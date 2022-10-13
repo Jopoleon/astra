@@ -1,0 +1,32 @@
+#!/bin/bash -f
+
+rootdir=`dirname $0`          # may be relative path
+AWD=`cd $rootdir && pwd`  # ensure absolute path
+node=`uname -n`
+
+if [[ $AWD == "/afs/ipp"* ]]
+then
+   osy=`fs sysname | awk '{print $NF}'`
+   if [[ $osy == "'amd64_linux26'" ]]
+   then
+      platform=lx
+   else
+      platform=tok
+   fi
+elif [[ $AWD == "/toks/work"* ]]
+then
+   platform=tok
+elif [[ $AWD == "/afs/eufus"* ]]
+then
+   platform=gway
+elif [[ $AWD == "/home/ITER"* ]]
+then
+   platform=iter
+elif [[ $AWD == "/compass"* ]]
+then
+   platform=cz
+else
+   platform=ga
+fi
+
+echo $platform

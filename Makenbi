@@ -1,0 +1,66 @@
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+AREP := $(dir $(mkfile_path))
+
+NBI_DIR = $(AREP)/nbi
+
+SRC_DIR = $(NBI_DIR)
+OBJ_DIR = $(NBI_DIR)/obj
+MOD_DIR = $(AREP)/inc
+LIB_DIR = $(AREP)/lib
+LIBNAM = libnbi.a
+LIB  = $(LIB_DIR)/$(LIBNAM)
+
+# Compilers
+
+AFC = ifort -r8 -no-prec-div -ip
+AFC_FLAGS = -O0 
+
+# Make Commands
+.PHONY: all
+all: directories $(LIB) rmgenmod
+
+.PHONY: directories
+directories:
+	@mkdir -p $(LIB_DIR)
+	@mkdir -p $(OBJ_DIR)
+	@mkdir -p $(MOD_DIR)
+
+.PHONY: rmgenmod
+rmgenmod:
+	rm -f *genmod.*
+
+.PHONY: clean
+clean:
+	rm -f $(LIB)
+	rm -rf $(OBJ_DIR)
+	rm -f $(MOD_DIR)/*.mod
+
+# Rules
+
+MODOBJS = $(OBJ_DIR)/nbstatus_inc.o
+
+OBJS = \
+$(OBJ_DIR)/nbfoa.o \
+$(OBJ_DIR)/NBIBCE.o \
+$(OBJ_DIR)/nbicom.o \
+$(OBJ_DIR)/nbinj.o \
+$(OBJ_DIR)/nbi.o \
+$(OBJ_DIR)/nborbco.o \
+$(OBJ_DIR)/nborbctr.o \
+$(OBJ_DIR)/nbstatus.o \
+$(OBJ_DIR)/nbtrag.o \
+$(OBJ_DIR)/nbuser.o
+
+$(OBJ_DIR)/nbstatus_inc.o: $(SRC_DIR)/nbstatus_inc.f90
+	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -c $< -o $@
+	mv nbstatus_inc.mod $(MOD_DIR)/
+
+$(OBJ_DIR)%.o: $(SRC_DIR)%.f
+	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -c $< -o $@
+
+$(OBJ_DIR)%.o: $(SRC_DIR)%.f90
+	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -c $< -o $@
+
+$(LIB): $(MODOBJS) $(OBJS)
+	ar rv $(LIB) $(MODOBJS) $(OBJS) >/dev/null
+	ranlib $(LIB)

@@ -1,0 +1,80 @@
+\documentstyle[12pt,epsfig,/u/git/texmf/tex/notes]{article}
+
+\input{/afs/ipp/home/g/git/latex/def.tex}
+
+\def\bdot{\dot{b}}
+\def\rdot{\dot{r}}
+\def\qt{\tilde{Q}}
+\def\qr{\qt_{\rho}}
+\def\pa{\parallel}
+\def\ginv{\frac{1}{G}}
+\def\gpa{G_{\pa}}
+\def\vinv{\frac{1}{V}}
+%\def\pu{\underline{p}}
+\def\pu{P}
+\def\ddt{\frac{\partial}{\partial t}}
+\def\ddr{\frac{\partial}{\partial \rho}}
+\def\ddx{\frac{\partial}{\partial x}}
+\def\v53{V'${5/3}$~}
+\def\gblock{- \gpa A y' + \gpa B y + \gpa R }
+\def\rbblock{\left( \rdot - \bdot \right)}
+\def\gky{\left( G \kappa y \right)}
+\def\vw{\frac{V}{W}}
+
+
+\begin{document}
+%
+\section{Generic transport equation}
+\label{sec.traeq}
+%
+Some definitions:
+\bea
+&&\qt = \gblock \\
+&&\qr := \qt - \bdot \rho y N  \\
+&&\kappa = \frac{\rho}{\rho_b} \\
+&&\ddt \frac{y}{\rho} - \rho \bdot \frac{\partial y}{\partial \rho} = D\left(\Psi\right) + S
+\eea
+The ASTRA generic transport equation reads:
+\bean
+&&S y + \pu = 
+\ginv \ddt \gky_\rho + \vinv \ddr \left( V M \qr \right) = 
+\ginv \ddt \gky_\rho + \vinv \ddr \left( V M \qt \right) - \frac{\bdot}{W} \ddr \left( \rho V M N y \right) = \\
+&& = \ginv \ddt \gky_x - x \rbblock \ginv \ddx \gky + \vinv \ddr\left(V M \qt \right) - \frac{\bdot}{W} \ddr \left( \rho V M N y \right)
+\eean
+Substitung the definitions above, the explicit form reads:
+\bean
+&& \ginv \ddt \gky_x + \vinv \ddr \left[ VM \left( \gblock \right) \right] = \\
+&& = Sy + \pu + \frac{bdot}{V} \vw \ddr \left( V M N \rho y \right) + \rbblock \frac{\rho}{V} \frac{V}{G} \ddr \gky
+\eean
+%
+In implicit form, the transport equation looks like:
+\bean
+&& \ginv \ddt \gky_x + \vinv \ddr \left[VM \left( \gblock - \bdot \vw N \rho y - \rbblock \rho \frac{\kappa y}{M} \right) \right] = \\
+&& = S y + \pu - \rbblock \frac{GHy}{V} \ddr R\left( \frac{\rho V}{G} \right) - \bdot M N \rho y \ddr \left( \vw \right) \\
+\eean
+%
+\section{Physical meaning of the argument variables}
+\label{sec.vars}
+%
+\begin{table}[!ht]
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|}
+\hline
+\hline
+       & G   & H    & M       & $\gpa$    & N              & V     & A          & B         & S   & $\pu$        & W        & R   \\
+\hline
+\hline
+$\Psi$ & 1   & 1    & 1/G     & 1         & 1/$\rho$       & C$_1$ & G$_2$      & 0          & 0   & j$_{bs}$ + ...& 1/$\rho$ & 0   \\
+\hline
+n      & V'  & 1    & 1/V'    & $\gpa$    & V'             & V'    & Diff       & V$_{pinch}$ & SNN & SN           & V'       & 0   \\
+\hline
+F$_j$  & V'  & 1    & 1/V'    & $\gpa$    & V'             & V'    & Diff       & V$_{p}$    & SFN & SF            & V'      & 0   \\
+\hline
+T$_e$  & v53 & n$_e$ & 625/V' & $\gpa$/625 & 3/2 n$_e$ \v53 & V'   & $\chi_e$    & V$_{pe}$   & PET & PE            & V'      & 0   \\
+\hline
+U$_\pa$ & V' & UPS   & 1      & 1          & 1              & V'    & $\chi_\phi$ & V$_{pu}$   & 0   & Torque        & V'      & Res \\
+\hline
+\end{tabular}
+\end{table}
+%
+\end{document}
