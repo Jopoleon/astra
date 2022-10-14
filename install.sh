@@ -21,7 +21,7 @@ then
     module load intelstudio/18
 elif [[ $platform == "ga" ]]
 then
-    module load intel/18
+    module load intel/2018
 else
     module load intel
 fi
