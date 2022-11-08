@@ -526,9 +526,12 @@ class LINE2FOR:
             else:
                 repl = '#'
             if sym in tmp:
-                piece1 = tmp.split(sym, 1)[1]
+                piece0, piece1 = tmp.split(sym, 1)
                 piece2 = rec_split(piece1)[0]
+                piece3 = rec_split(piece0)[-1]
+                logger.debug('piece3 %s', piece3)
                 try:
+                    flt = float(piece3) #Make sure there's a digit before "E-"
                     num = int(piece2) #Make sure there's an integer after "E-"
                     tmp = tmp.replace(sym, repl) # avoid splitting if exp notation
                 except:
@@ -584,7 +587,7 @@ class LINE2FOR:
                         out = '%s(%s, ROC)'  %(var, tmp3)
                     jpos += 3
                 elif len(pieces[jpos+2:]) == 2:
-                    print('Hey', var3)
+                    logger.debug('var3 %s', var3)
                     if var3 in self.fnc_list:
                         out = '%s(%sR, j*HRO)' %(var, var3)
                     if var3 in self.profiles:
