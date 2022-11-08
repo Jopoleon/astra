@@ -177,7 +177,7 @@ ULON(J) = IPOL(J)*G33(J)*UPL(J)
 FP(J)  = FP(J) - (9.*FP(1) - FP(2))/8.
 FPO(J) = FP(J)
 enddo
-UPL(NA1)  = ARRNA1(UPL(NA-2), 1.)
+UPL(NA1)  = UPL(NA-2)
 ULON(NA1) = ULON(NA)
 call CUOFP
 '''
@@ -243,7 +243,7 @@ ULON(J) = 0.0
 endif
 UPL(J) = ULON(J)/(IPOL(J)*G33(J))
 enddo ! j (radial loop)
-ULON(NA1) = ARRNA1(ULON(NA-2),HRO/HRO)
+ULON(NA1) = ULON(NA-2)
 UPL(NA1)  = ULON(NA1)/(IPOL(NA1)*G33(NA1))
 DFPDRB = 0.4*IPL/IPOL(NA1)/G22(NA1)*GP*RTOR
 '''
