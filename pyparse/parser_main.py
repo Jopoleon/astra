@@ -46,9 +46,9 @@ if __name__ == '__main__':
         if args.awd is None:
             logger.error('Need either argument -awd or -equ')
             sys.exit()
-        config.awd = args.awd
-        config.fml_dir = '%s/fml'  %args.awd
-        config.fnc_dir = '%s/fnc'  %args.awd
         f_equ = '%s/tmp/model.tmp' %args.awd
+    config.awd = args.awd
+    config.fml_dir = '%s/fml'  %args.awd
+    config.fnc_dir = '%s/fnc'  %args.awd
     txt = astra_parser(f_equ)
     write_tmp(txt, dir_out='./tmp')

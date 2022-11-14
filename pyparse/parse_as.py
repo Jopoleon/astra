@@ -1,11 +1,7 @@
 import os, re, logging
 import config
 
-fmt = logging.Formatter('%(name)s | %(levelname)s: %(message)s', '%H:%M:%S')
-hnd = logging.StreamHandler()
-hnd.setFormatter(fmt)
-logger = logging.getLogger('parse_as')
-logger.addHandler(hnd)
+logger = logging.getLogger('as_parse.parse_as')
 #logger.setLevel(logging.DEBUG)
 logger.setLevel(logging.INFO)
 
@@ -14,8 +10,9 @@ def apptmp(lbl, parse):
 
     pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
     txt = ''
+    var = lbl.split('|', 1)[0]
     if lbl in parse.right_hand_d.keys():
-        l2f = LINE2FOR(lbl, parse.right_hand_d[lbl], pack)
+        l2f = LINE2FOR(var, parse.right_hand_d[lbl], pack)
         txt += l2f.fcode
 
     return txt
@@ -179,7 +176,7 @@ def equ_prepare(f_equ):
 
 
 def indicise_lefteq(var, fnc_list, profiles, arr_nam2):
-    '''Add proper FORTRAN idnex to ASTRA arrays, eqn left hand side'''
+    '''Add proper FORTRAN index to ASTRA arrays, eqn left hand side'''
 
     var = var.strip()
     tmp1 = var[:-1]
@@ -685,9 +682,6 @@ class LINE2FOR:
         line_out = line_out.replace('"', '')
         line_out = line_out.replace('$', 'd-')
         line_out = line_out.replace('#', 'd+')
-
-# Split lines longer than Fortran permits
-
         logger.debug('OUT: %s', line_out)
         logger.debug('')
 

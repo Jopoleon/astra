@@ -3,11 +3,7 @@ import const_text, eqns
 import config
 from parse_as import parse_inc, equ_prepare
 
-fmt = logging.Formatter('%(name)s | %(levelname)s: %(message)s', '%H:%M:%S')
-hnd = logging.StreamHandler()
-hnd.setFormatter(fmt)
 logger = logging.getLogger('as_parse.equ_parser')
-logger.addHandler(hnd)
 #logger.setLevel(logging.DEBUG)
 logger.setLevel(logging.INFO)
 
@@ -119,6 +115,7 @@ class EQU_PARSER:
         self.eqns_lines = []
 
         self.right_hand_d = {}
+        self.right_hand_count = {}
         self.sbr_lines = []
         fluxes = []
         coeffs = []
@@ -132,25 +129,18 @@ class EQU_PARSER:
 
             if '=' in tmp:
                 key, val = tmp.split('=', 1)
+                if key in self.right_hand_d.keys(): # Variable was already defined above
+                    self.right_hand_count[key] += 1
+                    lbl = '%s|%d' %(key, self.right_hand_count[key]) # Keep several equ-lines with same left-hand side
+                    self.right_hand_d[lbl] = val
+                else:
+                    self.right_hand_count[key] = 0
+                    lbl = key
+                self.right_hand_d[lbl] = val
                 if key in config.eqn_list + fluxes + coeffs:
                     self.eqns_lines.append(line)
                 else:
-                    self.detv_lines.append(line)
-                if key in self.right_hand_d.keys():
-                    old = self.right_hand_d[key]
-                    if key not in val:
-                        logger.warning('Substituting')
-                        logger.warning('  %s = %s', key, old)
-                        logger.warning('  in')
-                        logger.warning(line)
-                        self.right_hand_d[key].replace(key, '(%s)' %old)
-                        logger.warning('Variable %s had already been assigned:' %key)
-                        logger.warning('  %s = %s', key, old)
-                        logger.warning('  Overruling old statement:')          
-                    else:
-                        self.right_hand_d[key] = val
-                else:
-                    self.right_hand_d[key] = val
+                    self.detv_lines.append('%s = %s' %(lbl, val))
 
             if ':' in tmp:
 # Equation

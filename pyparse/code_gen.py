@@ -2,11 +2,7 @@ import os, sys, logging
 import const_text, eqns, eqns_init, config
 import parse_as as pa
 
-fmt = logging.Formatter('%(name)s | %(levelname)s: %(message)s', '%H:%M:%S')
-hnd = logging.StreamHandler()
-hnd.setFormatter(fmt)
 logger = logging.getLogger('as_parse.code_gen')
-logger.addHandler(hnd)
 #logger.setLevel(logging.DEBUG)
 logger.setLevel(logging.INFO)
 
@@ -150,19 +146,20 @@ end subroutine POSTEP'''
         detv_rad  = ''
 
         for line in parse.detv_lines:
-            var = line.split('=')[0].upper()
+            lbl = line.split('=', 1)[0].upper().strip()
+            var = lbl.split('|', 1)[0]
             for jv, varm in enumerate(parse.variables):
                 if var == varm:
                     jvar = jv + 1
                     detv_time += 'IFDFVX(%d) = max(IFDFVX(%d), 2)\n' %(jvar, jvar)
-                    l2f = pa.LINE2FOR('', right_hand[var], pack)
+                    l2f = pa.LINE2FOR('', right_hand[lbl], pack)
                     detv_time += 'if (IFDFVX(%d) <= 2) %s = %s\n'%(jvar, var, l2f.fcode)
                     break
             if var in parse.constants + parse.internals:
-                l2f = pa.LINE2FOR('', right_hand[var], pack)
+                l2f = pa.LINE2FOR('', right_hand[lbl], pack)
                 detv_time += '%s = %s\n' %(var, l2f.fcode)
             if var in parse.profiles:
-                detv_rad += pa.apptmp(var, parse)
+                detv_rad += pa.apptmp(lbl, parse)
 
         self.detvar  = const_text.DETVAR.header
         self.detvar += detv_time
