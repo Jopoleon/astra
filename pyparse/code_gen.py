@@ -254,16 +254,15 @@ end subroutine DETVAR_init
 # Current
 
         inivar += 'do J=1, NA1\n'
+        if 'CC' in var_defined:
+            inivar += pa.apptmp('CC', parse)
+        else:
+            l2f = pa.LINE2FOR('CC', 'CCSP', pack)
+            inivar += l2f.fcode
         if 'CU' not in var_defined:
             inivar += pa.apptmp('MU', parse)
             if parse.assign_d['CU'] == 'AS':
                 inivar += 'CU(J) = CC(J)\n'
-        if 'CC' in var_defined:
-            inivar += pa.apptmp('CC', parse)
-        else:
-            l2f = pa.LINE2FOR('', 'CCSP', pack)
-            inivar += l2f.fcode
-            inivar += 'CC(J) = CCSP\n'
         inivar += 'enddo\n'
 
 # Dummy transport equations
