@@ -23,8 +23,8 @@ def eqns_init(parse):
         sbr_d['neq'] = j_sbr
         if sbr_d['locsbr'] == 0: #sbr
             a_str = ''
-            if (sbr_d['name'] in ('MIXINT', 'MIXEXT', 'TSCTRL')):
-                a_str = '.and. JIT == JEX'
+#            if (sbr_d['name'] in ('MIXINT', 'MIXEXT', 'TSCTRL')):
+#                a_str = '.and. JIT == JEX'
             sbr_txt += sbr_header(sbr_d['neq'], astr=a_str)
             sbr_txt += write_sbr(sbr_d)
 # Subprocess

@@ -45,8 +45,8 @@ class CODE_GEN:
             sbrs_d[line] = sbr_d
             locsbr = sbr_d['locsbr']
             a_str = ''
-            if (sbr_d['name'] in ('MIXINT', 'MIXEXT', 'TSCTRL')) or (locsbr == 1):
-                a_str = '.and. JIT == JEX'
+#            if (sbr_d['name'] in ('MIXINT', 'MIXEXT', 'TSCTRL')) or (locsbr == 1):
+#                a_str = '.and. JIT == JEX'
             if locsbr == -1:
                 detv_sbr += pa.sbr_header(j_sbr, astr=a_str)
                 detv_sbr += pa.write_sbr(sbr_d)
@@ -87,8 +87,8 @@ class CODE_GEN:
             sbr_d = sbrs_d[line]
             if sbr_d['locsbr'] == 0: #sbr
                 a_str = ''
-                if (sbr_d['name'] in ('MIXINT', 'MIXEXT', 'TSCTRL')):
-                    a_str = '.and. JIT == JEX'
+#                if (sbr_d['name'] in ('MIXINT', 'MIXEXT', 'TSCTRL')):
+#                    a_str = '.and. JIT == JEX'
                 sbr_txt += pa.sbr_header(sbr_d['neq'], astr=a_str)
                 sbr_txt += pa.write_sbr(sbr_d)
 # Subprocess

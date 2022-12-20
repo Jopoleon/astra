@@ -980,7 +980,7 @@ include 'tmp/declar.fnc'
 character(len=64), intent(in) :: LISTSB(NSBMX)
 
 integer :: J1, IFKEY, IFIPC, IFSUB, JDETV, ND, ND1, jkey,&
-    imethod, jcall, IFTREQ, IFSTEP, JIT
+    imethod, jcall, IFTREQ, IFSTEP
 
 double precision :: dfpdrbm12, ARRNA1, YHRO, YB, YC, YJ_CU, &
     YM, YMCD, YIOH, YICD, YM1, YU, RABDOT, BABDOT
