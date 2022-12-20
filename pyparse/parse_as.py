@@ -647,6 +647,12 @@ class LINE2FOR:
                         out = '%s(%s, J)'  %(var, var3)
                 jpos += 3
 
+
+            elif var in ('FRMIN', 'FRMAX'):
+# do not indicise arrays!
+                var3 = pieces[jpos+2]
+                out = '%s(%s)' %(var, var3)
+                jpos += 3
 # Formula
             elif var in self.fml_list:
                 if self.flag_fml[var.lower()]:
