@@ -31,7 +31,7 @@ flux_d = { \
     'TE':   ['PE', 'PET'], \
     'TI':   ['PI', 'PIT'], \
     'NE':   ['SN', 'SNN'], \
-    'CU':   ['MV'], \
+    'CU':   ['MV', 'MU'], \
     'UPAR': ['TTRQ']}
 
 bnd_d  = { \

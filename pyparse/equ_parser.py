@@ -176,7 +176,7 @@ class EQU_PARSER:
             'EQS': 4}  # SCoPE
 
         for key, val in self.assign_d.items():
-            if val in('', 'EQ'):
+            if val[:2] in ('', 'EQ'):
                 self.leq_d[key] = 1 # EQ, default, such as TE:;
             if val == 'AS':
                 self.leq_d[key] = 0
