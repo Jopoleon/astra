@@ -437,11 +437,11 @@ def parse_sbr(line):
             locsbr = -2
     else:           # subroutine
         if '<' in line:
-            locsbr = -1  # detvar.tmp; call at every JIT
-        elif '>' in line:
-            locsbr = 1   # postep.inc; call at JIT=JEX
+            locsbr = -1  # detvar.f90; call in ASTRA_MAIN, STEPUP before equil
+        elif '>' in line or sbrnam.upper() in ('MIXINT', 'MIXEXT', 'TSCTRL'):
+            locsbr = 1   # postep.f90; call in STEPUP
         else:
-            locsbr = 0   # init/eqns.inc; call at every JIT (STEPIN), at JIT=1 (STEPUP)
+            locsbr = 0   # converge_init.f90/eqns_inc.f90; call in ASTRA_MAIN, STEPUP
 
     sbr_dic['name'] = sbrnam
     sbr_dic['args'] = args_str
@@ -647,12 +647,12 @@ class LINE2FOR:
                         out = '%s(%s, J)'  %(var, var3)
                 jpos += 3
 
-
             elif var in ('FRMIN', 'FRMAX'):
 # do not indicise arrays!
                 var3 = pieces[jpos+2]
                 out = '%s(%s)' %(var, var3)
                 jpos += 3
+
 # Formula
             elif var in self.fml_list:
                 if self.flag_fml[var.lower()]:
