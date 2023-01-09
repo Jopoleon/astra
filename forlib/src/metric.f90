@@ -11,7 +11,7 @@ use debugger, only: markloc, astra_stop
 
 implicit none
 
-integer :: jrho, n_neq, jexit, NDTEQUILMY, equil_solver
+integer :: jrho, jexit, NDTEQUILMY, equil_solver
 double precision :: ROC3A
 character(len=120) :: err_msg
 
@@ -29,37 +29,7 @@ if (IPART == 1) then ! do only at initiation
    enddo
 endif
 
-n_neq = nint(NEQUIL)  ! Nearest integer
-
-if (nint(IPEQL) == 0) then
-
-   if (LEQ(5) == -3) then ! Old type definition > NEQUIL controlled
-      if (n_neq < 0 .and. n_neq > -1e5) then
-         LEQ(5) = 4  ! SPIDER GS solver
-      else
-         if (nint(MEQUIL) /= 0) then
-            LEQ(5) = 4  ! SPIDER GS solver
-         else
-            SELECT CASE(n_neq)
-            CASE(0, -1, -2)  ! Guessed equ | External file | Cylindrical equ
-               LEQ(5) = n_neq
-            CASE(-1000000)
-               LEQ(5) = -88  ! Analytical scaling
-            CASE(1)
-               LEQ(5) = 99
-            CASE DEFAULT
-               LEQ(5) = 1    ! EMEQ(NEQUIL)
-            END SELECT
-         endif
-
-      endif
-   endif
-else
-   if (nint(IPEQL) == 1) LEQ(5) = 1
-   if (nint(IPEQL) == 2) LEQ(5) = 3
-   if (nint(IPEQL) == 3) LEQ(5) = 4
-   if (nint(IPEQL) == 4) LEQ(5) = 5 ! EF solver
-endif
+LEQ(5) = nint(IPEQL)
 
 SELECT CASE(LEQ(5))
 
@@ -99,7 +69,7 @@ CASE(3)  ! SPIDER iterations
       TIMEQL = TIME
    endif
 
-CASE(4: 5)  ! SPIDER, EFsolver
+CASE(4: 5)  ! SPIDER, FEQIS
    if (LEQ(5) == 4) then
       equil_solver = 3
    else
@@ -401,6 +371,12 @@ enddo
 !computes new roc
 RHO = IPOL*VR/GP2**2.d0*G33/RTOR
 ROC = RHO(NA1)
+if (debug > 0) then
+   write(*, *) 'metric', RHO(1:10)
+   write(*, *) VR(1:10)
+   write(*, *) G33(1:10)
+   write(*, *) IPOL(1:10)
+endif
 HRO = RHO(2) - RHO(1)
 HROX = (RHO(2) - RHO(1))/ROC
 

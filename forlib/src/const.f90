@@ -205,10 +205,10 @@ DELOUT(1:44) = (/ &
    1.,    0.,    0.,    0.,      0.,      0.,   1.e20,  1.e20, &
 ! INUME1, INUME2, INUME3, INUME4, IPROT, ITFBE  ITFBP  ICIRCQ 
   22.,    22.,    22.,    22.,     0.,   -1.,    0.,       0., &     
-! IPCTRL, ADCMPF, FLXDR, SGNIP, SGNBT, IRESTA, IFBEG
-  0.,     1.,     0.,    1.,    1.,    0.,     0. , &
-!IPEQL, IPSMK, IPNWT, IBKDW, IBKVR
-    0.,    0.,   0.,  0.,    0. /)
+! IPCTRL, ADCMPF, FLXDR, SGNIP, SGNBT, IRESTA, IFBEG, IPEQL
+  0.,     1.,     0.,    1.,    1.,    0.,     0. ,      4., &
+! IPSMK, IPNWT, IBKDW, IBKVR
+  0.,   0.,  0.,    0. /)
 
 do j=1, NSBMX
 !   DTEQ(1, j) = 0.
