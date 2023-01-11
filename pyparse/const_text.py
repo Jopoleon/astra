@@ -1040,7 +1040,7 @@ integer, intent(out) :: bc_type_for_fp, dfpdrbm12
 
 integer :: IFSUB, imethod, ND, ND1, NODE
 
-double precision :: RABDOT, BABDOT, YHRO, YM1, YM2, YB, YC, YJ_CU, YM, YU, YIOH, YICD, YMCD
+double precision :: ARRNA1, RABDOT, BABDOT, YHRO, YM1, YM2, YB, YC, YJ_CU, YM, YU, YIOH, YICD, YMCD
 
 double precision, dimension(NRD) :: YWA, YWB, YWC, YWD, YWGN, &
     YWHN, YWGO, YWHO, YWR, YWH, YVR, YWM, YWA1, YWA2, YWB1, YWB2, &
