@@ -320,7 +320,7 @@ use const_inc, only: RTOR, BTOR, ABC, ROC, HRO, HROX, &
    SHIFT, ELONG, TRIAN, VOLUME, GP, GP2, NA, NA1, NAB
 use status_inc, only: SHIF, ELON, TRIA, SHX, ELX, TRX, &
    G11, G22, G33, G11X, G22X, G33X, GRADRO, DRODA, DRODAX, &
-   IPOL, IPOLX, VR, VRS, VRX, RHO, AMETR, SLAT, SLATX, &
+   IPOL, IPOLX, VR, VRS, VRX, RHO, XRHO, AMETR, SLAT, SLATX, &
    BDB0, BDB02, B0DB2, BMINT, BMAXT, FOFB, VOLUM, SHEAR, FP, MU
 use debugger, only: markloc, debug
 use parse_utils, only: ifdefx2
@@ -369,8 +369,10 @@ do J=1, NA1
 enddo
 
 !computes new roc
-RHO = IPOL*VR/GP2**2.d0*G33/RTOR
-ROC = RHO(NA1)
+
+ROC = VR(NA1)/GP2**2 * G33(NA1)/RTOR
+RHO(1: NA1) = XRHO(1: NA1)*ROC
+
 if (debug > 0) then
    write(*, *) 'metric', RHO(1:10)
    write(*, *) VR(1:10)
