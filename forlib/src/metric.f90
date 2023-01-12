@@ -1692,7 +1692,7 @@ subroutine NEWGRD
 use parameter_inc, only: NRD
 use status_inc, only: RHO, XRHO, SRHO, SXHO, AMETR
 use const_inc, only: HRO, HROX, AB, ABC, ROC, ROB, ROWALL, &
-   FTN, BTN, GP, NA, NA1, NB1, NAB
+   FTO, BTN, GP, NA, NA1, NB1, NAB
 
 implicit none
 
@@ -1704,7 +1704,7 @@ do j=1, NRD
   RHO(j)  = XRHO(j)*ROC
   SRHO(j) = SXHO(j)*ROC
 enddo
-FTN = GP*BTN*ROC**2.0
+FTO = GP*BTN*ROC**2.0
 !Efable normalized grid stuff
 
 do j=1, NRD

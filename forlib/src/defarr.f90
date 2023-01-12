@@ -441,7 +441,7 @@ IPLN = GETXVAR('IPL' , TIME + TAU) ! Update IPLN for new TAU
 
 ! Reset ROC
 ROC = ROCO
-FTN = FTO
+FTO = FTN
 
 call CUOFP  ! Restore CU & MU, to be checked after VR is done EFable
 IFSTEP = 0
@@ -608,7 +608,7 @@ enddo
 BTN  = GETXVAR('BTOR', TIME + TAU)
 IPLN = GETXVAR('IPL' , TIME + TAU) ! Update IPLN for new TAU
 
-FTO = FTN
+FTN = FTO
 ROCO = ROC
 
 end subroutine OLDNEW
