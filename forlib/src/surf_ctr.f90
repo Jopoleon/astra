@@ -1,6 +1,6 @@
 subroutine SURF_CTR(order, nrho_surf, nthe_surf, r_surf, z_surf)
 
-use const_inc, only: NA1, GP2, RTOR, UPDWN, MEQUIL, NEQUIL
+use const_inc, only: NA1, GP2, RTOR, UPDWN, MEQUIL, NEQUIL, LEQ
 use status_inc, only: SHIF, AMETR, ELON, TRIA
 use parameters_a2spider, only: equil_now
 
@@ -15,7 +15,7 @@ double precision :: theta, rtmp, ztmp
 
 ! Surface contours
 
-if (MEQUIL .EQ. 0.) then
+if (MEQUIL == 0. .or. LEQ(5) <= 0) then
 
 ! 3 moments equilibrium
    nrho_surf = NA1
