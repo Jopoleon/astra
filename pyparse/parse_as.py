@@ -6,6 +6,26 @@ logger = logging.getLogger('as_parse.parse_as')
 logger.setLevel(logging.INFO)
 
 
+def doublise(sarg):
+
+    if '.' in sarg:
+        c = sarg.split('.')[0]
+        return sarg + 'd0'
+    else:
+        return sarg
+        
+#    try:
+#        a = int(sarg)
+#        return sarg
+#    except:
+#        try:
+#            b = float(sarg)
+#            c = sarg.split('.')[0]
+#            return sarg + 'd0'
+#        except:
+#            return sarg
+
+
 def apptmp(lbl, parse):
 
     pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
@@ -429,7 +449,6 @@ def parse_sbr(line):
         tmin = 0.
         tmax = 1000.
         key = ''
-
     if '&' in line: # SubProcess
         if '<' in line:
             locsbr = -3
@@ -443,8 +462,16 @@ def parse_sbr(line):
         else:
             locsbr = 0   # converge_init.f90/eqns_inc.f90; call in ASTRA_MAIN, STEPUP
 
+    args_str2 = ''
+    if (args_str):
+        args = args_str.split(',')
+        for arg in args[:-1]:
+            sarg = doublise(arg.strip())
+            args_str2 += '%s, ' %sarg
+        args_str2 += doublise(args[-1])
+
     sbr_dic['name'] = sbrnam
-    sbr_dic['args'] = args_str
+    sbr_dic['args'] = args_str2
     sbr_dic['tmin'] = tmin
     sbr_dic['tmax'] = tmax
     sbr_dic['dt']   = dt
