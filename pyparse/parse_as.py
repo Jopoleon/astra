@@ -8,11 +8,15 @@ logger.setLevel(logging.INFO)
 
 def doublise(sarg):
 
-    if '.' in sarg:
+    if '.' in sarg and 'd' not in sarg and 'D' not in sarg and 'e' not in sarg and 'E' not in sarg:
         c = sarg.split('.')[0]
-        return sarg + 'd0'
-    else:
-        return sarg
+        sarg = sarg + 'd0'
+    elif '.' in sarg and 'e' in sarg:
+        sarg = sarg.replace('e', 'D')
+    elif '.' in sarg and 'E' in sarg:
+        sarg = sarg.replace('E', 'D')
+
+    return sarg
         
 #    try:
 #        a = int(sarg)
