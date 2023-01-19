@@ -94,7 +94,7 @@ NITREQ = 1. ! Initialization: g95 does not like it in blockdata
 ! Parse file ".exe/version"
 !----------------------------------------------------------------------|
 
-open(131, FILE='.exe/version', iostat=ios)
+open(131, FILE='exe/version', iostat=ios)
 
 if (ios /= 0) then
    write(*,*)'>>> Warning: Unknown version'
