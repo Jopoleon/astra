@@ -1,0 +1,6 @@
+! OMDI [1/s]: ION diamagnetic frequency
+! OMDI=Vdia/r
+
+INCLUDE 'fml/vdia'
+OMDI=VDIA/AMETR(J)
+

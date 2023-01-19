@@ -1,0 +1,7 @@
+! ROTSH [1/s]:  Rotation shear rate  Pereverzev 17-May-99
+!
+!   psi'/B0*(E_r/psi')' = | rho/B0*(E_r/rho)' + s*E_r/B0/rho |
+!      
+
+ROTSH = (ER(j+1)/(j+1) - ER(j)/j)/HRO**2
+ROTSH = abs(SHEAR(j)*ER(j)/(j*HRO) + j*HRO*ROTSH)/BTOR

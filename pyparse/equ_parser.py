@@ -43,13 +43,13 @@ class EQU_PARSER:
 # Lists of arrays, constants, variables
 #--------------------------------------
 
-        f_prof    = '%s/for/profiles.txt'   %config.awd
-        f_profx   = '%s/for/profiles_x.txt' %config.awd
-        f_const   = '%s/for/constants.txt'  %config.awd
-        f_intern  = '%s/for/internal.txt'   %config.awd
-        f_intern2 = '%s/for/intern2.txt'    %config.awd
-        f_vars    = '%s/for/variables.txt'  %config.awd
-        f_asfnc   = '%s/for/functions.txt'  %config.awd
+        f_prof    = '%s/main/profiles.txt'   %config.awd
+        f_profx   = '%s/main/profiles_x.txt' %config.awd
+        f_const   = '%s/main/constants.txt'  %config.awd
+        f_intern  = '%s/main/internal.txt'   %config.awd
+        f_intern2 = '%s/main/intern2.txt'    %config.awd
+        f_vars    = '%s/main/variables.txt'  %config.awd
+        f_asfnc   = '%s/main/functions.txt'  %config.awd
         prof   = parse_inc(f_prof)
         profx  = parse_inc(f_profx)
         self.profiles = prof + profx

@@ -1,0 +1,18 @@
+! HARLS [keV/m]: Heat diffusivity Anomalous Rebut-Lallia Smoothed
+! See fml/HARL
+! Usage:
+!   or HE=...+HARLS; XI=...+HARLS*XIRL; CE=...-HARLS*CERL;
+!  Internal Report IPP 5/29 (1988)
+!   (Pereverzev 6-AUG-92)
+if (j .eq. 1) then
+ do  jj =1, NA
+ j = jj
+ include 'fml/harl'
+ if (jj .eq. 1) YY = HARL
+ call SMOFML(-1., JJ, HARL, 'HARLS')
+ enddo
+ j = 1
+ HARL = YY
+endif 
+call SMOFML(CHE3, J, HARLS, 'HARLS')
+

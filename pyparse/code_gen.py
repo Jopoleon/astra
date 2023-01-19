@@ -7,7 +7,7 @@ logger = logging.getLogger('as_parse.code_gen')
 logger.setLevel(logging.INFO)
 
 # Input:
-#    tmp/model.tmp, for/profiles.txt for/variables.txt for/constants.txt for/internal.txt, ls fml/, ls fnc/
+#    tmp/model.tmp, main/profiles.txt main/variables.txt main/constants.txt main/internal.txt, ls fml/, ls fnc/
 #
 # Output:
 #    tmp/*.f90, declar.fml, declar.fnc

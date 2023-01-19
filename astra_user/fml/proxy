@@ -1,0 +1,16 @@
+! PROXY [MW*m#3] Oxygen radiation power
+!       POST D.E. JENSEN R.V. e.a., Atomic Data and Nuclear Tables, 
+!                                   Vol.20 (1977) 397.
+!       Giannone ( September 1996 )
+!       Usage:          PE=...-PROXY*NE*NIZ1
+  T=TE(J)*1000.
+  Z=LOG10(T)
+  if (T .le. 10.)                 Y=-2.5039+4.4066*Z-1.2924*Z*Z
+  if (T .gt. 10. .and. T .le. 22.)    Y=-7.0188+12.574*Z-4.9513*Z*Z
+  if (T .gt. 22. .and. T .le. 56.)    Y=1.7475+2.9345*Z-2.5932*Z*Z
+  if (T .gt. 56. .and. T .le. 140.)   Y=35.441-37.599*Z+9.5808*Z*Z
+  if (T .gt. 140. .and. T .le. 400.)  Y=-25.309+20.864*Z-4.4619*Z*Z
+  if (T .gt. 400. .and. T .le. 4000.) Y=7.996-5.6584*Z+0.81038*Z*Z
+  if (T .gt. 4000. .and. T .le. 1.E4) Y=2.4304-2.4367*Z+0.34463*Z*Z
+  if (T .gt. 1.E4)                Y=-1.1215-0.62068*Z+0.11287*Z*Z
+  PROXY   =10.**(Y)

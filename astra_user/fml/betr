@@ -1,0 +1,5 @@
+! BeTr: Beta toroidal Troyon
+!  Pereverzev 
+! betr=bett/(I/aB)
+!
+BETR =BETAR(RHO(j))*AMETR(j)*BTOR/ITOTR(RHO(j))

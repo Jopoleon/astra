@@ -1,0 +1,8 @@
+! PJOUL [MW/m#3]: Joule heat sourse
+! P=Cu*Ez
+!  (Pereverzev 30-JAN-89)
+! The formula is changed 24-JAN-96 from the old expression:
+! PJOUL=CU(J)*ULON(J)/(GP2*RTOR*IPOL(J)*G33(J))
+! where j_|| was used instead of j_{tor}
+PJOUL=CUTOR(J)*UPL(J)/(GP2*RTOR)
+

@@ -1,0 +1,15 @@
+! SVDHE [10#19m#3/s]: The formula is a fit to D-3He reaction rate
+! according to Golovin (Preprint IAE-4885/8 1989)
+! D+3He=alpha(3.671MeV)+p(14.683MeV)
+! Use: Palpha=Nd*N3He*SVDHe*18354./625. [MW/m#3]
+! Ti<100 KeV  (Polevoy 18-MAY-90)
+TILG =LOG10(TI(J))
+if (TI(J) .le. 18.5) THEN
+ Y =4.393*(TILG-1.16)
+   ELSE
+if (TI(J) .le. 25.)Y =0.47+3.985*(TILG-1.267)
+   ENDif 
+if ((TI(J) .gt. 25.) .and. (TI(J) .le. 40.))Y=1.+3.*(TILG-1.4)
+if ((TI(J) .gt. 40.) .and. (TI(J) .le. 60.))Y=1.6+1.944*(TILG-1.6)
+if (TI(J) .gt. 60.)Y =1.95+1.136*(TILG-1.78)
+SVDHE =10**(Y-5.)

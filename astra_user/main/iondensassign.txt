@@ -1,0 +1,26 @@
+	if (MACHIN.eq.'aug_') then
+		do J=1,na1
+      NI(J)=F1(J)+F2(J)+F3(J)+F4(J)+
+     & F5(J)+F6(J)+F7(J)+F8(J)+F9(J) ! complete AUG
+		enddo
+	endif
+
+
+	if (MACHIN.eq.'demo') then
+		do J=1,na1
+	    NI(J)=F1(J)+F2(J)+F3(J)+F4(J)+
+     & F6(J)+F7(J)+F8(J) !DEMO
+		enddo
+	endif
+
+	if (MACHIN.eq.'dem_') then
+		do J=1,na1
+	    NI(J)=F1(J)+F2(J)+F3(J)+F4(J)+
+     & F6(J)+F7(J)+F8(J) !DEMO
+		enddo
+	endif
+
+
+
+!      NI(J)=F1(J)+F3(J) ! ramp up AUG
+!	NI(J)=NE(J) !test

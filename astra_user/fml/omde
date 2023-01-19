@@ -1,0 +1,6 @@
+! OMDE [1/s]: Electron diamagnetic frequency
+! OMDE=Vdie/r
+
+INCLUDE 'fml/vdie'
+OMDE=VDIE/AMETR(J)
+

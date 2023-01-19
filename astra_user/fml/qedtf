@@ -1,0 +1,5 @@
+! QEDTF [MW]: Fusion power (with account of fast ions) input to electrons 
+!  (Pereverzev 7-APR-03)
+include 'fml/pedtf'
+if (J .eq. 1) QEDTF=0.
+QEDTF=QEDTF+PEDTF*VR(J)*HRO

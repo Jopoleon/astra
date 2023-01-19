@@ -1,0 +1,7 @@
+! DNDif [m#2/s]: Experimental dif fusion coefficient
+!   without convection flux
+!   (Yushmanov 21-JAN-91)
+if (J .lt. NA1) then
+YR=HRO*J
+DNDif =-((QNTOTR(YR)-QNDNTR(YR))/G11(J)+NE(J)*   (HN(J)*(TE(J+1)/TE(J)-1)/HRO   +XN(J)*(TI(J+1)/TI(J)-1)/HRO-CN(J)))/GRAD(NE, J)
+  endif 

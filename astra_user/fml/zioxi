@@ -1,0 +1,12 @@
+! ZIOXI [ ]: Average O charge
+! T [eV] Electron temperature
+!       POST D.E. JENSEN R.V. e.a., Atomic Data and Nuclear Tables, 
+!        Vol.20 (1977) 397.
+!    (Yushmanov 25-12-89)
+T=TE(J)
+ Z=LOG10(T)
+    ZIOXI=0.
+ if (T .lt. .035 .and. T .ge. .005) ZIOXI=2.+4.27*(Z+2.3)
+ if (T .lt. .140 .and. T .ge. .035) ZIOXI=6.
+ if (T .lt. .300 .and. T .ge. .140) ZIOXI=6.+6.05*(Z+.854)
+ if (T .ge. .300)               ZIOXI=8.

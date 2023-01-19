@@ -1,0 +1,163 @@
+!  AUG 
+
+IPL=IPLX;
+SGNIP=1.d0;
+SGNBT=-1.d0;
+
+NEQUIL = 91;
+MEQUIL = 90;
+ATREQ = 1.;
+!MEQUIL = 0;
+
+TAUMIN=0.05;
+TAUMAX=0.05;
+
+AMAIN=AMJ;
+ZMAIN=ZMJ;
+
+AIM1=12.; ! C
+ZIM1=ZICAR;
+NIZ1=CIMP1*NE;
+ZIM2=1.e-1;
+ZIM3=1.e-1;
+!Deuterium density
+NDEUT=NE-ZIM1*NIZ1;
+NMAIN=NDEUT;
+NI=NDEUT+NIZ1;  !Thermal ion density
+ZEF1 = ZIM1*(ZIM1-1.)*NIZ1/NE;
+ZEF = 1.+ZEF1;
+
+!----------
+! Sources
+
+! ECH
+! TORBEAM
+TORBA(PEECR, CUECR, 0.d0)>:0.06:::;
+
+! ICRF
+
+!FGAUSS_RHOPOL(0.5d0, 0.3d0, CAR54)>:.2:2.:5.:;
+!CAR53 = ZRD25X*CAR54;
+
+! Pellet source
+
+!ABLATION(ZRD21X, ZRD23X, CF15) ::2.81:5.2:;
+
+!CAR51 = (1. - FLIN)*XSTEP(ZRD24X);
+!CAR55 = CAR51/VINT(CAR51B);
+!CAR52 = CF15*CAR55; ! Factor CF15 arbitrary, for sensitivity study
+
+NNCL=1.d-5; !Cold neutrals
+NNWM=1.d-5; !Warm neutrals
+NEUT:.05:::;
+
+!CNB1=8; CNB2=1; CNB3=2; CNB4=1;
+!NBI<:0.02:::;
+
+RABBIT>:0.06:::;
+
+! Radiation
+
+PRAD=PBRAD;
+
+PE = PEBM+POH+PEECR-PRAD-PEICL; !+CAR42;
+PI = PIBM+PEICL; !-CAR42;
+
+SN=SNEBM;
+CAR11=CUBM;
+
+! PFAST = PBLON*1/3+2/3*PBPER; in kev*1/m**3 10**19
+
+
+!QLK call
+! physics
+CF16=0.85;  ! Boundary
+CF12=0.02; ! Frequency of calls
+CRAD3=nint((CF16*NA1 - 1)/16.);
+
+qlknn_serial(CAR17, CAR18, CAR20)>::::;
+
+SMEARR(CF4,CAR17,CAR21)::::;
+SMEARR(CF4,CAR18,CAR22)::::;
+SMEARR(CF5,CAR20,CAR24)::::;
+
+XI = min(20., max(0., CAR21)) + HNASI;
+HE = min(20., max(0., CAR22)) + HNGSE;
+DN = HNGSE; ! + CAR23;
+CN = CAR24 -VP*VRAS; !max(-20., min(20.,CAR24));
+
+DVN=CF14;
+DVE=CF14;
+DVI=CF14;
+
+XE=0.0; 
+HI=0.0;
+CI=0.0;
+DI=0.0;   
+HN=0.0;
+XN=0.0; 
+DE=0.0; 
+
+!Bootstrap coefficients
+HC=HCSA;
+DC=DCSA; 
+XC=XCSA; 
+
+!Plasma rotation
+VPOL=VPSWW; !Poloidal rotation
+VTOR=VTORX; !Toroidal rotation
+ER=BTOR*(VDIA-VPOL)+BTOR*AMETR*MU*VTOR/RTOR;
+
+!---------------------
+! Transport equations
+
+NE=NEX; 
+NE:EQ[2,CF16];
+NEB=NEX(AFX(CF16));
+
+TE=TEX;
+TE:EQ[2,CF16];
+TEB=TEX(AFX(CF16));
+
+TI=TIX;
+TI:EQ[2,CF16];
+TIB=TIX(AFX(CF16)); 
+
+!CU:EQ; 
+CU:AS; 
+
+MU = 1./(CAR2X + 0.0001);
+CC = CNHR; !CNSA;
+CD = CUBM+CUECR; !CD source from NBI + PECRH 
+
+!------------------------------------------
+! NCLASS 
+
+!NEOCL4>::::;
+
+!----------------
+! Profile output
+!----------------
+
+! NetCDF output
+a2cdf>:.050:::;
+
+! Page 1
+
+
+Te\TE\\TEX\-3;	Ne\NE\\NEX;	chie\HE\10;	Ware\-VP*VRAS\5;
+Pnbe\PEBM\-6; 	Zef\ZEF;	snNB\SNEBM\50;	Prad\PRAD;
+
+TI\TI\\TIX\-3;	vtor\VTOR;	Chii\XI\10;	CN\CN\5;
+Pnbi\PIBM\-6; 	exch\CAR42;	sneu\SNNEU*NE\50;	Pecr\PEECR;
+
+q\1./MU\\CAR2X;	QE\QE\5;	QI\QI\5;	eccd\CUECR\-4;
+\;		jbs\CUBS;		cc\CC;		cu\CC;
+shea\SHEAR;	QETO\QETOT\5;	QITO\QITOT\5;	nbcd\CUBM\-4;
+
+!-------------
+! Time traces
+!-------------
+
+PNBi_VINT(PIBMB); PNBe_VINT(PEBMB); Pech_VINT(PEECRB); Prad_VINT(PRADB); 
+eccd_IINT(CUECRB); nbcd_IINT(CAR11B);

@@ -1,0 +1,4 @@
+!   VCA [m/s]    Crossover velocity for alpha-particles
+!   V_cr, alpha = (3*sqrt(pi)*Me/(4*M_al)*Z1)**(1/3), 
+!   Z1 = 5/3 for n_D=n_T plasmas
+VCA=1.258d6*sqrt(TE(J))

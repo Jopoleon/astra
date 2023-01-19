@@ -1,0 +1,8 @@
+! TH99[s]      TauEth(99) (y, 2) (for Elmy H-mode for ITER) (eq. I.3.3.1-1)
+!      "Study of RTO/RC ITER Options", Chapt. I Sec.3.3 Page.2
+!                        Polevoy (11-OCT-99)
+!        TAU     =THQ99/Q**.69
+
+yne_lin_av = LININT(NE, ROC)/(2.*ABC)
+THQ99 = 0.0562*IPL**0.93*(RTOR*BTOR)**0.15 * AMAIN(1)**0.19 * ABC**0.58 * &
+    ELONG**0.78 * yne_lin_av**0.41 * (RTOR+SHIFT)**1.24

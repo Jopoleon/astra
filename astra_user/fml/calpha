@@ -1,0 +1,6 @@
+! CALPHA [norm to DALPHA]: Anomalous Convection of ALPHA particles
+! usage VF_j = DHE*DALPHA*CALPHA
+!la   25.07.08
+CALPHA = (105.9/TE(J))**1.5
+CALPHA = 1.5/(log(CALPHA+1.)*(1.+1./CALPHA))-1.5
+CALPHA = -2*CALPHA*(TE(J+1) - TE(J))/HRO/(TE(J+1) + TE(J))

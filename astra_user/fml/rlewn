@@ -1,0 +1,21 @@
+! RLewn []: R/L_Te_crit for TEM  (Weiland Nordman model)
+!   (email Weiland 20.02.01)  (Ryter 5-06-03)
+
+include 'fml/lne'
+include 'fml/tpf'
+!       reduce effect of RLn 
+YRLN = RTOR/LNE*0.
+
+!        YRLN = 0.
+! YSHif = 0.5*(SHIF(j+1)+SHIF(j))
+YA = 0.5*(AMETR(j+1)+AMETR(j))
+! YR0 = RTOR+YSHIF
+! frac = sqrt(YA/YR0/(1.+ YA/YR0))
+! frac = sqrt(2.*YA/YR0/(1.+ YA/YR0))
+
+  frac= tpf
+  gm   = frac/(1.-frac)
+
+  RLewn= 20./(9.*gm)+0.5*GM+2./3.*YRLN+gm*YRLN*(0.25/2*YRLN-.5)
+!        RLewn = RLewn + CF15*EXP(-((YA -Cf13)/CF14)**2)
+!        RLewn = RLewn - 4.*EXP(-((YA -(cf3-0.007)*0.5)/0.03)**2)

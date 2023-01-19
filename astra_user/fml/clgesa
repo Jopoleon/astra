@@ -1,0 +1,7 @@
+! CLGESA []:  Coulomb logarithm for electron collisions
+!     Coulge = 31.3 - ln(ne[m^-3]^0.5/Te[eV])
+!                Sauter, Angioni, Lin-Liu
+!   Physics of Plasmas, 6, 2834 (1999)
+!   (Teplukhina 08-JAN-2015)
+
+  CLGESA = 16.33 - .5*LOG(NE(J))+LOG(TE(J))

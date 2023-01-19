@@ -1,0 +1,14 @@
+!  CXFI  [d/l]     CXFI = chi_phi/chi_Ti Ratio of the anomalous 
+! toroidal momentum dif fusivity to the ion heat diffusivity
+!   (C.Angioni private communication)
+!   Pereverzev 29-05-2008
+!  Usage:  D_phi=CXFI*XI
+include 'fml/lti'
+include 'fml/lte'
+include 'fml/bete'
+YRTI = (RTOR+SHIF(j))/LTI
+YRTE = (RTOR+SHIF(j))/LTE
+YTEI = TE(j)/TI(j)
+YSH  = min(1.5d0, SHEAR(j))
+CXFI = 0.81+0.85*SQEPS(j)-0.26*MU(j)**2-43*min(6.d-3, BETE)       +(0.85-0.46*YSH)*YSH       +(0.076*YTEI-0.29)*YTEI       +(0.0012*YRTE+0.0044)*YRTE-0.044*YRTI
+CXFI = max(CXFI, 1.d-1)

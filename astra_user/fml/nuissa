@@ -1,0 +1,9 @@
+! NUISSA []:  Relative frequency of ion collisions
+!   Nui* = 4.9e-18*q*R*ni[m^-3]*Z**4*Coulgi/Ti[eV]**2/eps**1.5
+!  Sauter, Angioni, Lin-Liu
+!  Physics of Plasmas, 6, 2834 (1999)
+!  (Teplukhina 08-JAN-2015)
+
+include 'fml/clgisa'
+NUISSA = 4.9e-5*RTOR*NI(J)*(ZEF(J)**4)*CLGISA   /ABS(MU(J)*(TI(J)**2)*(SQEPS(J)**3))
+

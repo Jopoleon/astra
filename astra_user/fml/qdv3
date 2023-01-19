@@ -1,0 +1,3 @@
+! QDV3 [F3/s]: Integral {0, R} (SDV3) dV
+!   (Pereverzev 9-OCT-07)
+QDV3 = HRO*SUM(SDV3(1:J)*VR(1:J))

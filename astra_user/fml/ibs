@@ -1,0 +1,4 @@
+! IBS [MA] - Bootstrep current inside suface Ro
+!   (Yushmanov 11-FEB-91)
+if (J .eq. 1) IBS=0.
+IBS=IBS+CUBS(J)*VR(J)/IPOL(J)**2*HRO*IPOL(NA)/(GP2*RTOR)

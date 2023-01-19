@@ -1,0 +1,4 @@
+! WE [MJ]: 0.0016 * Integral {0, R} (3/2*Ne*Te) dV
+!   (Yushmanov 11-JAN-89)
+if (J .eq. 1) WE=0.
+WE=WE+NE(J)*TE(J)*VR(J)*HRO*.0024

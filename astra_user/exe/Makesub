@@ -1,0 +1,59 @@
+SRC_DIR = $(AWD)/$(sub)
+OBJ_DIR = $(AWD)/obj/$(sub)
+INC_DIR = $(AWD)/inc
+MOD_DIR = $(AWD)/mod/for
+LIB_DIR = $(AWD)/lib
+LIB = $(LIB_DIR)/lib$(sub).a
+
+AFC = ifort -r8 -no-prec-div -ip
+AFC_FLAGS = -O0 -w -qopenmp
+ACC = cc
+
+SRCF90 := $(wildcard $(SRC_DIR)/*.f90)
+SRCF   := $(wildcard $(SRC_DIR)/*.f)
+SRCC   := $(wildcard $(SRC_DIR)/*.c)
+
+OBJF90 := $(patsubst $(SRC_DIR)%.f90, $(OBJ_DIR)%.o, $(SRCF90))
+OBJF   := $(patsubst $(SRC_DIR)%.f, $(OBJ_DIR)%.o, $(SRCF)  )
+OBJC   := $(patsubst $(SRC_DIR)%.c, $(OBJ_DIR)%.o, $(SRCC)  )
+
+# Make Commands
+.PHONY: all
+all: directories $(LIB)
+
+.PHONY: directories
+directories:
+	@mkdir -p $(OBJ_DIR)
+	@mkdir -p $(LIB_DIR)
+
+.PHONY: clean
+clean:
+	rm -rf $(OBJ_DIR)
+	rm $(LIB)
+
+$(OBJ_DIR)%.o: $(SRC_DIR)%.f
+	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -c $< -o $@
+
+$(OBJ_DIR)/tglf_serial.o: $(SRC_DIR)/tglf_serial.f90
+	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -I$(TGLF_INC) -c $< -o $@
+
+$(OBJ_DIR)/qlknn_serial.o: $(SRC_DIR)/qlknn_serial.f90
+	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -I$(QLKNN_INC) -c $< -o $@
+
+$(OBJ_DIR)/netcdf.o: $(SRC_DIR)/netcdf.f90
+	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -I$(NCDF_INC) -c $< -o $@
+
+$(OBJ_DIR)/rabbit.o: $(SRC_DIR)/rabbit.f90
+	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -I$(RABBIT_INC) -c $< -o $@
+
+$(OBJ_DIR)%.o: $(SRC_DIR)%.f90
+	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -c $< -o $@
+
+$(OBJ_DIR)%.o: $(SRC_DIR)%.c
+	$(ACC) -I$(INC_DIR) -c $< -o $@
+
+$(LIB): $(OBJF90) $(OBJF) $(OBJC)
+	ar rv $(LIB) $(OBJF90) >/dev/null
+	ar rv $(LIB) $(OBJF) >/dev/null
+	ar rv $(LIB) $(OBJC) >/dev/null
+	ranlib $(LIB)

@@ -1,0 +1,100 @@
+#!/bin/bash -f
+
+# IPP toki 05.06.2020
+
+export PKG=/work/imas/opt/EasyBuild/software
+export MKL_LIBDIR=${PKG}/imkl/2020.4.304-iimpi-2020b/mkl/lib/intel64
+export NAGLIB=${PKG}/NAG/26-intel-2020b/lib
+ADDLIB=${PKG}/NAG/26-intel-2020b/rtl/intel64
+COMP_HOME=${PKG}/iccifort/2020.4.304/compilers_and_libraries_2020.4.304/linux
+export COMP_LIB=${COMP_HOME}/compiler/lib/intel64
+export I_MPI_ROOT=${PKG}/impi/2019.9.304-iccifort-2020.4.304
+export IFORT_BIN=${COMP_HOME}/bin/intel64
+export MPIFORT_BIN=${I_MPI_ROOT}/intel64/bin
+export INTEL_LICENSE_FILE=27010@io-ws-ls1
+
+export AFC=ifort
+export AFC_FLAGS="-O0 -w"
+export ACC="cc -O"
+
+export ASTRA_EXT=/home/ITER/tarding/ASTRA_LIBRARIES_EXT
+export ACORE_HOME=/home/ITER/tarding/astra81_server
+
+# MPI
+
+export MPI_INC="-I${I_MPI_ROOT}/intel64/include"
+export MPI_LIB="-L${I_MPI_ROOT}/intel64/lib/release -lmpi -L${I_MPI_ROOT}/intel64/lib -lmpifort"
+
+# NetCDF
+
+export HDF5_HOME=${PKG}/HDF5/1.10.7-iimpi-2020b
+export HDF5_LIB="-L${HDF5_HOME}/lib64 -lhdf5 -lhdf5_hl"
+export NCDF_HOME=/home/ITER/weilanm/fortran/netcdf-4.1.3/intel/19.0.3
+export NCDF_INC=${NCDF_HOME}/fortran
+export NCDF_LIB="${HDF5_LIB} -L${NCDF_HOME}/fortran/.libs -lnetcdff"
+
+# TORBEAM
+
+IRC_LIB="-L${COMP_LIB} -lirc" # necessary for libtorbeam.so
+export TORB_HOME="${ASTRA_EXT}/torbeam/dec20"  # needed at runtime too
+export TORB_LIB="-L${TORB_HOME}/lib -ltorbeamB ${IRC_LIB}"
+
+# RABBIT
+
+export RABBIT_HOME="${ASTRA_EXT}/rabbit/jul22"
+RABBIT_LIBDIR=${RABBIT_HOME}/lib
+export RABBIT_LIB="-L${RABBIT_LIBDIR} -lRabbitMore -Wl,-rpath,${RABBIT_LIBDIR}"
+export RABBIT_INC=${RABBIT_HOME}/inc
+
+# SPIDER
+
+export SPIDER_HOME=${ASTRA_EXT}/spider/feb21
+export SPIDER_LIB="-L${SPIDER_HOME}/lib -lspider"
+
+# Old NBI
+
+export NBI_HOME="${ASTRA_EXT}/nbi/dec21"
+export NBI_LIB="-L${NBI_HOME}/nbi -lnbi"
+export NBI_INC=${NBI_HOME}/inc
+
+# EQUIL
+
+export EQUIL_LIB="-L${ACORE_HOME}/lib -lequil"
+
+# ASTRA_CORE
+
+export ACORE_LIB="-L${ACORE_HOME}/lib -lfor"
+export ACORE_INC=${ACORE_HOME}/inc
+
+# QuaLiKiZ
+
+export QLK_HOME=${ASTRA_EXT}/qualikiz/apr21
+export QLK_INC=${QLK_HOME}/inc
+export QLK_LIB=${QLK_HOME}/lib/libQLK-intel-release-default-mpi.a
+
+export QLKNN_HOME=${ASTRA_EXT}/qlk_nn/apr21
+export QLKNN_INC=${QLKNN_HOME}/inc
+export QLKNN_LIB=${QLKNN_HOME}/lib/libQLKNN-intel-release-default.a
+
+# TGLF
+
+export TGLF_HOME=${ASTRA_EXT}/tglf/oct22
+export TGLF_INC=${TGLF_HOME}/inc
+export TGLF_LIB=${TGLF_HOME}/lib/libtglf.a
+
+# NEO
+
+export NEO_HOME=${ASTRA_EXT}/neo/apr21
+export NEO_INC=${NEO_HOME}/inc
+export NEO_LIB="${NEO_HOME}/lib/neo_lib.a ${NEO_HOME}/lib/nclass_lib.a ${NEO_HOME}/lib/UMFPACK_lib.a ${NEO_HOME}/lib/math_lib.a ${NEO_HOME}/lib/expro_lib.a ${NEO_HOME}/lib/geo_lib.a"
+
+# NAGs
+
+export NAGFLIB=${NAGLIB}/libnag_nag.a
+export NAGF90MKL=${NAGLIB}/libnag_mkl.a
+
+# XLBR
+
+export XLBR="-L/usr/lib64 -lX11 -Wl,--start-group ${COMP_LIB}/libintlc.so.5 ${MKL_LIBDIR}/libmkl_intel_lp64.a ${MKL_LIBDIR}/libmkl_core.a ${MKL_LIBDIR}/libmkl_sequential.a ${MKL_LIBDIR}/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group"
+
+export AS_LD_LIBRARY_PATH="${HDF5_HOME}/lib64:${NCDF_HOME}/liblib/.libs:${NCDF_HOME}/fortran/.libs:${ADDLIB}:${NAGLIB}:${COMP_LIB}:${TORB_HOME}/lib:${RABBIT_HOME}/lib:${I_MPI_ROOT}/intel64/lib:${I_MPI_ROOT}/intel64/lib/release:${PKG}/Szip/2.1.1-GCCcore-10.2.0/lib:${PKG}/PMIx/3.1.5-GCCcore-10.2.0/lib"

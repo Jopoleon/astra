@@ -1,0 +1,4 @@
+! XMHD2 [m#2/s]: Heat conductivity anomalous due to sawtooth oscillations (q<1)
+!   (G.Pereverzev 20-MAR-92)
+if (J .eq. NA1) call MIX1('XI')
+XMHD2 =0.

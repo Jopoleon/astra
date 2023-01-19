@@ -1,0 +1,28 @@
+cv   main ion brems       SXR     spectral brems      thermal CX       nbicx
+             1             0            0                 0   0
+
+cv  diagnostic lines
+             0      
+
+cc begin atomicData
+acd:acd85_ar.dat           recombination
+scd:scd85_ar.dat           ionisation
+prb:prb00_ar.dat           continuum radiation 
+plt:plt97_ar.dat           line radiation
+cc end atomic Data        
+
+********************Diagnostic Lines******************** 
+
+cd     excitation     recombination   charge exchange
+          1                0               0
+
+cd   # of lines
+	  1
+
+cd   charge of ion      wavelength(A)     half width of window(A)       file extension
+	 6                585.8                      0.1                 'alb'
+         7                700.3                      0.1                 'bdx'
+        14                221.3                      0.1                 'jlt'
+	15		  353.9                      0.1		 'zsf'
+	16                  4.0                      0.2                 'fpk'
+

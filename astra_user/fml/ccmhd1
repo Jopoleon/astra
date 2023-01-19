@@ -1,0 +1,7 @@
+! CCMHD1  [1/mkOhm*m] or [MA/V*m]: Conductivity anomalous due to
+!  sawtooth oscillations (q<1) (G.Pereverzev 31-01-06)
+! CC=Const inside q<1, CC is unchanged elsewhere
+! Conductivity is artif icially enhanced in order to keep q above 1
+!   Usage example: CC=CNHR+CCMHD1
+if (j .eq. NA1) call MIX1('CC', 9.2d-1)
+CCMHD1 =0.

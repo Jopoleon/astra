@@ -1,0 +1,7 @@
+!Fast alpha density [10^19 m^-3]
+!5.632 in PDT is: 3.52 * 1.602 * 10^[3 keV (alpha) - 22 (keV -> MJ) + 19 (10^19 m^-3 -> m^-3)
+!Here: no factors, as SVDT [10^19 m^3 /s]
+!G. Tardini 9/02/06
+INCLUDE 'fml/svdt'
+INCLUDE 'fml/ts_alf'
+NALPH = NDEUT(j)*NTRIT(j)*SVDT*ts_alf

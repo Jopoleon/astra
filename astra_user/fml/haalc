@@ -1,0 +1,5 @@
+! HAALC  [m#2/s]: Heat conductivity Anomalous ALCator
+! HE=5*10#17/Ne
+!   NUCL. FUS 16 (1976) 1045
+!   (Yushmanov 8-APR-87)
+HAALC=5./NE(J)

@@ -1,0 +1,12 @@
+! PDT [MW/m#3]   D-T Fusion power
+! S.V.Putvinskij//VANT, v.2, 1988, p.3
+! Corrected by S.V.Putvinskij 22.11.89
+!    Polevoy  22.11.89
+INCLUDE 'fml/svdt'
+PDT = 5.632*NDEUT(J)*NTRIT(J)*SVDT
+
+!note that the 5.632 that is 3.52 * e_charge*1e-19 is due to 3.52 being 0.2 times 17.6 MeV. 17.6 MeV is energy released per fusion reaction, of which 20% is released in form of alphas.
+
+
+
+

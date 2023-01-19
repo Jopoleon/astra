@@ -1,0 +1,15 @@
+&astra_log
+
+AWD      = "/compass/home/tardini/a8_apr21/"
+AEXT     = "/compass/home/tardini/astra_ext"
+exp_file = "aug34954"
+equ_file = "fluxes"
+rev_file = profiles.dat
+tbeg_nml =   0.0000
+tend_nml =   1.0000
+TASK     = "RUN"
+machine  = "aug"
+debug    = 0
+resize   =   1.0000
+
+/

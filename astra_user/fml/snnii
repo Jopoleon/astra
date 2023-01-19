@@ -1,0 +1,6 @@
+! SNNII [1/m#3/s]:   S=<sigma*v>*Nn*Ni
+! particle Source due to Neutral Ionization by Ion impact
+! SN=...+SNNII
+!   (Pereverzev 14-MAY-87)
+INCLUDE 'fml/svii'
+SNNII =SVII*(NNCL+NNWM)*NN(J)*NI(J)

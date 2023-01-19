@@ -1,0 +1,77 @@
+cv   main ion brems       SXR     spectral brems      thermal CX    nbicx
+             1             0            0                 0           0
+
+cv  diagnostic lines
+             0       	
+
+cc begin atomicData-Files
+acd:acd96_he.dat           recombination
+scd:scd96_he.dat           ionisation
+prb:prb96_he.dat           continuum radiation
+plt:plt96_he.dat           line radiation
+cc end atomic Data-Files
+
+********************Diagnostic Lines******************** 
+
+cd     excitation     recombination   charge exchange
+          1                1               0
+
+         -17
+cd   # of lines               
+         -1
+
+cd   charge of ion        ISEL          wavelength(A)       file extension         
+              0               7             3188.700            'pju'
+              0               6             3889.700            'pju'
+              0               5             3965.700            'pju'
+              0              11             4472.900            'pju'
+              0              10             4714.800            'pju'
+              0              15             4923.200            'pju'
+              0               4             5017.100            'pju'
+              0              14             5049.000            'pju'
+              0               9             5877.500            'pju'
+              0              13             6680.000            'pju'
+              0               8             7067.600            'pju'
+              0              12             7283.300            'pju'
+              1               7             1084.800            'pju'
+              1               6             1215.000            'pju'
+              1               5             1640.300            'pju'
+              1               9             3203.700            'pju'
+              1               8             4686.500            'pju'
+
+
+cd   # of lines
+         -18
+
+
+
+cd   charge of ion        ISEL          wavelength(A)       file extension
+              0               1              529.639            'cls'
+              0               2              584.354            'cls'
+              0               3             3188.674            'cls'
+              0               4             3927.712            'cls'
+              0               5             4472.872            'cls'
+              0               6             4714.757            'cls'
+              0               7             4996.410            'cls'
+              0               8             5877.513            'cls'
+              0               9             6680.027            'cls'
+              0              10             7175.479            'cls'
+              1               1              240.157            'cls'
+              1               2              256.294            'cls'
+              1               3              303.756            'cls'
+              1               4             1084.842            'cls'
+              1               5             1215.024            'cls'
+              1               6             1640.283            'cls'
+              1               7             3203.670            'cls'
+              1               8             4686.519            'cls'
+
+cd   charge of ion      wavelength(A)     half width of window(A)       file extension
+          0                 584.4                      3.                  'kvu'
+          0                 537.0                      3.                  'kvu'
+          1                 303.8                      3.                  'cpu'
+	  1                 256.3                      3.                  'cpu'
+	  1                 243.0                      3.                  'cpu'
+	  1                 237.3                      3.                  'cpu'
+	  1                1084.9                      3.                  'cpu'
+	  1                1215.1                      3.                  'cpu'
+	  1                4686.9                      3.                  'cpu'

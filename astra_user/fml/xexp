@@ -1,0 +1,4 @@
+! XEXP [m#2/s]: Experimental ion heat conductivity
+!   (G.Pereverzev 11-SEP-90)
+YR=(J-.5)*HRO
+if (J .lt. NA)  XEXP =-625.*QITOTR(YR)/(G11(J)*NI(J)*GRAD(TIX, J))

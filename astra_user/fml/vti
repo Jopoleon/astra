@@ -1,0 +1,3 @@
+!   VTI    [m/s]   Vti=SQRT(2*Ti/(Mp*AMAIN))
+!   DNESTROVSKY 14-DEC-88
+VTI=4.37E5*SQRT(TI(J)/AMAIN(J))

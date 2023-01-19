@@ -1,0 +1,5 @@
+! RLNE []: R/L_ne 
+! RLNE=R*|dlog(n_e)/drho|
+!   (Pereverzev 25-08-08)
+
+RLNE = 2.*(RTOR + SHIFT)*abs(NE(j+1) - NE(j))/HRO/(NE(j+1) + NE(j))

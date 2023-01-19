@@ -1,0 +1,3 @@
+! QEX [MW]: Integral {0, R} ( PEX ) dV
+!   (Yushmanov 11-JAN-89)
+QEX = HRO*SUM(PEX(1:J)*VR(1:J))

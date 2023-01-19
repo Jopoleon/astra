@@ -1,0 +1,13 @@
+! PEICL2 [MW/m#3]: Electron ion heat exchange due to Coulomb collisions
+!   PEICL2=3/tauei*Ne*(Te-Ti)*m/M
+!   here tauei[sec]=1.1E-3*T_{e,keV}^{3/2}/[Z_i^2*n_{i,19}*\Lambda]
+! Usage:
+!    PE=...-PEICL2
+!    PI=...+PEICL2
+!      (Pereverzev 22-APR-87)
+!      (Corrected  26-MAR-97)
+!       (Corrected, E. Fable  Nov 2011)
+include	'fml/coulg'
+PEICL2 = 0.00246*COULG*NE(J)*(TE(J) - TI(J))/(TE(J)*SQRT(TE(J)))
+include	'fml/suzpei'
+PEICL2 = PEICL2*SUZPEI

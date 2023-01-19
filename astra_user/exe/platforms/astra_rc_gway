@@ -1,0 +1,80 @@
+#!/bin/bash -f
+
+# eufus gateway 21.10.2021
+
+PKG=/cineca/prod/opt
+INTEL=${PKG}/compilers/intel/pe-xe-2018/binary
+NAG=${PKG}/libraries/nag/mark27/binary/nll6i27dbl
+export MKL_LIBDIR=${INTEL}/mkl/lib/intel64_lin
+export NAGLIB=${NAG}/ilp64/lib
+export COMP_LIB=${INTEL}/lib/intel64
+export I_MPI_ROOT=${INTEL}/impi/2018.4.274
+export IFORT_BIN=${INTEL}/bin
+export MPIFORT_BIN=${INTEL}/impi/2018.4.274/bin64
+export INTEL_LICENSE_FILE=${INTEL}/server.lic
+
+export NAG_KUSARI_FILE=${NAG}/license/license.lic
+
+export AFC=ifort
+export AFC_FLAGS="-O0 -w"
+export ACC="cc -O"
+
+export ASTRA_EXT=/afs/eufus.eu/user/g/g2gtardi/ASTRA_LIBRARIES_EXT
+
+# MPI
+export MPI_INC="-I${I_MPI_ROOT}/include64"
+export MPI_LIB="-L${I_MPI_ROOT}/lib64 -lmpigf -lmpi"
+
+# NetCDF
+
+export NCDF_HOME=${PKG}/libraries/netcdf/4.6.3/gnu--6.1.0
+export NCDFF_HOME=${PKG}/libraries/netcdff/4.4.5/gnu--6.1.0
+export NCDF_LIB="-L${NCDF_HOME}/lib -lnetcdf -L${NCDFF_HOME}/lib -lnetcdff"
+export NCDF_INC=${NCDFF_HOME}/include
+
+# TORBEAM
+
+IRC_LIB="-L${COMP_LIB} -lirc" # necessary for libtorbeam.so
+export TORB_HOME="${ASTRA_EXT}/torbeam/aug21_ifort"  # needed at runtime too
+export TORB_LIB="-L${TORB_HOME}/lib -ltorbeamB ${IRC_LIB}"
+
+# RABBIT
+
+export RABBIT_HOME="${ASTRA_EXT}/rabbit/jul22"
+RABBIT_LIBDIR=${RABBIT_HOME}/lib
+export RABBIT_LIB="-L${RABBIT_LIBDIR} -lRabbitMore -Wl,-rpath,${RABBIT_LIBDIR}"
+export RABBIT_INC=${RABBIT_HOME}/inc
+
+# QuaLiKiZ
+
+export QLK_HOME=${ASTRA_EXT}/qualikiz/apr21
+export QLK_INC=${QLK_HOME}/inc
+export QLK_LIB=${QLK_HOME}/lib/libQLK-intel-release-default-mpi.a
+
+export QLKNN_HOME=${ASTRA_EXT}/qlk_nn/apr21
+export QLKNN_INC=${QLKNN_HOME}/inc/serial
+export QLKNN_LIB=${QLKNN_HOME}/lib/libQLKNN-intel-release-default.a
+
+# TGLF
+
+export TGLF_HOME=${ASTRA_EXT}/tglf/oct22
+export TGLF_INC=${TGLF_HOME}/inc
+export TGLF_LIB=${TGLF_HOME}/lib/libtglf.a
+
+# NEO
+
+export NEO_HOME=${ASTRA_EXT}/neo/apr21
+export NEO_INC=${NEO_HOME}/inc
+export NEO_LIB="${NEO_HOME}/lib/neo_lib.a ${NEO_HOME}/lib/nclass_lib.a ${NEO_HOME}/lib/UMFPACK_lib.a ${NEO_HOME}/lib/math_lib.a ${NEO_HOME}/lib/expro_lib.a ${NEO_HOME}/lib/geo_lib.a"
+
+# NAGs
+
+export NAGFLIB=${NAGLIB}/libnag_nag.a
+export NAGF90MKL=${NAGLIB}/libnag_mkl.a
+
+# XLBR
+
+export XLBR="-L/usr/lib64 -lX11 -Wl,--start-group ${COMP_LIB}/libintlc.so.5 ${MKL_LIBDIR}/libmkl_intel_lp64.a ${MKL_LIBDIR}/libmkl_core.a ${MKL_LIBDIR}/libmkl_sequential.a ${MKL_LIBDIR}/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group"
+
+export AS_LD_LIBRARY_PATH="${NCDF_HOME}/lib:${NCDFF_HOME}/lib:${NAGLIB}:${COMP_LIB}:${TORB_HOME}/lib:${RABBIT_HOME}/lib"
+

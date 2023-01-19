@@ -1,0 +1,20 @@
+! CNSA [1/mkOM*m]: Neoclassical Conductivity Sauter, Angioni, Lin-Liu
+!    sigma_neo = sigma_spitzer*
+!                (1-(1+0.36/Z)*fteff+0.59/Z*fteff^2-0.23/Z*fteff^3
+!    fteff = ft/(1+(0.55-0.1*ft)*sqrt(nuestar)+0.45*(1-ft)*nuestar/Z^1.5)
+!    Sauter, Angioni, Lin-Liu Physics of Plasmas, 6, 2834 (1999)
+!    (Angioni 28-MAY-2002)
+!    NUES was replaced by NUESSA
+!    CCSP was replaced by CCSPSA
+!    (Teplukhina 08-JAN-2015) 
+ZZ=ZEF(J)
+ZFT=FTLLMR(RHO(J))
+INCLUDE 'fml/nuessa'
+ZDF = 1.+(0.55-0.1*ZFT)*SQRT(NUESSA)
+ZDF = ZDF + 0.45*(1.-ZFT)*NUESSA/ZZ/SQRT(ZZ)
+ZFT = ZFT/ZDF
+CNSA=1.-(1.+0.36/ZZ)*ZFT
+CNSA=CNSA+0.59/ZZ*ZFT*ZFT-0.23/ZZ*ZFT*ZFT*ZFT
+include 'fml/ccspsa'
+CNSA=CCSPSA*CNSA
+

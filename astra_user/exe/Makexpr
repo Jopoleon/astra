@@ -1,0 +1,60 @@
+XPR = $(AWD)/xpr
+INC_DIR = $(AWD)/inc
+MOD_DIR = $(AWD)/mod/for
+LIB_DIR = $(AWD)/lib
+LIBIPC = $(LIB_DIR)/libipc.a
+AENV = $(AWD)/exe/astra_rc
+
+# TGLF
+AFC = ifort -r8 -no-prec-div -ip
+AFL = ifort
+ACC = cc
+MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
+#-----
+
+# Qualikiz
+MPIFC = mpiifort -qopenmp -r8 -no-prec-div -ip -g
+MPIFL = mpiifort -qopenmp
+NAG_LIB = $(NAGFLIB) $(NAGF90MKL)
+#-----
+
+.PHONY: all
+all: directories $(XPR)/tglfi $(XPR)/qlki $(XPR)/neo
+
+.PHONY: directories
+directories:
+	@mkdir -p $(LIB_DIR)
+	@mkdir -p $(AWD)/tglf
+	@mkdir -p $(AWD)/qualikiz
+
+.PHONY: clean
+clean:
+	rm -f $(XPR)/*.o
+	rm -f $(XPR)/tglfi
+	rm -f $(XPR)/qlki
+	rm -f $(XPR)/neo
+
+
+$(XPR)/tglfi:	$(XPR)/tglf_interf.f90 $(XPR)/qinterp.f90 $(XPR)/tglf_interf.o $(LIBIPC) $(AENV)
+		$(AFL) -o $@ $(XPR)/tglf_interf.f90 $(XPR)/qinterp.f90 $(XPR)/tglf_interf.o $(LIBIPC)	\
+		-I$(TGLF_INC) $(TGLF_LIB) $(MKL_LIB) -lpthread -lm
+
+$(XPR)/neo:	$(XPR)/neo_interf.f90 $(XPR)/qinterp.f90 $(XPR)/neo_interf.o $(LIBIPC) $(AENV)
+		$(MPIFC) -o $@ $(XPR)/neo_interf.f90 $(XPR)/qinterp.f90 $(XPR)/neo_interf.o $(LIBIPC)	\
+		-I$(NEO_INC) $(MPI_INC) $(NEO_LIB) $(MKL_LIB) $(MPI_LIB) -lpthread -lm
+
+$(XPR)/qlki:	$(XPR)/qlk_interf.f90 $(XPR)/qinterp.f90 $(XPR)/qlk_interf.o $(LIBIPC) $(AENV)
+		$(MPIFC) -o $@ $(XPR)/qlk_interf.f90 $(XPR)/qinterp.f90 $(XPR)/qlk_interf.o $(LIBIPC)	\
+		-I$(QLK_INC) $(MPI_INC) $(QLK_LIB) $(NAG_LIB) $(MPI_LIB)
+
+$(XPR)/neo_interf.o:    $(XPR)/tra_interf.c
+		$(ACC) -I$(INC_DIR) -o $@ -c $< -Dneo
+
+$(XPR)/tglf_interf.o:   $(XPR)/tra_interf.c
+		$(ACC) -I$(INC_DIR) -o $@ -c $< -Dtglf
+
+$(XPR)/qlk_interf.o:    $(XPR)/tra_interf.c
+		$(ACC) -I$(INC_DIR) -o $@ -c $< -Dqlk
+
+$(LIBIPC): $(AWD)/ipc/*
+	make -f $(AWD)/exe/Makesub sub=ipc

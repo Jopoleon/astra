@@ -1,0 +1,6 @@
+! SNNR [1/m#3/s]:   S=-<sigma*v>*Ne*Ne
+! Particle Sink due to recombination
+!  (Pereverzev 14-MAY-87)
+! SNN=-SNNR
+INCLUDE 'fml/svrec'
+SNNR =-SVREC*NE(J)

@@ -1,0 +1,5 @@
+! HAPYU [m#2/s]: Heat conductivity Anomalous Parail-YUshmanov
+! HE=C#2/OMpe#2*VTe*eps/q*R
+!   Pis'ma v JETF 30 (1985) 276
+!   (Yushmanov 8-APR-87)
+HAPYU=70.*SQRT(TE(J))*MU(J)/(NE(J)*RTOR)*SQEPS(J)*SQEPS(J)

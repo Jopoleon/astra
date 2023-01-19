@@ -9,6 +9,3 @@ Supported platforms:
   gateway
   iter-sdcc
   GA-iris
-
-Server installation: execute
-  ./install.sh

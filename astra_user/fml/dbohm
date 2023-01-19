@@ -1,0 +1,4 @@
+! DBOHM [m#2/s]: Anomalous Dif fusion Bohm
+! DBOHM=c*Te/(e*B*16)
+!   (Pereverzev 15-12-98)
+DBOHM=62.5*TE(J)/BTOR

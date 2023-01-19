@@ -1,0 +1,5 @@
+! DALPHA [norm to D_HE]: Anomalous Dif fusion of ALPHA particles
+! usage DF_j = DHE*DALPHA
+!la   25.07.08
+DALPHA=TE(J)/3500
+DALPHA=0.02+4.5*DALPHA+8*DALPHA**2+350*DALPHA**3

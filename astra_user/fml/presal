@@ -1,0 +1,4 @@
+! Alpha pressure [MJ/m^3]: alpha power density x slowing down time
+INCLUDE 'fml/pdt'
+INCLUDE 'fml/ts_alf'
+PRESAL = PDT*ts_alf

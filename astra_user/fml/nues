@@ -1,0 +1,6 @@
+! NUES []: Relative frequency of electron collisions
+! NU*=Nuei*q*Rt/eps#1.5/Vte
+! Electron-ion collision frequency NUEI=NUEE*1.4*ZEF is used
+!   (Yushmanov 30-APR-87)
+include 'fml/nuee'
+NUES=NUEE*1.4*ZEF(J)*RTOR  /ABS(MU(J)*(SQEPS(J)**3)*SQRT(TE(J))*1.875E7)

@@ -1,0 +1,17 @@
+! PRCAR [MW*m#3] Carbon radiation power
+!       POST D.E. JENSEN R.V. e.a., Atomic Data and Nuclear Tables, 
+!        Vol.20 (1977) 397.
+! (PPPL-1352 1977)
+!    (Yushmanov 27-12-89)
+! Corrected by Pereverzev 29-07-96
+! Usage:  PE=...-PRCAR*NE*NIZ1
+  T=TE(J)*1000.
+  Z=      LOG10(TE(J))
+  if (T .le. 13.)                    Y=-14.4*(Z+2.2)**2
+  if (T .le. 25. .and. T .gt. 13.)       Y=-1.3-3.67*(Z+1.9)
+  if (T .le. 63. .and. T .gt. 25.)       Y=-2.8+10.*(Z+1.4)**2
+  if (T .le. 159. .and. T .gt. 63.)      Y=-2.12-7.2*(Z+1.)**2
+  if (T .le. 500. .and. T .gt. 159.)     Y=-2.4-1.2*(Z+.8)
+  if (T .le. 4.E3 .and. T .gt. 500.)     Y=-3.3+.957*(Z-.26)**2
+  if (T .gt. 4.E3)                   Y=-3.2+0.357*(Z-0.6)
+  PRCAR =10.**(Y+1.)

@@ -1,0 +1,13 @@
+! FTLLM [%]: 
+! Effective trapped particle fraction Lin-Liu and Miller GA-A21820
+!                                                        (Oct 94)
+! Y.R.Lin-Liu and R.L.Miller,  Phys.Plasmas 2(5),  May 1995,  pp.1666-1668
+
+if (ABS(BMAXT(J)) < 0.0001 .or. ABS(BDB0(J)) < 0.0001) THEN
+   FTLLM = 0.1
+else
+   YH = min(.999999d0, BDB0(J)/BMAXT(J)*BTOR)
+   YFTUP = 1.-BDB02(J)/BDB0(J)**2 * (1.-SQRT(1.-YH)*(1.+.5*YH))
+   YFTLO = 1. - BDB02(J)*FOFB(J)
+   FTLLM = .75*YFTUP + .25*YFTLO
+endif 

@@ -1,0 +1,22 @@
+! QEICL [MW]:  Integral {0, R} ( PEICL ) dV
+!   (Yushmanov 11-JAN-89)
+double precision FUNCTION QEICLR(YR)
+
+use const_inc, only: HRO
+use status_inc, only: VR, TE, TI, NE, NI, AMAIN, ZMAIN
+
+implicit none
+
+double precision, intent(in) :: YR
+integer :: J, JK
+double precision PEICL, COULG, YDR
+
+call yrjkdr(YR, JK, YDR)
+QEICLR = 0.
+DO J=1, JK
+   include  'fml/peicl'
+   QEICLR = QEICLR + PEICL*VR(J)
+enddo
+QEICLR = HRO*(QEICLR - PEICL*YDR)
+
+end function QEICLR

@@ -1,0 +1,4 @@
+! HARPL [m#2/s]: Heat conductivity Anomalous Rippling mode
+! HARPL=.01*q^2*n^1/3/Te^5/6
+!   (Dnestrovskii A. 25-2-90)
+HARPL=.01*NE(J)**.33/MU(J)**2/TE(J)**.83

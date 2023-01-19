@@ -1,0 +1,2 @@
+! SUZPEI []: sum of Nz * Z^2/M_Z of thermal ions with to be used in equipartition
+SUZPEI=NMAIN(J)/AMAIN(J)*ZMAIN(J)**2.+  NIZ1(J)/AIM1*ZIM1(J)**2.+  NIZ2(J)/AIM2*ZIM2(J)**2.+  NIZ3(J)/AIM3*ZIM3(J)**2.
