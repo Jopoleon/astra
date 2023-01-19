@@ -173,7 +173,7 @@ int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs){
         i = strlen(path);
 
         if (i == 0){
-            strcpy(stri, "test -x .tsk/");
+            strcpy(stri, "test -x bin/");
             strcat(stri, name);
         }
         else{
@@ -235,7 +235,7 @@ int initipc_(INT_* Ngrid){
     A_PID = getpid();
 /* Define the absolute path name of Astra executable ASTRA_task */
     strcpy(ASTRA_task, AWD);
-    strcat(ASTRA_task, ".tsk/");
+    strcat(ASTRA_task, "bin/");
     strcat(ASTRA_task, equmod);
     strcat(ASTRA_task, ".exe");
     my_key = ftok( ASTRA_task, (int)A_PID);    /* Get System V IPC key */
@@ -370,7 +370,7 @@ int inikids_(INT_* Nsub, INT_ *Lstr, char *subs){
 
         if ( i == 0 ){
             sprintf(stri, "%s%s %s %d %d %d &", 
-            "./.tsk/", name, ASTRA_task, A_PID, (int)my_key, j+1);
+            "./bin/", name, ASTRA_task, A_PID, (int)my_key, j+1);
             i = system(stri);
         }
         else{
