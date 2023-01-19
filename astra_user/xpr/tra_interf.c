@@ -150,12 +150,12 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
     ShmAd1 = shmat(ShMid1, NULL, 0);
     SP_stamp(Mama, My, SemID);
     strcpy(AWD, Mama.Path);
-    if (strstr(AWD, ".tsk/") == NULL){
+    if (strstr(AWD, "bin/") == NULL){
         printf("SBP launch string error\n");
         a_stop_();
     }
     else{
-        *strstr(AWD, ".tsk/") = '\0';
+        *strstr(AWD, "bin/") = '\0';
     }
     My.Key = ftok( My.Path, (int)My.Pid);
 
