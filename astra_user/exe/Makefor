@@ -7,7 +7,7 @@ LIB = $(LIB_DIR)/$(LIBNAM)
 
 # Compilers
 
-AFC = ifort -r8 -no-prec-div -ip -warn all
+AFC = ifort -r8 -no-prec-div -ip
 AFC_FLAGS = -O0 
 ACC = cc
 

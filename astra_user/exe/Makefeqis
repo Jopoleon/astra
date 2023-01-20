@@ -7,7 +7,7 @@ LIBNAM = libfeqis.a
 LIB = $(LIB_DIR)/$(LIBNAM)
 
 F90    	= ifort
-FQFLAGS	= -O2 -g -traceback -warn all -I$(MOD_FOR) -I$(MOD_DIR)
+FQFLAGS	= -O2 -g -traceback -I$(MOD_FOR) -I$(MOD_DIR)
 
 # FEQIS objs
 
