@@ -27,8 +27,8 @@ export MPI_LIB="-L${I_MPI_ROOT}/lib64 -lmpigf -lmpi"
 
 # NetCDF
 
-export NCDF_HOME=${PKG}/libraries/netcdf/4.6.3/gnu--6.1.0
-export NCDFF_HOME=${PKG}/libraries/netcdff/4.4.5/gnu--6.1.0
+export NCDF_HOME=${PKG}/libraries/netcdf/4.4.1/intel--pe-xe-2017--binary
+export NCDFF_HOME=${PKG}/libraries/netcdff/4.4.4/intel--pe-xe-2017--binary
 export NCDF_LIB="-L${NCDF_HOME}/lib -lnetcdf -L${NCDFF_HOME}/lib -lnetcdff"
 export NCDF_INC=${NCDFF_HOME}/include
 
