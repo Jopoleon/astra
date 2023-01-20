@@ -7,26 +7,6 @@ AWD=`cd $rootdir && pwd`  # ensure absolute path
 
 platform=`$AWD/get_platform`
 
-if [[ $platform == "gway" ]]
-then
-    module load cineca intel
-elif [[ $platform == "iter" ]]
-then
-    module load intel
-elif [[ $platform == "cz" ]]
-then
-    module load intelstudio/18
-elif [[ $platform == "tok" ]]
-then
-    module load intel/18.0.5
-elif [[ $platform == "lx" ]]
-then
-    module load intel/18.0
-elif [[ $platform == "ga" ]]
-then
-    module load intel/2019
-fi
-
 cd $AWD
 for DIR in $(ls astra_user)
 do
