@@ -8,6 +8,8 @@ export AWD=`cd $rootdir/.. && pwd`  # ensure absolute path
 platform=`$AWD/get_platform`
 echo Installation for platform $platform
 
+module purge
+
 if [[ $platform == "gway" ]]
 then
     module load cineca intel
