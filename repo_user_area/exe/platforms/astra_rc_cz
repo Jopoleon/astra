@@ -9,10 +9,8 @@ export NCDF_HOME="/sw/netcdf/4.6.1-intel18"
 export HDF5_HOME="/sw/hdf5/1.8.21-intel18"
 
 export AFC=ifort
-export AFC_FLAGS="-O0 -w"
 export ACC="cc -O"
-#this is new
-export AFL="ifort -O0 -w -I. -o"
+export MPIFC=mpiifort
 
 export ASTRA_EXT=/compass/home/tardini/astra_ext
 

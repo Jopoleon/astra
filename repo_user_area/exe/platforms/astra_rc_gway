@@ -16,8 +16,8 @@ export INTEL_LICENSE_FILE=${INTEL}/server.lic
 export NAG_KUSARI_FILE=${NAG}/license/license.lic
 
 export AFC=ifort
-export AFC_FLAGS="-O0 -w"
 export ACC="cc -O"
+export MPIFC=mpiifort
 
 export ASTRA_EXT=/afs/eufus.eu/user/g/g2gtardi/ASTRA_LIBRARIES_EXT
 
