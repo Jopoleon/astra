@@ -13,7 +13,6 @@ LIBNBI = $(LIB_DIR)/libnbi.a
 LIBFEQIS  = $(LIB_DIR)/libfeqis.a 
 LIBSPIDER = $(LIB_DIR)/libspider.a 
 
-FC = ifort
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
 LIB = -lnbi -lipc -lsbr -lfnc $(XLBR) $(NCDF_LIB) $(QLKNN_LIB) $(TGLF_LIB) $(TORB_LIB) $(RABBIT_LIB) -lfor -lfeqis -lspider -L$(LIB_DIR) $(MKL_LIB)
 
@@ -57,7 +56,7 @@ update_model:
 
 $(ATASK): $(LIBFOR) $(LIBNBI) $(LIBFEQIS) $(LIBSPIDER) $(LIBSBR) $(LIBFNC) $(LIBIPC) $(AENV) $(MODTMP) $(FOR_SRC)
 	$(PY_TMP_GEN)
-	$(FC) -qopenmp -g -traceback -o $(ATASK) $(FOR_SRC) $(TMP_SRC) -I$(MOD_DIR) -I$(NBI_INC) $(LIB)
+	$(AFC) -qopenmp -g -traceback -o $(ATASK) $(FOR_SRC) $(TMP_SRC) -I$(MOD_DIR) -I$(NBI_INC) $(LIB)
 
 # Generate FORTRAN code
 # EQU is copied into MODTMP above if they are different, here if EQU is touched

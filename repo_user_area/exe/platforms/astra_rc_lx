@@ -17,6 +17,7 @@ export NAG_KUSARI_FILE=lserv1.rzg.mpg.de:7733
 export AFC=ifort
 export AFC_FLAGS="-O0 -w"
 export ACC="cc -O"
+export MPIFC=mpiifort
 
 export ASTRA_EXT=/afs/ipp/home/a/astra/ASTRA_LIBRARIES_EXT
 

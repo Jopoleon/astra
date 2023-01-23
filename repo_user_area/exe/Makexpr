@@ -6,15 +6,13 @@ LIBIPC = $(LIB_DIR)/libipc.a
 AENV = $(AWD)/exe/astra_rc
 
 # TGLF
-AFC = ifort -r8 -no-prec-div -ip
-AFL = ifort
+
 ACC = cc
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
 #-----
 
 # Qualikiz
-MPIFC = mpiifort -qopenmp -r8 -no-prec-div -ip -g
-MPIFL = mpiifort -qopenmp
+MPI_FC = $(MPIFC) -qopenmp -r8 -no-prec-div -ip -g
 NAG_LIB = $(NAGFLIB) $(NAGF90MKL)
 #-----
 
@@ -36,15 +34,15 @@ clean:
 
 
 $(XPR)/tglfi:	$(XPR)/tglf_interf.f90 $(XPR)/qinterp.f90 $(XPR)/tglf_interf.o $(LIBIPC) $(AENV)
-		$(AFL) -o $@ $(XPR)/tglf_interf.f90 $(XPR)/qinterp.f90 $(XPR)/tglf_interf.o $(LIBIPC)	\
+		$(AFC) -o $@ $(XPR)/tglf_interf.f90 $(XPR)/qinterp.f90 $(XPR)/tglf_interf.o $(LIBIPC)	\
 		-I$(TGLF_INC) $(TGLF_LIB) $(MKL_LIB) -lpthread -lm
 
 $(XPR)/neo:	$(XPR)/neo_interf.f90 $(XPR)/qinterp.f90 $(XPR)/neo_interf.o $(LIBIPC) $(AENV)
-		$(MPIFC) -o $@ $(XPR)/neo_interf.f90 $(XPR)/qinterp.f90 $(XPR)/neo_interf.o $(LIBIPC)	\
+		$(MPI_FC) -o $@ $(XPR)/neo_interf.f90 $(XPR)/qinterp.f90 $(XPR)/neo_interf.o $(LIBIPC)	\
 		-I$(NEO_INC) $(MPI_INC) $(NEO_LIB) $(MKL_LIB) $(MPI_LIB) -lpthread -lm
 
 $(XPR)/qlki:	$(XPR)/qlk_interf.f90 $(XPR)/qinterp.f90 $(XPR)/qlk_interf.o $(LIBIPC) $(AENV)
-		$(MPIFC) -o $@ $(XPR)/qlk_interf.f90 $(XPR)/qinterp.f90 $(XPR)/qlk_interf.o $(LIBIPC)	\
+		$(MPI_FC) -o $@ $(XPR)/qlk_interf.f90 $(XPR)/qinterp.f90 $(XPR)/qlk_interf.o $(LIBIPC)	\
 		-I$(QLK_INC) $(MPI_INC) $(QLK_LIB) $(NAG_LIB) $(MPI_LIB)
 
 $(XPR)/neo_interf.o:    $(XPR)/tra_interf.c

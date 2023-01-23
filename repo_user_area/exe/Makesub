@@ -5,8 +5,7 @@ MOD_DIR = $(AWD)/mod/for
 LIB_DIR = $(AWD)/lib
 LIB = $(LIB_DIR)/lib$(sub).a
 
-AFC = ifort -r8 -no-prec-div -ip
-AFC_FLAGS = -O0 -w -qopenmp
+AFC_FLAGS = -r8 -no-prec-div -ip -O0 -w -qopenmp
 ACC = cc
 
 SRCF90 := $(wildcard $(SRC_DIR)/*.f90)

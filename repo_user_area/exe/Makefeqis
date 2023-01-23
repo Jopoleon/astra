@@ -6,7 +6,6 @@ LIB_DIR = $(AWD)/lib
 LIBNAM = libfeqis.a
 LIB = $(LIB_DIR)/$(LIBNAM)
 
-F90    	= ifort
 FQFLAGS	= -O2 -g -traceback -I$(MOD_FOR) -I$(MOD_DIR)
 
 # FEQIS objs
@@ -46,7 +45,7 @@ clean:
 # Rules
 
 $(OBJ_DIR)%.o : $(SRC_DIR)%.f90
-	$(F90) $(FQFLAGS) -c $< -o $@
+	$(AFC) $(FQFLAGS) -c $< -o $@
 	-@mv *.mod $(MOD_DIR)/
 
 $(LIB): $(FQMODOBJS) $(FQOBJS)

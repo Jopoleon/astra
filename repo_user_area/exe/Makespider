@@ -6,8 +6,7 @@ LIB_DIR = $(AWD)/lib
 LIBNAM = libspider.a
 LIB = $(LIB_DIR)/$(LIBNAM)
 
-F90    	= ifort
-SPFLAGS	= -O2 -g -traceback -I$(MOD_FOR) -I$(MOD_DIR) -nostandard-realloc-lhs -qopenmp
+FFLAGS	= -O2 -g -traceback -I$(MOD_FOR) -I$(MOD_DIR) -nostandard-realloc-lhs -qopenmp
 
 # SPIDER objs
 
@@ -89,10 +88,10 @@ clean:
 # Rules
 
 $(OBJ_DIR)%.o : $(SRC_DIR)%.f
-	$(F90) $(SPFLAGS) -c $< -o $@
+	$(AFC) $(FFLAGS) -c $< -o $@
 
 $(OBJ_DIR)%.o : $(SRC_DIR)%.f90
-	$(F90) $(SPFLAGS) -c $< -o $@
+	$(AFC) $(FFLAGS) -c $< -o $@
 	-@mv *.mod $(MOD_DIR)/
 
 $(LIB): $(SPMODOBJS) $(SPOBJS)
