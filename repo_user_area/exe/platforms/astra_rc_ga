@@ -5,9 +5,9 @@ export MKL_LIBDIR=${PKG}/compilers_and_libraries/linux/mkl/lib/intel64
 export NAGLIB=joe_OPEN_ASTRA_RC_please
 export COMP_LIB=${PKG}/compilers_and_libraries/linux/lib/intel64
 echo COMP_LIB ${COMP_LIB}
-export I_MPI_ROOT=/fusion/usc/opt/mpich/mpich-3.2/gcc-4.7.2-ifort-2016/include
+export I_MPI_ROOT=/fusion/usc/opt/mpich/mpich-3.2/intel2020
 export IFORT_BIN=${PKG}/compilers_and_libraries/linux/bin/intel64
-export MPIFORT_BIN=/fusion/usc/opt/mpich/mpich-3.2/gcc-4.7.2-ifort-2016/bin
+export MPIFORT_BIN=/fusion/usc/opt/mpich/mpich-3.2/intel2020/bin
 export INTEL_LICENSE_FILE=${PKG}/licenses
 
 export AFC=ifort
