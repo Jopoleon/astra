@@ -569,12 +569,12 @@ def teeqn(parse, assign_type=None):
             LB = False
     if 'XN' in var_defined and assign_type[:2] == 'EQ':
         if 'XE' in var_defined:
-            te_txt += 'YWC(J) = (XE(J) + GN2E*XN(J))*(NE(J+1) + NE(J))/(TE(J+1) + TE(J))\n'
+            te_txt += 'YWC(J) = (XE(J) + GN2E*XN(J))*(NE(J+1) + NE(J))/(TI(J+1) + TI(J))\n'
         else:
-            te_txt += 'YWC(J) = GN2E*XN(J)*(NE(J+1) + NE(J))/(TE(J+1) + TE(J))\n'
+            te_txt += 'YWC(J) = GN2E*XN(J)*(NE(J+1) + NE(J))/(TI(J+1) + TI(J))\n'
     else:
         if 'XE' in var_defined:
-            te_txt += 'YWC(J) = XE(J)*(NE(J+1) + NE(J))/(TE(J+1) + TE(J))\n'
+            te_txt += 'YWC(J) = XE(J)*(NE(J+1) + NE(J))/(TI(J+1) + TI(J))\n'
         else:
             LC = False
     te_txt += 'YWD(J) = 0.'
@@ -805,14 +805,16 @@ def fjeqn(parse, jeq, assign_type=None):
 
 # Previous fjeqn
 
-    fj_txt += 'do J=1, NA\n'
+    fj_txt += 'do J=1, NA1\n'
     fj_txt += 'YWA(J) = 0.'
     if df in var_defined:
         fj_txt += ' + %s(J)' %df
     if dvf in var_defined:
         fj_txt += ' + %s(J)' %dvf
     fj_txt += '\n'
+    fj_txt += 'enddo\n'
 
+    fj_txt += 'do J=1, NA\n'
     if dvf in var_defined:
         lin2 = 'YWB(J) = %s(J)*log(%s(J)/%s(J+1))/HRO' %(dvf, key, key)
     else:
@@ -893,13 +895,21 @@ def fjeqn(parse, jeq, assign_type=None):
         if gf in var_defined:
             fj_txt += '%s(J) = %s(J) + SLAT(J)*%s(J)\n' %(qf, qf, gf)
 
+# GIT
+#    if gf not in var_defined:
+#        fj_txt += '%s(J) = %s(J)/SLAT(J)\n' %(gf, qf)
+
+#    if sff in var_defined:
+#        fj_txt += '%sTOT(J) = %sTOT(J) + %s(J)*%s(J)\n' %(sf, sf, sff, key)
+    fj_txt += 'enddo\n'
+
     if gf not in var_defined:
-        fj_txt += '%s(J) = %s(J)/SLAT(J)\n' %(gf, qf)
+        fj_txt += '%s(NA1) = %s(NA1)/SLAT(NA1)\n' %(gf, qf)
 
     if sff in var_defined:
-        fj_txt += '%sTOT(J) = %sTOT(J) + %s(J)*%s(J)\n' %(sf, sf, sff, key)
+        fj_txt += '%sTOT(NA1) = %sTOT(NA1) + %s(NA1)*%s(NA1)\n' %(sf, sf, sff, key)
 
-    fj_txt += 'enddo\n'
+
 
     if qfb in var_defined and none_in([qffb, varb, ro], var_defined):
         fj_txt += '%s(NA1) = %sB\n' %(qf, qf)
