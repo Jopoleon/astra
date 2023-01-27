@@ -6,7 +6,7 @@ use outcmn_inc, only: CPT, CPTEQL
 use status_inc, only: VRO, VR
 use const_inc, only: IPART, FTO, FTN, ROC, GP, BTOR, ROCO, RTOR, SHIFT, &
    ABC, ELONG, TRIAN, NB1, NEQUIL, MEQUIL, LEQ, IPEQL, &
-   TIME, TSTART, TIMEQL, DTEQL
+   TIME, TSTART, TIMEQL, DTEQL, BTN
 use debugger, only: markloc, astra_stop
 
 implicit none
@@ -21,7 +21,8 @@ call ADDTIME(CPT)
 
 if (IPART == 1) then ! do only at initiation
 
-   FTO = FTN
+   FTN = FTO
+   BTN = BTOR
    ROC = sqrt(FTO/GP/BTOR)
    ROCO = ROC
    do jrho=1, NB1

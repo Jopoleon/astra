@@ -381,7 +381,7 @@ integer, intent(in) :: IFCONV
 double precision, intent(in) :: updwno
 
 integer :: j, jj
-double precision :: CTAU, TAUO, YY, TAUN, GETXVAR
+double precision :: CTAU, TAUO, YY, TAUN
 
 call markloc('IFSTEP')
 
@@ -435,9 +435,6 @@ do j=1, NB1
       FJ(j, jj) = FJO(j, jj)
    enddo
 enddo
-
-BTN  = GETXVAR('BTOR', TIME + TAU) ! Update BTN  for new TAU
-IPLN = GETXVAR('IPL' , TIME + TAU) ! Update IPLN for new TAU
 
 ! Reset ROC
 ROC = ROCO
@@ -579,13 +576,12 @@ subroutine OLDNEW
 use status_inc, only: NE, TE, TI, FP, VR, FJO, UPAR, &
    UPS0, UPS1, UPS2, NEO, TEO, TIO, FPO, VRO, FJ, &
    UPARO, UPS0O, UPS1O, UPS2O
-use const_inc, only: NB1, BTN, TIME, TAU, IPLN, FTO, FTN, ROCO, ROC
+use const_inc, only: NB1, BTN, TIME, TAU, IPLN, FTO, FTN, ROCO, ROC, BTOR, BTN
 use debugger, only: markloc
 
 implicit none
 
 integer :: j, jj
-double precision :: GETXVAR
 !----------------------------------------------------------------------|
 
 call markloc('OLDNEW')
@@ -605,9 +601,7 @@ do j=1, NB1
    enddo
 enddo
 
-BTN  = GETXVAR('BTOR', TIME + TAU)
-IPLN = GETXVAR('IPL' , TIME + TAU) ! Update IPLN for new TAU
-
+BTN = BTOR
 FTN = FTO
 ROCO = ROC
 

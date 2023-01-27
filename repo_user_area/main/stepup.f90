@@ -35,6 +35,10 @@ save dt_smlk
 save time_ext
 save tau_temp_smlk
 
+!Initialize a few variables for toroidal field
+BTN = BTOR
+FTN = FTO
+
 if (ipsmk < 1) plasma_up = 1
 
 !tau treatment to avoid machine precision errors
@@ -68,9 +72,7 @@ endif
 
 IPART = 2             ! Mark time evolution section
 
-call INTVAR           ! Set exp scalars
-
-!CCC reset initial condition
+! reset initial condition
 				
 NIO = NI  !moved from OLDNEW here to maintain it correctly. detvar goes before oldnew to maintain time derivative computations. 
 						
@@ -89,7 +91,8 @@ call detvar
 ! Subroutines with the "<" symbol are put here
 ! here it computes the new NI also
 
-call OLDNEW             ! Time advance: F(t-tau):=F(t) neo=ne, etc,except ni
+call OLDNEW           ! Time advance: F(t-tau):=F(t) neo=ne, etc,except ni
+call INTVAR           ! Set exp scalars, moved here for btor consistency
 
 ! Update time at the end of everything
 
@@ -164,8 +167,8 @@ time_step_accuracy: do
 
         call METRIC          ! Equilibrium call, compute IPL from dfpdrb, compute PSIEXT, shape, psplex, and metric coefficients, update ROC, FTN
 
-        RBDOT = (FTN - FTO )/(FTN + FTO )/TAU     !New rbdot for adiabatic compression
-        BBDOT = (BTN - BTOR)/(BTN + BTOR)/TAU     !New bbdot for adiabatic compression
+        RBDOT = (FTO  - FTN)/(FTO  + FTN)/TAU     !New rbdot for adiabatic compression
+        BBDOT = (BTOR - BTN)/(BTOR + BTN)/TAU     !New bbdot for adiabatic compression
 
         if (nint(ADCMPF) == 2) then
             RBDOT = 0.   !no adiabatic compression whatsoever
