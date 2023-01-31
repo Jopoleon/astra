@@ -35,7 +35,8 @@ $(TMP_DIR)/eqns_inc.f90
 
 PY_TMP_GEN = $(AWD)/pyparse/parser_main.py -awd $(AWD)
 
-FMLS := $(wildcard $(AWD)/fml/*)
+FMLS    := $(wildcard $(AWD)/fml/*)
+PYFILES := $(wildcard $(AWD)/pyparse/*.py)
 
 # Make Commands
 .PHONY: all
@@ -54,7 +55,7 @@ update_model:
 
 # Linking, create ASTRA executable
 
-$(ATASK): $(LIBFOR) $(LIBNBI) $(LIBFEQIS) $(LIBSPIDER) $(LIBSBR) $(LIBFNC) $(LIBIPC) $(AENV) $(MODTMP) $(FOR_SRC)
+$(ATASK): $(LIBFOR) $(LIBNBI) $(LIBFEQIS) $(LIBSPIDER) $(LIBSBR) $(LIBFNC) $(LIBIPC) $(AENV) $(MODTMP) $(FOR_SRC) $(PYFILES)
 	$(PY_TMP_GEN)
 	$(AFC) -qopenmp -g -traceback -o $(ATASK) $(FOR_SRC) $(TMP_SRC) -I$(MOD_DIR) -I$(NBI_INC) $(LIB)
 
