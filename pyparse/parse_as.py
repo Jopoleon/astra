@@ -54,7 +54,19 @@ def write_fortran(f_out, text, fortran='f77'):
         indent0 = 0
         line_break  = ' &\n' + indent_step*' '
         llen = 110 #90
-    lines = text.split('\n')
+
+    lines_in = text.split('\n')
+
+# Add enddo-do in presence of "J+1" functions
+    lines = []
+    for line in lines_in:
+        pieces = rec_split(line)
+        if ('GRAD' in pieces) or ('GRADS' in pieces):
+            lines.append('enddo')
+            lines.append('do J=1, NA1')
+        lines.append(line)
+
+# Add proper indentation and line-breaking
     indent = indent0
     with open(f_out, 'w') as f:
         lin_old = ''
@@ -658,7 +670,7 @@ class LINE2FOR:
                 out += ', J)'
                 jpos += jbra
 
-            elif var in ('GRAD', ):
+            elif var in ('GRAD', 'GRADS'):
                 var3 = pieces[jpos+2]
                 tmp3 = var3[:-1]
                 if var3[-1] == 'B':
