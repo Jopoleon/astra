@@ -82,7 +82,7 @@ double precision, dimension(NRD) :: &
     CNPAP, XUPAR, RUPAR, RUPYR, RUPFR, &
     CNPAD, XUPAP, TTRQI, XUPAD, DDNEOD
 
-double precision :: WORK(NRD, 2*NRD)
+double precision :: WORK(NRD, 2*NRD), work_strahl(NRD, 26)
 
 double precision, dimension(:), pointer :: &
     F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, &
