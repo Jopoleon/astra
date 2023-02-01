@@ -123,7 +123,7 @@ def eqns_init(parse):
         elif 'MU' in var_defined:
             eqns_txt += eqns.cuasn(parse, 0)
         else:
-             eqns_txt += eqns.cuasn_uloop(parse)
+             eqns_txt += eqns.cuas_uloop(parse)
     for jf in range(10):
         fj = 'F%d' %jf
         if parse.assign_d[fj] != 'Missing':
