@@ -851,7 +851,6 @@ subroutine DRAWFOOT(jifnew)
 ! NBFILE, XWW, XWH, DYLET, IY0, IYM, IDX, IDT, scale_bnd are taken from "outcmn.inc"
 !----------------------------------------------------------------------|
 
-use status_inc, only: WORK1
 use const_inc, only: CNB1
 use outcmn_inc
 
@@ -862,7 +861,8 @@ implicit none
 integer, intent(in) :: jifnew
 
 integer :: j, jj, JL, JN, plot_arr(10), ERCODE
-double precision  YS0, YSC8, YRBMN, YRBMX, YHBM, YASP, YH, YQ
+double precision :: YS0, YSC8, YRBMN, YRBMX, YHBM, YASP, YH, YQ
+double precision, dimension(15, 2*NRD+7) :: work_nbi
 character(len=16) :: STRI
 character(len=132) :: err_msg
 !----------------------------------------------------------------------|
@@ -877,7 +877,7 @@ if (anint(CNB1) < 1) return
 
 do JN=1, anint(CNB1)
 ! Read a record for one beam source
-   call STREAD(2, 20, WORK1(1, JN), ERCODE)
+   call STREAD(2, 20, work_nbi(1, JN), ERCODE)
    if (ERCODE /= 0) EXIT
 enddo
 
@@ -909,13 +909,13 @@ JL = 0
 
 do JN=1, anint(CNB1)
 
-   YQ = WORK1(1, JN)
+   YQ = work_nbi(1, JN)
 
    if (YQ >= 1.d-2) then
-      YHBM = WORK1(11, JN)
-      YASP = WORK1(15, JN)
-      YRBMX = WORK1(12, JN)
-      YRBMN = WORK1(13, JN)
+      YHBM = work_nbi(11, JN)
+      YASP = work_nbi(15, JN)
+      YRBMX = work_nbi(12, JN)
+      YRBMN = work_nbi(13, JN)
 ! Beam footprint drawing:
       JL = JL + 1
       write(STRI(1: 2), '(I2)') JN
