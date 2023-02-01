@@ -82,8 +82,6 @@ double precision, dimension(NRD) :: &
     CNPAP, XUPAR, RUPAR, RUPYR, RUPFR, &
     CNPAD, XUPAP, TTRQI, XUPAD, DDNEOD
 
-! The length of WORK1 is set accordingly to NEUT
-double precision, dimension(NRD, 2*NRD+7), target :: WORK1
 double precision :: WORK(NRD, 2*NRD)
 
 double precision, dimension(:), pointer :: &
@@ -555,7 +553,6 @@ SF9TOT => SFJTOT(:, 9)
 ! Multi-dimensional
 
 WORK  = 0.d0
-WORK1 = 0.d0
 !CAR   = 0.d0
 EXT   = 0.d0
 

@@ -10,36 +10,17 @@ subroutine NEUT
 
 use parameter_inc, only: NRD
 use const_inc, only: NA, NA1, ABC, NAB, ENCL, ENWM, NNCL, NNWM, AMJ, NNCX, ALBPL
-use status_inc, only: NN, TN, NE, TE, NI, TI, SNNBM, AMAIN, work1
+use status_inc, only: NN, TN, NE, TE, NI, TI, SNNBM, AMAIN
 
 implicit none
 
 integer :: J, JJ, JN
-double precision, dimension(:), pointer :: SCXNI, TEN, SRCNN, YVI, &
+double precision, dimension(NRD) :: SCXNI, TEN, SRCNN, YVI, &
    NIN, NN0, THICKN
-double precision, dimension(:), pointer :: YKERN, YKERNF
+double precision, dimension(NRD*NRD) :: YKERN, YKERNF
 double precision :: AKDLT, Y, SVIE, SVREC, SVCX, YNN0, YXI1, YXI2, &
       YV1, YV2, YHA, YTI, YN0, YZZN, YZ1, YZ2, YZZ, YZZT
 
-SCXNI  => WORK1(:, 1)
-TEN    => WORK1(:, 2)
-SRCNN  => WORK1(:, 3)
-YVI    => WORK1(:, 4)
-NIN    => WORK1(:, 5)
-NN0    => WORK1(:, 6)
-THICKN => WORK1(:, 7)
-YKERN  => WORK1(:, 8)
-YKERNF => WORK1(:, 8 + NRD)
-
-!work1(1:NRD, 8) = 1.8
-!work1(1:NRD, 9) = 1.9
-!work1(1:NRD, NRD+8) = 2.8
-!work1(1:NRD, NRD+9) = 2.9
-
-!write(*, *) YKERN(1: 10)
-!write(*, *) YKERN(NRD + 1: NRD + 11)
-!write(*, *) YKERNF(1: 10)
-!write(*, *) YKERNF(NRD + 1: NRD + 11)
 !----------------------------------------------------------------------|
 if (ENCL .lt. 0.0001) then
    write(*, '(A, F6.3, A)') &
@@ -53,6 +34,7 @@ if (ENWM .lt. 0.002) then
    write(*, *) "    Setting ENWM = 2 eV"
    ENWM = 0.002
 endif
+
 ! Neutral generations
 YHA = ABC/(NA1 - .5)
 do J=1, NA1
@@ -119,6 +101,7 @@ do J=1, NA1
       TEN(J) = TEN(J) + ENWM*YN0
    endif
 enddo
+
 !-----------------------      Zero generation density is ready
 !-------------------------------      Iterations:
 do J=1, NA1
@@ -137,6 +120,7 @@ do JN=1, NNCX
       NN(J)  = NN(J) + NN0(J)
    enddo
 enddo
+
 !------------------- End of iterations
 do J=1, NA1
    YVI(J) = TI(J)*NN(J)
