@@ -35,7 +35,6 @@ subroutine A2STRAHL(tau_start, zneocl, dzneocl, dimpsol, ydimp, yvimp, &
 !         y_zcharge [e] (radial function)
 !
 !         n_e = (main ions) + n_imp
-!         prad_sep are work_strahl(:, j), j = 4...24
 !----------------------------------------------------------------------|
 
 use parameter_inc, only: NRD
