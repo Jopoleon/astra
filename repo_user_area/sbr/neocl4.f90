@@ -222,7 +222,7 @@ use status_inc, only: work, BDB0, B0DB2, BDB02, BMAXT, FOFB, IPOL, &
    ULON, ER, VRS, G11, &
    MU, ELON, SHIF, TE, TI, &
    NE, NHYDR, NDEUT, NTRIT, NHE3, NALF, ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3
-use nclass_mx, only: mx_mi, mx_ms, mx_mz
+use nclass_mod, only: mx_mi, mx_ms, mx_mz
 
 implicit none
 
