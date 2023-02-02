@@ -102,7 +102,7 @@ MU=1./(CAR2X + 0.0001);
 ! E.g. CF10=10 - Kadomtsev model, ZRD22X= prescribed period
 !CF9=min(0.25,ZRD22X);
 
-A2STRAHL(0.,100.d0,100.d0,1.d0,DF1,VF1,ZIM1,AIM1,NIZ1,ZEF,CAR18,CAR19,CRAD4,1.*abc/abc,-1.*abc/abc,0.*ZRD48X)>::::;
+A2STRAHL(0.,100.d0,100.d0,1.d0,DF1,VF1,ZIM1,AIM1,NIZ1,ZEF,CAR18,CAR19,CRAD4,1.,-1.,0.)>::::;
 
 	Profile output
 

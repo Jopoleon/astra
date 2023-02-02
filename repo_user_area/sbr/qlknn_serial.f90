@@ -676,7 +676,7 @@ chie_m  (1:2) = chie_m(3)
 pfluxi_m(1:2) = pfluxi_m(3)
 
 do j=1, jna
-    CHI(j) = chii_m(j)/gradrhosq_exp(j) ! \chi_i, m^2/s : starts from work(21, :)
+    CHI(j) = chii_m(j)/gradrhosq_exp(j) ! \chi_i, m^2/s
     CHE(j) = chie_m(j)/gradrhosq_exp(j) ! \chi_e, m^2/s
     VIN(j) = pfluxi_m(j)/AMETR(NA1)/gradrhosq_exp(j) ! D flux
     VIN(j) = min( 20., max(-20., VIN(j)) ) ! D flux

@@ -6,9 +6,6 @@ subroutine tglf_serial(CHI, CHE, VIN, XTB)
 !       "testglf.f" 18-fev-03 version 1.61
 !       written by Jon Kinsey, General Atomics
 !----------------------------------------------------------------------|
-! WORK(1:NA1,1:13) array is used for output
-!                              (when i_delay=0 and egamma_d is not used)
-!----------------------------------------------------------------------|
 
 use parameter_inc, only: NRD
 USE tglf_interface
@@ -418,7 +415,7 @@ pfluxi_m(1:2) = pfluxi_m(3)
 exchi_m (1:2) = exchi_m(3)
 
 do j=1, jna
-    CHI(j) = chii_m(j)/gradrhosq_exp(j) ! \chi_i, m^2/s : starts from work(21,:) 
+    CHI(j) = chii_m(j)/gradrhosq_exp(j) ! \chi_i, m^2/s
     CHE(j) = chie_m(j)/gradrhosq_exp(j) ! \chi_e, m^2/s
     VIN(j) = min(20., pfluxi_m(j)/AMETR(NA1)/gradrhosq_exp(j)) ! D flux
     VIN(j) = max(-20., VIN(j)) ! D flux

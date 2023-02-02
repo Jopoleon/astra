@@ -36,15 +36,12 @@ subroutine A2STRAHL(tau_start, zneocl, dzneocl, dimpsol, ydimp, yvimp, &
 !
 !         n_e = (main ions) + n_imp
 !         prad_sep are work_strahl(:, j), j = 4...24
-!
-!  work_strahl(:, 1) is Prad tot
-!  work_strahl(:, 2) is ne_source tot in 10^19*part/m^3/s
-!  work_strahl(:, 3) is total number of neutrals from impurities in plasma radial profile
 !----------------------------------------------------------------------|
 
 use parameter_inc, only: NRD
 use const_inc, only: TIME, TSTART, TAUPRP, NA1, PSIAX, GP, GP2, RTOR, NA, HRO, IPART
-use status_inc, only: FP, UPL, VOLUM, SHIF, NE, TE, TI, AMAIN, ZMAIN, work_strahl
+use status_inc, only: FP, UPL, VOLUM, SHIF, NE, TE, TI, AMAIN, ZMAIN
+use strahl_mod, only: prad_tot, ne_source, nneut_imp, prad_strahl, nimp_strahl, nesrc_strahl
 use outcmn_inc, only: machine, awd, exp_file
 
 implicit none
@@ -477,7 +474,7 @@ call qinterp_metric(rpol_o(1:Nr_o), 1.E-19*abs(mion_o(1:Nr_o)), Nr_o, &
     rhopol(1:NA1), y_mions(1:NA1), NA1)
 
 call qinterp_metric(rpol_o(1:Nr_o), nimpneutr_o(1:Nr_o)/1.e19, Nr_o, &
-    rhopol(1:NA1), work_strahl(1:NA1, 3), NA1)
+    rhopol(1:NA1), nneut_imp(1:NA1), NA1)
 
 call qinterp_metric(rpol_o(1:Nr_o), 1.E-19*abs(nimp_o(1:Nr_o)), Nr_o, &
     rhopol(1:NA1), ynimp(1:NA1), NA1)
@@ -487,8 +484,8 @@ call qinterp_metric(rpol_o(1:Nr_o), prad_o(1:Nr_o)/1.E6, Nr_o, &
 
 open(nch_w4, file='fort.224')
     do j=1, NA1
-        work_strahl(j, 1) = yprad(j)
-        write(nch_w4, '(6E25.11)') rhopol(j), TE(j), NE(j), yprad(j), ynimp(j), work_strahl(j, 3)
+        prad_tot(j) = yprad(j)
+        write(nch_w4, '(6E25.11)') rhopol(j), TE(j), NE(j), yprad(j), ynimp(j), nneut_imp(3)
     enddo
 close(nch_w4)
 
@@ -506,20 +503,16 @@ vneo_o = vneo_o/r_rho
 
 do i=1, nimp_touse+1
     call qinterp_metric(rpol_o(1:Nr_o), pradsep_o(1:Nr_o, i), Nr_o, &
-        rhopol(1:NA1), work_strahl(1:NA1, 3+i), NA1)
+        rhopol(1:NA1), prad_strahl(1:NA1, i), NA1)
 enddo
-
-do i=nimp_touse+2, 2*nimp_touse+1
-    call qinterp_metric(rpol_o(1:Nr_o), nimpsep_o(1:Nr_o, i-nimp_touse-1), Nr_o, &
-        rhopol(1:NA1), work_strahl(1:NA1, 3+i), NA1)
-enddo
-
-do i=2*nimp_touse+2, 3*nimp_touse+1
-    call qinterp_metric(rpol_o(1:Nr_o), ne_source_o(1:Nr_o, i-2*nimp_touse-1), Nr_o, &
-        rhopol(1:NA1), work_strahl(1:NA1, 3+i), NA1)
+do i=1, nimp_touse
+    call qinterp_metric(rpol_o(1:Nr_o), nimpsep_o(1:Nr_o, i), Nr_o, &
+        rhopol(1:NA1), nimp_strahl(1:NA1, i), NA1)
+    call qinterp_metric(rpol_o(1:Nr_o), ne_source_o(1:Nr_o, i), Nr_o, &
+        rhopol(1:NA1), nesrc_strahl(1:NA1, i), NA1)
 enddo
 do j=1, NA1
-    work_strahl(j, 2) = sum(work_strahl(j, 3+2*nimp_touse+2: 3+3*nimp_touse+1), 1) /1.E+19
+    ne_source(j) = sum(nesrc_strahl(j, 1: nimp_touse)) /1.E+19
 enddo
 
 !neutrals from Zimp
