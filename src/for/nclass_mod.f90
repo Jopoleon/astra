@@ -1,3 +1,10 @@
+module nclass_mod
+
+integer, parameter :: mx_mi=9, mx_ms=40, mx_mz=100
+
+implicit none
+
+contains
 !----------------------------------------------------------------
 subroutine NCLASS(k_order,k_potato,m_i,m_z,c_den,c_potb,c_potl, &
                   p_b2,p_bm2,p_eb,p_fhat,p_fm,p_ft,p_grbm2, &
@@ -101,8 +108,6 @@ subroutine NCLASS(k_order,k_potato,m_i,m_z,c_den,c_potb,c_potl, &
 !       =5 error: inversion of flow matrix failed
 !       =6 error: trapped fraction must be 0.0.le.p_ft.le.1.0
 !----------------------------------------------------------------
-
-use nclass_mx, only: mx_mi, mx_ms, mx_mz
 
 implicit none
 
@@ -402,8 +407,6 @@ subroutine NCLASS_FLOW(k_order,m_i,m_s,jm_s,jz_s,p_b2,p_bm2,p_eb, &
 !       =0 no errors
 !       =1 inversion of flow matrix failed
 !----------------------------------------------------------------
-
-use nclass_mx, only: mx_mi, mx_ms, mx_mz
 
 implicit none
 
@@ -819,8 +822,6 @@ subroutine NCLASS_K(k_banana,k_pfirsch,k_potato,m_s,jm_s,jz_s, &
 !  tau_ss(s1,s2)-90 degree scattering time of s1 on s2 (s)
 !----------------------------------------------------------------
 
-use nclass_mx, only: mx_mi, mx_ms
-
 implicit none
 
 !Declaration of input variables
@@ -919,8 +920,6 @@ subroutine NCLASS_MN(k_order,m_i,amu_i,temp_i,capm_ii,capn_ii)
 !The indices on the M and N matrices are one greater than the notation
 !  in the review article so as to avoid 0 as an index
 !----------------------------------------------------------------
-
-use nclass_mx, only: mx_mi
 
 implicit none
 
@@ -1045,8 +1044,6 @@ subroutine NCLASS_MU(k_order,k_banana,k_pfirsch,k_potato,m_s,jm_s, &
 !  ymu_s(s)-normalized viscosity for s (kg/m**3/s)
 !  tau_ss(s1,s2)-90 degree scattering time of s1 on s2 (s)
 !----------------------------------------------------------------
-
-use nclass_mx, only: mx_mi, mx_ms, mx_mz
 
 implicit none
 
@@ -1347,8 +1344,6 @@ subroutine NCLASS_TAU(m_i,m_s,jm_s,jz_s,amu_i,temp_i,vt_i,den_iz, &
 !  amnt_ii(s1,s2)-eff relaxation rate for s1 on s2 (kg/m**3/s)
 !  tau_ss(s1,s2)-90 degree scattering time of s1 on s2 (s)
 !----------------------------------------------------------------
-
-use nclass_mx, only: mx_mi, mx_ms, mx_mz
 
 implicit none
 
@@ -1924,3 +1919,5 @@ enddo
 
 return
 end subroutine RARRAY_COPY
+
+end module nclass_mod

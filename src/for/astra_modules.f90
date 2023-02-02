@@ -52,8 +52,3 @@ implicit none
 integer plasma_up, plasma_trig
 
 end module plasma_state
-
-!----------------------------
-module nclass_mx
-   integer, parameter :: mx_mi=9, mx_ms=40, mx_mz=100
-end module nclass_mx
