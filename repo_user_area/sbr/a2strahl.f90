@@ -82,7 +82,7 @@ data ineocli /0/
 data tneocl0 /0./
 save i_stepst, tneocl0, ineocli
 
-NAMELIST / strahl /  tau_strahl, rho_coord, ne_decayl, te_decayl, ti_decayl, &
+NAMELIST / strahl_nml /  tau_strahl, rho_coord, ne_decayl, te_decayl, ti_decayl, &
     nfour_c, nimp_touse, elements_touse, aweight, eneutr, ridecay, irecycl, &
     wrecycl, diffname1_s, z_K, n_grids, zdr_0, zdr_1, rsources, rrates, trates, &
     ineocla, rneocl, divpuff, swincm, swoutcm, promptredep, taudiv, taupump, &
@@ -95,7 +95,7 @@ as_nml = TRIM(awd) // 'exp/nml/' // TRIM(exp_file)
 write(*, *) 'Reading namelist ', TRIM(as_nml)
 
 open(nch_r1, FILE=TRIM(as_nml), delim='apostrophe')
-read(nch_r1, nml=strahl, iostat=ios)
+read(nch_r1, nml=strahl_nml, iostat=ios)
 close(nch_r1)
 
 ineocl = 0
