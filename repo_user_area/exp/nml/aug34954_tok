@@ -157,7 +157,7 @@
    zaxis_astra=0.
 /
 
-&strahl
+&strahl_par
    tau_strahl = 5.e-5
    rho_coord = 'poloidal rho'
    ne_decayl = 2.
