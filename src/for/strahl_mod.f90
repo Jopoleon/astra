@@ -1,4 +1,4 @@
-module strahl
+module strahl_mod
 
 use parameter_inc, only: NRD
 
@@ -379,4 +379,4 @@ close(nch_w3)
 return
 end subroutine grid_write_strahl
 
-end module strahl
+end module strahl_mod

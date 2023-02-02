@@ -42,7 +42,7 @@ use parameter_inc, only: NRD
 use const_inc, only: TIME, TSTART, TAUPRP, NA1, PSIAX, GP, GP2, RTOR, NA, HRO, IPART
 use status_inc, only: FP, UPL, VOLUM, SHIF, NE, TE, TI, AMAIN, ZMAIN
 use outcmn_inc, only: machine, awd, exp_file
-use strahl, only: profiles_file_write_strahl, grid_write_strahl, &
+use strahl_mod, only: profiles_file_write_strahl, grid_write_strahl, &
     prad_tot, ne_source, nneut_imp, prad_strahl, nimp_strahl, nesrc_strahl
 
 implicit none
