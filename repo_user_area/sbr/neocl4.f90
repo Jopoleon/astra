@@ -1,10 +1,11 @@
 subroutine NEOCL4
 
-!    Astra_6 interface to Houlberg's code NCLASS
+!    Astra interface to Houlberg's code NCLASS
 !
-!                                     May-2004, A.Zolotukhin
-!                                     Apr-2021 G. Tardini -> f90
-!---------------------------------------------------------------------|
+!             May-2004, A.Zolotukhin
+!             Apr-2021 G. Tardini -> f90
+!             Feb-2023 G. Tardini: removed work, using module nclass_mod instead
+!---------------------------------------------------------------------
 ! NCLASS calculates the neoclassical transport properties of a multiple
 !   species axisymmetric plasma using k_order parallel and radial force
 !   balance equations for each species
@@ -12,217 +13,59 @@ subroutine NEOCL4
 !   Houlberg, Shaing, Hirshman, Zarnstorff, Phys Plasmas 4 (1997) 3230
 !   Hirshman, Sigmar, Nucl Fusion 21 (1981) 1079
 !   W.A.Houlberg 3/99
-!---------------------------------------------------------------------|
+!---------------------------------------------------------------------
 ! Usage example in an ASTRA model:
 !  - for electron density
-!    DN = ... + "WORK(j,102)";
-!    CN = ... + "WORK(j,103)";
+!    DN = ... + "dn_e_nc(j)";
+!    CN = ... + "cn_e_nc(j)";
 !
 !  - for electron heat transport
-!    HE = ... + "WORK(j,105)";
-!    CE = ... + "WORK(j,106)";
+!    HE = ... + "xe_nc(j)";
+!    CE = ... + "ce_nc(j)";
 !
 !  - for a density of impurities Z1 
 !                                (equation F1 , for example)
-!    DF1 = ... + "WORK(j,242)";
-!    VF1 = ... + "WORK(j,243)";
+!    DF1 = ... + "dn_imp1_nc(j)";
+!    VF1 = ... + "cn_imp1_nc(j)";
 !
 !  - for a bootstrap current
 !      DC=0.;  HC=0.;  XC=0.;
-!                   CD=... + "WORK(j,301)";  
-!---------------------------------------------------------------------|
+!                   CD=... + "jbs_nc(j)";  
+!---------------------------------------------------------------------
 ! Below the net fluxes are understood as a flux G_i of the 
 ! particular species through the entire flux surface according to
 !                 dn_i    d   
 !                 ---- = ----[G_i] + Source_i
 !                  dt     dV  
 ! It coincides with the Astra total fluxes QN, QF1, etc., as
-!---------------------------------------------------------------------|
-! Output: work(j,:
-!   - electrons
-! 101) - particle radial net flux Gamma_electron, [1.e19/s]
-! 102) - particle diffusion coefficient Dn_electron, [m**2/s]
-! 103) - electron convective velocity Vn_electron, [m/s]
-! 104) - radial net heat conduction flux 
-!               q_cond_electron, [MW] 
-! 105) - heat conductivity Chi_electron, [m**2/s]
-! 106) - heat convective velocity V_heat_electron, [m/s]
-! 107) - radial energy (conduction+convection) flux 
-!               (electrons), [MW] 
-! 108) - bootstrap current on (p'/p)_electron, [MA/m**2]
-! 109) - bootstrap current on (T'/T)_electron, [MA/m**2]
-! 110) - poloidal flow velocity of electrons 
-!               on outside midplane, [m/s]
-! 111...120) - reserved
-!
-! - main ions (not specified)
-!++++++++++++++++  Note!!! ++++++++++++++++++
-! This type of species is applied to satisfy quasineutrality condition
-! and should be used only (!) in the case when ions H, D, T 
-!  or He3 are not specified in the Astra model explicitly.
-!  Otherwise use arrays for correspondent species.
-!++++++++++++++++++++++++++++++++++++++++++++
-! 121) - particle radial net flux Gamma_mainions, [1.e19/s]
-! 122) - particle diffusion coefficient Dn_mainions, [m**2/s]
-! 123) - particle convective velocity Vn_mainions, [m/s]
-! 124) - radial net heat conduction flux 
-!               q_cond_mainion, [MW] 
-! 125) - heat conductivity Chi_mainions, [m**2/s]
-! 126) - heat convective velocity V_heat_mainions, [m/s]
-! 127) - radial energy (conduction+convection) flux 
-!               (main ions), [MW]
-! 128) - bootstrap current on (p'/p)_mainions, [MA/m**2]
-! 129) - bootstrap current on (T'/T)_mainions, [MA/m**2]
-! 130) - poloidal flow velocity of main ions 
-!               on outside midplane, [m/s]
-! 131...140) - reserved
-!               ------------------------------
-!  - protons
-! 141) - particle radial net flux Gamma_protons, 
-!               [1.e19/s]
-! 142) - particle diffusion coefficient Dn_proton, [m**2/s]
-! 143) - particle convective velocity Vn_proton, [m/s]
-! 144) - radial heat conduction net flux 
-!               q_cond_proton, [MW] 
-! 145) - heat conductivity Chi_proton, [m**2/s]
-! 146) - heat convective velocity V_heat_proton, [m/s]
-! 147) - radial energy (conduction+convection) flux 
-!               (protons), [MW]
-! 148) - bootstrap current on (p'/p)_proton, [MA/m**2]
-! 149) - bootstrap current on (T'/T)_proton, [MA/m**2]
-! 150) - poloidal flow velocity of protons 
-!               on outside midplane, [m/s]
-! 151...160) - reserved
-!               ------------------------------
-!  - deuterons
-! 161) - particle radial net flux Gamma_deuterons,
-!               [1.e19/s]
-! 162) - particle diffusion coefficient Dn_deuteron, [m**2/s]
-! 163) - particle convective velocity Vn_deuteron, [m/s]
-! 164) - radial heat conduction net flux 
-!               q_cond_deuteron, [MW] 
-! 165) - heat conductivity Chi_deuteron, [m**2/s]
-! 166) - heat convective velocity V_heat_deuteron, [m/s]
-! 167) - radial energy (conduction+convection) flux 
-!               (deuterons), [MW]
-! 168) - bootstrap current on (p'/p)_deuteron, [MA/m**2]
-! 169) - bootstrap current on (T'/T)_deuteron, [MA/m**2]
-! 170) - poloidal flow velocity of deuterons 
-!               on outside midplane, [m/s]
-! 171...180) - reserved
-!               ------------------------------
-!  - tritons
-! 181) - particle radial net flux Gamma_tritons,
-!               [1.e19/s]
-! 182) - particle diffusion coefficient Dn_triton, [m**2/s]
-! 183) - particle convective velocity Vn_triton, [m/s]
-! 184) - radial heat conduction net flux 
-!               q_cond_triton, [MW] 
-! 185) - heat conductivity Chi_triton, [m**2/s]
-! 186) - heat convective velocity V_heat_triton, [m/s]
-! 187) - radial energy (conduction+convection) flux 
-!               (tritons), [MW]
-! 188) - bootstrap current on (p'/p)_triton, [MA/m**2]
-! 189) - bootstrap current on (T'/T)_triton, [MA/m**2]
-! 190) - poloidal flow velocity of tritons 
-!               on outside midplane, [m/s]
-! 191...200) - reserved
-!               ------------------------------
-!  - He3-particles
-! 201) - particle radial net flux Gamma_He3, [1.e19/s]
-! 202) - particle diffusion coefficient Dn_He3, [m**2/s]
-! 203) - particle convective velocity Vn_He3, [m/s]
-! 204) - radial heat conduction net flux 
-!               q_cond_He3, [MW] 
-! 205) - heat conductivity Chi_He3, [m**2/s]
-! 206) - heat convective velocity V_heat_He3, [m/s]
-! 207) - radial energy (conduction+convection) flux 
-!               (He3's), [MW]
-! 208) - bootstrap current on (p'/p)_He3, [MA/m**2]
-! 209) - bootstrap current on (T'/T)_He3, [MA/m**2]
-! 210) - poloidal flow velocity of He3-particles 
-!               on outside midplane, [m/s]
-! 211...220) - reserved
-!               ------------------------------
-!  - alpha-particles
-! 221) - particle radial net flux Gamma_alpha, [1.e19/s]
-! 222) - particle diffusion coefficient Dn_alpha, [m**2/s]
-! 223) - particle convective velocity Vn_alpha, [m/s]
-! 224) - radial heat conduction net flux 
-!               q_cond_alpha, [MW] 
-! 225) - heat conductivity Chi_alpha, [m**2/s]
-! 226) - heat convective velocity V_heat_alpha, [m/s]
-! 227) - radial energy (conduction+convection) flux 
-!               (alphas), [MW]
-! 228) - bootstrap current on (p'/p)_alpha, [MA/m**2]
-! 229) - bootstrap current on (T'/T)_alpha, [MA/m**2]
-! 230) - poloidal flow velocity of alpha-particles 
-!               on outside midplane, [m/s]
-! 231...240) - reserved
-!               ------------------------------
-!  - Impurity Z_1
-! 241) - particle radial net flux Gamma_impZ1, [1.e19/s]
-! 242) - particle diffusion coefficient Dn_impZ1, [m**2/s]
-! 243) - particle convective velocity Vn_impZ1, [m/s]
-! 244) - radial heat conduction net flux 
-!               q_cond_impZ1, [MW]
-! 245) - heat conductivity Chi_impZ1, [m**2/s]
-! 246) - heat convective velocity V_heat_impZ1, [m/s]
-! 247) - radial energy (conduction+convection) flux 
-!               (impurity Z1), [MW]
-! 248) - bootstrap current on (p'/p)_impZ1, [MA/m**2]
-! 249) - bootstrap current on (T'/T)_impZ1, [MA/m**2]
-! 250) - poloidal flow velocity of impurity ions Z1 
-!               on outside midplane, [m/s]
-! 251...260) - reserved
-!               ------------------------------
-!  - Impurity Z_2
-! 261) - particle radial net flux Gamma_impZ2, [1.e19/s]
-! 262) - particle diffusion coefficient Dn_impZ2, [m**2/s]
-! 263) - particle convective velocity Vn_impZ2, [m/s]
-! 264) - radial heat conduction net flux 
-!               q_cond_impZ2, [MW]
-! 265) - heat conductivity Chi_impZ2, [m**2/s]
-! 266) - heat convective velocity V_heat_impZ2, [m/s]
-! 267) - radial energy (conduction+convection) flux 
-!               (impurity Z2), [MW]
-! 268) - bootstrap current on (p'/p)_impZ2, [MA/m**2]
-! 269) - bootstrap current on (T'/T)_impZ2, [MA/m**2]
-! 270) - poloidal flow velocity of impurity ions Z2 
-!               on outside midplane, [m/s]
-! 271...280) - reserved
-!               ------------------------------
-!  - Impurity Z_3
-! 281) - particle radial net flux Gamma_impZ3, [1.e19/s]
-! 282) - particle diffusion coefficient Dn_impZ3, [m**2/s]
-! 283) - particle convective velocity Vn_impZ3, [m/s]
-! 284) - radial heat conduction net flux 
-!               q_cond_impZ3, [MW]
-! 285) - heat conductivity Chi_impZ3, [m**2/s]
-! 286) - heat convective velocity V_heat_impZ3, [m/s]
-! 287) - radial energy (conduction+convection) flux 
-!               (impurity Z3), [MW]
-! 288) - bootstrap current on (p'/p)_impZ3, [MA/m**2]
-! 289) - bootstrap current on (T'/T)_impZ3, [MA/m**2]
-! 290) - poloidal flow velocity of impurity ions Z3 
-!               on outside midplane, [m/s]
-! 291...300) - reserved
-!               ------------------------------
+!---------------------------------------------------------------------
+! Shared, for each species:
+!   - electrons, main ions, proton, D, T, He3, He4, Imp1, Imp2, Imp3
+!  1) - particle radial net flux Gamma [1.e19/s]
+!  2) - particle diffusion coefficient Dn [m**2/s]
+!  3) - convective velocity Vn [m/s]
+!  4) - radial net heat conduction flux q_cond [MW] 
+!  5) - heat conductivity Chi [m**2/s]
+!  6) - heat convective velocity V_heat [m/s]
+!  7) - radial energy (conduction+convection) flux [MW] 
+!  8) - bootstrap current on (p'/p), [MA/m**2]
+!  9) - bootstrap current on (T'/T), [MA/m**2]
+! 10) - poloidal flow velocity on outside midplane, [m/s]
+!-----------------------------------------------
 !               - Miscellanious parameters
-! 301) - bootstrap current, [MA/m**2]
-! 302) - external current, [MA/m**2]
-! 303) - current conductivity, [MS/m=1/(microOhm*m)]
-! 304) - density of main ions as they are defined above
-! 305...320) - reserved
-!---------------------------------------------------------------------|
+! bootstrap current [MA/m**2]
+! external current [MA/m**2]
+! current conductivity [MS/m=1/(microOhm*m)]
+! density of main ions as they are defined above
+!---------------------------------------------------------------------
 
 use const_inc, only: GP2, ABC, ROC, BTOR, RTOR, HRO, NA, NA1, &
    AMJ, AIM1, AIM2, AIM3, ZMJ
-use status_inc, only: work, BDB0, B0DB2, BDB02, BMAXT, FOFB, IPOL, &
+use status_inc, only: BDB0, B0DB2, BDB02, BMAXT, FOFB, IPOL, &
    ULON, ER, VRS, G11, &
    MU, ELON, SHIF, TE, TI, &
    NE, NHYDR, NDEUT, NTRIT, NHE3, NALF, ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3
-use nclass_mod, only: mx_mi, mx_ms, mx_mz
+use nclass_mod
 
 implicit none
 
@@ -238,7 +81,7 @@ real p_eps
 integer :: k_electron, k_mainion, k_proton, k_deuteron, k_triton, &
    k_he3, k_alpha, k_impZ1, k_impZ2, k_impZ3, narray
 real :: ybbmax, ybbmax2, yftupper, yftlower
-real rdum(8), RARRAY_SUM
+real rdum(8)
 !Declaration of input to NCLASS
 integer :: k_order, k_potato, m_i, m_z
 real :: c_den, c_potb, c_potl
@@ -286,13 +129,6 @@ c_potb = -0.5*ELON(1)*BTOR*MU(1)**2
 !  m_z-highest charge state of all species (0<mz<mx_mz+1)
 !  grt_i(i)-temperature gradient of i (keV/rho)
 !  grp_iz(i,z)-pressure gradient of i,z (keV/m**3/rho)
-
-! Initialise output arrays
-do j=1,NA1
-   do narray=101,320
-      work(j,narray) = 0.
-   enddo
-enddo
 
 call ZBFAUX(yGRRdB2, yNGRTheta, YFM)
 
@@ -417,7 +253,7 @@ do j=1,NA
    YNMAIN = 1./ZMJ * ( NE(j) - NHYDR(j) - NDEUT(j) - NTRIT(j) - &
             2.*NHE3(j) - 2.*NALF(j) - &
             ZIM1(j)*NIZ1(j) - ZIM2(j)*NIZ2(j) - ZIM3(j)*NIZ3(j) )
-   work(j,304) = YNMAIN
+   ni_nc(j) = YNMAIN
    YNMAIN1 = 1./ZMJ * ( NE(j+1) - NHYDR(j+1) - NDEUT(j+1) - NTRIT(j+1) - &
              2.*NHE3(j+1) - 2.*NALF(j+1) - &
              ZIM1(j+1)*NIZ1(j+1) - ZIM2(j+1)*NIZ2(j+1) - ZIM3(j+1)*NIZ3(j+1) )
@@ -543,17 +379,17 @@ do j=1,NA
 ! Total radial particle flux (electrons)
       call RARRAY_COPY(5,gfl_s(1,k_electron),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,101) = rdum(6)*VRS(j)*1.e-19
+      gamma_e_nc(j) = rdum(6)*VRS(j)*1.e-19
 ! Particle diffusion and velocity (electrons)
       im  = jm_s(k_electron)
       iza = IABS(jz_s(k_electron))
-      work(j,102) = dn_s(k_electron)/y_grrho2
-      work(j,103) = (vn_s(k_electron) + veb_s(k_electron) + &
+      dn_e_nc(j) = dn_s(k_electron)/y_grrho2
+      cn_e_nc(j) = (vn_s(k_electron) + veb_s(k_electron) + &
                     gfl_s(5,k_electron)/den_iz(im,iza)) / y_grrho2
 ! Radial conduction flux (electrons)
       call RARRAY_COPY(5,qfl_s(1,k_electron),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,104) = rdum(6)*VRS(j)*1.e-6
+      qcond_e_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Heat conduction and velocity (electrons)
 ! Conduction total is sum of components
       rdum(1)=RARRAY_SUM(5,qfl_s(1,k_electron),1)
@@ -562,22 +398,22 @@ do j=1,NA
                        chip_ss(k_electron,k_electron)
       vq_s(k_electron)=rdum(1)/(den_iz(im,iza)*z_j7kv*temp_i(im)) + &
                        dq_s(k_electron)*grt_i(im)/temp_i(im)
-      work(j,105) = dq_s(k_electron)/y_grrho2
-      work(j,106) = vq_s(k_electron)/y_grrho2
+      xe_nc(j) = dq_s(k_electron)/y_grrho2
+      ce_nc(j) = vq_s(k_electron)/y_grrho2
 ! Total radial energy flux (electrons)
       do k=1,5
          rdum(k)=qfl_s(k,k_electron) + &
                  2.5*gfl_s(k,k_electron)*temp_i(im)*z_j7kv
       enddo
       rdum(6)=RARRAY_SUM(5,rdum,1)
-      work(j,107) = rdum(6)*VRS(j)*1.e-6
+      qen_e_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Bootstrap current on p'/p (electrons)
       rdum(1)=bsjbp_s(k_electron)
       rdum(2)=bsjbt_s(k_electron)
-      work(j,108) = -1.e-6*rdum(1)/BTOR
-      work(j,109) = -1.e-6*rdum(2)/BTOR
+      bs_pe_nc(j) = -1.e-6*rdum(1)/BTOR
+      bs_te_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (electrons)
-      work(j,110) = ( utheta_s(1,1,k_electron) +  &
+      polflow_e_nc(j) = ( utheta_s(1,1,k_electron) +  &
                       utheta_s(1,2,k_electron) + &
                       utheta_s(1,3,k_electron)  ) * &
                       BTOR/(1.0 + p_eps)/p_fhat
@@ -587,17 +423,17 @@ do j=1,NA
 ! Total radial particle flux (main ions)
       call RARRAY_COPY(5,gfl_s(1,k_mainion),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,121) = rdum(6)*VRS(j)*1.e-19
+      gamma_i_nc(j) = rdum(6)*VRS(j)*1.e-19
 ! Particle diffusion and velocity (main ions)
       im  = jm_s(k_mainion)
       iza = IABS(jz_s(k_mainion))
-      work(j,122) = dn_s(k_mainion)/y_grrho2
-      work(j,123) = (vn_s(k_mainion) + veb_s(k_mainion) + &
+      dn_i_nc(j) = dn_s(k_mainion)/y_grrho2
+      cn_i_nc(j) = (vn_s(k_mainion) + veb_s(k_mainion) + &
                     gfl_s(5,k_mainion)/den_iz(im,iza)) / y_grrho2
 ! Radial conduction flux (main ions)
       call RARRAY_COPY(5,qfl_s(1,k_mainion),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,124) = rdum(6)*VRS(j)*1.e-6
+      qcond_i_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Heat conduction and velocity (main ions)
 ! Conduction total is sum of components
       rdum(1)=RARRAY_SUM(5,qfl_s(1,k_mainion),1)
@@ -606,22 +442,22 @@ do j=1,NA
                       chip_ss(k_mainion,k_mainion)
       vq_s(k_mainion)=rdum(1)/(den_iz(im,iza)* z_j7kv*temp_i(im)) + &
                       dq_s(k_mainion)*grt_i(im)/temp_i(im)
-      work(j,125) = dq_s(k_mainion)/y_grrho2
-      work(j,126) = vq_s(k_mainion)/y_grrho2
+      xi_nc(j) = dq_s(k_mainion)/y_grrho2
+      ci_nc(j) = vq_s(k_mainion)/y_grrho2
 ! Total radial energy flux (main ions)
       do k=1,5
          rdum(k)=qfl_s(k,k_mainion) + &
                  2.5*gfl_s(k,k_mainion)*temp_i(im)*z_j7kv
       enddo
       rdum(6)=RARRAY_SUM(5,rdum,1)
-      work(j,127) = rdum(6)*VRS(j)*1.e-6
+      qen_i_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Bootstrap current on p'/p (main ions)
       rdum(1)=bsjbp_s(k_mainion)
       rdum(2)=bsjbt_s(k_mainion)
-      work(j,128) = -1.e-6*rdum(1)/BTOR
-      work(j,129) = -1.e-6*rdum(2)/BTOR
+      bs_pi_nc(j) = -1.e-6*rdum(1)/BTOR
+      bs_ti_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (main ions)
-      work(j,130) = ( utheta_s(1,1,k_mainion) +  &
+      polflow_i_nc(j) = ( utheta_s(1,1,k_mainion) +  &
                       utheta_s(1,2,k_mainion) + &
                       utheta_s(1,3,k_mainion)  ) * &
                       BTOR/(1.0 + p_eps)/p_fhat
@@ -632,17 +468,17 @@ do j=1,NA
 ! Total radial particle flux (protons  )
       call RARRAY_COPY(5,gfl_s(1,k_proton),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,141) = rdum(6)*VRS(j)*1.e-19
+      gamma_p_nc(j) = rdum(6)*VRS(j)*1.e-19
 ! Particle diffusion and velocity (protons  )
       im  = jm_s(k_proton)
       iza = IABS(jz_s(k_proton))
-      work(j,142) = dn_s(k_proton)/y_grrho2
-      work(j,143) = (vn_s(k_proton) + veb_s(k_proton) + &
+      dn_p_nc(j) = dn_s(k_proton)/y_grrho2
+      cn_p_nc(j) = (vn_s(k_proton) + veb_s(k_proton) + &
                      gfl_s(5,k_proton)/den_iz(im,iza))  / y_grrho2
 ! Radial conduction flux (protons  )
       call RARRAY_COPY(5,qfl_s(1,k_proton),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,144) = rdum(6)*VRS(j)*1.e-6
+      qcond_p_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Heat conduction and velocity (protons  )
 ! Conduction total is sum of components
       rdum(1)=RARRAY_SUM(5,qfl_s(1,k_proton),1)
@@ -650,22 +486,22 @@ do j=1,NA
       dq_s(k_proton)=chit_ss(k_proton,k_proton) + chip_ss(k_proton,k_proton)
       vq_s(k_proton)=rdum(1)/(den_iz(im,iza)* z_j7kv*temp_i(im)) + &
                      dq_s(k_proton)*grt_i(im)/temp_i(im)
-      work(j,145) = dq_s(k_proton)/y_grrho2
-      work(j,146) = vq_s(k_proton)/y_grrho2
+      xp_nc(j) = dq_s(k_proton)/y_grrho2
+      cp_nc(j) = vq_s(k_proton)/y_grrho2
 ! Total radial energy flux (protons  )
       do k=1,5
          rdum(k)=qfl_s(k,k_proton) + &
                  2.5*gfl_s(k,k_proton)*temp_i(im)*z_j7kv
       enddo
       rdum(6)=RARRAY_SUM(5,rdum,1)
-      work(j,147) = rdum(6)*VRS(j)*1.e-6
+      qen_p_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Bootstrap current on p'/p (protons  )
       rdum(1)=bsjbp_s(k_proton)
       rdum(2)=bsjbt_s(k_proton)
-      work(j,148) = -1.e-6*rdum(1)/BTOR
-      work(j,149) = -1.e-6*rdum(2)/BTOR
+      bs_pp_nc(j) = -1.e-6*rdum(1)/BTOR
+      bs_tp_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (protons)
-      work(j,150) = ( utheta_s(1,1,k_proton) +  &
+      polflow_p_nc(j) = ( utheta_s(1,1,k_proton) +  &
                       utheta_s(1,2,k_proton) + &
                       utheta_s(1,3,k_proton)  ) * &
                       BTOR/(1.0 + p_eps)/p_fhat
@@ -676,17 +512,17 @@ do j=1,NA
 ! Total radial particle flux (deuterons  )
       call RARRAY_COPY(5,gfl_s(1,k_deuteron),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,161) = rdum(6)*VRS(j)*1.e-19
+      gamma_d_nc(j) = rdum(6)*VRS(j)*1.e-19
 ! Particle diffusion and velocity (deuterons  )
       im  = jm_s(k_deuteron)
       iza = IABS(jz_s(k_deuteron))
-      work(j,162) = dn_s(k_deuteron)/y_grrho2
-      work(j,163) = (vn_s(k_deuteron) + veb_s(k_deuteron) + &
+      dn_d_nc(j) = dn_s(k_deuteron)/y_grrho2
+      cn_d_nc(j) = (vn_s(k_deuteron) + veb_s(k_deuteron) + &
                      gfl_s(5,k_deuteron)/den_iz(im,iza)) / y_grrho2
 ! Radial conduction flux (deuterons  )
       call RARRAY_COPY(5,qfl_s(1,k_deuteron),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,164) = rdum(6)*VRS(j)*1.e-6
+      qcond_d_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Heat conduction and velocity (deuterons  )
 ! Conduction total is sum of components
       rdum(1)=RARRAY_SUM(5,qfl_s(1,k_deuteron),1)
@@ -695,22 +531,22 @@ do j=1,NA
                        chip_ss(k_deuteron,k_deuteron)
       vq_s(k_deuteron)=rdum(1)/(den_iz(im,iza)* z_j7kv*temp_i(im)) + &
                        dq_s(k_deuteron)*grt_i(im)/temp_i(im)
-      work(j,165) = dq_s(k_deuteron)/y_grrho2
-      work(j,166) = vq_s(k_deuteron)/y_grrho2
+      xd_nc(j) = dq_s(k_deuteron)/y_grrho2
+      cd_nc(j) = vq_s(k_deuteron)/y_grrho2
 ! Total radial energy flux (deuterons  )
       do k=1,5
          rdum(k)=qfl_s(k,k_deuteron) + &
                  2.5*gfl_s(k,k_deuteron)*temp_i(im)*z_j7kv
       enddo
       rdum(6)=RARRAY_SUM(5,rdum,1)
-      work(j,167) = rdum(6)*VRS(j)*1.e-6
+      qen_d_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Bootstrap current on p'/p (deuterons  )
       rdum(1)=bsjbp_s(k_deuteron)
       rdum(2)=bsjbt_s(k_deuteron)
-      work(j,168) = -1.e-6*rdum(1)/BTOR
-      work(j,169) = -1.e-6*rdum(2)/BTOR
+      bs_pd_nc(j) = -1.e-6*rdum(1)/BTOR
+      bs_td_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (deuterons)
-      work(j,170) = ( utheta_s(1,1,k_deuteron) +  &
+      polflow_d_nc(j) = ( utheta_s(1,1,k_deuteron) +  &
                       utheta_s(1,2,k_deuteron) + &
                       utheta_s(1,3,k_deuteron)  ) * &
                       BTOR/(1.0 + p_eps)/p_fhat
@@ -721,17 +557,17 @@ do j=1,NA
 ! Total radial particle flux (tritons  )
       call RARRAY_COPY(5,gfl_s(1,k_triton),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,181) = rdum(6)*VRS(j)*1.e-19
+      gamma_t_nc(j) = rdum(6)*VRS(j)*1.e-19
 ! Particle diffusion and velocity (tritons  )
       im  = jm_s(k_triton)
       iza = IABS(jz_s(k_triton))
-      work(j,182) = dn_s(k_triton)/y_grrho2
-      work(j,183) = (vn_s(k_triton) + veb_s(k_triton) + &
+      dn_t_nc(j) = dn_s(k_triton)/y_grrho2
+      cn_t_nc(j) = (vn_s(k_triton) + veb_s(k_triton) + &
                      gfl_s(5,k_triton)/den_iz(im,iza)) / y_grrho2
 ! Radial conduction flux (tritons  )
       call RARRAY_COPY(5,qfl_s(1,k_triton),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,184) = rdum(6)*VRS(j)*1.e-6
+      qcond_t_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Heat conduction and velocity (tritons  )
 ! Conduction total is sum of components
       rdum(1)=RARRAY_SUM(5,qfl_s(1,k_triton),1)
@@ -740,22 +576,22 @@ do j=1,NA
                      chip_ss(k_triton,k_triton)
       vq_s(k_triton)=rdum(1)/(den_iz(im,iza)* z_j7kv*temp_i(im)) + &
                      dq_s(k_triton)*grt_i(im)/temp_i(im)
-      work(j,185) = dq_s(k_triton)/y_grrho2
-      work(j,186) = vq_s(k_triton)/y_grrho2
+      xt_nc(j) = dq_s(k_triton)/y_grrho2
+      ct_nc(j) = vq_s(k_triton)/y_grrho2
 ! Total radial energy flux (tritons  )
       do k=1,5
          rdum(k)=qfl_s(k,k_triton) + &
                  2.5*gfl_s(k,k_triton)*temp_i(im)*z_j7kv
       enddo
       rdum(6)=RARRAY_SUM(5,rdum,1)
-      work(j,187) = rdum(6)*VRS(j)*1.e-6
+      qen_t_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Bootstrap current on p'/p (tritons  )
       rdum(1)=bsjbp_s(k_triton)
       rdum(2)=bsjbt_s(k_triton)
-      work(j,188) = -1.e-6*rdum(1)/BTOR
-      work(j,189) = -1.e-6*rdum(2)/BTOR
+      bs_pt_nc(j) = -1.e-6*rdum(1)/BTOR
+      bs_tt_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (tritons)
-      work(j,190) = ( utheta_s(1,1,k_triton) +  &
+      polflow_t_nc(j) = ( utheta_s(1,1,k_triton) +  &
                       utheta_s(1,2,k_triton) + &
                       utheta_s(1,3,k_triton)  ) * &
                       BTOR/(1.0 + p_eps)/p_fhat
@@ -766,17 +602,17 @@ do j=1,NA
 ! Total radial particle flux (He3 particles)
       call RARRAY_COPY(5,gfl_s(1,k_he3),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,101) = rdum(6)*VRS(j)*1.e-19
+      gamma_he3_nc = rdum(6)*VRS(j)*1.e-19
 ! Particle diffusion and velocity (He3 particles)
       im  = jm_s(k_he3)
       iza = IABS(jz_s(k_he3))
-      work(j,202) = dn_s(k_he3)/y_grrho2
-      work(j,203) = (vn_s(k_he3)  + veb_s(k_he3) + &
+      dn_he3_nc(j) = dn_s(k_he3)/y_grrho2
+      cn_he3_nc(j) = (vn_s(k_he3)  + veb_s(k_he3) + &
                      gfl_s(5,k_he3)/den_iz(im,iza))  / y_grrho2
 ! Radial conduction flux (He3 particles)
       call RARRAY_COPY(5,qfl_s(1,k_he3),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,204) = rdum(6)*VRS(j)*1.e-6
+      qcond_he3_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Heat conduction and velocity (He3 particles)
 ! Conduction total is sum of components
       rdum(1)=RARRAY_SUM(5,qfl_s(1,k_he3),1)
@@ -784,22 +620,22 @@ do j=1,NA
       dq_s(k_he3)=chit_ss(k_he3,k_he3) + chip_ss(k_he3,k_he3)
       vq_s(k_he3)=rdum(1)/(den_iz(im,iza)* z_j7kv*temp_i(im)) + &
                   dq_s(k_he3)*grt_i(im)/temp_i(im)
-      work(j,205) = dq_s(k_he3)/y_grrho2
-      work(j,206) = vq_s(k_he3)/y_grrho2
+      xhe3_nc(j) = dq_s(k_he3)/y_grrho2
+      che3_nc(j) = vq_s(k_he3)/y_grrho2
 ! Total radial energy flux (He3 particles)
       do k=1,5
          rdum(k)=qfl_s(k,k_he3) + &
                  2.5*gfl_s(k,k_he3)*temp_i(im)*z_j7kv
       enddo
       rdum(6)=RARRAY_SUM(5,rdum,1)
-      work(j,207) = rdum(6)*VRS(j)*1.e-6
+      qen_he3_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Bootstrap current on p'/p (He3 particles)
       rdum(1)=bsjbp_s(k_he3)
       rdum(2)=bsjbt_s(k_he3)
-      work(j,208) = -1.e-6*rdum(1)/BTOR
-      work(j,209) = -1.e-6*rdum(2)/BTOR
+      bs_phe3_nc(j) = -1.e-6*rdum(1)/BTOR
+      bs_the3_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (He3 particles)
-      work(j,210) = ( utheta_s(1,1,k_he3) +  &
+      polflow_he3_nc(j) = ( utheta_s(1,1,k_he3) +  &
                       utheta_s(1,2,k_he3) + &
                       utheta_s(1,3,k_he3)  ) * &
                       BTOR/(1.0 + p_eps)/p_fhat
@@ -809,17 +645,17 @@ do j=1,NA
 ! Total radial particle flux (alpha particles)
       call RARRAY_COPY(5,gfl_s(1,k_alpha),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,221) = rdum(6)*VRS(j)*1.e-19
+      gamma_he4_nc(j) = rdum(6)*VRS(j)*1.e-19
 ! Particle diffusion and velocity (alpha particles)
       im  = jm_s(k_alpha)
       iza = IABS(jz_s(k_alpha))
-      work(j,222) = dn_s(k_alpha)/y_grrho2
-      work(j,223) = (vn_s(k_alpha) + veb_s(k_alpha) + &
+      dn_he4_nc(j) = dn_s(k_alpha)/y_grrho2
+      cn_he4_nc(j) = (vn_s(k_alpha) + veb_s(k_alpha) + &
                      gfl_s(5,k_alpha)/den_iz(im,iza)) / y_grrho2
 ! Radial conduction flux (alpha particles)
       call RARRAY_COPY(5,qfl_s(1,k_alpha),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,224) = rdum(6)*VRS(j)*1.e-6
+      qcond_he4_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Heat conduction and velocity (alpha particles)
 ! Conduction total is sum of components
       rdum(1)=RARRAY_SUM(5,qfl_s(1,k_alpha),1)
@@ -827,22 +663,22 @@ do j=1,NA
       dq_s(k_alpha)=chit_ss(k_alpha,k_alpha) + chip_ss(k_alpha,k_alpha)
       vq_s(k_alpha)=rdum(1)/(den_iz(im,iza)* z_j7kv*temp_i(im)) + &
                     dq_s(k_alpha)*grt_i(im)/temp_i(im)
-      work(j,225) = dq_s(k_alpha)/y_grrho2
-      work(j,226) = vq_s(k_alpha)/y_grrho2
+      xhe4_nc(j) = dq_s(k_alpha)/y_grrho2
+      che4_nc(j) = vq_s(k_alpha)/y_grrho2
 ! Total radial energy flux (alpha particles)
       do k=1,5
          rdum(k)=qfl_s(k,k_alpha) + &
                  2.5*gfl_s(k,k_alpha)*temp_i(im)*z_j7kv
       enddo
       rdum(6)=RARRAY_SUM(5,rdum,1)
-      work(j,227) = rdum(6)*VRS(j)*1.e-6
+      qen_he4_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Bootstrap current on p'/p (alpha particles)
       rdum(1)=bsjbp_s(k_alpha)
       rdum(2)=bsjbt_s(k_alpha)
-      work(j,228) = -1.e-6*rdum(1)/BTOR
-      work(j,229) = -1.e-6*rdum(2)/BTOR
+      bs_phe4_nc(j) = -1.e-6*rdum(1)/BTOR
+      bs_the4_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (alpha particles)
-      work(j,230) = ( utheta_s(1,1,k_alpha) +  &
+      polflow_he4_nc(j) = ( utheta_s(1,1,k_alpha) +  &
                       utheta_s(1,2,k_alpha) + &
                       utheta_s(1,3,k_alpha)  ) * &
                       BTOR/(1.0 + p_eps)/p_fhat
@@ -852,17 +688,17 @@ do j=1,NA
 ! Total radial particle flux (impZ1 particles)
       call RARRAY_COPY(5,gfl_s(1,k_impZ1),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,241) = rdum(6)*VRS(j)*1.e-19
+      gamma_imp1_nc(j) = rdum(6)*VRS(j)*1.e-19
 ! Particle diffusion and velocity (impZ1 particles)
       im  = jm_s(k_impZ1)
       iza = IABS(jz_s(k_impZ1))
-      work(j,242) = dn_s(k_impZ1)/y_grrho2
-      work(j,243) = (vn_s(k_impZ1) + veb_s(k_impZ1) + &
+      dn_imp1_nc(j) = dn_s(k_impZ1)/y_grrho2
+      cn_imp1_nc(j) = (vn_s(k_impZ1) + veb_s(k_impZ1) + &
                      gfl_s(5,k_impZ1)/den_iz(im,iza)) / y_grrho2
 ! Radial conduction flux (impZ1 particles)
       call RARRAY_COPY(5,qfl_s(1,k_impZ1),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,244) = rdum(6)*VRS(j)*1.e-6
+      qcond_imp1_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Heat conduction and velocity (impZ1 particles)
 ! Conduction total is sum of components
       rdum(1)=RARRAY_SUM(5,qfl_s(1,k_impZ1),1)
@@ -870,22 +706,22 @@ do j=1,NA
       dq_s(k_impZ1)=chit_ss(k_impZ1,k_impZ1) + chip_ss(k_impZ1,k_impZ1)
       vq_s(k_impZ1)=rdum(1)/(den_iz(im,iza)* z_j7kv*temp_i(im)) + &
                     dq_s(k_impZ1)*grt_i(im)/temp_i(im)
-      work(j,245) = dq_s(k_impZ1)/y_grrho2
-      work(j,246) = vq_s(k_impZ1)/y_grrho2
+      ximp1_nc(j) = dq_s(k_impZ1)/y_grrho2
+      cimp1_nc(j) = vq_s(k_impZ1)/y_grrho2
 ! Total radial energy flux (impZ1 particles)
       do k=1,5
          rdum(k)=qfl_s(k,k_impZ1) + &
                  2.5*gfl_s(k,k_impZ1)*temp_i(im)*z_j7kv
       enddo
       rdum(6)=RARRAY_SUM(5,rdum,1)
-      work(j,247) = rdum(6)*VRS(j)*1.e-6
+      qen_imp1_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Bootstrap current on p'/p (impZ1 particles)
       rdum(1)=bsjbp_s(k_impZ1)
       rdum(2)=bsjbt_s(k_impZ1)
-      work(j,248) = -1.e-6*rdum(1)/BTOR
-      work(j,249) = -1.e-6*rdum(2)/BTOR
+      bs_pimp1_nc(j) = -1.e-6*rdum(1)/BTOR
+      bs_timp1_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (impZ1 particles)
-      work(j,250) = ( utheta_s(1,1,k_impZ1) +  &
+      polflow_imp1_nc(j) = ( utheta_s(1,1,k_impZ1) +  &
                       utheta_s(1,2,k_impZ1) + &
                       utheta_s(1,3,k_impZ1)  ) * &
                       BTOR/(1.0 + p_eps)/p_fhat
@@ -895,17 +731,17 @@ do j=1,NA
 ! Total radial particle flux (impZ2 particles)
       call RARRAY_COPY(5,gfl_s(1,k_impZ2),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,261) = rdum(6)*VRS(j)*1.e-19
+      gamma_imp2_nc(j) = rdum(6)*VRS(j)*1.e-19
 ! Particle diffusion and velocity (impZ2 particles)
       im  = jm_s(k_impZ2)
       iza = IABS(jz_s(k_impZ2))
-      work(j,262) = dn_s(k_impZ2)/y_grrho2
-      work(j,263) = (vn_s(k_impZ2) + veb_s(k_impZ2) + &
+      dn_imp2_nc(j) = dn_s(k_impZ2)/y_grrho2
+      cn_imp2_nc(j) = (vn_s(k_impZ2) + veb_s(k_impZ2) + &
                      gfl_s(5,k_impZ2)/den_iz(im,iza))  / y_grrho2
 ! Radial conduction flux (impZ2 particles)
       call RARRAY_COPY(5,qfl_s(1,k_impZ2),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,264) = rdum(6)*VRS(j)*1.e-6
+      qcond_imp2_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Heat conduction and velocity (impZ2 particles)
 ! Conduction total is sum of components
       rdum(1)=RARRAY_SUM(5,qfl_s(1,k_impZ2),1)
@@ -913,22 +749,22 @@ do j=1,NA
       dq_s(k_impZ2)=chit_ss(k_impZ2,k_impZ2) + chip_ss(k_impZ2,k_impZ2)
       vq_s(k_impZ2)=rdum(1)/(den_iz(im,iza)* z_j7kv*temp_i(im)) + &
                     dq_s(k_impZ2)*grt_i(im)/temp_i(im)
-      work(j,265) = dq_s(k_impZ2)/y_grrho2
-      work(j,266) = vq_s(k_impZ2)/y_grrho2
+      ximp2_nc(j) = dq_s(k_impZ2)/y_grrho2
+      cimp2_nc(j) = vq_s(k_impZ2)/y_grrho2
 ! Total radial energy flux (impZ2 particles)
       do k=1,5
          rdum(k)=qfl_s(k,k_impZ2) + &
                  2.5*gfl_s(k,k_impZ2)*temp_i(im)*z_j7kv
       enddo
       rdum(6)=RARRAY_SUM(5,rdum,1)
-      work(j,267) = rdum(6)*VRS(j)*1.e-6
+      qen_imp2_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Bootstrap current on p'/p (impZ2 particles)
       rdum(1)=bsjbp_s(k_impZ2)
       rdum(2)=bsjbt_s(k_impZ2)
-      work(j,268) = -1.e-6*rdum(1)/BTOR
-      work(j,269) = -1.e-6*rdum(2)/BTOR
+      bs_pimp2_nc(j) = -1.e-6*rdum(1)/BTOR
+      bs_timp2_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (impZ2 particles)
-      work(j,270) = ( utheta_s(1,1,k_impZ2) +  &
+      polflow_imp2_nc(j) = ( utheta_s(1,1,k_impZ2) +  &
                       utheta_s(1,2,k_impZ2) + &
                       utheta_s(1,3,k_impZ2)  ) * &
                       BTOR/(1.0 + p_eps)/p_fhat
@@ -938,17 +774,17 @@ do j=1,NA
 ! Total radial particle flux (impZ3 particles)
       call RARRAY_COPY(5,gfl_s(1,k_impZ3),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,281) = rdum(6)*VRS(j)*1.e-19
+      gamma_imp3_nc(j) = rdum(6)*VRS(j)*1.e-19
 ! Particle diffusion and velocity (impZ3 particles)
       im  = jm_s(k_impZ3)
       iza = IABS(jz_s(k_impZ3))
-      work(j,282) = dn_s(k_impZ3)/y_grrho2
-      work(j,283) = (vn_s(k_impZ3) + veb_s(k_impZ3) + &
+      dn_imp3_nc(j) = dn_s(k_impZ3)/y_grrho2
+      cn_imp3_nc(j) = (vn_s(k_impZ3) + veb_s(k_impZ3) + &
                      gfl_s(5,k_impZ3)/den_iz(im,iza)) / y_grrho2
 ! Radial conduction flux (impZ3 particles)
       call RARRAY_COPY(5,qfl_s(1,k_impZ3),1,rdum,1)
       rdum(6) = RARRAY_SUM(5,rdum,1)
-      work(j,284) = rdum(6)*VRS(j)*1.e-6
+      qcond_imp3_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Heat conduction and velocity (impZ3 particles)
 ! Conduction total is sum of components
       rdum(1)=RARRAY_SUM(5,qfl_s(1,k_impZ3),1)
@@ -956,22 +792,22 @@ do j=1,NA
       dq_s(k_impZ3)=chit_ss(k_impZ3,k_impZ3) + chip_ss(k_impZ3,k_impZ3)
       vq_s(k_impZ3)=rdum(1)/(den_iz(im,iza)* z_j7kv*temp_i(im)) + &
                     dq_s(k_impZ3)*grt_i(im)/temp_i(im)
-      work(j,285) = dq_s(k_impZ3)/y_grrho2
-      work(j,286) = vq_s(k_impZ3)/y_grrho2
+      ximp3_nc(j) = dq_s(k_impZ3)/y_grrho2
+      cimp3_nc(j) = vq_s(k_impZ3)/y_grrho2
 ! Total radial energy flux (impZ3 particles)
       do k=1,5
          rdum(k)=qfl_s(k,k_impZ3) + &
                  2.5*gfl_s(k,k_impZ3)*temp_i(im)*z_j7kv
       enddo
       rdum(6)=RARRAY_SUM(5,rdum,1)
-      work(j,287) = rdum(6)*VRS(j)*1.e-6
+      qen_imp3_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Bootstrap current on p'/p (impZ3 particles)
       rdum(1)=bsjbp_s(k_impZ3)
       rdum(2)=bsjbt_s(k_impZ3)
-      work(j,288) = -1.e-6*rdum(1)/BTOR
-      work(j,289) = -1.e-6*rdum(2)/BTOR
+      bs_pimp3_nc(j) = -1.e-6*rdum(1)/BTOR
+      bs_timp3_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (impZ3 particles)
-      work(j,290) = ( utheta_s(1,1,k_impZ3) +  &
+      polflow_imp3_nc(j) = ( utheta_s(1,1,k_impZ3) +  &
                       utheta_s(1,2,k_impZ3) + &
                       utheta_s(1,3,k_impZ3)  ) * &
                       BTOR/(1.0 + p_eps)/p_fhat
@@ -981,18 +817,131 @@ do j=1,NA
 
 ! Bootstrap current
    rdum(1)=p_bsjb
-   work(j,301)  = -1.e-6*rdum(1)/BTOR
+   jbs_nc(j)  = -1.e-6*rdum(1)/BTOR
 ! External current
    rdum(2)=p_exjb
-   work(j,302)  = -1.e-6*rdum(2)/BTOR
+   jext_nc(j)  = -1.e-6*rdum(2)/BTOR
 ! Current conductivity
-   work(j,303)  = 1.e-6/p_etap
+   cc_nc(j)  = 1.e-6/p_etap
 
 enddo ! Main radial loop
 
-do narray=101,320
-   work(NA1,narray) = work(NA,narray)
-enddo
+! Boundary value
+
+gamma_e_nc(NA1) = gamma_e_nc(NA)
+dn_e_nc(NA1)    = dn_e_nc(NA)
+cn_e_nc(NA1)    = cn_e_nc(NA)
+qcond_e_nc(NA1) = qcond_e_nc(NA)
+xe_nc(NA1)      = xe_nc(NA)
+ce_nc(NA1)      = ce_nc(NA)
+qen_e_nc(NA1)   = qen_e_nc(NA)
+bs_pe_nc(NA1)   = bs_pe_nc(NA)
+bs_te_nc(NA1)   = bs_te_nc(NA)
+polflow_e_nc(NA1) = polflow_e_nc(NA)
+
+gamma_i_nc(NA1) = gamma_i_nc(NA)
+dn_i_nc(NA1)    = dn_i_nc(NA)
+cn_i_nc(NA1)    = cn_i_nc(NA)
+qcond_i_nc(NA1) = qcond_i_nc(NA)
+xi_nc(NA1)      = xi_nc(NA)
+ci_nc(NA1)      = ci_nc(NA)
+qen_i_nc(NA1)   = qen_i_nc(NA)
+bs_pi_nc(NA1)   = bs_pi_nc(NA)
+bs_ti_nc(NA1)   = bs_ti_nc(NA)
+polflow_i_nc(NA1) = polflow_i_nc(NA)
+
+gamma_p_nc(NA1) = gamma_p_nc(NA)
+dn_p_nc(NA1)    = dn_p_nc(NA)
+cn_p_nc(NA1)    = cn_p_nc(NA)
+qcond_p_nc(NA1) = qcond_p_nc(NA)
+xp_nc(NA1)      = xp_nc(NA)
+cp_nc(NA1)      = cp_nc(NA)
+qen_p_nc(NA1)   = qen_p_nc(NA)
+bs_pp_nc(NA1)   = bs_pp_nc(NA)
+bs_tp_nc(NA1)   = bs_tp_nc(NA)
+polflow_p_nc(NA1) = polflow_p_nc(NA)
+
+gamma_d_nc(NA1) = gamma_d_nc(NA)
+dn_d_nc(NA1)    = dn_d_nc(NA)
+cn_d_nc(NA1)    = cn_d_nc(NA)
+qcond_d_nc(NA1) = qcond_d_nc(NA)
+xd_nc(NA1)      = xd_nc(NA)
+cd_nc(NA1)      = cd_nc(NA)
+qen_d_nc(NA1)   = qen_d_nc(NA)
+bs_pd_nc(NA1)   = bs_pd_nc(NA)
+bs_td_nc(NA1)   = bs_td_nc(NA)
+polflow_d_nc(NA1) = polflow_d_nc(NA)
+
+gamma_t_nc(NA1) = gamma_t_nc(NA)
+dn_t_nc(NA1)    = dn_t_nc(NA)
+cn_t_nc(NA1)    = cn_t_nc(NA)
+qcond_t_nc(NA1) = qcond_t_nc(NA)
+xt_nc(NA1)      = xt_nc(NA)
+ct_nc(NA1)      = ct_nc(NA)
+qen_t_nc(NA1)   = qen_t_nc(NA)
+bs_pt_nc(NA1)   = bs_pt_nc(NA)
+bs_tt_nc(NA1)   = bs_tt_nc(NA)
+polflow_t_nc(NA1) = polflow_t_nc(NA)
+
+gamma_he3_nc(NA1) = gamma_he3_nc(NA)
+dn_he3_nc(NA1)    = dn_he3_nc(NA)
+cn_he3_nc(NA1)    = cn_he3_nc(NA)
+qcond_he3_nc(NA1) = qcond_he3_nc(NA)
+xhe3_nc(NA1)      = xhe3_nc(NA)
+che3_nc(NA1)      = che3_nc(NA)
+qen_he3_nc(NA1)   = qen_he3_nc(NA)
+bs_phe3_nc(NA1)   = bs_phe3_nc(NA)
+bs_the3_nc(NA1)   = bs_the3_nc(NA)
+polflow_he3_nc(NA1) = polflow_he3_nc(NA)
+
+gamma_he4_nc(NA1) = gamma_he4_nc(NA)
+dn_he4_nc(NA1)    = dn_he4_nc(NA)
+cn_he4_nc(NA1)    = cn_he4_nc(NA)
+qcond_he4_nc(NA1) = qcond_he4_nc(NA)
+xhe4_nc(NA1)      = xhe4_nc(NA)
+che4_nc(NA1)      = che4_nc(NA)
+qen_he4_nc(NA1)   = qen_he4_nc(NA)
+bs_phe4_nc(NA1)   = bs_phe4_nc(NA)
+bs_the4_nc(NA1)   = bs_the4_nc(NA)
+polflow_he4_nc(NA1) = polflow_he4_nc(NA)
+
+gamma_imp1_nc(NA1) = gamma_imp1_nc(NA)
+dn_imp1_nc(NA1)    = dn_imp1_nc(NA)
+cn_imp1_nc(NA1)    = cn_imp1_nc(NA)
+qcond_imp1_nc(NA1) = qcond_imp1_nc(NA)
+ximp1_nc(NA1)      = ximp1_nc(NA)
+cimp1_nc(NA1)      = cimp1_nc(NA)
+qen_imp1_nc(NA1)   = qen_imp1_nc(NA)
+bs_pimp1_nc(NA1)   = bs_pimp1_nc(NA)
+bs_timp1_nc(NA1)   = bs_timp1_nc(NA)
+polflow_imp1_nc(NA1) = polflow_imp1_nc(NA)
+
+gamma_imp2_nc(NA1) = gamma_imp2_nc(NA)
+dn_imp2_nc(NA1)    = dn_imp2_nc(NA)
+cn_imp2_nc(NA1)    = cn_imp2_nc(NA)
+qcond_imp2_nc(NA1) = qcond_imp2_nc(NA)
+ximp2_nc(NA1)      = ximp2_nc(NA)
+cimp2_nc(NA1)      = cimp2_nc(NA)
+qen_imp2_nc(NA1)   = qen_imp2_nc(NA)
+bs_pimp2_nc(NA1)   = bs_pimp2_nc(NA)
+bs_timp2_nc(NA1)   = bs_timp2_nc(NA)
+polflow_imp2_nc(NA1) = polflow_imp2_nc(NA)
+
+gamma_imp3_nc(NA1) = gamma_imp3_nc(NA)
+dn_imp3_nc(NA1)    = dn_imp3_nc(NA)
+cn_imp3_nc(NA1)    = cn_imp3_nc(NA)
+qcond_imp3_nc(NA1) = qcond_imp3_nc(NA)
+ximp3_nc(NA1)      = ximp3_nc(NA)
+cimp3_nc(NA1)      = cimp3_nc(NA)
+qen_imp3_nc(NA1)   = qen_imp3_nc(NA)
+bs_pimp3_nc(NA1)   = bs_pimp3_nc(NA)
+bs_timp3_nc(NA1)   = bs_timp3_nc(NA)
+polflow_imp3_nc(NA1) = polflow_imp3_nc(NA)
+
+jbs_nc(NA1)  = jbs_nc(NA)
+jext_nc(NA1) = jext_nc(NA)
+cc_nc(NA1)   = cc_nc(NA)
+ni_nc(NA1)   = ni_nc(NA)
 
 return
 end subroutine neocl4

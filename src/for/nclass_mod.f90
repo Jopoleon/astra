@@ -1,6 +1,31 @@
 module nclass_mod
 
+use parameter_inc, only: NRD
+
 implicit none
+
+double precision, dimension(NRD) :: &
+    gamma_e_nc, dn_e_nc, cn_e_nc, qcond_e_nc, xe_nc, ce_nc, qen_e_nc, &
+    bs_pe_nc, bs_te_nc, polflow_e_nc, &
+    gamma_i_nc, dn_i_nc, cn_i_nc, qcond_i_nc, xi_nc, ci_nc, qen_i_nc, &
+    bs_pi_nc, bs_ti_nc, polflow_i_nc, &
+    gamma_p_nc, dn_p_nc, cn_p_nc, qcond_p_nc, xp_nc, cp_nc, qen_p_nc, &
+    bs_pp_nc, bs_tp_nc, polflow_p_nc, &
+    gamma_d_nc, dn_d_nc, cn_d_nc, qcond_d_nc, xd_nc, cd_nc, qen_d_nc, &
+    bs_pd_nc, bs_td_nc, polflow_d_nc, &
+    gamma_t_nc, dn_t_nc, cn_t_nc, qcond_t_nc, xt_nc, ct_nc, qen_t_nc, &
+    bs_pt_nc, bs_tt_nc, polflow_t_nc, &
+    gamma_he3_nc, dn_he3_nc, cn_he3_nc, qcond_he3_nc, xhe3_nc, che3_nc, qen_he3_nc, &
+    bs_phe3_nc, bs_the3_nc, polflow_he3_nc, &
+    gamma_he4_nc, dn_he4_nc, cn_he4_nc, qcond_he4_nc, xhe4_nc, che4_nc, qen_he4_nc, &
+    bs_phe4_nc, bs_the4_nc, polflow_he4_nc, &
+    gamma_imp1_nc, dn_imp1_nc, cn_imp1_nc, qcond_imp1_nc, ximp1_nc, cimp1_nc, qen_imp1_nc, &
+    bs_pimp1_nc, bs_timp1_nc, polflow_imp1_nc, &
+    gamma_imp2_nc, dn_imp2_nc, cn_imp2_nc, qcond_imp2_nc, ximp2_nc, cimp2_nc, qen_imp2_nc, &
+    bs_pimp2_nc, bs_timp2_nc, polflow_imp2_nc, &
+    gamma_imp3_nc, dn_imp3_nc, cn_imp3_nc, qcond_imp3_nc, ximp3_nc, cimp3_nc, qen_imp3_nc, &
+    bs_pimp3_nc, bs_timp3_nc, polflow_imp3_nc, &
+    jbs_nc, jext_nc, cc_nc, ni_nc
 
 integer, parameter :: mx_mi=9, mx_ms=40, mx_mz=100
 
@@ -109,6 +134,8 @@ subroutine NCLASS(k_order,k_potato,m_i,m_z,c_den,c_potb,c_potl, &
 !       =6 error: trapped fraction must be 0.0.le.p_ft.le.1.0
 !----------------------------------------------------------------
 
+implicit none
+
 !Declaration of input variables
 integer        k_order,                 k_potato
 integer        m_i,                     m_z
@@ -154,7 +181,6 @@ real           denz2(mx_mi),            vt_i(mx_mi)
 real           pgrp_iz(mx_mi,mx_mz)
 real           amnt_ii(mx_mi,mx_mi)
 real           tau_ss(mx_ms,mx_ms)
-
 !Initialization
 !  Error flag
 iflag=0
@@ -406,6 +432,8 @@ subroutine NCLASS_FLOW(k_order,m_i,m_s,jm_s,jz_s,p_b2,p_bm2,p_eb, &
 !       =0 no errors
 !       =1 inversion of flow matrix failed
 !----------------------------------------------------------------
+
+implicit none
 
 !Declaration of input variables
 integer        k_order,                 m_i, &
@@ -819,6 +847,8 @@ subroutine NCLASS_K(k_banana,k_pfirsch,k_potato,m_s,jm_s,jz_s, &
 !  tau_ss(s1,s2)-90 degree scattering time of s1 on s2 (s)
 !----------------------------------------------------------------
 
+implicit none
+
 !Declaration of input variables
 integer        k_banana,                k_pfirsch, &
             k_potato,                m_s
@@ -915,6 +945,8 @@ subroutine NCLASS_MN(k_order,m_i,amu_i,temp_i,capm_ii,capn_ii)
 !The indices on the M and N matrices are one greater than the notation
 !  in the review article so as to avoid 0 as an index
 !----------------------------------------------------------------
+
+implicit none
 
 !Declaration of input variables
 integer        k_order,                 m_i
@@ -1037,6 +1069,8 @@ subroutine NCLASS_MU(k_order,k_banana,k_pfirsch,k_potato,m_s,jm_s, &
 !  ymu_s(s)-normalized viscosity for s (kg/m**3/s)
 !  tau_ss(s1,s2)-90 degree scattering time of s1 on s2 (s)
 !----------------------------------------------------------------
+
+implicit none
 
 !Declaration of input variables
 integer        k_banana,                k_order, &
@@ -1248,6 +1282,7 @@ subroutine NCLASS_NU(m_s,jm_s,p_ngrth,x,temp_i,vt_i,tau_ss,ynud_s, &
 !  ynut_s(s)-anisotropy relaxation rate for s (/s)
 !  ynutis(3,s)-PS anisotropy relaxation rates for s (/s)
 !----------------------------------------------------------------
+implicit none
 
 integer, parameter :: mx_mi=9, mx_ms=40
 
@@ -1334,6 +1369,8 @@ subroutine NCLASS_TAU(m_i,m_s,jm_s,jz_s,amu_i,temp_i,vt_i,den_iz, &
 !  amnt_ii(s1,s2)-eff relaxation rate for s1 on s2 (kg/m**3/s)
 !  tau_ss(s1,s2)-90 degree scattering time of s1 on s2 (s)
 !----------------------------------------------------------------
+
+implicit none
 
 !Declaration of input variables
 integer        m_i,                      m_s
@@ -1433,7 +1470,7 @@ subroutine WRITE_C(nout,n_c,c,n_l)
 !  n_l-length of field
 !  W.A. Houlberg 2/99
 !----------------------------------------------------------------
-
+implicit none
 !Declaration of input variables
 character*(*)  c(*)
 integer        n_c,                     n_l, &
@@ -1467,7 +1504,7 @@ subroutine WRITE_IR(nout,n_i,i,n_r,r,k_format)
 !          =else use e
 !  W.A. Houlberg 2/99
 !----------------------------------------------------------------
-
+implicit none
 !Declaration of input variables
 integer        k_format,                n_i, &
             n_r,                     nout
@@ -1520,7 +1557,7 @@ subroutine WRITE_LINE(nout,label,nabove,nbelow)
 !  nbelow-number of blanklines below label
 !  W.A. Houlberg 2/99
 !----------------------------------------------------------------
-
+implicit none
 !Declaration of input variables
 character*(*)  label
 integer        nabove,                  nbelow, &
@@ -1560,7 +1597,7 @@ subroutine WRITE_LINE_IR(nout,label,n_i,i,n_r,r,k_format)
 !          =else use e
 !  W.A. Houlberg 12/98
 !----------------------------------------------------------------
-
+implicit none
 !Declaration of input variables
 character*(*)  label
 integer        k_format,                n_i, &
@@ -1626,7 +1663,7 @@ subroutine U_LU_BACKSUB(a,n,ndim,indx,b)
 !  To solve with a different right hand side, just reload b as  desired
 !  and use the same LU decomposition, call U_LU_BACKSUB(a,n,ndim,indx,b)                                 *
 !----------------------------------------------------------------
-
+implicit none
 !Declaration of input variables
 integer        indx(*),               n, &
             ndim
@@ -1685,7 +1722,7 @@ subroutine U_LU_DECOMP(a,n,ndim,indx,d,iflag)
 !       =0 no errors
 !       =1 singular matrix
 !----------------------------------------------------------------
-
+implicit none
 !Declaration of parameters
 integer         nmax
 PARAMETER      (nmax=100)
@@ -1771,6 +1808,7 @@ real FUNCTION U_ERF(x)
 !Input:
 !  x-argument of error function
 !----------------------------------------------------------------
+implicit none
 
 !Declaration of input variables
 real           x
@@ -1834,7 +1872,7 @@ subroutine RARRAY_ZERO(n,x)
 !Output:
 !  x-zeroed array
 !----------------------------------------------------------------
-
+implicit none
 !Declaration of input variables
 integer        n
 real           x(*)
@@ -1857,6 +1895,7 @@ real function RARRAY_SUM(n,x,incx)
 !  x-array to be summed
 !  incx-increment in sx index
 !----------------------------------------------------------------
+implicit none
 
 !Declaration of input variables
 integer        incx,                    n
@@ -1885,7 +1924,7 @@ subroutine RARRAY_COPY(n,x,incx,y,incy)
 !Output:
 !  y-new array
 !----------------------------------------------------------------
-
+implicit none
 !Declaration of input variables
 integer        incx,                    incy, &
             n
