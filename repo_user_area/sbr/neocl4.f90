@@ -1007,7 +1007,7 @@ subroutine ZBFAUX(GRRdB2, NGRTheta, YFM)
 !-----------------------------------------------------------------------
 
 use const_inc, only: ROC, HRO, NA, NA1, GP2, BTOR, RTOR
-use status_inc, only: work, BDB0, BDB02, IPOL, MU, TRIA, ELON, SHIF, &
+use status_inc, only: BDB0, BDB02, IPOL, MU, TRIA, ELON, SHIF, &
    AMETR, RHO, DRODA
 
 implicit none
