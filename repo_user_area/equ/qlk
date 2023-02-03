@@ -92,10 +92,10 @@ xpr/qlki(int(CRAD3)*14+1,int(CRAD3)*15)&<:CF12:::;
 xpr/qlki(int(CRAD3)*15+1,int(CRAD3)*16)&<:CF12:::;
 !xpr/qlki(int(CRAD3)*15+1,int(CF16*NA1))&<:CF12:::;
 
-CAR17 = "work(j,21)"; ! chi_i
-CAR18 = "work(j,22)"; ! chi_e
-CAR20 = "work(j,24)"; ! Particle flux
-CAR42 = "work(j,28)"; !turbulent equipartition to be added to PE and subtracted to PI
+CAR17 = "mem_qlkz(j,1)"; ! chi_i
+CAR18 = "mem_qlkz(j,2)"; ! chi_e
+CAR20 = "mem_qlkz(j,4)"; ! Particle flux
+CAR42 = "mem_qlkz(j,8)"; !turbulent equipartition to be added to PE and subtracted to PI
 
 SMEARR(CF4,CAR17,CAR21)::::;
 SMEARR(CF4,CAR18,CAR22)::::;

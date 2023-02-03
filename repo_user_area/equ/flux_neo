@@ -89,9 +89,9 @@ xpr/neo(int(CRAD3)*14+1,int(CRAD3)*15)&<:CF12:::;
 xpr/neo(int(CRAD3)*15+1,int(CRAD3)*16)&<:CF12:::;
 !xpr/neo(int(CRAD3)*15+1,int(CF16*NA1)-1)&<:CF12:::;
 
-CAR17 = "work(j,51)"; ! chi_i
-CAR18 = "work(j,52)"; ! chi_e
-CAR20 = "work(j,54)"; ! Particle flux
+CAR17 = "mem_neo(j,1)"; ! chi_i
+CAR18 = "mem_neo(j,2)"; ! chi_e
+CAR20 = "mem_neo(j,4)"; ! Particle flux
 
 CAR1 = QETOT;
 CAR2 = QITOT;
