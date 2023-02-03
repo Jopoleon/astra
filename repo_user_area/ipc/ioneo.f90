@@ -29,12 +29,12 @@ subroutine OTNEO(JS, JE, JSBP, JSBR)
 !----------------------------------------------------------------------|
 
 use outcmn_inc, only: CPTSBR
-use status_inc, only: work
+use ipc_mod, only: mem_neo
 
 implicit none
 
 integer, intent(in) :: JS, JE, JSBP, JSBR
 
-call ot_tra(JS, JE, JSBP, CPTSBR(JSBR), work(1, 51) )
+call ot_tra(JS, JE, JSBP, CPTSBR(JSBR), mem_neo(1, 1) )
 
 end subroutine OTNEO

@@ -34,6 +34,7 @@ class POSTEP:
 
 use const_inc
 use status_inc
+use ipc_mod
 use outcmn_inc, only: CPT, CPTSBR
 use debugger, only: markloc
 
@@ -303,6 +304,7 @@ class DETVAR:
 
 use const_inc
 use status_inc
+use ipc_mod
 use outcmn_inc
 use debugger, only: markloc
 

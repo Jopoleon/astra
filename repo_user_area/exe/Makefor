@@ -22,6 +22,7 @@ $(OBJ_DIR)/parse_utils.o \
 $(OBJ_DIR)/dbl2char.o \
 $(OBJ_DIR)/emeq.o \
 $(OBJ_DIR)/parameters_a2spider.o \
+$(OBJ_DIR)/ipc_mod.o \
 $(OBJ_DIR)/nclass_mod.o \
 $(OBJ_DIR)/strahl_mod.o
 
