@@ -1,18 +1,15 @@
 !===========================================================!
-!=============== Simple use of STRAHL in ASTRA =============!
+!== Simple use of STRAHL-ASTRA8 with new output structure ==!
 !===========================================================!
 !
-! Daniel Fajardo, Elisabetta Bray, Teobaldo Luda (2022)
+! Daniel Fajardo (2023)
+! run e.g. with exp/AUG33040_2500
 !
 !----------------- General parameters ----------------------!
 
 ! Time step definition
 TAUMIN = 0.025;           ! minimum time step
 TAUMAX = 0.025;           ! maximum time step
-
-! Equilibrium grid
-NEQUIL=41;
-MEQUIL=41;
 
 !------------------- Plasma species ------------------------!
 
@@ -21,16 +18,12 @@ AMAIN=AMJ;         ! mass
 ZMAIN=ZMJ;         ! charge
 
 ! Main impurity of interest
-AIM1=184.;      ! W mass
-!ZIM1=CAR45;    ! Tungsten charge, calculated by STRAHL
+AIM1=184.;     ! W mass
+ZIM1=CAR45;    ! Tungsten charge, calculated by STRAHL
 	       ! CAR45 will be used in the call to A2STRAHL
-ZIM1=ZIWOL;    ! ZIWOL is a fml 
+
 NIZ1=1.*CAR40; ! Tungsten density, evolved in time by STRAHL
 	       ! CAR40 will be used in the call to A2STRAHL
-!NIZ1=0.01*NE;
-
-ZIM2=0.1; ! turn them off for TGLF
-ZIM3=0.1; ! turn them off for TGLF
 
 ! Deuterium density, from quasineutrality
 NDEUT=NE-(ZIM1*NIZ1);
@@ -41,137 +34,52 @@ NI=NDEUT;
 NIX=(NEX-NIZ1*ZIM1)+NIZ1;
 
 ! Effective charge (calculated by STRAHL)
-!ZEF=CAR41 + 1.e-8; ! CAR41 will be used in the call to A2STRAHL
-ZEF=(NDEUT*ZMJ**2+NIZ1*ZIM1**2)/NE; ! from definition, to compare to STRAHL result
+!ZEF=CAR41+1.e-8; ! CAR41 will be used in the call to A2STRAHL
+ZEF=(NDEUT*ZMJ**2+NIZ1*ZIM1**2)/NE; ! to compare to STRAHL
 
 !----------------------- Sources ---------------------------!
 
-! Power sources
-! (not necessary because we're not evolving the temperatures)
-%
-! ECRH
-TORBA(PEECR, CUECR, 0.d0)>:0.05:::;
-! NBI
-RABBIT>:0.05:::;
-%
-
-! Density sources
-NNCL=0.00001;   ! cold neutrals
-NNWM=0.0000;    ! warm neutrals
-NEUT:0.05:0.1:; ! calculates neutral density NN and temperature TN
-
-SNN=SNNEU; ! particle source due to ionization and recombination
-
 ! Radiation (calculated by STRAHL)
-!PRAD=CAR42; ! CAR42 will be used in the call to A2STRAHL
-PRAD=PRADX;
-
-! Power balance and equipartition to ions and electrons
-
-PE=POH+PEBM+PEECR-PEICL2-PRAD; ! heating power to electrons
-PI=PIBM+PEICL2;		       ! heating power to ions
+PRAD=CAR42; ! CAR42 will be used in the call to A2STRAHL
 
 !--------------------- TRANSPORT ---------------------------!
 
-%
-! Turbulent transport
-! TGLF call uses CRAD3, CBND1, CF4,CF12,CF13 and CAR17-CAR24
+! Impurity transport from simple analytical expressions
 
-CBND1=CMHD4;  ! boundary condition location for TGLF
-CF12 = 0.001; ! frequency of TGLF calls
-CF13 = 0.000; ! 
-CRAD3=nint((CBND1*NA1-1.)/16.);
+! impurity diffusion coefficient
+CAR43 = CIMP2;    ! CIMP2 is controllable from log.
+      	          ! Default: CIMP2 = 1.0
+	          ! --> constant diff. coeff. of 1m^2/s 
+! impurity convection
+CAR44 = CIMP3*FX; ! CIMP3 is controllable from log.
+      		  ! Default: CIMP3 = -5.0
+		  ! --> linearly increasing inward convection 
 
-xpr/tglfi(int(CRAD3)*0+1,int(CRAD3)*1 )&<:CF12:CF13::;	
-xpr/tglfi(int(CRAD3)*1+1,int(CRAD3)*2 )&<:CF12:CF13::;	
-xpr/tglfi(int(CRAD3)*2+1,int(CRAD3)*3 )&<:CF12:CF13::;	
-xpr/tglfi(int(CRAD3)*3+1,int(CRAD3)*4 )&<:CF12:CF13::;	
-xpr/tglfi(int(CRAD3)*4+1,int(CRAD3)*5 )&<:CF12:CF13::;	
-xpr/tglfi(int(CRAD3)*5+1,int(CRAD3)*6 )&<:CF12:CF13::;	
-xpr/tglfi(int(CRAD3)*6+1,int(CRAD3)*7 )&<:CF12:CF13::;	
-xpr/tglfi(int(CRAD3)*7+1,int(CRAD3)*8 )&<:CF12:CF13::;	
-xpr/tglfi(int(CRAD3)*8+1,int(CRAD3)*9 )&<:CF12:CF13::;	
-xpr/tglfi(int(CRAD3)*9+1,int(CRAD3)*10 )&<:CF12:CF13::;	
-xpr/tglfi(int(CRAD3)*10+1,int(CRAD3)*11 )&<:CF12:CF13::;	
-xpr/tglfi(int(CRAD3)*11+1,int(CRAD3)*12 )&<:CF12:CF13::;	
-xpr/tglfi(int(CRAD3)*12+1,int(CRAD3)*13 )&<:CF12:CF13::;	
-xpr/tglfi(int(CRAD3)*13+1,int(CRAD3)*14 )&<:CF12:CF13::;	
-xpr/tglfi(int(CRAD3)*14+1,int(CRAD3)*15 )&<:CF12:CF13::;	
-xpr/tglfi(int(CRAD3)*15+1,int(CBND1*NA1)-1)&<:CF12:CF13::;
-
-
-! (main species have fixed profiles. Running TGLF just for the impurity)
-
-! total turbulent impurity flux as convection from TGLF
-CAR48 = "work(j,26)"; ! work 26 is DPL in xpr/tglf_interf.f90, ipc/io_tra.c
-CF5 = 0.0001; ! smoothing parameter alpha
-SMEARR(CF5, CAR48, CAR50):;
-
-! Collisional transport
-
-! NCLASS
-NEOCL4::::;          ! NCLASS call
-CAR39="work(j,242)"; ! NCLASS impurity 1 diffusion coeff.
-CAR47="work(j,243)"; ! NCLASS impurity 1 convection
-%
-
-DVF1=40;
-
-! Plasma rotation
-VPOL=VPSWW; !Poloidal rotation
-VTOR=VTORX; !Toroidal rotation
-
-! Radial electric field
-ER=BTOR*(VDIA-VPOL)+BTOR*AMETR*MU*VTOR/RTOR;
 
 !------------------ Transport equations --------------------!
 
 ! main species profiles are assigned
-! (boundary condition is not necessary)
+
 ! electron density evolution
-NE=NEX;             ! initial condition: experimental profile
-NE:AS;              ! assigned value
+NE=NEX; ! initial condition: experimental profile
+NE:AS;  ! assigned value
 
 
 ! electron temperature evolution
-TE=CMHD2*TEX;       ! initial condition: experimental profile
-TE:AS;              ! assigned value
+TE=TEX; ! initial condition: experimental profile
+TE:AS;  ! assigned value
 
 ! main ion temperature evolution
-TI=CMHD3*TIX;       ! initial condition: experimental profile
-TI:AS;              ! assigned value
+TI=TIX; ! initial condition: experimental profile
+TI:AS;  ! assigned value
 
-! control magnitude of temperatures in log to see Carbon charge profile.
 
 ! current diffusion equation
 CU:AS;
-MU = MUX;  ! rotational transform (inverse safety factor)
+!MU = MUX;  ! rotational transform (inverse safety factor)
+MU = 1./(CAR2X + 1.e-4);
 
 IPL=IPLX; ! total plasma current fixed from exp. value
-
-!----------------------------!
-! IMPURITY DENSITY EVOLUTION !
-!----------------------------!
-
-%
-! Impurity transport calculated by TGLF and NCLASS:
-! impurity diffusion coefficient
-CAR43 = max(0.0, min(20.0, CAR39)); ! diffusion only from collisional transport
-
-! impurity convection
-CAR44 = max(-50.0, min(50.0, CIMP1*(CAR47 + CAR50))); ! convection as total turbulent flux density
-      		 	    		   	      ! plus collisional convection
-						      
-! CIMP can be used to control magnitude and direction of the impurity transport from the log. Default: CIMP=1.0
-%
-
-! Impurity transport from simple controllable (from log) values
-! impurity diffusion coefficient
-CAR43 = CIMP2; ! CIMP2 is controllable from log. Default: CIMP2 = 1.0 --> constant diff. coeff. of 1m^2/s 
-! impurity convection
-CAR44 = CIMP3; ! CIMP3 is controllable from log. Default: CIMP3 = -1.0 --> constant conv. vel. of -1m/s (inward pinch) 
-
-
 
 !----------------!
 !-CALL TO STRAHL-!
@@ -194,31 +102,34 @@ CAR44 = CIMP3; ! CIMP3 is controllable from log. Default: CIMP3 = -1.0 --> const
 ! - (I) factor of puff rate (?)
 ! - (I) shot number (?)
 
-CPEL1 = CIMP4*1.e19; ! edge source of impurities
-      		     ! CIMP4 used to increase or decrease this source term. Default: CIMP4 = 1.0 in log.
-!CPEL1=1.e16+5.e21*FJUMP(CMHD1)*(1-FJUMP(CMHD1+0.01)); !changed for NBI
+CPEL1 = CIMP4*1.e19; ! edge source of impurities in atoms/second
+      		     ! CIMP4 used to increase or decrease this source term. Default for W: CIMP4 = 5.e-2 in log.
 
-A2STRAHL(TAU,TAU+1.e6,TAU,3.,CAR43,CAR44,CAR45,AIM1,CAR40,CAR41,CAR60,CAR61,CPEL1,1.,1.,0.)>::::;
+A2STRAHL(TAU,TAU+1.e6,TAU,1.d0,CAR43,CAR44,CAR45,AIM1,CAR40,CAR41,CAR60,CAR61,CPEL1,1.,1.,0.)>::::;
 
-! take additional outputs of A2STRAHL that go to "work"
-
-CAR42 = "work(j,421)"; ! radiated power
-CAR46 = "work(j,422)"; ! total electron density source
-CAR49 = "work(j,423)"; ! total number of neutrals from impurities in plasma radial profile
-
+! take additional outputs of A2STRAHL
+! (see names in sbr/a2strahl.f90 and mod/strahl_mod.f90)
+CAR42 = "prad_tot(j)"; ! radiated power
 
 ! other radiated power expressions to compare
 CAR51 = PBRAD; 	       ! Bremsstrahlung formula of ASTRA
 CAR52 = PRWOL*NE*NIZ1; ! Tungsten radiation power formula of ASTRA
 
+! Compare impurity density evolution with ASTRA
 
+SF1 = 0.0;
+SFF1 = 0.0;
+DF1 = CAR43;
+VF1 = CAR44;
+
+F1 = CAR40;	     ! initial condition
+F1:EQ[2,0.99]; 	     ! evolution equation 
+FIB=CAR40(AFX(0.99)); ! boundary condition
 
 !------------------ write profile output --------------------!
 
 ! NetCDF output
-!NETCDF>:.0250:::;
-!NETCDF>:0.1:::;
-A2CDF>:0.1:::;
+!A2CDF>:0.1:::;
 
 !----------------- plotting radial profiles ------------------!
 
@@ -226,35 +137,11 @@ A2CDF>:0.1:::;
 ! Page 1: main profiles and transport
 
 ! top panel, red
-Te\TE\\TEX\-3;	Ne\NE\\NEX;	NzW\CAR40\-2;		ZWS\CAR45\-4;
+Te\TE\\TEX\-3;	Ne\NE\\NEX;	NzS\CAR40\-2;		ZwS\CAR45\-4;
 ! lower panel, red
-Prad\CAR42\-5; 	Pbre\CAR51\-5;	DzW\CAR43\;		ZefS\CAR41\-1;
+PraS\CAR42\-5; 	Pbre\CAR51\-5;	DzW\CAR43\;		ZefS\CAR41\-1;
 
 ! top panel, blue
-Ti\TI\\TIX\-3;	Ni\NI;		\;			ZWc\ZIM1\-4;
+Ti\TI\\TIX\-3;	Ni\NI;		NzA\F1\-2;		ZwA\ZIWOL\-4;
 !lower panel, blue
-PraX\PRADX\-5; 	PRW\CAR52\-5;	VzW\CAR44+10.\20.;	ZefD\ZEF\-1;
-
-! Page 2: convergence and heating power
-
-! top panel, red
-QE\QE\-8;	QI\QI\-8;	Qn\QN\-7;		QF1\QF1\0.1;    
-! lower panel, red
-Pe\PE;	        Pi\PI;		esrc\CAR46;		QF2\QF2\0.1;
-
-! top panel, blue
-QET\QETOT\-8;	QIT\QITOT\-8;	QNT\QNTOT\-7;			\;	
-!lower panel, blue
-Pebm\PEBM;		Pibm\PIBM;			nnim\CAR49;	\;
-
-! Page 3: geometry and currents
-
-! top panel, red
-q\1.0/MU;	jtot\CU\-15;	jech\CUECR\-15;		jbs\CAR63\-15;
-! lower panel, red
-\;	\;     \;	Zw\ZIM2;
-
-! top panel, blue
-shea\SHEAR;        jcd\CD\-15;	jnbi\CUBM\-15;	\;
-! lower panel, blue
-\;	\;     \;	Mach\CAR40;
+PraA\CAR52\-5; 	Qf1\QF1+0.01\0.02;	VzW\CAR44+5.\10.;	ZefA\ZEF\-1;

@@ -186,9 +186,12 @@ write(nch_w1, '(A)') '   ', &
 write(nch_w1, 104) ' ', z_K, ' ', n_grids, ' ', zdr_0, ' ', zdr_1
 write(nch_w1, '(A)') &
     '   ', &
-    'cv      max. iterations at fixed time  stop iteration if change below(%)', &
-    '  1000          -1.		', &
-    '   ', &
+    'cv     finite vol=1, finite diff=0', &
+    '         1', &
+    '   ', & 
+!    'cv      max. iterations at fixed time  stop iteration if change below(%)', &
+!    '  1000          -1.		', &
+!    '   ', &
     '      S T A R T   C O N D I T I O N S', &
     '   ', &
     'cv    start new=0/from old impurity   distribution=1     shot   at    time  index'
@@ -404,14 +407,16 @@ call grid_write_strahl(strahl_dir, nfour_c, RTOR+SHIF(1), &
 
 ! Main STRAHL call
 
-cmd_cmd = '/afs/ipp/home/r/rld/strahl/amd64_sles11/strahl a q v'
+!cmd_cmd = '/afs/ipp/home/r/rld/strahl/amd64_sles11/strahl a q v'
+cmd_cmd = '/afs/ipp/home/r/rld/STRAHLG/amd64_sles15/strahl a q' ! add v to options for verbose version
 write(*, '(A)') 'Executing', cmd_cmd 
 call system(cmd_cmd)      ! run strahl
 
 cmd_cmd = 'rm -f results.txt'
 call system(cmd_cmd)    ! rm old results, if existing
 
-cmd_cmd = '/afs/ipp/home/r/rld/strahl/amd64_sles11/result_to_astra '//trim(elements_touse(1))//' > ' // TRIM(strahl_dir) // 'results.txt'
+!cmd_cmd = '/afs/ipp/home/r/rld/strahl/amd64_sles11/result_to_astra '//trim(elements_touse(1))//' > ' // TRIM(strahl_dir) // 'results.txt'
+cmd_cmd = '/afs/ipp/home/r/rld/STRAHLG/amd64_sles15/result_to_astra '//trim(elements_touse(1))//' > ' // TRIM(strahl_dir) // 'results.txt'
 write(*, '(A)') 'Executing', cmd_cmd 
 call system(cmd_cmd)   ! produce new result file
 
