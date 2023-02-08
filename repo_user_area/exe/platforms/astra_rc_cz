@@ -5,7 +5,7 @@
 export MKL_LIBDIR="/sw/intel/compilers_and_libraries_2018.3.222/linux/mkl/lib/intel64"
 export NAGLIB="/compass/home/tardini/astra_ext/nag_lib"
 export COMP_LIB="/sw/intel/compilers_and_libraries_2018.3.222/linux/compiler/lib/intel64_lin"
-export NCDF_HOME="/sw/netcdf/4.6.1-intel18"
+export NCDF_HOME="/sw/netcdf/4.6.3-intel18"
 export HDF5_HOME="/sw/hdf5/1.8.21-intel18"
 
 export AFC=ifort

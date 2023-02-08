@@ -45,14 +45,16 @@ class EQU_PARSER:
 
         f_prof    = '%s/main/profiles.txt'   %config.awd
         f_profx   = '%s/main/profiles_x.txt' %config.awd
+        f_prof_ext= '%s/main/prof_ext.txt'   %config.awd
         f_const   = '%s/main/constants.txt'  %config.awd
         f_intern  = '%s/main/internal.txt'   %config.awd
         f_intern2 = '%s/main/intern2.txt'    %config.awd
         f_vars    = '%s/main/variables.txt'  %config.awd
         f_asfnc   = '%s/main/functions.txt'  %config.awd
-        prof   = parse_inc(f_prof)
-        profx  = parse_inc(f_profx)
-        self.profiles = prof + profx
+        prof     = parse_inc(f_prof)
+        profx    = parse_inc(f_profx)
+        prof_ext = parse_inc(f_prof_ext)
+        self.profiles = prof + profx + prof_ext
         self.constants = parse_inc(f_const)
         self.internals = parse_inc(f_intern) + parse_inc(f_intern2)
         self.variables = parse_inc(f_vars)

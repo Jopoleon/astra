@@ -4,8 +4,14 @@ use parameter_inc, only: NRD
 
 implicit none
 
-double precision, dimension(NRD) :: prad_tot, ne_source, nneut_imp
-double precision, dimension(NRD, 11) :: prad_strahl, nimp_strahl, nesrc_strahl
+double precision, dimension(NRD) ::     zeff_strahl, prad_tot_strahl,&
+                                        nmain_strahl, prad_main_strahl
+double precision, dimension(NRD, 11) :: prad_strahl, nimp_strahl, &
+                                        zavg_strahl, nesrc_strahl, &
+                                        Dneo_strahl, Vneo_strahl, &
+                                        Dz_in_strahl, Vz_in_strahl
+
+double precision, dimension(11) ::      rrates_in_strahl 
 
 contains
 
@@ -184,10 +190,10 @@ write(nch_w2, '(A)') &
 write(nch_w2, 105) '   ', ti_decayl
 close(nch_w2)
 
-101 format(F12.4)
-103 format(A, F12.4, A, F12.4, A, F12.4, A, F12.4)
-105 format(A, F12.4)
-107 format(E16.4)
+101 format(F15.8)
+103 format(A, F15.8, A, F15.8, A, F15.8, A, F15.8)
+105 format(A, F15.8)
+107 format(E16.8)
 
 return
 end subroutine profiles_file_write_strahl
@@ -373,8 +379,8 @@ do i=1, nequil
 enddo
 close(nch_w3)
 
-101 format(F12.4)
-103 format(A, F12.4, A, F12.4, A, F12.4, A, F12.4)
+101 format(F15.8)
+103 format(A, F15.8, A, F15.8, A, F15.8, A, F15.8)
 
 return
 end subroutine grid_write_strahl

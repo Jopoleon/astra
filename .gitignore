@@ -11,6 +11,7 @@ fml/*
 fnc/*
 inc/*
 lib/*
+main/*
 sbr/*
 xpr/*
 ipc/*
