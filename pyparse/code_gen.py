@@ -146,8 +146,9 @@ end subroutine POSTEP'''
         detv_rad  = ''
 
         for line in parse.detv_lines:
+            line = line.strip()
             lbl = line.split('=', 1)[0].upper().strip()
-            var = lbl.split('|', 1)[0]
+            var = lbl.split('|', 1)[0] # For multiple statements with same left-hand side
             for jv, varm in enumerate(parse.variables):
                 if var == varm:
                     jvar = jv + 1
@@ -158,8 +159,10 @@ end subroutine POSTEP'''
             if var in parse.constants + parse.internals:
                 l2f = pa.LINE2FOR('', right_hand[lbl], pack)
                 detv_time += '%s = %s\n' %(var, l2f.fcode)
-            if var in parse.profiles:
+            elif var in parse.profiles:
                 detv_rad += pa.apptmp(lbl, parse)
+            elif line[0] == '"' and line[-1] == '"':
+                detv_rad += line[1: -1] + '\n'
 
         self.detvar  = const_text.DETVAR.header
         self.detvar += detv_time
