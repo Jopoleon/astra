@@ -424,7 +424,7 @@ radial_loop: do jradial=1, nradial
     IF (runcounter_in >= maxruns_in) THEN !Reset if we're at our maximum number of runs
         runcounter_in = 0
     ENDIF
-    runcounter_in = 0 ! GIT force calculation from scratch
+!    runcounter_in = 0 ! GIT force calculation from scratch
 
     IF (runcounter_in == 0) THEN !load old rsol and isol if we're not doing a reset run
         write(6, *) 'Qualikiz from scratch'
