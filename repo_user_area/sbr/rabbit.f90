@@ -121,10 +121,10 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
     aimp = AIM1
     zimp = ZIM1(1)
  
-    if (zimp /= 5 .AND. zimp /= 6 .AND. zimp /= 28) then
-        write(6, *) 'No cross-sections for impurities other than Z=5, 6, 28'
-        write(6, *) 'Skipping RABBIT calculation'
-        return
+    if (zimp /= 4 .AND. zimp /= 5 .AND. zimp /= 6 .AND. zimp /= 28) then
+        write(6, *) 'No cross-sections for impurities other than Z=4, 5, 6, 28'
+        write(6, *) 'Forcing Zimp=6'
+        zimp = 6
     endif
 
     call rabbit_lib_init(aplasma, zplasma, aimp, zimp,            & ! plasma species
