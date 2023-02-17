@@ -121,8 +121,8 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
     aimp = AIM1
     zimp = ZIM1(1)
  
-    if (zimp /= 4 .AND. zimp /= 5 .AND. zimp /= 6 .AND. zimp /= 28) then
-        write(6, *) 'No cross-sections for impurities other than Z=4, 5, 6, 28'
+    if (zimp /= 4 .AND. zimp /= 5 .AND. zimp /= 6  .AND. zimp /= 7 .AND. zimp /= 10 .AND. zimp /= 18 .AND. zimp /= 28) then
+        write(6, *) 'No cross-sections for Zimp other than 4, 5, 6, 7, 10, 18, 28'
         write(6, *) 'Forcing Zimp=6'
         zimp = 6
     endif
