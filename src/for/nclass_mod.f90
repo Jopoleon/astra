@@ -1303,7 +1303,7 @@ real           c1,                      c2, &
             c3,                      g, &
             phi,                     z_pi
 !Declaration of external functions
-real           U_ERF
+
 !Initializaton
 !  Physical and conversion constants
 z_pi=ACOS(-1.0)
