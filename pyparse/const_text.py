@@ -976,6 +976,7 @@ use parameter_inc, only: NSBMX, NRD
 use outcmn_inc
 use const_inc
 use status_inc
+use nclass_mod
 use debugger, only: markloc
 
 implicit none
