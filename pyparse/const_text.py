@@ -1033,6 +1033,8 @@ use parameter_inc, only: NRD, NSBMX
 use const_inc
 use status_inc
 use outcmn_inc
+use nclass_mod
+use strahl_mod
 use plasma_state
 use debugger, only: markloc
 
