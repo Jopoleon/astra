@@ -56,6 +56,12 @@ export TGLF_HOME=${ASTRA_EXT}/tglf/oct22
 export TGLF_INC=${TGLF_HOME}/inc
 export TGLF_LIB=${TGLF_HOME}/lib/libtglf.a
 
+# NEO
+
+export NEO_HOME=${ASTRA_EXT}/neo/apr21
+export NEO_INC=${NEO_HOME}/inc
+export NEO_LIB="${NEO_HOME}/lib/neo_lib.a ${NEO_HOME}/lib/nclass_lib.a ${NEO_HOME}/lib/UMFPACK_lib.a ${NEO_HOME}/lib/math_lib.a ${NEO_HOME}/lib/expro_lib.a ${NEO_HOME}/lib/geo_lib.a"
+
 # NAGs
 
 export NAGFLIB=${NAGLIB}/libnag_nag.a
