@@ -14,11 +14,10 @@ export MPIFORT_BIN=${I_MPI_ROOT}/intel64/bin
 export INTEL_LICENSE_FILE=27010@io-ws-ls1
 
 export AFC=ifort
-export AFC_FLAGS="-O0 -w"
 export ACC="cc -O"
+export MPIFC=mpiifort
 
 export ASTRA_EXT=/home/ITER/tarding/ASTRA_LIBRARIES_EXT
-export ACORE_HOME=/home/ITER/tarding/astra81_server
 
 # MPI
 
@@ -45,26 +44,6 @@ export RABBIT_HOME="${ASTRA_EXT}/rabbit/jul22"
 RABBIT_LIBDIR=${RABBIT_HOME}/lib
 export RABBIT_LIB="-L${RABBIT_LIBDIR} -lRabbitMore -Wl,-rpath,${RABBIT_LIBDIR}"
 export RABBIT_INC=${RABBIT_HOME}/inc
-
-# SPIDER
-
-export SPIDER_HOME=${ASTRA_EXT}/spider/feb21
-export SPIDER_LIB="-L${SPIDER_HOME}/lib -lspider"
-
-# Old NBI
-
-export NBI_HOME="${ASTRA_EXT}/nbi/dec21"
-export NBI_LIB="-L${NBI_HOME}/nbi -lnbi"
-export NBI_INC=${NBI_HOME}/inc
-
-# EQUIL
-
-export EQUIL_LIB="-L${ACORE_HOME}/lib -lequil"
-
-# ASTRA_CORE
-
-export ACORE_LIB="-L${ACORE_HOME}/lib -lfor"
-export ACORE_INC=${ACORE_HOME}/inc
 
 # QuaLiKiZ
 
