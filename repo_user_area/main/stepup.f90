@@ -5,14 +5,14 @@ subroutine STEPUP
 !-------------------------------------------------------------------
 
 use parameter_inc, only: NRD
-use const_inc, only: IPSMK, IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
+use const_inc, only: IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
     IPCTRL, NCNB, ICIRCQ, ITFBP, ITREQ, UPDWN, FTN, FTO, BTN, BTOR, HRO, ROC, NA1, &
     TAU, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, CDVM7, ATREQ, ZRD69, LEQ, & 
     PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, ADCMPF, RBDOT, BBDOT
 use status_inc, only: TE, TI, NE, NI, NIO, FP
 use outcmn_inc, only: CCOIL, CCOILO, DUMCT, DUMCTP, CTRLM, VCOIL, MACHINE
 use plasma_state, only: plasma_up
-use debugger, only: markloc
+use debugger, only: markloc, flightsim
 
 implicit none
 
@@ -39,10 +39,10 @@ save tau_temp_smlk
 BTN = BTOR
 FTN = FTO
 
-if (ipsmk < 1) plasma_up = 1
+if (flightsim < 1) plasma_up = 1
 
 !tau treatment to avoid machine precision errors
-if (nint(ipsmk) .ge. 1) then
+if (flightsim >= 1) then
     tau = 1.d-6*nint(tau*1.d6)
     tau_temp_smlk = 1.d-6*nint(tau_temp_smlk*1.d6)
 endif
@@ -53,8 +53,8 @@ tau_old = tau
 tau_new = tau
 
 ! wait until constants file is read and read control file
-if (nint(IPSMK) >= 1) then
-    if (nint(ipsmk) == 1) then
+if (flightsim >= 1) then
+    if (flightsim == 1) then
         if (TIME-TSTART == 0) then
             tau     = dt_smlk ! taumin?
             tau_old = dt_smlk
@@ -117,8 +117,8 @@ else
     call GETCTRLMS(CTRLM)   
     DUMCTP = DUMCT
 
-! do this only if IPSMK = 0, so that with -1 it doesnt do this.
-! if (nint(IPSMK)==0) then
+! do this only if flightsim = 0, so that with -1 it doesnt do this.
+! if (flightsim==0) then
     call GETCOILS(VCOIL(1:NCNB), dummycoils(1:NCNB))
 
     if (ICIRCQ == 0.) then
@@ -138,7 +138,7 @@ if (IFBEY >= 1.) then
     endif
 endif
 
-if (nint(IPSMK) >= 1) then
+if (flightsim >= 1) then
     tau = tau_temp_smlk
 endif
 
@@ -259,12 +259,12 @@ time_step_accuracy: do
     if (IFSTEP(jkey, updwno) == 0 .and. IFBEY /= 1) then
 ! Time step accuracy accepted? No(0)
 ! note that here TAU is modified and TIME updated with time_new = TIME+TAU !
-        if (nint(IPSMK) >= 1) then
+        if (flightsim >= 1) then
             TAU = max(taumin, TAU_old - ZRD69) ! correct TAU not to exceed time_ext
             TAU = max(taumin, TAU)
         endif
     else
-        if (nint(IPSMK) >= 1) then
+        if (flightsim >= 1) then
             TAU = min(taumax, TAU_old + ZRD69)
         endif
         tau_new = tau
@@ -303,11 +303,11 @@ call POSTEP
                                                                       
 tau_new = tauprp
 
-if (nint(IPSMK) >= 1) then
+if (flightsim >= 1) then
     tau_temp_smlk = TAU_new
     taumin = min(tau_temp_smlk, taumin)
 
-    if (TIME-TSTART >= time_ext+dt_smlk-1.e-8 .and. nint(ipsmk) >= 1) then
+    if (TIME-TSTART >= time_ext+dt_smlk-1.e-8 .and. flightsim >= 1) then
         jreadd=0
     else
         jreadd = 1
@@ -320,7 +320,7 @@ if (nint(IPSMK) >= 1) then
 endif
 
 tau = min(taumax, tau_new)
-if (nint(ipsmk) >= 1) then
+if (flightsim >= 1) then
     tau     = min(taumax, tau_temp_smlk)
     tau_new = tau
 endif
