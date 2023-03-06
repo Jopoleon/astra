@@ -193,17 +193,16 @@ IP31 = (/ &
  97,  98, 101, 102, 105, 106, 109, 110,  99, 100, 103, 104, 107, 108, 111, 112, &
 113, 114, 117, 118, 115, 116, 119, 120, 121, 122, 125, 126, 123, 124, 127, 128 /)
 
-DTNAME(1: 44) = (/ &
+DTNAME(1: NSDELOUT) = (/ &
    'dRout ', 'dTout ', 'dPout ', 'Time  ', 'TAUmin', 'TAUmax', &
    'TAUinc', 'DELvar', 'Iterex', 'NiTrEq', 'Tinit ', 'Tscale', &
    'NA1   ', 'NUF   ', 'Xaxis ', 'Xdeflt', 'NB2EQL', 'NEQUIL', &
    'NBND  ', 'Xflag ', 'DTeql ', 'MEQUIL', 'Tpause', 'Tend  ', &
    'Inume1', 'Inume2', 'Inume3', 'Inume4', 'Iprot ', 'Itfbe ', &
    'Itfbp ', 'Icircq', 'Ipctrl', 'Adcmpf', 'Flxdr ', 'Sgnip ', &
-   'Sgnbt ', 'Iresta', 'Ifbeg ', 'Ipeql ', 'Ipsmk ', 'Ipnwt ', &
-   'Ibkdw ', 'Ibkvr ' /)
+   'Sgnbt ', 'Ifbeg ', 'Ipeql ' /)
 do j=1, 30
-   i = (j-1)*4 + 44
+   i = (j-1)*4 + NSDELOUT
    write(DTNAME(i+1), '(A, i0)') 'DTeq', j
    write(DTNAME(i+2), '(A, i0)') 'BEeq', j
    write(DTNAME(i+3), '(A, i0)') 'ENeq', j
