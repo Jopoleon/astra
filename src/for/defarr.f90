@@ -10,9 +10,9 @@ subroutine DEFARR
 
 use outcmn_inc, only: exp_file, NSBR, DTNAME
 use const_inc, only: GP2, RTOR, BTOR, HRO, ROC, ABC, NA1, NB1, NAB, &
-   IPSMK, NSDELOUT, TIME, TAU, TSTART, WTE, WTI, WNE
+   NSDELOUT, TIME, TAU, TSTART, WTE, WTI, WNE
 use status_inc
-use debugger, only: markloc, astra_stop
+use debugger, only: markloc, astra_stop, flightsim
 
 implicit none
 
@@ -40,7 +40,7 @@ do j=1, NA1
       if (TIME <= TSTART + TAU/2.) write(*, '(2A,1H"/)') &
          '               Check if it is defined in the data file "', &
          TRIM(exp_file)
-      if (ipsmk >= 0.) call err_catch_a
+      if (flightsim >= 0) call err_catch_a
       call astra_stop
    endif
    VP(j) = ULON(j)/(YV*j*MU(j))
@@ -369,11 +369,11 @@ integer function IFSTEP(IFCONV, updwno)
 !----------------------------------------------------------------------|
 
 use const_inc, only: TIME, TAUINC, DELVAR, TAU, TAUPRP, TAUMIN, TAUMAX, &
-   DTOUT, DPOUT, NA, NB1, LEQ, NSTEPS, IPSMK, UPDWN, ROC, ROCO, &
+   DTOUT, DPOUT, NA, NB1, LEQ, NSTEPS, UPDWN, ROC, ROCO, &
    BTN, IPLN, FTN, FTO
 use status_inc, only: NEO, NIO, TEO, TIO, FJO, FPO, VRO, UPARO, &
    NE, NI, TE, TI, FJ, FP, VR, UPAR
-use debugger, only: markloc
+use debugger, only: markloc, flightsim
 
 implicit none
 
@@ -388,10 +388,10 @@ call markloc('IFSTEP')
 CTAU = 1./TAUINC
 
 do j = 1, NA
-   if(LEQ(1) > 0) CTAU = MAX(CTAU, ABS(NEO(j)/NE(j) - 1.)/DELVAR)
-   if(LEQ(2) > 0) CTAU = MAX(CTAU, ABS(TEO(j)/TE(j) - 1.)/DELVAR)
-   if(LEQ(3) > 0) CTAU = MAX(CTAU, ABS(TIO(j)/TI(j) - 1.)/DELVAR)
-   if(IPSMK >= 1 .and. j == 1) CTAU = MAX(CTAU, ABS(Updwno/UPDWN - 1.)/DELVAR)
+   if (LEQ(1) > 0) CTAU = MAX(CTAU, ABS(NEO(j)/NE(j) - 1.)/DELVAR)
+   if (LEQ(2) > 0) CTAU = MAX(CTAU, ABS(TEO(j)/TE(j) - 1.)/DELVAR)
+   if (LEQ(3) > 0) CTAU = MAX(CTAU, ABS(TIO(j)/TI(j) - 1.)/DELVAR)
+   if (flightsim >= 1 .and. j == 1) CTAU = MAX(CTAU, ABS(Updwno/UPDWN - 1.)/DELVAR)
    do jj=0, 9
       if (LEQ(jj+10) > 0) then
          YY = 0.5*(abs(FJO(j, jj)) + abs(FJ(j, jj)))
@@ -412,8 +412,8 @@ TAUN   = MIN(TAUMAX, TAUN/CTAU, DTOUT, DPOUT)
 
 TAUN = MAX(TAUMIN, TAUN)   ! due to DELVAR & TAUINC
 TAU = TAUN 
-if (nint(ipsmk) >= 1) tauo = 1.d-6*nint(tauo*1.d6)
-if (nint(ipsmk) >= 1) tau = 1.d-6*nint(tau*1.d6)
+if (flightsim >= 1) tauo = 1.d-6*nint(tauo*1.d6)
+if (flightsim >= 1) tau = 1.d-6*nint(tau*1.d6)
 
 if (TAU >= TAUO) then
    IFSTEP = 1

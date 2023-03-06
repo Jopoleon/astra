@@ -1,8 +1,8 @@
 subroutine err_catch_a
 
-use const_inc, only: IPSMK, TIME, CDHJ7, CV6, NA1
+use const_inc, only: TIME, CDHJ7, CV6, NA1
 use status_inc, only: TE, FP, NE, G11
-use debugger, only: astra_stop
+use debugger, only: astra_stop, flightsim
 
 implicit none
 
@@ -12,7 +12,7 @@ integer :: j
 data time_ext / 0. /
 save time_ext   ! counter to use psi as bc stuff
 
-if (nint(ipsmk) == 1) then
+if (flightsim == 1) then
 
    do j=1, 1000000
       if (j == 1) time_ext = TIME

@@ -1376,13 +1376,14 @@ subroutine GETCOILS(yvcoil, yccoil)
 !----------------------------------------------------------------------|
 
 use outcmn_inc, only: CCOIL, VCOIL, NCNBT, CCOILX, VCOILX
-use const_inc, only: IPSMK, TIME, NCNB
+use const_inc, only: TIME, NCNB
+use debugger, only: flightsim
 
 implicit none
 
 double precision, intent(out), dimension(NCNB) :: yvcoil, yccoil
 
-if (nint(IPSMK) >= 1) then
+if (flightsim >= 1) then
    yccoil = CCOIL(1: NCNB)
    yvcoil = VCOIL(1: NCNB)
 return
