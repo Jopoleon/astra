@@ -35,6 +35,7 @@ class POSTEP:
 use const_inc
 use status_inc
 use ipc_mod
+use nclass_mod
 use strahl_mod
 use outcmn_inc, only: CPT, CPTSBR
 use debugger, only: markloc
@@ -306,6 +307,7 @@ class DETVAR:
 use const_inc
 use status_inc
 use ipc_mod
+use nclass_mod
 use strahl_mod
 use outcmn_inc
 use debugger, only: markloc
@@ -974,6 +976,7 @@ use parameter_inc, only: NSBMX, NRD
 use outcmn_inc
 use const_inc
 use status_inc
+use nclass_mod
 use debugger, only: markloc
 
 implicit none
@@ -1031,6 +1034,8 @@ use parameter_inc, only: NRD, NSBMX
 use const_inc
 use status_inc
 use outcmn_inc
+use nclass_mod
+use strahl_mod
 use plasma_state
 use debugger, only: markloc
 

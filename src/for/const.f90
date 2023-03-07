@@ -184,19 +184,12 @@ FLXDR => DELOUT(35)
 
 SGNIP => DELOUT(36)
 SGNBT => DELOUT(37)
-IRESTA=> DELOUT(38)
-IFBEG => DELOUT(39)
-IPEQL => DELOUT(40)
-IPSMK => DELOUT(41)
-IPNWT => DELOUT(42)
-IBKDW => DELOUT(43)
-IBKVR => DELOUT(44)
+IFBEG => DELOUT(38)
+IPEQL => DELOUT(39)
 
-DTEQ(1:4, 1:NSBMX) => DELOUT(44+1: 44 + 4*NSBMX)
+DTEQ(1:4, 1:NSBMX) => DELOUT(NSDELOUT+1: NSDELOUT + 4*NSBMX)
 
-!DTEQ => DELOUT(45)
-
-DELOUT(1:44) = (/ &
+DELOUT(1: NSDELOUT) = (/ &
 ! DROUT, DTOUT, DPOUT, TIME, TAUMIN, TAUMAX, TAUINC, DELVAR
    .01,   .01,   .01,   0.,  .000001,  .05,   1.1,   .1, &
 ! ITEREX, NITREQ, TINIT, TSCALE, NA1, NUFR, XOUT, XINPUT 
@@ -205,17 +198,15 @@ DELOUT(1:44) = (/ &
    1.,    0.,    0.,    0.,      0.,      0.,   1.e20,  1.e20, &
 ! INUME1, INUME2, INUME3, INUME4, IPROT, ITFBE  ITFBP  ICIRCQ 
   22.,    22.,    22.,    22.,     0.,   -1.,    0.,       0., &     
-! IPCTRL, ADCMPF, FLXDR, SGNIP, SGNBT, IRESTA, IFBEG, IPEQL
-  0.,     1.,     0.,    1.,    1.,    0.,     0. ,      4., &
-! IPSMK, IPNWT, IBKDW, IBKVR
-  0.,   0.,  0.,    0. /)
+! IPCTRL, ADCMPF, FLXDR, SGNIP, SGNBT, IFBEG, IPEQL
+  0.,     1.,     0.,    1.,    1.,    0. ,      4. /)
 
 do j=1, NSBMX
 !   DTEQ(1, j) = 0.
 !   DTEQ(2, j) = -99999.
 !   DTEQ(3, j) = 99999.
 !   DTEQ(4, j) = -1.
-   i = (j-1)*4 + 44
+   i = (j-1)*4 + NSDELOUT
    DELOUT(i+1) = 0.
    DELOUT(i+2) = -99999.
    DELOUT(i+3) = 99999.

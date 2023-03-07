@@ -14,11 +14,10 @@ export MPIFORT_BIN=${I_MPI_ROOT}/intel64/bin
 export INTEL_LICENSE_FILE=27010@io-ws-ls1
 
 export AFC=ifort
-export AFC_FLAGS="-O0 -w"
 export ACC="cc -O"
+export MPIFC=mpiifort
 
 export ASTRA_EXT=/home/ITER/tarding/ASTRA_LIBRARIES_EXT
-export ACORE_HOME=/home/ITER/tarding/astra81_server
 
 # MPI
 
@@ -29,9 +28,13 @@ export MPI_LIB="-L${I_MPI_ROOT}/intel64/lib/release -lmpi -L${I_MPI_ROOT}/intel6
 
 export HDF5_HOME=${PKG}/HDF5/1.10.7-iimpi-2020b
 export HDF5_LIB="-L${HDF5_HOME}/lib64 -lhdf5 -lhdf5_hl"
-export NCDF_HOME=/home/ITER/weilanm/fortran/netcdf-4.1.3/intel/19.0.3
-export NCDF_INC=${NCDF_HOME}/fortran
-export NCDF_LIB="${HDF5_LIB} -L${NCDF_HOME}/fortran/.libs -lnetcdff"
+#export NCDF_HOME=/home/ITER/weilanm/fortran/netcdf-4.1.3/intel/19.0.3
+#export NCDF_INC=${NCDF_HOME}/fortran
+#export NCDF_LIB="${HDF5_LIB} -L${NCDF_HOME}/fortran/.libs -lnetcdff"
+export NCDF_HOME=${PKG}/netCDF/4.7.4-iimpi-2020b
+export NCDFF_HOME=${PKG}/netCDF-Fortran/4.5.3-iimpi-2020b
+export NCDF_LIB="${HDF5_LIB} -L${NCDF_HOME}/lib -lnetcdf -L${NCDFF_HOME}/lib -lnetcdff"
+export NCDF_INC="${NCDFF_HOME}/include"
 
 # TORBEAM
 
@@ -45,26 +48,6 @@ export RABBIT_HOME="${ASTRA_EXT}/rabbit/jul22"
 RABBIT_LIBDIR=${RABBIT_HOME}/lib
 export RABBIT_LIB="-L${RABBIT_LIBDIR} -lRabbitMore -Wl,-rpath,${RABBIT_LIBDIR}"
 export RABBIT_INC=${RABBIT_HOME}/inc
-
-# SPIDER
-
-export SPIDER_HOME=${ASTRA_EXT}/spider/feb21
-export SPIDER_LIB="-L${SPIDER_HOME}/lib -lspider"
-
-# Old NBI
-
-export NBI_HOME="${ASTRA_EXT}/nbi/dec21"
-export NBI_LIB="-L${NBI_HOME}/nbi -lnbi"
-export NBI_INC=${NBI_HOME}/inc
-
-# EQUIL
-
-export EQUIL_LIB="-L${ACORE_HOME}/lib -lequil"
-
-# ASTRA_CORE
-
-export ACORE_LIB="-L${ACORE_HOME}/lib -lfor"
-export ACORE_INC=${ACORE_HOME}/inc
 
 # QuaLiKiZ
 
@@ -97,4 +80,4 @@ export NAGF90MKL=${NAGLIB}/libnag_mkl.a
 
 export XLBR="-L/usr/lib64 -lX11 -Wl,--start-group ${COMP_LIB}/libintlc.so.5 ${MKL_LIBDIR}/libmkl_intel_lp64.a ${MKL_LIBDIR}/libmkl_core.a ${MKL_LIBDIR}/libmkl_sequential.a ${MKL_LIBDIR}/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group"
 
-export AS_LD_LIBRARY_PATH="${HDF5_HOME}/lib64:${NCDF_HOME}/liblib/.libs:${NCDF_HOME}/fortran/.libs:${ADDLIB}:${NAGLIB}:${COMP_LIB}:${TORB_HOME}/lib:${RABBIT_HOME}/lib:${I_MPI_ROOT}/intel64/lib:${I_MPI_ROOT}/intel64/lib/release:${PKG}/Szip/2.1.1-GCCcore-10.2.0/lib:${PKG}/PMIx/3.1.5-GCCcore-10.2.0/lib"
+export AS_LD_LIBRARY_PATH="${HDF5_HOME}/lib64:${NCDF_HOME}/lib:${NCDFF_HOME}/lib:${ADDLIB}:${NAGLIB}:${COMP_LIB}:${TORB_HOME}/lib:${RABBIT_HOME}/lib:${I_MPI_ROOT}/intel64/lib:${I_MPI_ROOT}/intel64/lib/release:${PKG}/Szip/2.1.1-GCCcore-10.2.0/lib:${PKG}/PMIx/3.1.5-GCCcore-10.2.0/lib"

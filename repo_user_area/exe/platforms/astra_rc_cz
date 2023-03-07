@@ -48,7 +48,7 @@ export TORB_LIB="-L${TORB_HOME}/lib -ltorbeam ${CPLIBS} ${NAGFLIB} ${NAGF90MKL}"
 
 export RABBIT_HOME="${ASTRA_EXT}/rabbit/jul22"
 RABBIT_LIBDIR=${RABBIT_HOME}/lib
-export RABBIT_LIB="-L${RABBIT_LIBDIR} -lRabbitMore -Wl,-rpath,${RABBIT_LIBDIR}"
+export RABBIT_LIB="-L${RABBIT_LIBDIR} -lrabbit -Wl,-rpath,${RABBIT_LIBDIR}"
 export RABBIT_INC=${RABBIT_HOME}/inc
 
 # QuaLiKiZ
