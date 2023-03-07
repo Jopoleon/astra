@@ -20,37 +20,24 @@ subroutine A2STRAHL(tau_start, zneocl, dzneocl, dimpsol, shot_in)
 ! * Given in equ file to array names from src/for/strahl_mod.f90,
 !   with isp = 1...nsp being the index of each impurity species:
 ! --------------------------------------------------------------
-! - Dz_in_strahl(:,isp) -> anomalous diffusion coefficient profile [m^2/s] of species <sp>
-! - Vz_in_strahl(:,isp) -> anomalous convection velocity profile [m/s] of <sp>
+! - Dz_in_strahl(:,isp) ---> anomalous diffusion coefficient profile [m^2/s] of species <sp>
+! - Vz_in_strahl(:,isp) ---> anomalous convection velocity profile [m/s] of <sp>
 ! - rrates_in_strahl(isp) -> edge source of impurities [particles/s] of <sp>
 !
 ! OUTPUTS
 ! =======
-! * In work_strahl:
-! -----------------
-! - work_strahl(:, 1) -----------------> Zeff [-], effective charge profile
-! - work_strahl(:, 2) -----------------> Prad_tot [MW/m^3], total radiated power density profile
-! - work_strahl(:, 3) -----------------> nmain [10^19/m^3], main ion density profile
-! - work_strahl(:, 4) -----------------> Prad_main [MW/m^3], radiated power density from bulk plasma 
-! - work_strahl(:, 5 + 6*(isp-1) + 0) -> Prad_<sp> [MW/m^3], radiated power density profile of <sp>
-! - work_strahl(:, 5 + 6*(isp-1) + 1) -> nimp_<sp> [10^19/m^3], impurity density profile of <sp>
-! - work_strahl(:, 5 + 6*(isp-1) + 2) -> Zavg_<sp> [-], average charge profile of <sp>
-! - work_strahl(:, 5 + 6*(isp-1) + 3) -> nesrc_<sp> [10^19/m^3/s], electron density source due to <sp>
-! - work_strahl(:, 5 + 6*(isp-1) + 4) -> Dneo_avg_<sp> [m^2/s], avg. neocl. diffusion from NEOART
-! - work_strahl(:, 5 + 6*(isp-1) + 5) -> Vneo_avg_<sp> [m/s], avg. neocl. convection from NEOART
-!
-! * In src/for/strahl_mod.f90 (same description as above):
+! * In src/for/strahl_mod.f90:
 ! --------------------------------------------------------
-! - zeff_strahl(:)
-! - prad_tot_strahl(:)
-! - nmain_strahl(:)
-! - prad_main_strahl(:)
-! - prad_strahl(:,isp)
-! - nimp_strahl(:,isp)
-! - zavg_strahl(:,isp)
-! - nesrc_strahl(:,isp)
-! - Dneo_strahl(:,isp)
-! - Vneo_strahl(:,isp)
+! - zeff_strahl(:)------> Zeff [-], effective charge profile
+! - prad_tot_strahl(:)--> Prad_tot [MW/m^3], total radiated power density profile
+! - nmain_strahl(:)-----> nmain [10^19/m^3], main ion density profile
+! - prad_main_strahl(:)-> Prad_main [MW/m^3], radiated power density from bulk plasma 
+! - prad_strahl(:,isp)--> Prad_<sp> [MW/m^3], radiated power density profile of <sp>
+! - nimp_strahl(:,isp)--> nimp_<sp> [10^19/m^3], impurity density profile of <sp>
+! - zavg_strahl(:,isp)--> Zavg_<sp> [-], average charge profile of <sp>
+! - nesrc_strahl(:,isp)-> nesrc_<sp> [10^19/m^3/s], electron density source due to <sp>
+! - Dneo_strahl(:,isp)--> Dneo_avg_<sp> [m^2/s], avg. neocl. diffusion from NEOART
+! - Vneo_strahl(:,isp)--> Vneo_avg_<sp> [m/s], avg. neocl. convection from NEOART
 !  
 !============================================================================================!
 
@@ -94,7 +81,7 @@ double precision, dimension(n_o_max, 10) :: pradsp_o, nimpsp_o, zavgsp_o, nesrcs
 
 double precision, dimension(ngmax) :: rhopolg, neg, teg, tig
 
-double precision, dimension(NRD,10) :: Dz_anom, Vz_anom
+double precision, dimension(NRD,10) :: Dzin, Vzin, Dz_anom, Vz_anom
 
 character(len=160) :: strahl_dir, cmd_cmd, as_nml
 character(len=20) :: rho_coord, elements_touse(10)
@@ -142,22 +129,12 @@ if (TIME-TSTART < tau_start) then
     nesrc_strahl = 0.0
     Dneo_strahl = 0.0
     Vneo_strahl = 0.0
-    !work_strahl(:,1) = 1.0 ! zeff
-    !work_strahl(:,2) = 0.0 ! pradtot
-    !work_strahl(1:NA1,3) = NE ! nmain
-    !work_strahl(:,4) = 0.0 ! pradmain
-    !do isp=1,nimp_touse
-    !   work_strahl(:,5+6*(isp-1)+0) = 0.0 ! prad_sp
-    !   work_strahl(:,5+6*(isp-1)+1) = 0.0 ! nimp_sp
-    !   work_strahl(:,5+6*(isp-1)+3) = 0.0 ! nesrc_sp
-    !   work_strahl(:,5+6*(isp-1)+4) = 0.0 ! Dneo_sp
-    !   work_strahl(:,5+6*(isp-1)+5) = 0.0 ! Vneo_sp
-    !enddo
-    !do isp=1,nimp_touse
-    !   work_strahl(:,5+6*(isp-1)+2) = 1.0 ! zavg_sp
-    !enddo
     return
 endif
+
+print *, "Calling STRAHL..."
+print *, "Number of impurities:", nimp_touse
+print *, "Species: ", (elements_touse(isp), isp=1, nimp_touse)
 
 diffname1_s = ''
 
@@ -185,8 +162,8 @@ r_rho(NA1) = r_rho(NA)
 !conversion from rho to rhovol of STRAHL for diffusion and convection
 
 do isp=1, nimp_touse
-   Dz_anom(:,isp) = Dz_in_strahl(:,isp)*r_rho(:)
-   Vz_anom(:,isp) = Vz_in_strahl(:,isp)*r_rho(:)
+   Dzin(:,isp) = Dz_in_strahl(:,isp)*r_rho(:)
+   Vzin(:,isp) = Vz_in_strahl(:,isp)*r_rho(:)
 enddo
 
 rhopolg(1) = 0.
@@ -197,14 +174,16 @@ enddo
 if (NA1 > ngmax) then
 ! Interpolate to astra grid
     do isp=1, nimp_touse
-       call qinterp_metric(rhopol(1:NA1), Dz_anom(1:NA1,isp), NA1, rhopolg(1:ngmax), Dz_anom(1:ngmax,isp), ngmax)
-       call qinterp_metric(rhopol(1:NA1), Vz_anom(1:NA1,isp), NA1, rhopolg(1:ngmax), Vz_anom(1:ngmax,isp), ngmax)
+       call qinterp_metric(rhopol(1:NA1), Dzin(1:NA1,isp), NA1, rhopolg(1:ngmax), Dz_anom(1:ngmax,isp), ngmax)
+       call qinterp_metric(rhopol(1:NA1), Vzin(1:NA1,isp), NA1, rhopolg(1:ngmax), Vz_anom(1:ngmax,isp), ngmax)
     enddo
     call qinterp_metric(rhopol(1:NA1), NE(1:NA1), NA1, rhopolg(1:ngmax), neg(1:ngmax), ngmax)
     call qinterp_metric(rhopol(1:NA1), TE(1:NA1), NA1, rhopolg(1:ngmax), teg(1:ngmax), ngmax)
     call qinterp_metric(rhopol(1:NA1), TI(1:NA1), NA1, rhopolg(1:ngmax), tig(1:ngmax), ngmax)
+else
+   Dz_anom = 1.*Dzin
+   Vz_anom = 1.*Vzin
 endif
-
 
 do isp=1,nimp_touse
    rrates(isp)=rrates_in_strahl(isp)
@@ -318,7 +297,7 @@ write(nch_w1, '(A)') &
 
 ! reclying has to be for each imp species
 do isp=1, nimp_touse
-    write(nch_w1, '(A, I, A, F12.4, A, E14.5, A, F12.4)') &
+    write(nch_w1, '(A, I, A, F12.4, A, E14.5, A, E12.4)') &
         '   ', irecycl(isp), '               ', wrecycl(isp), '        ', taudiv(isp), '  ', taupump(isp)
 enddo
 write(nch_w1, '(A)') &
@@ -447,7 +426,7 @@ close(nch_w1)
 101 format(A, F15.8)
 104 format(A, F15.8 , A, I, A, F15.8, A, F15.8)
 105 format(A, E25.11, A, E25.11, 10A)
-108 format(A, F15.8 , A, E16.8, A, E16.8)
+108 format(A, F15.8 , A, E16.8, A, F15.8)
 109 format(A, I, A , I, A, I, A)
 112 format(A, F15.8 , A, F15.8, A, F15.8, A, F15.8)
 145 format(A, F15.8 , A, F15.8, A, F15.8, A, F15.8, A, F15.8)
@@ -464,8 +443,8 @@ call grid_write_strahl(strahl_dir, nfour_c, RTOR+SHIF(1), &
 
 ! Main STRAHL call
 
-!cmd_cmd = '/afs/ipp/home/r/rld/strahl/amd64_sles11/strahl a q v'
-cmd_cmd = '/afs/ipp/home/r/rld/STRAHLG/amd64_sles15/strahl a q' ! add v to options for verbose version
+!cmd_cmd = '/afs/ipp/home/r/rld/strahl/amd64_sles11/strahl a q v' ! old executable
+cmd_cmd = '/afs/ipp/home/r/rld/STRAHLG/amd64_sles15/strahl a q' ! new executable, add v to options for verbose version
 write(*, '(A)') 'Executing', cmd_cmd 
 call system(cmd_cmd)      ! run strahl
 
@@ -519,9 +498,6 @@ open(nch_r2, file=TRIM(strahl_dir)//TRIM(strahl_output))
     enddo
 close(nch_r2)
 
-! OR: extract results from NetCDF file (TO DO)
-! ...
-
 
 ! Interpolate to astra grid
 
@@ -529,58 +505,42 @@ close(nch_r2)
 ! Zeff
 call qinterp_metric(rpol_o(1:Nr_o), max(1., zeff_o(1:Nr_o)), Nr_o, &
      rhopol(1:NA1), zeff_strahl(1:NA1), NA1)
-!call qinterp_metric(rpol_o(1:Nr_o), max(1., zeff_o(1:Nr_o)), Nr_o, &
-!     rhopol(1:NA1), work_strahl(1:NA1,1), NA1)
 
 ! Prad tot
 call qinterp_metric(rpol_o(1:Nr_o), pradtot_o(1:Nr_o)/1.E6, Nr_o, &
     rhopol(1:NA1), prad_tot_strahl(1:NA1), NA1)
-!call qinterp_metric(rpol_o(1:Nr_o), pradtot_o(1:Nr_o)/1.E6, Nr_o, &
-!    rhopol(1:NA1), work_strahl(1:NA1,2), NA1)
 
 ! nmain
 call qinterp_metric(rpol_o(1:Nr_o), 1.E-19*max(nmain_o(1:Nr_o),0.0), Nr_o, &
     rhopol(1:NA1), nmain_strahl(1:NA1), NA1)
-!call qinterp_metric(rpol_o(1:Nr_o), 1.E-19*max(nmain_o(1:Nr_o),0.0), Nr_o, &
-!     rhopol(1:NA1), work_strahl(1:NA1,3), NA1)
 
 ! Prad main
 call qinterp_metric(rpol_o(1:Nr_o), max(pradmain_o(1:Nr_o),0.0)/1.E6, Nr_o, &
     rhopol(1:NA1), prad_main_strahl(1:NA1), NA1)
-!call qinterp_metric(rpol_o(1:Nr_o), max(pradmain_o(1:Nr_o),0.0)/1.E6, Nr_o, &
-!    rhopol(1:NA1), work_strahl(1:NA1,4), NA1)
 
 ! species-dependent quantities
 ! Prad species
 do isp=1, nimp_touse
     call qinterp_metric(rpol_o(1:Nr_o), max(pradsp_o(1:Nr_o, isp),0.0)/1.E6, Nr_o, &
          rhopol(1:NA1), prad_strahl(1:NA1, isp), NA1)
-    !call qinterp_metric(rpol_o(1:Nr_o), max(pradsp_o(1:Nr_o, isp),0.0)/1.E6, Nr_o, &
-    !     rhopol(1:NA1), work_strahl(1:NA1, 5 + 6*(isp-1) + 0), NA1)
 enddo
 
 ! nimp species
 do isp=1, nimp_touse
     call qinterp_metric(rpol_o(1:Nr_o), 1.E-19*max(nimpsp_o(1:Nr_o, isp),0.0), Nr_o, &
          rhopol(1:NA1), nimp_strahl(1:NA1, isp), NA1)
-    !call qinterp_metric(rpol_o(1:Nr_o), 1.E-19*max(nimpsp_o(1:Nr_o, isp),0.0), Nr_o, &
-    !     rhopol(1:NA1), work_strahl(1:NA1, 5 + 6*(isp-1) + 1), NA1)
 enddo
 
 ! zavg species
 do isp=1, nimp_touse
     call qinterp_metric(rpol_o(1:Nr_o), max(zavgsp_o(1:Nr_o, isp),0.0), Nr_o, &
          rhopol(1:NA1), zavg_strahl(1:NA1, isp), NA1)
-    !call qinterp_metric(rpol_o(1:Nr_o), max(zavgsp_o(1:Nr_o, isp),0.0), Nr_o, &
-    !     rhopol(1:NA1), work_strahl(1:NA1, 5 + 6*(isp-1) + 2), NA1)
 enddo
  
 ! ne source species
 do isp=1, nimp_touse
     call qinterp_metric(rpol_o(1:Nr_o), 1.E-19*max(nesrcsp_o(1:Nr_o, isp),0.0), Nr_o, &
          rhopol(1:NA1), nesrc_strahl(1:NA1, isp), NA1)
-    !call qinterp_metric(rpol_o(1:Nr_o), 1.E-19*max(nesrcsp_o(1:Nr_o, isp),0.0), Nr_o, &
-    !     rhopol(1:NA1), work_strahl(1:NA1, 5 + 6*(isp-1) + 3), NA1)
 enddo
 
 !conversion from strahl rvol to astra rho
@@ -594,21 +554,19 @@ enddo
 do isp=1, nimp_touse
     call qinterp_metric(rpol_o(1:Nr_o), dneosp_o(1:Nr_o, isp), Nr_o, &
          rhopol(1:NA1), Dneo_strahl(1:NA1, isp), NA1)
-    !call qinterp_metric(rpol_o(1:Nr_o), dneosp_o(1:Nr_o, isp), Nr_o, &
-    !     rhopol(1:NA1), work_strahl(1:NA1, 5 + 6*(isp-1) + 4), NA1)
 enddo
 
 ! Vneo species
 do isp=1, nimp_touse
     call qinterp_metric(rpol_o(1:Nr_o), vneosp_o(1:Nr_o, isp), Nr_o, &
          rhopol(1:NA1), Vneo_strahl(1:NA1, isp), NA1)
-    !call qinterp_metric(rpol_o(1:Nr_o), vneosp_o(1:Nr_o, isp), Nr_o, &
-    !     rhopol(1:NA1), work_strahl(1:NA1, 5 + 6*(isp-1) + 5), NA1)
 enddo
 
 i_stepst = i_stepst+1
 
 if (i_stepst > 5) i_stepst=5
+
+print *, "Finished STRAHL call"
 
 201 format(1F15.8)
 203 format(1I8)
