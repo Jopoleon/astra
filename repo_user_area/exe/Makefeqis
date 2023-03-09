@@ -6,7 +6,7 @@ LIB_DIR = $(AWD)/lib
 LIBNAM = libfeqis.a
 LIB = $(LIB_DIR)/$(LIBNAM)
 
-FQFLAGS	= -O2 -g -traceback -I$(MOD_FOR) -I$(MOD_DIR)
+FQFLAGS	= -O2 -g -traceback -I$(MOD_FOR)
 
 # FEQIS objs
 
@@ -27,13 +27,17 @@ $(OBJ_DIR)/solver_inversion_matrix_gsef.o
 
 # Make Commands
 .PHONY: all
-all: directories $(LIB)
+all: directories $(LIB) mvmod
 
 .PHONY: directories
 directories:
 	@mkdir -p $(OBJ_DIR)
 	@mkdir -p $(LIB_DIR)
 	@mkdir -p $(MOD_DIR)
+
+.PHONY: mvmod
+mvmod:
+	-@mv *.mod $(MOD_DIR)/
 
 .PHONY: clean
 clean:
@@ -46,7 +50,6 @@ clean:
 
 $(OBJ_DIR)%.o : $(SRC_DIR)%.f90
 	$(AFC) $(FQFLAGS) -c $< -o $@
-	-@mv *.mod $(MOD_DIR)/
 
 $(LIB): $(FQMODOBJS) $(FQOBJS)
 	ar -u -rv $(LIB) $(FQMODOBJS) $(FQOBJS)
