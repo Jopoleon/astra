@@ -27,7 +27,7 @@ then
    platform=cz
 elif [[ $node == *"mit.edu" ]]
 then
-   platform=cz
+   platform=mit
 else
    platform=ga
 fi
