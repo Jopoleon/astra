@@ -15,7 +15,7 @@ double precision :: theta, rtmp, ztmp
 
 ! Surface contours
 
-if (MEQUIL == 0. .or. LEQ(5) <= 0) then
+if (MEQUIL == 0. .or. LEQ(5) <= 1) then
 
 ! 3 moments equilibrium
    nrho_surf = NA1
