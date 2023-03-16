@@ -991,6 +991,7 @@ def upeqn(parse, assign_type=None):
         up_txt += 'ND1 = NA1\n'
     else:
         up_txt += pa.apptmp('ROU', parse)
+        up_txt += 'ND1 = NODE(ROU)\n'
 
     up_txt += 'NA1U = ND1\n'
     up_txt += 'ND = ND1 - 1\n'
