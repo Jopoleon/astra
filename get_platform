@@ -25,6 +25,9 @@ then
 elif [[ $AWD == "/compass"* ]]
 then
    platform=cz
+elif [[ $node == *"mit.edu" ]]
+then
+   platform=cz
 else
    platform=ga
 fi

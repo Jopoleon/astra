@@ -24,6 +24,10 @@ elif [[ $platform == "ga" ]]
 then
     module load intel/2019
     module load conda/iris
+elif [[ $platform == "mit" ]]
+then
+    module load intel/2018-01
+    module load anaconda3/2020.11
 else
     module load anaconda/3
 fi
