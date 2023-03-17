@@ -280,6 +280,7 @@ VRS      m^2                       dV/dRho, intermediate grid
 VTOR     m/s                       Toroidal rotation speed
 XC       None                      Bootstrap coefficient for ion temperature gradient
 XI       m^2/s                     Total ion thermal diffusivity Chi_i for sum of thermal ions
+XRHO     None                      Normalized Rho = Rho/Roc = [drhox/2,1-drhox/2], ... 
 XUPAD    m^2/s                     Parallel momentum diffusivity Chi_par, diamagnetic part
 XUPAP    m^2/s                     Parallel momentum diffusivity Chi_par, poloidal part
 XUPAR    m^2/s                     Parallel momentum diffusivity Chi_par
