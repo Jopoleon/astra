@@ -6,7 +6,7 @@ LIB_DIR = $(AWD)/lib
 LIBNAM = libspider.a
 LIB = $(LIB_DIR)/$(LIBNAM)
 
-FFLAGS	= -O2 -g -traceback -I$(MOD_FOR) -I. -nostandard-realloc-lhs -qopenmp
+FFLAGS	= -O2 -g -traceback -I$(MOD_FOR) -I. -I$(MOD_DIR) -nostandard-realloc-lhs -qopenmp
 
 # SPIDER objs
 
