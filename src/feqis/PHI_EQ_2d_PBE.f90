@@ -42,7 +42,7 @@ double precision, dimension(Nr, Nt) :: PSI_imd, dArea, Rmaj, Rmaj2, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
     ddr, ddr_i, dtp, dtm, r_a, Rmaji, Rmaji1, rr2, r_i, r_i1, &
-    gradr, gradh, gradr2(Nr, nt), gradh2, dArea2, &
+    gradr, gradh, gradr2, gradh2, dArea2, &
     B_R, B_Z, B_T, &
     grt, grt2, dphdr, dphdz, ghht2, X_i1, Y_i1
 
