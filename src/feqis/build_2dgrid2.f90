@@ -11,20 +11,22 @@ use debugger_ef, only: markloc_ef, debug
 implicit none
 
 integer, intent(in) :: Nt, Nr
-double precision, intent(in) :: btor, iplasma
-double precision, intent(in), dimension(Nr) :: psig
+double precision, intent(in) :: btor, iplasma, Rtor
+double precision, intent(in), dimension(Nr) :: psig, ipol, pressure
 double precision, intent(in), dimension(Nt+1) :: thetap_i
 double precision, intent(in), dimension(Nr, Nt) :: Rmaj, Rmaj2, &
-    Jcbn2, r, gradr2
+    Jcbn2, r, gradr2, PSI
+double precision, intent(out) :: li3, betapol
+double precision, intent(out), dimension(Nr) :: G1, G2, G3, &
+    volum, areat, perim, slat, &
+    FOFB, GRADRO, BMAXT, BMINT, BDB02, BDB0, B0DB2
 
 integer :: jr, jt, i, j, k, ip0, ip1, ip2, ip3
-
-double precision :: Rtor, li3, betapol, ipol_rmaj, z1, z2, t1, t2, t3, t4
-double precision, dimension(Nr) :: rhot, rhoa, areat, perim, slat, FOFB, ipol, &
-    dPSIdV, dVa, daa, dum1, pressure, G1, G2, G3, volum, GRADRO, &
-    BMAXT, BMINT, BDB02, BDB0, B0DB2, AMETR, ONEZ
+double precision :: ipol_rmaj, z1, z2, t1, t2, t3, t4
+double precision, dimension(Nr) :: rhot, rhoa, &
+    dPSIdV, dVa, daa, dum1, AMETR, ONEZ
 double precision, dimension(Nt) :: dl_arc, tar1, tar2
-double precision, dimension(Nr, Nt) :: PSI, gradPSI, gradV, gradPSIa, gradVa, &
+double precision, dimension(Nr, Nt) :: gradPSI, gradV, gradPSIa, gradVa, &
     dV2da, dA2da, B_pol, B_R, B_Z, B_pola, B_ABSa, B_Ta
 
 call markloc_ef('build_2dgrid2', debug_lev=debug)
