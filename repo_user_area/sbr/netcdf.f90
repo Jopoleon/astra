@@ -97,10 +97,11 @@ call nf90_set(ncid, jid, 1, (/n_t/), f_intern2, n_int2, varid)
 
 ! Profiles
 
-if (verbose) write(6, *) '   Defining profile variables...'
+if (verbose) write(6, *) '   Defining profileX variables...'
 
 jid = jid + n_int2
 call nf90_set(ncid, jid, 1, (/n_r/), f_profx, n_profx, varid)
+if (verbose) write(6, *) '   Defining profile variables...'
 jid = jid + n_profx
 call nf90_set(ncid, jid, 1, (/n_r/), f_prof, n_prof, varid)
 
@@ -949,7 +950,7 @@ read(nunit, '(/A)')
 do
     read(nunit, '(A8, X, A25, X, A50)', iostat=ios) s_name, s_unit, s_desc
     if (ios /= 0) EXIT
-    if (TRIM(s_name) /= 'TIME') then
+    if (TRIM(s_name) /= 'TIME' .and. TRIM(s_name) /= 'XRHO') then
 !        write(6, '( 3(A, "%") )') s_name, s_desc, s_unit
         call nfcheck( nf90_def_var(ncid, s_name, NF90_DOUBLE, dimid, varid(jid)) )
         call nfcheck( nf90_put_att(ncid, varid(jid), UNIT, s_unit) )
