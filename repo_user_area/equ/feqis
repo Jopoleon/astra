@@ -1,0 +1,116 @@
+NEQUIL=91;
+MEQUIL=90;
+!MEQUIL=0;
+IPEQL=5;
+
+atreq = .5;
+
+IPL=IPLX;
+SGNIP= 1.;
+SGNBT= -1.;
+
+TAUMIN=0.05;
+TAUMAX=0.05;
+
+!====================  Ion densities ========================================
+AMAIN=AMJ;
+ZMAIN=ZMJ;
+
+AIM1=12.; ! C
+ZIM1=ZICAR;
+NIZ1=CIMP1*NE;
+
+!Deuterium density
+NDEUT=NE-ZIM1*NIZ1;
+NMAIN=NDEUT;
+NI=NDEUT+NIZ1;  !Thermal ion density
+ZEF1 = ZICAR*(ZICAR-1.)*NIZ1/NE
+ZEF = 1+ZEF1;
+
+!====================  Impurity radiation ==================================
+
+PBOL1 = PRBER*NIZ1*NE;            ! PBOL1 - entire radiation due to C
+
+PBOL1=PBOL1-PBR1;               ! PBOL1 - line radiation due to C, MW/m^3
+CAR15=PBRAD;                     ! Bremstrahlung
+CAR16=CRAD2*PSYNC;                     ! Bremstrahlung
+PRAD=PBOL1+CAR15+CAR16;    ! Total radiation power density
+
+!----------------------------------------------------------------------------
+CF3=NA1;
+
+!FOUR_ARR(TIME, CF3, 1, TE, 3.d1, 2, CAR2)>::::;
+NNCL=1.e-5;
+NNWM=3.e-5;
+NEUT:.05:::;
+
+!CNB1=8; CNB2=1; CNB3=2; CNB4=1;
+!NBI:0.05;
+
+!RABBIT>:0.050:::;
+
+VPOL=VPSWW;
+VTOR=VTORX;
+! ZRD23X=1 using angular velocity, =0 using vtor;
+!ER=BTOR*(VTOR/RTOR*FRS*MU+VDIA-VPOL)
+
+a2cdf>:.05:::;
+
+! ECH
+! TORBEAM
+
+!TORBA(PEECR, CUECR, 0.d0)>:.05:::;
+
+TE:AS;		TE=TEX;
+TI:AS;		TI=TIX
+NE:AS;		NE=NEX;
+
+PE=POH+PEBM+PEECR-PEICL-PRAD+PEDT;
+PI=PIBM+PEICL+PIDT;
+
+CAR1 = QETOT;
+CAR2 = QITOT;
+!CF14=4.997*QDTB;
+CF15=BETANB;
+CF4=QOHB;
+CF5=QRADB;
+!Power radiated within the separatrix
+CF6=0.33*VINT(PRADXB)+VINT(CAR15B)+VINT(CAR16B);
+!L-H threshold power: Eq. 26 in IPB07, chapter 2, n_19 instead of n_20
+!CF7=0.0156*NECHC**0.73*BTOR**0.74*SLATB**0.98/AMJ;
+CF8=NEC/NEAVB;
+CF9=TIX(AFX(0.));
+
+HC=HCKIM;	
+DC=DCKIM;
+XC=XCKIM;
+!CU:AS;	
+CU:EQ;
+CC=CNSA;
+CD=CUBM+CUECR;
+MU=1./(CAR2X + 0.0001);
+!CU=max(0., min(70./IPLX*BTORX/2.5, CNSA));
+!CU=CNSA;
+
+!MIXINT(10.,ZRD22X)::::;tglf_pel	
+! E.g. CF10=10 - Kadomtsev model, ZRD22X= prescribed period
+!CF9=min(0.25,ZRD22X);
+
+
+	Profile output
+
+Tex\TE\\TEX;	pinb\PIBM\-3;	Pecr\PEECR;	nT\NTRIT;
+dens\NE\\NEX;	j\CU;		Pohm\POH\-1;	Sne\SNEBM; 
+Tix\TI\\TIX; 	penb\PEBM\-3; 	Jecr\CUECR;	nD\NDEUT;
+Zeff\ZEF;	q\1./MU\\CAR2X;	Prad\PRAD\-1;	sneu\SNNEU;
+
+j\CU\-15;	Upl\UPL\-28;	Qi\QITOT\-13;   nuis\NUIS;
+jbs\CUBS\-15;	\;	joh\CUOHM\-15;	RLTi\RTOR/LTI;	
+CC\CC\-12;	\;	Qe\QETOT;	RLne\RTOR/LNE;
+X_nc\HNCHI\-7;	\;	X_as\HNASI\-7;	hexp\HEXP;
+
+	Time output
+
+QE_QETOTB;	QI_QITOTB;	QOH_QOHB;	NA1_NA1; 
+q0_1/MUC;	qa_1/MUB; 	q95_1/MU(AFX(0.95));	q95r_ZRD13X;
+qmin_QMINB;	PNBi_VINT(PIBMB);	PNBe_VINT(PEBMB);	Pecr_VINT(PEECRB); Inb_IINT(CUBMB); Iec_IINT(CUECRB); betn_BETANB;
