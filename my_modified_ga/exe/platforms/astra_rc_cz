@@ -1,0 +1,68 @@
+#!/bin/bash -f
+
+# IPP CZ
+
+export MKL_LIBDIR="/sw/intel/compilers_and_libraries_2018.3.222/linux/mkl/lib/intel64"
+export NAGLIB="/compass/home/tardini/astra_ext/nag_lib"
+export COMP_LIB="/sw/intel/compilers_and_libraries_2018.3.222/linux/compiler/lib/intel64_lin"
+export NCDF_HOME="/sw/netcdf/4.6.3-intel18"
+export HDF5_HOME="/sw/hdf5/1.8.21-intel18"
+
+export AFC=ifort
+export ACC="cc -O"
+export MPIFC=mpiifort
+
+export ASTRA_EXT=/compass/home/tardini/astra_ext
+
+# NetCDF
+
+export NCDF_LIB="-L${HDF5_HOME}/lib -lhdf5 -L${NCDF_HOME}/lib -lnetcdf -lnetcdff"
+export NCDF_INC="${NCDF_HOME}/include"
+
+CPLIBS="-L${COMP_LIB} -lsvml -limf -lirng -lifport -lirc"
+
+# TGLF
+
+export TGLF_HOME=${ASTRA_EXT}/tglf/oct22
+export TGLF_INC=${TGLF_HOME}/inc
+export TGLF_LIB=${TGLF_HOME}/lib/libtglf.a
+
+# NEO
+
+export NEO_HOME=${ASTRA_EXT}/neo/jun21
+export NEO_INC=${NEO_HOME}/inc
+export NEO_LIB="${NEO_HOME}/lib/neo_lib.a ${NEO_HOME}/lib/nclass_lib.a ${NEO_HOME}/lib/UMFPACK_lib.a ${NEO_HOME}/lib/math_lib.a ${NEO_HOME}/lib/expro_lib.a ${NEO_HOME}/lib/geo_lib.a"
+
+# NAGs
+
+export NAGFLIB=${NAGLIB}/libnag_nag.a
+export NAGF90MKL=${NAGLIB}/libnag_mkl.a
+
+# TORBEAM
+
+IRC_LIB="-L${COMP_LIB} -lirc" # necessary for libtorbeam.so
+export TORB_HOME="${ASTRA_EXT}/torbeam" # needed at runtime too
+export TORB_LIB="-L${TORB_HOME}/lib -ltorbeam ${CPLIBS} ${NAGFLIB} ${NAGF90MKL}"
+
+# RABBIT
+
+export RABBIT_HOME="${ASTRA_EXT}/rabbit/jul22"
+RABBIT_LIBDIR=${RABBIT_HOME}/lib
+export RABBIT_LIB="-L${RABBIT_LIBDIR} -lrabbit -Wl,-rpath,${RABBIT_LIBDIR}"
+export RABBIT_INC=${RABBIT_HOME}/inc
+
+# QuaLiKiZ
+
+export QLK_HOME=${ASTRA_EXT}/qualikiz/jun21
+export QLK_INC=${QLK_HOME}/inc
+export QLK_LIB=${QLK_HOME}/lib/libQLK-intel-release-default-mpi.a
+
+export QLKNN_HOME=${ASTRA_EXT}/qlk_nn/jun21
+export QLKNN_INC=${QLKNN_HOME}/inc/serial
+export QLKNN_LIB=${QLKNN_HOME}/lib/libQLKNN-intel-release-default.a
+
+# XLBR
+
+export XLBR="-L/usr/lib -lX11 -Wl,--start-group ${MKL_LIBDIR}/libmkl_intel_lp64.a ${COMP_LIB}/libintlc.so.5 ${MKL_LIBDIR}/libmkl_core.a ${MKL_LIBDIR}/libmkl_sequential.a -Wl,--end-group ${MKL_LIBDIR}/libmkl_blacs_intelmpi_lp64.a"
+
+export AS_LD_LIBRARY_PATH="${HDF5_HOME}/lib:${NCDF_HOME}/lib:${NAGLIB}:${COMP_LIB}:${TORB_HOME}/lib:${RABBIT_HOME}/lib"

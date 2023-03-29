@@ -1,0 +1,36 @@
+#!/bin/bash -f
+
+source /etc/profile.d/modules.sh
+
+rootdir=`dirname $0`                # may be relative path
+export AWD=`cd $rootdir/.. && pwd`  # ensure absolute path
+
+platform=`$AWD/get_platform`
+echo Installation for platform $platform
+
+module purge
+
+if [[ $platform == "gway" ]]
+then
+    module load cineca intel
+elif [[ $platform == "iter" ]]
+then
+    module load SciPy-bundle/2020.11-intel-2020b
+elif [[ $platform == "cz" ]]
+then
+    module load python3/anaconda3.5
+    module load intelstudio/18
+elif [[ $platform == "ga" ]]
+then
+    module load intel/2019
+    module load conda/iris
+elif [[ $platform == "mit" ]]
+then
+    module load intel/2018-01
+    module load anaconda3/2020.11
+else
+    module load anaconda/3
+fi
+
+ulimit -s 50000
+python ${AWD}/exe/as_exe.py "$@"

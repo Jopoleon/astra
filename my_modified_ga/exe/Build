@@ -1,0 +1,99 @@
+#!/bin/bash -f
+
+rootdir=`dirname $0`                  # may be relative path
+export AWD=`cd $rootdir/.. && pwd`    # ensure absolute path
+echo AWD is $AWD
+
+cd $AWD
+
+# Get variables from log file
+
+ALOG=$AWD/tmp/astra.nml
+while IFS='=' read var val
+do
+   var=`echo $var | xargs` #xargs for trimming
+   val=`echo $val | xargs`
+   if [[ $val ]]
+   then
+      declare "$var=$val"
+   fi
+done < $ALOG
+
+# Define environment variables, including compiler and libraries
+
+source $AWD/exe/astra_rc
+
+export PATH="${PATH}:${IFORT_BIN}:${MPIFORT_BIN}"
+export expfile="${exp_file}"
+export equfile="${equ_file}"
+jobname=${exp_file}${equ_file}
+
+echo Compile main ASTRA executable $equ_file $AWD $RABBIT_HOME
+make -f exe/Makefile MODEL=$equ_file
+
+echo Compile IPC programs
+[ -f exe/Makexpr ] && make -f exe/Makexpr
+
+if [ $? == 0 ]  # successful compilation
+then
+
+   exe/CheckObjs
+   if [ $? == 1 ]
+   then
+      exit 1
+   else
+      echo Successful check of object names in libs
+   fi
+# Execution (Runmodel)
+
+   export LD_LIBRARY_PATH="${AS_LD_LIBRARY_PATH}:$LD_LIBRARY_PATH"
+
+   ATASK=$AWD/bin/$equ_file.exe
+
+   if [ "$TASK" == 'BGD' ]
+   then
+      bat="$AWD/exe/batch.sh"
+      cat << EOT > $bat
+#!/bin/sh
+#SBATCH -J astra_${USER}
+#SBATCH --partition=p.tok.openmp
+#SBATCH --qos=p.tok.openmp.48h
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=16
+#SBATCH --mem-per-cpu 1GB
+#SBATCH --time=12:00:00
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user ${USER}@ipp.mpg.de
+export OMP_NUM_THREADS=\${SLURM_CPUS_PER_TASK:-1}
+export OMP_PLACES=cores
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+srun $ATASK
+EOT
+
+      echo sbatch $bat
+#      jobid=`sbatch $bat | awk '{print $NF}'`
+#      date=`date`
+#      fslurm="$AWD/slurm_jobs.log"
+#      touch $fslurm
+#      echo $jobname $jobid $date | cat >> $fslurm
+      date
+      sbatch -W $bat
+   else
+      echo Running $ATASK
+      $ATASK
+      echo ASTRA normal exit
+      echo
+      for mod_name in tglfi qlkzi qlki neo
+      do
+          PID=$(ps aux | grep $mod_name | grep 'R+' | awk '{print $2}')
+          if [ ! -z "$PID" ];
+          then
+              for p_id in $PID
+              do
+                  kill -9 $p_id
+              done
+          fi
+       done
+   fi
+fi

@@ -1,0 +1,85 @@
+SRC_DIR = $(AWD)/src/for
+OBJ_DIR = $(AWD)/obj/for
+MOD_DIR = $(AWD)/mod/for
+LIB_DIR = $(AWD)/lib
+LIBNAM = libfor.a
+LIB = $(LIB_DIR)/$(LIBNAM)
+
+# Compilers
+
+AFC_FLAGS = -r8 -no-prec-div -ip -O0 
+ACC = cc
+
+MODOBJS = \
+$(OBJ_DIR)/imas_ids.o \
+$(OBJ_DIR)/astra_modules.o \
+$(OBJ_DIR)/debugger.o \
+$(OBJ_DIR)/outcmn.o \
+$(OBJ_DIR)/const.o \
+$(OBJ_DIR)/status.o \
+$(OBJ_DIR)/char_manip.o \
+$(OBJ_DIR)/parse_utils.o \
+$(OBJ_DIR)/dbl2char.o \
+$(OBJ_DIR)/emeq.o \
+$(OBJ_DIR)/parameters_a2spider.o \
+$(OBJ_DIR)/ipc_mod.o \
+$(OBJ_DIR)/nclass_mod.o \
+$(OBJ_DIR)/strahl_mod.o
+
+OBJS = \
+$(OBJ_DIR)/Astra2XW.o \
+$(OBJ_DIR)/defarr.o \
+$(OBJ_DIR)/dialogx.o \
+$(OBJ_DIR)/err_catch_a.o \
+$(OBJ_DIR)/ifkey.o \
+$(OBJ_DIR)/read_input.o \
+$(OBJ_DIR)/intvar.o \
+$(OBJ_DIR)/metric.o \
+$(OBJ_DIR)/outdsp.o \
+$(OBJ_DIR)/runeq.o \
+$(OBJ_DIR)/serv.o \
+$(OBJ_DIR)/setarx.o \
+$(OBJ_DIR)/stdfun.o \
+$(OBJ_DIR)/surv.o \
+$(OBJ_DIR)/typdsp.o \
+$(OBJ_DIR)/gs_solver.o \
+$(OBJ_DIR)/a_spider.o \
+$(OBJ_DIR)/surf_ctr.o \
+$(OBJ_DIR)/ctr2rz.o \
+$(OBJ_DIR)/four_mom.o \
+$(OBJ_DIR)/numerical_tools_equil.o
+
+# Make Commands
+
+.PHONY: all
+all: directories $(LIB) mvmod
+
+.PHONY: directories
+directories:
+	@mkdir -p $(MOD_DIR)
+	@mkdir -p $(OBJ_DIR)
+	@mkdir -p $(LIB_DIR)
+
+.PHONY: mvmod
+mvmod:
+	rm -f *genmod.*
+	-@mv *.mod $(MOD_DIR)/
+
+.PHONY: clean
+clean:
+	rm -f *.mod
+	rm -f $(MOD_DIR)/*.mod
+	rm -rf $(OBJ_DIR)
+	rm -f $(LIB)
+
+# Rules
+
+$(OBJ_DIR)%.o: $(SRC_DIR)%.f90
+	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -c $< -o $@
+
+$(OBJ_DIR)%.o: $(SRC_DIR)%.c
+	$(ACC) -c $< -o $@
+
+$(LIB): $(MODOBJS) $(OBJS)
+	ar rv $(LIB) $(MODOBJS) $(OBJS) >/dev/null
+#	ranlib $(LIB)
