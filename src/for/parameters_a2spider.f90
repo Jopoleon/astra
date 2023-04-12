@@ -7,7 +7,7 @@ integer, parameter, private :: DP=kind(1.0D0)
 double precision, parameter :: GP=3.1415926, GP2=6.283185, GP4=GP2**2.0, muvac=0.4*GP*1.E-06
 double precision :: epsf_tol, epss_tol, ydiff, ydiff2, epsv_tol, sorparam, epsg_tol, &
     epstol, itertol, lambdatol, urelax, urelax2, time_fix_eqpff, murelax2, cheb_coefs(5, 5)
-character(len=40) :: name_gsefdir = 'exp/equ/' ! working directory path
+character(len=80) :: name_gsefdir = 'exp/equ/' ! working directory path
 
 integer :: max_iter, miter_ext, diagnostic_gsef, interp_routine, &
    do_adcmp, interp_method_rect, cheb_degree, four_degree, &
@@ -26,9 +26,9 @@ type type_parameters
 
     integer :: nstep = 0   ! nstep=0 - initial eq., nstep>0 using computed eq.
 
-    character*40 :: prename = 'exp/equ/' ! working directory path
+    character(len=80) :: prename = 'exp/equ/' ! working directory path
     integer :: kname = 8   ! path name length >=1
-    character*40 :: eqdfn = ''
+    character(len=80) :: eqdfn = ''
     
     integer ::  k_fixfree=1  !=0->only fixed boundary spider 
     integer ::  k_filesss=1  !=1->use files, 0 use memory 
