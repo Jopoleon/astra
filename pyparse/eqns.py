@@ -87,11 +87,11 @@ itype:
         cuas_txt += pa.apptmp('CU', parse)
         cuas_txt += const_text.CUAS.cu2
         if 'MV' in var_defined:
-            cuas_txt += 'MU(J) = YJ*MU(J) + MV(j)\n'
-            cuas_txt += 'FP(J) = YJ*(FP(J) - FP(1)) + FP(1) + FV(J)\n'
+            cuas_txt += 'MU(J) = YJ_CU*MU(J) + MV(j)\n'
+            cuas_txt += 'FP(J) = YJ_CU*(FP(J) - FP(1)) + FP(1) + FV(J)\n'
         else:
-            cuas_txt += 'MU(J) = YJ*MU(J)\n'
-            cuas_txt += 'FP(J) = YJ*(FP(J) - FP(1)) + FP(1)\n'
+            cuas_txt += 'MU(J) = YJ_CU*MU(J)\n'
+            cuas_txt += 'FP(J) = YJ_CU*(FP(J) - FP(1)) + FP(1)\n'
 
     cuas_txt += const_text.CUAS.cu_mu
 

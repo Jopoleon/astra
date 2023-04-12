@@ -582,13 +582,13 @@ class NIAS:
 '''! **** Ion density assignment
 call markloc("NI assignment")
 
-if (MACHIN == 'aug_') then
+if (MACHINE == 'aug_') then
 do J=1, NA1
 NI(J) = F1(J) + F2(J) + F3(J) + F4(J) + F5(J) + F6(J) + F7(J) + F8(J) + F9(J)  ! complete AUG
 enddo
 endif
 
-if (MACHIN == 'demo' .or. MACHIN == 'dem_') then
+if (MACHINE == 'demo' .or. MACHINE == 'dem_') then
 do J=1, NA1
 NI(J) = F1(J) + F2(J) + F3(J) + F4(J) + F6(J) + F7(J) + F8(J)  ! DEMO
 enddo
@@ -950,7 +950,7 @@ class INIT:
 
     end = \
 '''ROCO = ROC
-FTO = FTN
+!FTO = FTN
 do j=1, NA1
 NEO(j) = NE(j)
 NIO(j) = NI(j)
@@ -1045,7 +1045,8 @@ include 'tmp/declar.fml'
 include 'tmp/declar.fnc'
 
 integer, intent(in) :: ibcpsi_fb
-integer, intent(out) :: bc_type_for_fp, dfpdrbm12
+integer, intent(out) :: bc_type_for_fp
+double precision, intent(out) :: dfpdrbm12
 
 integer :: IFSUB, imethod, ND, ND1, NODE
 

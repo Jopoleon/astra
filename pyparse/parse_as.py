@@ -375,7 +375,7 @@ def sbr_header(j_sbr, astr='', label='subroutine'):
     out_txt += 'IFSUB = 0\n'
     out_txt += 'if (KEY /= 0 .and. ABS(KEY - DTEQ(4,%d)) < 0.1) IFSUB = 1\n' %j_sbr
     out_txt += 'if (TIME >= DTEQ(2, %d) .and. TIME <= DTEQ(3, %d) .and. ' %(j_sbr, j_sbr)
-    out_txt += 'TIME - TEQ(%d) + 1.E-8 - DTEQ(1, %d) > 0.0%s) IFSUB = 1\n' %(j_sbr, j_sbr, astr)
+    out_txt += 'TIME - TEQ(%d) + 1.E-7 - DTEQ(1, %d) > 0.0%s) IFSUB = 1\n' %(j_sbr, j_sbr, astr)
 
     return out_txt
 
