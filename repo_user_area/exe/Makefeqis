@@ -6,20 +6,19 @@ LIB_DIR = $(AWD)/lib
 LIBNAM = libfeqis.a
 LIB = $(LIB_DIR)/$(LIBNAM)
 
-FQFLAGS	= -O2 -g -traceback -I$(MOD_FOR) -I$(MOD_DIR) -I.
+FFLAGS	= -O2 -g -traceback -I$(MOD_FOR) -I$(MOD_DIR) -I.
 
 # FEQIS objs
 
-FQMODOBJS = \
+FEQ_MODOBJ = \
 $(OBJ_DIR)/modules_feqis.o
 
-FQOBJS = \
-$(OBJ_DIR)/find_angle_ef.o \
-$(OBJ_DIR)/feqis_main.o \
-$(OBJ_DIR)/feqis_init.o \
+FEQ_LIBOBJ = \
 $(OBJ_DIR)/build_2dgrid.o \
 $(OBJ_DIR)/build_2dgrid2.o \
-$(OBJ_DIR)/find_new_X0Y0.o \
+$(OBJ_DIR)/feqis_init.o \
+$(OBJ_DIR)/feqis_main.o \
+$(OBJ_DIR)/interp.o \
 $(OBJ_DIR)/PHI_EQ_2d_PBE.o \
 $(OBJ_DIR)/solver_inversion_matrix_gsef.o
 
@@ -49,7 +48,7 @@ clean:
 # Rules
 
 $(OBJ_DIR)%.o : $(SRC_DIR)%.f90
-	$(AFC) $(FQFLAGS) -c $< -o $@
+	$(AFC) $(FFLAGS) -c $< -o $@
 
-$(LIB): $(FQMODOBJS) $(FQOBJS)
-	ar -u -rv $(LIB) $(FQMODOBJS) $(FQOBJS)
+$(LIB): $(FEQ_MODOBJ) $(FEQ_LIBOBJ)
+	ar -u -rv $(LIB) $(FEQ_MODOBJ) $(FEQ_LIBOBJ)

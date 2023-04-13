@@ -4,8 +4,6 @@ subroutine solver_inversion_matrix_gsef(PSIb, Nr, Nt, &
      dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
      ddr, ddr_i, dtp, dtm, dt_i, PSI)
 
-use debugger_ef, only: markloc_ef, debug
-
 implicit none
 
 integer, intent(in) :: Nt, Nr, Ndims, LDAB
@@ -23,13 +21,11 @@ double precision :: rm_arc, tp_arc, tm_arc, rp_arc, denom
 double precision, dimension(Ndims, 1) :: BB
 double precision, dimension(LDAB, Ndims) :: AB
 
-call markloc_ef('solver_inversion_matrix_gsef', debug_lev=debug)
-
 NRHS = 1
-KL = 2*Nt
-KU = 2*Nt
+KL   = 2*Nt
+KU   = 2*Nt
 
-AB = 0.0
+AB  = 0.0
 BB  = 0.0
 PSI = 0.0
 
@@ -70,14 +66,14 @@ do jt=1, Nt
     iiup  = min(Ndims, jdimpp + KL)
     if (jdim00 >= iilow .and. jdim00 <= iiup) then
         AB(jrawm - jdimpp, jdimpp) = AB(jrawm - jdimpp, jdimpp) +  &
-           1./4.*dArc_rpt1(jr, jt)/dt_i(jr, jt)
+           0.25*dArc_rpt1(jr, jt)/dt_i(jr, jt)
     endif
 
     iilow = max(1, jdimpm-KU)
     iiup = min(Ndims, jdimpm + KL)
     if (jdim00 >= iilow .and. jdim00 <= iiup) then
         AB(jrawm - jdimpm, jdimpm) = AB(jrawm - jdimpm, jdimpm)- &
-            1./4.*dArc_rpt1(jr, jt)/dt_i(jr, jt)
+            0.25*dArc_rpt1(jr, jt)/dt_i(jr, jt)
     endif
 
 enddo
@@ -114,7 +110,7 @@ do jr=2, Nr-1
 
         if (jr == Nr - 1) then
             BB(jdim00, 1) = known_term(jr, jt) - dArc_rp1(jr, jt)/ddr(jr, jt)*PSIb - &
-                1./2.*(rp_arc + rm_arc)*PSIb
+                0.5*(rp_arc + rm_arc)*PSIb
         else
             BB(jdim00, 1) = known_term(jr, jt)
         endif
@@ -129,14 +125,14 @@ do jr=2, Nr-1
         iiup  = min(Ndims, jdim0p + KL)
         if (jdim00 >= iilow .and. jdim00 <= iiup) then
             AB(jrawm - jdim0p, jdim0p) = dArc_tp1(jr, jt)/dtp(jr, jt) + &
-                1./4.*(tp_arc + tm_arc)
+                0.25*(tp_arc + tm_arc)
         endif
 
         iilow = max(    1, jdim0m - KU)
         iiup  = min(Ndims, jdim0m + KL)
         if (jdim00 >= iilow .and. jdim00 <= iiup) then
             AB(jrawm - jdim0m, jdim0m) = dArc_tm1(jr, jt)/dtm(jr, jt) + &
-                1./4.*(-tp_arc - tm_arc)
+                0.25*(-tp_arc - tm_arc)
         endif
 
         if (jr < Nr - 1) then
@@ -144,19 +140,19 @@ do jr=2, Nr-1
             iiup  = min(Ndims, jdimp0 + KL)
             if (jdim00 >= iilow .and. jdim00 <= iiup) then
                 AB(jrawm - jdimp0, jdimp0) = dArc_rp1(jr, jt)/ddr(jr, jt) + &
-                    1./4.*(rp_arc + rm_arc)
+                    0.25*(rp_arc + rm_arc)
             endif
 
             iilow = max(    1, jdimpp - KU)
             iiup  = min(Ndims, jdimpp + KL)
             if (jdim00 >= iilow .and. jdim00 <= iiup) then
-                AB(jrawm - jdimpp, jdimpp) = 1./4.*(rp_arc + tp_arc)
+                AB(jrawm - jdimpp, jdimpp) = 0.25*(rp_arc + tp_arc)
             endif
 
             iilow = max(    1, jdimpm - KU)
             iiup  = min(Ndims, jdimpm + KL)
             if (jdim00 >= iilow .and. jdim00 <= iiup) then
-                AB(jrawm - jdimpm, jdimpm) = 1./4.*(-tp_arc + rm_arc)
+                AB(jrawm - jdimpm, jdimpm) = 0.25*(-tp_arc + rm_arc)
             endif
         endif
 
@@ -168,10 +164,10 @@ do jr=2, Nr-1
         if (jdim00 >= iilow .and. jdim00 <= iiup) then
             if (jr == 2) then
                 AB(jrawm - jdimm0, jdimm0) = dArc_rm1(jr, jt)/ddr(jr-1, jt) + &
-                    1./2.*(-rp_arc - rm_arc)
+                    0.5 *(-rp_arc - rm_arc)
             else
                 AB(jrawm - jdimm0, jdimm0) = dArc_rm1(jr, jt)/ddr(jr-1, jt) + &
-                    1./4.*(-rp_arc - rm_arc)
+                    0.25*(-rp_arc - rm_arc)
             endif
         endif
 
@@ -179,13 +175,13 @@ do jr=2, Nr-1
             iilow = max(    1, jdimmp - KU)
             iiup  = min(Ndims, jdimmp + KL)
             if (jdim00 >= iilow .and. jdim00 <= iiup) then
-                AB(jrawm - jdimmp, jdimmp) = 1./4.*(tm_arc - rp_arc)
+                AB(jrawm - jdimmp, jdimmp) = 0.25*(tm_arc - rp_arc)
             endif
 
             iilow = max(    1, jdimmm - KU)
             iiup  = min(Ndims, jdimmm + KL)
             if (jdim00 >= iilow .and. jdim00 <= iiup) then
-                AB(jrawm - jdimmm, jdimmm) = 1./4.*(-rm_arc - tm_arc)
+                AB(jrawm - jdimmm, jdimmm) = 0.25*(-rm_arc - tm_arc)
             endif
         endif
     enddo
