@@ -1,6 +1,6 @@
 subroutine definitions_feqis(equil_in, params, j_call, ifplasma)
 
-use pi_grec_vars, only: GPI2, mu0
+use pi_vars, only: GPI2, mu0
 use parameters_a2spider, only: type_parameters
 use imas_ids, only: type_equilibrium
 use ef_circuit, only: data_dir, nteta, nrho, &
@@ -55,13 +55,13 @@ if (ifplasma == 1) then
     psigrida(1: nrho) = equil_in%profiles_1d%psi(1: nrho) !unnormalized
     psigrida(1: nrho) = (psigrida(1: nrho) - psigrida(1)) / &
                         (psigrida(nrho)    - psigrida(1)) ! normalized: 0 axis,  1 sep
-    call linterp_ef(psigrida(1: nrho), ffprime(1: nrho), nrho, &
+    call linterp_feqis(psigrida(1: nrho), ffprime(1: nrho), nrho, &
         psia_2d(1: nrho), ffp_2d(1: nrho), nrho)
-    call linterp_ef(psigrida(1: nrho), pprime(1: nrho), nrho, &
+    call linterp_feqis(psigrida(1: nrho), pprime(1: nrho), nrho, &
         psia_2d(1: nrho), ppp_2d(1: nrho), nrho)
-    call linterp_ef(psigrida(1: nrho), IPOL(1: nrho), nrho, &
+    call linterp_feqis(psigrida(1: nrho), IPOL(1: nrho), nrho, &
         psia_2d(1: nrho), ipol_2d(1: nrho), nrho)
-    call linterp_ef(psigrida(1: nrho), pressure(1: nrho), nrho, &
+    call linterp_feqis(psigrida(1: nrho), pressure(1: nrho), nrho, &
         psia_2d(1: nrho), pres_2d(1: nrho), nrho)
     ffp_2d = -GPI2/mu0*ffp_2d
     ppp_2d = -GPI2*1.e-6*ppp_2d

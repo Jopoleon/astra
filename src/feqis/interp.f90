@@ -1,19 +1,5 @@
-subroutine find_angle_ef(rt, zt, r, z, angle)
-
-use pi_grec_vars, only: GPI2
-use debugger_ef, only: markloc_ef, debug
-
-double precision, intent(in) :: rt, zt, r, z
-double precision, intent(out) :: angle
-
-angle = ATAN2(z-zt, r-rt)
-if (angle < 0) angle = angle + GPI2
-
-return
-end subroutine find_angle_ef
-
 !------------------------------------------------------------
-subroutine qinterp_ef_feqis(x1, y1, Nx1, x2, y2, Nx2)
+subroutine qinterp_feqis(x1, y1, Nx1, x2, y2, Nx2)
 
 use debugger_ef, only: markloc_ef, debug
 
@@ -27,7 +13,7 @@ double precision, intent(out), dimension(Nx2) :: y2
 integer :: i, j
 double precision :: A, B, C, z1, z2, z3, t1, t2, t3, t4
 
-call markloc_ef('qinterp_ef_feqis', debug_lev=debug-1)
+call markloc_ef('qinterp_feqis', debug_lev=debug-1)
 
 do i=1, Nx2
     t4 = x2(i)
@@ -79,10 +65,10 @@ do i=1, Nx2
 enddo
 
 return
-end subroutine qinterp_ef_feqis
+end subroutine qinterp_feqis
 
 !------------------------------------------------------------
-subroutine linterp_ef_feqis(x1, y1, Nx1, x2, y2, Nx2)
+subroutine linterp_feqis(x1, y1, Nx1, x2, y2, Nx2)
 
 use debugger_ef, only: markloc_ef, debug
 
@@ -96,7 +82,7 @@ double precision, intent(out), dimension(Nx2) :: y2
 integer :: i, j
 double precision :: A, C, z1, z2, t1, t2, t4
 
-call markloc_ef('linterp_ef_feqis', debug_lev=debug-1)
+call markloc_ef('linterp_feqis', debug_lev=debug-1)
 
 do i=1, Nx2
     t4 = x2(i)
@@ -127,7 +113,7 @@ do i=1, Nx2
 enddo
 
 return
-end subroutine linterp_ef_feqis
+end subroutine linterp_feqis
 
 !------------------------------------------------------------
 subroutine polyfitcc_feqis(x, y, P)

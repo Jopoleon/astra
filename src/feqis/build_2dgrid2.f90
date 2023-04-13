@@ -5,7 +5,7 @@ subroutine build_2dgrid2(Nr, Nt, psig, &
     BMAXT, BMINT, BDB02, BDB0, B0DB2, &
     FOFB, slat, li3, betapol)
 
-use pi_grec_vars, only: GPI, GPI2
+use pi_vars, only: GPI, GPI2
 use debugger_ef, only: markloc_ef, debug
 
 implicit none
@@ -184,34 +184,34 @@ call b_extrp_ef(t4, t1, t2, t3, ip3, ip2, ip1, ip0, Nr, BDB02 , k)
 call b_extrp_ef(t4, t1, t2, t3, ip3, ip2, ip1, ip0, Nr, BDB0  , k)
 call b_extrp_ef(t4, t1, t2, t3, ip3, ip2, ip1, ip0, Nr, B0DB2 , k)
       
-call qinterp_ef_feqis(rhot(1: Nr-1), G1(1: Nr-1), Nr-1, &
+call qinterp_feqis(rhot(1: Nr-1), G1(1: Nr-1), Nr-1, &
     rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
 G1(2: Nr-1) = dum1(2: Nr-1)
-call qinterp_ef_feqis(rhot(1: Nr-1), g2(1: Nr-1), Nr-1, &
+call qinterp_feqis(rhot(1: Nr-1), g2(1: Nr-1), Nr-1, &
     rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
 g2(2: Nr-1) = dum1(2: Nr-1)
-call qinterp_ef_feqis(rhot(1: Nr-1), g3(1: Nr-1), Nr-1, &
+call qinterp_feqis(rhot(1: Nr-1), g3(1: Nr-1), Nr-1, &
     rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
 g3(2: Nr-1) = dum1(2: Nr-1)
-call qinterp_ef_feqis(rhot(1: Nr-1), gradro(1: Nr-1), Nr-1, &
+call qinterp_feqis(rhot(1: Nr-1), gradro(1: Nr-1), Nr-1, &
     rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
 gradro(2: Nr-1) = dum1(2: Nr-1)
-call qinterp_ef_feqis(rhot(1: Nr-1), fofb(1: Nr-1), Nr-1, &
+call qinterp_feqis(rhot(1: Nr-1), fofb(1: Nr-1), Nr-1, &
     rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
  fofb(2: Nr-1) = dum1(2: Nr-1)
-call qinterp_ef_feqis(rhot(1: Nr-1), bmaxt(1: Nr-1), Nr-1, &
+call qinterp_feqis(rhot(1: Nr-1), bmaxt(1: Nr-1), Nr-1, &
     rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
 bmaxt(2: Nr-1) = dum1(2: Nr-1)
-call qinterp_ef_feqis(rhot(1: Nr-1), bmint(1: Nr-1), Nr-1, &
+call qinterp_feqis(rhot(1: Nr-1), bmint(1: Nr-1), Nr-1, &
     rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
 bmint(2: Nr-1) = dum1(2: Nr-1)
-call qinterp_ef_feqis(rhot(1: Nr-1), bdb02(1: Nr-1), Nr-1, &
+call qinterp_feqis(rhot(1: Nr-1), bdb02(1: Nr-1), Nr-1, &
     rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
 bdb02(2: Nr-1) = dum1(2: Nr-1)
-call qinterp_ef_feqis(rhot(1: Nr-1), bdb0(1: Nr-1), Nr-1, &
+call qinterp_feqis(rhot(1: Nr-1), bdb0(1: Nr-1), Nr-1, &
     rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
 bdb0(2: Nr-1) = dum1(2: Nr-1)
-call qinterp_ef_feqis(rhot(1: Nr-1), b0db2(1: Nr-1), Nr-1, &
+call qinterp_feqis(rhot(1: Nr-1), b0db2(1: Nr-1), Nr-1, &
     rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
 b0db2(2: Nr-1) = dum1(2: Nr-1)
 

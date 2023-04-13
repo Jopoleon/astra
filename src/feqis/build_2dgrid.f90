@@ -7,7 +7,7 @@ subroutine build_2dgrid(Nr, Nt, Rb, Zb, X0, Y0, lambda2d, lambda2dp, &
     r, thetap, rr2, thetap_i, r_i, r_i1, dphdR, dphdZ, gradr, Jcbn, &
     grt, gradr2, Jcbn2, grt2, ghht2)
 
-use pi_grec_vars, only: GPI2
+use pi_vars, only: GPI2
 use debugger_ef, only: markloc_ef, debug
 
 implicit none
@@ -41,7 +41,8 @@ call markloc_ef('build_2dgrid', debug_lev=debug)
 
 do jt=1, Nt
     dXb0(jt) = sqrt((rb(jt) - X0)**2.0 + (zb(jt) - Y0)**2.0)
-    call find_angle_ef(X0, Y0, rb(jt), zb(jt), thetap(jt))
+    thetap(jt) = ATAN2(zb(jt) - Y0, rb(jt) - X0)
+    if (thetap(jt) < 0) thetap(jt) = thetap(jt) + GPI2
 enddo
 
 if (thetap(1) > thetap(Nt)) then !reorder
@@ -76,9 +77,9 @@ if (j_ok == 1) then !relambda
         psin( 1, jt) = 0
         psin(Nr, jt) = 1.
 
-        call linterp_ef_feqis(psin(:, jt), lambda2dold(:, jt), Nr, &
+        call linterp_feqis(psin(:, jt), lambda2dold(:, jt), Nr, &
             psig( 2: Nr-1), lambda2d( 2: Nr-1, jt), Nr-2)
-        call linterp_ef_feqis(psin(:, jt), lambda2dold(:, jt), Nr, &
+        call linterp_feqis(psin(:, jt), lambda2dold(:, jt), Nr, &
             psigp(1: Nr-1), lambda2dp(1: Nr-1, jt), Nr-1)
         do jr=2, Nr-1
             lambda2d( jr, jt) = min(1., lambda2d( jr, jt))

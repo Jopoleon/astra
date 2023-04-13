@@ -7,7 +7,7 @@ use ef_circuit, only: nrho, nteta, nr2, nz2, &
     raxp, zaxp, rbndp, zbndp, rpol, zpol, &
     psiaxisp, psibndp, psigrida, psirhoteta, &
     pressure, pprime, ffprime
-use pi_grec_vars, only:  GPI2
+use pi_vars, only:  GPI2
 use debugger_ef, only: markloc_ef, debug
 use exchange_with_astra, only: nonegcurr, &
     raxis_astra, zaxis_astra, psi0_astra, psib_astra
@@ -110,7 +110,6 @@ call PHI_EQ_2d_PBE( &
     equil_out%coord_sys%position%r(1: nrho, 1: nteta), & 
     equil_out%coord_sys%position%z(1: nrho, 1: nteta), & 
     psirhoteta(1: nrho, 1: nteta), & 
-    equil_out%profiles_1d%dPSIdV(1: nrho), & 
     equil_out%profiles_1d%psi(1: nrho), & 
     equil_out%profiles_1d%g2(1: nrho), &
     equil_out%profiles_1d%gm1(1: nrho), &
@@ -132,7 +131,6 @@ call PHI_EQ_2d_PBE( &
     equil_out%profiles_1d%elongation(1: nrho), &
     equil_out%profiles_1d%surface(1: nrho), & ! lateral surface
     equil_out%profiles_1d%tria_upper(1: nrho), &
-    equil_out%profiles_1d%q(1: nrho), &
     equil_out%coord_sys%position%teta2d(1: nteta), &
     equil_out%coord_sys%position%rmin(1: nrho, 1: nteta), &
     jrhoteta(1: nrho, 1: nteta), &

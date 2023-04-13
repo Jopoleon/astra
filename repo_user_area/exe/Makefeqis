@@ -6,15 +6,15 @@ LIB_DIR = $(AWD)/lib
 LIBNAM = libfeqis.a
 LIB = $(LIB_DIR)/$(LIBNAM)
 
-FQFLAGS	= -O2 -g -traceback -I$(MOD_FOR) -I$(MOD_DIR)
+FFLAGS	= -O2 -g -traceback -I$(MOD_FOR) -I$(MOD_DIR)
 
 # FEQIS objs
 
-FQMODOBJS = \
+FEQ_MODOBJ = \
 $(OBJ_DIR)/modules_feqis.o
 
-FQOBJS = \
-$(OBJ_DIR)/find_angle_ef.o \
+FEQ_LIBOBJ = \
+$(OBJ_DIR)/interp.o \
 $(OBJ_DIR)/feqis_main.o \
 $(OBJ_DIR)/feqis_init.o \
 $(OBJ_DIR)/build_2dgrid.o \
@@ -45,8 +45,8 @@ clean:
 # Rules
 
 $(OBJ_DIR)%.o : $(SRC_DIR)%.f90
-	$(AFC) $(FQFLAGS) -c $< -o $@
+	$(AFC) $(FFLAGS) -c $< -o $@
 	-@mv *.mod $(MOD_DIR)/
 
-$(LIB): $(FQMODOBJS) $(FQOBJS)
-	ar -u -rv $(LIB) $(FQMODOBJS) $(FQOBJS)
+$(LIB): $(FEQ_MODOBJ) $(FEQ_LIBOBJ)
+	ar -u -rv $(LIB) $(FEQ_MODOBJ) $(FEQ_LIBOBJ)

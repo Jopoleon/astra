@@ -1,24 +1,23 @@
 subroutine PHI_EQ_2d_PBE(Nr, Nt, psin_grid, iplasma, &
     pressure, ffprimp, pprimp, btor, r0, Rb, Zb, Rax, Zax, &
-    PSIb, IPOL, XX, YY, PSI, HHH, PSIxx, &
+    PSIb, IPOL, XX, YY, PSI, PSIxx, &
     g2, G3, r_out, r_in, volum, G1, G41, GRADRO, &
     BMAXT, BMINT, BDB02, BDB0, B0DB2, FOFB, &
-    areat, perim, shif, elon, slat, tria, qqsg, thetappp, &
+    areat, perim, shif, elon, slat, tria, thetappp, &
     rmin, jrhoteta, nonegcurr, li3, betapol)
 
-use pi_grec_vars, only: GPI, GPI2, GPI4, MUVAC
+use pi_vars, only: GPI, GPI2, GPI4, MUVAC
 use parameters_gsef, only: max_iter, diagnostic_gsef, name_gsefdir, &
     file_eqout, file_fields
 use metric_coefficients_pbe, only: lambda2d, lambda2dp
-use debugger_ef, only: markloc_ef, debug
 
 implicit none
 
 integer, intent(in) :: Nr, Nt, nonegcurr
 double precision, intent(in) :: iplasma, R0, btor, li3, betapol
 double precision, intent(in) , dimension(Nr) :: pressure, ipol, &
-    HHH, g1, g2, g3, volum, gradro, bmaxt, bmint, bdb02, bdb0, b0db2, &
-    fofb, areat, perim, slat, qqsg
+    g1, g2, g3, volum, gradro, bmaxt, bmint, bdb02, bdb0, b0db2, &
+    fofb, areat, perim, slat
 double precision, intent(in) , dimension(Nt) :: Rb, Zb
 double precision, intent(out), dimension(Nr) :: PSIxx, r_out, r_in, &
     g41, shif, elon, tria
@@ -51,8 +50,6 @@ character(len=120) :: fname
 data i_call_save /0/
 save i_call_save
 save PSIsave
-
-call markloc_ef('PHI_EQ_2d_PBE', debug_lev=debug)
 
 if (nonegcurr /= 0) then
     do j=1, Nr
@@ -220,54 +217,6 @@ call build_2dgrid2(Nr, Nt, psin_grid, &
 
 rmin(1: Nr, 1: Nt) = r_a(1: Nr, 1: Nt)
 
-if (diagnostic_gsef == 1) then
-    write(49, *) G1
-    write(49, *) G2
-    write(49, *) G3
-    write(49, *) r
-    write(49, *) volum
-    write(49, *) GRADRO
-    write(49, *) BMAXT
-    write(49, *) BMINT
-    write(49, *) BDB02
-    write(49, *) BDB0
-    write(49, *) B0DB2
-    write(49, *) HHH
-endif 
-
-! Save
-fname = TRIM(name_gsefdir) // '/' // TRIM(file_eqout)
-open(1, file=TRIM(fname))
-    write(1, *) Nr, Nt
-    write(1, *) ((r_a(i, j), i=1, Nr), j=1, Nt)
-    write(1, *) (thetap(j), j=1, Nt)
-    write(1, *) (Rb(j)    , j=1, Nt)
-    write(1, *) (Zb(j)    , j=1, Nt)
-    write(1, *) ((XX( i, j), i=1, Nr), j=1, Nt)
-    write(1, *) ((YY( i, j), i=1, Nr), j=1, Nt)
-    write(1, *) ((PSI(i, j), i=1, Nr), j=1, Nt)
-    write(1, *) ((B_R(i, j), i=1, Nr), j=1, Nt)
-    write(1, *) ((B_Z(i, j), i=1, Nr), j=1, Nt)
-    write(1, *) ((B_T(i, j), i=1, Nr), j=1, Nt)
-    write(1, *) (PSIn_grid(i)   , i=1, Nr)
-    write(1, *) (pprimp(i)      , i=1, Nr)
-    write(1, *) (ffprimp(i)     , i=1, Nr)
-    write(1, *) (btor*R0*IPOL(i), i=1, Nr)
-    write(1, *) (pprimp(i)      , i=1, Nr)
-    write(1, *) (qqsg(i)        , i=1, Nr)
-close(1)
-
-fname = TRIM(name_gsefdir) // '/' // TRIM(file_fields)
-open(1, file=TRIM(fname))
-    write(1, *) Nr, Nt
-    write(1, *) ((XX( i, j), i=1, Nr), j=1, Nt)
-    write(1, *) ((YY( i, j), i=1, Nr), j=1, Nt)
-    write(1, *) ((PSI(i, j), i=1, Nr), j=1, Nt)
-    write(1, *) ((B_R(i, j), i=1, Nr), j=1, Nt)
-    write(1, *) ((B_Z(i, j), i=1, Nr), j=1, Nt)
-    write(1, *) ((B_T(i, j), i=1, Nr), j=1, Nt)
-close(1)
-
 do jt=1, Nt
     do jr=1, Nr
         jrhoteta(jr, jt) = -GPI2*(ffprimp(jr) * 1./Rmaj(jr, jt)/0.4/GPI + &
@@ -278,7 +227,6 @@ enddo
 UPDWN = YY(1, 1)
 
 do ji=1, Nr
-
     i = minloc(yy(ji, 1: Nt), 1)  
     i1 = i - 1
     i2 = i + 1
