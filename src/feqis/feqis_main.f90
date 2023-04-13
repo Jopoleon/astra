@@ -110,7 +110,7 @@ call PHI_EQ_2d_PBE( &
     equil_out%coord_sys%position%r(1: nrho, 1: nteta), & 
     equil_out%coord_sys%position%z(1: nrho, 1: nteta), & 
     psirhoteta(1: nrho, 1: nteta), & 
-! git    equil_out%profiles_1d%dPSIdV(1: nrho), & 
+    equil_out%profiles_1d%dPSIdV(1: nrho), & 
     equil_out%profiles_1d%psi(1: nrho), & 
     equil_out%profiles_1d%g2(1: nrho), &
     equil_out%profiles_1d%gm1(1: nrho), &
@@ -132,12 +132,11 @@ call PHI_EQ_2d_PBE( &
     equil_out%profiles_1d%elongation(1: nrho), &
     equil_out%profiles_1d%surface(1: nrho), & ! lateral surface
     equil_out%profiles_1d%tria_upper(1: nrho), &
-! git    equil_out%profiles_1d%q(1: nrho), &
+    equil_out%profiles_1d%q(1: nrho), &
     equil_out%coord_sys%position%teta2d(1: nteta), &
     equil_out%coord_sys%position%rmin(1: nrho, 1: nteta), &
     jrhoteta(1: nrho, 1: nteta), &
-! git    nonegcurr, &
-    li3, betapol)
+    nonegcurr, li3, betapol)
 
 jrhoteta(1: nrho, nteta+1) = jrhoteta(1: nrho, 1) !periodic j
 
