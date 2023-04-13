@@ -1,6 +1,6 @@
 subroutine definitions_feqis(equil_in, params, j_call, ifplasma)
 
-use pi_grec_vars, only: GPI2, mu0
+use pi_vars, only: GPI2, mu0
 use parameters_a2spider, only: type_parameters
 use imas_ids, only: type_equilibrium
 use ef_circuit, only: data_dir, nteta, nrho, &

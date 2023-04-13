@@ -7,14 +7,14 @@ integer, parameter :: i_dim2=300
 end module dimensions_ef_parameters
 
 !-------------------------------------------
-module pi_grec_vars
+module pi_vars
 
 implicit none
 
 double precision, parameter :: GPI=3.141592653589793, &
-    GPI2=2.*GPI, GPI4=GPI2**2.0, mu0=0.4*GPI, muvac=4.e-7*GPI
+    GPI2=2.*GPI, mu0=0.4*GPI
 
-end module pi_grec_vars
+end module pi_vars
 
 !-------------------------------------------
 module ef_circuit       ! declaration of minimal CPOs
