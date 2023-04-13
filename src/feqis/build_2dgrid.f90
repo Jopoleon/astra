@@ -8,7 +8,6 @@ subroutine build_2dgrid(Nr, Nt, Rb, Zb, X0, Y0, lambda2d, lambda2dp, &
     grt, gradr2, Jcbn2, grt2, ghht2)
 
 use pi_vars, only: GPI2
-use debugger_ef, only: markloc_ef, debug
 
 implicit none
 
@@ -36,8 +35,6 @@ double precision, dimension(Nr, Nt) :: lambda2d, lambda2dold, &
     dXdr2, dYdr2, dXdr, dYdr, dXdri1, dYdri1, &
     dXdh2, dYdh2, dXdh, dYdh, dXdhi1, dYdhi1, &
     Jcbni1, gradh, gradh2, gradhi1, grti1
-
-call markloc_ef('build_2dgrid', debug_lev=debug)
 
 do jt=1, Nt
     dXb0(jt) = sqrt((rb(jt) - X0)**2.0 + (zb(jt) - Y0)**2.0)
@@ -246,7 +243,7 @@ do jt=1, Nt
     grt(    1, jt) = 0. 
     grti1(  1, jt) = 0. 
 enddo
-   
+
 !Define major radius
 
 do jt=1, Nt

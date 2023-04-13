@@ -4,8 +4,6 @@ subroutine solver_inversion_matrix_gsef(PSIb, Nr, Nt, &
      dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
      ddr, ddr_i, dtp, dtm, dt_i, PSI)
 
-use debugger_ef, only: markloc_ef, debug
-
 implicit none
 
 integer, intent(in) :: Nt, Nr, Ndims, LDAB
@@ -22,8 +20,6 @@ integer, dimension(Ndims) :: IPIV
 double precision :: rm_arc, tp_arc, tm_arc, rp_arc, denom
 double precision, dimension(Ndims, 1) :: BB
 double precision, dimension(LDAB, Ndims) :: AB
-
-call markloc_ef('solver_inversion_matrix_gsef', debug_lev=debug)
 
 NRHS = 1
 KL = 2*Nt

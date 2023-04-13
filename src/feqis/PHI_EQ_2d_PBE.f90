@@ -7,11 +7,11 @@ subroutine PHI_EQ_2d_PBE(Nr, Nt, psin_grid, iplasma, &
     rmin, jrhoteta, nonegcurr, li3, betapol)
 
 use pi_vars, only: GPI, GPI2, GPI4, MUVAC
-use parameters_gsef, only: max_iter, diagnostic_gsef, name_gsefdir, &
-    file_eqout, file_fields
 use metric_coefficients_pbe, only: lambda2d, lambda2dp
 
 implicit none
+
+integer, parameter :: max_iter=250
 
 integer, intent(in) :: Nr, Nt, nonegcurr
 double precision, intent(in) :: iplasma, R0, btor, li3, betapol
@@ -99,8 +99,7 @@ jax   = 1
 j_ok  = 0
 
 !External iterations
-max_iter = 250
- 
+
 iter_loop: do jiterext=1, max_iter
 
 ! recalculate psin_grid based on ffprime

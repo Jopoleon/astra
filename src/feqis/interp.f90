@@ -1,8 +1,6 @@
 !------------------------------------------------------------
 subroutine qinterp_feqis(x1, y1, Nx1, x2, y2, Nx2)
 
-use debugger_ef, only: markloc_ef, debug
-
 implicit none
 
 integer, intent(in) :: Nx1, Nx2
@@ -12,8 +10,6 @@ double precision, intent(out), dimension(Nx2) :: y2
 
 integer :: i, j
 double precision :: A, B, C, z1, z2, z3, t1, t2, t3, t4
-
-call markloc_ef('qinterp_feqis', debug_lev=debug-1)
 
 do i=1, Nx2
     t4 = x2(i)
@@ -70,8 +66,6 @@ end subroutine qinterp_feqis
 !------------------------------------------------------------
 subroutine linterp_feqis(x1, y1, Nx1, x2, y2, Nx2)
 
-use debugger_ef, only: markloc_ef, debug
-
 implicit none
 
 integer, intent(in) :: Nx1, Nx2
@@ -81,8 +75,6 @@ double precision, intent(out), dimension(Nx2) :: y2
 
 integer :: i, j
 double precision :: A, C, z1, z2, t1, t2, t4
-
-call markloc_ef('linterp_feqis', debug_lev=debug-1)
 
 do i=1, Nx2
     t4 = x2(i)
@@ -118,16 +110,12 @@ end subroutine linterp_feqis
 !------------------------------------------------------------
 subroutine polyfitcc_feqis(x, y, P)
 
-use debugger_ef, only: markloc_ef, debug
-
 implicit none
 
 double precision, intent(in) , dimension(3) :: x, y
 double precision, intent(out), dimension(3) :: P
 
 double precision :: y21, y32, x21, x32, h21, h32
-
-call markloc_ef('polyfitcc_feqis', debug_lev=debug)
 
 y32=y(3)-y(2)                 
 y21=y(2)-y(1)                 
@@ -142,22 +130,3 @@ P(3)=y(3)-P(1)*x(3)**2.-P(2)*x(3)
 
 return
 end subroutine polyfitcc_feqis
-
-!------------------------------------------------------------
-subroutine bilinear_average_ef(x1, x2, y1, y2, x, y, f11, f21, f12, f22, f0)
-
-use debugger_ef, only: markloc_ef, debug
-
-implicit none
-
-double precision, intent(in)  :: x1, x2, y1, y2, x, y, f11, f21, f12, f22
-double precision, intent(out) :: f0
-
-call markloc_ef('bilinear_average_ef', debug_lev=debug)
-
-f0 = 1./((x2 - x1)*(y2 - y1)) * ( &
-     f11*(x2 - x )*(y2 - y) + f21*(x - x1)*(y2 - y) + & 
-     f12*(x2 - x )*(y - y1) + f22*(x - x1)*(y - y1) )
-
-return
-end subroutine bilinear_average_ef

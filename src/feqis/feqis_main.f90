@@ -8,7 +8,6 @@ use ef_circuit, only: nrho, nteta, nr2, nz2, &
     psiaxisp, psibndp, psigrida, psirhoteta, &
     pressure, pprime, ffprime
 use pi_vars, only:  GPI2
-use debugger_ef, only: markloc_ef, debug
 use exchange_with_astra, only: nonegcurr, &
     raxis_astra, zaxis_astra, psi0_astra, psib_astra
 
@@ -24,9 +23,6 @@ integer :: j_init, i, j
 
 data j_init/0/
 save j_init
-
-debug = 0 
-call markloc_ef('feqis_main', debug_lev=debug)
 
 call definitions_feqis(equil_in, parameters_spider, j_init, ifplasma)
 

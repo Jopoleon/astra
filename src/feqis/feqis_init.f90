@@ -10,7 +10,6 @@ use ef_circuit, only: data_dir, nteta, nrho, &
     psia_2d, ffp_2d, ppp_2d, ipol_2d, pres_2d
 use exchange_with_astra, only: psi0_astra, psib_astra, &
     raxis_astra, zaxis_astra, nonegcurr
-use debugger_ef, only: markloc_ef, debug
 
 implicit none
 
@@ -19,8 +18,6 @@ type(type_parameters) , intent(in) :: params
 type(type_equilibrium), intent(in) :: equil_in
 
 integer :: i
-
-call markloc_ef('definitions_ef_equil', debug_lev=debug)
 
 if (j_call == 0) then
     data_dir = params%prename(1: params%kname)

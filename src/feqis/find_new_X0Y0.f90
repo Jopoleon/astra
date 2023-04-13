@@ -1,7 +1,5 @@
 subroutine find_new_X0Y0(Nr, Nt, PSI, X, Y, X0, Y0, psiax, iax, jax)
 
-use debugger_ef, only: markloc_ef, debug
-
 implicit none
 
 integer, intent(in) :: Nr, Nt
@@ -13,8 +11,6 @@ double precision, intent(out) :: X0, Y0, psiax
 integer :: jt, info, jmin(2)
 double precision :: g3(2*Nt+1)
 double precision :: work(2*(2*Nt+1)*6), matrix(2*Nt+1, 6)
-
-call markloc_ef('find_new_X0Y0', debug_lev=debug)
 
 jmin = minloc(PSI)
 iax = jmin(1)
