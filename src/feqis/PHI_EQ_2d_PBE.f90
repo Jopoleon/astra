@@ -1,17 +1,18 @@
 subroutine PHI_EQ_2d_PBE(Nr, Nt, psin_grid, iplasma, &
     pressure, ffprimp, pprimp, btor, r0, Rb, Zb, Rax, Zax, &
-    PSIb, IPOL, XX, YY, PSI, PSIxx, &
+    PSIb, IPOL, XX, YY, PSI, psin_grid_out, &
     g2, G3, r_out, r_in, volum, G1, G41, GRADRO, &
     BMAXT, BMINT, BDB02, BDB0, B0DB2, FOFB, &
-    areat, perim, shif, elon, slat, tria, thetappp, &
+    areat, perim, shif, elon, slat, tria, thetap_out, &
     rmin, jrhoteta, nonegcurr, li3, betapol)
 
-use pi_vars, only: GPI, GPI2, GPI4, MUVAC
+use pi_vars, only: GPI, GPI2
 use metric_coefficients_pbe, only: lambda2d, lambda2dp
 
 implicit none
 
 integer, parameter :: max_iter=250
+double precision, parameter :: GPI4=GPI2**2, muvac=4.e-7*GPI
 
 integer, intent(in) :: Nr, Nt, nonegcurr
 double precision, intent(in) :: iplasma, R0, btor, li3, betapol
@@ -19,17 +20,17 @@ double precision, intent(in) , dimension(Nr) :: pressure, ipol, &
     g1, g2, g3, volum, gradro, bmaxt, bmint, bdb02, bdb0, b0db2, &
     fofb, areat, perim, slat
 double precision, intent(in) , dimension(Nt) :: Rb, Zb
-double precision, intent(out), dimension(Nr) :: PSIxx, r_out, r_in, &
+double precision, intent(out), dimension(Nr) :: psin_grid_out, r_out, r_in, &
     g41, shif, elon, tria
-double precision, intent(out), dimension(Nt) :: thetappp
+double precision, intent(out), dimension(Nt) :: thetap_out
 double precision, intent(out), dimension(Nr, Nt) :: Psi, rmin, jrhoteta, XX, YY
 double precision, intent(inout) :: PSIb, rax, zax
 double precision, intent(inout), dimension(Nr) :: psin_grid, &
     ffprimp, pprimp
 
 integer :: i, i1, i2, j, jr, jt, i_call_save, ji, j_ok, iax, jax, &
-    jiterext, jcall, Ndims, LDAB, nan_count
-double precision :: X0, Y0, X0o, Y0o, epssol, epslambda, cnorm, psiax, &
+    jiter, Ndims, LDAB, nan_count
+double precision :: X0, Y0, X0o, Y0o, cnorm, psiax, &
     area, UPDWN, yrr, ya, t1, &
     yrmax, yrmin, yzmax, yzmin, yrzmax, yrzmin
 double precision, dimension(3) :: xxxx1, yyyy1, pppp1
@@ -63,9 +64,6 @@ do j=1, Nr
     effprimp(j) = -GPI4*ffprimp(j)
 enddo
 
-epssol    = 1
-epslambda = 1
-
 if (i_call_save == 0) then
     PSI_imd = 0.0
     do jr=1, Nr
@@ -93,17 +91,16 @@ Y0  = Zax
 X0o = X0
 Y0o = Y0
 
-jcall = 0
 iax   = 1
 jax   = 1
 j_ok  = 0
 
 !External iterations
 
-iter_loop: do jiterext=1, max_iter
+iter_loop: do jiter=1, max_iter
 
 ! recalculate psin_grid based on ffprime
-    if (jiterext >= 2 .and. (iax == 1 .and. jax == 1)) then
+    if (jiter >= 2 .and. (iax == 1 .and. jax == 1)) then
         gradh(Nr, 1) = btor*r0
         gradh(Nr-1, 1) = sqrt((btor*r0)**2. - ffprimp(Nr) * (psin_grid(Nr) - psin_grid(Nr-1)) * (psib - psiax))
         do j=Nr-2, 1, -1
@@ -174,7 +171,6 @@ iter_loop: do jiterext=1, max_iter
         j_ok = 0
     endif
 
-    epssol = sum(abs(psi - psio))/Nr/Nt
     nan_count = 0
     do jr=1, Nr
         do jt=2, Nt
@@ -282,9 +278,9 @@ i_call_save = 1
 rax = X0
 zax = Y0
 
-psixx(1: Nr) = PSI(1: Nr, 1) 
+psin_grid_out(1: Nr) = PSI(1: Nr, 1) 
 
-thetappp(1: Nt) = thetap(1: Nt)
+thetap_out(1: Nt) = thetap(1: Nt)
 
 return
 end subroutine PHI_EQ_2d_PBE
