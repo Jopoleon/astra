@@ -7,7 +7,7 @@ use ef_circuit, only: nrho, nteta, nr2, nz2, &
     raxp, zaxp, rbndp, zbndp, rpol, zpol, &
     psiaxisp, psibndp, psigrida, psirhoteta, &
     pressure, pprime, ffprime
-use pi_grec_vars, only:  GPI2
+use pi_vars, only:  GPI2
 use debugger_ef, only: markloc_ef, debug
 use exchange_with_astra, only: nonegcurr, &
     raxis_astra, zaxis_astra, psi0_astra, psib_astra
