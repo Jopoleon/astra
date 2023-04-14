@@ -31,20 +31,19 @@ double precision, intent(inout), dimension(Nr) :: psin_grid, &
 integer :: i, i1, i2, j, jr, jt, i_call_save, ji, j_ok, iax, jax, &
     jiter, Ndims, LDAB, nan_count
 double precision :: X0, Y0, X0o, Y0o, cnorm, psiax, &
-    area, UPDWN, yrr, ya, t1, &
+    UPDWN, yrr, ya, t1, &
     yrmax, yrmin, yzmax, yzmin, yrzmax, yrzmin
 double precision, dimension(3) :: xxxx1, yyyy1, pppp1
 double precision, dimension(300, 300) :: psisave
 double precision, dimension(Nr) :: PSIn_gridp, effprimp, epprimp, r
 double precision, dimension(Nt+1) :: thetap, thetap_i
-double precision, dimension(Nr, Nt) :: PSI_imd, dArea, Rmaj, Rmaj2, &
+double precision, dimension(Nr, Nt) :: PSI_imd, dArea, Rmaj2, &
     known_term, dt_i, psio, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
-    ddr, ddr_i, dtp, dtm, r_a, Rmaji, Rmaji1, rr2, r_i, r_i1, &
-    gradr, gradh, gradr2(Nr, nt), gradh2, dArea2, &
-    B_R, B_Z, B_T, &
-    grt, grt2, dphdr, dphdz, ghht2, X_i1, Y_i1
+    ddr, ddr_i, dtp, dtm, r_a, &
+    gradh, gradr2, gradh2, dArea2, &
+    B_R, B_Z, B_T
 
 character(len=120) :: fname
 
@@ -133,17 +132,17 @@ iter_loop: do jiter=1, max_iter
     call build_2dgrid(Nr, Nt, Rb, Zb, X0, Y0, &
         lambda2d(1: Nr, 1: Nt), lambda2dp(1: Nr, 1: Nt), psin_grid, &
         psiax, psib, j_ok, psin_gridp, PSI, &
-        dArea, Rmaj, Rmaj2, Rmaji, Rmaji1, dArea2, &
+        dArea, Rmaj2, dArea2, &
         dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
         dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
-        ddr, ddr_i, dtp, dtm, dt_i, Area, XX, YY, X_i1, Y_i1, &
-        r_a, thetap, rr2, thetap_i, r_i, r_i1, dphdr, dphdz, &
-        gradr, gradh, grt, gradr2, gradh2, grt2, ghht2)
+        ddr, ddr_i, dtp, dtm, dt_i, XX, YY, &
+        r_a, thetap, thetap_i, &
+        gradh, gradr2, gradh2)
 
     do jt=1, Nt
         do jr=1, Nr
-            known_term(jr, jt) = (effprimp(jr) * dArea(jr, jt)/Rmaj(jr, jt) + &
-                Rmaj(jr, jt)*epprimp(jr)*dArea(jr, jt))
+            known_term(jr, jt) = (effprimp(jr) * dArea(jr, jt)/XX(jr, jt) + &
+                XX(jr, jt)*epprimp(jr)*dArea(jr, jt))
         enddo
     enddo
 
@@ -195,16 +194,16 @@ psisave(1: Nr, 1: Nt) = psi(1: Nr, 1: Nt)
 call build_2dgrid(Nr, Nt,  Rb, Zb,  X0, Y0, &
     lambda2d(1: Nr, 1: Nt), lambda2dp(1: Nr, 1: Nt), &
     psin_grid, psiax, psib, j_ok,  psin_gridp, PSI, &
-    dArea, Rmaj, Rmaj2,  Rmaji, Rmaji1, dArea2, &
+    dArea, Rmaj2, dArea2, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
-    ddr, ddr_i, dtp, dtm, dt_i, Area, XX, YY, X_i1, Y_i1, &
-    r_a, thetap, rr2, thetap_i, r_i, r_i1, dphdr, dphdz, &
-    gradr, gradh, grt, gradr2, gradh2, grt2, ghht2)
+    ddr, ddr_i, dtp, dtm, dt_i, XX, YY, &
+    r_a, thetap, thetap_i, &
+    gradh, gradr2, gradh2)
 
 !regrid
 call build_2dgrid2(Nr, Nt, psin_grid, &
-    Rmaj, Rmaj2, r_a, thetap_i, gradr2, gradh2, &
+    XX, Rmaj2, r_a, thetap_i, gradr2, gradh2, &
     PSI, r0, pressure, btor, ipol, iplasma, &
     G2, G3, areat, perim, volum, G1, GRADRO, &
     BMAXT, BMINT, BDB02, BDB0, B0DB2, FOFB, &
@@ -214,8 +213,8 @@ rmin(1: Nr, 1: Nt) = r_a(1: Nr, 1: Nt)
 
 do jt=1, Nt
     do jr=1, Nr
-        jrhoteta(jr, jt) = -GPI2*(ffprimp(jr) * 1./Rmaj(jr, jt)/0.4/GPI + &
-            Rmaj(jr, jt) * 1.e-6*pprimp(jr))/cnorm
+        jrhoteta(jr, jt) = -GPI2*(ffprimp(jr) * 1./XX(jr, jt)/0.4/GPI + &
+            XX(jr, jt) * 1.e-6*pprimp(jr))/cnorm
     enddo
 enddo
 
