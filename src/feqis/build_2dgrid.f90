@@ -26,7 +26,7 @@ double precision, intent(out), dimension(Nr, Nt) :: dArea, dArea2, X2, &
     gradr2
 
 integer :: jr, jt, jthe_l, jthe_r, j, k
-double precision :: drdX, dhdX, drdY, dhdY, Mdet, dpsi, dthe
+double precision :: drdX, dhdX, drdY, dhdY, Mdet_inv, dpsi, dthe
 double precision, dimension(Nt) :: dXb0, dXb0_i
 double precision, dimension(Nr, Nt) :: lambda2dold, &
     lambda2di, lambda2dpi, psin, Y2, X_i, Y_i, &
@@ -54,12 +54,12 @@ thetap(jt+1) = GPI2 + thetap(1)
 
 ! Now find the intermediate theta grid
 do jt=1, Nt
-    thetap_i(jt) = (thetap(jt) + thetap(jt+1))/2.0
+    thetap_i(jt) = 0.5*(thetap(jt) + thetap(jt+1))
 enddo
 thetap_i(Nt+1) = thetap_i(1) + GPI2
  
 do jt=1, Nt-1
-    dXb0_i(jt) = (dXb0(jt) + dXb0(jt+1))/2.0
+    dXb0_i(jt) = 0.5*(dXb0(jt) + dXb0(jt+1))
 enddo
 dXb0_i(Nt) = dXb0_i(1)
 
@@ -77,10 +77,6 @@ if (j_ok == 1) then !relambda
             psig (2: Nr-1), lambda2d (2: Nr-1, jt), Nr-2)
         call linterp_feqis(psin(:, jt), lambda2dold(:, jt), Nr, &
             psigp(1: Nr-1), lambda2dp(1: Nr-1, jt), Nr-1)
-!        do jr=2, Nr-1
-!            lambda2d (jr, jt) = min(1., lambda2d (jr, jt))
-!            lambda2dp(jr, jt) = min(1., lambda2dp(jr, jt))
-!        enddo
     enddo
 endif 
 
@@ -96,12 +92,12 @@ do jt=1, Nt
 enddo
 
 do jt=1, Nt-1
-    lambda2di (:, jt) = (lambda2d (:, jt) + lambda2d (:, jt+1))/2.0
-    lambda2dpi(:, jt) = (lambda2dp(:, jt) + lambda2dp(:, jt+1))/2.0
+    lambda2di (:, jt) = 0.5*(lambda2d (:, jt) + lambda2d (:, jt+1))
+    lambda2dpi(:, jt) = 0.5*(lambda2dp(:, jt) + lambda2dp(:, jt+1))
 enddo
 jt = Nt
-lambda2di (:, jt) = (lambda2d (:, jt) + lambda2d (:, 1))/2.0
-lambda2dpi(:, jt) = (lambda2dp(:, jt) + lambda2dp(:, 1))/2.0
+lambda2di (:, jt) = 0.5*(lambda2d (:, jt) + lambda2d (:, 1))
+lambda2dpi(:, jt) = 0.5*(lambda2dp(:, jt) + lambda2dp(:, 1))
 
 do jt=1, Nt
     do jr = 1, Nr
@@ -200,19 +196,19 @@ Jcbni1 = dXdri1*dYdhi1 - dXdhi1*dYdri1  ! i, j+1/2
 
 do jt=1, Nt
     do jr=1, Nr-1
-        Mdet =  dXdr2(jr, jt)*dYdh2(jr, jt) - dXdh2(jr, jt)*dYdr2(jr, jt)
-        drdX =  dYdh2(jr, jt)/Mdet
-        dhdX = -dYdr2(jr, jt)/Mdet
-        drdY = -dXdh2(jr, jt)/Mdet
-        dhdY =  dXdr2(jr, jt)/Mdet
+        Mdet_inv = 1./(dXdr2(jr, jt)*dYdh2(jr, jt) - dXdh2(jr, jt)*dYdr2(jr, jt))
+        drdX =  dYdh2(jr, jt)*Mdet_inv
+        dhdX = -dYdr2(jr, jt)*Mdet_inv
+        drdY = -dXdh2(jr, jt)*Mdet_inv
+        dhdY =  dXdr2(jr, jt)*Mdet_inv
         gradr2(jr, jt) = drdX**2 + drdY**2 
         grt2  (jr, jt) = drdX*dhdX + drdY*dhdY   ! i+1/2, j
 
-        Mdet =  dXdri1(jr, jt)*dYdhi1(jr, jt) - dXdhi1(jr, jt)*dYdri1(jr, jt)
-        drdX =  dYdhi1(jr, jt)/Mdet
-        dhdX = -dYdri1(jr, jt)/Mdet
-        drdY = -dXdhi1(jr, jt)/Mdet
-        dhdY =  dXdri1(jr, jt)/Mdet
+        Mdet_inv = 1./(dXdri1(jr, jt)*dYdhi1(jr, jt) - dXdhi1(jr, jt)*dYdri1(jr, jt))
+        drdX =  dYdhi1(jr, jt)*Mdet_inv
+        dhdX = -dYdri1(jr, jt)*Mdet_inv
+        drdY = -dXdhi1(jr, jt)*Mdet_inv
+        dhdY =  dXdri1(jr, jt)*Mdet_inv
         gradhi1(jr, jt) = dhdX**2 + dhdY**2  
         grti1  (jr, jt) = drdX*dhdX + drdY*dhdY       ! i, j+1/2
     enddo
