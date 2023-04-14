@@ -38,11 +38,7 @@ integer :: nr, nz, nrho, nteta, nr2, nz2
 
 double precision :: rmin, rmax, zmin, zmax
 double precision :: rho(i_dim2, i_dim2), teta(i_dim2) ! rho is defined as actual distance in meters as in astra
-double precision :: rpol(i_dim2, i_dim2), zpol(i_dim2, i_dim2) ! R, Z in polar coordinates
 double precision :: psia_2d(i_dim2), ffp_2d(i_dim2), ppp_2d(i_dim2), ipol_2d(i_dim2), pres_2d(i_dim2)
-
-! potential
-double precision :: psirhoteta(i_dim2, i_dim2)
 
 ! boundary and axis PBE
 double precision :: rbndp(i_dim2), zbndp(i_dim2), psibndp, psiaxisp

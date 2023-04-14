@@ -4,12 +4,11 @@ use imas_ids, only: type_equilibrium
 use parameters_a2spider, only: type_parameters
 use ef_circuit, only: nrho, nteta, nr2, nz2, &
     rho, teta, iplasma, ipol, jrhoteta, btor0, rgeom0, li3, betapol, &
-    raxp, zaxp, rbndp, zbndp, rpol, zpol, &
-    psiaxisp, psibndp, psigrida, psirhoteta, &
+    raxp, zaxp, rbndp, zbndp, &
+    psiaxisp, psibndp, psigrida, &
     pressure, pprime, ffprime
-use pi_vars, only:  GPI2
-use exchange_with_astra, only: &
-    raxis_astra, zaxis_astra, psi0_astra, psib_astra
+use pi_vars, only: GPI2
+use exchange_with_astra, only: raxis_astra, zaxis_astra, psi0_astra, psib_astra
 
 implicit none
 
@@ -19,7 +18,7 @@ type(type_parameters), intent(in) :: parameters_spider
 type(type_equilibrium), intent(in)  :: equil_in
 type(type_equilibrium), intent(out) :: equil_out
 
-integer :: j_init, i, j
+integer :: j_init, jrho, jthe
 
 data j_init/0/
 save j_init
@@ -103,32 +102,32 @@ call PHI_EQ_2d_PBE( &
     ffprime(1: nrho), pprime(1: nrho), btor0, rgeom0, &
     rbndp(1: nteta), zbndp(1: nteta), Raxp, Zaxp, &
     psibndp, ipol(1: nrho), & 
-    equil_out%coord_sys%position%r(1: nrho, 1: nteta), & 
-    equil_out%coord_sys%position%z(1: nrho, 1: nteta), & 
-    psirhoteta(1: nrho, 1: nteta), & 
-    equil_out%profiles_1d%psi(1: nrho), & 
-    equil_out%profiles_1d%g2(1: nrho), &
-    equil_out%profiles_1d%gm1(1: nrho), &
-    equil_out%profiles_1d%r_outboard(1: nrho), &
-    equil_out%profiles_1d%r_inboard(1: nrho), &
-    equil_out%profiles_1d%volume(1: nrho), &
-    equil_out%profiles_1d%g1(1: nrho), &
-    equil_out%profiles_1d%gm41(1: nrho), &
-    equil_out%profiles_1d%ggradro(1: nrho), &
-    equil_out%profiles_1d%bmaxt(1: nrho), &
-    equil_out%profiles_1d%bmint(1: nrho), &
-    equil_out%profiles_1d%gm4(1: nrho), &
-    equil_out%profiles_1d%bdb0(1: nrho), &
-    equil_out%profiles_1d%gm5(1: nrho), &
-    equil_out%profiles_1d%fofb(1: nrho), &
-    equil_out%profiles_1d%areat(1: nrho), &
-    equil_out%profiles_1d%perim(1: nrho), &
-    equil_out%profiles_1d%shif(1: nrho), &
-    equil_out%profiles_1d%elongation(1: nrho), &
-    equil_out%profiles_1d%surface(1: nrho), & ! lateral surface
-    equil_out%profiles_1d%tria_upper(1: nrho), &
-    equil_out%coord_sys%position%teta2d(1: nteta), &
-    equil_out%coord_sys%position%rmin(1: nrho, 1: nteta), &
+    equil_out%coord_sys%position%r, &
+    equil_out%coord_sys%position%z, &
+    equil_out%coord_sys%position%psirz, &
+    equil_out%profiles_1d%psi, & 
+    equil_out%profiles_1d%g2, &
+    equil_out%profiles_1d%gm1, &
+    equil_out%profiles_1d%r_outboard, &
+    equil_out%profiles_1d%r_inboard, &
+    equil_out%profiles_1d%volume, &
+    equil_out%profiles_1d%g1, &
+    equil_out%profiles_1d%gm41, &
+    equil_out%profiles_1d%ggradro, &
+    equil_out%profiles_1d%bmaxt, &
+    equil_out%profiles_1d%bmint, &
+    equil_out%profiles_1d%gm4, &
+    equil_out%profiles_1d%bdb0, &
+    equil_out%profiles_1d%gm5, &
+    equil_out%profiles_1d%fofb, &
+    equil_out%profiles_1d%areat, &
+    equil_out%profiles_1d%perim, &
+    equil_out%profiles_1d%shif, &
+    equil_out%profiles_1d%elongation, &
+    equil_out%profiles_1d%surface, & ! lateral surface
+    equil_out%profiles_1d%tria_upper, &
+    equil_out%coord_sys%position%teta2d, &
+    equil_out%coord_sys%position%rmin, &
     jrhoteta(1: nrho, 1: nteta), &
     li3, betapol)
 
@@ -140,19 +139,18 @@ equil_out%global_param%li3 = li3
 equil_out%global_param%betpol = betapol 
 equil_out%global_param%i_plasma = iplasma*1.e6
 equil_out%profiles_1d%tria_lower = equil_out%profiles_1d%tria_upper
-equil_out%profiles_1d%ffprime(1: nrho) = 0.
-equil_out%profiles_1d%pprime(1: nrho) = 0.
-equil_out%profiles_1d%pressure(1: nrho) = 0.
-equil_out%profiles_1d%rho_tor(1: nrho) = 0.
-equil_out%profiles_1d%F_dia(1: nrho) = 0.
+equil_out%profiles_1d%ffprime  = 0.
+equil_out%profiles_1d%pprime   = 0.
+equil_out%profiles_1d%pressure = 0.
+equil_out%profiles_1d%rho_tor  = 0.
+equil_out%profiles_1d%F_dia    = 0.
 
-equil_out%coord_sys%position%psirz(1: nrho, 1: nteta) = psirhoteta(1: nrho, 1: nteta)/GPI2
-rpol(1: nrho, 1: nteta) = equil_out%coord_sys%position%r(1: nrho, 1: nteta)
-zpol(1: nrho, 1: nteta) = equil_out%coord_sys%position%z(1: nrho, 1: nteta)
+equil_out%coord_sys%position%psirz = equil_out%coord_sys%position%psirz/GPI2
 
-do j=1, nteta
-    do i=1, nrho
-        rho(i, j) = sqrt((rpol(i, j) - raxp)**2 + (zpol(i, j) - zaxp)**2)
+do jthe=1, nteta
+    do jrho=1, nrho
+        rho(jrho, jthe) = sqrt((equil_out%coord_sys%position%r(jrho, jthe) - raxp)**2 + &
+                               (equil_out%coord_sys%position%z(jrho, jthe) - zaxp)**2)
     enddo
 enddo
 
@@ -160,10 +158,9 @@ teta(1: nteta) = equil_out%coord_sys%position%teta2d(1: nteta)
 rho(1: nrho, nteta+1) = rho(1: nrho, 1)
 teta(nteta+1) = teta(1) + GPI2
 
-equil_out%global_param%psplex = 0.
+equil_out%global_param%psplex   = 0.
 equil_out%global_param%psibound = psibndp
-equil_out%global_param%psiaxis = psiaxisp
-write(*, *) 'end fix equil code'
+equil_out%global_param%psiaxis  = psiaxisp
 j_init = 1
 
 return
