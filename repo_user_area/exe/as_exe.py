@@ -1,5 +1,5 @@
 import os, logging, argparse, shutil, traceback
-from nc_concat import nc_concat, nc_concat_equ
+from nc_concat import nc_concat
 
 fmt = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s: %(message)s', '%H:%M:%S')
 
@@ -122,9 +122,3 @@ if __name__ == '__main__':
     except:
 #        logger.debug(traceback.format_exc())
         pass
-
-    try:
-        nc_concat_equ(expequ)
-    except:
-        pass
-#        logger.debug(traceback.format_exc())

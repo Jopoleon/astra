@@ -39,7 +39,7 @@ $(OBJ_DIR)/tglf_serial.o: $(SRC_DIR)/tglf_serial.f90
 $(OBJ_DIR)/qlknn_serial.o: $(SRC_DIR)/qlknn_serial.f90
 	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -I$(QLKNN_INC) -c $< -o $@
 
-$(OBJ_DIR)/netcdf.o: $(SRC_DIR)/netcdf.f90
+$(OBJ_DIR)/a2cdf.o: $(SRC_DIR)/a2cdf.f90
 	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -I$(NCDF_INC) -c $< -o $@
 
 $(OBJ_DIR)/rabbit.o: $(SRC_DIR)/rabbit.f90

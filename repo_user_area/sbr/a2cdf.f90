@@ -1,5 +1,6 @@
 subroutine a2cdf
 
+use parameters_a2spider, only: equil_now
 use parameter_inc
 use const_inc
 use status_inc
@@ -11,30 +12,29 @@ implicit none
 ! NetCDF variables
 
 logical, parameter :: verbose=.False.
-integer, parameter :: l_name=8, l_unit=25, l_desc=50, n_surf=556
+integer, parameter :: l_name=8, l_unit=25, l_desc=50
 
 integer :: ncid, j_call=1
 
 character(len = *), parameter :: UNIT='units'
 character(len = *), parameter :: DESC='long_name'
 
-character(len = l_name), parameter :: t_lbl='TIME', r_lbl='XRHO', eq_lbl='RHO_SURF', th_lbl='THETA'
-character(len = l_unit), parameter :: t_unit='s', r_unit ='-'
-character(len = l_desc), parameter :: t_desc='Time', r_desc='rho toroidal'
+character(len = l_name), parameter :: t_lbl='TIME', r_lbl='XRHO', rh_lbl='RHO_SURF', th_lbl='THETA'
+character(len = l_unit), parameter :: t_unit='s', r_unit ='-', rh_unit ='-', th_unit='rad'
+character(len = l_desc), parameter :: t_desc='Time', r_desc='rho toroidal', rh_desc='rho toroidal', th_desc='Pol. angle'
 
-integer :: n_t, n_r, n_eq, n_th, ios, j, jid
-integer :: varid(1000), t_id, r_id, YS0, nrho_surf, nthe_surf
-integer :: n_devar, n_devarx, n_const, n_delout, n_int2, n_prof, n_profx
+integer :: n_t, n_r, n_rh, n_th, ios, j, jid
+integer :: varid(1000), t_id, r_id, rh_id, th_id, nrho_surf, nthe_surf
+integer :: n_devar, n_devarx, n_const, n_delout, n_int2, n_prof, n_profx, neq_1d, neq_2d
 character(len=l_name) :: s_name
 character(len=l_desc) :: s_desc
 character(len=l_unit) :: s_unit
-character(len=120) :: f_var, f_varx, f_const, f_intern, f_intern2, f_prof, f_profx, netcdf_out
-
-double precision, dimension(n_surf, n_surf) :: r_surf, z_surf
+character(len=120) :: f_var, f_varx, f_const, f_intern, f_intern2, f_prof, f_profx, feq_1d, feq_2d, netcdf_out
 
 save j_call
 
-call SURF_CTR(.FALSE., nrho_surf, nthe_surf, r_surf, z_surf)
+nrho_surf = SIZE(equil_now%profiles_1d%rho_tor)
+nthe_surf = SIZE(equil_now%coord_sys%position%teta2d)
 
 ! NetCDF output
 
@@ -45,6 +45,8 @@ f_intern  = TRIM(AWD) // '/main/internal.txt'
 f_intern2 = TRIM(AWD) // '/main/intern2.txt'
 f_prof    = TRIM(AWD) // '/main/profiles.txt'
 f_profx   = TRIM(AWD) // '/main/profiles_x.txt'
+feq_1d    = TRIM(AWD) // '/main/equil_1d.txt'
+feq_2d    = TRIM(AWD) // '/main/equil_2d.txt'
 
 write(netcdf_out, '(4A, i0, A)') TRIM(awd), '/.res/ncdf/', TRIM(exp_file), TRIM(equ_file), j_call, '.cdf'
 
@@ -60,22 +62,28 @@ write(6, *) 'NetCDF  equil2D: ', nrho_surf, nthe_surf
 
 call nfcheck( nf90_def_dim(ncid, t_lbl, 1  , n_t) )
 call nfcheck( nf90_def_dim(ncid, r_lbl, NA1, n_r) )
-call nfcheck( nf90_def_dim(ncid, eq_lbl, nrho_surf, n_eq) )
+call nfcheck( nf90_def_dim(ncid, rh_lbl, nrho_surf, n_rh) )
 call nfcheck( nf90_def_dim(ncid, th_lbl, nthe_surf, n_th) )
   
 if (verbose) then
     write(6, *) '   Defining coordinate variables...'
 endif
-call nfcheck( nf90_def_var(ncid, t_lbl, NF90_DOUBLE, (/n_t/), t_id) )
-call nfcheck( nf90_def_var(ncid, r_lbl, NF90_DOUBLE, (/n_r/), r_id) )
+call nfcheck( nf90_def_var(ncid,  t_lbl, NF90_DOUBLE, (/n_t/), t_id) )
+call nfcheck( nf90_def_var(ncid,  r_lbl, NF90_DOUBLE, (/n_r/), r_id) )
+call nfcheck( nf90_def_var(ncid, rh_lbl, NF90_DOUBLE, (/n_rh/), rh_id) )
+call nfcheck( nf90_def_var(ncid, th_lbl, NF90_DOUBLE, (/n_th/), th_id) )
 
 if (verbose) then
     write(6, *) '   Assigning attributes to coordinate variables...'
 endif
-call nfcheck( NF90_PUT_ATT(ncid, t_id, UNIT, t_unit) )
-call nfcheck( NF90_PUT_ATT(ncid, r_id, UNIT, r_unit) )
-call nfcheck( NF90_PUT_ATT(ncid, t_id, DESC, t_desc) )
-call nfcheck( NF90_PUT_ATT(ncid, r_id, DESC, r_desc) )
+call nfcheck( NF90_PUT_ATT(ncid,  t_id, UNIT,  t_unit) )
+call nfcheck( NF90_PUT_ATT(ncid,  r_id, UNIT,  r_unit) )
+call nfcheck( NF90_PUT_ATT(ncid, rh_id, UNIT, rh_unit) )
+call nfcheck( NF90_PUT_ATT(ncid, th_id, UNIT, th_unit) )
+call nfcheck( NF90_PUT_ATT(ncid,  t_id, DESC,  t_desc) )
+call nfcheck( NF90_PUT_ATT(ncid,  r_id, DESC,  r_desc) )
+call nfcheck( NF90_PUT_ATT(ncid, rh_id, DESC, rh_desc) )
+call nfcheck( NF90_PUT_ATT(ncid, th_id, DESC, th_desc) )
 
 !---------------------------------------
 ! Define NetCDF variables and attributes
@@ -107,23 +115,17 @@ call nf90_set(ncid, jid, 1, (/n_r/), f_prof, n_prof, varid)
 
 ! Equilibrium
 
-if (verbose) write(6, *) '   Defining R, Z variables'
-s_name = 'Rsurf'
-s_unit = 'm'
-s_desc = 'R_surf(rho, theta)'
 jid = jid + n_prof
-call nfcheck( nf90_def_var(ncid, s_name, NF90_DOUBLE, (/n_th, n_eq/), varid(jid)) )
-call nfcheck( NF90_PUT_ATT(ncid, varid(jid), UNIT, s_unit) )
-call nfcheck( NF90_PUT_ATT(ncid, varid(jid), DESC, s_desc) )
+if (verbose) then
+    write(6, *) '   Assigning attributes to 1d variables...'
+endif
+call nf90_set(ncid, jid, 1, (/n_rh/), feq_1d, neq_1d, varid)
 
-jid = jid + 1
-
-s_name = 'Zsurf'
-s_unit = 'm'
-s_desc = 'Z_surf(rho, theta)'
-call nfcheck( nf90_def_var(ncid, s_name, NF90_DOUBLE, (/n_th, n_eq/), varid(jid)) )
-call nfcheck( NF90_PUT_ATT(ncid, varid(jid), UNIT, s_unit) )
-call nfcheck( NF90_PUT_ATT(ncid, varid(jid), DESC, s_desc) )
+if (verbose) then
+    write(6, *) '   Assigning attributes to 2d variables...'
+endif
+jid = jid + neq_1d
+call nf90_set(ncid, jid, 2, (/n_th, n_rh/), feq_2d, neq_2d, varid)
 
 call nfcheck( nf90_enddef(ncid) ) ! End define mode
 
@@ -132,8 +134,10 @@ call nfcheck( nf90_enddef(ncid) ) ! End define mode
 !--------------------
 
 if (verbose) write(6, *) '   Writing grid data...'
-call nfcheck( nf90_put_var(ncid, t_id, (/TIME/)) )
-call nfcheck( nf90_put_var(ncid, r_id, XRHO(1:NA1)) )
+call nfcheck( nf90_put_var(ncid,  t_id, (/TIME/)) )
+call nfcheck( nf90_put_var(ncid,  r_id, XRHO(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, rh_id, equil_now%profiles_1d%rho_tor(:)) )
+call nfcheck( nf90_put_var(ncid, th_id, equil_now%coord_sys%position%teta2d(:)) )
 
 !--------------------------------------------
 if (verbose) write(6, *) '   Writing time traces'
@@ -785,112 +789,9 @@ jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), ZIM3  (1:NA1)) )
 jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), ZMAIN (1:NA1)) )
-jid = jid + 1
 
-call nfcheck( nf90_put_var(ncid, varid(jid), r_surf(1:nthe_surf, 1:nrho_surf)) )
-jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), z_surf(1:nthe_surf, 1:nrho_surf)) )
+! Equilibrium quantities
 
-! Close the NetCDF file.
-call nfcheck( nf90_close(ncid) )
-write(6, *) '   Written file ' // netcdf_out
-
-j_call = j_call + 1
-
-return
-end subroutine a2cdf
-
-!---------------------------------------------------------------
-subroutine eq2cdf
-
-use parameters_a2spider, only: equil_now
-use outcmn_inc, only: AWD, exp_file, equ_file
-use const_inc, only: TIME
-use netcdf
-
-implicit none
-
-logical, parameter :: verbose=.False.
-integer, parameter :: l_name=8, l_unit=25, l_desc=50, n_surf=556
-
-integer :: ncid, jid, varid(1000), j_call=1
-integer :: t_id, rh_id, th_id
-integer :: jrho, nrho_surf, nthe_surf, n_t, n_rh, n_th
-integer :: neq_1d, neq_2d
-character(len=*), parameter :: UNIT='units'
-character(len=*), parameter :: DESC='long_name'
-
-character(len=l_name), parameter :: t_lbl='TIME', rh_lbl='rhot_eq', th_lbl='THETA'
-character(len=l_unit), parameter :: t_unit='s', rh_unit ='-', th_unit='rad'
-character(len=l_desc), parameter :: t_desc='Time', rh_desc='rho toroidal', th_desc='Pol. angle'
-character(len=120) :: netcdf_out, feq_1d, feq_2d
-
-save j_call
-
-feq_1d = TRIM(AWD) // '/main/equil_1d.txt'
-feq_2d = TRIM(AWD) // '/main/equil_2d.txt'
-
-write(netcdf_out, '(5A, i0, A)') TRIM(awd), '/.res/ncdf/', TRIM(exp_file), TRIM(equ_file), '_eq', j_call, '.cdf'
-
-nrho_surf = SIZE(equil_now%profiles_1d%rho_tor)
-nthe_surf = SIZE(equil_now%coord_sys%position%teta2d)
-
-call nfcheck( nf90_create(netcdf_out, nf90_clobber, ncid) )
-
-! Coordinate variables (time, space)
-
-if (verbose) then
-    write(6, *) '   Dimensions...'
-    write(6, *) '      rho:     '
-endif
-write(6, *) 'NetCDF  equil2D: ', nrho_surf, nthe_surf 
-
-call nfcheck( nf90_def_dim(ncid, t_lbl, 1, n_t) )
-call nfcheck( nf90_def_dim(ncid, rh_lbl, nrho_surf, n_rh) )
-call nfcheck( nf90_def_dim(ncid, th_lbl, nthe_surf, n_th) )
-  
-if (verbose) then
-    write(6, *) '   Defining coordinate variables...'
-endif
-call nfcheck( nf90_def_var(ncid,  t_lbl, NF90_DOUBLE, (/n_t /),  t_id) )
-call nfcheck( nf90_def_var(ncid, rh_lbl, NF90_DOUBLE, (/n_rh/), rh_id) )
-call nfcheck( nf90_def_var(ncid, th_lbl, NF90_DOUBLE, (/n_th/), th_id) )
-
-if (verbose) then
-    write(6, *) '   Assigning attributes to coordinate variables...'
-endif
-call nfcheck( NF90_PUT_ATT(ncid,  t_id, UNIT,  t_unit) )
-call nfcheck( NF90_PUT_ATT(ncid, rh_id, UNIT, rh_unit) )
-call nfcheck( NF90_PUT_ATT(ncid, th_id, UNIT, th_unit) )
-call nfcheck( NF90_PUT_ATT(ncid,  t_id, DESC,  t_desc) )
-call nfcheck( NF90_PUT_ATT(ncid, rh_id, DESC, rh_desc) )
-call nfcheck( NF90_PUT_ATT(ncid, th_id, DESC, th_desc) )
-
-if (verbose) then
-    write(6, *) '   Assigning attributes to 1d variables...'
-endif
-jid = 1
-call nf90_set(ncid, jid, 1, (/n_rh/), feq_1d, neq_1d, varid)
-
-if (verbose) then
-    write(6, *) '   Assigning attributes to 2d variables...'
-endif
-jid = jid + neq_1d
-call nf90_set(ncid, jid, 2, (/n_th, n_rh/), feq_2d, neq_2d, varid)
-
-call nfcheck( nf90_enddef(ncid) ) ! End define mode
-
-!--------------------
-! Writing NetCDF data
-!--------------------
-
-if (verbose) write(6, *) '   Writing grid data...'
-call nfcheck( nf90_put_var(ncid,  t_id, (/TIME/)) )
-call nfcheck( nf90_put_var(ncid, rh_id, equil_now%profiles_1d%rho_tor(:)) )
-call nfcheck( nf90_put_var(ncid, th_id, equil_now%coord_sys%position%teta2d(:)) )
-
-! profiles
-jid = 0
 jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), equil_now%profiles_1d%phi   ) )
 jid = jid + 1
@@ -911,7 +812,7 @@ write(6, *) '   Written file ' // netcdf_out
 j_call = j_call + 1
 
 return
-end subroutine eq2cdf
+end subroutine a2cdf
 
 !---------------------------------------------------------------
 subroutine nf90_set(ncid, jid_in, nlen, dimid, file_in, nvars, varid)
