@@ -14,7 +14,7 @@ FEQ_MODOBJ = \
 $(OBJ_DIR)/modules_feqis.o
 
 FEQ_LIBOBJ = \
-$(OBJ_DIR)/interp.o \
+$(OBJ_DIR)/interp_feqis.o \
 $(OBJ_DIR)/feqis_main.o \
 $(OBJ_DIR)/feqis_init.o \
 $(OBJ_DIR)/build_2dgrid.o \
