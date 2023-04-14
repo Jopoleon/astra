@@ -64,7 +64,7 @@ def nc_concat(expequ):
     nt = len(ds['TIME'])
     logger.info('nt = %d, n_cdf = %d' %(nt, j_cdf-1))
     nx = len(cv['XRHO'].data)
-    n_eq, n_the = cv['Rsurf'].shape
+    n_eq, n_the = cv['r2d'].shape
 
     for key, val in ds.items():
         if len(val) == nt*nx:
@@ -76,7 +76,7 @@ def nc_concat(expequ):
 
     f.createDimension('TIME', nt)
     f.createDimension('XRHO', nx)
-    f.createDimension('RHOEQ', n_eq)
+    f.createDimension('RHO_SURF', n_eq)
     f.createDimension('THETA', n_the)
 
     rho = f.createVariable('XRHO', np.float32, ('XRHO', ))
@@ -90,8 +90,8 @@ def nc_concat(expequ):
     time.long_name = 'Time'
 
     for key, val in ds.items():
-        if key not in ('XRHO', 'TIME', 'rhot_eq', 'THETA'):
-            dims = ('TIME', ) + val.dimensions
+        if key not in ('XRHO', 'TIME', 'RHO_SURF', 'THETA'):
+            dims = ('TIME', ) + cv[key].dimensions
             tmp = f.createVariable(key, np.float32, dims)
 
             tmp[:] = val
