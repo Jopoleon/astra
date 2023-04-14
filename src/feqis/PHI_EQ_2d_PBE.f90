@@ -4,17 +4,16 @@ subroutine PHI_EQ_2d_PBE(Nr, Nt, psin_grid, iplasma, &
     g2, G3, r_out, r_in, volum, G1, G41, GRADRO, &
     BMAXT, BMINT, BDB02, BDB0, B0DB2, FOFB, &
     areat, perim, shif, elon, slat, tria, thetap_out, &
-    rmin, jrhoteta, nonegcurr, li3, betapol)
+    rmin, jrhoteta, li3, betapol)
 
 use pi_vars, only: GPI, GPI2
-use metric_coefficients_pbe, only: lambda2d, lambda2dp
 
 implicit none
 
 integer, parameter :: max_iter=250
 double precision, parameter :: GPI4=GPI2**2, muvac=4.e-7*GPI
 
-integer, intent(in) :: Nr, Nt, nonegcurr
+integer, intent(in) :: Nr, Nt
 double precision, intent(in) :: iplasma, R0, btor, li3, betapol
 double precision, intent(in) , dimension(Nr) :: pressure, ipol, &
     g1, g2, g3, volum, gradro, bmaxt, bmint, bdb02, bdb0, b0db2, &
@@ -28,57 +27,36 @@ double precision, intent(inout) :: PSIb, rax, zax
 double precision, intent(inout), dimension(Nr) :: psin_grid, &
     ffprimp, pprimp
 
-integer :: i, i1, i2, j, jr, jt, i_call_save, ji, j_ok, iax, jax, &
+integer :: i, i1, i2, j, jr, jt, ji, j_ok, iax, jax, &
     jiter, Ndims, LDAB, nan_count
 double precision :: X0, Y0, X0o, Y0o, cnorm, psiax, &
     UPDWN, yrr, ya, t1, &
     yrmax, yrmin, yzmax, yzmin, yrzmax, yrzmin
 double precision, dimension(3) :: xxxx1, yyyy1, pppp1
-double precision, dimension(300, 300) :: psisave
 double precision, dimension(Nr) :: PSIn_gridp, effprimp, epprimp, r
 double precision, dimension(Nt+1) :: thetap, thetap_i
-double precision, dimension(Nr, Nt) :: PSI_imd, dArea, Rmaj2, &
-    known_term, dt_i, psio, &
+double precision, dimension(Nr, Nt) :: dArea, Rmaj2, &
+    known_term, lambda2d, lambda2dp, dt_i, psio, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
     ddr, ddr_i, dtp, dtm, r_a, &
     gradh, gradr2, gradh2, dArea2, &
     B_R, B_Z, B_T
 
-character(len=120) :: fname
-
-data i_call_save /0/
-save i_call_save
-save PSIsave
-
-if (nonegcurr /= 0) then
-    do j=1, Nr
-        pprimp( j) = -max(0., -pprimp( j))
-        ffprimp(j) = -max(0., -ffprimp(j))
-    enddo
-endif 
-
 do j=1, Nr
     epprimp(j)  = -GPI4*muvac*pprimp(j)
     effprimp(j) = -GPI4*ffprimp(j)
 enddo
 
-if (i_call_save == 0) then
-    PSI_imd = 0.0
-    do jr=1, Nr
-        do jt=1, Nt
-            lambda2d( jr, jt) = (jr - 1      )/(Nr - 1.)
-            lambda2dp(jr, jt) = (jr - 1 + 0.5)/(Nr - 1.)
-        enddo
-    enddo 
-  
-    PSI = 0.0
-    do j=1, Nt
-        PSI(1: Nr, j) = psin_grid(1: Nr)
+do jr=1, Nr
+    do jt=1, Nt
+        lambda2d(jr, jt) = (jr - 1)/(Nr - 1.)
     enddo
-else
-     psi(1: Nr, 1: Nt) = psisave(1: Nr, 1: Nt)
-endif 
+enddo 
+lambda2dp = lambda2d + 0.5/(Nr - 1.) 
+do j=1, Nt
+    PSI(1: Nr, j) = psin_grid(1: Nr)
+enddo
 
 do jr=1, Nr-1
     psin_gridp(jr) = 0.5*(psin_grid(jr+1) + psin_grid(jr))
@@ -189,8 +167,6 @@ iter_loop: do jiter=1, max_iter
     endif
 enddo iter_loop
 
-psisave(1: Nr, 1: Nt) = psi(1: Nr, 1: Nt)
-
 call build_2dgrid(Nr, Nt,  Rb, Zb,  X0, Y0, &
     lambda2d(1: Nr, 1: Nt), lambda2dp(1: Nr, 1: Nt), &
     psin_grid, psiax, psib, j_ok,  psin_gridp, PSI, &
@@ -271,8 +247,6 @@ TRIA(1) = 0.d0
 SHIF (1) = XX(1, 1) - R0
 
 G41 = G1 ! to be fixed
-
-i_call_save = 1
 
 rax = X0
 zax = Y0

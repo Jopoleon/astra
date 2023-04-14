@@ -8,7 +8,7 @@ use ef_circuit, only: nrho, nteta, nr2, nz2, &
     psiaxisp, psibndp, psigrida, psirhoteta, &
     pressure, pprime, ffprime
 use pi_vars, only:  GPI2
-use exchange_with_astra, only: nonegcurr, &
+use exchange_with_astra, only: &
     raxis_astra, zaxis_astra, psi0_astra, psib_astra
 
 implicit none
@@ -130,7 +130,7 @@ call PHI_EQ_2d_PBE( &
     equil_out%coord_sys%position%teta2d(1: nteta), &
     equil_out%coord_sys%position%rmin(1: nrho, 1: nteta), &
     jrhoteta(1: nrho, 1: nteta), &
-    nonegcurr, li3, betapol)
+    li3, betapol)
 
 jrhoteta(1: nrho, nteta+1) = jrhoteta(1: nrho, 1) !periodic j
 

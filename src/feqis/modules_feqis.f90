@@ -58,21 +58,8 @@ double precision :: jrhoteta(i_dim2, i_dim2), ipol(i_dim2)
 end module ef_circuit
 
 !------------------------------------
-module metric_coefficients_pbe
-
-use dimensions_ef_parameters, only: i_dim2
-
-implicit none
-
-! metric coefficients in polar coordinates 
-double precision, dimension(i_dim2, i_dim2) :: lambda2d, lambda2dp
-
-end module metric_coefficients_pbe
-
-!------------------------------------
 module exchange_with_astra       ! declaration of minimal CPOs
 
-integer :: nonegcurr ! nonegcurr = 0 --> no negative current allowed in plasma
 double precision :: raxis_astra, zaxis_astra, psi0_astra, psib_astra
 
 end module exchange_with_astra

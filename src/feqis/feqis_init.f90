@@ -9,7 +9,7 @@ use ef_circuit, only: data_dir, nteta, nrho, &
     btor0, iplasma, pressure, pprime, ffprime, ipol, &
     psia_2d, ffp_2d, ppp_2d, ipol_2d, pres_2d
 use exchange_with_astra, only: psi0_astra, psib_astra, &
-    raxis_astra, zaxis_astra, nonegcurr
+    raxis_astra, zaxis_astra
 
 implicit none
 
@@ -62,12 +62,6 @@ if (ifplasma == 1) then
         psia_2d(1: nrho), pres_2d(1: nrho), nrho)
     ffp_2d = -GPI2/mu0*ffp_2d
     ppp_2d = -GPI2*1.e-6*ppp_2d
-    if (nonegcurr == 1) then
-        do i = 1, nrho
-            ffp_2d(i) = max(0., ffp_2d(i))
-            ppp_2d(i) = max(0., ppp_2d(i))
-        enddo
-    endif
 
     ipol(1: nrho) = equil_in%profiles_1d%F_dia(1: nrho)
 
