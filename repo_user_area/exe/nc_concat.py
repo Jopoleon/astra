@@ -54,10 +54,11 @@ def nc_concat(expequ):
                 break
         cv = netcdf.netcdf_file(f_cdf, 'r', mmap=False).variables
         for key, val in cv.items():
-            if j_cdf == 1:
-                ds[key] = val.data
-            else:
-                ds[key] = np.append(ds[key], val.data)
+            if key not in ('XRHO', 'THETA', 'RHO_SURF'):
+                if j_cdf == 1:
+                    ds[key] = val.data
+                else:
+                    ds[key] = np.append(ds[key], val.data)
         f_cdf_prev = f_cdf
         j_cdf += 1
 
@@ -68,11 +69,12 @@ def nc_concat(expequ):
     n_th = len(cv['THETA'].data)
 
     for key, val in ds.items():
-        if key not in ('XRHO', 'THETA', 'RHO_SURF'):
-            if cv[key].dimensions == ('XRHO', ):
-                ds[key] = ds[key].reshape((nt, nx))
-            if cv[key].dimensions == ('THETA', 'RHO_SURF'):
-                ds[key] = ds[key].reshape((nt, n_th, n_eq))
+        if cv[key].dimensions == ('XRHO', ):
+            ds[key] = ds[key].reshape((nt, nx))
+        elif cv[key].dimensions == ('RHO_SURF', ):
+            ds[key] = ds[key].reshape((nt, n_eq))
+        elif cv[key].dimensions == ('THETA', 'RHO_SURF'):
+            ds[key] = ds[key].reshape((nt, n_th, n_eq))
 
     f = netcdf.netcdf_file(cdf_out, 'w', mmap=False)
 
@@ -81,35 +83,39 @@ def nc_concat(expequ):
     f.createDimension('RHO_SURF', n_eq)
     f.createDimension('THETA', n_th)
 
-    rho = f.createVariable('XRHO', np.float64, ('XRHO', ))
-    rho.data = cv['XRHO'].data
+    dtyp = np.float64
+
+    rho = f.createVariable('XRHO', dtyp, ('XRHO', ))
+    rho.data = cv['XRHO'].data.astype(dtyp)
     rho.units = cv['XRHO'].units
     rho.long_name = cv['XRHO'].long_name
 
     print('nc_concat:TIME', ds['TIME'])
-    time = f.createVariable('TIME', np.float64, ('TIME', ))
-    time.data = np.float64(ds['TIME'])
+    time = f.createVariable('TIME', dtyp, ('TIME', ))
+    time.data = ds['TIME'].astype(dtyp)
     time.units = 's'
     time.long_name = 'Time'
 
-    rho_surf = f.createVariable('RHO_SURF', np.float64, ('RHO_SURF', ))
-    rho_surf.data = cv['RHO_SURF'].data
+    rho_surf = f.createVariable('RHO_SURF', dtyp, ('RHO_SURF', ))
+    rho_surf.data = cv['RHO_SURF'].data.astype(dtyp)
     rho_surf.units = '-'
     rho_surf.long_name = cv['RHO_SURF'].long_name
 
-    theta = f.createVariable('THETA', np.float64, ('THETA', ))
-    theta.data = cv['THETA'].data
+    theta = f.createVariable('THETA', dtyp, ('THETA', ))
+    theta.data = cv['THETA'].data.astype(dtyp)
     theta.units = 'rad'
     theta.long_name = cv['THETA'].long_name
 
     for key, val in ds.items():
-        if key not in ('XRHO', 'TIME', 'RHO_SURF', 'THETA'):
+        if key != 'TIME':
             if 'TIME' in cv[key].dimensions:
                 dims = cv[key].dimensions
             else:
                 dims = ('TIME', ) + cv[key].dimensions
-            tmp = f.createVariable(key, np.float64, dims)
-            tmp.data = val.astype(np.float64)
+            if key == 'r2d':
+                print(key, dims, val.shape)
+            tmp = f.createVariable(key, dtyp, dims)
+            tmp[:] = val
             tmp.units = cv[key].units
             tmp.long_name = cv[key].long_name
 
