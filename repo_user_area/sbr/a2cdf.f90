@@ -11,7 +11,7 @@ implicit none
 
 ! NetCDF variables
 
-logical, parameter :: verbose=.False.
+logical, parameter :: verbose=.True.
 integer, parameter :: l_name=8, l_unit=25, l_desc=50
 
 integer :: ncid, j_call=1
@@ -23,7 +23,7 @@ character(len = l_name), parameter :: t_lbl='TIME', r_lbl='XRHO', rh_lbl='RHO_SU
 character(len = l_unit), parameter :: t_unit='s', r_unit ='-', rh_unit ='-', th_unit='rad'
 character(len = l_desc), parameter :: t_desc='Time', r_desc='rho toroidal', rh_desc='rho toroidal', th_desc='Pol. angle'
 
-integer :: n_t, n_r, n_rh, n_th, ios, j, jid
+integer :: n_t, n_r, n_rh, n_th, ios, j, jid, jrho, jthe
 integer :: varid(1000), t_id, r_id, rh_id, th_id, nrho_surf, nthe_surf
 integer :: n_devar, n_devarx, n_const, n_delout, n_int2, n_prof, n_profx, neq_1d, neq_2d
 character(len=l_name) :: s_name
@@ -68,8 +68,8 @@ call nfcheck( nf90_def_dim(ncid, th_lbl, nthe_surf, n_th) )
 if (verbose) then
     write(6, *) '   Defining coordinate variables...'
 endif
-call nfcheck( nf90_def_var(ncid,  t_lbl, NF90_DOUBLE, (/n_t/), t_id) )
-call nfcheck( nf90_def_var(ncid,  r_lbl, NF90_DOUBLE, (/n_r/), r_id) )
+call nfcheck( nf90_def_var(ncid,  t_lbl, NF90_DOUBLE, (/n_t /),  t_id) )
+call nfcheck( nf90_def_var(ncid,  r_lbl, NF90_DOUBLE, (/n_r /),  r_id) )
 call nfcheck( nf90_def_var(ncid, rh_lbl, NF90_DOUBLE, (/n_rh/), rh_id) )
 call nfcheck( nf90_def_var(ncid, th_lbl, NF90_DOUBLE, (/n_th/), th_id) )
 
@@ -125,7 +125,7 @@ if (verbose) then
     write(6, *) '   Assigning attributes to 2d variables...'
 endif
 jid = jid + neq_1d
-call nf90_set(ncid, jid, 2, (/n_th, n_rh/), feq_2d, neq_2d, varid)
+call nf90_set(ncid, jid, 2, (/n_rh, n_th/), feq_2d, neq_2d, varid)
 
 call nfcheck( nf90_enddef(ncid) ) ! End define mode
 
@@ -139,9 +139,9 @@ call nfcheck( nf90_put_var(ncid,  r_id, XRHO(1:NA1)) )
 call nfcheck( nf90_put_var(ncid, rh_id, equil_now%profiles_1d%rho_tor(:)) )
 call nfcheck( nf90_put_var(ncid, th_id, equil_now%coord_sys%position%teta2d(:)) )
 
-!--------------------------------------------
+!------------------------------------------------
 if (verbose) write(6, *) '   Writing time traces'
-!--------------------------------------------
+!------------------------------------------------
 jid = 0
 do j = 1, n_devar
     jid = jid + 1
@@ -791,18 +791,25 @@ jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), ZMAIN (1:NA1)) )
 
 ! Equilibrium quantities
+!------------------------------------------------
+if (verbose) write(6, *) '   Writing equilibrium quantities'
+!------------------------------------------------
 
 jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), equil_now%profiles_1d%phi   ) )
 jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), equil_now%profiles_1d%pprime) )
 jid = jid + 1
+if (verbose) write(6, *) '   Writing equilibrium ffprime', SIZE(equil_now%profiles_1d%ffprime), nrho_surf
 call nfcheck( nf90_put_var(ncid, varid(jid), equil_now%profiles_1d%ffprime) )
 jid = jid + 1
+if (verbose) write(6, *) '   Writing equilibrium r2d', SHAPE(equil_now%coord_sys%position%r), nrho_surf, nthe_surf
 call nfcheck( nf90_put_var(ncid, varid(jid), equil_now%coord_sys%position%r) )
 jid = jid + 1
+if (verbose) write(6, *) '   Writing equilibrium z2d'
 call nfcheck( nf90_put_var(ncid, varid(jid), equil_now%coord_sys%position%z) )
 jid = jid + 1
+if (verbose) write(6, *) '   Writing equilibrium psi2d'
 call nfcheck( nf90_put_var(ncid, varid(jid), equil_now%coord_sys%position%psirz) )
 
 ! Close the NetCDF file.
