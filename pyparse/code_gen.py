@@ -159,7 +159,7 @@ end subroutine POSTEP'''
             if var in parse.constants + parse.internals:
 #                l2f = pa.LINE2FOR('', right_hand[lbl], pack)
 #                detv_time += '%s = %s\n' %(var, l2f.fcode)
-                detv_rad += pa.apptmp(lbl, parse)
+                detv_time += pa.apptmp(lbl, parse)
             elif var in parse.profiles:
                 detv_rad += pa.apptmp(lbl, parse)
             elif line[0] == '"' and line[-1] == '"':
