@@ -1041,7 +1041,7 @@ YWC(4)=1.
     return up_txt
 
 
-def tetieqn(parse):
+def tetieqn(parse, itype=3):
 
     var_defined = parse.right_hand_d.keys()
 
@@ -1056,15 +1056,13 @@ def tetieqn(parse):
                 logger.warning('Boundary condition ignored')
                 print(pa.apptmp(lbl, parse))
                 var_defined.remove(lbl)
-        if itype < 0:
-            return teti
 
-    if asstyp == 'EQ':
+    if asstyp[:2] == 'EQ':
         teti += '! **** Electron temperature equation\n'
         teti += 'call markloc("TE equation")\n'
-    elif asstyp == 'AS':
-        teti += '! **** Electron temperature assignment\n'
-        teti += 'call markloc("TE assignment")\n'
+    else:
+        logger.error('ERROR tetieqn: TE cannot be ASSIGNED with implicit scheme')
+        return ''
 
     teti += 'do j=1, NA1\n'
     for lbl in ['DE', 'HE', 'XE', 'CE', 'PE', 'PET', 'DVE', 'DSE']:
@@ -1136,22 +1134,8 @@ def tetieqn(parse):
 
     teti += 'enddo\n'  # model1.f90, line 2292
 
-    te_assigned = const_text.TETIEQN.assigned_te
-    if ('QEB' in var_defined) and ('QETB' not in var_defined) and \
-       (varb not in var_defined) and rho_bnd is None:
-        te_assigned += 'QEB\n'
-    else:
-        te_assigned += 'QE(NA)\n'
-
-    if itype < 0:
-        teti += te_assigned
-
     if 'TE' not in var_defined:
         logger.warning('Initial condition for TE is not defined\nTE=TEX(TSTART) will be used')
-
-    if asstyp == 'AS' and 'TEB' in var_defined:
-        teti += 'ND1 = NA1\n'
-        teti += pa.apptmp('TEB', parse)
 
     if 'ROE' in var_defined:
         teti += pa.apptmp('ROE', parse)
@@ -1171,14 +1155,8 @@ def tetieqn(parse):
         else:
             teti += 'do j=ND1, NA1\n'
         teti += pa.apptmp('TE', parse)
-        teti += 'enddo'
-        teti += 'endif'
-
-    if itype == 0:
-        teti += 'do j=1, ND1\n'
-        teti += pa.apptmp('TE', parse)
-        teti += te_assigned
-        return teti
+        teti += 'enddo\n'
+        teti += 'endif\n'
 
 # From here, itype is /= 0
 
@@ -1191,11 +1169,11 @@ def tetieqn(parse):
                 logger.warning('Using TEX(t) at shifted boundary')
             else:
                 logger.warning('Using TEX(t0) at shifted boundary')
-        teti += const_text.TETIOLD.teold
+        teti += const_text.TETIEQN.teold
 
     elif 'TEB' in var_defined:
         teti += pa.apptmp('TEB', parse)
-        teti += const_text.TETIOLD.teold
+        teti += const_text.TETIEQN.teold
     else:
         if 'QEB' in var_defined:
             teti += pa.apptmp('QEB', parse)
@@ -1236,15 +1214,12 @@ def tetieqn(parse):
                 logger.warning('Boundary condition ignored')
                 print(pa.apptmp(lbl, parse))
                 var_defined.remove(lbl)
-        if itype < 0:
-            return teti
 
-    if asstyp == 'EQ':
-        teti += '! **** Electron temperature equation\n'
-        teti += 'call markloc("TE equation")\n'
+    if asstyp[:2] == 'EQ':
+        teti += '! **** Ion temperature equation\n'
+        teti += 'call markloc("TI equation")\n'
     else:
-        teti += '! **** Electron temperature assignment\n'
-        teti += 'call markloc("TE assignment")\n'
+        logger.error('ERROR tetieqn: TI cannot be ASSIGNED with implicit scheme')
 
     teti += 'do j=1, NA1\n'
     for lbl in ['DI', 'HI', 'XI', 'CI', 'PI', 'PIT', 'DVI', 'DSI']:
@@ -1316,25 +1291,12 @@ def tetieqn(parse):
 
     teti += 'enddo\n'  # model1.f90, line 2547
 
-    ti_assigned = const_text.TETIEQN.assigned_ti
-    if 'QIB' in var_defined and none_in(['QITB', 'TIB', 'ROI'], var_defined):
-        ti_assigned += 'QIB\n'
-    else:
-        ti_assigned += 'QI(NA)\n'
-
-    if itype < 0:
-        teti += ti_assigned
-        return teti
-
 # From here on, itype >= 0
 
     if 'TI' not in var_defined:
         logger.warning('Initial condition for TI is not defined')
         logger.warning('Using TI=TIX(TSTART)')
 
-    if asstyp == 'AS' and 'TIB' in var_defined:
-        teti += 'ND1 = NA1\n'
-        teti += pa.apptmp('TIB', parse)
     if 'ROI' in var_defined:
         teti += pa.apptmp('ROI', parse)
     else:
@@ -1355,13 +1317,6 @@ def tetieqn(parse):
         teti += pa.apptmp('TI', parse)
         teti += 'enddo\n'
         teti += 'endif\n'
-
-    if asstyp == 'AS':
-        teti += 'do j=1, ND1\n'
-        teti += pa.apptmp('TI', parse)
-        teti += 'enddo\n'
-        teti += const_text.TETIEQN.assigned_ti
-        return teti
 
 # From here, itype > 0
 
@@ -1409,3 +1364,7 @@ def tetieqn(parse):
         teti += 'DSI(ND1) = 1.\n'
     else:
         teti += 'DSI(ND1) = 0.\n'
+
+    teti += const_text.TETIEQN.runeq
+
+    return teti

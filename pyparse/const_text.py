@@ -661,17 +661,16 @@ RABDOT = (abs(ADCMPF))*RBDOT
 BABDOT = (abs(ADCMPF))*BBDOT
 '''
 
-    assigned_te = \
-'''do j=1, NA
-QE(J) = -G11(J)*(YWA1(J)*(TE(J+1) - TE(J))/HRO + 0.5*YWB1(J)*(TE(J+1) + TE(J)))*0.0016
+    runeq = \
+'''call RUNEQTIMP_EF(YWGN(1:NA1), 3./2.*NE(1:NA1), 3./2.*NI(1:NA1), YWGO(1:NA1), 3./2.*NEO(1:NA1), 3./2.*NIO(1:NA1), TEO(1:NA1), TIO(1:NA1), YWN1B(1:NA1), YWN2B(1:NA1), YWW1B(1:NA1), YWW2B(1:NA1), YVR(1:NA1), YWM(1:NA1), G11(1:NA1)/625, YWA1(1:NA1), YWA2(1:NA1), YWB1(1:NA1), YWB2(1:NA1), YWR(1:NA1), YWR(1:NA1), 625*PET(1:NA1), 625*PIT(1:NA1), 625*PETOT(1:NA1), 625*PITOT(1:NA1), 0.0*YWR(1:NA1), 0.0*YWR(1:NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1:NA1), imethod, YWC1(1:NA1), YWC2(1:NA1), TE(1:NA1), TI(1:NA1), QE(1:NA1), QI(1:NA1), ADCMPF)
+if (ND1 < NA1) then
+do j=ND1+1, NA1
+QE(j) = QE(ND1)
+QI(j) = QI(ND1)
 enddo
-QE(NA1) = '''
-
-    assigned_ti = \
-'''do j=1, NA
-QI(J) = -G11(J)*(YWA2(J)*(TI(J+1) - TI(J))/HRO + 0.5*YWB(J)*(TI(J+1)+TI(J)))*0.0016', &
-enddo
-QI(NA1) = '''
+endif
+PETOT=PE+PET*TE
+'''
 
     teold = \
 '''TEO(ND1: NA1) = TE(ND1: NA1)
