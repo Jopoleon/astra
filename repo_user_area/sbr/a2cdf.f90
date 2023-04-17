@@ -11,7 +11,7 @@ implicit none
 
 ! NetCDF variables
 
-logical, parameter :: verbose=.True.
+logical, parameter :: verbose=.False.
 integer, parameter :: l_name=8, l_unit=25, l_desc=50
 
 integer :: ncid, j_call=1
@@ -26,15 +26,15 @@ character(len = l_desc), parameter :: t_desc='Time', r_desc='rho toroidal', rh_d
 integer :: n_t, n_r, n_rh, n_th, ios, j, jid, jrho, jthe
 integer :: varid(1000), t_id, r_id, rh_id, th_id, nrho_surf, nthe_surf
 integer :: n_devar, n_devarx, n_const, n_delout, n_int2, n_prof, n_profx, neq_1d, neq_2d
-character(len=l_name) :: s_name
-character(len=l_desc) :: s_desc
-character(len=l_unit) :: s_unit
+double precision, dimension(:, :), allocatable :: tmp
 character(len=120) :: f_var, f_varx, f_const, f_intern, f_intern2, f_prof, f_profx, feq_1d, feq_2d, netcdf_out
 
 save j_call
 
 nrho_surf = SIZE(equil_now%profiles_1d%rho_tor)
 nthe_surf = SIZE(equil_now%coord_sys%position%teta2d)
+
+allocate(tmp(nrho_surf, nthe_surf))
 
 ! NetCDF output
 
@@ -125,7 +125,7 @@ if (verbose) then
     write(6, *) '   Assigning attributes to 2d variables...'
 endif
 jid = jid + neq_1d
-call nf90_set(ncid, jid, 2, (/n_rh, n_th/), feq_2d, neq_2d, varid)
+call nf90_set(ncid, jid, 2, (/n_th, n_rh/), feq_2d, neq_2d, varid)
 
 call nfcheck( nf90_enddef(ncid) ) ! End define mode
 
@@ -800,17 +800,17 @@ call nfcheck( nf90_put_var(ncid, varid(jid), equil_now%profiles_1d%phi   ) )
 jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), equil_now%profiles_1d%pprime) )
 jid = jid + 1
-if (verbose) write(6, *) '   Writing equilibrium ffprime', SIZE(equil_now%profiles_1d%ffprime), nrho_surf
 call nfcheck( nf90_put_var(ncid, varid(jid), equil_now%profiles_1d%ffprime) )
 jid = jid + 1
-if (verbose) write(6, *) '   Writing equilibrium r2d', SHAPE(equil_now%coord_sys%position%r), nrho_surf, nthe_surf
-call nfcheck( nf90_put_var(ncid, varid(jid), equil_now%coord_sys%position%r) )
+tmp = TRANSPOSE(equil_now%coord_sys%position%r)
+if (verbose) write(*, *) 'R2D', SHAPE(tmp)
+call nfcheck( nf90_put_var(ncid, varid(jid), tmp) ) 
 jid = jid + 1
-if (verbose) write(6, *) '   Writing equilibrium z2d'
-call nfcheck( nf90_put_var(ncid, varid(jid), equil_now%coord_sys%position%z) )
+tmp = TRANSPOSE(equil_now%coord_sys%position%z)
+call nfcheck( nf90_put_var(ncid, varid(jid), tmp) )
 jid = jid + 1
-if (verbose) write(6, *) '   Writing equilibrium psi2d'
-call nfcheck( nf90_put_var(ncid, varid(jid), equil_now%coord_sys%position%psirz) )
+tmp = TRANSPOSE(equil_now%coord_sys%position%psirz)
+call nfcheck( nf90_put_var(ncid, varid(jid), tmp) )
 
 ! Close the NetCDF file.
 call nfcheck( nf90_close(ncid) )

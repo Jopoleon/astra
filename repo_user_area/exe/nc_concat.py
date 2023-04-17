@@ -73,8 +73,8 @@ def nc_concat(expequ):
             ds[key] = ds[key].reshape((nt, nx))
         elif cv[key].dimensions == ('RHO_SURF', ):
             ds[key] = ds[key].reshape((nt, n_eq))
-        elif cv[key].dimensions == ('THETA', 'RHO_SURF'):
-            ds[key] = ds[key].reshape((nt, n_th, n_eq))
+        elif cv[key].dimensions == ('RHO_SURF', 'THETA'):
+            ds[key] = ds[key].reshape((nt, n_eq, n_th))
 
     f = netcdf.netcdf_file(cdf_out, 'w', mmap=False)
 
@@ -90,7 +90,6 @@ def nc_concat(expequ):
     rho.units = cv['XRHO'].units
     rho.long_name = cv['XRHO'].long_name
 
-    print('nc_concat:TIME', ds['TIME'])
     time = f.createVariable('TIME', dtyp, ('TIME', ))
     time.data = ds['TIME'].astype(dtyp)
     time.units = 's'
@@ -112,8 +111,6 @@ def nc_concat(expequ):
                 dims = cv[key].dimensions
             else:
                 dims = ('TIME', ) + cv[key].dimensions
-            if key == 'r2d':
-                print(key, dims, val.shape)
             tmp = f.createVariable(key, dtyp, dims)
             tmp[:] = val
             tmp.units = cv[key].units
