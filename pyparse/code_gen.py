@@ -157,8 +157,9 @@ end subroutine POSTEP'''
                     detv_time += 'if (IFDFVX(%d) <= 2) %s = %s\n'%(jvar, var, l2f.fcode)
                     break
             if var in parse.constants + parse.internals:
-                l2f = pa.LINE2FOR('', right_hand[lbl], pack)
-                detv_time += '%s = %s\n' %(var, l2f.fcode)
+#                l2f = pa.LINE2FOR('', right_hand[lbl], pack)
+#                detv_time += '%s = %s\n' %(var, l2f.fcode)
+                detv_rad += pa.apptmp(lbl, parse)
             elif var in parse.profiles:
                 detv_rad += pa.apptmp(lbl, parse)
             elif line[0] == '"' and line[-1] == '"':
