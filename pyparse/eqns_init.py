@@ -51,25 +51,22 @@ def eqns_init(parse):
     eqns_txt += str_out
     init_txt += str_out
 
+# If Fj, UPAR missing, do not fall back to any default, just skip
+
     ne_as = eqns.neeqn(parse, assign_type='Missing')
     init_txt += ne_as
-    if parse.assign_d['NE'] == 'AS':
+    if parse.assign_d['NE'] == 'Missing':
         eqns_txt += ne_as
 
     te_as = eqns.teeqn(parse, assign_type='Missing')
     init_txt += te_as
-    if parse.assign_d['TE'] == 'AS':
+    if parse.assign_d['TE'] == 'Missing':
         eqns_txt += te_as
 
     ti_as = eqns.tieqn(parse, assign_type='Missing')
     init_txt += ti_as
     if parse.assign_d['TI'] == 'Missing':
         eqns_txt += ti_as
-
-    upar_as = eqns.upeqn(parse, assign_type='Missing')
-    init_txt += upar_as
-    if parse.assign_d['UPAR'] == 'Missing':
-        eqns_txt += upar_as
 
     if 'CU' in var_defined:
         cu_as = eqns.cuasn(parse, itype=-1)
@@ -80,13 +77,6 @@ def eqns_init(parse):
     init_txt += cu_as
     if parse.assign_d['CU'] == 'Missing':
         eqns_txt += cu_as
-
-    for jeq in range(10):
-        fj = 'F%d' %jeq
-        fj_as = eqns.fjeqn(parse, jeq, assign_type='Missing')
-        init_txt += fj_as
-        if parse.assign_d[fj] == 'AS':
-            eqns_txt += fj_as
 
 # Subroutines
 
@@ -102,10 +92,16 @@ def eqns_init(parse):
 
 # Equations
 
+    for jf in range(10):
+        fj = 'F%d' %jf
+        if parse.assign_d[fj] != 'Missing':
+            eqns_txt += eqns.fjeqn(parse, jf, assign_type=parse.assign_d[fj])
+
     if parse.assign_d['NE'] != 'Missing':
         eqns_txt += eqns.neeqn(parse, assign_type=parse.assign_d['NE'])
         if config.checkeqn:
             eqns_txt += const_text.NIAS.iondensassign
+
     if 'implicit' in parse.assign_d['TE'] or 'implicit' in parse.assign_d['TI']:
         eqns_txt += eqns.tetieqn(parse)
     else:
@@ -113,8 +109,10 @@ def eqns_init(parse):
             eqns_txt += eqns.teeqn(parse, assign_type=parse.assign_d['TE'])
         if parse.assign_d['TI'] != 'Missing':
             eqns_txt += eqns.tieqn(parse, assign_type=parse.assign_d['TI'])
+
     if parse.assign_d['UPAR'] != 'Missing':
         eqns_txt += eqns.upeqn(parse, assign_type=parse.assign_d['UPAR'])
+
     if parse.assign_d['CU'][:2] == 'EQ':
         eqns_txt += eqns.cueqn(parse)
     else:
@@ -124,10 +122,6 @@ def eqns_init(parse):
             eqns_txt += eqns.cuasn(parse, 0)
         else:
              eqns_txt += eqns.cuas_uloop(parse)
-    for jf in range(10):
-        fj = 'F%d' %jf
-        if parse.assign_d[fj] != 'Missing':
-            eqns_txt += eqns.fjeqn(parse, jf, assign_type=parse.assign_d[fj])
 
 # Closing statements
 

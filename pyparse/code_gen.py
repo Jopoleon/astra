@@ -222,6 +222,17 @@ end subroutine DETVAR_init
 
         inivar = ''
 
+# Dummy transport equations
+
+        for jf in range(10):
+            fj   = 'F%d' %jf
+            inivar += 'do J=1, NA1\n'
+            if fj in var_defined:
+                inivar += pa.apptmp(fj, parse)
+            else:
+                inivar += '%s(J) = 1.\n' %fj
+            inivar += 'enddo\n'
+
         for lbl in ['NE', 'TE', 'TI', 'UPAR']:
 # Initial condition
             if (parse.assign_d[lbl] == 'Missing') or (parse.assign_d[lbl] == 'AS' and parse.init_d[lbl] == ''):
@@ -268,17 +279,6 @@ end subroutine DETVAR_init
             if parse.assign_d['CU'] == 'AS':
                 inivar += 'CU(J) = CC(J)\n'
         inivar += 'enddo\n'
-
-# Dummy transport equations
-
-        for jf in range(10):
-            fj   = 'F%d' %jf
-            inivar += 'do J=1, NA1\n'
-            if fj in var_defined:
-                inivar += pa.apptmp(fj, parse)
-            else:
-                inivar += '%s(J) = 1.\n' %fj
-            inivar += 'enddo\n'
 
         self.iniv = inivar
 
@@ -391,4 +391,3 @@ end subroutine TIMOUT
         self.eqns_inc  = const_text.EQNS_INC.header
         self.eqns_inc += eqns_tmp
         self.eqns_inc += const_text.EQNS_INC.tail
-
