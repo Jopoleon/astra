@@ -1077,7 +1077,7 @@ def tetieqn(parse, itype=3):
     if 'DVE' in var_defined:
         txt += ' + DVE(J)'
     teti += txt + '\n'
-    teti += 'YWA1(J) = YWA1(J)*(NE(J+1) + NE(J))*0.5'
+    teti += 'YWA1(J) = YWA1(J)*(NE(J+1) + NE(J))*0.5\n'
 
     LB = 1
     if itype > 1 and 'DN' in var_defined:
@@ -1234,7 +1234,7 @@ def tetieqn(parse, itype=3):
     if 'DVI' in var_defined:
         txt += ' + DVI(J)'
     teti += txt + '\n'
-    teti += 'YWA2(J) = YWA2(J)*(NI(J+1) + NI(J))*0.5'
+    teti += 'YWA2(J) = YWA2(J)*(NI(J+1) + NI(J))*0.5\n'
 
     LB = 1
     if itype > 1 and 'DN' in var_defined:
