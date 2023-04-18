@@ -1121,18 +1121,16 @@ def tetieqn(parse, itype=3):
         teti += 'PE(J) = 0.\n'
     teti += 'PETOT(J) = PE(J)\n'
     teti += 'if (j > NA) CYCLE\n'
-    if itype >= 0:
-        txt = 'YWB1(J) = -YWD(J)'
-        if LB > 0:
-            txt += ' + YWB1(J)*(NE(J+1) - NE(J))/HRO'
-        if LC > 0:
-            txt += ' + YWC( J)*(TI(J+1) - TI(J))/HRO'
-        teti += txt + '\n'
-        if 'DVE' in var_defined:
-            teti += 'YWB1(J) = YWB1(J) + DVE(J)*0.5*(NE(j) + NE(j+1))*log(TE(j)/TE(j+1))/HRO\n'
-            teti += 'YWD(J) = DVE(j)\n'
-        teti += 'YWC(J) = PE(j)\n'
-
+    txt = 'YWB1(J) = -YWD(J)'
+    if LB > 0:
+        txt += ' + YWB1(J)*(NE(J+1) - NE(J))/HRO'
+    if LC > 0:
+        txt += ' + YWC( J)*(TI(J+1) - TI(J))/HRO'
+    teti += txt + '\n'
+    if 'DVE' in var_defined:
+        teti += 'YWB1(J) = YWB1(J) + DVE(J)*0.5*(NE(j) + NE(j+1))*log(TE(j)/TE(j+1))/HRO\n'
+        teti += 'YWD(J) = DVE(j)\n'
+    teti += 'YWC(J) = PE(j)\n'
     teti += 'enddo\n'  # model1.f90, line 2292
 
     if 'TE' not in var_defined:
@@ -1145,19 +1143,15 @@ def tetieqn(parse, itype=3):
         l2f = pa.LINE2FOR('', rho_bnd, pack)
         teti += 'ROE = %s\n' %(l2f.fcode)
         teti += 'ND1 = NODE(ROE)\n'
-
     teti += 'NA1E = ND1\n'
     teti += 'ND = ND1 - 1\n'
-    if itype > 0:
-        teti += 'QE( 1) = RHO(ND1)-RHO(ND)\n'
-        teti += 'YWC(1) = RHO(ND1)-RHO(ND)\n' # model1.f90, line 2315
+
+    teti += 'QE( 1) = RHO(ND1)-RHO(ND)\n'
+    teti += 'YWC(1) = RHO(ND1)-RHO(ND)\n' # model1.f90, line 2315
 
     if 'TE' in var_defined:
         teti += 'if (ND1 < NA1) then\n'
-        if itype == 0 and 'TEB' in var_defined:
-            teti += 'do j=ND1, NA\n'
-        else:
-            teti += 'do j=ND1, NA1\n'
+        teti += 'do j=ND1, NA1\n'
         teti += pa.apptmp('TE', parse)
         teti += 'enddo\n'
         teti += 'endif\n'
@@ -1284,21 +1278,17 @@ def tetieqn(parse, itype=3):
         teti += 'PI(J) = 0.\n'
     teti += 'PITOT(J) = PI(J)\n'
     teti += 'if (j > NA) CYCLE\n'
-    if itype >= 0:
-        txt = 'YWB2(J) = -YWD(J)'
-        if LB > 0:
-            txt += ' + YWB2(J)*(NE(J+1) - NE(J))/HRO'
-        if LC > 0:
-            txt += ' + YWC( J)*(TE(J+1) - TE(J))/HRO'
-        teti += txt + '\n'
-        if 'DVI' in var_defined:
-            teti += 'YWB2(J) = YWB2(J) + DVI(J)*0.5*(NI(j) + NI(j+1))*log(TI(j)/TI(j+1))/HRO\n'
-            teti += 'YWD(J) = DVI(j)\n'
-        teti += 'YWC(J) = PI(j)\n'
-
+    txt = 'YWB2(J) = -YWD(J)'
+    if LB > 0:
+        txt += ' + YWB2(J)*(NE(J+1) - NE(J))/HRO'
+    if LC > 0:
+        txt += ' + YWC( J)*(TE(J+1) - TE(J))/HRO'
+    teti += txt + '\n'
+    if 'DVI' in var_defined:
+        teti += 'YWB2(J) = YWB2(J) + DVI(J)*0.5*(NI(j) + NI(j+1))*log(TI(j)/TI(j+1))/HRO\n'
+        teti += 'YWD(J) = DVI(j)\n'
+    teti += 'YWC(J) = PI(j)\n'
     teti += 'enddo\n'  # model1.f90, line 2547
-
-# From here on, itype >= 0
 
     if 'TI' not in var_defined:
         logger.warning('Initial condition for TI is not defined')
@@ -1311,29 +1301,18 @@ def tetieqn(parse, itype=3):
         l2f = pa.LINE2FOR('', rho_bnd, pack)
         teti += 'ROI = %s\n' %(l2f.fcode)
         teti += 'ND1 = NODE(ROI)\n'
-
-    if 'ROI' in var_defined:
-        teti += pa.apptmp('ROI', parse)
-    else:
-        teti += 'ND1 = NA1\n'
     teti += 'NA1I = ND1\n'
     teti += 'ND = ND1 - 1\n' # 2567
 
-    if itype > 0:
-        teti += 'QI(1)  = RHO(ND1) - RHO(ND)\n'
-        teti += 'YWC(1) = RHO(ND1) - RHO(ND)\n'
+    teti += 'QI(1)  = RHO(ND1) - RHO(ND)\n'
+    teti += 'YWC(1) = RHO(ND1) - RHO(ND)\n'
         
     if 'TI' in var_defined:
         teti += 'if (ND1 < NA1) then\n'
-        if itype == 0 and 'TIB' in var_defined:
-            teti += 'do j=ND1, NA\n'
-        else:
-            teti += 'do j=ND1, NA1\n'
+        teti += 'do j=ND1, NA1\n'
         teti += pa.apptmp('TI', parse)
         teti += 'enddo\n'
         teti += 'endif\n'
-
-# From here, itype > 0
 
     if none_in(['QITB', 'QIB', 'TIB'], var_defined):
         logger.warning('Boundary condition for TI is not set')
