@@ -1044,6 +1044,7 @@ YWC(4)=1.
 def tetieqn(parse, itype=3):
 
     var_defined = parse.right_hand_d.keys()
+    pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
 
     assign_type = parse.assign_d['TE']
     impl, asstyp = assign_type.split('_', 1)
@@ -1137,10 +1138,13 @@ def tetieqn(parse, itype=3):
     if 'TE' not in var_defined:
         logger.warning('Initial condition for TE is not defined\nTE=TEX(TSTART) will be used')
 
-    if 'ROE' in var_defined:
-        teti += pa.apptmp('ROE', parse)
-    else:
+    rho_bnd = pa.set_rho(asstyp)
+    if rho_bnd is None:
         teti += 'ND1 = NA1\n'
+    else:
+        l2f = pa.LINE2FOR('', rho_bnd, pack)
+        teti += 'ROE = %s\n' %(l2f.fcode)
+        teti += 'ND1 = NODE(ROE)\n'
 
     teti += 'NA1E = ND1\n'
     teti += 'ND = ND1 - 1\n'
@@ -1206,6 +1210,9 @@ def tetieqn(parse, itype=3):
 #---------------------------
 # Ti part in implicit scheme
 #---------------------------
+
+    assign_type = parse.assign_d['TI']
+    impl, asstyp = assign_type.split('_', 1)
 
     if none_in(['DI', 'HI', 'XI', 'CI', 'PI', 'PIT'], var_defined):
         for lbl in ('TIB', 'QIB', 'QITB'):
@@ -1296,6 +1303,14 @@ def tetieqn(parse, itype=3):
     if 'TI' not in var_defined:
         logger.warning('Initial condition for TI is not defined')
         logger.warning('Using TI=TIX(TSTART)')
+
+    rho_bnd = pa.set_rho(asstyp)
+    if rho_bnd is None:
+        teti += 'ND1 = NA1\n'
+    else:
+        l2f = pa.LINE2FOR('', rho_bnd, pack)
+        teti += 'ROI = %s\n' %(l2f.fcode)
+        teti += 'ND1 = NODE(ROI)\n'
 
     if 'ROI' in var_defined:
         teti += pa.apptmp('ROI', parse)
