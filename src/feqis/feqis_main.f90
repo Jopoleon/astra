@@ -2,11 +2,12 @@ subroutine feqis_main(nucoils, ucoils, parameters_spider, ifplasma, equil_in, eq
 
 use imas_ids, only: type_equilibrium
 use parameters_a2spider, only: type_parameters
-use ef_circuit, only: nrho, nteta, nr2, nz2, &
-    rho, teta, iplasma, ipol, jrhoteta, btor0, rgeom0, li3, betapol, &
-    raxp, zaxp, rbndp, zbndp, &
-    psiaxisp, psibndp, psigrida, &
-    pressure, pprime, ffprime
+use ef_circuit, only: nrho, nteta, ncoils, nr2, nz2, &
+    rho, teta, iplasma, ipol, jrhoteta, psiextrz, psirz, &
+    btor0, rgeom0, li3, betapol, &
+    raxp, zaxp, rbndp, zbndp, psiaxisp, psibndp, psigrida, &
+    pressure, pprime, ffprime, &
+    voltage, psiplasmatoconduc, psi_cur_old
 use pi_vars, only: GPI2
 
 implicit none
@@ -17,12 +18,18 @@ type(type_parameters), intent(in) :: parameters_spider
 type(type_equilibrium), intent(in)  :: equil_in
 type(type_equilibrium), intent(out) :: equil_out
 
-integer :: j_init, jrho, jthe
+integer :: jrho, jthe
+integer :: j_init, j_call, j_vacplas
 
 data j_init/0/
-save j_init
+data j_call/0/
+data j_vacplas/0/
+save j_init, j_call, j_vacplas
 
 call definitions_feqis(equil_in, parameters_spider, j_init, ifplasma)
+
+ncoils = nucoils
+voltage(1:ncoils) = ucoils(1:ncoils) ! voltage inputs for active conductors
 
 if (ifplasma == 1) then
     allocate(equil_out%profiles_1d%psi(nrho))
@@ -95,6 +102,32 @@ if (j_init == 0) then
 !boundary from experiment
 endif 
 
+if (j_call == 0) then
+    if (parameters_spider%k_fixfree == 1) then
+!        call equil_ef_init_circ
+    endif
+endif
+
+if (parameters_spider%k_fixfree == 1) then
+    if (ifplasma == 0) then  ! only circuit equations solved
+        write(*,*) 'vacuum'
+        psi_cur_old = 0.
+        psiplasmatoconduc = 0.
+!        call circuit_eq_advance_ef(j_call)	
+!        call psi_external_calc_ef
+        psirz = psiextrz
+        j_vacplas = 0
+    else if (ifplasma == 1) then  ! full plasma solved
+        if (j_vacplas == 0) j_call=0
+!        call full_system_advance_ef(j_call)
+	if (j_call == -1) then
+!            call convert_boundary_to_pbe
+!            call fix_boundary_ef(1)
+        endif
+        j_vacplas = 1		
+    endif
+endif
+
 !boundary from previous time step
 call PHI_EQ_2d_PBE( &
     nrho, nteta, psigrida(1: nrho), iplasma, pressure(1: nrho), &
@@ -131,6 +164,8 @@ call PHI_EQ_2d_PBE( &
     li3, betapol)
 
 jrhoteta(1: nrho, nteta+1) = jrhoteta(1: nrho, 1) !periodic j
+raxp = equil_out%coord_sys%position%r(1, 1)
+zaxp = equil_out%coord_sys%position%z(1, 1)
 
 ! additional info from rectangular grid
  

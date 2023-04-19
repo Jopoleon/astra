@@ -14,7 +14,7 @@ integer, parameter :: max_iter=500
 double precision, parameter :: GPI4=GPI2**2, muvac=4.e-7*GPI
 
 integer, intent(in) :: Nr, Nt
-double precision, intent(in) :: iplasma, R0, btor, psib
+double precision, intent(in) :: iplasma, R0, btor, rax, zax, psib
 double precision, intent(in) , dimension(Nr) :: pressure, ipol, ffprimp, pprimp, psin_grid_in
 double precision, intent(in) , dimension(Nt) :: Rb, Zb
 
@@ -24,7 +24,6 @@ double precision, intent(out), dimension(Nr) :: psin_grid_out, g1, g2, g3, g41, 
     areat, perim, slat, r_out, r_in, shif, elon, tria
 double precision, intent(out), dimension(Nt) :: thetap_out
 double precision, intent(out), dimension(Nr, Nt) :: Psi, rmin, jrhoteta, XX, YY
-double precision, intent(inout) :: rax, zax
 
 integer :: i, i1, i2, j, jt, jrho, j_ok, jrho_axis, jthe_axis, &
     jiter, Ndims, LDAB, nan_count, info, jloc, jmin(2)
@@ -279,8 +278,6 @@ G41 = G1 ! to be fixed
 
 thetap_out(1: Nt) = thetap(1: Nt)
 psin_grid_out = psin_grid
-rax = X0
-zax = Y0
 
 return
 end subroutine PHI_EQ_2d_PBE
