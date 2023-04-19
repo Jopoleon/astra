@@ -52,10 +52,3 @@ double precision :: pprime(i_dim2), ffprime(i_dim2), pressure(i_dim2), psigrida(
 double precision :: jrhoteta(i_dim2, i_dim2), ipol(i_dim2)
 
 end module ef_circuit
-
-!------------------------------------
-module exchange_with_astra       ! declaration of minimal CPOs
-
-double precision :: raxis_astra, zaxis_astra
-
-end module exchange_with_astra
