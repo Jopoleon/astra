@@ -17,17 +17,18 @@ integer, intent(in) :: Nr, Nt
 double precision, intent(in) :: iplasma, R0, btor
 double precision, intent(in) , dimension(Nr) :: pressure, ipol, ffprimp, pprimp, psin_grid_in
 double precision, intent(in) , dimension(Nt) :: Rb, Zb
+
 double precision, intent(out) :: li3, betapol
 double precision, intent(out), dimension(Nr) :: psin_grid_out, g1, g2, g3, g41, &
     volum, gradro, bmaxt, bmint, bdb02, bdb0, b0db2, fofb, &
     areat, perim, slat, r_out, r_in, shif, elon, tria
 double precision, intent(out), dimension(Nt) :: thetap_out
 double precision, intent(out), dimension(Nr, Nt) :: Psi, rmin, jrhoteta, XX, YY
-double precision, intent(inout) :: PSIb, rax, zax
+double precision, intent(inout) :: rax, zax, psib
 
 integer :: i, i1, i2, j, jt, jrho, j_ok, jrho_axis, jthe_axis, &
-    jiter, Ndims, LDAB, nan_count
-double precision :: X0, Y0, X0o, Y0o, cnorm, psiax, &
+    jiter, Ndims, LDAB, nan_count, info, jloc, jmin(2)
+double precision :: X0, Y0, X0o, Y0o, cnorm, denom, psiax, &
     yrr, ya, axis_change, &
     yrmax, yrmin, yzmax, yzmin, yrzmax, yrzmin
 double precision, dimension(3) :: xxxx1, yyyy1, pppp1
@@ -38,7 +39,8 @@ double precision, dimension(Nr, Nt) :: dArea, Rmaj2, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
     ddr, ddr_i, dtp, dtm, dt_i, gradh, gradr2, gradh2, dArea2
-
+double precision :: gpsi(2*Nt+1), work(2*(2*Nt+1)*6), matrix(2*Nt+1, 6)
+    
 Ndims = 1 + (Nr - 2)*Nt
 LDAB = 6*Nt + 1
 psin_grid = psin_grid_in
@@ -54,6 +56,7 @@ do jrho=1, Nr
     enddo
 enddo
 lambda2dp = lambda2d + 0.5/(Nr - 1.)
+
 do j=1, Nt
     PSI(1: Nr, j) = psin_grid(1: Nr)
 enddo
@@ -128,10 +131,49 @@ iter_loop: do jiter=1, max_iter
         dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
         ddr, ddr_i, dtp, dtm, dt_i, PSI)
 
-    call find_new_X0Y0(Nr, Nt, PSI, XX, YY, X0, Y0, PSIax, jrho_axis, jthe_axis)
+!----------------------------------
+! Find new magnetic axis: R, z, psi
+
+    jmin = minloc(PSI)
+    jrho_axis = jmin(1)
+    jthe_axis = jmin(2)
+
+    if (jrho_axis == 1) then
+        gpsi(1)      = PSI(1, 1)
+        matrix(1, 1) =  XX(1, 1)**2
+        matrix(1, 2) =  XX(1, 1)
+        matrix(:, 3) = 1.
+        matrix(1, 4) =  YY(1, 1)**2
+        matrix(1, 5) =  YY(1, 1)
+        matrix(1, 6) =  XX(1, 1)*YY(1, 1)
+        do jrho=2, 3
+            do jt=1, Nt
+                jloc = jt + 1 + (jrho - 2)*Nt
+                matrix(jloc, 1) =  XX(jrho, jt)**2
+                matrix(jloc, 2) =  XX(jrho, jt)
+                matrix(jloc, 4) =  YY(jrho, jt)**2
+                matrix(jloc, 5) =  YY(jrho, jt)
+                matrix(jloc, 6) =  XX(jrho, jt)*YY(jrho, jt)
+                gpsi  (jloc)    = PSI(jrho, jt)
+            enddo
+        enddo
+
+! Lapack DGELS
+        call dgels('N', 2*Nt + 1, 6, 1, matrix, 2*Nt + 1, gpsi, 2*Nt + 1, WORK, 2*(2*Nt + 1)*6, INFO)
+
+        denom = 4*gpsi(1)*gpsi(4) - gpsi(6)**2
+        x0 = (gpsi(6)*gpsi(5) - 2*gpsi(4)*gpsi(2))/denom
+        y0 = (gpsi(6)*gpsi(2) - 2*gpsi(1)*gpsi(5))/denom
+        psiax = gpsi(1)*x0**2 + gpsi(2)*x0 + gpsi(3) +  &
+                gpsi(4)*y0**2 + gpsi(5)*y0 + gpsi(6)*x0*y0
+    else
+        x0 = XX(jrho_axis, jthe_axis)
+        y0 = YY(jrho_axis, jthe_axis)
+        psiax = PSI(jrho_axis, jthe_axis)
+    endif
 
     if (jrho_axis == 1 .and. jthe_axis == 1) then
-        j_ok = 1   
+        j_ok = 1
     else
         j_ok = 0
     endif
@@ -143,14 +185,19 @@ iter_loop: do jiter=1, max_iter
         enddo
     enddo
 
-    if ((abs(X0) >= 20.) .and. (abs(y0) >= 20.)) call err_catch_a
+    if ((abs(X0) >= 20.) .and. (abs(y0) >= 20.)) then
+        write(*, *) 'Error x0, y0 too large'
+        stop
+    endif
 
 !------------------
 ! Check convergence
+
     axis_change = abs(x0 - x0o)/x0 + abs(y0 - y0o)/x0
     X0o = X0
     Y0o = Y0
     if (axis_change < 1.e-6) then
+!        write(*, '(A, i3)') 'FEQIS converged, step #', jiter
         EXIT iter_loop
     endif
 enddo iter_loop
@@ -178,6 +225,7 @@ do jt=1, Nt
 enddo
 
 do jrho=2, Nr
+
     i = minloc(yy(jrho, :), 1)
     i1 = i - 1
     i2 = i + 1
@@ -229,11 +277,10 @@ SHIF(1)  = XX(1, 1) - R0
 
 G41 = G1 ! to be fixed
 
-rax = X0
-zax = Y0
-
 thetap_out(1: Nt) = thetap(1: Nt)
 psin_grid_out = psin_grid
+rax = X0
+zax = Y0
 
 return
 end subroutine PHI_EQ_2d_PBE
