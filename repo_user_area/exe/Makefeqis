@@ -19,7 +19,6 @@ $(OBJ_DIR)/feqis_main.o \
 $(OBJ_DIR)/feqis_init.o \
 $(OBJ_DIR)/build_2dgrid.o \
 $(OBJ_DIR)/build_2dgrid2.o \
-$(OBJ_DIR)/find_new_X0Y0.o \
 $(OBJ_DIR)/PHI_EQ_2d_PBE.o \
 $(OBJ_DIR)/solver_inversion_matrix_gsef.o
 
