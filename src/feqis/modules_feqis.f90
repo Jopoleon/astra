@@ -56,6 +56,6 @@ end module ef_circuit
 !------------------------------------
 module exchange_with_astra       ! declaration of minimal CPOs
 
-double precision :: raxis_astra, zaxis_astra, psi0_astra, psib_astra
+double precision :: raxis_astra, zaxis_astra
 
 end module exchange_with_astra

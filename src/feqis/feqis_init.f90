@@ -5,11 +5,9 @@ use parameters_a2spider, only: type_parameters
 use imas_ids, only: type_equilibrium
 use ef_circuit, only: data_dir, nteta, nrho, &
     psigrida, Rgeom0, max_iter, teta, &
-    raxp, zaxp, Rexp, Zexp, Rbndp, Zbndp, &
+    Rexp, Zexp, Rbndp, Zbndp, &
     btor0, iplasma, pressure, pprime, ffprime, ipol, &
     psia_2d, ffp_2d, ppp_2d, ipol_2d, pres_2d
-use exchange_with_astra, only: psi0_astra, psib_astra, &
-    raxis_astra, zaxis_astra
 
 implicit none
 
@@ -37,10 +35,6 @@ if (j_call == 0) then
     do i=1, nteta+1
         teta(i) = GPI2*(i - 1.)/(nteta + 0.)
     enddo
-    psi0_astra = equil_in%profiles_1d%psi(1)
-    psib_astra = equil_in%profiles_1d%psi(nrho)
-    raxp = raxis_astra
-    zaxp = zaxis_astra
 endif
 
 if (ifplasma == 1) then

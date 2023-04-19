@@ -8,7 +8,6 @@ use ef_circuit, only: nrho, nteta, nr2, nz2, &
     psiaxisp, psibndp, psigrida, &
     pressure, pprime, ffprime
 use pi_vars, only: GPI2
-use exchange_with_astra, only: raxis_astra, zaxis_astra, psi0_astra, psib_astra
 
 implicit none
 
@@ -89,10 +88,10 @@ write(*, *) 'call fix equil code'
 
 ! initial guess
 if (j_init == 0) then
-    raxp = raxis_astra
-    zaxp = zaxis_astra
-    psiaxisp = psi0_astra
-    psibndp = psib_astra 
+    raxp = 0.
+    zaxp = 0.
+    psiaxisp = equil_in%profiles_1d%psi(1)
+    psibndp  = equil_in%profiles_1d%psi(nrho)
 !boundary from experiment
 endif 
 
