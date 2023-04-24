@@ -19,7 +19,7 @@ end module pi_vars
 !-------------------------------------------
 module ef_circuit       ! declaration of minimal CPOs
 
-use dimensions_ef_parameters, only: i_dim2
+use dimensions_ef_parameters, only: i_dim1, i_dim2
 
 implicit none 
 
