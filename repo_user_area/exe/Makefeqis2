@@ -1,0 +1,63 @@
+SRC_DIR = $(AWD)/src/feqis2
+OBJ_DIR = $(AWD)/obj/feqis2
+MOD_FOR = $(AWD)/mod/for
+MOD_DIR = $(AWD)/mod/feqis2
+LIB_DIR = $(AWD)/lib
+LIBNAM = libfeqis2.a
+LIB = $(LIB_DIR)/$(LIBNAM)
+
+FQFLAGS	= -O2 -g -traceback -I$(MOD_FOR) -I$(MOD_DIR) -I.
+
+# FEQIS objs
+
+FQMODOBJS = \
+$(OBJ_DIR)/moduls_ef_ef.o 
+
+FQOBJS = \
+$(OBJ_DIR)/find_new_X0Y0.o \
+$(OBJ_DIR)/solver_dphi2.o \
+$(OBJ_DIR)/solver_inversion_matrix_gsef.o \
+$(OBJ_DIR)/ainv_matrix_def.o \
+$(OBJ_DIR)/feqisupdate.o \
+$(OBJ_DIR)/interp_feqis.o \
+$(OBJ_DIR)/dft_equil_ef.o \
+$(OBJ_DIR)/feqis_main.o \
+$(OBJ_DIR)/ef_init_ef.o \
+$(OBJ_DIR)/main_wrappers_ef.o \
+$(OBJ_DIR)/PHI_EQ_2d_PBE.o \
+$(OBJ_DIR)/build_2dgrid.o \
+$(OBJ_DIR)/build_2dgrid2.o 
+
+# Coupling scheme objs
+
+# Make Commands
+.PHONY: all
+all: directories $(LIB) mvmod
+
+.PHONY: directories
+directories:
+	@mkdir -p $(OBJ_DIR)
+	@mkdir -p $(LIB_DIR)
+	@mkdir -p $(MOD_DIR)
+
+.PHONY: mvmod
+mvmod:
+	-@mv *.mod $(MOD_DIR)/
+
+.PHONY: clean
+clean:
+	rm -rf $(OBJ_DIR)
+	rm -f $(MOD_DIR)/*.mod
+	rm -f *.mod
+	rm -f $(LIB)
+
+# Rules
+
+$(OBJ_DIR)%.o : $(SRC_DIR)%.f90 
+	$(AFC) $(FQFLAGS) -c $< -o $@
+
+$(OBJ_DIR)%.o : $(SRC_DIR)%.f
+	$(AFC) $(FQFLAGS) -c $< -o $@
+
+$(LIB): $(FQMODOBJS) $(FQOBJS)
+	ar -u -rv $(LIB) $(FQMODOBJS) $(FQOBJS)
