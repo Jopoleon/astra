@@ -2,7 +2,7 @@ module dimensions_ef_parameters
 
 implicit none
 
-integer, parameter :: i_dim1=300, i_dim2=300 ! #coils, #rad.grid
+integer, parameter :: i_dim2=300
 
 end module dimensions_ef_parameters
 
@@ -19,12 +19,13 @@ end module pi_vars
 !-------------------------------------------
 module ef_circuit       ! declaration of minimal CPOs
 
-use dimensions_ef_parameters, only: i_dim1, i_dim2
+use dimensions_ef_parameters, only: i_dim2
 
 implicit none 
 
 !generic
-character(len=120) :: data_dir
+character*120 :: data_dir
+integer :: max_iter
 
 ! coordinates:
 ! r, z --> rectangular grid in meters
@@ -33,13 +34,21 @@ character(len=120) :: data_dir
 ! psigrid --> in poloidal flux equispaced
 
 !grids
-integer :: nr, nz, nrho, nteta, nr2, nz2, ncoils
+integer :: nr, nz, nrho, nteta, nr2, nz2
 
-double precision :: rmin, rmax, zmin, zmax, psibndp, psiaxisp, raxp, zaxp, &
-    iplasma, btor0, rgeom0, psplex, li3, betapol
-double precision, dimension(i_dim1) :: voltage, psiplasmatoconduc, psi_cur_old
-double precision, dimension(i_dim2) :: teta, rbndp, zbndp, rexp, zexp, &
-    psia_2d, ffp_2d, ppp_2d, ipol_2d, pres_2d, pprime, ffprime, pressure, psigrida, ipol
-double precision, dimension(i_dim2, i_dim2) :: rho, jrhoteta, psiextrz, psirz
+double precision :: rmin, rmax, zmin, zmax
+double precision :: rho(i_dim2, i_dim2), teta(i_dim2) ! rho is defined as actual distance in meters as in astra
+double precision :: psia_2d(i_dim2), ffp_2d(i_dim2), ppp_2d(i_dim2), ipol_2d(i_dim2), pres_2d(i_dim2)
+
+! boundary and axis PBE
+double precision :: rbndp(i_dim2), zbndp(i_dim2), psibndp, psiaxisp
+double precision :: raxp, zaxp
+double precision :: rexp(i_dim2), zexp(i_dim2)
+
+! plasma parameters
+double precision :: iplasma, btor0, rgeom0, psplex, li3, betapol
+double precision :: pprime(i_dim2), ffprime(i_dim2), pressure(i_dim2), psigrida(i_dim2)     !these 3 come from astra, psi is FP of astra
+! current density
+double precision :: jrhoteta(i_dim2, i_dim2), ipol(i_dim2)
 
 end module ef_circuit

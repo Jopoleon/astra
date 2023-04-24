@@ -5,7 +5,7 @@
 !   MAIN  PROGRAM  OF  THE EVOLUTION CODE  "PET"
 !-----------------------------------------------
 
-      use fenix_params, only: s_adapt, s_fazt
+      use parameters_a2spider, only: s_adapt, s_fazt
       use keys, only: key_0st, kpr, key_out
 
       implicit none
