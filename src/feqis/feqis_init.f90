@@ -4,7 +4,7 @@ use pi_vars, only: GPI2, mu0
 use parameters_a2spider, only: type_parameters
 use imas_ids, only: type_equilibrium
 use ef_circuit, only: data_dir, nteta, nrho, &
-    psigrida, Rgeom0, max_iter, teta, &
+    psigrida, Rgeom0, teta, &
     Rexp, Zexp, Rbndp, Zbndp, &
     btor0, iplasma, pressure, pprime, ffprime, ipol, &
     psia_2d, ffp_2d, ppp_2d, ipol_2d, pres_2d
@@ -28,7 +28,6 @@ if (j_call == 0) then
 !constants
 
     Rgeom0 = equil_in%global_param%toroid_field%r0
-    max_iter = 520 !hardwired
 
 ! teta for polar grid,  goes from 0 to 2*pi-dteta,  but point nt+1 is the periodic one
 
