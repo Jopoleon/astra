@@ -8,7 +8,7 @@ double precision, dimension(NRD) :: &
     TEO, TIO, NEO, UPAR, UPARO, &
     FPO, ULON, QU, VP, GN, SQEPS, &
     PRES, PELH, PETOT, PELON, CULH, PITOT, &
-    SNTOT, PEECR, PEFW, PEICR, PIICR, PIFW, PEPER, &
+    SNTOT, PEECR, PEFW, PEICR, PEIQI, PIICR, PIFW, PEPER, &
     QE, QI, QN, QF0, QF1, QF2, QF3, QF4, QF5, QF6, QF7, &
     QF8, QF9, CUECR, CUFW, CUICR, CUTOR, TTRQ, VR, VRO, &
     NIO
@@ -207,6 +207,7 @@ NIZ1  = 0.
 NIZ2  = 0.
 NIZ3  = 0.
 NMAIN = 0.
+PEIQI = 0.
 
 ! Current
 
