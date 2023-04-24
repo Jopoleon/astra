@@ -78,9 +78,11 @@ double precision, pointer :: &
     NB2EQL, NEQUIL, NBNDR, XFLAGR, DTEQL, MEQUIL, TPAUSE, TEND, &
     INUME1, INUME2, INUME3, INUME4, &
     IPROT, ITFBE, ITFBP, ICIRCQ, IPCTRL, ADCMPF, FLXDR, &
-    SGNIP, SGNBT, IRESTA, IFBEG, IPEQL, IPSMK, IPNWT, IBKDW, IBKVR, &
+    SGNIP, SGNBT,  IFBEG, IPEQL, &
     DTEQ(:, :)
 double precision, target :: DELOUT(NSDELOUT + 4*NSBMX)
+
+double precision :: IPSMK, IBKDW ! flight simulator switch. IPSMK=1 for coupling to control. IBKDW=-1 for breakdown yes
 
 double precision, target :: MESHEQ
 
@@ -195,7 +197,7 @@ DELOUT(1: NSDELOUT) = (/ &
 ! ITEREX, NITREQ, TINIT, TSCALE, NA1, NUFR, XOUT, XINPUT 
    1.,    1.,    0.,    1.,	41.,     41.,      1.,     1., &
 ! NB2EQL, NEQUIL, NBNDR, XFLAGR, DTEQL, MEQUIL, TPAUSE, TEND
-   1.,    0.,    0.,    0.,      0.,      0.,   1.e20,  1.e20, &
+   1.,    0.,    0.,    0.,      0.,      0.,   100.,  1000., &
 ! INUME1, INUME2, INUME3, INUME4, IPROT, ITFBE  ITFBP  ICIRCQ 
   22.,    22.,    22.,    22.,     0.,   -1.,    0.,       0., &     
 ! IPCTRL, ADCMPF, FLXDR, SGNIP, SGNBT, IFBEG, IPEQL

@@ -2,9 +2,9 @@ module parameters_a2spider       ! declaration of code parameters
 
 use imas_ids, only: type_equilibrium
 
-integer :: s_adapt, s_fazt, fix_adapgrid
+integer :: fix_adapgrid
 integer, parameter, private :: DP=kind(1.0D0)
-double precision, parameter :: GP=3.1415926, GP2=6.283185, GP4=GP2**2.0, muvac=0.4*GP*1.E-06
+double precision, parameter :: GP=3.14159265359, GP2=2.*GP, GP4=GP2**2.0, muvac=0.4*GP*1.E-06
 double precision :: epsf_tol, epss_tol, ydiff, ydiff2, epsv_tol, sorparam, epsg_tol, &
     epstol, itertol, lambdatol, urelax, urelax2, time_fix_eqpff, murelax2, cheb_coefs(5, 5)
 character(len=80) :: name_gsefdir = 'exp/equ/' ! working directory path
