@@ -80,10 +80,6 @@ CASE(4: 5)  ! SPIDER, FEQIS
    if (TIME > TSTART) NDTEQUILMY=1
    if (TIME-TIMEQL >= NDTEQUILMY*DTEQL) then
       call RHSEQ   ! Define p', FF', j_tor=CUTOR
-      if (NEQUIL > 0) then
-         NEQUIL = -NEQUIL
-         MEQUIL = -MEQUIL
-      endif
       call A2GSSOLVER_EF(equil_solver)
       call ADDTIME(CPTEQL)
       TIMEQL = TIME
@@ -837,9 +833,9 @@ call TRANSF(N3EQL, BMINEQ, XEQ, NA1, BMINT, XTR)
 call TRANSF(N3EQL, BMODEQ, XEQ, NA1, BDB0 , XTR)
 call TRANSF(N3EQL, FOFBEQ, XEQ, NA1, FOFB , XTR)
 
-BDB02 = BDB02*BTOOO**2./BTOR**2.
+BDB02 = BDB02*BTOOO**2 / BTOR**2
 BDB0  = BDB0*BTOOO/BTOR
-B0DB2 = B0DB2/BTOOO**2.*BTOR**2.
+B0DB2 = B0DB2/BTOOO**2 * BTOR**2
 
 do J=NA1, NAB
    SHEAR(j) = SHEAR(NA1)
@@ -981,8 +977,8 @@ do j=1, na1
 
 !Efable Reput values since now they are used for ff' computation
    yg11(j)   = G11(j)*VRS(j)                           !g11 = <(grad(V)^2)> 
-   yg22(j)   = G22(j)*(GP2**2.0)*IPOL(j)/RTOR*VRS(j)   !g22 = <(grad(V)/R)^2>
-   yg33(j)   = G33(j)/(RTOR**2.0)                      !g33 = <1/R^2>
+   yg22(j)   = G22(j)*(GP2**2)*IPOL(j)/RTOR*VRS(j)   !g22 = <(grad(V)/R)^2>
+   yg33(j)   = G33(j)/(RTOR**2)                      !g33 = <1/R^2>
    yvr(j)    = VR(j)
    yvrs(j)   = VRS(j)
    yslat(j)  = SLAT(j)
@@ -1005,10 +1001,9 @@ if (IFBEY >= 1.) i = 2   !fbe is on
 if (IPART == 1 ) i = 1   !fbe is off
 
 if (ifbey > 0..and.plasma_up == 0) then
+    call A_spider_2(jneql, jnteta, NCNB, nint(ifbey), time, tau, machine, &
+       ccoil(1: ncnb), vcoil(1: ncnb), equil_solver)
    jnstep = jnstep + 1
-!This is to call SPIDER again...
-   NEQUIL = -NEQUIL
-   MEQUIL = -MEQUIL
    return
 endif
 
@@ -1101,7 +1096,7 @@ call NEWGRD ! The RHO-grid and NA, NA1, HRO are updated
 
 VOLUM(NA1) = yvolum(NA1)
 
-G22 = G22/VRS*RTOR/(GP2**2.0)/IPOL
+G22 = G22/VRS*RTOR/(GP2**2)/IPOL
 G11 = G11/VRS
 GRADRO = GRADRO/VRS
 DRODA = DRODA/VRS
@@ -1136,10 +1131,6 @@ enddo
 VOLUME = VOLUM(NA1)
 
 jnstep = jnstep + 1 ! Count SPIDER calls, this was outside enddo
-
-!This is to call SPIDER again...
-NEQUIL = -NEQUIL
-MEQUIL = -MEQUIL
 
 return
 end subroutine A2GSSOLVER_EF
@@ -1694,7 +1685,7 @@ subroutine NEWGRD
 use parameter_inc, only: NRD
 use status_inc, only: RHO, XRHO, SRHO, SXHO, AMETR
 use const_inc, only: HRO, HROX, AB, ABC, ROC, ROB, ROWALL, &
-   FTO, BTN, GP, NA, NA1, NB1, NAB
+   FTO, BTOR, GP, NA, NA1, NB1, NAB
 
 implicit none
 
@@ -1706,7 +1697,7 @@ do j=1, NRD
   RHO(j)  = XRHO(j)*ROC
   SRHO(j) = SXHO(j)*ROC
 enddo
-FTO = GP*BTN*ROC**2.0
+FTO = GP*BTOR*ROC**2
 !Efable normalized grid stuff
 
 do j=1, NRD
