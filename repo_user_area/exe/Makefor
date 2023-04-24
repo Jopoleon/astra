@@ -36,6 +36,8 @@ $(OBJ_DIR)/read_input.o \
 $(OBJ_DIR)/intvar.o \
 $(OBJ_DIR)/metric.o \
 $(OBJ_DIR)/outdsp.o \
+$(OBJ_DIR)/read_input_constant_file.o \
+$(OBJ_DIR)/rrsudg.o \
 $(OBJ_DIR)/runeq.o \
 $(OBJ_DIR)/serv.o \
 $(OBJ_DIR)/setarx.o \

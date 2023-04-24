@@ -1001,8 +1001,8 @@ if (IFBEY >= 1.) i = 2   !fbe is on
 if (IPART == 1 ) i = 1   !fbe is off
 
 if (ifbey > 0..and.plasma_up == 0) then
-    call A_spider_2(jneql, jnteta, NCNB, nint(ifbey), time, tau, machine, &
-       ccoil(1: ncnb), vcoil(1: ncnb), equil_solver)
+! git    call A_spider_2(jneql, jnteta, NCNB, nint(ifbey), time, tau, machine, &
+!       ccoil(1: ncnb), vcoil(1: ncnb), equil_solver)
    jnstep = jnstep + 1
    return
 endif

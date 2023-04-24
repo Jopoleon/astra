@@ -10,7 +10,8 @@ subroutine A_SPIDER( &
     key_start, PSIEXT, PSPLEX, keyplc, equil_out)
 
 use imas_ids, only: type_equilibrium
-use parameters_a2spider, only: type_parameters, s_adapt, s_fazt, fix_adapgrid, GP, GP2
+use fenix_params, only: s_adapt, s_fazt
+use parameters_a2spider, only: type_parameters, fix_adapgrid, GP, GP2
 
 implicit none
 
