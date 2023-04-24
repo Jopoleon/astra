@@ -7,9 +7,9 @@ subroutine build_2dgrid(Nr, Nt, Rb, Zb, X0, Y0, lambda2d, lambda2dp, &
     ddr, ddr_i, dtp, dtm, dt_i, X, Y, &
     rmin, thetap, thetap_i, Jcbn, gradr2, Jcbn2)
 
-use pi_vars, only: GPI2
-
 implicit none
+
+double precision, parameter :: GPI=3.141592653589793, GPI2=2.*GPI
 
 integer, intent(in) :: Nt, Nr, j_ok
 double precision, intent(in) :: psiax, psib, X0, Y0
@@ -48,9 +48,7 @@ if (thetap(1) > thetap(Nt)) then !reorder
     enddo  
     if (j > 1) thetap(1: j-1) = thetap(1: j-1) - GPI2
 endif 
-
-jt = Nt
-thetap(jt+1) = GPI2 + thetap(1)
+thetap(Nt+1) = thetap(1) + GPI2
 
 ! Now find the intermediate theta grid
 do jt=1, Nt

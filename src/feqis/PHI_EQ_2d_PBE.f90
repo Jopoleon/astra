@@ -6,12 +6,11 @@ subroutine PHI_EQ_2d_PBE(Nr, Nt, psin_grid_in, iplasma, &
     areat, perim, shif, elon, slat, tria, thetap_out, &
     rmin, jrhoteta, li3, betapol)
 
-use pi_vars, only: GPI, GPI2
-
 implicit none
 
 integer, parameter :: max_iter=500
-double precision, parameter :: GPI4=GPI2**2, muvac=4.e-7*GPI
+double precision, parameter :: GPI=3.141592653589793, GPI2=2.*GPI, &
+    GPI4=GPI2**2, muvac=4.e-7*GPI
 
 integer, intent(in) :: Nr, Nt
 double precision, intent(in) :: iplasma, R0, btor, rax, zax, psib
@@ -196,7 +195,7 @@ iter_loop: do jiter=1, max_iter
     X0o = X0
     Y0o = Y0
     if (axis_change < 1.e-6) then
-!        write(*, '(A, i3)') 'FEQIS converged, step #', jiter
+        write(*, '(A, i3)') 'FEQIS converged, step #', jiter
         EXIT iter_loop
     endif
 enddo iter_loop

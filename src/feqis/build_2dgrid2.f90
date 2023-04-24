@@ -6,9 +6,9 @@ subroutine build_2dgrid2(Nr, Nt, psig, &
     BMAXT, BMINT, BDB02, BDB0, B0DB2, &
     FOFB, slat, li3, betapol)
 
-use pi_vars, only: GPI, GPI2
-
 implicit none
+
+double precision, parameter :: GPI=3.141592653589793, GPI2=2.*GPI
 
 integer, intent(in) :: Nt, Nr
 double precision, intent(in) :: btor, iplasma, Rtor
@@ -100,7 +100,7 @@ li3 = 2.*sum(B_pola**2 * dV2da)/rtor/(0.4*GPI*iplasma)**2
 do i=1, Nr-1
     onez(i) = 0.5*(pressure(i) + pressure(i+1))
 enddo
-betapol = 2.*0.4*GPI*1.e-6*sum(onez*dva)/sum(B_pola**2 * dV2da)
+betapol = 0.4*GPI2*1.e-6*sum(onez*dva)/sum(B_pola**2 * dV2da)
 slat = 0.
 do i=2, Nr
     do j=1, Nt-1 
