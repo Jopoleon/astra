@@ -109,7 +109,7 @@ end subroutine linterp_feqis
 !---------------------------------------------------------------------
 subroutine find_angle_ef(rt, zt, r, z, anglr)
 
-use pi_grec_vars, only: GPI2
+use pi_vars, only: GPI2
 
 implicit none
 double precision, intent(in) :: rt, zt, r, z
@@ -223,30 +223,9 @@ return
 end subroutine inverse_matrix_equilef
 
 !---------------------------------------------------------------------
-subroutine interp_j_fromrhotorz
-
-use ef_circuit, only: nrho, nteta, nr2, nz2, r, z, jrz, jrhoteta, rho, teta, raxp, zaxp
-
-implicit none
-
-integer i, j
-
-! go from jrhoteta to jrz
-jrz = 0.
-do j=1, nz2
-    do i=1, nr2
-        call curinterp_ef(r(i), z(j), jrhoteta(1:nrho-1, 1:nteta), & 
-            rho(1:nrho-1, 1:nteta), teta(1:nteta), raxp, zaxp, nrho-1, nteta, jrz(i, j))
-    enddo
-enddo
-
-return
-end subroutine interp_j_fromrhotorz
-
-!---------------------------------------------------------------------
 subroutine curinterp_ef(r, z, jrho, rho, teta, rax, zax, nrho, nteta, j)
 
-use pi_grec_vars, only: GPI2
+use pi_vars, only: GPI2
 
 implicit none
 
@@ -355,30 +334,11 @@ return
 end subroutine discrete_sine_transform_ef
 
 !---------------------------------------------------------------------
-subroutine plasma_psi_to_coils_ef
-
-use ef_circuit, only: nconduc, nr2, nz2, psiplasmatoconduc, jrz, area_eff
-use green_matrix, only: greeni
-
-implicit none
-
-integer :: i
-
-do i=1, nconduc
-    psiplasmatoconduc(i) = sum(jrz(1:nr2, 1:nz2) * &
-        area_eff(1:nr2, 1:nz2)*greeni(1:nr2, 1:nz2, i))
-enddo
-
-
-return
-end subroutine plasma_psi_to_coils_ef
-
-!---------------------------------------------------------------------
 subroutine psiplex_calc_ef(dumz)
 
-use pi_grec_vars, only: GPI2
+use pi_vars, only: GPI2
 use exchange_with_astra, only: psplex_from_fbe
-use ef_circuit, only: nbnd, dr, rbnd, dz, zbnd
+use circuit, only: nbnd, dr, rbnd, dz, zbnd
 
 implicit none
 
@@ -424,25 +384,6 @@ endif
 
 return
 end subroutine psiplex_calc_ef
-
-!---------------------------------------------------------------------
-subroutine psi_external_calc_ef
-
-use ef_circuit, only: nr2, nz2, nconduc, psiextrz, curconduc
-use green_matrix, only: greeni
-
-implicit none
-
-integer :: i, j
-
-do j=1, nz2
-    do i=1, nr2
-        psiextrz(i, j) = sum(curconduc(1:nconduc)*greeni(i, j, 1:nconduc))
-    enddo
-enddo
-
-return
-end subroutine psi_external_calc_ef
 
 !---------------------------------------------------------------------
 subroutine least_square_biquad_ef(r, z, u, n, c, rax, zax, uax, derivs)
@@ -774,7 +715,7 @@ end function frlim_ef
 !---------------------------------------------------------------------
 subroutine nine_point_regression(r0, z0, pos_xpoint, ddpsi, f00)
 
-use ef_circuit, only: nr1, nz1, r, dr, z, dz, psirz
+use circuit, only: nr1, nz1, r, dr, z, dz, psirz
 
 implicit none
 
@@ -820,7 +761,7 @@ end subroutine nine_point_regression
 !---------------------------------------------------------------------
 subroutine nine_point_regression_follow(rx, zx, pos_xpoint, ddpsi, f00)
 
-use ef_circuit, only: dr, dz
+use circuit, only: dr, dz
 
 implicit none
 
@@ -870,7 +811,7 @@ end subroutine nine_point_regression_follow
 !---------------------------------------------------------------------
 subroutine find_actual_index_ef(r0, z0, i, j)
 
-use ef_circuit, only: rmin, dr, zmin, dz
+use circuit, only: rmin, dr, zmin, dz
 
 implicit none
 
@@ -886,7 +827,7 @@ end subroutine find_actual_index_ef
 !---------------------------------------------------------------------
 subroutine find_fields_interp_ef_psionly(r0, z0, psi0) !give back psi, br, bz at r0, z0
 
-use ef_circuit, only: rmin, r, dr, zmin, z, dz, psirz
+use circuit, only: rmin, r, dr, zmin, z, dz, psirz
 
 implicit none
 double precision, intent(in)  :: r0, z0
@@ -915,7 +856,7 @@ end subroutine find_fields_interp_ef_psionly
 !---------------------------------------------------------------------
 subroutine find_fields_interp_ef_green(r0, z0, psi0, iconduc)
 
-use ef_circuit, only: rmin, r, dr, zmin, z, dz
+use circuit, only: rmin, r, dr, zmin, z, dz
 use green_matrix, only: greeni
 
 implicit none
@@ -1031,8 +972,8 @@ subroutine boundary_ef(g)
 
 ! new bc is integral_over_boundary of -Green * dg/dn * dl
 use dimensions_ef_parameters, only: i_dim2
-use pi_grec_vars, only: GPI
-use ef_circuit, only: nr1, nz1, nr2, nz2
+use pi_vars, only: GPI
+use circuit, only: nr1, nz1, nr2, nz2, green_bnd_integral
 
 implicit none
 
@@ -1045,19 +986,19 @@ integr = 0.
 jcounty = 0
 ! lower side
 do i=2, nr1
-    call bgint_ef(integr(i, 1), g, jcounty)
+    call green_bnd_integral(integr(i, 1), g, jcounty)
 enddo
 ! right side
 do i=2, nz1
-    call bgint_ef(integr(i, 2), g, jcounty)
+    call green_bnd_integral(integr(i, 2), g, jcounty)
 enddo
 ! upper side
 do i=2, nr1
-    call bgint_ef(integr(i, 3), g, jcounty)
+    call green_bnd_integral(integr(i, 3), g, jcounty)
 enddo
 ! left side
 do i=2, nz1
-    call bgint_ef(integr(i, 4), g, jcounty)
+    call green_bnd_integral(integr(i, 4), g, jcounty)
 enddo
 g(2:nr1,   1) = integr(2:nr1, 1)/GPI
 g(nr2, 2:nz1) = integr(2:nz1, 2)/GPI
@@ -1066,53 +1007,3 @@ g(1,   2:nz1) = integr(2:nz1, 4)/GPI
 
 return
 end subroutine boundary_ef
-
-!---------------------------------------------------------------------
-subroutine bgint_ef(bgintsol, g, jcounty)
-
-! calculates  integral_over_boundary of -Green * dg/dn * dl for point r0, z0
-use dimensions_ef_parameters, only: i_dim2
-use ef_circuit, only: nr1, nz1, nr2, nz2, dr, r, dz, green_bnd_f
-
-implicit none
-
-double precision, intent(in), dimension(i_dim2, i_dim2) :: g(i_dim2, i_dim2)
-integer, intent(out) :: jcounty
-double precision, intent(out) :: bgintsol
-
-integer :: j
-double precision :: greenf
-double precision, dimension(i_dim2) :: dgdn
-
-bgintsol = 0.
-! lower side
-do j=1, nr1
-    jcounty = jcounty + 1
-    greenf = green_bnd_f(jcounty)
-    dgdn(j) = -(g(j, 2) - g(j, 1) + g(j+1, 2) - g(j+1, 1))/2./dz*greenf*dr/(r(j) + dr/2.)
-enddo
-bgintsol = bgintsol - sum(dgdn(1:nr1))
-! right side
-do j=1, nz1
-    jcounty = jcounty + 1
-    greenf = green_bnd_f(jcounty)
-    dgdn(j) = (g(nr2, j) - g(nr1, j) + g(nr2, j+1) - g(nr1, j+1))/2./dr*greenf*dz/(r(nr2) + r(nr1))*2.
-enddo
-bgintsol = bgintsol - sum(dgdn(1:nz1))
-! upper side
-do j=1, nr1
-    jcounty = jcounty + 1
-    greenf = green_bnd_f(jcounty)
-    dgdn(j) = (g(j, nz2) - g(j, nz1) + g(j+1, nz2) - g(j+1, nz1))/2./dz*greenf*dr/(r(j) + dr/2.)
-enddo
-bgintsol = bgintsol - sum(dgdn(1:nr1))
-! left side
-do j=1, nz1
-    jcounty = jcounty + 1
-    greenf = green_bnd_f(jcounty)
-    dgdn(j) = -(g(2, j) - g(1, j) + g(2, j+1) - g(1, j+1))/2./dr*greenf*dz/(r(1) + r(2))*2.
-enddo
-bgintsol = bgintsol - sum(dgdn(1:nz1))
-
-return
-end subroutine bgint_ef

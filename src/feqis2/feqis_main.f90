@@ -4,8 +4,11 @@
 
       use imas_ids       
       use parameters_a2spider
-      use ef_circuit
-
+      use circuit, only: ncoils, nrho, nteta, nr2, nz2, &
+          voltage, ucoils, &
+          psiplasmatoconduc, psirz, psiextrz, psplex, psibndp, &
+          psi_cur_old, psiaxisp, &
+          psi_external_calc_ef
       implicit none
  
       type(type_equilibrium) equil_in, equil_out
@@ -26,7 +29,6 @@
 	call definitions_ef_equil(equil_in,parameters_spider,j_init,ifplasma)
 	ncoils=nucoils
 	voltage(1:ncoils)=ucoils(1:ncoils) ! voltage inputs for active conductors
-!
 	write(*,*) ifplasma
 nrplasma=nrho
 	if (ifplasma.eq.1) then
@@ -96,25 +98,15 @@ nrplasma=nrho
 	write(*,*) 'fix and nstep',parameters_spider%k_fixfree, & 
 	& parameters_spider%nstep,nrho,nteta
 
-
-!	write(1331,*) 'data',psigrid(1:nrho)
-
-!	call equil_ef_init_circ  !test
-
 !init coils and grid
 	if (j_call.eq.0) then
 	if (parameters_spider%k_fixfree.eq.1) then
 	call equil_ef_init_circ
 	endif
 	endif
-	
-	
-	
+
 	write(*,*) parameters_spider%k_fixfree,j_init
 ! call fix boundary code, also here boundary comes from experiment
-
-
-
 ! only circuit equations solved!!!!!!!!!!!!!!!!!!!!!!
 	if (parameters_spider%k_fixfree.eq.1) then
 
@@ -132,14 +124,10 @@ nrplasma=nrho
 
 ! full plasma solved!!!!!!!!!!!!!!!!!!!!!!
 	if (ifplasma.eq.1) then
-	!	write(*,*) 'full plasma'
 		if (j_vacplas.eq.0) j_call=0
 		call full_system_advance_ef(j_call)
-!	write(31671,*) dpc(1:nconduc)
-	!	write(978,*) rax,zax
 		if (j_call.eq.-1) then
 			call convert_boundary_to_pbe
-		!	write(*,*) 'call fix equil code'
 			call fix_boundary_ef(1)
 		endif
 		j_vacplas=1		
@@ -147,7 +135,6 @@ nrplasma=nrho
 ! full plasma!!!!!!!!!!!!!!!!!!!!!!
 	endif !kfixfree
 
-	
 	if (parameters_spider%k_fixfree.eq.0) then
 			write(*,*) 'call fix equil code'
 			call fix_boundary_ef(j_init)
@@ -160,32 +147,25 @@ nrplasma=nrho
 	write(*,*) 'end equil code'
 	return
 			endif
-	
-	
+
 	write(*,*) 'end equil code'
 	j_call=1
 	j_init=1
-
 
 	if (ifplasma.eq.1) then
 		call assignment_of_equilout_stuff(equil_out)
 	endif
 
-
-
 	return
 	end
-
-
-
-
 
 	subroutine assignment_of_equilout_stuff(equil_out)
 
       use imas_ids       
       use parameters_a2spider
-      use ef_circuit
+      use circuit
 			use transfer_functions
+   use pi_vars, only: GPI2
 
 	implicit none
 
@@ -260,32 +240,12 @@ nrplasma=nrho
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	subroutine convert_boundary_to_pbe
 
 
-	use ef_circuit
-	
+	use circuit
+	use pi_vars, only: GPI, GPI2
+
 	implicit none	
 		double precision teta_fbe(i_dim5)
 		double precision x1,x2,x3,x4,t1,t2,t3,t4,z1,z2,z3,z4
@@ -315,7 +275,7 @@ nrplasma=nrho
 		rbnd(1)=r(k)-(psirz(k,j)-psibnd)/(psirz(k,j)-psirz(k-1,j))*dr		
 	endif	
 		zbnd(1)=z(j)
-			call find_angle_ef(rax,zax,rbnd(1),zbnd(1),teta_fbe(1))	
+                teta_fbe(1) = ATAN2(zbnd(1) - zax, rbnd(1) - rax)
 			i=1
 	write(*,*) i,rbnd(i),zbnd(i),teta_fbe(i)/GPI*180.,x1,t1,t2,t3,z1,z2,z3,psibnd
 			
@@ -442,47 +402,20 @@ nrplasma=nrho
 	psibndp=psibnd
 	psiaxisp=psiaxis
 	
-!	write(*,*) rax,zax,psibnd,psiaxis
-!	open(32,file='fort.333')
-!	do i=1,nteta
-!		write(32,'(24E25.11)') teta(i),rbndp(i),zbndp(i)
-!	enddo
-!	close(32)	
-	
-	
 	return
 	end
 	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!! fix boundary
 
 	subroutine fix_boundary_ef(j_init,equil_out)
 
-	use ef_circuit
+	use circuit
 	use exchange_with_astra
 	use imas_ids
 	use metric_coefficients_pbe	
-	use transfer_functions	
+	use transfer_functions
+        use pi_vars, only: GPI2
 	
 	implicit none
 
@@ -563,92 +496,11 @@ nrplasma=nrho
 	return
 	end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	
-	
-		
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	
+!---------------------------------------------------------------------
 	subroutine solve_gs2d(g)
 
-	use ef_circuit
-
+	use circuit
+use pi_vars, only: sintable, costable, mu0
 
 	implicit none
 	double precision g(i_dim2,i_dim2)
@@ -746,22 +598,18 @@ nrplasma=nrho
 
 	subroutine solve_tridiag_fbe_ef(A,B,C,R,f,Ngrid)
 
-!C Provides solution of the system:
-!C
-!C   Aj fj-1  + Bj fj  + Cj fj+1 = Rj
-!C
-!C   where j = 1..Ngrid
-!C
-!C   bcbound = 1  -> given f_NA1
-!C
-!C  eximp = 2: implicit
-!C
-!C by means of this method:
-!C
-!C
-!C
-!C
-!C
+! Provides solution of the system:
+!
+!   Aj fj-1  + Bj fj  + Cj fj+1 = Rj
+!
+!   where j = 1..Ngrid
+!
+!   bcbound = 1  -> given f_NA1
+!
+!  eximp = 2: implicit
+!
+! by means of this method:
+
 	implicit none
 	integer	i,j,k,Ngrid,NgridS,bcbound
 	double precision A(Ngrid),B(Ngrid)
@@ -801,34 +649,10 @@ nrplasma=nrho
 	return
 	end	
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+!---------------------------------------------------------------------
 	subroutine find_new_axis_part1	
 	
-	use ef_circuit
+	use circuit
 	
 	implicit none
 	
@@ -929,15 +753,12 @@ nrplasma=nrho
 	return
 	end
 
-
-
-
-
-
-
+!---------------------------------------------------------------------
 	subroutine find_psi_boundary
 
-	use ef_circuit
+	use circuit
+use pi_vars, only: GPI
+use errors_params, only: err_find_oxpoints_derivs
 	
 	implicit none
 	
@@ -961,23 +782,12 @@ nrplasma=nrho
 
 	i_plasmatype=0
 
-!	write(*,*) i_county,n_of_xpoints
-
-!	open(5671,file='fort.5671')
-!	write(5671,*) 'ax',rax,zax,psiaxis
-!	write(5672,*) 'ax',rax,zax,psiaxis
-	
 	if (i_county.eq.1) then
-!		write(5671,*) 're-track x points'
-!	write(5672,*) 're-track x points'
+
 !	go through old x-points and see where they end up
 		if (n_of_xpoints.ge.1) then
 			iaold=n_of_xpoints
 			do i=1,iaold
-
-!				write(5671,*) 'old point ',i,r_xpoint(i),z_xpoint(i)
-
-
 				niter=0
 
 289	niter=niter+1				
@@ -1028,10 +838,6 @@ nrplasma=nrho
 			enddo			
 		endif
 
-
-!	write(5671,*) 'old points ',n_of_xpoints,r_xpoint(1:n_of_xpoints),z_xpoint(1:n_of_xpoints)
-!	write(5672,*) 'old points ',n_of_xpoints,r_xpoint(1:n_of_xpoints),z_xpoint(1:n_of_xpoints)
-!scan the boundary to find new x-points
 			j=2
 			do i=2,nr1
 	call nine_point_regression(r(i),z(j),pos_xpoint,ddipsi,x1)
@@ -1177,18 +983,7 @@ nrplasma=nrho
 		if (i.lt.n_of_xpoints) goto 319
 320	continue
 
-
-
-!	write(5671,*) 'new points ',n_of_xpoints,r_xpoint(1:n_of_xpoints),z_xpoint(1:n_of_xpoints)
-
-!	if (oldpointnum.ne.n_of_xpoints) pause
 	oldpointnum=n_of_xpoints
-
-	
-
-!	pause
-
-
 
 !ignore limiter if use_limiter_astra is 0, da trasferirsi in init
 	if (use_limiter_yesno.eq.0) then
@@ -1220,7 +1015,7 @@ nrplasma=nrho
 
 
 			if (zlimpotential(j,k).gt.0.) then
-				call find_angle_ef(rax,zax,r_xpoint(i),z_xpoint(i),x1)
+                                x1 = ATAN2(z_xpoint(i) - zax, r_xpoint(i) - rax)
 				if ((r_xpoint(i).gt.rax).and.(x1.ge.7./4.*GPI.or.x1.le.GPI/4.)) raus=min(raus,r_xpoint(i))
 				if ((z_xpoint(i).gt.zax).and.(x1.ge.GPI/4..and.x1.le.3./4.*GPI)) ztop=min(ztop,z_xpoint(i))
 				if ((r_xpoint(i).lt.rax).and.(x1.ge.3./4.*GPI.and.x1.le.5./4.*GPI)) rinner=max(rinner,r_xpoint(i))
@@ -1321,9 +1116,12 @@ nrplasma=nrho
 
 	subroutine new_jrz_ef ! calculate new right hand side given new boundary!
 
-	use ef_circuit
+	use circuit
 	use exchange_with_astra 
+use rcurr_zcurr_2def, only: R_curr_2D,Z_curr_2D
+
 	implicit none
+
 	integer i,j,k,i1,i2,i3,i4,i5,j1,j2,j3,j4,j5
 	double precision dum1,dum2,dum3,zeta,dumc(i_dim2,i_dim2)
 	double precision t1,t2,t3,t4,x,y,alp,bet,gam,det,det0
@@ -1438,8 +1236,6 @@ nrplasma=nrho
 	external_griddo_j(j_griddo_j,1)=ilast
 	external_griddo_j(j_griddo_j,2)=j
 
-
-
 !found boundary, go back, check vertically
 
 	i=istart
@@ -1479,8 +1275,6 @@ nrplasma=nrho
 	
 	close(6712)
 
-
-
 ! fill current in external griddo
 !	open(4314,file='fort.4314')
 !	open(4315,file='fort.4315')
@@ -1517,31 +1311,13 @@ nrplasma=nrho
 	endif
 
 	enddo
-!	do i=1,i_griddo_j
-!	write(4315,*) internal_griddo(i,1),internal_griddo(i,2)
-!	enddo
 
-
-!	close(4314)
-!	close(4315)
-
-
-!	write(*,*) 'rax,zax',rax,zax !
-
-		
 		jrz(1:nr2,1:nz2)=dumc(1:nr2,1:nz2)
 
 !rescale current
 	dum1=sum(jrz*area_eff) !*area_eff) !*area_eff)*dr*dz
 	jrz=jrz/dum1*iplasma
-!
 
-!	open(55158,file='fort.55158');
-!		write(55158,*) r(1:nr2),z(1:nz2),jrz(1:nr2,1:nz2)
-!	close(55158)
-
-!	write(*,*) 'total current ',dum1/sum(area_eff),sum(area_eff),jrz(iaxis,jaxis),iplasma,psiaxis,psibnd
-!	write(6161,*) 'total current ',dum1,dum1/sum(area_eff),sum(area_eff),jrz(iaxis,jaxis),iplasma,psiaxis,psibnd,sum(jrz*area_eff)
 	if (isnan(dum1)) then
 	write(88881,*) 'total current is nan in fbe current rescaling'
 	stop

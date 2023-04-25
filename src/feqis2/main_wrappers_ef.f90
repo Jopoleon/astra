@@ -1,7 +1,9 @@
 subroutine full_system_advance_ef(j_init)
 
-use ef_circuit, only: nconduc, psiplasmatoconduc, curconduc, psi_cur_old, &
-    err_epsilon, err_circ_plasma_iter, iplasma
+use errors_params, only: err_epsilon, err_circ_plasma_iter
+use circuit, only: nconduc, psiplasmatoconduc, curconduc, psi_cur_old, &
+    iplasma, &
+    plasma_psi_to_coils_ef, psi_external_calc_ef
 use exchange_with_astra, only: fast_mode, execute_plasma
 use parameters_a2spider, only: max_iter
 
@@ -77,8 +79,9 @@ end subroutine full_system_advance_ef
 !---------------------------------------------------------------------
 subroutine solve_gse2d_fbe_full_ef(j_init)
 
-use ef_circuit, only: nr2, nz2, psiextrz, raxp, zaxp, iaxis, jaxis, &
-    psistabR, psistabZ, err_find_psistab, redo_bnd, &
+use errors_params, only:  err_find_psistab
+use circuit, only: nr2, nz2, psiextrz, raxp, zaxp, iaxis, jaxis, &
+    psistabR, psistabZ, redo_bnd, &
     trax, rax, r, dr, dr_factor_init, &
     tzax, zax, z, dz, dz_factor_init
 use exchange_with_astra, only: refit_mode, n_of_newton_iterations
@@ -303,12 +306,14 @@ subroutine restab_F_function_full_fonfit
 
 ! refits all currents
 
-use ef_circuit, only: nr2, nz2, jrz, iaxis, jaxis, iplasma, &
+use errors_params, only: err_find_psistab
+use circuit, only: nr2, nz2, jrz, iaxis, jaxis, iplasma, &
     nteta, nconduc, nactive, &
     dr, rax, raxp, rbndp, &
     dz, zax, zaxp, zbndp, &
     data_dir, data_dir_k, curconduc, psiplasrz, psirz, psiextrz, &
-    psistabr, psistabz, err_find_psistab
+    psistabr, psistabz, &
+    interp_j_fromrhotorz, psi_external_calc_ef
 use green_matrix, only: greeni
 
 implicit none
@@ -526,12 +531,14 @@ end subroutine restab_F_function_full_fonfit
 !---------------------------------------------------------------------
 subroutine restab_boundary_with_furier_wall !not working well
 
-use ef_circuit, only: nr2, nz2, jrz, iaxis, jaxis, iplasma, &
+use errors_params, only: err_find_psistab
+use circuit, only: nr2, nz2, jrz, iaxis, jaxis, iplasma, &
     nteta, nconduc, nactive, npassive, &
     dr, rax, raxp, rbndp, r_cond, &
     dz, zax, zaxp, zbndp, z_cond, &
     curconduc, psiplasrz, psirz, psiextrz, &
-    psistabr, psistabz, err_find_psistab
+    psistabr, psistabz, &
+    interp_j_fromrhotorz, psi_external_calc_ef
 use exchange_with_astra, only: n_fourier_restab_boundary
 use green_matrix, only: greeni
 
@@ -709,12 +716,14 @@ end subroutine restab_boundary_with_furier_wall
 !---------------------------------------------------------------------
 subroutine restab_axis_with_furier_wall
 
-use ef_circuit, only: nr2, nz2, jrz, iaxis, jaxis, iplasma, &
+use errors_params, only: err_find_psistab
+use circuit, only: nr2, nz2, jrz, iaxis, jaxis, iplasma, &
     nconduc, nactive, npassive, &
     r, dr, rax, raxp, r_cond, &
     z, dz, zax, zaxp, z_cond, &
     curconduc, psiplasrz, psirz, psiextrz, &
-    psistabr, psistabz, err_find_psistab
+    psistabr, psistabz, &
+    interp_j_fromrhotorz, psi_external_calc_ef
 use green_matrix, only: greeni
 
 implicit none
@@ -908,11 +917,12 @@ end subroutine restab_axis_with_furier_wall
 !---------------------------------------------------------------------
 subroutine solve_gse2d_fbe_full_ef_1turn(j_init, j_stab, raxold, zaxold)
 
-use ef_circuit, only: nr2, nz2, jrz, iaxis, jaxis, iplasma, &
+use circuit, only: nr2, nz2, jrz, iaxis, jaxis, iplasma, &
     r, dr, rax, raxp, trax, &
     z, dz, zax, zaxp, tzax, &
     psiplasrz, psirz, psiextrz, derivpsi, &
-    psistabr, psistabz
+    psistabr, psistabz, &
+    interp_j_fromrhotorz
 
 implicit none
 

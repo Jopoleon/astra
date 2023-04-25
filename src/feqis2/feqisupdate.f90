@@ -1,8 +1,6 @@
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
        SUBROUTINE  FEQISUPDATE(machine,coilzzz,time_nowz,nccc)
 
-	use ef_circuit
+	use circuit
 	use exchange_with_astra
 
 
@@ -60,8 +58,9 @@
 !circuit eq advance
 	subroutine circuit_eq_advance_ef(j_init)
 
-	use ef_circuit
-	use exchange_with_astra       ! declaration of minimal CPOs
+	use circuit
+	use exchange_with_astra
+	use pi_vars, only: GPI2
 
 	implicit none
 	integer j_init,i,ic,j,k,iii,jjj,invertcommand,i_equivalence	
@@ -235,21 +234,13 @@
 	
 	return
 	end
-	
-
-
-	
-
-
-
-
 
 	subroutine solve_circuit_equations(nc,im,rm,I0,I1,& 
 			& 	V,dpc,tau,invertcommand)
 	
 	implicit none
 	
-	integer i,j,k,nc,invertcommand
+	integer i,nc,invertcommand
 	double precision im(nc,nc),rm(nc,nc),i0(nc), &
     & i1(nc),v(nc),dpc(nc),tau,matrix(nc,nc)	
 	double precision b(nc),invmatrix(200,200)
@@ -268,18 +259,9 @@
 	else
 	endif
 
-!	write(*,*) 'ii',i0(12:15)
 	do i=1,nc
 	i1(i) = sum(invmatrix(i,1:nc)*b(1:nc))
 	enddo
-!	write(*,*) 'ii',i1(12:15)
-
-
-!	open(32,file='fort.33872')
-!	write(32,*) i0(1),i1(1),b(1),v(1),dpc(1),sum(im(1,1:nc)*i0(1:nc))/tau
-!	close(32)
-
-
 
 	return
 	end

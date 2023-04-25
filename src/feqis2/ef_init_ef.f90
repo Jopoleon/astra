@@ -2,11 +2,14 @@
 
 use parameters_a2spider, only: max_iter, type_parameters
 use imas_ids, only: type_equilibrium
-use ef_circuit, only: data_dir, data_dir_k, nteta, nrho, psistabR, &
-    psistabZ, psigrid, dr_factor_init, dz_factor_init, &
-    err_circ_plasma_iter, err_find_oxpoints, err_find_oxpoints_derivs, &
+use pi_vars, only: mu0, GPI, GPI2
+use errors_params, only: err_circ_plasma_iter, err_find_oxpoints, &
+    err_find_oxpoints_derivs, &
     err_find_psistab, err_find_delr, err_find_biquad, err_gaptolez, &
-    err_fix_boundary, err_epsilon, mu0, GPI, GPI2, Rgeom0, omega_pl, &
+    err_fix_boundary, err_epsilon
+use circuit, only: data_dir, data_dir_k, nteta, nrho, psistabR, &
+    psistabZ, psigrid, dr_factor_init, dz_factor_init, &
+    Rgeom0, omega_pl, &
     raxp, zaxp, psibnd, use_limiter_yesno, voltage_old, voltage, &
     dteta, teta, tetaexp, btor0, pressure, pprime, ffprime, psigrida, &
     rexp, zexp, rbndp, zbndp, ipol, iplasma, psia_2d, ffp_2d, ppp_2d
@@ -52,11 +55,7 @@ read(32,*) err_gaptolez
 read(32,*) err_fix_boundary
 close(32)
 
-!constants
-!	GPI=3.141592653589793
-!	GPI2=2.*GPI
-!	GPI4=GPI2**2.0
-mu0=0.4*GPI
+
 	Rgeom0=equil_in%global_param%toroid_field%r0
 tau_circuit_ef=0.001 !default value	
 tau_gseq_ef=0.001	 !default value
@@ -142,11 +141,12 @@ end
 !----------------------------------------------------
 subroutine equil_ef_init_circ
 
-use ef_circuit, only: rcomp, zcomp, r, z, dr, dz, r_cond, z_cond, &
+use pi_vars, only: GPI, GPI2, mu0, costable, sintable
+use circuit, only: rcomp, zcomp, r, z, dr, dz, r_cond, z_cond, &
     data_dir, data_dir_k, nr_of_fit_parameters, rmag_fit, zmag_fit, &
     k_fit, nr, nr1, nr2, nz, nz1, nz2, rxp_fit, zxp_fit, &
     rmin, rmax, zmin, zmax, &
-    alpsep, GPI, GPI2, mu0, costable, sintable, &
+    alpsep, &
     ncoils, nelemcoil, rcoil, zcoil, &
     drcoil, dzcoil, anglecoil, curcoil, mturns, mequivalence, &
     curconduc, nconduc, nblocks, nreseqcoil, resconduc, nactive, nlimiter, &
