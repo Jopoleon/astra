@@ -1,15 +1,20 @@
 subroutine rrsudg(time_ext, dt_smlk)
 
-use parameter_inc
-use const_inc
-use status_inc
-use outcmn_inc
-use fenix_params
-			
+use const_inc, only: BTOR, CPEL1, CIMP3, CBND3, &
+        ZRD70, ZRD71, ZRD73, ZRD84, ZRD93, &
+        CSCL1, CDYM3, CDVM7, CDWM5, CDWM6, &
+        CDMJ1, CDMJ2, CDMJ3, CDMJ4, CDJM5, CDJM6, CDJM7, CDJM8, &
+        CSOL1, &
+        CHE1, CHE3, &
+        CDHJ1, CDHJ2, CDHJ3, CDHJ4, CDHJ5, &
+        CV3, CV4, CV6, CV13
+use status_inc, only: CAR32, CAR33
+use outcmn_inc, only: machine, vcoil
+	
 implicit none
 
-real*8 :: time_ext, dt_smlk, gvcoil(15)
-real*8 :: vcoiltmp(10)
+real*8, intent(out) :: time_ext, dt_smlk
+real*8 :: vcoiltmp(10), gvcoil(15)
 
 save vcoiltmp
 
@@ -23,7 +28,7 @@ if (MACHINE == 'dem_') then
         CHE1, CDHJ1, CDHJ2, &
         CHE3, CDHJ3, CDHJ4, &
         CV3, CDHJ5, &
-        CDMJ1, CDMJ2, CDMJ3, CDMJ4,gvcoil(1:15), &
+        CDMJ1, CDMJ2, CDMJ3, CDMJ4, gvcoil(1:15), &
         time_ext, CV6, CDVM7)
         CV13 = MAX(1., CV13)  ! finite pump speed to avoid NaN
         dt_smlk = CDVM7  ! simulink tau defined in equ log
@@ -40,7 +45,7 @@ else if (MACHINE == 'aug_') then
     dt_smlk = CDVM7 ! simulink tau defined in equ log
 
     vcoil(1: 10) = vcoiltmp(1: 10)
-    vcoil(11:12)=0.
+    vcoil(11:12) = 0.
 
     ZRD93 = time_ext + dt_smlk
 endif  ! (MACHIN == 'aug_')
