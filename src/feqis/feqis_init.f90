@@ -1,7 +1,6 @@
-subroutine definitions_feqis(equil_in, params, j_call, ifplasma)
+subroutine definitions_feqis(equil_in, j_call, ifplasma)
 
 use pi_vars, only: GPI2, mu0
-use parameters_a2spider, only: type_parameters
 use imas_ids, only: type_equilibrium
 use ef_circuit, only: data_dir, nteta, nrho, &
     psigrida, Rgeom0, teta, &
@@ -12,15 +11,13 @@ use ef_circuit, only: data_dir, nteta, nrho, &
 implicit none
 
 integer, intent(in) :: j_call, ifplasma
-type(type_parameters) , intent(in) :: params
 type(type_equilibrium), intent(in) :: equil_in
 
 integer :: i
 
 if (j_call == 0) then
-    data_dir = params%prename(1: params%kname)
     nteta = equil_in%eqgeometry%boundary%npoints
-    nrho = params%neql
+    nrho  = SIZE(equil_in%profiles_1d%pressure)
 !normalized psi from 0 axis to 1 edge,  equispaced
     do i=1, nrho
         psia_2d(i) = (i - 1.)/(nrho - 1.)
@@ -58,14 +55,13 @@ if (ifplasma == 1) then
 
     ipol(1: nrho) = equil_in%profiles_1d%F_dia(1: nrho)
 
-    if (params%k_fixfree == 0) then !if 1,  comes from free boundary
-        rexp(1: nteta) = equil_in%eqgeometry%boundary%r(1: nteta)
-        zexp(1: nteta) = equil_in%eqgeometry%boundary%z(1: nteta)
-        rexp(nteta+1)  = rexp(1)
-        zexp(nteta+1)  = zexp(1)
-        rbndp(1: nteta+1) = rexp(1: nteta+1)
-        zbndp(1: nteta+1) = zexp(1: nteta+1)
-    endif
+    rexp(1: nteta) = equil_in%eqgeometry%boundary%r(1: nteta)
+    zexp(1: nteta) = equil_in%eqgeometry%boundary%z(1: nteta)
+    rexp(nteta+1)  = rexp(1)
+    zexp(nteta+1)  = zexp(1)
+    rbndp(1: nteta+1) = rexp(1: nteta+1)
+    zbndp(1: nteta+1) = zexp(1: nteta+1)
+
 endif
 
 return

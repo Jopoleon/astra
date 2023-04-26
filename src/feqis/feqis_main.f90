@@ -1,7 +1,6 @@
-subroutine feqis_main(nucoils, ucoils, parameters_spider, ifplasma, equil_in, equil_out)
+subroutine feqis_main(nucoils, ucoils, ifplasma, equil_in, equil_out)
 
 use imas_ids, only: type_equilibrium
-use parameters_a2spider, only: type_parameters
 use ef_circuit, only: nrho, nteta, ncoils, nr2, nz2, &
     rho, teta, iplasma, ipol, jrhoteta, psiextrz, psirz, &
     btor0, rgeom0, li3, betapol, &
@@ -14,19 +13,17 @@ implicit none
 
 integer, intent(in) :: nucoils, ifplasma
 double precision, intent(in), dimension(nucoils) :: ucoils
-type(type_parameters), intent(in) :: parameters_spider
 type(type_equilibrium), intent(in)  :: equil_in
 type(type_equilibrium), intent(out) :: equil_out
 
 integer :: jrho, jthe
-integer :: j_init, j_call, j_vacplas
+integer :: j_init
 
 data j_init/0/
-data j_call/0/
-data j_vacplas/0/
-save j_init, j_call, j_vacplas
 
-call definitions_feqis(equil_in, parameters_spider, j_init, ifplasma)
+save j_init
+
+call definitions_feqis(equil_in, j_init, ifplasma)
 
 ncoils = nucoils
 voltage(1:ncoils) = ucoils(1:ncoils) ! voltage inputs for active conductors
@@ -101,32 +98,6 @@ if (j_init == 0) then
     psibndp  = equil_in%profiles_1d%psi(nrho)
 !boundary from experiment
 endif 
-
-if (j_call == 0) then
-    if (parameters_spider%k_fixfree == 1) then
-!        call equil_ef_init_circ
-    endif
-endif
-
-if (parameters_spider%k_fixfree == 1) then
-    if (ifplasma == 0) then  ! only circuit equations solved
-        write(*,*) 'vacuum'
-        psi_cur_old = 0.
-        psiplasmatoconduc = 0.
-!        call circuit_eq_advance_ef(j_call)	
-!        call psi_external_calc_ef
-        psirz = psiextrz
-        j_vacplas = 0
-    else if (ifplasma == 1) then  ! full plasma solved
-        if (j_vacplas == 0) j_call=0
-!        call full_system_advance_ef(j_call)
-	if (j_call == -1) then
-!            call convert_boundary_to_pbe
-!            call fix_boundary_ef(1)
-        endif
-        j_vacplas = 1		
-    endif
-endif
 
 !boundary from previous time step
 call PHI_EQ_2d_PBE( &

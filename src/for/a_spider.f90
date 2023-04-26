@@ -177,7 +177,7 @@ if (parameters_spider%k_fixfree == 1) then
 endif
 
 if (equil_solver == 101) then
-    call feqis_main(ncoils, ucoils, parameters_spider, 1, equil_in, equil_out)
+    call feqis_main(ncoils, ucoils, 1, equil_in, equil_out)
 else
     call spider_run(ncoils, ucoils, equil_in, equil_out, parameters_spider)     
 endif
