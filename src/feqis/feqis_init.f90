@@ -1,4 +1,4 @@
-subroutine definitions_feqis(equil_in, j_call, ifplasma)
+subroutine definitions_feqis(equil_in, j_call)
 
 use pi_vars, only: GPI2, mu0
 use imas_ids, only: type_equilibrium
@@ -10,7 +10,7 @@ use ef_circuit, only: data_dir, nteta, nrho, &
 
 implicit none
 
-integer, intent(in) :: j_call, ifplasma
+integer, intent(in) :: j_call
 type(type_equilibrium), intent(in) :: equil_in
 
 integer :: i
@@ -33,36 +33,33 @@ if (j_call == 0) then
     enddo
 endif
 
-if (ifplasma == 1) then
-    btor0   = equil_in%global_param%toroid_field%b0
-    iplasma = equil_in%global_param%i_plasma/1.e6
-    pressure(1: nrho) = equil_in%profiles_1d%pressure(1: nrho)
-    pprime(  1: nrho) = equil_in%profiles_1d%pprime(1: nrho)
-    ffprime( 1: nrho) = equil_in%profiles_1d%ffprime(1: nrho)
-    psigrida(1: nrho) = equil_in%profiles_1d%psi(1: nrho) !unnormalized
-    psigrida(1: nrho) = (psigrida(1: nrho) - psigrida(1)) / &
-                        (psigrida(nrho)    - psigrida(1)) ! normalized: 0 axis,  1 sep
-    call linterp_feqis(psigrida(1: nrho), ffprime(1: nrho), nrho, &
-        psia_2d(1: nrho), ffp_2d(1: nrho), nrho)
-    call linterp_feqis(psigrida(1: nrho), pprime(1: nrho), nrho, &
-        psia_2d(1: nrho), ppp_2d(1: nrho), nrho)
-    call linterp_feqis(psigrida(1: nrho), IPOL(1: nrho), nrho, &
-        psia_2d(1: nrho), ipol_2d(1: nrho), nrho)
-    call linterp_feqis(psigrida(1: nrho), pressure(1: nrho), nrho, &
-        psia_2d(1: nrho), pres_2d(1: nrho), nrho)
-    ffp_2d = -GPI2/mu0*ffp_2d
-    ppp_2d = -GPI2*1.e-6*ppp_2d
+btor0   = equil_in%global_param%toroid_field%b0
+iplasma = equil_in%global_param%i_plasma/1.e6
+pressure(1: nrho) = equil_in%profiles_1d%pressure(1: nrho)
+pprime(  1: nrho) = equil_in%profiles_1d%pprime(1: nrho)
+ffprime( 1: nrho) = equil_in%profiles_1d%ffprime(1: nrho)
+psigrida(1: nrho) = equil_in%profiles_1d%psi(1: nrho) !unnormalized
+psigrida(1: nrho) = (psigrida(1: nrho) - psigrida(1)) / &
+                    (psigrida(nrho)    - psigrida(1)) ! normalized: 0 axis,  1 sep
+call linterp_feqis(psigrida(1: nrho), ffprime(1: nrho), nrho, &
+    psia_2d(1: nrho), ffp_2d(1: nrho), nrho)
+call linterp_feqis(psigrida(1: nrho), pprime(1: nrho), nrho, &
+    psia_2d(1: nrho), ppp_2d(1: nrho), nrho)
+call linterp_feqis(psigrida(1: nrho), IPOL(1: nrho), nrho, &
+    psia_2d(1: nrho), ipol_2d(1: nrho), nrho)
+call linterp_feqis(psigrida(1: nrho), pressure(1: nrho), nrho, &
+    psia_2d(1: nrho), pres_2d(1: nrho), nrho)
+ffp_2d = -GPI2/mu0*ffp_2d
+ppp_2d = -GPI2*1.e-6*ppp_2d
 
-    ipol(1: nrho) = equil_in%profiles_1d%F_dia(1: nrho)
+ipol(1: nrho) = equil_in%profiles_1d%F_dia(1: nrho)
 
-    rexp(1: nteta) = equil_in%eqgeometry%boundary%r(1: nteta)
-    zexp(1: nteta) = equil_in%eqgeometry%boundary%z(1: nteta)
-    rexp(nteta+1)  = rexp(1)
-    zexp(nteta+1)  = zexp(1)
-    rbndp(1: nteta+1) = rexp(1: nteta+1)
-    zbndp(1: nteta+1) = zexp(1: nteta+1)
-
-endif
+rexp(1: nteta) = equil_in%eqgeometry%boundary%r(1: nteta)
+zexp(1: nteta) = equil_in%eqgeometry%boundary%z(1: nteta)
+rexp(nteta+1)  = rexp(1)
+zexp(nteta+1)  = zexp(1)
+rbndp(1: nteta+1) = rexp(1: nteta+1)
+zbndp(1: nteta+1) = zexp(1: nteta+1)
 
 return
 end subroutine definitions_feqis
