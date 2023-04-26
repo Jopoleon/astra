@@ -1,13 +1,13 @@
 subroutine feqis_main(equil_in, equil_out)
 
 use imas_ids, only: type_equilibrium
-use ef_circuit, only: nrho, nteta, ncoils, nr2, nz2, &
-    rho, teta, iplasma, ipol, jrhoteta, psiextrz, psirz, &
+use ef_circuit, only: nrho, nteta, nr2, nz2, &
+    rho, teta, iplasma, ipol, jrhoteta, &
     btor0, rgeom0, li3, betapol, &
     raxp, zaxp, rbndp, zbndp, psiaxisp, psibndp, psigrida, &
     pressure, pprime, ffprime, &
-    voltage, psiplasmatoconduc, psi_cur_old
-use pi_vars, only: GPI2
+    psia_2d, ffp_2d, ppp_2d, ipol_2d, pres_2d
+use pi_vars, only: GPI2, mu0
 
 implicit none
 
@@ -21,7 +21,49 @@ data j_init/0/
 
 save j_init
 
-call definitions_feqis(equil_in, j_init)
+if (j_init == 0) then
+    nteta = equil_in%eqgeometry%boundary%npoints
+    nrho  = SIZE(equil_in%profiles_1d%pressure)
+!normalized psi from 0 axis to 1 edge,  equispaced
+    do jrho=1, nrho
+        psia_2d(jrho) = (jrho - 1.)/(nrho - 1.)
+    enddo
+!constants
+
+    Rgeom0 = equil_in%global_param%toroid_field%r0
+
+! teta for polar grid,  goes from 0 to 2*pi-dteta,  but point nt+1 is the periodic one
+
+    do jthe=1, nteta+1
+        teta(jthe) = GPI2*(jthe - 1.)/(nteta + 0.)
+    enddo
+endif
+
+btor0   = equil_in%global_param%toroid_field%b0
+iplasma = equil_in%global_param%i_plasma/1.e6
+pressure(1: nrho) = equil_in%profiles_1d%pressure(1: nrho)
+pprime(  1: nrho) = equil_in%profiles_1d%pprime(1: nrho)
+ffprime( 1: nrho) = equil_in%profiles_1d%ffprime(1: nrho)
+psigrida(1: nrho) = equil_in%profiles_1d%psi(1: nrho) !unnormalized
+psigrida(1: nrho) = (psigrida(1: nrho) - psigrida(1)) / &
+                    (psigrida(nrho)    - psigrida(1)) ! normalized: 0 axis,  1 sep
+call linterp_feqis(psigrida(1: nrho), ffprime(1: nrho), nrho, &
+    psia_2d(1: nrho), ffp_2d(1: nrho), nrho)
+call linterp_feqis(psigrida(1: nrho), pprime(1: nrho), nrho, &
+    psia_2d(1: nrho), ppp_2d(1: nrho), nrho)
+call linterp_feqis(psigrida(1: nrho), IPOL(1: nrho), nrho, &
+    psia_2d(1: nrho), ipol_2d(1: nrho), nrho)
+call linterp_feqis(psigrida(1: nrho), pressure(1: nrho), nrho, &
+    psia_2d(1: nrho), pres_2d(1: nrho), nrho)
+ffp_2d = -GPI2/mu0*ffp_2d
+ppp_2d = -GPI2*1.e-6*ppp_2d
+
+ipol(1: nrho) = equil_in%profiles_1d%F_dia(1: nrho)
+
+rbndp(1: nteta) = equil_in%eqgeometry%boundary%r(1: nteta)
+zbndp(1: nteta) = equil_in%eqgeometry%boundary%z(1: nteta)
+rbndp(nteta+1)  = rbndp(1)
+zbndp(nteta+1)  = zbndp(1)
 
 allocate(equil_out%profiles_1d%psi(nrho))
 allocate(equil_out%profiles_1d%pressure(nrho))
@@ -94,10 +136,20 @@ endif
 
 !boundary from previous time step
 call PHI_EQ_2d_PBE( &
-    nrho, nteta, psigrida(1: nrho), iplasma, pressure(1: nrho), &
-    ffprime(1: nrho), pprime(1: nrho), btor0, rgeom0, &
-    rbndp(1: nteta), zbndp(1: nteta), Raxp, Zaxp, &
-    psibndp, ipol(1: nrho), & 
+    nrho, nteta, &
+    psigrida(1: nrho), &
+    iplasma, &
+    pressure(1: nrho), &
+    ffprime(1: nrho), &
+    pprime(1: nrho), &
+    btor0, &
+    rgeom0, &
+    rbndp(1: nteta), &
+    zbndp(1: nteta), &
+    Raxp, &
+    Zaxp, &
+    psibndp, &
+    ipol(1: nrho), & 
     equil_out%coord_sys%position%r, &
     equil_out%coord_sys%position%z, &
     equil_out%coord_sys%position%psirz, &

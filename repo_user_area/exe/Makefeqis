@@ -16,7 +16,6 @@ $(OBJ_DIR)/modules_feqis.o
 FEQ_LIBOBJ = \
 $(OBJ_DIR)/interp_feqis.o \
 $(OBJ_DIR)/feqis_main.o \
-$(OBJ_DIR)/feqis_init.o \
 $(OBJ_DIR)/build_2dgrid.o \
 $(OBJ_DIR)/build_2dgrid2.o \
 $(OBJ_DIR)/PHI_EQ_2d_PBE.o \
