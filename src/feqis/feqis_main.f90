@@ -5,8 +5,7 @@ use ef_circuit, only: nrho, nteta, nr2, nz2, &
     teta, iplasma, ipol, &
     btor0, rgeom0, li3, betapol, &
     raxp, zaxp, rbndp, zbndp, psiaxisp, psibndp, psigrida, &
-    pressure, pprime, ffprime, &
-    psia_2d, ffp_2d, ppp_2d, ipol_2d, pres_2d
+    pressure, pprime, ffprime
 
 implicit none
 
@@ -16,7 +15,7 @@ double precision, parameter :: GPI=3.141592653589793, &
 type(type_equilibrium), intent(in)  :: equil_in
 type(type_equilibrium), intent(out) :: equil_out
 
-integer :: jrho, jthe
+integer :: jthe
 integer :: j_init
 double precision, allocatable, dimension(:, :) :: jrhoteta
 
@@ -27,16 +26,8 @@ save j_init
 if (j_init == 0) then
     nteta = equil_in%eqgeometry%boundary%npoints
     nrho  = SIZE(equil_in%profiles_1d%pressure)
-!normalized psi from 0 axis to 1 edge,  equispaced
-    do jrho=1, nrho
-        psia_2d(jrho) = (jrho - 1.)/(nrho - 1.)
-    enddo
-!constants
-
     Rgeom0 = equil_in%global_param%toroid_field%r0
-
-! teta for polar grid,  goes from 0 to 2*pi-dteta,  but point nt+1 is the periodic one
-
+! polar grid, goes from 0 to 2*pi
     do jthe=1, nteta+1
         teta(jthe) = GPI2*(jthe - 1.)/(nteta + 0.)
     enddo
@@ -50,19 +41,7 @@ ffprime( 1: nrho) = equil_in%profiles_1d%ffprime(1: nrho)
 psigrida(1: nrho) = equil_in%profiles_1d%psi(1: nrho) !unnormalized
 psigrida(1: nrho) = (psigrida(1: nrho) - psigrida(1)) / &
                     (psigrida(nrho)    - psigrida(1)) ! normalized: 0 axis,  1 sep
-call linterp_feqis(psigrida(1: nrho), ffprime(1: nrho), nrho, &
-    psia_2d(1: nrho), ffp_2d(1: nrho), nrho)
-call linterp_feqis(psigrida(1: nrho), pprime(1: nrho), nrho, &
-    psia_2d(1: nrho), ppp_2d(1: nrho), nrho)
-call linterp_feqis(psigrida(1: nrho), IPOL(1: nrho), nrho, &
-    psia_2d(1: nrho), ipol_2d(1: nrho), nrho)
-call linterp_feqis(psigrida(1: nrho), pressure(1: nrho), nrho, &
-    psia_2d(1: nrho), pres_2d(1: nrho), nrho)
-ffp_2d = -GPI2/mu0*ffp_2d
-ppp_2d = -GPI2*1.e-6*ppp_2d
-
-ipol(1: nrho) = equil_in%profiles_1d%F_dia(1: nrho)
-
+ipol(1: nrho)   = equil_in%profiles_1d%F_dia(1: nrho)
 rbndp(1: nteta) = equil_in%eqgeometry%boundary%r(1: nteta)
 zbndp(1: nteta) = equil_in%eqgeometry%boundary%z(1: nteta)
 rbndp(nteta+1)  = rbndp(1)
@@ -202,7 +181,6 @@ equil_out%profiles_1d%F_dia    = 0.
 equil_out%coord_sys%position%psirz = equil_out%coord_sys%position%psirz/GPI2
 
 teta(1: nteta) = equil_out%coord_sys%position%teta2d(1: nteta)
-!rho(1: nrho, nteta+1) = rho(1: nrho, 1)
 teta(nteta+1) = teta(1) + GPI2
 
 equil_out%global_param%psplex   = 0.
