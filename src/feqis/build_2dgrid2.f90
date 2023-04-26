@@ -1,4 +1,4 @@
-subroutine build_2dgrid2(Nr, Nt, psig, &
+subroutine build_2dgrid2(nrho, ntheta, psig, &
     Rmaj, Rmaj2, r, thetap_i, gradr2, Jcbn2, &
     PSI, rtor, pressure, btor, ipol, iplasma, &
 ! Output
@@ -10,46 +10,46 @@ implicit none
 
 double precision, parameter :: GPI=3.141592653589793, GPI2=2.*GPI
 
-integer, intent(in) :: Nt, Nr
+integer, intent(in) :: ntheta, nrho
 double precision, intent(in) :: btor, iplasma, Rtor
-double precision, intent(in), dimension(Nr) :: psig, ipol, pressure
-double precision, intent(in), dimension(Nt+1) :: thetap_i
-double precision, intent(in), dimension(Nr, Nt) :: Rmaj, Rmaj2, &
+double precision, intent(in), dimension(nrho) :: psig, ipol, pressure
+double precision, intent(in), dimension(ntheta+1) :: thetap_i
+double precision, intent(in), dimension(nrho, ntheta) :: Rmaj, Rmaj2, &
     Jcbn2, r, gradr2, PSI
 double precision, intent(out) :: li3, betapol
-double precision, intent(out), dimension(Nr) :: G1, G2, G3, &
+double precision, intent(out), dimension(nrho) :: G1, G2, G3, &
     volum, areat, perim, slat, &
     FOFB, GRADRO, BMAXT, BMINT, BDB02, BDB0, B0DB2
 
-integer :: jr, jt, i, j
+integer :: jrho, jthe, i, j
 double precision :: ipol_rmaj, z1, z2, rho_interp
-double precision, dimension(Nr) :: rhot, rhoa, &
+double precision, dimension(nrho) :: rhot, rhoa, &
     dPSIdV, dVa, daa, dum1, AMETR, ONEZ
-double precision, dimension(Nt) :: dl_arc, tar1, tar2
-double precision, dimension(Nr, Nt) :: gradPSIa, gradVa, &
+double precision, dimension(ntheta) :: dl_arc, tar1, tar2
+double precision, dimension(nrho, ntheta) :: gradPSIa, gradVa, &
     dV2da, dA2da, B_pola, B_ABSa, B_Ta
 double precision, external :: EXTRAPOLATE
 
-do i=1, Nr
-    rhoa(i) = (i - 1.)/(Nr - 1.) ! full grid
+do i=1, nrho
+    rhoa(i) = (i - 1.)/(nrho - 1.) ! full grid
 enddo
-rhot = rhoa + 0.5/(Nr - 1.)  ! half grid
+rhot = rhoa + 0.5/(nrho - 1.)  ! half grid
 
 da2da = 0.
 dv2da = 0.
 
 ! half grid points around area and volume (last point doesn exist)
-jt = 1
-do jr=1, Nr-1
-    da2da(jr, jt) = Jcbn2(jr, jt)*(psig(jr+1) - psig(jr)) * &
-        (thetap_i(Nt+1) - thetap_i(Nt)) 
-    dv2da(jr, jt) = GPI2*Rmaj2(jr, jt)*da2da(jr, jt)
+jthe = 1
+do jrho=1, nrho-1
+    da2da(jrho, jthe) = Jcbn2(jrho, jthe)*(psig(jrho+1) - psig(jrho)) * &
+        (thetap_i(ntheta+1) - thetap_i(ntheta)) 
+    dv2da(jrho, jthe) = GPI2*Rmaj2(jrho, jthe)*da2da(jrho, jthe)
 enddo
-do jt=2, nt
-    do jr=1, Nr-1
-        da2da(jr, jt) = Jcbn2(jr, jt)*(psig(jr+1) - psig(jr)) * &
-            (thetap_i(jt) - thetap_i(jt-1)) 
-        dv2da(jr, jt) = GPI2*Rmaj2(jr, jt)*da2da(jr, jt)
+do jthe=2, ntheta
+    do jrho=1, nrho-1
+        da2da(jrho, jthe) = Jcbn2(jrho, jthe)*(psig(jrho+1) - psig(jrho)) * &
+            (thetap_i(jthe) - thetap_i(jthe-1)) 
+        dv2da(jrho, jthe) = GPI2*Rmaj2(jrho, jthe)*da2da(jrho, jthe)
     enddo
 enddo
 
@@ -59,33 +59,33 @@ daa = sum(da2da, 2)
 slat  = 0.
 areat = 0.
 volum = 0.
-do i=2, Nr
+do i=2, nrho
     volum(i) = volum(i-1) + dva(i-1)
     areat(i) = areat(i-1) + daa(i-1)
 enddo
 
 dl_arc = 0.0
-do j=1, Nr
+do j=1, nrho
     dl_arc = 0.0   
-    do i=2, Nt 
+    do i=2, ntheta 
         dl_arc(i) = r(j, i)*(thetap_i(i) - thetap_i(i-1)) !on the full grid
     enddo
-    dl_arc(1) = r(j, 1)*(thetap_i(nt+1) - thetap_i(nt))
+    dl_arc(1) = r(j, 1)*(thetap_i(ntheta+1) - thetap_i(ntheta))
     perim(j) = sum(dl_arc)
 enddo
 
 !Compute Bpol, gradPSI, gradV
 
-do i=1, Nr-1
+do i=1, nrho-1
     dPSIdv(i) = (PSI(i+1, 1) - PSI(i, 1))/(volum(i+1) - volum(i)) !on the psigp grid
 enddo
 
 ! there are on half grid
-do i=1, Nr-1
+do i=1, nrho-1
     onez(i) = 0.5*(IPOL(i) + IPOL(i+1))
 enddo
-do i=1, Nr-1
-    do j=1, Nt 
+do i=1, nrho-1
+    do j=1, ntheta 
         z1 = dVa(i)/(psig(i+1) - psig(i))
         z2 = (PSI(i+1, j) - PSI(i, j))/(psig(i+1) - psig(i))
         B_pola(i, j) = z2/(GPI2*Rmaj2(i, j))*sqrt(gradr2(i, j))
@@ -97,100 +97,100 @@ enddo
 B_absa = sqrt(B_Ta**2 + B_pola**2)
 
 li3 = 2.*sum(B_pola**2 * dV2da)/rtor/(0.4*GPI*iplasma)**2
-do i=1, Nr-1
+do i=1, nrho-1
     onez(i) = 0.5*(pressure(i) + pressure(i+1))
 enddo
 betapol = 0.4*GPI2*1.e-6*sum(onez*dva)/sum(B_pola**2 * dV2da)
 slat = 0.
-do i=2, Nr
-    do j=1, Nt-1 
+do i=2, nrho
+    do j=1, ntheta-1 
         slat(i) = slat(i) + Rmaj(i, j)*r(i, j)*(thetap_i(j+1) - thetap_i(j))
     enddo
-    slat(i) = slat(i) + Rmaj(i, Nt)*r(i, Nt)*(thetap_i(1) - thetap_i(Nt) + GPI2)
+    slat(i) = slat(i) + Rmaj(i, ntheta)*r(i, ntheta)*(thetap_i(1) - thetap_i(ntheta) + GPI2)
 enddo
 slat = slat*GPI2   !full grid
 
-do i=1, Nr
-    ametr(i) = 0.5*(maxval(Rmaj(i, 1: Nt)) - minval(Rmaj(i, 1: Nt)))      ! full grid
+do i=1, nrho
+    ametr(i) = 0.5*(maxval(Rmaj(i, 1: ntheta)) - minval(Rmaj(i, 1: ntheta)))      ! full grid
 enddo
 
 !Cycle over positions  ! half grid
-do i=1, Nr-1
-    tar2 = dV2da(i, 1: Nt)/dVa(i)
-    tar1 = 1./(Rmaj2(i, 1: Nt)**2)
+do i=1, nrho-1
+    tar2 = dV2da(i, 1: ntheta)/dVa(i)
+    tar1 = 1./(Rmaj2(i, 1: ntheta)**2)
     z1 = sum(tar1*tar2)
     G3(i) = z1
     z1 = sum(tar2)
     ONEZ(i) = z1
-    tar1 = (gradVa(i, 1: Nt)/Rmaj2(i, 1: Nt))**2
+    tar1 = (gradVa(i, 1: ntheta)/Rmaj2(i, 1: ntheta))**2
     z1 = sum(tar1*tar2)
     G2(i) = z1
 
-    tar1 = gradVa(i, 1: Nt)**2
+    tar1 = gradVa(i, 1: ntheta)**2
     z1 = sum(tar1*tar2)
     G1(i) = z1
 
-    tar1 = gradVa(i, 1: Nt)
+    tar1 = gradVa(i, 1: ntheta)
     z1 = sum(tar1*tar2)
     GRADRO(i) = z1
 
-    tar1 = B_ABSa(i, 1: Nt)**2
+    tar1 = B_ABSa(i, 1: ntheta)**2
     z1 = sum(tar1*tar2)
     BDB02(i) = z1
 
-    tar1 = B_ABSa(i, 1: Nt)
+    tar1 = B_ABSa(i, 1: ntheta)
     z1 = sum(tar1*tar2)
     BDB0(i) = z1
 
-    tar1 = 1./(B_ABSa(i, 1: Nt)**2)
+    tar1 = 1./(B_ABSa(i, 1: ntheta)**2)
     z1 = sum(tar1*tar2)
 
     B0DB2(i) = z1
     BMAXT(i) = maxval(B_ABSa(i, : ))
     BMINT(i) = minval(B_ABSa(i, : ))
 
-    tar2 = B_ABSa(i, 1: Nt)/BMAXT(i)
-    tar1 = ((btor/B_ABSa(i, 1: Nt))**2) * &
+    tar2 = B_ABSa(i, 1: ntheta)/BMAXT(i)
+    tar1 = ((btor/B_ABSa(i, 1: ntheta))**2) * &
         (  1. - (sqrt(1. - tar2)) * (1. + 0.5*tar2)  )
-    tar2 = dV2da(i, 1: Nt)/dVa(i)
+    tar2 = dV2da(i, 1: ntheta)/dVa(i)
     z1 = sum(tar1*tar2)
     FOFB(i) = z1
 
 enddo
 
-rho_interp = rhoa(Nr)
+rho_interp = rhoa(nrho)
 
-G1(Nr)     = EXTRAPOLATE(rho_interp, Nr-1, Nr-2, Nr-3, Nr, rhot, G1)
-G2(Nr)     = EXTRAPOLATE(rho_interp, Nr-1, Nr-2, Nr-3, Nr, rhot, G2)
-G3(Nr)     = EXTRAPOLATE(rho_interp, Nr-1, Nr-2, Nr-3, Nr, rhot, G3)
-GRADRO(Nr) = EXTRAPOLATE(rho_interp, Nr-1, Nr-2, Nr-3, Nr, rhot, GRADRO)
-FOFB(Nr)   = EXTRAPOLATE(rho_interp, Nr-1, Nr-2, Nr-3, Nr, rhot, FOFB)
-BMAXT(Nr)  = EXTRAPOLATE(rho_interp, Nr-1, Nr-2, Nr-3, Nr, rhot, BMAXT)
-BMINT(Nr)  = EXTRAPOLATE(rho_interp, Nr-1, Nr-2, Nr-3, Nr, rhot, BMINT)
-BDB02(Nr)  = EXTRAPOLATE(rho_interp, Nr-1, Nr-2, Nr-3, Nr, rhot, BDB02)
-BDB0(Nr)   = EXTRAPOLATE(rho_interp, Nr-1, Nr-2, Nr-3, Nr, rhot, BDB0)
-B0DB2(Nr)  = EXTRAPOLATE(rho_interp, Nr-1, Nr-2, Nr-3, Nr, rhot, B0DB2)
+G1(nrho)     = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, G1)
+G2(nrho)     = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, G2)
+G3(nrho)     = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, G3)
+GRADRO(nrho) = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, GRADRO)
+FOFB(nrho)   = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, FOFB)
+BMAXT(nrho)  = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, BMAXT)
+BMINT(nrho)  = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, BMINT)
+BDB02(nrho)  = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, BDB02)
+BDB0(nrho)   = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, BDB0)
+B0DB2(nrho)  = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, B0DB2)
 
-call qinterp_feqis(rhot(1: Nr-1), G1(1: Nr-1), Nr-1, rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
-G1(2: Nr-1) = dum1(2: Nr-1)
-call qinterp_feqis(rhot(1: Nr-1), g2(1: Nr-1), Nr-1, rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
-g2(2: Nr-1) = dum1(2: Nr-1)
-call qinterp_feqis(rhot(1: Nr-1), g3(1: Nr-1), Nr-1, rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
-g3(2: Nr-1) = dum1(2: Nr-1)
-call qinterp_feqis(rhot(1: Nr-1), gradro(1: Nr-1), Nr-1, rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
-gradro(2: Nr-1) = dum1(2: Nr-1)
-call qinterp_feqis(rhot(1: Nr-1), fofb(1: Nr-1), Nr-1, rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
-fofb(2: Nr-1) = dum1(2: Nr-1)
-call qinterp_feqis(rhot(1: Nr-1), bmaxt(1: Nr-1), Nr-1, rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
-bmaxt(2: Nr-1) = dum1(2: Nr-1)
-call qinterp_feqis(rhot(1: Nr-1), bmint(1: Nr-1), Nr-1, rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
-bmint(2: Nr-1) = dum1(2: Nr-1)
-call qinterp_feqis(rhot(1: Nr-1), bdb02(1: Nr-1), Nr-1, rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
-bdb02(2: Nr-1) = dum1(2: Nr-1)
-call qinterp_feqis(rhot(1: Nr-1), bdb0(1: Nr-1), Nr-1, rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
-bdb0(2: Nr-1) = dum1(2: Nr-1)
-call qinterp_feqis(rhot(1: Nr-1), b0db2(1: Nr-1), Nr-1, rhoa(2: Nr-1), dum1(2: Nr-1), Nr-2)
-b0db2(2: Nr-1) = dum1(2: Nr-1)
+call qinterp_feqis(rhot(1: nrho-1), G1(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+G1(2: nrho-1) = dum1(2: nrho-1)
+call qinterp_feqis(rhot(1: nrho-1), g2(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+g2(2: nrho-1) = dum1(2: nrho-1)
+call qinterp_feqis(rhot(1: nrho-1), g3(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+g3(2: nrho-1) = dum1(2: nrho-1)
+call qinterp_feqis(rhot(1: nrho-1), gradro(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+gradro(2: nrho-1) = dum1(2: nrho-1)
+call qinterp_feqis(rhot(1: nrho-1), fofb(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+fofb(2: nrho-1) = dum1(2: nrho-1)
+call qinterp_feqis(rhot(1: nrho-1), bmaxt(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+bmaxt(2: nrho-1) = dum1(2: nrho-1)
+call qinterp_feqis(rhot(1: nrho-1), bmint(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+bmint(2: nrho-1) = dum1(2: nrho-1)
+call qinterp_feqis(rhot(1: nrho-1), bdb02(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+bdb02(2: nrho-1) = dum1(2: nrho-1)
+call qinterp_feqis(rhot(1: nrho-1), bdb0(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+bdb0(2: nrho-1) = dum1(2: nrho-1)
+call qinterp_feqis(rhot(1: nrho-1), b0db2(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+b0db2(2: nrho-1) = dum1(2: nrho-1)
 
 G1(1) = 0.0
 G3(1) = 1./(Rmaj(1, 1)**2)

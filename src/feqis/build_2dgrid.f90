@@ -1,4 +1,4 @@
-subroutine build_2dgrid(Nr, Nt, Rb, Zb, X0, Y0, lambda2d, lambda2dp, &
+subroutine build_2dgrid(nrho, ntheta, Rb, Zb, X0, Y0, lambda2d, lambda2dp, &
     psig, psiax, psib, j_ok, psigp, PSI, &
 ! Output
     dArea, X2, dArea2, &
@@ -11,305 +11,305 @@ implicit none
 
 double precision, parameter :: GPI=3.141592653589793, GPI2=2.*GPI
 
-integer, intent(in) :: Nt, Nr, j_ok
+integer, intent(in) :: ntheta, nrho, j_ok
 double precision, intent(in) :: psiax, psib, X0, Y0
-double precision, intent(in), dimension(Nt) :: Rb, Zb
-double precision, intent(in), dimension(Nr) :: psig, psigp
-double precision, intent(in), dimension(Nr, Nt) :: psi, lambda2d, lambda2dp
+double precision, intent(in), dimension(ntheta) :: Rb, Zb
+double precision, intent(in), dimension(nrho) :: psig, psigp
+double precision, intent(in), dimension(nrho, ntheta) :: psi, lambda2d, lambda2dp
 
-double precision, intent(out), dimension(Nt+1) :: thetap, thetap_i
-double precision, intent(out), dimension(Nr, Nt) :: dArea, dArea2, X2, &
+double precision, intent(out), dimension(ntheta+1) :: thetap, thetap_i
+double precision, intent(out), dimension(nrho, ntheta) :: dArea, dArea2, X2, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
     ddr, ddr_i, dtp, dtm, dt_i, X, Y, &
     rmin, Jcbn, Jcbn2, &
     gradr2
 
-integer :: jr, jt, jthe_l, jthe_r, j, k
+integer :: jrho, jthe, jthe_l, jthe_r, j, k
 double precision :: drdX, dhdX, drdY, dhdY, Mdet_inv, dpsi, dthe
-double precision, dimension(Nt) :: dXb0, dXb0_i
-double precision, dimension(Nr, Nt) :: lambda2dold, &
+double precision, dimension(ntheta) :: dXb0, dXb0_i
+double precision, dimension(nrho, ntheta) :: lambda2dold, &
     lambda2di, lambda2dpi, psin, Y2, X_i, Y_i, &
     dXdr2, dYdr2, dXdr, dYdr, dXdri1, dYdri1, &
     dXdh2, dYdh2, dXdh, dYdh, dXdhi1, dYdhi1, &
     Jcbni1, gradhi1, grti1, &
     rr2, r_i, r_i1, X_i1, Y_i1, grt2
 
-do jt=1, Nt
-    dXb0(jt) = sqrt((rb(jt) - X0)**2 + (zb(jt) - Y0)**2)
-    thetap(jt) = ATAN2(zb(jt) - Y0, rb(jt) - X0)
-    if (thetap(jt) < 0) thetap(jt) = thetap(jt) + GPI2
+do jthe=1, ntheta
+    dXb0(jthe) = sqrt((rb(jthe) - X0)**2 + (zb(jthe) - Y0)**2)
+    thetap(jthe) = ATAN2(zb(jthe) - Y0, rb(jthe) - X0)
+    if (thetap(jthe) < 0) thetap(jthe) = thetap(jthe) + GPI2
 enddo
 
-if (thetap(1) > thetap(Nt)) then !reorder
+if (thetap(1) > thetap(ntheta)) then !reorder
     j = 1
-    do k=1, Nt-1
+    do k=1, ntheta-1
         if (thetap(k+1) < thetap(k)) j = k + 1   ! j is the first teta above 0
     enddo  
     if (j > 1) thetap(1: j-1) = thetap(1: j-1) - GPI2
 endif 
-thetap(Nt+1) = thetap(1) + GPI2
+thetap(ntheta+1) = thetap(1) + GPI2
 
 ! Now find the intermediate theta grid
-do jt=1, Nt
-    thetap_i(jt) = 0.5*(thetap(jt) + thetap(jt+1))
+do jthe=1, ntheta
+    thetap_i(jthe) = 0.5*(thetap(jthe) + thetap(jthe+1))
 enddo
-thetap_i(Nt+1) = thetap_i(1) + GPI2
+thetap_i(ntheta+1) = thetap_i(1) + GPI2
  
-do jt=1, Nt-1
-    dXb0_i(jt) = 0.5*(dXb0(jt) + dXb0(jt+1))
+do jthe=1, ntheta-1
+    dXb0_i(jthe) = 0.5*(dXb0(jthe) + dXb0(jthe+1))
 enddo
-dXb0_i(Nt) = dXb0_i(1)
+dXb0_i(ntheta) = dXb0_i(1)
 
 if (j_ok == 1) then !relambda
 !relambda
-    lambda2dold(1: Nr, 1: Nt) = lambda2d(1: Nr, 1: Nt)
-    do jt=1, Nt
-        do jr=1, Nr
-            psin(jr, jt) = (psi(jr, jt) - psiax)/(psib - psiax)
+    lambda2dold(1: nrho, 1: ntheta) = lambda2d(1: nrho, 1: ntheta)
+    do jthe=1, ntheta
+        do jrho=1, nrho
+            psin(jrho, jthe) = (psi(jrho, jthe) - psiax)/(psib - psiax)
         enddo
-        psin( 1, jt) = 0
-        psin(Nr, jt) = 1.
+        psin( 1, jthe) = 0
+        psin(nrho, jthe) = 1.
 
-        call linterp_feqis(psin(:, jt), lambda2dold(:, jt), Nr, &
-            psig (2: Nr-1), lambda2d (2: Nr-1, jt), Nr-2)
-        call linterp_feqis(psin(:, jt), lambda2dold(:, jt), Nr, &
-            psigp(1: Nr-1), lambda2dp(1: Nr-1, jt), Nr-1)
+        call linterp_feqis(psin(:, jthe), lambda2dold(:, jthe), nrho, &
+            psig (2: nrho-1), lambda2d (2: nrho-1, jthe), nrho-2)
+        call linterp_feqis(psin(:, jthe), lambda2dold(:, jthe), nrho, &
+            psigp(1: nrho-1), lambda2dp(1: nrho-1, jthe), nrho-1)
     enddo
 endif 
 
-do jt=1, Nt
-    do jr=1, Nr
-        rmin(jr, jt) = lambda2d (jr, jt)*dXb0(jt)
-        rr2 (jr, jt) = lambda2dp(jr, jt)*dXb0(jt)
-        X   (jr, jt) = X0 + rmin(jr, jt)*cos(thetap(jt))
-        Y   (jr, jt) = Y0 + rmin(jr, jt)*sin(thetap(jt))
-        X2  (jr, jt) = X0 + rr2 (jr, jt)*cos(thetap(jt))
-        Y2  (jr, jt) = Y0 + rr2 (jr, jt)*sin(thetap(jt))
+do jthe=1, ntheta
+    do jrho=1, nrho
+        rmin(jrho, jthe) = lambda2d (jrho, jthe)*dXb0(jthe)
+        rr2 (jrho, jthe) = lambda2dp(jrho, jthe)*dXb0(jthe)
+        X   (jrho, jthe) = X0 + rmin(jrho, jthe)*cos(thetap(jthe))
+        Y   (jrho, jthe) = Y0 + rmin(jrho, jthe)*sin(thetap(jthe))
+        X2  (jrho, jthe) = X0 + rr2 (jrho, jthe)*cos(thetap(jthe))
+        Y2  (jrho, jthe) = Y0 + rr2 (jrho, jthe)*sin(thetap(jthe))
     enddo
 enddo
 
-do jt=1, Nt-1
-    lambda2di (:, jt) = 0.5*(lambda2d (:, jt) + lambda2d (:, jt+1))
-    lambda2dpi(:, jt) = 0.5*(lambda2dp(:, jt) + lambda2dp(:, jt+1))
+do jthe=1, ntheta-1
+    lambda2di (:, jthe) = 0.5*(lambda2d (:, jthe) + lambda2d (:, jthe+1))
+    lambda2dpi(:, jthe) = 0.5*(lambda2dp(:, jthe) + lambda2dp(:, jthe+1))
 enddo
-jt = Nt
-lambda2di (:, jt) = 0.5*(lambda2d (:, jt) + lambda2d (:, 1))
-lambda2dpi(:, jt) = 0.5*(lambda2dp(:, jt) + lambda2dp(:, 1))
+jthe = ntheta
+lambda2di (:, jthe) = 0.5*(lambda2d (:, jthe) + lambda2d (:, 1))
+lambda2dpi(:, jthe) = 0.5*(lambda2dp(:, jthe) + lambda2dp(:, 1))
 
-do jt=1, Nt
-    do jr = 1, Nr
-        r_i1(jr, jt) = lambda2di (jr, jt)*dXb0_i(jt)
-        r_i (jr, jt) = lambda2dpi(jr, jt)*dXb0_i(jt)
-        X_i1(jr, jt) = X0 + r_i1(jr, jt)*cos(thetap_i(jt))
-        Y_i1(jr, jt) = Y0 + r_i1(jr, jt)*sin(thetap_i(jt))
-        X_i (jr, jt) = X0 + r_i (jr, jt)*cos(thetap_i(jt))
-        Y_i (jr, jt) = Y0 + r_i (jr, jt)*sin(thetap_i(jt))
+do jthe=1, ntheta
+    do jrho = 1, nrho
+        r_i1(jrho, jthe) = lambda2di (jrho, jthe)*dXb0_i(jthe)
+        r_i (jrho, jthe) = lambda2dpi(jrho, jthe)*dXb0_i(jthe)
+        X_i1(jrho, jthe) = X0 + r_i1(jrho, jthe)*cos(thetap_i(jthe))
+        Y_i1(jrho, jthe) = Y0 + r_i1(jrho, jthe)*sin(thetap_i(jthe))
+        X_i (jrho, jthe) = X0 + r_i (jrho, jthe)*cos(thetap_i(jthe))
+        Y_i (jrho, jthe) = Y0 + r_i (jrho, jthe)*sin(thetap_i(jthe))
     enddo
 enddo
    
 ! Now computes jacobian
 ! J = det( {dX/dr dX/dtheta}  {dY/dr dY/dtheta} ) = dX/dr*dY/dtheta - dX/dtheta*dY/dr= J(r, theta)
 
-do jr=1, Nr-1
-    dpsi = psig(jr+1) - psig(jr)
-    do jt=1, Nt
-        if (jt == 1) then
-            jthe_l = Nt
+do jrho=1, nrho-1
+    dpsi = psig(jrho+1) - psig(jrho)
+    do jthe=1, ntheta
+        if (jthe == 1) then
+            jthe_l = ntheta
         else
-            jthe_l = jt - 1
+            jthe_l = jthe - 1
         endif
         dthe = thetap_i(jthe_l+1) - thetap_i(jthe_l) 
-        dXdr2(jr, jt) = (X(jr+1, jt) - X(jr, jt))/dpsi 
-        dYdr2(jr, jt) = (Y(jr+1, jt) - Y(jr, jt))/dpsi
-        dXdh2(jr, jt) = (X_i(jr, jt) - X_i(jr, jthe_l))/dthe
-        dYdh2(jr, jt) = (Y_i(jr, jt) - Y_i(jr, jthe_l))/dthe
+        dXdr2(jrho, jthe) = (X(jrho+1, jthe) - X(jrho, jthe))/dpsi 
+        dYdr2(jrho, jthe) = (Y(jrho+1, jthe) - Y(jrho, jthe))/dpsi
+        dXdh2(jrho, jthe) = (X_i(jrho, jthe) - X_i(jrho, jthe_l))/dthe
+        dYdh2(jrho, jthe) = (Y_i(jrho, jthe) - Y_i(jrho, jthe_l))/dthe
     enddo
 enddo
 
 Jcbn2 = dXdr2*dYdh2 - dXdh2*dYdr2   ! i+1/2, j 
 
-do jr=2, Nr-1
-    dpsi = psigp(jr) - psigp(jr-1)
-    do jt=1, Nt
-        jthe_l = jt - 1
-        jthe_r = jt + 1
-        if (jt == 1) then
-            jthe_l = Nt
-        elseif (jt == Nt) then
+do jrho=2, nrho-1
+    dpsi = psigp(jrho) - psigp(jrho-1)
+    do jthe=1, ntheta
+        jthe_l = jthe - 1
+        jthe_r = jthe + 1
+        if (jthe == 1) then
+            jthe_l = ntheta
+        elseif (jthe == ntheta) then
             jthe_r = 1
         endif 
-        dXdr  (jr, jt) = (X2  (jr, jt) - X2 (jr-1, jt))/dpsi
-        dYdr  (jr, jt) = (Y2  (jr, jt) - Y2 (jr-1, jt))/dpsi
-        dXdri1(jr, jt) = (X_i (jr, jt) - X_i(jr-1, jt))/dpsi
-        dYdri1(jr, jt) = (Y_i (jr, jt) - Y_i(jr-1, jt))/dpsi
-        dXdh  (jr, jt) = (X_i1(jr, jt) - X_i1(jr, jthe_l))/(thetap_i(jthe_l+1) - thetap_i(jthe_l))
-        dYdh  (jr, jt) = (Y_i1(jr, jt) - Y_i1(jr, jthe_l))/(thetap_i(jthe_l+1) - thetap_i(jthe_l))
-        dXdhi1(jr, jt) = (X(jr, jthe_r) - X(jr, jt))/(thetap(jt+1) - thetap(jt))  
-        dYdhi1(jr, jt) = (Y(jr, jthe_r) - Y(jr, jt))/(thetap(jt+1) - thetap(jt))
+        dXdr  (jrho, jthe) = (X2  (jrho, jthe) - X2 (jrho-1, jthe))/dpsi
+        dYdr  (jrho, jthe) = (Y2  (jrho, jthe) - Y2 (jrho-1, jthe))/dpsi
+        dXdri1(jrho, jthe) = (X_i (jrho, jthe) - X_i(jrho-1, jthe))/dpsi
+        dYdri1(jrho, jthe) = (Y_i (jrho, jthe) - Y_i(jrho-1, jthe))/dpsi
+        dXdh  (jrho, jthe) = (X_i1(jrho, jthe) - X_i1(jrho, jthe_l))/(thetap_i(jthe_l+1) - thetap_i(jthe_l))
+        dYdh  (jrho, jthe) = (Y_i1(jrho, jthe) - Y_i1(jrho, jthe_l))/(thetap_i(jthe_l+1) - thetap_i(jthe_l))
+        dXdhi1(jrho, jthe) = (X (jrho, jthe_r) - X(jrho, jthe))/(thetap(jthe+1) - thetap(jthe))  
+        dYdhi1(jrho, jthe) = (Y (jrho, jthe_r) - Y(jrho, jthe))/(thetap(jthe+1) - thetap(jthe))
     enddo
 enddo
 
-jr = 1
-do jt=1, Nt
-    jthe_l = jt - 1
-    jthe_r = jt + 1
-    if (jt == 1) then
-        jthe_l = Nt
-    elseif (jt == Nt) then
+jrho = 1
+do jthe=1, ntheta
+    jthe_l = jthe - 1
+    jthe_r = jthe + 1
+    if (jthe == 1) then
+        jthe_l = ntheta
+    elseif (jthe == ntheta) then
         jthe_r = 1
     endif
-    dXdr  (jr, jt) = (X2 (jr, jt) - X(jr, jt))/ psigp(jr)
-    dYdr  (jr, jt) = (Y2 (jr, jt) - Y(jr, jt))/ psigp(jr)
-    dXdri1(jr, jt) = (X_i(jr, jt) - X(jr, jt))/ psigp(jr)
-    dYdri1(jr, jt) = (Y_i(jr, jt) - Y(jr, jt))/ psigp(jr)
-    dXdh  (jr, jt) = (X_i(jr, jt) - X_i(jr, jthe_l))/ (thetap_i(jthe_l+1) - thetap_i(jthe_l))
-    dYdh  (jr, jt) = (Y_i(jr, jt) - Y_i(jr, jthe_l))/ (thetap_i(jthe_l+1) - thetap_i(jthe_l))
-    dXdhi1(jr, jt) = (X2(jr, jthe_r) - X2(jr, jt))/ (thetap(jt+1) - thetap(jt))  
-    dYdhi1(jr, jt) = (Y2(jr, jthe_r) - Y2(jr, jt))/ (thetap(jt+1) - thetap(jt))
+    dXdr  (jrho, jthe) = (X2 (jrho, jthe) - X(jrho, jthe))/ psigp(jrho)
+    dYdr  (jrho, jthe) = (Y2 (jrho, jthe) - Y(jrho, jthe))/ psigp(jrho)
+    dXdri1(jrho, jthe) = (X_i(jrho, jthe) - X(jrho, jthe))/ psigp(jrho)
+    dYdri1(jrho, jthe) = (Y_i(jrho, jthe) - Y(jrho, jthe))/ psigp(jrho)
+    dXdh  (jrho, jthe) = (X_i(jrho, jthe) - X_i(jrho, jthe_l))/ (thetap_i(jthe_l+1) - thetap_i(jthe_l))
+    dYdh  (jrho, jthe) = (Y_i(jrho, jthe) - Y_i(jrho, jthe_l))/ (thetap_i(jthe_l+1) - thetap_i(jthe_l))
+    dXdhi1(jrho, jthe) = (X2(jrho, jthe_r) - X2(jrho, jthe))/ (thetap(jthe+1) - thetap(jthe))  
+    dYdhi1(jrho, jthe) = (Y2(jrho, jthe_r) - Y2(jrho, jthe))/ (thetap(jthe+1) - thetap(jthe))
 enddo
 
-jr = Nr
-dpsi = psigp(jr) - psigp(jr-1)
-do jt=1, Nt
-    jthe_l = jt - 1
-    jthe_r = jt + 1
-    if (jt == 1) then
-        jthe_l = Nt
-    elseif (jt == Nt) then
+jrho = nrho
+dpsi = psigp(jrho) - psigp(jrho-1)
+do jthe=1, ntheta
+    jthe_l = jthe - 1
+    jthe_r = jthe + 1
+    if (jthe == 1) then
+        jthe_l = ntheta
+    elseif (jthe == ntheta) then
         jthe_r = 1
     endif
-    dXdr  (jr, jt) = (X   (jr, jt) - X2 (jr-1, jt))/dpsi
-    dYdr  (jr, jt) = (Y   (jr, jt) - Y2 (jr-1, jt))/dpsi
-    dXdri1(jr, jt) = (X_i1(jr, jt) - X_i(jr-1, jt))/dpsi
-    dYdri1(jr, jt) = (Y_i1(jr, jt) - Y_i(jr-1, jt))/dpsi
-    dXdh  (jr, jt) = (X_i1(jr, jt) - X_i1(jr, jthe_l))/(thetap_i(jthe_l+1) - thetap_i(jthe_l))
-    dYdh  (jr, jt) = (Y_i1(jr, jt) - Y_i1(jr, jthe_l))/(thetap_i(jthe_l+1) - thetap_i(jthe_l))
-    dXdhi1(jr, jt) = (X(jr, jthe_r) - X(jr, jt))/(thetap(jt+1) - thetap(jt))  
-    dYdhi1(jr, jt) = (Y(jr, jthe_r) - Y(jr, jt))/(thetap(jt+1) - thetap(jt))
+    dXdr  (jrho, jthe) = (X   (jrho, jthe) - X2 (jrho-1, jthe))/dpsi
+    dYdr  (jrho, jthe) = (Y   (jrho, jthe) - Y2 (jrho-1, jthe))/dpsi
+    dXdri1(jrho, jthe) = (X_i1(jrho, jthe) - X_i(jrho-1, jthe))/dpsi
+    dYdri1(jrho, jthe) = (Y_i1(jrho, jthe) - Y_i(jrho-1, jthe))/dpsi
+    dXdh  (jrho, jthe) = (X_i1(jrho, jthe) - X_i1(jrho, jthe_l))/(thetap_i(jthe_l+1) - thetap_i(jthe_l))
+    dYdh  (jrho, jthe) = (Y_i1(jrho, jthe) - Y_i1(jrho, jthe_l))/(thetap_i(jthe_l+1) - thetap_i(jthe_l))
+    dXdhi1(jrho, jthe) = (X(jrho, jthe_r) - X(jrho, jthe))/(thetap(jthe+1) - thetap(jthe))  
+    dYdhi1(jrho, jthe) = (Y(jrho, jthe_r) - Y(jrho, jthe))/(thetap(jthe+1) - thetap(jthe))
 enddo
 
 Jcbn   = dXdr  *dYdh   - dXdh  *dYdr    ! i, j
 Jcbni1 = dXdri1*dYdhi1 - dXdhi1*dYdri1  ! i, j+1/2  
 
-do jt=1, Nt
-    do jr=1, Nr-1
-        Mdet_inv = 1./(dXdr2(jr, jt)*dYdh2(jr, jt) - dXdh2(jr, jt)*dYdr2(jr, jt))
-        drdX =  dYdh2(jr, jt)*Mdet_inv
-        dhdX = -dYdr2(jr, jt)*Mdet_inv
-        drdY = -dXdh2(jr, jt)*Mdet_inv
-        dhdY =  dXdr2(jr, jt)*Mdet_inv
-        gradr2(jr, jt) = drdX**2 + drdY**2 
-        grt2  (jr, jt) = drdX*dhdX + drdY*dhdY   ! i+1/2, j
+do jthe=1, ntheta
+    do jrho=1, nrho-1
+        Mdet_inv = 1./(dXdr2(jrho, jthe)*dYdh2(jrho, jthe) - dXdh2(jrho, jthe)*dYdr2(jrho, jthe))
+        drdX =  dYdh2(jrho, jthe)*Mdet_inv
+        dhdX = -dYdr2(jrho, jthe)*Mdet_inv
+        drdY = -dXdh2(jrho, jthe)*Mdet_inv
+        dhdY =  dXdr2(jrho, jthe)*Mdet_inv
+        gradr2(jrho, jthe) = drdX**2 + drdY**2 
+        grt2  (jrho, jthe) = drdX*dhdX + drdY*dhdY   ! i+1/2, j
 
-        Mdet_inv = 1./(dXdri1(jr, jt)*dYdhi1(jr, jt) - dXdhi1(jr, jt)*dYdri1(jr, jt))
-        drdX =  dYdhi1(jr, jt)*Mdet_inv
-        dhdX = -dYdri1(jr, jt)*Mdet_inv
-        drdY = -dXdhi1(jr, jt)*Mdet_inv
-        dhdY =  dXdri1(jr, jt)*Mdet_inv
-        gradhi1(jr, jt) = dhdX**2 + dhdY**2  
-        grti1  (jr, jt) = drdX*dhdX + drdY*dhdY       ! i, j+1/2
+        Mdet_inv = 1./(dXdri1(jrho, jthe)*dYdhi1(jrho, jthe) - dXdhi1(jrho, jthe)*dYdri1(jrho, jthe))
+        drdX =  dYdhi1(jrho, jthe)*Mdet_inv
+        dhdX = -dYdri1(jrho, jthe)*Mdet_inv
+        drdY = -dXdhi1(jrho, jthe)*Mdet_inv
+        dhdY =  dXdri1(jrho, jthe)*Mdet_inv
+        gradhi1(jrho, jthe) = dhdX**2 + dhdY**2  
+        grti1  (jrho, jthe) = drdX*dhdX + drdY*dhdY       ! i, j+1/2
     enddo
 enddo
 
-do jt=1, Nt    
-    gradhi1(1, jt) = 0. 
-    grti1  (1, jt) = 0. 
+do jthe=1, ntheta    
+    gradhi1(1, jthe) = 0. 
+    grti1  (1, jthe) = 0. 
 enddo
 
 ! Area at grid points
 
-do jr=1, Nr
-    if (jr == 1) then
-        dpsi = 0.5*psigp(jr)
+do jrho=1, nrho
+    if (jrho == 1) then
+        dpsi = 0.5*psigp(jrho)
     else
-        dpsi = (psigp(jr) - psigp(jr-1))
+        dpsi = (psigp(jrho) - psigp(jrho-1))
     endif
-    do jt=1, Nt
-        if (jt == 1) then
-            dthe = (thetap_i(Nt+1) - thetap_i(Nt))
+    do jthe=1, ntheta
+        if (jthe == 1) then
+            dthe = (thetap_i(ntheta+1) - thetap_i(ntheta))
         else
-            dthe = (thetap_i(jt) - thetap_i(jt-1))
+            dthe = (thetap_i(jthe) - thetap_i(jthe-1))
         endif
-        dArea(jr, jt) = Jcbn(jr, jt)*dpsi*dthe
+        dArea(jrho, jthe) = Jcbn(jrho, jthe)*dpsi*dthe
     enddo
 enddo
 
 ! Half grid points
 
-do jr=1, Nr-1
-    dpsi = (psig(jr+1) - psig(jr))
-    do jt=1, Nt
-        if (jt == 1) then
-            dthe = (thetap_i(Nt+1) - thetap_i(Nt))
+do jrho=1, nrho-1
+    dpsi = (psig(jrho+1) - psig(jrho))
+    do jthe=1, ntheta
+        if (jthe == 1) then
+            dthe = (thetap_i(ntheta+1) - thetap_i(ntheta))
         else
-            dthe = (thetap_i(jt) - thetap_i(jt-1))
+            dthe = (thetap_i(jthe) - thetap_i(jthe-1))
         endif
-        dArea2(jr, jt) = Jcbn2(jr, jt)*dpsi*dthe
+        dArea2(jrho, jthe) = Jcbn2(jrho, jthe)*dpsi*dthe
     enddo
 enddo
 
 !Now compute arc lengths do fluxes
  
-jr = 1
-do jt=1, Nt
-    if (jt == 1) then
-        dthe = thetap_i(Nt+1) - thetap_i(Nt)
+jrho = 1
+do jthe=1, ntheta
+    if (jthe == 1) then
+        dthe = thetap_i(ntheta+1) - thetap_i(ntheta)
     else
-        dthe = thetap_i(jt) - thetap_i(jt-1)
+        dthe = thetap_i(jthe) - thetap_i(jthe-1)
     endif
-    dArc_rp1 (jr, jt) = Jcbn2(jr, jt)*gradr2(jr, jt)*dthe/X2(jr, jt)
-    dArc_rpt1(jr, jt) = Jcbn2(jr, jt)*grt2  (jr, jt)*dthe/X2(jr, jt)
-    dArc_rm1(jr, jt) = 0.   ! i-1/2, j
-    dArc_tp1(jr, jt) = 0.   ! i, j+1/2
-    dArc_tm1(jr, jt) = 0.   ! i, j-1/2
+    dArc_rp1 (jrho, jthe) = Jcbn2(jrho, jthe)*gradr2(jrho, jthe)*dthe/X2(jrho, jthe)
+    dArc_rpt1(jrho, jthe) = Jcbn2(jrho, jthe)*grt2  (jrho, jthe)*dthe/X2(jrho, jthe)
+    dArc_rm1(jrho, jthe) = 0.   ! i-1/2, j
+    dArc_tp1(jrho, jthe) = 0.   ! i, j+1/2
+    dArc_tm1(jrho, jthe) = 0.   ! i, j-1/2
 enddo
 
-do jr=2, Nr
-    dpsi = psigp(jr) - psigp(jr-1)
-    do jt=1, Nt
-        if (jt == 1) then
-            jthe_l = Nt
+do jrho=2, nrho
+    dpsi = psigp(jrho) - psigp(jrho-1)
+    do jthe=1, ntheta
+        if (jthe == 1) then
+            jthe_l = ntheta
         else
-            jthe_l = jt-1
+            jthe_l = jthe-1
         endif
         dthe = thetap_i(jthe_l+1) - thetap_i(jthe_l)
-        dArc_rp1 (jr, jt) = Jcbn2(jr  , jt)*gradr2(jr  , jt)*dthe/X2(jr  , jt)
-        dArc_rm1 (jr, jt) = Jcbn2(jr-1, jt)*gradr2(jr-1, jt)*dthe/X2(jr-1, jt)
-        dArc_rpt1(jr, jt) = Jcbn2(jr  , jt)*grt2  (jr  , jt)*dthe/X2(jr  , jt)
-        dArc_rmt1(jr, jt) = Jcbn2(jr-1, jt)*grt2  (jr-1, jt)*dthe/X2(jr-1, jt)
-        dArc_tp1 (jr, jt) = Jcbni1(jr, jt    )*gradhi1(jr, jt    )*dpsi/X_i1(jr, jt    )
-        dArc_tm1 (jr, jt) = Jcbni1(jr, jthe_l)*gradhi1(jr, jthe_l)*dpsi/X_i1(jr, jthe_l)
-        dArc_tpr1(jr, jt) = Jcbni1(jr, jt    )*grti1  (jr, jt    )*dpsi/X_i1(jr, jt    )
-        dArc_tmr1(jr, jt) = Jcbni1(jr, jthe_l)*grti1  (jr, jthe_l)*dpsi/X_i1(jr, jthe_l)
+        dArc_rp1 (jrho, jthe) = Jcbn2(jrho  , jthe)*gradr2(jrho  , jthe)*dthe/X2(jrho  , jthe)
+        dArc_rm1 (jrho, jthe) = Jcbn2(jrho-1, jthe)*gradr2(jrho-1, jthe)*dthe/X2(jrho-1, jthe)
+        dArc_rpt1(jrho, jthe) = Jcbn2(jrho  , jthe)*grt2  (jrho  , jthe)*dthe/X2(jrho  , jthe)
+        dArc_rmt1(jrho, jthe) = Jcbn2(jrho-1, jthe)*grt2  (jrho-1, jthe)*dthe/X2(jrho-1, jthe)
+        dArc_tp1 (jrho, jthe) = Jcbni1(jrho, jthe  )*gradhi1(jrho, jthe  )*dpsi/X_i1(jrho, jthe  )
+        dArc_tm1 (jrho, jthe) = Jcbni1(jrho, jthe_l)*gradhi1(jrho, jthe_l)*dpsi/X_i1(jrho, jthe_l)
+        dArc_tpr1(jrho, jthe) = Jcbni1(jrho, jthe  )*grti1  (jrho, jthe  )*dpsi/X_i1(jrho, jthe  )
+        dArc_tmr1(jrho, jthe) = Jcbni1(jrho, jthe_l)*grti1  (jrho, jthe_l)*dpsi/X_i1(jrho, jthe_l)
     enddo
 enddo
 
 ! Compute differentials
 
-do jr=1, Nr-1
-    dpsi = psig(jr+1) - psig(jr)
-    do jt=1, Nt
-        ddr(jr, jt) = dpsi
+do jrho=1, nrho-1
+    dpsi = psig(jrho+1) - psig(jrho)
+    do jthe=1, ntheta
+        ddr(jrho, jthe) = dpsi
     enddo
 enddo
 
-do jr=2, Nr
-    dpsi = psigp(jr) - psigp(jr-1)
-    do jt=1, Nt
-        ddr_i(jr, jt) = dpsi
+do jrho=2, nrho
+    dpsi = psigp(jrho) - psigp(jrho-1)
+    do jthe=1, ntheta
+        ddr_i(jrho, jthe) = dpsi
     enddo
 enddo
 
-do jr=1, Nr
-    do jt=1, Nt
-        jthe_l = jt - 1
-        if (jt == 1) then
-            jthe_l = Nt
-        endif 
-        dtp (jr, jt) = thetap(jt+1) - thetap(jt)
-        dtm (jr, jt) = thetap  (jthe_l+1) - thetap  (jthe_l)
-        dt_i(jr, jt) = thetap_i(jthe_l+1) - thetap_i(jthe_l)
+do jrho=1, nrho
+    do jthe=1, ntheta
+        jthe_l = jthe - 1
+        if (jthe == 1) then
+            jthe_l = ntheta
+        endif
+        dtp (jrho, jthe) = thetap  (jthe  +1) - thetap  (jthe)
+        dtm (jrho, jthe) = thetap  (jthe_l+1) - thetap  (jthe_l)
+        dt_i(jrho, jthe) = thetap_i(jthe_l+1) - thetap_i(jthe_l)
     enddo
 enddo
 

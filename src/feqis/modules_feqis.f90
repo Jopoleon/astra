@@ -13,7 +13,7 @@ use dimensions_ef_parameters, only: i_dim2
 
 implicit none 
 
-integer :: nr2, nz2, nrho, nteta
+integer :: nrho, nteta
 
 double precision :: psibndp, psiaxisp, raxp, zaxp, &
     iplasma, btor0, rgeom0, psplex, li3, betapol

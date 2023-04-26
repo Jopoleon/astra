@@ -1,7 +1,7 @@
 subroutine feqis_main(equil_in, equil_out)
 
 use imas_ids, only: type_equilibrium
-use ef_circuit, only: nrho, nteta, nr2, nz2, &
+use ef_circuit, only: nrho, nteta, &
     teta, iplasma, ipol, &
     btor0, rgeom0, li3, betapol, &
     raxp, zaxp, rbndp, zbndp, psiaxisp, psibndp, psigrida, &
@@ -103,11 +103,8 @@ allocate(equil_out%profiles_1d%tria_upper(nrho))
 allocate(equil_out%profiles_1d%tria_lower(nrho)) 
 allocate(equil_out%profiles_1d%shif(nrho))
 allocate(equil_out%profiles_1d%shiv(nrho))
-allocate(equil_out%eqgeometry%rectgrid%r2d(nr2))
-allocate(equil_out%eqgeometry%rectgrid%z2d(nz2))
-allocate(equil_out%eqgeometry%rectgrid%psirz2d(nr2, nz2))
 
-write(*, *) 'call fix equil code'
+write(*, *) 'call fix equil code', nrho, nteta
 
 ! initial guess
 if (j_init == 0) then
