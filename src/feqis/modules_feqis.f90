@@ -1,23 +1,9 @@
-module dimensions_ef_parameters
-
-implicit none
-
-integer, parameter :: i_dim2=300
-
-end module dimensions_ef_parameters
-
-!-------------------------------------------
-module ef_circuit       ! declaration of minimal CPOs
-
-use dimensions_ef_parameters, only: i_dim2
+module feqis_geom
 
 implicit none 
 
 integer :: nrho, nteta
+double precision :: raxp, zaxp, rgeom0
+double precision, allocatable, dimension(:) :: teta
 
-double precision :: psibndp, psiaxisp, raxp, zaxp, &
-    rgeom0, psplex
-double precision, dimension(i_dim2) :: teta, rexp, zexp, &
-    pprime, ffprime, pressure, psigrida, ipol
-
-end module ef_circuit
+end module feqis_geom
