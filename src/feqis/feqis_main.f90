@@ -2,20 +2,23 @@ subroutine feqis_main(equil_in, equil_out)
 
 use imas_ids, only: type_equilibrium
 use ef_circuit, only: nrho, nteta, nr2, nz2, &
-    rho, teta, iplasma, ipol, jrhoteta, &
+    teta, iplasma, ipol, &
     btor0, rgeom0, li3, betapol, &
     raxp, zaxp, rbndp, zbndp, psiaxisp, psibndp, psigrida, &
     pressure, pprime, ffprime, &
     psia_2d, ffp_2d, ppp_2d, ipol_2d, pres_2d
-use pi_vars, only: GPI2, mu0
 
 implicit none
+
+double precision, parameter :: GPI=3.141592653589793, &
+    GPI2=2.*GPI, mu0=0.4*GPI
 
 type(type_equilibrium), intent(in)  :: equil_in
 type(type_equilibrium), intent(out) :: equil_out
 
 integer :: jrho, jthe
 integer :: j_init
+double precision, allocatable, dimension(:, :) :: jrhoteta
 
 data j_init/0/
 
@@ -64,6 +67,8 @@ rbndp(1: nteta) = equil_in%eqgeometry%boundary%r(1: nteta)
 zbndp(1: nteta) = equil_in%eqgeometry%boundary%z(1: nteta)
 rbndp(nteta+1)  = rbndp(1)
 zbndp(nteta+1)  = zbndp(1)
+
+if (.not. allocated(jrhoteta)) allocate(jrhoteta(nrho, nteta))
 
 allocate(equil_out%profiles_1d%psi(nrho))
 allocate(equil_out%profiles_1d%pressure(nrho))
@@ -176,10 +181,9 @@ call PHI_EQ_2d_PBE( &
     equil_out%profiles_1d%tria_upper, &
     equil_out%coord_sys%position%teta2d, &
     equil_out%coord_sys%position%rmin, &
-    jrhoteta(1: nrho, 1: nteta), &
+    jrhoteta, &
     li3, betapol)
 
-jrhoteta(1: nrho, nteta+1) = jrhoteta(1: nrho, 1) !periodic j
 raxp = equil_out%coord_sys%position%r(1, 1)
 zaxp = equil_out%coord_sys%position%z(1, 1)
 
@@ -197,15 +201,8 @@ equil_out%profiles_1d%F_dia    = 0.
 
 equil_out%coord_sys%position%psirz = equil_out%coord_sys%position%psirz/GPI2
 
-do jthe=1, nteta
-    do jrho=1, nrho
-        rho(jrho, jthe) = sqrt((equil_out%coord_sys%position%r(jrho, jthe) - raxp)**2 + &
-                               (equil_out%coord_sys%position%z(jrho, jthe) - zaxp)**2)
-    enddo
-enddo
-
 teta(1: nteta) = equil_out%coord_sys%position%teta2d(1: nteta)
-rho(1: nrho, nteta+1) = rho(1: nrho, 1)
+!rho(1: nrho, nteta+1) = rho(1: nrho, 1)
 teta(nteta+1) = teta(1) + GPI2
 
 equil_out%global_param%psplex   = 0.
