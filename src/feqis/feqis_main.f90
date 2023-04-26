@@ -2,9 +2,9 @@ subroutine feqis_main(equil_in, equil_out)
 
 use imas_ids, only: type_equilibrium
 use ef_circuit, only: nrho, nteta, &
-    teta, iplasma, ipol, &
-    btor0, rgeom0, li3, betapol, &
-    raxp, zaxp, rbndp, zbndp, psiaxisp, psibndp, psigrida, &
+    teta, ipol, &
+    rgeom0, &
+    raxp, zaxp, psiaxisp, psibndp, psigrida, &
     pressure, pprime, ffprime
 
 implicit none
@@ -33,8 +33,6 @@ if (j_init == 0) then
     enddo
 endif
 
-btor0   = equil_in%global_param%toroid_field%b0
-iplasma = equil_in%global_param%i_plasma/1.e6
 pressure(1: nrho) = equil_in%profiles_1d%pressure(1: nrho)
 pprime(  1: nrho) = equil_in%profiles_1d%pprime(1: nrho)
 ffprime( 1: nrho) = equil_in%profiles_1d%ffprime(1: nrho)
@@ -42,10 +40,6 @@ psigrida(1: nrho) = equil_in%profiles_1d%psi(1: nrho) !unnormalized
 psigrida(1: nrho) = (psigrida(1: nrho) - psigrida(1)) / &
                     (psigrida(nrho)    - psigrida(1)) ! normalized: 0 axis,  1 sep
 ipol(1: nrho)   = equil_in%profiles_1d%F_dia(1: nrho)
-rbndp(1: nteta) = equil_in%eqgeometry%boundary%r(1: nteta)
-zbndp(1: nteta) = equil_in%eqgeometry%boundary%z(1: nteta)
-rbndp(nteta+1)  = rbndp(1)
-zbndp(nteta+1)  = zbndp(1)
 
 if (.not. allocated(jrhoteta)) allocate(jrhoteta(nrho, nteta))
 
@@ -119,14 +113,14 @@ endif
 call PHI_EQ_2d_PBE( &
     nrho, nteta, &
     psigrida(1: nrho), &
-    iplasma, &
+    equil_in%global_param%i_plasma/1.e6, &
     pressure(1: nrho), &
     ffprime(1: nrho), &
     pprime(1: nrho), &
-    btor0, &
+    equil_in%global_param%toroid_field%b0, &
     rgeom0, &
-    rbndp(1: nteta), &
-    zbndp(1: nteta), &
+    equil_in%eqgeometry%boundary%r, &
+    equil_in%eqgeometry%boundary%z, &
     Raxp, &
     Zaxp, &
     psibndp, &
@@ -158,16 +152,15 @@ call PHI_EQ_2d_PBE( &
     equil_out%coord_sys%position%teta2d, &
     equil_out%coord_sys%position%rmin, &
     jrhoteta, &
-    li3, betapol)
+    equil_out%global_param%li3, &
+    equil_out%global_param%betpol)
 
 raxp = equil_out%coord_sys%position%r(1, 1)
 zaxp = equil_out%coord_sys%position%z(1, 1)
 
 ! additional info from rectangular grid
  
-equil_out%global_param%li3 = li3
-equil_out%global_param%betpol = betapol 
-equil_out%global_param%i_plasma = iplasma*1.e6
+equil_out%global_param%i_plasma  = equil_in%global_param%i_plasma
 equil_out%profiles_1d%tria_lower = equil_out%profiles_1d%tria_upper
 equil_out%profiles_1d%ffprime  = 0.
 equil_out%profiles_1d%pprime   = 0.

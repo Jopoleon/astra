@@ -16,8 +16,8 @@ implicit none
 integer :: nrho, nteta
 
 double precision :: psibndp, psiaxisp, raxp, zaxp, &
-    iplasma, btor0, rgeom0, psplex, li3, betapol
-double precision, dimension(i_dim2) :: teta, rbndp, zbndp, rexp, zexp, &
+    rgeom0, psplex
+double precision, dimension(i_dim2) :: teta, rexp, zexp, &
     pprime, ffprime, pressure, psigrida, ipol
 
 end module ef_circuit
