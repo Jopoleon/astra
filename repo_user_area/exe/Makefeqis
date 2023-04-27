@@ -11,11 +11,12 @@ FFLAGS	= -O2 -g -traceback -I$(MOD_FOR) -I$(MOD_DIR)
 # FEQIS objs
 
 FEQ_MODOBJ = \
+$(OBJ_DIR)/interp_mod.o \
 $(OBJ_DIR)/modules_feqis.o
 
 FEQ_LIBOBJ = \
-$(OBJ_DIR)/interp_feqis.o \
 $(OBJ_DIR)/feqis_main.o \
+$(OBJ_DIR)/green.o \
 $(OBJ_DIR)/build_2dgrid.o \
 $(OBJ_DIR)/jacobians.o \
 $(OBJ_DIR)/PHI_EQ_2d_PBE.o \

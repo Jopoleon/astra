@@ -6,6 +6,8 @@ subroutine PHI_EQ_2d_PBE(nrho, ntheta, psin_grid_in, iplasma, &
     areat, perim, shif, elon, slat, tria, thetap_out, &
     rmin, jrhoteta, li3, betapol, psiax_out)
 
+use interp_mod, only: polyfitcc
+
 implicit none
 
 integer, parameter :: max_iter=500
@@ -113,7 +115,7 @@ iter_loop: do jiter=1, max_iter
         dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
         dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
         ddr, ddr_i, dtp, dtm, dt_i, XX, YY, &
-        thetap, thetap_i)
+        thetap, thetap_i, lambda2d, lambda2dp)
 
     do jthe=1, ntheta
         known_term(1: nrho, jthe) = (effprimp(1: nrho) * dArea(1: nrho, jthe)/XX(1: nrho, jthe) + &
@@ -229,7 +231,7 @@ do jrho=2, nrho
     yyyy1(1) = yy(jrho, i1)
     yyyy1(2) = yy(jrho, i)
     yyyy1(3) = yy(jrho, i2)
-    call polyfitcc_feqis(xxxx1, yyyy1, pppp1)
+    call polyfitcc(xxxx1, yyyy1, pppp1)
     yrzmin = -pppp1(2)/(2.*pppp1(1))
     yzmin = pppp1(1)*yrzmin**2 + pppp1(2)*yrzmin + pppp1(3)
 
@@ -244,7 +246,7 @@ do jrho=2, nrho
     yyyy1(1) = yy(jrho, i1)
     yyyy1(2) = yy(jrho, i)
     yyyy1(3) = yy(jrho, i2)
-    call polyfitcc_feqis(xxxx1, yyyy1, pppp1)
+    call polyfitcc(xxxx1, yyyy1, pppp1)
     yrzmax = -pppp1(2)/(2.*pppp1(1))
     yzmax = pppp1(1)*yrzmax**2 + pppp1(2)*yrzmax + pppp1(3)
 

@@ -5,6 +5,8 @@ subroutine build_2dgrid(nrho, ntheta, Rb, Zb, X0, Y0, lambda2d, lambda2dp, psin_
     BMAXT, BMINT, BDB02, BDB0, B0DB2, FOFB, &
     slat, li3, betapol)
 
+use interp_mod, only: qinterp
+
 implicit none
 
 double precision, parameter :: GPI=3.141592653589793, GPI2=2.*GPI
@@ -251,25 +253,25 @@ BDB02(nrho)  = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, BDB02
 BDB0(nrho)   = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, BDB0)
 B0DB2(nrho)  = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, B0DB2)
 
-call qinterp_feqis(rhot(1: nrho-1), G1(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+call qinterp(rhot(1: nrho-1), G1(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
 G1(2: nrho-1) = dum1(2: nrho-1)
-call qinterp_feqis(rhot(1: nrho-1), g2(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+call qinterp(rhot(1: nrho-1), g2(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
 g2(2: nrho-1) = dum1(2: nrho-1)
-call qinterp_feqis(rhot(1: nrho-1), g3(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+call qinterp(rhot(1: nrho-1), g3(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
 g3(2: nrho-1) = dum1(2: nrho-1)
-call qinterp_feqis(rhot(1: nrho-1), gradro(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+call qinterp(rhot(1: nrho-1), gradro(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
 gradro(2: nrho-1) = dum1(2: nrho-1)
-call qinterp_feqis(rhot(1: nrho-1), fofb(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+call qinterp(rhot(1: nrho-1), fofb(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
 fofb(2: nrho-1) = dum1(2: nrho-1)
-call qinterp_feqis(rhot(1: nrho-1), bmaxt(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+call qinterp(rhot(1: nrho-1), bmaxt(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
 bmaxt(2: nrho-1) = dum1(2: nrho-1)
-call qinterp_feqis(rhot(1: nrho-1), bmint(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+call qinterp(rhot(1: nrho-1), bmint(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
 bmint(2: nrho-1) = dum1(2: nrho-1)
-call qinterp_feqis(rhot(1: nrho-1), bdb02(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+call qinterp(rhot(1: nrho-1), bdb02(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
 bdb02(2: nrho-1) = dum1(2: nrho-1)
-call qinterp_feqis(rhot(1: nrho-1), bdb0(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+call qinterp(rhot(1: nrho-1), bdb0(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
 bdb0(2: nrho-1) = dum1(2: nrho-1)
-call qinterp_feqis(rhot(1: nrho-1), b0db2(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+call qinterp(rhot(1: nrho-1), b0db2(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
 b0db2(2: nrho-1) = dum1(2: nrho-1)
 
 G1(1) = 0.0

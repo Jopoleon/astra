@@ -1,6 +1,11 @@
-subroutine qinterp_feqis(x1, y1, Nx1, x2, y2, Nx2)
+module interp_mod
 
 implicit none
+
+contains
+
+!---------------------------------------------------------------------
+subroutine qinterp(x1, y1, Nx1, x2, y2, Nx2)
 
 integer, intent(in) :: Nx1, Nx2
 double precision, intent(in) , dimension(Nx1) :: x1, y1
@@ -60,12 +65,10 @@ do i=1, Nx2
 enddo
 
 return
-end subroutine qinterp_feqis
+end subroutine qinterp
 
 !------------------------------------------------------------
-subroutine linterp_feqis(x1, y1, Nx1, x2, y2, Nx2)
-
-implicit none
+subroutine linterp(x1, y1, Nx1, x2, y2, Nx2)
 
 integer, intent(in) :: Nx1, Nx2
 double precision, intent(in) , dimension(Nx1) :: x1, y1
@@ -104,12 +107,10 @@ do i=1, Nx2
 enddo
 
 return
-end subroutine linterp_feqis
+end subroutine linterp
 
 !------------------------------------------------------------
-subroutine polyfitcc_feqis(x, y, P)
-
-implicit none
+subroutine polyfitcc(x, y, P)
 
 double precision, intent(in) , dimension(3) :: x, y
 double precision, intent(out), dimension(3) :: P
@@ -128,4 +129,6 @@ P(2) = y21/x21 - P(1)*h21
 P(3) = y(3) - P(1)*x(3)**2 - P(2)*x(3)
 
 return
-end subroutine polyfitcc_feqis
+end subroutine polyfitcc
+
+end module interp_mod
