@@ -2,8 +2,7 @@ module feqis_geom
 
 implicit none 
 
-integer :: nrho, nteta
-double precision :: raxp, zaxp, rgeom0
-double precision, allocatable, dimension(:) :: teta
+double precision :: raxp, zaxp
+double precision, allocatable, dimension(:) :: theta
 
 end module feqis_geom

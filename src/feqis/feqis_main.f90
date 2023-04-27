@@ -1,8 +1,7 @@
 subroutine feqis_main(equil_in, equil_out)
 
 use imas_ids, only: type_equilibrium
-use feqis_geom, only: nrho, nteta, &
-    teta, rgeom0, raxp, zaxp
+use feqis_geom, only: theta, raxp, zaxp
 
 implicit none
 
@@ -12,31 +11,31 @@ double precision, parameter :: GPI=3.141592653589793, &
 type(type_equilibrium), intent(in)  :: equil_in
 type(type_equilibrium), intent(out) :: equil_out
 
-integer :: jthe, j_init
+integer :: jthe, j_init, nrho, ntheta
 double precision :: psi0, psiB
 double precision, allocatable, dimension(:) :: psi_norm_in, psi_norm_out
-double precision, allocatable, dimension(:, :) :: jrhoteta
+double precision, allocatable, dimension(:, :) :: jrhotheta
 
 data j_init/0/
 
 save j_init
 
-if (.not. allocated(teta)) allocate(teta(nteta))
-if (.not. allocated(jrhoteta)) then
+if (.not. allocated(theta)) allocate(theta(ntheta))
+if (.not. allocated(jrhotheta)) then
     allocate(psi_norm_in(nrho))
     allocate(psi_norm_out(nrho))
-    allocate(jrhoteta(nrho, nteta))
+    allocate(jrhotheta(nrho, ntheta))
 endif
 
+ntheta = equil_in%eqgeometry%boundary%npoints
+nrho  = SIZE(equil_in%profiles_1d%pressure)
+
 if (j_init == 0) then
-    nteta = equil_in%eqgeometry%boundary%npoints
-    nrho  = SIZE(equil_in%profiles_1d%pressure)
-    Rgeom0 = equil_in%global_param%toroid_field%r0
 ! Initial polar grid: regular from 0 to 2*pi
-    do jthe=1, nteta+1
-        teta(jthe) = GPI2*(jthe - 1.)/(nteta + 0.)
+    do jthe=1, ntheta+1
+        theta(jthe) = GPI2*(jthe - 1.)/(ntheta + 0.)
     enddo
-    raxp = Rgeom0
+    raxp = equil_in%global_param%toroid_field%r0
     zaxp = 0.
 endif
 
@@ -51,22 +50,22 @@ allocate(equil_out%profiles_1d%pprime(nrho))
 allocate(equil_out%profiles_1d%ffprime(nrho))
 allocate(equil_out%profiles_1d%F_dia(nrho))
 allocate(equil_out%profiles_1d%q(nrho))
-allocate(equil_out%coord_sys%position%r(nrho, nteta))
-allocate(equil_out%coord_sys%position%z(nrho, nteta))    
-allocate(equil_out%coord_sys%position%teta2d(nteta))    
-allocate(equil_out%coord_sys%position%rmin(nrho, nteta))    
-allocate(equil_out%coord_sys%position%psirz(nrho, nteta))    
-allocate(equil_out%eqgeometry%boundary%r(nteta))
-allocate(equil_out%eqgeometry%boundary%z(nteta))
+allocate(equil_out%coord_sys%position%r(nrho, ntheta))
+allocate(equil_out%coord_sys%position%z(nrho, ntheta))    
+allocate(equil_out%coord_sys%position%teta2d(ntheta))    
+allocate(equil_out%coord_sys%position%rmin(nrho, ntheta))    
+allocate(equil_out%coord_sys%position%psirz(nrho, ntheta))    
+allocate(equil_out%eqgeometry%boundary%r(ntheta))
+allocate(equil_out%eqgeometry%boundary%z(ntheta))
 allocate(equil_out%profiles_1d%rho_tor(nrho) )
 allocate(equil_out%profiles_1d%jparallel(nrho) )
 allocate(equil_out%profiles_1d%sigmapar%value(nrho) )
 allocate(equil_out%profiles_1d%jni%value(nrho) )
 allocate(equil_out%profiles_1d%te%value(nrho) )
-allocate(equil_out%coord_sys%gradvcell(nrho, nteta))
-allocate(equil_out%coord_sys%bpcell(nrho, nteta))
-allocate(equil_out%coord_sys%bcell(nrho, nteta))
-allocate(equil_out%coord_sys%rcell(nrho, nteta))
+allocate(equil_out%coord_sys%gradvcell(nrho, ntheta))
+allocate(equil_out%coord_sys%bpcell(nrho, ntheta))
+allocate(equil_out%coord_sys%bcell(nrho, ntheta))
+allocate(equil_out%coord_sys%rcell(nrho, ntheta))
 allocate(equil_out%profiles_1d%gm1(nrho))
 allocate(equil_out%profiles_1d%gm4(nrho))
 allocate(equil_out%profiles_1d%gm5(nrho))
@@ -103,14 +102,14 @@ write(*, '(A, 2f8.4)') 'Call fix equil code', psi0, psiB
 
 !boundary from previous time step
 call PHI_EQ_2d_PBE( &
-    nrho, nteta, &
+    nrho, ntheta, &
     psi_norm_in, &
     equil_in%global_param%i_plasma/1.e6, &
     equil_in%profiles_1d%pressure, &
     equil_in%profiles_1d%ffprime, &
     equil_in%profiles_1d%pprime, &
     equil_in%global_param%toroid_field%b0, &
-    rgeom0, &
+    equil_in%global_param%toroid_field%r0, &
     equil_in%eqgeometry%boundary%r, &
     equil_in%eqgeometry%boundary%z, &
     Raxp, Zaxp, &
@@ -142,7 +141,7 @@ call PHI_EQ_2d_PBE( &
     equil_out%profiles_1d%tria_upper, &
     equil_out%coord_sys%position%teta2d, &
     equil_out%coord_sys%position%rmin, &
-    jrhoteta, &
+    jrhotheta, &
     equil_out%global_param%li3, &
     equil_out%global_param%betpol, &
     psi0)
@@ -163,8 +162,8 @@ equil_out%profiles_1d%rho_tor  = 0.
 equil_out%profiles_1d%F_dia    = 0.
 equil_out%coord_sys%position%psirz = equil_out%coord_sys%position%psirz/GPI2
 
-teta(1: nteta) = equil_out%coord_sys%position%teta2d(1: nteta)
-teta(nteta+1) = teta(1) + GPI2
+theta(1: ntheta) = equil_out%coord_sys%position%teta2d(1: ntheta)
+theta(ntheta+1) = theta(1) + GPI2
 
 equil_out%global_param%psplex   = 0.
 equil_out%global_param%psibound = psiB
