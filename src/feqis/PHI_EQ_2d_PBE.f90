@@ -26,17 +26,17 @@ double precision, intent(out), dimension(nrho, ntheta) :: Psi, rmin, jrhoteta, X
 
 integer :: i, i1, i2, j, jthe, jrho, j_ok, jrho_axis, jthe_axis, &
     jiter, Ndims, LDAB, nan_count, info, jloc, jmin(2)
-double precision :: X0, Y0, X0o, Y0o, cnorm, denom, &
+double precision :: X0, Y0, X0o, Y0o, cnorm, denom, psiax, &
     yrr, ya, axis_change, &
     yrmax, yrmin, yzmax, yzmin, yrzmax, yrzmin
 double precision, dimension(3) :: xxxx1, yyyy1, pppp1
-double precision, dimension(nrho) :: PSIn_gridp, effprimp, epprimp, psin_grid
+double precision, dimension(nrho) :: PSIn_gridp, effprimp, epprimp, psin_grid, fpol, fpol2
 double precision, dimension(ntheta+1) :: thetap, thetap_i
 double precision, dimension(nrho, ntheta) :: dArea, Rmaj2, &
     known_term, lambda2d, lambda2dp, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
-    ddr, ddr_i, dtp, dtm, dt_i, gradh, gradr2, gradh2, dArea2
+    ddr, ddr_i, dtp, dtm, dt_i, dArea2
 double precision :: gpsi(2*ntheta+1), work(2*(2*ntheta+1)*6), matrix(2*ntheta+1, 6)
     
 Ndims = 1 + (nrho - 2)*ntheta
@@ -72,48 +72,48 @@ jrho_axis = 1
 jthe_axis = 1
 j_ok  = 0
 
-psiax_out = psiax_in
+psiax = psiax_in
 
 iter_loop: do jiter=1, max_iter
 
 ! recalculate psin_grid based on ffprime
     if (jiter >= 2 .and. (jrho_axis == 1 .and. jthe_axis == 1)) then
-        gradh(nrho, 1) = btor*r0
-        gradh(nrho-1, 1) = sqrt((btor*r0)**2 - ffprimp(nrho) * (psin_grid(nrho) - psin_grid(nrho-1)) * (psib - psiax_out))
+        fpol(nrho) = btor*r0
+        fpol(nrho-1) = sqrt((btor*r0)**2 - ffprimp(nrho) * (psin_grid(nrho) - psin_grid(nrho-1)) * (psib - psiax))
         do j=nrho-2, 1, -1
-            gradh(j, 1) = sqrt(gradh(j+1, 1)**2 - ffprimp(j+1) * &
-                (psin_grid(j+2) - psin_grid(j)) * (psib - psiax_out))
+            fpol(j) = sqrt(fpol(j+1)**2 - ffprimp(j+1) * &
+                (psin_grid(j+2) - psin_grid(j)) * (psib - psiax))
         enddo
 
         tria(1) = 0.
         do jrho=2, nrho ! toroidal flux on full grid
-            tria(jrho) = tria(jrho-1) + gradh(jrho-1, 1) * sum(dArea2(jrho-1, 1: ntheta)/Rmaj2(jrho-1, 1: ntheta))
+            tria(jrho) = tria(jrho-1) + fpol(jrho-1) * sum(dArea2(jrho-1, 1: ntheta)/Rmaj2(jrho-1, 1: ntheta))
         enddo
 
         do jrho=1, nrho-1 ! safety factor at half grid
             elon(jrho) = (tria(jrho+1) - tria(jrho))/(psin_grid(jrho+1) - psin_grid(jrho)) / &
-                (psib - psiax_out)
+                (psib - psiax)
         enddo
 
-        gradh2(1, 1) = 0.
+        fpol2(1) = 0.
         do jrho=2, nrho ! new psin grid
-            gradh2(jrho, 1) = gradh2(jrho-1, 1) + (2.*jrho - 3.)/elon(jrho-1)/(nrho - 1.)**2
+            fpol2(jrho) = fpol2(jrho-1) + (2.*jrho - 3.)/elon(jrho-1)/(nrho - 1.)**2
         enddo
-        psin_grid = 0.5*psin_grid + 0.5*gradh2(:, 1)/gradh2(nrho, 1)
+        psin_grid = 0.5*psin_grid + 0.5*fpol2/fpol2(nrho)
 
         do jrho=1, nrho-1
             psin_gridp(jrho) = 0.5*(psin_grid(jrho+1) + psin_grid(jrho))
         enddo
     endif
 
-    call build_2dgrid(nrho, ntheta, Rb, Zb, X0, Y0, &
+    call jacobians(nrho, ntheta, Rb, Zb, X0, Y0, &
         lambda2d, lambda2dp, psin_grid, &
-        psiax_out, psib, j_ok, psin_gridp, PSI, &
+        psiax, psib, j_ok, psin_gridp, PSI, &
         dArea, Rmaj2, dArea2, &
         dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
         dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
         ddr, ddr_i, dtp, dtm, dt_i, XX, YY, &
-        rmin, thetap, thetap_i, gradh, gradr2, gradh2)
+        thetap, thetap_i)
 
     do jthe=1, ntheta
         known_term(1: nrho, jthe) = (effprimp(1: nrho) * dArea(1: nrho, jthe)/XX(1: nrho, jthe) + &
@@ -162,12 +162,12 @@ iter_loop: do jiter=1, max_iter
         denom = 4*gpsi(1)*gpsi(4) - gpsi(6)**2
         x0 = (gpsi(6)*gpsi(5) - 2*gpsi(4)*gpsi(2))/denom
         y0 = (gpsi(6)*gpsi(2) - 2*gpsi(1)*gpsi(5))/denom
-        psiax_out = gpsi(1)*x0**2 + gpsi(2)*x0 + gpsi(3) +  &
+        psiax = gpsi(1)*x0**2 + gpsi(2)*x0 + gpsi(3) +  &
                 gpsi(4)*y0**2 + gpsi(5)*y0 + gpsi(6)*x0*y0
     else
         x0 = XX(jrho_axis, jthe_axis)
         y0 = YY(jrho_axis, jthe_axis)
-        psiax_out = PSI(jrho_axis, jthe_axis)
+        psiax = PSI(jrho_axis, jthe_axis)
     endif
 
     if (jrho_axis == 1 .and. jthe_axis == 1) then
@@ -201,21 +201,15 @@ iter_loop: do jiter=1, max_iter
 enddo iter_loop
 
 call build_2dgrid(nrho, ntheta,  Rb, Zb,  X0, Y0, &
-    lambda2d, lambda2dp, &
-    psin_grid, psiax_out, psib, j_ok, psin_gridp, PSI, &
-    dArea, Rmaj2, dArea2, &
-    dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
-    dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
-    ddr, ddr_i, dtp, dtm, dt_i, XX, YY, &
-    rmin, thetap, thetap_i, gradh, gradr2, gradh2)
-
-!regrid
-call build_2dgrid2(nrho, ntheta, psin_grid, &
-    XX, Rmaj2, rmin, thetap_i, gradr2, gradh2, &
+    lambda2d, lambda2dp, psin_grid, &
     PSI, r0, pressure, btor, ipol, iplasma, &
-    G2, G3, areat, perim, volum, G1, GRADRO, &
+    XX, YY, rmin, G2, G3, areat, perim, volum, G1, GRADRO, &
     BMAXT, BMINT, BDB02, BDB0, B0DB2, FOFB, &
     slat, li3, betapol)
+
+! Output
+
+psiax_out = psiax
 
 do jthe=1, ntheta
     jrhoteta(1: nrho, jthe) = -GPI2*(ffprimp(1: nrho) * 1./XX(1: nrho, jthe)/0.4/GPI + &
