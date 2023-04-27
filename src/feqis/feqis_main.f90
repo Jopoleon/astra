@@ -12,9 +12,9 @@ double precision, parameter :: GPI=3.141592653589793, &
 type(type_equilibrium), intent(in)  :: equil_in
 type(type_equilibrium), intent(out) :: equil_out
 
-integer :: jthe
-integer :: j_init
-double precision, allocatable, dimension(:) :: psigrida
+integer :: jthe, j_init
+double precision :: psi0, psiB
+double precision, allocatable, dimension(:) :: psi_norm_in, psi_norm_out
 double precision, allocatable, dimension(:, :) :: jrhoteta
 
 data j_init/0/
@@ -23,7 +23,8 @@ save j_init
 
 if (.not. allocated(teta)) allocate(teta(nteta))
 if (.not. allocated(jrhoteta)) then
-    allocate(psigrida(nrho))
+    allocate(psi_norm_in(nrho))
+    allocate(psi_norm_out(nrho))
     allocate(jrhoteta(nrho, nteta))
 endif
 
@@ -39,9 +40,9 @@ if (j_init == 0) then
     zaxp = 0.
 endif
 
-psigrida(1: nrho) = equil_in%profiles_1d%psi(1: nrho) !unnormalized
-psigrida(1: nrho) = (psigrida(1: nrho) - psigrida(1)) / &
-                    (psigrida(nrho)    - psigrida(1)) ! normalized: 0 axis,  1 sep
+psi0 = equil_in%profiles_1d%psi(1)
+psiB = equil_in%profiles_1d%psi(nrho)
+psi_norm_in = (equil_in%profiles_1d%psi - psi0)/(psiB - psi0) ! normalized: 0 axis,  1 sep
 
 allocate(equil_out%profiles_1d%psi(nrho))
 allocate(equil_out%profiles_1d%pressure(nrho))
@@ -98,12 +99,12 @@ allocate(equil_out%profiles_1d%tria_lower(nrho))
 allocate(equil_out%profiles_1d%shif(nrho))
 allocate(equil_out%profiles_1d%shiv(nrho))
 
-write(*, *) 'call fix equil code', nrho, nteta
+write(*, '(A, 2f8.4)') 'Call fix equil code', psi0, psiB
 
 !boundary from previous time step
 call PHI_EQ_2d_PBE( &
     nrho, nteta, &
-    psigrida(1: nrho), &
+    psi_norm_in, &
     equil_in%global_param%i_plasma/1.e6, &
     equil_in%profiles_1d%pressure, &
     equil_in%profiles_1d%ffprime, &
@@ -112,14 +113,13 @@ call PHI_EQ_2d_PBE( &
     rgeom0, &
     equil_in%eqgeometry%boundary%r, &
     equil_in%eqgeometry%boundary%z, &
-    Raxp, &
-    Zaxp, &
-    equil_in%profiles_1d%psi(nrho), &
+    Raxp, Zaxp, &
+    psi0, psiB, &
     equil_in%profiles_1d%F_dia, & 
     equil_out%coord_sys%position%r, &
     equil_out%coord_sys%position%z, &
     equil_out%coord_sys%position%psirz, &
-    equil_out%profiles_1d%psi, & 
+    psi_norm_out, & 
     equil_out%profiles_1d%g2, &
     equil_out%profiles_1d%gm1, &
     equil_out%profiles_1d%r_outboard, &
@@ -144,7 +144,10 @@ call PHI_EQ_2d_PBE( &
     equil_out%coord_sys%position%rmin, &
     jrhoteta, &
     equil_out%global_param%li3, &
-    equil_out%global_param%betpol)
+    equil_out%global_param%betpol, &
+    psi0)
+
+write(*, '(A, 2f8.4)') 'Done fix equil code', psi0, psiB
 
 raxp = equil_out%coord_sys%position%r(1, 1)
 zaxp = equil_out%coord_sys%position%z(1, 1)
@@ -158,15 +161,16 @@ equil_out%profiles_1d%pprime   = 0.
 equil_out%profiles_1d%pressure = 0.
 equil_out%profiles_1d%rho_tor  = 0.
 equil_out%profiles_1d%F_dia    = 0.
-
 equil_out%coord_sys%position%psirz = equil_out%coord_sys%position%psirz/GPI2
 
 teta(1: nteta) = equil_out%coord_sys%position%teta2d(1: nteta)
 teta(nteta+1) = teta(1) + GPI2
 
 equil_out%global_param%psplex   = 0.
-equil_out%global_param%psibound = equil_in%profiles_1d%psi(nrho)
-equil_out%global_param%psiaxis  = equil_in%profiles_1d%psi(1)
+equil_out%global_param%psibound = psiB
+equil_out%global_param%psiaxis  = psi0
+! Unnormalise psi
+equil_out%profiles_1d%psi = psi0 + (psiB - psi0)*psi_norm_out
 j_init = 1
 
 return

@@ -1,10 +1,10 @@
 subroutine PHI_EQ_2d_PBE(nrho, ntheta, psin_grid_in, iplasma, &
-    pressure, ffprimp, pprimp, btor, r0, Rb, Zb, Rax, Zax, PSIb, IPOL, &
-    XX, YY, PSI, &
+    pressure, ffprimp, pprimp, btor, r0, Rb, Zb, Rax, Zax, psiax_in, PSIb, &
+    IPOL, XX, YY, PSI, &
     psin_grid_out, g2, G3, r_out, r_in, volum, G1, G41, GRADRO, &
     BMAXT, BMINT, BDB02, BDB0, B0DB2, FOFB, &
     areat, perim, shif, elon, slat, tria, thetap_out, &
-    rmin, jrhoteta, li3, betapol)
+    rmin, jrhoteta, li3, betapol, psiax_out)
 
 implicit none
 
@@ -13,11 +13,11 @@ double precision, parameter :: GPI=3.141592653589793, GPI2=2.*GPI, &
     GPI4=GPI2**2, muvac=4.e-7*GPI
 
 integer, intent(in) :: nrho, ntheta
-double precision, intent(in) :: iplasma, R0, btor, rax, zax, psib
+double precision, intent(in) :: iplasma, R0, btor, rax, zax, psiax_in, psib
 double precision, intent(in) , dimension(nrho) :: pressure, ipol, ffprimp, pprimp, psin_grid_in
 double precision, intent(in) , dimension(ntheta) :: Rb, Zb
 
-double precision, intent(out) :: li3, betapol
+double precision, intent(out) :: li3, betapol, psiax_out
 double precision, intent(out), dimension(nrho) :: psin_grid_out, g1, g2, g3, g41, &
     volum, gradro, bmaxt, bmint, bdb02, bdb0, b0db2, fofb, &
     areat, perim, slat, r_out, r_in, shif, elon, tria
@@ -26,7 +26,7 @@ double precision, intent(out), dimension(nrho, ntheta) :: Psi, rmin, jrhoteta, X
 
 integer :: i, i1, i2, j, jthe, jrho, j_ok, jrho_axis, jthe_axis, &
     jiter, Ndims, LDAB, nan_count, info, jloc, jmin(2)
-double precision :: X0, Y0, X0o, Y0o, cnorm, denom, psiax, &
+double precision :: X0, Y0, X0o, Y0o, cnorm, denom, &
     yrr, ya, axis_change, &
     yrmax, yrmin, yzmax, yzmin, yrzmax, yrzmin
 double precision, dimension(3) :: xxxx1, yyyy1, pppp1
@@ -72,17 +72,17 @@ jrho_axis = 1
 jthe_axis = 1
 j_ok  = 0
 
-psiax = 0.
+psiax_out = psiax_in
 
 iter_loop: do jiter=1, max_iter
 
 ! recalculate psin_grid based on ffprime
     if (jiter >= 2 .and. (jrho_axis == 1 .and. jthe_axis == 1)) then
         gradh(nrho, 1) = btor*r0
-        gradh(nrho-1, 1) = sqrt((btor*r0)**2 - ffprimp(nrho) * (psin_grid(nrho) - psin_grid(nrho-1)) * (psib - psiax))
+        gradh(nrho-1, 1) = sqrt((btor*r0)**2 - ffprimp(nrho) * (psin_grid(nrho) - psin_grid(nrho-1)) * (psib - psiax_out))
         do j=nrho-2, 1, -1
             gradh(j, 1) = sqrt(gradh(j+1, 1)**2 - ffprimp(j+1) * &
-                (psin_grid(j+2) - psin_grid(j)) * (psib - psiax))
+                (psin_grid(j+2) - psin_grid(j)) * (psib - psiax_out))
         enddo
 
         tria(1) = 0.
@@ -92,7 +92,7 @@ iter_loop: do jiter=1, max_iter
 
         do jrho=1, nrho-1 ! safety factor at half grid
             elon(jrho) = (tria(jrho+1) - tria(jrho))/(psin_grid(jrho+1) - psin_grid(jrho)) / &
-                (psib - psiax)
+                (psib - psiax_out)
         enddo
 
         gradh2(1, 1) = 0.
@@ -108,7 +108,7 @@ iter_loop: do jiter=1, max_iter
 
     call build_2dgrid(nrho, ntheta, Rb, Zb, X0, Y0, &
         lambda2d, lambda2dp, psin_grid, &
-        psiax, psib, j_ok, psin_gridp, PSI, &
+        psiax_out, psib, j_ok, psin_gridp, PSI, &
         dArea, Rmaj2, dArea2, &
         dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
         dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
@@ -162,12 +162,12 @@ iter_loop: do jiter=1, max_iter
         denom = 4*gpsi(1)*gpsi(4) - gpsi(6)**2
         x0 = (gpsi(6)*gpsi(5) - 2*gpsi(4)*gpsi(2))/denom
         y0 = (gpsi(6)*gpsi(2) - 2*gpsi(1)*gpsi(5))/denom
-        psiax = gpsi(1)*x0**2 + gpsi(2)*x0 + gpsi(3) +  &
+        psiax_out = gpsi(1)*x0**2 + gpsi(2)*x0 + gpsi(3) +  &
                 gpsi(4)*y0**2 + gpsi(5)*y0 + gpsi(6)*x0*y0
     else
         x0 = XX(jrho_axis, jthe_axis)
         y0 = YY(jrho_axis, jthe_axis)
-        psiax = PSI(jrho_axis, jthe_axis)
+        psiax_out = PSI(jrho_axis, jthe_axis)
     endif
 
     if (jrho_axis == 1 .and. jthe_axis == 1) then
@@ -202,7 +202,7 @@ enddo iter_loop
 
 call build_2dgrid(nrho, ntheta,  Rb, Zb,  X0, Y0, &
     lambda2d, lambda2dp, &
-    psin_grid, psiax, psib, j_ok, psin_gridp, PSI, &
+    psin_grid, psiax_out, psib, j_ok, psin_gridp, PSI, &
     dArea, Rmaj2, dArea2, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
@@ -275,7 +275,7 @@ SHIF(1)  = XX(1, 1) - R0
 
 G41 = G1 ! to be fixed
 
-thetap_out(1: ntheta) = thetap(1: ntheta)
+thetap_out = thetap(1: ntheta)
 psin_grid_out = psin_grid
 
 return
