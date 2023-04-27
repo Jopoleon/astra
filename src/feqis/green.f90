@@ -3,21 +3,16 @@ double precision function green_function(r1, z1, r2, z2)
 implicit none
 
 double precision, intent(in) :: r1, z1, r2, z2
-double precision TT,K,ELCK,ELCE,ellk_green,elle_green
-double precision s21bbf,s21bcf,acl,alg
-integer ifailk,ifaile
+double precision :: TT, K, acl, alg
+double precision, external :: ellk_green, elle_green
 
 K = sqrt(4.*r1*r2/((r2 + r1)**2 + (z2 - z1)**2))
-
-TT = 1. - K**2.
+TT = 1. - K**2
 
 acl = tt
 alg = dlog(acl)
 
-ELCK = ellK_green(acl, alg)
-ELCE = ellE_green(acl, alg)
-
-green_function = ( (1.D0 - K**2./2.)*ELCK - ELCE )*( SQRT(r1*r2)/K )
+green_function = ( (1.D0 - K**2/2.)*ellK_green(acl, alg) - ellE_green(acl, alg))*( SQRT(r1*r2)/K )
 
 return
 end function green_function
