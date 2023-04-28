@@ -15,6 +15,7 @@ use const_inc, only: NA1, RTOR, BTOR, TIME, ROC, SGNIP, SGNBT
 use status_inc, only: TE, NE, FP, XRHO, ZEF, MU, ELON, SHif , IPOL, &
    AMETR
 use outcmn_inc, only: AWD, exp_file 
+use numerical_tools, only: qinterp
 
 implicit none
 
@@ -115,9 +116,9 @@ rhotor1d = XRHO(1:NA1)
 rhotor1d(NA1) = 1.d0
 rhotor1d(1) = 1.d-8
 
-call qinterp_metric(rhotor1d(1:NA1), IPOL(1:NA1)*RTOR*BTOR, NA1, &
+call qinterp(rhotor1d(1:NA1), IPOL(1:NA1)*RTOR*BTOR, NA1, &
         rho_eq(1:nrho_surf), ffp_eq(1:nrho_surf), nrho_surf)
-call qinterp_metric(rhotor1d(1:NA1), FP(1:NA1), NA1, &
+call qinterp(rhotor1d(1:NA1), FP(1:NA1), NA1, &
         rho_eq(1:nrho_surf), pf_eq(1:nrho_surf), nrho_surf)
 
 write(6, *) 'TORBEAM surf dims:', nthe_surf, nrho_surf
@@ -166,9 +167,9 @@ allocate( ne_interp(n_rho))
 if (n_interp < NA1) then ! Interpolate on reduced space grid
    drho_interp = 1./(n_rho - 1.d0)
    rho_interp = (/ (drho_interp*(i - 1.d0), i=1, n_rho) /)
-   call qinterp_metric(rhop(1: NA1), NE(1: NA1), NA1, &
+   call qinterp(rhop(1: NA1), NE(1: NA1), NA1, &
       rho_interp(1:n_rho), ne_interp(1:n_rho), n_rho)
-   call qinterp_metric(rhop(1: NA1), TE(1: NA1), NA1, &
+   call qinterp(rhop(1: NA1), TE(1: NA1), NA1, &
       rho_interp(1:n_rho), te_interp(1:n_rho), n_rho)
 else ! use original profiles
    rho_interp(1:n_rho) = rhop(1:n_rho)
@@ -401,8 +402,8 @@ gyro_loop: do jgy=1, n_gyro
       ECR = 0.d0
       CCD = 0.d0
 
-      call qinterp_metric(rtorb, ptorb, npnt, rhop(1:NA1), ECR(1:NA1), NA1)
-      call qinterp_metric(rtorb, ctorb, npnt, rhop(1:NA1), CCD(1:NA1), NA1)
+      call qinterp(rtorb, ptorb, npnt, rhop(1:NA1), ECR(1:NA1), NA1)
+      call qinterp(rtorb, ctorb, npnt, rhop(1:NA1), CCD(1:NA1), NA1)
 
 ! Profiles are equidistand in rho_tor, even though they are expressed
 ! as function of (irregular) rho_pol, because this rho_pol grid is

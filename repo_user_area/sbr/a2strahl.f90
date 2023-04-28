@@ -174,12 +174,12 @@ enddo
 if (NA1 > ngmax) then
 ! Interpolate to astra grid
     do isp=1, nimp_touse
-       call qinterp_metric(rhopol(1:NA1), Dzin(1:NA1,isp), NA1, rhopolg(1:ngmax), Dz_anom(1:ngmax,isp), ngmax)
-       call qinterp_metric(rhopol(1:NA1), Vzin(1:NA1,isp), NA1, rhopolg(1:ngmax), Vz_anom(1:ngmax,isp), ngmax)
+       call qinterp(rhopol(1:NA1), Dzin(1:NA1,isp), NA1, rhopolg(1:ngmax), Dz_anom(1:ngmax,isp), ngmax)
+       call qinterp(rhopol(1:NA1), Vzin(1:NA1,isp), NA1, rhopolg(1:ngmax), Vz_anom(1:ngmax,isp), ngmax)
     enddo
-    call qinterp_metric(rhopol(1:NA1), NE(1:NA1), NA1, rhopolg(1:ngmax), neg(1:ngmax), ngmax)
-    call qinterp_metric(rhopol(1:NA1), TE(1:NA1), NA1, rhopolg(1:ngmax), teg(1:ngmax), ngmax)
-    call qinterp_metric(rhopol(1:NA1), TI(1:NA1), NA1, rhopolg(1:ngmax), tig(1:ngmax), ngmax)
+    call qinterp(rhopol(1:NA1), NE(1:NA1), NA1, rhopolg(1:ngmax), neg(1:ngmax), ngmax)
+    call qinterp(rhopol(1:NA1), TE(1:NA1), NA1, rhopolg(1:ngmax), teg(1:ngmax), ngmax)
+    call qinterp(rhopol(1:NA1), TI(1:NA1), NA1, rhopolg(1:ngmax), tig(1:ngmax), ngmax)
 else
    Dz_anom = 1.*Dzin
    Vz_anom = 1.*Vzin
@@ -503,43 +503,43 @@ close(nch_r2)
 
 ! species-independent quantities
 ! Zeff
-call qinterp_metric(rpol_o(1:Nr_o), max(1., zeff_o(1:Nr_o)), Nr_o, &
+call qinterp(rpol_o(1:Nr_o), max(1., zeff_o(1:Nr_o)), Nr_o, &
      rhopol(1:NA1), zeff_strahl(1:NA1), NA1)
 
 ! Prad tot
-call qinterp_metric(rpol_o(1:Nr_o), pradtot_o(1:Nr_o)/1.E6, Nr_o, &
+call qinterp(rpol_o(1:Nr_o), pradtot_o(1:Nr_o)/1.E6, Nr_o, &
     rhopol(1:NA1), prad_tot_strahl(1:NA1), NA1)
 
 ! nmain
-call qinterp_metric(rpol_o(1:Nr_o), 1.E-19*max(nmain_o(1:Nr_o),0.0), Nr_o, &
+call qinterp(rpol_o(1:Nr_o), 1.E-19*max(nmain_o(1:Nr_o),0.0), Nr_o, &
     rhopol(1:NA1), nmain_strahl(1:NA1), NA1)
 
 ! Prad main
-call qinterp_metric(rpol_o(1:Nr_o), max(pradmain_o(1:Nr_o),0.0)/1.E6, Nr_o, &
+call qinterp(rpol_o(1:Nr_o), max(pradmain_o(1:Nr_o),0.0)/1.E6, Nr_o, &
     rhopol(1:NA1), prad_main_strahl(1:NA1), NA1)
 
 ! species-dependent quantities
 ! Prad species
 do isp=1, nimp_touse
-    call qinterp_metric(rpol_o(1:Nr_o), max(pradsp_o(1:Nr_o, isp),0.0)/1.E6, Nr_o, &
+    call qinterp(rpol_o(1:Nr_o), max(pradsp_o(1:Nr_o, isp),0.0)/1.E6, Nr_o, &
          rhopol(1:NA1), prad_strahl(1:NA1, isp), NA1)
 enddo
 
 ! nimp species
 do isp=1, nimp_touse
-    call qinterp_metric(rpol_o(1:Nr_o), 1.E-19*max(nimpsp_o(1:Nr_o, isp),0.0), Nr_o, &
+    call qinterp(rpol_o(1:Nr_o), 1.E-19*max(nimpsp_o(1:Nr_o, isp),0.0), Nr_o, &
          rhopol(1:NA1), nimp_strahl(1:NA1, isp), NA1)
 enddo
 
 ! zavg species
 do isp=1, nimp_touse
-    call qinterp_metric(rpol_o(1:Nr_o), max(zavgsp_o(1:Nr_o, isp),0.0), Nr_o, &
+    call qinterp(rpol_o(1:Nr_o), max(zavgsp_o(1:Nr_o, isp),0.0), Nr_o, &
          rhopol(1:NA1), zavg_strahl(1:NA1, isp), NA1)
 enddo
  
 ! ne source species
 do isp=1, nimp_touse
-    call qinterp_metric(rpol_o(1:Nr_o), 1.E-19*max(nesrcsp_o(1:Nr_o, isp),0.0), Nr_o, &
+    call qinterp(rpol_o(1:Nr_o), 1.E-19*max(nesrcsp_o(1:Nr_o, isp),0.0), Nr_o, &
          rhopol(1:NA1), nesrc_strahl(1:NA1, isp), NA1)
 enddo
 
@@ -552,13 +552,13 @@ enddo
 
 ! Dneo species
 do isp=1, nimp_touse
-    call qinterp_metric(rpol_o(1:Nr_o), dneosp_o(1:Nr_o, isp), Nr_o, &
+    call qinterp(rpol_o(1:Nr_o), dneosp_o(1:Nr_o, isp), Nr_o, &
          rhopol(1:NA1), Dneo_strahl(1:NA1, isp), NA1)
 enddo
 
 ! Vneo species
 do isp=1, nimp_touse
-    call qinterp_metric(rpol_o(1:Nr_o), vneosp_o(1:Nr_o, isp), Nr_o, &
+    call qinterp(rpol_o(1:Nr_o), vneosp_o(1:Nr_o, isp), Nr_o, &
          rhopol(1:NA1), Vneo_strahl(1:NA1, isp), NA1)
 enddo
 

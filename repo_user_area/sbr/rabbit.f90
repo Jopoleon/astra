@@ -8,6 +8,7 @@ use const_inc, only: GP2, AIM1, TIME, TAU, QNBI, ROC, &
 use status_inc, only: FP, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
    XRHO, VOLUM, IPOL, PEBM, PIBM, NIBM, CUBM, SNEBM, SCUBM, &
    PBLON, PBPER, MU, VTOR, ZEF
+use numerical_tools, only: reinterp_back_quad, qinterp
 
 implicit none
 
@@ -189,7 +190,7 @@ vol(1) = 0.d0
 psi_n(1) = 0.d0
 area = vol/(GP2*RTOR)
 
-call qinterp_metric(rhotor1d(1: NA1), FP(1: NA1), NA1, &
+call qinterp(rhotor1d(1: NA1), FP(1: NA1), NA1, &
       rho_eq(1: nrho_surf), pf_eq(1: nrho_surf), nrho_surf)
 
 !------------
@@ -246,14 +247,14 @@ i_cd = sum(jcd_rb*darea)
 
 tim_prev = TIME
 
-call qinterp_metric(rho_rab_out, pi_rb   , nrhoout, XRHO(1: NA1), PIBM( 1: NA1), NA1)
-call qinterp_metric(rho_rab_out, pe_rb   , nrhoout, XRHO(1: NA1), PEBM( 1: NA1), NA1)
-call qinterp_metric(rho_rab_out, nfi_rb  , nrhoout, XRHO(1: NA1), NIBM( 1: NA1), NA1)
-call qinterp_metric(rho_rab_out, tq_rb   , nrhoout, XRHO(1: NA1), SCUBM(1: NA1), NA1)
-call qinterp_metric(rho_rab_out, jcd_rb  , nrhoout, XRHO(1: NA1), CUBM( 1: NA1), NA1)
-call qinterp_metric(rho_rab_out, src_rb  , nrhoout, XRHO(1: NA1), SNEBM(1: NA1), NA1)
-call qinterp_metric(rho_rab_out, pfi_par , nrhoout, XRHO(1: NA1), PBLON(1: NA1), NA1)
-call qinterp_metric(rho_rab_out, pfi_perp, nrhoout, XRHO(1: NA1), PBPER(1: NA1), NA1)
+call qinterp(rho_rab_out, pi_rb   , nrhoout, XRHO(1: NA1), PIBM( 1: NA1), NA1)
+call qinterp(rho_rab_out, pe_rb   , nrhoout, XRHO(1: NA1), PEBM( 1: NA1), NA1)
+call qinterp(rho_rab_out, nfi_rb  , nrhoout, XRHO(1: NA1), NIBM( 1: NA1), NA1)
+call qinterp(rho_rab_out, tq_rb   , nrhoout, XRHO(1: NA1), SCUBM(1: NA1), NA1)
+call qinterp(rho_rab_out, jcd_rb  , nrhoout, XRHO(1: NA1), CUBM( 1: NA1), NA1)
+call qinterp(rho_rab_out, src_rb  , nrhoout, XRHO(1: NA1), SNEBM(1: NA1), NA1)
+call qinterp(rho_rab_out, pfi_par , nrhoout, XRHO(1: NA1), PBLON(1: NA1), NA1)
+call qinterp(rho_rab_out, pfi_perp, nrhoout, XRHO(1: NA1), PBPER(1: NA1), NA1)
 
 if (ALFA > 0.) then 
     call smearr(ALFA, PIBM , PIBM )
