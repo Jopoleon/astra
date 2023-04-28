@@ -111,7 +111,6 @@ call PHI_EQ_2d_PBE( &
     nrho, ntheta, &
     psi_norm_in, &
     equil_in%global_param%i_plasma/1.e6, &
-    equil_in%profiles_1d%pressure, &
     equil_in%profiles_1d%ffprime, &
     equil_in%profiles_1d%pprime, &
     equil_in%global_param%toroid_field%b0, &
@@ -120,7 +119,7 @@ call PHI_EQ_2d_PBE( &
     equil_in%eqgeometry%boundary%z, &
     Raxp, Zaxp, &
     psi0, psiB, &
-    equil_in%profiles_1d%F_dia, & 
+! Output
     equil_out%coord_sys%position%r, &
     equil_out%coord_sys%position%z, &
     equil_out%coord_sys%position%psirz, &

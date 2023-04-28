@@ -1,8 +1,9 @@
 subroutine PHI_EQ_2d_PBE(nrho, ntheta, psin_grid_in, iplasma, &
-    pressure, ffprimp, pprimp, btor, r0, Rb, Zb, Rax, Zax, psiax_in, PSIb, IPOL, &
+    ffprimp, pprimp, btor, r0, Rb, Zb, Rax, Zax, psiax_in, PSIb, &
+! Output
     XX, YY, PSI, &
-    psin_grid_out, lambda2d, lambda2dp, thetap_out, &
-    psiax_out, cnorm, X0_out, Y0_out)
+    psin_grid, lambda2d, lambda2dp, thetap_out, &
+    psiax, cnorm, X0, Y0)
 
 use pi_vars, only: GPI, GPI2, GPI4, muvac
 implicit none
@@ -11,19 +12,19 @@ integer, parameter :: max_iter=500
 
 integer, intent(in) :: nrho, ntheta
 double precision, intent(in) :: iplasma, R0, btor, rax, zax, psiax_in, psib
-double precision, intent(in) , dimension(nrho) :: pressure, ipol, ffprimp, pprimp, psin_grid_in
+double precision, intent(in) , dimension(nrho) :: ffprimp, pprimp, psin_grid_in
 double precision, intent(in) , dimension(ntheta) :: Rb, Zb
 
-double precision, intent(out) :: psiax_out, cnorm, X0_out, Y0_out
-double precision, intent(out), dimension(nrho) :: psin_grid_out
+double precision, intent(out) :: psiax, cnorm, X0, Y0
+double precision, intent(out), dimension(nrho) :: psin_grid
 double precision, intent(out), dimension(ntheta) :: thetap_out
 double precision, intent(out), dimension(nrho, ntheta) :: Psi, XX, YY, lambda2d, lambda2dp
 
 integer :: j, jthe, jrho, j_ok, jrho_axis, jthe_axis, &
     jiter, Ndims, LDAB, nan_count, info, jloc, jmin(2)
-double precision :: X0, Y0, X0o, Y0o, denom, psiax, axis_change
+double precision :: X0o, Y0o, denom, axis_change
 double precision, dimension(nrho) :: ddr, ddr_i, PSIn_gridp, effprimp, epprimp, &
-    psin_grid, fpol, fpol2, phitor, qhalf
+    fpol, fpol2, phitor, qhalf
 double precision, dimension(ntheta) :: dtp, dtm, dt_i
 double precision, dimension(ntheta+1) :: thetap, thetap_i
 double precision, dimension(nrho, ntheta) :: dArea, Rmaj2, &
@@ -194,11 +195,7 @@ iter_loop: do jiter=1, max_iter
     endif
 enddo iter_loop
 
-X0_out = X0
-Y0_out = Y0 
-psiax_out = psiax
 thetap_out = thetap(1: ntheta)
-psin_grid_out = psin_grid
 
 return
 end subroutine PHI_EQ_2d_PBE

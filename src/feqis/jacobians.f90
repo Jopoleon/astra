@@ -27,7 +27,7 @@ double precision, intent(out), dimension(nrho, ntheta) :: dArea, dArea2, X2, &
     X, Y, lambda2d_out, lambda2dp_out
 
 integer :: jrho, jthe, jthe_l, jthe_r, j, k
-double precision :: drdX, dhdX, drdY, dhdY, Mdet_inv, dpsi, dthe
+double precision :: drdX, dhdX, drdY, dhdY, Mdet_inv
 double precision, dimension(nrho) ::  lambda2dold
 double precision, dimension(ntheta) :: dXb0, dXb0_i
 double precision, dimension(nrho, ntheta) :: lambda2d, lambda2dp, &
