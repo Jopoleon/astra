@@ -5,7 +5,7 @@ subroutine jacobians(nrho, ntheta, Rb, Zb, X0, Y0, lambda2d_in, lambda2dp_in, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
     ddr, ddr_i, dtp, dtm, dt_i, X, Y, &
-    thetap, thetap_i, lambda2d_out, lambda2dp_out)
+    thetap, thetap_i, lambda2d, lambda2dp)
 
 use pi_vars, only: GPI2
 use numerical_tools, only: linterp
@@ -25,13 +25,13 @@ double precision, intent(out), dimension(ntheta+1) :: thetap, thetap_i
 double precision, intent(out), dimension(nrho, ntheta) :: dArea, dArea2, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
-    X, Y, X2, lambda2d_out, lambda2dp_out
+    X, Y, X2, lambda2d, lambda2dp
 
 integer :: jrho, jthe, jthe_l, jthe_r, j, k
 double precision :: drdX, dhdX, drdY, dhdY, Mdet_inv
 double precision, dimension(nrho) ::  lambda2dold
 double precision, dimension(ntheta) :: dXb0, dXb0_i
-double precision, dimension(nrho, ntheta) :: lambda2d, lambda2dp, &
+double precision, dimension(nrho, ntheta) :: &
     lambda2di, lambda2dpi, psin, Y2, X_i, Y_i, &
     dXdr2, dYdr2, dXdr, dYdr, dXdri1, dYdri1, &
     dXdh2, dYdh2, dXdh, dYdh, dXdhi1, dYdhi1, &
@@ -254,9 +254,6 @@ do jrho=2, nrho
         dArc_tmr1(jrho, jthe) = Jcbni1(jrho, jthe_l)*grti1  (jrho, jthe_l)*ddr_i(jrho)/X_i1(jrho, jthe_l)
     enddo
 enddo
-
-lambda2d_out  = lambda2d
-lambda2dp_out = lambda2dp
 
 return
 end subroutine jacobians
