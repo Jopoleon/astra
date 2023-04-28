@@ -23,13 +23,15 @@ double precision, intent(out), dimension(nrho, ntheta) :: Psi, XX, YY, lambda2d,
 integer :: j, jthe, jrho, j_ok, jrho_axis, jthe_axis, &
     jiter, Ndims, LDAB, nan_count, info, jloc, jmin(2)
 double precision :: X0, Y0, X0o, Y0o, denom, psiax, axis_change
-double precision, dimension(nrho) :: PSIn_gridp, effprimp, epprimp, psin_grid, fpol, fpol2, phitor, qhalf
+double precision, dimension(nrho) :: ddr, ddr_i, PSIn_gridp, effprimp, epprimp, &
+    psin_grid, fpol, fpol2, phitor, qhalf
+double precision, dimension(ntheta) :: dtp, dtm, dt_i
 double precision, dimension(ntheta+1) :: thetap, thetap_i
 double precision, dimension(nrho, ntheta) :: dArea, Rmaj2, &
     known_term, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
-    ddr, ddr_i, dtp, dtm, dt_i, dArea2
+    dArea2
 double precision :: gpsi(2*ntheta+1), work(2*(2*ntheta+1)*6), matrix(2*ntheta+1, 6)
 
 Ndims = 1 + (nrho - 2)*ntheta
