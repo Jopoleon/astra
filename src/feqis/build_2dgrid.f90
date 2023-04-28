@@ -6,7 +6,7 @@ subroutine build_2dgrid(nrho, ntheta, Rb, Zb, X0, Y0, lambda2d, lambda2dp, psin_
     slat, li3, betapol)
 
 use pi_vars, only: GPI, GPI2
-use interp_mod, only: qinterp
+use interp_mod, only: qinterp, extrapolate
 
 implicit none
 
@@ -32,7 +32,6 @@ double precision, dimension(nrho, ntheta) :: &
     lambda2dpi, X_i, Y_i, dXdr2, dYdr2, dXdh2, dYdh2, &
     rr2, r_i, Rmaj2, Jcbn2, gradr2, &
     gradPSIa, gradVa, dV2da, dA2da, B_pola, B_ABSa, B_Ta
-double precision, external :: EXTRAPOLATE
 
 do jthe=1, ntheta
     dXb0(jthe) = sqrt((rb(jthe) - X0)**2 + (zb(jthe) - Y0)**2)
@@ -287,28 +286,3 @@ BMINT(1) = ipol_rmaj
 
 return
 end subroutine build_2dgrid
-
-!-------------------------------------------------------------------
-double precision function EXTRAPOLATE(x_interp, j1, j2, j3, narr, rho, y_in)
-
-implicit none
-
-integer, intent(in) :: j1, j2, j3, narr
-double precision, intent(in) :: x_interp
-double precision, intent(in), dimension(narr) :: rho, y_in
-
-double precision :: x1, x2, x3, f1, f2, f3, dfdx, d2fdx
-
-f1 = y_in(j1)
-f2 = y_in(j2)
-f3 = y_in(j3)
-x1 = rho(j1)
-x2 = rho(j2)
-x3 = rho(j3)
-dfdx = (f3 - f1)/(x3 - x1)
-d2fdx = ((f3 - f2)/(x3 - x2) - (f2 - f1)/(x2 - x1))/(x3 - x1)
-
-EXTRAPOLATE = f2 + (x_interp - x2)*(dfdx + d2fdx*(x_interp - x2))
-      
-return
-end function EXTRAPOLATE

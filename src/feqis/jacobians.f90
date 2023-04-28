@@ -1,5 +1,5 @@
 subroutine jacobians(nrho, ntheta, Rb, Zb, X0, Y0, lambda2d_in, lambda2dp_in, &
-    psig, psiax, psib, j_ok, psigp, PSI, &
+    psig, psiax, psib, relambda_flag, psigp, PSI, &
 ! Output
     dArea, X2, dArea2, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
@@ -12,7 +12,8 @@ use interp_mod, only: linterp
 
 implicit none
 
-integer, intent(in) :: ntheta, nrho, j_ok
+logical, intent(in) :: relambda_flag
+integer, intent(in) :: ntheta, nrho
 double precision, intent(in) :: psiax, psib, X0, Y0
 double precision, intent(in), dimension(ntheta) :: Rb, Zb
 double precision, intent(in), dimension(nrho) :: psig, psigp
@@ -21,10 +22,10 @@ double precision, intent(in), dimension(nrho, ntheta) :: psi, lambda2d_in, lambd
 double precision, intent(out), dimension(nrho) :: ddr, ddr_i
 double precision, intent(out), dimension(ntheta) :: dtp, dtm, dt_i
 double precision, intent(out), dimension(ntheta+1) :: thetap, thetap_i
-double precision, intent(out), dimension(nrho, ntheta) :: dArea, dArea2, X2, &
+double precision, intent(out), dimension(nrho, ntheta) :: dArea, dArea2, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
-    X, Y, lambda2d_out, lambda2dp_out
+    X, Y, X2, lambda2d_out, lambda2dp_out
 
 integer :: jrho, jthe, jthe_l, jthe_r, j, k
 double precision :: drdX, dhdX, drdY, dhdY, Mdet_inv
@@ -86,7 +87,7 @@ dXb0_i(ntheta) = dXb0_i(1)
 lambda2d = lambda2d_in
 lambda2dp = lambda2dp_in
 
-if (j_ok == 1) then !relambda
+if (relambda_flag) then !relambda
     psin = (psi - psiax)/(psib - psiax)
     psin(   1, :) = 0.
     psin(nrho, :) = 1.

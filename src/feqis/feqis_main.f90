@@ -12,7 +12,7 @@ type(type_equilibrium), intent(out) :: equil_out
 
 integer :: jrho, jthe, j_init, nrho, ntheta, i, i1, i2
 double precision :: psi0, psiB, cnorm, X0, Y0, &
-    yrr, ya, yrmax, yrmin, yzmax, yzmin, yrzmax, yrzmin, R0
+    yrr, ya, yrmax, yrmin, yzmax, yzmin, yrzmax, yrzmin, R0, rbphi
 double precision, dimension(3) :: xxxx1, yyyy1, pppp1
 double precision, allocatable, dimension(:) :: psi_norm_in, psi_norm_out, &
     elon, tria, shif, r_in, r_out
@@ -36,18 +36,20 @@ if (.not. allocated(lambda2d)) then
         lambda2d(nrho, ntheta), lambda2dp(nrho, ntheta))
 endif
 
+psi0 = equil_in%profiles_1d%psi(1)
+psiB = equil_in%profiles_1d%psi(nrho)
+psi_norm_in = (equil_in%profiles_1d%psi - psi0)/(psiB - psi0) ! normalized: 0 axis,  1 sep
+R0 = equil_in%global_param%toroid_field%r0
+rbphi = equil_in%global_param%toroid_field%b0 * R0
+
 if (j_init == 0) then
 ! Initial polar grid: regular from 0 to 2*pi
     do jthe=1, ntheta+1
         theta(jthe) = GPI2*(jthe - 1.)/(ntheta + 0.)
     enddo
-    raxp = equil_in%global_param%toroid_field%r0
+    raxp = R0
     zaxp = 0.
 endif
-
-psi0 = equil_in%profiles_1d%psi(1)
-psiB = equil_in%profiles_1d%psi(nrho)
-psi_norm_in = (equil_in%profiles_1d%psi - psi0)/(psiB - psi0) ! normalized: 0 axis,  1 sep
 
 allocate(equil_out%profiles_1d%psi(nrho))
 allocate(equil_out%profiles_1d%pressure(nrho))
@@ -57,10 +59,10 @@ allocate(equil_out%profiles_1d%ffprime(nrho))
 allocate(equil_out%profiles_1d%F_dia(nrho))
 allocate(equil_out%profiles_1d%q(nrho))
 allocate(equil_out%coord_sys%position%r(nrho, ntheta))
-allocate(equil_out%coord_sys%position%z(nrho, ntheta))    
-allocate(equil_out%coord_sys%position%teta2d(ntheta))    
-allocate(equil_out%coord_sys%position%rmin(nrho, ntheta))    
-allocate(equil_out%coord_sys%position%psirz(nrho, ntheta))    
+allocate(equil_out%coord_sys%position%z(nrho, ntheta))
+allocate(equil_out%coord_sys%position%teta2d(ntheta))
+allocate(equil_out%coord_sys%position%rmin(nrho, ntheta))
+allocate(equil_out%coord_sys%position%psirz(nrho, ntheta))
 allocate(equil_out%eqgeometry%boundary%r(ntheta))
 allocate(equil_out%eqgeometry%boundary%z(ntheta))
 allocate(equil_out%profiles_1d%rho_tor(nrho) )
@@ -81,7 +83,7 @@ allocate(equil_out%profiles_1d%bplfs(nrho))
 allocate(equil_out%profiles_1d%acosB2a(nrho, 5))
 allocate(equil_out%profiles_1d%asinB2a(nrho, 5))
 allocate(equil_out%profiles_1d%acosBlnBa(nrho, 5))
-allocate(equil_out%profiles_1d%asinBlnBa(nrho, 5))     
+allocate(equil_out%profiles_1d%asinBlnBa(nrho, 5))
 allocate(equil_out%profiles_1d%g1(nrho))
 allocate(equil_out%profiles_1d%g2(nrho))
 allocate(equil_out%profiles_1d%g2int(nrho))
@@ -100,7 +102,7 @@ allocate(equil_out%profiles_1d%r_inboard(nrho))
 allocate(equil_out%profiles_1d%r_outboard(nrho))
 allocate(equil_out%profiles_1d%elongation(nrho))
 allocate(equil_out%profiles_1d%tria_upper(nrho))
-allocate(equil_out%profiles_1d%tria_lower(nrho)) 
+allocate(equil_out%profiles_1d%tria_lower(nrho))
 allocate(equil_out%profiles_1d%shif(nrho))
 allocate(equil_out%profiles_1d%shiv(nrho))
 
@@ -113,8 +115,7 @@ call PHI_EQ_2d_PBE( &
     equil_in%global_param%i_plasma/1.e6, &
     equil_in%profiles_1d%ffprime, &
     equil_in%profiles_1d%pprime, &
-    equil_in%global_param%toroid_field%b0, &
-    equil_in%global_param%toroid_field%r0, &
+    rbphi, &
     equil_in%eqgeometry%boundary%r, &
     equil_in%eqgeometry%boundary%z, &
     Raxp, Zaxp, &
@@ -123,7 +124,7 @@ call PHI_EQ_2d_PBE( &
     equil_out%coord_sys%position%r, &
     equil_out%coord_sys%position%z, &
     equil_out%coord_sys%position%psirz, &
-    psi_norm_out, lambda2d, lambda2dp, & 
+    psi_norm_out, lambda2d, lambda2dp, &
     equil_out%coord_sys%position%teta2d, &
     psi0, cnorm, X0, Y0)
 

@@ -1,5 +1,5 @@
 subroutine PHI_EQ_2d_PBE(nrho, ntheta, psin_grid_in, iplasma, &
-    ffprimp, pprimp, btor, r0, Rb, Zb, Rax, Zax, psiax_in, PSIb, &
+    ffprimp, pprimp, rbphi, Rb, Zb, Rax, Zax, psiax_in, PSIb, &
 ! Output
     XX, YY, PSI, &
     psin_grid, lambda2d, lambda2dp, thetap_out, &
@@ -11,7 +11,7 @@ implicit none
 integer, parameter :: max_iter=500
 
 integer, intent(in) :: nrho, ntheta
-double precision, intent(in) :: iplasma, R0, btor, rax, zax, psiax_in, psib
+double precision, intent(in) :: iplasma, rbphi, rax, zax, psiax_in, psib
 double precision, intent(in) , dimension(nrho) :: ffprimp, pprimp, psin_grid_in
 double precision, intent(in) , dimension(ntheta) :: Rb, Zb
 
@@ -20,27 +20,27 @@ double precision, intent(out), dimension(nrho) :: psin_grid
 double precision, intent(out), dimension(ntheta) :: thetap_out
 double precision, intent(out), dimension(nrho, ntheta) :: Psi, XX, YY, lambda2d, lambda2dp
 
-integer :: j, jthe, jrho, j_ok, jrho_axis, jthe_axis, &
+logical :: relambda_flag=.FALSE.
+integer :: jthe, jrho, jrho_axis, jthe_axis, &
     jiter, Ndims, LDAB, nan_count, info, jloc, jmin(2)
 double precision :: X0o, Y0o, denom, axis_change
 double precision, dimension(nrho) :: ddr, ddr_i, PSIn_gridp, effprimp, epprimp, &
     fpol, fpol2, phitor, qhalf
 double precision, dimension(ntheta) :: dtp, dtm, dt_i
 double precision, dimension(ntheta+1) :: thetap, thetap_i
-double precision, dimension(nrho, ntheta) :: dArea, Rmaj2, &
-    known_term, &
+double precision, dimension(nrho, ntheta) :: dArea, dArea2, &
+    Rmaj2, known_term, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
-    dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
-    dArea2
+    dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1
 double precision :: gpsi(2*ntheta+1), work(2*(2*ntheta+1)*6), matrix(2*ntheta+1, 6)
 
 Ndims = 1 + (nrho - 2)*ntheta
 LDAB = 6*ntheta + 1
 psin_grid = psin_grid_in
 
-do j=1, nrho
-    epprimp(j)  = -GPI4*muvac*pprimp(j)
-    effprimp(j) = -GPI4*ffprimp(j)
+do jrho=1, nrho
+    epprimp(jrho)  = -GPI4*muvac*pprimp(jrho)
+    effprimp(jrho) = -GPI4*ffprimp(jrho)
 enddo
 
 do jrho=1, nrho
@@ -50,8 +50,8 @@ do jrho=1, nrho
 enddo
 lambda2dp = lambda2d + 0.5/(nrho - 1.)
 
-do j=1, ntheta
-    PSI(1: nrho, j) = psin_grid(1: nrho)
+do jthe=1, ntheta
+    PSI(:, jthe) = psin_grid(:)
 enddo
 
 do jrho=1, nrho-1
@@ -65,7 +65,6 @@ Y0o = Y0
 
 jrho_axis = 1
 jthe_axis = 1
-j_ok  = 0
 
 psiax = psiax_in
 
@@ -73,16 +72,16 @@ iter_loop: do jiter=1, max_iter
 
 ! recalculate psin_grid based on ffprime
     if (jiter >= 2 .and. (jrho_axis == 1 .and. jthe_axis == 1)) then
-        fpol(nrho) = btor*r0
-        fpol(nrho-1) = sqrt((btor*r0)**2 - ffprimp(nrho) * (psin_grid(nrho) - psin_grid(nrho-1)) * (psib - psiax))
-        do j=nrho-2, 1, -1
-            fpol(j) = sqrt(fpol(j+1)**2 - ffprimp(j+1) * &
-                (psin_grid(j+2) - psin_grid(j)) * (psib - psiax))
+        fpol(nrho) = rbphi
+        fpol(nrho-1) = sqrt(rbphi**2 - ffprimp(nrho) * (psin_grid(nrho) - psin_grid(nrho-1)) * (psib - psiax))
+        do jrho=nrho-2, 1, -1
+            fpol(jrho) = sqrt(fpol(jrho+1)**2 - ffprimp(jrho+1) * &
+                (psin_grid(jrho+2) - psin_grid(jrho)) * (psib - psiax))
         enddo
 
         phitor(1) = 0.
         do jrho=2, nrho ! toroidal flux on full grid
-            phitor(jrho) = phitor(jrho-1) + fpol(jrho-1) * sum(dArea2(jrho-1, 1: ntheta)/Rmaj2(jrho-1, 1: ntheta))
+            phitor(jrho) = phitor(jrho-1) + fpol(jrho-1) * sum(dArea2(jrho-1, :)/Rmaj2(jrho-1, :))
         enddo
 
         do jrho=1, nrho-1 ! safety factor at half grid
@@ -103,7 +102,7 @@ iter_loop: do jiter=1, max_iter
 
     call jacobians(nrho, ntheta, Rb, Zb, X0, Y0, &
         lambda2d, lambda2dp, psin_grid, &
-        psiax, psib, j_ok, psin_gridp, PSI, &
+        psiax, psib, relambda_flag, psin_gridp, PSI, &
         dArea, Rmaj2, dArea2, &
         dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
         dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
@@ -111,8 +110,8 @@ iter_loop: do jiter=1, max_iter
         thetap, thetap_i, lambda2d, lambda2dp)
 
     do jthe=1, ntheta
-        known_term(1: nrho, jthe) = (effprimp(1: nrho) * dArea(1: nrho, jthe)/XX(1: nrho, jthe) + &
-            XX(1: nrho, jthe)*epprimp(1: nrho)*dArea(1: nrho, jthe))
+        known_term(:, jthe) = (effprimp(:) * dArea(:, jthe)/XX(:, jthe) + &
+            XX(:, jthe)*epprimp(:)*dArea(:, jthe))
     enddo
 
     cnorm = sum(known_term)/iplasma/GPI2/0.4/GPI
@@ -165,11 +164,7 @@ iter_loop: do jiter=1, max_iter
         psiax = PSI(jrho_axis, jthe_axis)
     endif
 
-    if (jrho_axis == 1 .and. jthe_axis == 1) then
-        j_ok = 1
-    else
-        j_ok = 0
-    endif
+    relambda_flag = (jrho_axis == 1 .and. jthe_axis == 1)
 
     nan_count = 0
     do jrho=1, nrho
