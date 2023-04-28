@@ -8,7 +8,7 @@ subroutine jacobians(nrho, ntheta, Rb, Zb, X0, Y0, lambda2d_in, lambda2dp_in, &
     thetap, thetap_i, lambda2d_out, lambda2dp_out)
 
 use pi_vars, only: GPI2
-use interp_mod, only: linterp
+use numerical_tools, only: linterp
 
 implicit none
 

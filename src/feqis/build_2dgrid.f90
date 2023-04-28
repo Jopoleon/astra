@@ -6,7 +6,7 @@ subroutine build_2dgrid(nrho, ntheta, Rb, Zb, X0, Y0, lambda2d, lambda2dp, psin_
     slat, li3, betapol)
 
 use pi_vars, only: GPI, GPI2
-use interp_mod, only: qinterp, extrapolate
+use numerical_tools, only: qinterp, extrapolate
 
 implicit none
 

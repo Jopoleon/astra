@@ -2,7 +2,7 @@ subroutine feqis_main(equil_in, equil_out)
 
 use imas_ids, only: type_equilibrium
 use feqis_geom, only: theta, raxp, zaxp
-use interp_mod, only: polyfitcc
+use numerical_tools, only: polyfitcc
 use pi_vars, only: GPI, GPI2
 
 implicit none
