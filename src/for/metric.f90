@@ -80,7 +80,7 @@ CASE(4: 5)  ! SPIDER, FEQIS
    if (TIME > TSTART) NDTEQUILMY=1
    if (TIME-TIMEQL >= NDTEQUILMY*DTEQL) then
       call RHSEQ   ! Define p', FF', j_tor=CUTOR
-      call A2GSSOLVER_EF(equil_solver)
+      call A2GSSOLVER(equil_solver)
       call ADDTIME(CPTEQL)
       TIMEQL = TIME
    endif
@@ -107,6 +107,7 @@ use status_inc, only: RHO, XRHO, VR, VRS, AMETR, SHIF, SHIV, &
    FOFB, BMAXT, BMINT, DRODA, GRADRO, VOLUM
 use const_inc, only: VOLUME, GP, GP2, RTOR, BTOR, DELOUT, &
    ABC, HRO, ROC, FTO, ROWALL, NA, NA1, NB1
+use numerical_tools, only: integr
 use debugger, only: markloc, debug
 
 implicit none
@@ -154,7 +155,7 @@ if (NA < NB1) then
    DELOUT(13) = NB1
 endif
 NA = NA1 - 1
-call INTEGR_EF(RHO, 1, VR, VOLUM, NB1)
+call INTEGR(RHO, 1, VR, VOLUM, NB1)
 VOLUME = VOLUM(NA1)
 
 end subroutine EQCYL
@@ -182,6 +183,7 @@ use status_inc, only: RHO, VR, VRS, AMETR, SHIF, &
    ELON, TRIA, SLAT, G11, G22, G33, G41, G42, G43, G44, G45, &
    BDB0, BDB02, B0DB2, IPOL, MU, FP, FV, SHEAR, &
    FOFB, BMAXT, BMINT, DRODA, GRADRO, VOLUM
+use numerical_tools, only: integr
 use debugger, only: markloc, debug
 
 implicit none
@@ -298,7 +300,7 @@ do J=NA1, NAB
    FOFB(j)  = FOFB(NA1)
 enddo
 
-call INTEGR_EF(RHO, 1, VR, VOLUM, NA1)
+call INTEGR(RHO, 1, VR, VOLUM, NA1)
 
 VOLUME = VOLUM(NA1)
 
@@ -321,6 +323,7 @@ use status_inc, only: SHIF, ELON, TRIA, SHX, ELX, TRX, &
    BDB0, BDB02, B0DB2, BMINT, BMAXT, FOFB, VOLUM, SHEAR, FP, MU
 use debugger, only: markloc, debug
 use parse_utils, only: ifdefx2
+use numerical_tools, only: integr
 
 implicit none
 
@@ -418,7 +421,7 @@ DRODA(NA1) = 1.5*DRODA(NA) - 0.5*DRODA(NA-1)
 G11(NA1)   = 1.5*G11(NA)   - 0.5*G11(NA-1)
 
 ! Compute new minor radius
-call INTEGR_EF(RHO(1: NA1), 1, 1./DRODA(1: NA1), AMETR(1: NA1), NA1)
+call INTEGR(RHO(1: NA1), 1, 1./DRODA(1: NA1), AMETR(1: NA1), NA1)
 ABC = AMETR(NA1)
 
 do J=1, NA1
@@ -468,7 +471,7 @@ if (NA1 < NAB) then
    enddo
 
 ! Volume (on the shifted grid) is calculated using VR:
-   call INTEGR_EF(RHO, 1, VR, VOLUM, NA1)
+   call INTEGR(RHO, 1, VR, VOLUM, NA1)
 
    call NEWGRD ! The RHO-grid and NA, NA1 are updated
 
@@ -571,6 +574,7 @@ use status_inc, only: TE, TI, CU, CUTOR, SHEAR, SHIV, &
     SLAT, VOLUM, SHIF, ELON, TRIA, DRODA, GRADRO, VR, VRS, XRHO, & 
     G11, G22, G33, G41, G42, G43, G44, G45, & 
     BDB0, BDB02, B0DB2, BMAXT, BMINT, FOFB
+use numerical_tools, only: integr
 use debugger, only: markloc
 
 implicit none
@@ -847,7 +851,7 @@ do J=NA1, NAB
    FOFB(j)  = FOFB(NA1)
 enddo
 
-call INTEGR_EF(RHO, 1, VR, VOLUM, NA1)
+call INTEGR(RHO, 1, VR, VOLUM, NA1)
 VOLUME = VOLUM(NA1)
 
 !Efable add G41-G45 : these are on the shifted grid.
@@ -863,7 +867,7 @@ return
 end subroutine A2EMEQ
 
 !======================================================================|
-subroutine A2GSSOLVER_EF(equil_solver)
+subroutine A2GSSOLVER(equil_solver)
 
 use parameter_inc, only: NRD
 use outcmn_inc, only: TASK, machine, DXLET, CCOIL, VCOIL, DUMCTP, DUMCT, NBNT
@@ -895,7 +899,7 @@ data jnstep/0/
 data j_save_bound/0/
 data yiplout/0./
 
-call markloc('A2GSSOLVER_EF')
+call markloc('A2GSSOLVER')
 
 jstepp = 10
 
@@ -1133,7 +1137,7 @@ VOLUME = VOLUM(NA1)
 jnstep = jnstep + 1 ! Count SPIDER calls, this was outside enddo
 
 return
-end subroutine A2GSSOLVER_EF
+end subroutine A2GSSOLVER
 
 !======================================================================|
 subroutine BNDRY(RPB, ZPB)
@@ -1512,6 +1516,7 @@ subroutine CUOFMU
 
 use const_inc, only: GP, GP2, RTOR, BTOR, NA1, NA, PSIBO, PSIAX, HRO
 use status_inc, only: RHO, SRHO, XRHO, CU, MU, FP, G22, G33, IPOL
+use numerical_tools, only: extrap, integr
 
 implicit none
 
@@ -1544,7 +1549,7 @@ do j=1, NA1
    YAR(j) = GP2*BTOR*MU(j)*SRHO(j)
 enddo
 
-call INTEGR_EF(SRHO(1:NA1), 2, YAR(1:NA1), FP(1:NA1), NA1)
+call INTEGR(SRHO(1:NA1), 2, YAR(1:NA1), FP(1:NA1), NA1)
 
 HH = HRO*HRO
 YAJ = 0.
@@ -1560,7 +1565,7 @@ do J=1, NA
    CU(j) = (YAJ - YCJ)/(HRO*(j - 0.5))
 enddo
 
-call EXTRAP_EF(XRHO(1:NA), CU(1:NA), XRHO(NA1), NA, CU(NA1), 2, NA)
+call EXTRAP(XRHO(1:NA), CU(1:NA), XRHO(NA1), NA, CU(NA1), 2, NA)
 YCJ = 1.25/(GP*GP*RTOR)
 YAJ = 0.5/(GP*BTOR)
 do J=1, NA1
@@ -1568,7 +1573,7 @@ do J=1, NA1
 enddo
 
 PSIBO = FP(NA1)
-call EXTRAP_EF(XRHO(1:NA1), FP(1:NA1), 0.0, 1, PSIAX, 1, NA1)
+call EXTRAP(XRHO(1:NA1), FP(1:NA1), 0.0, 1, PSIAX, 1, NA1)
 
 return
 end subroutine CUOFMU
@@ -1592,6 +1597,7 @@ subroutine CUOFP
 use parameter_inc
 use status_inc, only: RHO, SRHO, XRHO, FP, MU, CU, IPOL, G22, G33
 use const_inc, only: GP, GP2, RTOR, HRO, BTOR, NA, NA1, PSIBO, PSIAX
+use numerical_tools, only: extrap, deriv
 
 implicit none
 
@@ -1618,7 +1624,7 @@ do J=1, NA
    CU(j) = CU(j)/(j - 0.5)
 enddo
 
-call EXTRAP_EF(XRHO(1: NA), CU(1: NA), XRHO(NA1), NA, CU(NA1), 2, NA)
+call EXTRAP(XRHO(1: NA), CU(1: NA), XRHO(NA1), NA, CU(NA1), 2, NA)
 
 YCJ = 1.25/(GP*GP*RTOR)
 YAJ = 0.5/(GP*BTOR)
@@ -1631,14 +1637,14 @@ MUVAC = 4*GP*0.1
 
 ! Compute PSIAX, PSIBO
 PSIBO = FP(NA1)
-call EXTRAP_EF(XRHO(1: NA1), FP(1: NA1), 0.0, 1, PSIAX, 1, NA1)
+call EXTRAP(XRHO(1: NA1), FP(1: NA1), 0.0, 1, PSIAX, 1, NA1)
 
 ! Compute MU from FP, MU is on shifted grid
 do j=1, NA1
    YAR(j)=RHO(j)
 enddo
     
-call DERIV_EF(YAR(1: NA1), SRHO(1: NA1), 1, FP(1:NA1), YAR1(1:NA1), 1, NA1, 1)
+call DERIV(YAR(1: NA1), SRHO(1: NA1), 1, FP(1:NA1), YAR1(1:NA1), 1, NA1, 1)
 
 do j=1, NA1
    MU(j) = YAR1(j)/(GP2*BTOR*SRHO(j))
@@ -2021,6 +2027,7 @@ subroutine ADCMP(boundary_cond, dfpdrbm12)
 use const_inc
 use status_inc
 use debugger, only: markloc
+use numerical_tools, only: deriv
 
 implicit none
 
@@ -2034,7 +2041,7 @@ call markloc('ADCMP')
 
 !Temperature e 
 if (ADCMPF == 1.) then 
-   call DERIV_EF(XRHO(1: NA1), SXHO(1: NA1), 1, TE(1: NA1), XHH(1: NA1), 1, NA1, 1)
+   call DERIV(XRHO(1: NA1), SXHO(1: NA1), 1, TE(1: NA1), XHH(1: NA1), 1, NA1, 1)
    call GRID2GRID(2, SXHO(1: NA1), XHH(1: NA1), XST(1: NA1), NA1, 0)
    do J=1, NA1
       XHH(J) = TAU*RBDOT*XRHO(J)*XST(J)
@@ -2050,7 +2057,7 @@ endif
 
 ! Temperature i 
 if (ADCMPF == 1.) then 
-   call DERIV_EF(XRHO(1: NA1), SXHO(1: NA1), 1, TI(1: NA1), XHH(1: NA1), 1, NA1, 1)
+   call DERIV(XRHO(1: NA1), SXHO(1: NA1), 1, TI(1: NA1), XHH(1: NA1), 1, NA1, 1)
    call GRID2GRID(2, SXHO(1: NA1), XHH(1: NA1), XST(1: NA1), NA1, 0)
    do J=1, NA1
       XHH(J) = TAU*RBDOT*XRHO(J)*XST(J)
@@ -2065,7 +2072,7 @@ endif
 
 !Density 
 if (ADCMPF == 1.) then 
-   call DERIV_EF(XRHO(1: NA1), SXHO(1: NA1), 1, NE(1: NA1), XHH(1: NA1), 1, NA1, 1)
+   call DERIV(XRHO(1: NA1), SXHO(1: NA1), 1, NE(1: NA1), XHH(1: NA1), 1, NA1, 1)
    call GRID2GRID(2, SXHO(1: NA1), XHH(1: NA1), XST(1: NA1), NA1, 0)
    do J=1, NA1
       XHH(J) = TAU*RBDOT*XRHO(J)*XST(J)
@@ -2079,7 +2086,7 @@ if (NA1N < NA1) then
 endif
 
 if (LEQ(4) > 0) then
-   call DERIV_EF(XRHO(1: NA1), SXHO(1: NA1), 1, FP(1: NA1), XHH(1: NA1), 1, NA1, 1)
+   call DERIV(XRHO(1: NA1), SXHO(1: NA1), 1, FP(1: NA1), XHH(1: NA1), 1, NA1, 1)
    call GRID2GRID(2, SXHO(1: NA1), XHH(1: NA1), XST(1: NA1), NA1, 0)
    do J=1, NA
       FP(J) = FP(J) + TAU*RBDOT*XRHO(J)*XST(J)

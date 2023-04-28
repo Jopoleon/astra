@@ -763,6 +763,7 @@ double precision function RADIAL(ARR, YR)
 
 use const_inc, only: NA1
 use status_inc, only: RHO
+use numerical_tools, only: qinterp_metric
 
 implicit none
 

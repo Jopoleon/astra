@@ -83,6 +83,7 @@ SUBROUTINE ctr2rz_b(n_rho, n_the, pf1d, ipol, X, Y, Nrrect, Nzrect, Rgrid, Zgrid
    pfm, B_R, B_Z, B_T)
 
 use const_inc, only: GP2
+use numerical_tools, only: deriv_cde
 
 implicit none
 

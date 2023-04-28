@@ -69,6 +69,8 @@ subroutine RUNEQ_EF(GN, HN, GO, HO, YO, N, W, V, M, G11, A, B, R, S, P, &
 !  bctype = 2 -> Qbound
 !  bctype = 3 -> mixed
 
+use numerical_tools, only: extrap, deriv
+
 implicit none
 
 integer, parameter :: idiagnostic=0
@@ -127,7 +129,7 @@ do j=1, Ngrid
    Rsource(j) = Vtilde(j)*G11(j)*R(j)
    Rsource2(j) = 0.
 enddo
-call DERIV_EF(x_b, x, 2, Rsource, Rsource2, 1, Ngrid, 0)
+call DERIV(x_b, x, 2, Rsource, Rsource2, 1, Ngrid, 0)
 do j=1, Ngrid
    Rsource2(j) = -Rsource2(j)/V(j)
    P_new(j) = P(j) + Rsource2(j)
@@ -140,11 +142,11 @@ Pdot_1 = 0.
 Pdot_2 = 0.
 if (exrbdot == 1.) then
 ! So S = S - bdot*M*N*x*d/dx(V/W) - (rdot-bdot)/V*G*H*d/dx (x*V/G)  for implicit
-   call DERIV_EF(x, x_b, 1, V/W, ydummy, 1, Ngrid, 1)
+   call DERIV(x, x_b, 1, V/W, ydummy, 1, Ngrid, 1)
    call GRID2GRID(2, x_b, ydummy, Sdot_1, Ngrid, 0)
    Sdot_1 = Sdot_1*M*N*x
 
-   call DERIV_EF(x, x_b, 1, x*V/G, ydummy, 1, Ngrid, 1)
+   call DERIV(x, x_b, 1, x*V/G, ydummy, 1, Ngrid, 1)
    call GRID2GRID(2, x_b, ydummy, Sdot_2, Ngrid, 0)
    Sdot_2 = Sdot_2*G*H/V
 endif
@@ -153,26 +155,26 @@ if (exrbdot == 0.) then
 ! and P = P + bdot/W*d/dx (V*M*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)         for explicit
 
    if (sum(mphit) == 0.) then
-      call DERIV_EF(x, x_b, 1, V*M*N*x*YO, ydummy, 1, Ngrid, 1)
+      call DERIV(x, x_b, 1, V*M*N*x*YO, ydummy, 1, Ngrid, 1)
       call GRID2GRID(2, x_b, ydummy, Pdot_1, Ngrid, 0)
       Pdot_1 = Pdot_1/W
 
-      call DERIV_EF(x, x_b, 1, G*H*YO, ydummy, 1, Ngrid, 1)
+      call DERIV(x, x_b, 1, G*H*YO, ydummy, 1, Ngrid, 1)
       call GRID2GRID(2, x_b, ydummy, Pdot_2, Ngrid, 0)
       Pdot_2 = Pdot_2*x/G
    else
-      call DERIV_EF(x, x_b, 1, V*M*N*x*mphit, ydummy, 1, Ngrid, 1)
+      call DERIV(x, x_b, 1, V*M*N*x*mphit, ydummy, 1, Ngrid, 1)
       call GRID2GRID(2, x_b, ydummy, Pdot_1, Ngrid, 0)
       Pdot_1 = Pdot_1/W
 
-      call DERIV_EF(x, x_b, 1, G*H*mphit, ydummy, 1, Ngrid, 1)
+      call DERIV(x, x_b, 1, G*H*mphit, ydummy, 1, Ngrid, 1)
       call GRID2GRID(2, x_b, ydummy, Pdot_2, Ngrid, 0)
       Pdot_2 = Pdot_2*x/G
    endif
 
 endif
 
-call DERIV_EF (x, x_b, 1, YO, ydummy, 1, Ngrid, 1)
+call DERIV (x, x_b, 1, YO, ydummy, 1, Ngrid, 1)
 call GRID2GRID(2, x_b, ydummy, ydummy2, Ngrid, 0)
 
 do j=1, Ngrid
@@ -294,12 +296,12 @@ enddo
 
 SELECT CASE(bctype)
 CASE(1)
-   call EXTRAP_EF(x(1: NgridS), Q(1: NgridS), x(Ngridb), &
+   call EXTRAP(x(1: NgridS), Q(1: NgridS), x(Ngridb), &
                   NgridS, Q(Ngridb), 2, NgridS)
 CASE(2) ! Restore G11 in Qbound
    Q(Ngridb) = Qbound*G11(Ngridb)
 CASE(3)
-   call EXTRAP_EF(x(1: NgridS-1), Q(1: NgridS-1), x(Ngridb), & 
+   call EXTRAP(x(1: NgridS-1), Q(1: NgridS-1), x(Ngridb), & 
                   NgridS-1, Q(Ngridb), 2, NgridS-1)
 CASE(4) ! Restore G11 in Qbound
    Q(Ngridb) = Qbound*G11(Ngridb)*y(Ngridb)
@@ -739,6 +741,8 @@ subroutine RUNEQTIMP_EF(GN, H1N, H2N, GO, H1O, H2O, &
 !  bctype = 1 -> ybound
 !  bctype = 2 -> Qbound
 
+use numerical_tools, only: deriv, extrap
+
 implicit none
 
 integer, intent(in) :: Ngrid, imethod, Ngridb
@@ -803,7 +807,7 @@ do j=1, Ngrid
    Rsource1(j) = Vtilde(j)*G11(j)*R1(j)
    Rsource3(j) = 0.
 enddo
-call DERIV_EF(x_b, x, 2, Rsource1, Rsource3, 1, Ngrid, 0)
+call DERIV(x_b, x, 2, Rsource1, Rsource3, 1, Ngrid, 0)
 do j=1, Ngrid
    Rsource3(j) = -Rsource3(j)/V(j)
    P1_new(j) = P1(j) + Rsource3(j)
@@ -812,7 +816,7 @@ do j=1, Ngrid
    Rsource4(j) = 0.
 enddo
 
-call DERIV_EF(x_b, x, 2, Rsource2, Rsource4, 1, Ngrid, 0)
+call DERIV(x_b, x, 2, Rsource2, Rsource4, 1, Ngrid, 0)
 do j=1, Ngrid
    Rsource4(j) = -Rsource4(j)/V(j)
    P2_new(j) = P2(j) + Rsource4(j)
@@ -833,19 +837,19 @@ Pdot_22 = 0.
 
 if (exrbdot == 1.) then
 ! So S = S - bdot*M*N*x*d/dx(V/W) - (rdot-bdot)/V*G*H*d/dx (x*V/G)      for implicit
-   call DERIV_EF(x, x_b, 1, V/W1, ydummy, 1, Ngrid, 1)
+   call DERIV(x, x_b, 1, V/W1, ydummy, 1, Ngrid, 1)
    call GRID2GRID(2, x_b, ydummy, Sdot_11, Ngrid, 0)
    Sdot_11 = Sdot_11*M*N1*x
 
-   call DERIV_EF(x, x_b, 1, V/W2, ydummy, 1, Ngrid, 1)
+   call DERIV(x, x_b, 1, V/W2, ydummy, 1, Ngrid, 1)
    call GRID2GRID(2, x_b, ydummy, Sdot_12, Ngrid, 0)
    Sdot_12 = Sdot_12*M*N2*x
 
-   call DERIV_EF(x, x_b, 1, x*V/GN, ydummy, 1, Ngrid, 1)
+   call DERIV(x, x_b, 1, x*V/GN, ydummy, 1, Ngrid, 1)
    call GRID2GRID(2, x_b, ydummy, Sdot_21, Ngrid, 0)
    Sdot_21 = Sdot_21*GN*H1N/V
 
-   call DERIV_EF(x, x_b, 1, x*V/GN, ydummy, 1, Ngrid, 1)
+   call DERIV(x, x_b, 1, x*V/GN, ydummy, 1, Ngrid, 1)
    call GRID2GRID(2, x_b, ydummy, Sdot_22, Ngrid, 0)
    Sdot_22 = Sdot_22*GN*H2N/V
 
@@ -854,19 +858,19 @@ endif
 if (exrbdot == 0.) then
 ! and P = P + bdot/W*d/dx (V*M*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)         for explicit
 
-   call DERIV_EF(x, x_b, 1, V*M*N1*x*Y1O, ydummy, 1, Ngrid, 1)
+   call DERIV(x, x_b, 1, V*M*N1*x*Y1O, ydummy, 1, Ngrid, 1)
    call GRID2GRID(2, x_b, ydummy, Pdot_11, Ngrid, 0)
    Pdot_11 = Pdot_11/W1
 
-   call DERIV_EF(x, x_b, 1, V*M*N2*x*Y2O, ydummy, 1, Ngrid, 1)
+   call DERIV(x, x_b, 1, V*M*N2*x*Y2O, ydummy, 1, Ngrid, 1)
    call GRID2GRID(2, x_b, ydummy, Pdot_12, Ngrid, 0)
    Pdot_12 = Pdot_12/W2
 
-   call DERIV_EF(x, x_b, 1, GN*H1N*Y1O, ydummy, 1, Ngrid, 1)
+   call DERIV(x, x_b, 1, GN*H1N*Y1O, ydummy, 1, Ngrid, 1)
    call GRID2GRID(2, x_b, ydummy, Pdot_21, Ngrid, 0)
    Pdot_21 = Pdot_21*x/GN
 
-   call DERIV_EF(x, x_b, 1, GN*H2N*Y2O, ydummy, 1, Ngrid, 1)
+   call DERIV(x, x_b, 1, GN*H2N*Y2O, ydummy, 1, Ngrid, 1)
    call GRID2GRID(2, x_b, ydummy, Pdot_22, Ngrid, 0)
    Pdot_22 = Pdot_22*x/GN
 
@@ -1008,7 +1012,7 @@ do j=1, Ngridb-1
    Q2(j) = G11(j)*(-A2(j)/dx*(fxi2(j)*y2(j+1) - gxi2(j)*y2(j)) + R2(j))
 enddo
 if (bctype(1) == 1) then
-   call EXTRAP_EF(x(1: NgridS(1)), Q1(1: NgridS(1)), x(Ngridb), & 
+   call EXTRAP(x(1: NgridS(1)), Q1(1: NgridS(1)), x(Ngridb), & 
                   NgridS(1), Q1(Ngridb), 1, NgridS(1))
 endif
 if (bctype(1) == 2) then
@@ -1017,7 +1021,7 @@ if (bctype(1) == 2) then
 endif
 
 if (bctype(2) == 1) then
-   call EXTRAP_EF(x(1: NgridS(2)), Q2(1: NgridS(2)), x(Ngridb), & 
+   call EXTRAP(x(1: NgridS(2)), Q2(1: NgridS(2)), x(Ngridb), & 
                   NgridS(2), Q2(Ngridb), 1, NgridS(2))
 endif
 if (bctype(2) == 2) then

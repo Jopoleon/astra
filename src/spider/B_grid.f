@@ -1527,6 +1527,7 @@
 !----------------------------------------------------------------
       subroutine grid_b_ef(igdf, nstep)
 
+      use numerical_tools, only: reinterp_back_quad
       use sp_parameters
 
       implicit none

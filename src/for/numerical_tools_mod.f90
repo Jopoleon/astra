@@ -1,23 +1,25 @@
-subroutine reinterp_back(x1, y1, Nx1, x2, y2, Nx2)
-
-use parameters_a2spider, only: interp_routine
+module numerical_tools
 
 implicit none
 
-integer, intent(in) :: Nx1, Nx2
+contains
+
+subroutine reinterp_back(x1, y1, Nx1, x2, y2, Nx2, interp_switch)
+
+integer, intent(in) :: Nx1, Nx2, interp_switch
 double precision, intent(in), dimension(Nx1) :: x1, y1
 double precision, intent(in) :: x2(Nx2)
 double precision, intent(out) :: y2(Nx2)
 
 integer :: i
-double precision :: zspl, ispline_nt
+double precision :: zspl
 double precision, dimension(Nx1) :: b, c, d
 
-if (interp_routine == 1) then
-   call qinterp_ef(x1, y1, Nx1, x2, y2, Nx2)
+if (interp_switch == 1) then
+   call qinterp(x1, y1, Nx1, x2, y2, Nx2)
 endif
 
-if (interp_routine == 2) then
+if (interp_switch == 2) then
    call spline_numerict(x1, y1, b, c, d, Nx1)
    do i=2, Nx2-1
       zspl = x2(i)
@@ -25,7 +27,7 @@ if (interp_routine == 2) then
    enddo
 
    if (x2(Nx2) > x1(Nx1)) then
-      call EXTRAP_EF(x2(1: Nx2-1), y2(1: Nx2-1), x2(Nx2), &
+      call EXTRAP(x2(1: Nx2-1), y2(1: Nx2-1), x2(Nx2), &
          Nx2-1, y2(Nx2), 2, Nx2-1)
    else
       zspl = x2(Nx2)
@@ -33,7 +35,7 @@ if (interp_routine == 2) then
    endif
 
    if (x2(1) < x1(1)) then
-      call EXTRAP_EF(x2(2: Nx2), y2(2: Nx2), x2(1), 1, y2(1), 2, Nx2-1)
+      call EXTRAP(x2(2: Nx2), y2(2: Nx2), x2(1), 1, y2(1), 2, Nx2-1)
    else
       zspl = x2(1)
       y2(1) = ispline_nt(zspl, x1, y1, b, c, d, Nx1)
@@ -44,8 +46,6 @@ end subroutine reinterp_back
 
 !--------------------------------------------------
 subroutine reinterp_back_quad(x1, y1, Nx1, x2, y2, Nx2)
-
-implicit none
 
 integer, intent(in) :: Nx1, Nx2
 double precision, intent(in), dimension(Nx1) :: x1, y1
@@ -139,7 +139,7 @@ do i = 1, Nx2
 enddo
 
 if (x2(Nx2) > x1(Nx1)) then
-   call EXTRAP_EF(x2(1: Nx2-1), y2(1: Nx2-1), x2(Nx2), &
+   call EXTRAP(x2(1: Nx2-1), y2(1: Nx2-1), x2(Nx2), &
       Nx2-1, y2(Nx2), 2, Nx2-1)
 endif
 
@@ -163,8 +163,6 @@ subroutine spline_numerict (x, y, b, c, d, n)
 !  comments ...
 !  spline.f90 program is based on fortran version of program spline.f
 !  the accompanying function fspline can be used for interpolation
-
-implicit none
 
 integer, intent(in) :: n
 double precision, intent(in), dimension(n) :: x, y
@@ -240,7 +238,7 @@ d(n) = d(n-1)
 end subroutine spline_numerict
 
 !-----------------------------------------------
-double precision function ispline_nt(u, x, y, b, c, d, n)
+function ispline_nt(u, x, y, b, c, d, n) result(f_out)
 
 ! function ispline evaluates the cubic spline interpolation at point z
 ! ispline = y(i)+b(i)*(u-x(i))+c(i)*(u-x(i))**2+d(i)*(u-x(i))**3
@@ -254,22 +252,21 @@ double precision function ispline_nt(u, x, y, b, c, d, n)
 ! output:
 ! ispline = interpolated value at point u
 
-implicit none
-
 integer, intent(in) :: n
 double precision, intent(in) :: u
 double precision, intent(in), dimension(n) :: x, y, b, c, d
+double precision :: f_out
 
 integer :: i, j, k
-double precision dx
+double precision :: dx
 
 ! if u is ouside the x() interval take a boundary value (left or right)
 if(u <= x(1)) then
-   ispline_nt = y(1)
+   f_out = y(1)
    return
 endif
 if(u >= x(n)) then
-   ispline_nt = y(n)
+   f_out = y(n)
    return
 endif
 
@@ -289,12 +286,13 @@ enddo
 ! evaluate spline interpolation
 
 dx = u - x(i)
-ispline_nt = y(i) + dx*(b(i) + dx*(c(i) + dx*d(i)))
+f_out = y(i) + dx*(b(i) + dx*(c(i) + dx*d(i)))
 
+return
 end function ispline_nt
 
 !-------------------------------------------------------------
-!Efable DERIV_EF computes first and second derivative over x
+!Efable DERIV computes first and second derivative over x
 !
 !  x_input: x_variable
 !  x_type for GRP style-grid is: 1 main grid -> shifted grid (deriv), 2 shifted grid -> main grid (deriv)
@@ -305,8 +303,6 @@ end function ispline_nt
 ! iextrap: 1 if yes interpolate last grid point, 0 do not interpolate last grid point
 !-------------------------------------------------------------
 subroutine DERIV_CDE(x_input, x_type, y_input, yd_output, nagrid)
-
-implicit none
 
 integer, intent(in) :: x_type, nagrid
 double precision, intent(in), dimension(nagrid) :: x_input, y_input
@@ -354,16 +350,14 @@ yd_output(j) = y1tmp/y2tmp
 
 ! Interpolate to last grid point
 j = nagrid
-call EXTRAP_EF(x_input(1: j-1), yd_output(1: j-1), x_input(j), & 
+call EXTRAP(x_input(1: j-1), yd_output(1: j-1), x_input(j), & 
    j-1, yd_output(j), OEXTRAP, j-1)   
 
 end subroutine DERIV_CDE
 
 !linear inerpolation
 !----------------------------------------------------------------------|
-subroutine linterp_ef(x1, y1, Nx1, x2, y2, Nx2)
-
-implicit none
+subroutine linterp(x1, y1, Nx1, x2, y2, Nx2)
 
 integer, intent(in) :: Nx1, Nx2
 double precision, intent(in), dimension(Nx1) :: x1, y1
@@ -424,13 +418,11 @@ do i = 1, Nx2
    enddo
 enddo
 
-end subroutine linterp_ef
+end subroutine linterp
 
 !quadratic inerpolation
 !----------------------------------------------------------------------|
-subroutine qinterp_ef(x1, y1, Nx1, x2, y2, Nx2)
-
-implicit none
+subroutine qinterp(x1, y1, Nx1, x2, y2, Nx2)
 
 integer, intent(in) :: Nx1, Nx2
 double precision, intent(in), dimension(Nx1) :: x1, y1
@@ -506,12 +498,10 @@ do i = 1, Nx2
    enddo
 enddo
 
-end subroutine qinterp_ef
+end subroutine qinterp
 
 !-----------------------------------------------------
 subroutine integrcc(nx, x, y, sy)
-
-implicit none
 
 integer, intent(in) :: nx
 double precision, intent(in), dimension(nx) :: x, y
@@ -531,8 +521,6 @@ end subroutine integrcc
 
 !------------------------------------------------------
 subroutine derivcc(nx, x, y, dy, gga)
-
-implicit none
 
 integer, intent(in) :: nx, gga
 double precision, intent(in), dimension(nx) :: x, y
@@ -557,8 +545,6 @@ end subroutine derivcc
 !------------------------------------------------------
 subroutine polyfitcc(x, y, P)
 
-implicit none
-
 double precision, intent(in), dimension(3) :: x, y
 double precision, intent(out) :: P(3)
 double precision :: y21, y32, x21, x32, h21, h32
@@ -575,3 +561,384 @@ P(2) = y21/x21 - P(1)*h21
 P(3) = y(3) - P(1)*x(3)**2. - P(2)*x(3)
 
 end subroutine polyfitcc
+
+!---------------------------------------------------------------------=|
+! Assume that x is of r-type, i.e. interpolation in 0 has zero odd derivatives
+subroutine EXTRAP(x_input, y_input, x_extrap, j_extrap, y_extrap, ex_order, nagrid)
+
+integer, intent(in) :: ex_order, j_extrap, nagrid
+double precision, intent(in)  :: x_input(nagrid), x_extrap, y_input(nagrid)
+double precision, intent(out) :: y_extrap
+
+integer :: k1, k2, k3, jsign
+double precision :: P(3)
+         
+if (j_extrap == nagrid) jsign = -1
+if (j_extrap == 1) jsign = 1
+     
+! Constant interpolation
+if (ex_order == 0) then
+   k1 = j_extrap
+   P(1) = y_input(k1)
+   y_extrap = P(1)
+endif
+
+if (ex_order == 1) then ! Linear extrapolation
+   if (jsign < 0) then
+      k1 = j_extrap + jsign
+      k2 = j_extrap
+      call polyfitcc_metric_1(x_input(k1: k2), y_input(k1: k2), P(1: 2))
+      y_extrap = P(1)*x_extrap + P(2)
+   endif
+   if (jsign > 0) then
+      k1 = j_extrap
+      k2 = j_extrap + 1
+      call polyfitcc_metric_1(x_input(k1: k2), y_input(k1: k2), P(1: 2))
+      y_extrap = P(1)*x_extrap + P(2)
+   endif
+else if (ex_order == 2) then! Quadratic extrapolation
+   if (jsign < 0) then
+      k1 = j_extrap + jsign*2
+      k2 = j_extrap + jsign
+      k3 = j_extrap
+      call polyfitcc_metric(x_input(k1: k3), y_input(k1: k3), P)
+      y_extrap = P(1) * x_extrap**2.0 + P(2)*x_extrap + P(3)
+   else if (jsign > 0) then
+      k1 = j_extrap
+      k2 = j_extrap + jsign
+      k3 = j_extrap + jsign*2
+      call polyfitcc_metric(x_input(k1: k3), y_input(k1: k3), P)
+      y_extrap = P(1) * x_extrap**2.0 + P(2)*x_extrap + P(3)
+   endif
+endif
+
+return
+end subroutine EXTRAP
+
+!---------------------------------------------------------------------=|
+subroutine polyfitcc_metric(x, y, P)
+
+double precision, intent(in) , dimension(3) :: x, y
+double precision, intent(out), dimension(3) :: P
+
+double precision :: y21, y32, x21, x32, h21, h32
+
+y32 = y(3) - y(2)
+x32 = x(3) - x(2)     
+h32 = x(3) + x(2)     
+y21 = y(2) - y(1)     
+x21 = x(2) - x(1)     
+h21 = x(2) + x(1)     
+
+P(1) = (x21*y32 - x32*y21)/(x21*x32*(h32 - h21))
+P(2) = y21/x21 - P(1)*h21
+P(3) = y(3) - P(1)*x(3)**2. - P(2)*x(3)
+
+return
+end subroutine polyfitcc_metric
+
+!---------------------------------------------------------------------=|
+subroutine polyfitcc_metric_1(x, y, P)
+
+double precision, intent(in) , dimension(2) :: x, y
+double precision, intent(out), dimension(2) :: P
+
+double precision :: y21, x21
+
+y21 = y(2) - y(1)     
+x21 = x(2) - x(1)     
+
+P(1) = y21/x21
+P(2) = y(1) - x(1)*y21/x21
+
+return
+end subroutine polyfitcc_metric_1
+
+!----------------------------------------------------------------------|
+subroutine linterp_metric(x1, y1, Nx1, x2, y2, Nx2)
+
+integer, intent(in) :: Nx1, Nx2
+double precision, intent(in)  :: x1(Nx1), y1(Nx1), x2(Nx2)
+double precision, intent(out) :: y2(Nx2)
+
+integer :: i, j, jdone
+double precision A, B, z1, z2, z3, z4, t1, t3, t4
+
+do i=1, Nx2
+   jdone = 0
+
+   t1 = x2(i)
+
+   do j=2, Nx1
+      z1 = x1(j-1)
+      z2 = x1(j)
+ 
+      if (t1 == z1 .and. jdone == 0) then
+         y2(i) = y1(j-1)
+         jdone = 1
+      endif
+
+      if (t1 == z2 .and. jdone == 0) then
+         y2(i) = y1(j)
+         jdone = 1
+      endif
+
+      if (t1 > z1 .and. t1 < z2 .and. jdone == 0) then
+         z3 = y1(j-1)
+         z4 = y1(j)
+         t3 = x1(j-1)
+         t4 = x1(j)
+ 
+         A = (z4 - z3)/(t4 - t3)
+         B = z3 - t3*A
+         y2(i) = A*t1 + B
+
+         jdone=1
+      endif
+
+      if (t1 < z1 .and. j == 2 .and. jdone == 0) then
+         z3 = y1(j-1)
+         z4 = y1(j)
+         t3 = x1(j-1)**2.0
+         t4 = x1(j)**2.0
+ 
+         A = (z4 - z3)/(t4 - t3)
+         B = z3 - t3*A
+         y2(i) = A*t1**2.0 + B
+
+         jdone=1
+      endif
+
+      if (t1 > z2 .and. j == Nx1 .and. jdone == 0) then
+         z3 = y1(j-1)
+         z4 = y1(j)
+         t3 = x1(j-1)
+         t4 = x1(j)
+ 
+         A = (z4 - z3)/(t4 - t3)
+         B = z3 - t3*A
+         y2(i) = A*t1 + B
+
+         jdone=1
+      endif
+
+   enddo
+enddo
+
+return
+end subroutine linterp_metric
+
+!quadratic inerpolation
+!----------------------------------------------------------------------|
+subroutine qinterp_metric(x1, y1, Nx1, x2, y2, Nx2)
+
+integer, intent(in) :: Nx1, Nx2
+double precision, intent(in) :: x1(Nx1), y1(Nx1), x2(Nx2)
+double precision, intent(out) :: y2(Nx2)
+
+integer :: i, j, jdone
+double precision :: A, B, C, z1, z2, z3, t1, t2, t3, t4
+
+do i=1, Nx2
+
+   jdone = 0
+ 
+   t4 = x2(i)
+
+   do j=2, Nx1-1
+      z1 = x1(j-1)
+      z2 = x1(j)
+      z3 = x1(j+1)
+ 
+      if (t4 == z1 .and. jdone == 0) then
+         y2(i) = y1(j-1)
+         jdone = 1
+      endif
+
+      if (t4 == z2 .and. jdone == 0) then
+         y2(i) = y1(j)
+         jdone = 1
+      endif
+
+      if (t4 == z3 .and. jdone == 0) then
+         y2(i) = y1(j+1)
+         jdone = 1
+      endif
+
+      if (t4 > z1 .and. t4 < z3 .and. jdone == 0) then
+         t1 = y1(j-1)
+         t2 = y1(j)
+         t3 = y1(j+1)
+ 
+         A = (t3 - t2 - (z3 - z2)*(t1 - t2)/(z1 - z2)) / ((z3 - z2)*(z3 - z1))
+         B = (t1 - t2)/(z1 - z2) - A*(z1 + z2)
+         C = t2 - A * z2**2.0 - B*z2
+
+         y2(i) = A * t4**2.0 + B*t4 + C
+         jdone = 1
+      endif
+
+      if (t4 < z1 .and. jdone == 0 .and. j == 2) then
+         z1 = x1(j-1)**2.0
+         z2 = x1(j)**2.0
+         t1 = y1(j-1)
+         t2 = y1(j)
+ 
+         A = 0.0
+         B = (t1 - t2)/(z1 - z2) - A*(z1 + z2)
+         C = t2 - A * z2**2.0 - B*z2
+
+         y2(i) = A * t4**4.0 + B * t4**2.0 + C
+         jdone = 1
+      endif
+
+      if (t4 > z3 .and. jdone == 0  .and. j == Nx1-1) then
+
+         t1 = y1(j-1)
+         t2 = y1(j)
+         t3 = y1(j+1)
+
+         A = (t3 - t2 - (z3 - z2)*(t1 - t2)/(z1 - z2)) / ((z3 - z2)*(z3 - z1))
+         B = (t1 - t2)/(z1 - z2) - A*(z1 + z2)
+         C = t2 - A * z2**2.0 - B*z2
+         y2(i) = A * t4**2.0 + B*t4 + C
+         jdone = 1
+      endif
+
+   enddo
+enddo
+
+return
+end subroutine qinterp_metric
+
+!---------------------------------------------------------------------=|
+!Efable DERIV_EF computes first or second derivative over x
+!
+!  x_input: x_variable
+!  x_type for GRP style-grid is: 1 main grid -> shifted grid (deriv), 2 shifted grid -> main grid (deriv)
+!  y_input: y_variable
+!  yd_output: derivative
+!  order_d: 1st or 2nd derivative
+!  nagrid: number of grid points
+! iextrap: 1 if yes interpolate last grid point, 0 do not interpolate last grid point
+!---------------------------------------------------------------------=|
+subroutine DERIV(x_input, x_output, x_type, y_input, yd_output, order_d, nagrid, iextrap)
+
+integer, intent(in) :: order_d, x_type, nagrid, iextrap
+double precision, intent(in) , dimension(nagrid) :: x_input, x_output, y_input
+double precision, intent(out), dimension(nagrid) :: yd_output
+
+integer :: j, j_end, OEXTRAP
+double precision dx, dy, y0, P(3)
+    
+OEXTRAP = 1
+
+if (iextrap == 1) j_end=1
+if (iextrap == 0) j_end=0
+  
+! dy/dx
+if (order_d == 1) then
+
+   if (x_type == 1) then
+      do j=1, nagrid - j_end
+         dx = x_input(j+1) - x_input(j)
+         dy = y_input(j+1) - y_input(j)
+         yd_output(j) = dy/dx
+      enddo
+   endif
+
+   if (x_type == 2) then
+      j = 1
+      call polyfitcc_metric(x_input(1: 3), y_input(1: 3), P)
+      y0 = P(3)
+      dx = x_input(1)
+      dy = (y_input(1) - y0)
+      yd_output(j) = dy/dx
+      do j=2, nagrid
+         dx = x_input(j) - x_input(j-1)
+         dy = y_input(j) - y_input(j-1)
+         yd_output(j) = dy/dx
+      enddo
+   endif
+
+else if (order_d == 2) then ! d2y/dx^2
+   if (x_type == 1) then
+      j = 1
+      dx = (x_input(j+1) - x_input(j))**2.0
+      dy = (y_input(j+1) - y_input(j))
+      yd_output(j) = dy/dx
+
+      do j=2, nagrid - j_end
+         dx = (x_input(j+1) - x_input(j))**2.0
+         dy = (y_input(j+1) - 2.*y_input(j) + y_input(j-1))
+         yd_output(j) = dy/dx
+      enddo
+   endif
+   if (x_type == 2) then
+! First interpolate shifted variable to zero
+      j = 1
+      call polyfitcc_metric(x_input(1:3), y_input(1:3), P)
+      y0 = P(3)
+      dx = x_input(j)**2.0
+      dy = (y_input(j+1) - 2.0*y_input(j) + y0)
+      yd_output(j) = dy/dx
+      do j=2, nagrid - j_end
+         dx = (x_input(j+1) - x_input(j))**2.0
+         dy = (y_input(j+1) - 2.0*y_input(j) + y_input(j-1))
+         yd_output(j) = dy/dx
+      enddo
+   endif
+endif
+
+! Interpolate to last grid point
+if (iextrap == 1 .and. order_d == 1) then
+   j = nagrid
+   call polyfitcc_metric(x_input(j-2: j), y_input(j-2: j), P)
+   yd_output(j) = 2.*P(1)*x_output(j) + P(2)
+endif
+
+if (iextrap == 1 .and. order_d == 2) then
+   j = nagrid
+   call polyfitcc_metric(x_input(j-2: j), y_input(j-2: j), P)
+   yd_output(j) = 2.*P(1)
+endif
+
+return
+end subroutine DERIV
+
+!---------------------------------------------------------------------=|
+! INTEGR_EF computes integrals over x
+!  x_input: x_variable
+!  x_type for GRP style-grid is: 1 main grid -> shifted grid (deriv), 2 shifted grid -> main grid (deriv)
+!  y_input: y_variable
+!  ys_output: integral
+!  nagrid: number of grid points
+!---------------------------------------------------------------------=|
+subroutine INTEGR(x_input, x_type, y_input, ys_output, nagrid)
+
+integer, intent(in) :: x_type, nagrid
+double precision, intent(in) , dimension(nagrid) :: x_input, y_input
+double precision, intent(out), dimension(nagrid) :: ys_output
+
+integer :: j
+double precision :: P(3)
+
+! Normalized grid , GRP style
+if (x_type == 1) then
+   ys_output(1) = y_input(1)*x_input(1)
+   do j=2, nagrid
+      ys_output(j) = ys_output(j-1) + y_input(j)*(x_input(j) - x_input(j-1))
+   enddo
+else if (x_type == 2) then ! First interpolate shifted variable to zero
+   call polyfitcc_metric(x_input(1: 3), y_input(1: 3), P)
+   ys_output(1) = P(3)*x_input(1)
+   do j=2, nagrid
+      ys_output(j) = ys_output(j-1) + y_input(j-1)*(x_input(j) - x_input(j-1))
+   enddo
+endif
+
+return
+end subroutine INTEGR
+
+
+end module numerical_tools

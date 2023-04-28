@@ -20,7 +20,8 @@ subroutine GS_SOLVER( &
     droda, volum, ametr, updwn, shif, elon, tria, fofb, areat, perim)
 
 use imas_ids, only: type_equilibrium
-
+use numerical_tools, only: reinterp_back, reinterp_back_quad, qinterp, &
+    derivcc, integrcc
 use parameters_a2spider, only: GP, GP2, GP4, muvac, &
     name_gsefdir, time_fix_eqpff, fix_eqpf_eqff, &
     cheb_degree, spidat_yes, iter_one_only_fbe, advanced_methods, &
@@ -166,13 +167,13 @@ do j=1, nr_equ
 enddo
 
 !go from astra grid to equilibrium radial grid
-call reinterp_back(xrho**2, fp   , jna1, xrho_sp**2, PSI  , nr_equ)
-call reinterp_back(xrho**2, pres , jna1, xrho_sp**2, PRESS, nr_equ)
-call reinterp_back(xrho   , eqpf , jna1, xrho_sp   , eqpfe, nr_equ)
-call reinterp_back(xrho   , eqff , jna1, xrho_sp   , eqffe, nr_equ)
-call reinterp_back(sxho**2, g22  , jna1, xrho_sp**2, GG2  , nr_equ)
-call reinterp_back(xrho**2, g33  , jna1, xrho_sp**2, GG3  , nr_equ)
-call reinterp_back(vxho**2, volum, jna1, xrho_sp**2, volum_in, nr_equ)
+call reinterp_back(xrho**2, fp   , jna1, xrho_sp**2, PSI     , nr_equ, interp_routine)
+call reinterp_back(xrho**2, pres , jna1, xrho_sp**2, PRESS   , nr_equ, interp_routine)
+call reinterp_back(xrho   , eqpf , jna1, xrho_sp   , eqpfe   , nr_equ, interp_routine)
+call reinterp_back(xrho   , eqff , jna1, xrho_sp   , eqffe   , nr_equ, interp_routine)
+call reinterp_back(sxho**2, g22  , jna1, xrho_sp**2, GG2     , nr_equ, interp_routine)
+call reinterp_back(xrho**2, g33  , jna1, xrho_sp**2, GG3     , nr_equ, interp_routine)
+call reinterp_back(vxho**2, volum, jna1, xrho_sp**2, volum_in, nr_equ, interp_routine)
 
 GG2(1) = 0.0
 volum_in(1) = 0.0
@@ -305,7 +306,7 @@ iter_loop: do jiter=1, miter_ext
         if (advanced_methods > 0) then
             dum2 = G2f
             if (Veps < epsf_tol) then
-                call qinterp_ef(volum_in, G2m, nr_equ, dum1, G2f, nr_equ)
+                call qinterp(volum_in, G2m, nr_equ, dum1, G2f, nr_equ)
                 G2f(1) = 0.
                 lhs(1) = sum(abs(G2f(2:nr_equ) - dum2(2:nr_equ))/dum2(2:nr_equ), 1)/nr_equ
             else

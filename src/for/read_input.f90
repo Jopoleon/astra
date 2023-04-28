@@ -45,6 +45,8 @@ use char_manip, only: to_upper, str_in_list, clean_string
 use debugger, only: markloc, debug, astra_stop, flightsim
 use parse_utils
 
+use numerical_tools, only: EXTRAP, INTEGR
+
 implicit none
 
 integer, parameter :: MPEX=101, MSIGEX=1, MTEX=50, MSIG=1, MEXT=MPEX*MTEX
@@ -551,12 +553,12 @@ do J=1, NB1
    G11(J) = VRS(J)
 enddo
 
-call INTEGR_EF(RHO, 1, VR, VOLUM, NA1)
+call INTEGR(RHO, 1, VR, VOLUM, NA1)
 
 n_bouncon = NA1
 
 PSIBO = FP(NA1)
-call EXTRAP_EF(XRHO(1: NA1), FP(1: NA1), 0.0, 1, PSIAX, 2, NA1)
+call EXTRAP(XRHO(1: NA1), FP(1: NA1), 0.0, 1, PSIAX, 2, NA1)
 
 VOLUME = VOLUM(NA1)
 

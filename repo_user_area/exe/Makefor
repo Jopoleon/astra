@@ -24,7 +24,9 @@ $(OBJ_DIR)/emeq.o \
 $(OBJ_DIR)/parameters_a2spider.o \
 $(OBJ_DIR)/ipc_mod.o \
 $(OBJ_DIR)/nclass_mod.o \
-$(OBJ_DIR)/strahl_mod.o
+$(OBJ_DIR)/strahl_mod.o \
+$(OBJ_DIR)/numerical_tools_mod.o
+
 
 OBJS = \
 $(OBJ_DIR)/Astra2XW.o \
@@ -51,9 +53,7 @@ $(OBJ_DIR)/gs_solver.o \
 $(OBJ_DIR)/a_spider.o \
 $(OBJ_DIR)/surf_ctr.o \
 $(OBJ_DIR)/ctr2rz.o \
-$(OBJ_DIR)/four_mom.o \
-$(OBJ_DIR)/numerical_tools_equil.o
-
+$(OBJ_DIR)/four_mom.o
 # Make Commands
 
 .PHONY: all
