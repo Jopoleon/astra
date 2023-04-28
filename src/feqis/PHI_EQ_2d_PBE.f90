@@ -4,11 +4,10 @@ subroutine PHI_EQ_2d_PBE(nrho, ntheta, psin_grid_in, iplasma, &
     psin_grid_out, lambda2d, lambda2dp, thetap_out, &
     psiax_out, cnorm, X0_out, Y0_out)
 
+use pi_vars, only: GPI, GPI2, GPI4, muvac
 implicit none
 
 integer, parameter :: max_iter=500
-double precision, parameter :: GPI=3.141592653589793, GPI2=2.*GPI, &
-    GPI4=GPI2**2, muvac=4.e-7*GPI
 
 integer, intent(in) :: nrho, ntheta
 double precision, intent(in) :: iplasma, R0, btor, rax, zax, psiax_in, psib

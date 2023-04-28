@@ -3,11 +3,9 @@ subroutine feqis_main(equil_in, equil_out)
 use imas_ids, only: type_equilibrium
 use feqis_geom, only: theta, raxp, zaxp
 use interp_mod, only: polyfitcc
+use pi_vars, only: GPI, GPI2
 
 implicit none
-
-double precision, parameter :: GPI=3.141592653589793, &
-    GPI2=2.*GPI
 
 type(type_equilibrium), intent(in)  :: equil_in
 type(type_equilibrium), intent(out) :: equil_out

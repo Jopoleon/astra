@@ -7,11 +7,10 @@ subroutine jacobians(nrho, ntheta, Rb, Zb, X0, Y0, lambda2d_in, lambda2dp_in, &
     ddr, ddr_i, dtp, dtm, dt_i, X, Y, &
     thetap, thetap_i, lambda2d_out, lambda2dp_out)
 
+use pi_vars, only: GPI2
 use interp_mod, only: linterp
 
 implicit none
-
-double precision, parameter :: GPI=3.141592653589793, GPI2=2.*GPI
 
 integer, intent(in) :: ntheta, nrho, j_ok
 double precision, intent(in) :: psiax, psib, X0, Y0

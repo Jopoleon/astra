@@ -5,11 +5,10 @@ subroutine build_2dgrid(nrho, ntheta, Rb, Zb, X0, Y0, lambda2d, lambda2dp, psin_
     BMAXT, BMINT, BDB02, BDB0, B0DB2, FOFB, &
     slat, li3, betapol)
 
+use pi_vars, only: GPI, GPI2
 use interp_mod, only: qinterp
 
 implicit none
-
-double precision, parameter :: GPI=3.141592653589793, GPI2=2.*GPI
 
 integer, intent(in) :: ntheta, nrho
 double precision, intent(in) :: X0, Y0, btor, iplasma, Rtor
