@@ -2337,7 +2337,7 @@ end subroutine MAIN2SHIFT
 !---------------------------------------------------------------------=|
 subroutine SHIFT2MAIN(x_input, y_input, y_output, nagrid)
 
-use numerical_tools, only: polyfitcc_metric
+use numerical_tools, only: polyfitcc
 
 implicit none
 
@@ -2353,7 +2353,7 @@ do j=2, nagrid
    y_output(j) = 0.5*(y_input(j) + y_input(j-1))
 enddo
 
-call polyfitcc_metric(x_input(1: 3), y_input(1: 3), P)
+call polyfitcc(x_input(1: 3), y_input(1: 3), P)
 y1tmp = P(3)
 y_output(1) = 0.5*(y1tmp + y_input(1))
 

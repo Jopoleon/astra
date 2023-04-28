@@ -587,13 +587,13 @@ if (ex_order == 1) then ! Linear extrapolation
     if (jsign < 0) then
         k1 = j_extrap + jsign
         k2 = j_extrap
-        call polyfitcc_metric_1(x_input(k1: k2), y_input(k1: k2), P(1: 2))
+        call polyfitcc_1(x_input(k1: k2), y_input(k1: k2), P(1: 2))
         y_extrap = P(1)*x_extrap + P(2)
     endif
     if (jsign > 0) then
         k1 = j_extrap
         k2 = j_extrap + 1
-        call polyfitcc_metric_1(x_input(k1: k2), y_input(k1: k2), P(1: 2))
+        call polyfitcc_1(x_input(k1: k2), y_input(k1: k2), P(1: 2))
         y_extrap = P(1)*x_extrap + P(2)
     endif
 else if (ex_order == 2) then! Quadratic extrapolation
@@ -601,13 +601,13 @@ else if (ex_order == 2) then! Quadratic extrapolation
         k1 = j_extrap + jsign*2
         k2 = j_extrap + jsign
         k3 = j_extrap
-        call polyfitcc_metric(x_input(k1: k3), y_input(k1: k3), P)
+        call polyfitcc(x_input(k1: k3), y_input(k1: k3), P)
         y_extrap = P(1) * x_extrap**2.0 + P(2)*x_extrap + P(3)
     else if (jsign > 0) then
         k1 = j_extrap
         k2 = j_extrap + jsign
         k3 = j_extrap + jsign*2
-        call polyfitcc_metric(x_input(k1: k3), y_input(k1: k3), P)
+        call polyfitcc(x_input(k1: k3), y_input(k1: k3), P)
         y_extrap = P(1) * x_extrap**2.0 + P(2)*x_extrap + P(3)
     endif
 endif
@@ -616,29 +616,7 @@ return
 end subroutine EXTRAP
 
 !---------------------------------------------------------------------=|
-subroutine polyfitcc_metric(x, y, P)
-
-double precision, intent(in) , dimension(3) :: x, y
-double precision, intent(out), dimension(3) :: P
-
-double precision :: y21, y32, x21, x32, h21, h32
-
-y32 = y(3) - y(2)
-x32 = x(3) - x(2)      
-h32 = x(3) + x(2)      
-y21 = y(2) - y(1)      
-x21 = x(2) - x(1)      
-h21 = x(2) + x(1)      
-
-P(1) = (x21*y32 - x32*y21)/(x21*x32*(h32 - h21))
-P(2) = y21/x21 - P(1)*h21
-P(3) = y(3) - P(1)*x(3)**2. - P(2)*x(3)
-
-return
-end subroutine polyfitcc_metric
-
-!---------------------------------------------------------------------=|
-subroutine polyfitcc_metric_1(x, y, P)
+subroutine polyfitcc_1(x, y, P)
 
 double precision, intent(in) , dimension(2) :: x, y
 double precision, intent(out), dimension(2) :: P
@@ -652,167 +630,9 @@ P(1) = y21/x21
 P(2) = y(1) - x(1)*y21/x21
 
 return
-end subroutine polyfitcc_metric_1
-
-!----------------------------------------------------------------------|
-subroutine linterp_metric(x1, y1, Nx1, x2, y2, Nx2)
-
-integer, intent(in) :: Nx1, Nx2
-double precision, intent(in)  :: x1(Nx1), y1(Nx1), x2(Nx2)
-double precision, intent(out) :: y2(Nx2)
-
-integer :: i, j, jdone
-double precision A, B, z1, z2, z3, z4, t1, t3, t4
-
-do i=1, Nx2
-    jdone = 0
-
-    t1 = x2(i)
-
-    do j=2, Nx1
-        z1 = x1(j-1)
-        z2 = x1(j)
- 
-        if (t1 == z1 .and. jdone == 0) then
-            y2(i) = y1(j-1)
-            jdone = 1
-        endif
-
-        if (t1 == z2 .and. jdone == 0) then
-            y2(i) = y1(j)
-            jdone = 1
-        endif
-
-        if (t1 > z1 .and. t1 < z2 .and. jdone == 0) then
-            z3 = y1(j-1)
-            z4 = y1(j)
-            t3 = x1(j-1)
-            t4 = x1(j)
- 
-            A = (z4 - z3)/(t4 - t3)
-            B = z3 - t3*A
-            y2(i) = A*t1 + B
-
-            jdone=1
-        endif
-
-        if (t1 < z1 .and. j == 2 .and. jdone == 0) then
-            z3 = y1(j-1)
-            z4 = y1(j)
-            t3 = x1(j-1)**2.0
-            t4 = x1(j)**2.0
- 
-            A = (z4 - z3)/(t4 - t3)
-            B = z3 - t3*A
-            y2(i) = A*t1**2.0 + B
-
-            jdone=1
-        endif
-
-        if (t1 > z2 .and. j == Nx1 .and. jdone == 0) then
-            z3 = y1(j-1)
-            z4 = y1(j)
-            t3 = x1(j-1)
-            t4 = x1(j)
- 
-            A = (z4 - z3)/(t4 - t3)
-            B = z3 - t3*A
-            y2(i) = A*t1 + B
-
-            jdone=1
-        endif
-
-    enddo
-enddo
-
-return
-end subroutine linterp_metric
-
-!quadratic inerpolation
-!----------------------------------------------------------------------|
-subroutine qinterp_metric(x1, y1, Nx1, x2, y2, Nx2)
-
-integer, intent(in) :: Nx1, Nx2
-double precision, intent(in) :: x1(Nx1), y1(Nx1), x2(Nx2)
-double precision, intent(out) :: y2(Nx2)
-
-integer :: i, j, jdone
-double precision :: A, B, C, z1, z2, z3, t1, t2, t3, t4
-
-do i=1, Nx2
-
-    jdone = 0
- 
-    t4 = x2(i)
-
-    do j=2, Nx1-1
-        z1 = x1(j-1)
-        z2 = x1(j)
-        z3 = x1(j+1)
- 
-        if (t4 == z1 .and. jdone == 0) then
-            y2(i) = y1(j-1)
-            jdone = 1
-        endif
-
-        if (t4 == z2 .and. jdone == 0) then
-            y2(i) = y1(j)
-            jdone = 1
-        endif
-
-        if (t4 == z3 .and. jdone == 0) then
-            y2(i) = y1(j+1)
-            jdone = 1
-        endif
-
-        if (t4 > z1 .and. t4 < z3 .and. jdone == 0) then
-            t1 = y1(j-1)
-            t2 = y1(j)
-            t3 = y1(j+1)
- 
-            A = (t3 - t2 - (z3 - z2)*(t1 - t2)/(z1 - z2)) / ((z3 - z2)*(z3 - z1))
-            B = (t1 - t2)/(z1 - z2) - A*(z1 + z2)
-            C = t2 - A * z2**2.0 - B*z2
-
-            y2(i) = A * t4**2.0 + B*t4 + C
-            jdone = 1
-        endif
-
-        if (t4 < z1 .and. jdone == 0 .and. j == 2) then
-            z1 = x1(j-1)**2.0
-            z2 = x1(j)**2.0
-            t1 = y1(j-1)
-            t2 = y1(j)
- 
-            A = 0.0
-            B = (t1 - t2)/(z1 - z2) - A*(z1 + z2)
-            C = t2 - A * z2**2.0 - B*z2
-
-            y2(i) = A * t4**4.0 + B * t4**2.0 + C
-            jdone = 1
-        endif
-
-        if (t4 > z3 .and. jdone == 0  .and. j == Nx1-1) then
-
-            t1 = y1(j-1)
-            t2 = y1(j)
-            t3 = y1(j+1)
-
-            A = (t3 - t2 - (z3 - z2)*(t1 - t2)/(z1 - z2)) / ((z3 - z2)*(z3 - z1))
-            B = (t1 - t2)/(z1 - z2) - A*(z1 + z2)
-            C = t2 - A * z2**2.0 - B*z2
-            y2(i) = A * t4**2.0 + B*t4 + C
-            jdone = 1
-        endif
-
-    enddo
-enddo
-
-return
-end subroutine qinterp_metric
-
+end subroutine polyfitcc_1
 !---------------------------------------------------------------------=|
-!Efable DERIV_EF computes first or second derivative over x
+!Efable DERIV computes first or second derivative over x
 !
 !  x_input: x_variable
 !  x_type for GRP style-grid is: 1 main grid -> shifted grid (deriv), 2 shifted grid -> main grid (deriv)
@@ -849,7 +669,7 @@ if (order_d == 1) then
 
     if (x_type == 2) then
         j = 1
-        call polyfitcc_metric(x_input(1: 3), y_input(1: 3), P)
+        call polyfitcc(x_input(1: 3), y_input(1: 3), P)
         y0 = P(3)
         dx = x_input(1)
         dy = (y_input(1) - y0)
@@ -877,7 +697,7 @@ else if (order_d == 2) then ! d2y/dx^2
     if (x_type == 2) then
 ! First interpolate shifted variable to zero
         j = 1
-        call polyfitcc_metric(x_input(1:3), y_input(1:3), P)
+        call polyfitcc(x_input(1:3), y_input(1:3), P)
         y0 = P(3)
         dx = x_input(j)**2.0
         dy = (y_input(j+1) - 2.0*y_input(j) + y0)
@@ -893,13 +713,13 @@ endif
 ! Interpolate to last grid point
 if (iextrap == 1 .and. order_d == 1) then
     j = nagrid
-    call polyfitcc_metric(x_input(j-2: j), y_input(j-2: j), P)
+    call polyfitcc(x_input(j-2: j), y_input(j-2: j), P)
     yd_output(j) = 2.*P(1)*x_output(j) + P(2)
 endif
 
 if (iextrap == 1 .and. order_d == 2) then
     j = nagrid
-    call polyfitcc_metric(x_input(j-2: j), y_input(j-2: j), P)
+    call polyfitcc(x_input(j-2: j), y_input(j-2: j), P)
     yd_output(j) = 2.*P(1)
 endif
 
@@ -930,7 +750,7 @@ if (x_type == 1) then
         ys_output(j) = ys_output(j-1) + y_input(j)*(x_input(j) - x_input(j-1))
     enddo
 else if (x_type == 2) then ! First interpolate shifted variable to zero
-    call polyfitcc_metric(x_input(1: 3), y_input(1: 3), P)
+    call polyfitcc(x_input(1: 3), y_input(1: 3), P)
     ys_output(1) = P(3)*x_input(1)
     do j=2, nagrid
         ys_output(j) = ys_output(j-1) + y_input(j-1)*(x_input(j) - x_input(j-1))
