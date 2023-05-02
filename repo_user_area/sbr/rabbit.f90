@@ -8,7 +8,7 @@ use const_inc, only: GP2, AIM1, TIME, TAU, QNBI, ROC, &
 use status_inc, only: FP, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
    XRHO, VOLUM, IPOL, PEBM, PIBM, NIBM, CUBM, SNEBM, SCUBM, &
    PBLON, PBPER, MU, VTOR, ZEF
-use numerical_tools, only: reinterp_back_quad, qinterp
+use numerical_tools, only: qinterp
 
 implicit none
 
