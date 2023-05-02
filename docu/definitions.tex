@@ -1,0 +1,79 @@
+\nonstopmode			\nobreak
+\def\eq{Eq.~\hspace*{-.2em}(}	\def\eqs{Eqs.~\hspace*{-.2em}(}
+\def\cH{{\cal H}}		\def\cV{{\cal V}}
+\def\cN{{\cal N}}		\def\cR{{\cal R}}
+\def\cE{{\cal E}}
+\def\Quad{\qquad\quad}		\def\QQuad{\qquad\qquad}
+\def\QUAD{\qquad\qquad\quad}	\def\QQUAD{\qquad\qquad\qquad}
+\def\al{\alpha}			\def\be{\beta}
+\def\ga{\gamma}			\def\de{\delta}
+\def\ge{\varepsilon}		\def\vt{\vartheta}
+\def\vf{\varphi}		\def\nb{\nabla}
+\def\dstyle{\displaystyle}	\def\ds{\dstyle}
+\def\tstyle{\textstyle}		\def\ts{\tstyle}
+\def\ss{\scriptstyle}		\def\ow{\stackrel{o}{w}}
+\def\prt{\partial}		\def\pll{{\scriptscriptstyle\parallel}}
+\def\bA{{\bf A}}		\def\bG{{\bf\Gamma}}
+\def\br{{\bf r}}		\def\bE{{\bf E}}
+\def\bv{{\bf v}}		\def\bB{{\bf B}}
+\def\bx{{\bf x}}		\def\bk{{\bf k}}		
+\def\x{\times}			\def\.{\cdot}		
+\def\epp{\varepsilon_{_\parallel}}
+\def\df{\stackrel{{\rm def}}{=}}
+\def\rot{{\rm\,rot\,}}
+\def\ov{\over}			\def\na{\nabla}
+\def\noi{\noindent}		\def\ns{\normalsize}
+\def\cl{\centerline}		\def\rl{\rightline}
+\def\ti{\tilde}			\def\wt{\widetilde}
+\def\ka{\kappa}			\def\wh{\widehat}
+\def\rb{\right}			\def\lb{\left}
+\def\rhs{right hand side }	\def\lhs{left hand side }
+\def\today{\ifcase\month\or
+		January\or February\or March\or April\or May\or June\or
+		July\or August\or September\or October\or November\or
+		December\fi \space\number\day, \number\year}
+%Christoffel symbol:
+\newcommand{\Chr}[3]
+	{\biggl\{\!\!\!\begin{array}{c}#1\\ #2 #3\end{array}\!\!\!\biggr\}}
+
+%First partial derivative:
+\newcommand{\prti}[2]{\displaystyle{\partial #1\over\partial #2}}
+
+%Second partial derivative:
+\newcommand{\prtii}[3]{\displaystyle{\partial^2 #1\over\partial #2\partial #3}}
+
+%Absolute derivative
+\newcommand{\prdi}[2]{\displaystyle{\delta #1\over\delta #2}}
+\newcommand{\prd}[2]{\displaystyle{\prt_{#2}\lb[#1\rb]}}
+
+\newcommand{\av}[1]{\left<#1\right>}
+\newcommand{\rr}[1]{\left.\left(#1\right)\right|_\Re}
+\newcommand{\rro}[1]{\left.#1\right|_\Re}
+\newcommand{\req}[1]{\eq\ref{#1})}
+\newcommand{\rf}[1]{(\ref{#1})}
+
+\newcommand{\ceqn}[3]{\\ \vbox{}\\ \null [#1] \hfill 
+		$\displaystyle{#2}$ \hfill (#3)\null\\ \vbox{}\\}
+
+%\newfont{\mainL}{cmss12 scaled\magstep3}
+%\newfont{\mainh}{cmss12 scaled\magstep4}
+%\newfont{\headfont}{cmr7 scaled\magstep0}
+%\def\rightheadline{\tenrm\hfil LEFT \hfil\folio}
+%\def\leftheadline{\tenrm\folio\hfil LEFT \hfil}
+%\newcommand{\headline}[1]{\ifodd\pageno\rightheadline \else\leftheadline\fi}
+%\renewcommand{\thesubsection}{}	\setcounter{subsection}{0}
+
+%\newfont{\cyrillic}{/ipp2/lib/publisher/fonts/mcyr10 scaled\magstep1}
+%\newfont{\cyrilb}{/ipp2/lib/publisher/fonts/mcyb10 scaled\magstep2}
+%\boldmath
+\parindent=0pt				\parskip=15pt plus2pt
+\hyphenpenalty = 200
+\hyphenation{pWKB}
+\hyphenation{WKB}
+\hyphenation{Eq}
+\hyphenation{equ-a-tion}
+\hyphenation{equ-a-ti-ons}
+\hyphenation{Eq}
+\hyphenation{Eqs}
+
+\mathsurround=5pt

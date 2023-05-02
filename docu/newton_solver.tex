@@ -1,0 +1,152 @@
+%\chapter{Reference guide}
+
+\section{A Newton--scheme for fast convergence to an absolute steady--state}
+In this section it is discussed a scheme implemented in Astra to converge to an absolute steady--state using the Newton--scheme.
+%
+\subsection{The scheme}
+The scheme is supposed to solve the steady--state version of the transport equation, using Newton--like iterations.
+Precisely, we have a set of variables $y_i(x)$, where $x$ is the radial coordinate and $i=1..N$ with $y_1=\tempe,y_2=\tempi,y_3=\dense,y_4=F1,y_5=F2,...$.
+
+One selects a finite number of radial grid points $x_j, j=1..M$, and the actual solution variable $g_{i,j}$, where
+at each chosen radial grid point $j$, $g_i = -d\log(y_i)/dx$.
+
+Now, one can compute the transport sources $R_{i,j}=(P_e, P_i, S_n, ...)$.
+As well as the transport fluxes: $T_{i,j}=(Q_e, Q_i, Q_n, ...)$ as defined in ASTRA using diffusivities and convection velocities.
+
+Obviously: $R=R(g)$ and $T=T(g)$ where the dependencies can be very very complex and non--linear.
+At steady--state one should fine $R=T$. As such, we select the "figure--of--merit" $F=R-T$ as the variable to force to zero.
+
+The scheme is thus employed to solve the simple implicit equation:
+\begin{eqnarray}
+\frac{d F}{d t}  =- F
+\label{newteq1dfdt}
+\end{eqnarray}
+where the time $t$ here is not actual real time but just a parameter to identify evolving iterations in differential form.
+The implicit solution assuming previous iteration is known: $F_0$, is:
+\begin{eqnarray}
+F=\frac{F_0}{1+dt}
+\label{newteq1dfdt2}
+\end{eqnarray}
+So this is very straightforward and easy, however $F$ is an implicit highly non--linear functions of the profiles, represented via the $g$s.
+
+To explicit them, we use Fourier expansion around $F_0$, that is $F=F_0 + J(g-g_0)$, where $J$ is the Jacobian matrix and $Jg$ is inteded as matrix multiplication operator.
+
+Finally, the equation for the new value of the $g$s is simply:
+\begin{eqnarray}
+g=g_0 - \frac{dt}{1+dt}(J^{-1}F_0)
+\label{newteq1dfdt3}
+\end{eqnarray}
+
+So the scheme is simply:
+
+1) give some guess $g_0$
+
+2) compute $F_0$
+
+3) compute the Jacobian $J$ and its inverse $J^{-1}$
+
+4) compute the new $g$
+
+5) if tolerance in $g-g_0$ is reached, exit, otherwise set $g_0=g$ and go to 2) \\
+It is obvious that the heavy part here is in computing $J$ and the inverse.
+For example, if one computes transport of $\tempe,\tempi¸\dense$ with a transport grid of 7 points, there are a total 
+of 21+1 (=22) calls of the ASTRA formulas and subroutines that define the transport coefficients and the sources, 
+per iteration, plus the inverse matrix operation.
+This makes this scheme rather slow for several transport channels and many grid points.
+
+An alternative scheme is proposed, which assumes that transport is dominated by diagonal diffusion of its own channel.
+In this case the iteration scheme is the following:
+\begin{eqnarray}
+g=g_0 - \frac{dt}{1+dt}\frac{F_0}{y_0 D_0}
+\label{newteq1dfdt3bis}
+\end{eqnarray}
+where $D_0$ is the diagonal diffusion coefficient of the quantity under consideration and the radial grid point
+As such, it is just a ratio of local quantities and not a matrix product. Moreover, it requires only 1 computation per iteration.
+Of course, the convergence in this case is not as fast as in Newton, in terms of number of iterations, but it is much faster.
+
+As an example, for the electron temperature channel at some location $j$:
+\begin{eqnarray}
+g_j=g_{0,j} - \frac{dt}{1+dt}\frac{F_{0,j}}{n_{e,0,j}T_{e,0,j}\chi_{e,0,j}}
+\label{newteq1dfdt3bis2}
+\end{eqnarray}
+
+This alternative scheme is pretty fast and converges in less iterations than the standard time--dependent scheme, however
+if the transport matrix has non--negligible non--diagonal terms, it can take more iterations than the actual Newton scheme.
+
+Note that the choice of $dt$ is merely based on stability considerations, i.e. it must be such that the iterations
+do not oscillate or diverge.  
+%
+\subsection{New parameter}
+To switch from ASTRA time--dependent scheme to the Newton scheme, the new control variable {\bf IPNWT} has been introduced.
+Here are the possible values:\\[2ex]
+\begin{tabular}{|l|l|l|}					\hline
+\bf Name	&\bf Value & Description\\ \hline
+\tt IPNWT 	& 0. & Default: usual ASTRA time--dependent scheme\\
+\tt  	& -1. & ASTRA called with time--dependent scheme but it stops\\
+\tt  	& & when tolerance is reached\\ 
+\tt  	& 1 & Simplified Newton scheme, ASTRA stops when tolerance is reached\\ 
+\tt  	& 2 & Simplified Newton scheme, ASTRA goes on (after a pause) \\
+\tt  	& & with time--dependent scheme after tolerance is reached\\ 
+\tt  	& 3 & Simplified (0) or real (1) Newton scheme , \\
+\tt  	& & it stops when tolerance is reached\\ 
+\tt  	& 4 & Simplified (0) or real (1) Newton scheme ,ASTRA goes on (after a pause) \\
+\tt  	& &  with time--dependent scheme after tolerance is reached\\ 
+\tt  	& 5 & First simplified Newton scheme, until a certain \\
+\tt  	& & intermediate tolerance is reached, then goes on with real \\
+\tt  	& & Newton scheme up to actual chosen tolerance\\ 
+\hline
+\end{tabular}
+\bigskip\\
+
+To select some numerical parameters, a new file is introduced and must be found in the local directory {\it dat/}
+
+This file is called {\it newton\_numerics.dat} and it contains one row with the following parameters (example):\\
+number of transport grid points ;  x0 ; xb ; number of channels ; tolerance ;  isaw ;  imode ;  pown  ;  powe  ;  urelax ;  powsub ;  idiag ; tolinterm ; forgetexp \\
+5 0.2 0.9   4      1.e-6    1  1  0. 0. 1.  0. 0  1.e-1    1 \\
+Here is the meaning:
+
+number of transport grid points: self--explanatory, equispaced between x0 and xb.
+
+x0 : first grid point in normalized $\rho$
+
+xb : last grid point in normalized $\rho$
+
+number of channels : number of equations to be solved
+
+tolerance : tolerance to be reached
+
+isaw: if 0 $q$ profile is natural, if 1 $q$ profile is flattened to 1 inside $q=1$
+
+imode: if 0 runs simplified Newton scheme, if 1 runs real Newton scheme
+
+pown: exponent of $1/tol^{pown}$ to call the Newton solver every tot iterations (suggested to leave = 0)
+
+powe: exponent of $1/tol^{powe}$ to call the equilibrium solver every tot iterations (suggested to leave = 0)
+
+urelax: under--relaxation coefficient (suggested to leave = 0)
+
+powsub: exponent of $1/tol^{powsub}$ to call the postep.inc subroutines every tot iterations (important to avoid slowing down the code)
+
+idiag: 0 to not write any diagnostics on screen, 1 to write
+
+tolinterm: when IPNWT = 5, decides the tolerance at which to switch between simple Newton and real Newton
+
+forgetexp: when 1, do not sync with experimental data; useful when for example parts of the profile have to be assigned iteratively (i.e. pedestal model)
+
+%
+\subsection{Some tricks}
+The simplified Newton scheme always converge or at least is stable, even when the model file does not respect some logic, i.e. in terms of variable definitions, i.e. as in the usual time--dependent scheme.
+
+The real Newton scheme diverges with nonsense results if the model file does not respect a certain logic. Here are the criterion:\\
+1) There must not be any model that creates "jumps" in the profiles;\\
+2) The definitions of the variable must follow consequently;\\
+3) Avoid at all costs recursive definitions; \\
+4) Heavy subroutines better go into postep.inc (symbol $>$);\\
+5) Light subroutines that define transport coefficients or other things should be called with the symbol $<$, and define
+possibly the variable "work", because then they are called before the use of said "work"; \\
+
+
+
+
+%
+\clearpage

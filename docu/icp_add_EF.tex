@@ -1,0 +1,76 @@
+%\chapter{Reference guide}
+
+%
+\section{Parallel processes with IPC}
+From Astra--6.2.1 on, it is possible to run several processes on independent memory segments, to speed up computations in cases where
+each radial grid point is independently considered.
+
+As an example, suppose to run a transport simulation of electron temperature, for which the energy diffusivity is computed with a sophisticated model that requires some time for a single radial point computation.
+Said model is local, i.e. each radial grid point is computed independently of the others.
+In this case, the IPC paradigm is of help, since many radial grid points can be then run simultaneously which greatly speeds up the overall simulation.
+%
+\subsection{Calling IPC from the model file}
+Suppose to have a subroutine {\it subp.f} which calls a physical model that computes at generic radii index $j$. \\
+In the model file the IPC call to {\it subp.f} appears as a sequence of calls:
+
+xpr/subp(j1,j2)\&::::;	\\
+where $j1,j2$ are indexes of radial positions. As an example, with 121 radial grid points:
+
+xpr/subp(1,40)\&::::;	
+
+xpr/subp(41,81)\&::::;	
+
+xpr/subp(82,121)\&::::;	\\
+which means that the subp module is sent on three independent processes, the first of which computes radii from 1 to 40, the second from 41 to 81, and the third from 82 to 121. In this way, the computational time for 121 grid points is 1/3 than the usual computational time that would require the call 
+
+subp::::;\\
+which solves all radii in one single process.
+%
+\subsection{Setting up the subroutines to run the IPC processes}
+Running IPC requires some effort from the part of the user in setting up a bunch
+of subroutines that take care of appropriate variable assignment and calls. This
+is unfortunately not as straightforward as calling subroutines in the standard 
+way.
+
+The detailed explanation on how to set up these additional routines and the scheme of the IPC process is presented in the attached paper {\it IPC.pdf}.
+%
+\subsection{Calling subroutines in order}
+In general, in all Astra versions, the order in which commands enter in the model file, is maintained in the compilation. In addition to this, from Astra--6.2.1 onwards, there is the possibility to explicitly tell the code to give higher or lower priority to specific subroutines.
+
+Suppose to have five generic subroutines that here we call SUB1,SUB2,SUB3,SUB4,SUB5, where the number is arbitrary, does not represent priority.
+If in the model file they appear for example as:\\
+SUB1::::;\\
+SUB2::::;\\
+SUB3::::;\\
+SUB4::::;\\
+Means that they will be performed in the order in which they appear: 1,2,3,4.
+Now, by writing for example:\\
+SUB1::::;\\
+SUB2$<$::::;\\
+SUB3::::;\\
+SUB4::::;\\
+The order would be: 2,1,3,4. SUB2 has acquired highest priority with the symbol $<$.
+The following instead:\\
+SUB1::::;\\
+SUB2$<$::::;\\
+SUB3$<$::::;\\
+SUB4::::;\\
+gives the order: 2,3,1,4.
+In this other example:\\
+SUB1$>$::::;\\ 
+SUB2::::;\\
+SUB3::::;\\
+SUB4::::;\\
+the order is: 2,3,4,1. So SUB1 has lowest priority with the symbol $>$.
+In this example:\\
+SUB1$>$::::;\\
+SUB2$>$::::;\\
+SUB3::::;\\
+SUB4::::;\\
+the order is then 3,4,1,2.
+
+
+
+%
+
+\clearpage

@@ -1,0 +1,3208 @@
+%\chapter{Reference guide}
+
+\section{Reference guide}
+
+\subsection{Units and variables}
+
+The following set of units, based on SI with some exceptions, is adopted
+in the Astra code. 
+\medskip\\
+\noindent
+{\bf Table 4.1. System of units}
+\nopagebreak
+\\[10pt]
+\nopagebreak
+\noindent
+\begin{tabular}{|l|l|}
+\hline
+\bf Unit		& \bf Quantity\\
+\hline
+m			& length\\
+m$^2$			& area\\
+m$^3$			& volume\\
+s			& time\\
+m/s			& velocity\\
+m$^2$/s			& diffusion\\
+$10^{19}$m$^{-3}$	& particle density\\
+$10^{19}$m$^{-3}$s$^{-1}$ & particle source\\
+$10^{19}$s$^{-1}$	& particle flux\\
+$10^{19}$m$^{-2}$s$^{-1}$ & particle flux density\\
+keV			& temperature\\
+s$^{-1}$		& collision frequency\\
+\hline
+\end{tabular}
+\hspace*{30pt}\begin{tabular}{|l|l|}
+\hline
+\bf Units		& \bf Quantity\\
+\hline
+MW			& power, energy flux\\
+MW$\cdot$m$^{-3}$	& power density\\
+MW$\cdot$m$^{-2}$	& density of energy flux\\
+MJ			& energy content\\
+T			& magnetic induction\\
+V$\cdot$s		& magnetic flux\\
+V			& voltage\\
+MA			& current\\
+MA$\cdot$m$^{-2}$	& current density\\
+$\mu$Hn			& inductance\\
+($\mu$Ohm$\cdot$m)$^{-1}\!=$MS/m	& conductivity\\
+GHz			& RF frequency\\
+\hline
+\end{tabular}
+\\[10pt]
+The main set of the simple variables in the Astra code includes
+\medskip\\
+\noindent
+{\bf Table 4.2. List of main device and plasma parameters}
+\nopagebreak
+\\[10pt]
+\nopagebreak
+\noindent
+\begin{tabular}{|c|l|l|l|}
+\hline
+\bf Quantity	&\bf Variable name &\bf Units &\bf Description	\\
+\hline
+$R_0$		&{\tt RTOR}	& m   & major radius		 \\
+$a_M$		&{\tt AB}	& m   & maximum value of $a_B$ allowed \\
+$a_B$		&{\tt ABC}	& m   
+			& minor radius of LCMS in the mid-plane \\
+$\Delta_B$	&{\tt SHIFT}	& m   
+			& Shafranov shift of the plasma boundary\\
+$\lambda_B$	&{\tt ELONG}	& -- 
+			& elongation of the plasma boundary \\
+$\delta$	&{\tt TRIAN}	& -- 
+			& triangularity of the plasma boundary \\
+$\Delta_Z$	&{\tt UPDWN}	& m   
+			& vertical shift of the plasma boundary	 \\
+$\rho_B$	&{\tt ROC}	& m   & effective minor radius	 \\
+$A_i/m_p$	&{\tt AMJ}	&--
+			& main ion mass number ($m_p$ is the proton mass)\\
+$Z_i$		&{\tt ZMJ}	& -- 
+			& electric charge of the main ion species \\
+$B_0$ 		&{\tt BTOR}	& T   & vacuum magnetic field at $R_0$ \\
+$I_{\rm pl}$	&{\tt IPL}	& MA  & total plasma current 	\\
+%$L_{\rm ext}$ 	&{\tt LEXT}	& $\mu$Hn&external inductance	 \\
+%$U_{\rm ext}$ 	&{\tt UEXT}	& V   & external voltage	 \\
+%$V$ 		&{\tt VOLUME}	& m$^3$   & plasma volume	 \\
+%$t$ 		&{\tt TIME}	& s   & time			 \\
+%$\tau$	 	&{\tt TAU}	& s   & time step		 \\
+%$\pi$		&{\tt GP}	& -- & 3.1415926		 \\
+\hline
+\end{tabular}
+\\[10pt]
+The first two quantities in this table cannot depend on time, all others 
+can be time dependent.
+
+Table 4.3 shows the list of main radially and time dependent
+quantities (arrays) which are continuously stored in memory at two
+time slices.  
+Except for $n_i$ and $V',$ this list coincides with the list of unknown
+quantities in the system of transport equations. 
+\medskip\\
+\noindent
+{\bf Table 4.3. List of radial functions (arrays) stored at two time
+slices} 
+\nopagebreak
+\\[10pt]
+\nopagebreak
+\noindent
+\begin{tabular}{|c|c|c|l|}
+\hline
+\bf Quantity	&\bf Code variable at the
+		&\bf Code variable at the 	&\bf Description\\ 
+	&\bf current time $t\hspace*{2.6em}$ 
+		&\bf previous time $t-\tau\hspace*{0.9em}$&	\\ \hline
+$n_e$ 		&{\tt NE}	&{\tt NEO}	& electron density\\
+$n_i$		&{\tt NI}	&{\tt NIO}	& ion density\\
+$T_e$		&{\tt TE}	&{\tt TEO}	& electron temperature\\
+$T_i$ 		&{\tt TI}	&{\tt TIO}	& ion temperature\\
+$\psi$ 		&{\tt FP}	&{\tt FPO}	& poloidal flux\\
+$f_1$ 		&{\tt F1}	&{\tt F1O} & 1st function in \req{aux}\\
+$f_2$ 		&{\tt F2}	&{\tt F2O} & 2nd function in \req{aux}\\
+$f_3$ 		&{\tt F3}	&{\tt F3O} & 3rd function in \req{aux}\\
+$V'$ 		&{\tt VR}	&{\tt VRO} & volume derivative\\ \hline
+\end{tabular}
+\\[10pt]
+All other quantities are available for the current time, $t,$ only. 
+The list of main arrays is given in Table 4.4. 
+\medskip\\
+\noindent
+{\bf Table 4.4. Some other radial functions}
+\nopagebreak
+\\[10pt]
+\nopagebreak
+\noindent
+\begin{tabular}{|c|l|l|l|}
+\hline
+\bf Quantity	&\bf Array name	&\bf Units	&\bf Description\\
+\hline
+$\rho$		&{\tt RHO}	& m	& main magnetic surface label\\
+$a$		&{\tt AMETR}	& m	& minor radius as in \req{3mom}\\
+$\Delta$	&{\tt SHIF}	& m	& Shafranov shift \req{3mom}\\
+$\lambda$	&{\tt ELON}	& --	& elongation \req{3mom}\\
+$\delta$	&{\tt TRIA}	& --	& triangularity \req{3mom}\\
+%$n_i$ 		&{\tt NI}	& $10^{19}$m$^{-3}$ & ion density\\
+$j_\pll$ 	&{\tt CU}	& A/m$^2$ & current density\\
+$j_{BS}$ 	&{\tt CUBS}	& A/m$^2$ & bootstrap current density\\
+$j_{CD}$ 	&{\tt CD}	& A/m$^2$ & driven current density\\
+$\sigma_\pll$ 	&{\tt CC} & ($\mu$Ohm$\cdot$m)$^{-1}$	& conductivity\\
+$\mu$	 	&{\tt MU}	& --	& rotational transform\\
+$\mu_V$		&{\tt MV}	& --	& vacuum rotational transform\\
+$\psi_V$	&{\tt FV}	& V$\cdot$s
+			& poloidal flux for vacuum magnetic field\\
+$E_\pll/B_p$	&{\tt VP}	& m/s	& pinch velocity, 
+					$E_\pll=U_\pll/(2\pi R_0)$\\
+$U_\pll$	&{\tt ULON}	& V	& longitudinal loop voltage\\
+$U_{\rm pl}$	&{\tt UPL}	& V	& toroidal loop voltage\\
+$Z_{eff}$ 	&{\tt ZEF}	& --	& effective charge\\
+$\Gamma_e$ 	&{\tt QN}	& $10^{19}$s$^{-1}$ & particle flux\\
+$q_e$	 	&{\tt QE}	& MW	& electron heat flux\\
+$q_i$	 	&{\tt QI}	& MW	& ion heat flux\\
+$J$ 		&{\tt IPOL}	& --	& normalized poloidal current\\
+$V'G_1$		&{\tt G11}	& m$^2$	& defined in \req{metr}\\
+$R_0G_2/J$	&{\tt G22}	& m	& defined in \req{metr}\\
+$G_3$		&{\tt G33}	& --	& defined in \req{metr}\\
+\hline
+\end{tabular}
+\pagebreak
+\\
+The complete list of radially dependent variables includes more than 200
+quantities. 
+Most of them are discussed in Section 4.6.2.
+
+\subsection{Transport equations in Astra notations}
+
+For convenience in working with the Astra code, we re-write the set of
+transport equations (\ref{main})-(\ref{fluxes}) in the newly introduced
+system of units using Astra variable notation. First, we define
+the operators 
+\begin{equation}
+\begin{array}{c}
+\hat D_T[f]\df\dstyle
+\frac{3}{2}\frac{1}{\lb(V'\rb)^{5/3}}
+\lb(\prti{}{t}-\frac{\dot B_0}{2B_0}\prti{}{\rho}\rho\rb)
+\lb[\lb(V'\rb)^{5/3}f\rb]
+,\bigskip\\ \dstyle
+\hat D_n[f]\df
+\frac{1}{V'}\lb(\prti{}{t}-\frac{\dot B_0}{2B_0}\prti{}{\rho}\rho\rb)
+\lb[V'f\rb]
+,\qquad\dstyle
+\hat D_\psi[f]\df
+\prti{f}{t}-\frac{\rho\dot B_0}{2B_0}\prti{f}{\rho}
+.\end{array}
+\end{equation}
+Now \req{main} takes the form
+\begin{equation}\label{Amain}
+\hspace*{-5mm}
+\begin{array}{rl}\dstyle
+\hat D_n\left[{\tt NE}\right]+\prti{}{V}\lb({\tt QN}\rb)
+&\!\!\!\!
+={\tt SN}+{\tt SNN*NE}
+,\bigskip\\ \dstyle
+\hat D_T\left[{\tt NE*TE}\right]
++\prti{}{V}
+\lb({\tt 625*QE}+\frac{\tt 5}{\tt 2}{\tt *}\gamma_e{\tt *TE*QN}\rb)
+&\!\!\!\!
+={\tt 625*(PE+PET*TE)}
+,\bigskip\\ \dstyle
+\hat D_T\left[{\tt NI*TI}\right]
++\prti{}{V}
+\lb({\tt 625*QI}+\frac{\tt 5}{\tt 2}{\tt*}\gamma_i\;
+\frac{\tt NI*TI}{\tt NE}\;{\tt QN}\rb)
+&\!\!\!\!
+={\tt 625*(PI+PIT*TI)}
+,\bigskip\\ \dstyle
+{2\pi\rho}{\tt *CC*}\hat D_\psi\lb[{\tt FP}\rb]
++V'{\tt *}\left({\tt CUBS}+{\tt CD}\right)
+&\!\!\!\!\dstyle
+={\tt 5*IPOL}^2\prti{}{\rho}
+\left[{\tt G22}\prti{}{\rho}\lb(\tt FP\rb)\right]
+.\end{array}
+\end{equation}
+Two additional factors $\gamma_e,\gamma_i$ are introduced in \req{Amain}
+to allow modification of the contribution of the convective component to
+the heat flux. 
+The corresponding code variable names are
+$\tw{GN2E}=\frac{5}{2}\gamma_e$ and $\tw{GN2I}=\frac{5}{2}\gamma_i.$
+When not determined explicitly these factors take the default values 
+$\tw{GN2E}=\tw{GN2I}=0.$ 
+The full energy fluxes through a whole magnetic surface appear in the
+form 
+\begin{equation}
+Q_e=q_e+\frac{5}{2}\gamma_e T_e \Gamma_e
+={\tt QE}+1.6\x10^{-3}\,{\tt GN2E*TE*QN}
+\end{equation}
+and
+\begin{equation}
+Q_i=q_i+\frac{5}{2}\gamma_i T_i \Gamma_i
+={\tt QI}+1.6\x10^{-3}\,\frac{\tt NI}{\tt NE}\;{\tt GN2I*TI*QN}
+\end{equation}
+where the factor $1.6\x10^{-3}=1/625$ emerges because the mixed system of units (keV and
+MJ) is adopted. 
+
+The set of equations (\ref{aux}) acquires the form
+\begin{equation}\label{Aux}
+\frac{1}{V'}\prti{}{t}\left(V'{\tt *Fj}\right)
++\prti{}{V}\lb({\tt QFj}\rb)
+={\tt SFj+SFFj*Fj}
+,\end{equation}
+with
+\begin{equation}\label{QFj}
+{\tt QFj}
+={\tt G11*}
+\left({\tt VFj*Fj}-{\tt DFj}\;\prti{}{\rho}\lb({\tt Fj}\rb)\right)
+.\end{equation}
+Here the letter {\tt j} should be replaced with one of the numbers: 1,
+2, 3. 
+
+The transport matrix \req{fluxes}, in the Astra notation, takes the form
+\begin{equation}\label{Afluxes}
+\left(
+\begin{array}{c}\dstyle
+\frac{\tt QN-SLAT*GNX}{\tt G11*NE}
+\bigskip\\ \dstyle
+\frac{\tt 625*QE}{\tt G11*NE*TE}
+\bigskip\\ \dstyle
+\frac{\tt 625*QI}{\tt G11*NI*TI}
+\bigskip\\ \dstyle
+\frac{0.4\pi}{B_p}{\tt *CUBS}
+\end{array}
+\right)
+=
+-\left(
+\begin{array}{cccc}
+\tt DN &\tt HN &\tt XN &\tt CN
+\bigskip\bigskip\\ \dstyle
+\tt DE &\tt HE &\tt XE &\tt CE
+\bigskip\bigskip\\ \dstyle
+\tt DI &\tt HI &\tt XI &\tt CI
+\bigskip\bigskip\\ \dstyle
+\tt DC &\tt HC &\tt XC & 0
+\end{array}
+\right)
+\cdot
+\left(
+\begin{array}{c}\dstyle
+\frac{1}{\tt NE}\prti{\tt NE}{\rho}
+\bigskip\\ \dstyle
+\frac{1}{\tt TE}\prti{\tt TE}{\rho}
+\bigskip\\ \dstyle
+\frac{1}{\tt TI}\prti{\tt TI}{\rho}
+\bigskip\\ \dstyle
+-1
+\end{array}
+\right)
+.\end{equation}
+The reason for the additional term \tws{-SLAT*GNX} in the first
+row on the left hand side of \req{Afluxes} will be discussed in
+Section~4.9.1. 
+Note also that the last 
+element of the column vector on the \rhs of \req{fluxes} does not
+correspond to that in \req{Afluxes}:  
+namely, the quantity ``$E_\pll/B_p$'' in \req{fluxes} is replaced with
+``1'' in \req{Afluxes}. 
+This allows the inclusion of particle or energy fluxes which are not
+necessarily related to the toroidal electric field. 
+\medskip\\
+\noindent
+{\bf Table 4.5. Notations for transport coefficients in the Astra code}
+\nopagebreak
+\\[10pt]
+\nopagebreak
+\noindent
+\begin{tabular}{| l l l | l | l l l|}				 \hline
+\multicolumn{3}{|c|}{\bf Code variable}	&\bf Units 	&
+\multicolumn{3}{|l|}{Notations in Eqs.~(\ref{fluxes}),(\ref{aux})}\\
+\hline
+{\tt DN,}&{\tt HN,}&{\tt XN}    &m/s$^2$ 
+		&\qquad $D_n$,       &$D_e$,       &$D_i$	\\
+{\tt DE,}&{\tt HE,}&{\tt XE}    &m/s$^2$ 
+		&\qquad $\chi_n^e,$&$\chi_e,$  &$\chi_i^e$\\
+{\tt DI,}&{\tt HI,}&{\tt XI}    &m/s$^2$ 
+		&\qquad $\chi_n^i,$&$\chi_e^i,$&$\chi_i$	\\
+{\tt CN,}&{\tt CE,}&{\tt CI}    &m/s     
+		&\qquad $C_n,$       &$C_e,$       &$C_i$ 	\\
+{\tt DC,}&{\tt HC,}&{\tt XC}    &--     
+		&\qquad $D_E,$       &$\chi_E^e,$&$\chi_E^i$\\
+{\tt DF1,}&{\tt DF2,}&{\tt DF3} &m/s$^2$ 
+		&\qquad $D_1,$       &$D_2,$       &$D_3$	\\
+{\tt VF1,}&{\tt VF2,}&{\tt VF3} &m/s     
+		&\qquad $v_1,$       &$v_2,$       &$v_3$	\\
+{\tt CC} & & 		&MS/m	&\qquad $\sigma_\pll$ & &	\\[5pt]
+\hline
+\end{tabular}\vskip 3ex
+
+The sources on the right hand side in Eqs.~(\ref{Amain}) and (\ref{Aux})
+are split into two parts. 
+The part which is linear with respect to the unknown variable in each
+equation is written separately, in order to allow the choice of either
+an implicit or an explicit numerical scheme.
+For instance, the same particle source $S_e$ can be defined as 
+${\tt SN}=s_{ion}Nn_e$ or as ${\tt SNN}=s_{ion}N.$
+In the first case, it would be approximated explicitly using the
+electron density $n_e={\tt NEO}$ from the previous time slice,
+$S_e=s_{ion}N*{\tt NEO};$
+while, in the second case, $S_e=s_{ion}N*{\tt NE}.$
+We summarize usage of the sources and sinks in Table 4.6.
+
+\vskip 1ex\noindent
+{\bf Table 4.6. Notations for the right hand sides of transport equations}
+\\[10pt]\noindent
+\begin{tabular}{| lll | l | l |}				\hline
+\multicolumn{3}{|c|}{\bf Code variable}
+			&\bf Units	&\bf Definition\\	\hline
+{\tt SN}  & 	&    &$10^{19}$/(m$^3\,$s)& $S_e={\tt SN+SNN*NE}$	\\
+{\tt SNN} & 	&	&1/s		&		 	\\
+{\tt PE,} &{\tt PI,} &	&MW/m$^3$	& $P_e={\tt PE+PET*TE}$	\\
+{\tt PET,}&{\tt PIT,}&	&MW/(m$^3\,$keV)	& $P_i={\tt PI+PIT*TI}$	\\
+{\tt SF1,}&{\tt SF2,}&{\tt SF3} &[{\tt Fj}]/s & $S_j={\tt SFj+SFFj*Fj}$\\
+{\tt SFF1,}&{\tt SFF2,}&{\tt SFF3}&1/s	& 			\\
+{\tt CUBS,}&{\tt CD}&	&MA/m$^2$	& $j_{BS}={\tt CUBS},$
+					  $j_{CD}={\tt CD}$	\\ \hline
+\end{tabular}
+
+\vskip 3ex
+The transport set of equations will be completely defined if 
+\begin{description}
+\vspace*{-1ex}
+\item (1) device and plasma parameters (Table 4.2) are set,
+\vspace*{-1ex}
+\item (2) all quantities in Tables 4.5 and 4.6 are determined,
+\vspace*{-1ex}
+\item (3) a rule for calculation of metric coefficients is defined and 
+\vspace*{-1ex}
+\item (4) initial and boundary conditions are prescribed. 
+\end{description}
+Calculation of the metric coefficients is provided by the equilibrium
+solver, and 
+a link between transport and equilibrium parts of the code is discussed
+in Section 4.5.
+The technical details for setting initial and boundary conditions
+in the code are described in Section 5, while in the following 
+two sections the general logic of the procedure is discussed.
+
+\subsection{Initial conditions}
+
+In this Section and below we use the following flowchart notation
+$$
+\begin{picture}(110,50)
+\put(0,30){\begin{picture}(110,50)
+	\thicklines
+	\multiput(15,15)(0,-30){2}{\line(1,0){30}}
+	\multiput(0,0)(45,-15){2}{\line(1,1){15}}
+	\multiput(0,0)(45,15){2}{\line(1,-1){15}}
+	\put(20,-5){{\tt QTY}}
+	\thinlines
+	\put(67,0){\vector(1,0){40}}\put(80,5){yes}
+	\put(30,-20){\vector(0,-1){25}}\put(15,-32){no}
+	\end{picture}}
+\end{picture}\QQUAD
+$$
+which means a test of whether the quantity {\tt QTY} is defined in a
+model or not. 
+If it appears on the left hand side of any assignment instruction in 
+a model (see Section 5.2) at least once as
+\\ \indent
+{\tt QTY}$=${\tt expression};\\
+then we say that it is defined, the answer to the question is positive 
+and the path labeled "yes" is taken.
+
+
+\subsubsection{Initial conditions for $\tt NE, TE, TI, Fj$}
+
+Setting of the initial conditions for the electron density is quite
+straightforward:\\ 
+\hspace*{125pt}\begin{tabular}{cl}
+\begin{picture}(110,25)
+\thicklines
+\multiput(15,15)(0,-30){2}{\line(1,0){30}}
+\multiput(0,0)(45,-15){2}{\line(1,1){15}}
+\multiput(0,0)(45,15){2}{\line(1,-1){15}}
+\put(25,-5){{\tt NE}}
+\thinlines
+\put(67,0){\vector(1,0){40}}\put(80,5){yes}
+\put(30,-20){\vector(0,-1){30}}\put(15,-35){no}
+\end{picture}
+&
+$n_{e}(\rho,t)={\tt NE}$\\[50pt]
+%\begin{picture}(110,65)
+%\thicklines
+%\multiput(15,15)(0,-30){2}{\line(1,0){30}}
+%\multiput(0,0)(45,-15){2}{\line(1,1){15}}
+%\multiput(0,0)(45,15){2}{\line(1,-1){15}}
+%\put(20,-5){{\tt NEX}}
+%\thinlines
+%\put(70,0){\vector(1,0){40}}\put(80,5){yes}
+%\put(30,-20){\vector(0,-1){30}}\put(15,-35){no}
+%\end{picture}
+%&
+\hspace*{-50pt}$n_{e}(\rho,t)={\tt NEX}$\\
+%\multicolumn{2}{l}
+%{\hspace*{-50pt}The density distribution is determined}\\ 
+%\multicolumn{2}{l}
+%{\hspace*{-50pt}by the default value $10^{18}\rm\;m^{-3}$}\\
+\end{tabular}\\[15pt]
+Firstly, the Astra compiler checks whether the diffusion equation
+for $n_e$ is to be solved or not.
+Suppose first that the density evolution will be prescribed, i.e. the
+particle diffusion equation is to be suppressed. 
+The Astra compiler continues by checking whether \twd{NE} is assigned
+in the model. 
+If yes, then the density will evolve according to this assignment and no
+further checks are made.
+If \twd{NE} is not defined in the model, then the next check (not shown
+in the diagram) is made as to whether \twd{NEX} is set in the data file
+(Section~5.4). 
+If this is the case, then \twd{NE} is set to \twd{NEX}.
+If it happens that \twd{NEX} does not appear in the data file either,
+then the default setting $n_e(\rho,t)=10^{18}{\rm\;m}^{-3}$ is applied. 
+The default setting is constant in time and space, while all other means
+of setting \twd{NE} can have arbitrary dependences.
+
+A similar scheme is applied when the density $n_e(\rho,t)$ is to be
+defined by the transport equation.
+The difference is that, in this case, the assignment
+$n_e(\rho,t_0)=\dots$ is made only once, and that this is understood as
+the initial condition. 
+Any time $t_0$ (code variable \twd{TSTART}) can be selected as a starting
+time for the simulation. 
+The following evolution of $n_e$ at $t>t_0$ will be defined by the
+transport equation. 
+Finally, it has to be mentioned that there is an option (see
+Section~5.2.5) to assign \twd{NE} only once at $t=t_0=\tt TSTART$ even
+if \twd{NE} or \twd{NEX} are defined as time dependent. 
+
+Initial conditions for $T_e,$ $T_i$ and $f_j$ are defined in similar
+ways:
+\pagebreak 
+
+%\indent
+{{\bf Table 4.7. Summary of the  setting of initial conditions}
+\bigskip\\ \noindent
+\begin{tabular}{| c | c | c | c | l |}\hline
+{\bf Variable}	&{\bf Name in the code}
+	&\bf 1st check  &\bf 2nd check	&\bf Default value \\ \hline
+$n_e$	& {\tt NE} &${\tt NE}=\:?$ & ${\tt NEX}=\:?$
+				   & \quad $10^{18}{\rm m}^{-3}$ \\
+$T_e$	& {\tt TE} &${\tt TE}=\:?$ & ${\tt TEX}=\:?$ & \quad 10 eV \\
+$T_i$	& {\tt TI} &${\tt TI}=\:?$ & ${\tt TIX}=\:?$ & \quad 10 eV \\
+$f_1$	& {\tt F1} &${\tt F1}=\:?$ & ${\tt F1X}=\:?$ & \quad 0	\\
+$f_2$	& {\tt F2} &${\tt F2}=\:?$ & ${\tt F2X}=\:?$ & \quad 0	\\
+$f_3$	& {\tt F3} &${\tt F3}=\:?$ & ${\tt F3X}=\:?$ & \quad 0	\\
+\hline
+\end{tabular}}
+
+\vskip 2ex\noindent
+For every quantity in this table, the Astra compiler finds the
+appropriate mode of calculating the corresponding variable:
+via equation, formula or data file.
+
+\subsubsection{Initial conditions for the poloidal flux $\psi=\tt FP$}
+
+The similar procedure is applied for the poloidal flux.
+The scheme below can define the initial conditions only (then the
+equation for $\psi$ is solved), or describe the prescribed time evolution
+of $\psi$ and all related quantities. 
+Usually, it is more convenient to prescribe the plasma current density
+$j_\pll$ rather than the poloidal flux $\psi.$
+
+\vskip 1ex\noindent
+\hspace*{60pt}
+\begin{tabular}{l}
+\begin{picture}(110,25)
+\thicklines
+\multiput(15,15)(0,-30){2}{\line(1,0){30}}
+\multiput(0,0)(45,-15){2}{\line(1,1){15}}
+\multiput(0,0)(45,15){2}{\line(1,-1){15}}
+\put(25,-5){{\tt CU}}
+\thinlines
+\put(67,0){\vector(1,0){40}}\put(80,5){yes}
+\put(30,-20){\vector(0,-1){30}}\put(15,-35){no}
+\put(120,0){$j_\pll={\tt CU}\rightarrow{\tt MU}\rightarrow{\tt FP}
+	\rightarrow{\tt UPL}$}
+\put(120,-20){Additionally, the condition \rf{icj} is applied.}
+\end{picture}
+\\
+\begin{picture}(110,65)
+\thicklines
+\multiput(15,15)(0,-30){2}{\line(1,0){30}}
+\multiput(0,0)(45,-15){2}{\line(1,1){15}}
+\multiput(0,0)(45,15){2}{\line(1,-1){15}}
+\put(25,-5){{\tt MU}}
+\thinlines
+\put(70,0){\vector(1,0){40}}\put(80,5){yes}
+\put(30,-20){\vector(0,-1){30}}\put(15,-35){no}
+\put(120,0){$\mu={\tt MU} \rightarrow {\tt CU} \rightarrow {\tt FP} 
+	\rightarrow{\tt UPL}$}
+\put(120,-20){The condition \rf{icj} is not applied.}
+\end{picture}
+\\[50pt]
+\hspace*{-60pt}The current distribution is determined \\
+\hspace*{-60pt}by the steady-state condition \rf{icU}.
+\end{tabular}\\[15pt]
+After one of the quantities $j_\pll$ or $\mu$ is defined, all other
+quantities in the list $j_\pll,\mu,\psi,U_{\rm pl}$ are calculated
+using Eqs.~\rf{Ipl}, \rf{jlon} and \req{Ohm}. 
+Note that, in case when an assignment of \twd{MU} is active, no
+normalization is applied although $\mu(\rho_B)$ is consistent with the
+total plasma current.
+That is, in general, $\mu(\rho)$ has a jump (surface current) at the
+plasma edge. 
+In all other cases, the additional normalization condition \rf{icj} is
+applied so that an assignment of \twd{CU} is valid within to a
+multiplicative constant. 
+
+\subsection{Boundary conditions}
+
+\subsubsection{Boundary conditions for $n_e,\;T_e,\;T_i,\;f_j$}
+
+Besides the initial condition, the boundary values 
+$n_e(\rho_B,t),\;T_e(\rho_B,t),\;T_i(\rho_B,t),\;f_j(\rho_B,t)$ 
+must be prescribed as functions of time.
+Electron density at the plasma edge $n_e(\rho=\rho_B,t)$ is defined
+according to
+
+\begin{tabular}{p{110pt}	p{130pt}	p{151pt}}
+\begin{picture}(110,35)
+\thicklines
+\multiput(15,15)(0,-30){2}{\line(1,0){30}}
+\multiput(0,0)(45,-15){2}{\line(1,1){15}}
+\multiput(0,0)(45,15){2}{\line(1,-1){15}}
+\put(20,-5){{\tt NEB}}
+\thinlines
+\put(67,0){\vector(1,0){40}}\put(80,5){yes}
+\put(30,-20){\vector(0,-1){35}}\put(15,-40){no}
+\end{picture}
+	&Prescribed edge density:\vspace*{-10pt}
+	$$n_e(\rho_B,t)={\tt NEB}(t)$$\\[5pt]
+\end{tabular} 
+
+\begin{tabular}{p{110pt}	p{130pt}	p{163pt}}
+\begin{picture}(110,25)
+\thicklines
+\multiput(15,15)(0,-30){2}{\line(1,0){30}}
+\multiput(0,0)(45,-15){2}{\line(1,1){15}}
+\multiput(0,0)(45,15){2}{\line(1,-1){15}}
+\thinlines
+\put(18,-5){{\tt QNB}}
+\put(70,0){\vector(1,0){40}}\put(80,5){yes}
+\put(30,-20){\vector(0,-1){70}}\put(15,-55){no}
+\end{picture}
+	&
+\begin{picture}(110,25)
+\thicklines
+\multiput(15,15)(0,-30){2}{\line(1,0){30}}
+\multiput(0,0)(45,-15){2}{\line(1,1){15}}
+\multiput(0,0)(45,15){2}{\line(1,-1){15}}
+\put(18,-5){{\tt QNNB}}
+\thinlines
+\put(70,0){\vector(1,0){40}}\put(80,5){yes}
+\put(30,-20){\vector(0,-1){30}}\put(15,-35){no}
+\end{picture}
+&\hspace*{-6pt}Prescribed electron flux: 
+\vspace*{-10pt}
+$$\hspace*{-32pt}\Gamma_e(\rho_B,t)={\tt QNB}(t)+{\tt QNNB}(t)\times
+n_e(\rho_B,t)$$ 
+\vspace*{5pt}\\
+&\hspace*{-20pt}Prescribed electron flux: 
+\vspace*{-10pt}
+$$\hspace*{-40pt}\Gamma_e(\rho_B,t)={\tt QNB}(t)$$\\
+\end{tabular} 
+\\[-30pt] \indent
+\begin{tabular}{l l}
+\begin{picture}(110,35)
+\thicklines
+\multiput(15,15)(0,-30){2}{\line(1,0){30}}
+\multiput(0,0)(45,-15){2}{\line(1,1){15}}
+\multiput(0,0)(45,15){2}{\line(1,-1){15}}
+\put(18,-5){{\tt QNNB}}
+\thinlines
+%\put(30,40){\vector(0,-1){20}}%\put(15,30){no}
+\put(70,0){\vector(1,0){40}}\put(80,5){yes}
+\put(30,-20){\vector(0,-1){35}}\put(15,-40){no}
+\end{picture}
+&%\multicolumn{2}{l}
+{$\hspace*{-5pt}\Gamma_e(\rho_B,t)={\tt QNNB}(t)\times 
+n_e(\rho_B,t)$}\\[60pt]
+\multicolumn{2}{l}{\hspace*{-20pt}Edge density is determined by}\\
+\multicolumn{2}{l}{\hspace*{-20pt}a data file as
+			$n_e(\rho_B,t)={\tt NEXB}(t_0)$}
+\end{tabular} 
+\\[20pt]
+It is seen that giving ${\tt NEB=1}$ one obtains the boundary condition
+$n_e(\rho_B,t)=10^{19}{\rm m}^{-3}.$
+In such a case, the setting of ${\tt QNB}$ or ${\tt QNNB}$ does not
+influence $n_e(\rho_B,t)$.
+Otherwise, if the particle flux, rather than the particle density, at
+the plasma edge is to be prescribed, then any instructions of the type 
+${\tt NEB}=\cdots$ must not be present. 
+
+Any combination of explicit or implicit approximation for the edge
+particle flux can be used.
+For instance, both instructions
+${\tt QNB=10*NE}$ and ${\tt QNNB=10}$ describe
+the same boundary condition (to within the numerical accuracy).
+However, in the first case, the numerical approximation reads 
+$\Gamma_e(\rho_B,t)=10n_e(\rho_B,t-\Delta t),$ while in the second,
+$\Gamma_e(\rho_B,t)=10n_e(\rho_B,t).$ 
+
+Other boundary conditions can be defined in a parallel fashion, as
+illustrated in Table~4.8.
+In addition to this table, we note that if none of the control parameters
+listed there 
+\linebreak\indent
+{\bf Table 4.8. Summary of boundary condition setting}
+\bigskip\\ \noindent
+\begin{tabular}{| c | l | l | l | l |}\hline
+Quantity/Flux & Code name  
+	& \multicolumn{3}{c|}{Control parameters ~/~ Units}\\	\hline
+$n_e$ / $\Gamma_e$
+	&{\tt NE} / {\tt QN} 
+		&{\tt NEB} ~/~ $10^{19}{\rm m}^{-3}$
+			&{\tt QNB~} ~/~ $10^{19}{\rm s}^{-1}$
+				&{\tt QNNB~} ~/~ ${\rm m}^3$/s	\\
+$T_e$ / $q_e$	& {\tt TE} / {\tt QE}	
+	&{\tt TEB} ~/~ keV & {\tt QEB~} ~/~ MJ	&{\tt QETB~} ~/~ MJ/keV\\
+$T_i$ / $q_e$	& {\tt TI} / {\tt QI}
+	&{\tt TIB} ~/~ keV & {\tt QIB~} ~/~ MJ	&{\tt QITB~} ~/~ MJ/keV\\
+$f_1$ / $\Gamma_1$&{\tt F1} / {\tt QF1}	&{\tt F1B} ~/~ $[f_1]$
+		 &{\tt QF1B} ~/~ $[f_1]\;{\rm m}^3$/s
+			&{\tt QFF1B} ~/~ ${\rm m}^3$/s		\\
+$f_2$ / $\Gamma_2$&{\tt F2} / {\tt QF2}	&{\tt F2B} ~/~ $[f_2]$
+		 &{\tt QF2B} ~/~ $[f_2]\;{\rm m}^3$/s
+			&{\tt QFF2B} ~/~ ${\rm m}^3$/s		\\
+$f_3$ / $\Gamma_3$&{\tt F3} / {\tt QF3}	&{\tt F3B} ~/~ $[f_3]$
+		 &{\tt QF3B} ~/~ $[f_3]\;{\rm m}^3$/s
+			&{\tt QFF3B} ~/~ ${\rm m}^3$/s		\\
+\hline
+\end{tabular}
+\\[2ex]
+appears in a model, then a boundary value from the data file is used.
+However, there is a difference between the following two cases: (i)
+where the assignment ${\tt NEB=NEXB}$ is explicitly given in a model,
+and (ii) where the same assignment is used because none of the control
+parameters appears in a model. 
+In the first case, the assignment is considered as time dependent while
+in the second case it is executed only at the initial time.
+Finally, if a data file does not define the quantity either, then the
+boundary value is set to one of the defaults given in Table~4.7.
+
+\subsubsection{Boundary condition for the poloidal flux $\psi=\tt FP$}
+
+The boundary condition for the poloidal flux is defined according to
+the following diagram
+
+\begin{tabular}{p{110pt}	p{130pt}}
+\begin{picture}(110,25)
+\thicklines
+\multiput(15,15)(0,-30){2}{\line(1,0){30}}
+\multiput(0,0)(45,-15){2}{\line(1,1){15}}
+\multiput(0,0)(45,15){2}{\line(1,-1){15}}
+\put(20,-5){{\tt IPL}}
+\thinlines
+\put(67,0){\vector(1,0){40}}\put(80,5){yes}
+\put(30,-20){\vector(0,-1){45}}\put(15,-40){no}
+\end{picture}
+&
+Prescribed current:
+$$\left.\prti{\psi}{\rho}\right|_{\rho=\rho_B}
+=\frac{0.4\pi}{G_2}{\tt IPL}(t)$$
+\end{tabular}
+%\vspace*{-10pt}
+
+\begin{tabular}{p{110pt}	p{124pt}	p{169pt}}
+\begin{picture}(110,25)
+\thicklines
+\multiput(15,15)(0,-30){2}{\line(1,0){30}}
+\multiput(0,0)(45,-15){2}{\line(1,1){15}}
+\multiput(0,0)(45,15){2}{\line(1,-1){15}}
+\thinlines
+\put(18,-5){{\tt LEXT}}
+\put(70,0){\vector(1,0){40}}\put(80,5){yes}
+\put(30,-20){\vector(0,-1){90}}\put(15,-65){no}
+\end{picture}
+&
+\begin{picture}(110,25)
+\thicklines
+\multiput(15,15)(0,-30){2}{\line(1,0){30}}
+\multiput(0,0)(45,-15){2}{\line(1,1){15}}
+\multiput(0,0)(45,15){2}{\line(1,-1){15}}
+\put(18,-5){{\tt UEXT}}
+\thinlines
+\put(70,0){\vector(1,0){40}}\put(80,5){yes}
+\put(30,-20){\vector(0,-1){30}}\put(15,-35){no}
+\end{picture}
+&\hspace*{-15pt}External circuit equation is solved: 
+\vspace*{-10pt}
+$${d\over dt}\left(L_{\rm ext}I\right)+U_{\rm plB}={\tt UEXT}(t)$$
+\vspace*{5pt}
+\\
+&\vspace*{-10pt}\hspace*{-20pt}Short-circuited primary coil: 
+\vspace*{-10pt}
+$$\hspace*{-20pt} {d\over dt}\left(L_{\rm ext}I\right)+U_{\rm plB}=0$$
+%$$\hspace*{-20pt}{d\over dt}\left({\tt LEXT*IPL}\right)+{\tt UPLB}=0$$
+\end{tabular}
+
+%\vspace*{-10pt}
+\begin{tabular}{p{110pt}	p{140pt}}
+\begin{picture}(110,25)
+\thicklines
+\multiput(15,15)(0,-30){2}{\line(1,0){30}}
+\multiput(0,0)(45,-15){2}{\line(1,1){15}}
+\multiput(0,0)(45,15){2}{\line(1,-1){15}}
+\put(18,-5){{\tt UEXT}}
+\thinlines
+\put(70,0){\vector(1,0){40}}\put(80,5){yes}
+\put(30,-20){\vector(0,-1){35}}\put(15,-40){no}
+\end{picture}
+&Prescribed loop voltage:\vspace*{-10pt} 
+$$U_{\rm plB}=\left.\prti{\psi}{t}\right|_{\rho=\rho_B}={\tt UEXT}(t)$$
+\\
+\multicolumn{2}{l}{\hspace*{-20pt}The plasma current $I_{\rm pl}$ is}\\
+\multicolumn{2}{l}{\hspace*{-20pt}prescribed by a data file:}\\
+\vspace*{-20pt}
+$$\hspace*{-20pt}\left.\prti{\psi}{\rho}\right|_{\rho=\rho_B}
+=\frac{0.4\pi}{G_2}{\tt IPLX}$$\\
+\end{tabular}
+\\
+In the simplified external circuit equation in this diagram 
+$L_{ext}=\tt LEXT$ can be understood as the external inductance between
+plasma and primary coil. 
+Note also that in the case of prescribed loop voltage the parameter
+{\tt UEXT} defines a loop voltage at the plasma surface and coincides
+with $U_{\rm plB}=\tt UPLB$, whereas in the circuit equation {\tt UEXT}
+denotes a voltage provided by the external source (primary coil). 
+In the code, the circuit equation is represented as
+$$
+%U_{\rm ext}=\prti{\psi}{t}
+%+{1\over 0.4\pi}\prti{}{t}\left(L_{\rm ext}G_2\prti{\psi}{\rho}\right)
+%,\qquad
+\lb.{L_{\rm ext}G_2\over 0.4\pi}\:\prti{\psi}{\rho}\rb|_{\rho_B}
++\lb.\psi\rb|_{\rho_B}=\int\limits_0^tU_{\rm ext}dt
+$$
+with $L_{\rm ext}$ measured in $\!\!\mu\!\!$Hn. 
+
+\subsection{Link between the transport and equilibrium parts of Astra}
+
+Two versions of the equilibrium solver are presently provided by the
+Astra system. 
+The more simple version \cite{Z3m} solves the equilibrium equation
+\req{GSp} using 3-moment approach. It is assumed that the plasma
+configuration is up-down symmetric and each magnetic surface can be
+parameterized as 
+\begin{equation}\label{3mom}
+\lb\{\begin{array}{l}
+r(a,\theta)=R_0+\Delta(a)+a\lb(\cos\theta-\delta(a)\sin^2\theta\rb)\\
+z(a,\theta)=\Delta_Z+a\lambda(a)\sin\theta
+\end{array}\rb.
+\end{equation}
+where $a$ is a minor radius of every magnetic surface in the equatorial
+mid-plane. 
+From now on $a$ will denote this magnetic surface function. 
+$\Delta$ is the Shafranov shift, $\lambda$ is the elongation and
+$\delta$ is the triangularity of each flux surface. 
+The parameter $\Delta_Z$ is not included in the equilibrium solver
+because the problem has translational symmetry in the $z$--direction. 
+However, the plasma up-- or down-shift may be relevant for the
+calculation of heat and particle sources.
+In this representation the
+boundary surface  $\mbox{\msym S}_B$ is specified with five parameters:
+$R_0$, $a_B$, $\Delta(a_B)$, $\lambda(a_B)$, $\delta(a_B)$. 
+This is equivalent to a prescription of four characteristic points on
+the boundary. 
+These are two points in the mid--plane 
+$\{r=R_0+\Delta(a_B)\pm a_B,\;z=\Delta_Z\}$ 
+and the two points most remote from the plane
+$\{r=R_0+\Delta(a_B)-a_B\delta(a_B),\;z=\Delta_Z\pm a_B\lambda(a_B)\}$.
+
+A more advanced equilibrium solver called
+ESC\footnote{http://w3.pppl.gov/topdac/esc.htm}  
+(Equilibrium and Stability Code) is also available \cite{ESC} 
+which allows for arbitrary shape of the plasma boundary. 
+In this version, the plasma boundary $\mbox{\msym S}_B$ is specified by
+a set of $N_B\leq 121$ points $\{r_i,z_i\}$ 
+while the configuration is sought in the form
+\vspace*{-5pt}
+\begin{equation}\label{sesconf}
+\lb\{\begin{array}{l}
+r(\rho,\tau)
+=r_0^c(\rho)+2\ds\sum\limits_{k=1}^{K}
+\lb[r_k^c(\rho)\cos k\tau+r_k^s(\rho)\sin k\tau\rb]
+,\medskip\\
+z(\rho,\tau)=\Delta_Z(\rho)+\rho\lambda(\rho)\sin\tau
+.\end{array}\rb.
+\end{equation}
+ESC also provides an analysis of plasma stability with respect to tearing
+and ballooning modes. 
+%By request, it also creates an input file for the specialized 
+%stability analysis codes PEST and DCON. 
+
+Now we will describe the interface between the equilibrium and the
+transport packages of the code.  
+If the number $N_B$ does not exceed 4 and the boundary is up down
+symmetric then it is convenient to use shift, elongation and
+triangularity of the boundary. 
+Two radially dependent functions on the right hand side of the
+Grad-Shafranov equation, namely the pressure and current
+density distributions, are supplied at a $\rho_j$-grid of $N_E$ points
+(variable name {\tt NEQUIL}) which is different from the transport
+grid. 
+In the current version, $N_E={\tt NEQUIL}\leq 41$ and in addition to
+its main meaning it is also used as a control parameter:
+$$
+\begin{array}{rll}
+&N_E<0
+	&\mbox{No equilibrium solver is called. Pre-calculated metric}\\
+	&&\mbox{is taken from a data file as described in Section~5.3.2.}
+\medskip\\
+&N_E=0
+	&\mbox{No equilibrium solver is called. Parabolic distributions}\\
+	&&\mbox{for }\Delta(\rho),\lambda(\rho),\delta(\rho)
+	\mbox{ are used and }a(\rho)=\rho/\sqrt{\lambda}.
+\medskip\\
+0 < &N_E\leq 41
+	&\mbox{3-moment equilibrium solver is called with $N_E$-point grid.}
+\medskip\\
+&N_E>41\quad
+	&\mbox{ESC is called.}
+\end{array}
+$$
+%The information in the table above is sufficient for the work with the
+%Astra code if the 4-point set prescribes the plasma boundary. 
+%More knowledge about the interface is needed only for more complicated
+%boundary shape. 
+Parameter exchange is shown in the following diagram and explained in
+the table below. 
+\vspace*{-25pt}
+$$
+\begin{array}{lcr}
+\bigskip\\
+\fboxrule=1pt\fboxsep=5mm
+\hspace*{-5pt}\fbox{\Large\bf Transport}
+&
+\begin{array}{c}
+R_0B_0,\;p,\;j_\pll,\;N_E,\;N_B,\;\{r_i,z_i\}\\
+\vector( 1,0){172}\\[-10pt]
+\vector(-1,0){172}\\
+\rho_B,\;\rho_j({\bf r}),\;I,\;V',\;G_1,\;G_2,\;G_3\\
+\mbox{\rm Additional output is available}\\
+\mbox{\rm by request}
+\end{array}
+&
+\fboxrule=1pt\fboxsep=5mm
+\fbox{\Large\bf Equilibrium}
+\bigskip\\
+\end{array}
+$$
+
+%$$
+%\begin{array}{l}
+%\hspace*{0.6em}
+\noindent
+\begin{tabular}{|ll|ll|}\hline &&&\\
+\multicolumn{2}{|c}
+	{\hspace*{1.5em}{\bf Input} to the equilibrium module}\hspace*{1.5em}
+&\multicolumn{2}{|c|}
+	{\hspace*{1.5em}{\bf Output} from the equilibrium module 
+	 \hspace*{1em}}\\[10pt]\hline
+$R_0B_0$	& boundary value of $I$
+	&$\rho_B$		& boundary value of $\rho$\\[8pt]
+
+$N_B$		& boundary-grid size ($N_B\leq 12$)
+	&$\rho_j({\bf r})$	& shape of every flux surface\\[8pt]
+
+$\{r_i,z_i\}$	& boundary shape ($1\leq i\leq N_B$)
+	&$I(\rho_j)$		& poloidal current \\[8pt]
+
+$N_E$		& $\rho$-grid size and type of solver
+	&$V'(\rho_j)$		& volume derivative\\[8pt]
+
+\hspace*{-0.5em}
+	\begin{tabular}{l}
+	$\rho_j$\\[8pt]
+	$p(\rho_j)$\\[8pt]
+	$j_\pll(\rho_j)$\\[8pt]
+	\end{tabular}
+	    &	\hspace*{-0.5em}
+		\begin{tabular}{l}
+		$\rho$-grid ($1\leq j\leq N_E$)\\[8pt]
+		pressure profile\\[8pt]
+		current density profile\\[8pt]
+		\end{tabular}
+		    &	\hspace*{-1em}
+			$\lb.\begin{tabular}{l}
+			$G_1(\rho_j)$\\[8pt]
+			$G_2(\rho_j)$\\[8pt]
+			$G_3(\rho_j)$
+			\end{tabular}\rb\}$
+			   &	\begin{tabular}{l}\hspace*{-0.5em}
+				metric characteristics \\
+				\end{tabular}\\
+\hline
+\end{tabular}%\bigskip\\
+%\end{array}
+%$$
+
+\subsection{Astra variables}
+
+In this section, we describe Astra internal variables dividing them into
+groups according to their meaning and limiting the discussion to those
+variables which can be accessed (or corrupted) by a user of the
+code. 
+These variables are held in Fortran common blocks and seen from every
+part of the code. 
+First of all, there are variables describing different physical
+quantities: some of them have to be defined by a user, others are
+calculated by the code. 
+The second group consists of control parameters for the numerical
+schemes used in the code and for tuning the output.
+Finally, there is a set of global variables without any predefined
+meaning, which are entirely at the disposal of the user. 
+Employing these variables is recommended if any new quantity
+is needed in a simulation. 
+Although it is not forbidden to introduce new variables in a user's
+model, no check is made for dangerous possible name conflicts. 
+Therefore, it is supposed that in introducing a new variable (see
+Section~5.2.8), the user will check that the variable name does not
+coincide with any of the Astra global variables.
+Complete lists of the Astra global variables can be found in the files:
+\footnote
+{We remind that \twd{AWD} stands here for the Astra working directory
+which can be different for each installation.}\label{AWD} 
+%
+\begin{tabbing}
+\qquad\tw{AWD/for/parameter.inc},\qquad\=\tw{AWD/for/const.inc},
+\qquad\=\qquad\tw{AWD/for/status.inc}, \kill
+\qquad\tw{AWD/for/parameter.inc},\>	\tw{AWD/for/const.inc}, \>
+\tw{AWD/for/status.inc}, \\
+\qquad\tw{AWD/for/outcmn.inc},\>	\tw{AWD/tmp/declar.fml},\>
+\tw{AWD/tmp/declar.fnc}. 
+\end{tabbing}
+
+It is obvious that there is a minimal set of variables which must be
+defined by a user in order to start an Astra simulation. 
+In the Astra code we have tried to minimize this burden on the user by
+setting as many variables as possible according to common sense.
+We will use the following symbols to mark different types of the code
+variables.\bigskip \\ 
+\begin{tabular}{c p{151mm}}
+  !  & The variable must be defined by a user. 		\medskip \\
+  +  & The variable can be defined by a user. Otherwise, it takes
+	a default value. 				\medskip \\
+  $*$ & The variable cannot be defined by a user. It is always defined 
+	by the code. 					\bigskip \\
+%  -- & The variable cannot be defined by a user. It is defined 
+%	by the code if needed. 				\medskip \\
+%$\uplus$& The variable is reserved for use in some special subroutines. 
+%	However, it can be used for other goals if the corresponding 
+%	subroutine is not called.			\bigskip\\
+%\tt * & The variable can be used arbitrary.
+\end{tabular}\\
+As mentioned, there is an additional type of variables which are
+exclusively defined by the user and can be used for exchanging
+information between user routines.
+
+There are several ways for determining variables in the Astra
+code and the default definition is only applied if the variable
+was not explicitly set by the user. 
+More about possible ways of setting code variables and about their
+default values can be found in Section~5.3.
+
+\subsubsection{Scalar (time dependent) variables}
+
+We start with a set of variables which define the plasma configuration.
+The five geometrical variables \twd{AB, ELONM, TRICH} and \twd{AWALL,
+RTOR} are time independent.
+The first three of them are the maximum possible values for the time
+dependent quantities \twd{ABC, ELONG} and \twd{TRIANG}, respectively. 
+The variable \twd{AWALL} is  presently used only for a radial grid
+allocation 
+\linebreak
+%\begin{figure}
+\indent
+{\bf Table 4.9. Configuration parameters}\\[2ex]
+\begin{tabular}{|c|l|c|l|}\hline
+\hspace*{-1pt}\bf Type\hspace*{-1pt} & \bf Variable 
+			&\bf Units &\bf Description\\		\hline
+ ! &\tt AB    & m & Limiter position in the mid-plane, $a_B$\\
+ + &\tt ABC   & m & Transport grid boundary in the variable $a$\\
+ + &\tt AWALL & m & Wall position in the mid-plane\\
+ ! &\tt RTOR  & m & Major radius of the vacuum chamber\\
+ + &\tt SHIFT & m & Horizontal shift of the edge magnetic surface\\
+ + &\tt UPDWN & m & Vertical shift of the edge magnetic surface\\
+ + &\tt ELONG & -- & Elongation of the edge magnetic surface\\
+ + &\tt ELONM & -- & Vacuum chamber elongation (used for drawing)\\
+ + &\tt TRIAN & -- & Triangularity of the boundary surface\\
+ + &\tt TRICH & -- & Vacuum chamber triangularity	\\	\hline
+\end{tabular}
+%\end{figure}
+\bigskip\\
+%\begin{figure}
+\indent{\bf Table 4.10. Main plasma parameters}\\[2ex]
+\begin{tabular}{| c | l | c | l |}\hline
+\hspace*{-1pt}\bf Type\hspace*{-1pt} & \bf Variable 
+		& \bf Units & \bf Description \\	\hline
+ ! &\tt BTOR &  T  & Vacuum toroidal field at the position $\tt RTOR$\\
+ ! &\tt IPL  &  MA & Plasma current\\			
+ + &\tt AMJ  &$m_p$& Main ion atom mass in units of the proton mass \\
+ + &\tt ZMJ  &$e_p$& Main ion charge in units of the proton charge\\
+\hline
+\end{tabular}\bigskip\\%\vskip 3ex
+%\end{figure}
+and usually it does not require an explicit definition.
+The major radius \twd{RTOR} corresponds to 
+the position where the vacuum toroidal magnetic \twd{BTOR} is given. 
+Although \twd{RTOR} cannot vary 
+in time, plasma motion can be defined by varying \twd{SHIFT} and
+\twd{UPDWN}.~ 
+The main ion mass and charge can also be given as radial arrays
+\twd{AMAIN} and \twd{ZMAIN}.
+
+{\bf Table 4.11. Other scalar plasma parameters}\\[2ex]
+\begin{tabular}{| c |l|c|l|}\hline
+\hspace*{-1pt}\bf Type\hspace*{-1pt} & \bf Variable 
+			&\bf Units &\bf Description	\\	\hline
+ + &\tt GN2E &	-- & Factor in convective electron heat flux\\
+ + &\tt GN2I &	-- & Factor in convective ion heat flux\\
+ + &\tt AIM1,AIM2,AIM3
+	  & $m_p$ & Impurity species mass in units of the proton mass\\
+ + &\tt LEXT &$\mu$H & External inductance\\
+ + &\tt UEXT &   V   & External loop voltage\\
+%\tt QETB  & MJ/keV & Coefficient for electron heat outflux = QETB*TEB\\
+%\tt QFF1B &  1/s   & Coefficient for F1 outflux = QFF1B*F1B\\
+%\tt QFF2B &  1/s   & Coefficient for F2 outflux = QFF2B*F2B\\
+%\tt QFF3B &  1/s   & Coefficient for F3 outflux = QFF3B*F3B\\
+%\tt QITB  & MJ/keV & Coefficient for ion heat outflux = QITB*TIB\\
+%\tt QNNB  & $m^3/s$& Coefficient for density outflux = QNNB*NEB\\
+ + &\tt WNE, WTE, WTI& m & Width of exponential decay 
+		for $n_e,T_e,T_i$ at $a>a_B$\\
+\hline
+ $*$ &\tt RHOW   & m & 
+    Limiter position in the variable $\rho$: $a(\tw{RHOW})=\tw{AB}$\\
+%\tt ROWALL&   m  & Wall position    (in variable $\rho$)\\
+ $*$ &\tt ROC   & m  & $\rho_B,$
+    grid edge in the variable $\rho$: $a(\tw{ROC})=\tw{ABC}$\\
+ $*$ &\tt VOLUME &m$^3$ & Plasma volume inside $\rho_B=$\tw{ROC}\\
+ $*$ &\tt VSB   & Vs & Poloidal flux at the plasma edge \\
+ $*$ &\tt VSC   & Vs & Poloidal flux at the magnetic axis\\	\hline
+\end{tabular}\vskip 3ex
+
+As seen from Table~4.11, up to three different ion impurity species
+can be defined in the code by their masses, charges and densities
+\footnote[1]{Unlike the masses, the impurity charges and densities are
+described by radial arrays {\tt~ZIM1, ZIM2, ZIM3} and
+\twd{NIZ1,NIZ2,NIZ3} (Section~4.6.2).}.
+The impurities are not directly included in the main set of transport
+equations, but they are required in the NBI heating subroutine, NCLASS,
+STRAHL and some other external modules. 
+The parameters \twd{WNE, WTE, WTI} are used to describe the plasma
+parameters \twd{NE, TE, TI} in the scrape-off-layer outside the main
+transport grid.
+In the present version, they do not play any role in the simulation and
+can be seen only in a special drawing mode when radial profiles are
+plotted beyond the transport boundary. 
+
+As long as the memory requirement for the Astra code is quite moderate
+the code does not use dynamic memory allocation. 
+All arrays have fixed dimensions and any change of those requires
+re-installation of the code. 
+Some of the code constants are given in the Table~4.12.
+Normally, an error is reported when any of these array limits is
+exceeded. 
+
+The parameter $\tt NRD$ allocates the maximum possible length of all
+radial arrays. 
+However, the parameter which really determines the radial grid size is
+$\tt NB1\leq NRD.$ 
+The transport core of the code is quite fast so that large values of
+\twd{NB1} do not affect its speed significantly. 
+\linebreak\indent
+{\bf Table 4.12. Internal constants}\\[2ex]
+\begin{tabular}{| c | l|c|l|}\hline
+\hspace*{-1pt}\bf Type\hspace*{-1pt} & \bf Constant 
+			&\bf Value &\bf Description	\\	\hline
+% + &\tt SHOT  &	     & String with a shot description\\
+% + &\tt DEVICE&	     & String with a device description\\
+ $*$ &\tt NRD   & 501  & Maximum size of the radial grid\\
+ $*$ &\tt NRDX  & 200  
+	& Maximum No. of radial points for input from a data file \\
+ $*$ &\tt NRW   & 96   & Maximum No. of radial / time curves for output\\
+ $*$ &\tt NTIMES& 1024 
+	& Dimension of arrays for output in time modes 6 and 7\\
+ $*$ &\tt NTVAR & 2000 
+	& Total No. of time slices for all variables in a data file\\
+ $*$ &\tt NTARR & 5000 
+	& Total No. of time slices for all arrays in a data file\\
+ $*$ &\tt GP    & $\pi$ & \\
+ $*$ &\tt GP2   & $2\pi$   & \\
+\hline
+\end{tabular}\\[2ex]
+However, some additional modules which do not use a separate grid can
+noticeably decelerate the calculations.
+The essential feature of the parameter \twd{NB1} is that it must be
+defined at the earliest phase of the code execution and cannot be
+redefined later.
+It means that, unlike most other parameters in the Astra code which can
+be set in many different ways, the only way of defining the grid size
+\twd{NB1} is input from a data file (Section~5.3.1).
+The parameter \twd{NEQUIL} defines a radial grid for the 3-moment
+equilibrium solver and serves also as a switch to the $\tt{ESC}$ solver. 
+In the latter case, a radial grid is selected automatically. 
+Two parameters \twd{XFLAG} and \twd{NBND} define a type of the plasma
+boundary and a number of points on it, respectively.
+
+%\linebreak\indent
+{\bf Table 4.13. Parameters for radial grid control}\medskip\\
+\begin{tabular}{| c |l|c|l|}\hline
+\hspace*{-1pt}\bf Type\hspace*{-1pt} & \bf Variable 
+			&\bf Units &\bf Description	\\	\hline
++ &\tt NB1    & -- & No. of points of the main transport grid 
+					\twd{NB1}$\leq$\twd{NRD}\\
++ &\tt NEQUIL & --& 3-moment equilibrium solver grid size and control switch\\
++ &\tt NB2EQL & --& Factor for NB pressure contribution 
+					to equilibrium eqn \\
++ &\tt NBND   & --& No. of points on the boundary\\
++ &\tt XFLAG  & --& X-point flag				\\
++ &\tt NUF    & --& No. of radial points to be written in a U-file\\
++ &\tt XOUT   & --& Type of abscissa for radial graphic output 
+						(modes 1, 2, 4, 5)\\
++ &\tt XINPUT & --& Type of abscissa for radial profile input\\ \hline
+$*$ &\tt HRO    & m & Radial grid step in the variable $\rho$\\
+$*$ &\tt HROA   & m & Edge step of the radial grid: 
+					\tt RHO(NA1)-RHO(NA)\\
+$*$ &\tt NA     & --& = \tw{NA1}-1\\
+$*$ &\tt NA1    & --& Edge grid point number: {\tt ROC=RHO(NA1)}\\
+$*$ &\tt NAB    & --& $\tw{NAB}\geq\tw{NA1},\;\;\tw{AB}=\tw{AMETR(NAB)}
+		\geq\tw{ABC}=\tw{AMETR(NA1)}$\\			\hline
+\end{tabular}\vskip 3ex\noindent
+
+The parameter \twd{NUF} defines a number of radial grid points for an
+output in the format of U-file. 
+A type of the created U-file depends on the current radial graphic
+mode (Section~5.5.3)\\
+\indent -- 1D (radial coordinate) in graphic modes 1, 2, 3,\\
+\indent -- 2D (radial and time coordinates) in the graphic mode 4,\\
+\indent -- 1D (time coordinate) in the graphic mode 6.\\
+In addition, one should also have in mind that the radial coordinate in
+the U-file produced, is the same as for the current graphs on the
+screen. 
+Therefore, it is controlled by parameter \twd{XOUT} which
+defines an abscissa type for radial profiles in the current plot. 
+If the parameter \twd{XOUT} takes values 0 or 1 (default value is 1)
+then the flux surface label $a$ is used as a radial coordinate. 
+If $\tw{XOUT}=2$ or 3 then $\rho$ or $\psi$ are used in place of $a.$
+The parameter \twd{XINPUT} can take the same values, but it defines an
+abscissa of radial profiles for input in cases when the radial grid is
+equidistant but the coordinate is not defined explicitly.
+The meaning of these numbers is similar to that for the parameter
+\twd{GRIDTYPE} 
+which is explained in more detail in Section~5.4.4, and summarized in
+Table~5.5. 
+%Finally, we note that for a 2D U-file output the only radial coordinate,
+%$0<a<\tt AB,$ is meaningful. 
+All other parameters in Table~4.13 cannot be changed by a user.
+They may be used for output only.
+
+{\bf Table 4.14. Parameters for output control}\\[10 pt]
+\begin{tabular}{|c|l|c|l|}\hline
+\hspace*{-1pt}\bf Type\hspace*{-1pt} & \bf Variable 
+	&\bf\hspace*{-1pt}Units\hspace*{-1pt} &\bf Description\\ \hline
+ + &\tt DPOUT  & s 
+   & Time interval for profile storing (modes 4, 5 and Review)\\
+ + &\tt DROUT  & s 
+   & Time interval for profile redrawing (modes 1, 2 and 3)\\
+ + &\tt DTOUT  & s & Time step for time curve output (modes 6 and 7)\\
+ + &\tt TPAUSE & s  & Time for switching on the ``step'' mode	\\
+ + &\tt TEND   & s  & End of run time				\\
+ + &\tt TINIT  & s & Time axis left label (modes 6 and 7)   \\
+ + &\tt TSCALE & s & Time axis scale length (modes 6 and 7) \\	\hline
+\end{tabular}\vskip 3ex
+
+Table~4.14 contains a number of other control parameters for graphic
+output. 
+All these parameters are described in Section 5.5.3.
+They can be set in a model or adjusted interactively.
+If the parameters \twd{DPOUT}, \twd{DROUT}, \twd{DTOUT}, \twd{TSCALE} and
+also the parameters \twd{TAUMIN, TAUMAX} from the Table~4.15 are not
+given by the user they are set by the code to be proportional to the
+plasma volume.
+
+The control parameters given in Table~4.15 define the numerical algorithm
+used in the transport part of the code. 
+Usually, the time step is selected automatically by the following
+condition. 
+If a maximum relative change in any of variables \tw{~TE, TI, NE, F1,
+F2, F3~} is larger than \twd{DELVAR} then the time step $\tau=\tt TAU$
+is decreased. 
+Otherwise, it is multiplied by \twd{TAUINC} which when not defined
+explicitly is equal to 1.1. 
+However, a user can fix the time step by setting ${\tt TAUMIN} = {\tt
+TAUMAX},$ or modify the algorithm (see Section~4.9.8). 
+An increase of the parameter $\tt ITEREX$ (default value 1) can
+sometimes improve the numerical stability in strongly nonlinear problems.
+Another iteration parameter $\tt ITERIN$ cannot be changed by a user.
+It is selected by the code to ensure that the numerical approximation of
+electron--ion heat exchange does not violate energy conservation. 
+
+{\bf Table 4.15. Parameters for accuracy control}\\[2ex]
+\begin{tabular}{| c |l|c|l|}\hline
+\hspace*{-1pt}\bf Type\hspace*{-1pt} & \bf Variable 
+			&\bf Units &\bf Description		\\ \hline
+ + &\tt TAUMAX & s  & Maximum time step: $\tau\leq{\tt TAUMAX}$	\\
+ + &\tt TAUMIN & s  & Minimum time step: $\tau\geq{\tt TAUMIN}$	\\
+ + &\tt TAUINC & --& Maximum time step increment: 
+		${\tt TAU}(t+\tau)/{\tt TAU}(t)$		\\
+ + &\tt DELVAR & --& Maximum relative change of variables at time step\\
+ + &\tt ITEREX & --& No. of iterations in the external loop 	\\ \hline
+$*$&\tt ITERIN& --& No. of iterations in the internal loop 	\\
+$*$&\tt TIME  & s  & Current time of the simulation		\\
+$*$&\tt TAU   & s  & Current time step				\\
+% + &\tt DTEQ  & s  & Subroutine J call interval     DTEQ(1,J)	\\
+% + &\tt TEQ   & s  & Subroutine J last call time    TEQ(J)	\\ 
+\hline
+\end{tabular}\vskip 3ex
+
+\paragraph{Exchange variables.}
+A group of parameters, which are in all respects similar to those
+discussed above, is reserved for particular uses in the different 
+external modules rather than in the Astra core.
+If, in a particular model, these modules are not involved then the
+parameters can be used quite arbitrarily independently of their names and
+significance.
+If the modules are in use, however, then the parameters can only be used
+in the predefined context. 
+
+\indent
+{\bf Table 4.16. Input/output parameters for the subroutine \twd{NEUT}}
+\\[2ex]
+\begin{tabular}{|l|c|l|}					\hline
+\bf Name		&\bf Units &\bf Description	\\	\hline
+\tt NNCL / NNWM &$10^{19}/{\rm m}^{-3}$ 
+	& Density of incoming cold / warm neutrals\\
+\tt ENCL / ENWM & keV 
+	& Energy of incoming cold / warm neutrals\\
+\tt NNCX  & -- & No. of iterations in the neutral solver\\
+\tt ALBPL& -- 
+	& Plasma albedo (Neutral flux outward)/(Neutral flux inward)\\
+\hline
+\end{tabular}%\bigskip\\
+\vskip 3ex
+
+The scalar input parameters for the external module 
+$\tt NEUT$ are listed in Table~4.16.
+Two pairs $\{{\tt NNCL, ENCL}\}$ and ${\tt \{NNWM,ENWM\}}$ are available.
+Each pair describes a density and energy of one mono-energetic incident
+neutral component.
+Although it is not quite correct, the parameter \twd{NNCX} can be
+viewed as a number of charge exchange neutral 
+generations.
+The complete list 
+of parameters related to this subroutine which
+includes also output is discussed in Section~4.11. 
+
+A number of control parameters are used in different heating and current
+drive modules. 
+Most of them are built into the appropriate packages, and can be
+changed by the user according to the usual rules. 
+Only a few of them are associated with the total heating power  
+\twd{(QECR, QFW, QICR, QLH, QNBI)} and these
+belong to the list of main Astra parameters.
+As already mentioned, the meaning of these parameters is defined
+inside the corresponding packages and can even change if one heating
+module is replaced by another. 
+
+All scalar variables discussed so far can be defined with maximum
+flexibility (except for those marked with `$\!\!*\!\!$'). 
+They can be defined by all the methods described in Section 5.3, i.e. in
+a model, in a data file (with few exceptions) and interactively. 
+Other scalars described below have fewer restrictions in 
+their usage, but have less flexibility in how they are initialized.
+
+\paragraph{Dummy variables.}
+As mentioned in the beginning of this section there are a number of
+parameters which are reserved for user's needs and can be used 
+arbitrarily in a model. 
+All these scalar variables have no predefined meanings and mnemonics of
+names (if any) should not be viewed as binding.
+For instance, \twd{CMHD1} need not be associated with MHD phenomena as
+well as \twd{CIMP1} may have nothing to do with the impurity behavior.
+They can be used for communication between different user's
+subroutines, in intermediate calculations or for output. 
+Two different groups are described below. 
+Variables in the both groups can be time dependent but the time
+dependence is to be set in different ways.
+
+\indent
+{\bf Table 4.17. Parameters for a run control (C-parameters)}\\[2ex]
+{\tt\begin{tabular}
+{|p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}|}       \hline
+CF1	& CF2	& CF3	& CF4	& CF5	& CF6	& CF7	& CF8	\\
+CF9	& CF10	& CF11	& CF12	& CF13	& CF14	& CF15	& CF16	\\
+CV1	& CV2	& CV3	& CV4	& CV5	& CV6	& CV7	& CV8	\\
+CV9	& CV10	& CV11	& CV12	& CV13	& CV14	& CV15	& CV16	\\
+CHE1	& CHE2	& CHE3	& CHE4	& CHI1	& CHI2	& CHI3	& CHI4	\\
+CNB1	& CNB2	& CNB3	& CNB4	& CNBI1	& CNBI2	& CNBI3	& CNBI4	\\
+CCD1	& CCD2	& CCD3	& CCD4	& CRF1	& CRF2	& CRF3	& CRF4	\\
+CNEUT1	& CNEUT2& CNEUT3& CNEUT4& CPEL1	& CPEL2	& CPEL3	& CPEL4	\\
+CBND1	& CBND2	& CBND3	& CBND4	& CFUS1	& CFUS2	& CFUS3	& CFUS4	\\
+CIMP1	& CIMP2	& CIMP3	& CIMP4	& CMHD1	& CMHD2	& CMHD3	& CMHD4	\\
+CRAD1	& CRAD2	& CRAD3	& CRAD4	& CSOL1	& CSOL2	& CSOL3	& CSOL4	\\ \hline
+\end{tabular}}\vskip 3ex
+
+The group of parameters listed in Table~4.17 will be called
+C-parameters.
+They can be used for run control because
+the C-parameters can be changed interactively during a code run.  
+They can also be saved during a run (Section~5.3.2), 
+then the subsequent run will be started with the recently adjusted
+values of these control parameters. 
+If the C-parameters are not determined explicitly in one of the ways
+described in Section~5.3 then they take default values which are 0 
+for the 16 variables starting with \twd{CV} (from \twd{CV1} till
+\twd{CV16}) and 1 for all others. 
+A limitation is that the C-parameters cannot be read from a data file. 
+
+A second set of dummy parameters given in Table~4.18 can be defined by
+an input file. 
+These parameters can be used to input non-standard experimental
+characteristics for which 
+\linebreak\indent
+{\bf Table 4.18. Variables readable from a data file}\\[2ex]
+{\tt\begin{tabular}
+{|p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}|}      \hline
+ZRD1X & ZRD2X & ZRD3X & ZRD4X & ZRD5X & ZRD6X & ZRD7X & ZRD8X \\
+ZRD9X & ZRD10X& ZRD11X& ZRD12X& ZRD13X& ZRD14X& ZRD15X& ZRD16X\\ 
+ZRD17X& ZRD18X& ZRD19X& ZRD20X& ZRD21X& ZRD22X& ZRD23X& ZRD24X\\
+ZRD25X& ZRD26X& ZRD27X& ZRD28X& ZRD29X& ZRD30X& ZRD31X& ZRD32X\\  
+ZRD33X& ZRD34X& ZRD35X& ZRD36X& ZRD37X& ZRD38X& ZRD39X& ZRD40X \\
+ZRD41X& ZRD42X& ZRD43X& ZRD44X& ZRD45X& ZRD46X& ZRD47X& ZRD48X \\
+\hline
+\end{tabular}}\bigskip\\
+(unlike \twd{BTOR} or \twd{IPL}) no special variable is allocated. 
+Typical examples are measured 
+$q=2$ radius or a diamagnetic signal.
+Default value for all these parameters is $0$ and they cannot be changed
+interactively.
+This set of parameters is coupled with the next set by the rules 
+\linebreak\noindent
+\indent
+{\bf Table 4.19. Z-parameters}\\[2ex]
+{\tt\begin{tabular}
+{|p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}|}	\hline
+ZRD1	& ZRD2	& ZRD3	& ZRD4	& ZRD5	& ZRD6	& ZRD7	& ZRD8	\\
+ZRD9	& ZRD10	& ZRD11	& ZRD12	& ZRD13	& ZRD14	& ZRD15	& ZRD16	\\ 
+ZRD17	& ZRD18	& ZRD19	& ZRD20	& ZRD21	& ZRD22	& ZRD23	& ZRD24	\\
+ZRD25	& ZRD26	& ZRD27	& ZRD28	& ZRD29	& ZRD30	& ZRD31	& ZRD32 \\ 
+ZRD33 	& ZRD34 & ZRD35 & ZRD36 & ZRD37 & ZRD38 & ZRD39 & ZRD40 \\
+ZRD41 	& ZRD42 & ZRD43 & ZRD44 & ZRD45 & ZRD46 & ZRD47 & ZRD48 \\ \hline
+\end{tabular}}\bigskip\\
+discussed in Section~5.3.3. 
+
+\subsubsection{Vector (radially and time dependent) variables} 
+
+A few hundreds of internal Astra variables describe radially and time
+dependent quantities. 
+Here we discuss those which are implemented as Fortran arrays,
+i.e. those which are calculated once at each time step at all points on
+a radial grid.
+Other radially dependent quantities will be considered in the
+next section.
+
+A complete alphabetical list of all Astra arrays is given in the file~
+\tw{AWD/for\hspace*{-.5pt}/\hspace*{-.5pt}status\hspace*{-.5pt}.\hspace*{-.5pt}inc}. 
+In this section, for the sake of convenience, the arrays are combined in
+groups according to their physical meaning. 
+A group of vector variables related to the plasma geometry is given in
+Table~4.20.
+The array $\tw{RHO}=\rho_j=(j-0.5)\;\tw{HRO},$ $(j=1,2,3,\dots,\tt NA)$ 
+is the main radial 
+\linebreak
+\indent
+{\bf Table 4.20. Arrays describing plasma configuration}\bigskip\\
+\begin{tabular}{| c | l | c | l  l |}\hline
+\hspace*{-1pt}\bf Type\hspace*{-1pt} & \bf Variable    
+		&\bf Units &\multicolumn{2}{|c|}{\bf Description}\\	\hline
+$*$&\tt AMETR     & m & $a$ & Magnetic surface radius in a mid--plane\\
+$*$&\tt RHO       & m & $\rho$ & Equivalent radius of a magnetic surface \\
++ &\tt SHIF / SHX& m & $\Delta$ & Shafranov shift of a magnetic surface \\
++ &\tt SHIV      & m & $\Delta_Z$ & Vertical shift of a magnetic surface\\
++ &\tt ELON / ELX&   & $\lambda$ & Elongation of a magnetic surface \\
++ &\tt TRIA / TRX&   & $\delta$ & Triangularity of a magnetic surface \\
+$*$&\tt SQEPS     &   & $\sqrt{\varepsilon}$ & $\varepsilon=a/R$ 
+			being the  inverse aspect ratio\\
+$*$ &\tt SLAT  & ${\rm m}^2$ & $S_a$ & Toroidal surface area \\
+$*$ &\tt VOLUM & ${\rm m}^3$ & $V$ & Volume within a magnetic flux surface\\
+$*$ / +&\tt VR~~~/ VRX& ${\rm m}^2$ & $V'$ & on the main grid at $t$\\
+$*$&\tt VRO   & ${\rm m}^2$ & $V'$ & on the main grid at $t-\tau$\\
+$*$&\tt VRS   & ${\rm m}^2$ & $V'$ & on the intermediate grid at $t$\\
+\hline
+\end{tabular}\bigskip\\ %\vskip 3ex
+grid used in the transport problem. 
+The main set of unknown functions in Eqs.~\rf{main}, \rf{aux}
+$n_e,T_e,T_i,\psi,f_j$ and most of other arrays are defined on this
+grid.  
+Fluxes and other quantities which are
+derivatives of quantities defined on the main grid, for instance, the
+rotational transform $\mu=\tt MU,$ are defined on the intermediate grid 
+$\rho_j^{aux}=j\;\tw{HRO}.$
+
+Some variable names for arrays have the character \twd{`X'} at the end. 
+These {\tt X}-arrays can be imported from an
+input file as described in Section~5.3. 
+For instance, these external data can be experimentally measured radial
+profiles, and can be read in for on-line comparison with the results of
+simulation during the run. 
+They could also be radial functions, pre-calculated by stand-alone codes 
+for subsequent usage in the Astra code, e.g., heat deposition profiles
+or equilibrium evolution characteristics calculated elsewhere. 
+Although all \twd{X}-arrays have names associated with predefined
+names for some physical quantities, most of them are independent from
+their prototypes.
+However, there are a few situations when some unexpected side effects are
+possible. 
+It usually can happen when any explicit definition is missing and the
+code uses default assignment as described in Section~5.3.1.
+For instance, if the transport equation \rf{Aux} for \tt F1 \rm is
+involved but no initial condition for \twd{F1} is specified, then the
+Astra compiler will use the default assignment \twd{F1=F1X.}
+Then \twd{F1X} can be used in this sense only.
+Otherwise, the variable \twd{F1X} can be used for reading arbitrary
+radially and time dependent function from a data file.
+
+In the next two tables 4.21 and 4.22, the main plasma parameters,
+corresponding fluxes and sources are collected. 
+Note that the quantities \twd{SNTOT, PETOT, PITOT, QN, QE, QI} are
+calculated by the code. 
+Any user's attempt to define them will be overridden.
+
+\vskip 1ex\indent
+{\bf Table 4.21. Arrays for the main plasma parameters}\\[2ex]
+\begin{tabular}{|c|l|c|l|}					\hline
+\hspace*{-1pt}\bf Type\hspace*{-1pt} & \bf Variable 
+			&\bf Units &\bf Description	\\	\hline
++ / $*$ / + &\tt NE / NEO / NEX &$10^{19}{\rm m}^{-3}$ 
+	& $n_e(t)$ \tw{~/~} $n_e(t-\tau)$ \tw{~/~} $n_e^{exp}(t)$ \\
++ / $*$ / + &\tt NI / NIO / NIX &$10^{19}{\rm m}^{-3}$ 
+	& $n_i(t)$ \tw{~/~} $n_i(t-\tau)$ \tw{~/~} $n_i^{exp}(t)$ \\
++ / $*$ / + &\tt TE / TEO / TEX & keV & $T_e(t)$ \tw{~/~} 
+	$T_e(t-\tau)$ \tw{~/~} $T_e^{exp}(t)$ 	\\
++ / $*$ / + &\tt TI / TIO / TIX & keV & $T_i(t)$ \tw{~/~} 
+	$T_i(t-\tau)$ \tw{~/~} $T_i^{exp}(t)$ 	\\
++ &\tt AMAIN / ZMAIN &$m_p$\tw{~/~}$e_p$ 
+		& main ion mass \tw{~/~} main ion charge\\
++ &\tt ZEF~~ / ZEFX &  & $Z_{eff}$ \tw{~/~} $Z_{eff}^{exp}$\\	\hline
+\end{tabular}\vskip 2.5ex
+
+{\bf Table 4.22. Fluxes and sources \rm (see also Table~4.6)}\\[2ex]
+\begin{tabular}{|c|l|c|l|}					\hline
+\hspace*{-2pt}\bf Type\hspace*{-2pt} & \bf Variable 
+			& \bf Units & \bf Description\\ \hline
+$*$ / +&\tt SNTOT / SNX	&$10^{19}$m$^{-3}$s$^{-1}$ 
+	& Particle source $\tt SNTOT = SN+SNN*NE$	\\
+$*$ / +&\tt PETOT / PEX& MW$\,{\rm m}^{-3}$ 
+	& Electron heat source $\tt PETOT=PE+PET*TE$	\\
+$*$ / +&\tt PITOT / PIX& MW$\,{\rm m}^{-3}$ 
+	& Ion heat source $\tt PITOT=PI+PIT*TI$	\\
+$*$ / +&\tt GN~~~ / GNX &$10^{19}$m$^{-2}$s$^{-1}$&$\tt GN=QN/G11,$
+	\tw{GNX} is usually defined in \tw{GNXSRC}\\
+$*$ / +&\tt QN~~~ / QNX   & $10^{19}\rm s^{-1}$ 
+	& Electron flux through the entire magnetic surface	\\
+$*$ / $*$&\tt QE~~~ / QI  & MW & Electron heat flux / Ion heat flux 	\\
+\hline
+\end{tabular}\vskip 2.5ex
+
+Table~4.23 describes quantities related to the diffusion of the poloidal
+field. 
+The quantities \twd{FV, MV, CV} are introduced for simulation of a
+stellarator. 
+For tokamak modelling 
+\\[1ex]\indent
+{\bf Table 4.23. Poloidal flux and related quantities}\bigskip\\
+\begin{tabular}{|c|l|c|l|}					\hline
+\hspace*{-1pt}\bf Type\hspace*{-1pt} & \bf Variable 
+			&\bf Units &\bf Description	\\	\hline
++ / $*$&\tt FP / FPO &Vs
+		&Poloidal flux: $\psi(t)$ \tw{~/~} $\psi(t-\tau)$\\
++ &\tt MU / MUX & & Inverse safety factor ($\mu=\iota=1/q$)\\
++ &\tt CU / CUX & MA$\,\rm m^{-2}$& $j_\pll,$ 
+		longitudinal current density, \req{dfjp}\\
++ &\tt CD   & MA$\,\rm m^{-2}$ & $j_{CD},$ driven current, \req{jCD}\\
++ &\tt CUBS & MA$\,\rm m^{-2}$ & $j_{BS},$ bootstrap current, \req{jCD}\\
++ &\tt CUTOR& MA$\,\rm m^{-2}$ & $j_{\rm tor},$ 
+		toroidal current density, \req{dfjtor}\\
++ &\tt ULON &  V  & $U_\pll,$ parallel loop voltage, \req{dfEp}\\
++ &\tt UPL  &  V  & $U_{\rm pl},$ toroidal loop voltage, \req{Upl}\\
+\hline
++ &\tt FV   & Vs & Vacuum poloidal flux created by external coils\\
++ &\tt MV / MVX & & Vacuum rotational transform for a stellarator (iota)\\
++ &\tt CV   &MA$\,\rm m^{-2}$& Current density equivalent to \tw{MV}\\
+\hline
+\end{tabular}\bigskip\\
+they are not needed.
+If \twd{MV} (or \twd{CV}) is set then the external (vacuum) poloidal
+field is added to the field of the plasma current.
+In this case, the latter can also be zero.
+All current densities in Tables 4.23 and 4.24 one are assumed to
+be parallel to the magnetic field $\bf B$ 
+\linebreak 
+\indent
+{\bf Table 4.24. Right hand sides of transport equations}\bigskip\\
+\begin{tabular}{|c|l|c|l|}					\hline
+\hspace*{-1pt}\bf Type\hspace*{-1pt} & \bf Variable 
+			&\bf Units &\bf Description	\\	\hline
++ &\tw{CUBM} &${\rm MA}\,{\rm m}^{-2}$&  NB driven current\\
++ &\tw{CUECR}&${\rm MA}\,{\rm m}^{-2}$&  EC driven current\\
++ &\tw{CUFI} &${\rm MA}\,{\rm m}^{-2}$&  Fast ion current\\
++ &\tw{CUFW} &${\rm MA}\,{\rm m}^{-2}$&  FW driven current\\
++ &\tw{CUICR}&${\rm MA}\,{\rm m}^{-2}$&  IC driven current\\
++ &\tw{CULH} &${\rm MA}\,{\rm m}^{-2}$&  LH driven current\\	\hline
++ &\tw{PRAD / PRADX}& ${\rm MW}\,{\rm m}^{-3}$ & Radiation power\\
++ &\tw{PEECR}&${\rm MW}\,{\rm m}^{-3}$ & Electron heating due to ECR\\
++ &\tw{PEFW} &${\rm MW}\,{\rm m}^{-3}$ & Electron heating due to FW\\
++ &\tw{PEICR}&${\rm MW}\,{\rm m}^{-3}$ & Electron heating due to ICR\\
++ &\tw{PELH} &${\rm MW}\,{\rm m}^{-3}$ & Electron heating due to LHCD\\
++ &\tw{PIFW} &${\rm MW}\,{\rm m}^{-3}$ & Ion heating due to FW\\
++ &\tw{PIICR}&${\rm MW}\,{\rm m}^{-3}$ & Ion heating due to ICR\\
++ &\tw{PBEAM}&${\rm MW}\,{\rm m}^{-3}$ & Total beam power source\\ \hline
++ &\tw{SCUBM}& ${\rm kg}\;{\rm m/s}^2/{\rm m}^3$ 
+				& Toroidal momentum source due to NB \\
++ &\tw{SNEBM}& $10^{19}{\rm\,m}^{-3}{\rm\,s}^{-1}$ 
+				& Electron source due to NB\\
++ &\tw{SNNBM}& $10^{19}{\rm\,m}^{-3}{\rm\,s}^{-1}$ 
+				& Warm neutral source due to NB\\
++ &\tw{SNIBMj}& $10^{19}{\rm\,m}^{-3}{\rm\,s}^{-1}$ 
+	& Source of ions with the energy \tw{EBEAM/j, j=}1,2,3\\ \hline
+\end{tabular}\bigskip\\
+because they are supposed to be used in the parallel Ohm law \req{Ohm}. 
+The only exception is \twd{CUTOR} which participates in the Joule
+heating term \req{QJ}.
+
+Some frequently used quantities are given in Table~4.25.
+Density and temperature distributions of the `cold' neutral atoms are
+calculated by the subroutine \twd{NEUT} as described 
+\linebreak	
+\indent{\bf Table 4.25. Auxiliary plasma parameters}\bigskip\\
+\begin{tabular}{|c|l|c|l|}				\hline
+\hspace*{-1pt}\bf Type\hspace*{-1pt} & \bf Variable 
+&\bf Units &\bf Description	\\			\hline
+$*$ &\tw{VP}     & m/s 
+	    & $U_\pll/(d\psi/d\rho)=E_\pll/B_{\rm p},$ pinch velocity\\
+$*$ &\tw{VPFP}  & m/s & $0.5\rho\dot B/B,$ flux surface velocity \\
++ &\tw{ER}    & V/m & Radial electric field\\
++ &\tw{VPOL~/~VPOLX}  & m/s & Poloidal rotation velocity\\
++ &\tw{VTOR~/~VTORX}  & m/s & Toroidal rotation velocity\\	\hline
++ &\tw{NN} & -- & Relative neutral density, $N(\rho)/N(\rho_B)$\\
++ &\tw{TN} & keV & Neutral temperature, $T_N(\rho)$	\\	\hline
++ &\tw{PBLON}& $10^{19}{\rm\,keV/m}^{3}$ 
+			& Longitudinal pressure of  fast ions\\
++ &\tw{PBPER}& $10^{19}{\rm\,keV/m}^{3}$
+			& Perpendicular pressure of  fast ions\\
++ &\tw{PELON}& $10^{19}{\rm\,keV/m}^{3}$ 
+			& Longitudinal electron pressure\\
++ &\tw{PEPER}& $10^{19}{\rm\,keV/m}^{3}$ 
+			& Perpendicular electron pressure\\	\hline
+\end{tabular}\bigskip\\%\vskip 3ex
+in Section~4.11.
+
+Table~4.26 contains parameters characterizing the tokamak magnetic
+configuration. 
+The quantities $\tt EQFF$ and  $\tt EQPF$ give the right hand side of
+the Grad-Shafranov equation \req{GSh}.
+All others are obtained as a result of solving this equation.
+Different average magnetic field characteristics are used in transport
+coefficients while purely geometric quantities are included in the
+transport set of equations as metric coefficients.
+\\[1ex]
+\indent
+{\bf Table 4.26. Geometric and magnetic field characteristics}\bigskip\\
+\begin{tabular}{|c|l|c|l|}					\hline
+\hspace*{-1pt}\bf Type\hspace*{-1pt} & \bf Variable 
+		&\bf Units &\bf Description	\\		\hline
++ &\tt EQFF~ / EQPF  & MA$\,\rm m^{-2}$ & $j_\zeta(r,z)= 
+		R_0/r*\tw{EQFF} + r/R_0*\tw{EQPF}$ \\		\hline
++ &\tt BMAXT / BMINT & T & Maximum / minimum B field on a surface\\
++ &\tt B0DB2 / BDB02 & & $<B_0^2/B^2>$ \tw{~/~}	$<B^2/B_0^2>$\\
++ &\tt BDB0 & & $<B/B_0>$\\
++ &\tt FOFB  & & $<B_0^2/B^2(1.-\sqrt{1-B/B_{max}}(1+.5B/B_{max})>$ \\
+								\hline
++ &\tt GRADRO& & $<|\nabla\rho|>,$ lateral area $S_a=$\tw{VR*GRADRO}\\
++ &\tt DRODA / DRODAX & &   d$\rho$/da\\
++ &\tt G11~~ / G11X & m$^2$ & $<(\nabla\rho)^2>V'$\\
++ &\tt G22~~ / G22X & m~ & $V'R_0/(4\pi^2 J)<(\nabla(\rho)/r)^2>$\\
++ &\tt G33~~ / G33X & & $<R_0^2/r^2>$\\
++ &\tt IPOL~ / IPOLX&& $J,$ Normalized poloidal current \req{dfJ}\\
+								\hline
+\end{tabular}\vskip 3ex
+
+The next group of parameters (Table~4.27) describes plasma isotope
+composition and impurity species. 
+These quantities are used in subroutines 
+{\tt ~NCLASS, NBI, STRAHL~} and in many other code modules
+dealing with the transport properties, additional heating and so on.
+\\
+\indent
+{\bf Table 4.27. Plasma isotope and impurity composition}\bigskip\\
+\begin{tabular}{|c|lll|c|l|}
+\hline
+\hspace*{-1pt}\bf Type\hspace*{-1pt} &\multicolumn{3}{|c|}{\bf Variable} 
+		&\bf Units &\bf Description		\\	\hline
++ &\tt NHYDR &\tt NDEUT &\tt NTRIT 	
+	& $10^{19}$${\rm m}^{-3}$	& Hydrogen isotope density\\
++ &\tt NHE3  &\tt NALF  &  	
+	&$10^{19}$${\rm m}^{-3}$ & Helium isotope density\\
++ &\tt NIZ1  &\tt NIZ2  &\tt NIZ3 
+	& $10^{19}$${\rm m}^{-3}$ 	& Impurity species density\\
++ &\tt ZIM1  &\tt ZIM2  &\tt ZIM3 
+	& $e_p$ 		& Impurity species charge \\ 
++ &\tt ZEF1  &\tt ZEF2  &\tt ZEF3
+	& 			& Impurity contribution to $Z_{eff}$\\
++ &\tt DIMP1 &\tt DIMP2 &\tt DIMP3
+	& ${\rm m}^2/{\rm s}$ 	& Diffusion coefficient \\
++ &\tt VIMP1 &\tt VIMP2 &\tt VIMP3
+	& m/s 			& Impurity pinch velocity \\
++ &\tt PBOL1 &\tt PBOL2 &\tt PBOL3
+	& ${\rm MW}\,{\rm m}^{-3}$	& Contribution to bolometric power \\
++ &\tt PSXR1 &\tt PSXR2 &\tt PSXR3
+	& ${\rm MW}\,{\rm m}^{-3}$ 	& Contribution to soft X-ray radiation \\
+\hline
+\end{tabular}\bigskip
+
+The group of variables used in the additional transport equations
+\rf{Aux}, \rf{QFj} is given in Table~4.28.
+They are analogous to the variables used for the main plasma parameters
+such as \twd{NE} or \twd{TE}.
+\medskip\\
+\indent
+{\bf Table 4.28. Arrays associated with dummy unknowns \twd{F1, F2, F3}}
+\\[2ex]
+\begin{tabular}{|c|lll|c|l|}					\hline
+\hspace*{-1pt}\bf Type\hspace*{-1pt}&\multicolumn{3}{|c|}{\bf Variable} 
+	&\bf Units 	&\bf Description	\\		\hline
++ &\tt F1  & \tw{F1O} & \tw{F1X} & [$f_1$] & 
+	$f_1(t)$ \tw{~/~} $f_1(t-\tau)$ \tw{~/~} $f_1^{exp}(t)$ \\
++ &\tt F2  & \tw{F2O} & \tw{F2X} & [$f_2$] & 
+	$f_2(t)$ \tw{~/~} $f_2(t-\tau)$ \tw{~/~} $f_2^{exp}(t)$ \\
++ &\tt F3  & \tw{F3O} & \tw{F3X} & [$f_3$] & 
+	$f_3(t)$ \tw{~/~} $f_3(t-\tau)$ \tw{~/~} $f_3^{exp}(t)$ \\
++ &\tt DF1 & \tw{DF2} & \tw{DF3} & ${\rm m}^2/{\rm s}$ & 
+			Diffusion for the variable $f_j$	\\
++ &\tt VF1 & \tw{VF2} & \tw{VF3} & m/s & 
+			Pinch velocity for the variable $f_j$	\\
++ &\tt QF1 & \tw{QF2} & \tw{QF3} &[$f_j$]m$^3$/s & 
+			Entire flux for the variable $f_j$	\\
++ &\tt SF1 & \tw{SF2} & \tw{SF3} &[$f_j$]/s & 
+			Explicit rhs for the variable $f_j$	\\
++ &\tt SFF1&\tw{SFF2} & \tw{SFF3}& 1/s & 
+			Implicit rhs for the variable $f_j$	\\
++ &\tt SF1TOT&\tw{SF2TOT}& \tw{SF3TOT} &[$f_j$]/s & 
+			Total source for the variable $f_j$
+%	\tw{SFjTOT=SFj+SFFj*Fj}	
+\\	\hline
+\end{tabular}\vskip 3ex %\bigskip\\
+
+Finally, two groups of vector variables without predetermined
+meanings are defined.
+All can be used similarly to the scalar variables listed in
+Table~4.17. 
+Additionally, those of them with an \twd{`X'} at the end can be read in
+from the data file (see Section~5.3).
+\linebreak
+\indent
+{\bf Table 4.29. Dummy arrays}\bigskip\\
+{\tt\begin{tabular}
+{|p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}|}	   \hline
+CAR1	& CAR2	& CAR3	& CAR4	& CAR5	& CAR6	& CAR7	& CAR8	\\
+CAR9	& CAR10	& CAR11	& CAR12	& CAR13	& CAR14	& CAR15	& CAR16	\\
+CAR17	& CAR18	& CAR19	& CAR20	& CAR21	& CAR22	& CAR23	& CAR24	\\ 
+CAR25	& CAR26	& CAR27	& CAR28	& CAR29	& CAR30	& CAR31	& CAR32	\\ \hline
+CAR1X	& CAR2X	& CAR3X	& CAR4X	& CAR5X	& CAR6X	& CAR7X	& CAR8X	\\
+CAR9X	& CAR10X& CAR11X& CAR12X& CAR13X& CAR14X& CAR15X& CAR16X\\ \hline
+\end{tabular}}\vskip 3ex
+
+\subsection{Astra expressions}
+
+\subsubsection{Types of expressions}
+
+Astra expressions provide a convenient notation for defining
+physical quantities or discharge characteristics which can be expressed
+by a formula. 
+Each formula/expression can be referred to by a name and used in other
+expressions as described in Section~5.2.
+Typical examples are transport coefficients, power and particle sources
+and sinks, cross-sections of atomic processes and so on.  
+Once these expressions are programmed they are stored in an object
+library or as Fortran text files.
+The Astra compiler then ensures the appropriate treatment of all
+modules and includes them into the resulting code according to their
+meaning, implementation and application.
+The whole concept is rather flexible: the expressions can be radially
+and/or time dependent, they can include integrals and derivatives, depend
+on other expressions and plasma parameters.
+In many cases, the Astra expressions are self-documented because they
+contain comments, examples of usage in the code, and references to 
+papers from which they originate. 
+
+On the one hand, the number of Astra expressions is continuously
+increasing, on the other hand, some which have become obsolete are
+retained for backward compatibility.
+Therefore, instead of comprehensively describing all Astra expressions,
+the goal of this section is to give a general representation of the Astra
+expression library, to describe its structure, and to demonstrate how to 
+find out more. 
+
+Astra supports two different kinds of expressions:
+formulae and functions. 
+A beginning user of the code does not need to discriminate between
+functions and formulae and can treat them as identical.
+Moreover, the names of Astra expressions can coincide with the names of
+the vector variables described in the previous section. 
+The only essential difference for a user is that, unlike arrays,
+expressions can be modified and new ones can be added. 
+A user can delete any formula (including those in the Astra kernel) and
+replace it with his own. 
+A function provided with the code cannot be deleted, however, this is
+not very restrictive because a user can always create his own function
+with a new name.
+Although no detailed explanation of the expression syntax is provided
+here, a number of expressions in the code can be used as templates for
+designing new ones. 
+
+The actual difference formulae and functions is that the formulae are
+included in a source code with the ${\tt INCLUDE}$ statement, while
+functions are conventional Fortran functions. 
+Although there is no clear distinction, functions tend to be used for
+programming more complicated expressions than formulae.\footnote[1] 
+{This sequence can be continued by the Astra subroutines which are
+described in Section~4.9 and related to the processes described by
+equations rather than by expressions.}
+Nevertheless, many expressions are represented both by
+functions and by formulae. 
+Usage of formulae is preferable because it does not require rebuilding
+libraries and usually results in a faster executable code than using
+functions. 
+As already mentioned, the proper usage is handled by the Astra compiler
+so that a user need not go into these details.
+
+In this description, only the overview and usage of Astra
+expressions are presented. 
+%Syntax and details will be discussed elsewhere.
+Usually, a name of variable/expression has a mnemonic meaning
+related to its use in the code. 
+So the expressions supposed to be used as the matrix elements or the
+right hand sides in Eqs.~\rf{Amain}--\rf{Afluxes} start with the same
+letters as the corresponding terms of the equations. 
+With a few exceptions the first letter of an expression name has the
+following meaning
+\bigskip \\ 
+\begin{tabular}{l l}
+\tw{B} &-- contributions to $\beta$'s,\medskip \\
+\tw{C} &-- conductivity,\medskip \\
+\tw{D} &-- diffusivity,\medskip \\
+\tw{F} &-- predefined radial functions,\medskip \\
+\tw{H} or \tw {X} &-- heat conductivity, (\tw{`H'} is used for electron, 
+		\tw{`X'} for ion heat conductivity),\medskip \\
+\tw{I} &-- surface integral (applied for current density),\medskip\\
+\tw{L} or \tw{R} &-- plasma inductance or characteristic length,
+							\medskip\\
+\tw{N} &-- plasma collision frequencies,		\medskip\\
+\tw{P} &-- heat source or sink,\medskip \\
+\tw{Q} or \tw{W} &-- volume integral of a source or of energy
+		content, respectively,\medskip \\
+\tw{S} &-- particle source,\medskip \\
+\tw{SV} &-- $<\sigma v>$ for collision processes,\medskip\\
+\tw{V} &-- velocity.\medskip \\
+\end{tabular}\\
+More detailed information about every particular expression can be found
+in its source file.
+The source files for Astra formulae are placed in the directory
+\twd{AWD/fml/}, functions in the directory \twd{AWD/fnc/}, arrays are
+listed in the file \twd{AWD/for/status.inc}. 
+
+\subsubsection{List of expressions}
+
+In an Astra model (see Section~5.2) both upper- and lowercase letters can
+be used. 
+Below we write all Astra expressions in uppercase but emphasize that 
+all file names for Astra expressions consist of lowercase letters only.
+For instance, a source file for the expression \twd{QDT} appears as 
+\twd{AWD/fml/qdt} (formula) and as \twd{AWD/fnc/qdt.f} (function).
+Other expressions can be presented either by a formula or by a function
+only. 
+A user should also be aware that all variables associated with Astra
+expressions are interpreted by the Astra code as Fortran real variables
+independently of the first letter of the name.  
+\smallskip\\
+\noindent
+{\bf Conductivity and CD efficiency}\\[1ex]
+{\tt\begin{tabular}
+{|p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}|}\hline
+CCSP & CCSPX & CNHH & CNHR & CCNEU & CCNEU & CHOTF & EFLHN & EFLHW\\ 
+\hline
+\end{tabular}}
+\smallskip\\
+\noindent
+{\bf Bootstrap current density}\nopagebreak\\[1ex]
+{\tt\begin{tabular}
+{|p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}|}
+\hline
+DCHA	& HCHA	& XCHA	& DCHH	& HCHH	& XCHH	& DCHR	& HCHR	& XCHR	\\
+DCKIM	& HCKIM	& XCKIM	& DCKM1	& HCKM1	& XCKM1	& DHKIM	&	& \\
+\hline
+\end{tabular}}
+\bigskip
+\\
+\noindent
+{\bf Transport coefficients}\\[1ex]
+{\tt\begin{tabular}
+{|p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}|}
+\hline
+CERL	& DBOHM	& DNDIF	& DNEXP	& ENHH0	& ENHH1	& ENHH2	& FOWC	& HAALC	\\
+HABM	& HABMS	& HABOM	& HACTE	& HAED	& HAETI	& HAETS	& HAGB	& HAGBS	\\
+HAGBS1	& HAITF	& HAITR	& HAMM	& HANAG	& HANAL	& HAPA	& HAPUE	& HAPYU	\\
+HAQ1	& HAQ1C	& HARL	& HARLS	& HARNQ	& HARPL	& HASCL	& HATL	& HATLI	\\
+HATLS	& HBJET	& HCHII	& HCHGP	& HEEFF	& HEGN 	& HETAI	& HETIS	& HEXP	\\
+HGBEJ	& HGBIJ	& HIT89	& HNCHI	& HNGSB	& HNGSE	& HNGSI	& HNGSP	& HNPSI	\\
+TECRL	& XCH86	& XCHR	& XEXP	& XIGN	& XIEFF	& XIRL	&	& \\ 
+\hline
+\end{tabular}}
+\bigskip
+\\
+\noindent
+{\bf Power sources and sinks}\\[1ex]
+{\tt\begin{tabular}
+{|p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}|}   \hline
+PAION	& PBDHE	& PBEIE	& PBICX	& PBRAD	& PDT	& PEDT	& PEDT1	& PEGN	\\
+PEHCL	& PEI	& PEICL	& PEIGN	& PENEU	& PENLI	& PETSL	& PHICL	& PICX	\\
+PIDT	& PIDT1	& PIGN	& PINEU	& PIONZ	& PIREC	& PITCX	& PITSL	& PJOUL	\\
+POH	& PRCAR	& PRFER	& PRNEO	& PRNIT	& PROXI	& PROXY	& PRWOL	& PSYNC \\
+\hline
+\end{tabular}}
+\bigskip
+\\
+\noindent
+{\bf Particle sources and sinks}\\[1ex]
+{\tt\begin{tabular}
+{|p{13mm}p{13mm}p{13mm}p{13mm}|}				\hline
+SNNEU	& SNNIE	& SNNII	& SNNR	\\			\hline
+\end{tabular}}
+\bigskip
+\\
+\noindent
+{\bf Volume integrals of power and particle sources}\\[1ex]
+{\tt\begin{tabular}
+{|p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}|} \hline
+QBREM	& QDT	& QEDT	& QEGN	& QEICL	& QEIGN	& QENEU	& QETOT	& QEX\\
+QIDT	& QIGN	& QINEU	& QITOT	& QIX	& QJOUL	& QNTOT	& QNX	& QOH\\
+QRAD	& QRADX	& QSYNC	& QTOT	& QBTOT	& QEDWT	& QIDWT	& QNDNT	&\\ \hline
+\end{tabular}}
+\bigskip
+\\
+\noindent
+{\bf Volume average quantities}\\[1ex]
+{\tt\begin{tabular}
+{|p{13mm}p{13mm}p{13mm}	p{13mm}	p{13mm}	p{13mm}	p{13mm}	p{13mm} p{13mm}|}
+\hline
+NEAV	& NEXAV	& TEAV	& TEXAV	& TIAV	& TIXAV	& TENDN	& TINDN &     \\
+WALF	& WBPOL	& WE	& WEX	& WI	& WIX	& WTOT	& WTOTX	& ZNDN\\ 
+\hline
+\end{tabular}} 
+\bigskip
+\\
+\noindent
+{\bf Confinement times}\\[1ex]
+{\tt\begin{tabular}
+{|p{13mm}p{13mm}p{13mm}	p{13mm}	p{13mm}	p{13mm}	p{13mm}	p{13mm}|} \hline
+TAUE	& TAUEE	& TAUEI	& TAUG	& TAUNA	& TAUP	& TAU89	& TITER\\ \hline
+\end{tabular}}
+\bigskip
+\\
+\noindent
+{\bf Averaged cross-sections of atomic and nuclear processes}\\[1ex]
+{\tt\begin{tabular}
+{|p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}|}	\hline
+SVCX	& SVCXX	& SVD1	& SVD2	& SVDBH	& SVDHE	& SVDT	& SVIE	\\ 
+SVIEP	& SVIEX	& SVII	& SVREC	& SVRECX& 	&	& \\	\hline
+\end{tabular}}
+\bigskip
+\\
+\noindent
+{\bf Collisions}\\[1ex]
+{\tt\begin{tabular}
+{|p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}|}		\hline
+COULG	& NUE	& NUEE	& NUES	& NUI	& NUIS	& NUPP	\\	\hline
+\end{tabular}}
+\bigskip
+\\
+\noindent
+{\bf Velocities}\nopagebreak\\[1ex]\nopagebreak
+{\tt\begin{tabular}{|p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}|}	\hline
+CS	& VDIA	& VSI	& VTE	& VTI	\\			\hline
+\end{tabular}}
+\bigskip
+\\
+\noindent
+{\bf Pressure and $\beta$'s}\\[1ex]
+{\tt\begin{tabular}
+{|p{13mm}p{13mm}p{13mm}	p{13mm}	p{13mm}	p{13mm}	p{13mm}|}	\hline
+BETE	& BETI	& BETPL	& BETR	& BETAJ	& BETBM	& BETT	\\ 
+ALMHD	& PRESE	& PRESI	& PREST	&	&	&	\\	\hline
+\end{tabular}}
+\bigskip
+\\
+\noindent
+{\bf Integrals of current density}\\[1ex]
+{\tt\begin{tabular}
+{|p{13mm}p{13mm}p{13mm}	p{13mm}	p{13mm}	p{13mm}|}	\hline
+IBM	& IBS	& ICD	& IOHM	& ITOT	& IX		\\
+IECR	& IFI	& IFW	& IICR	& ILH 	&		\\	\hline
+\end{tabular}}
+\bigskip
+\\
+\noindent
+{\bf Properties of the current profile}\\[1ex]
+{\tt\begin{tabular}
+{|p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}|}
+\hline
+LICD	& LINT & QBM	& QBS	& QCD	& QNIND	& QMIN	& SHEAR	& XQMIN\\
+\hline
+\end{tabular}}
+\bigskip
+\\
+\noindent
+{\bf Characteristic lengths and derived quantities}\\[1ex]
+{\tt\begin{tabular}
+{|p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}|}	\hline
+LNE	& LNI	& LNZ1	& LTE	& LTI	& ETAN	& ETAE	& ETAI	\\
+RLTCR	& RLTCZ	& RLTWN	& RLI	& RLS	&	&	&	\\ \hline
+\end{tabular}}
+\bigskip
+\\
+\noindent
+{\bf Average Z in coronal approximation}\\[1ex]
+{\tt\begin{tabular}
+{|p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}|}			\hline
+ZICAR	& ZIFER	& ZINEO	& ZINIT	& ZIOXI	& ZIWOL \\		\hline
+\end{tabular}}
+\bigskip
+\\
+\noindent
+{\bf Other plasma parameters}\\[1ex]
+{\tt\begin{tabular}
+{|p{13mm}p{13mm}p{13mm}	p{13mm}	p{13mm}	p{13mm}	p{13mm}	p{13mm} p{13mm}|}
+\hline
+EPAR	& EPL	& EDR	& D2TI	& SQZ	& DIDT	& FTE	& FTLLM	& TPF \\
+ROTSH	& NECH  & NELA  & CCMHD	& CUOHM	& HMHD1	& HMHD2	& XMHD1	& XMHD2\\
+\hline
+\end{tabular}} 
+\bigskip
+\\
+{\bf Radial functions} (See Section~4.8.3)\\[1ex]
+{\tt\begin{tabular}
+{|p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}p{13mm}|}		\hline
+FA	& FLIN	& FPA	& FPR	& FR	& FRS	&  FX	\\	\hline
+\end{tabular}}
+
+\subsection{Built-in functions}
+
+Below we list some of the modules (Fortran subroutines and functions)
+incorporated in the package. Headers of each module are equipped with
+a brief description and examples of their usage. 
+Fortran sources for most of the functions discussed in this section are
+available in the file \twd{AWD/for/intern.f.}\footnote
+{Changes in this file are not allowed for a non-authorized user.}
+The general rules of calling Astra subroutines and functions are
+described in Section~5.2.
+
+The following notations for the arguments of Astra functions and
+subroutines are adopted below:\\
+\hspace*{1em}
+$R$ is a vector variable, $R=R(\rho,t),$\\ \hspace*{1em}
+$S$ is a scalar variable or an Astra vector at a given radius,
+$S=S(t),$ \\ \hspace*{1em}
+$G$ is a generic name for both, $R(\rho,t)$ and $S(t)$,\\ \hspace*{1em}
+$t_0$ is the initial time of the simulation run,\\ \hspace*{1em}
+$t\;$ is the current time, $t\geq t_0,$\\ \hspace*{1em}
+$t_1$ is arbitrary time.\\
+In the case where a built-in function allows a generic argument $G$ the
+result has the same type as the argument. 
+As a rule, only Astra variables (scalars and vectors) can be used as
+arguments of Astra built-in functions.
+To overcome this restriction one has to perform two steps as
+in the following example:
+\\ \indent
+\tw{CAR1=WTOT;~~~~~~CAR2=TIMDER(CAR1)}
+\\
+Because \twd{WTOT} is an Astra formula, rather than an array, it cannot
+be directly used as an argument of the built-in function \twd{TIMDER}
+(time derivative).
+Therefore, the first statement assigns the kinetic energy density 
+$W_{\rm kin}(\rho)$ to the vector variable \twd{CAR1}, 
+then the second computes the energy derivative as the vector~\tw{CAR2}:
+$$
+\tw{CAR1}=\tw{WTOT}=W_{\rm kin}
+=0.0024\int_0^{\rho}\!\lb(n_eT_e+n_iT_i\rb)V'd\rho
+\quad\rm[MJ]
+,\qquad
+\tw{CAR2}=\prti{W_{\rm kin}}{t}
+\quad\rm[MW].
+$$
+In the next example 
+\\ \indent
+\tw{CV1=TIMDER(IPL);~~~~~~CV2=TIMINT(QNB)}
+\\
+both results are scalars, where ${\tw{CV1}=dI_{\rm pl}/dt}$
+is the plasma current ramp rate and
+$\tw{CV2}=\int_{t_0}^t\tw{QN}(\rho_{\rm B},t)dt$ is
+the total particle flux through the outermost magnetic surface.
+
+The rule restricting the argument type has two exceptions.
+First, the functions \twd{CUT}, \twd{STEP} (see the end of 
+Section~4.8.2) and Fortran intrinsic functions (Section~4.8.3)
+allow arbitrary expressions as arguments.
+Secondly, the values of Astra arrays at fixed radii (e.g. \twd{QNB} in
+the example above) can also be arguments of the built-in functions.
+
+\subsubsection{Time dependent functions}
+
+\paragraph{Time derivative} (function {\tt TIMDER}).
+$$
+{\tt TIMDER}(G)=\lb.\lb(\prti{G}{t}\rb)\rb|_\rho
+.$$
+
+\paragraph{Time integral} (function {\tt TIMINT}).
+$$
+{\tt TIMINT}(G)=\int\limits_{t_0}^t G([\rho,]\,t)dt
+.$$
+Usage of functions \twd{TIMDER} and \twd{TIMINT} has an additional
+limitation. 
+They can only be used in an Astra model on the right hand side of an
+assignment statement. 
+This means that the constructions 
+\\ \indent
+\tw{CV1=TIMDER(VOLUME);~~~~~~dVdt\symbol{95}CV1}
+\\
+and
+\\ \indent
+\tw{CAR1=TIMDER(FP);~~~~~~~~~U\symbol{95}pl\symbol{92}CAR1}
+\\
+are correct while the result of \twd{dVdt\symbol{95}TIMDER(VOLUME)}
+will be wrong.
+
+\paragraph{Heaviside function of time} (function {\tt FJUMP}).
+$$
+{\tt FJUMP}(t_1)=H(t-t_1)
+\lb\{\begin{array}{ll}
+0
+,\quad &
+\mbox{if}\quad t<t_1\\
+1
+,&
+\mbox{if}\quad t_1<t
+.\\
+\end{array}\rb.
+$$
+
+\paragraph{Linear ramp in time} (function {\tt FRAMP}).
+$$
+{\tt FRAMP}(t_1,t_2)=
+\lb\{\begin{array}{ll}
+0
+,\quad &
+\mbox{if}\quad t\leq t_1\\
+(t-t_1)/(t_2-t_1)
+,&
+\mbox{if}\quad t_1< t< t_2\\
+1
+,&
+\mbox{if}\quad t_2\leq t
+.\\
+\end{array}\rb.
+$$
+
+\paragraph{Storing of a variable value} at a given time 
+(function {\tt FIXVAL}).
+$$
+{\tt FIXVAL}(G,t_1)=
+\lb\{\begin{array}{ll}
+G(t)
+,\quad &
+\mbox{if}\quad t<t_1\\
+G(t_1)
+,&
+\mbox{if}\quad t_1<t
+.\\
+\end{array}\rb.
+$$
+
+\paragraph{Sliding time average.} 
+Function of two parameters $\tws{FTAV}(G,\Delta t)$
+provides smoothing of the variable $G(t)$ over the time interval 
+$\Delta t$ so that  
+$$
+\lb.\lb.\vphantom{\frac{1}{2}}{\tt FTAV(G,}\Delta t)\rb|_t=
+{\tt FTAV(G,}\Delta t)\rb|_{t-\tau}\exp\lb(-\frac{\tau}{\Delta t}\rb)
++\tws{G}(t)\lb[1-\exp\lb(-\frac{\tau}{\Delta t}\rb)\rb]
+,$$
+with $\tau$ being the time step. In particular,
+$$
+\lb\{\begin{array}{ll}
+{\tt FTAV}(t)
+\approx G(t)
+, &
+\mbox{if}\quad \tau \gg \Delta t\\
+{\tt FTAV}(t)
+\approx {\tt FTAV}(t-\tau)
+,\quad &
+\mbox{if}\quad  \tau \ll \Delta t
+.\\
+\end{array}\rb.
+$$
+
+\paragraph{Minimum/maximum value in time of a function $G$ 
+({\tt FTMIN, FTMAX}).} 
+$$
+{\tt FTMIN}(G)=\min\limits_{t_0\leq\theta\leq t}\lb[G(\theta)\rb]
+,\qquad
+{\tt FTMAX}(G)=\max\limits_{t_0\leq\theta\leq t}\lb[G(\theta)\rb]
+.$$
+Here $t_0=\tt TSTART$ is the initial time and $t=\tt TIME$ is the
+current time of the run. 
+
+\paragraph{Examples:}
+\begin{description}
+\item[\quad\tw{FJUMP(1.)}] 
+provides a time dependent function with the unity step at the time
+$t=1$s. The actual width of the transition phase is no less than the
+current time step $\tau=\tw{TAU}.$
+\item[\quad\tw{FRAMP(1.,1.01)}] extends the transition phase up to 10 ms
+(provided $\tau<10$ms, otherwise $\tau$).
+\item[\quad\tw{MU\hspace*{3pt}-\hspace*{3pt}FIXVAL(MU,1.)}] 
+returns the finite difference 
+$\Delta\mu(\rho,t)=\mu(\rho,t)-\mu(\rho,1.),$ if $t>1$s, 
+and 0~otherwise.
+\item[\quad\tw{FTAV(UPL,.01)}]
+returns a vector variable which is the loop voltage 
+$U_{\rm pl}(\rho,t)$ averaged over the recent 10 ms (assuming that the time step 
+$\tau\ll 10$ms). 
+\item[\quad\tw{FTAV(UPLB,.01)}] is a scalar giving the average edge loop
+voltage $U_{\rm pl}(\rho_{\rm B},t).$ 
+\item[\quad\tw{FTMIN(MU)}] and \tw{~FTMAX(MU)~} give a range of
+variation of $\tw{MU}=1/q$ during a run.
+\item[!\hspace*{9pt}\tw{FTAV(HEXP,.01)}] this usage is forbidden
+because \twd{HEXP} is not an Astra array. 
+Two statements 
+\twd{CAR1=HEXP;~CAR2=FTAV(CAR1,.01)} should be used instead.
+%\item[\quad\tw{FTMAX(QOHB)}] is allowed and gives the
+%maximum in time value of the total Ohmic power. However, a repeated call
+%as \\ \hspace*{5em}
+%\tw{Q(0)\symbol{95}FTMAX(QOHC)}
+%;\qquad 
+%\tw{Q(a)\symbol{95}FTMAX(QOHC)}\\
+%results in an error.
+\item[\quad\tw{TIMINT(UPL)}] is a vector variable which gives the
+poloidal flux 
+$\psi(\rho,t)=\psi(\rho,t_0)+\int_{t_0}^tU_{\rm pl}(\rho,t)dt$
+up to an additive constant.
+\item[\quad\tw{TIMDER(FPB)}] is a scalar variable and within numerical errors coincides with 
+$U_{\rm pl}(\rho_{\rm B},t).$
+\end{description}
+
+\subsubsection{Radially dependent functions}
+
+\paragraph{Linear radial functions} ({\tt FA, FX, FLIN, FR, FRS}).\\
+All functions listed above are implemented as Astra formulae. 
+The function {\tt~FR~}(array synonym{\tt~RHO}) gives the nodes of the
+main transport radial grid~$\rho_j$ 
+$$
+\rho_j=
+\lb\{\begin{array}{ll}
+h(j-0.5)
+, &
+\mbox{if}\quad 1 \leq j < {\tt NA1}\\
+\rho_B
+,\quad &
+\mbox{if}\quad j = {\tt NA1}
+.\\
+\end{array}\rb.
+$$
+Similarly, ${\tt FA}$ (array synonym {\tt~AMETR}) gives values of
+the variable $a,$ i.e. $a_j=a(\rho_j)$ on this grid.
+Most frequently used functions are defined on this grid.
+Functions ${\tt FX}$ and ${\tt~FLIN}$ both return the normalized
+radius $\rho_j/\rho_B$ which can also be obtained as
+$\tw{RHO/ROC}.$ 
+
+The intermediate grid in $\rho$ is given by the function
+${\tt FRS}=jh.$
+The functions listed in Table~4.5, all fluxes and some others are
+defined on this latter grid.  
+
+\paragraph{Parabolic profiles} ({\tt FPR, FPA}).
+The Astra formulae
+$${\tt FPR}=1-(\rho/\rho_B)^2
+\qquad{\rm and}\qquad
+{\tt FPA}=1-(a/a_B)^2
+$$ 
+describe parabolic profiles in variables $\rho$ and $a,$ respectively.
+
+\paragraph{Gaussian distribution} 
+(subroutine {\tt FGAUSS}, function {\tt GAUSS}). \\
+The subroutine {\tt FGAUSS}$(\rho_0,\Delta_\rho,R)$ returns a radial
+Gaussian profile in the variable $\rho$
+$$
+R_i=N\exp\lb[-\lb(\frac{\rho_i-\rho_0}{\Delta_\rho}\rb)^2\rb]
+,$$
+where the factor $N$ (of dimension ${\rm m}^{-3}$) is determined by the
+normalization condition 
+$$
+\int_0^{\rho_B} R(\rho)dV=1
+.$$
+This means that the statement 
+%\\ \hspace*{1em}
+``\twd{FGAUSS(.5,.2,PEX):;}''
+%\hspace*{1em}%\\
+defines the vector variable \twd{PEX} as a Gaussian profile, centered in
+$\rho_0=0.5$m with the width $\Delta\rho=0.2$m.
+If the quantity \twd{PEX} is defined as a power, then the total power
+deposited would be 1 MW.
+
+The function {\tt GAUSS}$(\rho_0,\Delta_\rho)$ can be used similarly:
+\marginpar{!!}$\tt PEX = GAUSS(0.5,0.2),$ 
+however, the function \twd{GAUSS} can be called in a model only once.
+
+\paragraph{Minimum/maximum value} of a vector variable $R(\rho)$ 
+({\tt FRMIN, FRMAX}).
+$$
+{\tt FRMIN}(R)=\min\limits_{0\leq\rho\leq\rho_B}\lb[R(\rho)\rb]
+,\qquad
+{\tt FRMAX}(R)=\max\limits_{0\leq\rho\leq\rho_B}\lb[R(\rho)\rb]
+.$$
+
+\paragraph{Position of minimum/maximum} of a vector variable $R(\rho)$ 
+({\tt RFMIN, RFMAX}).\\
+The functions {\tt RFMIN, RFMAX} return 
+$$
+\begin{array}{ll}
+{\tt RFMIN}(R)=\rho_{\min}
+,\quad\mbox{where}\quad
+R(\rho_{\min})=\min\limits_{0\leq\rho\leq\rho_B}\lb[R(\rho)\rb]
+,\bigskip\\
+{\tt RFMAX}(R)=\rho_{\max}
+,\quad\mbox{where}\quad
+R(\rho_{\max})=\max\limits_{0\leq\rho\leq\rho_B}\lb[R(\rho)\rb]
+.\end{array}
+$$
+
+\paragraph{Root of the algebraic equation} $R(\rho)=R_0$ ({\tt RFVAL}).
+$$
+{\tt RFVAL}(R,R_0)=\rho_0
+,\quad\mbox{where}\quad
+R(\rho=\rho_0)=R_0
+.$$
+Maximum of all possible solutions is returned, $\rho_0=0$ if no root
+found. 
+
+\paragraph{Root of the algebraic equation} $R(a)=R_0$ ({\tt AFVAL}).
+$$
+{\tt AFVAL}(R,R_0)=a_0
+,\quad\mbox{where}\quad
+R(a=a_0)=R_0
+.$$
+Maximum of all solutions is returned, 0 if no root found.
+
+\paragraph{Gradient} of a function $R(\rho)$ ({\tt GRAD}).
+$$
+{\tt GRAD}(R)=\prti{R(\rho)}{\rho}
+.$$
+One should beware of the approximate character of this operation.
+The function \twd{GRAD} is intended for auxiliary purposes such as
+graphical presentation or estimates only.  
+For instance, it makes no distinction between the main and intermediate
+radial grids. 
+Therefore, the safety factor $q$ calculated as 
+\twd{GP2*BTOR*RHO/GRAD(FP)} shows significant deviation from the
+exact (in a finite difference sense) quantity 
+$q=2\pi B_0\rho\,\prt\rho/\prt\psi=1/\mu=\tt1/MU$ at the
+plasma centre. 
+Even the improved evaluation $\tt GP2*BTOR*FRS/GRAD(FP)$ is not
+everywhere exact because it does not take into account the centering of
+different grid variables appropriately. 
+
+\paragraph{Volume integral} of a function $R(\rho)$ ({\tt VINT}).
+$$
+{\tt VINT}(R)=\int\limits_0^{\rho} R(\rho)V'd\rho
+.$$
+In Astra models the function \twd{VINT} can be used in several different
+ways: 
+$$
+\tw{
+CAR1=VINT(NE);    \qquad
+CV1=VINT(NEB);    \qquad
+CF1=VINT(NE,0.5);
+}
+$$
+The first statement in this example produces a vector, others
+scalar output.
+Note that the `0.5' as the second argument of \twd{VINT} (in the 3rd 
+statement) refers to the minor radius $a$ measured in meters and 
+introduced by \req{3mom}.
+Therefore, this gives the following results:
+$$
+\tw{CAR1}=\!\int\limits_0^{\rho}\tw{NE}(\rho)V'd\rho
+,\qquad
+\tw{CV1}=\!\int\limits_0^{a_B}\tw{NE}(a)dV
+=\!\int\limits_0^{\rho_B}\tw{NE}(\rho)V'd\rho
+,\qquad
+\tw{CF1}=\!\!\int\limits_0^{0.5\,\rm m}\!\tw{NE}(a)dV
+.$$
+For instance, the density averaged over a volume inside the current
+radius $\rho$ can be submitted to the radial graphics output by the two
+instructions: 
+$$
+\tw{CAR1=1;
+\qquad
+<ne>\symbol{92}VINT(NE)/VINT(CAR1);~~~
+}
+$$
+In the last example, \twd{VINT(CAR1)} is equivalent to \twd{VOLUM}.
+Moreover, the entire expression for $<n_e>$ can be obtained making use
+of already defined Astra function \twd{NEAV}.
+
+Exactly the same rules are applicable to the next Astra function
+\twd{IINT} which also calculates an integral over the poloidal
+cross-section rather then over the volume of a magnetic surface.
+
+\paragraph{Surface integral} of a function $R(\rho)$ in a poloidal plane
+({\tt IINT}). 
+$$
+{\tt IINT}(R)
+=\frac{J}{2\pi R_0}\int\limits_0^{\rho} R(\rho)\frac{V'}{J^2}d\rho
+.$$
+This function is used for integration of the longitudinal
+current density (see~\req{Ipl}). 
+Similar to \twd{VINT} it allows expressions like \twd{IINT(CUECR),}
+\twd{IINT(CUECRB)} and \twd{IINT(CUECR,0.2).}
+
+As a general remark, we note that constructions involving \twd{VINT} (or
+\twd{IINT}) are rarely needed because Astra expressions are
+available for most physical quantities relevant to transport analysis.
+We also remind the reader that \twd{VINT(1)} or \twd{VINT(NE*TE)} are
+not allowed because the argument should be a radial array (Astra vector
+variable). 
+
+\paragraph{Heaviside function} of the radial variable $a$ ({\tt ASTEP}).
+$$
+{\tt ASTEP}(a_0)=H(a-a_0)
+$$
+
+\paragraph{Heaviside function} of the radial variable $\rho$ ({\tt
+RSTEP}). 
+$$
+{\tt RSTEP}(\rho_0)=H(\rho-\rho_0)
+$$
+
+\paragraph{Heaviside function} of the radial variable $x=\rho/\rho_B$
+({\tt XSTEP}). 
+$$
+{\tt XSTEP}(x_0)=H(\rho/\rho_B-x_0)
+$$
+
+\paragraph{Heaviside function} of any dimensionless argument $A$ ({\tt
+STEP}).
+$$
+{\tt STEP}(A)=H(A)
+=\lb\{
+\begin{array}{l}
+1,\qquad\mbox{if}\quad A\geq 0,\\
+0,\qquad\mbox{if}\quad A< 0.
+\end{array}\rb.
+$$
+An argument $A$ of the function \twd{STEP} can be any expression allowed
+by the Astra rules. The same is valid also for the next function.
+
+\paragraph{Cut-off function ({\tt CUT}).}
+Sometimes, a function for the graphic output varies by many order of
+magnitude. 
+Because of a very limited word length (1 byte) of the data stored in 
+an Astra post-view file (Section~5.5.4) essential information can be
+lost and saved data will have very low resolution. 
+To avoid this one can cut off too large values of no interest:
+$$
+{\tt CUT}(a_0,A)=
+\lb\{\begin{array}{lll}
+-a_0, 	&\quad\mbox{if}\quad & \;\;\;A\leq -a_0,\\
+A,	&\quad\mbox{if}\quad & -a_0\leq A\leq a_0,\\
+a_0,	&\quad\mbox{if}\quad & \;\;\;a_0\leq A.\\
+\end{array}\rb.
+$$
+
+\begin{description}
+\item[Examples:]
+\item[\quad\tw{RSTEP(.5)}] can also be obtained as \twd{STEP(RHO-.5)},~ 
+\twd{XSTEP(.2)}~as~\twd{STEP(RHO/ROC-.2)},\linebreak
+\twd{ASTEP(.1)}~is equivalent to~\twd{STEP(AMETR-.1)}. 
+Note that the numerical argument of \twd{XSTEP} (0.2 in this example) is
+dimensionless, all others are measured in meters.
+\item[\quad\tw{CUT(100.,NUES)}] can be useful for drawing a radial
+profile of the collision frequency which can be very large near the
+magnetic axis and at the plasma edge.
+The same effect can be achieved in a more complicated way as
+\twd{100-(100-NUES)*STEP(100-NUES).}
+\item[\quad\tw{STEP(SIN(GP2*100*TIME)-0.5)}] shows another example of
+allowed usage for this function which gives a time dependent square-wave
+signal with a period 0.01 s (frequency ${f=100}$Hz) and a duty factor 
+$(\pi/2-\arcsin(0.5))/\pi=33\%$.
+\item[\quad\tw{FRMAX(MU)}] returns the minimum value of the safety factor
+$q(\rho)=1/\mu(\rho)=\tt 1/MU,$
+\item[\quad\tw{RFMAX(MU)}] returns the $\rho\,-$position of this minimum,
+\item[\quad\tw{RFVAL(MU,0.5)}] returns the position of the$q=2$resonance
+surface in the coordinate$\rho,$
+\item[\quad\tw{AFVAL(MU,0.5)}] returns the position of the same surface
+with respect to the coordinate$a.$
+The last result can also be obtained as 
+%\twd{RADIAL(AMETRC,RFVAL(MU,0.5))} or shorter as
+\twd{AMETR(RFVAL(MU,0.5)).}
+\end{description}
+
+\subsubsection{Functions for mapping one flux label to another}
+
+Several Astra functions are available for recalculating one `radial' 
+coordinate to another: {\tt RFA}, {\tt XFA}, {\tt AFR}, {\tt AFX}, 
+{\tt RFAN}, {\tt XFAN} . 
+The function \twd{RFA(0.5)} returns a value of the coordinate $\rho$
+(in meters) at the magnetic surface labeled by the mid-plane radius
+$a=0.5$m (see \req{3mom}).
+The function \twd{XFA({\it a})} is equivalent to 
+${\tt RFA}(a)/{\tt ROC}$ and returns the normalized value of the flux
+label $x(a)=\rho(a)/\rho_B.$ 
+The functions {\tt AFR} and {\tt AFX} are inverses of {\tt RFA} and
+{\tt XFA}, respectively.
+Finally, {\tt RFAN(0.5)} gives $\rho$ as a function of the dimensionless
+argument $a_N=a/a_B=0.5,$ similarly, 
+${\tt XFAN}(a_N)={\tt RFAN}(a_N)/\rho_B.$
+
+Vector variable at the given radius can be computed using one of the two
+functions {\tt ATX} and {\tt ATR}.
+The difference between both is that the first one refers to the
+normalized radius $\rho/\rho_B$ and the second to the dimensional radius
+$\rho.$ 
+For instance, \twd{ATX(TI,0.5)} returns a value of the ion temperature
+at $\rho=0.5\rho_B$ while \twd{ATR(TI,0.5)} at $\rho=$0.5 m. 
+Other options are discussed in Section~5.2.3.
+
+\subsubsection{Fortran intrinsic functions}
+
+In addition to special functions described above one can use also the
+standard set of Fortran functions:
+{\tt SIN,} {\tt COS,} {\tt TAN,} {\tt ASIN,} {\tt ATAN,} {\tt EXP,} 
+{\tt ABS,} {\tt MIN,} {\tt MAX,} {\tt SQRT,} {\tt ALOG,} {\tt ALOG10,}  
+{\tt ANINT,} {\tt REAL} and {\tt SIGN.}
+The type of the argument can be anything.
+In turn, it defines a type of the result so that {\tt~SIN(CV1)} is a
+scalar, while {\tt~SQRT(NE*TE)~} and {\tt~ALOG(LTE)} are vectors. 
+
+\subsection{Plug-in subroutines}
+
+All subroutines described in this section can be found under the name 
+\twd{AWD/sbr/xxx.f} where \twd{`xxx'} should be replaced by a name
+referred below in the lowercase. 
+As a matter of fact, the directory \twd{AWD/sbr/} includes many more
+subroutines which can be useful in different applications.
+We describe here only few of those.
+
+%\subsubsection{Fourier transform in time ({\tt FOURV, FOURTR}).}
+%The subroutines perform Fourier transform for Astra scalar variable and
+%array, respectively.
+
+\subsubsection{Ionization particle flux ({\tt GNEX, GNXSRC}).}
+
+Both subroutines have no parameters and communicate with the Astra core
+through common blocks.
+The subroutine ${\tt GNEX}$ calculates the particle flux \twd{GNX} caused
+by ionization of neutral atoms in the plasma volume and also due to
+evolution of the electron density 
+$$
+{\tt GNX}
+=\frac{1}{S_a}\int\limits_0^\rho\lb(V'S_e-\prti{V'n_e}{t}\rb)d\rho
+,$$
+where the toroidal surface area $S_a=\tt SLAT$ is defined by \req{Sa}.
+It is assumed that the density of wall neutrals \twd{NN} and a source
+due to the beam neutrals \twd{SNEBM} are calculated 
+independently (for instance, by calling subroutines \twd{NEUT} and
+\twd{NBI}). 
+{\tt GNXSRC~} gives the same quantity but without allowance for the
+neutrals from NBI. 
+
+The quantity \twd{GNX} is {\em always} included in \req{Amain}. 
+It can be useful when the particle diffusion equation is switched off
+and the density evolution is taken from an experiment and is a
+prescribed function of time and radius. 
+Then the `experimental' particle flux \twd{QN=SLAT*GNX} will be included
+in the power balance in accordance with \req{Amain},\rf{Afluxes} unless 
+$\gamma_e=\gamma_i=0.$ 
+On the other hand, the user should be aware that calling any of the
+subroutines {\tt GNEX} or {\tt GNXSRC} together with solving the
+diffusion equation will cause a side effect and include the same
+particle flux twice. 
+
+\subsubsection{Upper and lower function boundaries (\twd{MINMAX}).}
+A call to the subroutine ${\tt MINMAX}(R,R_{min},R_{max})$ returns two
+quantities 
+$$
+R_{min}(\rho)
+=\mathop{\rm min}\limits_{t_1\leq\theta\leq t_2}R(\rho,\theta)
+\qquad\mbox{and}\qquad
+R_{max}(\rho)
+=\mathop{\rm max}\limits_{t_1\leq\theta\leq t_2}R(\rho,\theta)
+.$$
+Although the same result can be obtained by calling the two functions
+${\tt FTMIN}$ and  ${\tt FTMAX}$ using \twd{MINMAX} is more flexible
+because it finds maxima and minima in a prescribed time interval
+$t_1<t<t_2.$ 
+So the statement
+\\ \indent
+\tw{MINMAX(CU,CAR1,CAR2)::0.5:0.6}
+\\
+gives range of variation of the current density for 100 ms inside the
+time interval 0.5 s$<t<$0.6 s.
+
+\subsubsection{Sawtooth oscillations (internal disruption) 
+{\rm (subroutine \tt MIXINT)}.}
+
+This subroutine models profile evolution of 
+$T_e,T_i,n_e,n_i,j_\pll,\mu,\psi$ 
+in the process of magnetic field line reconnection according to
+Kadomtsev's theory of sawtooth oscillations \cite{BB}.
+The current version of the code allows for the internal reconnection at
+the resonance $q=m/n=1$ only.
+In a process of the full reconnection final distributions of all plasma
+parameters are uniquely determined by the conservation laws and by the
+initial distributions. 
+The only physical characteristic missing in  this theory is the trigger
+of the internal disruption.
+Therefore, the subroutine \twd{MIXINT} requires one physical input
+parameter which can be either the sawtooth period or the reconnection
+radius.
+Additionally, it is possible to use a disruption condition
+based on the double-tearing-mode reconnection model \cite{PP}.
+In this case no additional parameters are required.
+A statement calling the subroutine reads
+\\ \indent
+\tw{MIXINT(OPTION,RECON):}
+\\
+Both input parameters must be given as real Fortran variables or
+constants and have the following significance:
+\begin{description}
+\item
+$\tw{OPTION}=0:$ if a reconnection takes place at $t=t_1$ then the
+next one occurs not earlier than at $t=t_1+\tt RECON$ and as soon as
+the resonance surface $q=1$ is found,
+\item
+$\tw{OPTION}=1:$ a reconnection occurs as soon as the radius $\rho_1$
+of the resonance surface $q=1$ satisfies the condition
+$\rho_1/\rho_{\rm B}>\tw{RECON},$ 
+\item
+$\tw{OPTION}=2:$ a reconnection occurs according to the model of
+\cite{PP}. 
+The second parameter $\tt RECON$ is ignored.
+\end{description}
+The header of the subroutine \twd{MIXINT} describes other options which
+provide extended information about every sawtooth event.
+
+Reconnection mixes up all plasma parameters, however, in the code,
+only those quantities are redistributed which evolution is described by
+a transport equation.
+For instance, if the equation for \twd{NE} is not solved then the
+profiles of \twd{NE} and \twd{NI} do not change in the course of the
+reconnection described by \twd{MIXINT}.
+Similarly \tw{~FP, MU, CU~} do not change if the current density
+distribution is prescribed.
+
+\subsubsection{Gas puff neutrals {\rm (subroutine \tt NEUT)}.} 
+
+The subroutine \twd{NEUT} solves an equation for the distribution of
+`cold' (to distinguish from `fast' neutral particles from NBI) neutral
+atoms in the plasma volume.  
+The solution method first replaces the differential kinetic equation
+\rf{fN} with an integral equation \cite{DK} then the integral equation
+is solved iteratively. 
+The parameter input/output for the subroutine can be schematically
+depicted as 
+$$
+\begin{array}{lcr}
+\fboxrule=1pt			\fboxsep=5mm
+\fbox{\Large\bf Transport}
+&
+\begin{array}{c}
+a_B,\;A_i,\;Z_i,\;n_e,\;T_{e,i};\;N_{1,2},\;E_{1,2},\;N_{iter}\\
+\vector( 1,0){190}\\[-10pt]
+\vector(-1,0){190}\\
+N(\rho),\;T_N(\rho),\;\alpha_{\rm pl}
+\end{array}
+&
+\fboxrule=1pt			\fboxsep=5mm
+\fbox{\Large\tt NEUT}
+\end{array}
+$$
+Most of the exchange parameters were already discussed.
+Those which are directly related to the neutral atom distribution are 
+listed in the following table.
+\\[2ex]
+%\noindent
+\begin{tabular}{| l | l | l | l |}				\hline
+\bf Parameter\hspace*{-4pt}&\bf Code name&\bf Units &\bf Description\\
+								\hline
+$N_1$	& {\tt NNCL}	&10$^{19}\rm m^{-3}$\hspace*{-7pt}
+	& Density of incoming neutrals (1st component)\\
+$N_2$	& {\tt NNWM}	&10$^{19}\rm m^{-3}$\hspace*{-7pt}
+	& Density of incoming neutrals (2nd component)\\ 
+$E_1$	& {\tt ENCL}	&keV	
+	& Energy of incoming neutrals (1st component)\\
+$E_2$	& {\tt ENWM}	&keV	
+	& Energy of incoming neutrals (2nd component)\\
+$N_{iter}$&\tt NNCX	& & Number of iterations in {\tt NEUT}\\ \hline
+$N(\rho)$&\tt NN*(NNCL+NNWM)\hspace*{-4pt}&10$^{19}\rm m^{-3}$
+		\hspace*{-7pt}&Density of neutral particles\\ 
+$T_N(\rho)$&{\tt TN}	&keV& Temperature of neutral particles\\ 
+$\alpha_{\rm pl}$&{\tt ALBPL}&	& Plasma albedo\\ \hline
+\end{tabular}
+\bigskip \\
+The subroutine allows for two mono-energetic components of incoming
+neutral particles which are characterized with their densities 
+$N_1,N_2$ and energies $E_1,E_2$ (\twd{NNCL,NNWM} and \twd{ENCL,ENWM}),
+respectively. 
+It is assumed that the neutral mass coincides with a mass of the working
+gas given by the variable \twd{AMJ}.
+A control parameter \twd{NNCX} (default value 20) describes a number of
+iterations for solving the integral equation.
+
+Output of the subroutine \twd{NEUT} provides the normalized neutral
+density \twd{NN} and the temperature \twd{TN}
+distributions of the neutral particles in plasma and, additionally, the
+plasma albedo \twd{ALBPL.}  
+Optionally, it is also possible to calculate a distribution function of
+the outgoing neutral particles. 
+The quantity \twd{NN} is normalized in such a way
+that, at the plasma edge, the density of incoming neutrals is
+$N_1+N_2=\twd{NNCL+NNWM}$ and the density of outgoing neutrals is
+$N_{\rm B}-N_1-N_2=\tt(NNCL+NNWM)*(NNB-1),$ where
+$N_{\rm B}=N(\rho_{\rm B})$ and $\tw{NNB}=\tw{NN}(\rho_{\rm B}).$ 
+Consequently, the average energy of incoming neutrals is
+$$
+E_{\rm in}=\frac{N_1E_1+N_2E_2}{N_1+N_2}
+=\frac{\tt NNCL*ENCL+NNWM*ENWM}{\tt NNCL+NNWM}
+$$
+and outgoing
+$$
+E_{\rm out}=\frac{N_{\rm B}T_{\rm NB}-N_1E_1-N_2E_2}{N_{\rm B}-N_1-N_2}
+=\frac{\tt NNB*TNB-NNCL*ENCL-NNWM*ENWM}{\tt(NNCL+NNWM)*(NNB-1)}
+.$$
+Finally, the inward flux is given by
+$$
+\Gamma_{\rm in}
+=4.44\x10^{24}\ds\frac{\lb(N_1\sqrt{E_1}+N_2\sqrt{E_2}\rb)}{\sqrt{A_i}}
+,\qquad\rm m^{-2}s^{-1}
+$$
+and the outward flux by
+$$
+\Gamma_{\rm out}=\alpha_{\rm pl}\Gamma_{\rm in}
+.$$
+\subsubsection{Density adjustment ({\tt SETNAV}).}
+
+This subroutine adjusts the density of incoming cold neutrals in order to
+provide a required volume average electron density. 
+The following algorithm is adopted.
+At each time step the particle confinement time $\tau_n$ is evaluated 
+$\tau_n=\,<n_e>\!\!\lb/\lb(S-{d<n_e>}/{dt}\rb)\rb..$
+Then the density of the cold neutrals (parameter \twd{NNCL}) is scaled
+in order to provide $S_{\rm req}=<n_{e,\rm req}>/\tau_n.$ 
+The resulting density evolution is approximately described by the 0D
+equation 
+$$
+\frac{d<n_e>}{dt}
+=\frac{<n_{e,\rm req}>-<n_e>}{\tau_n}+S-S_{\rm req}
+,$$
+where $S_{\rm req},\,\tau_n$ and $<n_{e,\rm req}>$ are taken from the
+previous time step.
+If initially the actual density $<n_e>$ is far from the requested value 
+$<n_{e,\rm req}>$ the described procedure can give an unreasonably large
+neutral influx which subsequently crashes the code. 
+In order to avoid this, an additional control parameter $\tau_N$ is
+introduced which restricts the rate of variation 
+$\tw{NNCL}=N_1$ by the condition $N_1/(N_1/dt)<\tau_N.$
+This parameter should be selected as $\tau_N\geq\tau_n.$
+As another option, $\tau_N$ can be set negative. 
+Then an automatic adjustment will be enabled which works reasonably if
+the difference 
+$|\!<\!n_{e,\rm req}\!>-<\!n_e\!>\!|$ is not too large.
+
+\noindent{\bf Example:}
+
+\hangindent=8mm\hangafter=0\noindent
+The part of the model related to \twd{SETNAV} reads:
+\\ \hspace*{15mm}
+\tw{CF1=5+5*FRAMP(.5,1);~~~~~~!~Prescribed volume average density}
+\\ \hspace*{15mm}
+\tw{SETNAV(CF1,.01):;~~~~~~~~~!$\tau_N=$0.01 s}\\
+%\hangindent=8mm\hangafter=0\noindent
+This will result in a ramp of the electron density as prescribed by the
+first statement. 
+
+\subsubsection{Smoothing a function ({\rm subroutine \tt SMEARR}).}
+
+The subroutine ${\tt SMEARR}(\alpha,R_{\rm in},R_{\rm out})$ finds a
+vector function $R_{\rm out}(\rho)$ as an extremum of the functional 
+$$
+\mathop{\rm min}\int\limits_0^{\rho_B}\left[
+\alpha\left(\prti{R_{\rm out}}{\rho}\right)^2
++\left(R_{\rm in}(\rho)-R_{\rm out}(\rho)\right)^2
+\right]d\rho
+$$
+with the boundary conditions
+$$
+\left.\prti{R_{\rm out}}{\rho}\right|_{\rho=0}=0
+,\qquad
+R_{\rm out}(\rho_B)=R_{\rm in}(\rho_B)
+$$
+where $R_{\rm in}(\rho_j)$ is a given grid function, $\alpha$ is a
+control parameter and $R_{\rm out}$ is the output function.
+Reasonable values of the control parameter $\alpha$ should be around
+0.001. 
+The value $\alpha=0.01$ results in a very strong smoothing of the
+result. 
+
+\noindent{\bf Example:}
+\\ \hspace*{2cm}
+\tw{CAR1=HEEFF;~~~~~~SMEARR(0.002,CAR1,CAR2):;}
+\\ \hspace*{0.5cm}
+This gives a radially smoothed effective electron heat conductivity
+\\ \hspace*{2cm}
+$
+\chi_{e,eff}=\int\lb(P_e-\prt W_e/\prt t\rb)dV/V'<(\na\rho)^2>n_e
+$.
+
+\subsubsection{Store array / variable value at a given time 
+({\tt STARR / STVAR}).}
+
+The subroutine ${\tt STARR}(R,t_1,R_1)$ (${\tt STVAR}(S,t_1,S_1)$)
+stores a vector (simple) variable at a given time $t_1:$
+$$
+R_1(\rho)=R(\rho,t=t_1)
+,\qquad\qquad
+S_1=S(t=t_1)
+.$$
+Note that in recent versions of the code both subroutines can be
+replaced by the function ${\tt FIXVAL}.$
+
+\subsubsection{User defined time step control {\rm (subroutine \tt
+TSCTRL)}.} 
+
+The standard procedure of automatic time step control implemented in the
+Astra code restricts the one-time-step variation in the main unknowns
+\twd{TE, TI, NE, Fj}.
+In some cases, for instance for stiff transport models, more
+strict control is required.
+ 
+Such a control can be achieved by calling the subroutine 
+${\tt TSCTRL}(R_1,R_2,R_3,\Delta_{\rm max}).$ 
+First, a variation in every vector input quantity $R_i,$ where $i=1,2,3,$ 
+$$
+\Delta_{Ri}=\mathop{\rm max}\limits_\rho
+\left|\frac{R_i(\rho,t)-R_i(\rho,t-\tau)}{R_i(\rho,t)}\right|
+$$
+is evaluated.
+Then the time step $\tau$ is multiplied by 
+$\max\lb(\Delta_{\rm max}/\Delta_{Ri},\tau_{\rm inc}\rb).$
+The quantity $\tau_{\rm inc}=\tt TAUINC$ is described in Table~4.15
+and $\Delta_{\rm max}$ is the real input parameter which can vary
+between 0.1 and 10. depending on the controlled quantities $R_i.$
+In all cases, the time step $\tau$ is bounded by 
+${\tt TAUMIN}<\tau<\tt TAUMAX.$ 
+
+A limitation is that the subroutine ${\tt TSCTRL}$ can be called from a
+model only once. 
+To monitor several array parameters it allows up to three different
+vector arguments.
+
+\paragraph{Examples:}
+\begin{description}
+\item[$\,$1)] In a stiff transport model small variation in gradient
+can cause huge variation in flux.
+Therefore, plasma parameters like density or temperatures cannot provide
+reliable time step control.
+More appropriate regulation can be provided by \\
+\hspace*{2cm}\twd{TSCTRL(QI,QE,QN,1.):;}
+\item[$\,$2)] Another way to achieve a similar result is\\
+\hspace*{2cm}\twd{TSCTRL(XI,XI,XI,CF1):;}\\
+Here variation of a single quantity \twd{XI} is checked. 
+The strength of the control can be adjusted interactively by changing
+\twd{CF1}. 
+\end{description}
+
+\subsection{Interfaces to additional heating and CD modules}
+
+\subsubsection{General features.}
+
+The Astra system provides additional subroutines developed by different
+authors for the main methods of additional plasma heating in tokamaks. 
+Each of the subroutines is, in fact, a large package and we do
+not pretend to describe them in this report. 
+We discuss here the main features of the interfaces only, referring to
+the original descriptions for more detail. 
+
+\paragraph{Input.} 
+The following set of input data is usually required 
+for additional heating and current drive modules: 
+\begin{itemize}
+\item[]{\bf Configuration:}
+$R_0${\tt (RTOR)}, 
+$a_B${\tt (AB {\rm or} ABC)}, 
+$a(\rho)${\tt (AMETR)}, 
+$\Delta(\rho)${\tt (SHIF)}, \\
+$\hphantom{{\bf Configuration:~}}\lambda(\rho)${\tt (ELON)}, 
+$\delta(\rho)${\tt (TRIA)}, metric coefficients.
+\item[]{\bf Plasma parameters:}
+$A_j${\tt (AMJ {\rm or} AMAIN)}, 
+$Z_{eff}(\rho)${\tt (ZEF)}, 
+$Z_j${\tt (ZMJ {\rm or} ZMAIN,} \\
+$\hphantom{{\bf Plasma parameters:}}$
+{\tt ZIM1, ZIM2, ZIM3),} 
+$n_{e,j}(\rho)${\tt (NE, NI, NHYDR, NDEUT,...} \\
+$\hphantom{{\bf Plasma parameters:}}$
+{\tt NIZ1, NIZ2, NIZ3)}, 
+$T_{e,j}(\rho)${\tt (TE, TI).~~} Here index $j$\\
+$\hphantom{{\bf Plasma parameters:}}$
+extends over all ion species.
+\item[]{\bf Current} and {\bf magnetic field:}
+$I_{\rm pl}${\tt (IPL)}, 
+$B_0${\tt (BTOR)}, 
+$\mu(\rho)${\tt (MU)}, 
+$j_\pll(\rho)${\tt (CU)}.
+\item[]{\bf Launcher} or {\bf neutral beam parameters.}
+\item[]{\bf Control parameters for the numerical algorithm.}
+\end{itemize}
+
+\paragraph{Output.} All modules return power deposition profiles,
+$P_{e,i}^H(\rho),$ for electron and ion plasma components and, 
+when applicable, driven current profile, $j_{CD}.$ 
+Many other characteristics as injected momentum, distribution functions,
+antenna coupling or shine through and so on are usually also available.
+
+The set of input parameters can be split into two groups.
+The first one includes those parameters, which are 
+time-dependent or can change from shot to shot. 
+The second group describes construction characteristics of a particular
+tokamak or its heating system.
+In most cases these parameters do not often change and only require be
+set once. 
+It is natural to exclude these parameters from the Astra core and
+localize them inside the modules for additional heating.
+The input parameters of the first group and the main output parameters
+are treated as standard Astra control parameters which means that they
+are accessible from the Astra code, can be defined, changed, plotted
+using the standard Astra service as described in Sections~5.2 and 5.3.  
+
+Different heating and current drive packages briefly described in
+Section~3.14.1 can be obtained by special request.
+The only exception is the NBI package which is always included in the
+Astra code. 
+For this reason the interface to the NB heating package is described in
+more detail in the next Section.
+
+\subsubsection{NB heating and current drive {\rm (subroutine \tt NBI \rm
+by A.~R.~Polevoi)}} 
+
+A neutral beam installation is represented in the NBI package by a set
+of ``pencil beams''.  
+Each pencil beam is characterized by its geometry and the power
+distribution across the beam axis which in turn is described by a
+number of thin parallel beams.
+Presently, up to 16 pencil beams (or beam sources with the different
+geometry) is allowed.
+
+The NBI package considers (i) attenuation of the neutral beam during its
+passage through a plasma due to ionization and charge-exchange, 
+(ii) capture and losses (including ripple losses) of the new-born ions 
+by analysis of the ion drift trajectories, 
+(iii) thermalization of the supra-thermal ions and their
+contribution to plasma heating, current drive and toroidal rotation. 
+The latter problem requires solving the Fokker-Planck equation. 
+In the fast standard version, an analytic solution of the steady-state
+equation is used. A time dependent version is also available.
+
+Interface between the Astra core and the neutral beam package is
+provided by the subroutine \twd{AWD/sbr/nbi.f}.
+As all other Astra plug-in modules this subroutine can be modified by
+the user and, therefore, the description below should be viewed as a
+framework providing rather guidelines than a comprehensive manual.
+
+The usual set of general discharge and device parameters (see
+Section~4.10.1) are transferred to the subroutine \twd{NBI} through
+common blocks and is not discussed here. 
+Additionally, a number of specific parameters describe the properties of
+the NBI solver and the geometric characteristics of every pencil beam.
+First of all, 8 control parameters 
+\\
+{\bf Table 4.30. Control parameters for the subroutine \twd{~NBI}}\\[2ex]
+\begin{tabular}{|l|l|}					\hline
+\bf Name	&\bf Description\\ \hline
+\tt CNB1 	& A number of NBI sources (a number of pencil beams)\\
+\tt CNB2 	& Explicit (=1) or implicit (=0) account for the charge
+		  exchange losses\\ 
+\tt CNB3 	& Space grid for NBI routine \twd{N1=(NA1-1)/CNB3+1}\\
+\tt CNB4 	& Steady state (=1) or time dependent (=2) Fokker-Planck
+		  solver \\
+\tt CNBI1 	& Fast ion charge exchange losses due to cold neutrals\\
+\tt CNBI2 	& Fast ion charge exchange losses due to NBI neutrals\\
+\tt CNBI3 	& FP solver time step: $\tau_{NBI}=\tt CNBI2*TAU$\\
+\tt CNBI4 	& FP solver velocity grid size: \twd{IV1=80/CNBI4+1}\\
+\hline
+\end{tabular}
+\bigskip\\
+are used to set different features of the NBI solver.
+The control parameters are described in the Table~4.30 as they are used
+in the subroutine \twd{AWD/sbr/nbi.f} although, in general, every
+C-parameter (see Table~4.17) can be used to perform every control
+function. 
+
+The parameter \twd{CNB1} gives a number of pencil beams which have to be
+taken into account. 
+It can also take negative values which invoke an interactive mode for
+modifying the beam geometry and will be discussed later.
+
+The parameter \twd{CNB2} defines a way of describing the ion thermal
+losses due to the charge exchange between the beam neutrals and plasma
+ions.
+These losses can be computed with the formula
+\twd{PBICX=-0.0024*SNNBM*TI} where the source of thermal neutrals
+\twd{SNNBM} is calculated by the NBI package. 
+The corresponding losses can either be included into the ion
+heating source \twd{PIBM} or calculated elsewhere.
+If the parameter \twd{CNB2} is positive then the quantity \twd{PBICX}
+is subtracted from the ion heating source \twd{PIBM}.
+Otherwise, the losses should be taken into account in a model as shown
+below 
+\bigskip\\
+%\begin{equation}\label{3models}
+\begin{tabular}{p{5cm}|p{5cm}|p{4cm}}
+\tt\quad Model 1 \rm (recommended)
+		&\qq\qq\tt Model 2 &\qq\tt\quad Model 3 \\
+\tt CNB2=0  	&\qq\tt CNB2=0  &\qq\tt CNB2=1  \\
+\tt PI=PIBM+\dots &\qq\tt PI=PIBM-PBICX+\dots 
+				&\qq\tt PI=PIBM+\dots \\
+\tt PIT=-0.0024*SNNBM+\dots	& 		&
+\end{tabular}\bigskip\\
+%\end{equation}
+Models 2 and 3 in this example are fully equivalent, however, the ion
+heating term \twd{PIBM} is different in these two cases.
+The model 1 enables implicit treatment of the charge exchange losses
+which can result in more stable numerical scheme when these losses are
+high enough.
+
+The parameter \twd{CNB3} allows to run NBI routine on the reduced radial
+grid in order to save computing time. 
+This is reasonable when the fast ion drift trajectories are wide and
+spread over many Astra radial grid steps.
+Finally, the parameter \twd{CNB4} defines a type of the Fokker-Planck
+solver to be used.
+The C-parameters \twd{CNBI1$\div$CNBI4} are effective if \twd{CNB4=2}
+only. 
+Otherwise they can be anything.
+
+As mentioned every beam source is represented by a pencil beam.
+A sort of neutral atoms in the beam, their energy composition and power
+distribution across the beam, geometry and some other characteristics
+(altogether about 20 parameters) should be set separately for every
+pencil beam. 
+These parameter are stored in an NBI configuration file which can be
+either attributed to every input data file (Section~5.1) or to every
+experimental setup. 
+%\footnote
+%{For instance, four different NBI configuration files are
+%used presently for the Asdex Upgrade tokamak:
+%and two for the JET tokamak: \twd{AWD/exp/jetupshifted.nbi} and
+%\twd{AWD/exp/jetstandard.nbi}.
+%\twd{AWD/exp/aug99.nbi}, \twd{AWD/exp/aug00.nbi},} 
+It is done in the following way. 
+Assume that the Astra code is started with the data input file
+\twd{aug10000}. 
+When the \twd{NBI} routine is called the code checks whether the file
+\twd{AWD/exp/aug10000.nbi} exists. 
+If yes, then this file, otherwise, the default configuration file
+\twd{AWD/exp/aug.nbi} will be used.
+The latter can also serve as a template for creating new configuration
+files. 
+
+The NBI configuration file can start with arbitrary number of comment
+lines. 
+A comment line is a line with the sign \twd{'!'} in the first column.
+The comment lines are allowed in the beginning of the
+configuration file only.
+A meaningful part of the file consists of \twd{CNB1} groups, one group
+for every pencil beam. Each group consists of 21 fields. 
+Each field occupies 12 positions and can be filled either with a name of
+C-parameter (Table~4.17) or Z-parameter (Tables~4.18 and 4.19) or with a
+number in the free format as shown in the example below:
+\begin{equation}\label{NBI_conf}\begin{tabular}{l}\tt\hspace*{2ex}
+1						\\ \tt%\hspace*{1ex}
+~~ZRD1~~~~~~0.0000E+00~~2.0000E+00~~1.0000E+00~~6.0000E+01
+\\						 \tt%\hspace*{1ex}
+5.0000E-01~~3.0000E-01~~2.0000E-01~~1.0000E+00~~~~CF1
+\\						 \tt\hspace*{-2.5ex}
+-1.9570E-01~~6.5000E-01~~4.0000E-01~~8.5500E-02~~1.0000E+00
+\\						 \tt%\hspace*{1ex}
+1.0000E+00~~2.0000E+00~~1.0000E+00~~2.0000E+00~~0.0000E+00
+\end{tabular}\hphantom{AAAAAA}\end{equation}
+The first line in every group is also ignored by the code.
+It gives the ordinal number of the group (or of the corresponding pencil
+beam) and is useful for manual creating or editing the configuration
+file only. 
+The other parameters have the following significance
+
+\noindent
+{\bf Table 4.31. Parameters describing each pencil beam}\\[2ex]
+\begin{tabular}{| c | c | l |}
+\hline
+\bf No.&\bf\hspace*{-1pt}Units\hspace*{-1pt}&\bf Description\\
+\hline
+1  &[MW]& Pencil beam power					\\
+2  &--& Counter injection fraction (0 for co-, 1 for counter-injection)\\
+3  &--& Mass of the beam ions in the proton mass (can be 1,2,3)\\
+4  &--& Charge of the beam ions in the proton charge units	\\
+5  &--& Maximum beam energy	\\
+6  &--& Power fraction of the full (maximum) energy component 	\\
+7  &--& Power fraction of the one half energy component	\\
+8  &--& Power fraction of the one third energy component	\\
+9  &--& Type of averaging over the fast ion orbits	\\
+10 &--& Number of thin beams in the horizontal plane	\\
+11 &[m]& Vertical shift in the beam footprint centre	\\
+12 &[m]& Maximum major radius in the beam footprint	\\
+13 &[m]& Minimum major radius in the beam footprint	\\
+14 &--& $\tan\al,$ $\al$ being the angle between the beam axis and the midplane\\
+15 &--& Footprint aspect ratio	\\ \hline
+16 &--& 
+These 4 parameters prescribe the beam power distribution across the\\
+17 &--& 
+pencil beam. 
+The parameters are transferred to the user defined functions\\
+18 &--& 
+\twd{NBFHZ} and \twd{NBFRY} (see the file \twd{AWD/sbr/nbuser.f}) 
+under the names\\
+19 &--& \twd{CVER1, CVER2, CHOR1, CHOR2}, respectively	\\ \hline
+20 &--& Unused parameter				\\
+\hline
+\end{tabular}\\[15pt]
+The first parameter gives the power injected by each beam source.
+This quantity is usually time dependent, therefore, it is convenient to
+set it as a variable rather than as a number. 
+In the example \rf{NBI_conf}, this variable is $\tt ZRD1\equiv ZRD1X$
+and its time evolution can be prescribed in the data file
+(Section~5.3.3). 
+Similarly, the number of partial thin beams\footnote
+{The parameter No.~10 in Table~4.31 gives the number of beams in the
+horizontal direction, $N_h.$ The total number of constituent thin beams
+is evaluated as $N_{tot}=N_hN_v$ while $N_v$ is calculated by the code
+as a number of flux surfaces in the vertical aperture of each pencil
+beam in the footprint crossection.
+} 
+which represent the pencil beam is an adjustable parameter
+that can be varied interactively (\twd{CF1} in example \rf{NBI_conf}). 
+
+The 9-th parameter in Table~4.31 also requires more explanations.
+This parameter defines how the power of a fast ion is deposited in the
+plasma: \\
+\hspace*{1em}{\tt $=0$} no averaging (deposition at the birth point),\\
+\hspace*{1em}{\tt $=1$} averaging with a finite orbit width,\\
+\hspace*{1em}{\tt $=2$} averaging with zero orbit width.\\
+\vspace*{-1ex}
+
+The last 10 parameters in Table~4.31 define the geometry of every pencil
+beam.
+The neutral beam is characterized, first of all, by its ``footprint'',
+i.e. the cross-section of the beam with the plane including the major
+torus axis and orthogonal to the beam axis projection onto the midplane.
+In turn, the footprint represented as a rectangle is given by four
+parameters: the rectangle center (parameter No.~11), major radii of two
+vertical sides (parameters 12 and 13) and by the aspect ratio that is
+defined as ratio of the rectangle height to its width.
+Secondly, by the inclination of the beam axis with respect to the
+midplane (parameter No.~14), and, thirdly,\footnote
+{In the current version of the code, the beam divergence is not taken
+into account.}
+by the power distribution across the beam axis.
+The power distribution is described by two Fortran functions,
+\twd{NBFHZ} and \twd{NBFRY}, in the vertical and in the horizontal
+cross-sections, respectively. 
+Each function has two free parameters which are the first four
+parameters in the last line of example \rf{NBI_conf} (or parameters 16,
+17, 18, 19 in Table~4.31). 
+Both functions are included in the file \twd{AWD/sbr/nbuser.f} and can
+be arbitrarily modified by the user to prescribe any power distribution
+required. 
+
+The NBI configuration file can either be created by the user from
+scratch or adjusted by editing one of the files of this type provided
+with the code.
+Another option is interactive creating/modification during the
+Astra run.
+The code enters in the interactive regime whenever\\
+\hspace*{1em}-- the NBI configuration file does not exist,\\
+\hspace*{1em}-- the parameter {\tt CNB1} takes a negative value,\\
+\hspace*{1em}-- the parameter {\tt CNB1} changes its value during the run.\\
+In all cases, a dialog window pops up and the user can adjust all input
+parameters for all beam sources.
+As before, assume that the input data file is \twd{aug10000}, (the full
+name of the file being \twd{AWD/exp/aug10000}).
+If neither \twd{aug10000.nbi} nor \twd{aug.nbi} exist in the directory
+\twd{AWD/exp/} then a new file \twd{AWD/exp/aug10000.nbi} will be
+created on exit from the dialog window.
+The new (or modified) data file will then be used in the subsequent
+simulations. 
+The total number of sources is defined as the absolute value
+$\lb|\twd{CNB1}\rb|.$ 
+Note also that if the actual number of records in the file is larger
+than expected due to $\lb|\twd{CNB1}\rb|$ then the excessive records
+are ignored.
+The opposite case and $\tw{CNB1}=0$ are treated as an error.
+
+
+The NBI routine provides the following output.
+
+\noindent
+{\bf Table 4.32. Output from \twd{NBI} routine}\\[2ex]
+\begin{tabular}{| l l l |}					\hline
+\bf Parameter	&\bf Units	&\bf Description\\		\hline
+{\tt CUBM}	&[MA$\,\rm m^{-2}$]	& NB driven current\\
+{\tt CUFI}	&[MA$\,\rm m^{-2}$]	& Current of the fast ions\\
+{\tt NIBM}	&[10$^{19}{\rm m}^{-3}$]
+		&Density of the suprathermal ions\\
+{\tt NNBM1}	&[10$^{19}{\rm m}^{-3}$]	
+		&Density of neutrals with the full energy {\tt EBEAM}\\ 
+{\tt NNBM2}	&[10$^{19}{\rm m}^{-3}$]
+		&Density of neutrals with the half energy {\tt EBEAM}/2\\
+{\tt NNBM3}	&[10$^{19}{\rm m}^{-3}$]
+		& Density of neutrals with the energy {\tt EBEAM}/3\\
+{\tt PBEAM}	&[MW${\rm m}^{-3}$]& Total beam power absorbed\\
+{\tt PBLON}	&[$10^{19}$keV${\rm m}^{-3}$]	
+		& Longitudinal pressure due to fast ions\\
+{\tt PBPER}	&[$10^{19}$keV${\rm m}^{-3}$]	
+		& Perpendicular pressure due to fast ions\\
+{\tt PEBM}	&[MW${\rm m}^{-3}$]& Beam power absorbed by electrons\\
+{\tt PIBM}	&[MW${\rm m}^{-3}$]& Beam power absorbed by ions\\
+{\tt SCUBM}	&[kg~s$^{-2}$m$^{-2}$]	
+		& Source of the toroidal momentum\\
+{\tt SNEBM}	&[$10^{19}$m$^{-3}$s$^{-1}$]	
+		& Source of electrons due to NBI\\
+{\tt SNIBM1} &$[10^{19}$m$^{-3}$s$^{-1}]$ 
+		& Birth rate for ions with the energy \twd{EBEAM}\\
+{\tt SNIBM2} &$[10^{19}$m$^{-3}$s$^{-1}]$ 
+		& Birth rate for ions with the energy \twd{EBEAM}/2\\
+{\tt SNIBM3} &$[10^{19}$m$^{-3}$s$^{-1}]$ 
+		& Birth rate for ions with the energy \twd{EBEAM}/3\\
+{\tt SNNBM}	&[$10^{19}$m$^{-3}$s$^{-1}$]
+		& Source of thermal neutrals\\			\hline
+\end{tabular}\\[15pt]
+More detailed description of the algorithm and a way of calculating all
+quantities in Table~4.32 are described in \cite{Pole}. 
+
+\vfill\eject

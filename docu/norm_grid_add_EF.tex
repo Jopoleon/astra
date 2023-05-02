@@ -1,0 +1,181 @@
+\section{Normalized grid as the reference grid}
+In this section it is described which grid has been implemented in the new
+version of the code. The form that the transport equations acquire when
+written in terms of this grid is also presented and discussed. 
+%
+\subsection{Motivations for the change of grid}
+In Astra--7.0 it has been decided to adopt another grid, which has
+advantages and disadvantages over the grid used in previous versions.
+The motivations for this choice stem from three considerations:
+
+1) With the previous, $\rho$--grid, the number of grid points in the plasma region
+varies with the plasma linear dimension. This means that simulations which
+involve expanding plasmas with much different volume at the beginning and at the
+end of the expansion require a large number of grid points to maintain a sufficient
+resolution at every time step;
+
+2) The boundary point does not fall on a pre--existing grid point,
+meaning that the last two grid points acquire a differential $\delta\rho$ which varies with time;
+
+3) Coupling with equilibrium codes is extremely difficult and prone to numerical instabilities.
+
+The main advantage of the $\rho$--grid is that grid--convective terms appear 
+only for cases with 
+time--dependent vacuum field $\dot{B}_0$. In case of static vacuum field, 
+changes in plasma boundary do not affect internal grid points, which 
+simplifies the equations. However, in the general case, the equations have the
+same form as they would appear on the normalized grid, where in the latter case $\dot{\Phi}_{\rm b}$ appears as the convective drive.
+%
+\subsection{Description of the chosen grid}
+From this version onwards, the fundamental grid on which quantities are computed is defined as:
+\begin{eqnarray}
+x = \sqrt{\frac{\Phi}{\Phi_{\rm b}}}
+\label{normgridfeeq}
+\end{eqnarray}
+In terms of indexing, the main transport grid is numerically defined as ($j  \in [1..{\rm NA1}]$):
+\begin{eqnarray}
+x_j = \frac{(j-0.5)}{({\rm NA1}-0.5)}
+\label{normgridindexeq}
+\end{eqnarray}
+where ${\rm  NA1}$ is the number of grid points in the plasma. The grid is thus equispaced.
+As such we have that $x_{\rm NA1}=1$ is always a grid point. 
+The shifted grid on which fluxes and gradients are defined is given as:
+\begin{eqnarray}
+\tilde{x}_j = \frac{(j-1.)}{({\rm NA1}-0.5)}
+\label{snormgridindexeq}
+\end{eqnarray}
+This choice of indexing is useful if simulations are performed at given boundary
+values of the main quantity. For flux--driven simulations, it would be more
+appropriate and accurate to have $\tilde{x}_{\rm  NA1}=1.$. 
+
+To allow the user to choose between the two possibilities, i.e. having the 
+actual plasma boundary on the main or on the shifted grid, an option has been 
+introduced. The variable {\bf FLXDR} can now be set to 0 or to 1 to this purpose, as seen in table 1.1 below. 
+\\
+{\bf Table 1.1} Choice for grid indexing label {\bf FLXDR}\\[2ex]
+\begin{tabular}{|l|l|l|}					\hline
+\bf Name	&\bf Value & Description\\ \hline
+\tt FLXDR 	& 0 & The main grid $x=1$ coincides with the plasma boundary\\
+\tt  	& 1 &  The shifted grid $\tilde{x}=1$ coincides with the plasma boundary\\ 
+\hline
+\end{tabular}
+\bigskip\\
+The variable {\bf FLXDR} is a control parameter and can be added in the 'Control parameters' section of the {\it /equ/log/[model\_file\_name]}.
+If not provided explicitly, the default value is {\bf FLXDR}=0.
+
+{\bf IMPORTANT NOTE}: A major difference with respect to the previous Astra--6.2.1 version is that now
+the number of grid points in the plasma, {\bf NA1}, has to be given in input,
+instead of {\rm NB1}, the latter being then a time--dependent quantity. In 
+practice, the number of grid points in between the plasma boundary and the wall 
+is a varying quantity.
+From the point of view of the INPUT experimental and model files to Astra, that 
+is the only relevant change that the user should take care of. Every other 
+detail, mapping from grid to grid etc. is taken care of inside Astra. 
+
+The grid variables are now part of the Astra arrays set, with the names:
+\\
+Grid arrays\\[2ex]
+\begin{tabular}{|l|l|l|}					\hline
+\bf Name	& Description & Units\\ \hline
+\tt XRHO 	& Main normalized grid & []\\
+\tt SXHO 	& Shifted normalized grid & []\\
+\tt RHO 	& Main grid in $\rho=\sqrt{\Phi/(\pi B_0)}$ & [m]\\
+\tt SRHO 	& Shifted grid in $\rho=\sqrt{\Phi/(\pi B_0)}$ & [m]\\
+\hline
+\end{tabular}
+\bigskip\\
+The $\rho$ grid RHO is now defined simply as $\rho = \rho_{\rm b} x$, and SRHO as
+$\tilde{\rho} = \rho_{\rm b} \tilde{x}$.
+%
+\subsection{Grid convection terms when working with the $x$ grid}
+In the previous Astra versions, the use of $\rho$ as the fundamental grid
+resulted in exact conservation of profiles for cases with vanishing transport
+fluxes and sources, made exception for cases with time--dependent vacuum 
+toroidal field. The latter cases were treated in terms of 'adiabatic 
+compression', a posteriori (i.e. after solution of the actual transport 
+equations).
+
+When transforming equations to have time derivatives done a constant $x$ instead
+of constant $\rho$, a new convective term appears, in this form:
+\begin{eqnarray}
+\left[\frac{\partial y}{\partial t}\right]_x - x\frac{\dot{\Phi}_{\rm b}}{2\Phi_{\rm b}} \frac{\partial y}{\partial x} + \left[{\rm transport} \right]= \left[{\rm source}\right]
+\label{gridconvtermseq}
+\end{eqnarray}
+The second term on the LHS is the new grid convetion term, proportional to 
+the quantity $\dot{\Phi}_{\rm b}$.
+Because this term depends on the solution of the equilibrium problem at two 
+different time slices, it is now chosen to add this convective terms {\it a 
+posteriori}, as was done before, like an 'adiabatic compression/expansion'. 
+The new term has also been numerically implemented in the actual matrix which 
+solves for the transport equations. However then it would require iterate at 
+least once between transport and equilibrium.
+
+To allow the user to choose if to solve the convective term inside or outside 
+the equations, a new variable {\bf ADCMPF} has been added to the Control 
+parameters. The possible values are listed in the Table 1.2 below:
+\\
+{\bf Table 1.2} Choice for adiabatic compression label {\bf ADCMPF}\\[2ex]
+\begin{tabular}{|l|l|l|}					\hline
+\bf Name	&\bf Value & Description\\ \hline
+\tt ADCMPF 	& 1 or -1 & Adiabatic compression done in the transport equation,\\ 
+\tt &   &  at the moment it is done explicit (ADCMPF=1), \\
+\tt &   &  improved by iterating between transport and equilibrium (NITREQ$>1$).\\
+\tt &   &  Implicit scheme (ADCMPF=-1) will be implemented soon\\
+\tt & 0 &  Adiabatic compression is performed outside of transport equation. \\
+\tt &   &  Works only for FP! \\ 
+\tt & 2 &  Adiabatic compression is neglected.\\ 
+\tt &(3)&  (can then be done by equilibrium code, not recommended).\\ 
+\hline
+\end{tabular}
+\bigskip\\
+By default, {\bf ADCMPF}=1.  
+We note that neglect of adiabatic compression may 
+not be too dramatic for kinetic profiles in general. Exception makes the 
+poloidal flux $\psi$, which suffers from severe errors if no adiabatic 
+compression is computed.
+%
+\subsection{Choice of the numerical scheme}
+In the new version of Astra, new control parameters have been added, which allow
+the user to choose between several implemented numerical schemes to solve the 
+transport equations.
+
+These newly introduced variables are called {\bf INUME}{\it i}, where {\it i} can be 1,2,3, or 4. The different numbers refer to the quantities to be evolved:
+
+1 - NE, F1, F2, ...;
+
+2 - TE and TI;
+
+3 - FP;
+
+4 - UPAR;
+
+The values that the INUME{\it i} can take are $k_1 k_2$, where $k_1$ and $k_2$ are two integer numbers. For example INUME1 = 21 means $k_1 = 2$ and $k_2=1$. 
+
+The meaning of the $k_1,k_2$ numbers is listed and detailed in the following table 1.3:
+\\
+{\bf Table 1.3} Numerical scheme selection\\[2ex]
+\begin{tabular}{|l|l|l|}					\hline
+\bf Name	&\bf Description & Default\\ \hline
+\tt $k_1$	& 1 & Scheme is fully explicit in time \\ 
+\tt 	& 2 & Scheme is fully implicit in time \\ 
+\tt 	& 3 & Scheme is Crank--Nicholson in time \\ 
+\tt $k_2$ & 1 & Advection--diffusion is treated with centered difference in space\\
+\tt  	& 2 &  The power--law scheme is employed \\ 
+\tt & 3&  The exponential scheme is employed \\ 
+\hline
+\end{tabular}
+\bigskip\\
+Default value is 22 for all INUME{\it i}, meaning that by default all transport 
+equations are advanced fully implicitly in time, centered difference in space
+numerical schemes.
+The centered difference scheme is accurate for cases with small convection and 
+large diffusion. Cases with large convection are better treated with the 
+exponential or the power--law scheme. In future versions, it is possible that 
+more sophisticate numerical scheme with gradient limiters will be implemented, 
+however in general, cases with large convection are rarely encountered.
+
+Notice that, if {\bf INUME3}$\leq 0$, which has to be used with CU:AS; in the model file, 
+then EQPF and EQFF (i.e. P' and FF') are to be prescribed by the user and are not computed in ASTRA. This
+modality is useful when performing equilibrium tests at constant P', FF'.
+
+\clearpage

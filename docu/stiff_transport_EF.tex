@@ -1,0 +1,76 @@
+%\chapter{Reference guide}
+
+\section{Numerical scheme for stiff transport problems}
+In this section it is discussed a scheme implemented in Astra to treat stiff transport problems.
+%
+\subsection{The scheme}
+In most applications of tokamak transport, one encounters cases in which bulk plasma energy and
+particle transport is stiff. This term basically means that a small change in the transported quantity
+causes a large change in the flux.
+
+Calling $Q$ the flux of quantity $T$, this means that $Q(T,T')$ has a strong sensitivity in variations
+of $T$ and $T'$. 
+
+As a simple example, say that transport of $T$ satisfies the equation:
+\begin{eqnarray}
+\frac{\partial T}{\partial t} + \frac{\partial Q}{\partial x} =0
+\end{eqnarray}
+and 
+\begin{eqnarray}
+Q = - D\left(\frac{\partial T}{ \partial x}\right)\frac{\partial T}{\partial x} 
+\end{eqnarray}
+In a linearly implicit scheme in time, this means that formally the solution is:
+\begin{eqnarray}
+\frac{T^+-T^-}{\delta t} - \frac{\partial }{\partial x}\left[D(T_x^-)\frac{\partial T^+}{\partial x}\right] =0
+\end{eqnarray}
+If solved in this way, and if the dependence of $D$ on $T_x=\partial T/\partial x$ is rather strong (for example linear is sufficient),
+then the solution exhibits unphysical oscillations and stair--steps appear on the profile, which do not allow to
+smoothly follow the evolution.
+
+In the paper [G. V. Pereverzev and G. Corrigan, Computer Physics Communications {\bf 8}, 579 (2008)], the
+Authors propose a scheme that efficiently mitigate this issue.
+The basic idea is to introduce an auxiliary diffusion coefficient $D_{\rm s}$, where $s$ stands for 'stiff'. The
+value of $D_{\rm s}$ can be a constant or a profile.
+
+The modified equation looks then as:
+\begin{eqnarray}
+\frac{T^+-T^-}{\delta t} - \frac{\partial }{\partial x}\left[\left(D(T_x^-)+D_{\rm s}\right)\frac{\partial T^+}{\partial x}-D_{\rm s}\frac{\partial \log T^-}{\partial x} T^+\right] =0
+\end{eqnarray}
+We can introduce an effective convection $\displaystyle V_{\rm s}=D_{\rm s}\frac{\partial \log T^-}{\partial x}$, such as to rewrite:
+\begin{eqnarray}
+\frac{T^+-T^-}{\delta t} - \frac{\partial }{\partial x}\left[\left(D(T_x^-)+D_{\rm s}\right)\frac{\partial T^+}{\partial x}-V_{\rm s} T^+\right] =0
+\end{eqnarray}
+In the paper cited previously, it is proven that this method produces smooth evolution which, on average, is 
+equivalent to solving the original equation. The numerical error introduced with this scheme with respect to the
+exact solution is also estimated in that paper.
+
+In the code, a set of new array has been introduced to employ this scheme. The arrays are called {\bf DVN, DVE, DVI}, respectively for electron density, electron temperature, and ion temperature. Their dimension is m$^2$/s as the other diffusivities.
+Their usage is as the following in the model file:
+
+DVE=50.;
+
+DVI=50.;
+
+DVN=50.;
+
+where 50. here is an example value, but it can be arbitrary, such as to sufficiently stabilize the diffusivity jumps but not too large to lose physics during transients for example. The actual criterion could be derived by comparing these artificial diffusivitites with the physical diffusivity and the time scales of interest.
+
+Notice that in the model file only the artificial diffusivities pertaining to the actually resolved equations have to be specified. Also DVE, DVI, etc. have to be defined AFTER the definitions of HE, XI, etc.!
+%
+\subsection{Implicit equipartition}
+From Astra--6.2.1 onwards, there is the possibility to run electron and ion temperature equations with implicit 
+equipartition. One needs to write as the following in the model file:
+
+TE*:EQ;
+
+TI*:EQ;\\
+and in PE and PI there is no need to put PEICL.
+
+
+
+
+
+
+
+%
+\clearpage

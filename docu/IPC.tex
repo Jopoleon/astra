@@ -1,0 +1,563 @@
+\documentclass[12pt]{article}
+\nonstopmode                   \nobreak
+\input ../input/colors
+\input ../input/math
+\topmargin 5mm                 \oddsidemargin 2mm
+\textwidth 155mm               \textheight 245mm
+\headheight 0mm                \headsep 0mm
+\pagestyle{empty}
+\parindent=0pt                 \parskip=15pt
+\newcommand{\tw}[1]{\texttt{#1}}
+
+\begin{document}\normalsize
+\baselineskip=16pt plus 0.5pt
+
+Astra version 6.1 enables running several (up to 20) parallel processes.
+Operation is similar to a subroutine (plug-in) call in the previous Astra
+versions. 
+The only difference with calling a plug-in module is the ampersand
+symbol, {\tt\&}, in the command line. 
+For instance, the compiler instruction 
+
+\hspace*{25pt}{\tt
+NEUT~\&~:~0.1 :~2.2~:~3.3;
+}\hfill(1)
+
+will invoke the \tw{NEUT} code as a separate processes with the name
+\tw{'neut'} inside the time interval $2.2\mbox{~s}\leq t\leq 3.3\mbox{~s}$. 
+The process \tw{neut} will be activated and its results inquired every
+$0.1\mbox{~s}$. 
+Without the {\tt\&} symbol in the command line, the standard plug-in module
+\tw{NEUT} will be called.
+This new feature provides several advantages:
+\vspace*{-\parskip}
+\begin{enumerate}
+\item It allows to call different subroutines or pieces of subroutines
+  in parallel rather than in sequence as before.
+  It opens an easy way to parallelizing the code and gaining from
+  multi-processor computers. 
+\item Maintenance and development of Astra and different routines become fully
+  independent. 
+  Change on one side does not require any awareness of all other sides as long
+  as the interface does not change.
+%  Unlike that, in the conventional approach, each modification of requires  
+\item With growing complexity of the codes this approach allows to keep the
+  responsibility of the code developers split and provides the only way of 
+  maintaining huge code packages without increasing a number of people
+  involved. 
+\end{enumerate}\vspace*{-\parskip}
+
+The IPC (inter-process communication) mechanism is used for synchronization
+and communication with the Astra core. 
+The synchronization is implemented by the Astra compiler and
+does not require any additional programming on the user side.
+Nevertheless, some module-specific features cannot be added automatically and
+have to be provided by the user. 
+Below we explain the code flow, processes interaction, data exchamge 
+and then illustrate the aforesaid with an example.  
+
+Assume that, in the previous Astra version, a subroutine \tw{example()} with
+the source code \tw{sbr/example.c} has been used as a plug-in module. 
+Transforming it to an independently running child process
+requires a development of
+
+\vspace*{-\parskip}
+\begin{enumerate}
+\item[1.1] multiple process synchronization (semaphore operations),
+\item[1.2] two-sided shared memory read/write facilities (inter-processes
+  communication),
+\item[1.3] a stand-alone program \tw{main()} calling {~\tt example()} as a
+  subroutine (function).
+\end{enumerate}\vspace*{-\parskip}
+
+As mentioned, the first step (1.1) is fully performed with the Astra compiler
+and does not require any additional actions from the user.
+To a large extent, the rest of the programming work is similar to including a
+new plug-in C-module into the Astra code. 
+In this case, one needs to
+\vspace*{-\parskip}
+\begin{enumerate}
+\item[2.1] develop an interface for proper parameter exchange between
+  \tw{example()} and the Astra Fortran core, 
+\item[2.2] include a call of this interface into Astra.
+\end{enumerate}\vspace*{-\parskip}
+
+The step (2.1) consists of:
+(i) identifying I/O parameter list and (ii) organizing exchange between the
+Fortran and C pieces of the code.
+Obviously, the step (i) is exactly the same in both cases (1.2) and (2.1). 
+The step (ii) being formally also the same differs in implementation so far as
+two processes communicate via shared memory.
+The difference of two schemes can be represented as
+
+\hskip5pt
+\leftline{\tw{
+Astra -> \color{blue}set\_example\_input -> example -> get\_example\_output
+\color{black} -> Astra
+}\hfill(2)~}
+
+\hskip5pt
+\leftline{\tw{
+Astra -> \color{blue}set\_example\_input -> write\_Sh\_mem
+}}\\
+\centerline{\tw{\hfill
+main -> \color{blue} read\_Sh\_mem -> example -> write\_Sh\_mem
+}\hfill(3)}\\
+\rightline{\tw{\color{blue}
+read\_Sh\_mem -> get\_example\_output \color{black} -> Astra~~
+}}
+
+The two intermediate steps ~\tw{\color{blue}set\_example\_input}~ and
+~\tw{\color{blue}get\_example\_output}~
+are indispensable because the Astra core is written in Fortran while all
+operations with the shared memory have to be written in C.
+The program parts that are expected to be provided by the user are shown in
+blue. 
+
+The step (1.3) is shown as the central line in (3). 
+In order to insure the proper time alignment it is recommended to 
+embed the user developed piece into the pre-defined module
+\tw{IPC/template.c}. 
+The template module is supplied with the Astra code.
+It contains a problem-independent environment that is responsible for
+synchronizing with the Astra core and a specified place for including the
+problem-dependent part (1.2). 
+As shown in (3), the call of the C-function \tw{example()} is enclosed with two
+series of commands supplying data to and receiving data from the function
+\tw{example()}. 
+Except for this operator sequence the file \tw{IPC/template.c} should remain
+untouched.
+The executable file must have the name \tw{IPC/example.c}. 
+Instructions for compiling \tw{IPC/example.c} and preparing executable file 
+\tw{.tsk/.../example} are given in the file \tw{IPC/Readme}. 
+
+We describe now in more details some recommendations and constraints for
+(1.2).  
+First of all, a shared memory segment has to be designed that serves for
+parameter exchange between the subprocess and the Astra core.
+Note that, in the version 6.1, one and only one
+shared memory segment has to be attached to each parallel process.
+It is proposed to cast the exchange dataset in the form of the C-structure 
+\\[5pt]
+\hspace*{25pt}\parbox{10cm}{
+\tw{struct A\_example\\
+  \{\\
+    struct A\_comio My;\\
+    int  ...;\\
+    double ...;\\
+  \} *InOut;}}\\[5pt]
+The structure is started with a service dataset
+\\[2pt] 
+\hspace*{25pt}\tw{struct A\_comio My;} 
+%\hspace*{25pt}\parbox{10cm}{\tw
+%struct A\_comio\\
+%\{\\
+%  char  Path[64];\\
+%  key\_t Key;\\
+%  pid\_t Pid;\\
+%  int   OrdNr;\\
+%  int   ShMid;\\
+%  double CPUse;\\
+%\};\\ }
+\\[2pt] 
+and then includes all Astra parameters required on the interface.
+The user does not need to take care of the service dataset although it is the
+user responsibility to the ensure a proper data exchange between the function 
+\tw{example()} and the other data in the structure
+
+\tw{struct A\_example *InOut};
+
+In essence, the module (1.2) makes the same job as (2.1) excepting that the
+assignment operators in (1.2) have to be replaced by communications with the  
+shared memory.
+Reading and writing shared memory includes altogether four modules.
+In the child process, the reading and writing pieces can be placed
+in the main file \tw{example.c} (see \tw{IPC/*.c}).
+Unlike that, on the Astra side, each of the read and write interfaces has to
+be split in two, C- and Fortran-, modules where the former one deals with the
+shared memory while the latter with the Astra core.
+The names of these four modules on the Astra side are predefined and derivable
+from the name 
+\tw{example}. 
+In our case, they have to be named 
+
+\vskip5pt\centerline{\hfill\tw{
+toexample -> to\_example() \dots\ ot\_example() -> otexample
+}\hfill(4)}
+
+where the inner two are C-functions, the outer two Fortran subroutines.
+The left hand side writes a specified set of Astra parameters to the shared
+memory segment associated with the process \tw{example()} while the right hand
+side reads the shared memory and transforms the output to Astra parameters.
+Although the chain (4) could seem to be over-complicated it cannot be reduced
+because it connects a C-function in the middle (dots) with the Fortran code
+core on the edges.
+Moreover, as long as the contents of all modules in (4) depend on the
+particular subroutine \tw{example()} these functions cannot be created
+automatically by the Astra compiler. 
+Processing an instruction of the type (1) the Astra compiler adds call of two
+subroutines \tw{toexample} and \tw{otexample}. 
+Proper subroutines have to be provided by the user.
+
+There are some further restrictions.
+The Fortran subroutines \tw{toexample} and \tw{otexample} have no parameters.
+They communicate with the Astra core via common blocks.
+In opposite, the data transfer between \tw{toexample} and \tw{to\_example} 
+(\tw{ot\_example} and \tw{otexample}) is organized through the C-function
+headers. 
+The two reciprocal functions \tw{to\_example()} and 
+\tw{ot\_example()} can be found in the file \tw{ipc/io\_example.c}. 
+The four modules (3) have to be placed into the Astra subdirectory \tw{ipc/}. 
+Then they will be automatically linked to the Astra core by the Astra compiler.
+We remind that the executable file for the child process \tw{.tsk/.../example}
+has to be provided by the user.
+
+In order to simplify the user work the Astra compiler creates, fills and
+updates two segments of shared memory with main Astra variables and arrays
+that are described in the include files \tw{for/A\_vars.h} and
+\tw{for/A\_arrs.h}, respectively. 
+Note that a code created by the compiler only writes these two shared memory
+segments.
+It never reads data from those. 
+For instance, consider the model of warm neutrals \tw{NEUT}. 
+Although the neutral density \tw{NN} and temperature \tw{TN} are included
+into the shared memory segment associated with \tw{for/A\_arrs.h} it is the
+user responsibility to update these quantities after calling \tw{NEUT}.
+
+In summary, we give below a list of new files and functions that have to be
+created instead of the subroutine file \tw{sbr/example.c}
+
+\vspace*{-\parskip}
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline
+File & Function/Subroutine & Action \\
+\hline
+\tw{ipc/toexample.f}   & \tw{toexample}
+                 & prepare Astra data for \tw{to\_example}\\
+\tw{ipc/to\_example.c} & \tw{to\_example(\dots)} 
+                 & write shared memory before \tw{example} \\
+\hline
+\tw{IPC/example.c} & \tw{example()} 
+                         & process synchronization      \\
+                 & 
+                 & read shared memory before \tw{example}   \\
+                 & %\tw{a\_example();} 
+                 & call \tw{example}       \\
+                 & %\tw{write\_shmem} 
+                 & write shared memory after \tw{example}    \\
+\hline
+\tw{ipc/ot\_example.c} & \tw{ot\_example(\dots)} 
+                 & read shared memory after \tw{example}   \\
+\tw{ipc/otexample.f}   & \tw{otexample}
+                 & transfer results of \tw{ot\_example} to Astra\\
+\hline
+\end{tabular}
+\end{center}
+Note that the names \tw{toexample} and \tw{otexample} are mandatory while all
+other names in the first and second columns are optional.
+For instance, one can put the two Fortran subroutines, \tw{toexample} and
+\tw{otexample}, in one file \tw{ottoexample.f},  etc.
+
+The situation becomes a little bit more complicated if one needs to convert a
+Fortran subroutine \tw{sbr/example.f} to an independent process.
+Then it is necessary to add one more interface between the child \tw{main}
+C-function and the Fortran subroutine \tw{example.f}.
+The procedure is standard, we only note that one can keep the
+original source \tw{sbr/example.f} unchanged and call it in parallel with the
+newly created process so long as a special care is taken that the outputs of
+the two do not destroy one another.
+
+\vfill\eject
+\centerline{\bf Code flow diagram}
+\begin{picture}(400,500)
+%\put(110,380){\begin{picture}(50,50)%
+\put(290,-130){\begin{picture}(50,50)%
+                \put(-10,30){\fbox{\fbox{\parbox{200pt}{\begin{center}\bf
+                        \color{ippblue}
+                        Astra initiates semaphores, 
+                        launches all secondary processes, 
+                        inquires them, then locks
+                        \color{black}\end{center}}}}}
+             \end{picture}}
+                \put(155,470){\fbox{\parbox{115pt}{\begin{center}
+                        \color{ippblue}
+                        \bf Create semaphores%\vphantom{y}
+                        \color{black}\end{center}}}}
+                \put(155,410){\fbox{\parbox{115pt}{\begin{center}
+                        \color{ippblue}
+                        \bf Launch secondaries
+                            Lock primary%\vphantom{y}
+                        \color{black}\end{center}}}}
+                \put(105,379){\line(1,0){195}}
+                \put(300,370){\line(0,1){90}}
+                \put(30,375){\parbox{105pt}{\bf\color{red}
+                        Checkpoint
+                        \color{black}}}
+    \put(155,80){\begin{picture}(50,50)%
+                \put(160,400){\fbox{\parbox{105pt}{\begin{center}
+                        \color{ippblue}
+                        \bf Check existance\vphantom{y}
+                        \color{black}\end{center}}}}
+                \put(160,340){\fbox{\parbox{105pt}{\begin{center}
+                        \color{ippblue}
+                        \bf Collect info\vphantom{y}
+                        \color{black}\end{center}}}}
+                \put(160,280){\fbox{\parbox{105pt}{\begin{center}
+                        \color{ippblue}
+                        \bf Create shmem\vphantom{y}
+                        \color{black}\end{center}}}}
+             \end{picture}}
+
+                \put(160,350){\fbox{\parbox{105pt}{\begin{center}
+                        \color{ippblue}
+                        \bf Wait for secs%\vphantom{y}
+                        \color{black}\end{center}}}}
+                \put(160,290){\fbox{\parbox{105pt}{\begin{center}
+                        \color{ippblue}
+                        \bf Get shmem requisites%\vphantom{y}
+                        \color{black}\end{center}}}}
+
+\put(0,-60){\begin{picture}(50,50)%\red%
+        \put(210,-58){\line(0,-1){7}}
+        \put(210,-65){\vector(-1,0){105}}
+        \put(105,-65){\line(-1,0){105}}
+        \put(0,-65){\vector(0,1){190}}
+        \put(0,125){\line(0,1){190}}
+        \put(0,315){\vector(1,0){105}}
+        \put(105,315){\line(1,0){105}}
+        \put(210,315){\line(0,-1){10}}
+             \end{picture}}
+                \put(160,220){\fbox{\parbox{105pt}{\begin{center}
+                        \color{ippblue}
+                        \bf Write shmem\vphantom{y}
+                        \color{black}\end{center}}}}
+                \put(155,150){\fbox{\parbox{115pt}{\begin{center}
+                        \color{ippblue}
+                        \bf Unlock secondaries Lock primary\vphantom{y}
+                        \color{black}\end{center}}}}
+                \put(20,115){\line(1,0){280}}
+                \put(20,52){\line(1,0){280}}
+                \put(300,115){\line(0,1){80}}
+                \put(300,52){\line(0,-1){90}}
+                \put(300,195){\line(1,0){120}}
+                \put(300,-38){\line(1,0){120}}
+                \put(20,80){\fbox{\parbox{105pt}{\begin{center}
+                        \color{ippblue}
+                        \bf Run secondary\vphantom{y}
+                        \color{black}\end{center}}}}
+                \put(160,20){\fbox{\parbox{105pt}{\begin{center}
+                        \color{ippblue}
+                        \bf Wait for secs\vphantom{y}
+                        \color{black}\end{center}}}}
+                \put(160,-40){\fbox{\parbox{105pt}{\begin{center}
+                        \color{ippblue}
+                        \bf Read shmem\vphantom{y}
+                        \color{black}\end{center}}}}
+                \put(160,-100){\fbox{\parbox{105pt}{\begin{center}
+                        \color{ippblue}
+                        \bf Time step\vphantom{y}
+                        \color{black}\end{center}}}}
+    \put(155,80){\begin{picture}(50,50)%
+                \put(5,0){\fbox{\parbox{105pt}{\begin{center}
+                        \color{ippblue}
+                        \bf Run secondary\vphantom{y}
+                        \color{black}\end{center}}}}
+                \put(-130,-37){\parbox{105pt}{\bf\color{red}
+                        Checkpoint
+                        \color{black}}}
+                \put(-120,40){\parbox{105pt}{\bf\color{red}
+%                        1st checkpoint
+                        \color{black}}}
+                \put(-120,-40){\parbox{105pt}{\bf\color{red}
+%                        2nd checkpoint
+                        \color{black}}}
+                \put(170,120){\parbox{105pt}{\bf\color{red}
+%                        1st checkpoint
+                        \color{black}}}
+                \put(170,-130){\parbox{105pt}{\bf\color{red}
+%                        2nd checkpoint
+                        \color{black}}}
+                \put(160,80){\fbox{\parbox{105pt}{\begin{center}
+                        \color{ippblue}
+                        \bf Read shmem\vphantom{y}
+                        \color{black}\end{center}}}}
+                \put(160,30){\fbox{\parbox{105pt}{\begin{center}
+                        \color{ippblue}
+                        \bf Compute\vphantom{y}
+                        \color{black}\end{center}}}}
+                \put(160,-20){\fbox{\parbox{105pt}{\begin{center}
+                        \color{ippblue}
+                        \bf Write shmem\vphantom{y}
+                        \color{black}\end{center}}}}
+                \put(160,-80){\fbox{\parbox{105pt}{\begin{center}
+                        \color{ippblue}
+                        \bf Inform primary Lock itself\vphantom{y}
+                        \color{black}\end{center}}}}
+             \end{picture}}
+\end{picture}
+\vfill\eject
+
+\centerline{\bf\large Code talking mechanism}
+
+\begin{enumerate}
+\item At start, a set of~ {\blue\tt Nsbp+1} ~semaphores is created.\\ 
+  All semaphores in the set are set to zero.
+\item {\blue\tt Nsbp+2} ~shared memory segments are created.
+\item The IDs of the primary {\blue\tt main} and of all secondary processes 
+  as well as semaphore and shared memory IDs are stored in the file 
+  {\blue\tt AWD/tmp/astra.ipc}.
+\end{enumerate}
+
+
+\leftline{\bf Notations}\\
+The box
+\begin{picture}(70,0)%
+   \put(10,0){\fbox{\fbox{\parbox{40pt}{\bf
+       \color{ippblue}~~\# i\color{black}}}}}
+\end{picture}
+means that\vspace*{-1em}
+\begin{enumerate}
+\item On entry, {\blue\tt sem\_val(i)=0}. This causes $i$-th subprocess
+  {\blue\tt SBP(i)} to wait until another process ({\blue\tt main} in case
+  {\blue\tt i$\neq$0} or an SBP otherwise) increments the $i$-th semaphore
+  by setting its value to {\blue\tt sem\_val(i)=1}. 
+\item Then {\blue\tt SBP(i)} proceeds simultaneously resetting the semaphore
+  value back to zero {\blue\tt sem\_val(i)=0}. This restores the initiial
+  status and will lock the process {\blue\tt SBP(i)} on the next entry. 
+\end{enumerate}
+
+\vskip1em
+\leftline{\sc \underline{Start}}
+{\bf Initial status:}\\ All semaphores are set to zero:
+{\blue\tt sem\_val[0:Nsbp]=0}. \\[15pt]
+{\blue\tt inikids:\hspace*{16em}SBP(i)}\\
+\hspace*{5em}
+\begin{picture}(300,155)%
+   \put(30,160){\dots}
+   \put(20,140){\blue\tt i = 1;}
+   \put(0,120){\rm Launch~~ {\tt SBP(i)}}
+   \put(15,90){\fbox{\fbox{\parbox{40pt}{\bf
+       \color{ippblue}~~\# 0\color{black}}}}}
+   \put(-20,45){No}
+   \put( 10,40){\line(-1,0){50}}
+   \put(-40,40){\line( 0,1){85}}
+   \put(-40,125){\vector( 1,0){30}}
+   \put(35, 30){\vector(0,-1){35}}
+   \put(40,10){Yes}
+   \put(25,60){\blue\tt i++;}
+   \put(20,40){\em Ready?}
+                        \put(170,120){\rm Collect IPC info}
+                        \put(150,100){\rm Write~1~line~to~\tt A\_ipc\_file}
+                        \put(170,80){\blue\tt sem\_val(0)++;}
+                        \put(180,55){\fbox{\fbox{\parbox{40pt}{\bf
+                                \color{ippblue}~~\# i\color{black}}}}}
+                        \color{ippblue}
+                \put(100,125){\vector(1,0){60}}
+                \put(160,80){\vector(-1,0){80}}
+                \put(100,85){Release}
+                \put(105,70){main}
+                        \color{black}
+\end{picture}
+
+%\vskip10pt
+{\bf Resulting status:} \\[5pt]
+\quad All semaphores are set to zero $~\longrightarrow~$ All SBPs wait.\\
+{\blue\tt main} ~runs until the next checkpoint (see main Loop).
+
+\vfill\eject
+\leftline{\sc \underline{Main Loop}}
+{\bf Status.} All semaphores are set to zero:
+{\blue\tt sem\_val[0:Nsbp]=0}. 
+All SBPs are sleeping.
+
+{\blue\tt main:\hspace*{26em}SBP(i)}\\
+\hspace*{6em}
+\begin{picture}(300,300)%
+   \put(30,305){\dots}
+   \put(-15,285){\blue\tt i = 1;~~buf0.sem\_op = 0;}
+   \put( 0,265){\rm Check if~ {\tt SBP(i)} is due?}
+   \put(20,255){\vector(0,-1){110}}
+   \put(25,240){No}
+   \put(85,255){\vector(0,-1){25}}
+   \put(90,240){Yes}
+   \put(50,215){\blue\tt buf0.sem\_op$\,$-$\,$-;}
+   \put(50,200){\blue\tt sem\_val(i)++;}
+%   \put(60,190){\fbox{\fbox{\parbox{40pt}{\bf
+%       \color{ippblue}~~\# i\color{black}}}}}
+   \put(85,170){\vector(0,-1){25}}
+   \put(-20,130){\rm Check if~ {\tt SBP(i)} list is exausted?}
+   \put( 85,120){\vector(0,-1){50}}
+   \put(90,90){Yes}
+   \put(20,120){\vector(0,-1){25}}
+   \put(25,105){No}
+   \put(10, 80){\blue\tt i++;}
+   \put( 5, 80){\line(-1,0){45}}
+   \put(-40,80){\line( 0,1){190}}
+   \put(-40,270){\vector( 1,0){30}}
+   \put(-40,50){Check$\red^*$:~{\blue\tt sem\_val(0)$\geq$ abs(buf0.sem\_op)}}
+   \put( 85,40){\vector(0,-1){55}}
+   \put(90,10){Yes}
+   \put(20,40){\vector(0,-1){25}}
+   \put(25,25){No}
+   \put(5, 0){Wait\red$^{**}$}
+   \put(0, 0){\line(-1,0){60}}
+   \put(-60,0){\line(0,1){55}}
+   \put(-60,55){\vector(1,0){15}}
+   \put(0,-30){Make the next time step}
+   \put(5,-48){Repeat the loop}
+   \put(170,0){\red Time synchronization checkpoint}
+   \put(-50,-5){\red \rule{400pt}{1pt}}
+   \put(0,-45){\line(-1,0){70}}
+   \put(-70,-45){\line(0,1){340}}
+   \put(-70,295){\vector(1,0){105}}
+        \color{ippblue}
+        \put(135,202){\vector(1,0){120}}
+        \put(170,207){Release}
+        \put(172,189){SBP(i)}
+        \color{black}
+                \put(260,200){\fbox{\fbox{\parbox{40pt}{\bf
+                        \color{ippblue}~~\# i\color{black}}}}}
+                \put(250,175){Makes its job}
+                \put(250,160){\blue\tt sem\_val(0)++;}
+                \put(290,155){\line(1,0){50}}
+                \put(340,155){\line(0,1){70}}
+                \put(340,225){\vector(-1,0){50}}
+\end{picture}
+
+\vskip40pt
+{\bf Note}
+\begin{enumerate}
+\item \vskip-20pt
+      Subroutines and subprocesses are launched sequentially in the same order
+      as they are listed in a model file unless the tag {\tt "<"} is used.
+\item Moreover the subroutines are executed in sequence hence the next one is
+  not started before the previous one finishes its calculation.
+\item Checkpoint is placed after all subroutines and subprocesses before the
+  first time evolution element ({\tt ADCMP}).
+\end{enumerate}
+\vskip-20pt
+{\red \rule[2pt]{2cm}{1pt}}
+ ~
+
+\vfill
+\rule{80pt}{0.5pt}\\
+$\red^*$~Here {\blue\tt sem\_val(0)} is a number of SBPs that have finished
+their work and are waiting, {\blue\tt $-$(buf0.sem\_op)} is a number of SBPs
+that have been called at the current time step.\\
+$\red^{**}$~Here {\blue\tt main} can do also some operations (e.g. polling
+events, plotting, etc) that are not directly involved in the time evolution.\\
+
+\end{document}
+   \put(20,40){\em Ready?}
+                        \put(170,120){\rm Collect IPC info}
+                        \put(150,100){\rm Write~1~line~to~\tt A\_ipc\_file}
+                        \put(170,80){\blue\tt sem\_val(0)++;}
+                        \put(180,55){\fbox{\fbox{\parbox{40pt}{\bf
+                                \color{ippblue}~~\# i\color{black}}}}}
+                        \color{ippblue}
+                \put(160,80){\vector(-1,0){80}}
+                \put(100,85){Release}
+                \put(105,70){main}
+                        \color{black}
+
