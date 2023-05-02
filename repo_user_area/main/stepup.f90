@@ -296,7 +296,7 @@ if (IFBEY >= 1.) then         ! is doing free boundary
                 call f_SPIDUPDATE(machine, CCOIL(1:NCNB), time, ncnb)  ! Update circuit stuff which has to be outside the iterations of course
             endif
         else if (LEQ(5) == 5) then ! FEQIS
-            call FEQISUPDATE(machine, CCOIL(1:NCNB), time, ncnb)    ! Update circuit stuff which has to be
+!            call FEQISUPDATE(machine, CCOIL(1:NCNB), time, ncnb)    ! Update circuit stuff which has to be
         endif
     endif
 endif
