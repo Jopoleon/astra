@@ -2,8 +2,8 @@
 !           (Yushmanov 11-JAN-89)
 double precision FUNCTION QDTR(YR)
 
-use status_inc
-use const_inc
+use status_inc, only: VR, TI, NDEUT, NTRIT
+use const_inc, only: HRO
 
 implicit none
 
@@ -16,7 +16,9 @@ JK = nint(YR/HRO)
 
 QDTR = 0.
 do J=1, JK
-    include 'fml/pdt'
+    SVDT = TI(J) ** (-0.33333333)
+    SVDT = 8.972*EXP(-19.9826*SVDT)*SVDT*SVDT* ((TI(J)+1.0134)/(1.+6.386E-3*(TI(J)+1.0134)**2)+ 1.877*EXP(-.16176*TI(J)*SQRT(TI(J))))
+    PDT = 5.632*NDEUT(J)*NTRIT(J)*SVDT
     QDTR = QDTR + PDT*VR(J)
 enddo
 QDTR = HRO*(QDTR - PDT*HRO)

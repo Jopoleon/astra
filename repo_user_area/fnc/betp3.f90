@@ -1,6 +1,5 @@
-! betpol []:	Internal inductance li(r) [4]
-!			Pereverzev 03-APR-08
-!			/
+! betpol []: Internal inductance li(r) [4]
+!            Pereverzev 03-APR-08
 !
 ! betpol = Wp/Wm
 !
@@ -8,13 +7,13 @@
 !----------------------------------------------------------------------|
 double precision function BETP3R(YR)
 
-use status_inc
-use const_inc, only: NA1, ROC, HRO, BTOR
+use status_inc, only: NE, TE, NI, TI, VR, MU, RHO, PBLON, PBPER, PFAST
+use const_inc, only: GP, NA1, ROC, HRO, BTOR, RTOR
 
 implicit none
 
-integer :: JK, J, J1
 double precision, intent(in) :: yr
+integer :: JK, J, J1
 double precision :: Q,V,YRO,YK,YIPL,YWBP
 
 JK = min(na1,nint(ROC/HRO))

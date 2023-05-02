@@ -2,8 +2,8 @@
 !            (Yushmanov 11-JAN-89)
 double precision FUNCTION QTOKR(YR)
 
-use status_inc
-use const_inc
+use status_inc, only: PE, PI, VR
+use const_inc, only: NA1, HRO, ROC
 
 implicit none
 
@@ -12,7 +12,7 @@ integer :: JK,J
 	
 JK = min(na1, nint(ROC/HRO))
 
-QTOKR=0.
+QTOKR = 0.
 do J=1, JK
     QTOKR = QTOKR + (PE(J) + PI(J))*VR(J)
 enddo
@@ -20,5 +20,3 @@ QTOKR = HRO*(QTOKR - (PE(JK) + PI(JK))*HRO)
 
 return
 end function QTOKR
-
-

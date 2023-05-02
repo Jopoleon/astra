@@ -139,9 +139,9 @@ else if (MACHINE == 'aug_') then
 ! get coil forces
     if (TIME >= ZRD78) then
         if (nint(IPEQL) == 4) then
-            call coil_force2(coil_forces(1:100, 1:2))
+!            call coil_force2(coil_forces(1:100, 1:2))
 	else
-            call coil_forces_feqis(100, coil_forces(1:100, 1), coil_forces(1:100,2))
+!            call coil_forces_feqis(100, coil_forces(1:100, 1), coil_forces(1:100,2))
             coil_forces = -coil_forces
         endif
     endif

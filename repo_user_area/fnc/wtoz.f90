@@ -2,18 +2,18 @@
 !        (Fable Nov 2018) total energy including fast ions
 double precision FUNCTION WTOZR(YR)
 
-use const_inc
-use status_inc
+use const_inc, only: HRO
+use status_inc, only: NE, TE, NI, TI, VR, PBLON, PBPER, PFAST
 
 implicit none
 
 double precision, intent(in) :: yr
-integer :: jk,j
+integer :: jk, j
 
 jk = nint(yr/hro)
 
 WTOZR = 0.
-do J=1,JK
+do J=1, JK
     WTOZR = WTOZR + (NE(J)*TE(J) + NI(J)*TI(J) + &
         0.5*(PBLON(J) + PBPER(J)) + PFAST(J))*VR(J)
 enddo
