@@ -37,10 +37,5 @@ ADCMPF   None                      Numerical flag for ADCMP (=1 use ADCMP, =0 do
 FLXDR    None                      Numerical flag for grid: 0
 SGNIP    None                      Sign of current with respect to reference system of coordinates used in Astra
 SGNBT    None                      Sign of toroidal field with respect to reference system of coordinates used in Astra
-IRESTA   None                      Flag for restart file. 0: nothing, i > 0, use restart file with index i.
 IFBEG    None                      if 0, rectangular grid. If 1, adaptive grid in free boundary equilibrium (or chooses between different grids)
 IPEQL    None                      Numerical flag to choose equilibrium solver (0 doesnt do anything, 1 forces 3mom, 2 forces SPIDER)
-IPSMK    None                      Numerical flag to work with memory exchange with external stuff (like SIMULINK): 0 doesnt do anything, 1 wait for files. with
-IPNWT    None                      Call ASTRA as a Newton solver for strictly steady
-IBKDW    None                      Call ASTRA at t=0 with breakdown model, 1
-IBKVR    None                      variable must be below value if positive, must be above value if negative.

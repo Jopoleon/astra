@@ -2,7 +2,7 @@ program astra
 
 use parameter_inc, only: NSBMX, NRD
 use outcmn_inc, only: VCOIL, CCOIL, CCOILO, DUMCT, DUMCTP, CTRLM, outcmn_init
-use const_inc, only: IPART, const_init
+use const_inc, only: IPSMK, IPART, const_init
 use status_inc, only: status_init
 use debugger, only: debug
 
@@ -38,12 +38,10 @@ call INIVAR
 
 call CONVERGE_INIT(LISTSB)
 
-! Get coils currents from exp file as initial condition
-!call GETCOILS(VCOIL, CCOIL)
-!CCOILO = CCOIL
-!call GETDUMCT(DUMCT)
-!call GETCTRLMS(CTRLM)   
-!DUMCTP = DUMCT
+! write output file for simulink or whatever control system
+if (nint(IPSMK) == 1) then
+    call write_output_diag_file
+endif
 
 !---------------
 ! Time step loop

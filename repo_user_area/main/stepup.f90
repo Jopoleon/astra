@@ -5,14 +5,15 @@ subroutine STEPUP
 !-------------------------------------------------------------------
 
 use parameter_inc, only: NRD
-use const_inc, only: IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
+use const_inc, only: IPSMK, IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
     IPCTRL, NCNB, ICIRCQ, ITFBP, ITREQ, UPDWN, FTN, FTO, BTN, BTOR, HRO, ROC, NA1, &
-    TAU, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, CDVM7, ATREQ, ZRD69, LEQ, & 
+    TAU, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, ATREQ, LEQ, & 
     PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, ADCMPF, RBDOT, BBDOT
 use status_inc, only: TE, TI, NE, NI, NIO, FP
 use outcmn_inc, only: CCOIL, CCOILO, DUMCT, DUMCTP, CTRLM, VCOIL, MACHINE
 use plasma_state, only: plasma_up
 use debugger, only: markloc, flightsim
+use fs_coupling_variables, only: fs_dt_smlk,fs_dt_tctrl
 
 implicit none
 
@@ -53,19 +54,19 @@ tau_old = tau
 tau_new = tau
 
 ! wait until constants file is read and read control file
-if (flightsim >= 1) then
-    if (flightsim == 1) then
-        if (TIME-TSTART == 0) then
-            tau     = dt_smlk ! taumin?
-            tau_old = dt_smlk
-            tau_new = dt_smlk
-            tau_temp_smlk = dt_smlk
-        endif
-    else
-        if (jreadd == 0) then
-            time_ext = TIME
-            dt_smlk = CDVM7
-        endif
+if (flightsim == 1) then
+    if (jreadd == 0) call read_input_constant_file(time_ext, dt_smlk)
+    if (TIME-TSTART == 0) then
+        tau     = taumin
+        tau_old = tau
+        tau_new = tau
+        tau_temp_smlk = tau
+    endif
+    if (tau_temp_smlk == 0.) tau_temp_smlk = tau
+else if (flightsim >= 1) then
+    if (jreadd == 0) then
+        time_ext = TIME
+        dt_smlk = fs_dt_smlk
     endif
     if (tau_temp_smlk == 0.) tau_temp_smlk = tau
 endif
@@ -91,8 +92,10 @@ call detvar
 ! Subroutines with the "<" symbol are put here
 ! here it computes the new NI also
 
-call OLDNEW           ! Time advance: F(t-tau):=F(t) neo=ne, etc,except ni
-call INTVAR           ! Set exp scalars, moved here for btor consistency
+if (plasma_up == 1 .or. ifbey == 0) then
+    call OLDNEW           ! Time advance: F(t-tau):=F(t) neo=ne, etc,except ni
+    call INTVAR           ! Set exp scalars, moved here for btor consistency
+endif
 
 ! Update time at the end of everything
 
@@ -107,22 +110,24 @@ PSIEXO = PSIEXT	      ! reset also external flux from fbe and ce, this is for te
 PSPLXO = PSPLEX  	      ! reset also green function flux from fbe and ce, this is for test!
 						
 !Get target quantities for control
-if (nint(IPCTRL) /= 0 .and. nint(IPCTRL) > -2) then
-    call GETDUMCT(DUMCT)   ! in this case VCOIL and CCOIL are not taken from experimental file, rather from controller
-    call GETCTRLMS(CTRLM)   
-else
+if (plasma_up == 1 .or. ifbey == 0) then
+    if (nint(IPCTRL) /= 0 .and. nint(IPCTRL) > -2) then
+        call GETDUMCT(DUMCT)   ! in this case VCOIL and CCOIL are not taken from experimental file, rather from controller
+        call GETCTRLMS(CTRLM)   
+    else
 ! Get coils currents from experimental file if no control
 	
-    call GETDUMCT(DUMCT)   
-    call GETCTRLMS(CTRLM)   
-    DUMCTP = DUMCT
+        call GETDUMCT(DUMCT)   
+        call GETCTRLMS(CTRLM)   
+        DUMCTP = DUMCT
 
 ! do this only if flightsim = 0, so that with -1 it doesnt do this.
 ! if (flightsim==0) then
-    call GETCOILS(VCOIL(1:NCNB), dummycoils(1:NCNB))
+        call GETCOILS(VCOIL(1:NCNB), dummycoils(1:NCNB))
 
-    if (ICIRCQ == 0.) then
-        call GETCOILS(VCOIL(1:NCNB), CCOIL(1:NCNB))
+        if (ICIRCQ == 0.) then
+            call GETCOILS(VCOIL(1:NCNB), CCOIL(1:NCNB))
+        endif
     endif
 endif
 
@@ -143,7 +148,7 @@ if (flightsim >= 1) then
 endif
 
 updwno = updwn          ! for fsim
-	
+
 time_step_accuracy: do
 
     ITREQ = 0               ! Start Tr-Eq loop
@@ -163,22 +168,26 @@ time_step_accuracy: do
 ! NITREQ regulates this. 
 ! 1 - no iterations, 2 - yes. is 1 by default
 
-        call SETARX(2)       ! Update exp-data with a new metric
+        if (plasma_up == 0 .or. ifbey == 0) then
+            call SETARX(2)       ! Update exp-data with a new metric
+        endif
 
         call METRIC          ! Equilibrium call, compute IPL from dfpdrb, compute PSIEXT, shape, psplex, and metric coefficients, update ROC, FTN
 
-        RBDOT = (FTO  - FTN)/(FTO  + FTN)/TAU     !New rbdot for adiabatic compression
-        BBDOT = (BTOR - BTN)/(BTOR + BTN)/TAU     !New bbdot for adiabatic compression
+	if (plasma_up == 1) then
+            RBDOT = (FTO  - FTN)/(FTO  + FTN)/TAU     !New rbdot for adiabatic compression
+            BBDOT = (BTOR - BTN)/(BTOR + BTN)/TAU     !New bbdot for adiabatic compression
 
-        if (nint(ADCMPF) == 2) then
-            RBDOT = 0.   !no adiabatic compression whatsoever
-            BBDOT = 0.   !no adiabatic compression whatsoever
-        endif
+            if (nint(ADCMPF) == 2) then
+                RBDOT = 0.   !no adiabatic compression whatsoever
+                BBDOT = 0.   !no adiabatic compression whatsoever
+            endif
 
 ! here it should go the correction after 1st free boundary call since geometry changes abruptly
-        if (IFBEY == 1.) then
-            RBDOT = 0.   !also set compression to zero to avoid jumps
-            BBDOT = 0.   !also set compression to zero to avoid jumps
+            if (IFBEY == 1.) then
+                RBDOT = 0.   !also set compression to zero to avoid jumps
+                BBDOT = 0.   !also set compression to zero to avoid jumps
+            endif
         endif
 
         tau_old = tau !remember old tau for later
@@ -235,37 +244,40 @@ time_step_accuracy: do
         endif
 
 !quantitites for psi b.c.
-        Apsibcfac = dfpdrbm12
-        Bpsibcfac = PSIEXT - PSPLEX*ROC*Apsibcfac
-        PSIFB = Bpsibcfac
+ 	if (plasma_up == 1) then
+            Apsibcfac = dfpdrbm12
+            Bpsibcfac = PSIEXT - PSPLEX*ROC*Apsibcfac
+            PSIFB = Bpsibcfac
 
-        icurradj = 0
-        if (ITFBP < 0.0) then
-            if (IFBEY >= 1.) then
-                if (ibcpsi_fb == 1) then
-                    FP = FP - FP(NA1) + PSIFB
-                    bc_type_for_fp = 3
-                    icurradj = 1
+            icurradj = 0
+            if (ITFBP < 0.0) then
+                if (IFBEY >= 1.) then
+                    if (ibcpsi_fb == 1) then
+                        FP = FP - FP(NA1) + PSIFB
+                        bc_type_for_fp = 3
+                        icurradj = 1
+                    endif
                 endif
             endif
         endif
 
     enddo tr_eq_loop
 
-    call DEFARR                  ! F(t)>0? Define F(t) outside ABC
-
+    if (plasma_up == 1 .or. IFBEY == 0) then
+        call DEFARR                  ! F(t)>0? Define F(t) outside ABC
+    endif
     tau_old = tau
 
     if (IFSTEP(jkey, updwno) == 0 .and. IFBEY /= 1) then
 ! Time step accuracy accepted? No(0)
 ! note that here TAU is modified and TIME updated with time_new = TIME+TAU !
         if (flightsim >= 1) then
-            TAU = max(taumin, TAU_old - ZRD69) ! correct TAU not to exceed time_ext
+            TAU = max(taumin, TAU_old - fs_dt_tctrl) ! correct TAU not to exceed time_ext
             TAU = max(taumin, TAU)
         endif
     else
         if (flightsim >= 1) then
-            TAU = min(taumax, TAU_old + ZRD69)
+            TAU = min(taumax, TAU_old + fs_dt_tctrl)
         endif
         tau_new = tau
         tau = tau_old
@@ -279,11 +291,12 @@ if (IFBEY >= 1.) then         ! is doing free boundary
     if (ICIRCQ > 0.) then    ! circuit equations are solved with whatever code
         if (LEQ(5) == 4) then ! SPIDER
             if (nint(IFBEG) == 0) then
-                call SPIDUPDATE(machine, CCOIL(1:NCNB))    ! Update circuit stuff which has to be outside the iterations of course
+                call SPIDUPDATE(machine, CCOIL(1:NCNB), time, ncnb)    ! Update circuit stuff which has to be outside the iterations of course
+            else if (nint(IFBEG) == 1) then
+                call f_SPIDUPDATE(machine, CCOIL(1:NCNB), time, ncnb)  ! Update circuit stuff which has to be outside the iterations of course
             endif
-            if (nint(IFBEG) == 1) then
-                call f_SPIDUPDATE(machine, CCOIL(1:NCNB))  ! Update circuit stuff which has to be outside the iterations of course
-            endif
+        else if (LEQ(5) == 5) then ! FEQIS
+            call FEQISUPDATE(machine, CCOIL(1:NCNB), time, ncnb)    ! Update circuit stuff which has to be
         endif
     endif
 endif
@@ -306,9 +319,9 @@ tau_new = tauprp
 if (flightsim >= 1) then
     tau_temp_smlk = TAU_new
     taumin = min(tau_temp_smlk, taumin)
-
-    if (TIME-TSTART >= time_ext+dt_smlk-1.e-8 .and. flightsim >= 1) then
-        jreadd=0
+    if (TIME-TSTART >= time_ext+dt_smlk-1.e-8) then
+        call write_output_diag_file
+        jreadd = 0
     else
         jreadd = 1
         if (TIME-TSTART > time_ext+dt_smlk+1.d-6) then

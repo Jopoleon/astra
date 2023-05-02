@@ -21,9 +21,9 @@ QFF9B    1/s                       Coefficient for F3_outflux = QFF9B*F9B
 QITB     MJ/keV                    Coefficient for Ion_heat_outflux = QITB*TIB
 QNNB     m^3/s                     Coefficient for Density_outflux = QNNB*NEB
 FTO      V.s                       Toroidal flux \Phi at the edge at TIME
-FTN      V.s                       Toroidal flux \Phi at the edge at TIME+TAU
-BTN      T                         Toroidal field at TIME+TAU
-IPLN     MA                        Plasma current at TIME+TAU
+FTN      V.s                       Toroidal flux \Phi at the edge at TIME-TAU
+BTN      T                         Toroidal field at TIME-TAU (BTOR is the new one at time TIME)
+IPLN     MA                        Plasma current at TIME-TAU (not used for anything yet)
 IFBEY    None                      switched to = 1 if doing fbe, to 0 if doing PBE
 ROB      m                         Limiter position (in "rho")
 ROWALL   m                         Wall position    (in "rho")

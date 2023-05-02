@@ -63,28 +63,41 @@ double precision, dimension(300) :: geom1d
 end module flight_sim_geometrics
 
 !--------------------------------
-module fenix_params ! for flight simulator parameters
+module fenix_params !for flight simulator parameters
 
 implicit none
-
-integer :: lhmodel, btipdirec, pr_clamp, reinitcirc, reinitpsi, &
-    ipsmk2, eq_cmd, use_zlim_pot, cmnd_dioh2s, cmnd_dioh2u, nequiz, &
-    s_adapt, yesfitcc, s_fazt, kastr2, com_solver, &
-    isafazt, ispid_contour, &
-    max_max_iteri, max_max_iterb, max_max_iterj, res_trigts06
 
 double precision :: wallpos, d_j_m, dw_j_m, dw2_j_m, &
     vsoldiv, solwidth, &
     recycl_wall, boron_wall, predep_w, &
-    transp_variance,  &
-    hmodetransp, lmodetransp, &
+    transp_variance, hmodetransp, lmodetransp, &
     solmod_dt, tctr_dt, equi_dt, &
     saves_dt, savep_dt, neocl_dt, trmod_ty, nbieqmix_dt, &
     torba_dt, simdtmultip, ped_width, chie_chii, &
-    D_chie, D_ped_mult, gs2d_tmin_multip, &
-    timecirc, timepsi, diohdt, diohdtthreshold, dteqz2, &
-    zibkdw, zifbey, dt_adapt, VV, dt_fazt, ipl_bf_bkdw, &
-    resres_oh6, alp0, alpnew0, rx00, zx00
+    D_chie, D_ped_mult, gs2d_tmin_multip, timecirc, timepsi, &
+    diohdt, diohdtthreshold, dteqz2, zibkdw, zifbey, &
+    dt_adapt, VV, dt_fazt, ipl_bf_bkdw, &
+    alp0, alpnew0, rx00, zx00
+integer :: lhmodel, btipdirec, pr_clamp, reinitcirc, reinitpsi, &
+    ipsmk2, eq_cmd, use_zlim_pot, cmnd_dioh2s, cmnd_dioh2u, nequiz, &
+    s_adapt, yesfitcc, s_fazt, kastr2, com_solver, &
+    isafazt, ispid_contour, res_trigts06, &
+     max_max_iteri, max_max_iterb, max_max_iterj
 double precision, dimension(500, 2) :: psitok
 
 end module fenix_params
+
+!--------------------------------
+module fs_coupling_variables
+
+double precision :: fs_a_crash, fs_dt_smlk, fs_dt_tctrl, fs_paux, fs_pump, &
+     fs_NTM_trig, fs_NTM_M, fs_NTM_N, fs_NTM_seed, fs_stop_time, &
+     fs_prad, fs_psep, fs_pintrinsic, fs_pfus
+double precision, dimension(2) :: fs_pow_IC
+double precision, dimension(8) :: fs_pol_EC, fs_pow_EC, fs_pow_NB
+double precision, dimension(10) :: fs_pellet
+double precision, dimension(24) :: fs_valves
+double precision, dimension(500) :: fs_magnetics
+double precision, dimension(100, 2) :: fs_cforces
+
+end module fs_coupling_variables

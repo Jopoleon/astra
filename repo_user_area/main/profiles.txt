@@ -177,6 +177,7 @@ PEBM     MW/m^3                    Beam energy source into electrons
 PEECR    MW/m^3                    Electron heating due to ECR
 PEFW     MW/m^3                    Electron heating due to FW
 PEICR    MW/m^3                    Electron heating due to ICR
+PEIQI    MW/m^3                    Electron-ion exchange used in getpei for teti double implciit equation. to be defined in the model file
 PELH     MW/m^3                    Electron heating due to LHCD
 PELON    10^19keV/m^3              Longitudinal electron pressure due to H & CD
 PEPER    10^19keV/m^3              Perpendicular electron pressure due to H & CD
