@@ -27,7 +27,7 @@ double precision, intent(out), dimension(nrho, ntheta) :: dArea, dArea2, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
     X, Y, X2, lambda2d, lambda2dp
 
-integer :: jrho, jthe, jthe_l, jthe_r, j, k
+integer :: jrho, jthe, jthe_l, jthe_r, k
 double precision :: drdX, dhdX, drdY, dhdY, Mdet_inv
 double precision, dimension(nrho) ::  lambda2dold
 double precision, dimension(ntheta) :: dXb0, dXb0_i
@@ -44,13 +44,13 @@ do jthe=1, ntheta
     thetap(jthe) = ATAN2(zb(jthe) - Y0, rb(jthe) - X0)
     if (thetap(jthe) < 0) thetap(jthe) = thetap(jthe) + GPI2
 enddo
-
-if (thetap(1) > thetap(ntheta)) then !reorder
-    j = 1
+if (thetap(1) > thetap(ntheta)) then ! shift some entries
     do k=1, ntheta-1
-        if (thetap(k+1) < thetap(k)) j = k + 1   ! j is the first teta above 0
+        if (thetap(k+1) < thetap(k)) then
+            thetap(1: k) = thetap(1: k) - GPI2
+            EXIT
+        endif
     enddo
-    if (j > 1) thetap(1: j-1) = thetap(1: j-1) - GPI2
 endif
 thetap(ntheta+1) = thetap(1) + GPI2
 
@@ -66,8 +66,8 @@ do jrho=1, nrho-1
     ddr(jrho)     = psig (jrho+1) - psig (jrho)
     ddr_i(jrho+1) = psigp(jrho+1) - psigp(jrho)
 enddo
-ddr_i(1) = 0.5*psigp(1)
-ddr(nrho)  = 0.
+ddr_i(1)  = 0.5*psigp(1)
+ddr(nrho) = 0.
 
 do jthe=1, ntheta
     jthe_l = jthe - 1
@@ -84,7 +84,7 @@ do jthe=1, ntheta-1
 enddo
 dXb0_i(ntheta) = dXb0_i(1)
 
-lambda2d = lambda2d_in
+lambda2d  = lambda2d_in
 lambda2dp = lambda2dp_in
 
 if (relambda_flag) then !relambda

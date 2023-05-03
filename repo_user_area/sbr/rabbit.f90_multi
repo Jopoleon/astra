@@ -120,7 +120,7 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
 
     allocate(aplasma(0))
     allocate(zplasma(0))
-    if (maxval(NHDYR) .gt. 0.) then
+    if (maxval(NHYDR) .gt. 0.) then
        aplasma = [aplasma, 1.]
        zplasma = [zplasma, 1.]
     endif

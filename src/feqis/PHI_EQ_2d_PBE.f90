@@ -41,19 +41,10 @@ psin_grid = psin_grid_in
 do jrho=1, nrho
     epprimp(jrho)  = -GPI4*muvac*pprimp(jrho)
     effprimp(jrho) = -GPI4*ffprimp(jrho)
-enddo
-
-do jrho=1, nrho
-    do jthe=1, ntheta
-        lambda2d(jrho, jthe) = (jrho - 1.)/(nrho - 1.)
-    enddo
+    lambda2d(jrho, :) = (jrho - 1.)/(nrho - 1.)
+    PSI(jrho, :) = psin_grid(jrho)
 enddo
 lambda2dp = lambda2d + 0.5/(nrho - 1.)
-
-do jthe=1, ntheta
-    PSI(:, jthe) = psin_grid(:)
-enddo
-
 do jrho=1, nrho-1
     psin_gridp(jrho) = 0.5*(psin_grid(jrho+1) + psin_grid(jrho))
 enddo
