@@ -398,7 +398,7 @@ contains
             y2 = y_in(j)
             y3 = y_in(j+1)
             if (xloc_out == x1) then
-                y_out(i) = y_in(j-1)
+                y_out(i) = y1
                 EXIT
             else if (xloc_out == x2) then
                 y_out(i) = y2
@@ -414,10 +414,10 @@ contains
                 y_out(i) = B * xloc_out**2 + C
                 EXIT
             else if ( (xloc_out > x1 .and. xloc_out < x3) .or. &
-                      (xloc_out > x3 .and. j == Nx_out-1) ) then
+                      (xloc_out > x3 .and. j == Nx_in-1) ) then
                 A = (y3 - y2 - (x3 - x2)*(y1 - y2)/(x1 - x2)) / ((x3 - x2)*(x3 - x1))
                 B = (y1 - y2)/(x1 - x2) - A*(x1 + x2)
-                C = y2 - A*(x2**2) - B*x2
+                C = y2 - A* x2**2 - B*x2
                 y_out(i) = A * xloc_out**2 + B*xloc_out + C
                 EXIT
             endif
