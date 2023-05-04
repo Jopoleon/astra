@@ -23,9 +23,9 @@ double precision, intent(out), dimension(nrho, ntheta) :: Psi, XX, YY, lambda2d,
 logical :: relambda_flag=.FALSE.
 integer :: jthe, jrho, jrho_axis, jthe_axis, &
     jiter, Ndims, LDAB, nan_count, info, jloc, jmin(2)
-double precision :: X0o, Y0o, denom, axis_change
+double precision :: X0o, Y0o, denom, axis_change, dphi, qhalf
 double precision, dimension(nrho) :: ddr, ddr_i, PSIn_gridp, effprimp, epprimp, &
-    fpol, fpol2, phitor, qhalf
+    fpol, fpol2
 double precision, dimension(ntheta) :: dtp, dtm, dt_i
 double precision, dimension(ntheta+1) :: thetap, thetap_i
 double precision, dimension(nrho, ntheta) :: dArea, dArea2, &
@@ -69,23 +69,13 @@ iter_loop: do jiter=1, max_iter
             fpol(jrho) = sqrt(fpol(jrho+1)**2 - ffprimp(jrho+1) * &
                 (psin_grid(jrho+2) - psin_grid(jrho)) * (psib - psiax))
         enddo
-
-        phitor(1) = 0.
-        do jrho=2, nrho ! toroidal flux on full grid
-            phitor(jrho) = phitor(jrho-1) + fpol(jrho-1) * sum(dArea2(jrho-1, :)/Rmaj2(jrho-1, :))
-        enddo
-
-        do jrho=1, nrho-1 ! safety factor at half grid
-            qhalf(jrho) = (phitor(jrho+1) - phitor(jrho))/(psin_grid(jrho+1) - psin_grid(jrho)) / &
-                (psib - psiax)
-        enddo
-
         fpol2(1) = 0.
-        do jrho=2, nrho ! new psin grid
-            fpol2(jrho) = fpol2(jrho-1) + (2.*jrho - 3.)/qhalf(jrho-1)/(nrho - 1.)**2
+        do jrho=2, nrho ! toroidal flux on full grid
+            dphi = fpol(jrho-1) * sum(dArea2(jrho-1, :)/Rmaj2(jrho-1, :))
+            qhalf = dphi/(psin_grid(jrho) - psin_grid(jrho-1))
+            fpol2(jrho) = fpol2(jrho-1) + (2.*jrho - 3.)/qhalf
         enddo
         psin_grid = 0.5*psin_grid + 0.5*fpol2/fpol2(nrho)
-
         do jrho=1, nrho-1
             psin_gridp(jrho) = 0.5*(psin_grid(jrho+1) + psin_grid(jrho))
         enddo
