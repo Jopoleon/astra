@@ -524,7 +524,7 @@ radial_loop: do jradial=1, nradial
     in_regular%write_primi = 0
     in_regular%rot_flag = rot_flag_in
 
-    in_regular%R0 = R0_in
+!    in_regular%R0 = R0_in
     in_regular%relacc1 = relacc1_in
     in_regular%relacc2 = relacc2_in
     in_regular%absacc2 = absacc2_in

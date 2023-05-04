@@ -49,7 +49,7 @@ export STRAHL_HOME="${ASTRA_EXT}/strahl"
 
 # QuaLiKiZ
 
-export QLK_HOME=${ASTRA_EXT}/qualikiz/apr21
+export QLK_HOME=${ASTRA_EXT}/qualikiz/apr23
 export QLK_INC=${QLK_HOME}/inc
 export QLK_LIB=${QLK_HOME}/lib/libQLK-intel-release-default-mpi.a
 
