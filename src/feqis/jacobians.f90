@@ -33,7 +33,8 @@ double precision :: drdX, dhdX, drdY, dhdY, &
     dXdr2, dYdr2, dXdh2, dYdh2, &
     dXdri1, dYdri1, dXdhi1, dYdhi1, &
     dXdr, dYdr, dXdh, dYdh, &
-    Jcbn, Jcbn2, grt2, gradr2
+    Jcbn, Jcbn2, grt2, gradr2, &
+    dxcos1, dxcos2, dxsin1, dxsin2 
 double precision, dimension(nrho) ::  lambda2dold, psin
 double precision, dimension(ntheta) :: dXb0
 double precision, dimension(nrho, ntheta) :: &
@@ -93,18 +94,22 @@ do jthe=1, ntheta
     else
         jthe_r = jthe + 1
     endif
+    dXb0_i = 0.5*(dXb0(jthe) + dXb0(jthe_r))
+    dxcos1 = dXb0(jthe)*cos(thetap(jthe))
+    dxsin1 = dXb0(jthe)*sin(thetap(jthe))
+    dxcos2 = dXb0_i*cos(thetap_i(jthe))
+    dxsin2 = dXb0_i*sin(thetap_i(jthe))
     do jrho=1, nrho
         lambda2di  = 0.5*(lambda2d (jrho, jthe) + lambda2d (jrho, jthe_r))
         lambda2dpi = 0.5*(lambda2dp(jrho, jthe) + lambda2dp(jrho, jthe_r))
-        dXb0_i = 0.5*(dXb0(jthe) + dXb0(jthe_r))
-        X   (jrho, jthe) = X0 + lambda2d (jrho, jthe)*dXb0(jthe)*cos(thetap(jthe))
-        Y   (jrho, jthe) = Y0 + lambda2d (jrho, jthe)*dXb0(jthe)*sin(thetap(jthe))
-        X2  (jrho, jthe) = X0 + lambda2dp(jrho, jthe)*dXb0(jthe)*cos(thetap(jthe))
-        Y2  (jrho, jthe) = Y0 + lambda2dp(jrho, jthe)*dXb0(jthe)*sin(thetap(jthe))
-        X_i1(jrho, jthe) = X0 + lambda2di *dXb0_i*cos(thetap_i(jthe))
-        Y_i1(jrho, jthe) = Y0 + lambda2di *dXb0_i*sin(thetap_i(jthe))
-        X_i (jrho, jthe) = X0 + lambda2dpi*dXb0_i*cos(thetap_i(jthe))
-        Y_i (jrho, jthe) = Y0 + lambda2dpi*dXb0_i*sin(thetap_i(jthe))
+        X   (jrho, jthe) = X0 + lambda2d (jrho, jthe)*dxcos1
+        Y   (jrho, jthe) = Y0 + lambda2d (jrho, jthe)*dxsin1
+        X2  (jrho, jthe) = X0 + lambda2dp(jrho, jthe)*dxcos1
+        Y2  (jrho, jthe) = Y0 + lambda2dp(jrho, jthe)*dxsin1
+        X_i1(jrho, jthe) = X0 + lambda2di *dxcos2
+        Y_i1(jrho, jthe) = Y0 + lambda2di *dxsin2
+        X_i (jrho, jthe) = X0 + lambda2dpi*dxcos2
+        Y_i (jrho, jthe) = Y0 + lambda2dpi*dxsin2
     enddo
 enddo
 

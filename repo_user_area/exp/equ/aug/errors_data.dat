@@ -1,0 +1,9 @@
+1.e-9  ! err circ
+1.e-12  ! err find oxpoints
+1.e-12  ! err find oxpoints deriv
+1.e-8  ! err find psistab
+1.e-10  ! err find delr
+1.e-10 ! err find biquad
+1.e-12 ! epsilon
+1.e-5 ! err gap tolez
+1.e-6 ! fix boundary tolerance
