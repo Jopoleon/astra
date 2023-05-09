@@ -252,17 +252,15 @@
       end subroutine kpr_calc
 
 !----------------------------------------------------------------
-      subroutine put_name(name, ksym)
+      subroutine put_name(name)
 
-      use iopath, only: kname, path
+      use iopath, only: path
 
       implicit none
 
-      integer, intent(in) :: ksym
-      character(len=40), intent(in) :: name
+      character(len=120), intent(in) :: name
      
-      path  = name
-      kname = ksym
+      path = name
 
       return
       end subroutine put_name

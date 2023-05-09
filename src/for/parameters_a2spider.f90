@@ -27,7 +27,6 @@ type type_parameters
     integer :: nstep = 0   ! nstep=0 - initial eq., nstep>0 using computed eq.
 
     character(len=80) :: prename = 'exp/equ/' ! working directory path
-    integer :: kname = 8   ! path name length >=1
     character(len=80) :: eqdfn = ''
     
     integer ::  k_fixfree=1  !=0->only fixed boundary spider 

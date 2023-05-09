@@ -141,7 +141,7 @@
       subroutine wrd
 
       use sp_parameters, only: nbndp2
-      use iopath, only: kname, path
+      use iopath, only: path
       use comblc, only: ni, ni1, ni2, nj, nj1, nj2, ipr, 
      &   r, z, rm, zm, rx0, zx0, r, z, curf,
      &   u, ue, ui, um, un, up, ux0
@@ -154,7 +154,7 @@
 
       common/comlop/ rxb, zxb, nxb
 
-      write(fname,'(a,a)') path(1:kname),'out.wr'
+      write(fname,'(a,a)') TRIM(path), '/out.wr'
       open(1,file=fname,form='formatted')
          write(1,*) ni,nj,ni1,nj1,ni2,nj2,nxb
          write(1,*) (r(i),i=1,ni)
@@ -170,7 +170,7 @@
          write(1,*) ((un(i,j),i=1,ni),j=1,nj)
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'recbon.wr'
+      write(fname,'(a,a)') TRIM(path), '/recbon.wr'
       open(1,file=fname,form='formatted')  
          write(1,*) nxb
          do ig=1,nxb
@@ -184,7 +184,7 @@
 !----------------------------------------------------------------
       subroutine wrrec
 
-      use iopath, only: kname, path
+      use iopath, only: path
       use comblc, only: ni, ni1, ni2, nj, nj1, nj2, imax, jmax, ipr,
      &   r, z, rx0, zx0, rm, zm, r0ax, rx1, rx2, zx1, zx2, 
      &   rmin, rmax, zmin, zmax, qcen, b0ax, u, ue, um, un, up, ux0
@@ -194,7 +194,7 @@
       integer :: i, j, l
       character(len=80) :: fname
 
-      write(fname,'(a,a)') path(1:kname),'rect.wr'
+      write(fname,'(a,a)') TRIM(path), '/rect.wr'
       open(1,file=fname,form='formatted')
          write(1,*) ni,nj,ni1,nj1,ni2,nj2,imax,jmax
          write(1,*) (r(i),i=1,ni)
@@ -214,7 +214,7 @@
 !----------------------------------------------------------------
       subroutine wrdbnd
  
-      use iopath, only: kname, path
+      use iopath, only: path
       use comblc, only: nbnd, binadg
 
       implicit none
@@ -222,7 +222,7 @@
       integer :: i, j
       character(len=80) :: fname
 
-      write(fname,'(a,a)') path(1:kname),'bnd.wr'
+      write(fname,'(a,a)') TRIM(path), '/bnd.wr'
       open(1,file=fname,form='formatted')
          write(1,*) ((binadg(i,j),i=1,nbnd),j=1,nbnd)
       close(1)
@@ -233,7 +233,7 @@
 !----------------------------------------------------------------
       subroutine rddbnd
 
-      use iopath, only: kname, path
+      use iopath, only: path
       use comblc, only: nbnd, binadg
 
       implicit none
@@ -241,7 +241,7 @@
       integer :: i, j
       character(len=80) :: fname
 
-      write(fname,'(a,a)') path(1:kname),'bnd.wr'
+      write(fname,'(a,a)') TRIM(path), '/bnd.wr'
       open(1,file=fname,form='formatted')
          read(1,*) ((binadg(i,j),i=1,nbnd),j=1,nbnd)
       close(1)

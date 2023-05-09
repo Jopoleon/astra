@@ -4,7 +4,7 @@
      &   n_tht, n_psi, epsro, nurs, i_eqdsk, i_bsh, psi_bnd, psi0_bnd)
 
       use sp_parameters
-      use iopath, only: kname, path
+      use iopath, only: path
       use keys, only: kpr, kstep
 
       implicit none
@@ -93,7 +93,7 @@
 
       if(nstep.eq.0) then
          if(nbsh.eq.0) then
-            write(fname,'(a,a)') path(1:kname),'inpol.dat'
+            write(fname,'(a,a)') TRIM(path),'/inpol.dat'
             open(1,file=fname)
                read(1,*) dummy_nbsh
                read(1,*) rc0

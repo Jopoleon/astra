@@ -6,7 +6,7 @@
 
       use sp_parameters, only: njlim, nplim, nclim, nilim, npfc0, 
      &   pi, amu0
-      use iopath, only: kname, path
+      use iopath, only: path
       use comevl, only: ppind
 
       implicit none
@@ -49,7 +49,7 @@
 
       NCEQUI = NC - NCPFC + NEQUI
 
-      write(fname,'(a,a)') path(1:kname),'ppind_mat.wr'
+      write(fname,'(a,a)') TRIM(path), '/ppind_mat.wr'
       open(1,file=fname,form='formatted')
          write(1,*) ncequi
          write(1,*) ((ppind(i,j),i=1,ncequi), j=1,ncequi)
@@ -62,7 +62,7 @@
       subroutine rd_ppind
 
       use sp_parameters, only: njlim, nplim, npfc0
-      use iopath, only: kname, path
+      use iopath, only: path
       use comevl, only: ppind
 
       implicit none
@@ -72,7 +72,7 @@
 
       common/comeqg/ ncequi
 
-      write(fname,'(a,a)') path(1:kname),'ppind_mat.wr'
+      write(fname,'(a,a)') TRIM(path), '/ppind_mat.wr'
         open(1,file=fname,form='formatted')
            read(1,*) ncequi
            read(1,*) ((ppind(i,j),i=1,ncequi), j=1,ncequi)
@@ -86,7 +86,7 @@
      &                   NPRO, RPRO, ZPRO,  FIPRO )
 C--- INPUT OF POSITIONS OF "PF_PROBE" POINTS:
 
-      use iopath, only: kname, path
+      use iopath, only: path
 
       implicit none
 
@@ -97,7 +97,7 @@ C--- INPUT OF POSITIONS OF "PF_PROBE" POINTS:
       integer :: i, l
       character(len=80) :: fname
 
-      write(fname,'(a,a)') path(1:kname),'pf_probe.dat'
+      write(fname,'(a,a)') TRIM(path), '/pf_probe.dat'
       open(1,file=fname,form='formatted')
          read(1,*)  NPRO
          if( NPRO.NE.0 ) then
@@ -107,7 +107,7 @@ C--- INPUT OF POSITIONS OF "PF_PROBE" POINTS:
          endif
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'propoi.wr'
+      write(fname,'(a,a)') TRIM(path), '/propoi.wr'
       open(1,file=fname,form='formatted')
          write(1,*) npro
          write(1,*) ( rpro(i), i=1,npro)
@@ -122,7 +122,7 @@ C--- INPUT OF POSITIONS OF "PF_PROBE" POINTS:
       subroutine rd_prob( NPRO, RPRO, ZPRO,  FIPRO )
 ! READING POSITIONS OF "PF_PROBE" POINTS:
 
-      use iopath, only: kname, path
+      use iopath, only: path
 
       implicit none
 
@@ -132,7 +132,7 @@ C--- INPUT OF POSITIONS OF "PF_PROBE" POINTS:
       integer :: i
       character(len=80) :: fname
 
-      write(fname,'(a,a)') path(1:kname),'propoi.wr'
+      write(fname,'(a,a)') TRIM(path), '/propoi.wr'
       open(1,file=fname,form='formatted')
          read(1,*) npro
          read(1,*) ( rpro(i), i=1,npro)
@@ -147,7 +147,7 @@ C--- INPUT OF POSITIONS OF "PF_PROBE" POINTS:
       subroutine LOOPNT(NOUT, NTER, NINFW, NGRA1, NLOO, RLOO, ZLOO)
 C--- INPUT OF POSITIONS OF "FL_LOOP" POINTS:
 
-      use iopath, only: kname, path
+      use iopath, only: path
 
       implicit none
 
@@ -161,7 +161,7 @@ C--- INPUT OF POSITIONS OF "FL_LOOP" POINTS:
       NINFW=1
       ngra1=1
  
-      write(fname,'(a,a)') path(1:kname),'fl_loop.dat'
+      write(fname,'(a,a)') TRIM(path), '/fl_loop.dat'
       open(NINFW,file=fname,form='formatted')
          read(NINFW,*) NLOO
          if( NLOO.NE.0 ) then
@@ -170,7 +170,7 @@ C--- INPUT OF POSITIONS OF "FL_LOOP" POINTS:
             enddo
          endif
       close(NINFW)
-      write(fname,'(a,a)') path(1:kname),'loopoi.wr'
+      write(fname,'(a,a)') TRIM(path), '/loopoi.wr'
       open(ngra1,file=fname,form='formatted')
          write(ngra1,*) nloo
          write(ngra1,*) (rloo(i), i=1,nloo)
@@ -184,7 +184,7 @@ C--- INPUT OF POSITIONS OF "FL_LOOP" POINTS:
       subroutine rd_loop( NLOO, RLOO, ZLOO )
 ! INPUT OF POSITIONS OF "FL_LOOP" POINTS:
 
-      use iopath, only: kname, path
+      use iopath, only: path
 
       implicit none
 
@@ -195,7 +195,7 @@ C--- INPUT OF POSITIONS OF "FL_LOOP" POINTS:
       character(len=80) :: fname
 
       ngra1 = 1
-      write(fname,'(a,a)') path(1:kname),'loopoi.wr'
+      write(fname,'(a,a)') TRIM(path), '/loopoi.wr'
       open(1,file=fname,form='formatted')
          read(ngra1,*) nloo
          read(ngra1,*) (rloo(i), i=1,nloo)

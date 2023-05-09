@@ -5,7 +5,7 @@ subroutine TREFW( NOUT, NTER, NINFW, NP, KD, RP1, ZP1, RP2, ZP2, &
 ! VV(I)  - VERTICAL   (Z) SIZE  OF THIN PLATE
 ! HH(I)  - HORISONTAL (R) SIZE  OF THIN PLATE
 
-use iopath, only: kname, path
+use iopath, only: path
 
 implicit none
 
@@ -19,7 +19,7 @@ integer :: I, K, L, ND
 real*8 :: DELR, DELZ, SSSFW, DDI, fr_cam, RCEFW
 character(len=80) :: fname
 
-write(fname,'(a,a)') path(1:kname),'blanfw.dat'
+write(fname,'(a,a)') TRIM(path), '/blanfw.dat'
 open(NINFW,file=fname,form='formatted')
 
 read(NINFW,*)  RCEFW
@@ -100,7 +100,7 @@ subroutine TREBP( NOUT, NTER, NINFW, NP, KD, RP1, ZP1, RP2, ZP2, &
 !  VV(I)  - VERTICAL   (Z) SIZE OF THIN PLATE
 !  HH(I)  - HORISONTAL (R) SIZE OF THIN PLATE
 
-use iopath, only: kname, path
+use iopath, only: path
 
 implicit none
 
@@ -114,7 +114,7 @@ integer :: I, K, L, ND
 real*8 :: DELR, DELZ, SSSFW, DDI, fr_cam, RCEBP
 character(len=80) :: fname
 
-write(fname,'(a,a)') path(1:kname),'blanbp.dat'
+write(fname,'(a,a)') TRIM(path), '/blanbp.dat'
 open(NINFW,file=fname,form='formatted')
 read(NINFW,*) RCEBP
 read(NINFW,*) NP
@@ -189,7 +189,7 @@ subroutine TREVV( NOUT, NTER, NINFW, NP, KD, RP1, ZP1, RP2, ZP2, &
 ! VV(I)  - VERTICAL   (Z) SIZE OF THIN PLATE
 ! HH(I)  - HORISONTAL (R) SIZE OF THIN PLATE
 
-use iopath, only: kname, path
+use iopath, only: path
 
 implicit none
 
@@ -203,7 +203,7 @@ integer :: I, K, L, ND
 real*8 :: DELR, DELZ, SSSFW, DDI, fr_cam, RCEVV
 character(len=80) :: fname
 
-write(fname,'(a,a)') path(1:kname),'vacves.dat'
+write(fname,'(a,a)') TRIM(path), '/vacves.dat'
 open(NINFW,file=fname,form='formatted')
 read(NINFW,*)  RCEVV
 read(NINFW,*)  NP

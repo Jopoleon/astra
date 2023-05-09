@@ -29,7 +29,7 @@
       subroutine extfil(pcequi, ncequi)
 
       use sp_parameters, only: nip, njp, amu0
-      use iopath, only: kname, path
+      use iopath, only: path
       use comevl, only: nloc, nequi, npfc
       use comblc, only: nj, ni, ue, ue_k, rcondzzz
 
@@ -52,7 +52,7 @@
 
       ue_k=0.
 
-      write(fname,'(a,a)') path(1:kname),'exf.wr'
+      write(fname,'(a,a)') TRIM(path), '/exf.wr'
       open(1,file=fname,form='formatted')
          read(1,*) nkread,nequi
          do iq=1,ncequi
@@ -75,7 +75,7 @@
      &                  rk3, zk3, rk4, zk4, ntipe, NECON, WECON )
 
       use sp_parameters, only: nip, njp, pi
-      use iopath, only: kname, path
+      use iopath, only: path
       use comevl, only: nequi, npfc, nloc
       use comblc, only: ni, nj, r, z
 
@@ -96,7 +96,7 @@
       nves   = nk - ncpfc
       ncequi = nequi + nves
 
-      write(fname,'(a,a)') path(1:kname),'exf.wr'
+      write(fname,'(a,a)') TRIM(path), '/exf.wr'
       open(1,file=fname,form='formatted')
          write(1,*) ncequi, nequi
          do iq=1,nequi
@@ -163,7 +163,7 @@
       subroutine cfr_mat(rk, zk, tk, nk, NECON, WECON)
 
       use sp_parameters, only: nip, njp, npfc0, pi
-      use iopath, only: kname, path
+      use iopath, only: path
       use comevl, only: npfc, nloc
       use comblc, only: ni, nj, r, z
 
@@ -208,7 +208,7 @@
          enddo
       enddo
 
-      write(fname,'(a,a)') path(1:kname),'forcmat.wr'
+      write(fname,'(a,a)') TRIM(path), '/forcmat.wr'
       open(1,file=fname,form='formatted')
          write(1,*) npfc
          write(1,*) ((fr_indk(i,j),j=1,npfc),i=1,npfc)
@@ -269,7 +269,7 @@
       subroutine rdexf(ncequi)
 
       use sp_parameters, only: nip, njp
-      use iopath, only: kname, path
+      use iopath, only: path
       use comevl, only: nequi, nloc, npfc
       use comrec, only: zaindk
       use comblc, only: ni, nj
@@ -282,7 +282,7 @@
       real*8, dimension(nip, njp) :: aindk
       character(len=80) :: fname
 
-      write(fname,'(a,a)') path(1:kname),'exf.wr'
+      write(fname,'(a,a)') TRIM(path), '/exf.wr'
       open(1,file=fname,form='formatted')
          read(1,*) nk,nequi
          ncpfc=nloc(npfc)

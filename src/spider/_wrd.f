@@ -1,7 +1,7 @@
       SUBROUTINE wrd_tim
 
       use sp_parameters, only: nstep_p
-      use iopath, only: kname, path
+      use iopath, only: path
       use comtim
       use keys, only: kstep, kpr
 
@@ -11,7 +11,7 @@
       character(len=80) :: fname
 
       if (kpr.ge.0) then
-         write(fname,'(a,a)') path(1:kname),'eq_tim.wr'
+         write(fname,'(a,a)') TRIM(path), '/eq_tim.wr'
          open(1,file=fname)
             kwr=kstep+1
             write(1,*)  kwr
@@ -35,7 +35,7 @@
       subroutine f_wrd
 
       use sp_parameters
-      use iopath, only: kname, path
+      use iopath, only: path
       use keys, only: kpr, kstep
 
       implicit none
@@ -55,7 +55,7 @@
       common/com_but/ sigma,cbut_b
 
       if (kpr.ge.0) then
-         write(fname,'(a,a)') path(1:kname),'outp.wr'
+         write(fname,'(a,a)') TRIM(path), '/outp.wr'
          open(1,file=fname)
             write(1,*) nr,nt,nr1,nt1,nr2,nt2,iplas
             write(1,*) ((r(i,j),i=1,nr),j=1,nt)
@@ -71,7 +71,7 @@
             write(1,*)  rm,zm,rx0,zx0,ctim,kstep
         close(1)
 
-        write(fname,'(a,a)') path(1:kname),'ddp.wr'
+        write(fname,'(a,a)') TRIM(path), '/ddp.wr'
         open(1,file=fname)
            write(1,*) iplas
            write(1,*) (q(i),i=1,iplas)
@@ -86,7 +86,7 @@
            write(1,*) (cbut_b(i),i=1,iplas)
            write(1,*)  ctim,kstep
         close(1)
-        write(fname,'(a,a)') path(1:kname),'dps.wr'
+        write(fname,'(a,a)') TRIM(path), '/dps.wr'
         open(1,file=fname)
            do i=1,iplas
               ddps=psi(i,2)-psf(i)
@@ -102,7 +102,7 @@
       subroutine rdrec
 
       use sp_parameters, only: nip, njp
-      use iopath, only: kname, path
+      use iopath, only: path
       use comrec
 
       implicit none
@@ -111,7 +111,7 @@
       real*8 :: qcen, b0ax, r0ax
       character(len=80) :: fname
 
-      write(fname,'(a,a)') path(1:kname),'rect.wr'
+      write(fname,'(a,a)') TRIM(path), '/rect.wr'
       open(1,file=fname)
          read(1,*) ni,nj,ni1,nj1,ni2,nj2,imax,jmax
          read(1,*) (x(i),i=1,ni)
@@ -132,7 +132,7 @@
       subroutine wr_step(numwr, time, istep)
 
       use sp_parameters
-      use iopath, only: kname, path
+      use iopath, only: path
 
       implicit none
 
@@ -145,19 +145,19 @@
       include 'compol.inc'
       include 'compol_add.inc'
 
-      write(fname,'(a,a)') path(1:kname),'nmwr.wr'
+      write(fname,'(a,a)') TRIM(path), '/nmwr.wr'
       open(1,file=fname)
          write(1,*) numwr
       close(1)
 
       if(numwr.lt.10) then
-         write(str,'(a,a,i1,a)') path(1:kname),'step',numwr,'.wr'
+         write(str,'(a,a,i1,a)') TRIM(path), '/step',numwr,'.wr'
       elseif(numwr.lt.100) then
-         write(str,'(a,a,i2,a)') path(1:kname),'step',numwr,'.wr'
+         write(str,'(a,a,i2,a)') TRIM(path), '/step',numwr,'.wr'
       elseif(numwr.lt.1000) then
-         write(str,'(a,a,i3,a)') path(1:kname),'step',numwr,'.wr'
+         write(str,'(a,a,i3,a)') TRIM(path), '/step',numwr,'.wr'
       else
-         write(str,'(a,a,i4,a)') path(1:kname),'step',numwr,'.wr'
+         write(str,'(a,a,i4,a)') TRIM(path), '/step',numwr,'.wr'
       endif
 
       open(1,file=str,form='formatted')
@@ -176,7 +176,7 @@
          write(1,*) psi_eav,rm,zm,psim-psip,psibon0,tok
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'wlist.wr'
+      write(fname,'(a,a)') TRIM(path), '/wlist.wr'
       open(1,file=fname)
          if(numwr.eq.1) then
             write(1,*) str

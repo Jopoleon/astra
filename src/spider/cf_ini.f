@@ -3,7 +3,7 @@
 
       use durs_d_modul
       use sp_parameters
-      use iopath, only: kname, path
+      use iopath, only: path
       use parcur, only: curref
       use comevl
       use keys
@@ -51,7 +51,7 @@
       if(k_auto.eq.0) goto 2005
 
       if(kastr.ne.1) then
-         write(fname,'(a,a)') path(1:kname),'durs.dat'
+         write(fname,'(a,a)') TRIM(path),'/durs.dat'
          open(1,file=fname,form='formatted')
             read(1,*) n_tht
             read(1,*) n_psi
@@ -121,19 +121,19 @@
          endif
       enddo
 
-      write(fname,'(a,a)') path(1:kname),'currents.wr'
+      write(fname,'(a,a)') TRIM(path), '/currents.wr'
       open(1,file=fname,form='formatted')
          write(1,*) NEQUI,NCEQUI
          write(1,*)(pjk(j),j=1,NCEQUI)
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'pfcurr.wr'
+      write(fname,'(a,a)') TRIM(path), '/pfcurr.wr'
       open(1,file=fname,form='formatted')
          write(1,*) NEQUI
          write(1,*)(PFCEQW(j),j=1,NEQUI)
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'res_mat.wr'
+      write(fname,'(a,a)') TRIM(path), '/res_mat.wr'
          open(1,file=fname,form='formatted')
          write(1,*) ((res(i,j),j=1,ncequi),i=1,ncequi)
       close(1)
@@ -151,7 +151,7 @@
  2005 continue
 
       if(kastr.eq.0) then 
-         write(fname,'(a,a)') path(1:kname),'inpol.dat'
+         write(fname,'(a,a)') TRIM(path), '/inpol.dat'
          open(1,file=fname,form='formatted')
             read(1,*) i_bsh
          close(1)    
@@ -164,19 +164,19 @@
       call rd_prob( NPROb, RPROb, ZPROb,  FIPROb )
       call rd_loop( NLOOp, RLOOp, ZLOOp )
 
-      write(fname,'(a,a)') path(1:kname),'currents.wr'
+      write(fname,'(a,a)') TRIM(path), '/currents.wr'
       open(1,file=fname,form='formatted')
          read(1,*) nequi,ncequi
          read(1,*)(pjk(j),j=1,ncequi)
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'pfcurr.wr'
+      write(fname,'(a,a)') TRIM(path), '/pfcurr.wr'
       open(1,file=fname,form='formatted')
          read(1,*) nequi
          read(1,*)(PFCEQW(j),j=1,nequi)
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'res_mat.wr'
+      write(fname,'(a,a)') TRIM(path), '/res_mat.wr'
       open(1,file=fname,form='formatted')
          read(1,*) ((res(i,j),j=1,ncequi),i=1,ncequi)
       close(1)
@@ -278,20 +278,20 @@
 
       call wrd
 
-      write(fname,'(a,a)') path(1:kname),'currents.wr'
+      write(fname,'(a,a)') TRIM(path), '/currents.wr'
       open(1,file=fname,form='formatted')
          write(1,*) NEQUI,NCEQUI
          write(1,*)(pjk(j),j=1,NCEQUI)
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'psiplcoils.wr'
+      write(fname,'(a,a)') TRIM(path), '/psiplcoils.wr'
       open(1,file=fname,form='formatted')
          write(1,*) NEQUI,NCEQUI
          write(1,*)( (pskp1(j)+psk(j))/2. ,j=1,NCEQUI)
          write(1,*) psi_bnd,tokout,ftok
       close(1)
        
-      write(fname,'(a,a)') path(1:kname),'pfc_curr.wr'
+      write(fname,'(a,a)') TRIM(path), '/pfc_curr.wr'
       open(1,file=fname,form='formatted')
          write(1,*) 'coil currents [mA]'
          write(1,'(a6,e13.5)') 'PF1',pjk(1) !*1.d3
@@ -301,7 +301,7 @@
          write(1,'(a6,e13.5)') 'CS',pjk(5) !*1.d3
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'tcurrs.wr'
+      write(fname,'(a,a)') TRIM(path), '/tcurrs.wr'
       open(1,file=fname,form='formatted')
          do ik=1,nequi
 	    do j=1,NPFC
@@ -334,7 +334,7 @@
 
       use durs_d_modul
       use sp_parameters
-      use iopath, only: kname, path
+      use iopath, only: path
       use parcur, only: curref
       use comevl
       use keys
@@ -380,7 +380,7 @@
       if(k_auto.eq.0) goto 2005 
 
       if(kastr.ne.1) then
-         write(fname,'(a,a)') path(1:kname),'durs.dat'
+         write(fname,'(a,a)') TRIM(path), '/durs.dat'
          open(1,file=fname,form='formatted')
             read(1,*) n_tht
             read(1,*) n_psi
@@ -450,19 +450,19 @@
          endif
       enddo
 
-      write(fname,'(a,a)') path(1:kname),'currents.wr'
+      write(fname,'(a,a)') TRIM(path), '/currents.wr'
       open(1,file=fname,form='formatted')
          write(1,*) NEQUI,NCEQUI
          write(1,*)(pjk(j),j=1,NCEQUI)
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'pfcurr.wr'
+      write(fname,'(a,a)') TRIM(path), '/pfcurr.wr'
       open(1,file=fname,form='formatted')
          write(1,*) NEQUI
          write(1,*)(PFCEQW(j),j=1,NEQUI)
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'res_mat.wr'
+      write(fname,'(a,a)') TRIM(path), '/res_mat.wr'
       open(1,file=fname,form='formatted')
          write(1,*) ((res(i,j),j=1,ncequi),i=1,ncequi)
       close(1)
@@ -482,7 +482,7 @@
  2005   continue
 
       if(kastr.eq.0) then 
-         write(fname,'(a,a)') path(1:kname),'inpol.dat'
+         write(fname,'(a,a)') TRIM(path), '/inpol.dat'
          open(1,file=fname,form='formatted')
             read(1,*) i_bsh
          close(1)
@@ -495,19 +495,19 @@
       call rd_prob(NPROb, RPROb, ZPROb, FIPROb)
       call rd_loop(NLOOp, RLOOp, ZLOOp)
 
-      write(fname,'(a,a)') path(1:kname),'currents.wr'
+      write(fname,'(a,a)') TRIM(path), '/currents.wr'
       open(1,file=fname,form='formatted')
          read(1,*) nequi,ncequi
          read(1,*)(pjk(j),j=1,ncequi)
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'pfcurr.wr'
+      write(fname,'(a,a)') TRIM(path), '/pfcurr.wr'
       open(1,file=fname,form='formatted')
          read(1,*) nequi
          read(1,*)(PFCEQW(j),j=1,nequi)
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'res_mat.wr'
+      write(fname,'(a,a)') TRIM(path), '/res_mat.wr'
       open(1,file=fname,form='formatted')
          read(1,*) ((res(i,j),j=1,ncequi),i=1,ncequi)
       close(1)
@@ -609,20 +609,20 @@
 
       call wrd
 
-      write(fname,'(a,a)') path(1:kname),'currents.wr'
+      write(fname,'(a,a)') TRIM(path), '/currents.wr'
       open(1,file=fname,form='formatted')
          write(1,*) NEQUI,NCEQUI
          write(1,*)(pjk(j),j=1,NCEQUI)
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'psiplcoils.wr'
+      write(fname,'(a,a)') TRIM(path), '/psiplcoils.wr'
       open(1,file=fname,form='formatted')
          write(1,*) NEQUI,NCEQUI
          write(1,*)( (pskp1(j)+psk(j))/2. ,j=1,NCEQUI)
          write(1,*) psi_bnd,tokout,ftok
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'pfc_curr.wr'
+      write(fname,'(a,a)') TRIM(path), '/pfc_curr.wr'
       open(1,file=fname,form='formatted')
          write(1,*) 'coil currents [mA]'
          write(1,'(a6,e13.5)') 'PF1',pjk(1) !*1.d3
@@ -632,7 +632,7 @@
          write(1,'(a6,e13.5)') 'CS',pjk(5) !*1.d3
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'tcurrs.wr'
+      write(fname,'(a,a)') TRIM(path), '/tcurrs.wr'
       open(1,file=fname,form='formatted')
          do ik=1,nequi
             do j=1,NPFC
@@ -665,7 +665,7 @@
 
       use durs_d_modul
       use sp_parameters
-      use iopath, only: kname, path
+      use iopath, only: path
       use parcur, only: curref
       use comevl
       use keys
@@ -847,20 +847,20 @@
 
       call wrd
 
-      write(fname,'(a,a)') path(1:kname),'currents.wr'
+      write(fname,'(a,a)') TRIM(path), '/currents.wr'
       open(1,file=fname,form='formatted')
          write(1,*) NEQUI,NCEQUI
          write(1,*)(pjk(j),j=1,NCEQUI)
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'psiplcoils.wr'
+      write(fname,'(a,a)') TRIM(path), '/psiplcoils.wr'
       open(1,file=fname,form='formatted')
          write(1,*) NEQUI,NCEQUI
          write(1,*)( (pskp1(j)+psk(j))/2. ,j=1,NCEQUI)
          write(1,*) psi_bnd
       close(1)
        
-      write(fname,'(a,a)') path(1:kname),'pfc_curr.wr'
+      write(fname,'(a,a)') TRIM(path), '/pfc_curr.wr'
       open(1,file=fname,form='formatted')
          write(1,*) 'coil currents [mA]'
          write(1,'(a6,e13.5)') 'PF1',pjk(1) !*1.d3
@@ -870,7 +870,7 @@
          write(1,'(a6,e13.5)') 'CS',pjk(5) !*1.d3
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'tcurrs.wr'
+      write(fname,'(a,a)') TRIM(path), '/tcurrs.wr'
       open(1,file=fname,form='formatted')
          do ik=1,nequi
             do j=1,NPFC

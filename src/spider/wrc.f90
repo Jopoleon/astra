@@ -1,6 +1,6 @@
 SUBROUTINE wrcoil(nk, nkcoil, rk, zk, tk, necon, wecon)
 
-use iopath, only: kname, path
+use iopath, only: path
 
 implicit none
 
@@ -11,7 +11,7 @@ real*8, intent(in) :: wecon(nkcoil)
 integer :: j
 character(len=80) :: fname
 
-write(fname, '(a, a)') path(1:kname), 'ecur.wr'
+write(fname, '(a, a)') TRIM(path), '/ecur.wr'
 open(1, file=fname, form='formatted')
 
 write(1, *) nk, nkcoil
@@ -28,7 +28,7 @@ end subroutine wrcoil
 !---------------------------------------------------------------
 SUBROUTINE rdcoil(nk, nkcoil, rk, zk, tk, necon, wecon)
 
-use iopath, only: kname, path
+use iopath, only: path
 
 implicit none
 
@@ -38,7 +38,7 @@ real*8, intent(out) :: rk(*), zk(*), tk(*), wecon(*)
 integer :: j
 character(len=80) :: fname
 
-write(fname, '(a, a)') path(1:kname), 'ecur.wr'
+write(fname, '(a, a)') TRIM(path), '/ecur.wr'
 open(1, file=fname, form='formatted')
 
 read(1, *) nk, nkcoil

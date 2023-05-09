@@ -34,7 +34,7 @@ end subroutine f_ext_fil
 subroutine f_rdexf(ncequi)
 
 use sp_parameters, only: njlim, nip, njp
-use iopath, only: kname, path
+use iopath, only: path
 use comrec
 use comevl
 
@@ -46,7 +46,7 @@ integer :: i, j, iq, nk
 real*8 aindk(nip,njp)
 character(len=80) :: fname
 
-write(fname,'(a,a)') path(1:kname),'exf.wr'
+write(fname,'(a,a)') TRIM(path),'/exf.wr'
 open(1,file=fname)
 
 read(1,*) nk,nequi

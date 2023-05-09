@@ -2,7 +2,7 @@
 
       use durs_d_modul
       use sp_parameters
-      use iopath, only: kname, path
+      use iopath, only: path
       use comtim
       use comevl
       use keys, only: kstep, kpr
@@ -47,7 +47,7 @@
 
       DT_EF = dt
       if(kpr .ge. 0) then
-         write(fname,'(a,a)') path(1:kname),'dpsipldt.wr'
+         write(fname,'(a,a)') TRIM(path), '/dpsipldt.wr'
          open(1,file=fname,form='formatted')
          write(1,*) NEQUI,NCEQUI
          write(1,*)( (pskp1(j)-psk(j))/dt_EF ,j=1,NCEQUI)
@@ -56,7 +56,7 @@
 
 ! mutual inductances plasma to coils
       if(kpr .ge. 0) then
-         write(fname,'(a,a)') path(1:kname),'psi_to_coils.wr'
+         write(fname,'(a,a)') TRIM(path), '/psi_to_coils.wr'
          open(1,file=fname,form='formatted')
          write(1,*) NEQUI,NCEQUI
          write(1,*)( (pskp1(j)+psk(j))/2. ,j=1,NCEQUI)
@@ -74,7 +74,7 @@
       enddo
 
       if(kpr .ge. 0) then
-         write(fname,'(a,a)') path(1:kname),'currents.wr'
+         write(fname,'(a,a)') TRIM(path), '/currents.wr'
          open(1,file=fname,form='formatted')
          write(1,*) NEQUI,NCEQUI
          write(1,*)(pjk(j),j=1,NCEQUI)
@@ -127,7 +127,7 @@
 
       use durs_d_modul       
       use sp_parameters
-      use iopath, only: kname, path
+      use iopath, only: path
       use comtim
       use comevl, only: dt_ef, nequi
       use keys, only: kstep, kpr
@@ -177,7 +177,7 @@
 
       DT_EF = dt
       if(kpr .ge. 0) then
-         write(fname,'(a,a)') path(1:kname),'dpsipldt.wr'
+         write(fname,'(a,a)') TRIM(path), '/dpsipldt.wr'
          open(1,file=fname,form='formatted')
          write(1,*) NEQUI,NCEQUI
          write(1,*)( (pskp1(j)-psk(j))/dt_EF ,j=1,NCEQUI)
@@ -186,7 +186,7 @@
 
 ! mutual inductances plasma to coils
       if(kpr .ge. 0) then
-         write(fname,'(a,a)') path(1:kname),'psi_to_coils.wr'
+         write(fname,'(a,a)') TRIM(path), '/psi_to_coils.wr'
          open(1,file=fname,form='formatted')
          write(1,*) NEQUI,NCEQUI
          write(1,*)( (pskp1(j)+psk(j))/2. ,j=1,NCEQUI)
@@ -194,7 +194,7 @@
       endif
 
       if(kpr .ge. 0) then
-         write(fname,'(a,a)') path(1:kname),'currents.wr'
+         write(fname,'(a,a)') TRIM(path), '/currents.wr'
          open(1,file=fname,form='formatted')
          write(1,*) NEQUI,NCEQUI
          write(1,*)(pjk(j),j=1,NCEQUI)

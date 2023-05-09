@@ -27,8 +27,7 @@ module iopath
 
    implicit none
 
-   integer :: kname
-   character(len=80) :: io_dir, path
+   character(len=120) :: path
 
 end module iopath
 

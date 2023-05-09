@@ -57,7 +57,7 @@ subroutine TRECUR( NCPFC, RI, ZI, PC, NTYPE, NECON, WECON, &
                    HORS, VERS, NPRI, NTER )
 
 use sp_parameters, only: nloopp, nprobp, njlim, nplim, npfc0
-use iopath, only: kname, path
+use iopath, only: path
 use comevl
 
 implicit none
@@ -78,7 +78,7 @@ character(len=80) :: fname
 
 NINP  = 1
 
-write(fname,'(a,a)') path(1:kname),'coilres.dat'
+write(fname,'(a,a)') TRIM(path), '/coilres.dat'
 open(1,file=fname,form='formatted')
    read(1,*)  NEQUI
    do I=1,NEQUI
@@ -88,7 +88,7 @@ open(1,file=fname,form='formatted')
 close(1)		
 write(*,*) 'res read'
 
-write(fname,'(a,a)') path(1:kname),'coil.dat'
+write(fname,'(a,a)') TRIM(path), '/coil.dat'
 open(1,file=fname,form='formatted')
    read(1,*) NPFC, KEYCUR
    if(NPFC.gt.NPFC0) then

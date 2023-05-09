@@ -3,7 +3,7 @@
 
       use durs_d_modul
       use sp_parameters, only: nstep_p
-      use iopath, only: kname, path
+      use iopath, only: path
       use keys, only: kstep, kpr, kastr
 
       implicit none
@@ -29,7 +29,7 @@
 
       if(k_auto.eq.0 .or. kastr .eq. 1) goto 2005
 
-      write(fname,'(a,a)') path(1:kname),'durs.dat'
+      write(fname,'(a,a)') TRIM(path), '/durs.dat'
       open(1,file=fname)
          read(1,*) n_tht
          read(1,*) n_psi
@@ -68,7 +68,7 @@
  2005 continue
 
       if(kastr.eq.0) then 
-         write(fname,'(a,a)') path(1:kname),'inpol.dat'
+         write(fname,'(a,a)') TRIM(path), '/inpol.dat'
          open(1,file=fname,form='formatted')
             read(1,*) i_bsh
          close(1)    
@@ -117,7 +117,7 @@
       use durs_d_modul       
       use sp_parameters, only: nloopp, nprobp, njlim, nplim, npfc0, 
      &    nilim, nclim, pi, twopi, nstep_p
-      use iopath, only: kname, path
+      use iopath, only: path
       use comevl, only: pfceqw, nequi
       use keys, only: kstep, kpr
 
@@ -199,7 +199,7 @@
 ! --- INPUT OF "BASIC" EQULIBRIUM PARAMETERS FROM FILE "durs.dat"
 
       if(k_auto.ne.0) then
-         write(fname,'(a,a)') path(1:kname),'durs.dat'
+         write(fname,'(a,a)') TRIM(path), '/durs.dat'
          open(1,file=fname,form='formatted')
             read(1,*) n_tht
             read(1,*) n_psi
@@ -287,13 +287,13 @@
             endif
 	endif
 
-        write(fname,'(a,a)') path(1:kname),'currents.wr'
+        write(fname,'(a,a)') TRIM(path), '/currents.wr'
         open(1,file=fname,form='formatted')
            write(1,*) NEQUI,NCEQUI
            write(1,*)(pjk(j),j=1,NCEQUI)
         close(1)
 
-        write(fname,'(a,a)') path(1:kname),'res_mat.wr'
+        write(fname,'(a,a)') TRIM(path), '/res_mat.wr'
         open(1,file=fname,form='formatted')
            write(1,*) ((res(i,j),j=1,ncequi),i=1,ncequi)
         close(1)
@@ -307,13 +307,13 @@
       call rd_prob( NPROb, RPROb, ZPROb,  FIPROb )
       call rd_loop( NLOOp, RLOOp, ZLOOp )
 
-      write(fname,'(a,a)') path(1:kname),'currents.wr'
+      write(fname,'(a,a)') TRIM(path), '/currents.wr'
       open(1,file=fname,form='formatted')
          read(1,*) nequi,ncequi
          read(1,*)(pjk(j),j=1,ncequi)
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'res_mat.wr'
+      write(fname,'(a,a)') TRIM(path), '/res_mat.wr'
       open(1,file=fname,form='formatted')
          read(1,*) ((res(i,j),j=1,ncequi),i=1,ncequi)
       close(1)
@@ -607,7 +607,7 @@
 
          if( erro .LT. ENELS ) then
             if (kpr.ge.0) then
-               write(fname,'(a,a)') path(1:kname),'knel_iters.wr'
+               write(fname,'(a,a)') TRIM(path), '/knel_iters.wr'
                open(1,file=fname)
                   write(1,*) KNEL
                close(1)
@@ -638,7 +638,7 @@
       use durs_d_modul       
       use sp_parameters, only: nloopp, nprobp, njlim, nplim, npfc0, 
      &    nilim, nclim, pi, twopi, nstep_p
-      use iopath, only: kname, path
+      use iopath, only: path
       use comevl, only: pfceqw, nequi
       use keys, only: kstep, kpr
 
@@ -717,17 +717,17 @@
 
       call rd_ppind
 
-      write(*,*) path(1:kname)
+      write(*,*) TRIM(path)
       call rdcoil(nc,ncpfc,rc,zc,pc,necon,wecon)
 
 
-      write(fname,'(a,a)') path(1:kname),'currents.wr'
+      write(fname,'(a,a)') TRIM(path), '/currents.wr'
       open(1,file=fname,form='formatted')
          read(1,*) nequi,ncequi
          read(1,*)(pjk(j),j=1,ncequi)
       close(1)
       write(*,*) ncequi
-      write(fname,'(a,a)') path(1:kname),'res_mat.wr'
+      write(fname,'(a,a)') TRIM(path), '/res_mat.wr'
       open(1,file=fname,form='formatted')
          read(1,*) ((res(i,j),j=1,ncequi),i=1,ncequi)
       close(1)
@@ -1057,7 +1057,7 @@
 
          if( erro .LT. ENELS ) then
             if (kpr.ge.0) then
-               write(fname,'(a,a)') path(1:kname),'knel_iters.wr'
+               write(fname,'(a,a)') TRIM(path), '/knel_iters.wr'
                open(1,file=fname)
                   write(1,*) KNEL
                close(1)
@@ -1088,7 +1088,7 @@
       use durs_d_modul       
       use sp_parameters, only: nloopp, nprobp, njlim, nplim, npfc0, 
      &    nilim, nclim, pi, twopi, nstep_p
-      use iopath, only: kname, path
+      use iopath, only: path
       use comevl
       use keys, only: kstep, kpr, kastr
 
@@ -1183,7 +1183,7 @@
       if(k_auto.eq.0) goto 2005 
 
       if(kastr.ne.1) then
-         write(fname,'(a,a)') path(1:kname),'durs.dat'
+         write(fname,'(a,a)') TRIM(path), '/durs.dat'
          open(1,file=fname)
             read(1,*) n_tht
             read(1,*) n_psi
@@ -1217,7 +1217,7 @@
             i_betp = 0
          endif
 
-         write(fname,'(a,a)') path(1:kname),'durs_d.dat'
+         write(fname,'(a,a)') TRIM(path), '/durs_d.dat'
          open(1,file=fname,form='formatted')
             write(1,*) n_tht,n_psi,igdf,nurs,keyctr,i_eqdsk,i_betp
             write(1,*) epsro,betplx,tokf,psax,b0,r0,rax,zax
@@ -1267,13 +1267,13 @@
          endif
       enddo
 
-      write(fname,'(a,a)') path(1:kname),'currents.wr'
+      write(fname,'(a,a)') TRIM(path), '/currents.wr'
       open(1,file=fname,form='formatted')
          write(1,*) NEQUI,NCEQUI
          write(1,*)(pjk(j),j=1,NCEQUI)
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'res_mat.wr'
+      write(fname,'(a,a)') TRIM(path), '/res_mat.wr'
       open(1,file=fname,form='formatted')
          write(1,*) ((res(i,j),j=1,ncequi),i=1,ncequi)
       close(1)
@@ -1292,7 +1292,7 @@
  2005 continue
 
       if(kastr.eq.0 .AnD. i_eqdsk.eq.0) then 
-         write(fname,'(a,a)') path(1:kname),'inpol.dat'
+         write(fname,'(a,a)') TRIM(path), '/inpol.dat'
          open(1,file=fname,form='formatted')
             read(1,*) i_bsh
          close(1)    
@@ -1301,7 +1301,7 @@
       endif
 
       if(kastr.eq.0 ) then 
-         write(fname,'(a,a)') path(1:kname),'durs_d.dat'
+         write(fname,'(a,a)') TRIM(path), '/durs_d.dat'
          open(1,file=fname,form='formatted')
             read(1,*) n_tht,n_psi,igdf,nurs,keyctr,i_eqdsk,i_betp
             read(1,*) epsro,betplx,tokf,psax,b0,r0,rax,zax
@@ -1314,13 +1314,13 @@
       call rd_prob(NPROb, RPROb, ZPROb,  FIPROb)
       call rd_loop(NLOOp, RLOOp, ZLOOp)
 
-      write(fname,'(a,a)') path(1:kname),'currents.wr'
+      write(fname,'(a,a)') TRIM(path), '/currents.wr'
       open(1,file=fname,form='formatted')
          read(1,*) nequi,ncequi
          read(1,*)(pjk(j),j=1,ncequi)
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'res_mat.wr'
+      write(fname,'(a,a)') TRIM(path), '/res_mat.wr'
       open(1,file=fname,form='formatted')
          read(1,*) ((res(i,j),j=1,ncequi),i=1,ncequi)
       close(1)

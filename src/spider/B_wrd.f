@@ -1,7 +1,7 @@
       subroutine wrb
 
       use sp_parameters
-      use iopath, only: kname, path
+      use iopath, only: path
       use keys, only: kpr
 
       implicit none
@@ -9,7 +9,7 @@
       integer :: i, j, ib, nrr
       real*8, dimension(nrp) :: psf, sqtor, bj_av, curfi_av, b2_av
       character(len=8) :: etitl(5)
-      character(len=80) :: fname
+      character(len=120) :: fname
 
       include 'compol.inc'
 
@@ -19,7 +19,7 @@
 
       if(kpr.lt.0) return
 
-      write(fname,'(a,a)') path(1:kname),'outp.wr'
+      write(fname,'(a,a)') TRIM(path),'/outp.wr'
       open(1,file=fname)
          write(1,*) nr,nt,nr1,nt1,nr2,nt2,iplas
          write(1,*) ((r(i,j),i=1,iplas),j=1,nt)
@@ -30,7 +30,7 @@
          write(1,*)  (f(i),i=1,iplas)
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'ddp.wr'
+      write(fname,'(a,a)') TRIM(path),'/ddp.wr'
       open(1,file=fname)
          write(1,*) iplas
          write(1,*) (q(i),i=1,iplas)
@@ -42,7 +42,7 @@
          write(1,*) (BJ_av(i),i=1,iplas)
          write(1,*) (b2_av(i),i=1,iplas)
       close(1)
-      write(fname,'(a,a)') path(1:kname),'tabppf.wr'
+      write(fname,'(a,a)') TRIM(path),'/tabppf.wr'
       open(1,file=fname)
          write(1,*) iplas
          do i=1,iplas
@@ -50,7 +50,7 @@
          enddo
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'q.wr'
+      write(fname,'(a,a)') TRIM(path),'/q.wr'
       open(1,file=fname)
          do i=1,iplas
             if(i.ne.iplas) then
@@ -64,7 +64,7 @@
 
       nrr=iplas
 
-      write(fname,'(a,a)') path(1:kname),'efit_comp.wr'
+      write(fname,'(a,a)') TRIM(path),'/efit_comp.wr'
       open(1,file=fname)
          write(1,2022) nrr,nt
          write(1,2020) rm,zm,psim*0.4d0*pi,psip*0.4d0*pi,tok*1.d3
@@ -78,7 +78,7 @@
          write(1,2020) (r(nrr,j),z(nrr,j),j=1,nt)
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'tab_bnd.wr'
+      write(fname,'(a,a)') TRIM(path),'/tab_bnd.wr'
       open(1,file=fname)
 	 write(1,*) nt1 
 	 do ib=1,nt1
@@ -98,7 +98,7 @@
       use ppf_modul
       use bnd_modul
       use sp_parameters, only: pi, amu0, twopi
-      use iopath, only: kname, path
+      use iopath, only: path
       use keys, only: kpr
 
       implicit none
@@ -133,7 +133,7 @@
       write(*,*) ' Entry of subr."tab_efit":'
       write(*,*) '--------------------------'
 
-      write(fname,'(a,a40)') path(1:kname),eqdfn
+      write(fname,'(a,a40)') TRIM(path),eqdfn
       open(1,file=fname,form='formatted')
 	 read(1,2000) (ccase(i),i=1,6),idum,nw,nh
          write(*,*) idum,nw,nh
@@ -225,19 +225,19 @@
       subroutine wr_spik
 
       use sp_parameters
-      use iopath, only: kname, path
+      use iopath, only: path
       use keys, only: kpr
 
       implicit none
 
       integer :: i, j, nm
-      character(len=80) :: fname
+      character(len=120) :: fname
 
       include 'compol.inc'
 
       if(kpr.lt.0) return
 
-      write(fname,'(a,a)') path(1:kname),'spik.wr'
+      write(fname,'(a,a)') TRIM(path),'spik.wr'
       open(1,file=fname,form='formatted')
          nm=iplas*nt1
          write(1,*) iplas,nt1,nm,psim,psibon,1

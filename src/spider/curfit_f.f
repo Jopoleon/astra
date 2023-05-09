@@ -38,7 +38,7 @@
         
       use bnd_modul
       use sp_parameters
-      use iopath, only: kname, path
+      use iopath, only: path
       use parcur
       use comevl, only: nequi
       use keys, only: kastr, ksnf, kxwx
@@ -59,7 +59,7 @@
       z_ax=zax
 
       if(kastr.eq.0) then 
-         write(fname,'(a,a)') path(1:kname),'bonfit.dat'
+         write(fname,'(a,a)') TRIM(path), '/bonfit.dat'
          open(1,file=fname,form='formatted')
             read(1,*) wwl,wdk,wsig
             read(1,*) (d_wght(ik),ik=1,NEQUI)
@@ -83,7 +83,7 @@
          close(1)
 
          if(ksnf.eq.1) then
-            write(fname,'(a,a)') path(1:kname),'matC.wr'
+            write(fname,'(a,a)') TRIM(path), '/matC.wr'
             open(1,file=fname,form='formatted')
                read(1,*) c_wght
                read(1,*) n_cc,m_cc
@@ -115,7 +115,7 @@
          wsig=1.d-2
          write(*,*) nequi
 
-         write(fname,'(a,a)') path(1:kname),'bonfit.dat'
+         write(fname,'(a,a)') TRIM(path), '/bonfit.dat'
          open(1,file=fname,form='formatted')
             read(1,*) wwl,wdk,wsig
             read(1,*) (d_wght(ik),ik=1,NEQUI)

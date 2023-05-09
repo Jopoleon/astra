@@ -3,7 +3,7 @@
      &                rk3, zk3, rk4, zk4,
      &                ntipe, necon, wecon )
 
-      use iopath, only: kname, path
+      use iopath, only: path
       use comblc, only: nctrl, ni, nj, icont, nblm, rblm, zblm,
      &   rmin, rmax, zmin, zmax, rm0, zm0, 
      &   alp, qcen, psi_bon, 
@@ -22,7 +22,7 @@
 
 ! input initial data
 
-      write(fname,'(a,a)') path(1:kname),'data.dat'
+      write(fname,'(a,a)') TRIM(path), '/data.dat'
       open(1,file=fname,form='formatted')
          read(1,*) icont
          read(1,*) ni
@@ -42,7 +42,7 @@
          read(1,*) zm0
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'data_d.wr'
+      write(fname,'(a,a)') TRIM(path), '/data_d.wr'
       open(1,file=fname,form='formatted')
          write(1,*) icont, ni, nj, nctrl
          write(1,*) rmin, rmax, zmin, zmax, alp, qcen,
@@ -57,7 +57,7 @@
       rx2=rx20
       zx2=zx20
 
-      write(fname,'(a,a)') path(1:kname),'limpnt.dat'
+      write(fname,'(a,a)') TRIM(path), '/limpnt.dat'
       open(1,file=fname,form='formatted')
          read(1,*) nblm
          do i=1,nblm
@@ -65,7 +65,7 @@
          enddo
       close(1)
 
-      write(fname,'(a,a)') path(1:kname),'limpnt_d.wr'
+      write(fname,'(a,a)') TRIM(path), '/limpnt_d.wr'
       open(1,file=fname,form='formatted')
          write(1,*) nblm
          do i=1,nblm
@@ -90,7 +90,7 @@
 !----------------------------------------------------------------
       subroutine noauto
 
-      use iopath, only: kname, path
+      use iopath, only: path
       use comblc, only: nctrl, ni, nj, icont, nblm, rblm, zblm,
      &   rmin, rmax, zmin, zmax, rm0, zm0, 
      &   alp, qcen, psi_bon, 
@@ -104,7 +104,7 @@
 
 ! input initial data
 
-      write(fname,'(a,a)') path(1:kname),'data_d.wr'
+      write(fname,'(a,a)') TRIM(path), '/data_d.wr'
       open(1,file=fname,form='formatted')
          read(1,*) icont, ni, nj, nctrl
          read(1,*) rmin, rmax, zmin, zmax, alp, qcen,
@@ -119,7 +119,7 @@
       rx2=rx20
       zx2=zx20
 
-      write(fname,'(a,a)') path(1:kname),'limpnt_d.wr'
+      write(fname,'(a,a)') TRIM(path), '/limpnt_d.wr'
       open(1,file=fname,form='formatted')
          read(1,*) nblm
          do i=1,nblm
@@ -138,7 +138,7 @@
      &                 ftok, tokout, psicen, pscout, nursb, 
      &                 psi_bnd, alp_b, rax, zax, n_ctrl, b_0, r_0 )
 
-      use iopath, only: kname, path
+      use iopath, only: path
       use comblc, only: ni, nj, nnstpp, nctrl, icont, iter, iterbf, 
      &   itin, nitl, nitin, nrun, ix1, ix2, jx1, jx2, 
      &   alp, clr, clz, eps, tok, psi_bon, ucen, b0ax, r0ax, rm0, zm0
@@ -177,7 +177,7 @@
       tok  = ftok
       ucen = psicen
 
-      write(fname,'(a,a)') path(1:kname),'itpr.dat'
+      write(fname,'(a,a)') TRIM(path), '/itpr.dat'
       open(1,file=fname,form='formatted')
          read(1,*) eps0
          read(1,*) eps
@@ -258,7 +258,7 @@
      &               ftok, tokout, psicen, pscout, 
      &               nursb, psi_bnd, alp_b, rax, zax )
 
-      use iopath, only: kname, path
+      use iopath, only: path
       use keys, only: kpr
       use comblc, only: ni, nj, ix1, ix2, jx1, jx2, iter, itin, iterbf,
      &   imax, jmax, nitl, nitin, nrun, 
@@ -295,7 +295,7 @@
          zm=zax
       endif
 
-      write(fname,'(a,a)') path(1:kname),'itpr.dat'
+      write(fname,'(a,a)') TRIM(path), '/itpr.dat'
       open(1,file=fname,form='formatted')
          read(1,*) eps0
          read(1,*) eps

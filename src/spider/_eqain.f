@@ -6,7 +6,7 @@
 
       use parameters_a2spider, only: fix_adapgrid
       use sp_parameters
-      use iopath, only: path, kname
+      use iopath, only: path
 
       implicit none
 
@@ -46,7 +46,7 @@
 
 c...input initial data
         
-      write(fname,'(a,a)') path(1:kname),'egg.dat'
+      write(fname,'(a,a)') TRIM(path), '/egg.dat'
       open(1,file=fname)
          read(1,*) i_vac
          read(1,*) alp
@@ -59,7 +59,7 @@ c...input initial data
 
       if (fix_adapgrid.ne.1) then		
       else
-         write(fname,'(a,a)') path(1:kname),'egg_g.dat'
+         write(fname,'(a,a)') TRIM(path), '/egg_g.dat'
          write(*,*) fname     
          INQUIRE( FILE=trim(fname), EXIST= file_existence) 
          if (file_existence) then		
@@ -83,7 +83,7 @@ c...input initial data
       jrolim=2  !+(nt-2)/2
 
       if(nctrl.eq.1 ) then
-         write(fname,'(a,a)') path(1:kname),'limpnt_d.wr'
+         write(fname,'(a,a)') TRIM(path), '/limpnt_d.wr'
          open(1,file=fname)
          read(1,*) nblm
          do i=1,nblm

@@ -14,7 +14,7 @@
 
       !locals
       integer nstep, key_dmf, k_grid, k_auto, k_fixfree, key_start
-      integer kpr, kname, npointzz
+      integer kpr, npointzz
       real*8 time, dt, dpsdt
       integer i, neql
       integer itmastra
@@ -33,9 +33,8 @@
 
       kpr = params%kpr
       call kpr_calc(kpr)
-      kname = params%kname 
  
-      call put_name(params%prename, kname)
+      call put_name(params%prename)
 ! set key_plc for plasma current
       call put_key_plc(params%key_plc)
 ! set key_out for currents and inductive voaltages update in circuit equation

@@ -18,10 +18,9 @@ double precision, dimension(nlinetot) :: rline1, rline2, rline3, &
 character(len=160) :: reffile, destfile
 character rlineget(nlinetot)
 
-destfile = parameters_spider%prename(1: parameters_spider%kname) // 'coil.dat'
+destfile = TRIM(parameters_spider%prename) // '/coil.dat'
 if (ncoils.gt.0) then
-   reffile = parameters_spider%prename(1: parameters_spider%kname) // &
-      'req2d_input/coil_ref.dat'
+   reffile = TRIM(parameters_spider%prename) // '/req2d_input/coil_ref.dat'
 
    open(32, file=reffile, status='old')
    read(32, *) nlines, ntimes, rlineget(1)

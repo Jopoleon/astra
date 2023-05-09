@@ -293,7 +293,7 @@
      &                    NOUT, NTER, NINFW, ngra1 )
 
       use sp_parameters, only: njlim, nplim, npfc0, twopi, nclim
-      use iopath, only: kname, path
+      use iopath, only: path
       use comevl, only: nequi, pfres, pfvol1
 
       implicit none
@@ -427,7 +427,7 @@
          NCEQUI = NCEQUI + NVV
       endif
 
-      write(fname,'(a,a)') path(1:kname),'pascon.wr'
+      write(fname,'(a,a)') TRIM(path), '/pascon.wr'
       open(1,file=fname,form='formatted')
          write(1,*) nc, ncpfc, nfw, nbp, nvv
          write(1,*) (rc(i), i=1,nc), (zc(i), i=1,nc)
