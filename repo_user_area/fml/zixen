@@ -1,0 +1,29 @@
+!C ZIXEN [ ]:	Average Xenon charge
+!C T [eV] Electron temperature
+!C       POST D.E. JENSEN R.V. e.a., Atomic Data and Nuclear Tables,
+!C				    Vol.20 (1977) 397.
+!C				(Yushmanov 25-12-89)
+	T=TE(J)*1.E3
+	Z=LOG10(TE(J))
+					ZIXEN=0.
+	
+	if(T .lt. 200. .and. T .gt. 0.)  then
+		Y=-1.612164e2-Z*1.091205e3-Z**2*2.598436e3-&
+     &  Z**3*3.017742e3-Z**4*1.738551e3-Z**5*3.985735e2
+	endif
+	if(T .lt. 2000. .and. T .gt. 200.)  then
+		Y=2.556534e1+Z*1.9454143+Z**2*7.525661+&
+     &  Z**3*1.189704e2+Z**4*7.082394e1-Z**5*5.952649e1
+	endif
+	if(T .lt. 20000. .and. T .gt. 2000.) then
+		Y=9.150919e1-Z*5.787112e2+Z**2*1.935449e3-&
+     &  Z**3*2.807403e3+Z**4*1.874038e3-Z**5*4.698364e2
+	endif
+	if(T .gt. 20000.)  then
+		Y=-6.2323e2+Z*2.021506e3-Z**2*2.433083e3+&
+     &  Z**3*1.466899e3-Z**4*4.421467e2+Z**5*5.32444e1
+	endif
+
+	ZIXEN=Y
+	if(T .lt. 80.)   ZIXEN=0.  
+
