@@ -1,14 +1,14 @@
 subroutine RABBIT
 
 use mod_rabbit_lib
-use rabbit_variables, only: fusion_power, neutron_power
 
 use outcmn_inc, only: AWD, exp_file
 use const_inc, only: GP2, AIM1, TIME, TAU, QNBI, ROC, &
    RTOR, BTOR, NA1
 use status_inc, only: FP, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
    XRHO, VOLUM, IPOL, PEBM, PIBM, NIBM, CUBM, SNEBM, SCUBM, &
-   PBLON, PBPER, MU, VTOR, ZEF, NI, NHYDR, NDEUT, NTRIT
+   PBLON, PBPER, MU, VTOR, ZEF
+use numerical_tools, only: qinterp
 
 implicit none
 
@@ -20,8 +20,7 @@ integer :: n_nbi, dum, n_lim, jumpcor, torqjxb_model
 integer :: pdim, ldim
 integer :: i, j, jlim, jnb, ios, nrho_surf, nthe_surf
 
-double precision :: aimp, zimp, p_i, p_e, tq_i, fi, i_cd, src, nfi
-double precision, allocatable, dimension(:) :: aplasma, zplasma, species_plasma_ratio
+double precision :: aplasma, zplasma, aimp, zimp, p_i, p_e, tq_i, fi, i_cd, src, nfi
 double precision, dimension(NA1) :: psi1d_n, rhotor1d
 double precision, allocatable, dimension(:, :), save :: powe, powi, &
       press, bdep, bdens, jfi, jnbcd,  wfi_par, wfi_perp, wfi_par_lab, &
@@ -83,31 +82,6 @@ psi1d_n = (FP(1:NA1) - FP(1))/(FP(NA1) - FP(1))
 psi1d_n(1) = 1.d-8
 psi1d_n(NA1) = 1.d0
 
-if (.not. allocated(aplasma)) then
-    allocate(aplasma(0))
-    allocate(zplasma(0))
-endif
-if (maxval(NHYDR(1:NA1)) .gt. 0.) then
-    aplasma = [aplasma, 1.]
-    zplasma = [zplasma, 1.]
-endif
-if (maxval(NDEUT(1:NA1)) .gt. 0.) then
-    aplasma = [aplasma, 2.]
-    zplasma = [zplasma, 1.]
-endif
-if (maxval(NTRIT(1:NA1)) .gt. 0.) then
-    aplasma = [aplasma, 3.]
-    zplasma = [zplasma, 1.]
-endif
-if (.not. allocated(species_plasma_ratio)) allocate(species_plasma_ratio(size(Aplasma)))
-
-do i=1, size(Aplasma)
-   if (nint(Aplasma(i)) == 1) species_plasma_ratio(i) = sum(nhydr)
-   if (nint(Aplasma(i)) == 2) species_plasma_ratio(i) = sum(ndeut)
-   if (nint(Aplasma(i)) == 3) species_plasma_ratio(i) = sum(ntrit)   
-enddo
-species_plasma_ratio = species_plasma_ratio / sum(species_plasma_ratio)
-
 if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---       
     as_nml = TRIM(AWD) // 'exp/nml/' // TRIM(exp_file)
 
@@ -143,8 +117,8 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
     Rrect = (/ (R_min + dr*(i - 1.d0), i=1, Nrrect) /)
     zrect = (/ (z_min + dz*(i - 1.d0), i=1, Nzrect) /)
 
-!    aplasma = AMAIN(1)
-!    zplasma = ZMAIN(1)
+    aplasma = AMAIN(1)
+    zplasma = ZMAIN(1)
     aimp = AIM1
     zimp = ZIM1(1)
  
@@ -155,7 +129,6 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
     endif
 
     call rabbit_lib_init(aplasma, zplasma, aimp, zimp,            & ! plasma species
-        size(Aplasma),                                           &  !number of main ion species
         a_beam(1:n_nbi), z_beam(1:n_nbi), start_pos(:, 1:n_nbi), &
         unit_vec(:, 1:n_nbi), width_poly(:, 1:n_nbi),            & ! beam
         nspc, n_nbi,                                             & ! beam
@@ -230,8 +203,6 @@ call ctr2rz_fun(nrho_surf, nthe_surf, pf_eq(1: nrho_surf)/GP2, &
          r_surf(1: nrho_surf, 1: nthe_surf),  z_surf(1: nrho_surf, 1: nthe_surf), &
          Nrrect, Nzrect, Rrect, zrect, PSI_rect)
 
-call rabbit_lib_set_sp_plasma_ratio(species_plasma_ratio, size(species_plasma_ratio))
-
 call rabbit_lib_step(                                     & ! input
     rho_interp_plasma, ne_interp, te_interp, ti_interp,    &
     zef_interp, omg_interp, pdim,                          & ! Kin profiles & their dim
@@ -249,6 +220,7 @@ call rabbit_lib_step(                                     & ! input
 
 call rabbit_lib_get_dV_dArea(dvol, darea, nrhoout)
 call rabbit_lib_get_Wfi(wfi_par, wfi_perp, wfi_par_lab, n_nbi, nrhoout)
+write(6, *) 'nrho out' , nrhoout, NA1
      
 ! Sum over all NBI sources
 
