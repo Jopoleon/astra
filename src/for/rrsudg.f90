@@ -38,8 +38,6 @@ else if (MACHINE == 'aug_') then
         ZRD84, CAR32(1: 8), CAR32(9: 16), CAR32(17: 24), CAR32(25: 26), &
         vcoiltmp(1: 10), CAR33(1: 24), BTOR, &
         time_ext, CV6, CDVM7)
-    BTOR = 1.9 !TEST EFABLE to be removed
-    write(*, *) 'remove this 2 lines'
 
     BTOR = abs(BTOR) !Btor defined here absolute value. sign has to be given separatly
     dt_smlk = CDVM7 ! simulink tau defined in equ log
