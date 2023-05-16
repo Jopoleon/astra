@@ -6,8 +6,7 @@ node=`uname -n`
 
 if [[ $AWD == "/afs/ipp"* ]]
 then
-   osy=`fs sysname | awk '{print $NF}'`
-   if [[ $osy == "'amd64_linux26'" ]]
+   if [[ $node == "lxts"* ]]
    then
       platform=lx
    else
@@ -28,6 +27,9 @@ then
 elif [[ $node == *"mit.edu" ]]
 then
    platform=mit
+elif [[ $node == "CX-LD-AUG-150" ]]
+then
+   platform=ldaug
 else
    platform=ga
 fi

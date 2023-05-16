@@ -1,0 +1,15 @@
+&astra_log
+
+AWD      = "/shares/departments/AUG/users/git/a8"
+AEXT     = "/shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT"
+exp_file = "aug34954"
+equ_file = "fluxes"
+rev_file = profiles.dat
+tbeg_nml =   0.0000
+tend_nml =   1.0000
+TASK     = "RUN"
+machine  = "aug"
+debug    = 0
+resize   =   1.0000
+
+/
