@@ -62,8 +62,6 @@ if (flightsim == 1) then
         tau_new = tau
         tau_temp_smlk = tau
     endif
-    if (tau_temp_smlk == 0.) tau_temp_smlk = tau
-else if (flightsim >= 1) then
     if (jreadd == 0) then
         time_ext = TIME
         dt_smlk = fs_dt_smlk
@@ -71,6 +69,7 @@ else if (flightsim >= 1) then
     if (tau_temp_smlk == 0.) tau_temp_smlk = tau
 endif
 
+!MPHIT=0. ??? astra7
 IPART = 2             ! Mark time evolution section
 
 ! reset initial condition
@@ -290,13 +289,9 @@ enddo time_step_accuracy
 if (IFBEY >= 1.) then         ! is doing free boundary
     if (ICIRCQ > 0.) then    ! circuit equations are solved with whatever code
         if (LEQ(5) == 4) then ! SPIDER
-            if (nint(IFBEG) == 0) then
-                call SPIDUPDATE(machine, CCOIL(1:NCNB), time, ncnb)    ! Update circuit stuff which has to be outside the iterations of course
-            else if (nint(IFBEG) == 1) then
-                call f_SPIDUPDATE(machine, CCOIL(1:NCNB), time, ncnb)  ! Update circuit stuff which has to be outside the iterations of course
-            endif
+            call SPIDUPDATE(machine, CCOIL(1:NCNB), time, ncnb)    ! Update circuit stuff which has to be outside the iterations of course
         else if (LEQ(5) == 5) then ! FEQIS
-!            call FEQISUPDATE(machine, CCOIL(1:NCNB), time, ncnb)    ! Update circuit stuff which has to be
+            call FEQISUPDATE(machine, CCOIL(1:NCNB), time, ncnb)    ! Update circuit stuff which has to be
         endif
     endif
 endif
