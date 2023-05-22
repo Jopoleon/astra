@@ -330,8 +330,8 @@
       end subroutine get_zccur
 
 !----------------------------------------------------------------
-      subroutine get_zccurb(rc_cur, zc_cur, z2c_cur,
-     &   rgeoc, zgeoc, ahorc, bpcell)
+      subroutine get_zccurb(rc_cur,zc_cur,z2c_cur,
+     & rgeoc,zgeoc,ahorc) 
 
       use sp_parameters
 
@@ -339,7 +339,6 @@
 
       real*8, intent(out) :: rc_cur, zc_cur, z2c_cur,
      &   rgeoc, zgeoc, ahorc
-      real*8, intent(inout), dimension(nt1-1) :: bpcell
       include 'compol.inc'
 
       integer :: i, j
@@ -357,13 +356,9 @@
       ahorc2=0.
       	
       i=iplas
-      bpcell(nt1-1)=bpcell(nt1-2)
 
       do j=2,nt1
          perimz=perimz+dlt(i,j)
-         sum_rc=sum_rc+(r(i,j)**2.)*bpcell(j-1)*dlt(i,j)
-         sum_zc=sum_zc+z(i,j)*bpcell(j-1)*dlt(i,j)
-         sum_Ipla=sum_Ipla+bpcell(j-1)*dlt(i,j)
          rgeoc=rgeoc+r(i,j)*dlt(i,j)
          zgeoc=zgeoc+z(i,j)*dlt(i,j)
       enddo

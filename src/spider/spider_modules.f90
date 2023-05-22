@@ -10,11 +10,11 @@ module sp_parameters
    integer, parameter :: njlim=1550, npfc0=200, nplim=400, nkp=njlim
    integer, parameter :: NiLIM=NJLIM - NpLIM, NCLIM=NJLIM, &
       NNLIM=NJLIM*NJLIM, NSP=90000
-   integer, parameter :: nip=257, njp=257, ni2p=nip-2, nj2p = njp-2, &
+   integer, parameter :: nip=3, njp=3, ni2p=nip-2, nj2p = njp-2, &
       nbndp=2*(nip+njp), nbndp2=nbndp*2, nbndp4=nbndp2+4, nbndp6=nbndp4*6
    integer, parameter :: nblmp=600, neqp_blc=ni2p*nj2p, lp_blc=10
    integer, parameter :: nstep_p=5001
-   integer, parameter :: nc_p=500, nf_p=300, ncf_p=nc_p+nf_p+1, &
+   integer, parameter :: nc_p=5, nf_p=3, ncf_p=nc_p+nf_p+1, &
       nnc_p=25, mmc_p=25
    integer, parameter :: nursp=4000, n_ursp=1000
    integer, parameter :: nekp=npfc0+nplim

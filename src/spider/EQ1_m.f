@@ -699,3 +699,16 @@
 
       return
       end function blintr
+	 
+				 
+
+
+				 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+         subroutine coil_force2(forces_output,plasma_state)
+
+ 	implicit none
+		integer plasma_state
+		double precision forces_output(*)
+
+         return
+         end
