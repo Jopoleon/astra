@@ -96,6 +96,7 @@ CSCL5    None                      Additional control constant
 CSCL6    None                      Additional control constant
 CSCL7    None                      Additional control constant
 CSCL8    None                      Additional control constant
+CDWM0    None                      Additional dummy constant can be used for anything
 CDWM1    None                      Additional dummy constant can be used for anything
 CDWM2    None                      Additional dummy constant can be used for anything
 CDWM3    None                      Additional dummy constant can be used for anything
@@ -105,6 +106,7 @@ CDWM6    None                      Additional dummy constant can be used for any
 CDWM7    None                      Additional dummy constant can be used for anything
 CDWM8    None                      Additional dummy constant can be used for anything
 CDWM9    None                      Additional dummy constant can be used for anything
+CDYM0    None                      Additional dummy constant can be used for anything
 CDYM1    None                      Additional dummy constant can be used for anything
 CDYM2    None                      Additional dummy constant can be used for anything
 CDYM3    None                      Additional dummy constant can be used for anything
@@ -114,6 +116,7 @@ CDYM6    None                      Additional dummy constant can be used for any
 CDYM7    None                      Additional dummy constant can be used for anything
 CDYM8    None                      Additional dummy constant can be used for anything
 CDYM9    None                      Additional dummy constant can be used for anything
+CDVM0    None                      Additional dummy constant can be used for anything
 CDVM1    None                      Additional dummy constant can be used for anything
 CDVM2    None                      Additional dummy constant can be used for anything
 CDVM3    None                      Additional dummy constant can be used for anything
@@ -123,9 +126,6 @@ CDVM6    None                      Additional dummy constant can be used for any
 CDVM7    None                      Additional dummy constant can be used for anything
 CDVM8    None                      Additional dummy constant can be used for anything
 CDVM9    None                      Additional dummy constant can be used for anything
-CDWM0    None                      Additional dummy constant can be used for anything
-CDYM0    None                      Additional dummy constant can be used for anything
-CDVM0    None                      Additional dummy constant can be used for anything
 CDBC1    None                      Additional dummy constant can be used for anything
 CDBC2    None                      Additional dummy constant can be used for anything
 CDBC3    None                      Additional dummy constant can be used for anything
