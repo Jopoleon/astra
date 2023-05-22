@@ -1,5 +1,6 @@
 subroutine rrsudg(time_ext, dt_smlk)
 
+use fs_coupling_variables, only: fs_dt_smlk
 use const_inc, only: BTOR, CPEL1, CIMP3, CBND3, &
         ZRD70, ZRD71, ZRD73, ZRD84, ZRD93, &
         CSCL1, CDYM3, CDVM7, CDWM5, CDWM6, &
@@ -10,7 +11,7 @@ use const_inc, only: BTOR, CPEL1, CIMP3, CBND3, &
         CV3, CV4, CV6, CV13
 use status_inc, only: CAR32, CAR33
 use outcmn_inc, only: machine, vcoil
-	
+
 implicit none
 
 real*8, intent(out) :: time_ext, dt_smlk
@@ -29,18 +30,18 @@ if (MACHINE == 'dem_') then
         CHE3, CDHJ3, CDHJ4, &
         CV3, CDHJ5, &
         CDMJ1, CDMJ2, CDMJ3, CDMJ4, gvcoil(1:15), &
-        time_ext, CV6, CDVM7)
+        time_ext, CV6, fs_dt_smlk)
         CV13 = MAX(1., CV13)  ! finite pump speed to avoid NaN
-        dt_smlk = CDVM7  ! simulink tau defined in equ log
+        dt_smlk = fs_dt_smlk  ! simulink tau defined in equ log
 else if (MACHINE == 'aug_') then
     call shmr( &
         CPEL1, CV13, CDMJ1, CDMJ2, CDMJ3, CDMJ4, &
         ZRD84, CAR32(1: 8), CAR32(9: 16), CAR32(17: 24), CAR32(25: 26), &
         vcoiltmp(1: 10), CAR33(1: 24), BTOR, &
-        time_ext, CV6, CDVM7)
+        time_ext, CV6, fs_dt_smlk)
 
     BTOR = abs(BTOR) !Btor defined here absolute value. sign has to be given separatly
-    dt_smlk = CDVM7 ! simulink tau defined in equ log
+    dt_smlk = fs_dt_smlk ! simulink tau defined in equ log
 
     vcoil(1: 10) = vcoiltmp(1: 10)
     vcoil(11:12) = 0.
