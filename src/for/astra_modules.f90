@@ -81,8 +81,8 @@ double precision :: wallpos, d_j_m, dw_j_m, dw2_j_m, &
 integer :: lhmodel, btipdirec, pr_clamp, reinitcirc, reinitpsi, &
     ipsmk2, eq_cmd, use_zlim_pot, cmnd_dioh2s, cmnd_dioh2u, nequiz, &
     s_adapt, yesfitcc, s_fazt, kastr2, com_solver, &
-    isafazt, ispid_contour, res_trigts06, &
-     max_max_iteri, max_max_iterb, max_max_iterj
+    isafazt, ispid_contour, res_trigts06, resres_oh6, &
+    max_max_iteri, max_max_iterb, max_max_iterj
 double precision, dimension(500, 2) :: psitok
 
 end module fenix_params

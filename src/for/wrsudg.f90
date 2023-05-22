@@ -90,7 +90,7 @@ save betp3r_0, LI3R_0, IPL_0, upl_0, &
     geom1d_now, time_now
 
 
-if (MACHINE == 'dem_') then
+if (MACHINE(1:3) == 'dem') then
     i_error = 0 ! whether add noise latencies errors to diagnostics
     qalp1 = QDTR(ROC)
     qrad1 = QRADR(ROC)
@@ -130,24 +130,26 @@ if (MACHINE == 'dem_') then
         CU(1:NA1), &
         CCOIL(1:15)*1.e3, magnetics(1:439))
 
-else if (MACHINE == 'aug_') then
+else if (MACHINE(1:3) == 'aug') then
 
     geom1d(64) = WTOZR(ROC)*1e6 !total Wmhd including fast ions  in MJ
     time_1 = time - tstart
     time_0 = time - tstart - TAU
 
 ! get coil forces
-    if (TIME >= ZRD78) then
         if (nint(IPEQL) == 4) then
-!            call coil_force2(coil_forces(1:100, 1:2))
+!            call coil_force2(coil_forces(1:100, 1:2),plasma_up)
 	else
-!            call coil_forces_feqis(100, coil_forces(1:100, 1), coil_forces(1:100,2))
+!            call coil_forces_feqis(100, coil_forces(1:100, 1), & 
+!	         coil_forces(1:100, 2), plasma_up)
             coil_forces = -coil_forces
         endif
-    endif
 
     car54( 1:21) = coil_forces(1:21, 1)
     car54(22:42) = coil_forces(1:21, 2)
+
+	write(8998,'(333E25.11)') TIME,coil_forces(1:21,1), &
+     & coil_forces(1:21,2)
 
     neqlp  = abs(nint(NEQUIL))
     ntetap = abs(nint(MEQUIL)) + 1
@@ -336,14 +338,14 @@ else if (MACHINE == 'aug_') then
             yroutfull(1:mmequi), &
             cdhj7) !na1+1.d-16  !& geom1d(1:10),
 
-        if (TIME - TSTART > ZRD93 + 1.e-8) then
+        if (TIME - TSTART.le. ZRD93 + 1.e-8) goto 300
             call read_input_constant_file(time_ext, dt_smlk)
             ZRD93 = time_ext + dt_smlk
             goto 200
         endif
 
-    endif
 
+300	continue
     betp3r_0 = betp3r(roc)
     LI3R_0 = LI3R(ROC)
     if (plasma_up == 0) then
