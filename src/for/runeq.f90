@@ -650,29 +650,30 @@ end subroutine TRIDIAG1_EF
 !======================================================================|
 double precision function GETPEI(j)
 
-use status_inc, only: NE, NI, TE, ZMAIN, AMAIN, NMAIN, & 
+use status_inc, only: PEIQI, NE, NI, TE, TI, ZMAIN, AMAIN, NMAIN, & 
        NIZ1, NIZ2, NIZ3, ZIM1, ZIM2, ZIM3
-use const_inc, only: IPROT, AIM1, AIM2, AIM3
+use const_inc, only: IPROT, AIM1, AIM2, AIM3, NA1
 
 implicit none
 
 integer, intent(in) :: j
-double precision COULG, PEI, SUZPEI, PEI2
+double precision :: COULG, SUZPEI, t1, t2
 
-COULG = 15.9 - 0.5*LOG(NE(J)) + log(TE(J))
+GETPEI = PEIQI(j)
+t1 = sum(PEIQI(1:NA1))
+t2 = sum((TE(1:NA1) - TI(1:NA1)))
 
-!use old pei which is not correct for impurities
-if (nint(abs(IPROT)) == 2) then
-   PEI2 = 0.00246*COULG*NE(J)/(TE(J)*SQRT(TE(J)))
-   SUZPEI = NMAIN(J)/AMAIN(J)*ZMAIN(J)**2. + &
-            NIZ1(J)/AIM1*ZIM1(J)**2. + &
-            NIZ2(J)/AIM2*ZIM2(J)**2. + &
-            NIZ3(J)/AIM3*ZIM3(J)**2.
-   PEI2 = PEI2*SUZPEI
-   GETPEI = PEI2
-else
-   PEI = 0.00246*COULG*NE(J)*NI(J)*ZMAIN(J)*ZMAIN(J)/(AMAIN(J)*TE(J)*SQRT(TE(J)))
-   GETPEI = PEI
+if (t1 == 0. .and. t2 /= 0.) then
+    COULG = 15.9 - 0.5*LOG(NE(J)) + log(TE(J))
+    if (nint(abs(IPROT)) == 2) then
+        SUZPEI = NMAIN(J)/AMAIN(J)*ZMAIN(J)**2 + &
+            NIZ1(J)/AIM1*ZIM1(J)**2 + &
+            NIZ2(J)/AIM2*ZIM2(J)**2 + &
+            NIZ3(J)/AIM3*ZIM3(J)**2
+        GETPEI = 0.00246*COULG*NE(J)*SUZPEI/(TE(J)*SQRT(TE(J)))
+    else
+        GETPEI = 0.00246*COULG*NE(J)*NI(J)*ZMAIN(J)**2/(AMAIN(J)*TE(J)*SQRT(TE(J)))
+    endif
 endif
 
 end function GETPEI
