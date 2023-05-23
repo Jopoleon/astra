@@ -61,8 +61,8 @@ double precision, dimension(Nrrect) :: Rrect
 double precision, dimension(Nzrect) :: Zrect
 double precision, dimension(Nrrect, Nzrect) ::&
        PSI_rect , B_Rrect , B_Zrect ,  B_Trect
-double precision, dimension(n_surf) :: pf_eq, rho_eq, ffp_eq
-double precision, dimension(n_surf, n_surf) :: r_surf, z_surf
+double precision, dimension(:), allocatable :: pf_eq, rho_eq, ffp_eq
+double precision, dimension(:, :), allocatable :: r_surf, z_surf
 double precision, dimension(:), allocatable :: rho_interp, te_interp, ne_interp
 
 double precision :: ecrh_int, eccd_int
@@ -95,14 +95,17 @@ close(57)
 
 xrmaj = RTOR*100.
 
-call SURF_CTR(.TRUE., nrho_surf, nthe_surf, r_surf, z_surf)
+call GET_NRHO_NTHETA(nrho_surf, nthe_surf)
+allocate(pf_eq(nrho_surf), rho_eq(nrho_surf), ffp_eq(nrho_surf))
+allocate(r_surf(nrho_surf, nthe_surf), z_surf(nrho_surf, nthe_surf))
+call SURF_CTR(nrho_surf, nthe_surf, r_surf, z_surf)
 
 ! From polar to rectangluar grid
 
-Rmin = MINVAL(r_surf(nrho_surf, 1:nthe_surf)) - 0.03 ! 1.08
-Rmax = MAXVAL(r_surf(nrho_surf, 1:nthe_surf)) + 0.03 ! 2.26
-zmin = MINVAL(z_surf(nrho_surf, 1:nthe_surf)) - 0.03 ! -1.0
-zmax = MAXVAL(z_surf(nrho_surf, 1:nthe_surf)) + 0.03 ! 1.0
+Rmin = MINVAL(r_surf(nrho_surf, :)) - 0.03 ! 1.08
+Rmax = MAXVAL(r_surf(nrho_surf, :)) + 0.03 ! 2.26
+zmin = MINVAL(z_surf(nrho_surf, :)) - 0.03 ! -1.0
+zmax = MAXVAL(z_surf(nrho_surf, :)) + 0.03 ! 1.0
 write(*, *)
 dr = (Rmax - Rmin)/(Nrrect - 1.d0)
 dz = (zmax - zmin)/(Nzrect - 1.d0)
@@ -116,16 +119,12 @@ rhotor1d = XRHO(1:NA1)
 rhotor1d(NA1) = 1.d0
 rhotor1d(1) = 1.d-8
 
-call qinterp(rhotor1d(1:NA1), IPOL(1:NA1)*RTOR*BTOR, NA1, &
-        rho_eq(1:nrho_surf), ffp_eq(1:nrho_surf), nrho_surf)
-call qinterp(rhotor1d(1:NA1), FP(1:NA1), NA1, &
-        rho_eq(1:nrho_surf), pf_eq(1:nrho_surf), nrho_surf)
+call qinterp(rhotor1d(1:NA1), IPOL(1:NA1)*RTOR*BTOR, NA1, rho_eq, ffp_eq, nrho_surf)
+call qinterp(rhotor1d(1:NA1), FP(1:NA1)            , NA1, rho_eq, pf_eq , nrho_surf)
 
 write(6, *) 'TORBEAM surf dims:', nthe_surf, nrho_surf
-call ctr2rz_b(nrho_surf, nthe_surf, pf_eq(1:nrho_surf), &
-      ffp_eq(1:nrho_surf), &
-      r_surf(1:nrho_surf, 1:nthe_surf), &
-      z_surf(1:nrho_surf, 1:nthe_surf), &
+call ctr2rz_b(nrho_surf, nthe_surf, pf_eq, ffp_eq, &
+      r_surf, z_surf, &
       Nrrect, Nzrect, Rrect, zrect,  &
       PSI_rect, B_Rrect, B_Zrect, B_Trect)
 
@@ -291,9 +290,9 @@ if (wr_flg /= 0.d0) then
 
    fort_name = 'tb_magn_t' // TRIM(time_str) // 's.dat'
    open(62, file=TRIM(fort_name))
-   write(62, '(e13.5)') rho_eq(1:nrho_surf)
-   write(62, '(e13.5)') ffp_eq(1:nrho_surf)
-   write(62, '(e13.5)') pf_eq(1:nrho_surf)
+   write(62, '(e13.5)') rho_eq
+   write(62, '(e13.5)') ffp_eq
+   write(62, '(e13.5)') pf_eq
    close(62)
 endif 
 

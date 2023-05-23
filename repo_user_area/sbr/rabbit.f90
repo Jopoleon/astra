@@ -46,7 +46,8 @@ double precision :: part_mix(nspc, nnb_max), dt_in, output_timing
 double precision :: tim_prev=-1.d0
 
 double precision, dimension(:), allocatable :: pf_eq, rho_eq
-double precision, dimension(n_surf, n_surf) :: r_surf, z_surf
+!double precision, dimension(n_surf, n_surf) :: r_surf, z_surf
+double precision, allocatable, dimension(:, :) :: r_surf, z_surf
 double precision, dimension(NA1) :: rho_interp_plasma, rho_interp_eq, &
    ti_interp, te_interp, ne_interp, omg_interp, zef_interp,  &
    iota, area, vol, ffp, psi_n
@@ -73,9 +74,10 @@ rhotor1d(1) = 0.d0
 pdim = NA1    !Rabbit input plasma grid size
 ldim = NA1    !Rabbit input 1D EQ grid size
 
-call SURF_CTR(.TRUE., nrho_surf, nthe_surf, r_surf, z_surf)
-
+call GET_NRHO_NTHETA(nrho_surf, nthe_surf)
 allocate(pf_eq(nrho_surf), rho_eq(nrho_surf))
+allocate(r_surf(nrho_surf, nthe_surf), z_surf(nrho_surf, nthe_surf))
+call SURF_CTR(nrho_surf, nthe_surf, r_surf, z_surf)
 
 psi_axis = FP(1)/GP2
 psi_sep  = FP(NA1)/GP2
