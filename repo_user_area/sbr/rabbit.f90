@@ -18,7 +18,7 @@ use parameters_a2spider, only : equil_now
 
 implicit none
 
-integer, parameter :: Nrrect=64, Nzrect=64, nnb_max=30, nspc=3, n_surf=556, nrhoout=21, unit_lim=11
+integer, parameter :: Nrrect=64, Nzrect=64, nnb_max=30, nspc=3, nrhoout=21, unit_lim=11
 double precision, parameter :: ALFA=1.d-5
 
 integer, dimension(nnb_max) :: ierr
@@ -46,7 +46,6 @@ double precision :: part_mix(nspc, nnb_max), dt_in, output_timing
 double precision :: tim_prev=-1.d0
 
 double precision, dimension(:), allocatable :: pf_eq, rho_eq
-!double precision, dimension(n_surf, n_surf) :: r_surf, z_surf
 double precision, allocatable, dimension(:, :) :: r_surf, z_surf
 double precision, dimension(NA1) :: rho_interp_plasma, rho_interp_eq, &
    ti_interp, te_interp, ne_interp, omg_interp, zef_interp,  &
@@ -125,7 +124,6 @@ else
 endif
 if (.not. allocated(psi_rect)) allocate(psi_rect(n_Rrect, n_Zrect))
 if (.not. allocated(Rrect)) allocate(Rrect(n_Rrect), Zrect(n_Zrect))
-
 
 if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---       
     as_nml = TRIM(AWD) // 'exp/nml/' // TRIM(exp_file)
