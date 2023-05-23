@@ -5,7 +5,7 @@ subroutine STEPUP
 !-------------------------------------------------------------------
 
 use parameter_inc, only: NRD
-use const_inc, only: IPSMK, IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
+use const_inc, only: IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
     IPCTRL, NCNB, ICIRCQ, ITFBP, ITREQ, UPDWN, FTN, FTO, BTN, BTOR, HRO, ROC, NA1, &
     TAU, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, ATREQ, LEQ, & 
     PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, ADCMPF, RBDOT, BBDOT

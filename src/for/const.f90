@@ -82,7 +82,7 @@ double precision, pointer :: &
     DTEQ(:, :)
 double precision, target :: DELOUT(NSDELOUT + 4*NSBMX)
 
-double precision :: IPSMK, IBKDW ! flight simulator switch. IPSMK=1 for coupling to control. IBKDW=-1 for breakdown yes
+double precision :: IBKDW ! IBKDW=-1 for breakdown yes
 
 double precision, target :: MESHEQ
 

@@ -2,9 +2,9 @@ program astra
 
 use parameter_inc, only: NSBMX, NRD
 use outcmn_inc, only: VCOIL, CCOIL, CCOILO, DUMCT, DUMCTP, CTRLM, outcmn_init
-use const_inc, only: IPSMK, IPART, const_init
+use const_inc, only: IPART, const_init
 use status_inc, only: status_init
-use debugger, only: debug
+use debugger, only: debug, flightsim
 
 implicit none
 
@@ -39,7 +39,7 @@ call INIVAR
 call CONVERGE_INIT(LISTSB)
 
 ! write output file for simulink or whatever control system
-if (nint(IPSMK) == 1) then
+if (flightsim == 1) then
     call write_output_diag_file
 endif
 
