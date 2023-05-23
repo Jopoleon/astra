@@ -38,7 +38,7 @@ double precision, dimension(nnb_max) :: a_beam, z_beam, pinj,  &
       Inbcd
 double precision, dimension(3, nnb_max) :: start_pos, unit_vec, width_poly
 
-double precision, dimension(Nrrect, Nzrect) :: PSI_rect
+double precision, allocatable, dimension(:, :) :: PSI_rect
 double precision, allocatable, dimension(:) :: Rrect, zrect
 double precision :: psi_sep, psi_axis, rmag, zmag
 double precision :: R_max, R_min, z_max, z_min, dr, dz, drho_eq
@@ -121,6 +121,9 @@ else
     n_Rrect = SIZE(equil_now%eqgeometry%rectgrid%r2d)
     n_Zrect = SIZE(equil_now%eqgeometry%rectgrid%z2d)
 endif
+if (.not. allocated(psi_rect)) allocate(psi_rect(n_Rrect, n_Zrect))
+if (.not. allocated(Rrect)) allocate(Rrect(n_Rrect), Zrect(n_Zrect))
+
 
 if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---       
     as_nml = TRIM(AWD) // 'exp/nml/' // TRIM(exp_file)
@@ -142,7 +145,6 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
     read(unit_lim, '(2i)') dum, n_lim
 
     allocate(r_lim(n_lim), z_lim(n_lim))
-    allocate(Rrect(n_Rrect), Zrect(n_Zrect))
 
     do jlim=1, n_lim
         read(unit_lim, *) r_lim(jlim), z_lim(jlim)
@@ -253,7 +255,7 @@ write(6, *) 'Call rabbit_lib_step'
 if (flightsim == 0) then
     call ctr2rz_fun(nrho_surf, nthe_surf, pf_eq(1: nrho_surf)/GP2, &
          r_surf(1: nrho_surf, 1: nthe_surf),  z_surf(1: nrho_surf, 1: nthe_surf), &
-         N_Rrect, N_Zrect, Rrect, zrect, PSI_rect)
+         n_Rrect, n_Zrect, Rrect, zrect, PSI_rect)
 else
     psi_rect = equil_now%eqgeometry%rectgrid%psirz2d(1:n_Rrect, 1:n_Zrect)
 endif
