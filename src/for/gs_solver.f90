@@ -44,13 +44,13 @@ double precision, intent(in), dimension(nbtabp) :: rbnd, zbnd
 double precision, intent(in), dimension(jna1) :: xrho, pres_in
 character(len=4), intent(in) :: machine_name
 
-double precision, intent(out) :: ipl, rocnew, updwn, psifb, volume, &
-   psiext, psplex
+double precision, intent(out) :: rocnew, updwn, psifb, psiext, psplex
 double precision, intent(out), dimension(jna1) :: ametr, vr, vrs, &
    slat, gradro, shif, tria, elon, ipol, bmaxt, bmint, bdb02, &
    bdb0, b0db2, droda, fofb, areat, perim, volum, &
    g11, g41, g22, g33
 double precision, intent(out), dimension(nr_equ) :: g22e, g33e
+double precision, intent(inout) :: ipl, volume
 double precision, intent(inout), dimension(jna1) :: fp, eqpf, eqff
 
 logical :: file_existence
@@ -75,6 +75,7 @@ double precision, dimension(nr_equ) :: volum_in, PSI, PRESS, xrho_sp, &
     G2tild1, Htild1, G2tild2, Htild2, G2corr2, Hcorr2
 character(len=80) :: fname
 type(type_equilibrium) :: equil_in, equil_out
+double precision :: vtemp_counter
 
 !----------------------------------------------------------------------
 
@@ -83,6 +84,9 @@ save iter_step_call
 
 data i_call_gsss /0/
 save i_call_gsss
+
+data vtemp_counter/0.5/
+save vtemp_counter
 
 namelist / spider_settings / time_fix_eqpff, fix_eqpf_eqff, &
     cheb_degree, spidat_yes, iter_one_only_fbe, advanced_methods, &
@@ -256,6 +260,8 @@ iter_loop: do jiter=1, miter_ext
     phibl = phibm
     G2f = G2m
 
+!Iteration cycle
+
     fsa_gse_loop: do jveps=1, max_iter
 
         p = p + 1
@@ -299,7 +305,8 @@ iter_loop: do jiter=1, miter_ext
         call integrcc(nr_equ, PSI, 1./H, dum1)
 !end of algorithm
 
-        Vtemp = dum1(nr_equ)
+        Vtemp = vtemp_counter*vtemp+(1.-vtemp_counter)*dum1(nr_equ)
+
         Veps = abs(Vtemp - volume)/volume
 
 ! new method
@@ -322,6 +329,8 @@ iter_loop: do jiter=1, miter_ext
         if (Veps + lhs(1) <= epsf_tol) EXIT
 
     enddo fsa_gse_loop
+
+    vtemp_counter=0.
 
 ! G2f = G2m   ! Be careful this is now done because numerically I have to find a good way to integrate G2f...
 
@@ -386,22 +395,38 @@ iter_loop: do jiter=1, miter_ext
     eqff_sp(1:nr_equ) = ffprimp(1:nr_equ)
 
     if (fix_eqpf_eqff == 1) then
-        fname = TRIM(name_gsefdir) // trim(machine_name) // '/spidat2.dat'
-        write(*, *) 'EQUIL_CALL_SPID', TRIM(fname)
-        open(32, file = fname)
-        write(32, *)
-        write(32, *) nr_equ
-        write(32, *)
-        write(32, *) (eqpf_sp(j), j = 1, nr_equ)
-        write(32, *)
-        write(32, *) (eqff_sp(j), j = 1, nr_equ)
-        write(32, *)
-        write(32, *) (PSI(j), j = 1, nr_equ)
-        write(32, *)
-        write(32, *) IPLX, R0, btor, roc_sp
-        write(32, *)
-        close(32)
-        if (time_a > time_fix_eqpff) then
+        if (time_a.le.time_fix_eqpff) then
+            fname = TRIM(name_gsefdir) // trim(machine_name) // '/spidat2.dat'
+            write(*, *) 'EQUIL_CALL_SPID', TRIM(fname)
+            open(32, file = fname)
+            write(32, *)
+            write(32, *) nr_equ
+            write(32, *)
+            write(32, *) (eqpf_sp(j), j = 1, nr_equ)
+            write(32, *)
+            write(32, *) (eqff_sp(j), j = 1, nr_equ)
+            write(32, *)
+            write(32, *) (PSI(j), j = 1, nr_equ)
+            write(32, *)
+            write(32, *) IPLX, R0, btor, roc_sp
+            write(32, *)
+            close(32)
+        else
+            fname = TRIM(name_gsefdir) // trim(machine_name) // '/spidat2.dat'
+            write(*, *) 'EQUIL_CALL_SPID', TRIM(fname)
+            open(32, file = fname)
+            read(32, *)
+            read(32, *) i
+            read(32, *)
+            read(32, *) (eqpf_sp(j), j = 1, nr_equ)
+            read(32, *)
+            read(32, *) (eqff_sp(j), j = 1, nr_equ)
+            read(32, *)
+            read(32, *) (PSI(j), j = 1, nr_equ)
+            read(32, *)
+            read(32, *) IPLX, R0, dum1, roc_sp
+            read(32, *)
+            close(32)
             pprimp = eqpf_sp
             ffprimp = eqff_sp
         endif
@@ -415,6 +440,19 @@ iter_loop: do jiter=1, miter_ext
     enddo
 
     PSIn_grid = sqrt((PSI - PSI(1))/(PSI(nr_equ) - PSI(1)))
+
+!use tabbnd.wr if only fbe without circuit
+    if (ifbey == 1 .and. ipctrl >= -3 .and. ipctrl <= 0 .and. &
+       (iter_itreq >= 1 .or. jiter > 1) ) then
+        write(fname, '(a)') 'exp/equ/' // trim(machine_name) // '/tab_bnd.wr'
+        open(32, file=fname)
+        read(32,*) i
+        do j=1, Nteta
+            read(32, *) Rb(j), Zb(j)
+        enddo
+        close(32)
+        iter_step_call=1
+    endif
 
     if (ifbey == 1 .and. iter_step_call == 0) then
         iter_step_call = 1
@@ -669,33 +707,33 @@ droda_sp(1) = 0.0
 ! END call EQUIL_CALL_SPID
 !------------------------------------------------
 
-call reinterp_back_quad(xrho_sp, GG2      , nr_equ, sxho, g22   , jna1)
-call reinterp_back_quad(xrho_sp, GG3      , nr_equ, xrho, g33   , jna1)
-call reinterp_back_quad(xrho_sp, equil_now%profiles_1d%surface(1:nr_equ), nr_equ, xrho, slat, jna1)
-call reinterp_back_quad(xrho_sp, vr_sp    , nr_equ, xrho, vr    , jna1)
-call reinterp_back_quad(xrho_sp, vr_sp    , nr_equ, sxho, vrs   , jna1)
-call reinterp_back_quad(xrho_sp, volum_sp , nr_equ, sxho, volum , jna1)
-call reinterp_back_quad(xrho_sp, g11_sp   , nr_equ, sxho, g11   , jna1)
-call reinterp_back_quad(xrho_sp, g41_sp   , nr_equ, sxho, g41   , jna1)
-call reinterp_back_quad(xrho_sp, droda_sp , nr_equ, sxho, droda , jna1)
-call reinterp_back_quad(xrho_sp, gradro_sp, nr_equ, sxho, gradro, jna1)
-call reinterp_back_quad(xrho_sp, ipol_sp  , nr_equ, xrho, ipol  , jna1)
-call reinterp_back_quad(xrho_sp, ametr_sp , nr_equ, xrho, ametr , jna1)
-call reinterp_back_quad(xrho_sp, equil_now%profiles_1d%shif(1:nr_equ), nr_equ, xrho, shif  , jna1)
+call reinterp_back_quad(xrho_sp, GG2      , nr_equ, sxho, g22    , jna1)
+call reinterp_back_quad(xrho_sp, GG3      , nr_equ, xrho, g33    , jna1)
+call reinterp_back_quad(xrho_sp, vr_sp    , nr_equ, xrho, vr     , jna1)
+call reinterp_back_quad(xrho_sp, vr_sp    , nr_equ, sxho, vrs    , jna1)
+call reinterp_back_quad(xrho_sp, volum_sp , nr_equ, sxho, volum  , jna1)
+call reinterp_back_quad(xrho_sp, g11_sp   , nr_equ, sxho, g11    , jna1)
+call reinterp_back_quad(xrho_sp, g41_sp   , nr_equ, sxho, g41    , jna1)
+call reinterp_back_quad(xrho_sp, droda_sp , nr_equ, sxho, droda  , jna1)
+call reinterp_back_quad(xrho_sp, gradro_sp, nr_equ, sxho, gradro , jna1)
+call reinterp_back_quad(xrho_sp, ipol_sp  , nr_equ, xrho, ipol   , jna1)
+call reinterp_back_quad(xrho_sp, ametr_sp , nr_equ, xrho, ametr  , jna1)
+call reinterp_back_quad(xrho_sp, tria_sp  , nr_equ, xrho, tria   , jna1)
+call reinterp_back_quad(xrho_sp, eqpf_sp  , nr_equ, xrho, eqpf   , jna1)
+call reinterp_back_quad(xrho_sp, eqff_sp  , nr_equ, xrho, eqff   , jna1)
+call reinterp_back_quad(xrho_sp, bdb02_sp , nr_equ, xrho, bdb02  , jna1)
+call reinterp_back_quad(xrho_sp, bdb0_sp  , nr_equ, xrho, bdb0   , jna1)
+call reinterp_back_quad(xrho_sp, b0db2_sp , nr_equ, xrho, b0db2  , jna1)
+call reinterp_back_quad(xrho_sp, dPSI_adcmp,nr_equ, xrho, dpsi_ad, jna1)
+call reinterp_back_quad(xrho_sp, dP_adcmp , nr_equ, xrho, dp_ad  , jna1)
 call reinterp_back_quad(xrho_sp, equil_now%profiles_1d%elongation(1:nr_equ), nr_equ, xrho, elon, jna1)
-call reinterp_back_quad(xrho_sp, tria_sp  , nr_equ, xrho, tria  , jna1)
-call reinterp_back_quad(xrho_sp, equil_now%profiles_1d%fofb( 1:nr_equ), nr_equ, xrho, fofb  , jna1)
+call reinterp_back_quad(xrho_sp, equil_now%profiles_1d%surface   (1:nr_equ), nr_equ, xrho, slat, jna1)
+call reinterp_back_quad(xrho_sp, equil_now%profiles_1d%shif (1:nr_equ), nr_equ, xrho, shif , jna1)
+call reinterp_back_quad(xrho_sp, equil_now%profiles_1d%fofb (1:nr_equ), nr_equ, xrho, fofb , jna1)
 call reinterp_back_quad(xrho_sp, equil_now%profiles_1d%areat(1:nr_equ), nr_equ, xrho, areat, jna1)
 call reinterp_back_quad(xrho_sp, equil_now%profiles_1d%perim(1:nr_equ), nr_equ, xrho, perim, jna1)
-call reinterp_back_quad(xrho_sp, eqpf_sp  , nr_equ, xrho, eqpf  , jna1)
-call reinterp_back_quad(xrho_sp, eqff_sp  , nr_equ, xrho, eqff  , jna1)
 call reinterp_back_quad(xrho_sp, equil_now%profiles_1d%bmaxt(1:nr_equ), nr_equ, xrho, bmaxt, jna1)
 call reinterp_back_quad(xrho_sp, equil_now%profiles_1d%bmint(1:nr_equ), nr_equ, xrho, bmint, jna1)
-call reinterp_back_quad(xrho_sp, bdb02_sp , nr_equ, xrho, bdb02 , jna1)
-call reinterp_back_quad(xrho_sp, bdb0_sp  , nr_equ, xrho, bdb0  , jna1)
-call reinterp_back_quad(xrho_sp, b0db2_sp , nr_equ, xrho, b0db2 , jna1)
-call reinterp_back_quad(xrho_sp, dPSI_adcmp,nr_equ, xrho, dpsi_ad,jna1)
-call reinterp_back_quad(xrho_sp, dP_adcmp , nr_equ, xrho, dp_ad , jna1)
 
 volum(jna1) = volum_sp(nr_equ)
 rocnew = sqrt(phib/(GP*btor))
