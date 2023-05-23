@@ -1,6 +1,8 @@
 subroutine RABBIT
 
-use mod_rabbit_lib
+use mod_rabbit_lib, only: do_dump, rabbit_lib_init, rabbit_lib_set_dump_dir, &
+    rabbit_lib_dump_beams, rabbit_lib_set_sp_plasma_ratio, rabbit_lib_step, &
+    rabbit_lib_get_dv_darea, rabbit_lib_get_wfi
 use rabbit_variables, only: fusion_power, neutron_power
 
 use outcmn_inc, only: AWD, exp_file
@@ -9,10 +11,14 @@ use const_inc, only: GP2, AIM1, TIME, TAU, QNBI, ROC, &
 use status_inc, only: FP, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
    XRHO, VOLUM, IPOL, PEBM, PIBM, NIBM, CUBM, SNEBM, SCUBM, &
    PBLON, PBPER, MU, VTOR, ZEF, NI, NHYDR, NDEUT, NTRIT
+	 
+use fs_coupling_variables, only: fs_pow_NB
+use debugger, only: flightsim
+use parameters_a2spider, only : equil_now
 
 implicit none
 
-integer, parameter :: Nrrect=80, Nzrect=120, nnb_max=30, nspc=3, n_surf=556, nrhoout=60, unit_lim=11
+integer, parameter :: Nrrect=64, Nzrect=64, nnb_max=30, nspc=3, n_surf=556, nrhoout=21, unit_lim=11
 double precision, parameter :: ALFA=1.d-5
 
 integer, dimension(nnb_max) :: ierr
@@ -49,7 +55,7 @@ double precision, dimension(nrhoout) :: rho_rab_out, &
     nfi_rb, jcd_rb, src_rb, tq_rb, pfi_par, pfi_perp, nrate
 double precision, dimension(:), allocatable :: r_lim, z_lim
 
-character(len=120) :: as_nml, pinj_file, limiter_file, table_path
+character(len=120) :: as_nml, pinj_file, pinj_file2, limiter_file, table_path
 
 double precision, external :: VINT , IINT
 namelist / rabbit_beam_geo / start_pos, unit_vec, width_poly
@@ -133,15 +139,19 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
     enddo
     close(unit_lim)
 
-    R_min = MINVAL(R_lim) - 0.05
-    R_max = MAXVAL(R_lim) + 0.05
-    z_min = MINVAL(z_lim) - 0.05
-    z_max = MAXVAL(z_lim) + 0.05
-    dr = (R_max - R_min)/(Nrrect - 1.d0)
-    dz = (z_max - z_min)/(Nzrect - 1.d0)
-
-    Rrect = (/ (R_min + dr*(i - 1.d0), i=1, Nrrect) /)
-    zrect = (/ (z_min + dz*(i - 1.d0), i=1, Nzrect) /)
+    if (flightsim == 0) then
+        R_min = MINVAL(R_lim) - 0.05
+        R_max = MAXVAL(R_lim) + 0.05
+        z_min = MINVAL(z_lim) - 0.05
+        z_max = MAXVAL(z_lim) + 0.05
+        dr = (R_max - R_min)/(Nrrect - 1.d0)
+        dz = (z_max - z_min)/(Nzrect - 1.d0)
+        Rrect = (/ (R_min + dr*(i - 1.d0), i=1, Nrrect) /)
+        Zrect = (/ (z_min + dz*(i - 1.d0), i=1, Nzrect) /)
+    else
+        Rrect(1:nrrect) = equil_now%eqgeometry%rectgrid%r2d(1:nrrect)
+        Zrect(1:nzrect) = equil_now%eqgeometry%rectgrid%z2d(1:nzrect)
+    endif
 
 !    aplasma = AMAIN(1)
 !    zplasma = ZMAIN(1)
@@ -167,12 +177,11 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
 
     if (do_dump) then
        !activate this to enable dumping of Rabbit inputs (for debbuging)
-       call rabbit_lib_set_dump_dir("/toks/work/markusw/Rabbit_dump", 30)
-       call rabbit_lib_dump_beams("/toks/work/markusw/Rabbit_dump", 30, einj, part_mix)
+        call rabbit_lib_set_dump_dir(TRIM(awd), 30)
+        call rabbit_lib_dump_beams(TRIM(awd), 30, einj, part_mix)
     endif
-    
+
     tim_prev = max(0.d0, TIME-TAU)
-    pinj_file = TRIM(awd) // TRIM(pinj_file)
     bdens_in(:) = 0.
 
 ! below arrays are saved, i.e. need to be allocated only once.
@@ -194,8 +203,13 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
     allocate(wfi_par_lab(nrhoout, n_nbi))
 endif
 
-call uf2dr(pinj_file, TIME, pinj(1:n_nbi))
-
+if (flightsim == 1) then
+    pinj(1:8) = fs_pow_NB(1:8)*1d6
+else
+    pinj_file2 = TRIM(awd) // TRIM(pinj_file)
+    call uf2dr(pinj_file2, TIME, pinj(1:n_nbi))
+endif
+	
 QNBI = sum(pinj(1:n_nbi))*1d-6
 
 output_timing = 0.5d0
@@ -226,9 +240,13 @@ call qinterp(rhotor1d(1: NA1), FP(1: NA1), NA1, &
 
 write(6, *) 'Call rabbit_lib_step'
 
-call ctr2rz_fun(nrho_surf, nthe_surf, pf_eq(1: nrho_surf)/GP2, &
+if (flightsim == 0) then
+    call ctr2rz_fun(nrho_surf, nthe_surf, pf_eq(1: nrho_surf)/GP2, &
          r_surf(1: nrho_surf, 1: nthe_surf),  z_surf(1: nrho_surf, 1: nthe_surf), &
          Nrrect, Nzrect, Rrect, zrect, PSI_rect)
+else
+    psi_rect = equil_now%eqgeometry%rectgrid%psirz2d(1:nrrect, 1:nzrect)
+endif
 
 call rabbit_lib_set_sp_plasma_ratio(species_plasma_ratio, size(species_plasma_ratio))
 
