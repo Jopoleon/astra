@@ -22,7 +22,7 @@ integer, parameter :: Nrrect=64, Nzrect=64, nnb_max=30, nspc=3, n_surf=556, nrho
 double precision, parameter :: ALFA=1.d-5
 
 integer, dimension(nnb_max) :: ierr
-integer :: n_nbi, dum, n_lim, jumpcor, torqjxb_model
+integer :: n_Rrect, n_Zrect, n_nbi, dum, n_lim, jumpcor, torqjxb_model
 integer :: pdim, ldim
 integer :: i, j, jlim, jnb, ios, nrho_surf, nthe_surf
 
@@ -39,7 +39,7 @@ double precision, dimension(nnb_max) :: a_beam, z_beam, pinj,  &
 double precision, dimension(3, nnb_max) :: start_pos, unit_vec, width_poly
 
 double precision, dimension(Nrrect, Nzrect) :: PSI_rect
-double precision :: Rrect(Nrrect), zrect(Nzrect)
+double precision, allocatable, dimension(:) :: Rrect, zrect
 double precision :: psi_sep, psi_axis, rmag, zmag
 double precision :: R_max, R_min, z_max, z_min, dr, dz, drho_eq
 double precision :: part_mix(nspc, nnb_max), dt_in, output_timing 
@@ -114,6 +114,14 @@ do i=1, size(Aplasma)
 enddo
 species_plasma_ratio = species_plasma_ratio / sum(species_plasma_ratio)
 
+if (flightsim == 0) then
+    n_Rrect = Nrrect
+    n_Zrect = Nzrect
+else
+    n_Rrect = SIZE(equil_now%eqgeometry%rectgrid%r2d)
+    n_Zrect = SIZE(equil_now%eqgeometry%rectgrid%z2d)
+endif
+
 if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---       
     as_nml = TRIM(AWD) // 'exp/nml/' // TRIM(exp_file)
 
@@ -132,8 +140,10 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
     write(6, *) 'Limiter file', TRIM(limiter_file)
     open(unit_lim, file=TRIM(limiter_file), iostat=ios)
     read(unit_lim, '(2i)') dum, n_lim
-    allocate(r_lim(n_lim))
-    allocate(z_lim(n_lim))
+
+    allocate(r_lim(n_lim), z_lim(n_lim))
+    allocate(Rrect(n_Rrect), Zrect(n_Zrect))
+
     do jlim=1, n_lim
         read(unit_lim, *) r_lim(jlim), z_lim(jlim)
     enddo
@@ -144,13 +154,13 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
         R_max = MAXVAL(R_lim) + 0.05
         z_min = MINVAL(z_lim) - 0.05
         z_max = MAXVAL(z_lim) + 0.05
-        dr = (R_max - R_min)/(Nrrect - 1.d0)
-        dz = (z_max - z_min)/(Nzrect - 1.d0)
-        Rrect = (/ (R_min + dr*(i - 1.d0), i=1, Nrrect) /)
-        Zrect = (/ (z_min + dz*(i - 1.d0), i=1, Nzrect) /)
+        dr = (R_max - R_min)/(n_Rrect - 1.d0)
+        dz = (z_max - z_min)/(n_Zrect - 1.d0)
+        Rrect = (/ (R_min + dr*(i - 1.d0), i=1, n_Rrect) /)
+        Zrect = (/ (z_min + dz*(i - 1.d0), i=1, n_Zrect) /)
     else
-        Rrect(1:nrrect) = equil_now%eqgeometry%rectgrid%r2d(1:nrrect)
-        Zrect(1:nzrect) = equil_now%eqgeometry%rectgrid%z2d(1:nzrect)
+        Rrect = equil_now%eqgeometry%rectgrid%r2d
+        Zrect = equil_now%eqgeometry%rectgrid%z2d
     endif
 
 !    aplasma = AMAIN(1)
@@ -171,7 +181,7 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
         nspc, n_nbi,                                             & ! beam
         nrhoout,                                                 & ! output grid dimension
         Rrect, zrect,                                            & ! eq flux matrix grid
-        Nrrect, Nzrect,                                          & ! eq grid dimensions
+        N_Rrect, N_Zrect,                                          & ! eq grid dimensions
         ldim, pdim,                                              & ! plasma grid dimension
         TRIM(as_nml), LEN_TRIM(as_nml), ierr(1:n_nbi))
 
@@ -243,9 +253,9 @@ write(6, *) 'Call rabbit_lib_step'
 if (flightsim == 0) then
     call ctr2rz_fun(nrho_surf, nthe_surf, pf_eq(1: nrho_surf)/GP2, &
          r_surf(1: nrho_surf, 1: nthe_surf),  z_surf(1: nrho_surf, 1: nthe_surf), &
-         Nrrect, Nzrect, Rrect, zrect, PSI_rect)
+         N_Rrect, N_Zrect, Rrect, zrect, PSI_rect)
 else
-    psi_rect = equil_now%eqgeometry%rectgrid%psirz2d(1:nrrect, 1:nzrect)
+    psi_rect = equil_now%eqgeometry%rectgrid%psirz2d(1:n_Rrect, 1:n_Zrect)
 endif
 
 call rabbit_lib_set_sp_plasma_ratio(species_plasma_ratio, size(species_plasma_ratio))
@@ -255,7 +265,7 @@ call rabbit_lib_step(                                     & ! input
     zef_interp, omg_interp, pdim,                          & ! Kin profiles & their dim
     PSI_rect, psi_n, vol, area, rho_interp_eq, iota, ffp,  & ! eq
     psi_sep, psi_axis, rmag, zmag,                         & ! eq scalars
-    Nrrect, Nzrect, ldim,                                  & ! eq dimensions
+    N_Rrect, N_Zrect, ldim,                                  & ! eq dimensions
     pinj(1: n_nbi), einj(1: n_nbi), part_mix(: , 1: n_nbi),    &
     nspc, n_nbi, bdens_in, dt_in, output_timing,           & ! Output
     powe, powi, press, bdep, bdens, jfi, jnbcd,            &
