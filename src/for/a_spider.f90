@@ -28,7 +28,7 @@ real*8, intent(out) :: PSIEXT, PSPLEX
 type(type_equilibrium), intent(out) :: equil_out
 
 logical :: file_existence 
-integer :: nstep, i, j, key_equil, nrp, nr, nz, &
+integer :: nstep, i, j, key_equil, nrp, nz, &
     toric_fourc, toric_file, strahl_file, strahl_fourc, &
     write_coils_diagn, key_plcs, kprs, k_grids, &
     kprs2, fixadapgrid, &
@@ -38,11 +38,10 @@ real*8 :: dampfacpsplex, psplexold, epsros, enelss, k_filessss, ipl
 real*8, dimension(ncoils) :: t_currents, ucoils
 double precision :: psplexavg, psplexavgexp, Rmag, Zmag, Rgeo, Zgeo, &
     rcurr, zcurr, rgeoc, zgeoc, ahorc, zsquad, psi_sep, psi_axis, &
-    Rin, Raus, zoben, zunten, &
+    Rin, Raus, zoben, zunten, elong, &
     R_strike_in, R_strike_out, delr_oben, amin
 double precision, dimension(300) :: geom1dold
 double precision, dimension(100, 4) :: demo_gaps
-double precision, dimension(nr_equ) :: elon
 double precision, dimension(n_theta) :: Rbnd, Zbnd
 character(len=80) :: fname
 
@@ -64,7 +63,7 @@ namelist / spider / kprs, k_grids, epsros, enelss, key_plcs, &
 key_equil = 0
 nrp = 256
 s_adapt = 0
-s_fazt = 0
+s_fazt  = 0
 
 nstep = max(0, ifbey-1)
 
@@ -167,26 +166,31 @@ if (key_no_refits == 1) then
 endif 
 
 if (parameters_spider%k_fixfree == 1) then
-    if (machine_name == 'aug_'.or.machine_name == 'aug '.or. machine_name == 'aug5') then
-        ucoils(1)  = vcoils(1) - vcoils(7)
-        ucoils(2)  = vcoils(7) - vcoils(8)
-        ucoils(3)  = vcoils(8)
-        ucoils(4)  = vcoils(6)
+    if (machine_name(1:3) == 'aug') then
+        ucoils(1)  = vcoils(1) - vcoils(2)
+        ucoils(2)  = vcoils(2) - vcoils(3)
+        ucoils(3)  = vcoils(3)
+        ucoils(4)  = vcoils(4)
         ucoils(5)  = vcoils(5)
-        ucoils(6)  = vcoils(4)
-        ucoils(7)  = vcoils(2)
-        ucoils(8)  = vcoils(3)
+        ucoils(6)  = vcoils(6)
+        ucoils(7)  = vcoils(7)
+        ucoils(8)  = vcoils(8)
         ucoils(9)  = vcoils(9)
         ucoils(10) = vcoils(10)
-        ucoils(11:12) = 0.
-    elseif (machine_name == 'dem_') then !DEMO free boundary, to recheck
-        ucoils(1:11)  = vcoils(1:11)
+        ucoils(11) = 0.
+        ucoils(12) = 0.
+    elseif (machine_name(1:3) == 'dem') then !DEMO free boundary, to recheck
+        ucoils(1:ncoils)  = vcoils(1:ncoils)
+    elseif (machine_name(1:3) == 'tcv') then !TCV free boundary, to recheck
+        ucoils(1:ncoils)  = vcoils(1:ncoils)
+    else
+        ucoils(1:ncoils) = vcoils(1:ncoils)
     endif
     parameters_spider%nstep = nstep
 endif
 
 if (equil_solver == 101) then
-    call feqis_main(equil_in, equil_out)
+    call feqis_main(equil_in, equil_out) ! git: different arguments than FSIM, to be merged
 else
     call spider_run(ncoils, ucoils, equil_in, equil_out, parameters_spider)     
 endif
@@ -243,11 +247,13 @@ do j=1, n_theta
     Rbnd(j) = equil_out%coord_sys%position%r(nr_equ, j)
     Zbnd(j) = equil_out%coord_sys%position%z(nr_equ, j)
 enddo
-Rmag = equil_out%coord_sys%position%r(1, 1)
-Zmag = equil_out%coord_sys%position%z(1, 1)
+Rmag  = equil_out%coord_sys%position%r(1, 1)
+Zmag  = equil_out%coord_sys%position%z(1, 1)
+elong = equil_out%profiles_1d%elongation(nr_equ)
+nz    = equil_out%eqgeometry%rectgrid%npointsz
 
-jzmin = minloc(Zbnd, 1)
-jzmax = maxloc(Zbnd, 1)
+jzmin  = minloc(Zbnd, 1)
+jzmax  = maxloc(Zbnd, 1)
 Rin    = MINVAL(Rbnd)
 Raus   = MAXVAL(Rbnd)
 zoben  = Zbnd(jzmax)
@@ -256,9 +262,6 @@ Rgeo = 0.5*(Raus + Rin)
 Zgeo = 0.5*(zoben + zunten)
 amin = 0.5*(Raus - Rin)
 delr_oben = (Rgeo - Rbnd(jzmax))/amin
-
-nr = equil_out%eqgeometry%rectgrid%npointsr
-nz = equil_out%eqgeometry%rectgrid%npointsz
 
 if (parameters_spider%k_fixfree == 1) then
     if (machine_name(1:3) == 'aug') then
@@ -272,7 +275,7 @@ if (parameters_spider%k_fixfree == 1) then
         geom1d(53) = rgeoc !should be rgeo, should go somewhere else
         geom1d(54) = zgeoc !should be zgeo, should go somewhere else
         geom1d(55) = ahorc !minor radius
-        geom1d(56) = elon(nr_equ) ! k
+        geom1d(56) = elong
         geom1d(57) = Rin
         geom1d(58) = Raus
         geom1d(59) = Rmag
@@ -346,7 +349,7 @@ else
         geom1d(53) = Rgeo
         geom1d(54) = Zgeo
         geom1d(55) = amin
-        geom1d(56) = elon(nr_equ) ! k
+        geom1d(56) = elong
         geom1d(57) = Rin
         geom1d(58) = Raus
         geom1d(59) = Rmag
