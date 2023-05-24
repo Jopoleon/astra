@@ -12,6 +12,7 @@ subroutine A_SPIDER( &
 use imas_ids, only: type_equilibrium
 use fenix_params, only: s_adapt, s_fazt
 use parameters_a2spider, only: type_parameters, fix_adapgrid, GP, GP2
+use flight_sim_geometrics, only: geom1d
 
 implicit none
 
@@ -27,25 +28,33 @@ real*8, intent(out) :: PSIEXT, PSPLEX
 type(type_equilibrium), intent(out) :: equil_out
 
 logical :: file_existence 
-integer :: nstep, i, j, key_equil, nrp, &
+integer :: nstep, i, j, key_equil, nrp, nr, nz, &
     toric_fourc, toric_file, strahl_file, strahl_fourc, &
     write_coils_diagn, key_plcs, kprs, k_grids, &
-    kprs2, fixadapgrid
-
-double precision :: psplexavg, psplexavgexp
+    kprs2, fixadapgrid, &
+    jzmin, jzmax, jdemogaps, i_gaps
 
 real*8 :: dampfacpsplex, psplexold, epsros, enelss, k_filessss, ipl
 real*8, dimension(ncoils) :: t_currents, ucoils
-
+double precision :: psplexavg, psplexavgexp, Rmag, Zmag, Rgeo, Zgeo, &
+    rcurr, zcurr, rgeoc, zgeoc, ahorc, zsquad, psi_sep, psi_axis, &
+    Rin, Raus, zoben, zunten, &
+    R_strike_in, R_strike_out, delr_oben, amin
+double precision, dimension(300) :: geom1dold
+double precision, dimension(100, 4) :: demo_gaps
+double precision, dimension(nr_equ) :: elon
+double precision, dimension(n_theta) :: Rbnd, Zbnd
 character(len=80) :: fname
 
 type(type_parameters) :: parameters_spider
 
+data jdemogaps /0/
 data psplexold /2./
 save toric_fourc, toric_file
 save strahl_file, strahl_fourc, write_coils_diagn
 save kprs, k_grids, epsros, enelss, key_plcs, k_filessss
-save psplexavg, psplexold, kprs2, psplexavgexp
+save psplexavg, psplexold, kprs2, psplexavgexp, jdemogaps, i_gaps
+save geom1dold, demo_gaps
 
 namelist / spider / kprs, k_grids, epsros, enelss, key_plcs, &
     toric_fourc, toric_file, strahl_file, strahl_fourc, write_coils_diagn, &
@@ -226,6 +235,148 @@ if (parameters_spider%k_fixfree == 1) then
     endif
 endif
 
+! for any machine, geom1d(299) and geom1d(300) are respecetively li3 and betapol from SPIDER
+
+geom1d(299) = equil_out%global_param%li3	
+geom1d(300) = equil_out%global_param%betpol	
+do j=1, n_theta
+    Rbnd(j) = equil_out%coord_sys%position%r(nr_equ, j)
+    Zbnd(j) = equil_out%coord_sys%position%z(nr_equ, j)
+enddo
+Rmag = equil_out%coord_sys%position%r(1, 1)
+Zmag = equil_out%coord_sys%position%z(1, 1)
+
+jzmin = minloc(Zbnd, 1)
+jzmax = maxloc(Zbnd, 1)
+Rin    = MINVAL(Rbnd)
+Raus   = MAXVAL(Rbnd)
+zoben  = Zbnd(jzmax)
+zunten = Zbnd(jzmin)
+Rgeo = 0.5*(Raus + Rin)
+Zgeo = 0.5*(zoben + zunten)
+amin = 0.5*(Raus - Rin)
+delr_oben = (Rgeo - Rbnd(jzmax))/amin
+
+nr = equil_out%eqgeometry%rectgrid%npointsr
+nz = equil_out%eqgeometry%rectgrid%npointsz
+
+if (parameters_spider%k_fixfree == 1) then
+    if (machine_name(1:3) == 'aug') then
+        if (equil_solver == 101) then
+!git            call get_zccurb_efff(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
+	else if (equil_solver == 3) then
+            call get_zccurb(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
+        endif
+        geom1d(51) = Zcurr ! For now Zsquad = Zcurr
+        geom1d(52) = zoben
+        geom1d(53) = rgeoc !should be rgeo, should go somewhere else
+        geom1d(54) = zgeoc !should be zgeo, should go somewhere else
+        geom1d(55) = ahorc !minor radius
+        geom1d(56) = elon(nr_equ) ! k
+        geom1d(57) = Rin
+        geom1d(58) = Raus
+        geom1d(59) = Rmag
+        geom1d(60) = Zmag
+! inner strike point position
+        R_strike_in = 1.27  !Rmaj of inner strike position
+        i = minloc(abs(equil_out%eqgeometry%rectgrid%r2d - R_strike_in), 1)  
+        call find_in_vec_spid(nz, -gp2*equil_out%eqgeometry%rectgrid%psirz2d(i, :), &
+            equil_out%global_param%psibound, -1, j)
+        geom1d(66) = equil_out%eqgeometry%rectgrid%z2d(j)
+        if (j < nz .and. j > 1) then
+            geom1d(66) = equil_out%eqgeometry%rectgrid%z2d(j) - &
+                (-gp2*equil_out%eqgeometry%rectgrid%psirz2d(i, j) - equil_out%global_param%psibound)/  &
+                ( -gp2*equil_out%eqgeometry%rectgrid%psirz2d(i, j+1) + &
+                   gp2*equil_out%eqgeometry%rectgrid%psirz2d(i, j-1) ) * &
+                (equil_out%eqgeometry%rectgrid%z2d(j+1) - equil_out%eqgeometry%rectgrid%z2d(j-1))
+        endif
+        psi_sep  = equil_out%global_param%psibound
+        psi_axis = equil_out%global_param%psiaxis
+        R_strike_out = 1.72
+        i = minloc(abs(equil_out%eqgeometry%rectgrid%r2d - R_strike_out), 1)  
+        call find_in_vec_spid(nz, -gp2*equil_out%eqgeometry%rectgrid%psirz2d(i, :), &
+            equil_out%global_param%psibound, -1, J) 
+        geom1d(67) = equil_out%eqgeometry%rectgrid%z2d(j)
+        if (j < nz .and. j > 1) then
+            geom1d(67) = equil_out%eqgeometry%rectgrid%z2d(j) - & 
+                (-gp2*equil_out%eqgeometry%rectgrid%psirz2d(i,   j) - equil_out%global_param%psibound)/   &
+                (-gp2*equil_out%eqgeometry%rectgrid%psirz2d(i, j+1) + &
+                  gp2*equil_out%eqgeometry%rectgrid%psirz2d(i, j-1)) * &
+                (equil_out%eqgeometry%rectgrid%z2d(j+1) - equil_out%eqgeometry%rectgrid%z2d(j-1))
+        endif
+        geom1d(70) = delr_oben
+        geom1d(78) = zunten
+        geom1d(80) = Rbnd(jzmin) ! Xpoint position R
+        geom1d(81) = Rcurr
+        geom1d(82) = Zcurr
+    else if (machine_name(1:3) == 'dem') then
+        if (jdemogaps == 0) then
+            write(fname, '(a)') TRIM(parameters_spider%prename) // 'demo_gaps.data'	
+            open(32, file=fname)
+            read(32, *) i_gaps
+            do i=1, i_gaps
+                read(32, *) demo_gaps(i, 1), demo_gaps(i, 2), demo_gaps(i, 3), demo_gaps(i, 4) !1-R,  2-Z,  3-angle,  4-0 if do both sides,  1 if only positive side
+            enddo
+            close(32)		
+            jdemogaps = 1
+        endif
+        if (equil_solver == 101) then
+!git            call find_demo_gaps_efff(i_gaps, demo_gaps(1:i_gaps, 1:4), geom1d(94-i_gaps+1:94))
+!git            call get_zccurb_efff(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
+        else if (equil_solver == 3) then
+            call find_demo_gaps(i_gaps, demo_gaps(1:i_gaps, 1:4), geom1d(94-i_gaps+1:94))
+            call get_zccurb(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
+        endif
+        geom1d(95)  = zunten
+        geom1d(96)  = zoben
+        geom1d(97)  = Rcurr
+        geom1d(98)  = Zcurr
+        geom1d(99)  = Rin
+        geom1d(100) = Raus
+    endif
+else
+    if (machine_name(1:3) == 'aug') then
+        if (equil_solver == 101) then
+!git            call get_zccurb_efff(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
+        else if (equil_solver == 3) then
+            call get_zccurb(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
+        endif
+        geom1d(51) = Zsquad ! For now Zsquad = Zcurr  
+        geom1d(52) = zoben 
+        geom1d(53) = Rgeo
+        geom1d(54) = Zgeo
+        geom1d(55) = amin
+        geom1d(56) = elon(nr_equ) ! k
+        geom1d(57) = Rin
+        geom1d(58) = Raus
+        geom1d(59) = Rmag
+        geom1d(60) = Zmag
+        geom1d(61: 65) = 0. !IVSF, slobn, srobn, Wmhd, q95
+! inner strike point position
+        geom1d(66) = R_strike_in
+! outer strike point position
+        geom1d(67) = R_strike_out
+        geom1d(68: 69) = 0. ! zskewi2b, zskewa2b
+        geom1d(70) = delr_oben
+        geom1d(78) = zunten
+        geom1d(80) = Rbnd(jzmin) ! Xpoint position R
+        geom1d(81) = Rcurr ! Rcurr
+        geom1d(82) = Zcurr ! Zcurr
+    else if (machine_name(1:3) == 'dem') then
+        geom1d(48:94) = 0.001
+        if (equil_solver == 101) then
+!git            call get_zccurb_efff(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
+        else if (equil_solver == 3) then
+            call get_zccurb(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
+        endif
+        geom1d(95) = Rmag
+        geom1d(96) = Zmag
+        geom1d(97) = Rcurr !rgeo
+        geom1d(98) = Zcurr !zgeo
+    endif
+endif
+geom1dold = geom1d
+
 return
 end subroutine A_SPIDER
 
@@ -291,3 +442,35 @@ endif
 
 return
 end subroutine a_spider_2
+
+!---------------------------------------------------------------------
+subroutine find_in_vec_spid(n, y, y0, is, iv)
+
+implicit none
+
+integer, intent(in) :: n, is
+double precision, intent(in) :: y0
+double precision, intent(in), dimension(n) :: y
+integer, intent(out) :: iv
+
+integer :: i, j
+integer, dimension(n) :: ic
+double precision :: dum1, dum2
+double precision, dimension(n) :: yy
+
+yy = abs(y - y0)
+j = 0
+do i=2, n-1
+    dum1 = yy(i) -   yy(i-1)
+    dum2 = yy(i+1) - yy(i)
+    if (dum1*dum2 <= 0) then
+        j = j + 1
+        ic(j) = i
+    endif
+enddo
+
+if (is ==  1) iv = ic(j)
+if (is == -1) iv = ic(1)
+	
+return
+end subroutine find_in_vec_spid
