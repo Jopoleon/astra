@@ -562,6 +562,8 @@ call nfcheck( nf90_put_var(ncid, varid(jid), PEFW  (1:NA1)) )
 jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), PEICR (1:NA1)) )
 jid = jid + 1
+call nfcheck( nf90_put_var(ncid, varid(jid), PEIQI (1:NA1)) )
+jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), PELH  (1:NA1)) )
 jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), PELON (1:NA1)) )
