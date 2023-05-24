@@ -39,7 +39,7 @@ real*8, dimension(ncoils) :: t_currents, ucoils
 double precision :: psplexavg, psplexavgexp, Rmag, Zmag, Rgeo, Zgeo, &
     rcurr, zcurr, rgeoc, zgeoc, ahorc, zsquad, psi_sep, psi_axis, &
     Rin, Raus, zoben, zunten, elong, &
-    R_strike_in, R_strike_out, delr_oben, amin
+    R_strike_in_aug, R_strike_out_aug, delr_oben, amin
 double precision, dimension(300) :: geom1dold
 double precision, dimension(100, 4) :: demo_gaps
 double precision, dimension(n_theta) :: Rbnd, Zbnd
@@ -262,6 +262,8 @@ Rgeo = 0.5*(Raus + Rin)
 Zgeo = 0.5*(zoben + zunten)
 amin = 0.5*(Raus - Rin)
 delr_oben = (Rgeo - Rbnd(jzmax))/amin
+R_strike_in_aug  = 1.27
+R_strike_out_aug = 1.72
 
 if (parameters_spider%k_fixfree == 1) then
     if (machine_name(1:3) == 'aug') then
@@ -281,8 +283,7 @@ if (parameters_spider%k_fixfree == 1) then
         geom1d(59) = Rmag
         geom1d(60) = Zmag
 ! inner strike point position
-        R_strike_in = 1.27  !Rmaj of inner strike position
-        i = minloc(abs(equil_out%eqgeometry%rectgrid%r2d - R_strike_in), 1)  
+        i = minloc(abs(equil_out%eqgeometry%rectgrid%r2d - R_strike_in_aug), 1)  
         call find_in_vec_spid(nz, -gp2*equil_out%eqgeometry%rectgrid%psirz2d(i, :), &
             equil_out%global_param%psibound, -1, j)
         geom1d(66) = equil_out%eqgeometry%rectgrid%z2d(j)
@@ -295,8 +296,7 @@ if (parameters_spider%k_fixfree == 1) then
         endif
         psi_sep  = equil_out%global_param%psibound
         psi_axis = equil_out%global_param%psiaxis
-        R_strike_out = 1.72
-        i = minloc(abs(equil_out%eqgeometry%rectgrid%r2d - R_strike_out), 1)  
+        i = minloc(abs(equil_out%eqgeometry%rectgrid%r2d - R_strike_out_aug), 1)  
         call find_in_vec_spid(nz, -gp2*equil_out%eqgeometry%rectgrid%psirz2d(i, :), &
             equil_out%global_param%psibound, -1, J) 
         geom1d(67) = equil_out%eqgeometry%rectgrid%z2d(j)
@@ -356,9 +356,9 @@ else
         geom1d(60) = Zmag
         geom1d(61: 65) = 0. !IVSF, slobn, srobn, Wmhd, q95
 ! inner strike point position
-        geom1d(66) = R_strike_in
+        geom1d(66) = R_strike_in_aug
 ! outer strike point position
-        geom1d(67) = R_strike_out
+        geom1d(67) = R_strike_out_aug
         geom1d(68: 69) = 0. ! zskewi2b, zskewa2b
         geom1d(70) = delr_oben
         geom1d(78) = zunten
