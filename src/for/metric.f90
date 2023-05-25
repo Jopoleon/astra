@@ -1,6 +1,4 @@
-!----------------------------------------------------------------------|
 subroutine METRIC
-!----------------------------------------------------------------------|
 
 use outcmn_inc, only: CPT, CPTEQL
 use status_inc, only: VRO, VR
@@ -11,7 +9,7 @@ use debugger, only: markloc, astra_stop
 
 implicit none
 
-integer :: jrho, jexit, NDTEQUILMY, equil_solver
+integer :: jexit, NDTEQUILMY, equil_solver
 double precision :: ROC3A
 character(len=120) :: err_msg
 
@@ -20,14 +18,11 @@ call markloc('METRIC')
 call ADDTIME(CPT)
 
 if (IPART == 1) then ! do only at initiation
-
     FTN = FTO
     BTN = BTOR
     ROC = sqrt(FTO/GP/BTOR)
     ROCO = ROC
-    do jrho=1, NB1
-        VRO(jrho) = VR(jrho)
-    enddo
+    VRO(1: NB1) = VR(1: NB1)
 endif
 
 LEQ(5) = nint(IPEQL)
@@ -38,18 +33,18 @@ CASE(-2)  ! Cylindircal case, No equilibrium solver. No toroidicity
     call EQCYL
     call RHSEQ
 
-CASE(-1)  ! Take metrics from exp/data_file
+CASE(-1)  ! Take metric from exp/data_file
     ROC = ROC3A(RTOR, SHIFT, ABC, ELONG, TRIAN)
     FTO = GP*BTOR*ROC**2
-    call SETEXM ! Main grid: (jj-0.5)*h
+    call set_external_metric ! Main grid: (jj-0.5)*h
     call RHSEQ  ! this computes ffprime and pprime
 
 CASE(0) ! No equilibrium solver (NEQUIL=0) .or. data initiation @ 1st entry
     call EQGUESS
 
 CASE(1)  ! EMEQ
-    if (TIME == TSTART) NDTEQUILMY=0
-    if (TIME > TSTART) NDTEQUILMY=1
+    if (TIME == TSTART) NDTEQUILMY = 0
+    if (TIME >  TSTART) NDTEQUILMY = 1
     if (TIME-TIMEQL >= NDTEQUILMY*DTEQL) then
         call RHSEQ   ! Define p', FF', j_tor=CUTOR
         call A2EMEQ(jexit)
@@ -62,8 +57,8 @@ CASE(1)  ! EMEQ
     endif
 
 CASE(3)  ! SPIDER iterations
-    if (TIME == TSTART) NDTEQUILMY=0
-    if (TIME > TSTART) NDTEQUILMY=1
+    if (TIME == TSTART) NDTEQUILMY = 0
+    if (TIME >  TSTART) NDTEQUILMY = 1
     if (TIME-TIMEQL >= NDTEQUILMY*DTEQL) then
         call RHSEQ
         call ADDTIME(CPTEQL)
@@ -76,8 +71,8 @@ CASE(4: 5)  ! SPIDER, FEQIS
     else
         equil_solver = 101
     endif
-    if (TIME == TSTART) NDTEQUILMY=0
-    if (TIME > TSTART) NDTEQUILMY=1
+    if (TIME == TSTART) NDTEQUILMY = 0
+    if (TIME >  TSTART) NDTEQUILMY = 1
     if (TIME-TIMEQL >= NDTEQUILMY*DTEQL) then
         call RHSEQ    ! Define p', FF', j_tor=CUTOR
         call A2GSSOLVER(equil_solver)
@@ -89,17 +84,19 @@ END SELECT
 
 call ADDTIME(CPT)
 
+return
 end subroutine METRIC
 
-!======================================================================|
+!---------------------------------------------------------------------
 subroutine EQCYL
-!----------------------------------------------------------------------|
-! Quasi-cylindrical assignment: Called if NEQUIL==LEQ(5)==-2
-!----------------------------------------------------------------------|
-!  In: RTOR, SHIFT, ABC, ELONG, TRIAN, NA1, NB1
+
+!---------------------------------------------------------------------
+! Quasi-cylindrical assignment: Called if LEQ(5)==-2
+!
+! In: RTOR, SHIFT, ABC, ELONG, TRIAN, NA1, NB1
 ! Out: NA, HRO, ROC, RHO(j), DRODA, VOLUM, IPOL, G33, GRADRO, G11, G22, SLAT
 !  BDB02, B0DB2, BDB0, FOFB, BMAXT, BMINT, DRODA, GRADRO
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 
 use status_inc, only: RHO, XRHO, VR, VRS, AMETR, SHIF, SHIV, &
     ELON, TRIA, SLAT, G11, G22, G33, G41, G42, G43, G44, G45, &
@@ -116,39 +113,39 @@ integer :: j
 
 call markloc('EQCYL', debug_lev=3*debug)
 
-VOLUME = GP2*GP*RTOR*ABC*ABC
+VOLUME = GP2*RTOR*GP*ABC**2
 ROC = ABC
 FTO = GP*BTOR*ROC**2
-HRO = ABC/(NA1-0.5)
-HRO = HRO
+HRO = ABC/(NA1 - 0.5)
+
 do j=1, NB1
     RHO(J) = XRHO(J)*ROC
     if (RHO(j) <= ROWALL) NA = j
-    G22(J) = J*HRO
-    VR(J)  = GP2*GP2*RTOR*RHO(J)
-    VRS(j) = GP2*GP2*RTOR*G22(J)
+    G22(J)   = J*HRO
+    VR(J)    = GP2**2 * RTOR*RHO(J)
+    VRS(j)   = GP2**2 * RTOR*G22(J)
     AMETR(J) = RHO(J)
-    SHIF(J) = 0.
-    SHIV(J) = 0.
-    ELON(J) = 1.
-    TRIA(J) = 0.
-    IPOL(J) = 1.
-    G33(J) = 1.
-    G11(J) = VRS(j) 
-    SLAT(J) = VRS(j)
-    BDB02(j) = 1.+(RHO(j)*MU(j)/RTOR)**2
+    SHIF(J)  = 0.
+    SHIV(J)  = 0.
+    ELON(J)  = 1.
+    TRIA(J)  = 0.
+    IPOL(J)  = 1.
+    G33(J)   = 1.
+    G11(J)   = VRS(j) 
+    SLAT(J)  = VRS(j)
+    BDB02(j) = 1. + (RHO(j)*MU(j)/RTOR)**2
     B0DB2(j) = 1./BDB02(j)
-    BDB0(j) = sqrt(BDB02(j))
-    FOFB(j) = 1.
+    BDB0(j)  = sqrt(BDB02(j))
+    FOFB(j)  = 1.
     BMAXT(j) = BTOR*BDB0(j)
     BMINT(j) = BMAXT(j)
     DRODA(j) = 1.
-    GRADRO(j) = 1.
-    G41(J) = 1.0
-    G42(J) = GRADRO(J)
-    G43(J) = GRADRO(J)
-    G44(J) = G11(J)/VRS(J)
-    G45(J) = G11(J)/VRS(J)
+    GRADRO(j)= 1.
+    G41(J)   = 1.
+    G42(J)   = GRADRO(J)
+    G43(J)   = GRADRO(J)
+    G44(J)   = G11(J)/VRS(J)
+    G45(J)   = G11(J)/VRS(J)
 enddo
 if (NA < NB1) then
     NB1 = NA
@@ -160,25 +157,25 @@ VOLUME = VOLUM(NA1)
 
 end subroutine EQCYL
 
-!======================================================================|
+!---------------------------------------------------------------------
 subroutine EQGUESS
-!----------------------------------------------------------------------|
+
+!---------------------------------------------------------------------
 ! Guessed equibrium: Called if LEQ(5)==0 or data_initiation @ 1st_entry
-!----------------------------------------------------------------------|
-!  In: RTOR, SHIFT, ABC, ELONG, TRIAN, NA1, NB1, HRO
-! Out: NA, RHO(j), DRODA, VOLUM, IPOL, G33, GRADRO, G11, G22, SLAT
-!Efable: OUT: G41 G42 G43 G44 G45
 !
-!alling:
+! In: RTOR, SHIFT, ABC, ELONG, TRIAN, NA1, NB1, HRO
+! Out: NA, RHO(j), DRODA, VOLUM, IPOL, G33, GRADRO, G11, G22, SLAT,
+!   G41 G42 G43 G44 G45
+!
+! Calling:
 !         SETGEO -> SHIF, SHIV, ELONG, TRIA, DRODA, AMETR
-! NEWGRD -> Takes ROC, HRO, NB1, NA1, NA=NA1-1, AB, ABC, AMETR(NA1)
+! new_grid -> Takes ROC, HRO, NB1, NA1, NA=NA1-1, AB, ABC, AMETR(NA1)
 !     Returns:
 !     NA1, NA=NA1-1, NAB, RHO(NA1)=ROC, AMETR(j>NA1)
-! EDCELL -> 
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 
 use const_inc, only: ROC, RTOR, SHIFT, ABC, ELONG, TRIAN, &
-    FTO, GP, GP2, BTOR, NA, NA1, NB1, NAB, HRO, IPL, VOLUME
+    FTO, GP, GP2, BTOR, NA, NA1, NB1, NAB, HRO, VOLUME
 use status_inc, only: RHO, VR, VRS, AMETR, SHIF, &
     ELON, TRIA, SLAT, G11, G22, G33, G41, G42, G43, G44, G45, &
     BDB0, BDB02, B0DB2, IPOL, MU, FP, FV, SHEAR, &
@@ -188,18 +185,17 @@ use debugger, only: markloc, debug
 
 implicit none
 
-integer :: j, j1, JNA1O
+integer :: j, j1
 double precision :: ROC3A, YA, YAS, YES, YDS, YDV, DFPDR, YR1
-!----------------------------------------------------------------------|
 
 call markloc('EQGUESS', debug_lev=3*debug)
 
 ROC = ROC3A(RTOR, SHIFT, ABC, ELONG, TRIAN)
 FTO = GP*BTOR*ROC**2
-NA = NA1-1
+NA  = NA1 - 1
 
 ! Compute NB1 
-call NEWGRD
+call new_grid
 
 ! Define AMETR, SHIF, ELON, TRIA, SHIV
 
@@ -217,79 +213,74 @@ do J=1, NB1
     YES = 0.5*(ELON(J)  + ELON(J1))
     YDS = 0.5*(TRIA(J)  + TRIA(J1))
     YAS = 0.5*(SHIF(J)  + SHIF(J1))
-    VOLUM(J) = GP*GP2*YA**2*YES*(RTOR + YAS - 0.25*YA*YDS)
+    VOLUM(J) = GP*GP2*YA**2 * YES*(RTOR + YAS - 0.25*YA*YDS)
     VR(J) = (VOLUM(J) - YDV)/HRO
     YDV = VOLUM(J)
     YR1 = min(AMETR(j)/2., 1.d-2)
-    YAS = ROC3A(RTOR, SHIF(j), AMETR(j),         ELON(j), TRIA(j))
+    YAS = ROC3A(RTOR, SHIF(j), AMETR(j),       ELON(j), TRIA(j))
     YDS = ROC3A(RTOR, SHIF(j), AMETR(j) - YR1, ELON(j), TRIA(j))
     DRODA(J) = (YAS - YDS)/YR1
 enddo
-VOLUM(NA1) = GP*GP2*ABC**2*ELONG*(RTOR + SHIFT - 0.25*ABC*TRIAN)
+VOLUM(NA1) = GP*GP2*ABC**2 * ELONG*(RTOR + SHIFT - 0.25*ABC*TRIAN)
 DFPDR = (FP(NA1) - FP(NA) - (FV(NA1) - FV(NA)))/HRO
-JNA1O = NA1
+
 ! Input:  ROC, HRO, NB1, NA1, NA=NA1-1, AB, ABC, AMETR(NA1)
-call NEWGRD
-! Output: NA1, NA=NA1-1, NAB, RHO(NA1)=ROC, AMETR(j>NA1)
+call new_grid
+! Output: NAB, RHO(NA1)=ROC, AMETR(j>NA1)
 
-if (abs(DFPDR-IPL) < .2*IPL) then
-    call EDCELL(JNA1O)
-endif
-
-! If NA1 does not change then EDCELL corrects FP(NA1) only.
-
-!====== Definition --------------------------- Approximation ----------|
-!        gradRHO = DRODA
-!      <|grad(a)|> = sqrt(G1)/DRODA 
+!----- Definition --------------------------- Approximation ----------
+! gradRHO = DRODA
+! <|grad(a)|> = sqrt(G1)/DRODA 
 ! G1=<(gradRHO)**2>;     G1=DRODA**2
 ! G11=VR*G1=VR*<(gradRHO)**2>    G11=VR*G1
 ! G2=<(gradRHO/R)**2>*VR/4/pi**2;    G22=R*G2/J;
 ! G22=VR*R*<(gradRHO/R)**2>/(GP2)**2/IPOL; C22=G11/R/(GP2)**2/IPOL
 ! SLAT=VR*DRODA*<|gradA|>;    SLAT=VR*sqrt(G1)
+
 do J=1, NB1
     IPOL(J) = 1.
     G33(J) = (RTOR/(RTOR + SHIF(J)))**2
     GRADRO(J) = DRODA(J)
     if (j < NB1) VRS(j) = 0.5*(VR(J + 1) + VR(j))
     SLAT(J) = VRS(J)*DRODA(J)  
-    G11(J) = VRS(J)*DRODA(J)**2
-    G22(J) = G11(J)/GP2**2/(RTOR + SHIF(J))
-    G41(J) = 1.0
-    G42(J) = GRADRO(J)
-    G43(J) = GRADRO(J)
-    G44(J) = G11(J)/VRS(J)
-    G45(J) = G11(J)/VRS(J)
+    G11(J)  = VRS(J)*DRODA(J)**2
+    G22(J)  = G11(J)/GP2**2/(RTOR + SHIF(J))
+    G41(J)  = 1.0
+    G42(J)  = GRADRO(J)
+    G43(J)  = GRADRO(J)
+    G44(J)  = G11(J)/VRS(J)
+    G45(J)  = G11(J)/VRS(J)
 enddo
 
-!    BDB02 - <B**2/B0**2>
-!    B0DB2 - <B0**2/B**2>    <(R/R0)^2>
-!    BMAXT - BMAXT
-!    BMINT - BMINT
-!    BDB0  - <B/BTOR>
-!    FOFB  - <(BTOR/B)**2*(1.-SQRT(1-B/Bmax)*(1+.5B/Bmax))>
-!    SHEAR -  d[ln(q)]/d[ln(rho)] (to replace fml/shear)
+!---------------------------------------------------------------------
+! BDB02 - <B**2/B0**2>
+! B0DB2 - <B0**2/B**2>    <(R/R0)^2>
+! BMAXT - BMAXT
+! BMINT - BMINT
+! BDB0  - <B/BTOR>
+! FOFB  - <(BTOR/B)**2*(1.-SQRT(1-B/Bmax)*(1+.5B/Bmax))>
+! SHEAR -  d[ln(q)]/d[ln(rho)] (to replace fml/shear)
 ! Alternative definition for BDB02 (G.Pereverzev 10.02.99)
+!---------------------------------------------------------------------
+
 do J=1, NA1
     if (j == 1) then
         SHEAR(J) = (FP(2) - FP(1))/(2.*MU(1) + 0.333*(MU(1) - MU(2)))
-    elseif (j < NA) then
+    elseif (j <= NA) then
         SHEAR(J) = (FP(j+1) - 2.*FP(j) + FP(j-1))/(MU(j+1) + MU(j))
-    else
-        SHEAR(J) = HRO*(FP(NA1) - FP(NA))/HRO - FP(NA) + FP(NA-1)
-        SHEAR(J) = 2.*SHEAR(J)*(2.*HRO - HRO)
-        SHEAR(J) = SHEAR(J)/(2.*HRO*MU(NA1) - HRO*MU(NA))
     endif
-    SHEAR(J) = 1. -SHEAR(J)/(GP*BTOR*HRO**2)
-    YR1        = RHO(j)*G22(j)*(MU(j)/RTOR)**2
+    SHEAR(J) = 1. - SHEAR(J)/(GP*BTOR*HRO**2)
+    YR1      = RHO(j)*G22(j)*(MU(j)/RTOR)**2
     BDB02(j) = (1. + YR1)*G33(J)*IPOL(J)**2
-    B0DB2(j) = ((RTOR + SHIF(J))/RTOR)**2 + .75*(AMETR(j)/RTOR)**2
+    B0DB2(j) = ((RTOR + SHIF(J))/RTOR)**2 + 0.75*(AMETR(j)/RTOR)**2
     BMAXT(j) = BTOR*RTOR/(RTOR + SHIF(j) - AMETR(j))
     BMINT(j) = BTOR*RTOR/(RTOR + SHIF(j) + AMETR(j))
     BDB0(j)  = (RTOR/(RTOR + SHIF(j)))
 !  - <(BTOR/B)**2*(1.-SQRT(1-B/Bmax)*(1+.5B/Bmax))>
     YR1      = (RTOR + SHIF(j) - AMETR(j))/(RTOR + SHIF(j))
-    FOFB(j) = 1. - sqrt(YR1)*(1. + 0.5*YR1)
+    FOFB(j)  = 1. - sqrt(YR1)*(1. + 0.5*YR1)
 enddo
+SHEAR(NA1) = SHEAR(NA)
 do J=NA1, NAB
     SHEAR(j) = SHEAR(NA1)
     BDB02(j) = BDB02(NA1)
@@ -307,13 +298,10 @@ VOLUME = VOLUM(NA1)
 return
 end subroutine EQGUESS
 
-!======================================================================|
-subroutine SETEXM
-!----------------------------------------------------------------------|
-! Set external metrics 
-! This subroutine is adjusted for external metric calculated for
-! TJ-II    (Pereverzev 10.02.2005)
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
+subroutine set_external_metric
+
+! Set external metric  (Pereverzev 10.02.2005)
 
 use const_inc, only: RTOR, BTOR, ABC, ROC, HRO, HROX, &
     SHIFT, ELONG, TRIAN, VOLUME, GP, GP2, NA, NA1, NAB
@@ -329,9 +317,8 @@ implicit none
 
 integer :: j
 double precision :: YNF, YR1
-!----------------------------------------------------------------------|
 
-call markloc('SETEXM', debug_lev=3*debug)
+call markloc('set_external_metric', debug_lev=3*debug)
 
 YNF = RTOR*GP2**2
 do J=1, NA1
@@ -374,10 +361,10 @@ ROC = VR(NA1)/GP2**2 * G33(NA1)/RTOR
 RHO(1: NA1) = XRHO(1: NA1)*ROC
 
 if (debug > 0) then
-    write(*, *) 'metric', RHO(1:10)
-    write(*, *) VR(1:10)
-    write(*, *) G33(1:10)
-    write(*, *) IPOL(1:10)
+    write(*, *) 'metric', RHO(1: 10)
+    write(*, *) VR(1: 10)
+    write(*, *) G33(1: 10)
+    write(*, *) IPOL(1: 10)
 endif
 HRO = RHO(2) - RHO(1)
 HROX = (RHO(2) - RHO(1))/ROC
@@ -414,11 +401,11 @@ enddo
 
 ! Linear extrapolation
 SLAT(NA1)  = 1.5*SLAT(NA)  - 0.5*SLAT(NA-1)
-VRS(NA1)    = 1.5*VRS(NA)    - 0.5*VRS(NA-1)
-G11(NA1)    = 1.5*G11(NA)    - 0.5*G11(NA-1)
-G22(NA1)    = 1.5*G22(NA)    - 0.5*G22(NA-1)
+VRS(NA1)   = 1.5*VRS(NA)   - 0.5*VRS(NA-1)
+G11(NA1)   = 1.5*G11(NA)   - 0.5*G11(NA-1)
+G22(NA1)   = 1.5*G22(NA)   - 0.5*G22(NA-1)
 DRODA(NA1) = 1.5*DRODA(NA) - 0.5*DRODA(NA-1)
-G11(NA1)    = 1.5*G11(NA)    - 0.5*G11(NA-1)
+G11(NA1)   = 1.5*G11(NA)   - 0.5*G11(NA-1)
 
 ! Compute new minor radius
 call INTEGR(RHO(1: NA1), 1, 1./DRODA(1: NA1), AMETR(1: NA1), NA1)
@@ -427,12 +414,8 @@ ABC = AMETR(NA1)
 do J=1, NA1
     if (j == 1) then
         SHEAR(J) = (FP(2) - FP(1))/(2.*MU(1) + 0.333*(MU(1) - MU(2)))
-    elseif (j < NA) then
+    elseif (j <= NA) then
         SHEAR(J) = (FP(j+1) - 2.*FP(j) + FP(j-1))/(MU(j+1) + MU(j))
-    else
-        SHEAR(J) = HRO*(FP(NA1) - FP(NA))/HRO - FP(NA) + FP(NA-1)
-        SHEAR(J) = 2.*SHEAR(J)*(2.*HRO - HRO)
-        SHEAR(J) = SHEAR(J)/(2.*HRO*MU(NA1) - HRO*MU(NA))
     endif
     SHEAR(J) = 1. - SHEAR(J)/(GP*BTOR*HRO**2)
     GRADRO(j) = DRODA(J)
@@ -441,13 +424,12 @@ do J=1, NA1
     B0DB2(j) = ((RTOR + SHIF(J))/RTOR)**2 + 0.75*(AMETR(j)/RTOR)**2
     BMAXT(j) = BTOR*RTOR/(RTOR + SHIF(j) - AMETR(j))
     BMINT(j) = BTOR*RTOR/(RTOR + SHIF(j) + AMETR(j))
-    BDB0(j) = (RTOR/(RTOR + SHIF(j)))
+    BDB0(j)  = (RTOR/(RTOR + SHIF(j)))
     YR1      = (RTOR + SHIF(j) - AMETR(j))/(RTOR + SHIF(j))
-    FOFB(j) = 1. - sqrt(YR1)*(1. + 0.5*YR1)
+    FOFB(j)  = 1. - sqrt(YR1)*(1. + 0.5*YR1)
 enddo
-
+SHEAR(NA1) = SHEAR(NA)
 if (NA1 < NAB) then
-
     do J=NA1+1, NAB
         SHIF(J) = SHIFT
         ELON(J) = 1.
@@ -460,7 +442,7 @@ if (NA1 < NAB) then
         G11(J) = VRS(j)
         G22(J) = RTOR*VRS(j)/(RTOR + SHIFT)**2
         DRODA(J) = 1.
-        SLAT(J) = VRS(J)*DRODA(J)
+        SLAT(J)  = VRS(J)*DRODA(J)
         SHEAR(j) = SHEAR(NA1)
         BDB02(j) = BDB02(NA1)
         B0DB2(j) = B0DB2(NA1)
@@ -473,19 +455,20 @@ if (NA1 < NAB) then
 ! Volume (on the shifted grid) is calculated using VR:
     call INTEGR(RHO, 1, VR, VOLUM, NA1)
 
-    call NEWGRD ! The RHO-grid and NA, NA1 are updated
+    call new_grid ! The RHO-grid and NA, NA1 are updated
 
     VOLUME = VOLUM(NA1)
 endif
 
 return
-end subroutine SETEXM
+end subroutine set_external_metric
 
-!======================================================================|
+!---------------------------------------------------------------------
+double precision function ROC3A(Rmaj, shaf_shift, a_min, elongation, triangularity)
+
+!---------------------------------------------------------------------
 ! ROC3A [m]: Analytical formula for the "rho_tor" in vacuum
 !      (Pereverzev 24.03.00)
-double precision function ROC3A(Rmaj, shaf_shift, a_min, elongation, triangularity)
-!----------------------------------------------------------------------|
 ! Input: Rmaj - Major radius [m]
 !  shaf_shift - Shafranov shift [m]
 !  a_min - Minor radius [m]
@@ -493,7 +476,7 @@ double precision function ROC3A(Rmaj, shaf_shift, a_min, elongation, triangulari
 !  triangularity - Triangularity [d/l]
 ! Output:
 !  ROC3A - Dimensional toroidal "rho" [m]
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 
 use debugger, only: markloc, debug, astra_stop
 
@@ -544,25 +527,27 @@ endif
 return
 end function ROC3A
 
-!======================================================================|
+!---------------------------------------------------------------------
+subroutine A2EMEQ(jexit)
+
+!---------------------------------------------------------------------
 ! Module call sequence in A2EMEQ
 !    
-!    EQ -> mapping -> EMEQ -> NEWGRD -> mapping -> SETEDGE -> mapping
+!    EQ -> mapping -> EMEQ -> new_grid -> mapping 
 !
 !                                         | -> EQGB3
 !                                         |                 | -> EQLVU3
 !    inside EMEC:          EMEQ -> | -> EQAB3 -> | -> EQK3
 !                                         |                 | -> EQC1
 !                                         | -> EQPPAB
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 ! This solver is called if LEQ(5) == 3 or 
 !        if (NEQUIL != 42 and NEQUIL != 64.64 and NEQUIL > 0)
 ! EMEQ grid is defined as min(NA1, nint(NEQIL), NP)
 ! For (NEQUIL = 0 ) metric is prescribed by a simple formula
 ! For (NEQUIL = -1) metric is taken from a data file
 ! For (NEQUIL = 1 ) metric is frozen (can be used interactively)
-!======================================================================|
-subroutine A2EMEQ(jexit)
+!---------------------------------------------------------------------
 
 use parameter_inc, only: NRD
 use emeq_mod, only: NP, emeq
@@ -583,20 +568,20 @@ double precision, parameter :: ACEQLB=1.d-6
 
 integer, intent(out) :: jexit
 
-integer :: N3EQL, j, jp, jt, jna1, jcall, waitevent
+integer :: N3EQL, j, jp, jt, jcall
 double precision :: &
-    ALFA, Y1, Y2, YY, YDA, GPP4, YRO, YCB, TRIABC, IINT, BTOOO
+    ALFA, Y1, Y2, YY, YDA, GPP4, YRO, YCB, TRIABC, BTOOO
 double precision, dimension(NRD) :: YA, YB, BA, BB, GR, GBD, GL, GSD, &
     A, B, C, D, BC, BD, XTR, BMODEQ, FOFBEQ, GRDAEQ, &
     XEQ, B2B0EQ, B0B2EQ, BMAXEQ, BMINEQ
 character(len=80) :: STRI
 
-external IINT, waitevent
+double precision, external :: IINT
 
 save jcall, N3EQL
 data jcall/0/
 
-!----------------------------------------------------------------------|
+!--------------------------------------------------
 ! Prepare input data for the 3M equilibrium solver:
 
 call markloc('A2EMEQ')
@@ -625,15 +610,15 @@ if (jcall <= jp) then
     Y1 = jcall    ! 0 <= jcall <= jp
     Y1 = Y1/jp
     do J=1, NA1
-        A(J) = TE(J)
-        B(J) = TI(J)
-        C(J) = CU(J)
+        A(J)  = TE(J)
+        B(J)  = TI(J)
+        C(J)  = CU(J)
         TE(J) = Y1*A(J)
         TI(J) = Y1*B(J)
         if (jcall == 0) then
             CU(J) = (1 - (RHO(J)/ROC)**2)
         else
-            CU(J) = Y1*C(J) + (1.d0 - Y1)*(1 - (RHO(J)/ROC)**2)
+            CU(J) = Y1*C(J) + (1. - Y1)*(1. - (RHO(J)/ROC)**2)
         endif
     enddo
     YCB = IINT(CU, ROC)
@@ -660,7 +645,7 @@ do J=1, N3EQL
     XEQ(J) = (j - 1.)/(N3EQL - 1.)
 enddo
 ! From transport grid in "a" to equidistant grid in "a"
-ALFA = .001
+ALFA = 0.001
 call SMOOTH(ALFA, NA1, A, XTR, N3EQL, BA, XEQ)
 call SMOOTH(ALFA, NA1, B, XTR, N3EQL, BB, XEQ)
 
@@ -674,7 +659,6 @@ if (TIME > 0.2453d16) then
     do j=1, N3EQL
         write(*, '(I4, 2F10.5)') j, BA(j), BB(j)
     enddo
-
     write(*, '(3(2F10.5, 2X))') (EQPF(j), j=NA1-5, NA1)
     write(*, '(3(2F10.5, 2X))') (EQFF(j), j=NA1-5, NA1)
     write(*, '(3(2F10.5, 2X))') (CU(j)/IPOL(j), j=NA1-5, NA1)
@@ -685,12 +669,11 @@ if (TIME > 0.2453d16) then
         RHO(j)*G22(J)*(MU(J)/RTOR)**2, j=NA1-5, NA1)
     write(*, '(3(2F10.5, 2X))') (BA(j), j=1, N3EQL)
     write(*, '(3(2F10.5, 2X))') (BB(j), j=1, N3EQL)
-
 endif
 
-call EMEQ &
+call EMEQ( &
 ! Input:
-    (BA, BB, RTOR + SHIFT, ABC, ELONG, TRIABC, N3EQL, ACEQLB, &  ! relative accuracy
+    BA, BB, RTOR + SHIFT, ABC, ELONG, TRIABC, N3EQL, ACEQLB, &  ! relative accuracy
     BTOR*RTOR/(RTOR + SHIFT), IPL, &  ! Total plasma current
 ! output
     GR, GBD, GL, GSD, A, BD, B, BA, BB, BC, C, D, &
@@ -736,15 +719,14 @@ if (N3EQL > 10) then
     endif
 endif
 
-!----------------------------------------------------------------------|
+!---------------------------------------
 ! Define a new RHO-grid:
 YRO = sqrt(RTOR/(RTOR + SHIFT))
 ROC = YRO*GR(N3EQL)  ! Define a new RHO_edge
 ! FTN = GP*BTN*ROC*ROC
-JNA1 = NA1 ! Save NA1  that can be changed by NEWGRD
-YY = HRO ! Save HRO that can be changed by NEWGRD
-call NEWGRD ! The RHO-grid and NA, NA1, HRO are updated
-!----------------------------------------------------------------------|
+YY = HRO ! Save HRO that can be changed by new_grid
+call new_grid ! The RHO-grid and NA, NA1, HRO are updated
+!---------------------------------------
 ! Define a new auxiliary (shifted) grid:
 Y2 = 0.5d0/ROC
 do J=1, NA1
@@ -754,18 +736,18 @@ enddo
 GPP4 = GP2*GP2
 do J=1, N3EQL
     DRODA(J) = YRO*BC(J)
-    XEQ(J) = GR(J)/GR(N3EQL)
-    G11(J) = A(J)*DRODA(J)**2
-    G22(J) = B(J)*DRODA(J)**2
-    G33(J) = BA(J)*RTOR*RTOR
-    VRS(J) = GPP4*C(J)/DRODA(J)
-    IPOL(J) = BB(J)/RTOR/BTOR
-    GRADRO(J) = BD(J)*DRODA(J)
-    VR(J) = VRS(j)
-    YA(j) = G33(j)
-    YB(j) = IPOL(j)
+    XEQ(J)   = GR(J)/GR(N3EQL)
+    G11(J)   = A(J)*DRODA(J)**2
+    G22(J)   = B(J)*DRODA(J)**2
+    G33(J)   = BA(J)*RTOR*RTOR
+    VRS(J)   = GPP4*C(J)/DRODA(J)
+    IPOL(J)  = BB(J)/RTOR/BTOR
+    GRADRO(J)= BD(J)*DRODA(J)
+    VR(J)    = VRS(j)
+    YA(j)    = G33(j)
+    YB(j)    = IPOL(j)
 enddo
-call QMAP(        N3EQL, XEQ, NA1, XTR, VRS)
+call QMAP(      N3EQL, XEQ, NA1, XTR, VRS)
 call SMAP(ALFA, N3EQL, XEQ, NA1, XTR, G11)
 call SMAP(ALFA, N3EQL, XEQ, NA1, XTR, G22)
 call SMAP(ALFA, N3EQL, XEQ, NA1, XTR, YA) ! G33 @ aux. grid
@@ -784,17 +766,12 @@ do J=1, NA1
     SLAT(J) = GRADRO(J)*VRS(J)
 enddo
 
-if (NA1 /= JNA1) then
-    call SETEDGE(JNA1, YY)
-endif
-
-!----------------------------------------------------------------------|
+!-------------------------------------
 ! Define the main transport grid:
-do J = 1, NA1
-    XTR(J) = XRHO(J) 
-enddo
+XTR(1: NA1) = XRHO(1: NA1) 
+
 ! Define VR, G33 and IPOL    on the main transport grid:
-call QMAP  (        N3EQL, XEQ, NA1, XTR, VR)
+call QMAP  (      N3EQL, XEQ, NA1, XTR, VR)
 call SMAP  (ALFA, N3EQL, XEQ, NA1, XTR, G33)
 call SMAP  (ALFA, N3EQL, XEQ, NA1, XTR, IPOL)
 call SMOOTH(ALFA, N3EQL, GBD, XEQ, NA1, SHIF, XTR)
@@ -812,21 +789,18 @@ B(1) = 0.
 call TRANSF(N3EQL, B, XEQ, NA1,  TRIA, XTR)
 call TRANSF(N3EQL, A, XEQ, NA1, AMETR, XTR)
 
-do J=1, NA1
+do J=1, NA
     SHIF(J) = SHIFT + SHIF(J)
     if (j == 1) then
         SHEAR(J) = (FP(2) - FP(1))/(2.*MU(1) + 0.333*(MU(1) - MU(2)))
-    elseif (j < NA) then
+    else
         SHEAR(J) = (FP(j+1) - 2.*FP(j) + FP(j-1))/(MU(j+1) + MU(j))
-    elseif (j == NA) then
-        SHEAR(J) = HRO*(FP(j+1) - FP(j))/HRO - FP(j) + FP(j-1)
-        SHEAR(J) = SHEAR(J)/(MU(j+1) + MU(j))
     endif
     SHEAR(J) = 1. - SHEAR(J)/(GP*BTOR*HRO**2)
 enddo
 SHEAR(NA1) = SHEAR(NA)
 
-do J = 1, NAB
+do J=1, NAB
     SHIV(J) = UPDWN 
 enddo
 
@@ -866,14 +840,23 @@ enddo
 return
 end subroutine A2EMEQ
 
-!======================================================================|
+!---------------------------------------------------------------------
 subroutine A2GSSOLVER(equil_solver)
 
 use parameter_inc, only: NRD
 use outcmn_inc, only: TASK, DXLET, CCOIL, VCOIL, DUMCTP, DUMCT, NBNT
-use const_inc
-use status_inc
-use plasma_state
+use const_inc, only: NEQUIL, MEQUIL, NBND, IPART, IPCTRL, TAU, NA, NA1, NAB, NCNB, NCTP, &
+    RTOR, BTOR, IPL, GP, GP2, HRO, ROC, ABC, &
+    VOLUME, SHIFT, ELONG, UPDWN, TRIAN, &
+    INUME3, ITFBP, IPLFBE, IFBEY, ITREQ, ICIRCQ, ITFBE, &
+    NB2EQL, TIME, LEQ, PSIFB, PSPLEX, PSIEXT
+use status_inc, only: G11, G22, G22E, G33, G33E, G41, G42, G43, G44, G45, &
+    FP, IPOL, MU, SHEAR, &
+    AMETR, VR, VRS, SLAT, GRADRO, DRODA, &
+    NE, TE, NI, TI, PBLON, PBPER, PFAST, EQPF, EQFF, &
+    BMAXT, BMINT, BDB02, BDB0, B0DB2, FOFB, &
+    VOLUM, SHIF, ELON, TRIA, XRHO, AREAT, PERIM, SHIV
+use plasma_state, only: plasma_up, plasma_trig
 use debugger, only: markloc
 use parameters_a2spider, only: equil_now
 
@@ -883,15 +866,16 @@ integer, parameter :: itfbe_ctrl=0
 
 integer, intent(in) :: equil_solver
 
-integer :: i, j, jneql, jnteta, jnbnd, jna1, jnstep, jstepp, j_save_bound
-double precision :: rbnd(1000), zbnd(1000), tau_resistive, dampfacpsplex, &
+integer :: i, j, jneql, jnteta, jnbnd, jnstep, jstepp, j_save_bound
+double precision :: tau_resistive, dampfacpsplex, &
      yrocnew, iplnew, ychipfp, dfpdrb12, yiplout, yipl, yupdwn
-double precision, dimension(NRD) :: yg11, yg22, yg33, yvr, yvrs, yslat, yg41, &
+double precision, dimension(NA1) :: yg11, yg22, yg33, yvr, yvrs, yslat, yg41, &
     ygradro, yipol, ydroda, ypres, ybmaxt, ybmint, yfp, &
     ybdb02, ybdb0, yb0db2, yvolum, yametr, yshif, yelon, &
     ytria, yfofb, yeqpf, yeqff
 double precision, dimension(NCNB) :: yccoil, yvcoil
 double precision, dimension(NCTP) :: ydumctp, ydumct
+double precision, dimension(1000) ::  rbnd, zbnd
 
 save jnstep, j_save_bound, yiplout, iplnew
 
@@ -973,9 +957,8 @@ endif
 if (LEQ(4) <= 0) iplnew = IPL !if CU:AS, current is assigned from model file
 
 yipl  = iplnew
-jna1  = NA1
 
-do j=1, na1
+do j=1, NA1
     yfp(j) = FP(j)
     yametr(j) = AMETR(j)
 
@@ -985,21 +968,21 @@ do j=1, na1
     yg33(j)    = G33(j)/(RTOR**2)                             !g33 = <1/R^2>
     yvr(j)     = VR(j)
     yvrs(j)    = VRS(j)
-    yslat(j)  = SLAT(j)
-    ygradro(j)= GRADRO(j)*VRS(j)                !gradro = <(grad(V))> 
-    yipol(j)  = IPOL(j)*RTOR*BTOR                 !ipol = R*Bphi
-    ypres(j)  = 1.60218E-3*((NE(j)*TE(j) + NI(j)*TI(j)) + &
-    NB2EQL*(0.5*PBLON(j) + 0.5*PBPER(j)) + PFAST(j))  !thermal + fast ions  from NBI + fast alpha in keV/m^3 *1e19 to MJ/m^3
-    yeqpf(j)  = EQPF(j)
-    yeqff(j)  = EQFF(j)
-    yvolum(j) = VOLUM(j)
-    yshif(j)  = SHIF(j)
-    yelon(j)  = ELON(j)
-    ytria(j)  = TRIA(j)
+    yslat(j)   = SLAT(j)
+    ygradro(j) = GRADRO(j)*VRS(j)                !gradro = <(grad(V))> 
+    yipol(j)   = IPOL(j)*RTOR*BTOR                 !ipol = R*Bphi
+    ypres(j)   = 1.60218E-3*((NE(j)*TE(j) + NI(j)*TI(j)) + &
+        NB2EQL*(0.5*PBLON(j) + 0.5*PBPER(j)) + PFAST(j))  !thermal + fast ions  from NBI + fast alpha in keV/m^3 *1e19 to MJ/m^3
+    yeqpf(j)   = EQPF(j)
+    yeqff(j)   = EQFF(j)
+    yvolum(j)  = VOLUM(j)
+    yshif(j)   = SHIF(j)
+    yelon(j)   = ELON(j)
+    ytria(j)   = TRIA(j)
 enddo
 ychipfp = FP(NA1)
 
-! EFable call to SPIDER
+! call to SPIDER
 i = 1    !fbe is off
 if (IFBEY >= 1.) i = 2    !fbe is on
 if (IPART == 1 ) i = 1    !fbe is off
@@ -1014,40 +997,39 @@ endif
 call GS_SOLVER( &
 ! Input:
     equil_solver, &
-    jneql, jnteta, jnbnd, jna1, &
+    jneql, jnteta, jnbnd, NA1, &
     rbnd, zbnd, & 
-    XRHO(1: jna1), RTOR, BTOR, ROC, yfp(1: jna1), ypres(1: jna1), &
-    yeqpf(1: jna1), yeqff(1: jna1), &
-    VOLUME, NCNB, yccoil(1: NCNB), yvcoil(1: NCNB), i, IPART, ITREQ, &
+    XRHO(1: NA1), RTOR, BTOR, ROC, yfp, ypres, &
+    yeqpf, yeqff, &
+    VOLUME, NCNB, yccoil, yvcoil, i, IPART, ITREQ, &
     nint(INUME3), TAU, nint(ITFBP), nint(ICIRCQ), nint(IPCTRL), nint(IFBEY), &
     TIME, ychipfp, PSIFB, PSIEXT, PSPLEX, &
 ! Output: 
-    yrocnew, yipl, yg11(1: jna1), yg41(1: jna1), yg22(1: jna1), &
-    yg33(1: jna1), G22E(1: jneql), G33E(1: jneql), yvr(1: jna1), yvrs(1: jna1), &
-    yslat(1: jna1), ygradro(1: jna1), yipol(1: jna1), ybmaxt(1: jna1), ybmint(1: jna1), &
-    ybdb02(1: jna1), ybdb0(1: jna1), yb0db2(1: jna1), ydroda(1: jna1), yvolum(1: jna1), &
-    yametr(1: jna1), yupdwn, yshif(1: jna1), yelon(1: jna1), ytria(1: jna1), &
-    yfofb(1: jna1), AREAT(1: jna1), PERIM(1: jna1) ) 
+    yrocnew, yipl, yg11, yg41, yg22, &
+    yg33, G22E(1: jneql), G33E(1: jneql), yvr, yvrs, &
+    yslat, ygradro, yipol, ybmaxt, ybmint, &
+    ybdb02, ybdb0, yb0db2, ydroda, yvolum, &
+    yametr, yupdwn, yshif, yelon, ytria, &
+    yfofb, AREAT(1: NA1), PERIM(1: NA1) ) 
 
-ROC = YROCNEW  ! Define a new RHO_edge
-JNA1 = NA1      ! Save NA1  that can be changed by NEWGRD
-yiplout = yipl ! new current in case
+ROC  = YROCNEW  ! Define a new RHO_edge
+yiplout = yipl  ! new current in case
 
 !Update control quantities
 if (nint(IPCTRL) /= 0 .and. nint(IPCTRL) > -2) then
     do j=1, NCTP
-        DUMCTP(j)=ydumctp(j) 
+        DUMCTP(j) = ydumctp(j) 
     enddo
 endif    
 
-do j=1, na1
+do j=1, NA1
 
 ! Meaningful lines (change evolutuion):
 ! Enabling G22 leads to a divergence
 !Efable try removing G22, original has it, now put it back
-    VR(j)     = yvr(j)
+    VR(j)    = yvr(j)
 ! Auxiliary lines (do not change evolutuion):
-    VRS(j)    = yvrs(j)
+    VRS(j)   = yvrs(j)
     SLAT(j)  = yslat(j)
     BMAXT(j) = ybmaxt(j)
     BMINT(j) = ybmint(j)
@@ -1056,29 +1038,29 @@ do j=1, na1
     B0DB2(j) = yb0db2(j)
     DRODA(j) = ydroda(j)
     IPOL(j)  = yipol(j)
-    G11(j)    = yg11(j)
-    G22(j)    = yg22(j)
-    G33(j)    = yg33(j)
+    G11(j)   = yg11(j)
+    G22(j)   = yg22(j)
+    G33(j)   = yg33(j)
     GRADRO(j)= ygradro(j)
     VOLUM(j) = yvolum(j)
     AMETR(J) = yametr(J)
     SHIF(J)  = yshif(J)
     ELON(J)  = yelon(J)
     TRIA(J)  = ytria(J)
-    G41(J)    = yg41(J)
-    G42(J)    = GRADRO(J)
-    G43(J)    = GRADRO(J)
-    G44(J)    = G11(J)/VRS(J)
-    G45(J)    = G11(J)/VRS(J)
+    G41(J)   = yg41(J)
+    G42(J)   = GRADRO(J)
+    G43(J)   = GRADRO(J)
+    G44(J)   = G11(J)/VRS(J)
+    G45(J)   = G11(J)/VRS(J)
     FOFB(J)  = yfofb(J)
-    FP(J)     = yfp(J)      ! due to adiabatic compression done in the code
+    FP(J)    = yfp(J)      ! due to adiabatic compression done in the code
     EQPF(J)  = yeqpf(J)    ! due to adiabatic compression done in the code
     EQFF(J)  = yeqff(J)    ! due to adiabatic compression done in the code
 enddo
 
 if (NBNT > 0 .or. TIME > ITFBE) then
     UPDWN = yupdwn
-    ABC    = yametr(NA1) 
+    ABC   = yametr(NA1) 
     ELONG = ELON(NA1)
     TRIAN = TRIA(NA1)
     SHIFT = SHIF(NA1)
@@ -1086,7 +1068,7 @@ endif
 
 if (itfbe_ctrl > 0) then
     UPDWN = yupdwn
-    ABC    = yametr(NA1) 
+    ABC   = yametr(NA1) 
     ELONG = ELON(NA1)
     TRIAN = TRIA(NA1)
     SHIFT = SHIF(NA1)
@@ -1094,29 +1076,26 @@ endif
 
 ! Deallocate equil_out%metric_coefs%g1 & co
 
-call NEWGRD ! The RHO-grid and NA, NA1, HRO are updated
+call new_grid ! The RHO-grid and NA, NA1, HRO are updated
 
 VOLUM(NA1) = yvolum(NA1)
 
 G22 = G22/VRS*RTOR/(GP2**2)/IPOL
 G11 = G11/VRS
 GRADRO = GRADRO/VRS
-DRODA = DRODA/VRS
+DRODA  = DRODA/VRS
 
-do J=1, NA1
+do J=1, NA
     if (j == 1) then
         SHEAR(J) = (FP(2) - FP(1))/(2.*MU(1) + 0.333*(MU(1) - MU(2)))
-    elseif (j < NA) then
+    else
         SHEAR(J) = (FP(j+1) - 2.*FP(j) + FP(j-1))/(MU(j+1) + MU(j))
-    elseif (j == NA) then
-        SHEAR(J) = HRO*(FP(j+1) - FP(j))/HRO-FP(j) + FP(j-1)
-        SHEAR(J) = SHEAR(J)/(MU(j+1) + MU(j))
     endif
-    SHEAR(J) = 1. -SHEAR(J)/(GP*BTOR*HRO**2)
+    SHEAR(J) = 1. - SHEAR(J)/(GP*BTOR*HRO**2)
 enddo
 SHEAR(NA1) = SHEAR(NA)
 
-do J = 1, NAB
+do J=1, NAB
     SHIV(J) = UPDWN 
 enddo
 
@@ -1137,9 +1116,10 @@ jnstep = jnstep + 1 ! Count SPIDER calls, this was outside enddo
 return
 end subroutine A2GSSOLVER
 
-!======================================================================|
+!---------------------------------------------------------------------
 subroutine BNDRY(RPB, ZPB)
-!----------------------------------------------------------------------|
+
+!---------------------------------------------------------------------
 ! If 3M solver is used the subroutine is not called.
 ! Otherwise, if a general equilibrium solver, ESC or SPIDER, is called
 ! then 
@@ -1149,14 +1129,14 @@ subroutine BNDRY(RPB, ZPB)
 ! 2) If the plasma boundary is defined by a data file then
 !     this subroutine uses the arrays BNDR, BNDZ as an input and
 !     produces output in [time dependent] arrays RPB, ZPB
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 ! NBND      number of points on the plasma vacuum boundary
 ! NBNT      number of times for the plasma boundary evolution
 !  call from ESC:
 !  call BNDRY(RPB, ZPB)
 !  call from SPIDER:
 !  call BNDRY(RZPB, RZPB(NBND+1))
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 
 use outcmn_inc, only: NBNT, BNDTIM, BNDR, BNDZ
 use const_inc, only: NBND, GP2, TIME, RTOR, SHIFT, ABC, TRIAN, UPDWN, ELONG
@@ -1173,7 +1153,6 @@ if (NBNT <= 1) then
     if (NBNT == 0) then  ! No input group "NAMEXP BND" found
 
         if (NBND == 0) NBND = 8    ! call from ESC
-
         if (NBND /= 8) then
             do j=1, NBND
                 YFI = GP2*(j-1.)/(NBND)
@@ -1186,8 +1165,8 @@ if (NBNT <= 1) then
             return
         endif
 
-        yd1 = .75  ! sin^2(pi/3)
-        yd2 = .5  ! cos(pi/3) 
+        yd1 = 0.75  ! sin^2(pi/3)
+        yd2 = 0.5  ! cos(pi/3) 
         ydt = sqrt(yd1)  ! sin(pi/3)
         BNDR(1) = RTOR + SHIFT - ABC*TRIAN
         BNDZ(1) = UPDWN + ABC*ELONG
@@ -1215,15 +1194,15 @@ endif
 
 if (TIME <= BNDTIM(1)) then ! Take bnd at time=t1
     do j=1, NBND
-        RPB(j) = BNDR(1 + (j-1)*NBNT)
-        ZPB(j) = BNDZ(1 + (j-1)*NBNT)
+        RPB(j) = BNDR(1 + (j - 1)*NBNT)
+        ZPB(j) = BNDZ(1 + (j - 1)*NBNT)
     enddo
     return
 endif
 if (TIME >= BNDTIM(NBNT)) then ! Take bnd at time=t_NBNT
     do j=1, NBND
-        RPB(j) = BNDR(NBNT + (j-1)*NBNT)
-        ZPB(j) = BNDZ(NBNT + (j-1)*NBNT)
+        RPB(j) = BNDR(NBNT + (j - 1)*NBNT)
+        ZPB(j) = BNDZ(NBNT + (j - 1)*NBNT)
     enddo
     return
 endif
@@ -1236,8 +1215,8 @@ ydt = BNDTIM(jt+1) - BNDTIM(jt)
 yd1 = (TIME - BNDTIM(jt))/ydt
 yd2 = (TIME - BNDTIM(jt+1))/ydt
 do j=1, NBND
-    RPB(j) = BNDR(jt + (j-1)*NBNT)
-    ZPB(j) = BNDZ(jt + (j-1)*NBNT)
+    RPB(j) = BNDR(jt + (j - 1)*NBNT)
+    ZPB(j) = BNDZ(jt + (j - 1)*NBNT)
 enddo
 if (NBND > 12) return
 
@@ -1253,8 +1232,8 @@ do j=1, NBND
 enddo
 YD1 = RPB(1)
 YD2 = ZPB(1)
-RPB(1) = RPB(j1)
-ZPB(1) = ZPB(j1)
+RPB(1)  = RPB(j1)
+ZPB(1)  = ZPB(j1)
 RPB(j1) = YD1
 ZPB(j1) = YD2
 ! Bottom(2)
@@ -1281,8 +1260,8 @@ do j=3, NBND
 enddo
 YD1 = RPB(3)
 YD2 = ZPB(3)
-RPB(3) = RPB(j1)
-ZPB(3) = ZPB(j1)
+RPB(3)  = RPB(j1)
+ZPB(3)  = ZPB(j1)
 RPB(j1) = YD1
 ZPB(j1) = YD2
 ! Outward(4)
@@ -1295,20 +1274,18 @@ do j=4, NBND
 enddo
 YD1 = RPB(4)
 YD2 = ZPB(4)
-RPB(4) = RPB(j1)
-ZPB(4) = ZPB(j1)
+RPB(4)  = RPB(j1)
+ZPB(4)  = ZPB(j1)
 RPB(j1) = YD1
 ZPB(j1) = YD2
 
 return
 end subroutine BNDRY
 
-!======================================================================|
+!---------------------------------------------------------------------
 subroutine get_coil(tim_in, coil_arr, nt, n_coil, coil_curr)
-!----------------------------------------------------------------------|
-! This routine get the control quantities from the exp data at the present time
-! slice.
-!----------------------------------------------------------------------|
+
+! Get the control quantities from the exp data at the present time slice
 
 implicit none
 
@@ -1361,12 +1338,10 @@ enddo
 return
 end subroutine get_coil
 
-!======================================================================|
+!---------------------------------------------------------------------
 subroutine GETCOILS(yvcoil, yccoil)
-!----------------------------------------------------------------------|
-! This routine get the coil currents from the exp data at the present time
-! slice.
-!----------------------------------------------------------------------|
+
+! Get the coil currents from the exp data at the present time slice
 
 use outcmn_inc, only: CCOIL, VCOIL, NCNBT, CCOILX, VCOILX
 use const_inc, only: TIME, NCNB
@@ -1394,14 +1369,12 @@ call get_coil(TIME, CCOILX, NCNBT, NCNB, yccoil)
 call get_coil(TIME, VCOILX, NCNBT, NCNB, yvcoil)
 
 return
-end
+end subroutine GETCOILS
 
-!======================================================================|
+!---------------------------------------------------------------------
 subroutine GETDUMCT(ydumct)
-!----------------------------------------------------------------------|
-! This routine get the control quantities from the exp data at the present time
-! slice.
-!----------------------------------------------------------------------|
+
+! Get the control quantities from the exp data at the present time slice
 
 use outcmn_inc, only: DUMCTX, NCTPT
 use const_inc, only: TIME, NCTP
@@ -1415,12 +1388,10 @@ call get_coil(TIME, DUMCTX, NCTPT, NCTP, ydumct)
 return
 end subroutine GETDUMCT
 
-!======================================================================|
+!---------------------------------------------------------------------
 subroutine GETCTRLMS(yctrlm)    
-!----------------------------------------------------------------------|
-! This routine get the control quantities from the exp data at the present time
-! slice.
-!----------------------------------------------------------------------|
+
+! Get the control quantities from the exp data at the present time slice
 
 use outcmn_inc, only: NCRMT, CTRLMX
 use const_inc, only: NCRM, TIME
@@ -1434,9 +1405,10 @@ call get_coil(TIME, CTRLMX, NCRMT, NCRM, yctrlm)
 return
 end subroutine GETCTRLMS
 
-!======================================================================|
+!---------------------------------------------------------------------
 subroutine RHSEQ
-!-----------------------------------------------------------------------
+
+!---------------------------------------------------------------------
 ! Input: RTOR, BTOR, NA, NA1, HRO, NB2EQL, 
 !  NE, NI, TE, TI, MU, CU, AMETR, RHO, PBLON, PBPER, G22, G33, IPOL
 ! Output:
@@ -1452,10 +1424,11 @@ subroutine RHSEQ
 !         j(r, z) = r*(\vec j\cdot\nabla\zeta) = EQPF*r/R_0+EQFF*R_0/r , 
 ! ASTRA average toroidal current density is
 !    R_0*<\vec j\cdot\nabla\zeta> = EQPF+EQFF*<R_0^2/r^2>
-!-----------------------------------------------------------------------
+!---------------------------------------------------------------------
 
 use const_inc, only: INUME3, RTOR, BTOR, HRO, NA, NA1, NB2EQL
-use status_inc
+use status_inc, only: EQFF, EQPF, NE, TE, NI, TI, PBLON, PBPER, PFAST, &
+    RHO, AMETR, CU, CUTOR, G22, G33, MU, IPOL
 use debugger, only: markloc, debug
 
 implicit none
@@ -1493,11 +1466,12 @@ endif
 return
 end subroutine RHSEQ
 
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 subroutine CUOFMU
-!----------------------------------------------------------------------|
+
+!---------------------------------------------------------------------
 ! Compute CU(rho) and FP(rho) from MU(rho)
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 ! Input: RHO - radial grid (m)
 !          NA1 - number of grid points
 !          GP2 - 2\pi
@@ -1510,7 +1484,7 @@ subroutine CUOFMU
 !          MU(1:NA1)     - (1/rho)dF/d(rho) rotational transform
 ! Output: CU(1:NA1) - (1/rho)d{K*dF/d(rho)}/d(rho) current density
 !            FP(1:NA1) - poloidal flux [Vs]
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 
 use const_inc, only: GP, GP2, RTOR, BTOR, NA1, NA, PSIBO, PSIAX, HRO
 use status_inc, only: RHO, SRHO, XRHO, CU, MU, FP, G22, G33, IPOL
@@ -1549,7 +1523,7 @@ enddo
 
 call INTEGR(SRHO(1:NA1), 2, YAR(1:NA1), FP(1:NA1), NA1)
 
-HH = HRO*HRO
+HH = HRO**2
 YAJ = 0.
 
 do J=1, NA
@@ -1564,7 +1538,7 @@ do J=1, NA
 enddo
 
 call EXTRAP(XRHO(1:NA), CU(1:NA), XRHO(NA1), NA, CU(NA1), 2, NA)
-YCJ = 1.25/(GP*GP*RTOR)
+YCJ = 1.25/(GP**2 * RTOR)
 YAJ = 0.5/(GP*BTOR)
 do J=1, NA1
     CU(j) = YCJ*CU(j)*G33(J)*IPOL(J)**3
@@ -1576,11 +1550,12 @@ call EXTRAP(XRHO(1:NA1), FP(1:NA1), 0.0, 1, PSIAX, 1, NA1)
 return
 end subroutine CUOFMU
 
-!======================================================================|
+!---------------------------------------------------------------------
 subroutine CUOFP
-!----------------------------------------------------------------------|
+
+!---------------------------------------------------------------------
 ! Compute CU(rho) and MU(rho) from FP(rho)
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 ! Input: HRO - radial step (m)
 !  NA1 - number of grid points
 !  G22(1:NA) - <g22/g>*............
@@ -1590,9 +1565,8 @@ subroutine CUOFP
 !  FP(1:NA1) - poloidal flux
 ! Output: CU(1:NA1) - (1/rho)d{K*dF/d(rho)}/d(rho) current density
 !  MU(1:NA1) - (1/rho)dF/d(rho)      rotational transform
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 
-use parameter_inc
 use status_inc, only: RHO, SRHO, XRHO, FP, MU, CU, IPOL, G22, G33
 use const_inc, only: GP, GP2, RTOR, HRO, BTOR, NA, NA1, PSIBO, PSIAX
 use numerical_tools, only: extrap, deriv
@@ -1603,7 +1577,7 @@ integer :: j
 double precision, dimension(NA1) :: YAR, YAR1
 double precision :: MUVAC, HH, YAJ, YCJ, ARRNA1
 
-HH = HRO*HRO
+HH = HRO**2
 YAJ = 0.
 
 do J=1, NA
@@ -1624,23 +1598,20 @@ enddo
 
 call EXTRAP(XRHO(1: NA), CU(1: NA), XRHO(NA1), NA, CU(NA1), 2, NA)
 
-YCJ = 1.25/(GP*GP*RTOR)
+YCJ = 1.25/(GP**2 * RTOR)
 YAJ = 0.5/(GP*BTOR)
 do J=1, NA1
     CU(j) = YCJ*CU(j)*G33(J)*IPOL(J)**3
     MU(J) = YAJ*MU(j)
 enddo
 
-MUVAC = 4*GP*0.1
+MUVAC = 0.4*GP
 
 ! Compute PSIAX, PSIBO
 PSIBO = FP(NA1)
 call EXTRAP(XRHO(1: NA1), FP(1: NA1), 0.0, 1, PSIAX, 1, NA1)
 
-! Compute MU from FP, MU is on shifted grid
-do j=1, NA1
-    YAR(j)=RHO(j)
-enddo
+YAR(1: NA1) = RHO(1: NA1)
      
 call DERIV(YAR(1: NA1), SRHO(1: NA1), 1, FP(1:NA1), YAR1(1:NA1), 1, NA1, 1)
 
@@ -1666,25 +1637,26 @@ do J=1, NA
         YAJ = G22(j)*YAJ
         CU(j) = (YAJ - YCJ)/HRO
     endif
-    CU(j) = CU(j)/(j-0.5)
+    CU(j) = CU(j)/(j - 0.5)
 enddo
 MU(NA1) = ARRNA1(MU(NA), 1.)  ! See DEFARR
-YCJ = 1.25/(GP*GP*RTOR)
+YCJ = 1.25/(GP**2 * RTOR)
 YAJ = 0.5/(GP*BTOR)
 do J=1, NA1
     CU(j) = YCJ*CU(j)*G33(J)*IPOL(J)**3
     MU(J) = YAJ*MU(j)
 enddo
 
+return
 end subroutine CUOFP
 
-!======================================================================|
-subroutine NEWGRD
-!----------------------------------------------------------------------|
-! input:  XRHO, SXHO, HROX, ROC, NA1, AB, ABC, AMETR(NA1)
+!---------------------------------------------------------------------
+subroutine new_grid
+
+!---------------------------------------------------------------------
+! Input:  XRHO, SXHO, HROX, ROC, NA1, AB, ABC, AMETR(NA1)
 ! Output: NB1, RHO, SRHO, HRO, AMETR(j>NA1)
-!----------------------------------------------------------------------|
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 
 use parameter_inc, only: NRD
 use status_inc, only: RHO, XRHO, SRHO, SXHO, AMETR
@@ -1698,11 +1670,10 @@ double precision :: YDA
 
 HRO = HROX*ROC
 do j=1, NRD
-  RHO(j)  = XRHO(j)*ROC
-  SRHO(j) = SXHO(j)*ROC
+    RHO(j)  = XRHO(j)*ROC
+    SRHO(j) = SXHO(j)*ROC
 enddo
 FTO = GP*BTOR*ROC**2
-!Efable normalized grid stuff
 
 do j=1, NRD
     if (RHO(j) >= ROWALL) EXIT
@@ -1726,12 +1697,10 @@ AMETR(NAB) = AB
 if (NA1 + 1 > NB1 .or. NA1 == NAB) return
 
 YDA = (AB - ABC)/(NAB - NA1)
-do j=NA1 + 1, NB1
-    AMETR(j) = ABC + YDA*(j - NA1)
-enddo
 
 if (NA1 < NB1) then
-    do j=NA1 + 1, NB1
+    do j=NA1+1, NB1
+        AMETR(j) = ABC + YDA*(j - NA1)
         if (AMETR(j) < AB) NAB = j
     enddo
     if (NAB < NB1) NAB = NAB + 1
@@ -1740,242 +1709,18 @@ ROB = RHO(NAB)
 AMETR(NAB) = AB
 
 return
-end subroutine NEWGRD
+end subroutine new_grid
 
-!======================================================================|
-subroutine SETEDGE(JNA1O, YHAO)
-!----------------------------------------------------------------------|
-! Input:
-! YHAO - old edge-cell size
-! JNA1O - old grid dimension
-! Output:
-! if (NA1 == JNA1O) then FP(NA1) 
-!          all main arrays(NA1) otherwise
-! Note! FP defined in this subroutine will be assigned to FPO in OLDNEW
-!----------------------------------------------------------------------|
-
-use const_inc, only: GP, GP2, NA, NA1, HRO, ROC, RTOR, BTOR, IPL
-use status_inc
-
-implicit none
-
-integer, intent(in) :: JNA1O
-double precision, intent(in) :: YHAO
-integer :: JNAO, j
-double precision :: YL, YR, YD, YM, YM1, YM2
-
-if (NA1 > JNA1O) then ! NA1 increases: JNA1O >= NA
-    JNAO = JNA1O - 1
-    TE(NA1)     = TE(JNA1O)
-    TI(NA1)     = TI(JNA1O)
-    NE(NA1)     = NE(JNA1O)
-    NI(NA1)     = NI(JNA1O)
-    NIZ1(NA1)  = NIZ1(JNA1O)
-    NIZ2(NA1)  = NIZ2(JNA1O)
-    NIZ3(NA1)  = NIZ3(JNA1O)
-    NALF(NA1)  = NALF(JNA1O)
-    NHE3(NA1)  = NHE3(JNA1O)
-    NHYDR(NA1) = NHYDR(JNA1O)
-    NDEUT(NA1) = NDEUT(JNA1O)
-    NTRIT(NA1) = NTRIT(JNA1O)
-    NMAIN(NA1) = NMAIN(JNA1O)
-    F0(NA1) = F0(JNA1O)
-    F1(NA1) = F1(JNA1O)
-    F2(NA1) = F2(JNA1O)
-    F3(NA1) = F3(JNA1O)
-    F4(NA1) = F4(JNA1O)
-    F5(NA1) = F5(JNA1O)
-    F6(NA1) = F6(JNA1O)
-    F7(NA1) = F7(JNA1O)
-    F8(NA1) = F8(JNA1O)
-    F9(NA1) = F9(JNA1O)
-
-    YM  = MU(JNAO)
-    YM1 = MU(JNAO-1)
-    YM2 = MU(JNAO-2)
-    YR = YHAO/HRO
-    YM = YM*8./(1. + YR)/(3. + YR) - YM2*(YR - 1.)/(3. + YR) + &
-          YM1*2.*(YR - 1.)/(1. + YR)
-    YD = GP2*BTOR*JNAO*HRO*YM
-
-! find MU_old
-    YM  = (FPO(JNA1O)     - FPO(JNAO)     )/(YHAO*JNAO*HRO)
-    YM1 = (FPO(JNAO)      - FPO(JNAO - 1))/(HRO*(JNAO - 1)*HRO)
-    YM2 = (FPO(JNAO - 1) - FPO(JNAO - 2))/(HRO*(JNAO - 2)*HRO)
-    YR = YHAO/HRO
-    YM = YM*8./(1. + YR)/(3. + YR) - YM2*(YR - 1.)/(3. + YR) + &
-          YM1*2.*(YR - 1.)/(1. + YR)
-    YD = JNAO*HRO*YM
-! Extend FPO to the new grid (points NA and NA1)
-    FPO(NA)  = FPO(NA-1) + (FV(NA) - FV(NA-1)) + YD*HRO
-    FPO(NA1) = FPO(NA) + IPL*HRO*0.4*GP*RTOR/G22(NA)/IPOL(NA1) + &
-                  FV(NA) - FV(NA-1)
-    YD = RHO(NA1) - RHO(JNAO)
-    do j=JNA1O, NA ! Linear interpolation on the 2nd last node
-        YR = (RHO(j) - RHO(JNAO))/YD
-        YL = (RHO(NA1) - RHO(j))/YD
-        TE(j)     = TE(NA1)    *YR + TE(JNAO)    *YL
-        TI(j)     = TI(NA1)    *YR + TI(JNAO)    *YL
-        NE(j)     = NE(NA1)    *YR + NE(JNAO)    *YL
-        F0(j)     = F0(NA1)    *YR + F0(JNAO)    *YL
-        F1(j)     = F1(NA1)    *YR + F1(JNAO)    *YL
-        F2(j)     = F2(NA1)    *YR + F2(JNAO)    *YL
-        F3(j)     = F3(NA1)    *YR + F3(JNAO)    *YL
-        F4(j)     = F4(NA1)    *YR + F4(JNAO)    *YL
-        F5(j)     = F5(NA1)    *YR + F5(JNAO)    *YL
-        F6(j)     = F6(NA1)    *YR + F6(JNAO)    *YL
-        F7(j)     = F7(NA1)    *YR + F7(JNAO)    *YL
-        F8(j)     = F8(NA1)    *YR + F8(JNAO)    *YL
-        F9(j)     = F9(NA1)    *YR + F9(JNAO)    *YL
-        NI(j)     = NI(NA1)    *YR + NI(JNAO)    *YL
-        VRO(j)    = VRO(NA1)  *YR + VRO(JNAO)  *YL
-        NIZ1(j)  = NIZ1(NA1) *YR + NIZ1(JNAO) *YL
-        NIZ2(j)  = NIZ2(NA1) *YR + NIZ2(JNAO) *YL
-        NIZ3(j)  = NIZ3(NA1) *YR + NIZ3(JNAO) *YL
-        NALF(j)  = NALF(NA1) *YR + NALF(JNAO) *YL
-        NHE3(j)  = NHE3(NA1) *YR + NHE3(JNAO) *YL
-        NHYDR(j) = NHYDR(NA1)*YR + NHYDR(JNAO)*YL
-        NDEUT(j) = NDEUT(NA1)*YR + NDEUT(JNAO)*YL
-        NTRIT(j) = NTRIT(NA1)*YR + NTRIT(JNAO)*YL
-        NMAIN(j) = NMAIN(NA1)*YR + NMAIN(JNAO)*YL
-    enddo
-    call CUOFP  ! new metric is used for CU, MU EFable to be restored after VR is corrected
-elseif (NA1 < JNA1O) then  ! NA1 decreases
-    TE(NA1)     = TE(JNA1O)
-    TI(NA1)     = TI(JNA1O)
-    NE(NA1)     = NE(JNA1O)
-    NI(NA1)     = NI(JNA1O)
-    NIZ1(NA1)  = NIZ1(JNA1O)
-    NIZ2(NA1)  = NIZ2(JNA1O)
-    NIZ3(NA1)  = NIZ3(JNA1O)
-    NALF(NA1)  = NALF(JNA1O)
-    NHE3(NA1)  = NHE3(JNA1O)
-    NHYDR(NA1) = NHYDR(JNA1O)
-    NDEUT(NA1) = NDEUT(JNA1O)
-    NTRIT(NA1) = NTRIT(JNA1O)
-    NMAIN(NA1) = NMAIN(JNA1O)
-    F0(NA1) = F0(JNA1O)
-    F1(NA1) = F1(JNA1O)
-    F2(NA1) = F2(JNA1O)
-    F3(NA1) = F3(JNA1O)
-    F4(NA1) = F4(JNA1O)
-    F5(NA1) = F5(JNA1O)
-    F6(NA1) = F6(JNA1O)
-    F7(NA1) = F7(JNA1O)
-    F8(NA1) = F8(JNA1O)
-    F9(NA1) = F9(JNA1O)
-    MU(NA1) = RTOR*IPL/(5.*BTOR*ROC*G22(NA)*IPOL(NA1))
-endif
-
-return
-end subroutine SETEDGE
-
-!======================================================================|
-subroutine EDCELL(JNA1O)
-!----------------------------------------------------------------------|
-! Input:
-! JNA1O - old grid size
-! DFPDR = (FP(NA1)-FP(NA))/HRO
-! Output:
-! if (NA1 == JNA1O) then FP(NA1) 
-!          all main arrays otherwise
-! Note! FP defined in this subroutine will be assigned to FPO in OLDNEW
-!----------------------------------------------------------------------|
-
-use parameter_inc
-use const_inc, only: NA, NA1, ROC, RTOR, BTOR, IPL, TIME
-use status_inc
-
-implicit none
-
-integer, intent(in) :: JNA1O
-
-integer :: JNAO, j
-double precision :: YL, YR, YD
-
-if (NA1 > JNA1O) then ! NA1 increases: JNA1O >= NA
-    JNAO = JNA1O - 1
-    TE(NA1)     = TE(JNA1O)
-    TI(NA1)     = TI(JNA1O)
-    NE(NA1)     = NE(JNA1O)
-    NI(NA1)     = NI(JNA1O)
-    NIZ1(NA1)  = NIZ1(JNA1O)
-    NIZ2(NA1)  = NIZ2(JNA1O)
-    NIZ3(NA1)  = NIZ3(JNA1O)
-    NALF(NA1)  = NALF(JNA1O)
-    NHE3(NA1)  = NHE3(JNA1O)
-    NHYDR(NA1) = NHYDR(JNA1O)
-    NDEUT(NA1) = NDEUT(JNA1O)
-    NTRIT(NA1) = NTRIT(JNA1O)
-    NMAIN(NA1) = NMAIN(JNA1O)
-    F0(NA1) = F0(JNA1O)
-    F1(NA1) = F1(JNA1O)
-    F2(NA1) = F2(JNA1O)
-    F3(NA1) = F3(JNA1O)
-    F4(NA1) = F4(JNA1O)
-    F5(NA1) = F5(JNA1O)
-    F6(NA1) = F6(JNA1O)
-    F7(NA1) = F7(JNA1O)
-    F8(NA1) = F8(JNA1O)
-    F9(NA1) = F9(JNA1O)
-! (RHO(JNA1O)-RHO(JNAO)) - new value (after NEWGRD) is HRO, 
-
-    write(*, '(/A, 2I4, A, 2I4, 2F10.6)') 'EDCELL:', JNAO, NA, ' ->', JNA1O, NA1, TIME, IPL
-! Set FP(NA1) keeping I_pl
-
-    YD = RHO(NA1) - RHO(JNAO)
-    do j=JNA1O, NA ! Linear interpolation on the 2nd last node
-        YR = (RHO(j) - RHO(JNAO))/YD
-        YL = (RHO(NA1) - RHO(j))/YD
-        TE(j) = TE(NA1)*YR + TE(JNAO)*YL
-        TI(j) = TI(NA1)*YR + TI(JNAO)*YL
-        NE(j) = NE(NA1)*YR + NE(JNAO)*YL
-        NI(j) = NI(NA1)*YR + NI(JNAO)*YL
-        F1(j) = F1(NA1)*YR + F1(JNAO)*YL
-        F2(j) = F2(NA1)*YR + F2(JNAO)*YL
-        F3(j) = F3(NA1)*YR + F3(JNAO)*YL
-    enddo
-! Define FP(NA) from sigma*E=j_OH at j=NA
-
-elseif (NA1 < JNA1O) then  ! NA1 decreases
-    TE(NA1)     = TE(JNA1O)
-    TI(NA1)     = TI(JNA1O)
-    NE(NA1)     = NE(JNA1O)
-    NI(NA1)     = NI(JNA1O)
-    NIZ1(NA1)  = NIZ1(JNA1O)
-    NIZ2(NA1)  = NIZ2(JNA1O)
-    NIZ3(NA1)  = NIZ3(JNA1O)
-    NALF(NA1)  = NALF(JNA1O)
-    NHE3(NA1)  = NHE3(JNA1O)
-    NHYDR(NA1) = NHYDR(JNA1O)
-    NDEUT(NA1) = NDEUT(JNA1O)
-    NTRIT(NA1) = NTRIT(JNA1O)
-    NMAIN(NA1) = NMAIN(JNA1O)
-    F0(NA1) = F0(JNA1O)
-    F1(NA1) = F1(JNA1O)
-    F2(NA1) = F2(JNA1O)
-    F3(NA1) = F3(JNA1O)
-    F4(NA1) = F4(JNA1O)
-    F5(NA1) = F5(JNA1O)
-    F6(NA1) = F6(JNA1O)
-    F7(NA1) = F7(JNA1O)
-    F8(NA1) = F8(JNA1O)
-    F9(NA1) = F9(JNA1O)
-    MU(NA1) = RTOR*IPL/(5.*BTOR*ROC*G22(NA)*IPOL(NA1))
-endif
-
-end subroutine EDCELL
-
-!======================================================================|
+!---------------------------------------------------------------------
 subroutine SETGEO(jst)
-!----------------------------------------------------------------------|
+
+!---------------------------------------------------------------------
 ! Presently the subroutine is called with jst=0 only
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 ! input:  jst, NB1, HRO, ROC, AB, RHO(j)
 ! Output: SHIF(jst:NB1), ELON(jst:NB1), TRIA(jst:NB1), 
 !  AMETR(jst:NB1), DRODA(jst:NB1)
 
-use parameter_inc
 use const_inc, only: NB1, AB, ROC, RTOR, SHIFT, UPDWN, ELONG, TRIAN
 use status_inc, only: RHO, SHIF, SHIV, ELON, TRIA, AMETR, DRODA
 
@@ -1985,7 +1730,7 @@ integer, intent(in) :: jst
 
 integer :: j
 double precision :: YDA, YA, YR1, YR2, ROC3A
-!----------------------------------------------------------------------|
+
 if (jst + 1 > NB1) return
 do j=jst + 1, NB1
     YR2 = min(1.d0, (RHO(J)/ROC)**2)
@@ -1996,33 +1741,32 @@ do j=jst + 1, NB1
 enddo
 YDA = 0.1*AB/NB1
 
-YR1 = .0
+YR1 = 0.
 if (jst == 0) then
-    YA = 0.
+    YA  = 0.
     YR2 = 0.
 else
-    YA = AMETR(jst+1)
-    YR2 = RHO(jst+1)
+    YA  = AMETR(jst+1)
+    YR2 = RHO  (jst+1)
 endif
-do j=jst + 1, NB1
-2  continue
-    if (YR2 > RHO(j)) goto 3
-    YR1 = YR2
-    YA = YA + YDA
-    YR2 = ROC3A(RTOR, SHIF(j), YA, ELON(j), TRIA(j))
-    if (YR2 <= RHO(j)) goto 2
+do j=jst+1, NB1
+    do while(YR2 <= RHO(j))
+        YR1 = YR2
+        YA = YA + YDA
+        YR2 = ROC3A(RTOR, SHIF(j), YA, ELON(j), TRIA(j))
+    enddo
     DRODA(j) = YDA/(YR2 - YR1)
-3  continue
     AMETR(j) = YA - YDA + (RHO(j) - YR1)*DRODA(j)
 enddo
 
 return
 end subroutine SETGEO
 
-!======================================================================|
+!---------------------------------------------------------------------
 subroutine ADCMP(boundary_cond, dfpdrbm12)
 
-use const_inc
+use const_inc, only: ADCMPF, NA, NA1, TAU, RBDOT, NA1E, NA1I, NA1N, &
+    LEQ, HRO, ROC, PSIEXT, PSPLEX
 use status_inc
 use debugger, only: markloc
 use numerical_tools, only: deriv
@@ -2037,7 +1781,7 @@ double precision, dimension(NRD) :: XST, XHH
 
 call markloc('ADCMP')
 
-!Temperature e 
+! Te 
 if (ADCMPF == 1.) then 
     call DERIV(XRHO(1: NA1), SXHO(1: NA1), 1, TE(1: NA1), XHH(1: NA1), 1, NA1, 1)
     call GRID2GRID(2, SXHO(1: NA1), XHH(1: NA1), XST(1: NA1), NA1, 0)
@@ -2048,12 +1792,12 @@ if (ADCMPF == 1.) then
 endif
 
 if (NA1E < NA1) then
-    do J=NA1E + 1, NA1
+    do J=NA1E+1, NA1
         TE(J) = TEO(J)
     enddo
 endif
 
-! Temperature i 
+! Ti 
 if (ADCMPF == 1.) then 
     call DERIV(XRHO(1: NA1), SXHO(1: NA1), 1, TI(1: NA1), XHH(1: NA1), 1, NA1, 1)
     call GRID2GRID(2, SXHO(1: NA1), XHH(1: NA1), XST(1: NA1), NA1, 0)
@@ -2063,12 +1807,12 @@ if (ADCMPF == 1.) then
     enddo
 endif
 if (NA1I < NA1) then
-    do J=NA1I + 1, NA1
+    do J=NA1I+1, NA1
         TI(J) = TIO(J)
     enddo
 endif
 
-!Density 
+! Density 
 if (ADCMPF == 1.) then 
     call DERIV(XRHO(1: NA1), SXHO(1: NA1), 1, NE(1: NA1), XHH(1: NA1), 1, NA1, 1)
     call GRID2GRID(2, SXHO(1: NA1), XHH(1: NA1), XST(1: NA1), NA1, 0)
@@ -2091,20 +1835,18 @@ if (LEQ(4) > 0) then
     enddo
 
     SELECT CASE(boundary_cond)
-
-        CASE(1) !  Prescribed plasma current
-            J = NA1
-            FP(J) = FP(J-1) + HRO*dfpdrbm12
-        CASE(2) ! Prescribed psi_b
-            FP(NA1) = FP(NA1)
-        CASE(3) ! psi_n+g dpsidrb=psiext
-            FP(NA1) = (HRO*PSIEXT + FP(NA)*ROC*PSPLEX)/(HRO + ROC*PSPLEX)
-        CASE(4)
-            FP(NA1) = (HRO*PSIEXT + FP(NA)*PSPLEX)/(HRO + PSPLEX)  
-        CASE DEFAULT
-            J = NA1
-            FP(J) = FP(J) + TAU*RBDOT*XRHO(J)*XST(J)
-
+    CASE(1) !  Prescribed plasma current
+        J = NA1
+        FP(J) = FP(J-1) + HRO*dfpdrbm12
+    CASE(2) ! Prescribed psi_b
+        FP(NA1) = FP(NA1)
+    CASE(3) ! psi_n+g dpsidrb=psiext
+        FP(NA1) = (HRO*PSIEXT + FP(NA)*ROC*PSPLEX)/(HRO + ROC*PSPLEX)
+    CASE(4)
+        FP(NA1) = (HRO*PSIEXT + FP(NA)*PSPLEX)/(HRO + PSPLEX)  
+    CASE DEFAULT
+        J = NA1
+        FP(J) = FP(J) + TAU*RBDOT*XRHO(J)*XST(J)
     END SELECT
 
 ! recompute current and mu
@@ -2115,11 +1857,11 @@ endif
 return
 end subroutine ADCMP
 
-!======================================================================|
-
+!---------------------------------------------------------------------
 subroutine yrjkdr(YR, JK, YDR)
-!computes index position JK, and volume differential dV/HRO at position JK
-!input YR in units of RHO (so meters). 
+
+! Computes index position JK, and volume differential dV/HRO at position JK
+! Input: YR in units of RHO (meters)
 
 use const_inc, only: HRO, ROC, NA1
 use status_inc, only: VR
