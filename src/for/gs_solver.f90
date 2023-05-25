@@ -12,8 +12,7 @@ subroutine GS_SOLVER( &
     roc, fp, pres_in, eqpf, eqff, volume, &
     ncoils, yccoil, yvcoil, iter_step, iter_part, iter_itreq, &
     inume_3, tau_step, ipsibcf, icircq, ipctrl, ifbey, time_a, &
-    psifb_in, machine_name, &
-    psifb, psiext, psplex, &
+    psifb_in, psifb, psiext, psplex, &
 ! Output:
     rocnew, ipl, g11, g41, g22, g33, g22e, g33e, &
     vr, vrs, slat, gradro, ipol, bmaxt, bmint, bdb02, bdb0, b0db2, &
@@ -29,6 +28,7 @@ use parameters_a2spider, only: GP, GP2, GP4, muvac, &
     murelax2,  ydiff,  ydiff2,  max_iter,  miter_ext,  interp_routine, &
     interp_method_rect, epsf_tol, epss_tol, epsv_tol, epsg_tol, &
     key_no_startz, key_no_refits, equil_now
+use outcmn_inc, only: MACHINE
 
 implicit none
 
@@ -42,7 +42,6 @@ double precision, intent(in) :: tau_step, psifb_in, rtor, btor, roc, time_a
 double precision, intent(in), dimension(ncoils) :: yccoil, yvcoil
 double precision, intent(in), dimension(nbtabp) :: rbnd, zbnd
 double precision, intent(in), dimension(jna1) :: xrho, pres_in
-character(len=4), intent(in) :: machine_name
 
 double precision, intent(out) :: rocnew, updwn, psifb, psiext, psplex
 double precision, intent(out), dimension(jna1) :: ametr, vr, vrs, &
@@ -74,7 +73,7 @@ double precision, dimension(nr_equ) :: volum_in, PSI, PRESS, xrho_sp, &
     Hout, Houtt, hin1, hin2, hout1, hout2, &
     G2tild1, Htild1, G2tild2, Htild2, G2corr2, Hcorr2
 character(len=80) :: fname
-type(type_equilibrium) :: equil_in, equil_out
+type(type_equilibrium) :: equil_in
 double precision :: vtemp_counter
 
 !----------------------------------------------------------------------
@@ -124,7 +123,7 @@ if (ifbey == 0) then
     key_no_startz = 0
     key_no_refits = 0
 !GIT fname = TRIM(awd) // 'exp/nml/' // TRIM(RDNAME)
-    fname = TRIM(name_gsefdir) // TRIM(machine_name) // '/namelist_astra.txt'
+    fname = TRIM(name_gsefdir) // TRIM(MACHINE) // '/namelist_astra.txt'
     INQUIRE(FILE=trim(fname), EXIST=file_existence)
     if (file_existence) then
         open(53, FILE=fname)
@@ -396,7 +395,7 @@ iter_loop: do jiter=1, miter_ext
 
     if (fix_eqpf_eqff == 1) then
         if (time_a.le.time_fix_eqpff) then
-            fname = TRIM(name_gsefdir) // trim(machine_name) // '/spidat2.dat'
+            fname = TRIM(name_gsefdir) // trim(MACHINE) // '/spidat2.dat'
             write(*, *) 'EQUIL_CALL_SPID', TRIM(fname)
             open(32, file = fname)
             write(32, *)
@@ -412,7 +411,7 @@ iter_loop: do jiter=1, miter_ext
             write(32, *)
             close(32)
         else
-            fname = TRIM(name_gsefdir) // trim(machine_name) // '/spidat2.dat'
+            fname = TRIM(name_gsefdir) // trim(MACHINE) // '/spidat2.dat'
             write(*, *) 'EQUIL_CALL_SPID', TRIM(fname)
             open(32, file = fname)
             read(32, *)
@@ -444,7 +443,7 @@ iter_loop: do jiter=1, miter_ext
 !use tabbnd.wr if only fbe without circuit
     if (ifbey == 1 .and. ipctrl >= -3 .and. ipctrl <= 0 .and. &
        (iter_itreq >= 1 .or. jiter > 1) ) then
-        write(fname, '(a)') 'exp/equ/' // trim(machine_name) // '/tab_bnd.wr'
+        write(fname, '(a)') TRIM(name_gsefdir) // trim(MACHINE) // '/tab_bnd.wr'
         open(32, file=fname)
         read(32,*) i
         do j=1, Nteta
@@ -482,7 +481,7 @@ iter_loop: do jiter=1, miter_ext
         nr_equ, n_theta, iter_step, &
         ncoils, yccoil, yvcoil, tau_step, time_a, &
         ipsibcf, key_no_refits, &
-        icircq, ipctrl, iter_itreq, machine_name, ifbey, inume_3, &
+        icircq, ipctrl, iter_itreq, ifbey, inume_3, &
 ! Outputs
         key_start, PSIEXT, PSPLEX, keyplc, equil_now)
 

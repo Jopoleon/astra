@@ -870,7 +870,7 @@ end subroutine A2EMEQ
 subroutine A2GSSOLVER(equil_solver)
 
 use parameter_inc, only: NRD
-use outcmn_inc, only: TASK, machine, DXLET, CCOIL, VCOIL, DUMCTP, DUMCT, NBNT
+use outcmn_inc, only: TASK, DXLET, CCOIL, VCOIL, DUMCTP, DUMCT, NBNT
 use const_inc
 use status_inc
 use plasma_state
@@ -1020,8 +1020,7 @@ call GS_SOLVER( &
     yeqpf(1: jna1), yeqff(1: jna1), &
     VOLUME, NCNB, yccoil(1: NCNB), yvcoil(1: NCNB), i, IPART, ITREQ, &
     nint(INUME3), TAU, nint(ITFBP), nint(ICIRCQ), nint(IPCTRL), nint(IFBEY), &
-    TIME, ychipfp, machine, &
-    PSIFB, PSIEXT, PSPLEX, &
+    TIME, ychipfp, PSIFB, PSIEXT, PSPLEX, &
 ! Output: 
     yrocnew, yipl, yg11(1: jna1), yg41(1: jna1), yg22(1: jna1), &
     yg33(1: jna1), G22E(1: jneql), G33E(1: jneql), yvr(1: jna1), yvrs(1: jna1), &

@@ -5,7 +5,7 @@ subroutine A_SPIDER( &
     ncoils, ccoils, vcoils, tau_step, time_a, &
     ipsibcf, key_no_refits, &
     icircq, ipctrl, &
-    iter_itreq, machine_name, ifbey, inume_3, &
+    iter_itreq, ifbey, inume_3, &
 ! Output:
     key_start, PSIEXT, PSPLEX, keyplc, equil_out)
 
@@ -13,6 +13,7 @@ use imas_ids, only: type_equilibrium
 use fenix_params, only: s_adapt, s_fazt
 use parameters_a2spider, only: type_parameters, fix_adapgrid, GP, GP2
 use flight_sim_geometrics, only: geom1d
+use outcmn_inc, only: MACHINE
 
 implicit none
 
@@ -20,7 +21,6 @@ integer, intent(in) :: equil_solver, nr_equ, n_theta, iter_step, ncoils, &
     ipsibcf, key_no_refits, icircq, ipctrl, iter_itreq, ifbey, inume_3
 real*8, intent(in) :: tau_step, time_a
 real*8, intent(in), dimension(ncoils) :: ccoils, vcoils
-character(len=4), intent(in) :: machine_name
 type(type_equilibrium), intent(in) :: equil_in
 
 integer, intent(out) :: key_start, keyplc
@@ -40,7 +40,6 @@ double precision :: psplexavg, psplexavgexp, Rmag, Zmag, Rgeo, Zgeo, &
     rcurr, zcurr, rgeoc, zgeoc, ahorc, zsquad, psi_sep, psi_axis, &
     Rin, Raus, zoben, zunten, elong, &
     R_strike_in_aug, R_strike_out_aug, delr_oben, amin
-double precision, dimension(300) :: geom1dold
 double precision, dimension(100, 4) :: demo_gaps
 double precision, dimension(n_theta) :: Rbnd, Zbnd
 character(len=80) :: fname
@@ -53,7 +52,7 @@ save toric_fourc, toric_file
 save strahl_file, strahl_fourc, write_coils_diagn
 save kprs, k_grids, epsros, enelss, key_plcs, k_filessss
 save psplexavg, psplexold, kprs2, psplexavgexp, jdemogaps, i_gaps
-save geom1dold, demo_gaps
+save demo_gaps
 
 namelist / spider / kprs, k_grids, epsros, enelss, key_plcs, &
     toric_fourc, toric_file, strahl_file, strahl_fourc, write_coils_diagn, &
@@ -72,7 +71,7 @@ parameters_spider%dt    = tau_step
 parameters_spider%time  = time_a
 parameters_spider%neql  = nr_equ
 parameters_spider%nteta = n_theta + 2
-parameters_spider%prename = trim(parameters_spider%prename) // trim(machine_name) // '/'
+parameters_spider%prename = trim(parameters_spider%prename) // trim(MACHINE) // '/'
 
 !defaults
 if (nstep == 0) then
@@ -166,7 +165,7 @@ if (key_no_refits == 1) then
 endif 
 
 if (parameters_spider%k_fixfree == 1) then
-    if (machine_name(1:3) == 'aug') then
+    if (MACHINE(1:3) == 'aug') then
         ucoils(1)  = vcoils(1) - vcoils(2)
         ucoils(2)  = vcoils(2) - vcoils(3)
         ucoils(3)  = vcoils(3)
@@ -179,9 +178,9 @@ if (parameters_spider%k_fixfree == 1) then
         ucoils(10) = vcoils(10)
         ucoils(11) = 0.
         ucoils(12) = 0.
-    elseif (machine_name(1:3) == 'dem') then !DEMO free boundary, to recheck
+    elseif (MACHINE(1:3) == 'dem') then !DEMO free boundary, to recheck
         ucoils(1:ncoils)  = vcoils(1:ncoils)
-    elseif (machine_name(1:3) == 'tcv') then !TCV free boundary, to recheck
+    elseif (MACHINE(1:3) == 'tcv') then !TCV free boundary, to recheck
         ucoils(1:ncoils)  = vcoils(1:ncoils)
     else
         ucoils(1:ncoils) = vcoils(1:ncoils)
@@ -214,8 +213,7 @@ if (parameters_spider%k_fixfree == 1) then
     ipl = 1.e-6*equil_in%global_param%i_plasma
     if (parameters_spider%k_grid == 0) then
         call psib_ext(PSIEXT)
-    endif
-    if (parameters_spider%k_grid == 1) then
+    else if (parameters_spider%k_grid == 1) then
         call f_psib_ext(PSIEXT)
     endif
     if (ipsibcf >= 0) then     ! case with PSI_B and dPSI_B implicit 
@@ -227,8 +225,7 @@ if (parameters_spider%k_fixfree == 1) then
     else
         if (parameters_spider%k_grid == 0) then
             call psib_ext(PSIEXT)
-        endif
-        if (parameters_spider%k_grid == 1) then
+        else if (parameters_spider%k_grid == 1) then
             call f_psib_ext(PSIEXT)
         endif
         PSIEXT = -GP2*PSIEXT
@@ -237,36 +234,34 @@ if (parameters_spider%k_fixfree == 1) then
             (1. + (psplexavg*ipl**psplexavgexp)/tau_step)
         psplexold = PSPLEX
     endif
-endif
 
 ! for any machine, geom1d(299) and geom1d(300) are respecetively li3 and betapol from SPIDER
 
-geom1d(299) = equil_out%global_param%li3	
-geom1d(300) = equil_out%global_param%betpol	
-do j=1, n_theta
-    Rbnd(j) = equil_out%coord_sys%position%r(nr_equ, j)
-    Zbnd(j) = equil_out%coord_sys%position%z(nr_equ, j)
-enddo
-Rmag  = equil_out%coord_sys%position%r(1, 1)
-Zmag  = equil_out%coord_sys%position%z(1, 1)
-elong = equil_out%profiles_1d%elongation(nr_equ)
-nz    = equil_out%eqgeometry%rectgrid%npointsz
+    geom1d(299) = equil_out%global_param%li3	
+    geom1d(300) = equil_out%global_param%betpol	
+    do j=1, n_theta
+        Rbnd(j) = equil_out%coord_sys%position%r(nr_equ, j)
+        Zbnd(j) = equil_out%coord_sys%position%z(nr_equ, j)
+    enddo
+    Rmag  = equil_out%coord_sys%position%r(1, 1)
+    Zmag  = equil_out%coord_sys%position%z(1, 1)
+    elong = equil_out%profiles_1d%elongation(nr_equ)
+    nz    = equil_out%eqgeometry%rectgrid%npointsz
 
-jzmin  = minloc(Zbnd, 1)
-jzmax  = maxloc(Zbnd, 1)
-Rin    = MINVAL(Rbnd)
-Raus   = MAXVAL(Rbnd)
-zoben  = Zbnd(jzmax)
-zunten = Zbnd(jzmin)
-Rgeo = 0.5*(Raus + Rin)
-Zgeo = 0.5*(zoben + zunten)
-amin = 0.5*(Raus - Rin)
-delr_oben = (Rgeo - Rbnd(jzmax))/amin
-R_strike_in_aug  = 1.27
-R_strike_out_aug = 1.72
+    jzmin  = minloc(Zbnd, 1)
+    jzmax  = maxloc(Zbnd, 1)
+    Rin    = MINVAL(Rbnd)
+    Raus   = MAXVAL(Rbnd)
+    zoben  = Zbnd(jzmax)
+    zunten = Zbnd(jzmin)
+    Rgeo = 0.5*(Raus + Rin)
+    Zgeo = 0.5*(zoben + zunten)
+    amin = 0.5*(Raus - Rin)
+    delr_oben = (Rgeo - Rbnd(jzmax))/amin
 
-if (parameters_spider%k_fixfree == 1) then
-    if (machine_name(1:3) == 'aug') then
+    if (MACHINE(1:3) == 'aug') then
+        R_strike_in_aug  = 1.27
+        R_strike_out_aug = 1.72
         if (equil_solver == 101) then
 !git            call get_zccurb_efff(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
 	else if (equil_solver == 3) then
@@ -312,7 +307,7 @@ if (parameters_spider%k_fixfree == 1) then
         geom1d(80) = Rbnd(jzmin) ! Xpoint position R
         geom1d(81) = Rcurr
         geom1d(82) = Zcurr
-    else if (machine_name(1:3) == 'dem') then
+    else if (MACHINE(1:3) == 'dem') then
         if (jdemogaps == 0) then
             write(fname, '(a)') TRIM(parameters_spider%prename) // 'demo_gaps.data'	
             open(32, file=fname)
@@ -337,48 +332,7 @@ if (parameters_spider%k_fixfree == 1) then
         geom1d(99)  = Rin
         geom1d(100) = Raus
     endif
-else
-    if (machine_name(1:3) == 'aug') then
-        if (equil_solver == 101) then
-!git            call get_zccurb_efff(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
-        else if (equil_solver == 3) then
-            call get_zccurb(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
-        endif
-        geom1d(51) = Zsquad ! For now Zsquad = Zcurr  
-        geom1d(52) = zoben 
-        geom1d(53) = Rgeo
-        geom1d(54) = Zgeo
-        geom1d(55) = amin
-        geom1d(56) = elong
-        geom1d(57) = Rin
-        geom1d(58) = Raus
-        geom1d(59) = Rmag
-        geom1d(60) = Zmag
-        geom1d(61: 65) = 0. !IVSF, slobn, srobn, Wmhd, q95
-! inner strike point position
-        geom1d(66) = R_strike_in_aug
-! outer strike point position
-        geom1d(67) = R_strike_out_aug
-        geom1d(68: 69) = 0. ! zskewi2b, zskewa2b
-        geom1d(70) = delr_oben
-        geom1d(78) = zunten
-        geom1d(80) = Rbnd(jzmin) ! Xpoint position R
-        geom1d(81) = Rcurr ! Rcurr
-        geom1d(82) = Zcurr ! Zcurr
-    else if (machine_name(1:3) == 'dem') then
-        geom1d(48:94) = 0.001
-        if (equil_solver == 101) then
-!git            call get_zccurb_efff(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
-        else if (equil_solver == 3) then
-            call get_zccurb(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
-        endif
-        geom1d(95) = Rmag
-        geom1d(96) = Zmag
-        geom1d(97) = Rcurr !rgeo
-        geom1d(98) = Zcurr !zgeo
-    endif
 endif
-geom1dold = geom1d
 
 return
 end subroutine A_SPIDER
