@@ -366,7 +366,7 @@ if (debug > 0) then
     write(*, *) G33(1: 10)
     write(*, *) IPOL(1: 10)
 endif
-HRO = RHO(2) - RHO(1)
+HRO  =  RHO(2) - RHO(1)
 HROX = (RHO(2) - RHO(1))/ROC
 
 !boundary
@@ -569,8 +569,7 @@ double precision, parameter :: ACEQLB=1.d-6
 integer, intent(out) :: jexit
 
 integer :: N3EQL, j, jp, jt, jcall
-double precision :: &
-    ALFA, Y1, Y2, YY, YDA, GPP4, YRO, YCB, TRIABC, BTOOO
+double precision :: ALFA, Y1, Y2, YDA, GPP4, YRO, YCB, TRIABC, BTOOO
 double precision, dimension(NRD) :: YA, YB, BA, BB, GR, GBD, GL, GSD, &
     A, B, C, D, BC, BD, XTR, BMODEQ, FOFBEQ, GRDAEQ, &
     XEQ, B2B0EQ, B0B2EQ, BMAXEQ, BMINEQ
@@ -724,14 +723,12 @@ endif
 YRO = sqrt(RTOR/(RTOR + SHIFT))
 ROC = YRO*GR(N3EQL)  ! Define a new RHO_edge
 ! FTN = GP*BTN*ROC*ROC
-YY = HRO ! Save HRO that can be changed by new_grid
+
 call new_grid ! The RHO-grid and NA, NA1, HRO are updated
 !---------------------------------------
 ! Define a new auxiliary (shifted) grid:
 Y2 = 0.5d0/ROC
-do J=1, NA1
-    XTR(J) = SXHO(J)
-enddo
+XTR(1: NA1) = SXHO(1: NA1)
 
 GPP4 = GP2*GP2
 do J=1, N3EQL
@@ -800,9 +797,7 @@ do J=1, NA
 enddo
 SHEAR(NA1) = SHEAR(NA)
 
-do J=1, NAB
-    SHIV(J) = UPDWN 
-enddo
+SHIV(1: NAB) = UPDWN
 
 call TRANSF(N3EQL, B2B0EQ, XEQ, NA1, BDB02, XTR)
 call TRANSF(N3EQL, B0B2EQ, XEQ, NA1, B0DB2, XTR)
@@ -923,7 +918,7 @@ do j=1, NCNB
 enddo
 do j=1, NCTP
     ydumctp(j) = DUMCTP(j)
-    ydumct(j) = DUMCT(j)
+    ydumct(j)  = DUMCT(j)
 enddo
 
 tau_resistive = 0.01 ! this is just for AUG
@@ -1072,7 +1067,7 @@ if (itfbe_ctrl > 0) then
     ELONG = ELON(NA1)
     TRIAN = TRIA(NA1)
     SHIFT = SHIF(NA1)
-endif     
+endif
 
 ! Deallocate equil_out%metric_coefs%g1 & co
 
@@ -1458,7 +1453,7 @@ if (nint(INUME3) >= 0) then     ! if inume3 < 0 , uses eqpf, eqff from model fil
         EQPF(j) = EQFF(j)
         YTH2 = RHO(j)*G22(J)*(MU(J)/RTOR)**2
         YG = (1. + YTH2)*G33(J)
-        EQFF(J) = (CU(J)/IPOL(J) - EQPF(J))/YG
+        EQFF(J)  = (CU(J)/IPOL(J) - EQPF(J))/YG
         CUTOR(J) = (CU(J)/IPOL(J) + YTH2*EQPF(J))/(1. + YTH2)
     enddo
 endif
@@ -1493,12 +1488,12 @@ use numerical_tools, only: extrap, integr
 implicit none
 
 integer	:: j
-double precision :: YH, YM, YM1, YM2, YC, YF, HH, YAJ, YCJ, MUVAC
+double precision :: YH, YM, YM1, YM2, YC, YF, YAJ, YCJ, MUVAC
 double precision, dimension(NA1) :: YAR
 	
 YC = 0.2*GP2*RTOR/BTOR
 YH = RHO(2) - RHO(1)
-YF = GP2*YH*YH*BTOR
+YF = GP2*YH**2 * BTOR
 YM = 0.
 do J=1, NA1
     YM1 = MU(j)*j
@@ -1515,7 +1510,7 @@ do J=1, NA1
     endif
     YM = YM2
 enddo
-MUVAC = 4.*GP*0.1
+MUVAC = 0.4*GP
 
 do j=1, NA1
     YAR(j) = GP2*BTOR*MU(j)*SRHO(j)
@@ -1523,16 +1518,10 @@ enddo
 
 call INTEGR(SRHO(1:NA1), 2, YAR(1:NA1), FP(1:NA1), NA1)
 
-HH = HRO**2
 YAJ = 0.
-
 do J=1, NA
     YCJ = YAJ
-    if (j < NA) then
-        YAJ = (FP(j+1) - FP(j))/HH
-    else
-        YAJ = (FP(j+1) - FP(j))/HRO**2
-    endif
+    YAJ = (FP(j+1) - FP(j))/HRO**2
     YAJ = G22(j)*YAJ
     CU(j) = (YAJ - YCJ)/(HRO*(j - 0.5))
 enddo
@@ -1575,24 +1564,16 @@ implicit none
 
 integer :: j
 double precision, dimension(NA1) :: YAR, YAR1
-double precision :: MUVAC, HH, YAJ, YCJ, ARRNA1
+double precision :: MUVAC, YAJ, YCJ, ARRNA1
 
-HH = HRO**2
 YAJ = 0.
 
 do J=1, NA
     YCJ = YAJ
-    if (j < NA) then
-        YAJ = (FP(j+1) - FP(j))/HH
-        MU(j) = YAJ/j
-        YAJ = G22(j)*YAJ
-        CU(j) = (YAJ - YCJ)/HRO
-    else
-        YAJ = (FP(j+1) - FP(j))/HRO**2
-        MU(j) = YAJ/j
-        YAJ = G22(j)*YAJ
-        CU(j) = (YAJ - YCJ)/HRO
-    endif
+    YAJ = (FP(j+1) - FP(j))/HRO**2
+    MU(j) = YAJ/j
+    YAJ = G22(j)*YAJ
+    CU(j) = (YAJ - YCJ)/HRO
     CU(j) = CU(j)/(j - 0.5)
 enddo
 
@@ -1612,31 +1593,23 @@ PSIBO = FP(NA1)
 call EXTRAP(XRHO(1: NA1), FP(1: NA1), 0.0, 1, PSIAX, 1, NA1)
 
 YAR(1: NA1) = RHO(1: NA1)
-     
+
 call DERIV(YAR(1: NA1), SRHO(1: NA1), 1, FP(1:NA1), YAR1(1:NA1), 1, NA1, 1)
 
 do j=1, NA1
     MU(j) = YAR1(j)/(GP2*BTOR*SRHO(j))
 enddo
 
-HH = HRO*HRO
 YAJ = 0.
-CU = 0.
-MU = 0.
+CU  = 0.
+MU  = 0.
 
 do J=1, NA
     YCJ = YAJ
-    if (j < NA) then
-        YAJ = (FP(j+1) - FP(j))/HH
-        MU(j) = YAJ/j
-        YAJ = G22(j)*YAJ
-        CU(j) = (YAJ - YCJ)/HRO
-    else
-        YAJ = (FP(j+1) - FP(j))/HRO**2
-        MU(j) = YAJ/j
-        YAJ = G22(j)*YAJ
-        CU(j) = (YAJ - YCJ)/HRO
-    endif
+    YAJ = (FP(j+1) - FP(j))/HRO**2
+    MU(j) = YAJ/j
+    YAJ = G22(j)*YAJ
+    CU(j) = (YAJ - YCJ)/HRO
     CU(j) = CU(j)/(j - 0.5)
 enddo
 MU(NA1) = ARRNA1(MU(NA), 1.)  ! See DEFARR
