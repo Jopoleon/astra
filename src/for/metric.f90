@@ -322,17 +322,17 @@ call markloc('set_external_metric', debug_lev=3*debug)
 
 YNF = RTOR*GP2**2
 do J=1, NA1
-    if (IFDEFX2('SHX    ')) then
+    if (IFDEFX2('SHX   ')) then
         SHIF(J) = SHX(j)
     else
         SHIF(J) = SHIFT
     endif
-    if (IFDEFX2('ELX    ')) then
+    if (IFDEFX2('ELX   ')) then
         ELON(J) = ELX(j)
     else
         ELON(J) = 1.
     endif
-    if (IFDEFX2('TRX    ')) then
+    if (IFDEFX2('TRX   ')) then
         TRIA(J) = TRX(j)
     else
         TRIA(J) = 0.
@@ -347,7 +347,7 @@ do J=1, NA1
     else
         IPOL(J) = 1.
     endif
-    if (IFDEFX2('VRX    ')) then
+    if (IFDEFX2('VRX   ')) then
         VR(J) = VRX(j)
     else
         VR(J) = YNF*RHO(j)/(IPOL(j)*G33(j))
