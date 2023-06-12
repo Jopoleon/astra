@@ -17,7 +17,7 @@ def doublise(sarg):
         sarg = sarg.replace('E', 'D')
 
     return sarg
-        
+
 #    try:
 #        a = int(sarg)
 #        return sarg
@@ -215,6 +215,7 @@ def indicise_lefteq(var, fnc_list, profiles, arr_nam2):
     '''Add proper FORTRAN index to ASTRA arrays, eqn left hand side'''
 
     var = var.strip()
+    out = var
     tmp1 = var[:-1]
     if var in profiles + arr_nam2:
         out = '%s(J)' %var
@@ -226,8 +227,6 @@ def indicise_lefteq(var, fnc_list, profiles, arr_nam2):
                 out = '%s(ND1)' %tmp1
         if var[-1] == 'C':
             out = '%s(1)' %tmp1
-    else:
-        out = var
 
     return out
 
