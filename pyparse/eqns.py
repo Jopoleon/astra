@@ -175,7 +175,7 @@ def pre_eqn(parse, key, assign_type=None):
     if assign_type is None:
         assign_type = parse.assign_d[key]
 
-    var_defined = right_hand.keys()
+    var_defined = list(right_hand.keys())
 
     if none_in(config.coeff_d[key] + config.flux_d[key], var_defined):
         for var in config.bnd_d[key]:
@@ -1043,7 +1043,7 @@ YWC(4)=1.
 
 def tetieqn(parse, itype=3):
 
-    var_defined = parse.right_hand_d.keys()
+    var_defined = list(parse.right_hand_d.keys())
     pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
 
     assign_type = parse.assign_d['TE']
