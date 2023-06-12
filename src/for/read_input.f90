@@ -544,7 +544,7 @@ NB1 = NA1
 NA  = NA1 - 1
 
 call SETGEO(0)
-call NEWGRD
+call NEW_GRID
 
 do J=1, NB1
     G22(J) = RHO(J)
