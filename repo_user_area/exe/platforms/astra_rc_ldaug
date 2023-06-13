@@ -22,7 +22,7 @@ export ASTRA_EXT=/shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT
 
 # MPI
 export MPI_INC="-I${I_MPI_ROOT}/include"
-export MPI_LIB="-L${I_MPI_ROOT}/lib -lmpigf -lmpi"
+export MPI_LIB="-L${I_MPI_ROOT}/lib/release -lmpigf -lmpi"
 
 # NetCDF
 
