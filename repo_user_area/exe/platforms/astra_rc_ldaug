@@ -1,14 +1,14 @@
 #!/bin/bash -f
 
-# IPP toki 05.06.2020
+# IPP ldaug 05.06.2020
 
-PKG=/afs/@cell/common/soft
-INTEL=${PKG}/intel/ics2018.4/18.0/linux
-export MKL_LIBDIR=${INTEL}/mkl/lib/intel64_lin
+PKG=/shares/software/aug-dv/moduledata
+INTEL=${PKG}/Intel/oneapi
+export MKL_LIBDIR=${INTEL}/mkl/2023.1.0/lib/intel64
 export NAGLIB=${PKG}/nag_mk25/fll6i25dcl/lib
-export COMP_LIB=${PKG}/intel/ics2018.4/compilers_and_libraries_2018.5.274/linux/compiler/lib/intel64_lin
-export I_MPI_ROOT=${PKG}/intel/impi/4.1.0.030/intel64
-export IFORT_BIN=${INTEL}/bin/intel64/bin
+export COMP_LIB=${INTEL}/compiler/2023.1.0/linux/lib
+export I_MPI_ROOT=${INTEL}/mpi/2021.9.0
+export IFORT_BIN=${INTEL}/compiler/2023.1.0/linux/bin/intel64
 export MPIFORT_BIN=${I_MPI_ROOT}/bin
 export INTEL_LICENSE_FILE=${INTEL}/licenses
 
