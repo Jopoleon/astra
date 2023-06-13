@@ -78,4 +78,4 @@ export NAGF90MKL=${NAGLIB}/libnag_mkl.a
 
 export XLBR="-L/usr/lib64 -lX11 -Wl,--start-group ${COMP_LIB}/libintlc.so.5 ${MKL_LIBDIR}/libmkl_intel_lp64.a ${MKL_LIBDIR}/libmkl_core.a ${MKL_LIBDIR}/libmkl_sequential.a ${MKL_LIBDIR}/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group"
 
-export AS_LD_LIBRARY_PATH="${NCDF_HOME}/lib:${NAGLIB}:${COMP_LIB}:${TORB_HOME}/lib:${RABBIT_HOME}/lib:${I_MPI_ROOT}/lib"
+export AS_LD_LIBRARY_PATH="${NCDF_HOME}/lib:${NAGLIB}:${COMP_LIB}:${TORB_HOME}/lib:${RABBIT_HOME}/lib:${I_MPI_ROOT}/lib/release"
