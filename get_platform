@@ -27,7 +27,7 @@ then
 elif [[ $node == *"mit.edu" ]]
 then
    platform=mit
-elif [[ $node == "CX-LD-AUG-150" ]]
+elif [[ $node == "CX-LD-AUG"* ]]
 then
    platform=ldaug
 else
