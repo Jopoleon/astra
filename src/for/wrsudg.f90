@@ -130,6 +130,44 @@ if (MACHINE(1:3) == 'dem') then
         CU(1:NA1), &
         CCOIL(1:15)*1.e3, magnetics(1:439))
 
+elseif (MACHINE(1:4) == 'iter') then
+    i_error = 0 ! whether add noise latencies errors to diagnostics
+    qalp1 = QDTR(ROC)
+    qrad1 = QRADR(ROC)
+    NE1 = NE(1:NA1)
+
+! QDTR: fusion power
+! QRAD: radiated power
+! NE: electron density profile
+    qalp1 = qalp2
+    qrad1 = qrad2
+    ne1 = ne2
+
+    gapnum(1) = 16
+    gapnum(2) = 23
+    gapnum(3) = 30
+    gapnum(4) = 36
+    gapnum(5) = 46
+    gapnum(6) = 47
+    do j=1,6
+        magnetics(j) = geom1d(94 - 52 +1 +gapnum(j) - 1)
+    enddo
+    magnetics(7) = geom1d(97) !Rcurr
+    magnetics(8) = geom1d(98) !Zcurr
+    magnetics(9) = ipl*1.e6   !Ipl A
+
+    call shmw( &
+        TIME, &
+        qalp1, qrad1, &
+        IPL, QTOKR(ROC) - qedwtr(ROC) - qidwtr(ROC), &
+        CRAD4, CMHD2, CSCL4, CDWM1, &
+        CDWM2, CDWM7, CDJM1, CDJM2, CDJM3, CDJM4, ZRD77, &
+        CDMJ5, CDMJ6, CDMJ7, &
+        CNEUT1, CNEUT2, TE(1:NA1), NE1(1:NA1), &
+        1.d0/MU(1:NA1), &
+        CU(1:NA1), &
+        CCOIL(1:15)*1.e3, magnetics(1:439))
+
 else if (MACHINE(1:3) == 'aug') then
 
     geom1d(64) = WTOZR(ROC)*1e6 !total Wmhd including fast ions  in MJ
@@ -141,15 +179,14 @@ else if (MACHINE(1:3) == 'aug') then
             call coil_force2(coil_forces(1:100, 1:2),plasma_up)
 	else
 !git            call coil_forces_feqis(100, coil_forces(1:100, 1), & 
-!git                coil_forces(1:100, 2), plasma_up)
+!git	    coil_forces(1:100,2),plasma_up)
             coil_forces = -coil_forces
         endif
 
     car54( 1:21) = coil_forces(1:21, 1)
     car54(22:42) = coil_forces(1:21, 2)
 
-	write(8998,'(333E25.11)') TIME,coil_forces(1:21,1), &
-     & coil_forces(1:21,2)
+    write(8998, '(333E25.11)') TIME, coil_forces(1:21, 1), coil_forces(1:21, 2)
 
     neqlp  = abs(nint(NEQUIL))
     ntetap = abs(nint(MEQUIL)) + 1

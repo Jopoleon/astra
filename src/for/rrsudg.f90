@@ -33,6 +33,20 @@ if (MACHINE == 'dem_') then
         time_ext, CV6, fs_dt_smlk)
         CV13 = MAX(1., CV13)  ! finite pump speed to avoid NaN
         dt_smlk = fs_dt_smlk  ! simulink tau defined in equ log
+elseif (MACHINE == 'iter') then
+    call shmr( &
+        CPEL1, CIMP3, CV4,  CBND3, &
+        CSCL1, ZRD71, ZRD73, CDYM3, &
+        CDWM5, CDWM6, &
+        CDJM5, CDJM6, CDJM7,  CDJM8, ZRD70, &
+        CV13, CSOL1, &
+        CHE1, CDHJ1, CDHJ2, &
+        CHE3, CDHJ3, CDHJ4, &
+        CV3, CDHJ5, &
+        CDMJ1, CDMJ2, CDMJ3, CDMJ4, gvcoil(1:12), &
+        time_ext, CV6, fs_dt_smlk)
+        CV13 = MAX(1., CV13)  ! finite pump speed to avoid NaN
+        dt_smlk = fs_dt_smlk  ! simulink tau defined in equ log
 else if (MACHINE == 'aug_') then
     call shmr( &
         CPEL1, CV13, CDMJ1, CDMJ2, CDMJ3, CDMJ4, &

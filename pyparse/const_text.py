@@ -588,9 +588,9 @@ NI(J) = F1(J) + F2(J) + F3(J) + F4(J) + F5(J) + F6(J) + F7(J) + F8(J) + F9(J)  !
 enddo
 endif
 
-if (MACHINE == 'demo' .or. MACHINE == 'dem_') then
+if (MACHINE == 'demo' .or. MACHINE == 'dem_' .or. MACHINE == 'iter') then
 do J=1, NA1
-NI(J) = F1(J) + F2(J) + F3(J) + F4(J) + F6(J) + F7(J) + F8(J)  ! DEMO
+NI(J) = F1(J) + F2(J) + F3(J) + F4(J) + F6(J) + F7(J) + F8(J)  ! DEMO, ITER: D, T, H, He, Be, W, Ne
 enddo
 endif
 '''
