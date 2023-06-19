@@ -179,8 +179,8 @@ else if (MACHINE(1:3) == 'aug') then
         if (nint(IPEQL) == 4) then
             call coil_force2(coil_forces(1:100, 1:2),plasma_up)
 	else
-            call coil_forces_feqis(100, coil_forces(1:100, 1), & 
-	    coil_forces(1:100,2),plasma_up)
+!git            call coil_forces_feqis(100, coil_forces(1:100, 1), & 
+!git                coil_forces(1:100, 2), plasma_up)
             coil_forces = -coil_forces
         endif
 
