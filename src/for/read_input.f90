@@ -683,11 +683,13 @@ parse_exp_2d: do
     SELECT CASE(VNAMX)
 
     CASE('CCOILX')
+        NCNBT = 0
 ! read only if NCNBT==0, i.e. CCOILX was not defined before
         call read_arrx(201, NCNBT, ntim, NCNB, STRI, CCOILX)
         VNAMO = VNAM
 
     CASE('VCOILX')
+        NCNBT = 0
         call read_arrx(201, NCNBT, ntim, NCNB, STRI, VCOILX)
         VNAMO = VNAM
 
