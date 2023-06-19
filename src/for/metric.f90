@@ -1210,8 +1210,10 @@ ydt = BNDTIM(jt+1) - BNDTIM(jt)
 yd1 = (TIME - BNDTIM(jt))/ydt
 yd2 = (TIME - BNDTIM(jt+1))/ydt
 do j=1, NBND
-    RPB(j) = BNDR(jt + (j - 1)*NBNT)
-    ZPB(j) = BNDZ(jt + (j - 1)*NBNT)
+    j1 = jt + (j - 1)*NBNT
+    RPB(j) = yd1*BNDR(j1+1) - yd2*bndr(j1)
+    j1 = jt + (j - 1)*NBNT
+    ZPB(j) = yd1*BNDZ(j1+1) - yd2*bndz(j1)
 enddo
 if (NBND > 12) return
 
