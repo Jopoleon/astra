@@ -1,6 +1,59 @@
 !-----------------------------------------------------------------------
-!  NOTE:  All functions in this file should be decribed as
-!         double precision and have a name no longer than 6 characters
+integer function N_95_POS(i)
+!-----------------------------------------------------------------------
+! returns the radial integer index of the psi_95 position, at the left
+! i in input is a dummy integer, so call it as N_95_POS(0)
+
+use const_inc, only: NA1
+use status_inc, only: FP
+
+implicit none
+
+integer, intent(in) :: i
+
+integer :: j, k
+double precision, dimension(NA1) :: rhop
+
+rhop = (FP(1:NA1) - FP(1))/(FP(NA1) - FP(1))
+N_95_POS = 1
+do j=1, NA1
+    if (rhop(j) <= 0.95) N_95_POS = j
+enddo
+
+return
+end function N_95_POS
+
+!-----------------------------------------------------------------------
+double precision function V_95_POS(Yin)
+!-----------------------------------------------------------------------
+! returns the value of array Y(na1) at the 0.95 psi position
+
+use const_inc, only: NA1
+use status_inc, only: FP
+
+implicit none
+
+double precision, intent(in), dimension(NA1) :: Yin
+
+integer :: j, k
+integer, external :: N_95_POS
+double precision :: r1, r2, y1, y2
+double precision, dimension(NA1) :: rhop
+
+j = N_95_POS(0)
+
+rhop = (FP(1:NA1) - FP(1))/(FP(NA1) - FP(1))
+
+y1 = Yin(j)
+y2 = Yin(j+1)
+r1 = rhop(j)
+r2 = rhop(j+1)
+
+V_95_POS = (y1*(r2 - 0.95) + y2*(0.95 - r1))/(r2 -r1)
+
+return
+end function V_95_POS
+
 !-----------------------------------------------------------------------
 double precision function RFA(YA)
 !-----------------------------------------------------------------------
@@ -18,6 +71,7 @@ double precision :: DRHODA, QUADIN
 
 RFA = QUADIN(NA1, AMETR, RHO, YA, DRHODA, j)
 
+return
 end function RFA
 
 !-----------------------------------------------------------------------
@@ -34,6 +88,7 @@ double precision :: RFA
 
 RFAN = RFA(YAN*ABC)
 
+return
 end function RFAN
 
 !-----------------------------------------------------------------------
@@ -50,6 +105,7 @@ double precision :: RFA
 
 XFA = RFA(YA)/ROC
 
+return
 end function XFA
 
 !-----------------------------------------------------------------------
@@ -66,6 +122,7 @@ double precision :: XFA
 
 XFAN = XFA(YAN*ABC)
 
+return
 end function XFAN
 
 !-----------------------------------------------------------------------
@@ -85,6 +142,7 @@ double precision :: DADRHO, QUADIN
 
 AFR = QUADIN(NA1, RHO, AMETR, YR, DADRHO, j)
 
+return
 end function AFR
 
 !-----------------------------------------------------------------------
@@ -101,6 +159,7 @@ double precision :: AFR
 
 AFX = AFR(YX*ROC)
 
+return
 end function AFX
 
 !-----------------------------------------------------------------------
@@ -116,6 +175,7 @@ double precision, intent(in) :: YA(*)
 
 FRMAX = MAXVAL(YA(1:NA1))
 
+return
 end function FRMAX
 
 !-----------------------------------------------------------------------
@@ -131,6 +191,7 @@ double precision, intent(in) :: YA(*)
 
 FRMIN = MINVAL(YA(1:NA1))
 
+return
 end function FRMIN
 
 !-----------------------------------------------------------------------
@@ -160,6 +221,7 @@ integer :: jmax
 jmax = MAXLOC(YA(1:NA1), 1)
 RFMAX = RHO(jmax)
 
+return
 end function RFMAX
 
 !-----------------------------------------------------------------------
@@ -180,6 +242,7 @@ integer :: jmin
 jmin = MINLOC(YA(1:NA1), 1)
 RFMIN = RHO(jmin)
 
+return
 end function RFMIN
 
 !-----------------------------------------------------------------------
@@ -220,6 +283,7 @@ do j=2, NA1
    YA1 = YA2
 enddo
 
+return
 end function RFVAL
 
 !-----------------------------------------------------------------------
@@ -258,6 +322,7 @@ do j=2, NA1
    YA1 = YA2
 enddo
 
+return
 end function AFVAL
 
 !-----------------------------------------------------------------------
@@ -276,6 +341,7 @@ double precision :: RFVAL
 
 RFVEX = RFVAL(YA, YVAL)
 
+return
 end function RFVEX
 
 !-----------------------------------------------------------------------
@@ -294,6 +360,7 @@ double precision :: AFVAL
 
 AFVEX = AFVAL(YA, YVAL)
 
+return
 end function AFVEX
 
 !-----------------------------------------------------------------------
@@ -332,6 +399,7 @@ do j=NA1, 2, -1
 enddo
 YA1 = YA2
 
+return
 end function RFVIN
 
 !-----------------------------------------------------------------------
@@ -371,6 +439,7 @@ do j=NA1, 2, -1
 enddo
 YA1 = YA2
 
+return
 end function AFVIN
 
 !-----------------------------------------------------------------------
@@ -406,6 +475,7 @@ YR = 28.*N*BTOR*RTOR/FECR
 YA = RZ2A(YR, YZ, NA1)
 RECR = QUADIN(NA1, AMETR, RHO, YA, YY, j)
 
+return
 end function RECR
 
 !-----------------------------------------------------------------------
@@ -451,6 +521,7 @@ else
    GAUSS = exp(-((RHO(j)/ROC - YX)/YW)**2)/YPOW
 endif
 
+return
 end function GAUSS
 
 !-----------------------------------------------------------------------
@@ -477,6 +548,7 @@ else
    ASTEP = 1.
 endif
 
+return
 end function ASTEP
 
 !-----------------------------------------------------------------------
@@ -502,6 +574,7 @@ else
    RSTEP = 1.
 endif
 
+return
 end function RSTEP
 
 !-----------------------------------------------------------------------
@@ -529,6 +602,7 @@ else
    XSTEP = 1.
 endif
 
+return
 end function XSTEP
 
 !-----------------------------------------------------------------------
@@ -551,6 +625,7 @@ else
    STEP = 1.
 endif
 
+return
 end function STEP
 
 !-----------------------------------------------------------------------
@@ -576,6 +651,7 @@ else
    GRAD = (Y(NA1) - Y(NA))/HRO
 endif
 
+return
 end function GRAD
 
 !-----------------------------------------------------------------------
@@ -601,6 +677,7 @@ else
    GRADS =(Y(NA1) - Y(NA))/(ROC - NA*HRO)
 endif
 
+return
 end function GRADS
 
 !-----------------------------------------------------------------------
@@ -632,6 +709,7 @@ LININT = LININT - (arr(JK) + arr(JK-1))*(AMETR(JK) - AMETR(JK-1))*(float(JK) - Y
 
 ! Line average: divide by 2*ABC
 
+return
 end function LININT
 
 !-----------------------------------------------------------------------
@@ -661,6 +739,7 @@ do J=1, JK
 enddo
 VINT = HRO*(VINT - ARR(JK)*YDR)
 
+return
 end function VINT
 
 !-----------------------------------------------------------------------
@@ -690,6 +769,7 @@ do J=1, JK
 enddo
 VINTO = HRO*(VINTO - ARR(JK)*YDR)
 
+return
 end function VINTO
 
 !-----------------------------------------------------------------------
@@ -731,6 +811,7 @@ if (JK >= NA) then
 endif
 IINT = GP2*IPOL(JK)*(HRO*IINT + YDR*YA)
 
+return
 end function IINT
 
 !-----------------------------------------------------------------------
@@ -753,6 +834,7 @@ else
 endif
 NODE = min(NA1, NODE)
 
+return
 end function NODE
 
 !-----------------------------------------------------------------------
@@ -773,6 +855,7 @@ double precision :: rad_out(1)
 call qinterp(RHO(1:NA1), ARR(1:NA1), NA1, (/YR/), rad_out, 1)
 RADIAL = rad_out(1)
 
+return
 end function RADIAL
 
 !-----------------------------------------------------------------------
@@ -801,6 +884,7 @@ else
    RADINT = (YDR*ARR(JK+1) + (HRO - YDR)*ARR(JK))/HRO
 endif
 
+return
 end function RADINT
 
 !-----------------------------------------------------------------------
@@ -815,6 +899,7 @@ double precision :: RADIAL
 
 ATR = RADIAL(ARR, YR)
 
+return
 end function ATR
 
 !-----------------------------------------------------------------------
@@ -831,6 +916,8 @@ double precision, intent(in) :: YR, ARR(*)
 double precision :: RADIAL
 
 ATX = RADIAL(ARR, YR*ROC)
+
+return
 end function ATX
 
 !-----------------------------------------------------------------------
@@ -847,6 +934,7 @@ double precision, intent(in) :: X, Y
 
 CUT = max(-X, min(X, Y))
 
+return
 end function CUT
 
 !-----------------------------------------------------------------------
@@ -876,6 +964,7 @@ else
    FRAMP = (TIME - T1)/(T2 - T1)
 endif
 
+return
 end function FRAMP
 
 !-----------------------------------------------------------------------
@@ -898,6 +987,7 @@ else
    FJUMP = 1.
 endif
 
+return
 end function FJUMP
 
 !-----------------------------------------------------------------------
@@ -924,6 +1014,7 @@ else
    FTBOX = 1.
 endif
 
+return
 end function FTBOX
 
 !-----------------------------------------------------------------------
@@ -950,6 +1041,7 @@ else
    FXBOX = 1.
 endif
 
+return
 end function FXBOX
 
 !-----------------------------------------------------------------------
@@ -1261,6 +1353,7 @@ endif
 FTAV3 = YAV
 YTIME = TIME
 
+return
 end function FTAV3
 
 !-----------------------------------------------------------------------
@@ -1316,6 +1409,7 @@ endif
 FTAV2 = YAV
 YTIME = TIME
 
+return
 end function FTAV2
 
 !-----------------------------------------------------------------------
