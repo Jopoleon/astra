@@ -660,8 +660,8 @@ integer, intent(in) :: j
 double precision :: COULG, SUZPEI, t1, t2
 
 GETPEI = PEIQI(j)
-t1 = sum(PEIQI(1:NA1))
-t2 = sum((TE(1:NA1) - TI(1:NA1)))
+t1 = PEIQI(j)
+t2 = TE(j) - TI(j)
 
 if (t1 == 0. .and. t2 /= 0.) then
     COULG = 15.9 - 0.5*LOG(NE(J)) + log(TE(J))
