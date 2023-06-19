@@ -5,9 +5,9 @@ use const_inc, only: ROC, NA1, IPL, TIME, TAU, TSTART, IPEQL, NEQUIL, MEQUIL, IP
     CRAD4, CMHD2, CHE3, CSCL4, CDWM1, CDWM2, CDWM7, &
     CDJM1, CDJM2, CDJM3, CDJM4, CDJM6, CDJM7, &
     CDMJ5, CDMJ6, CDMJ7, CDHJ7, CNEUT1, CNEUT2, &
-    ZRD15, ZRD77, ZRD78, ZRD93
-use status_inc, only: NE, TE, TI, ZEF, HE, XI, PE, PI, NIBM, PRAD, MU, CU, UPL, F4, &
-    CAR34, CAR54
+    ZRD15, ZRD77, ZRD78, ZRD93, CRAD3
+use status_inc, only: NE, TE, TI, ZEF, HE, XI, PE, PI, NIBM, PRAD, &
+    MU, CU, UPL, F4, CAR34, CAR54, SHIF
 use outcmn_inc, only: machine, ccoil
 use fenix_params, only: ipl_bf_bkdw
 use flight_sim_geometrics, only: geom1d
@@ -128,7 +128,8 @@ if (MACHINE(1:3) == 'dem') then
         CNEUT1, CNEUT2, TE(1:NA1), NE1(1:NA1), &
         1.d0/MU(1:NA1), &
         CU(1:NA1), &
-        CCOIL(1:15)*1.e3, magnetics(1:439))
+        CCOIL(1:15)*1.e3, magnetics(1:439), & 
+        CRAD3, F4(1:NA1), ZEF(1:NA1), TI(1:NA1), SHIF(1:NA1))
 
 elseif (MACHINE(1:4) == 'iter') then
     i_error = 0 ! whether add noise latencies errors to diagnostics
@@ -178,8 +179,8 @@ else if (MACHINE(1:3) == 'aug') then
         if (nint(IPEQL) == 4) then
             call coil_force2(coil_forces(1:100, 1:2),plasma_up)
 	else
-!git            call coil_forces_feqis(100, coil_forces(1:100, 1), & 
-!git	    coil_forces(1:100,2),plasma_up)
+            call coil_forces_feqis(100, coil_forces(1:100, 1), & 
+	    coil_forces(1:100,2),plasma_up)
             coil_forces = -coil_forces
         endif
 
