@@ -1049,7 +1049,7 @@ integer, intent(in) :: ibcpsi_fb
 integer, intent(out) :: bc_type_for_fp
 double precision, intent(out) :: dfpdrbm12
 
-integer :: IFSUB, imethod, ND, ND1, NODE
+integer :: IFSUB, imethod, ND, ND1, NODE, JCALL
 
 double precision :: ARRNA1, RABDOT, BABDOT, YHRO, YM1, YM2, YB, YC, YJ_CU, YM, YU, YIOH, YICD, YMCD
 
