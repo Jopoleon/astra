@@ -133,7 +133,7 @@ enddo ! j (radial loop)
 '''
 
     uloop_1 = \
-'''do  j=1, NA1', &
+'''do  j=1, NA1
 FPO(j) = FV(j) + 0.2*GP*RTOR*IPL*(RHO(j)/ROC)**2
 enddo
 do JCALL=1, 10
