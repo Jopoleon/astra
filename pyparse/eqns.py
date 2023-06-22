@@ -151,6 +151,7 @@ CV(NA1) = CV(NA) + YWD(NA1) + ((CV(NA) + YWD(NA1)) - (CV(NA-1) + YWD(NA)))
         cuasu_txt += 'CU(1: NA1) = CU(1: NA1) - CV(1: NA1)\n'
     if neq == 0:
         cuasu_txt += const_text.CUAS.beta
+    cuasu_txt += 'enddo ! JCALL\n'
 
     return cuasu_txt
 

@@ -196,7 +196,6 @@ else
 write(*, *) ">>>  ERROR  >>> The initial plasma pressure is too high"
 stop
 endif
-enddo ! JCALL
 '''
 
     mu = \
@@ -971,6 +970,7 @@ class CONVERGE_INIT:
 
     header = \
 '''subroutine converge_init(LISTSB)
+
 use parameter_inc, only: NSBMX, NRD
 use outcmn_inc
 use const_inc
@@ -986,7 +986,7 @@ include 'tmp/declar.fnc'
 character(len=64), intent(in) :: LISTSB(NSBMX)
 
 integer :: J1, IFKEY, IFIPC, IFSUB, JDETV, ND, ND1, jkey,&
-    imethod, jcall, IFTREQ, IFSTEP
+    imethod, jcall, IFTREQ, IFSTEP, jt_req
 
 double precision :: dfpdrbm12, ARRNA1, YHRO, YB, YC, YJ_CU, &
     YM, YMCD, YIOH, YICD, YM1, YU, RABDOT, BABDOT
@@ -995,10 +995,12 @@ double precision, dimension(NRD) :: YWA, YWB, YWC, YWD, &
     YWGN, YWHN, YWGO, YWHO, YWR, YWH, YVR, YWM,&
     YWA1, YWA2, YWB1, YWB2, YWAA, YWNB, YWWB, YWN1B, YWW1B,&
     YWN2B, YWW2B, YWC1, YWC2, YWS, YQDCM, YQDCMF,&
-    YWQ, YWG11, YWgradF, YWgradb2
+    YWQ, YWG11, YWgradF, YWgradb2, MPHIT
 
-j = 0
-do while (j == 0) ! Till convergence (j/=0). Max #iterations is set in IFTREQ (for/defarr.f90)
+MPHIT = 0.
+
+jt_req = 0
+do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set in IFTREQ (for/defarr.f90)
 jkey = IFKEY(256) 
 call INTVAR      ! Set exp scalars
 call DETVAR_INIT
@@ -1012,7 +1014,7 @@ call INIVAR
 IFBEY = 0. ! no fbe possible here
 call METRIC
 
-j = IFTREQ(ATREQ)     ! ++ITREQ; Convergence check; 1 - yes
+jt_req = IFTREQ(ATREQ)     ! ++ITREQ; Convergence check; 1 - yes
 enddo
 
 return
