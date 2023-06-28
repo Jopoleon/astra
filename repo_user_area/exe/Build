@@ -28,7 +28,7 @@ export expfile="${exp_file}"
 export equfile="${equ_file}"
 jobname=${exp_file}${equ_file}
 
-echo Compile main ASTRA executable $equ_file $AWD $RABBIT_HOME
+echo Compile main ASTRA executable $equ_file $AWD 
 make -f exe/Makefile MODEL=$equ_file
 
 echo Compile IPC programs

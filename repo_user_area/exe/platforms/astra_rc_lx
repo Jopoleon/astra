@@ -4,10 +4,11 @@
 
 PKG=/afs/@cell/common/soft
 INTEL=${PKG}/intel/ics2018.4/18.0/linux
+NAG_LIBDIR=${PKG}/nag_mk25/fll6i25dcl/lib
+COMP_LIBDIR=${PKG}/intel/ics2018.4/compilers_and_libraries_2018.5.274/linux/compiler/lib/intel64_lin
+I_MPI_ROOT=${PKG}/intel/impi/4.1.0.030/intel64
+
 export MKL_LIBDIR=${INTEL}/mkl/lib/intel64_lin
-export NAGLIB=${PKG}/nag_mk25/fll6i25dcl/lib
-export COMP_LIB=${PKG}/intel/ics2018.4/compilers_and_libraries_2018.5.274/linux/compiler/lib/intel64_lin
-export I_MPI_ROOT=${PKG}/intel/impi/4.1.0.030/intel64
 export IFORT_BIN=${INTEL}/bin/intel64/bin
 export MPIFORT_BIN=${I_MPI_ROOT}/bin
 export INTEL_LICENSE_FILE=${INTEL}/licenses
@@ -18,64 +19,65 @@ export AFC=ifort
 export ACC="cc -O"
 export MPIFC=mpiifort
 
-export ASTRA_EXT=/afs/ipp/home/a/astra/ASTRA_LIBRARIES_EXT
+ASTRA_EXT=/afs/ipp/home/a/astra/ASTRA_LIBRARIES_EXT
 
 # MPI
+MPI_LIBDIR=${I_MPI_ROOT}/lib
+export MPI_LIB="-L${MPI_LIBDIR} -lmpigf -lmpi"
 export MPI_INC="-I${I_MPI_ROOT}/include"
-export MPI_LIB="-L${I_MPI_ROOT}/lib -lmpigf -lmpi"
 
 # NetCDF
 
-export NCDF_HOME=${PKG}/netcdf/4.2.1.1/amd64_sles11/intel/14.0/impi-4.1.3
-export NCDF_LIB="-L${NCDF_HOME}/lib -lnetcdf -lnetcdff"
+NCDF_HOME=${PKG}/netcdf/4.2.1.1/amd64_sles11/intel/14.0/impi-4.1.3
+NCDF_LIBDIR=${NCDF_HOME}/lib
+export NCDF_LIB="-L${NCDF_LIBDIR} -lnetcdf -lnetcdff"
 export NCDF_INC=${NCDF_HOME}/include
 
 # TORBEAM
 
-IRC_LIB="-L${COMP_LIB} -lirc" # necessary for libtorbeam.so
-export TORB_HOME="${ASTRA_EXT}/torbeam/aug21_ifort"  # needed at runtime too
-export TORB_LIB="-L${TORB_HOME}/lib -ltorbeamB ${IRC_LIB}"
+IRC_LIB="-L${COMP_LIBDIR} -lirc" # necessary for libtorbeam.so
+TORB_HOME="${ASTRA_EXT}/torbeam/aug21_ifort"  # needed at runtime too
+TORB_LIBDIR=${TORB_HOME}/lib
+export TORB_LIB="-L${TORB_LIBDIR} -ltorbeamB ${IRC_LIB}"
 
 # RABBIT
 
-export RABBIT_HOME="${ASTRA_EXT}/rabbit/may23"
+RABBIT_HOME="${ASTRA_EXT}/rabbit/may23"
 RABBIT_LIBDIR=${RABBIT_HOME}/lib
 export RABBIT_LIB="-L${RABBIT_LIBDIR} -lrabbit -Wl,-rpath,${RABBIT_LIBDIR}"
 export RABBIT_INC=${RABBIT_HOME}/inc
 
-# STRAHL
-
-export STRAHL_HOME="${ASTRA_EXT}/strahl"
-
 # QuaLiKiZ
 
-export QLK_HOME=${ASTRA_EXT}/qualikiz/apr23
+QLK_HOME=${ASTRA_EXT}/qualikiz/apr23
 export QLK_INC=${QLK_HOME}/inc
 export QLK_LIB=${QLK_HOME}/lib/libQLK-intel-release-default-mpi.a
 
-export QLKNN_HOME=${ASTRA_EXT}/qlk_nn/apr21
+QLKNN_HOME=${ASTRA_EXT}/qlk_nn/apr21
 export QLKNN_INC=${QLKNN_HOME}/inc/serial
 export QLKNN_LIB=${QLKNN_HOME}/lib/libQLKNN-intel-release-default.a
 
 # TGLF
 
-export TGLF_HOME=${ASTRA_EXT}/tglf/oct22
+TGLF_HOME=${ASTRA_EXT}/tglf/oct22
 export TGLF_INC=${TGLF_HOME}/inc
 export TGLF_LIB=${TGLF_HOME}/lib/libtglf.a
 
 # NEO
 
-export NEO_HOME=${ASTRA_EXT}/neo/apr21
+NEO_HOME=${ASTRA_EXT}/neo/apr21
+NEO_LIBDIR=${NEO_HOME}/lib
 export NEO_INC=${NEO_HOME}/inc
-export NEO_LIB="${NEO_HOME}/lib/neo_lib.a ${NEO_HOME}/lib/nclass_lib.a ${NEO_HOME}/lib/UMFPACK_lib.a ${NEO_HOME}/lib/math_lib.a ${NEO_HOME}/lib/expro_lib.a ${NEO_HOME}/lib/geo_lib.a"
+export NEO_LIB="${NEO_LIBDIR}/neo_lib.a ${NEO_LIBDIR}/nclass_lib.a ${NEO_LIBDIR}/UMFPACK_lib.a ${NEO_LIBDIR}/math_lib.a ${NEO_LIBDIR}/expro_lib.a ${NEO_LIBDIR}/geo_lib.a"
 
 # NAGs
 
-export NAGFLIB=${NAGLIB}/libnag_nag.a
-export NAGF90MKL=${NAGLIB}/libnag_mkl.a
+export NAGFLIB=${NAG_LIBDIR}/libnag_nag.a
+export NAGF90MKL=${NAG_LIBDIR}/libnag_mkl.a
 
 # XLBR
 
-export XLBR="-L/usr/lib64 -lX11 -Wl,--start-group ${COMP_LIB}/libintlc.so.5 ${MKL_LIBDIR}/libmkl_intel_lp64.a ${MKL_LIBDIR}/libmkl_core.a ${MKL_LIBDIR}/libmkl_sequential.a ${MKL_LIBDIR}/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group"
+export XLBR="-L/usr/lib64 -lX11 -Wl,--start-group ${COMP_LIBDIR}/libintlc.so.5 ${MKL_LIBDIR}/libmkl_intel_lp64.a ${MKL_LIBDIR}/libmkl_core.a ${MKL_LIBDIR}/libmkl_sequential.a ${MKL_LIBDIR}/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group"
 
-export AS_LD_LIBRARY_PATH="${NCDF_HOME}/lib:${NAGLIB}:${COMP_LIB}:${TORB_HOME}/lib:${RABBIT_HOME}/lib:${I_MPI_ROOT}/lib"
+export AS_LD_LIBRARY_PATH="${NCDF_LIBDIR}:${NAG_LIBDIR}:${TORB_LIBDIR}"
+#export AS_LD_LIBRARY_PATH="${NCDF_LIBDIR}:${NAG_LIBDIR}:${COMP_LIBDIR}:${TORB_LIBDIR}:${RABBIT_LIBDIR}:${MPI_LIBDIR}"
