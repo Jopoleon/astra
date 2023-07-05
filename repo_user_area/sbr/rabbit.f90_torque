@@ -12,7 +12,7 @@ use numerical_tools, only: qinterp
 
 implicit none
 
-integer, parameter :: Nrrect=64, Nzrect=64, nnb_max=30, nspc=3, nrhoout=21, unit_lim=11, n_surf=556
+integer, parameter :: Nrrect=64, Nzrect=64, nnb_max=30, nspc=3, nrhoout=21, unit_lim=11
 double precision, parameter :: ALFA=1.d-5
 
 integer, dimension(nnb_max) :: ierr
