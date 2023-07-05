@@ -70,6 +70,7 @@
    zlim = 0.20
    Rmax = 2.26 !AUG defaults
    Rmin = 1.08
+   torqjxb_model = 3
 /
 
 &numerics
