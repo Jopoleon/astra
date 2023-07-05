@@ -42,6 +42,7 @@ RO6      m                         Boundary position for F6 equation
 RO7      m                         Boundary position for F7 equation
 RO8      m                         Boundary position for F8 equation
 RO9      m                         Boundary position for F9 equation
+ROU      m                         Boundary position for UPAR equation
 VOLUME   m^3                       Total volume
 PSIAX    Tm^2                      PSI on axis
 PSIBO    Tm^2                      PSI boundary

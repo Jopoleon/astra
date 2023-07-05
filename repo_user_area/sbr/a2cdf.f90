@@ -246,6 +246,8 @@ call nfcheck( nf90_put_var(ncid, varid(jid), RO8   ) )
 jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), RO9   ) )
 jid = jid + 1
+call nfcheck( nf90_put_var(ncid, varid(jid), ROU   ) )
+jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), VOLUME) )
 jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), PSIAX ) )
