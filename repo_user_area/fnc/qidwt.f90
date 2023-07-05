@@ -14,6 +14,6 @@ double precision :: YQ, YQO, VINT, VINTO
 YQO = VINTO(NIO*TIO, YR)
 YQ  = VINT (NI *TI , YR)
 
-QIDWTR = (YQ - YQO)/TAU*HRO*.0024
+QIDWTR = (YQ - YQO)/TAU*.0024
 
 end function QIDWTR

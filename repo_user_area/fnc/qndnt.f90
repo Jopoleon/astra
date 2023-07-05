@@ -13,6 +13,6 @@ double precision YQ, YQO, VINT, VINTO
 YQ  = VINT (NE , YR)
 YQO = VINTO(NEO, YR)
 
-QNDNTR = (YQ - YQO)/TAU*HRO
+QNDNTR = (YQ - YQO)/TAU
 
 end function QNDNTR
