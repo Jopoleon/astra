@@ -931,7 +931,7 @@ def upeqn(parse, assign_type=None):
     if assign_type is None:
         assign_type = parse.assign_d[key]
 
-    short = config.short_d[key]
+    pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
 
     up_txt, var_defined = pre_eqn(parse, key, assign_type=assign_type)
     if up_txt is None:
@@ -979,6 +979,14 @@ def upeqn(parse, assign_type=None):
         return up_txt
 
 # From here, assign_type is either AS or EQ, not Missing
+
+    rho_bnd = pa.set_rho(assign_type)
+    if rho_bnd is None:
+        up_txt += 'ND1 = NA1\n'
+    else:
+        l2f = pa.LINE2FOR('', rho_bnd, pack)
+        up_txt += 'ROU = %s\n' %l2f.fcode
+        up_txt += 'ND1 = NODE(ROU)\n'
 
     if 'UPAR' not in var_defined:
         logger.warning('   Initial condition for UPAR is not defined\n' + \

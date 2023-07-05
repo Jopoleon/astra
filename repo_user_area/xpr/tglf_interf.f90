@@ -495,8 +495,8 @@ omega_m (1:2) = omega_m(3)
 gamma_m (1:2) = gamma_m(3)
 
 DIF(1:nrho) = 0.d0       ! D, electron diffusivity, m^2/s
-DPH(1:nrho) = 0.d0       ! D, impurity diffusivity, m^2/s
-DPL(1:nrho) = 0.d0       ! impurity convection
+DPH(1:nrho) = 0.d0       ! 2nd imp convection
+DPL(1:nrho) = 0.d0       ! 1st imp convection
 DPR(1:nrho) = 0.d0       ! tor. stress
 EGM(1:nrho) = 0.d0
 GAM(1:nrho) = 0.d0
