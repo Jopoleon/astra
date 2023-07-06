@@ -13,6 +13,14 @@ do
     cp -r repo_user_area/$DIR .
 done
 
+for plat in ga gway cz mit iter
+do
+    if [ $plat == $platform ]
+    then
+        cp sbr/rabbit.f90_torque sbr/rabbit.f90
+    fi
+done
+
 cp $AWD/repo_user_area/exe/platforms/astra_rc_${platform} $AWD/exe/astra_rc
 cp $AWD/repo_user_area/exp/nml/aug34954_${platform}       $AWD/exp/nml/aug34954
 cp $AWD/repo_user_area/tmp/astra_${platform}.nml          $AWD/tmp/astra.nml
