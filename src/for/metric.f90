@@ -56,7 +56,7 @@ CASE(1)  ! EMEQ
         TIMEQL = TIME
     endif
 
-CASE(3)  ! SPIDER iterations
+CASE(3)  ! equil iterations
     if (TIME == TSTART) NDTEQUILMY = 0
     if (TIME >  TSTART) NDTEQUILMY = 1
     if (TIME-TIMEQL >= NDTEQUILMY*DTEQL) then
@@ -883,7 +883,7 @@ jstepp = 10
 
 if (jnstep == 0 .and. TASK(1:3) /= 'BGD') then
     call colovm(14) ! Iteration # in blue
-    call textvm(62*DXLET, 2, "SPIDER iterations", 17)
+    call textvm(62*DXLET, 2, "equil iterations", 17)
     call redraw(0)
 endif
 
@@ -951,7 +951,7 @@ do j=1, NA1
 enddo
 ychipfp = FP(NA1)
 
-! call to SPIDER
+! call to equil
 i = 1    !fbe is off
 if (IFBEY >= 1.) i = 2    !fbe is on
 if (IPART == 1 ) i = 1    !fbe is off
@@ -1073,7 +1073,7 @@ enddo
 
 VOLUME = VOLUM(NA1)
 
-jnstep = jnstep + 1 ! Count SPIDER calls, this was outside enddo
+jnstep = jnstep + 1 ! Count equil calls, this was outside enddo
 
 return
 end subroutine A2GSSOLVER
@@ -1083,7 +1083,7 @@ subroutine BNDRY(RPB, ZPB)
 
 !---------------------------------------------------------------------
 ! If 3M solver is used the subroutine is not called.
-! Otherwise, if a general equilibrium solver, ESC or SPIDER, is called
+! Otherwise, if a general equilibrium solver, equil code, is called
 ! then 
 ! 1) In case of the plasma boundary defined by 3 moments, 
 !     this subroutine writes 8 points on the boundary into arrays BNDR, BNDZ
@@ -1096,7 +1096,7 @@ subroutine BNDRY(RPB, ZPB)
 ! NBNT      number of times for the plasma boundary evolution
 !  call from ESC:
 !  call BNDRY(RPB, ZPB)
-!  call from SPIDER:
+!  call from equil:
 !  call BNDRY(RZPB, RZPB(NBND+1))
 !---------------------------------------------------------------------
 
