@@ -101,3 +101,34 @@ double precision, dimension(500) :: fs_magnetics
 double precision, dimension(100, 2) :: fs_cforces
 
 end module fs_coupling_variables
+
+!-------------------------------------
+module exchange_with_astra  !these are coupling variables with the equilibrium solver and astra
+
+integer, parameter :: ncoil_dim=300
+
+integer :: use_limiter_astra  ! 1-uses limiter, 0-ignore limiter
+integer :: refit_mode         ! if -1 - 1 pass only , 0 - self-consistent solution, if 1 - stab axis using passive wall currents fourier modes cos and sin, if 2 - same as 1 but uses boundary points using 5 fourier modes, 3-uses full currents fit using analytic F function and fit file efonfit.dat
+integer :: solve_fix          ! if 0 - solve full fix boundary problem, if 1 - 1 iteration only , 2 - only contouring
+integer :: execute_plasma     ! if 0 - only circuit equations, if 1 - solve plasma gseq too 
+integer :: nonegcurr          ! nonegcurr = 0 --> no negative current allowed in plasma
+integer :: fast_mode          ! 0 - normale, 1 - domnt do iterationsin fbe gse
+integer :: reconnect_circuits ! 0-nothing, 1-recompute matrix with new circuits
+integer :: new_equivalence(300, 10)   ! if reconnect, says what is the new_equivalence, for example (1,1,1,0,0,0,0,..) means coil 1,2,3 become 1,1,1
+integer :: n_equivalence      ! number of equivalences
+integer :: use_reduce_circuit ! 0-all coils solved. 1 - some coils not solved
+integer :: n_of_newton_iterations    ! to find actual mag axis. recommended between 5 - 10 
+integer :: n_fourier_restab_boundary ! nr of fourier modes for boundary restab, default = 5
+integer :: psplex_from_fbe    ! put 1 to get psplex fromfree boundary
+integer :: plasma_config      ! 0 if limiter, 1 if xpoint
+
+double precision :: tau_circuit_ef, tau_gseq_ef, time_astra
+double precision :: dr_factor_init_astra, dz_factor_init_astra ! factors of dr and dz for initial iterations
+double precision :: raxis_astra, zaxis_astra, psi0_astra, psib_astra
+
+double precision :: x_point_save(20, 2) ! R, Z of xpoints, max 20 x points
+double precision, dimension(ncol_dim) :: activate_coil_ef, sign_coil, cur_init ! initial currents from astra exp, not from coil.dat, in MA/turn
+double precision, dimension(ncol_dim, 2) :: current_limit_ef ! 1 is upper, 2 is lower
+double precision, dimension(ncoil_dim, ncoil_dim) :: force_coil ! where it is 1, forces coil i,i to current of i,j
+
+end module exchange_with_astra
