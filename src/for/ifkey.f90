@@ -313,7 +313,7 @@ write(3) TIME
 write(3) (CONSTF(J), J=1, NCFNAM), (DEVAR(J), J=1, NPRNAM), ABC, ROC, CHORDN, 1./MU(NA)
 write(3) NA1, NAB, (0, j=1, 10), (0.d0, j=1, 10)
 
-if (LEQ(5) /= 5) call RHSEQ !call this only if SPIDER is not active
+if (LEQ(5) /= 5) call RHSEQ !call this only if equil is not active
 
 call STUFF(3, AMETR, NAB, YWD)
 call STUFF(3, SHIF , NAB, YWD)

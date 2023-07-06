@@ -18,7 +18,7 @@ integer :: key_no_refits  ! if 0, does not overwrite coil.dat with new refit cur
 type(type_equilibrium) :: equil_now
 
 type type_parameters  
-    integer :: kpr=0  ! print in spider (0 - no print, -1 - no write)
+    integer :: kpr=0  ! print in equil (0 - no print, -1 - no write)
     integer :: k_grid= 0  ! k_grid= 0   rect. grid
                           ! k_grid= 1   adap. grid
     integer :: k_auto= 1  ! k_auto= 1->   full initialization

@@ -400,7 +400,7 @@ iter_loop: do jiter=1, miter_ext
         equil_in%profiles_1d%F_dia(i)    = ipol_sp(i)*btor*r0
     enddo
 
-! for current diffusion equation in SPIDER
+! for current diffusion equation in equil
     do i=1, n_theta
         equil_in%eqgeometry%boundary%r(i) = Rb(i)
         equil_in%eqgeometry%boundary%z(i) = Zb(i)

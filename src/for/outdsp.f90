@@ -475,7 +475,7 @@ CASE(8)
 
 
 ! if (data file includes NAMEXP BND) then (NBND > 0);
-! or (NBND == 8) after calling ESC/SPIDER with no boundary points provided;
+! or (NBND == 8) after calling equil with no boundary points provided;
 !     NBND == 0 otherwise
 
    SELECT CASE(LEQ(5))
