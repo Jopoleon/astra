@@ -61,8 +61,6 @@ namelist / spider / kprs, k_grids, epsros, enelss, key_plcs, &
 !for PBE , use p and cu, key_equil=key_dmf=-10, nstep = 0 only at first iteration
 key_equil = 0
 nrp = 256
-s_adapt = 0
-s_fazt  = 0
 
 nstep = max(0, ifbey-1)
 
@@ -165,26 +163,7 @@ if (key_no_refits == 1) then
 endif 
 
 if (parameters_spider%k_fixfree == 1) then
-    if (MACHINE(1:3) == 'aug') then
-        ucoils(1)  = vcoils(1) - vcoils(2)
-        ucoils(2)  = vcoils(2) - vcoils(3)
-        ucoils(3)  = vcoils(3)
-        ucoils(4)  = vcoils(4)
-        ucoils(5)  = vcoils(5)
-        ucoils(6)  = vcoils(6)
-        ucoils(7)  = vcoils(7)
-        ucoils(8)  = vcoils(8)
-        ucoils(9)  = vcoils(9)
-        ucoils(10) = vcoils(10)
-        ucoils(11) = 0.
-        ucoils(12) = 0.
-    elseif (MACHINE(1:3) == 'dem') then !DEMO free boundary, to recheck
-        ucoils(1:ncoils)  = vcoils(1:ncoils)
-    elseif (MACHINE(1:3) == 'tcv') then !TCV free boundary, to recheck
-        ucoils(1:ncoils)  = vcoils(1:ncoils)
-    else
-        ucoils(1:ncoils) = vcoils(1:ncoils)
-    endif
+    ucoils(1:ncoils) = vcoils(1:ncoils)
     parameters_spider%nstep = nstep
 endif
 
@@ -195,14 +174,6 @@ else
 endif
 
 if (ipsibcf /= 0) parameters_spider%key_psibcf = 1
-
-if (parameters_spider%k_fixfree == 1 .and. nstep == 0) then
-    open(32, file=TRIM(parameters_spider%prename) // 'data.dat')
-    read(32, *) j
-    write(*, *) j
-    if (j == 0) stop
-    close(32)
-endif
 
 !output from equil_out structure 
 

@@ -147,11 +147,6 @@ pres = 1.E+06*pres_in
 R0   = rtor
 Z0   = 0
 
-if (inume_3 /= -1) then
-    eqpf = -1./(GP2*rtor)*eqpf*1.E+06
-    eqff = -rtor/GP2*eqff*muvac*1.E+06
-endif
-
 psifb = fp(jna1)
 Fvacuum = rtor*btor
 phib = GP*btor * roc**2
@@ -218,11 +213,6 @@ deltaPSI = PSIb - PSI0
 call derivcc(nr_equ, PSI    , PRESS, pprimp, 2)
 call derivcc(nr_equ, xrho_sp, PRESS, pprimx, 1)
 call derivcc(nr_equ, xrho_sp, PSI  , psipx , 1)
-
-if (advanced_methods == -1 .or. inume_3 == -1 .or. inume_3 == -2) then
-    pprimp = eqpfe
-    pprimx = pprimp*psipx
-endif
 
 zfunc = 0.
 zfuncb = 0.
@@ -386,50 +376,9 @@ iter_loop: do jiter=1, miter_ext
         dum2(j) = dum2(j)/Fvacuum
     enddo
 
-    if (advanced_methods == -1 .or. inume_3 == -1) then
-        ffprimp = eqffe
-    endif
 
     eqpf_sp(1:nr_equ) = pprimp(1:nr_equ)
     eqff_sp(1:nr_equ) = ffprimp(1:nr_equ)
-
-    if (fix_eqpf_eqff == 1) then
-        if (time_a.le.time_fix_eqpff) then
-            fname = TRIM(name_gsefdir) // trim(MACHINE) // '/spidat2.dat'
-            write(*, *) 'EQUIL_CALL_SPID', TRIM(fname)
-            open(32, file = fname)
-            write(32, *)
-            write(32, *) nr_equ
-            write(32, *)
-            write(32, *) (eqpf_sp(j), j = 1, nr_equ)
-            write(32, *)
-            write(32, *) (eqff_sp(j), j = 1, nr_equ)
-            write(32, *)
-            write(32, *) (PSI(j), j = 1, nr_equ)
-            write(32, *)
-            write(32, *) IPLX, R0, btor, roc_sp
-            write(32, *)
-            close(32)
-        else
-            fname = TRIM(name_gsefdir) // trim(MACHINE) // '/spidat2.dat'
-            write(*, *) 'EQUIL_CALL_SPID', TRIM(fname)
-            open(32, file = fname)
-            read(32, *)
-            read(32, *) i
-            read(32, *)
-            read(32, *) (eqpf_sp(j), j = 1, nr_equ)
-            read(32, *)
-            read(32, *) (eqff_sp(j), j = 1, nr_equ)
-            read(32, *)
-            read(32, *) (PSI(j), j = 1, nr_equ)
-            read(32, *)
-            read(32, *) IPLX, R0, dum1, roc_sp
-            read(32, *)
-            close(32)
-            pprimp = eqpf_sp
-            ffprimp = eqff_sp
-        endif
-    endif
 
 ! Compute F according to newfound dPSIdV
     call integrcc(nr_equ, PSI, ffprimp, dum3)
@@ -439,24 +388,6 @@ iter_loop: do jiter=1, miter_ext
     enddo
 
     PSIn_grid = sqrt((PSI - PSI(1))/(PSI(nr_equ) - PSI(1)))
-
-!use tabbnd.wr if only fbe without circuit
-    if (ifbey == 1 .and. ipctrl >= -3 .and. ipctrl <= 0 .and. &
-       (iter_itreq >= 1 .or. jiter > 1) ) then
-        write(fname, '(a)') TRIM(name_gsefdir) // trim(MACHINE) // '/tab_bnd.wr'
-        open(32, file=fname)
-        read(32,*) i
-        do j=1, Nteta
-            read(32, *) Rb(j), Zb(j)
-        enddo
-        close(32)
-        iter_step_call=1
-    endif
-
-    if (ifbey == 1 .and. iter_step_call == 0) then
-        iter_step_call = 1
-    endif
-    if (ifbey > 1) iter_step_call = 0
 
     equil_in%global_param%toroid_field%r0 = R0
     equil_in%global_param%toroid_field%b0 = btor
@@ -684,10 +615,7 @@ PHI = phib * xrho_sp**2
 call derivcc(nr_equ, PSI, PHI, qqsg, 2)
 call derivcc(nr_equ, roc_sp*xrho_sp, volum_sp, vr_sp, 1)
 
-IPL = 1.E-06*1./(GP4*muvac)*dPSIdV(nr_equ)*G2f(nr_equ)
 IPL = IPLX
-
-if (keyplc == 0) IPL = abs(equil_now%global_param%i_plasma)/1.E6
 
 ! Conversion to ASTRA conventions
 do j=1, nr_equ
@@ -740,11 +668,6 @@ rocnew = sqrt(phib/(GP*btor))
 g22e = GG2
 g33e = GG3/R0**2
 
-if (iter_part > 1) then
-    if (do_adcmp == 1) then
-        fp = fp + dpsi_ad
-    endif
-endif
 
 return
 end subroutine GS_SOLVER
