@@ -1,7 +1,7 @@
 program astra
 
 use parameter_inc, only: NSBMX, NRD
-use outcmn_inc, only: VCOIL, CCOIL, CCOILO, DUMCT, DUMCTP, CTRLM, outcmn_init
+use outcmn_inc, only: VCOIL, CCOIL, CCOILO, outcmn_init
 use const_inc, only: IPART, const_init
 use status_inc, only: status_init
 use debugger, only: debug, flightsim

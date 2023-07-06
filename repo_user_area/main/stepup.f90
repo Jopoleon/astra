@@ -10,7 +10,7 @@ use const_inc, only: IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
     TAU, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, ATREQ, LEQ, & 
     PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, ADCMPF, RBDOT, BBDOT
 use status_inc, only: TE, TI, NE, NI, NIO, FP
-use outcmn_inc, only: CCOIL, CCOILO, DUMCT, DUMCTP, CTRLM, VCOIL, MACHINE
+use outcmn_inc, only: CCOIL, CCOILO, VCOIL, MACHINE
 use plasma_state, only: plasma_up
 use debugger, only: markloc, flightsim
 use fs_coupling_variables, only: fs_dt_smlk,fs_dt_tctrl
@@ -108,27 +108,8 @@ BBDOT = 0.              ! reset boundary adiabatic factor
 PSIEXO = PSIEXT	      ! reset also external flux from fbe and ce, this is for test!
 PSPLXO = PSPLEX  	      ! reset also green function flux from fbe and ce, this is for test!
 						
-!Get target quantities for control
-if (plasma_up == 1 .or. ifbey == 0) then
-    if (nint(IPCTRL) /= 0 .and. nint(IPCTRL) > -2) then
-        call GETDUMCT(DUMCT)   ! in this case VCOIL and CCOIL are not taken from experimental file, rather from controller
-        call GETCTRLMS(CTRLM)   
-    else
-! Get coils currents from experimental file if no control
-	
-        call GETDUMCT(DUMCT)   
-        call GETCTRLMS(CTRLM)   
-        DUMCTP = DUMCT
-
-! do this only if flightsim = 0, so that with -1 it doesnt do this.
-! if (flightsim==0) then
-        call GETCOILS(VCOIL(1:NCNB), dummycoils(1:NCNB))
-
-        if (ICIRCQ == 0.) then
-            call GETCOILS(VCOIL(1:NCNB), CCOIL(1:NCNB))
-        endif
-    endif
-endif
+!Get target quantities from experiment if prescribed boundary. if free boundary, then uses circuit equations and voilc comes from elsewhere
+	call GETCOILS(VCOIL(1:NCNB), CCOIL(1:NCNB))
 
 ! counter for psi bc = -1 
 if (ITFBP == 0.0) ibcpsi_fb = 0
