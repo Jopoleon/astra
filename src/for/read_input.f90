@@ -1,4 +1,3 @@
-!======================================================================|
 subroutine read_input
 !----------------------------------------------------------------------|
 !  NCONST   amount of simple variables readable (initiated)
@@ -688,17 +687,9 @@ parse_exp_2d: do
         call read_arrx(201, NCNBT, ntim, NCNB, STRI, CCOILX)
         VNAMO = VNAM
 
-    CASE('VCOILX')
+    CASE('VCOILX') !note that both CCOIL and VCOIL need to appear in the exp file with the same number of points and times
         NCNBT = 0
         call read_arrx(201, NCNBT, ntim, NCNB, STRI, VCOILX)
-        VNAMO = VNAM
-
-    CASE('DUMCTX')
-        call read_arrx(201, NCTPT, ntim, NCTP, STRI, DUMCTX)
-        VNAMO = VNAM
-
-    CASE('CTRLMX')
-        call read_arrx(201, NCRMT, ntim, NCRM, STRI, CTRLMX)
         VNAMO = VNAM
 
     CASE ('BNDX  ')

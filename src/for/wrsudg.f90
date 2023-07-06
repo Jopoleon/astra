@@ -27,6 +27,7 @@ double precision, dimension(32) :: geom1d_0, geom1d_1, geom1d_now
 double precision, dimension(500) :: magnetics
 double precision, dimension(660) :: yroutfull
 double precision, dimension(256, 256) :: yrout, yzout
+double precision, dimension(10) :: ccoil_scramble
 
 double precision coil_forces(na1,2)
 double precision betp3r_0, LI3R_0, IPL_0, upl_0, &
@@ -144,18 +145,18 @@ elseif (MACHINE(1:4) == 'iter') then
     qrad1 = qrad2
     ne1 = ne2
 
-    gapnum(1) = 16
-    gapnum(2) = 23
-    gapnum(3) = 30
-    gapnum(4) = 36
-    gapnum(5) = 46
-    gapnum(6) = 47
-    do j=1,6
-        magnetics(j) = geom1d(94 - 52 +1 +gapnum(j) - 1)
-    enddo
-    magnetics(7) = geom1d(97) !Rcurr
-    magnetics(8) = geom1d(98) !Zcurr
-    magnetics(9) = ipl*1.e6   !Ipl A
+!    gapnum(1) = 16
+!    gapnum(2) = 23
+!    gapnum(3) = 30
+!    gapnum(4) = 36
+!    gapnum(5) = 46
+!    gapnum(6) = 47
+!    do j=1,6
+!        magnetics(j) = geom1d(94 - 52 +1 +gapnum(j) - 1)
+!    enddo
+!    magnetics(7) = geom1d(97) !Rcurr
+!    magnetics(8) = geom1d(98) !Zcurr!
+!    magnetics(9) = ipl*1.e6   !Ipl A
 
     call shmw( &
         TIME, &
@@ -171,18 +172,23 @@ elseif (MACHINE(1:4) == 'iter') then
 
 else if (MACHINE(1:3) == 'aug') then
 
+    ccoil_scramble(1: 10) = ccoil(1: 10)
+    ccoil(2) = ccoil_scramble(2) - ccoil_scramble(1)
+    ccoil(3) = ccoil_scramble(3) - ccoil_scramble(2)
+
+!scramble coil currents
+
     geom1d(64) = WTOZR(ROC)*1e6 !total Wmhd including fast ions  in MJ
     time_1 = time - tstart
     time_0 = time - tstart - TAU
 
 ! get coil forces
-        if (nint(IPEQL) == 4) then
-            call coil_force2(coil_forces(1:100, 1:2),plasma_up)
-	else
-!git            call coil_forces_feqis(100, coil_forces(1:100, 1), & 
-!git                coil_forces(1:100, 2), plasma_up)
-            coil_forces = -coil_forces
-        endif
+    if (nint(IPEQL) == 4) then
+        call coil_force2(coil_forces(1:100, 1:2),plasma_up)
+    else
+! git        call coil_forces_feqis(100, coil_forces(1:100, 1), coil_forces(1:100, 2), plasma_up)
+        coil_forces = -coil_forces
+    endif
 
     car54( 1:21) = coil_forces(1:21, 1)
     car54(22:42) = coil_forces(1:21, 2)
@@ -382,8 +388,7 @@ else if (MACHINE(1:3) == 'aug') then
             goto 200
         endif
 
-
-300	continue
+300 continue
     betp3r_0 = betp3r(roc)
     LI3R_0 = LI3R(ROC)
     if (plasma_up == 0) then
@@ -415,6 +420,9 @@ else if (MACHINE(1:3) == 'aug') then
     ne_0(1:na1) = ne(1:na1)
     ccoil_0 = ccoil(1:10)
     geom1d_0 = geom1d(51:82)
+
+
+	ccoil(1:10)=ccoil_scramble(1:10)
 
 endif
 

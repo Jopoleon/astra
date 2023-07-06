@@ -29,7 +29,7 @@ if (MACHINE == 'dem_') then
         CHE1, CDHJ1, CDHJ2, &
         CHE3, CDHJ3, CDHJ4, &
         CV3, CDHJ5, &
-        CDMJ1, CDMJ2, CDMJ3, CDMJ4, gvcoil(1:15), &
+        CDMJ1, CDMJ2, CDMJ3, CDMJ4, gvcoil, &
         time_ext, CV6, fs_dt_smlk)
         CV13 = MAX(1., CV13)  ! finite pump speed to avoid NaN
         dt_smlk = fs_dt_smlk  ! simulink tau defined in equ log
@@ -43,7 +43,7 @@ elseif (MACHINE == 'iter') then
         CHE1, CDHJ1, CDHJ2, &
         CHE3, CDHJ3, CDHJ4, &
         CV3, CDHJ5, &
-        CDMJ1, CDMJ2, CDMJ3, CDMJ4, gvcoil(1:12), &
+        CDMJ1, CDMJ2, CDMJ3, CDMJ4, gvcoil, &
         time_ext, CV6, fs_dt_smlk)
         CV13 = MAX(1., CV13)  ! finite pump speed to avoid NaN
         dt_smlk = fs_dt_smlk  ! simulink tau defined in equ log
@@ -57,8 +57,10 @@ else if (MACHINE == 'aug_') then
     BTOR = abs(BTOR) !Btor defined here absolute value. sign has to be given separatly
     dt_smlk = fs_dt_smlk ! simulink tau defined in equ log
 
-    vcoil(1: 10) = vcoiltmp(1: 10)
-    vcoil(11:12) = 0.
+    vcoil(1) = vcoiltmp(1) - vcoiltmp(2)
+    vcoil(2) = vcoiltmp(2) - vcoiltmp(3)
+    vcoil( 3: 10) = vcoiltmp(3: 10)
+    vcoil(11: 12) = 0.
 
     ZRD93 = time_ext + dt_smlk
 endif  ! (MACHIN == 'aug_')

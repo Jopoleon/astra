@@ -100,7 +100,7 @@ double precision :: &
 
 
 integer :: NA, NA1, NAB, NB1, NUF, NNCX, KEY, NBND, NCNB, &
-    XFLAG, NSTEPS, ITREQ, IPART, LEQ(NEQNS), NITOT, NCTP, NCRM
+    XFLAG, NSTEPS, ITREQ, IPART, LEQ(NEQNS), NITOT
 integer :: ARXUSE(NARRX)
 character(len=132) :: XLINE1, XLINE2
 
@@ -119,8 +119,6 @@ NBND = 0
 
 ! Coils
 NCNB = 1
-NCTP = 1
-NCRM = 1
 
 NEQUIL => MESHEQ
 

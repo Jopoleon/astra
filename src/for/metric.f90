@@ -839,8 +839,8 @@ end subroutine A2EMEQ
 subroutine A2GSSOLVER(equil_solver)
 
 use parameter_inc, only: NRD
-use outcmn_inc, only: TASK, DXLET, CCOIL, VCOIL, DUMCTP, DUMCT, NBNT
-use const_inc, only: NEQUIL, MEQUIL, NBND, IPART, IPCTRL, TAU, NA, NA1, NAB, NCNB, NCTP, &
+use outcmn_inc, only: TASK, DXLET, CCOIL, VCOIL, NBNT
+use const_inc, only: NEQUIL, MEQUIL, NBND, IPART, IPCTRL, TAU, NA, NA1, NAB, NCNB, &
     RTOR, BTOR, IPL, GP, GP2, HRO, ROC, ABC, &
     VOLUME, SHIFT, ELONG, UPDWN, TRIAN, &
     INUME3, ITFBP, IPLFBE, IFBEY, ITREQ, ICIRCQ, ITFBE, &
@@ -869,7 +869,6 @@ double precision, dimension(NA1) :: yg11, yg22, yg33, yvr, yvrs, yslat, yg41, &
     ybdb02, ybdb0, yb0db2, yvolum, yametr, yshif, yelon, &
     ytria, yfofb, yeqpf, yeqff
 double precision, dimension(NCNB) :: yccoil, yvcoil
-double precision, dimension(NCTP) :: ydumctp, ydumct
 double precision, dimension(1000) ::  rbnd, zbnd
 
 save jnstep, j_save_bound, yiplout, iplnew
@@ -900,35 +899,14 @@ if (j_save_bound == 0 .or. IPART == 1) then
     call BNDRY(rbnd(1:NBND), zbnd(1:NBND))
 endif
 
-if (nint(IPCTRL) == 50 .or. nint(IPCTRL) == 51) then
-    IPCTRL = -50. + nint(IPCTRL)
-    j_save_bound = 1
-endif
-
 jnbnd = NBND
-if (j_save_bound == 1 .and. ipart /= 1) then
-    rbnd(1: jnteta-1) = equil_now%coord_sys%position%r(jneql, 1: jnteta-1)
-    zbnd(1: jnteta-1) = equil_now%coord_sys%position%z(jneql, 1: jnteta-1)
-    jnbnd = jnteta - 1
-endif
 
 do j=1, NCNB
     yccoil(j) = CCOIL(j)
     yvcoil(j) = VCOIL(j)
 enddo
-do j=1, NCTP
-    ydumctp(j) = DUMCTP(j)
-    ydumct(j)  = DUMCT(j)
-enddo
 
-tau_resistive = 0.01 ! this is just for AUG
-dampfacpsplex = tau_resistive/TAU
-dampfacpsplex = 0.
-
-iplnew = (dampfacpsplex*iplnew + G22(NA)/RTOR/0.4/GP * &
-    (FP(NA1) - FP(NA))/HRO * IPOL(NA1))/(1. + dampfacpsplex)
-
-if (nint(inume3) == -1) iplnew = IPL !if fixed pprim ffprim, use IPL as total current for spider
+iplnew = G22(NA)/RTOR/0.4/GP * (FP(NA1) - FP(NA))/HRO * IPOL(NA1)
 
 if (ITFBP /= 0.) IPLFBE = iplnew      ! current for free boundary equilibrium
 if (IPART == 1) then
@@ -936,10 +914,6 @@ if (IPART == 1) then
     jstepp = 0              ! if in initialization mode, use plasma current
 else
     jstepp = 1              ! if in initialization mode, use plasma current
-endif
-
-if (nint(inume3) == -1) then
-    if (jstepp == 1) iplnew = yiplout ! if fixed ffp, pp, if in time advance, uses output current from spider if also keyplc = 0
 endif
 
 dfpdrb12 = (FP(NA1) - FP(NA))/HRO
@@ -1009,13 +983,6 @@ call GS_SOLVER( &
 
 ROC  = YROCNEW  ! Define a new RHO_edge
 yiplout = yipl  ! new current in case
-
-!Update control quantities
-if (nint(IPCTRL) /= 0 .and. nint(IPCTRL) > -2) then
-    do j=1, NCTP
-        DUMCTP(j) = ydumctp(j) 
-    enddo
-endif    
 
 do j=1, NA1
 
@@ -1294,11 +1261,9 @@ double precision, intent(out), dimension(n_coil) :: coil_curr
 integer :: j, j1, j2, jt
 double precision :: ydt, yd1, yd2
 
-if (nt <= 1) then 
-    if (nt == 0) then  
-        coil_curr = 0.0
-        return
-    endif  
+if (nt == 0) then  
+    coil_curr = 0.0
+    return
 endif
 
 ! Input order:
@@ -1341,66 +1306,24 @@ subroutine GETCOILS(yvcoil, yccoil)
 ! Get the coil currents from the exp data at the present time slice
 
 use outcmn_inc, only: CCOIL, VCOIL, NCNBT, CCOILX, VCOILX
-use const_inc, only: TIME, NCNB
-use debugger, only: flightsim
+use const_inc, only: TIME, NCNB, ITFBE
 
 implicit none
 
 double precision, intent(out), dimension(NCNB) :: yvcoil, yccoil
 
-if (flightsim >= 1) then
+if (TIME > ITFBE) then ! if free boundary, solve circuit equations, ccoil comes from there
     yccoil = CCOIL(1: NCNB)
     yvcoil = VCOIL(1: NCNB)
-return
+    return
 endif
 
-if (NCNBT <= 1) then ! Just one time point
-    if (NCNBT == 0) then
-        yccoil = CCOIL(1: NCNB)
-        yvcoil = VCOIL(1: NCNB)
-        return
-    endif  
-endif
-
+! if time <= ITFBE, ccoil and vcoil comes from experimental traces in exp file
 call get_coil(TIME, CCOILX, NCNBT, NCNB, yccoil)
 call get_coil(TIME, VCOILX, NCNBT, NCNB, yvcoil)
 
 return
 end subroutine GETCOILS
-
-!---------------------------------------------------------------------
-subroutine GETDUMCT(ydumct)
-
-! Get the control quantities from the exp data at the present time slice
-
-use outcmn_inc, only: DUMCTX, NCTPT
-use const_inc, only: TIME, NCTP
-
-implicit none
-
-double precision, intent(out), dimension(NCTP) :: ydumct
-
-call get_coil(TIME, DUMCTX, NCTPT, NCTP, ydumct)
-
-return
-end subroutine GETDUMCT
-
-!---------------------------------------------------------------------
-subroutine GETCTRLMS(yctrlm)    
-
-! Get the control quantities from the exp data at the present time slice
-
-use outcmn_inc, only: NCRMT, CTRLMX
-use const_inc, only: NCRM, TIME
-
-implicit none
-
-double precision, intent(out), dimension(NCRM) :: yctrlm
-
-call get_coil(TIME, CTRLMX, NCRMT, NCRM, yctrlm)
-
-return
-end subroutine GETCTRLMS
 
 !---------------------------------------------------------------------
 subroutine RHSEQ

@@ -19,22 +19,22 @@ type(type_equilibrium) :: equil_now
 
 type type_parameters  
     integer :: kpr=0  ! print in spider (0 - no print, -1 - no write)
-    integer :: k_grid= 0   ! k_grid= 0   rect. grid
-                           ! k_grid= 1   adap. grid
-    integer :: k_auto= 1   ! k_auto= 1->   full initialization
-    integer :: key_dmf=0 !=1->diff.mag.field, =0->without
+    integer :: k_grid= 0  ! k_grid= 0   rect. grid
+                          ! k_grid= 1   adap. grid
+    integer :: k_auto= 1  ! k_auto= 1->   full initialization
+    integer :: key_dmf=0  !=1->diff.mag.field, =0->without
 
-    integer :: nstep = 0   ! nstep=0 - initial eq., nstep>0 using computed eq.
+    integer :: nstep = 0  ! nstep=0 - initial eq., nstep>0 using computed eq.
 
     character(len=80) :: prename = 'exp/equ/' ! working directory path
     character(len=80) :: eqdfn = ''
     
-    integer ::  k_fixfree=1  !=0->only fixed boundary spider 
-    integer ::  k_filesss=1  !=1->use files, 0 use memory 
+    integer ::  k_fixfree=1 !=0->only fixed boundary spider 
+    integer ::  k_filesss=1 !=1->use files, 0 use memory 
     integer ::  key_ini=1   ! =1 astra profiles, =0 start from EQDSK and SPIDER profiles
     integer ::  key_start=0 ! =1 reconstruction, =0 direct for free-boundary equilibrium
-    integer ::  key_0stp=0   !initial eq. only =0 - p',ff'; =1 - p,cu
-    integer ::  key_pres=0   !=1 - pressure profile, =0 - p' profile  
+    integer ::  key_0stp=0  !initial eq. only =0 - p',ff'; =1 - p,cu
+    integer ::  key_pres=0  !=1 - pressure profile, =0 - p' profile  
     integer ::  i_eqdsk=0   !=1 - eqdsk file as input, =0 - other user input 
     integer ::  key_plc=1   !=1 - precribed Ip, =0 - no G-S rhs renormalization , ipl is an output anyway 
     integer ::  key_out=0   !=1 - circuit equations with currents and inductive voltages update, =0 - no update, 0 is to do iterations, last one has to have key_out=1
@@ -48,11 +48,21 @@ type type_parameters
     real(DP) :: epsro=1.0d-7 ! fixed boundary equilibrium accuracy
     real(DP) :: enels=1.0d-6 ! circuit equation accuracy
     
-    integer :: neql = 100   ! number of nodes in radial
-    integer :: nteta = 90  ! number of intervals in poloidal + 2
-
+    integer :: neql = 100 ! number of nodes in radial
+    integer :: nteta = 90 ! number of intervals in poloidal + 2
     integer :: n_dmf = 3  ! number of iterations of cde in SPIDER with rectangular grid
 
 endtype
+
+!feqis
+double precision :: err_circ_in                 = 1.e-9  ! err circ
+double precision :: err_find_oxpoints_in        = 1.e-13 ! err find oxpoints
+double precision :: err_find_oxpoints_derivs_in = 1.e-13 ! err find oxpoints deriv
+double precision :: err_find_psistab_in         = 1.e-8  ! err find psistab
+double precision :: err_find_delr_in            = 1.e-10 ! err find delr
+double precision :: err_find_biquad_in          = 1.e-12 ! err find biquad
+double precision :: err_epsilon_in              = 1.e-12 ! epsilon
+double precision :: err_gaptolez_in             = 1.e-5  ! err gap tolez
+double precision :: err_fix_boundary_in         = 1.e-9  ! fix boundary tolerance
 
 end module parameters_a2spider

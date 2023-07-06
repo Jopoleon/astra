@@ -16,8 +16,7 @@ integer, dimension(NARRX) :: IFDFAX, KOGDA, NPTM
 integer, dimension(NSBMX) :: SIGNSB, IFSBX, IFSBP
 integer :: &
     NDTNAM, NCFNAM, NPRNAM, NSRNAM, NARNAM, NEXNAM, NTOUT, NROUT, NSBR, NSBP, &
-    NBNT, NCNBT, LTOUT, IPOUT, MOD10, NGR, NXOUT, IFDFVX(NCONST), &
-    IFMETR, NCTPT, NCRMT
+    NBNT, NCNBT, LTOUT, IPOUT, MOD10, NGR, NXOUT, IFDFVX(NCONST)
 integer :: &
     MODEY, frame_wid, frame_hei, DXLET, DYLET, IY0, IYM, canv_hei, canv_wid, &
     IDX, IDT, KPRI, NST, XWX, XWY, XWW, XWH, LRJJ, &
@@ -28,8 +27,8 @@ integer :: nx_canvas, ny_canvas
 double precision, dimension(NRW)   :: GRAL, GRAP, OSHIFT, OSHIFR, SCALET, SCALER
 double precision, dimension(NTARR) :: FILTER, TIMEX
 double precision, dimension(NARRX) :: TOUTX
-double precision, dimension(NCNBM) :: CCOIL, CCOILO, CTRLM, DUMCT, DUMCTP, VCOIL
-double precision, dimension((NCNBM+1)*NCNBTM) :: CCOILX, CTRLMX, DUMCTX, VCOILX
+double precision, dimension(NCNBM) :: CCOIL, CCOILO, VCOIL
+double precision, dimension((NCNBM+1)*NCNBTM) :: CCOILX, VCOILX
 double precision, dimension(NRDX, NARRX) :: XAXES, DATAX
 double precision, dimension(NRD, NRW) :: ROUT
 double precision, dimension(NBDTMAX) :: BNDTIM
@@ -106,8 +105,6 @@ active_tab = 0
 
 ! Coils
 NCNBT = 0
-NCTPT = 0
-NCRMT = 0
 
 OSHIFT = 0.
 OSHIFR = 0.
@@ -126,13 +123,8 @@ TIM7 = (/ 0, 9999, 9999, 1 /)
 
 VCOILX = 0.
 CCOILX = 0.
-DUMCTX = 0.
-CTRLMX = 0.
 VCOIL  = 0.
 CCOIL  = 0.
-DUMCT  = 0.
-DUMCTP = 0.
-CTRLM  = 0.
 
 ! Output windows
 
