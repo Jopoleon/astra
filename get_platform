@@ -18,6 +18,9 @@ then
 elif [[ $AWD == "/afs/eufus"* ]]
 then
    platform=gway
+elif [[ $AWD == "/localhome"* ]]
+then
+   platform=goblin
 elif [[ $AWD == "/home/ITER"* ]]
 then
    platform=iter
