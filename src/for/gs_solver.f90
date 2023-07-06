@@ -87,7 +87,7 @@ save i_call_gsss
 data vtemp_counter/0.5/
 save vtemp_counter
 
-namelist / spider_settings / time_fix_eqpff, fix_eqpf_eqff, &
+namelist / equil_settings / time_fix_eqpff, fix_eqpf_eqff, &
     cheb_degree, spidat_yes, iter_one_only_fbe, advanced_methods, &
     i3method, diagnostic_gsef, do_adcmp, urelax, urelax2, &
     murelax2, ydiff, ydiff2, max_iter, miter_ext, interp_routine, &
@@ -127,7 +127,7 @@ if (ifbey == 0) then
     INQUIRE(FILE=trim(fname), EXIST=file_existence)
     if (file_existence) then
         open(53, FILE=fname)
-        read(53, nml=spider_settings)
+        read(53, nml=equil_settings)
         close(53)
     endif
 endif

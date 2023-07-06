@@ -14,7 +14,7 @@
 
 /
 
-&spider_settings
+&equil_settings
 
    time_fix_eqpff = 0.0021
    fix_eqpf_eqff = 0
