@@ -103,7 +103,7 @@ double precision, dimension(100, 2) :: fs_cforces
 end module fs_coupling_variables
 
 !-------------------------------------
-module exchange_with_astra  !these are coupling variables with the equilibrium solver and astra
+module astra2fbe  !these are coupling variables with the equilibrium solver and astra
 
 integer, parameter :: ncoil_dim=300
 
@@ -127,8 +127,8 @@ double precision :: dr_factor_init_astra, dz_factor_init_astra ! factors of dr a
 double precision :: raxis_astra, zaxis_astra, psi0_astra, psib_astra
 
 double precision :: x_point_save(20, 2) ! R, Z of xpoints, max 20 x points
-double precision, dimension(ncol_dim) :: activate_coil_ef, sign_coil, cur_init ! initial currents from astra exp, not from coil.dat, in MA/turn
-double precision, dimension(ncol_dim, 2) :: current_limit_ef ! 1 is upper, 2 is lower
+double precision, dimension(ncoil_dim) :: activate_coil_ef, sign_coil, cur_init ! initial currents from astra exp, not from coil.dat, in MA/turn
+double precision, dimension(ncoil_dim, 2) :: current_limit_ef ! 1 is upper, 2 is lower
 double precision, dimension(ncoil_dim, ncoil_dim) :: force_coil ! where it is 1, forces coil i,i to current of i,j
 
-end module exchange_with_astra
+end module astra2fbe
