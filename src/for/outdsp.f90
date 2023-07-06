@@ -1041,7 +1041,7 @@ subroutine DRAWSPFLUX(jifnew, YS0, YSC8)
 
 use outcmn_inc, only: Pink, Magenta, White
 use const_inc, only: NEQUIL, MEQUIL
-use parameters_a2spider, only: equil_now
+use parameters_a2equil, only: equil_now
 
 implicit none
 

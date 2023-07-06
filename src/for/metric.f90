@@ -853,7 +853,7 @@ use status_inc, only: G11, G22, G22E, G33, G33E, G41, G42, G43, G44, G45, &
     VOLUM, SHIF, ELON, TRIA, XRHO, AREAT, PERIM, SHIV
 use plasma_state, only: plasma_up, plasma_trig
 use debugger, only: markloc
-use parameters_a2spider, only: equil_now
+use parameters_a2equil, only: equil_now
 
 implicit none
 
@@ -957,7 +957,7 @@ if (IFBEY >= 1.) i = 2    !fbe is on
 if (IPART == 1 ) i = 1    !fbe is off
 
 if (ifbey > 0..and.plasma_up == 0) then
-    call A_spider_2(NCNB, nint(ifbey), time, tau, vcoil(1:ncnb), equil_solver)
+    call A_EQUIL_2(NCNB, nint(ifbey), time, tau, vcoil(1:ncnb), equil_solver)
     jnstep = jnstep + 1
     return
 endif

@@ -4,7 +4,7 @@
      &            rloop, zloop, nloop,  rprob, zprob, nprob,
      &            necon, wecon, ntipe )
 
-      use parameters_a2spider, only: fix_adapgrid
+      use parameters_a2equil, only: fix_adapgrid
       use sp_parameters
       use iopath, only: path
 

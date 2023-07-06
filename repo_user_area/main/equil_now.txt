@@ -32,11 +32,11 @@ shif           m              SHIF
 elongation     -              ELON
 surface        m^2            SLAT
 phispid        Wb             PHI (in ASTRA doesnt exist anyway)
-q              -              Safety factor from SPIDER
-ffprime        -              FFPRIME from SPIDER
-pprime         -              PPRIME from SPIDER
-pressure       -              Pressure from SPIDER
-rho_tor        -              rho_tor in output from SPIDER
+q              -              Safety factor from EQUIL
+ffprime        -              FFPRIME from EQUIL
+pprime         -              PPRIME from EQUIL
+pressure       -              Pressure from EQUIL
+rho_tor        -              rho_tor in output from EQUIL
 phi            Wb             Toroidal flux
 pprime         -              dpres/dpsi
 ffprime        -              dF/dpsi
@@ -45,7 +45,7 @@ ffprime        -              dF/dpsi
 ------------------------------------------------------------
 r2d            m              Rectangular grid major radius coordinate
 z2d            m              Rectangular grid vertical coordinate
-psirz2d        Wb/rad         Psi on rectangular grid, ASTRA has -2*PI*PSI_SPIDER
+psirz2d        Wb/rad         Psi on rectangular grid, ASTRA has -2*PI*PSI_EQUIL
 psi_axis       Wb/rad         Psi on axis
 psi_boundary   Wb/rad         Psi at boundary
 ------------------------------------------------------------

@@ -12,7 +12,7 @@ use outcmn_inc, only: machine, ccoil
 use fenix_params, only: ipl_bf_bkdw
 use flight_sim_geometrics, only: geom1d
 use plasma_state, only: plasma_up
-use parameters_a2spider, only: equil_now
+use parameters_a2equil, only: equil_now
 
 implicit none
 

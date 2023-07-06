@@ -202,7 +202,7 @@ end subroutine profiles_file_write_strahl
 subroutine grid_write_strahl(strahl_dir, nfour_c, Raxis, &
   Rvoltot, Vloop, time, machine)
 
-use parameters_a2spider, only: equil_now
+use parameters_a2equil, only: equil_now
 
 implicit none
 

@@ -2,7 +2,7 @@
 
 subroutine coil2spider(ccoils,ncoils,parameters_spider)
 
-use parameters_a2spider, only: type_parameters
+use parameters_a2equil, only: type_parameters
 
 implicit none
 

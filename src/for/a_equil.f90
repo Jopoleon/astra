@@ -1,4 +1,4 @@
-subroutine A_SPIDER( &
+subroutine A_EQUIL( &
 ! Input
     equil_in, equil_solver, &
     nr_equ, n_theta, iter_step, &
@@ -11,7 +11,7 @@ subroutine A_SPIDER( &
 
 use imas_ids, only: type_equilibrium
 use fenix_params, only: s_adapt, s_fazt
-use parameters_a2spider, only: type_parameters, fix_adapgrid, GP, GP2
+use parameters_a2equil, only: type_parameters, fix_adapgrid, GP, GP2
 use flight_sim_geometrics, only: geom1d
 use outcmn_inc, only: MACHINE
 
@@ -44,7 +44,7 @@ double precision, dimension(100, 4) :: demo_gaps
 double precision, dimension(n_theta) :: Rbnd, Zbnd
 character(len=80) :: fname
 
-type(type_parameters) :: parameters_spider
+type(type_parameters) :: parameters_equil
 
 data jdemogaps /0/
 data psplexold /2./
@@ -65,11 +65,11 @@ nrp = 256
 nstep = max(0, ifbey-1)
 
 ! grids
-parameters_spider%dt    = tau_step
-parameters_spider%time  = time_a
-parameters_spider%neql  = nr_equ
-parameters_spider%nteta = n_theta + 2
-parameters_spider%prename = trim(parameters_spider%prename) // trim(MACHINE) // '/'
+parameters_equil%dt    = tau_step
+parameters_equil%time  = time_a
+parameters_equil%neql  = nr_equ
+parameters_equil%nteta = n_theta + 2
+parameters_equil%prename = trim(parameters_equil%prename) // trim(MACHINE) // '/'
 
 !defaults
 if (nstep == 0) then
@@ -87,7 +87,7 @@ if (nstep == 0) then
     psplexavg = 0. 
     psplexavgexp = 0.
     fix_adapgrid = 0
-    fname = trim(parameters_spider%prename) // 'namelist_astra.txt'
+    fname = trim(parameters_equil%prename) // 'namelist_astra.txt'
     INQUIRE( FILE=trim(fname), EXIST=file_existence) 
     if (file_existence) then
         open(53, FILE=fname)
@@ -109,41 +109,41 @@ else
     k_grids = 1
 endif
 
-parameters_spider%kpr     = kprs
-parameters_spider%k_grid  = k_grids
-parameters_spider%epsro   = epsros
-parameters_spider%enels   = enelss
-parameters_spider%key_plc = key_plcs      
-parameters_spider%key_dmf = 0
+parameters_equil%kpr     = kprs
+parameters_equil%k_grid  = k_grids
+parameters_equil%epsro   = epsros
+parameters_equil%enels   = enelss
+parameters_equil%key_plc = key_plcs      
+parameters_equil%key_dmf = 0
 
-if (inume_3 /= -1) parameters_spider%key_plc = 1    !force plc = 1 if current diffusion is solved
-keyplc = parameters_spider%key_plc
-parameters_spider%key_out = 0
+if (inume_3 /= -1) parameters_equil%key_plc = 1    !force plc = 1 if current diffusion is solved
+keyplc = parameters_equil%key_plc
+parameters_equil%key_out = 0
 
 if (icircq == 0) nstep = 0    !no circuit equations, only static fbe
-if (iter_step == 1) parameters_spider%k_fixfree = 0 !astra initialization, no fbe
-if (parameters_spider%k_fixfree == 0) nstep = 0  !no fbe, nstep=0
+if (iter_step == 1) parameters_equil%k_fixfree = 0 !astra initialization, no fbe
+if (parameters_equil%k_fixfree == 0) nstep = 0  !no fbe, nstep=0
 
-if (parameters_spider%k_fixfree == 1) then
+if (parameters_equil%k_fixfree == 1) then
     SELECT CASE(ipctrl)
     CASE(1, -4, -5)  !controller, refit currents, coil.dat untouched
-        parameters_spider%key_start = 1
+        parameters_equil%key_start = 1
     CASE(-3: 0)  !no controller, coil.dat untouched
-        parameters_spider%key_start = 0
+        parameters_equil%key_start = 0
     END SELECT
 
-    key_start = parameters_spider%key_start
-    parameters_spider%key_out = 0  ! keep this and use spidupdate call instead
+    key_start = parameters_equil%key_start
+    parameters_equil%key_out = 0  ! keep this and use spidupdate call instead
 
-    if (nstep >= 1) parameters_spider%key_start = 0 !fbe with circuit equations, no refit
+    if (nstep >= 1) parameters_equil%key_start = 0 !fbe with circuit equations, no refit
 endif      
 
 !Coil currents
 if (ncoils > 0) then
-    if (parameters_spider%k_fixfree == 1) then
+    if (parameters_equil%k_fixfree == 1) then
         SELECT CASE(ipctrl)
         CASE(-5, -3, -2)
-            call coil2spider(ccoils, ncoils, parameters_spider)   !Write coil currents from CCOIL in astra to   coil.dat file only for fbe without controller (otherwise CCOIL is reserved for target coil currents and coil.dat is written elsewhere)
+            call coil2spider(ccoils, ncoils, parameters_equil)   !Write coil currents from CCOIL in astra to   coil.dat file only for fbe without controller (otherwise CCOIL is reserved for target coil currents and coil.dat is written elsewhere)
         END SELECT
     endif
 endif
@@ -151,40 +151,40 @@ endif
 !use refits currents in coil.dat, only for nitreq >1
 if (key_no_refits == 1) then
     if (key_start == 1 .and. iter_itreq > 0) then
-        fname = trim(parameters_spider%prename) // 'tcurrs.wr' 
+        fname = trim(parameters_equil%prename) // 'tcurrs.wr' 
         open(1, file=TRIM(fname))
         do i=1, ncoils
             read(1, *) t_currents(i)  
         enddo
         close(1)
         write(*, *) 'rewriting coil.dat with new fitted currents'
-        call coil2spider(t_currents*1.e3, ncoils, parameters_spider)  !Write coil currents in coil.dat when key_start inside iterations NITREQ
+        call coil2spider(t_currents*1.e3, ncoils, parameters_equil)  !Write coil currents in coil.dat when key_start inside iterations NITREQ
     endif
 endif 
 
-if (parameters_spider%k_fixfree == 1) then
+if (parameters_equil%k_fixfree == 1) then
     ucoils(1:ncoils) = vcoils(1:ncoils)
-    parameters_spider%nstep = nstep
+    parameters_equil%nstep = nstep
 endif
 
 if (equil_solver == 101) then
     call feqis_main(equil_in, equil_out) ! git: different arguments than FSIM, to be merged
 else
-    call spider_run(ncoils, ucoils, equil_in, equil_out, parameters_spider)     
+    call spider_run(ncoils, ucoils, equil_in, equil_out, parameters_equil)     
 endif
 
-if (ipsibcf /= 0) parameters_spider%key_psibcf = 1
+if (ipsibcf /= 0) parameters_equil%key_psibcf = 1
 
 !output from equil_out structure 
 
 !psifb = psifb_in
 dampfacpsplex = 0.
 
-if (parameters_spider%k_fixfree == 1) then
+if (parameters_equil%k_fixfree == 1) then
     ipl = 1.e-6*equil_in%global_param%i_plasma
-    if (parameters_spider%k_grid == 0) then
+    if (parameters_equil%k_grid == 0) then
         call psib_ext(PSIEXT)
-    else if (parameters_spider%k_grid == 1) then
+    else if (parameters_equil%k_grid == 1) then
         call f_psib_ext(PSIEXT)
     endif
     if (ipsibcf >= 0) then     ! case with PSI_B and dPSI_B implicit 
@@ -194,9 +194,9 @@ if (parameters_spider%k_fixfree == 1) then
             (1. + (psplexavg*ipl**psplexavgexp)/tau_step)
         psplexold = PSPLEX
     else
-        if (parameters_spider%k_grid == 0) then
+        if (parameters_equil%k_grid == 0) then
             call psib_ext(PSIEXT)
-        else if (parameters_spider%k_grid == 1) then
+        else if (parameters_equil%k_grid == 1) then
             call f_psib_ext(PSIEXT)
         endif
         PSIEXT = -GP2*PSIEXT
@@ -280,7 +280,7 @@ if (parameters_spider%k_fixfree == 1) then
         geom1d(82) = Zcurr
     else if (MACHINE(1:3) == 'dem') then
         if (jdemogaps == 0) then
-            write(fname, '(a)') TRIM(parameters_spider%prename) // 'demo_gaps.data'	
+            write(fname, '(a)') TRIM(parameters_equil%prename) // 'demo_gaps.data'	
             open(32, file=fname)
             read(32, *) i_gaps
             do i=1, i_gaps
@@ -306,13 +306,13 @@ if (parameters_spider%k_fixfree == 1) then
 endif
 
 return
-end subroutine A_SPIDER
+end subroutine A_EQUIL
 
 !---------------------------------------------------------------------
-subroutine A_SPIDER_2(ncoils, ifbey, time_a, tau_step, vcoils, eq_solver)
+subroutine A_EQUIL_2(ncoils, ifbey, time_a, tau_step, vcoils, eq_solver)
 
 use imas_ids, only: type_equilibrium
-use parameters_a2spider, only: type_parameters
+use parameters_a2equil, only: type_parameters
 use outcmn_inc, only: MACHINE
 
 implicit none
@@ -324,24 +324,24 @@ real*8, dimension(ncoils), intent(in) :: vcoils
 integer :: nstep, key_equil
 real*8, dimension(ncoils) :: ucoils
     
-type(type_parameters) :: parameters_spider
+type(type_parameters) :: parameters_equil
 type(type_equilibrium) :: equil_in, equil_out
 
 key_equil = 0
 nstep = max(0, ifbey - 1)
 
-parameters_spider%dt      = tau_step
-parameters_spider%time    = time_a
-parameters_spider%prename = 'exp/equ/'//trim(MACHINE)//'/'
-parameters_spider%kpr     = -2
-parameters_spider%k_grid  = 1
-parameters_spider%epsro   = 1.d-9
-parameters_spider%enels   = 1.d-9
-parameters_spider%key_plc = 1
+parameters_equil%dt      = tau_step
+parameters_equil%time    = time_a
+parameters_equil%prename = 'exp/equ/'//trim(MACHINE)//'/'
+parameters_equil%kpr     = -2
+parameters_equil%k_grid  = 1
+parameters_equil%epsro   = 1.d-9
+parameters_equil%enels   = 1.d-9
+parameters_equil%key_plc = 1
 
-parameters_spider%key_out   = 0
-parameters_spider%k_fixfree = 1
-parameters_spider%key_start = 0    !controller, refit currents, coil.dat untouched
+parameters_equil%key_out   = 0
+parameters_equil%k_fixfree = 1
+parameters_equil%key_start = 0    !controller, refit currents, coil.dat untouched
 
 if (MACHINE(1:3) == 'aug') then
     ucoils(1) = vcoils(1) - vcoils(2)
@@ -360,16 +360,16 @@ elseif (MACHINE(1:3) == 'dem') then
 else
     ucoils(1:ncoils) = vcoils(1:ncoils)
 endif
-parameters_spider%nstep = nstep
+parameters_equil%nstep = nstep
 
 if (eq_solver == 101) then
-    call feqis_main(ncoils, ucoils, parameters_spider, 0, equil_in, equil_out)     
+    call feqis_main(ncoils, ucoils, parameters_equil, 0, equil_in, equil_out)     
 else if (eq_solver == 3) then
-    call spider_run_2(ncoils, ucoils, parameters_spider)     
+    call spider_run_2(ncoils, ucoils, parameters_equil)     
 endif
 
 return
-end subroutine a_spider_2
+end subroutine A_EQUIL_2
 
 !---------------------------------------------------------------------
 subroutine find_in_vec_spid(n, y, y0, is, iv)

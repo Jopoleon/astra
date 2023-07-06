@@ -21,7 +21,7 @@ subroutine GS_SOLVER( &
 use imas_ids, only: type_equilibrium
 use numerical_tools, only: reinterp_back, reinterp_back_quad, qinterp, &
     derivcc, integrcc
-use parameters_a2spider, only: GP, GP2, GP4, muvac, &
+use parameters_a2equil, only: GP, GP2, GP4, muvac, &
     name_gsefdir, time_fix_eqpff, fix_eqpf_eqff, &
     cheb_degree, spidat_yes, iter_one_only_fbe, advanced_methods, &
     i3method, diagnostic_gsef, do_adcmp, urelax, urelax2,  &
@@ -406,7 +406,7 @@ iter_loop: do jiter=1, miter_ext
         equil_in%eqgeometry%boundary%z(i) = Zb(i)
     enddo
 
-    call a_spider( &
+    call a_equil( &
 ! Inputs
         equil_in, equil_solver, &
         nr_equ, n_theta, iter_step, &

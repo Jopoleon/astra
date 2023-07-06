@@ -1,7 +1,7 @@
       subroutine spider_run(ncoils, vcoils, equil_in, equil_out, params)
 
       use imas_ids, only: type_equilibrium
-      use parameters_a2spider, only: type_parameters 
+      use parameters_a2equil, only: type_parameters 
       use keys, only: key_0st, key_prs
 
       implicit none
@@ -87,7 +87,7 @@
 
       use sp_parameters, only: nrp, ntp, n_ursp, twopi
       use imas_ids, only: type_equilibrium
-      use parameters_a2spider, only: type_parameters
+      use parameters_a2equil, only: type_parameters
       use durs_d_modul
       use ppf_modul
       use bnd_modul
@@ -344,7 +344,7 @@
 ! April 2013
 
       use imas_ids, only: type_equilibrium
-      use parameters_a2spider, only: type_parameters
+      use parameters_a2equil, only: type_parameters
       use sp_parameters
 
       implicit none
@@ -389,7 +389,7 @@
 ! April 2013
 
       use imas_ids, only: type_equilibrium
-      use parameters_a2spider, only: type_parameters
+      use parameters_a2equil, only: type_parameters
       use sp_parameters
 
       implicit none
@@ -448,7 +448,7 @@
       subroutine S_proffi_pres(equil_in, parameters_spider)
 
       use imas_ids, only: type_equilibrium
-      use parameters_a2spider, only: type_parameters
+      use parameters_a2equil, only: type_parameters
       use sp_parameters
 
       implicit none
@@ -950,7 +950,7 @@
       subroutine put_eq(equil_out, parameters_spider)
 
       use imas_ids, only: type_equilibrium
-      use parameters_a2spider, only: type_parameters
+      use parameters_a2equil, only: type_parameters
 
       use sp_parameters
 
@@ -1837,7 +1837,7 @@
       subroutine spider_run_2(ncoils,vcoils,params)
 
       use imas_ids       
-      use parameters_a2spider, only: type_parameters
+      use parameters_a2equil, only: type_parameters
  
       implicit none
  

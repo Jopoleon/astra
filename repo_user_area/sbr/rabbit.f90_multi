@@ -14,7 +14,7 @@ use status_inc, only: FP, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
 	 
 use fs_coupling_variables, only: fs_pow_NB
 use debugger, only: flightsim
-use parameters_a2spider, only : equil_now
+use parameters_a2equil, only : equil_now
 
 implicit none
 

@@ -15,7 +15,7 @@ use status_inc, only: TE, NE, FP, XRHO, ZEF, MU, ELON, SHif , IPOL, &
 use fs_coupling_variables, only: fs_pol_EC, fs_pow_EC
 use outcmn_inc, only: AWD, exp_file 
 use numerical_tools, only: qinterp, integr
-use parameters_a2spider, only : equil_now, GP2
+use parameters_a2equil, only : equil_now, GP2
 
 implicit none
 

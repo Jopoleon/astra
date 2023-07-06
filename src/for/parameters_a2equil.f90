@@ -1,4 +1,4 @@
-module parameters_a2spider       ! declaration of code parameters
+module parameters_a2equil       ! declaration of code parameters
 
 use imas_ids, only: type_equilibrium
 
@@ -65,4 +65,4 @@ double precision :: err_epsilon_in              = 1.e-12 ! epsilon
 double precision :: err_gaptolez_in             = 1.e-5  ! err gap tolez
 double precision :: err_fix_boundary_in         = 1.e-9  ! fix boundary tolerance
 
-end module parameters_a2spider
+end module parameters_a2equil

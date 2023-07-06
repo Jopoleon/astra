@@ -23,7 +23,7 @@ subroutine SURF_CTR(nrho_surf, nthe_surf, r_surf, z_surf)
 
 use const_inc, only: GP2, RTOR, UPDWN, LEQ
 use status_inc, only: SHIF, AMETR, ELON, TRIA
-use parameters_a2spider, only: equil_now
+use parameters_a2equil, only: equil_now
 
 implicit none
 

@@ -1,7 +1,7 @@
 subroutine four_mom(n_rho, n_mom, rcos, rsin, zcos, zsin)
 
 use const_inc, only: GP
-use parameters_a2spider, only: equil_now
+use parameters_a2equil, only: equil_now
 
 implicit none
 

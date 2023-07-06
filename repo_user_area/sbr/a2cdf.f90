@@ -1,6 +1,6 @@
 subroutine a2cdf
 
-use parameters_a2spider, only: equil_now
+use parameters_a2equil, only: equil_now
 use parameter_inc
 use const_inc
 use status_inc
