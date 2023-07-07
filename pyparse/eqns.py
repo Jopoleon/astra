@@ -996,11 +996,11 @@ def upeqn(parse, assign_type=None):
         up_txt += 'ND1 = NA1\n'
         up_txt += pa.apptmp('UPARB', parse)
 
-    if 'ROU' not in var_defined:
-        up_txt += 'ND1 = NA1\n'
-    else:
-        up_txt += pa.apptmp('ROU', parse)
-        up_txt += 'ND1 = NODE(ROU)\n'
+#    if 'ROU' not in var_defined:
+#        up_txt += 'ND1 = NA1\n'
+#    else:
+#        up_txt += pa.apptmp('ROU', parse)
+#        up_txt += 'ND1 = NODE(ROU)\n'
 
     up_txt += 'NA1U = ND1\n'
     up_txt += 'ND = ND1 - 1\n'
@@ -1036,16 +1036,37 @@ def upeqn(parse, assign_type=None):
         logger.warning('Boundary condition for UPAR is not set')
         if 'ROU' not in var_defined:
             logger.warning('It is set to VTORX(t0)')
+        else:
             if 'UPAR' in var_defined:
                 logger.warning('VTORX(t) will be used at the shifted boundary')
             else:
                 logger.warning('VTORX(t0) will be used at the shifted boundary')
+
+    if 'UPARB' in var_defined:
+        up_txt += pa.apptmp('UPARB', parse)
+        if assign_type[:2] == 'EQ':
+            up_txt += const_text.UPEQN.uparo
+    elif 'TTRQB' in var_defined:
         up_txt += \
-'''UPARO(ND1: NA1) = UPAR(ND1: NA1)
-QU(4) = 1.
-YWC(4)=1.
+'''QU(2)  = TTRQB
+YWC(2) = TTRQB
+QU(3)  = 0.
+QU(4)  = -1.
+YWC(3) = 0.
+YWC(4) = -1.
 '''
+    else:
+        if assign_type[:2] == 'EQ':
+            up_txt += const_text.UPEQN.uparo
+
+    if assign_type[:2] == 'EQ':
         up_txt += const_text.UPEQN.eqn
+    else:
+        up_txt += const_text.UPEQN.assigned
+        if 'TTRQB' in var_defined and 'UPARB' not in var_defined and 'ROU' not in var_defined:
+            up_txt += 'QU(NA1) = TTRQB\n'
+        else:
+            up_txt += 'QU(NA1) = QU(NA)\n'
 
     return up_txt
 

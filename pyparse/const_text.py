@@ -637,7 +637,14 @@ MPHIT = 0.
 '''do j=1, NA
 QU(J) = -G11(J)*(YWA(J)*(UPAR(J+1) - UPAR(J))/HRO + 0.5*YWB(J)*(UPAR(J+1) + UPAR(J)))*0.0016
 enddo
-QU(NA1) = '''
+'''
+
+
+    uparo = \
+'''UPARO(ND1: NA1) = UPAR(ND1: NA1)
+QU(4) = 1.
+YWC(4)=1.
+'''
 
 
 class TETIEQN:
