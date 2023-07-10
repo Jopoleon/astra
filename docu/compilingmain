@@ -12,3 +12,8 @@ latex addendum_A8.tex
 latex addendum_A8.tex
 dvips addendum_A8.dvi
 ps2pdf addendum_A8.ps
+
+latex runeq.tex
+latex runeq.tex
+dvips runeq.dvi
+ps2pdf runeq.ps

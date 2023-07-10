@@ -1,0 +1,332 @@
+Fenix flight simulator
+
+These variables are related to the various physics models. mentioned where they are used, or common if not mentioned.
+
+- Variables list
+
+- Constants used for exchange with Simulink:
+
+- In reading (from simulink to astra): 
+
+CPEL1   -   pellet signal 
+CV4     -   divertor D gas puff in p/s
+ZRD73   -   hydrogen puff midplane
+CDJM5   -  helium puff midplane
+CDJM8   -  W drop or midplane puff
+CDWM6   -  N puff divertor
+CDWM5   -  Ne puff divertor 
+CSCL1   -  Ar puff divertor
+ZRD71   -  Kr puff divertor
+CV13    -  pump speed in m3/s
+CDMJ1   -  ntm island trigger
+CDMJ2   -  ntm m
+CDMJ3   -  ntm n
+CDMJ4   -  island seed  
+CAR32   -  1:42 for heating
+CV6     -  time to stop
+CDVM7   -  simulink time step
+
+ZRD93   -  simulink time 
+
+- from astra to simulink:
+
+CRAD4   - greenwald density
+CMHD2   - H factor
+CSCL4   - plate power
+CDWM1   - divertor temperature
+CDWM2   - pumped D
+CDJM6   - pumped H
+CDJM1   - pumped He
+CDJM2   - pumped B
+CDJM4   - pumped W
+CDJM7   - pumped N
+CHE3    - pumped Ne
+CDJM3   - pumped Ar
+ZRD77   - pumped Kr
+CDMJ5   - island widht
+CDMJ6   - island ampl
+CDMJ7   - island pos
+CDHJ7   -  astra stopping
+geom1d(51:77) - magnetic measurements
+
+
+- used internally in astra or its modules:
+
+CMHD1 - tau_scaling
+CMHD2 - H factor
+CV8 - pedestal width
+CAR63 - ELM effect on diffusivities
+CAR41 - chii
+CAR42 - chie
+CAR43 - Dn
+CAR44 - CN
+CV14  - pedestal diffusivity 
+CSOL2 - pedestal D/chie
+CSOL4 - D/chie scaling also in trmodel.f
+CSOL3 - chie/chii scaling also in trmodel.f
+CAR47 - NTM diffusivity shape
+CSOL1 - transport scaling in trmodel.f
+CRAD3 - total auxiliary power
+CRAD2 - total radiated power
+CAR28 - vp*vras
+CAR29 - time average of CAR28
+CAR62 - ELM effect on convections
+ZRD39 - samuli eped scaling for pedestal top, also used in edgemod
+CDVM2 - LH transition power
+CDBC1 - f1 b.c. also in pbmdau
+CDBC2 - f2 b.c. also in pbmdau
+CDBC3 - f3 b.c. also in pbmdau
+CDBC4 - f4 b.c. also in pbmdau
+CDBC5 - f7 b.c. also in pbmdau
+CDBC6 - f5 b.c. also in pbmdau
+CDBC7 - f6 b.c. also in pbmdau
+CDBC8 - f8 b.c. also in pbmdau
+ZRD74 - f9 b.c. also in pbmdau
+CBND1 - b.c. position for te, ti
+ZRD81 - te b.c.
+ZRD82 - detachment parameter in solmodinp
+ZRD32 - helium rhostar
+ZRD14 - cumulative sum of pellets
+CAR51 - RTOR/LTE
+CAR52 - RTOR/LTI
+CAR53 - RTOR/LNE
+CAR57 - NUES
+CRAD4 - greenwald density
+CNEUT4 - critical shear for sawtooth triggering
+CAR47 - NTM diffus shape
+CFUS3 - elm frequency
+CFUS4 - elm diffus
+ZRD61 - elm affected area
+ZRD53 - call of solmodinp
+ZRD69 - time stepping increse for time control
+ZRD35 - dteql
+ZRD36 - call of savectrls
+ZRD37 - call of savectrlp
+ZRD47 - call of nclass
+ZRD44 - type of transport model
+ZRD67 - call of nbi rotuine
+CNEUT1 - pellet position
+CNEUT2 - pellet width
+CAR16  - pellet shape
+CHE2   - NTM module result w_dep
+CDHJ2  - NTM module rhodep
+
+- used in pbmdau
+NNCL
+NNWM
+CDBC1-CDBC8  - SOL densities of 8 species
+ZRD74 - Ar sol density
+CDYM8 - divertor D density
+CDYM6 - divertor N density
+CSCL2 - W puff from erosion of divertor
+car33 - gas input
+car34 - pumped gas
+
+- used in solmodinp
+CDWM1 - t plate
+ZRD82 - detach parameter
+ZRD81 - tsep
+
+- used in edgemod
+CSOL1, CV8
+CF7 - time average of Psep
+ZRD39
+ZRD15 - mode type, 0 L 1 H 2 I
+CDVM3 - LI threshold for psepi
+CDVM4 - D pedestal multiplier
+ZRD64 - 1 if elmy, 0 if not
+CBND3   -  diffusion coefficient multiplier for pedestal in Hmode for particles
+
+- used in eqctrz
+CDMJ8 - time step for GS call
+CDVM7 - simulink time step
+ZRD88 - actual discharge time
+ZRD33 - Pellet velocity in m/s
+
+
+- used in nbisp8 
+QNBI
+
+
+
+- special variables hard-wired in ASTRA when using ipsmk > 1
+ZRD69 - time stepping for time control
+CDVM7 - simulink time step
+
+
+
+
+
+
+
+- summarizing in order:
+
+arrays:
+
+geom1d(51:77) - magnetic measurements
+CAR16  - pellet shape
+CAR28 - vp*vras
+CAR29 - time average of CAR28
+CAR32   -  1:42 for heating
+CAR33   -  1:24 gas valves
+CAR34   -  1:12 pumped gases
+CAR41 - chii
+CAR42 - chie
+CAR43 - Dn
+CAR44 - CN
+CAR45 - Vd for NNetwork TGLF
+CAR47 - NTM diffusivity shape
+CAR51 - RTOR/LTE
+CAR52 - RTOR/LTI
+CAR53 - RTOR/LNE
+CAR55 - NBI losses (8 positions)
+CAR57 - NUES
+CAR62 - ELM effect on convections
+CAR64 - ZEFF
+
+
+scalars:
+
+CBND1 - b.c. position for te, ti
+CBND3   -  diffusion coefficient multiplier for pedestal in Hmode for particles
+CF7 - time average of Psep
+CFUS3 - elm frequency
+CFUS4 - elm diffus
+CHE2   - NTM module result w_dep
+CHE3   - W influx
+CMHD1 - tau_scaling
+CMHD2 - H factor
+CMHD3 - reserved for mixins
+CMHD4 - reserved for mixins
+!NBI
+CNB1   =  8.000E+00
+CNB2   =  0.000E+00
+CNB3   =  1.000E+00
+CNB4   =  1.000E+00
+CNBI1  =  1.000E+00
+CNBI2  =  1.000E+00
+CNBI3  =  1.000E+00
+CNBI4  =  1.000E+00
+!
+CNEUT1 - pellet position
+CNEUT2 - pellet width
+CNEUT4 - critical shear for sawtooth triggering
+CPEL1   -   pellet signal 
+CRAD2 - total radiated power
+CRAD3 - total auxiliary power
+CRAD4   - greenwald density
+CSCL1   -  Ar puff divertor
+CSCL2   -  W erosion puff divertor
+CSCL4   - power to divertor
+CSOL1 - transport scaling in trmodel.f
+CSOL2 - ratio D/chie in pedestal
+CSOL3 - ratio he/xi scaling also in trmodel.f
+CSOL4 - ratio DN/he scaling also in trmodel.f
+CV4     -   divertor D gas puff in p/s
+CV6     -  time to stop
+CV8 - pedestal width
+CV13    -  pump speed in m3/s
+CV14  - pedestal diffusivity 
+CDBC1 - f1 b.c. also in pbmdau
+CDBC2 - f2 b.c. also in pbmdau
+CDBC3 - f3 b.c. also in pbmdau
+CDBC4 - f4 b.c. also in pbmdau
+CDBC5 - f7 b.c. also in pbmdau
+CDBC6 - f5 b.c. also in pbmdau
+CDBC7 - f6 b.c. also in pbmdau
+CDBC8 - f8 b.c. also in pbmdau
+CDHJ2  - NTM module rhodep
+CDJM1   - W divertor density
+CDJM2   - W sol density
+CDJM3   - empty1
+CDJM4   - divertor neutral pressure
+CDJM5   -  helium puff midplane
+CDJM6   - n_W in divertor 
+CDJM7   - Te_sep
+CDJM8   -  W drop or midplane puff
+CDMJ1   -  ntm island trigger
+CDMJ2   -  ntm m
+CDMJ3   -  ntm n
+CDMJ4   -  island seed  
+CDMJ5   - island widht
+CDMJ6   - island ampl
+CDMJ7   - island pos
+CDMJ8 - time step for GS call multiplier of taumin
+CDVM2 - LH transition power
+CDVM3 - LI transition power
+CDVM4 - D pedestal multiplier
+CDWM1   - divertor temperature
+CDWM2   - PLH transition power MW
+CDWM5   -  Ne puff divertor 
+CDWM6   -  N puff divertor
+CDYM8 - divertor D density
+
+ZRD11 - choice of spider recctangular model: 0 (standard) , 1 (invert matrix) or 2 (use inverted)
+ZRD12 - sawtooth yes (1.), sawooth no (0.) from mixins
+ZRD13 - choice of NBI model: 1 is simple gaussian, 2 is RABBIT
+ZRD14 - cumulative sum of pellets
+ZRD15 - mode type: 0 is L-mode, 1 is H-mode, 2 is I-mode
+ZRD16 - IPL threshold for ramp-down. below this plasma doesnt exist anymore
+ZRD17 - error threshold for speeding up equilibrium, suggested 1.  (that is, 1%) as a working point
+ZRD18 - choice of EC model: 1 is simple gaussian, 2 is TORBEAM
+ZRD19 - choice of IC model: 1 is simple gaussian, 2 is something better
+ZRD20 - choice of pellet model: 1 is simple gaussian, 2 is HPI2 regression
+ZRD22 - main ion species selector: 1 D, 2 H , 3 He
+ZRD32 - helium rhostar
+ZRD33 - Pellet velocity in m/s
+ZRD35 - dteql
+ZRD36 - call of savectrls
+ZRD37 - call of savectrlp
+ZRD39 - samuli eped scaling for pedestal top, also used in edgemod
+ZRD44 - type of transport model
+ZRD47 - call of nclass
+ZRD53 - call of solmodinp
+ZRD61 - elm affected area
+ZRD62 - elm resistivity enhancement
+ZRD63 - bootstrap current reduction due to ELMs
+ZRD64 - 1 if elmy, 0 if not
+ZRD67 - call of nbi rotuine
+ZRD69 - time stepping increse for time control
+ZRD71   -  Kr puff divertor
+ZRD73   -   hydrogen puff midplane
+ZRD74 - f9 b.c. also in pbmdau
+ZRD77   - empty2
+ZRD78 - time of actual breakdown
+ZRD81 - te b.c.
+ZRD82 - detachment parameter
+ZRD83 - ti b.c.
+ZRD84 - EV/TS6 for oh switch
+ZRD90 - time step for call of torbeam
+ZRD93 - simulink time
+
+- exp arrays
+
+- exp constants (these should not overlap with the ones above...!)
+ZRD3X - shot number
+ZRD88X - minimum time for breakdown
+ZRD91X - >=0.: plasma starts already formed. negative value: plasma should first breakdowned
+ZRD92X - diohdt threshold for plasma formation, in the namelist
+ZRD94X - time w.r.t segment 8192 when dioh2u should start operating
+ZRD95X - time w.r.t segment 8192 when dioh2s should start operating
+
+
+
+
+
+
+
+
+
+
+
+
+- DEMO Fenix:
+
+
+
+
+
+
+
+
+

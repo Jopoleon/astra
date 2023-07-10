@@ -1,0 +1,53 @@
+ Start file for version 6.2.1
+ Variables as described in the file "for/const.inc"
+ABC    =  0.5
+BTOR   =  1.9
+ELONG  =  1.7
+RTOR   =  1.65
+TRIAN  =  0.33
+ Constants:
+CBND1 = 1. !boundary condition for LH threshold
+CNB1   =  8.000E+00
+CNB2   =  0.000E+00
+CNB3   =  1.000E+00
+CNB4   =  1.000E+00
+CNBI1  =  1.000E+00
+CNBI2  =  1.000E+00
+CNBI3  =  1.000E+00
+CNBI4  =  1.000E+00
+CSOL1  =  1.8 ! transport global scaling for determining H factor in simulation
+CV6    =  10. !time to stop
+CV13   =  500. !pump speed in m^3/s
+CV14   =  30. !edge diffusivity output of edgemod
+CSCL2  = 0. !W puff from divertor
+CDVM7 =  0.0002 ! simulink tau
+CDHJ7 = 0. ! this is the astra error flag, 0 means astra is living, 1 is a zombie, so stop simulink
+CDMJ1 = 0.  !trigger of island 1 ON, 0 OFF
+ Control parameters (common block A_OUTPUT):22
+NEQUIL =  21
+MEQUIL =  31  !35  ! 70
+NBND   =  31  ! needed if running without bnd
+TAUMIN =  0.0002 !minimal time step
+TAUMAX =  0.0002 !maximal time step
+DELVAR =  0.0000001 !variation of variables in % to reduce time step
+TAUINC =  2. ! tauinc for precision
+ITFBE  =  0.001 ! when it starts with free boundary
+IBKDW  =  -1. !0. ! -1. !-1. !-1.
+IFBEG  =  0. ! leave it adaptive grid with 1
+ITFBP  =  0. ! leave it
+ICIRCQ =  1. ! leave it
+IPCTRL =  0. ! leave it
+NB2EQL =  1. ! nbi pressure in equilibrium
+ADCMPF =  1.
+IPEQL  =  5.
+ Color table (description in for/outcmn.inc):  32
+   0   0     50   0      3   0     37   0
+  62   0      5   0     26   0     60   0 
+  50   0     27   0      1   0      1   0
+  50   0      1   0      1   0      1   0
+   0   0      0   0      0   0      0   0
+   0   0      0   0      0   0      0   0
+   0   0      0   0      0   0      0   0
+   0   0      0   0      0   0      0   0
+
+

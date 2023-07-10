@@ -1,0 +1,176 @@
+ Start file for version 6.2.1
+ Variables as described in the file "for/const.inc"
+ABC    =  2.95
+AWALL  =  2.986
+BTOR   =  5
+ELONG  =  1.7
+ELONM  =  1.8
+RTOR   =  9
+SHIFT  =  0.
+TRIAN  =  0.33
+TRICH  =  0.4
+UPDWN  =  0.000E+00
+ Constants:
+CSOL1  =  0.33
+CSOL2  =  1.000E+00
+
+
+CF7    =  0.5 !time average for psep
+
+CSOL3  =  0.5
+CSOL4  =  1.
+
+CRAD1  =  130.
+
+CCD1   =  0.
+CCD2   =  400
+
+CIMP1  =  0.00001
+CIMP2  =  0.01
+
+CV9    =  0.99
+CV10   =  0.03
+CV11   =  75.0
+CV12   =  150.0
+
+CIMP4  =  0.99
+CNEUT3 =  0.03
+CBND3  =  0.55
+CBND4  =  500.
+CV13   =  500.
+
+CNEUT1 =  0.9
+CNEUT2 =  0.1
+
+
+CHE1   =  0.3
+CHE2   =  0.1
+CHE3   =  00.
+
+CV1    =  0.1
+CV2    =  0.1
+CV3    =  25.
+
+CBND1 = 1. !boundary condition for LH threshold
+
+CIMP3  =  30000
+CPEL1  = 30000
+CPEL2  = 30000
+CPEL3  = 0.01
+CPEL4  =  1.
+
+CMHD3  =  1.
+CMHD4  =  5.5
+
+CBND2  =  1.
+
+CV8    =  0.06 !pedestal width 0.06
+
+CNEUT4 =  0.6
+
+CV6    =  20.
+
+CDVM6  =  0.85  !nbi for psep control location 0.3
+CDHJ5  =  0.  !nbi pow for psep control location
+
+
+CV4    =  0.0  ! DT gas puffing fresh
+CDYM3  =  0.5 !DT fresh mix
+
+CDWM5  =  0. !DT gas puff recirculating
+CDWM6  =  0.5 !DT puff recirculating mix
+
+!	CDBC1 = dens_Sjo(1)/V_sol
+!	CDBC2 = dens_Sjo(2)/V_sol
+!	CDBC3 = dens_Sjo(3)/V_sol
+!	CDBC4 = dens_Sjo(4)/V_sol
+!	CDBC5 = dens_Sjo(5)/V_sol
+!	CDBC6 = dens_Sjo(6)/V_sol
+
+!	CDYM5 = dens_Sjo(4)
+!	CDYM6 = dens_Sjo(4)
+!	CDYM7 = dens_Sjo(4)
+!	CDYM8 = dens_Sjo(4)
+
+!CDYM2 = sawteeth position
+CDYM2=0.
+
+CDHJ1 = 0. !pos ecrh 2
+CDHJ2 = 0. !pos ecrh 3
+CDHJ3 = 0. !pow ecrh 2
+CDHJ4 = 0. !pow ecrh 3
+
+CDJM5 = 0. !reinjected He
+CDJM6 = 0. !reinjected Xe
+CDJM7 = 0. !reinjected Ar
+CDJM8 = 0. !reinjected W
+
+CDJM9 = 0. !fraction of pellet that is Xe
+
+CDMJ1 = 0.  !trigger of island 1 ON, 0 OFF
+CDMJ2 = 0.  !m - poloidal number
+CDMJ3 = 0.  !n - toroidal number
+CDMJ4 = 0.  !wseed - width/a starting of island width
+CDMJ5 = 0.  !measurement  island width in width/a
+CDMJ6 = 0.  !measurement amplitude of island 5000*(width/a)^2
+CDMJ7 = 0.  !measurement position of island r/a
+
+!ZRD70 = 0. !reinjected Kr by mistake
+!ZRD71 = 0. !Kr puff in div
+!ZRD73 = 0. !Kr puff in mid plane
+!ZRD74 = 0. !Kr b.c.
+!ZRD75 = 0. !Kr in sol
+!ZRD76 = 0. !Kr in div
+!ZRD77 = 0. !Kr pumped
+
+!ZRD69  = 0.001 !tauinc ipsmk
+!ZRD53  = 0.01 !call of solmodinp
+
+!ZRD35  = 1.e6 !Equilibrium call dt
+
+!ZRD43  = 0.001 !alpha particle multiplier of DN
+
+!ZRD36  = 1.;! call of savectrls
+!ZRD37  = 5.6;! call of savectrlp
+
+!ZRD47  = 0.1; !call of NEOCL
+
+CDVM7  =  0.01 ! simulink tau
+
+!ZRD44  = 1.; !transport model
+CV7    = 2.        !TGLF model: 0 standard, 2 fast but not accurate
+!ZRD61=0.1; !ELM area affected in meters
+
+!ZRD82 is detach parameter in solmodinp
+
+
+CSCL2  = 0. !W puff from divertor
+
+CFUS3  = 0.000001 !ELM frequency in Hz
+CFUS4  = 1. !Elm amplitude per frequency
+
+ Control parameters (common block A_OUTPUT):22
+NEQUIL =  31
+MEQUIL =  50
+NBND   =  50
+DROUT  =  0.1
+DTOUT  =  0.1
+DPOUT  =  0.1
+TAUMIN =  0.0025 !0.0025             
+TAUMAX =  0.0025 !0.0025
+TSCALE =  200.
+ITFBE  =  1000. ! when it starts with free boundary
+IBKDW  =  0. 
+ICIRCQ =  1. ! leave it
+IPCTRL =  0. ! leave it
+NB2EQL =  1. ! nbi pressure in equilibrium
+IPEQL  =  4
+ Color table (description in for/outcmn.inc):  32
+   0   0     50   0      3   0     37   0
+  62   0      5   0     26   0     60   0
+  50   0     27   0      1   0      1   0
+  50   0      1   0      1   0      1   0
+   0   0      0   0      0   0      0   0
+   0   0      0   0      0   0      0   0
+   0   0      0   0      0   0      0   0
+   0   0      0   0      0   0      0   0

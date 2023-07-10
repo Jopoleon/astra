@@ -1,0 +1,582 @@
+!DEMO control scheme: 2 is DEMO, 3 is AUG
+! EFable Aug 2017
+
+
+!F1 is deuterium
+!F2 is tritium
+
+AMAIN=(2.*NDEUT(0.*abc)+3.*NTRIT(0.*abc))/(NDEUT(0.*abc)+NTRIT(0.*abc));	
+ZMAIN=ZMJ;		! mass & charge of main ion species
+
+!initialization
+ZEF=max(1.,ZEF);
+
+
+!
+!density block
+NALF=F5; !ALPHAs density
+NIBM=0.; !fast NBI
+PBLON=0.;  !NBI fast ions longitud pressure
+PBPER=0.; !NBI fast ions perp pressure
+
+ZIM1=ZIXEN; !Xe
+ZIM2=ZIAR; !Ar    to not include this species in TGLF, put its charge to zero (<1 actually)
+ZIM3=ZIKR; !Pxy
+
+AIM1=131; !impurity
+AIM2=40.; !Ar
+AIM3=84.; !Oxy
+
+!test
+NIZ1=F3;  !Xe
+NIZ2=F6;  !Ar
+NIZ3=F8;  !Kr
+
+NDEUT=F1;    !density of deuterium is from equation
+NTRIT=F2;  !density of tritium is from equation
+
+!F6 is Argon
+!F7 is tungsten
+
+PRAD=(NIZ1*PRXEN+F8*PRKR+F6*PRARG+F7*PRWOL)*NE+PBRAD+PSYNC;	!radiation of impurity: Xenon coronal + bremsstrahlung + synchrotron
+
+!PRAD=(NIZ1*PRKR+F8*PROXY+F6*PRARG+F7*PRWOL)*NE+PBRAD+PSYNC;	!radiation of impurity: Xenon coronal + bremsstrahlung + synchrotron
+
+!effective charge
+CAR64 = ZIM3**2.*NIZ3+ZIM1**2.*NIZ1+ZIM2**2.*NIZ2;
+ZEF=1./NE*(NDEUT+NTRIT+4.*F4+ZIWOL**2.*F7+4.*F5+CAR64);
+
+
+
+
+
+!
+
+!DENSITY BLOCK------------------------------------------------------
+!Densities sources
+pelscal>::::;
+FGAUSS(CNEUT1,CNEUT2,CAR16)<:::1.e6:; !pellet source, CNEUT1 is r0, CNEUT2 is deltar, in normalized rho
+!-------------------------------------------------------------------
+
+
+!Power block---------------------
+
+PRAD=(NIZ1*PRXEN+F8*PRKR+F6*PRARG+F7*PRWOL)*NE+PBRAD+PSYNC;	!radiation of impurity: Xenon coronal + bremsstrahlung + synchrotron
+
+!ZRD64=0.7;
+!FGAUSS(ZRD64,0.02*abc/abc,CAR17)<:::1.e6:; !ECRH for NTM
+!CHE3=0.*FJUMP(100.*abc/abc); ! NTM control power at q = 2
+
+!CDHJ5=25.;
+!CDVM6=0.8-TIME/10000*0.7;
+!FGAUSS(CDVM6,0.02*abc/abc,CAR19)<:::1.e6:; !ECH for edge control
+!PEECR=CHE3*CAR17; !+CDHJ5*CAR19;
+!CCD1=0.03/(NEAVB*RTOR)*4.*slat(abc);  !linearly depends on Te
+!CUECR=CCD1*PEECR*TE/25.;  !ECCD, CCD1 is efficiency
+
+FGAUSS(CV1,CV2,CAR18)<:::1.e6:; !NBI for core
+!PEBM=1.*1.*(0.3*CV3-0.*CHE3)*CAR18; !pure ecrh reduced to 30% of cap
+!PIBM=0.*1.*CV3*CAR18; !cdvm7 power of NBI at CDVM6 position - centre
+PEBM=0.5*50*CAR18; !fixed power
+PIBM=0.5*50*CAR18; !fixed power
+
+
+PET=0.; !-PRAD/TE;
+PIT=0.;
+PE=POH+PEECR+PEBM+PEHT-PEICL-PRAD; !test, no poh
+PI=PIBM+PIHT+PEICL;
+
+CRAD3=VINT(PEECRB)+VINT(PEBMB)+VINT(PIBMB)+QOHB; !total aux power
+CRAD2=VINT(PRADB); !example: volume integral of radiated power
+CFUS2=QDTB; !example: total alpha power
+------------------------------------
+
+
+!Neoclassical coefficients
+!NEOCL4>:5:1:1.e6:;
+!"work(j,303)" is the conductivity
+
+!TRANSPORT BLOCK-----------------------------------------------
+!Transport models
+
+!temperatures
+GN2E=0.; !Convective term in energy equation GN2E = 5./2. for neoclassical, 3./2. for anomalous, but to check again
+GN2I=0.;
+
+
+!H-factors for transport
+!CMHD1=THQ99/((QTOKB-QIDWTB-QEDWTB))**0.69;
+!actual scaling conf time CMHD1
+CMHD1=THQ99/((QTOKB-QIDWTB-QEDWTB+QRADB))**0.69; !actual scaling conf time CMHD1, radiation only up to 0.99
+CMHD2=WTOTB/((QTOKB-QIDWTB-QEDWTB+QRADB))/CMHD1;  !h factor is CMHD2, target is CMHD3
+
+
+ZRD44  = 1.; !141.; !transport model gbg
+
+
+DVE=20;
+DVI=20;
+DVF1=20;
+DVF2=20;
+DVF3=20;
+DVF4=20;
+DVF5=20;
+DVF6=20;
+DVF7=20;
+DVF8=20;
+DVF9=20;
+
+
+TRMODEL(ZRD44,0.1d0,1.d0)>:::1.e6:; !transport model
+car41="work(j,21)";
+car42="work(j,22)";
+car43="work(j,23)";
+car44="work(j,24)";
+CV7=1.-CV8;
+
+!-------------------------------------------------------------
+CAR61=abs(car41*(1.-XSTEP(CV7))+(1.*abs(CV14))*XSTEP(CV7)+HNASI);
+CAR62=abs(car42*(1.-XSTEP(CV7))+(0.8*abs(CV14))*XSTEP(CV7)+HNGSE)+CAR47*CDMJ6;
+CAR63=abs(car43*(1.-XSTEP(CV7))+(CSOL4*0.8*0.2*abs(CV14))*XSTEP(CV7)+DNNEO);
+
+
+XI=car61;        
+HE=car62;  !CSOL3 is chie/chii ratio
+DN=car63; !"work(j,303)"+0; !CSOL4 is D/chieff ratio. Notice that in pedestal it will be !
+CN=car44*(1.-XSTEP(CV7))-VP*VRAS*FJUMP(TAU);  !basic pinch formula, works ok. only in the core. no pinch in pedestal
+
+
+
+!edge model
+!Pedestal top pressure from EPED1 scaling S. Saarelma
+ZRD21=2.3*RTOR**(-0.38)*TRIAN**0.83*IPL**1.25*ELONG**0.62*BETANB**0.43;
+!PLH Martin scaling
+cdvm2=1.53*btor**.78*rtor**1.75*(abc/rtor)**0.57*(necaB/10.)**0.66; !LH transition power in MW
+EDGMDEM(245.d0,cdvm2,CV8,CV14,1.d0,1.d0):::1.e6:; !new sbr for lh transition
+
+
+
+!deuterium and tritium, same stuff as electrons
+!deut
+DF1 = DN;
+VF1 = CN;
+!trit , this has same pinch as deut. In reality it should be that for deut it is like smaller than CN, and for trit larger than CN.
+DF2 = DN;
+VF2 = CN; !multiply this by some constant that will be different from 1 (1.04 in estrada mila)
+!Xe: same as deut/trit but no pinch
+DF3 = DN; !+"work(j,242)";
+!VF3 = 0.*CN; !"work(j,243)";
+VF3 = +0;
+!Helium: same as deut/trit
+DF4 = DN;
+VF4 = CN;
+!fast alpha transport below, just put some very small number to get neoclassical distribution
+DF5 = ZRD43*DN; !+ZRD15*50.*(1.-ASTEP(c_res));  !practically it is DN * (TE/Talpha)^(3/2)
+VF5 = +0; !no alpha pinch
+!Ar: same as deut/trit but no pinch
+DF6 = DN+0; !"work(j,262)";
+VF6 = 0.*CN+0;!"work(j,263)"+0;
+!VF6=0.;
+!W: same as deut/trit but no pinch
+DF7 = DN+0;!"work(j,242)";
+VF7 = 0.*CN+0;!"work(j,243)"+0; !same as Xe
+!Kripton, same as Ar
+Df8=DN+0;!"work(j,282)";
+VF8=0.*CN+0;!"work(j,283)"+0;
+!VF8=0.;
+
+!Transport coefficients other than HE
+CE=0.0;
+XE=0.0;
+HI=0.0; CI=0.0; DI=0.0;
+HN=0.0; XN=0.0;
+DE=0;
+
+
+
+!-------------------------------------------------------------
+
+
+!WITH PBMODEL
+!Deuterium equation, for these density equations b.c. is at separatrix. pedestal is modeled as neoclassical, see above
+F1=NEX/2;
+F1:EQ; !amplitude CV4 but with pumped fule ratio since direct reinjection is assumed
+F1B=CDBC1;
+
+!Tritium equation
+F2=NEX/2.;
+F2:EQ;
+F2B=CDBC2;
+
+SF1=CPEL1*CAR16 - NDEUT*NTRIT*SVDT;
+SF2=CIMP3*CAR16 - NDEUT*NTRIT*SVDT;
+
+!He
+F4=CIMP2*NEX;  !start with 10% (CIMP2)
+F4:EQ;
+SF4=NALF/ts_alf;  !source of He is decay of alphas
+F4B=CDBC3;  !CBND4 (check if it is used already, is so choose another not used name): edge He pumping in m^3/s. This pumping will ultimately !FIX THIS!
+! regulate taup/taue. If you start by putting CBND4 = 500 (in the constants file) then it should give hert ~ 5 (see below).
+
+!Alphas fast
+F5=0.01*CIMP2*NEX;  !start with a few alphas
+F5:EQ;
+SF5=NDEUT*NTRIT*SVDT-NALF/ts_alf;  !this will force NALF to be the slowing down distribution if DF5 and VF5 are small enough
+F5B=1.e-8*NEB; !alphas are very well confined and no edge flux is seen
+
+!Xenon equation
+!F3=CIMP1*NEX;  !initial condition
+F3=1.e-5*NE;
+!F3:AS;
+F3:EQ;
+SF3=0.; !+(CPEL1+CIMP3)*CAR16*CDJM9; !source is scaled by CBND3
+F3B=CDBC4;  !this is pumping at separatrix regulated by CV13
+!W equation
+!F7=1.e-7*NEX;  !initial condition
+F7:EQ;
+!F7:AS;
+F7=1.e-5*NE;
+!FGAUSS(CIMP4,CNEUT3,CAR21)<::::;
+!same as Xe source at the separatrix
+SF7=0.; !source is scaled by CSCL2
+F7B=CDBC6;  !this is pumping at separatrix regulated by CV5
+!
+
+!Ar equation
+F6=1.e-6*NEX;  !initial condition
+F6:EQ;
+!FGAUSS(CIMP4,CNEUT3,CAR21)<::::;
+!same as Xe source at the separatrix
+SF6=0.; !source is scaled by CSCL1
+F6B=CDBC5;  !this is pumping at separatrix regulated by CV5
+!Kr equation
+F8=1.e-6*NEX;  !initial condition
+F8:EQ;
+!FGAUSS(CIMP4,CNEUT3,CAR21)<::::;
+!same as Xe source at the separatrix
+SF8=0.; !source is scaled by CSCL1 
+F8B=ZRD74;  !
+
+%
+!Oxy equation
+F8=1.e-6*NEX;  !initial condition
+F8:EQ;
+!FGAUSS(CIMP4,CNEUT3,CAR21)<::::;
+!same as Xe source at the separatrix
+SF8=0.; !source is scaled by CSCL1 
+F8B=ZRD74;  !
+%
+
+
+
+!Quasineutrality
+NE =NEX*(1.-FJUMP(tau))+FJUMP(tau)*(F1+F2+ZIM1*F3+2.*F4+2.*F5+ZIM2*F6+ZIWOL*F7+ZIM3*F8); ! electrons from quasineutrality
+!NE=NEX; !test
+NE:AS;  !assigned to quasineutrality as line above
+!NI=NE; !test
+NI=F1+F2+F3+F4+F6+F7+F8;  !Thermal ion density
+NMAIN=F1+F2; !main ion density
+@!@    ! this makes ion density computed consistenly
+
+!Transport equations for temperatures
+!electron
+TE=TEX; !*CSCL4;   !TE:AS;
+TE:EQ[2,CBND1];  !at the moment b.c. is at CBND1 and not at separatrix to avoid changing pedestal
+!TEB=ZRD81*FJUMP(TAU+ZRD53)+TEX(AFX(CBND1))*(1.-FJUMP(TAU+ZRD53));
+TEB=0.17;
+!ion
+TI=TEX; !*CSCL4;   !TI:AS;
+TI:EQ[2,CBND1];
+!TIB=ZRD81*FJUMP(TAU)+TEX(AFX(CBND1))*(1.-FJUMP(TAU));
+TIB=0.17;
+
+ZRD32 = VINT(F4B)/QF4B/TAUEB;  ! define this that is taup/taue for He, around ~ 5 is AUG min values
+
+
+
+
+!-----------------------------------------
+
+
+
+
+ZRD14=ZRD14+CPEL1*TAU+CIMP3*TAU;
+
+
+
+
+
+
+
+
+
+!some diagnostics
+car51=pedt;
+car52=pidt;
+car53=lne;
+!collisionality
+CAR57 = NUES;
+
+
+
+!Plasma rotation
+XUPAR=XI;
+CNPAR=-XUPAR*GRAD(IPOL)/IPOL-1*XUPAR/RTOR*SQEPS*(2.4+0.3*RTOR/LNE);
+MRHO=AMAIN*NMAIN;
+RUPFR=0.0;
+CRAD1=FJUMP(100.*abc/abc)*CCD2;
+TTRQ=-5.9786e7*CRAD1/VOLUM(0.3*abc)*(1.-ASTEP(0.3*abc));
+
+UPAR:EQ;
+UPAR=0.;
+UPARB=0.;
+
+
+VTOR=F3+F4+F6+F7+F8;
+
+
+!CURRENT diffusion BLOCK-----------------------------
+
+
+!Bootstrap coefficients
+HC=HCSA; !*FJUMP(0.1*abc/abc);  ! test 0 bootstrap current
+DC=DCSA; !*FJUMP(0.1*abc/abc);
+XC=XCSA; !*FJUMP(0.1*abc/abc);
+
+!CU:AS; !EQ;
+CU:EQ; !current equation is solved
+
+!CC=1.e9;
+!CC=CNSA*1./1.e5*(1.-FJUMP(1*abc/abc))+CNSA*FJUMP(1*abc/abc);
+CC=CNSA;
+!CU=1.-XRHO**2.; !only for rampup
+IPL=IPL;    !Total plasma current fixed from experimental value, cbnd2 allows to change it by rescaling
+!MU=MUX; !Initial q-profile
+!CU=1.-XRHO**2.; !flattop
+CU=CC;
+CD=CUECR; !CD source from NBI + PECRH , no cubs, which is computed self-consistently, also no bootstrap from alphas
+
+!IPL=IPL;
+!IPL=IPLFBE;
+!LEXT=2.;
+!UEXT=0.007;
+
+TSTOPP(CV6)>:::1.e6:; !called in eqctrl.
+!------------------------------------------
+TSTRTCC(200006.d0,-1.d0)>:::1.e6:;  !switch on psi_bc as b.c. for fbe with current control
+
+
+
+!boundary condition slow moving
+!CV8=0.12-0.06*(1.-min(1.,exp(-(TIME-20.)/40.))); !not used anymore
+!CV8=0.06;
+
+!CRAD4 = IPL/(GP*ABC**2.)*10.;  !Greenwald density
+CRAD4 = 19/(GP*2.89**2.)*10.;  !Greenwald density
+
+ATREQ=1.e-2;
+!TPAUSE=0.;
+
+!SOL model
+SOLMODINP(6.d0,8.d0,7.d0,cscl4,ZRD81,1.d0)>:ZRD53::1.e6:;  !ZRD81 is Tesep
+!cscl4 is the power to divertor in MW/m`2, should be below 10, which gives a verz low divertor temperature to avoid sputtering, say qplate should be between 10 / 20 not more
+
+PBMODE(1.d0)<:::1.e6:; ! SOL/div particle balance model
+
+CNEUT4=0.1+0.5*QDTB/400.;	!QDT is alpha power in MW CNEUT is critical shear, 0.1 is approximately 10 s and 0.6 is 100s roughly; change 0.3 to 0.5 to get 0.6 for 2GW fus power
+!CNEUT4=10.5;
+!MIXINS(10,CNEUT4,c_res,ZRD15)>:::1e6:;  !sawtooth model that just flattens with period CNEUT4 s at the moment
+
+!SAVECTRLS>:1.:1.:1.e6:; !save some scalars to file
+!SAVECTRLP>:10.:10.:1.e6:; ! save some profiles to file
+
+!XEQDSCA>:10.:10.:1.e6:; !equidisc
+EQCTRL>:::1.e6:;  ! control equilibrium calls with dteql
+EQCTRZD<:0.0025::1.e6:;  ! control time step is 0.0025
+EQCTRZT<:::1.e6:;  ! control equilibrium calls with dteql
+!EQCTRZD2<:::1.e6:;  ! control equilibrium calls with dteql
+
+!celmf=CFUS3; !ELM frequency in hz
+!cdiff=CFUS4/celmf; !increase in diffusivity for 1 time step m^2/s or m/s
+ZRD61=0.1*abc; !ELM area affected in meters
+!celmm=1.; !ELM model. 1. is diffusive, 2. is convective, 0 is diffusion, 0 is convection
+!celmd=0.01; !ELM duration
+!ELMHD(celmf,cdiff,zrd61,0,0,celmm,celmd,cpclm)>::::; !ELM model
+
+
+ZRD53 = 0.01; !call of solmodinp and neut
+
+ZRD69 = 0.005; !time step for time control
+
+!ZRD35  = 1.e-6; !Equilibrium call dt
+
+ZRD36  = 10000.;! call of savectrls
+ZRD37  = 50000.6;! call of savectrlp
+
+ZRD43  = 0.001;! alpha particles multiplier of DN
+
+ZRD47  = 1.; ! call of nclass
+
+
+!DIAGZF::::; !
+!DIAGZD>:0.01:0.0:1e6:; !
+!DIAGZP>:1.:0.1:1e6:; !
+
+!NTM model
+!HE=...+CAR47*CDMJ6;
+! cdmj1 = trigger
+! cdmj2 = mmod
+! cdmj3 = nmod
+! cdmj4 = swidt
+! cdmj5 = iwidt
+! cdmj6 = chiamp
+! cdmj7 = r_rat
+! cdmj1 = w_dep
+! cdmj1 = rho_dep
+
+!NTMMOD(CDMJ1,CDMJ2,CDMJ3,CDMJ4,CDMJ5,CDMJ6,CDMJ7,CHE2,CDHJ2)>:::1.e6:;
+CDMJ7=0.83; !minidsrupt artificial
+CDMJ5=0.37; !minidsrupt artificial
+CAR47=exp(-(XRHO-cdmj7)**2./(cdmj5/2.+0.001)**2.);
+CAR47=CAR47*XSTEP(cdmj7-cdmj5/2.)*(1.-XSTEP(cdmj7+cdmj5/2.));
+
+!ER=BTOR*(VDIA-VPOL+MU*AMETR/RTOR*UPAR);
+ER=BTOR*(VDIA-0+MU*AMETR/RTOR*UPAR);
+
+CAR39=ER/RTOR/(BTOR*MU*AMETR/RTOR);
+CAR38=6.9e6*BTOR/sqrt(MRHO);
+CAR38=1./CAR38*ABC*ABC*GRAD(CAR39)*DRODA;
+
+
+!Plotting radial profiles
+
+
+!Pag1
+Te\TE\-50; Ti\TI\-50; he\HE\5; pein\PE;
+q\1./MU\-21; qe\QE\-552; ne\NE; Jpar\CU\2;
+
+g2\g22; ip\IPOL-IPOL(ABC); vrs\vrs; g3\g33; g1\g11;
+vol\volum; k\elon; cub\CUBS\2; gro\gradro;
+drda\droda; sh\shif;
+
+He_n\F4; pt\NE*TE+NI*TI\-557; xi\XI\5; Piin\PI\-121;
+shir\SHEAR; qi\QI\-552; ni\NI; Jbs\CUBS\-4;
+
+xi\XI\5; he\HE\5; cn\CN\0.5; dn\DN\3;
+deut\F1; trit\F2; cHe\(F4+F5)/NE; cXe\F3/NE;
+
+Chii\"work(j,41)"\5; chie\"work(j,42)"\5; Sn\SN; nalf\NALF;
+rlna\-RTOR*GRAD(NALF)/NALF; Vpol\VPOL; cc\-vp*vras; cn\cn; !!!
+
+xi\"work(j,81)"\5; he\"work(j,82)"\5; cn\CN\0.5; dn\DN\3;
+deut\F1; trit\F2; cHe\(F4+F5)/NE; cXe\F3/NE;
+
+Chii\"work(j,41)"\5; chie\"work(j,42)"\5; Sn\SN; dtra\NTRIT/NDEUT\2;
+freq\"work(j,12)"\-321; Vpol\VPOL; cc\-vp*vras; cn\cn;
+
+psyn\PSYNC; df1\DF1; Qn\QN; psi\FP;
+
+!Pag1
+f6\F6; f1\f1; f2\f2; f3\f3; f4\f4; f7\f7; f8\f8;
+
+
+
+!Plotting Time Traces
+ip_IPL;
+li3_LI3B;
+!vlop_UPLB;
+betp_BETP3B;
+fpa_(FP(ABC)-FP(0.))/GP2;
+z_UPDWN;
+k_ELON(ABC);
+d_TRIA(ABC);
+km_ELON(0.5*ABC);
+dm_TRIA(0.5*ABC);
+g2_G22(ABC);
+g1_G11(ABC);
+g3_G33(ABC);
+vol_VOLUME;
+
+
+ttq_VINT(TTRQB)/5.9786e7;
+cxe_F3(0.*abc)/NE(0.*abc);
+che_F4(0.*abc)/NE(0.*abc);
+car_F6(0.*abc)/NE(0.*abc);
+cdt_F1(0.*abc)/NE(0.*abc)*2;
+betp_BETP3B;
+wmhd_WTOTB;
+pfus_5*QDTB;
+te0_TE(0.*abc);
+pfuz_WTOTB*NEAVB*0.2;
+cw0_F7(0.*abc)/NE(0.*abc);
+cwe_F7(abc)/NE(abc);
+
+li3_li3B;
+bc1_CDBC3
+bc2_CDBC4
+bc3_CDBC5
+bc4_CDBC6
+bc5_ZRD74
+
+ttq_VINT(TTRQB)/5.9786e7;
+cxe_F3(0.*abc)/NE(0.*abc);
+che_F4(0.*abc)/NE(0.*abc);
+car_F6(0.*abc)/NE(0.*abc);
+cdt_F1(0.*abc)/NE(0.*abc)*2;
+
+z_UPDWN;
+ip_IPL;
+nd_ndeut(0.*abc)/NE(0.*abc); 
+nt_ntrit(0.*abc)/NE(0.*abc);
+masp_amain(0.*abc);
+Dsp_F1B;
+Tsp_F2B;
+Hesp_F4B;
+crad_F3(0.*abc)/NE(0.*abc);
+plh_CDVM2;
+teb_TE(ABC); tez_ZRD81;
+f61_f6(0.*abc)/NE(0.*abc); kr_F8(1)/NE(1);
+chiz_CSOL1; chip_CSOL2; Te0_TE(0); Teb_TEB; Ti0_TI(0); TeTi_TE(0)/TI(0);
+li_LINTB; ne0_NE(0); qtok_QTOKB; 
+Teib_TE(ROC)/TI(ROC); neb_NE(ROC); q0_1./MU(0.01*ROC); QeB_QEB; aim1_AIM1;
+prat_CRAD2; hh_CMHD2; tept_TE(0.95*ABC); nept_NE(0.95*ABC);
+nepg_NE(0.95*ABC)/CRAD4;
+nust_CAR57(0.95*ABC);
+q1_1./MU(ROC); Zef_ZEF(0); Ipl_IPL; Icd_ICDB; qdt_QDTB;
+pfus_5.*QDTB;
+Ibs_IBSB; Iohm_IOHMB; Itot_ICDB+IBSB+IOHMB;
+Ecrh_VINT(PEECR,ROC);
+Ptot_QTOKB; H98_CMHD2; cm1_CMHD1;
+tauE_TAUEB; NPe_VINT(NE,ROC);
+Vlup_UPL(ROC); abc_AMETR(ROC);
+g2_G22(ROC); Wtot_WTOTB; wei_(WEB+WIB);  betn_BETANB;
+paux_CRAD3;  psyn_QSYNCB;
+icd_IINT(CD,ROC); npik_NE(0.)/NEAVB;
+qalp_QDTB; qbrd_QBRADB; qsyn_QSYNCB; qsep_QTOKB-QIDWTB-QEDWTB;
+qdte_QEDWTB; qdti_QIDWTB; qne0_QTOKB;
+fni_(ICDB+IBSB)/IPL;
+taue_(WEB+WIB)/QTOKB; fbs_IBSB/IPL;  ne0_NE(0.01*ROC);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

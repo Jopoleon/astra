@@ -498,36 +498,129 @@ MAX-PLANCK-INSTITUT F\"UR PLASMAPHYSIK\normalsize\\[15pt]
 GARCHING BEI M\"UNCHEN
 \end{center}
 \vspace*{40mm}
-\begin{center}\LARGE{\bf ASTRA--7.0} \\ \\ 
-Addendum with changes and new features
-\end{center}
-\vskip15mm
-\begin{center}\large\sf
-G. Tardini and E.~Fable
-\vskip15mm
-\parbox{41mm}{\hspace*{-5mm}	\normalsize\sf
-\\ \normalsize
-\\	\normalsize
-\\	\normalsize
-}
-\vfill
-  \hfill April 2023
-\end{center}
+%\begin{center}\LARGE{\bf ASTRA--7.0} \\ \\ 
+%Addendum with changes and new features
+%\end{center}
+%\vskip15mm
+%\begin{center}\large\sf
+%G. Tardini and E.~Fable
+%\vskip15mm
+%\parbox{41mm}{\hspace*{-5mm}	\normalsize\sf
+%\\ \normalsize
+%\\	\normalsize
+%\\	\normalsize
+%}
+%\vfill
+%  \hfill April 2023
+%\end{center}
 \eject
 \thispagestyle{empty}
 \clearpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 {\bf Introduction}\\\\
-fdsfdsfds
+Astra 8 is essentially a "new" code with respect to old Astra versions.
+The Code is now recast in F90, using modules and avoiding at all commons.
+This makes the code much more efficient to be developed and coupled to other frameworks.
 
+The compiler is now much cleaner, and many systems are already included in the platform 
+list. A user has no difficulty including new ones in case.
+
+Below this is written in details.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \clearpage
 \vfill\rm\normalsize
 \baselineskip=20pt plus 0.5pt
 \tableofcontents
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{New compiler and code language}
+The code structure is now the following. 
 
+Once cloned, the code comes with a 2--layers structure.
+Let us suppose the code has been cloned in a directory called "a8code".
+Then the 2 layers are:
 
+1) a8code/
+
+2) a8code/repo\_user\_area/ \\
+
+"a8code" contains the source code directory src/, in which for, feqis, spider, nbi are contained. 
+
+"a8code/repo\_user\_area" contains the working directories with the pre--installed formulas, subroutines, and example model and experimental files. In addition, it contains the directories: "main" - main ASTRA program astra\_main.f90 and subroutine stepup.f90, and text files containing the list of all the native variables of various types. 
+
+The command "install.sh" will copy from "repo\_user\_area" to the main directory, all the sub--directories contained there. As such, the user should eventually back--up any changes done to the pre--installed files.
+The rationale behind this is that the copied directories like sbr/, fnc/, fml/, xpr/, ... can now include user--defined files, or the user can even modify the pre--installed ones, without affecting the repository layer.\\%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+----------------------------------------------------------------------------------\\
+{\bf Platform and libraries}
+Then install.sh command will copy also a directory called "exe/", inside which there are a few compilation files. \\
+In particular, "exe/astra\_rc" contains the detailed list of the needed libraries and their paths. \\
+It is good for the user to check once if these paths are correct. \\
+If the user does not have specific libraries that are listed, these can be left blank. However, the user may need to also remove some subroutines or change the makefile "exe/Makesub" and "exe/Makexpr", which contains links to code--specific libraries.\\
+----------------------------------------------------------------------------------\\\\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+After the "install.sh" copy is done, the user can now run ASTRA using the new command line: \\
+{\bf exe/as\_exe -m (modelfile) -v (expfile) -s (starttime) -e (endtime) -dev (machinename) -tpause (pausetime) -f -b}
+
+Note that any of these arguments is optional and does not need to be inserted. In which case, the last used value will be adopted.
+
+The new argument "-f" launches ASTRA in "flight--simulator" mode, meaning it will crash if its not linked to the control system (whatever framework it maybe). 
+
+The argument "-dev" tells ASTRA which machine its running for configuration file purposes.
+
+Once Astra is called, it will compile everything present in the source code and the user--defined directories sbr/ and fnc/ 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Changes in the model file syntax}
+A few changes have appeared in the way the model file syntax has to be given.
+
+(Not sure what to put here, but some syntax IS different).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Equilibrium solvers}
+The variable {\bf IPEQL}, that can be defined in the equ/log/ file in the "Parameter" block, can now attain several values, which correspond to the following equilibrium options:\\\\
+"-2" * cylindrical analytical equilibrium;\\\\
+"-1" * take the metric coefficients from the experimental file. The parameters (profiles) that should be given are: SHX (shift), ELX (elon), TRX (tria), G33X (G33), IPOLX (IPOL), VRX (VR), SLATX (slat), G11X (G11), G22X (G22), DRODAX (droda);\\\\
+"0" * fixed guess and no equilibrium from outside;\\\\
+"1" * 3--moment equilibrium EMEQ;\\\\
+"2" * not used;\\\\
+"3" * not used;\\\\
+"4" * SPIDER prescribed boundary;\\\\
+"5" * FEQIS prescribed or free boundary;\\\\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Generate the machine configuration grid for FEQIS}
+In the main Astra directory, run the following command first:\\\\
+./Makegenerate \\\\
+and then run the program:\\\\
+./generate\_grids\_equil.exe \\\\
+when prompted which machines to generate, insert 0 or 1 depending on which machine the user wants to generate.
+\subsection{The namelist files}
+Astra now has a few namelist files to instruct some of the additional physics modules.
+In particular, in the "exp/nml/" directory, a namelist with the same name of the exp/ file, contains the following namelists:\\
+rabbit\_beam\_geo (RABBIT); partmix (NBI?); nbi\_par (NBI?); species (RABBIT); output\_settings (RABBIT); physics (RABBIT); numerics (RABBIT); nbinj\_par (NBI?); torbeam (TORBEAM); equilef (FEQIS); 
+
+Morevoer, in the directory exp/equ/(dev)/, a namelist called "namelist\_astra.txt" contains the following namelists:\\
+torbeam (TORBEAM); equil\_settings (astra coupling to equilibrium); equilef (FEQIS); spider (SPIDER); fenix (flight simulator physics models parameters);
+
+Finally, when running the free boundary solver FEQIS, in exp/equ/(dev)/, the following files are needed:
+
+data.dat (general grid info), coil.dat (active coil config file), blanbp.dat (first wall config file), blanbpc.dat (first wall config file), blanfw.dat (first wall config file), coilres.dat (active coil resistances), efonfit.dat (fit parameters for FEQIS inverse mode), limpnt.dat (limiter description), refit\_ef.dat (refit parameters FEQIS).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Additional routines for the flight simulator}
+Astra can be coupled to an external control framework using a generic C interface (developed by C. Wu at KIT, Germany). It can then be run in "flight simulator" mode adding the "-f" flag in the command line.
+
+The coupling routines are in src/for/, wrsdug.f90, rrsudg.f90, and shmrw.c. These are generic, but machine--dependent needs are specifically in wrsudg.f90 and rrsudg.f90.
+
+Additional physics files are in the FLIGHT\_SIMULATOR directory for common or specific machines.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The new equilibrium solver FEQIS}
+\input{FEQIS_manual.tex}	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \vfill\eject
 %\input garbage.tex

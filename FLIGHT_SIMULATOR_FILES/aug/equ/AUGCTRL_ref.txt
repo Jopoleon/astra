@@ -1,0 +1,718 @@
+!AUG control scheme: 2 is DEMO, 3 is AUG
+! EFable Aug 2017
+!F1 is deuterium
+
+
+
+!
+!density block
+
+ZIM1=ZICAR; !B (use C)
+ZIM2=ZINIT; !N 
+ZIM3=ZIWOL; !W
+
+AIM1=10; !B
+AIM2=7.; !N
+AIM3=140.; !W
+
+NIZ1=F3;  !B
+NIZ2=F5;  !N
+NIZ3=F4;  !W
+
+NDEUT=F1;    !density of deuterium is from equation
+
+!effective charge!
+CAR64 = ZIM3**2.*NIZ3+ZIM1**2.*NIZ1+ZIM2**2.*NIZ2;
+ZEF=1./NE*(NDEUT+4.*F2+CAR64+F7+ZINE**2.*F6+ZIKR**2.*F8+ZIAR**2.*F9);
+ZEF=max(1.,ZEF);!
+
+!ZEF=2.;
+
+
+!DENSITY BLOCK------------------------------------------------------
+!Densities sources
+!-------------------------------------------------------------------
+!electron source;
+SNN=SNNEU; ! using neut
+ENCL = 0.00075;
+ENWM = 0.01;
+
+!Power block---------------------
+
+PRAD=(PRNEO*F6+F5*PRNIT+F8*PRKR+F9*PRARG+F4*PRWOL)*NE+PBRAD+PSYNC;	!radiation of impurity: Xenon coronal + bremsstrahlung + synchrotron
+
+PET=-PRAD/TE;
+
+PEIQI = PEIAU;   ! standard astra would be PEI. implicit equiparition
+
+
+CAR39=POH;
+ZRD52=VINT(CAR39B);
+!PE=CAR39/ZRD52*min(1.,ZRD52)+PEECR+PEBM+PEICR; !ohmic power clamped at 1 MW
+PE=POH+PEECR+PEBM+PEICR-0*PEIAU*(TE-TI);  !added explicit equipartition waiting to change back in A8
+PI=PIBM+PIICR+0*PEIAU*(TE-TI);
+
+CRAD3=VINT(PEB)+VINT(PIB); !total aux power
+CRAD2=VINT(PRADB); !example: volume integral of radiated power
+------------------------------------
+
+
+!Neoclassical coefficients
+!"work(j,303)" is the conductivity
+
+!TRANSPORT BLOCK-----------------------------------------------
+!Transport models
+
+!temperatures
+GN2E=0.; !Convective term in energy equation GN2E = 5./2. for neoclassical, 3./2. for anomalous, but to check again
+GN2I=0.;
+
+
+!H-factors for transport
+!CMHD1=THQ99/((QTOK(roc)-QIDWT(roc)-QEDWT(roc)))**0.69;
+!actual scaling conf time CMHD1
+CMHD1=THQ99/((QTOKB-QIDWTB-QEDWTB+QRADB))**0.69; !actual scaling conf time CMHD1, radiation only up to 0.99
+CMHD2=WTOTB/((QTOKB-QIDWTB-QEDWTB+QRADB))/CMHD1;  !h factor is CMHD2, target is CMHD3
+
+
+!transport model
+
+csmm=0.001; !smear coefficient
+
+
+
+
+
+
+car41="work(j,21)"; !chii
+car42="work(j,22)"; !chie
+car43="work(j,23)"; !D
+car44="work(j,24)"; !V
+
+!CSOL4=(NE(AFX(1.-CV8))*GP*ABC**2./IPLFBE/10.)**4. ; !ped dens diffus
+
+XI=abs(car41*(1.-XSTEP(1.-CV8))+(abs(CV14))*XSTEP(1.-CV8)+hnasi)+car63;        !These are new with L-H transition plus necessary function in sbr EDGEMOD(CV8,CV14)
+HE=abs(car42*(1.-XSTEP(1.-CV8))+(abs(CV14))*XSTEP(1.-CV8)+hngse)+CAR47*CDMJ6+car63;  !CSOL3 is chie/chii ratio
+DN=abs((dnneo+car43)*(1.-XSTEP(1.-CV8))+(CSOL2*CDVM4*abs(CV14)+dnneo)*XSTEP(1.-CV8))+car63; !CSOL4 is D/chieff ratio. Notice that in pedestal it will be basically = ion neoclassical heat transport
+
+CAR28=VP*VRAS;
+CAR29=FTAV(2.*TAU,CAR28);
+
+!HE=1./MU**2.;
+!XI=HE*2.;
+!DN=HE;
+!CN=0.;
+!CN=-CAR29-DN/RTOR*(0.2*RTOR/LTE+0.15*SHEAR);
+
+CN=(car44*(1.-XSTEP(1.-CV8))-CAR29*FJUMP(TAU)+car62);  !basic pinch formula, works ok. only in the core. no pinch in pedestal
+CE=+car62;
+CI=+car62;
+
+!deuterium and tritium, same stuff as electrons
+
+!deut
+DF1 = DN;
+VF1 = CN;
+
+!H: same as deut
+DF7 = 2.*DN;
+VF7 = CN; !+car62; !same as Xe
+
+!He , this has same pinch as deut. In reality it should be that for deut it is like smaller than CN, and for trit larger than CN.
+DF2 = DN;
+VF2 = CN+car62; !multiply this by some constant that will be different from 1
+
+!B: same as deut/trit but no pinch
+DF3 = DN+"work(j,242)";
+VF3 = CN+"work(j,243)"+car62;
+
+!N
+DF5 = DN+"work(j,262)";  !practically it is DN * (TE/Talpha)^(3/2)
+VF5 = CN+"work(j,263)"+car62; !no alpha pinch
+
+!Ne: same as deut/trit but no pinch
+DF6 = DN+"work(j,262)";
+VF6 = "work(j,263)"+car62;
+
+!Ar, same as kr
+Df9=DN+"work(j,282)";
+VF9="work(j,283)"+car62;
+
+!Kripton, same as Ar
+Df8=Df9;
+VF8=vf9;
+
+!W: same as deut/trit, no pinch
+DF4 = DN+"work(j,282)";
+VF4 = "work(j,283)"+car62;
+
+
+
+!Transport coefficients other than HE
+CE=0.0;
+XE=0.0;
+HI=0.0; CI=0.0; DI=0.0;
+HN=0.0; XN=0.0;
+DE=0;
+
+
+!edge model
+!Pedestal top pressure from EPED1 scaling S. Saarelma
+!PLH Martin scaling
+
+
+!-------------------------------------------------------------
+
+
+!WITH PBMODEL
+
+!Deuterium equation, 
+F1=IPL*4.; !*(1.01-XRHO**2.); !NEX;
+!SF1=CPEL1/6000*12000*CAR16+SNN*NE+(2.-ZRD22)*SNEBM*(3.-ZRD22)/2.;
+SF1=CPEL1*CAR16+SNN*NE+(2.-ZRD22)*SNEBM*(3.-ZRD22)/2.;
+!SF1=0.;
+F1B=CDBC1;
+
+!H equation
+F7=0.000001*NEX;
+SF7=(ZRD22-1.)*SNEBM*(3.-ZRD22);
+F7B=CDBC5;
+
+!He equation
+F2=0.000001*NEX;
+SF2=(ZRD22-1.)/2.*(ZRD22-2.)*SNEBM;
+F2B=CDBC2;
+
+!B equation
+F3=0.01*NEX;  !initial condition
+SF3=0.; !
+F3B=CDBC3;  !this is pumping at separatrix regulated by CV13
+
+!W
+F4=0.000001*NEX;  !start with 10% (CIMP2)
+SF4=0.;  !source of He is decay of alphas
+F4B=CDBC4;
+
+
+
+F1:EQ; 
+F3:EQ;
+F2:EQ; 
+F4:EQ;
+F7:EQ;
+F5:EQ;
+F6:EQ;
+F8:EQ;
+F9:EQ;
+
+
+F5=0.000001*NEX; !N
+F6=0.000001*NEX; !Ne
+F8=0.000001*NEX; !Kr
+F9=0.000001*NEX; !Ar
+F5B=CDBC6;
+F6B=CDBC7;
+F8B=CDBC8;
+F9B=ZRD74;
+SF5=0.;
+SF6=0.;
+SF8=0.;
+SF9=0.;
+
+%
+F1:AS; 
+F3:AS; 
+F2:AS; 
+F4:AS; 
+F7:AS; 
+F5:AS; 
+F6:AS; 
+F8:AS; 
+F9:AS; 
+%
+
+
+!TE=0.1;
+!NE=0.1;
+!Quasineutrality
+NE=NEX*(1.-FJUMP(tau))+FJUMP(tau)*(F1+2.*F2+ZIM1*F3+ZIM3*F4+F7+ZIM2*F5+ZINE*F6+ZIKR*F8+ZIAR*F9); ! electrons from quasineutrality
+NE:AS;  !assigned to quasineutrality as line above
+!NE=NEX;
+NI=F1+F2+F3+F4+F5+F6+F7+F8+F9;  !Thermal ion density !NMAIN=NDEUT;
+@!@    ! this makes ion density computed consistenly!
+
+
+!Transport equations for temperatures
+!electron
+
+TE=1.*IPL+0*RHO;
+
+!TE:AS;
+TE*:EQ[2,CBND1];  !at the moment b.c. is at CBND1 and not at separatrix to avoid changing pedestal
+!TEB=ZRD81;
+!TEB=ZRD81;
+TEB=0.05;
+!ion
+TI=TE;
+TI*:EQ[2,CBND1];
+TIB=0.05;
+
+
+
+
+ZRD32 = VINT(F4B)/QF4B/TAUEB;  ! define this that is taup/taue for He, around ~ 5 is AUG min values
+
+
+!-----------------------------------------
+
+!ZRD14=ZRD14+CPEL1*TAU+CIMP3*TAU;
+
+
+!some diagnostics
+car51=rtor/lte;
+car52=rtor/lti;
+car53=rtor/lne;
+!collisionality
+CAR57 = NUES;
+
+
+!Plasma rotation
+VPOL=0.;
+VTOR=0.0*VTHI;
+!ER=BTOR*(VDIA-VPOL+MU*AMETR/RTOR*VTOR);
+ER=0.;
+
+
+!momentum transport equation
+MRHO=AMAIN*NMAIN;
+XUPAR=XI;
+CNPAR=0.;
+UPAR=0.;
+UPAR:AS;
+UPARB=0.;
+
+
+
+
+
+!CURRENT diffusion BLOCK-----------------------------
+
+!Bootstrap coefficients
+HC=HCSA*(1.-(1.-ZRD63)*XSTEP(1.-ZRD61)*ZRD64);
+DC=DCSA*(1.-(1.-ZRD63)*XSTEP(1.-ZRD61)*ZRD64);
+XC=XCSA*(1.-(1.-ZRD63)*XSTEP(1.-ZRD61)*ZRD64);
+
+CU:EQ;
+!CU:AS; !current equation is solved
+
+CC=CNSA*1./(1.+ZRD62*XSTEP(1.-ZRD61)*ZRD64); !Conductivity from S-A formulas
+!CC=CNHR;
+
+!MU=MUX; !Initial q-profile
+CU=1.-XRHO**2.;
+!CU=1.;
+
+CD=CUECR+CUBM; !CD source from NBI + PECRH , no cubs, which is computed self-consistently, also no bootstrap from alphas
+
+!IPL=IPLFBE;    !Total plasma current fixed from experimental value,
+!IPL=IPLX;
+IPL=IPL; !defined in sbr/eqctrz.f
+
+!------------------------------------------
+
+
+CRAD4 = IPL/(GP*ABC**2.)*10.;  !Greenwald density
+
+ATREQ=1.e-2;
+
+
+!CNEUT4=0.1;	!QDT is alpha power in MW CNEUT is critical shear, 0.1 is approximately 10 s and 0.6 is 100s roughly; change 0.3 to 0.5 to get 0.6 for 2GW fus power
+
+CAR47=exp(-(XRHO-cdmj7)**2./(cdmj5/2.+0.001)**2.);
+CAR47=CAR47*XSTEP(cdmj7-cdmj5/2.)*(1.-XSTEP(cdmj7+cdmj5/2.));
+
+celmf=CFUS3; !ELM frequency in hz
+cdiff=CFUS4/celmf; !increase in diffusivity for 1 time step m^2/s or m/s
+celmm=1.; !ELM model. 1. is diffusive, 2. is convective, car63 is diffusion, car62 is convection
+celmd=0.01; !ELM duration
+
+
+!ZRD53 = 0.002; !call of solmodinp and neut dt
+!ZRD69 = 0.0001; !time step for time control
+!ZRD35  = 1.e-9; !Equilibrium call dt
+!ZRD36  = 10.01;! call of savectrls dt
+!ZRD37  = 10.01;! call of savectrlp dt
+!ZRD47  = 0.002; ! call of nclass dt
+!ZRD44  = 1.; !transport model type
+!ZRD67  = 0.002; !NBI routine dt and eqctrl for nelig and mixins
+!ZRD90  = 0.005; !torbeam
+
+
+!subroutine pack!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!NEOCL4>:ZRD47:zrd78:1.e6:; !nclass neoclassical transport
+
+!fueling
+PBMDAU<:::1.e6:; ! SOL/div particle balance model
+
+NEUT>:ZRD53:zrd78:1.e6:;
+
+PELAUG>::ZRD78:1.e6:; ! AUG pellet scaling model to give cneut1 and cneut2
+
+
+
+!heating
+NBISPL>:ZRD67:zrd78:1.e6:; ! NBI+ICRH 
+
+!TORBA>:ZRD90:zrd78:1.e6:; ! ECRH called in NBISPL
+
+
+
+
+!exhaust
+!SOL model
+!CYU1=6.; !Ar  this is actuallz W but for the SOL is the same as Xe
+!CYU2=8.; !Xe
+!CYU3=7.; !Kr
+!SOLMODAUG(CYU1,CYU2,CYU3,cscl4,ZRD81)<:ZRD53:ZRD78:1.e6:;  !ZRD81 is Tesep, cscl4 is t_div
+SOLMODAUG(6.d0,8.d0,7.d0,cscl4,ZRD81)<:ZRD53:ZRD78:1.e6:;  !ZRD81 is Tesep, cscl4 is t_div
+CDJM7=ZRD81; !Tsep
+
+!routines that need to be called at each time step
+FGAUSS(CNEUT1,CNEUT2,CAR16)<:::1.e6:; !pellet source, CNEUT1 is r0, CNEUT2 is deltar, in normalized rho
+
+!rpms
+RMPMOD>::ZRD78:1.e6:; ! RMP model
+
+
+!core transport
+!csmm=0.001; !smear coefficient
+!TRMAUG(ZRD44,csmm,cmachz)>::zrd78:1.e6:; !transport model
+TRMAUG(ZRD44,0.001d0,0.0d0)>::zrd78:1.e6:; !transport model
+
+
+!pedestal model
+EDGMAU(211.d0,cdvm2,CV8,CV14,0.0d0,1.d0)>::zrd78:1.e6:; !new sbr for lh transition
+
+
+!NTMs
+!NTMMOD(CDMJ1,CDMJ2,CDMJ3,CDMJ4,CDMJ5,CDMJ6,CDMJ7,CHE2,CDHJ2)>::zrd78:1.e6:; ! to be fixed
+CDMJ6=0.; !no NTMs for now
+
+
+!sawteeth
+MIXINS(CNEUT4,ZRD12)>::zrd78:1.e6:;  !sawtooth model that just flattens with period critical shear cneut4 from namelist, zrd12 is sawtooth yes or no (double precision)
+
+
+!elms
+!ELMHD(celmf,cdiff,zrd61,car63,car62,celmm,celmd,1.d0)>::::; !ELM model
+
+
+
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!routines called just once that cannot be further optimised
+TSTRTCC(zrd78+2.*TAU,-1.d0)>:::1.e6:;  !switch on psi_bc as b.c. for fbe with current control
+EQCTRA<:ZRD67::1.e6:;  ! control equilibrium calls, nelig is called in here
+EQCTRZ<:::1.e6:;  ! control equilibrium calls with dteql
+
+
+!diagnostics
+DIAGZ<:DROUT::1.e6:;
+
+!savings
+!SAVECTRLP>:ZRD37:ZRD37:1.e6:; ! save some profiles to file
+!SAVECTRLS>:ZRD36:ZRD36:1.e6:; !save some scalars to file
+
+TSTOPP(CV6)<:::1.e6:;
+
+
+!NTM model
+!NTMMOD()::::;
+!HE=...+CAR47*CDMJ6;
+! cdmj1 = trigger
+! cdmj2 = mmod
+! cdmj3 = nmod
+! cdmj4 = swidt
+! cdmj5 = iwidt
+! cdmj6 = chiamp
+! cdmj7 = r_rat
+! cdmj1 = w_dep
+! cdmj1 = rho_dep
+
+
+
+
+!Plotting radial profiles
+
+!par\-VF6/DF6*RTOR;
+
+
+!Pag1
+Te\TE\\TEX\-10; ne\NE\\NEX\-547; he\HE\10; pein\PE\-121;
+q\1./MU\10; pt\NE*TE+NI*TI\-557; nd\NDEUT; Jpar\CU\-4;
+
+Ti\TI\\TIX\-10; nd\NDEUT\-547; xi\XI\10; piin\PI\-121;
+shir\SHEAR; pf\0.5*(PBLON+PBPER)+PFAST\-557; sdeu\SF1; Jbs\CUBS\-4;
+
+
+!Pag2
+cD\F1/NE; cHe\F2/NE; cB\F3/NE; cW\F4/NE;
+D\F1; He\F2; B\F3; W\F4;
+
+cN\F5/NE; cNe\F6/NE; cH\F7/NE; cKr\F8/NE;
+N\F5; Ne\F6; H\F7; Kr\F8;
+
+he1\"work(j,22)"\10; xi1\"work(j,21)"\10; vd\"work(j,505)"\-172; pein\PE\-121;
+q\1./MU; pt\NE*TE+NI*TI\-557; nd\NDEUT; Jpar\CU\-4;
+
+he2\"work(j,502)"\10; xi2\"work(j,501)"\10; vz\"work(j,504)"\-172; Piin\PI\-121;
+shir\SHEAR; pf\0.5*(PBLON+PBPER)\-557; sdeu\SF1; Jbs\CUBS\-4;
+
+pin\PIBM; pei\PEICL; snn\SNN*NE; snb\SNEBM;
+
+pres\NE*TE+NI*TI; pfas\0.5*(PBLON+PBPER); th\THQ99;
+
+
+
+cAr\F9/NE; 
+Ar\F9;
+
+
+!Pag3
+prad\PRAD\-665; pnbi\PEBM+PIBM\-665; poh\POH\-665; pec\PEECR\-665;
+
+!Plotting Time Traces
+sh_(SHIF(0.*abc)-SHIFT)*1.e3;
+vol_VOLUME;
+te0_te(0.*abc);
+ti0_ti(0.*abc);
+ne0_ne(0.*abc);
+ni0_ni(0.*abc);
+fcd_ICDB/IPL;
+cde_ICDB/QECR*1000.;
+qee_QECR;
+wtot_WTOTB*1.e3;
+pec_VINT(PEECRB);
+peb_VINT(PEBMB);
+pib_VINT(PIBMB);
+psep_QTOKB-QRADB;
+psep_QTOTB-QRADB;
+prad_QRADB;
+pcrr_QTOKB;
+ip_IPL;
+mdty_ZRD15;
+betp_BETP3B;
+net_NE(0.94*ABC);
+li3_LI3B;
+neb_NEB;
+ne0_NE(0.*abc);
+nt_NETB;
+nv_NEAVB;
+npik_NE(0.*abc)/NEAVB;
+z_UPDWN;
+Paux_CRAD3;
+zef_ZEF(0.*abc);
+D0_F1(0.*abc);
+He0_F2(0.*abc);
+B0_F3(0.*abc);
+W0_F4(0.*abc);
+H0_F7(0.*abc);
+N0_F5(0.*abc);
+Ne0_F6(0.*abc);
+Kr0_F8(0.*abc);
+Ar0_F9(0.*abc);
+teb_TEB;
+tib_TIB;
+Vloo_UPLB;
+qrad_QRADB;
+
+
+qt_QTOKB;
+qti_QITOTB;
+
+qii_VINT(PIBMB)+VINT(PEBMB);
+qee_VINT(PEECRB);
+
+plh_CDVM2;
+
+
+z_updwn;
+ipx_IPLX;
+ipt_ITOTB;
+ipf_IPLFBE;
+q100_1./MU(ABC);
+
+qoh_QOHB;
+!qnb_QNBI;
+!qec_QECH;
+!qic_QICH;
+
+nd_ndeut(0.*abc)/NE(0.*abc); 
+masp_amain(0.*abc);
+Dsp_F1B;
+hh_CMHD2; 
+
+c1_CMHD1;
+th_THQ99;
+qtk_QTOKB;
+qid_QIDWTB;
+qed_QEDWTB;
+qrd_QRADB; !actual scaling conf time CMHD1, radiation only up to 0.99
+c2_CMHD2;
+wb_WTOTB;  !h factor is CMHD2, target is CMHD3
+
+
+
+%
+qsep_QTOK(ROC)-QEDWT(ROC)-QIDWT(ROC);
+
+plh_CDVM2;
+teb_TE(ABC); tib_TI(abc); tez_ZRD81;
+f61_f6(0.*abc)/NE(0.*abc); kr_F8(1)/NE(1);
+chiz_CSOL1; chip_CSOL2; Te0_TE(0); Teb_TEB; Ti0_TI(0); TeTi_TE(0)/TI(0);
+li_LINT(ROC); ne0_NE(0); qtok_QTOK(ROC); thq_THQ99;
+Teib_TE(ROC)/TI(ROC); neb_NE(ROC); q0_1./MU(0.01*ROC); QeB_QEB; aim1_AIM1;
+prat_CRAD2; hh_CMHD2; tept_TE((1.-CV8)*ABC); nept_NE((1.-CV8)*ABC);
+nepg_NE((1.-CV8)*ABC)/CRAD4;
+nust_CAR57((1.-CV8)*ABC);
+q1_1./MU(ROC); Zef_ZEF(0); Ipl_IPL; Icd_ICD(ROC); qdt_QDT(ROC);
+pfus_5.*QDT(ROC);
+Ibs_IBS(ROC); Iohm_IOHM(ROC); Itot_ICD(ROC)+IBS(ROC)+IOHM(ROC);
+Ecrh_VINT(PEECR,ROC);
+Ptot_QTOK(ROC); H98_CMHD2; cm1_CMHD1;
+tauE_TAUE(ROC); NPe_VINT(NE,ROC);
+Vlup_UPL(ROC); abc_AMETR(ROC);
+g2_G22(ROC); Wtot_WTOT(ROC); wei_(WEB+WIB);  betn_BETAN(ROC);
+paux_CRAD3;  psyn_QSYNC(ROC);
+icd_IINT(CD,ROC); npik_NE(0.)/NEAV(ROC);
+qalp_QDT(ROC); qbrd_QBRAD(ROC); qsyn_QSYNC(ROC); qsep_QTOK(ROC)-QIDWT(ROC)-QEDWT(ROC);
+qdte_QEDWT(ROC); qdti_QIDWT(ROC); qne0_QTOK(ROC);
+fni_(ICD(ROC)+IBS(ROC))/IPL;
+taue_(WE(ROC)+WI(ROC))/QTOK(ROC); fbs_IBS(ROC)/IPL;  ne0_NE(0.01*ROC);
+kk_ELON(ROC); dd_TRIA(ROC); aa_AMETR(ROC);  vol_VOLUME;
+shi0_SHIF(0); shib_SHIF(ABC); shib_SHIFT; Z_UPDWN;
+hert_ZRD32;PovR_QTOK(ROC)/RTOR;DTmx_ZRD30;grdD_ZRD31;grdT_ZRD33;
+nvg_NELA(ROC)/(IPL/(GP*ABC**2.)*10.); che_F4(0.*ROC)/NE(0.*ROC);
+nvg_NEAV(ROC)/(IPL/(GP*ABC**2.)*10.); che_F4(0.*ROC)/NE(0.*ROC);
+hfac_TAUE(ROC)/THQ99*((QTOK(roc)-QIDWT(roc)-QEDWT(roc)))**0.69; zrd5_ZRD5; cv7_CV7; 
+dtr_NDEUT(0.*ABC)/(NDEUT(0.*ABC)+NTRIT(0.*ABC)); praz_VINT(PRADB);
+qplt_cscl4; 
+psi_QIDWT(ROC);
+ qplt_cscl4; plh_cdvm2;
+pspl_(QTOK(ROC)-QEDWT(ROC)-QIDWT(ROC))/cdvm2_2;
+pse_QEDWT(ROC);
+carg_f6(0.*abc)/ne(0.*abc);
+carg_f6(abc)/cdym6;
+carg_cdym6/cdym8;
+carg_f6(abc)/cdym8;
+carg_cdym8/f6(abc);
+ps_QTOK(ROC);
+cp_CPEL1; che_f4(0.*abc)/ne(0.*abc);
+nepd_NE(0.94*ABC);
+nepd_NE(0.94*ABC);
+nipd_NI(0.94*ABC);
+tepd_TE(0.94*ABC);
+tipd_TI(0.94*ABC);
+!pip1_NI(0.91*ABC)*TI(0.91*ABC)+NE(0.91*ABC)*TE(0.91*ABC);
+!pip2_NI(0.92*ABC)*TI(0.92*ABC)+NE(0.92*ABC)*TE(0.92*ABC);
+!pip3_NI(0.93*ABC)*TI(0.93*ABC)+NE(0.93*ABC)*TE(0.93*ABC);
+!pip4_NI(0.94*ABC)*TI(0.94*ABC)+NE(0.94*ABC)*TE(0.94*ABC);
+!pip5_NI(0.95*ABC)*TI(0.95*ABC)+NE(0.95*ABC)*TE(0.95*ABC);
+!pip6_NI(0.96*ABC)*TI(0.96*ABC)+NE(0.96*ABC)*TE(0.96*ABC);
+!pip7_NI(0.97*ABC)*TI(0.97*ABC)+NE(0.97*ABC)*TE(0.97*ABC);
+!pip8_NI(0.98*ABC)*TI(0.98*ABC)+NE(0.98*ABC)*TE(0.98*ABC);
+!pip9_NI(0.99*ABC)*TI(0.99*ABC)+NE(0.99*ABC)*TE(0.99*ABC);
+!pipd_NI(0.74*ABC)*TI(0.74*ABC)+NE(0.74*ABC)*TE(0.74*ABC);
+!pipd_NI(0.54*ABC)*TI(0.54*ABC)+NE(0.54*ABC)*TE(0.54*ABC);
+!pipd_NI(0.34*ABC)*TI(0.34*ABC)+NE(0.34*ABC)*TE(0.34*ABC);
+Pel_(CRAD3+5.*QDT(ROC))*0.35-CRAD3/0.4;
+tpl_CDWM1;
+cs1_CSOL1;
+ptop_ZRD21;
+ttop_ZRD21/NE(0.94*ABC);
+ttoz_TE(0.94*ABC);
+li3_LI3(ROC);
+betp_beta(ROC)/ABC**2.*RTOR**2./MU(0.95*ABC)**2./100.;
+cue_IINT(CUECRB);
+cub_IINT(CUBMB);
+rrat_CDMJ7;
+iwid_CDMJ5;
+iamp_CDMJ6;
+pelp_zrd14;
+cWc_F7(0.*abc)/NE(0.*abc);
+!cc_car63(abc)+car62(abc);
+tep_TE(0.98*abc);
+cn_CNEUT4;
+
+!-------------------------------------------------------------------------------------------------------
+
+
+
+!END
+
+
+
+
+
+
+
+!CAR64 = ZIM1**2.*NIZ1;
+!ZEF=1./NE*(NDEUT+CAR64);
+!ZEF=max(1.,ZEF);
+
+!ZEF=3.;
+
+%
+
+
+!END RAMPS
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,27 @@
+ 1 !  icont
+
+	65
+  65           !  nj - number of points on Z-direction
+
+  4. !5.58            ! 0.7 rmin - left bound of box (m)
+  14 !12.2           ! 2.7 rmax - right bound of box (m)
+
+ -9. !-7.2879            !  -1.44 zmin - low bound of box (m)
+  9. !6.0516            !  1.44 zmax - upper bound of box (m)
+
+  0.995d0           !  alp - (PSIm-PSIp)=(PSIm-PSIx)*alp
+
+  1                 !  nctrl - ! 0-given alp,1-given lim.point, -1 for both (?)
+
+  0.8945d0           !  q0 - q on magn. ax.
+
+  7.7d0              !  rx1 - initial guess for lower x-point (m)
+ -5.3d0             !  zx1
+
+  7.80d0              !  rx2 - initial guess for upper x-point (m)
+  -5.4d0              !  zx2
+
+  9.d0             !  rm0 - initial guess for magnetic axis (m)
+  0.0d0             !  zm0
+
+( ITER, SOF, li=0.85 )
