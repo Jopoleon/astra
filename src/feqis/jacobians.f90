@@ -5,7 +5,7 @@ subroutine jacobians(nrho, ntheta, Rb, Zb, X0, Y0, lambda2d_in, lambda2dp_in, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
     ddr, ddr_i, dtp, dtm, dt_i, X, Y, &
-    thetap, thetap_i, lambda2d, lambda2dp)
+    thetap, thetap_i, lambda2d, lambda2dp, jcbn2, r_min, y2, gradr2)
 
 use pi_vars, only: GPI2
 use numerical_tools, only: linterp
@@ -25,7 +25,7 @@ double precision, intent(out), dimension(ntheta+1) :: thetap, thetap_i
 double precision, intent(out), dimension(nrho, ntheta) :: dArea, dArea2, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
-    X, Y, X2, lambda2d, lambda2dp
+    X, Y, X2, lambda2d, lambda2dp, jcbn2, r_min, y2, gradr2
 
 integer :: jrho, jthe, jthe_l, jthe_r, k
 double precision :: drdX, dhdX, drdY, dhdY, &
@@ -33,12 +33,12 @@ double precision :: drdX, dhdX, drdY, dhdY, &
     dXdr2, dYdr2, dXdh2, dYdh2, &
     dXdri1, dYdri1, dXdhi1, dYdhi1, &
     dXdr, dYdr, dXdh, dYdh, &
-    Jcbn, Jcbn2, grt2, gradr2, &
+    Jcbn, grt2, &
     dxcos1, dxcos2, dxsin1, dxsin2 
 double precision, dimension(nrho) ::  lambda2dold, psin
 double precision, dimension(ntheta) :: dXb0
 double precision, dimension(nrho, ntheta) :: &
-    Y2, X_i, Y_i, &
+    X_i, Y_i, &
     gradhi1, grti1, &
     X_i1, Y_i1, Jcbni1
 
@@ -104,7 +104,8 @@ do jthe=1, ntheta
         lambda2dpi = 0.5*(lambda2dp(jrho, jthe) + lambda2dp(jrho, jthe_r))
         X   (jrho, jthe) = X0 + lambda2d (jrho, jthe)*dxcos1
         Y   (jrho, jthe) = Y0 + lambda2d (jrho, jthe)*dxsin1
-        X2  (jrho, jthe) = X0 + lambda2dp(jrho, jthe)*dxcos1
+        r_min(jrho, jthe)= lambda2d(jrho,jthe)*dxb0(jthe)
+								X2  (jrho, jthe) = X0 + lambda2dp(jrho, jthe)*dxcos1
         Y2  (jrho, jthe) = Y0 + lambda2dp(jrho, jthe)*dxsin1
         X_i1(jrho, jthe) = X0 + lambda2di *dxcos2
         Y_i1(jrho, jthe) = Y0 + lambda2di *dxsin2
@@ -170,7 +171,7 @@ do jthe=1, ntheta
         dhdX = -dYdr2*Mdet_inv2
         drdY = -dXdh2*Mdet_inv2
         dhdY =  dXdr2*Mdet_inv2
-        gradr2 = drdX**2 + drdY**2
+        gradr2(jrho, jthe) = drdX**2 + drdY**2
         grt2   = drdX*dhdX + drdY*dhdY   ! i+1/2, j
 
         Mdet_invi1 = 1./(dXdri1*dYdhi1 - dXdhi1*dYdri1)
@@ -186,17 +187,17 @@ do jthe=1, ntheta
             grti1  (jrho, jthe) = drdX*dhdX + drdY*dhdY       ! i, j+1/2
         endif
         Jcbn  = dXdr *dYdh  - dXdh *dYdr    ! i, j
-        Jcbn2 = dXdr2*dYdh2 - dXdh2*dYdr2   ! i+1/2, j
+        Jcbn2(jrho,jthe) = dXdr2*dYdh2 - dXdh2*dYdr2   ! i+1/2, j
         Jcbni1(jrho, jthe) = dXdri1*dYdhi1 - dXdhi1*dYdri1  ! i, j+1/2
         dArea    (jrho, jthe) = Jcbn  *ddr_i(jrho)*dt_i(jthe)
-        dArea2   (jrho, jthe) = Jcbn2 *ddr  (jrho)*dt_i(jthe)
-        dArc_rp1 (jrho, jthe) = Jcbn2 *gradr2*dt_i(jthe)/X2(jrho, jthe)
-        dArc_rpt1(jrho, jthe) = Jcbn2 *grt2  *dt_i(jthe)/X2(jrho, jthe)
+        dArea2   (jrho, jthe) = Jcbn2(jrho,jthe) *ddr  (jrho)*dt_i(jthe)
+        dArc_rp1 (jrho, jthe) = Jcbn2(jrho,jthe) *gradr2(jrho,jthe)*dt_i(jthe)/X2(jrho, jthe)
+        dArc_rpt1(jrho, jthe) = Jcbn2(jrho,jthe) *grt2  *dt_i(jthe)/X2(jrho, jthe)
         dArc_tp1 (jrho, jthe) = Jcbni1(jrho, jthe)*gradhi1(jrho, jthe)*ddr_i(jrho)/X_i1(jrho, jthe)
         dArc_tpr1(jrho, jthe) = Jcbni1(jrho, jthe)*grti1  (jrho, jthe)*ddr_i(jrho)/X_i1(jrho, jthe)
         if (jrho < nrho) then
-            dArc_rm1 (jrho+1, jthe) = Jcbn2*gradr2*dt_i(jthe)/X2(jrho, jthe)
-            dArc_rmt1(jrho+1, jthe) = Jcbn2*grt2  *dt_i(jthe)/X2(jrho, jthe)
+            dArc_rm1 (jrho+1, jthe) = Jcbn2(jrho,jthe)*gradr2(jrho,jthe)*dt_i(jthe)/X2(jrho, jthe)
+            dArc_rmt1(jrho+1, jthe) = Jcbn2(jrho,jthe)*grt2  *dt_i(jthe)/X2(jrho, jthe)
         endif
     enddo
 enddo
@@ -221,3 +222,4 @@ dArc_tmr1(1, :) = 0.   ! i, j-1/2
 
 return
 end subroutine jacobians
+

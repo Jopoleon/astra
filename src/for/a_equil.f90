@@ -12,8 +12,12 @@ subroutine A_EQUIL( &
 use imas_ids, only: type_equilibrium
 use fenix_params, only: s_adapt, s_fazt
 use parameters_a2equil, only: type_parameters, fix_adapgrid, GP, GP2
+use const_inc, only : rtor,shift,updwn
+
+
 use flight_sim_geometrics, only: geom1d
 use outcmn_inc, only: MACHINE
+use astra2fbe
 
 implicit none
 
@@ -57,6 +61,8 @@ save demo_gaps
 namelist / spider / kprs, k_grids, epsros, enelss, key_plcs, &
     toric_fourc, toric_file, strahl_file, strahl_fourc, write_coils_diagn, &
     k_filessss, psplexavg, psplexavgexp, fixadapgrid
+namelist / equilef / refit_mode,solve_fix,execute_plasma,&
+ & n_of_newton_iterations
 
 !for PBE , use p and cu, key_equil=key_dmf=-10, nstep = 0 only at first iteration
 key_equil = 0
@@ -87,6 +93,12 @@ if (nstep == 0) then
     psplexavg = 0. 
     psplexavgexp = 0.
     fix_adapgrid = 0
+    refit_mode=0
+    solve_fix=0
+    execute_plasma=1
+    n_of_newton_iterations=7
+    raxis_astra=rtor+shift
+    zaxis_astra=updwn
     fname = trim(parameters_equil%prename) // 'namelist_astra.txt'
     INQUIRE( FILE=trim(fname), EXIST=file_existence) 
     if (file_existence) then
@@ -116,11 +128,11 @@ parameters_equil%enels   = enelss
 parameters_equil%key_plc = key_plcs      
 parameters_equil%key_dmf = 0
 
-if (inume_3 /= -1) parameters_equil%key_plc = 1    !force plc = 1 if current diffusion is solved
+parameters_equil%key_plc = 1    !force plc = 1 if current diffusion is solved
 keyplc = parameters_equil%key_plc
 parameters_equil%key_out = 0
 
-if (icircq == 0) nstep = 0    !no circuit equations, only static fbe
+!if (icircq == 0) nstep = 0    !no circuit equations, only static fbe !obsolete
 if (iter_step == 1) parameters_equil%k_fixfree = 0 !astra initialization, no fbe
 if (parameters_equil%k_fixfree == 0) nstep = 0  !no fbe, nstep=0
 
@@ -163,12 +175,12 @@ if (key_no_refits == 1) then
 endif 
 
 if (parameters_equil%k_fixfree == 1) then
-    ucoils(1:ncoils) = vcoils(1:ncoils)
-    parameters_equil%nstep = nstep
+        ucoils(1:ncoils)  = vcoils(1:ncoils)
+		    parameters_equil%nstep = nstep
 endif
 
 if (equil_solver == 101) then
-    call feqis_main(equil_in, equil_out) ! git: different arguments than FSIM, to be merged
+    call feqis_main(ncoils, ucoils, parameters_equil, 1, equil_in, equil_out)
 else
     call spider_run(ncoils, ucoils, equil_in, equil_out, parameters_equil)     
 endif
@@ -183,9 +195,11 @@ dampfacpsplex = 0.
 if (parameters_equil%k_fixfree == 1) then
     ipl = 1.e-6*equil_in%global_param%i_plasma
     if (parameters_equil%k_grid == 0) then
-        call psib_ext(PSIEXT)
-    else if (parameters_equil%k_grid == 1) then
-        call f_psib_ext(PSIEXT)
+  		if (equil_solver==101) then
+				call psib_ext_efff(PSIEXT)
+			else
+			  call psib_ext(PSIEXT)
+			endif
     endif
     if (ipsibcf >= 0) then     ! case with PSI_B and dPSI_B implicit 
         PSIEXT = -GP2*PSIEXT
@@ -195,9 +209,11 @@ if (parameters_equil%k_fixfree == 1) then
         psplexold = PSPLEX
     else
         if (parameters_equil%k_grid == 0) then
-            call psib_ext(PSIEXT)
-        else if (parameters_equil%k_grid == 1) then
-            call f_psib_ext(PSIEXT)
+  				if (equil_solver==101) then
+						call psib_ext_efff(PSIEXT)
+					else
+					  call psib_ext(PSIEXT)
+					endif
         endif
         PSIEXT = -GP2*PSIEXT
         PSPLEX = (dampfacpsplex*PSPLEX + equil_out%global_param%psplex)/(1. + dampfacpsplex)
@@ -205,8 +221,12 @@ if (parameters_equil%k_fixfree == 1) then
             (1. + (psplexavg*ipl**psplexavgexp)/tau_step)
         psplexold = PSPLEX
     endif
+endif
 
-! for any machine, geom1d(299) and geom1d(300) are respecetively li3 and betapol from SPIDER
+write(*,*) 'psiext and psplex',psiext,psplex
+
+
+! for any machine, geom1d(299) and geom1d(300) are respecetively li3 and betapol from equil
 
     geom1d(299) = equil_out%global_param%li3	
     geom1d(300) = equil_out%global_param%betpol	
@@ -230,11 +250,12 @@ if (parameters_equil%k_fixfree == 1) then
     amin = 0.5*(Raus - Rin)
     delr_oben = (Rgeo - Rbnd(jzmax))/amin
 
+if (parameters_equil%k_fixfree == 1) then
     if (MACHINE(1:3) == 'aug') then
         R_strike_in_aug  = 1.27
         R_strike_out_aug = 1.72
         if (equil_solver == 101) then
-!git            call get_zccurb_efff(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
+            call get_zccurb_efff(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
 	else if (equil_solver == 3) then
             call get_zccurb(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
         endif
@@ -290,8 +311,8 @@ if (parameters_equil%k_fixfree == 1) then
             jdemogaps = 1
         endif
         if (equil_solver == 101) then
-!git            call find_demo_gaps_efff(i_gaps, demo_gaps(1:i_gaps, 1:4), geom1d(94-i_gaps+1:94))
-!git            call get_zccurb_efff(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
+            call find_demo_gaps_efff(i_gaps, demo_gaps(1:i_gaps, 1:4), geom1d(94-i_gaps+1:94))
+            call get_zccurb_efff(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
         else if (equil_solver == 3) then
             call find_demo_gaps(i_gaps, demo_gaps(1:i_gaps, 1:4), geom1d(94-i_gaps+1:94))
             call get_zccurb(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
@@ -306,10 +327,10 @@ if (parameters_equil%k_fixfree == 1) then
 endif
 
 return
-end subroutine A_EQUIL
+end subroutine A_equil
 
 !---------------------------------------------------------------------
-subroutine A_EQUIL_2(ncoils, ifbey, time_a, tau_step, vcoils, eq_solver)
+subroutine A_equil_2(ncoils, ifbey, time_a, tau_step, vcoils, eq_solver)
 
 use imas_ids, only: type_equilibrium
 use parameters_a2equil, only: type_parameters
@@ -369,7 +390,7 @@ else if (eq_solver == 3) then
 endif
 
 return
-end subroutine A_EQUIL_2
+end subroutine a_equil_2
 
 !---------------------------------------------------------------------
 subroutine find_in_vec_spid(n, y, y0, is, iv)

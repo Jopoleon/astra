@@ -642,8 +642,8 @@ enddo
 
     uparo = \
 '''UPARO(ND1: NA1) = UPAR(ND1: NA1)
-QU(4) = 1.
-YWC(4)=1.
+QU(4)  = 1.
+YWC(4) = 1.
 '''
 
 
