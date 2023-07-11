@@ -972,10 +972,10 @@ def upeqn(parse, assign_type=None):
 
     if assign_type == 'Missing':
         up_txt += const_text.UPEQN.assigned
-        if 'TTRQB' in var_defined and 'UPARB' not in var_defined and 'ROU' not in var_defined:
-            up_txt += 'TTRQB\n'
-        else:
-            up_txt += 'QU(NA)\n'
+#        if 'TTRQB' in var_defined and 'UPARB' not in var_defined and 'ROU' not in var_defined:
+#            up_txt += 'TTRQB\n'
+#        else:
+#            up_txt += 'QU(NA)\n'
         return up_txt
 
 # From here, assign_type is either AS or EQ, not Missing
@@ -1024,10 +1024,10 @@ def upeqn(parse, assign_type=None):
         up_txt += pa.apptmp('UPAR', parse)
         up_txt += 'enddo\n'
         up_txt += const_text.UPEQN.assigned
-        if 'TTRQB' in var_defined and 'UPARB' not in var_defined and 'ROU' not in var_defined:
-            up_txt += 'TTRQB\n'
-        else:
-            up_txt += 'QU(NA)\n'
+#        if 'TTRQB' in var_defined and 'UPARB' not in var_defined and 'ROU' not in var_defined:
+#            up_txt += 'TTRQB\n'
+#        else:
+#            up_txt += 'QU(NA)\n'
         return up_txt
 
 # From here, assign_type = EQ
