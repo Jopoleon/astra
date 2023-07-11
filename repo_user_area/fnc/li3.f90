@@ -22,7 +22,7 @@ implicit none
 
 double precision, intent(in) :: YRO
 double precision :: YK, YR, YIPL, YWBP
-integer  J, J1, JK
+integer :: J, J1, JK
 
 if (YRO <= HRO) then
    YK = 1.

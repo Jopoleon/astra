@@ -21,7 +21,7 @@ NEQUIL   None                      Eq. solver grid [<= none, 1 freeze eq., >= 42
 NBND     None                      No. of points on the boundary
 XFLAG    None                      X
 DTEQL    s                         Time interval to recalculate equilibrium
-MEQUIL   None                      Poloidal M (for ESC), grid size (for SPIDER)
+MEQUIL   None                      Poloidal M (for ESC), grid size (for equil)
 TPAUSE   s                         Time to set "pause" mode
 TEND     s                         End time, t_end, t_start <= t <= t_end
 INUME1   None                      Numerical flag for NE, 11 is explicit, centered diff. 12 is explicit, power law, 21 is implicit, centered diff, 22 is implicit, power law. 31 is Crank
@@ -38,4 +38,4 @@ FLXDR    None                      Numerical flag for grid: 0
 SGNIP    None                      Sign of current with respect to reference system of coordinates used in Astra
 SGNBT    None                      Sign of toroidal field with respect to reference system of coordinates used in Astra
 IFBEG    None                      if 0, rectangular grid. If 1, adaptive grid in free boundary equilibrium (or chooses between different grids)
-IPEQL    None                      Numerical flag to choose equilibrium solver (0 doesnt do anything, 1 forces 3mom, 2 forces SPIDER)
+IPEQL    None                      Numerical flag to choose equilibrium solver (0 doesnt do anything, 1 forces 3mom, 4 spider, 5 feqis)
