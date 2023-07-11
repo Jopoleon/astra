@@ -16,6 +16,15 @@ then
 elif [[ $platform == "iter" ]]
 then
     module load SciPy-bundle/2020.11-intel-2020b
+elif [[ $platform == "goblin" ]]
+then
+    module load intel/18.0
+    module load nag_flib/intel/legacy-r4
+    module load nag_flib/intel/mk24 
+    module load matlab/2021b
+    export LD_LIBRARY_PATH="/afs/@cell/common/soft/intel/ics2018.4/18.0/linux/compiler/lib/intel64:/afs/ipp/u/ecrh/lib"
+    module load anaconda/3
+    ulimit
 elif [[ $platform == "cz" ]]
 then
     module load python3/anaconda3.5
