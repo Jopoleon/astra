@@ -259,39 +259,35 @@ use green_matrix
 
 implicit none
 
-integer i, j, k, ncoilz
-double precision force_R(ncoilz), force_Z(ncoilz)
-double precision x1
-integer nblock_a
-integer plasma_state
+integer, intent(in) :: ncoilz, plasma_state
+double precision, intent(out), dimension(ncoilz) :: force_R, force_Z
 
-force_R=0.
-force_Z=0.
-nblock_a=nblocks-npassive
+integer :: i, j, k, nblock_a
+double precision :: x1
+
+force_R = 0.
+force_Z = 0.
+nblock_a = nblocks - npassive
 
 write(*, *) 'coil forces', nblock_a
 
 if (plasma_state == 1) then !not sure about the plasma response...
-do i=1, nblock_a
-x1=sum(jrz(1:nr2, 1:nz2)* &
-      & area_eff(1:nr2, 1:nz2)*dgreenirpl(1:nr2, 1:nz2, i))
-force_R(i)=force_R(i)+curconduc(mequivalence(i))*x1
-x1=-sum(jrz(1:nr2, 1:nz2)* &
-      & area_eff(1:nr2, 1:nz2)*dgreenizpl(1:nr2, 1:nz2, i))
-force_Z(i)=force_Z(i)+curconduc(mequivalence(i))*x1
-enddo
+    do i=1, nblock_a
+        x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreenirpl(1:nr2, 1:nz2, i))
+        x1 = -sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreenizpl(1:nr2, 1:nz2, i))
+        force_R(i) = force_R(i) + curconduc(mequivalence(i)) * x1
+        force_Z(i) = force_Z(i) + curconduc(mequivalence(i)) * x1
+    enddo
 endif
 
 !block-to-block
 do i=1, nblock_a
-do j=1, nblock_a
-if (i /= j) then
-force_R(i)=force_R(i)+ & 
-& curconduc(mequivalence(j))*curconduc(mequivalence(i))*dgreenirj(i, j)
-force_Z(i)=force_Z(i)- & 
-& curconduc(mequivalence(j))*curconduc(mequivalence(i))*dgreenizj(i, j)
-endif
-enddo
+    do j=1, nblock_a
+        if (i /= j) then
+            force_R(i) = force_R(i) + curconduc(mequivalence(j)) * curconduc(mequivalence(i)) * dgreenirj(i, j)
+            force_Z(i) = force_Z(i) - curconduc(mequivalence(j)) * curconduc(mequivalence(i)) * dgreenizj(i, j)
+        endif
+    enddo
 enddo
 
 return
@@ -308,8 +304,7 @@ implicit none
 integer :: i, j, k
 
 do i=1, nconduc
-    psiplasmatoconduc(i) = sum(jrz(1: nr2, 1: nz2) * area_eff(1: nr2, 1: nz2) * &
-        greeni(1: nr2, 1: nz2, i))
+    psiplasmatoconduc(i) = sum(jrz(1: nr2, 1: nz2) * area_eff(1: nr2, 1: nz2) * greeni(1: nr2, 1: nz2, i))
 enddo
 
 return
@@ -322,46 +317,39 @@ use ef_circuit
 use metric_coefficients_pbe  
 
 implicit none
+real*8, intent(out) :: rc_cur, zc_cur, z2c_cur, rgeoc, zgeoc, ahorc
+real*8, intent(out), dimension(i_dim2, i_dim2) :: bpcell
+real*8 :: perimz, ahorc2, avgelem
+integer :: i, j
 
-real*8 rc_cur, zc_cur, z2c_cur
-real*8 perimz, ahorc2, ahorc, rgeoc, zgeoc
-real*8 bpcell(i_dim2, i_dim2), avgelem
-integer i, j
-real*8 sum_z2c, sum_zc, sum_rc, sum_Ipla
-
-sum_z2c=0.d0
-sum_zc=0.d0
-sum_rc=0.d0
-sum_Ipla=0.d0
- perimz=0.         
-rgeoc=0.
-zgeoc=0.
-ahorc=0.
-ahorc2=0.
-
-zc_cur=Z_curr_0D
-z2c_cur=zc_cur
-rc_cur=R_curr_0D
+perimz = 0.         
+rgeoc  = 0.
+zgeoc  = 0.
+ahorc  = 0.
+ahorc2 = 0.
+zc_cur  = Z_curr_0D
+z2c_cur = zc_cur
+rc_cur  = R_curr_0D
 
 do i=1, nrho-1
-          do j=1, nteta
- avgelem=dator(i, j) !/bpcell(i, j-1)
-perimz=perimz+avgelem
-rgeoc=rgeoc+rpol(i, j)*avgelem
-zgeoc=zgeoc+zpol(i, j)*avgelem
-          enddo
+    do j=1, nteta
+        avgelem = dator(i, j) !/bpcell(i, j-1)
+        perimz = perimz + avgelem
+        rgeoc  = rgeoc + rpol(i, j)*avgelem
+        zgeoc  = zgeoc + zpol(i, j)*avgelem
+    enddo
 enddo
-rgeoc=rgeoc/perimz
-zgeoc=zgeoc/perimz
+rgeoc = rgeoc/perimz
+zgeoc = zgeoc/perimz
 
 do i=1, nrho-1
-          do j=1, nteta
-avgelem=dator(i, j) !/bpcell(i, j-1)
-ahorc2=ahorc2+(rpol(i, j)-rgeoc)**2.*avgelem
-          enddo
+    do j=1, nteta
+        avgelem = dator(i, j) !/bpcell(i, j-1)
+        ahorc2  = ahorc2 + (rpol(i, j)-rgeoc)**2 * avgelem
+    enddo
 enddo
-ahorc2=ahorc2/perimz
-ahorc=2.*sqrt(ahorc2)
+ahorc2 = ahorc2/perimz
+ahorc = 2.*sqrt(ahorc2)
 
 return
 end subroutine get_zccurb_efff
@@ -373,27 +361,28 @@ use ef_circuit
 use green_matrix
 
 implicit none
+
 integer i, j, k, m
 integer i1, j1, k1, m1
 double precision psiext_out, dlt, dllt, dum1, dum2
 
 !cycle over boundary
-psiext_out=0.
-dllt=0.
+psiext_out = 0.
+dllt = 0.
 do i=1, nbnd-1
-call find_fields_interp_ef_psiext(rbnd(i), zbnd(i), dum1) !give back psi, br, bz at r0, z0
-call find_fields_interp_ef_psiext(rbnd(i+1), zbnd(i+1), dum2) !give back psi, br, bz at r0, z0
-dlt=sqrt((rbnd(i+1)-rbnd(i))**2.+(zbnd(i+1)-zbnd(i))**2.)
-psiext_out=psiext_out+0.5*(dum1+dum2)*dlt
-dllt=dllt+dlt
+    call find_fields_interp_ef_psiext(rbnd(i), zbnd(i), dum1) !give back psi, br, bz at r0, z0
+    call find_fields_interp_ef_psiext(rbnd(i+1), zbnd(i+1), dum2) !give back psi, br, bz at r0, z0
+    dlt = sqrt((rbnd(i+1) - rbnd(i))**2 + (zbnd(i+1) - zbnd(i))**2)
+    psiext_out = psiext_out + 0.5*(dum1 + dum2)*dlt
+    dllt = dllt + dlt
 enddo
 call find_fields_interp_ef_psiext(rbnd(nbnd), zbnd(nbnd), dum1) !give back psi, br, bz at r0, z0
 call find_fields_interp_ef_psiext(rbnd(1), zbnd(1), dum2) !give back psi, br, bz at r0, z0
-dlt=sqrt((rbnd(1)-rbnd(nbnd))**2.+(zbnd(1)-zbnd(nbnd))**2.)
-psiext_out=psiext_out+0.5*(dum1+dum2)*dlt
-dllt=dllt+dlt
+dlt = sqrt((rbnd(1) - rbnd(nbnd))**2 + (zbnd(1) - zbnd(nbnd))**2)
+psiext_out = psiext_out + 0.5*(dum1 + dum2)*dlt
+dllt = dllt + dlt
 
-psiext_out=psiext_out/dllt
+psiext_out = psiext_out/dllt
 
 write(*, *) 'psibbb', psibnd, psiext_out
 
@@ -405,7 +394,9 @@ subroutine psiplex_calc_ef(dumz)
 
 use astra2fbe
 use ef_circuit
+
 implicit none
+
 double precision dumz
 integer i, j, k
 double precision t1, t2, t3, t4, z1, z2, z3, z4
@@ -414,40 +405,38 @@ double precision arc1, arc2
 
 write(*, *) 'spid par', psplex_from_fbe
 
-if (psplex_from_fbe == 1) then
-else
-dumz=dumz
-return
+if (psplex_from_fbe /= 1) then
+    return
 endif
 
-z4=0.
-z2=0.
-do j=1, nbnd-1
-x1=rbnd(j)
-y1=zbnd(j)
-x3=rbnd(j+1)
-y3=zbnd(j+1)
-x2=0.5*(rbnd(j+1)+rbnd(j))
-y2=0.5*(zbnd(j+1)+zbnd(j))
-arc2=sqrt((x3-x1)**2.+(y3-y1)**2.)
-do i=1, nbnd-1
-x1=rbnd(i)
-y1=zbnd(i)
-x3=rbnd(i+1)
-y3=zbnd(i+1)
-arc1=sqrt((x3-x1)**2.+(y3-y1)**2.)
-call green_function(x1, y1, x2, y2, z3)
-call find_fields_interp_ef_psionly(rbnd(i)+dr/2, zbnd(i), t1)
-call find_fields_interp_ef_psionly(rbnd(i), zbnd(i)+dz/2, t2)
-call find_fields_interp_ef_psionly(rbnd(i)-dr/2, zbnd(i), t3)
-call find_fields_interp_ef_psionly(rbnd(i), zbnd(i)-dz/2, t4)
-z1=sqrt(((t3-t1)/dr)**2.+((t4-t2)/dz)**2.)
-z2=z2+z3/x1*z1*arc1*arc2
-enddo
-z4=z4+arc2
+z4 = 0.
+z2 = 0.
+do j=1,  nbnd-1
+    x1 = rbnd(j)
+    y1 = zbnd(j)
+    x3 = rbnd(j+1)
+    y3 = zbnd(j+1)
+    x2 = 0.5*(rbnd(j+1) + rbnd(j))
+    y2 = 0.5*(zbnd(j+1) + zbnd(j))
+    arc2 = sqrt((x3 - x1)**2 + (y3 - y1)**2)
+    do i=1, nbnd-1
+        x1 = rbnd(i)
+        y1 = zbnd(i)
+        x3 = rbnd(i+1)
+        y3 = zbnd(i+1)
+        arc1 = sqrt((x3 - x1)**2 + (y3 - y1)**2)
+        call green_function(x1, y1, x2, y2, z3)
+        call find_fields_interp_ef_psionly(rbnd(i) + dr/2, zbnd(i), t1)
+        call find_fields_interp_ef_psionly(rbnd(i), zbnd(i) + dz/2, t2)
+        call find_fields_interp_ef_psionly(rbnd(i) - dr/2, zbnd(i), t3)
+        call find_fields_interp_ef_psionly(rbnd(i), zbnd(i) - dz/2, t4)
+        z1 = sqrt(((t3 - t1)/dr)**2 + ((t4 - t2)/dz)**2)
+        z2 = z2 + z3/x1*z1*arc1*arc2
+    enddo
+    z4 = z4 + arc2
 enddo
 
-dumz=z2/z4*GPI2
+dumz = z2/z4*GPI2
 
 return
 end subroutine psiplex_calc_ef
@@ -498,6 +487,7 @@ subroutine find_demo_gaps_efff(ngaps, demo_gaps, geom1d)
 use ef_circuit
 
 implicit none
+
 integer ngaps, i, j
 integer n_iterz, j1, j2, j3, j4
 double precision demo_gaps(ngaps, 4), geom1d(ngaps)
@@ -699,9 +689,9 @@ implicit none
 integer i, j, k
 
 do j=1, nz2	
-do i=1, nr2	
-psiextrz(i, j)=sum(curconduc(1:nconduc)*greeni(i, j, 1:nconduc))
-enddo
+    do i=1, nr2	
+        psiextrz(i, j) = sum(curconduc(1: nconduc)*greeni(i, j, 1: nconduc))
+    enddo
 enddo
 
 return
@@ -717,108 +707,109 @@ double precision A(6, 6), B(6), cc(6), c(6), Ainv(6, 6)
 double precision  rax, zax, uax
 double precision sums(21), det, det_r, det_z
 
-sums=0.
+sums = 0.
 
-sums(1)=sum(r**4.)
-sums(2)=sum(z**4.)
-sums(3)=sum(r**2.*z**2.)
-sums(4)=sum(r**2.)
-sums(5)=sum(z**2.)
-sums(6)=n+0.
-sums(7)=sum(r**3.*z)
-sums(8)=sum(r**3.)
-sums(9)=sum(r**2.*z)
-sums(10)=sum(r*z**3.)
-sums(11)=sum(r*z**2.)
-sums(12)=sum(z**3.)
-sums(13)=sum(r*z)
-sums(14)=sum(r)
-sums(15)=sum(z)
-sums(16)=sum(u*r**2.)
-sums(17)=sum(u*z**2.)
-sums(18)=sum(u*r*z)
-sums(19)=sum(u*r)
-sums(20)=sum(u*z)
-sums(21)=sum(u)
+sums(1)  = sum(r**4)
+sums(2)  = sum(z**4)
+sums(3)  = sum(r**2 * z**2)
+sums(4)  = sum(r**2)
+sums(5)  = sum(z**2)
+sums(6)  = n + 0.
+sums(7)  = sum(r**3 * z)
+sums(8)  = sum(r**3)
+sums(9)  = sum(r**2 * z)
+sums(10) = sum(r * z**3)
+sums(11) = sum(r * z**2)
+sums(12) = sum(z**3)
+sums(13) = sum(r*z)
+sums(14) = sum(r)
+sums(15) = sum(z)
+sums(16) = sum(u * r**2)
+sums(17) = sum(u * z**2)
+sums(18) = sum(u*r*z)
+sums(19) = sum(u*r)
+sums(20) = sum(u*z)
+sums(21) = sum(u)
 
-B(1)=-2*sums(16)
-B(2)=-2*sums(17)
-B(3)=-2*sums(18)
-B(4)=-2*sums(19)
-B(5)=-2*sums(20)
-B(6)=-2*sums(21)
+B(1) = -2*sums(16)
+B(2) = -2*sums(17)
+B(3) = -2*sums(18)
+B(4) = -2*sums(19)
+B(5) = -2*sums(20)
+B(6) = -2*sums(21)
 
-A(1, 1)=4*sums(1)
-A(1, 2)=4*sums(3)
-A(1, 3)=4*sums(7)
-A(1, 4)=4*sums(8)
-A(1, 5)=4*sums(9)
-A(1, 6)=4*sums(4)
+A(1, 1) = 4*sums(1)
+A(1, 2) = 4*sums(3)
+A(1, 3) = 4*sums(7)
+A(1, 4) = 4*sums(8)
+A(1, 5) = 4*sums(9)
+A(1, 6) = 4*sums(4)
 
-A(2, 1)=A(1, 2)
-A(2, 2)=4*sums(2)
-A(2, 3)=4*sums(10)
-A(2, 4)=4*sums(11)
-A(2, 5)=4*sums(12)
-A(2, 6)=4*sums(5)
+A(2, 1) = A(1, 2)
+A(2, 2) = 4*sums(2)
+A(2, 3) = 4*sums(10)
+A(2, 4) = 4*sums(11)
+A(2, 5) = 4*sums(12)
+A(2, 6) = 4*sums(5)
 
-A(3, 1)=A(1, 3)
-A(3, 2)=A(2, 3)
-A(3, 3)=4*sums(3)
-A(3, 4)=4*sums(9)
-A(3, 5)=4*sums(11)
-A(3, 6)=4*sums(13)
+A(3, 1) = A(1, 3)
+A(3, 2) = A(2, 3)
+A(3, 3) = 4*sums(3)
+A(3, 4) = 4*sums(9)
+A(3, 5) = 4*sums(11)
+A(3, 6) = 4*sums(13)
 
-A(4, 1)=A(1, 4)
-A(4, 2)=A(2, 4)
-A(4, 3)=A(3, 4)
-A(4, 4)=4*sums(4)
-A(4, 5)=4*sums(13)
-A(4, 6)=4*sums(14)
+A(4, 1) = A(1, 4)
+A(4, 2) = A(2, 4)
+A(4, 3) = A(3, 4)
+A(4, 4) = 4*sums(4)
+A(4, 5) = 4*sums(13)
+A(4, 6) = 4*sums(14)
 
-A(5, 1)=A(1, 5)
-A(5, 2)=A(2, 5)
-A(5, 3)=A(3, 5)
-A(5, 4)=A(4, 5)
-A(5, 5)=4*sums(5)
-A(5, 6)=4*sums(15)
+A(5, 1) = A(1, 5)
+A(5, 2) = A(2, 5)
+A(5, 3) = A(3, 5)
+A(5, 4) = A(4, 5)
+A(5, 5) = 4*sums(5)
+A(5, 6) = 4*sums(15)
 
-A(6, 1)=A(1, 6)
-A(6, 2)=A(2, 6)
-A(6, 3)=A(3, 6)
-A(6, 4)=A(4, 6)
-A(6, 5)=A(5, 6)
-A(6, 6)=4*sums(6)
+A(6, 1) = A(1, 6)
+A(6, 2) = A(2, 6)
+A(6, 3) = A(3, 6)
+A(6, 4) = A(4, 6)
+A(6, 5) = A(5, 6)
+A(6, 6) = 4*sums(6)
 
 !find coefficients
 call inverse_matrix_equilef(A, Ainv, 6)
 
 do k=1, 6
-cc(k)=-2*sum(Ainv(k, 1:6)*B(1:6))
+    cc(k) = -2*sum(Ainv(k, 1: 6)*B(1: 6))
 enddo
-c(4)=cc(1)
-c(5)=cc(2)
-c(6)=cc(3)
-c(2)=cc(4)
-c(3)=cc(5)
-c(1)=cc(6)
+
+c(4) = cc(1)
+c(5) = cc(2)
+c(6) = cc(3)
+c(2) = cc(4)
+c(3) = cc(5)
+c(1) = cc(6)
 
 !  magnetic axis
 
-det=4.d0*cc(1)*cc(2)-cc(3)**2.
-det_r=-2.d0*cc(2)*cc(4)+cc(3)*cc(5)
-det_z=-2.d0*cc(1)*cc(5)+cc(3)*cc(4)
+det   =  4.d0*cc(1)*cc(2) - cc(3)**2
+det_r = -2.d0*cc(2)*cc(4) + cc(3)*cc(5)
+det_z = -2.d0*cc(1)*cc(5) + cc(3)*cc(4)
 
-rax=det_r/det
-zax=det_z/det
+rax = det_r/det
+zax = det_z/det
 
-uax=cc(1)*rax**2.+cc(2)*zax**2.+cc(3)*rax*zax+cc(4)*rax+cc(5)*zax+cc(6)
+uax = cc(1)*rax**2 + cc(2)*zax**2 + cc(3)*rax*zax + cc(4)*rax + cc(5)*zax + cc(6)
 
-derivs(1)=cc(4)
-derivs(2)=cc(5)
-derivs(3)=2.*cc(1)
-derivs(4)=2.*cc(2)
-derivs(5)=cc(3) 
+derivs(1) = cc(4)
+derivs(2) = cc(5)
+derivs(3) = 2.*cc(1)
+derivs(4) = 2.*cc(2)
+derivs(5) = cc(3) 
 
 return
 end subroutine least_square_biquad_ef
@@ -842,62 +833,62 @@ double precision det,  det_r, det_z, tolez
 
 integer niter, j_success
 
-tolez=err_find_biquad
+tolez = err_find_biquad
 
 !transformation
-x=(r-r(5))/dr		
-y=(z-z(5))/dz		
+x = (r-r(5))/dr		
+y = (z-z(5))/dz		
 
 !find coefficients
 call ainv_matrix_def(Ainv)
 
 do k=1, 9
-c(k)=sum(Ainv(k, 1:9)*u(1:9))
+    c(k) = sum(Ainv(k, 1:9)*u(1:9))
 enddo
 
-rax=x(5)
-zax=y(5)
+rax = x(5)
+zax = y(5)
 
 !now find axis
-niter=0
-s_r=100000.
-s_z=100000.
+niter = 0
+s_r = 100000.
+s_z = 100000.
 1234 continue
-niter=niter+1
-s_r2=2*C(1)*rax*zax**2 + 2*C(2)*rax*zax+C(3)*zax**2+C(4)*zax+2*C(5)*rax+C(7);
-s_z2=2*C(1)*rax**2*zax**1 + C(2)*rax**2 +2*C(3)*zax**1*rax+C(4)*rax+2*C(6)*zax+C(8);
-A(1, 1)=2*C(1)*zax**2+2*C(2)*zax+2*C(5);
-A(1, 2)=4*C(1)*rax**1*zax+2*C(2)*rax+2*C(3)*zax+C(4);
-A(2, 2)=2*C(1)*rax**2+2*C(3)*rax+2*c(6);
-A(2, 1)=4*C(1)*rax**1*zax+2*C(2)*rax+2*C(3)*zax+C(4);
-B(1)=s_r2;
-B(2)=s_z2;
-det=(A(1, 1)*A(2, 2))-(A(1, 2)*A(2, 1))
-s_r2=1/det*(A(2, 2)*B(1)-A(1, 2)*B(2))
-s_z2=1/det*(A(1, 1)*B(2)-A(2, 1)*B(1))
-rax=rax-s_r2
-zax=zax-s_z2
+niter = niter+1
+s_r2 = 2*C(1)*rax*zax**2    + 2*C(2)*rax*zax +   C(3)*zax**2     + C(4)*zax + 2*C(5)*rax + C(7)
+s_z2 = 2*C(1)*rax**2*zax +   C(2)*rax**2  + 2*C(3)*zax*rax + C(4)*rax + 2*C(6)*zax + C(8)
+A(1, 1) = 2*C(1)*zax**2+2*C(2)*zax+2*C(5)
+A(1, 2) = 4*C(1)*rax*zax+2*C(2)*rax+2*C(3)*zax+C(4)
+A(2, 2) = 2*C(1)*rax**2+2*C(3)*rax+2*c(6)
+A(2, 1) = 4*C(1)*rax*zax+2*C(2)*rax+2*C(3)*zax+C(4)
+B(1) = s_r2
+B(2) = s_z2
+det = (A(1, 1)*A(2, 2))-(A(1, 2)*A(2, 1))
+s_r2 = 1/det*(A(2, 2)*B(1)-A(1, 2)*B(2))
+s_z2 = 1/det*(A(1, 1)*B(2)-A(2, 1)*B(1))
+rax = rax-s_r2
+zax = zax-s_z2
 
-s_r2=s_r
-s_z2=s_z
-s_r=2*C(1)*rax*zax**2 + 2*C(2)*rax*zax+C(3)*zax**2+C(4)*zax+2*C(5)*rax+C(7)
-s_z=2*C(1)*rax**2*zax**1 + C(2)*rax**2 +2*C(3)*zax**1*rax+C(4)*rax+2*C(6)*zax+C(8)
+s_r2 = s_r
+s_z2 = s_z
+s_r = 2*C(1)*rax*zax**2 + 2*C(2)*rax*zax+C(3)*zax**2+C(4)*zax+2*C(5)*rax+C(7)
+s_z = 2*C(1)*rax**2*zax + C(2)*rax**2 +2*C(3)*zax*rax+C(4)*rax+2*C(6)*zax+C(8)
 
 if (abs(s_r) < tolez.and.abs(s_z) < tolez) then
-j_success=1
-goto 1235
+    j_success = 1
+    goto 1235
 endif
 if (abs(rax) > 1.) then
-j_success=0.
-goto 1235
+    j_success = 0
+    goto 1235
 endif
 if (abs(zax) > 1) then
-j_success=0.
-goto 1235
+    j_success = 0
+    goto 1235
 endif
 if (niter > 100000) then
-j_success=0.
-goto 1235
+    j_success = 0
+    goto 1235
 endif
 
 goto 1234
@@ -905,30 +896,30 @@ goto 1234
 1235 continue
 
 if (j_success == 0) then
-rax=1.e6
-zax=1.e6
-uax=-1.e6
-derivs=1.e6
-return	
+    rax =    1.e6
+    zax =    1.e6
+    uax =   -1.e6
+    derivs = 1.e6
+    return	
 endif
 
 ! magnetic axis
 
 uax = c(1)*rax**2 * zax**2 + & 
-      c(2)*rax**2 * zax**1 + &
-      c(3)*rax**1 * zax**2 + &
-      c(4)*rax**1 * zax**1 + &
-      c(5)*rax**2 * zax**0 + &
-      c(6)*rax**0 * zax**2 + &
-      c(7)*rax**1 * zax**0 + &
-      c(8)*rax**0 * zax**1 + &
-      c(9)*rax**0 * zax**0 
+      c(2)*rax**2 * zax + &
+      c(3)*rax * zax**2 + &
+      c(4)*rax * zax + &
+      c(5)*rax**2  + &
+      c(6)*zax**2 + &
+      c(7)*rax  + &
+      c(8)*zax + &
+      c(9)
 
-derivs(1)=1/dr*(2*C(1)*rax*zax**2 + 2*C(2)*rax*zax+C(3)*zax**2+C(4)*zax+2*C(5)*rax+C(7))
-derivs(2)=1/dz*(2*C(1)*rax**2*zax**1 + C(2)*rax**2 +2*C(3)*zax**1*rax+C(4)*rax+2*C(6)*zax+C(8))
-derivs(3)=1/dr**2.*(2.*c(1)*zax**2.+2*c(2)*zax+2*c(5))
-derivs(4)=1/dz**2.*(2.*c(1)*rax**2.+2*c(3)*rax+2*c(6))
-derivs(5)=1/dr/dz*(4*c(1)*rax*zax+2*c(2)*rax+2*c(3)*zax+c(4)) 
+derivs(1) = 1/dr*(2*C(1)*rax*zax**2    + 2*C(2)*rax*zax+C(3)*zax**2+C(4)*zax+2*C(5)*rax+C(7))
+derivs(2) = 1/dz*(2*C(1)*rax**2*zax + C(2)*rax**2 +2*C(3)*zax*rax+C(4)*rax+2*C(6)*zax+C(8))
+derivs(3) = 1/dr**2*(2.*c(1)*zax**2+2*c(2)*zax+2*c(5))
+derivs(4) = 1/dz**2*(2.*c(1)*rax**2+2*c(3)*rax+2*c(6))
+derivs(5) = 1/dr/dz*(4*c(1)*rax*zax+2*c(2)*rax+2*c(3)*zax+c(4)) 
  
 rax=rax*dr+r(5)
 zax=zax*dz+z(5)
@@ -970,14 +961,14 @@ rax=xx
 zax=yy
 
 !now find axis
-s_r2=2*C(1)*rax*zax**2 + 2*C(2)*rax*zax+C(3)*zax**2+C(4)*zax+2*C(5)*rax+C(7);
-s_z2=2*C(1)*rax**2*zax**1 + C(2)*rax**2 +2*C(3)*zax**1*rax+C(4)*rax+2*C(6)*zax+C(8);
-A(1,1)=2*C(1)*zax**2+2*C(2)*zax+2*C(5);
-A(1,2)=4*C(1)*rax**1*zax+2*C(2)*rax+2*C(3)*zax+C(4);
-A(2,2)=2*C(1)*rax**2+2*C(3)*rax+2*c(6);
-A(2,1)=4*C(1)*rax**1*zax+2*C(2)*rax+2*C(3)*zax+C(4);
-B(1)=s_r2;
-B(2)=s_z2;
+s_r2=2*C(1)*rax*zax**2 + 2*C(2)*rax*zax+C(3)*zax**2+C(4)*zax+2*C(5)*rax+C(7)
+s_z2=2*C(1)*rax**2*zax + C(2)*rax**2 +2*C(3)*zax*rax+C(4)*rax+2*C(6)*zax+C(8)
+A(1,1)=2*C(1)*zax**2+2*C(2)*zax+2*C(5)
+A(1,2)=4*C(1)*rax*zax+2*C(2)*rax+2*C(3)*zax+C(4)
+A(2,2)=2*C(1)*rax**2+2*C(3)*rax+2*c(6)
+A(2,1)=4*C(1)*rax*zax+2*C(2)*rax+2*C(3)*zax+C(4)
+B(1)=s_r2
+B(2)=s_z2
 det=(A(1,1)*A(2,2))-(A(1,2)*A(2,1))
 s_r2=1/det*(A(2,2)*B(1)-A(1,2)*B(2))
 s_z2=1/det*(A(1,1)*B(2)-A(2,1)*B(1))
@@ -985,22 +976,22 @@ rax=rax-s_r2
 zax=zax-s_z2
 
 s_r=2*C(1)*rax*zax**2 + 2*C(2)*rax*zax+C(3)*zax**2+C(4)*zax+2*C(5)*rax+C(7)
-s_z=2*C(1)*rax**2*zax**1 + C(2)*rax**2 +2*C(3)*zax**1*rax+C(4)*rax+2*C(6)*zax+C(8)
+s_z=2*C(1)*rax**2*zax + C(2)*rax**2 +2*C(3)*zax*rax+C(4)*rax+2*C(6)*zax+C(8)
 
 uax = c(1)*rax**2 * zax**2 + & 
-      c(2)*rax**2 * zax**1 + &
-      c(3)*rax**1 * zax**2 + &
-      c(4)*rax**1 * zax**1 + &
-      c(5)*rax**2 * zax**0 + &
-      c(6)*rax**0 * zax**2 + &
-      c(7)*rax**1 * zax**0 + &
-      c(8)*rax**0 * zax**1 + &
-      c(9)*rax**0 * zax**0 
+      c(2)*rax**2 * zax + &
+      c(3)*rax * zax**2 + &
+      c(4)*rax * zax + &
+      c(5)*rax**2 + &
+      c(6)*zax**2 + &
+      c(7)*rax    + &
+      c(8)*zax + &
+      c(9)
 
 derivs(1)=1/dr*(2*C(1)*rax*zax**2 + 2*C(2)*rax*zax+C(3)*zax**2+C(4)*zax+2*C(5)*rax+C(7))
-derivs(2)=1/dz*(2*C(1)*rax**2*zax**1 + C(2)*rax**2 +2*C(3)*zax**1*rax+C(4)*rax+2*C(6)*zax+C(8))
-derivs(3)=1/dr**2.*(2.*c(1)*zax**2.+2*c(2)*zax+2*c(5))
-derivs(4)=1/dz**2.*(2.*c(1)*rax**2.+2*c(3)*rax+2*c(6))
+derivs(2)=1/dz*(2*C(1)*rax**2*zax + C(2)*rax**2 +2*C(3)*zax*rax+C(4)*rax+2*C(6)*zax+C(8))
+derivs(3)=1/dr**2*(2.*c(1)*zax**2+2*c(2)*zax+2*c(5))
+derivs(4)=1/dz**2*(2.*c(1)*rax**2+2*c(3)*rax+2*c(6))
 derivs(5)=1/dr/dz*(4*c(1)*rax*zax+2*c(2)*rax+2*c(3)*zax+c(4)) 
  
 rax=rax*dr+r(5)
@@ -1469,7 +1460,7 @@ function dk_dr1(r1, r2, z1, z2)  !identical do dk_dr2
 double precision,  intent(in) :: r1, r2, z1, z2
 double precision :: dk_dr1, f
 
-f=((r2+r1)**2.+(z2-z1)**2.)
+f=((r2+r1)**2+(z2-z1)**2)
 dk_dr1 = sqrt(r2/r1)*sqrt(f)-2*sqrt(r1*r2)*(r1+r2)*f**(-1.5)
 
 return 
@@ -1481,7 +1472,7 @@ function dk_dz1(r1, r2, z1, z2)  !identical to -dk_dz2
 double precision,  intent(in) :: r1, r2, z1, z2
 double precision :: dk_dz1, f
 
-f=((r2+r1)**2.+(z2-z1)**2.)
+f=((r2+r1)**2+(z2-z1)**2)
 dk_dz1 = -2*sqrt(r1*r2)*(z1-z2)*f**(-1.5)
 
 return 
@@ -1497,17 +1488,17 @@ double precision TT, K, ELCK, ELCE, ellk_green, elle_green
 double precision s21bbf, s21bcf, acl, alg
 integer ifailk, ifaile
 
-K=sqrt(4.*r1*r2/ ((r2+r1)**2.+(z2-z1)**2.))
+K=sqrt(4.*r1*r2/ ((r2+r1)**2+(z2-z1)**2))
 
-TT = 1.-K**2.
+TT = 1.-K**2
 
 acl=tt
 alg=dlog(acl)
 
 ELCK=ellK_green(acl, alg) !              S21BBF(0.D0, TT, 1.D0, IFAILK)
-ELCE=ellE_green(acl, alg) ! ELCK-K**2./3.D0*S21BCF(0.D0, TT, 1.D0, IFAILE)
+ELCE=ellE_green(acl, alg) ! ELCK-K**2/3.D0*S21BCF(0.D0, TT, 1.D0, IFAILE)
 
-greenf = ( (1.D0-K**2./2.)*ELCK-ELCE )*( SQRT(r1*r2)/K )
+greenf = ( (1.D0-K**2/2.)*ELCK-ELCE )*( SQRT(r1*r2)/K )
 
 return
 end subroutine green_function
@@ -1526,19 +1517,19 @@ integer ifailk, ifaile
 if (abs(r1-r2) < 1.e-6.and.abs(z1-z2) < 1.e-6) then
 
 tt=dl/(4*R0)
-greenf=-tt*(log(tt**2.)-4*log(2.)+2.)/4.*8.*r0**2./dl/2.	  !as in lackner code !this one works
+greenf=-tt*(log(tt**2)-4*log(2.)+2.)/4.*8.*r0**2/dl/2.	  !as in lackner code !this one works
 else
-K=sqrt(4.*r1*r2/ ((r2+r1)**2.+(z2-z1)**2.))
+K=sqrt(4.*r1*r2/ ((r2+r1)**2+(z2-z1)**2))
 
-TT = 1.-K**2.
+TT = 1.-K**2
 
 acl=tt
 alg=dlog(acl)
 
 ELCK=ellK_green(acl, alg) !              S21BBF(0.D0, TT, 1.D0, IFAILK)
-ELCE=ellE_green(acl, alg) ! ELCK-K**2./3.D0*S21BCF(0.D0, TT, 1.D0, IFAILE)
+ELCE=ellE_green(acl, alg) ! ELCK-K**2/3.D0*S21BCF(0.D0, TT, 1.D0, IFAILE)
 
-greenf = ( (1.D0-K**2./2.)*ELCK-ELCE )*( SQRT(r1*r2)/K )
+greenf = ( (1.D0-K**2/2.)*ELCK-ELCE )*( SQRT(r1*r2)/K )
 endif
 
 return
@@ -1721,8 +1712,8 @@ integer nsteps, i
 
 call find_angle_ef(rax, zax, rx, zx, angl)
 
-dbl=sqrt((rx-rax)**2.+(zx-zax)**2.)
-dd=sqrt(dr**2.+dz**2.)
+dbl=sqrt((rx-rax)**2+(zx-zax)**2)
+dd=sqrt(dr**2+dz**2)
 nsteps=nint(dbl/dd)
 dd=dbl/nsteps !perfect ratio	
 
@@ -1827,7 +1818,7 @@ double precision posx(2), x1, tolez, toleb, rx(20), zx(20)
 double precision ddipsi(5), bx0, bx1, bx2
 integer jcycl(250), istart
 
-bx1=sqrt(dr**2.+dz**2.)
+bx1=sqrt(dr**2+dz**2)
 tolez=1000
 rx=1000.
 zx=1000.
@@ -1872,7 +1863,7 @@ if (jinc >= 2) then
 !remove double counts
 do i=2, jinc
 call nine_point_regression_follow(rbnd(jcycl(i)), zbnd(jcycl(i)), posx, ddipsi, x1)
-bx0=sqrt((rx(i-1)-posx(1))**2.+(zx(i-1)-posx(2))**2.)
+bx0=sqrt((rx(i-1)-posx(1))**2+(zx(i-1)-posx(2))**2)
 if (bx0 <= bx1) then
 else
 n_add=n_add+1
