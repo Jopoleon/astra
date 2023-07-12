@@ -2,7 +2,7 @@ NEQUIL=91;
 MEQUIL=90;
 !MEQUIL=0;
 
-atreq = .5;
+atreq = .005;
 
 IPL=IPLX;
 SGNIP= 1.;
