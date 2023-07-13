@@ -43,7 +43,7 @@ double precision, allocatable, dimension(:) :: Rrect, zrect
 double precision :: psi_sep, psi_axis, rmag, zmag
 double precision :: R_max, R_min, z_max, z_min, dr, dz, drho_eq
 double precision :: part_mix(nspc, nnb_max), dt_in, output_timing 
-double precision :: tim_prev=-1.d0
+double precision :: tim_prev=-1.d0, dumba1, dumba2
 
 double precision, dimension(:), allocatable :: pf_eq, rho_eq
 double precision, allocatable, dimension(:, :) :: r_surf, z_surf
@@ -258,6 +258,10 @@ if (flightsim == 0) then
          n_Rrect, n_Zrect, Rrect, zrect, PSI_rect)
 else
     psi_rect = equil_now%eqgeometry%rectgrid%psirz2d(1:n_Rrect, 1:n_Zrect)
+    dumba1 = equil_now%eqgeometry%rectgrid%psi_axis
+    dumba2 = equil_now%eqgeometry%rectgrid%psi_boundary
+    psi_rect = (psi_rect - dumba1)/(dumba2 - dumba1)
+    psi_rect = (psi_sep - psi_axis)*psi_rect + psi_axis
 endif
 
 call rabbit_lib_set_sp_plasma_ratio(species_plasma_ratio, size(species_plasma_ratio))
