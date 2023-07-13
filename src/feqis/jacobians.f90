@@ -105,7 +105,7 @@ do jthe=1, ntheta
         X   (jrho, jthe) = X0 + lambda2d (jrho, jthe)*dxcos1
         Y   (jrho, jthe) = Y0 + lambda2d (jrho, jthe)*dxsin1
         r_min(jrho, jthe)= lambda2d(jrho,jthe)*dxb0(jthe)
-								X2  (jrho, jthe) = X0 + lambda2dp(jrho, jthe)*dxcos1
+        X2  (jrho, jthe) = X0 + lambda2dp(jrho, jthe)*dxcos1
         Y2  (jrho, jthe) = Y0 + lambda2dp(jrho, jthe)*dxsin1
         X_i1(jrho, jthe) = X0 + lambda2di *dxcos2
         Y_i1(jrho, jthe) = Y0 + lambda2di *dxsin2
@@ -222,4 +222,3 @@ dArc_tmr1(1, :) = 0.   ! i, j-1/2
 
 return
 end subroutine jacobians
-

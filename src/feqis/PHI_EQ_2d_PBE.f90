@@ -1,11 +1,11 @@
 subroutine PHI_EQ_2d_PBE(nrho, ntheta, psin_grid_in, iplasma, &
     ffprimp, pprimp, rbphi, Rb, Zb, Rax, Zax, psiax_in, PSIb, &
-				solve_fix, i_prevc, &
+    solve_fix, i_prevc, &
 ! Output
     XX, YY, PSI, &
     psin_grid, lambda2d, thetap_out, &
     psiax, cnorm, X0, Y0, thetap_i_out, rmaj2, jcbn2, q_new, rhoedge, &
-				darea2,epprim_out,efprim_out,r_min, yy2, gradr2)
+    darea2,epprim_out,efprim_out,r_min, yy2, gradr2)
 
 use pi_vars, only: GPI, GPI2, GPI4, muvac
 implicit none
@@ -32,8 +32,7 @@ double precision, dimension(nrho) :: ddr, ddr_i, PSIn_gridp, effprimp, epprimp, 
     fpol, fpol2, phi_flux
 double precision, dimension(ntheta) :: dtp, dtm, dt_i
 double precision, dimension(ntheta+1) :: thetap, thetap_i
-double precision, dimension(nrho, ntheta) :: dArea, lambda2dp, &
-    known_term, &
+double precision, dimension(nrho, ntheta) :: dArea, lambda2dp, known_term, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1
 double precision :: gpsi(2*ntheta+1), work(2*(2*ntheta+1)*6), matrix(2*ntheta+1, 6)
@@ -45,14 +44,14 @@ psin_grid = psin_grid_in
 do jrho=1, nrho
     epprimp(jrho)  = -GPI4*muvac*pprimp(jrho)
     effprimp(jrho) = -GPI4*ffprimp(jrho)
-				if (i_prevc == 0) then
-       lambda2d(jrho, :) = (jrho - 1.)/(nrho - 1.)
-       PSI(jrho, :) = psin_grid(jrho)
+    if (i_prevc == 0) then
+        lambda2d(jrho, :) = (jrho - 1.)/(nrho - 1.)
+        PSI(jrho, :) = psin_grid(jrho)
     endif
 enddo
 do jrho=1, nrho-1
     psin_gridp(jrho) = 0.5*(psin_grid(jrho+1) + psin_grid(jrho))
-    lambda2dp(jrho,:) = 0.5*(lambda2d(jrho+1,:) + lambda2d(jrho,:))
+    lambda2dp(jrho, :) = 0.5*(lambda2d(jrho+1, :) + lambda2d(jrho, :))
 enddo
 
 X0  = Rax
@@ -65,9 +64,13 @@ jthe_axis = 1
 
 psiax = psiax_in
 
-if (solve_fix.gt.0)	max_iter=solve_fix
-if (solve_fix.le.0)	max_iter=500
-if (solve_fix.eq.-2)	max_iter=500  ! uses fbe
+if (solve_fix > 0) then
+    max_iter = solve_fix
+else if (solve_fix == -2) then
+    max_iter=500  ! uses fbe
+else
+    max_iter=500
+endif
 
 iter_loop: do jiter=1, max_iter
 
@@ -80,17 +83,17 @@ iter_loop: do jiter=1, max_iter
                 (psin_grid(jrho+2) - psin_grid(jrho)) * (psib - psiax))
         enddo
         fpol2(1) = 0.
-								phi_flux(1) = 0.
+        phi_flux(1) = 0.
         do jrho=2, nrho ! toroidal flux on full grid
             dphi = fpol(jrho-1) * sum(dArea2(jrho-1, :)/Rmaj2(jrho-1, :))
             phi_flux(jrho)=phi_flux(jrho-1)+dphi
             qhalf = dphi/(psin_grid(jrho) - psin_grid(jrho-1))
-   	 							q_new(jrho-1)=qhalf/(psib-psiax)
+            q_new(jrho-1)=qhalf/(psib-psiax)
             fpol2(jrho) = fpol2(jrho-1) + (2.*jrho - 3.)/qhalf
         enddo
-								
-								rhoedge = sqrt(phi_flux(nrho)/GPI)
-								
+
+        rhoedge = sqrt(phi_flux(nrho)/GPI)
+
         psin_grid = 0.5*psin_grid + 0.5*fpol2/fpol2(nrho)
         do jrho=1, nrho-1
             psin_gridp(jrho) = 0.5*(psin_grid(jrho+1) + psin_grid(jrho))
@@ -187,8 +190,8 @@ iter_loop: do jiter=1, max_iter
     endif
 enddo iter_loop
 
-thetap_out = thetap(1: ntheta)
-thetap_i_out = thetap_i(1:ntheta)
+thetap_out   = thetap  (1: ntheta)
+thetap_i_out = thetap_i(1: ntheta)
 epprim_out = epprimp
 efprim_out = effprimp
 
