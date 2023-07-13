@@ -226,7 +226,6 @@ MEQUIL =  5.100E+01
 ICIRCQ =  1.
 ITFBE  =  2.5
 IPCTRL =  0
-TPAUSE =  2.49
 IPEQL  =  5.
  Color table (description in for/outcmn.inc):          32
    0   0     50   0      3   0     62   0

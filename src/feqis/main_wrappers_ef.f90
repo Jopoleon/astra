@@ -62,7 +62,7 @@
 	if (fast_mode.eq.1.and.execute_plasma.eq.1) then
 		psi_cur_old(1:nconduc)=psiplasmatoconduc(1:nconduc)
  		call psi_external_calc_ef
-		call solve_gse2d_fbe_full_ef_1turn(1,0,0.,0.)	
+		call solve_gse2d_fbe_full_ef_1turn(1,0,0.d0,0.d0)	
 		call plasma_psi_to_coils_ef
 	endif
 
@@ -82,7 +82,7 @@
 		!open(32,file='fort.44987')
 		!write(32,*) psiextrz(1:nr2,1:nz2)
 		!close(32)
-		call solve_gse2d_fbe_full_ef_1turn(1,0,0.,0.)	
+		call solve_gse2d_fbe_full_ef_1turn(1,0,0.d0,0.d0)	
 		call plasma_psi_to_coils_ef
 	endif
 
@@ -156,26 +156,6 @@ end
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	subroutine solve_gse2d_fbe_full_ef(j_init)	
 
 	use ef_circuit
@@ -211,7 +191,7 @@ end
 
 
 	if (refit_mode.eq.-1) then ! 1 turn only
-		call solve_gse2d_fbe_full_ef_1turn(j_init,0,0.,0.)	
+		call solve_gse2d_fbe_full_ef_1turn(j_init,0,0.d0,0.d0)	
 		return
 	endif
 
@@ -583,7 +563,6 @@ end
 	return
 	end
 
-	
 	
 	
 	subroutine restab_F_function_full_fonfit
@@ -1025,7 +1004,6 @@ end
 
 	
 	
-	
 
 !	write(*,*) 'stop here5'
 !	open(32,file='fort.4447')
@@ -1291,7 +1269,6 @@ end
 
 	
 	
-	
 
 !	write(*,*) 'stop here5'
 !	open(32,file='fort.4447')
@@ -1406,20 +1383,6 @@ end
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	subroutine solve_gse2d_fbe_full_ef_1turn(j_init,j_stab,raxold,zaxold)	
 
 	use ef_circuit
@@ -1470,8 +1433,6 @@ end
 	
 	
 	
-	
-	
 
 
 		!open(32,file='fort.44490')
@@ -1508,7 +1469,6 @@ end
 	
 
 
-	
 	
 	
 
@@ -1572,7 +1532,6 @@ end
 	endif
 	CALL CPU_TIME(tup)
 	write(*,*) tup-tin	
-	
 	
 
 	write(*,*) 'stop here41'
@@ -2067,51 +2026,6 @@ end
 	
 	
 	
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -2354,6 +2268,8 @@ end
 	nblocks=ncoils+npassive
 
 ! load everything from file
+        write(*, *) 'main_wrappers, DATA_DIR', trim(data_dir)
+        call generate_files_feqis(data_dir) ! GIT
 	open(32,file=trim(data_dir)//'induc_matrix.dat')	
 	read(32,*) nconduc
 	do i=1,nconduc	
@@ -2847,7 +2763,6 @@ endif
 !		write(32,'(24E25.11)') teta(i),rbndp(i),zbndp(i)
 !	enddo
 !	close(32)	
-	
 	
 	return
 	end
