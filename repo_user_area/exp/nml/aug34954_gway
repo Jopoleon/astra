@@ -146,12 +146,90 @@
 
 /
 
-&equilef
-   refit_mode=0
-   solve_fix=0
-   execute_plasma=1
-   nonegcurr=0
-   n_of_newton_iterations=7
-   raxis_astra=9.
-   zaxis_astra=0.
+&spider
+
+   kprs = 0
+   k_grids = 0
+   epsros = 1.d-9
+   enelss  = 1.d-7
+   key_plcs = 1
+   toric_fourc = 11
+   toric_file = 0
+   torba_file = 0
+   strahl_file = 0
+   eqdsk_file = 0
+   strahl_fourc = 4
+   write_coils_diagn = 0
+   k_filessss = 0
+/
+
+&spider_settings
+
+   time_fix_eqpff = 0.0021
+   fix_eqpf_eqff = 0
+   cheb_degree = 5
+   spidat_yes = 1
+   iter_one_only_fbe = 0
+   advanced_methods = 3
+   i3method = 3
+   diagnostic_gsef = 0
+   do_adcmp = 0
+   urelax = 0.5
+   urelax2 = 0.1
+   murelax2 = 0.2
+   ydiff = 1.e2
+   ydiff2 = 1.
+   max_iter = 10000
+   miter_ext = 1
+   interp_routine = 2
+   interp_method_rect = 4
+   epsf_tol = 1.e-9
+   epss_tol = 1.e-5
+   epsv_tol = 1.e-5
+   epsg_tol = 1.e-8
+   key_no_startz = 0
+   key_no_refits = 0
+
+/
+
+&strahl_par
+   tau_strahl = 5.e-5
+   rho_coord = 'poloidal rho'
+   ne_decayl = 2.
+   te_decayl = 2.
+   ti_decayl = 2.
+   nfour_c = 3
+   nimp_touse = 2
+   elements_touse(1) = 'H_', 'N_'
+   aweight(1) = 1., 14.
+   eneutr(1) = 0.05, 0.1
+   ridecay(1) = 2., 2.
+   irecycl(1) = 0, 0
+   wrecycl(1) = 0., 0.
+   diffname1_s = ''
+   z_K = 8.
+   n_grids = 105
+   zdr_0 = 2.0
+   zdr_1 = 0.02
+   rsources(1) = 2., 2.
+   rrates(1) = 1.E+16, 2.E+19
+   trates(1) = 0., 0.
+   ineocla = 0
+   rneocl = 0.7
+   divpuff(1) = 0., 0.
+   swincm(1)  = 0., 0.
+   swoutcm(1) = 0., 0.
+   promptredep(1) = 0., 0.
+   taudiv(1) = 1.E+09, 1.E+09
+   taupump(1) = 1., 1.
+   rbrlcfs   = 4.
+   rlimrlcfs = 4.
+   todivert = 20.
+   tolimiter = 6.0
+   solflow = 0.
+   addsheathvoltage = 0.
+   solrout1 = 1.
+   solrout2 = 1.05
+   solrout3 = 1.3
+   solrout4 = 1.5
 /
