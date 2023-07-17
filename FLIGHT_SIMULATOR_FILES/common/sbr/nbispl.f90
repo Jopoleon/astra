@@ -4,6 +4,7 @@
 	use const_inc
 	use status_inc
 	use outcmn_inc
+	use fs_coupling_variables, only: fs_pow_NB, fs_pow_EC, fs_pol_EC
 
 	implicit none
 
@@ -41,7 +42,9 @@
 	QECR=sum(car32(1:8))
 	QICR=sum(car32(25:26))
 
-
+	fs_pow_NB(1:8)=car32(17:24)
+	fs_pow_EC(1:8)=car32(1:8)
+	fs_pol_EC(1:8)=car32(9:16)
 
 !NBI model	done by rabbit.f
 !	write(*,*) 'qnbi ',qnbi

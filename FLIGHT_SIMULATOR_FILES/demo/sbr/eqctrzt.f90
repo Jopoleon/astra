@@ -7,14 +7,15 @@
 	use const_inc
 	use status_inc
 	use outcmn_inc
-
+	use    astra2fbe , only:  	dr_factor_init_astra,dz_factor_init_astra
+	
 
 	implicit none
 !	include	'for/parameter.inc'
 !	include 'for/const.inc'
 !	include 'for/status.inc'
 !	include 'for/outcmn.inc'
-	include 'tmp/declar.fnc'
+!	include 'tmp/declar.fnc'
 
 	integer ictrl,i,j
 	double precision r_mag,z_mag,icur,voltaz(15)
@@ -50,6 +51,9 @@
 
 !	include 'dat/fenixparams.var'
 !!!
+!factors of dr and dz for initial iterations
+	dr_factor_init_astra=0.1
+	dz_factor_init_astra=0.1
 
 	eq_cmd=0		
 	dteqz2=TAU

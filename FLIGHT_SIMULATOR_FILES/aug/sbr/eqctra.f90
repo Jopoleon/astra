@@ -10,7 +10,7 @@
 	use flight_sim_geometrics
 
 	use debugger, only: flightsim
-	use exchange_with_astra, only: cur_init
+	use astra2fbe, only: cur_init
 
 	implicit none
 

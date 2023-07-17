@@ -2,7 +2,7 @@
 	subroutine EQCTST !copy this to sbr/
 !C
 !C----------------------------------------------------------------------|
-	use  exchange_with_astra       ! declaration of minimal CPOs
+	use  astra2fbe       ! declaration of minimal CPOs
 	use parameter_inc
 	use const_inc
 	use status_inc
@@ -145,6 +145,10 @@
 		cur_init(13:52)=0.
 	endif
 
+
+	if (TIME.gt.2.52) fast_mode=1
+
+	machine_description=trim(machine)
 
 	write(*,*) 'eqtime',time,fast_mode,execute_plasma,tau_gseq_ef,ncnb,ncnbt,cur_init(1:12)
 	write(*,*) V_95_POS(1./mu(1:na1))

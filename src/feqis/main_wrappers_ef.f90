@@ -87,10 +87,10 @@
 	endif
 
 	error_temp=sum(abs(cur_temp(1:nconduc)-curconduc(1:nconduc)))/(nconduc+err_epsilon)/iplasma
-	if (j_iter.gt.100) then
-		write(*,*) 'oscillating solution'
-		error_temp=0.99*err_circ_plasma_iter
-	endif
+!	if (j_iter.gt.100) then
+!		write(*,*) 'oscillating solution'
+!		error_temp=0.99*err_circ_plasma_iter
+!	endif
 
 	if (j_iter.eq.1.and.fast_mode.eq.0) then
 		error_temp=100.
@@ -282,7 +282,7 @@ end
 	endif
 	
 !	write(2222,*) ' '
-!	write(2222,*) j_iter2,j_cyclo,raxoldo,zaxoldo,raxold,zaxold,psistabr,psistabz,dcrdr,dcrdz,dczdr,dczdz,cibapr,cibazr,det,dist1,dist2,dr_factor_init
+!	write(2222,*) j_iter2,j_cyclo,raxoldo,zaxoldo,raxold,zaxold,psistabr,psistabz,dcrdr,dcrdz,dczdr,dczdz,cibapr,cibazr,det,'dist',dist1,dist2,dr_factor_init,'cur',cur_init(1:15),'dds',dr,dz
 
 !	pause
 !	raxoldo=raxold
@@ -295,7 +295,7 @@ end
 	redo_bnd=1
 
 
-	do j_iter=1,100000000
+	do j_iter=1,10000
 
 	raxtmp=trax
 	zaxtmp=tzax
@@ -308,20 +308,20 @@ end
 	temp_err=(abs(psro-psistabr)+abs(pszo-psistabz))
 
 !	write(*,*)  'psistab',j_iter,raxold,zaxold,rax,zax,temp_err,psistabR,psistabZ
-!	write(444,'(8E25.11)')  trax,tzax,rax,zax,psistabR,psistabZ
+!	write(444,'(8E25.11)')  trax,tzax,rax,zax,psistabR,psistabZ,temp_err
 	
 	if (temp_err.le.err_find_psistab)	goto 941
 
-	if (j_iter.ge.400) then	
-		write(*,*) 'oscillating solution'
-		pause	
-	endif
+!	if (j_iter.ge.400) then	
+!		write(*,*) 'oscillating solution'
+!		pause	
+!	endif
 	
 	psro=psistabr
 	pszo=psistabz
 	
 	enddo
-	write(*,*) 'total iterations passed!'
+	write(*,*) 'total iterations passed, stopping!'
 	stop
 	return
 
@@ -444,7 +444,7 @@ end
 	redo_bnd=1
 
 
-	do j_iter=1,100000000
+	do j_iter=1,10000
 
 	raxtmp=trax
 	zaxtmp=tzax
@@ -461,10 +461,10 @@ end
 	
 	if (temp_err.le.err_find_psistab)	goto 9411
 
-	if (j_iter.ge.400) then	
-		write(*,*) 'oscillating solution'
-		pause	
-	endif
+!	if (j_iter.ge.400) then	
+!		write(*,*) 'oscillating solution'
+!		pause	
+!	endif
 	
 	psro=psistabr
 	pszo=psistabz
@@ -594,7 +594,6 @@ end
 	double precision invmatrix(nconduc,nconduc)
 	double precision Fderiv(nconduc),Ffunc,Ffunc_old
 	integer info,whichcoil
-	double precision sigma_B, sigma_axis,sigma_coils(nconduc)
 	double precision curref(nconduc),curnow(nconduc),curdiff(nconduc)
 	double precision raxref,zaxref,rbref(500),zbref(500)
 	data cum1/0./
@@ -635,12 +634,12 @@ end
 	
 
 !read efonfit.dat
-	open(32,file=trim(data_dir)//'efonfit.dat')
+!	open(32,file=trim(data_dir)//'efonfit.dat') ! this will come from astra
 	!read sigma_B, sigma_axis, sigma_coils
-	read(32,*) sigma_B, sigma_axis
-	read(32,*) sigma_coils(1:nactive)  !active conductors
-	read(32,*) sigma_coils(nactive+1)  !passive conductors
-	close(32) 
+!	read(32,*) sigma_B, sigma_axis
+!	read(32,*) sigma_coils(1:nactive)  !active conductors
+!	read(32,*) sigma_coils(nactive+1)  !passive conductors
+!	close(32) 
 	sigma_coils(nactive+1:nconduc)=sigma_coils(nactive+1)
 
 	curref(1:nconduc)=curconduc(1:nconduc)
@@ -769,7 +768,7 @@ end
 	x3 = (bub(4)-bub(3))/dz ! psiz
 
 
-	Ffunc=sigma_B*sum((psicorr-x1)**2.)+sum(sigma_coils*curdiff**2.)+sigma_axis*(x2**2.+x3**2.)
+	Ffunc=sigma_B*sum((psicorr-x1)**2.)+sum(sigma_coils(1:nconduc)*curdiff**2.)+sigma_axis*(x2**2.+x3**2.)
 
 !calculate F derivative
 	do i=1,nconduc
@@ -2052,7 +2051,7 @@ end
 
 	use ef_circuit
 	use green_matrix
-	use astra2fbe, only: cur_init
+	use astra2fbe, only: cur_init,machine_description
 		
 	implicit none
 
@@ -2074,44 +2073,20 @@ end
 	integer equivtmp(5200)
 	integer equivforce(5200)
 	double precision tatmp(5200)
+	character(80) fname
+	
+	
+	fname='exp/cnf/machine_description_out.'//trim(machine_description)
+	open(32,file=fname)
 
-
-
-
-	open(32,file=trim(data_dir)//'refit_ef.dat')
-	read(32,*) nr_of_fit_parameters     ! nr of fit parameters from rmag to zxp_fit
-	read(32,*) rmag_fit   ! R mag axis
-	read(32,*) zmag_fit ! Z mag axis
-	read(32,*) k_fit ! elongation at mag axis
-	read(32,*) rxp_fit ! X point R
-	read(32,*) zxp_fit ! X point Z
-	close(32)
-
-
-	open(32,file=trim(data_dir)//'data.dat')
-	read(32,*) j_files
-	read(32,*) nr
-	read(32,*) nz
+	read(32,*) nr,nr2,nr1
+	read(32,*) nz,nz2,nz1
 	read(32,*) rmin
 	read(32,*) rmax
 	read(32,*) zmin
 	read(32,*) zmax
 	read(32,*) alpsep
-	close(32)
-	j_files=1	
 
-!compatibility with spier
-! in spider ni=65, ni1=64
-	nr=nr-2  !because for spider its 65,65 for example, but here its 63,63
-	nz=nz-2  ! this was -1 before!!!!!
-
-
-
-!define grid
-	nr2=nr+2
-	nz2=nz+2
-	nr1=nr+1
-	nz1=nz+1
  do i=1,nr2
  	r(i)=rmin+(i-1.)*(rmax-rmin)/nr1     ! computational domain is r(2:nr+1), boundaries are r(1) and r(nr+2)
  enddo
@@ -2130,186 +2105,41 @@ end
 		enddo
 		enddo
 
-
-!load coils
-	r_cond=0.
-	z_cond=0.
-	numeqcump=0
-	open(32,file=trim(data_dir)//'coil.dat')
-	read(32,*) ncoils
-	do i=1,ncoils
-	read(32,*) nelemcoil(i)
-	read(32,*) rcoil(i),zcoil(i),drcoil(i),dzcoil(i),dummy1,anglecoil(i), & 
-	& curcoil(i),mturns(i),mequivalence(i)
-		curconduc(mequivalence(i))=curcoil(i) !assign current to conductor
-		r_cond(mequivalence(i))=r_cond(mequivalence(i))+rcoil(i) !assign current to conductor
-		z_cond(mequivalence(i))=z_cond(mequivalence(i))+zcoil(i) !assign current to conductor
-    numeqcump(mequivalence(i))=numeqcump(mequivalence(i))+1
-	enddo
-	anglecoil=anglecoil/180.*GPI
-	close(32)
-	nconduc=maxval(mequivalence(1:ncoils))
-	r_cond(1:nconduc)=r_cond(1:nconduc)/numeqcump(1:nconduc)
-	z_cond(1:nconduc)=z_cond(1:nconduc)/numeqcump(1:nconduc)
-
-	nblocks=0
-
-!load coilres
-	open(32,file=trim(data_dir)//'coilres.dat')
-	read(32,*) nreseqcoil
-	do i=1,nreseqcoil
-	read(32,*) j
-	read(32,*) resconduc(i,1:nreseqcoil)
-	enddo
-	close(32)
-	nactive=nconduc
-	write(*,*) nactive 
-
-!load limiter
-	open(32,file=trim(data_dir)//'limpnt.dat')
-	read(32,*) nlimiter
-	do i=1,nlimiter
-	read(32,*) limiterr(i),limiterz(i)
-	enddo
-	read(32,*) lim_maxR,lim_minR,lim_maxZ,lim_minZ
-	close(32)
-	
-!forces limiter to adapt to grid points !EFable test, but this should be better than leaving it floating
-	do i=1,nlimiter
-			call find_actual_index_ef(limiterr(i),limiterz(i),j,k)
-			limiterr(i)=r(j)
-			limiterz(i)=z(k)
-	enddo	
-
-	ilim_maxR=1+nint((lim_maxR-r(1))/dr)
-	lim_maxR=r(ilim_maxR)
-
-	ilim_minR=1+nint((lim_minR-r(1))/dr)
-	lim_minR=r(ilim_minR)
-
-	ilim_maxZ=1+nint((lim_maxZ-z(1))/dz)
-	lim_maxZ=z(ilim_maxZ)
-
-	ilim_minZ=1+nint((lim_minZ-z(1))/dz)
-	lim_minZ=z(ilim_minZ)
-	
-	
-
-
-!load first wall (not working yet)
-	open(32,file=trim(data_dir)//'blanfw.dat')
-	read(32,*) reswall
-	read(32,*) nfirstwall
-	if (nfirstwall.ge.1) then
-	do i=1,nfirstwall
-	read(32,*) j,rwall(i)
-	enddo
-	endif
-	close(32)
-
-!load blanket (works)
-	open(32,file=trim(data_dir)//'blanbp.dat')
-	read(32,*) resblan,widthblan
-	read(32,*) nblanket
-	nelemblanket=9  !nelemblanket sub element of a blanket element, for now hardwired width to 10 cm
-	if (nblanket.ge.1) then
-	ssfw=0.
-	do i=1,nblanket
-	j=2*i-1
-	read(32,*) jjj,x1,x2,x3,x4,x5,x6
-	x7=x3-x1
-	x8=x4-x2
-	rblan(j)=x1+1./4.*x7
-	rblan(2*i)=x1+3./4.*x7
-	zblan(j)=x2+1./4.*x8
-	zblan(2*i)=x2+3./4.*x8
-	x9=sqrt(x7**2.+x8**2.)
-	dhoriz(j)=x7/2.
-	dvert(j)=x8/2.
-	dhoriz(2*i)=x7/2.
-	dvert(2*i)=x8/2.
-	areablan(j)=x9*widthblan
-	areablan(2*i)=x9*widthblan
-	ssfw=ssfw+areablan(j)/rblan(j)+areablan(2*i)/rblan(2*i)
-!	write(*,*) i,x1,x2,x3,x4,x7,x8,j,areablan(j),areablan(2*i),2*i
-	enddo
-!	write(*,*) resblan,nblanket,x1,x2,x3,x4,x5,x6,x7,x8,rblan(1),zblan(1), &
-!	& areablan(1)
-	nblanket=2*nblanket
-	do i=1,nblanket
-	nconduc=nconduc+1
-	curconduc(nconduc)=0.
-	r_cond(nconduc)=rblan(i)
-	z_cond(nconduc)=zblan(i)
-	resconduc(nconduc,nconduc)=resblan*r_cond(nconduc)/areablan(i)*ssfw
-!	write(*,*) nconduc,areablan(nconduc),resconduc(nconduc,nconduc),ssfw,resblan
-	enddo
-	endif
-	close(32)
-
-!load passive conduc  (works)
-	open(32,file=trim(data_dir)//'blanbpc.dat')
-	read(32,*) nblanketpc
-	nelemblanketpc=9  !nelemblanketpc sub element of a blanket element, hardwired to 9 for now
-	if (nblanketpc.ge.1) then
-	do i=1,nblanketpc
-	read(32,*) rblanpc(i),zblanpc(i),resblanpc(i),areablanpc(i),curblanpc(i)
-	nconduc=nconduc+1
-	curconduc(nconduc)=curblanpc(i)
-	resconduc(nconduc,nconduc)=resblanpc(i)
-	r_cond(nconduc)=rblanpc(i)
-	z_cond(nconduc)=zblanpc(i)
-	enddo
-	endif
-	close(32)
-
-! currents are in MA!
-	npassive = nconduc-nactive
-	nblocks=ncoils+npassive
-
 ! load everything from file
-        write(*, *) 'main_wrappers, DATA_DIR', trim(data_dir)
-        call generate_files_feqis(data_dir) ! GIT
-	open(32,file=trim(data_dir)//'induc_matrix.dat')	
+  read(32, *) nactive,npassive
+
+read(32, *) ncoils
+do i=1, ncoils
+    read(32, *) rcoil(i),zcoil(i),drcoil(i),dzcoil(i),anglecoil(i)
+enddo
+
+read(32, *) nlimiter
+do i=1, nlimiter
+    read(32, *) limiterr(i),limiterz(i)
+enddo
+read(32,*) ilim_maxR,lim_maxR
+read(32,*) ilim_minR,lim_minR
+read(32,*) ilim_maxZ,lim_maxZ
+read(32,*) ilim_minZ,lim_minZ
+
+
+do i=nactive+1,npassive
+    read(32, *) r_cond(i),z_cond(i)
+enddo
+
 	read(32,*) nconduc
 	do i=1,nconduc	
 		read(32,*) indconduc(i,1:nconduc)	
 	enddo
-	close(32)
-	open(32,file=trim(data_dir)//'resistance_matrix.dat')	
 	read(32,*) nconduc
 	do i=1,nconduc	
 		read(32,*) resconduc(i,1:nconduc)	
 	enddo
-	close(32)
-
-
-
-
-	open(32,file=trim(data_dir)//'greeni_matrix.dat')
 	do i=1,nconduc	
 	do j=1,nr2
 		read(32,*) greeni(j,1:nz2,i)	
 	enddo	
 	enddo
-	close(32)
-	open(32,file=trim(data_dir)//'green_boundary.dat')
-	read(32,*) ngbnd
-	read(32,*) green_bnd_f(1:ngbnd)
-	close(32)
-
-
-	open(32,file=trim(data_dir)//'zlim_potential.dat')
-	do jj=1,nz2
-	do ii=1,nr2
-		read(32,*) zlimpotential(ii,jj)	
-	enddo	
-	enddo
-	close(32)
-	
-	
-	!force matrix
-	open(32,file=trim(data_dir)//'force_matrix.dat')
 		read(32,*) nblocks	
 	do j=1,nblocks	
 	do i=1,nblocks
@@ -2323,9 +2153,21 @@ end
 	enddo	
 	enddo
 	enddo
-	close(32)
+	do jj=1,nz2
+	do ii=1,nr2
+		read(32,*) zlimpotential(ii,jj)	
+	enddo	
+	enddo
+	read(32,*) ngbnd
+	read(32,*) green_bnd_f(1:ngbnd)
 
-	
+ close(32)
+
+	write(*,*) nactive 
+
+
+
+
 	
 ! assign initial currents from astra	
 	curconduc(1:nconduc)=cur_init(1:nconduc)

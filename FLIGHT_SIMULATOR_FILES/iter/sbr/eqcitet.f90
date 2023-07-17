@@ -7,7 +7,7 @@
 	use const_inc
 	use outcmn_inc
 	use fenix_params
-		use exchange_with_astra, only: execute_plasma       ! declaration of minimal CPOs
+	use astra2fbe, only: execute_plasma       ! declaration of minimal CPOs
 
 	implicit none
 !	include	'for/parameter.inc'

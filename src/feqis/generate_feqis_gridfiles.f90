@@ -1,4 +1,4 @@
-subroutine generate_files_feqis(data_dir2)
+subroutine generate_files_feqis(data_dir2,machine)
 
 use ef_circuit
 use green_matrix, only: greeni, dgreenirpl, dgreenizpl, dgreenirj, dgreenizj
@@ -20,17 +20,19 @@ double precision, dimension(ncoils_max) :: tempcoilr, tempcoilz, &
 double precision, dimension(nblanket_max) :: dhoriz, dvert !blanket elements lengths
 double precision, dimension(n_max) :: rcetmp, zcetmp, datmp, &
     drcetmp, dzcetmp, tatmp
-character(len=120) :: fname
+character(len=120) :: fname,machine,dumstring1
 
 !Efable test, remove this later
 
 mu0 = 0.4*GPI
 
-fname = trim(data_dir2)//'/data.dat'
-write(*, '(2A)') 'DDIR=', trim(data_dir2)
-write(*, '(2A)') 'FNAME=', trim(fname)
+fname = trim(data_dir2)//'/machine_description_in.'//trim(machine)
+
 open(32, file=trim(fname))
-read(32, *) j_files
+
+
+!general grid file
+read(32, *) dumstring1
 read(32, *) nr
 read(32, *) nz
 read(32, *) rmin
@@ -38,8 +40,7 @@ read(32, *) rmax
 read(32, *) zmin
 read(32, *) zmax
 read(32, *) alpsep
-close(32)
-j_files = 0
+
 
 !compatibility with spider
 ! in spider ni=65, ni1=64
@@ -62,31 +63,21 @@ zcomp(1:nz) = z(2:nz1)
 dr = r(2) - r(1)
 dz = z(2) - z(1)
 
-do i=1, nz
-    do j=1, nz
-        sintable(i, j) = sin(i*j*GPI/(nz + 1))
-        costable(i, j) = cos(i*j*GPI/(nz + 1))
-    enddo
-enddo
-
 !load coils
 r_cond = 0.
 z_cond = 0.
 numeqcump = 0
-fname = trim(data_dir2)//'/coil.dat'
-open(32, file=trim(fname))
+read(32, *) dumstring1
 read(32, *) ncoils
 do i=1, ncoils
     read(32, *) nelemcoil(i)
     read(32, *) rcoil(i), zcoil(i), drcoil(i), dzcoil(i), dummy1, anglecoil(i), &
-        curcoil(i), mturns(i), mequivalence(i)
-    curconduc(mequivalence(i)) = curcoil(i) !assign current to conductor
+         mturns(i), mequivalence(i)
     r_cond(mequivalence(i)) = r_cond(mequivalence(i)) + rcoil(i) !assign current to conductor
     z_cond(mequivalence(i)) = z_cond(mequivalence(i)) + zcoil(i) !assign current to conductor
     numeqcump(mequivalence(i)) = numeqcump(mequivalence(i)) + 1
 enddo
 anglecoil = anglecoil/180.*GPI
-close(32)
 nconduc = maxval(mequivalence(1:ncoils))
 r_cond(1:nconduc) = r_cond(1:nconduc)/numeqcump(1:nconduc)
 z_cond(1:nconduc) = z_cond(1:nconduc)/numeqcump(1:nconduc)
@@ -94,26 +85,21 @@ z_cond(1:nconduc) = z_cond(1:nconduc)/numeqcump(1:nconduc)
 nblocks = 0
 
 !load coilres
-fname = trim(data_dir2)//'/coilres.dat'
-open(32, file=trim(fname))
+read(32, *) dumstring1
 read(32, *) nreseqcoil
 do i=1, nreseqcoil
-    read(32, *) j
     read(32, *) resconduc(i, 1:nreseqcoil)
 enddo
-close(32)
 nactive = nconduc
 write(*, *) nactive
 
 !load limiter
-fname = trim(data_dir2)//'/limpnt.dat'
-open(32, file=trim(fname))
+read(32, *) dumstring1
 read(32, *) nlimiter
 do i=1, nlimiter
     read(32, *) limiterr(i), limiterz(i)
 enddo
 read(32, *) lim_maxR, lim_minR, lim_maxZ, lim_minZ
-close(32)
 
 !forces limiter to adapt to grid points !EFable test, but this should be better than leaving it floating
 do i=1, nlimiter
@@ -134,19 +120,9 @@ lim_maxZ = z(ilim_maxZ)
 ilim_minZ = 1 + nint((lim_minZ - z(1))/dz)
 lim_minZ = z(ilim_minZ)
 
-!load first wall (not working yet)
-open(32, file=trim(data_dir2)//'blanfw.dat')
-read(32, *) reswall
-read(32, *) nfirstwall
-if (nfirstwall >= 1) then
-    do i=1, nfirstwall
-        read(32, *) j, rwall(i)
-    enddo
-endif
-close(32)
 
 !load blanket (works)
-open(32, file=trim(data_dir2)//'blanbp.dat')
+read(32, *) dumstring1
 read(32, *) resblan, widthblan
 read(32, *) nblanket
 nelemblanket = 9  !nelemblanket sub element of a blanket element, for now hardwired width to 10 cm
@@ -179,11 +155,9 @@ if (nblanket >= 1) then
         resconduc(nconduc, nconduc) = resblan*r_cond(nconduc)/areablan(i)*ssfw
     enddo
 endif
-close(32)
 
 !load passive conduc  (works)
-fname = trim(data_dir2) // '/blanbpc.dat'
-open(32, file=trim(fname))
+read(32, *) dumstring1
 read(32, *) nblanketpc
 nelemblanketpc = 9  !nelemblanketpc sub element of a blanket element, hardwired to 9 for now
 if (nblanketpc >= 1) then
@@ -454,34 +428,62 @@ do j=1, nz2
     enddo
 enddo
 
+
+
+
+
 ! write everything on file
-fname = trim(data_dir2) // '/induc_matrix.dat'
+
+fname = trim(data_dir2)//'/machine_description_out.'//trim(machine)
 open(32, file=trim(fname))
+
+write(32, *) nr,nr2,nr1
+write(32, *) nz,nz2,nz1
+write(32, *) rmin
+write(32, *) rmax
+write(32, *) zmin
+write(32, *) zmax
+write(32, *) alpsep
+
+write(32, *) nactive,npassive
+
+write(32, *) ncoils
+do i=1, ncoils
+    write(32, *) rcoil(i),zcoil(i),drcoil(i),dzcoil(i),anglecoil(i)
+enddo
+
+write(32, *) nlimiter
+do i=1, nlimiter
+    write(32, *) limiterr(i),limiterz(i)
+enddo
+write(32,*) ilim_maxR,lim_maxR
+write(32,*) ilim_minR,lim_minR
+write(32,*) ilim_maxZ,lim_maxZ
+write(32,*) ilim_minZ,lim_minZ
+
+
+do i=nactive+1,npassive
+    write(32, *) r_cond(i),z_cond(i)
+enddo
+
+
 write(32, *) nconduc
 do i=1, nconduc
     write(32, *) indconduc(i, 1:nconduc)
 enddo
-close(32)
 
-fname = trim(data_dir2) // '/resistance_matrix.dat'
-open(32, file=trim(fname))
 write(32, *) nconduc
 do i=1, nconduc
     write(32, *) resconduc(i, 1:nconduc)
 enddo
-close(32)
 
-fname = trim(data_dir2) // '/greeni_matrix.dat'
-open(32, file=trim(fname))
 do i=1, nconduc
     do j=1, nr2
         write(32, *) greeni(j, 1:nz2, i)
     enddo
 enddo
-close(32)
 
 !force matrix
-open(32, file=trim(data_dir2)//'force_matrix.dat')
 write(32, *) nblocks
 do j=1, nblocks
     do i=1, nblocks
@@ -495,18 +497,14 @@ do ii=1, nblocks
         enddo
     enddo
 enddo
-close(32)
 
-open(32, file=trim(data_dir2)//'zlim_potential.dat')
 do jj=1, nz2
     do ii=1, nr2
         write(32, *) zlimpotential(ii, jj)
     enddo
 enddo
-close(32)
 
 write(*, *) 'bound'
-open(32, file=trim(data_dir2)//'green_boundary.dat')
 write(32, *) nint((2.*nr + 2.*nz)*(2.*nr + 2.*nz))
 ! lower side
 do i=2, nr1

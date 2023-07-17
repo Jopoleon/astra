@@ -8,8 +8,8 @@ IPL=IPLX;
 SGNIP= 1.;
 SGNBT= -1.;
 
-TAUMIN=0.05;
-TAUMAX=0.05;
+TAUMIN=0.002;
+TAUMAX=0.002;
 
 !====================  Ion densities ========================================
 AMAIN=AMJ;

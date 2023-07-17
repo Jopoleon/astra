@@ -2,7 +2,7 @@
 	subroutine EQCTRZ
 !C
 !C----------------------------------------------------------------------|
-	use  exchange_with_astra       ! declaration of minimal CPOs
+	use  astra2fbe       ! declaration of minimal CPOs
 	use parameter_inc
 	use const_inc
 	use status_inc
@@ -215,8 +215,7 @@ write(*,*) 'eqctrz0'
 	IBKDW     =   0.0
 !
 	
-		write(fname,'(a)') 'exp/equ/'//trim(MACHINE) &
-     &  //'/namelist_astra.txt'	
+		write(fname,'(a)') 'exp/nml/'//trim(exp_file)
 		INQUIRE( FILE=trim(fname), EXIST= file_existence) 
 		if (file_existence .eqv. .true.) then		
          open(53, FILE=trim(fname))

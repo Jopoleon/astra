@@ -92,7 +92,7 @@ module fs_coupling_variables
 
 double precision :: fs_a_crash, fs_dt_smlk, fs_dt_tctrl, fs_paux, fs_pump, &
      fs_NTM_trig, fs_NTM_M, fs_NTM_N, fs_NTM_seed, fs_stop_time, &
-     fs_prad, fs_psep, fs_pintrinsic, fs_pfus
+     fs_prad, fs_psep, fs_pintrinsic, fs_pfus, fs_ipl_in
 double precision, dimension(2) :: fs_pow_IC
 double precision, dimension(8) :: fs_pol_EC, fs_pow_EC, fs_pow_NB
 double precision, dimension(10) :: fs_pellet
@@ -124,11 +124,12 @@ integer :: plasma_config      ! 0 if limiter, 1 if xpoint
 
 double precision :: tau_circuit_ef, tau_gseq_ef, time_astra
 double precision :: dr_factor_init_astra, dz_factor_init_astra ! factors of dr and dz for initial iterations
-double precision :: raxis_astra, zaxis_astra, psi0_astra, psib_astra
+double precision :: raxis_astra, zaxis_astra, psi0_astra, psib_astra, sigma_B, sigma_axis
 
 double precision :: x_point_save(20, 2) ! R, Z of xpoints, max 20 x points
-double precision, dimension(ncoil_dim) :: activate_coil_ef, sign_coil, cur_init ! initial currents from astra exp, not from coil.dat, in MA/turn
+double precision, dimension(ncoil_dim) :: activate_coil_ef, sign_coil, cur_init, sigma_coils ! initial currents from astra exp, not from coil.dat, in MA/turn
 double precision, dimension(ncoil_dim, 2) :: current_limit_ef ! 1 is upper, 2 is lower
 double precision, dimension(ncoil_dim, ncoil_dim) :: force_coil ! where it is 1, forces coil i,i to current of i,j
+character(len=80) :: machine_description ! name of device, in astra it's called MACHINE
 
 end module astra2fbe

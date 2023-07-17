@@ -2,7 +2,7 @@
 	subroutine EQCTRZD !for demo
 !C
 !C----------------------------------------------------------------------|
-	use    exchange_with_astra       ! declaration of minimal CPOs
+	use    astra2fbe       ! declaration of minimal CPOs
 	use fenix_params
 	use parameter_inc
 	use status_inc
@@ -10,7 +10,7 @@
 	use outcmn_inc
 	use plasma_state
 	use flight_sim_geometrics
-
+use fs_coupling_variables, only:fs_ipl_in
 	use parameters_a2equil, only: equil_now
 	use debugger, only: flightsim
 
@@ -20,7 +20,7 @@
 !	include 'for/const.inc'
 !	include 'for/status.inc'
 !	include 'for/outcmn.inc'
-	include 'tmp/declar.fnc'
+!	include 'tmp/declar.fnc'
 
 	integer ictrl,i,j
 	double precision r_mag,z_mag,icur,voltaz(15)
@@ -39,8 +39,8 @@
 	double precision a_min_b
 
 	double precision a_ratio,r_pl,z_pl
-	double precision tbkdw,LL,RR
-	double precision ipl_threshold
+	double precision tbkdw,LL,RR,li3r,qradr
+	double precision ipl_threshold,betanr
 	double precision conduc_cur(130),dumm1
 	character*80 fname
 	integer ii_pl,jj_pl
@@ -85,7 +85,7 @@
 	double precision flux_in(129,2),dt_afazt
 	double precision flux_out(129)
 	double precision KCURR(11,11),xk1,xk2
-	double precision I_MEAS(11),prezz
+	double precision I_MEAS(11),prezz,qdtr
 	double precision I_reff(11),circoils(15)
 	double precision t_diag,t_diagref,demo_gaps(52,3)
 	double precision rand
@@ -150,6 +150,28 @@
      & D_chie,D_ped_mult,gs2d_tmin_multip,btipdirec,pr_clamp
 
 
+!fill in the coil currents for initialization in MA/turn as in coil.dat
+cur_init=0.
+
+
+ cur_init(1)= 0.010194586781208 
+!  cur_init(2)=  0.030392922109131       
+! cur_init(3)=  -0.004256569659392 
+  cur_init(2)=  0.035392922109131       
+ cur_init(3)=  -0.001256569659392 
+    
+   cur_init(4)=  0.023563427575675       
+  cur_init(5)=  0.027480588003405            
+  cur_init(6)=   0.044999999984193         
+  cur_init(7)=   -0.016583422450871          
+  cur_init(8)=  -0.011325383849442          
+  cur_init(9)=  -0.045000000000000        
+  cur_init(10)=  0.001296100419129       
+  cur_init(11)= 0.022465017543708    
+
+
+
+
 	tau_circuit_ef=tau	
 	tau_gseq_ef=tau	
 
@@ -165,14 +187,14 @@
 	neqlp=NEQUIL
 	ntetap=MEQUIL+1
 
-
+if (time.gt.0.) then
 	yrout(1:neqlp,1:ntetap-1)=equil_now%coord_sys%position%r(1:neqlp,1:ntetap-1) !yrout(neqlp,j)
 	yzout(1:neqlp,1:ntetap-1)=equil_now%coord_sys%position%z(1:neqlp,1:ntetap-1) !yrout(neqlp,j)
 	yrout(1:neqlp,ntetap)=yrout(1:neqlp,1)
 	yzout(1:neqlp,ntetap)=yzout(1:neqlp,1)
 	yrout(1:neqlp,ntetap+1)=yrout(1:neqlp,2)
 	yzout(1:neqlp,ntetap+1)=yzout(1:neqlp,2)
-
+endif
 
 
 
@@ -185,6 +207,7 @@
 !	force_coil(2,1)=1.
 !	force_coil(3,2)=1.
 	new_equivalence=0
+
 
 !OH circuit up until entrance of dioh2s and dioh2u later
 	use_reduce_circuit=0
@@ -254,7 +277,7 @@
 !		write(321,*) TIME,UPDWN
 	
 
-	use_zlim_pot=0
+	use_zlim_pot=1
 
 	voltaz=0. !for fbe evolution with plasma test
 !Position control
@@ -262,27 +285,9 @@
 ! x(k+1)=0.8635*x(k)+1*Zcur(k)
 ! V12(k)=3.0371e4*x(k)-2.8571e5*zcur(k)
 !	solve_fix=0
-!	if (TIME.ge.0.01) solve_fix=1	
-		psplex_from_fbe=0
 
-	if (TIME.ge.0.05) then
-		solve_fix=15
-	endif
-	if (TIME.ge.0.524) then
-		solve_fix=0
-		psplex_from_fbe=1
-	endif
 		fast_mode=0
 		s_fazt=0		
-	if (TIME.ge.0.55) then
-!		solve_fix=-2
-!		fast_mode=1
-!		s_fazt=1		
-	endif
-!	if (TIME.ge.ITFBE+dt_fazt) then 
-!		s_fazt=1		
-!	endif
-		s_fazt=0
 	
 !	rhoedge=roc
 !	qedge=1./mu(na1)
@@ -306,17 +311,17 @@
 !	write(448,'(3E25.11)') TIME,UPDWN,geom1d(98) !vertical position
 
 	if (TIME.le.TAU) then
-		open(32,file='exp/equ/dem_/bvec_in.txt')
-			read(32,*) i	
-		do i=1,258
-			read(32,*) br_in(i,1:3)		
-		enddo
-		close(32)
-		open(32,file='exp/equ/dem_/flux_in.txt')
-			read(32,*) i		
-		do i=1,129
-			read(32,*) flux_in(i,1:2)		
-		enddo
+!		open(32,file='exp/equ/dem_/bvec_in.txt')
+!			read(32,*) i	
+!		do i=1,258
+!			read(32,*) br_in(i,1:3)		
+!		enddo
+!		close(32)
+!		open(32,file='exp/equ/dem_/flux_in.txt')
+!			read(32,*) i		
+!		do i=1,129
+!			read(32,*) flux_in(i,1:2)		
+!		enddo
 	endif
 
 	if (nint(IPEQL).ne.4) then
@@ -348,15 +353,14 @@
 !	write(449,'(45E25.12)') TIME,geom1d(51:94) !gaps
 
 	DTEQL=0.
-	if (TIME.le.ITFBE-0.1) DTEQL=0.1
+	if (TIME.le.ITFBE-0.3) DTEQL=0.1
 
 
 	write(6611,'(5555E25.11)') TIME,ELONG,TE(1),NE(1),TE(90),NE(90),TI(1), &
      & QDTR(ROC),QRADR(ROC),CRAD3,SHIF(1),ZEF(1),VOLUME, &
      & BETANR(ROC),ZRD21,he(80),xi(80),cmhd2,1./mu(50), &
 		 LI3R(ROC),V_95_POS(1./MU(1:na1))
-	DTEQL=0.5
-!	if (TIME.le.ITFBE-2.) DTEQL=1.
+	
 
 
 
@@ -384,20 +388,20 @@
      & (ne(1:na1)*te(1:na1)+ &
      & ni(1:na1)*ti(1:na1)+pfast(1:na1))
 	f_dia(1:na1)=ipol(1:na1)*btor*rtor;
-		 
+		 ! psi is FP
 	if (t_diag.ge.t_diagref.and.TIME.ge.0.02) then
 		if (IPEQL.eq.4) then
-			write(9845,'(34443E25.11)') TIME, &
-     & circoils(1:15),pjk(1:15)*1e3, &
-     & pjk(16:115)*1e3,vcoil(1:15),UPDWN,geom1d(98) &
-     & ,br_out,flux_out,geom1d(94-52+1:94), &
-     & geom1d(299:300) &
-     & ,1./MU(NA1-1),yrout(neqlp,1:ntetap), &
-     & yzout(neqlp,1:ntetap),ipl,geom1d(97), &
-     & RTOR+SHIF(1),RTOR,ABC,ELON(NA1),TRIA(NA1), &
-     & VOLUM(NA1),FP(NA1),FP(1),PSPLEX,PSIEXT,dpc(1:115), &
-     & FP(1:NA1),pressure(1:na1),f_dia(1:na1)
-	write(5353,'(40E25.11)') TIME,u_cd(1:39)
+!			write(9845,'(34443E25.11)') TIME, &
+!     & circoils(1:15),pjk(1:15)*1e3, &
+!     & pjk(16:115)*1e3,vcoil(1:15),UPDWN,geom1d(98) &
+!     & ,br_out,flux_out,geom1d(94-52+1:94), &
+!     & geom1d(299:300) &
+!     & ,1./MU(NA1-1),yrout(neqlp,1:ntetap), &
+!     & yzout(neqlp,1:ntetap),ipl,geom1d(97), &
+!     & RTOR+SHIF(1),RTOR,ABC,ELON(NA1),TRIA(NA1), &
+!     & VOLUM(NA1),FP(NA1),FP(1),PSPLEX,PSIEXT,dpc(1:115), &
+!     & FP(1:NA1),pressure(1:na1),f_dia(1:na1)
+!	write(5353,'(40E25.11)') TIME,u_cd(1:39)
 !			call wrd_equilef
 !			call wrd_equilef_pbe
 		else
@@ -472,7 +476,8 @@
 	I_meas(10)=CCOIL(10)
 	I_meas(11)=CCOIL(11)
 
-	if (TIME.le.ITFBE) then
+	if (TIME.ge.100000+ITFBE) then
+	!if (TIME.le.ITFBE) then
 		open(32,file='ssmA_demo.dat')
 		do j=1,8
 		do i=1,8
@@ -518,9 +523,18 @@
 		IPL=IPLX
 		IPLFBE=IPL
 	endif
+	
 		IPL=IPLFBE  !b.c. for current diffusion	
 !	endif
 
+!        if (TIME.ge.50 .AND. TIME.lt.51) then
+!	IPLX=IPLX+1*(TIME-50)/1
+!	elseif (TIME.ge.51) then
+   
+!	     IPLX=IPLX+1
+!	endif
+!        IPL = IPLX
+!	IPLFBE=IPL
 	if (TIME.ge.ITFBE+100000.) s_fazt = 1  ! try fast mode
 
 
@@ -649,89 +663,4 @@
 	return
 	end
 
-
-
-
-!C======================================================================|
-	subroutine alphapow_est_demo
-!C
-!C----------------------------------------------------------------------|
-
-	use parameter_inc
-	use const_inc
-	use status_inc
-	use outcmn_inc
-!	use declar_fnc
-!	use declar_fml
-
-	implicit none
-!	include	'for/parameter.inc'
-!	include 'for/const.inc'
-!	include 'for/status.inc'
-!	include 'for/outcmn.inc'
-	include 'tmp/declar.fnc'
-	include 'tmp/declar.fml'
-
-	integer ictrl,i
-
-	double precision npedreac,tpedreac
-	double precision tslowd,ssdt(na1)
-	double precision titemp(na1),netemp(na1)
-	double precision agenerate(na1),paaa(na1)
-	double precision naaa(na1),patot
-		
-	npedreac=7.
-	tpedreac=5.5
-
-	tslowd=1.*tauer(roc)  !check for DEMO the factor
-	titemp=ti(1:na1)
-	ictrl=nint(0.9*na1)
-	
-	do j=1,na1
-		ti(j)=te(j)/te(ictrl)*tpedreac
-		include 'fml/svdt'
-		ssdt(j)=svdt
-	enddo
-		ti(1:na1)=titemp
-	netemp=ne(1:na1)/ne(ictrl)*npedreac
-
-	agenerate=1.*netemp**2.*ssdt   !scale to have nalph ~ 2% at steady state
-
-!time advance
-
-	do j=1,na1
-		naaa(j)=1./(1./TAU+1./tslowd)* &
-     & (agenerate(j)+naaa(j)/TAU)
-	enddo
-
-
-!sawtooth effect
-	if (ZRD12.eq.1) then
-	
-	
-	endif
-
-	write(*,*) 'calphas(0): ',naaa(1)/ne(1)
-
-	paaa=naaa/tslowd*5.3*1.  !scale
-	patot=0.
-	do j=2,na1
-		patot=patot+paaa(j-1)*VR(j)*HRO
-	enddo
-
-	write(*,*) 'alpha power: ',paaa(1),patot
-
-	return
-	end
-
-
-
-!		ztt1=0.7778*ztt0+1.*(ztt2-geom1d(98))
-!		ccuscita=min(6e3,max(-6e3,-3.1941e6*ztt0+
-!     & 1.4403e7*(ztt2-geom1d(98))))
-!		ztt0=ztt1
-!		ccuscita2=min(3e3,max(-3e3,5e4*(rtt2-geom1d(97))))
-!		VCOIL(1:11)=0.
-!		VCOIL(7:8)=ccuscita+1.*ccuscita2
-!		VCOIL(9:10)=-ccuscita+1.*ccuscita2	
 

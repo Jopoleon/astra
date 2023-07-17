@@ -70,7 +70,8 @@ PRAD=(NIZ1*PRXEN+F8*PRKR+F6*PRARG+F7*PRWOL)*NE+PBRAD+PSYNC;	!radiation of impuri
 !CDHJ5=25.;
 !CDVM6=0.8-TIME/10000*0.7;
 !FGAUSS(CDVM6,0.02*abc/abc,CAR19)<:::1.e6:; !ECH for edge control
-!PEECR=CHE3*CAR17; !+CDHJ5*CAR19;
+CHE3=min(50.d0,CHE3);
+!PEECR=CHE3*CAR18; !+CDHJ5*CAR19;
 !CCD1=0.03/(NEAVB*RTOR)*4.*slat(abc);  !linearly depends on Te
 !CUECR=CCD1*PEECR*TE/25.;  !ECCD, CCD1 is efficiency
 
@@ -363,7 +364,7 @@ CD=CUECR; !CD source from NBI + PECRH , no cubs, which is computed self-consiste
 
 TSTOPP(CV6)>:::1.e6:; !called in eqctrl.
 !------------------------------------------
-TSTRTCC(200006.d0,-1.d0)>:::1.e6:;  !switch on psi_bc as b.c. for fbe with current control
+TSTRTCC(11.d0,-1.d0)>:::1.e6:;  !switch on psi_bc as b.c. for fbe with current control
 
 
 
@@ -392,7 +393,7 @@ CNEUT4=0.1+0.5*QDTB/400.;	!QDT is alpha power in MW CNEUT is critical shear, 0.1
 
 !XEQDSCA>:10.:10.:1.e6:; !equidisc
 EQCTRL>:::1.e6:;  ! control equilibrium calls with dteql
-EQCTRZD<:0.0025::1.e6:;  ! control time step is 0.0025
+EQCTRZD<:::1.e6:;  ! control time step is 0.0025
 EQCTRZT<:::1.e6:;  ! control equilibrium calls with dteql
 !EQCTRZD2<:::1.e6:;  ! control equilibrium calls with dteql
 

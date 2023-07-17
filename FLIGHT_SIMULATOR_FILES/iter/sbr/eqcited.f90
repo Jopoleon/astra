@@ -2,7 +2,7 @@
 	subroutine EQCITED !for demo
 !C
 !C----------------------------------------------------------------------|
-	use    exchange_with_astra       ! declaration of minimal CPOs
+	use    astra2fbe       ! declaration of minimal CPOs
 
 	use parameters_a2equil, only: equil_now
 

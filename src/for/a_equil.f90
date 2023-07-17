@@ -16,7 +16,7 @@ use const_inc, only : rtor,shift,updwn
 
 
 use flight_sim_geometrics, only: geom1d
-use outcmn_inc, only: MACHINE
+use outcmn_inc, only: MACHINE, exp_file
 use astra2fbe
 
 implicit none
@@ -99,7 +99,7 @@ if (nstep == 0) then
     n_of_newton_iterations=7
     raxis_astra=rtor+shift
     zaxis_astra=updwn
-    fname = trim(parameters_equil%prename) // 'namelist_astra.txt'
+    fname = 'exp/nml/'//trim(exp_file)
     INQUIRE( FILE=trim(fname), EXIST=file_existence) 
     if (file_existence) then
         open(53, FILE=fname)
@@ -223,7 +223,7 @@ if (parameters_equil%k_fixfree == 1) then
     endif
 endif
 
-write(*,*) 'psiext and psplex',psiext,psplex
+!write(*,*) 'psiext and psplex',psiext,psplex
 
 
 ! for any machine, geom1d(299) and geom1d(300) are respecetively li3 and betapol from equil

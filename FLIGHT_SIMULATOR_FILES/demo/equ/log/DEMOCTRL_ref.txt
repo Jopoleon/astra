@@ -47,8 +47,8 @@ CHE1   =  0.3
 CHE2   =  0.1
 CHE3   =  00.
 
-CV1    =  0.1
-CV2    =  0.1
+CV1    =  0.05
+CV2    =  0.05
 CV3    =  25.
 
 CBND1 = 1. !boundary condition for LH threshold
@@ -159,6 +159,7 @@ DPOUT  =  0.1
 TAUMIN =  0.0025 !0.0025             
 TAUMAX =  0.0025 !0.0025
 TSCALE =  200.
+TPAUSE =  999.9
 ITFBE  =  1000. ! when it starts with free boundary
 IBKDW  =  0. 
 ICIRCQ =  1. ! leave it

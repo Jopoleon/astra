@@ -28,7 +28,7 @@ use parameters_a2equil, only: GP, GP2, GP4, muvac, &
     murelax2,  ydiff,  ydiff2,  max_iter,  miter_ext,  interp_routine, &
     interp_method_rect, epsf_tol, epss_tol, epsv_tol, epsg_tol, &
     key_no_startz, key_no_refits, equil_now
-use outcmn_inc, only: MACHINE
+use outcmn_inc, only: MACHINE, exp_file
 
 implicit none
 
@@ -122,8 +122,7 @@ if (ifbey == 0) then
     epsg_tol = 1.E-8
     key_no_startz = 0
     key_no_refits = 0
-!GIT fname = TRIM(awd) // 'exp/nml/' // TRIM(RDNAME)
-    fname = TRIM(name_gsefdir) // TRIM(MACHINE) // '/namelist_astra.txt'
+    fname = 'exp/nml/'//TRIM(exp_file)
     INQUIRE(FILE=trim(fname), EXIST=file_existence)
     if (file_existence) then
         open(53, FILE=fname)

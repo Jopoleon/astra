@@ -1,6 +1,6 @@
 subroutine rrsudg(time_ext, dt_smlk)
 
-use fs_coupling_variables, only: fs_dt_smlk
+use fs_coupling_variables, only: fs_dt_smlk, fs_ipl_in
 use const_inc, only: BTOR, CPEL1, CIMP3, CBND3, &
         ZRD70, ZRD71, ZRD73, ZRD84, ZRD93, &
         CSCL1, CDYM3, CDVM7, CDWM5, CDWM6, &
@@ -29,7 +29,7 @@ if (MACHINE == 'dem_') then
         CHE1, CDHJ1, CDHJ2, &
         CHE3, CDHJ3, CDHJ4, &
         CV3, CDHJ5, &
-        CDMJ1, CDMJ2, CDMJ3, CDMJ4, gvcoil, &
+        CDMJ1, CDMJ2, CDMJ3, CDMJ4, vcoil, &
         time_ext, CV6, fs_dt_smlk)
         CV13 = MAX(1., CV13)  ! finite pump speed to avoid NaN
         dt_smlk = fs_dt_smlk  ! simulink tau defined in equ log

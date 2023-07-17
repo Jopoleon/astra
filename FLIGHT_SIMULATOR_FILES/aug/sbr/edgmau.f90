@@ -7,7 +7,7 @@
 	use status_inc
 	use outcmn_inc
       use fenix_params
-	use  exchange_with_astra, only: x_point_save, plasma_config       ! declaration of minimal CPOs
+	use  astra2fbe, only: x_point_save, plasma_config       ! declaration of minimal CPOs
 
 	implicit none
 

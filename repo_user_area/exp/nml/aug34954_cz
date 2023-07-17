@@ -64,8 +64,8 @@
 
 &physics
    jumpcor = 2
-   table_path   = '/compass/home/tardini/astra_ext/rabbit/tables_highRes'
-   limiter_file = '/compass/home/tardini/astra_ext/rabbit/limiters/limiter_aug.dat'
+   table_path   = '/compass/home/tardini/astra_ext/rabbit//tables_highRes'
+   limiter_file = '/compass/home/tardini/astra_ext/rabbit//limiters/limiter_aug.dat'
    Rlim = 2.20 !AUG defaults, overridden if limiter_file exists
    zlim = 0.20
    Rmax = 2.26 !AUG defaults
@@ -154,16 +154,15 @@
    enelss  = 1.d-7
    key_plcs = 1
    toric_fourc = 11
-   toric_file = 0
-   torba_file = 0
-   strahl_file = 0
-   eqdsk_file = 0
    strahl_fourc = 4
    write_coils_diagn = 0
    k_filessss = 0
+   psplexavg = 0.01 ! 0.01
+   psplexavgexp = 0. !exponent of Ip in psplexavg
+   fixadapgrid = 0 !0 for standard spider adaptive grid, 1 for EF variation
 /
 
-&spider_settings
+&equil_settings
 
    time_fix_eqpff = 0.0021
    fix_eqpf_eqff = 0
