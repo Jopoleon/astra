@@ -94,6 +94,7 @@ MU=1./(CAR2X + 0.0001);
 !MIXINT(10.,ZRD22X)::::;tglf_pel	
 ! E.g. CF10=10 - Kadomtsev model, ZRD22X= prescribed period
 !CF9=min(0.25,ZRD22X);
+EQCTST<::::;
 
 
 	Profile output
