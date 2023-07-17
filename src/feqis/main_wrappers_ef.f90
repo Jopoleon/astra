@@ -2051,7 +2051,8 @@ end
 
 	use ef_circuit
 	use green_matrix
-	use astra2fbe, only: cur_init,machine_description
+        use outcmn_inc, only: machine
+	use astra2fbe, only: cur_init
 		
 	implicit none
 
@@ -2076,7 +2077,7 @@ end
 	character(80) fname
 	
 	
-	fname='exp/cnf/machine_description_out.'//trim(machine_description)
+	fname='exp/cnf/machine_description_out.'//trim(machine)
 	open(32,file=fname)
 
 	read(32,*) nr,nr2,nr1
