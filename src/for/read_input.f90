@@ -497,90 +497,6 @@ IFDFVX(KRTOR)  = 4
 IFDFVX(KTRICH) = 4
 IFDFVX(KAWALL) = 4
 
-VOLUME = GP2*GP*RTOR*AB*AB*ELONG
-
-ROC  = ROC3A(RTOR, SHIFT, ABC, ELONG, TRIAN)
-ROCO = ROC
-
-! Initialization of magnetic quantities
-BTN = BTOR
-FTO = GP*BTOR*ROC**2
-FTN = GP*BTN*ROC**2
-IPLN = IPL
-
-if (AWALL > RTOR+SHIFT) then
-    ROWALL = AWALL*SQRT(max(ELONM, ELONG))
-elseif (ELONM > ELONG) then
-    ROWALL = ROC3A(RTOR, SHIFT, AWALL, ELONM, TRICH)
-else
-    ROWALL = ROC3A(RTOR, 0.d0, AWALL, ELONG, TRIAN)
-endif
-
-!Efable
-! basic space steps, these do not change
-! Two versions: HROX = 1/NA1, XRHO(NA1)<1, HROX=1/(NA1-1/2) gives XRHO(NA1) = 1
-! Case with XRHO(NA1)=1-HROX/2, XSHO(NA1) = 1   (fluxes, MU, etc are on LCFS at at last grid point NA1 / NE, TE, and quantities are a bit inside at last grid point NA1)
-
-if (int(FLXDR) == 1) then
-    HROX  = 1.0/(NA1)
-else if (int(FLXDR) == 0) then
-    HROX  = 1.0/(NA1-0.5)
-endif
-
-do j=1, NRD
-    XRHO(j) = (j - 0.5)*HROX
-    SXHO(j) = j*HROX
-! real space grids, these are function of ROC 
-    RHO (j) = XRHO(j)*ROC
-    SRHO(j) = SXHO(j)*ROC
-enddo
-
-! real space grids, these are function of ROC 
-HRO  = HROX*ROC
-
-! Compute NB1
-NB1 = NA1
-NA  = NA1 - 1
-
-call SETGEO(0)
-call NEW_GRID
-
-do J=1, NB1
-    G22(J) = RHO(J)
-    VR(J)  = (GP2*(RTOR + SHIFT))**2*RHO(J)/RTOR
-    VRS(J) = (GP2*(RTOR + SHIFT))**2*J*HRO/RTOR
-    G11(J) = VRS(J)
-enddo
-
-call INTEGR(RHO, 1, VR, VOLUM, NA1)
-
-n_bouncon = NA1
-
-PSIBO = FP(NA1)
-call EXTRAP(XRHO(1: NA1), FP(1: NA1), 0.0, 1, PSIAX, 2, NA1)
-
-VOLUME = VOLUM(NA1)
-
-NAB = NA1
-if (NA1 < NB1 .and. AB > ABC) then
-    do j=NA1+1, NB1
-        if (AMETR(j) < AB) NAB = j
-    enddo
-    if (NAB < NB1) NAB = NAB + 1
-endif
-ROB = RHO(NAB)
-
-AMETR(NAB) = AB
-AMETR(NA1) = ABC
-
-NEO   = NE
-TEO   = TE
-FPO   = FP
-UPARO = UPAR
-VRO   = VR    
-MRHO  = AMAIN*NE
-UPS0  = MRHO*RTOR 
-UPS0O = UPS0
 
 !----------------------------------------------------------------------|
 ! Skipping for now: JAMS through Ex-files
@@ -945,17 +861,6 @@ parse_exp_2d: do
     IFDFAX(jexar) = 0
 
 enddo parse_exp_2d
-! GIT debug
-!open(31, file='out')
-!write(31, *) 'DATARR', DATARR(1: jarr)
-!write(31, *) 'TIMEX', TIMEX(1:NGR)
-!write(31, *) 'NGIRDX', NGRIDX(1:NGR)
-!write(31, *) 'NTYPEX', NTYPEX(1:NGR)
-!write(31, *) 'KTO', KTO(1:NGR)
-!write(31, *) 'KOGDA', KOGDA(KTO(1:NGR))
-!write(31, *) 'GDEX', GDEX(1:NGR)
-!write(31, *) 'GDEY', GDEY(1:NGR)
-!close(31)
 
 39 continue
 
@@ -964,6 +869,120 @@ close(201)
 !-----------------------
 ! End reading "exp" file
 !-----------------------
+
+!if boundary is given, calculates initial geometry from that
+if (NBNT > 0) then
+    allocate(bnd_rz(2*NBND))
+    do jthe=1, NBND
+        bnd_rz(jthe)      = BNDR((jthe-1)*NBNT + 1)
+        bnd_rz(NBND+jthe) = BNDZ((jthe-1)*NBNT + 1) 
+    enddo
+!calculate ABC
+    ABC = (maxval(bnd_rz(1: nbnd)) - minval(bnd_rz(1: nbnd)))/2.
+!calculate elong
+    YB  = (maxval(bnd_rz(1: nbnd))        + minval(bnd_rz(1: nbnd)       ))/2. !Rgeo
+    YB1 = (maxval(bnd_rz(NBND+1: 2*nbnd)) + minval(bnd_rz(nbnd+1: 2*nbnd)))/2. !Zgeo
+    ELONG = (maxval(bnd_rz(NBND+1: 2*nbnd)) - minval(bnd_rz(nbnd+1: 2*nbnd)))/(2.*ABC)
+    ELONG = max(ELONG, 1.d0)
+    deallocate(bnd_rz)
+endif
+
+
+!assign variables here for initialization:
+
+VOLUME = GP2*GP*RTOR*AB*AB*ELONG
+
+ROC  = ROC3A(RTOR, SHIFT, ABC, ELONG, TRIAN)
+ROCO = ROC
+
+! Initialization of magnetic quantities
+BTN = BTOR
+FTO = GP*BTOR*ROC**2
+FTN = GP*BTN*ROC**2
+IPLN = IPL
+
+if (AWALL > RTOR+SHIFT) then
+    ROWALL = AWALL*SQRT(max(ELONM, ELONG))
+elseif (ELONM > ELONG) then
+    ROWALL = ROC3A(RTOR, SHIFT, AWALL, ELONM, TRICH)
+else
+    ROWALL = ROC3A(RTOR, 0.d0, AWALL, ELONG, TRIAN)
+endif
+
+!Efable
+! basic space steps, these do not change
+! Two versions: HROX = 1/NA1, XRHO(NA1)<1, HROX=1/(NA1-1/2) gives XRHO(NA1) = 1
+! Case with XRHO(NA1)=1-HROX/2, XSHO(NA1) = 1   (fluxes, MU, etc are on LCFS at at last grid point NA1 / NE, TE, and quantities are a bit inside at last grid point NA1)
+
+if (int(FLXDR) == 1) then
+    HROX  = 1.0/(NA1)
+else if (int(FLXDR) == 0) then
+    HROX  = 1.0/(NA1-0.5)
+endif
+
+do j=1, NRD
+    XRHO(j) = (j - 0.5)*HROX
+    SXHO(j) = j*HROX
+! real space grids, these are function of ROC 
+    RHO (j) = XRHO(j)*ROC
+    SRHO(j) = SXHO(j)*ROC
+enddo
+
+! real space grids, these are function of ROC 
+HRO  = HROX*ROC
+
+! Compute NB1
+NB1 = NA1
+NA  = NA1 - 1
+
+call SETGEO(0)
+call NEW_GRID
+
+do J=1, NB1
+    G22(J) = RHO(J)
+    VR(J)  = (GP2*(RTOR + SHIFT))**2*RHO(J)/RTOR
+    VRS(J) = (GP2*(RTOR + SHIFT))**2*J*HRO/RTOR
+    G11(J) = VRS(J)
+enddo
+
+call INTEGR(RHO, 1, VR, VOLUM, NA1)
+
+n_bouncon = NA1
+
+PSIBO = FP(NA1)
+call EXTRAP(XRHO(1: NA1), FP(1: NA1), 0.0, 1, PSIAX, 2, NA1)
+
+VOLUME = VOLUM(NA1)
+
+NAB = NA1
+if (NA1 < NB1 .and. AB > ABC) then
+    do j=NA1+1, NB1
+        if (AMETR(j) < AB) NAB = j
+    enddo
+    if (NAB < NB1) NAB = NAB + 1
+endif
+ROB = RHO(NAB)
+
+AMETR(NAB) = AB
+AMETR(NA1) = ABC
+
+NEO   = NE
+TEO   = TE
+FPO   = FP
+UPARO = UPAR
+VRO   = VR    
+MRHO  = AMAIN*NE
+UPS0  = MRHO*RTOR 
+UPS0O = UPS0
+
+
+
+
+
+
+
+
+
 
 do j=1, NEXNAM
     if (ARXUSE(j) /= 0) then
