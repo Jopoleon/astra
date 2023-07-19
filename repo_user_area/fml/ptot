@@ -1,2 +1,0 @@
-! PTOT [MW/m#3]: ( PETOT+PITOT )
-PTOT=PETOT(J)+PITOT(J)

@@ -1,4 +1,0 @@
-! IOHM [MA] - Ohmic current inside suface Ro
-!   (Yushmanov 11-FEB-91)
-if (J .eq. 1) IOHM=0.
-IOHM=IOHM+CC(J)*ULON(J)*VR(J)/(RTOR*GP2*IPOL(J))**2   *IPOL(NA)*HRO

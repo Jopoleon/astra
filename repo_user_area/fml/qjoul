@@ -1,3 +1,0 @@
-! QJOUL [MW]: Integral {0, R} (PJOUL) dV
-!   (Pereverzev 30-JAN-89)
-QJOUL = HRO/(GP2*RTOR)*SUM(CU(1:J)*UPL(1:J)*VR(1:J))

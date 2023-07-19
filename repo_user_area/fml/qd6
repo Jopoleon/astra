@@ -1,3 +1,0 @@
-! QD6 [F0/s]: Integral {0, R} (SD6) dV
-!   (Pereverzev 9-OCT-07)
-QD6 = HRO*SUM(SD6(1:J)*VR(1:J))

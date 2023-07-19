@@ -1,3 +1,0 @@
-! QDE [MW]: Integral {0, R} (PDE) dV
-!   (Pereverzev 9-OCT-07)
-QDE = HRO*SUM(PDE(1:J)*VR(1:J))

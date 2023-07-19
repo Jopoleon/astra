@@ -1,3 +1,0 @@
-! QD5 [F0/s]: Integral {0, R} (SD5) dV
-!   (Pereverzev 9-OCT-07)
-QD5 = HRO*SUM(SD5(1:J)*VR(1:J))

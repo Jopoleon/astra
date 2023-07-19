@@ -1,5 +1,0 @@
-! QDT [MW]: Fusion power
-!  (Pereverzev 24-JUL-89)
-include 'fml/pdt'
-if (J .eq. 1) QDT=0.
-QDT=QDT+PDT*VR(J)*HRO

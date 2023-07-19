@@ -1,3 +1,0 @@
-! QD7 [F0/s]: Integral {0, R} (SD7) dV
-!   (Pereverzev 9-OCT-07)
-QD7 = HRO*SUM(SD7(1:J)*VR(1:J))

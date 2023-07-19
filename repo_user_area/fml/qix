@@ -1,3 +1,0 @@
-! QIX [MW]: Integral {O, R} ( PIX ) dV
-!   (Yushmanov 11-JAN-89)
-QIX = HRO*SUM(PIX(1:J)*VR(1:J))

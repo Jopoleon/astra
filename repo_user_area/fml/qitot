@@ -1,3 +1,0 @@
-! QETOT [MW]: Integral {0, R} ( PETOT ) dV
-!   (Yushmanov 11-JAN-89)
-QITOT=HRO*SUM(PITOT(1:J)*VR(1:J))

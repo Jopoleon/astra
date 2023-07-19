@@ -1,4 +1,0 @@
-! QRADX [MW]: Integral {0, R} (PRAD) dV
-!   (Yushmanov 11-JAN-89)
-if (J .eq. 1) QRADX=0.
-QRADX=QRADX+PRADX(J)*VR(J)*HRO

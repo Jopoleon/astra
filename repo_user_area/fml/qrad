@@ -1,3 +1,0 @@
-! QRAD [MW]: Integral {0, R} (PRAD) dV
-!   (Pereverzev 26-JULY-89)
-QRAD = HRO*SUM(PRAD(1:J)*VR(1:J))

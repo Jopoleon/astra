@@ -1,5 +1,0 @@
-! QENEU [MW]: Integral {0, R} (PENEU) dV
-!   (Yushmanov 11-JUN-89)
-INCLUDE 'fml/peneu'
-if (J .eq. 1) QENEU=0.
-QENEU=QENEU+PENEU*VR(J)*HRO

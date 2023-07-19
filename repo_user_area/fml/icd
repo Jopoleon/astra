@@ -1,4 +1,0 @@
-! ICD [MA] - Driven current inside suface Ro
-!   (Yushmanov 11-FEB-91)
-if (J .eq. 1) ICD=0.
-ICD=ICD+CD(J)*VR(J)/IPOL(J)**2*HRO*IPOL(NA)/(GP2*RTOR)
