@@ -19,72 +19,7 @@
 
       if(kpr.lt.0) return
 
-      write(fname,'(a,a)') TRIM(path),'/outp.wr'
-      open(1,file=fname)
-         write(1,*) nr,nt,nr1,nt1,nr2,nt2,iplas
-         write(1,*) ((r(i,j),i=1,iplas),j=1,nt)
-         write(1,*) ((z(i,j),i=1,iplas),j=1,nt)
-         write(1,*) ((cur(i,j),i=1,iplas),j=1,nt)
-         write(1,*) ((psi(i,j),i=1,iplas),j=1,nt)
-         write(1,*)  (q(i),i=1,iplas)
-         write(1,*)  (f(i),i=1,iplas)
-      close(1)
-
-      write(fname,'(a,a)') TRIM(path),'/ddp.wr'
-      open(1,file=fname)
-         write(1,*) iplas
-         write(1,*) (q(i),i=1,iplas)
-         write(1,*) (f(i),i=1,iplas)
-         write(1,*) (dfdpsi(i),i=1,iplas)
-         write(1,*) (psia(i),i=1,iplas)
-         write(1,*) (sqtor(i),i=1,iplas)
-         write(1,*) (dpdpsi(i),i=1,iplas)
-         write(1,*) (BJ_av(i),i=1,iplas)
-         write(1,*) (b2_av(i),i=1,iplas)
-      close(1)
-      write(fname,'(a,a)') TRIM(path),'/tabppf.wr'
-      open(1,file=fname)
-         write(1,*) iplas
-         do i=1,iplas
-            write(1,*) 1.d0-psia(i),dpdpsi(i),dfdpsi(i)
-         enddo
-      close(1)
-
-      write(fname,'(a,a)') TRIM(path),'/q.wr'
-      open(1,file=fname)
-         do i=1,iplas
-            if(i.ne.iplas) then
-               write(1,*) 1.d0 - 0.5d0 * 
-     &            (psia(i) + psia(i+1)), 0.5d0*q(i)/pi, i
-            else
-               write(1,*) 1.d0-psia(i),0.5d0*q(i)/pi,i
-            endif
-         enddo
-      close(1)
-
       nrr=iplas
-
-      write(fname,'(a,a)') TRIM(path),'/efit_comp.wr'
-      open(1,file=fname)
-         write(1,2022) nrr,nt
-         write(1,2020) rm,zm,psim*0.4d0*pi,psip*0.4d0*pi,tok*1.d3
-         write(1,2020) (f(i)*0.4d0*pi,i=1,nrr-1)
-         write(1,2020) (dpdpsi(i)*1.d7/4.d0/pi,i=1,nrr)
-         write(1,2020) (dfdpsi(i)*0.4d0*pi,i=1,nrr)
-         write(1,2020) ((r(i,j),i=1,nrr),j=1,nt)
-         write(1,2020) ((z(i,j),i=1,nrr),j=1,nt)
-         write(1,2020) ((psi(i,j)*0.4d0*pi,i=1,nrr),j=1,nt)
-         write(1,2020) (q(i),i=1,nrr-1)
-         write(1,2020) (r(nrr,j),z(nrr,j),j=1,nt)
-      close(1)
-
-      write(fname,'(a,a)') TRIM(path),'/tab_bnd.wr'
-      open(1,file=fname)
-	 write(1,*) nt1 
-	 do ib=1,nt1
-	    write(1,*) r(iplas,ib),z(iplas,ib) 
-	 enddo
-      close(1) 
 
  2020 format(5e16.9)
  2022 format(2i5)
@@ -234,23 +169,6 @@
       character(len=120) :: fname
 
       include 'compol.inc'
-
-      if(kpr.lt.0) return
-
-      write(fname,'(a,a)') TRIM(path),'spik.wr'
-      open(1,file=fname,form='formatted')
-         nm=iplas*nt1
-         write(1,*) iplas,nt1,nm,psim,psibon,1
-         write(1,*)(dsqrt(1.d0-psia(i)),i=1,iplas),
-     &      (dpdpsi(i),i=1,iplas),
-     &      (dfdpsi(i),i=1,iplas),
-     &      (r(1,j),j=1,nt1),
-     &      (z(1,j),j=1,nt1),
-     &      (r(iplas,j),j=1,nt1),
-     &      (z(iplas,j),j=1,nt1),
-     &      ((ro(i,j)/ro(iplas,j),j=1,nt1),i=1,iplas),
-     &      (q(i)/2.d0/pi,i=1,iplas),fvac
-      close(1)
 
       return
       end subroutine wr_spik
