@@ -1,35 +1,47 @@
-subroutine generate_files_feqis(data_dir2,machine)
-
-use ef_circuit
-use green_matrix, only: greeni, dgreenirpl, dgreenizpl, dgreenirj, dgreenizj
+subroutine generate_files_feqis(data_dir2, machine)
 
 implicit none
 
-integer, parameter :: ncoils_max=300, nblanket_max=200, n_max=5200
-character(len=*), intent(in) :: data_dir2
+integer, parameter :: ncoils_max=300, nplas_max=300, nblanket_max=200, n_max=5200, nlim_max=500
+double precision, parameter :: GPI=3.1415926, GPI2=2.*GPI, mu0=0.4*GPI
 
-integer :: j_files, i, j, k, ii, jj, iii, jjj, ielem
-integer, dimension(ncoils_max) :: tempcoilturns, tempcoilelem, tempnnc
+character(len=*), intent(in) :: data_dir2, machine
+
+integer :: j_files, i, j, k, ii, jj, iii, jjj, ielem, &
+    nr, nr1, nr2, nz, nz1, nz2, nlimiter, &
+    ncoils, nreseqcoil, nconduc, nblocks, npassive, nactive, &
+    nblanket, nblanketpc, nelemblanketpc, nelemblanket, &
+    ilim_minr, ilim_maxr, ilim_minz, ilim_maxz
+integer, dimension(ncoils_max) :: tempcoilturns, tempcoilelem, tempnnc, &
+    nelemcoil, mturns, mequivalence
 integer, dimension(100) :: numeqcump
 integer, dimension(n_max) :: identcoil, nctype, equivtmp, equivforce
 integer, dimension(ncoils_max, ncoils_max) :: jjelem
+
 double precision :: dummy1, r1, r2, z1, z2, r3, z3, r4, z4, gtemp, dr1, dz1, &
-    x1, x2, x3, x4, x5, x6, x7, x8, x9, greenf, ssfw
+    x1, x2, x3, x4, x5, x6, x7, x8, x9, greenf, ssfw, &
+    Rmin, Rmax, Zmin, Zmax, alpsep, dR, dZ, &
+    lim_minR, lim_maxR, lim_minZ, lim_maxZ, &
+    resblan, widthblan
 double precision, dimension(ncoils_max) :: tempcoilr, tempcoilz, &
-    tempcoilangle, tempcoildr, tempcoildz, areactmp
+    tempcoilangle, tempcoildr, tempcoildz, areactmp, &
+    r_cond, z_cond, curconduc, Rcoil, Zcoil, dRcoil, dZcoil, anglecoil, &
+    Rblan, Zblan, areablan, Rblanpc, Zblanpc, resblanpc, areablanpc, curblanpc
+double precision, dimension(nplas_max) :: Rcomp, Zcomp, R, Z
+double precision, dimension(nlim_max) :: limiterR, limiterZ
 double precision, dimension(nblanket_max) :: dhoriz, dvert !blanket elements lengths
 double precision, dimension(n_max) :: rcetmp, zcetmp, datmp, &
     drcetmp, dzcetmp, tatmp
-character(len=120) :: fname,machine,dumstring1
+double precision, dimension(ncoils_max, ncoils_max) :: resconduc, indconduc, &
+    dgreenirj, dgreenizj
+double precision, dimension(nplas_max, nplas_max) :: zlimpotential
+double precision, dimension(nplas_max, nplas_max, ncoils_max) :: greeni, dgreenirpl, dgreenizpl
 
-!Efable test, remove this later
-
-mu0 = 0.4*GPI
+character(len=120) :: fname, dumstring1
 
 fname = trim(data_dir2)//'/machine_description_in.'//trim(machine)
 
 open(32, file=trim(fname))
-
 
 !general grid file
 read(32, *) dumstring1
@@ -40,7 +52,6 @@ read(32, *) rmax
 read(32, *) zmin
 read(32, *) zmax
 read(32, *) alpsep
-
 
 !compatibility with spider
 ! in spider ni=65, ni1=64
@@ -102,15 +113,20 @@ enddo
 read(32, *) lim_maxR, lim_minR, lim_maxZ, lim_minZ
 
 !forces limiter to adapt to grid points !EFable test, but this should be better than leaving it floating
+write(*, *) 'Debug1', nlimiter, limiterr(1)
 do i=1, nlimiter
-    call find_actual_index_ef(limiterr(i), limiterz(i), j, k)
+    write(*, *) 'Debug2', i, limiterr(i), limiterz(i)
+    j = nint((limiterr(i) - rmin)/dr + 1.)
+    k = nint((limiterz(i) - zmin)/dz + 1.)
+    write(*, *) 'Debug3', j, k
     limiterr(i) = r(j)
     limiterz(i) = z(k)
 enddo
-
+write(*, *) 'Debug2', lim_maxR, r(1), dr
 ilim_maxR = 1 + nint((lim_maxR - r(1))/dr)
 lim_maxR = r(ilim_maxR)
 
+write(*, *) 'Debug3'
 ilim_minR = 1 + nint((lim_minR - r(1))/dr)
 lim_minR = r(ilim_minR)
 

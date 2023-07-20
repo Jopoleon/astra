@@ -2,36 +2,27 @@ program generate_grids_equil
 
 implicit none
 
- character*80 directori !
+character(len=80), parameter :: dir='exp/cnf/'
 
-	integer iaug,iiter,idemo
+integer :: iaug=1, iiter=0, idemo=0
 	
-	write(*,*) 'do aug? (0 for no or 1 for yes)'
-	read(*,*) iaug
-	write(*,*) 'do demo? (0 for no or 1 for yes)'
-	read(*,*) idemo
-	write(*,*) 'do iter? (0 for no or 1 for yes)'
-	read(*,*) iiter
+!write(*,*) 'do aug? (0 = no, 1 = yes)'
+!read(*,*) iaug
+!write(*,*) 'do demo? (0 for no or 1 for yes)'
+!read(*,*) idemo
+!write(*,*) 'do iter? (0 for no or 1 for yes)'
+!read(*,*) iiter
 
-		directori='exp/cnf/'
+if (iaug == 1) then
+    call generate_files_feqis(dir, 'aug')
+endif
 
-	if (iaug.eq.1) then
-		call generate_files_feqis(directori,'aug')
-!		call CEPPON(0,0,0,0.01,0., & 
-!			0.,0.,0.,0,'exp/equ/aug_/',13)
-	endif
+if (iiter == 1) then
+    call generate_files_feqis(dir, 'demo')
+endif
 
-	if (iiter.eq.1) then
-		call generate_files_feqis(directori,'demo')
-!		call CEPPON(0,0,0,0.01,0., & 
-!			0.,0.,0.,0,'exp/equ/iter/',13)
-	endif
+if (idemo == 1) then
+    call generate_files_feqis(dir, 'iter')
+endif
 
-	if (idemo.eq.1) then
-		call generate_files_feqis(directori,'iter')
-!		call CEPPON(0,0,0,0.01,0., & 
-!			0.,0.,0.,0,'exp/equ/dem_/',13)
-	endif
-
-
-end
+end program generate_grids_equil
