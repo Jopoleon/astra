@@ -36,6 +36,8 @@ double precision, dimension(ncoils_max, ncoils_max) :: resconduc, indconduc, &
     dgreenirj, dgreenizj
 double precision, dimension(nplas_max, nplas_max) :: zlimpotential
 double precision, dimension(nplas_max, nplas_max, ncoils_max) :: greeni, dgreenirpl, dgreenizpl
+double precision, external :: green_function, green_function_identity, &
+    green_function_non_identity, green_function_includingsamepoint
 
 character(len=120) :: fname, dumstring1
 
@@ -113,20 +115,16 @@ enddo
 read(32, *) lim_maxR, lim_minR, lim_maxZ, lim_minZ
 
 !forces limiter to adapt to grid points !EFable test, but this should be better than leaving it floating
-write(*, *) 'Debug1', nlimiter, limiterr(1)
 do i=1, nlimiter
-    write(*, *) 'Debug2', i, limiterr(i), limiterz(i)
     j = nint((limiterr(i) - rmin)/dr + 1.)
     k = nint((limiterz(i) - zmin)/dz + 1.)
-    write(*, *) 'Debug3', j, k
     limiterr(i) = r(j)
     limiterz(i) = z(k)
 enddo
-write(*, *) 'Debug2', lim_maxR, r(1), dr
+
 ilim_maxR = 1 + nint((lim_maxR - r(1))/dr)
 lim_maxR = r(ilim_maxR)
 
-write(*, *) 'Debug3'
 ilim_minR = 1 + nint((lim_minR - r(1))/dr)
 lim_minR = r(ilim_minR)
 
@@ -336,18 +334,18 @@ do i=1, ielem
     do j=1, ielem
         if (iii == equivtmp(j)) then
             if ((equivforce(j) == equivforce(i)).and.(i /= j)) then
-                call green_function_non_identity(rcetmp(i), zcetmp(i), rcetmp(j), zcetmp(j), gtemp, &
+                gtemp = green_function_non_identity(rcetmp(i), zcetmp(i), rcetmp(j), zcetmp(j), &
                     drcetmp(i), dzcetmp(i), drcetmp(j), dzcetmp(j), nctype(i), nctype(j))
                 indconduc(iii, iii) = indconduc(iii, iii) + mu0/GPI*gtemp*tatmp(i)*tatmp(j)
             endif
             if ((equivforce(j) /= equivforce(i))) then
-                call green_function_non_identity(rcetmp(i), zcetmp(i), rcetmp(j), zcetmp(j), gtemp, &
+                gtemp = green_function_non_identity(rcetmp(i), zcetmp(i), rcetmp(j), zcetmp(j), &
                     drcetmp(i), dzcetmp(i), drcetmp(j), dzcetmp(j), nctype(i), nctype(j))
                 indconduc(iii, iii) = indconduc(iii, iii) + mu0/GPI*gtemp*tatmp(i)*tatmp(j)
             endif
             if (i == j) then
                 jjelem(iii, iii) = jjelem(iii, iii) + 1
-                call green_function_identity(rcetmp(i), zcetmp(i), gtemp, drcetmp(i), dzcetmp(i), nctype(i))
+                gtemp = green_function_identity(rcetmp(i), zcetmp(i), drcetmp(i), dzcetmp(i), nctype(i))
                 indconduc(iii, iii) = indconduc(iii, iii) + mu0/GPI*gtemp*tatmp(i)*tatmp(j)/2.
             endif
         endif
@@ -366,7 +364,7 @@ do i=1, ielem
     do j=1, ielem
         if ((equivtmp(j) /= iii)) then
             jjelem(equivtmp(j), iii) = jjelem(equivtmp(j), iii) + 1
-            call green_function_non_identity(rcetmp(i), zcetmp(i), rcetmp(j), zcetmp(j), gtemp, &
+            gtemp = green_function_non_identity(rcetmp(i), zcetmp(i), rcetmp(j), zcetmp(j), &
                 drcetmp(i), dzcetmp(i), drcetmp(j), dzcetmp(j), nctype(i), nctype(j))
             indconduc(iii, equivtmp(j)) = indconduc(iii, equivtmp(j)) + mu0/GPI*gtemp*tatmp(i)*tatmp(j)
         endif
@@ -389,7 +387,7 @@ do i=1, ielem
     iii = equivtmp(i)
     do jj=1, nz2
         do ii=1, nr2
-            call green_function_non_identity(rcetmp(i), zcetmp(i), r(ii), z(jj), gtemp, &
+            gtemp = green_function_non_identity(rcetmp(i), zcetmp(i), r(ii), z(jj), &
                 drcetmp(i), dzcetmp(i), dr, dz, nctype(i), 2)
             greeni(ii, jj, iii) = greeni(ii, jj, iii) + mu0/GPI*gtemp*tatmp(i)
         enddo
@@ -406,12 +404,12 @@ do i=1, ielem
     iii = equivforce(i)
     do j=1, ielem
         if ((equivforce(j) /= iii)) then
-            call green_function(rcetmp(i) + dr/2., zcetmp(i), rcetmp(j), zcetmp(j), x1)
-            call green_function(rcetmp(i) - dr/2., zcetmp(i), rcetmp(j), zcetmp(j), x2)
+            x1 = green_function(rcetmp(i) + dr/2., zcetmp(i), rcetmp(j), zcetmp(j))
+            x2 = green_function(rcetmp(i) - dr/2., zcetmp(i), rcetmp(j), zcetmp(j))
             dgreenirj(iii, equivforce(j)) = dgreenirj(iii, equivforce(j)) - &
                 mu0*2.*tatmp(i)*tatmp(j)* (x1 - x2)/dr
-            call green_function(rcetmp(i), zcetmp(i) + dz/2., rcetmp(j), zcetmp(j), x1)
-            call green_function(rcetmp(i), zcetmp(i) - dz/2., rcetmp(j), zcetmp(j), x2)
+            x1 = green_function(rcetmp(i), zcetmp(i) + dz/2., rcetmp(j), zcetmp(j))
+            x2 = green_function(rcetmp(i), zcetmp(i) - dz/2., rcetmp(j), zcetmp(j))
             dgreenizj(iii, equivforce(j)) = dgreenizj(iii, equivforce(j)) - &
                 mu0*2.*tatmp(i)*tatmp(j)* (x1 - x2)/dz
         endif
@@ -423,11 +421,11 @@ do i=1, ielem
     iii = equivforce(i)
     do jj=1, nz2
         do ii=1, nr2
-            call green_function(rcetmp(i) + dr/2., zcetmp(i), r(ii), z(jj), x1)
-            call green_function(rcetmp(i) - dr/2., zcetmp(i), r(ii), z(jj), x2)
+            x1 = green_function(rcetmp(i) + dr/2., zcetmp(i), r(ii), z(jj))
+            x2 = green_function(rcetmp(i) - dr/2., zcetmp(i), r(ii), z(jj))
             dgreenirpl(ii, jj, iii) = dgreenirpl(ii, jj, iii) - mu0*2.*tatmp(i)* (x1 - x2)/dr
-            call green_function(rcetmp(i), zcetmp(i) + dz/2., r(ii), z(jj), x1)
-            call green_function(rcetmp(i), zcetmp(i) - dz/2., r(ii), z(jj), x2)
+            x1 = green_function(rcetmp(i), zcetmp(i) + dz/2., r(ii), z(jj))
+            x2 = green_function(rcetmp(i), zcetmp(i) - dz/2., r(ii), z(jj))
             dgreenizpl(ii, jj, iii) = dgreenizpl(ii, jj, iii) - mu0*2.*tatmp(i)* (x1 - x2)/dz
         enddo
     enddo
@@ -443,10 +441,6 @@ do j=1, nz2
         if (j > ilim_maxZ) zlimpotential(i, j) = 0
     enddo
 enddo
-
-
-
-
 
 ! write everything on file
 
@@ -525,22 +519,22 @@ write(32, *) nint((2.*nr + 2.*nz)*(2.*nr + 2.*nz))
 ! lower side
 do i=2, nr1
     do j=2, nr1
-        call green_function_includingsamepoint(r(i), z(1), r(j), z(1), dr, r(i), greenf)
+        greenf = green_function_includingsamepoint(r(i), z(1), r(j), z(1), dr, r(i))
         write(32, *) greenf
     enddo
 !right side
     do j=2, nz1
-        call green_function_includingsamepoint(r(i), z(1), r(nr2), z(j), dz, r(i), greenf)
+        greenf = green_function_includingsamepoint(r(i), z(1), r(nr2), z(j), dz, r(i))
         write(32, *) greenf
     enddo
 ! upper side
     do j=2, nr1
-        call green_function_includingsamepoint(r(i), z(1), r(j), z(nz2), dr, r(i), greenf)
+        greenf = green_function_includingsamepoint(r(i), z(1), r(j), z(nz2), dr, r(i))
         write(32, *) greenf
     enddo
 !left side
     do j=2, nz1
-        call green_function_includingsamepoint(r(i), z(1), r(1), z(j), dz, r(i), greenf)
+        greenf = green_function_includingsamepoint(r(i), z(1), r(1), z(j), dz, r(i))
         write(32, *) greenf
     enddo
 enddo
@@ -548,22 +542,22 @@ enddo
 ! right side
 do i=2, nz1
     do j=2, nr1
-        call green_function_includingsamepoint(r(nr2), z(i), r(j), z(1), dr, r(nr2), greenf)
+        greenf = green_function_includingsamepoint(r(nr2), z(i), r(j), z(1), dr, r(nr2))
         write(32, *) greenf
     enddo
 !right side
     do j=2, nz1
-        call green_function_includingsamepoint(r(nr2), z(i), r(nr2), z(j), dz, r(nr2), greenf)
+        greenf = green_function_includingsamepoint(r(nr2), z(i), r(nr2), z(j), dz, r(nr2))
         write(32, *) greenf
     enddo
 ! upper side
     do j=2, nr1
-        call green_function_includingsamepoint(r(nr2), z(i), r(j), z(nz2), dr, r(nr2), greenf)
+        greenf = green_function_includingsamepoint(r(nr2), z(i), r(j), z(nz2), dr, r(nr2))
         write(32, *) greenf
     enddo
 !left side
     do j=2, nz1
-        call green_function_includingsamepoint(r(nr2), z(i), r(1), z(j), dz, r(nr2), greenf)
+        greenf = green_function_includingsamepoint(r(nr2), z(i), r(1), z(j), dz, r(nr2))
         write(32, *) greenf
     enddo
 enddo
@@ -571,22 +565,22 @@ enddo
 ! upper side
 do i=2, nr1
     do j=2, nr1
-        call green_function_includingsamepoint(r(i), z(nz2), r(j), z(1), dr, r(i), greenf)
+        greenf = green_function_includingsamepoint(r(i), z(nz2), r(j), z(1), dr, r(i))
         write(32, *) greenf
     enddo
 !right side
     do j=2, nz1
-        call green_function_includingsamepoint(r(i), z(nz2), r(nr2), z(j), dz, r(i), greenf)
+        greenf = green_function_includingsamepoint(r(i), z(nz2), r(nr2), z(j), dz, r(i))
         write(32, *) greenf
     enddo
 ! upper side
     do j=2, nr1
-        call green_function_includingsamepoint(r(i), z(nz2), r(j), z(nz2), dr, r(i), greenf)
+        greenf = green_function_includingsamepoint(r(i), z(nz2), r(j), z(nz2), dr, r(i))
         write(32, *) greenf
     enddo
 !left side
     do j=2, nz1
-        call green_function_includingsamepoint(r(i), z(nz2), r(1), z(j), dz, r(i), greenf)
+        greenf = green_function_includingsamepoint(r(i), z(nz2), r(1), z(j), dz, r(i))
         write(32, *) greenf
     enddo
 enddo
@@ -594,22 +588,22 @@ enddo
 ! left side
 do i=2, nz1
     do j=2, nr1
-        call green_function_includingsamepoint(r(1), z(i), r(j), z(1), dr, r(1), greenf)
+        greenf = green_function_includingsamepoint(r(1), z(i), r(j), z(1), dr, r(1))
         write(32, *) greenf
     enddo
 !right side
     do j=2, nz1
-        call green_function_includingsamepoint(r(1), z(i), r(nr2), z(j), dz, r(1), greenf)
+        greenf = green_function_includingsamepoint(r(1), z(i), r(nr2), z(j), dz, r(1))
         write(32, *) greenf
     enddo
 ! upper side
     do j=2, nr1
-        call green_function_includingsamepoint(r(1), z(i), r(j), z(nz2), dr, r(1), greenf)
+        greenf = green_function_includingsamepoint(r(1), z(i), r(j), z(nz2), dr, r(1))
         write(32, *) greenf
     enddo
 !left side
     do j=2, nz1
-        call green_function_includingsamepoint(r(1), z(i), r(1), z(j), dz, r(1), greenf)
+        greenf = green_function_includingsamepoint(r(1), z(i), r(1), z(j), dz, r(1))
         write(32, *) greenf
     enddo
 enddo

@@ -71,6 +71,8 @@ if __name__ == '__main__':
         aext = '/afs/ipp/home/a/astra/ASTRA_LIBRARIES_EXT'
     elif '/toks/work' in awd:
         aext = '/afs/ipp/home/a/astra/ASTRA_LIBRARIES_EXT'
+    elif '/localhome' in awd:
+        aext = '/afs/ipp/home/a/astra/ASTRA_LIBRARIES_EXT'
     elif '/home/ITER' in awd:
         aext = '/home/ITER/tarding/ASTRA_LIBRARIES_EXT'
     elif 'compass' in awd:

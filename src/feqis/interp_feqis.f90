@@ -401,6 +401,7 @@ integer i, j, k
 double precision t1, t2, t3, t4, z1, z2, z3, z4
 double precision x1, x2, x3, x4, y1, y2, y3, y4
 double precision arc1, arc2
+double precision, external :: green_function
 
 write(*, *) 'spid par', psplex_from_fbe
 
@@ -424,7 +425,7 @@ do j=1,  nbnd-1
         x3 = rbnd(i+1)
         y3 = zbnd(i+1)
         arc1 = sqrt((x3 - x1)**2 + (y3 - y1)**2)
-        call green_function(x1, y1, x2, y2, z3)
+        z3 = green_function(x1, y1, x2, y2)
         call find_fields_interp_ef_psionly(rbnd(i) + dr/2, zbnd(i), t1)
         call find_fields_interp_ef_psionly(rbnd(i), zbnd(i) + dz/2, t2)
         call find_fields_interp_ef_psionly(rbnd(i) - dr/2, zbnd(i), t3)
@@ -1385,232 +1386,142 @@ return
 end subroutine bilinear_average_ef
 
 !---------------------------------------------------------------------
-function ellE_green(X,  DL) ! gives back the first kind elliptic integral,  from K. Lackner,  T. Lunt,  IPP - Garching 2022
+double precision function ellE_green(X,  DL) ! gives back the first kind elliptic integral,  from K. Lackner,  T. Lunt,  IPP - Garching 2022
 
 double precision,  intent(in) :: X,  DL
-double precision :: ellE_green
 
-ellE_green = (((.01736506451D0 *X + .04757383546D0)*X + .06260601220D0)*X + .44325141463D0)*X + 1.0D0 - &
-    (((.00526449639D0 *X + .04069697526D0)*X + .09200180037D0)*X + .24998368310D0)*X*DL
+ellE_green = (((0.01736506451D0 *X + 0.04757383546D0)*X + 0.06260601220D0)*X + 0.44325141463D0)*X + 1.0D0 - &
+             (((0.00526449639D0 *X + 0.04069697526D0)*X + 0.09200180037D0)*X + 0.24998368310D0)*X*DL
 
 return
 end function ellE_green
 
 !---------------------------------------------------------------------
-function ellK_green(X,  DL) ! gives back the second kind elliptic integral,  from K. Lackner,  T. Lunt,  IPP - Garching 2022
+double precision function ellK_green(X,  DL) ! gives back the second kind elliptic integral,  from K. Lackner,  T. Lunt,  IPP - Garching 2022
 
 double precision,  intent(in) :: X,  DL
-double precision :: ellK_green
-    ellK_green= ((( .01451196212D0*X + .03742563713D0)*X + .03590092383D0)*X + .09666344259D0)*X + 1.38629436112D0 - &
-    ((((.00441787012D0*X + .03328355346D0)*X + .06880248576D0)*X + .12498593597D0)*X + .5D0)*DL
+
+ellK_green = ((( 0.01451196212D0*X + 0.03742563713D0)*X + 0.03590092383D0)*X + 0.09666344259D0)*X + 1.38629436112D0 - &
+            (((( 0.00441787012D0*X + 0.03328355346D0)*X + 0.06880248576D0)*X + 0.12498593597D0)*X + 0.5D0)*DL
 
 return 
 end function ellK_green
 
-!---------------------------------------------------------------------
-function ellE_green_dx(X, DL) ! d/dx
-
-double precision,  intent(in) :: X, DL
-double precision :: ellE_green_dx
-
-ellE_green_dx = (((4.*.01736506451D0 *X + 3.*.04757383546D0)*X + 2.*.06260601220D0)*X + .44325141463D0) - &
-    (((4.*.00526449639D0 *X + 3.*.04069697526D0)*X + 2.*.09200180037D0)*X + .24998368310D0)*DL + &
-    (((.00526449639D0 *X + .04069697526D0)*X + .09200180037D0)*X + .24998368310D0)
-
-return
-end function ellE_green_dx
-
-!---------------------------------------------------------------------
-function ellK_green_dx(X, DL) ! d/dx
-
-double precision,  intent(in) :: X, DL
-double precision :: ellK_green_dx
-    ellK_green_dx= ((( 4.*.01451196212D0*X + 3.*.03742563713D0)*X + 2.*.03590092383D0)*X + .09666344259D0)  - &
-((((4.*.00441787012D0*X + 3.*.03328355346D0)*X + 2.*.06880248576D0)*X + .12498593597D0))*DL+ &
-((((.00441787012D0*X + .03328355346D0)*X + .06880248576D0)*X + .12498593597D0)*X + .5D0)/X
-
-return 
-end function ellK_green_dx
-
-!---------------------------------------------------------------------
-function ellE_green_asy(X,  DL) ! for x --> 0
-
-double precision,  intent(in) :: X,  DL
-double precision :: ellE_green_asy
-
-ellE_green_asy = .44325141463D0*X + 1.0D0 - .24998368310D0*X*DL
-
-return
-end function ellE_green_asy
-
-!---------------------------------------------------------------------
-function ellK_green_asy(X,  DL) ! for x-->0
-
-double precision,  intent(in) :: X,  DL
-double precision :: ellK_green_asy
-ellK_green_asy= .09666344259D0*X + 1.38629436112D0 - (.12498593597D0*X + .5D0)*DL
-
-return 
-end function ellK_green_asy
-
-!---------------------------------------------------------------------
-function dk_dr1(r1, r2, z1, z2)  !identical do dk_dr2
-
-double precision,  intent(in) :: r1, r2, z1, z2
-double precision :: dk_dr1, f
-
-f=((r2+r1)**2+(z2-z1)**2)
-dk_dr1 = sqrt(r2/r1)*sqrt(f)-2*sqrt(r1*r2)*(r1+r2)*f**(-1.5)
-
-return 
-end function dk_dr1
-    
-!---------------------------------------------------------------------
-function dk_dz1(r1, r2, z1, z2)  !identical to -dk_dz2
-
-double precision,  intent(in) :: r1, r2, z1, z2
-double precision :: dk_dz1, f
-
-f=((r2+r1)**2+(z2-z1)**2)
-dk_dz1 = -2*sqrt(r1*r2)*(z1-z2)*f**(-1.5)
-
-return 
-end function dk_dz1
-
 !----------------------------------------------------------------------------------- 
-subroutine green_function(r1, z1, r2, z2, greenf)
+double precision function green_function(r1, z1, r2, z2)
 
 implicit none
 
-double precision r1, z1, r2, z2, greenf
-double precision TT, K, ELCK, ELCE, ellk_green, elle_green
-double precision s21bbf, s21bcf, acl, alg
-integer ifailk, ifaile
+double precision, intent(in) :: r1, z1, r2, z2
+double precision :: TT, K, ELCK, ELCE, acl, alg
+double precision, external :: ellk_green, elle_green
 
-K=sqrt(4.*r1*r2/ ((r2+r1)**2+(z2-z1)**2))
+K = sqrt(4.*r1*r2/ ((r2 + r1)**2 + (z2 - z1)**2))
 
-TT = 1.-K**2
+TT = 1. - K**2
 
-acl=tt
-alg=dlog(acl)
+acl = tt
+alg = dlog(acl)
 
-ELCK=ellK_green(acl, alg) !              S21BBF(0.D0, TT, 1.D0, IFAILK)
-ELCE=ellE_green(acl, alg) ! ELCK-K**2/3.D0*S21BCF(0.D0, TT, 1.D0, IFAILE)
+ELCK = ellK_green(acl, alg) !              S21BBF(0.D0, TT, 1.D0, IFAILK)
+ELCE = ellE_green(acl, alg) ! ELCK-K**2/3.D0*S21BCF(0.D0, TT, 1.D0, IFAILE)
 
-greenf = ( (1.D0-K**2/2.)*ELCK-ELCE )*( SQRT(r1*r2)/K )
+green_function = ( (1.D0 - K**2/2.)*ELCK - ELCE )*( SQRT(r1*r2)/K )
 
 return
-end subroutine green_function
+end function green_function
 
 !-----------------------------------------------------------------------------------
-subroutine green_function_includingsamepoint(r1, z1, r2, z2, dl, R0, greenf)
+double precision function green_function_includingsamepoint(r1, z1, r2, z2, dl, R0)
 
 implicit none
 
-double precision,  intent(in) :: r1, r2, z1, z2, dl, r0
-double precision,  intent(out) :: greenf
-double precision TT, K, ELCK, ELCE, ellk_green, elle_green
-double precision s21bbf, s21bcf, acl, alg
-integer ifailk, ifaile
+double precision, intent(in) :: r1, r2, z1, z2, dl, r0
+double precision :: TT
+double precision, external :: green_function
 
-if (abs(r1-r2) < 1.e-6.and.abs(z1-z2) < 1.e-6) then
-
-tt=dl/(4*R0)
-greenf=-tt*(log(tt**2)-4*log(2.)+2.)/4.*8.*r0**2/dl/2.	  !as in lackner code !this one works
+if (abs(r1 - r2) < 1.e-6 .and. abs(z1 - z2) < 1.e-6) then
+    tt = dl/(4*R0)
+    green_function_includingsamepoint = -tt*(log(tt**2) - 4*log(2.) + 2.)*r0**2/dl
 else
-K=sqrt(4.*r1*r2/ ((r2+r1)**2+(z2-z1)**2))
-
-TT = 1.-K**2
-
-acl=tt
-alg=dlog(acl)
-
-ELCK=ellK_green(acl, alg) !              S21BBF(0.D0, TT, 1.D0, IFAILK)
-ELCE=ellE_green(acl, alg) ! ELCK-K**2/3.D0*S21BCF(0.D0, TT, 1.D0, IFAILE)
-
-greenf = ( (1.D0-K**2/2.)*ELCK-ELCE )*( SQRT(r1*r2)/K )
+    green_function_includingsamepoint = green_function(r1, z1, r2, z2)
 endif
 
 return
-end subroutine green_function_includingsamepoint
+end function green_function_includingsamepoint
 
 !-----------------------------------------------------------------------------------
-subroutine green_function_identity(r1, z1, greenf, dr, dz, ntype)
+double precision function green_function_identity(r1, z1, dr, dz, ntype)
 
 implicit none
 
-double precision r1, z1, r2, z2, greenf, dr, dz
-double precision TT, K, ELCK, ELCE
-double precision s21bbf, s21bcf
-integer ifailk, ifaile, ntype
-integer i, j
+integer, intent(in) :: ntype
+double precision, intent(in) :: r1, z1, dr, dz
+integer :: i, j
+double precision :: ELCK, ELCE, greenf
+double precision, external :: green_function
 
 if (ntype == 2) then
-greenf = r1*(log(8.*r1/(0.2236*(dr+dz)))-2.0) ! From A. Kavin,  used in SPIDER (A. A. Ivanov and S. Yu. Medvedev),  self inductance of a rectangular coil in toroidal direction
-endif
-
-if (ntype == 1) then
-elce=SQRT(dr**2+dz**2)
-greenf=0.
-do i=-1, 1
-do j=-1, i
-if(i  ==  j) then
-greenf = greenf+ (r1+dr*i/3.d0)  * (log( 8.*(r1+dr*i/3.d0)/(elce/3.d0) ) - 0.5D0)
-else
-call green_function(r1+dr*i/3., dz*i/3., r1+dr*j/3., dz*j/3., elck)
-greenf=greenf+4.*elck
-endif
-enddo
-enddo
-greenf = greenf/9.d0
+    green_function_identity = r1*(log(8.*r1/(0.2236*(dr + dz))) - 2.0) ! From A. Kavin,  used in SPIDER (A. A. Ivanov and S. Yu. Medvedev),  self inductance of a rectangular coil in toroidal direction
+else if (ntype == 1) then
+    elce = SQRT(dr**2 + dz**2)
+    greenf = 0.
+    do i=-1, 1
+        do j=-1, i
+            if (i == j) then
+                greenf = greenf + (r1 + dr*i/3.d0) * (log( 8.*(r1 + dr*i/3.d0)/(elce/3.d0) ) - 0.5D0)
+            else
+                elck = green_function(r1 + dr*i/3., dz*i/3., r1 + dr*j/3., dz*j/3.)
+                greenf = greenf + 4.*elck
+            endif
+        enddo
+    enddo
+    green_function_identity = greenf/9.d0
 endif	
 
 return
-end subroutine green_function_identity
+end function green_function_identity
 
 !-----------------------------------------------------------------------------------
-subroutine green_function_non_identity(r1, z1, r2, z2, greenf, dr, dz, dr2, dz2, ntype1, ntype2)
+double precision function green_function_non_identity(r1, z1, r2, z2, dr, dz, dr2, dz2, ntype1, ntype2)
 
 implicit none
 
-double precision r1, z1, r2, z2, greenf, dr, dz, dr2, dz2
-double precision TT, K, ELCK, ELCE
-double precision s21bbf, s21bcf
-integer ifailk, ifaile, ntype1, ntype2
-integer i, j
+integer, intent(in) :: ntype1, ntype2
+double precision, intent(in) :: r1, z1, r2, z2, dr, dz, dr2, dz2
 
-greenf=0.
+integer :: i, j
+double precision :: ELCK, greenf
+double precision, external :: green_function
 
-if ( ntype1 == 1.and.ntype2 == 1) then
-do i=-1, 1
-do j=-1, 1
-call green_function(r1+dr*i/3., z1+dz*i/3., r2+dr2*j/3., z2+dz2*j/3., elck)
-greenf=greenf+elck
-enddo
-enddo
-greenf = greenf/9.d0
-endif
-if ( ntype1 == 1.and.ntype2 == 2) then
-do i=-1, 1
-call green_function(r1+dr*i/3., z1+dz*i/3., r2, z2, elck)
-greenf=greenf+elck
-enddo
-greenf = greenf/3.d0
-endif
-if ( ntype1 == 2.and.ntype2 == 1) then
-do j=-1, 1
-call green_function(r1, z1, r2+dr2*j/3., z2+dz2*j/3., elck)
-greenf=greenf+elck
-enddo
-greenf = greenf/3.d0
-endif
-if ( ntype1 == 2.and.ntype2 == 2) then
-call green_function(r1, z1, r2, z2, elck)
-greenf=greenf+elck
+greenf = 0.
+
+if (ntype1 == 1 .and. ntype2 == 1) then
+    do i=-1, 1
+        do j=-1, 1
+            elck = green_function(r1+dr*i/3., z1+dz*i/3., r2+dr2*j/3., z2+dz2*j/3.)
+            greenf = greenf + elck
+        enddo
+    enddo
+    green_function_non_identity = greenf/9.d0
+else if (ntype1 == 1 .and. ntype2 == 2) then
+    do i=-1, 1
+        elck = green_function(r1+dr*i/3., z1+dz*i/3., r2, z2)
+        greenf = greenf + elck
+    enddo
+    green_function_non_identity = greenf/3.d0
+else if (ntype1 == 2 .and. ntype2 == 1) then
+    do j=-1, 1
+        elck = green_function(r1, z1, r2+dr2*j/3., z2+dz2*j/3.)
+        greenf = greenf + elck
+    enddo
+    green_function_non_identity = greenf/3.d0
+else if (ntype1 == 2 .and. ntype2 == 2) then
+    green_function_non_identity = green_function(r1, z1, r2, z2)
 endif
 
 return
-end subroutine green_function_non_identity
+end function green_function_non_identity
 
 !-----------------------------------------------------------------------------------
 subroutine boundary_ef(g)
@@ -1748,15 +1659,15 @@ subroutine ainv_matrix_def(A)
 implicit none
 double precision A(9, 9)
 
-A(1, 1:9)= (/  0.25, -0.50,  0.25, -0.50,  1.00, -0.50,  0.25, -0.50,  0.25 /)
-A(2, 1:9)= (/ -0.25,  0.50, -0.25,  0.  ,  0.  ,  0.  ,  0.25, -0.50,  0.25 /)
-A(3, 1:9)= (/ -0.25,  0.  ,  0.25,  0.50,  0.  , -0.50, -0.25,  0.  ,  0.25 /)
-A(4, 1:9)= (/  0.25,  0.  , -0.25,  0.  ,  0.  ,  0.  , -0.25,  0.  ,  0.25 /)
-A(5, 1:9)= (/  0.  ,  0.  ,  0.  ,  0.50, -1.00,  0.50,  0.  ,  0.  ,  0.   /)
-A(6, 1:9)= (/  0.  ,  0.50,  0.  ,  0.  , -1.00,  0.  ,  0.  ,  0.50,  0.   /)
-A(7, 1:9)= (/  0.  ,  0.  ,  0.  , -0.50,  0.  ,  0.50,  0.  ,  0.  ,  0.   /)
-A(8, 1:9)= (/  0.  , -0.50,  0.  ,  0.  ,  0.  ,  0.  ,  0.  ,  0.50,  0.   /)
-A(9, 1:9)= (/  0.  ,  0.  ,  0.  ,  0.  ,  1.00,  0.  ,  0.  ,  0.  ,  0.   /)
+A(1, 1: 9) = (/  0.25, -0.50,  0.25, -0.50,  1.00, -0.50,  0.25, -0.50,  0.25 /)
+A(2, 1: 9) = (/ -0.25,  0.50, -0.25,  0.  ,  0.  ,  0.  ,  0.25, -0.50,  0.25 /)
+A(3, 1: 9) = (/ -0.25,  0.  ,  0.25,  0.50,  0.  , -0.50, -0.25,  0.  ,  0.25 /)
+A(4, 1: 9) = (/  0.25,  0.  , -0.25,  0.  ,  0.  ,  0.  , -0.25,  0.  ,  0.25 /)
+A(5, 1: 9) = (/  0.  ,  0.  ,  0.  ,  0.50, -1.00,  0.50,  0.  ,  0.  ,  0.   /)
+A(6, 1: 9) = (/  0.  ,  0.50,  0.  ,  0.  , -1.00,  0.  ,  0.  ,  0.50,  0.   /)
+A(7, 1: 9) = (/  0.  ,  0.  ,  0.  , -0.50,  0.  ,  0.50,  0.  ,  0.  ,  0.   /)
+A(8, 1: 9) = (/  0.  , -0.50,  0.  ,  0.  ,  0.  ,  0.  ,  0.  ,  0.50,  0.   /)
+A(9, 1: 9) = (/  0.  ,  0.  ,  0.  ,  0.  ,  1.00,  0.  ,  0.  ,  0.  ,  0.   /)
 
 return
 end subroutine ainv_matrix_def
