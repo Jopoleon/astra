@@ -311,14 +311,13 @@ return
 end subroutine plasma_psi_to_coils_ef
 
 !---------------------------------------------------------------------
-subroutine get_zccurb_efff(rc_cur, zc_cur, z2c_cur, rgeoc, zgeoc, ahorc, bpcell)
+subroutine get_zccurb_efff(rc_cur, zc_cur, z2c_cur, rgeoc, zgeoc, ahorc)
 
 use ef_circuit  
 use metric_coefficients_pbe  
 
 implicit none
 real*8, intent(out) :: rc_cur, zc_cur, z2c_cur, rgeoc, zgeoc, ahorc
-real*8, intent(out), dimension(i_dim2, i_dim2) :: bpcell
 real*8 :: perimz, ahorc2, avgelem
 integer :: i, j
 

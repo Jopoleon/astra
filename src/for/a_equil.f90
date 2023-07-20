@@ -175,8 +175,8 @@ if (key_no_refits == 1) then
 endif 
 
 if (parameters_equil%k_fixfree == 1) then
-        ucoils(1:ncoils)  = vcoils(1:ncoils)
-		    parameters_equil%nstep = nstep
+    ucoils(1:ncoils)  = vcoils(1:ncoils)
+    parameters_equil%nstep = nstep
 endif
 
 if (equil_solver == 101) then
@@ -195,11 +195,11 @@ dampfacpsplex = 0.
 if (parameters_equil%k_fixfree == 1) then
     ipl = 1.e-6*equil_in%global_param%i_plasma
     if (parameters_equil%k_grid == 0) then
-  		if (equil_solver==101) then
-				call psib_ext_efff(PSIEXT)
-			else
-			  call psib_ext(PSIEXT)
-			endif
+        if (equil_solver == 101) then
+            call psib_ext_efff(PSIEXT)
+        else
+            call psib_ext(PSIEXT)
+        endif
     endif
     if (ipsibcf >= 0) then     ! case with PSI_B and dPSI_B implicit 
         PSIEXT = -GP2*PSIEXT
@@ -209,11 +209,11 @@ if (parameters_equil%k_fixfree == 1) then
         psplexold = PSPLEX
     else
         if (parameters_equil%k_grid == 0) then
-  				if (equil_solver==101) then
-						call psib_ext_efff(PSIEXT)
-					else
-					  call psib_ext(PSIEXT)
-					endif
+            if (equil_solver==101) then
+                call psib_ext_efff(PSIEXT)
+            else
+                call psib_ext(PSIEXT)
+            endif
         endif
         PSIEXT = -GP2*PSIEXT
         PSPLEX = (dampfacpsplex*PSPLEX + equil_out%global_param%psplex)/(1. + dampfacpsplex)
@@ -223,52 +223,56 @@ if (parameters_equil%k_fixfree == 1) then
     endif
 endif
 
-!write(*,*) 'psiext and psplex',psiext,psplex
-
-
 ! for any machine, geom1d(299) and geom1d(300) are respecetively li3 and betapol from equil
 
-    geom1d(299) = equil_out%global_param%li3	
-    geom1d(300) = equil_out%global_param%betpol	
-    do j=1, n_theta
-        Rbnd(j) = equil_out%coord_sys%position%r(nr_equ, j)
-        Zbnd(j) = equil_out%coord_sys%position%z(nr_equ, j)
-    enddo
-    Rmag  = equil_out%coord_sys%position%r(1, 1)
-    Zmag  = equil_out%coord_sys%position%z(1, 1)
-    elong = equil_out%profiles_1d%elongation(nr_equ)
-    nz    = equil_out%eqgeometry%rectgrid%npointsz
+geom1d(299) = equil_out%global_param%li3	
+geom1d(300) = equil_out%global_param%betpol	
+do j=1, n_theta
+    Rbnd(j) = equil_out%coord_sys%position%r(nr_equ, j)
+    Zbnd(j) = equil_out%coord_sys%position%z(nr_equ, j)
+enddo
+Rmag  = equil_out%coord_sys%position%r(1, 1)
+Zmag  = equil_out%coord_sys%position%z(1, 1)
+elong = equil_out%profiles_1d%elongation(nr_equ)
+nz    = equil_out%eqgeometry%rectgrid%npointsz
 
-    jzmin  = minloc(Zbnd, 1)
-    jzmax  = maxloc(Zbnd, 1)
-    Rin    = MINVAL(Rbnd)
-    Raus   = MAXVAL(Rbnd)
-    zoben  = Zbnd(jzmax)
-    zunten = Zbnd(jzmin)
-    Rgeo = 0.5*(Raus + Rin)
-    Zgeo = 0.5*(zoben + zunten)
-    amin = 0.5*(Raus - Rin)
-    delr_oben = (Rgeo - Rbnd(jzmax))/amin
+jzmin  = minloc(Zbnd, 1)
+jzmax  = maxloc(Zbnd, 1)
+Rin    = MINVAL(Rbnd)
+Raus   = MAXVAL(Rbnd)
+zoben  = Zbnd(jzmax)
+zunten = Zbnd(jzmin)
+Rgeo = 0.5*(Raus + Rin)
+Zgeo = 0.5*(zoben + zunten)
+amin = 0.5*(Raus - Rin)
+delr_oben = (Rgeo - Rbnd(jzmax))/amin
+if (equil_solver == 101) then
+    call get_zccurb_efff(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
+else if (equil_solver == 3) then
+    call get_zccurb(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
+endif
+
+!below are valid for any machine bcs of prescribed boundary already has these values, but can be overwritten more below by specific machines
+geom1d(51) = Zcurr ! For now Zsquad = Zcurr
+geom1d(52) = zoben
+geom1d(53) = rgeoc !should be rgeo, should go somewhere else
+geom1d(54) = zgeoc !should be zgeo, should go somewhere else
+geom1d(55) = ahorc !minor radius
+geom1d(56) = elong
+geom1d(57) = Rin
+geom1d(58) = Raus
+geom1d(59) = Rmag
+geom1d(60) = Zmag
+geom1d(70) = delr_oben
+geom1d(78) = zunten
+geom1d(80) = Rbnd(jzmin) ! Xpoint position R
+geom1d(81) = Rcurr
+geom1d(82) = Zcurr
 
 if (parameters_equil%k_fixfree == 1) then
     if (MACHINE(1:3) == 'aug') then
         R_strike_in_aug  = 1.27
         R_strike_out_aug = 1.72
-        if (equil_solver == 101) then
-            call get_zccurb_efff(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
-	else if (equil_solver == 3) then
-            call get_zccurb(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
-        endif
-        geom1d(51) = Zcurr ! For now Zsquad = Zcurr
-        geom1d(52) = zoben
-        geom1d(53) = rgeoc !should be rgeo, should go somewhere else
-        geom1d(54) = zgeoc !should be zgeo, should go somewhere else
-        geom1d(55) = ahorc !minor radius
-        geom1d(56) = elong
-        geom1d(57) = Rin
-        geom1d(58) = Raus
-        geom1d(59) = Rmag
-        geom1d(60) = Zmag
 ! inner strike point position
         i = minloc(abs(equil_out%eqgeometry%rectgrid%r2d - R_strike_in_aug), 1)  
         call find_in_vec_spid(nz, -gp2*equil_out%eqgeometry%rectgrid%psirz2d(i, :), &
@@ -294,11 +298,6 @@ if (parameters_equil%k_fixfree == 1) then
                   gp2*equil_out%eqgeometry%rectgrid%psirz2d(i, j-1)) * &
                 (equil_out%eqgeometry%rectgrid%z2d(j+1) - equil_out%eqgeometry%rectgrid%z2d(j-1))
         endif
-        geom1d(70) = delr_oben
-        geom1d(78) = zunten
-        geom1d(80) = Rbnd(jzmin) ! Xpoint position R
-        geom1d(81) = Rcurr
-        geom1d(82) = Zcurr
     else if (MACHINE(1:3) == 'dem') then
         if (jdemogaps == 0) then
             write(fname, '(a)') TRIM(parameters_equil%prename) // 'demo_gaps.data'	

@@ -19,7 +19,7 @@ real*8 :: vcoiltmp(10), gvcoil(15)
 
 save vcoiltmp
 
-if (MACHINE == 'dem_') then
+if (trim(MACHINE) == 'demo') then
     call shmr( &
         CPEL1, CIMP3, CV4,  CBND3, &
         CSCL1, ZRD71, ZRD73, CDYM3, &
@@ -33,7 +33,7 @@ if (MACHINE == 'dem_') then
         time_ext, CV6, fs_dt_smlk)
         CV13 = MAX(1., CV13)  ! finite pump speed to avoid NaN
         dt_smlk = fs_dt_smlk  ! simulink tau defined in equ log
-elseif (MACHINE == 'iter') then
+elseif (trim(MACHINE) == 'iter') then
     call shmr( &
         CPEL1, CIMP3, CV4,  CBND3, &
         CSCL1, ZRD71, ZRD73, CDYM3, &
@@ -47,7 +47,7 @@ elseif (MACHINE == 'iter') then
         time_ext, CV6, fs_dt_smlk)
         CV13 = MAX(1., CV13)  ! finite pump speed to avoid NaN
         dt_smlk = fs_dt_smlk  ! simulink tau defined in equ log
-else if (MACHINE == 'aug_') then
+else if (trim(MACHINE) == 'aug') then
     call shmr( &
         CPEL1, CV13, CDMJ1, CDMJ2, CDMJ3, CDMJ4, &
         ZRD84, CAR32(1: 8), CAR32(9: 16), CAR32(17: 24), CAR32(25: 26), &
@@ -63,7 +63,7 @@ else if (MACHINE == 'aug_') then
     vcoil(11: 12) = 0.
 
     ZRD93 = time_ext + dt_smlk
-endif  ! (MACHIN == 'aug_')
+endif  
 
 return
 end subroutine rrsudg
