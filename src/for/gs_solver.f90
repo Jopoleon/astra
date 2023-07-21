@@ -242,7 +242,7 @@ equil_in%eqgeometry%boundary%npoints = n_theta    !one periodic point
 !Iteration cycle
 iter_loop: do jiter=1, miter_ext
     p = 1
-    Vtemp = 1000
+    Vtemp = volume
     Veps = 1
     phibm = phib
     phibl = phibm
