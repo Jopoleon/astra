@@ -36,6 +36,8 @@ double precision, dimension(ntheta) :: dl_arc, tar1, tar2
 double precision, dimension(nrho, ntheta) :: gradPSIa, gradVa, dV2da, dA2da, B_pola, B_ABSa, B_Ta
 double precision :: t4,xxxx1(3),yyyy1(3),pppp1(3), &
    yrzmin,yrzmax,yzmax,yrmin,yrmax,yrr,yzmin,ya
+double precision, external :: green_function_includingsamepoint
+
 integer :: ip0,ip1,ip2,ip3
 
 ! build_2dgrid2
@@ -128,7 +130,7 @@ B_absa = sqrt(B_Ta**2 + B_pola**2)
 dumba1=0.
 do j=1, ntheta
 do i=1, ntheta
-   call	green_function_includingsamepoint(xx(nrho,i),yy(nrho,i),xx(nrho,j),yy(nrho,j),dl_arc(i),xx(nrho,i),greenf)
+    greenf=green_function_includingsamepoint(xx(nrho,i),yy(nrho,i),xx(nrho,j),yy(nrho,j),dl_arc(i),xx(nrho,i))
     dumba1=dumba1+greenf/xx(nrho,i)* &
       gradpsia(nrho,i)*dl_arc(i)*dl_arc(j)	
 enddo
