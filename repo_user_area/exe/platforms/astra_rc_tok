@@ -1,15 +1,16 @@
 #!/bin/bash -f
 
-# IPP toki 05.06.2020
+# IPP toki 21.07.2023
 
 PKG=/mpcdf/soft/SLE_15/packages
-NAG_LIBDIR=${PKG}/sandybridge/nag_flib/intel_18_0_5/24/lib
-COMP_LIBDIR=${PKG}/x86_64/intel_parallel_studio/2018.4/18.0/linux/compiler/lib/intel64
-I_MPI_ROOT=${PKG}/x86_64/intel_parallel_studio/2018.4/compilers_and_libraries_2018.5.274/linux/mpi
-
-export MKL_LIBDIR=${PKG}/x86_64/intel_parallel_studio/2018.4/mkl/lib/intel64_lin
-export IFORT_BIN=${PKG}/sandybridge/intel/18.0.5/bin
-export MPIFORT_BIN=${PKG}/x86_64/intel_parallel_studio/2018.4/compilers_and_libraries_2018.5.274/linux/mpi/bin64
+NAG_LIBDIR=${PKG}/skylake/nag_flib/intel_2023.1.0.x-2023.1.0.x/24/lib
+INTEL_HOME=${PKG}/x86_64/intel_oneapi/2023.1
+I_MPI_ROOT=${INTEL}/mpi/2021.9.0
+COMP_LIBDIR=${INTEL_HOME}/compiler/2023.1.0/linux/compiler/lib/intel64_lin
+export MKL_LIBDIR=${INTEL_HOME}/mkl/2023.1.0/lib/intel64
+export IFORT_BIN=${INTEL_HOME}/compiler/2023.1.0/linux/bin/intel64
+I_MPI_ROOT=${INTEL_HOME}/mpi/2021.9.0
+export MPIFORT_BIN=${I_MPI_ROOT}/bin
 
 export INTEL_LICENSE_FILE=${PKG}/x86_64/intel_license/0.1
 export NAG_KUSARI_FILE=lserv1.rzg.mpg.de:7733
@@ -21,9 +22,9 @@ export MPIFC=mpiifort
 ASTRA_EXT=/afs/ipp/home/a/astra/ASTRA_LIBRARIES_EXT
 
 # MPI
-MPI_LIBDIR=${I_MPI_ROOT}/lib64
-export MPI_LIB="-L${MPI_LIBDIR} -lmpigf -lmpi"
-export MPI_INC="-I${I_MPI_ROOT}/include64"
+MPI_LIBDIR=${I_MPI_ROOT}/lib
+export MPI_INC="-I${I_MPI_ROOT}/include"
+export MPI_LIB="-L${MPI_LIBDIR}/release -lmpi"
 
 # NetCDF
 
@@ -41,9 +42,9 @@ export TORB_LIB="-L${TORB_LIBDIR} -ltorbeamB -Wl,-rpath,${TORB_LIBDIR} ${IRC_LIB
 
 # RABBIT
 
-RABBIT_HOME="${ASTRA_EXT}/rabbit/may23"
+RABBIT_HOME="${ASTRA_EXT}/rabbit/jul22"
 RABBIT_LIBDIR=${RABBIT_HOME}/lib
-export RABBIT_LIB="-L${RABBIT_LIBDIR} -lrabbit -Wl,-rpath,${RABBIT_LIBDIR}"
+export RABBIT_LIB="-L${RABBIT_LIBDIR} -lRabbitMore -Wl,-rpath,${RABBIT_LIBDIR}"
 export RABBIT_INC=${RABBIT_HOME}/inc
 
 # QuaLiKiZ
@@ -78,6 +79,6 @@ export NAGF90MKL=${NAG_LIBDIR}/libnag_mkl.a
 
 export XLBR="-L/usr/lib64 -lX11 -Wl,--start-group ${COMP_LIBDIR}/libintlc.so.5 ${MKL_LIBDIR}/libmkl_intel_lp64.a ${MKL_LIBDIR}/libmkl_core.a ${MKL_LIBDIR}/libmkl_sequential.a ${MKL_LIBDIR}/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group"
 
-export AS_LD_LIBRARY_PATH="${NAG_LIBDIR}"
+export AS_LD_LIBRARY_PATH="${NAG_LIBDIR}:${COMP_LIBDIR}:${I_MPI_ROOT}/libfabric/lib:${I_MPI_ROOT}/lib"
 #export AS_LD_LIBRARY_PATH="${NCDF_LIBDIR}:${NAG_LIBDIR}:${COMP_LIBDIR}:${TORB_LIBDIR}:${RABBIT_LIBDIR}"
 

@@ -24,6 +24,8 @@ done < $ALOG
 source $AWD/exe/astra_rc
 
 export PATH="${PATH}:${IFORT_BIN}:${MPIFORT_BIN}"
+export LD_LIBRARY_PATH="${AS_LD_LIBRARY_PATH}"
+
 export expfile="${exp_file}"
 export equfile="${equ_file}"
 jobname=${exp_file}${equ_file}
@@ -45,8 +47,6 @@ then
       echo Successful check of object names in libs
    fi
 # Execution (Runmodel)
-
-   export LD_LIBRARY_PATH="${AS_LD_LIBRARY_PATH}"
 
    ATASK=$AWD/bin/$equ_file.exe
 
