@@ -5,7 +5,7 @@
 PKG=/mpcdf/soft/SLE_15/packages
 NAG_LIBDIR=${PKG}/skylake/nag_flib/intel_2023.1.0.x-2023.1.0.x/24/lib
 INTEL_HOME=${PKG}/x86_64/intel_oneapi/2023.1
-I_MPI_ROOT=${INTEL}/mpi/2021.9.0
+I_MPI_ROOT=${INTEL_HOME}/mpi/2021.9.0
 COMP_LIBDIR=${INTEL_HOME}/compiler/2023.1.0/linux/compiler/lib/intel64_lin
 export MKL_LIBDIR=${INTEL_HOME}/mkl/2023.1.0/lib/intel64
 export IFORT_BIN=${INTEL_HOME}/compiler/2023.1.0/linux/bin/intel64
@@ -24,7 +24,7 @@ ASTRA_EXT=/afs/ipp/home/a/astra/ASTRA_LIBRARIES_EXT
 # MPI
 MPI_LIBDIR=${I_MPI_ROOT}/lib
 export MPI_INC="-I${I_MPI_ROOT}/include"
-export MPI_LIB="-L${MPI_LIBDIR}/release -lmpi"
+export MPI_LIB="-L${MPI_LIBDIR}/release -lmpi -L${MPI_LIBDIR} -lmpifort -L${I_MPI_ROOT}/libfabric/lib -lfabric"
 
 # NetCDF
 
@@ -42,9 +42,9 @@ export TORB_LIB="-L${TORB_LIBDIR} -ltorbeamB -Wl,-rpath,${TORB_LIBDIR} ${IRC_LIB
 
 # RABBIT
 
-RABBIT_HOME="${ASTRA_EXT}/rabbit/jul22"
+RABBIT_HOME="${ASTRA_EXT}/rabbit/may23"
 RABBIT_LIBDIR=${RABBIT_HOME}/lib
-export RABBIT_LIB="-L${RABBIT_LIBDIR} -lRabbitMore -Wl,-rpath,${RABBIT_LIBDIR}"
+export RABBIT_LIB="-L${RABBIT_LIBDIR} -lrabbit -Wl,-rpath,${RABBIT_LIBDIR}"
 export RABBIT_INC=${RABBIT_HOME}/inc
 
 # QuaLiKiZ
@@ -79,6 +79,5 @@ export NAGF90MKL=${NAG_LIBDIR}/libnag_mkl.a
 
 export XLBR="-L/usr/lib64 -lX11 -Wl,--start-group ${COMP_LIBDIR}/libintlc.so.5 ${MKL_LIBDIR}/libmkl_intel_lp64.a ${MKL_LIBDIR}/libmkl_core.a ${MKL_LIBDIR}/libmkl_sequential.a ${MKL_LIBDIR}/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group"
 
-export AS_LD_LIBRARY_PATH="${NAG_LIBDIR}:${COMP_LIBDIR}:${I_MPI_ROOT}/libfabric/lib:${I_MPI_ROOT}/lib"
+export AS_LD_LIBRARY_PATH="${NAG_LIBDIR}:${COMP_LIBDIR}:${I_MPI_ROOT}/libfabric/lib:${MPI_LIBDIR}"
 #export AS_LD_LIBRARY_PATH="${NCDF_LIBDIR}:${NAG_LIBDIR}:${COMP_LIBDIR}:${TORB_LIBDIR}:${RABBIT_LIBDIR}"
-
