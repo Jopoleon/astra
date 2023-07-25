@@ -12,6 +12,9 @@ then
    else
       platform=tok
    fi
+elif [[ $AWD == "/tokp/work"* ]]
+then
+   platform=tok
 elif [[ $AWD == "/toks/work"* ]]
 then
    platform=tok
