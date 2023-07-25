@@ -5,12 +5,9 @@
 PKG=/mpcdf/soft/SLE_15/packages
 NAG_LIBDIR=${PKG}/skylake/nag_flib/intel_2023.1.0.x-2023.1.0.x/24/lib
 INTEL_HOME=${PKG}/x86_64/intel_oneapi/2023.1
-I_MPI_ROOT=${INTEL_HOME}/mpi/2021.9.0
 COMP_LIBDIR=${INTEL_HOME}/compiler/2023.1.0/linux/compiler/lib/intel64_lin
 export MKL_LIBDIR=${INTEL_HOME}/mkl/2023.1.0/lib/intel64
 export IFORT_BIN=${INTEL_HOME}/compiler/2023.1.0/linux/bin/intel64
-I_MPI_ROOT=${INTEL_HOME}/mpi/2021.9.0
-export MPIFORT_BIN=${I_MPI_ROOT}/bin
 
 export INTEL_LICENSE_FILE=${PKG}/x86_64/intel_license/0.1
 export NAG_KUSARI_FILE=lserv1.rzg.mpg.de:7733
@@ -22,9 +19,7 @@ export MPIFC=mpiifort
 ASTRA_EXT=/afs/ipp/home/a/astra/ASTRA_LIBRARIES_EXT
 
 # MPI
-MPI_LIBDIR=${I_MPI_ROOT}/lib
-export MPI_INC="-I${I_MPI_ROOT}/include"
-export MPI_LIB="-L${MPI_LIBDIR}/release -lmpi -L${MPI_LIBDIR} -lmpifort -L${I_MPI_ROOT}/libfabric/lib -lfabric"
+MPI_LIBDIR=${INTEL_HOME}/mpi/2021.9.0/lib
 
 # NetCDF
 

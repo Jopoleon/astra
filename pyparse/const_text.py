@@ -258,6 +258,7 @@ class INIVAR:
 
 use outcmn_inc
 use const_inc
+use nclass_mod
 use status_inc
 use debugger, only: markloc
 
