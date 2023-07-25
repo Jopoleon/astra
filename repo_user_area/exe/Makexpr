@@ -33,25 +33,25 @@ clean:
 	rm -f $(XPR)/neo
 
 
-$(XPR)/tglfi:	$(XPR)/tglf_interf.f90 $(XPR)/qinterp.f90 $(XPR)/tglf_interf.o $(LIBIPC) $(AENV)
-		$(AFC) -o $@ $(XPR)/tglf_interf.f90 $(XPR)/qinterp.f90 $(XPR)/tglf_interf.o $(LIBIPC)	\
+$(XPR)/tglfi:	$(XPR)/tglf_interf.f90 $(XPR)/qinterp.f90 $(XPR)/tglfinter.o $(LIBIPC) $(AENV)
+		$(AFC) -o $@ $(XPR)/tglf_interf.f90 $(XPR)/qinterp.f90 $(XPR)/tglfinter.o $(LIBIPC)	\
 		-I$(TGLF_INC) $(TGLF_LIB) $(MKL_LIB) -lpthread -lm
 
-$(XPR)/neo:	$(XPR)/neo_interf.f90 $(XPR)/qinterp.f90 $(XPR)/neo_interf.o $(LIBIPC) $(AENV)
-		$(MPI_FC) -o $@ $(XPR)/neo_interf.f90 $(XPR)/qinterp.f90 $(XPR)/neo_interf.o $(LIBIPC)	\
+$(XPR)/neo:	$(XPR)/neo_interf.f90 $(XPR)/qinterp.f90 $(XPR)/neointer.o $(LIBIPC) $(AENV)
+		$(MPI_FC) -o $@ $(XPR)/neo_interf.f90 $(XPR)/qinterp.f90 $(XPR)/neointer.o $(LIBIPC)	\
 		-I$(NEO_INC) $(MPI_INC) $(NEO_LIB) $(MKL_LIB) $(MPI_LIB) -lpthread -lm
 
-$(XPR)/qlki:	$(XPR)/qlk_interf.f90 $(XPR)/qinterp.f90 $(XPR)/qlk_interf.o $(LIBIPC) $(AENV)
-		$(MPI_FC) -o $@ $(XPR)/qlk_interf.f90 $(XPR)/qinterp.f90 $(XPR)/qlk_interf.o $(LIBIPC)	\
+$(XPR)/qlki:	$(XPR)/qlk_interf.f90 $(XPR)/qinterp.f90 $(XPR)/qlkinter.o $(LIBIPC) $(AENV)
+		$(MPI_FC) -o $@ $(XPR)/qlk_interf.f90 $(XPR)/qinterp.f90 $(XPR)/qlkinter.o $(LIBIPC)	\
 		-I$(QLK_INC) $(MPI_INC) $(QLK_LIB) $(NAG_LIB) $(MPI_LIB)
 
-$(XPR)/neo_interf.o:    $(XPR)/tra_interf.c
+$(XPR)/neointer.o:    $(XPR)/tra_interf.c
 		$(ACC) -I$(INC_DIR) -o $@ -c $< -Dneo
 
-$(XPR)/tglf_interf.o:   $(XPR)/tra_interf.c
+$(XPR)/tglfinter.o:   $(XPR)/tra_interf.c
 		$(ACC) -I$(INC_DIR) -o $@ -c $< -Dtglf
 
-$(XPR)/qlk_interf.o:    $(XPR)/tra_interf.c
+$(XPR)/qlkinter.o:    $(XPR)/tra_interf.c
 		$(ACC) -I$(INC_DIR) -o $@ -c $< -Dqlk
 
 $(LIBIPC): $(AWD)/ipc/*

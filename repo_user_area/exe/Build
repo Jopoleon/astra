@@ -1,7 +1,11 @@
 #!/bin/bash -f
 
+source /etc/profile.d/modules.sh
+
 rootdir=`dirname $0`                  # may be relative path
 export AWD=`cd $rootdir/.. && pwd`    # ensure absolute path
+
+platform=`$AWD/get_platform`
 echo AWD is $AWD
 
 cd $AWD
@@ -23,7 +27,12 @@ done < $ALOG
 
 source $AWD/exe/astra_rc
 
-export PATH="${PATH}:${IFORT_BIN}:${MPIFORT_BIN}"
+if [[ $platform == "tok" ]]
+then
+    module load intel/2023.1.0.x impi/2021.9 impi-interactive/1.0
+else
+    export PATH="${PATH}:${IFORT_BIN}:${MPIFORT_BIN}"
+fi
 export LD_LIBRARY_PATH="${AS_LD_LIBRARY_PATH}"
 
 export expfile="${exp_file}"
