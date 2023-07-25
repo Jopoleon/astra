@@ -5,7 +5,7 @@
 PKG=/shares/software/aug-dv/moduledata
 INTEL=${PKG}/Intel/oneapi
 export MKL_LIBDIR=${INTEL}/mkl/2023.1.0/lib/intel64
-export NAG_LIBDIR=${PKG}/nag_mk27/nll6i27dbl/lp64/lib
+export NAG_LIBDIR=${PKG}/NAG/nag_mk27/nll6i27dbl/lp64/lib
 export COMP_LIBDIR=${INTEL}/compiler/2023.1.0/linux/compiler/lib/intel64_lin
 
 export NAG_KUSARI_FILE=lserv1.rzg.mpg.de:7733
@@ -17,13 +17,13 @@ export MPIFC=mpiifort
 export ASTRA_EXT=/shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT
 
 # MPI
-MPI_LIBDIR="-L${PKG}/Intel/oneapi/mpi/2021.9.0/lib/release -lmpigf -lmpi"
+MPI_LIBDIR="-L${PKG}/Intel/oneapi/mpi/2021.9.0/lib/release"
 
 # NetCDF
 
 NCDF_LIBDIR=/usr/lib/x86_64-linux-gnu
 export NCDF_LIB="-L${NCDF_LIBDIR} -lnetcdf -lnetcdff"
-export NCDF_INC=/usr/include
+export NCDF_INC=-I/usr/include
 
 # TORBEAM
 
@@ -36,8 +36,8 @@ export TORB_LIB="-L${TORB_LIBDIR} -ltorbeamB ${IRC_LIB}"
 
 RABBIT_HOME="${ASTRA_EXT}/rabbit/may23"
 RABBIT_LIBDIR=${RABBIT_HOME}/lib
-export RABBIT_LIB="-L${RABBIT_LIBDIR} -lrabbit -Wl,-rpath,${RABBIT_LIBDIR}"
-export RABBIT_INC=${RABBIT_HOME}/inc
+#export RABBIT_LIB="-L${RABBIT_LIBDIR} -lrabbit -Wl,-rpath,${RABBIT_LIBDIR}"
+#export RABBIT_INC=${RABBIT_HOME}/inc
 
 # STRAHL
 
