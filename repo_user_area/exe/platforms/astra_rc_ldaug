@@ -5,7 +5,7 @@
 PKG=/shares/software/aug-dv/moduledata
 INTEL=${PKG}/Intel/oneapi
 export MKL_LIBDIR=${INTEL}/mkl/2023.1.0/lib/intel64
-export NAG_LIBDIR=${PKG}/nag_mk25/fll6i25dcl/lib
+export NAG_LIBDIR=${PKG}/nag_mk27/nll6i27dbl/lp64/lib
 export COMP_LIBDIR=${INTEL}/compiler/2023.1.0/linux/compiler/lib/intel64_lin
 
 export NAG_KUSARI_FILE=lserv1.rzg.mpg.de:7733

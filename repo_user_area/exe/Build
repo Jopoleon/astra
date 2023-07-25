@@ -33,7 +33,7 @@ then
     module load intel/18.0 impi/4.1.0
 elif [[ $platform == "ldaug" ]]
 then
-    module load enable-aug-dv-modules intel mpi/2021.9.0
+    module load enable-aug-dv-modules intel mpi/2021.9.0 compiler/2023.1.0
 else
     export PATH="${PATH}:${IFORT_BIN}:${MPIFORT_BIN}"
 fi
