@@ -7,9 +7,7 @@ NAG_LIBDIR=${PKG}/skylake/nag_flib/intel_2023.1.0.x-2023.1.0.x/24/lib
 INTEL_HOME=${PKG}/x86_64/intel_oneapi/2023.1
 COMP_LIBDIR=${INTEL_HOME}/compiler/2023.1.0/linux/compiler/lib/intel64_lin
 export MKL_LIBDIR=${INTEL_HOME}/mkl/2023.1.0/lib/intel64
-export IFORT_BIN=${INTEL_HOME}/compiler/2023.1.0/linux/bin/intel64
 
-export INTEL_LICENSE_FILE=${PKG}/x86_64/intel_license/0.1
 export NAG_KUSARI_FILE=lserv1.rzg.mpg.de:7733
 
 export AFC=ifort

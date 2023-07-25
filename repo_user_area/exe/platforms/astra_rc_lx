@@ -3,15 +3,10 @@
 # IPP toki 05.06.2020
 
 PKG=/afs/@cell/common/soft
-INTEL=${PKG}/intel/ics2018.4/18.0/linux
 NAG_LIBDIR=${PKG}/nag_mk25/fll6i25dcl/lib
 COMP_LIBDIR=${PKG}/intel/ics2018.4/compilers_and_libraries_2018.5.274/linux/compiler/lib/intel64_lin
-I_MPI_ROOT=${PKG}/intel/impi/4.1.0.030/intel64
 
-export MKL_LIBDIR=${INTEL}/mkl/lib/intel64_lin
-export IFORT_BIN=${INTEL}/bin/intel64/bin
-export MPIFORT_BIN=${I_MPI_ROOT}/bin
-export INTEL_LICENSE_FILE=${INTEL}/licenses
+export MKL_LIBDIR=${PKG}/intel/ics2018.4/18.0/linux/mkl/lib/intel64_lin
 
 export NAG_KUSARI_FILE=lserv1.rzg.mpg.de:7733
 
@@ -22,9 +17,7 @@ export MPIFC=mpiifort
 ASTRA_EXT=/afs/ipp/home/a/astra/ASTRA_LIBRARIES_EXT
 
 # MPI
-MPI_LIBDIR=${I_MPI_ROOT}/lib
-export MPI_LIB="-L${MPI_LIBDIR} -lmpigf -lmpi"
-export MPI_INC="-I${I_MPI_ROOT}/include"
+MPI_LIBDIR=${PKG}/intel/impi/4.1.0.030/intel64/lib
 
 # NetCDF
 
@@ -79,5 +72,4 @@ export NAGF90MKL=${NAG_LIBDIR}/libnag_mkl.a
 
 export XLBR="-L/usr/lib64 -lX11 -Wl,--start-group ${COMP_LIBDIR}/libintlc.so.5 ${MKL_LIBDIR}/libmkl_intel_lp64.a ${MKL_LIBDIR}/libmkl_core.a ${MKL_LIBDIR}/libmkl_sequential.a ${MKL_LIBDIR}/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group"
 
-export AS_LD_LIBRARY_PATH="${NCDF_LIBDIR}:${NAG_LIBDIR}:${TORB_LIBDIR}"
-#export AS_LD_LIBRARY_PATH="${NCDF_LIBDIR}:${NAG_LIBDIR}:${COMP_LIBDIR}:${TORB_LIBDIR}:${RABBIT_LIBDIR}:${MPI_LIBDIR}"
+export AS_LD_LIBRARY_PATH="${NCDF_LIBDIR}:${NAG_LIBDIR}:${TORB_LIBDIR}:${MPI_LIBDIR}"
