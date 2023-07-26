@@ -650,6 +650,8 @@ class LINE2FOR:
                             block_left += piec
                         elif jcomma != jpiec:
                             block_right += piec
+                    if not block_right: # VINT(CAR11) * ...
+                        block_right = 'j'
                     if block_left in self.fnc_list:
                         out = '%s(%sR, %s*ROC)' %(var, block_left, block_right)
                     else:
