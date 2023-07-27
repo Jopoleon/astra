@@ -102,13 +102,13 @@ contains
     call markloc('assign_val')
 
     do j=1, narr
-
-        open(171, FILE=TRIM(file_in), iostat=ios)
+        open(171, FILE=TRIM(file_in), iostat=ios, status='old')
         line_loop: do
             read(171, '(A132)', iostat=ios) STRI
             if (ios < 0) EXIT line_loop  ! End of file encountered
-            if (ios > 0)  call astra_stop('>>> READAT: File "' // &
-                TRIM(file_in) // '" reading error')
+            if (ios > 0) then
+                call astra_stop('>>> READAT: File "' // TRIM(file_in) // '" reading error')
+            endif
             call split_string(STRI, '=', str_nam, str_val)
             if (LEN_TRIM(str_val) == 0) CYCLE line_loop
             if ( TRIM(arr_in(j)) == str_nam(1: LEN_TRIM(str_nam)) ) then
@@ -333,26 +333,23 @@ contains
     double precision, intent(out) :: factor
 
     integer :: n_words
-    character(len=132) :: strtmp, str1, strarray(10), err_msg
+    character(len=132) :: str1, strarray(10), err_msg
 
     call markloc('parse_u_line')
 
     uname = repeat(' ', 40)
     err_msg = 'Error in exp-file line ' // TRIM(str_in)
 
-    strtmp = repeat(' ', 132)
     str1   = repeat(' ', 132)
-    strtmp = to_upper(ADJUSTL(str_in))
 
-    call split_string(strtmp, ' ', var_name, str1)
+    call split_string(str_in, ' ', var_name, str1)
     if (LEN_TRIM(var_name) == 0) then
        call astra_stop(err_msg)
     endif
 
     call split2array(str1, ':', strarray, n_words)
 
-    if (TRIM(strarray(1)) /= 'U-FILE' ) then
-!   write(*, *) 'Line ' // TRIM(str_in) // ' is not pointing to u-files, returning'
+    if (to_upper(TRIM(strarray(1))) /= 'U-FILE' ) then
        return
     endif
 
