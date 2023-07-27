@@ -155,7 +155,7 @@ if (ncoils > 0) then
     if (parameters_equil%k_fixfree == 1) then
         SELECT CASE(ipctrl)
         CASE(-5, -3, -2)
-            call coil2spider(ccoils, ncoils, parameters_equil)   !Write coil currents from CCOIL in astra to   coil.dat file only for fbe without controller (otherwise CCOIL is reserved for target coil currents and coil.dat is written elsewhere)
+!            call coil2spider(ccoils, ncoils, parameters_equil)   !Write coil currents from CCOIL in astra to   coil.dat file only for fbe without controller (otherwise CCOIL is reserved for target coil currents and coil.dat is written elsewhere)
         END SELECT
     endif
 endif
@@ -170,7 +170,7 @@ if (key_no_refits == 1) then
         enddo
         close(1)
         write(*, *) 'rewriting coil.dat with new fitted currents'
-        call coil2spider(t_currents*1.e3, ncoils, parameters_equil)  !Write coil currents in coil.dat when key_start inside iterations NITREQ
+!        call coil2spider(t_currents*1.e3, ncoils, parameters_equil)  !Write coil currents in coil.dat when key_start inside iterations NITREQ
     endif
 endif 
 
