@@ -37,7 +37,6 @@ $(OBJ_DIR)/B_rig.o \
 $(OBJ_DIR)/B_sol.o \
 $(OBJ_DIR)/B_wrd.o \
 $(OBJ_DIR)/cf_ini.o \
-$(OBJ_DIR)/coil2spider.o \
 $(OBJ_DIR)/com_sub.o \
 $(OBJ_DIR)/Curap.o \
 $(OBJ_DIR)/curfit_f.o \

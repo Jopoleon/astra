@@ -269,13 +269,11 @@ force_R = 0.
 force_Z = 0.
 nblock_a = nblocks - npassive
 
-write(*, *) 'coil forces', nblock_a
-
 if (plasma_state == 1) then !not sure about the plasma response...
     do i=1, nblock_a
         x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreenirpl(1:nr2, 1:nz2, i))
-        x1 = -sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreenizpl(1:nr2, 1:nz2, i))
         force_R(i) = force_R(i) + curconduc(mequivalence(i)) * x1
+        x1 = -sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreenizpl(1:nr2, 1:nz2, i))
         force_Z(i) = force_Z(i) + curconduc(mequivalence(i)) * x1
     enddo
 endif
