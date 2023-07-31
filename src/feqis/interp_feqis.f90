@@ -926,6 +926,26 @@ return
 end subroutine exact_biquad_ef
 
 !---------------------------------------------------------------------
+subroutine exact_biquad_ef_coeffs_only(u, c)
+
+implicit none
+
+double precision, intent(in) , dimension(9) :: u
+double precision, intent(out), dimension(9) :: c
+integer :: k
+double precision, dimension(9, 9) :: Ainv
+
+!find coefficients
+call ainv_matrix_def(Ainv)
+
+do k=1, 9
+    c(k) = sum(Ainv(k, :) * u)
+enddo
+
+return
+end subroutine exact_biquad_ef_coeffs_only
+
+!---------------------------------------------------------------------
 subroutine exact_biquad_regress_ef(r,z,u,n,ccc,rax,zax,uax,derivs,dr,dz,rx,zx)
 
 implicit none
@@ -1104,6 +1124,48 @@ call exact_biquad_ef(xub(1:d), yub(1:d), bub(1:d), d,  &
 
 return
 end subroutine nine_point_regression
+
+!---------------------------------------------------------------------
+subroutine nine_point_coeffs_only(r0, z0, c, c1, c2)
+
+use ef_circuit, only: psirz,nr1,nz1,r,z
+
+implicit none
+
+double precision, intent(in) :: r0, z0
+double precision, intent(out) :: c1, c2
+double precision, intent(out), dimension(9) :: c
+integer :: iax, jax, i, j, k, d, i1, i2, i3, i4
+double precision, dimension(90) :: bub
+
+call find_actual_index_ef(r0, z0, iax, jax)
+c1 = r(iax)
+c2 = z(jax)
+
+!find true axis
+k = 0
+i3 = -1
+i1 = -1
+i4 =  1
+i2 =  1
+if (iax ==   2) i3 = -1
+if (jax ==   2) i1 = -1
+if (iax == nr1) i4 =  1
+if (jax == nz1) i2 =  1
+
+d = (i4 - i3 + 1)*(i2 - i1 + 1)
+
+do j=i3, i4
+    do i=i1, i2
+        k = k + 1
+        bub(k) = psirz(iax+i, jax+j)
+    enddo
+enddo
+
+call exact_biquad_ef_coeffs_only(bub(1:d), c)
+
+return
+end subroutine nine_point_coeffs_only
 
 !---------------------------------------------------------------------
 subroutine nine_point_regression_follow(rx, zx, pos_xpoint, ddpsi, f00)

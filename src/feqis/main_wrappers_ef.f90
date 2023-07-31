@@ -107,7 +107,7 @@
 
 	
 
-	write(*,*) 'error',error_temp
+	write(*,*) 'error circuit equation',error_temp,j_iter
 	if (error_temp.le.err_circ_plasma_iter) then
 		if (execute_plasma.eq.1.or.fast_mode.eq.0) then
 			j_init=-1
@@ -1398,6 +1398,7 @@ end
 	double precision curpastmp(npassive),correction,delr,delz
 	double precision curpastmpo(npassive),psicdtmp(300)
 	double precision voltdz(300),curref(300),rdtl,tin,tup,cum1,cum2
+	double precision c(9)
 	data cum1/0./
 	data cum2/0./
 	data j_count/0/
@@ -1490,38 +1491,57 @@ end
 	delr=0.
 	delz=0.
 			psirz(1:nr2,1:nz2)=psiplasrz(1:nr2,1:nz2)+psiextrz(1:nr2,1:nz2) !total flux
-	do ii=1,100000
+
+	call find_new_axis_part1	
+	write(*,*) 'natural ax',rax,zax
+	
+ call nine_point_coeffs_only(raxold, zaxold, c, zum1,zum2)
+!dpsidr
+zum1=(raxold-zum1)/dr
+zum2=(zaxold-zum2)/dz
+
+dum1=2.*c(2)*(zum1*zum2**2.+2.*c(2)*zum1*zum2)+ &
+   c(3)*zum2**2.+c(4)*zum2+2*c(5)*zum1+c(7)
+	 
+!dpsidz
+dum2=2.*c(1)*zum1**2.*zum2+c(2)*zum1**2.+ &
+   2.*c(3)*zum1*zum2+c(4)*zum1+2.*c(6)*zum2+c(8)
+
+psistabr=-1./(2.*raxold)*dum1/dr
+psistabz=-dum2/dz
+
+!	do ii=1,100000
 		do i=1,nr2
 		do j=1,nz2
-			psirz(i,j)=psirz(i,j)+delr*r(i)**2.+delz*z(j) !total flux
+			psirz(i,j)=psiplasrz(i,j)+psiextrz(i,j)+psistabr*r(i)**2.+psistabz*z(j) !total flux
 		enddo
 		enddo
 	call find_new_axis_part1	
-	if (raxold.lt.-1.d5) then
-		delr=-(derivpsi(3)*(rax-rax)+derivpsi(5)*(zaxold-zax))*0.5/rax
-		delz=-(derivpsi(4)*(zaxold-zax)+derivpsi(5)*(rax-rax))
-	else
-		delr=-(derivpsi(3)*(raxold-rax)+derivpsi(5)*(zaxold-zax))*0.5/raxold
-		delz=-(derivpsi(4)*(zaxold-zax)+derivpsi(5)*(raxold-rax))
-	endif
-		psistabr=psistabr+delr
-		psistabz=psistabz+delz
-!		write(*,*) 'del',delr,delz,derivpsi(1:5),rax,zax,raxold,zaxold
-	!write(5671,*) 'psi',delr,delz,psistabr,psistabz,raxold,rax,zaxold,zax,derivpsi(3:5)
-	if (abs(delr)+abs(delz).gt.100.) then
-		write(*,*) 'delr,delz dont converge'
-		stop !test, to put this better
-	endif
-	if (abs(delr)+abs(delz).lt.err_find_delr) goto 2010
+!	if (raxold.lt.-1.d5) then
+!		delr=-(derivpsi(3)*(rax-rax)+derivpsi(5)*(zaxold-zax))*0.5/rax
+!		delz=-(derivpsi(4)*(zaxold-zax)+derivpsi(5)*(rax-rax))
+!	else
+!		delr=-(derivpsi(3)*(raxold-rax)+derivpsi(5)*(zaxold-zax))*0.5/raxold
+!		delz=-(derivpsi(4)*(zaxold-zax)+derivpsi(5)*(raxold-rax))
+!	endif
+!		psistabr=psistabr+delr
+!		psistabz=psistabz+delz
+!	if (abs(delr)+abs(delz).gt.100.) then
+!		write(*,*) 'delr,delz dont converge'
+!		stop !test, to put this better
+!	endif
+!	if (abs(delr)+abs(delz).lt.err_find_delr) goto 2010
 
-	enddo
+!	enddo
 
-	write(*,*) 'axis not converged, stop'
-	stop
+	write(*,*) 'axis done' ! not converged, stop'
+!	stop
+!2010 continue
 
-2010 continue
 
-	write(*,*) 'raxx',rax,zax,trax,tzax,raxold,zaxold,psistabr,psistabz
+
+	write(*,*) 'raxx',rax,zax,raxold,zaxold,psistabr,psistabz
+!pause
 	
 
 	else
@@ -2111,7 +2131,7 @@ end
 
 read(32, *) ncoils
 do i=1, ncoils
-    read(32, *) rcoil(i),zcoil(i),drcoil(i),dzcoil(i),anglecoil(i)
+    read(32, *) rcoil(i),zcoil(i),drcoil(i),dzcoil(i),anglecoil(i),mequivalence(i)
 enddo
 
 read(32, *) nlimiter
@@ -3313,38 +3333,55 @@ write(*,*) 'ax',rax,zax
 
 !	write(*,*) limiterr(nlimiter),limiterz(1:nlimiter),psi_limp(1:nlimiter)
 
+if (n_of_xpoints.eq.0) then
+   !no x-points, take largest limiter flux
+   psibnd = maxval(psi_limp(1:nlimiter),1)
+   i_plasmatype=0
+endif
+
 ! now, remove limiters that are in the shadow of xpoints
-	ztop=1.e6
-	zbot=-1.e6
-	raus=1.e6
-	rinner=0.
-	if (n_of_xpoints.ge.1) then
-		i_plasmatype=1
-		do i=1,n_of_xpoints
-			call find_actual_index_ef(r_xpoint(i),z_xpoint(i),j,k)
-	pos_xpoint(1)=r_xpoint(i)
-	pos_xpoint(2)=z_xpoint(i)
-	call find_fields_interp_ef_psionly(pos_xpoint(1),pos_xpoint(2),psi_xpoint(i))
-			if (zlimpotential(j,k).gt.0.) then
+ztop=1.e6
+zbot=-1.e6
+raus=1.e6
+rinner=0.
+if (n_of_xpoints.ge.1) then
+   i_plasmatype=1
+
+!first pass, remove X-points behind the limiter area
+   do i=1,n_of_xpoints
+      call find_actual_index_ef(r_xpoint(i),z_xpoint(i),j,k)
+			if (zlimpotential(j,k).lt.0.5) then
+         psi_xpoint(i)=-1.e6
+		  else
+         call find_fields_interp_ef_psionly(r_xpoint(i),z_xpoint(i),psi_xpoint(i))
+			endif
+   enddo
+
+!second pass, remove limiter points that are in x-points shadow, simple "straight line method" --> to be refined later on
+   do i=1,n_of_xpoints
+    if (psi_xpoint(i).gt.-1.e5) then
 				call find_angle_ef(rax,zax,r_xpoint(i),z_xpoint(i),x1)
 				if ((r_xpoint(i).gt.rax).and.(x1.ge.7./4.*GPI.or.x1.le.GPI/4.)) raus=min(raus,r_xpoint(i))
 				if ((z_xpoint(i).gt.zax).and.(x1.ge.GPI/4..and.x1.le.3./4.*GPI)) ztop=min(ztop,z_xpoint(i))
 				if ((r_xpoint(i).lt.rax).and.(x1.ge.3./4.*GPI.and.x1.le.5./4.*GPI)) rinner=max(rinner,r_xpoint(i))
 				if ((z_xpoint(i).lt.zax).and.(x1.ge.5./4.*GPI.and.x1.le.7./4.*GPI)) zbot=max(zbot,z_xpoint(i))
-				do j=1,nlimiter
-					if (limiterr(j).le.rinner) psi_limp(j)=-1.e6
-					if (limiterr(j).ge.raus) psi_limp(j)=-1.e6
-					if (limiterz(j).le.zbot) psi_limp(j)=-1.e6
-					if (limiterz(j).ge.ztop) psi_limp(j)=-1.e6
-				enddo			
-			else
-			! xpoint is outside of the limiter, doesnt count
-			psi_xpoint(i)=-1.e6
-			endif			
-			!check if x-point is connected monotonically to the plasma center, for snowflake configurations foe xample
-			call check_xpoint_connection_axis(r_xpoint(i),z_xpoint(i),rax,zax,dr,dz,i1)
-			if (i1.eq.0) psi_xpoint(i)=-1.e6
-		enddo
+    endif
+   enddo
+   do j=1,nlimiter
+      if (limiterr(j).le.rinner) psi_limp(j)=-1.e6
+		  if (limiterr(j).ge.raus) psi_limp(j)=-1.e6
+			if (limiterz(j).le.zbot) psi_limp(j)=-1.e6
+			if (limiterz(j).ge.ztop) psi_limp(j)=-1.e6
+   enddo			
+
+!third pass, remove x-points that are non-monotonically connected to the plasma.
+   do i=1,n_of_xpoints
+    if (psi_xpoint(i).gt.-1.e5) then
+       call check_xpoint_connection_axis(r_xpoint(i),z_xpoint(i),rax,zax,dr,dz,i1)
+       if (i1.eq.0) psi_xpoint(i)=-1.e6
+    endif
+   enddo
+		
 !psi boundary is the highest of all the values
 		x1=maxval(psi_xpoint(1:n_of_xpoints),1)
 		x2=maxval(psi_limp(1:nlimiter),1)
@@ -3353,15 +3390,8 @@ write(*,*) 'ax',rax,zax
 		psibnd=max(x1,x2)
 		if (x2.gt.x1) i_plasmatype=0
 		if (x1.ge.x2) i_plasmatype=1
-!	write(*,*) psibnd,x1,x2,i_plasmatype,psi_xpoint(i4),psi_limp(i5),limiterr(i5),limiterz(i5),r_xpoint(i4),z_xpoint(i4)
-	else
-	!no x-points, take largest limiter flux
-		psibnd = maxval(psi_limp(1:nlimiter),1)
-		i_plasmatype=0
-!	write(*,*) psibnd,i_plasmatype
-	endif
+endif
 
-!	write(114511,*) psibnd,i_plasmatype,curconduc(12:15),psiplasmatoconduc(12:15),rax,zax,r_xpoint(1:2),z_xpoint(1:2),psi_xpoint(1:2)
 
 	write(*,*) 'plasma type',psibnd,i_plasmatype,x1,x2,psi_xpoint(i4),psi_limp(i5),limiterr(i5),limiterz(i5),r_xpoint(i4),z_xpoint(i4)
 	

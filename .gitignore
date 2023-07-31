@@ -4,6 +4,7 @@
 mod
 obj
 pyparse/__pycache__
+pyparse/fml.py
 /exe
 /equ
 /exp
