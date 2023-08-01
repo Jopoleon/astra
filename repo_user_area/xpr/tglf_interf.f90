@@ -181,7 +181,7 @@ if (tglf_zs_in(4) >= 1. .and. tglf_ns_in == 2) then
     tglf_ns_in = 3
 endif
 
-kygrid_model_tg = 1
+kygrid_model_tg = 4 !1 Email Angioni Aug 1st 2023
 
 sat_rule = 2
 write(6, '(A, 6i4)') 'Call TGLF...', jr1_in, jr2_in, nrho, jna, sat_rule, tglf_ns_in
@@ -218,7 +218,7 @@ tglf_new_eikonal_in    = .True.
 tglf_adiabatic_elec_in = .False.
 tglf_ibranch_in    = -1
 tglf_nmodes_in     = nmodes_tg
-tglf_nbasis_max_in = 4
+tglf_nbasis_max_in = 6 ! 4 email Angioni Aug 1st 2023
 tglf_nbasis_min_in = 2
 tglf_nxgrid_in     = 16
 tglf_nky_in        = 19
@@ -226,6 +226,7 @@ tglf_units_in   = 'CGYRO'
 tglf_path_in = '../tglf/'
 ! Want fluxes from TGLF
 tglf_use_transport_model_in = .true.
+tglf_use_ave_ion_grid_in    = .true. ! Email Angioni Aug 1st 2023
 
 tglf_sign_Bt_in = 1
 tglf_sign_It_in = 1
