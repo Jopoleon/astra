@@ -48,7 +48,7 @@ use tglf_pkg, only: get_eigenvalue_spectrum_out, get_ky_spectrum_out, &
 
 implicit none
 
-integer, parameter :: jpd=700, nradial=9
+integer, parameter :: jpd=700, nradial=5
 
 double precision, parameter :: &
    k0   = 1.6022d-12, &       ! erg/ev
