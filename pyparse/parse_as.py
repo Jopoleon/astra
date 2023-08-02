@@ -8,13 +8,14 @@ logger.setLevel(logging.INFO)
 
 def doublise(sarg):
 
-    if '.' in sarg and 'd' not in sarg and 'D' not in sarg and 'e' not in sarg and 'E' not in sarg:
-        c = sarg.split('.')[0]
-        sarg = sarg + 'd0'
-    elif '.' in sarg and 'e' in sarg:
-        sarg = sarg.replace('e', 'D')
-    elif '.' in sarg and 'E' in sarg:
-        sarg = sarg.replace('E', 'D')
+    if '.' in sarg:
+        if 'd' not in sarg and 'D' not in sarg and 'e' not in sarg and 'E' not in sarg:
+            c = sarg.split('.')[0]
+            sarg = sarg + 'd0'
+        elif 'e' in sarg:
+            sarg = sarg.replace('e', 'D')
+        elif 'E' in sarg:
+            sarg = sarg.replace('E', 'D')
 
     return sarg
 
@@ -667,7 +668,7 @@ class LINE2FOR:
                         break
                 out = ''
                 for j in range(jpos, jpos+jbra):
-                    out += pieces[j]
+                    out += doublise(pieces[j])
                 out += ', J)'
                 jpos += jbra
 
