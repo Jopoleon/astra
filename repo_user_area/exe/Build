@@ -35,7 +35,7 @@ then
     NETCDF_LIBDIR=${NETCDF_HOME}/lib
     export NETCDF_LIB="-L${NETCDF_LIBDIR} -lnetcdf -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}"
     export NETCDF_INC=${NETCDF_HOME}/include
-    ASTRA_EXT=/afs/ipp/home/a/astra/ASTRA_LIBRARIES_EXT
+    ASTRA_EXT=/tokp/work/software/TOK_2023/ASTRA_LIBRARIES_EXT
 elif [ $platform == "lx" ] || [ $platform == "goblin" ]
 then
     module load intel/18.0 impi/4.1.0 anaconda/3
