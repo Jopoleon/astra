@@ -459,7 +459,7 @@ write(32, *) nactive,npassive
 
 write(32, *) ncoils
 do i=1, ncoils
-    write(32, *) rcoil(i),zcoil(i),drcoil(i),dzcoil(i),anglecoil(i)
+    write(32, *) rcoil(i), zcoil(i), drcoil(i), dzcoil(i), anglecoil(i), mequivalence(i)
 enddo
 
 write(32, *) nlimiter
