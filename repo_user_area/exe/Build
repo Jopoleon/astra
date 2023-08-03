@@ -102,6 +102,12 @@ jobname=${exp_file}${equ_file}
 
 echo Compile main ASTRA executable $equ_file $AWD 
 make -f exe/Makefile MODEL=$equ_file
+status=$?
+echo make status $status
+if [ $status -ne 0 ]
+then
+    exit 2
+fi
 
 echo Compile IPC programs
 [ -f exe/Makexpr ] && make -f exe/Makexpr
