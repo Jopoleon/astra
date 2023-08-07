@@ -1,0 +1,37 @@
+#%Module######################################################################
+##
+##      ASTRA modulefile
+##      author: G. Tardini       (git@ipp.mpg.de)
+##
+
+module-whatis "ASTRA is a suite of transport codes"
+
+proc ModulesHelp { } {
+    puts stderr "See <https://www.aug.ipp.mpg.de/aug/manuals/astra/index.html>. "
+}
+
+conflict meld
+
+if [ module-info mode load ] {
+    module load SciPy-bundle/2020.11-intel-2020b netCDF/4.7.4-iimpi-2020b
+}
+if [ module-info mode remove ] {
+    module unload SciPy-bundle netCDF
+}
+
+setenv ASTRA_EXT /home/ITER/tarding/ASTRA_LIBRARIES_EXT
+set PKG /work/imas/opt/EasyBuild/software
+setenv MKL_LIBDIR $env(MKLROOT)/lib/intel64
+setenv COMP_LIBDIR $PKG/iccifort/2020.4.304/compilers_and_libraries_2020.4.304/linux/compiler/lib/intel64_lin
+set HDF5_LIB "-L$env(HDF5_DIR)/lib64 -lhdf5 -lhdf5_hl"
+set NETCDF_HOME $PKG/netCDF/4.7.4-iimpi-2020b
+set NETCDFF_HOME $PKG/netCDF-Fortran/4.5.3-iimpi-2020b
+set NETCDF_LIBDIR $NETCDF_HOME/lib
+set NETCDFF_LIBDIR $NETCDFF_HOME/lib
+setenv NETCDF_LIB "${HDF5_LIB} -L${NETCDF_LIBDIR} -lnetcdf -L${NETCDFF_LIBDIR} -lnetcdff -Wl,-rpath,$env(HDF5_DIR)/lib64:${NETCDF_LIBDIR}:${NETCDFF_LIBDIR}"
+setenv NETCDF_INC $NETCDFF_HOME/include
+
+setenv AFC ifort
+setenv ACC "cc -O"
+setenv MPIFC mpiifort
+setenv XLBR "-L/usr/lib64 -lX11 -Wl,--start-group $env(COMP_LIBDIR)/libintlc.so.5 $env(MKL_LIBDIR)/libmkl_intel_lp64.a $env(MKL_LIBDIR)/libmkl_core.a $env(MKL_LIBDIR)/libmkl_sequential.a $env(MKL_LIBDIR)/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group"

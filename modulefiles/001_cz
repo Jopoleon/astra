@@ -1,0 +1,32 @@
+#%Module######################################################################
+##
+##      ASTRA modulefile
+##      author: G. Tardini       (git@ipp.mpg.de)
+##
+
+module-whatis "ASTRA is a suite of transport codes"
+
+proc ModulesHelp { } {
+    puts stderr "See <https://www.aug.ipp.mpg.de/aug/manuals/astra/index.html>. "
+}
+
+conflict meld
+
+if [ module-info mode load ] {
+    module load python3/anaconda3.5 intelstudio/18 netcdf/4.7.4-hdf5-1.12.0-intelmpi-18
+}
+if [ module-info mode remove ] {
+    module unload python3 intelstudio netcdf
+}
+
+setenv ASTRA_EXT /compass/home/tardini/astra_ext
+setenv COMP_LIBDIR /sw/intel/compilers_and_libraries_2018.3.222/linux/compiler/lib/intel64_lin
+setenv MKL_LIBDIR $env(MKLROOT)/lib/intel64
+set NETCDF_LIBDIR $env(NETCDF_DIR)/lib
+setenv NETCDF_LIB "-L$NETCDF_LIBDIR -lnetcdf -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}"
+setenv NETCDF_INC $env(NETCDF_DIR)/include
+
+setenv AFC ifort
+setenv ACC "cc -O"
+setenv MPIFC mpiifort
+setenv XLBR "-L/usr/lib64 -lX11 -Wl,--start-group $env(COMP_LIBDIR)/libintlc.so.5 $env(MKL_LIBDIR)/libmkl_intel_lp64.a $env(MKL_LIBDIR)/libmkl_core.a $env(MKL_LIBDIR)/libmkl_sequential.a $env(MKL_LIBDIR)/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group"

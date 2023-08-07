@@ -1,7 +1,6 @@
 #!/bin/bash -f
 
 source /etc/profile.d/modules.sh
-module purge
 
 rootdir=`dirname $0`                  # may be relative path
 export AWD=`cd $rootdir/.. && pwd`    # ensure absolute path
@@ -24,76 +23,7 @@ do
    fi
 done < $ALOG
 
-# Define environment variables, including compiler and libraries
-
-if [[ $platform == "tok" ]]
-then
-    module load intel/2023.1.0.x impi/2021.9 impi-interactive/1.0 mkl/2023.1 anaconda/3/2023.03
-    export MKL_LIBDIR=${MKLROOT}/lib/intel64
-    export COMP_LIBDIR=${INTEL_HOME}/compiler/2023.1.0/linux/compiler/lib/intel64_lin
-    NETCDF_HOME=/afs/ipp/common/soft/netcdf/4.2.1.1/amd64_sles11/intel/14.0/impi-4.1.3
-    NETCDF_LIBDIR=${NETCDF_HOME}/lib
-    export NETCDF_LIB="-L${NETCDF_LIBDIR} -lnetcdf -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}"
-    export NETCDF_INC=${NETCDF_HOME}/include
-    ASTRA_EXT=/tokp/work/software/TOK_2023/ASTRA_LIBRARIES_EXT
-elif [ $platform == "lx" ] || [ $platform == "goblin" ]
-then
-    module load intel/18.0 impi/4.1.0 anaconda/3
-    export MKL_LIBDIR=${INTEL_HOME}/linux/mkl/lib/intel64_lin
-    export COMP_LIBDIR=${INTEL_HOME}/../compilers_and_libraries_2018.5.274/linux/compiler/lib/intel64_lin
-    NETCDF_HOME=/afs/ipp/common/soft/netcdf/4.2.1.1/amd64_sles11/intel/14.0/impi-4.1.3
-    NETCDF_LIBDIR=${NETCDF_HOME}/lib
-    export NETCDF_LIB="-L${NETCDF_LIBDIR} -lnetcdf -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}"
-    export NETCDF_INC=${NETCDF_HOME}/include
-    ASTRA_EXT=/afs/ipp/home/a/astra/ASTRA_LIBRARIES_EXT
-elif [[ $platform == "ldaug" ]]
-then
-    module load enable-aug-dv-modules intel mpi/2021.9.0 compiler/2023.1.0 mkl/2023.1.0 anaconda3/2023.03
-    INTEL_HOME=/shares/software/aug-dv/moduledata/Intel/oneapi
-    export COMP_LIBDIR=${INTEL_HOME}/compiler/2023.1.0/linux/compiler/lib/intel64_lin
-    export MKL_LIBDIR=${MKLROOT}/lib/intel64
-    ASTRA_EXT=/shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT
-elif [[ $platform == "gway" ]]
-then
-    module load cineca intel/pe-xe-2020--binary mkl/2020--binary intelmpi/2020--binary
-    export COMP_LIBDIR=${INTEL_HOME}/compilers_and_libraries/linux/lib/intel64
-    export MKL_LIBDIR=${MKLROOT}/lib/intel64
-    NETCDF_HOME=/cineca/prod/opt/libraries/netcdf/4.4.1/intel--pe-xe-2017--binary
-    NETCDFF_HOME=/cineca/prod/opt/libraries/netcdff/4.4.4/intel--pe-xe-2017--binary
-    NETCDF_LIBDIR=${NETCDF_HOME}/lib
-    NETCDFF_LIBDIR=${NETCDFF_HOME}/lib
-    export NETCDF_LIB="-L${NETCDF_LIBDIR} -lnetcdf -L${NETCDFF_LIBDIR} -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}:${NETCDFF_LIBDIR}"
-    export NETCDF_INC=${NETCDFF_HOME}/include
-    ASTRA_EXT=/afs/eufus.eu/user/g/g2gtardi/ASTRA_LIBRARIES_EXT
-elif [[ $platform == "iter" ]]
-then
-    module load intel/2020b netCDF/4.7.4-iimpi-2020b
-    PKG=/work/imas/opt/EasyBuild/software
-    export COMP_LIBDIR=${PKG}/iccifort/2020.4.304/compilers_and_libraries_2020.4.304/linux/compiler/lib/intel64_lin
-    export MKL_LIBDIR=${MKLROOT}/lib/intel64
-    HDF5_LIB="-L${HDF5_DIR}/lib64 -lhdf5 -lhdf5_hl"
-    NETCDF_HOME=${PKG}/netCDF/4.7.4-iimpi-2020b
-    NETCDFF_HOME=${PKG}/netCDF-Fortran/4.5.3-iimpi-2020b
-    NETCDF_LIBDIR=${NETCDF_HOME}/lib
-    NETCDFF_LIBDIR=${NETCDFF_HOME}/lib
-    export NETCDF_LIB="${HDF5_LIB} -L${NETCDF_LIBDIR} -lnetcdf -L${NETCDFF_LIBDIR} -lnetcdff -Wl,-rpath,${HDF5_DIR}/lib64:${NETCDF_LIBDIR}:${NETCDFF_LIBDIR}"
-    export NETCDF_INC=${NETCDFF_HOME}/include
-    ASTRA_EXT=/home/ITER/tarding/ASTRA_LIBRARIES_EXT
-elif [[ $platform == "cz" ]]
-then
-    module load intelstudio/18 netcdf/4.7.4-hdf5-1.12.0-intelmpi-18
-    export COMP_LIBDIR=/sw/intel/compilers_and_libraries_2018.3.222/linux/compiler/lib/intel64_lin
-    export MKL_LIBDIR=${MKLROOT}/lib/intel64
-    export NETCDF_LIB="-L${NETCDF_DIR}/lib -lnetcdf -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}"
-    export NETCDF_INC=${NETCDF_DIR}/include
-    ASTRA_EXT=/compass/home/tardini/astra_ext
-fi
-
-export AFC=ifort
-export ACC="cc -O"
-export MPIFC=mpiifort
-export XLBR="-L/usr/lib64 -lX11 -Wl,--start-group ${COMP_LIBDIR}/libintlc.so.5 ${MKL_LIBDIR}/libmkl_intel_lp64.a ${MKL_LIBDIR}/libmkl_core.a ${MKL_LIBDIR}/libmkl_sequential.a ${MKL_LIBDIR}/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group"
-
+ulimit -s 50000
 source $AWD/exe/astra_rc
 
 export expfile="${exp_file}"
@@ -128,6 +58,7 @@ then
 
    if [ "$TASK" == 'BGD' ]
    then
+      module unload impi-interactive
       bat="$AWD/exe/batch.sh"
       cat << EOT > $bat
 #!/bin/sh

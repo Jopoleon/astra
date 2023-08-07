@@ -33,6 +33,9 @@ then
 elif [[ $node == *"mit.edu" ]]
 then
    platform=mit
+elif [[ $node == "omega"* ]]
+then
+   platform=omega
 elif [[ $node == "CX-LD-AUG"* ]]
 then
    platform=ldaug

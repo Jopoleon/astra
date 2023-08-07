@@ -1,0 +1,30 @@
+#%Module######################################################################
+##
+##      ASTRA modulefile
+##      author: G. Tardini       (git@ipp.mpg.de)
+##
+
+module-whatis "ASTRA is a suite of transport codes"
+
+proc ModulesHelp { } {
+    puts stderr "See <https://www.aug.ipp.mpg.de/aug/manuals/astra/index.html>. "
+}
+
+conflict meld
+
+if [ module-info mode load ] {
+    module load enable-aug-dv-modules intel mpi/2021.9.0 compiler/2023.1.0 mkl/2023.1.0 anaconda3/2023.03
+}
+if [ module-info mode remove ] {
+    module unload enable-aug-dv-modules intel mpi compiler mkl anaconda3/2023.03
+}
+
+set ASTRA_EXT /shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT
+set INTEL_HOME /shares/software/aug-dv/moduledata/Intel/oneapi
+setenv MKL_LIBDIR $env(MKLROOT)/lib/intel64
+setenv COMP_LIBDIR $INTEL_HOME/compiler/2023.1.0/linux/compiler/lib/intel64_lin
+
+setenv AFC ifort
+setenv ACC "cc -O"
+setenv MPIFC mpiifort
+setenv XLBR "-L/usr/lib64 -lX11 -Wl,--start-group $env(COMP_LIBDIR)/libintlc.so.5 $env(MKL_LIBDIR)/libmkl_intel_lp64.a $env(MKL_LIBDIR)/libmkl_core.a $env(MKL_LIBDIR)/libmkl_sequential.a $env(MKL_LIBDIR)/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group"
