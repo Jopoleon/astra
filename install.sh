@@ -16,4 +16,5 @@ done
 cp $AWD/repo_user_area/exp/nml/aug34954_${platform}       $AWD/exp/nml/aug34954
 cp $AWD/repo_user_area/tmp/astra_${platform}.nml          $AWD/tmp/astra.nml
 
+module load astra
 $AWD/exe/as_exe -m fluxes -v aug34954 -s 4 -e 5
