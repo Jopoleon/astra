@@ -13,13 +13,13 @@ proc ModulesHelp { } {
 conflict meld
 
 if [ module-info mode load ] {
-    module load env/intel2020
+    module load env/intel2020 python/3.11
 }
 if [ module-info mode remove ] {
-    module unload env
+    module unload env python
 }
 
-setenv ASTRA_EXT /fusion/projects/astra/ASTRA_LIBRARIES_EXT
+setenv ASTRA_EXT /fusion/projects/codes/astra/ASTRA_LIBRARIES_EXT
 setenv MKL_LIBDIR $env(MKLROOT)/lib/intel64
 setenv COMP_LIBDIR $env(MKLROOT)/../lib/intel64
 set NETCDF_LIBDIR $env(NETCDF_DIR)/lib
