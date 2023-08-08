@@ -20,6 +20,7 @@ if [[ $platform == "lx" ]]
 then
     module use /afs/.ipp/common/usr/modules/@sys/modulefiles/AUG
 elif [[ $platform == "ldaug" ]]
+then
      module use /shares/departments/AUG/users/git/modulefiles
 fi
 module load astra
