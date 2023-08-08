@@ -25,6 +25,9 @@ then
 elif [[ $platform == "iter" ]]
 then
      module use /home/ITER/tarding/modulefiles
+elif [[ $platform == "cz" ]]
+then
+     module use /compass/home/tardini/modulefiles
 fi
 module load astra
 status=$?

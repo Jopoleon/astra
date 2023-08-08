@@ -1,0 +1,5 @@
+#%Module
+
+# Default version
+
+set ModulesVersion "0.0.1"
