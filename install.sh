@@ -16,5 +16,15 @@ done
 cp $AWD/repo_user_area/exp/nml/aug34954_${platform}       $AWD/exp/nml/aug34954
 cp $AWD/repo_user_area/tmp/astra_${platform}.nml          $AWD/tmp/astra.nml
 
+if [[ $platform == "lx" ]]
+then
+    module use /afs/.ipp/common/usr/modules/@sys/modulefiles/AUG
+fi
 module load astra
+status=$?
+if [ $status -ne 0 ]
+then
+    echo module astra was not loaded
+    exit 1
+fi
 $AWD/exe/as_exe -m fluxes -v aug34954 -s 4 -e 5

@@ -36,6 +36,7 @@ status=$?
 echo make status $status
 if [ $status -ne 0 ]
 then
+    echo Error during compilation, exiting
     exit 2
 fi
 
