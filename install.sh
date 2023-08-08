@@ -19,6 +19,8 @@ cp $AWD/repo_user_area/tmp/astra_${platform}.nml          $AWD/tmp/astra.nml
 if [[ $platform == "lx" ]]
 then
     module use /afs/.ipp/common/usr/modules/@sys/modulefiles/AUG
+elif [[ $platform == "ldaug" ]]
+     module use /shares/departments/AUG/users/git/modulefiles
 fi
 module load astra
 status=$?
