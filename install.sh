@@ -13,8 +13,8 @@ do
     cp -r repo_user_area/$DIR .
 done
 
-cp $AWD/repo_user_area/exp/nml/aug34954_${platform}       $AWD/exp/nml/aug34954
-cp $AWD/repo_user_area/tmp/astra_${platform}.nml          $AWD/tmp/astra.nml
+cp $AWD/repo_user_area/exp/nml/aug34954_${platform} $AWD/exp/nml/aug34954
+cp $AWD/repo_user_area/tmp/astra.nml $AWD/tmp/astra.nml
 
 if [[ $platform == "lx" ]]
 then
