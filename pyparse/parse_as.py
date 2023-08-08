@@ -176,6 +176,22 @@ def rec_split(line_in, syms='+|-|*|/|(|)|,'):
     return [x for x in pieces if len(x.strip()) > 0]
 
 
+def function_args(pieces):
+
+    if pieces[0] != '(':
+        return
+    else:
+        left_right_bra = -1
+        for jpos, piece in enumerate(pieces[1:]):
+            if piece == '(':
+                left_right_bra -= 1
+            if piece == ')':
+                left_right_bra += 1
+                if left_right_bra == 0:
+                    break
+        return jpos+2
+
+
 def equ_prepare(f_equ):
     '''
     Skip blocks between "%" tags (comments)
@@ -594,7 +610,6 @@ class LINE2FOR:
                    pieces[jpos-1] == '(' and pieces[jpos+1] == ',' or \
                    pieces[jpos-1] == ',' and pieces[jpos+1] == ')':
                     var = var2
-                    var = var2
 
             if (jpos < n_pieces-2 and pieces[jpos + 2] == 'AFX'):
                 count_close_bracket = 0
@@ -662,10 +677,34 @@ class LINE2FOR:
                     logger.debug(block_right)
                     logger.debug(out)
 
+            elif var in ('V_95_POS', 'RFMAX', 'RFMIN', 'FRMAX' 'FRMIN'):
+                print(var)
+                jbra = function_args(pieces[jpos+1: n_pieces])
+                out = ''
+                for j in range(jpos, jpos+jbra):
+                    if pieces[j] in self.profiles:
+                        out += '%s(1:NA1))' %pieces[j]
+                    else:
+                        out += doublise(pieces[j])
+                jpos += jbra
+
+            elif var in ('RFVAL', 'AFVAL', 'RFVEX', 'AFVEX', 'RFVIN', 'AFVIN'):
+                jbra = function_args(pieces[jpos+1: n_pieces])
+                out = ''
+                for j in range(jpos, jpos+jbra):
+                    if pieces[j] in self.profiles:
+                        out += '%s(1:NA1)' %pieces[j]
+                    else:
+                        out += doublise(pieces[j])
+                if var[0] == 'R':
+                    out += '*ROC'
+                else:
+                    out += '*ABC'
+                out += ')'
+                jpos += jbra
+
             elif var in ('ASTEP', 'RSTEP', 'XSTEP'):
-                for jbra in range(1, n_pieces-jpos):
-                    if pieces[jpos+jbra] == ')':
-                        break
+                jbra = function_args(pieces[jpos+1: n_pieces])
                 out = ''
                 for j in range(jpos, jpos+jbra):
                     out += doublise(pieces[j])
@@ -690,12 +729,6 @@ class LINE2FOR:
                         out = '%s(%sR, J)' %(var, var3)
                     if var3 in self.profiles:
                         out = '%s(%s, J)'  %(var, var3)
-                jpos += 3
-
-            elif var in ('FRMIN', 'FRMAX'):
-# do not indicise arrays!
-                var3 = pieces[jpos+2]
-                out = '%s(%s)' %(var, var3)
                 jpos += 3
 
 # Formula

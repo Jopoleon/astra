@@ -28,3 +28,5 @@ setenv AFC ifort
 setenv ACC "cc -O"
 setenv MPIFC mpiifort
 setenv XLBR "-L/usr/lib64 -lX11 -Wl,--start-group $env(COMP_LIBDIR)/libintlc.so.5 $env(MKL_LIBDIR)/libmkl_intel_lp64.a $env(MKL_LIBDIR)/libmkl_core.a $env(MKL_LIBDIR)/libmkl_sequential.a $env(MKL_LIBDIR)/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group"
+
+set-alias ae exe/as_exe
