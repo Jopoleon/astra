@@ -6,14 +6,13 @@ LIB_DIR = $(AWD)/lib
 LIBNAM = libfeqis.a
 LIB = $(LIB_DIR)/$(LIBNAM)
 
-FFLAGS	= -O2 -g -traceback -I$(MOD_FOR) -I$(MOD_DIR)
+FFLAGS	= -O2 -g -traceback -I. -I$(MOD_FOR) -I$(MOD_DIR)
 
 # FEQIS objs
 
 FEQ_MODOBJ = \
 $(OBJ_DIR)/pi_var_module.o \
 $(OBJ_DIR)/modules_feqis.o 
-
 
 FEQ_LIBOBJ = \
 $(OBJ_DIR)/solver_inversion_matrix_gsef.o \
@@ -29,13 +28,18 @@ $(OBJ_DIR)/build_2dgrid.o
 
 # Make Commands
 .PHONY: all
-all: directories $(LIB)
+all: directories $(LIB) mvmod
 
 .PHONY: directories
 directories:
 	@mkdir -p $(OBJ_DIR)
 	@mkdir -p $(LIB_DIR)
 	@mkdir -p $(MOD_DIR)
+
+.PHONY: mvmod
+mvmod:
+	rm -f *genmod.*
+	-@mv *.mod $(MOD_DIR)/
 
 .PHONY: clean
 clean:
@@ -48,7 +52,6 @@ clean:
 
 $(OBJ_DIR)%.o : $(SRC_DIR)%.f90
 	$(AFC) $(FFLAGS) -c $< -o $@
-	-@mv *.mod $(MOD_DIR)/
 
 $(LIB): $(FEQ_MODOBJ) $(FEQ_LIBOBJ)
 	ar -u -rv $(LIB) $(FEQ_MODOBJ) $(FEQ_LIBOBJ)
