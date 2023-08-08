@@ -28,7 +28,11 @@ then
 elif [[ $platform == "cz" ]]
 then
      module use /compass/home/tardini/modulefiles
+elif [[ $platform == "omega" ]]
+then
+     module use /home/tardinig/modulefiles
 fi
+
 module load astra
 status=$?
 if [ $status -ne 0 ]
