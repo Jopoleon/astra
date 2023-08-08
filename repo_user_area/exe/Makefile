@@ -2,6 +2,7 @@ LIB_DIR = $(AWD)/lib
 TSK_DIR = $(AWD)/bin
 FOR_DIR = $(AWD)/main
 MOD_DIR = $(AWD)/mod/for
+OBJ_DIR = $(AWD)/obj/for
 TMP_DIR = $(AWD)/tmp
 ATASK = $(TSK_DIR)/$(MODEL).exe
 EQU  = $(AWD)/equ/$(MODEL)
@@ -48,6 +49,13 @@ directories:
 	@mkdir -p $(LIB_DIR)
 	@mkdir -p $(AWD)/.res/ncdf
 	@mkdir -p $(AWD)/dat
+
+.PHONY: clean
+clean:
+	rm -f *.mod
+	rm -f $(MOD_DIR)/*.mod
+	rm -rf $(OBJ_DIR)
+	rm -f $(LIBFOR)
 
 .PHONY: update_model
 update_model:

@@ -22,6 +22,9 @@ then
 elif [[ $platform == "ldaug" ]]
 then
      module use /shares/departments/AUG/users/git/modulefiles
+elif [[ $platform == "iter" ]]
+then
+     module use /home/ITER/tarding/modulefiles
 fi
 module load astra
 status=$?
