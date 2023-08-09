@@ -1,0 +1,41 @@
+#%Module######################################################################
+##
+##      ASTRA modulefile
+##      author: G. Tardini       (git@ipp.mpg.de)
+##
+
+module-whatis "ASTRA is a suite of transport codes"
+
+proc ModulesHelp { } {
+    puts stderr "See <https://www.aug.ipp.mpg.de/aug/manuals/astra/index.html>. "
+}
+
+conflict meld
+module use /orcd/nese/psfc/001/software/spack/2023-07-01-physics-rpp/spack/share/spack/modules-test/linux-rocky8-x86_64
+
+if [ module-info mode load ] {
+    module load intel-oneapi-mkl/2023.1.0-intel-oneapi-mpi-2021.9.0-gcc-12.2.0-module-seow5nc
+    module load anaconda3/2022.05-x86_64
+    module load netcdf-fortran/4.6.0-openmpi-4.1.4-oneapi-2023.1.0-module-2o2pb3f
+}
+if [ module-info mode remove ] {
+    module unload intel-oneapi-mkl
+    module unload anaconda3
+    module unload netcdf-fortran
+}
+
+setenv ASTRA_EXT /home/gtardini/ASTRA_LIBRARIES_EXT
+set mkllib ::env(MKLROOT)/linux/mkl/lib/intel64
+setenv MKL_LIBDIR mkllib
+setenv COMP_LIBDIR ::env(INTEL_ONEAPI_MKL_ROOT)/compiler/2023.1.0/linux/compiler/lib/intel64_lin
+set NETCDF_LIBDIR ::env(NETCDF_C_ROOT)/lib
+set NETCDFF_LIBDIR ::env(NETCDF_FORTRAN_ROOT)/lib
+setenv NETCDF_LIB "-L${NETCDF_LIBDIR} -lnetcdf -L${NETCDFF_LIBDIR} -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}:${NETCDFF_LIBDIR}"
+setenv NETCDF_INC ::env(NETCDF_FORTRAN_ROOT)/include
+
+setenv AFC ifort
+setenv ACC "cc -O"
+setenv MPIFC mpiifort
+setenv XLBR "-L/usr/lib64 -lX11 -Wl,--start-group ::env(COMP_LIBDIR)/libintlc.so.5 $mkllib/libmkl_intel_lp64.a $mkllib/libmkl_core.a $mkllib/libmkl_sequential.a $mkllib/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group"
+
+set-alias ae exe/as_exe

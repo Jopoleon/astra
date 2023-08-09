@@ -25,6 +25,9 @@ then
 elif [[ $platform == "cz" ]]
 then
     module use /compass/home/tardini/modulefiles
+elif [[ $platform == "mit" ]]
+then
+    module use /home/gtardini/modulefiles
 elif [[ $platform == "omega" ]]
 then
     module use /home/tardinig/modulefiles
