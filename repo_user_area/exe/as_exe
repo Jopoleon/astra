@@ -69,24 +69,8 @@ if __name__ == '__main__':
     if dev_name.strip() == '':
         dev_name = 'aug'
 
-    if '/afs/ipp' in awd:
-        aext = '/afs/ipp/home/a/astra/ASTRA_LIBRARIES_EXT'
-    elif '/toks/work' in awd:
-        aext = '/afs/ipp/home/a/astra/ASTRA_LIBRARIES_EXT'
-    elif '/localhome' in awd:
-        aext = '/afs/ipp/home/a/astra/ASTRA_LIBRARIES_EXT'
-    elif '/home/ITER' in awd:
-        aext = '/home/ITER/tarding/ASTRA_LIBRARIES_EXT'
-    elif 'compass' in awd:
-        aext = '/compass/home/tardini/astra_ext'
-    elif 'eufus' in awd:
-        aext = '/afs/eufus.eu/g2itmdev/user/g2gtardi/ASTRA_LIBRARIES_EXT'
-    else:
-        aext = '/fusion/projects/codes/astra/c8/8.2/intel2020/ASTRA_LIBRARIES_EXT'
-    logger.debug(aext)
     alog  = '&astra_log\n\n'
     alog += 'AWD       = "%s/"\n'   %awd
-    alog += 'AEXT      = "%s/"\n'   %aext
     alog += 'exp_file  = "%s"\n'    %args.exp
     alog += 'equ_file  = "%s"\n'    %args.equ
     alog += 'rev_file  = profiles.dat\n'

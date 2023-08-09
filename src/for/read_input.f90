@@ -68,7 +68,7 @@ character(len=30) :: rholbl
 character(len=132) :: strarray(10), STRI, lin_upper, dir_path, fname, &
     err_msg, err_format, err_msg_exp, file_in, uname, uvar, win_title
 
-namelist / astra_log / AEXT, AWD, exp_file, equ_file, rev_file, TASK, machine, &
+namelist / astra_log / AWD, exp_file, equ_file, rev_file, TASK, machine, &
 debug, tbeg_nml, tend_nml, tpause_nml, flightsim, resize
 
 !----------------------------------------------------------------------|

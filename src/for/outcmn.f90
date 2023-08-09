@@ -44,7 +44,7 @@ character(len=6), dimension(NCONST) :: CFNAME, PRNAME, SRNAME
 character(len=6), dimension(NRW) :: NAMEX
 character(len=6), dimension(NARRX) :: EXARNM
 character(len=6) :: DTNAME(NSDELOUT+4*NSBMX), NAM7(4)
-character(132) :: exp_file, equ_file, rev_file, TASKID, wall_gc_file, NBFILE, MSFILE, VERSION, RUNID, AEXT, AWD, WHOME, FILEX
+character(132) :: exp_file, equ_file, rev_file, TASKID, wall_gc_file, NBFILE, MSFILE, VERSION, RUNID, AWD, WHOME, FILEX
 
 contains
 
