@@ -10,7 +10,6 @@ use status_inc, only: NE, TE, NI, TI, &
     RHO, AMETR, SHIF, ELON, &
     NDEUT, NIZ1, NTRIT, NIZ2, NHE3, &
     TRIA, VTOR, NIBM, G11, VRS, SHEAR
-use outcmn_inc, only: AEXT
 
 USE qlknn_evaluate_nets, only: lli, qlknn_options, qlknn_normpars, evaluate_jetexp_net, &
     default_qlknn_hyper_options, default_qlknn_hornnet_options, &
@@ -70,6 +69,7 @@ double precision, dimension(nspec_max-1, NRD) :: ni_m, ti_m
 double precision :: vpar_in, vpar_shear_in, cexb
 
 CHARACTER(len=20) :: fmtnets
+character(len=120) :: AEXT
 
 TYPE (qlknn_options), SAVE :: qlknn_opts ! for QuaLiKiz Neural Network options
 TYPE (qlknn_normpars), SAVE :: qlknn_norms ! for normalisation conversion of gammaE inside QLKNN
@@ -93,6 +93,7 @@ character(len=132) :: qlknn_sets_dir
 
 !---------------------------------
 
+call GETENV('ASTRA_EXT', AEXT)
 qlknn_sets_dir = TRIM(AEXT) // '/qlk_nn/apr21/'
 
 nions = nspec_max - 1
