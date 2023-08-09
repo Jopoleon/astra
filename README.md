@@ -14,10 +14,12 @@ Compile or execute:
 Supported platforms:
   IPP tok
   IPP lxts
+  IPP ldaug
   IPP-cz
   gateway
   iter-sdcc
   GA-iris
+  GA-omega
 
 The supported platforms are automatically recognised. If not, execute
   cd a8

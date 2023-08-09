@@ -30,6 +30,7 @@ then
     module use /home/tardinig/modulefiles
 fi
 
+module purge
 module load astra
 status=$?
 if [ $status -ne 0 ]
@@ -37,4 +38,5 @@ then
     echo module astra was not loaded
     exit 1
 fi
+
 $AWD/exe/as_exe -m fluxes -v aug34954 -s 4 -e 5

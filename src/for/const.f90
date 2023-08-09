@@ -744,6 +744,8 @@ NA     = 40
 NITOT  = 0
 NSTEPS = 0
 
+TEQ = -1.e3
+
 ! Input dummy variables:
 DEVAR (38:85) = 0.d0
 ! Assign 48*ZRD*
