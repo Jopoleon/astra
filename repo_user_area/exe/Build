@@ -15,12 +15,12 @@ cd $AWD
 ALOG=$AWD/tmp/astra.nml
 while IFS='=' read var val
 do
-   var=`echo $var | xargs` #xargs for trimming
-   val=`echo $val | xargs`
-   if [[ $val ]]
-   then
-      declare "$var=$val"
-   fi
+    var=`echo $var | xargs` #xargs for trimming
+    val=`echo $val | xargs`
+    if [[ $val ]]
+    then
+        declare "$var=$val"
+    fi
 done < $ALOG
 
 ulimit -s 50000
@@ -33,35 +33,38 @@ jobname=${exp_file}${equ_file}
 echo Compile main ASTRA executable $equ_file $AWD 
 make -f exe/Makefile MODEL=$equ_file
 status=$?
-echo make status $status
 if [ $status -ne 0 ]
 then
-    echo Error during compilation, exiting
-    exit 2
+    echo Error from exe/Makefile-compilation, exiting
+    exit 1
 fi
 
 echo Compile IPC programs
-[ -f exe/Makexpr ] && make -f exe/Makexpr
-
-if [ $? == 0 ]  # successful compilation
+make -f exe/Makexpr
+status=$?
+if [ $status -ne 0 ]
 then
+    echo Error from exe/Makexpr-compilation, exiting
+    exit 2
+fi
 
-   exe/CheckObjs
-   if [ $? == 1 ]
-   then
-      exit 1
-   else
-      echo Successful check of object names in libs
-   fi
-# Execution (Runmodel)
+exe/CheckObjs
+status=$?
+if [ $status -ne 0 ]
+then
+    echo CheckObjs failed: conflicting object names
+    exit 3
+fi
 
-   ATASK=$AWD/bin/$equ_file.exe
+# Execution
 
-   if [ "$TASK" == 'BGD' ]
-   then
-      module unload impi-interactive
-      bat="$AWD/exe/batch.sh"
-      cat << EOT > $bat
+ATASK=$AWD/bin/$equ_file.exe
+
+if [ "$TASK" == 'BGD' ]
+then
+    module unload impi-interactive
+    bat="$AWD/exe/batch.sh"
+    cat << EOT > $bat
 #!/bin/sh
 #SBATCH -J astra_${USER}
 #SBATCH --partition=p.tok.openmp
@@ -81,25 +84,24 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 srun $ATASK
 EOT
 
-      echo sbatch $bat
-      date
-      module unload impi-interactive
-      sbatch -W $bat
-   else
-      echo Running $ATASK
-      $ATASK
-      echo ASTRA normal exit
-      echo
-      for mod_name in tglfi qlkzi qlki neo
-      do
-          PID=$(ps aux | grep $mod_name | grep 'R+' | awk '{print $2}')
-          if [ ! -z "$PID" ];
-          then
-              for p_id in $PID
-              do
-                  kill -9 $p_id
-              done
-          fi
-       done
-   fi
+    echo sbatch $bat
+    date
+    module unload impi-interactive
+    sbatch -W $bat
+else
+    echo Running $ATASK
+    $ATASK
+    echo ASTRA normal exit
+    echo
+    for mod_name in tglfi qlkzi qlki neo
+    do
+        PID=$(ps aux | grep $mod_name | grep 'R+' | awk '{print $2}')
+        if [ ! -z "$PID" ];
+        then
+            for p_id in $PID
+            do
+                kill -9 $p_id
+            done
+        fi
+    done
 fi
