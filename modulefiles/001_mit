@@ -14,7 +14,7 @@ conflict meld
 module use /orcd/nese/psfc/001/software/spack/2023-07-01-physics-rpp/spack/share/spack/modules-test/linux-rocky8-x86_64
 
 if [ module-info mode load ] {
-    module load intel-oneapi-mkl/2023.1.0-intel-oneapi-mpi-2021.9.0-gcc-12.2.0-module-seow5nc
+    module load intel-oneapi-compilers/2023.1.0-gcc-12.2.0-module-3vfzgf
     module load anaconda3/2022.05-x86_64
     module load netcdf-fortran/4.6.0-openmpi-4.1.4-oneapi-2023.1.0-module-2o2pb3f
 }
