@@ -5,9 +5,6 @@ source /etc/profile.d/modules.sh
 rootdir=`dirname $0`                  # may be relative path
 export AWD=`cd $rootdir/.. && pwd`    # ensure absolute path
 
-platform=`$AWD/get_platform`
-echo AWD is $AWD
-
 cd $AWD
 
 # Get variables from log file
@@ -28,7 +25,6 @@ source $AWD/exe/astra_rc
 
 export expfile="${exp_file}"
 export equfile="${equ_file}"
-jobname=${exp_file}${equ_file}
 
 echo Compile main ASTRA executable $equ_file $AWD 
 make -f exe/Makefile MODEL=$equ_file
