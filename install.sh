@@ -16,21 +16,18 @@ done
 cp $AWD/repo_user_area/exp/nml/aug34954_${platform} $AWD/exp/nml/aug34954
 cp $AWD/repo_user_area/tmp/astra.nml $AWD/tmp/astra.nml
 
-if [[ $platform == "lx" ]]
+if [[ $platform == "ldaug" ]]
 then
-    module use /afs/.ipp/common/usr/modules/@sys/modulefiles/AUG
-elif [[ $platform == "ldaug" ]]
-then
-     module use /shares/departments/AUG/users/git/modulefiles
+    module use /shares/departments/AUG/users/git/modulefiles
 elif [[ $platform == "iter" ]]
 then
-     module use /home/ITER/tarding/modulefiles
+    module use /home/ITER/tarding/modulefiles
 elif [[ $platform == "cz" ]]
 then
-     module use /compass/home/tardini/modulefiles
+    module use /compass/home/tardini/modulefiles
 elif [[ $platform == "omega" ]]
 then
-     module use /home/tardinig/modulefiles
+    module use /home/tardinig/modulefiles
 fi
 
 module load astra
