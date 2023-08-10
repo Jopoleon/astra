@@ -37,6 +37,7 @@ if ! command -v module &> /dev/null
 then
     echo "module tool not available on this platform, set environment in exe/Build"
 else
+    module load astra
     RES=$( { module load astra; } 2>&1 )
     echo $RES
     if [[ "$RES" == *"ERROR"* ]];
