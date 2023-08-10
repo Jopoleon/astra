@@ -16,16 +16,18 @@ set NETCDF_HOME $::env(NETCDF_C_ROOT)
 set NETCDFF_HOME $::env(NETCDF_FORTRAN_ROOT)
 set NETCDF_LIBDIR $NETCDF_HOME/lib
 set NETCDFF_LIBDIR $NETCDFF_HOME/lib
+set comp_lib $::env(INTEL_ONEAPI_MKL_ROOT)/compiler/2023.1.0/linux/compiler/lib/intel64_lin
+set mkl_lib $::env(MKLROOT)/lib/intel64
 
 setenv ASTRA_EXT /home/gtardini/ASTRA_LIBRARIES_EXT
-setenv MKL_LIBDIR $::env(MKLROOT)/lib/intel64
-setenv COMP_LIBDIR $::env(INTEL_ONEAPI_MKL_ROOT)/compiler/2023.1.0/linux/compiler/lib/intel64_lin
+setenv MKL_LIBDIR $mkl_lib
+setenv COMP_LIBDIR $comp_lib
 setenv NETCDF_LIB "-L${NETCDF_LIBDIR} -lnetcdf -L${NETCDFF_LIBDIR} -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}:${NETCDFF_LIBDIR}"
 setenv NETCDF_INC $NETCDFF_HOME/include
 
 setenv AFC ifort
 setenv ACC "cc -O"
 setenv MPIFC mpiifort
-setenv XLBR "-L/usr/lib64 -lX11 -Wl,--start-group $comp_lib/libintlc.so.5 $mkllib/libmkl_intel_lp64.a $mkllib/libmkl_core.a $mkllib/libmkl_sequential.a $mkllib/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group"
+setenv XLBR "-L/usr/lib64 -lX11 -Wl,--start-group $comp_lib/libintlc.so.5 $mkl_lib/libmkl_intel_lp64.a $mkl_lib/libmkl_core.a $mkl_lib/libmkl_sequential.a $mkl_lib/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group"
 
 set-alias ae exe/as_exe
