@@ -25,21 +25,26 @@ then
 elif [[ $platform == "cz" ]]
 then
     module use /compass/home/tardini/modulefiles
-elif [[ $platform == "mit" ]]
-then
-    module use /home/gtardini/modulefiles
 elif [[ $platform == "omega" ]]
 then
     module use /home/tardinig/modulefiles
 fi
 
-module purge
-module load astra
-status=$?
-if [ $status -ne 0 ]
+if ! command -v module &> /dev/null
 then
-    echo module astra was not loaded
-    exit 1
+    echo "module tool not available on this platform, set environment in exe/Build"
+else
+    RES=$( { module load astra; } 2>&1 )
+    echo $RES
+    if [[ "$RES" == *"ERROR"* ]];
+    then
+        echo module astra not loaded, proceed anyway?
+        read -p "y/n:" proc
+        if [[ $proc == "n" ]]
+        then
+            exit 1
+        fi
+    fi
 fi
 
 $AWD/exe/as_exe -m fluxes -v aug34954 -s 4 -e 5
