@@ -28,6 +28,9 @@ then
 elif [[ $platform == "omega" ]]
 then
     module use /home/tardinig/modulefiles
+elif [[ $platform == "mit" ]]
+then
+    module use /home/gtardini/modulefiles
 fi
 
 if ! command -v module &> /dev/null
