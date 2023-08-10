@@ -11,29 +11,15 @@ proc ModulesHelp { } {
 }
 
 conflict meld
-module use /orcd/nese/psfc/001/software/spack/2023-07-01-physics-rpp/spack/share/spack/modules-test/linux-rocky8-x86_64
 
-if [ module-info mode load ] {
-    module load intel-oneapi-compilers/2023.1.0-gcc-12.2.0-module-3vfzgf
-    module load anaconda3/2022.05-x86_64
-    module load netcdf-fortran/4.6.0-openmpi-4.1.4-oneapi-2023.1.0-module-2o2pb3f
-}
-if [ module-info mode remove ] {
-    module unload intel-oneapi-mkl
-    module unload anaconda3
-    module unload netcdf-fortran
-}
-
-setenv ASTRA_EXT /home/gtardini/ASTRA_LIBRARIES_EXT
-set mkllib ::env(MKLROOT)/linux/mkl/lib/intel64
-set comp_lib ::env(INTEL_ONEAPI_MKL_ROOT)/compiler/2023.1.0/linux/compiler/lib/intel64_lin
-set NETCDF_HOME ::env(NETCDF_C_ROOT)
-set NETCDFF_HOME ::env(NETCDF_FORTRAN_ROOT)
+set NETCDF_HOME $::env(NETCDF_C_ROOT)
+set NETCDFF_HOME $::env(NETCDF_FORTRAN_ROOT)
 set NETCDF_LIBDIR $NETCDF_HOME/lib
 set NETCDFF_LIBDIR $NETCDFF_HOME/lib
 
-setenv MKL_LIBDIR $mkllib
-setenv COMP_LIBDIR $comp_lib
+setenv ASTRA_EXT /home/gtardini/ASTRA_LIBRARIES_EXT
+setenv MKL_LIBDIR $::env(MKLROOT)/lib/intel64
+setenv COMP_LIBDIR $::env(INTEL_ONEAPI_MKL_ROOT)/compiler/2023.1.0/linux/compiler/lib/intel64_lin
 setenv NETCDF_LIB "-L${NETCDF_LIBDIR} -lnetcdf -L${NETCDFF_LIBDIR} -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}:${NETCDFF_LIBDIR}"
 setenv NETCDF_INC $NETCDFF_HOME/include
 

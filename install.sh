@@ -30,6 +30,11 @@ then
     module use /home/tardinig/modulefiles
 elif [[ $platform == "mit" ]]
 then
+    module use /orcd/nese/psfc/001/software/spack/2023-07-01-physics-rpp/spack/share/spack/modules-test/linux-rocky8-x86_64
+    module load intel-oneapi-compilers/2023.1.0-gcc-12.2.0-module-3vfzgf
+    module load intel-oneapi-mkl/2023.1.0-intel-oneapi-mpi-2021.9.0-gcc-12.2.0-module-seow5n
+    module load anaconda3/2022.05-x86_64
+    module load netcdf-fortran/4.6.0-intel-2021.9.0-module-2v44tym
     module use /home/gtardini/modulefiles
 fi
 
