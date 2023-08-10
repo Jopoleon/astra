@@ -7,6 +7,8 @@ export AWD=`cd $rootdir/.. && pwd`    # ensure absolute path
 
 cd $AWD
 
+platform=`$AWD/get_platform`
+
 # Get variables from log file
 
 ALOG=$AWD/tmp/astra.nml
@@ -19,6 +21,16 @@ do
         declare "$var=$val"
     fi
 done < $ALOG
+
+if [[ $platform == "mit" ]]
+then
+    NETCDF_LIBDIR=${NETCDF_C_ROOT}/lib
+    NETCDFF_LIBDIR=${NETCDFF_FORTRAN_ROOT}/lib
+    export COMP_LIBDIR=${INTEL_ONEAPI_MKL_ROOT}/compiler/2023.1.0/linux/compiler/lib/intel64_lin
+    export MKL_LIBDIR=${MKLROOT}/lib/intel64
+    export NETCDF_LIB="-L${NETCDF_LIBDIR} -lnetcdf -L${NETCDFF_LIBDIR} -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}:${NETCDFF_LIBDIR}"
+    export NETCDF_INC=${NETCDFF_FORTRAN_ROOT}/include
+fi
 
 ulimit -s 50000
 source $AWD/exe/astra_rc
