@@ -26,14 +26,14 @@ if [ module-info mode remove ] {
 
 setenv ASTRA_EXT /home/gtardini/ASTRA_LIBRARIES_EXT
 set mkllib ::env(MKLROOT)/linux/mkl/lib/intel64
-setenv MKL_LIBDIR mkllib
-set intel_home ::env(INTEL_ONEAPI_MKL_ROOT)
-set comp_lib $intel_home/compiler/2023.1.0/linux/compiler/lib/intel64_lin
-setenv COMP_LIBDIR $comp_lib
+set comp_lib ::env(INTEL_ONEAPI_MKL_ROOT)/compiler/2023.1.0/linux/compiler/lib/intel64_lin
 set NETCDF_HOME ::env(NETCDF_C_ROOT)
 set NETCDFF_HOME ::env(NETCDF_FORTRAN_ROOT)
 set NETCDF_LIBDIR $NETCDF_HOME/lib
-set NETCDFF_LIBDIR NETCDFF_HOME)/lib
+set NETCDFF_LIBDIR $NETCDFF_HOME/lib
+
+setenv MKL_LIBDIR $mkllib
+setenv COMP_LIBDIR $comp_lib
 setenv NETCDF_LIB "-L${NETCDF_LIBDIR} -lnetcdf -L${NETCDFF_LIBDIR} -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}:${NETCDFF_LIBDIR}"
 setenv NETCDF_INC $NETCDFF_HOME/include
 
