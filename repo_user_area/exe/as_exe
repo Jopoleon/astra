@@ -15,9 +15,7 @@ if len(logger.handlers) == 0:
 #logger.setLevel(logging.DEBUG)
 logger.setLevel(logging.INFO)
 
-awd = os.getenv('AWD')
-if awd is None:
-    awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 f_log = '%s/tmp/astra.nml' %awd
 
