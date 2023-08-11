@@ -39,7 +39,6 @@ $(OBJ_DIR)/nbfoa.o \
 $(OBJ_DIR)/NBIBCE.o \
 $(OBJ_DIR)/nbicom.o \
 $(OBJ_DIR)/nbinj.o \
-$(OBJ_DIR)/nbi.o \
 $(OBJ_DIR)/nborbco.o \
 $(OBJ_DIR)/nborbctr.o \
 $(OBJ_DIR)/nbstatus.o \
