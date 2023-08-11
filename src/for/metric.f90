@@ -648,28 +648,6 @@ ALFA = 0.001
 call SMOOTH(ALFA, NA1, A, XTR, N3EQL, BA, XEQ)
 call SMOOTH(ALFA, NA1, B, XTR, N3EQL, BB, XEQ)
 
-if (TIME > 0.2453d16) then
-    write(*, *) NA1, TIME, N3EQL, "     EQPF  EQFF  CU  CUTOR  A  B"
-    write(*, '(3(2F10.5, 2X))') RTOR + SHIFT, ABC, ELONG, TRIABC, & 
-         BTOR*RTOR/(RTOR + SHIFT), IPL
-    do j=1, na1
-        write(*, '(I4, 7F10.5)') j, A(j), B(j), CU(j), EQPF(j), EQFF(j), CU(j)
-    enddo
-    do j=1, N3EQL
-        write(*, '(I4, 2F10.5)') j, BA(j), BB(j)
-    enddo
-    write(*, '(3(2F10.5, 2X))') (EQPF(j), j=NA1-5, NA1)
-    write(*, '(3(2F10.5, 2X))') (EQFF(j), j=NA1-5, NA1)
-    write(*, '(3(2F10.5, 2X))') (CU(j)/IPOL(j), j=NA1-5, NA1)
-    write(*, '(3(2F10.5, 2X))') (CUTOR(j), j=NA1-5, NA1)
-    write(*, '(3(2F10.5, 2X))') (2.*(CU(j)/IPOL(j) - CUTOR(j))/ &
-        (CU(j)/IPOL(j) + CUTOR(j)), j=1, NA1)
-    write(*, '(3(2F10.5, 2X))') ((EQPF(j) - CUTOR(j))* &
-        RHO(j)*G22(J)*(MU(J)/RTOR)**2, j=NA1-5, NA1)
-    write(*, '(3(2F10.5, 2X))') (BA(j), j=1, N3EQL)
-    write(*, '(3(2F10.5, 2X))') (BB(j), j=1, N3EQL)
-endif
-
 call EMEQ( &
 ! Input:
     BA, BB, RTOR + SHIFT, ABC, ELONG, TRIABC, N3EQL, ACEQLB, &  ! relative accuracy
@@ -969,13 +947,13 @@ call GS_SOLVER( &
     jneql, jnteta, jnbnd, NA1, &
     rbnd, zbnd, & 
     XRHO(1: NA1), RTOR, BTOR, ROC, yfp, ypres, &
-    yeqpf, yeqff, &
     VOLUME, NCNB, yccoil, yvcoil, i, IPART, ITREQ, &
     nint(INUME3), TAU, nint(ITFBP), nint(ICIRCQ), nint(IPCTRL), nint(IFBEY), &
     TIME, ychipfp, PSIFB, PSIEXT, PSPLEX, &
 ! Output: 
     yrocnew, yipl, yg11, yg41, yg22, &
-    yg33, G22E(1: jneql), G33E(1: jneql), yvr, yvrs, &
+    yg33, G22E(1: jneql), G33E(1: jneql), &
+    yeqpf, yeqff, yvr, yvrs, &
     yslat, ygradro, yipol, ybmaxt, ybmint, &
     ybdb02, ybdb0, yb0db2, ydroda, yvolum, &
     yametr, yupdwn, yshif, yelon, ytria, &
@@ -1347,7 +1325,7 @@ subroutine RHSEQ
 !---------------------------------------------------------------------
 
 use const_inc, only: INUME3, RTOR, BTOR, HRO, NA, NA1, NB2EQL
-use status_inc, only: EQFF, EQPF, NE, TE, NI, TI, PBLON, PBPER, PFAST, &
+use status_inc, only: EQPF, EQFF, NE, TE, NI, TI, PBLON, PBPER, PFAST, &
     RHO, AMETR, CU, CUTOR, G22, G33, MU, IPOL
 use debugger, only: markloc, debug
 
@@ -1378,8 +1356,8 @@ if (nint(INUME3) >= 0) then     ! if inume3 < 0 , uses eqpf, eqff from model fil
         EQPF(j) = EQFF(j)
         YTH2 = RHO(j)*G22(J)*(MU(J)/RTOR)**2
         YG = (1. + YTH2)*G33(J)
-        EQFF(J)  = (CU(J)/IPOL(J) - EQPF(J))/YG
-        CUTOR(J) = (CU(J)/IPOL(J) + YTH2*EQPF(J))/(1. + YTH2)
+        EQFF(J)  = (CU(J)/IPOL(J) - EQPF(j))/YG
+        CUTOR(J) = (CU(J)/IPOL(J) + YTH2*EQPF(j))/(1. + YTH2)
     enddo
 endif
 

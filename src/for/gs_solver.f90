@@ -9,12 +9,12 @@ subroutine GS_SOLVER( &
     jna1, & ! radial grid for input (dimension of all arrays below)
     rbnd, zbnd, &
     xrho, rtor, btor, &
-    roc, fp, pres_in, eqpf, eqff, volume, &
+    roc, fp, pres_in, volume, &
     ncoils, yccoil, yvcoil, iter_step, iter_part, iter_itreq, &
     inume_3, tau_step, ipsibcf, icircq, ipctrl, ifbey, time_a, &
     psifb_in, psifb, psiext, psplex, &
 ! Output:
-    rocnew, ipl, g11, g41, g22, g33, g22e, g33e, &
+    rocnew, ipl, g11, g41, g22, g33, g22e, g33e, eqpf, eqff, &
     vr, vrs, slat, gradro, ipol, bmaxt, bmint, bdb02, bdb0, b0db2, &
     droda, volum, ametr, updwn, shif, elon, tria, fofb, areat, perim)
 
@@ -24,15 +24,15 @@ use numerical_tools, only: reinterp_back, reinterp_back_quad, qinterp, &
 use parameters_a2equil, only: GP, GP2, GP4, muvac, &
     name_gsefdir, time_fix_eqpff, fix_eqpf_eqff, &
     cheb_degree, spidat_yes, iter_one_only_fbe, advanced_methods, &
-    i3method, diagnostic_gsef, do_adcmp, urelax, urelax2,  &
-    murelax2,  ydiff,  ydiff2,  max_iter,  miter_ext,  interp_routine, &
+    i3method, diagnostic_gsef, do_adcmp, urelax, urelax2, &
+    murelax2, ydiff, ydiff2, max_iter, miter_ext, interp_routine, &
     interp_method_rect, epsf_tol, epss_tol, epsv_tol, epsg_tol, &
     key_no_startz, key_no_refits, equil_now
 use outcmn_inc, only: MACHINE, exp_file
 
 implicit none
 
-integer,  parameter :: nbtabp=1000
+integer, parameter :: nbtabp=1000
 
 integer, intent(in) :: equil_solver, nteta, nr_equ, jna1, nbnd, ncoils, &
     iter_step, iter_part, ipsibcf, icircq, ipctrl, &
@@ -41,16 +41,15 @@ integer, intent(in) :: equil_solver, nteta, nr_equ, jna1, nbnd, ncoils, &
 double precision, intent(in) :: tau_step, psifb_in, rtor, btor, roc, time_a
 double precision, intent(in), dimension(ncoils) :: yccoil, yvcoil
 double precision, intent(in), dimension(nbtabp) :: rbnd, zbnd
-double precision, intent(in), dimension(jna1) :: xrho, pres_in
+double precision, intent(in), dimension(jna1) :: xrho, pres_in, fp
 
 double precision, intent(out) :: rocnew, updwn, psifb, psiext, psplex
 double precision, intent(out), dimension(jna1) :: ametr, vr, vrs, &
    slat, gradro, shif, tria, elon, ipol, bmaxt, bmint, bdb02, &
-   bdb0, b0db2, droda, fofb, areat, perim, volum, &
+   bdb0, b0db2, droda, fofb, areat, perim, volum, eqpf, eqff, &
    g11, g41, g22, g33
 double precision, intent(out), dimension(nr_equ) :: g22e, g33e
 double precision, intent(inout) :: ipl, volume
-double precision, intent(inout), dimension(jna1) :: fp, eqpf, eqff
 
 logical :: file_existence
 integer :: i, j, n_theta, i_call_gsss, k, k1, key_start, keyplc, &
@@ -61,7 +60,7 @@ double precision :: dum1r, R0, Z0, Fvacuum, dxrho_sp, dx, &
 double precision, dimension(nbnd) :: Rb, Zb
 double precision, dimension(jna1) :: dpsi_ad, dp_ad, pres, sxho, vxho
 double precision, dimension(nr_equ) :: volum_in, PSI, PRESS, xrho_sp, &
-    GG2, GG3, eqpfe, eqffe, g11_sp, g41_sp, gradro_sp, &
+    GG2, GG3, g11_sp, g41_sp, gradro_sp, &
     bdb02_sp, ipol_sp, &
     bdb0_sp, b0db2_sp, droda_sp, vr_sp, ametr_sp, &
     volum_sp, tria_sp, &
@@ -166,8 +165,6 @@ enddo
 !go from astra grid to equilibrium radial grid
 call reinterp_back(xrho**2, fp   , jna1, xrho_sp**2, PSI     , nr_equ, interp_routine)
 call reinterp_back(xrho**2, pres , jna1, xrho_sp**2, PRESS   , nr_equ, interp_routine)
-call reinterp_back(xrho   , eqpf , jna1, xrho_sp   , eqpfe   , nr_equ, interp_routine)
-call reinterp_back(xrho   , eqff , jna1, xrho_sp   , eqffe   , nr_equ, interp_routine)
 call reinterp_back(sxho**2, g22  , jna1, xrho_sp**2, GG2     , nr_equ, interp_routine)
 call reinterp_back(xrho**2, g33  , jna1, xrho_sp**2, GG3     , nr_equ, interp_routine)
 call reinterp_back(vxho**2, volum, jna1, xrho_sp**2, volum_in, nr_equ, interp_routine)
@@ -269,7 +266,7 @@ iter_loop: do jiter=1, miter_ext
         zfuncb = 0.5 * ybound**2
 
 !Solve 1st ODE for zfunc:   z'  - 2*As*z = Bm
-! Bm = C/A   ,   As = B/A
+! Bm = C/A, As = B/A
 
         call integrcc(nr_equ, xrho_sp, As, dum2)
         expAA = exp(2.*dum2)  ! e^(A)
@@ -360,21 +357,8 @@ iter_loop: do jiter=1, miter_ext
 ! Skipping g2 preconditioner for now, and for some reasons...
 
     IPL = 1.E-06*1./(GP4*muvac)*dPSIdV(nr_equ)*G2f(nr_equ)
-    dum1 = volum_in
 
     PSIn_grid = sqrt((PSI - PSI(1))/(PSI(nr_equ) - PSI(1)))
-! Compute F according to newfound dPSIdV
-    call integrcc(nr_equ, PSI, ffprimp, dum3)
-    do j=1, nr_equ
-        ipol_sp(j) = (2.**0.5) * ( 0.5*Fvacuum**2 - dum3(nr_equ) + dum3(j) )**0.5
-        ipol_sp(j) = ipol_sp(j)/Fvacuum
-    enddo
-    call integrcc(nr_equ, PSI, eqffe, dum3)
-    do j=1, nr_equ
-        dum2(j) = (2.**0.5)* ( 0.5*Fvacuum**2 - dum3(nr_equ) + dum3(j) )**0.5
-        dum2(j) = dum2(j)/Fvacuum
-    enddo
-
 
     eqpf_sp(1:nr_equ) = pprimp(1:nr_equ)
     eqff_sp(1:nr_equ) = ffprimp(1:nr_equ)
@@ -593,7 +577,7 @@ iter_loop: do jiter=1, miter_ext
 
     G2m = G2p; !on sxrho_sp
     G3m = G3p; !on xrho_sp
-    volume = ((1. - urelax)*volum_sp(nr_equ) + urelax*dum1(nr_equ))
+    volume = ((1. - urelax)*volum_sp(nr_equ) + urelax*volum_in(nr_equ))
     volum_sp = volum_sp/volum_sp(nr_equ)*volume
 
 enddo iter_loop

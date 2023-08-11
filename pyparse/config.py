@@ -1,6 +1,7 @@
-NCVA = 512
-NFML = 500
+NCVA  = 512
+NFML  = 500
 NSBMX = 20
+NRW   = 128
 
 eqn_list = ['NE', 'TE', 'TI', 'CU', 'Equil', 'UPAR', 'F0', 'F1', \
             'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9']

@@ -248,10 +248,13 @@ class EQU_PARSER:
         self.namer   = []
         self.asnamer = []
         self.scaler  = []
-        self.namex = []
-        self.nwindx = []
+        self.namex   = []
+        self.nwindx  = []
 
         for n_sgr, sgr in enumerate(self.radout):
+            if n_sgr == config.NRW:
+                logger.warning('Too many profiles for graphic output, cutting at 128')
+                break
             tmp = sgr.split('\\')
             self.namer.append(tmp[0])
             self.asnamer.append(tmp[1].upper()) # not stored in ininam.tmp!
