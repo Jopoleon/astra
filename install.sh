@@ -22,9 +22,6 @@ then
 elif [[ $platform == "iter" ]]
 then
     module use /home/ITER/tarding/modulefiles
-elif [[ $platform == "cz" ]]
-then
-    module use /compass/home/tardini/modulefiles
 elif [[ $platform == "omega" ]]
 then
     module use /home/tardinig/modulefiles
