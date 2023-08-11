@@ -37,6 +37,5 @@ setenv("NETCDF_INC",  os.getenv("NETCDF_DIR") .. "/include")
 setenv("AFC", "ifort")
 setenv("ACC",  "cc -O")
 setenv("NETCDF_INC",  os.getenv("NETCDF_DIR") .. "/include")
-setenv("XLBR",  "-L/usr/lib64 -lX11 -Wl,--start-group " .. os.getenv("COMP_LIBDIR") .. "/libintlc.so.5 " .. os.getenv("MKL_LIBDIR") .. "/libmkl_intel_lp64.a " .. os.getenv("MKL_LIBDIR") .. "/libmkl_core.a " .. os.getenv("MKL_LIBDIR") .. "/libmkl_sequential.a " .. os.getenv("MKL_LIBDIR") .. "/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group")
 
 set_alias("ae", "exe/as_exe")

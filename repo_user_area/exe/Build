@@ -30,7 +30,6 @@ then
     export MKL_LIBDIR=${MKLROOT}/lib/intel64
     export NETCDF_LIB="-L${NETCDF_LIBDIR} -lnetcdf -L${NETCDFF_LIBDIR} -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}:${NETCDFF_LIBDIR}"
     export NETCDF_INC=${NETCDF_FORTRAN_ROOT}/include
-    export XLBR="-L/usr/lib64 -lX11 -Wl,--start-group $COMP_LIBDIR/libintlc.so.5 $MKL_LIBDIR/libmkl_intel_lp64.a $MKL_LIBDIR/libmkl_core.a $MKL_LIBDIR/libmkl_sequential.a $MKL_LIBDIR/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group"
 fi
 
 ulimit -s 50000
