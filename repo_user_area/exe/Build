@@ -32,7 +32,6 @@ then
     export NETCDF_INC=${NETCDF_FORTRAN_ROOT}/include
 fi
 
-ulimit -s 50000
 source $AWD/exe/astra_rc
 
 export expfile="${exp_file}"
