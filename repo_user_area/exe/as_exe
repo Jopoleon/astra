@@ -3,7 +3,7 @@
 source /etc/profile.d/modules.sh
 
 rootdir=`dirname $0`       # may be relative path
-AWD=`cd $rootdir && pwd`  # ensure absolute path
+AWD=`cd $rootdir/.. && pwd`  # ensure absolute path
 
 platform=`$AWD/get_platform`
 
