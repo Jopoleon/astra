@@ -37,7 +37,7 @@ def parse_alog():
 if __name__ == '__main__':
 
     alog_d = parse_alog()
-    parser = argparse.ArgumentParser(description='astra.nml writer')
+    parser = argparse.ArgumentParser(description='Write settings & run ASTRA')
     parser.add_argument('-m', '--equ', help='Model file', required=False, default=alog_d['equ_file'])
     parser.add_argument('-v', '--exp', help='Exp file', required=False, default=alog_d['exp_file'])
     parser.add_argument('-s', '--tbeg', type=float, help='Initial time', required=False, default=alog_d['tbeg_nml'])

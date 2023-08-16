@@ -172,7 +172,7 @@ F3B=NIZ3(AFX(1.0));  ! boundary condition
 !------------------ write profile output --------------------!
 
 ! NetCDF output
-!A2CDF>:TAU:::;
+A2CDF>:.05:::;
 
 !----------------- plotting radial profiles ------------------!
 
