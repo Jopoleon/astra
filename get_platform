@@ -6,7 +6,7 @@ node=`uname -n`
 
 if [[ $AWD == "/afs/ipp"* ]]
 then
-   if [[ $node == "lxts"* ]]
+   if [[ $node == "lx"* ]]
    then
       platform=lx
    else
