@@ -74,13 +74,13 @@ then
     cat << EOT > $bat
 #!/bin/sh
 #SBATCH -J astra_${USER}
-#SBATCH --partition=p.tok.openmp
-#SBATCH --qos=p.tok.openmp.48h
+#SBATCH --partition=s.tok
+#SBATCH --qos=s.tok.short
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu 1GB
-#SBATCH --time=12:00:00
+#SBATCH --time=2:00:00
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user ${USER}@ipp.mpg.de
 export OMP_NUM_THREADS=\${SLURM_CPUS_PER_TASK:-1}

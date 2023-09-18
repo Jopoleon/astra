@@ -200,8 +200,8 @@
    ti_decayl = 2.
    nfour_c = 3
    nimp_touse = 2
-   elements_touse(1) = 'H_', 'N_'
-   aweight(1) = 1., 14.
+   elements_touse(1) = 'B_', 'W_'
+   aweight(1) = 10., 184.
    eneutr(1) = 0.05, 0.1
    ridecay(1) = 2., 2.
    irecycl(1) = 0, 0
