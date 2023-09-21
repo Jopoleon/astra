@@ -7,10 +7,7 @@ AWD=`cd $rootdir/.. && pwd`  # ensure absolute path
 
 platform=`$AWD/get_platform`
 
-if [[ $platform == "ldaug" ]]
-then
-    module load enable-aug-dv-modules
-elif [[ $platform == "iter" ]]
+if [[ $platform == "iter" ]]
 then
     module use /home/ITER/tarding/modulefiles
 elif [[ $platform == "omega" ]]

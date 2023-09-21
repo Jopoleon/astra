@@ -83,7 +83,7 @@ def nc_concat(expequ):
     f.createDimension('RHO_SURF', n_eq)
     f.createDimension('THETA', n_th)
 
-    dtyp = np.float64
+    dtyp = '>f8' #np.float64
 
     rho = f.createVariable('XRHO', dtyp, ('XRHO', ))
     rho.data = cv['XRHO'].data.astype(dtyp)
