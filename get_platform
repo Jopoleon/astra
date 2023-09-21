@@ -40,6 +40,7 @@ elif [[ $node == "CX-LD-AUG"* ]]
 then
    platform=ldaug
 elif [[ $node == "iris"* ]]
+then
    platform=iris
 fi
 
