@@ -3,6 +3,7 @@
 rootdir=`dirname $0`       # may be relative path
 AWD=`cd $rootdir && pwd`  # ensure absolute path
 
+chmod 744 $AWD/get_platform
 platform=`$AWD/get_platform`
 
 cd $AWD
@@ -12,8 +13,11 @@ do
 done
 
 cp $AWD/repo_user_area/exp/nml/aug34954_${platform} $AWD/exp/nml/aug34954
-chmod 744 $AWD/get_platform
-chmod 744 $AWD/exe/*
-chmod 744 $AWD/pyparse/*.py
+
+chmod 744 $AWD/exe/Build
+chmod 744 $AWD/exe/as_exe
+chmod 744 $AWD/exe/nc_concat.py
+chmod 744 $AWD/exe/wr_nml
+chmod 744 $AWD/pyparse/parser_main.py
 
 $AWD/exe/as_exe -m fluxes -v aug34954 -s 4 -e 5
