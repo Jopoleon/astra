@@ -13,6 +13,9 @@ then
 elif [[ $platform == "omega" ]]
 then
     module use /home/tardinig/modulefiles
+elif [[ $platform == "iris" ]]
+then
+    module use /home/tardinig/modulefiles
 elif [[ $platform == "mit" ]]
 then
     module use /orcd/nese/psfc/001/software/spack/2023-07-01-physics-rpp/spack/share/spack/modules-test/linux-rocky8-x86_64

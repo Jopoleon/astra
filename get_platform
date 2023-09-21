@@ -39,8 +39,8 @@ then
 elif [[ $node == "CX-LD-AUG"* ]]
 then
    platform=ldaug
-else
-   platform=ga
+elif [[ $node == "iris"* ]]
+   platform=iris
 fi
 
 echo $platform
