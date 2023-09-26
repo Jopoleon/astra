@@ -443,16 +443,18 @@ call grid_write_strahl(strahl_dir, nfour_c, RTOR+SHIF(1), &
 
 ! Main STRAHL call
 
-!cmd_cmd = '/afs/ipp/home/r/rld/strahl/amd64_sles11/strahl a q v' ! old executable
-cmd_cmd = '/afs/ipp/home/r/rld/STRAHLG/amd64_sles15/strahl a q' ! new executable, add v to options for verbose version
+!cmd_cmd = '/shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT/strahl/sep23/bin/strahl a q'
+cmd_cmd = '/tokp/work/software/TOK_2023/software/ASTRA_LIBRARIES_EXT/strahl/sep23/bin/strahl a q'
+
 write(*, '(A)') 'Executing', cmd_cmd 
 call system(cmd_cmd)      ! run strahl
 
 cmd_cmd = 'rm -f results.txt'
 call system(cmd_cmd)    ! rm old results, if existing
 
-!cmd_cmd = '/afs/ipp/home/r/rld/strahl/amd64_sles11/result_to_astra '//trim(elements_touse(1))//' > ' // TRIM(strahl_dir) // 'results.txt'
-cmd_cmd = '/afs/ipp/home/r/rld/STRAHLG/amd64_sles15/result_to_astra '//trim(elements_touse(1))//' > ' // TRIM(strahl_dir) // 'results.txt'
+!cmd_cmd = '/shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT/strahl/sep23/bin/result_to_astra '//trim(elements_touse(1))//' > ' // TRIM(strahl_dir) // 'results.txt'
+cmd_cmd = '/tokp/work/software/TOK_2023/software/ASTRA_LIBRARIES_EXT/strahl/sep23/bin/result_to_astra '//trim(elements_touse(1))//' > ' // TRIM(strahl_dir) // 'results.txt'
+
 write(*, '(A)') 'Executing', cmd_cmd 
 call system(cmd_cmd)   ! produce new result file
 
