@@ -383,3 +383,41 @@ enddo var_loop
 
 return
 end subroutine SETARX
+
+!---------------------------------------------------------------------
+subroutine SORTAB(A, B, nlen)
+! Re-arranges real arrays A(1:N) and B(1:N)
+
+implicit none
+
+integer, intent(in) :: nlen
+double precision, intent(inout), dimension(nlen) :: A, B
+
+integer :: j, jj, jl, jr
+double precision :: YA, YB
+
+if (nlen <= 1) return
+
+do jl=1, nlen
+    jr = jl
+    YA = A(jl)
+    YB = B(jl)
+    do jj=jl+1, nlen
+        if (A(jj) < YA) then
+            YA = A(jj)
+            YB = B(jj)
+            jr = jj
+        endif
+    enddo
+    if (jr /= jl) then
+        do j=jr-1, jl, -1
+            A(j+1) = A(j)
+            B(j+1) = B(j)
+        enddo
+        A(jl) = YA
+        B(jl) = YB
+    endif
+enddo
+
+return
+end subroutine SORTAB

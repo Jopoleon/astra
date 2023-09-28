@@ -69,7 +69,7 @@ subroutine RUNEQ_EF(GN, HN, GO, HO, YO, N, W, V, M, G11, A, B, R, S, P, &
 !  bctype = 2 -> Qbound
 !  bctype = 3 -> mixed
 
-use numerical_tools, only: extrap, deriv
+use numerical_tools, only: extrap, deriv, grid2grid
 
 implicit none
 
@@ -742,7 +742,7 @@ subroutine RUNEQTIMP_EF(GN, H1N, H2N, GO, H1O, H2O, &
 !  bctype = 1 -> ybound
 !  bctype = 2 -> Qbound
 
-use numerical_tools, only: deriv, extrap
+use numerical_tools, only: deriv, extrap, grid2grid
 
 implicit none
 

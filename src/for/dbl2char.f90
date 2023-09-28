@@ -216,6 +216,29 @@ module dbl2char
    end function fmx_5
 
 !-------------------------------------------
+    double precision function ROUNDN(R1, N)
+
+    integer, intent(in) :: N
+    double precision, intent(in) :: R1
+   
+    integer :: J
+    double precision :: R
+   
+    if (R >= 1.e13 .or. R < 1.e-9) then
+        ROUNDN = R1
+    else
+        R = R1*1.e9
+        do J=1, 25
+            if (R < 10.) EXIT
+            R = R/10.
+        enddo
+        ROUNDN = (R + 50./10.**N)*10.**(J - 10)
+    endif
+
+    return
+    end function ROUNDN
+   
+!-------------------------------------------
    function fmt456(R2, N)
 
    use debugger, only: astra_stop
@@ -227,8 +250,7 @@ module dbl2char
    character(len=6) :: fmt456
 
    integer :: J, JM
-   double precision :: R, ROUNDN
-   external ROUNDN
+   double precision :: R
    character(len=25) :: T ! T*25 in case of crash
 
    if (R2 < 0) then

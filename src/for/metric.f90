@@ -1645,7 +1645,7 @@ use const_inc, only: ADCMPF, NA, NA1, TAU, RBDOT, NA1E, NA1I, NA1N, &
     LEQ, HRO, ROC, PSIEXT, PSPLEX
 use status_inc
 use debugger, only: markloc
-use numerical_tools, only: deriv
+use numerical_tools, only: deriv, grid2grid
 
 implicit none
 

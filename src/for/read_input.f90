@@ -1066,3 +1066,232 @@ endif
 
 end subroutine set_timescale
 
+!---------------------------------------------------------------------
+subroutine READF6(LINE, F6, IERR)
+! Read a number in LINE to 6-positinal field 
+
+implicit none
+
+character(len=6), intent(in) :: LINE
+integer, intent(out) :: IERR
+double precision, intent(out) :: F6
+
+integer :: N, JE, JP, JM, J
+character(len=6) :: STRI
+
+IERR = 0
+JE = 0
+JP = 0
+JM = 0
+do J=1, 6
+    if(LINE(J: J) == '-') JM = J
+    if(LINE(J: J) == 'e' .or. LINE(J: J) == 'E') JE = J
+    if(LINE(J: J) == '.') JP = J
+enddo
+
+if(JP > 0) then
+    READ(LINE, '(F6.3)', ERR=2) F6
+    return
+endif
+
+if(JE <= 0) then
+    if(JM <= 1) then
+        READ(LINE, '(I6)', ERR=2) N
+        F6 = N
+        return
+    endif
+    STRI = LINE(1: JM-1)
+    READ(STRI, '(I6)', ERR=2) N
+    F6 = N
+    STRI = LINE(JM: 6)
+    READ(STRI, '(I6)', ERR=2) N
+    F6 = F6 * 10.**N
+    return
+else
+    STRI = LINE(1: JE-1)
+    READ(STRI, '(I6)', ERR=2) N
+    F6 = N
+    STRI = LINE(JE+1: 6)
+    READ(STRI, '(I6)', ERR=2) N
+    F6 = F6 * 10.**N
+endif
+
+2 continue
+
+IERR = 1
+write(*, *) '>>> READF6: found ERROR in "', LINE, '"'
+
+return
+end subroutine READF6
+
+!---------------------------------------------------------------------
+character(len=6) function VARNAM(str_in, ierr)
+!---------------------------------------------------------------------
+! If 1st character is tab or space, a blank string is returned
+! If tabs are present anywhere else, they are replaced by blanks 
+!    and ierr is set to 1
+! Eventual trailing 'X' is removed
+! Otherwise, VARNAM is returned.
+
+use outcmn_inc, only: esc_ch, tab_ch
+
+implicit none
+
+integer, intent(out) :: ierr
+character(len=*), intent(in) :: str_in
+
+integer :: j, nlen
+character(len=1) :: symb
+
+ierr = 0
+VARNAM = str_in(1:6)
+nlen = LEN_TRIM(VARNAM)
+
+symb = str_in(1: 1)
+if (symb == ' ' .or. symb == tab_ch) then
+!   Ignore names starting with spaces and tabs
+    VARNAM = '      '
+    return
+endif
+
+do j=2, 6
+    symb = str_in(j: j)
+    if(symb == tab_ch .or. symb == esc_ch) then
+        ierr = 1
+        VARNAM(j: j) = ' '
+    endif
+enddo
+
+if (VARNAM(nlen: nlen) == 'X') VARNAM(nlen: nlen) = ' '
+
+return
+end function VARNAM
+
+!---------------------------------------------------------------------
+character(len=6) function ARRNAM(str_in)
+!---------------------------------------------------------------------
+! The subroutine analizes a character*6 "string"
+! If the 1st position is tab or space the string 6*' ' is returned
+! If tabs are encountered on the end of the "string", 
+!  they are removed the "string" is appended with spaces
+! Trailing "X" is added when not present in string*6 
+! Finally ARRNAM in the Astra standard is created, 
+!-----------------------------------------------------------------------
+
+use char_manip, only: clean_string, to_upper
+
+implicit none
+
+character(len=*), intent(in) :: str_in
+
+integer :: nlen
+character(len=len(str_in)) :: strtmp
+
+strtmp = to_upper(str_in)
+strtmp = clean_string(strtmp)
+!call clean_string(strtmp, strtmp)
+nlen = LEN_TRIM(strtmp)
+
+ARRNAM = strtmp(1: 6)
+! Append "X" if absent
+
+if (nlen < 6 .and. strtmp(nlen: nlen) /= 'X') then
+    ARRNAM(nlen+1: nlen+1) = 'X'
+endif
+
+return
+end function ARRNAM
+
+!---------------------------------------------------------------------
+subroutine CHECKU(INTYPE, ABC, AB, XBDRY, YX, jrad, jbdry, STRING, FILENA)
+!---------------------------------------------------------------------
+! Consistency check for grid array YX(1:jrad) and plasma boundary AB/ABC
+! Input:
+! ABC - 
+! AB - 
+! YX(1:jrad) - array for a "radial" coordinate 
+! jrad - YX array dimensionality
+! STRING - U-file "Independent variable" description
+! FILENA - U-file name
+! Analyse array YX and returns proper values for XBDRY and jbdry
+! Output:
+! INTYPE - 
+! XBDRY = ABC or AB depending on INTYPE selected
+! jbdry - is determined from {YX(jbdry) <= ABC} or {YX(jbdry) <= AB}
+!    for {INTYPE = 10} or {INTYPE = 11}, respectively
+!  jbdry = jrad if  if YX(jrad) < ABC <= AB
+!----------------------------------------------------------------------|
+
+use char_manip, only: to_upper, clean_string
+
+implicit none
+
+integer, intent(in)  ::  jrad
+integer, intent(out) :: jbdry, INTYPE
+real*4 , intent(in)  :: YX(jrad)
+double precision, intent(in)  :: ABC, AB
+double precision, intent(out) :: XBDRY
+character(len=*), intent(in)   :: FILENA
+character(len=*), intent(inout) :: STRING
+
+integer :: j
+character(len=12) :: STRAD
+
+jbdry = 0
+XBDRY = YX(jrad)
+STRAD = STRING(21:31)
+STRING = to_upper(clean_string(STRING))
+if (STRING(1:8) == 'MINORRAD') then
+    INTYPE = 10
+elseif (STRING(1:8) == 'MAJORRAD') then
+    INTYPE = 19
+elseif (STRING(1:3) == 'RHO') then
+    INTYPE = 12
+elseif (STRING(1:12) == 'POLOIDALFLUX') then
+    INTYPE = 13
+else
+    write(*, *) '>>> U-file "', TRIM(FILENA), '"', &
+         '    Unrecognized "radial" variable. Input ignored.' &
+        // '    Allowed options are:' &
+        // '  Minor Radius        m' &
+        // '  Major Radius        m' &
+        // '  Rho Toroidal, normalized' &
+        // '  Poloidal Flux, normalized'
+    INTYPE = -1
+    return
+endif
+STRAD = to_upper(clean_string(STRAD))
+if ((INTYPE == 10 .or. INTYPE == 19) .and. STRAD(1: 1) /= 'M') then
+    write(*, *) ">>> Warning: Inconsistency in the input data"
+    write(*, *) '>>> U-file "', TRIM(FILENA), '":     radial grid is expected to be given in "m"'
+endif
+
+if (INTYPE == 10 .and. abs(XBDRY - AB) > 0.3*AB/jrad)  then
+    if (XBDRY < AB) then
+        jbdry = jrad
+    else
+        do j=jrad, 1, -1
+           if (YX(j) > AB) jbdry = j
+        enddo
+        XBDRY = AB
+    endif
+elseif (INTYPE == 11 .and. abs(XBDRY - ABC) > 0.3*ABC/jrad) then
+    if (XBDRY < ABC) then
+        jbdry = jrad
+    else
+        do j=jrad, 1, -1
+            if (YX(j) > ABC) jbdry = j
+        enddo
+        XBDRY = ABC
+    endif
+endif
+if (INTYPE == 18) then
+    write(*, *)'>>> U-file "', TRIM(FILENA), '"', &
+        " Don't know a distance to the major axis.           Set to RTOR"
+endif
+if (jbdry == 0) then
+    jbdry = jrad
+endif
+
+return
+end subroutine CHECKU
