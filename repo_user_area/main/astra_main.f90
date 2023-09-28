@@ -54,10 +54,7 @@ OPEN(161, FILE=TRIM(file_in), delim='apostrophe')
 READ(161, nml=astra_log, iostat=ios)
 CLOSE(161)
 
-if (TASK(1: 3) == 'BGD') then
-    STRI = 'BGD'//char(0)
-    call initvm(XWX, XWY, XWW, XWH, COLTAB, STRI(1: 3), 3)
-else
+if (TASK(1: 3) /= 'BGD') then
     call get_runid()
 ! Resize
     frame_wid = resize*frame_wid
