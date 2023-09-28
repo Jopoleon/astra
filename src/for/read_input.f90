@@ -38,11 +38,18 @@ subroutine read_input
 use parameter_inc, only: NTVAR
 use const_inc
 use status_inc
-use outcmn_inc
+use outcmn_inc, only: AWD, exp_file, equ_file, rev_file, TASK, machine, CPT, &
+    TASKID, VERSION, AVERS, ARLEAS, AEDIT, COLTAB, IFDFVX, IFDFAX, KOGDA, KTO, &
+    PRNAME, CFNAME, SRNAME, EXARNM, NBFILE, MSFILE, wall_gc_file, &
+    NPRNAM, NCFNAM, NSRNAM, NEXNAM, FILTER, &
+    NGR, NBNT, NCNBT, NBDMAX, NBDTMAX, NRDX, NTARR, NGRIDX, NTYPEX, NRW, &
+    CCOILX, VCOILX, BNDR, BNDZ, BNDTIM, DATARR, TIMEX, GDEX, GDEY, GRAP, TIM7
+    
 use expdat
 use char_manip, only: to_upper, str_in_list, clean_string
 use debugger, only: markloc, debug, astra_stop, flightsim
 use parse_utils
+use timeoutput_inc, only: NTIMES, TTOUT
 
 use numerical_tools, only: EXTRAP, INTEGR
 
@@ -52,13 +59,13 @@ integer, parameter :: MPEX=101, MSIGEX=1, MTEX=50, MSIG=1, MEXT=MPEX*MTEX
 
 logical :: exilog
 
-integer :: IFKEY, jarr, INTYPE, jtype, IM, SYSTEM, jbdry, ntim, ntim1
+integer :: jarr, INTYPE, jtype, SYSTEM, jbdry, ntim, ntim1
 integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
 integer :: KAB, KABC, KAWALL, KRTOR, KELONM, KTRICH
-integer :: XSC0, XSC, n_var, n_color, n_words
-integer :: nt_u, nx_u, ios, ndim_u, jvar, jkey, jrt, jt, jthe
+integer :: n_var, n_color, n_words
+integer :: nt_u, nx_u, ios, ndim_u, jvar, jrt, jt, jthe
 
-double precision :: CHORDN, LINEAV, resize
+double precision :: resize
 double precision :: tbeg_nml, tend_nml, tpause_nml
 double precision, allocatable :: t_u(:), x_u(:), var_u(:), bnd_rz(:)
 double precision :: XBDRY, YB, YB1, YXB, YXB1, ALFA, &
@@ -66,7 +73,7 @@ double precision :: XBDRY, YB, YB1, YXB, YXB1, ALFA, &
 character(len=6) :: VNAM, VNAMO, VNAMU, VNAMX, VTIM, VDAT, VERR, VARNAM, ARRNAM, keyword
 character(len=30) :: rholbl
 character(len=132) :: strarray(10), STRI, lin_upper, dir_path, fname, &
-    err_msg, err_format, err_msg_exp, file_in, uname, uvar, win_title
+    err_msg, err_format, err_msg_exp, file_in, uname, uvar
 
 namelist / astra_log / AWD, exp_file, equ_file, rev_file, TASK, machine, &
 debug, tbeg_nml, tend_nml, tpause_nml, flightsim, resize
@@ -85,7 +92,6 @@ TASKID = STRI(1: j)
 !----------------------------------------------------------------------|
 ! Initialisation with default values
 
-resize = 1.
 tbeg_nml   = -1.
 tend_nml   = -1.
 tpause_nml = -1.
@@ -153,57 +159,22 @@ TIME = TSTART  ! Here TSTART=0
 call set_vars('main/profiles_x.txt', EXARNM, NEXNAM)
 
 !----------------------------------------------------------------------|
-! Read file 'tmp/astra.nml'
+! Read file 'tmp/<exp><equ>.nml'
 !----------------------------------------------------------------------|
 
 call GETENV('expfile', exp_file)
 call GETENV('equfile', equ_file)
+
 file_in = 'tmp/' // TRIM(exp_file) // TRIM(equ_file) // '.nml'
 
 OPEN(161, FILE=TRIM(file_in), delim='apostrophe')
 READ(161, nml=astra_log, iostat=ios)
 CLOSE(161)
 
-! Resize ASTRA frame
-
-frame_wid = resize*frame_wid
-frame_hei = resize*frame_hei
-XWW = resize*XWW
-XWH = resize*XWH
-XWX = resize*XWX
-XWY = resize*XWY
-DXLET = resize*DXLET
-DYLET = resize*DYLET
-LRJJ = resize*LRJJ
-
 call path_split(rev_file, dir_path, fname, jpos)
 if (LEN_TRIM(fname) == 0) fname = 'profil.dat'
 ! Disallowing user-defined subdirs for Review file
 rev_file = '.res/' // TRIM(fname)
-
-call get_runid()
-! initvm: initialises graphic window
-if (TASK(1: 3) == 'BGD') then
-    STRI = 'BGD'//char(0)
-    call initvm(XWX, XWY, XWW, XWH, COLTAB, STRI(1: 3), 3)
-else
-    jj = max(0, (15 + NTOUT - 64)/16)
-    XWH = XWH + 2*jj*(DYLET + 2)
-    win_title = 'Per aspera ad ASTRA'
-    call initvm(XWX, XWY, XWW, XWH, COLTAB, TRIM(win_title), LEN_TRIM(win_title))
-
-    IM = 1
-    NST = 0
-    MOD10 = 1
-    call set_frame(IM, XSC0, XSC)
-    call set_plot(IM, XSC0, XSC)
-
-    j = XOUT + .49
-
-    call ASRUMN(j) ! Task menu
-    call textbf(0, XWH-104, RUNID, 80) ! Task ID
-endif
-
 
 !----------------------------------------------------------------------|
 ! Read file equ/log/<model>, checking existence of obsolete equ/<model>.log 
@@ -887,7 +858,6 @@ if (NBNT > 0) then
     deallocate(bnd_rz)
 endif
 
-
 !assign variables here for initialization:
 
 VOLUME = GP2*GP*RTOR*AB*AB*ELONG
@@ -975,15 +945,6 @@ MRHO  = AMAIN*NE
 UPS0  = MRHO*RTOR 
 UPS0O = UPS0
 
-
-
-
-
-
-
-
-
-
 do j=1, NEXNAM
     if (ARXUSE(j) /= 0) then
         if (IFDFAX(ARXUSE(j)) < 0) then
@@ -1011,18 +972,14 @@ DELOUT(20) = XFLAG
 TIMEQL = TIME - DTEQL - 1.d-7
 
 ! Define TAU, TAUMIN, TAUMAX, TSCALE, DROUT, DTOUT, DPOUT
-jkey = ifkey(258)
+TTOUT(1) = -1.d10
+call set_timescale(NTIMES)  ! Set time scale (mode 6)
 
 GRAP(1:NRW) = AB
 
 TIM7(1) = TINIT
 if (TIME > TINIT + 1.025*abs(TSCALE)) TINIT = TSTART
 TIM7(3) = abs(TSCALE)/8.
-
-if (TASK(1:3) /= 'BGD') then
-    CHORDN = LINEAV()
-    call UPSTR(CHORDN, 1./MU(NA))
-endif
 
 call inquire_fname('cnf', TRIM(exp_file), TRIM(machine), wall_gc_file)
 call inquire_fname('nbi', TRIM(exp_file), TRIM(machine), NBFILE)
@@ -1034,3 +991,78 @@ return
 call astra_stop(err_format)
 
 end subroutine read_input
+
+!---------------------------------------------------------------------
+subroutine set_timescale(n_times)
+! Define time scales (former SETTSC)
+
+use outcmn_inc, only: equ_file
+use const_inc, only: TAUPRP, TAUMIN, TAUMAX, TAU, TSCALE, &
+        VOLUME, DTOUT, DROUT, DPOUT
+
+implicit none
+
+integer, intent(in) :: n_times
+
+logical :: EXILOG
+integer :: j
+double precision, dimension(8) :: YS
+
+inquire(file='equ/log/' // TRIM(equ_file), exist=EXILOG)
+
+if ( EXILOG ) then ! Always the case (equ/log exists)
+    TAUPRP = TAUMIN
+else
+    TAUMAX = 0.01*VOLUME
+    YS(1) = 0.00000010
+    YS(2) = 0.00000015
+    YS(3) = 0.00000020
+    YS(4) = 0.00000025
+    YS(5) = 0.00000030
+    YS(6) = 0.00000040
+    YS(7) = 0.00000050
+    YS(8) = 0.00000075
+    do while (1.1*TAUMAX > YS(8))
+        YS(1: 8) = 10.*YS(1: 8)
+    enddo
+    do J=1, 8
+        if (1.1*TAUMAX <= YS(J)) EXIT
+    enddo
+
+    TSCALE = 0.1*n_times*YS(J)
+
+! 115=(right_label_position)/IDT=575/5
+    do while (TSCALE*115./n_times > YS(8))
+        YS(1: 8) = 10.*YS(1: 8)
+    enddo
+    do J = 1, 8
+        if (TSCALE*115./n_times <= YS(J)) EXIT
+    enddo
+
+    TSCALE = YS(J)
+    TAUMAX = 0.01*VOLUME
+    YS(1) = 0.00000010
+    YS(2) = 0.00000015
+    YS(3) = 0.00000020
+    YS(4) = 0.00000025
+    YS(5) = 0.00000050
+    YS(6) = 0.00000075
+
+    do while (1.1*TAUMAX > YS(6))
+        YS(1: 6) = 10.*YS(1: 6)
+    enddo
+    do J=1, 6
+        if (1.1*TAUMAX <= YS(J)) EXIT
+    enddo
+
+    TAUMAX = YS(J)
+    TAUMIN = 0.001*TAUMAX
+    TAU    = TAUMIN
+    TAUPRP = TAUMIN
+    DTOUT  = 0.01*TAUMAX
+    DROUT  = 0.02*TAUMAX
+    DPOUT  = 0.2*TAUMAX
+endif
+
+end subroutine set_timescale
+

@@ -127,11 +127,6 @@ if (IFKL == -1) then
    TASK(1:3) = 'DSP'
 ! git   IFKL = 0
 endif
-if (IFKL == 258) then ! Call from INIT
-   TTOUT(1) = -1.d10
-   call set_timescale(NTRUN)  ! Set time scale (mode 6)
-   return
-endif
 
 if (IFKL == 259) then ! Call once after STEPIN is done
    if (TASK(1:3) /= 'BGD') then
@@ -1059,84 +1054,6 @@ endif
 
 return
 end subroutine re_draw
-
-!======================================================================|
-subroutine set_timescale(JTIMS)
-!----------------------------------------------------------------------|
-! Define time scales (former piece of READAT
-!----------------------------------------------------------------------|
-
-use outcmn_inc, only: equ_file
-use const_inc, only: TAUPRP, TAUMIN, TAUMAX, TAU, TSCALE, &
-        VOLUME, DTOUT, DROUT, DPOUT
-
-implicit none
-
-integer, intent(in) :: JTIMS
-
-logical :: EXILOG
-integer :: j
-double precision :: YS(10)
-! Read file equ/MODEL.log
-
-inquire(file='equ/log/' // TRIM(equ_file), exist=EXILOG)
-
-if ( EXILOG ) then
-   TAUPRP = TAUMIN
-else
-   TAUMAX = .01*VOLUME
-   YS(1) = 0.00000010
-   YS(2) = 0.00000015
-   YS(3) = 0.00000020
-   YS(4) = 0.00000025
-   YS(5) = 0.00000030
-   YS(6) = 0.00000040
-   YS(7) = 0.00000050
-   YS(8) = 0.00000075
-   do while (1.1*TAUMAX > YS(8))
-      YS(1: 8) = 10.*YS(1: 8)
-   enddo
-   do J=1, 8
-      if (1.1*TAUMAX <= YS(J)) EXIT
-   enddo
-
-   TSCALE = JTIMS*YS(J)*.1
-   TAUMAX = YS(J)
-
-! 115=(right_label_position)/IDT=575/5
-   do while (TSCALE*115/JTIMS > YS(8))
-      YS(1: 8) = 10.*YS(1: 8)
-   enddo
-   do J = 1, 8
-      if (TSCALE*115/JTIMS <= YS(J)) EXIT
-   enddo
-
-   TSCALE = YS(J)
-   TAUMAX = .01*VOLUME
-   YS(1) = 0.00000010
-   YS(2) = 0.00000015
-   YS(3) = 0.00000020
-   YS(4) = 0.00000025
-   YS(5) = 0.00000050
-   YS(6) = 0.00000075
-
-   do while (1.1*TAUMAX > YS(6))
-      YS(1: 6) = 10.*YS(1: 6)
-   enddo
-   do J=1, 6
-      if (1.1*TAUMAX <= YS(J)) EXIT
-   enddo
-
-   TAUMAX = YS(J)
-   TAUMIN = .001*TAUMAX
-   TAU    = TAUMIN
-   TAUPRP = TAUMIN
-   DTOUT  = .01*TAUMAX
-   DROUT  = .02*TAUMAX
-   DPOUT  = .2*TAUMAX
-endif
-
-end subroutine set_timescale
 
 !======================================================================|
 subroutine SMODE5(MARK, plot_arr, PRMARK, NAMEP, ITIMES)
