@@ -428,6 +428,22 @@ contains
     end subroutine qinterp
 
 !---------------------------------------------------------------------
+    double precision function QUADIN(n_in, x_in, y_in, x_out)
+! 1-point quadratic interpolation
+
+    integer, intent(in) :: n_in
+    double precision, intent(in) :: x_out
+    double precision, intent(in), dimension(n_in) :: x_in, y_in
+    double precision, dimension(1) :: qint1
+
+    call qinterp(x_in, y_in, n_in, (/x_out/), qint1, 1)
+
+    QUADIN = qint1(1)
+
+    return
+    end function QUADIN
+
+!---------------------------------------------------------------------
     subroutine integrcc(nx, x, y, sy)
 
     integer, intent(in) :: nx

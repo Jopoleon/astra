@@ -378,6 +378,7 @@ use outcmn_inc, only: XWH, XWW, MOD10, IY0, IYM, scale_bnd, canv_hei, &
 use status_inc, only: AMETR, SHIF, ELON, TRIA, FP, RHO
 use const_inc, only: TIME, TINIT, TSCALE, NA, NA1, NAB, XOUT, AB, ABC, ROC, HRO
 use dbl2char, only: fmt5
+use numerical_tools, only: QUADIN
 
 implicit none
 
@@ -387,7 +388,7 @@ double precision, intent(in) :: TTOUT(ITIMES), TOUT(ITIMES, NRW)
 integer :: IM, JX, JY, JLR, j, j1, JC, JL, IX0, IXM, MODEX, &
     GETIME, JW, JN0, JN2
 double precision :: DX, DY, YX, YX1, YY, YY1, YA, YA1, YD, YE, YT, &
-    YRHO, YFP, YFPC, RZ2A, QUADIN
+    YRHO, YFP, YFPC, RZ2A
 character(len=80) :: STRI
 
 JN0 = 0
@@ -426,9 +427,9 @@ if (MOD10 == 8) then
    YX = 5.*YX1*scale_bnd
    YY = (YY1 - 0.5)*scale_bnd*canv_hei/IDT/IDX
    YA1= RZ2A(YX, YY, NAB)
-   YD = QUADIN(NAB, AMETR, SHIF, YA1, YY1, j1)
-   YE = QUADIN(NAB, AMETR, ELON, YA1, YY1, j1)
-   YT = QUADIN(NAB, AMETR, TRIA, YA1, YY1, j1)
+   YD = QUADIN(NAB, AMETR, SHIF, YA1)
+   YE = QUADIN(NAB, AMETR, ELON, YA1)
+   YT = QUADIN(NAB, AMETR, TRIA, YA1)
    STRI( 7: 12) = "(r, z)="
    STRI(32: 37) = "(a, S)="
    STRI(38: 50) = '(     ,     )'
@@ -461,20 +462,20 @@ if (MOD10 == 4) MODEX = 0
 SELECT CASE(modex)
 CASE(0)
    YA = YX*AB
-   YRHO = QUADIN(NA1, AMETR, RHO, YA, YD, j1)
-   YFP  = QUADIN(NA1, AMETR, FP, YA, YD, j1)
+   YRHO = QUADIN(NA1, AMETR, RHO, YA)
+   YFP  = QUADIN(NA1, AMETR, FP , YA)
 CASE(1)
    YA = YX*ABC
-   YRHO = QUADIN(NA1, AMETR, RHO, YA, YD, j1)
-   YFP  = QUADIN(NA1, AMETR, FP, YA, YD, j1)
+   YRHO = QUADIN(NA1, AMETR, RHO, YA)
+   YFP  = QUADIN(NA1, AMETR, FP , YA)
 CASE(2)
    YRHO = YX*ROC
-   YA   = QUADIN(NA1, RHO, AMETR, YRHO, YD, j1)
-   YFP  = QUADIN(NA1, RHO, FP,   YRHO, YD, j1)
+   YA   = QUADIN(NA1, RHO, AMETR, YRHO)
+   YFP  = QUADIN(NA1, RHO, FP   , YRHO)
 CASE(3)
-   YFP  = YFPC+(FP(NA1)-YFPC)*YX
-   YA   = QUADIN(NA1, FP, AMETR, YFP, YD, j1)
-   YRHO = QUADIN(NA1, FP, RHO  , YFP, YD, j1)
+   YFP  = YFPC + (FP(NA1) - YFPC)*YX
+   YA   = QUADIN(NA1, FP, AMETR, YFP)
+   YRHO = QUADIN(NA1, FP, RHO  , YFP)
 END SELECT
 
 j = YRHO/HRO + 1

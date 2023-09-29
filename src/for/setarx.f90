@@ -1,6 +1,6 @@
-!----------------------------------------------------------------------|
+!--------------------------------------------------------------------
 subroutine SETARX(ICALL)
-!----------------------------------------------------------------------|
+!--------------------------------------------------------------------
 ! Add treatment for NGRIDX()=1
 !
 ! All arrays are mapped to the WHOLE radial grid [1, NB1]
@@ -10,10 +10,11 @@ subroutine SETARX(ICALL)
 !
 ! Then it is stored for the current time in the arrays
 !  EXT(NRD, NARRX) - (description in the file main/profiles_x.txt)
-!----------------------------------------------------------------------|
+!--------------------------------------------------------------------
 
 use const_inc, only: TIME, BTOR, GP, AB, ABC, ROC, VOLUME, NA1, NAB
 use status_inc, only: AMETR, RHO, FP, VOLUM, EXT
+use numerical_tools, only: qinterp
 use outcmn_inc
 use debugger, only: markloc, astra_stop
 
@@ -22,16 +23,16 @@ implicit  none
 integer, intent(in) :: ICALL
 
 integer :: jj, n_grid, gridtype, jar, jstim, jto, jentim, kn, j3, &
-    jtn, jt, jt0, jx, jy, NP1, j1, N11
-double precision :: QUADIN, RORZ, RZ2A, YDT, YDTA, YDTB, Y, Y1, dxl, dxr
+    jtn, jt, jt0, jx, jy, NP1, N11
+double precision :: RORZ, RZ2A, YDT, YDTA, YDTB, Y, Y1, dxl, dxr
 double precision, dimension(NRDX) :: x_grid, dat_exp
 double precision, dimension(NRD) :: XA, DA
 character(len=132) :: err_msg, err_msg_grid
-!----------------------------------------------------------------------|
+!--------------------------------------------------------------------
 !  NARRX    maximal number of arrays readable from a data file 
 !  NTARR    maximal number of time slices for all arrays (total)
 !  NGR     number of actually defined groups (grid + data)
-!----------------------------------------------------------------------|
+!--------------------------------------------------------------------
 ! Input
 ! ICALL = 0 - call from REVIEW (no transfer to EXT(, ) is needed)
 !  > 0 - call from STEPON
@@ -55,7 +56,7 @@ character(len=132) :: err_msg, err_msg_grid
 ! XAXES(jj, kn) - "radial" grid for displayed data
 ! DATAX(jj, kn) - array for displayed data
 ! EXT(jj, kn)   - smoothed curve
-!----------------------------------------------------------------------|
+!--------------------------------------------------------------------
 
 ! Pointer is returned to the root window after calling ESC
 
@@ -101,7 +102,7 @@ var_loop: do jar=1, NGR
 ! Time loop
    time_loop: do
 
-!----------------------------------------------------------------------|
+!--------------------------------------------------------------------
 ! The following is done below:
 ! (1) The grid in "a", XA(NP1), and the data DA(NP1) on this grid
 !     are defined by 
@@ -154,17 +155,16 @@ var_loop: do jar=1, NGR
       CASE(2)
          NP1 = NA1
          XA(: NP1) = RHO(: NP1)/ROC
-         do j3 = 1, n_grid
-            XAXES(j3, KN) = QUADIN(NP1, XA, AMETR, x_grid(j3), Y, j1)
-         enddo
+         call qinterp(XA(1: NP1), AMETR(1: NP1), NP1, x_grid(1: n_grid), XAXES(1: n_grid, KN), n_grid)
+! AMETR(XA(1:NP1)) is given; AMETR(x_grid(j)) is returned;
+!         do j3 = 1, n_grid
+!            XAXES(j3, KN) = QUADIN(NP1, XA, AMETR, x_grid(j3))
+!         enddo
 
       CASE(3)
          NP1 = NA1
          XA(: NP1) = sqrt((FP(: NP1) - FP(1))/(FP(NP1) - FP(1)))
-! AMETR(XA(1:NP1)) is given; QUADIN=AMETR(x_grid(j)) is returned;
-         do j3 = 1, n_grid
-            XAXES(j3, KN) = QUADIN(NP1, XA, AMETR, x_grid(j3), Y, j1)
-         enddo
+         call qinterp(XA, AMETR, NP1, x_grid(1: n_grid), XAXES(1: n_grid, KN), n_grid)
 
       CASE(4)
          call astra_stop(err_msg_grid)
@@ -185,9 +185,7 @@ var_loop: do jar=1, NGR
          enddo
          if (x_grid(N11)  < dxl*AB) N11 = n_grid + 1
          x_grid(: N11-1) = x_grid(: N11-1)/AB
-         do j3 = 1, n_grid
-            XAXES(j3, KN) = QUADIN(NP1, XA, AMETR, x_grid(j3), Y, j1)
-         enddo
+         call qinterp(XA(1: NP1), AMETR(1: NP1), NP1, x_grid(1: n_grid), XAXES(1: n_grid, KN), n_grid)
          x_grid(N11) = 1.
          dat_exp(N11) = DATAX(min(n_grid, N11), KN)
 
@@ -199,9 +197,7 @@ var_loop: do jar=1, NGR
          enddo
          if (x_grid(N11)  < dxl*ABC) N11 = n_grid+1
          x_grid(: N11-1) = x_grid(: N11-1)/ABC
-         do j3 = 1, n_grid
-            XAXES(j3, KN) = QUADIN(NP1, XA, AMETR, x_grid(j3), Y, j1)
-         enddo
+         call qinterp(XA(1: NP1), AMETR(1: NP1), NP1, x_grid(1: n_grid), XAXES(1: n_grid, KN), n_grid)
          x_grid(N11) = 1.
          dat_exp(N11) = DATAX(min(n_grid, N11), KN)
 
@@ -212,9 +208,7 @@ var_loop: do jar=1, NGR
             if (x_grid(N11) <= dxr) EXIT
          enddo
          if (x_grid(N11) < dxl) N11 = n_grid+1
-         do j3 = 1, n_grid
-            XAXES(j3, KN) = QUADIN(NP1, XA, AMETR, x_grid(j3), Y, j1)
-         enddo
+         call qinterp(XA(1: NP1), AMETR(1: NP1), NP1, x_grid(1: n_grid), XAXES(1: n_grid, KN), n_grid)
          x_grid(N11) = 1.
          dat_exp(N11) = DATAX(min(n_grid, N11), KN)
 
@@ -225,9 +219,7 @@ var_loop: do jar=1, NGR
             if (x_grid(N11) <= dxr) EXIT
          enddo
          if (x_grid(N11) < dxl) N11 = n_grid+1
-         do j3 = 1, n_grid
-            XAXES(j3, KN) = QUADIN(NP1, XA, AMETR, x_grid(j3), Y, j1)
-         enddo
+         call qinterp(XA(1: NP1), AMETR(1: NP1), NP1, x_grid(1: n_grid), XAXES(1: n_grid, KN), n_grid)
          x_grid(N11) = 1.
          dat_exp(N11) = DATAX(min(n_grid, N11), KN)
 
@@ -238,9 +230,7 @@ var_loop: do jar=1, NGR
             if (x_grid(N11) <= dxr) EXIT
          enddo
          if (x_grid(N11) < dxl) N11 = n_grid+1
-         do j3 = 1, n_grid
-            XAXES(j3, KN) = QUADIN(NP1, XA, AMETR, x_grid(j3), Y, j1)
-         enddo
+         call qinterp(XA(1: NP1), AMETR(1: NP1), NP1, x_grid(1: n_grid), XAXES(1: n_grid, KN), n_grid)
          x_grid(N11) = 1.
          dat_exp(N11) = DATAX(min(n_grid, N11), KN)
 
@@ -251,9 +241,7 @@ var_loop: do jar=1, NGR
             if (x_grid(N11) <= dxr) EXIT
          enddo
          if (x_grid(N11) < dxl) N11 = n_grid+1
-         do j3 = 1, n_grid
-            XAXES(j3, KN) = QUADIN(NP1, XA, AMETR, x_grid(j3), Y, j1)
-         enddo
+         call qinterp(XA(1: NP1), AMETR(1: NP1), NP1, x_grid(1: n_grid), XAXES(1: n_grid, KN), n_grid)
          x_grid(N11) = 1.
          dat_exp(N11) = DATAX(min(n_grid, N11), KN)
 
@@ -267,9 +255,7 @@ var_loop: do jar=1, NGR
          enddo
          if (x_grid(N11) < ROC*dxl) N11 = n_grid+1
          x_grid(: N11-1) = x_grid(: N11-1)/ROC
-         do j3 = 1, n_grid
-            XAXES(j3, KN) = QUADIN(NP1, XA, AMETR, x_grid(j3), Y, j1)
-         enddo
+         call qinterp(XA(1: NP1), AMETR(1: NP1), NP1, x_grid(1: n_grid), XAXES(1: n_grid, KN), n_grid)
          x_grid(N11) = 1.
          dat_exp(N11) = DATAX(min(n_grid, N11), KN)
  

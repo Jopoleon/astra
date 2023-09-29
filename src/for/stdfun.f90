@@ -61,15 +61,13 @@ double precision function RFA(YA)
 
 use const_inc, only: NA1
 use status_inc, only: AMETR, RHO
+use numerical_tools, only: QUADIN
 
 implicit none
 
 double precision, intent(in) :: YA
 
-integer :: j
-double precision :: DRHODA, QUADIN
-
-RFA = QUADIN(NA1, AMETR, RHO, YA, DRHODA, j)
+RFA = QUADIN(NA1, AMETR, RHO, YA)
 
 return
 end function RFA
@@ -132,15 +130,13 @@ double precision function AFR(YR)
 
 use const_inc, only: NA1
 use status_inc, only: RHO, AMETR
+use numerical_tools, only: QUADIN
 
 implicit none
 
 double precision, intent(in) :: YR
 
-integer :: j
-double precision :: DADRHO, QUADIN
-
-AFR = QUADIN(NA1, RHO, AMETR, YR, DADRHO, j)
+AFR = QUADIN(NA1, RHO, AMETR, YR)
 
 return
 end function AFR
@@ -461,19 +457,19 @@ double precision function RECR(YZ, N)
 
 use const_inc, only: NA1, RTOR, BTOR, FECR
 use status_inc, only: AMETR, RHO
+use numerical_tools, only: QUADIN
 
 implicit none
 
 integer, intent(in) :: N
 double precision, intent(in) :: YZ
 
-integer :: j
-double precision :: YA, YR, YY, RZ2A, QUADIN
+double precision :: YA, YR, RZ2A
 
 FECR = 140.
 YR = 28.*N*BTOR*RTOR/FECR
 YA = RZ2A(YR, YZ, NA1)
-RECR = QUADIN(NA1, AMETR, RHO, YA, YY, j)
+RECR = QUADIN(NA1, AMETR, RHO, YA)
 
 return
 end function RECR
@@ -1541,3 +1537,51 @@ y(i) = x(i)*z1*r
 
 return
 end function ADTRMC
+
+!---------------------------------------------------------------------
+double precision function RZ2A(R_in, Z_in, nx_in)
+!---------------------------------------------------------------------
+! The function returns A(r, z) where
+!
+! r = R0 + del(A) + A*[cos(theta)-tri(A)*sin^2(theta)]
+! z = UPD + A*elo(A)*sin(theta)
+!
+! and del(j), elo(j), tri(j) are given as arrays[1:N] 
+!      on the grid A=AMETR(j)
+!---------------------------------------------------------------------
+
+use const_inc, only: RTOR, AB
+use status_inc, only: AMETR, SHIF, SHIV, ELON, TRIA
+use numerical_tools, only: QUADIN
+
+implicit none
+
+integer, intent(in) :: nx_in
+double precision, intent(in) :: R_in, Z_in
+
+integer :: j, j1
+double precision :: Y1, YAS, YAO, YA
+double precision :: YHOR, YVER, YELO, YTRI
+
+YAS = ((Z_in - SHIV(nx_in))/ELON(nx_in))**2
+YA = sqrt(YAS + (R_in - RTOR - SHIF(nx_in))**2)
+
+do j=1, 20
+    YAO = YA
+    YHOR = QUADIN(nx_in, AMETR(1: nx_in), SHIF(1: nx_in), YA)
+    YELO = QUADIN(nx_in, AMETR(1: nx_in), ELON(1: nx_in), YA)
+    YTRI = QUADIN(nx_in, AMETR(1: nx_in), TRIA(1: nx_in), YA)
+    YVER = QUADIN(nx_in, AMETR(1: nx_in), SHIV(1: nx_in), YA)
+    YAS = ((Z_in - YVER)/YELO)**2
+    if (YA > 1.E-4) then
+        Y1 = YAS/YA
+    else
+        Y1 = YAS
+    endif
+    YA = sqrt(YAS + (R_in - RTOR - YHOR + YTRI*Y1)**2)
+    if (abs(YA - YAO) < 1.E-10) EXIT
+enddo
+RZ2A = min(YA, AB)
+
+return
+end function RZ2A
