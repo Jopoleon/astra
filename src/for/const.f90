@@ -190,16 +190,16 @@ IPEQL => DELOUT(39)
 DTEQ(1:4, 1:NSBMX) => DELOUT(NSDELOUT+1: NSDELOUT + 4*NSBMX)
 
 DELOUT(1: NSDELOUT) = (/ &
-! DROUT, DTOUT, DPOUT, TIME, TAUMIN, TAUMAX, TAUINC, DELVAR
-   .01,   .01,   .01,   0.,  .000001,  .05,   1.1,   .1, &
-! ITEREX, NITREQ, TINIT, TSCALE, NA1, NUFR, XOUT, XINPUT 
-   1.,    1.,    0.,    1.,	41.,     41.,      1.,     1., &
-! NB2EQL, NEQUIL, NBNDR, XFLAGR, DTEQL, MEQUIL, TPAUSE, TEND
-   1.,    0.,    0.,    0.,      0.,      0.,   100.,  1000., &
-! INUME1, INUME2, INUME3, INUME4, IPROT, ITFBE  ITFBP  ICIRCQ 
-  22.,    22.,    22.,    22.,     0.,   -1.,    0.,       0., &     
-! IPCTRL, ADCMPF, FLXDR, SGNIP, SGNBT, IFBEG, IPEQL
-  0.,     1.,     0.,    1.,    1.,    0. ,      4. /)
+!  DROUT,  DTOUT,  DPOUT,   TIME, TAUMIN, TAUMAX, TAUINC, DELVAR,
+    0.01,   0.01,   0.01,     0.,  1.e-6,   0.05,    1.1,    0.1, &
+! ITEREX, NITREQ,  TINIT, TSCALE,    NA1,   NUFR,   XOUT, XINPUT, 
+      1.,     1.,     0.,     1.,    41.,    41.,     1.,     1., &
+! NB2EQL, NEQUIL,  NBNDR, XFLAGR,  DTEQL, MEQUIL, TPAUSE,   TEND,
+      1.,     0.,     0.,     0.,     0.,     0.,   100.,  1000., &
+! INUME1, INUME2, INUME3, INUME4,  IPROT,  ITFBE,  ITFBP, ICIRCQ, 
+     22.,    22.,    22.,    22.,     0.,   1.e6,     0.,     0., &     
+! IPCTRL, ADCMPF,  FLXDR,  SGNIP,  SGNBT,  IFBEG,  IPEQL
+      0.,     1.,     0.,     1.,     1.,     0.,     4. /)
 
 do j=1, NSBMX
 !   DTEQ(1, j) = 0.
