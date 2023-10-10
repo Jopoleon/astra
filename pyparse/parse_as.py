@@ -677,8 +677,7 @@ class LINE2FOR:
                     logger.debug(block_right)
                     logger.debug(out)
 
-            elif var in ('V_95_POS', 'RFMAX', 'RFMIN', 'FRMAX' 'FRMIN'):
-                print(var)
+            elif var in ('V_95_POS', 'RFMAX', 'RFMIN', 'FRMAX', 'FRMIN'):
                 jbra = function_args(pieces[jpos+1: n_pieces])
                 out = ''
                 for j in range(jpos, jpos+jbra):
