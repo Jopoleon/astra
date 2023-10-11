@@ -436,9 +436,49 @@ contains
     double precision, intent(in), dimension(n_in) :: x_in, y_in
     double precision, dimension(1) :: qint1
 
-    call qinterp(x_in, y_in, n_in, (/x_out/), qint1, 1)
+!    call qinterp(x_in, y_in, n_in, (/x_out/), qint1, 1)
+!    QUADIN = qint1(1)
+    integer :: j, jj
+    double precision :: YF1, YF2, YF3, Y, YY, YX, &
+        YD21, YD23, YD31, YDX1, YDX2, YDX3
 
-    QUADIN = qint1(1)
+! No extrapolation
+
+    YX = max(x_out, 0.d0)
+    YX = min(YX, x_in(n_in))
+    YY = 0.
+    jj = 1
+    do j=1, n_in
+        Y = x_in(j) - YX
+        jj = j
+        if (Y < 0.) then
+            YY = Y
+            CYCLE
+        else if (Y == 0.) then
+            EXIT
+        else
+            if (Y > -YY) jj = jj - 1
+            EXIT
+        endif
+    enddo
+
+    if (jj <= 1) jj = 2
+    if (jj >= n_in) jj = n_in - 1
+
+    YD21 = x_in(jj)   - x_in(jj-1)
+    YD23 = x_in(jj)   - x_in(jj+1)
+    YD31 = x_in(jj+1) - x_in(jj-1)
+    YDX1 = YX - x_in(jj-1)
+    YDX2 = YX - x_in(jj)
+    YDX3 = YX - x_in(jj+1)
+    if (YD21 <= 0. .or. YD23 >= 0.) then
+        QUADIN = y_in(jj)
+    else
+        YF1 = y_in(jj-1)/YD21/YD31
+        YF2 = y_in(jj)/YD21/YD23
+        YF3 = y_in(jj+1)/YD31/YD23
+        QUADIN = YF1*YDX2*YDX3 + YF2*YDX1*YDX3 - YF3*YDX1*YDX2
+    endif
 
     return
     end function QUADIN
