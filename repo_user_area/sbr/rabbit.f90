@@ -141,8 +141,8 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
 
     if (do_dump) then
        !activate this to enable dumping of Rabbit inputs (for debbuging)
-       call rabbit_lib_set_dump_dir("/toks/work/markusw/Rabbit_dump", 30)
-       call rabbit_lib_dump_beams("/toks/work/markusw/Rabbit_dump", 30, einj, part_mix)
+       call rabbit_lib_set_dump_dir(TRIM(awd), LEN_TRIM(awd))
+       call rabbit_lib_dump_beams(TRIM(awd), LEN_TRIM(awd), einj, part_mix)
     endif
     
     tim_prev = max(0.d0, TIME-TAU)
