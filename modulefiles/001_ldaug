@@ -12,12 +12,11 @@ proc ModulesHelp { } {
 
 conflict meld
 
-if [ module-info mode load ] {
-    module load intel mpi/2021.9.0 compiler/2023.1.0 mkl/2023.1.0 anaconda3/2023.03
-}
-if [ module-info mode remove ] {
-    module unload intel mpi compiler mkl anaconda3/2023.03
-}
+prereq intel
+prereq mpi/2021.9.0
+prereq compiler/2023.1.0
+prereq mkl/2023.1.0
+prereq anaconda3/2023.03
 
 setenv ASTRA_EXT /shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT
 set INTEL_HOME /shares/software/aug-dv/moduledata/Intel/oneapi

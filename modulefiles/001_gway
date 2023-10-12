@@ -12,12 +12,10 @@ proc ModulesHelp { } {
 
 conflict meld
 
-if [ module-info mode load ] {
-    module load cineca intel/pe-xe-2020--binary mkl/2020--binary intelmpi/2020--binary
-}
-if [ module-info mode remove ] {
-    module unload cineca intel mkl intelmpi
-}
+prereq cineca
+prereq intel/pe-xe-2020--binary
+prereq mkl/2020--binary
+prereq intelmpi/2020--binary
 
 setenv ASTRA_EXT /afs/eufus.eu/user/g/g2gtardi/ASTRA_LIBRARIES_EXT
 setenv MKL_LIBDIR $env(MKLROOT)/lib/intel64

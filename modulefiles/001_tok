@@ -12,12 +12,11 @@ proc ModulesHelp { } {
 
 conflict meld
 
-if [ module-info mode load ] {
-    module load intel/2023.1.0.x impi/2021.9 impi-interactive/1.0 mkl/2023.1 anaconda/3/2023.03
-}
-if [ module-info mode remove ] {
-    module unload intel impi impi-interactive mkl anaconda
-}
+prereq intel/2023.1.0.x
+prereq impi/2021.9
+prereq impi-interactive/1.0
+prereq mkl/2023.1
+prereq anaconda/3/2023.03
 
 setenv ASTRA_EXT /tokp/work/software/TOK_2023/ASTRA_LIBRARIES_EXT 
 setenv MKL_LIBDIR $env(MKLROOT)/lib/intel64

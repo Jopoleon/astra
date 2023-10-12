@@ -12,16 +12,9 @@ proc ModulesHelp { } {
 
 conflict meld
 
-if [ module-info mode load ] {
-    module load intel/18.0
-    module load impi/4.1.0 
-    module load anaconda/3
-}
-if [ module-info mode remove ] {
-    module unload intel
-    module unload impi
-    module unload anaconda
-}
+prereq intel/18.0
+prereq impi/4.1.0 
+prereq anaconda/3
 
 setenv ASTRA_EXT /afs/ipp/home/a/astra/ASTRA_LIBRARIES_EXT
 setenv MKL_LIBDIR $env(INTEL_HOME)/linux/mkl/lib/intel64_lin

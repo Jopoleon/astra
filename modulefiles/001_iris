@@ -12,14 +12,8 @@ proc ModulesHelp { } {
 
 conflict meld
 
-if [ module-info mode load ] {
-    module load intel/2018
-    module load conda/omfit
-}
-if [ module-info mode remove ] {
-    module unload intel
-    module unload conda
-}
+prereq intel/2018
+prereq conda/omfit
 
 setenv ASTRA_EXT /fusion/projects/codes/astra/c8/8.2/intel2020/ASTRA_LIBRARIES_EXT
 setenv MKL_LIBDIR /fusion/usc/opt/intel2018/compilers_and_libraries_2018.2.199/linux/mkl/lib/intel64_lin
