@@ -63,7 +63,7 @@ update_model:
 
 # Linking, create ASTRA executable
 
-$(ATASK): $(LIBFOR) $(LIBNBI) $(LIBFEQIS) $(LIBSPIDER) $(LIBSBR) $(LIBFNC) $(LIBIPC) $(AENV) $(MODTMP) $(FOR_SRC) $(PYFILES)
+$(ATASK): $(LIBFOR) $(LIBNBI) $(LIBFEQIS) $(LIBSPIDER) $(LIBSBR) $(LIBFNC) $(LIBIPC) $(AENV) $(MODTMP) $(FOR_SRC) $(PYFILES) $(FMLS)
 	$(PY_TMP_GEN)
 	$(AFC) -qopenmp -g -traceback -o $(ATASK) $(FOR_SRC) $(TMP_SRC) -I$(MOD_DIR) -I$(NBI_INC) $(LIB)
 
