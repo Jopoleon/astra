@@ -15,12 +15,11 @@ conflict meld
 prereq intel/2023.1.0.x
 prereq impi/2021.9
 prereq impi-interactive/1.0
-prereq mkl/2023.1
 prereq anaconda/3/2023.03
 
-setenv ASTRA_EXT /tokp/work/software/TOK_2023/ASTRA_LIBRARIES_EXT 
-setenv MKL_LIBDIR $env(MKLROOT)/lib/intel64
-setenv COMP_LIBDIR $env(INTEL_HOME)/compiler/2023.1.0/linux/compiler/lib/intel64_lin
+setenv ASTRA_EXT /tokp/work/software/TOK_2023/software/ASTRA_LIBRARIES_EXT 
+setenv MKL_LIBDIR  /tok/u/system/soft/SLE_15/packages/x86_64/intel_oneapi/2023.1/mkl/latest/lib/intel64
+setenv COMP_LIBDIR /tok/u/system/soft/SLE_15/packages/x86_64/intel_oneapi/2023.1/compiler/2023.1.0/linux/compiler/lib/intel64_lin
 set NETCDF_HOME /afs/ipp/common/soft/netcdf/4.2.1.1/amd64_sles11/intel/14.0/impi-4.1.3
 set NETCDF_LIBDIR $NETCDF_HOME/lib
 setenv NETCDF_LIB "-L${NETCDF_LIBDIR} -lnetcdf -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}"
