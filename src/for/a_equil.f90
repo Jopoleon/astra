@@ -225,8 +225,8 @@ endif
 
 ! for any machine, geom1d(299) and geom1d(300) are respecetively li3 and betapol from equil
 
-geom1d(299) = equil_out%global_param%li3	
-geom1d(300) = equil_out%global_param%betpol	
+geom1d(299) = equil_out%global_param%li3
+geom1d(300) = equil_out%global_param%betpol
 do j=1, n_theta
     Rbnd(j) = equil_out%coord_sys%position%r(nr_equ, j)
     Zbnd(j) = equil_out%coord_sys%position%z(nr_equ, j)
@@ -300,13 +300,13 @@ if (parameters_equil%k_fixfree == 1) then
         endif
     else if (MACHINE(1:3) == 'dem') then
         if (jdemogaps == 0) then
-            write(fname, '(a)') TRIM(parameters_equil%prename) // 'demo_gaps.data'	
+            write(fname, '(a)') TRIM(parameters_equil%prename) // 'demo_gaps.data'
             open(32, file=fname)
             read(32, *) i_gaps
             do i=1, i_gaps
                 read(32, *) demo_gaps(i, 1), demo_gaps(i, 2), demo_gaps(i, 3), demo_gaps(i, 4) !1-R,  2-Z,  3-angle,  4-0 if do both sides,  1 if only positive side
             enddo
-            close(32)		
+            close(32)
             jdemogaps = 1
         endif
         if (equil_solver == 101) then
@@ -343,7 +343,7 @@ real*8, dimension(ncoils), intent(in) :: vcoils
 
 integer :: nstep, key_equil
 real*8, dimension(ncoils) :: ucoils
-    
+
 type(type_parameters) :: parameters_equil
 type(type_equilibrium) :: equil_in, equil_out
 
@@ -419,6 +419,6 @@ enddo
 
 if (is ==  1) iv = ic(j)
 if (is == -1) iv = ic(1)
-	
+
 return
 end subroutine find_in_vec_spid

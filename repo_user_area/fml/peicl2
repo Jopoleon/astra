@@ -6,8 +6,9 @@
 !    PI=...+PEICL2
 !      (Pereverzev 22-APR-87)
 !      (Corrected  26-MAR-97)
-!       (Corrected, E. Fable  Nov 2011)
-include	'fml/coulg'
+!      (Corrected, E. Fable  Nov 2011)
+
+include 'fml/coulg'
 PEICL2 = 0.00246*COULG*NE(J)*(TE(J) - TI(J))/(TE(J)*SQRT(TE(J)))
-include	'fml/suzpei'
+include 'fml/suzpei'
 PEICL2 = PEICL2*SUZPEI

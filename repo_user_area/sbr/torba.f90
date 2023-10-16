@@ -476,7 +476,7 @@ gyro_loop: do jgy=1, n_gyro
                                (rhoresult(11) - rhoresult(10))**2)
                 enddo
                 CCD = ECR
-	 	
+
                 call INTEGR(VOLUM(1:NA1), 1, ECR, total_int, NA1)
                 call INTEGR(AREAT(1:NA1), 1, CCD, total_int, NA1)
                 ECR = ECR/total_int(na1)

@@ -9,7 +9,7 @@ implicit none
 
 double precision, intent(in) :: yr
 integer :: JK,J
-	
+
 JK = min(na1, nint(ROC/HRO))
 
 QTOKR = 0.

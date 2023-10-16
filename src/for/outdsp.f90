@@ -2,18 +2,18 @@
 subroutine OUTDSP(MARK, JIFNEW, plot_arr, IYO, ITIMES, TTOUT, TOUT)
 !----------------------------------------------------------------------|
 ! Drawing options:
-!    X - axis
-!	0 <= rho <= ROC=RHO(NA1)
-!	0 <= a <= ABC
-!	0 <= a <= AB
+!   X - axis
+!      0 <= rho <= ROC=RHO(NA1)
+!      0 <= a <= ABC
+!      0 <= a <= AB
 !
-! MARK = 1	Put marks
-! MARK = 0	Solid lines
-! MARK =-1	Dashed lines
-! JIFNEW  =  0	Re-draw (erase) the previous curves
-! JIFNEW =/= 0	New curves only
-! JIFNEW < 0	Don't mark resonances q=m/n
-! JIFNEW > 10	Call from Review. (JIFNEW-10) is used to control erasing
+! MARK = 1     Put marks
+! MARK = 0     Solid lines
+! MARK =-1     Dashed lines
+! JIFNEW  =  0 Re-draw (erase) the previous curves
+! JIFNEW =/= 0 New curves only
+! JIFNEW < 0   Don't mark resonances q=m/n
+! JIFNEW > 10  Call from Review. (JIFNEW-10) is used to control erasing
 !----------------------------------------------------------------------|
 
 use status_inc, only: AMETR, MU, SHIF, ELON, TRIA

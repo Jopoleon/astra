@@ -1,15 +1,15 @@
 ! PEIAU [MW/m#3/keV]: Electron ion heat exchange due to Coulomb collisions
-!	PEIAU=3/tauei*Ne*m/M
+!        PEIAU=3/tauei*Ne*m/M
 !  here tauei[sec]=1.1E-3*T_{e,keV}^{3/2}/[Z_i^2*n_{i,19}*\Lambda]
-!	PE=...+PEIAU*TI;		PET=...-PEIAU
-!	PI=...+PEIAU*TE;		PIT=...-PEIAU
-!			(Pereverzev 22-JAN-90)
-!			(Corrected  19-JUN-97)
+!        PE=...+PEIAU*TI;        PET=...-PEIAU
+!        PI=...+PEIAU*TE;        PIT=...-PEIAU
+!                        (Pereverzev 22-JAN-90)
+!                        (Corrected  19-JUN-97)
 
-include	'fml/coulg'
-include	'fml/zine'
-include	'fml/zikr'
-include	'fml/ziar'
+include 'fml/coulg'
+include 'fml/zine'
+include 'fml/zikr'
+include 'fml/ziar'
 
 PEIAU = 0.00246*COULG*NE(J)/(TE(J)*SQRT(TE(J))) * &
     (F1(J)/2. + F2(J) + &

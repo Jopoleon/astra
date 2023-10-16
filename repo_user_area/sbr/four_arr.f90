@@ -1,7 +1,7 @@
 SUBROUTINE FOUR_ARR(tim, n_cycle, ARRIN, FREQ, n_harm, arrout)
 !-----------------------------------------------------------------------|
-! Description:	    Fourier expansion in time for the function ARRIN(a,t)
-!							of 2 arguments
+! Description:  Fourier expansion in time for the function ARRIN(a,t)
+!               of 2 arguments
 ! Input:
 !    N_CYCLE  - numbers of period for integration
 !    ARRIN(*) - periodic radial dependent function of time to be expanded

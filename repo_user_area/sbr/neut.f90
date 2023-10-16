@@ -1,11 +1,11 @@
 subroutine NEUT
 !-----------------------------------------------------------22.01.97---|
-!	Input:	ABC,NA1,NA,AMJ,NAB,NNCX
-!		AMAIN(j),ZMAIN(j),TE(j),TI(j),NE(j),NI(j),ZEF(j),SNNBM(j)
-!		ENCL,ENWM or wall neutral distribution
-!		NNCL,NNWM
-!	Warning:	ENCL > 0.5;	ENWM =/= 0 if NNWM =/= 0
-!	Output:	NN,	TN,    ALBPL
+! Input: ABC,NA1,NA,AMJ,NAB,NNCX
+!        AMAIN(j),ZMAIN(j),TE(j),TI(j),NE(j),NI(j),ZEF(j),SNNBM(j)
+!        ENCL,ENWM or wall neutral distribution
+!        NNCL,NNWM
+! Warning: ENCL > 0.5; ENWM =/= 0 if NNWM =/= 0
+! Output: NN, TN, ALBPL
 !---------------------------------------------CHANGED BY POLEVOY-------|
 
 use parameter_inc, only: NRD

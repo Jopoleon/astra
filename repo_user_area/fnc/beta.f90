@@ -1,10 +1,11 @@
-! BETA %:	Beta toroidal  % 
+! BETA % Beta toroidal  % 
 !
-! SI:	BETA=2\mu_0*p/B^2 = 12.8e-3*pi*(n_20)*(T_keV)/(B_T)^2 * 100[%]
-! CGS:	BETA=8\pi*p/B^2   = 12.8e-3*pi*[0.1*NE*TE+...]/BTOR^2 * 100[%]
+! SI:   BETA=2\mu_0*p/B^2 = 12.8e-3*pi*(n_20)*(T_keV)/(B_T)^2 * 100[%]
+! CGS:  BETA=8\pi*p/B^2   = 12.8e-3*pi*[0.1*NE*TE+...]/BTOR^2 * 100[%]
 !
 !    NOTE! NBI Pressure is included as in equilibrium
-!					(Pereverzev 02-MAY-2006)
+!            (Pereverzev 02-MAY-2006)
+
 double precision function BETAR(YR)
 
 use const_inc, only: ROC, HRO, NA1, BTOR

@@ -1,11 +1,11 @@
 !======================================================================|
-! BETAJR []:	Beta poloidal (r)		(Pereverzev 12-JAN-90)
+! BETAJR []: Beta poloidal (r)         (Pereverzev 12-JAN-90)
 !
 ! In this subroutine, the dimensionless \beta_J is defined as
 !
-!   2*c*c		       2*c*c
-!  ------*{Int(p*dS) - pS} = - ------ * Int[S*dp]
-!    I*I		        I*I
+!   2*c*c                        2*c*c
+!  ------ * {Int(p*dS) - pS} = - ------ * Int[S*dp]
+!    I*I                          I*I
 !
 ! Equivalent definition:
 !
@@ -43,8 +43,8 @@ integer J, JR
 double precision YR, YB, YP, YP1
 !----------------------------------------------------------------------|
 JR = YR/HRO+0.5
-if (JR .lt. 2)	JR=2
-if (JR .gt. NA)	JR=NA
+if (JR .lt. 2) JR=2
+if (JR .gt. NA) JR=NA
 YB = 0.
 YP = NE(1)*TE(1)+NI(1)*TI(1)
 do J=1,JR
@@ -56,23 +56,3 @@ BETAJR = 6.4E-4*GP2*YB*(RTOR/(G22(JR)*IPOL(JR)*BTOR*JR*HRO*MU(JR)))**2
 
 return
 end function betajr
-
-!======================================================================|
-!----------------------------------------------------------------------|
-! Another definition:
-!
-!     2*c*c		               2*c*c      1 
-!  ------------ * {Int(p*dV) - pV} = - ----- * -------- {Int(V*dp)}
-!  2\pi*r_c*I*I		                I*I    2\pi*r_c
-!
-! where "r_c" can be defined in different ways, e.g. r_c = RTOR
-! More reasonable definition is r_c = RTOR+SHIF(1)
-!
-! Similarly, in SI units:
-!
-!        4                                 4
-!  -------------*{Int(p*dV) - pV} = - ------------- * Int[V*dp]
-!  \mu_0*r_c*I*I                      \mu_0*r_c*I*I
-!
-!----------------------------------------------------------------------|
-!======================================================================|

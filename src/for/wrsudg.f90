@@ -206,7 +206,7 @@ else if (MACHINE(1:3) == 'aug') then
     mmequi = 2*ntetap
     do j=1,ntetap
         yroutfull(2*j-1) = yrout(neqlp, j)
-	yroutfull(2*j  ) = yzout(neqlp, j)
+        yroutfull(2*j  ) = yzout(neqlp, j)
     enddo
     if (TIME - TSTART <= ZRD93 +1.e-8) then
         if (plasma_up == 0) then
@@ -291,7 +291,7 @@ else if (MACHINE(1:3) == 'aug') then
 
     else
 
-200	continue
+200     continue
 
         betp3r_1 = betp3r(roc)
         LI3R_1 = LI3R(ROC)
@@ -421,8 +421,7 @@ else if (MACHINE(1:3) == 'aug') then
     ccoil_0 = ccoil(1:10)
     geom1d_0 = geom1d(51:82)
 
-
-	ccoil(1:10)=ccoil_scramble(1:10)
+    ccoil(1:10) = ccoil_scramble(1:10)
 
 endif
 

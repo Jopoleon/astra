@@ -1,22 +1,17 @@
 ! DNNEO [m#2/s]:  Particle diffusivity neoclassical from Angioni thesis
-!	
-	include	'fml/nuee'
-	ZPF=FTLLMR(RHO(j))
-	ZPZ=ZEF(j)+0.5
-	FF11=(1+0.9/ZPZ)*ZPF
-	FF11=FF11-1.9/ZPZ*ZPF*ZPF
-	FF11=FF11+1.6/ZPZ*ZPF*ZPF*ZPF
-	FF11=FF11-0.6/ZPZ*ZPF*ZPF*ZPF*ZPF
-	if (j .lt. NA1)  then
-	   BPPL=GRADRO(J)*((FP(j+1)-FP(j))/(RHO(j+1)-RHO(j)))
-           BPPL=BPPL/2./3.1415/(RTOR+AMETR(j))
-	   RLEP=0.003235*sqrt(0.000545*TE(j))/BPPL
-	   DNNEO=0.5*FF11*IPOL(j)*IPOL(j)
-	   DNNEO=DNNEO*NUEE/NE(j)*(ZEF(j)*ZEF(j))*NI(j)*RLEP*RLEP
-	endif
-	DNNEO=NUEE/NE(j)*(ZEF(j)*ZEF(j))*NI(j)*RLEP*RLEP
-	DNNEO=DNNEO*0.5*FF11*IPOL(j)*IPOL(j)
-	if (DNNEO .gt. 0.1) then
-	   DNNEO=0.1
-	endif
-	
+
+include 'fml/nuee'
+ZPF = FTLLMR(RHO(j))
+ZPZ = ZEF(j) + 0.5
+FF11 = (1. + 0.9/ZPZ)* ZPF    - 1.9/ZPZ * ZPF**2 + &
+             1.6/ZPZ * ZPF**3 - 0.6/ZPZ * ZPF**4
+if (j < NA1) then
+    BPPL = GRADRO(J)*((FP(j+1) - FP(j))/(RHO(j+1) - RHO(j)))
+    BPPL = BPPL/2./3.1415/(RTOR + AMETR(j))
+    RLEP = 0.003235*sqrt(0.000545*TE(j))/BPPL
+    DNNEO = 0.5*FF11*IPOL(j)**2
+    DNNEO = DNNEO*NUEE/NE(j)*(ZEF(j)**2)*NI(j)*RLEP**2
+endif
+DNNEO = NUEE/NE(j)*(ZEF(j)**2)*NI(j)*RLEP**2
+DNNEO = DNNEO*0.5*FF11*IPOL(j)**2
+DNNEO = min(DNNEO, 0.1)

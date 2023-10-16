@@ -1,5 +1,5 @@
-! WTOZ [MJ]:	Integral {0:R} ( 3/2*(NE*(TE+Ti)+pfast+0.5*(pblon+pbper) )) dV
-!        (Fable Nov 2018) total energy including fast ions
+! WTOZ [MJ]:  Integral {0:R} ( 3/2*(NE*(TE+Ti)+pfast+0.5*(pblon+pbper) )) dV
+!             (Fable Nov 2018) total energy including fast ions
 double precision FUNCTION WTOZR(YR)
 
 use const_inc, only: HRO

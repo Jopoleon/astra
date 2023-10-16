@@ -4,7 +4,7 @@
 !     Li = ------------*|(Bpol**2)dV
 !     li = Li/(2*pi*R0)
 !          4*pi*Ipl*Ipl |
-!   SI:	Li[H] = 2*Wi/Ipl**2 ;  li[dim.less] = Li[mkHn]/(0.2*pi*R0[m])
+!  SI: Li[H] = 2*Wi/Ipl**2 ;  li[dim.less] = Li[mkHn]/(0.2*pi*R0[m])
 !       2*pi*R0[m]*li[dim.less] = 10*Li[mkHn]
 
 double precision function LINTR(YRO)

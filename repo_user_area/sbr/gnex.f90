@@ -1,6 +1,6 @@
 subroutine GNEX
 ! Electron flux GNX due to all neutral sources
-! GNX	[10^19 particle/m^2/s]
+! GNX  [10^19 particle/m^2/s]
 !    (Pereverzev 23-FEB-98)
 !   2-NOV-99 GNX redetermined to give the flux density
 
@@ -9,7 +9,7 @@ use status_inc, only: VR, VRO, NE, NEO, TE, NI, NN, SLAT, GNX, SNEBM
 
 implicit none
 
-integer	:: j
+integer :: j
 double precision :: YSN1, YSN2, YSN3, YH, Y, &
     SNNEU, SVIE, SVII, SVREC, SNNR, SNNI
 

@@ -1,30 +1,31 @@
-! XCSA []:	Bootstrap current density	
-!   		Jbs = HCSA*ln(Te)'+DCSA*ln(Ne)'+XCSA*ln(Ti)'
-!               Sauter, Angioni, Lin-Liu
-!		Physics of Plasmas, 6, 2834 (1999)
-!		(Angioni 29-MAY-2002)
-!   (corrected for beta tot Fable May 2014)
-!		NUES was replaced by NEUSSA
-!		NUIS was replaced by NUISSA
-!		(Teplukhina 08-JAN-2015)
+! XCSA []: Bootstrap current density
+!      Jbs = HCSA*ln(Te)'+DCSA*ln(Ne)'+XCSA*ln(Ti)'
+!      Sauter, Angioni, Lin-Liu
+!      Physics of Plasmas, 6, 2834 (1999)
+!      (Angioni 29-MAY-2002)
+!      (corrected for beta tot Fable May 2014)
+!      NUES was replaced by NEUSSA
+!      NUIS was replaced by NUISSA
+!          (Teplukhina 08-JAN-2015)
 ! Example: XC=XCSA
+
 INCLUDE 'fml/betpl'
 INCLUDE 'fml/betpt'
-ZZ=ZEF(J)
-ZFT=FTLLMR(RHO(J))	
+ZZ  = ZEF(J)
+ZFT = FTLLMR(RHO(J))
 INCLUDE 'fml/nuessa'
 INCLUDE 'fml/nuissa'
-ZDF = 1.+(1.-0.1*ZFT)*SQRT(NUESSA)	
-ZDF = ZDF + 0.5*(1.-0.5*ZFT)*NUESSA/ZZ
+ZDF = 1. + (1. - 0.1*ZFT)*SQRT(NUESSA)
+ZDF = ZDF + 0.5*(1. - 0.5*ZFT)*NUESSA/ZZ
 ZFTE = ZFT/ZDF
-XCSA = (1+1.4/(ZZ+1))*ZFTE-1.9/(ZZ+1)*ZFTE*ZFTE
-XCSA = XCSA + (0.3*ZFTE*ZFTE+0.2*ZFTE*ZFTE*ZFTE)*ZFTE/(ZZ+1)
-A0 = -(1.17)*(1.-ZFT)
-A0 =A0/(1.-0.22*ZFT-0.19*ZFT*ZFT)
-ALP =(A0+0.25*(1-ZFT*ZFT)*SQRT(NUISSA))/(1.+0.5*SQRT(NUISSA))
-A1 = NUISSA*NUISSA*ZFT*ZFT*ZFT*ZFT*ZFT*ZFT
-ALP = (ALP + 0.315*A1)/(1.+0.15*A1)
+XCSA = (1 + 1.4/(ZZ + 1))*ZFTE - 1.9/(ZZ + 1)*ZFTE**2
+XCSA = XCSA + (0.3*ZFTE**2 + 0.2*ZFTE**3)*ZFTE/(ZZ + 1)
+A0 = -1.17*(1. - ZFT)
+A0 = A0/(1. - 0.22*ZFT - 0.19*ZFT**2)
+ALP = (A0 + 0.25*(1 - ZFT**2)*SQRT(NUISSA))/(1. + 0.5*SQRT(NUISSA))
+A1 = NUISSA**2 * ZFT**6
+ALP = (ALP + 0.315*A1)/(1. + 0.15*A1)
 INCLUDE 'fml/dcsa'
-XCSA = (BETPT-BETPL)*(XCSA*ALP)
-XCSA = XCSA+DCSA*(1-BETPL/BETPT)
-IF(J.EQ.1) XCSA=0.
+XCSA = (BETPT - BETPL)*(XCSA*ALP)
+XCSA = XCSA + DCSA*(1 - BETPL/BETPT)
+if (J == 1) XCSA = 0.

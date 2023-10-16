@@ -221,7 +221,7 @@ else
     pinj_file2 = TRIM(awd) // TRIM(pinj_file)
     call uf2dr(pinj_file2, TIME, pinj(1:n_nbi))
 endif
-	
+
 QNBI = sum(pinj(1:n_nbi))*1d-6
 
 output_timing = 0.5d0

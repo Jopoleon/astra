@@ -1,12 +1,12 @@
 !----------------------------------------------------------------------|
-!  Subroutine minimizes the value of functional
-!  INTEGRAL(alfa*(dU/dx)**2+(U-F)**2)*dx with respect to U(x).
-!  f_in(1:NA1) is a given array on the grid X(1:NA1)
-!  The result is a smoothed array f_out(1:NA1) given on the same grid
-!	ALFA ~ 0.01*X(NA1)**2  is a regularizator
-!	The target function f_out obeys the additional conditions:
-!	     df_out/dx(x=0)=0 - cylindrical case
-!	     f_out(XN(NA1))=f_in(XO(NA1))
+! Subroutine minimizes the value of functional
+! INTEGRAL(alfa*(dU/dx)**2+(U-F)**2)*dx with respect to U(x).
+! f_in(1:NA1) is a given array on the grid X(1:NA1)
+! The result is a smoothed array f_out(1:NA1) given on the same grid
+!    ALFA ~ 0.01*X(NA1)**2  is a regularizator
+!    The target function f_out obeys the additional conditions:
+!       df_out/dx(x=0)=0 - cylindrical case
+!       f_out(XN(NA1))=f_in(XO(NA1))
 !----------------------------------------------------------------------|
 
 subroutine SMEARR(ALFA, f_in, f_out)

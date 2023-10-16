@@ -1,2 +1,3 @@
-!C Thermal velocitz main ions
-	VTHI=3.0944E5*SQRT((TI(j))/AMAIN(j))
+! Thermal velocitz main ions
+
+VTHI=3.0944E5*SQRT((TI(j))/AMAIN(j))

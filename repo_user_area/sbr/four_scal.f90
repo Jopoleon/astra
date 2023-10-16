@@ -1,7 +1,7 @@
 SUBROUTINE FOUR_SCAL(tim, n_cycle, VARIN, FREQ, n_harm, VAROUT)
 !-----------------------------------------------------------------------|
-! Description:	    Fourier expansion in time for the function VARIN(a,t)
-!							of 2 arguments
+! Description:  Fourier expansion in time for the function VARIN(a,t)
+!               of 2 arguments
 ! Input:
 !    N_CYCLE  - numbers of period for integration
 !    VARIN(*) - periodic radial dependent function of time to be expanded

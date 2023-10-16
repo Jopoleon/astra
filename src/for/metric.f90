@@ -1390,10 +1390,10 @@ use numerical_tools, only: extrap, integr
 
 implicit none
 
-integer	:: j
+integer :: j
 double precision :: YH, YM, YM1, YM2, YC, YF, YAJ, YCJ, MUVAC
 double precision, dimension(NA1) :: YAR
-	
+
 YC = 0.2*GP2*RTOR/BTOR
 YH = RHO(2) - RHO(1)
 YF = GP2*YH**2 * BTOR

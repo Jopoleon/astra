@@ -73,9 +73,9 @@ endif
 IPART = 2             ! Mark time evolution section
 
 ! reset initial condition
-				
+
 NIO = NI  !moved from OLDNEW here to maintain it correctly. detvar goes before oldnew to maintain time derivative computations. 
-						
+
 !switch from pbe to fbe gs solver
 if (ITFBE < 0.) IFBEY = 0.
 if (ITFBE > 0.) then
@@ -102,14 +102,14 @@ iplfbeo = iplfbe
 
 !reset some quantities
 CCOILO = CCOIL
-PSIFBO = PSIFB          ! reset boundary flux
-RBDOT = 0.              ! reset boundary adiabatic factor
-BBDOT = 0.              ! reset boundary adiabatic factor
-PSIEXO = PSIEXT	      ! reset also external flux from fbe and ce, this is for test!
-PSPLXO = PSPLEX  	      ! reset also green function flux from fbe and ce, this is for test!
-						
+PSIFBO = PSIFB       ! reset boundary flux
+RBDOT = 0.           ! reset boundary adiabatic factor
+BBDOT = 0.           ! reset boundary adiabatic factor
+PSIEXO = PSIEXT      ! reset also external flux from fbe and ce, this is for test!
+PSPLXO = PSPLEX      ! reset also green function flux from fbe and ce, this is for test!
+
 !Get target quantities from experiment if prescribed boundary. if free boundary, then uses circuit equations and voilc comes from elsewhere
-	call GETCOILS(VCOIL(1:NCNB), CCOIL(1:NCNB))
+call GETCOILS(VCOIL(1:NCNB), CCOIL(1:NCNB))
 
 ! counter for psi bc = -1 
 if (ITFBP == 0.0) ibcpsi_fb = 0
@@ -154,7 +154,7 @@ time_step_accuracy: do
 
         call METRIC          ! Equilibrium call, compute IPL from dfpdrb, compute PSIEXT, shape, psplex, and metric coefficients, update ROC, FTN
 
-	if (plasma_up == 1) then
+        if (plasma_up == 1) then
             RBDOT = (FTO  - FTN)/(FTO  + FTN)/TAU     !New rbdot for adiabatic compression
             BBDOT = (BTOR - BTN)/(BTOR + BTN)/TAU     !New bbdot for adiabatic compression
 
@@ -224,7 +224,7 @@ time_step_accuracy: do
         endif
 
 !quantitites for psi b.c.
- 	if (plasma_up == 1) then
+        if (plasma_up == 1) then
             Apsibcfac = dfpdrbm12
             Bpsibcfac = PSIEXT - PSPLEX*ROC*Apsibcfac
             PSIFB = Bpsibcfac

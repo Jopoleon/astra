@@ -293,7 +293,7 @@ module dbl2char
    endif
 
    R = ROUNDN(R2, 5 - JM)
-   if (R < 1.e13/10.**JM)	then
+   if (R < 1.e13/10.**JM) then
       write(T, '(1F25.11)') R
       do J=1, 11
          if(T(J:J) /= ' ' .and. T(J:J) /= '0') EXIT

@@ -1000,24 +1000,24 @@ do im=1,m_i
                       +xab2*(28.0+xab2*175.0/8.0))))/yab92
     endif     
 !  Elements of N
-!         Momentum conservation, Eqn 4.11 for N00 (HS81)
+!       Momentum conservation, Eqn 4.11 for N00 (HS81)
     capn_ii(1,1,im,jm)=-capm_ii(1,1,im,jm)
-!         Eqn 4.9 and 4.12 for N01 (HS81)
+!       Eqn 4.9 and 4.12 for N01 (HS81)
     capn_ii(1,2,im,jm)=-xab2*capm_ii(1,2,im,jm)
-!         Momentum conservation, Eqn 4.12 for N10 (HS81)
+!       Momentum conservation, Eqn 4.12 for N10 (HS81)
     capn_ii(2,1,im,jm)=-capm_ii(2,1,im,jm)
-!         Eqn 4.14 for N11 (HS81)	- corrected rhs
+!       Eqn 4.14 for N11 (HS81) - corrected rhs
     capn_ii(2,2,im,jm)=(27.0/4.0)*SQRT(xtab)*xab2/yab52
     if(k_order.eq.3) then
-!           Eqn 4.15 for N02 (HS81) - corrected rhs by Ta/Tb
+!       Eqn 4.15 for N02 (HS81) - corrected rhs by Ta/Tb
       capn_ii(1,3,im,jm)=-xab2**2*capm_ii(1,3,im,jm)
-!           Eqn 4.17 for N12 (HS81)
+!       Eqn 4.17 for N12 (HS81)
       capn_ii(2,3,im,jm)=-225.0/16.0*xtab*xab2**2/yab72
-!           Momentum conservation for N20 (HS81)
+!       Momentum conservation for N20 (HS81)
       capn_ii(3,1,im,jm)=-capm_ii(3,1,im,jm)
-!           Eqn 4.9 and 4.17 for N21 (HS81)
+!       Eqn 4.9 and 4.17 for N21 (HS81)
       capn_ii(3,2,im,jm)=-225.0/16.0*xab2**2/yab72
-!           Eqn 5.22 for N22 (HS81) 
+!       Eqn 5.22 for N22 (HS81) 
       capn_ii(3,3,im,jm)=2625.0/64.0*xtab*xab2**2/yab92
     endif
   enddo   

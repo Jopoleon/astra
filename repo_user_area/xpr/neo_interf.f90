@@ -267,7 +267,7 @@ radial_loop: do jradial=1, nradial
         neo_dlntdr_in(i_ion+1) = -dti(i_ion)/(dr*ti_m(i_ion, j0))
     enddo
 ! Restore quasi-neutrality via main ions?
-					
+
 ! neo model parameters
     neo_sim_model_in = 2  ! type of NEO calculation: 1 analytic, 2 kinetic
     neo_equilibrium_model_in = 2
@@ -351,7 +351,7 @@ radial_loop: do jradial=1, nradial
         pflux_e_neo    = neo_pflux_thHH_out *Gamma_neo_GB 
         eflux_e_neo    = neo_eflux_thHHe_out*Q_neo_GB
         jboots = neo_jpar_thS_out*Jpar_GB
-	write(*,*) 'end neo analytic', pflux_i_neo(1), eflux_i_neo(1), pflux_e_neo, eflux_e_neo, jboots
+        write(*,*) 'end neo analytic', pflux_i_neo(1), eflux_i_neo(1), pflux_e_neo, eflux_e_neo, jboots
 
     CASE(2) ! kinetic calculation
         write(*,*) 'run neo DKE', n_ions
