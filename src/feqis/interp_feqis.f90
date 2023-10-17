@@ -1,6 +1,6 @@
 subroutine find_angle_ef(rt, zt, r, z, anglr)
 
-use pi_grec_vars, only: GPI2
+use pi_vars, only: GPI2
 
 implicit none
 
@@ -22,7 +22,7 @@ subroutine inverse_matrix_equilef(a, c, n)
 ! Based on Doolittle LU factorization for Ax = B
 ! Alex G. December 2009. www2.odu.eud/~agodunov/computing/programs/book2/Ch06/Inverse.f90
 
-implicit none 
+implicit none
 
 integer, intent(in) :: n
 double precision, intent(out), dimension(n, n) :: c
@@ -94,7 +94,8 @@ end subroutine inverse_matrix_equilef
 !---------------------------------------------------------------------
 subroutine interp_j_fromrhotorz
 
-use ef_circuit
+use ef_circuit, only: nrho, nteta, nr2, nz2, r, z, jrz, jrhoteta, &
+    rho, teta, raxp, zaxp
 
 implicit none
 
@@ -107,7 +108,7 @@ jrhoteta(1:nrho, nteta+1) = jrhoteta(1:nrho, 1)
 do j=1, nz2
     do i=1, nr2
         call curinterp_ef(r(i), z(j), jrhoteta(1:nrho, 1:nteta+1),  & 
-    rho(1:nrho, 1:nteta+1), teta(1:nteta+1), raxp, zaxp, nrho, nteta+1, jrz(i, j))
+            rho(1:nrho, 1:nteta+1), teta(1:nteta+1), raxp, zaxp, nrho, nteta+1, jrz(i, j))
     enddo
 enddo
 
@@ -132,12 +133,13 @@ end subroutine t_find_u_n
 !---------------------------------------------------------------------
 subroutine curinterp_ef(r, z, jrho, rho, teta, rax, zax, nrho, nteta, j)
 
-use pi_grec_vars
+use pi_vars, only: GPI2
 use numerical_tools, only: linterp
 
 implicit none
+
 integer,  intent(in) :: nrho, nteta
-double precision,  intent(in) :: r, z, jrho(nrho, nteta), rho(nrho, nteta), teta(nteta),  &
+double precision, intent(in) :: r, z, jrho(nrho, nteta), rho(nrho, nteta), teta(nteta),  &
 rax, zax
 double precision, intent(out) :: j
 
@@ -162,7 +164,7 @@ j2 = j1 + 1
 z1 = rho(nrho, j1)
 z2 = rho(nrho, j2)
 if (rho0 > z1 .or. rho0 > z2) then
-    j=0.
+    j = 0.
     return
 endif
 
@@ -204,8 +206,7 @@ end subroutine curinterp_ef
 !---------------------------------------------------------------------
 subroutine discrete_sine_transform_ef(n, y)
 
-use pi_grec_vars
-use fft_mod_eff
+use fft_mod_eff, only: dp, sintable
 
 implicit none
 
@@ -254,8 +255,9 @@ end subroutine discrete_sine_transform_ef
 !---------------------------------------------------------------------
 subroutine coil_forces_feqis(ncoilz, force_R, force_Z, plasma_state)
 
-use ef_circuit
-use green_matrix
+use ef_circuit, only: nblocks, npassive, jrz, nr2, nz2, area_eff, &
+    curconduc, mequivalence
+use green_matrix, only: dgreenirpl, dgreenizpl, dgreenirj, dgreenizj
 
 implicit none
 
@@ -294,12 +296,12 @@ end subroutine coil_forces_feqis
 !---------------------------------------------------------------------
 subroutine plasma_psi_to_coils_ef
 
-use ef_circuit
-use green_matrix
+use ef_circuit, only: nr2, nz2, nconduc, jrz, area_eff, psiplasmatoconduc
+use green_matrix, only: greeni
 
 implicit none
 
-integer :: i, j, k
+integer :: i
 
 do i=1, nconduc
     psiplasmatoconduc(i) = sum(jrz(1: nr2, 1: nz2) * area_eff(1: nr2, 1: nz2) * greeni(1: nr2, 1: nz2, i))
@@ -311,13 +313,15 @@ end subroutine plasma_psi_to_coils_ef
 !---------------------------------------------------------------------
 subroutine get_zccurb_efff(rc_cur, zc_cur, z2c_cur, rgeoc, zgeoc, ahorc)
 
-use ef_circuit  
-use metric_coefficients_pbe  
+use ef_circuit, only: nrho, nteta, rpol, zpol
+use metric_coefficients_pbe, only: R_curr_0D, Z_curr_0D, dator
 
 implicit none
+
 real*8, intent(out) :: rc_cur, zc_cur, z2c_cur, rgeoc, zgeoc, ahorc
-real*8 :: perimz, ahorc2, avgelem
+
 integer :: i, j
+real*8 :: perimz, ahorc2, avgelem
 
 perimz = 0.         
 rgeoc  = 0.
@@ -354,27 +358,25 @@ end subroutine get_zccurb_efff
 !---------------------------------------------------------------------
 subroutine psib_ext_efff(psiext_out)  !gives back external flux on plasma boundary
 
-use ef_circuit
-use green_matrix
+use ef_circuit, only: nbnd, rbnd, zbnd, psibnd
 
 implicit none
 
-integer i, j, k, m
-integer i1, j1, k1, m1
-double precision psiext_out, dlt, dllt, dum1, dum2
+integer :: i
+double precision :: psiext_out, dlt, dllt, dum1, dum2
 
 !cycle over boundary
 psiext_out = 0.
 dllt = 0.
 do i=1, nbnd-1
-    call find_fields_interp_ef_psiext(rbnd(i), zbnd(i), dum1) !give back psi, br, bz at r0, z0
+    call find_fields_interp_ef_psiext(rbnd(i)  , zbnd(i  ), dum1) !give back psi, br, bz at r0, z0
     call find_fields_interp_ef_psiext(rbnd(i+1), zbnd(i+1), dum2) !give back psi, br, bz at r0, z0
     dlt = sqrt((rbnd(i+1) - rbnd(i))**2 + (zbnd(i+1) - zbnd(i))**2)
     psiext_out = psiext_out + 0.5*(dum1 + dum2)*dlt
     dllt = dllt + dlt
 enddo
 call find_fields_interp_ef_psiext(rbnd(nbnd), zbnd(nbnd), dum1) !give back psi, br, bz at r0, z0
-call find_fields_interp_ef_psiext(rbnd(1), zbnd(1), dum2) !give back psi, br, bz at r0, z0
+call find_fields_interp_ef_psiext(rbnd(1   ), zbnd(1   ), dum2) !give back psi, br, bz at r0, z0
 dlt = sqrt((rbnd(1) - rbnd(nbnd))**2 + (zbnd(1) - zbnd(nbnd))**2)
 psiext_out = psiext_out + 0.5*(dum1 + dum2)*dlt
 dllt = dllt + dlt
@@ -389,16 +391,16 @@ end subroutine psib_ext_efff
 !---------------------------------------------------------------------
 subroutine psiplex_calc_ef(dumz)
 
-use astra2fbe
-use ef_circuit
+use pi_vars, only: GPI2
+use astra2fbe, only: psplex_from_fbe
+use ef_circuit, only: nbnd, rbnd, zbnd, dr, dz
 
 implicit none
 
-double precision dumz
-integer i, j, k
-double precision t1, t2, t3, t4, z1, z2, z3, z4
-double precision x1, x2, x3, x4, y1, y2, y3, y4
-double precision arc1, arc2
+double precision, intent(out) :: dumz
+integer :: i, j
+double precision :: z1, z2, z3, z4, t1, t2, t3, t4, &
+    x1, x2, x3, y1, y2, y3, arc1, arc2
 double precision, external :: green_function
 
 write(*, *) 'spid par', psplex_from_fbe
@@ -440,49 +442,10 @@ return
 end subroutine psiplex_calc_ef
 
 !---------------------------------------------------------------------
-subroutine wrd_equilef  !gives back external flux on plasma boundary
-
-use ef_circuit
-
-implicit none
-
-! open(32, file='fort.4444')
-! write(32, *) r(1:nr2), z(1:nz2), jrz(1:nr2, 1:nz2)
-! close(32)
-! open(32, file='fort.4445')
-! write(32, *) psiextrz(1:nr2, 1:nz2)
-! close(32)
-! open(32, file='fort.4447')
-! write(32, *) psirz(1:nr2, 1:nz2)
-! close(32)
-
-return
-end subroutine wrd_equilef
-
-!---------------------------------------------------------------------
-subroutine wrd_equilef_pbe  !gives back external flux on plasma boundary
-
-use ef_circuit
-
-implicit none
-
-! open(32, file='fort.4444')
-! write(32, *) rpol(1:nrho, 1:nteta), zpol(1:nrho, 1:nteta), jrhoteta(1:nrho, 1:nteta)
-! close(32)
-! open(32, file='fort.4445')
-! write(32, *) rpul(1:nrho, 1:nteta), zpul(1:nrho, 1:nteta), psirhoteta(1:nrho, 1:nteta)
-! close(32)
-! open(32, file='fort.4447')
-! write(32, *) psia_1d(1:nrho), ffp_1d(1:nrho), ppp_1d(1:nrho)
-! close(32)
-
-return
-end subroutine wrd_equilef_pbe
-
-!---------------------------------------------------------------------
 subroutine find_demo_gaps_efff(ngaps, demo_gaps, geom1d)
 
-use ef_circuit
+use errors_params, only: err_gaptolez
+use ef_circuit, only: psibnd
 
 implicit none
 
@@ -496,19 +459,19 @@ double precision dumx0, dumy0, dumxx, dumyy, d_step
 double precision gapmin, gapmax, x00, y00, x002, y002
 double precision tolez, bolez, dur1, dur2
 integer onlypos
-tolez=err_gaptolez
 
-d_step=0.1 !advance in 1 cm steps
-n_iterz=100
-gapmin=-1.5
-gapmax=2.5
-up=psibnd
+tolez = err_gaptolez
+
+d_step = 0.1 !advance in 1 cm steps
+n_iterz = 100
+gapmin = -1.5
+gapmax = 2.5
+up = psibnd
 
 do i=1, ngaps
 onlypos=nint(demo_gaps(i, 4))
 
-
-!first positive gap!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!first positive gap
 l_ref=d_step
 
 dumx0=demo_gaps(i, 1) ! R0
@@ -530,8 +493,8 @@ if (abs(l_ref) < tolez) goto 131
 
 if (u00 == up) goto 118
 if (u002 == up) goto 117
-if (u002 > up.and.u00 < up) goto 115
-if (u002 < up.and.u00 > up) goto 116
+if (u002 > up .and. u00 < up) goto 115
+if (u002 < up .and. u00 > up) goto 116
 
 
 !case with no intersection: larger 1. m
@@ -655,23 +618,28 @@ end subroutine find_demo_gaps_efff
 subroutine find_demo_meas2021_equilef(nbexp, nfexp, br_in, br_out,  &
     flux_in, flux_out, ncoilzzz, pjk, dddc)
 
-use ef_circuit
-implicit none
-integer nbexp, nfexp, i, j, k, i0, j0, ncoilzzz
-double precision br_in(nbexp, 3), br_out(nbexp), pjk(ncoilzzz)
-double precision flux_in(nfexp, 2), flux_out(nfexp)
-double precision br1, bz1, brr, brz, bzr, bzz, dum0, dddc(200)
+use ef_circuit, only: nconduc, curconduc, dpc
 
-pjk(1:nconduc)=curconduc(1:nconduc)
-dddc(1:nconduc)=dpc(1:nconduc)
+implicit none
+
+integer, intent(in) :: nbexp, nfexp, ncoilzzz
+double precision, intent(in)  :: br_in(nbexp, 3), flux_in(nfexp, 2)
+double precision, intent(out) :: br_out(nbexp), flux_out(nfexp), dddc(200)
+double precision :: pjk(ncoilzzz)
+
+integer :: i
+double precision :: br1, bz1, brr, brz, bzr, bzz, dum0
+
+pjk(1:nconduc) = curconduc(1:nconduc)
+dddc(1:nconduc) = dpc(1:nconduc)
 
 do i=1, nbexp
-call find_fields_interp_ef(br_in(i, 1), br_in(i, 2), dum0, br1, bz1, brr, brz, bzr, bzz)
-br_out(i)=br1*cos(br_in(i, 3))+bz1*sin(br_in(i, 3))	
+    call find_fields_interp_ef(br_in(i, 1), br_in(i, 2), dum0, br1, bz1, brr, brz, bzr, bzz)
+    br_out(i) = br1*cos(br_in(i, 3)) + bz1*sin(br_in(i, 3))	
 enddo
 
 do i=1, nfexp
-call find_fields_interp_ef_psionly(flux_in(i, 1), flux_in(i, 2), flux_out(i)) 
+    call find_fields_interp_ef_psionly(flux_in(i, 1), flux_in(i, 2), flux_out(i)) 
 enddo
 
 return
@@ -680,11 +648,12 @@ end subroutine find_demo_meas2021_equilef
 !---------------------------------------------------------------------
 subroutine psi_external_calc_ef
 
-use ef_circuit
-use green_matrix
+use ef_circuit, only: nr2, nz2, nconduc, curconduc, psiextrz
+use green_matrix, only: greeni
 
 implicit none
-integer i, j, k
+
+integer :: i, j
 
 do j=1, nz2	
     do i=1, nr2	
@@ -815,7 +784,7 @@ end subroutine least_square_biquad_ef
 !---------------------------------------------------------------------
 subroutine exact_biquad_ef(r, z, u, n, ccc, rax, zax, uax, derivs, dr, dz)
 
-use errors_params
+use errors_params, only: err_find_biquad
 
 implicit none
 
@@ -1023,100 +992,82 @@ real*8 function frlim_ef(dp, ylim, rx, zx, rm, zm)
 
 implicit none
 
-double precision dp(5), dxx, dxy, dyy, ylim, rx, zx, rm, zm
-double precision disc, cc, cdpls, cdmns, ang1, ang2, c1, dl2x, c2, dl2y
+double precision, intent(in) :: dp(5), ylim, rx, zx, rm, zm
+double precision :: dxx, dxy, dyy, disc, cc, cdpls, cdmns, ang1, ang2, c1, dl2x, c2, dl2y
 
-Dxx=dp(3)
-Dxy=dp(4)
-Dyy=dp(5)
+Dxx = dp(3)
+Dxy = dp(4)
+Dyy = dp(5)
 
-disc=(Dxy/Dyy)**2 - Dxx/Dyy
+disc = (Dxy/Dyy)**2 - Dxx/Dyy
 
-if(Disc < 0.) then
-
-cc=(zm-zx)/(rm-rx)
-
-cc=-1.d0/cc
-go to 100
-
-endif
-
-cdpls = -Dxy/Dyy + dsqrt(disc)
-cdmns = -Dxy/Dyy - dsqrt(disc)
-
-ang1 = 0.5d0*(datan(cdpls)+datan(cdmns))
-ang2 =-0.5d0*(datan(1.d0/cdpls)+datan(1.d0/cdmns))
-
-
-!c.........calculation D2u/Dl2(direction ang1    )
-
-c1=dtan(ang1)
-Dl2x=Dyy*c1*c1+2.d0*Dxy*c1+Dxx
-
-!c.........calculation D2u/Dl2(direction ang2    )
-
-c2=dtan(ang2)
-Dl2y=Dyy*c2*c2+2.*Dxy*c2+Dxx
-
-if(Dl2x < 0.) then
-
-cc=c1
-
-elseif(Dl2y < 0.) then
-
-cc=c2
-
+if (Disc < 0.) then
+    cc = (zm - zx)/(rm - rx)
+    cc = -1.d0/cc
 else
+    cdpls = -Dxy/Dyy + dsqrt(disc)
+    cdmns = -Dxy/Dyy - dsqrt(disc)
+    ang1 =  0.5d0*(datan(cdpls) + datan(cdmns))
+    ang2 = -0.5d0*(datan(1.d0/cdpls) + datan(1.d0/cdmns))
 
-cc=(zm-zx)/(rm-rx)
+! calculation D2u/Dl2(direction ang1    )
+    c1 = dtan(ang1)
+    Dl2x = Dyy*c1**2 + 2.d0*Dxy*c1 + Dxx
 
-cc=-1.d0/cc
-
+! calculation D2u/Dl2(direction ang2    )
+    c2 = dtan(ang2)
+    Dl2y = Dyy*c2**2 + 2.*Dxy*c2 + Dxx
+    if (Dl2x < 0.) then
+        cc = c1
+    else if (Dl2y < 0.) then
+        cc = c2
+    else
+        cc = (zm - zx)/(rm - rx)
+        cc = -1.d0/cc
+    endif
 endif
 
- 100      continue
-
-frlim_ef=rx+(ylim-zx)/cc
+frlim_ef = rx + (ylim - zx)/cc
 
 return
 end function frlim_ef
 
 !---------------------------------------------------------------------
 subroutine nine_point_regression(r0, z0, pos_xpoint, ddpsi, f00)
-use ef_circuit
+
+use ef_circuit, only: nr1, nz1, r, z, dr, dz, psirz
 
 implicit none
 
 integer iax, jax, i, j, k, d
 double precision pos_xpoint(2)
 double precision r0, z0, f00, xub(90), bub(90), yub(90)
-double precision f0, fr0, fz0, frr0, fzz0, frz0, fr2z0, frz20, fr2z20
-double precision f(9), drad, dzad, t1, t2, det, matrix(2, 2)
-double precision c1, c2, c3, c4, c5, c6, c7, c8, c9, ddpsi(8), c(6)
+double precision ddpsi(8), c(6)
 integer i1, i2, i3, i4
 
 call find_actual_index_ef(r0, z0, iax, jax)
+
 !find true axis
-k=0
-i3=-1
-i1=-1
-i4=1
-i2=1
-if (iax == 2) i3=-1
-if (jax == 2) i1=-1
+k  = 0
+i3 = -1
+i1 = -1
+i4 = 1
+i2 = 1
+
+if (iax ==   2) i3=-1
+if (jax ==   2) i1=-1
 if (iax == nr1) i4=1
 if (jax == nz1) i2=1
 
-d=(i4-i3+1)*(i2-i1+1)
-
+d = (i4 - i3 + 1)*(i2 - i1 + 1)
 
 do j=i3, i4
-do i=i1, i2
-k=k+1
-xub(k)=r(iax+i)
-yub(k)=z(jax+j)
-bub(k)=psirz(iax+i, jax+j)
-enddo
+    do i=i1, i2
+        k = k + 1
+        xub(k) = r(iax+i)
+        yub(k) = z(jax+j)
+        bub(k) = psirz(iax+i, jax+j)
+    enddo
 enddo
 
 call exact_biquad_ef(xub(1:d), yub(1:d), bub(1:d), d,  &
@@ -1128,17 +1079,19 @@ end subroutine nine_point_regression
 !---------------------------------------------------------------------
 subroutine nine_point_coeffs_only(r0, z0, c, c1, c2)
 
-use ef_circuit, only: psirz,nr1,nz1,r,z
+use ef_circuit, only: psirz, nr1, nz1, r, z
 
 implicit none
 
 double precision, intent(in) :: r0, z0
 double precision, intent(out) :: c1, c2
 double precision, intent(out), dimension(9) :: c
+
 integer :: iax, jax, i, j, k, d, i1, i2, i3, i4
 double precision, dimension(90) :: bub
 
 call find_actual_index_ef(r0, z0, iax, jax)
+
 c1 = r(iax)
 c2 = z(jax)
 
@@ -1584,83 +1537,97 @@ return
 end function green_function_non_identity
 
 !-----------------------------------------------------------------------------------
-subroutine boundary_ef(g)
+subroutine boundary_ef(green_fun)
 
 ! new bc is integral_over_boundary of -Green * dg/dn * dl
-use ef_circuit
+use pi_vars, only: GPI
+use ef_circuit, only: nr1, nz1, nr2, nz2, i_dim2
 
 implicit none
-integer i, j, k
-double precision integr(i_dim2, 4), g(i_dim2, i_dim2), dgdn(i_dim2), greenf
-integer jcounty
 
-integr=0.
-jcounty=0
+double precision, intent(inout), dimension(i_dim2, i_dim2) :: green_fun
+integer :: i, jcounty
+double precision, dimension(i_dim2, 4) :: integr
+
+integr = 0.
+jcounty = 0
+
 ! lower side
 do i=2, nr1
-call bgint_ef(r(i), z(1), integr(i, 1), g, jcounty)
+    call bgint_ef(integr(i, 1), green_fun, jcounty)
 enddo
+
 ! right side
 do i=2, nz1
-call bgint_ef(r(nr2), z(i), integr(i, 2), g, jcounty)
+    call bgint_ef(integr(i, 2), green_fun, jcounty)
 enddo
+
 ! upper side
 do i=2, nr1
-call bgint_ef(r(i), z(nz2), integr(i, 3), g, jcounty)
+    call bgint_ef(integr(i, 3), green_fun, jcounty)
 enddo
+
 ! left side
 do i=2, nz1
-call bgint_ef(r(1), z(i), integr(i, 4), g, jcounty)
+    call bgint_ef(integr(i, 4), green_fun, jcounty)
 enddo
-g(2:nr1, 1)=integr(2:nr1, 1)/GPI
-g(nr2, 2:nz1)=integr(2:nz1, 2)/GPI
-g(2:nr1, nz2)=integr(2:nr1, 3)/GPI
-g(1, 2:nz1)=integr(2:nz1, 4)/GPI
+
+green_fun(2:nr1,   1) = integr(2:nr1, 1)/GPI
+green_fun(nr2, 2:nz1) = integr(2:nz1, 2)/GPI
+green_fun(2:nr1, nz2) = integr(2:nr1, 3)/GPI
+green_fun(  1, 2:nz1) = integr(2:nz1, 4)/GPI
 
 return
 end subroutine boundary_ef
 
 !-----------------------------------------------------------------------------------
-subroutine bgint_ef(r0, z0, bgintsol, g, jcounty)
+subroutine bgint_ef(bgintsol, green_in, jcounty)
 
-! calculates  integral_over_boundary of -Green * dg/dn * dl for point r0, z0
-use ef_circuit
+! calculates  integral_over_boundary of -Green * dg/dn * dl
+use ef_circuit, only: nr1, nr2, nz1, i_dim2, green_bnd_f, r, dr, dz
 
 implicit none
 
-integer i, j, k, jcounty
-double precision g(i_dim2, i_dim2), dgdn(i_dim2), greenf
-double precision r0, z0, bgintsol
+double precision, intent(in), dimension(i_dim2, i_dim2) :: green_in
+integer, intent(inout) :: jcounty
+double precision, intent(out) :: bgintsol
 
-bgintsol=0.
+integer :: j
+double precision :: dgdn(i_dim2), greenf
+
+bgintsol = 0.
+
 ! lower side
 do j=2, nr1
-jcounty=jcounty+1
-greenf=green_bnd_f(jcounty)
-dgdn(j)=-g(j, 2)/dz*greenf*dr/r(j)
+    jcounty = jcounty + 1
+    greenf  = green_bnd_f(jcounty)
+    dgdn(j) = -green_in(j, 2)/dz*greenf*dr/r(j)
 enddo
-bgintsol=bgintsol-sum(dgdn(2:nr1))
-!right side	
+bgintsol = bgintsol - sum(dgdn(2:nr1))
+
+!right side
 do j=2, nz1
-jcounty=jcounty+1
-greenf=green_bnd_f(jcounty)
-dgdn(j)=-g(nr1, j)/dr*greenf*dz/(r(nr2)+r(nr1))*2.
+    jcounty = jcounty + 1
+    greenf  = green_bnd_f(jcounty)
+    dgdn(j) = -green_in(nr1, j)/dr*greenf*dz/(r(nr2) + r(nr1))*2.
 enddo
-bgintsol=bgintsol-sum(dgdn(2:nz1))
+bgintsol = bgintsol - sum(dgdn(2:nz1))
+
 ! upper side
 do j=2, nr1
-jcounty=jcounty+1
-greenf=green_bnd_f(jcounty)
-dgdn(j)=-g(j, nz1)/dz*greenf*dr/r(j)
+    jcounty = jcounty + 1
+    greenf  = green_bnd_f(jcounty)
+    dgdn(j) = -green_in(j, nz1)/dz*greenf*dr/r(j)
 enddo
-bgintsol=bgintsol-sum(dgdn(2:nr1))
-!left side	
+bgintsol = bgintsol - sum(dgdn(2:nr1))
+
+!left side
 do j=2, nz1
-jcounty=jcounty+1
-greenf=green_bnd_f(jcounty)
-dgdn(j)=-g(2, j)/dr*greenf*dz/(r(1)+r(2))*2.
+    jcounty = jcounty + 1
+    greenf  = green_bnd_f(jcounty)
+    dgdn(j) = -green_in(2, j)/dr*greenf*dz/(r(1) + r(2))*2.
 enddo
-bgintsol=bgintsol-sum(dgdn(2:nz1))
+bgintsol = bgintsol - sum(dgdn(2:nz1))
 
 return
 end subroutine bgint_ef
@@ -1674,41 +1641,39 @@ subroutine check_xpoint_connection_axis(rx, zx, rax, zax, dr, dz, icheck)
 implicit none
 
 double precision,  intent(in) :: rx, zx, rax, zax, dr, dz
-integer,  intent(out) :: icheck
+integer, intent(out) :: icheck
 
+integer :: nsteps, i
 double precision :: angl, dbl, dd, t1, t2, t3, t4, t5
 double precision :: z1, z2, psiold, z3
-integer nsteps, i
 
 call find_angle_ef(rax, zax, rx, zx, angl)
 
-dbl=sqrt((rx-rax)**2+(zx-zax)**2)
-dd=sqrt(dr**2+dz**2)
-nsteps=nint(dbl/dd)
-dd=dbl/nsteps !perfect ratio	
+dbl = sqrt((rx - rax)**2 + (zx - zax)**2)
+dd  = sqrt(dr**2 + dz**2)
+nsteps = nint(dbl/dd)
+dd = dbl/nsteps !perfect ratio	
 
 
-icheck=1
-psiold=0.	
+icheck = 1
+psiold = 0.	
 do i=2, nsteps
-t1=rax+dd*(i-1)*cos(angl)
-t2=zax+dd*(i-1)*sin(angl)
-t3=rax+dd*i*cos(angl)
-t4=zax+dd*i*sin(angl)
-call find_fields_interp_ef_psionly(t1, t2, z1)
-call find_fields_interp_ef_psionly(t3, t4, z2)
-z3=(z2-z1)*psiold
-psiold=(z2-z1)
-if (z3<0) then
-icheck=0
-goto 300		
-endif
-if (dd*i >= dbl) then
-goto 300		
-endif
+    t1 = rax + dd*(i - 1)*cos(angl)
+    t2 = zax + dd*(i - 1)*sin(angl)
+    t3 = rax + dd*i*cos(angl)
+    t4 = zax + dd*i*sin(angl)
+    call find_fields_interp_ef_psionly(t1, t2, z1)
+    call find_fields_interp_ef_psionly(t3, t4, z2)
+    z3 = (z2 - z1)*psiold
+    psiold = z2 - z1
+    if (z3 < 0) then
+        icheck = 0
+        EXIT
+    endif
+    if (dd*i >= dbl) then
+        EXIT	
+    endif
 enddo
-
-300 continue	
 
 return
 end subroutine check_xpoint_connection_axis
@@ -1734,113 +1699,128 @@ end subroutine ainv_matrix_def
 
 !---------------------------------------------------------------------
 subroutine fst3(f, d, m, n)
-dimension f(n), d(1)
-j1=1
-n1=n
-j3=-1
-f(n)=d(1)*f(n)
-do 40 i=1, m-1
-n2=n1
-n1=n1/2
-n6=0
-do 30 j=1, j1
-j2=j1+j
-j3=-j3
-a=d(j2-j3)
-b=d(j2)+d(j2)
-n3=n6+1
-n6=n2+n6
-n5=n6-n1
-n4=n5+n5
-do 10 k=n3, n5-1
-k1=n4-k
-f(k)=f(k)+f(k1)
-10 f(k1)=f(k1)*b
-f(n5)=f(n5)*a
-do 20 k=n3, n5
-t=f(k+n1)
-f(k+n1)=f(k)-t
-20 f(k)=f(k)+t
-30 continue
-40 j1=j1+j1
-50 do 60 i=1, j1
-i1=i+i
-i2=i1-1
-j3=-j3
-t=d(j1+i-j3)*f(i2)
-f(i2)=t+f(i1)
-60 f(i1)=t-f(i1)
+
+implicit none
+
+integer, intent(in) :: m, n
+double precision, intent(in) :: d(1)
+double precision, intent(inout) :: f(n)
+
+integer :: i, j, k, i1, i2, j1, j2, j3, k1, n1, n2, n3, n4, n5, n6
+double   precision :: a, b, t
+
+j1 = 1
+n1 = n
+j3 = -1
+f(n) = d(1)*f(n)
+
+do i=1, m-1
+    n2 = n1
+    n1 = n1/2
+    n6 = 0
+    do j=1, j1
+        j2 = j1 + j
+        j3 = -j3
+        a = d(j2-j3)
+        b = d(j2) + d(j2)
+        n3 = n6 + 1
+        n6 = n2 + n6
+        n5 = n6 - n1
+        n4 = n5 + n5
+        do k=n3, n5-1
+            k1 = n4 - k
+            f(k)  = f(k) + f(k1)
+            f(k1) = f(k1)*b
+        enddo
+        f(n5) = f(n5)*a
+        do k=n3, n5
+            t = f(k+n1)
+            f(k+n1) = f(k) - t
+            f(k)    = f(k) + t
+        enddo
+    enddo
+    j1 = j1 + j1
+enddo
+
+do i=1, j1
+    i1 = i + i
+    i2 = i1-1
+    j3 = -j3
+    t = d(j1+i-j3)*f(i2)
+    f(i2) = t + f(i1)
+    f(i1) = t - f(i1)
+enddo
+
 return
 end subroutine fst3
 
 !---------------------------------------------------------------------
 subroutine find_closest_xpoints(rx, zx, ierr, n_add)
 
-use ef_circuit,  only: rbnd, zbnd, nteta, r, z, nr1, nz1,  & 
-& lim_maxR, lim_minR, lim_minZ, lim_maxZ, dr, dz
+use ef_circuit,  only: rbnd, zbnd, nteta, r, z, nr1, nz1, & 
+    lim_maxR, lim_minR, lim_minZ, lim_maxZ, dr, dz
 
 !this routine finds the x-points close to the plasma boundary,  irrespective of other x-points
 
 implicit none
 
-integer i, j, i0, j0, i1, j1, iinc, inow, jnow, nx, ierr, n_add, jinc
-double precision posx(2), x1, tolez, toleb, rx(20), zx(20)
-double precision ddipsi(5), bx0, bx1, bx2
-integer jcycl(250), istart
+integer, intent(out) :: ierr, n_add
+double precision, intent(out), dimension(20) :: rx, zx
 
-bx1=sqrt(dr**2+dz**2)
-tolez=1000
-rx=1000.
-zx=1000.
-nx=0
-ierr=1
-n_add=0
-jinc=0
+integer :: i, jinc, nx
+integer, dimension(250) :: jcycl
+double precision :: bx0, bx1, x1
+double precision, dimension(2) :: posx
+double precision, dimension(5) :: ddipsi
 
-!write(*, *) 'find clos', nteta, rbnd(1:nteta), zbnd(1:nteta)
+bx1 = sqrt(dr**2 + dz**2)
+rx = 1000.
+zx = 1000.
+nx    = 0
+ierr  = 1
+n_add = 0
+jinc  = 0
+
 if (rbnd(1) <= r(1)) return ! boundary doesnt exist yet
-ierr=0
+
+ierr = 0
 
 do i=1, nteta !cycle over boundary points
 !around each boundary point,  do a 3-layer X-point search (25 point search x boundary point)
-!	write(*, *) 'find closest x point', i, rbnd(i), zbnd(i)
-call nine_point_regression_follow(rbnd(i), zbnd(i), posx, ddipsi, x1)
-!	write(*, *) 'find closest x point', i, rbnd(i), zbnd(i), posx, x1
-if (isnan(x1)) then
-else
-if (posx(1) <= lim_maxR.and.posx(1) >= lim_minR.and.posx(2) >= lim_minZ.and.posx(2) <= lim_maxZ) then
-jinc=jinc+1
-jcycl(jinc)=i
-endif
-endif
+    call nine_point_regression_follow(rbnd(i), zbnd(i), posx, ddipsi, x1)
+    if (.not. isnan(x1)) then
+        if (posx(1) <= lim_maxR .and. posx(1) >= lim_minR .and. posx(2) >= lim_minZ .and. posx(2) <= lim_maxZ) then
+            jinc = jinc + 1
+            jcycl(jinc) = i
+        endif
+    endif
 enddo
 
 if (jinc == 0) then
-ierr=1
-return
+    ierr = 1
+    return
 endif
 
 call nine_point_regression_follow(rbnd(jcycl(1)), zbnd(jcycl(1)), posx, ddipsi, x1)
-n_add=1
-rx(1)=posx(1)
-zx(1)=posx(2)
+n_add = 1
+rx(1) = posx(1)
+zx(1) = posx(2)
 
 if (jinc == 1) then
-return
+    return
 endif
 
 if (jinc >= 2) then
 !remove double counts
-do i=2, jinc
-call nine_point_regression_follow(rbnd(jcycl(i)), zbnd(jcycl(i)), posx, ddipsi, x1)
-bx0=sqrt((rx(i-1)-posx(1))**2+(zx(i-1)-posx(2))**2)
-if (bx0 <= bx1) then
-else
-n_add=n_add+1
-rx(n_add)=posx(1)
-zx(n_add)=posx(2)		
-endif		
-enddo
+    do i=2, jinc
+        call nine_point_regression_follow(rbnd(jcycl(i)), zbnd(jcycl(i)), posx, ddipsi, x1)
+        bx0 = sqrt((rx(i-1) - posx(1))**2 + (zx(i-1)-posx(2))**2)
+        if (bx0 > bx1) then
+            n_add = n_add + 1
+            rx(n_add) = posx(1)
+            zx(n_add) = posx(2)
+        endif
+    enddo
 endif
 
 if (n_add == 0) ierr=1
