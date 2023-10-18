@@ -38,10 +38,10 @@ subroutine read_input
 use parameter_inc, only: NTVAR
 use const_inc
 use status_inc
-use outcmn_inc, only: AWD, exp_file, equ_file, rev_file, TASK, machine, CPT, &
+use outcmn_inc, only: AWD, exp_file, nml_file, equ_file, rev_file, &
+    TASK, machine, CPT, &
     TASKID, VERSION, AVERS, ARLEAS, AEDIT, COLTAB, IFDFVX, IFDFAX, KOGDA, KTO, &
     PRNAME, CFNAME, SRNAME, EXARNM, NBFILE, MSFILE, wall_gc_file, &
-    exp_file, nml_file, machine, &
     NPRNAM, NCFNAM, NSRNAM, NEXNAM, FILTER, &
     NGR, NBNT, NCNBT, NBDMAX, NBDTMAX, NRDX, NTARR, NGRIDX, NTYPEX, NRW, &
     CCOILX, VCOILX, BNDR, BNDZ, BNDTIM, DATARR, TIMEX, GDEX, GDEY, GRAP, TIM7
@@ -63,13 +63,13 @@ logical :: exilog, file_existence
 integer :: jarr, INTYPE, jtype, SYSTEM, jbdry, ntim, ntim1
 integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
 integer :: KAB, KABC, KAWALL, KRTOR, KELONM, KTRICH
-integer :: n_var, n_color, n_words
+integer :: n_var, n_color, n_words, i_filter_glob
 integer :: nt_u, nx_u, ios, ndim_u, jvar, jrt, jt, jthe
 
 double precision :: resize
 double precision :: tbeg_nml, tend_nml, tpause_nml
 double precision, allocatable :: t_u(:), x_u(:), var_u(:), bnd_rz(:)
-double precision :: XBDRY, YB, YB1, YXB, YXB1, ALFA, &
+double precision :: XBDRY, YB, YB1, YXB, YXB1, ALFA, ALFA_GLOB, &
     VRDATA, FACTOR, TIMEVR, VRERR, ROC3A, YTP=-1.d9
 character(len=6) :: VNAM, VNAMO, VNAMU, VNAMX, VTIM, VDAT, VERR, VARNAM, ARRNAM, keyword
 character(len=30) :: rholbl
@@ -97,6 +97,7 @@ tbeg_nml   = -1.
 tend_nml   = -1.
 tpause_nml = -1.
 NITREQ = 1. ! Initialization: g95 does not like it in blockdata
+i_filter_glob = 0 ! if i_filter_glob = 1, a global filter is set
 
 !----------------------------------------------------------------------|
 ! Parse file ".exe/version"
@@ -492,6 +493,7 @@ read(201, '(A132)', ERR=906, END=39) STRI
 NGR = 0
 jarr = 0
 NBNT = 0
+ALFA_GLOB = 0.001
 
 parse_exp_2d: do
 
@@ -500,11 +502,12 @@ parse_exp_2d: do
     ntim = 0
     jbdry = 0
     factor = 1.
-    ALFA = 0.001
+    ALFA = ALFA_GLOB
 
     read(201, '(A132)', iostat=ios) STRI
     if (ios < 0) EXIT parse_exp_2d
     if (ios > 0) call astra_stop(err_format)
+    if (STRI(1:6) == 'FILTER') i_filter_glob = 1
     lin_upper = to_upper(STRI)
     if (LEN_TRIM(lin_upper) == 0) CYCLE parse_exp_2d
     if (lin_upper(1: 1) == '!') CYCLE parse_exp_2d
@@ -541,6 +544,10 @@ parse_exp_2d: do
                 CASE('FILTER')
                     read(strarray(j+1), *, iostat=ios) ALFA
                     if (ios /= 0) call astra_stop(err_format)
+                    if (i_filter_glob == 1) then
+	         	alfa_glob = alfa
+			i_filter_glob = 0
+		    endif
                 CASE('FACTOR')
                     read(strarray(j+1), *, iostat=ios) factor
                     if (ios /= 0) call astra_stop(err_format)
