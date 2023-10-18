@@ -99,6 +99,8 @@ double precision, dimension(10) :: fs_pellet
 double precision, dimension(24) :: fs_valves
 double precision, dimension(500) :: fs_magnetics
 double precision, dimension(100, 2) :: fs_cforces
+double precision, dimension(50, 2) :: fs_bnd_in
+integer :: fs_bnd_yes
 
 end module fs_coupling_variables
 

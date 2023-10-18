@@ -61,8 +61,6 @@ save demo_gaps
 namelist / spider / kprs, k_grids, epsros, enelss, key_plcs, &
     toric_fourc, toric_file, strahl_file, strahl_fourc, write_coils_diagn, &
     k_filessss, psplexavg, psplexavgexp, fixadapgrid
-namelist / equilef / refit_mode,solve_fix,execute_plasma,&
- & n_of_newton_iterations
 
 !for PBE , use p and cu, key_equil=key_dmf=-10, nstep = 0 only at first iteration
 key_equil = 0
@@ -93,12 +91,8 @@ if (nstep == 0) then
     psplexavg = 0. 
     psplexavgexp = 0.
     fix_adapgrid = 0
-    refit_mode=0
-    solve_fix=0
-    execute_plasma=1
-    n_of_newton_iterations=7
-    raxis_astra=rtor+shift
-    zaxis_astra=updwn
+    raxis_astra = rtor + shift
+    zaxis_astra = updwn
     fname = 'exp/nml/'//trim(exp_file)
     INQUIRE( FILE=trim(fname), EXIST=file_existence) 
     if (file_existence) then

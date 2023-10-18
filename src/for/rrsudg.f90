@@ -1,6 +1,6 @@
 subroutine rrsudg(time_ext, dt_smlk)
 
-use fs_coupling_variables, only: fs_dt_smlk, fs_ipl_in
+use fs_coupling_variables, only: fs_dt_smlk, fs_ipl_in, fs_bnd_in, fs_bnd_yes
 use const_inc, only: BTOR, CPEL1, CIMP3, CBND3, &
         ZRD70, ZRD71, ZRD73, ZRD84, ZRD93, &
         CSCL1, CDYM3, CDVM7, CDWM5, CDWM6, &
@@ -15,7 +15,7 @@ use outcmn_inc, only: machine, vcoil
 implicit none
 
 real*8, intent(out) :: time_ext, dt_smlk
-real*8 :: vcoiltmp(10), gvcoil(15)
+real*8 :: vcoiltmp(10), gvcoil(15), dummy
 
 save vcoiltmp
 
@@ -29,10 +29,11 @@ if (trim(MACHINE) == 'demo') then
         CHE1, CDHJ1, CDHJ2, &
         CHE3, CDHJ3, CDHJ4, &
         CV3, CDHJ5, &
-        CDMJ1, CDMJ2, CDMJ3, CDMJ4, vcoil, &
-        time_ext, CV6, fs_dt_smlk)
+        CDMJ1, CDMJ2, CDMJ3, CDMJ4, vcoil, fs_ipl_in, &
+        fs_bnd_in(1:50, 1), fs_bnd_in(1:50, 2), dummy, time_ext, CV6, fs_dt_smlk)
         CV13 = MAX(1., CV13)  ! finite pump speed to avoid NaN
         dt_smlk = fs_dt_smlk  ! simulink tau defined in equ log
+	fs_bnd_yes = nint(dummy)
 elseif (trim(MACHINE) == 'iter') then
     call shmr( &
         CPEL1, CIMP3, CV4,  CBND3, &

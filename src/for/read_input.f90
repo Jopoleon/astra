@@ -41,6 +41,7 @@ use status_inc
 use outcmn_inc, only: AWD, exp_file, equ_file, rev_file, TASK, machine, CPT, &
     TASKID, VERSION, AVERS, ARLEAS, AEDIT, COLTAB, IFDFVX, IFDFAX, KOGDA, KTO, &
     PRNAME, CFNAME, SRNAME, EXARNM, NBFILE, MSFILE, wall_gc_file, &
+    exp_file, nml_file, machine, &
     NPRNAM, NCFNAM, NSRNAM, NEXNAM, FILTER, &
     NGR, NBNT, NCNBT, NBDMAX, NBDTMAX, NRDX, NTARR, NGRIDX, NTYPEX, NRW, &
     CCOILX, VCOILX, BNDR, BNDZ, BNDTIM, DATARR, TIMEX, GDEX, GDEY, GRAP, TIM7
@@ -57,7 +58,7 @@ implicit none
 
 integer, parameter :: MPEX=101, MSIGEX=1, MTEX=50, MSIG=1, MEXT=MPEX*MTEX
 
-logical :: exilog
+logical :: exilog, file_existence
 
 integer :: jarr, INTYPE, jtype, SYSTEM, jbdry, ntim, ntim1
 integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
@@ -170,6 +171,13 @@ file_in = 'tmp/' // TRIM(exp_file) // TRIM(equ_file) // '.nml'
 OPEN(161, FILE=TRIM(file_in), delim='apostrophe')
 READ(161, nml=astra_log, iostat=ios)
 CLOSE(161)
+
+!define namelist file nml_file
+nml_file = 'exp/nml/' // trim(exp_file)
+INQUIRE(FILE=trim(nml_file), EXIST=file_existence)
+if (.not. file_existence) then
+   nml_file = 'exp/nml/' // trim(machine)
+endif
 
 call path_split(rev_file, dir_path, fname, jpos)
 if (LEN_TRIM(fname) == 0) fname = 'profil.dat'

@@ -5,9 +5,9 @@ use const_inc, only: ROC, NA1, IPL, TIME, TAU, TSTART, IPEQL, NEQUIL, MEQUIL, IP
     CRAD4, CMHD2, CHE3, CSCL4, CDWM1, CDWM2, CDWM7, &
     CDJM1, CDJM2, CDJM3, CDJM4, CDJM6, CDJM7, &
     CDMJ5, CDMJ6, CDMJ7, CDHJ7, CNEUT1, CNEUT2, &
-    ZRD15, ZRD77, ZRD78, ZRD93, CRAD3
+    ZRD15, ZRD77, ZRD78, ZRD93, CRAD3, btor, rtor
 use status_inc, only: NE, TE, TI, ZEF, HE, XI, PE, PI, NIBM, PRAD, &
-    MU, CU, UPL, F4, CAR34, CAR54, SHIF
+    MU, CU, UPL, F4, CAR34, CAR54, SHIF, ipol, fp, pfast, pblon, pbper, ni
 use outcmn_inc, only: machine, ccoil
 use fenix_params, only: ipl_bf_bkdw
 use flight_sim_geometrics, only: geom1d
@@ -18,16 +18,16 @@ implicit none
 
 integer :: mmequi, j, ntetap, neqlp, i_error
 integer, dimension(6) :: gapnum
-double precision :: qalp1, qalp2, qrad1, qrad2, QRADR, QTOKR, QDTR, QEDWTR, QIDWTR, &
+double precision :: qalp1, qalp2, qrad1, qrad2
+double precision, external :: QRADR, QTOKR, QDTR, QEDWTR, QIDWTR, &
     WTOZR, LI3R, BETP3R
-double precision, dimension(NA1) :: ne1, ne2
+double precision, dimension(NA1) :: ne1, ne2, pressure
 double precision, dimension(NRD) :: te_0, te_1, te_now, ne_0, ne_1, ne_now
-double precision, dimension(10) :: ccoil_0, ccoil_1, ccoil_now
+double precision, dimension(10) :: ccoil_0, ccoil_1, ccoil_now, ccoil_scramble
 double precision, dimension(32) :: geom1d_0, geom1d_1, geom1d_now
 double precision, dimension(500) :: magnetics
 double precision, dimension(660) :: yroutfull
 double precision, dimension(256, 256) :: yrout, yzout
-double precision, dimension(10) :: ccoil_scramble
 
 double precision coil_forces(na1,2)
 double precision betp3r_0, LI3R_0, IPL_0, upl_0, &
@@ -90,7 +90,6 @@ save betp3r_0, LI3R_0, IPL_0, upl_0, &
     ccoil_now, &
     geom1d_now, time_now
 
-
 if (MACHINE(1:3) == 'dem') then
     i_error = 0 ! whether add noise latencies errors to diagnostics
     qalp1 = QDTR(ROC)
@@ -119,6 +118,9 @@ if (MACHINE(1:3) == 'dem') then
     magnetics(8) = geom1d(98) !Zcurr
     magnetics(9) = ipl*1.e6   !Ipl A
 
+    pressure(1:na1) = (te(1:na1)*ne(1:na1) + ti(1:na1)*ni(1:na1) + pfast(1:na1) + &
+        0.5*(pblon(1:na1) + pbper(1:na1)))*1602.  !Pascal
+
     call shmw( &
         TIME, &
         qalp1, qrad1, &
@@ -130,21 +132,17 @@ if (MACHINE(1:3) == 'dem') then
         1.d0/MU(1:NA1), &
         CU(1:NA1), &
         CCOIL(1:15)*1.e3, magnetics(1:439), & 
-        CRAD3, F4(1:NA1), ZEF(1:NA1), TI(1:NA1), SHIF(1:NA1))
+        CRAD3, F4(1:NA1), ZEF(1:NA1), TI(1:NA1), SHIF(1:NA1), &
+	FP(1:na1), IPOL(1:na1)*RTOR*BTOR, pressure(1:na1), li3r(roc), betp3r(roc))
 
 elseif (MACHINE(1:4) == 'iter') then
     i_error = 0 ! whether add noise latencies errors to diagnostics
-    qalp1 = QDTR(ROC)
-    qrad1 = QRADR(ROC)
-    NE1 = NE(1:NA1)
+!    qalp1 = QDTR(ROC)
+!    qrad1 = QRADR(ROC)
 
 ! QDTR: fusion power
 ! QRAD: radiated power
 ! NE: electron density profile
-    qalp1 = qalp2
-    qrad1 = qrad2
-    ne1 = ne2
-
 !    gapnum(1) = 16
 !    gapnum(2) = 23
 !    gapnum(3) = 30
@@ -160,12 +158,12 @@ elseif (MACHINE(1:4) == 'iter') then
 
     call shmw( &
         TIME, &
-        qalp1, qrad1, &
+        qdtr(roc), qradr(roc), &
         IPL, QTOKR(ROC) - qedwtr(ROC) - qidwtr(ROC), &
         CRAD4, CMHD2, CSCL4, CDWM1, &
         CDWM2, CDWM7, CDJM1, CDJM2, CDJM3, CDJM4, ZRD77, &
         CDMJ5, CDMJ6, CDMJ7, &
-        CNEUT1, CNEUT2, TE(1:NA1), NE1(1:NA1), &
+        CNEUT1, CNEUT2, TE(1:NA1), NE(1:NA1), &
         1.d0/MU(1:NA1), &
         CU(1:NA1), &
         CCOIL(1:15)*1.e3, magnetics(1:439))
@@ -206,7 +204,7 @@ else if (MACHINE(1:3) == 'aug') then
     mmequi = 2*ntetap
     do j=1,ntetap
         yroutfull(2*j-1) = yrout(neqlp, j)
-        yroutfull(2*j  ) = yzout(neqlp, j)
+	yroutfull(2*j  ) = yzout(neqlp, j)
     enddo
     if (TIME - TSTART <= ZRD93 +1.e-8) then
         if (plasma_up == 0) then
@@ -291,7 +289,7 @@ else if (MACHINE(1:3) == 'aug') then
 
     else
 
-200     continue
+200	continue
 
         betp3r_1 = betp3r(roc)
         LI3R_1 = LI3R(ROC)

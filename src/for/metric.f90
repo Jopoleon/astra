@@ -6,6 +6,7 @@ use const_inc, only: IPART, FTO, FTN, ROC, GP, BTOR, ROCO, RTOR, SHIFT, &
     ABC, ELONG, TRIAN, NB1, LEQ, IPEQL, &
     TIME, TSTART, TIMEQL, DTEQL, BTN
 use debugger, only: markloc, astra_stop
+use fs_coupling_variables, only: fs_bnd_yes
 
 implicit none
 
@@ -23,6 +24,7 @@ if (IPART == 1) then ! do only at initiation
     ROC = sqrt(FTO/GP/BTOR)
     ROCO = ROC
     VRO(1: NB1) = VR(1: NB1)
+    fs_bnd_yes = 0
 endif
 
 LEQ(5) = nint(IPEQL)
@@ -37,6 +39,12 @@ CASE(-1)  ! Take metric from exp/data_file
     ROC = ROC3A(RTOR, SHIFT, ABC, ELONG, TRIAN)
     FTO = GP*BTOR*ROC**2
     call set_external_metric ! Main grid: (jj-0.5)*h
+    call RHSEQ  ! this computes ffprime and pprime
+
+CASE(-6)  ! Take metric internally subroutine external file (so not X)
+    ROC = ROC3A(RTOR, SHIFT, ABC, ELONG, TRIAN)
+    FTO = GP*BTOR*ROC**2
+    call set_external_metric_2 ! Main grid: (jj-0.5)*h
     call RHSEQ  ! this computes ffprime and pprime
 
 CASE(0) ! No equilibrium solver (NEQUIL=0) .or. data initiation @ 1st entry
@@ -462,6 +470,144 @@ endif
 
 return
 end subroutine set_external_metric
+
+!---------------------------------------------------------------------
+subroutine extmetric_input
+! EQDSK creator from annular equilibrium, valid also for SPIDER adaptive grid!
+!
+! E Fable 2012
+
+use const_inc, only: NA1
+use status_inc, only: SHIF, ELON, TRIA, G33, IPOL, VR, SLAT, G11, G22, DRODA
+
+implicit none
+
+open(32, file='input_metric.dat')	
+read(32, '(5555E25.11)') SHIF(1:na1), elon(1:na1), tria(1:na1), & 
+    g33(1:na1), ipol(1:na1), vr(1:na1), slat(1:na1), g11(1:na1), & 
+    g22(1:na1), droda(1:na1)
+close(32)
+
+return
+end subroutine extmetric_input
+
+!---------------------------------------------------------------------
+subroutine set_external_metric_2
+
+! Set external metric  (Pereverzev 10.02.2005)
+
+use const_inc, only: RTOR, BTOR, ABC, ROC, HRO, HROX, &
+    SHIFT, ELONG, TRIAN, VOLUME, GP, GP2, NA, NA1, NAB
+use status_inc, only: SHIF, ELON, TRIA, SHX, ELX, TRX, &
+    G11, G22, G33, G11X, G22X, G33X, GRADRO, DRODA, DRODAX, &
+    IPOL, IPOLX, VR, VRS, VRX, RHO, XRHO, AMETR, SLAT, SLATX, &
+    BDB0, BDB02, B0DB2, BMINT, BMAXT, FOFB, VOLUM, SHEAR, FP, MU
+use debugger, only: markloc, debug
+use parse_utils, only: ifdefx2
+use numerical_tools, only: integr
+
+implicit none
+
+integer :: j
+double precision :: YNF, YR1
+
+call markloc('set_external_metric', debug_lev=3*debug)
+
+call extmetric_input
+
+
+YNF = RTOR*GP2**2
+do J=1, NA1
+    AMETR(J) = RHO(J)
+enddo
+
+!computes new roc
+
+ROC = VR(NA1)/GP2**2 * G33(NA1)/RTOR
+RHO(1: NA1) = XRHO(1: NA1)*ROC
+
+if (debug > 0) then
+    write(*, *) 'metric', RHO(1: 10),ROC
+    write(*, *) VR(1: 10)
+    write(*, *) G33(1: 10)
+    write(*, *) IPOL(1: 10)
+endif
+HRO  =  RHO(2) - RHO(1)
+HROX = (RHO(2) - RHO(1))/ROC
+
+!boundary
+ELONG = ELON(NA1)
+TRIAN = TRIA(NA1)
+SHIFT = SHIF(NA1)
+
+! Flux grid: j*h
+do J=1, NA
+    VRS(j) = 0.5*(VR(J+1) + VR(j))
+enddo
+
+! Linear extrapolation
+SLAT(NA1)  = 1.5*SLAT(NA)  - 0.5*SLAT(NA-1)
+VRS(NA1)   = 1.5*VRS(NA)   - 0.5*VRS(NA-1)
+G11(NA1)   = 1.5*G11(NA)   - 0.5*G11(NA-1)
+G22(NA1)   = 1.5*G22(NA)   - 0.5*G22(NA-1)
+DRODA(NA1) = 1.5*DRODA(NA) - 0.5*DRODA(NA-1)
+G11(NA1)   = 1.5*G11(NA)   - 0.5*G11(NA-1)
+
+! Compute new minor radius
+call INTEGR(RHO(1: NA1), 1, 1./DRODA(1: NA1), AMETR(1: NA1), NA1)
+ABC = AMETR(NA1)
+
+do J=1, NA1
+    if (j == 1) then
+        SHEAR(J) = (FP(2) - FP(1))/(2.*MU(1) + 0.333*(MU(1) - MU(2)))
+    elseif (j <= NA) then
+        SHEAR(J) = (FP(j+1) - 2.*FP(j) + FP(j-1))/(MU(j+1) + MU(j))
+    endif
+    SHEAR(J) = 1. - SHEAR(J)/(GP*BTOR*HRO**2)
+    GRADRO(j) = DRODA(J)
+    YR1 = RHO(j)*G22(j)*(MU(j)/RTOR)**2
+    BDB02(j) = (1. + YR1)*G33(J)*IPOL(J)**2
+    B0DB2(j) = ((RTOR + SHIF(J))/RTOR)**2 + 0.75*(AMETR(j)/RTOR)**2
+    BMAXT(j) = BTOR*RTOR/(RTOR + SHIF(j) - AMETR(j))
+    BMINT(j) = BTOR*RTOR/(RTOR + SHIF(j) + AMETR(j))
+    BDB0(j)  = (RTOR/(RTOR + SHIF(j)))
+    YR1      = (RTOR + SHIF(j) - AMETR(j))/(RTOR + SHIF(j))
+    FOFB(j)  = 1. - sqrt(YR1)*(1. + 0.5*YR1)
+enddo
+SHEAR(NA1) = SHEAR(NA)
+if (NA1 < NAB) then
+    do J=NA1+1, NAB
+        SHIF(J) = SHIFT
+        ELON(J) = 1.
+        TRIA(J) = 0.
+        G33(J) = (RTOR/(RTOR + SHIFT))**2
+        IPOL(J) = 1.
+        VR(J) = YNF*RHO(j)/(IPOL(j)*G33(j))
+        AMETR(J) = RHO(J)
+        VRS(j) = 0.5*(VR(J+1) + VR(j))
+        G11(J) = VRS(j)
+        G22(J) = RTOR*VRS(j)/(RTOR + SHIFT)**2
+        DRODA(J) = 1.
+        SLAT(J)  = VRS(J)*DRODA(J)
+        SHEAR(j) = SHEAR(NA1)
+        BDB02(j) = BDB02(NA1)
+        B0DB2(j) = B0DB2(NA1)
+        BMAXT(j) = BMAXT(NA1)
+        BMINT(j) = BMINT(NA1)
+        BDB0(j)  = BDB0(NA1)
+        FOFB(j)  = FOFB(NA1)
+    enddo
+
+! Volume (on the shifted grid) is calculated using VR:
+    call INTEGR(RHO, 1, VR, VOLUM, NA1)
+
+    call new_grid ! The RHO-grid and NA, NA1 are updated
+
+    VOLUME = VOLUM(NA1)
+endif
+
+return
+end subroutine set_external_metric_2
 
 !---------------------------------------------------------------------
 double precision function ROC3A(Rmaj, shaf_shift, a_min, elongation, triangularity)
@@ -1080,6 +1226,7 @@ subroutine BNDRY(RPB, ZPB)
 
 use outcmn_inc, only: NBNT, BNDTIM, BNDR, BNDZ
 use const_inc, only: NBND, GP2, TIME, RTOR, SHIFT, ABC, TRIAN, UPDWN, ELONG
+use fs_coupling_variables, only: fs_bnd_in, fs_bnd_yes
 
 implicit none
 
@@ -1094,14 +1241,23 @@ if (NBNT <= 1) then
 
         if (NBND == 0) NBND = 8    ! call from ESC
         if (NBND /= 8) then
-            do j=1, NBND
-                YFI = GP2*(j-1.)/(NBND)
-                YD1 = sin(YFI)
-                ZPB(j) = UPDWN+ABC*ELONG*YD1
-                RPB(j) = RTOR+SHIFT+ABC*(cos(YFI)-TRIAN*YD1*YD1)
-                BNDZ(j) = ZPB(j)
-                BNDR(j) = RPB(j)
-            enddo
+            if (fs_bnd_yes == 1) then
+                do j=1, NBND
+	            ZPB(j) = fs_bnd_in(j, 2)
+                    RPB(j) = fs_bnd_in(j, 1)
+                    BNDZ(j) = ZPB(j)
+                    BNDR(j) = RPB(j)
+                enddo
+            else
+                do j=1, NBND
+                    YFI = GP2*(j - 1.)/NBND
+                    YD1 = sin(YFI)
+                    ZPB(j) = UPDWN + ABC*ELONG*YD1
+                    RPB(j) = RTOR + SHIFT + ABC*(cos(YFI) - TRIAN*YD1**2)
+                    BNDZ(j) = ZPB(j)
+                    BNDR(j) = RPB(j)
+                enddo
+            endif
             return
         endif
 
