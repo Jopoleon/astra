@@ -246,9 +246,6 @@ area = vol/(GP2*RTOR)
 call qinterp(rhotor1d(1: NA1), FP(1: NA1), NA1, &
       rho_eq(1: nrho_surf), pf_eq(1: nrho_surf), nrho_surf)
 
-pf_eq(1) = psi_axis
-pf_eq(nrho_surf) = psi_sep
-
 !------------
 ! RABBIT call
 !------------
