@@ -4,7 +4,7 @@ use errors_params
 use ef_circuit
 use astra2fbe
 use parameters_a2equil
-use feqis_tools, only: psi_external_calc_ef, plasma_psi_to_coils_ef
+use feqis_tools, only: psi_external_calc, plasma_psi_to_coils
 
 implicit none
 
@@ -17,9 +17,9 @@ double precision cur_temp(300)
 if (j_init.eq.0) then
 write(*,*) 'init full system'
 !first do full equilibrium solution at time t=0
- 		call psi_external_calc_ef
+call psi_external_calc
 call solve_gse2d_fbe_full_ef(0)	
-call plasma_psi_to_coils_ef
+call plasma_psi_to_coils
 psi_cur_old(1:nconduc)=psiplasmatoconduc(1:nconduc)
 
 write(*,*) 'init done'
@@ -33,9 +33,9 @@ write(*,*) 'iter full system'
 
 if (fast_mode.eq.1.and.execute_plasma.eq.1) then
 psi_cur_old(1:nconduc)=psiplasmatoconduc(1:nconduc)
- 		call psi_external_calc_ef
+call psi_external_calc
 call solve_gse2d_fbe_full_ef_1turn(1,0,0.d0,0.d0)	
-call plasma_psi_to_coils_ef
+call plasma_psi_to_coils
 endif
 
 do j_iter=1,2*max_iter
@@ -44,9 +44,9 @@ cur_temp(1:nconduc)=curconduc(1:nconduc)
 call circuit_eq_advance_ef(1)	
 
 if (fast_mode.eq.0) then
- 		call psi_external_calc_ef
+call psi_external_calc
 call solve_gse2d_fbe_full_ef_1turn(1,0,0.d0,0.d0)	
-call plasma_psi_to_coils_ef
+call plasma_psi_to_coils
 endif
 
 error_temp=sum(abs(cur_temp(1:nconduc)-curconduc(1:nconduc)))/(nconduc+err_epsilon)/iplasma
@@ -82,7 +82,7 @@ subroutine solve_gse2d_fbe_full_ef(j_init)
 use errors_params, only: err_find_psistab
 use ef_circuit
 use astra2fbe
-use feqis_tools, only: find_actual_index_ef
+use feqis_tools, only: find_actual_index
 
 implicit none
 
@@ -110,7 +110,7 @@ endif
 if (refit_mode.eq.0) then
 !start iterations to find self-consistent solution
 g000(1:nr2,1:nz2)=psiextrz(1:nr2,1:nz2)
-call find_actual_index_ef(raxp,zaxp,iaxis,jaxis)
+call find_actual_index(raxp,zaxp,iaxis,jaxis)
 rax=r(iaxis)
 zax=z(jaxis)
 raxold=rax
@@ -211,7 +211,7 @@ endif
 if (refit_mode.eq.101) then !only vertical stab
 !start iterations to find self-consistent solution
 g000(1:nr2,1:nz2)=psiextrz(1:nr2,1:nz2)
-call find_actual_index_ef(raxp,zaxp,iaxis,jaxis)
+call find_actual_index(raxp,zaxp,iaxis,jaxis)
 rax=r(iaxis)
 zax=z(jaxis)
 raxold=rax
@@ -324,9 +324,9 @@ use errors_params, only: err_find_psistab
 use ef_circuit
 use astra2fbe
 use green_matrix
-use feqis_tools, only: interp_j_fromrhotorz, find_actual_index_ef, &
-    find_fields_interp_ef_green, inverse_matrix_equilef, boundary_ef, &
-    psi_external_calc_ef, find_fields_interp_ef_psionly
+use feqis_tools, only: interp_j_fromrhotorz, find_actual_index, &
+    find_fields_interp_green, inverse_matrix, boundary, &
+    psi_external_calc, find_fields_interp_psionly
 
 implicit none
 
@@ -375,7 +375,7 @@ rax=raxp
 zax=zaxp
 write(*,*) raxp,zaxp,dum1
 
-call find_actual_index_ef(rax,zax,iaxis,jaxis)
+call find_actual_index(rax,zax,iaxis,jaxis)
 iax=iaxis
 jax=jaxis
 
@@ -397,13 +397,13 @@ matrix=0.
 invmatrix=0.
 do j=1,nconduc
 do k=1,nteta
-call find_fields_interp_ef_green(rbref(k),zbref(k),G_00(j,k),j) !give back psi,br,bz at r0,z0
+call find_fields_interp_green(rbref(k),zbref(k),G_00(j,k),j) !give back psi,br,bz at r0,z0
 enddo
 G_00c(j)=sum(G_00(j,1:nteta))/(0.+nteta)
-call find_fields_interp_ef_green(raxref-dr/2.,zaxref,bub(1),j) !give back psi,br,bz at r0,z0
-call find_fields_interp_ef_green(raxref+dr/2.,zaxref,bub(2),j) !give back psi,br,bz at r0,z0
-call find_fields_interp_ef_green(raxref,zaxref-dz/2.,bub(3),j) !give back psi,br,bz at r0,z0
-call find_fields_interp_ef_green(raxref,zaxref+dz/2.,bub(4),j) !give back psi,br,bz at r0,z0
+call find_fields_interp_green(raxref-dr/2.,zaxref,bub(1),j) !give back psi,br,bz at r0,z0
+call find_fields_interp_green(raxref+dr/2.,zaxref,bub(2),j) !give back psi,br,bz at r0,z0
+call find_fields_interp_green(raxref,zaxref-dz/2.,bub(3),j) !give back psi,br,bz at r0,z0
+call find_fields_interp_green(raxref,zaxref+dz/2.,bub(4),j) !give back psi,br,bz at r0,z0
 G_00r(j)=(bub(2)-bub(1))/dr
 G_00z(j)=(bub(4)-bub(3))/dz
 enddo
@@ -418,7 +418,7 @@ enddo
 enddo
 
 !calculate inverse
-call inverse_matrix_equilef(matrix,invmatrix,nconduc)
+call inverse_matrix(matrix,invmatrix,nconduc)
 
 do j_iter=1,300000 !iterations to find currents
 
@@ -432,7 +432,7 @@ CALL CPU_TIME(tup)
 write(*,*) 'stop here2'
 !find boundary condition using g
 CALL CPU_TIME(tin)	
-call boundary_ef(g)  ! gbound = integral (Green*dg/dn) over the boundary
+call boundary(g)  ! gbound = integral (Green*dg/dn) over the boundary
 write(*,*) 'stop here3'
 CALL CPU_TIME(tup)
 write(*,*) tup-tin	
@@ -463,16 +463,16 @@ write(*,*) tup-tin
 do j=1,nteta
 xub(1)=rbref(j)
 yub(1)=zbref(j)
-call find_fields_interp_ef_psionly(xub(1),yub(1),psicorr(j))  !psi on the boundary
+call find_fields_interp_psionly(xub(1),yub(1),psicorr(j))  !psi on the boundary
 enddo
 
 x1=sum(psicorr)/(nteta+0.) !average psi on the boundary
 
 !derivative at ref axis
-call find_fields_interp_ef_psionly(raxref-dr/2.,zaxref,bub(1)) !give back psi,br,bz at r0,z0
-call find_fields_interp_ef_psionly(raxref+dr/2.,zaxref,bub(2)) !give back psi,br,bz at r0,z0
-call find_fields_interp_ef_psionly(raxref,zaxref-dz/2.,bub(3)) !give back psi,br,bz at r0,z0
-call find_fields_interp_ef_psionly(raxref,zaxref+dz/2.,bub(4)) !give back psi,br,bz at r0,z0
+call find_fields_interp_psionly(raxref-dr/2.,zaxref,bub(1)) !give back psi,br,bz at r0,z0
+call find_fields_interp_psionly(raxref+dr/2.,zaxref,bub(2)) !give back psi,br,bz at r0,z0
+call find_fields_interp_psionly(raxref,zaxref-dz/2.,bub(3)) !give back psi,br,bz at r0,z0
+call find_fields_interp_psionly(raxref,zaxref+dz/2.,bub(4)) !give back psi,br,bz at r0,z0
 x2 = (bub(2)-bub(1))/dr ! psir
 x3 = (bub(4)-bub(3))/dz ! psiz
 
@@ -546,7 +546,7 @@ do i=1,nconduc
 curconduc(i)= curnow(i)
 enddo
 
-call psi_external_calc_ef
+call psi_external_calc
 psirz(1:nr2,1:nz2)=psiplasrz(1:nr2,1:nz2)+psiextrz(1:nr2,1:nz2)
 call find_new_axis_part1	
 call find_psi_boundary
@@ -565,10 +565,10 @@ use errors_params, only: err_find_psistab
 use ef_circuit
 use astra2fbe
 use green_matrix
-use feqis_tools, only: interp_j_fromrhotorz, find_actual_index_ef, &
-    find_angle_ef, find_fields_interp_ef_green, boundary_ef, &
-    find_fields_interp_ef_psionly, psi_external_calc_ef, &
-    least_square_biquad_ef
+use feqis_tools, only: interp_j_fromrhotorz, find_actual_index, &
+    find_angle, find_fields_interp_green, boundary, &
+    find_fields_interp_psionly, psi_external_calc, &
+    least_square_biquad
 
 implicit none
 
@@ -613,7 +613,7 @@ zax=zaxp
 write(*,*) raxp,zaxp,dum1
 
 
-call find_actual_index_ef(rax,zax,iaxis,jaxis)
+call find_actual_index(rax,zax,iaxis,jaxis)
 iax=iaxis
 jax=jaxis
 
@@ -622,12 +622,12 @@ G_00s=0.
 
 ! evaluate coils things
 do i=1,npassive
-call find_angle_ef(rax,zax,r_cond(nactive+i),z_cond(nactive+i),anglr(i))
+call find_angle(rax,zax,r_cond(nactive+i),z_cond(nactive+i),anglr(i))
 !find true axis
 do j=1,nteta
 xub(1)=rbndp(j)
 yub(1)=zbndp(j)
-call find_fields_interp_ef_green(xub(1),yub(1),bub(2),nactive+i) !give back psi,br,bz at r0,z0
+call find_fields_interp_green(xub(1),yub(1),bub(2),nactive+i) !give back psi,br,bz at r0,z0
 do k=1,n_fourier_restab_boundary
 G_00c(j,k)=G_00c(j,k)+cos(k*anglr(i))*bub(2)
 G_00s(j,k)=G_00s(j,k)+sin(k*anglr(i))*bub(2)
@@ -656,7 +656,7 @@ write(*,*) 'solve g0',tup-tin
 write(*,*) 'stop here2'
 !find boundary condition using g
 CALL CPU_TIME(tin)	
-call boundary_ef(g)  ! gbound = integral (Green*dg/dn) over the boundary
+call boundary(g)  ! gbound = integral (Green*dg/dn) over the boundary
 write(*,*) 'stop here3'
 CALL CPU_TIME(tup)
 write(*,*) tup-tin	
@@ -675,7 +675,7 @@ psirz(1:nr2,1:nz2)=psiplasrz(1:nr2,1:nz2)+psiextrz(1:nr2,1:nz2) !total flux
 do j=1,nteta
 xub(1)=rbndp(j)
 yub(1)=zbndp(j)
-call find_fields_interp_ef_psionly(xub(1),yub(1),psicorr(j)) 
+call find_fields_interp_psionly(xub(1),yub(1),psicorr(j)) 
 enddo
 
 x1=sum(psicorr)/(nteta+0.)
@@ -754,7 +754,7 @@ curconduc(nactive+i)= curconduc(nactive+i)+&
 enddo
 enddo
 
-call psi_external_calc_ef
+call psi_external_calc
 psirz(1:nr2,1:nz2)=psiplasrz(1:nr2,1:nz2)+psiextrz(1:nr2,1:nz2)
 call find_new_axis_part1	
 call find_psi_boundary
@@ -773,9 +773,9 @@ use errors_params, only: err_find_psistab
 use ef_circuit
 use astra2fbe
 use green_matrix       ! declaration of minimal CPOs
-use feqis_tools, only: interp_j_fromrhotorz, find_actual_index_ef, &
-    find_angle_ef, least_square_biquad_ef, boundary_ef, &
-    find_fields_interp_ef_psionly, psi_external_calc_ef
+use feqis_tools, only: interp_j_fromrhotorz, find_actual_index, &
+    find_angle, least_square_biquad, boundary, &
+    find_fields_interp_psionly, psi_external_calc
 
 implicit none
 
@@ -811,13 +811,13 @@ rax=raxp
 zax=zaxp
 write(*,*) raxp,zaxp,dum1
 
-call find_actual_index_ef(rax,zax,iaxis,jaxis)
+call find_actual_index(rax,zax,iaxis,jaxis)
 iax=iaxis
 jax=jaxis
 
 ! evaluate coils things
 do i=1,npassive
-call find_angle_ef(rax,zax,r_cond(nactive+i),z_cond(nactive+i),anglr(i))
+call find_angle(rax,zax,r_cond(nactive+i),z_cond(nactive+i),anglr(i))
 !find true axis
 xub(1)=r(iax-1)
 xub(2)=r(iax)
@@ -846,7 +846,7 @@ bub(6)=greeni(iax-1,jax-1,nactive+i)
 bub(7)=greeni(iax-1,jax+1,nactive+i)
 bub(8)=greeni(iax+1,jax-1,nactive+i)
 bub(9)=greeni(iax+1,jax+1,nactive+i)
-call least_square_biquad_ef(xub,yub,bub,9,ccc,dum1,dum2,zum1,ddipsi)
+call least_square_biquad(xub,yub,bub,9,ccc,dum1,dum2,zum1,ddipsi)
 g0_r(i)=ddipsi(1)
 g0_z(i)=ddipsi(2)
 enddo
@@ -878,7 +878,7 @@ write(*,*) 'solve g0',tup-tin
 write(*,*) 'stop here2'
 !find boundary condition using g
 CALL CPU_TIME(tin)	
-call boundary_ef(g)  ! gbound = integral (Green*dg/dn) over the boundary
+call boundary(g)  ! gbound = integral (Green*dg/dn) over the boundary
 write(*,*) 'stop here3'
 CALL CPU_TIME(tup)
 write(*,*) tup-tin	
@@ -899,10 +899,10 @@ psirz(1:nr2,1:nz2)=psiplasrz(1:nr2,1:nz2)+psiextrz(1:nr2,1:nz2) !total flux
 call find_new_axis_part1	
 
 dum1=C_00r*S_00z-C_00z*S_00r	
-call find_fields_interp_ef_psionly(raxp+dr,zaxp,bub(1)) !give back psi,br,bz at r0,z0
-call find_fields_interp_ef_psionly(raxp-dr,zaxp,bub(2)) !give back psi,br,bz at r0,z0
-call find_fields_interp_ef_psionly(raxp,zaxp+dz,bub(3)) !give back psi,br,bz at r0,z0
-call find_fields_interp_ef_psionly(raxp,zaxp-dz,bub(4)) !give back psi,br,bz at r0,z0
+call find_fields_interp_psionly(raxp+dr,zaxp,bub(1)) !give back psi,br,bz at r0,z0
+call find_fields_interp_psionly(raxp-dr,zaxp,bub(2)) !give back psi,br,bz at r0,z0
+call find_fields_interp_psionly(raxp,zaxp+dz,bub(3)) !give back psi,br,bz at r0,z0
+call find_fields_interp_psionly(raxp,zaxp-dz,bub(4)) !give back psi,br,bz at r0,z0
 
 xub(1)=(bub(1)-bub(2))/(2.*dr)
 yub(1)=(bub(3)-bub(4))/(2.*dz)
@@ -962,7 +962,7 @@ curconduc(nactive+i)= curconduc(nactive+i)+&
  & psistabr*cos(anglr(i))+psistabz*sin(anglr(i))
 enddo
 
-call psi_external_calc_ef
+call psi_external_calc
 psirz(1:nr2,1:nz2)=psiplasrz(1:nr2,1:nz2)+psiextrz(1:nr2,1:nz2)
 call find_new_axis_part1	
 call find_psi_boundary
@@ -980,9 +980,9 @@ subroutine solve_gse2d_fbe_full_ef_1turn(j_init,j_stab,raxold,zaxold)
 
 use ef_circuit
 use astra2fbe
-use feqis_tools, only: interp_j_fromrhotorz, find_actual_index_ef, &
-    boundary_ef, nine_point_coeffs_only, find_angle_ef, &
-    find_fields_interp_ef_psionly
+use feqis_tools, only: interp_j_fromrhotorz, find_actual_index, &
+    boundary, nine_point_coeffs_only, find_angle, &
+    find_fields_interp_psionly
 
 implicit none
 
@@ -1017,7 +1017,7 @@ jrz=jrz/dum1*iplasma
 
 rax=raxp
 zax=zaxp
-call find_actual_index_ef(rax,zax,iaxis,jaxis)
+call find_actual_index(rax,zax,iaxis,jaxis)
 rax=r(iaxis)
 zax=z(jaxis)
 write(*,*) raxp,zaxp,rax,zax
@@ -1032,7 +1032,7 @@ write(*,*) 'solve g0',tup-tin
 write(*,*) 'stop here2'
 !find boundary condition using g
 CALL CPU_TIME(tin)	
-call boundary_ef(g)  ! gbound = integral (Green*dg/dn) over the boundary
+call boundary(g)  ! gbound = integral (Green*dg/dn) over the boundary
 write(*,*) 'stop here3'
 CALL CPU_TIME(tup)
 write(*,*) tup-tin	
@@ -1303,7 +1303,7 @@ end subroutine circuit_eq_advance_ef
 subroutine solve_circuit_equations(nc,im,rm,I0,I1,& 
 & 	V,dpc,tau,invertcommand)
 
-use feqis_tools, only: inverse_matrix_equilef
+use feqis_tools, only: inverse_matrix
 
 implicit none
 
@@ -1322,7 +1322,7 @@ enddo
 
 if (invertcommand.eq.1) then
 matrix(1:nc,1:nc) = im(1:nc,1:nc)/tau+rm(1:nc,1:nc)
-call	inverse_matrix_equilef(matrix,invmatrix(1:nc,1:nc),nc)
+call	inverse_matrix(matrix,invmatrix(1:nc,1:nc),nc)
 else
 endif
 
@@ -1343,7 +1343,7 @@ use imas_ids
 use ef_circuit
 use astra2fbe
 use numerical_tools, only: linterp
-use feqis_tools, only: find_angle_ef
+use feqis_tools, only: find_angle
 
 implicit none
 
@@ -1435,7 +1435,7 @@ zaxp=zaxis_astra
 endif
 
 do i=1,nteta
-call find_angle_ef(raxp,zaxp,rexp(i),zexp(i),tetaexp(i))
+call find_angle(raxp,zaxp,rexp(i),zexp(i),tetaexp(i))
 enddo	
 
 !put points in order
@@ -1838,7 +1838,7 @@ subroutine convert_boundary_to_pbe
 
 use pi_vars, only: GPI2
 use ef_circuit
-use feqis_tools, only: find_angle_ef, find_fields_interp_ef_psionly
+use feqis_tools, only: find_angle, find_fields_interp_psionly
 
 implicit none
 
@@ -1870,7 +1870,7 @@ else
 rbnd(1)=r(k)-(psirz(k,j)-psibnd)/(psirz(k,j)-psirz(k-1,j))*dr		
 endif	
 zbnd(1)=z(j)
-call find_angle_ef(rax,zax,rbnd(1),zbnd(1),teta_fbe(1))	
+call find_angle(rax,zax,rbnd(1),zbnd(1),teta_fbe(1))	
 i=1
 
 do i=2,nteta
@@ -1897,7 +1897,7 @@ x1=(zbot-zax)/sin(teta_fbe(i))
 endif
 t1=rax+x1*cos(teta_fbe(i))
 t2=zax+x1*sin(teta_fbe(i))
-call find_fields_interp_ef_psionly(t1,t2,t3) !give back psi,br,bz at r0,z0
+call find_fields_interp_psionly(t1,t2,t3) !give back psi,br,bz at r0,z0
 if (t3.eq.psibnd) then
 rbnd(i)=t1
 zbnd(i)=t2
@@ -1908,7 +1908,7 @@ if (t3.lt.psibnd) then
 4 continue
 z1=rax+(x1-dx)*cos(teta_fbe(i))
 z2=zax+(x1-dx)*sin(teta_fbe(i))
-call find_fields_interp_ef_psionly(z1,z2,z3) 
+call find_fields_interp_psionly(z1,z2,z3) 
 if (z3.lt.psibnd) then
 	dx=1.1*dx
 	goto 4
@@ -1943,7 +1943,7 @@ j4=1
 endif
 z1=rax+x2*cos(teta_fbe(i))
 z2=zax+x2*sin(teta_fbe(i))
-call find_fields_interp_ef_psionly(z1,z2,z3) 
+call find_fields_interp_psionly(z1,z2,z3) 
 if (z3.gt.psibnd) then
 	if (j4.eq.1) then
 		rbnd(i)=z1
@@ -1985,7 +1985,7 @@ subroutine solve_gs2d(g)
 
 use ef_circuit
 use fft_mod_eff, only: costable
-use feqis_tools, only: discrete_sine_transform_ef
+use feqis_tools, only: discrete_sine_transform
 
 implicit none
 
@@ -2021,7 +2021,7 @@ rhs(nr1,2:nz1)=rhs(nr1,2:nz1)-g(nr2,2:nz1)*r2m_1
 wrhs=rhs
 !	CALL CPU_TIME(tin)
 do i=2,nr1
-  	call discrete_sine_transform_ef(nz,wrhs(i,2:nz1))
+  	call discrete_sine_transform(nz,wrhs(i,2:nz1))
 enddo
 
 k_fourier = nz
@@ -2062,7 +2062,7 @@ enddo
 !			gt(i,k)=sum(invMM_gs2d(i-1,1:nr,k-1)*wrhs(2:nr1,k))
 
 do i=2,nr1
-  	call discrete_sine_transform_ef(nz,gt(i,2:nz1))
+  	call discrete_sine_transform(nz,gt(i,2:nz1))
 enddo
 g(2:nr1,2:nz1)=2./(nz+1)*gt(2:nr1,2:nz1)
 
@@ -2237,8 +2237,8 @@ use pi_vars, only: GPI
 use ef_circuit
 use astra2fbe, only: x_point_save, plasma_config
 use errors_params, only: err_find_oxpoints_derivs
-use feqis_tools, only: find_closest_xpoints, find_fields_interp_ef_psionly, &
-    find_actual_index_ef, find_angle_ef, check_xpoint_connection_axis, &
+use feqis_tools, only: find_closest_xpoints, find_fields_interp_psionly, &
+    find_actual_index, find_angle, check_xpoint_connection_axis, &
     nine_point_regression, nine_point_regression_follow, t_find_u_n
 
 implicit none
@@ -2496,7 +2496,7 @@ limiterZ=z(nz1)
 endif	
 !calculate limiter flux 
 do i=1,nlimiter
-call find_fields_interp_ef_psionly(limiterR(i),limiterZ(i),psi_limp(i)) !give back psi,br,bz at r0,z0
+call find_fields_interp_psionly(limiterR(i),limiterZ(i),psi_limp(i)) !give back psi,br,bz at r0,z0
 enddo
 
 if (n_of_xpoints.eq.0) then
@@ -2515,18 +2515,18 @@ if (n_of_xpoints.ge.1) then
 
 !first pass, remove X-points behind the limiter area
    do i=1,n_of_xpoints
-      call find_actual_index_ef(r_xpoint(i),z_xpoint(i),j,k)
+      call find_actual_index(r_xpoint(i),z_xpoint(i),j,k)
 if (zlimpotential(j,k).lt.0.5) then
          psi_xpoint(i)=-1.e6
   else
-         call find_fields_interp_ef_psionly(r_xpoint(i),z_xpoint(i),psi_xpoint(i))
+         call find_fields_interp_psionly(r_xpoint(i),z_xpoint(i),psi_xpoint(i))
 endif
    enddo
 
 !second pass, remove limiter points that are in x-points shadow, simple "straight line method" --> to be refined later on
    do i=1,n_of_xpoints
     if (psi_xpoint(i).gt.-1.e5) then
-	call find_angle_ef(rax,zax,r_xpoint(i),z_xpoint(i),x1)
+	call find_angle(rax,zax,r_xpoint(i),z_xpoint(i),x1)
 	if ((r_xpoint(i).gt.rax).and.(x1.ge.7./4.*GPI.or.x1.le.GPI/4.)) raus=min(raus,r_xpoint(i))
 	if ((z_xpoint(i).gt.zax).and.(x1.ge.GPI/4..and.x1.le.3./4.*GPI)) ztop=min(ztop,z_xpoint(i))
 	if ((r_xpoint(i).lt.rax).and.(x1.ge.3./4.*GPI.and.x1.le.5./4.*GPI)) rinner=max(rinner,r_xpoint(i))

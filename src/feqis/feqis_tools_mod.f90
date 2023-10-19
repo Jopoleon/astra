@@ -2,6 +2,8 @@ module feqis_tools
 
 implicit none
 
+! reshape does transpose!
+
 double precision, dimension(9, 9), parameter :: A_inv = reshape( (/ &
      0.25, -0.25, -0.25,  0.25,  0.00,  0.00,  0.00,  0.00,  0.00, &
     -0.50,  0.50,  0.00,  0.00,  0.00,  0.50,  0.00, -0.50,  0.00, &
@@ -16,7 +18,7 @@ double precision, dimension(9, 9), parameter :: A_inv = reshape( (/ &
 contains
 
 !---------------------------------------------------------------------
-    subroutine find_angle_ef(rt, zt, r, z, anglr)
+    subroutine find_angle(rt, zt, r, z, anglr)
 
     use pi_vars, only: GPI2
 
@@ -27,10 +29,10 @@ contains
     if (anglr < 0) anglr = anglr + GPI2
 
     return
-    end subroutine find_angle_ef
+    end subroutine find_angle
 
 !---------------------------------------------------------------------
-    subroutine inverse_matrix_equilef(a, c, n)
+    subroutine inverse_matrix(a, c, n)
 
 ! a(n,n) - array of coefficients for matrix A
 ! n      - dimension
@@ -103,7 +105,7 @@ contains
     enddo
 
     return
-    end subroutine inverse_matrix_equilef
+    end subroutine inverse_matrix
 
 !---------------------------------------------------------------------
     subroutine interp_j_fromrhotorz
@@ -119,7 +121,7 @@ contains
     jrhoteta(1:nrho, nteta+1) = jrhoteta(1:nrho, 1)
     do j=1, nz2
         do i=1, nr2
-            call curinterp_ef(r(i), z(j), jrhoteta(1:nrho, 1:nteta+1),  & 
+            call curinterp(r(i), z(j), jrhoteta(1:nrho, 1:nteta+1),  & 
                 rho(1:nrho, 1:nteta+1), teta(1:nteta+1), raxp, zaxp, nrho, nteta+1, jrz(i, j))
         enddo
     enddo
@@ -141,7 +143,7 @@ contains
     end subroutine t_find_u_n
 
 !---------------------------------------------------------------------
-    subroutine curinterp_ef(r, z, jrho, rho, teta, rax, zax, nrho, nteta, j)
+    subroutine curinterp(r, z, jrho, rho, teta, rax, zax, nrho, nteta, j)
 
     use pi_vars, only: GPI2
     use numerical_tools, only: linterp
@@ -158,7 +160,7 @@ contains
     double precision, dimension(4, 4) :: matrix, imatrix
 
     
-    call find_angle_ef(rax, zax, r, z, anglr)
+    call find_angle(rax, zax, r, z, anglr)
     rho0 = sqrt((r - rax)**2 + (z - zax)**2)
 
     if (anglr < teta(1)) anglr = anglr + GPI2
@@ -209,10 +211,10 @@ contains
         (d1*d2*d3 + d1*d3*d4 + d2*d3*d4 + d1*d2*d4)
 
     return
-    end subroutine curinterp_ef
+    end subroutine curinterp
 
 !---------------------------------------------------------------------
-    subroutine discrete_sine_transform_ef(n, y)
+    subroutine discrete_sine_transform(n, y)
 
     use fft_mod_eff, only: dp, sintable
 
@@ -256,7 +258,7 @@ contains
     endif
 
     return
-    end subroutine discrete_sine_transform_ef
+    end subroutine discrete_sine_transform
 
 !---------------------------------------------------------------------
     subroutine coil_forces_feqis(ncoilz, force_R, force_Z, plasma_state)
@@ -298,7 +300,7 @@ contains
     end subroutine coil_forces_feqis
 
 !---------------------------------------------------------------------
-    subroutine plasma_psi_to_coils_ef
+    subroutine plasma_psi_to_coils
 
     use ef_circuit, only: nr2, nz2, nconduc, jrz, area_eff, psiplasmatoconduc
     use green_matrix, only: greeni
@@ -310,7 +312,7 @@ contains
     enddo
 
     return
-    end subroutine plasma_psi_to_coils_ef
+    end subroutine plasma_psi_to_coils
 
 !---------------------------------------------------------------------
     subroutine get_zccurb_efff(rc_cur, zc_cur, z2c_cur, rgeoc, zgeoc, ahorc)
@@ -367,14 +369,14 @@ contains
     psiext_out = 0.
     dllt = 0.
     do i=1, nbnd-1
-        call find_fields_interp_ef_psiext(rbnd(i)  , zbnd(i  ), dum1) !give back psi, br, bz at r0, z0
-        call find_fields_interp_ef_psiext(rbnd(i+1), zbnd(i+1), dum2) !give back psi, br, bz at r0, z0
+        call find_fields_interp_psiext(rbnd(i)  , zbnd(i  ), dum1) !give back psi, br, bz at r0, z0
+        call find_fields_interp_psiext(rbnd(i+1), zbnd(i+1), dum2) !give back psi, br, bz at r0, z0
         dlt = sqrt((rbnd(i+1) - rbnd(i))**2 + (zbnd(i+1) - zbnd(i))**2)
         psiext_out = psiext_out + 0.5*(dum1 + dum2)*dlt
         dllt = dllt + dlt
     enddo
-    call find_fields_interp_ef_psiext(rbnd(nbnd), zbnd(nbnd), dum1) !give back psi, br, bz at r0, z0
-    call find_fields_interp_ef_psiext(rbnd(1   ), zbnd(1   ), dum2) !give back psi, br, bz at r0, z0
+    call find_fields_interp_psiext(rbnd(nbnd), zbnd(nbnd), dum1) !give back psi, br, bz at r0, z0
+    call find_fields_interp_psiext(rbnd(1   ), zbnd(1   ), dum2) !give back psi, br, bz at r0, z0
     dlt = sqrt((rbnd(1) - rbnd(nbnd))**2 + (zbnd(1) - zbnd(nbnd))**2)
     psiext_out = psiext_out + 0.5*(dum1 + dum2)*dlt
     dllt = dllt + dlt
@@ -387,7 +389,7 @@ contains
     end subroutine psib_ext_efff
 
 !---------------------------------------------------------------------
-    subroutine psiplex_calc_ef(dumz)
+    subroutine psiplex_calc(dumz)
 
     use pi_vars, only: GPI2
     use astra2fbe, only: psplex_from_fbe
@@ -421,10 +423,10 @@ contains
             y3 = zbnd(i+1)
             arc1 = sqrt((x3 - x1)**2 + (y3 - y1)**2)
             z3 = green_function(x1, y1, x2, y2)
-            call find_fields_interp_ef_psionly(rbnd(i) + dr/2, zbnd(i), t1)
-            call find_fields_interp_ef_psionly(rbnd(i), zbnd(i) + dz/2, t2)
-            call find_fields_interp_ef_psionly(rbnd(i) - dr/2, zbnd(i), t3)
-            call find_fields_interp_ef_psionly(rbnd(i), zbnd(i) - dz/2, t4)
+            call find_fields_interp_psionly(rbnd(i) + dr/2, zbnd(i), t1)
+            call find_fields_interp_psionly(rbnd(i), zbnd(i) + dz/2, t2)
+            call find_fields_interp_psionly(rbnd(i) - dr/2, zbnd(i), t3)
+            call find_fields_interp_psionly(rbnd(i), zbnd(i) - dz/2, t4)
             z1 = sqrt(((t3 - t1)/dr)**2 + ((t4 - t2)/dz)**2)
             z2 = z2 + z3/x1*z1*arc1*arc2
         enddo
@@ -434,7 +436,7 @@ contains
     dumz = z2/z4*GPI2
 
     return
-    end subroutine psiplex_calc_ef
+    end subroutine psiplex_calc
 
 !---------------------------------------------------------------------
     double precision function find_l_gap(psibnd, l_ref_in, dumx0, dumy0, dumz)
@@ -458,8 +460,8 @@ contains
         dumy1 = dumy0 + dur1*sin(dumz)
         dumx2 = dumx0 + dur2*cos(dumz)
         dumy2 = dumy0 + dur2*sin(dumz)
-        call find_fields_interp_ef_psionly(dumx1, dumy1, u001) 
-        call find_fields_interp_ef_psionly(dumx2, dumy2, u002) 
+        call find_fields_interp_psionly(dumx1, dumy1, u001) 
+        call find_fields_interp_psionly(dumx2, dumy2, u002) 
         if (abs(l_ref) < tolez) then
             find_l_gap = 0.5*(dur1 + dur2)
             EXIT
@@ -528,7 +530,7 @@ contains
     end subroutine find_demo_gaps_efff
 
 !---------------------------------------------------------------------
-    subroutine psi_external_calc_ef
+    subroutine psi_external_calc
 
     use ef_circuit, only: nr2, nz2, nconduc, curconduc, psiextrz
     use green_matrix, only: greeni
@@ -542,10 +544,10 @@ contains
     enddo
 
     return
-    end subroutine psi_external_calc_ef
+    end subroutine psi_external_calc
 
 !---------------------------------------------------------------------
-    subroutine least_square_biquad_ef(r, z, u, n, c, rax, zax, uax, derivs)
+    subroutine least_square_biquad(r, z, u, n, c, rax, zax, uax, derivs)
     integer n, k
     double precision r(n), z(n), u(n), derivs(8)
     double precision A(6, 6), B(6), cc(6), c(6), Ainv(6, 6)
@@ -626,7 +628,7 @@ contains
     A(6, 6) = 4*sums(6)
 
 !find coefficients
-    call inverse_matrix_equilef(A, Ainv, 6)
+    call inverse_matrix(A, Ainv, 6)
 
     do k=1, 6
         cc(k) = -2*sum(Ainv(k, 1: 6)*B(1: 6))
@@ -657,10 +659,10 @@ contains
     derivs(5) = cc(3) 
 
     return
-    end subroutine least_square_biquad_ef
+    end subroutine least_square_biquad
      
 !---------------------------------------------------------------------
-    subroutine exact_biquad_ef(r, z, u, n, ccc, rax, zax, uax, derivs, dr, dz)
+    subroutine exact_biquad(r, z, u, n, ccc, rax, zax, uax, derivs, dr, dz)
 
     use errors_params, only: err_find_biquad
 
@@ -766,10 +768,10 @@ contains
     zax=zax*dz+z(5)
 
     return
-    end subroutine exact_biquad_ef
+    end subroutine exact_biquad
 
 !---------------------------------------------------------------------
-    subroutine exact_biquad_ef_coeffs_only(u, c)
+    subroutine exact_biquad_coeffs_only(u, c)
 
     double precision, intent(in) , dimension(9) :: u
     double precision, intent(out), dimension(9) :: c
@@ -780,10 +782,10 @@ contains
     enddo
 
     return
-    end subroutine exact_biquad_ef_coeffs_only
+    end subroutine exact_biquad_coeffs_only
 
 !---------------------------------------------------------------------
-    subroutine exact_biquad_regress_ef(r,z,u,n,ccc,rax,zax,uax,derivs,dr,dz,rx,zx)
+    subroutine exact_biquad_regress(r,z,u,n,ccc,rax,zax,uax,derivs,dr,dz,rx,zx)
     integer n,k,i,j
     double precision x(9),y(9),r(9),z(9),u(9),derivs(8)
     double precision A(9,9),B(9),ccc(6)
@@ -849,10 +851,10 @@ contains
     zax=zax*dz+z(5)
 
     return
-    end subroutine exact_biquad_regress_ef
+    end subroutine exact_biquad_regress
 
 !---------------------------------------------------------------------		 
-    real*8 function frlim_ef(dp, ylim, rx, zx, rm, zm)
+    real*8 function frlim(dp, ylim, rx, zx, rm, zm)
 
     double precision, intent(in) :: dp(5), ylim, rx, zx, rm, zm
     double precision :: dxx, dxy, dyy, disc, cc, cdpls, cdmns, ang1, ang2, c1, dl2x, c2, dl2y
@@ -889,10 +891,10 @@ contains
         endif
     endif
 
-    frlim_ef = rx + (ylim - zx)/cc
+    frlim = rx + (ylim - zx)/cc
 
     return
-    end function frlim_ef
+    end function frlim
 
 !---------------------------------------------------------------------
     subroutine nine_point_regression(r0, z0, pos_xpoint, ddpsi, f00)
@@ -905,7 +907,7 @@ contains
     double precision ddpsi(8), c(6)
     integer i1, i2, i3, i4
 
-    call find_actual_index_ef(r0, z0, iax, jax)
+    call find_actual_index(r0, z0, iax, jax)
 
 !find true axis
     k  = 0
@@ -930,7 +932,7 @@ contains
         enddo
     enddo
 
-    call exact_biquad_ef(xub(1:d), yub(1:d), bub(1:d), d,  &
+    call exact_biquad(xub(1:d), yub(1:d), bub(1:d), d,  &
         c, pos_xpoint(1), pos_xpoint(2), f00, ddpsi, dr, dz)
 
     return
@@ -948,7 +950,7 @@ contains
     integer :: iax, jax, i, j, k, d, i1, i2, i3, i4
     double precision, dimension(90) :: bub
 
-    call find_actual_index_ef(r0, z0, iax, jax)
+    call find_actual_index(r0, z0, iax, jax)
 
     c1 = r(iax)
     c2 = z(jax)
@@ -973,7 +975,7 @@ contains
         enddo
     enddo
 
-    call exact_biquad_ef_coeffs_only(bub(1:d), c)
+    call exact_biquad_coeffs_only(bub(1:d), c)
 
     return
     end subroutine nine_point_coeffs_only
@@ -991,15 +993,15 @@ contains
     double precision c1, c2, c3, c4, c5, c6, c7, c8, c9, ddpsi(8), c(9)
     integer i1, i2, i3, i4
 
-    call find_fields_interp_ef_psionly(rx-dr, zx-dz, bub(1))
-    call find_fields_interp_ef_psionly(rx, zx-dz, bub(2))
-    call find_fields_interp_ef_psionly(rx+dr, zx-dz, bub(3))
-    call find_fields_interp_ef_psionly(rx-dr, zx, bub(4))
-    call find_fields_interp_ef_psionly(rx, zx, bub(5))
-    call find_fields_interp_ef_psionly(rx+dr, zx, bub(6))
-    call find_fields_interp_ef_psionly(rx-dr, zx+dz, bub(7))
-    call find_fields_interp_ef_psionly(rx, zx+dz, bub(8))
-    call find_fields_interp_ef_psionly(rx+dr, zx+dz, bub(9))
+    call find_fields_interp_psionly(rx-dr, zx-dz, bub(1))
+    call find_fields_interp_psionly(rx, zx-dz, bub(2))
+    call find_fields_interp_psionly(rx+dr, zx-dz, bub(3))
+    call find_fields_interp_psionly(rx-dr, zx, bub(4))
+    call find_fields_interp_psionly(rx, zx, bub(5))
+    call find_fields_interp_psionly(rx+dr, zx, bub(6))
+    call find_fields_interp_psionly(rx-dr, zx+dz, bub(7))
+    call find_fields_interp_psionly(rx, zx+dz, bub(8))
+    call find_fields_interp_psionly(rx+dr, zx+dz, bub(9))
 
     xub(1)=rx-dr
     yub(1)=zx-dz
@@ -1021,14 +1023,14 @@ contains
     yub(9)=zx+dz
 
     d=9
-    call exact_biquad_regress_ef(xub(1:d), yub(1:d), bub(1:d), d,  &
+    call exact_biquad_regress(xub(1:d), yub(1:d), bub(1:d), d,  &
         c, pos_xpoint(1), pos_xpoint(2), f00, ddpsi, dr, dz, rx, zx)
 
     return
     end subroutine nine_point_regression_follow
 
 !---------------------------------------------------------------------
-    subroutine find_actual_index_ef(r0, z0, i, j)
+    subroutine find_actual_index(r0, z0, i, j)
 
     use ef_circuit
     integer i, j
@@ -1037,10 +1039,10 @@ contains
     j=nint((z0-zmin)/dz+1.)	
 
     return
-    end subroutine find_actual_index_ef
+    end subroutine find_actual_index
 
 !---------------------------------------------------------------------
-    subroutine find_fields_interp_ef(r0, z0, psi0, br0, bz0, brr, brz, bzr, bzz) !give back psi, br, bz at r0, z0
+    subroutine find_fields_interp(r0, z0, psi0, br0, bz0, brr, brz, bzr, bzz) !give back psi, br, bz at r0, z0
 
     use ef_circuit
     integer i, j
@@ -1061,14 +1063,14 @@ contains
     z4=psirz(i+1, j+1)
 
 !bilinear interpolation
-    call bilinear_average_ef(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4, psi0)
+    call bilinear_average(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4, psi0)
 
 !br
       t1=-1./x1*(psirz(i, j+1)-psirz(i, j-1))/dz/2.
       t2=-1./x2*(psirz(i+1, j+1)-psirz(i+1, j-1))/dz/2.
       t3=-1./x1*(psirz(i, j+2)-psirz(i, j))/dz/2.
       t4=-1./x2*(psirz(i+1, j+2)-psirz(i+1, j))/dz/2.
-    call bilinear_average_ef(x1, x2, y1, y2, r0, z0, t1, t2, t3, t4, br0)
+    call bilinear_average(x1, x2, y1, y2, r0, z0, t1, t2, t3, t4, br0)
     br0=-br0
 
 !bz
@@ -1076,7 +1078,7 @@ contains
       t2=1./x2*(psirz(i+2, j)-psirz(i, j))/dr/2.
       t3=1./x1*(psirz(i+1, j+1)-psirz(i-1, j+1))/dr/2.
       t4=1./x2*(psirz(i+2, j+1)-psirz(i, j+1))/dr/2.
-    call bilinear_average_ef(x1, x2, y1, y2, r0, z0, t1, t2, t3, t4, bz0)
+    call bilinear_average(x1, x2, y1, y2, r0, z0, t1, t2, t3, t4, bz0)
     bz0=-bz0
 
 !brr
@@ -1084,7 +1086,7 @@ contains
       t2=(-1./r(i+2)*(psirz(i+2, j+1)-psirz(i+2, j-1))/dz/2.+1./r(i)*(psirz(i, j+1)-psirz(i, j-1))/dz/2.)/dr/2.
       t3=(-1./r(i+1)*(psirz(i+1, j+2)-psirz(i+1, j))/dz/2.+1./r(i-1)*(psirz(i-1, j+2)-psirz(i-1, j))/dz/2.)/dr/2.
       t4=(-1./r(i+2)*(psirz(i+2, j+2)-psirz(i+2, j))/dz/2.+1./r(i)*(psirz(i, j+2)-psirz(i, j))/dz/2.)/dr/2.
-    call bilinear_average_ef(x1, x2, y1, y2, r0, z0, t1, t2, t3, t4, brr)
+    call bilinear_average(x1, x2, y1, y2, r0, z0, t1, t2, t3, t4, brr)
     brr=-brr
 
 !brz
@@ -1092,7 +1094,7 @@ contains
       t2=(-1./r(i+1)*(psirz(i+1, j+1)-psirz(i+1, j))/dz+1./r(i+1)*(psirz(i+1, j)-psirz(i+1, j-1))/dz)/dz
       t3=(-1./r(i)*(psirz(i, j+2)-psirz(i, j+1))/dz+1./r(i)*(psirz(i, j+1)-psirz(i, j))/dz)/dz
       t4=(-1./r(i+1)*(psirz(i+1, j+2)-psirz(i+1, j+1))/dz+1./r(i+1)*(psirz(i+1, j+1)-psirz(i+1, j))/dz)/dz
-    call bilinear_average_ef(x1, x2, y1, y2, r0, z0, t1, t2, t3, t4, brz)
+    call bilinear_average(x1, x2, y1, y2, r0, z0, t1, t2, t3, t4, brz)
     brz=-brz
 
 !bzr
@@ -1100,7 +1102,7 @@ contains
       t2=(+2./(r(i+2)+r(i+1))*(psirz(i+2, j)-psirz(i+1, j))/dr-2./(r(i)+r(i+1))*(psirz(i+1, j)-psirz(i, j))/dr)/dr
       t3=(+2./(r(i)+r(i+1))*(psirz(i+1, j+1)-psirz(i, j+1))/dr-2./(r(i)+r(i-1))*(psirz(i, j+1)-psirz(i, j+1))/dr)/dr
       t4=(+2./(r(i+2)+r(i+1))*(psirz(i+2, j+1)-psirz(i+1, j+1))/dr-2./(r(i)+r(i+1))*(psirz(i+1, j+1)-psirz(i, j+1))/dr)/dr
-    call bilinear_average_ef(x1, x2, y1, y2, r0, z0, t1, t2, t3, t4, bzr)
+    call bilinear_average(x1, x2, y1, y2, r0, z0, t1, t2, t3, t4, bzr)
     bzr=-bzr
 
 !bzz
@@ -1108,14 +1110,14 @@ contains
       t2=(+1./(r(i+1))*(psirz(i+2, j+1)-psirz(i, j+1))/dr/2.-1./(r(i+1))*(psirz(i+2, j-1)-psirz(i, j-1))/dr/2.)/dz/2.
       t3=(+1./(r(i))*(psirz(i+1, j+2)-psirz(i-1, j+2))/dr/2.-1./(r(i))*(psirz(i+1, j)-psirz(i-1, j))/dr/2.)/dz/2.
       t4=(+1./(r(i+1))*(psirz(i+2, j+2)-psirz(i, j+2))/dr/2.-1./(r(i+1))*(psirz(i+2, j)-psirz(i, j))/dr/2.)/dz/2.
-    call bilinear_average_ef(x1, x2, y1, y2, r0, z0, t1, t2, t3, t4, bzz)
+    call bilinear_average(x1, x2, y1, y2, r0, z0, t1, t2, t3, t4, bzz)
     bzz=-bzz
 
     return
-    end subroutine find_fields_interp_ef
+    end subroutine find_fields_interp
 
 !---------------------------------------------------------------------
-    subroutine find_fields_interp_ef_psionly(r0, z0, psi0) !give back psi, br, bz at r0, z0
+    subroutine find_fields_interp_psionly(r0, z0, psi0) !give back psi, br, bz at r0, z0
 
     use ef_circuit
     integer i, j
@@ -1136,13 +1138,13 @@ contains
     z4=psirz(i+1, j+1)
 
 !bilinear interpolation
-    call bilinear_average_ef(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4, psi0)
+    call bilinear_average(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4, psi0)
 
     return
-    end subroutine find_fields_interp_ef_psionly
+    end subroutine find_fields_interp_psionly
 
 !---------------------------------------------------------------------
-    subroutine find_fields_interp_ef_green(r0, z0, psi0, iconduc) !give back psi, br, bz at r0, z0
+    subroutine find_fields_interp_green(r0, z0, psi0, iconduc) !give back psi, br, bz at r0, z0
 
     use ef_circuit
     use green_matrix       ! declaration of minimal CPOs
@@ -1165,13 +1167,13 @@ contains
     z4=greeni(i+1, j+1, iconduc)
 
 !bilinear interpolation
-    call bilinear_average_ef(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4, psi0)
+    call bilinear_average(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4, psi0)
 
     return
-    end subroutine find_fields_interp_ef_green
+    end subroutine find_fields_interp_green
 
 !---------------------------------------------------------------------
-    subroutine find_fields_interp_ef_psiext(r0, z0, psi0) !give back psi, br, bz at r0, z0
+    subroutine find_fields_interp_psiext(r0, z0, psi0) !give back psi, br, bz at r0, z0
 
     use ef_circuit
 
@@ -1193,13 +1195,13 @@ contains
     z4=psiextrz(i+1, j+1)
 
 !bilinear interpolation
-    call bilinear_average_ef(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4, psi0)
+    call bilinear_average(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4, psi0)
 
     return
-    end subroutine find_fields_interp_ef_psiext
+    end subroutine find_fields_interp_psiext
 
 !---------------------------------------------------------------------
-    subroutine find_fields_interp_ef_psionly_neg(r0, z0, psi0) !give back psi, br, bz at r0, z0
+    subroutine find_fields_interp_psionly_neg(r0, z0, psi0) !give back psi, br, bz at r0, z0
 
     use ef_circuit
     integer i, j
@@ -1221,13 +1223,13 @@ contains
     z4=-psirz(i+1, j+1)
 
 !bilinear interpolation
-    call bilinear_average_ef(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4, psi0)
+    call bilinear_average(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4, psi0)
 
     return
-    end subroutine find_fields_interp_ef_psionly_neg
+    end subroutine find_fields_interp_psionly_neg
 
 !---------------------------------------------------------------------
-    subroutine bilinear_average_ef(x1, x2, y1, y2, x, y, f11, f21, f12, f22, f0)
+    subroutine bilinear_average(x1, x2, y1, y2, x, y, f11, f21, f12, f22, f0)
 
     double precision x1, x2, y1, y2, x, y, f11, f21, f12, f22, f0
 
@@ -1238,7 +1240,7 @@ contains
          f22*(x-x1)*(y-y1) )
 
     return
-    end subroutine bilinear_average_ef
+    end subroutine bilinear_average
 
 !---------------------------------------------------------------------
     double precision function ellE_green(X,  DL) ! gives back the first kind elliptic integral,  from K. Lackner,  T. Lunt,  IPP - Garching 2022
@@ -1367,7 +1369,7 @@ contains
     end function green_function_non_identity
 
 !-----------------------------------------------------------------------------------
-    subroutine boundary_ef(green_fun)
+    subroutine boundary(green_fun)
 
 ! new bc is integral_over_boundary of -Green * dg/dn * dl
     use pi_vars, only: GPI
@@ -1382,22 +1384,22 @@ contains
 
 ! lower side
     do i=2, nr1
-        call bgint_ef(integr(i, 1), green_fun, jcounty)
+        call bgint(integr(i, 1), green_fun, jcounty)
     enddo
 
 ! right side
     do i=2, nz1
-        call bgint_ef(integr(i, 2), green_fun, jcounty)
+        call bgint(integr(i, 2), green_fun, jcounty)
     enddo
 
 ! upper side
     do i=2, nr1
-        call bgint_ef(integr(i, 3), green_fun, jcounty)
+        call bgint(integr(i, 3), green_fun, jcounty)
     enddo
 
 ! left side
     do i=2, nz1
-        call bgint_ef(integr(i, 4), green_fun, jcounty)
+        call bgint(integr(i, 4), green_fun, jcounty)
     enddo
 
     green_fun(2:nr1,   1) = integr(2:nr1, 1)/GPI
@@ -1406,10 +1408,10 @@ contains
     green_fun(  1, 2:nz1) = integr(2:nz1, 4)/GPI
 
     return
-    end subroutine boundary_ef
+    end subroutine boundary
 
 !-----------------------------------------------------------------------------------
-    subroutine bgint_ef(bgintsol, green_in, jcounty)
+    subroutine bgint(bgintsol, green_in, jcounty)
 
 ! calculates  integral_over_boundary of -Green * dg/dn * dl
     use ef_circuit, only: nr1, nr2, nz1, i_dim2, green_bnd_f, r, dr, dz
@@ -1456,7 +1458,7 @@ contains
     bgintsol = bgintsol - sum(dgdn(2:nz1))
 
     return
-    end subroutine bgint_ef
+    end subroutine bgint
 
 !---------------------------------------------------------------------
     subroutine check_xpoint_connection_axis(rx, zx, rax, zax, dr, dz, icheck)
@@ -1471,7 +1473,7 @@ contains
     double precision :: angl, dbl, dd, t1, t2, t3, t4, t5
     double precision :: z1, z2, psiold, z3
 
-    call find_angle_ef(rax, zax, rx, zx, angl)
+    call find_angle(rax, zax, rx, zx, angl)
 
     dbl = sqrt((rx - rax)**2 + (zx - zax)**2)
     dd  = sqrt(dr**2 + dz**2)
@@ -1486,8 +1488,8 @@ contains
         t2 = zax + dd*(i - 1)*sin(angl)
         t3 = rax + dd*i*cos(angl)
         t4 = zax + dd*i*sin(angl)
-        call find_fields_interp_ef_psionly(t1, t2, z1)
-        call find_fields_interp_ef_psionly(t3, t4, z2)
+        call find_fields_interp_psionly(t1, t2, z1)
+        call find_fields_interp_psionly(t3, t4, z2)
         z3 = (z2 - z1)*psiold
         psiold = z2 - z1
         if (z3 < 0) then
