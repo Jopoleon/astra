@@ -1,5 +1,8 @@
 subroutine generate_files_feqis(data_dir2, machine)
 
+use feqis_tools, only: green_function, green_function_identity, &
+    green_function_non_identity, green_function_includingsamepoint
+
 implicit none
 
 integer, parameter :: ncoils_max=300, nplas_max=300, nblanket_max=200, n_max=5200, nlim_max=500
@@ -36,8 +39,6 @@ double precision, dimension(ncoils_max, ncoils_max) :: resconduc, indconduc, &
     dgreenirj, dgreenizj
 double precision, dimension(nplas_max, nplas_max) :: zlimpotential
 double precision, dimension(nplas_max, nplas_max, ncoils_max) :: greeni, dgreenirpl, dgreenizpl
-double precision, external :: green_function, green_function_identity, &
-    green_function_non_identity, green_function_includingsamepoint
 
 character(len=120) :: fname, dumstring1
 

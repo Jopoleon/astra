@@ -1,2 +1,2 @@
 generate_grids_equil.exe: generate_grids_equil.f90 src/feqis/generate_feqis_gridfiles.f90
-	ifort -I./mod/for -o generate_grids_equil.exe generate_grids_equil.f90 obj/feqis/generate_feqis_gridfiles.o obj/feqis/modules_feqis.o obj/feqis/feqis_tools_mod.o lib/libfor.a 
+	ifort -I./mod/for -I./mod/feqis -o generate_grids_equil.exe generate_grids_equil.f90 obj/feqis/generate_feqis_gridfiles.o obj/feqis/modules_feqis.o obj/feqis/feqis_tools_mod.o lib/libfor.a 

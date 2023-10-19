@@ -4,6 +4,7 @@ use errors_params
 use ef_circuit
 use astra2fbe
 use parameters_a2equil
+use feqis_tools, only: psi_external_calc_ef, plasma_psi_to_coils_ef
 
 implicit none
 
@@ -81,6 +82,7 @@ subroutine solve_gse2d_fbe_full_ef(j_init)
 use errors_params, only: err_find_psistab
 use ef_circuit
 use astra2fbe
+use feqis_tools, only: find_actual_index_ef
 
 implicit none
 
@@ -322,6 +324,9 @@ use errors_params, only: err_find_psistab
 use ef_circuit
 use astra2fbe
 use green_matrix
+use feqis_tools, only: interp_j_fromrhotorz, find_actual_index_ef, &
+    find_fields_interp_ef_green, inverse_matrix_equilef, boundary_ef, &
+    psi_external_calc_ef, find_fields_interp_ef_psionly
 
 implicit none
 
@@ -560,6 +565,10 @@ use errors_params, only: err_find_psistab
 use ef_circuit
 use astra2fbe
 use green_matrix
+use feqis_tools, only: interp_j_fromrhotorz, find_actual_index_ef, &
+    find_angle_ef, find_fields_interp_ef_green, boundary_ef, &
+    find_fields_interp_ef_psionly, psi_external_calc_ef, &
+    least_square_biquad_ef
 
 implicit none
 
@@ -764,6 +773,9 @@ use errors_params, only: err_find_psistab
 use ef_circuit
 use astra2fbe
 use green_matrix       ! declaration of minimal CPOs
+use feqis_tools, only: interp_j_fromrhotorz, find_actual_index_ef, &
+    find_angle_ef, least_square_biquad_ef, boundary_ef, &
+    find_fields_interp_ef_psionly, psi_external_calc_ef
 
 implicit none
 
@@ -968,6 +980,9 @@ subroutine solve_gse2d_fbe_full_ef_1turn(j_init,j_stab,raxold,zaxold)
 
 use ef_circuit
 use astra2fbe
+use feqis_tools, only: interp_j_fromrhotorz, find_actual_index_ef, &
+    boundary_ef, nine_point_coeffs_only, find_angle_ef, &
+    find_fields_interp_ef_psionly
 
 implicit none
 
@@ -1288,6 +1303,8 @@ end subroutine circuit_eq_advance_ef
 subroutine solve_circuit_equations(nc,im,rm,I0,I1,& 
 & 	V,dpc,tau,invertcommand)
 
+use feqis_tools, only: inverse_matrix_equilef
+
 implicit none
 
 integer i,j,k,nc,invertcommand
@@ -1325,8 +1342,8 @@ use parameters_a2equil
 use imas_ids
 use ef_circuit
 use astra2fbe
-
 use numerical_tools, only: linterp
+use feqis_tools, only: find_angle_ef
 
 implicit none
 
@@ -1821,6 +1838,7 @@ subroutine convert_boundary_to_pbe
 
 use pi_vars, only: GPI2
 use ef_circuit
+use feqis_tools, only: find_angle_ef, find_fields_interp_ef_psionly
 
 implicit none
 
@@ -1967,6 +1985,7 @@ subroutine solve_gs2d(g)
 
 use ef_circuit
 use fft_mod_eff, only: costable
+use feqis_tools, only: discrete_sine_transform_ef
 
 implicit none
 
@@ -2109,6 +2128,7 @@ end subroutine solve_tridiag_fbe_ef
 subroutine find_new_axis_part1	
 
 use ef_circuit
+use feqis_tools, only: nine_point_regression
 
 implicit none
 
@@ -2217,6 +2237,9 @@ use pi_vars, only: GPI
 use ef_circuit
 use astra2fbe, only: x_point_save, plasma_config
 use errors_params, only: err_find_oxpoints_derivs
+use feqis_tools, only: find_closest_xpoints, find_fields_interp_ef_psionly, &
+    find_actual_index_ef, find_angle_ef, check_xpoint_connection_axis, &
+    nine_point_regression, nine_point_regression_follow, t_find_u_n
 
 implicit none
 
@@ -2554,8 +2577,11 @@ end subroutine find_psi_boundary
 subroutine new_jrz_ef ! calculate new right hand side given new boundary!
 
 use ef_circuit
-use astra2fbe 
+use astra2fbe
+use feqis_tools, only: t_find_u_n
+
 implicit none
+
 integer i,j,k,i1,i2,i3,i4,i5,j1,j2,j3,j4,j5
 double precision dum1,dum2,dum3,zeta,dumc(i_dim2,i_dim2)
 double precision t1,t2,t3,t4,x,y,alp,bet,gam,det,det0

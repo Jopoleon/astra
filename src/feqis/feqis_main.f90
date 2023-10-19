@@ -5,6 +5,7 @@
       use imas_ids       
       use parameters_a2equil
       use ef_circuit
+      use feqis_tools, only: psi_external_calc_ef
 
       implicit none
  
