@@ -2,6 +2,17 @@ module feqis_tools
 
 implicit none
 
+double precision, dimension(9, 9), parameter :: A_inv = reshape( (/ &
+     0.25, -0.25, -0.25,  0.25,  0.00,  0.00,  0.00,  0.00,  0.00, &
+    -0.50,  0.50,  0.00,  0.00,  0.00,  0.50,  0.00, -0.50,  0.00, &
+     0.25, -0.25,  0.25, -0.25,  0.00,  0.00,  0.00,  0.00,  0.00, &
+    -0.50,  0.00,  0.50,  0.00,  0.50,  0.00, -0.50,  0.00,  0.00, &
+     1.00,  0.00,  0.00,  0.00, -1.00, -1.00,  0.00,  0.00,  1.00, &
+    -0.50,  0.00, -0.50,  0.00,  0.50,  0.00,  0.50,  0.00,  0.00, &
+     0.25,  0.25, -0.25, -0.25,  0.00,  0.00,  0.00,  0.00,  0.00, &
+    -0.50, -0.50,  0.00,  0.00,  0.00,  0.50,  0.00,  0.50,  0.00, &
+     0.25,  0.25,  0.25,  0.25,  0.00,  0.00,  0.00,  0.00,  0.00 /), (/9, 9/) )
+
 contains
 
 !---------------------------------------------------------------------
@@ -655,7 +666,7 @@ contains
 
     integer n, k, i, j
     double precision x(9), y(9), r(9), z(9), u(9), derivs(8)
-    double precision A(9, 9), B(9), ccc(6), Ainv(9, 9)
+    double precision A(9, 9), B(9), ccc(6)
     double precision  rax, zax, uax, c(9), dr, dz
     double precision s_r, s_z, s_r2, s_z2, s_rz
     double precision s_r3, s_rz2, s_r2z, s_z3
@@ -667,15 +678,13 @@ contains
 
     tolez = err_find_biquad
 
-!transformation
+! Transform
     x = (r-r(5))/dr		
     y = (z-z(5))/dz		
 
-!find coefficients
-    call ainv_matrix_def(Ainv)
-
+! Find coefficients
     do k=1, 9
-        c(k) = sum(Ainv(k, 1:9)*u(1:9))
+        c(k) = sum(A_inv(k, 1:9)*u(1:9))
     enddo
 
     rax = x(5)
@@ -765,13 +774,9 @@ contains
     double precision, intent(in) , dimension(9) :: u
     double precision, intent(out), dimension(9) :: c
     integer :: k
-    double precision, dimension(9, 9) :: Ainv
-
-!find coefficients
-    call ainv_matrix_def(Ainv)
 
     do k=1, 9
-        c(k) = sum(Ainv(k, :) * u)
+        c(k) = sum(A_inv(k, :) * u)
     enddo
 
     return
@@ -781,7 +786,7 @@ contains
     subroutine exact_biquad_regress_ef(r,z,u,n,ccc,rax,zax,uax,derivs,dr,dz,rx,zx)
     integer n,k,i,j
     double precision x(9),y(9),r(9),z(9),u(9),derivs(8)
-    double precision A(9,9),B(9),ccc(6),Ainv(9,9)
+    double precision A(9,9),B(9),ccc(6)
     double precision  rax,zax,uax,c(9),dr,dz,rx,zx
     double precision s_r,s_z,s_r2,s_z2,s_rz,xx,yy
     double precision s_r3,s_rz2,s_r2z,s_z3
@@ -791,18 +796,16 @@ contains
 
     integer niter,j_success
 
-!transformation
+! Transform
     x=(r-r(5))/dr		
     y=(z-z(5))/dz		
     xx=(rx-r(5))/dr
     yy=(zx-z(5))/dz	
 
     
-!find coefficients
-    call ainv_matrix_def(Ainv)
-
-    do k=1,9
-    c(k)=sum(Ainv(k,1:9)*u(1:9))
+! Find coefficients
+    do k=1, 9
+        c(k) = sum(A_inv(k, 1:9)*u(1:9))
     enddo
 
     rax=xx
@@ -1498,23 +1501,6 @@ contains
 
     return
     end subroutine check_xpoint_connection_axis
-
-!---------------------------------------------------------------------
-    subroutine ainv_matrix_def(A)
-    double precision A(9, 9)
-
-    A(1, 1: 9) = (/  0.25, -0.50,  0.25, -0.50,  1.00, -0.50,  0.25, -0.50,  0.25 /)
-    A(2, 1: 9) = (/ -0.25,  0.50, -0.25,  0.  ,  0.  ,  0.  ,  0.25, -0.50,  0.25 /)
-    A(3, 1: 9) = (/ -0.25,  0.  ,  0.25,  0.50,  0.  , -0.50, -0.25,  0.  ,  0.25 /)
-    A(4, 1: 9) = (/  0.25,  0.  , -0.25,  0.  ,  0.  ,  0.  , -0.25,  0.  ,  0.25 /)
-    A(5, 1: 9) = (/  0.  ,  0.  ,  0.  ,  0.50, -1.00,  0.50,  0.  ,  0.  ,  0.   /)
-    A(6, 1: 9) = (/  0.  ,  0.50,  0.  ,  0.  , -1.00,  0.  ,  0.  ,  0.50,  0.   /)
-    A(7, 1: 9) = (/  0.  ,  0.  ,  0.  , -0.50,  0.  ,  0.50,  0.  ,  0.  ,  0.   /)
-    A(8, 1: 9) = (/  0.  , -0.50,  0.  ,  0.  ,  0.  ,  0.  ,  0.  ,  0.50,  0.   /)
-    A(9, 1: 9) = (/  0.  ,  0.  ,  0.  ,  0.  ,  1.00,  0.  ,  0.  ,  0.  ,  0.   /)
-
-    return
-    end subroutine ainv_matrix_def
 
 !---------------------------------------------------------------------
     subroutine find_closest_xpoints(rx, zx, ierr, n_add)
