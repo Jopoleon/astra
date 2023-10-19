@@ -41,7 +41,7 @@ PYFILES := $(wildcard $(AWD)/pyparse/*.py)
 
 # Make Commands
 .PHONY: all
-all: directories update_model $(ATASK)
+all: directories update_model modules $(ATASK)
 
 .PHONY: directories
 directories:
@@ -60,6 +60,11 @@ clean:
 .PHONY: update_model
 update_model:
 	rsync -c $(EQU) $(MODTMP)
+
+.PHONY: modules
+modules:
+	make -f $(AWD)/exe/Makefor modules
+	make -f $(AWD)/exe/Makefeqis modules
 
 # Linking, create ASTRA executable
 
@@ -83,16 +88,16 @@ $(LIBFNC): $(AWD)/fnc/*.f90
 $(LIBIPC): $(AWD)/ipc/*
 	make -f $(AWD)/exe/Makesub sub=ipc
 
-# Former 'server' part
+# Libs
 
 $(LIBFOR): $(AWD)/src/for/*
-	make -f $(AWD)/exe/Makefor
+	make -f $(AWD)/exe/Makefor lib
 
 $(LIBNBI): $(AWD)/src/nbi/*
 	cd $(AWD)/src; make -f $(AWD)/exe/Makenbi
 
 $(LIBFEQIS): $(AWD)/src/feqis/*
-	make -f $(AWD)/exe/Makefeqis
+	make -f $(AWD)/exe/Makefeqis lib
 
 $(LIBSPIDER): $(AWD)/src/spider/*
 	make -f $(AWD)/exe/Makespider

@@ -12,23 +12,27 @@ FFLAGS	= -O2 -g -traceback -I. -I$(MOD_FOR) -I$(MOD_DIR)
 
 FEQ_MODOBJ = \
 $(OBJ_DIR)/pi_var_module.o \
-$(OBJ_DIR)/modules_feqis.o 
+$(OBJ_DIR)/modules_feqis.o \
+$(OBJ_DIR)/feqis_tools_mod.o
 
 FEQ_LIBOBJ = \
 $(OBJ_DIR)/solver_inversion_matrix_gsef.o \
 $(OBJ_DIR)/generate_feqis_gridfiles.o \
-$(OBJ_DIR)/interp_feqis.o \
 $(OBJ_DIR)/feqis_main.o \
 $(OBJ_DIR)/main_wrappers_ef.o \
 $(OBJ_DIR)/PHI_EQ_2d_PBE.o \
 $(OBJ_DIR)/jacobians.o \
-$(OBJ_DIR)/build_2dgrid.o 
+$(OBJ_DIR)/build_2dgrid.o
 
 # Coupling scheme objs
 
 # Make Commands
-.PHONY: all
-all: directories $(LIB) mvmod
+
+.PHONY: modules
+modules: directories $(FEQ_MODOBJ) mvmod
+
+.PHONY: lib
+lib: $(LIB)
 
 .PHONY: directories
 directories:
@@ -51,7 +55,7 @@ clean:
 # Rules
 
 $(OBJ_DIR)%.o : $(SRC_DIR)%.f90
-	$(AFC) $(FFLAGS) -c $< -o $@
+	$(AFC) $(FFLAGS) -I$(MOD_DIR) -I$(MOD_FOR) -c $< -o $@
 
 $(LIB): $(FEQ_MODOBJ) $(FEQ_LIBOBJ)
 	ar -u -rv $(LIB) $(FEQ_MODOBJ) $(FEQ_LIBOBJ)

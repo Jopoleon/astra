@@ -1,6 +1,7 @@
 SRC_DIR = $(AWD)/src/for
 OBJ_DIR = $(AWD)/obj/for
 MOD_DIR = $(AWD)/mod/for
+MOD_FEQ = $(AWD)/mod/feqis
 LIB_DIR = $(AWD)/lib
 LIBNAM = libfor.a
 LIB = $(LIB_DIR)/$(LIBNAM)
@@ -26,7 +27,6 @@ $(OBJ_DIR)/ipc_mod.o \
 $(OBJ_DIR)/nclass_mod.o \
 $(OBJ_DIR)/strahl_mod.o \
 $(OBJ_DIR)/numerical_tools_mod.o
-
 
 OBJS = \
 $(OBJ_DIR)/Astra2XW.o \
@@ -54,10 +54,14 @@ $(OBJ_DIR)/a_equil.o \
 $(OBJ_DIR)/surf_ctr.o \
 $(OBJ_DIR)/ctr2rz.o \
 $(OBJ_DIR)/four_mom.o
+
 # Make Commands
 
-.PHONY: all
-all: directories $(LIB) mvmod
+.PHONY: modules
+modules: directories $(MODOBJS) mvmod
+
+.PHONY: lib
+lib: $(LIB)
 
 .PHONY: directories
 directories:
@@ -80,11 +84,10 @@ clean:
 # Rules
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f90
-	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -c $< -o $@
+	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -I$(MOD_FEQ) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.c
 	$(ACC) -c $< -o $@
 
 $(LIB): $(MODOBJS) $(OBJS)
 	ar rv $(LIB) $(MODOBJS) $(OBJS) >/dev/null
-#	ranlib $(LIB)
