@@ -30,9 +30,10 @@ double precision, dimension(:), pointer :: &
     AMAIN, AMETR, CU, ELON, ER, FP, G11, IPOL, MU, &
     NALF, NDEUT, NE, NHE3, NHYDR, NI, NIBM, NIZ1, NIZ2, NIZ3, NTRIT, &
     PBLON, PBPER, PFAST, RHO, SHEAR, SHIF, TE, TI, TRIA, UPL, VPOL, VRS, VTOR, &
-    ZEF, ZIM1, ZIM2, ZIM3, ZMAIN
+    ZEF, ZIM1, ZIM2, ZIM3, ZMAIN, ZIMPT, NIMPT, AIMPT
+!zimpt, nimpt, aimpt --> average charge, total density, average mass of impurities
 
-double precision, dimension(NRD*38), target :: plasma_profs
+double precision, dimension(NRD*41), target :: plasma_profs
 
 double precision, dimension(NRD) :: &
     NN, TN, PRAD, PBOL1, PBOL2, PBOL3, PSXR1, &
@@ -149,6 +150,9 @@ ZIM1  => plasma_profs(34*NRD + 1: 35*NRD)
 ZIM2  => plasma_profs(35*NRD + 1: 36*NRD)
 ZIM3  => plasma_profs(36*NRD + 1: 37*NRD)
 ZMAIN => plasma_profs(37*NRD + 1: 38*NRD)
+ZIMPT => plasma_profs(38*NRD + 1: 39*NRD)
+NIMPT => plasma_profs(39*NRD + 1: 40*NRD)
+AIMPT => plasma_profs(40*NRD + 1: 41*NRD)
 
 ! Geometry/equilibrium
 
@@ -185,6 +189,10 @@ UPAR = 0.
 ZEF = 1.
 
 AMAIN = 1.
+
+ZIMPT = 1.
+NIMPT = 0.
+AIMPT = 1.
 
 ZMAIN = 1.
 ZIM1  = 1.
