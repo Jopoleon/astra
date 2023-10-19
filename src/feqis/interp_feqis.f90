@@ -442,208 +442,100 @@ return
 end subroutine psiplex_calc_ef
 
 !---------------------------------------------------------------------
-subroutine find_demo_gaps_efff(ngaps, demo_gaps, geom1d)
+double precision function find_l_gap(psibnd, l_ref_in, dumx0, dumy0, dumz)
 
 use errors_params, only: err_gaptolez
+
+implicit none
+
+double precision, intent(in) :: psibnd, l_ref_in, dumx0, dumy0, dumz
+
+double precision :: dur1, dur2, u001, u002, dumx1, dumx2, dumy1, dumy2, &
+    tolez, gapmin, gapmax, l_ref
+
+l_ref = l_ref_in
+dur1 = 0.
+dur2 = l_ref
+gapmin = -1.5
+gapmax = 2.5
+tolez = err_gaptolez
+
+do
+    dumx1 = dumx0 + dur1*cos(dumz)
+    dumy1 = dumy0 + dur1*sin(dumz)
+    dumx2 = dumx0 + dur2*cos(dumz)
+    dumy2 = dumy0 + dur2*sin(dumz)
+    call find_fields_interp_ef_psionly(dumx1, dumy1, u001) 
+    call find_fields_interp_ef_psionly(dumx2, dumy2, u002) 
+    if (abs(l_ref) < tolez) then
+        find_l_gap = 0.5*(dur1 + dur2)
+        EXIT
+    endif
+    if (u001 == psibnd) then
+        find_l_gap = dur1
+        EXIT
+    endif
+    if (u002 == psibnd) then
+        find_l_gap = dur2
+        EXIT
+    endif
+    if ((u002 > psibnd .and. u001 < psibnd) .or. (u002 < psibnd .and. u001 > psibnd)) then
+        l_ref = -0.5*l_ref
+        dur1 = dur2
+        dur2 = dur1 + l_ref
+        CYCLE
+    endif
+! Case with no intersection: larger 1. m
+    find_l_gap = 0.5*(dur1 + dur2)
+    if (find_l_gap >= gapmax .or. find_l_gap < gapmin) then
+        find_l_gap = -5000.
+        EXIT
+    endif
+    dur1 = dur1 + l_ref
+    dur2 = dur2 + l_ref
+enddo
+
+return
+end function find_l_gap
+
+!---------------------------------------------------------------------
+subroutine find_demo_gaps_efff(ngaps, demo_gaps, geom1d)
+
 use ef_circuit, only: psibnd
 
 implicit none
 
-integer ngaps, i, j
-integer n_iterz, j1, j2, j3, j4
-double precision demo_gaps(ngaps, 4), geom1d(ngaps)
-double precision dumx, dumy, dumz, l_ref, l_gap
-double precision dumx2, dumy2, dumu1, dumu2, u00, up
-double precision dumx3, dumy3, l_gap2, l_gap3, x003, y003, u002
-double precision dumx0, dumy0, dumxx, dumyy, d_step
-double precision gapmin, gapmax, x00, y00, x002, y002
-double precision tolez, bolez, dur1, dur2
-integer onlypos
+integer, intent(in) :: ngaps
+double precision, intent(in) :: demo_gaps(ngaps, 4)
+double precision, intent(out) :: geom1d(ngaps)
 
-tolez = err_gaptolez
+integer :: i, onlypos
+double precision :: d_step, gapmin, gapmax, l_gap, l_gap_pos, l_gap_neg
+double precision, external :: find_l_gap
 
-d_step = 0.1 !advance in 1 cm steps
-n_iterz = 100
+d_step = 0.1 ! advance in 1 cm steps
 gapmin = -1.5
 gapmax = 2.5
-up = psibnd
 
 do i=1, ngaps
-onlypos=nint(demo_gaps(i, 4))
-
-!first positive gap
-l_ref=d_step
-
-dumx0=demo_gaps(i, 1) ! R0
-dumy0=demo_gaps(i, 2) ! Z0
-dumz=demo_gaps(i, 3) ! angle 
-dur1=0.
-dur2=l_ref
-
-1781 continue
-
-dumx=dumx0+dur1*cos(dumz)
-dumy=dumy0+dur1*sin(dumz)
-dumx2=dumx0+dur2*cos(dumz)
-dumy2=dumy0+dur2*sin(dumz)
-call find_fields_interp_ef_psionly(dumx, dumy, u00) 
-call find_fields_interp_ef_psionly(dumx2, dumy2, u002) 
-
-if (abs(l_ref) < tolez) goto 131
-
-if (u00 == up) goto 118
-if (u002 == up) goto 117
-if (u002 > up .and. u00 < up) goto 115
-if (u002 < up .and. u00 > up) goto 116
-
-
-!case with no intersection: larger 1. m
-l_gap=0.5*(dur1+dur2)
-if (l_gap >= gapmax.or.l_gap < gapmin)goto 119
-
-dur1=dur1+l_ref
-dur2=dur2+l_ref
-
-goto 1781
-
-116 continue
-115 continue
-
-l_ref=-0.5*l_ref
-dur1=dur2
-dur2=dur1+l_ref
-
-goto 1781
-
-118 continue
-l_gap=dur1
-goto 211
-
-117 continue
-l_gap=dur2
-goto 211
-
-119 continue !case there is no intersection
-l_gap=-5000.
-goto 211
-
-131 continue
-l_gap=0.5*(dur1+dur2)
-
-211 continue
-
-! now negative gap
-l_ref=-d_step 
-
-dumx0=demo_gaps(i, 1) ! R0
-dumy0=demo_gaps(i, 2) ! Z0
-dumz=demo_gaps(i, 3) ! angle	 
-
-dur1=0.
-dur2=l_ref
-
-3781 continue
-
-dumx=dumx0+dur1*cos(dumz)
-dumy=dumy0+dur1*sin(dumz)
-dumx2=dumx0+dur2*cos(dumz)
-dumy2=dumy0+dur2*sin(dumz)
-call find_fields_interp_ef_psionly(dumx, dumy, u00) 
-call find_fields_interp_ef_psionly(dumx2, dumy2, u002) 
-
-if (abs(l_ref) < tolez) goto 331
-
-if (u00 == up) goto 318
-if (u002 == up) goto 317
-if (u002 > up.and.u00 < up) goto 315
-if (u002 < up.and.u00 > up) goto 316
-
-!case with no intersection: larger 1. m
-l_gap2=0.5*(dur1+dur2)
-if (l_gap2 >= gapmax.or.l_gap2 < gapmin)	goto 319
-
-dur1=dur1+l_ref
-dur2=dur2+l_ref
-
-goto 3781
-
-316 continue
-315 continue
-
-l_ref=-0.5*l_ref
-dur1=dur2
-dur2=dur1+l_ref
-
-goto 3781
-
-318 continue
-l_gap2=dur1
-goto 411
-
-317 continue
-l_gap2=dur2
-goto 411
-
-319 continue !case there is no intersection
-l_gap2=-5000.
-goto 411
-
-331 continue
-l_gap2=0.5*(dur1+dur2)
-
-411 continue
-
+    onlypos = nint(demo_gaps(i, 4))
+    l_gap_pos = find_l_gap(psibnd,  d_step, demo_gaps(i, 1), demo_gaps(i, 2), demo_gaps(i, 3))
+    l_gap_neg = find_l_gap(psibnd, -d_step, demo_gaps(i, 1), demo_gaps(i, 2), demo_gaps(i, 3))
 ! choose minimum of absolute values
-if (onlypos == 0) then
-l_gap3=l_gap
-if (abs(l_gap2) < abs(l_gap)) l_gap3=l_gap2
-if (abs(l_gap) < abs(l_gap2)) l_gap3=l_gap
-
-if (isnan(l_gap)) l_gap3=l_gap2
-if (isnan(l_gap2)) l_gap3=l_gap
-
-write(*, *) 'gaps ', i, dumx0, dumy0, dumx, dumy,  &
-    dumx2, dumy2, dumxx, dumyy, l_gap2, l_gap, l_gap3
-
-geom1d(i)=min(gapmax, max(gapmin, l_gap3))
-else
-geom1d(i)=min(gapmax, max(gapmin, l_gap))
-endif
+    if (onlypos == 0) then
+        l_gap = l_gap_pos
+        if (abs(l_gap_neg) < abs(l_gap_pos)) l_gap = l_gap_neg
+        if (abs(l_gap_pos) < abs(l_gap_neg)) l_gap = l_gap_pos
+        if (isnan(l_gap_pos)) l_gap = l_gap_neg
+        if (isnan(l_gap_neg)) l_gap = l_gap_pos
+        geom1d(i) = min(gapmax, max(gapmin, l_gap))
+    else
+        geom1d(i) = min(gapmax, max(gapmin, l_gap_pos))
+    endif
 enddo
 
 return
 end subroutine find_demo_gaps_efff
-
-!---------------------------------------------------------------------
-subroutine find_demo_meas2021_equilef(nbexp, nfexp, br_in, br_out,  &
-    flux_in, flux_out, ncoilzzz, pjk, dddc)
-
-use ef_circuit, only: nconduc, curconduc, dpc
-
-implicit none
-
-integer, intent(in) :: nbexp, nfexp, ncoilzzz
-double precision, intent(in)  :: br_in(nbexp, 3), flux_in(nfexp, 2)
-double precision, intent(out) :: br_out(nbexp), flux_out(nfexp), dddc(200)
-double precision :: pjk(ncoilzzz)
-
-integer :: i
-double precision :: br1, bz1, brr, brz, bzr, bzz, dum0
-
-pjk(1:nconduc) = curconduc(1:nconduc)
-dddc(1:nconduc) = dpc(1:nconduc)
-
-do i=1, nbexp
-    call find_fields_interp_ef(br_in(i, 1), br_in(i, 2), dum0, br1, bz1, brr, brz, bzr, bzz)
-    br_out(i) = br1*cos(br_in(i, 3)) + bz1*sin(br_in(i, 3))	
-enddo
-
-do i=1, nfexp
-    call find_fields_interp_ef_psionly(flux_in(i, 1), flux_in(i, 2), flux_out(i)) 
-enddo
-
-return
-end subroutine find_demo_meas2021_equilef
 
 !---------------------------------------------------------------------
 subroutine psi_external_calc_ef
@@ -1696,63 +1588,6 @@ A(9, 1: 9) = (/  0.  ,  0.  ,  0.  ,  0.  ,  1.00,  0.  ,  0.  ,  0.  ,  0.   /)
 
 return
 end subroutine ainv_matrix_def
-
-!---------------------------------------------------------------------
-subroutine fst3(f, d, m, n)
-
-implicit none
-
-integer, intent(in) :: m, n
-double precision, intent(in) :: d(1)
-double precision, intent(inout) :: f(n)
-
-integer :: i, j, k, i1, i2, j1, j2, j3, k1, n1, n2, n3, n4, n5, n6
-double   precision :: a, b, t
-
-j1 = 1
-n1 = n
-j3 = -1
-f(n) = d(1)*f(n)
-
-do i=1, m-1
-    n2 = n1
-    n1 = n1/2
-    n6 = 0
-    do j=1, j1
-        j2 = j1 + j
-        j3 = -j3
-        a = d(j2-j3)
-        b = d(j2) + d(j2)
-        n3 = n6 + 1
-        n6 = n2 + n6
-        n5 = n6 - n1
-        n4 = n5 + n5
-        do k=n3, n5-1
-            k1 = n4 - k
-            f(k)  = f(k) + f(k1)
-            f(k1) = f(k1)*b
-        enddo
-        f(n5) = f(n5)*a
-        do k=n3, n5
-            t = f(k+n1)
-            f(k+n1) = f(k) - t
-            f(k)    = f(k) + t
-        enddo
-    enddo
-    j1 = j1 + j1
-enddo
-
-do i=1, j1
-    i1 = i + i
-    i2 = i1-1
-    j3 = -j3
-    t = d(j1+i-j3)*f(i2)
-    f(i2) = t + f(i1)
-    f(i1) = t - f(i1)
-enddo
-
-return
-end subroutine fst3
 
 !---------------------------------------------------------------------
 subroutine find_closest_xpoints(rx, zx, ierr, n_add)
