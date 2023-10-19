@@ -21,9 +21,9 @@ chmod 744 $AWD/exe/wr_nml
 chmod 744 $AWD/exe/CheckObjs
 chmod 744 $AWD/pyparse/parser_main.py
 
+$AWD/exe/as_exe -m fluxes -v aug34954 -s 4 -e 5
+
 # Generate Green-functions for FBE
 make -f Makegenerate
 chmod 744 generate_grids_equil.exe
 ./generate_grids_equil.exe
-
-$AWD/exe/as_exe -m fluxes -v aug34954 -s 4 -e 5

@@ -10,7 +10,6 @@ subroutine build_2dgrid(nrho, ntheta, psin_grid, &
 
 use pi_vars, only: GPI, GPI2
 use numerical_tools, only: qinterp, extrapolate, polyfitcc
-use feqis_tools, only: green_function_includingsamepoint
 
 implicit none
 
@@ -37,6 +36,7 @@ double precision, dimension(ntheta) :: dl_arc, tar1, tar2
 double precision, dimension(nrho, ntheta) :: gradPSIa, gradVa, dV2da, dA2da, B_pola, B_ABSa, B_Ta
 double precision :: t4,xxxx1(3),yyyy1(3),pppp1(3), &
    yrzmin,yrzmax,yzmax,yrmin,yrmax,yrr,yzmin,ya
+double precision, external :: green_function_includingsamepoint
 
 integer :: ip0,ip1,ip2,ip3
 

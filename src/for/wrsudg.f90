@@ -13,7 +13,6 @@ use fenix_params, only: ipl_bf_bkdw
 use flight_sim_geometrics, only: geom1d
 use plasma_state, only: plasma_up
 use parameters_a2equil, only: equil_now
-use feqis_tools, only: coil_forces_feqis
 
 implicit none
 

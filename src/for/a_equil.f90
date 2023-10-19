@@ -14,10 +14,10 @@ use fenix_params, only: s_adapt, s_fazt
 use parameters_a2equil, only: type_parameters, fix_adapgrid, GP, GP2
 use const_inc, only : rtor,shift,updwn
 
+
 use flight_sim_geometrics, only: geom1d
 use outcmn_inc, only: MACHINE, exp_file
 use astra2fbe
-use feqis_tools, only: psib_ext_efff, get_zccurb_efff, find_demo_gaps_efff
 
 implicit none
 

@@ -5,7 +5,6 @@
       use imas_ids       
       use parameters_a2equil
       use ef_circuit
-      use feqis_tools, only: psi_external_calc
 
       implicit none
  
@@ -124,7 +123,7 @@ nrplasma=nrho
 	 psi_cur_old=0.
 	 psiplasmatoconduc=0.
  		call circuit_eq_advance_ef(j_call)	
- 		call psi_external_calc
+ 		call psi_external_calc_ef
 		psirz=psiextrz
 		j_vacplas=0
 	endif
