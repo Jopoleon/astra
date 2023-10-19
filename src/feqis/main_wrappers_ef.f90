@@ -1641,7 +1641,7 @@ call PHI_EQ_2d_PBE(nrho,nteta,psigrida(1:nrho),iplasma, &
    psibez(1:nrho), &   ! psinorm new
  lambda2d(1:nrho,1:nteta), t2dbez(1:nteta), &
   psiaxis_new, cnorm, rax_new, zax_new, thetap_i, rmaj2, & 
-	jcbn2, q_new, rhoedge,darea2,effprimp,epprimp, r_min, yy2, gradr2)
+	jcbn2, q_new, rhoedge,darea2,epprimp, effprimp,r_min, yy2, gradr2)
 	
 	raxp=rax_new
 	zaxp=zax_new
