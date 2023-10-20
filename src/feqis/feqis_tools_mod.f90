@@ -439,30 +439,26 @@ contains
     end subroutine psiplex_calc
 
 !---------------------------------------------------------------------
-    double precision function find_l_gap(psibnd, l_ref_in, dumx0, dumy0, dumz)
+    double precision function find_l_gap(psibnd, l_ref_in, gapmin, gapmax, geom)
 
     use errors_params, only: err_gaptolez
 
-    double precision, intent(in) :: psibnd, l_ref_in, dumx0, dumy0, dumz
+    double precision, intent(in) :: psibnd, l_ref_in, gapmin, gapmax, geom(3)
 
-    double precision :: dur1, dur2, u001, u002, dumx1, dumx2, dumy1, dumy2, &
-        tolez, gapmin, gapmax, l_ref
+    double precision :: dur1, dur2, u001, u002, dumx1, dumx2, dumy1, dumy2, l_ref
 
     l_ref = l_ref_in
     dur1 = 0.
     dur2 = l_ref
-    gapmin = -1.5
-    gapmax = 2.5
-    tolez = err_gaptolez
 
     do
-        dumx1 = dumx0 + dur1*cos(dumz)
-        dumy1 = dumy0 + dur1*sin(dumz)
-        dumx2 = dumx0 + dur2*cos(dumz)
-        dumy2 = dumy0 + dur2*sin(dumz)
+        dumx1 = geom(1) + dur1*cos(geom(3))
+        dumy1 = geom(2) + dur1*sin(geom(3))
+        dumx2 = geom(1) + dur2*cos(geom(3))
+        dumy2 = geom(2) + dur2*sin(geom(3))
         call find_fields_interp_psionly(dumx1, dumy1, u001) 
         call find_fields_interp_psionly(dumx2, dumy2, u002) 
-        if (abs(l_ref) < tolez) then
+        if (abs(l_ref) < err_gaptolez) then
             find_l_gap = 0.5*(dur1 + dur2)
             EXIT
         endif
@@ -511,13 +507,15 @@ contains
 
     do i=1, ngaps
         onlypos = nint(demo_gaps(i, 4))
-        l_gap_pos = find_l_gap(psibnd,  d_step, demo_gaps(i, 1), demo_gaps(i, 2), demo_gaps(i, 3))
-        l_gap_neg = find_l_gap(psibnd, -d_step, demo_gaps(i, 1), demo_gaps(i, 2), demo_gaps(i, 3))
+        l_gap_pos = find_l_gap(psibnd,  d_step, gapmin, gapmax, demo_gaps(i, 1:3))
+        l_gap_neg = find_l_gap(psibnd, -d_step, gapmin, gapmax, demo_gaps(i, 1:))
 ! choose minimum of absolute values
         if (onlypos == 0) then
-            l_gap = l_gap_pos
-            if (abs(l_gap_neg) < abs(l_gap_pos)) l_gap = l_gap_neg
-            if (abs(l_gap_pos) < abs(l_gap_neg)) l_gap = l_gap_pos
+            if (abs(l_gap_neg) < abs(l_gap_pos)) then
+                l_gap = l_gap_neg
+            else
+                l_gap = l_gap_pos
+            endif
             if (isnan(l_gap_pos)) l_gap = l_gap_neg
             if (isnan(l_gap_neg)) l_gap = l_gap_pos
             geom1d(i) = min(gapmax, max(gapmin, l_gap))
@@ -537,8 +535,8 @@ contains
 
     integer :: i, j
 
-    do j=1, nz2	
-        do i=1, nr2	
+    do j=1, nz2
+        do i=1, nr2
             psiextrz(i, j) = sum(curconduc(1: nconduc)*greeni(i, j, 1: nconduc))
         enddo
     enddo
@@ -548,6 +546,7 @@ contains
 
 !---------------------------------------------------------------------
     subroutine least_square_biquad(r, z, u, n, c, rax, zax, uax, derivs)
+
     integer n, k
     double precision r(n), z(n), u(n), derivs(8)
     double precision A(6, 6), B(6), cc(6), c(6), Ainv(6, 6)
@@ -662,127 +661,95 @@ contains
     end subroutine least_square_biquad
      
 !---------------------------------------------------------------------
-    subroutine exact_biquad(r, z, u, n, ccc, rax, zax, uax, derivs, dr, dz)
+    subroutine exact_biquad(r5, z5, u, n, rax, zax, uax, derivs, dr, dz)
 
     use errors_params, only: err_find_biquad
 
-    integer n, k, i, j
-    double precision x(9), y(9), r(9), z(9), u(9), derivs(8)
-    double precision A(9, 9), B(9), ccc(6)
-    double precision  rax, zax, uax, c(9), dr, dz
-    double precision s_r, s_z, s_r2, s_z2, s_rz
-    double precision s_r3, s_rz2, s_r2z, s_z3
-    double precision s_r4, s_r2z2, s_r3z, s_z4, s_rz3
-    double precision s_u, s_ur, s_uz, s_ur2, s_uz2, s_urz	
-    double precision det,  det_r, det_z, tolez
+    integer, intent(in) :: n
+    double precision, intent(in) :: dr, dz, r5, z5
+    double precision, intent(in), dimension(n) :: u
+    double precision, intent(out) :: rax, zax, uax
+    double precision, intent(out), dimension(8) :: derivs
 
-    integer niter, j_success
-
-    tolez = err_find_biquad
-
-! Transform
-    x = (r-r(5))/dr		
-    y = (z-z(5))/dz		
+    integer :: k, niter, j_success
+    double precision :: s_r, s_z, s_r2, s_z2, det
+    double precision :: A(2, 2), B(2), c(9)
 
 ! Find coefficients
     do k=1, 9
-        c(k) = sum(A_inv(k, 1:9)*u(1:9))
+        c(k) = sum(A_inv(k, 1:n) * u(1:n))
     enddo
 
-    rax = x(5)
-    zax = y(5)
+    rax = 0.
+    zax = 0.
 
 !now find axis
     niter = 0
     s_r = 100000.
     s_z = 100000.
-    1234 continue
-    niter = niter+1
-    s_r2 = 2*C(1)*rax*zax**2    + 2*C(2)*rax*zax +   C(3)*zax**2     + C(4)*zax + 2*C(5)*rax + C(7)
-    s_z2 = 2*C(1)*rax**2*zax +   C(2)*rax**2  + 2*C(3)*zax*rax + C(4)*rax + 2*C(6)*zax + C(8)
-    A(1, 1) = 2*C(1)*zax**2+2*C(2)*zax+2*C(5)
-    A(1, 2) = 4*C(1)*rax*zax+2*C(2)*rax+2*C(3)*zax+C(4)
-    A(2, 2) = 2*C(1)*rax**2+2*C(3)*rax+2*c(6)
-    A(2, 1) = 4*C(1)*rax*zax+2*C(2)*rax+2*C(3)*zax+C(4)
-    B(1) = s_r2
-    B(2) = s_z2
-    det = (A(1, 1)*A(2, 2))-(A(1, 2)*A(2, 1))
-    s_r2 = 1/det*(A(2, 2)*B(1)-A(1, 2)*B(2))
-    s_z2 = 1/det*(A(1, 1)*B(2)-A(2, 1)*B(1))
-    rax = rax-s_r2
-    zax = zax-s_z2
 
-    s_r2 = s_r
-    s_z2 = s_z
-    s_r = 2*C(1)*rax*zax**2 + 2*C(2)*rax*zax+C(3)*zax**2+C(4)*zax+2*C(5)*rax+C(7)
-    s_z = 2*C(1)*rax**2*zax + C(2)*rax**2 +2*C(3)*zax*rax+C(4)*rax+2*C(6)*zax+C(8)
+    do
+        niter = niter + 1
+        s_r2 = 2*C(1)*rax*zax**2 + 2*C(2)*rax*zax +   C(3)*zax**2  + C(4)*zax + 2*C(5)*rax + C(7)
+        s_z2 = 2*C(1)*rax**2*zax +   C(2)*rax**2  + 2*C(3)*zax*rax + C(4)*rax + 2*C(6)*zax + C(8)
+        A(1, 1) = 2*C(1)*zax**2  + 2*C(2)*zax + 2*C(5)
+        A(1, 2) = 4*C(1)*rax*zax + 2*C(2)*rax + 2*C(3)*zax + C(4)
+        A(2, 2) = 2*C(1)*rax**2  + 2*C(3)*rax + 2*c(6)
+        A(2, 1) = 4*C(1)*rax*zax + 2*C(2)*rax + 2*C(3)*zax + C(4)
+        B(1) = s_r2
+        B(2) = s_z2
+        det = (A(1, 1)*A(2, 2)) - (A(1, 2)*A(2, 1))
+        s_r2 = 1/det*(A(2, 2)*B(1) - A(1, 2)*B(2))
+        s_z2 = 1/det*(A(1, 1)*B(2) - A(2, 1)*B(1))
+        rax = rax - s_r2
+        zax = zax - s_z2
 
-    if (abs(s_r) < tolez.and.abs(s_z) < tolez) then
-        j_success = 1
-        goto 1235
-    endif
-    if (abs(rax) > 1.) then
-        j_success = 0
-        goto 1235
-    endif
-    if (abs(zax) > 1) then
-        j_success = 0
-        goto 1235
-    endif
-    if (niter > 100000) then
-        j_success = 0
-        goto 1235
-    endif
+        s_r2 = s_r
+        s_z2 = s_z
+        s_r = 2*C(1)*rax*zax**2 + 2*C(2)*rax*zax +   C(3)*zax**2  + C(4)*zax + 2*C(5)*rax + C(7)
+        s_z = 2*C(1)*rax**2*zax + C(2)*rax**2    + 2*C(3)*zax*rax + C(4)*rax + 2*C(6)*zax + C(8)
 
-    goto 1234
-
-    1235 continue
+        if (abs(s_r) < err_find_biquad .and. abs(s_z) < err_find_biquad) then
+            j_success = 1
+            EXIT
+        endif
+        if (abs(rax) > 1. .or. abs(zax) > 1 .or. niter > 100000) then
+            j_success = 0
+            EXIT
+        endif
+    enddo
 
     if (j_success == 0) then
-        rax =    1.e6
-        zax =    1.e6
-        uax =   -1.e6
-        derivs = 1.e6
-        return	
+        rax    =  1.e6
+        zax    =  1.e6
+        uax    = -1.e6
+        derivs =  1.e6
+        return
     endif
 
 ! magnetic axis
 
     uax = c(1)*rax**2 * zax**2 + & 
-          c(2)*rax**2 * zax + &
-          c(3)*rax * zax**2 + &
-          c(4)*rax * zax + &
-          c(5)*rax**2  + &
+          c(2)*rax**2 * zax    + &
+          c(3)*rax    * zax**2 + &
+          c(4)*rax    * zax    + &
+          c(5)*rax**2 + &
           c(6)*zax**2 + &
-          c(7)*rax  + &
-          c(8)*zax + &
+          c(7)*rax    + &
+          c(8)*zax    + &
           c(9)
 
-    derivs(1) = 1/dr*(2*C(1)*rax*zax**2    + 2*C(2)*rax*zax+C(3)*zax**2+C(4)*zax+2*C(5)*rax+C(7))
-    derivs(2) = 1/dz*(2*C(1)*rax**2*zax + C(2)*rax**2 +2*C(3)*zax*rax+C(4)*rax+2*C(6)*zax+C(8))
-    derivs(3) = 1/dr**2*(2.*c(1)*zax**2+2*c(2)*zax+2*c(5))
-    derivs(4) = 1/dz**2*(2.*c(1)*rax**2+2*c(3)*rax+2*c(6))
-    derivs(5) = 1/dr/dz*(4*c(1)*rax*zax+2*c(2)*rax+2*c(3)*zax+c(4)) 
-     
-    rax=rax*dr+r(5)
-    zax=zax*dz+z(5)
+    derivs(1) = 1/dr*(2*C(1)*rax*zax**2 + 2*C(2)*rax*zax +   C(3)*zax**2  + C(4)*zax + 2*C(5)*rax + C(7))
+    derivs(2) = 1/dz*(2*C(1)*rax**2*zax +   C(2)*rax**2  + 2*C(3)*zax*rax + C(4)*rax + 2*C(6)*zax + C(8))
+    derivs(3) = 1/dr**2*(2.*c(1)*zax**2 + 2*c(2)*zax + 2*c(5))
+    derivs(4) = 1/dz**2*(2.*c(1)*rax**2 + 2*c(3)*rax + 2*c(6))
+    derivs(5) = 1/dr/dz*(4*c(1)*rax*zax + 2*c(2)*rax + 2*c(3)*zax + c(4)) 
+
+    rax = rax*dr + r5
+    zax = zax*dz + z5
 
     return
     end subroutine exact_biquad
-
-!---------------------------------------------------------------------
-    subroutine exact_biquad_coeffs_only(u, c)
-
-    double precision, intent(in) , dimension(9) :: u
-    double precision, intent(out), dimension(9) :: c
-    integer :: k
-
-    do k=1, 9
-        c(k) = sum(A_inv(k, :) * u)
-    enddo
-
-    return
-    end subroutine exact_biquad_coeffs_only
 
 !---------------------------------------------------------------------
     subroutine exact_biquad_regress(r,z,u,n,ccc,rax,zax,uax,derivs,dr,dz,rx,zx)
@@ -793,16 +760,16 @@ contains
     double precision s_r,s_z,s_r2,s_z2,s_rz,xx,yy
     double precision s_r3,s_rz2,s_r2z,s_z3
     double precision s_r4,s_r2z2,s_r3z,s_z4,s_rz3
-    double precision s_u,s_ur,s_uz,s_ur2,s_uz2,s_urz	
+    double precision s_u,s_ur,s_uz,s_ur2,s_uz2,s_urz
     double precision det, det_r,det_z,tolez
 
     integer niter,j_success
 
 ! Transform
-    x=(r-r(5))/dr		
-    y=(z-z(5))/dz		
+    x=(r-r(5))/dr
+    y=(z-z(5))/dz
     xx=(rx-r(5))/dr
-    yy=(zx-z(5))/dz	
+    yy=(zx-z(5))/dz
 
     
 ! Find coefficients
@@ -853,7 +820,7 @@ contains
     return
     end subroutine exact_biquad_regress
 
-!---------------------------------------------------------------------		 
+!--------------------------------------------------------------------- 
     real*8 function frlim(dp, ylim, rx, zx, rm, zm)
 
     double precision, intent(in) :: dp(5), ylim, rx, zx, rm, zm
@@ -904,10 +871,10 @@ contains
     integer iax, jax, i, j, k, d
     double precision pos_xpoint(2)
     double precision r0, z0, f00, xub(90), bub(90), yub(90)
-    double precision ddpsi(8), c(6)
+    double precision ddpsi(8)
     integer i1, i2, i3, i4
 
-    call find_actual_index(r0, z0, iax, jax)
+    call get_closest_index(r0, z0, iax, jax)
 
 !find true axis
     k  = 0
@@ -916,10 +883,10 @@ contains
     i4 = 1
     i2 = 1
 
-    if (iax ==   2) i3=-1
-    if (jax ==   2) i1=-1
-    if (iax == nr1) i4=1
-    if (jax == nz1) i2=1
+    if (iax ==   2) i3 = -1
+    if (jax ==   2) i1 = -1
+    if (iax == nr1) i4 =  1
+    if (jax == nz1) i2 =  1
 
     d = (i4 - i3 + 1)*(i2 - i1 + 1)
 
@@ -932,8 +899,8 @@ contains
         enddo
     enddo
 
-    call exact_biquad(xub(1:d), yub(1:d), bub(1:d), d,  &
-        c, pos_xpoint(1), pos_xpoint(2), f00, ddpsi, dr, dz)
+    call exact_biquad(xub(5), yub(5), bub(1:d), d,  &
+        pos_xpoint(1), pos_xpoint(2), f00, ddpsi, dr, dz)
 
     return
     end subroutine nine_point_regression
@@ -950,7 +917,7 @@ contains
     integer :: iax, jax, i, j, k, d, i1, i2, i3, i4
     double precision, dimension(90) :: bub
 
-    call find_actual_index(r0, z0, iax, jax)
+    call get_closest_index(r0, z0, iax, jax)
 
     c1 = r(iax)
     c2 = z(jax)
@@ -975,7 +942,9 @@ contains
         enddo
     enddo
 
-    call exact_biquad_coeffs_only(bub(1:d), c)
+    do k=1, 9
+        c(k) = sum(A_inv(k, 1:d) * bub(1:d))
+    enddo
 
     return
     end subroutine nine_point_coeffs_only
@@ -983,7 +952,7 @@ contains
 !---------------------------------------------------------------------
     subroutine nine_point_regression_follow(rx, zx, pos_xpoint, ddpsi, f00)
 
-    use ef_circuit
+    use ef_circuit, only: dr, dz
 
     integer iax, jax, i, j, k, d
     double precision pos_xpoint(2), rx, zx
@@ -1030,217 +999,164 @@ contains
     end subroutine nine_point_regression_follow
 
 !---------------------------------------------------------------------
-    subroutine find_actual_index(r0, z0, i, j)
+    subroutine get_closest_index(r0, z0, i, j)
 
-    use ef_circuit
-    integer i, j
-    double precision r0, z0
-    i=nint((r0-rmin)/dr+1.)	
-    j=nint((z0-zmin)/dz+1.)	
+    use ef_circuit, only: rmin, zmin, dr, dz
+
+    double precision, intent(in) :: r0, z0
+    integer, intent(out) :: i, j
+
+    i = nint((r0 - rmin)/dr + 1.) ! nint(1.8) = 2
+    j = nint((z0 - zmin)/dz + 1.)
 
     return
-    end subroutine find_actual_index
+    end subroutine get_closest_index
 
 !---------------------------------------------------------------------
-    subroutine find_fields_interp(r0, z0, psi0, br0, bz0, brr, brz, bzr, bzz) !give back psi, br, bz at r0, z0
+    subroutine get_floor_index(r0, z0, i, j)
 
-    use ef_circuit
-    integer i, j
-    double precision r0, z0, psi0, br0, bz0
-    double precision x1, x2, x3, x4, x5, x6, x7, x8, y1, y2, y3, y4, y5, y6
-    double precision z1, z2, z3, z4, z5, z6, z7, z8, t1, t2, t3, t4, t5, t6
-    double precision brr, brz, bzr, bzz
+    use ef_circuit, only: rmin, zmin, dr, dz
 
-    i=floor((r0-rmin)/dr+1.)	
-    j=floor((z0-zmin)/dz+1.)	
-    x1=r(i)
-    x2=r(i+1)
-    y1=z(j)
-    y2=z(j+1)
-    z1=psirz(i, j)
-    z2=psirz(i+1, j)
-    z3=psirz(i, j+1)
-    z4=psirz(i+1, j+1)
+    double precision, intent(in) :: r0, z0
+    integer, intent(out) :: i, j
 
-!bilinear interpolation
-    call bilinear_average(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4, psi0)
-
-!br
-      t1=-1./x1*(psirz(i, j+1)-psirz(i, j-1))/dz/2.
-      t2=-1./x2*(psirz(i+1, j+1)-psirz(i+1, j-1))/dz/2.
-      t3=-1./x1*(psirz(i, j+2)-psirz(i, j))/dz/2.
-      t4=-1./x2*(psirz(i+1, j+2)-psirz(i+1, j))/dz/2.
-    call bilinear_average(x1, x2, y1, y2, r0, z0, t1, t2, t3, t4, br0)
-    br0=-br0
-
-!bz
-      t1=1./x1*(psirz(i+1, j)-psirz(i-1, j))/dr/2.
-      t2=1./x2*(psirz(i+2, j)-psirz(i, j))/dr/2.
-      t3=1./x1*(psirz(i+1, j+1)-psirz(i-1, j+1))/dr/2.
-      t4=1./x2*(psirz(i+2, j+1)-psirz(i, j+1))/dr/2.
-    call bilinear_average(x1, x2, y1, y2, r0, z0, t1, t2, t3, t4, bz0)
-    bz0=-bz0
-
-!brr
-      t1=(-1./r(i+1)*(psirz(i+1, j+1)-psirz(i+1, j-1))/dz/2.+1./r(i-1)*(psirz(i-1, j+1)-psirz(i-1, j-1))/dz/2.)/dr/2.
-      t2=(-1./r(i+2)*(psirz(i+2, j+1)-psirz(i+2, j-1))/dz/2.+1./r(i)*(psirz(i, j+1)-psirz(i, j-1))/dz/2.)/dr/2.
-      t3=(-1./r(i+1)*(psirz(i+1, j+2)-psirz(i+1, j))/dz/2.+1./r(i-1)*(psirz(i-1, j+2)-psirz(i-1, j))/dz/2.)/dr/2.
-      t4=(-1./r(i+2)*(psirz(i+2, j+2)-psirz(i+2, j))/dz/2.+1./r(i)*(psirz(i, j+2)-psirz(i, j))/dz/2.)/dr/2.
-    call bilinear_average(x1, x2, y1, y2, r0, z0, t1, t2, t3, t4, brr)
-    brr=-brr
-
-!brz
-      t1=(-1./r(i)*(psirz(i, j+1)-psirz(i, j))/dz+1./r(i)*(psirz(i, j)-psirz(i, j-1))/dz)/dz
-      t2=(-1./r(i+1)*(psirz(i+1, j+1)-psirz(i+1, j))/dz+1./r(i+1)*(psirz(i+1, j)-psirz(i+1, j-1))/dz)/dz
-      t3=(-1./r(i)*(psirz(i, j+2)-psirz(i, j+1))/dz+1./r(i)*(psirz(i, j+1)-psirz(i, j))/dz)/dz
-      t4=(-1./r(i+1)*(psirz(i+1, j+2)-psirz(i+1, j+1))/dz+1./r(i+1)*(psirz(i+1, j+1)-psirz(i+1, j))/dz)/dz
-    call bilinear_average(x1, x2, y1, y2, r0, z0, t1, t2, t3, t4, brz)
-    brz=-brz
-
-!bzr
-      t1=(+2./(r(i)+r(i+1))*(psirz(i+1, j)-psirz(i, j))/dr-2./(r(i)+r(i-1))*(psirz(i, j)-psirz(i-1, j))/dr)/dr
-      t2=(+2./(r(i+2)+r(i+1))*(psirz(i+2, j)-psirz(i+1, j))/dr-2./(r(i)+r(i+1))*(psirz(i+1, j)-psirz(i, j))/dr)/dr
-      t3=(+2./(r(i)+r(i+1))*(psirz(i+1, j+1)-psirz(i, j+1))/dr-2./(r(i)+r(i-1))*(psirz(i, j+1)-psirz(i, j+1))/dr)/dr
-      t4=(+2./(r(i+2)+r(i+1))*(psirz(i+2, j+1)-psirz(i+1, j+1))/dr-2./(r(i)+r(i+1))*(psirz(i+1, j+1)-psirz(i, j+1))/dr)/dr
-    call bilinear_average(x1, x2, y1, y2, r0, z0, t1, t2, t3, t4, bzr)
-    bzr=-bzr
-
-!bzz
-      t1=(+1./(r(i))*(psirz(i+1, j+1)-psirz(i-1, j+1))/dr/2.-1./(r(i))*(psirz(i+1, j-1)-psirz(i-1, j-1))/dr/2.)/dz/2.
-      t2=(+1./(r(i+1))*(psirz(i+2, j+1)-psirz(i, j+1))/dr/2.-1./(r(i+1))*(psirz(i+2, j-1)-psirz(i, j-1))/dr/2.)/dz/2.
-      t3=(+1./(r(i))*(psirz(i+1, j+2)-psirz(i-1, j+2))/dr/2.-1./(r(i))*(psirz(i+1, j)-psirz(i-1, j))/dr/2.)/dz/2.
-      t4=(+1./(r(i+1))*(psirz(i+2, j+2)-psirz(i, j+2))/dr/2.-1./(r(i+1))*(psirz(i+2, j)-psirz(i, j))/dr/2.)/dz/2.
-    call bilinear_average(x1, x2, y1, y2, r0, z0, t1, t2, t3, t4, bzz)
-    bzz=-bzz
+    i = floor((r0 - rmin)/dr + 1.) ! floor(1.8) = 1
+    j = floor((z0 - zmin)/dz + 1.)
 
     return
-    end subroutine find_fields_interp
+    end subroutine get_floor_index
 
 !---------------------------------------------------------------------
     subroutine find_fields_interp_psionly(r0, z0, psi0) !give back psi, br, bz at r0, z0
 
-    use ef_circuit
-    integer i, j
-    double precision r0, z0, psi0, br0, bz0
-    double precision x1, x2, x3, x4, x5, x6, x7, x8, y1, y2, y3, y4, y5, y6
-    double precision z1, z2, z3, z4, z5, z6, z7, z8, t1, t2, t3, t4, t5, t6
+    use ef_circuit, only: nr1, nz1, r, z, psirz
+
+    double precision, intent(in) :: r0, z0
+    double precision, intent(out) :: psi0
+
+    integer :: i, j
+    double precision x1, x2, y1, y2, z1, z2, z3, z4
     double precision brr, brz, bzr, bzz
 
-    i=min(nr1, max(1, floor((r0-rmin)/dr+1.)))	
-    j=min(nr1, max(1, floor((z0-zmin)/dz+1.)))	
-    x1=r(i)
-    x2=r(i+1)
-    y1=z(j)
-    y2=z(j+1)
-    z1=psirz(i, j)
-    z2=psirz(i+1, j)
-    z3=psirz(i, j+1)
-    z4=psirz(i+1, j+1)
+    call get_floor_index(r0, z0, i, j)
+    i = min(nr1, max(1, i))
+    j = min(nz1, max(1, j))
 
-!bilinear interpolation
-    call bilinear_average(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4, psi0)
+    x1 = r(i)
+    x2 = r(i+1)
+    y1 = z(j)
+    y2 = z(j+1)
+    z1 = psirz(i, j)
+    z2 = psirz(i+1, j)
+    z3 = psirz(i, j+1)
+    z4 = psirz(i+1, j+1)
+
+    psi0 = bilinear_interp(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4)
 
     return
     end subroutine find_fields_interp_psionly
 
 !---------------------------------------------------------------------
-    subroutine find_fields_interp_green(r0, z0, psi0, iconduc) !give back psi, br, bz at r0, z0
+    subroutine find_fields_interp_green(r0, z0, psi0, iconduc)
+! Returns psi at r0, z0
 
-    use ef_circuit
-    use green_matrix       ! declaration of minimal CPOs
+    use ef_circuit, only: r, z
+    use green_matrix, only: greeni
 
-    integer i, j, iconduc
-    double precision r0, z0, psi0, br0, bz0
-    double precision x1, x2, x3, x4, x5, x6, x7, x8, y1, y2, y3, y4, y5, y6
-    double precision z1, z2, z3, z4, z5, z6, z7, z8, t1, t2, t3, t4, t5, t6
-    double precision brr, brz, bzr, bzz
+    integer, intent(in) :: iconduc
+    double precision, intent(in) :: r0, z0
+    double precision, intent(out) :: psi0
 
-    i=floor((r0-rmin)/dr+1.)	
-    j=floor((z0-zmin)/dz+1.)	
-    x1=r(i)
-    x2=r(i+1)
-    y1=z(j)
-    y2=z(j+1)
-    z1=greeni(i, j, iconduc)
-    z2=greeni(i+1, j, iconduc)
-    z3=greeni(i, j+1, iconduc)
-    z4=greeni(i+1, j+1, iconduc)
+    integer :: i, j
+    double precision :: x1, x2, y1, y2, z1, z2, z3, z4
 
-!bilinear interpolation
-    call bilinear_average(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4, psi0)
+    call get_floor_index(r0, z0, i, j)
+
+    x1 = r(i)
+    x2 = r(i+1)
+    y1 = z(j)
+    y2 = z(j+1)
+    z1 = greeni(i  , j  , iconduc)
+    z2 = greeni(i+1, j  , iconduc)
+    z3 = greeni(i  , j+1, iconduc)
+    z4 = greeni(i+1, j+1, iconduc)
+
+    psi0 = bilinear_interp(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4)
 
     return
     end subroutine find_fields_interp_green
 
 !---------------------------------------------------------------------
-    subroutine find_fields_interp_psiext(r0, z0, psi0) !give back psi, br, bz at r0, z0
+    subroutine find_fields_interp_psiext(r0, z0, psi0)
+! Returns psi_ext at r0, z0
 
-    use ef_circuit
+    use ef_circuit, only: r, z, psiextrz
 
-    integer i, j
-    double precision r0, z0, psi0, br0, bz0
-    double precision x1, x2, x3, x4, x5, x6, x7, x8, y1, y2, y3, y4, y5, y6
-    double precision z1, z2, z3, z4, z5, z6, z7, z8, t1, t2, t3, t4, t5, t6
-    double precision brr, brz, bzr, bzz
+    double precision, intent(in) :: r0, z0
+    double precision, intent(out) :: psi0
 
-    i=floor((r0-rmin)/dr+1.)	
-    j=floor((z0-zmin)/dz+1.)	
-    x1=r(i)
-    x2=r(i+1)
-    y1=z(j)
-    y2=z(j+1)
-    z1=psiextrz(i, j)
-    z2=psiextrz(i+1, j)
-    z3=psiextrz(i, j+1)
-    z4=psiextrz(i+1, j+1)
+    integer :: i, j
+    double precision :: x1, x2, y1, y2, z1, z2, z3, z4
 
-!bilinear interpolation
-    call bilinear_average(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4, psi0)
+    call get_floor_index(r0, z0, i, j)
+
+    x1 = r(i)
+    x2 = r(i+1)
+    y1 = z(j)
+    y2 = z(j+1)
+    z1 = psiextrz(i  , j  )
+    z2 = psiextrz(i+1, j  )
+    z3 = psiextrz(i  , j+1)
+    z4 = psiextrz(i+1, j+1)
+
+    psi0 = bilinear_interp(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4)
 
     return
     end subroutine find_fields_interp_psiext
 
 !---------------------------------------------------------------------
-    subroutine find_fields_interp_psionly_neg(r0, z0, psi0) !give back psi, br, bz at r0, z0
+    subroutine find_fields_interp_psionly_neg(r0, z0, psi0)
+! Returns psi_ext at r0, z0
 
-    use ef_circuit
-    integer i, j
-    double precision r0, z0, psi0, br0, bz0
-    double precision x1, x2, x3, x4, x5, x6, x7, x8, y1, y2, y3, y4, y5, y6
-    double precision z1, z2, z3, z4, z5, z6, z7, z8, t1, t2, t3, t4, t5, t6
-    double precision brr, brz, bzr, bzz
+    use ef_circuit, only: r, z, psirz
 
-    i=floor((r0-rmin)/dr+1.)	
-    j=floor((z0-zmin)/dz+1.)	
+    double precision, intent(in) :: r0, z0
+    double precision, intent(out) :: psi0
 
-    x1=r(i)
-    x2=r(i+1)
-    y1=z(j)
-    y2=z(j+1)
-    z1=-psirz(i, j)
-    z2=-psirz(i+1, j)
-    z3=-psirz(i, j+1)
-    z4=-psirz(i+1, j+1)
+    integer :: i, j
+    double precision :: x1, x2, y1, y2, z1, z2, z3, z4
 
-!bilinear interpolation
-    call bilinear_average(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4, psi0)
+    call get_floor_index(r0, z0, i, j)
+
+    x1 = r(i)
+    x2 = r(i+1)
+    y1 = z(j)
+    y2 = z(j+1)
+    z1 = -psirz(i  , j  )
+    z2 = -psirz(i+1, j  )
+    z3 = -psirz(i  , j+1)
+    z4 = -psirz(i+1, j+1)
+
+    psi0 = bilinear_interp(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4)
 
     return
     end subroutine find_fields_interp_psionly_neg
 
 !---------------------------------------------------------------------
-    subroutine bilinear_average(x1, x2, y1, y2, x, y, f11, f21, f12, f22, f0)
+    double precision function bilinear_interp(x1, x2, y1, y2, x, y, f11, f21, f12, f22)
+! Bilinear interpolation
 
-    double precision x1, x2, y1, y2, x, y, f11, f21, f12, f22, f0
+    double precision, intent(in) :: x1, x2, y1, y2, x, y, f11, f21, f12, f22
 
-    f0 = 1./((x2-x1)*(y2-y1))*( &
-         f11*(x2-x)*(y2-y)+ & 
-         f21*(x-x1)*(y2-y)+ & 
-         f12*(x2-x)*(y-y1)+ &
-         f22*(x-x1)*(y-y1) )
+    bilinear_interp = &
+         1./((x2 - x1)*(y2 - y1)) * ( &
+         f11*(x2 - x )*(y2 - y ) + & 
+         f21*(x  - x1)*(y2 - y ) + & 
+         f12*(x2 - x )*(y  - y1) + &
+         f22*(x  - x1)*(y  - y1) )
 
     return
-    end subroutine bilinear_average
+    end function bilinear_interp
 
 !---------------------------------------------------------------------
     double precision function ellE_green(X,  DL) ! gives back the first kind elliptic integral,  from K. Lackner,  T. Lunt,  IPP - Garching 2022
@@ -1325,7 +1241,7 @@ contains
             enddo
         enddo
         green_function_identity = greenf/9.d0
-    endif	
+    endif
 
     return
     end function green_function_identity
@@ -1478,11 +1394,11 @@ contains
     dbl = sqrt((rx - rax)**2 + (zx - zax)**2)
     dd  = sqrt(dr**2 + dz**2)
     nsteps = nint(dbl/dd)
-    dd = dbl/nsteps !perfect ratio	
+    dd = dbl/nsteps !perfect ratio
 
     
     icheck = 1
-    psiold = 0.	
+    psiold = 0.
     do i=2, nsteps
         t1 = rax + dd*(i - 1)*cos(angl)
         t2 = zax + dd*(i - 1)*sin(angl)
@@ -1497,7 +1413,7 @@ contains
             EXIT
         endif
         if (dd*i >= dbl) then
-            EXIT	
+            EXIT
         endif
     enddo
 

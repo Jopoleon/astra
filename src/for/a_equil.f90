@@ -16,7 +16,7 @@ use const_inc, only : rtor,shift,updwn
 use feqis_tools, only: psib_ext_efff, get_zccurb_efff, find_demo_gaps_efff
 
 use flight_sim_geometrics, only: geom1d
-use outcmn_inc, only: MACHINE, exp_file
+use outcmn_inc, only: MACHINE, nml_file
 use astra2fbe
 
 implicit none
@@ -93,7 +93,7 @@ if (nstep == 0) then
     fix_adapgrid = 0
     raxis_astra = rtor + shift
     zaxis_astra = updwn
-    fname = 'exp/nml/'//trim(exp_file)
+    fname = trim(nml_file)
     INQUIRE( FILE=trim(fname), EXIST=file_existence) 
     if (file_existence) then
         open(53, FILE=fname)

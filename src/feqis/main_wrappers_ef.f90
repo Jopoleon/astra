@@ -82,7 +82,7 @@ subroutine solve_gse2d_fbe_full_ef(j_init)
 use errors_params, only: err_find_psistab
 use ef_circuit
 use astra2fbe
-use feqis_tools, only: find_actual_index
+use feqis_tools, only: get_closest_index
 
 implicit none
 
@@ -110,7 +110,7 @@ endif
 if (refit_mode.eq.0) then
 !start iterations to find self-consistent solution
 g000(1:nr2,1:nz2)=psiextrz(1:nr2,1:nz2)
-call find_actual_index(raxp,zaxp,iaxis,jaxis)
+call get_closest_index(raxp,zaxp,iaxis,jaxis)
 rax=r(iaxis)
 zax=z(jaxis)
 raxold=rax
@@ -211,7 +211,7 @@ endif
 if (refit_mode.eq.101) then !only vertical stab
 !start iterations to find self-consistent solution
 g000(1:nr2,1:nz2)=psiextrz(1:nr2,1:nz2)
-call find_actual_index(raxp,zaxp,iaxis,jaxis)
+call get_closest_index(raxp,zaxp,iaxis,jaxis)
 rax=r(iaxis)
 zax=z(jaxis)
 raxold=rax
@@ -324,7 +324,7 @@ use errors_params, only: err_find_psistab
 use ef_circuit
 use astra2fbe
 use green_matrix
-use feqis_tools, only: interp_j_fromrhotorz, find_actual_index, &
+use feqis_tools, only: interp_j_fromrhotorz, get_closest_index, &
     find_fields_interp_green, inverse_matrix, boundary, &
     psi_external_calc, find_fields_interp_psionly
 
@@ -375,7 +375,7 @@ rax=raxp
 zax=zaxp
 write(*,*) raxp,zaxp,dum1
 
-call find_actual_index(rax,zax,iaxis,jaxis)
+call get_closest_index(rax,zax,iaxis,jaxis)
 iax=iaxis
 jax=jaxis
 
@@ -565,7 +565,7 @@ use errors_params, only: err_find_psistab
 use ef_circuit
 use astra2fbe
 use green_matrix
-use feqis_tools, only: interp_j_fromrhotorz, find_actual_index, &
+use feqis_tools, only: interp_j_fromrhotorz, get_closest_index, &
     find_angle, find_fields_interp_green, boundary, &
     find_fields_interp_psionly, psi_external_calc, &
     least_square_biquad
@@ -613,7 +613,7 @@ zax=zaxp
 write(*,*) raxp,zaxp,dum1
 
 
-call find_actual_index(rax,zax,iaxis,jaxis)
+call get_closest_index(rax,zax,iaxis,jaxis)
 iax=iaxis
 jax=jaxis
 
@@ -773,7 +773,7 @@ use errors_params, only: err_find_psistab
 use ef_circuit
 use astra2fbe
 use green_matrix       ! declaration of minimal CPOs
-use feqis_tools, only: interp_j_fromrhotorz, find_actual_index, &
+use feqis_tools, only: interp_j_fromrhotorz, get_closest_index, &
     find_angle, least_square_biquad, boundary, &
     find_fields_interp_psionly, psi_external_calc
 
@@ -811,7 +811,7 @@ rax=raxp
 zax=zaxp
 write(*,*) raxp,zaxp,dum1
 
-call find_actual_index(rax,zax,iaxis,jaxis)
+call get_closest_index(rax,zax,iaxis,jaxis)
 iax=iaxis
 jax=jaxis
 
@@ -980,7 +980,7 @@ subroutine solve_gse2d_fbe_full_ef_1turn(j_init,j_stab,raxold,zaxold)
 
 use ef_circuit
 use astra2fbe
-use feqis_tools, only: interp_j_fromrhotorz, find_actual_index, &
+use feqis_tools, only: interp_j_fromrhotorz, get_closest_index, &
     boundary, nine_point_coeffs_only, find_angle, &
     find_fields_interp_psionly
 
@@ -1017,7 +1017,7 @@ jrz=jrz/dum1*iplasma
 
 rax=raxp
 zax=zaxp
-call find_actual_index(rax,zax,iaxis,jaxis)
+call get_closest_index(rax,zax,iaxis,jaxis)
 rax=r(iaxis)
 zax=z(jaxis)
 write(*,*) raxp,zaxp,rax,zax
@@ -2147,7 +2147,7 @@ integer j1,j2,j3,j4,j5,j6,j7,j8,j9,i0,j0
 
 ! 1) find new magnetic axis
 !old axis
-!	call find_actual_index_ef(rax,zax,iax,jax)
+!	call get_closest_index_ef(rax,zax,iax,jax)
 iax=iaxis
 jax=jaxis
 i1=10000
@@ -2238,7 +2238,7 @@ use ef_circuit
 use astra2fbe, only: x_point_save, plasma_config
 use errors_params, only: err_find_oxpoints_derivs
 use feqis_tools, only: find_closest_xpoints, find_fields_interp_psionly, &
-    find_actual_index, find_angle, check_xpoint_connection_axis, &
+    get_closest_index, find_angle, check_xpoint_connection_axis, &
     nine_point_regression, nine_point_regression_follow, t_find_u_n
 
 implicit none
@@ -2515,7 +2515,7 @@ if (n_of_xpoints.ge.1) then
 
 !first pass, remove X-points behind the limiter area
    do i=1,n_of_xpoints
-      call find_actual_index(r_xpoint(i),z_xpoint(i),j,k)
+      call get_closest_index(r_xpoint(i),z_xpoint(i),j,k)
 if (zlimpotential(j,k).lt.0.5) then
          psi_xpoint(i)=-1.e6
   else

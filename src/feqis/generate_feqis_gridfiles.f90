@@ -135,7 +135,6 @@ lim_maxZ = z(ilim_maxZ)
 ilim_minZ = 1 + nint((lim_minZ - z(1))/dz)
 lim_minZ = z(ilim_minZ)
 
-
 !load blanket (works)
 read(32, *) dumstring1
 read(32, *) resblan, widthblan
@@ -150,6 +149,10 @@ if (nblanket >= 1) then
         x8 = x4 - x2
         rblan(j)   = x1 + 1./4.*x7
         rblan(2*i) = x1 + 3./4.*x7
+	resblanpc(j)   = x5
+	resblanpc(2*i) = x5
+	curblanpc(j)   = x6
+	curblanpc(2*i) = x6
         zblan(j)   = x2 + 1./4.*x8
         zblan(2*i) = x2 + 3./4.*x8
         x9 = sqrt(x7**2 + x8**2)
@@ -164,12 +167,15 @@ if (nblanket >= 1) then
     nblanket = 2*nblanket
     do i=1, nblanket
         nconduc = nconduc + 1
-        curconduc(nconduc) = 0.
+        curconduc(nconduc) = curblanpc(i)
         r_cond(nconduc) = rblan(i)
         z_cond(nconduc) = zblan(i)
-        resconduc(nconduc, nconduc) = resblan*r_cond(nconduc)/areablan(i)*ssfw
+	if (resblan > 0.) resconduc(nconduc, nconduc) = resblan*r_cond(nconduc)/areablan(i)*ssfw
+	if (resblan < 0.) resconduc(nconduc, nconduc) = resblanpc(i)
     enddo
 endif
+resblanpc = 0.
+curblanpc = 0.
 
 !load passive conduc  (works)
 read(32, *) dumstring1
