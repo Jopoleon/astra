@@ -116,9 +116,6 @@ data (HELP(j),j=21,28)/ &
 !----------------------------------------------------------------------|
 
 call markloc('IFKEY', debug_lev=2*debug)
-if (TASK(1:3) == 'BGD') then
-    return
-endif
 
 NTRUN = NTIMES
 if (IFKL == 257) goto 97 ! makemovie + EXIT
@@ -131,9 +128,11 @@ if (IFKL == -1) then
 endif
 
 if (IFKL == 259) then ! Call once after STEPIN is done
-    write(STRI, '(15x)')  ! Erase iteration number
-    call colovm(Black)
-    call textvm(64*DXLET, DYLET + 1, STRI, 15)
+    if (TASK(1:3) /= 'BGD') then
+        write(STRI, '(15x)')  ! Erase iteration number
+        call colovm(Black)
+        call textvm(64*DXLET, DYLET + 1, STRI, 15)
+    endif
     return
 endif
 
@@ -143,9 +142,14 @@ if (IFKL < 0 .or. IFKL > 257) then
 endif
 
 if (IFKL > 0 .and. IFKL < 256) then
+    if (TASK(1:3) == 'BGD') then
+        write(*, *) "Illegal IFKEY parameter"
+        return
+    endif
     KEY = IFKL
     goto 10
 elseif (IFKL == 256)   then
+    if (TASK(1:3) == 'BGD') return
     write(STRI, '(a, i3, 1x)') "Iteration #", ITREQ
     call colovm(Blue) ! Iteration
     call textvm(64*DXLET, DYLET+1, STRI, 15)
@@ -153,7 +157,7 @@ elseif (IFKL == 256)   then
     call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
 endif
 
-if (IFKL /= 256 .and. TASK(4:4) /= 'B') call TIMEDT(TIME, 1000.*TAU)
+if (IFKL /= 256 .and. TASK(1:3) /= 'BGD' .and. TASK(4:4) /= 'B') call TIMEDT(TIME, 1000.*TAU)
 
 !--------------
 ! Radial output
@@ -208,16 +212,18 @@ TTOUT(LTOUT) = TIME
 LTOUT = LTOUT + 1
 JTOUT = JTOUT + 1
 
-if (MOD10 == 6 .or. MOD10 == 7) then
-    if (JJ /= 0) then
-        call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
-        if (IFKL == KEY) return
-        goto 1
+if (TASK(1:3) /= 'BGD') then
+    if (MOD10 == 6 .or. MOD10 == 7) then
+        if (JJ /= 0) then
+            call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
+            if (IFKL == KEY) return
+            goto 1
+        endif
+        call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
     endif
-    call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
 endif
 
- 437 continue
+437 continue
 
 !-----------------------------------------------
 ! Writing post-view file,  2D Radial/Time output 
@@ -326,7 +332,7 @@ if (IPOUT < NTRUN) IPOUT = IPOUT + 1
 call markloc(str_in='IFKEY (loop)')
 KEY = 0
 
-if (TASK(4:4) /= 'B') call redraw(0)
+if (TASK(1:3) /= 'BGD' .and. TASK(4:4) /= 'B') call redraw(0)
 
 ! Check Pause time condition
 if (TIME >= TPAUSE .and. IDSP == 0) then
@@ -337,6 +343,7 @@ endif
 
 ! Check EXIT condition
 if (TIME - TEND + .1E-7 >= DPOUT+TAU) goto 97
+if (TASK(1:3) == 'BGD') return
 
 !---------------
 ! Polling events
@@ -904,7 +911,7 @@ if (PNMNAME(1:1) /= "*") then ! even pressing <AltM>
     call makemovie(PNMNAME)
 endif
 
-if (TASK(4:4) /= 'B') call endvm
+if (TASK(1:3) /= 'BGD' .and. TASK(4:4) /= 'B') call endvm
 if (IFKL == 257) then
     write(6, '(A)')' >>> ASTRA error >>>'
     write(6, '(A, F11.6, A)')"    Floating point exception at  t =", TIME, ' sec'
