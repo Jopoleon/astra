@@ -1009,7 +1009,7 @@ MPHIT = 0.
 
 jt_req = 0
 do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set in IFTREQ (for/defarr.f90)
-jkey = IFKEY(256) 
+if (TASK(1:3) /= 'BGD') jkey = IFKEY(256) 
 call INTVAR      ! Set exp scalars
 call DETVAR_INIT
 call DEFARR
