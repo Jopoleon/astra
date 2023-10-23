@@ -116,6 +116,13 @@ data (HELP(j),j=21,28)/ &
 !----------------------------------------------------------------------|
 
 call markloc('IFKEY', debug_lev=2*debug)
+write(6, *) 'Texit1', TIME - TEND + .1E-7, DPOUT+TAU
+
+! Check exit condition
+if (TIME - TEND + .1E-7 >= DPOUT+TAU) goto 97
+
+! Return in batch mode
+if (TASK(1:3) == 'BGD') return
 
 NTRUN = NTIMES
 if (IFKL == 257) goto 97 ! makemovie + EXIT
@@ -128,11 +135,9 @@ if (IFKL == -1) then
 endif
 
 if (IFKL == 259) then ! Call once after STEPIN is done
-    if (TASK(1:3) /= 'BGD') then
-        write(STRI, '(15x)')  ! Erase iteration number
-        call colovm(Black)
-        call textvm(64*DXLET, DYLET + 1, STRI, 15)
-    endif
+    write(STRI, '(15x)')  ! Erase iteration number
+    call colovm(Black)
+    call textvm(64*DXLET, DYLET + 1, STRI, 15)
     return
 endif
 
@@ -142,14 +147,9 @@ if (IFKL < 0 .or. IFKL > 257) then
 endif
 
 if (IFKL > 0 .and. IFKL < 256) then
-    if (TASK(1:3) == 'BGD') then
-        write(*, *) "Illegal IFKEY parameter"
-        return
-    endif
     KEY = IFKL
     goto 10
 elseif (IFKL == 256)   then
-    if (TASK(1:3) == 'BGD') return
     write(STRI, '(a, i3, 1x)') "Iteration #", ITREQ
     call colovm(Blue) ! Iteration
     call textvm(64*DXLET, DYLET+1, STRI, 15)
@@ -157,7 +157,7 @@ elseif (IFKL == 256)   then
     call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
 endif
 
-if (IFKL /= 256 .and. TASK(1:3) /= 'BGD' .and. TASK(4:4) /= 'B') call TIMEDT(TIME, 1000.*TAU)
+if (IFKL /= 256 .and. TASK(4:4) /= 'B') call TIMEDT(TIME, 1000.*TAU)
 
 !--------------
 ! Radial output
@@ -212,15 +212,13 @@ TTOUT(LTOUT) = TIME
 LTOUT = LTOUT + 1
 JTOUT = JTOUT + 1
 
-if (TASK(1:3) /= 'BGD') then
-    if (MOD10 == 6 .or. MOD10 == 7) then
-        if (JJ /= 0) then
-            call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
-            if (IFKL == KEY) return
-            goto 1
-        endif
-        call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
+if (MOD10 == 6 .or. MOD10 == 7) then
+    if (JJ /= 0) then
+        call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
+        if (IFKL == KEY) return
+        goto 1
     endif
+    call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
 endif
 
 437 continue
@@ -332,7 +330,7 @@ if (IPOUT < NTRUN) IPOUT = IPOUT + 1
 call markloc(str_in='IFKEY (loop)')
 KEY = 0
 
-if (TASK(1:3) /= 'BGD' .and. TASK(4:4) /= 'B') call redraw(0)
+if (TASK(4:4) /= 'B') call redraw(0)
 
 ! Check Pause time condition
 if (TIME >= TPAUSE .and. IDSP == 0) then
@@ -340,10 +338,6 @@ if (TIME >= TPAUSE .and. IDSP == 0) then
     KEY = 32
     goto 10
 endif
-
-! Check EXIT condition
-if (TIME - TEND + .1E-7 >= DPOUT+TAU) goto 97
-if (TASK(1:3) == 'BGD') return
 
 !---------------
 ! Polling events
