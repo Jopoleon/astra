@@ -67,7 +67,7 @@ fi
 
 ATASK=$AWD/bin/$equ_file.exe
 
-if [ "$TASK" == 'BGD' ]for 
+if [ "$TASK" == 'BGD' ]
 then
     if ! command -v sbatch &> /dev/null
     then
