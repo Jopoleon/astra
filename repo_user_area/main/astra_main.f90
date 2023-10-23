@@ -5,9 +5,10 @@ use outcmn_inc, only: VCOIL, CCOIL, CCOILO, outcmn_init, &
     XWH, XWW, XWX, XWY, DXLET, DYLET, LRJJ, frame_wid, frame_hei, &
     TASK, machine, exp_file, equ_file, rev_file, AWD, &
     COLTAB, RUNID, NST, MOD10, NTOUT
-use const_inc, only: IPART, const_init, XOUT, NA
+use const_inc, only: IPART, const_init, XOUT, NA, &
+    TIME, TEND, DPOUT, TAU
 use status_inc, only: status_init, MU
-use debugger, only: debug, flightsim
+use debugger, only: debug, flightsim, astra_stop
 
 implicit none
 
@@ -15,11 +16,12 @@ implicit none
 ! Find self-consistent initial configuration
 !-------------------------------------------
 
-integer :: j, jj, IM, ios, XSC0, XSC
-double precision :: CHORDN, resize, tbeg_nml, tend_nml, tpause_nml
+integer :: j, jj, IM, ios, XSC0, XSC, jt1, jt2, jt3
+double precision :: CHORDN, resize, tbeg_nml, tend_nml, tpause_nml, &
+    Y, timeb
 character(len=64) :: LISTSB(NSBMX)
 character(len=132) :: file_in, STRI, win_title
-double precision, external :: LINEAV
+double precision, external :: LINEAV, SWATCH
 
 namelist / astra_log / AWD, exp_file, equ_file, rev_file, TASK, machine, &
 debug, tbeg_nml, tend_nml, tpause_nml, flightsim, resize
@@ -104,8 +106,17 @@ endif
 ! Time step loop
 !---------------
 
-do
+do while (TIME - TEND + 1.E-8 < DPOUT + TAU)
     call STEPUP 
 enddo
+
+timeb = swatch(Y)
+jt1 = timeb
+jt2 = jt1/3600
+jt3 = (jt1 - 3600*jt2)/60
+jt1 = timeb - 60*jt3 - 3600*jt2
+write(6, '(A, I4.2, 2(A1, I2.2))') '>>> ASTRA normal exit >>>  Run time', jt2, ':', jt3, ':', jt1
+call CPUSE(6)
+call astra_stop
 
 end program astra

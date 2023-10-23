@@ -10,21 +10,19 @@ use const_inc, only: IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
     TAU, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, ATREQ, LEQ, & 
     PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, ADCMPF, RBDOT, BBDOT
 use status_inc, only: TE, TI, NE, NI, NIO, FP
-use outcmn_inc, only: CCOIL, CCOILO, VCOIL, MACHINE
+use outcmn_inc, only: CCOIL, CCOILO, VCOIL, MACHINE, TASK
 use plasma_state, only: plasma_up
-use debugger, only: markloc, flightsim
-use fs_coupling_variables, only: fs_dt_smlk,fs_dt_tctrl
+use debugger, only: markloc, flightsim, astra_stop
+use fs_coupling_variables, only: fs_dt_smlk, fs_dt_tctrl
 
 implicit none
 
 integer :: IFKEY, IFSUB, &
     ibcpsi_fb, jreadd, icurradj, bc_type_for_fp, jkey, &
     IFTREQ, IFSTEP
-
 double precision :: tau_new, updwno, zipctrl, &
     iplfbeo, Apsibcfac, Bpsibcfac, dfpdrbm12, time_ext, &
-    tau_temp_smlk, tau_old, dt_smlk
-
+    tau_temp_smlk, tau_old, dt_smlk, Y
 double precision, dimension(NRD) :: dummycoils
 
 data ibcpsi_fb /0/
@@ -56,7 +54,7 @@ tau_new = tau
 ! wait until constants file is read and read control file
 if (flightsim == 1) then
     if (jreadd == 0) call read_input_constant_file(time_ext, dt_smlk)
-    if (TIME-TSTART == 0) then
+    if (TIME - TSTART == 0) then
         tau     = taumin
         tau_old = tau
         tau_new = tau
@@ -214,7 +212,9 @@ time_step_accuracy: do
             call err_catch_a
         endif
 
-        jkey = IFKEY(0)                 ! Enables ITREQ iteration control 
+        if (TASK(1:3) /= 'BGD') then
+            jkey = IFKEY(0)                 ! Enables ITREQ iteration control 
+        endif
         jkey = IFTREQ(ATREQ)            ! ++ITREQ; Tr-Eq loop converged?  
 
 ! some options to avoid NITREQ when IFBEY = 1, IPCTR = X.1  --> does not do NITREQ
