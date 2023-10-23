@@ -32,7 +32,7 @@ contains
     end subroutine find_angle
 
 !---------------------------------------------------------------------
-    subroutine inverse_matrix(a, c, n)
+    subroutine inverse_matrix(a_in, c, n)
 
 ! a(n,n) - array of coefficients for matrix A
 ! n      - dimension
@@ -41,17 +41,18 @@ contains
 ! Alex G. December 2009. www2.odu.eud/~agodunov/computing/programs/book2/Ch06/Inverse.f90
 
     integer, intent(in) :: n
+    double precision, intent(in), dimension(n, n) ::  a_in
     double precision, intent(out), dimension(n, n) :: c
-    double precision, intent(inout), dimension(n, n) ::  a
 
     integer :: i, j, k
     double precision :: coeff
     double precision, dimension(n) :: b, d, x
-    double precision, dimension(n, n) ::  L, U
+    double precision, dimension(n, n) :: a, L, U
 
     L = 0.0
     U = 0.0
     b = 0.0
+    a = a_in
 
 ! step 1: forward elimination
     do k=1, n-1
@@ -95,7 +96,7 @@ contains
             do j=n, i+1, -1
                 x(i) = x(i) - U(i, j)*x(j)
             enddo
-            x(i) = x(i)/u(i,i)
+            x(i) = x(i)/u(i, i)
         enddo
 ! Step 3c: fill the solutions x(n) into column k of C
         do i=1, n
@@ -281,8 +282,7 @@ contains
         do i=1, nblock_a
             x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreenirpl(1:nr2, 1:nz2, i))
             force_R(i) = force_R(i) + curconduc(mequivalence(i)) * x1
-            x1 = -sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreenizpl(1:nr2, 1:nz2, i))
-            force_Z(i) = force_Z(i) + curconduc(mequivalence(i)) * x1
+            force_Z(i) = force_Z(i) - curconduc(mequivalence(i)) * x1
         enddo
     endif
 
@@ -290,8 +290,9 @@ contains
     do i=1, nblock_a
         do j=1, nblock_a
             if (i /= j) then
-                force_R(i) = force_R(i) + curconduc(mequivalence(j)) * curconduc(mequivalence(i)) * dgreenirj(i, j)
-                force_Z(i) = force_Z(i) - curconduc(mequivalence(j)) * curconduc(mequivalence(i)) * dgreenizj(i, j)
+                x1 = curconduc(mequivalence(j)) * curconduc(mequivalence(i)) * dgreenirj(i, j)
+                force_R(i) = force_R(i) + x1
+                force_Z(i) = force_Z(i) - x1
             endif
         enddo
     enddo
@@ -348,7 +349,7 @@ contains
     do i=1, nrho-1
         do j=1, nteta
             avgelem = dator(i, j) !/bpcell(i, j-1)
-            ahorc2  = ahorc2 + (rpol(i, j)-rgeoc)**2 * avgelem
+            ahorc2  = ahorc2 + (rpol(i, j) - rgeoc)**2 * avgelem
         enddo
     enddo
     ahorc2 = ahorc2/perimz
@@ -661,13 +662,13 @@ contains
     end subroutine least_square_biquad
      
 !---------------------------------------------------------------------
-    subroutine exact_biquad(r5, z5, u, n, rax, zax, uax, derivs, dr, dz)
+    subroutine exact_biquad(rx_in, zx_in, u, ndim, rax, zax, uax, derivs, dr, dz)
 
     use errors_params, only: err_find_biquad
 
-    integer, intent(in) :: n
-    double precision, intent(in) :: dr, dz, r5, z5
-    double precision, intent(in), dimension(n) :: u
+    integer, intent(in) :: ndim
+    double precision, intent(in) :: dr, dz, rx_in, zx_in
+    double precision, intent(in), dimension(ndim) :: u
     double precision, intent(out) :: rax, zax, uax
     double precision, intent(out), dimension(8) :: derivs
 
@@ -677,7 +678,7 @@ contains
 
 ! Find coefficients
     do k=1, 9
-        c(k) = sum(A_inv(k, 1:n) * u(1:n))
+        c(k) = sum(A_inv(k, 1:ndim) * u(1:ndim))
     enddo
 
     rax = 0.
@@ -745,58 +746,49 @@ contains
     derivs(4) = 1/dz**2*(2.*c(1)*rax**2 + 2*c(3)*rax + 2*c(6))
     derivs(5) = 1/dr/dz*(4*c(1)*rax*zax + 2*c(2)*rax + 2*c(3)*zax + c(4)) 
 
-    rax = rax*dr + r5
-    zax = zax*dz + z5
+    rax = rax*dr + rx_in
+    zax = zax*dz + zx_in
 
     return
     end subroutine exact_biquad
 
 !---------------------------------------------------------------------
-    subroutine exact_biquad_regress(r,z,u,n,ccc,rax,zax,uax,derivs,dr,dz,rx,zx)
-    integer n,k,i,j
-    double precision x(9),y(9),r(9),z(9),u(9),derivs(8)
-    double precision A(9,9),B(9),ccc(6)
-    double precision  rax,zax,uax,c(9),dr,dz,rx,zx
-    double precision s_r,s_z,s_r2,s_z2,s_rz,xx,yy
-    double precision s_r3,s_rz2,s_r2z,s_z3
-    double precision s_r4,s_r2z2,s_r3z,s_z4,s_rz3
-    double precision s_u,s_ur,s_uz,s_ur2,s_uz2,s_urz
-    double precision det, det_r,det_z,tolez
+    subroutine exact_biquad_regress(rx_in, zx_in, u, ndim, rax, zax, uax, derivs, dr, dz)
 
-    integer niter,j_success
+    integer, intent(in) :: ndim
+    double precision, intent(in) :: dr, dz, rx_in, zx_in
+    double precision, intent(in), dimension(ndim) :: u
+    double precision, intent(out) :: rax, zax, uax
+    double precision, intent(out), dimension(ndim-1) :: derivs
+
+    integer :: k
+    double precision :: s_r2, s_z2, det
+    double precision :: A(2, 2), B(2)
+    double precision :: c(9)
 
 ! Transform
-    x=(r-r(5))/dr
-    y=(z-z(5))/dz
-    xx=(rx-r(5))/dr
-    yy=(zx-z(5))/dz
+    rax = 0.
+    zax = 0.
 
-    
 ! Find coefficients
-    do k=1, 9
-        c(k) = sum(A_inv(k, 1:9)*u(1:9))
+    do k=1, ndim
+        c(k) = sum(A_inv(k, 1:ndim)*u(1:ndim))
     enddo
 
-    rax=xx
-    zax=yy
-
-!now find axis
-    s_r2=2*C(1)*rax*zax**2 + 2*C(2)*rax*zax+C(3)*zax**2+C(4)*zax+2*C(5)*rax+C(7)
-    s_z2=2*C(1)*rax**2*zax + C(2)*rax**2 +2*C(3)*zax*rax+C(4)*rax+2*C(6)*zax+C(8)
-    A(1,1)=2*C(1)*zax**2+2*C(2)*zax+2*C(5)
-    A(1,2)=4*C(1)*rax*zax+2*C(2)*rax+2*C(3)*zax+C(4)
-    A(2,2)=2*C(1)*rax**2+2*C(3)*rax+2*c(6)
-    A(2,1)=4*C(1)*rax*zax+2*C(2)*rax+2*C(3)*zax+C(4)
-    B(1)=s_r2
-    B(2)=s_z2
-    det=(A(1,1)*A(2,2))-(A(1,2)*A(2,1))
-    s_r2=1/det*(A(2,2)*B(1)-A(1,2)*B(2))
-    s_z2=1/det*(A(1,1)*B(2)-A(2,1)*B(1))
-    rax=rax-s_r2
-    zax=zax-s_z2
-
-    s_r=2*C(1)*rax*zax**2 + 2*C(2)*rax*zax+C(3)*zax**2+C(4)*zax+2*C(5)*rax+C(7)
-    s_z=2*C(1)*rax**2*zax + C(2)*rax**2 +2*C(3)*zax*rax+C(4)*rax+2*C(6)*zax+C(8)
+! Now find axis
+    s_r2 = 2.*C(1)*rax*zax**2 + 2.*C(2)*rax*zax +    C(3)*zax**2  + C(4)*zax + 2.*C(5)*rax + C(7)
+    s_z2 = 2.*C(1)*rax**2*zax +    C(2)*rax**2  + 2.*C(3)*zax*rax + C(4)*rax + 2.*C(6)*zax + C(8)
+    A(1, 1) = 2.*C(1)*zax**2  + 2.*C(2)*zax + 2.*C(5)
+    A(1, 2) = 4.*C(1)*rax*zax + 2.*C(2)*rax + 2.*C(3)*zax + C(4)
+    A(2, 2) = 2.*C(1)*rax**2  + 2.*C(3)*rax + 2.*c(6)
+    A(2, 1) = A(1, 2)
+    B(1) = s_r2
+    B(2) = s_z2
+    det = (A(1, 1)*A(2, 2)) - (A(1, 2)*A(2, 1))
+    s_r2 = 1./det*(A(2, 2)*B(1) - A(1, 2)*B(2))
+    s_z2 = 1./det*(A(1, 1)*B(2) - A(2, 1)*B(1))
+    rax = rax - s_r2
+    zax = zax - s_z2
 
     uax = c(1)*rax**2 * zax**2 + & 
           c(2)*rax**2 * zax + &
@@ -808,98 +800,46 @@ contains
           c(8)*zax + &
           c(9)
 
-    derivs(1)=1/dr*(2*C(1)*rax*zax**2 + 2*C(2)*rax*zax+C(3)*zax**2+C(4)*zax+2*C(5)*rax+C(7))
-    derivs(2)=1/dz*(2*C(1)*rax**2*zax + C(2)*rax**2 +2*C(3)*zax*rax+C(4)*rax+2*C(6)*zax+C(8))
-    derivs(3)=1/dr**2*(2.*c(1)*zax**2+2*c(2)*zax+2*c(5))
-    derivs(4)=1/dz**2*(2.*c(1)*rax**2+2*c(3)*rax+2*c(6))
-    derivs(5)=1/dr/dz*(4*c(1)*rax*zax+2*c(2)*rax+2*c(3)*zax+c(4)) 
+    derivs(1) = 1./dr*(2.*C(1)*rax*zax**2 + 2.*C(2)*rax*zax +    C(3)*zax**2  + C(4)*zax + 2.*C(5)*rax + C(7))
+    derivs(2) = 1./dz*(2.*C(1)*rax**2*zax +    C(2)*rax**2  + 2.*C(3)*zax*rax + C(4)*rax + 2.*C(6)*zax + C(8))
+    derivs(3) = 1./dr**2*(2.*c(1)*zax**2  + 2.*c(2)*zax + 2.*c(5))
+    derivs(4) = 1./dz**2*(2.*c(1)*rax**2  + 2.*c(3)*rax + 2.*c(6))
+    derivs(5) = 1./dr/dz*(4.*c(1)*rax*zax + 2.*c(2)*rax + 2.*c(3)*zax + c(4)) 
      
-    rax=rax*dr+r(5)
-    zax=zax*dz+z(5)
+    rax = rax*dr + rx_in
+    zax = zax*dz + zx_in
 
     return
     end subroutine exact_biquad_regress
-
-!--------------------------------------------------------------------- 
-    real*8 function frlim(dp, ylim, rx, zx, rm, zm)
-
-    double precision, intent(in) :: dp(5), ylim, rx, zx, rm, zm
-    double precision :: dxx, dxy, dyy, disc, cc, cdpls, cdmns, ang1, ang2, c1, dl2x, c2, dl2y
-
-    Dxx = dp(3)
-    Dxy = dp(4)
-    Dyy = dp(5)
-
-    disc = (Dxy/Dyy)**2 - Dxx/Dyy
-
-    if (Disc < 0.) then
-        cc = (zm - zx)/(rm - rx)
-        cc = -1.d0/cc
-    else
-        cdpls = -Dxy/Dyy + dsqrt(disc)
-        cdmns = -Dxy/Dyy - dsqrt(disc)
-        ang1 =  0.5d0*(datan(cdpls) + datan(cdmns))
-        ang2 = -0.5d0*(datan(1.d0/cdpls) + datan(1.d0/cdmns))
-
-! calculation D2u/Dl2(direction ang1    )
-        c1 = dtan(ang1)
-        Dl2x = Dyy*c1**2 + 2.d0*Dxy*c1 + Dxx
-
-! calculation D2u/Dl2(direction ang2    )
-        c2 = dtan(ang2)
-        Dl2y = Dyy*c2**2 + 2.*Dxy*c2 + Dxx
-        if (Dl2x < 0.) then
-            cc = c1
-        else if (Dl2y < 0.) then
-            cc = c2
-        else
-            cc = (zm - zx)/(rm - rx)
-            cc = -1.d0/cc
-        endif
-    endif
-
-    frlim = rx + (ylim - zx)/cc
-
-    return
-    end function frlim
 
 !---------------------------------------------------------------------
     subroutine nine_point_regression(r0, z0, pos_xpoint, ddpsi, f00)
 
     use ef_circuit, only: nr1, nz1, r, z, dr, dz, psirz
 
-    integer iax, jax, i, j, k, d
-    double precision pos_xpoint(2)
-    double precision r0, z0, f00, xub(90), bub(90), yub(90)
-    double precision ddpsi(8)
-    integer i1, i2, i3, i4
+    integer, parameter :: ndim=9
+    double precision, intent(in) :: r0, z0
+    double precision, intent(out) :: f00
+    double precision, intent(out), dimension(2) :: pos_xpoint 
+    double precision, intent(out), dimension(ndim-1) :: ddpsi
+
+    integer :: iax, jax, i, j, k
+    double precision :: rax, zax
+    double precision, dimension(ndim) :: bub
 
     call get_closest_index(r0, z0, iax, jax)
 
-!find true axis
-    k  = 0
-    i3 = -1
-    i1 = -1
-    i4 = 1
-    i2 = 1
-
-    if (iax ==   2) i3 = -1
-    if (jax ==   2) i1 = -1
-    if (iax == nr1) i4 =  1
-    if (jax == nz1) i2 =  1
-
-    d = (i4 - i3 + 1)*(i2 - i1 + 1)
-
-    do j=i3, i4
-        do i=i1, i2
+    k = 0
+    do j=-1, 1
+        do i=-1, 1
             k = k + 1
-            xub(k) = r(iax+i)
-            yub(k) = z(jax+j)
             bub(k) = psirz(iax+i, jax+j)
         enddo
     enddo
+    rax = r(iax)
+    zax = z(jax)
 
-    call exact_biquad(xub(5), yub(5), bub(1:d), d,  &
+    call exact_biquad(rax, zax, bub(1:ndim), ndim,  &
         pos_xpoint(1), pos_xpoint(2), f00, ddpsi, dr, dz)
 
     return
@@ -910,11 +850,12 @@ contains
 
     use ef_circuit, only: psirz, nr1, nz1, r, z
 
+    integer, parameter :: ndim=9
     double precision, intent(in) :: r0, z0
     double precision, intent(out) :: c1, c2
     double precision, intent(out), dimension(9) :: c
 
-    integer :: iax, jax, i, j, k, d, i1, i2, i3, i4
+    integer :: iax, jax, i, j, k
     double precision, dimension(90) :: bub
 
     call get_closest_index(r0, z0, iax, jax)
@@ -924,26 +865,15 @@ contains
 
 !find true axis
     k = 0
-    i3 = -1
-    i1 = -1
-    i4 =  1
-    i2 =  1
-    if (iax ==   2) i3 = -1
-    if (jax ==   2) i1 = -1
-    if (iax == nr1) i4 =  1
-    if (jax == nz1) i2 =  1
-
-    d = (i4 - i3 + 1)*(i2 - i1 + 1)
-
-    do j=i3, i4
-        do i=i1, i2
+    do j=-1, 1
+        do i=-1, 1
             k = k + 1
             bub(k) = psirz(iax+i, jax+j)
         enddo
     enddo
 
     do k=1, 9
-        c(k) = sum(A_inv(k, 1:d) * bub(1:d))
+        c(k) = sum(A_inv(k, 1:ndim) * bub(1:ndim))
     enddo
 
     return
@@ -954,46 +884,25 @@ contains
 
     use ef_circuit, only: dr, dz
 
-    integer iax, jax, i, j, k, d
-    double precision pos_xpoint(2), rx, zx
-    double precision r0, z0, f00, xub(90), bub(90), yub(90)
-    double precision f0, fr0, fz0, frr0, fzz0, frz0, fr2z0, frz20, fr2z20
-    double precision f(9), drad, dzad, t1, t2, det, matrix(2, 2)
-    double precision c1, c2, c3, c4, c5, c6, c7, c8, c9, ddpsi(8), c(9)
-    integer i1, i2, i3, i4
+    integer, parameter :: ndim=9
+    double precision, intent(in) :: rx, zx
+    double precision, intent(out) :: f00
+    double precision, intent(out), dimension(2) :: pos_xpoint
+    double precision, intent(out), dimension(ndim-1) :: ddpsi
+    double precision, dimension(ndim) :: bub
 
-    call find_fields_interp_psionly(rx-dr, zx-dz, bub(1))
-    call find_fields_interp_psionly(rx, zx-dz, bub(2))
-    call find_fields_interp_psionly(rx+dr, zx-dz, bub(3))
-    call find_fields_interp_psionly(rx-dr, zx, bub(4))
-    call find_fields_interp_psionly(rx, zx, bub(5))
-    call find_fields_interp_psionly(rx+dr, zx, bub(6))
-    call find_fields_interp_psionly(rx-dr, zx+dz, bub(7))
-    call find_fields_interp_psionly(rx, zx+dz, bub(8))
-    call find_fields_interp_psionly(rx+dr, zx+dz, bub(9))
+    call find_fields_interp_psionly(rx - dr, zx - dz, bub(1))
+    call find_fields_interp_psionly(rx     , zx - dz, bub(2))
+    call find_fields_interp_psionly(rx + dr, zx - dz, bub(3))
+    call find_fields_interp_psionly(rx - dr, zx     , bub(4))
+    call find_fields_interp_psionly(rx     , zx     , bub(5))
+    call find_fields_interp_psionly(rx + dr, zx     , bub(6))
+    call find_fields_interp_psionly(rx - dr, zx + dz, bub(7))
+    call find_fields_interp_psionly(rx     , zx + dz, bub(8))
+    call find_fields_interp_psionly(rx + dr, zx + dz, bub(9))
 
-    xub(1)=rx-dr
-    yub(1)=zx-dz
-    xub(2)=rx
-    yub(2)=zx-dz
-    xub(3)=rx+dr
-    yub(3)=zx-dz
-    xub(4)=rx-dr
-    yub(4)=zx
-    xub(5)=rx
-    yub(5)=zx
-    xub(6)=rx+dr
-    yub(6)=zx
-    xub(7)=rx-dr
-    yub(7)=zx+dz
-    xub(8)=rx
-    yub(8)=zx+dz
-    xub(9)=rx+dr
-    yub(9)=zx+dz
-
-    d=9
-    call exact_biquad_regress(xub(1:d), yub(1:d), bub(1:d), d,  &
-        c, pos_xpoint(1), pos_xpoint(2), f00, ddpsi, dr, dz, rx, zx)
+    call exact_biquad_regress(rx, zx, bub(1:ndim), ndim,  &
+        pos_xpoint(1), pos_xpoint(2), f00, ddpsi, dr, dz)
 
     return
     end subroutine nine_point_regression_follow
