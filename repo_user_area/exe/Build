@@ -67,11 +67,15 @@ fi
 
 ATASK=$AWD/bin/$equ_file.exe
 
-if [ "$TASK" == 'BGD' ]
+if [ "$TASK" == 'BGD' ]for 
 then
-    module unload impi-interactive
-    bat="$AWD/exe/batch.sh"
-    cat << EOT > $bat
+    if ! command -v sbatch &> /dev/null
+    then
+        echo Running $ATASK without graphic interactive window
+        $ATASK
+    else
+        bat="$AWD/exe/batch.sh"
+        cat << EOT > $bat
 #!/bin/sh
 #SBATCH -J astra_${USER}
 #SBATCH --partition=p.tok.openmp
@@ -91,10 +95,11 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 srun $ATASK
 EOT
 
-    echo sbatch $bat
-    date
-    module unload impi-interactive
-    sbatch -W $bat
+        echo sbatch $bat
+        date
+        module unload impi-interactive
+        sbatch -W $bat
+    fi
 else
     echo Running $ATASK
     $ATASK
