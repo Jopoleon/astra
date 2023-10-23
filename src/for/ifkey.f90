@@ -117,6 +117,9 @@ data (HELP(j),j=21,28)/ &
 !----------------------------------------------------------------------|
 
 call markloc('IFKEY', debug_lev=2*debug)
+if (TASK(1:3) == 'BGD') then
+    return
+endif
 
 NTRUN = NTIMES
 if (IFKL == 257) goto 97 ! makemovie + EXIT

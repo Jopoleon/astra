@@ -2576,6 +2576,7 @@ end subroutine find_psi_boundary
 !--------------------------------------------------------------------
 subroutine new_jrz_ef ! calculate new right hand side given new boundary!
 
+use rcurr_zcurr_2def, only: R_curr_2d, Z_curr_2D
 use ef_circuit
 use astra2fbe
 use feqis_tools, only: t_find_u_n
