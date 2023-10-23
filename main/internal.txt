@@ -1,0 +1,41 @@
+LABEL    UNITS                     DESCRIPTION
+------------------------------------------------------------
+DROUT    s                         Radial profiles output interval
+DTOUT    s                         Time variables output interval
+DPOUT    s                         Profiles/time output interval
+TIME     s                         Current time, t
+TAUMIN   s                         Minimum time step
+TAUMAX   s                         Maximum time step
+TAUINC   None                      Maximum time step increment (=TAUold/TAUnew)
+DELVAR   None                      Maximum relative change of variables at time step
+ITEREX   None                      Maximum number of iterations in the external loop
+NITREQ   None                      Maximum number of iterations in the int. Tr+Eq loop
+TINIT    s                         Time axis initial time
+TSCALE   s                         Time axis scale
+NB1      None                      No. of points of the main transport grid up to the wall boundary, NA1<NB1
+NUF      None                      No. of radial points to be written in a U
+XOUT     None                      Output control: X
+XINPUT   None                      Default input mode for a radial variable (C Xdeflt)
+NB2EQL   None                      [0,1] contribution of beam pressure to equilibrium
+NEQUIL   None                      Eq. solver grid [<= none, 1 freeze eq., >= 42
+NBND     None                      No. of points on the boundary
+XFLAG    None                      X
+DTEQL    s                         Time interval to recalculate equilibrium
+MEQUIL   None                      Poloidal M (for ESC), grid size (for equil)
+TPAUSE   s                         Time to set "pause" mode
+TEND     s                         End time, t_end, t_start <= t <= t_end
+INUME1   None                      Numerical flag for NE, 11 is explicit, centered diff. 12 is explicit, power law, 21 is implicit, centered diff, 22 is implicit, power law. 31 is Crank
+INUME2   None                      Numerical flag for TE and TI
+INUME3   None                      Numerical flag for FP
+INUME4   None                      Numerical flag for UPAR
+IPROT    None                      Numerical flag for poloidal terms in parallel momentum transport, 0 if no poloidal rot, 1 if yes
+ITFBE    None                      Time at which FBE is switched on. If negative, FBE is switched off. By default it is negative
+ITFBP    None                      if 0, nothing. If 1, uses PSIFB as bc for PSI equation.
+ICIRCQ   None                      if 0, nothing. If 1, does circuit equations
+IPCTRL   None                      if 0, nothing. If 1, uses controller for external coils
+ADCMPF   None                      Numerical flag for ADCMP (=1 use ADCMP, =0 do ADCMP into equations)
+FLXDR    None                      Numerical flag for grid: 0
+SGNIP    None                      Sign of current with respect to reference system of coordinates used in Astra
+SGNBT    None                      Sign of toroidal field with respect to reference system of coordinates used in Astra
+IFBEG    None                      if 0, rectangular grid. If 1, adaptive grid in free boundary equilibrium (or chooses between different grids)
+IPEQL    None                      Numerical flag to choose equilibrium solver (0 doesnt do anything, 1 forces 3mom, 4 spider, 5 feqis)

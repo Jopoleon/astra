@@ -1,0 +1,60 @@
+LABEL         UNITS           DESCRIPTION
+------------------------------------------------------------
+%global_param
+------------------------------------------------------------
+li3            -              Internal inductance ITER defintion
+betpol         -              Beta poloidal
+i_plasma       A              Plasma current
+psi_bound      Wb             Boundary psi value
+psiaxis        Wb             Axis psi value
+------------------------------------------------------------
+%profiles_1d
+------------------------------------------------------------
+dpsidv         Wb/m^3         Volume derivative of Psi
+psi            Wb             Psi
+g2             -              G22_ASTRA = g2 * /VRS * RTOR * GP2**2. / IPOL
+gm1            -              G33_ASTRA = gm1 *RTOR**2.
+r_inboard      m              AMETR is 0.5*(r_outboard - r_inboard)
+r_outboard     m              Outboard R
+volume         m^3            VOLUM in ASTRA is  = volume but interpolated on XRHO ofc
+g1             -              G11_ASTRA = g1/VRS
+gm41           -              G41_ASTRA = gm41 /RTOR**2.
+ggradro        -              GRADRO_ASTRA = ggradro / VRS
+bmaxt          T              BMAXT
+bmint          T              BMINT
+gm4            -              BDB02_ASTRA = gm4 / BTOR**2.
+bdb0           -              BDB0_ASTRA = bdb0 / BTOR
+gm5            -              B0DB2_ASTRA = gm5 * BTOR**2.
+fofb           -              FOFB
+areat          m^2            Area of flux surface poloidal cross section
+perim          m              Flux surface lateral perimeter
+shif           m              SHIF
+elongation     -              ELON
+surface        m^2            SLAT
+phispid        Wb             PHI (in ASTRA doesnt exist anyway)
+q              -              Safety factor from EQUIL
+ffprime        -              FFPRIME from EQUIL
+pprime         -              PPRIME from EQUIL
+pressure       -              Pressure from EQUIL
+rho_tor        -              rho_tor in output from EQUIL
+phi            Wb             Toroidal flux
+pprime         -              dpres/dpsi
+ffprime        -              dF/dpsi
+------------------------------------------------------------
+%rectgrid
+------------------------------------------------------------
+r2d            m              Rectangular grid major radius coordinate
+z2d            m              Rectangular grid vertical coordinate
+psirz2d        Wb/rad         Psi on rectangular grid, ASTRA has -2*PI*PSI_EQUIL
+psi_axis       Wb/rad         Psi on axis
+psi_boundary   Wb/rad         Psi at boundary
+------------------------------------------------------------
+%coord_sys%position
+------------------------------------------------------------
+r              m              Major radius of magnetic surfaces' points
+z              m              Verical coordinate of magnetic surfaces' points
+teta2d         rad            Poloidal angle of magnetic surfaces' points
+rmin           m              Minor radius local distance from axis to point
+psirz          Wb             Psi in polar coordinates
+bpcell         T              Poloidal magnetic field absolute value
+bcell          T              Total magnetic field

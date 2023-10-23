@@ -116,13 +116,6 @@ data (HELP(j),j=21,28)/ &
 !----------------------------------------------------------------------|
 
 call markloc('IFKEY', debug_lev=2*debug)
-write(6, *) 'Texit1', TIME - TEND + .1E-7, DPOUT+TAU
-
-! Check exit condition
-if (TIME - TEND + .1E-7 >= DPOUT+TAU) goto 97
-
-! Return in batch mode
-if (TASK(1:3) == 'BGD') return
 
 NTRUN = NTIMES
 if (IFKL == 257) goto 97 ! makemovie + EXIT
@@ -900,12 +893,12 @@ KEY = 0
 goto 1
 
 ! (Makemovie +) stop ASTRA
-97 continue  
+97 continue
 if (PNMNAME(1:1) /= "*") then ! even pressing <AltM>
     call makemovie(PNMNAME)
 endif
 
-if (TASK(1:3) /= 'BGD' .and. TASK(4:4) /= 'B') call endvm
+if (TASK(4:4) /= 'B') call endvm
 if (IFKL == 257) then
     write(6, '(A)')' >>> ASTRA error >>>'
     write(6, '(A, F11.6, A)')"    Floating point exception at  t =", TIME, ' sec'

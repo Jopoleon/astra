@@ -1,0 +1,5 @@
+LABEL    UNITS                     DESCRIPTION
+------------------------------------------------------------
+r2d      m                         R of magnetic contour
+z2d      m                         Z of magnetic contour
+psi2d    Weber                     Pol. flux matrix
