@@ -247,8 +247,7 @@ else
 !  in review*3, in listres
 
     open(unit=12, file='equ/'//TRIM(equ_file), iostat=ios)
-    if (ios /= 0) write(*, *) '>>> IFKEY: Model file "equ/', &
-         TRIM(equ_file), '" open error'
+    if (ios /= 0) write(*, *) '>>> IFKEY: Model file "equ/', TRIM(equ_file), '" open error'
     open(3, file=TRIM(rev_file), iostat=ios, form='unformatted')
     if (ios /= 0) write(*, *) '>>> IFKEY: Review file open error ' // TRIM(rev_file)
     CNSFIL = 'equ/log/' // TRIM(equ_file)
@@ -900,7 +899,7 @@ KEY = 0
 goto 1
 
 ! (Makemovie +) stop ASTRA
- 97 continue  
+97 continue  
 if (PNMNAME(1:1) /= "*") then ! even pressing <AltM>
     call makemovie(PNMNAME)
 endif
