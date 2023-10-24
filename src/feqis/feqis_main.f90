@@ -32,6 +32,13 @@ voltage(1:ncoils) = ucoils(1:ncoils) ! voltage inputs for active conductors
 write(*, *) ifplasma
 nrplasma = nrho
 
+! Init coils and grid
+if (j_call == 0) then
+    if (parameters_equil%k_fixfree == 1) then
+        call equil_ef_init_circ
+    endif
+endif
+
 if (ifplasma == 1) then
     allocate(equil_out%profiles_1d%psi(nrplasma))
     allocate(equil_out%profiles_1d%pressure(nrplasma))
@@ -97,13 +104,6 @@ if (ifplasma == 1) then
 endif
 
 write(*, *) 'fix and nstep', parameters_equil%k_fixfree, parameters_equil%nstep, nrho, nteta
-
-! Init coils and grid
-if (j_call == 0) then
-    if (parameters_equil%k_fixfree == 1) then
-        call equil_ef_init_circ
-    endif
-endif
 
 write(*, *) parameters_equil%k_fixfree, j_init
 
