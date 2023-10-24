@@ -18,23 +18,14 @@
 #else
 #define INT_ long
 #endif
-#ifndef INT8
-#define INT_ int
-#else
-#define INT_ long
-#endif
 #define IPCACTIVE 1
 
 #include "A_vars.h"
 #include "A_proc.h"
 
-void AstraEvent();
-double swatch (double*);
-double swatch_(double*);
-
 int semtimedop();
-int AllocateShmem(int);
-int WhatSem();
+void AllocateShmem(int);
+void WhatSem();
 int read_aipc(INT_*, INT_*, char*);
 int freeshm();
 
@@ -144,8 +135,6 @@ int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs){
 
     fclose(A_LOG);
     free(line);
-
-
 
     for(j=0; j < *Nsub; j++){
         if (strlen(&subs[*Lstr*j]) == 0) goto Error1;
@@ -312,7 +301,7 @@ int initipc_(INT_* Ngrid){
 /*----------------------------------------------------------
   Get ShMemIDs for Astra datasets (const.inc) and (status.inc)
 */
-int AllocateShmem (int l){
+void AllocateShmem (int l){
     if (A_ShmNum > A_ShmShift+A_Nsemx){
         printf(">>> ERROR >>> Too many shared memory segments requested\n");
         a_stop_();
@@ -323,7 +312,7 @@ int AllocateShmem (int l){
 /* Attach shared memory to the process */
     A_ShmAdr[A_ShmNum] = shmat(A_ShmID[A_ShmNum], NULL, 0);
 
-    return(0);
+    return;
 }
 
 /*---------------------------------------------------------------------
@@ -403,12 +392,9 @@ int inikids_(INT_* Nsub, INT_ *Lstr, char *subs){
 }
 
 /*------------------------------------------------------*/
-void whatsem_(){  /* Callable from FORTRAN as call whatsem()*/
-    WhatSem();
-}
-int WhatSem(){
+void WhatSem(){
     int j;
-    if (A_Nsems == 0) return(0);
+    if (A_Nsems == 0) return;
     ushort semarray[A_Nsems];
     union semun Mysemun;
     Mysemun.array = &semarray[0]; 
@@ -417,7 +403,7 @@ int WhatSem(){
     printf(" Semaphore set = {");
     for (j=0; j < A_Nsems-1; j++) printf("%d, ", semarray[j]);
     printf("%d}\n", semarray[A_Nsems-1]);
-    return (0);
+    return;
 }
 
 /*--------------------- Check if ipc is activated --------------------*/
@@ -442,10 +428,7 @@ int wait4all_(){
     if (A_ShmNum < 0) return(0); /* Do check only after initialization   */
     static struct timespec timeout = {0, 100000000};   /* timeout = .1 sec */
 
-    MinorLoop:{
-/* Here the primary process can do limited actions e.g. analyze keys */
-        (void) AstraEvent();
-    }
+    MinorLoop: 
 
 /*
   Go on if [Sem0value+buf0.sem_op==0], goto Minorloop after timeout
@@ -459,7 +442,6 @@ int wait4all_(){
     if (semtimedop(A_SemID, &buf0, 1, &timeout)){
         switch(errno){
         case EAGAIN:
-//            printf("Timed out\n");
             goto MinorLoop;
         case EIDRM:
             printf("The semaphore set was removed\n");
