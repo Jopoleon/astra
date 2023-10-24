@@ -32,17 +32,26 @@ clean:
 	rm -f $(XPR)/neo
 
 
-$(XPR)/tglfi:	$(XPR)/tglf_interf.f90 $(XPR)/qinterp.f90 $(LIBIPC) $(AENV)
+$(XPR)/tglfi:	$(XPR)/tglf_interf.f90 $(XPR)/qinterp.f90 $(XPR)/tglfinter.o $(LIBIPC) $(AENV)
 		$(AFC) -o $@ $(XPR)/tglf_interf.f90 $(XPR)/qinterp.f90 $(XPR)/tglfinter.o $(LIBIPC)	\
 		-I$(TGLF_INC) $(TGLF_LIB) $(MKL_LIB) -lpthread -lm
 
-$(XPR)/neo:	$(XPR)/neo_interf.f90 $(XPR)/qinterp.f90 $(LIBIPC) $(AENV)
-		$(MPI_FC) -o $@ $(XPR)/neo_interf.f90 $(XPR)/qinterp.f90 $(LIBIPC)	\
+$(XPR)/neo:	$(XPR)/neo_interf.f90 $(XPR)/qinterp.f90 $(XPR)/neointer.o $(LIBIPC) $(AENV)
+		$(MPI_FC) -o $@ $(XPR)/neo_interf.f90 $(XPR)/qinterp.f90 $(XPR)/neointer.o $(LIBIPC)	\
 		-I$(NEO_INC) $(NEO_LIB) $(MKL_LIB) -lpthread -lm
 
-$(XPR)/qlki:	$(XPR)/qlk_interf.f90 $(XPR)/qinterp.f90 $(LIBIPC) $(AENV)
+$(XPR)/qlki:	$(XPR)/qlk_interf.f90 $(XPR)/qinterp.f90 $(XPR)/qlkinter.o $(LIBIPC) $(AENV)
 		$(MPI_FC) -o $@ $(XPR)/qlk_interf.f90 $(XPR)/qinterp.f90 $(XPR)/qlkinter.o $(LIBIPC)	\
 		-I$(QLK_INC) $(QLK_LIB)
 
+$(XPR)/neointer.o:    $(XPR)/tra_interf.c
+		$(ACC) -I$(INC_DIR) -o $@ -c $< -Dneo
+
+$(XPR)/tglfinter.o:   $(XPR)/tra_interf.c
+		$(ACC) -I$(INC_DIR) -o $@ -c $< -Dtglf
+
+$(XPR)/qlkinter.o:    $(XPR)/tra_interf.c
+		$(ACC) -I$(INC_DIR) -o $@ -c $< -Dqlk
+
 $(LIBIPC): $(AWD)/ipc/*
-	make -f $(AWD)/exe/Makeipc
+	make -f $(AWD)/exe/Makesub sub=ipc
