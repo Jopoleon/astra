@@ -41,6 +41,12 @@ double swatch_(double*);
 extern INT_  A_NB1;
 int   SemID ,  ShMid0,  ShMid1;
 void *ShmAd0, *ShmAd1, *ShmAdr;
+void qlk_interf_();
+void neo_interf_();
+void tglf_interf_();
+void SP_stamp();
+int read_aipc();
+int write_aipc();
 
 #define NC1 A_NB1
 
@@ -278,6 +284,4 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
     swatch(&(My.CPUse));
     printf("CPUse %g\n", My.CPUse);
     exit(0);
-
 }
- 

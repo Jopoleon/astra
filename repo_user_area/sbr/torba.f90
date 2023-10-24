@@ -13,7 +13,7 @@ use debugger, only: flightsim
 use status_inc, only: TE, NE, FP, XRHO, ZEF, MU, ELON, SHif , IPOL, &
    AMETR, VOLUM, PEECR, CUECR, AREAT
 use fs_coupling_variables, only: fs_pol_EC, fs_pow_EC
-use outcmn_inc, only: AWD, exp_file 
+use outcmn_inc, only: AWD, nml_file 
 use numerical_tools, only: qinterp, integr
 use parameters_a2equil, only : equil_now, GP2
 
@@ -99,7 +99,7 @@ if (.not. allocated(eqdata)) allocate(eqdata(eqdim))
 
 ! Read geometry and settings
 
-as_nml = TRIM(awd) // 'exp/nml/' // TRIM(exp_file)
+as_nml = TRIM(awd) // TRIM(nml_file)
 write(*, *) 'Reading namelist ', TRIM(as_nml)
 
 open(57, FILE=TRIM(as_nml), delim='apostrophe')
