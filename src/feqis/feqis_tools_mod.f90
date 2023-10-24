@@ -111,7 +111,7 @@ contains
 !---------------------------------------------------------------------
     subroutine interp_j_fromrhotorz
 
-    use ef_circuit, only: nrho, nteta, nr2, nz2, r, z, jrz, jrhoteta, &
+    use feqis_circuit, only: nrho, nteta, nr2, nz2, r, z, jrz, jrhoteta, &
         rho, teta, raxp, zaxp
 
     integer :: i, j, k, k1, k2
@@ -133,7 +133,7 @@ contains
 !---------------------------------------------------------------------
     subroutine t_find_u_n(i1, j1, i2, j2, t1)
 
-    use ef_circuit, only: u_n
+    use feqis_circuit, only: u_n
 
     integer, intent(in) :: i1, i2, j1, j2
     double precision, intent(out) :: t1
@@ -264,7 +264,7 @@ contains
 !---------------------------------------------------------------------
     subroutine coil_forces_feqis(ncoilz, force_R, force_Z, plasma_state)
 
-    use ef_circuit, only: nblocks, npassive, jrz, nr2, nz2, area_eff, &
+    use feqis_circuit, only: nblocks, npassive, jrz, nr2, nz2, area_eff, &
         curconduc, mequivalence
     use green_matrix, only: dgreenirpl, dgreenizpl, dgreenirj, dgreenizj
 
@@ -303,7 +303,7 @@ contains
 !---------------------------------------------------------------------
     subroutine plasma_psi_to_coils
 
-    use ef_circuit, only: nr2, nz2, nconduc, jrz, area_eff, psiplasmatoconduc
+    use feqis_circuit, only: nr2, nz2, nconduc, jrz, area_eff, psiplasmatoconduc
     use green_matrix, only: greeni
 
     integer :: i
@@ -318,7 +318,7 @@ contains
 !---------------------------------------------------------------------
     subroutine get_zccurb_efff(rc_cur, zc_cur, z2c_cur, rgeoc, zgeoc, ahorc)
 
-    use ef_circuit, only: nrho, nteta, rpol, zpol
+    use feqis_circuit, only: nrho, nteta, rpol, zpol
     use metric_coefficients_pbe, only: R_curr_0D, Z_curr_0D, dator
 
     real*8, intent(out) :: rc_cur, zc_cur, z2c_cur, rgeoc, zgeoc, ahorc
@@ -361,7 +361,7 @@ contains
 !---------------------------------------------------------------------
     subroutine psib_ext_efff(psiext_out)  !gives back external flux on plasma boundary
 
-    use ef_circuit, only: nbnd, rbnd, zbnd, psibnd
+    use feqis_circuit, only: nbnd, rbnd, zbnd, psibnd
 
     integer :: i
     double precision :: psiext_out, dlt, dllt, dum1, dum2
@@ -394,7 +394,7 @@ contains
 
     use pi_vars, only: GPI2
     use astra2fbe, only: psplex_from_fbe
-    use ef_circuit, only: nbnd, rbnd, zbnd, dr, dz
+    use feqis_circuit, only: nbnd, rbnd, zbnd, dr, dz
 
     double precision, intent(out) :: dumz
     integer :: i, j
@@ -493,7 +493,7 @@ contains
 !---------------------------------------------------------------------
     subroutine find_demo_gaps_efff(ngaps, demo_gaps, geom1d)
 
-    use ef_circuit, only: psibnd
+    use feqis_circuit, only: psibnd
 
     integer, intent(in) :: ngaps
     double precision, intent(in) :: demo_gaps(ngaps, 4)
@@ -531,7 +531,7 @@ contains
 !---------------------------------------------------------------------
     subroutine psi_external_calc
 
-    use ef_circuit, only: nr2, nz2, nconduc, curconduc, psiextrz
+    use feqis_circuit, only: nr2, nz2, nconduc, curconduc, psiextrz
     use green_matrix, only: greeni
 
     integer :: i, j
@@ -815,7 +815,7 @@ contains
 !---------------------------------------------------------------------
     subroutine nine_point_regression(r0, z0, pos_xpoint, ddpsi, f00)
 
-    use ef_circuit, only: nr1, nz1, r, z, dr, dz, psirz
+    use feqis_circuit, only: nr1, nz1, r, z, dr, dz, psirz
 
     integer, parameter :: ndim=9
     double precision, intent(in) :: r0, z0
@@ -848,7 +848,7 @@ contains
 !---------------------------------------------------------------------
     subroutine nine_point_coeffs_only(r0, z0, c, c1, c2)
 
-    use ef_circuit, only: psirz, nr1, nz1, r, z
+    use feqis_circuit, only: psirz, nr1, nz1, r, z
 
     integer, parameter :: ndim=9
     double precision, intent(in) :: r0, z0
@@ -882,7 +882,7 @@ contains
 !---------------------------------------------------------------------
     subroutine nine_point_regression_follow(rx, zx, pos_xpoint, ddpsi, f00)
 
-    use ef_circuit, only: dr, dz
+    use feqis_circuit, only: dr, dz
 
     integer, parameter :: ndim=9
     double precision, intent(in) :: rx, zx
@@ -910,7 +910,7 @@ contains
 !---------------------------------------------------------------------
     subroutine get_closest_index(r0, z0, i, j)
 
-    use ef_circuit, only: rmin, zmin, dr, dz
+    use feqis_circuit, only: rmin, zmin, dr, dz
 
     double precision, intent(in) :: r0, z0
     integer, intent(out) :: i, j
@@ -924,7 +924,7 @@ contains
 !---------------------------------------------------------------------
     subroutine get_floor_index(r0, z0, i, j)
 
-    use ef_circuit, only: rmin, zmin, dr, dz
+    use feqis_circuit, only: rmin, zmin, dr, dz
 
     double precision, intent(in) :: r0, z0
     integer, intent(out) :: i, j
@@ -938,7 +938,7 @@ contains
 !---------------------------------------------------------------------
     subroutine find_fields_interp_psionly(r0, z0, psi0) !give back psi, br, bz at r0, z0
 
-    use ef_circuit, only: nr1, nz1, r, z, psirz
+    use feqis_circuit, only: nr1, nz1, r, z, psirz
 
     double precision, intent(in) :: r0, z0
     double precision, intent(out) :: psi0
@@ -969,7 +969,7 @@ contains
     subroutine find_fields_interp_green(r0, z0, psi0, iconduc)
 ! Returns psi at r0, z0
 
-    use ef_circuit, only: r, z
+    use feqis_circuit, only: r, z
     use green_matrix, only: greeni
 
     integer, intent(in) :: iconduc
@@ -999,7 +999,7 @@ contains
     subroutine find_fields_interp_psiext(r0, z0, psi0)
 ! Returns psi_ext at r0, z0
 
-    use ef_circuit, only: r, z, psiextrz
+    use feqis_circuit, only: r, z, psiextrz
 
     double precision, intent(in) :: r0, z0
     double precision, intent(out) :: psi0
@@ -1027,7 +1027,7 @@ contains
     subroutine find_fields_interp_psionly_neg(r0, z0, psi0)
 ! Returns psi_ext at r0, z0
 
-    use ef_circuit, only: r, z, psirz
+    use feqis_circuit, only: r, z, psirz
 
     double precision, intent(in) :: r0, z0
     double precision, intent(out) :: psi0
@@ -1198,7 +1198,7 @@ contains
 
 ! new bc is integral_over_boundary of -Green * dg/dn * dl
     use pi_vars, only: GPI
-    use ef_circuit, only: nr1, nz1, nr2, nz2, i_dim2
+    use feqis_circuit, only: nr1, nz1, nr2, nz2, i_dim2
 
     double precision, intent(inout), dimension(i_dim2, i_dim2) :: green_fun
     integer :: i, jcounty
@@ -1239,7 +1239,7 @@ contains
     subroutine bgint(bgintsol, green_in, jcounty)
 
 ! calculates  integral_over_boundary of -Green * dg/dn * dl
-    use ef_circuit, only: nr1, nr2, nz1, i_dim2, green_bnd_f, r, dr, dz
+    use feqis_circuit, only: nr1, nr2, nz1, i_dim2, green_bnd_f, r, dr, dz
 
     double precision, intent(in), dimension(i_dim2, i_dim2) :: green_in
     integer, intent(inout) :: jcounty
@@ -1332,7 +1332,7 @@ contains
 !---------------------------------------------------------------------
     subroutine find_closest_xpoints(rx, zx, ierr, n_add)
 
-    use ef_circuit,  only: rbnd, zbnd, nteta, r, z, nr1, nz1, & 
+    use feqis_circuit,  only: rbnd, zbnd, nteta, r, z, nr1, nz1, & 
         lim_maxR, lim_minR, lim_minZ, lim_maxZ, dr, dz
 
 !this routine finds the x-points close to the plasma boundary,  irrespective of other x-points

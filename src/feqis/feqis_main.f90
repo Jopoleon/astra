@@ -3,7 +3,7 @@ subroutine feqis_main(nucoils, ucoils, parameters_equil, ifplasma, &
 
 use imas_ids, only: type_equilibrium  
 use parameters_a2equil, only: type_parameters
-use ef_circuit, only: ncoils, nrho, nteta, nr2, nz2, &
+use feqis_circuit, only: ncoils, nrho, nteta, nr2, nz2, &
     psi_cur_old, psiplasmatoconduc, psirz, psiextrz, &
     psplex, psibndp, psiaxisp, &
     ucoils, voltage

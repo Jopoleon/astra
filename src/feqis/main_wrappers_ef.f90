@@ -1,7 +1,7 @@
 subroutine full_system_advance_ef(j_init)
 
 use errors_params
-use ef_circuit
+use feqis_circuit
 use astra2fbe
 use parameters_a2equil
 use feqis_tools, only: psi_external_calc, plasma_psi_to_coils
@@ -80,7 +80,7 @@ end subroutine full_system_advance_ef
 subroutine solve_gse2d_fbe_full_ef(j_init)	
 
 use errors_params, only: err_find_psistab
-use ef_circuit
+use feqis_circuit
 use astra2fbe
 use feqis_tools, only: get_closest_index
 
@@ -321,7 +321,7 @@ subroutine restab_F_function_full_fonfit
 
 !refits all currents
 use errors_params, only: err_find_psistab
-use ef_circuit
+use feqis_circuit
 use astra2fbe
 use green_matrix
 use feqis_tools, only: interp_j_fromrhotorz, get_closest_index, &
@@ -562,7 +562,7 @@ end subroutine restab_F_function_full_fonfit
 subroutine restab_boundary_with_furier_wall !not working well
 
 use errors_params, only: err_find_psistab
-use ef_circuit
+use feqis_circuit
 use astra2fbe
 use green_matrix
 use feqis_tools, only: interp_j_fromrhotorz, get_closest_index, &
@@ -770,7 +770,7 @@ end subroutine restab_boundary_with_furier_wall
 subroutine restab_axis_with_furier_wall
 
 use errors_params, only: err_find_psistab
-use ef_circuit
+use feqis_circuit
 use astra2fbe
 use green_matrix       ! declaration of minimal CPOs
 use feqis_tools, only: interp_j_fromrhotorz, get_closest_index, &
@@ -978,7 +978,7 @@ end subroutine restab_axis_with_furier_wall
 !--------------------------------------------------------------------
 subroutine solve_gse2d_fbe_full_ef_1turn(j_init,j_stab,raxold,zaxold)	
 
-use ef_circuit
+use feqis_circuit
 use astra2fbe
 use feqis_tools, only: interp_j_fromrhotorz, get_closest_index, &
     boundary, nine_point_coeffs_only, find_angle, &
@@ -1115,7 +1115,7 @@ end subroutine solve_gse2d_fbe_full_ef_1turn
 subroutine FEQISUPDATE(machine,coilzzz,time_nowz,nccc)
        
 use pi_vars, only: GPI2
-use ef_circuit
+use feqis_circuit
 use astra2fbe
 
 implicit none
@@ -1138,7 +1138,7 @@ end subroutine FEQISUPDATE
 subroutine circuit_eq_advance_ef(j_init)
 
 use pi_vars, only: GPI, GPI2
-use ef_circuit
+use feqis_circuit
 use astra2fbe       ! declaration of minimal CPOs
 
 implicit none
@@ -1336,11 +1336,11 @@ end subroutine solve_circuit_equations
 !--------------------------------------------------------------------
 subroutine definitions_ef_equil(equil_in,params,j_call,ifplasma)
 
-use pi_vars, only: GPI, GPI2
+use pi_vars, only: GPI, GPI2, mu0
 use errors_params
 use parameters_a2equil
 use imas_ids
-use ef_circuit
+use feqis_circuit
 use astra2fbe
 use numerical_tools, only: linterp
 use feqis_tools, only: find_angle
@@ -1355,7 +1355,6 @@ type(type_parameters) params
        type(type_equilibrium) equil_in
 
 if (j_call.eq.0) then
-data_dir=params%prename
 nteta=equil_in%eqgeometry%boundary%npoints
 nrho=params%neql
 psistabR=0.
@@ -1379,7 +1378,6 @@ dz_factor_init=dz_factor_init_astra
  err_gaptolez = err_gaptolez_in
  err_fix_boundary = err_fix_boundary_in
 
-mu0=0.4*GPI
 Rgeom0=equil_in%global_param%toroid_field%r0
 tau_circuit_ef=0.001 !default value	
 tau_gseq_ef=0.001	 !default value
@@ -1483,7 +1481,7 @@ subroutine equil_ef_init_circ
 
 use pi_vars, only: GPI
 use fft_mod_eff, only: sintable, costable
-use ef_circuit
+use feqis_circuit
 use green_matrix
 use outcmn_inc, only: machine
 use astra2fbe, only: cur_init
@@ -1607,7 +1605,7 @@ end subroutine equil_ef_init_circ
 !--------------------------------------------------------------------
 subroutine fix_boundary_ef(j_init)
 
-use ef_circuit
+use feqis_circuit
 use astra2fbe
 use imas_ids
 use metric_coefficients_pbe	
@@ -1766,7 +1764,7 @@ subroutine assignment_of_equilout_stuff(equil_out)
 use pi_vars, only: GPI, GPI2
 use imas_ids, only: type_equilibrium
 use parameters_a2equil
-use ef_circuit
+use feqis_circuit
 use transfer_functions
 
 implicit none
@@ -1837,7 +1835,7 @@ end subroutine assignment_of_equilout_stuff
 subroutine convert_boundary_to_pbe
 
 use pi_vars, only: GPI2
-use ef_circuit
+use feqis_circuit
 use feqis_tools, only: find_angle, find_fields_interp_psionly
 
 implicit none
@@ -1983,7 +1981,8 @@ end subroutine convert_boundary_to_pbe
 !--------------------------------------------------------------------
 subroutine solve_gs2d(g)
 
-use ef_circuit
+use pi_vars, only: mu0
+use feqis_circuit
 use fft_mod_eff, only: costable
 use feqis_tools, only: discrete_sine_transform
 
@@ -2127,7 +2126,7 @@ end subroutine solve_tridiag_fbe_ef
 !--------------------------------------------------------------------
 subroutine find_new_axis_part1	
 
-use ef_circuit
+use feqis_circuit
 use feqis_tools, only: nine_point_regression
 
 implicit none
@@ -2234,7 +2233,7 @@ end subroutine find_new_axis_part1
 subroutine find_psi_boundary
 
 use pi_vars, only: GPI
-use ef_circuit
+use feqis_circuit
 use astra2fbe, only: x_point_save, plasma_config
 use errors_params, only: err_find_oxpoints_derivs
 use feqis_tools, only: find_closest_xpoints, find_fields_interp_psionly, &
@@ -2577,7 +2576,7 @@ end subroutine find_psi_boundary
 subroutine new_jrz_ef ! calculate new right hand side given new boundary!
 
 use rcurr_zcurr_2def, only: R_curr_2d, Z_curr_2D
-use ef_circuit
+use feqis_circuit
 use astra2fbe
 use feqis_tools, only: t_find_u_n
 
