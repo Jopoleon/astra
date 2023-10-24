@@ -12,8 +12,6 @@ double precision, intent(in) :: YR
 integer :: i
 double precision, external :: VINT
 
-integer i
-
 i = int(YR/HRO) + 1
 
 NEAVR = VINT(NE, YR)/VOLUM(i) !VOLR(YR)
