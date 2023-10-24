@@ -3,6 +3,7 @@ static struct A_arrs
   INT_ NC1;
   int Size;
   int CheckWord;
+  double aimpt[NC1];
   double amain[NC1];
   double ametr[NC1];
   double cu[NC1];
@@ -19,6 +20,7 @@ static struct A_arrs
   double nhydr[NC1];
   double ni[NC1];
   double nibm[NC1];
+  double nimpt[NC1];
   double niz1[NC1];
   double niz2[NC1];
   double niz3[NC1];
@@ -43,5 +45,6 @@ static struct A_arrs
   double zim1[NC1];
   double zim2[NC1];
   double zim3[NC1];
+  double zimpt[NC1];
   double zmain[NC1];
 } *AARRS;
