@@ -6,9 +6,9 @@ use outcmn_inc, only: VCOIL, CCOIL, CCOILO, outcmn_init, &
     TASK, machine, exp_file, equ_file, rev_file, AWD, &
     COLTAB, RUNID, NST, MOD10, NTOUT
 use const_inc, only: IPART, const_init, XOUT, NA, &
-    TIME, TEND, DPOUT, TAU
+    TIME, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT
 use status_inc, only: status_init, MU
-use debugger, only: debug, flightsim, astra_stop
+use debugger, only: debug, flightsim, astra_stop, markloc
 
 implicit none
 
@@ -16,12 +16,13 @@ implicit none
 ! Find self-consistent initial configuration
 !-------------------------------------------
 
-integer :: j, jj, IM, ios, XSC0, XSC, jt1, jt2, jt3
+integer :: j, jj, IM, ios, XSC0, XSC, jt1, jt2, jt3, jt_req, jkey
 double precision :: CHORDN, resize, tbeg_nml, tend_nml, tpause_nml, &
     Y, timeb
 character(len=64) :: LISTSB(NSBMX)
 character(len=132) :: file_in, STRI, win_title
 double precision, external :: LINEAV, SWATCH
+integer, external :: IFKEY, IFTREQ
 
 namelist / astra_log / AWD, exp_file, equ_file, rev_file, TASK, machine, &
 debug, tbeg_nml, tend_nml, tpause_nml, flightsim, resize
@@ -95,7 +96,24 @@ call DETVAR_INIT
 call EQGUESS
 call INIVAR
 
-call CONVERGE_INIT(LISTSB)
+jt_req = 0
+do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set in IFTREQ (for/defarr.f90)
+    if (TASK(1:3) /= 'BGD') jkey = IFKEY(256) 
+    call INTVAR      ! Set exp scalars
+    call DETVAR_INIT
+    call DEFARR
+    call SETARX(1)   ! Set X-data w/o time interpolation
+    call INIVAR
+    call markloc("init.inc")
+    NITOT = NITOT + 1
+
+    call INIT_CONVERGE_STEP(LISTSB)
+    call markloc("init done")
+    
+    IFBEY = 0. ! no fbe possible here
+    call METRIC
+    jt_req = IFTREQ(ATREQ)     ! ++ITREQ; Convergence check; 1 - yes
+enddo
 
 ! write output file for simulink or whatever control system
 if (flightsim == 1) then
