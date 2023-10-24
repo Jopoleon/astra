@@ -974,10 +974,10 @@ enddo
 call markloc("init done")
 '''
 
-class CONVERGE_INIT:
+class INIT_CONVERGE_STEP:
 
     header = \
-'''subroutine converge_init(LISTSB)
+'''subroutine init_converge_step(LISTSB)
 
 use parameter_inc, only: NSBMX, NRD
 use outcmn_inc
@@ -993,8 +993,8 @@ include 'tmp/declar.fnc'
 
 character(len=64), intent(in) :: LISTSB(NSBMX)
 
-integer :: J1, IFKEY, IFIPC, IFSUB, JDETV, ND, ND1, jkey,&
-    imethod, jcall, IFTREQ, IFSTEP, jt_req
+integer :: J1, IFIPC, IFSUB, JDETV, ND, ND1, &
+    imethod, jcall, IFSTEP
 
 double precision :: dfpdrbm12, ARRNA1, YHRO, YB, YC, YJ_CU, &
     YM, YMCD, YIOH, YICD, YM1, YU, RABDOT, BABDOT
@@ -1004,29 +1004,13 @@ double precision, dimension(NRD) :: YWA, YWB, YWC, YWD, &
     YWA1, YWA2, YWB1, YWB2, YWAA, YWNB, YWWB, YWN1B, YWW1B,&
     YWN2B, YWW2B, YWC1, YWC2, YWS, YQDCM, YQDCMF,&
     YWQ, YWG11, YWgradF, YWgradb2, MPHIT
-
-MPHIT = 0.
-
-jt_req = 0
-do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set in IFTREQ (for/defarr.f90)
-if (TASK(1:3) /= 'BGD') jkey = IFKEY(256) 
-call INTVAR      ! Set exp scalars
-call DETVAR_INIT
-call DEFARR
-call SETARX(1)   ! Set X-data w/o time interpolation
-call INIVAR
 '''
 
     tail = \
 '''
-IFBEY = 0. ! no fbe possible here
-call METRIC
-
-jt_req = IFTREQ(ATREQ)     ! ++ITREQ; Convergence check; 1 - yes
-enddo
 
 return
-end subroutine converge_init
+end subroutine init_converge_step
 '''
 
 

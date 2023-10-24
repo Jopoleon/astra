@@ -380,13 +380,13 @@ end subroutine TIMOUT
 """
 
 #--------------------------------
-# eqns_inc.f90, converge_init.f90
+# eqns_inc.f90, init_converge_step.f90
 
         eqns_tmp, init_tmp = eqns_init.eqns_init(parse)
 
-        self.converge_init  = const_text.CONVERGE_INIT.header
-        self.converge_init += init_tmp
-        self.converge_init += const_text.CONVERGE_INIT.tail
+        self.init_converge_step  = const_text.INIT_CONVERGE_STEP.header
+        self.init_converge_step += init_tmp
+        self.init_converge_step += const_text.INIT_CONVERGE_STEP.tail
 
         self.eqns_inc  = const_text.EQNS_INC.header
         self.eqns_inc += eqns_tmp

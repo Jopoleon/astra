@@ -492,7 +492,7 @@ def parse_sbr(line):
         elif '>' in line or sbrnam.upper() in ('MIXINT', 'MIXEXT', 'TSCTRL'):
             locsbr = 1   # postep.f90; call in STEPUP
         else:
-            locsbr = 0   # converge_init.f90/eqns_inc.f90; call in ASTRA_MAIN, STEPUP
+            locsbr = 0   # init_converge_step.f90/eqns_inc.f90; call in ASTRA_MAIN, STEPUP
 
     args_str2 = ''
     if (args_str):

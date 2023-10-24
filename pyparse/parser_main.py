@@ -24,7 +24,7 @@ def write_tmp(txt, dir_out=None, fortran='f90'):
 
     if dir_out is None:
         dir_out = '.'
-    f90_l  = [ 'astra_out', 'setvar', 'inivar', 'detvar', 'detvar_init', 'ininam', 'subproc', 'postep', 'converge_init', 'eqns_inc']
+    f90_l  = [ 'astra_out', 'setvar', 'inivar', 'detvar', 'detvar_init', 'ininam', 'subproc', 'postep', 'init_converge_step', 'eqns_inc']
     for lbl in f90_l:
         f_f90 = '%s/%s.f90' %(dir_out, lbl)
         write_fortran(f_f90, txt.__dict__[lbl], fortran=fortran)

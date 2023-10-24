@@ -31,7 +31,7 @@ $(TMP_DIR)/detvar.f90 \
 $(TMP_DIR)/postep.f90 \
 $(TMP_DIR)/subproc.f90 \
 $(TMP_DIR)/ininam.f90 \
-$(TMP_DIR)/converge_init.f90 \
+$(TMP_DIR)/init_converge_step.f90 \
 $(TMP_DIR)/eqns_inc.f90
 
 PY_TMP_GEN = $(AWD)/pyparse/parser_main.py -awd $(AWD)
