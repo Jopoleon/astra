@@ -2594,12 +2594,14 @@ integer ipluz,jpluz,qipluz,qjpluz
 integer ilast,jlast,totpoints,istart,jcallaz
 integer external_griddo_j(90000,2),j_griddo_j
 integer internal_griddo(90000,2),i_griddo_j
+double precision iconvex(300,300)
 
 data jcallaz/0/
 save jcallaz
 
 ! in entry: rbnd,zbnd,nbnd,psiaxis,psibnd,u_n
 
+iconvex=0.
 dumc=0.	
 area_eff=dr*dz
 i_griddo_j=0
@@ -2647,6 +2649,7 @@ endif
 
 call fill_in_current(r(i),z(j), & 
 		& nrho2d,psia_2d,ppp_2d,ffp_2d,dumc(i,j),u_n(i,j))
+iconvex(i,j)=1.
 i_griddo_j=i_griddo_j+1
 internal_griddo(i_griddo_j,1)=i
 internal_griddo(i_griddo_j,2)=j
@@ -2661,6 +2664,7 @@ if (t2.gt.0..and.t2.le.1.) then
 j_griddo_j=j_griddo_j+1
 external_griddo_j(j_griddo_j,1)=i
 external_griddo_j(j_griddo_j,2)=j+jpluz
+iconvex(i,j+jpluz)=1.
 endif
 
 if (t1.gt.1.e5) then
@@ -2674,6 +2678,7 @@ ilast=i+ipluz
 j_griddo_j=j_griddo_j+1
 external_griddo_j(j_griddo_j,1)=ilast
 external_griddo_j(j_griddo_j,2)=j
+iconvex(ilast,j)=1.
 
 !found boundary, go back, check vertically
 
@@ -2696,6 +2701,7 @@ goto 558
 j_griddo_j=j_griddo_j+1
 external_griddo_j(j_griddo_j,1)=i
 external_griddo_j(j_griddo_j,2)=j+jpluz
+iconvex(i,j+jpluz)=1.
 
 i=i+ipluz
 istart=i
@@ -2761,11 +2767,26 @@ dumc(i1,i2)=t1*je1+t2*je2+t3*je3+t4*je4- &
  t2*t4*(je4+je2)/2.+ & 
  t3*t4*(je3+je4)/2.)
 
+iconvex(i1,i2)=t1+t2+t3+t4- & 
+ (t1*t2+ & 
+ t1*t3+ & 
+ t1*t4+ & 
+ t2*t3+ & 
+ t2*t4+ & 
+ t3*t4)
+
+
 enddo
 
-jrz(1:nr2,1:nz2)=dumc(1:nr2,1:nz2)
+jrz=0.
+do j=2,nz1
+do i=2,nr1
+	jrz(i,j)=iconvex(i,j)*0.5*(dumc(i,j)+0.25*(dumc(i+1,j)+dumc(i-1,j)+dumc(i,j-1)+dumc(i,j+1)))
+enddo
+enddo
 
-!rescale current
+!uncomment below for consistent current
+!jrz(1:nr2,1:nz2)=dumc(1:nr2,1:nz2)
 dum1=sum(jrz*area_eff) 
 jrz=jrz/dum1*iplasma
 
@@ -2778,7 +2799,7 @@ t1=0.
 t2=0.
 t3=0.
 do j=1,nz2
-do i=1,nr1
+do i=1,nr2
 t1=t1+r(i)**2.*jrz(i,j)*area_eff(i,j)
 t2=t2+z(j)*jrz(i,j)*area_eff(i,j)
 t3=t3+jrz(i,j)*area_eff(i,j)
