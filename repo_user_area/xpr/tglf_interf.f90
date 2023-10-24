@@ -30,6 +30,7 @@ subroutine tglf_interf(jr1_in, jr2_in, nrho, NA1N, NA1E, NA1I, &
     NE, TE, NI, NDEUT, NTRIT, NIZ1, NIZ2, TI, ZEF, ZIM1, AMAIN, &
     MU, RHO, AMETR, SHIF, ELON, TRIA, ER, NIBM, G11, &
     VPOL, VRS, VTOR, SHEAR, PBLON, PBPER, PFAST, NIZ3, ZIM2, ZIM3, &
+    ZIMPT, NIMPT, AIMPT, &
 ! output
     CHI, CHE, DIF, VIN, DPH, DPL, DPR, XTB, EGM, GAM, GM1, GM2, OM1, OM2, FR1)
 
@@ -67,7 +68,8 @@ double precision, intent(in) :: BTOR, RTOR, &
 double precision, intent(in), dimension(*) :: NE, TE, NI, TI, &
     ZEF, ZIM1, ZIM2, ZIM3, PBLON, PBPER, PFAST, NIZ3, AMAIN, &
     ER, MU, RHO, AMETR, SHIF, ELON, NDEUT, NIZ1, NTRIT, &
-    NIZ2, TRIA, NIBM, G11, VPOL, VRS, VTOR, SHEAR
+    NIZ2, TRIA, NIBM, G11, VPOL, VRS, VTOR, SHEAR, &
+    ZIMPT, NIMPT, AIMPT
 
 double precision, intent(out), dimension(*) :: CHI, CHE, DIF, VIN, &
     DPH, DPL, DPR, XTB, EGM, GAM, GM1, GM2, OM1, OM2, FR1

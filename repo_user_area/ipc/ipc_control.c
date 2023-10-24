@@ -634,6 +634,9 @@ int setarrs_(double* plasma_profs, INT_* NRD){
         AARRS->zim2[jrho]  = *(plasma_profs + jrho + 35*(*NRD)); 
         AARRS->zim3[jrho]  = *(plasma_profs + jrho + 36*(*NRD)); 
         AARRS->zmain[jrho] = *(plasma_profs + jrho + 37*(*NRD)); 
+        AARRS->zimpt[jrho] = *(plasma_profs + jrho + 38*(*NRD)); 
+        AARRS->nimpt[jrho] = *(plasma_profs + jrho + 39*(*NRD)); 
+        AARRS->aimpt[jrho] = *(plasma_profs + jrho + 40*(*NRD)); 
     }
     return(0);
 }

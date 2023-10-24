@@ -77,7 +77,7 @@ int ot_tra_(INT_* IS, INT_* IE, INT_* N, double* cpuse, double* YY){
         YY[j+i] = (*IOQL).gm2[j];  i += n_nrd; // work(j+1,12)
         YY[j+i] = (*IOQL).om1[j];  i += n_nrd; // work(j+1,13)
         YY[j+i] = (*IOQL).om2[j];  i += n_nrd; // work(j+1,14)
-        YY[j+i] = (*IOQL).fr1[j];  i += n_nrd; // work(j+1,14)
+        YY[j+i] = (*IOQL).fr1[j];  i += n_nrd; // work(j+1,15)
     }
     if (*IS == 1){
        for (j=0; j <= 15*n_nrd; j += n_nrd) YY[j] = 0.;

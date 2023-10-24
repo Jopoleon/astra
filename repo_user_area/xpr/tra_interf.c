@@ -245,6 +245,9 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
               &(AARRS->niz3),
               &(AARRS->zim2),
               &(AARRS->zim3),
+              &(AARRS->zimpt),
+              &(AARRS->nimpt),
+              &(AARRS->aimpt),
 /* output */
               &((*IOQL).chi), 
               &((*IOQL).che), 
