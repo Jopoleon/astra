@@ -68,7 +68,7 @@ modules:
 
 # Linking, create ASTRA executable
 
-$(ATASK): $(LIBFOR) $(LIBNBI) $(LIBFEQIS) $(LIBSPIDER) $(LIBSBR) $(LIBFNC) $(LIBIPC) $(AENV) $(MODTMP) $(FOR_SRC) $(PYFILES) $(FMLS)
+$(ATASK): $(LIBFOR) $(LIBNBI) $(LIBFEQIS) $(LIBSPIDER) $(LIBSBR) $(LIBFNC) $(AENV) $(MODTMP) $(FOR_SRC) $(PYFILES) $(FMLS)
 	$(PY_TMP_GEN)
 	$(AFC) -qopenmp -g -traceback -o $(ATASK) $(FOR_SRC) $(TMP_SRC) -I$(MOD_DIR) -I$(NBI_INC) $(LIB)
 
@@ -84,9 +84,6 @@ $(LIBSBR): $(AWD)/sbr/*
 
 $(LIBFNC): $(AWD)/fnc/*.f90
 	make -f $(AWD)/exe/Makesub sub=fnc
-
-$(LIBIPC): $(AWD)/ipc/*
-	make -f $(AWD)/exe/Makesub sub=ipc
 
 # Libs
 

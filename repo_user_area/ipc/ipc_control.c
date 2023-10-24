@@ -1,14 +1,9 @@
-#include <unistd.h>
 #include <time.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 #include <unistd.h>
 #include <errno.h>
-#include <sys/times.h>
-#include <sys/types.h>
-#include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include <signal.h>
