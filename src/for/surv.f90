@@ -1458,30 +1458,32 @@ return
 end subroutine get_runid
 
 !---------------------------------------------------------------------=|
-subroutine getnames_(equ_name, exp_name)
+subroutine getnames_(awd_path, equ_name, exp_name)
 
-character(len=*), intent(out) :: equ_name, exp_name
+character(len=*), intent(out) :: awd_path, equ_name, exp_name
 
-call getnames(equ_name, exp_name)
+call getnames(awd_path, equ_name, exp_name)
 
 return
 end subroutine getnames_
 
 !---------------------------------------------------------------------=|
-subroutine getnames(equ_name, exp_name)
+subroutine getnames(awd_path, equ_name, exp_name)
 !----------------------------------------------------------------------|
 ! The subroutine can be called from C function, returns equ_file, exp_file
 ! G.V.Pereverzev 16.02.2004
 !----------------------------------------------------------------------|
 
-use outcmn_inc, only: equ_file, exp_file, null_ch
+use outcmn_inc, only: awd, equ_file, exp_file, null_ch
 
 implicit none
 
-character(len=*), intent(out) :: equ_name, exp_name
+character(len=*), intent(out) :: awd_path, equ_name, exp_name
 
+awd_path = TRIM(awd)      // null_ch
 equ_name = TRIM(equ_file) // null_ch
 exp_name = TRIM(exp_file) // null_ch
+write(6, *) 'getnames', TRIM(equ_name)
 
 return
 end subroutine getnames

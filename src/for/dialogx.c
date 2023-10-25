@@ -642,6 +642,7 @@ int asklis_ (nofbox, array, theNames, id)
 		ihelp, selalb=0,  contr, icol, dcol, irow, drow;
 	float	param;
 	char	value[10],  ovalue[10],  stri[10],  vsym = '=',title[70],
+	        exp_name[60], equ_name[60],
 		stri50[50],stri40[40], stri256[256], theName[10], legend[128];
 	i = *id-1;	namlen = DWnamlen[i];	strcpy(title,*(DWTitle+i));
 /*	printf("theID = %d,  theTitle = %s[%d],   \t theNameLength = %d\n",
@@ -791,22 +792,24 @@ Escend:	if ( contr==0 ){/*printf("iret %d\n",iret);*/	goto EndDialog;}
 	if ( iret == -1 )  	goto EndDialog;
 	if ( iret == -2 )
 	   { i = 0;	ii = namlen;
-Fstblanc:    strncpy(theName,theNames+(ibox-1)*namlen+i,ii);
-	     if ( theName[0]  == ' ' )	{ii--;	i++;  goto Fstblanc;}
+TableQuestionMark:    strncpy(theName,theNames+(ibox-1)*namlen+i,ii);
+	     if ( theName[0]  == ' ' )	{ii--;	i++;  goto TableQuestionMark;}
 	     theName[ii] = '\0';
 	     while ( theName[--ii] == ' ' ) theName[ii] = '\0';	ii++;
-
+	     
 	     if (*id == 1)		/*Variables <- for/const.in*/
 		{ strcpy(stri50,"grep -i \"");   strncat(stri50,theName,ii);
 	          strcat(stri50," \" main/variables.txt");   system(stri50);  }
 	     if (*id == 2)		/*Constant table*/
-		{ strcpy (stri256,"grep -i -w ");  strncat(stri256,theName,ii);
-		  getnames_(stri40,stri50);
-   		  strcat (stri256," equ/txt/");
-		  strncat(stri256,stri40,strlen(stri40));
-		  printf("\nControl constant \"%s\" -> using in the model \"%s\"\n",
-		     theName, stri40);		 ii = system(stri256);
-		  if (ii == 256) printf("The constant is not used.\n");   }
+		{ 
+		  strcpy (stri256,"grep -i -w ");
+		  strncat(stri256,theName,ii);
+   		  strcat (stri256," tmp/model.tmp");
+		  ii = system(stri256);
+		  if (ii == 256) {
+                      printf("The constant %s is not assigned\n", theName); 
+		  }
+		  }
 	     if (*id == 3)		/*Time, grid control*/
 		{  strcpy(stri50,"grep -i \"");  strncat(stri50,theName,ii);
 	           strcat(stri50," \" main/internal.txt");   system(stri50);  }
