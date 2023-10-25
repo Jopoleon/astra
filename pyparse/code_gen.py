@@ -339,7 +339,8 @@ end subroutine INIVAR'''
             inam += 'SIGNSB(%2d) = %d\n' %(j_sbr, sbr_d['locsbr'])
 
         inam += 'NSBP = %d\n' %NSBP
-        inam += 'call checkexec(NSBP,64,LISTSB)\n'
+        if NSBP > 0:
+            inam += 'call checkexec(NSBP,64,LISTSB)\n'
 
         self.ininam  = const_text.ininam_header
         self.ininam += inam
