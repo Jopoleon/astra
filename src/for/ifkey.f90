@@ -53,7 +53,7 @@ logical :: MODADD
 integer*2, dimension(NRD) :: YWD
 integer :: POLLEVENT, OUTFIG(NRW), WAITEVENT, KIBM, KASCII
 integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
-    MOVIE, IFLAG, INT4, IRET, NTRUN, IM, &
+    IFLAG, INT4, IRET, NTRUN, IM, &
     XSC0, XSC, MODEX, IX, IY, NU1, j2, J1, ios, &
     YEAR, MONTH, DAY, HOUR, MINUTE, time_arr(8)
 ! plot_arr dimension: 4*NRD(Mode 5, 8) 320(7) 2*NTIMES(Mode 6) 2*NRD(Modes 1-4)
@@ -66,16 +66,16 @@ character(len=6) :: NAMEP(NTIMES)
 character(len=8) :: OUTNAME(NRW)
 character(len=10) :: UNAMES(NRW), DEFUNA 
 character(len=40) :: CNSFIL
-character(len=80) :: PNMNAME, HELP(28), PSNAME, STR, STRB
+character(len=80) :: HELP(28), PSNAME, STR, STRB
 character(len=132) :: STRI
 
 save ITO, IFLAG, TROUT, MARK, LTOUTO, IDSP
-save NAMEP, PNMNAME, MOVIE
+save NAMEP
 ! save OUTFIG, OUTNAME
 data PRMARK/NTIMES*0./  TROUT/-99999./ &
      IFLAG/0/  DEFUNA/'      .tmp'/ &
      JTOUT/0/ LTOUTO/0/ MARK /0/       IDSP/0/ &
-     OUTFIG /NRW*0/ PNMNAME/'***'/
+     OUTFIG /NRW*0/
 
 ! ASCII codes: ^C 3  <Esc>27 <Space>32  % 37  * 42  . 46  / 47  ? 63
 !   0 48  1 49  2 50  3 51  4 52  5 53  6 54  7 55  8 56  9 57
@@ -118,7 +118,7 @@ data (HELP(j),j=21,28)/ &
 call markloc('IFKEY', debug_lev=2*debug)
 
 NTRUN = NTIMES
-if (IFKL == 257) goto 97 ! makemovie + EXIT
+if (IFKL == 257) goto 97 ! EXIT
 IFKEY = 0
 
 if (IFKL == -1) then
@@ -159,11 +159,6 @@ if (MOD10 <= 3 .or. MOD10 >= 8) then
     if (TIME + .5*TAU >= TROUT + DROUT) then
         TROUT = TIME
         call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
-        if (MOVIE > 0) then
-            call dump_movie_frame(MOVIE, PNMNAME)
-        else
-            call makemovie(PNMNAME)
-        endif
     endif
 endif
 
@@ -839,17 +834,10 @@ goto 1
 
 49 continue 
 
-!----------------------------------------------------------------------|
+!--------------------------------------------------------------------
     if (KIBM == 2) then
 !-------- <Alt>'M' or  <Alt>'m'
         if (KEY == 77 .or. KEY == 109) then
-            if (PNMNAME(1:1) == "*") then ! odd pressing <AltM>
-                PNMNAME = 'tmp/' // TRIM(exp_file) // '-' // TRIM(equ_file) // null_ch
-                write(*, *) PNMNAME
-                MOVIE = 1
-            else
-                MOVIE = 0
-            endif
             goto 70
         endif
         if (KEY == 47) goto 97 ! <Alt>+/
@@ -892,11 +880,8 @@ endif
 KEY = 0
 goto 1
 
-! (Makemovie +) stop ASTRA
+! Exit ASTRA
 97 continue
-if (PNMNAME(1:1) /= "*") then ! even pressing <AltM>
-    call makemovie(PNMNAME)
-endif
 
 if (TASK(4:4) /= 'B') call endvm
 if (IFKL == 257) then
@@ -912,7 +897,7 @@ else
     write(6, '(A, I4.2, 2(A1, I2.2))') '>>> ASTRA normal exit >>>  Run time', j2, ':', jj, ':', j1
 endif
 call CPUSE(6)
-call astra_stop ! GIT
+call astra_stop
 
 end function ifkey
 

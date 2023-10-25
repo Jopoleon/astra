@@ -1458,75 +1458,17 @@ return
 end subroutine get_runid
 
 !---------------------------------------------------------------------=|
-subroutine makemovie(PNMNAME)
-!----------------------------------------------------------------------|
+subroutine getnames_(equ_name, exp_name)
 
-use outcmn_inc, only: XWH, Magenta, null_ch
-use debugger, only: markloc
+character(len=*), intent(out) :: equ_name, exp_name
 
-implicit none
-
-character, intent(inout) :: PNMNAME*(*)
-
-call markloc('makemovie')
-
-if (PNMNAME(1:1) /= "*") then
-   call colorb(Magenta)
-   call textbf(20, XWH - 124, "Saving movie in tmp/movie.mpeg  ", 32)
-   call redraw(0)
-   call system(".srv/esc2movie " // TRIM(PNMNAME) )
-   call system("rm tmp/*.ppm") ! Done in esc2movie
-   call textbf(20, XWH - 124, "                                ", 32)
-   PNMNAME = '*'
-endif
-
-end subroutine makemovie
-
-!---------------------------------------------------------------------=|
-subroutine dump_movie_frame(jframe, PNMNAME)
-
-use outcmn_inc, only: XWH, Magenta, null_ch
-use debugger, only: markloc
-
-implicit none
-
-integer, intent(inout) :: jframe
-character, intent(inout) :: PNMNAME*(*)
-
-character(len=32) :: STRI
-integer :: jj
-
-call markloc('dump_movie_frame')
-
-if (PNMNAME(1:1) /= "*") then
-   jj = 1
-   if (jframe > 9)   jj = 2
-   if (jframe > 99)  jj = 3
-   if (jframe > 999) jj = 4
-   write(STRI, '(A, i0)') "Making Movie:  Frame # ", jframe
-   call colorb(Magenta)
-   call textbf(20, XWH - 124, TRIM(STRI), 23+jj)
-! xwd -silent -id XW_ID | xwdtopnm > frame_name.pnm) >& /dev/null
-   call redraw(0)
-   call px2pnm(PNMNAME) ! dump an image of X window (man "xwd") 
-   jframe = jframe + 1
-endif
-
-return
-end subroutine dump_movie_frame
-
-!---------------------------------------------------------------------=|
-subroutine getnames_(YEQUNAME, YEXPNAME)
-
-character(len=*), intent(out) :: YEQUNAME, YEXPNAME
-
-call getnames(YEQUNAME, YEXPNAME)
+call getnames(equ_name, exp_name)
 
 return
 end subroutine getnames_
 
 !---------------------------------------------------------------------=|
-subroutine getnames(YEQUNAME, YEXPNAME)
+subroutine getnames(equ_name, exp_name)
 !----------------------------------------------------------------------|
 ! The subroutine can be called from C function, returns equ_file, exp_file
 ! G.V.Pereverzev 16.02.2004
@@ -1536,10 +1478,10 @@ use outcmn_inc, only: equ_file, exp_file, null_ch
 
 implicit none
 
-character(len=*), intent(out) :: YEQUNAME, YEXPNAME
+character(len=*), intent(out) :: equ_name, exp_name
 
-YEQUNAME = TRIM(equ_file) // null_ch
-YEXPNAME = TRIM(exp_file) // null_ch
+equ_name = TRIM(equ_file) // null_ch
+exp_name = TRIM(exp_file) // null_ch
 
 return
 end subroutine getnames
