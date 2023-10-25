@@ -8,14 +8,13 @@ ATASK = $(TSK_DIR)/$(MODEL).exe
 EQU  = $(AWD)/equ/$(MODEL)
 LIBSBR = $(LIB_DIR)/libsbr.a
 LIBFNC = $(LIB_DIR)/libfnc.a
-LIBIPC = $(LIB_DIR)/libipc.a
 LIBFOR = $(LIB_DIR)/libfor.a
 LIBNBI = $(LIB_DIR)/libnbi.a
 LIBFEQIS  = $(LIB_DIR)/libfeqis.a 
 LIBSPIDER = $(LIB_DIR)/libspider.a 
 
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
-LIB = -lnbi -lipc -lsbr -lnbi -L/usr/lib64 -lX11 $(NETCDF_LIB) $(QLKNN_LIB) $(TGLF_LIB) $(TORB_LIB) $(RABBIT_LIB) -lfor -lfnc -lfeqis -lspider -L$(LIB_DIR) $(MKL_LIB) -lrt
+LIB = -lnbi -lsbr -lnbi -L/usr/lib64 -lX11 $(NETCDF_LIB) $(QLKNN_LIB) $(TGLF_LIB) $(TORB_LIB) $(RABBIT_LIB) -lfor -lfnc -lfeqis -lspider -L$(LIB_DIR) $(MKL_LIB) -lrt
 
 MODTMP = $(AWD)/tmp/model.tmp
 AENV = $(AWD)/exe/astra_rc
@@ -68,7 +67,7 @@ modules:
 
 # Linking, create ASTRA executable
 
-$(ATASK): $(LIBFOR) $(LIBNBI) $(LIBFEQIS) $(LIBSPIDER) $(LIBSBR) $(LIBFNC) $(LIBIPC) $(AENV) $(MODTMP) $(FOR_SRC) $(PYFILES) $(FMLS)
+$(ATASK): $(LIBFOR) $(LIBNBI) $(LIBFEQIS) $(LIBSPIDER) $(LIBSBR) $(LIBFNC) $(AENV) $(MODTMP) $(FOR_SRC) $(PYFILES) $(FMLS)
 	$(PY_TMP_GEN)
 	$(AFC) -qopenmp -g -traceback -o $(ATASK) $(FOR_SRC) $(TMP_SRC) -I$(MOD_DIR) -I$(NBI_INC) $(LIB)
 
@@ -84,9 +83,6 @@ $(LIBSBR): $(AWD)/sbr/*
 
 $(LIBFNC): $(AWD)/fnc/*.f90
 	make -f $(AWD)/exe/Makesub sub=fnc
-
-$(LIBIPC): $(AWD)/ipc/*
-	make -f $(AWD)/exe/Makesub sub=ipc
 
 # Libs
 

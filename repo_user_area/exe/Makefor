@@ -1,6 +1,7 @@
 SRC_DIR = $(AWD)/src/for
 OBJ_DIR = $(AWD)/obj/for
 MOD_DIR = $(AWD)/mod/for
+INC_DIR = $(AWD)/inc
 MOD_FEQ = $(AWD)/mod/feqis
 LIB_DIR = $(AWD)/lib
 LIBNAM = libfor.a
@@ -35,6 +36,7 @@ $(OBJ_DIR)/defarr.o \
 $(OBJ_DIR)/dialogx.o \
 $(OBJ_DIR)/err_catch_a.o \
 $(OBJ_DIR)/ifkey.o \
+$(OBJ_DIR)/ipc_control.o \
 $(OBJ_DIR)/read_input.o \
 $(OBJ_DIR)/intvar.o \
 $(OBJ_DIR)/metric.o \
@@ -88,7 +90,7 @@ $(OBJ_DIR)%.o: $(SRC_DIR)%.f90
 	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -I$(MOD_FEQ) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.c
-	$(ACC) -c $< -o $@
+	$(ACC) -c $< -o $@ -I$(INC_DIR)
 
 $(LIB): $(MODOBJS) $(OBJS)
 	ar rv $(LIB) $(MODOBJS) $(OBJS) >/dev/null

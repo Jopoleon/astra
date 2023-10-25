@@ -23,11 +23,13 @@
 #include "A_vars.h"
 #include "A_proc.h"
 
-int semtimedop();
 void AllocateShmem(int);
 void WhatSem();
+int semtimedop();
 int read_aipc(INT_*, INT_*, char*);
-int freeshm();
+void freeshm();
+void to_tra_(INT_*, INT_*, INT_*);
+void ot_tra_(INT_*, INT_*, INT_*, double*, double*);
 
 char *AWD, *equmod, *DATA;
 char A_ipc_file[132];
@@ -71,6 +73,74 @@ void a_stop_(){
     kill(AID, SIGKILL);
     system("rm tmp/*.ppm >& /dev/null");
     exit(0);
+}
+/*---------------------------------------------------------------------*/
+/* This function is called from Astra -> to_tra
+   "to_tra" fills tra specific data in the dedicated memory segment   
+   Similarly, Astra -> ot_tra returns the data calculated
+   by the process "tra" and stored in shared memory.
+*/
+
+void to_tra_(INT_* IS, INT_* IE, INT_* N){
+
+    int k;
+
+    struct shmid_ds Myshmid_ds;
+#include "A_proc.h"
+#include "A_ql_IO.h"
+    if (A_ShmNum < 0) return;
+    if (shmctl(A_ShmID[*N+1], IPC_STAT, &Myshmid_ds) < 0){
+        printf(">>> Process # %d: shmctl error >>>\n",*N+1);
+        exit(1);
+    }
+    else if (Myshmid_ds.shm_segsz != A_ShmL[*N+1]){
+        printf(">>> Process No.%d, \"%s\" >>>",*N,&A_ChNa[*N+1][0]);
+        printf(" Size of shared memory mismatch\n");
+        printf("    Allocated %d != %ld(found)\n", 
+            A_ShmL[*N+1], Myshmid_ds.shm_segsz);
+        exit(1);
+    }
+
+    AVARS = (struct A_vars *)A_ShmAdr[0];
+    k = (*AVARS).nrd;
+    IOQL = (struct A_ql_IO *)A_ShmAdr[*N+1];
+    (*IOQL).is = *IS;
+    (*IOQL).ie = *IE;
+    return;
+}
+
+/*----------------------------------------------------------------*/
+void ot_tra_(INT_* IS, INT_* IE, INT_* N, double* cpuse, double* YY){
+    int j, i, n_nrd;
+#include "A_proc.h"
+#include "A_ql_IO.h"
+    if (A_ShmNum < 0) return;
+    AVARS = (struct A_vars *)A_ShmAdr[0];
+    IOQL = (struct A_ql_IO *)A_ShmAdr[*N+1];
+    *cpuse = (*IOQL).My.CPUse;
+    n_nrd = AVARS->nrd;
+    for (j=*IS-1; j <= *IE-1; j++){
+        i = 1;
+        YY[j+i] = (*IOQL).chi[j];  i += n_nrd; // mem(:,  1)
+        YY[j+i] = (*IOQL).che[j];  i += n_nrd; // mem(:,  2)
+        YY[j+i] = (*IOQL).dif[j];  i += n_nrd; // mem(:,  3)
+        YY[j+i] = (*IOQL).vin[j];  i += n_nrd; // mem(:,  4)
+        YY[j+i] = (*IOQL).dph[j];  i += n_nrd; // mem(:,  5)
+        YY[j+i] = (*IOQL).dpl[j];  i += n_nrd; // mem(:,  6)
+        YY[j+i] = (*IOQL).dpr[j];  i += n_nrd; // mem(:,  7)
+        YY[j+i] = (*IOQL).xtb[j];  i += n_nrd; // mem(:,  8)
+        YY[j+i] = (*IOQL).egm[j];  i += n_nrd; // mem(:,  9)
+        YY[j+i] = (*IOQL).gam[j];  i += n_nrd; // mem(:, 10)
+        YY[j+i] = (*IOQL).gm1[j];  i += n_nrd; // mem(:, 11)
+        YY[j+i] = (*IOQL).gm2[j];  i += n_nrd; // mem(:, 12)
+        YY[j+i] = (*IOQL).om1[j];  i += n_nrd; // mem(:, 13)
+        YY[j+i] = (*IOQL).om2[j];  i += n_nrd; // mem(:, 14)
+        YY[j+i] = (*IOQL).fr1[j];  i += n_nrd; // mem(:, 15)
+    }
+    if (*IS == 1){
+       for (j=0; j <= 15*n_nrd; j += n_nrd) YY[j] = 0.;
+    }
+    return;
 }
 
 char* parse_nml(char * line_in){
@@ -642,12 +712,12 @@ int setarrs_(double* plasma_profs, INT_* NRD){
 }
 
 /*---------------------------------------------------------------------*/
-int freeshm(){
+void freeshm(){
     struct shmid_ds Myshmid_ds;
     int j;
     printf(">>> Freeing shared memory segments\n");
     if (A_Nsems != 0) semctl(A_SemID, 0, IPC_RMID);
-    if (A_ShmNum < 0) return(0);
+    if (A_ShmNum < 0) return;
     for (j=0; j <= A_ShmNum; j++){
 /* Detach and remove all shared memory segments */
         if (shmdt(A_ShmAdr[j]) < 0){
@@ -665,12 +735,12 @@ int freeshm(){
             }
         }
     }
-    return(0);
+    return;
 }
 
-/*------- Call as:  i = write_aipc_(Aproc.OrdNr, Aproc.ShMid, lS), -------*/
+/*------- Call as:  write_aipc_(Aproc.OrdNr, Aproc.ShMid, lS), -------*/
 
-int write_aipc (const struct A_proc_info Aproc, char* AWD, int* lS)
+void write_aipc (const struct A_proc_info Aproc, char* AWD, int* lS)
 {
     FILE *A_PDF;
     char A_IPC[132]; 
@@ -713,7 +783,7 @@ int write_aipc (const struct A_proc_info Aproc, char* AWD, int* lS)
     }
     fprintf(A_PDF, "%12d%12d%12d   %s\n", getpid(), Aproc.ShMid, *lS, Aproc.Path);
     fclose(A_PDF);
-    return(0);
+    return;
 }
 /*-----------------------------------------------------
   Communication report
