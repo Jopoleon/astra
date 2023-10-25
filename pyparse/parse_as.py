@@ -429,7 +429,7 @@ def write_xpr(sbr_dic, j_ipc):
     out_txt += 'call ADDTIME(CPT)\n'
     sbr_nam = sbrnam.lower().replace('xpr/', '')
     out_txt += 'call markloc("subroutine %s")\n' %sbr_nam
-    out_txt += 'call to%s(%s, %d)\n' %(sbr_nam, sbr_dic['args'], j_ipc)
+    out_txt += 'call to_tra(%s, %d)\n' %(sbr_dic['args'], j_ipc)
     out_txt += 'call letsbp(%d)\n' %j_ipc
     out_txt += 'endif\n'
 

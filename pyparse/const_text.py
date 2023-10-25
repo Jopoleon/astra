@@ -13,7 +13,8 @@ class SUBPROC:
 '''subroutine SUBPROC
 
 use const_inc
-use outcmn_inc, only: IFSBP
+use outcmn_inc, only: IFSBP, CPTSBR
+use ipc_mod, only: mem_tglf, mem_qlkz, mem_neo
 
 implicit none
 '''

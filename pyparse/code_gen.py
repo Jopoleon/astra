@@ -12,6 +12,8 @@ logger.setLevel(logging.INFO)
 # Output:
 #    tmp/*.f90, declar.fml, declar.fnc
 
+mem_d = {'XPR/TGLFI': 'mem_tglf(1, 1)', 'XPR/QLKI': 'mem_qlkz(1, 1)', 'XPR/NEO': 'mem_neo(1, 1)'}
+
 
 class CODE_GEN:
 
@@ -109,7 +111,8 @@ class CODE_GEN:
                 jsbp = jlin + 1
                 sbp_d = sbrs_d[line]
                 self.subproc += 'if (IFSBP(%d) /= 0) then\n' %jsbp
-                self.subproc += 'call ot%s(%s, %d, IFSBP(%d))\n' %(sbp_d['name'].lower()[4:10], sbp_d['args'], jsbp, jsbp)
+#                self.subproc += 'call ot%s(%s, %d, IFSBP(%d))\n' %(sbp_d['name'].lower()[4:10], sbp_d['args'], jsbp, jsbp)
+                self.subproc += 'call ot_tra(%s, %d, CPTSBR(IFSBP(%d)), %s)\n' %(sbp_d['args'], jsbp, jsbp, mem_d[sbp_d['name']])
                 self.subproc += 'IFSBP(%d) = 0\n' %jsbp
                 self.subproc += 'endif\n'
         self.subproc += \
