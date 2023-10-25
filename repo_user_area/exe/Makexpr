@@ -3,6 +3,7 @@ INC_DIR = $(AWD)/inc
 MOD_DIR = $(AWD)/mod/for
 LIB_DIR = $(AWD)/lib
 LIBFOR = $(LIB_DIR)/libfor.a
+IPC_OBJ = $(AWD)/obj/for/ipc_control.o
 AENV = $(AWD)/exe/astra_rc
 
 # TGLF

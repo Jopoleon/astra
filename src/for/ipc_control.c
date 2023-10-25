@@ -198,9 +198,9 @@ int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs){
     }
 
     while ((read = getline(&line, &len, A_LOG)) != -1) {
-        if (strstr(line, "AWD") != NULL) AWD = parse_nml(line);
+        if (strstr(line, "AWD"     ) != NULL) AWD    = parse_nml(line);
         if (strstr(line, "equ_file") != NULL) equmod = parse_nml(line);
-        if (strstr(line, "exp_file") != NULL) DATA = parse_nml(line);
+        if (strstr(line, "exp_file") != NULL) DATA   = parse_nml(line);
     }
 
     fclose(A_LOG);
@@ -229,31 +229,18 @@ int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs){
             strcpy(name, path);
             path[0] = '\0';
         }
-        i = strlen(path);
 
-        if (i == 0){
-            strcpy(stri, "test -x bin/");
-            strcat(stri, name);
-        }
-        else{
-            strcpy(stri, "test -x ");
-            strcat(stri, path);
-            strcat(stri, name);
-        }
+        strcpy(stri, "test -x "); // Check for xpr/tglfi executable
+        strcat(stri, path);
+        strcat(stri, name);
 
         if (system(stri) == 0){
             A_Nsems++;
         }
         else{
-            if (i == 0){
-                printf("The executable file \"%s\" (#%d) does not exist\n", 
-                  &stri[8], j+1);
-            }
-            else{
-                printf("The executable file \"%s%s\" (#%d) does not exist\n", 
-                  path, name, j+1);
-            }
-        exit(j);
+            printf("The executable file \"%s%s\" (#%d) does not exist\n", 
+                path, name, j+1);
+            exit(j);
         }
     }
     A_Nsems++;
