@@ -36,8 +36,7 @@ union semun {
 #include "A_proc.h"
 
 void a_stop_();
-double swatch (double*);
-double swatch_(double*);
+
 extern INT_  A_NB1;
 int   SemID ,  ShMid0,  ShMid1;
 void *ShmAd0, *ShmAd1, *ShmAdr;
@@ -49,39 +48,6 @@ int read_aipc();
 int write_aipc();
 
 #define NC1 A_NB1
-
-/*
-  Returns CPU time [sec] between two successive calls to the argument.
-  The  function "times" returns the number of clock ticks that have elapsed
-     since the moment the system was booted. 
-  The  "tms_utime"  field contains the CPU time spent executing instructions
-     of the calling process.
-  The  "tms_stime"  field contains the CPU time spent in the system while 
-     executing tasks on behalf of the calling process.
-*/
-double swatch_(double *secs){
-    double runsec;
-    clock_t cpu_time, run_time;
-    static clock_t time0=0, prev_time;
-    static double  secs_per_tick;
-    struct tms buf;
-    if (time0 == -1) return -1.;  /* Overflow range of clock_t*/
-    if (time0 ==  0){     /* Set time0 at start */
-        secs_per_tick = 1./sysconf(_SC_CLK_TCK);
-        time0 = times(&buf);
-        prev_time = buf.tms_utime+buf.tms_stime;
-        return 0.;
-    }
-    run_time = times(&buf) - time0;  /* Set time difference */
-    cpu_time = buf.tms_utime + buf.tms_stime;
-    *secs += (cpu_time - prev_time)*secs_per_tick;
-    prev_time = cpu_time; 
-    runsec = run_time*secs_per_tick;
-    return runsec;
-}
-double swatch(double *secs){
-    return swatch_(secs);
-}
 
 /*---------------------------------------------------------------------*/
 #if C_MAIN != 0
