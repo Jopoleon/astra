@@ -1,9 +1,10 @@
 subroutine full_system_advance_ef(j_init)
 
-use errors_params
-use feqis_circuit
-use astra2fbe
-use parameters_a2equil
+use errors_params, only: err_epsilon, err_circ_plasma_iter
+use feqis_circuit, only: nconduc, iplasma, psi_cur_old, &
+    psiplasmatoconduc, curconduc
+use astra2fbe, only: fast_mode, execute_plasma
+use parameters_a2equil, only: max_iter
 use feqis_tools, only: psi_external_calc, plasma_psi_to_coils
 
 implicit none
@@ -80,24 +81,23 @@ end subroutine full_system_advance_ef
 subroutine solve_gse2d_fbe_full_ef(j_init)	
 
 use errors_params, only: err_find_psistab
-use feqis_circuit
-use astra2fbe
+use feqis_circuit, only: nr2, nz2, psiextrz, redo_bnd, &
+    r, z, dr, dz, dr_factor_init, dz_factor_init, rax, zax, raxp, zaxp, &
+    trax, tzax, iaxis, jaxis, psistabr, psistabz
+use astra2fbe, only: refit_mode, n_of_newton_iterations
 use feqis_tools, only: get_closest_index
 
 implicit none
 
-integer j_init,i,j,k,ii,jj,kk,iii,jjj,kkk
-integer j_iter,j_iter2,iax,jax,j_cyclo
-double precision g(300,300),temp_err,raxold,zaxold
-double precision g2(300,300)
+integer j_init
+integer j_iter,j_iter2,j_cyclo
+double precision temp_err,raxold,zaxold
 double precision temp_err2,raxoldo,zaxoldo
-double precision g000(300,300),br1,bz1,dum6,dum7,dum8,dum9,dum10
-double precision dum1,dum2,raxtmp,zaxtmp,dum3,det
-double precision psistab1o,psistab2o,dbrr,dbrz,dbzr,dbzz
-double precision curpastmp(npassive),correction
-double precision curpastmpo(npassive),psicdtmp(300)
-double precision voltdz(300),curref(300),rdtl,psro,pszo,dist1,dist2
-double precision przsav(6),psistabrr,psistabzz,cibapr,cibazr
+double precision g000(300,300)
+double precision raxtmp,zaxtmp,det
+double precision psistab1o,psistab2o
+double precision psro,pszo,dist1,dist2
+double precision cibapr,cibazr
 double precision rleft,rright,zup,zdown,dcrdr,dcrdz,dczdr,dczdz
 integer jeppa
 !first, initialized initial guess coming from prescribed boundary current density: jrhoteta
@@ -321,39 +321,34 @@ subroutine restab_F_function_full_fonfit
 
 !refits all currents
 use errors_params, only: err_find_psistab
-use feqis_circuit
-use astra2fbe
-use green_matrix
+use feqis_circuit, only: nr2, nz2, nactive, nconduc, nteta, iaxis, jaxis, &
+    dr, dz, rax, zax, raxp, zaxp, rbndp, zbndp, &
+    curconduc, iplasma, jrz, psiplasrz, psirz, psiextrz, psistabr, psistabz
+use astra2fbe, only: sigma_coils, sigma_b, sigma_axis
+use green_matrix, only: greeni
 use feqis_tools, only: interp_j_fromrhotorz, get_closest_index, &
     find_fields_interp_green, inverse_matrix, boundary, &
     psi_external_calc, find_fields_interp_psionly
 
 implicit none
 
-integer j_init,i,j,k,ii,jj,kk,iii,jjj,kkk
-integer j_iter,j_iter2,iax,jax
-double precision g(300,300),temp_err,raxold,zaxold
-double precision g000(300,300),br1,bz1,dum6,dum7,dum8,dum9,dum10
-double precision psistab1,psistab2,dum1,dum2,zum1,zum2
-double precision psistab1o,psistab2o,dbrr,dbrz,dbzr,dbzz
-double precision voltdz(300),rdtl,tin,tup,cum1,cum2
-double precision bub(9),xub(9),yub(9),ccc(6),ddipsi(8)
+integer i,j,k
+integer j_iter,iax,jax
+double precision g(300,300),temp_err
+double precision dum1
+double precision tin,tup
+double precision bub(9),xub(9),yub(9)
 double precision G_00(nconduc,nteta)
 double precision G_00c(nconduc) !average
 double precision G_00r(nconduc)
 double precision G_00z(nconduc)
-double precision f_correction,x1,x2,x3,x4
-double precision psibt0,psibt1,psicorr(nteta)
-double precision ggep(nteta)
+double precision f_correction,x1,x2,x3
+double precision psicorr(nteta)
 double precision matrix(nconduc,nconduc)
 double precision invmatrix(nconduc,nconduc)
 double precision Fderiv(nconduc),Ffunc,Ffunc_old
-integer info,whichcoil
 double precision curref(nconduc),curnow(nconduc),curdiff(nconduc)
 double precision raxref,zaxref,rbref(500),zbref(500)
-data cum1/0./
-data cum2/0./
-save cum1,cum2,dum8,dum9
 
 psicorr=0.
 
@@ -562,9 +557,12 @@ end subroutine restab_F_function_full_fonfit
 subroutine restab_boundary_with_furier_wall !not working well
 
 use errors_params, only: err_find_psistab
-use feqis_circuit
-use astra2fbe
-use green_matrix
+use feqis_circuit, only: npassive, nactive, nconduc, &
+    nteta, nr2, nz2, iaxis, jaxis, &
+    dr, dz, rax, zax, raxp, zaxp, rbndp, zbndp, r_cond, z_cond, &
+    iplasma, curconduc, psiplasrz, jrz, psirz, psiextrz, psistabr, psistabz
+use astra2fbe, only: n_fourier_restab_boundary
+use green_matrix, only: greeni
 use feqis_tools, only: interp_j_fromrhotorz, get_closest_index, &
     find_angle, find_fields_interp_green, boundary, &
     find_fields_interp_psionly, psi_external_calc, &
@@ -572,29 +570,21 @@ use feqis_tools, only: interp_j_fromrhotorz, get_closest_index, &
 
 implicit none
 
-integer j_init,i,j,k,ii,jj,kk,iii,jjj,kkk
-integer j_iter,j_iter2,iax,jax
-double precision g(300,300),temp_err,raxold,zaxold
-double precision g000(300,300),br1,bz1,dum6,dum7,dum8,dum9,dum10
-double precision psistab1,psistab2,dum1,dum2,zum1,zum2
-double precision psistab1o,psistab2o,dbrr,dbrz,dbzr,dbzz
-double precision curpastmp(npassive),correction,delr,delz
-double precision curpastmpo(npassive),psicdtmp(300),anglr(npassive)
-double precision voltdz(300),curref(300),rdtl,tin,tup,cum1,cum2
-double precision bub(9),xub(9),yub(9),ccc(6),ddipsi(8)
-double precision g_0(npassive),g0_r(npassive),g0_z(npassive)
+integer i,j,k
+integer j_iter,iax,jax
+double precision g(300,300),temp_err
+double precision dum1
+double precision anglr(npassive)
+double precision tin,tup
+double precision bub(9),xub(9),yub(9)
 double precision S_00(n_fourier_restab_boundary),C_00(n_fourier_restab_boundary)
 double precision G_00c(nteta,n_fourier_restab_boundary)
 double precision G_00s(nteta,n_fourier_restab_boundary)
-double precision f_correction,x1,x2,x3,x4
+double precision f_correction,x1
 double precision psibt0,psibt1,psicorr(nteta)
 double precision matrix(nteta,2*n_fourier_restab_boundary)
 integer info
 double precision work(4*nteta*n_fourier_restab_boundary)
-
-data cum1/0./
-data cum2/0./
-save cum1,cum2,dum8,dum9
 
 !first, initialized initial guess coming from prescribed boundary current density: jrhoteta
 write(*,*) 'reinterp curr, restab'
@@ -770,30 +760,27 @@ end subroutine restab_boundary_with_furier_wall
 subroutine restab_axis_with_furier_wall
 
 use errors_params, only: err_find_psistab
-use feqis_circuit
-use astra2fbe
-use green_matrix       ! declaration of minimal CPOs
+use feqis_circuit, only: nactive, npassive, nconduc, nr2, nz2, iaxis, jaxis, &
+    r, z, dr, dz, rax, zax, raxp, zaxp, r_cond, z_cond, &
+    curconduc, iplasma, jrz, psirz, psiextrz, psiplasrz, psistabr, psistabz
+use green_matrix, only: greeni
 use feqis_tools, only: interp_j_fromrhotorz, get_closest_index, &
     find_angle, least_square_biquad, boundary, &
     find_fields_interp_psionly, psi_external_calc
 
 implicit none
 
-integer j_init,i,j,k,ii,jj,kk,iii,jjj,kkk
-integer j_iter,j_iter2,iax,jax
-double precision g(300,300),temp_err,raxold,zaxold
-double precision g000(300,300),br1,bz1,dum6,dum7,dum8,dum9,dum10
-double precision psistab1,psistab2,dum1,dum2,zum1,zum2
-double precision psistab1o,psistab2o,dbrr,dbrz,dbzr,dbzz
-double precision curpastmp(npassive),correction,delr,delz
-double precision curpastmpo(npassive),psicdtmp(300),anglr(npassive)
-double precision voltdz(300),curref(300),rdtl,tin,tup,cum1,cum2
+integer i,j
+integer j_iter,iax,jax
+double precision g(300,300),temp_err
+double precision dum1,dum2,zum1
+double precision psistab1o,psistab2o
+double precision delr,delz
+double precision anglr(npassive)
+double precision tin,tup
 double precision bub(9),xub(9),yub(9),ccc(6),ddipsi(8)
-double precision g_0(npassive),g0_r(npassive),g0_z(npassive)
+double precision g0_r(npassive),g0_z(npassive)
 double precision S_00r,C_00r,S_00z,C_00z,C_00(258,258),S_00(258,258)
-data cum1/0./
-data cum2/0./
-save cum1,cum2,dum8,dum9
 
 !first, initialized initial guess coming from prescribed boundary current density: jrhoteta
 write(*,*) 'reinterp curr, restab'
@@ -978,29 +965,22 @@ end subroutine restab_axis_with_furier_wall
 !--------------------------------------------------------------------
 subroutine solve_gse2d_fbe_full_ef_1turn(j_init,j_stab,raxold,zaxold)	
 
-use feqis_circuit
-use astra2fbe
+use feqis_circuit, only : nr2, nz2, iaxis, jaxis, &
+    r, z, dr, dz, rax, zax, raxp, zaxp, &
+    iplasma, jrz, psirz, psiextrz, psiplasrz, psistabr, psistabz
 use feqis_tools, only: interp_j_fromrhotorz, get_closest_index, &
     boundary, nine_point_coeffs_only, find_angle, &
     find_fields_interp_psionly
 
 implicit none
 
-integer j_init,i,j,k,ii,jj,kk,iii,jjj,kkk
-integer j_iter,j_iter2,iax,jax,j_stab,j_count
-double precision g(300,300),temp_err,raxold,zaxold
-double precision g000(300,300),br1,bz1,dum6,dum7,dum8,dum9,dum10
-double precision psistab1,psistab2,dum1,dum2,zum1,zum2
-double precision psistab1o,psistab2o,dbrr,dbrz,dbzr,dbzz
-double precision curpastmp(npassive),correction,delr,delz
-double precision curpastmpo(npassive),psicdtmp(300)
-double precision voltdz(300),curref(300),rdtl,tin,tup,cum1,cum2
+integer j_init,i,j
+integer j_stab
+double precision g(300,300),raxold,zaxold
+double precision dum1,dum2,zum1,zum2
+double precision delr,delz
+double precision tin,tup
 double precision c(9)
-
-data cum1/0./
-data cum2/0./
-data j_count/0/
-save cum1,cum2,dum8,dum9,j_count
 
 !first, initialized initial guess coming from prescribed boundary current density: jrhoteta
 if (j_init.eq.0) then
@@ -1112,17 +1092,17 @@ return
 end subroutine solve_gse2d_fbe_full_ef_1turn
 
 !--------------------------------------------------------------------
-subroutine FEQISUPDATE(machine,coilzzz,time_nowz,nccc)
+subroutine FEQISUPDATE(coilzzz,nccc)
        
 use pi_vars, only: GPI2
-use feqis_circuit
-use astra2fbe
+use feqis_circuit, only: nconduc, cur_con_old, curconduc, &
+    psi_cur_old, psiplasmatoconduc
+use astra2fbe, only: fast_mode
 
 implicit none
 
 integer nccc
-character*4 machine
-double precision coilzzz(nccc),time_nowz
+double precision coilzzz(nccc)
 
 coilzzz(1:nccc)=curconduc(1:nccc)*1.e3
 cur_con_old(1:nconduc)=curconduc(1:nconduc)
@@ -1138,8 +1118,12 @@ end subroutine FEQISUPDATE
 subroutine circuit_eq_advance_ef(j_init)
 
 use pi_vars, only: GPI, GPI2
-use feqis_circuit
-use astra2fbe       ! declaration of minimal CPOs
+use feqis_circuit, only: nconduc, i_dim1, tau_new, &
+    tau_old, cur_con_old, curconduc, voltage, &
+    dpc, psiplasmatoconduc, resconduc, indconduc, psi_cur_old
+use astra2fbe, only: tau_circuit_ef, tau_gseq_ef, activate_coil_ef, &
+    n_equivalence, reconnect_circuits, new_equivalence, &
+    use_reduce_circuit, current_limit_ef, force_coil
 
 implicit none
 integer j_init,i,ic,j,k,iii,jjj,invertcommand,i_equivalence	
@@ -1307,7 +1291,7 @@ use feqis_tools, only: inverse_matrix
 
 implicit none
 
-integer i,j,k,nc,invertcommand
+integer i,nc,invertcommand
 double precision im(nc,nc),rm(nc,nc),i0(nc), &
     & i1(nc),v(nc),dpc(nc),tau,matrix(nc,nc)	
 double precision b(nc),invmatrix(200,200)
@@ -1337,18 +1321,31 @@ end subroutine solve_circuit_equations
 subroutine definitions_ef_equil(equil_in,params,j_call,ifplasma)
 
 use pi_vars, only: GPI, GPI2, mu0
-use errors_params
-use parameters_a2equil
-use imas_ids
-use feqis_circuit
-use astra2fbe
+use errors_params, only: err_circ_plasma_iter, err_find_oxpoints_derivs, &
+    err_find_psistab, err_find_delr, err_find_biquad, err_epsilon, &
+    err_gaptolez, err_fix_boundary, err_find_oxpoints
+use parameters_a2equil, only: type_parameters, max_iter, &
+    err_circ_in, err_find_oxpoints_in, err_find_psistab_in, err_find_delr_in, &
+    err_find_biquad_in, err_epsilon_in, err_gaptolez_in, err_fix_boundary_in, &
+    err_find_oxpoints_derivs_in
+use imas_ids, only: type_equilibrium
+use feqis_circuit, only: nrho, nrho2d, nteta, use_limiter_yesno, &
+    dr_factor_init, dz_factor_init, &
+    rexp, zexp, raxp, zaxp, rbnd, zbnd, rbndp, zbndp, &
+    teta, dteta, tetaexp, &
+    iplasma, Rgeom0, Btor0, voltage, voltage_old, omega_pl, &
+    pressure, ipol, pprime, ffprime, &
+    psia_2d, ffp_2d, ppp_2d, &
+    psistabr, psistabz, psigrid, psigrida, psibnd
+use astra2fbe, only: dr_factor_init_astra, dz_factor_init_astra, &
+    tau_circuit_ef, tau_gseq_ef, activate_coil_ef, current_limit_ef, &
+    raxis_astra, zaxis_astra, psi0_astra, psib_astra, use_limiter_astra
 use numerical_tools, only: linterp
 use feqis_tools, only: find_angle
 
 implicit none
 
-integer j_call,i,j,k,ifplasma,idum(10)
-double precision rgeaz,zgeaz,dum1(10)
+integer j_call,i,j,k,ifplasma
 double precision rdum(700),zdum(700),tdum(700)
 
 type(type_parameters) params
@@ -1481,31 +1478,21 @@ subroutine equil_ef_init_circ
 
 use pi_vars, only: GPI
 use fft_mod_eff, only: sintable, costable
-use feqis_circuit
-use green_matrix
+use feqis_circuit, only: nr, nr1, nr2, nz, nz1, nz2, &
+    nactive, npassive, ncoils, nconduc, nlimiter, nblocks, ngbnd, &
+    ilim_minr, ilim_maxr, ilim_minz, ilim_maxz, &
+    lim_minr, lim_maxr, lim_minz, lim_maxz, &
+    rmin, rmax, zmin, zmax, r, z, dr, dz, rcomp, zcomp, r_cond, z_cond, &
+    rcoil, zcoil, drcoil, dzcoil, anglecoil, mequivalence, &
+    limiterr, limiterz, alpsep, curconduc, resconduc, indconduc, &
+    zlimpotential, green_bnd_f
+use green_matrix, only: greeni, dgreenirj, dgreenizj, dgreenirpl, dgreenizpl
 use outcmn_inc, only: machine
 use astra2fbe, only: cur_init
 
 implicit none
 
-integer j_files,i,j,k,ii,jj,kk,iii,jjj,kkk,ielem
-double precision dummy1,k_fourier
-double precision tempcoilr(300),tempcoilz(300), &
-     & tempcoilangle(300),tempcoildr(300),tempcoildz(300)
- integer identcoil(5200),tempcoilturns(300),tempcoilelem(300)
-integer numeqcump(100),jjelem(300,300),tempnnc(300)
-double precision r1,r2,z1,z2,r3,z3,r4,z4,area,gtemp
-double precision dr1,dr2,dz1,dz2,dr3,dz3,dr4,dz4,area2,gtemp2
-double precision x1,x2,x3,x4,x5,x6,x7,x8,x9,areactmp(300)
-double precision rcetmp(5200),zcetmp(5200),datmp(5200)
-double precision drcetmp(5200),dzcetmp(5200),areazz(300)
-double precision matrix_gs2d(500,500),z_fourier,greenf,ssfw
-double precision dummatrix(52,52) !Efable test
-integer nctype(5200) !Efable test
-double precision dhoriz(200),dvert(200) !blanket elements lengths
-integer equivtmp(5200)
-integer equivforce(5200)
-double precision tatmp(5200)
+integer i,j,ii,jj
 character(80) fname
 
 fname='exp/cnf/machine_description_out.'//trim(machine)
@@ -1605,17 +1592,25 @@ end subroutine equil_ef_init_circ
 !--------------------------------------------------------------------
 subroutine fix_boundary_ef(j_init)
 
-use feqis_circuit
-use astra2fbe
-use imas_ids
-use metric_coefficients_pbe	
-use transfer_functions	
- use pi_vars, only: GPI, GPI2, GPI4, muvac
+use feqis_circuit, only: nr, nrho, nteta, raxp, zaxp, rbndp, zbndp, rho, teta, &
+    psiaxisp, psirhoteta, psigrida, psplex, psibndp, &
+    psia_1d, ffp_1d, ppp_1d, &
+    ffprime, pprime, pressure, ipol, &
+    Rgeom0, Btor0, Rpol, Zpol, Rpul, Zpul, jrhoteta, li3, betapol, iplasma
+use astra2fbe, only: raxis_astra, zaxis_astra, psi0_astra, psib_astra, &
+    solve_fix
+use metric_coefficients_pbe, only: lambda2d, R_curr_0d, Z_curr_0d, dator
+use transfer_functions, only: rpbez, zpbez, psibez, t2dbez, &
+    g1bez, g2bez, gm1bez, gm4bez, gm41bez, gm5bez, ggrhobez, &
+    areatbez, surfbez, perimbez, vbez, qbez, phibez, &
+    bmaxbez, bminbez, bdb0bez, fofbbez, bcell2dbez, bpcell2dbez, &
+    ffprimebez, pprimebez, pressbez, ipolbez, rinbez, routbez, &
+    kbez, triaubez, shifbez, rbp2_b2bez, rmin2dbez, dpsidvbez
+use pi_vars, only: GPI, GPI2, GPI4, muvac
 
 implicit none
 
-integer j_init,i,j,i_init
-type(type_equilibrium) equil_out
+integer j_init,i,j
 double precision psiaxis_new,cnorm,rax_new,zax_new
 double precision rhoedge,q_new(nrho),psisave(512,512)
 double precision thetap_i(nteta),rmaj2(nrho,nteta), &
@@ -1763,9 +1758,16 @@ subroutine assignment_of_equilout_stuff(equil_out)
 
 use pi_vars, only: GPI, GPI2
 use imas_ids, only: type_equilibrium
-use parameters_a2equil
-use feqis_circuit
-use transfer_functions
+use feqis_circuit, only: nr2, nz2, nrho, nteta, &
+    psplex, psiaxis, psibnd, psirhoteta, psirz, &
+    r, z, betapol, li3, iplasma
+use transfer_functions, only: rpbez, zpbez, t2dbez, &
+    rinbez, routbez, rmin2dbez, vbez, areatbez, perimbez, surfbez, &
+    kbez, shifbez, triaubez, qbez, phibez, &
+    g1bez, g2bez, g2ibez, gm1bez, gm4bez, gm41bez, gm5bez, ggrhobez, &
+    bcell2dbez, bpcell2dbez, bminbez, bmaxbez, bdb0bez, fofbbez, &
+    psibez, dpsidvbez, rbp2_b2bez, &
+    ffprimebez, pprimebez, pressbez, ipolbez
 
 implicit none
 
@@ -1835,16 +1837,19 @@ end subroutine assignment_of_equilout_stuff
 subroutine convert_boundary_to_pbe
 
 use pi_vars, only: GPI2
-use feqis_circuit
+use feqis_circuit, only: nr2, nteta, nbnd, i_dim5, iaxis, jaxis, &
+    teta, dteta, raus, rinner, zbot, ztop, &
+    r, z, dr, dz, rax, zax, raxp, zaxp, rbnd, zbnd, rbndp, zbndp, &
+    psiaxis, psibnd, psiaxisp, psibndp, psirz
 use feqis_tools, only: find_angle, find_fields_interp_psionly
 
 implicit none
 
 double precision teta_fbe(i_dim5)
-double precision x1,x2,x3,x4,t1,t2,t3,t4,z1,z2,z3,z4
-double precision x11,x22,x33,x44,t11,t22,t33,t44,z11,z22,z33,z44
+double precision x1,x2,t1,t2,t3,z1,z2,z3
+double precision x11
 double precision dx
-integer i,j,k,i1,i2,i3,i4,j1,j2,j3,j4
+integer i,j,k,j4
 
 do i=1,nteta+1
 teta(i)=GPI2*(i-1.)/(nteta+0.)
@@ -1982,7 +1987,8 @@ end subroutine convert_boundary_to_pbe
 subroutine solve_gs2d(g)
 
 use pi_vars, only: mu0
-use feqis_circuit
+use feqis_circuit, only: nr, nr1, nr2, nz, nz1, nz2, i_dim2, &
+    r, dr, dz, rcomp, jrz
 use fft_mod_eff, only: costable
 use feqis_tools, only: discrete_sine_transform
 
@@ -1992,10 +1998,9 @@ double precision g(i_dim2,i_dim2)
 double precision gt(i_dim2,i_dim2)
 double precision rhs(i_dim2,i_dim2)
 double precision wrhs(i_dim2,i_dim2)
-double precision trhs(i_dim2,i_dim2)
 double precision A(258),z_fourier(258)
 double precision B(258),x1,x2
-double precision C(258),tin,tup,r1m_1,r2m_1
+double precision C(258),r1m_1,r2m_1
 integer i,j,k,k_fourier
 integer j_init
 
@@ -2085,13 +2090,11 @@ subroutine solve_tridiag_fbe_ef(A,B,C,R,f,Ngrid)
 
 implicit none
 
-integer :: i,j,k,Ngrid,NgridS,bcbound
+integer :: j,k,Ngrid
 double precision A(Ngrid),B(Ngrid)
 double precision C(Ngrid),R(Ngrid)
-double precision f(Ngrid),f_bound
-double precision alpha(Ngrid),beta(Ngrid),f0
-double precision Bstar,Cstar,Rstar
-integer eximp
+double precision f(Ngrid)
+double precision alpha(Ngrid),beta(Ngrid)
 
 alpha=0.
 beta=0.
@@ -2126,22 +2129,17 @@ end subroutine solve_tridiag_fbe_ef
 !--------------------------------------------------------------------
 subroutine find_new_axis_part1	
 
-use feqis_circuit
+use feqis_circuit, only: iaxis, jaxis, r, z,rax, zax, trax, tzax, &
+    psiaxis, derivpsi, psirz
 use feqis_tools, only: nine_point_regression
 
 implicit none
 
-integer jaold,iaold,i_mode
-integer i,j,k,iax,jax,i_ixpoint
+integer j,iax,jax
 double precision errtol,tolerr,raxm,zaxm
-double precision br1,bz1,dbrr,dbrz,dbzr,dbzz
-double precision br2,bz2,darax,dazax,bub(100),xub(100),yub(100)
-double precision br3,bz3,icase,psi0,ccc(6)
-double precision br4,bz4,determ,rleft,rright
-double precision x1,x2,x3,x4,x5,x6,x7,x8,x9,psibtmp,x22,x33,x10,x11
 double precision ppx(2)
-integer i1,i2,i3,i4,i5,i6,i7,i8,i9
-integer j1,j2,j3,j4,j5,j6,j7,j8,j9,i0,j0
+integer i1,i2
+integer j1,j2
 !the used function is psirz
 
 ! 1) find new magnetic axis
@@ -2233,7 +2231,13 @@ end subroutine find_new_axis_part1
 subroutine find_psi_boundary
 
 use pi_vars, only: GPI
-use feqis_circuit
+use feqis_circuit, only: nr1, nr2, nz1, nz2, i_dim2, i_dim5, nlimiter, &
+    max_xpoints, n_of_xpoints, &
+    r, z, dr, dz, rax, zax, r_xpoint, z_xpoint, &
+    rinner, raus, zbot, ztop, &
+    deriv_x, use_limiter_yesno, i_plasmatype, limiterr, limiterz, &
+    psiaxis, psibnd, psirz, &
+    alpsep, u_n, zlimpotential
 use astra2fbe, only: x_point_save, plasma_config
 use errors_params, only: err_find_oxpoints_derivs
 use feqis_tools, only: find_closest_xpoints, find_fields_interp_psionly, &
@@ -2242,24 +2246,18 @@ use feqis_tools, only: find_closest_xpoints, find_fields_interp_psionly, &
 
 implicit none
 
-integer jaold,iaold,i_mode,niter
-integer i,j,k,iax,jax,i_ixpoint
-double precision errtol,tolerr,raxm,zaxm
-double precision br1,bz1,dbrr,dbrz,dbzr,dbzz,rstart
-double precision br2,bz2,darax,dazax,bub(9),xub(9),yub(9)
-double precision br3,bz3,icase,psi0,ccc(6),psiloc,polfield
-double precision br4,bz4,determ,rleft,rright,omega_temp(300,300)
-double precision x1,x2,x3,x4,x5,x6,x7,x8,x9,psibtmp,x22,x33,x10,x11
-double precision xbnd(i_dim5),ybnd(i_dim5),r_temp(i_dim2),z_temp(i_dim2),rminz
-double precision pos_xpoint(2),ddipsi(8),tin,tup,frlim_ef
-double precision r_limp,z_limp,psi_limp(500),hard_left,hard_right
+integer iaold,niter
+integer i,j,k
+double precision x1,x2,x5
+double precision pos_xpoint(2),ddipsi(8)
+double precision psi_limp(500)
 double precision psi_xpoint(max_xpoints),ddpsi(5)
 double precision rx_add(20),zx_add(20)
- 	integer ipath(5),jpath(5),oldpointnum
-integer i1,i2,i3,i4,i5,i6,i7,i8,i9,n_adding
-integer j1,j2,j3,j4,j5,j6,j7,j8,j9,i0,j0,i_county
+ 	integer oldpointnum
+integer i1,i4,i5,i9,n_adding,i_county
+
 data i_county/0/
-save i_county,rstart,oldpointnum
+save i_county,oldpointnum
 
 i_plasmatype=0
 
@@ -2576,27 +2574,26 @@ end subroutine find_psi_boundary
 subroutine new_jrz_ef ! calculate new right hand side given new boundary!
 
 use rcurr_zcurr_2def, only: R_curr_2d, Z_curr_2D
-use feqis_circuit
-use astra2fbe
+use feqis_circuit, only: nr1, nr2, nz1, nz2, nrho2d, i_dim2, &
+    r, z, rax, zax, dr, dz, &
+    rmin, zmin, &
+    ppp_2d, ffp_2d, &
+    area_eff, jrz, u_n, iplasma
 use feqis_tools, only: t_find_u_n
 
 implicit none
 
-integer i,j,k,i1,i2,i3,i4,i5,j1,j2,j3,j4,j5
-double precision dum1,dum2,dum3,zeta,dumc(i_dim2,i_dim2)
-double precision t1,t2,t3,t4,x,y,alp,bet,gam,det,det0
+integer i,j,i1,i2,j1
+double precision dum1,dumc(i_dim2,i_dim2)
+double precision t1,t2,t3,t4
 double precision je1,je2,je3,je4
 integer quadrant
-double precision rpluz,zpluz
 double precision z11,z12,z13,z14
-integer ipluz,jpluz,qipluz,qjpluz
-integer ilast,jlast,totpoints,istart,jcallaz
+integer ipluz,jpluz
+integer ilast,totpoints,istart
 integer external_griddo_j(90000,2),j_griddo_j
 integer internal_griddo(90000,2),i_griddo_j
 double precision iconvex(300,300)
-
-data jcallaz/0/
-save jcallaz
 
 ! in entry: rbnd,zbnd,nbnd,psiaxis,psibnd,u_n
 
@@ -2646,8 +2643,7 @@ write(*,*) 'error in find new boundary (totpoints.gt.nz2*nr2)'
 stop
 endif
 
-call fill_in_current(r(i),z(j), & 
-		& nrho2d,psia_2d,ppp_2d,ffp_2d,dumc(i,j),u_n(i,j))
+call fill_in_current(r(i),nrho2d,ppp_2d,ffp_2d,dumc(i,j),u_n(i,j))
 iconvex(i,j)=1.
 i_griddo_j=i_griddo_j+1
 internal_griddo(i_griddo_j,1)=i
@@ -2741,14 +2737,10 @@ z11=r(i1-1)*(1-t1)+r(i1)*t1
 z12=r(i1)
 z13=r(i1+1)*(1-t3)+r(i1)*t3
 z14=r(i1)
-if (t1.gt.0.)	call fill_in_current(z11,z(i2), & 
-		& nrho2d,psia_2d,ppp_2d,ffp_2d,je1,1.d0)
-if (t2.gt.0.)		call fill_in_current(z12,z(i2+1), & 
-		& nrho2d,psia_2d,ppp_2d,ffp_2d,je2,1.d0)
-if (t3.gt.0.)	call fill_in_current(z13,z(i2), & 
-		& nrho2d,psia_2d,ppp_2d,ffp_2d,je3,1.d0)
-if (t4.gt.0.)	call fill_in_current(z14,z(i2-1), & 
-		& nrho2d,psia_2d,ppp_2d,ffp_2d,je4,1.d0)
+if (t1.gt.0.) call fill_in_current(z11,nrho2d,ppp_2d,ffp_2d,je1,1.d0)
+if (t2.gt.0.) call fill_in_current(z12,nrho2d,ppp_2d,ffp_2d,je2,1.d0)
+if (t3.gt.0.) call fill_in_current(z13,nrho2d,ppp_2d,ffp_2d,je3,1.d0)
+if (t4.gt.0.) call fill_in_current(z14,nrho2d,ppp_2d,ffp_2d,je4,1.d0)
 
 ! defining S1 = dR - d1, S2 = dZ-d2, S3 = dZ-d3, S4 = dR-d4
 ! Jvacuum = C*Jb
@@ -2812,14 +2804,15 @@ return
 end subroutine new_jrz_ef
 
 !--------------------------------------------------------------------
-subroutine fill_in_current(r0,z0,nx,psia_2d,ppp_2d,ffp_2d,dumc,un)
+!subroutine fill_in_current(r0,z0,nx,psia_2d,ppp_2d,ffp_2d,dumc,un)
+ subroutine fill_in_current(r0,   nx,        ppp_2d,ffp_2d,dumc,un)
 
 implicit none
 
-double precision r0,z0,dr,dz,t1,t2,t3,t4,area_eff,zeta,un
-double precision psibnd,dumc
+double precision r0,zeta,un
+double precision dumc
 integer k,nx
-double precision ppp_2d(nx),ffp_2d(nx),psia_2d(nx)
+double precision ppp_2d(nx),ffp_2d(nx)
 
 if (un.gt.1.) dumc=0.0
 if (un.le.0.) dumc=ppp_2d(1)*r0+ffp_2d(1)/r0
@@ -2836,4 +2829,3 @@ endif
 
 return
 end subroutine fill_in_current
-

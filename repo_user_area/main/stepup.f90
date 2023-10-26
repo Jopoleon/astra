@@ -272,7 +272,7 @@ if (IFBEY >= 1.) then         ! is doing free boundary
         if (LEQ(5) == 4) then ! SPIDER
             call SPIDUPDATE(machine, CCOIL(1:NCNB), time, ncnb)    ! Update circuit stuff which has to be outside the iterations of course
         else if (LEQ(5) == 5) then ! FEQIS
-            call FEQISUPDATE(machine, CCOIL(1:NCNB), time, ncnb)    ! Update circuit stuff which has to be
+            call FEQISUPDATE(CCOIL(1:NCNB), ncnb)    ! Update circuit stuff which has to be
         endif
     endif
 endif
