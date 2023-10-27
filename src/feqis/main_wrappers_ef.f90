@@ -289,7 +289,7 @@ use feqis_circuit, only: nr2, nz2, nactive, nconduc, nteta, iaxis, jaxis, &
     curconduc, iplasma, jrz, psiplasrz, psirz, psiextrz
 use astra2fbe, only: sigma_coils, sigma_b, sigma_axis
 use green_matrix, only: greeni
-use feqis_tools, only: interp_j_fromrhotorz, get_closest_index, &
+use feqis_tools, only: get_closest_index, &
     find_fields_interp_green, inverse_matrix, boundary, &
     psi_external_calc, find_fields_interp_psionly
 
@@ -469,7 +469,7 @@ use feqis_circuit, only: npassive, nactive, nconduc, &
     iplasma, curconduc, psiplasrz, jrz, psirz, psiextrz, psistabr, psistabz
 use astra2fbe, only: n_fourier_restab_boundary
 use green_matrix, only: greeni
-use feqis_tools, only: interp_j_fromrhotorz, get_closest_index, &
+use feqis_tools, only: get_closest_index, &
     find_angle, find_fields_interp_green, boundary, &
     find_fields_interp_psionly, psi_external_calc, &
     least_square_biquad
@@ -606,7 +606,7 @@ use feqis_circuit, only: nactive, npassive, nconduc, nr2, nz2, iaxis, jaxis, &
     r, z, dr, dz, rax, zax, raxp, zaxp, r_cond, z_cond, &
     curconduc, iplasma, jrz, psirz, psiextrz, psiplasrz, psistabr, psistabz
 use green_matrix, only: greeni
-use feqis_tools, only: interp_j_fromrhotorz, get_closest_index, &
+use feqis_tools, only: get_closest_index, &
     find_angle, least_square_biquad, boundary, &
     find_fields_interp_psionly, psi_external_calc
 
@@ -757,7 +757,7 @@ subroutine solve_gse2d_fbe_full_ef_1turn(j_init, j_stab, raxold, zaxold)
 use feqis_circuit, only : nr2, nz2, iaxis, jaxis, &
     r, z, dr, dz, rax, zax, raxp, zaxp, &
     iplasma, jrz, psirz, psiextrz, psiplasrz, psistabr, psistabz
-use feqis_tools, only: interp_j_fromrhotorz, get_closest_index, &
+use feqis_tools, only: get_closest_index, &
     boundary, nine_point_coeffs_only, find_angle, &
     find_fields_interp_psionly
 
@@ -868,6 +868,7 @@ use pi_vars, only: GPI, GPI2
 use feqis_circuit, only: nconduc, i_dim1, tau_new, &
     tau_old, cur_con_old, curconduc, voltage, &
     dpc, psiplasmatoconduc, resconduc, indconduc, psi_cur_old
+use feqis_tools, only: solve_circuit_equations
 use astra2fbe, only: tau_circuit_ef, tau_gseq_ef, activate_coil_ef, &
     n_equivalence, reconnect_circuits, new_equivalence, &
     use_reduce_circuit, current_limit_ef, force_coil
@@ -1024,44 +1025,6 @@ reconnect_circuits = 0
 
 return
 end subroutine circuit_eq_advance_ef
-
-!--------------------------------------------------------------------
-subroutine solve_circuit_equations(nc, im, rm, I0, I1, V, dpc, tau, invertcommand)
-
-use feqis_tools, only: inverse_matrix
-
-implicit none
-
-integer, intent(in) :: nc, invertcommand
-double precision, intent(in) :: tau
-double precision, intent(in), dimension(nc) :: I0, V, dpc
-double precision, intent(in), dimension(nc, nc) :: im, rm
-double precision, intent(out), dimension(nc) :: I1
-
-integer :: i
-double precision, dimension(nc) :: B
-double precision, dimension(200, 200) :: invmatrix
-double precision, dimension(nc, nc) :: matrix
-
-save invmatrix
-
-! Equation is im*(i1 - i0)/tau + rm*i1 = v - dpc
-
-do i=1, nc
-    b(i) = v(i) - dpc(i) + sum(im(i, 1:nc)*i0(1:nc))/tau
-enddo
-
-if (invertcommand == 1) then
-    matrix(1:nc, 1:nc) = im(1:nc, 1:nc)/tau + rm(1:nc, 1:nc)
-    call inverse_matrix(matrix, invmatrix(1:nc, 1:nc), nc)
-endif
-
-do i=1, nc
-    i1(i) = sum(invmatrix(i, 1:nc)*b(1:nc))
-enddo
-
-return
-end subroutine solve_circuit_equations
 
 !--------------------------------------------------------------------
 subroutine definitions_ef_equil(equil_in, params, j_call, ifplasma)
@@ -1688,141 +1651,82 @@ use pi_vars, only: mu0
 use feqis_circuit, only: nr, nr1, nr2, nz, nz1, nz2, i_dim2, &
     r, dr, dz, rcomp, jrz
 use fft_mod_eff, only: costable
-use feqis_tools, only: discrete_sine_transform
+use feqis_tools, only: discrete_sine_transform, solve_tridiag_fbe_ef
 
-implicit none
+double precision, intent(inout), dimension(i_dim2, i_dim2) :: g
 
-double precision g(i_dim2, i_dim2)
-double precision gt(i_dim2, i_dim2)
-double precision rhs(i_dim2, i_dim2)
-double precision wrhs(i_dim2, i_dim2)
-double precision A(258), z_fourier(258)
-double precision B(258), x1, x2
-double precision C(258), r1m_1, r2m_1
-integer i, j, k, k_fourier
-integer j_init
+integer :: i, j, k, j_init
+double precision :: x1, x2, r1m_1, r2m_1
+double precision, dimension(258) :: A, B, C, z_fourier
+double precision, dimension(i_dim2, i_dim2) :: gt, rhs, wrhs
 
 data j_init/0/
 save A, B, C, j_init, z_fourier
 
 do j=1, nz2
-do i=1, nr2
-rhs(i, j) = -mu0*r(i)*jrz(i, j)
-enddo
+    do i=1, nr2
+        rhs(i, j) = -mu0*r(i)*jrz(i, j)
+    enddo
 enddo
 
-r1m_1 = r(2)/dr**2/((r(1) + r(2))/2.)
+r1m_1 = r(  2)/dr**2/((r(  1) + r(  2))/2.)
 r2m_1 = r(nr1)/dr**2/((r(nr1) + r(nr2))/2.)
 
-rhs(2:nr1, 2) = rhs(2:nr1, 2) - g(2:nr1, 1)/dz**2
+rhs(2:nr1,   2) = rhs(2:nr1,   2) - g(2:nr1,   1)/dz**2
 rhs(2:nr1, nz1) = rhs(2:nr1, nz1) - g(2:nr1, nz2)/dz**2
 
-rhs(2, 2:nz1) = rhs(2, 2:nz1) - g(1, 2:nz1)*r1m_1
+rhs(  2, 2:nz1) = rhs(  2, 2:nz1) - g(  1, 2:nz1)*r1m_1
 rhs(nr1, 2:nz1) = rhs(nr1, 2:nz1) - g(nr2, 2:nz1)*r2m_1
 
 wrhs = rhs
 ! CALL CPU_TIME(tin)
 do i=2, nr1
-   call discrete_sine_transform(nz, wrhs(i, 2:nz1))
+    call discrete_sine_transform(nz, wrhs(i, 2:nz1))
 enddo
 
-k_fourier = nz
-!create inverse matrix for gs2d
+! Create inverse matrix for gs2d
 if (j_init == 0) then
-A = 0.
-B = 0.
-C = 0.
-do i=2, nr-1
-x1 = 0.5*(rcomp(i) + rcomp(i-1))
-x2 = 0.5*(rcomp(i + 1) + rcomp(i))
-B(i) = -rcomp(i)/dr**2*(1./x2 + 1./x1) 
-A(i) = rcomp(i)/x2/dr**2 
-C(i) = rcomp(i)/x1/dr**2 
-enddo
-i = 1
-x1 = 0.5*(rcomp(i) + r(1))
-x2 = 0.5*(rcomp(i + 1) + rcomp(i))
-B(i) = -rcomp(i)/dr**2*(1./x2 + 1./x1) 
-A(i) = rcomp(i)/x2/dr**2 
-i = nr
-x1 = 0.5*(rcomp(i) + rcomp(i-1))
-x2 = 0.5*(r(nr2) + rcomp(i))
-B(i) = -rcomp(i)/dr**2*(1./x2 + 1./x1) 
-C(i) = rcomp(i)/x1/dr**2 
-j_init = 1
-do k=2, nz1
-z_fourier(k) = 2./dz**2*(costable(1, k-1) - 1.)
-enddo
+    A = 0.
+    B = 0.
+    C = 0.
+    do i=2, nr-1
+        x1 = 0.5*(rcomp(  i) + rcomp(i-1))
+        x2 = 0.5*(rcomp(i+1) + rcomp(i  ))
+        B(i) = -rcomp(i)/dr**2*(1./x2 + 1./x1) 
+        A(i) =  rcomp(i)/x2/dr**2 
+        C(i) =  rcomp(i)/x1/dr**2 
+    enddo
+    i = 1
+    x1 = 0.5*(rcomp(  i) + r(1))
+    x2 = 0.5*(rcomp(i+1) + rcomp(i))
+    B(i) = -rcomp(i)/dr**2 * (1./x2 + 1./x1) 
+    A(i) =  rcomp(i)/x2/dr**2 
+    i = nr
+    x1 = 0.5*(rcomp(i) + rcomp(i-1))
+    x2 = 0.5*(r(nr2)   + rcomp(i)  )
+    B(i) = -rcomp(i)/dr**2 * (1./x2 + 1./x1) 
+    C(i) =  rcomp(i)/x1/dr**2
+    j_init = 1
+    do k=2, nz1
+        z_fourier(k) = 2./dz**2 * (costable(1, k-1) - 1.)
+    enddo
 endif
 
 gt = 0.
 !solve matrix
 do k=2, nz1
-call solve_tridiag_fbe_ef(C(1:nr), B(1:nr) + z_fourier(k), A(1:nr), wrhs(2:nr1, k), gt(2:nr1, k), nr)
+    call solve_tridiag_fbe_ef(C(1:nr), B(1:nr) + z_fourier(k), A(1:nr), wrhs(2:nr1, k), gt(2:nr1, k), nr)
 enddo
 !invert fourier from gt(1:nr, 1:kfourier) to g(2:nr1, 2:nz1)
 !  gt(i, k)=sum(invMM_gs2d(i-1, 1:nr, k-1)*wrhs(2:nr1, k))
 
 do i=2, nr1
-   call discrete_sine_transform(nz, gt(i, 2:nz1))
+    call discrete_sine_transform(nz, gt(i, 2:nz1))
 enddo
 g(2:nr1, 2:nz1) = 2./(nz + 1)*gt(2:nr1, 2:nz1)
 
 return
 end subroutine solve_gs2d
-
-!--------------------------------------------------------------------
-subroutine solve_tridiag_fbe_ef(A, B, C, R, f, Ngrid)
-
-! Provides solution of the system:
-!
-!   Aj fj - 1  + Bj fj  + Cj fj + 1 = Rj
-!
-!   where j = 1..Ngrid
-!
-!   bcbound = 1  -> given f_NA1
-!
-!  eximp = 2: implicit
-!
-! by means of this method:
-
-implicit none
-
-integer :: j, k, Ngrid
-double precision A(Ngrid), B(Ngrid)
-double precision C(Ngrid), R(Ngrid)
-double precision f(Ngrid)
-double precision alpha(Ngrid), beta(Ngrid)
-
-alpha = 0.
-beta = 0.
-
-         j = 1
-   alpha(j) = C(j)/B(j)
-         beta(j) = R(j)/B(j)
- 
-   do j=2, Ngrid-1
-    alpha(j) = C(j)/(B(j) - A(j)*alpha(j-1))
-   enddo
-   do j=2, Ngrid
-    beta(j) = (R(j) - A(j)*beta(j-1))/(B(j) - A(j)*alpha(j-1))
-   enddo
-
-! Note that boundary value is assumed to be on the main last grid point, so 1 - dx/2. This has to be
-! corrected later on... CEfable
-   j = Ngrid
-
-!C     f(j-1) = (f_bound - beta(j-1))/alpha(j-1)
-!CTHis one should be appropriate with extrapolation... but now go back to real b.c.
-!C     f(j-1) = (2./3.*f_bound - beta(j-1))/(alpha(j-1)-1./3.)
-     f(j) = beta(j)
-   do k=1, Ngrid-1
-    j = Ngrid-1-k + 1
-    f(j) = beta(j) - alpha(j)*f(j + 1)
-   enddo
-
-return
-end subroutine solve_tridiag_fbe_ef
 
 !--------------------------------------------------------------------
 subroutine find_new_axis_part1
@@ -1929,6 +1833,11 @@ end subroutine find_new_axis_part1
 subroutine find_psi_boundary
 
 use pi_vars, only: GPI
+use astra2fbe, only: x_point_save, plasma_config
+use errors_params, only: err_find_oxpoints_derivs
+use feqis_tools, only: find_closest_xpoints, find_fields_interp_psionly, &
+    get_closest_index, find_angle, check_xpoint_connection_axis, &
+    nine_point_regression, nine_point_regression_follow
 use feqis_circuit, only: nr1, nr2, nz1, nz2, i_dim2, i_dim5, nlimiter, &
     max_xpoints, n_of_xpoints, &
     r, z, dr, dz, rax, zax, r_xpoint, z_xpoint, &
@@ -1936,23 +1845,15 @@ use feqis_circuit, only: nr1, nr2, nz1, nz2, i_dim2, i_dim5, nlimiter, &
     deriv_x, use_limiter_yesno, i_plasmatype, limiterr, limiterz, &
     psiaxis, psibnd, psirz, &
     alpsep, u_n, zlimpotential
-use astra2fbe, only: x_point_save, plasma_config
-use errors_params, only: err_find_oxpoints_derivs
-use feqis_tools, only: find_closest_xpoints, find_fields_interp_psionly, &
-    get_closest_index, find_angle, check_xpoint_connection_axis, &
-    nine_point_regression, nine_point_regression_follow, t_find_u_n
 
-implicit none
-
-integer iaold, niter
-integer i, j, k
-double precision x1, x2, x5
-double precision pos_xpoint(2), ddipsi(8)
-double precision psi_limp(500)
-double precision psi_xpoint(max_xpoints), ddpsi(5)
-double precision rx_add(20), zx_add(20)
- integer oldpointnum
-integer i1, i4, i5, i9, n_adding, i_county
+integer :: iaold, niter, i, j, k, oldpointnum, i1, i4, i5, i9, n_adding, &
+    i_county
+double precision :: x1, x2, x5
+double precision, dimension(2) :: pos_xpoint(2)
+double precision, dimension(8) :: ddipsi
+double precision, dimension(20) :: rx_add, zx_add
+double precision, dimension(500) :: psi_limp
+double precision, dimension(max_xpoints) :: psi_xpoint
 
 data i_county/0/
 save i_county, oldpointnum
@@ -1960,297 +1861,233 @@ save i_county, oldpointnum
 i_plasmatype = 0
 
 if (n_of_xpoints >= 1) then
-x_point_save(1:n_of_xpoints, 1) = r_xpoint(1:n_of_xpoints)
-x_point_save(1:n_of_xpoints, 2) = z_xpoint(1:n_of_xpoints)
+    x_point_save(1:n_of_xpoints, 1) = r_xpoint(1:n_of_xpoints)
+    x_point_save(1:n_of_xpoints, 2) = z_xpoint(1:n_of_xpoints)
 endif
 
 call find_closest_xpoints(rx_add, zx_add, i9, n_adding)
 if (i9 == 0) then
-r_xpoint(n_of_xpoints + 1:n_of_xpoints + n_adding) = rx_add(1:n_adding)
-z_xpoint(n_of_xpoints + 1:n_of_xpoints + n_adding) = zx_add(1:n_adding)
-n_of_xpoints = n_of_xpoints + n_adding
+    r_xpoint(n_of_xpoints + 1:n_of_xpoints + n_adding) = rx_add(1:n_adding)
+    z_xpoint(n_of_xpoints + 1:n_of_xpoints + n_adding) = zx_add(1:n_adding)
+    n_of_xpoints = n_of_xpoints + n_adding
 endif
 
 if (i_county == 1) then
 !go through old x-points and see where they end up
-if (n_of_xpoints >= 1) then
-iaold = n_of_xpoints
-do i=1, iaold
-
-niter = 0
-
-289 niter = niter + 1
- call nine_point_regression_follow(r_xpoint(i), z_xpoint(i), pos_xpoint, ddipsi, x1)
-
- r_xpoint(i) = pos_xpoint(1)
- z_xpoint(i) = pos_xpoint(2)
- if ( (abs(ddipsi(1)) + abs(ddipsi(2))) <= err_find_oxpoints_derivs) goto 290
- if (niter > 100) goto 291 !no point found
- if ((pos_xpoint(1) > r(nr2) - dr) .or. (pos_xpoint(1) < r(1) + dr) .or.  & 
-  & (pos_xpoint(2) > z(nz2) - dz) .or. (pos_xpoint(2) < z(1) + dz)) then
+    if (n_of_xpoints >= 1) then
+        iaold = n_of_xpoints
+        do i=1, iaold
+            do niter=1, 101
+                call nine_point_regression_follow(r_xpoint(i), z_xpoint(i), pos_xpoint, ddipsi, x1)
+                r_xpoint(i) = pos_xpoint(1)
+                z_xpoint(i) = pos_xpoint(2)
+                if ( (abs(ddipsi(1)) + abs(ddipsi(2))) <= err_find_oxpoints_derivs) then
+! Check if point outside of domain
+                    if ((pos_xpoint(1) > r(nr2) - dr) .or. (pos_xpoint(1) < r(1) + dr) .or.  & 
+                        (pos_xpoint(2) > z(nz2) - dz) .or. (pos_xpoint(2) < z(1) + dz)) then
 ! xpoint doesnt exist anymore
-  r_xpoint(i) = 1.e6
-  z_xpoint(i) = 0.
-  deriv_x(1:5, i) = 1.e6
-  goto 317
- endif
- goto 289
-291 continue
-  r_xpoint(i) = 1.e6
-  z_xpoint(i) = 0.
-  deriv_x(1:5, i) = 1.e6
-  goto 317
-290 continue
-
-!check if point outside of domain
- if ((pos_xpoint(1) > r(nr2) - dr) .or. (pos_xpoint(1) < r(1) + dr) .or.  & 
-  & (pos_xpoint(2) > z(nz2) - dz) .or. (pos_xpoint(2) < z(1) + dz)) then
+                        r_xpoint(i) = 1.e6
+                        z_xpoint(i) = 0.
+                    else if ((pos_xpoint(1) > rax - dr) .and. (pos_xpoint(1) < rax + dr) .and.  & 
+                             (pos_xpoint(2) > zax - dz) .and. (pos_xpoint(2) < zax + dz)) then
 ! xpoint doesnt exist anymore
-  r_xpoint(i) = 1.e6
-  z_xpoint(i) = 0.
-  deriv_x(1:5, i) = 1.e6
-  goto 317
- endif
-
-!check if point is on axis
- if ((pos_xpoint(1) > rax - dr) .and. (pos_xpoint(1) < rax + dr) .and.  & 
-  & (pos_xpoint(2) > zax - dz) .and. (pos_xpoint(2) < zax + dz)) then
+                        r_xpoint(i) = 1.e6
+                        z_xpoint(i) = 0.
+                    else
+                        r_xpoint(i) = pos_xpoint(1)
+                        z_xpoint(i) = pos_xpoint(2)
+                    endif
+                    EXIT
+                endif
+                if (niter > 100) then
+                    r_xpoint(i) = 1.e6
+                    z_xpoint(i) = 0.
+                    EXIT
+                endif
+                if ((pos_xpoint(1) > r(nr2) - dr) .or. (pos_xpoint(1) < r(1) + dr) .or.  & 
+                    (pos_xpoint(2) > z(nz2) - dz) .or. (pos_xpoint(2) < z(1) + dz)) then
 ! xpoint doesnt exist anymore
-
-  r_xpoint(i) = 1.e6
-  z_xpoint(i) = 0.
-  deriv_x(1:5, i) = 1.e6
-  goto 317
- endif
-
- r_xpoint(i) = pos_xpoint(1)
- z_xpoint(i) = pos_xpoint(2)
- deriv_x(1:5, i) = ddpsi(1:5)
-
-317 continue
-enddo
-endif
+                    r_xpoint(i) = 1.e6
+                    z_xpoint(i) = 0.
+                    EXIT
+                endif
+            enddo
+        enddo
+    endif
 
 !scan the boundary to find new x-points
-j = 2
-do i=2, nr1
-call nine_point_regression(r(i), z(j), pos_xpoint, ddipsi, x1)
+    do j=2, nz1, nz1-2
+        do i=2, nr1
+            call nine_point_regression(r(i), z(j), pos_xpoint, ddipsi, x1)
+            x5 = (ddipsi(5)**2 - ddipsi(3)*ddipsi(4))
+            if ((pos_xpoint(1) >= r(i) - dr) .and.  & 
+                (pos_xpoint(1) <= r(i) + dr) .and.  & 
+                (pos_xpoint(2) >= z(j) - dz) .and.  & 
+                (pos_xpoint(2) <= z(j) + dz) .and.  & 
+                (x5 >= 0.)) then
 
-x5 = (ddipsi(5)**2 - ddipsi(3)*ddipsi(4))
+                n_of_xpoints = min(max_xpoints, n_of_xpoints + 1)
+                r_xpoint(n_of_xpoints) = pos_xpoint(1)
+                z_xpoint(n_of_xpoints) = pos_xpoint(2)
+            endif
+        enddo
+    enddo
 
-if ((pos_xpoint(1) >= r(i) - dr) .and.  & 
- & (pos_xpoint(1) <= r(i) + dr) .and.  & 
- & (pos_xpoint(2) >= z(j) - dz) .and.  & 
- & (pos_xpoint(2) <= z(j) + dz) .and.  & 
- & (x5 >= 0.)) then
+    do i=2, nr1, nr1-2
+        do j=2, nz1
+            call nine_point_regression(r(i), z(j), pos_xpoint, ddipsi, x1)
+            x5 = (ddipsi(5)**2 - ddipsi(3)*ddipsi(4))
+            if ((pos_xpoint(1) >= r(i) - dr) .and.  & 
+                (pos_xpoint(1) <= r(i) + dr) .and.  & 
+                (pos_xpoint(2) >= z(j) - dz) .and.  & 
+                (pos_xpoint(2) <= z(j) + dz) .and.  & 
+                (x5 >= 0.)) then
 
-n_of_xpoints = min(max_xpoints, n_of_xpoints + 1)
-r_xpoint(n_of_xpoints) = pos_xpoint(1)
-z_xpoint(n_of_xpoints) = pos_xpoint(2)
-deriv_x(1:5, n_of_xpoints) = ddpsi(1:5)
-
-endif
-enddo
-j = nz1
-do i=2, nr1
-call nine_point_regression(r(i), z(j), pos_xpoint, ddipsi, x1)
-
- x5 = (ddipsi(5)**2 - ddipsi(3)*ddipsi(4))
-
-if ((pos_xpoint(1) >= r(i) - dr) .and.  & 
- & (pos_xpoint(1) <= r(i) + dr) .and.  & 
- & (pos_xpoint(2) >= z(j) - dz) .and.  & 
- & (pos_xpoint(2) <= z(j) + dz) .and.  & 
- & (x5 >= 0.)) then
-
-n_of_xpoints = min(max_xpoints, n_of_xpoints + 1)
-r_xpoint(n_of_xpoints) = pos_xpoint(1)
-z_xpoint(n_of_xpoints) = pos_xpoint(2)
-deriv_x(1:5, n_of_xpoints) = ddpsi(1:5)
-
-endif
-enddo
-i = 2
-do j=2, nz1
-call nine_point_regression(r(i), z(j), pos_xpoint, ddipsi, x1)
-
- x5 = (ddipsi(5)**2 - ddipsi(3)*ddipsi(4))
-
-if ((pos_xpoint(1) >= r(i) - dr) .and.  & 
- & (pos_xpoint(1) <= r(i) + dr) .and.  & 
- & (pos_xpoint(2) >= z(j) - dz) .and.  & 
- & (pos_xpoint(2) <= z(j) + dz) .and.  & 
- & (x5 >= 0.)) then
-
-n_of_xpoints = min(max_xpoints, n_of_xpoints + 1)
-r_xpoint(n_of_xpoints) = pos_xpoint(1)
-z_xpoint(n_of_xpoints) = pos_xpoint(2)
-deriv_x(1:5, n_of_xpoints) = ddpsi(1:5)
-
-endif
-enddo
-i = nr1
-do j=2, nz1
-call nine_point_regression(r(i), z(j), pos_xpoint, ddipsi, x1)
-
-x5 = (ddipsi(5)**2 - ddipsi(3)*ddipsi(4))
-
-if ((pos_xpoint(1) >= r(i) - dr) .and.  & 
- & (pos_xpoint(1) <= r(i) + dr) .and.  & 
- & (pos_xpoint(2) >= z(j) - dz) .and.  & 
- & (pos_xpoint(2) <= z(j) + dz) .and.  & 
- & (x5 >= 0.)) then
-
-n_of_xpoints = min(max_xpoints, n_of_xpoints + 1)
-r_xpoint(n_of_xpoints) = pos_xpoint(1)
-z_xpoint(n_of_xpoints) = pos_xpoint(2)
-deriv_x(1:5, n_of_xpoints) = ddpsi(1:5)
-
-endif
-enddo
+                n_of_xpoints = min(max_xpoints, n_of_xpoints + 1)
+                r_xpoint(n_of_xpoints) = pos_xpoint(1)
+                z_xpoint(n_of_xpoints) = pos_xpoint(2)
+            endif
+        enddo
+    enddo
 
 endif
 
 !-------------------
 if (i_county == 0) then ! do a full pass to find all X-points
-n_of_xpoints = 0
-do j=2, nz1
-do i=2, nr1
- call nine_point_regression(r(i), z(j), pos_xpoint, ddipsi, x1)
-    x5 = (ddipsi(5)**2 - ddipsi(3)*ddipsi(4))
+    n_of_xpoints = 0
+    do j=2, nz1
+        do i=2, nr1
+            call nine_point_regression(r(i), z(j), pos_xpoint, ddipsi, x1)
+            x5 = (ddipsi(5)**2 - ddipsi(3)*ddipsi(4))
 
-    if ((pos_xpoint(1) >= r(i) - dr) .and.  & 
-    & (pos_xpoint(1) <= r(i) + dr) .and.  & 
- & (pos_xpoint(2) >= z(j) - dz) .and.  & 
- & (pos_xpoint(2) <= z(j) + dz) .and.  & 
- & (x5 >= 0.)) then
+            if ((pos_xpoint(1) >= r(i) - dr) .and.  & 
+                (pos_xpoint(1) <= r(i) + dr) .and.  & 
+                (pos_xpoint(2) >= z(j) - dz) .and.  & 
+                (pos_xpoint(2) <= z(j) + dz) .and.  & 
+                (x5 >= 0.)) then
 
-     if (abs(pos_xpoint(1) - rax) <= 2.*dr .and. abs(pos_xpoint(2) - zax) <= 2.*dz) then
-      else
-      n_of_xpoints = min(max_xpoints, n_of_xpoints + 1)
-      r_xpoint(n_of_xpoints) = pos_xpoint(1)
-      z_xpoint(n_of_xpoints) = pos_xpoint(2)
-      deriv_x(1:5, n_of_xpoints) = ddpsi(1:5)
+                if (abs(pos_xpoint(1) - rax) > 2.*dr .or. abs(pos_xpoint(2) - zax) > 2.*dz) then
+                    n_of_xpoints = min(max_xpoints, n_of_xpoints + 1)
+                    r_xpoint(n_of_xpoints) = pos_xpoint(1)
+                    z_xpoint(n_of_xpoints) = pos_xpoint(2)
+                endif
+            endif
+        enddo
+    enddo
+    i_county = 1
+    oldpointnum = n_of_xpoints
+endif
 
-     endif
+! Remove disappeared x-points and double counts
 
+i = 0
+xpoints_loop: do
+    i = i + 1
+    if (i > n_of_xpoints) EXIT xpoints_loop
+    if (r_xpoint(i) >= 1.e5) then
+        if (n_of_xpoints == 1) then
+            n_of_xpoints = 0
+            EXIT xpoints_loop
+        endif
+        r_xpoint(i:n_of_xpoints-1) = r_xpoint(i+1:n_of_xpoints)
+        z_xpoint(i:n_of_xpoints-1) = z_xpoint(i+1:n_of_xpoints)
+        n_of_xpoints = n_of_xpoints - 1
+        i = i - 1
+        CYCLE xpoints_loop
     endif
-enddo
-enddo
-i_county = 1
-oldpointnum = n_of_xpoints
-endif
 
-!remove disappeared x-points and double counts
-318 i = 0
+    do k=1, i-1 ! check if double counted
+        if ((abs(r_xpoint(i) - r_xpoint(k)) <= 2.*dr) .and.  & 
+            (abs(z_xpoint(i) - z_xpoint(k)) <= 2.*dz)) then
 
-319 i = i + 1
-!write(*, *) 'i', i, n_of_xpoints, r_xpoint(i)
-if (i > n_of_xpoints) goto 320
-if (r_xpoint(i) >= 1.e5) then
-  if (n_of_xpoints == 1) then
-   n_of_xpoints = 0
-   goto 320
-  endif
-!     write(*, *) 'big', i
-  r_xpoint(i:n_of_xpoints-1) = r_xpoint(i + 1:n_of_xpoints)
-  z_xpoint(i:n_of_xpoints-1) = z_xpoint(i + 1:n_of_xpoints)
-  n_of_xpoints = n_of_xpoints - 1
-  i = i - 1
-  goto 319
-endif
-
-do k=1, i-1 ! check if double counted
-if ((abs(r_xpoint(i) - r_xpoint(k)) <= 2.*dr) .and.  & 
- & (abs(z_xpoint(i) - z_xpoint(k)) <= 2.*dz)) then
-! write(*, *) 'dupli', i
-r_xpoint(k) = 0.5*(r_xpoint(i) + r_xpoint(k))
-z_xpoint(k) = 0.5*(z_xpoint(i) + z_xpoint(k))
-deriv_x(1:5, k) = 0.5*(deriv_x(1:5, i) + deriv_x(1:5, k))
-  r_xpoint(i:n_of_xpoints-1) = r_xpoint(i + 1:n_of_xpoints)
-  z_xpoint(i:n_of_xpoints-1) = z_xpoint(i + 1:n_of_xpoints)
-  n_of_xpoints = n_of_xpoints - 1
-  i = i - 1
-goto 319
-endif
-enddo
-
-goto 319
-
-320 continue
+            r_xpoint(k) = 0.5*(r_xpoint(i) + r_xpoint(k))
+            z_xpoint(k) = 0.5*(z_xpoint(i) + z_xpoint(k))
+            r_xpoint(i:n_of_xpoints-1) = r_xpoint(i+1:n_of_xpoints)
+            z_xpoint(i:n_of_xpoints-1) = z_xpoint(i+1:n_of_xpoints)
+            n_of_xpoints = n_of_xpoints - 1
+            i = i - 1
+            CYCLE xpoints_loop
+        endif
+    enddo
+enddo xpoints_loop
 
 write(*, *) 'new points ', n_of_xpoints, r_xpoint(1:n_of_xpoints), z_xpoint(1:n_of_xpoints)
 write(*, *) 'ax', rax, zax
 
 oldpointnum = n_of_xpoints
 
-!ignore limiter if use_limiter_astra is 0, da trasferirsi in init
+! Ignore limiter if use_limiter_astra is 0, da trasferirsi in init
 if (use_limiter_yesno == 0) then
-limiterR = r(nr1)
-limiterZ = z(nz1)
+    limiterR = r(nr1)
+    limiterZ = z(nz1)
 endif
-!calculate limiter flux 
+
+! Calculate limiter flux 
 do i=1, nlimiter
-call find_fields_interp_psionly(limiterR(i), limiterZ(i), psi_limp(i)) !give back psi, br, bz at r0, z0
+    call find_fields_interp_psionly(limiterR(i), limiterZ(i), psi_limp(i))
 enddo
 
 if (n_of_xpoints == 0) then
-   !no x-points, take largest limiter flux
-   psibnd = maxval(psi_limp(1:nlimiter), 1)
-   i_plasmatype = 0
+   ! No x-points, take largest limiter flux
+    psibnd = maxval(psi_limp(1:nlimiter), 1)
+    i_plasmatype = 0
 endif
 
 ! now, remove limiters that are in the shadow of xpoints
-ztop = 1.e6
-zbot = -1.e6
-raus = 1.e6
-rinner = 0.
+ztop   =  1.e6
+zbot   = -1.e6
+raus   =  1.e6
+rinner =  0.
+
 if (n_of_xpoints >= 1) then
-   i_plasmatype = 1
+    i_plasmatype = 1
 
-!first pass, remove X-points behind the limiter area
-   do i=1, n_of_xpoints
-      call get_closest_index(r_xpoint(i), z_xpoint(i), j, k)
-if (zlimpotential(j, k) < 0.5) then
-         psi_xpoint(i) = -1.e6
-  else
-         call find_fields_interp_psionly(r_xpoint(i), z_xpoint(i), psi_xpoint(i))
-endif
-   enddo
+! First pass, remove X-points behind the limiter area
+    do i=1, n_of_xpoints
+        call get_closest_index(r_xpoint(i), z_xpoint(i), j, k)
+        if (zlimpotential(j, k) < 0.5) then
+            psi_xpoint(i) = -1.e6
+        else
+            call find_fields_interp_psionly(r_xpoint(i), z_xpoint(i), psi_xpoint(i))
+        endif
+    enddo
 
-!second pass, remove limiter points that are in x-points shadow, simple "straight line method" --> to be refined later on
-   do i=1, n_of_xpoints
-    if (psi_xpoint(i) > -1.e5) then
- call find_angle(rax, zax, r_xpoint(i), z_xpoint(i), x1)
- if ((r_xpoint(i) > rax) .and. (x1 >= 7./4.*GPI .or. x1 <= GPI/4.)) raus = min(raus, r_xpoint(i))
- if ((z_xpoint(i) > zax) .and. (x1 >= GPI/4. .and. x1 <= 3./4.*GPI)) ztop = min(ztop, z_xpoint(i))
- if ((r_xpoint(i) < rax) .and. (x1 >= 3./4.*GPI .and. x1 <= 5./4.*GPI)) rinner = max(rinner, r_xpoint(i))
- if ((z_xpoint(i) < zax) .and. (x1 >= 5./4.*GPI .and. x1 <= 7./4.*GPI)) zbot = max(zbot, z_xpoint(i))
+! Second pass, remove limiter points that are in x-points shadow, simple "straight line method" --> to be refined later on
+    do i=1, n_of_xpoints
+        if (psi_xpoint(i) > -1.e5) then
+            call find_angle(rax, zax, r_xpoint(i), z_xpoint(i), x1)
+            if ((r_xpoint(i) > rax) .and. (x1 >= 7./4.*GPI .or.  x1 <= GPI/4.   )) raus   = min(raus, r_xpoint(i))
+            if ((z_xpoint(i) > zax) .and. (x1 >=   GPI/4.  .and. x1 <= 3./4.*GPI)) ztop   = min(ztop, z_xpoint(i))
+            if ((r_xpoint(i) < rax) .and. (x1 >= 3./4.*GPI .and. x1 <= 5./4.*GPI)) rinner = max(rinner, r_xpoint(i))
+            if ((z_xpoint(i) < zax) .and. (x1 >= 5./4.*GPI .and. x1 <= 7./4.*GPI)) zbot   = max(zbot, z_xpoint(i))
+        endif
+    enddo
+    do j=1, nlimiter
+        if (limiterr(j) <= rinner) psi_limp(j) = -1.e6
+        if (limiterr(j) >= raus) psi_limp(j) = -1.e6
+        if (limiterz(j) <= zbot) psi_limp(j) = -1.e6
+        if (limiterz(j) >= ztop) psi_limp(j) = -1.e6
+    enddo
+
+! Third pass, remove x-points that are non-monotonically connected to the plasma.
+    do i=1, n_of_xpoints
+        if (psi_xpoint(i) > -1.e5) then
+            call check_xpoint_connection_axis(r_xpoint(i), z_xpoint(i), rax, zax, dr, dz, i1)
+            if (i1 == 0) psi_xpoint(i) = -1.e6
+        endif
+    enddo
+
+! Psi boundary is the highest of all the values
+    i4 = maxloc(psi_xpoint(1:n_of_xpoints), 1)
+    i5 = maxloc(psi_limp(1:nlimiter), 1)
+    x1 = psi_xpoint(i4)
+    x2 = psi_limp(i5)
+    psibnd = max(x1, x2)
+    if (x2 > x1) then
+        i_plasmatype = 0
+    else
+        i_plasmatype = 1
     endif
-   enddo
-   do j=1, nlimiter
-      if (limiterr(j) <= rinner) psi_limp(j) = -1.e6
-  if (limiterr(j) >= raus) psi_limp(j) = -1.e6
-if (limiterz(j) <= zbot) psi_limp(j) = -1.e6
-if (limiterz(j) >= ztop) psi_limp(j) = -1.e6
-   enddo
-
-!third pass, remove x-points that are non-monotonically connected to the plasma.
-   do i=1, n_of_xpoints
-    if (psi_xpoint(i) > -1.e5) then
-       call check_xpoint_connection_axis(r_xpoint(i), z_xpoint(i), rax, zax, dr, dz, i1)
-       if (i1 == 0) psi_xpoint(i) = -1.e6
-    endif
-   enddo
-
-!psi boundary is the highest of all the values
-x1 = maxval(psi_xpoint(1:n_of_xpoints), 1)
-x2 = maxval(psi_limp(1:nlimiter), 1)
-i4 = maxloc(psi_xpoint(1:n_of_xpoints), 1)
-i5 = maxloc(psi_limp(1:nlimiter), 1)
-psibnd = max(x1, x2)
-if (x2 > x1) i_plasmatype = 0
-if (x1 >= x2) i_plasmatype = 1
 endif
 
 write(*, *) 'plasma type', psibnd, i_plasmatype, x1, x2, psi_xpoint(i4), psi_limp(i5), limiterr(i5), limiterz(i5), r_xpoint(i4), z_xpoint(i4)
@@ -2262,7 +2099,7 @@ x_point_save(20, 2) = z_xpoint(i4)
 ! if (i_plasmatype == 1) 
 psibnd = psiaxis + (psibnd - psiaxis)*alpsep
 
-!normalized flux
+! Normalized flux
 u_n(1:nr2, 1:nz2) = (psirz(1:nr2, 1:nz2) - psiaxis)/(psibnd - psiaxis)
 
 return
@@ -2272,173 +2109,152 @@ end subroutine find_psi_boundary
 subroutine new_jrz_ef ! calculate new right hand side given new boundary!
 
 use rcurr_zcurr_2def, only: R_curr_2d, Z_curr_2D
+use feqis_tools, only: fill_in_current, t_find_u_n, get_floor_index
 use feqis_circuit, only: nr1, nr2, nz1, nz2, nrho2d, i_dim2, &
     r, z, rax, zax, dr, dz, &
     rmin, zmin, &
     ppp_2d, ffp_2d, &
     area_eff, jrz, u_n, iplasma
-use feqis_tools, only: t_find_u_n
 
-implicit none
-
-integer i, j, i1, i2, j1
-double precision dum1, dumc(i_dim2, i_dim2)
-double precision t1, t2, t3, t4
-double precision je1, je2, je3, je4
-integer quadrant
-double precision z11, z12, z13, z14
-integer ipluz, jpluz
-integer ilast, totpoints, istart
-integer external_griddo_j(90000, 2), j_griddo_j
-integer internal_griddo(90000, 2), i_griddo_j
-double precision iconvex(300, 300)
+integer :: i, j, i1, i2, j1, quadrant, ipluz, jpluz, &
+    ilast, totpoints, istart, j_griddo_j, i_griddo_j
+integer, dimension(90000, 2) :: external_griddo_j, internal_griddo
+double precision :: curr, darea, t1, t2, t3, t4, je1, je2, je3, je4, &
+    z11, z12, z13, z14
+double precision, dimension(300, 300) :: iconvex
+double precision, dimension(i_dim2, i_dim2) :: dumc
 
 ! in entry: rbnd, zbnd, nbnd, psiaxis, psibnd, u_n
 
 iconvex = 0.
-dumc = 0.
+dumc    = 0.
 area_eff = dr*dz
+darea = dr*dz
 i_griddo_j = 0
 j_griddo_j = 0
 
 totpoints = 0
-do quadrant=1, 4
+quad_loop: do quadrant=1, 4
 ! sweep from axis to exterior and fill in the current
 !start from axis position
-i1 = floor((rax - rmin)/dr + 1.)
-j1 = floor((zax - zmin)/dz + 1.)
-!write(6712, *)  ' quadrant', quadrant
-if (quadrant == 1) then
-i = i1 + 1
-j = j1 + 1
-ipluz = 1
-jpluz = 1
-endif
-if (quadrant == 2) then
-i = i1
-j = j1 + 1
-ipluz = -1
-jpluz = 1
-endif
-if (quadrant == 3) then
-i = i1
-j = j1
-ipluz = -1
-jpluz = -1
-endif
-if (quadrant == 4) then
-i = i1 + 1
-j = j1
-ipluz = 1
-jpluz = -1
-endif
-istart = i
+    call get_floor_index(rax, zax, i1, j1)
 
-558 continue
-totpoints = totpoints + 1
-if (totpoints > nz2*nr2) then
-write(*, *) 'error in find new boundary (totpoints > nz2*nr2)'
-stop
-endif
+    SELECT CASE(quadrant)
+    CASE(1)
+        i = i1 + 1
+        j = j1 + 1
+        ipluz = 1
+        jpluz = 1
+    CASE(2)
+        i = i1
+        j = j1 + 1
+        ipluz = -1
+        jpluz =  1
+    CASE(3)
+        i = i1
+        j = j1
+        ipluz = -1
+        jpluz = -1
+    CASE(4)
+        i = i1 + 1
+        j = j1
+        ipluz =  1
+        jpluz = -1
+    END SELECT
 
-call fill_in_current(r(i), nrho2d, ppp_2d, ffp_2d, dumc(i, j), u_n(i, j))
-iconvex(i, j) = 1.
-i_griddo_j = i_griddo_j + 1
-internal_griddo(i_griddo_j, 1) = i
-internal_griddo(i_griddo_j, 2) = j
-i1 = i
-i2 = j
+    istart = i
 
-call t_find_u_n(i1 + ipluz, i2, i1, i2, t1)
-if (t1 < 0 .or. t1 > 1.) t1 = 1.e6
-call t_find_u_n(i1, i2 + jpluz, i1, i2, t2)
-if (t2 < 0 .or. t2 > 1.) t2 = 1.e6
-if (t2 > 0. .and. t2 <= 1.) then
-j_griddo_j = j_griddo_j + 1
-external_griddo_j(j_griddo_j, 1) = i
-external_griddo_j(j_griddo_j, 2) = j + jpluz
-iconvex(i, j + jpluz) = 1.
-endif
+    inner_loop: do
 
-if (t1 > 1.e5) then
-!move horizontally to the right
-i = i + ipluz
-goto 558
-endif
+        totpoints = totpoints + 1
+        if (totpoints > nz2*nr2) then
+            write(*, *) 'Error in find new boundary (totpoints > nz2*nr2)'
+            stop
+        endif
 
-ilast = i + ipluz
+        dumc(i, j) = fill_in_current(r(i), nrho2d, ppp_2d, ffp_2d, u_n(i, j))
+        iconvex(i, j) = 1.
+        i_griddo_j = i_griddo_j + 1
+        internal_griddo(i_griddo_j, 1) = i
+        internal_griddo(i_griddo_j, 2) = j
+        i1 = i
+        i2 = j
 
-j_griddo_j = j_griddo_j + 1
-external_griddo_j(j_griddo_j, 1) = ilast
-external_griddo_j(j_griddo_j, 2) = j
-iconvex(ilast, j) = 1.
+        t1 = t_find_u_n(i1 + ipluz, i2, i1, i2)
+        if (t1 < 0 .or. t1 > 1.) t1 = 1.e6
+        t2 = t_find_u_n(i1, i2 + jpluz, i1, i2)
+        if (t2 < 0 .or. t2 > 1.) t2 = 1.e6
+        if (t2 > 0. .and. t2 <= 1.) then
+            j_griddo_j = j_griddo_j + 1
+            external_griddo_j(j_griddo_j, 1) = i
+            external_griddo_j(j_griddo_j, 2) = j + jpluz
+            iconvex(i, j + jpluz) = 1.
+        endif
 
-!found boundary, go back, check vertically
+        if (t1 > 1.e5) then
+! Move horizontally to the right
+            i = i + ipluz
+        else
+            ilast = i + ipluz
+            j_griddo_j = j_griddo_j + 1
+            external_griddo_j(j_griddo_j, 1) = ilast
+            external_griddo_j(j_griddo_j, 2) = j
+            iconvex(ilast, j) = 1.
+! Found boundary, go back, check vertically
+            i = istart
+            do
+                t2 = t_find_u_n(i, j + jpluz, i, j)
+                if (t2 < 0 .or. t2 > 1.) then
+                    j = j + jpluz
+                    CYCLE inner_loop
+                endif
 
-i = istart
-59781 continue
-call t_find_u_n(i, j + jpluz, i, j, t2)
-if (t2 < 0 .or. t2 > 1.) then
-goto 5581
-endif
+! Found boundary on Z, need to advance 1 more
+                j_griddo_j = j_griddo_j + 1
+                external_griddo_j(j_griddo_j, 1) = i
+                external_griddo_j(j_griddo_j, 2) = j + jpluz
+                iconvex(i, j + jpluz) = 1.
 
-goto 5582
+                i = i + ipluz
+                istart = i
+                if (i == ilast) CYCLE quad_loop
+            enddo
+            EXIT inner_loop
+        endif
+    enddo inner_loop
+enddo quad_loop
 
-5581 continue
-j = j + jpluz
-goto 558
-
-!found boundary on Z, need to advance 1 more
-5582 continue
-
-j_griddo_j = j_griddo_j + 1
-external_griddo_j(j_griddo_j, 1) = i
-external_griddo_j(j_griddo_j, 2) = j + jpluz
-iconvex(i, j + jpluz) = 1.
-
-i = i + ipluz
-istart = i
-if (i == ilast) then
-!terminated quadrant
-goto 559
-endif
-goto 59781
-
-559 continue
-
-enddo !quadrant cycle
-
-!finished quadrants, now do trick at boundary for ciurrent
+! Trick at boundary for ciurrent
 
 ! fill current in external griddo
 do i=1, j_griddo_j
-t1 = 0.
-t2 = 0.
-t3 = 0.
-t4 = 0.
-i1 = external_griddo_j(i, 1)
-i2 = external_griddo_j(i, 2)
-call t_find_u_n(i1-1, i2, i1, i2, t1)
-if (t1 < 0 .or. t1 > 1.) t1 = 0.
-call t_find_u_n(i1, i2 + 1, i1, i2, t2)
-if (t2 < 0 .or. t2 > 1.) t2 = 0.
-call t_find_u_n(i1 + 1, i2, i1, i2, t3)
-if (t3 < 0 .or. t3 > 1.) t3 = 0.
-call t_find_u_n(i1, i2-1, i1, i2, t4)
-if (t4 < 0 .or. t4 > 1.) t4 = 0.
+    t1 = 0.
+    t2 = 0.
+    t3 = 0.
+    t4 = 0.
+    i1 = external_griddo_j(i, 1)
+    i2 = external_griddo_j(i, 2)
+    t1 = t_find_u_n(i1-1, i2, i1, i2)
+    if (t1 < 0 .or. t1 > 1.) t1 = 0.
+    t2 = t_find_u_n(i1, i2 + 1, i1, i2)
+    if (t2 < 0 .or. t2 > 1.) t2 = 0.
+    t3 = t_find_u_n(i1 + 1, i2, i1, i2)
+    if (t3 < 0 .or. t3 > 1.) t3 = 0.
+    t4 = t_find_u_n(i1, i2-1, i1, i2)
+    if (t4 < 0 .or. t4 > 1.) t4 = 0.
 
-je1 = 0.
-je2 = 0.
-je3 = 0.
-je4 = 0.
-z11 = r(i1-1)*(1 - t1) + r(i1)*t1
-z12 = r(i1)
-z13 = r(i1 + 1)*(1 - t3) + r(i1)*t3
-z14 = r(i1)
-if (t1 > 0.) call fill_in_current(z11, nrho2d, ppp_2d, ffp_2d, je1, 1.d0)
-if (t2 > 0.) call fill_in_current(z12, nrho2d, ppp_2d, ffp_2d, je2, 1.d0)
-if (t3 > 0.) call fill_in_current(z13, nrho2d, ppp_2d, ffp_2d, je3, 1.d0)
-if (t4 > 0.) call fill_in_current(z14, nrho2d, ppp_2d, ffp_2d, je4, 1.d0)
+    je1 = 0.
+    je2 = 0.
+    je3 = 0.
+    je4 = 0.
+    z11 = r(i1-1)*(1 - t1) + r(i1)*t1
+    z12 = r(i1)
+    z13 = r(i1 + 1)*(1 - t3) + r(i1)*t3
+    z14 = r(i1)
+    if (t1 > 0.) je1 = fill_in_current(z11, nrho2d, ppp_2d, ffp_2d, 1.d0)
+    if (t2 > 0.) je2 = fill_in_current(z12, nrho2d, ppp_2d, ffp_2d, 1.d0)
+    if (t3 > 0.) je3 = fill_in_current(z13, nrho2d, ppp_2d, ffp_2d, 1.d0)
+    if (t4 > 0.) je4 = fill_in_current(z14, nrho2d, ppp_2d, ffp_2d, 1.d0)
 
 ! defining S1 = dR - d1, S2 = dZ - d2, S3 = dZ - d3, S4 = dR - d4
 ! Jvacuum = C*Jb
@@ -2448,51 +2264,45 @@ if (t4 > 0.) call fill_in_current(z14, nrho2d, ppp_2d, ffp_2d, je4, 1.d0)
 ! if 4 points: C = 1 - (S1*S2 + S1*S3 + S3*S4 + S4*S2)/(4*dR*dZ)
 ! t_j = d_j /(dR or dZ depending on direction)
 
-dumc(i1, i2) = t1*je1 + t2*je2 + t3*je3 + t4*je4 -  & 
- (t1*t2*(je1 + je2)/2. +  & 
- t1*t3*(je1 + je3)/2. +  & 
- t1*t4*(je1 + je4)/2. +  & 
- t2*t3*(je3 + je2)/2. +  & 
- t2*t4*(je4 + je2)/2. +  & 
- t3*t4*(je3 + je4)/2.)
+    dumc(i1, i2) = t1*je1 + t2*je2 + t3*je3 + t4*je4 -  & 
+        (t1*t2*(je1 + je2)/2. +  & 
+         t1*t3*(je1 + je3)/2. +  & 
+         t1*t4*(je1 + je4)/2. +  & 
+         t2*t3*(je3 + je2)/2. +  & 
+         t2*t4*(je4 + je2)/2. +  & 
+         t3*t4*(je3 + je4)/2.)
 
-iconvex(i1, i2) = t1 + t2 + t3 + t4 -  & 
- (t1*t2 +  & 
- t1*t3 +  & 
- t1*t4 +  & 
- t2*t3 +  & 
- t2*t4 +  & 
- t3*t4)
-
+    iconvex(i1, i2) = t1 + t2 + t3 + t4 -  & 
+        (t1*t2 + t1*t3 + t1*t4 + t2*t3 + t2*t4 + t3*t4)
 
 enddo
 
 jrz = 0.
 do j=2, nz1
-do i=2, nr1
- jrz(i, j) = iconvex(i, j)*0.5*(dumc(i, j) + 0.25*(dumc(i + 1, j) + dumc(i-1, j) + dumc(i, j-1) + dumc(i, j + 1)))
-enddo
+    do i=2, nr1
+        jrz(i, j) = iconvex(i, j)*0.5*(dumc(i, j) + 0.25*(dumc(i+1, j) + dumc(i-1, j) + dumc(i, j-1) + dumc(i, j+1)))
+    enddo
 enddo
 
 !uncomment below for consistent current
 !jrz(1:nr2, 1:nz2)=dumc(1:nr2, 1:nz2)
-dum1 = sum(jrz*area_eff) 
-jrz = jrz/dum1*iplasma
+curr = sum(jrz)*darea 
+jrz = jrz/curr*iplasma
 
-if (isnan(dum1)) then
-write(*, *) 'total current is nan in fbe current rescaling'
-stop
+if (isnan(curr)) then
+    write(*, *) 'Total current is nan in fbe current rescaling'
+    stop
 endif
 
 t1 = 0.
 t2 = 0.
 t3 = 0.
 do j=1, nz2
-do i=1, nr2
-t1 = t1 + r(i)**2*jrz(i, j)*area_eff(i, j)
-t2 = t2 + z(j)*jrz(i, j)*area_eff(i, j)
-t3 = t3 + jrz(i, j)*area_eff(i, j)
-enddo
+     do i=1, nr2
+        t1 = t1 + r(i)**2*jrz(i, j)*darea
+        t2 = t2 + z(j)*jrz(i, j)*darea
+        t3 = t3 + jrz(i, j)*darea
+    enddo
 enddo
 
 R_curr_2D =  sqrt(t1/t3)
@@ -2501,28 +2311,25 @@ Z_curr_2D =  t2/t3
 return
 end subroutine new_jrz_ef
 
-!--------------------------------------------------------------------
-subroutine fill_in_current(r0, nx, ppp_2d, ffp_2d, dumc, un)
+!---------------------------------------------------------------------
+subroutine interp_j_fromrhotorz
 
-implicit none
+use feqis_circuit, only: nrho, nteta, nr2, nz2, r, z, jrz, jrhoteta, &
+    rho, teta, raxp, zaxp
+use feqis_tools, only: curinterp
 
-integer, intent(in) :: nx
-double precision r0, zeta, un
-double precision dumc
-integer :: k
-double precision ppp_2d(nx), ffp_2d(nx)
+integer :: i, j, k, k1, k2
+double precision :: t1, t2, t3, t4
 
-if (un >  1.) dumc = 0.0
-if (un <= 0.) dumc = ppp_2d(1 )*r0 + ffp_2d(1 )/r0
-if (un == 1.) dumc = ppp_2d(nx)*r0 + ffp_2d(nx)/r0
-
-if (un >= 0. .and. un <= 1.) then
-    zeta = un*(nx - 1.) + 1.
-    k = min(floor(zeta), nx - 1)
-    k = max(k, 1)
-    dumc = ( (ppp_2d(k + 1)*(zeta - k) + ppp_2d(k)*(k + 1. - zeta))*r0 + &
-             (ffp_2d(k + 1)*(zeta - k) + ffp_2d(k)*(k + 1. - zeta))/r0 )
-endif
+! go from jrhoteta to jrz
+jrz = 0.
+jrhoteta(1:nrho, nteta+1) = jrhoteta(1:nrho, 1)
+do j=1, nz2
+    do i=1, nr2
+        jrz(i, j) = curinterp(r(i), z(j), jrhoteta(1:nrho, 1:nteta+1),  & 
+            rho(1:nrho, 1:nteta+1), teta(1:nteta+1), raxp, zaxp, nrho, nteta+1)
+    enddo
+enddo
 
 return
-end subroutine fill_in_current
+end subroutine interp_j_fromrhotorz

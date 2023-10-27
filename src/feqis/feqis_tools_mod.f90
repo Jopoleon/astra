@@ -109,50 +109,27 @@ contains
     end subroutine inverse_matrix
 
 !---------------------------------------------------------------------
-    subroutine interp_j_fromrhotorz
-
-    use feqis_circuit, only: nrho, nteta, nr2, nz2, r, z, jrz, jrhoteta, &
-        rho, teta, raxp, zaxp
-
-    integer :: i, j, k, k1, k2
-    double precision :: t1, t2, t3, t4
-
-! go from jrhoteta to jrz
-    jrz = 0.
-    jrhoteta(1:nrho, nteta+1) = jrhoteta(1:nrho, 1)
-    do j=1, nz2
-        do i=1, nr2
-            call curinterp(r(i), z(j), jrhoteta(1:nrho, 1:nteta+1),  & 
-                rho(1:nrho, 1:nteta+1), teta(1:nteta+1), raxp, zaxp, nrho, nteta+1, jrz(i, j))
-        enddo
-    enddo
-
-    return
-    end subroutine interp_j_fromrhotorz
-
-!---------------------------------------------------------------------
-    subroutine t_find_u_n(i1, j1, i2, j2, t1)
+    double precision function t_find_u_n(i1, j1, i2, j2)
 
     use feqis_circuit, only: u_n
 
     integer, intent(in) :: i1, i2, j1, j2
-    double precision, intent(out) :: t1
 
-    t1 = (1. - u_n(i1, j1))/(u_n(i2, j2) - u_n(i1, j1))
+    t_find_u_n = (1. - u_n(i1, j1))/(u_n(i2, j2) - u_n(i1, j1))
 
     return
-    end subroutine t_find_u_n
+    end function t_find_u_n
 
 !---------------------------------------------------------------------
-    subroutine curinterp(r, z, jrho, rho, teta, rax, zax, nrho, nteta, j)
+    double precision function curinterp(r_in, z_in, jrho, rho, teta, rax, zax, nrho, nteta)
 
     use pi_vars, only: GPI2
     use numerical_tools, only: linterp
 
     integer,  intent(in) :: nrho, nteta
-    double precision, intent(in) :: r, z, jrho(nrho, nteta), rho(nrho, nteta), teta(nteta),  &
-    rax, zax
-    double precision, intent(out) :: j
+    double precision, intent(in) :: r_in, z_in, rax, zax
+    double precision, intent(in), dimension(nteta) :: teta
+    double precision, intent(in), dimension(nrho, nteta) :: jrho, rho
 
     integer :: i, k, k1, k2, k3, k4, j1, j2
     double precision :: anglr, rho0, r1, r2, r3, r4, z1, z2, z3, z4, a1, a2, a3, a4, d1, d2, d3, d4
@@ -160,22 +137,21 @@ contains
     double precision, dimension(4) :: jj1, coef
     double precision, dimension(4, 4) :: matrix, imatrix
 
-    
-    call find_angle(rax, zax, r, z, anglr)
-    rho0 = sqrt((r - rax)**2 + (z - zax)**2)
+    call find_angle(rax, zax, r_in, z_in, anglr)
+    rho0 = sqrt((r_in - rax)**2 + (z_in - zax)**2)
 
     if (anglr < teta(1)) anglr = anglr + GPI2
 
     j1 = 1
     do i=1, nteta
-        if (anglr >= teta(i)) j1=i
+        if (anglr >= teta(i)) j1 = i
     enddo
     j2 = j1 + 1
 
     z1 = rho(nrho, j1)
     z2 = rho(nrho, j2)
     if (rho0 > z1 .or. rho0 > z2) then
-        j = 0.
+        curinterp = 0.
         return
     endif
 
@@ -203,16 +179,16 @@ contains
     jj1(2) = jrho(k2, j1)
     jj1(3) = jrho(k4, j2)
     jj1(4) = jrho(k3, j2)
-    d1 = sqrt((r1 - r)**2 + (z1 - z)**2)
-    d2 = sqrt((r2 - r)**2 + (z2 - z)**2)
-    d3 = sqrt((r3 - r)**2 + (z3 - z)**2)
-    d4 = sqrt((r4 - r)**2 + (z4 - z)**2)
+    d1 = sqrt((r1 - r_in)**2 + (z1 - z_in)**2)
+    d2 = sqrt((r2 - r_in)**2 + (z2 - z_in)**2)
+    d3 = sqrt((r3 - r_in)**2 + (z3 - z_in)**2)
+    d4 = sqrt((r4 - r_in)**2 + (z4 - z_in)**2)
 
-    j = (jj1(1)*d2*d3*d4 + jj1(2)*d1*d3*d4 + jj1(3)*d1*d2*d4 + jj1(4)*d1*d2*d3) / &
+    curinterp = (jj1(1)*d2*d3*d4 + jj1(2)*d1*d3*d4 + jj1(3)*d1*d2*d4 + jj1(4)*d1*d2*d3) / &
         (d1*d2*d3 + d1*d3*d4 + d2*d3*d4 + d1*d2*d4)
 
     return
-    end subroutine curinterp
+    end function curinterp
 
 !---------------------------------------------------------------------
     subroutine discrete_sine_transform(n, y)
@@ -1400,5 +1376,109 @@ contains
 
     return
     end subroutine find_closest_xpoints
+
+!--------------------------------------------------------------------
+    subroutine solve_tridiag_fbe_ef(A, B, C, R, f, Ngrid)
+
+! Provides solution of the system:
+!
+!   Aj fj - 1  + Bj fj  + Cj fj + 1 = Rj
+!
+!   where j = 1..Ngrid
+!   bcbound = 1  -> given f_NA1
+!   eximp = 2: implicit
+
+    integer, intent(in) :: Ngrid
+    double precision, intent(in) , dimension(Ngrid) :: A, B, C, R
+    double precision, intent(out), dimension(Ngrid) :: f
+
+    integer :: j, k
+    double precision, dimension(Ngrid) :: alpha, beta
+
+    alpha(1) = C(1)/B(1)
+    beta (1) = R(1)/B(1)
+    do j=2, Ngrid-1
+        alpha(j) = C(j)/(B(j) - A(j)*alpha(j-1))
+    enddo
+    do j=2, Ngrid
+        beta(j) = (R(j) - A(j)*beta(j-1))/(B(j) - A(j)*alpha(j-1))
+    enddo
+
+! Note that boundary value is assumed to be on the main last grid point, so 1 - dx/2. This has to be
+! corrected later on... CEfable
+!     f(j-1) = (f_bound - beta(j-1))/alpha(j-1)
+! This one should be appropriate with extrapolation... but now go back to real b.c.
+!     f(j-1) = (2./3.*f_bound - beta(j-1))/(alpha(j-1)-1./3.)
+    f(Ngrid) = beta(Ngrid)
+    do k=1, Ngrid-1
+        j = Ngrid - k
+        f(j) = beta(j) - alpha(j)*f(j + 1)
+    enddo
+
+    return
+    end subroutine solve_tridiag_fbe_ef
+
+!--------------------------------------------------------------------
+    double precision function fill_in_current(r0, nx, ppp_2d, ffp_2d, un)
+
+    integer, intent(in) :: nx
+    double precision, intent(in) :: r0, un
+    double precision, intent(in), dimension(nx) ::  ppp_2d, ffp_2d
+
+    integer :: k
+    double precision :: zeta
+
+    if (un >  1.) then
+        fill_in_current = 0.0
+    elseif (un <= 0.) then
+        fill_in_current = ppp_2d(1 )*r0 + ffp_2d(1 )/r0
+    elseif (un == 1.) then
+        fill_in_current = ppp_2d(nx)*r0 + ffp_2d(nx)/r0
+    else
+        zeta = un*(nx - 1.) + 1.
+        k = min(floor(zeta), nx - 1)
+        k = max(k, 1)
+        fill_in_current = ( &
+             (ppp_2d(k + 1)*(zeta - k) + ppp_2d(k)*(k + 1. - zeta))*r0 + &
+             (ffp_2d(k + 1)*(zeta - k) + ffp_2d(k)*(k + 1. - zeta))/r0   )
+    endif
+
+    return
+    end function fill_in_current
+
+!--------------------------------------------------------------------
+    subroutine solve_circuit_equations(nc, im, rm, I0, I1, V, dpc, tau, invertcommand)
+
+    integer, intent(in) :: nc, invertcommand
+    double precision, intent(in) :: tau
+    double precision, intent(in), dimension(nc) :: I0, V, dpc
+    double precision, intent(in), dimension(nc, nc) :: im, rm
+    double precision, intent(out), dimension(nc) :: I1
+
+    integer :: i
+    double precision, dimension(nc) :: B
+    double precision, dimension(200, 200) :: invmatrix
+    double precision, dimension(nc, nc) :: matrix
+
+    save invmatrix
+
+! Equation is im*(i1 - i0)/tau + rm*i1 = v - dpc
+
+    do i=1, nc
+        b(i) = v(i) - dpc(i) + sum(im(i, 1:nc)*i0(1:nc))/tau
+    enddo
+
+    if (invertcommand == 1) then
+        matrix(1:nc, 1:nc) = im(1:nc, 1:nc)/tau + rm(1:nc, 1:nc)
+        call inverse_matrix(matrix, invmatrix(1:nc, 1:nc), nc)
+    endif
+
+    do i=1, nc
+        i1(i) = sum(invmatrix(i, 1:nc)*b(1:nc))
+    enddo
+
+    return
+    end subroutine solve_circuit_equations
+
 
 end module feqis_tools
