@@ -301,56 +301,6 @@ contains
     end subroutine psib_ext_efff
 
 !---------------------------------------------------------------------
-    subroutine psiplex_calc(dumz)
-
-    use pi_vars, only: GPI2
-    use astra2fbe, only: psplex_from_fbe
-    use feqis_circuit, only: nbnd, rbnd, zbnd, dr, dz
-
-    double precision, intent(out) :: dumz
-    integer :: i, j
-    double precision :: z1, z2, z3, z4, t1, t2, t3, t4, &
-        x1, x2, x3, y1, y2, y3, arc1, arc2
-
-    write(*, *) 'spid par', psplex_from_fbe
-
-    if (psplex_from_fbe /= 1) then
-        return
-    endif
-
-    z4 = 0.
-    z2 = 0.
-    do j=1,  nbnd-1
-        x1 = rbnd(j)
-        y1 = zbnd(j)
-        x3 = rbnd(j+1)
-        y3 = zbnd(j+1)
-        x2 = 0.5*(rbnd(j+1) + rbnd(j))
-        y2 = 0.5*(zbnd(j+1) + zbnd(j))
-        arc2 = sqrt((x3 - x1)**2 + (y3 - y1)**2)
-        do i=1, nbnd-1
-            x1 = rbnd(i)
-            y1 = zbnd(i)
-            x3 = rbnd(i+1)
-            y3 = zbnd(i+1)
-            arc1 = sqrt((x3 - x1)**2 + (y3 - y1)**2)
-            z3 = green_function(x1, y1, x2, y2)
-            call find_fields_interp_psionly(rbnd(i) + dr/2, zbnd(i), t1)
-            call find_fields_interp_psionly(rbnd(i), zbnd(i) + dz/2, t2)
-            call find_fields_interp_psionly(rbnd(i) - dr/2, zbnd(i), t3)
-            call find_fields_interp_psionly(rbnd(i), zbnd(i) - dz/2, t4)
-            z1 = sqrt(((t3 - t1)/dr)**2 + ((t4 - t2)/dz)**2)
-            z2 = z2 + z3/x1*z1*arc1*arc2
-        enddo
-        z4 = z4 + arc2
-    enddo
-
-    dumz = z2/z4*GPI2
-
-    return
-    end subroutine psiplex_calc
-
-!---------------------------------------------------------------------
     double precision function find_l_gap(psibnd, l_ref_in, gapmin, gapmax, geom)
 
     use errors_params, only: err_gaptolez
