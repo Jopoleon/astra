@@ -999,22 +999,22 @@ contains
 
 ! lower side
     do i=2, nr1
-        call bgint(integr(i, 1), green_fun, jcounty)
+        integr(i, 1) = bgint(green_fun, jcounty)
     enddo
 
 ! right side
     do i=2, nz1
-        call bgint(integr(i, 2), green_fun, jcounty)
+        integr(i, 2) = bgint(green_fun, jcounty)
     enddo
 
 ! upper side
     do i=2, nr1
-        call bgint(integr(i, 3), green_fun, jcounty)
+        integr(i, 3) = bgint(green_fun, jcounty)
     enddo
 
 ! left side
     do i=2, nz1
-        call bgint(integr(i, 4), green_fun, jcounty)
+        integr(i, 4) = bgint(green_fun, jcounty)
     enddo
 
     green_fun(2:nr1,   1) = integr(2:nr1, 1)/GPI
@@ -1026,19 +1026,18 @@ contains
     end subroutine boundary
 
 !-----------------------------------------------------------------------------------
-    subroutine bgint(bgintsol, green_in, jcounty)
+    double precision function bgint(green_in, jcounty)
 
 ! calculates  integral_over_boundary of -Green * dg/dn * dl
     use feqis_circuit, only: nr1, nr2, nz1, i_dim2, green_bnd_f, r, dr, dz
 
     double precision, intent(in), dimension(i_dim2, i_dim2) :: green_in
     integer, intent(inout) :: jcounty
-    double precision, intent(out) :: bgintsol
 
     integer :: j
     double precision :: dgdn(i_dim2), greenf
 
-    bgintsol = 0.
+    bgint = 0.
 
 ! lower side
     do j=2, nr1
@@ -1046,7 +1045,7 @@ contains
         greenf  = green_bnd_f(jcounty)
         dgdn(j) = -green_in(j, 2)/dz*greenf*dr/r(j)
     enddo
-    bgintsol = bgintsol - sum(dgdn(2:nr1))
+    bgint = bgint - sum(dgdn(2:nr1))
 
 !right side
     do j=2, nz1
@@ -1054,7 +1053,7 @@ contains
         greenf  = green_bnd_f(jcounty)
         dgdn(j) = -green_in(nr1, j)/dr*greenf*dz/(r(nr2) + r(nr1))*2.
     enddo
-    bgintsol = bgintsol - sum(dgdn(2:nz1))
+    bgint = bgint - sum(dgdn(2:nz1))
 
 ! upper side
     do j=2, nr1
@@ -1062,7 +1061,7 @@ contains
         greenf  = green_bnd_f(jcounty)
         dgdn(j) = -green_in(j, nz1)/dz*greenf*dr/r(j)
     enddo
-    bgintsol = bgintsol - sum(dgdn(2:nr1))
+    bgint = bgint - sum(dgdn(2:nr1))
 
 !left side
     do j=2, nz1
@@ -1070,10 +1069,10 @@ contains
         greenf  = green_bnd_f(jcounty)
         dgdn(j) = -green_in(2, j)/dr*greenf*dz/(r(1) + r(2))*2.
     enddo
-    bgintsol = bgintsol - sum(dgdn(2:nz1))
+    bgint = bgint - sum(dgdn(2:nz1))
 
     return
-    end subroutine bgint
+    end function bgint
 
 !---------------------------------------------------------------------
     subroutine check_xpoint_connection_axis(rx, zx, rax, zax, dr, dz, icheck)
