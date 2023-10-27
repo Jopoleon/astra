@@ -18,18 +18,17 @@ double precision, dimension(9, 9), parameter :: A_inv = reshape( (/ &
 contains
 
 !---------------------------------------------------------------------
-    subroutine find_angle(rt, zt, r, z, anglr)
+    double precision function pol_angle(r0, z0, r, z)
 
     use pi_vars, only: GPI2
 
-    double precision, intent(in) :: rt, zt, r, z
-    double precision, intent(out) :: anglr
+    double precision, intent(in) :: r0, z0, r, z
 
-    anglr = ATAN2(z - zt, r - rt)
-    if (anglr < 0) anglr = anglr + GPI2
+    pol_angle = ATAN2(z - z0, r - r0)
+    if (pol_angle < 0) pol_angle = pol_angle + GPI2
 
     return
-    end subroutine find_angle
+    end function pol_angle
 
 !---------------------------------------------------------------------
     subroutine inverse_matrix(a_in, c, n)
@@ -125,7 +124,7 @@ contains
     double precision, dimension(4) :: jj1, coef
     double precision, dimension(4, 4) :: matrix, imatrix
 
-    call find_angle(rax, zax, r_in, z_in, anglr)
+    anglr = pol_angle(rax, zax, r_in, z_in)
     rho0 = sqrt((r_in - rax)**2 + (z_in - zax)**2)
 
     if (anglr < teta(1)) anglr = anglr + GPI2
@@ -271,25 +270,27 @@ contains
 !---------------------------------------------------------------------
     subroutine psib_ext_efff(psiext_out)  !gives back external flux on plasma boundary
 
-    use feqis_circuit, only: nbnd, rbnd, zbnd, psibnd
+    use feqis_circuit, only: nr, nz, nbnd, rbnd, zbnd, psibnd, psiextrz
 
     integer :: i
-    double precision :: psiext_out, dlt, dllt, dum1, dum2
+    double precision, intent(out) :: psiext_out
+    double precision :: dlt, dllt, psi_ext_1, psiext1, psiext2
 
 !cycle over boundary
     psiext_out = 0.
     dllt = 0.
+    psi_ext_1 = interp2d_psi(rbnd(1), zbnd(1), psiextrz(1:nr, 1:nz))
+    psiext1 = psi_ext_1
     do i=1, nbnd-1
-        call find_fields_interp_psiext(rbnd(i)  , zbnd(i  ), dum1) !give back psi, br, bz at r0, z0
-        call find_fields_interp_psiext(rbnd(i+1), zbnd(i+1), dum2) !give back psi, br, bz at r0, z0
+        psiext2 = interp2d_psi(rbnd(i+1), zbnd(i+1), psiextrz(1:nr, 1:nz))
         dlt = sqrt((rbnd(i+1) - rbnd(i))**2 + (zbnd(i+1) - zbnd(i))**2)
-        psiext_out = psiext_out + 0.5*(dum1 + dum2)*dlt
+        psiext_out = psiext_out + 0.5*(psiext1 + psiext2)*dlt
         dllt = dllt + dlt
+        psiext1 = psiext2
     enddo
-    call find_fields_interp_psiext(rbnd(nbnd), zbnd(nbnd), dum1) !give back psi, br, bz at r0, z0
-    call find_fields_interp_psiext(rbnd(1   ), zbnd(1   ), dum2) !give back psi, br, bz at r0, z0
+    psiext1 = psi_ext_1
     dlt = sqrt((rbnd(1) - rbnd(nbnd))**2 + (zbnd(1) - zbnd(nbnd))**2)
-    psiext_out = psiext_out + 0.5*(dum1 + dum2)*dlt
+    psiext_out = psiext_out + 0.5*(psiext1 + psiext2)*dlt
     dllt = dllt + dlt
 
     psiext_out = psiext_out/dllt
@@ -723,12 +724,12 @@ contains
     end subroutine exact_biquad_regress
 
 !---------------------------------------------------------------------
-    subroutine nine_point_regression(r0, z0, pos_xpoint, ddpsi, f00)
+    subroutine nine_point_regression(r_in, z_in, pos_xpoint, ddpsi, f00)
 
     use feqis_circuit, only: nr1, nz1, r, z, dr, dz, psirz
 
     integer, parameter :: ndim=9
-    double precision, intent(in) :: r0, z0
+    double precision, intent(in) :: r_in, z_in
     double precision, intent(out) :: f00
     double precision, intent(out), dimension(2) :: pos_xpoint 
     double precision, intent(out), dimension(ndim-1) :: ddpsi
@@ -737,7 +738,7 @@ contains
     double precision :: rax, zax
     double precision, dimension(ndim) :: bub
 
-    call get_closest_index(r0, z0, iax, jax)
+    call get_closest_index(r_in, z_in, iax, jax)
 
     k = 0
     do j=-1, 1
@@ -756,19 +757,19 @@ contains
     end subroutine nine_point_regression
 
 !---------------------------------------------------------------------
-    subroutine nine_point_coeffs_only(r0, z0, c, c1, c2)
+    subroutine nine_point_coeffs_only(r_in, z_in, c, c1, c2)
 
     use feqis_circuit, only: psirz, nr1, nz1, r, z
 
     integer, parameter :: ndim=9
-    double precision, intent(in) :: r0, z0
+    double precision, intent(in) :: r_in, z_in
     double precision, intent(out) :: c1, c2
     double precision, intent(out), dimension(9) :: c
 
     integer :: iax, jax, i, j, k
     double precision, dimension(90) :: bub
 
-    call get_closest_index(r0, z0, iax, jax)
+    call get_closest_index(r_in, z_in, iax, jax)
 
     c1 = r(iax)
     c2 = z(jax)
@@ -818,148 +819,77 @@ contains
     end subroutine nine_point_regression_follow
 
 !---------------------------------------------------------------------
-    subroutine get_closest_index(r0, z0, i, j)
+    subroutine get_closest_index(r_in, z_in, i, j)
 
     use feqis_circuit, only: rmin, zmin, dr, dz
 
-    double precision, intent(in) :: r0, z0
+    double precision, intent(in) :: r_in, z_in
     integer, intent(out) :: i, j
 
-    i = nint((r0 - rmin)/dr + 1.) ! nint(1.8) = 2
-    j = nint((z0 - zmin)/dz + 1.)
+    i = nint((r_in - rmin)/dr + 1.) ! nint(1.8) = 2
+    j = nint((z_in - zmin)/dz + 1.)
 
     return
     end subroutine get_closest_index
 
 !---------------------------------------------------------------------
-    subroutine get_floor_index(r0, z0, i, j)
+    subroutine get_floor_index(r_in, z_in, i, j)
 
     use feqis_circuit, only: rmin, zmin, dr, dz
 
-    double precision, intent(in) :: r0, z0
+    double precision, intent(in) :: r_in, z_in
     integer, intent(out) :: i, j
 
-    i = floor((r0 - rmin)/dr + 1.) ! floor(1.8) = 1
-    j = floor((z0 - zmin)/dz + 1.)
+    i = floor((r_in - rmin)/dr + 1.) ! floor(1.8) = 1
+    j = floor((z_in - zmin)/dz + 1.)
 
     return
     end subroutine get_floor_index
 
 !---------------------------------------------------------------------
-    subroutine find_fields_interp_psionly(r0, z0, psi0) !give back psi, br, bz at r0, z0
+    double precision function interp2d_psi(r_in, z_in, psi_in)
+! ->psi at r_in, z_in
+    use feqis_circuit, only: r, z
 
-    use feqis_circuit, only: nr1, nz1, r, z, psirz
-
-    double precision, intent(in) :: r0, z0
-    double precision, intent(out) :: psi0
+    double precision, intent(in) :: r_in, z_in
+    double precision, intent(in), dimension(:, :) :: psi_in
 
     integer :: i, j
-    double precision x1, x2, y1, y2, z1, z2, z3, z4
-    double precision brr, brz, bzr, bzz
+    integer, dimension(2) :: psi_shape
+    double precision :: r1, r2, z1, z2, psi1, psi2, psi3, psi4
 
-    call get_floor_index(r0, z0, i, j)
-    i = min(nr1, max(1, i))
-    j = min(nz1, max(1, j))
+    psi_shape = SHAPE(psi_in)
 
-    x1 = r(i)
-    x2 = r(i+1)
-    y1 = z(j)
-    y2 = z(j+1)
-    z1 = psirz(i, j)
-    z2 = psirz(i+1, j)
-    z3 = psirz(i, j+1)
-    z4 = psirz(i+1, j+1)
+    call get_floor_index(r_in, z_in, i, j)
+    i = min(psi_shape(1) - 1, max(1, i))
+    j = min(psi_shape(2) - 1, max(1, j))
 
-    psi0 = bilinear_interp(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4)
+    r1 = r(i)
+    r2 = r(i+1)
+    z1 = z(j)
+    z2 = z(j+1)
+    psi1 = psi_in(i, j)
+    psi2 = psi_in(i+1, j)
+    psi3 = psi_in(i, j+1)
+    psi4 = psi_in(i+1, j+1)
+
+    interp2d_psi = bilinear_interp(r1, r2, z1, z2, r_in, z_in, psi1, psi2, psi3, psi4)
+
+    return
+    end function interp2d_psi
+
+!---------------------------------------------------------------------
+    subroutine find_fields_interp_psionly(r_in, z_in, psi0)
+! ->psi at r_in, z_in
+    use feqis_circuit, only: nr, nz, psirz
+
+    double precision, intent(in) :: r_in, z_in
+    double precision, intent(out) :: psi0
+
+    psi0 = interp2d_psi(r_in, z_in, psirz(1:nr, 1:nz))
 
     return
     end subroutine find_fields_interp_psionly
-
-!---------------------------------------------------------------------
-    subroutine find_fields_interp_green(r0, z0, psi0, iconduc)
-! Returns psi at r0, z0
-
-    use feqis_circuit, only: r, z
-    use green_matrix, only: greeni
-
-    integer, intent(in) :: iconduc
-    double precision, intent(in) :: r0, z0
-    double precision, intent(out) :: psi0
-
-    integer :: i, j
-    double precision :: x1, x2, y1, y2, z1, z2, z3, z4
-
-    call get_floor_index(r0, z0, i, j)
-
-    x1 = r(i)
-    x2 = r(i+1)
-    y1 = z(j)
-    y2 = z(j+1)
-    z1 = greeni(i  , j  , iconduc)
-    z2 = greeni(i+1, j  , iconduc)
-    z3 = greeni(i  , j+1, iconduc)
-    z4 = greeni(i+1, j+1, iconduc)
-
-    psi0 = bilinear_interp(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4)
-
-    return
-    end subroutine find_fields_interp_green
-
-!---------------------------------------------------------------------
-    subroutine find_fields_interp_psiext(r0, z0, psi0)
-! Returns psi_ext at r0, z0
-
-    use feqis_circuit, only: r, z, psiextrz
-
-    double precision, intent(in) :: r0, z0
-    double precision, intent(out) :: psi0
-
-    integer :: i, j
-    double precision :: x1, x2, y1, y2, z1, z2, z3, z4
-
-    call get_floor_index(r0, z0, i, j)
-
-    x1 = r(i)
-    x2 = r(i+1)
-    y1 = z(j)
-    y2 = z(j+1)
-    z1 = psiextrz(i  , j  )
-    z2 = psiextrz(i+1, j  )
-    z3 = psiextrz(i  , j+1)
-    z4 = psiextrz(i+1, j+1)
-
-    psi0 = bilinear_interp(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4)
-
-    return
-    end subroutine find_fields_interp_psiext
-
-!---------------------------------------------------------------------
-    subroutine find_fields_interp_psionly_neg(r0, z0, psi0)
-! Returns psi_ext at r0, z0
-
-    use feqis_circuit, only: r, z, psirz
-
-    double precision, intent(in) :: r0, z0
-    double precision, intent(out) :: psi0
-
-    integer :: i, j
-    double precision :: x1, x2, y1, y2, z1, z2, z3, z4
-
-    call get_floor_index(r0, z0, i, j)
-
-    x1 = r(i)
-    x2 = r(i+1)
-    y1 = z(j)
-    y2 = z(j+1)
-    z1 = -psirz(i  , j  )
-    z2 = -psirz(i+1, j  )
-    z3 = -psirz(i  , j+1)
-    z4 = -psirz(i+1, j+1)
-
-    psi0 = bilinear_interp(x1, x2, y1, y2, r0, z0, z1, z2, z3, z4)
-
-    return
-    end subroutine find_fields_interp_psionly_neg
 
 !---------------------------------------------------------------------
     double precision function bilinear_interp(x1, x2, y1, y2, x, y, f11, f21, f12, f22)
@@ -1208,7 +1138,7 @@ contains
     double precision :: angl, dbl, dd, t1, t2, t3, t4, t5
     double precision :: z1, z2, psiold, z3
 
-    call find_angle(rax, zax, rx, zx, angl)
+    angl = pol_angle(rax, zax, rx, zx)
 
     dbl = sqrt((rx - rax)**2 + (zx - zax)**2)
     dd  = sqrt(dr**2 + dz**2)

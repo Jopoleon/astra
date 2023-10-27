@@ -291,13 +291,13 @@ subroutine restab_F_function_full_fonfit
 
 !refits all currents
 use errors_params, only: err_find_psistab
-use feqis_circuit, only: nr2, nz2, nactive, nconduc, nteta, iaxis, jaxis, &
+use feqis_circuit, only: nr, nz, nr2, nz2, nactive, nconduc, nteta, iaxis, jaxis, &
     dr, dz, rax, zax, raxp, zaxp, rbndp, zbndp, &
     curconduc, iplasma, jrz, psiplasrz, psirz, psiextrz
 use astra2fbe, only: sigma_coils, sigma_b, sigma_axis
 use green_matrix, only: greeni
-use feqis_tools, only: get_closest_index, &
-    find_fields_interp_green, inverse_matrix, boundary, &
+use feqis_tools, only: get_closest_index, interp2d_psi, &
+    inverse_matrix, boundary, &
     psi_external_calc, find_fields_interp_psionly
 
 implicit none
@@ -351,13 +351,13 @@ matrix    = 0.
 invmatrix = 0.
 do j=1, nconduc
     do k=1, nteta
-        call find_fields_interp_green(rbref(k), zbref(k), G_00(j, k), j) !give back psi, br, bz at r0, z0
+        G_00(j, k) = interp2d_psi(rbref(k), zbref(k), greeni(1:nr, 1:nz, j))
     enddo
     G_00c(j) = sum(G_00(j, 1:nteta))/(0. + nteta)
-    call find_fields_interp_green(raxref - dr/2., zaxref, bub(1), j) ! -> psi, br, bz at r0, z0
-    call find_fields_interp_green(raxref + dr/2., zaxref, bub(2), j)
-    call find_fields_interp_green(raxref, zaxref - dz/2., bub(3), j)
-    call find_fields_interp_green(raxref, zaxref + dz/2., bub(4), j)
+    bub(1) = interp2d_psi(raxref - dr/2., zaxref, greeni(1:nr, 1:nz, j))
+    bub(2) = interp2d_psi(raxref + dr/2., zaxref, greeni(1:nr, 1:nz, j))
+    bub(3) = interp2d_psi(raxref, zaxref - dz/2., greeni(1:nr, 1:nz, j))
+    bub(4) = interp2d_psi(raxref, zaxref + dz/2., greeni(1:nr, 1:nz, j))
     G_00r(j) = (bub(2) - bub(1))/dr
     G_00z(j) = (bub(4) - bub(3))/dz
 enddo
@@ -471,13 +471,13 @@ subroutine restab_boundary_with_fourier_wall !not working well
 
 use errors_params, only: err_find_psistab
 use feqis_circuit, only: npassive, nactive, nconduc, &
-    nteta, nr2, nz2, iaxis, jaxis, &
+    nteta, nr, nz, nr2, nz2, iaxis, jaxis, &
     dr, dz, rax, zax, raxp, zaxp, rbndp, zbndp, r_cond, z_cond, &
     iplasma, curconduc, psiplasrz, jrz, psirz, psiextrz, psistabr, psistabz
 use astra2fbe, only: n_fourier_restab_boundary
 use green_matrix, only: greeni
-use feqis_tools, only: get_closest_index, &
-    find_angle, find_fields_interp_green, boundary, &
+use feqis_tools, only: get_closest_index, interp2d_psi, &
+    pol_angle, boundary, &
     find_fields_interp_psionly, psi_external_calc, &
     least_square_biquad
 
@@ -515,12 +515,12 @@ G_00s = 0.
 
 ! Evaluate coils' quantities
 do i=1, npassive
-    call find_angle(rax, zax, r_cond(nactive + i), z_cond(nactive + i), anglr(i))
+    anglr(i) = pol_angle(rax, zax, r_cond(nactive + i), z_cond(nactive + i))
 ! Find true axis
     do j=1, nteta
         xub(1) = rbndp(j)
         yub(1) = zbndp(j)
-        call find_fields_interp_green(xub(1), yub(1), bub(2), nactive + i) !give back psi, br, bz at r0, z0
+        bub(2) = interp2d_psi(xub(1), yub(1), greeni(1:nr, 1:nz, nactive + i))
         do k=1, n_fourier_restab_boundary
             G_00c(j, k) = G_00c(j, k) + cos(k*anglr(i))*bub(2)
             G_00s(j, k) = G_00s(j, k) + sin(k*anglr(i))*bub(2)
@@ -614,7 +614,7 @@ use feqis_circuit, only: nactive, npassive, nconduc, nr2, nz2, iaxis, jaxis, &
     curconduc, iplasma, jrz, psirz, psiextrz, psiplasrz, psistabr, psistabz
 use green_matrix, only: greeni
 use feqis_tools, only: get_closest_index, &
-    find_angle, least_square_biquad, boundary, &
+    pol_angle, least_square_biquad, boundary, &
     find_fields_interp_psionly, psi_external_calc
 
 implicit none
@@ -646,7 +646,7 @@ jax = jaxis
 
 ! Evaluate coils' quantities
 do i=1, npassive
-    call find_angle(rax, zax, r_cond(nactive + i), z_cond(nactive + i), anglr(i))
+    anglr(i) = pol_angle(rax, zax, r_cond(nactive + i), z_cond(nactive + i))
 ! Find true axis
     xub(1) = r(iax-1)
     xub(2) = r(iax)
@@ -765,7 +765,7 @@ use feqis_circuit, only : nr2, nz2, iaxis, jaxis, &
     r, z, dr, dz, rax, zax, raxp, zaxp, &
     iplasma, jrz, psirz, psiextrz, psiplasrz, psistabr, psistabz
 use feqis_tools, only: get_closest_index, &
-    boundary, nine_point_coeffs_only, find_angle, &
+    boundary, nine_point_coeffs_only, &
     find_fields_interp_psionly
 
 implicit none
@@ -1057,7 +1057,7 @@ use astra2fbe, only: dr_factor_init_astra, dz_factor_init_astra, &
     tau_circuit_ef, tau_gseq_ef, activate_coil_ef, current_limit_ef, &
     raxis_astra, zaxis_astra, psi0_astra, psib_astra, use_limiter_astra
 use numerical_tools, only: linterp
-use feqis_tools, only: find_angle
+use feqis_tools, only: pol_angle
 
 implicit none
 
@@ -1144,7 +1144,7 @@ if (ifplasma == 1) then
         endif
 
         do i=1, nteta
-            call find_angle(raxp, zaxp, rexp(i), zexp(i), tetaexp(i))
+            tetaexp(i) = pol_angle(raxp, zaxp, rexp(i), zexp(i))
         enddo
 
 ! Order points
@@ -1520,7 +1520,7 @@ use feqis_circuit, only: nr2, nteta, nbnd, i_dim5, iaxis, jaxis, &
     teta, dteta, raus, rinner, zbot, ztop, &
     r, z, dr, dz, rax, zax, raxp, zaxp, rbnd, zbnd, rbndp, zbndp, &
     psiaxis, psibnd, psiaxisp, psibndp, psirz
-use feqis_tools, only: find_angle, find_fields_interp_psionly
+use feqis_tools, only: pol_angle, find_fields_interp_psionly
 
 implicit none
 
@@ -1548,7 +1548,7 @@ else
     rbnd(1) = r(k) - (psirz(k, j) - psibnd)/(psirz(k, j) - psirz(k-1, j))*dr
 endif
     zbnd(1) = z(j)
-call find_angle(rax, zax, rbnd(1), zbnd(1), teta_fbe(1))
+teta_fbe(1) = pol_angle(rax, zax, rbnd(1), zbnd(1))
 
 theta_loop: do i=2, nteta
     dx = sqrt(dr**2 + dz**2)
@@ -1843,7 +1843,7 @@ use pi_vars, only: GPI
 use astra2fbe, only: x_point_save, plasma_config
 use errors_params, only: err_find_oxpoints_derivs
 use feqis_tools, only: find_closest_xpoints, find_fields_interp_psionly, &
-    get_closest_index, find_angle, check_xpoint_connection_axis, &
+    get_closest_index, pol_angle, check_xpoint_connection_axis, &
     nine_point_regression, nine_point_regression_follow
 use feqis_circuit, only: nr1, nr2, nz1, nz2, i_dim2, i_dim5, nlimiter, &
     max_xpoints, n_of_xpoints, &
@@ -2062,7 +2062,7 @@ if (n_of_xpoints >= 1) then
 ! Second pass, remove limiter points that are in x-points shadow, simple "straight line method" --> to be refined later on
     do i=1, n_of_xpoints
         if (psi_xpoint(i) > -1.e5) then
-            call find_angle(rax, zax, r_xpoint(i), z_xpoint(i), x1)
+            x1 = pol_angle(rax, zax, r_xpoint(i), z_xpoint(i))
             if ((r_xpoint(i) > rax) .and. (x1 >= 7./4.*GPI .or.  x1 <= GPI/4.   )) raus   = min(raus, r_xpoint(i))
             if ((z_xpoint(i) > zax) .and. (x1 >=   GPI/4.  .and. x1 <= 3./4.*GPI)) ztop   = min(ztop, z_xpoint(i))
             if ((r_xpoint(i) < rax) .and. (x1 >= 3./4.*GPI .and. x1 <= 5./4.*GPI)) rinner = max(rinner, r_xpoint(i))
