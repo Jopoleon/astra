@@ -1,16 +1,17 @@
 subroutine full_system_advance_ef(j_init)
 
 use errors_params, only: err_epsilon, err_circ_plasma_iter
-use feqis_circuit, only: nconduc, iplasma, psi_cur_old, &
-    psiplasmatoconduc, curconduc
+use feqis_circuit, only: nr2, nz2, nconduc, iplasma, psi_cur_old, &
+    psiplasmatoconduc, curconduc, jrz, area_eff
 use astra2fbe, only: fast_mode, execute_plasma
 use parameters_a2equil, only: max_iter
-use feqis_tools, only: psi_external_calc, plasma_psi_to_coils
+use feqis_tools, only: psi_external_calc
+use green_matrix, only: greeni
 
 implicit none
 
 integer, intent(inout) :: j_init
-integer :: j_iter
+integer :: i, j_iter
 double precision :: error_temp
 double precision, dimension(300) :: cur_temp
 
@@ -21,7 +22,9 @@ if (j_init == 0) then
 ! First do full equilibrium solution at time t=0
     call psi_external_calc
     call solve_gse2d_fbe_full_ef(0)
-    call plasma_psi_to_coils
+    do i=1, nconduc
+        psiplasmatoconduc(i) = sum(jrz(1: nr2, 1: nz2) * area_eff(1: nr2, 1: nz2) * greeni(1: nr2, 1: nz2, i))
+    enddo
     psi_cur_old(1:nconduc) = psiplasmatoconduc(1:nconduc)
 
     write(*, *) 'init done'
@@ -37,7 +40,9 @@ if (fast_mode == 1 .and. execute_plasma == 1) then
     psi_cur_old(1:nconduc) = psiplasmatoconduc(1:nconduc)
     call psi_external_calc
     call solve_gse2d_fbe_full_ef_1turn(1, 0, 0.d0, 0.d0)
-    call plasma_psi_to_coils
+    do i=1, nconduc
+        psiplasmatoconduc(i) = sum(jrz(1: nr2, 1: nz2) * area_eff(1: nr2, 1: nz2) * greeni(1: nr2, 1: nz2, i))
+    enddo
 endif
 
 do j_iter=1, 2*max_iter
@@ -47,7 +52,9 @@ do j_iter=1, 2*max_iter
     if (fast_mode == 0) then
         call psi_external_calc
         call solve_gse2d_fbe_full_ef_1turn(1, 0, 0.d0, 0.d0)
-        call plasma_psi_to_coils
+        do i=1, nconduc
+            psiplasmatoconduc(i) = sum(jrz(1: nr2, 1: nz2) * area_eff(1: nr2, 1: nz2) * greeni(1: nr2, 1: nz2, i))
+        enddo
     endif
 
     error_temp = sum(abs(cur_temp(1:nconduc) - curconduc(1:nconduc)))/(nconduc + err_epsilon)/iplasma
@@ -2109,7 +2116,7 @@ end subroutine find_psi_boundary
 subroutine new_jrz_ef ! calculate new right hand side given new boundary!
 
 use rcurr_zcurr_2def, only: R_curr_2d, Z_curr_2D
-use feqis_tools, only: fill_in_current, t_find_u_n, get_floor_index
+use feqis_tools, only: fill_in_current, get_floor_index
 use feqis_circuit, only: nr1, nr2, nz1, nz2, nrho2d, i_dim2, &
     r, z, rax, zax, dr, dz, &
     rmin, zmin, &
@@ -2181,8 +2188,8 @@ quad_loop: do quadrant=1, 4
         i2 = j
 
         t1 = t_find_u_n(i1 + ipluz, i2, i1, i2)
-        if (t1 < 0 .or. t1 > 1.) t1 = 1.e6
         t2 = t_find_u_n(i1, i2 + jpluz, i1, i2)
+        if (t1 < 0 .or. t1 > 1.) t1 = 1.e6
         if (t2 < 0 .or. t2 > 1.) t2 = 1.e6
         if (t2 > 0. .and. t2 <= 1.) then
             j_griddo_j = j_griddo_j + 1
@@ -2234,13 +2241,13 @@ do i=1, j_griddo_j
     t4 = 0.
     i1 = external_griddo_j(i, 1)
     i2 = external_griddo_j(i, 2)
-    t1 = t_find_u_n(i1-1, i2, i1, i2)
-    if (t1 < 0 .or. t1 > 1.) t1 = 0.
+    t1 = t_find_u_n(i1 - 1, i2, i1, i2)
     t2 = t_find_u_n(i1, i2 + 1, i1, i2)
-    if (t2 < 0 .or. t2 > 1.) t2 = 0.
     t3 = t_find_u_n(i1 + 1, i2, i1, i2)
+    t4 = t_find_u_n(i1, i2 - 1, i1, i2)
+    if (t1 < 0 .or. t1 > 1.) t1 = 0.
+    if (t2 < 0 .or. t2 > 1.) t2 = 0.
     if (t3 < 0 .or. t3 > 1.) t3 = 0.
-    t4 = t_find_u_n(i1, i2-1, i1, i2)
     if (t4 < 0 .or. t4 > 1.) t4 = 0.
 
     je1 = 0.
@@ -2333,3 +2340,55 @@ enddo
 
 return
 end subroutine interp_j_fromrhotorz
+
+!---------------------------------------------------------------------
+double precision function t_find_u_n(i1, j1, i2, j2)
+
+use feqis_circuit, only: u_n
+
+integer, intent(in) :: i1, i2, j1, j2
+
+t_find_u_n = (1. - u_n(i1, j1))/(u_n(i2, j2) - u_n(i1, j1))
+
+return
+end function t_find_u_n
+
+!---------------------------------------------------------------------
+subroutine coil_forces_feqis(ncoilz, force_R, force_Z, plasma_state)
+
+use feqis_circuit, only: nblocks, npassive, jrz, nr2, nz2, area_eff, &
+    curconduc, mequivalence
+use green_matrix, only: dgreenirpl, dgreenizpl, dgreenirj, dgreenizj
+
+integer, intent(in) :: ncoilz, plasma_state
+double precision, intent(out), dimension(ncoilz) :: force_R, force_Z
+
+integer :: i, j, k, nblock_a
+double precision :: x1
+
+force_R = 0.
+force_Z = 0.
+nblock_a = nblocks - npassive
+
+if (plasma_state == 1) then !not sure about the plasma response...
+    do i=1, nblock_a
+        x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreenirpl(1:nr2, 1:nz2, i))
+        force_R(i) = force_R(i) + curconduc(mequivalence(i)) * x1
+        force_Z(i) = force_Z(i) - curconduc(mequivalence(i)) * x1
+    enddo
+endif
+
+!block-to-block
+do i=1, nblock_a
+    do j=1, nblock_a
+        if (i /= j) then
+            x1 = curconduc(mequivalence(j)) * curconduc(mequivalence(i)) * dgreenirj(i, j)
+            force_R(i) = force_R(i) + x1
+            force_Z(i) = force_Z(i) - x1
+        endif
+    enddo
+enddo
+
+return
+end subroutine coil_forces_feqis
+

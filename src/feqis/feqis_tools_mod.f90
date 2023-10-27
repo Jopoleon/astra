@@ -109,18 +109,6 @@ contains
     end subroutine inverse_matrix
 
 !---------------------------------------------------------------------
-    double precision function t_find_u_n(i1, j1, i2, j2)
-
-    use feqis_circuit, only: u_n
-
-    integer, intent(in) :: i1, i2, j1, j2
-
-    t_find_u_n = (1. - u_n(i1, j1))/(u_n(i2, j2) - u_n(i1, j1))
-
-    return
-    end function t_find_u_n
-
-!---------------------------------------------------------------------
     double precision function curinterp(r_in, z_in, jrho, rho, teta, rax, zax, nrho, nteta)
 
     use pi_vars, only: GPI2
@@ -236,60 +224,6 @@ contains
 
     return
     end subroutine discrete_sine_transform
-
-!---------------------------------------------------------------------
-    subroutine coil_forces_feqis(ncoilz, force_R, force_Z, plasma_state)
-
-    use feqis_circuit, only: nblocks, npassive, jrz, nr2, nz2, area_eff, &
-        curconduc, mequivalence
-    use green_matrix, only: dgreenirpl, dgreenizpl, dgreenirj, dgreenizj
-
-    integer, intent(in) :: ncoilz, plasma_state
-    double precision, intent(out), dimension(ncoilz) :: force_R, force_Z
-
-    integer :: i, j, k, nblock_a
-    double precision :: x1
-
-    force_R = 0.
-    force_Z = 0.
-    nblock_a = nblocks - npassive
-
-    if (plasma_state == 1) then !not sure about the plasma response...
-        do i=1, nblock_a
-            x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreenirpl(1:nr2, 1:nz2, i))
-            force_R(i) = force_R(i) + curconduc(mequivalence(i)) * x1
-            force_Z(i) = force_Z(i) - curconduc(mequivalence(i)) * x1
-        enddo
-    endif
-
-!block-to-block
-    do i=1, nblock_a
-        do j=1, nblock_a
-            if (i /= j) then
-                x1 = curconduc(mequivalence(j)) * curconduc(mequivalence(i)) * dgreenirj(i, j)
-                force_R(i) = force_R(i) + x1
-                force_Z(i) = force_Z(i) - x1
-            endif
-        enddo
-    enddo
-
-    return
-    end subroutine coil_forces_feqis
-
-!---------------------------------------------------------------------
-    subroutine plasma_psi_to_coils
-
-    use feqis_circuit, only: nr2, nz2, nconduc, jrz, area_eff, psiplasmatoconduc
-    use green_matrix, only: greeni
-
-    integer :: i
-
-    do i=1, nconduc
-        psiplasmatoconduc(i) = sum(jrz(1: nr2, 1: nz2) * area_eff(1: nr2, 1: nz2) * greeni(1: nr2, 1: nz2, i))
-    enddo
-
-    return
-    end subroutine plasma_psi_to_coils
 
 !---------------------------------------------------------------------
     subroutine get_zccurb_efff(rc_cur, zc_cur, z2c_cur, rgeoc, zgeoc, ahorc)
