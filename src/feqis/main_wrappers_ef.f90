@@ -297,15 +297,14 @@ use feqis_circuit, only: nr, nz, nr2, nz2, nactive, nconduc, nteta, iaxis, jaxis
 use astra2fbe, only: sigma_coils, sigma_b, sigma_axis
 use green_matrix, only: greeni
 use feqis_tools, only: get_closest_index, interp2d_psi, &
-    inverse_matrix, boundary, &
-    psi_external_calc, find_fields_interp_psionly
+    inverse_matrix, boundary, interp2d_psi, psi_external_calc
 
 implicit none
 
 integer :: i, j, k, j_iter, iax, jax
 double precision :: temp_err, curr, f_correction, x1, x2, x3, &
     Ffunc, Ffunc_old, raxref, zaxref
-double precision, dimension(9) :: bub, xub, yub
+double precision, dimension(9) :: bub
 double precision, dimension(500) :: rbref, zbref
 double precision, dimension(nconduc) :: G_00c, G_00r, G_00z, &
     Fderiv, curref, curnow, curdiff
@@ -395,20 +394,18 @@ do j_iter=1, 300000 !iterations to find currents
     enddo
 
     do j=1, nteta
-        xub(1) = rbref(j)
-        yub(1) = zbref(j)
-        call find_fields_interp_psionly(xub(1), yub(1), psicorr(j))  !psi on the boundary
+        psicorr(j) = interp2d_psi(rbref(j), zbref(j), psirz(1:nr, 1:nz))
     enddo
 
     x1 = sum(psicorr)/(nteta + 0.) !average psi on the boundary
 
 ! Derivative at ref axis
-    call find_fields_interp_psionly(raxref - dr/2., zaxref, bub(1)) ! -> psi(r0, z0)
-    call find_fields_interp_psionly(raxref + dr/2., zaxref, bub(2))
-    call find_fields_interp_psionly(raxref, zaxref - dz/2., bub(3))
-    call find_fields_interp_psionly(raxref, zaxref + dz/2., bub(4))
-    x2 = (bub(2) - bub(1))/dr ! psir
-    x3 = (bub(4) - bub(3))/dz ! psiz
+    bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, psirz(1:nr, 1:nz))
+    bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, psirz(1:nr, 1:nz))
+    bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, psirz(1:nr, 1:nz))
+    bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, psirz(1:nr, 1:nz))
+    x2 = (bub(2) - bub(1))/dr ! dPsi/dr
+    x3 = (bub(4) - bub(3))/dz ! dPsi/dz
 
     Ffunc = sigma_B*sum((psicorr - x1)**2) + sum(sigma_coils(1:nconduc)*curdiff**2) + sigma_axis*(x2**2 + x3**2)
 
@@ -477,15 +474,14 @@ use feqis_circuit, only: npassive, nactive, nconduc, &
 use astra2fbe, only: n_fourier_restab_boundary
 use green_matrix, only: greeni
 use feqis_tools, only: get_closest_index, interp2d_psi, &
-    pol_angle, boundary, &
-    find_fields_interp_psionly, psi_external_calc, &
+    pol_angle, boundary, interp2d_psi, psi_external_calc, &
     least_square_biquad
 
 implicit none
 
 integer :: i, j, k, j_iter, iax, jax, info
 double precision :: temp_err, curr, f_correction, x1, psibt0, psibt1
-double precision, dimension(9) :: bub, xub, yub
+double precision, dimension(9) :: bub
 double precision, dimension(npassive) :: anglr
 double precision, dimension(nteta) :: psicorr
 double precision, dimension(n_fourier_restab_boundary) :: S_00, C_00
@@ -518,9 +514,7 @@ do i=1, npassive
     anglr(i) = pol_angle(rax, zax, r_cond(nactive + i), z_cond(nactive + i))
 ! Find true axis
     do j=1, nteta
-        xub(1) = rbndp(j)
-        yub(1) = zbndp(j)
-        bub(2) = interp2d_psi(xub(1), yub(1), greeni(1:nr, 1:nz, nactive + i))
+        bub(2) = interp2d_psi(rbndp(j), zbndp(j), greeni(1:nr, 1:nz, nactive + i))
         do k=1, n_fourier_restab_boundary
             G_00c(j, k) = G_00c(j, k) + cos(k*anglr(i))*bub(2)
             G_00s(j, k) = G_00s(j, k) + sin(k*anglr(i))*bub(2)
@@ -546,9 +540,7 @@ do j_iter=1, 30
     psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
     psirz(1:nr2, 1:nz2) = psiplasrz(1:nr2, 1:nz2) + psiextrz(1:nr2, 1:nz2) !total flux
     do j=1, nteta
-        xub(1) = rbndp(j)
-        yub(1) = zbndp(j)
-        call find_fields_interp_psionly(xub(1), yub(1), psicorr(j)) 
+    	psicorr(j) = interp2d_psi(rbndp(j), zbndp(j), psirz(1:nr, 1:nz))
     enddo
 
     x1 = sum(psicorr)/(nteta + 0.)
@@ -609,13 +601,12 @@ end subroutine restab_boundary_with_fourier_wall
 subroutine restab_axis_with_fourier_wall
 
 use errors_params, only: err_find_psistab
-use feqis_circuit, only: nactive, npassive, nconduc, nr2, nz2, iaxis, jaxis, &
+use feqis_circuit, only: nactive, npassive, nconduc, nr, nz, nr2, nz2, iaxis, jaxis, &
     r, z, dr, dz, rax, zax, raxp, zaxp, r_cond, z_cond, &
     curconduc, iplasma, jrz, psirz, psiextrz, psiplasrz, psistabr, psistabz
 use green_matrix, only: greeni
-use feqis_tools, only: get_closest_index, &
-    pol_angle, least_square_biquad, boundary, &
-    find_fields_interp_psionly, psi_external_calc
+use feqis_tools, only: get_closest_index, interp2d_psi, &
+    pol_angle, least_square_biquad, boundary, psi_external_calc
 
 implicit none
 
@@ -711,10 +702,10 @@ do j_iter=1, 30000
     call find_new_axis_part1
     dum1 = C_00r*S_00z - C_00z*S_00r
 
-    call find_fields_interp_psionly(raxp + dr, zaxp, bub(1)) !give back psi, br, bz at r0, z0
-    call find_fields_interp_psionly(raxp - dr, zaxp, bub(2)) !give back psi, br, bz at r0, z0
-    call find_fields_interp_psionly(raxp, zaxp + dz, bub(3)) !give back psi, br, bz at r0, z0
-    call find_fields_interp_psionly(raxp, zaxp - dz, bub(4)) !give back psi, br, bz at r0, z0
+    bub(1) = interp2d_psi(raxp + dr, zaxp, psirz(1:nr, 1:nz))
+    bub(2) = interp2d_psi(raxp - dr, zaxp, psirz(1:nr, 1:nz))
+    bub(3) = interp2d_psi(raxp, zaxp + dz, psirz(1:nr, 1:nz))
+    bub(4) = interp2d_psi(raxp, zaxp - dz, psirz(1:nr, 1:nz))
 
     xub(1) = (bub(1) - bub(2))/(2.*dr)
     yub(1) = (bub(3) - bub(4))/(2.*dz)
@@ -765,8 +756,7 @@ use feqis_circuit, only : nr2, nz2, iaxis, jaxis, &
     r, z, dr, dz, rax, zax, raxp, zaxp, &
     iplasma, jrz, psirz, psiextrz, psiplasrz, psistabr, psistabz
 use feqis_tools, only: get_closest_index, &
-    boundary, nine_point_coeffs_only, &
-    find_fields_interp_psionly
+    boundary, nine_point_coeffs_only
 
 implicit none
 
@@ -1521,11 +1511,11 @@ end subroutine assignment_of_equilout_stuff
 subroutine convert_boundary_to_pbe
 
 use pi_vars, only: GPI2
-use feqis_circuit, only: nr2, nteta, nbnd, i_dim5, iaxis, jaxis, &
+use feqis_circuit, only: nr, nr2, nz, nteta, nbnd, i_dim5, iaxis, jaxis, &
     teta, dteta, raus, rinner, zbot, ztop, &
     r, z, dr, dz, rax, zax, raxp, zaxp, rbnd, zbnd, rbndp, zbndp, &
     psiaxis, psibnd, psiaxisp, psibndp, psirz
-use feqis_tools, only: pol_angle, find_fields_interp_psionly
+use feqis_tools, only: pol_angle, interp2d_psi
 
 implicit none
 
@@ -1577,7 +1567,7 @@ theta_loop: do i=2, nteta
     endif
     t1 = rax + x1*cos(teta_fbe(i))
     t2 = zax + x1*sin(teta_fbe(i))
-    call find_fields_interp_psionly(t1, t2, t3) !give back psi, br, bz at r0, z0
+    t3 = interp2d_psi(t1, t2, psirz(1:nr, 1:nz))
 
     if (t3 == psibnd) then
         rbnd(i) = t1
@@ -1586,7 +1576,7 @@ theta_loop: do i=2, nteta
         do
             z1 = rax + (x1 - dx)*cos(teta_fbe(i))
             z2 = zax + (x1 - dx)*sin(teta_fbe(i))
-            call find_fields_interp_psionly(z1, z2, z3) 
+            z3 = interp2d_psi(z1, z2, psirz(1:nr, 1:nz))
             if (z3 < psibnd) then
                 dx = 1.1*dx
             else
@@ -1620,7 +1610,7 @@ theta_loop: do i=2, nteta
             endif
             z1 = rax + x2*cos(teta_fbe(i))
             z2 = zax + x2*sin(teta_fbe(i))
-            call find_fields_interp_psionly(z1, z2, z3)
+            z3 = interp2d_psi(z1, z2, psirz(1:nr, 1:nz))
             if (z3 > psibnd) then
                 if (j4 == 1) then
                     rbnd(i) = z1
@@ -1847,10 +1837,10 @@ subroutine find_psi_boundary
 use pi_vars, only: GPI
 use astra2fbe, only: x_point_save, plasma_config
 use errors_params, only: err_find_oxpoints_derivs
-use feqis_tools, only: find_closest_xpoints, find_fields_interp_psionly, &
+use feqis_tools, only: find_closest_xpoints, &
     get_closest_index, pol_angle, check_xpoint_connection_axis, &
-    nine_point_regression, nine_point_regression_follow
-use feqis_circuit, only: nr1, nr2, nz1, nz2, i_dim2, i_dim5, nlimiter, &
+    nine_point_regression, nine_point_regression_follow, interp2d_psi
+use feqis_circuit, only: nr, nz, nr1, nr2, nz1, nz2, i_dim2, i_dim5, nlimiter, &
     max_xpoints, n_of_xpoints, &
     r, z, dr, dz, rax, zax, r_xpoint, z_xpoint, &
     rinner, raus, zbot, ztop, &
@@ -2036,7 +2026,7 @@ endif
 
 ! Calculate limiter flux 
 do i=1, nlimiter
-    call find_fields_interp_psionly(limiterR(i), limiterZ(i), psi_limp(i))
+    psi_limp(i) = interp2d_psi(limiterR(i), limiterZ(i), psirz(1:nr, 1:nz))
 enddo
 
 if (n_of_xpoints == 0) then
@@ -2060,7 +2050,7 @@ if (n_of_xpoints >= 1) then
         if (zlimpotential(j, k) < 0.5) then
             psi_xpoint(i) = -1.e6
         else
-            call find_fields_interp_psionly(r_xpoint(i), z_xpoint(i), psi_xpoint(i))
+            psi_xpoint(i) = interp2d_psi(r_xpoint(i), z_xpoint(i), psirz(1:nr, 1:nz))
         endif
     enddo
 

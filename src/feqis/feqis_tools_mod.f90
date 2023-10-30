@@ -304,22 +304,23 @@ contains
     double precision function find_l_gap(psibnd, l_ref_in, gapmin, gapmax, geom)
 
     use errors_params, only: err_gaptolez
+    use feqis_circuit, only: nr, nz, psirz
 
     double precision, intent(in) :: psibnd, l_ref_in, gapmin, gapmax, geom(3)
 
-    double precision :: dur1, dur2, u001, u002, dumx1, dumx2, dumy1, dumy2, l_ref
+    double precision :: dur1, dur2, u001, u002, x1, x2, y1, y2, l_ref
 
     l_ref = l_ref_in
     dur1 = 0.
     dur2 = l_ref
 
     do
-        dumx1 = geom(1) + dur1*cos(geom(3))
-        dumy1 = geom(2) + dur1*sin(geom(3))
-        dumx2 = geom(1) + dur2*cos(geom(3))
-        dumy2 = geom(2) + dur2*sin(geom(3))
-        call find_fields_interp_psionly(dumx1, dumy1, u001) 
-        call find_fields_interp_psionly(dumx2, dumy2, u002) 
+        x1 = geom(1) + dur1*cos(geom(3))
+        y1 = geom(2) + dur1*sin(geom(3))
+        x2 = geom(1) + dur2*cos(geom(3))
+        y2 = geom(2) + dur2*sin(geom(3))
+        u001 = interp2d_psi(x1, y1, psirz(1: nr, 1:nz))
+        u002 = interp2d_psi(x2, y2, psirz(1: nr, 1:nz))
         if (abs(l_ref) < err_gaptolez) then
             find_l_gap = 0.5*(dur1 + dur2)
             EXIT
@@ -743,7 +744,7 @@ contains
 !---------------------------------------------------------------------
     subroutine nine_point_regression_follow(rx, zx, pos_xpoint, ddpsi, f00)
 
-    use feqis_circuit, only: dr, dz
+    use feqis_circuit, only: nr, nz, dr, dz, psirz
 
     integer, parameter :: ndim=9
     double precision, intent(in) :: rx, zx
@@ -752,15 +753,15 @@ contains
     double precision, intent(out), dimension(ndim-1) :: ddpsi
     double precision, dimension(ndim) :: bub
 
-    call find_fields_interp_psionly(rx - dr, zx - dz, bub(1))
-    call find_fields_interp_psionly(rx     , zx - dz, bub(2))
-    call find_fields_interp_psionly(rx + dr, zx - dz, bub(3))
-    call find_fields_interp_psionly(rx - dr, zx     , bub(4))
-    call find_fields_interp_psionly(rx     , zx     , bub(5))
-    call find_fields_interp_psionly(rx + dr, zx     , bub(6))
-    call find_fields_interp_psionly(rx - dr, zx + dz, bub(7))
-    call find_fields_interp_psionly(rx     , zx + dz, bub(8))
-    call find_fields_interp_psionly(rx + dr, zx + dz, bub(9))
+    bub(1) = interp2d_psi(rx - dr, zx - dz, psirz(1:nr, 1:nz))
+    bub(2) = interp2d_psi(rx     , zx - dz, psirz(1:nr, 1:nz))
+    bub(3) = interp2d_psi(rx + dr, zx - dz, psirz(1:nr, 1:nz))
+    bub(4) = interp2d_psi(rx - dr, zx     , psirz(1:nr, 1:nz))
+    bub(5) = interp2d_psi(rx     , zx     , psirz(1:nr, 1:nz))
+    bub(6) = interp2d_psi(rx + dr, zx     , psirz(1:nr, 1:nz))
+    bub(7) = interp2d_psi(rx - dr, zx + dz, psirz(1:nr, 1:nz))
+    bub(8) = interp2d_psi(rx     , zx + dz, psirz(1:nr, 1:nz))
+    bub(9) = interp2d_psi(rx + dr, zx + dz, psirz(1:nr, 1:nz))
 
     call exact_biquad_regress(rx, zx, bub(1:ndim), ndim,  &
         pos_xpoint(1), pos_xpoint(2), f00, ddpsi, dr, dz)
@@ -827,19 +828,6 @@ contains
 
     return
     end function interp2d_psi
-
-!---------------------------------------------------------------------
-    subroutine find_fields_interp_psionly(r_in, z_in, psi0)
-! ->psi at r_in, z_in
-    use feqis_circuit, only: nr, nz, psirz
-
-    double precision, intent(in) :: r_in, z_in
-    double precision, intent(out) :: psi0
-
-    psi0 = interp2d_psi(r_in, z_in, psirz(1:nr, 1:nz))
-
-    return
-    end subroutine find_fields_interp_psionly
 
 !---------------------------------------------------------------------
     double precision function bilinear_interp(x1, x2, y1, y2, x, y, f11, f21, f12, f22)
@@ -1080,6 +1068,8 @@ contains
 !this routine checks that going from axis to x point,  the directed gradient of psi never changes sign
 !(otherwise it means the x point is not connected to the plasma
 
+    use feqis_circuit, only: nr, nz, psirz
+
     double precision,  intent(in) :: rx, zx, rax, zax, dr, dz
     integer, intent(out) :: icheck
 
@@ -1093,8 +1083,7 @@ contains
     dd  = sqrt(dr**2 + dz**2)
     nsteps = nint(dbl/dd)
     dd = dbl/nsteps !perfect ratio
-
-    
+  
     icheck = 1
     psiold = 0.
     do i=2, nsteps
@@ -1102,8 +1091,8 @@ contains
         t2 = zax + dd*(i - 1)*sin(angl)
         t3 = rax + dd*i*cos(angl)
         t4 = zax + dd*i*sin(angl)
-        call find_fields_interp_psionly(t1, t2, z1)
-        call find_fields_interp_psionly(t3, t4, z2)
+        z1 = interp2d_psi(t1, t2, psirz(1:nr, 1:nz))
+        z2 = interp2d_psi(t3, t4, psirz(1:nr, 1:nz))
         z3 = (z2 - z1)*psiold
         psiold = z2 - z1
         if (z3 < 0) then
