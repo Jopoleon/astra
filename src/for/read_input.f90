@@ -858,10 +858,17 @@ close(201)
 
 !if boundary is given, calculates initial geometry from that
 if (NBNT > 0) then
+!find time index of most proximum boundary
+    j=1
+    do jt=1,NBNT
+        if (BNDTIM(jt) <= TSTART) j=jt
+    enddo
+    jt=j
+		
     allocate(bnd_rz(2*NBND))
     do jthe=1, NBND
-        bnd_rz(jthe)      = BNDR((jthe-1)*NBNT + 1)
-        bnd_rz(NBND+jthe) = BNDZ((jthe-1)*NBNT + 1) 
+        bnd_rz(jthe)      = BNDR((jthe-1)*NBNT + jt)
+        bnd_rz(NBND+jthe) = BNDZ((jthe-1)*NBNT + jt) 
     enddo
 !calculate ABC
     ABC = (maxval(bnd_rz(1: nbnd)) - minval(bnd_rz(1: nbnd)))/2.
