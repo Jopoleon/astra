@@ -38,7 +38,7 @@ double precision, dimension(i_dim2) ::tetabez, dpsidvbez, psibez, &
     ffprimebez, pprimebez, pressbez, ipolbez
 
 double precision, dimension(i_dim2, i_dim2) :: rpbez, zpbez, &
-    rminbez, bpcellbez, bcellbez, rmin2dbez, &
+    rminbez, bpcellbez, bcellbez, rmin2dbez, jrhobez, &
     bpcell2dbez, bcell2dbez
 
 end module transfer_functions

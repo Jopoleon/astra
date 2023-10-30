@@ -5,7 +5,7 @@ subroutine PHI_EQ_2d_PBE(nrho, ntheta, psin_grid_in, iplasma, &
     XX, YY, PSI, &
     psin_grid, lambda2d, thetap_out, &
     psiax, cnorm, X0, Y0, thetap_i_out, rmaj2, jcbn2, q_new, rhoedge, &
-    darea2,epprim_out,efprim_out,r_min, yy2, gradr2)
+    darea2, epprim_out, efprim_out, r_min, yy2, gradr2, darea)
 
 use pi_vars, only: GPI, GPI2, GPI4, muvac
 implicit none
@@ -20,7 +20,8 @@ double precision, intent(in) , dimension(ntheta) :: Rb, Zb
 double precision, intent(out) :: psiax, cnorm, X0, Y0, rhoedge
 double precision, intent(out), dimension(nrho) :: psin_grid, q_new,epprim_out,efprim_out
 double precision, intent(out), dimension(ntheta) :: thetap_out, thetap_i_out
-double precision, intent(out), dimension(nrho, ntheta) :: XX, YY, rmaj2, jcbn2,darea2, r_min, yy2, gradr2
+double precision, intent(out), dimension(nrho, ntheta) :: XX, YY, rmaj2, jcbn2, &
+    darea2, r_min, yy2, gradr2, dArea
 
 double precision, intent(inout), dimension(nrho, ntheta) :: Psi, lambda2d
 
@@ -32,7 +33,7 @@ double precision, dimension(nrho) :: ddr, ddr_i, PSIn_gridp, effprimp, epprimp, 
     fpol, fpol2, phi_flux
 double precision, dimension(ntheta) :: dtp, dtm, dt_i
 double precision, dimension(ntheta+1) :: thetap, thetap_i
-double precision, dimension(nrho, ntheta) :: dArea, lambda2dp, known_term, &
+double precision, dimension(nrho, ntheta) :: lambda2dp, known_term, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1
 double precision :: gpsi(2*ntheta+1), work(2*(2*ntheta+1)*6), matrix(2*ntheta+1, 6)

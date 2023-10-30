@@ -98,6 +98,8 @@ type type_coord_sys  !
      real(DP),pointer :: bpcell(:,:) => null() ! /coord_sys/bpcell - Bp [T] in cells; Time-dependent; Vector (ndim1-1,ndim2-1)
      real(DP),pointer :: bcell(:,:) => null() ! /coord_sys/bcell - B [T] in cells; Time-dependent; Vector (ndim1-1,ndim2-1)
      real(DP),pointer :: rcell(:,:) => null() ! /coord_sys/rcell - R [m] in cells; Time-dependent; Vector (ndim1-1,ndim2-1)
+     real(DP),pointer :: darea(:,:) => null() ! /coord_sys/darea - dA [m^2] in cells; Time-dependent; Vector (ndim1-1,ndim2-1)
+     real(DP),pointer :: jphi(:,:) => null() ! /coord_sys/jphi - j toroidal [MA/m^2] in cells; Time-dependent; Vector (ndim1-1,ndim2-1)
       
 endtype
 

@@ -1309,7 +1309,7 @@ use transfer_functions, only: rpbez, zpbez, psibez, t2dbez, &
     areatbez, surfbez, perimbez, vbez, qbez, phibez, &
     bmaxbez, bminbez, bdb0bez, fofbbez, bcell2dbez, bpcell2dbez, &
     ffprimebez, pprimebez, pressbez, ipolbez, rinbez, routbez, &
-    kbez, triaubez, shifbez, rbp2_b2bez, rmin2dbez, dpsidvbez
+    kbez, triaubez, shifbez, rbp2_b2bez, rmin2dbez, dpsidvbez, jrhobez
 use pi_vars, only: GPI, GPI2, GPI4, muvac
 
 implicit none
@@ -1321,7 +1321,7 @@ double precision, dimension(nrho) :: q_new, effprimp, epprimp
 double precision, dimension(nteta) :: thetap_i
 double precision, dimension(512, 512) :: psisave
 double precision, dimension(nrho, nteta) :: rmaj2, jcbn2, darea2, &
-    r_min, yy2, jrho2, gradr2
+    r_min, yy2, jrho2, gradr2, darea
 
 save psisave
 
@@ -1354,7 +1354,7 @@ call PHI_EQ_2d_PBE(nrho, nteta, psigrida(1:nrho), iplasma, &
     psirhoteta(1:nrho, 1:nteta), psibez(1:nrho), &   ! psinorm new
     lambda2d(1:nrho, 1:nteta), t2dbez(1:nteta), &
     psiaxis_new, cnorm, rax_new, zax_new, thetap_i, rmaj2, & 
-    jcbn2, q_new, rhoedge, darea2, epprimp, effprimp, r_min, yy2, gradr2)
+    jcbn2, q_new, rhoedge, darea2, epprimp, effprimp, r_min, yy2, gradr2, darea)
  
 raxp = rax_new
 zaxp = zax_new
@@ -1406,8 +1406,10 @@ call build_2dgrid(nrho, nteta, psibez(1:nrho), &
 phibez(1:nrho) = 0.
 rbp2_b2bez(1:nrho) = 0.
 
-rmin2dbez(1:nrho, 1:nteta) = r_min(1:nrho, 1:nteta)
-dator(1:nrho, 1:nteta) = darea2(1:nrho, 1:nteta)
+rmin2dbez(1:nrho, 1:nteta) = r_min   (1:nrho, 1:nteta)
+dator    (1:nrho, 1:nteta) = darea   (1:nrho, 1:nteta)
+jrhobez  (1:nrho, 1:nteta) = jrhoteta(1:nrho, 1:nteta)
+
 rpol(1:nrho, 1:nteta) = rpbez(1:nrho, 1:nteta)
 zpol(1:nrho, 1:nteta) = zpbez(1:nrho, 1:nteta)
 rpul(1:nrho, 1:nteta) = rpbez(1:nrho, 1:nteta)
@@ -1447,7 +1449,8 @@ use transfer_functions, only: rpbez, zpbez, t2dbez, &
     g1bez, g2bez, g2ibez, gm1bez, gm4bez, gm41bez, gm5bez, ggrhobez, &
     bcell2dbez, bpcell2dbez, bminbez, bmaxbez, bdb0bez, fofbbez, &
     psibez, dpsidvbez, rbp2_b2bez, &
-    ffprimebez, pprimebez, pressbez, ipolbez
+    ffprimebez, pprimebez, pressbez, ipolbez, jrhobez
+use metric_coefficients_pbe, only: dator
 
 implicit none
 
@@ -1467,6 +1470,8 @@ equil_out%coord_sys%position%z    (1:nrho, 1:nteta) = zpbez      (1:nrho, 1:ntet
 equil_out%coord_sys%position%rmin (1:nrho, 1:nteta) = rmin2dbez  (1:nrho, 1:nteta)
 equil_out%coord_sys%bpcell        (1:nrho, 1:nteta) = bpcell2dbez(1:nrho, 1:nteta)
 equil_out%coord_sys%bcell         (1:nrho, 1:nteta) = bcell2dbez (1:nrho, 1:nteta)
+equil_out%coord_sys%darea         (1:nrho, 1:nteta) = dator(1:nrho, 1:nteta)
+equil_out%coord_sys%jphi          (1:nrho, 1:nteta) = jrhobez(1:nrho, 1:nteta)
 
 equil_out%eqgeometry%rectgrid%npointsr = nr2
 equil_out%eqgeometry%rectgrid%npointsz = nz2

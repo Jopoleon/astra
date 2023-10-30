@@ -63,6 +63,8 @@ if (ifplasma == 1) then
     allocate(equil_out%coord_sys%bpcell(nrplasma, nteta))
     allocate(equil_out%coord_sys%bcell(nrplasma, nteta))
     allocate(equil_out%coord_sys%rcell(nrplasma, nteta))
+    allocate(equil_out%coord_sys%darea(nrplasma, nteta))
+    allocate(equil_out%coord_sys%jphi(nrplasma, nteta))
     allocate(equil_out%profiles_1d%gm1(nrplasma))
     allocate(equil_out%profiles_1d%gm4(nrplasma))
     allocate(equil_out%profiles_1d%gm5(nrplasma))
