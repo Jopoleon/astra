@@ -2377,9 +2377,10 @@ nblock_a = nblocks - npassive
 
 if (plasma_state == 1) then !not sure about the plasma response...
     do i=1, nblock_a
-        x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreenirpl(1:nr2, 1:nz2, i))
+        x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreeniRpl(1:nr2, 1:nz2, i))
         force_R(i) = force_R(i) + curconduc(mequivalence(i)) * x1
-        force_Z(i) = force_Z(i) - curconduc(mequivalence(i)) * x1
+        x1 = -sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreeniZpl(1:nr2, 1:nz2, i))
+        force_Z(i) = force_Z(i) + curconduc(mequivalence(i)) * x1
     enddo
 endif
 
@@ -2387,9 +2388,8 @@ endif
 do i=1, nblock_a
     do j=1, nblock_a
         if (i /= j) then
-            x1 = curconduc(mequivalence(j)) * curconduc(mequivalence(i)) * dgreenirj(i, j)
-            force_R(i) = force_R(i) + x1
-            force_Z(i) = force_Z(i) - x1
+            force_R(i) = force_R(i) + curconduc(mequivalence(j)) * curconduc(mequivalence(i)) * dgreeniRj(i, j)
+            force_Z(i) = force_Z(i) - curconduc(mequivalence(j)) * curconduc(mequivalence(i)) * dgreeniZj(i, j)
         endif
     enddo
 enddo
