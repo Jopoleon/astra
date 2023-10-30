@@ -10,7 +10,7 @@ T = TE(J)*1000.
 Z = LOG10(TE(J))
 PRXEN = 0.
 
-if (T > 0. T < 200.) then
+if (T > 0. .and. T < 200.) then
     Y0 = -2.027267E1
     Y1 = -1.530175E1
     Y2 = -3.074557E1

@@ -861,7 +861,7 @@ if (NBNT > 0) then
 !find time index of most proximum boundary
     j=1
     do jt=1,NBNT
-        if (BNDTIM(jt) <= TSTART) j=jt
+        if (BNDTIM(jt) <= TSTART) j = jt
     enddo
     jt=j
 		

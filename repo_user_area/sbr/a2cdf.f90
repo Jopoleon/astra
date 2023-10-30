@@ -338,6 +338,8 @@ do j = 1, 64
 enddo
 
 jid = jid + 1
+call nfcheck( nf90_put_var(ncid, varid(jid), AIMPT(1:NA1)) )
+jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), AMAIN (1:NA1)) )
 jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), AMETR (1:NA1)) )
@@ -517,6 +519,8 @@ jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), NI    (1:NA1)) )
 jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), NIBM  (1:NA1)) )
+jid = jid + 1
+call nfcheck( nf90_put_var(ncid, varid(jid), NIMPT (1:NA1)) )
 jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), NIO   (1:NA1)) )
 jid = jid + 1
@@ -791,6 +795,8 @@ jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), ZIM2  (1:NA1)) )
 jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), ZIM3  (1:NA1)) )
+jid = jid + 1
+call nfcheck( nf90_put_var(ncid, varid(jid), ZIMPT (1:NA1)) )
 jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), ZMAIN (1:NA1)) )
 

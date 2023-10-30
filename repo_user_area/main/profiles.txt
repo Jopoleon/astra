@@ -64,6 +64,7 @@ CAR61    None                      Through channel
 CAR62    None                      Through channel
 CAR63    None                      Through channel
 CAR64    None                      Through channel
+AIMPT    None                      average Mass/Mp of impurities
 AMAIN    None                      Mass/Mp of main ions
 AMETR    m                         Equatorial magnetic surface size
 AREAT    m**2                      Area of poloidal cross
@@ -154,6 +155,7 @@ NHE3     10^19/m^3                 He3 ion density
 NHYDR    10^19/m^3                 Hydrogen ion density
 NI       10^19/m^3                 Total thermal (TI) ion density
 NIBM     10^19/m^3                 Beam ion density
+NIMPT    10^19/m^3                 total impurity density
 NIO      10^19/m^3                 Old main ion density
 NIZ1     10^19/m^3                 Impurity ions 1 density
 NIZ2     10^19/m^3                 Impurity ions 2 density
@@ -292,4 +294,5 @@ ZEF3     None                      3rd impurity Zeff contribution
 ZIM1     None                      1st impurity Z (used in NBI package)
 ZIM2     None                      2nd impurity Z (used in NBI package)
 ZIM3     None                      3rd impurity Z (used in NBI package)
+ZIMPT    None                      average impurity Z 
 ZMAIN    None                      Z of main ions

@@ -824,6 +824,13 @@ do j=1,NA
 ! Current conductivity
    cc_nc(j)  = 1.e-6/p_etap
 
+   if (isnan(cn_imp1_nc(j))) cn_imp1_nc(j) = 0.
+   if (isnan(cn_imp2_nc(j))) cn_imp2_nc(j) = 0.
+   if (isnan(cn_imp3_nc(j))) cn_imp3_nc(j) = 0.
+   if (isnan(dn_imp1_nc(j))) dn_imp1_nc(j) = 0.
+   if (isnan(dn_imp2_nc(j))) dn_imp2_nc(j) = 0.
+   if (isnan(dn_imp3_nc(j))) dn_imp3_nc(j) = 0.
+
 enddo ! Main radial loop
 
 ! Boundary value

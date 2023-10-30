@@ -5,7 +5,7 @@ use const_inc, only: ROC, NA1, IPL, TIME, TAU, TSTART, IPEQL, NEQUIL, MEQUIL, IP
     CRAD4, CMHD2, CHE3, CSCL4, CDWM1, CDWM2, CDWM7, &
     CDJM1, CDJM2, CDJM3, CDJM4, CDJM6, CDJM7, &
     CDMJ5, CDMJ6, CDMJ7, CDHJ7, CNEUT1, CNEUT2, &
-    ZRD15, ZRD77, ZRD78, ZRD93, CRAD3, btor, rtor
+    ZRD15, ZRD77, ZRD78, ZRD93, CRAD3, BTOR, RTOR, CDVM2
 use status_inc, only: NE, TE, TI, ZEF, HE, XI, PE, PI, NIBM, PRAD, &
     MU, CU, UPL, F4, CAR34, CAR54, SHIF, ipol, fp, pfast, pblon, pbper, ni
 use outcmn_inc, only: machine, ccoil
@@ -13,6 +13,7 @@ use fenix_params, only: ipl_bf_bkdw
 use flight_sim_geometrics, only: geom1d
 use plasma_state, only: plasma_up
 use parameters_a2equil, only: equil_now
+!use feqis_tools, only: coil_forces_feqis
 
 implicit none
 
@@ -21,6 +22,7 @@ integer, dimension(6) :: gapnum
 double precision :: qalp1, qalp2, qrad1, qrad2
 double precision, external :: QRADR, QTOKR, QDTR, QEDWTR, QIDWTR, &
     WTOZR, LI3R, BETP3R
+double precision nrrect, nzrect
 double precision, dimension(NA1) :: ne1, ne2, pressure
 double precision, dimension(NRD) :: te_0, te_1, te_now, ne_0, ne_1, ne_now
 double precision, dimension(10) :: ccoil_0, ccoil_1, ccoil_now, ccoil_scramble
@@ -28,7 +30,9 @@ double precision, dimension(32) :: geom1d_0, geom1d_1, geom1d_now
 double precision, dimension(500) :: magnetics
 double precision, dimension(660) :: yroutfull
 double precision, dimension(256, 256) :: yrout, yzout
-
+double precision, dimension(4225) :: psivect
+double precision, dimension(65) :: rrect, zrect
+double precision, dimension(65, 65) :: psi_rect
 double precision coil_forces(na1,2)
 double precision betp3r_0, LI3R_0, IPL_0, upl_0, &
     QRADR_0, QTOKR_0, &
@@ -105,6 +109,17 @@ if (MACHINE(1:3) == 'dem') then
         ne1 = ne2
     endif
 
+
+   nrrect=equil_now%eqgeometry%rectgrid%npointsr 
+   nzrect=equil_now%eqgeometry%rectgrid%npointsz 
+   rrect(1:nrrect)=equil_now%eqgeometry%rectgrid%r2d(1:nrrect) 
+   zrect(1:nzrect)=equil_now%eqgeometry%rectgrid%z2d(1:nzrect) 
+   psi_rect(1:nrrect,1:nzrect)=equil_now%eqgeometry%rectgrid%psirz2d(1:nrrect,1:nzrect)
+
+   do j=1,nzrect
+        psivect((j-1)*nrrect+1:j*nrrect)=psi_rect(1:nrrect,j)
+   enddo
+
     gapnum(1) = 16
     gapnum(2) = 23
     gapnum(3) = 30
@@ -133,7 +148,8 @@ if (MACHINE(1:3) == 'dem') then
         CU(1:NA1), &
         CCOIL(1:15)*1.e3, magnetics(1:439), & 
         CRAD3, F4(1:NA1), ZEF(1:NA1), TI(1:NA1), SHIF(1:NA1), &
-	FP(1:na1), IPOL(1:na1)*RTOR*BTOR, pressure(1:na1), li3r(roc), betp3r(roc))
+	FP(1:na1), IPOL(1:na1)*RTOR*BTOR, pressure(1:na1), li3r(roc), betp3r(roc), &
+	cdvm2,psivect(1:nrrect*nzrect),rrect(1:nrrect),zrect(1:nzrect))
 
 elseif (MACHINE(1:4) == 'iter') then
     i_error = 0 ! whether add noise latencies errors to diagnostics

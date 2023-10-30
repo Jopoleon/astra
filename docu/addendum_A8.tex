@@ -598,10 +598,10 @@ when prompted which machines to generate, insert 0 or 1 depending on which machi
 \subsection{The namelist files}
 Astra now has a few namelist files to instruct some of the additional physics modules.
 In particular, in the "exp/nml/" directory, a namelist with the same name of the exp/ file, contains the following namelists:\\
-rabbit\_beam\_geo (RABBIT); partmix (NBI?); nbi\_par (NBI?); species (RABBIT); output\_settings (RABBIT); physics (RABBIT); numerics (RABBIT); nbinj\_par (NBI?); torbeam (TORBEAM); equilef (FEQIS); 
+rabbit\_beam\_geo (RABBIT); partmix (NBI?); nbi\_par (NBI?); species (RABBIT); output\_settings (RABBIT); physics (RABBIT); numerics (RABBIT); nbinj\_par (NBI?); torbeam (TORBEAM); 
 
 Morevoer, in the directory exp/equ/(dev)/, a namelist called "namelist\_astra.txt" contains the following namelists:\\
-torbeam (TORBEAM); equil\_settings (astra coupling to equilibrium); equilef (FEQIS); spider (SPIDER); fenix (flight simulator physics models parameters);
+equil\_settings (astra coupling to equilibrium);  spider (SPIDER); fenix (flight simulator physics models parameters);
 
 Finally, when running the free boundary solver FEQIS, in exp/equ/(dev)/, the following files are needed:
 
