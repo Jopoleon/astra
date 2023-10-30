@@ -11,6 +11,7 @@ use green_matrix, only: greeni
 implicit none
 
 integer, intent(inout) :: j_init
+
 integer :: i, j_iter
 double precision :: error_temp
 double precision, dimension(300) :: cur_temp
@@ -95,6 +96,7 @@ use feqis_tools, only: get_closest_index
 implicit none
 
 integer, intent(in) :: j_init
+
 integer :: j_iter, j_iter2, j_cyclo, jeppa
 double precision :: temp_err, raxold, zaxold, temp_err2, raxoldo, zaxoldo, &
     raxtmp, zaxtmp, det, psistab1o, psistab2o, psro, pszo, dist1, dist2, &
@@ -297,7 +299,7 @@ use feqis_circuit, only: nr, nz, nr2, nz2, nactive, nconduc, nteta, iaxis, jaxis
 use astra2fbe, only: sigma_coils, sigma_b, sigma_axis
 use green_matrix, only: greeni
 use feqis_tools, only: get_closest_index, interp2d_psi, &
-    inverse_matrix, boundary, interp2d_psi, psi_external_calc
+    inv_matrix, boundary, interp2d_psi, psi_external_calc
 
 implicit none
 
@@ -371,13 +373,13 @@ do j=1, nconduc
 enddo
 
 ! Calculate inverse
-call inverse_matrix(matrix, invmatrix, nconduc)
+invmatrix = inv_matrix(matrix, nconduc)
 
 do j_iter=1, 300000 !iterations to find currents
     if (j_iter > 50) stop
     g = 0.
     call solve_gs2d(g) !jrz as right hand side
-    call boundary(g)  ! gbound = integral (Green*dg/dn) over the boundary
+    g = boundary(g)  ! gbound = integral (Green*dg/dn) over the boundary
 
     call solve_gs2d(g) ! again jrz as right hand side
     psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
@@ -474,8 +476,7 @@ use feqis_circuit, only: npassive, nactive, nconduc, &
 use astra2fbe, only: n_fourier_restab_boundary
 use green_matrix, only: greeni
 use feqis_tools, only: get_closest_index, interp2d_psi, &
-    pol_angle, boundary, interp2d_psi, psi_external_calc, &
-    least_square_biquad
+    pol_angle, boundary, interp2d_psi, psi_external_calc
 
 implicit none
 
@@ -535,7 +536,7 @@ psibt1 = 1000.
 do j_iter=1, 30
     g = 0.
     call solve_gs2d(g) !jrz as right hand side
-    call boundary(g)   ! gbound = integral (Green*dg/dn) over the boundary
+    g = boundary(g)   ! gbound = integral (Green*dg/dn) over the boundary
     call solve_gs2d(g) ! again jrz as right hand side
     psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
     psirz(1:nr2, 1:nz2) = psiplasrz(1:nr2, 1:nz2) + psiextrz(1:nr2, 1:nz2) !total flux
@@ -577,7 +578,6 @@ enddo
 
 write(*, *) raxp, zaxp, rax, zax, psistabr, psistabz
 
-! Check
 do i=1, npassive
     do j=1, n_fourier_restab_boundary
         curconduc(nactive + i) = curconduc(nactive + i) + &
@@ -666,7 +666,7 @@ do i=1, npassive
     bub(7) = greeni(iax - 1, jax + 1, nactive + i)
     bub(8) = greeni(iax + 1, jax - 1, nactive + i)
     bub(9) = greeni(iax + 1, jax + 1, nactive + i)
-    call least_square_biquad(xub, yub, bub, 9, ccc, curr, dum2, zum1, ddipsi)
+    ddipsi = least_square_biquad(xub, yub, bub, 9)
     g0_r(i) = ddipsi(1)
     g0_z(i) = ddipsi(2)
 enddo
@@ -690,7 +690,7 @@ psistab2o = 1000.
 do j_iter=1, 30000
     g = 0.
     call solve_gs2d(g) ! jrz as right hand side
-    call boundary(g)   ! gbound = integral (Green*dg/dn) over the boundary
+    g = boundary(g)   ! gbound = integral (Green*dg/dn) over the boundary
     call solve_gs2d(g) ! again jrz as right hand side
 
     psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
@@ -731,7 +731,6 @@ enddo
 
 write(*, *) raxp, zaxp, rax, zax, psistabr, psistabz
 
-!check
 do i=1, npassive
     curconduc(nactive + i) = curconduc(nactive + i) + &
         psistabr*cos(anglr(i)) + psistabz*sin(anglr(i))
@@ -785,7 +784,7 @@ endif
 
 g = 0.
 call solve_gs2d(g) !jrz as right hand side
-call boundary(g)   ! gbound = integral (Green*dg/dn) over the boundary
+g = boundary(g)   ! gbound = integral (Green*dg/dn) over the boundary
 call solve_gs2d(g) ! again jrz as right hand side
 psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
 
@@ -985,11 +984,11 @@ endif
 i = i_cnew
 
 if (use_reduce_circuit == 0) then
-    call solve_circuit_equations(i, indconduc(1:i, 1:i), resconduc(1:i, 1:i), & 
-        cur_con_old(1:i), curconduc(1:i), voltage(1:i), dpc(1:i), tau_new, invertcommand)
+    curconduc(1:i) = solve_circuit_equations(i, indconduc(1:i, 1:i), resconduc(1:i, 1:i), & 
+        cur_con_old(1:i), voltage(1:i), dpc(1:i), tau_new, invertcommand)
 else
-    call solve_circuit_equations(i, indtemp(1:i, 1:i), restemp(1:i, 1:i), & 
-        curotemp(1:i), curtemp(1:i), vtemp(1:i), dpctemp(1:i), tau_new, invertcommand)
+    curtemp(1:i) = solve_circuit_equations(i, indtemp(1:i, 1:i), restemp(1:i, 1:i), & 
+        curotemp(1:i), vtemp(1:i), dpctemp(1:i), tau_new, invertcommand)
 
 ! Re-adapt currents
     do i=1, nconduc
@@ -1653,7 +1652,7 @@ use pi_vars, only: mu0
 use feqis_circuit, only: nr, nr1, nr2, nz, nz1, nz2, i_dim2, &
     r, dr, dz, rcomp, jrz
 use fft_mod_eff, only: costable
-use feqis_tools, only: discrete_sine_transform, solve_tridiag_fbe_ef
+use feqis_tools, only: discrete_sine_transform, solve_tridiag_fbe
 
 double precision, intent(inout), dimension(i_dim2, i_dim2) :: g
 
@@ -1683,7 +1682,7 @@ rhs(nr1, 2:nz1) = rhs(nr1, 2:nz1) - g(nr2, 2:nz1)*r2m_1
 wrhs = rhs
 ! CALL CPU_TIME(tin)
 do i=2, nr1
-    call discrete_sine_transform(nz, wrhs(i, 2:nz1))
+    wrhs(i, 2:nz1) = discrete_sine_transform(nz, wrhs(i, 2:nz1))
 enddo
 
 ! Create inverse matrix for gs2d
@@ -1717,13 +1716,13 @@ endif
 gt = 0.
 !solve matrix
 do k=2, nz1
-    call solve_tridiag_fbe_ef(C(1:nr), B(1:nr) + z_fourier(k), A(1:nr), wrhs(2:nr1, k), gt(2:nr1, k), nr)
+    gt(2:nr1, k) = solve_tridiag_fbe(C(1:nr), B(1:nr) + z_fourier(k), A(1:nr), wrhs(2:nr1, k), nr)
 enddo
 !invert fourier from gt(1:nr, 1:kfourier) to g(2:nr1, 2:nz1)
 !  gt(i, k)=sum(invMM_gs2d(i-1, 1:nr, k-1)*wrhs(2:nr1, k))
 
 do i=2, nr1
-    call discrete_sine_transform(nz, gt(i, 2:nz1))
+    gt(i, 2:nz1) = discrete_sine_transform(nz, gt(i, 2:nz1))
 enddo
 g(2:nr1, 2:nz1) = 2./(nz + 1)*gt(2:nr1, 2:nz1)
 
@@ -1838,7 +1837,7 @@ use pi_vars, only: GPI
 use astra2fbe, only: x_point_save, plasma_config
 use errors_params, only: err_find_oxpoints_derivs
 use feqis_tools, only: find_closest_xpoints, &
-    get_closest_index, pol_angle, check_xpoint_connection_axis, &
+    get_closest_index, pol_angle, xpoint_axis_connection, &
     nine_point_regression, nine_point_regression_follow, interp2d_psi
 use feqis_circuit, only: nr, nz, nr1, nr2, nz1, nz2, i_dim2, i_dim5, nlimiter, &
     max_xpoints, n_of_xpoints, &
@@ -2074,7 +2073,7 @@ if (n_of_xpoints >= 1) then
 ! Third pass, remove x-points that are non-monotonically connected to the plasma.
     do i=1, n_of_xpoints
         if (psi_xpoint(i) > -1.e5) then
-            call check_xpoint_connection_axis(r_xpoint(i), z_xpoint(i), rax, zax, dr, dz, i1)
+            i1 = xpoint_axis_connection(r_xpoint(i), z_xpoint(i), rax, zax, dr, dz)
             if (i1 == 0) psi_xpoint(i) = -1.e6
         endif
     enddo

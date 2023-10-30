@@ -13,7 +13,7 @@ use imas_ids, only: type_equilibrium
 use fenix_params, only: s_adapt, s_fazt
 use parameters_a2equil, only: type_parameters, fix_adapgrid, GP, GP2
 use const_inc, only : rtor,shift,updwn
-use feqis_tools, only: psib_ext_efff, get_zccurb_efff, find_demo_gaps_efff
+use feqis_tools, only: psib_ext_feqis, get_zccurb_efff, find_demo_gaps_feqis
 
 use flight_sim_geometrics, only: geom1d
 use outcmn_inc, only: MACHINE, nml_file
@@ -190,7 +190,7 @@ if (parameters_equil%k_fixfree == 1) then
     ipl = 1.e-6*equil_in%global_param%i_plasma
     if (parameters_equil%k_grid == 0) then
         if (equil_solver == 101) then
-            call psib_ext_efff(PSIEXT)
+            PSIEXT = psib_ext_feqis()
         else
             call psib_ext(PSIEXT)
         endif
@@ -204,7 +204,7 @@ if (parameters_equil%k_fixfree == 1) then
     else
         if (parameters_equil%k_grid == 0) then
             if (equil_solver==101) then
-                call psib_ext_efff(PSIEXT)
+                PSIEXT = psib_ext_feqis()
             else
                 call psib_ext(PSIEXT)
             endif
@@ -304,7 +304,7 @@ if (parameters_equil%k_fixfree == 1) then
             jdemogaps = 1
         endif
         if (equil_solver == 101) then
-            call find_demo_gaps_efff(i_gaps, demo_gaps(1:i_gaps, 1:4), geom1d(94-i_gaps+1:94))
+            geom1d(94-i_gaps+1:94) = find_demo_gaps_feqis(i_gaps, demo_gaps(1:i_gaps, 1:4))
             call get_zccurb_efff(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
         else if (equil_solver == 3) then
             call find_demo_gaps(i_gaps, demo_gaps(1:i_gaps, 1:4), geom1d(94-i_gaps+1:94))

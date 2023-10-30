@@ -31,22 +31,16 @@ contains
     end function pol_angle
 
 !---------------------------------------------------------------------
-    subroutine inverse_matrix(a_in, c, n)
+    function inv_matrix(a_in, ndim) result(ainv_out)
 
-! a(n,n) - array of coefficients for matrix A
-! n      - dimension
-! c(n,n) - inverse matrix of A
-! Based on Doolittle LU factorization for Ax = B
-! Alex G. December 2009. www2.odu.eud/~agodunov/computing/programs/book2/Ch06/Inverse.f90
-
-    integer, intent(in) :: n
-    double precision, intent(in), dimension(n, n) ::  a_in
-    double precision, intent(out), dimension(n, n) :: c
+    integer, intent(in) :: ndim
+    double precision, intent(in), dimension(ndim, ndim) ::  a_in
+    double precision, dimension(ndim, ndim) :: ainv_out
 
     integer :: i, j, k
     double precision :: coeff
-    double precision, dimension(n) :: b, d, x
-    double precision, dimension(n, n) :: a, L, U
+    double precision, dimension(ndim) :: b, d, x
+    double precision, dimension(ndim, ndim) :: a, L, U
 
     L = 0.0
     U = 0.0
@@ -54,11 +48,11 @@ contains
     a = a_in
 
 ! step 1: forward elimination
-    do k=1, n-1
-        do i=k+1, n
+    do k=1, ndim-1
+        do i=k+1, ndim
             coeff = a(i, k)/a(k, k)
             L(i, k) = coeff
-            do j=k+1, n
+            do j=k+1, ndim
                  a(i, j) = a(i, j) - coeff*a(k, j)
             enddo
         enddo
@@ -67,45 +61,45 @@ contains
 ! Step 2: prepare L and U matrices 
 ! L matrix is a matrix of the elimination coefficient
 ! + the diagonal elements are 1.0
-    do i=1,n
+    do i=1, ndim
         L(i, i) = 1.0
     enddo
 ! U matrix is the upper triangular part of A
-    do j=1, n
+    do j=1, ndim
         do i=1, j
             U(i, j) = a(i, j)
         enddo
     enddo
 
 ! Step 3: compute columns of the inverse matrix C
-    do k=1, n
+    do k=1, ndim
         b(k) = 1.0
         d(1) = b(1)
 ! Step 3a: Solve Ld=b using the forward substitution
-        do i=2, n
+        do i=2, ndim
             d(i) = b(i)
             do j=1, i-1
                 d(i) = d(i) - L(i, j)*d(j)
             enddo
         enddo
 ! Step 3b: Solve Ux=d using the back substitution
-        x(n) = d(n)/U(n, n)
-        do i = n-1, 1, -1
+        x(ndim) = d(ndim)/U(ndim, ndim)
+        do i = ndim-1, 1, -1
             x(i) = d(i)
-            do j=n, i+1, -1
+            do j=ndim, i+1, -1
                 x(i) = x(i) - U(i, j)*x(j)
             enddo
             x(i) = x(i)/u(i, i)
         enddo
-! Step 3c: fill the solutions x(n) into column k of C
-        do i=1, n
-            c(i, k) = x(i)
+! Step 3c: fill the solutions x(n) into column k of ainv_out
+        do i=1, ndim
+            ainv_out(i, k) = x(i)
         enddo
         b(k) = 0.0
     enddo
-
+    
     return
-    end subroutine inverse_matrix
+    end function inv_matrix
 
 !---------------------------------------------------------------------
     double precision function curinterp(r_in, z_in, jrho, rho, teta, rax, zax, nrho, nteta)
@@ -178,51 +172,53 @@ contains
     end function curinterp
 
 !---------------------------------------------------------------------
-    subroutine discrete_sine_transform(n, y)
+    function discrete_sine_transform(ndim, f_in) result(f_out)
 
     use fft_mod_eff, only: dp, sintable
 
-    integer, intent(in) :: n
-    double precision,  intent(inout) :: y(n)
+    integer, intent(in) :: ndim
+    double precision,  intent(in), dimension(ndim) :: f_in
+    double precision, dimension(ndim) :: f_out
+
     integer :: i, j, imethod1, icall, k
-    double precision :: z(n)
-    complex(kind=dp) :: d(2*(n+1))
+    double precision :: z(ndim)
+    complex(kind=dp) :: d(2*(ndim+1))
 
     imethod1 = 1
-
+    f_out = f_in
     if (imethod1 == 1) then
         z = 0.
-        do i=1, n
-            do j=1, n
-                z(i) = z(i) + y(j)*sintable(i, j)
+        do i=1, ndim
+            do j=1, ndim
+                z(i) = z(i) + f_out(j)*sintable(i, j)
             enddo
         enddo
-        y = z
+        f_out = z
         return
     else if (imethod1 == 2) then 
 ! fast sine transform 
 ! this problem is equivalent to DST-I with N = n+1 
 
-        k = 2*(n+1)
-        z = y
+        k = 2*(ndim+1)
+        z = f_out
         d(1) = cmplx(0., 0.)
-        do i=1, n
+        do i=1, ndim
             d(i+1)   = cmplx( z(i), 0)
             d(k-i+1) = cmplx(-z(i), 0)
         enddo
-        d(k-n) = cmplx(0., 0.)
+        d(k-ndim) = cmplx(0., 0.)
 
         call fft_eff(d)
 
         d(1: k-1) = d(2: k)
-        do i=1, n
+        do i=1, ndim
             z(i) = 0.5*aimag(d(i) - d(k-i))
         enddo
-        y = z/2.
+        f_out = z/2.
     endif
 
     return
-    end subroutine discrete_sine_transform
+    end function discrete_sine_transform
 
 !---------------------------------------------------------------------
     subroutine get_zccurb_efff(rc_cur, zc_cur, z2c_cur, rgeoc, zgeoc, ahorc)
@@ -268,13 +264,14 @@ contains
     end subroutine get_zccurb_efff
 
 !---------------------------------------------------------------------
-    subroutine psib_ext_efff(psiext_out)  !gives back external flux on plasma boundary
+    double precision function psib_ext_feqis
+
+! gives back external flux on plasma boundary
 
     use feqis_circuit, only: nr, nz, nbnd, rbnd, zbnd, psibnd, psiextrz
 
     integer :: i
-    double precision, intent(out) :: psiext_out
-    double precision :: dlt, dllt, psi_ext_1, psiext1, psiext2
+    double precision :: psiext_out, dlt, dllt, psi_ext_1, psiext1, psiext2
 
 !cycle over boundary
     psiext_out = 0.
@@ -293,12 +290,12 @@ contains
     psiext_out = psiext_out + 0.5*(psiext1 + psiext2)*dlt
     dllt = dllt + dlt
 
-    psiext_out = psiext_out/dllt
+    psib_ext_feqis = psiext_out/dllt
 
     write(*, *) 'psibbb', psibnd, psiext_out
 
     return
-    end subroutine psib_ext_efff
+    end function psib_ext_feqis
 
 !---------------------------------------------------------------------
     double precision function find_l_gap(psibnd, l_ref_in, gapmin, gapmax, geom)
@@ -353,13 +350,13 @@ contains
     end function find_l_gap
 
 !---------------------------------------------------------------------
-    subroutine find_demo_gaps_efff(ngaps, demo_gaps, geom1d)
+    function find_demo_gaps_feqis(ngaps, demo_gaps) result(geom1d)
 
     use feqis_circuit, only: psibnd
 
     integer, intent(in) :: ngaps
     double precision, intent(in) :: demo_gaps(ngaps, 4)
-    double precision, intent(out) :: geom1d(ngaps)
+    double precision :: geom1d(ngaps)
 
     integer :: i, onlypos
     double precision :: d_step, gapmin, gapmax, l_gap, l_gap_pos, l_gap_neg
@@ -388,7 +385,7 @@ contains
     enddo
 
     return
-    end subroutine find_demo_gaps_efff
+    end function find_demo_gaps_feqis
 
 !---------------------------------------------------------------------
     subroutine psi_external_calc
@@ -408,13 +405,17 @@ contains
     end subroutine psi_external_calc
 
 !---------------------------------------------------------------------
-    subroutine least_square_biquad(r, z, u, n, c, rax, zax, uax, derivs)
+    function least_square_biquad(r, z, u, n) result(derivs)
 
-    integer n, k
-    double precision r(n), z(n), u(n), derivs(8)
-    double precision A(6, 6), B(6), cc(6), c(6), Ainv(6, 6)
-    double precision  rax, zax, uax
-    double precision sums(21), det, det_r, det_z
+    integer, intent(in) :: n
+    double precision, intent(in), dimension(n) :: r, z, u
+    double precision, dimension(8) :: derivs
+    
+    integer :: k
+    double precision :: det, det_r, det_z, rax, zax, uax
+    double precision, dimension(6) :: B, cc
+    double precision, dimension(21) :: sums
+    double precision, dimension(6, 6) :: A, Ainv
 
     sums = 0.
 
@@ -490,18 +491,11 @@ contains
     A(6, 6) = 4*sums(6)
 
 !find coefficients
-    call inverse_matrix(A, Ainv, 6)
+    Ainv  = inv_matrix(A, 6)
 
     do k=1, 6
         cc(k) = -2*sum(Ainv(k, 1: 6)*B(1: 6))
     enddo
-
-    c(4) = cc(1)
-    c(5) = cc(2)
-    c(6) = cc(3)
-    c(2) = cc(4)
-    c(3) = cc(5)
-    c(1) = cc(6)
 
 !  magnetic axis
 
@@ -521,8 +515,8 @@ contains
     derivs(5) = cc(3) 
 
     return
-    end subroutine least_square_biquad
-     
+    end function least_square_biquad
+
 !---------------------------------------------------------------------
     subroutine exact_biquad(rx_in, zx_in, u, ndim, rax, zax, uax, derivs, dr, dz)
 
@@ -708,13 +702,13 @@ contains
     end subroutine nine_point_regression
 
 !---------------------------------------------------------------------
-    subroutine nine_point_coeffs_only(r_in, z_in, c, c1, c2)
+    subroutine nine_point_coeffs_only(r_in, z_in, c, rax_out, zax_out)
 
     use feqis_circuit, only: psirz, nr1, nz1, r, z
 
     integer, parameter :: ndim=9
     double precision, intent(in) :: r_in, z_in
-    double precision, intent(out) :: c1, c2
+    double precision, intent(out) :: rax_out, zax_out
     double precision, intent(out), dimension(9) :: c
 
     integer :: iax, jax, i, j, k
@@ -722,8 +716,8 @@ contains
 
     call get_closest_index(r_in, z_in, iax, jax)
 
-    c1 = r(iax)
-    c2 = z(jax)
+    rax_out = r(iax)
+    zax_out = z(jax)
 
 !find true axis
     k = 0
@@ -751,6 +745,7 @@ contains
     double precision, intent(out) :: f00
     double precision, intent(out), dimension(2) :: pos_xpoint
     double precision, intent(out), dimension(ndim-1) :: ddpsi
+    
     double precision, dimension(ndim) :: bub
 
     bub(1) = interp2d_psi(rx - dr, zx - dz, psirz(1:nr, 1:nz))
@@ -972,13 +967,15 @@ contains
     end function green_function_non_identity
 
 !-----------------------------------------------------------------------------------
-    subroutine boundary(green_fun)
+    function boundary(green_in) result(green_out)
 
 ! new bc is integral_over_boundary of -Green * dg/dn * dl
     use pi_vars, only: GPI
     use feqis_circuit, only: nr1, nz1, nr2, nz2, i_dim2
 
-    double precision, intent(inout), dimension(i_dim2, i_dim2) :: green_fun
+    double precision, intent(in), dimension(i_dim2, i_dim2) :: green_in
+    double precision, dimension(i_dim2, i_dim2) :: green_out
+
     integer :: i, jcounty
     double precision, dimension(i_dim2, 4) :: integr
 
@@ -987,31 +984,31 @@ contains
 
 ! lower side
     do i=2, nr1
-        integr(i, 1) = bgint(green_fun, jcounty)
+        integr(i, 1) = bgint(green_in, jcounty)
     enddo
 
 ! right side
     do i=2, nz1
-        integr(i, 2) = bgint(green_fun, jcounty)
+        integr(i, 2) = bgint(green_in, jcounty)
     enddo
 
 ! upper side
     do i=2, nr1
-        integr(i, 3) = bgint(green_fun, jcounty)
+        integr(i, 3) = bgint(green_in, jcounty)
     enddo
 
 ! left side
     do i=2, nz1
-        integr(i, 4) = bgint(green_fun, jcounty)
+        integr(i, 4) = bgint(green_in, jcounty)
     enddo
 
-    green_fun(2:nr1,   1) = integr(2:nr1, 1)/GPI
-    green_fun(nr2, 2:nz1) = integr(2:nz1, 2)/GPI
-    green_fun(2:nr1, nz2) = integr(2:nr1, 3)/GPI
-    green_fun(  1, 2:nz1) = integr(2:nz1, 4)/GPI
+    green_out(2:nr1,   1) = integr(2:nr1, 1)/GPI
+    green_out(nr2, 2:nz1) = integr(2:nz1, 2)/GPI
+    green_out(2:nr1, nz2) = integr(2:nr1, 3)/GPI
+    green_out(  1, 2:nz1) = integr(2:nz1, 4)/GPI
 
     return
-    end subroutine boundary
+    end function boundary
 
 !-----------------------------------------------------------------------------------
     double precision function bgint(green_in, jcounty)
@@ -1063,7 +1060,7 @@ contains
     end function bgint
 
 !---------------------------------------------------------------------
-    subroutine check_xpoint_connection_axis(rx, zx, rax, zax, dr, dz, icheck)
+    integer function xpoint_axis_connection(rx, zx, rax, zax, dr, dz)
 
 !this routine checks that going from axis to x point,  the directed gradient of psi never changes sign
 !(otherwise it means the x point is not connected to the plasma
@@ -1071,7 +1068,6 @@ contains
     use feqis_circuit, only: nr, nz, psirz
 
     double precision,  intent(in) :: rx, zx, rax, zax, dr, dz
-    integer, intent(out) :: icheck
 
     integer :: nsteps, i
     double precision :: angl, dbl, dd, t1, t2, t3, t4, t5
@@ -1084,7 +1080,7 @@ contains
     nsteps = nint(dbl/dd)
     dd = dbl/nsteps !perfect ratio
   
-    icheck = 1
+    xpoint_axis_connection = 1
     psiold = 0.
     do i=2, nsteps
         t1 = rax + dd*(i - 1)*cos(angl)
@@ -1096,7 +1092,7 @@ contains
         z3 = (z2 - z1)*psiold
         psiold = z2 - z1
         if (z3 < 0) then
-            icheck = 0
+            xpoint_axis_connection = 0
             EXIT
         endif
         if (dd*i >= dbl) then
@@ -1105,7 +1101,7 @@ contains
     enddo
 
     return
-    end subroutine check_xpoint_connection_axis
+    end function xpoint_axis_connection
 
 !---------------------------------------------------------------------
     subroutine find_closest_xpoints(rx, zx, ierr, n_add)
@@ -1180,7 +1176,7 @@ contains
     end subroutine find_closest_xpoints
 
 !--------------------------------------------------------------------
-    subroutine solve_tridiag_fbe_ef(A, B, C, R, f, Ngrid)
+    function solve_tridiag_fbe(A, B, C, R, Ngrid) result(f_out)
 
 ! Provides solution of the system:
 !
@@ -1192,7 +1188,7 @@ contains
 
     integer, intent(in) :: Ngrid
     double precision, intent(in) , dimension(Ngrid) :: A, B, C, R
-    double precision, intent(out), dimension(Ngrid) :: f
+    double precision, dimension(Ngrid) :: f_out
 
     integer :: j, k
     double precision, dimension(Ngrid) :: alpha, beta
@@ -1211,14 +1207,14 @@ contains
 !     f(j-1) = (f_bound - beta(j-1))/alpha(j-1)
 ! This one should be appropriate with extrapolation... but now go back to real b.c.
 !     f(j-1) = (2./3.*f_bound - beta(j-1))/(alpha(j-1)-1./3.)
-    f(Ngrid) = beta(Ngrid)
+    f_out(Ngrid) = beta(Ngrid)
     do k=1, Ngrid-1
         j = Ngrid - k
-        f(j) = beta(j) - alpha(j)*f(j + 1)
+        f_out(j) = beta(j) - alpha(j)*f_out(j + 1)
     enddo
 
     return
-    end subroutine solve_tridiag_fbe_ef
+    end function solve_tridiag_fbe
 
 !--------------------------------------------------------------------
     double precision function fill_in_current(r0, nx, ppp_2d, ffp_2d, un)
@@ -1249,13 +1245,13 @@ contains
     end function fill_in_current
 
 !--------------------------------------------------------------------
-    subroutine solve_circuit_equations(nc, im, rm, I0, I1, V, dpc, tau, invertcommand)
+    function solve_circuit_equations(nc, im, rm, I0, V, dpc, tau, invertcommand) result(cur_conduc)
 
     integer, intent(in) :: nc, invertcommand
     double precision, intent(in) :: tau
     double precision, intent(in), dimension(nc) :: I0, V, dpc
     double precision, intent(in), dimension(nc, nc) :: im, rm
-    double precision, intent(out), dimension(nc) :: I1
+    double precision, dimension(nc) :: cur_conduc
 
     integer :: i
     double precision, dimension(nc) :: B
@@ -1272,15 +1268,15 @@ contains
 
     if (invertcommand == 1) then
         matrix(1:nc, 1:nc) = im(1:nc, 1:nc)/tau + rm(1:nc, 1:nc)
-        call inverse_matrix(matrix, invmatrix(1:nc, 1:nc), nc)
+        invmatrix(1:nc, 1:nc) = inv_matrix(matrix, nc)
     endif
 
     do i=1, nc
-        i1(i) = sum(invmatrix(i, 1:nc)*b(1:nc))
+        cur_conduc(i) = sum(invmatrix(i, 1:nc)*b(1:nc))
     enddo
 
     return
-    end subroutine solve_circuit_equations
+    end function solve_circuit_equations
 
 
 end module feqis_tools
