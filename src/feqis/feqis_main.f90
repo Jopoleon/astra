@@ -25,7 +25,7 @@ data j_init/0/
 save j_call, j_init, j_vacplas
 
 write(*, *) ifplasma
-call definitions_ef_equil(equil_in, parameters_equil, j_init, ifplasma)
+call definitions_feqis_equil(equil_in, parameters_equil, j_init, ifplasma)
 ncoils = nucoils
 voltage(1:ncoils) = ucoils(1:ncoils) ! voltage inputs for active conductors
 
@@ -35,7 +35,7 @@ nrplasma = nrho
 ! Init coils and grid
 if (j_call == 0) then
     if (parameters_equil%k_fixfree == 1) then
-        call equil_ef_init_circ
+        call equil_feqis_init_circ
     endif
 endif
 
@@ -114,26 +114,26 @@ if (parameters_equil%k_fixfree == 1) then
         write(*, *) 'vacuum'
         psi_cur_old = 0.
         psiplasmatoconduc = 0.
-        call circuit_eq_advance_ef(j_call)
+        call circuit_eq_advance_feqis(j_call)
         call psi_external_calc
         psirz = psiextrz
         j_vacplas = 0
     else if (ifplasma == 1) then  ! full plasma solved
         if (j_vacplas == 0) j_call = 0
-        call full_system_advance_ef(j_call)
+        call full_system_advance_feqis(j_call)
         if (j_call == -1) then
             call convert_boundary_to_pbe
-            call fix_boundary_ef(1)
+            call fix_boundary_feqis(1)
         endif
         j_vacplas = 1
     endif
 else if (parameters_equil%k_fixfree == 0) then
     write(*, *) 'call fix equil code'
-    call fix_boundary_ef(j_init)
+    call fix_boundary_feqis(j_init)
     equil_out%global_param%psplex   = psplex
     equil_out%global_param%psibound = psibndp
     equil_out%global_param%psiaxis  = psiaxisp
-    call assignment_of_equilout_stuff(equil_out)
+    call equil_assignments(equil_out)
     write(*, *) 'end fix equil code'
     j_init = 1
     write(*, *) 'end equil code'
@@ -145,7 +145,7 @@ j_call = 1
 j_init = 1
 
 if (ifplasma == 1) then
-    call assignment_of_equilout_stuff(equil_out)
+    call equil_assignments(equil_out)
 endif
 
 return

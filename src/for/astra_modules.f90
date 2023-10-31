@@ -124,13 +124,13 @@ integer :: n_fourier_restab_boundary ! nr of fourier modes for boundary restab, 
 integer :: psplex_from_fbe    ! put 1 to get psplex fromfree boundary
 integer :: plasma_config      ! 0 if limiter, 1 if xpoint
 
-double precision :: tau_circuit_ef, tau_gseq_ef, time_astra
+double precision :: tau_circuit_feqis, tau_gseq_feqis, time_astra
 double precision :: dr_factor_init_astra, dz_factor_init_astra ! factors of dr and dz for initial iterations
 double precision :: raxis_astra, zaxis_astra, psi0_astra, psib_astra, sigma_B, sigma_axis
 
 double precision :: x_point_save(20, 2) ! R, Z of xpoints, max 20 x points
-double precision, dimension(ncoil_dim) :: activate_coil_ef, sign_coil, cur_init, sigma_coils ! initial currents from astra exp, not from coil.dat, in MA/turn
-double precision, dimension(ncoil_dim, 2) :: current_limit_ef ! 1 is upper, 2 is lower
+double precision, dimension(ncoil_dim) :: activate_coil_feqis, sign_coil, cur_init, sigma_coils ! initial currents from astra exp, not from coil.dat, in MA/turn
+double precision, dimension(ncoil_dim, 2) :: current_limit_feqis ! 1 is upper, 2 is lower
 double precision, dimension(ncoil_dim, ncoil_dim) :: force_coil ! where it is 1, forces coil i,i to current of i,j
 character(len=80) :: machine_description ! name of device, in astra it's called MACHINE
 
