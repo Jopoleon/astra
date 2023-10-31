@@ -62,13 +62,13 @@ save n_limz,j_counta
 
 use_zlim_pot=1 ! for asdex
 
-tau_circuit_ef = tau
-tau_gseq_ef    = tau
+tau_circuit_feqis = tau
+tau_gseq_feqis    = tau
 time_astra     = time
-activate_coil_ef = 1 ! if 0, coil is forced to 0 current
+activate_coil_feqis = 1 ! if 0, coil is forced to 0 current
 sign_coil = 1. ! sign of coils currents w.r.t. plasma current
-current_limit_ef(:, 1) =  1.e6 ! 1 is upper, 2 is lower
-current_limit_ef(:, 2) = -1.e6 ! 1 is upper, 2 is lower
+current_limit_feqis(:, 1) =  1.e6 ! 1 is upper, 2 is lower
+current_limit_feqis(:, 2) = -1.e6 ! 1 is upper, 2 is lower
 force_coil = 0. ! where it is 1, forces coil i,i to current of i,j
 
 use_reduce_circuit = 0
@@ -101,7 +101,7 @@ dteqz2 = dteqz
 
 eq_cmd = 1
 execute_plasma = eq_cmd
-tau_gseq_ef = dteqz2
+tau_gseq_feqis = dteqz2
 
 if (MACHINE(1:3) == 'aug') then
     cur_init( 1:12) = CCOIL(1:12)/1.e3
@@ -110,7 +110,7 @@ endif
 
 if (TIME > 2.52) fast_mode = 1
 
-write(*,*) 'eqtime', time, fast_mode, execute_plasma, tau_gseq_ef, &
+write(*,*) 'eqtime', time, fast_mode, execute_plasma, tau_gseq_feqis, &
     ncnb, ncnbt, cur_init(1:12)
 write(*,*) V_95_POS(1./mu(1:na1))
 
