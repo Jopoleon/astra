@@ -25,7 +25,7 @@ data j_init/0/
 save j_call, j_init, j_vacplas
 
 write(*, *) ifplasma
-call definitions_feqis_equil(equil_in, parameters_equil, j_init, ifplasma)
+call feqis_init(equil_in, parameters_equil, j_init, ifplasma)
 ncoils = nucoils
 voltage(1:ncoils) = ucoils(1:ncoils) ! voltage inputs for active conductors
 
