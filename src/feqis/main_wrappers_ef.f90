@@ -91,7 +91,7 @@ use feqis_circuit, only: nr2, nz2, psiextrz, redo_bnd, &
     r, z, dr, dz, dr_factor_init, dz_factor_init, rax, zax, raxp, zaxp, &
     trax, tzax, iaxis, jaxis, psistabr, psistabz
 use astra2fbe, only: refit_mode, n_of_newton_iterations
-use feqis_tools, only: get_closest_index
+use feqis_tools, only: closest_index
 
 implicit none
 
@@ -113,7 +113,8 @@ CASE(-1) ! 1 turn only
 CASE(0)
 ! Start iterations to find self-consistent solution
     g000(1:nr2, 1:nz2) = psiextrz(1:nr2, 1:nz2)
-    call get_closest_index(raxp, zaxp, iaxis, jaxis)
+    iaxis = closest_index(raxp, r(1), dr)
+    jaxis = closest_index(zaxp, z(1), dz)
     rax = r(iaxis)
     zax = z(jaxis)
     raxold = rax
@@ -201,7 +202,8 @@ CASE(0)
 CASE(101) ! refit_mode=101: only vertical stab
 !start iterations to find self-consistent solution
     g000(1:nr2, 1:nz2) = psiextrz(1:nr2, 1:nz2)
-    call get_closest_index(raxp, zaxp, iaxis, jaxis)
+    iaxis = closest_index(raxp, r(1), dr)
+    jaxis = closest_index(zaxp, z(1), dz)
     rax = r(iaxis)
     zax = z(jaxis)
     raxold    = rax
@@ -294,11 +296,11 @@ subroutine restab_F_function_full_fonfit
 !refits all currents
 use errors_params, only: err_find_psistab
 use feqis_circuit, only: nr, nz, nr2, nz2, nactive, nconduc, nteta, iaxis, jaxis, &
-    dr, dz, rax, zax, raxp, zaxp, rbndp, zbndp, &
+    rmin, zmin, dr, dz, rax, zax, raxp, zaxp, rbndp, zbndp, &
     curconduc, iplasma, jrz, psiplasrz, psirz, psiextrz
 use astra2fbe, only: sigma_coils, sigma_b, sigma_axis
 use green_matrix, only: greeni
-use feqis_tools, only: get_closest_index, interp2d_psi, &
+use feqis_tools, only: closest_index, interp2d_psi, &
     inv_matrix, boundary, interp2d_psi, psi_external_calc
 
 implicit none
@@ -328,9 +330,8 @@ jrz = jrz/curr*iplasma
 
 rax = raxp
 zax = zaxp
-write(*, *) raxp, zaxp, curr
-
-call get_closest_index(rax, zax, iaxis, jaxis)
+iaxis = closest_index(rax, rmin, dr)
+jaxis = closest_index(zax, zmin, dz)
 iax = iaxis
 jax = jaxis
 
@@ -471,11 +472,11 @@ subroutine restab_boundary_with_fourier_wall !not working well
 use errors_params, only: err_find_psistab
 use feqis_circuit, only: npassive, nactive, nconduc, &
     nteta, nr, nz, nr2, nz2, iaxis, jaxis, &
-    dr, dz, rax, zax, raxp, zaxp, rbndp, zbndp, r_cond, z_cond, &
+    rmin, zmin, dr, dz, rax, zax, raxp, zaxp, rbndp, zbndp, r_cond, z_cond, &
     iplasma, curconduc, psiplasrz, jrz, psirz, psiextrz, psistabr, psistabz
 use astra2fbe, only: n_fourier_restab_boundary
 use green_matrix, only: greeni
-use feqis_tools, only: get_closest_index, interp2d_psi, &
+use feqis_tools, only: closest_index, interp2d_psi, &
     pol_angle, boundary, interp2d_psi, psi_external_calc
 
 implicit none
@@ -501,9 +502,8 @@ jrz = jrz/curr*iplasma
 
 rax = raxp
 zax = zaxp
-write(*, *) raxp, zaxp, curr
-
-call get_closest_index(rax, zax, iaxis, jaxis)
+iaxis = closest_index(rax, rmin, dr)
+jaxis = closest_index(zax, zmin, dz)
 iax = iaxis
 jax = jaxis
 
@@ -605,7 +605,7 @@ use feqis_circuit, only: nactive, npassive, nconduc, nr, nz, nr2, nz2, iaxis, ja
     r, z, dr, dz, rax, zax, raxp, zaxp, r_cond, z_cond, &
     curconduc, iplasma, jrz, psirz, psiextrz, psiplasrz, psistabr, psistabz
 use green_matrix, only: greeni
-use feqis_tools, only: get_closest_index, interp2d_psi, &
+use feqis_tools, only: closest_index, interp2d_psi, &
     pol_angle, least_square_biquad, boundary, psi_external_calc
 
 implicit none
@@ -630,8 +630,8 @@ jrz = jrz/curr*iplasma
 
 rax = raxp
 zax = zaxp
-write(*, *) raxp, zaxp, curr
-call get_closest_index(rax, zax, iaxis, jaxis)
+iaxis = closest_index(rax, r(1), dr)
+jaxis = closest_index(zax, z(1), dz)
 iax = iaxis
 jax = jaxis
 
@@ -754,7 +754,7 @@ subroutine solve_gse2d_fbe_full_ef_1turn(j_init, j_stab, raxold, zaxold)
 use feqis_circuit, only : nr2, nz2, iaxis, jaxis, &
     r, z, dr, dz, rax, zax, raxp, zaxp, &
     iplasma, jrz, psirz, psiextrz, psiplasrz, psistabr, psistabz
-use feqis_tools, only: get_closest_index, &
+use feqis_tools, only: closest_index, &
     boundary, nine_point_coeffs_only
 
 implicit none
@@ -776,7 +776,8 @@ if (j_init == 0) then
     jrz = jrz/curr*iplasma
     rax = raxp
     zax = zaxp
-    call get_closest_index(rax, zax, iaxis, jaxis)
+    iaxis = closest_index(rax, r(1), dr)
+    jaxis = closest_index(zax, z(1), dz)
     rax = r(iaxis)
     zax = z(jaxis)
     write(*, *) raxp, zaxp, rax, zax
@@ -1738,16 +1739,12 @@ use feqis_tools, only: nine_point_regression
 
 implicit none
 
-integer j, iax, jax
-double precision errtol, tolerr, raxm, zaxm
-double precision ppx(2)
-integer i1, i2
-integer j1, j2
-!the used function is psirz
+integer :: j, iax, jax, i1, i2, j1, j2
+double precision :: errtol, tolerr, raxm, zaxm
+double precision, dimension(2) :: ppx
 
 ! 1) find new magnetic axis
-!old axis
-! call get_closest_index_ef(rax, zax, iax, jax)
+
 iax = iaxis
 jax = jaxis
 i1 = 10000
@@ -1759,56 +1756,53 @@ tolerr = 10.
 j = 1
 raxm = rax
 zaxm = zax
-! write(44125, *) ' '
-  do while(errtol > tolerr)
-i1 = i2
-j1 = j2
-i2 = iax
-j2 = jax
-if (psirz(iax + 1, jax) > psirz(iax, jax)) then
-iax = iax + 1
-jax = jax
-endif
-if (psirz(iax-1, jax) > psirz(iax, jax)) then
-iax = iax - 1
-jax = jax
-endif
-if (psirz(iax, jax + 1) > psirz(iax, jax)) then
-iax = iax
-jax = jax + 1
-endif
-if (psirz(iax, jax-1) > psirz(iax, jax)) then
-iax = iax
-jax = jax - 1
-endif
-if (psirz(iax + 1, jax-1) > psirz(iax, jax)) then
-iax = iax + 1
-jax = jax - 1
-endif
-if (psirz(iax-1, jax + 1) > psirz(iax, jax)) then
-iax = iax - 1
-jax = jax + 1
-endif
-if (psirz(iax-1, jax-1) > psirz(iax, jax)) then
-iax = iax - 1
-jax = jax - 1
-endif
-if (psirz(iax + 1, jax + 1) > psirz(iax, jax)) then
-iax = iax + 1
-jax = jax + 1
-endif
 
-j = j + 1
+do while(errtol > tolerr)
+    i1 = i2
+    j1 = j2
+    i2 = iax
+    j2 = jax
+    if (psirz(iax + 1, jax) > psirz(iax, jax)) then
+        iax = iax + 1
+        jax = jax
+    endif
+    if (psirz(iax-1, jax) > psirz(iax, jax)) then
+        iax = iax - 1
+        jax = jax
+    endif
+    if (psirz(iax, jax + 1) > psirz(iax, jax)) then
+        iax = iax
+        jax = jax + 1
+    endif
+    if (psirz(iax, jax-1) > psirz(iax, jax)) then
+        iax = iax
+        jax = jax - 1
+    endif
+    if (psirz(iax + 1, jax-1) > psirz(iax, jax)) then
+        iax = iax + 1
+        jax = jax - 1
+    endif
+    if (psirz(iax-1, jax + 1) > psirz(iax, jax)) then
+        iax = iax - 1
+        jax = jax + 1
+    endif
+    if (psirz(iax-1, jax-1) > psirz(iax, jax)) then
+        iax = iax - 1
+        jax = jax - 1
+    endif
+    if (psirz(iax + 1, jax + 1) > psirz(iax, jax)) then
+        iax = iax + 1
+        jax = jax + 1
+    endif
 
-if ((iax == i1) .and. (jax == j1)) goto 101
-if (j >= 100000) goto 101
+    j = j + 1
+
+    if ((iax == i1) .and. (jax == j1)) EXIT
+    if (j >= 100000) EXIT
 enddo
-101 continue
 
 iaxis = iax
 jaxis = jax
-write(*, *) 'ax', rax, zax, iax, jax, r(iax), z(jax), psirz(iax, jax)
-
 call nine_point_regression(r(iax), z(jax), ppx, derivpsi, psiaxis)
 
 rax = ppx(1)  !r(iaxis)
@@ -1816,15 +1810,13 @@ zax = ppx(2) !z(jaxis)
 trax = rax
 tzax = zax
 
-write(*, *) 'ax2', rax, zax
-
 if (isnan(rax)) then
-write(*, *) 'rax is nan in fbe find axis'
-stop
+    write(*, *) 'rax is nan in fbe find axis'
+    stop
 endif
 if (rax < 0.1 .or. rax > 100) then
-write(*, *) 'rax is nan in fbe find axis', rax, zax, ppx, derivpsi, psiaxis
-stop
+    write(*, *) 'rax is nan in fbe find axis', rax, zax, ppx, derivpsi, psiaxis
+    stop
 endif
 
 return
@@ -1837,7 +1829,7 @@ use pi_vars, only: GPI
 use astra2fbe, only: x_point_save, plasma_config
 use errors_params, only: err_find_oxpoints_derivs
 use feqis_tools, only: find_closest_xpoints, &
-    get_closest_index, pol_angle, xpoint_axis_connection, &
+    closest_index, pol_angle, xpoint_axis_connection, &
     nine_point_regression, nine_point_regression_follow, interp2d_psi
 use feqis_circuit, only: nr, nz, nr1, nr2, nz1, nz2, i_dim2, i_dim5, nlimiter, &
     max_xpoints, n_of_xpoints, &
@@ -2045,7 +2037,8 @@ if (n_of_xpoints >= 1) then
 
 ! First pass, remove X-points behind the limiter area
     do i=1, n_of_xpoints
-        call get_closest_index(r_xpoint(i), z_xpoint(i), j, k)
+        j = closest_index(r_xpoint(i), r(1), dr)
+        k = closest_index(z_xpoint(i), z(1), dz)
         if (zlimpotential(j, k) < 0.5) then
             psi_xpoint(i) = -1.e6
         else
@@ -2110,10 +2103,9 @@ end subroutine find_psi_boundary
 subroutine new_jrz_ef ! calculate new right hand side given new boundary!
 
 use rcurr_zcurr_2def, only: R_curr_2d, Z_curr_2D
-use feqis_tools, only: fill_in_current, get_floor_index
+use feqis_tools, only: fill_in_current, floor_index
 use feqis_circuit, only: nr1, nr2, nz1, nz2, nrho2d, i_dim2, &
     r, z, rax, zax, dr, dz, &
-    rmin, zmin, &
     ppp_2d, ffp_2d, &
     area_eff, jrz, u_n, iplasma
 
@@ -2138,7 +2130,9 @@ totpoints = 0
 quad_loop: do quadrant=1, 4
 ! sweep from axis to exterior and fill in the current
 !start from axis position
-    call get_floor_index(rax, zax, i1, j1)
+
+    i1 = floor_index(rax, r(1), dr)
+    j1 = floor_index(zax, z(1), dz)
 
     SELECT CASE(quadrant)
     CASE(1)

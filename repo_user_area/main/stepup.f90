@@ -38,7 +38,7 @@ save tau_temp_smlk
 BTN = BTOR
 FTN = FTO
 
-if (flightsim < 1) plasma_up = 1
+! if (flightsim < 1) plasma_up = 1
 
 !tau treatment to avoid machine precision errors
 if (flightsim >= 1) then

@@ -683,7 +683,8 @@ contains
     double precision :: rax, zax
     double precision, dimension(ndim) :: bub
 
-    call get_closest_index(r_in, z_in, iax, jax)
+    iax = closest_index(r_in, r(1), dr)
+    jax = closest_index(z_in, z(1), dz)
 
     k = 0
     do j=-1, 1
@@ -704,8 +705,7 @@ contains
 !---------------------------------------------------------------------
     subroutine nine_point_coeffs_only(r_in, z_in, c, rax_out, zax_out)
 
-    use feqis_circuit, only: psirz, nr1, nz1, r, z
-
+    use feqis_circuit, only: psirz, nr1, nz1, r, z, dr, dz, psirz
     integer, parameter :: ndim=9
     double precision, intent(in) :: r_in, z_in
     double precision, intent(out) :: rax_out, zax_out
@@ -714,7 +714,8 @@ contains
     integer :: iax, jax, i, j, k
     double precision, dimension(90) :: bub
 
-    call get_closest_index(r_in, z_in, iax, jax)
+    iax = closest_index(r_in, r(1), dr)
+    jax = closest_index(z_in, z(1), dz)
 
     rax_out = r(iax)
     zax_out = z(jax)
@@ -765,37 +766,29 @@ contains
     end subroutine nine_point_regression_follow
 
 !---------------------------------------------------------------------
-    subroutine get_closest_index(r_in, z_in, i, j)
+    integer function closest_index(x_in, xmin, dx)
 
-    use feqis_circuit, only: rmin, zmin, dr, dz
+    double precision, intent(in) :: x_in, xmin, dx
 
-    double precision, intent(in) :: r_in, z_in
-    integer, intent(out) :: i, j
-
-    i = nint((r_in - rmin)/dr + 1.) ! nint(1.8) = 2
-    j = nint((z_in - zmin)/dz + 1.)
+    closest_index = nint((x_in - xmin)/dx + 1.) ! nint(1.8) = 2
 
     return
-    end subroutine get_closest_index
+    end function closest_index
 
 !---------------------------------------------------------------------
-    subroutine get_floor_index(r_in, z_in, i, j)
+    integer function floor_index(x_in, xmin, dx)
 
-    use feqis_circuit, only: rmin, zmin, dr, dz
+    double precision, intent(in) :: x_in, xmin, dx
 
-    double precision, intent(in) :: r_in, z_in
-    integer, intent(out) :: i, j
-
-    i = floor((r_in - rmin)/dr + 1.) ! floor(1.8) = 1
-    j = floor((z_in - zmin)/dz + 1.)
+    floor_index = floor((x_in - xmin)/dx + 1.) ! floor(1.8) = 1
 
     return
-    end subroutine get_floor_index
+    end function floor_index
 
 !---------------------------------------------------------------------
     double precision function interp2d_psi(r_in, z_in, psi_in)
 ! ->psi at r_in, z_in
-    use feqis_circuit, only: r, z
+    use feqis_circuit, only: r, z, dr, dz
 
     double precision, intent(in) :: r_in, z_in
     double precision, intent(in), dimension(:, :) :: psi_in
@@ -806,7 +799,8 @@ contains
 
     psi_shape = SHAPE(psi_in)
 
-    call get_floor_index(r_in, z_in, i, j)
+    i = floor_index(r_in, r(1), dr)
+    j = floor_index(z_in, z(1), dz)
     i = min(psi_shape(1) - 1, max(1, i))
     j = min(psi_shape(2) - 1, max(1, j))
 

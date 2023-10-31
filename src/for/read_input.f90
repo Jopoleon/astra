@@ -54,6 +54,8 @@ use timeoutput_inc, only: NTIMES, TTOUT
 
 use numerical_tools, only: EXTRAP, INTEGR
 
+use plasma_state, only: plasma_up
+
 implicit none
 
 integer, parameter :: MPEX=101, MSIGEX=1, MTEX=50, MSIG=1, MEXT=MPEX*MTEX
@@ -98,6 +100,8 @@ tend_nml   = -1.
 tpause_nml = -1.
 NITREQ = 1. ! Initialization: g95 does not like it in blockdata
 i_filter_glob = 0 ! if i_filter_glob = 1, a global filter is set
+
+plasma_up = 1  ! plasma is up by default, can be set to 0 for breakdown by the user in a user-defined sbr called with "<"
 
 !----------------------------------------------------------------------|
 ! Parse file ".exe/version"
