@@ -6,8 +6,8 @@ use parameters_a2equil, only: type_parameters
 use feqis_circuit, only: ncoils, nrho, nteta, nr2, nz2, &
     psi_cur_old, psiplasmatoconduc, psirz, psiextrz, &
     psplex, psibndp, psiaxisp, &
-    ucoils, voltage
-use feqis_tools, only: psi_external_calc
+    ucoils, voltage, &
+    psi_external_calc
 
 implicit none
 

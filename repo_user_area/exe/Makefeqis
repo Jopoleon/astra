@@ -13,8 +13,8 @@ FFLAGS	= -O2 -g -traceback -I. -I$(MOD_FOR) -I$(MOD_DIR)
 FEQ_MODOBJ = \
 $(OBJ_DIR)/pi_var_module.o \
 $(OBJ_DIR)/modules_feqis.o \
-$(OBJ_DIR)/feqis_circuit_mod.o \
-$(OBJ_DIR)/feqis_tools_mod.o
+$(OBJ_DIR)/feqis_tools_mod.o \
+$(OBJ_DIR)/feqis_circuit_mod.o
 
 FEQ_LIBOBJ = \
 $(OBJ_DIR)/solver_inversion_matrix_gsef.o \

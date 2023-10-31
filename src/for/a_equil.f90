@@ -12,8 +12,8 @@ subroutine A_EQUIL( &
 use imas_ids, only: type_equilibrium
 use fenix_params, only: s_adapt, s_fazt
 use parameters_a2equil, only: type_parameters, fix_adapgrid, GP, GP2
-use const_inc, only : rtor,shift,updwn
-use feqis_tools, only: psib_ext_feqis, get_zccurb_efff, find_demo_gaps_feqis
+use const_inc, only : rtor,shift, updwn
+use feqis_circuit, only: psib_ext_feqis, get_zccurb_feqis, find_demo_gaps_feqis
 
 use flight_sim_geometrics, only: geom1d
 use outcmn_inc, only: MACHINE, nml_file
@@ -241,7 +241,7 @@ Zgeo = 0.5*(zoben + zunten)
 amin = 0.5*(Raus - Rin)
 delr_oben = (Rgeo - Rbnd(jzmax))/amin
 if (equil_solver == 101) then
-    call get_zccurb_efff(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
+    call get_zccurb_feqis(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
 else if (equil_solver == 3) then
     call get_zccurb(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
 endif
@@ -305,7 +305,7 @@ if (parameters_equil%k_fixfree == 1) then
         endif
         if (equil_solver == 101) then
             geom1d(94-i_gaps+1:94) = find_demo_gaps_feqis(i_gaps, demo_gaps(1:i_gaps, 1:4))
-            call get_zccurb_efff(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
+            call get_zccurb_feqis(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
         else if (equil_solver == 3) then
             call find_demo_gaps(i_gaps, demo_gaps(1:i_gaps, 1:4), geom1d(94-i_gaps+1:94))
             call get_zccurb(Rcurr, Zcurr, Zsquad, rgeoc, zgeoc, ahorc)
