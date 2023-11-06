@@ -5,7 +5,7 @@ LIBDIR=$AWD/lib
 ERR=0
 echo ""
 
-for lib1 in ipc sbr fnc
+for lib1 in for sbr fnc
 do
    LIB1=$LIBDIR/lib${lib1}.a
    OBJ1=`ar -tv $LIB1 | awk '{print $NF}'`
