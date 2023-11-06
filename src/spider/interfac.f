@@ -1614,6 +1614,7 @@
          allocate(equil_out%profiles_1d%tria_lower(iplas))
          allocate(equil_out%profiles_1d%shif(iplas))
          allocate(equil_out%profiles_1d%shiv(iplas))
+         allocate(equil_out%profiles_1d%squareness(iplas))
       endif
       equil_out%profiles_1d%volume = volum*twopi
       equil_out%profiles_1d%r_inboard = yri

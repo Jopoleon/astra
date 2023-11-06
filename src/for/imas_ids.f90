@@ -25,6 +25,7 @@ type type_profiles_1d  !
     real(DP),pointer :: elongation(:) => null()     ! /profiles_1d/elongation - Elongation; Time-dependent; Vector (npsi)
     real(DP),pointer :: tria_upper(:) => null()     ! /profiles_1d/tria_upper - Upper triangularity profile; Time-dependent; Vector (npsi)
     real(DP),pointer :: tria_lower(:) => null()     ! /profiles_1d/tria_lower - Lower triangularity profile; Time-dependent; Vector (npsi)
+    real(DP),pointer :: squareness(:) => null()     ! /profiles_1d/squareness - squareness; Time-dependent; Vector (npsi)
     real(DP),pointer :: volume(:) => null()     ! /profiles_1d/volume - Volume enclosed in the flux surface [m^3]; Time-dependent; Vector (npsi)
     !real(DP),pointer :: ftrap(:) => null()     ! /profiles_1d/ftrap - Trapped particle fraction; Time-dependent; Vector (npsi)
     real(DP),pointer :: fofb(:) => null() ! /profiles_1d/fofb -average(B0/B^2(l-sqrt(1-B/Bmax)(1+0.5B/Bmax)) [1]; Time-dependent; Vector (npsi)
