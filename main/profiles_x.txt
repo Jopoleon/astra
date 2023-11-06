@@ -99,3 +99,5 @@ NIX      10^19/m^3                 External ion density
 VPOLX    m/s                       Poloidal rotation speed as taken from data
 VTORX    m/s                       Toroidal rotation speed as taken from data
 SLATX    m^2                       Xarray for SLAT
+SHIVX    m^2                       Xarray for SHIV
+SQUAX    m^2                       Xarray for SQUARN

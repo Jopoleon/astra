@@ -240,7 +240,7 @@ SGNEO    kg/m**3*m/s/T/(1e19*m_p)  Neoclassical correction for mom equation (sgn
 SGNEOD   kg/m**3*1/s/T/(1e19*m_p)  Neoclassical correction for mom equation (sgneo = sum ms ns dKs/drho), Ks = Upols/Bpol
 SHEAR    None                      Magnetic shear (replaces fnc/shearr.f and fml/shear)
 SHIF     m                         Magnetic surface Shafranov shift (alias SHIH)
-SHIV     m                         Magnetic surface vertical (up
+SHIV     m                         Magnetic surface vertical (per flux surface, = UPDWN on axis)
 SLAT     m^2                       Lateral area of a magnetic surface
 SN       10^19/m^3/s               Explicit source in NE equation
 SNEBM    10^19/m^3/s               Electron source from NB
@@ -250,6 +250,7 @@ SNIBM3   10^19/m^3/s               Source of ions from NB (energy EBEAM/3)
 SNNBM    10^19/m^3/s               Warm neutrals source
 SNTOT    10^19/m^3/s               Total particle source
 SQEPS    None                      SQRT(eps)=sqrt(a/R)=sqrt(AMETR(j)/RTOR)
+SQUARN   None                      Plasma squareness zeta
 SRHO     None                      Shifted RHO, SRHO = RHO+drho/2 [drho, roc , ...]
 SXHO     None                      Shifted XRHO, SXHO = XRHO+drhox/2 [drhox, 1 , ...]
 TE       keV                       Electron temperature

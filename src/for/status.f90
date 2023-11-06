@@ -19,7 +19,7 @@ double precision, dimension(NRD) :: &
     VOLUM, CV, DRODA, PDE, PDI, SDN, &
     SD0, SD1, SD2, SD3, SD4, SD5, SD6, SD7, SD8, SD9, &
     UPS0, UPS0O, UPS1, UPS1O, DLNEO, SGNEO, UPS2, &
-    UPS2O, MRHO, DDNEO, SGNEOD, DLNEOD  !46
+    UPS2O, MRHO, DDNEO, SGNEOD, DLNEOD, SQUARN  !47
 
 double precision, dimension(NRD) :: &
     B0DB2, BDB02, BDB0, BMAXT, BMINT, FOFB, GRADRO, &
@@ -62,7 +62,7 @@ double precision, dimension(:), pointer :: &
     F0X, F1X, F2X, F3X, F4X, F5X, F6X, F7X, F8X, F9X, &
     MUX, MVX, GNX, SNX, PEX, PIX, PRADX, TEX, TIX, NEX, CUX, &
     ZEFX, VRX, SHX, ELX, TRX, G11X, G22X, G33X, DRODAX, IPOLX, &
-    NIX, VPOLX, VTORX, SLATX
+    NIX, VPOLX, VTORX, SLATX, SHIVX, SQUAX
 
 double precision, dimension(NRD, NARRX), target :: EXT
 
@@ -160,6 +160,7 @@ ELON = 1.
 TRIA = 0.
 SHIF = 0.
 SHIV = 0.
+SQUARN = 0.
 G33 = 1.
 G41 = 1.
 G42 = 1.
@@ -446,6 +447,8 @@ NIX    => EXT(:, 96)
 VPOLX  => EXT(:, 97)
 VTORX  => EXT(:, 98)
 SLATX  => EXT(:, 99)
+SHIVX  => EXT(:, 100)
+SQUAX  => EXT(:, 101)
 
 ! F0-F9
 

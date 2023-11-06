@@ -710,6 +710,8 @@ call nfcheck( nf90_put_var(ncid, varid(jid), SNTOT (1:NA1)) )
 jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), SQEPS (1:NA1)) )
 jid = jid + 1
+call nfcheck( nf90_put_var(ncid, varid(jid), SQUARN(1:NA1)) )
+jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), SRHO  (1:NA1)) )
 jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), SXHO  (1:NA1)) )
