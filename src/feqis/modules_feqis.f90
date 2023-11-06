@@ -35,7 +35,7 @@ double precision, dimension(i_dim2) ::tetabez, dpsidvbez, psibez, &
     ggrhobez, bmaxbez, bminbez, gm4bez, bdb0bez, gm5bez, fofbbez, &
     areatbez, perimbez, shifbez, kbez, surfbez, triaubez, phibez, &
     qbez, t2dbez, rbp2_b2bez, &
-    ffprimebez, pprimebez, pressbez, ipolbez
+    ffprimebez, pprimebez, pressbez, ipolbez, shivbez, squarebez
 
 double precision, dimension(i_dim2, i_dim2) :: rpbez, zpbez, &
     rminbez, bpcellbez, bcellbez, rmin2dbez, jrhobez, &

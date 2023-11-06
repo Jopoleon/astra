@@ -6,7 +6,7 @@ subroutine build_2dgrid(nrho, ntheta, psin_grid, &
     G2, G3, areat, perim, volum, G1, GRADRO, &
     BMAXT, BMINT, BDB02, BDB0, B0DB2, FOFB, &
     slat, li3, betapol, psplex, bpcell, bcell, r_out, r_in, &
-    elon, tria, shif, g41, q_out)
+    elon, tria, shif, g41, q_out, shiv, square)
 
 use pi_vars, only: GPI, GPI2
 use numerical_tools, only: qinterp, extrapolate, polyfitcc
@@ -27,7 +27,8 @@ double precision, intent(out), dimension(nrho) :: G1, G2, G3, &
 double precision, intent(in), dimension(nrho, ntheta) :: XX, YY, rmin, Rmaj2, & 
     jcbn2, gradr2
 double precision, intent(out), dimension(nrho, ntheta) :: bpcell, bcell
-double precision, intent(out), dimension(nrho) :: r_out, r_in, elon, tria, shif, g41, q_out
+double precision, intent(out), dimension(nrho) :: r_out, r_in, elon, tria, shif, &
+    g41, q_out, shiv, square
 
 integer :: jrho, jthe, jthe_l, k, j, i, ji, i1, i2, ip0, ip1, ip2, ip3
 double precision :: drdX, drdY, Mdet, dpsi, dthe, ipol_rmaj, z1, z2, z3, rho_interp, &
@@ -76,12 +77,18 @@ enddo
 dl_arc = 0.0
 do jrho=1, nrho
     dl_arc = 0.0
+    square(jrho)=0.0
     do jthe=2, ntheta 
         dl_arc(jthe) = rmin(jrho, jthe)*(thetap_i(jthe) - thetap_i(jthe-1)) !on the full grid
+        square(jrho) = square(jrho) + XX(jrho, jthe)*sin(thetap_i(jthe) + thetap_i(jthe-1))*dl_arc(jthe)
     enddo
     dl_arc(1) = rmin(jrho, 1)*(thetap_i(1) + GPI2 - thetap_i(ntheta))
-    perim(jrho) = sum(dl_arc)
+    square(jrho) = square(jrho) + XX(jrho, 1)*sin((thetap_i(1) + GPI2 + thetap_i(ntheta)))*dl_arc(1)
+    perim(jrho)  = sum(dl_arc)
+    square(jrho) = square(jrho)/perim(jrho)
 enddo
+square = -square
+square(1) = square(2)
 
 !Compute Bpol, gradPSI, gradV
 
@@ -150,6 +157,7 @@ slat = slat*GPI2   !full grid
 
 do jrho=1, nrho
     ametr(jrho) = 0.5*(maxval(XX(jrho, 1: ntheta)) - minval(XX(jrho, 1: ntheta)))
+    shiv(jrho)  = 0.5*(maxval(YY(jrho, 1: ntheta)) + minval(YY(jrho, 1: ntheta)))  !avg between zmax and zmin or mean of Z ???
 enddo
 
 !Cycle over positions  ! half grid

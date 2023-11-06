@@ -18,7 +18,7 @@ double precision, dimension(500) :: limiterR, limiterZ
 double precision :: lim_maxR, lim_minR, lim_maxZ, lim_minZ
 integer :: ilim_maxR, ilim_minR, ilim_maxZ, ilim_minZ
 double precision, dimension(i_dim1) :: Rcoil, Zcoil, drcoil, dzcoil, &
-    anglecoil
+    anglecoil, anglehcoil
 
 integer :: nconduc, nblocks, npassive, nactive
 double precision, dimension(i_dim1) :: curconduc, voltage, voltage_old, &
@@ -1385,7 +1385,7 @@ contains
 
             totpoints = totpoints + 1
             if (totpoints > nz2*nr2) then
-                write(*, *) 'Error in find new boundary (totpoints > nz2*nr2)'
+                write(*, *) 'Error in find new boundary (totpoints > nz2*nr2)', totpoints, nr2, nz2
                 stop
             endif
 

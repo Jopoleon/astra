@@ -26,8 +26,8 @@ double precision :: dummy1, r1, r2, z1, z2, r3, z3, r4, z4, gtemp, dr1, dz1, &
     lim_minR, lim_maxR, lim_minZ, lim_maxZ, &
     resblan, widthblan
 double precision, dimension(ncoils_max) :: tempcoilr, tempcoilz, &
-    tempcoilangle, tempcoildr, tempcoildz, areactmp, &
-    r_cond, z_cond, curconduc, Rcoil, Zcoil, dRcoil, dZcoil, anglecoil, &
+    tempcoilangle, tempcoilangleh, tempcoildr, tempcoildz, areactmp, &
+    r_cond, z_cond, curconduc, Rcoil, Zcoil, dRcoil, dZcoil, anglecoil, anglehcoil, &
     Rblan, Zblan, areablan, Rblanpc, Zblanpc, resblanpc, areablanpc, curblanpc
 double precision, dimension(nplas_max) :: Rcomp, Zcomp, R, Z
 double precision, dimension(nlim_max) :: limiterR, limiterZ
@@ -38,6 +38,7 @@ double precision, dimension(ncoils_max, ncoils_max) :: resconduc, indconduc, &
     dgreenirj, dgreenizj
 double precision, dimension(nplas_max, nplas_max) :: zlimpotential
 double precision, dimension(nplas_max, nplas_max, ncoils_max) :: greeni, dgreenirpl, dgreenizpl
+double precision, dimension(ncoils_max) :: cos1,cos2,sin1,sin2,Det
 
 character(len=120) :: fname, dumstring1
 
@@ -77,6 +78,13 @@ dr = r(2) - r(1)
 dz = z(2) - z(1)
 
 !load coils
+!Definitions:
+! rcoil, zcoil : geometric centroid of the coil (R,Z)
+! drcoil : length of the "horizontal" side l1
+! dzcoil : length of the "vertical" side l2
+! Area of romboid is: A = l1*l2*Det    ! Det = cos(angleh)*sin(angle) - cos(angle)*sin(angleh). For angleh=0 and angle = 90, Det = 1.
+
+
 r_cond = 0.
 z_cond = 0.
 numeqcump = 0
@@ -84,16 +92,25 @@ read(32, *) dumstring1
 read(32, *) ncoils
 do i=1, ncoils
     read(32, *) nelemcoil(i)
-    read(32, *) rcoil(i), zcoil(i), drcoil(i), dzcoil(i), dummy1, anglecoil(i), &
+    read(32, *) rcoil(i), zcoil(i), drcoil(i), dzcoil(i), anglehcoil(i), anglecoil(i), &
          mturns(i), mequivalence(i)
     r_cond(mequivalence(i)) = r_cond(mequivalence(i)) + rcoil(i) !assign current to conductor
     z_cond(mequivalence(i)) = z_cond(mequivalence(i)) + zcoil(i) !assign current to conductor
     numeqcump(mequivalence(i)) = numeqcump(mequivalence(i)) + 1
+		cos1(i)=cos(anglehcoil(i))
+		cos2(i)=cos(anglecoil(i))
+		sin1(i)=sin(anglehcoil(i))
+		sin2(i)=sin(anglecoil(i))
+		Det(i)=cos1(i)*sin2(i)-cos2(i)*sin1(i)
 enddo
+anglehcoil = anglehcoil/180.*GPI
 anglecoil = anglecoil/180.*GPI
 nconduc = maxval(mequivalence(1:ncoils))
 r_cond(1:nconduc) = r_cond(1:nconduc)/numeqcump(1:nconduc)
 z_cond(1:nconduc) = z_cond(1:nconduc)/numeqcump(1:nconduc)
+
+
+write(*,*) anglecoil(1:ncoils),anglehcoil(1:ncoils)
 
 nblocks = 0
 
@@ -211,6 +228,7 @@ do i=1, ncoils
         k = k + 1
         tempcoilr(k) = rcoil(i)
         tempcoilz(k) = zcoil(i)
+        tempcoilangleh(k) = anglehcoil(i)
         tempcoilangle(k) = anglecoil(i)
         tempcoildr(k) = drcoil(i)
         tempcoildz(k) = dzcoil(i)
@@ -223,6 +241,7 @@ do i=1, ncoils
                 k = k + 1
                 tempcoilr(k) = rcoil(j)
                 tempcoilz(k) = zcoil(j)
+                tempcoilangleh(k) = anglehcoil(j)
                 tempcoilangle(k) = anglecoil(j)
                 tempcoildr(k) = drcoil(j)
                 tempcoildz(k) = dzcoil(j)
@@ -234,41 +253,32 @@ do i=1, ncoils
 ! analysis coil
 !  double precision rcetmp(1200), zcetmp(1200), datmp(1200), equivtmp(1200)
         do j=1, k
-            x1 = tempcoilr(j) - 0.5*(tempcoildr(j) + tempcoildz(j)*cos(tempcoilangle(j))/sin(tempcoilangle(j)))
-            x2 = tempcoilz(j) - 0.5*(tempcoildz(j))
-            r1 = x1
-            z1 = x2
-            x1 = tempcoildr(j)
-            x2 = tempcoildz(j)/sin(tempcoilangle(j))
-            x3 = tempcoildr(j)
-            x4 = 0.
-            x5 = tempcoildz(j)*cos(tempcoilangle(j))/sin(tempcoilangle(j))
-            x6 = tempcoildz(j)
+            r1 = tempcoilr(j) - 0.5*(tempcoildr(j)*cos(tempcoilangleh(j)) + tempcoildz(j)*cos(tempcoilangle(j)))
+            z1 = tempcoilz(j) - 0.5*(tempcoildr(j)*sin(tempcoilangleh(j)) + tempcoildz(j)*sin(tempcoilangle(j)))
+           	x3 = tempcoildr(j)
+            x4 = tempcoildz(j)
+            x5 = x3*x4*(cos(tempcoilangleh(j))*sin(tempcoilangle(j))-cos(tempcoilangle(j))*sin(tempcoilangleh(j)))
+            x6 = x5/tempcoilelem(j)
 
-            iii = nint(sqrt(tempcoilelem(j)*x1/x2) + 0.5)
-            jjj = nint(sqrt(tempcoilelem(j)*x2/x1) + 0.5)
-
-            x3 = x3/iii
-            x4 = x4/iii
-            x5 = x5/jjj
-            x6 = x6/jjj
-
-            dr1 = x3 !tempcoildr(j)/iii
-            dz1 = x6 !tempcoildz(j)/jjj
-            r1 = r1 + 0.5*(x3 + x5)
-            z1 = z1 + 0.5*(x4 + x6)
+            iii = nint(x3/sqrt(x6) + 0.5)
+            jjj = nint(x4/sqrt(x6) + 0.5)
+						tempcoilelem(j)=iii*jjj
+            x3 = x3/iii !dl1
+            x4 = x4/jjj !dl2
+	write(*,*) i,j,r1,z1,iii,jjj,x3,x4,tempcoildr(j),tempcoildz(j)
+						
             do jj=1, jjj
                 do ii=1, iii
                     ielem = ielem + 1
-                    rcetmp(ielem) = r1 + (ii - 1.)*x3 + (jj - 1.)*x5   !center
-                    zcetmp(ielem) = z1 + (ii - 1.)*x4 + (jj - 1.)*x6 !center
-                    drcetmp(ielem) = dr1   !center
-                    dzcetmp(ielem) = dz1 !center
-                    datmp(ielem) = dr1*dz1/sin(tempcoilangle(j)) !area including turns
+                    rcetmp(ielem) = r1 + 0.5*(x3*cos(tempcoilangleh(j)) + x4*cos(tempcoilangle(j)))+(ii-1.)*x3*cos(tempcoilangleh(j)) + (jj-1.)*x4*cos(tempcoilangle(j))   !center
+                    zcetmp(ielem) = z1 + 0.5*(x3*sin(tempcoilangleh(j)) + x4*sin(tempcoilangle(j)))+(ii-1.)*x3*sin(tempcoilangleh(j)) + (jj-1.)*x4*sin(tempcoilangle(j)) !center
+                    drcetmp(ielem) = x3   !dl1
+                    dzcetmp(ielem) = x4 !dl2
+                    datmp(ielem) = x3*x4*(cos(tempcoilangleh(j))*sin(tempcoilangle(j))-cos(tempcoilangle(j))*sin(tempcoilangleh(j))) !area 
                     equivtmp(ielem) = nconduc
                     equivforce(ielem) = tempnnc(j)
-                    tatmp(ielem) = datmp(ielem)*tempcoilturns(j)/(tempcoildr(j)*tempcoildz(j)/sin(tempcoilangle(j))) !area including turns
-                    write(*, '(6E25.11)') ielem + 0., rcetmp(ielem), zcetmp(ielem), 0. + equivtmp(ielem), 0. + equivforce(ielem)
+                    tatmp(ielem) = (0.+tempcoilturns(j))/(0.+tempcoilelem(j))+0. ! turns
+                    write(*, '(9E25.11)') ielem + 0., rcetmp(ielem), zcetmp(ielem), 0. + equivtmp(ielem), 0. + equivforce(ielem),tempcoilturns(j)+0.,tempcoilelem(j)+0.,tatmp(ielem)
                     nctype(ielem) = 2 !rectangular coil block
                 enddo
             enddo !cycles over 1 single coil element
@@ -338,17 +348,11 @@ do i=1, ielem
     iii = equivtmp(i)
     do j=1, ielem
         if (iii == equivtmp(j)) then
-            if ((equivforce(j) == equivforce(i)).and.(i /= j)) then
+            if (i /= j) then
                 gtemp = green_function_non_identity(rcetmp(i), zcetmp(i), rcetmp(j), zcetmp(j), &
                     drcetmp(i), dzcetmp(i), drcetmp(j), dzcetmp(j), nctype(i), nctype(j))
-                indconduc(iii, iii) = indconduc(iii, iii) + mu0/GPI*gtemp*tatmp(i)*tatmp(j)
-            endif
-            if ((equivforce(j) /= equivforce(i))) then
-                gtemp = green_function_non_identity(rcetmp(i), zcetmp(i), rcetmp(j), zcetmp(j), &
-                    drcetmp(i), dzcetmp(i), drcetmp(j), dzcetmp(j), nctype(i), nctype(j))
-                indconduc(iii, iii) = indconduc(iii, iii) + mu0/GPI*gtemp*tatmp(i)*tatmp(j)
-            endif
-            if (i == j) then
+                indconduc(iii, iii) = indconduc(iii, iii) + mu0/GPI*gtemp*tatmp(i)*tatmp(j)/1.
+            else
                 gtemp = green_function_identity(rcetmp(i), zcetmp(i), drcetmp(i), dzcetmp(i), nctype(i))
                 indconduc(iii, iii) = indconduc(iii, iii) + mu0/GPI*gtemp*tatmp(i)*tatmp(j)/2.
             endif
@@ -434,6 +438,7 @@ do i=1, ielem
     enddo
 enddo
 
+
 !generate zlimpotential
 zlimpotential = 1.
 do j=1, nz2
@@ -444,6 +449,12 @@ do j=1, nz2
         if (j > ilim_maxZ) zlimpotential(i, j) = 0
     enddo
 enddo
+
+open(32,file='limatrix.txt')
+do i=1, nconduc
+    write(32, *) indconduc(i, 1:nconduc)
+enddo
+close(32)
 
 ! write everything on file
 
@@ -462,7 +473,7 @@ write(32, *) nactive,npassive
 
 write(32, *) ncoils
 do i=1, ncoils
-    write(32, *) rcoil(i), zcoil(i), drcoil(i), dzcoil(i), anglecoil(i), mequivalence(i)
+    write(32, *) rcoil(i), zcoil(i), drcoil(i), dzcoil(i), anglehcoil(i), anglecoil(i), mequivalence(i)
 enddo
 
 write(32, *) nlimiter

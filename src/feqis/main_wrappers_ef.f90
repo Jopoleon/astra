@@ -722,7 +722,7 @@ use feqis_circuit, only: nr, nr1, nr2, nz, nz1, nz2, &
     ilim_minr, ilim_maxr, ilim_minz, ilim_maxz, &
     lim_minr, lim_maxr, lim_minz, lim_maxz, &
     rmin, rmax, zmin, zmax, r, z, dr, dz, rcomp, zcomp, r_cond, z_cond, &
-    rcoil, zcoil, drcoil, dzcoil, anglecoil, mequivalence, &
+    rcoil, zcoil, drcoil, dzcoil, anglecoil, anglehcoil, mequivalence, &
     limiterr, limiterz, alpsep, curconduc, resconduc, indconduc, &
     zlimpotential, green_bnd_f
 use green_matrix, only: greeni, dgreenirj, dgreenizj, dgreenirpl, dgreenizpl
@@ -766,7 +766,7 @@ open(32, file=TRIM(fname))
     read(32, *) nactive, npassive
     read(32, *) ncoils
     do i=1, ncoils
-        read(32, *) rcoil(i), zcoil(i), drcoil(i), dzcoil(i), anglecoil(i), mequivalence(i)
+        read(32, *) rcoil(i), zcoil(i), drcoil(i), dzcoil(i), anglehcoil(i), anglecoil(i), mequivalence(i)
     enddo
     read(32, *) nlimiter
     do i=1, nlimiter
@@ -838,13 +838,14 @@ use transfer_functions, only: rpbez, zpbez, psibez, t2dbez, &
     areatbez, surfbez, perimbez, vbez, qbez, phibez, &
     bmaxbez, bminbez, bdb0bez, fofbbez, bcell2dbez, bpcell2dbez, &
     ffprimebez, pprimebez, pressbez, ipolbez, rinbez, routbez, &
-    kbez, triaubez, shifbez, rbp2_b2bez, rmin2dbez, dpsidvbez, jrhobez
+    kbez, triaubez, shifbez, rbp2_b2bez, rmin2dbez, dpsidvbez, &
+    jrhobez, shivbez, squarebez
 use pi_vars, only: GPI, GPI2, GPI4, muvac
 
 implicit none
 
 integer, intent(in) :: j_init
-integer :: i, j, jr, jt
+integer :: i, j, jr, jt, ierr
 double precision :: psiaxis_new, cnorm, rax_new, zax_new, rhoedge
 double precision, dimension(nrho) :: q_new, effprimp, epprimp
 double precision, dimension(nteta) :: thetap_i
@@ -852,7 +853,9 @@ double precision, dimension(512, 512) :: psisave
 double precision, dimension(nrho, nteta) :: rmaj2, jcbn2, darea2, &
     r_min, yy2, jrho2, gradr2, darea
 
-save psisave
+data ierr/0/
+save psisave, ierr
+
 
 ! initial guess
 if (j_init == 0) then
@@ -883,7 +886,7 @@ call PHI_EQ_2d_PBE(nrho, nteta, psigrida(1:nrho), iplasma, &
     psirhoteta(1:nrho, 1:nteta), psibez(1:nrho), &   ! psinorm new
     lambda2d(1:nrho, 1:nteta), t2dbez(1:nteta), &
     psiaxis_new, cnorm, rax_new, zax_new, thetap_i, rmaj2, & 
-    jcbn2, q_new, rhoedge, darea2, epprimp, effprimp, r_min, yy2, gradr2, darea)
+    jcbn2, q_new, rhoedge, darea2, epprimp, effprimp, r_min, yy2, gradr2, darea, ierr)
  
 raxp = rax_new
 zaxp = zax_new
@@ -930,7 +933,7 @@ call build_2dgrid(nrho, nteta, psibez(1:nrho), &
     li3, betapol, psplex, &
     bpcell2dbez(1:nrho, 1:nteta), bcell2dbez(1:nrho, 1:nteta), &
     routbez(1:nrho), rinbez(1:nrho), kbez(1:nrho), triaubez(1:nrho), shifbez(1:nrho), &
-    gm41bez(1:nrho), qbez(1:nrho)) 
+    gm41bez(1:nrho), qbez(1:nrho), shivbez(1:nrho), squarebez(1:nrho)) 
 
 phibez(1:nrho) = 0.
 rbp2_b2bez(1:nrho) = 0.
@@ -978,7 +981,7 @@ use transfer_functions, only: rpbez, zpbez, t2dbez, &
     g1bez, g2bez, g2ibez, gm1bez, gm4bez, gm41bez, gm5bez, ggrhobez, &
     bcell2dbez, bpcell2dbez, bminbez, bmaxbez, bdb0bez, fofbbez, &
     psibez, dpsidvbez, rbp2_b2bez, &
-    ffprimebez, pprimebez, pressbez, ipolbez, jrhobez
+    ffprimebez, pprimebez, pressbez, ipolbez, jrhobez, shivbez, squarebez
 use metric_coefficients_pbe, only: dator
 
 implicit none
@@ -1035,6 +1038,8 @@ equil_out%profiles_1d%fofb      (1:nrho) = fofbbez(1:nrho)
 equil_out%profiles_1d%areat     (1:nrho) = areatbez(1:nrho)
 equil_out%profiles_1d%perim     (1:nrho) = perimbez(1:nrho)
 equil_out%profiles_1d%shif      (1:nrho) = shifbez(1:nrho)
+equil_out%profiles_1d%shiv      (1:nrho) = shivbez(1:nrho)
+equil_out%profiles_1d%squareness(1:nrho) = squarebez(1:nrho)
 equil_out%profiles_1d%elongation(1:nrho) = kbez(1:nrho)
 equil_out%profiles_1d%surface   (1:nrho) = surfbez(1:nrho) ! lateral surface
 equil_out%profiles_1d%tria_upper(1:nrho) = triaubez(1:nrho)

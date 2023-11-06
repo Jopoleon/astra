@@ -100,6 +100,7 @@ if (ifplasma == 1) then
 
     allocate(equil_out%profiles_1d%shif(nrplasma))
     allocate(equil_out%profiles_1d%shiv(nrplasma))
+    allocate(equil_out%profiles_1d%squareness(nrplasma))
     allocate(equil_out%eqgeometry%rectgrid%r2d(nr2))
     allocate(equil_out%eqgeometry%rectgrid%z2d(nz2))
     allocate(equil_out%eqgeometry%rectgrid%psirz2d(nr2, nz2))
