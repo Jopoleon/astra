@@ -142,6 +142,7 @@ if (NA1 /= NB1) then
         VR(j)    = VR(NA1)
         SHIF(j)  = SHIF(NA1)
         SHIV(j)  = SHIV(NA1)
+        SQUARN(j)= SQUARN(NA1)
         ELON(j)  = ELON(NA1)
         TRIA(j)  = TRIA(NA1)
         G11(j)   = G11(NA1)

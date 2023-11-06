@@ -16,7 +16,7 @@ subroutine GS_SOLVER( &
 ! Output:
     rocnew, ipl, g11, g41, g22, g33, g22e, g33e, eqpf, eqff, &
     vr, vrs, slat, gradro, ipol, bmaxt, bmint, bdb02, bdb0, b0db2, &
-    droda, volum, ametr, updwn, shif, elon, tria, fofb, areat, perim)
+    droda, volum, ametr, updwn, shif, elon, tria, fofb, areat, perim, shiv, square)
 
 use imas_ids, only: type_equilibrium
 use numerical_tools, only: reinterp_back, reinterp_back_quad, qinterp, &
@@ -47,7 +47,7 @@ double precision, intent(out) :: rocnew, updwn, psifb, psiext, psplex
 double precision, intent(out), dimension(jna1) :: ametr, vr, vrs, &
    slat, gradro, shif, tria, elon, ipol, bmaxt, bmint, bdb02, &
    bdb0, b0db2, droda, fofb, areat, perim, volum, eqpf, eqff, &
-   g11, g41, g22, g33
+   g11, g41, g22, g33, shiv, square
 double precision, intent(out), dimension(nr_equ) :: g22e, g33e
 double precision, intent(inout) :: ipl, volume
 
@@ -639,6 +639,8 @@ call reinterp_back_quad(xrho_sp, dP_adcmp , nr_equ, xrho, dp_ad  , jna1)
 call reinterp_back_quad(xrho_sp, equil_now%profiles_1d%elongation(1:nr_equ), nr_equ, xrho, elon, jna1)
 call reinterp_back_quad(xrho_sp, equil_now%profiles_1d%surface   (1:nr_equ), nr_equ, xrho, slat, jna1)
 call reinterp_back_quad(xrho_sp, equil_now%profiles_1d%shif (1:nr_equ), nr_equ, xrho, shif , jna1)
+call reinterp_back_quad(xrho_sp, equil_now%profiles_1d%shiv (1:nr_equ), nr_equ, xrho, shiv , jna1)
+call reinterp_back_quad(xrho_sp, equil_now%profiles_1d%squareness(1:nr_equ), nr_equ, xrho, square , jna1)
 call reinterp_back_quad(xrho_sp, equil_now%profiles_1d%fofb (1:nr_equ), nr_equ, xrho, fofb , jna1)
 call reinterp_back_quad(xrho_sp, equil_now%profiles_1d%areat(1:nr_equ), nr_equ, xrho, areat, jna1)
 call reinterp_back_quad(xrho_sp, equil_now%profiles_1d%perim(1:nr_equ), nr_equ, xrho, perim, jna1)

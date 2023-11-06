@@ -312,11 +312,12 @@ subroutine set_external_metric
 ! Set external metric  (Pereverzev 10.02.2005)
 
 use const_inc, only: RTOR, BTOR, ABC, ROC, HRO, HROX, &
-    SHIFT, ELONG, TRIAN, VOLUME, GP, GP2, NA, NA1, NAB
+    SHIFT, ELONG, TRIAN, VOLUME, GP, GP2, NA, NA1, NAB, updwn
 use status_inc, only: SHIF, ELON, TRIA, SHX, ELX, TRX, &
     G11, G22, G33, G11X, G22X, G33X, GRADRO, DRODA, DRODAX, &
     IPOL, IPOLX, VR, VRS, VRX, RHO, XRHO, AMETR, SLAT, SLATX, &
-    BDB0, BDB02, B0DB2, BMINT, BMAXT, FOFB, VOLUM, SHEAR, FP, MU
+    BDB0, BDB02, B0DB2, BMINT, BMAXT, FOFB, VOLUM, SHEAR, FP, MU, &
+    shiv, squarn, shivx, squax
 use debugger, only: markloc, debug
 use parse_utils, only: ifdefx2
 use numerical_tools, only: integr
@@ -334,6 +335,16 @@ do J=1, NA1
         SHIF(J) = SHX(j)
     else
         SHIF(J) = SHIFT
+    endif
+    if (IFDEFX2('SHIVX ')) then
+        SHIV(J) = SHIVX(j)
+    else
+        SHIV(J) = 0.
+    endif
+    if (IFDEFX2('SQUAX ')) then
+        SQUARN(J) = SQUAX(j)
+    else
+        SQUARN(J) = 0.
     endif
     if (IFDEFX2('ELX   ')) then
         ELON(J) = ELX(j)
@@ -440,6 +451,8 @@ SHEAR(NA1) = SHEAR(NA)
 if (NA1 < NAB) then
     do J=NA1+1, NAB
         SHIF(J) = SHIFT
+        SHIV(J) = 0.
+        SQUARN(J) = 0.
         ELON(J) = 1.
         TRIA(J) = 0.
         G33(J) = (RTOR/(RTOR + SHIFT))**2
@@ -468,6 +481,8 @@ if (NA1 < NAB) then
     VOLUME = VOLUM(NA1)
 endif
 
+UPDWN = SHIV(1)
+
 return
 end subroutine set_external_metric
 
@@ -478,14 +493,15 @@ subroutine extmetric_input
 ! E Fable 2012
 
 use const_inc, only: NA1
-use status_inc, only: SHIF, ELON, TRIA, G33, IPOL, VR, SLAT, G11, G22, DRODA
+use status_inc, only: SHIF, ELON, TRIA, G33, IPOL, VR, SLAT, G11, G22, &
+    DRODA, SHIV, SQUARN
 
 implicit none
 
 open(32, file='input_metric.dat')	
 read(32, '(5555E25.11)') SHIF(1:na1), elon(1:na1), tria(1:na1), & 
     g33(1:na1), ipol(1:na1), vr(1:na1), slat(1:na1), g11(1:na1), & 
-    g22(1:na1), droda(1:na1)
+    g22(1:na1), droda(1:na1), shiv(1:na1), squarn(1:na1)
 close(32)
 
 return
@@ -497,11 +513,11 @@ subroutine set_external_metric_2
 ! Set external metric  (Pereverzev 10.02.2005)
 
 use const_inc, only: RTOR, BTOR, ABC, ROC, HRO, HROX, &
-    SHIFT, ELONG, TRIAN, VOLUME, GP, GP2, NA, NA1, NAB
+    SHIFT, ELONG, TRIAN, VOLUME, GP, GP2, NA, NA1, NAB, updwn
 use status_inc, only: SHIF, ELON, TRIA, SHX, ELX, TRX, &
     G11, G22, G33, G11X, G22X, G33X, GRADRO, DRODA, DRODAX, &
     IPOL, IPOLX, VR, VRS, VRX, RHO, XRHO, AMETR, SLAT, SLATX, &
-    BDB0, BDB02, B0DB2, BMINT, BMAXT, FOFB, VOLUM, SHEAR, FP, MU
+    BDB0, BDB02, B0DB2, BMINT, BMAXT, FOFB, VOLUM, SHEAR, FP, MU, SHIV, SQUARN
 use debugger, only: markloc, debug
 use parse_utils, only: ifdefx2
 use numerical_tools, only: integr
@@ -539,6 +555,7 @@ HROX = (RHO(2) - RHO(1))/ROC
 ELONG = ELON(NA1)
 TRIAN = TRIA(NA1)
 SHIFT = SHIF(NA1)
+UPDWN = SHIV(1)
 
 ! Flux grid: j*h
 do J=1, NA
@@ -578,6 +595,8 @@ SHEAR(NA1) = SHEAR(NA)
 if (NA1 < NAB) then
     do J=NA1+1, NAB
         SHIF(J) = SHIFT
+        SHIV(J) = 0.
+        SQUARN(J) = 0.
         ELON(J) = 1.
         TRIA(J) = 0.
         G33(J) = (RTOR/(RTOR + SHIFT))**2
@@ -974,7 +993,7 @@ use status_inc, only: G11, G22, G22E, G33, G33E, G41, G42, G43, G44, G45, &
     AMETR, VR, VRS, SLAT, GRADRO, DRODA, &
     NE, TE, NI, TI, PBLON, PBPER, PFAST, EQPF, EQFF, &
     BMAXT, BMINT, BDB02, BDB0, B0DB2, FOFB, &
-    VOLUM, SHIF, ELON, TRIA, XRHO, AREAT, PERIM, SHIV
+    VOLUM, SHIF, ELON, TRIA, XRHO, AREAT, PERIM, SHIV, squarn
 use plasma_state, only: plasma_up, plasma_trig
 use debugger, only: markloc
 use parameters_a2equil, only: equil_now
@@ -991,7 +1010,7 @@ double precision :: tau_resistive, dampfacpsplex, &
 double precision, dimension(NA1) :: yg11, yg22, yg33, yvr, yvrs, yslat, yg41, &
     ygradro, yipol, ydroda, ypres, ybmaxt, ybmint, yfp, &
     ybdb02, ybdb0, yb0db2, yvolum, yametr, yshif, yelon, &
-    ytria, yfofb, yeqpf, yeqff
+    ytria, yfofb, yeqpf, yeqff, yshiv, ysquare
 double precision, dimension(NCNB) :: yccoil, yvcoil
 double precision, dimension(1000) ::  rbnd, zbnd
 
@@ -1103,7 +1122,7 @@ call GS_SOLVER( &
     yslat, ygradro, yipol, ybmaxt, ybmint, &
     ybdb02, ybdb0, yb0db2, ydroda, yvolum, &
     yametr, yupdwn, yshif, yelon, ytria, &
-    yfofb, AREAT(1: NA1), PERIM(1: NA1) ) 
+    yfofb, AREAT(1: NA1), PERIM(1: NA1), yshiv, ysquare) 
 
 ROC  = YROCNEW  ! Define a new RHO_edge
 yiplout = yipl  ! new current in case
@@ -1182,7 +1201,8 @@ enddo
 SHEAR(NA1) = SHEAR(NA)
 
 do J=1, NAB
-    SHIV(J) = UPDWN 
+    SHIV(J) = yshiv(J) 
+    SQUARN(J) = ysquare(J) 
 enddo
 
 do J=NA1, NAB
