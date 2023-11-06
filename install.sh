@@ -13,6 +13,7 @@ do
 done
 
 cp $AWD/repo_user_area/exp/nml/aug34954_${platform} $AWD/exp/nml/aug34954
+cp $AWD/repo_user_area/exp/nml/AUG33040_2500_${platform} $AWD/exp/nml/AUG33040_2500
 
 chmod 744 $AWD/exe/Build
 chmod 744 $AWD/exe/as_exe

@@ -19,7 +19,6 @@ integer, dimension(ncoils_max) :: tempcoilturns, tempcoilelem, tempnnc, &
     nelemcoil, mturns, mequivalence
 integer, dimension(100) :: numeqcump
 integer, dimension(n_max) :: identcoil, nctype, equivtmp, equivforce
-integer, dimension(ncoils_max, ncoils_max) :: jjelem
 
 double precision :: dummy1, r1, r2, z1, z2, r3, z3, r4, z4, gtemp, dr1, dz1, &
     x1, x2, x3, x4, x5, x6, x7, x8, x9, greenf, ssfw, &
@@ -335,7 +334,6 @@ write(*, *) 'self', nconduc, npassive, nactive, ielem
 indconduc = 0.
 areactmp = 0.
 identcoil = 1
-jjelem = 0
 do i=1, ielem
     iii = equivtmp(i)
     do j=1, ielem
@@ -351,7 +349,6 @@ do i=1, ielem
                 indconduc(iii, iii) = indconduc(iii, iii) + mu0/GPI*gtemp*tatmp(i)*tatmp(j)
             endif
             if (i == j) then
-                jjelem(iii, iii) = jjelem(iii, iii) + 1
                 gtemp = green_function_identity(rcetmp(i), zcetmp(i), drcetmp(i), dzcetmp(i), nctype(i))
                 indconduc(iii, iii) = indconduc(iii, iii) + mu0/GPI*gtemp*tatmp(i)*tatmp(j)/2.
             endif
@@ -370,7 +367,6 @@ do i=1, ielem
     iii = equivtmp(i)
     do j=1, ielem
         if ((equivtmp(j) /= iii)) then
-            jjelem(equivtmp(j), iii) = jjelem(equivtmp(j), iii) + 1
             gtemp = green_function_non_identity(rcetmp(i), zcetmp(i), rcetmp(j), zcetmp(j), &
                 drcetmp(i), dzcetmp(i), drcetmp(j), dzcetmp(j), nctype(i), nctype(j))
             indconduc(iii, equivtmp(j)) = indconduc(iii, equivtmp(j)) + mu0/GPI*gtemp*tatmp(i)*tatmp(j)
