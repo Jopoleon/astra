@@ -8,28 +8,10 @@ subroutine read_input
 !  NARRX    maximal number of arrays recognizable from a data file 
 !----------------------------------------------------------------------|
 ! The subroutine is called once at the start-up, it reads the "exp" file
-! and stores the time evolution of all input data in the arrays 
-! VARDAT (simple variables) and 
-! DATARR (sequential data in groups [grid,quantity]), TIMEX (group time)
-! NGRIDX (grid size), NTYPEX(grid type), KTO (internal group name)
-! FILTER (smoothing/transfer parameter)
-! GDEX   (relative position of grid in DATARR)
-! GDEY   (relative position of profile in DATARR)
-! KOGDA  (relative position of time in TIMEX)
-!        
+! and stores the time evolution of all input data in the arrays
 ! DATARR(NRDX*NTARR) - data array
 !       Let   1 <= j <= NTARR is an ordinal number of array in DATARR
-! TIMEX(j)  - time for this array
-! NGRIDX(j) - number of grid points
-! NTYPEX(j) - type of grid
-! KTO(j)   - pointer to a position in the array EXARNM
-!      so that EXARNM(KTO(j)) gives the name of the quantity
-! GDEX(j)   - pointer to grid in DATARR
-! GDEY(j)   - pointer to data in DATARR
-! XAXES(NRDX,j) - not used here
-!       Let   1 <= jx <= NARRX is an ordinal number of q-ty EXARNM(jx)
-! KOGDA(jx)  - pointer to a position in the array TIMEX
-!       KOGDA(KTO(j)) gives pointer to 1st time for KTO(j)
+! KOGDA(jx)  - pointer to a position in the array raw_profile_map%time
 !----------------------------------------------------------------------|
 
 use parameter_inc, only: NTVAR
@@ -37,13 +19,13 @@ use const_inc
 use status_inc
 use outcmn_inc, only: AWD, exp_file, nml_file, equ_file, rev_file, &
     TASK, machine, CPT, &
-    TASKID, VERSION, AVERS, ARLEAS, AEDIT, COLTAB, IFDFVX, IFDFAX, KOGDA, KTO, &
+    TASKID, VERSION, AVERS, ARLEAS, AEDIT, COLTAB, IFDFVX, IFDFAX, KOGDA, &
     PRNAME, CFNAME, SRNAME, EXARNM, NBFILE, MSFILE, wall_gc_file, &
-    NPRNAM, NCFNAM, NSRNAM, NEXNAM, FILTER, &
-    NGR, NBNT, NCNBT, NBDMAX, NBDTMAX, NRDX, NTARR, NGRIDX, NTYPEX, NRW, &
-    CCOILX, VCOILX, BNDR, BNDZ, BNDTIM, DATARR, TIMEX, GDEX, GDEY, GRAP, TIM7
+    NPRNAM, NCFNAM, NSRNAM, NEXNAM, &
+    NGR, NBNT, NCNBT, NBDMAX, NBDTMAX, NRDX, NTARR, NRW, &
+    CCOILX, VCOILX, BNDR, BNDZ, BNDTIM, DATARR, GRAP, TIM7
 
-use expdat, only: IVAR, raw_scalar
+use expdat, only: raw_scalar, raw_profile_map
 use char_manip, only: to_upper, str_in_list, clean_string
 use debugger, only: markloc, debug, astra_stop, flightsim
 use parse_utils
@@ -59,7 +41,7 @@ integer, parameter :: MPEX=101, MSIGEX=1, MTEX=50, MSIG=1, MEXT=MPEX*MTEX
 
 logical :: exilog, file_existence
 
-integer :: jarr, INTYPE, jtype, SYSTEM, jbdry, ntim, ntim1
+integer :: jarr, INTYPE, jtype, SYSTEM, jbdry, ntim, ntim1, IVAR
 integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
 integer :: KAB, KABC, KAWALL, KRTOR, KELONM, KTRICH
 integer :: n_var, n_color, n_words, i_filter_glob
@@ -258,6 +240,7 @@ read(201, '(A132)') XLINE2
 
 VNAMO = ' '
 VNAMU = ' '
+IVAR = 0
 
 parse_exp_1d: do
 
@@ -717,7 +700,7 @@ parse_exp_2d: do
             DATARR(jarr + j) = x_u(j)
         enddo
         do j=1, nt_u
-            TIMEX(NGR + j) = t_u(j)
+            raw_profile_map%time(NGR+j) = t_u(j)
         enddo
 
         if (INTYPE == 18 .or. INTYPE == 19) then
@@ -748,11 +731,11 @@ parse_exp_2d: do
         do j=1, nt_u
             NGR = NGR + 1
             if (j == 1) then
-                GDEX(NGR) = jarr - jbdry + 1
-                GDEY(NGR) = jarr + 1
+                raw_profile_map%jbeg_grid(NGR) = jarr - jbdry + 1
+                raw_profile_map%jbeg_data(NGR) = jarr + 1
             else
-                GDEX(NGR) = GDEX(NGR - 1)
-                GDEY(NGR) = jarr + 1
+                raw_profile_map%jbeg_grid(NGR) = raw_profile_map%jbeg_grid(NGR-1)
+                raw_profile_map%jbeg_data(NGR) = jarr + 1
             endif
             do j0=1, jbdry
                 DATARR(jarr + j0) = DATARR(jarr + j0)*factor
@@ -764,10 +747,11 @@ parse_exp_2d: do
                 YB = (YB*(XBDRY - YXB1) - YB1*(XBDRY - YXB))/(YXB - YXB1)
                 DATARR(jarr) = YB
             endif
-            KTO(NGR) = jexar
-            NGRIDX(NGR) = jbdry
-            NTYPEX(NGR) = INTYPE
-            FILTER(NGR) = ALFA
+            raw_profile_map%arr_index(NGR) = jexar
+            raw_profile_map%label    (NGR) = VNAMX
+            raw_profile_map%nrho     (NGR) = jbdry
+            raw_profile_map%grid_type(NGR) = INTYPE
+            raw_profile_map%filter   (NGR) = ALFA
         enddo
 
     else ! read exp-block data
@@ -798,17 +782,18 @@ parse_exp_2d: do
             call astra_stop(err_msg)
         endif
 
-        if (ntim > 0) read(201, *, ERR=906) (TIMEX(NGR+j), j=1, ntim)
+        if (ntim > 0) read(201, *, ERR=906) (raw_profile_map%time(NGR+j), j=1, ntim)
 
         do j=1, ntim1
             NGR = NGR + 1
-            KTO(NGR) = jexar
-            NGRIDX(NGR) = jbdry
-            NTYPEX(NGR) = INTYPE
-            FILTER(NGR) = ALFA
+            raw_profile_map%arr_index(NGR) = jexar
+            raw_profile_map%label    (NGR) = VNAMX
+            raw_profile_map%nrho     (NGR) = jbdry
+            raw_profile_map%grid_type(NGR) = INTYPE
+            raw_profile_map%filter   (NGR) = ALFA
             if (j == 1) then
                 KOGDA(jexar) = NGR
-                GDEX(NGR) = jarr + 1
+                raw_profile_map%jbeg_grid(NGR) = jarr + 1
                 if (INTYPE == 18 .or. INTYPE == 19) then
                     jarr = jarr + 1
                     read(201, *, ERR=906) DATARR(jarr)
@@ -824,13 +809,13 @@ parse_exp_2d: do
                     jarr = jarr + jbdry
                     if (jtype == 2 .and. INTYPE <= 17 .and. j1 == 1) XBDRY = DATARR(jarr)
                 enddo
-                GDEY(NGR) = jarr - jbdry + 1
+                raw_profile_map%jbeg_data(NGR) = jarr - jbdry + 1
                 do jj=1, jbdry
                     DATARR(jarr - jbdry + jj) = factor*DATARR(jarr - jbdry + jj)
                 enddo
             else
-                GDEX(NGR) = GDEX(NGR-1)
-                GDEY(NGR) = jarr + 1
+                raw_profile_map%jbeg_grid(NGR) = raw_profile_map%jbeg_grid(NGR-1)
+                raw_profile_map%jbeg_data(NGR) = jarr + 1
                 read(201, *, iostat=ios) (DATARR(jarr + jj), jj=1, jbdry)
                 if (ios /= 0) then
                     write(err_msg, '(3A, /, A, 1p, 6e12.4)') err_msg_exp, &

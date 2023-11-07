@@ -40,6 +40,7 @@ use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, XLINE1, &
    TSTART, TEND, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
    BTOR, IPL, CONSTF, DEVAR, DELOUT, XFLAG
 use outcmn_inc
+use expdat, only: raw_profile_map
 use timeoutput_inc, only: NTIMES, TTOUT, TPOUT, TOUT
 use dbl2char, only: fmt6
 use debugger, only: markloc, debug, astra_stop
@@ -272,9 +273,9 @@ else
     if (NXOUT > 0 .and. NGR > 0) then
 ! Total length: 3*NGR*int+(3*NGR+GDEY(NGR)+NGRIDX(NGR)-1)*real+3*NARRX*int
         write(3) &
-            (KTO(j)  , j=1, NGR), (NGRIDX(j), j=1, NGR), (NTYPEX(j), j=1, NGR), &
-            (TIMEX(j), j=1, NGR), (GDEX(j)  , j=1, NGR), (GDEY(j)  , j=1, NGR), &
-            (DATARR(j), j=1, GDEY(NGR)+NGRIDX(NGR)-1), &
+            (raw_profile_map%arr_index(j), j=1, NGR), (raw_profile_map%nrho(j), j=1, NGR), (raw_profile_map%grid_type(j), j=1, NGR), &
+            (raw_profile_map%time(j), j=1, NGR), (raw_profile_map%jbeg_grid(j), j=1, NGR), (raw_profile_map%jbeg_data(j), j=1, NGR), &
+            (DATARR(j), j=1, raw_profile_map%jbeg_data(NGR) + raw_profile_map%nrho(NGR) - 1), &
             (NAMEX(j), j=1, NARRX), (NWINDX(j), j=1, NARRX), &
             (KOGDA(j), j=1, NARRX)
     endif

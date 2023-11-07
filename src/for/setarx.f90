@@ -1,8 +1,6 @@
 !--------------------------------------------------------------------
 subroutine SETARX(ICALL)
 !--------------------------------------------------------------------
-! Add treatment for NGRIDX()=1
-!
 ! All arrays are mapped to the WHOLE radial grid [1, NB1]
 ! This can cause an inconsistency when NA1 varies in time.
 ! The time evolution of the input data is taken from
@@ -12,11 +10,14 @@ subroutine SETARX(ICALL)
 !  EXT(NRD, NARRX) - (description in the file main/profiles_x.txt)
 !--------------------------------------------------------------------
 
+use parameter_inc, only: NRD, NRDX
 use const_inc, only: TIME, BTOR, GP, AB, ABC, ROC, VOLUME, NA1, NAB
 use status_inc, only: AMETR, RHO, FP, VOLUM, EXT
 use numerical_tools, only: qinterp
-use outcmn_inc
+use outcmn_inc, only: NGR, KOGDA, IFDFAX, XAXES, &
+    DATAX, DATARR, NPTM, TOUTX
 use debugger, only: markloc, astra_stop
+use expdat, only: raw_profile_map
 
 implicit  none
 
@@ -40,16 +41,7 @@ character(len=132) :: err_msg, err_msg_grid
 !  = 2 - time interpolation on
 ! DATARR(NRDX*NTARR) - data array
 !   Let  1 <= j <= NGR is an ordinal number of a group in DATARR
-! TIMEX(j)  - time for this group
-! NTYPEX(j) - type of grid for the group j
-! NGRIDX(j) - number of grid points for the group j
-! GDEX(j)   - pointer (in DATARR) to the grid for the group j
-! GDEY(j)   - pointer (in DATARR) to the data for the group j
-! KTO(j)   - pointer (ordinal number) in the array EXARNM
-!  so that EXARNM(KTO(j)) gives the name of the quantity j
-!   Let   1 <= kn <= NARRX is an ordinal number of q-ty EXARNM(kn)
 ! KOGDA(kn)  - pointer to a position in the array TIMEX
-! EXARNM(kn) - name*6 of the quantity kn
 ! Output
 ! IFDFAX(kn)   - current pointer to data set in DATARR
 ! NPTM(kn)     - number of data points within a<=AB
@@ -58,8 +50,6 @@ character(len=132) :: err_msg, err_msg_grid
 ! EXT(jj, kn)   - smoothed curve
 !--------------------------------------------------------------------
 
-! Pointer is returned to the root window after calling ESC
-
 call markloc('SETARX')
 
 if (NGR == 0) return
@@ -67,9 +57,9 @@ if (NGR == 0) return
 var_loop: do jar=1, NGR
    jj = 0
    if (jar < NGR) then
-      if (KTO(jar+1) /= KTO(jar)) then
+      if (raw_profile_map%arr_index(jar+1) /= raw_profile_map%arr_index(jar)) then
          jj = jar ! jj -> group end
-         jentim = KOGDA(KTO(jar+1))-1 ! jentim -> last time
+         jentim = KOGDA(raw_profile_map%arr_index(jar+1))-1 ! jentim -> last time
       endif
    else
       jj = jar
@@ -77,26 +67,26 @@ var_loop: do jar=1, NGR
    endif
    if (jj == 0) CYCLE var_loop
 
-   KN = KTO(jj)
-   err_msg = 'Quantity  ' // EXARNM(KN) // ' Input times '
+   KN = raw_profile_map%arr_index(jj)
+   err_msg = 'Quantity  ' // raw_profile_map%label(jj) // ' Input times '
    jstim = KOGDA(KN)
    jto = jstim
    do j3=jstim + 1, jentim
-      if (TIMEX(j3) < TIMEX(j3-1))  call astra_stop(err_msg // 'out of order')
-      if (TIMEX(j3) == TIMEX(j3-1)) call astra_stop(err_msg // 'repeated')
-      if (TIMEX(j3) <= time) jto = j3
+      if (raw_profile_map%time(j3) < raw_profile_map%time(j3-1))  call astra_stop(err_msg // 'out of order')
+      if (raw_profile_map%time(j3) == raw_profile_map%time(j3-1)) call astra_stop(err_msg // 'repeated')
+      if (raw_profile_map%time(j3) <= time) jto = j3
    enddo
 
    IFDFAX(KN) = jto
    jtn = min(jto + 1, jentim)
-   if (time <= TIMEX(jstim)) jtn = jstim
+   if (TIME <= raw_profile_map%time(jstim)) jtn = jstim
    jt  = jtn
-   if (2.*TIME > TIMEX(jtn)+TIMEX(jto)) jt  = jto
+   if (2.*TIME > raw_profile_map%time(jtn) + raw_profile_map%time(jto)) jt  = jto
    jt0 = 0
    if (ICALL <= 1 .and. jto /= jtn) then
 ! only one run needed
       jt = jto
-      if (2.*TIME > TIMEX(jtn)+TIMEX(jto)) jt  = jtn
+      if (2.*TIME > raw_profile_map%time(jtn) + raw_profile_map%time(jto)) jt  = jtn
    endif
 
 ! Time loop
@@ -112,14 +102,15 @@ var_loop: do jar=1, NGR
 !     DATAX(n_grid, KN) data on this grid
 ! (3) EXT(NRD, KN) smoothed input arrays interpolated in time
 
-      n_grid   = NGRIDX(jt)
-      gridtype = NTYPEX(jt)
+      n_grid   = raw_profile_map%nrho(jt)
+      gridtype = raw_profile_map%grid_type(jt)
       write(err_msg_grid, '(A, i, A)')  'Option GRIDTYPE=', gridtype, ' not implemented, exiting'
-      jx = GDEX(jt)
-      jy = GDEY(jt)
+      jx = raw_profile_map%jbeg_grid(jt)
+      jy = raw_profile_map%jbeg_data(jt)
+
       N11 = n_grid
-      dxl = 1. - .5/n_grid
-      dxr = 1. + .5/n_grid
+      dxl = 1. - 0.5/n_grid
+      dxr = 1. + 0.5/n_grid
 
       do j3=1, n_grid
          dat_exp(j3) = DATARR(jy + j3 - 1)
@@ -315,7 +306,7 @@ var_loop: do jar=1, NGR
       END SELECT
 
       NPTM(KN) = min(n_grid, N11)
-      TOUTX(KN) = TIMEX(jt)
+      TOUTX(KN) = raw_profile_map%time(jt)
       if (ICALL == 0) CYCLE var_loop
 
 ! This is added to avoid too long extrapolation to the magnetic axis
@@ -325,7 +316,7 @@ var_loop: do jar=1, NGR
 
 ! All input data are mapped to the grid XA(1:NP1) in the variable "a"
 
-      call SMOOTH(FILTER(jt), N11, dat_exp(1:N11), x_grid(1:N11), NP1, DA(1:NP1), XA(1:NP1))
+      call SMOOTH(raw_profile_map%filter(jt), N11, dat_exp(1:N11), x_grid(1:N11), NP1, DA(1:NP1), XA(1:NP1))
 
 !    data interpolation
 ! jto - pointer to the previous time
@@ -352,9 +343,9 @@ var_loop: do jar=1, NGR
 
    enddo time_loop
 
-   ydt  = (TIMEX(jtn) - TIMEX(jto))
-   ydta = (TIMEX(jtn) - TIME)/ydt
-   ydtb = (TIME - TIMEX(jto))/ydt
+   ydt  = (raw_profile_map%time(jtn) - raw_profile_map%time(jto))
+   ydta = (raw_profile_map%time(jtn) - TIME)/ydt
+   ydtb = (TIME - raw_profile_map%time(jto))/ydt
    if (jto == jt) then
       do j3=1, NRD
          EXT(j3, KN) = EXT(j3, KN)*ydtb + DA(j3)*ydta

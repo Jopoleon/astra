@@ -11,7 +11,6 @@ integer, parameter :: White=0, Black=1, Red=2, Blue=3, &
 character(len=1), parameter :: null_ch=char(0), tab_ch=char(9), esc_ch=char(13), backslash=char(92)
 
 integer, dimension(NRW)   :: MARKT, MARKR, NWIND1, NWIND2, NWIND3, NWIND4, NWIND7, NWINDX, IP1, IP2, IP30, IP31
-integer, dimension(NTARR) :: GDEX, GDEY, KTO, NGRIDX, NTYPEX
 integer, dimension(NARRX) :: IFDFAX, KOGDA, NPTM
 integer, dimension(NSBMX) :: SIGNSB, IFSBX, IFSBP
 integer :: &
@@ -25,7 +24,6 @@ integer*4 :: COLTAB(64) ! i*4 needed for compatibility with C
 integer, dimension(plot_modes) :: active_tab, curves_per_frame
 integer :: nx_canvas, ny_canvas
 double precision, dimension(NRW)   :: GRAL, GRAP, OSHIFT, OSHIFR, SCALET, SCALER
-double precision, dimension(NTARR) :: FILTER, TIMEX
 double precision, dimension(NARRX) :: TOUTX
 double precision, dimension(NCNBM) :: CCOIL, CCOILO, VCOIL
 double precision, dimension((NCNBM+1)*NCNBTM) :: CCOILX, VCOILX
@@ -109,8 +107,8 @@ NCNBT = 0
 OSHIFT = 0.
 OSHIFR = 0.
 GRAL   = 0.
-TIMEX  = 0.
-FILTER = 0.001
+!TIMEX  = 0.
+!FILTER = 0.001
 
 NAMEX(:) = '      '
 NAM7 = (/ 'Tmin', 'Tmax', 'Tmark', 'Style' /)

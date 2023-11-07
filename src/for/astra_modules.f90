@@ -32,16 +32,15 @@ implicit none
 
 type rawScalar
     integer, dimension(NTVAR) :: var_index=0
-    double precision, dimension(NTVAR) :: time, value, error
+    double precision, dimension(NTVAR) :: time=0., value=0., error=0.
     character(len=6), dimension(NTVAR) :: label
 endtype
 type rawProfileMap
-    integer, dimension(NTARR) :: var_index, jbeg, grid_type, nrho
-    double precision, dimension(NTARR) :: time, filter
+    integer, dimension(NTARR) :: arr_index=0, jbeg_grid=0, jbeg_data=0, grid_type=0, nrho=0
+    double precision, dimension(NTARR) :: time=0., filter=0.001
     character(len=6), dimension(NTARR) :: label
 endtype
 
-integer :: IVAR
 type(rawScalar) :: raw_scalar
 type(rawProfileMap) :: raw_profile_map
 

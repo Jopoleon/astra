@@ -19,9 +19,10 @@ subroutine INTVAR
 !          eg. (AB, RTOR, ELONM, TRICH or set interactively)
 !-----------------------------------------------------------------------
 
+use parameter_inc, only: NTVAR
 use outcmn_inc, only: IFDFVX
 use const_inc, only: DEVARX, DEVAR, TIME
-use expdat, only: IVAR, raw_scalar
+use expdat, only: raw_scalar
 use debugger, only: markloc
 
 implicit none
@@ -34,7 +35,8 @@ call markloc('INTVAR')
 N1 = 0
 N2 = 0
 
-do jtvar=1, IVAR
+do jtvar=1, NTVAR
+    if (raw_scalar%var_index(jtvar) == 0) EXIT
     N2 = N1
     N1 = raw_scalar%var_index(jtvar)
     if (IFDFVX(N1) >= 0) then

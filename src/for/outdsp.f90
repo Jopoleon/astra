@@ -17,8 +17,10 @@ subroutine OUTDSP(MARK, JIFNEW, plot_arr, IYO, ITIMES, TTOUT, TOUT)
 !----------------------------------------------------------------------|
 
 use status_inc, only: AMETR, MU, SHIF, ELON, TRIA
-use const_inc
+use const_inc, only: XOUT, NAB, NA1, ABC, TINIT, TSCALE, RTOR, &
+    MEQUIL, LEQ, UPDWN, TIME
 use outcmn_inc
+use expdat, only: raw_profile_map
 use ac_neg1, only: NUM, NKL1, NKL2, JMIN, JMAX, MODK
 use dbl2char, only: fmt_xf, fmt4
 use char_manip, only: len_trim_tab, str_in_list
@@ -514,13 +516,13 @@ CASE(8)
    
       jarr = IFDFAX(jn)
       if (jarr <= 0)  CYCLE loop8
-      jtyp = NTYPEX(jarr)
+      jtyp = raw_profile_map%grid_type(jarr)
       if (jtyp < 18)  CYCLE loop8
-      jpnt = NGRIDX(jarr)
+      jpnt = raw_profile_map%nrho(jarr)
       if (jpnt <= 0)  CYCLE loop8
       jcol = jcol+1
-      js = GDEX(jarr)
-   
+      js = raw_profile_map%jbeg_grid(jarr)
+
       if (JFNEW == 0) then
          call colovm(EraseColor)
          do j=1, NPTMO(jxout)
