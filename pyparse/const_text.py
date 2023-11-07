@@ -997,7 +997,7 @@ character(len=64), intent(in) :: LISTSB(NSBMX)
 integer :: J1, IFIPC, IFSUB, JDETV, ND, ND1, &
     imethod, jcall, IFSTEP
 
-double precision :: dfpdrbm12, ARRNA1, YHRO, YB, YC, YJ_CU, &
+double precision :: dfpdrbm12, YHRO, YB, YC, YJ_CU, &
     YM, YMCD, YIOH, YICD, YM1, YU, RABDOT, BABDOT
 
 double precision, dimension(NRD) :: YWA, YWB, YWC, YWD, &
@@ -1044,7 +1044,7 @@ double precision, intent(out) :: dfpdrbm12
 
 integer :: IFSUB, imethod, ND, ND1, NODE, JCALL
 
-double precision :: ARRNA1, RABDOT, BABDOT, YHRO, YM1, YM2, YB, YC, YJ_CU, YM, YU, YIOH, YICD, YMCD
+double precision :: RABDOT, BABDOT, YHRO, YM1, YM2, YB, YC, YJ_CU, YM, YU, YIOH, YICD, YMCD
 
 double precision, dimension(NRD) :: YWA, YWB, YWC, YWD, YWGN, &
     YWHN, YWGO, YWHO, YWR, YWH, YVR, YWM, YWA1, YWA2, YWB1, YWB2, &

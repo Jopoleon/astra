@@ -1,4 +1,3 @@
-!--------------------------------------------------------------------
 subroutine SETARX(ICALL)
 !--------------------------------------------------------------------
 ! All arrays are mapped to the WHOLE radial grid [1, NB1]
@@ -13,7 +12,7 @@ subroutine SETARX(ICALL)
 use parameter_inc, only: NRD, NRDX, NTARR
 use const_inc, only: TIME, BTOR, GP, AB, ABC, ROC, VOLUME, NA1, NAB
 use status_inc, only: AMETR, RHO, FP, VOLUM, EXT
-use numerical_tools, only: qinterp
+use numerical_tools, only: qinterp, sortab
 use outcmn_inc, only: jbeg_arrx, IFDFAX, XAXES, &
     DATAX, NPTM, TOUTX
 use debugger, only: markloc, astra_stop
@@ -355,41 +354,3 @@ enddo var_loop
 
 return
 end subroutine SETARX
-
-!---------------------------------------------------------------------
-subroutine SORTAB(A, B, nlen)
-! Re-arranges real arrays A(1:N) and B(1:N)
-
-implicit none
-
-integer, intent(in) :: nlen
-double precision, intent(inout), dimension(nlen) :: A, B
-
-integer :: j, jj, jl, jr
-double precision :: YA, YB
-
-if (nlen <= 1) return
-
-do jl=1, nlen
-    jr = jl
-    YA = A(jl)
-    YB = B(jl)
-    do jj=jl+1, nlen
-        if (A(jj) < YA) then
-             YA = A(jj)
-             YB = B(jj)
-             jr = jj
-        endif
-    enddo
-    if (jr /= jl) then
-        do j=jr-1, jl, -1
-            A(j+1) = A(j)
-            B(j+1) = B(j)
-        enddo
-        A(jl) = YA
-        B(jl) = YB
-    endif
-enddo
-
-return
-end subroutine SORTAB

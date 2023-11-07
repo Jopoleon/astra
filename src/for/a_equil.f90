@@ -17,18 +17,18 @@ use feqis_circuit, only: psib_ext_feqis, get_zccurb_feqis, find_demo_gaps_feqis
 
 use flight_sim_geometrics, only: geom1d
 use outcmn_inc, only: MACHINE, nml_file
-use astra2fbe
+use astra2fbe, only: raxis_astra, zaxis_astra
 
 implicit none
 
 integer, intent(in) :: equil_solver, nr_equ, n_theta, iter_step, ncoils, &
     ipsibcf, key_no_refits, icircq, ipctrl, iter_itreq, ifbey, inume_3
-real*8, intent(in) :: tau_step, time_a
-real*8, intent(in), dimension(ncoils) :: ccoils, vcoils
+double precision, intent(in) :: tau_step, time_a
+double precision, intent(in), dimension(ncoils) :: ccoils, vcoils
 type(type_equilibrium), intent(in) :: equil_in
 
 integer, intent(out) :: key_start, keyplc
-real*8, intent(out) :: PSIEXT, PSPLEX
+double precision, intent(out) :: PSIEXT, PSPLEX
 type(type_equilibrium), intent(out) :: equil_out
 
 logical :: file_existence 
@@ -38,8 +38,8 @@ integer :: nstep, i, j, key_equil, nrp, nz, &
     kprs2, fixadapgrid, &
     jzmin, jzmax, jdemogaps, i_gaps
 
-real*8 :: dampfacpsplex, psplexold, epsros, enelss, k_filessss, ipl
-real*8, dimension(ncoils) :: t_currents, ucoils
+double precision :: dampfacpsplex, psplexold, epsros, enelss, k_filessss, ipl
+double precision, dimension(ncoils) :: t_currents, ucoils
 double precision :: psplexavg, psplexavgexp, Rmag, Zmag, Rgeo, Zgeo, &
     rcurr, zcurr, rgeoc, zgeoc, ahorc, zsquad, psi_sep, psi_axis, &
     Rin, Raus, zoben, zunten, elong, &
@@ -333,10 +333,10 @@ implicit none
 
 integer, intent(in) :: ifbey, eq_solver, ncoils
 double precision, intent(in) :: tau_step, time_a
-real*8, dimension(ncoils), intent(in) :: vcoils
+double precision, dimension(ncoils), intent(in) :: vcoils
 
 integer :: nstep, key_equil
-real*8, dimension(ncoils) :: ucoils
+double precision, dimension(ncoils) :: ucoils
 
 type(type_parameters) :: parameters_equil
 type(type_equilibrium) :: equil_in, equil_out

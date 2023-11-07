@@ -1644,7 +1644,7 @@ implicit none
 
 integer :: j
 double precision, dimension(NA1) :: YAR, YAR1
-double precision :: MUVAC, YAJ, YCJ, ARRNA1
+double precision :: MUVAC, YAJ, YCJ
 
 YAJ = 0.
 
@@ -1692,7 +1692,7 @@ do J=1, NA
     CU(j) = (YAJ - YCJ)/HRO
     CU(j) = CU(j)/(j - 0.5)
 enddo
-MU(NA1) = ARRNA1(MU(NA), 1.)  ! See DEFARR
+MU(NA1) = MU(NA)
 YCJ = 1.25/(GP**2 * RTOR)
 YAJ = 0.5/(GP*BTOR)
 do J=1, NA1

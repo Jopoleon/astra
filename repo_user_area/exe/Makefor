@@ -32,7 +32,7 @@ $(OBJ_DIR)/numerical_tools_mod.o
 
 OBJS = \
 $(OBJ_DIR)/Astra2XW.o \
-$(OBJ_DIR)/defarr.o \
+$(OBJ_DIR)/aux.o \
 $(OBJ_DIR)/dialogx.o \
 $(OBJ_DIR)/err_catch_a.o \
 $(OBJ_DIR)/ifkey.o \

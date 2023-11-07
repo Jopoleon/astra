@@ -7,7 +7,7 @@ use outcmn_inc, only: VCOIL, CCOIL, CCOILO, outcmn_init, &
     COLTAB, RUNID, NST, MOD10, NTOUT
 use const_inc, only: IPART, const_init, XOUT, NA, &
     TIME, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT
-use status_inc, only: status_init, MU
+use status_inc, only: status_init, MU, defarr
 use debugger, only: debug, flightsim, astra_stop, markloc
 
 implicit none

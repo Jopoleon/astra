@@ -9,6 +9,7 @@ integer, parameter :: NRD=801, NRW=128, NCONST=256, NARRX=101, NSBMX=60, &
 
 end module parameter_inc
 
+!--------------------------------
 module timeoutput_inc
 
 use parameter_inc, only: NRW
@@ -19,7 +20,7 @@ integer, parameter :: NTIMES=1024
 
 ! TOUT   - Time variables output array
 ! TTOUT  - time-coordinate array for time output [s] TTOUT(1:LTOUT<=NTIMES)
-double precision TTOUT(NTIMES), TOUT(NTIMES, NRW), TPOUT
+double precision :: TTOUT(NTIMES), TOUT(NTIMES, NRW), TPOUT
 
 end module timeoutput_inc
 
@@ -44,7 +45,7 @@ endtype
 type(rawScalar) :: raw_scalar
 type(rawProfileMap) :: raw_profile_map
 
-real*4 DATARR(NRDX*NTARR)
+real*4 :: DATARR(NRDX*NTARR)
 double precision, dimension(NBDTMAX) :: BNDTIM
 double precision, dimension(NBDTMAX*NBDMAX) :: BNDR, BNDZ
 
@@ -64,7 +65,7 @@ module plasma_state ! for flight simulator plasma yes/no
 
 implicit none
 
-integer plasma_up, plasma_trig
+integer :: plasma_up, plasma_trig
 
 end module plasma_state
 
@@ -105,6 +106,7 @@ end module fenix_params
 !--------------------------------
 module fs_coupling_variables
 
+integer :: fs_bnd_yes
 double precision :: fs_a_crash, fs_dt_smlk, fs_dt_tctrl, fs_paux, fs_pump, &
      fs_NTM_trig, fs_NTM_M, fs_NTM_N, fs_NTM_seed, fs_stop_time, &
      fs_prad, fs_psep, fs_pintrinsic, fs_pfus, fs_ipl_in
@@ -113,9 +115,8 @@ double precision, dimension(8) :: fs_pol_EC, fs_pow_EC, fs_pow_NB
 double precision, dimension(10) :: fs_pellet
 double precision, dimension(24) :: fs_valves
 double precision, dimension(500) :: fs_magnetics
+double precision, dimension( 50, 2) :: fs_bnd_in
 double precision, dimension(100, 2) :: fs_cforces
-double precision, dimension(50, 2) :: fs_bnd_in
-integer :: fs_bnd_yes
 
 end module fs_coupling_variables
 
@@ -131,7 +132,7 @@ integer :: execute_plasma     ! if 0 - only circuit equations, if 1 - solve plas
 integer :: nonegcurr          ! nonegcurr = 0 --> no negative current allowed in plasma
 integer :: fast_mode          ! 0 - normale, 1 - domnt do iterationsin fbe gse
 integer :: reconnect_circuits ! 0-nothing, 1-recompute matrix with new circuits
-integer :: new_equivalence(300, 10)   ! if reconnect, says what is the new_equivalence, for example (1,1,1,0,0,0,0,..) means coil 1,2,3 become 1,1,1
+integer :: new_equivalence(ncoil_dim, 10)   ! if reconnect, says what is the new_equivalence, for example (1,1,1,0,0,0,0,..) means coil 1,2,3 become 1,1,1
 integer :: n_equivalence      ! number of equivalences
 integer :: use_reduce_circuit ! 0-all coils solved. 1 - some coils not solved
 integer :: n_of_newton_iterations    ! to find actual mag axis. recommended between 5 - 10 
