@@ -29,7 +29,7 @@ def nc_concat(expequ):
     ds = {}
 
     j_cdf = 1
-    f_cdf = '%s%d.cdf' %(loc, j_cdf)
+    f_cdf = '%s-%d.cdf' %(loc, j_cdf)
 # Don't store anything if 1st cdf is older than tmp/astra.nml
     f_log2 = '%s/tmp/%s.nml' %(awd, expequ)
 

@@ -48,7 +48,7 @@ f_profx   = TRIM(AWD) // '/main/profiles_x.txt'
 feq_1d    = TRIM(AWD) // '/main/equil_1d.txt'
 feq_2d    = TRIM(AWD) // '/main/equil_2d.txt'
 
-write(netcdf_out, '(4A, i0, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), TRIM(equ_file), j_call, '.cdf'
+write(netcdf_out, '(5A, i0, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), TRIM(equ_file), '-', j_call, '.cdf'
 
 call nfcheck( nf90_create(netcdf_out, nf90_clobber, ncid) )
 
