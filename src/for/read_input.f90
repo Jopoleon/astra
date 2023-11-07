@@ -14,7 +14,7 @@ subroutine read_input
 ! KOGDA(jx)  - pointer to a position in the array raw_profile_map%time
 !----------------------------------------------------------------------|
 
-use parameter_inc, only: NTVAR
+use parameter_inc, only: NTVAR, NBDMAX, NBDTMAX
 use const_inc
 use status_inc
 use outcmn_inc, only: AWD, exp_file, nml_file, equ_file, rev_file, &
@@ -22,13 +22,14 @@ use outcmn_inc, only: AWD, exp_file, nml_file, equ_file, rev_file, &
     TASKID, VERSION, AVERS, ARLEAS, AEDIT, COLTAB, IFDFVX, IFDFAX, KOGDA, &
     PRNAME, CFNAME, SRNAME, EXARNM, NBFILE, MSFILE, wall_gc_file, &
     NPRNAM, NCFNAM, NSRNAM, NEXNAM, &
-    NGR, NBNT, NCNBT, NBDMAX, NBDTMAX, NRDX, NTARR, NRW, &
+    NGR, NBNT, NCNBT, NRDX, NTARR, NRW, &
     CCOILX, VCOILX, GRAP, TIM7
 
 use expdat, only: raw_scalar, raw_profile_map, DATARR, BNDR, BNDZ, BNDTIM
 use char_manip, only: to_upper, str_in_list, clean_string
 use debugger, only: markloc, debug, astra_stop, flightsim
-use parse_utils
+use parse_utils, only: IFDEFX, set_vars, path_split, split2array2, &
+    ufheader, ufrd, parse_u_line, inquire_fname, assign_val, read_arrx
 use timeoutput_inc, only: NTIMES, TTOUT
 
 use numerical_tools, only: EXTRAP, INTEGR
