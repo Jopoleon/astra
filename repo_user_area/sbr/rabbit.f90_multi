@@ -5,7 +5,7 @@ use mod_rabbit_lib, only: do_dump, rabbit_lib_init, rabbit_lib_set_dump_dir, &
     rabbit_lib_get_dv_darea, rabbit_lib_get_wfi
 use rabbit_variables, only: fusion_power, neutron_power
 
-use outcmn_inc, only: AWD, exp_file
+use outcmn_inc, only: AWD, nml_file
 use const_inc, only: GP2, AIM1, TIME, TAU, QNBI, ROC, &
    RTOR, BTOR, NA1
 use status_inc, only: FP, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
@@ -126,7 +126,7 @@ if (.not. allocated(psi_rect)) allocate(psi_rect(n_Rrect, n_Zrect))
 if (.not. allocated(Rrect)) allocate(Rrect(n_Rrect), Zrect(n_Zrect))
 
 if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---       
-    as_nml = TRIM(AWD) // 'exp/nml/' // TRIM(exp_file)
+    as_nml = TRIM(AWD) // TRIM(nml_file)
 
     write(6, *) 'Parsing namelist ' // TRIM(as_nml)
     open(53, FILE=TRIM(as_nml), delim='apostrophe', iostat=ios)
