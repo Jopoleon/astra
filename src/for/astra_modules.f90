@@ -26,12 +26,24 @@ end module timeoutput_inc
 !--------------------------------
 module expdat
 
-use parameter_inc, only: NTVAR
+use parameter_inc, only: NTVAR, NTARR
 
 implicit none
 
-double precision :: VARDAT(3,NTVAR)
-integer :: INDVAR(NTVAR), IVAR
+type rawScalar
+    integer, dimension(NTVAR) :: var_index=0
+    double precision, dimension(NTVAR) :: time, value, error
+    character(len=6), dimension(NTVAR) :: label
+endtype
+type rawProfileMap
+    integer, dimension(NTARR) :: var_index, jbeg, grid_type, nrho
+    double precision, dimension(NTARR) :: time, filter
+    character(len=6), dimension(NTARR) :: label
+endtype
+
+integer :: IVAR
+type(rawScalar) :: raw_scalar
+type(rawProfileMap) :: raw_profile_map
 
 end module expdat
 

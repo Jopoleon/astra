@@ -17,9 +17,6 @@ subroutine read_input
 ! GDEY   (relative position of profile in DATARR)
 ! KOGDA  (relative position of time in TIMEX)
 !        
-! VARDAT(1,NTVAR) - time
-! VARDAT(2,NTVAR) - value
-! VARDAT(3,NTVAR) - error (not used)
 ! DATARR(NRDX*NTARR) - data array
 !       Let   1 <= j <= NTARR is an ordinal number of array in DATARR
 ! TIMEX(j)  - time for this array
@@ -45,8 +42,8 @@ use outcmn_inc, only: AWD, exp_file, nml_file, equ_file, rev_file, &
     NPRNAM, NCFNAM, NSRNAM, NEXNAM, FILTER, &
     NGR, NBNT, NCNBT, NBDMAX, NBDTMAX, NRDX, NTARR, NGRIDX, NTYPEX, NRW, &
     CCOILX, VCOILX, BNDR, BNDZ, BNDTIM, DATARR, TIMEX, GDEX, GDEY, GRAP, TIM7
-    
-use expdat
+
+use expdat, only: IVAR, raw_scalar
 use char_manip, only: to_upper, str_in_list, clean_string
 use debugger, only: markloc, debug, astra_stop, flightsim
 use parse_utils
@@ -299,16 +296,17 @@ parse_exp_1d: do
             IFDFVX(jvar) = 1
         endif
 ! Read "time" array & function array
-        read(201, *, iostat=ios) (VARDAT(1, IVAR+jj), jj=1, ntim)
+        read(201, *, iostat=ios) (raw_scalar%time(IVAR+jj), jj=1, ntim)
         if (ios /= 0) call astra_stop(err_format)
-        read(201, *, iostat=ios) (VARDAT(2, IVAR+jj), jj=1, ntim)
+        read(201, *, iostat=ios) (raw_scalar%value(IVAR+jj), jj=1, ntim)
         if (ios /= 0) call astra_stop(err_format)
-        DEVAR(jvar) = factor*VARDAT(2, IVAR+1)
+        DEVAR(jvar) = factor*raw_scalar.value(IVAR+1)
         do jj=1, ntim
             IVAR = IVAR + 1
-            INDVAR(IVAR) = jvar
-            VARDAT(2, IVAR) = factor*VARDAT(2, IVAR)
-            VARDAT(3, IVAR) = 0.
+            raw_scalar%var_index(IVAR) = jvar
+            raw_scalar%value(IVAR) = factor*raw_scalar%value(IVAR)
+            raw_scalar%error(IVAR) = 0.
+            raw_scalar%label(IVAR) = VNAM
         enddo
         VNAMO = VNAM
         CYCLE parse_exp_1d
@@ -380,10 +378,11 @@ parse_exp_1d: do
             call astra_stop(err_msg)
         endif
 
-        INDVAR(IVAR) = jvar
-        VARDAT(1, IVAR) = TIMEVR
-        VARDAT(2, IVAR) = factor*VRDATA
-        VARDAT(3, IVAR) = VRERR
+        raw_scalar%var_index(IVAR) = jvar
+        raw_scalar%time(IVAR) = TIMEVR
+        raw_scalar%value(IVAR) = factor*VRDATA
+        raw_scalar%error(IVAR) = VRERR
+        raw_scalar%label(IVAR) = VNAM
 
     else  ! ":" found in the input string "STRI", pointer to U-file
 
@@ -405,10 +404,11 @@ parse_exp_1d: do
         endif
         do jj=1, nt_u
             IVAR = IVAR + 1
-            INDVAR(IVAR) = jvar
-            VARDAT(1, IVAR) = t_u(jj) ! git
-            VARDAT(2, IVAR) = factor*var_u(jj)
-            VARDAT(3, IVAR) = 0.
+            raw_scalar%var_index(IVAR) = jvar
+            raw_scalar%time (IVAR) = t_u(jj)
+            raw_scalar%value(IVAR) = factor*var_u(jj)
+            raw_scalar%error(IVAr) = 0.
+            raw_scalar%label(IVAR) = VNAM
         enddo
         deallocate(t_u, x_u, var_u)
     endif
