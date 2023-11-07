@@ -11,7 +11,7 @@ subroutine read_input
 ! and stores the time evolution of all input data in the arrays
 ! DATARR(NRDX*NTARR) - data array
 !       Let   1 <= j <= NTARR is an ordinal number of array in DATARR
-! KOGDA(jx)  - pointer to a position in the array raw_profile_map%time
+! jbeg_arrx(jx)  - pointer to a position in the array raw_profile_map%time
 !----------------------------------------------------------------------|
 
 use parameter_inc, only: NTVAR, NBDMAX, NBDTMAX
@@ -19,7 +19,7 @@ use const_inc
 use status_inc
 use outcmn_inc, only: AWD, exp_file, nml_file, equ_file, rev_file, &
     TASK, machine, CPT, &
-    TASKID, VERSION, AVERS, ARLEAS, AEDIT, COLTAB, IFDFVX, IFDFAX, KOGDA, &
+    TASKID, VERSION, AVERS, ARLEAS, AEDIT, COLTAB, IFDFVX, IFDFAX, jbeg_arrx, &
     PRNAME, CFNAME, SRNAME, EXARNM, NBFILE, MSFILE, wall_gc_file, &
     NPRNAM, NCFNAM, NSRNAM, NEXNAM, &
     NGR, NBNT, NCNBT, NRDX, NTARR, NRW, &
@@ -564,7 +564,7 @@ parse_exp_2d: do
     jexar = str_in_list(VNAMX, EXARNM) ! Checks if VNAMX-string is in array EXARNM
 
     if (VNAM /= VNAMO .and. IFDFAX(jexar) < 0) then
-        KOGDA(jexar) = NGR + 1
+        jbeg_arrx(jexar) = NGR + 1
     endif
 
 ! Special arrays
@@ -793,7 +793,7 @@ parse_exp_2d: do
             raw_profile_map%grid_type(NGR) = INTYPE
             raw_profile_map%filter   (NGR) = ALFA
             if (j == 1) then
-                KOGDA(jexar) = NGR
+                jbeg_arrx(jexar) = NGR
                 raw_profile_map%jbeg_grid(NGR) = jarr + 1
                 if (INTYPE == 18 .or. INTYPE == 19) then
                     jarr = jarr + 1

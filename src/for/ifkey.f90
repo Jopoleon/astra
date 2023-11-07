@@ -277,7 +277,7 @@ else
             (raw_profile_map%time(j), j=1, NGR), (raw_profile_map%jbeg_grid(j), j=1, NGR), (raw_profile_map%jbeg_data(j), j=1, NGR), &
             (DATARR(j), j=1, raw_profile_map%jbeg_data(NGR) + raw_profile_map%nrho(NGR) - 1), &
             (NAMEX(j), j=1, NARRX), (NWINDX(j), j=1, NARRX), &
-            (KOGDA(j), j=1, NARRX)
+            (jbeg_arrx(j), j=1, NARRX)
     endif
 endif
 !----------------------------------------------------------------------|

@@ -11,7 +11,7 @@ integer, parameter :: White=0, Black=1, Red=2, Blue=3, &
 character(len=1), parameter :: null_ch=char(0), tab_ch=char(9), esc_ch=char(13), backslash=char(92)
 
 integer, dimension(NRW)   :: MARKT, MARKR, NWIND1, NWIND2, NWIND3, NWIND4, NWIND7, NWINDX, IP1, IP2, IP30, IP31
-integer, dimension(NARRX) :: IFDFAX, KOGDA, NPTM
+integer, dimension(NARRX) :: IFDFAX, jbeg_arrx, NPTM
 integer, dimension(NSBMX) :: SIGNSB, IFSBX, IFSBP
 integer :: &
     NDTNAM, NCFNAM, NPRNAM, NSRNAM, NARNAM, NEXNAM, NTOUT, NROUT, NSBR, NSBP, &
