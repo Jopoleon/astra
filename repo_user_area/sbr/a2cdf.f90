@@ -55,10 +55,10 @@ call nfcheck( nf90_create(netcdf_out, nf90_clobber, ncid) )
 ! Coordinate variables (time, space)
 
 if (verbose) then
-    write(6, *) '   Dimensions...'
-    write(6, *) '      rho:     ', NA1
+    write(*, *) '   Dimensions...'
+    write(*, *) '      rho:     ', NA1
+    write(*, *) 'NetCDF  equil2D: ', nrho_surf, nthe_surf
 endif
-write(6, *) 'NetCDF  equil2D: ', nrho_surf, nthe_surf 
 
 call nfcheck( nf90_def_dim(ncid, t_lbl, 1  , n_t) )
 call nfcheck( nf90_def_dim(ncid, r_lbl, NA1, n_r) )
@@ -66,7 +66,7 @@ call nfcheck( nf90_def_dim(ncid, rh_lbl, nrho_surf, n_rh) )
 call nfcheck( nf90_def_dim(ncid, th_lbl, nthe_surf, n_th) )
   
 if (verbose) then
-    write(6, *) '   Defining coordinate variables...'
+    write(*, *) '   Defining coordinate variables...'
 endif
 call nfcheck( nf90_def_var(ncid,  t_lbl, NF90_DOUBLE, (/n_t /),  t_id) )
 call nfcheck( nf90_def_var(ncid,  r_lbl, NF90_DOUBLE, (/n_r /),  r_id) )
@@ -74,7 +74,7 @@ call nfcheck( nf90_def_var(ncid, rh_lbl, NF90_DOUBLE, (/n_rh/), rh_id) )
 call nfcheck( nf90_def_var(ncid, th_lbl, NF90_DOUBLE, (/n_th/), th_id) )
 
 if (verbose) then
-    write(6, *) '   Assigning attributes to coordinate variables...'
+    write(*, *) '   Assigning attributes to coordinate variables...'
 endif
 call nfcheck( NF90_PUT_ATT(ncid,  t_id, UNIT,  t_unit) )
 call nfcheck( NF90_PUT_ATT(ncid,  r_id, UNIT,  r_unit) )
@@ -105,11 +105,11 @@ call nf90_set(ncid, jid, 1, (/n_t/), f_intern2, n_int2, varid)
 
 ! Profiles
 
-if (verbose) write(6, *) '   Defining profileX variables...'
+if (verbose) write(*, *) '   Defining profileX variables...'
 
 jid = jid + n_int2
 call nf90_set(ncid, jid, 1, (/n_r/), f_profx, n_profx, varid)
-if (verbose) write(6, *) '   Defining profile variables...'
+if (verbose) write(*, *) '   Defining profile variables...'
 jid = jid + n_profx
 call nf90_set(ncid, jid, 1, (/n_r/), f_prof, n_prof, varid)
 
@@ -117,12 +117,12 @@ call nf90_set(ncid, jid, 1, (/n_r/), f_prof, n_prof, varid)
 
 jid = jid + n_prof
 if (verbose) then
-    write(6, *) '   Assigning attributes to 1d variables...'
+    write(*, *) '   Assigning attributes to 1d variables...'
 endif
 call nf90_set(ncid, jid, 1, (/n_rh/), feq_1d, neq_1d, varid)
 
 if (verbose) then
-    write(6, *) '   Assigning attributes to 2d variables...'
+    write(*, *) '   Assigning attributes to 2d variables...'
 endif
 jid = jid + neq_1d
 call nf90_set(ncid, jid, 2, (/n_th, n_rh/), feq_2d, neq_2d, varid)
@@ -133,14 +133,14 @@ call nfcheck( nf90_enddef(ncid) ) ! End define mode
 ! Writing NetCDF data
 !--------------------
 
-if (verbose) write(6, *) '   Writing grid data...'
+if (verbose) write(*, *) '   Writing grid data...'
 call nfcheck( nf90_put_var(ncid,  t_id, (/TIME/)) )
 call nfcheck( nf90_put_var(ncid,  r_id, XRHO(1:NA1)) )
 call nfcheck( nf90_put_var(ncid, rh_id, equil_now%profiles_1d%rho_tor(:)) )
 call nfcheck( nf90_put_var(ncid, th_id, equil_now%coord_sys%position%teta2d(:)) )
 
 !------------------------------------------------
-if (verbose) write(6, *) '   Writing time traces'
+if (verbose) write(*, *) '   Writing time traces'
 !------------------------------------------------
 jid = 0
 do j = 1, n_devar
@@ -325,7 +325,7 @@ jid = jid + 1
 call nfcheck( nf90_put_var(ncid, varid(jid), QBEAM ) )
 
 !-----------------------------------------
-if (verbose) write(6, *) '   Writing profiles...'
+if (verbose) write(*, *) '   Writing profiles...'
 !-----------------------------------------
 
 do j = 1, n_profx
@@ -804,7 +804,7 @@ call nfcheck( nf90_put_var(ncid, varid(jid), ZMAIN (1:NA1)) )
 
 ! Equilibrium quantities
 !------------------------------------------------
-if (verbose) write(6, *) '   Writing equilibrium quantities'
+if (verbose) write(*, *) '   Writing equilibrium quantities'
 !------------------------------------------------
 
 jid = jid + 1
@@ -826,7 +826,7 @@ call nfcheck( nf90_put_var(ncid, varid(jid), tmp) )
 
 ! Close the NetCDF file.
 call nfcheck( nf90_close(ncid) )
-write(6, *) '   Written file ' // netcdf_out
+write(*, *) '   Written file ' // netcdf_out
 
 j_call = j_call + 1
 
@@ -871,7 +871,7 @@ do
     read(nunit, '(A8, X, A25, X, A50)', iostat=ios) s_name, s_unit, s_desc
     if (ios /= 0) EXIT
     if (TRIM(s_name) /= 'TIME' .and. TRIM(s_name) /= 'XRHO') then
-!        write(6, '( 3(A, "%") )') s_name, s_desc, s_unit
+!        write(*, '( 3(A, "%") )') s_name, s_desc, s_unit
         call nfcheck( nf90_def_var(ncid, s_name, NF90_DOUBLE, dimid, varid(jid)) )
         call nfcheck( nf90_put_att(ncid, varid(jid), UNIT, s_unit) )
         call nfcheck( nf90_put_att(ncid, varid(jid), DESC, s_desc) )
@@ -894,7 +894,7 @@ integer, intent(in) :: status
 
 ! if (status /= NF90_NOERR) then
 if (status /= 0) then
-    write(6, *) 'Error', status
+    write(*, *) 'Error', status
     CALL exit(2)
 endif
 
