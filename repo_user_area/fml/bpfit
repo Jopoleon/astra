@@ -1,0 +1,15 @@
+! BPFIT: Beta Poloidal local with Fast Ions Total
+!  Fable May 2014 - Luda updated November 2017
+!  betpl=4*pi*(ne*Te+ni*Ti)/Bpo**2
+
+if (J == NA1) then
+    ZF1 = NE(J)*TE(J)
+    ZF2 = NI(J)*TI(J)
+    BPFIT = 6.4E-4*GP*(ZF1 + ZF2 + 0.5*PBPER(J) + 0.5*PBLON(J)) * &
+	(RTOR/(BTOR*ROC*ABS(MU(J) + 0.0001)))**2
+else
+    ZF1 = (NE(J+1) + NE(J))*(TE(J+1) + TE(J))
+    ZF2 = (NI(J+1) + NI(J))*(TI(J+1) + TI(J))
+    BPFIT = 1.6E-4*GP*(ZF1 +ZF2 + 2.*PBPER(J) + 2.*PBLON(J)) * &
+	(RTOR/(BTOR*J*HRO*ABS(MU(J) + 0.0001)))**2
+endif

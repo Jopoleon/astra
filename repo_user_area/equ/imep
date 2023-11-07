@@ -1,0 +1,292 @@
+!Template for ASTRA first approach to INTEGRATED MODELLING
+!CORE + EDGE
+!Teobaldo Luda -2018-
+!Transport equations are solved in r/a but input profiles are given in rho_vol,
+!and in the interface are plotted versus rho_tor (rho of astra). All profiles created
+!in astra downstairs are now done in RHO (rho_tor)
+
+!GENERAL PARAMETERS BLOCK-------------------------------------------------
+!Define equilibrium grid
+
+atreq = 1.0;
+
+CDWM1 =0.080;	!pedestal width
+CDWM2 = 1.-CDWM1;
+CDWM3 = 0.85; !!!CDWM2 - 0.1;    ! TGLF domain
+CDWM4 = CDWM2; 		! T pedestal width
+CDWM5 = CDWM2;      ! N pedestal width
+
+alfs(car44, car48, CF3)>::0.04::;
+CF8 = 1.65*0.4/RTOR;
+CF9 = (RTOR/1.65)**4;
+
+CHI1 = 2.*(1-FJUMP(0.001))+FJUMP(0.001)*max(-0.1,CHI1+CSCL2*TAU*(CF3-CF8));
+
+CMHD4 = 1.;
+!---------------------------
+!Experimental Zeff loading
+ZEF = ZRD1X;
+AMAIN=AMJ;	ZMAIN=ZMJ;		! mass & charge of main ion species
+
+!DENSITY BLOCK------------------------------------------------------
+!Densities sources
+NNCL=ZRD40X/1000.0; !Cold neutrals
+ENCL = 0.005; ! 5 eV --> Franck-Condon neutrals (as in A. Kallenbach paper)
+NNWM=0.; !Warm neutrals
+
+PEBM=car20x;    ! Pe - poh + pei
+PIBM=car21x;	! Pi - pei
+PEECR=0.0;
+PRAD=PRADX;
+SNEBM=CAR18X;	!electron source from NBI
+
+NIBM=car19x;   ! total fast ion density NBI+ICRH
+PBLON=2./3.*1.E-3/1.6*(0.);  ! total par energy density NBI+ICRH from TRA0
+PBPER=2./3.*1.E-3/1.6*(0.);   ! same perp
+
+NEUT:.04:::;
+SNN=SNNEU;
+SN=SNEBM;
+NIZ1=NE*(ZEF-1.D0)/(ZIM1-1.D0)/ZIM1;	!density of impurity
+ZIM1=7.;AIM1=14.;
+ZIM2=0.;ZIM3=0.;
+NIZ2=0.;NIZ3=0.;
+NDEUT=NE-ZIM1*NIZ1;	!density of deuterium plasma ions
+! NDEUT = NE-NIBM-ZIM1*NIZ1;
+NI=NDEUT+NIZ1;
+NMAIN=NDEUT;
+!------------------------------------------------------------------
+
+!!Power block---------------------
+SGNIP= 1.;
+SGNBT= -1.;
+CRAD4=VINT(PEECR,ROC);
+
+
+PEICR = 0.0;
+PIICR = 0.0;
+PE=POH+PEECR+PEBM-PRAD-PEICL+PEICR;
+PI=PIBM+PEICL+PIICR;
+------------------------------------
+
+!Neoclassical coefficients
+NEOCL4<::::;
+CAR60="xd_nc(j)"; !"work(j,165)"; ! heat conductivity Chi_deuteron, [m**2/s]
+CAR59="xe_nc(j)"; !"work(j,105)"; ! heat conductivity Chi_electron, [m**2/s]
+CAR56="dn_e_nc(j)"; !"work(j,102)"; ! particle diffusion coefficient Dn_electron, [m**2/s]
+
+!TRANSPORT BLOCK-----------------------------------------------
+
+CIMP2 = NEX(AFX(0.2))-NE(AFX(0.2)) - (NEX(AFX(0.82))-NE(AFX(0.82)));
+
+CAR19 = 0.5*(1-XSTEP(CDWM5))+(1-XSTEP(0.25))*0.5; !DN
+CAR19 = car19 + 0.75*RTOR*XSTEP(0.7)*(1-XSTEP(CDWM5-0.05));
+CAR19 = car19 - FJUMP(CF13)*CIMP2*20*(1-XSTEP(0.7));
+
+SMEARR(CF4*CF9,CAR19,CAR23)::::;
+
+
+CF7 = CDWM4+CDWM1/2.;
+CHE1  = CHI1*0.25;
+CAR26 = abs(HEXP)*TEX(AFX(0.85))/TE(AFX(0.85))*(1-XSTEP(0.85));
+CAR26 = CAR26 + CHE1 * XSTEP(CDWM4);                !HE
+CAR26 = car26 + car59;!* (1-XSTEP(CDWM4))	            !Neoclassical transport
+CAR26 = car26 + XSTEP(0.99)*(0.1+2.0*CHE1);           !SOL continuity
+!CAR26 = car26 + XSTEP(0.99)*(0.4+3.5*CHE1);           !SOL continuity
+CAR26 = car26 + (0.1+1.5*CHE1)*XSTEP(0.85)*(1-XSTEP(CDWM4-0.06))*1.9;
+CAR26 = car26 + (0.1+1.5*CHE1)*XSTEP(CDWM4-0.06)*(1-XSTEP(CDWM4-0.04))*4.;
+CAR26 = car26 + (0.1+1.5*CHE1)*XSTEP(CDWM4-0.04)*(1-XSTEP(CDWM4-0.02))*2.;
+CAR26 = car26 + (0.1+1.5*CHE1)*XSTEP(CDWM4-0.02)*(1-XSTEP(CDWM4))*1.2;
+CAR26 = car26*(1-XSTEP(CDWM3)) + XSTEP(CDWM3)*min(3.2,car26);
+
+SMEARR(CF4*CF9,CAR26,CAR30)::::;
+CAR33 = car30+10*(1-XSTEP(0.85));
+
+CDWM7=CDWM4;
+CAR25 = abs(XEXP)*TIX(AFX(0.85))/TI(AFX(0.85))*(1-XSTEP(0.85));
+CAR25 = CAR25 + FRMIN(CAR33) * XSTEP(cdwm7);	          !XI
+CAR25 = car25 + min(3.,CAR60); !* (1-XSTEP(cdwm7));     !Neoclassical transport
+CAR25 = car25 + XSTEP(0.99)*(0.6+CHE1+CAR33(AFX(CF7)))*0.5;        !SOL continuity
+CAR25 = car25 + (0.6+CHE1)*XSTEP(0.85)*(1-XSTEP(cdwm7-0.06))*1.2;
+CAR25 = car25 + (0.6+CHE1)*XSTEP(cdwm7-0.06)*(1-XSTEP(cdwm7-0.04))*1.8;
+CAR25 = car25 + (0.6+CHE1)*XSTEP(cdwm7-0.04)*(1-XSTEP(cdwm7-0.02))*1.8;
+CAR25 = car25 + (0.6+CHE1)*XSTEP(cdwm7-0.02)*(1-XSTEP(cdwm7))*.6;
+CAR25 = car25*(1-XSTEP(CDWM3)) + XSTEP(CDWM3)*min(6.5,car25);
+
+CAR27 = -0.05*XSTEP(CDWM5-0.05); !Pedestal pinch
+
+CAR28 = (car56(AFX(CF7)) + CHI2*FRMIN(CAR33))*XSTEP(CDWM5);  	    !DN
+CAR28 = CAR28 + car23*(1-XSTEP(CDWM5));
+
+CAR28=car28+(CHI2*0.1 + 1.*car28(AFX(CF7)))*100.*XSTEP(0.99)*(XRHO-(0.99));
+
+SMEARR(CF4*CF9,CAR25,CAR29)::::;
+
+SMEARR(CF5*CF9*2.,CAR27,CAR31)::::;
+SMEARR(CF5*CF9*2.,CAR28,CAR32)::::;
+
+
+XI = abs(HEXP)*(1-FJUMP(CF13)) + FJUMP(CF13)*max(car60,car30);
+HE = abs(HEXP)*(1-FJUMP(CF13)) + FJUMP(CF13)*max(car59,car30);
+CN = -0.5*(1-FJUMP(CF13)) + FJUMP(CF13)*car31;
+DN = 0.01*(1-FJUMP(CF13)) + FJUMP(CF13)*max(car56,car32);
+
+
+DVE=100*(1-FJUMP(2.))+FJUMP(2.)*80;
+DVI=100*(1-FJUMP(2.))+FJUMP(2.)*80;
+DVN=200*(1-FJUMP(2.))+FJUMP(2.)*80;
+
+
+!Transport coefficients other than HE
+CE=0.0; CI=0.0;
+XE=0.0;
+HI=0.0; DI=0.0;
+HN=0.0; XN=0.0;
+DE=0;
+
+!-------------------------------------------------------------
+
+!Plasma rotation
+VTOR=0.0; !Toroidal rotation
+ER=0.;
+
+!TEMPERATURE BLOCK-------------------------
+!Initial condition for temperatures
+NE=NEX;
+TE=TEX;
+TI=TIX;
+!NE:AS;
+
+NE:EQ[2,CMHD4];
+NEB =NEX(AFX(CMHD4));
+
+CF1 = FIXVAL(NECHC, 0.);
+CBND2 = FTAV(QNB, 0.04);
+CFUS4 = NNCL*4.37E5*SQRT(ENCL/AMJ)*SLAT(AFX(1))/3.*1.E+19; !Should be comparable to gas valve
+
+TE:EQ[2,CMHD4];
+TEB=TEX(AFX(CMHD4));
+!TE:AS;
+TI:EQ[2,CMHD4];
+TIB=TIX(AFX(CMHD4));
+!------------------------------------------
+
+!PRESSURE BLOCK-----------------------------
+
+!BETPL=BETPTFI
+
+!-------------------------------------------
+
+
+!CURRENT BLOCK-----------------------------
+!CU:AS;
+CU:EQ;
+MU=MUX;
+CU=CUX;
+
+CAR38="jbs_nc(j)"; !"WORK(j,301)"; Bootstrap current from NCLASS
+CAR39="cc_nc(j)"; !"work(j,303)"; !Conductivity from NCLASS
+
+!Bootstrap coefficients
+CC=CNSA*(1-FJUMP(0.01)) + FJUMP(0.01)*car39;
+CD=CUBM+CUECR+CAR38;
+DC=0.;  HC=0.;  XC=0.;
+!csawt=0.1;
+!mixinq(20,csawt)::::;  ! Sawtooth model
+
+CF2=20;
+CF6=0.01;
+mixint(CF2,CF6)::::;  ! Modified mixint to change ONLY q and j profiles, mixinteo and mixinq do not work !
+
+
+IPL=IPLX;    !Total plasma current fixed from experimental value
+
+!------------------------------------------
+CAR41=XEXP;
+CAR42=HEXP;
+car49=PREST;
+
+DoutTGLF:.02:3.96::;
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!Plotting radial profiles
+
+!Pag1
+!!Te\TE\\TEX\-2; Jpar\CU\-4; Chie\car42\10; chie\HE\10;
+!!q\1./MU\-21; 	Ecrh\PEECR; ne\NE\\NEX\-5; Qe\QE\-6;
+!!Ti\TI\\TIX\-2; Jbs\CUBS\-4; Chii\car41\10; chii\XI\10;
+!!shir\SHEAR; Zef\ZEF\\ZEFX\10; ni\NI\-5; Qi\QI\-6;
+
+!a\AMETR;
+!cr48\CAR48;
+
+Te\TE\\TEX\-2; chie\HE\8; CN\CN; 	 SNTT\VINT(SNTOT)\200;
+dTe\CAR48; chii\XI\8; ne\NE\\NEX\10; niz1\NIZ1\1;
+
+Ti\TI\\TIX\-2; 	CHIe\HEXP\8; DN\DN;	     QN\QN\200;
+dne\(-GRAD(ne)/GRAD(AMETR))/100.;
+CHIi\XEXP\8; ni\NI\10; ndt\NMAIN; !ER\ER; !ZF\max(min(1.,(((MU/MU(abc)*0.7)**2.)-1.)),0.)\1;
+
+!NECHC, hedg\HEDGE
+!BETP\BPFIT\5; neL\NECHC\-5; NEU\NN*(NNCL+NNWM); ZF\max(min(1.,(((MU/MU(abc)*0.7)**2.)-1.)),0.)\1;
+!CR19\CAR19\.2; CR20\CAR20; max(min(1.,(((MU/MU(abc)*0.6)**2.)-1.)),0.)\1
+
+!Pag2
+QE\QE\-114;		PED\PEDT\2;	PECR\PEECR\-22; Jpar\CU\-4;
+QI\QI\-115; 		PRAD\PRAD\-31; 	POH\car61\-22; 	CCnc\car39;
+PETT\VINT(PETOT)\-114; 	PID\PIDT\2; ; PICR\car14; 	Jbs\CUBS\-4;
+PITT\VINT(PITOT)\-115; 	PRni\CAR47\-31; PEICL\PEICL\-22;  CCfm\CNSA;
+
+!XNC\CAR51\-28; XNA\CAR52\-28;
+
+!Pag3
+ER\ER;; We\WE;   q\1./MU\-21; Jpar\CU\-4;
+!Wtot\WTOT; cr43\car43; shir\SHEAR;  Jbs\CUBS\-4;
+Vt\VTOR\\VTORX\-192; shir\SHEAR; dP\EQPF;  Jbs\CUBS\-4;
+
+vbnd\35000\-192; cr43\car43;   qexp\1./MUX\-21; Jcd\CD\-4;
+trq\TTRQ; scbm\SCUBM; Ptot\PREST;  Jnbi\CUBM\-4;
+
+!Pag4
+a\AMETR\-67;  Vtor\VTOR; EqEn\PEICL; nue\NUES;
+nuee\NUEE; ha\HARL; dTe\ABS(TE-TEX)/TEX*100; Bdb0\BDB0;
+
+alfs\CAR44\-67; PECH\PEECR; PRAD\PRAD; Zef\ZEF;
+\; PRAD\PRAD; PRAX\PRADX; Bmax\BMAXT;
+
+!Pag6
+jNCL\CAR38\-531; \; \; Pnbe\PEBM\-431;
+xNCL\CAR60\-533; \; \; Pnbi\PIBM\-432;
+
+nibm\NIBM; NN\NN; \; Peot\POH+PEECR-PEICL\-431;
+xSAU\HNASI\-533; \; \; Piot\PEICL\-432;
+
+!Page 7
+!Jcd\CD; Pbls\CF2*(1-PEBM-PIBM); pen\PEBM; pin\PIBM;
+
+!-dTi\-GRAD(TI); -dTe\-GRAD(TE);
+tgXi\CAR57\5; tgXe\CAR58\5; Ne\NE; cr28\car28\-72;
+XI\CAR17\5; HE\CAR18\5; DN\CAR19; \;
+
+!car1\CAR16; CR31\CAR31; CR62\CAR62; chat\CIHAT;
+!Ti\TI; Te\TE; \; RLNe\RTOR/NE*ABS(GRAD(NE)/GRAD(AMETR));
+LTi\LTI; LTe\LTE;               snn\SNN\-314; \;
+cr25\car25\5; cr26\car26\5; snbm\SNNBM\-314; \;
+!RLTi\RTOR/TI*ABS(GRAD(TI)/GRAD(AMETR)); RLTe\RTOR/TE*ABS(GRAD(TE)/GRAD(AMETR)); \; tCN\CAR55\5;
+
+
+!Plotting Time Traces
+Te0_TE(0); Teb_TEB; Ti0_TI(0); Tib_TIB; TeTi_TE(0)/TI(0); vloo_UPL(AFX(1))_5;
+Teib_TEB/TIB; NNCL_NNCL; NeLA_NECHC; neb_NEB; q0_1./MU(0); QeB_QEB;
+QnB_QNB; fped_CHI2; SETn_CF1; Zef_ZEF(0); Ipl_IPL;
+Ecrh_VINT(PEECR,ROC);
+Icrh_VINT(CAR14,ROC); NBIe_VINT(PEBM, ROC);
+NBIi_VINT(PIBM, ROC); Vlup_UPL(AFX(1)); abc_AMETR(AFX(1)); alfs_CAR44(AFX(1));
+Prad_VINT(PRAD, ROC); Tept_TE(AFX(CDWM2)); Tipt_TI(AFX(CDWM2)); nept_NE(AFX(CDWM2));
+ppt_CAR49(AFX(CDWM2)); cmh1_CMHD1; cmh3_CMHD3; ECRH_CBND3; GasV_CFUS4/1.E+19;
+Xped_CHI1; pedW_(1-CDWM4); pidW_(1-CDWM7); surf_SLAT(AFX(1)); CF3_CF3; Dped_CAR28(AFX(CDWM2+CDWM1/2));
+AMJ_AMJ; csl3_CSOL3; JB_CU(AFX(1)); encl_ENCL; dws_(CSOL4); cbnd2_CBND2;
+atop_(CAR44(AFX(1))-CAR44(AFX(CDWM2))); betN_CIMP4; PRni_VINT(CAR47,ROC);
+TRIAN_TRIAN; cmp1_CIMP1; PUMP_ZRD42X; RTOR_RTOR; Rime_0.4*RTOR/1.65; CF9_CF9; che1_CHE1;
+
+!-------------------------------------------------------------------------------------------------------
