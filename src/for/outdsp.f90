@@ -20,7 +20,7 @@ use status_inc, only: AMETR, MU, SHIF, ELON, TRIA
 use const_inc, only: XOUT, NAB, NA1, ABC, TINIT, TSCALE, RTOR, &
     MEQUIL, LEQ, UPDWN, TIME
 use outcmn_inc
-use expdat, only: raw_profile_map
+use expdat, only: raw_profile_map, DATARR, BNDR, BNDZ
 use ac_neg1, only: NUM, NKL1, NKL2, JMIN, JMAX, MODK
 use dbl2char, only: fmt_xf, fmt4
 use char_manip, only: len_trim_tab, str_in_list
@@ -571,7 +571,8 @@ subroutine bnd_draw(ifnew, YS0, SC8, IYO, time_in)
 ! IFNEW < 0 Don't mark resonances q=m/n
 ! IFNEW  > 10 Call from Review. (JIFNEW-10) is used to control erasing
 
-use outcmn_inc, only: Red, BNDTIM, BNDR, BNDZ, NBNT
+use outcmn_inc, only: Red, NBNT
+use expdat, only: BNDTIM, BNDR, BNDZ
 use const_inc, only: NBND
 
 implicit none

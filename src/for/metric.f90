@@ -1244,7 +1244,8 @@ subroutine BNDRY(RPB, ZPB)
 !  call BNDRY(RZPB, RZPB(NBND+1))
 !---------------------------------------------------------------------
 
-use outcmn_inc, only: NBNT, BNDTIM, BNDR, BNDZ
+use outcmn_inc, only: NBNT
+use expdat, only: BNDTIM, BNDR, BNDZ
 use const_inc, only: NBND, GP2, TIME, RTOR, SHIFT, ABC, TRIAN, UPDWN, ELONG
 use fs_coupling_variables, only: fs_bnd_in, fs_bnd_yes
 

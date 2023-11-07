@@ -15,9 +15,9 @@ use const_inc, only: TIME, BTOR, GP, AB, ABC, ROC, VOLUME, NA1, NAB
 use status_inc, only: AMETR, RHO, FP, VOLUM, EXT
 use numerical_tools, only: qinterp
 use outcmn_inc, only: NGR, KOGDA, IFDFAX, XAXES, &
-    DATAX, DATARR, NPTM, TOUTX
+    DATAX, NPTM, TOUTX
 use debugger, only: markloc, astra_stop
-use expdat, only: raw_profile_map
+use expdat, only: raw_profile_map, DATARR
 
 implicit  none
 

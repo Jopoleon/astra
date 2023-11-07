@@ -26,7 +26,7 @@ end module timeoutput_inc
 !--------------------------------
 module expdat
 
-use parameter_inc, only: NTVAR, NTARR
+use parameter_inc, only: NTVAR, NTARR, NRDX, NBDMAX, NBDTMAX
 
 implicit none
 
@@ -43,6 +43,10 @@ endtype
 
 type(rawScalar) :: raw_scalar
 type(rawProfileMap) :: raw_profile_map
+
+real*4 DATARR(NRDX*NTARR)
+double precision, dimension(NBDTMAX) :: BNDTIM
+double precision, dimension(NBDTMAX*NBDMAX) :: BNDR, BNDZ
 
 end module expdat
 

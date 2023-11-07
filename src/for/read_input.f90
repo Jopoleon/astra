@@ -23,9 +23,9 @@ use outcmn_inc, only: AWD, exp_file, nml_file, equ_file, rev_file, &
     PRNAME, CFNAME, SRNAME, EXARNM, NBFILE, MSFILE, wall_gc_file, &
     NPRNAM, NCFNAM, NSRNAM, NEXNAM, &
     NGR, NBNT, NCNBT, NBDMAX, NBDTMAX, NRDX, NTARR, NRW, &
-    CCOILX, VCOILX, BNDR, BNDZ, BNDTIM, DATARR, GRAP, TIM7
+    CCOILX, VCOILX, GRAP, TIM7
 
-use expdat, only: raw_scalar, raw_profile_map
+use expdat, only: raw_scalar, raw_profile_map, DATARR, BNDR, BNDZ, BNDTIM
 use char_manip, only: to_upper, str_in_list, clean_string
 use debugger, only: markloc, debug, astra_stop, flightsim
 use parse_utils

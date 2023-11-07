@@ -1,7 +1,7 @@
 module outcmn_inc
 
 use parameter_inc, only: NRD, NRDX, NRW, NTARR, NARRX, NSBMX, NCNBM, NCNBTM, &
-NBDMAX, NBDTMAX, NCONST, NSDELOUT, plot_modes
+    NCONST, NSDELOUT, plot_modes
 
 implicit none
 
@@ -29,12 +29,8 @@ double precision, dimension(NCNBM) :: CCOIL, CCOILO, VCOIL
 double precision, dimension((NCNBM+1)*NCNBTM) :: CCOILX, VCOILX
 double precision, dimension(NRDX, NARRX) :: XAXES, DATAX
 double precision, dimension(NRD, NRW) :: ROUT
-double precision, dimension(NBDTMAX) :: BNDTIM
-double precision, dimension(NBDTMAX*NBDMAX) :: BNDR, BNDZ
 double precision :: TIM7(4), scale_bnd
 double precision :: CPTOT, CPTEQL, CPTGRA, CPT, CPTSBR(NSBMX)
-
-real*4 DATARR(NRDX*NTARR)
 
 character(len=4), dimension(NRW) :: NAMET, NAMER
 character(len=4) :: TASK, machine
@@ -107,8 +103,6 @@ NCNBT = 0
 OSHIFT = 0.
 OSHIFR = 0.
 GRAL   = 0.
-!TIMEX  = 0.
-!FILTER = 0.001
 
 NAMEX(:) = '      '
 NAM7 = (/ 'Tmin', 'Tmax', 'Tmark', 'Style' /)
