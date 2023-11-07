@@ -23,7 +23,7 @@ if awd is None:
 
 def nc_concat(expequ):
 
-    loc = '%s/.res/ncdf/%s' %(awd, expequ)
+    loc = '%s/ncdf_out/%s' %(awd, expequ)
 
     cdf_out = '%s.CDF' %loc
     ds = {}

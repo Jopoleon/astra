@@ -46,7 +46,7 @@ enddo
 write(str_cdwm1, '(F6.4)') CDWM1
 write(str_time, '(F6.4)') TIME
 
-filemod = trim(awd) // 'out/CPout_' // trim(exp_file) // '_' // &
+filemod = trim(awd) // '/dat/CPout_' // trim(exp_file) // '_' // &
     trim(machine) // '_W_' // str_cdwm1 // '_at_' // str_time
 
 open(31, file=trim(filemod))
