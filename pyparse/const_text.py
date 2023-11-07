@@ -13,7 +13,7 @@ class SUBPROC:
 '''subroutine SUBPROC
 
 use const_inc
-use outcmn_inc, only: IFSBP, CPTSBR
+use outcmn_inc, only: IFSBP, cpuTime_sbr
 use ipc_mod, only: mem_tglf, mem_qlkz, mem_neo
 
 implicit none
@@ -38,7 +38,7 @@ use status_inc
 use ipc_mod
 use nclass_mod
 use strahl_mod
-use outcmn_inc, only: CPT, CPTSBR
+use outcmn_inc, only: cpuTime_tra, cpuTime_sbr
 use debugger, only: markloc
 
 implicit none

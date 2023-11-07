@@ -1,6 +1,6 @@
 subroutine METRIC
 
-use outcmn_inc, only: CPT, CPTEQL
+use outcmn_inc, only: cpuTime_tra, cpuTime_equ
 use status_inc, only: VRO, VR
 use const_inc, only: IPART, FTO, FTN, ROC, GP, BTOR, ROCO, RTOR, SHIFT, &
     ABC, ELONG, TRIAN, NB1, LEQ, IPEQL, &
@@ -16,7 +16,7 @@ character(len=120) :: err_msg
 
 call markloc('METRIC')
 
-call ADDTIME(CPT)
+call ADDTIME(cpuTime_tra)
 
 if (IPART == 1) then ! do only at initiation
     FTN = FTO
@@ -60,7 +60,7 @@ CASE(1)  ! EMEQ
             err_msg = 'Equilibrium problem at the initial iterations'
             if (IPART == 1) call astra_stop(err_msg)
         endif
-        call ADDTIME(CPTEQL)
+        call ADDTIME(cpuTime_equ)
         TIMEQL = TIME
     endif
 
@@ -69,7 +69,7 @@ CASE(3)  ! equil iterations
     if (TIME >  TSTART) NDTEQUILMY = 1
     if (TIME-TIMEQL >= NDTEQUILMY*DTEQL) then
         call RHSEQ
-        call ADDTIME(CPTEQL)
+        call ADDTIME(cpuTime_equ)
         TIMEQL = TIME
     endif
 
@@ -84,13 +84,13 @@ CASE(4: 5)  ! SPIDER, FEQIS
     if (TIME-TIMEQL >= NDTEQUILMY*DTEQL) then
         call RHSEQ    ! Define p', FF', j_tor=CUTOR
         call A2GSSOLVER(equil_solver)
-        call ADDTIME(CPTEQL)
+        call ADDTIME(cpuTime_equ)
         TIMEQL = TIME
     endif
 
 END SELECT
 
-call ADDTIME(CPT)
+call ADDTIME(cpuTime_tra)
 
 return
 end subroutine METRIC

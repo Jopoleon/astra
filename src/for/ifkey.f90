@@ -1275,7 +1275,7 @@ subroutine CPUSE(nch)
 ! 10.03.95 G.P.
 
 use parameter_inc, only: NSDELOUT
-use outcmn_inc, only: CPTOT, CPT, CPTEQL, CPTSBR, NSBR, DTNAME, IFSBX
+use outcmn_inc, only: cpuTime_tot, cpuTime_tra, cpuTime_equ, cpuTime_sbr, NSBR, DTNAME, IFSBX
 use const_inc, only: NSTEPS, TIME, TSTART
 use debugger, only: markloc
 
@@ -1288,9 +1288,9 @@ double precision :: Y
 
 call markloc('CPUSE')
 
-CPTOT = CPT + CPTEQL
+cpuTime_tot = cpuTime_tra + cpuTime_equ
 do j=1, NSBR
-   CPTOT = CPTOT + CPTSBR(j)
+   cpuTime_tot = cpuTime_tot + cpuTime_sbr(j)
 enddo
 write(nch, '(A, I8)')    "    Total time steps  ", NSTEPS
 if (NSTEPS == 0) return
@@ -1301,26 +1301,26 @@ if (Y < .99999999d-1) then
 else
     write(nch, '(A, F6.3, A)')"    Average time step   ", Y, " sec"
 endif
-write(nch, '(A, F6.3, A)')"    CPU per time step   ", CPTOT/NSTEPS, " sec"
-Y = CPTOT/(TIME - TSTART)
+write(nch, '(A, F6.3, A)')"    CPU per time step   ", cpuTime_tot/NSTEPS, " sec"
+Y = cpuTime_tot/(TIME - TSTART)
 if (Y < 60.) then
     write(nch, '(A, F6.3, A)')"    CPU per 1 sec       ", Y, " sec"
 else
     call wrtime(nch, '    CPU per 1 sec ', 18, Y, -1.d0)
 endif
-call wrtime(nch, '    Total CPU time', 18, CPTOT , CPTOT)
-call wrtime(nch, '    Transport core', 18, CPT   , CPTOT)
-call wrtime(nch, '    Equilibrium   ', 18, CPTEQL, CPTOT)
+call wrtime(nch, '    Total CPU time', 18, cpuTime_tot  , cpuTime_tot)
+call wrtime(nch, '    Transport core', 18, cpuTime_tra  , cpuTime_tot)
+call wrtime(nch, '    Equilibrium   ', 18, cpuTime_equ, cpuTime_tot)
 j2 = 1
 do j1=1, NSBR
     j = min(6, LEN_TRIM(DTNAME(NSDELOUT+4*j1)))
     if (j1 == IFSBX(j2)) then
         call wrtime(nch, '    Xroutine   "' // &
-            DTNAME(NSDELOUT+4*j1)(1: j) // '"', 17 + j, CPTSBR(j1), CPTOT)
+            DTNAME(NSDELOUT+4*j1)(1: j) // '"', 17 + j, cpuTime_sbr(j1), cpuTime_tot)
         j2 = j2 + 1
     else
         call wrtime(nch, '    Subroutine "' // &
-            DTNAME(NSDELOUT+4*j1)(1: j) // '"', 17 + j, CPTSBR(j1), CPTOT)
+            DTNAME(NSDELOUT+4*j1)(1: j) // '"', 17 + j, cpuTime_sbr(j1), cpuTime_tot)
     endif
 enddo
 write(nch, *)

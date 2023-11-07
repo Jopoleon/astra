@@ -30,7 +30,7 @@ double precision, dimension((NCNBM+1)*NCNBTM) :: CCOILX, VCOILX
 double precision, dimension(NRDX, NARRX) :: XAXES, DATAX
 double precision, dimension(NRD, NRW) :: ROUT
 double precision :: TIM7(4), scale_bnd
-double precision :: CPTOT, CPTEQL, CPTGRA, CPT, CPTSBR(NSBMX)
+double precision :: cpuTime_tot, cpuTime_equ, cpuTime_tra, cpuTime_sbr(NSBMX)
 
 character(len=4), dimension(NRW) :: NAMET, NAMER
 character(len=4) :: TASK, machine
@@ -48,11 +48,10 @@ integer :: i, j
 
 ! Constants
 
-CPTOT = 0.
-CPTEQL = 0.
-CPTGRA = 0.
-CPT = 0.
-CPTSBR = 0.
+cpuTime_tot = 0.
+cpuTime_equ = 0.
+cpuTime_tra = 0.
+cpuTime_sbr = 0.
 
 VERSION = repeat(' ', 32)
 wall_gc_file = '***'

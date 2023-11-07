@@ -18,7 +18,7 @@ use parameter_inc, only: NTVAR, NBDMAX, NBDTMAX
 use const_inc
 use status_inc
 use outcmn_inc, only: AWD, exp_file, nml_file, equ_file, rev_file, &
-    TASK, machine, CPT, &
+    TASK, machine, cpuTime_tra, &
     TASKID, VERSION, AVERS, ARLEAS, AEDIT, COLTAB, IFDFVX, IFDFAX, jbeg_arrx, &
     PRNAME, CFNAME, SRNAME, EXARNM, NBFILE, MSFILE, wall_gc_file, &
     NPRNAM, NCFNAM, NSRNAM, NEXNAM, &
@@ -66,7 +66,7 @@ debug, tbeg_nml, tend_nml, tpause_nml, flightsim, resize
 
 call markloc('read_input')
 
-call ADDTIME(CPT)  ! Initialize timer
+call ADDTIME(cpuTime_tra)  ! Initialize timer
 
 call getarg(0, STRI)
 j = min(len(TASKID), LEN_TRIM(STRI))
