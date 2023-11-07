@@ -5,6 +5,7 @@ mod
 obj
 pyparse/__pycache__
 pyparse/fml.py
+/dat
 /exe
 /equ
 /exp
@@ -13,6 +14,7 @@ pyparse/fml.py
 /inc
 /lib
 /main
+/ncdf_out
 /sbr
 /xpr
 /ipc
@@ -23,3 +25,4 @@ pyparse/fml.py
 /tglf
 /.res
 /bin
+user

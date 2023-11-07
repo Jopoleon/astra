@@ -206,7 +206,9 @@ CAR41=XEXP;
 CAR42=HEXP;
 car49=PREST;
 
-DoutTGLF:.02:3.96::;
+!DoutTGLF:.02:3.96::;
+
+A2CDF>:.02:3.96::;
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !Plotting radial profiles
