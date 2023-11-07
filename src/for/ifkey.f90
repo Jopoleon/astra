@@ -1019,7 +1019,7 @@ end subroutine re_draw
 !---------------------------------------------------------------------
 subroutine SMODE5(MARK, plot_arr, PRMARK, NAMEP, ITIMES)
 
-use parameter_inc
+use parameter_inc, only: NRD, NRW
 use outcmn_inc, only: frame_hei, frame_wid, IYM, IY0, NROUT, ICVMX, SCALER, &
     ROUT, rev_file, NXOUT, NGR, NAMER, NWIND4, active_tab, canv_wid, canv_hei, OSHIFR, &
     DXLET, DYLET, MOD10, GRAL, GRAP, MODEY, KPRI, null_ch, Black, Red
@@ -1547,7 +1547,7 @@ implicit none
 
 double precision :: swatch, Y
 
-write(6, '(A/A, F8.3)')RUNID, '     Time =', TIME
+write(6, '(A/A, F8.3)') RUNID, '     Time =', TIME
 call wrtime(6, '  >>> Astra run time  ', 22, swatch(Y), -1.d0)
 call CPUSE(6)
 
