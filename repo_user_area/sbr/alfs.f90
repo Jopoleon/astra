@@ -1,13 +1,14 @@
-subroutine alfs(aminlfsa, dt_tetop, avdte)
+subroutine alfs(rhot_ped_top, aminlfsa, dt_tetop, avdte)
 
 use parameter_inc, only: NRD
 use numerical_tools, only: qinterp
-use const_inc, only: NA1, ROC, SHIFT, CDWM2, nequil, mequil, AWALL, RTOR
-use status_inc, only: AMAIN, AMETR, TE, SHIF, EQPF
+use const_inc, only: NA1, AWALL, RTOR
+use status_inc, only: AMETR, TE
 use parameters_a2equil, only: equil_now
 
 implicit none
 
+double precision, intent(in) :: rhot_ped_top
 double precision, intent(out) :: avdte
 double precision, intent(out), dimension(NRD) :: aminlfsa, dt_tetop
 
@@ -28,14 +29,14 @@ call qinterp(aminm(1:neq), aminlfs(1:neq), neq, AMETR(1:NA1), aminlfsa(1:NA1), N
 
 ! ratio of average pedestal electron temperature gradient to electron temperature at pedestal top 
 do j=1, NA1
-    dt_tetop(J) = (-GRAD(TE, J)/GRAD(aminlfsa, J)/10.d1/RADIAL(TE, RFA(AFX(CDWM2))))
+    dt_tetop(J) = (-GRAD(TE, J)/GRAD(aminlfsa, J)/10.d1/RADIAL(TE, RFA(AFX(rhot_ped_top))))
 enddo
 
 KK  = 0
 tmp = 0.
 
 do j=1, NA1
-    if ((j > nint(CDWM2*NA1)) .and. (j < nint(0.999*NA1))) then
+    if ((j > nint(rhot_ped_top*NA1)) .and. (j < nint(0.999*NA1))) then
         tmp = tmp + dt_tetop(J)
         KK = KK + 1
     else

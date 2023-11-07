@@ -8,7 +8,7 @@
 !GENERAL PARAMETERS BLOCK-------------------------------------------------
 !Define equilibrium grid
 
-atreq = 1.0;
+atreq = 0.1;
 
 CDWM1 =0.080;	!pedestal width
 CDWM2 = 1.-CDWM1;
@@ -16,7 +16,7 @@ CDWM3 = 0.85; !!!CDWM2 - 0.1;    ! TGLF domain
 CDWM4 = CDWM2; 		! T pedestal width
 CDWM5 = CDWM2;      ! N pedestal width
 
-alfs(car44, car48, CF3)>::0.04::;
+alfs(CDWM2, car44, car48, CF3)>::0.04::;
 CF8 = 1.65*0.4/RTOR;
 CF9 = (RTOR/1.65)**4;
 
