@@ -34,12 +34,23 @@ integer function IFKEY(IFKL)
 ! 12,13 - for equ/model.log file (once on entry)
 ! 3 - for post-viewer file (first on entry, then periodically)
 
+use parameter_inc, only: NRD, NRW
 use status_inc, only: MU, AMETR, SHIF, ELON, TRIA, EQFF, EQPF, FP, RHO
 use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, XLINE1, &
    NA, NB1, NA1, NAB, NUF, LEQ, NBND, TIME, TAU, TINIT, TSCALE, &
    TSTART, TEND, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
    BTOR, IPL, CONSTF, DEVAR, DELOUT, XFLAG
-use outcmn_inc
+use outcmn_inc, only: Black, Blue, WarningColor, &
+    active_tab, curves_per_frame, coltab, &
+    frame_hei, DXLET, DYLET, MOD10, LTOUT, NARRX, IPOUT, MODEY, XWH, &
+    NWINDX, NWIND1, NWIND2, NWIND3, NWIND4, NWIND7, &
+    NROUT, NTOUT, NXOUT, NSBR, NGR, NST, &
+    NAMER, NAMET, NAMEX, SCALER, SCALET, ROUT, OSHIFR, OSHIFT, &
+    rev_file, equ_file, exp_file, &
+    CFNAME, PRNAME, SRNAME, DTNAME, &
+    runid, TASK, VERSION, AVERS, ARLEAS, AEDIT, &
+    NCFNAM, NPRNAM, NCONST, NDTNAM, NSDELOUT, &
+    jbeg_arrx, GRAP, GRAL, IFDFVX, TIM7, NAM7, LRJJ, KPRI, ICVMX
 use expdat, only: raw_profile_map, DATARR
 use timeoutput_inc, only: NTIMES, TTOUT, TPOUT, TOUT
 use dbl2char, only: fmt6

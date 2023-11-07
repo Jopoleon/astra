@@ -1,6 +1,5 @@
-!----------------------------------------------------------------
 subroutine SCAL(NOUT, SN, SO, OUT, NP, NDIM)
-!----------------------------------------------------------------
+!---------------------------------------------------------------------
 !  Input:
 !     NOUT Total number of channels (NROUT or NTOUT)
 !     SO(NOUT) Current scales
@@ -22,35 +21,35 @@ external SCALA
 
 ! Exclude 3 edge/central points
 var_loop: do J=1, NOUT
-   if (SO(J) > 0) then
-      SN(J) = SO(J)
-   else if (SO(J) .EQ. 0) then
-      SN(J) = SCALA(OUT(1, J), NP)
-   else
-      do JJ = 1, J-1
-         if(SO(J) .EQ. SO(JJ)) then
-            SN(J) = SN(JJ)
-            CYCLE var_loop
-         endif
-      enddo
-      SC = 0.
-      do JJ=J, NOUT
-         if(SO(J) .EQ. SO(JJ)) then
-            SC = MAX(SC, SCALA(OUT(1, JJ), NP))
-            if(ABS(SO(JJ) + JJ) < .01) then
-               SN(J) = SCALA(OUT(1, JJ), NP)
-               CYCLE var_loop
+    if (SO(J) > 0) then
+        SN(J) = SO(J)
+    else if (SO(J) .EQ. 0) then
+        SN(J) = SCALA(OUT(1, J), NP)
+    else
+        do JJ = 1, J-1
+            if (SO(J) .EQ. SO(JJ)) then
+                SN(J) = SN(JJ)
+                CYCLE var_loop
             endif
-         endif
-      enddo
-      SN(J) = SC
-   endif
+        enddo
+        SC = 0.
+        do JJ=J, NOUT
+            if (SO(J) .EQ. SO(JJ)) then
+                SC = MAX(SC, SCALA(OUT(1, JJ), NP))
+                if (ABS(SO(JJ) + JJ) < .01) then
+                    SN(J) = SCALA(OUT(1, JJ), NP)
+                    CYCLE var_loop
+                endif
+            endif
+        enddo
+        SN(J) = SC
+    endif
 enddo var_loop
 
 return
 end subroutine SCAL
 
-!-------------------------------------------
+!---------------------------------------------------------------------
 double precision function SCALA(Y, NJ)
 
 implicit none
@@ -71,17 +70,17 @@ YS(5) = 5.0d-9
 YS(6) = 8.0d-9
 
 do while(1.05*YMAX > YS(6))
-   YS = 10.*YS
+    YS = 10.*YS
 enddo
 do j=1, 6
-   if (1.05*YMAX <= YS(j)) EXIT
+    if (1.05*YMAX <= YS(j)) EXIT
 enddo
 
 SCALA = YS(J)
 
 end function SCALA
 
-!-------------------------------------------
+!---------------------------------------------------------------------
 subroutine CMARK(NL, JPOS, SC, OS, NAME, STYL)
 ! Mark variable/scale in 1 & 2 modes
 
@@ -103,27 +102,27 @@ ST(1: 4) = fmt4(SC)
 ST(5: 5)  = ' '
 ST(6: 10) = NAME
 if (OS /= 0) then
-   F4 = fmt4(abs(OS))
-   if (OS < 0) F5 = '-' // F4
-   if (OS > 0) F5 = '+' // F4
-   if (NL < frame_hei/2) then
-      JY = DYLET + 2
-   else
-      JY = -DYLET - 2
-   endif
-   call textvm(JPOS + 4*DXLET, NL + JY, F5, 5)
+    F4 = fmt4(abs(OS))
+    if (OS < 0) F5 = '-' // F4
+    if (OS > 0) F5 = '+' // F4
+    if (NL < frame_hei/2) then
+        JY = DYLET + 2
+    else
+        JY = -DYLET - 2
+    endif
+    call textvm(JPOS + 4*DXLET, NL + JY, F5, 5)
 endif
 call textvm(JPOS, NL, ST, 10)
 if (STYL > 0) then
-   POINT(1) = JPOS + 4*DXLET + 4
-   POINT(2) = NL - 4
-   call NMARK(POINT, STYL)
+    POINT(1) = JPOS + 4*DXLET + 4
+    POINT(2) = NL - 4
+    call NMARK(POINT, STYL)
 endif
 
 return
 end subroutine CMARK
 
-!-------------------------------------------
+!---------------------------------------------------------------------
 subroutine CMARKT(NL, JPOS, SC, OS, NAME, STYL)
 ! Mark variable/scale in 6th (time) mode
 
@@ -143,16 +142,16 @@ character(len=4 ) :: F4
 ST(1: 10) = '          '
 ST(2: 5)  = NAME
 if (OS == 0) then
-   JP = JPOS
-   J  = 5
+    JP = JPOS
+    J  = 5
 else
-   F4 = fmt4(abs(OS))
-   if (OS < 0) ST(6: 10) = '-' // F4
-   if (OS > 0) ST(6: 10) = '+' // F4
-   JP = JPOS - DXLET
-   if (ST(1: 1) == ' ') JP = JP - DXLET
-   j = LEN_TRIM(ST(2: 10))
-   if (j <= 6) JP = JP + DXLET
+    F4 = fmt4(abs(OS))
+    if (OS < 0) ST(6: 10) = '-' // F4
+    if (OS > 0) ST(6: 10) = '+' // F4
+    JP = JPOS - DXLET
+    if (ST(1: 1) == ' ') JP = JP - DXLET
+    j = LEN_TRIM(ST(2: 10))
+    if (j <= 6) JP = JP + DXLET
 endif
 
 call textvm(JP, NL, ST, J)   ! type name+yshift
@@ -167,7 +166,7 @@ if (STYL > 0) call NMARK(plot_arr, STYL)
 return
 end subroutine CMARKT
 
-!-------------------------------------------
+!---------------------------------------------------------------------
 subroutine CMARKP(NL, JPOS, NAME, STYL)
 ! Mark variable/scale in 4 & 5 (time-radial) modes
 
@@ -188,7 +187,7 @@ call textvm(JPOS, NL, ST, 5)
 
 end subroutine CMARKP
 
-!-------------------------------------------
+!---------------------------------------------------------------------
 subroutine PLOTXY(YARR, NP, JX, IX, IXO, IY, IYO, DMET, STYL, plot_arr)
 
 ! The subroutine displays NP points
@@ -214,36 +213,36 @@ data DMETO/999999./
 call colovm(EraseColor)
 JPOINT = 0
 do J0=0, 1
-   do J=1, NP
-      plot_arr(2*J - 1) = JX  + IXO(J)
-      plot_arr(2*J)     = 350 - IYO(J)
-   enddo
-   JMET = 0
-   do JJ=1, NP - 1 + J0
-      if(YARR(JJ) - YARR(1) >= JMET*DMETO .or. JJ == 1) then
-         if(JJ > 1) call curvvm(0, JPOINT + 1, plot_arr(J1))
-         J1 = 2*JJ - 1
-         call NMARK(plot_arr(J1), STYL)
-         JMET = JMET + 1
-         JPOINT = 1
-      else
-         JPOINT = JPOINT+1
-      endif
-   enddo
-   if (JPOINT /= 0) call curvvm(0, JPOINT, plot_arr(J1))
-   if (J0 == 1) return   ! J0=0 <- erasing
-   do J=1, NP
-      IXO(J) = IX(J)
-      IYO(J) = IY(J)
-   enddo
-   DMETO = DMET
-   call colovm(1)
+    do J=1, NP
+        plot_arr(2*J - 1) = JX  + IXO(J)
+        plot_arr(2*J)     = 350 - IYO(J)
+    enddo
+    JMET = 0
+    do JJ=1, NP - 1 + J0
+        if (YARR(JJ) - YARR(1) >= JMET*DMETO .or. JJ == 1) then
+            if (JJ > 1) call curvvm(0, JPOINT + 1, plot_arr(J1))
+            J1 = 2*JJ - 1
+            call NMARK(plot_arr(J1), STYL)
+            JMET = JMET + 1
+            JPOINT = 1
+        else
+            JPOINT = JPOINT+1
+        endif
+    enddo
+    if (JPOINT /= 0) call curvvm(0, JPOINT, plot_arr(J1))
+    if (J0 == 1) return   ! J0=0 <- erasing
+    do J=1, NP
+        IXO(J) = IX(J)
+        IYO(J) = IY(J)
+    enddo
+    DMETO = DMET
+    call colovm(1)
 enddo
 
 return
 end subroutine PLOTXY
 
-!-------------------------------------------
+!---------------------------------------------------------------------
 subroutine PLOTCR(NP, NPO, IX, IXOLD, IY, IYOLD, ICOLOR, STYL, plot_arr)
 
 ! The subroutine displays NP points of the integer array IY
@@ -273,19 +272,19 @@ integer :: J
 
 if (NPO > 0) then
 ! erase the old curve
-   do J=1, NPO
-      plot_arr(2*J - 1) = IXOLD(J)
-      plot_arr(2*J)     = IYOLD(J)
-   enddo
-   call colovm(EraseColor)
-   call CURV1(NPO, plot_arr, STYL)
+    do J=1, NPO
+        plot_arr(2*J - 1) = IXOLD(J)
+        plot_arr(2*J)     = IYOLD(J)
+    enddo
+    call colovm(EraseColor)
+    call CURV1(NPO, plot_arr, STYL)
 endif
 
 ! draw a new curve
 
 do J=1, NP
-   plot_arr(2*J - 1) = IX(J)
-   plot_arr(2*J)     = IY(J)
+    plot_arr(2*J - 1) = IX(J)
+    plot_arr(2*J)     = IY(J)
 enddo
 ! Colors: 1(Red) 2(Blue) 3(MeduimSeeGreen) 4(VioletRed) 5(Brown) 6(LightBlue)
 ! 7(Turquoise)
@@ -295,14 +294,14 @@ call colovm(ICOLOR)
 call CURV1(NP, plot_arr, STYL)
 if (NPO < 0) return
 do J=1, NP
-   IYOLD(J) = IY(J)
-   IXOLD(J) = IX(J)
+    IYOLD(J) = IY(J)
+    IXOLD(J) = IX(J)
 enddo
 
 return
 end subroutine PLOTCR
 
-!-------------------------------------------
+!---------------------------------------------------------------------
 subroutine CURV1(NP, plot_arr, STYL)
 ! The subroutine has replaced older subroutine CURV
 
@@ -313,48 +312,48 @@ integer, intent(in) :: plot_arr(*), STYL, NP
 integer :: LE, NF, J, j1, JJ, NM, PT1(2)
 
 if (STYL < 0) then  ! Draw dashed curves
-   jj = -STYL
-   if (jj >= 7) jj = jj + 1 - jj/7*7
-   if (jj > 1) then
-      LE = 8
-      do j=1, jj
-         j1 = j + 1
-         LE = LE + j1
-      enddo
-      j1 = jj
-      if (jj == 2) LE = min(LE, 16)
-      if (jj == 3) LE = min(LE, 8)
-      if (jj == 4) LE = min(LE, 4)
-      NF = max(1, LE/4)
-      do j=1, NP, LE
-         j1 = min(NP - j + 1, LE - NF)
-         call drcurv(0, j1, plot_arr(2*j-1))
-      enddo
-      return
-   endif
+    jj = -STYL
+    if (jj >= 7) jj = jj + 1 - jj/7*7
+    if (jj > 1) then
+        LE = 8
+        do j=1, jj
+            j1 = j + 1
+            LE = LE + j1
+        enddo
+        j1 = jj
+        if (jj == 2) LE = min(LE, 16)
+        if (jj == 3) LE = min(LE, 8)
+        if (jj == 4) LE = min(LE, 4)
+        NF = max(1, LE/4)
+        do j=1, NP, LE
+            j1 = min(NP - j + 1, LE - NF)
+            call drcurv(0, j1, plot_arr(2*j-1))
+        enddo
+        return
+    endif
 
 else if (STYL > 0) then
 
-   NM = NP/5
-   NM = max(10, NP/5)
-   LE = NM/5*STYL    ! 1st marker position
-   if (LE >= NM+2) LE = LE - NM
-   LE = max(1, LE)
+    NM = NP/5
+    NM = max(10, NP/5)
+    LE = NM/5*STYL    ! 1st marker position
+    if (LE >= NM+2) LE = LE - NM
+    LE = max(1, LE)
 ! call getcolor(j1)
-   do jj=LE, NP, NM
-      J  = 2*jj
-      PT1(1) = plot_arr(j-1)
-      PT1(2) = plot_arr(j)/10
-      call NMARK(PT1, STYL)
+    do jj=LE, NP, NM
+        J  = 2*jj
+        PT1(1) = plot_arr(j-1)
+        PT1(2) = plot_arr(j)/10
+        call NMARK(PT1, STYL)
 !    call puto(jx, jy, j1, STYL)
-   enddo
+    enddo
 endif
 
 call drcurv(0, NP, plot_arr(1))
 
 end subroutine CURV1
 
-!-------------------------------------------
+!---------------------------------------------------------------------
 subroutine NMARK(POINT, STYL)
 
 implicit none
@@ -371,37 +370,35 @@ integer :: plot_arr(32), DX(16, 7), DY(16, 7), J, JJ, IST
 
 save DX, DY ! Actually parameters
 data DX/ &
-   0, 3, 0, -3, 0, 0, 2, 0, -2, 0, 0, 1, 0, -1, 0, 0, &
-   3, 3, 2, 1, -1, -2, -3, -3, -2, -1, 1, 2, 3, 0, 0, 0, &
-   3, -3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
-  -3, -1, 2, -2, 1, -2, 2, -1, 3, 0, 0, 0, 0, 0, 0, 0, &
-  -2, -1, 0, 1, 2, 1, 0, 1, 2, 1, 0, -1, -2, 0, 0, 0, &
-   0, 0, -3, 0, -2, 0, 0, -2, 0, 0, 0, 0, 0, 0, 0, 0, &
-  -2, 2, 2, -2, -2, 1, 1, -1, -1, 0, 0, 0, 0, 0, 0, 0/ 
+    0,  3,  0, -3,  0,  0,  2,  0, -2,  0,  0,  1,  0, -1,  0,  0, &
+    3,  3,  2,  1, -1, -2, -3, -3, -2, -1,  1,  2,  3,  0,  0,  0, &
+    3, -3,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, &
+   -3, -1,  2, -2,  1, -2,  2, -1,  3,  0,  0,  0,  0,  0,  0,  0, &
+   -2, -1,  0,  1,  2,  1,  0,  1,  2,  1,  0, -1, -2,  0,  0,  0, &
+    0,  0, -3,  0, -2,  0,  0, -2,  0,  0,  0,  0,  0,  0,  0,  0, &
+   -2,  2,  2, -2, -2,  1,  1, -1, -1,  0,  0,  0,  0,  0,  0,  0/ 
 data DY/ &
-   3, 0, -3, 0, 3, 2, 0, -2, 0, 2, 1, 0, -1, 0, 1, 0, &
-   1, -1, -2, -3, -3, -2, -1, 1, 2, 3, 3, 2, 1, 0, 0, 0, &
-   0, 0, 0, 3, -3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
-   0, 0, 3, -3, 0, 3, -3, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
-  -2, -1, 0, 1, 2, 1, 0, -1, -2, -1, 0, 1, 2, 0, 0, 0, &
-   3, -3, 0, 3, -1, -1, 1, 1, -3, 0, 0, 0, 0, 0, 0, 0, &
-  -2, -2, 2, 2, -1, -1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0/  
+    3,  0, -3,  0,  3,  2,  0, -2,  0,  2,  1,  0, -1,  0,  1,  0, &
+    1, -1, -2, -3, -3, -2, -1,  1,  2,  3,  3,  2,  1,  0,  0,  0, &
+    0,  0,  0,  3, -3,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, &
+    0,  0,  3, -3,  0,  3, -3,  0,  0,  0,  0,  0,  0,  0,  0,  0, &
+   -2, -1,  0,  1,  2,  1,  0, -1, -2, -1,  0,  1,  2,  0,  0,  0, &
+    3, -3,  0,  3, -1, -1,  1,  1, -3,  0,  0,  0,  0,  0,  0,  0, &
+   -2, -2,  2,  2, -1, -1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0/  
 
 IST = max(1, min(STYL, 7))
 do JJ=1, N(IST)
-   J = 2*JJ
-   plot_arr(J-1) = POINT(1) + DX(JJ, IST)
-   plot_arr(J)   = POINT(2) + DY(JJ, IST)
+    J = 2*JJ
+    plot_arr(J-1) = POINT(1) + DX(JJ, IST)
+    plot_arr(J)   = POINT(2) + DY(JJ, IST)
 enddo
 call curvvm(0, N(IST), plot_arr(1))
 
 end subroutine NMARK
 
-!---------------------------------------------------------------------=|
+!---------------------------------------------------------------------
 double precision function GETNUM(FIELD, ERCODE)
-!----------------------------------------------------------------------|
 
-use parameter_inc
 use outcmn_inc, only: PRNAME, CFNAME
 use const_inc , only: CONSTF, DEVARX
 use char_manip, only: str_in_list
@@ -419,57 +416,53 @@ save ISHIFT
 data ISHIFT/0/
 
 if (ISHIFT == 0) then
-   j = str_in_list('ZRD1  ', PRNAME)
-   ISHIFT = max(j-1, 0)
+    j = str_in_list('ZRD1  ', PRNAME)
+    ISHIFT = max(j-1, 0)
 endif
 
 l  = len(FIELD)
 jpos = index(TRIM(FIELD), 'ZRD')
 
 if (jpos == 0) then
-
-   jpos1 = index(TRIM(FIELD), 'C')
-   ERCODE = 1 ! Only initial, before CFNAME-search
-   if (jpos1 >  0) then
-      j1 = min(LEN_TRIM(FIELD(jpos1: l)), l - jpos1 + 1)
-      ZNUM = FIELD(jpos1: jpos1+j1-1)
-      jnam = str_in_list(ZNUM, CFNAME)
-      if (jnam > 0) then
-         ERCODE = 0
-         GETNUM = CONSTF(jnam)
-      endif
-   endif
-
+    jpos1 = index(TRIM(FIELD), 'C')
+    ERCODE = 1 ! Only initial, before CFNAME-search
+    if (jpos1 >  0) then
+        j1 = min(LEN_TRIM(FIELD(jpos1: l)), l - jpos1 + 1)
+        ZNUM = FIELD(jpos1: jpos1+j1-1)
+        jnam = str_in_list(ZNUM, CFNAME)
+        if (jnam > 0) then
+            ERCODE = 0
+            GETNUM = CONSTF(jnam)
+        endif
+    endif
 else
+    j1 = index(FIELD(jpos+3: l), 'X')
+    if (j1 /= 0) then
+        if (j1 > 3) then
+            ERCODE = 1
+            return
+        endif
+        ZNUM = FIELD(jpos+3: jpos+j1+1)
+    else
+        ZNUM = FIELD(jpos+3:)
+    endif
 
-   j1 = index(FIELD(jpos+3: l), 'X')
-   if (j1 /= 0) then
-      if (j1 > 3) then
-         ERCODE = 1
-         return
-      endif
-      ZNUM = FIELD(jpos+3: jpos+j1+1)
-   else
-      ZNUM = FIELD(jpos+3:)
-   endif
+    read(ZNUM(1:), *, iostat=ios) j1
 
-   read(ZNUM(1:), *, iostat=ios) j1
-
-   if (ios /= 0 .or. j1 < 1 .or. j1 > 96) then
-      ERCODE = 1
-   else
-      GETNUM = DEVARX(ISHIFT + j1)
-      ERCODE = 0
-   endif
-
+    if (ios /= 0 .or. j1 < 1 .or. j1 > 96) then
+        ERCODE = 1
+    else
+        GETNUM = DEVARX(ISHIFT + j1)
+        ERCODE = 0
+    endif
 endif
 
 return
 end function GETNUM
 
-!---------------------------------------------------------------------=|
+!---------------------------------------------------------------------
 subroutine STREAD(NCH, NFIELD, ARRAY, ERCODE)
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 ! Reads one record group of the NBINP ("*.nbi") file 
 ! and fills ARRAY(1:NFIELD) with data.
 ! Numbers and references to ZRD*, ZRD*X and CONSTF_list
@@ -481,7 +474,7 @@ subroutine STREAD(NCH, NFIELD, ARRAY, ERCODE)
 !   3 - Wrong format
 !   4 - Array out of limits
 !   5 - Missing records
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 
 use char_manip, only: to_upper
 use dbl2char, only: isnum
@@ -497,58 +490,58 @@ integer :: j, ios
 double precision :: GETNUM
 character(len=12 ) :: SFIELD(20)
 character(len=132) :: str_line
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 
 if (NFIELD > 20) then
-   ERCODE = 4
-   return
+    ERCODE = 4
+    return
 endif
 
 ! Skip all lines beginning with '!'
 j = 1
 do while (j == 1)
-   read(NCH, '(A)', iostat=ios) str_line
-   if (ios < 0) then ! EOF encountered
-      ERCODE = 5
-      return
-   else if (ios > 0) then
-      ERCODE = 1
-      return
-   endif
-   j = index(str_line, '!')
+    read(NCH, '(A)', iostat=ios) str_line
+    if (ios < 0) then ! EOF encountered
+        ERCODE = 5
+        return
+    else if (ios > 0) then
+        ERCODE = 1
+        return
+    endif
+    j = index(str_line, '!')
 enddo
 
 if (j /= 0) then
-   ERCODE = 3
-   write(*, *) 'STREAD error: exclamation marks allowed only at line beginning'
+    ERCODE = 3
+    write(*, *) 'STREAD error: exclamation marks allowed only at line beginning'
 else  ! Read numbers and/or variable names
-   ERCODE = 5  ! Missing entries
-   read(NCH, '(5A)', iostat=ios) (SFIELD(j), j=1, NFIELD)
-   if (ios < 0) then ! EOF encoutnered
-      ERCODE = 5
-   else if (ios > 0) then
-      ERCODE = 1     ! Error reading, probably never occurring
-   else
-      ERCODE = 0
-      do j=1, NFIELD
-         SFIELD(J) = to_upper(SFIELD(j))
-         if ( ISNUM(SFIELD(j), 12) ) then
-            read(SFIELD(j), *) ARRAY(j) ! read err never occurs, protected by ISNUM
-         else ! In case it is a variable name, like ZRD*, pick its value
-            ARRAY(j) = GETNUM(SFIELD(j), ERCODE)
-            if (ERCODE /= 0) then ! Unrecognised variable name
-               ERCODE = 1
-               EXIT
+    ERCODE = 5  ! Missing entries
+    read(NCH, '(5A)', iostat=ios) (SFIELD(j), j=1, NFIELD)
+    if (ios < 0) then ! EOF encoutnered
+        ERCODE = 5
+    else if (ios > 0) then
+        ERCODE = 1      ! Error reading, probably never occurring
+    else
+        ERCODE = 0
+        do j=1, NFIELD
+            SFIELD(J) = to_upper(SFIELD(j))
+            if ( ISNUM(SFIELD(j), 12) ) then
+                read(SFIELD(j), *) ARRAY(j) ! read err never occurs, protected by ISNUM
+            else ! In case it is a variable name, like ZRD*, pick its value
+                ARRAY(j) = GETNUM(SFIELD(j), ERCODE)
+                if (ERCODE /= 0) then ! Unrecognised variable name
+                    ERCODE = 1
+                    EXIT
+                endif
             endif
-         endif
-      enddo
-   endif
+        enddo
+    endif
 endif
 
 return
 end subroutine STREAD
 
-!---------------------------------------------------------------------=|
+!---------------------------------------------------------------------
 subroutine ASKINT(NV, NVAR, NAME)
 
 use parameter_inc, only: NRW
@@ -563,17 +556,17 @@ integer :: J
 double precision :: VAR(NRW)
 
 do J=1, NV
-   VAR(J) = NVAR(J)
+    VAR(J) = NVAR(J)
 enddo
 call ASKLIS(NV, VAR, NAME, 4)
 do J=1, NV
-   NVAR(J) = VAR(J)
+    NVAR(J) = VAR(J)
 enddo
 
 return
 end subroutine ASKINT
 
-!---------------------------------------------------------------------=|
+!---------------------------------------------------------------------
 subroutine ASTWIN(NB, IBOX, NAME, SCALE, SHIFT, MOD10, YMODE)
 
 use parameter_inc, only: NRW
@@ -601,9 +594,9 @@ STR = "Name|Box| Scale|Offset||Name|Box| Scale|Offset" // null_ch
 jsep = index(STR, '||') + 1
 JMODE = MOD10
 if (JMODE == 1) then
-   JGR = 8
+    JGR = 8
 elseif (JMODE == 2 .or. JMODE == 3) then
-   JGR = 4
+    JGR = 4
 elseif (JMODE == 6) then
     if (YMODE ==  1) JGR = 4
     if (YMODE ==  0) JGR = 4
@@ -616,9 +609,9 @@ KEY = 'Y'
 
 ask_key: do while(KEY == 'Y')
 
-   do j = 1, NRW
-      write(rows(j)(1:80), '(79X, 1A1)') null_ch
-   enddo
+    do j = 1, NRW
+        write(rows(j)(1:80), '(79X, 1A1)') null_ch
+    enddo
 
 ! j  - ordinal box No.
 ! jb - box No. in the Astra nominations
@@ -626,113 +619,113 @@ ask_key: do while(KEY == 'Y')
 ! jj - horizontal row
 ! js - position in the current row
 
-   jn = 0
-   jm = 0
-   do j = 1, NB
-      jb = IBOX(j)
-      if (jb <= 0 ) then
-         jm = jm + 1
-         CYCLE
-      endif
-      if (JMODE == 1) jw = IP1(jb)
-      if (JMODE == 2 .or. JMODE == 3) jw = IP2(jb)
-      if (JMODE == 6) then
-         if (YMODE == 1) jw = jb
-         if (YMODE == 0) jw = IP30(jb)
-         if (YMODE  == -1) jw = IP31(jb)
-      endif
-      js = jsep*(1 - jw + jw/2*2)
-      jj = 1 + (jw - 1)/2
-      write(rows(jj)(js+1:js+4), '(1A4)') NAME(j)
-      write(rows(jj)(js+6:js+8), '(1I3)') jb
-      call num2str(SCALE(j), rows(jj)(js+10:js+15), 6)
-      call num2str(SHIFT(j), rows(jj)(js+17:js+22), 6)
-      jn = max(jn, jj)
-   enddo
+    jn = 0
+    jm = 0
+    do j = 1, NB
+        jb = IBOX(j)
+        if (jb <= 0 ) then
+            jm = jm + 1
+            CYCLE
+        endif
+        if (JMODE == 1) jw = IP1(jb)
+        if (JMODE == 2 .or. JMODE == 3) jw = IP2(jb)
+        if (JMODE == 6) then
+            if (YMODE == 1) jw = jb
+            if (YMODE == 0) jw = IP30(jb)
+            if (YMODE  == -1) jw = IP31(jb)
+        endif
+        js = jsep*(1 - jw + jw/2*2)
+        jj = 1 + (jw - 1)/2
+        write(rows(jj)(js+1:js+4), '(1A4)') NAME(j)
+        write(rows(jj)(js+6:js+8), '(1I3)') jb
+        call num2str(SCALE(j), rows(jj)(js+10:js+15), 6)
+        call num2str(SHIFT(j), rows(jj)(js+17:js+22), 6)
+        jn = max(jn, jj)
+    enddo
 
-   if (jm /= 0 ) then
-      j2 = jn
-      j1 = 2*jn + 1
-      do j = 1, NB
-         if (IBOX(j) <= 0 ) then
-            jw = j1
-            js = jsep*(1 - jw + jw/2*2)
-            jj = 1 + (jw - 1)/2
-            write(rows(jj)(js+1: js+4), '(1A4)') NAME(j)
-            write(rows(jj)(js+6: js+8), '(1I3)') IBOX(j)
-            call num2str(SCALE(j), rows(jj)(js+10: js+15), 6)
-            call num2str(SHIFT(j), rows(jj)(js+17: js+22), 6)
-            jn = max(jn, jj)
-            j1 = j1 + 1
-         endif
-      enddo
-   endif
+    if (jm /= 0 ) then
+        j2 = jn
+        j1 = 2*jn + 1
+        do j = 1, NB
+            if (IBOX(j) <= 0 ) then
+                jw = j1
+                js = jsep*(1 - jw + jw/2*2)
+                jj = 1 + (jw - 1)/2
+                write(rows(jj)(js+1: js+4), '(1A4)') NAME(j)
+                write(rows(jj)(js+6: js+8), '(1I3)') IBOX(j)
+                call num2str(SCALE(j), rows(jj)(js+10: js+15), 6)
+                call num2str(SHIFT(j), rows(jj)(js+17: js+22), 6)
+                jn = max(jn, jj)
+                j1 = j1 + 1
+            endif
+        enddo
+    endif
 
-   j = 1
-   do while(j > 0)
-      j1 = (jm + 1)/2
-      j = ASKTAB(TITLE, STR, rows, 80, jn, JGR, j1)
-   enddo
-   
-   jn = 0
-   do j=1, NB
-      if (IBOX(j) >  0 ) then
-         if (JMODE == 1) jw = IP1(IBOX(j))
-         if (JMODE == 2 .or. JMODE == 3) jw = IP2(IBOX(j))
-         if (JMODE == 6) then
-            if (YMODE  == 1) jw = IBOX(j)
-            if (YMODE  == 0) jw = IP30(IBOX(j))
-            if (YMODE == -1) jw = IP31(IBOX(j))
-         endif
-         js = jsep*(1 - jw + jw/2*2)
-         jj = 1 + (jw - 1)/2
-         write(NAME(j), '(1A4)', ERR=77) rows(jj)(js+1: js+4)
-         read(rows(jj)(js+6 : js+8 ), *, ERR=77) IB(j)
-         read(rows(jj)(js+10: js+15), *, ERR=77) SCALE(j)
-         read(rows(jj)(js+17: js+22), *, ERR=77) SHIFT(j)
-         jn = max(jn, jj)
-      endif
-   enddo
+    j = 1
+    do while(j > 0)
+        j1 = (jm + 1)/2
+        j = ASKTAB(TITLE, STR, rows, 80, jn, JGR, j1)
+    enddo
 
-   if (jm /= 0 ) then
-      j1 = 2*jn + 1
-      do j=1, NB
-         if (IBOX(j) <= 0 ) then
-            jw = j1
+    jn = 0
+    do j=1, NB
+        if (IBOX(j) >  0 ) then
+            if (JMODE == 1) jw = IP1(IBOX(j))
+            if (JMODE == 2 .or. JMODE == 3) jw = IP2(IBOX(j))
+            if (JMODE == 6) then
+                if (YMODE  == 1) jw = IBOX(j)
+                if (YMODE  == 0) jw = IP30(IBOX(j))
+                if (YMODE == -1) jw = IP31(IBOX(j))
+            endif
             js = jsep*(1 - jw + jw/2*2)
             jj = 1 + (jw - 1)/2
             write(NAME(j), '(1A4)', ERR=77) rows(jj)(js+1: js+4)
-            read(rows(jj)(js+6: js+8), *, ERR=77) IB(j)
-            read(rows(jj)(js+10:js+15), *, ERR=77) SCALE(j)
-            read(rows(jj)(js+17:js+22), *, ERR=77) SHIFT(j)
+            read(rows(jj)(js+6 : js+8 ), *, ERR=77) IB(j)
+            read(rows(jj)(js+10: js+15), *, ERR=77) SCALE(j)
+            read(rows(jj)(js+17: js+22), *, ERR=77) SHIFT(j)
             jn = max(jn, jj)
-            j1 = j1 + 1
-         endif
-      enddo
-   endif
+        endif
+    enddo
 
-   do j = 1, NB
-      IBOX(j) = IB(j)
-   enddo
-   
-   return
+    if (jm /= 0 ) then
+        j1 = 2*jn + 1
+        do j=1, NB
+            if (IBOX(j) <= 0 ) then
+                jw = j1
+                js = jsep*(1 - jw + jw/2*2)
+                jj = 1 + (jw - 1)/2
+                write(NAME(j), '(1A4)', ERR=77) rows(jj)(js+1: js+4)
+                read(rows(jj)(js+6: js+8), *, ERR=77) IB(j)
+                read(rows(jj)(js+10:js+15), *, ERR=77) SCALE(j)
+                read(rows(jj)(js+17:js+22), *, ERR=77) SHIFT(j)
+                jn = max(jn, jj)
+                j1 = j1 + 1
+            endif
+        enddo
+    endif
+
+    do j = 1, NB
+        IBOX(j) = IB(j)
+    enddo
+
+    return
 
 77 continue
 
-   write(*, *)
-   write(*, '(A)') '>>> INPUT ERROR encountered in the dialog window "Presentation"'
-   write(*, '(A23, A52, A1)') '                Line: "', rows(j)(1: 52), '"'
-   write(*, '(A52, $)') '     Enter "Y" to return, any other key to ignore > '
-   KEY = 'X'
-   read(*, '(:, A1)') KEY
-   KEY = to_upper(KEY)
+    write(*, *)
+    write(*, '(A)') '>>> INPUT ERROR encountered in the dialog window "Presentation"'
+    write(*, '(A23, A52, A1)') '                Line: "', rows(j)(1: 52), '"'
+    write(*, '(A52, $)') '     Enter "Y" to return, any other key to ignore > '
+    KEY = 'X'
+    read(*, '(:, A1)') KEY
+    KEY = to_upper(KEY)
 
 enddo ask_key
 
 return
 end subroutine ASTWIN
 
-!---------------------------------------------------------------------=|
+!---------------------------------------------------------------------
 subroutine ASXWIN(NB, IBOX, NAME, SCALE, YSHIFT, XL, XR, MOD10, YMODE)
 
 use parameter_inc, only: NRW
@@ -763,13 +756,13 @@ jsep = index(STR, '||')+1
 
 JMODE = MOD10
 if (JMODE == 1) then
-   JGR = 8
+    JGR = 8
 elseif (JMODE == 2 .or. JMODE == 3) then
-   JGR = 4
+    JGR = 4
 elseif (JMODE == 6) then
-   if (YMODE ==  1) JGR = 4
-   if (YMODE ==  0) JGR = 4
-   if (YMODE == -1) JGR = 2
+    if (YMODE ==  1) JGR = 4
+    if (YMODE ==  0) JGR = 4
+    if (YMODE == -1) JGR = 2
 else
     return
 endif
@@ -777,7 +770,7 @@ endif
 10 continue
 
 do j = 1, NRW
-   write(rows(j)(1:80), '(79X, 1A1)') null_ch
+    write(rows(j)(1:80), '(79X, 1A1)') null_ch
 enddo
 
 ! j  - ordinal box No.
@@ -790,107 +783,107 @@ jn = 0
 jm = 0
 call num2str(AB, ABNUM, 6)
 do j = 1, NB
-   jb = IBOX(j)
-   if (jb <= 0 ) then
-      jm = jm + 1
-      CYCLE
-   endif
-   if (JMODE == 1) jw = IP1(jb)
-   if (JMODE == 2 .or. JMODE == 3) jw = IP2(jb)
-   if (JMODE == 6) then
-      if (YMODE == 1) jw = jb
-      if (YMODE == 0) jw = IP30(jb)
-      if (YMODE  == -1) jw = IP31(jb)
-   endif
-   YY = XR(j)
-   js = jsep*(1 - jw + jw/2*2)
-   jj = 1 + (jw - 1)/2
-   write(rows(jj)(js+1: js+4), '(1A4)') NAME(j)
-   write(rows(jj)(js+6: js+8), '(1I3)') jb
-   call num2str(SCALE(j) , rows(jj)(js+10: js+15), 6)
-   call num2str(YSHIFT(j), rows(jj)(js+17: js+22), 6)
-   call num2str(XL(j)    , rows(jj)(js+24: js+29), 6)
-   call num2str(XR(j)    , rows(jj)(js+31: js+36), 6)
-   if (YY > AB) rows(jj)(js+31:js+36) = ABNUM
-   jn = max(jn, jj)
+    jb = IBOX(j)
+    if (jb <= 0 ) then
+        jm = jm + 1
+        CYCLE
+    endif
+    if (JMODE == 1) jw = IP1(jb)
+    if (JMODE == 2 .or. JMODE == 3) jw = IP2(jb)
+    if (JMODE == 6) then
+        if (YMODE == 1) jw = jb
+        if (YMODE == 0) jw = IP30(jb)
+        if (YMODE  == -1) jw = IP31(jb)
+    endif
+    YY = XR(j)
+    js = jsep*(1 - jw + jw/2*2)
+    jj = 1 + (jw - 1)/2
+    write(rows(jj)(js+1: js+4), '(1A4)') NAME(j)
+    write(rows(jj)(js+6: js+8), '(1I3)') jb
+    call num2str(SCALE(j) , rows(jj)(js+10: js+15), 6)
+    call num2str(YSHIFT(j), rows(jj)(js+17: js+22), 6)
+    call num2str(XL(j)    , rows(jj)(js+24: js+29), 6)
+    call num2str(XR(j)    , rows(jj)(js+31: js+36), 6)
+    if (YY > AB) rows(jj)(js+31:js+36) = ABNUM
+    jn = max(jn, jj)
 enddo
 
 if (jm /= 0 ) then
-   j2 = jn
-   j1 = 2*jn+1
-   do j = 1, NB
-      if (IBOX(j) <= 0 ) then
-         YY = XR(j)
-         jw = j1
-         js = jsep*(1 - jw + jw/2*2)
-         jj = 1 + (jw - 1)/2
-         write(rows(jj)(js+1: js+4), '(1A4)') NAME(j)
-         write(rows(jj)(js+6: js+8), '(1I3)') IBOX(j)
-         call num2str(SCALE(j) , rows(jj)(js+10: js+15), 6)
-         call num2str(YSHIFT(j), rows(jj)(js+17: js+22), 6)
-         call num2str(XL(j)    , rows(jj)(js+24: js+29), 6)
-         call num2str(XR(j)    , rows(jj)(js+31: js+36), 6)
-         if (YY > AB) rows(jj)(js+31: js+36) = ABNUM
-         jn = max(jn, jj)
-         j1 = j1 + 1
-      endif
-   enddo
+    j2 = jn
+    j1 = 2*jn+1
+    do j = 1, NB
+        if (IBOX(j) <= 0 ) then
+            YY = XR(j)
+            jw = j1
+            js = jsep*(1 - jw + jw/2*2)
+            jj = 1 + (jw - 1)/2
+            write(rows(jj)(js+1: js+4), '(1A4)') NAME(j)
+            write(rows(jj)(js+6: js+8), '(1I3)') IBOX(j)
+            call num2str(SCALE(j) , rows(jj)(js+10: js+15), 6)
+            call num2str(YSHIFT(j), rows(jj)(js+17: js+22), 6)
+            call num2str(XL(j)    , rows(jj)(js+24: js+29), 6)
+            call num2str(XR(j)    , rows(jj)(js+31: js+36), 6)
+            if (YY > AB) rows(jj)(js+31: js+36) = ABNUM
+            jn = max(jn, jj)
+            j1 = j1 + 1
+        endif
+    enddo
 endif
 
 j = 1
 do while(j > 0)
-   j1 = (jm + 1)/2
-   j = ASKTAB(TITLE, STR, rows, 80, jn, JGR, j1)
+    j1 = (jm + 1)/2
+    j = ASKTAB(TITLE, STR, rows, 80, jn, JGR, j1)
 enddo
 
 jn = 0
 do j = 1, NB
-   if (IBOX(j) > 0) then
-      if (JMODE == 1) jw = IP1(IBOX(j))
-      if (JMODE == 2 .or. JMODE == 3) jw = IP2(IBOX(j))
-      if (JMODE == 6) then
-         if (YMODE ==  1) jw = IBOX(j)
-         if (YMODE ==  0) jw = IP30(IBOX(j))
-         if (YMODE == -1) jw = IP31(IBOX(j))
-      endif
-      js = jsep*(1 - jw + jw/2*2)
-      jj = 1 + (jw - 1)/2
-      write(NAME(j), '(1A4)', ERR=77) rows(jj)(js+1: js+4)
-      read(rows(jj)(js+6 : js+8), *, ERR=77) IB(j)
-      read(rows(jj)(js+10: js+15), *, ERR=77) SCALE(j)
-      read(rows(jj)(js+17: js+22), *, ERR=77) YSHIFT(j)
-      read(rows(jj)(js+24: js+29), *, ERR=77) XL(j)
-      read(rows(jj)(js+31: js+36), *, ERR=77) YY
-      if (rows(jj)(js+31: js+36) /= ABNUM) then
-         read(rows(jj)(js+31: js+36), *, ERR=77) XR(j)
-      endif
-      jn = max(jn, jj)
-   endif
+    if (IBOX(j) > 0) then
+        if (JMODE == 1) jw = IP1(IBOX(j))
+        if (JMODE == 2 .or. JMODE == 3) jw = IP2(IBOX(j))
+        if (JMODE == 6) then
+            if (YMODE ==  1) jw = IBOX(j)
+            if (YMODE ==  0) jw = IP30(IBOX(j))
+            if (YMODE == -1) jw = IP31(IBOX(j))
+        endif
+        js = jsep*(1 - jw + jw/2*2)
+        jj = 1 + (jw - 1)/2
+        write(NAME(j), '(1A4)', ERR=77) rows(jj)(js+1: js+4)
+        read(rows(jj)(js+6 : js+8), *, ERR=77) IB(j)
+        read(rows(jj)(js+10: js+15), *, ERR=77) SCALE(j)
+        read(rows(jj)(js+17: js+22), *, ERR=77) YSHIFT(j)
+        read(rows(jj)(js+24: js+29), *, ERR=77) XL(j)
+        read(rows(jj)(js+31: js+36), *, ERR=77) YY
+        if (rows(jj)(js+31: js+36) /= ABNUM) then
+            read(rows(jj)(js+31: js+36), *, ERR=77) XR(j)
+        endif
+        jn = max(jn, jj)
+    endif
 enddo
 
 if (jm /= 0 ) then
-   j1 = 2*jn + 1
-   do j=1, NB
-      if (IBOX(j) <= 0) then
-         jw = j1
-         js = jsep*(1 - jw + jw/2*2)
-         jj = 1 + (jw - 1)/2
-         write(NAME(j), '(1A4)', ERR=77) rows(jj)(js+1: js+4)
-         read(rows(jj)(js+6 : js+8), *, ERR=77) IB(j)
-         read(rows(jj)(js+10: js+15), *, ERR=77) SCALE(j)
-         read(rows(jj)(js+17: js+22), *, ERR=77) YSHIFT(j)
-         read(rows(jj)(js+24: js+29), *, ERR=77) XL(j)
-         if  (rows(jj)(js+31: js+36) /= ABNUM) then
-            read(rows(jj)(js+31:js+36), *, ERR=77) XR(j)
-         endif
-         jn = max(jn, jj)
-         j1 = j1 + 1
-      endif
-   enddo
+    j1 = 2*jn + 1
+    do j=1, NB
+        if (IBOX(j) <= 0) then
+            jw = j1
+            js = jsep*(1 - jw + jw/2*2)
+            jj = 1 + (jw - 1)/2
+            write(NAME(j), '(1A4)', ERR=77) rows(jj)(js+1: js+4)
+            read(rows(jj)(js+6 : js+8), *, ERR=77) IB(j)
+            read(rows(jj)(js+10: js+15), *, ERR=77) SCALE(j)
+            read(rows(jj)(js+17: js+22), *, ERR=77) YSHIFT(j)
+            read(rows(jj)(js+24: js+29), *, ERR=77) XL(j)
+            if  (rows(jj)(js+31: js+36) /= ABNUM) then
+                read(rows(jj)(js+31:js+36), *, ERR=77) XR(j)
+            endif
+            jn = max(jn, jj)
+            j1 = j1 + 1
+        endif
+    enddo
 endif
 
 do j = 1, NB
-   IBOX(j) = IB(j)
+    IBOX(j) = IB(j)
 enddo
 
 return
@@ -907,7 +900,7 @@ if (YKEY == 'Y' .or. YKEY == 'y') goto 10
 return
 end subroutine ASXWIN
 
-!---------------------------------------------------------------------=|
+!---------------------------------------------------------------------
 subroutine ASKXGR(JCHAN, IBOX, NAME, YMODE, JNB, JXMODE, JGR, OUTFIG, OUTNAME )
 
 use parameter_inc, only: NRW
@@ -937,23 +930,23 @@ JXMODE = XOUT + 0.49
 
 SELECT CASE(JMODE)
 CASE(1)
-   JGR = 8
+    JGR = 8
 CASE(2, 3)
-   JGR = 4
+    JGR = 4
 CASE(6)
-   if (YMODE == 1) JGR = 4
-   if (YMODE == 0) JGR = 4
-   if (YMODE  == -1) JGR = 2
-   JXMODE = -1
+    if (YMODE == 1) JGR = 4
+    if (YMODE == 0) JGR = 4
+    if (YMODE  == -1) JGR = 2
+    JXMODE = -1
 CASE DEFAULT
-   return
+    return
 END SELECT
 
  10 continue
 
 do j = 1, NRW
-   OUTNAME(j) = '        '
-   write(rows(j)(1: 80), '(79X, 1A1)') null_ch
+    OUTNAME(j) = '        '
+    write(rows(j)(1: 80), '(79X, 1A1)') null_ch
 enddo
 JNB = JCHAN
 if (JMODE  /=  1) JNB = min(jchan, 96)
@@ -967,121 +960,121 @@ if (JMODE  /=  1) JNB = min(jchan, 96)
 jn = 0
 jm = 0
 do j=1, JNB
-   jb = IBOX(j)
-   if (jb <= 0 ) then
-      jm = jm + 1
-      CYCLE
-   endif
-   if (JMODE == 1) jw = IP1(jb)
-   if (JMODE == 2 .or. JMODE == 3) jw = IP2(jb)
-   if (JMODE == 6) then
-      if (YMODE ==  1) jw = jb
-      if (YMODE ==  0) jw = IP30(jb)
-      if (YMODE == -1) jw = IP31(jb)
-   endif
-   js = jsep*(1 - jw + jw/2*2)
-   jj = 1 + (jw - 1)/2
-   write(rows(jj)(js+1 : js+5), '(1I4, 1X)') jb
-   write(rows(jj)(js+7 : js+14), '(2X, 1A4, 2X)') NAME(j)
-   write(rows(jj)(js+16: js+21), '(1I4, 2X)') 0
-   jn = max(jn, jj)
+    jb = IBOX(j)
+    if (jb <= 0 ) then
+        jm = jm + 1
+        CYCLE
+    endif
+    if (JMODE == 1) jw = IP1(jb)
+    if (JMODE == 2 .or. JMODE == 3) jw = IP2(jb)
+    if (JMODE == 6) then
+        if (YMODE ==  1) jw = jb
+        if (YMODE ==  0) jw = IP30(jb)
+        if (YMODE == -1) jw = IP31(jb)
+    endif
+    js = jsep*(1 - jw + jw/2*2)
+    jj = 1 + (jw - 1)/2
+    write(rows(jj)(js+1 : js+5), '(1I4, 1X)') jb
+    write(rows(jj)(js+7 : js+14), '(2X, 1A4, 2X)') NAME(j)
+    write(rows(jj)(js+16: js+21), '(1I4, 2X)') 0
+    jn = max(jn, jj)
 enddo
 
 if (jm /= 0 ) then
-   jw = 2*jn + 1
-   do j = 1, JNB
-      if (IBOX(j) <= 0 ) then
-         js = jsep*(1 - jw + jw/2*2)
-         jj = 1 + (jw - 1)/2
-         write(rows(jj)(js+1 : js+5 ), '(1I4, 1X)') IBOX(j)
-         write(rows(jj)(js+7 : js+14), '(2X, 1A4, 2X)') NAME(j)
-         write(rows(jj)(js+16: js+21), '(1I4, 2X)') 0
-         jn = max(jn, jj)
-         jw = jw + 1
-      endif
-   enddo
+    jw = 2*jn + 1
+    do j = 1, JNB
+        if (IBOX(j) <= 0 ) then
+            js = jsep*(1 - jw + jw/2*2)
+            jj = 1 + (jw - 1)/2
+            write(rows(jj)(js+1 : js+5 ), '(1I4, 1X)') IBOX(j)
+            write(rows(jj)(js+7 : js+14), '(2X, 1A4, 2X)') NAME(j)
+            write(rows(jj)(js+16: js+21), '(1I4, 2X)') 0
+            jn = max(jn, jj)
+            jw = jw + 1
+        endif
+    enddo
 endif
 
 j = 1
 do while(j > 0)
-   j1 = (jm + 1)/2  ! jm number of switched off windows
-   j = ASKGRF(TITLE, STR, rows, 80, jn, JGR, j1, JXMODE)
+    j1 = (jm + 1)/2  ! jm number of switched off windows
+    j = ASKGRF(TITLE, STR, rows, 80, jn, JGR, j1, JXMODE)
 enddo
 
 jn = 0
 do j=1, JNB
-   if (IBOX(j) > 0) then
-      if (JMODE == 1) jw = IP1(IBOX(j))
-      if (JMODE == 2 .or. JMODE == 3) jw = IP2(IBOX(j))
-      if (JMODE == 6) then
-         if (YMODE ==  1) jw = IBOX(j)
-         if (YMODE ==  0) jw = IP30(IBOX(j))
-         if (YMODE == -1) jw = IP31(IBOX(j))
-      endif
-      js = jsep*(1 - jw + jw/2*2)
-      jj = 1 + (jw - 1)/2
-      write(OUTNAME(j), '(1A8)', ERR=77) rows(jj)(js+7: js+14)
-      if (OUTNAME(j) /= '        ') then
-         do while (OUTNAME(j)(1: 1) == ' ')
-            OUTNAME(j)(1:) = OUTNAME(j)(2:) // '       '
-         enddo
-      endif
-      j1 = index(rows(jj)(js+16: js+21), '.')
-      if (j1 >= 2) then
-         read(rows(jj)(js+16: js+14+j1), *, ERR=77) OUTFIG(j)
-         read(rows(jj)(js+16+j1: js+21), *, ERR=77) jc
-      elseif (j1 == 0) then
-         read(rows(jj)(js+16: js+21), *, ERR=77) OUTFIG(j)
-         jc = 0
-      else
-         goto 77
-      endif
-      if (OUTFIG(j) > 999) goto 78
-      OUTFIG(j) = 1000*OUTFIG(j) + jc
-      jn = max(jn, jj)
-    endif
+    if (IBOX(j) > 0) then
+        if (JMODE == 1) jw = IP1(IBOX(j))
+        if (JMODE == 2 .or. JMODE == 3) jw = IP2(IBOX(j))
+        if (JMODE == 6) then
+            if (YMODE ==  1) jw = IBOX(j)
+            if (YMODE ==  0) jw = IP30(IBOX(j))
+            if (YMODE == -1) jw = IP31(IBOX(j))
+        endif
+        js = jsep*(1 - jw + jw/2*2)
+        jj = 1 + (jw - 1)/2
+        write(OUTNAME(j), '(1A8)', ERR=77) rows(jj)(js+7: js+14)
+        if (OUTNAME(j) /= '        ') then
+            do while (OUTNAME(j)(1: 1) == ' ')
+                OUTNAME(j)(1:) = OUTNAME(j)(2:) // '       '
+            enddo
+        endif
+        j1 = index(rows(jj)(js+16: js+21), '.')
+        if (j1 >= 2) then
+            read(rows(jj)(js+16: js+14+j1), *, ERR=77) OUTFIG(j)
+            read(rows(jj)(js+16+j1: js+21), *, ERR=77) jc
+        elseif (j1 == 0) then
+            read(rows(jj)(js+16: js+21), *, ERR=77) OUTFIG(j)
+            jc = 0
+        else
+            goto 77
+        endif
+        if (OUTFIG(j) > 999) goto 78
+        OUTFIG(j) = 1000*OUTFIG(j) + jc
+        jn = max(jn, jj)
+     endif
 enddo
 
 if (jm /= 0 ) then
 jw = 2*jn + 1
-   do j=1, JNB
-      if (IBOX(j) <= 0) then
-         js = jsep*(1 - jw + jw/2*2)
-         jj = 1 + (jw - 1)/2
-         write(OUTNAME(j), '(1A8)', ERR=77) rows(jj)(js+7: js+14)
-         if (OUTNAME(j) /= '        ') then
-            do while (OUTNAME(j)(1:1) == ' ')
-               OUTNAME(j)(1:) = OUTNAME(j)(2:) // '       '
-            enddo
-         endif
-         j1 = index(rows(jj)(js+16: js+21), '.')
-         if (j1 >= 2) then
-            read(rows(jj)(js+16: js+14+j1), *, ERR=77) OUTFIG(j)
-            read(rows(jj)(js+16+j1: js+21), *, ERR=77) jc
-         elseif (j1 == 0) then
-            read(rows(jj)(js+16: js+21), *, ERR=77) OUTFIG(j)
-            jc = 0
-         else
-            goto 77
-         endif
-         if (OUTFIG(j) > 999) goto 78
-         OUTFIG(j) = 1000*OUTFIG(j) + jc
-         jn = max(jn, jj)
-         jw = jw + 1
-      endif
-   enddo
+    do j=1, JNB
+        if (IBOX(j) <= 0) then
+            js = jsep*(1 - jw + jw/2*2)
+            jj = 1 + (jw - 1)/2
+            write(OUTNAME(j), '(1A8)', ERR=77) rows(jj)(js+7: js+14)
+            if (OUTNAME(j) /= '        ') then
+                do while (OUTNAME(j)(1:1) == ' ')
+                    OUTNAME(j)(1:) = OUTNAME(j)(2:) // '       '
+                enddo
+            endif
+            j1 = index(rows(jj)(js+16: js+21), '.')
+            if (j1 >= 2) then
+                read(rows(jj)(js+16: js+14+j1), *, ERR=77) OUTFIG(j)
+                read(rows(jj)(js+16+j1: js+21), *, ERR=77) jc
+            elseif (j1 == 0) then
+                read(rows(jj)(js+16: js+21), *, ERR=77) OUTFIG(j)
+                jc = 0
+            else
+                goto 77
+            endif
+            if (OUTFIG(j) > 999) goto 78
+            OUTFIG(j) = 1000*OUTFIG(j) + jc
+            jn = max(jn, jj)
+            jw = jw + 1
+        endif
+    enddo
 endif
 
 jgr = 0
 do j=1, JNB
-   jb = OUTFIG(j)/1000
-   jgr = max(jgr, jb)
+    jb = OUTFIG(j)/1000
+    jgr = max(jgr, jb)
 enddo
 if (jgr == 0) return
 
 if (jxmode < -1 .or. jxmode > 5) then
-   write(*, *)"Unknown data type"
-   return
+    write(*, *)"Unknown data type"
+    return
 endif
 return
 
@@ -1103,16 +1096,16 @@ return
 
 end subroutine ASKXGR
 
-!---------------------------------------------------------------------=|
+!---------------------------------------------------------------------
 subroutine WRFIGS(JNB, JXMODE, JGR, OUTFIG, OUTNAME, IBOX, ITIMES, TTOUT, TOUT)
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 ! The subroutine writes file in the directories AWD/out/ and AWD/xmg/ 
 !     with curves selected in the dialog window ASKXGR (hot key "O")
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 
 use parameter_inc, only: NRW
 use outcmn_inc, only: exp_file, equ_file, AWD, RUNID, &
-   LTOUT, ROUT, XWH, WarningColor, null_ch
+    LTOUT, ROUT, XWH, WarningColor, null_ch
 use const_inc, only: NAB, NA1, ABC, ROC, VOLUME
 use status_inc, only: AMETR, RHO, FP, VOLUM
 
@@ -1126,7 +1119,7 @@ character(len=8), intent(in) :: OUTNAME(*)
 
 logical :: EXI
 integer :: JLR, j, jj, jr, jn, jm, js, jb, jc, jw, jl, &
-   NP1, JNUM(NRW), j0, j1, j2, j3, j4, j5, ios
+    NP1, JNUM(NRW), j0, j1, j2, j3, j4, j5, ios
 double precision :: YY
 character(len=1) :: CVE
 character(len=4) :: ext
@@ -1151,9 +1144,9 @@ write(*, '(/, A)') TRIM(STRI)
 JLR = XWH - 125
 call textvm(JN0, JLR, STRI, LEN_TRIM(STRI))
 open(7, file=TRIM(FNAME), iostat=ios)
-if(ios /= 0) then
-   write(*, *) '>>> WRFIGS: Data file error'
-   stop
+if (ios /= 0) then
+    write(*, *) '>>> WRFIGS: Data file error'
+    stop
 endif
 fig_name = TRIM(xmg_dir) // '/Fig'
 
@@ -1161,26 +1154,26 @@ j2 = LEN_TRIM(fig_name)
 
 SELECT CASE(jxmode)
 CASE(0)
-   STRI(1: 10) = " a, m     "
-   NP1 = NAB
+    STRI(1: 10) = " a, m     "
+    NP1 = NAB
 CASE(1)
-   STRI(1: 10) = " a_N, d/l "
-   NP1 = NA1
+    STRI(1: 10) = " a_N, d/l "
+    NP1 = NA1
 CASE(2)
-   STRI(1: 10) = "rho_N, d/l"
-   NP1 = NA1
+    STRI(1: 10) = "rho_N, d/l"
+    NP1 = NA1
 CASE(3)
-   STRI(1: 10) = "  Psi, Vs "
-   NP1 = NA1
+    STRI(1: 10) = "  Psi, Vs "
+    NP1 = NA1
 CASE(4)
-   STRI(1: 10) = " rho_V, m "
-   NP1 = NA1
+    STRI(1: 10) = " rho_V, m "
+    NP1 = NA1
 CASE(5)
-   STRI(1: 10) = "rho_pol, m"
-   NP1 = NA1
+    STRI(1: 10) = "rho_pol, m"
+    NP1 = NA1
 CASE(-1)
-   STRI(1: 10) = " time, s  "
-   NP1 = LTOUT-1
+    STRI(1: 10) = " time, s  "
+    NP1 = LTOUT-1
 END SELECT
 
 ! The next block selects all the curves with the same number
@@ -1189,97 +1182,97 @@ END SELECT
 jl = 0     ! jl - total amount of curves
 j3 = 1
 do jj=1, jgr   ! 999 - max Fig #
-   jc = 0    ! Amount of curves in one Fig
-   do j1=1, JNB   ! NRW - max channel #
-      jb = OUTFIG(j1)/1000  ! Fig #
-      if (jb ==  0) CYCLE
-      if (jb /= jj) CYCLE
-      if (jc == 0) then
-         FNAME = fig_name ! FNAME = .../Fig
-         j5 = 0    ! Check existance
-         EXI = .True.
-         do while(EXI)
-            j5 = j5+1
-            write(ext, '(A1, 1I3)') '.', j5
-            FNAME = TRIM(fig_name) // TRIM(ext)
-            inquire(FILE=TRIM(FNAME) // '.dat', EXIST=EXI)
-         enddo
-         write(*, '(/3A)')' >>> New Figure: "', FNAME(1:jw), '"'
-         open(8, file=TRIM(FNAME)//'.dat', iostat=ios)
-         if (ios /= 0) goto 97
-         open(9, file=TRIM(FNAME)//'.par', iostat=ios)
-         if (ios /= 0) goto 98
-         if (index(TRIM(AWD), 'efda-itm') == 0) write(9, 107)
-         write(9, 106) FNAME(j2-2:jw), RUNID(1:jr), '"' ! Run & Fig ID
-         SELECT CASE(jxmode)
-         CASE(0)
-            write(9, 101) "a [m]"
-         CASE(1)
-            write(9, 101) "a_N"
-         CASE(2)
-            write(9, 101) "rho_N"
-         CASE(3)
-            write(9, 101) "Psi [Vs]"
-         CASE(4)
-            write(9, 101) "rho_V [m]"
-         CASE(5)
-            write(9, 101) "rho_pol [m]"
-         CASE(-1)
-            write(9, 101) "time [s]"
-         END SELECT
-         write(7, '(2A)') 'Abscissa: ', STRI(1:10)
-      endif
-      STRI(11+10*jc:) = OUTNAME(j1) // '  '
-      if (jc < 10) then
-         write(9, 102) jc, OUTNAME(j1), jc
-      else 
-         write(9, 103) jc, OUTNAME(j1), jc
-      endif
-      jc = jc + 1
-      CVE = char(96+jc)
-      write(*, '(3A, I3, A, I3, 4A, I3)') &
-        'Name  "', OUTNAME(j1) &
-       , '"     Box', IBOX(j1) &
-       , '"     Fig', jj, '(', CVE, ')' &
-       , ',     Curve', jc
-      write(7, '(2A, 3(A, I3))') &
-        'Name  ', OUTNAME(j1) &
-       , ' Box', IBOX(j1) &
-       , ' Fig', jj &
-       , ' Curve', jc
-      jl = jl + 1
-      JNUM(jl) = IBOX(j1)
-   enddo
+    jc = 0      ! Amount of curves in one Fig
+    do j1=1, JNB   ! NRW - max channel #
+        jb = OUTFIG(j1)/1000  ! Fig #
+        if (jb ==  0) CYCLE
+        if (jb /= jj) CYCLE
+        if (jc == 0) then
+            FNAME = fig_name ! FNAME = .../Fig
+            j5 = 0    ! Check existance
+            EXI = .True.
+            do while(EXI)
+                j5 = j5+1
+                write(ext, '(A1, 1I3)') '.', j5
+                FNAME = TRIM(fig_name) // TRIM(ext)
+                inquire(FILE=TRIM(FNAME) // '.dat', EXIST=EXI)
+            enddo
+            write(*, '(/3A)')' >>> New Figure: "', FNAME(1:jw), '"'
+            open(8, file=TRIM(FNAME)//'.dat', iostat=ios)
+            if (ios /= 0) goto 97
+            open(9, file=TRIM(FNAME)//'.par', iostat=ios)
+            if (ios /= 0) goto 98
+            if (index(TRIM(AWD), 'efda-itm') == 0) write(9, 107)
+            write(9, 106) FNAME(j2-2:jw), RUNID(1:jr), '"' ! Run & Fig ID
+            SELECT CASE(jxmode)
+            CASE(0)
+                write(9, 101) "a [m]"
+            CASE(1)
+                write(9, 101) "a_N"
+            CASE(2)
+                write(9, 101) "rho_N"
+            CASE(3)
+                write(9, 101) "Psi [Vs]"
+            CASE(4)
+                write(9, 101) "rho_V [m]"
+            CASE(5)
+                write(9, 101) "rho_pol [m]"
+            CASE(-1)
+                write(9, 101) "time [s]"
+            END SELECT
+            write(7, '(2A)') 'Abscissa: ', STRI(1:10)
+        endif
+        STRI(11+10*jc:) = OUTNAME(j1) // '  '
+        if (jc < 10) then
+            write(9, 102) jc, OUTNAME(j1), jc
+        else 
+            write(9, 103) jc, OUTNAME(j1), jc
+        endif
+        jc = jc + 1
+        CVE = char(96+jc)
+        write(*, '(3A, I3, A, I3, 4A, I3)') &
+            'Name  "', OUTNAME(j1), &
+            '"     Box', IBOX(j1), &
+            '"     Fig', jj, '(', CVE, ')', &
+            ',     Curve', jc
+        write(7, '(2A, 3(A, I3))') &
+            'Name  ', OUTNAME(j1), &
+            ' Box', IBOX(j1), &
+            ' Fig', jj, &
+            ' Curve', jc
+        jl = jl + 1
+        JNUM(jl) = IBOX(j1)
+    enddo
 
-   if (jc /= 0) then
-      j4 = jc + 1
-      do j0=1, NP1
-         SELECT CASE(jxmode)
-         CASE(0)
-            YY = AMETR(j0)
-         CASE(1)
-            YY = AMETR(j0)/ABC
-         CASE(2)
-            YY = RHO(j0)/ROC
-         CASE(3)
-            YY = (FP(j0) - FP(1))/(FP(NA1) - FP(1))
-         CASE(4)
-            YY = sqrt(VOLUM(j0)/VOLUME)
-         CASE(5)
-            YY = sqrt((FP(j0) - FP(1))/(FP(NA1) - FP(1)))
-         CASE(-1)
-            YY = TTOUT(j0)
-         END SELECT
-         j3 = jl - jc + 1
-         if (jxmode >= 0) then
-            write(8, '(1P, 11E12.4)') YY, (ROUT(j0, ibox(jnum(j))), j=jl-jc+1, jl)
-         else
-            write(8, '(1P, 11E15.7)') YY, (TOUT(j0, ibox(jnum(j))), j=jl-jc+1, jl)
-         endif
-      enddo
-      close(8)
-      close(9)
-   endif
+    if (jc /= 0) then
+        j4 = jc + 1
+        do j0=1, NP1
+            SELECT CASE(jxmode)
+            CASE(0)
+                YY = AMETR(j0)
+            CASE(1)
+                YY = AMETR(j0)/ABC
+            CASE(2)
+                YY = RHO(j0)/ROC
+            CASE(3)
+                YY = (FP(j0) - FP(1))/(FP(NA1) - FP(1))
+            CASE(4)
+                YY = sqrt(VOLUM(j0)/VOLUME)
+            CASE(5)
+                YY = sqrt((FP(j0) - FP(1))/(FP(NA1) - FP(1)))
+            CASE(-1)
+                YY = TTOUT(j0)
+            END SELECT
+            j3 = jl - jc + 1
+            if (jxmode >= 0) then
+                write(8, '(1P, 11E12.4)') YY, (ROUT(j0, ibox(jnum(j))), j=jl-jc+1, jl)
+            else
+                write(8, '(1P, 11E15.7)') YY, (TOUT(j0, ibox(jnum(j))), j=jl-jc+1, jl)
+            endif
+        enddo
+        close(8)
+        close(9)
+    endif
 enddo
 
 ! return  ! If enabled suppress writing file to out/ (unit 7)
@@ -1292,37 +1285,37 @@ goto 13
 j1 = 0
 jl = 0
 do jj=1, jgr            ! 999 - max Fig #
-   jw = -1
-   do js=0, 19          ! 19  - max curve #
-      do j=1, JNB       ! NRW - max channel #
-         jb = OUTFIG(j)/1000   ! Fig #
-         if (jb == jj .and. jj /= j1) j1 = jj
-         CVE = '`'
-         do jm=1, JNB
-            jn = OUTFIG(jm)/1000      ! Retrieve Fig #
-            if (jn /= jj) CYCLE
-            CVE = char(ichar(CVE) + 1)
-            jc = OUTFIG(jm) - jn*1000  ! Curve #
-            if (js /= jc) CYCLE        ! Ignore curve #
-            if (js == jw) CYCLE        ! Skip repeated curves
-            CVE = char(97+jc)
-            write(*, *) &
-               'Name  "', OUTNAME(jm) &
-             , '",    Box', IBOX(jm) &
-             , ' ,    Curve', jc+1 &
-             , '      Fig', jj, '(', CVE, ')'
-            write(7, '(2A, 3(A, I3))') &
-               'Name  ', OUTNAME(jm) &
-             , ' Box', IBOX(jm) &
-             , ' Fig', jj &
-             , ' Curve', jc+1
-            jw = js
-            jl = jl+1
-            JNUM(jl) = IBOX(jm)
-         enddo    ! jm
-      enddo    ! j
-   enddo    ! js
-enddo    ! jj
+    jw = -1
+    do js=0, 19          ! 19  - max curve #
+        do j=1, JNB       ! NRW - max channel #
+            jb = OUTFIG(j)/1000   ! Fig #
+            if (jb == jj .and. jj /= j1) j1 = jj
+            CVE = '`'
+            do jm=1, JNB
+                jn = OUTFIG(jm)/1000      ! Retrieve Fig #
+                if (jn /= jj) CYCLE
+                CVE = char(ichar(CVE) + 1)
+                jc = OUTFIG(jm) - jn*1000  ! Curve #
+                if (js /= jc) CYCLE        ! Ignore curve #
+                if (js == jw) CYCLE        ! Skip repeated curves
+                CVE = char(97+jc)
+                write(*, *) &
+                    'Name  "', OUTNAME(jm), &
+                    '",    Box', IBOX(jm), &
+                    ' ,    Curve', jc+1, &
+                    '      Fig', jj, '(', CVE, ')'
+                write(7, '(2A, 3(A, I3))') &
+                    'Name  ', OUTNAME(jm), &
+                    ' Box', IBOX(jm), &
+                    ' Fig', jj, &
+                    ' Curve', jc+1
+                jw = js
+                jl = jl+1
+                JNUM(jl) = IBOX(jm)
+            enddo
+        enddo
+    enddo
+enddo
 
 13 continue
 
@@ -1330,27 +1323,27 @@ jj = 0
 js = 1
 
 do j1=1, NP1
-   SELECT CASE(jxmode)
-   CASE(0)
-      YY = AMETR(j1)
-   CASE(1)
-      YY = AMETR(j1)/ABC
-   CASE(2)
-      YY = RHO(j1)/ROC
-   CASE(3)
-      YY = FP(j1)
-   CASE(4)
-      YY = sqrt(VOLUM(j1)/VOLUME)
-   CASE(5)
-      YY = sqrt((FP(j1) - FP(1))/(FP(NA1) - FP(1)))
-   CASE(-1)
-      YY = TTOUT(j1)
-   END SELECT
-   if (jxmode >= 0) then
-      write(7, 100) YY, (ROUT(j1, ibox(jnum(j))), j=js, jl)
-   else
-      write(7, 100) YY, (TOUT(j1, ibox(jnum(j))), j=js, jl)
-   endif
+    SELECT CASE(jxmode)
+    CASE(0)
+        YY = AMETR(j1)
+    CASE(1)
+        YY = AMETR(j1)/ABC
+    CASE(2)
+        YY = RHO(j1)/ROC
+    CASE(3)
+        YY = FP(j1)
+    CASE(4)
+        YY = sqrt(VOLUM(j1)/VOLUME)
+    CASE(5)
+        YY = sqrt((FP(j1) - FP(1))/(FP(NA1) - FP(1)))
+    CASE(-1)
+        YY = TTOUT(j1)
+    END SELECT
+    if (jxmode >= 0) then
+        write(7, 100) YY, (ROUT(j1, ibox(jnum(j))), j=js, jl)
+    else
+        write(7, 100) YY, (TOUT(j1, ibox(jnum(j))), j=js, jl)
+    endif
 enddo
 
 close(7)
@@ -1383,7 +1376,7 @@ return
 
 end subroutine WRFIGS
 
-!---------------------------------------------------------------------==
+!---------------------------------------------------------------------
 subroutine curvvm(id, npnts, array)
 ! The same as drcurv but without the factor 10 
 ! The chain: PLOTGR(obsolete) -> CURV(obsolete) -> CURVVM
@@ -1394,15 +1387,16 @@ implicit none
 
 integer, intent(in) :: npnts, array(*), id
 
-if (npnts == 1) call drawvm(id, array(1), array(2), array(1), array(2))
-if (npnts <= 1) return
-
-call drawline(id, array, npnts)
+if (npnts == 1) then
+    call drawvm(id, array(1), array(2), array(1), array(2))
+elseif (npnts > 1) then
+    call drawline(id, array, npnts)
+endif
 
 return
 end subroutine curvvm
 
-!---------------------------------------------------------------------==
+!---------------------------------------------------------------------
 subroutine drcurv(id, npnts, array)
 ! The same as curvvm but the supplied integer array is multiplied 
 !     by the factor 10 in order to enhance PS resolution
@@ -1414,20 +1408,21 @@ implicit none
 
 integer, intent(in) :: npnts, array(*), id
 
-if (npnts == 1) call d1line(id, array(1), array(2), array(1), array(2))
-if (npnts <= 1) return
-
-call d1polyline(id, array, npnts)
+if (npnts == 1) then
+    call d1line(id, array(1), array(2), array(1), array(2))
+elseif (npnts > 1) then
+    call d1polyline(id, array, npnts)
+endif
 
 return
 end subroutine drcurv
 
-!---------------------------------------------------------------------=|
+!---------------------------------------------------------------------
 subroutine get_runid
-!-----------------------------------------------------------------------
+!---------------------------------------------------------------------
 ! The subroutine forms string RUNID and additionally returns 
 ! date and time when those are not defined (calling from INIT)
-!-----------------------------------------------------------------------
+!---------------------------------------------------------------------
 
 use outcmn_inc, only: RUNID, equ_file, exp_file, VERSION
 
@@ -1451,13 +1446,13 @@ write(datetime, "(1I2, 2('-', 1I2.2), 1I3, ':', 1I2.2)") &
 j = index(VERSION, 'Version')
 vers = version(j+8: j+10)
 
-RUNID = "ASTRA " // vers // " -- " // datetime // ' -- Model: ' // TRIM(equ_file) &
-   // ' -- Data: ' // TRIM(exp_file)
+RUNID = "ASTRA " // vers // " -- " // datetime // ' -- Model: ' // &
+    TRIM(equ_file) // ' -- Data: ' // TRIM(exp_file)
 
 return
 end subroutine get_runid
 
-!---------------------------------------------------------------------=|
+!---------------------------------------------------------------------
 subroutine getnames_(awd_path, equ_name, exp_name)
 
 character(len=*), intent(out) :: awd_path, equ_name, exp_name
@@ -1467,12 +1462,12 @@ call getnames(awd_path, equ_name, exp_name)
 return
 end subroutine getnames_
 
-!---------------------------------------------------------------------=|
+!---------------------------------------------------------------------
 subroutine getnames(awd_path, equ_name, exp_name)
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 ! The subroutine can be called from C function, returns equ_file, exp_file
 ! G.V.Pereverzev 16.02.2004
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 
 use outcmn_inc, only: awd, equ_file, exp_file, null_ch
 
