@@ -12,24 +12,23 @@ done
 
 cd $AWD
 
-exe/as_exe -m imep  -v 30000_3.4 -s 4 -e 5 -b
-exe/as_exe -m imep2 -v 30000_3.4 -s 4 -e 5 -b
+exp="30000_3.4"
 
-file1="$AWD/ncdf_out/30000_3.4imep-51.cdf"
-file2="$AWD/ncdf_out/30000_3.4imep2-51.cdf"
+for equ in imep imep2
+do
+    exe/as_exe -m $equ -v $exp -s 4 -e 5 -b
+done
 
 module load astra
 
-while [ ! -f $file1 ]; do
-    echo $file1 does not exist yet, waiting 10s
-    sleep 10
+for equ in imep imep2
+do
+    fcdf="$AWD/ncdf_out/30000_3.4$equ-51.cdf"
+    while [ ! -f $fcdf ]; do
+        echo $fcdf does not exist yet, waiting 10s
+        sleep 10
+    done
+    sleep 5
+    exe/nc_concat.py -e $exp$equ
+    exe/astra2helena.py -m $equ -v $exp
 done
-sleep 5
-exe/nc_concat.py -e 30000_3.4imep
-
-while [ ! -f $file2 ]; do
-    echo $file2 does not exist yet, waiting 10s
-    sleep 10
-done
-sleep 5
-exe/nc_concat.py -e 30000_3.4imep2
