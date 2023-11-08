@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os, logging, argparse
-from scipy.io import netcdf
+from scipy.io import netcdf_file
 import numpy as np
 
 fmt = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s: %(message)s', '%H:%M:%S')
@@ -23,6 +23,7 @@ if awd is None:
 
 def nc_concat(expequ):
 
+    logger.info('Starting nc_concat')
     loc = '%s/ncdf_out/%s' %(awd, expequ)
 
     cdf_out = '%s.CDF' %loc
@@ -39,11 +40,8 @@ def nc_concat(expequ):
         os.system('rm %s' %f_log2)
         return
 
-# run as a second nc_concat
-#    os.system('rm %s' %f_log2)
-
     while True:
-        f_cdf = '%s%d.cdf' %(loc, j_cdf)
+        f_cdf = '%s-%d.cdf' %(loc, j_cdf)
         if not os.path.isfile(f_cdf):
             if j_cdf == 1:
                 return
@@ -52,7 +50,7 @@ def nc_concat(expequ):
         if j_cdf > 1:
             if os.stat(f_cdf).st_mtime < os.stat(f_cdf_prev).st_mtime: #Newer
                 break
-        cv = netcdf.netcdf_file(f_cdf, 'r', mmap=False).variables
+        cv = netcdf_file(f_cdf, 'r', mmap=False).variables
         for key, val in cv.items():
             if key not in ('XRHO', 'THETA', 'RHO_SURF'):
                 if j_cdf == 1:
@@ -76,7 +74,7 @@ def nc_concat(expequ):
         elif cv[key].dimensions == ('RHO_SURF', 'THETA'):
             ds[key] = ds[key].reshape((nt, n_eq, n_th))
 
-    f = netcdf.netcdf_file(cdf_out, 'w', mmap=False)
+    f = netcdf_file(cdf_out, 'w', mmap=False)
 
     f.createDimension('TIME', nt)
     f.createDimension('XRHO', nx)
@@ -125,5 +123,4 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='astra.nml writer')
     parser.add_argument('-e', '--expequ', help='<exp><equ>', required=True)
     args = parser.parse_args()
-
     nc_concat(args.expequ)
