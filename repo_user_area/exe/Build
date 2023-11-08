@@ -98,7 +98,8 @@ EOT
         echo sbatch $bat
         date
         module unload impi-interactive
-        sbatch -W $bat
+#        sbatch -W $bat # -W: waiting for process to finish before running nc_concat
+        sbatch $bat
     fi
 else
     echo Running $ATASK

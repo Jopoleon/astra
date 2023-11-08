@@ -20,6 +20,7 @@ chmod 744 $AWD/exe/as_exe
 chmod 744 $AWD/exe/nc_concat.py
 chmod 744 $AWD/exe/wr_nml
 chmod 744 $AWD/exe/CheckObjs
+chmod 744 $AWD/exe/astra_imep.sh
 chmod 744 $AWD/pyparse/parser_main.py
 
 $AWD/exe/as_exe -m fluxes -v aug34954 -s 4 -e 5

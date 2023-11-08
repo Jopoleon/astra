@@ -23,7 +23,6 @@ if awd is None:
 
 def nc_concat(expequ):
 
-    logger.info('Starting nc_concat')
     loc = '%s/ncdf_out/%s' %(awd, expequ)
 
     cdf_out = '%s.CDF' %loc

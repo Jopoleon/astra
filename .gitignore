@@ -1,6 +1,7 @@
 **/*~
 *.pyc
 **/*genmod.f90
+slurm-*
 mod
 obj
 pyparse/__pycache__
