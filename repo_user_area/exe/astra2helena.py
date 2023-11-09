@@ -44,11 +44,7 @@ class astra2helena:
         Pblon = cv['PBLON'][-1, :]
 
 # fml/bpfit
-        ZFe = (ne[1:] + ne[:-1])*(Te[1:] + Te[:-1])
-        ZFi = (ni[1:] + ni[:-1])*(Ti[1:] + Ti[:-1])
-        ZF1 = np.append(ZFe, 4*ne[-1]*Te[-1])
-        ZF2 = np.append(ZFi, 4*ni[-1]*Ti[-1])
-        BPF = 1.6e-4*np.pi*(ZF1 + ZF2 + 2.*Pbper + 2.*Pblon + RTOR/(self.BTOR*rhot*np.abs(MU)))**2
+        BPF = 1.6e-4*4.*np.pi*(ne*Te + ni*Ti + 0.5*Pbper + 0.5*Pblon) * (RTOR/(self.BTOR*rhot*np.abs(MU)))**2
 
 # fml/prest
         Ptot = 1.6*(ne*Te + ni*Ti + 0.5*Pblon + 0.5*Pbper - nibm*Ti)
