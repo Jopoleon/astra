@@ -194,7 +194,7 @@ class astra2helena:
 def test():
 
     exp = '30000_3.4'    
-    for astra_equ in ('imep', 'imep2'):
+    for astra_equ in ('imep_pw04', 'imep_pw08'):
         f_cdf = '/toks/work/git/a82/ncdf_out/%s%s.CDF' %(exp, astra_equ)
         a2h = astra2helena(f_cdf, shottime=exp)
         a2h.dumpHelenaInput(astra_equ=astra_equ)

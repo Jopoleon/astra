@@ -18,6 +18,7 @@ cp $AWD/repo_user_area/exp/nml/AUG33040_2500_${platform} $AWD/exp/nml/AUG33040_2
 chmod 744 $AWD/exe/Build
 chmod 744 $AWD/exe/as_exe
 chmod 744 $AWD/exe/nc_concat.py
+chmod 744 $AWD/exe/astra2helena.py
 chmod 744 $AWD/exe/wr_nml
 chmod 744 $AWD/exe/CheckObjs
 chmod 744 $AWD/exe/astra_imep.sh

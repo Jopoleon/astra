@@ -14,14 +14,14 @@ cd $AWD
 
 exp="30000_3.4"
 
-for equ in imep imep2
+for equ in imep_pw04 imep_pw08
 do
     exe/as_exe -m $equ -v $exp -s 4 -e 5 -b
 done
 
 module load astra
 
-for equ in imep imep2
+for equ in imep_pw04 imep_pw08
 do
     fcdf="$AWD/ncdf_out/30000_3.4$equ-51.cdf"
     while [ ! -f $fcdf ]; do

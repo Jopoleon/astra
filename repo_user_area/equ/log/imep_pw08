@@ -1,0 +1,70 @@
+ Start file for version 6.2.1
+ Variables as described in the file "for/const.inc"
+BTOR   =  1.000E+00
+ABC    =  6.474E-01
+ELONG  =  1.809E+00
+TRIAN  =  0.141
+SHIFT  = -9.120E-04
+UPDWN  = -8.615E-03
+AWALL  =  7.000E-01
+ Constants:
+CRAD1  =  3
+CRAD2  =  1
+CSOL1  =  0.100E+00
+CSOL2  =  2.000E+00
+CSOL3  =  0.300E+00
+CSOL4  =  0.06E+00
+CIMP1  =  1.000E+00
+CIMP3  =  1.000E+00
+CRF1   =  1.000E+00
+CF1    =  1.000E+00
+CF3    =  0.400E+00
+CF4    =  1.000E-04
+CF7    =  1.0
+CF8    =  1.000E+00
+CMHD1  =  0.000E+00
+CMHD2  =  0.000E+00
+CMHD3  =  0.000E+00
+CHI1   =  2.000E+00
+CHI2   =  0.060E+00
+CHI4   =  0.000E+00
+CV1    =  0.020E+00
+CV2    =  0.100E+00
+CV3    =  1.000E+00
+CV4    =  1
+CV5    =  1
+CV6    =  0.2
+CF2    =  0.000E+00
+CIMP4  =  1.000E+00
+CNB1   =  8
+CNB2   =  0
+CNB3   =  1.000E+00
+CFUS3  =  1.000E+00
+CHE1   =  1.000E+00
+CF12   =  0.012E+00
+CF13   =  0.0 !1.e-6 -> changed because of new compiler
+CF4    =  0.0001
+CF5    =  0.00001
+CF6    =  0.000001
+CSCL2  =  500.0 !integral parameter Xped
+CSCL3  =  1.000E+00
+CSCL4  =  0.01 !integral parameter neutri
+ Control parameters (common block A_OUTPUT):22
+NEQUIL =  46
+MEQUIL =  46
+TAUMIN =  1.e-4
+DELVAR =  0.1
+TAUMAX =  0.01 !ASTRA main timestep
+DROUT  =  0.002E-00
+DTOUT  =  0.002E-00
+TSCALE =  4.000E+00
+TINIT  =  0.000E+00
+ Color table (description in for/outcmn.inc):  32
+   0   0     50   0      3   0     37   0
+  62   0      5   0     26   0     60   0
+  50   0     27   0      1   0      1   0
+  50   0      1   0      1   0      1   0
+   0   0      0   0      0   0      0   0
+   0   0      0   0      0   0      0   0
+   0   0      0   0      0   0      0   0
+   0   0      0   0      0   0      0   0
