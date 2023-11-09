@@ -7,6 +7,8 @@ from scipy.interpolate import InterpolatedUnivariateSpline, UnivariateSpline
 from scipy.optimize import minimize
 from scipy.io import netcdf_file
 
+awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
 
 class astra2helena:
 
@@ -194,7 +196,7 @@ class astra2helena:
 def test():
 
     exp = '30000_3.4'    
-    for astra_equ in ('imep_pw04', 'imep_pw08'):
+    for astra_equ in ('imep', 'imep2'):
         f_cdf = '/toks/work/git/a82/ncdf_out/%s%s.CDF' %(exp, astra_equ)
         a2h = astra2helena(f_cdf, shottime=exp)
         a2h.dumpHelenaInput(astra_equ=astra_equ)
@@ -214,6 +216,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    f_cdf = '/toks/work/git/a82/ncdf_out/%s%s.CDF' %(args.exp, args.equ)
+    f_cdf = '%s/ncdf_out/%s%s.CDF' %(awd, args.exp, args.equ)
     a2h = astra2helena(f_cdf, shottime=args.exp)
     a2h.dumpHelenaInput(astra_equ=args.equ)

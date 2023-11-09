@@ -2,7 +2,9 @@
 
 source /etc/profile.d/modules.sh
 
-AWD="/toks/work/git/a82"
+rootdir=`dirname $0`        # may be relative path
+AWD=`cd $rootdir/.. && pwd` # ensure absolute path
+
 COUNTER=1
 while [[ $COUNTER -ne 52 ]]; do
     rm "$AWD/ncdf_out/30000_3.4imep-$COUNTER.cdf"
@@ -14,14 +16,14 @@ cd $AWD
 
 exp="30000_3.4"
 
-for equ in imep_pw04 imep_pw08
+for equ in imep imep2
 do
     exe/as_exe -m $equ -v $exp -s 4 -e 5 -b
 done
 
 module load astra
 
-for equ in imep_pw04 imep_pw08
+for equ in imep imep2
 do
     fcdf="$AWD/ncdf_out/30000_3.4$equ-51.cdf"
     while [ ! -f $fcdf ]; do
