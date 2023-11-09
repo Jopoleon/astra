@@ -16,7 +16,6 @@ LIBSPIDER = $(LIB_DIR)/libspider.a
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
 LIB = -lnbi -lsbr -lnbi -L/usr/lib64 -lX11 $(NETCDF_LIB) $(QLKNN_LIB) $(TGLF_LIB) $(TORB_LIB) $(RABBIT_LIB) -lfor -lfnc -lfeqis -lspider -L$(LIB_DIR) $(MKL_LIB) -lrt
 
-MODTMP = $(AWD)/tmp/model.tmp
 AENV = $(AWD)/exe/astra_rc
 FOR_SRC = \
 $(FOR_DIR)/astra_main.f90 \
@@ -33,14 +32,14 @@ $(TMP_DIR)/ininam.f90 \
 $(TMP_DIR)/init_converge_step.f90 \
 $(TMP_DIR)/eqns_inc.f90
 
-PY_TMP_GEN = $(AWD)/pyparse/parser_main.py -awd $(AWD)
+PY_TMP_GEN = $(AWD)/pyparse/parser_main.py -equ $(EQU)
 
 FMLS    := $(wildcard $(AWD)/fml/*)
 PYFILES := $(wildcard $(AWD)/pyparse/*.py)
 
 # Make Commands
 .PHONY: all
-all: directories update_model modules $(ATASK)
+all: directories modules $(ATASK)
 
 .PHONY: directories
 directories:
@@ -58,10 +57,6 @@ clean:
 	rm -rf $(OBJ_DIR)
 	rm -f $(LIBFOR)
 
-.PHONY: update_model
-update_model:
-	rsync -c $(EQU) $(MODTMP)
-
 .PHONY: modules
 modules:
 	make -f $(AWD)/exe/Makefor modules
@@ -69,14 +64,9 @@ modules:
 
 # Linking, create ASTRA executable
 
-$(ATASK): $(LIBFOR) $(LIBNBI) $(LIBFEQIS) $(LIBSPIDER) $(LIBSBR) $(LIBFNC) $(AENV) $(MODTMP) $(FOR_SRC) $(PYFILES) $(FMLS)
+$(ATASK): $(LIBFOR) $(LIBNBI) $(LIBFEQIS) $(LIBSPIDER) $(LIBSBR) $(LIBFNC) $(AENV) $(EQU) $(FOR_SRC) $(PYFILES) $(FMLS)
 	$(PY_TMP_GEN)
 	$(AFC) -qopenmp -g -traceback -o $(ATASK) $(FOR_SRC) $(TMP_SRC) -I$(MOD_DIR) -I$(NBI_INC) $(LIB)
-
-# Generate FORTRAN code
-# EQU is copied into MODTMP above if they are different, here if EQU is touched
-$(MODTMP): $(EQU)
-	cp -p $(EQU) $(MODTMP)
 
 # User defined sbr and fnc
 

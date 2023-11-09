@@ -37,18 +37,13 @@ def write_tmp(txt, dir_out=None, fortran='f90'):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='astra parser')
-    parser.add_argument('-awd', help='ASTRA home dirpath', required=False, default=os.getenv('AWD'))
     parser.add_argument('-equ', help='ASTRA equ filepath', required=False)
     args = parser.parse_args()
 
     f_equ = args.equ
     if f_equ is None:
-        if args.awd is None:
-            logger.error('Need either argument -awd or -equ')
-            sys.exit()
-        f_equ = '%s/tmp/model.tmp' %args.awd
-    config.awd = args.awd
-    config.fml_dir = '%s/fml'  %args.awd
-    config.fnc_dir = '%s/fnc'  %args.awd
+        logger.error('Need argument -equ')
+        sys.exit()
+
     txt = astra_parser(f_equ)
     write_tmp(txt, dir_out='./tmp')
