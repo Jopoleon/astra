@@ -208,7 +208,7 @@ car49=PREST;
 
 !DoutTGLF:.02:3.96::;
 
-A2CDF>:.02:::;
+A2CDF>:.1:::;
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !Plotting radial profiles

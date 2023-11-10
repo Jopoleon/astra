@@ -25,7 +25,7 @@ class astra2helena:
         self.IPL  = cv['IPL'][-1]
         self.BTOR = cv['BTOR'][-1]
         RTOR = cv['RTOR' ][-1]
-        self.Wi = cv['CDWM2'][-1]
+        self.Wi = cv['CDWM1'][-1]
 
         nibm  = cv['NIBM' ][-1, :]
         rhotN = cv['XRHO' ].data
@@ -168,11 +168,11 @@ class astra2helena:
 
         f_helena = open(fHelena, 'w')
 
-        f_helena.write("# AUG Shot #%s @ %ss    Wped,tor=%s  Wped,pol=%1.7f\n" %(shot, time, self.Wi, self.Wipol))
+        f_helena.write("# AUG Shot #%s @ %ss    Wped,tor=%s Wped,pol=%1.7f\n" %(shot, time, self.Wi, self.Wipol))
 
         np.savetxt(f_helena, (self.psiN**0.5, self.Te_psiN, self.Ti_psiN, self.ne_psiN, self.Ptot_psiN, self.dPtot_psiN, \
                 self.BPF_psiN, self.CU_psiN, self.Cbs_psiN), \
-                fmt='%1.8e', header="Rho_pol    Te[keV]    Ti[keV]    ne[10^19/m^3]    p_tot[MJ/m^3]    dp_tot[Pa/Wb]    Beta_p    j[A/m^2]    jBS[A/m^2]    Boundary (r) (z)    dens_top[10^19/m^3]    mean(Zeff)  Ip[MA]  Btor[T]\n")
+                fmt='%1.8e', header="Rho_pol    Te[keV] Ti[keV]    ne[10^19/m^3]    p_tot[MJ/m^3]    dp_tot[Pa/Wb] Beta_p    j[A/m^2]    jBS[A/m^2]    Boundary (r) (z) dens_top[10^19/m^3]    mean(Zeff)  Ip[MA]  Btor[T]\n")
 
         for r in self.rs:
             f_helena.write("%.6E " %r)
