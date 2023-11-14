@@ -2,13 +2,110 @@
 
 import numpy as np
 from scipy.interpolate import splev, splrep
-import os, argparse
+import os, logging, argparse
 from scipy.interpolate import InterpolatedUnivariateSpline, UnivariateSpline
 from scipy.optimize import minimize
 from scipy.io import netcdf_file
 
+fmt = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s: %(message)s', '%H:%M:%S')
+logger = logging.getLogger('a2helena')
+logger.setLevel(logging.INFO)
+if len(logger.handlers) == 0:
+    hnd = logging.StreamHandler()
+    hnd.setFormatter(fmt)
+    logger.addHandler(hnd)
+
 awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
+helena_cluster = \
+'''#!/bin/sh
+#SBATCH -J  HELENA_IPED     #Job name
+#SBATCH -D %s            #Initial working directory
+#SBATCH --partition=s.tok     #Queue/Partition
+#SBATCH --qos=s.tok.short  #Quality of Service
+#SBATCH --mem=4000
+##
+#SBATCH --mail-type=none       #Send mail, e.g. for begin/end/fail/none
+#SBATCH --mail-user=%s@ipp.mpg.de  #Mail address
+   
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
+# For pinning threads correctly:
+export OMP_PLACES=cores 
+export MKL_NUM_THREADS=1
+# Run the program:
+srun %s/run_helena.sh'
+'''
+
+helena_xml = \
+'''<?xml version="1.0" encoding="undecided"?>
+version="1.0"?>
+
+<?xml-stylesheet type="text/xsl" href="./input_helena.xsl"
+charset="ISO-8859-1"?>
+
+
+<parameters>
+
+<!-- profile_parameters -->
+
+<profile_parameters>
+    <input_type> p' and j_tor </input_type>
+ <radial_coordinate> psi </radial_coordinate>
+<current_averaging> theta </current_averaging>
+<hbt> F </hbt>
+</profile_parameters>
+
+<!-- shape_parameters -->
+
+<shape_parameters>
+ <isol> 0 </isol>
+<ias> 1 </ias>
+<mfm> 256 </mfm>
+<imesh> 2 </imesh>
+<n_acc_points> 1 </n_acc_points>
+<s_acc> 1.0  </s_acc>
+<sig> 0.02  </sig>
+<weights> 1.0  </weights>
+<equidistant> 0.2 </equidistant>
+</shape_parameters>
+
+<!-- global_parameters -->
+
+<global_parameters>
+<match> Ip </match>
+<Ip> %s </Ip>
+<bvac> %s </bvac>
+<cpsurfin> %s  </cpsurfin>
+ </global_parameters>
+
+<!-- numerical_parameters -->
+
+<numerical_parameters>
+<nr> %d </nr>
+<np> %d </np>
+<nrmap> %d </nrmap>
+<npmap> %d </npmap>
+<nchi>  %d </nchi>
+<niter> 80 </niter>
+<nmesh> 50 </nmesh>
+ <nouter> 20 </nouter>
+<errcur> 1.0E-5 </errcur>
+</numerical_parameters>
+
+<!-- diagnostics_parameters -->
+
+<diagnostics_parameters>
+<verbosity> 4 </verbosity>
+<output> full </output>
+<cpo_output> False </cpo_output>
+<diagnostics_on> T </diagnostics_on>
+<standard_output> T </standard_output>
+</diagnostics_parameters>
+
+</parameters>
+'''
+
+# str(Ip), str(Bt), str(psibnd), nr, np, nrmap, npmap, nchi
 
 class astra2helena:
 
@@ -89,7 +186,7 @@ class astra2helena:
         if shottime == '30000_3.4':
             j_ax = min(2.2/2.5*self.BTOR*0.95/1.3, CU[0]*0.95)
         elif shottime[0] == '1':
-            print('IT IS C-Mod!')
+            logger.warning('IT IS C-Mod!')
             j_ax = min(2.2/2.5*self.BTOR*1.65/RTOR*1.2, CU[0]*0.95)
         else:
             j_ax = min(2.2/2.5*self.BTOR*0.95, CU[0]*0.95)
@@ -121,7 +218,7 @@ class astra2helena:
 
         spuf = InterpolatedUnivariateSpline(FP_norm, cun)
         Ipf = (spuf.integral(np.min(Surf), np.max(Surf)))
-	
+
         if Ipf/Ip < 0.9:
             cun[0: qind] = cun[0]
             difff = cun[0] - cun[qind+50]
@@ -186,26 +283,104 @@ class astra2helena:
         f_helena.write("%.4E\n" %self.BTOR)
 
         f_helena.close()
-        print ('Stored file %s' %fHelena)
-      
+        logger.info('Stored file %s', fHelena)
 
-def test():
 
-    exp = '30000_3.4'    
-    for astra_equ in ('imep', 'imep2'):
-        f_cdf = '/toks/work/git/a82/ncdf_out/%s%s.CDF' %(exp, astra_equ)
-        a2h = astra2helena(f_cdf, shottime=exp)
-        a2h.dumpHelenaInput(astra_equ=astra_equ)
+    def toHelenaBoundary(self):
 
-    import matplotlib.pylab as plt
-    plt.subplot(1, 1, 1, aspect='equal')
-    plt.plot(a2h.rs, a2h.zs)
-    plt.show()
+        rgeo = 0.5*(np.min(self.rs) + np.max(self.rs))
+        zgeo = 0.5*(np.min(self.zs) + np.max(self.zs))
+
+        theta = np.arctan2(self.zs - zgeo, self.rs - rgeo)
+        whneg = np.where(theta < 0)
+        theta[whneg] += 2.*np.pi
+        rad = np.sqrt((self.rs - rgeo)**2 + (self.zs - zgeo)**2)
+        sorting = np.argsort(theta)
+        rad   = rad  [sorting]
+        theta = theta[sorting]
+        nnew = 256
+        newtheta = np.linspace(0., 2.*np.pi, num=nnew, endpoint=False)
+        newrs = np.interp(newtheta, theta, rad)
+        self.rsHelena = newrs * np.cos(newtheta) + rgeo
+        self.zsHelena = newrs * np.sin(newtheta) + zgeo
+
+
+    def writeHelenaProfiles(self, dir_out='helena'):
+        '''Dump HELENA input profiles'''
+
+        f_out = {}
+        profs = ('p', 'j_tor', 'te', 'ne', 'dp')
+        for lbl in profs:
+            f_out[lbl] = '%s/%s.in' %(dir_out, lbl)
+
+# Flatten gradients in core region
+        pp = self.dPtot_psiN
+        whcore    = np.squeeze(np.where(self.PsiN < 0.1))[::-1]
+        whoutcore =  np.where((self.PsiN >= 0.1) & (self.PsiN < 0.2))
+        gradcore  = np.mean(np.diff(pp[whoutcore]))       
+        for ind in whcore:
+            pp[ind] = pp[ind+1] - gradcore
+            
+        np.savetxt(f_out['p']    , np.transpose(1.e3 *self.Ptot_psiN), fmt='%15.8e')
+        np.savetxt(f_out['j_tor'], np.transpose(1.e6 *self.CU_psiN  ), fmt='%15.8e')
+        np.savetxt(f_out['te']   , np.transpose(1.e3 *self.Te_psiN  ), fmt='%15.8e')
+        np.savetxt(f_out['ne']   , np.transpose(1.e19*self.ne_psiN  ), fmt='%15.8e')
+        np.savetxt(f_out['dp']   , np.transpose(1.e5 *pp            ), fmt='%15.8e')
+        for lbl in profs:
+            logger.info('Stored %s', f_out[lbl])
+
+    def writeHelenaSbatch(self, dir_out='helena'):
+        '''Dump HELENA SLURM batch script'''
+
+        user = (os.environ['USER'])
+
+        f_sbatch = dir_out + '/helena_cluster.sh'
+        with open(f_sbatch, 'w') as fsb:
+            txt = helena_cluster %(dir_out, user, dir_out)
+            fsb.write(txt)
+        logger.info('Stored %s', f_sbatch)
+
+    def writeHelenaXML(self, dir_out='helena', highres=False):
+        '''Dump HELENA xml input'''
+
+        psibnd = -1.3
+        if highres:
+            nr    = 501
+            nrmap = 1001
+            nnp   = 257
+            npmap = 257
+            nchi  = 1024
+        else:
+            nr    = 301
+            nrmap = 1001
+            nnp   = 257
+            npmap = 257
+            nchi  = 1024
+        f_xml = dir_out + '/helena.xml'
+        with open(f_xml, 'w') as fxml:
+            txt = helena_xml %(str(self.IPL), str(self.BTOR), str(psibnd), nr, nnp, nrmap, npmap, nchi)
+            fxml.write(txt)
+        logger.info('Stored %s', f_xml)
+
+    def writeHelenaBoundary(self, dir_out='helena'):
+        '''Dump file with separatrix R,z'''
+
+        if not hasattr(self, 'rsHelena'):
+            self.toHelenaBoundary()
+        f_bnd = dir_out + '/plasma_boundary.in'
+        np.savetxt(f_bnd, np.c_[self.rsHelena, self.zsHelena], fmt='%15.8e')
+        logger.info('Stored %s', f_bnd)
+
+    def writeHelenaInput(self, dir_out='helena'):
+
+        self.writeHelenaBoundary(dir_out=dir_out)
+        self.writeHelenaProfiles(dir_out=dir_out)
+        self.writeHelenaSbatch(dir_out=dir_out)
+        self.writeHelenaXML(dir_out=dir_out)
 
 
 if __name__ == '__main__':
 
-#    test()
     parser = argparse.ArgumentParser(description='Write settings & run ASTRA')
     parser.add_argument('-m', '--equ', help='Model file', required=True)
     parser.add_argument('-v', '--exp', help='Exp file'  , required=True)
@@ -214,4 +389,9 @@ if __name__ == '__main__':
 
     f_cdf = '%s/ncdf_out/%s%s.CDF' %(awd, args.exp, args.equ)
     a2h = astra2helena(f_cdf, shottime=args.exp)
-    a2h.dumpHelenaInput(astra_equ=args.equ)
+#    a2h.dumpHelenaInput(astra_equ=args.equ)
+    helena_dir = '/toks/work/git/a8/helena'
+    a2h.writeHelenaInput(dir_out=helena_dir)
+    cmd = 'sbatch %s/helena_cluster.sh' %helena_dir
+    logger.info('Executing %s', cmd)
+#    os.system(cmd)
