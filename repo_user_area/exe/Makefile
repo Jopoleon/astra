@@ -48,7 +48,6 @@ directories:
 	@mkdir -p $(AWD)/.res
 	@mkdir -p $(AWD)/ncdf_out
 	@mkdir -p $(AWD)/dat
-	@mkdir -p $(AWD)/helena
 
 .PHONY: clean
 clean:
