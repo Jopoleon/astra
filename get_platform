@@ -4,21 +4,7 @@ rootdir=`dirname $0`          # may be relative path
 AWD=`cd $rootdir && pwd`  # ensure absolute path
 node=`uname -n`
 
-if [[ $AWD == "/afs/ipp"* ]]
-then
-   if [[ $node == "lx"* ]]
-   then
-      platform=lx
-   else
-      platform=tok
-   fi
-elif [[ $AWD == "/tokp/work"* ]]
-then
-   platform=tok
-elif [[ $AWD == "/toks/work"* ]]
-then
-   platform=tok
-elif [[ $AWD == "/afs/eufus"* ]]
+if [[ $AWD == "/afs/eufus"* ]]
 then
    platform=gway
 elif [[ $AWD == "/localhome"* ]]
@@ -39,6 +25,9 @@ then
 elif [[ $node == "CX-LD-AUG"* ]]
 then
    platform=ldaug
+elif [[ $node == "tok"* ]]
+then
+   platform=tok
 elif [[ $node == "iris"* ]]
 then
    platform=iris
