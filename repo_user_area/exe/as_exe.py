@@ -48,6 +48,7 @@ if __name__ == '__main__':
     parser.add_argument('-resize', '--resize', type=float, help='Resize factor for ASTRA frame', required=False)
     parser.add_argument('-debug', action='store_true', help='Debug', required=False)
     parser.add_argument('-fs', action='store_true', help='Flight simulator', required=False)
+    parser.add_argument('-W', '--waitslurm', action='store_true', help='Hold on SLURM job', required=False, default=False)
 
     args = parser.parse_args()
 
@@ -99,6 +100,8 @@ if __name__ == '__main__':
         f.write(alog)
 
     cmd = '%s/exe/Build' %awd
+    if args.batch and args.waitslurm:
+        cmd += ' -W'
     logger.info(cmd)
     os.system(cmd)
 

@@ -2,6 +2,12 @@
 
 source /etc/profile.d/modules.sh
 
+if [[ $# > 0 ]]; then
+    WAIT_SLURM=$1
+else
+    WAIT_SLURM=""
+fi
+
 rootdir=`dirname $0`                  # may be relative path
 export AWD=`cd $rootdir/.. && pwd`    # ensure absolute path
 
@@ -99,7 +105,7 @@ EOT
         date
         module unload impi-interactive
 #        sbatch -W $bat # -W: waiting for process to finish before running nc_concat
-        sbatch $bat
+        sbatch $WAIT_SLURM $bat
     fi
 else
     echo Running $ATASK
