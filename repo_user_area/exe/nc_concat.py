@@ -36,7 +36,6 @@ def nc_concat(expequ):
     if os.stat(f_cdf).st_mtime < os.stat(f_log2).st_mtime:
         logger.warning('CDF files older then %s' %f_log2)
         logger.warning('No 2D NetCDF file written')
-        os.system('rm %s' %f_log2)
         return
 
     while True:

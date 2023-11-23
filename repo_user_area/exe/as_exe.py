@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, logging, argparse, shutil, traceback
+import os, logging, argparse, traceback
 from nc_concat import nc_concat
 
 fmt = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s: %(message)s', '%H:%M:%S')
@@ -84,9 +84,8 @@ if __name__ == '__main__':
     alog += '\n/\n'
 
     logger.info('Writing %s' %f_log)
-    f = open(f_log, 'w')
-    f.write(alog)
-    f.close()
+    with open(f_log, 'w') as f:
+        f.write(alog)
 
     logger.debug(alog)
 
@@ -95,9 +94,9 @@ if __name__ == '__main__':
         input('-----------------------------------\nFile %s missing!\nASTRA will probably crash.\nPress any key to continue at your own risk\n' %eqlog)
 
     expequ = args.exp + args.equ
-    source = '%s/tmp/astra.nml' %awd 
-    target = '%s/tmp/%s.nml'    %(awd, expequ) 
-    shutil.copy2(source, target)
+    f_log2 = '%s/tmp/%s.nml' %(awd, expequ) 
+    with open(f_log2, 'w') as f:
+        f.write(alog)
 
     cmd = '%s/exe/Build' %awd
     logger.info(cmd)
