@@ -372,7 +372,7 @@ subroutine PUTXY(IX, IY, ITIMES, TTOUT, TOUT)
 !---------------------------------------------------------------------
 
 use parameter_inc, only: NRW
-use outcmn_inc, only: XWH, XWW, MOD10, IY0, IYM, scale_bnd, canv_hei, &
+use outcmn_inc, only: XWH, XWW, MOD10, IY0, IYM, scale_bnd, canv_hei, canv_wid, &
     IDT, IDX, MODEY, DXLET, DYLET, frame_hei, LTOUT, NTOUT, active_tab, &
     NWIND3, NAMET, White, Red, Blue, nx_canvas, ny_canvas
 use status_inc, only: AMETR, SHIF, ELON, TRIA, FP, RHO
@@ -424,7 +424,8 @@ if (MOD10 == 6) then
     goto 2
 endif
 if (MOD10 == 8) then
-    YX = 5.*YX1*scale_bnd
+!    YX = 5.*YX1*scale_bnd
+    YX = YX1*scale_bnd*canv_wid/IDT/IDX
     YY = (YY1 - 0.5)*scale_bnd*canv_hei/IDT/IDX
     YA1= RZ2A(YX, YY, NAB)
     YD = QUADIN(NAB, AMETR, SHIF, YA1)
