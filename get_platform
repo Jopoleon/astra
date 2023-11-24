@@ -22,7 +22,7 @@ then
 elif [[ $node == "omega"* ]]
 then
    platform=omega
-elif [[ $node == "CX-LD-AUG"* ]]
+elif [[ $node == "CX-LD-"* ]]
 then
    platform=ldaug
 elif [[ $node == "tok"* ]]
