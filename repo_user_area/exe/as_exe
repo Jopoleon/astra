@@ -25,8 +25,14 @@ else
         module use /home/gtardini/modulefiles
     fi
 
-    module load astra
-    RES=$( { module load astra; } 2>&1 )
+    if [[ $platform == "lddsk" ]]
+    then
+        module load astra/cx-dsk
+        RES="Ok"
+    else 
+        module load astra
+        RES=$( { module load astra; } 2>&1 )
+    fi
     echo $RES
     if [[ "$RES" == *"ERROR"* ]];
     then
