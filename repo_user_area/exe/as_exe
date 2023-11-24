@@ -12,9 +12,11 @@ then
     echo "module tool not available on this platform, set environment in exe/Build"
 else
     module purge
+    RES="Ok"
     if [[ $platform == "iter" ]]
     then
         module use /home/ITER/tarding/modulefiles
+	module load astra
     elif [[ $platform == "mit" ]]
     then
         module use /orcd/nese/psfc/001/software/spack/2023-07-01-physics-rpp/spack/share/spack/modules-test/linux-rocky8-x86_64
@@ -23,12 +25,13 @@ else
         module load anaconda3/2022.05-x86_64
         module load netcdf-fortran/4.6.0-intel-2021.9.0-module-2v44tym
         module use /home/gtardini/modulefiles
-    fi
-
-    if [[ $platform == "lddsk" ]]
+	module load astra
+    elif [[ $platform == "ldaug" ]]
     then
-        module load astra/cx-dsk
-        RES="Ok"
+        module load astra/ldaug
+    elif [[ $platform == "lddsk" ]]
+    then
+        module load astra/lddsk
     else 
         module load astra
         RES=$( { module load astra; } 2>&1 )
