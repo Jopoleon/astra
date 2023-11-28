@@ -128,6 +128,7 @@ if (.not. allocated(Rrect)) allocate(Rrect(n_Rrect), Zrect(n_Zrect))
 if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---       
     as_nml = TRIM(AWD) // TRIM(nml_file)
 
+    ios = 0
     write(6, *) 'Parsing namelist ' // TRIM(as_nml)
     open(53, FILE=TRIM(as_nml), delim='apostrophe', iostat=ios)
     if (ios < 0) then
@@ -140,6 +141,7 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
     read(53, nml=physics, iostat=ios)
     close(53)
     write(6, *) '#NBI', n_nbi
+    ios = 0
     write(6, *) 'Limiter file', TRIM(limiter_file)
     open(unit_lim, file=TRIM(limiter_file), iostat=ios)
     read(unit_lim, '(2i)') dum, n_lim
