@@ -265,7 +265,6 @@ parse_exp_1d: do
         VERR = '0.'
         jvar = str_in_list(VNAM(1:6), PRNAME) 
         if (jvar == 0) CYCLE parse_exp_1d  ! var doesnt exist
-        IVAR = IVAR + 1
         ntim = 0
         read(vtim, *) ntim !from NTIMES
         factor = 1.
