@@ -284,7 +284,7 @@ parse_exp_1d: do
         if (ios /= 0) call astra_stop(err_format)
         read(201, *, iostat=ios) (raw_scalar%value(IVAR+jj), jj=1, ntim)
         if (ios /= 0) call astra_stop(err_format)
-        DEVAR(jvar) = factor*raw_scalar.value(IVAR+1)
+        DEVAR(jvar) = factor*raw_scalar%value(IVAR+1)
         do jj=1, ntim
             IVAR = IVAR + 1
             raw_scalar%var_index(IVAR) = jvar
