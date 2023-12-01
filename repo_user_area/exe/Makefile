@@ -1,3 +1,7 @@
+ifndef AWD
+$(error setenv/export AWD first)
+endif
+
 LIB_DIR = $(AWD)/lib
 TSK_DIR = $(AWD)/bin
 FOR_DIR = $(AWD)/main

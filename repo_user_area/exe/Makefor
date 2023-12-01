@@ -1,3 +1,7 @@
+ifndef AWD
+$(error setenv/export AWD first)
+endif
+
 SRC_DIR = $(AWD)/src/for
 OBJ_DIR = $(AWD)/obj/for
 MOD_DIR = $(AWD)/mod/for

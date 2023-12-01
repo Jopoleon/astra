@@ -1,3 +1,7 @@
+ifndef AWD
+$(error setenv/export AWD first)
+endif
+
 XPR = $(AWD)/xpr
 INC_DIR = $(AWD)/inc
 MOD_DIR = $(AWD)/mod/for

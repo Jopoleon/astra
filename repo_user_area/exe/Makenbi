@@ -1,3 +1,7 @@
+ifndef AWD
+$(error setenv/export AWD first)
+endif
+
 SRC_DIR = $(AWD)/src/nbi
 OBJ_DIR = $(AWD)/obj/nbi
 MOD_FOR = $(AWD)/mod/for

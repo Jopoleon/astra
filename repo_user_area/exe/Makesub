@@ -1,3 +1,7 @@
+ifndef AWD
+$(error setenv/export AWD first)
+endif
+
 SRC_DIR = $(AWD)/$(sub)
 OBJ_DIR = $(AWD)/obj/$(sub)
 INC_DIR = $(AWD)/inc
