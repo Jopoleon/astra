@@ -43,6 +43,14 @@ def compare_arr(arr1, arr2, lbl):
     print('')
 
 
+def truncate(arr, ncols=3):
+    nx = np.prod(arr.shape)
+    nrows = nx//ncols
+    arr_flat = arr.ravel()
+    block = arr_flat[:ncols*nrows].reshape((nrows, ncols))
+    return block, arr_flat[ncols*nrows:]
+
+
 class GREEN_MATRICES:
 
 
@@ -172,10 +180,10 @@ class GREEN_MATRICES:
             except:
                 lim_maxR, lim_minR, lim_maxZ, lim_minZ = (float(x) for x in pieces)
 
-        self.Rlim1 = np.array(Rlim)
-        self.Zlim1 = np.array(Zlim)
-        indR = ((self.Rlim1 - Rmin)/dr + 0.5).astype(int)
-        indZ = ((self.Zlim1 - Zmin)/dz + 0.5).astype(int)
+        Rlim1 = np.array(Rlim)
+        Zlim1 = np.array(Zlim)
+        indR = ((Rlim1 - Rmin)/dr + 0.5).astype(int)
+        indZ = ((Zlim1 - Zmin)/dz + 0.5).astype(int)
         self.Rlim = self.Rgrid[indR]
         self.Zlim = self.Zgrid[indZ]
 
@@ -256,15 +264,6 @@ class GREEN_MATRICES:
 
         self.nPassive = nConduc - self.nActive # n_blanket, n_blanket_c
         logger.debug('nactive, npassive, ncoils, nconduc, ssfw %d %d %d %d %12.4e', self.nActive, self.nPassive, nCoils, nConduc, self.ssfw)
-
-
-    def plotLimiter(self):
-
-        fig = plt.figure('Limiter', (6, 9))
-        fig.add_subplot(1, 1, 1, aspect='equal')
-        plt.plot(self.Rlim , self.Zlim , 'b-')
-        plt.plot(self.Rlim1, self.Zlim1, 'g-')
-        plt.show()
 
 
     def calcGreenf(self):
@@ -462,48 +461,58 @@ class GREEN_MATRICES:
         with open(f_out, 'w') as f:
             f.write('%3d %3d %3d\n' %(nR, nR2, nR1))
             f.write('%3d %3d %3d\n' %(nZ, nZ2, nZ1))
-            f.write('%8.4f\n' %self.Rgrid [0])
-            f.write('%8.4f\n' %self.Rgrid[-1])
-            f.write('%8.4f\n' %self.Zgrid [0])
-            f.write('%8.4f\n' %self.Zgrid[-1])
-            f.write('%8.4f\n' %self.alpsep)
+            f.write('%11.8f\n' %self.Rgrid [0])
+            f.write('%11.8f\n' %self.Rgrid[-1])
+            f.write('%11.8f\n' %self.Zgrid [0])
+            f.write('%11.8f\n' %self.Zgrid[-1])
+            f.write('%11.8f\n' %self.alpsep)
             f.write('%d %d\n' %(self.nActive, self.nPassive))
 
             f.write('%d\n' %nCoils)
-            np.savetxt(f, np.c_[self.R_coil, self.Z_coil, self.dR_coil, self.dZ_coil, self.angh_coil, self.ang_coil, self.m_equiv], fmt='%12.4e %12.4e %12.4e %12.4e %12.4e %12.4e %d')
+            np.savetxt(f, np.c_[self.R_coil, self.Z_coil, self.dR_coil, self.dZ_coil, self.angh_coil, self.ang_coil, self.m_equiv], fmt='%15.8e %15.8e %15.8e %15.8e %15.8e %15.8e %d')
 
             f.write('%d\n' %nLimiter)
-            np.savetxt(f, np.c_[self.Rlim, self.Zlim], fmt='%8.4f %8.4f')
+            np.savetxt(f, np.c_[self.Rlim, self.Zlim], fmt='%11.8f %11.8f')
 
-            f.write('%3d %8.4f\n' %(self.ilim_maxR, self.lim_maxR))
-            f.write('%3d %8.4f\n' %(self.ilim_minR, self.lim_minR))
-            f.write('%3d %8.4f\n' %(self.ilim_maxZ, self.lim_maxZ))
-            f.write('%3d %8.4f\n' %(self.ilim_minZ, self.lim_minZ))
+            f.write('%3d %11.8f\n' %(self.ilim_maxR+1, self.lim_maxR))
+            f.write('%3d %11.8f\n' %(self.ilim_minR+1, self.lim_minR))
+            f.write('%3d %11.8f\n' %(self.ilim_maxZ+1, self.lim_maxZ))
+            f.write('%3d %11.8f\n' %(self.ilim_minZ+1, self.lim_minZ))
 
-            np.savetxt(f, np.c_[self.R_cond[self.nActive: self.nPassive], self.Z_cond[self.nActive: self.nPassive]], fmt='%8.4f %8.4f')
-
-            f.write('%d\n' %nConduc)
-            np.savetxt(f, self.indConduc, fmt='%12.5e')
+            np.savetxt(f, np.c_[self.R_cond[self.nActive: self.nPassive], self.Z_cond[self.nActive: self.nPassive]], fmt='%11.8f %11.8f')
 
             f.write('%d\n' %nConduc)
-            np.savetxt(f, self.resConduc[:nConduc, :nConduc], fmt='%12.5e')
-            
             for jcon in range(nConduc):
-                np.savetxt(f, self.greeni[:, :, jcon], fmt='%12.5e')
+                block, tail = truncate(self.indConduc[jcon, :])
+                np.savetxt(f, block, fmt='%15.8e')
+                np.savetxt(f, tail , fmt='%15.8e')
+
+# Line is long
+            f.write('%d\n' %nConduc)
+            for jcon in range(nConduc):
+                block, tail = truncate(self.resConduc[jcon, :nConduc])
+                np.savetxt(f, block, fmt='%15.8e')
+                np.savetxt(f, tail, fmt='%15.8e')
+
+            for jcon in range(nConduc):
+                for jr in range(nR2):
+                    block, tail = truncate(self.greeni[jr, :, jcon])
+                    np.savetxt(f, block, fmt='%15.8e')
+                    np.savetxt(f, tail , fmt='%15.8e')
 
             f.write('%d\n' %nBlocks)
             for jb in range(nBlocks):
-                np.savetxt(f, np.c_[self.dGreeniRj[:, jb], self.dGreeniZj[:, jb]], fmt='%12.5e')
+                np.savetxt(f, np.c_[self.dGreeniRj[:, jb], self.dGreeniZj[:, jb]], fmt='%15.8e')
             for jb in range(nBlocks):
                 for jz in range(nZ2):
-                    np.savetxt(f, np.c_[self.dGreeniRpl[:, jz, jb], self.dGreeniZpl[:, jz, jb]], fmt='%12.5e')
+                    np.savetxt(f, np.c_[self.dGreeniRpl[:, jz, jb], self.dGreeniZpl[:, jz, jb]], fmt='%15.8e')
 
-            np.savetxt(f, self.zLimPotential, fmt='%12.5e')
+            np.savetxt(f, self.zLimPotential.ravel(), fmt='%15.8e')
 
             grBnd = self.greenBnd.ravel()
             nRZ2 = len(grBnd)
             f.write('%d\n' %nRZ2)
-            np.savetxt(f, grBnd, fmt='%12.5e')
+            np.savetxt(f, grBnd, fmt='%15.8e')
         print('Stored %s' %f_out)
 
 
@@ -514,7 +523,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     f_machineIn  = '%s/machine_description_in.%s'  %(grIOdir, args.tok)
-    f_machineOut = '%s/machine_description_out.%s' %(grIOdir, args.tok)
+    f_machineOut = '%s/green/machine_description_out.%s' %(awd, args.tok)
     
     gm = GREEN_MATRICES()
     gm.fromMachineInput(f_machineIn)
