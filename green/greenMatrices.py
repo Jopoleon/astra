@@ -21,26 +21,8 @@ awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 grIOdir = '%s/exp/cnf' %awd
 
 
-def int_float_line(str_in):
-    tmp = str_in.split()
-    return int(tmp[0]), float(tmp[1])
-
-
 def to_float(line):
     return float(line.split('!')[0].replace('d', 'e'))
-
-
-def compare_arr(arr1, arr2, lbl):
-    print(lbl)
-    absDiff = np.abs(arr1 - arr2)
-    jmd = np.argmax(absDiff)
-    index = np.unravel_index(jmd, arr1.shape)
-    print('Max rel error %s f90/python' %lbl)
-    rel_err = absDiff[index]/np.abs(arr1[index])
-    if rel_err > 1.e-6:
-        print('At index', index, jmd, arr1.shape)
-    print(absDiff[index]/np.abs(arr1[index]))
-    print('')
 
 
 def truncate(arr, ncols=3):
@@ -59,6 +41,8 @@ class GREEN_MATRICES:
 
 
     def fromMachineInput(self, f_machine):
+
+        logger.info('Reading %s', f_machine)
 
         with open(f_machine, 'r') as f:
             lines = f.readlines()
@@ -153,7 +137,6 @@ class GREEN_MATRICES:
         self.nActive = np.max(self.m_equiv)
         self.R_cond = self.R_cond[:self.nActive] / numeqcump[:self.nActive]
         self.Z_cond = self.Z_cond[:self.nActive] / numeqcump[:self.nActive]
-        self.cur_conduc = np.zeros(self.nActive, dtype=np.float32)
 
 # Coil resistivity
 
@@ -228,42 +211,40 @@ class GREEN_MATRICES:
             self.dhoriz = np.ravel([0.5*x7, 0.5*x7], 'F')
             self.dvert  = np.ravel([0.5*x8, 0.5*x8], 'F')
             area_blan   = np.ravel([width_blan*x9, width_blan*x9], 'F')
-            self.ssfw = np.sum(area_blan/self.R_blan)
+            ssfw = np.sum(area_blan/self.R_blan)
             n_blanket = len(self.R_blan)
 
             self.R_cond = np.append(self.R_cond[:self.nActive], self.R_blan)
             self.Z_cond = np.append(self.Z_cond[:self.nActive], self.Z_blan)
-            self.cur_conduc = np.append(self.cur_conduc, np.zeros(n_blanket))
             for jblan in range(n_blanket):
                 jcond = nConduc + jblan
-                self.resConduc[jcond, jcond] = res_blan*self.R_blan[jblan]/area_blan[jblan]*self.ssfw
+                self.resConduc[jcond, jcond] = res_blan*self.R_blan[jblan]/area_blan[jblan]*ssfw
             nConduc += n_blanket
 
 #
         n_blanket_pc = int(blanbpc_block[0])
         self.R_blan_pc    = np.array([])
         self.Z_blan_pc    = np.array([])
-        self.res_blan_pc  = np.array([])
         self.area_blan_pc = np.array([])
-        self.cur_blan_pc  = np.array([])
+        res_blan_pc  = np.array([])
+        cur_blan_pc  = np.array([])
         if n_blanket_pc > 0:
             for line in blanpc_block[2:]:
                 val = line.split()
                 self.R_blan_pc    = np.append( self.R_blan_pc   , to_float(val[0]))
                 self.Z_blan_pc    = np.append( self.Z_blan_pc   , to_float(val[1]))
-                self.res_blan_pc  = np.append( self.res_blan_pc , to_float(val[2]))
                 self.area_blan_pc = np.append( self.area_blan_pc, to_float(val[3]))
-                self.cur_blan_pc  = np.append( self.cur_blan_pc , to_float(val[4]))
+                res_blan_pc  = np.append(res_blan_pc , to_float(val[2]))
+                cur_blan_pc  = np.append(cur_blan_pc , to_float(val[4]))
             self.R_cond = np.append(self.R_cond, self.R_blan_pc)
             self.Z_cond = np.append(self.Z_cond, self.Z_blan_pc)
-            self.cur_conduc = np.append(self.cur_conduc, self.cur_blanpc)
             for jblan in range(n_blanket_pc):
                 jcond = nConduc + jblan
                 self.resConduc[jcond, jcond] = self.res_blan_pc[jblan]
             nConduc += n_blanket_pc
 
         self.nPassive = nConduc - self.nActive # n_blanket, n_blanket_c
-        logger.debug('nactive, npassive, ncoils, nconduc, ssfw %d %d %d %d %12.4e', self.nActive, self.nPassive, nCoils, nConduc, self.ssfw)
+        logger.debug('nactive, npassive, ncoils, nconduc, ssfw %d %d %d %d %12.4e', self.nActive, self.nPassive, nCoils, nConduc, ssfw)
 
 
     def calcGreenf(self):
@@ -320,7 +301,7 @@ class GREEN_MATRICES:
                     equivtmp   = np.append(equivtmp  , nConduc + int0_ij)
                     for jj in range(indj[j]):
                         Rce = np.append(Rce, r1[j] + dr1[j]*np.arange(indi[j]) + jj*dz_cs[j])
-                        Zce = np.append(Zce, z1[j] +        np.zeros (indi[j]) + jj*dz1[j])
+                        Zce = np.append(Zce, z1[j] +        np.zeros (indi[j]) + jj*dz1  [j])
         nctype = 2 + np.zeros(len(Rce), dtype=np.int32)
 
 #--------
@@ -373,7 +354,6 @@ class GREEN_MATRICES:
         self.indConduc = np.zeros((nConduc, nConduc))
 
         gf_diag = gf.identity(Rce, dRce, dZce, nctype)
-        print('self-ind', nConduc, ielem)
 
         for i in range(ielem):
             iii = equivtmp[i] - 1
@@ -392,7 +372,7 @@ class GREEN_MATRICES:
 
         ntype2range = {1: (-1, 0, 1), 2: (0,)}
         Rg, Zg = np.meshgrid(self.Rgrid, self.Zgrid)
-        print(Rg.shape, nR2, nZ2)
+
         self.greeni = np.zeros((nR2, nZ2, nConduc))
         for i in range(ielem):
             iii = equivtmp[i] - 1
@@ -446,6 +426,7 @@ class GREEN_MATRICES:
 
     def dumpMachineDescr(self, f_out='machine_description_out.aug'):
 
+        logger.debug('Dumping %s', f_out)
         nR2 = len(self.Rgrid)
         nZ2 = len(self.Zgrid)
         nR1 = nR2 - 1
@@ -487,7 +468,6 @@ class GREEN_MATRICES:
                 np.savetxt(f, block, fmt='%15.8e')
                 np.savetxt(f, tail , fmt='%15.8e')
 
-# Line is long
             f.write('%d\n' %nConduc)
             for jcon in range(nConduc):
                 block, tail = truncate(self.resConduc[jcon, :nConduc])
@@ -513,10 +493,11 @@ class GREEN_MATRICES:
             nRZ2 = len(grBnd)
             f.write('%d\n' %nRZ2)
             np.savetxt(f, grBnd, fmt='%15.8e')
-        print('Stored %s' %f_out)
+        logger.info('Stored %s', f_out)
 
 
 if __name__ == '__main__':
+
 
     parser = argparse.ArgumentParser(description='Write Green matrices for FEQIS')
     parser.add_argument('-t', '--tok', help='tokamak name', required=False, default='aug')
