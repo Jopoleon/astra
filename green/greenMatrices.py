@@ -243,8 +243,7 @@ class GREEN_MATRICES:
                 self.resConduc[jcond, jcond] = self.res_blan_pc[jblan]
             nConduc += n_blanket_pc
 
-        self.nPassive = nConduc - self.nActive # n_blanket, n_blanket_c
-        logger.debug('nactive, npassive, ncoils, nconduc, ssfw %d %d %d %d %12.4e', self.nActive, self.nPassive, nCoils, nConduc, ssfw)
+        logger.debug('nactive, ncoils, nconduc, ssfw %d %d %d %12.4e', self.nActive, nCoils, nConduc, ssfw)
 
 
     def calcGreenf(self):
@@ -438,6 +437,7 @@ class GREEN_MATRICES:
         nCoils   = len(self.R_coil)
         nBlocks  = self.dGreeniRj.shape[0]
         nConduc  = self.indConduc.shape[0]
+        nPassive = nConduc - self.nActive
 
         with open(f_out, 'w') as f:
             f.write('%3d %3d %3d\n' %(nR, nR2, nR1))
@@ -447,7 +447,7 @@ class GREEN_MATRICES:
             f.write('%11.8f\n' %self.Zgrid [0])
             f.write('%11.8f\n' %self.Zgrid[-1])
             f.write('%11.8f\n' %self.alpsep)
-            f.write('%d %d\n' %(self.nActive, self.nPassive))
+            f.write('%d %d\n' %(self.nActive, nPassive))
 
             f.write('%d\n' %nCoils)
             np.savetxt(f, np.c_[self.R_coil, self.Z_coil, self.dR_coil, self.dZ_coil, self.angh_coil, self.ang_coil, self.m_equiv], fmt='%15.8e %15.8e %15.8e %15.8e %15.8e %15.8e %d')
@@ -460,7 +460,7 @@ class GREEN_MATRICES:
             f.write('%3d %11.8f\n' %(self.ilim_maxZ+1, self.lim_maxZ))
             f.write('%3d %11.8f\n' %(self.ilim_minZ+1, self.lim_minZ))
 
-            np.savetxt(f, np.c_[self.R_cond[self.nActive: self.nPassive], self.Z_cond[self.nActive: self.nPassive]], fmt='%11.8f %11.8f')
+            np.savetxt(f, np.c_[self.R_cond[self.nActive: nPassive], self.Z_cond[self.nActive: nPassive]], fmt='%11.8f %11.8f')
 
             f.write('%d\n' %nConduc)
             for jcon in range(nConduc):
@@ -504,7 +504,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     f_machineIn  = '%s/machine_description_in.%s'  %(grIOdir, args.tok)
-    f_machineOut = '%s/green/machine_description_out.%s' %(awd, args.tok)
+    f_machineOut = '%s/machine_description_out.%s' %(grIOdir, args.tok)
     
     gm = GREEN_MATRICES()
     gm.fromMachineInput(f_machineIn)

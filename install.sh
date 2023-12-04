@@ -21,11 +21,10 @@ chmod 744 $AWD/exe/nc_concat.py
 chmod 744 $AWD/exe/wr_nml
 chmod 744 $AWD/exe/CheckObjs
 chmod 744 $AWD/pyparse/parser_main.py
+chmod 744 $AWD/green/greenMatrices.py
 
 make -f exe/Makefile clean
 exe/as_exe -m fluxes -v aug34954 -s 4 -e 5
 
 # Generate Green-functions for FBE
-make -f Makegenerate
-chmod 744 generate_grids_equil.exe
-./generate_grids_equil.exe
+green/greenMatrices.py
