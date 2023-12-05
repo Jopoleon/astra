@@ -35,12 +35,13 @@ double precision :: psiplasmatoconduc(i_dim1) !plasma --> conduc at t
 !grids
 integer :: nr, nz, nrho, nteta, nr2, nz2, nr1, nz1, nbnd, ngbnd, &
     redo_bnd
+integer, dimension(i_dim2, i_dim2) :: zlimpotential
 
 double precision :: rmin, rmax, zmin, zmax, dr, dz, dteta, &
     zbot, ztop, raus, rinner
 double precision, dimension(i_dim2) :: r, z, teta, rcomp, zcomp, psigrid  
 double precision, dimension(i_dim2, i_dim2) :: rho, area_eff, &
-    rpol, zpol, rpul, zpul, u_n, omega_pl, zlimpotential, &
+    rpol, zpol, rpul, zpul, u_n, omega_pl, &
     psirz, psirhoteta, psiextrz, psiplasrz
 ! r(z)pol: R, Z in polar coordinates half radial grid
 ! r(z)pul: R, Z in polar coordinates full radial grid
@@ -1267,7 +1268,7 @@ contains
         do i=1, n_of_xpoints
             j = closest_index(r_xpoint(i), r(1), dr)
             k = closest_index(z_xpoint(i), z(1), dz)
-            if (zlimpotential(j, k) < 0.5) then
+            if (zlimpotential(j, k)) then
                 psi_xpoint(i) = -1.e6
             else
                 psi_xpoint(i) = interp2d_psi(r_xpoint(i), z_xpoint(i), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))

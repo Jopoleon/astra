@@ -36,7 +36,7 @@ double precision, dimension(n_max) :: rcetmp, zcetmp, datmp, &
     drcetmp, dzcetmp, tatmp
 double precision, dimension(ncoils_max, ncoils_max) :: resconduc, indconduc, &
     dgreenirj, dgreenizj
-double precision, dimension(nplas_max, nplas_max) :: zlimpotential
+integer, dimension(nplas_max, nplas_max) :: zlimpotential
 double precision, dimension(nplas_max, nplas_max, ncoils_max) :: greeni, dgreenirpl, dgreenizpl
 double precision, dimension(ncoils_max) :: cos1,cos2,sin1,sin2,Det
 
@@ -440,7 +440,7 @@ enddo
 
 
 !generate zlimpotential
-zlimpotential = 1.
+zlimpotential = 1
 do j=1, nz2
     do i=1, nr2
         if (i < ilim_minR) zlimpotential(i, j) = 0

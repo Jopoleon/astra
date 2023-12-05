@@ -181,8 +181,8 @@ class GREEN_MATRICES:
         self.lim_minR = self.Rgrid[self.ilim_minR]
         self.lim_maxZ = self.Zgrid[self.ilim_maxZ]
         self.lim_minZ = self.Zgrid[self.ilim_minZ]
-        self.zLimPotential = np.zeros((nR2, nZ2))
-        self.zLimPotential[self.ilim_minR: self.ilim_maxR, self.ilim_minZ: self.ilim_maxZ] = 1.
+        self.zLimPotential = np.zeros((nR2, nZ2), dtype=gr_int)
+        self.zLimPotential[self.ilim_minR: self.ilim_maxR, self.ilim_minZ: self.ilim_maxZ] = 1
 
 # Blanket
 
@@ -499,7 +499,7 @@ class GREEN_MATRICES:
                 for jz in range(nZ2):
                     np.savetxt(f, np.c_[self.dGreeniRpl[:, jz, jb], self.dGreeniZpl[:, jz, jb]], fmt='%15.8e')
 
-            np.savetxt(f, self.zLimPotential.ravel(), fmt='%3.1f')
+            np.savetxt(f, self.zLimPotential.ravel(), fmt='%1d')
 
             grBnd = self.greenBnd.ravel()
             nRZ2 = len(grBnd)
