@@ -58,7 +58,7 @@ a2cdf>:.05:::;
 ! ECH
 ! TORBEAM
 
-TORBA(PEECR, CUECR, 0.d0)>:.05:::;
+!TORBA(PEECR, CUECR, 0.d0)>:.05:::;
 
 TE:AS;		TE=TEX;
 TI:AS;		TI=TIX

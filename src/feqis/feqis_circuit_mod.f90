@@ -16,7 +16,6 @@ integer :: ncoils, nreseqcoil, nlimiter
 integer, dimension(i_dim1) :: mequivalence
 double precision, dimension(500) :: limiterR, limiterZ
 double precision :: lim_maxR, lim_minR, lim_maxZ, lim_minZ
-integer :: ilim_maxR, ilim_minR, ilim_maxZ, ilim_minZ
 double precision, dimension(i_dim1) :: Rcoil, Zcoil, drcoil, dzcoil, &
     anglecoil, anglehcoil
 
@@ -1268,7 +1267,7 @@ contains
         do i=1, n_of_xpoints
             j = closest_index(r_xpoint(i), r(1), dr)
             k = closest_index(z_xpoint(i), z(1), dz)
-            if (zlimpotential(j, k)) then
+            if (zlimpotential(j, k) == 0) then
                 psi_xpoint(i) = -1.e6
             else
                 psi_xpoint(i) = interp2d_psi(r_xpoint(i), z_xpoint(i), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))

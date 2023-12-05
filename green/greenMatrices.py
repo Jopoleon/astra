@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, time, logging, argparse
+import os, logging, argparse
 import numpy as np
 import green_functions as gf
 
@@ -18,6 +18,11 @@ logger.setLevel(logging.DEBUG)
 awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 grIOdir = '%s/exp/cnf' %awd
 
+gr_flt = np.float64
+gr_int = np.int32
+empty_fltarr = np.array([], dtype=gr_flt)
+empty_intarr = np.array([], dtype=gr_int)
+
 
 def to_float(line):
     return float(line.split('!')[0].replace('d', 'e'))
@@ -29,11 +34,6 @@ def truncate(arr, ncols=3):
     arr_flat = arr.ravel()
     block = arr_flat[:ncols*nrows].reshape((nrows, ncols))
     return block, arr_flat[ncols*nrows:]
-
-gr_flt = np.float64
-gr_int = np.int32
-empty_fltarr = np.array([], dtype=gr_flt)
-empty_intarr = np.array([], dtype=gr_int)
 
 
 class GREEN_MATRICES:
@@ -110,7 +110,6 @@ class GREEN_MATRICES:
         self.angh_coil= empty_fltarr
         self.ang_coil = empty_fltarr
 
-#        n_coils = int(active_block[0])
         for line in active_block[1:]:
             try:
                 self.n_elem_coil = np.append(self.n_elem_coil, int(line))
@@ -143,7 +142,6 @@ class GREEN_MATRICES:
 
 # Coil resistivity
 
-        n_res = res_block[0]
         resConduc = []
         for line in res_block[1:]:
             resConduc.append([float(x) for x in line.split()])
@@ -154,7 +152,6 @@ class GREEN_MATRICES:
 
 # Limiter geometry
 
-        n_lim = limiter_block[0]
         Rlim = []
         Zlim = []
         for line in limiter_block[1:]:
@@ -173,16 +170,16 @@ class GREEN_MATRICES:
         self.Rlim = self.Rgrid[indR]
         self.Zlim = self.Zgrid[indZ]
 
-        self.ilim_maxR = int((lim_maxR - Rmin)/dr + 0.5)
-        self.ilim_minR = int((lim_minR - Rmin)/dr + 0.5)
-        self.ilim_maxZ = int((lim_maxZ - Zmin)/dz + 0.5)
-        self.ilim_minZ = int((lim_minZ - Zmin)/dz + 0.5)
-        self.lim_maxR = self.Rgrid[self.ilim_maxR]
-        self.lim_minR = self.Rgrid[self.ilim_minR]
-        self.lim_maxZ = self.Zgrid[self.ilim_maxZ]
-        self.lim_minZ = self.Zgrid[self.ilim_minZ]
+        ilim_maxR = int((lim_maxR - Rmin)/dr + 0.5)
+        ilim_minR = int((lim_minR - Rmin)/dr + 0.5)
+        ilim_maxZ = int((lim_maxZ - Zmin)/dz + 0.5)
+        ilim_minZ = int((lim_minZ - Zmin)/dz + 0.5)
+        self.lim_maxR = self.Rgrid[ilim_maxR]
+        self.lim_minR = self.Rgrid[ilim_minR]
+        self.lim_maxZ = self.Zgrid[ilim_maxZ]
+        self.lim_minZ = self.Zgrid[ilim_minZ]
         self.zLimPotential = np.zeros((nR2, nZ2), dtype=gr_int)
-        self.zLimPotential[self.ilim_minR: self.ilim_maxR, self.ilim_minZ: self.ilim_maxZ] = 1
+        self.zLimPotential[ilim_minR: ilim_maxR, ilim_minZ: ilim_maxZ] = 1
 
 # Blanket
 
@@ -195,25 +192,21 @@ class GREEN_MATRICES:
             x2 = empty_fltarr
             x3 = empty_fltarr
             x4 = empty_fltarr
-            x5 = empty_fltarr
-            x6 = empty_fltarr
             for line in passive_block[2:]:
                 val = line.split()
                 x1 = np.append(x1, to_float(val[1]))
                 x2 = np.append(x2, to_float(val[2]))
                 x3 = np.append(x3, to_float(val[3]))
                 x4 = np.append(x4, to_float(val[4]))
-                x5 = np.append(x5, to_float(val[5]))
-                x6 = np.append(x6, to_float(val[6]))
 
             x7 = x3 - x1
             x8 = x4 - x2
             x9 = np.hypot(x7, x8)
-            self.R_blan = np.ravel([x1 + 0.25*x7, x1 + 0.75*x7], 'F')
-            self.Z_blan = np.ravel([x2 + 0.25*x8, x2 + 0.75*x8], 'F')
-            self.dhoriz = np.ravel([0.5*x7, 0.5*x7], 'F')
-            self.dvert  = np.ravel([0.5*x8, 0.5*x8], 'F')
-            area_blan   = np.ravel([width_blan*x9, width_blan*x9], 'F')
+            self.R_blan = np.ravel([x1 + 0.25*x7, x1 + 0.75*x7], order='F')
+            self.Z_blan = np.ravel([x2 + 0.25*x8, x2 + 0.75*x8], order='F')
+            self.dhoriz = np.ravel([0.5*x7, 0.5*x7], order='F')
+            self.dvert  = np.ravel([0.5*x8, 0.5*x8], order='F')
+            area_blan   = np.ravel([width_blan*x9, width_blan*x9], order='F')
             ssfw = np.sum(area_blan/self.R_blan)
             n_blanket = len(self.R_blan)
 
@@ -241,7 +234,7 @@ class GREEN_MATRICES:
             self.Z_cond = np.append(self.Z_cond, self.Z_blan_pc)
             for jblan in range(n_blanket_pc):
                 jcond = nConduc + jblan
-                self.resConduc[jcond, jcond] = self.res_blan_pc[jblan]
+                self.resConduc[jcond, jcond] = res_blan_pc[jblan]
             nConduc += n_blanket_pc
 
         logger.debug('nactive, ncoils, nconduc, ssfw %d %d %d %12.4e', self.nActive, nCoils, nConduc, ssfw)
@@ -249,33 +242,25 @@ class GREEN_MATRICES:
 
     def calcGreenf(self):
 
-        tim = np.zeros(6)
-        tim[0] = time.time()
-        
 #------
 # Coils
-#------
 
         nBlocks = 0
         nConduc = 0
         nCoils = len(self.R_coil)
-        if hasattr(self, 'R_blan_pc'):
-            n_blanket_pc = len(self.R_blan_pc)
 
         identcoil = np.ones(nCoils, dtype=bool)
         sin_coil = np.sin(self.ang_coil)
         cos_coil = np.cos(self.ang_coil)
 
-        r1 = self.R_coil - 0.5*( self.dR_coil + self.dZ_coil*cos_coil/sin_coil)
-        z1 = self.Z_coil - 0.5*self.dZ_coil
         x12 = self.dR_coil*sin_coil/self.dZ_coil
         indi = np.sqrt(x12   *self.n_elem_coil).astype(gr_int) + 1
         indj = np.sqrt(1./x12*self.n_elem_coil).astype(gr_int) + 1
         dr1 = self.dR_coil/indi        # x3 ; x4 = 0.
         dz1 = self.dZ_coil/indj        # x6
         dz_cs = dz1*cos_coil/sin_coil  # x5
-        r1 += 0.5*(dr1 + dz_cs)
-        z1 += 0.5*dz1
+        r1 = self.R_coil - 0.5*( self.dR_coil + self.dZ_coil*cos_coil/sin_coil) + 0.5*(dr1 + dz_cs)
+        z1 = self.Z_coil - 0.5*self.dZ_coil + 0.5*dz1
 
         Rce   = empty_fltarr
         Zce   = empty_fltarr
@@ -309,7 +294,6 @@ class GREEN_MATRICES:
 
 #--------
 # Blanket
-#--------
 
         if hasattr(self, 'R_blan_pc'):
             n_blanket_pc = len(self.R_blan_pc)
@@ -353,8 +337,9 @@ class GREEN_MATRICES:
 
         ielem = len(tatmp)
 
+#-----------------
 # Self inductances
-        tim[1] = time.time()
+
         self.indConduc = np.zeros((nConduc, nConduc))
 
         gf_diag = gf.identity(Rce, dRce, dZce, nctype)
@@ -370,8 +355,9 @@ class GREEN_MATRICES:
 
         self.indConduc *= 0.8*np.pi
 
+#-----------------
 # Grid inductances
-        tim[2] = time.time()
+
         nR2 = len(self.Rgrid)
         nZ2 = len(self.Zgrid)
         dr = (self.Rgrid[-1] - self.Rgrid[0])/float(nR2 - 1)
@@ -393,14 +379,13 @@ class GREEN_MATRICES:
             self.greeni[:, :, iii] /= len(irange)
         self.greeni *= 0.4
 
-# Calculate inter-block forces (check: are they right?)
+#-------------------
+# Inter-block forces
 
-        tim[3] = time.time()
         self.dGreeniRpl = np.zeros((nR2, nZ2, nBlocks), dtype=gr_flt)
         self.dGreeniZpl = np.zeros((nR2, nZ2, nBlocks), dtype=gr_flt)
         self.dGreeniRj  = np.zeros((nBlocks, nBlocks) , dtype=gr_flt)
-        self.dGreeniZj  = np.zeros((nBlocks, nBlocks) , dtype=gr_flt)
-        
+        self.dGreeniZj  = np.zeros((nBlocks, nBlocks) , dtype=gr_flt) 
 
         for i in range(ielem):
             iii = equivforce[i] - 1
@@ -417,7 +402,7 @@ class GREEN_MATRICES:
                 if jjj != iii:
                     self.dGreeniRj[iii, jjj] += prefac_r*tar21[j]
                     self.dGreeniZj[iii, jjj] += prefac_z*taz21[j]
-            
+
             gr1 = gf.greenFunction(Rce[i] + dr/2., Zce[i], Rg, Zg)
             gr2 = gf.greenFunction(Rce[i] - dr/2., Zce[i], Rg, Zg)
             gz1 = gf.greenFunction(Rce[i], Zce[i] + dz/2., Rg, Zg)
@@ -425,19 +410,15 @@ class GREEN_MATRICES:
             self.dGreeniRpl[:, :, iii] += prefac_r*(gr1 - gr2)
             self.dGreeniZpl[:, :, iii] += prefac_z*(gz1 - gz2)
 
+#---------
 # Boundary
 
-        tim[4] = time.time()
         self.greenBnd = gf.greenBoundary(self.Rgrid, self.Zgrid)
-        tim[5] = time.time()
-        print('Calc time %6.4f' %(tim[-1] - tim[0]))
-        print('CPU check', np.diff(tim))
 
 
     def dumpMachineDescr(self, f_out='machine_description_out.aug'):
 
         logger.debug('Dumping %s', f_out)
-        t1 = time.time()
         nR2 = len(self.Rgrid)
         nZ2 = len(self.Zgrid)
         nR1 = nR2 - 1
@@ -467,10 +448,10 @@ class GREEN_MATRICES:
             f.write('%d\n' %nLimiter)
             np.savetxt(f, np.c_[self.Rlim, self.Zlim], fmt='%11.8f %11.8f')
 
-            f.write('%3d %11.8f\n' %(self.ilim_maxR+1, self.lim_maxR))
-            f.write('%3d %11.8f\n' %(self.ilim_minR+1, self.lim_minR))
-            f.write('%3d %11.8f\n' %(self.ilim_maxZ+1, self.lim_maxZ))
-            f.write('%3d %11.8f\n' %(self.ilim_minZ+1, self.lim_minZ))
+            f.write('%11.8f\n' %self.lim_maxR)
+            f.write('%11.8f\n' %self.lim_minR)
+            f.write('%11.8f\n' %self.lim_maxZ)
+            f.write('%11.8f\n' %self.lim_minZ)
 
             np.savetxt(f, np.c_[self.R_cond[self.nActive: nPassive], self.Z_cond[self.nActive: nPassive]], fmt='%11.8f %11.8f')
 
@@ -506,8 +487,7 @@ class GREEN_MATRICES:
             f.write('%d\n' %nRZ2)
             np.savetxt(f, grBnd, fmt='%15.8e')
         logger.info('Stored %s', f_out)
-        t2 = time.time()
-        print('Writing time %6.3f' %(t2 - t1))
+
 
 if __name__ == '__main__':
 

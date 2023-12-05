@@ -480,11 +480,10 @@ write(32, *) nlimiter
 do i=1, nlimiter
     write(32, *) limiterr(i),limiterz(i)
 enddo
-write(32,*) ilim_maxR,lim_maxR
-write(32,*) ilim_minR,lim_minR
-write(32,*) ilim_maxZ,lim_maxZ
-write(32,*) ilim_minZ,lim_minZ
-
+write(32,*) lim_maxR
+write(32,*) lim_minR
+write(32,*) lim_maxZ
+write(32,*) lim_minZ
 
 do i=nactive+1,npassive
     write(32, *) r_cond(i),z_cond(i)

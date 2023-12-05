@@ -719,7 +719,6 @@ use pi_vars, only: GPI
 use fft_mod_eff, only: sintable, costable
 use feqis_circuit, only: nr, nr1, nr2, nz, nz1, nz2, &
     nactive, npassive, ncoils, nconduc, nlimiter, nblocks, ngbnd, &
-    ilim_minr, ilim_maxr, ilim_minz, ilim_maxz, &
     lim_minr, lim_maxr, lim_minz, lim_maxz, &
     rmin, rmax, zmin, zmax, r, z, dr, dz, rcomp, zcomp, r_cond, z_cond, &
     rcoil, zcoil, drcoil, dzcoil, anglecoil, anglehcoil, mequivalence, &
@@ -772,10 +771,10 @@ open(32, file=TRIM(fname))
     do i=1, nlimiter
         read(32, *) limiterr(i), limiterz(i)
     enddo
-    read(32, *) ilim_maxR, lim_maxR
-    read(32, *) ilim_minR, lim_minR
-    read(32, *) ilim_maxZ, lim_maxZ
-    read(32, *) ilim_minZ, lim_minZ
+    read(32, *) lim_maxR
+    read(32, *) lim_minR
+    read(32, *) lim_maxZ
+    read(32, *) lim_minZ
     do i=nactive + 1, npassive
         read(32, *) r_cond(i), z_cond(i)
     enddo
