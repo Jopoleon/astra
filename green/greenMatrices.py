@@ -2,8 +2,6 @@
 
 import os, logging, argparse
 import numpy as np
-import matplotlib.pylab as plt
-from scipy.interpolate import interp1d
 import green_functions as gf
 
 
@@ -117,7 +115,7 @@ class GREEN_MATRICES:
                 self.Z_coil   = np.append(self.Z_coil   , float(zc))
                 self.dR_coil  = np.append(self.dR_coil  , float(drc))
                 self.dZ_coil  = np.append(self.dZ_coil  , float(dzc))
-                self.angh_coil= np.append(self.angh_coil, float(ang))
+                self.angh_coil= np.append(self.angh_coil, float(angh))
                 self.ang_coil = np.append(self.ang_coil , float(ang))
                 self.m_turns  = np.append(self.m_turns, int(mt))
                 self.m_equiv  = np.append(self.m_equiv, int(me))
