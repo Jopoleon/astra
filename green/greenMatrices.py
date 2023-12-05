@@ -30,7 +30,7 @@ def truncate(arr, ncols=3):
     block = arr_flat[:ncols*nrows].reshape((nrows, ncols))
     return block, arr_flat[ncols*nrows:]
 
-gr_flt = np.float32
+gr_flt = np.float64
 gr_int = np.int32
 empty_fltarr = np.array([], dtype=gr_flt)
 empty_intarr = np.array([], dtype=gr_int)
@@ -92,8 +92,8 @@ class GREEN_MATRICES:
         nR1 = nR + 1
         nZ1 = nZ + 1
 
-        self.Rgrid = np.linspace(Rmin, Rmax, nR2, endpoint=True)
-        self.Zgrid = np.linspace(Zmin, Zmax, nZ2, endpoint=True)
+        self.Rgrid = np.linspace(Rmin, Rmax, nR2, endpoint=True, dtype=gr_flt)
+        self.Zgrid = np.linspace(Zmin, Zmax, nZ2, endpoint=True, dtype=gr_flt)
 
         dr = (Rmax - Rmin)/float(nR1)
         dz = (Zmax - Zmin)/float(nZ1)
@@ -398,14 +398,14 @@ class GREEN_MATRICES:
         tim[3] = time.time()
         self.dGreeniRpl = np.zeros((nR2, nZ2, nBlocks), dtype=gr_flt)
         self.dGreeniZpl = np.zeros((nR2, nZ2, nBlocks), dtype=gr_flt)
-        self.dGreeniRj  = np.zeros((nBlocks, nBlocks), dtype=gr_flt)
-        self.dGreeniZj  = np.zeros((nBlocks, nBlocks), dtype=gr_flt)
+        self.dGreeniRj  = np.zeros((nBlocks, nBlocks) , dtype=gr_flt)
+        self.dGreeniZj  = np.zeros((nBlocks, nBlocks) , dtype=gr_flt)
+        
 
         for i in range(ielem):
             iii = equivforce[i] - 1
             prefac_r = -0.8*np.pi*tatmp[i]/dr
             prefac_z = -0.8*np.pi*tatmp[i]/dz
-
             g_r1 = gf.greenFunction(Rce[i] + dr/2., Zce[i], Rce, Zce)
             g_r2 = gf.greenFunction(Rce[i] - dr/2., Zce[i], Rce, Zce)
             g_z1 = gf.greenFunction(Rce[i], Zce[i] + dz/2., Rce, Zce)

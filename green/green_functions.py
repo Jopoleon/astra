@@ -5,6 +5,7 @@ from scipy.constants import mu_0
 cPsi  = 2.*np.pi
 gs_float = np.float64
 
+
 def greenFunction(Rloc, Zloc, Rcoil, Zcoil):
 
     sum_sq = (Rloc + Rcoil)**2 + (Zloc - Zcoil)**2
