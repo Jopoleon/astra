@@ -344,8 +344,8 @@ class GREEN_MATRICES:
             Zce  = np.append(Zce , self.Z_blan)
             dRce = np.append(dRce, self.dhoriz)
             dZce = np.append(dZce, self.dvert)
-            nctype   = np.append(nctype, np.ones(n_blanket, dtype=gr_int))
-            tatmp    = np.append(tatmp , np.ones(n_blanket, dtype=gr_flt))
+            nctype     = np.append(nctype, np.ones(n_blanket, dtype=gr_int))
+            tatmp      = np.append(tatmp , np.ones(n_blanket, dtype=gr_flt))
             equivtmp   = np.append(equivtmp  , nConduc + np.arange(n_blanket) + 1)
             equivforce = np.append(equivforce, nBlocks + np.arange(n_blanket) + 1)
             nConduc += n_blanket
@@ -430,12 +430,14 @@ class GREEN_MATRICES:
         tim[4] = time.time()
         self.greenBnd = gf.greenBoundary(self.Rgrid, self.Zgrid)
         tim[5] = time.time()
-        print(np.diff(tim))
+        print('Calc time %6.4f' %(tim[-1] - tim[0]))
+        print('CPU check', np.diff(tim))
 
 
     def dumpMachineDescr(self, f_out='machine_description_out.aug'):
 
         logger.debug('Dumping %s', f_out)
+        t1 = time.time()
         nR2 = len(self.Rgrid)
         nZ2 = len(self.Zgrid)
         nR1 = nR2 - 1
@@ -504,7 +506,8 @@ class GREEN_MATRICES:
             f.write('%d\n' %nRZ2)
             np.savetxt(f, grBnd, fmt='%15.8e')
         logger.info('Stored %s', f_out)
-
+        t2 = time.time()
+        print('Writing time %6.3f' %(t2 - t1))
 
 if __name__ == '__main__':
 
