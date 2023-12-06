@@ -488,9 +488,12 @@ do i=1, nconduc
     write(32, *) indconduc(i, 1:nconduc)
 enddo
 
-write(32, *) nconduc
-do i=1, nconduc
-    write(32, *) resconduc(i, 1:nconduc)
+write(32, *) nactive, nconduc
+do i=1, nactive
+    write(32, *) (resconduc(i, j), j=1, nactive)
+enddo
+do i=nactive+1, nconduc
+    write(32, *) resconduc(i, i)
 enddo
 
 do i=1, nconduc

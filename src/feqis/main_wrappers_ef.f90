@@ -733,6 +733,7 @@ implicit none
 integer :: i, j, ii, jj
 character(len=80) :: fname
 
+resconduc = 0.d0
 fname = 'exp/cnf/machine_description_out.'//trim(machine)
 open(32, file=TRIM(fname))
     read(32, *) nr2, nz2
@@ -784,9 +785,12 @@ open(32, file=TRIM(fname))
     do i=1, nconduc
         read(32, *) indconduc(i, 1:nconduc)
     enddo
-    read(32, *) nconduc
-    do i=1, nconduc
-        read(32, *) resconduc(i, 1:nconduc)
+    read(32, *) nactive, nconduc
+    do i=1, nactive
+        read(32, *) resconduc(i, 1:nactive)
+    enddo
+    do i=1, nconduc-nactive
+        read(32, *) resconduc(nactive+i, nactive+i)
     enddo
     do i=1, nconduc
         do j=1, nr2

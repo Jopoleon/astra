@@ -124,9 +124,8 @@ class GREEN_MATRICES:
 
         jBeg, jEnd = linesDelim['res']
         n_res = to_int(lines[jBeg])
-        n_res_max = 300
-        self.resConduc = np.zeros((n_res_max, n_res_max), dtype=gr_flt)
-        self.resConduc[:n_res, :n_res] = np.loadtxt(f_machine, skiprows=jBeg+1, max_rows=n_res, dtype=gr_flt)
+        self.resConduc = np.loadtxt(f_machine, skiprows=jBeg+1, max_rows=n_res, dtype=gr_flt)
+        self.resConduc_diag = empty_fltarr
 
 # Limiter geometry
 
@@ -175,7 +174,7 @@ class GREEN_MATRICES:
             self.Z_cond = np.append(self.Z_cond[:self.nActive], self.Z_blan)
             for jblan in range(n_blanket):
                 jcond = nConduc + jblan
-                self.resConduc[jcond, jcond] = res_blan*self.R_blan[jblan]/area_blan[jblan]*ssfw
+                self.resConduc_diag = np.append(self.resConduc_diag, res_blan*self.R_blan[jblan]/area_blan[jblan]*ssfw)
             nConduc += n_blanket
 
 # Blanketpc
@@ -189,7 +188,7 @@ class GREEN_MATRICES:
             self.Z_cond = np.append(self.Z_cond, self.Z_blan_pc)
             for jblan in range(n_blanket_pc):
                 jcond = nConduc + jblan
-                self.resConduc[jcond, jcond] = res_blan_pc[jblan]
+                self.resConduc_diag = np.append(self.resConduc_diag, res_blan_pc[jblan])
             nConduc += n_blanket_pc
 
         logger.debug('nactive, ncoils, nconduc, ssfw %d %d %d %12.4e', self.nActive, nCoils, nConduc, ssfw)
@@ -406,11 +405,9 @@ class GREEN_MATRICES:
                 np.savetxt(f, block, fmt='%15.8e')
                 np.savetxt(f, tail , fmt='%15.8e')
 
-            f.write('%d\n' %nConduc)
-            for jcon in range(nConduc):
-                block, tail = truncate(self.resConduc[jcon, :nConduc])
-                np.savetxt(f, block, fmt='%15.8e')
-                np.savetxt(f, tail, fmt='%15.8e')
+            f.write('%d %s\n' %(self.nActive, nConduc))
+            np.savetxt(f, self.resConduc, fmt='%15.8e')
+            np.savetxt(f, self.resConduc_diag, fmt='%15.8e')
 
             for jcon in range(nConduc):
                 for jr in range(nR2):
