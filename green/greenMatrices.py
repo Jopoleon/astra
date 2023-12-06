@@ -28,6 +28,10 @@ def strip_line(line):
     return line.split('!')[0].strip()
 
 
+def split_line(line):
+    return strip_line(line).split()
+
+
 def to_int(line):
     return int(strip_line(line))
 
@@ -59,28 +63,26 @@ class GREEN_MATRICES:
             lines = f.readlines()
 
 # Get blocks from file
+
         linesDelim = {}
-        labels = ['general', 'active', 'res', 'lim', 'blan', 'blanpc']
+        labels = ['grid', 'active', 'res', 'lim', 'blan', 'blanpc']
         for key in labels:
             linesDelim[key] = [0, 0]
 
         line_old = ''
         j_block = 0
-        for jl, lin in enumerate(lines):
-            line = lin.split('!')[0].strip()            
+        for jline, lin in enumerate(lines):
+            line = strip_line(lin)            
             if line and not line_old:
-                linesDelim[labels[j_block]][0] = jl
-                line_old = line
-                continue
+                linesDelim[labels[j_block]][0] = jline
             if not line and line_old:
-                linesDelim[labels[j_block]][1] = jl
-                line_old = line
+                linesDelim[labels[j_block]][1] = jline
                 j_block += 1
-                continue
+            line_old = line
 
-# General settings
+# Spatial grids
 
-        jBeg, jEnd = linesDelim['general']
+        jBeg, jEnd = linesDelim['grid']
         nR2  = to_int(lines[jBeg]  )
         nZ2  = to_int(lines[jBeg+1])
         Rmin = to_float(lines[jBeg+2])
@@ -96,16 +98,6 @@ class GREEN_MATRICES:
 
 # Coils geometry
 
-        self.n_elem_coil = empty_intarr
-        self.m_turns     = empty_intarr
-        self.m_equiv     = empty_intarr
-        self.R_coil   = empty_fltarr
-        self.Z_coil   = empty_fltarr
-        self.dR_coil  = empty_fltarr
-        self.dZ_coil  = empty_fltarr
-        self.angh_coil= empty_fltarr
-        self.ang_coil = empty_fltarr
-
         jBeg, jEnd = linesDelim['active']
         n_coils = to_int(lines[jBeg])
         self.R_coil, self.Z_coil, self.dR_coil, self.dZ_coil, self.angh_coil, self.ang_coil, \
@@ -116,35 +108,32 @@ class GREEN_MATRICES:
         self.angh_coil = np.radians(self.angh_coil)
         self.ang_coil  = np.radians(self.ang_coil)
         nCoils = len(self.R_coil)
-        numeqcump = np.zeros(nCoils, dtype=gr_int)
-        self.R_cond = np.zeros_like(self.R_coil)
-        self.Z_cond = np.zeros_like(self.R_coil)
+        self.nActive = np.max(self.m_equiv)
+        numeqcump   = np.zeros(self.nActive, dtype=gr_int)
+        self.R_cond = np.zeros(self.nActive, dtype=gr_flt)
+        self.Z_cond = np.zeros_like(self.R_cond)
         for jcoil in range(nCoils):
             jequiv = self.m_equiv[jcoil] - 1
             self.R_cond[jequiv] += self.R_coil[jcoil]
             self.Z_cond[jequiv] += self.Z_coil[jcoil]
             numeqcump[jequiv] += 1
-
-        self.nActive = np.max(self.m_equiv)
-        self.R_cond = self.R_cond[:self.nActive] / numeqcump[:self.nActive]
-        self.Z_cond = self.Z_cond[:self.nActive] / numeqcump[:self.nActive]
+        self.R_cond /= numeqcump
+        self.Z_cond /= numeqcump
 
 # Coil resistivity
 
         jBeg, jEnd = linesDelim['res']
         n_res = to_int(lines[jBeg])
-        resConduc = np.loadtxt(f_machine, skiprows=jBeg+1, max_rows=n_res, dtype=gr_flt)
         n_res_max = 300
         self.resConduc = np.zeros((n_res_max, n_res_max), dtype=gr_flt)
-        self.resConduc[:n_res, :n_res] = resConduc
+        self.resConduc[:n_res, :n_res] = np.loadtxt(f_machine, skiprows=jBeg+1, max_rows=n_res, dtype=gr_flt)
 
 # Limiter geometry
 
         jBeg, jEnd = linesDelim['lim']
         n_lim = to_int(lines[jBeg])
         Rlim, Zlim = np.loadtxt(f_machine, unpack=True, skiprows=jBeg+1, max_rows=n_lim, dtype=gr_flt)
-        pieces = strip_line(lines[jEnd-1]).split()
-        lim_maxR, lim_minR, lim_maxZ, lim_minZ = (float(x) for x in pieces)
+        lim_maxR, lim_minR, lim_maxZ, lim_minZ = (float(x) for x in split_line(lines[jEnd-1]))
         indR = ((Rlim - Rmin)/dr + 0.5).astype(int)
         indZ = ((Zlim - Zmin)/dz + 0.5).astype(int)
         self.Rlim = self.Rgrid[indR]
@@ -164,10 +153,10 @@ class GREEN_MATRICES:
 # Blanket
 
         jBeg, jEnd = linesDelim['blan']
-        res_blan, width_blan = (to_float(x) for x in strip_line(lines[jBeg]).split())
+        res_blan, width_blan = (to_float(x) for x in split_line(lines[jBeg]))
         n_blan = int(lines[jBeg+1].split()[0])
         if n_blan > 0:
-            x1, x2, x3, x4 = np.loadtxt(f_machine, unpack=True, usecols=(1, 2, 3,4), skiprows=jBeg+2, max_rows=n_blan, dtype=gr_flt)
+            x1, x2, x3, x4 = np.loadtxt(f_machine, unpack=True, usecols=(1, 2, 3, 4), skiprows=jBeg+2, max_rows=n_blan, dtype=gr_flt)
 
         nConduc = self.nActive
         if n_blan > 0:
@@ -194,7 +183,7 @@ class GREEN_MATRICES:
         jBeg, jEnd = linesDelim['blanpc']
         n_blanket_pc = to_int(lines[jBeg])
         if n_blanket_pc > 0:
-            self.R_blan_pc, self.Z_blan_pc, res_blan_pc, self.area_blan_pc = np.loadtxt(f_machine, unpack=True, usecols=(0, 1, 2, 3), skiprows=jBeg+2, max_rows=n_blanket_pc, dtype=gr_flt)
+            self.R_blan_pc, self.Z_blan_pc, res_blan_pc, self.area_blan_pc = np.loadtxt(f_machine, unpack=True, usecols=(0, 1, 2, 3), skiprows=jBeg+1, max_rows=n_blanket_pc, dtype=gr_flt)
 
             self.R_cond = np.append(self.R_cond, self.R_blan_pc)
             self.Z_cond = np.append(self.Z_cond, self.Z_blan_pc)
@@ -306,10 +295,9 @@ class GREEN_MATRICES:
 #-----------------
 # Self inductances
 
-        self.indConduc = np.zeros((nConduc, nConduc))
-
         gf_diag = gf.identity(Rce, dRce, dZce, nctype)
 
+        self.indConduc = np.zeros((nConduc, nConduc))
         for i in range(ielem):
             iii = equivtmp[i] - 1
             self.indConduc[iii, iii] += gf_diag[i]*tatmp[i]**2/2.
@@ -318,7 +306,6 @@ class GREEN_MATRICES:
                 if j != i:
                     jjj = equivtmp[j] - 1
                     self.indConduc[iii, jjj] += gf_ta[j]*tatmp[i]
-
         self.indConduc *= 0.8*np.pi
 
 #-----------------
@@ -448,7 +435,6 @@ class GREEN_MATRICES:
 
 
 if __name__ == '__main__':
-
 
     parser = argparse.ArgumentParser(description='Write Green matrices for FEQIS')
     parser.add_argument('-t', '--tok', help='tokamak name', required=False, default='aug')
