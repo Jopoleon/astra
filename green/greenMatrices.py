@@ -24,8 +24,16 @@ empty_fltarr = np.array([], dtype=gr_flt)
 empty_intarr = np.array([], dtype=gr_int)
 
 
+def strip_line(line):
+    return line.split('!')[0].strip()
+
+
+def to_int(line):
+    return int(strip_line(line))
+
+
 def to_float(line):
-    return float(line.split('!')[0].replace('d', 'e'))
+    return float(strip_line(line).replace('d', 'e'))
 
 
 def truncate(arr, ncols=3):
@@ -50,53 +58,41 @@ class GREEN_MATRICES:
         with open(f_machine, 'r') as f:
             lines = f.readlines()
 
-# Get blocks
-        general_block = []
-        active_block  = []
-        res_block     = []
-        limiter_block = []
-        passive_block = []
-        blanbpc_block = []
+# Get blocks from file
+        linesDelim = {}
+        labels = ['general', 'active', 'res', 'lim', 'blan', 'blanpc']
+        for key in labels:
+            linesDelim[key] = [0, 0]
 
+        line_old = ''
         j_block = 0
-        for lin in lines:
-            line = lin.split('!')[0].strip()
-            if not line:
+        for jl, lin in enumerate(lines):
+            line = lin.split('!')[0].strip()            
+            if line and not line_old:
+                linesDelim[labels[j_block]][0] = jl
+                line_old = line
+                continue
+            if not line and line_old:
+                linesDelim[labels[j_block]][1] = jl
+                line_old = line
                 j_block += 1
                 continue
-            if j_block == 1:
-                general_block.append(line)
-            elif j_block == 2:
-                active_block.append(line)
-            elif j_block == 3:
-                res_block.append(line)
-            elif j_block == 4:
-                limiter_block.append(line)
-            elif j_block == 5:
-                passive_block.append(line)
-            elif j_block == 6:
-                blanbpc_block.append(line)
 
 # General settings
 
-        nR = int(general_block[0]) - 2
-        nZ = int(general_block[1]) - 2
-        Rmin = to_float(general_block[2])
-        Rmax = to_float(general_block[3])
-        Zmin = to_float(general_block[4])
-        Zmax = to_float(general_block[5])
-        self.alpsep = to_float(general_block[6])
-
-        nR2 = nR + 2
-        nZ2 = nZ + 2
-        nR1 = nR + 1
-        nZ1 = nZ + 1
+        jBeg, jEnd = linesDelim['general']
+        nR2  = to_int(lines[jBeg]  )
+        nZ2  = to_int(lines[jBeg+1])
+        Rmin = to_float(lines[jBeg+2])
+        Rmax = to_float(lines[jBeg+3])
+        Zmin = to_float(lines[jBeg+4])
+        Zmax = to_float(lines[jBeg+5])
+        self.alpsep = to_float(lines[jBeg+6])
 
         self.Rgrid = np.linspace(Rmin, Rmax, nR2, endpoint=True, dtype=gr_flt)
         self.Zgrid = np.linspace(Zmin, Zmax, nZ2, endpoint=True, dtype=gr_flt)
-
-        dr = (Rmax - Rmin)/float(nR1)
-        dz = (Zmax - Zmin)/float(nZ1)
+        dr = (Rmax - Rmin)/float(nR2 - 1)
+        dz = (Zmax - Zmin)/float(nZ2 - 1)
 
 # Coils geometry
 
@@ -110,19 +106,12 @@ class GREEN_MATRICES:
         self.angh_coil= empty_fltarr
         self.ang_coil = empty_fltarr
 
-        for line in active_block[1:]:
-            try:
-                self.n_elem_coil = np.append(self.n_elem_coil, int(line))
-            except:
-                rc, zc, drc, dzc, angh, ang, mt, me = line.split()
-                self.R_coil   = np.append(self.R_coil   , float(rc))
-                self.Z_coil   = np.append(self.Z_coil   , float(zc))
-                self.dR_coil  = np.append(self.dR_coil  , float(drc))
-                self.dZ_coil  = np.append(self.dZ_coil  , float(dzc))
-                self.angh_coil= np.append(self.angh_coil, float(angh))
-                self.ang_coil = np.append(self.ang_coil , float(ang))
-                self.m_turns  = np.append(self.m_turns, int(mt))
-                self.m_equiv  = np.append(self.m_equiv, int(me))
+        jBeg, jEnd = linesDelim['active']
+        n_coils = to_int(lines[jBeg])
+        self.R_coil, self.Z_coil, self.dR_coil, self.dZ_coil, self.angh_coil, self.ang_coil, \
+            self.m_turns, self.m_equiv, self.n_elem_coil = \
+            np.genfromtxt(f_machine, unpack=True, skip_header=jBeg+1, max_rows=n_coils, \
+            dtype=6*[np.float32] + 3*[np.int32])
 
         self.angh_coil = np.radians(self.angh_coil)
         self.ang_coil  = np.radians(self.ang_coil)
@@ -142,31 +131,22 @@ class GREEN_MATRICES:
 
 # Coil resistivity
 
-        resConduc = []
-        for line in res_block[1:]:
-            resConduc.append([float(x) for x in line.split()])
-        n_res = len(resConduc)
+        jBeg, jEnd = linesDelim['res']
+        n_res = to_int(lines[jBeg])
+        resConduc = np.loadtxt(f_machine, skiprows=jBeg+1, max_rows=n_res, dtype=gr_flt)
         n_res_max = 300
         self.resConduc = np.zeros((n_res_max, n_res_max), dtype=gr_flt)
-        self.resConduc[:n_res, :n_res] = np.array(resConduc, dtype=gr_flt)
+        self.resConduc[:n_res, :n_res] = resConduc
 
 # Limiter geometry
 
-        Rlim = []
-        Zlim = []
-        for line in limiter_block[1:]:
-            pieces = line.split()
-            try:
-                a, b = pieces
-                Rlim.append(float(a))
-                Zlim.append(float(b))
-            except:
-                lim_maxR, lim_minR, lim_maxZ, lim_minZ = (float(x) for x in pieces)
-
-        Rlim1 = np.array(Rlim, dtype=gr_flt)
-        Zlim1 = np.array(Zlim, dtype=gr_flt)
-        indR = ((Rlim1 - Rmin)/dr + 0.5).astype(int)
-        indZ = ((Zlim1 - Zmin)/dz + 0.5).astype(int)
+        jBeg, jEnd = linesDelim['lim']
+        n_lim = to_int(lines[jBeg])
+        Rlim, Zlim = np.loadtxt(f_machine, unpack=True, skiprows=jBeg+1, max_rows=n_lim, dtype=gr_flt)
+        pieces = strip_line(lines[jEnd-1]).split()
+        lim_maxR, lim_minR, lim_maxZ, lim_minZ = (float(x) for x in pieces)
+        indR = ((Rlim - Rmin)/dr + 0.5).astype(int)
+        indZ = ((Zlim - Zmin)/dz + 0.5).astype(int)
         self.Rlim = self.Rgrid[indR]
         self.Zlim = self.Zgrid[indZ]
 
@@ -183,22 +163,14 @@ class GREEN_MATRICES:
 
 # Blanket
 
-        res_blan, width_blan = (to_float(x) for x in passive_block[0].split())
-        n_blan = int(passive_block[1].split()[0])
-        nConduc = self.nActive
-
+        jBeg, jEnd = linesDelim['blan']
+        res_blan, width_blan = (to_float(x) for x in strip_line(lines[jBeg]).split())
+        n_blan = int(lines[jBeg+1].split()[0])
         if n_blan > 0:
-            x1 = empty_fltarr
-            x2 = empty_fltarr
-            x3 = empty_fltarr
-            x4 = empty_fltarr
-            for line in passive_block[2:]:
-                val = line.split()
-                x1 = np.append(x1, to_float(val[1]))
-                x2 = np.append(x2, to_float(val[2]))
-                x3 = np.append(x3, to_float(val[3]))
-                x4 = np.append(x4, to_float(val[4]))
+            x1, x2, x3, x4 = np.loadtxt(f_machine, unpack=True, usecols=(1, 2, 3,4), skiprows=jBeg+2, max_rows=n_blan, dtype=gr_flt)
 
+        nConduc = self.nActive
+        if n_blan > 0:
             x7 = x3 - x1
             x8 = x4 - x2
             x9 = np.hypot(x7, x8)
@@ -217,19 +189,13 @@ class GREEN_MATRICES:
                 self.resConduc[jcond, jcond] = res_blan*self.R_blan[jblan]/area_blan[jblan]*ssfw
             nConduc += n_blanket
 
-#
-        n_blanket_pc = int(blanbpc_block[0])
-        self.R_blan_pc    = empty_fltarr
-        self.Z_blan_pc    = empty_fltarr
-        self.area_blan_pc = empty_fltarr
-        res_blan_pc  = empty_fltarr
+# Blanketpc
+
+        jBeg, jEnd = linesDelim['blanpc']
+        n_blanket_pc = to_int(lines[jBeg])
         if n_blanket_pc > 0:
-            for line in blanpc_block[2:]:
-                val = line.split()
-                self.R_blan_pc    = np.append( self.R_blan_pc   , to_float(val[0]))
-                self.Z_blan_pc    = np.append( self.Z_blan_pc   , to_float(val[1]))
-                self.area_blan_pc = np.append( self.area_blan_pc, to_float(val[3]))
-                res_blan_pc  = np.append(res_blan_pc , to_float(val[2]))
+            self.R_blan_pc, self.Z_blan_pc, res_blan_pc, self.area_blan_pc = np.loadtxt(f_machine, unpack=True, usecols=(0, 1, 2, 3), skiprows=jBeg+2, max_rows=n_blanket_pc, dtype=gr_flt)
+
             self.R_cond = np.append(self.R_cond, self.R_blan_pc)
             self.Z_cond = np.append(self.Z_cond, self.Z_blan_pc)
             for jblan in range(n_blanket_pc):
@@ -282,9 +248,9 @@ class GREEN_MATRICES:
                     indij = indi[j]*indj[j]
                     flt0_ij = np.zeros(indij, dtype=gr_flt)
                     int0_ij = np.zeros(indij, dtype=gr_int)
-                    dRce = np.append(dRce, dr1[j] + flt0_ij) # lot of redundancy, reduce!
-                    dZce = np.append(dZce, dz1[j] + flt0_ij)
-                    tatmp    = np.append(tatmp   , self.m_turns[j]/float(indij) + flt0_ij)
+                    dRce  = np.append(dRce , dr1[j] + flt0_ij) # lot of redundancy, reduce!
+                    dZce  = np.append(dZce , dz1[j] + flt0_ij)
+                    tatmp = np.append(tatmp, self.m_turns[j]/float(indij) + flt0_ij)
                     equivforce = np.append(equivforce, j + 1    + int0_ij)
                     equivtmp   = np.append(equivtmp  , nConduc + int0_ij)
                     for jj in range(indj[j]):
@@ -305,9 +271,9 @@ class GREEN_MATRICES:
             z1 = self.Z_blan_pc - 0.5*dx
             flt0_iipc = np.zeros(ind_pc**2*n_blanket_pc, dtype=gr_flt)
             int0_iipc = np.zeros(ind_pc**2*n_blanket_pc, dtype=gr_int)
-            dRce  = np.append(dRce, dx + flt0_iipc)
-            dZce  = np.append(dZce, dx + flt0_iipc)
-            nctype   = np.append(nctype , 2  + int0_iipc)
+            dRce   = np.append(dRce, dx + flt0_iipc)
+            dZce   = np.append(dZce, dx + flt0_iipc)
+            nctype = np.append(nctype , 2  + int0_iipc)
             for j in range(n_blanket_pc):
                 nConduc += 1
                 nBlocks += 1
@@ -419,22 +385,14 @@ class GREEN_MATRICES:
     def dumpMachineDescr(self, f_out='machine_description_out.aug'):
 
         logger.debug('Dumping %s', f_out)
-        nR2 = len(self.Rgrid)
-        nZ2 = len(self.Zgrid)
-        nR1 = nR2 - 1
-        nZ1 = nZ2 - 1
-        nR  = nR1 - 1
-        nZ  = nZ1 - 1
-
+        nR2, nZ2, nBlocks = self.dGreeniRpl.shape
         nLimiter = len(self.Rlim)
         nCoils   = len(self.R_coil)
-        nBlocks  = self.dGreeniRj.shape[0]
         nConduc  = self.indConduc.shape[0]
         nPassive = nConduc - self.nActive
 
         with open(f_out, 'w') as f:
-            f.write('%3d %3d %3d\n' %(nR, nR2, nR1))
-            f.write('%3d %3d %3d\n' %(nZ, nZ2, nZ1))
+            f.write('%3d %3d\n' %(nR2, nZ2))
             f.write('%11.8f\n' %self.Rgrid [0])
             f.write('%11.8f\n' %self.Rgrid[-1])
             f.write('%11.8f\n' %self.Zgrid [0])

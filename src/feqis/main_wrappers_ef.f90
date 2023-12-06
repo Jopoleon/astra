@@ -735,14 +735,16 @@ character(len=80) :: fname
 
 fname = 'exp/cnf/machine_description_out.'//trim(machine)
 open(32, file=TRIM(fname))
-    read(32, *) nr, nr2, nr1
-    read(32, *) nz, nz2, nz1
+    read(32, *) nr2, nz2
     read(32, *) rmin
     read(32, *) rmax
     read(32, *) zmin
     read(32, *) zmax
     read(32, *) alpsep
-
+    nr1 = nr2 - 1
+    nz1 = nz2 - 1
+    nr  = nr1 - 1
+    nz  = nz1 - 1
     do i=1, nr2
         r(i) = rmin + (i - 1.)*(rmax - rmin)/nr1     ! computational domain is r(2:nr + 1), boundaries are r(1) and r(nr + 2)
     enddo

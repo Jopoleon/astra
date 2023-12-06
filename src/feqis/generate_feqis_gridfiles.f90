@@ -48,24 +48,19 @@ open(32, file=trim(fname))
 
 !general grid file
 read(32, *) dumstring1
-read(32, *) nr
-read(32, *) nz
+read(32, *) nr2
+read(32, *) nz2
 read(32, *) rmin
 read(32, *) rmax
 read(32, *) zmin
 read(32, *) zmax
 read(32, *) alpsep
 
-!compatibility with spider
-! in spider ni=65, ni1=64
-nr = nr - 2  !because for spider its 65, 65 for example, but here its 63, 63
-nz = nz - 2  ! this was -1 before!!!!!
-
 !define grid
-nr2 = nr + 2
-nz2 = nz + 2
-nr1 = nr + 1
-nz1 = nz + 1
+nr1 = nr2 - 1
+nz1 = nz2 - 1
+nr  = nr1 - 1
+nz  = nz1 - 1
 do i=1, nr2
     r(i) = rmin + (i - 1.)*(rmax - rmin)/nr1     ! computational domain is r(2:nr+1), boundaries are r(1) and r(nr+2)
 enddo
@@ -91,9 +86,8 @@ numeqcump = 0
 read(32, *) dumstring1
 read(32, *) ncoils
 do i=1, ncoils
-    read(32, *) nelemcoil(i)
     read(32, *) rcoil(i), zcoil(i), drcoil(i), dzcoil(i), anglehcoil(i), anglecoil(i), &
-         mturns(i), mequivalence(i)
+         mturns(i), mequivalence(i), nelemcoil(i)
     r_cond(mequivalence(i)) = r_cond(mequivalence(i)) + rcoil(i) !assign current to conductor
     z_cond(mequivalence(i)) = z_cond(mequivalence(i)) + zcoil(i) !assign current to conductor
     numeqcump(mequivalence(i)) = numeqcump(mequivalence(i)) + 1
@@ -461,8 +455,7 @@ close(32)
 fname = trim(data_dir2)//'/machine_description_out.'//trim(machine)
 open(32, file=trim(fname))
 
-write(32, *) nr,nr2,nr1
-write(32, *) nz,nz2,nz1
+write(32, *) nr2, nz2
 write(32, *) rmin
 write(32, *) rmax
 write(32, *) zmin
