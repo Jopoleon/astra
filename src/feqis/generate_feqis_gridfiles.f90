@@ -48,13 +48,7 @@ open(32, file=trim(fname))
 
 !general grid file
 read(32, *) dumstring1
-read(32, *) nr2
-read(32, *) nz2
-read(32, *) rmin
-read(32, *) rmax
-read(32, *) zmin
-read(32, *) zmax
-read(32, *) alpsep
+read(32, *) nr2, nz2, rmin, rmax, zmin, zmax, alpsep
 
 !define grid
 nr1 = nr2 - 1

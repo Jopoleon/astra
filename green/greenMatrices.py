@@ -28,16 +28,8 @@ def strip_line(line):
     return line.split('!')[0].strip()
 
 
-def split_line(line):
-    return strip_line(line).split()
-
-
 def to_int(line):
     return int(strip_line(line))
-
-
-def to_float(line):
-    return float(strip_line(line).replace('d', 'e'))
 
 
 def truncate(arr, ncols=3):
@@ -83,13 +75,10 @@ class GREEN_MATRICES:
 # Spatial grids
 
         jBeg, jEnd = linesDelim['grid']
-        nR2  = to_int(lines[jBeg]  )
-        nZ2  = to_int(lines[jBeg+1])
-        Rmin = to_float(lines[jBeg+2])
-        Rmax = to_float(lines[jBeg+3])
-        Zmin = to_float(lines[jBeg+4])
-        Zmax = to_float(lines[jBeg+5])
-        self.alpsep = to_float(lines[jBeg+6])
+        nR2, nZ2, Rmin, Rmax, Zmin, Zmax, self.alpsep = \
+            np.genfromtxt(f_machine, unpack=True, skip_header=jBeg, max_rows=1, \
+            dtype=2*[np.int32] + 5*[np.float32])
+        print(nR2)
 
         self.Rgrid = np.linspace(Rmin, Rmax, nR2, endpoint=True, dtype=gr_flt)
         self.Zgrid = np.linspace(Zmin, Zmax, nZ2, endpoint=True, dtype=gr_flt)
@@ -132,7 +121,7 @@ class GREEN_MATRICES:
         jBeg, jEnd = linesDelim['lim']
         n_lim = to_int(lines[jBeg])
         Rlim, Zlim = np.loadtxt(f_machine, unpack=True, skiprows=jBeg+1, max_rows=n_lim, dtype=gr_flt)
-        lim_maxR, lim_minR, lim_maxZ, lim_minZ = (float(x) for x in split_line(lines[jEnd-1]))
+        lim_maxR, lim_minR, lim_maxZ, lim_minZ = np.genfromtxt(f_machine, unpack=True, skip_header=jEnd-1, max_rows=1, dtype=4*[np.float32])
         indR = ((Rlim - Rmin)/dr + 0.5).astype(int)
         indZ = ((Zlim - Zmin)/dz + 0.5).astype(int)
         self.Rlim = self.Rgrid[indR]
@@ -142,17 +131,14 @@ class GREEN_MATRICES:
         ilim_minR = int((lim_minR - Rmin)/dr + 0.5)
         ilim_maxZ = int((lim_maxZ - Zmin)/dz + 0.5)
         ilim_minZ = int((lim_minZ - Zmin)/dz + 0.5)
-        self.lim_maxR = self.Rgrid[ilim_maxR]
-        self.lim_minR = self.Rgrid[ilim_minR]
-        self.lim_maxZ = self.Zgrid[ilim_maxZ]
-        self.lim_minZ = self.Zgrid[ilim_minZ]
+        self.limRZ = (self.Rgrid[ilim_maxR], self.Rgrid[ilim_minR], self.Zgrid[ilim_maxZ], self.Zgrid[ilim_minZ])
         self.zLimPotential = np.zeros((nR2, nZ2), dtype=gr_int)
         self.zLimPotential[ilim_minR: ilim_maxR, ilim_minZ: ilim_maxZ] = 1
 
 # Blanket
 
         jBeg, jEnd = linesDelim['blan']
-        res_blan, width_blan = (to_float(x) for x in split_line(lines[jBeg]))
+        res_blan, width_blan = np.genfromtxt(f_machine, unpack=True, skip_header=jBeg, max_rows=1, dtype=2*[np.float32])
         n_blan = int(lines[jBeg+1].split()[0])
         if n_blan > 0:
             x1, x2, x3, x4 = np.loadtxt(f_machine, unpack=True, usecols=(1, 2, 3, 4), skiprows=jBeg+2, max_rows=n_blan, dtype=gr_flt)
@@ -172,9 +158,8 @@ class GREEN_MATRICES:
 
             self.R_cond = np.append(self.R_cond[:self.nActive], self.R_blan)
             self.Z_cond = np.append(self.Z_cond[:self.nActive], self.Z_blan)
-            for jblan in range(n_blanket):
-                jcond = nConduc + jblan
-                self.resConduc_diag = np.append(self.resConduc_diag, res_blan*self.R_blan[jblan]/area_blan[jblan]*ssfw)
+            if res_blan > 0:
+               self.resConduc_diag = np.append(self.resConduc_diag, res_blan*self.R_blan/area_blan*ssfw)
             nConduc += n_blanket
 
 # Blanketpc
@@ -186,9 +171,8 @@ class GREEN_MATRICES:
 
             self.R_cond = np.append(self.R_cond, self.R_blan_pc)
             self.Z_cond = np.append(self.Z_cond, self.Z_blan_pc)
-            for jblan in range(n_blanket_pc):
-                jcond = nConduc + jblan
-                self.resConduc_diag = np.append(self.resConduc_diag, res_blan_pc[jblan])
+            if res_blan < 0:
+                self.resConduc_diag = np.append(self.resConduc_diag, res_blan_pc)
             nConduc += n_blanket_pc
 
         logger.debug('nactive, ncoils, nconduc, ssfw %d %d %d %12.4e', self.nActive, nCoils, nConduc, ssfw)
@@ -391,11 +375,7 @@ class GREEN_MATRICES:
 
             f.write('%d\n' %nLimiter)
             np.savetxt(f, np.c_[self.Rlim, self.Zlim], fmt='%11.8f %11.8f')
-
-            f.write('%11.8f\n' %self.lim_maxR)
-            f.write('%11.8f\n' %self.lim_minR)
-            f.write('%11.8f\n' %self.lim_maxZ)
-            f.write('%11.8f\n' %self.lim_minZ)
+            f.write(4*'%11.8f\n' %self.limRZ)
 
             np.savetxt(f, np.c_[self.R_cond[self.nActive: nPassive], self.Z_cond[self.nActive: nPassive]], fmt='%11.8f %11.8f')
 
@@ -439,7 +419,7 @@ if __name__ == '__main__':
 
     f_machineIn  = '%s/machine_description_in.%s'  %(grIOdir, args.tok)
     f_machineOut = '%s/machine_description_out.%s' %(grIOdir, args.tok)
-    
+
     gm = GREEN_MATRICES()
     gm.fromMachineInput(f_machineIn)
     gm.calcGreenf()

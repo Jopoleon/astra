@@ -1,11 +1,5 @@
-!!! general grid data
-  65            ! ni - major radius grid points
-  65            ! nj - number of points on Z-direction
-  1.            ! rmin - left bound of box (m)
-  2.3d0         ! rmax - right bound of box (m)
- -1.6d0         ! zmin - low bound of box (m)
-  1.4d0         ! zmax - upper bound of box (m)
-  0.995d0       ! alp - (PSIm-PSIp)=(PSIm-PSIx)*alp
+! #Rgrid, #Zgrid, Rmin, Rmax, Zmin, Zmax, alp -> (PSIm-PSIp)=(PSIm-PSIx)*alp
+  65  65  1. 2.3 -1.6 1.4  0.995
 !!! active coils data, R Z dr dz angle1 angle2 turns equivnr
 21 
 3.685000e-01 -8.000000e-03 2.450000e-01 3.012000e+00 0.000000e+00 9.000000e+01	 510  1 60
@@ -160,7 +154,7 @@
     2.1727    0.0482
 2.1898 1.0360 1.1532 -1.2527
 !!!!!! passive elements in first wall, uses segments description (blanbp)
-  280.d0 0.01   ! total resistance and average widht
+  280.0 0.01   ! total resistance and average widht
    20   <=== NP - number of "basic segments" on VV-inner curve   
   2 0.951   0.070  0.952   0.140  0.0  0.0   ! 2 is number of filaments per segment
   2 0.952   0.140  0.959   0.420  0.0  0.0
@@ -184,4 +178,3 @@
   2 0.959  -0.420  0.951   0.070  0.0  0.0
 !!!!!!!!blanbpc
 -1  
-!!!!!!!
