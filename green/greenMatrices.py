@@ -22,6 +22,7 @@ gr_flt = np.float64
 gr_int = np.int32
 empty_fltarr = np.array([], dtype=gr_flt)
 empty_intarr = np.array([], dtype=gr_int)
+expfmt = '%15.8e'
 
 
 def strip_line(line):
@@ -176,11 +177,22 @@ class GREEN_MATRICES:
 # Ferromagnet stuff
 
         jBeg, jEnd = linesDelim['ferro']
-        self.n_ferro_mag = to_int(lines[jBeg])
-        if self.n_ferro_mag > 0:
-            self.r0ferro, self.z0ferro, self.Lferro, self.Rcurvferro, self.angleferro, \
-                self.nferrosub = np.genfromtxt(f_machine, unpack=True, skiprows=jBeg+1, max_rows=n_ferro_mag,  dtype=5*[gr_flt] + [gr_int])
+        n_ferro_mag = to_int(lines[jBeg])
+        if n_ferro_mag > 0:
+            self.r0ferro, self.z0ferro, self.Lferro, self.Rcurvferro, self.angleferro, self.imagValues, \
+                self.nferrosub = np.genfromtxt(f_machine, unpack=True, skiprows=jBeg+1, max_rows=n_ferro_mag,  dtype=5*[gr_flt] + 2*[gr_int])
 
+            self.angleferro = np.radians(self.angleferro)
+            nmag = np.max(self.imagValues)
+            self.magValue = np.zeros((nmag, n_ferro_mag), dtype=gr_flt)
+            self.hValue   = np.zeros_like(self.magValue)
+            jline = jBeg + n_ferro_mag + 1
+            for jfer in range(n_ferro_mag):
+                jmag = self.imagValues[jfer]
+                self.magValue[:jmag, jfer], self.hValue[:jmag, jfer] = np.loadtxt(f_machine, unpack=True, skiprows=jline, max_rows=jmag)
+                jline += jmag
+
+        
         logger.debug('nactive, ncoils, nconduc, ssfw %d %d %d %12.4e', self.nActive, nCoils, nConduc, ssfw)
 
 
@@ -359,6 +371,38 @@ class GREEN_MATRICES:
 
         self.greenBnd = gf.greenBoundary(self.Rgrid, self.Zgrid)
 
+#--------------
+# Ferromagnets
+
+        if hasattr(self, 'Lferro'):
+            x1 = self.Lferro/self.Rcurvferro
+            x6 = r0ferro(i) - self.rcurvferro*np.cos(self.angleferro)
+            x7 = z0ferro(i) - self.rcurvferro*np.sin(self.angleferro)
+            r1 = z1/self.nferrosub
+            n_ferro_mag = self.magValue.shape[1]
+            n_sub_mag = np.max(self.nferrosub)
+            self.r_ferro   = np.zeros((n_sub_mag, n_ferro_mag), dtype=gr_flt)
+            self.z_ferro   = np.zeros_like(self.r_ferro)
+            self.ang_ferro = np.zeros_like(self.r_ferro) # tananglferro
+            self.len_ferro = np.zeros_like(self.r_ferro)
+            self.mferro_ferro = np.zeros((n_sub_mag, n_sub_mag, n_ferro_mag), dtype=gr_flt)
+            for i in range(self.n_ferro_mag):
+                nfsi = self.nferrosub[i]
+                ang = self.angleferro[i] - x1[i]/2. + r1[i]/2. + r1[i]*np.arange(nfsi)
+                self.r_ferro  [:nfsi, i] = x6[i] + x3[i]*np.cos(ang)
+                self.z_ferro  [:nfsi, i] = x7[i] + x3[i]*np.sin(ang)
+                self.tan_ferro[:nfsi, i] = ang
+                self.len_ferro[:nfsi, i] = r1[i]*self.rcurvferro[i]
+
+                r_out = np.outer(self.r_ferro[:, i], self.r_ferro[:, i])
+                z_out = np.outer(self.z_ferro[:, i], self.z_ferro[:, i])
+                y1 = np.hypot(r_out, z_out)
+                y2 = np.arctan2(z_out, r_out)
+                cos_ferro = np.cos(self.ang_ferro[:, i])
+                sin_ferro = np.sin(self.ang_ferro[:, i])
+                y3 = np.cos(y2)*cos_ferro[None, :] - np.sin(y2)*sin_ferro[None, :]
+                self.mferro_ferro[:, :, i] = y3/y1
+
 
     def dumpMachineDescr(self, f_out='machine_description_out.aug'):
 
@@ -390,33 +434,44 @@ class GREEN_MATRICES:
             f.write('%d\n' %nConduc)
             for jcon in range(nConduc):
                 block, tail = truncate(self.indConduc[jcon, :])
-                np.savetxt(f, block, fmt='%15.8e')
-                np.savetxt(f, tail , fmt='%15.8e')
+                np.savetxt(f, block, fmt=expfmt)
+                np.savetxt(f, tail , fmt=expfmt)
 
             f.write('%d %s\n' %(self.nActive, nConduc))
-            np.savetxt(f, self.resConduc, fmt='%15.8e')
-            np.savetxt(f, self.resConduc_diag, fmt='%15.8e')
+            np.savetxt(f, self.resConduc, fmt=expfmt)
+            np.savetxt(f, self.resConduc_diag, fmt=expfmt)
 
             for jcon in range(nConduc):
                 for jr in range(nR2):
                     block, tail = truncate(self.greeni[jr, :, jcon])
-                    np.savetxt(f, block, fmt='%15.8e')
-                    np.savetxt(f, tail , fmt='%15.8e')
+                    np.savetxt(f, block, fmt=expfmt)
+                    np.savetxt(f, tail , fmt=expfmt)
 
             f.write('%d\n' %nBlocks)
             for jb in range(nBlocks):
-                np.savetxt(f, np.c_[self.dGreeniRj[:, jb], self.dGreeniZj[:, jb]], fmt='%15.8e')
+                np.savetxt(f, np.c_[self.dGreeniRj[:, jb], self.dGreeniZj[:, jb]], fmt=expfmt)
             for jb in range(nBlocks):
                 for jz in range(nZ2):
-                    np.savetxt(f, np.c_[self.dGreeniRpl[:, jz, jb], self.dGreeniZpl[:, jz, jb]], fmt='%15.8e')
+                    np.savetxt(f, np.c_[self.dGreeniRpl[:, jz, jb], self.dGreeniZpl[:, jz, jb]], fmt=expfmt)
 
             np.savetxt(f, self.zLimPotential.ravel(), fmt='%1d')
 
             grBnd = self.greenBnd.ravel()
             nRZ2 = len(grBnd)
             f.write('%d\n' %nRZ2)
-            np.savetxt(f, grBnd, fmt='%15.8e')
-            f.write('%d\n' %self.n_ferro_mag)
+            np.savetxt(f, grBnd, fmt=expfmt)
+            if not hasattr(self, 'Lferro'):
+                f.write('-1\n')
+            else:
+                n_ferro_mag = len(self.Lferro)
+                chiValue = self.magValue/self.hValue
+                f.write('%d\n' %n_ferro_mag)
+                for i in range(n_ferro_mag):
+                    f.write('%d %d\n' %(self.nferrosub[i], self.imagValues[i]))
+                    np.savetxt(f, np.c_[chiValue[:, i], hValue[:, i]], fmt=expfmt)
+                    np.savetxt(f, np.c_[self.r_ferro[:, i], self.z_ferro[:, i], self.ang_ferro[:, i], self.len_ferro[:, i]], fmt=expfmt)
+                    np.savetxt(f, self.mferro_ferro[:, :, i], fmt=expfmt)
+
         logger.info('Stored %s', f_out)
 
 
