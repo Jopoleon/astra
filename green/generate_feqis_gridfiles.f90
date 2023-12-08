@@ -1,14 +1,12 @@
-subroutine generate_files_feqis(data_dir2, machine)
-
-use feqis_tools, only: green_function, green_function_identity, &
-    green_function_non_identity, green_function_includingsamepoint
+program generate_files_feqis
 
 implicit none
 
-integer, parameter :: ncoils_max=300, nplas_max=300, nblanket_max=200, n_max=5200, nlim_max=500
+integer, parameter :: ncoils_max=300, nplas_max=300, nblanket_max=200, n_max=5200, nlim_max=500, nferro_max=10
 double precision, parameter :: GPI=3.1415926, GPI2=2.*GPI, mu0=0.4*GPI
+character(len=80), parameter :: data_dir2='../exp/cnf', machine='aug'
 
-character(len=*), intent(in) :: data_dir2, machine
+!character(len=*), intent(in) :: data_dir2, machine
 
 integer :: j_files, i, j, k, ii, jj, iii, jjj, ielem, &
     nr, nr1, nr2, nz, nz1, nz2, nlimiter, &
@@ -40,16 +38,28 @@ integer, dimension(nplas_max, nplas_max) :: zlimpotential
 double precision, dimension(nplas_max, nplas_max, ncoils_max) :: greeni, dgreenirpl, dgreenizpl
 double precision, dimension(ncoils_max) :: cos1,cos2,sin1,sin2,Det
 
+integer nferromag, nferrototwhat
+double precision, dimension(nferro_max) :: R0ferro,Z0ferro,Lferro,Rcurvferro,angleferro
+double precision, dimension(nferro_max*50,nferro_max) :: magvalue,Hvalue,chivalue
+integer, dimension(nferro_max) :: imagvalues,nferrosub
+double precision, dimension(nferro_max*50,nferro_max) :: r_ferro,z_ferro,tananglferro,lengthferro
+double precision, dimension(nferro_max*50,nferro_max*50,nferro_max) :: Mferro_ferro   !mutual inductances that give the Btangent local given the currents
+
 character(len=120) :: fname, dumstring1
+double precision, external :: green_function, green_function_identity, &
+    green_function_non_identity, green_function_includingsamepoint
 
 fname = trim(data_dir2)//'/machine_description_in.'//trim(machine)
+
+!some init
+Mferro_ferro=0.
 
 open(32, file=trim(fname))
 
 !general grid file
 read(32, *) dumstring1
 read(32, *) nr2, nz2, rmin, rmax, zmin, zmax, alpsep
-
+write(*, *) 'NR2', nr2
 !define grid
 nr1 = nr2 - 1
 nz1 = nz2 - 1
@@ -73,7 +83,6 @@ dz = z(2) - z(1)
 ! dzcoil : length of the "vertical" side l2
 ! Area of romboid is: A = l1*l2*Det    ! Det = cos(angleh)*sin(angle) - cos(angle)*sin(angleh). For angleh=0 and angle = 90, Det = 1.
 
-
 r_cond = 0.
 z_cond = 0.
 numeqcump = 0
@@ -85,20 +94,19 @@ do i=1, ncoils
     r_cond(mequivalence(i)) = r_cond(mequivalence(i)) + rcoil(i) !assign current to conductor
     z_cond(mequivalence(i)) = z_cond(mequivalence(i)) + zcoil(i) !assign current to conductor
     numeqcump(mequivalence(i)) = numeqcump(mequivalence(i)) + 1
-		cos1(i)=cos(anglehcoil(i))
-		cos2(i)=cos(anglecoil(i))
-		sin1(i)=sin(anglehcoil(i))
-		sin2(i)=sin(anglecoil(i))
-		Det(i)=cos1(i)*sin2(i)-cos2(i)*sin1(i)
+    cos1(i) = cos(anglehcoil(i)/180.*GPI)
+    cos2(i) = cos(anglecoil(i)/180.*GPI)
+    sin1(i) = sin(anglehcoil(i)/180.*GPI)
+    sin2(i) = sin(anglecoil(i)/180.*GPI)
+    Det(i) = cos1(i)*sin2(i) - cos2(i)*sin1(i)
 enddo
 anglehcoil = anglehcoil/180.*GPI
-anglecoil = anglecoil/180.*GPI
+anglecoil  = anglecoil/180.*GPI
 nconduc = maxval(mequivalence(1:ncoils))
 r_cond(1:nconduc) = r_cond(1:nconduc)/numeqcump(1:nconduc)
 z_cond(1:nconduc) = z_cond(1:nconduc)/numeqcump(1:nconduc)
 
-
-write(*,*) anglecoil(1:ncoils),anglehcoil(1:ncoils)
+write(*,*) anglecoil(1:ncoils), anglehcoil(1:ncoils)
 
 nblocks = 0
 
@@ -195,6 +203,49 @@ if (nblanketpc >= 1) then
         z_cond(nconduc) = zblanpc(i)
     enddo
 endif
+
+!load ferromagnet  (test)
+read(32, *) dumstring1
+read(32, *) nferromag !nferromags. these are the surfaces of ferromagnetic elements, where the surface currents take place. If a block needs to be represented, give surfaces on both sides. Otherwise only "inner-side" surface is important for plasma equilibrium.
+if (nferromag > 0) then
+    nferrototwhat = 0
+    do i=1, nferromag
+!              R0          Z0         length      R curv (put large to have straight tile)
+        read(32, *) r0ferro(i), z0ferro(i), Lferro(i), Rcurvferro(i), &
+	            angleferro(i), imagvalues(i), nferrosub(i)   ! angle of inclination,  number of mag values table, angleferro increases counterclockwise from 0 to 360 from LFS midplane to LFS midplane back, dont put negative values!
+        do j=1,imagvalues(i)
+            read(32, *) magvalue(j, i), Hvalue(j, i)   ! magnetization in ... , H in ....	
+        enddo
+    enddo
+
+    angleferro = angleferro/180*GPI
+    do i=1, nferromag
+        x1  = Lferro(i)/Rcurvferro(i)    ! Dalpha			
+        x6  = r0ferro(i) - rcurvferro(i)*cos(angleferro(i))  !rcenter	
+        x7  = z0ferro(i) - rcurvferro(i)*sin(angleferro(i))  !zcenter	
+        x3  = Rcurvferro(i)
+        r1  = x1/(nferrosub(i) + 0.)   ! dalpha
+        iii = nferrosub(i)
+        do ii=1, iii
+            r_ferro(ii, i) = x6 + x3*cos(angleferro(i) - x1/2. + r1/2. + r1*(ii-1))
+            z_ferro(ii, i) = x7 + x3*sin(angleferro(i) - x1/2. + r1/2. + r1*(ii-1))
+            tananglferro(ii, i) = angleferro(i) - x1/2. + r1/2. + r1*(ii - 1)
+            lengthferro (ii, i) = r1*Rcurvferro(i)
+        enddo
+    enddo
+    do i=1, nferromag
+        do ii=1, nferrosub(i)
+            do jj=1, nferrosub(i)
+                if (jj /= ii) then
+                    x1 = sqrt ((r_ferro(jj, i) - r_ferro(ii, i))**2 + (z_ferro(jj, i) - z_ferro(ii, i))**2)
+                    x2 = atan2((z_ferro(jj, i) - z_ferro(ii, i)),     (r_ferro(jj, i) - r_ferro(ii, i)))
+                    x3 = cos(x2)*cos(tananglferro(jj, i)) - sin(x2)*sin(tananglferro(jj, i))
+                    Mferro_ferro(ii, jj, i) = x3/x1
+                endif
+            enddo
+        enddo
+    enddo
+endif
 close(32)
 
 ! currents are in MA!
@@ -243,30 +294,29 @@ do i=1, ncoils
         do j=1, k
             r1 = tempcoilr(j) - 0.5*(tempcoildr(j)*cos(tempcoilangleh(j)) + tempcoildz(j)*cos(tempcoilangle(j)))
             z1 = tempcoilz(j) - 0.5*(tempcoildr(j)*sin(tempcoilangleh(j)) + tempcoildz(j)*sin(tempcoilangle(j)))
-           	x3 = tempcoildr(j)
+            x3 = tempcoildr(j)
             x4 = tempcoildz(j)
-            x5 = x3*x4*(cos(tempcoilangleh(j))*sin(tempcoilangle(j))-cos(tempcoilangle(j))*sin(tempcoilangleh(j)))
+            x5 = x3*x4*(cos(tempcoilangleh(j))*sin(tempcoilangle(j)) - cos(tempcoilangle(j))*sin(tempcoilangleh(j)))
             x6 = x5/tempcoilelem(j)
 
             iii = nint(x3/sqrt(x6) + 0.5)
             jjj = nint(x4/sqrt(x6) + 0.5)
-						tempcoilelem(j)=iii*jjj
+            tempcoilelem(j) = iii*jjj
             x3 = x3/iii !dl1
             x4 = x4/jjj !dl2
-	write(*,*) i,j,r1,z1,iii,jjj,x3,x4,tempcoildr(j),tempcoildz(j)
 						
             do jj=1, jjj
                 do ii=1, iii
                     ielem = ielem + 1
                     rcetmp(ielem) = r1 + 0.5*(x3*cos(tempcoilangleh(j)) + x4*cos(tempcoilangle(j)))+(ii-1.)*x3*cos(tempcoilangleh(j)) + (jj-1.)*x4*cos(tempcoilangle(j))   !center
                     zcetmp(ielem) = z1 + 0.5*(x3*sin(tempcoilangleh(j)) + x4*sin(tempcoilangle(j)))+(ii-1.)*x3*sin(tempcoilangleh(j)) + (jj-1.)*x4*sin(tempcoilangle(j)) !center
-                    drcetmp(ielem) = x3   !dl1
-                    dzcetmp(ielem) = x4 !dl2
-                    datmp(ielem) = x3*x4*(cos(tempcoilangleh(j))*sin(tempcoilangle(j))-cos(tempcoilangle(j))*sin(tempcoilangleh(j))) !area 
+                    drcetmp(ielem) = x3*cos(tempcoilangleh(j)) !dl1
+                    dzcetmp(ielem) = x4*sin(tempcoilangle(j)) !dl2
+                    datmp(ielem)   = x3*x4*(cos(tempcoilangleh(j))*sin(tempcoilangle(j)) - cos(tempcoilangle(j))*sin(tempcoilangleh(j))) !area 
                     equivtmp(ielem) = nconduc
                     equivforce(ielem) = tempnnc(j)
                     tatmp(ielem) = (0.+tempcoilturns(j))/(0.+tempcoilelem(j))+0. ! turns
-                    write(*, '(9E25.11)') ielem + 0., rcetmp(ielem), zcetmp(ielem), 0. + equivtmp(ielem), 0. + equivforce(ielem),tempcoilturns(j)+0.,tempcoilelem(j)+0.,tatmp(ielem)
+                    write(*, '(9E25.11)') ielem + 0., rcetmp(ielem), zcetmp(ielem), 0. + equivtmp(ielem), 0. + equivforce(ielem),tempcoilturns(j)+0.,tempcoilelem(j)+0., tatmp(ielem)
                     nctype(ielem) = 2 !rectangular coil block
                 enddo
             enddo !cycles over 1 single coil element
@@ -309,7 +359,7 @@ if (nblanketpc >= 1) then
     enddo !cycle over equivalent coils
 endif
 
-!now blanket
+! Blanket
 if (nblanket >= 1) then
     do j=1, nblanket
         nconduc = nconduc + 1
@@ -327,7 +377,7 @@ if (nblanket >= 1) then
     enddo !cycle over equivalent coils
 endif
 
-!calculate self-inductances ! Fable, trying to match SPIDER inductances....
+! Calculate self-inductances ! Fable, trying to match SPIDER inductances....
 write(*, *) 'self', nconduc, npassive, nactive, ielem
 indconduc = 0.
 areactmp = 0.
@@ -352,7 +402,7 @@ do i=1, nconduc
 enddo
 write(*, *) indconduc(1, 1)/GPI2
 
-!calculate mutual-inductances
+! Calculate mutual-inductances
 write(*, *) 'mutual'
 identcoil = 1
 do i=1, ielem
@@ -372,8 +422,6 @@ do j=1, nconduc
         endif
     enddo
 enddo
-
-write(*, *) indconduc(1, 2)/GPI2
 
 !calculate grid-inductances
 write(*, *) 'grid'
@@ -426,7 +474,6 @@ do i=1, ielem
     enddo
 enddo
 
-
 !generate zlimpotential
 zlimpotential = 1
 do j=1, nz2
@@ -475,7 +522,6 @@ write(32,*) lim_minZ
 do i=nactive+1,npassive
     write(32, *) r_cond(i),z_cond(i)
 enddo
-
 
 write(32, *) nconduc
 do i=1, nconduc
@@ -611,9 +657,31 @@ do i=2, nz1
     enddo
 enddo
 
+! Ferromagnetic stuff
+if (nferromag > 0) then
+    write(32, *) nferromag
+    do i=1, nferromag
+        write(32, *) nferrosub(i), imagvalues(i)
+	do j=1, imagvalues(i)
+            chivalue(j, i) = magvalue(j, i)/Hvalue(j, i)
+            write(32, *) chivalue(j, i), hvalue(j, i)
+        enddo
+        do j=1, nferrosub(i)
+            write(32, *) r_ferro(j, i), z_ferro(j, i), tananglferro(j, i), lengthferro(j, i)
+        enddo
+        do ii=1, nferrosub(i)
+            do jj=1, nferrosub(i)
+                write(32,*) Mferro_ferro(jj,ii,i)
+            enddo
+         enddo
+    enddo
+else
+    write(32,*) -1
+endif
+
 close(32)
 
 write(*, *) 'Stored green functions'
 
-return
-end subroutine generate_files_feqis
+stop
+end program generate_files_feqis

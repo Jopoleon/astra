@@ -101,7 +101,6 @@ integer :: j_iter, j_iter2, j_cyclo, jeppa
 double precision :: temp_err, raxold, zaxold, temp_err2, raxoldo, zaxoldo, &
     raxtmp, zaxtmp, det, psistab1o, psistab2o, psro, pszo, dist1, dist2, &
     cibapr, cibazr, rleft, rright, zup, zdown, dcrdr, dcrdz, dczdr, dczdz
-double precision, dimension(300, 300) :: g000
 
 ! First, initialized initial guess coming from prescribed boundary current density: jrhoteta
 
@@ -112,7 +111,6 @@ CASE(-1) ! 1 turn only
 
 CASE(0)
 ! Start iterations to find self-consistent solution
-    g000(1:nr2, 1:nz2) = psiextrz(1:nr2, 1:nz2)
     iaxis = closest_index(raxp, r(1), dr)
     jaxis = closest_index(zaxp, z(1), dz)
     rax = r(iaxis)
@@ -188,7 +186,6 @@ CASE(0)
         if (j_cyclo == 3) then
             temp_err2 = abs(psistabr) + abs(psistabZ)
             j_cyclo = 1
-            write(*, *) n_of_newton_iterations, nint((0. + j_iter2)/3.)
             if (nint((0. + j_iter2)/3.) >= n_of_newton_iterations) EXIT
         else
             j_cyclo = j_cyclo + 1
@@ -201,7 +198,6 @@ CASE(0)
 
 CASE(101) ! refit_mode=101: only vertical stab
 !start iterations to find self-consistent solution
-    g000(1:nr2, 1:nz2) = psiextrz(1:nr2, 1:nz2)
     iaxis = closest_index(raxp, r(1), dr)
     jaxis = closest_index(zaxp, z(1), dz)
     rax = r(iaxis)
@@ -263,7 +259,6 @@ CASE(101) ! refit_mode=101: only vertical stab
         if (j_cyclo == 2) then
             temp_err2 = abs(psistabZ)
             j_cyclo = 1
-            write(*, *) n_of_newton_iterations, nint((0. + j_iter2)/2.)
             if (nint((0. + j_iter2)/2.) >= n_of_newton_iterations) EXIT
         else
             j_cyclo = j_cyclo + 1
@@ -297,7 +292,8 @@ use feqis_circuit, only : nr2, nz2, iaxis, jaxis, &
     r, z, dr, dz, rax, zax, raxp, zaxp, &
     iplasma, jrz, psirz, psiextrz, psiplasrz, psistabr, psistabz, &
     nine_point_coeffs_only, boundary, interp_j_fromrhotorz, &
-    find_new_axis_part1, find_psi_boundary, new_jrz_feqis
+    find_new_axis_part1, find_psi_boundary, new_jrz_feqis, &
+    compound_psi
 
 use feqis_tools, only: closest_index
 
@@ -338,9 +334,9 @@ if (j_stab == 1) then
     psistabz = 0.
     delr = 0.
     delz = 0.
-    psirz(1:nr2, 1:nz2) = psiplasrz(1:nr2, 1:nz2) + psiextrz(1:nr2, 1:nz2) !total flux
+    call compound_psi
     call find_new_axis_part1
-    write(*, *) 'natural ax', rax, zax
+!    write(*, *) 'natural ax', rax, zax
 
     call nine_point_coeffs_only(raxold, zaxold, c, zum1, zum2)
 ! dpsidr
@@ -349,7 +345,7 @@ if (j_stab == 1) then
 
     dum1 = 2.*c(2)*(zum1*zum2**2 + 2.*c(2)*zum1*zum2) +  &
               c(3)*zum2**2 + c(4)*zum2 + 2*c(5)*zum1 + c(7)
- 
+
 ! dpsidz
    dum2 = 2.*c(1)*zum1**2*zum2 + c(2)*zum1**2 +  &
           2.*c(3)*zum1*zum2    + c(4)*zum1 + 2.*c(6)*zum2 + c(8)
@@ -357,14 +353,15 @@ if (j_stab == 1) then
     psistabr = -1./(2.*raxold)*dum1/dr
     psistabz = -dum2/dz
 
+    call compound_psi
     do i=1, nr2
         do j=1, nz2
-            psirz(i, j) = psiplasrz(i, j) + psiextrz(i, j) + psistabr*r(i)**2 + psistabz*z(j) ! Total flux
+            psirz(i, j) = psirz(i, j) + psistabr*r(i)**2 + psistabz*z(j) ! Total flux
         enddo
     enddo
     call find_new_axis_part1
 else
-    psirz(1:nr2, 1:nz2) = psiplasrz(1:nr2, 1:nz2) + psiextrz(1:nr2, 1:nz2) ! Total flux
+    call compound_psi ! Total flux
 endif
 
 call find_new_axis_part1
@@ -376,7 +373,7 @@ end subroutine solve_gse2d_fbe_full_feqis_1turn
 
 !--------------------------------------------------------------------
 subroutine FEQISUPDATE(coilzzz, nccc)
-       
+
 use pi_vars, only: GPI2
 use feqis_circuit, only: nconduc, cur_con_old, curconduc, &
     psi_cur_old, psiplasmatoconduc
@@ -524,10 +521,10 @@ endif
 i = i_cnew
 
 if (use_reduce_circuit == 0) then
-    curconduc(1:i) = solve_circuit_equations(i, indconduc(1:i, 1:i), resconduc(1:i, 1:i), & 
+    curconduc(1:i) = solve_circuit_equations(i, indconduc(1:i, 1:i), resconduc(1:i, 1:i), &
         cur_con_old(1:i), voltage(1:i), dpc(1:i), tau_new, invertcommand)
 else
-    curtemp(1:i) = solve_circuit_equations(i, indtemp(1:i, 1:i), restemp(1:i, 1:i), & 
+    curtemp(1:i) = solve_circuit_equations(i, indtemp(1:i, 1:i), restemp(1:i, 1:i), &
         curotemp(1:i), vtemp(1:i), dpctemp(1:i), tau_new, invertcommand)
 
 ! Re-adapt currents
@@ -580,7 +577,7 @@ use feqis_circuit, only: nrho, nrho2d, nteta, use_limiter_yesno, &
     teta, dteta, tetaexp, &
     iplasma, Rgeom0, Btor0, voltage, voltage_old, omega_pl, &
     pressure, ipol, pprime, ffprime, &
-    psia_2d, ffp_2d, ppp_2d, &
+    psia_2d, ffp_2d, ppp_2d, ncoils, &
     psistabr, psistabz, psigrid, psigrida, psibnd
 use astra2fbe, only: dr_factor_init_astra, dz_factor_init_astra, &
     tau_circuit_feqis, tau_gseq_feqis, activate_coil_feqis, current_limit_feqis, &
@@ -600,6 +597,7 @@ double precision, dimension(700) :: rdum, zdum, tdum
 if (j_call == 0) then
     nteta = equil_in%eqgeometry%boundary%npoints
     nrho = params%neql
+    allocate(psigrid(nrho))
     psistabR = 0.
     psistabZ = 0.
 ! Normalized psi from 0 axis to 1 edge, equispaced
@@ -636,8 +634,21 @@ if (j_call == 0) then
     zaxp = zaxis_astra
     psibnd = -1.e6
     use_limiter_yesno = use_limiter_astra
-    voltage_old = 0.
-    voltage = 0.
+    allocate(teta(nteta+1))
+    allocate(pressure(nrho))
+    allocate(pprime(nrho))
+    allocate(ffprime(nrho))
+    allocate(psigrida(nrho))
+    allocate(ipol(nrho))
+    allocate(voltage(ncoils))
+    allocate(rexp(2*nteta))
+    allocate(zexp(2*nteta))
+    allocate(tetaexp(2*nteta))
+    allocate(rbndp(2*nteta))
+    allocate(zbndp(2*nteta))
+    allocate(rbnd(2*nteta))
+    allocate(zbnd(2*nteta))
+
 endif
 
 if (ifplasma == 1) then
@@ -723,106 +734,184 @@ use feqis_circuit, only: nr, nr1, nr2, nz, nz1, nz2, &
     rmin, rmax, zmin, zmax, r, z, dr, dz, rcomp, zcomp, r_cond, z_cond, &
     rcoil, zcoil, drcoil, dzcoil, anglecoil, anglehcoil, mequivalence, &
     limiterr, limiterz, alpsep, curconduc, resconduc, indconduc, &
-    zlimpotential, green_bnd_f
+    zlimpotential, green_bnd_f, nferromag, psiplasmatoconduc, &
+    voltage, voltage_old, cur_con_old, &
+    jrz, psirz, psiextrz, psiplasrz, u_n, omega_pl, area_eff, &
+    psi_cur_old, dpc, psiferro, compound_psi
+use ferromagstructure, only: type_ferromag
+
 use green_matrix, only: greeni, dgreenirj, dgreenizj, dgreenirpl, dgreenizpl
 use outcmn_inc, only: machine
 use astra2fbe, only: cur_init
 
 implicit none
 
-integer :: i, j, ii, jj
+type(type_ferromag), dimension(:), allocatable :: ferromag
+
+integer :: i, j, ii, jj, nferrosub, imagvalues
 character(len=80) :: fname
 
-resconduc = 0.d0
 fname = 'exp/cnf/machine_description_out.'//trim(machine)
 open(32, file=TRIM(fname))
-    read(32, *) nr2, nz2
-    read(32, *) rmin
-    read(32, *) rmax
-    read(32, *) zmin
-    read(32, *) zmax
-    read(32, *) alpsep
-    nr1 = nr2 - 1
-    nz1 = nz2 - 1
-    nr  = nr1 - 1
-    nz  = nz1 - 1
-    do i=1, nr2
-        r(i) = rmin + (i - 1.)*(rmax - rmin)/nr1     ! computational domain is r(2:nr + 1), boundaries are r(1) and r(nr + 2)
-    enddo
-    do i=1, nz2
-        z(i) = zmin + (i - 1.)*(zmax - zmin)/nz1
-    enddo
-    rcomp(1:nr) = r(2:nr1)
-    zcomp(1:nz) = z(2:nz1)
-    dr = r(2) - r(1)
-    dz = z(2) - z(1)
+read(32, *) nr2, nz2
+read(32, *) rmin
+read(32, *) rmax
+read(32, *) zmin
+read(32, *) zmax
+read(32, *) alpsep
+nr1 = nr2 - 1
+nz1 = nz2 - 1
+nr  = nr1 - 1
+nz  = nz1 - 1
+allocate(r(nr2))
+allocate(z(nz2))
+allocate(rcomp(nr))
+allocate(zcomp(nz))
+do i=1, nr2
+    r(i) = rmin + (i - 1.)*(rmax - rmin)/nr1     ! computational domain is r(2:nr + 1), boundaries are r(1) and r(nr + 2)
+enddo
+do i=1, nz2
+    z(i) = zmin + (i - 1.)*(zmax - zmin)/nz1
+enddo
+rcomp(1:nr) = r(2:nr1)
+zcomp(1:nz) = z(2:nz1)
+dr = r(2) - r(1)
+dz = z(2) - z(1)
 
-    do i=1, nz
-        do j=1, nz
-            sintable(i, j) = sin(i*j*GPI/(nz + 1))
-            costable(i, j) = cos(i*j*GPI/(nz + 1))
-        enddo
+!some allocate
+allocate(sintable(nz,nz))
+allocate(costable(nz,nz))
+
+do i=1, nz
+    do j=1, nz
+        sintable(i, j) = sin(i*j*GPI/(nz + 1))
+        costable(i, j) = cos(i*j*GPI/(nz + 1))
     enddo
+enddo
 
 ! Load everything from file
-    read(32, *) nactive, npassive
-    read(32, *) ncoils
-    do i=1, ncoils
-        read(32, *) rcoil(i), zcoil(i), drcoil(i), dzcoil(i), anglehcoil(i), anglecoil(i), mequivalence(i)
+read(32, *) nactive, npassive
+read(32, *) ncoils
+allocate(rcoil(ncoils))
+allocate(zcoil(ncoils))
+allocate(drcoil(ncoils))
+allocate(dzcoil(ncoils))
+allocate(anglehcoil(ncoils))
+allocate(anglecoil(ncoils))
+allocate(mequivalence(ncoils))
+do i=1, ncoils
+    read(32, *) rcoil(i), zcoil(i), drcoil(i), dzcoil(i), anglehcoil(i), anglecoil(i), mequivalence(i)
+enddo
+read(32, *) nlimiter
+allocate(limiterr(nlimiter))
+allocate(limiterz(nlimiter))
+do i=1, nlimiter
+    read(32, *) limiterr(i), limiterz(i)
+enddo
+read(32, *) lim_maxR
+read(32, *) lim_minR
+read(32, *) lim_maxZ
+read(32, *) lim_minZ
+allocate(r_cond(npassive))
+allocate(z_cond(npassive))
+do i=nactive + 1, npassive
+    read(32, *) r_cond(i), z_cond(i)
+enddo
+read(32, *) nconduc
+allocate(curconduc(nconduc))
+allocate(voltage_old(nconduc))
+allocate(cur_con_old(nconduc))
+allocate(indconduc(nconduc, nconduc))
+allocate(resconduc(nconduc, nconduc))
+allocate(psiplasmatoconduc(nconduc))
+do i=1, nconduc
+    read(32, *) indconduc(i, 1:nconduc)
+enddo
+read(32, *) nactive, nconduc
+resconduc = 0.d0
+do i=1, nactive
+    read(32, *) (resconduc(i, j), j=1, nactive)
+enddo
+do i=nactive+1, nconduc
+    read(32, *) resconduc(i, i)
+enddo
+allocate(greeni(nr2, nz2, nconduc))
+do i=1, nconduc
+    do j=1, nr2
+        read(32, *) greeni(j, 1:nz2, i)
     enddo
-    read(32, *) nlimiter
-    do i=1, nlimiter
-        read(32, *) limiterr(i), limiterz(i)
+enddo
+read(32, *) nblocks
+allocate(dgreenirj(nblocks, nblocks))
+allocate(dgreenizj(nblocks, nblocks))
+allocate(dgreenirpl(nr2, nz2, nblocks))
+allocate(dgreenizpl(nr2, nz2, nblocks))
+do j=1, nblocks
+    do i=1, nblocks
+        read(32, *) dgreenirj(i, j), dgreenizj(i, j)
     enddo
-    read(32, *) lim_maxR
-    read(32, *) lim_minR
-    read(32, *) lim_maxZ
-    read(32, *) lim_minZ
-    do i=nactive + 1, npassive
-        read(32, *) r_cond(i), z_cond(i)
-    enddo
-    read(32, *) nconduc
-    do i=1, nconduc
-        read(32, *) indconduc(i, 1:nconduc)
-    enddo
-    read(32, *) nactive, nconduc
-    do i=1, nactive
-        read(32, *) resconduc(i, 1:nactive)
-    enddo
-    do i=1, nconduc-nactive
-        read(32, *) resconduc(nactive+i, nactive+i)
-    enddo
-    do i=1, nconduc
-        do j=1, nr2
-            read(32, *) greeni(j, 1:nz2, i)
+enddo
+do ii=1, nblocks
+    do j=1, nz2
+        do i=1, nr2
+            read(32, *) dgreenirpl(i, j, ii), dgreenizpl(i, j, ii)
         enddo
     enddo
-    read(32, *) nblocks
-    do j=1, nblocks
-        do i=1, nblocks
-            read(32, *) dgreenirj(i, j), dgreenizj(i, j)
-        enddo
+enddo
+allocate(zlimpotential(nr2, nz2))
+do jj=1, nz2
+    do ii=1, nr2
+        read(32, *) zlimpotential(ii, jj)
     enddo
-    do ii=1, nblocks
-        do j=1, nz2
-            do i=1, nr2
-                read(32, *) dgreenirpl(i, j, ii), dgreenizpl(i, j, ii)
+enddo
+read(32, *) ngbnd
+allocate(green_bnd_f(ngbnd))
+read(32, *) green_bnd_f(1:ngbnd)
+
+read(32, *) nferromag
+if (nferromag >= 1) then
+    allocate(ferromag(nferromag))
+    do i=1, nferromag
+        read(32,*) nferrosub, imagvalues
+        ferromag(i)%position%npoints   = nferrosub
+        ferromag(i)%mhrelation%nvalues = imagvalues
+        allocate(ferromag(i)%position%r(nferrosub))
+        allocate(ferromag(i)%position%z(nferrosub))
+        allocate(ferromag(i)%position%tanangl(nferrosub))
+        allocate(ferromag(i)%position%length(nferrosub))
+        allocate(ferromag(i)%mhrelation%chi(imagvalues))
+        allocate(ferromag(i)%mhrelation%h(imagvalues))
+        allocate(ferromag(i)%mutual_matrix%Mij(nferrosub, nferrosub))
+        do j=1, imagvalues
+            read(32, *) ferromag(i)%mhrelation%chi(j), ferromag(i)%mhrelation%h(j)
+        enddo
+        do j=1, nferrosub
+           read(32, *) ferromag(i)%position%r(j), ferromag(i)%position%z(j), &
+               ferromag(i)%position%tanangl(j), ferromag(i)%position%length(j)
+        enddo
+        do jj=1, nferrosub
+            do ii=1, nferrosub
+                read(32, *) ferromag(i)%mutual_matrix%Mij(ii, jj)
             enddo
         enddo
     enddo
-    do jj=1, nz2
-        do ii=1, nr2
-            read(32, *) zlimpotential(ii, jj)
-        enddo
-    enddo
-    read(32, *) ngbnd
-    read(32, *) green_bnd_f(1:ngbnd)
-close(32)
+endif
 
-write(*, *) nactive 
+close(32)
 
 ! assign initial currents from astra
 curconduc(1:nconduc) = cur_init(1:nconduc)
+
+allocate(jrz(nr2, nz2))
+allocate(psirz(nr2, nz2))
+allocate(psiextrz(nr2, nz2))
+allocate(psiplasrz(nr2, nz2))
+allocate(psiferro(nr2, nz2))
+allocate(u_n(nr2, nz2))
+allocate(omega_pl(nr2, nz2))
+allocate(area_eff(nr2, nz2))
+allocate(psi_cur_old(nconduc))
+allocate(dpc(nconduc))
 
 return
 end subroutine equil_feqis_init_circ
@@ -844,7 +933,8 @@ use transfer_functions, only: rpbez, zpbez, psibez, t2dbez, &
     bmaxbez, bminbez, bdb0bez, fofbbez, bcell2dbez, bpcell2dbez, &
     ffprimebez, pprimebez, pressbez, ipolbez, rinbez, routbez, &
     kbez, triaubez, shifbez, rbp2_b2bez, rmin2dbez, dpsidvbez, &
-    jrhobez, shivbez, squarebez
+    jrhobez, shivbez, squarebez, g2ibez, &
+    rminbez, bpcellbez, bcellbez
 use pi_vars, only: GPI, GPI2, GPI4, muvac
 
 implicit none
@@ -861,9 +951,63 @@ double precision, dimension(nrho, nteta) :: rmaj2, jcbn2, darea2, &
 data ierr/0/
 save psisave, ierr
 
-
 ! initial guess
 if (j_init == 0) then
+    allocate(rho(nrho, nteta))
+    allocate(rpol(nrho, nteta))
+    allocate(zpol(nrho, nteta))
+    allocate(rpul(nrho, nteta))
+    allocate(zpul(nrho, nteta))
+    allocate(psirhoteta(nrho, nteta))
+    allocate(jrhoteta(nrho, nteta))
+    allocate(psia_1d(nrho))
+    allocate(ppp_1d(nrho))
+    allocate(ffp_1d(nrho))
+    allocate(ffprimebez(nrho))
+    allocate(dpsidvbez(nrho))
+    allocate(psibez(nrho))
+    allocate(g2bez(nrho))
+    allocate(g2ibez(nrho))
+    allocate(gm1bez(nrho))
+    allocate(routbez(nrho))
+    allocate(rinbez(nrho))
+    allocate(vbez(nrho))
+    allocate(g1bez(nrho))
+    allocate(gm41bez(nrho))
+    allocate(ggrhobez(nrho))
+    allocate(bmaxbez(nrho))
+    allocate(bminbez(nrho))
+    allocate(gm4bez(nrho))
+    allocate(bdb0bez(nrho))
+    allocate(gm5bez(nrho))
+    allocate(fofbbez(nrho))
+    allocate(areatbez(nrho))
+    allocate(perimbez(nrho))
+    allocate(shifbez(nrho))
+    allocate(kbez(nrho))
+    allocate(surfbez(nrho))
+    allocate(triaubez(nrho))
+    allocate(phibez(nrho))
+    allocate(qbez(nrho))
+    allocate(t2dbez(nteta))
+    allocate(rbp2_b2bez(nrho))
+    allocate(pprimebez(nrho))
+    allocate(pressbez(nrho))
+    allocate(ipolbez(nrho))
+    allocate(shivbez(nrho))
+    allocate(squarebez(nrho))
+    allocate(rpbez(nrho, nteta))
+    allocate(zpbez(nrho, nteta))
+    allocate(rminbez(nrho, nteta))
+    allocate(bpcellbez(nrho, nteta))
+    allocate(bcellbez(nrho, nteta))
+    allocate(rmin2dbez(nrho, nteta))
+    allocate(jrhobez(nrho, nteta))
+    allocate(bpcell2dbez(nrho, nteta))
+    allocate(bcell2dbez(nrho, nteta))
+    allocate(lambda2d(nrho, nteta))
+    allocate(dator(nrho, nteta))
+
     raxp = raxis_astra
     zaxp = zaxis_astra
     psiaxisp = psi0_astra
@@ -872,7 +1016,7 @@ if (j_init == 0) then
         do jt=1, Nteta
             lambda2d(jr, jt) = (jr - 1)/(Nr - 1.)
         enddo
-    enddo 
+    enddo
     do jt=1, Nteta
          psirhoteta(1: Nrho, jt) = psigrida(1: Nrho)
     enddo
@@ -887,12 +1031,12 @@ endif
 call PHI_EQ_2d_PBE(nrho, nteta, psigrida(1:nrho), iplasma, &
     ffprime(1:nrho), pprime(1:nrho), btor0*rgeom0, &
     rbndp(1:nteta), zbndp(1:nteta), Raxp, Zaxp, psiaxisp, psibndp, &
-    solve_fix, j_init, rpbez(1:nrho, 1:nteta), zpbez(1:nrho, 1:nteta), & 
+    solve_fix, j_init, rpbez(1:nrho, 1:nteta), zpbez(1:nrho, 1:nteta), &
     psirhoteta(1:nrho, 1:nteta), psibez(1:nrho), &   ! psinorm new
     lambda2d(1:nrho, 1:nteta), t2dbez(1:nteta), &
-    psiaxis_new, cnorm, rax_new, zax_new, thetap_i, rmaj2, & 
+    psiaxis_new, cnorm, rax_new, zax_new, thetap_i, rmaj2, &
     jcbn2, q_new, rhoedge, darea2, epprimp, effprimp, r_min, yy2, gradr2, darea, ierr)
- 
+
 raxp = rax_new
 zaxp = zax_new
 psiaxisp = psiaxis_new
@@ -930,7 +1074,7 @@ R_curr_0D = sqrt(sum(jrho2(1:jr, :)*Rmaj2(1:jr, :)**2*darea2(1:jr, :))/ &
 call build_2dgrid(nrho, nteta, psibez(1:nrho), &
     psirhoteta(1:nrho, 1:nteta), rgeom0, pressure(1:nrho), &
     btor0, ipol(1:nrho), iplasma, rpbez(1:nrho, 1:nteta), zpbez(1:nrho, 1:nteta), &
-    rmaj2(1:nrho, 1:nteta), r_min(1:nrho, 1:nteta), jcbn2(1:nrho, 1:nteta), & 
+    rmaj2(1:nrho, 1:nteta), r_min(1:nrho, 1:nteta), jcbn2(1:nrho, 1:nteta), &
     thetap_i(1:nteta), q_new(1:nrho), rhoedge, gradr2(1:nrho, 1:nteta), &
     g2bez(1:nrho), gm1bez(1:nrho), areatbez(1:nrho), perimbez(1:nrho), vbez(1:nrho), &
     g1bez(1:nrho), ggrhobez(1:nrho), bmaxbez(1:nrho), bminbez(1:nrho), &
@@ -938,7 +1082,7 @@ call build_2dgrid(nrho, nteta, psibez(1:nrho), &
     li3, betapol, psplex, &
     bpcell2dbez(1:nrho, 1:nteta), bcell2dbez(1:nrho, 1:nteta), &
     routbez(1:nrho), rinbez(1:nrho), kbez(1:nrho), triaubez(1:nrho), shifbez(1:nrho), &
-    gm41bez(1:nrho), qbez(1:nrho), shivbez(1:nrho), squarebez(1:nrho)) 
+    gm41bez(1:nrho), qbez(1:nrho), shivbez(1:nrho), squarebez(1:nrho))
 
 phibez(1:nrho) = 0.
 rbp2_b2bez(1:nrho) = 0.
@@ -1243,19 +1387,19 @@ if (j_init == 0) then
     do i=2, nr-1
         x1 = 0.5*(rcomp(  i) + rcomp(i-1))
         x2 = 0.5*(rcomp(i+1) + rcomp(i  ))
-        B(i) = -rcomp(i)/dr**2*(1./x2 + 1./x1) 
-        A(i) =  rcomp(i)/x2/dr**2 
-        C(i) =  rcomp(i)/x1/dr**2 
+        B(i) = -rcomp(i)/dr**2*(1./x2 + 1./x1)
+        A(i) =  rcomp(i)/x2/dr**2
+        C(i) =  rcomp(i)/x1/dr**2
     enddo
     i = 1
     x1 = 0.5*(rcomp(  i) + r(1))
     x2 = 0.5*(rcomp(i+1) + rcomp(i))
-    B(i) = -rcomp(i)/dr**2 * (1./x2 + 1./x1) 
-    A(i) =  rcomp(i)/x2/dr**2 
+    B(i) = -rcomp(i)/dr**2 * (1./x2 + 1./x1)
+    A(i) =  rcomp(i)/x2/dr**2
     i = nr
     x1 = 0.5*(rcomp(i) + rcomp(i-1))
     x2 = 0.5*(r(nr2)   + rcomp(i)  )
-    B(i) = -rcomp(i)/dr**2 * (1./x2 + 1./x1) 
+    B(i) = -rcomp(i)/dr**2 * (1./x2 + 1./x1)
     C(i) =  rcomp(i)/x1/dr**2
     j_init = 1
     do k=2, nz1
@@ -1317,4 +1461,3 @@ enddo
 
 return
 end subroutine coil_forces_feqis
-

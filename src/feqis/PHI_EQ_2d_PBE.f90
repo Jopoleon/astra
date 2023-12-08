@@ -37,7 +37,7 @@ double precision, dimension(ntheta+1) :: thetap, thetap_i
 double precision, dimension(nrho, ntheta) :: lambda2dp, known_term, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1
-double precision :: gpsi(ntheta+1), work(2*(ntheta+1)*6), matrix(ntheta+1, 6)
+double precision :: gpsi(2*ntheta+1), work(2*(2*ntheta+1)*6), matrix(2*ntheta+1, 6)
 
 Ndims = 1 + (nrho - 2)*ntheta
 LDAB = 6*ntheta + 1
@@ -142,7 +142,7 @@ iter_loop: do jiter=1, max_iter+1
         matrix(1, 4) =  YY(1, 1)**2
         matrix(1, 5) =  YY(1, 1)
         matrix(1, 6) =  XX(1, 1)*YY(1, 1)
-        do jrho=2, 2
+        do jrho=2, 3
             do jthe=1, ntheta
                 jloc = jthe + 1 + (jrho - 2)*ntheta
                 matrix(jloc, 1) =  XX(jrho, jthe)**2
@@ -155,7 +155,7 @@ iter_loop: do jiter=1, max_iter+1
         enddo
 
 ! Lapack DGELS
-        call dgels('N', ntheta + 1, 6, 1, matrix, ntheta + 1, gpsi, ntheta + 1, WORK, 2*(ntheta + 1)*6, INFO)
+        call dgels('N', 2*ntheta + 1, 6, 1, matrix, 2*ntheta + 1, gpsi, 2*ntheta + 1, WORK, 2*(2*ntheta + 1)*6, INFO)
 
         denom = 4*gpsi(1)*gpsi(4) - gpsi(6)**2
         x0 = (gpsi(6)*gpsi(5) - 2*gpsi(4)*gpsi(2))/denom
@@ -188,7 +188,7 @@ iter_loop: do jiter=1, max_iter+1
     axis_change = abs(x0 - x0o)/x0 + abs(y0 - y0o)/x0
     X0o = X0
     Y0o = Y0
-    if (axis_change < 1.e-6) then
+    if (axis_change < 1.e-8) then
         write(*, '(A, i3)') 'FEQIS converged, step #', jiter
         EXIT iter_loop
     endif

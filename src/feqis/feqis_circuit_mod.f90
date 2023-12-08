@@ -9,21 +9,21 @@ integer :: use_limiter_yesno
 
 !time stepping
 double precision :: tau_old, tau_new
-double precision, dimension(i_dim1) :: psi_cur_old, dpc
+double precision, dimension(:), allocatable :: psi_cur_old, dpc
 
 !circuits
 integer :: ncoils, nreseqcoil, nlimiter
-integer, dimension(i_dim1) :: mequivalence
-double precision, dimension(500) :: limiterR, limiterZ
+integer, dimension(:), allocatable :: mequivalence
+double precision, dimension(:), allocatable :: limiterR, limiterZ
 double precision :: lim_maxR, lim_minR, lim_maxZ, lim_minZ
-double precision, dimension(i_dim1) :: Rcoil, Zcoil, drcoil, dzcoil, &
+double precision, dimension(:), allocatable :: Rcoil, Zcoil, drcoil, dzcoil, &
     anglecoil, anglehcoil
 
-integer :: nconduc, nblocks, npassive, nactive
-double precision, dimension(i_dim1) :: curconduc, voltage, voltage_old, &
+integer :: nconduc, nblocks, npassive, nactive, nferromag
+double precision, dimension(:), allocatable :: curconduc, voltage, voltage_old, &
     cur_con_old, r_cond, z_cond
-double precision, dimension(i_dim1, i_dim1) :: resconduc, indconduc
-double precision :: psiplasmatoconduc(i_dim1) !plasma --> conduc at t
+double precision, dimension(:, :), allocatable :: resconduc, indconduc
+double precision, dimension(:), allocatable :: psiplasmatoconduc !plasma --> conduc at t
 
 ! coordinates:
 ! r, z --> rectangular grid in meters
@@ -34,18 +34,22 @@ double precision :: psiplasmatoconduc(i_dim1) !plasma --> conduc at t
 !grids
 integer :: nr, nz, nrho, nteta, nr2, nz2, nr1, nz1, nbnd, ngbnd, &
     redo_bnd
-integer, dimension(i_dim2, i_dim2) :: zlimpotential
+integer, dimension(:, :), allocatable :: zlimpotential
 
 double precision :: rmin, rmax, zmin, zmax, dr, dz, dteta, &
     zbot, ztop, raus, rinner
-double precision, dimension(i_dim2) :: r, z, teta, rcomp, zcomp, psigrid  
-double precision, dimension(i_dim2, i_dim2) :: rho, area_eff, &
-    rpol, zpol, rpul, zpul, u_n, omega_pl, &
-    psirz, psirhoteta, psiextrz, psiplasrz
+double precision, dimension(:), allocatable :: r, z, rcomp, zcomp  
+double precision, dimension(:), allocatable :: teta, psigrid  
+double precision, dimension(:, :), allocatable :: rho, area_eff, &
+    rpol, zpol, rpul, zpul, psirhoteta
+
+double precision, dimension(:, :), allocatable :: u_n, omega_pl, &
+    psirz, psiextrz, psiplasrz, psiferro
+
 ! r(z)pol: R, Z in polar coordinates half radial grid
 ! r(z)pul: R, Z in polar coordinates full radial grid
 double precision, dimension(nrho2d) :: psia_2d, ffp_2d, ppp_2d
-double precision, dimension(i_dim2) :: psia_1d, ffp_1d, ppp_1d
+double precision, dimension(:), allocatable :: psia_1d, ffp_1d, ppp_1d
 double precision, dimension(8) :: derivpsi
 
 ! boundary and axis FBE, PBE
@@ -55,16 +59,17 @@ integer :: iaxis, jaxis, n_of_xpoints
 double precision :: psibnd, psiaxis, psibndp, psiaxisp, &
     rax, zax, trax, tzax, raxp, zaxp, &
     alpsep, psistabR, psistabZ, dr_factor_init, dz_factor_init
-double precision, dimension(i_dim5) :: rbnd, zbnd
+double precision, dimension(:), allocatable :: rbnd, zbnd
 double precision, dimension(max_xpoints) :: r_xpoint, z_xpoint
 double precision :: deriv_x(5, max_xpoints)
-double precision :: green_bnd_f(16*i_dim2**2)
-double precision, dimension(i_dim2) :: rbndp, zbndp, rexp, zexp, tetaexp
+double precision, dimension(:), allocatable :: green_bnd_f
+double precision, dimension(:), allocatable :: rbndp, zbndp, rexp, zexp, tetaexp
 
 ! plasma parameters
 double precision :: iplasma, btor0, rgeom0, psplex, li3, betapol
-double precision, dimension(i_dim2) :: pprime, ffprime, pressure, psigrida, ipol
-double precision, dimension(i_dim2, i_dim2) :: jrz, jrhoteta
+double precision, dimension(:), allocatable :: pprime, ffprime, pressure, psigrida, ipol
+double precision, dimension(:, :), allocatable :: jrz
+double precision, dimension(:, :), allocatable :: jrhoteta
 
 contains
 !---------------------------------------------------------------------
@@ -637,13 +642,14 @@ contains
         psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
 
 ! Construct correction
-        do j=1, nz2
+        call compound_psi
+				do j=1, nz2
             do i=1, nr2
                 f_correction = 0.
                 do k=1, nconduc
                     f_correction = f_correction + curdiff(k)*greeni(i, j, k) 
                 enddo
-                psirz(i, j) = psiplasrz(i, j) + psiextrz(i, j) + f_correction !total flux
+                psirz(i, j) = psirz(i, j) + f_correction !total flux
             enddo
         enddo
 
@@ -678,13 +684,14 @@ contains
         curdiff = curnow - curref
 
 ! Construct correction
+        call compound_psi
         do j=1, nz2
             do i=1, nr2
                 f_correction = 0.
                 do k=1, nconduc
                     f_correction = f_correction + curdiff(k)*greeni(i, j, k) 
                 enddo
-                psirz(i, j) = psiplasrz(i, j) + psiextrz(i, j) + f_correction !total flux
+                psirz(i, j) = psirz(i, j) + f_correction !total flux
             enddo
         enddo
 
@@ -703,7 +710,7 @@ contains
     enddo
 
     call psi_external_calc
-    psirz(1:nr2, 1:nz2) = psiplasrz(1:nr2, 1:nz2) + psiextrz(1:nr2, 1:nz2)
+    call compound_psi
     call find_new_axis_part1
     call find_psi_boundary
     call new_jrz_feqis  ! calculate new right hand side
@@ -779,7 +786,7 @@ contains
         g = boundary(g)   ! gbound = integral (Green*dg/dn) over the boundary
         call solve_gs2d(g) ! again jrz as right hand side
         psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
-        psirz(1:nr2, 1:nz2) = psiplasrz(1:nr2, 1:nz2) + psiextrz(1:nr2, 1:nz2) !total flux
+        call compound_psi
         do j=1, nteta
         	psicorr(j) = interp2d_psi(rbndp(j), zbndp(j), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
         enddo
@@ -794,6 +801,7 @@ contains
             psicorr, nteta, WORK, 2*(nteta)*n_fourier_restab_boundary*2, INFO)    
 
 ! Construct correction
+        call compound_psi
         do j=1, nz2
             do i=1, nr2
                 f_correction = 0.
@@ -802,7 +810,7 @@ contains
                         psicorr(k)                            *sum(greeni(i, j, nactive + 1:nactive + npassive)*cos(k*anglr(1:npassive))) + & 
                         psicorr(n_fourier_restab_boundary + k)*sum(greeni(i, j, nactive + 1:nactive + npassive)*sin(k*anglr(1:npassive)))
                 enddo
-                psirz(i, j) = psiplasrz(i, j) + psiextrz(i, j) + f_correction !total flux
+                psirz(i, j) = psirz(i, j) + f_correction !total flux
             enddo
         enddo
 
@@ -824,7 +832,7 @@ contains
     enddo
 
     call psi_external_calc
-    psirz(1:nr2, 1:nz2) = psiplasrz(1:nr2, 1:nz2) + psiextrz(1:nr2, 1:nz2)
+    call compound_psi
     call find_new_axis_part1
     call find_psi_boundary
     call new_jrz_feqis  ! calculate new right hand side
@@ -929,7 +937,7 @@ contains
         psistabz = 0.
         delr = 0.
         delz = 0.
-        psirz(1:nr2, 1:nz2) = psiplasrz(1:nr2, 1:nz2) + psiextrz(1:nr2, 1:nz2) !total flux
+        call compound_psi
         call find_new_axis_part1
         dum1 = C_00r*S_00z - C_00z*S_00r
 
@@ -945,7 +953,8 @@ contains
         psistabr = delr
         psistabz = delz
 
-        psirz(1:nr2, 1:nz2) = psiplasrz(1:nr2, 1:nz2) + psiextrz(1:nr2, 1:nz2) +  &
+        call compound_psi
+        psirz(1:nr2, 1:nz2) = psirz(1:nr2, 1:nz2) +  &
             psistabr*C_00(1:nr2, 1:nz2) + psistabz*S_00(1:nr2, 1:nz2) !total flux
 
         call find_new_axis_part1
@@ -966,7 +975,7 @@ contains
     enddo
 
     call psi_external_calc
-    psirz(1:nr2, 1:nz2) = psiplasrz(1:nr2, 1:nz2) + psiextrz(1:nr2, 1:nz2)
+    call compound_psi
     call find_new_axis_part1
     call find_psi_boundary
     call new_jrz_feqis  ! calculate new right hand side
@@ -1061,6 +1070,29 @@ contains
 
     return
     end subroutine find_new_axis_part1
+
+!-------------------------------------------------------------------
+    subroutine compound_psi
+
+    if (nferromag > 0) then
+        call ferro_mag_create
+        psirz = psiplasrz + psiextrz + psiferro
+    else
+        psirz = psiplasrz + psiextrz
+    endif
+    return
+    end subroutine compound_psi
+
+!-------------------------------------------------------------------
+subroutine ferro_mag_create
+
+implicit none
+
+integer i,j,ii,jj,iii,jjj
+
+psiferro=0.
+
+end subroutine ferro_mag_create
 
 !--------------------------------------------------------------------
     subroutine find_psi_boundary

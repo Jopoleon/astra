@@ -1,6 +1,6 @@
 ! #Rgrid, #Zgrid, Rmin, Rmax, Zmin, Zmax, alp -> (PSIm-PSIp)=(PSIm-PSIx)*alp
   65  65  1. 2.3 -1.6 1.4  0.995
-!!! active coils data, R Z dr dz angle1 angle2 turns equivnr
+! active coils data, R Z dr dz angle1 angle2 turns equivnr
 21 
 3.685000e-01 -8.000000e-03 2.450000e-01 3.012000e+00 0.000000e+00 9.000000e+01	 510  1 60
 6.610000e-01  2.007200e+00 3.380000e-01 4.145000e-01 0.000000e+00 9.000000e+01 	  81  2  5
@@ -23,7 +23,7 @@
 2.508800e+00 -7.170000e-01 7.500000e-02 1.900000e-01 0.000000e+00 6.845900e+01	   5 10  7
 2.111680e+00  7.180000e-01 8.100000e-02 3.120000e-01 0.000000e+00 1.208014e+02     1 11  7
 2.019000e+00 -7.180000e-01 8.900000e-02 3.120000e-01 0.000000e+00 5.799460e+01	   1 12  7
-!!!! equivalent coil resistances
+! equivalent coil resistances
  12
       22400. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
       0.  5000. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.  
@@ -37,7 +37,7 @@
       0. 0. 0. 0. 0. 0. 0. 0. 0.   550. 0. 0.   
       0. 0. 0. 0. 0. 0. 0. 0. 0. 0.  136.6 125.0 
       0. 0. 0. 0. 0. 0. 0. 0. 0. 0.  125.0 136.1 
-!limiter r z and finally rmax rmin zmax zmin
+! limiter r z and finally rmax rmin zmax zmin
 113
    2.1898    0.0836
     2.1920    0.1201
@@ -153,7 +153,7 @@
     2.1811    0.0116
     2.1727    0.0482
 2.1898 1.0360 1.1532 -1.2527
-!!!!!! passive elements in first wall, uses segments description (blanbp)
+! passive elements in first wall, uses segments description (blanbp)
   280.0 0.01   ! total resistance and average widht
    20   <=== NP - number of "basic segments" on VV-inner curve   
   2 0.951   0.070  0.952   0.140  0.0  0.0   ! 2 is number of filaments per segment
@@ -176,5 +176,7 @@
   2 1.173  -1.189  1.029  -0.996  0.0  0.0
   2 1.029  -0.996  0.959  -0.420  0.0  0.0
   2 0.959  -0.420  0.951   0.070  0.0  0.0
-!!!!!!!!blanbpc
+! blanbpc
+-1  
+! Ferromag
 -1  

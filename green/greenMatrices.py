@@ -57,7 +57,7 @@ class GREEN_MATRICES:
 # Get blocks from file
 
         linesDelim = {}
-        labels = ['grid', 'active', 'res', 'lim', 'blan', 'blanpc']
+        labels = ['grid', 'active', 'res', 'lim', 'blan', 'blanpc', 'ferro']
         for key in labels:
             linesDelim[key] = [0, 0]
 
@@ -76,9 +76,7 @@ class GREEN_MATRICES:
 
         jBeg, jEnd = linesDelim['grid']
         nR2, nZ2, Rmin, Rmax, Zmin, Zmax, self.alpsep = \
-            np.genfromtxt(f_machine, unpack=True, skip_header=jBeg, max_rows=1, \
-            dtype=2*[np.int32] + 5*[np.float32])
-        print(nR2)
+            np.genfromtxt(f_machine, unpack=True, skip_header=1, max_rows=1, dtype=2*[gr_int] + 5*[gr_flt])
 
         self.Rgrid = np.linspace(Rmin, Rmax, nR2, endpoint=True, dtype=gr_flt)
         self.Zgrid = np.linspace(Zmin, Zmax, nZ2, endpoint=True, dtype=gr_flt)
@@ -92,7 +90,7 @@ class GREEN_MATRICES:
         self.R_coil, self.Z_coil, self.dR_coil, self.dZ_coil, self.angh_coil, self.ang_coil, \
             self.m_turns, self.m_equiv, self.n_elem_coil = \
             np.genfromtxt(f_machine, unpack=True, skip_header=jBeg+1, max_rows=n_coils, \
-            dtype=6*[np.float32] + 3*[np.int32])
+            dtype=6*[gr_flt] + 3*[gr_int])
 
         self.angh_coil = np.radians(self.angh_coil)
         self.ang_coil  = np.radians(self.ang_coil)
@@ -121,7 +119,7 @@ class GREEN_MATRICES:
         jBeg, jEnd = linesDelim['lim']
         n_lim = to_int(lines[jBeg])
         Rlim, Zlim = np.loadtxt(f_machine, unpack=True, skiprows=jBeg+1, max_rows=n_lim, dtype=gr_flt)
-        lim_maxR, lim_minR, lim_maxZ, lim_minZ = np.loadtxt(f_machine, unpack=True, skiprows=jEnd-1, max_rows=1, dtype=np.float32)
+        lim_maxR, lim_minR, lim_maxZ, lim_minZ = np.loadtxt(f_machine, unpack=True, skiprows=jEnd-1, max_rows=1, dtype=gr_flt)
         indR = ((Rlim - Rmin)/dr + 0.5).astype(int)
         indZ = ((Zlim - Zmin)/dz + 0.5).astype(int)
         self.Rlim = self.Rgrid[indR]
@@ -138,7 +136,7 @@ class GREEN_MATRICES:
 # Blanket
 
         jBeg, jEnd = linesDelim['blan']
-        res_blan, width_blan = np.loadtxt(f_machine, unpack=True, usecols=(0, 1), skiprows=jBeg, max_rows=1, dtype=np.float32)
+        res_blan, width_blan = np.loadtxt(f_machine, unpack=True, usecols=(0, 1), skiprows=jBeg, max_rows=1, dtype=gr_flt)
         n_blan = int(lines[jBeg+1].split()[0])
         if n_blan > 0:
             x1, x2, x3, x4 = np.loadtxt(f_machine, unpack=True, usecols=(1, 2, 3, 4), skiprows=jBeg+2, max_rows=n_blan, dtype=gr_flt)
@@ -175,6 +173,14 @@ class GREEN_MATRICES:
                 self.resConduc_diag = np.append(self.resConduc_diag, res_blan_pc)
             nConduc += n_blanket_pc
 
+# Ferromagnet stuff
+
+        jBeg, jEnd = linesDelim['ferro']
+        self.n_ferro_mag = to_int(lines[jBeg])
+        if self.n_ferro_mag > 0:
+            self.r0ferro, self.z0ferro, self.Lferro, self.Rcurvferro, self.angleferro, \
+                self.nferrosub = np.genfromtxt(f_machine, unpack=True, skiprows=jBeg+1, max_rows=n_ferro_mag,  dtype=5*[gr_flt] + [gr_int])
+
         logger.debug('nactive, ncoils, nconduc, ssfw %d %d %d %12.4e', self.nActive, nCoils, nConduc, ssfw)
 
 
@@ -188,8 +194,10 @@ class GREEN_MATRICES:
         nCoils = len(self.R_coil)
 
         identcoil = np.ones(nCoils, dtype=bool)
-        sin_coil = np.sin(self.ang_coil)
-        cos_coil = np.cos(self.ang_coil)
+        sin_coil  = np.sin(self.ang_coil)
+        cos_coil  = np.cos(self.ang_coil)
+        sin_coilh = np.sin(self.angh_coil)
+        cos_coilh = np.cos(self.angh_coil)
 
         x12 = self.dR_coil*sin_coil/self.dZ_coil
         indi = np.sqrt(x12   *self.n_elem_coil).astype(gr_int) + 1
@@ -223,7 +231,7 @@ class GREEN_MATRICES:
                     dRce  = np.append(dRce , dr1[j] + flt0_ij) # lot of redundancy, reduce!
                     dZce  = np.append(dZce , dz1[j] + flt0_ij)
                     tatmp = np.append(tatmp, self.m_turns[j]/float(indij) + flt0_ij)
-                    equivforce = np.append(equivforce, j + 1    + int0_ij)
+                    equivforce = np.append(equivforce, j + 1   + int0_ij)
                     equivtmp   = np.append(equivtmp  , nConduc + int0_ij)
                     for jj in range(indj[j]):
                         Rce = np.append(Rce, r1[j] + dr1[j]*np.arange(indi[j]) + jj*dz_cs[j])
@@ -408,6 +416,7 @@ class GREEN_MATRICES:
             nRZ2 = len(grBnd)
             f.write('%d\n' %nRZ2)
             np.savetxt(f, grBnd, fmt='%15.8e')
+            f.write('%d\n' %self.n_ferro_mag)
         logger.info('Stored %s', f_out)
 
 

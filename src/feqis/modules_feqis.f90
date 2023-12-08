@@ -26,18 +26,51 @@ double precision :: R_curr_2D, Z_curr_2D
 end module rcurr_zcurr_2def
 
 !---------------------------------------------------------------------
+module ferromagstructure
+integer, parameter, private :: DP=kind(1.0D0)
+
+!use ferromagstructure, only: type_ferromag
+!type(type_ferromag), dimension(:), allocatable :: ferromag
+
+!subtypes
+type type_position  !    Structure for list of R,Z positions (1D)
+    integer :: npoints
+		real(DP),pointer :: R(:) => null()     ! /r - Major radius [m]. Vector(max_npoints). Time-dependent
+    real(DP),pointer :: Z(:) => null()     ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
+    real(DP),pointer :: tanangl(:) => null()     ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
+    real(DP),pointer :: length(:) => null()     ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
+endtype
+type type_mutmatrix  !    Structure for list of R,Z positions (1D)
+    real(DP),pointer :: Mij(:,:) => null()     ! /mutual induction matrix
+endtype
+type type_magnetiz  !    Structure for list of R,Z positions (1D)
+		integer :: nvalues
+    real(DP),pointer :: Chi(:) => null()     ! /magnetic suceptibility
+    real(DP),pointer :: H(:) => null()     ! /Bvacuum_tangent/mu0
+endtype
+
+type type_ferromag  !    
+    type (type_position) :: position  ! /ferromag/MHrelation - RZ description 
+    type (type_magnetiz) :: MHrelation  ! /ferromag/MHrelation - 
+    type (type_mutmatrix) :: mutual_matrix  ! /ferromag/mutual_matrix - 
+endtype
+
+
+end module ferromagstructure
+
+!---------------------------------------------------------------------
 module transfer_functions
 
 use feqis_dimensions, only: i_dim2
 
-double precision, dimension(i_dim2) ::tetabez, dpsidvbez, psibez, &
+double precision, dimension(:), allocatable :: dpsidvbez, psibez, &
     g2bez, g2ibez, gm1bez, routbez, rinbez, vbez, g1bez, gm41bez, &
     ggrhobez, bmaxbez, bminbez, gm4bez, bdb0bez, gm5bez, fofbbez, &
     areatbez, perimbez, shifbez, kbez, surfbez, triaubez, phibez, &
     qbez, t2dbez, rbp2_b2bez, &
     ffprimebez, pprimebez, pressbez, ipolbez, shivbez, squarebez
 
-double precision, dimension(i_dim2, i_dim2) :: rpbez, zpbez, &
+double precision, dimension(:, :), allocatable :: rpbez, zpbez, &
     rminbez, bpcellbez, bcellbez, rmin2dbez, jrhobez, &
     bpcell2dbez, bcell2dbez
 
@@ -46,24 +79,18 @@ end module transfer_functions
 !---------------------------------------------------------------------
 module metric_coefficients_pbe
 
-use feqis_dimensions, only: i_dim2
-
 ! metric coefficients in polar coordinates 
 double precision :: R_curr_0D, Z_curr_0D
-double precision, dimension(i_dim2) :: vol, sator, gg1, gg2, gg3
-double precision, dimension(i_dim2, i_dim2) :: dl, dator, dalat, dvol, &
-    bpoloidal, bphi, lambda2d
+double precision, dimension(:,:), allocatable :: lambda2d, dator
 
 end module metric_coefficients_pbe
 
 !---------------------------------------------------------------------
 module green_matrix
 
-use feqis_dimensions, only: i_dim1, i_dim2
-
-double precision, dimension(i_dim2, i_dim2, i_dim1) :: greeni, &
+double precision, dimension(:, :, :), allocatable :: greeni, &
     dgreenirpl, dgreenizpl
-double precision, dimension(i_dim1, i_dim1) :: dgreenirj, dgreenizj
+double precision, dimension(:, :), allocatable :: dgreenirj, dgreenizj
 
 end module green_matrix
 
@@ -75,7 +102,7 @@ use pi_vars, only: GPI2
 implicit none
 
 integer, parameter :: dp=selected_real_kind(15, 300)
-double precision, dimension(256, 256) :: sintable, costable
+double precision, dimension(:, :), allocatable :: sintable, costable
 
 contains
  
