@@ -1075,24 +1075,14 @@ contains
     subroutine compound_psi
 
     if (nferromag > 0) then
-        call ferro_mag_create
+        psiferro = 0.
         psirz = psiplasrz + psiextrz + psiferro
     else
         psirz = psiplasrz + psiextrz
     endif
+
     return
     end subroutine compound_psi
-
-!-------------------------------------------------------------------
-subroutine ferro_mag_create
-
-implicit none
-
-integer i,j,ii,jj,iii,jjj
-
-psiferro=0.
-
-end subroutine ferro_mag_create
 
 !--------------------------------------------------------------------
     subroutine find_psi_boundary

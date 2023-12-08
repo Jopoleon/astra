@@ -27,34 +27,32 @@ end module rcurr_zcurr_2def
 
 !---------------------------------------------------------------------
 module ferromagstructure
+
 integer, parameter, private :: DP=kind(1.0D0)
 
-!use ferromagstructure, only: type_ferromag
-!type(type_ferromag), dimension(:), allocatable :: ferromag
-
-!subtypes
-type type_position  !    Structure for list of R,Z positions (1D)
+type type_position   ! Structure for list of R,Z positions (1D)
     integer :: npoints
-		real(DP),pointer :: R(:) => null()     ! /r - Major radius [m]. Vector(max_npoints). Time-dependent
-    real(DP),pointer :: Z(:) => null()     ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
-    real(DP),pointer :: tanangl(:) => null()     ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
-    real(DP),pointer :: length(:) => null()     ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
-endtype
-type type_mutmatrix  !    Structure for list of R,Z positions (1D)
-    real(DP),pointer :: Mij(:,:) => null()     ! /mutual induction matrix
-endtype
-type type_magnetiz  !    Structure for list of R,Z positions (1D)
-		integer :: nvalues
-    real(DP),pointer :: Chi(:) => null()     ! /magnetic suceptibility
-    real(DP),pointer :: H(:) => null()     ! /Bvacuum_tangent/mu0
-endtype
-
-type type_ferromag  !    
-    type (type_position) :: position  ! /ferromag/MHrelation - RZ description 
-    type (type_magnetiz) :: MHrelation  ! /ferromag/MHrelation - 
-    type (type_mutmatrix) :: mutual_matrix  ! /ferromag/mutual_matrix - 
+    real(DP), pointer :: R(:)       => null()  ! /r - Major radius [m]. Vector(max_npoints). Time-dependent
+    real(DP), pointer :: Z(:)       => null()  ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
+    real(DP), pointer :: tanangl(:) => null()  ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
+    real(DP), pointer :: length(:)  => null()  ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
+endtype type_position
+ 
+type type_mutmatrix  ! Structure for list of R,Z positions (1D)
+    real(DP), pointer :: Mij(:, :) => null()    ! /mutual induction matrix
+endtype type_mutmatrix
+ 
+type type_magnetiz   ! Structure for list of R,Z positions (1D)
+    integer :: nvalues
+    real(DP), pointer :: Chi(:) => null()   ! /magnetic suceptibility
+    real(DP), pointer :: H(:)   => null()   ! /Bvacuum_tangent/mu0
 endtype
 
+type type_ferromag
+    type (type_position)  :: position      ! /ferromag/MHrelation - RZ description 
+    type (type_magnetiz)  :: MHrelation    ! /ferromag/MHrelation - 
+    type (type_mutmatrix) :: mutual_matrix ! /ferromag/mutual_matrix - 
+endtype
 
 end module ferromagstructure
 
@@ -81,7 +79,7 @@ module metric_coefficients_pbe
 
 ! metric coefficients in polar coordinates 
 double precision :: R_curr_0D, Z_curr_0D
-double precision, dimension(:,:), allocatable :: lambda2d, dator
+double precision, dimension(:, :), allocatable :: lambda2d, dator
 
 end module metric_coefficients_pbe
 
@@ -116,7 +114,7 @@ contains
  
     N = size(x)
  
-    if(N .le. 1) return
+    if (N < 2) return
  
     allocate(odd((N+1)/2))
     allocate(even(N/2))
