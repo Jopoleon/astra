@@ -121,7 +121,7 @@ class GREEN_MATRICES:
         jBeg, jEnd = linesDelim['lim']
         n_lim = to_int(lines[jBeg])
         Rlim, Zlim = np.loadtxt(f_machine, unpack=True, skiprows=jBeg+1, max_rows=n_lim, dtype=gr_flt)
-        lim_maxR, lim_minR, lim_maxZ, lim_minZ = np.genfromtxt(f_machine, unpack=True, skip_header=jEnd-1, max_rows=1, dtype=4*[np.float32])
+        lim_maxR, lim_minR, lim_maxZ, lim_minZ = np.loadtxt(f_machine, unpack=True, skiprows=jEnd-1, max_rows=1, dtype=np.float32)
         indR = ((Rlim - Rmin)/dr + 0.5).astype(int)
         indZ = ((Zlim - Zmin)/dz + 0.5).astype(int)
         self.Rlim = self.Rgrid[indR]
@@ -138,7 +138,7 @@ class GREEN_MATRICES:
 # Blanket
 
         jBeg, jEnd = linesDelim['blan']
-        res_blan, width_blan = np.genfromtxt(f_machine, unpack=True, skip_header=jBeg, max_rows=1, dtype=2*[np.float32])
+        res_blan, width_blan = np.loadtxt(f_machine, unpack=True, usecols=(0, 1), skiprows=jBeg, max_rows=1, dtype=np.float32)
         n_blan = int(lines[jBeg+1].split()[0])
         if n_blan > 0:
             x1, x2, x3, x4 = np.loadtxt(f_machine, unpack=True, usecols=(1, 2, 3, 4), skiprows=jBeg+2, max_rows=n_blan, dtype=gr_flt)
