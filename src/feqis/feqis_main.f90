@@ -3,7 +3,7 @@ subroutine feqis_main(nucoils, ucoils, parameters_equil, ifplasma, &
 
 use imas_ids, only: type_equilibrium  
 use parameters_a2equil, only: type_parameters
-use feqis_circuit, only: ncoils, nrho, nteta, nr2, nz2, &
+use feqis_circuit, only: nrho, nteta, nr2, nz2, &
     psi_cur_old, psiplasmatoconduc, psirz, psiextrz, &
     psplex, psibndp, psiaxisp, &
     ucoils, voltage, &
@@ -24,12 +24,8 @@ data j_vacplas/0/
 data j_init/0/
 save j_call, j_init, j_vacplas
 
-write(*, *) ifplasma
-ncoils = nucoils
 call feqis_init(equil_in, parameters_equil, j_init, ifplasma)
-voltage(1:ncoils) = ucoils(1:ncoils) ! voltage inputs for active conductors
 
-write(*, *) ifplasma
 nrplasma = nrho
 
 ! Init coils and grid
@@ -104,13 +100,10 @@ if (ifplasma == 1) then
     allocate(equil_out%profiles_1d%squareness(nrplasma))
 endif
 
-write(*, *) 'fix and nstep', parameters_equil%k_fixfree, parameters_equil%nstep, nrho, nteta
-
-write(*, *) parameters_equil%k_fixfree, j_init
-
 if (parameters_equil%k_fixfree == 1) then
+    voltage=0.
+    voltage(1:nucoils) = ucoils(1:nucoils) ! voltage inputs for active conductors
     if (ifplasma == 0) then       ! only circuit equations solved
-        write(*, *) 'vacuum'
         psi_cur_old = 0.
         psiplasmatoconduc = 0.
         call circuit_eq_advance_feqis(j_call)
@@ -127,19 +120,15 @@ if (parameters_equil%k_fixfree == 1) then
         j_vacplas = 1
     endif
 else if (parameters_equil%k_fixfree == 0) then
-    write(*, *) 'call fix equil code'
     call fix_boundary_feqis(j_init)
     equil_out%global_param%psplex   = psplex
     equil_out%global_param%psibound = psibndp
     equil_out%global_param%psiaxis  = psiaxisp
     call equil_assignments(equil_out)
-    write(*, *) 'end fix equil code'
     j_init = 1
-    write(*, *) 'end equil code'
     return
 endif
 
-write(*, *) 'end equil code'
 j_call = 1
 j_init = 1
 

@@ -211,14 +211,17 @@ class GREEN_MATRICES:
         sin_coilh = np.sin(self.angh_coil)
         cos_coilh = np.cos(self.angh_coil)
 
-        x12 = self.dR_coil*sin_coil/self.dZ_coil
+        x12 = self.dR_coil/self.dZ_coil
         indi = np.sqrt(x12   *self.n_elem_coil).astype(gr_int) + 1
         indj = np.sqrt(1./x12*self.n_elem_coil).astype(gr_int) + 1
         dr1 = self.dR_coil/indi        # x3 ; x4 = 0.
         dz1 = self.dZ_coil/indj        # x6
-        dz_cs = dz1*cos_coil/sin_coil  # x5
-        r1 = self.R_coil - 0.5*( self.dR_coil + self.dZ_coil*cos_coil/sin_coil) + 0.5*(dr1 + dz_cs)
-        z1 = self.Z_coil - 0.5*self.dZ_coil + 0.5*dz1
+        dr_cs = dr1*cos_coilh  # x5
+        dz_cs = dz1*cos_coil  # x5
+        dr_ss = dr1*sin_coilh  # x5
+        dz_ss = dz1*sin_coil  # x5
+        r1 = self.R_coil - 0.5*( self.dR_coil*cos_coilh + self.dZ_coil*cos_coil) + 0.5*(dr_cs + dz_cs)
+        z1 = self.Z_coil - 0.5*( self.dR_coil*sin_coilh + self.dZ_coil*sin_coil) + 0.5*(dr_ss + dz_ss)
 
         Rce   = empty_fltarr
         Zce   = empty_fltarr
@@ -240,14 +243,14 @@ class GREEN_MATRICES:
                     indij = indi[j]*indj[j]
                     flt0_ij = np.zeros(indij, dtype=gr_flt)
                     int0_ij = np.zeros(indij, dtype=gr_int)
-                    dRce  = np.append(dRce , dr1[j] + flt0_ij) # lot of redundancy, reduce!
-                    dZce  = np.append(dZce , dz1[j] + flt0_ij)
+                    dRce  = np.append(dRce , dr_cs[j] + flt0_ij) # lot of redundancy, reduce!
+                    dZce  = np.append(dZce , dz_ss[j] + flt0_ij)
                     tatmp = np.append(tatmp, self.m_turns[j]/float(indij) + flt0_ij)
                     equivforce = np.append(equivforce, j + 1   + int0_ij)
                     equivtmp   = np.append(equivtmp  , nConduc + int0_ij)
                     for jj in range(indj[j]):
-                        Rce = np.append(Rce, r1[j] + dr1[j]*np.arange(indi[j]) + jj*dz_cs[j])
-                        Zce = np.append(Zce, z1[j] +        np.zeros (indi[j]) + jj*dz1  [j])
+                        Rce = np.append(Rce, r1[j] + dr_cs[j]*np.arange(indi[j]) + jj*dz_cs[j])
+                        Zce = np.append(Zce, z1[j] + dr_ss[j]*np.arange(indi[j]) + jj*dz_ss[j])
         nctype = 2 + np.zeros(len(Rce), dtype=gr_int)
 
 #--------
