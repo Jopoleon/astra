@@ -23,8 +23,10 @@
 #include "A_vars.h"
 #include "A_proc.h"
 
-void AllocateShmem(int);
-void WhatSem();
+void AstraEvent();
+double swatch (double*);
+double swatch_(double*);
+
 int semtimedop();
 int read_aipc(INT_*, INT_*, char*);
 void freeshm();
@@ -485,7 +487,10 @@ int wait4all_(){
     if (A_ShmNum < 0) return(0); /* Do check only after initialization   */
     static struct timespec timeout = {0, 100000000};   /* timeout = .1 sec */
 
-    MinorLoop: 
+    MinorLoop:{
+/* Here the primary process can do limited actions e.g. analyze keys */
+        (void) AstraEvent();
+    }
 
 /*
   Go on if [Sem0value+buf0.sem_op==0], goto Minorloop after timeout
