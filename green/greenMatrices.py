@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, logging, argparse
+import os, logging, argparse, json
 import numpy as np
 import green_functions as gf
 
@@ -25,14 +25,6 @@ empty_intarr = np.array([], dtype=gr_int)
 expfmt = '%15.8e'
 
 
-def strip_line(line):
-    return line.split('!')[0].strip()
-
-
-def to_int(line):
-    return int(strip_line(line))
-
-
 def truncate(arr, ncols=3):
     nx = np.prod(arr.shape)
     nrows = nx//ncols
@@ -48,51 +40,31 @@ class GREEN_MATRICES:
         pass
 
 
-    def fromMachineInput(self, f_machine):
+    def fromMachineInput(self, f_json):
 
-        logger.info('Reading %s', f_machine)
+        logger.info('Reading %s', f_json)
 
-        with open(f_machine, 'r') as f:
-            lines = f.readlines()
+# Read machine input file
 
-# Get blocks from file
-
-        linesDelim = {}
-        labels = ['grid', 'active', 'res', 'lim', 'blan', 'blanpc', 'ferro']
-        for key in labels:
-            linesDelim[key] = [0, 0]
-
-        line_old = ''
-        j_block = 0
-        for jline, lin in enumerate(lines):
-            line = strip_line(lin)            
-            if line and not line_old:
-                linesDelim[labels[j_block]][0] = jline
-            if not line and line_old:
-                linesDelim[labels[j_block]][1] = jline
-                j_block += 1
-            line_old = line
+        with open(f_json) as fjson:
+            in_d = json.load(fjson)
+        for key, val in in_d.items():
+            if isinstance(val, list):
+                if isinstance(val[0], int):
+                    setattr(self, key, np.array(val, dtype=gr_int))
+                else:
+                    setattr(self, key, np.array(val, dtype=gr_flt))
+            else:
+                setattr(self, key, val)
 
 # Spatial grids
 
-        jBeg, jEnd = linesDelim['grid']
-        nR2, nZ2, Rmin, Rmax, Zmin, Zmax, self.alpsep = \
-            np.genfromtxt(f_machine, unpack=True, skip_header=1, max_rows=1, dtype=2*[gr_int] + 5*[gr_flt])
-
-        self.Rgrid = np.linspace(Rmin, Rmax, nR2, endpoint=True, dtype=gr_flt)
-        self.Zgrid = np.linspace(Zmin, Zmax, nZ2, endpoint=True, dtype=gr_flt)
-        dr = (Rmax - Rmin)/float(nR2 - 1)
-        dz = (Zmax - Zmin)/float(nZ2 - 1)
+        self.Rgrid = np.linspace(self.Rmin, self.Rmax, self.nR, endpoint=True, dtype=gr_flt)
+        self.Zgrid = np.linspace(self.Zmin, self.Zmax, self.nZ, endpoint=True, dtype=gr_flt)
+        dr = (self.Rmax - self.Rmin)/float(self.nR - 1)
+        dz = (self.Zmax - self.Zmin)/float(self.nZ - 1)
 
 # Coils geometry
-
-        jBeg, jEnd = linesDelim['active']
-        n_coils = to_int(lines[jBeg])
-        self.R_coil, self.Z_coil, self.dR_coil, self.dZ_coil, self.angh_coil, self.ang_coil, \
-            self.m_turns, self.m_equiv, self.n_elem_coil = \
-            np.genfromtxt(f_machine, unpack=True, skip_header=jBeg+1, max_rows=n_coils, \
-            dtype=6*[gr_flt] + 3*[gr_int])
-
         self.angh_coil = np.radians(self.angh_coil)
         self.ang_coil  = np.radians(self.ang_coil)
         nCoils = len(self.R_coil)
@@ -110,88 +82,56 @@ class GREEN_MATRICES:
 
 # Coil resistivity
 
-        jBeg, jEnd = linesDelim['res']
-        n_res = to_int(lines[jBeg])
-        self.resConduc = np.loadtxt(f_machine, skiprows=jBeg+1, max_rows=n_res, dtype=gr_flt)
         self.resConduc_diag = empty_fltarr
 
 # Limiter geometry
 
-        jBeg, jEnd = linesDelim['lim']
-        n_lim = to_int(lines[jBeg])
-        Rlim, Zlim = np.loadtxt(f_machine, unpack=True, skiprows=jBeg+1, max_rows=n_lim, dtype=gr_flt)
-        lim_maxR, lim_minR, lim_maxZ, lim_minZ = np.loadtxt(f_machine, unpack=True, skiprows=jEnd-1, max_rows=1, dtype=gr_flt)
-        indR = ((Rlim - Rmin)/dr + 0.5).astype(int)
-        indZ = ((Zlim - Zmin)/dz + 0.5).astype(int)
+        indR = ((self.Rlim - self.Rmin)/dr + 0.5).astype(int)
+        indZ = ((self.Zlim - self.Zmin)/dz + 0.5).astype(int)
         self.Rlim = self.Rgrid[indR]
         self.Zlim = self.Zgrid[indZ]
 
-        ilim_maxR = int((lim_maxR - Rmin)/dr + 0.5)
-        ilim_minR = int((lim_minR - Rmin)/dr + 0.5)
-        ilim_maxZ = int((lim_maxZ - Zmin)/dz + 0.5)
-        ilim_minZ = int((lim_minZ - Zmin)/dz + 0.5)
+        ilim_maxR = int((self.lim_maxR - self.Rmin)/dr + 0.5)
+        ilim_minR = int((self.lim_minR - self.Rmin)/dr + 0.5)
+        ilim_maxZ = int((self.lim_maxZ - self.Zmin)/dz + 0.5)
+        ilim_minZ = int((self.lim_minZ - self.Zmin)/dz + 0.5)
         self.limRZ = (self.Rgrid[ilim_maxR], self.Rgrid[ilim_minR], self.Zgrid[ilim_maxZ], self.Zgrid[ilim_minZ])
-        self.zLimPotential = np.zeros((nR2, nZ2), dtype=gr_int)
+        self.zLimPotential = np.zeros((self.nR, self.nZ), dtype=gr_int)
         self.zLimPotential[ilim_minR: ilim_maxR, ilim_minZ: ilim_maxZ] = 1
 
 # Blanket
-
-        jBeg, jEnd = linesDelim['blan']
-        res_blan, width_blan = np.loadtxt(f_machine, unpack=True, usecols=(0, 1), skiprows=jBeg, max_rows=1, dtype=gr_flt)
-        n_blan = int(lines[jBeg+1].split()[0])
-        if n_blan > 0:
-            x1, x2, x3, x4 = np.loadtxt(f_machine, unpack=True, usecols=(1, 2, 3, 4), skiprows=jBeg+2, max_rows=n_blan, dtype=gr_flt)
-
         nConduc = self.nActive
-        if n_blan > 0:
-            x7 = x3 - x1
-            x8 = x4 - x2
+        if hasattr(self, 'x1'):
+            x7 = self.x3 - self.x1
+            x8 = self.x4 - self.x2
             x9 = np.hypot(x7, x8)
-            self.R_blan = np.ravel([x1 + 0.25*x7, x1 + 0.75*x7], order='F')
-            self.Z_blan = np.ravel([x2 + 0.25*x8, x2 + 0.75*x8], order='F')
+            self.R_blan = np.ravel([self.x1 + 0.25*x7, self.x1 + 0.75*x7], order='F')
+            self.Z_blan = np.ravel([self.x2 + 0.25*x8, self.x2 + 0.75*x8], order='F')
             self.dhoriz = np.ravel([0.5*x7, 0.5*x7], order='F')
             self.dvert  = np.ravel([0.5*x8, 0.5*x8], order='F')
-            area_blan   = np.ravel([width_blan*x9, width_blan*x9], order='F')
+            area_blan   = np.ravel([self.width_blan*x9, self.width_blan*x9], order='F')
             ssfw = np.sum(area_blan/self.R_blan)
             n_blanket = len(self.R_blan)
 
             self.R_cond = np.append(self.R_cond[:self.nActive], self.R_blan)
             self.Z_cond = np.append(self.Z_cond[:self.nActive], self.Z_blan)
-            if res_blan > 0:
-               self.resConduc_diag = np.append(self.resConduc_diag, res_blan*self.R_blan/area_blan*ssfw)
+            if self.res_blan > 0:
+               self.resConduc_diag = np.append(self.resConduc_diag, self.res_blan*self.R_blan/area_blan*ssfw)
             nConduc += n_blanket
 
 # Blanketpc
 
-        jBeg, jEnd = linesDelim['blanpc']
-        n_blanket_pc = to_int(lines[jBeg])
-        if n_blanket_pc > 0:
-            self.R_blan_pc, self.Z_blan_pc, res_blan_pc, self.area_blan_pc = np.loadtxt(f_machine, unpack=True, usecols=(0, 1, 2, 3), skiprows=jBeg+1, max_rows=n_blanket_pc, dtype=gr_flt)
-
+        if hasattr(self, 'R_blan_pc'):
             self.R_cond = np.append(self.R_cond, self.R_blan_pc)
             self.Z_cond = np.append(self.Z_cond, self.Z_blan_pc)
-            if res_blan < 0:
-                self.resConduc_diag = np.append(self.resConduc_diag, res_blan_pc)
-            nConduc += n_blanket_pc
+            if self.res_blan < 0:
+                self.resConduc_diag = np.append(self.resConduc_diag, self.res_blan_pc)
+            nConduc += len(self.R_blan_pc)
 
 # Ferromagnet stuff
 
-        jBeg, jEnd = linesDelim['ferro']
-        n_ferro_mag = to_int(lines[jBeg])
-        if n_ferro_mag > 0:
-            self.r0ferro, self.z0ferro, self.Lferro, self.Rcurvferro, self.angleferro, self.imagValues, \
-                self.nferrosub = np.genfromtxt(f_machine, unpack=True, skiprows=jBeg+1, max_rows=n_ferro_mag,  dtype=5*[gr_flt] + 2*[gr_int])
-
+        if hasattr(self, 'r0ferro'):
             self.angleferro = np.radians(self.angleferro)
-            nmag = np.max(self.imagValues)
-            self.magValue = np.zeros((nmag, n_ferro_mag), dtype=gr_flt)
-            self.hValue   = np.zeros_like(self.magValue)
-            jline = jBeg + n_ferro_mag + 1
-            for jfer in range(n_ferro_mag):
-                jmag = self.imagValues[jfer]
-                self.magValue[:jmag, jfer], self.hValue[:jmag, jfer] = np.loadtxt(f_machine, unpack=True, skiprows=jline, max_rows=jmag)
-                jline += jmag
-
         
         logger.debug('nactive, ncoils, nconduc, ssfw %d %d %d %12.4e', self.nActive, nCoils, nConduc, ssfw)
 
@@ -317,15 +257,15 @@ class GREEN_MATRICES:
 #-----------------
 # Grid inductances
 
-        nR2 = len(self.Rgrid)
-        nZ2 = len(self.Zgrid)
-        dr = (self.Rgrid[-1] - self.Rgrid[0])/float(nR2 - 1)
-        dz = (self.Zgrid[-1] - self.Zgrid[0])/float(nZ2 - 1)
+        nR = len(self.Rgrid)
+        nZ = len(self.Zgrid)
+        dr = (self.Rgrid[-1] - self.Rgrid[0])/float(nR - 1)
+        dz = (self.Zgrid[-1] - self.Zgrid[0])/float(nZ - 1)
 
         ntype2range = {1: (-1, 0, 1), 2: (0,)}
         Rg, Zg = np.meshgrid(self.Rgrid, self.Zgrid)
 
-        self.greeni = np.zeros((nR2, nZ2, nConduc))
+        self.greeni = np.zeros((nR, nZ, nConduc))
         for i in range(ielem):
             iii = equivtmp[i] - 1
             irange = ntype2range[nctype[i]]
@@ -341,8 +281,8 @@ class GREEN_MATRICES:
 #-------------------
 # Inter-block forces
 
-        self.dGreeniRpl = np.zeros((nR2, nZ2, nBlocks), dtype=gr_flt)
-        self.dGreeniZpl = np.zeros((nR2, nZ2, nBlocks), dtype=gr_flt)
+        self.dGreeniRpl = np.zeros((nR, nZ, nBlocks), dtype=gr_flt)
+        self.dGreeniZpl = np.zeros((nR, nZ, nBlocks), dtype=gr_flt)
         self.dGreeniRj  = np.zeros((nBlocks, nBlocks) , dtype=gr_flt)
         self.dGreeniZj  = np.zeros((nBlocks, nBlocks) , dtype=gr_flt) 
 
@@ -410,14 +350,14 @@ class GREEN_MATRICES:
     def dumpMachineDescr(self, f_out='machine_description_out.aug'):
 
         logger.debug('Dumping %s', f_out)
-        nR2, nZ2, nBlocks = self.dGreeniRpl.shape
+        nR, nZ, nBlocks = self.dGreeniRpl.shape
         nLimiter = len(self.Rlim)
         nCoils   = len(self.R_coil)
         nConduc  = self.indConduc.shape[0]
         nPassive = nConduc - self.nActive
 
         with open(f_out, 'w') as f:
-            f.write('%3d %3d\n' %(nR2, nZ2))
+            f.write('%3d %3d\n' %(nR, nZ))
             f.write('%11.8f\n' %self.Rgrid [0])
             f.write('%11.8f\n' %self.Rgrid[-1])
             f.write('%11.8f\n' %self.Zgrid [0])
@@ -445,7 +385,7 @@ class GREEN_MATRICES:
             np.savetxt(f, self.resConduc_diag, fmt=expfmt)
 
             for jcon in range(nConduc):
-                for jr in range(nR2):
+                for jr in range(nR):
                     block, tail = truncate(self.greeni[jr, :, jcon])
                     np.savetxt(f, block, fmt=expfmt)
                     np.savetxt(f, tail , fmt=expfmt)
@@ -454,14 +394,14 @@ class GREEN_MATRICES:
             for jb in range(nBlocks):
                 np.savetxt(f, np.c_[self.dGreeniRj[:, jb], self.dGreeniZj[:, jb]], fmt=expfmt)
             for jb in range(nBlocks):
-                for jz in range(nZ2):
+                for jz in range(nZ):
                     np.savetxt(f, np.c_[self.dGreeniRpl[:, jz, jb], self.dGreeniZpl[:, jz, jb]], fmt=expfmt)
 
             np.savetxt(f, self.zLimPotential.ravel(), fmt='%1d')
 
             grBnd = self.greenBnd.ravel()
-            nRZ2 = len(grBnd)
-            f.write('%d\n' %nRZ2)
+            nRZ   = len(grBnd)
+            f.write('%d\n' %nRZ)
             np.savetxt(f, grBnd, fmt=expfmt)
             if not hasattr(self, 'Lferro'):
                 f.write('-1\n')
@@ -484,7 +424,7 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--tok', help='tokamak name', required=False, default='aug')
     args = parser.parse_args()
 
-    f_machineIn  = '%s/machine_description_in.%s'  %(grIOdir, args.tok)
+    f_machineIn  = '%s/%s_description_in.json'  %(grIOdir, args.tok)
     f_machineOut = '%s/machine_description_out.%s' %(grIOdir, args.tok)
 
     gm = GREEN_MATRICES()
