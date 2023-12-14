@@ -355,7 +355,7 @@ contains
 !this routine finds the x-points close to the plasma boundary,  irrespective of other x-points
 
     integer, intent(out) :: ierr, n_add
-    double precision, intent(out), dimension(20) :: rx, zx
+    double precision, intent(out), dimension(200) :: rx, zx
 
     integer :: i, jinc, nx
     integer, dimension(250) :: jcycl
@@ -1098,7 +1098,7 @@ contains
     double precision :: x1, x2, x5
     double precision, dimension(2) :: pos_xpoint(2)
     double precision, dimension(8) :: ddipsi
-    double precision, dimension(20) :: rx_add, zx_add
+    double precision, dimension(200) :: rx_add, zx_add
     double precision, dimension(500) :: psi_limp
     double precision, dimension(max_xpoints) :: psi_xpoint
 

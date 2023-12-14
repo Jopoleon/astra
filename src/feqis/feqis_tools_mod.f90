@@ -208,7 +208,7 @@ contains
         enddo
         d(k-ndim) = cmplx(0., 0.)
 
-        call fft_eff(d)
+!        call fft_eff(d)
 
         d(1: k-1) = d(2: k)
         do i=1, ndim
