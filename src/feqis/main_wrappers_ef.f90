@@ -904,8 +904,11 @@ curconduc(1:nconduc) = cur_init(1:nconduc)
 
 allocate(jrz(nr2, nz2))
 allocate(psirz(nr2, nz2))
+psirz=0.
 allocate(psiextrz(nr2, nz2))
+psiextrz=0.
 allocate(psiplasrz(nr2, nz2))
+psiplasrz=0.
 allocate(psiferro(nr2, nz2))
 allocate(u_n(nr2, nz2))
 allocate(omega_pl(nr2, nz2))
@@ -953,13 +956,13 @@ save psisave, ierr
 
 ! initial guess
 if (j_init == 0) then
-    allocate(rho(nrho, nteta))
+    allocate(rho(nrho, nteta+1))
     allocate(rpol(nrho, nteta))
     allocate(zpol(nrho, nteta))
     allocate(rpul(nrho, nteta))
     allocate(zpul(nrho, nteta))
     allocate(psirhoteta(nrho, nteta))
-    allocate(jrhoteta(nrho, nteta))
+    allocate(jrhoteta(nrho, nteta+1))
     allocate(psia_1d(nrho))
     allocate(ppp_1d(nrho))
     allocate(ffp_1d(nrho))
@@ -1106,7 +1109,7 @@ do j=1, nteta
     enddo
 enddo
 teta(1:nteta) = t2dbez(1:nteta)
-rho(1:nrho, nteta + 1) = rho(1:nrho, 1)
+rho(1:nrho, nteta+1) = rho(1:nrho, 1)
 teta(nteta + 1) = teta(1) + GPI2
 
 psia_1d(1:nrho) = psigrida(1:nrho)
@@ -1156,11 +1159,13 @@ equil_out%coord_sys%jphi          (1:nrho, 1:nteta) = jrhobez(1:nrho, 1:nteta)
 
 equil_out%eqgeometry%rectgrid%npointsr = nr2
 equil_out%eqgeometry%rectgrid%npointsz = nz2
-equil_out%eqgeometry%rectgrid%r2d(1:nr2) = r(1:nr2)
-equil_out%eqgeometry%rectgrid%z2d(1:nz2) = z(1:nz2)
-equil_out%eqgeometry%rectgrid%psirz2d(1:nr2, 1:nz2) = psirz(1:nr2, 1:nz2)
-equil_out%eqgeometry%rectgrid%psi_axis     = psiaxis
-equil_out%eqgeometry%rectgrid%psi_boundary = psibnd
+if (allocated(r)) then
+    equil_out%eqgeometry%rectgrid%r2d(1:nr2) = r(1:nr2)
+    equil_out%eqgeometry%rectgrid%z2d(1:nz2) = z(1:nz2)
+    equil_out%eqgeometry%rectgrid%psirz2d(1:nr2, 1:nz2) = psirz(1:nr2, 1:nz2)
+    equil_out%eqgeometry%rectgrid%psi_axis     = psiaxis
+    equil_out%eqgeometry%rectgrid%psi_boundary = psibnd
+endif
 
 equil_out%profiles_1d%ffprime   (1:nrho) = ffprimebez(1:nrho)
 equil_out%profiles_1d%pprime    (1:nrho) = pprimebez(1:nrho)
