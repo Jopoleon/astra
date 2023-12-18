@@ -498,6 +498,7 @@ parse_exp_2d: do
     lin_upper = to_upper(STRI)
     if (LEN_TRIM(lin_upper) == 0) CYCLE parse_exp_2d
     if (lin_upper(1: 1) == '!') CYCLE parse_exp_2d
+    if (lin_upper(1: 3) == 'END') EXIT parse_exp_2d
 
     VNAM = VARNAM(lin_upper(1: 6), ier_tab)
     VNAMX = ARRNAM(VNAM)
