@@ -45,7 +45,7 @@ directories:
 .PHONY: mvmod
 mvmod:
 	rm -f *genmod.*
-	-@mv *.mod $(MOD_DIR)/ 2>/dev/null
+	-@mv *.mod $(MOD_DIR)/ 2>/dev/null; true
 
 .PHONY: clean
 clean:
