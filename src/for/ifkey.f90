@@ -43,7 +43,7 @@ use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, XLINE1, &
 use outcmn_inc, only: Black, Blue, WarningColor, &
     active_tab, curves_per_frame, coltab, &
     frame_hei, DXLET, DYLET, MOD10, LTOUT, NARRX, IPOUT, MODEY, XWH, &
-    NWINDX, NWIND1, NWIND2, NWIND3, NWIND4, NWIND7, &
+    NWINDX, NWIND1, NWIND3, NWIND4, NWIND7, &
     NROUT, NTOUT, NXOUT, NSBR, NGR, NST, &
     NAMER, NAMET, NAMEX, SCALER, SCALET, ROUT, OSHIFR, OSHIFT, &
     rev_file, equ_file, exp_file, &
@@ -618,8 +618,7 @@ CASE(85) ! 'U'
     endif
 
 CASE(87) ! 'W'
-    if (MOD10 == 1) call ASKINT(NROUT, NWIND1, NAMER)
-    if (MOD10 == 2 .or. MOD10 == 3) call ASKINT(NROUT, NWIND2, NAMER)
+    if (MOD10 == 1 .or. MOD10 == 2 .or. MOD10 == 3) call ASKINT(NROUT, NWIND1, NAMER)
     if (MOD10 == 4 .or. MOD10 == 5) call ASKINT(NROUT, NWIND4, NAMER)
     if (MOD10 == 6) call ASKINT(NTOUT, NWIND3, NAMET)
     if (MOD10 == 7) call ASKINT(NTOUT, NWIND7, NAMET)
@@ -774,10 +773,8 @@ CASE(86) ! 'V'
     enddo
 
 CASE(77) ! 'M'
-    if (MOD10 == 1) call ASXWIN(NROUT, NWIND1, NAMER, SCALER, &
+    if (MOD10 == 1 .or. MOD10 == 2 .or. MOD10 == 3) call ASXWIN(NROUT, NWIND1, NAMER, SCALER, &
         OSHIFR, GRAL, GRAP, MOD10, MODEY)
-    if (MOD10 == 2 .or. MOD10 == 3) call ASXWIN(NROUT, NWIND2, NAMER, &
-        SCALER, OSHIFR, GRAL, GRAP, MOD10, MODEY)
     if (MOD10 == 6) call ASTWIN(NTOUT, NWIND3, NAMET, SCALET, &
         OSHIFT, MOD10, MODEY)
     if (MOD10 == 7) then

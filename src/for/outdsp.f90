@@ -113,7 +113,7 @@ CASE(1: 3)  ! Profiles
 
    j_curve = 0
    plot_prof: do jprof=1, NROUT
-      JW = jprof - curves_per_frame(MOD10)*active_tab(MOD10) ! 1-16 for mode '1'
+      JW = NWIND1(jprof) - curves_per_frame(MOD10)*active_tab(MOD10) ! 1-16 for mode '1'
       if (NAMER(jprof) == '    ') JW = 0
       if (JW <= 0 .or. JW > curves_per_frame(MOD10)) CYCLE plot_prof
       j_canv = MOD(JW - 1, n_canvas) + 1               ! 1-8 for mode '1'
@@ -214,7 +214,7 @@ CASE(1: 3)  ! Profiles
    
       jsc = NWINDX(jxout)
       if (abs(SC(jsc)) < 1.1E-7) call SCAL(1, SC(jsc), SCALER(jsc), DATAX(1, jn), jpnt, NRDX)
-      JW = jsc - curves_per_frame(MOD10)*active_tab(MOD10)
+      JW = NWIND1(jsc) - curves_per_frame(MOD10)*active_tab(MOD10)
       if (JW <= 0 .or. JW > curves_per_frame(MOD10)) CYCLE plot_profx
       j_canv = MOD(JW - 1, n_canvas) + 1               ! 1-8 for mode '1'
       jx_canv = MOD(j_canv - 1, nx_canvas)      ! 0-3 for mode '1'
@@ -357,7 +357,7 @@ CASE(6)  ! Time traces
 
    j_curve = 0
    plot_traces: do jtrace=1, NTOUT
-      JW = jtrace - curves_per_frame(MOD10)*active_tab(MOD10)
+      JW = NWIND3(jtrace) - curves_per_frame(MOD10)*active_tab(MOD10)
       if (NAMET(jtrace) == '    ') CYCLE plot_traces
       if (JW <= 0 .or. JW > curves_per_frame(MOD10)) CYCLE plot_traces
       jplot_in_canv = (JW - 1)/n_canvas       ! <-> color
@@ -406,7 +406,7 @@ CASE(7)
    do JJ=1, 4
       NUM(JJ) = 0
       do J=1, NTOUT
-         if (J - 4*active_tab(MOD10) == JJ) then
+         if (NWIND7(J) - 4*active_tab(MOD10) == JJ) then
             NUM(JJ) = J
             EXIT
          endif
