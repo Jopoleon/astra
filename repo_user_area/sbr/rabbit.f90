@@ -143,7 +143,7 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
     write(6, *) '#NBI', n_nbi
     ios = 0
     write(6, *) 'Limiter file', TRIM(limiter_file)
-    open(unit_lim, file=TRIM(limiter_file), iostat=ios)
+    open(unit_lim, file=TRIM(limiter_file), status='OLD', iostat=ios)
     read(unit_lim, '(2i)') dum, n_lim
 
     allocate(r_lim(n_lim), z_lim(n_lim))
