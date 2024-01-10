@@ -96,12 +96,15 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
     read(53, nml=physics, iostat=ios)
     close(53)
     write(6, *) '#NBI', n_nbi
+
     ios = 0
     write(6, *) 'Limiter file', TRIM(limiter_file)
     open(unit_lim, file=TRIM(limiter_file), status='OLD', iostat=ios)
+    if (ios /= 0) then
+        write(*, *) 'Error opening limiter file: iostat=', ios
+    endif
     read(unit_lim, '(2i)') dum, n_lim
-    allocate(r_lim(n_lim))
-    allocate(z_lim(n_lim))
+    allocate(r_lim(n_lim), z_lim(n_lim))
     do jlim=1, n_lim
         read(unit_lim, *) r_lim(jlim), z_lim(jlim)
     enddo
@@ -111,11 +114,10 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
     R_max = MAXVAL(R_lim) + 0.05
     z_min = MINVAL(z_lim) - 0.05
     z_max = MAXVAL(z_lim) + 0.05
-    dr = (R_max - R_min)/(Nrrect - 1.d0)
-    dz = (z_max - z_min)/(Nzrect - 1.d0)
-
-    Rrect = (/ (R_min + dr*(i - 1.d0), i=1, Nrrect) /)
-    zrect = (/ (z_min + dz*(i - 1.d0), i=1, Nzrect) /)
+    dr = (R_max - R_min)/(n_Rrect - 1.d0)
+    dz = (z_max - z_min)/(n_Zrect - 1.d0)
+    Rrect = (/ (R_min + dr*(i - 1.d0), i=1, n_Rrect) /)
+    Zrect = (/ (z_min + dz*(i - 1.d0), i=1, n_Zrect) /)
 
     aplasma = AMAIN(1)
     zplasma = ZMAIN(1)
