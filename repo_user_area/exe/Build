@@ -97,6 +97,7 @@ export OMP_NUM_THREADS=\${SLURM_CPUS_PER_TASK:-1}
 export expfile=${expfile}
 export equfile=${equfile}
 export OMP_PLACES=cores
+export AEXT=${AEXT}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 srun $ATASK
 EOT
