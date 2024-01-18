@@ -98,7 +98,6 @@ export expfile=${expfile}
 export equfile=${equfile}
 export OMP_PLACES=cores
 export ASTRA_EXT=${ASTRA_EXT}
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 srun $ATASK
 EOT
 
