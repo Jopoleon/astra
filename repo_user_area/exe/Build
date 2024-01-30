@@ -36,7 +36,7 @@ then
     export MKL_LIBDIR=${MKLROOT}/lib/intel64
     export NETCDF_LIB="-L${NETCDF_LIBDIR} -lnetcdf -L${NETCDFF_LIBDIR} -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}:${NETCDFF_LIBDIR}"
     export NETCDF_INC=${NETCDF_FORTRAN_ROOT}/include
-elif [[ $platform == "docker_out" ]]
+elif [[ $platform == "docker" ]]
 then
    # Same as "module load astra" on AUG machines
    export ASTRA_EXT=/shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT
