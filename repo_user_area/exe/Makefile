@@ -2,6 +2,10 @@ ifndef AWD
 $(error setenv/export AWD first)
 endif
 
+ifndef WORKFLOW
+WORKFLOW = $(FOR_DIR)/stepup.f90
+endif
+
 LIB_DIR = $(AWD)/lib
 TSK_DIR = $(AWD)/bin
 FOR_DIR = $(AWD)/main
@@ -14,16 +18,18 @@ LIBSBR = $(LIB_DIR)/libsbr.a
 LIBFNC = $(LIB_DIR)/libfnc.a
 LIBFOR = $(LIB_DIR)/libfor.a
 LIBNBI = $(LIB_DIR)/libnbi.a
-LIBFEQIS  = $(LIB_DIR)/libfeqis.a 
+LIBFEQIS  = $(LIB_DIR)/libfeqis.a
 LIBSPIDER = $(LIB_DIR)/libspider.a 
 
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
 LIB = -lnbi -lsbr -lnbi -L/usr/lib64 -lX11 $(NETCDF_LIB) $(QLKNN_LIB) $(TGLF_LIB) $(TORB_LIB) $(RABBIT_LIB) -lfor -lfnc -lfeqis -lspider -L$(LIB_DIR) $(MKL_LIB) -lrt
 
 AENV = $(AWD)/exe/astra_rc
+
 FOR_SRC = \
 $(FOR_DIR)/astra_main.f90 \
-$(FOR_DIR)/stepup.f90
+$(WORKFLOW)
+
 TMP_SRC = \
 $(TMP_DIR)/astra_out.f90 \
 $(TMP_DIR)/inivar.f90 \

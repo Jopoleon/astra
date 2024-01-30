@@ -6,6 +6,7 @@ mod
 obj
 pyparse/__pycache__
 pyparse/fml.py
+pyparse/iondens_ass.py
 /dat
 /exe
 /equ
