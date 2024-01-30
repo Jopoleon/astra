@@ -398,6 +398,11 @@ iter_loop: do jiter=1, miter_ext
         icircq, ipctrl, iter_itreq, ifbey, inume_3, &
 ! Outputs
         key_start, PSIEXT, PSPLEX, keyplc, equil_now)
+    
+    !reassign input profiles to output    
+    equil_now%profiles_1d%pprime(1:nr_equ)   = eqpf_sp(1:nr_equ)
+    equil_now%profiles_1d%ffprime(1:nr_equ)  = eqff_sp(1:nr_equ)
+    equil_now%profiles_1d%psi(1:nr_equ)  = PSI(1:nr_equ)
 
     psifb = psifb_in
     Rmag  = equil_now%coord_sys%position%r(1, 1)

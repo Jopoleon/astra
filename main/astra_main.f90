@@ -115,11 +115,6 @@ do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set 
     jt_req = IFTREQ(ATREQ)     ! ++ITREQ; Convergence check; 1 - yes
 enddo
 
-! write output file for simulink or whatever control system
-if (flightsim == 1) then
-    call write_output_diag_file
-endif
-
 !---------------
 ! Time step loop
 !---------------

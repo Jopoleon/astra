@@ -36,6 +36,22 @@ then
     export MKL_LIBDIR=${MKLROOT}/lib/intel64
     export NETCDF_LIB="-L${NETCDF_LIBDIR} -lnetcdf -L${NETCDFF_LIBDIR} -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}:${NETCDFF_LIBDIR}"
     export NETCDF_INC=${NETCDF_FORTRAN_ROOT}/include
+elif [[ $platform == "docker_out" ]]
+then
+   # Same as "module load astra" on AUG machines
+   export ASTRA_EXT=/shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT
+
+   # Corresponds to the default installation of the Fenix Docker
+   export MKL_LIBDIR=/opt/intel/oneapi/mkl/latest/lib/intel64
+   export COMP_LIBDIR=/opt/intel/oneapi/compiler/latest/linux/compiler/lib/intel64_lin
+   export NETCDF_LIBDIR=/usr/lib/x86_64-linux-gnu
+   export NETCDF_LIB="-L/lib -lnetcdff -L${NETCDF_LIBDIR} -lnetcdf -lnetcdf -ldl -lm"
+   export NETCDF_INC=/include
+   export AFC=ifort
+   export ACC="gcc -O"
+   export MPIFC=mpiifort
+   export IFORT_BIN=/opt/intel/oneapi/compiler/latest/linux/bin/intel64
+   export INTEL_LICENSE_FILE=/opt/intel/oneapi/mkl/latest/licencing
 fi
 
 source $AWD/exe/astra_rc

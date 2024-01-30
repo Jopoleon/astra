@@ -133,6 +133,7 @@ integer :: nonegcurr          ! nonegcurr = 0 --> no negative current allowed in
 integer :: fast_mode          ! 0 - normale, 1 - domnt do iterationsin fbe gse
 integer :: reconnect_circuits ! 0-nothing, 1-recompute matrix with new circuits
 integer :: new_equivalence(ncoil_dim, 10)   ! if reconnect, says what is the new_equivalence, for example (1,1,1,0,0,0,0,..) means coil 1,2,3 become 1,1,1
+integer :: resistance_change  ! if  = 1, changes resistances of coils using new_resistance
 integer :: n_equivalence      ! number of equivalences
 integer :: use_reduce_circuit ! 0-all coils solved. 1 - some coils not solved
 integer :: n_of_newton_iterations    ! to find actual mag axis. recommended between 5 - 10 
@@ -142,10 +143,11 @@ integer :: plasma_config      ! 0 if limiter, 1 if xpoint
 
 double precision :: tau_circuit_feqis, tau_gseq_feqis, time_astra
 double precision :: dr_factor_init_astra, dz_factor_init_astra ! factors of dr and dz for initial iterations
-double precision :: raxis_astra, zaxis_astra, psi0_astra, psib_astra, sigma_B, sigma_axis
+double precision :: raxis_astra, zaxis_astra, psi0_astra, psib_astra, sigma_B, sigma_axis, sigma_energy, sigma_forces   ! sigma_B multiplies the boundary, sigma_axis the axis, sigma_energy the block (sum sigma_coil coil_cur**2 induc), sigma_forces multiplies the force block: sum_ij force_ij I_i I_j
 
 double precision :: x_point_save(20, 2) ! R, Z of xpoints, max 20 x points
-double precision, dimension(ncoil_dim) :: activate_coil_feqis, sign_coil, cur_init, sigma_coils ! initial currents from astra exp, not from coil.dat, in MA/turn
+double precision, dimension(ncoil_dim) :: activate_coil_feqis, cur_init, sigma_coils ! initial currents from astra exp, not from coil.dat, in MA/turn
+double precision, dimension(ncoil_dim) :: new_resistance ! whichever is > 0, it is used as new resistance.
 double precision, dimension(ncoil_dim, 2) :: current_limit_feqis ! 1 is upper, 2 is lower
 double precision, dimension(ncoil_dim, ncoil_dim) :: force_coil ! where it is 1, forces coil i,i to current of i,j
 character(len=80) :: machine_description ! name of device, in astra it's called MACHINE

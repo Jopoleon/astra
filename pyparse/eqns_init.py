@@ -1,4 +1,4 @@
-import const_text, eqns, config
+import const_text, eqns, config, iondens_ass
 from parse_as import *
 
 
@@ -100,7 +100,7 @@ def eqns_init(parse):
     if parse.assign_d['NE'] != 'Missing':
         eqns_txt += eqns.neeqn(parse, assign_type=parse.assign_d['NE'])
         if config.checkeqn:
-            eqns_txt += const_text.NIAS.iondensassign
+            eqns_txt += iondens_ass.NIAS.iondensassign
 
     if 'implicit' in parse.assign_d['TE'] or 'implicit' in parse.assign_d['TI']:
         eqns_txt += eqns.tetieqn(parse)

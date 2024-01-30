@@ -65,14 +65,20 @@ use_zlim_pot=1 ! for asdex
 tau_circuit_feqis = tau
 tau_gseq_feqis    = tau
 time_astra     = time
-activate_coil_feqis = 1 ! if 0, coil is forced to 0 current
-sign_coil = 1. ! sign of coils currents w.r.t. plasma current
+activate_coil_feqis = 1 ! if 0, coil is disconnected if use_reduce_circuit and reconnect_circuits is used, otherwise just sets the current to zero (you will get a different result!)
 current_limit_feqis(:, 1) =  1.e6 ! 1 is upper, 2 is lower
 current_limit_feqis(:, 2) = -1.e6 ! 1 is upper, 2 is lower
-force_coil = 0. ! where it is 1, forces coil i,i to current of i,j
+force_coil = 0. ! where it is 1, forces coil i,i to current of i,j --> better use reconnect circuits.
 
-use_reduce_circuit = 0
-reconnect_circuits = 0
+use_reduce_circuit = 0 ! run with reconnected circuits, does not reset the matrix
+reconnect_circuits = 0 ! this resets the circuit matrix, to change connections
+n_equivalence = 0
+new_equivalence = 0
+!new_equivalence(1:14,1) = (/0,0,0,0,0,0,0,0,0,0,0,0,0,0/)
+resistance_change = 0 ! this resets the circuit matrix, to change resistances (diagonals)
+new_resistance=0.
+!	new_resistance(1:12) = (/0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0./) !diagonal resistance in microOhm
+
 raxis_astra = RTOR + SHIFT
 zaxis_astra = UPDWN
 psi0_astra = FP(1)
@@ -80,6 +86,11 @@ psib_astra = FP(NA1)
 n_fourier_restab_boundary = 5
 use_limiter_astra = 1   ! do not use limiter for DEMO
 refit_mode = 0   ! if -1 - 1 turn only, 0 - stab method, if 1 - restab with prescribed axis , 3 - full fit like spider but only for eddy currents, 101 - only Z stab
+sigma_B = 1.
+sigma_axis = 50000.
+sigma_coils = 1.e5
+sigma_energy = 1
+
 solve_fix = 0   ! if 0 - solve full fix boundary problem, >0 - N pass only, -2 - uses fbe solution 
 execute_plasma = 1   ! if 0 - only circuit equations, if 1 - solve plasma gseq too
 use_zlim_pot = 1

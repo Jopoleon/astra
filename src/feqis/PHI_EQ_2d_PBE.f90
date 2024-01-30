@@ -98,7 +98,7 @@ iter_loop: do jiter=1, max_iter+1
 
         rhoedge = sqrt(phi_flux(nrho)/GPI)
 
-        psin_grid = 0.5*psin_grid + 0.5*fpol2/fpol2(nrho)
+        psin_grid = 0.5*psin_grid + 0.5*fpol2/fpol2(nrho)         ! this update makes up for the missing external iterations. Otherwise the external iterations according to my scheme work if this block is commented. Let us keep this and use miter_ext = 1 in the external iterations since this is faster.
         do jrho=1, nrho-1
             psin_gridp(jrho) = 0.5*(psin_grid(jrho+1) + psin_grid(jrho))
         enddo

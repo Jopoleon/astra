@@ -13,7 +13,7 @@ use status_inc, only: TE, TI, NE, NI, NIO, FP, defarr
 use outcmn_inc, only: CCOIL, CCOILO, VCOIL, MACHINE, TASK
 use plasma_state, only: plasma_up
 use debugger, only: markloc, flightsim, astra_stop
-use fs_coupling_variables, only: fs_dt_smlk, fs_dt_tctrl
+use fs_coupling_variables, only: fs_dt_smlk
 
 implicit none
 
@@ -38,34 +38,12 @@ save tau_temp_smlk
 BTN = BTOR
 FTN = FTO
 
-! if (flightsim < 1) plasma_up = 1
-
 !tau treatment to avoid machine precision errors
-if (flightsim >= 1) then
-    tau = 1.d-6*nint(tau*1.d6)
-    tau_temp_smlk = 1.d-6*nint(tau_temp_smlk*1.d6)
-endif
 
 dfpdrbm12 = 0.
 
 tau_old = tau
 tau_new = tau
-
-! wait until constants file is read and read control file
-if (flightsim == 1) then
-    if (jreadd == 0) call read_input_constant_file(time_ext, dt_smlk)
-    if (TIME - TSTART == 0) then
-        tau     = taumin
-        tau_old = tau
-        tau_new = tau
-        tau_temp_smlk = tau
-    endif
-    if (jreadd == 0) then
-        time_ext = TIME
-        dt_smlk = fs_dt_smlk
-    endif
-    if (tau_temp_smlk == 0.) tau_temp_smlk = tau
-endif
 
 !MPHIT=0. ??? astra7
 IPART = 2             ! Mark time evolution section
@@ -119,10 +97,6 @@ if (IFBEY >= 1.) then
     else
         ibcpsi_fb = 0
     endif
-endif
-
-if (flightsim >= 1) then
-    tau = tau_temp_smlk
 endif
 
 updwno = updwn          ! for fsim
@@ -251,14 +225,7 @@ time_step_accuracy: do
     if (IFSTEP(jkey, updwno) == 0 .and. IFBEY /= 1) then
 ! Time step accuracy accepted? No(0)
 ! note that here TAU is modified and TIME updated with time_new = TIME+TAU !
-        if (flightsim >= 1) then
-            TAU = max(taumin, TAU_old - fs_dt_tctrl) ! correct TAU not to exceed time_ext
-            TAU = max(taumin, TAU)
-        endif
     else
-        if (flightsim >= 1) then
-            TAU = min(taumax, TAU_old + fs_dt_tctrl)
-        endif
         tau_new = tau
         tau = tau_old
         EXIT
@@ -291,28 +258,7 @@ call POSTEP
 ! note that in postep if one wants to modify tau, like in tsctrl, better to do it in tauprp
                                                                       
 tau_new = tauprp
-
-if (flightsim >= 1) then
-    tau_temp_smlk = TAU_new
-    taumin = min(tau_temp_smlk, taumin)
-    if (TIME-TSTART >= time_ext+dt_smlk-1.e-8) then
-        call write_output_diag_file
-        jreadd = 0
-    else
-        jreadd = 1
-        if (TIME-TSTART > time_ext+dt_smlk+1.d-6) then
-            write(*, *) 'problems with sync, stopping', tau, tau_temp_smlk, &
-                time, time_ext + dt_smlk + 1.d-6
-            call err_catch_a
-        endif
-    endif
-endif
-
 tau = min(taumax, tau_new)
-if (flightsim >= 1) then
-    tau     = min(taumax, tau_temp_smlk)
-    tau_new = tau
-endif
 tau = max(taumin, tau)
 
 return

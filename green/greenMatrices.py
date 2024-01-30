@@ -372,7 +372,7 @@ class GREEN_MATRICES:
             np.savetxt(f, np.c_[self.Rlim, self.Zlim], fmt='%11.8f %11.8f')
             f.write(4*'%11.8f\n' %self.limRZ)
 
-            np.savetxt(f, np.c_[self.R_cond[self.nActive: nPassive], self.Z_cond[self.nActive: nPassive]], fmt='%11.8f %11.8f')
+            np.savetxt(f, np.c_[self.R_cond[self.nActive: nPassive+self.nActive], self.Z_cond[self.nActive: nPassive+self.nActive]], fmt='%11.8f %11.8f')
 
             f.write('%d\n' %nConduc)
             for jcon in range(nConduc):
@@ -420,14 +420,17 @@ class GREEN_MATRICES:
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Write Green matrices for FEQIS')
-    parser.add_argument('-t', '--tok', help='tokamak name', required=False, default='aug')
-    args = parser.parse_args()
+#    parser = argparse.ArgumentParser(description='Write Green matrices for FEQIS')
+#    parser.add_argument('-t', '--tok', help='tokamak name', required=False, default='aug')
+#    args = parser.parse_args()
 
-    f_machineIn  = '%s/%s_description_in.json'  %(grIOdir, args.tok)
-    f_machineOut = '%s/machine_description_out.%s' %(grIOdir, args.tok)
+    for f_in in os.listdir(grIOdir):
+        if os.path.splitext(f_in) == '.json':
+            tok = f_in.split('_')[0]
+            f_machineIn  = '%s/%s_description_in.json'  %(grIOdir, tok)
+            f_machineOut = '%s/machine_description_out.%s' %(grIOdir, tok)
 
-    gm = GREEN_MATRICES()
-    gm.fromMachineInput(f_machineIn)
-    gm.calcGreenf()
-    gm.dumpMachineDescr(f_out=f_machineOut)
+            gm = GREEN_MATRICES()
+            gm.fromMachineInput(f_machineIn)
+            gm.calcGreenf()
+            gm.dumpMachineDescr(f_out=f_machineOut)

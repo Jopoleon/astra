@@ -312,13 +312,13 @@ subroutine set_external_metric
 ! Set external metric  (Pereverzev 10.02.2005)
 
 use const_inc, only: RTOR, BTOR, ABC, ROC, HRO, HROX, &
-    SHIFT, ELONG, TRIAN, VOLUME, GP, GP2, NA, NA1, NAB, updwn
+    SHIFT, ELONG, TRIAN, VOLUME, GP, GP2, NA, NA1, NAB, updwn, ipart
 use status_inc, only: SHIF, ELON, TRIA, SHX, ELX, TRX, &
     G11, G22, G33, G11X, G22X, G33X, GRADRO, DRODA, DRODAX, &
     IPOL, IPOLX, VR, VRS, VRX, RHO, XRHO, AMETR, SLAT, SLATX, &
     BDB0, BDB02, B0DB2, BMINT, BMAXT, FOFB, VOLUM, SHEAR, FP, MU, &
     shiv, squarn, shivx, squax
-use debugger, only: markloc, debug
+use debugger, only: markloc, debug, flightsim
 use parse_utils, only: ifdefx2
 use numerical_tools, only: integr
 
@@ -329,55 +329,66 @@ double precision :: YNF, YR1
 
 call markloc('set_external_metric', debug_lev=3*debug)
 
-YNF = RTOR*GP2**2
-do J=1, NA1
-    if (IFDEFX2('SHX   ')) then
-        SHIF(J) = SHX(j)
-    else
-        SHIF(J) = SHIFT
-    endif
-    if (IFDEFX2('SHIVX ')) then
-        SHIV(J) = SHIVX(j)
-    else
-        SHIV(J) = 0.
-    endif
-    if (IFDEFX2('SQUAX ')) then
-        SQUARN(J) = SQUAX(j)
-    else
-        SQUARN(J) = 0.
-    endif
-    if (IFDEFX2('ELX   ')) then
-        ELON(J) = ELX(j)
-    else
-        ELON(J) = 1.
-    endif
-    if (IFDEFX2('TRX   ')) then
-        TRIA(J) = TRX(j)
-    else
-        TRIA(J) = 0.
-    endif
-    if (IFDEFX2('G33X  ')) then
-        G33(J) = G33X(j)
-    else
-        G33(J) = (RTOR/(RTOR + SHIFT))**2
-    endif
-    if (IFDEFX2('IPOLX ')) then
-        IPOL(J) = IPOLX(j)
-    else
-        IPOL(J) = 1.
-    endif
-    if (IFDEFX2('VRX   ')) then
-        VR(J) = VRX(j)
-    else
-        VR(J) = YNF*RHO(j)/(IPOL(j)*G33(j))
-    endif
-    AMETR(J) = RHO(J)
-enddo
+if (flightsim == 1 .and. ipart == 1) call eqguess   ! for initialisation
+if (flightsim == 1 .and. ipart == 1) return         ! for initialisation
 
-!computes new roc
+if (flightsim == 0) then
+    YNF = RTOR*GP2**2
+    do J=1, NA1
+        if (IFDEFX2('SHX   ')) then
+            SHIF(J) = SHX(j)
+        else
+            SHIF(J) = SHIFT
+        endif
+        if (IFDEFX2('SHIVX ')) then
+            SHIV(J) = SHIVX(j)
+        else
+            SHIV(J) = 0.
+        endif
+        if (IFDEFX2('SQUAX ')) then
+            SQUARN(J) = SQUAX(j)
+        else
+            SQUARN(J) = 0.
+        endif
+        if (IFDEFX2('ELX   ')) then
+            ELON(J) = ELX(j)
+        else
+            ELON(J) = 1.
+        endif
+        if (IFDEFX2('TRX   ')) then
+            TRIA(J) = TRX(j)
+        else
+            TRIA(J) = 0.
+        endif
+        if (IFDEFX2('G33X  ')) then
+            G33(J) = G33X(j)
+        else
+            G33(J) = (RTOR/(RTOR + SHIFT))**2
+        endif
+        if (IFDEFX2('IPOLX ')) then
+            IPOL(J) = IPOLX(j)
+        else
+            IPOL(J) = 1.
+        endif
+        if (IFDEFX2('VRX   ')) then
+            VR(J) = VRX(j)
+        else
+            VR(J) = YNF*RHO(j)/(IPOL(j)*G33(j))
+        endif
+        AMETR(J) = RHO(J)
+    enddo
+endif
+
+! Compute new ROC
 
 ROC = VR(NA1)/GP2**2 * G33(NA1)/RTOR
 RHO(1: NA1) = XRHO(1: NA1)*ROC
+
+if (flightsim == 1) then
+    do j=1,NA1
+        VRS(j) = 0.5*(VR(J+1) + VR(j))
+    enddo
+endif
 
 if (debug > 0) then
     write(*, *) 'metric', RHO(1: 10)
@@ -388,35 +399,32 @@ endif
 HRO  =  RHO(2) - RHO(1)
 HROX = (RHO(2) - RHO(1))/ROC
 
-!boundary
-ELONG = ELON(NA1)
-TRIAN = TRIA(NA1)
-SHIFT = SHIF(NA1)
-
+if (flightsim == 0) then
 ! Flux grid: j*h
-do J=1, NA
-    VRS(j) = 0.5*(VR(J+1) + VR(j))
-    if (IFDEFX2('SLATX ')) then
-        SLAT(J) = 0.5*(SLATX(J+1) + SLATX(j))
-    else
-        SLAT(J) = VRS(j) 
-    endif
-    if (IFDEFX2('G11X  ')) then
-        G11(J) = 0.5*(G11X(j) + G11X(j+1))
-    else
-        G11(J) = VRS(j) 
-    endif
-    if (IFDEFX2('G22X  ')) then
-        G22(J) = 0.5*(G22X(j) + G22X(j+1))
-    else
-        G22(J) = RTOR*VRS(j)/(GP2*(RTOR + SHIFT))**2
-    endif
-    if (IFDEFX2('DRODAX')) then
-        DRODA(J) = 0.5*(DRODAX(j) + DRODAX(j+1))
-    else
-        DRODA(J) = 1.
-    endif
-enddo
+    do J=1, NA
+        VRS(j) = 0.5*(VR(J+1) + VR(j))
+        if (IFDEFX2('SLATX ')) then
+            SLAT(J) = 0.5*(SLATX(J+1) + SLATX(j))
+        else
+            SLAT(J) = VRS(j) 
+        endif
+        if (IFDEFX2('G11X  ')) then
+            G11(J) = 0.5*(G11X(j) + G11X(j+1))
+        else
+            G11(J) = VRS(j) 
+        endif
+        if (IFDEFX2('G22X  ')) then
+            G22(J) = 0.5*(G22X(j) + G22X(j+1))
+        else
+            G22(J) = RTOR*VRS(j)/(GP2*(RTOR + SHIFT))**2
+        endif
+        if (IFDEFX2('DRODAX')) then
+            DRODA(J) = 0.5*(DRODAX(j) + DRODAX(j+1))
+        else
+            DRODA(J) = 1.
+        endif
+    enddo
+endif
 
 ! Linear extrapolation
 SLAT(NA1)  = 1.5*SLAT(NA)  - 0.5*SLAT(NA-1)
@@ -424,9 +432,8 @@ VRS(NA1)   = 1.5*VRS(NA)   - 0.5*VRS(NA-1)
 G11(NA1)   = 1.5*G11(NA)   - 0.5*G11(NA-1)
 G22(NA1)   = 1.5*G22(NA)   - 0.5*G22(NA-1)
 DRODA(NA1) = 1.5*DRODA(NA) - 0.5*DRODA(NA-1)
-G11(NA1)   = 1.5*G11(NA)   - 0.5*G11(NA-1)
 
-! Compute new minor radius
+! Compute new minor radius => better just take from data?
 call INTEGR(RHO(1: NA1), 1, 1./DRODA(1: NA1), AMETR(1: NA1), NA1)
 ABC = AMETR(NA1)
 
@@ -481,6 +488,9 @@ if (NA1 < NAB) then
     VOLUME = VOLUM(NA1)
 endif
 
+ELONG = ELON(NA1)
+TRIAN = TRIA(NA1)
+SHIFT = SHIF(NA1)
 UPDWN = SHIV(1)
 
 return
@@ -518,7 +528,7 @@ use status_inc, only: SHIF, ELON, TRIA, SHX, ELX, TRX, &
     G11, G22, G33, G11X, G22X, G33X, GRADRO, DRODA, DRODAX, &
     IPOL, IPOLX, VR, VRS, VRX, RHO, XRHO, AMETR, SLAT, SLATX, &
     BDB0, BDB02, B0DB2, BMINT, BMAXT, FOFB, VOLUM, SHEAR, FP, MU, SHIV, SQUARN
-use debugger, only: markloc, debug
+use debugger, only: markloc, debug, flightsim
 use parse_utils, only: ifdefx2
 use numerical_tools, only: integr
 
@@ -529,8 +539,9 @@ double precision :: YNF, YR1
 
 call markloc('set_external_metric', debug_lev=3*debug)
 
-call extmetric_input
-
+if (flightsim == 0) then
+    call extmetric_input
+endif
 
 YNF = RTOR*GP2**2
 do J=1, NA1
@@ -568,7 +579,6 @@ VRS(NA1)   = 1.5*VRS(NA)   - 0.5*VRS(NA-1)
 G11(NA1)   = 1.5*G11(NA)   - 0.5*G11(NA-1)
 G22(NA1)   = 1.5*G22(NA)   - 0.5*G22(NA-1)
 DRODA(NA1) = 1.5*DRODA(NA) - 0.5*DRODA(NA-1)
-G11(NA1)   = 1.5*G11(NA)   - 0.5*G11(NA-1)
 
 ! Compute new minor radius
 call INTEGR(RHO(1: NA1), 1, 1./DRODA(1: NA1), AMETR(1: NA1), NA1)

@@ -32,10 +32,14 @@ integer, parameter, private :: DP=kind(1.0D0)
 
 type type_position   ! Structure for list of R,Z positions (1D)
     integer :: npoints
+    integer :: sigma_surface
     real(DP), pointer :: R(:)       => null()  ! /r - Major radius [m]. Vector(max_npoints). Time-dependent
     real(DP), pointer :: Z(:)       => null()  ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
     real(DP), pointer :: tanangl(:) => null()  ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
     real(DP), pointer :: length(:)  => null()  ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
+    real(DP), pointer :: MagnetizationChi(:)  => null()  ! /calculated chi for this element
+    real(DP), pointer :: Btangfield(:)  => null()  ! /calculated chi for this element
+    real(DP), pointer :: Current(:)  => null()  ! /I_s of this element in MA
 endtype type_position
  
 type type_mutmatrix  ! Structure for list of R,Z positions (1D)

@@ -45,7 +45,7 @@ if (fast_mode == 1 .and. execute_plasma == 1) then
     enddo
 endif
 
-do j_iter=1, 2*max_iter
+do j_iter=1, max_iter
 
     cur_temp(1:nconduc) = curconduc(1:nconduc)
     call circuit_eq_advance_feqis(1)
@@ -71,9 +71,9 @@ do j_iter=1, 2*max_iter
         return
     endif
 
-    if (j_iter > max_iter) then
-        write(*, *) 'circuit equations not converging, max number of iterations override... stopping', error_temp
-        stop
+    if (j_iter >= max_iter) then
+        write(*, *) 'circuit equations not converging, max number of iterations override... going on', error_temp
+!        stop
     endif
 
 enddo
@@ -89,7 +89,9 @@ use feqis_circuit, only: nr, nz, nr2, nz2, psiextrz, redo_bnd, &
     r, z, dr, dz, dr_factor_init, dz_factor_init, rax, zax, raxp, zaxp, &
     trax, tzax, iaxis, jaxis, psistabr, psistabz, &
     restab_axis_with_fourier_wall, restab_boundary_with_fourier_wall, & !doesnt work well
-    restab_F_function_full_fonfit
+    restab_F_function_full_fonfit, restab_F_function_full_currents, &
+    restab_2_timepoints_evolution, restab_F_function_full_currents_forces, &
+    restab_F_function_full_currents_limits,restab_2_timepoints_evolution_limits
 use astra2fbe, only: refit_mode, n_of_newton_iterations
 use feqis_tools, only: closest_index
 
@@ -106,10 +108,10 @@ double precision :: temp_err, raxold, zaxold, temp_err2, raxoldo, zaxoldo, &
 
 SELECT CASE(refit_mode)
 
-CASE(-1) ! 1 turn only
+CASE(-1) ! 1 turn only, linearized solution
     call solve_gse2d_fbe_full_feqis_1turn(j_init, 0, 0.d0, 0.d0)
 
-CASE(0)
+CASE(0) ! full static convergent solution with given currents
 ! Start iterations to find self-consistent solution
     iaxis = closest_index(raxp, r(1), dr)
     jaxis = closest_index(zaxp, z(1), dz)
@@ -196,7 +198,7 @@ CASE(0)
 
     enddo
 
-CASE(101) ! refit_mode=101: only vertical stab
+CASE(101) ! refit_mode=101: only vertical stab (doesn't work well)
 !start iterations to find self-consistent solution
     iaxis = closest_index(raxp, r(1), dr)
     jaxis = closest_index(zaxp, z(1), dz)
@@ -271,14 +273,29 @@ CASE(101) ! refit_mode=101: only vertical stab
 
     write(*, *) 'total iterations passed!'
 
-CASE(1) ! refit_mode=1
+CASE(1) ! refit eddy currents using fourier method for axis stability. doesnt respect boundary. fixed given active currents
     call restab_axis_with_fourier_wall
 
-CASE(2)
+CASE(2) ! doesn't work
     call restab_boundary_with_fourier_wall !doesnt work well
 
-CASE(3)
-    call restab_F_function_full_fonfit
+CASE(3) ! refits all currents (active and passive) with F minimization cost function, no constraints.
+    call restab_F_function_full_fonfit 
+
+CASE(4) !finds active currents from scratch, eddy currents zero
+    call restab_F_function_full_currents
+
+CASE(5) !finds active currents from scratch including evolution from time t1 to time t2, with constraint on the consumed flux. eddy currents = 0.
+    call restab_2_timepoints_evolution
+
+CASE(6) !finds active currents from scratch, eddy currents zero. minimize magnetic energy and intercoil forces.
+    call restab_F_function_full_currents_forces
+
+CASE(7) !finds active currents from scratch, eddy currents zero. minimize magnetic energy and respect current limits.
+    call restab_F_function_full_currents_limits
+
+CASE(8) !finds active currents from scratch including evolution from time t1 to time t2, with constraint on the consumed flux. eddy currents = 0. also respect current limits
+    call restab_2_timepoints_evolution_limits
 
 END SELECT
 
@@ -305,7 +322,7 @@ double precision, intent(in) :: raxold, zaxold
 integer :: i, j
 double precision :: curr, dum1, dum2, zum1, zum2, delr, delz
 double precision, dimension(9) :: c
-double precision, dimension(300, 300) :: g
+double precision, dimension(nr2, nz2) :: g
 
 !first, initialized initial guess coming from prescribed boundary current density: jrhoteta
 if (j_init == 0) then
@@ -404,7 +421,8 @@ use feqis_circuit, only: nconduc, i_dim1, tau_new, &
 use feqis_tools, only: solve_circuit_equations
 use astra2fbe, only: tau_circuit_feqis, tau_gseq_feqis, activate_coil_feqis, &
     n_equivalence, reconnect_circuits, new_equivalence, &
-    use_reduce_circuit, current_limit_feqis, force_coil
+    use_reduce_circuit, current_limit_feqis, force_coil, resistance_change, &
+    new_resistance
 
 implicit none
 
@@ -446,9 +464,23 @@ do j=1, nconduc
     if (activate_coil_feqis(j) == 0) dpc(j) = 0.
 enddo
 
-if (reconnect_circuits == 1) then
+
+if (resistance_change == 1) then
+    invertcommand = 1
+    do k=1,nconduc
+        if (new_resistance(k)>0.) then
+            resconduc(k,k) = new_resistance(k)
+        endif
+    enddo
+endif
+
+
+if (reconnect_circuits == 1.and.use_reduce_circuit == 1) then
+    rem_coils=0
     invertcommand = 1
     i_cnew = ic
+    indtemp = 0.
+    restemp = 0.
     indtemp(1:ic, 1:ic) = indconduc(1:ic, 1:ic)
     restemp(1:ic, 1:ic) = resconduc(1:ic, 1:ic)
     do k=1, n_equivalence
@@ -458,51 +490,55 @@ if (reconnect_circuits == 1) then
                 i_equivalence = 0
                 do j=i + 1, nconduc
                     if (new_equivalence(j, k) == new_equivalence(i, k)) then
-                        indtemp(i, i) = indconduc(i, i) + indconduc(j, j) + indconduc(i, j) + indconduc(j, i)
-                        restemp(i, i) = resconduc(i, i) + resconduc(j, j) + resconduc(i, j) + resconduc(j, i)
+                        indtemp(i, i) = indtemp(i, i) + indconduc(j, j) + indconduc(i, j) + indconduc(j, i)
+                        restemp(i, i) = restemp(i, i) + resconduc(j, j) + resconduc(i, j) + resconduc(j, i)
                         do iii=1, nconduc
                             if (iii /= i .and. iii /= j) then
-                                indtemp(i, iii) = indconduc(i, iii) + indconduc(j, iii)
-                                restemp(i, iii) = resconduc(i, iii) + resconduc(j, iii)
-                                indtemp(iii, i) = indconduc(iii, i) + indconduc(iii, j)
-                                restemp(iii, i) = resconduc(iii, i) + resconduc(iii, j)
+                                indtemp(i, iii) = indtemp(i, iii) + indconduc(j, iii)
+                                restemp(i, iii) = restemp(i, iii) + resconduc(j, iii)
+                                indtemp(iii, i) = indtemp(iii, i) + indconduc(iii, j)
+                                restemp(iii, i) = restemp(iii, i) + resconduc(iii, j)
                             endif
                         enddo
                         rem_coils(j) = new_equivalence(j, k)
                         ic = ic - 1
                     endif
                 enddo
+            endif !found equivalence
+            if (activate_coil_feqis(i) == 0) then
+                rem_coils(i) = 999999
+                ic = ic - 1
+            endif
+        enddo !conductors
     ! Remove obsolete columns and rows
-                do jjj=1, nconduc
-                    j = nconduc - jjj + 1
-                    if (rem_coils(j) > 0) then
-                        indtemp(1:nconduc, j:nconduc) = indtemp(1:nconduc, j + 1:nconduc + 1)
-                        restemp(1:nconduc, j:nconduc) = restemp(1:nconduc, j + 1:nconduc + 1)
-                        indtemp(j:nconduc, 1:nconduc) = indtemp(j + 1:nconduc + 1, 1:nconduc)
-                        restemp(j:nconduc, 1:nconduc) = restemp(j + 1:nconduc + 1, 1:nconduc)
-                    endif
-                enddo
+        do jjj=1, nconduc
+            j=nconduc-jjj+1
+            if (rem_coils(j) > 0) then
+                indtemp(1:nconduc, j:nconduc) = indtemp(1:nconduc, j + 1:nconduc + 1)
+                restemp(1:nconduc, j:nconduc) = restemp(1:nconduc, j + 1:nconduc + 1)
+                indtemp(j:nconduc, 1:nconduc) = indtemp(j + 1:nconduc + 1, 1:nconduc)
+                restemp(j:nconduc, 1:nconduc) = restemp(j + 1:nconduc + 1, 1:nconduc)
             endif
         enddo
-    enddo
+    enddo ! n equivalences
     i_cnew = ic
 endif
 
 if (use_reduce_circuit == 1) then
-    ic = nconduc
-    dpctemp(1:ic) = dpc(1:ic)
-    vtemp(1:ic) = voltage(1:ic)
-    curotemp(1:ic) = cur_con_old(1:ic)
+    dpctemp  = 0.
+    vtemp    = 0.
+    curotemp = 0.
+    dpctemp (1:nconduc) = dpc        (1:nconduc)
+    vtemp   (1:nconduc) = voltage    (1:nconduc)
+    curotemp(1:nconduc) = cur_con_old(1:nconduc)
     do k=1, n_equivalence
         i_equivalence = 1
         do i=1, nconduc
             if (new_equivalence(i, k) > 0 .and. i_equivalence == 1) then
                 i_equivalence = 0
-                do jjj=i+1, nconduc
-                    j = nconduc - jjj + i + 1
+                do j=i+1, nconduc
                     if (new_equivalence(j, k) == new_equivalence(i, k)) then
                         dpctemp(i) = dpctemp(i) + dpctemp(j)
-                        ic = ic - 1
                     endif
                 enddo
             endif
@@ -533,8 +569,12 @@ else
             curconduc(i) = curtemp(i)
         endif
         if (rem_coils(i) > 0) then
-            curconduc(i) = curtemp(rem_coils(i))
-            curtemp(i + 1:i_cnew + 1) = curtemp(i:i_cnew)
+            if (rem_coils(i) == 999999) then !non-activated
+                curconduc(i) = 0.
+            else
+                curconduc(i) = curtemp(rem_coils(i))
+            endif
+            curtemp(i + 1:nconduc + 1) = curtemp(i:nconduc)
         endif
     enddo
 endif
@@ -575,7 +615,7 @@ use feqis_circuit, only: nrho, nrho2d, nteta, use_limiter_yesno, &
     dr_factor_init, dz_factor_init, &
     rexp, zexp, raxp, zaxp, rbnd, zbnd, rbndp, zbndp, &
     teta, dteta, tetaexp, &
-    iplasma, Rgeom0, Btor0, voltage, voltage_old, omega_pl, &
+    iplasma, Rgeom0, Btor0, omega_pl, &
     pressure, ipol, pprime, ffprime, &
     psia_2d, ffp_2d, ppp_2d, ncoils, &
     psistabr, psistabz, psigrid, psigrida, psibnd
@@ -625,7 +665,7 @@ if (j_call == 0) then
     activate_coil_feqis = 1. ! when 0., coil is forced to 0 current
     current_limit_feqis(:, 1) = 1e6 ! cant be higher than 1e6 MA
     current_limit_feqis(:, 2) = -1e6 ! cant be lower than -1e6 MA
-    max_iter = 10000 !hardwired
+    max_iter = 1000 !hardwired
 ! teta for polar grid, goes from 0 to 2*pi-dteta, but point nt + 1 is the periodic one
     omega_pl = 0.
     psi0_astra = equil_in%profiles_1d%psi(1)
@@ -640,7 +680,6 @@ if (j_call == 0) then
     allocate(ffprime(nrho))
     allocate(psigrida(nrho))
     allocate(ipol(nrho))
-    allocate(voltage(ncoils))
     allocate(rexp(2*nteta))
     allocate(zexp(2*nteta))
     allocate(tetaexp(2*nteta))
@@ -814,11 +853,12 @@ read(32, *) lim_maxZ
 read(32, *) lim_minZ
 allocate(r_cond(npassive))
 allocate(z_cond(npassive))
-do i=nactive + 1, npassive
+do i=nactive + 1, nactive + npassive
     read(32, *) r_cond(i), z_cond(i)
 enddo
 read(32, *) nconduc
 allocate(curconduc(nconduc))
+allocate(voltage(nconduc))
 allocate(voltage_old(nconduc))
 allocate(cur_con_old(nconduc))
 allocate(indconduc(nconduc, nconduc))
@@ -872,13 +912,16 @@ read(32, *) nferromag
 if (nferromag >= 1) then
     allocate(ferromag(nferromag))
     do i=1, nferromag
-        read(32,*) nferrosub, imagvalues
+        read(32,*) nferrosub, imagvalues, ferromag(i)%position%sigma_surface 
         ferromag(i)%position%npoints   = nferrosub
         ferromag(i)%mhrelation%nvalues = imagvalues
         allocate(ferromag(i)%position%r(nferrosub))
         allocate(ferromag(i)%position%z(nferrosub))
         allocate(ferromag(i)%position%tanangl(nferrosub))
         allocate(ferromag(i)%position%length(nferrosub))
+        allocate(ferromag(i)%position%magnetizationchi(nferrosub))
+        allocate(ferromag(i)%position%Btangfield(nferrosub))
+        allocate(ferromag(i)%position%current(nferrosub))
         allocate(ferromag(i)%mhrelation%chi(imagvalues))
         allocate(ferromag(i)%mhrelation%h(imagvalues))
         allocate(ferromag(i)%mutual_matrix%Mij(nferrosub, nferrosub))
@@ -1353,12 +1396,12 @@ use feqis_circuit, only: nr, nr1, nr2, nz, nz1, nz2, i_dim2, &
 use fft_mod_eff, only: costable
 use feqis_tools, only: discrete_sine_transform, solve_tridiag_fbe
 
-double precision, intent(inout), dimension(i_dim2, i_dim2) :: g
+double precision, intent(inout), dimension(nr2, nz2) :: g
 
 integer :: i, j, k, j_init
 double precision :: x1, x2, r1m_1, r2m_1
-double precision, dimension(258) :: A, B, C, z_fourier
-double precision, dimension(i_dim2, i_dim2) :: gt, rhs, wrhs
+double precision, dimension(1000) :: A, B, C, z_fourier
+double precision, dimension(500, 500) :: gt, rhs, wrhs
 
 data j_init/0/
 save A, B, C, j_init, z_fourier
@@ -1378,10 +1421,8 @@ rhs(2:nr1, nz1) = rhs(2:nr1, nz1) - g(2:nr1, nz2)/dz**2
 rhs(  2, 2:nz1) = rhs(  2, 2:nz1) - g(  1, 2:nz1)*r1m_1
 rhs(nr1, 2:nz1) = rhs(nr1, 2:nz1) - g(nr2, 2:nz1)*r2m_1
 
-wrhs = rhs
-! CALL CPU_TIME(tin)
 do i=2, nr1
-    wrhs(i, 2:nz1) = discrete_sine_transform(nz, wrhs(i, 2:nz1))
+    wrhs(i, 2:nz1) = discrete_sine_transform(nz, rhs(i, 2:nz1))
 enddo
 
 ! Create inverse matrix for gs2d
@@ -1417,6 +1458,7 @@ gt = 0.
 do k=2, nz1
     gt(2:nr1, k) = solve_tridiag_fbe(C(1:nr), B(1:nr) + z_fourier(k), A(1:nr), wrhs(2:nr1, k), nr)
 enddo
+
 !invert fourier from gt(1:nr, 1:kfourier) to g(2:nr1, 2:nz1)
 !  gt(i, k)=sum(invMM_gs2d(i-1, 1:nr, k-1)*wrhs(2:nr1, k))
 
@@ -1449,7 +1491,7 @@ if (plasma_state == 1) then !not sure about the plasma response...
     do i=1, nblock_a
         x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreeniRpl(1:nr2, 1:nz2, i))
         force_R(i) = force_R(i) + curconduc(mequivalence(i)) * x1
-        x1 = -sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreeniZpl(1:nr2, 1:nz2, i))
+        x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreeniZpl(1:nr2, 1:nz2, i))
         force_Z(i) = force_Z(i) + curconduc(mequivalence(i)) * x1
     enddo
 endif
@@ -1459,10 +1501,12 @@ do i=1, nblock_a
     do j=1, nblock_a
         if (i /= j) then
             force_R(i) = force_R(i) + curconduc(mequivalence(j)) * curconduc(mequivalence(i)) * dgreeniRj(i, j)
-            force_Z(i) = force_Z(i) - curconduc(mequivalence(j)) * curconduc(mequivalence(i)) * dgreeniZj(i, j)
+            force_Z(i) = force_Z(i) + curconduc(mequivalence(j)) * curconduc(mequivalence(i)) * dgreeniZj(i, j)
         endif
     enddo
 enddo
+
+! force_R and force_Z are F_R and F_Z components in [N] for each block , does not include forces from the passive elements or on the passive elements.
 
 return
 end subroutine coil_forces_feqis
