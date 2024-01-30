@@ -423,9 +423,9 @@ if __name__ == '__main__':
 #    parser = argparse.ArgumentParser(description='Write Green matrices for FEQIS')
 #    parser.add_argument('-t', '--tok', help='tokamak name', required=False, default='aug')
 #    args = parser.parse_args()
-
+    print(grIOdir)
     for f_in in os.listdir(grIOdir):
-        if os.path.splitext(f_in) == '.json':
+        if os.path.splitext(f_in)[1] == '.json':
             tok = f_in.split('_')[0]
             f_machineIn  = '%s/%s_description_in.json'  %(grIOdir, tok)
             f_machineOut = '%s/machine_description_out.%s' %(grIOdir, tok)
