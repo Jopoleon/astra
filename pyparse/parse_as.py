@@ -702,6 +702,17 @@ class LINE2FOR:
                 out += ')'
                 jpos += jbra
 
+            elif var in ('ATX', 'ATR'):
+                jbra = function_args(pieces[jpos+1: n_pieces])
+                out = ''
+                for j in range(jpos, jpos+jbra):
+                    if pieces[j] in self.profiles:
+                        out += '%s(1:NA1)' %pieces[j]
+                    else:
+                        out += doublise(pieces[j])
+                out += ')'
+                jpos += jbra
+
             elif var in ('ASTEP', 'RSTEP', 'XSTEP'):
                 jbra = function_args(pieces[jpos+1: n_pieces])
                 out = ''
