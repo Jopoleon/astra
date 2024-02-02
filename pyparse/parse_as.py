@@ -677,17 +677,10 @@ class LINE2FOR:
                     logger.debug(block_right)
                     logger.debug(out)
 
-            elif var in ('V_95_POS', 'RFMAX', 'RFMIN', 'FRMAX', 'FRMIN'):
-                jbra = function_args(pieces[jpos+1: n_pieces])
-                out = ''
-                for j in range(jpos, jpos+jbra):
-                    if pieces[j] in self.profiles:
-                        out += '%s(1:NA1))' %pieces[j]
-                    else:
-                        out += doublise(pieces[j])
-                jpos += jbra
-
-            elif var in ('RFVAL', 'AFVAL', 'RFVEX', 'AFVEX', 'RFVIN', 'AFVIN'):
+            elif var in ('RFVAL', 'RFVEX', 'RFVIN',
+                         'AFVAL', 'AFVEX', 'AFVIN',
+                         'ASTEP', 'RSTEP', 'XSTEP',
+                         'ATX', 'ATR', 'V_95_POS', 'RFMAX', 'RFMIN', 'FRMAX', 'FRMIN'):
                 jbra = function_args(pieces[jpos+1: n_pieces])
                 out = ''
                 for j in range(jpos, jpos+jbra):
@@ -695,30 +688,13 @@ class LINE2FOR:
                         out += '%s(1:NA1)' %pieces[j]
                     else:
                         out += doublise(pieces[j])
-                if var[0] == 'R':
+                if var in ('RFVAL', 'RFVEX', 'RFVIN'):
                     out += '*ROC'
-                else:
+                elif var in ('AFVAL', 'AFVEX', 'AFVIN'):
                     out += '*ABC'
+                elif var in ('ASTEP', 'RSTEP', 'XSTEP'):
+                    out += ', J'
                 out += ')'
-                jpos += jbra
-
-            elif var in ('ATX', 'ATR'):
-                jbra = function_args(pieces[jpos+1: n_pieces])
-                out = ''
-                for j in range(jpos, jpos+jbra):
-                    if pieces[j] in self.profiles:
-                        out += '%s(1:NA1)' %pieces[j]
-                    else:
-                        out += doublise(pieces[j])
-                out += ')'
-                jpos += jbra
-
-            elif var in ('ASTEP', 'RSTEP', 'XSTEP'):
-                jbra = function_args(pieces[jpos+1: n_pieces])
-                out = ''
-                for j in range(jpos, jpos+jbra):
-                    out += doublise(pieces[j])
-                out += ', J)'
                 jpos += jbra
 
             elif var in ('GRAD', 'GRADS'):
