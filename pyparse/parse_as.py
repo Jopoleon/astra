@@ -627,7 +627,7 @@ class LINE2FOR:
                     if jcomma == -1:
                         block_left += format_number(piec)
                 if block_left in self.fnc_list:
-                    out = 'RADIAL(%s, RFA(%s))' %(pieces[jpos], block_left)
+                    out = 'RADIAL(%sR, RFA(%s))' %(pieces[jpos], block_left)
                 else:
                     out = 'RADIAL(%s, RFA(%s))' %(pieces[jpos], block_left)
                 jpos += jpiec + 2
