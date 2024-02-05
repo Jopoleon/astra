@@ -72,8 +72,7 @@ class CODE_GEN:
                         setv_sbr += 'DTEQ(%d,%d) = %s\n' %(j_arg, j_sbr, sval)
                     except:
                         l2f = pa.LINE2FOR('', val, pack)
-                        sval = l2f.fcode
-                        detv_sbr += 'DTEQ(%d,%d) = %s\n' %(j_arg, j_sbr, sval)
+                        detv_sbr += 'DTEQ(%d,%d) = %s\n' %(j_arg, j_sbr, l2f)
                 j_arg += 1
             j_sbr += 1
         
@@ -157,11 +156,9 @@ end subroutine POSTEP'''
                     jvar = jv + 1
                     detv_time += 'IFDFVX(%d) = max(IFDFVX(%d), 2)\n' %(jvar, jvar)
                     l2f = pa.LINE2FOR('', right_hand[lbl], pack)
-                    detv_time += 'if (IFDFVX(%d) <= 2) %s = %s\n'%(jvar, var, l2f.fcode)
+                    detv_time += 'if (IFDFVX(%d) <= 2) %s = %s\n'%(jvar, var, l2f)
                     break
             if var in parse.constants + parse.internals:
-#                l2f = pa.LINE2FOR('', right_hand[lbl], pack)
-#                detv_time += '%s = %s\n' %(var, l2f.fcode)
                 detv_time += pa.apptmp(lbl, parse)
             elif var in parse.profiles:
                 detv_rad += pa.apptmp(lbl, parse)
@@ -275,8 +272,7 @@ end subroutine DETVAR_init
         if 'CC' in var_defined:
             inivar += pa.apptmp('CC', parse)
         else:
-            l2f = pa.LINE2FOR('CC', 'CCSP', pack)
-            inivar += l2f.fcode
+            inivar += pa.LINE2FOR('CC', 'CCSP', pack)
         if 'CU' not in var_defined:
             inivar += pa.apptmp('MU', parse)
             if parse.assign_d['CU'] == 'AS':
@@ -372,12 +368,11 @@ end subroutine setvar'''
  
         self.astra_out  = const_text.RADOUT.header
         for jsgr, name in enumerate(parse.asnamer):
-            l2f = pa.LINE2FOR('ROUT(J, %d)' %(jsgr+1), name, pack)
-            self.astra_out += l2f.fcode
+            self.astra_out += pa.LINE2FOR('ROUT(J, %d)' %(jsgr+1), name, pack)
         self.astra_out += const_text.TIMOUT.header
         for jsig, name in enumerate(parse.asnamet):
             l2f = pa.LINE2FOR('', name, pack)
-            self.astra_out += 'TOUT(LTOUT, %d) = %s\n' %(jsig+1, l2f.fcode)
+            self.astra_out += 'TOUT(LTOUT, %d) = %s\n' %(jsig+1, l2f)
         self.astra_out +=  """
 return
 end subroutine TIMOUT

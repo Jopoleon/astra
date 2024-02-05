@@ -172,7 +172,7 @@ BABDOT = (abs(ADCMPF))*BBDOT
 
 call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RABDOT, BABDOT, NA1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, YWC(1:7), FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), ADCMPF,MPHIT(1: NA1) )
 
-DFPDRB    = -YWQ(NA)/G22(NA)
+!DFPDRB    = -YWQ(NA)/G22(NA)
 dfpdrbm12 = -YWQ(NA)/G22(NA)
 
 do J=1, NA1
@@ -248,7 +248,7 @@ UPL(J) = ULON(J)/(IPOL(J)*G33(J))
 enddo ! j (radial loop)
 ULON(NA1) = ULON(NA-2)
 UPL(NA1)  = ULON(NA1)/(IPOL(NA1)*G33(NA1))
-DFPDRB = 0.4*IPL/IPOL(NA1)/G22(NA1)*GP*RTOR
+!DFPDRB = 0.4*IPL/IPOL(NA1)/G22(NA1)*GP*RTOR
 '''
 
 
@@ -412,18 +412,18 @@ endif
 ! Circuit equation:
 if (TIME-TSTART <= TAU) then
 PSIEXT = FP(NA1) + LEXT*IPL
-PSPLEX = (FP(NA1) - FP(NA))/HRO
-PSPLEX = LEXT*IPL/PSPLEX
+PSPLEX = LEXT/ROC*5.*IPOL(NA1)*G22(NA)/GP2/RTOR
 endif
+PSPLEX = LEXT/ROC*5.*IPOL(NA1)*G22(NA)/GP2/RTOR
 PSIEXT = PSIEXT + TAU*UEXT
 YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 2.
-YWC(5) = HRO + PSPLEX
-YWC(6) = -PSPLEX
+YWC(5) = HRO + PSPLEX*ROC
+YWC(6) = -PSPLEX*ROC
 YWC(7) = PSIEXT*HRO
-bc_type_for_fp = 4
+bc_type_for_fp = 3
 if (ITFBP /= 0.0 .and. ITFBE < TIME) then
 if (ibcpsi_fb > 0) then
 if (ITFBP < 0.0 .and. ibcpsi_fb >= 2.) then
@@ -471,7 +471,7 @@ BABDOT = (abs(ADCMPF))*BBDOT
 
 call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RABDOT, BABDOT, NA1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, YWC(1:7), FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), ADCMPF, MPHIT(1: NA1) )
 
-DFPDRB    = -YWQ(NA)/G22(NA)
+!DFPDRB    = -YWQ(NA)/G22(NA)
 dfpdrbm12 = -YWQ(NA)/G22(NA)
 
 YWR(1) = MU(NA1)*GP2*ROC**2 * BTOR*BABDOT
@@ -852,7 +852,7 @@ YWC(7) =  PSIEXT*HRO
 bc_type_for_fp = 3
 endif
 endif
-if (ibcpsi_fb < =  1) then
+if (ibcpsi_fb <=  1) then
 YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
@@ -866,18 +866,18 @@ endif
 '''! Circuit equation:
 if (TIME - TSTART <= TAU) then
 PSIEXT = FP(NA1) + LEXT*IPL
-PSPLEX = (FP(NA1) - FP(NA))/HRO
-PSPLEX = LEXT*IPL/PSPLEX
+PSPLEX = LEXT/ROC*5.*IPOL(NA1)*G22(NA)/GP2/RTOR
 endif
+PSPLEX = LEXT/ROC*5.*IPOL(NA1)*G22(NA)/GP2/RTOR
 PSIEXT = PSIEXT + TAU*UEXT
 YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 2.
-YWC(5) = HRO + PSPLEX
-YWC(6) =  -PSPLEX
+YWC(5) = HRO + PSPLEX*ROC
+YWC(6) =  -PSPLEX*ROC
 YWC(7) = PSIEXT*HRO
-bc_type_for_fp = 4
+bc_type_for_fp = 3
 !For psifb
 ! when using the free boundary circuit equations with free current,
 ! then use mixed b.c.
@@ -929,7 +929,7 @@ BABDOT = (abs(ADCMPF))*BBDOT
 
 call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RABDOT, BABDOT, NA1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, YWC(1: 7), FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), ADCMPF, MPHIT(1: NA1) )
 
-DFPDRB    = -YWQ(NA)/G22(NA)
+!DFPDRB    = -YWQ(NA)/G22(NA)
 dfpdrbm12 = -YWQ(NA)/G22(NA)
 YWR(1) = MU(NA1)*GP2*ROC**2 * BTOR*BABDOT
 '''

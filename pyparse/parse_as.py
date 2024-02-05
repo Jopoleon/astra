@@ -19,17 +19,6 @@ def doublise(sarg):
 
     return sarg
 
-#    try:
-#        a = int(sarg)
-#        return sarg
-#    except:
-#        try:
-#            b = float(sarg)
-#            c = sarg.split('.')[0]
-#            return sarg + 'd0'
-#        except:
-#            return sarg
-
 
 def apptmp(lbl, parse):
 
@@ -37,13 +26,12 @@ def apptmp(lbl, parse):
     txt = ''
     var = lbl.split('|', 1)[0]
     if lbl in parse.right_hand_d.keys():
-        l2f = LINE2FOR(var, parse.right_hand_d[lbl], pack)
-        txt += l2f.fcode
+        txt += LINE2FOR(var, parse.right_hand_d[lbl], pack)
 
     return txt
 
 
-def write_fortran(f_out, text, fortran='f77'):
+def write_fortran(f_out, text, fortran='f90'):
     '''Writing FORTRAN tmp files'''
 
     indent_step = 4
@@ -228,9 +216,10 @@ def equ_prepare(f_equ):
     return equ_lines
 
 
-def indicise_lefteq(var, fnc_list, profiles, arr_nam2):
+def indicise_lefteq(var, pack):
     '''Add proper FORTRAN index to ASTRA arrays, eqn left hand side'''
 
+    fml_list, fnc_list, profiles, arr_nam2 = pack
     var = var.strip()
     out = var
     tmp1 = var[:-1]
@@ -248,9 +237,10 @@ def indicise_lefteq(var, fnc_list, profiles, arr_nam2):
     return out
 
 
-def indicise_righteq(line_in, fnc_list, profiles, arr_nam2):
+def indicise_righteq(line_in, pack):
     '''Add proper FORTRAN idnex to ASTRA arrays, eqn right hand side'''
 
+    fml_list, fnc_list, profiles, arr_nam2 = pack
     pieces = rec_split(line_in)
 
     line_out = ''
@@ -436,6 +426,187 @@ def write_xpr(sbr_dic, j_ipc):
     return out_txt
 
 
+def rec_fill_fml(txt_in):
+
+    tmp1 = txt_in
+    while('include' in tmp1):
+        tout = ''
+        lines = tmp1.split('\n')
+        for line in lines:
+            if 'include' in line:
+                fml = line.split('fml/')[1].split('\'')[0]
+                tout += insert_fml(fml)
+            else:
+                if line.strip() != '':
+                    tout += '%s\n' %line
+        tmp1 = tout
+    return tmp1.upper()
+
+
+def parse_pieces(pieces, pack, flag_fml):
+
+    fml_list, fnc_list, profiles, arr_nam2 = pack
+    line_out = ''
+    n_pieces = len(pieces)
+
+    jpos = 0
+    while(jpos < n_pieces):
+
+        var2 = pieces[jpos]
+# avoid: integer array labels -> double precision
+        var = format_number(var2).upper().strip()
+        logger.debug('var2=%s, var=%s, jpos=%d', var2, var, jpos)
+        if '.' not in var2:
+            if pieces[jpos-1] == '(' and pieces[jpos+1] == ')' or \
+               pieces[jpos-1] == '(' and pieces[jpos+1] == ',' or \
+               pieces[jpos-1] == ',' and pieces[jpos+1] == ')':
+                var = var2
+
+        if (jpos < n_pieces-2 and pieces[jpos+2] == 'AFX'):
+            count_close_bracket = 0
+            block_left = ''
+            jcomma = -1
+            for jpiec, piec in enumerate(pieces[jpos+2:]):
+                if piec == '(':
+                    count_close_bracket -= 1
+                elif piec == ')':
+                    count_close_bracket += 1
+                elif piec == ',' and count_close_bracket == 0:
+                    jcomma = jpiec
+                if count_close_bracket == 1:
+                    break
+                if jcomma == -1:
+                    block_left += format_number(piec)
+            if block_left in fnc_list:
+                out = 'RADIAL(%sR, RFA(%s))' %(pieces[jpos], block_left)
+            else:
+                out = 'RADIAL(%s, RFA(%s))' %(pieces[jpos], block_left)
+            jpos += jpiec + 2
+
+        elif var in ('VINT', 'IINT', 'LININT'):
+            var3 = pieces[jpos+2]
+            tmp3 = var3[:-1]
+            if var3[-1] == 'B':
+                if tmp3 in fnc_list:
+                    out = '%s(%sR, ROC)' %(var, tmp3)
+                if tmp3 in profiles:
+                    out = '%s(%s, ROC)'  %(var, tmp3)
+                jpos += 3
+            elif len(pieces[jpos+2:]) == 2:
+                logger.debug('var3 %s', var3)
+                if var3 in fnc_list:
+                    out = '%s(%sR, j*HRO)' %(var, var3)
+                if var3 in profiles:
+                    out = '%s(%s, j*HRO)'  %(var, var3)
+                jpos += 3
+            else:
+                count_close_bracket = 0
+                block_left = ''
+                block_right = ''
+                jcomma = -1
+                for jpiec, piec in enumerate(pieces[jpos+2:]):
+                    if piec == '(':
+                        count_close_bracket -= 1
+                    elif piec == ')':
+                        count_close_bracket += 1
+                    elif piec == ',' and count_close_bracket == 0:
+                        jcomma = jpiec
+                    if count_close_bracket == 1:
+                        break
+                    if jcomma == -1:
+                        block_left += piec
+                    elif jcomma != jpiec:
+                        block_right += piec
+                if not block_right: # VINT(CAR11) * ...
+                    block_right = 'j'
+                if block_left in fnc_list:
+                    out = '%s(%sR, %s*ROC)' %(var, block_left, block_right)
+                else:
+                    out = '%s(%s, %s*ROC)'  %(var, block_left, block_right)
+                jpos += jpiec + 2
+                logger.debug(block_left)
+                logger.debug(block_right)
+                logger.debug(out)
+
+        elif var in ('RFVAL', 'RFVEX', 'RFVIN',
+                     'AFVAL', 'AFVEX', 'AFVIN',
+                     'ASTEP', 'RSTEP', 'XSTEP',
+                     'ATX', 'ATR', 'V_95_POS', 'RFMAX', 'RFMIN', 'FRMAX', 'FRMIN'):
+            jbra = function_args(pieces[jpos+1:])
+            out = ''
+            for j in range(jpos, jpos+jbra):
+                if pieces[j] in profiles:
+                    out += '%s(1:NA1)' %pieces[j]
+                else:
+                    out += doublise(pieces[j])
+            if var in ('RFVAL', 'RFVEX', 'RFVIN'):
+                out += '*ROC'
+            elif var in ('AFVAL', 'AFVEX', 'AFVIN'):
+                out += '*ABC'
+            elif var in ('ASTEP', 'RSTEP', 'XSTEP'):
+                out += ', J'
+            out += ')'
+            jpos += jbra
+
+        elif var in ('GRAD', 'GRADS'):
+            var3 = pieces[jpos+2]
+            tmp3 = var3[:-1]
+            if var3[-1] == 'B':
+                if tmp3 in fnc_list:
+                    out = '%s(%sR, NA1)' %(var, tmp3)
+                if tmp3 in profiles:
+                    out = '%s(%s, NA1)'  %(var, tmp3)
+            elif var3[-1] == 'C':
+                if tmp3 in fnc_list:
+                    out = '%s(%sR, 1)' %(var, tmp3)
+                if tmp3 in profiles:
+                    out = '%s(%s, 1)'  %(var, tmp3)
+            else:
+                if var3 in fnc_list:
+                    out = '%s(%sR, J)' %(var, var3)
+                if var3 in profiles:
+                    out = '%s(%s, J)'  %(var, var3)
+            jpos += 3
+
+# Formula
+        elif var in fml_list:
+            if flag_fml[var.lower()]:
+                tmp4 = insert_fml(var)
+                line_out = 'replaced_fml' + rec_fill_fml(tmp4)
+                flag_fml[var.lower()] = False
+                return line_out, flag_fml
+            out = var
+# Between brackets
+        elif var in profiles + fnc_list:
+            if var in profiles:
+                varR = var
+            elif var in fnc_list:
+                varR = var + 'R'
+            if (jpos < n_pieces - 3) and (pieces[jpos+1] == '(' and pieces[jpos+3] == ')'):
+                try: # double precision
+                    arg = float(pieces[jpos+2])
+                    out = 'RADIAL(%s, RFA(%s)' %(varR, format_number(arg))
+                    jpos += 2
+                except: # integer
+                    out = var
+            elif jpos < n_pieces - 5 and pieces[jpos+1] == '(' and pieces[jpos+3] != ')' and pieces[jpos+5] == ')':
+                try: # double precision
+                    out = 'RADIAL(%s, RFA(%s%s%s)' %(varR, format_number(pieces[jpos+2]), pieces[jpos+3], pieces[jpos+4])
+                    jpos += 4
+                except: # integer
+                    out = var
+            else:
+                out = indicise_righteq(var, pack)
+
+        else:
+            out = indicise_righteq(var, pack)
+
+        line_out += out
+        jpos += 1
+
+    return line_out, flag_fml
+
+
 def parse_inc(f_inc):
 
     profiles = []
@@ -516,243 +687,71 @@ def parse_sbr(line):
     return sbr_dic
 
 
-class LINE2FOR:
-
-
-    def __init__(self, left_hand, right_hand, pack):
-
-        self.fml_list, self.fnc_list, self.profiles, self.arr_nam2 = pack
-        self.flag_fml = {}
-        for fml in self.fml_list:
-            self.flag_fml[fml.lower()] = True
-        if right_hand.strip() == '':
-            self.fcode = '%s = 0.d0\n' %left_hand
-        else:
-            self.fcode = ''
-
-            tmp = self.fmt_right_hand(right_hand)
-
-            while 'replaced_fml' in tmp: # If there's more than one formula in one line
-                self.fcode += tmp.replace('replaced_fml', '')
-                tmp = self.fmt_right_hand(right_hand)
-            right = tmp
-            if left_hand.strip() == '':
-                self.fcode = right
-            else:
-                left = indicise_lefteq(left_hand, self.fnc_list, self.profiles, self.arr_nam2)
-                self.fcode += '%s = %s\n' %(left, right)
-
-
-    def rec_fill_fml(self, txt_in):
-
-        tmp1 = txt_in
-        while('include' in tmp1):
-            tout = ''
-            lines = tmp1.split('\n')
-            for line in lines:
-                if 'include' in line:
-                    fml = line.split('fml/')[1].split('\'')[0]
-
-#                    if self.flag_fml[fml.lower()]:
-#                        tout += insert_fml(fml)
-#                        self.flag_fml[fml.lower()] = False
-                    tout += insert_fml(fml)
-                else:
-                    if line.strip() != '':
-                        tout += '%s\n' %line
-            tmp1 = tout
-        return tmp1.upper()
-
-
-    def fmt_right_hand(self, line_in):
+def fmt_right_hand(line_in, pack, flag_fml):
 # Convert an "equ" statement in Fortran format
 
-        tmp = line_in
+    tmp = line_in
 
-        if line_in.strip() == '':
-            line_out = ''
-            return line_out
+    if line_in.strip() == '':
+        line_out = ''
+        return line_out, flag_fml
 
-        logger.debug('IN:'+ line_in + '$')
+    logger.debug('IN:'+ line_in + '$')
 
 # Check: exponential notation or real '-' between variables?
-        for sym in ('E-', 'e-', 'D-', 'd-', 'E+', 'e+', 'D+', 'd+'):
-            if sym[-1] == '-':
-                repl = '$'
-            else:
-                repl = '#'
-            if sym in tmp:
-                piece0, piece1 = tmp.split(sym, 1)
-                piece2 = rec_split(piece1)[0]
-                piece3 = rec_split(piece0)[-1]
-                logger.debug('piece3 %s', piece3)
-                try:
-                    flt = float(piece3) #Make sure there's a digit before "E-"
-                    num = int(piece2) #Make sure there's an integer after "E-"
-                    tmp = tmp.replace(sym, repl) # avoid splitting if exp notation
-                except:
-                    pass
+    for sym in ('E-', 'e-', 'D-', 'd-', 'E+', 'e+', 'D+', 'd+'):
+        if sym[-1] == '-':
+            repl = '$'
+        else:
+            repl = '#'
+        if sym in tmp:
+            piece0, piece1 = tmp.split(sym, 1)
+            piece2 = rec_split(piece1)[0]
+            piece3 = rec_split(piece0)[-1]
+            logger.debug('piece3 %s', piece3)
+            try:
+                flt = float(piece3) #Make sure there's a digit before "E-"
+                num = int(piece2) #Make sure there's an integer after "E-"
+                tmp = tmp.replace(sym, repl) # avoid splitting if exp notation
+            except:
+                pass
 
-        pieces = rec_split(tmp)
+    pieces = rec_split(tmp)
 
-        line_out = ''
-        n_pieces = len(pieces)
-
-        jpos = 0
-        while(jpos < n_pieces):
-
-            var2 = pieces[jpos]
-# avoid: integer array labels -> double precision
-            var = format_number(var2).upper().strip()
-            logger.debug('var2=%s, var=%s, jpos=%d', var2, var, jpos)
-            if '.' not in var2:
-                if pieces[jpos-1] == '(' and pieces[jpos+1] == ')' or \
-                   pieces[jpos-1] == '(' and pieces[jpos+1] == ',' or \
-                   pieces[jpos-1] == ',' and pieces[jpos+1] == ')':
-                    var = var2
-
-            if (jpos < n_pieces-2 and pieces[jpos + 2] == 'AFX'):
-                count_close_bracket = 0
-                block_left = ''
-                jcomma = -1
-                for jpiec, piec in enumerate(pieces[jpos+2:]):
-                    if piec == '(':
-                        count_close_bracket -= 1
-                    elif piec == ')':
-                        count_close_bracket += 1
-                    elif piec == ',' and count_close_bracket == 0:
-                        jcomma = jpiec
-                    if count_close_bracket == 1:
-                        break
-                    if jcomma == -1:
-                        block_left += format_number(piec)
-                if block_left in self.fnc_list:
-                    out = 'RADIAL(%sR, RFA(%s))' %(pieces[jpos], block_left)
-                else:
-                    out = 'RADIAL(%s, RFA(%s))' %(pieces[jpos], block_left)
-                jpos += jpiec + 2
-
-            elif var in ('VINT', 'IINT', 'LININT'):
-                var3 = pieces[jpos+2]
-                tmp3 = var3[:-1]
-                if var3[-1] == 'B':
-                    if tmp3 in self.fnc_list:
-                        out = '%s(%sR, ROC)' %(var, tmp3)
-                    if tmp3 in self.profiles:
-                        out = '%s(%s, ROC)'  %(var, tmp3)
-                    jpos += 3
-                elif len(pieces[jpos+2:]) == 2:
-                    logger.debug('var3 %s', var3)
-                    if var3 in self.fnc_list:
-                        out = '%s(%sR, j*HRO)' %(var, var3)
-                    if var3 in self.profiles:
-                        out = '%s(%s, j*HRO)'  %(var, var3)
-                    jpos += 3
-                else:
-                    count_close_bracket = 0
-                    block_left = ''
-                    block_right = ''
-                    jcomma = -1
-                    for jpiec, piec in enumerate(pieces[jpos+2:]):
-                        if piec == '(':
-                            count_close_bracket -= 1
-                        elif piec == ')':
-                            count_close_bracket += 1
-                        elif piec == ',' and count_close_bracket == 0:
-                            jcomma = jpiec
-                        if count_close_bracket == 1:
-                            break
-                        if jcomma == -1:
-                            block_left += piec
-                        elif jcomma != jpiec:
-                            block_right += piec
-                    if not block_right: # VINT(CAR11) * ...
-                        block_right = 'j'
-                    if block_left in self.fnc_list:
-                        out = '%s(%sR, %s*ROC)' %(var, block_left, block_right)
-                    else:
-                        out = '%s(%s, %s*ROC)'  %(var, block_left, block_right)
-                    jpos += jpiec + 2
-                    logger.debug(block_left)
-                    logger.debug(block_right)
-                    logger.debug(out)
-
-            elif var in ('RFVAL', 'RFVEX', 'RFVIN',
-                         'AFVAL', 'AFVEX', 'AFVIN',
-                         'ASTEP', 'RSTEP', 'XSTEP',
-                         'ATX', 'ATR', 'V_95_POS', 'RFMAX', 'RFMIN', 'FRMAX', 'FRMIN'):
-                jbra = function_args(pieces[jpos+1: n_pieces])
-                out = ''
-                for j in range(jpos, jpos+jbra):
-                    if pieces[j] in self.profiles:
-                        out += '%s(1:NA1)' %pieces[j]
-                    else:
-                        out += doublise(pieces[j])
-                if var in ('RFVAL', 'RFVEX', 'RFVIN'):
-                    out += '*ROC'
-                elif var in ('AFVAL', 'AFVEX', 'AFVIN'):
-                    out += '*ABC'
-                elif var in ('ASTEP', 'RSTEP', 'XSTEP'):
-                    out += ', J'
-                out += ')'
-                jpos += jbra
-
-            elif var in ('GRAD', 'GRADS'):
-                var3 = pieces[jpos+2]
-                tmp3 = var3[:-1]
-                if var3[-1] == 'B':
-                    if tmp3 in self.fnc_list:
-                        out = '%s(%sR, NA1)' %(var, tmp3)
-                    if tmp3 in self.profiles:
-                        out = '%s(%s, NA1)'  %(var, tmp3)
-                elif var3[-1] == 'C':
-                    if tmp3 in self.fnc_list:
-                        out = '%s(%sR, 1)' %(var, tmp3)
-                    if tmp3 in self.profiles:
-                        out = '%s(%s, 1)'  %(var, tmp3)
-                else:
-                    if var3 in self.fnc_list:
-                        out = '%s(%sR, J)' %(var, var3)
-                    if var3 in self.profiles:
-                        out = '%s(%s, J)'  %(var, var3)
-                jpos += 3
-
-# Formula
-            elif var in self.fml_list:
-                if self.flag_fml[var.lower()]:
-                    tmp4 = insert_fml(var)
-                    line_out = 'replaced_fml' + self.rec_fill_fml(tmp4)
-                    self.flag_fml[var.lower()] = False
-                    return line_out
-                out = var
-# Between brackets
-            elif var in self.profiles + self.fnc_list:
-                if (jpos < n_pieces - 3) and (pieces[jpos+1] == '(' and pieces[jpos+3] == ')'):
-                    try: # double precision
-                        arg = float(pieces[jpos+2])
-                        out = 'RADIAL(%s, RFA(%s)' %(var, format_number(arg))
-                        jpos += 2
-                    except: # integer
-                        out = var
-                elif jpos < n_pieces - 5 and pieces[jpos+1] == '(' and pieces[jpos+3] != ')' and pieces[jpos+5] == ')':
-                    try: # double precision
-                        out = 'RADIAL(%s, RFA(%s%s%s)' %(var, format_number(pieces[jpos+2]), pieces[jpos+3], pieces[jpos+4])
-                        jpos += 4
-                    except: # integer
-                        out = var
-                else:
-                    out = indicise_righteq(var, self.fnc_list, self.profiles, self.arr_nam2)
-            else:
-                out = indicise_righteq(var, self.fnc_list, self.profiles, self.arr_nam2)
-
-            line_out += out
-            jpos += 1
+    line_out, flag_fml = parse_pieces(pieces, pack, flag_fml)
 
 # Reinserting exponential notation, after parsing for operational '+', '-'
-        line_out = line_out.replace('"', '')
-        line_out = line_out.replace('$', 'd-')
-        line_out = line_out.replace('#', 'd+')
-        logger.debug('OUT: %s', line_out)
-        logger.debug('')
+    line_out = line_out.replace('"', '')
+    line_out = line_out.replace('$', 'd-')
+    line_out = line_out.replace('#', 'd+')
+    logger.debug('OUT: %s', line_out)
+    logger.debug('')
 
-        return line_out
+    return line_out, flag_fml
+
+
+def LINE2FOR(left_hand, right_hand, pack):
+
+     fml_list, _, _, _ = pack
+     flag_fml = {}
+     for fml in fml_list:
+         flag_fml[fml.lower()] = True
+
+     if right_hand.strip() == '':
+         fcode = '%s = 0.d0\n' %left_hand
+     else:
+         fcode = ''
+
+         tmp, flag_fml = fmt_right_hand(right_hand, pack, flag_fml)
+         while 'replaced_fml' in tmp: # If there's more than one formula in one line
+             fcode += tmp.replace('replaced_fml', '')
+             tmp, flag_fml = fmt_right_hand(right_hand, pack, flag_fml)
+         right = tmp
+
+         if left_hand.strip() == '':
+             fcode = right
+         else:
+             left = indicise_lefteq(left_hand, pack)
+             fcode += '%s = %s\n' %(left, right)
+
+     return fcode

@@ -263,7 +263,7 @@ def neeqn(parse, assign_type=None):
         ne_txt += 'ND1 = NA1\n'
     else:
         l2f = pa.LINE2FOR('', rho_bnd, pack)
-        ne_txt += 'RO%s = %s\n' %(short, l2f.fcode)
+        ne_txt += 'RO%s = %s\n' %(short, l2f)
         ne_txt += 'ND1 = NODE(RO%s)\n' %short
 
     ne_txt += 'NA1%s = ND1\n' %short
@@ -438,7 +438,7 @@ def tieqn(parse, assign_type=None):
         ti_txt += 'ND1 = NA1\n'
     else:
         l2f = pa.LINE2FOR('', rho_bnd, pack)
-        ti_txt += 'RO%s = %s\n' %(short, l2f.fcode)
+        ti_txt += 'RO%s = %s\n' %(short, l2f)
         ti_txt += 'ND1 = NODE(RO%s)\n' %short
 
     ti_txt += 'NA1%s = ND1\n' %short
@@ -610,7 +610,7 @@ def teeqn(parse, assign_type=None):
         te_txt += 'ND1 = NA1\n'
     else:
         l2f = pa.LINE2FOR('', rho_bnd, pack)
-        te_txt += 'RO%s = %s\n' %(short, l2f.fcode)
+        te_txt += 'RO%s = %s\n' %(short, l2f)
         te_txt += 'ND1 = NODE(RO%s)\n' %short
 
     te_txt += 'NA1%s = ND1\n' %short
@@ -772,8 +772,8 @@ call CUOFP
 '''
 
     if 'UEXT' in var_defined or 'LEXT' in var_defined:
-        cueq_txt += 'DFPDR = (FP(NA1) - FP(NA) - (FV(NA1) - FV(NA)))/HRO\n'
-        cueq_txt += 'IPL = 5.*IPOL(NA1)*G22(NA)*DFPDR/GP2/RTOR\n'
+        cueq_txt += '!DFPDR = ((FP(NA1) - FP(NA) - (FV(NA1) - FV(NA)))/HRO)\n'
+        cueq_txt += 'IPL = 5.*IPOL(NA1)*G22(NA)*((FP(NA1) - FP(NA) - (FV(NA1) - FV(NA)))/HRO)/GP2/RTOR\n'
 
     return cueq_txt
 
@@ -838,7 +838,7 @@ def fjeqn(parse, jeq, assign_type=None):
             fj_txt += 'ND1 = NA1\n'
         else:
             l2f = pa.LINE2FOR('', rho_bnd, pack)
-            fj_txt += '%s = %s\n' %(ro, l2f.fcode)
+            fj_txt += '%s = %s\n' %(ro, l2f)
             fj_txt += 'ND1 = NODE(%s)\n' %ro
 
         fj_txt += 'NA1%s = ND1\n' %short
@@ -985,7 +985,7 @@ def upeqn(parse, assign_type=None):
         up_txt += 'ND1 = NA1\n'
     else:
         l2f = pa.LINE2FOR('', rho_bnd, pack)
-        up_txt += 'ROU = %s\n' %l2f.fcode
+        up_txt += 'ROU = %s\n' %l2f
         up_txt += 'ND1 = NODE(ROU)\n'
 
     if 'UPAR' not in var_defined:
@@ -1171,7 +1171,7 @@ def tetieqn(parse, itype=3):
         teti += 'ND1 = NA1\n'
     else:
         l2f = pa.LINE2FOR('', rho_bnd, pack)
-        teti += 'ROE = %s\n' %(l2f.fcode)
+        teti += 'ROE = %s\n' %(l2f)
         teti += 'ND1 = NODE(ROE)\n'
     teti += 'NA1E = ND1\n'
     teti += 'ND = ND1 - 1\n'
@@ -1329,7 +1329,7 @@ def tetieqn(parse, itype=3):
         teti += 'ND1 = NA1\n'
     else:
         l2f = pa.LINE2FOR('', rho_bnd, pack)
-        teti += 'ROI = %s\n' %(l2f.fcode)
+        teti += 'ROI = %s\n' %l2f
         teti += 'ND1 = NODE(ROI)\n'
     teti += 'NA1I = ND1\n'
     teti += 'ND = ND1 - 1\n' # 2567
