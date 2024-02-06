@@ -9,8 +9,7 @@ awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 def test_parse(statement, f_equ='%s/equ/test' %awd):
 
     parse = EQU_PARSER(f_equ)
-    pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
-    l2f = LINE2FOR(statement, pack)
+    l2f = LINE2FOR(statement, parse)
     print('')
     print(l2f)
 

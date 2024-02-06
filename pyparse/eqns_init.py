@@ -5,7 +5,6 @@ from parse_as import *
 def eqns_init(parse):
 # Corresponds to model2:alldef
 
-    pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
     eqns_lin = parse.eqns_lines
 
     eqns_txt = ''

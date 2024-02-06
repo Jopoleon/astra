@@ -22,7 +22,6 @@ class CODE_GEN:
 
 
         eqns_lin = parse.eqns_lines
-        pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
 
         linapp = False
 #------------------------------- 
@@ -69,7 +68,7 @@ class CODE_GEN:
                         sval = pa.format_number(fval)
                         setv_sbr += 'DTEQ(%d,%d) = %s\n' %(j_arg, j_sbr, sval)
                     except:
-                        l2f = pa.LINE2FOR(val, pack)
+                        l2f = pa.LINE2FOR(val, parse)
                         detv_sbr += 'DTEQ(%d,%d) = %s\n' %(j_arg, j_sbr, l2f)
                 j_arg += 1
             j_sbr += 1
@@ -153,7 +152,7 @@ end subroutine POSTEP'''
                 if var == varm:
                     jvar = jv + 1
                     detv_time += 'IFDFVX(%d) = max(IFDFVX(%d), 2)\n' %(jvar, jvar)
-                    l2f = pa.LINE2FOR(line, pack)
+                    l2f = pa.LINE2FOR(line, parse)
                     detv_time += 'if (IFDFVX(%d) <= 2) %s\n'%(jvar, l2f)
                     break
             if var in parse.constants + parse.internals:
@@ -270,7 +269,7 @@ end subroutine DETVAR_init
         if 'CC' in parse.var_defined:
             inivar += pa.apptmp('CC', parse)
         else:
-            inivar += pa.LINE2FOR('CC = CCSP', pack)
+            inivar += pa.LINE2FOR('CC = CCSP', parse)
         if 'CU' not in parse.var_defined:
             inivar += pa.apptmp('MU', parse)
             if parse.assign_d['CU'] == 'AS':
@@ -367,13 +366,13 @@ end subroutine setvar'''
         self.astra_out  = const_text.RADOUT.header
         for jsgr, name in enumerate(parse.asnamer):
             if name:
-                self.astra_out += pa.LINE2FOR('ROUT(J, %d) = %s' %(jsgr+1, name), pack)
+                self.astra_out += pa.LINE2FOR('ROUT(J, %d) = %s' %(jsgr+1, name), parse)
             else:
                 self.astra_out += 'ROUT(J, %d) = 0.d0\n' %(jsgr+1)
         self.astra_out += const_text.TIMOUT.header
         for jsig, name in enumerate(parse.asnamet):
             if name:
-                self.astra_out +=  pa.LINE2FOR('TOUT(LTOUT, %d) = %s' %(jsig+1, name), pack)
+                self.astra_out +=  pa.LINE2FOR('TOUT(LTOUT, %d) = %s' %(jsig+1, name), parse)
             else:
                 self.astra_out += 'TOUT(LTOUT, %d) = 0.d0\n' %(jsig+1)
         self.astra_out +=  """

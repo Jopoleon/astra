@@ -220,7 +220,6 @@ def neeqn(parse, assign_type=None):
     if assign_type is None:
         assign_type = parse.assign_d[key]
 
-    pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
     short = config.short_d[key]
 
     ne_txt, var_defined = pre_eqn(parse, key, assign_type=assign_type)
@@ -260,7 +259,7 @@ def neeqn(parse, assign_type=None):
     if rho_bnd is None:
         ne_txt += 'ND1 = NA1\n'
     else:
-        l2f = pa.LINE2FOR(rho_bnd, pack)
+        l2f = pa.LINE2FOR(rho_bnd, parse)
         ne_txt += 'RO%s = %s\n' %(short, l2f)
         ne_txt += 'ND1 = NODE(RO%s)\n' %short
 
@@ -365,7 +364,6 @@ def tieqn(parse, assign_type=None):
     if assign_type is None:
         assign_type = parse.assign_d[key]
 
-    pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
     short = config.short_d[key]
 
 # Previous tieqn
@@ -435,7 +433,7 @@ def tieqn(parse, assign_type=None):
     if rho_bnd is None:
         ti_txt += 'ND1 = NA1\n'
     else:
-        l2f = pa.LINE2FOR(rho_bnd, pack)
+        l2f = pa.LINE2FOR(rho_bnd, parse)
         ti_txt += 'RO%s = %s\n' %(short, l2f)
         ti_txt += 'ND1 = NODE(RO%s)\n' %short
 
@@ -535,7 +533,6 @@ def teeqn(parse, assign_type=None):
     if assign_type is None:
         assign_type = parse.assign_d[key]
 
-    pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
     short = config.short_d[key]
 
     te_txt, var_defined = pre_eqn(parse, key, assign_type=assign_type)
@@ -607,7 +604,7 @@ def teeqn(parse, assign_type=None):
     if rho_bnd is None:
         te_txt += 'ND1 = NA1\n'
     else:
-        l2f = pa.LINE2FOR(rho_bnd, pack)
+        l2f = pa.LINE2FOR(rho_bnd, parse)
         te_txt += 'RO%s = %s\n' %(short, l2f)
         te_txt += 'ND1 = NODE(RO%s)\n' %short
 
@@ -705,8 +702,6 @@ YWC(4) = 1.
 
 def cueqn(parse):
 
-    pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
-
     cueq_txt = const_text.CUEQN.header
     if 'MV' in parse.var_defined:
         cueq_txt += const_text.CUEQN.mv
@@ -794,7 +789,6 @@ def fjeqn(parse, jeq, assign_type=None):
     if assign_type is None:
         assign_type = parse.assign_d[key]
 
-    pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
     short = config.short_d[key]
 
     fj_txt, var_defined = pre_eqn(parse, key, assign_type=assign_type)
@@ -834,7 +828,7 @@ def fjeqn(parse, jeq, assign_type=None):
         if rho_bnd is None:
             fj_txt += 'ND1 = NA1\n'
         else:
-            l2f = pa.LINE2FOR(rho_bnd, pack)
+            l2f = pa.LINE2FOR(rho_bnd, parse)
             fj_txt += '%s = %s\n' %(ro, l2f)
             fj_txt += 'ND1 = NODE(%s)\n' %ro
 
@@ -920,8 +914,6 @@ def upeqn(parse, assign_type=None):
     if assign_type is None:
         assign_type = parse.assign_d[key]
 
-    pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
-
     up_txt, var_defined = pre_eqn(parse, key, assign_type=assign_type)
     if up_txt is None:
         return ''
@@ -973,7 +965,7 @@ def upeqn(parse, assign_type=None):
     if rho_bnd is None:
         up_txt += 'ND1 = NA1\n'
     else:
-        l2f = pa.LINE2FOR(rho_bnd, pack)
+        l2f = pa.LINE2FOR(rho_bnd, parse)
         up_txt += 'ROU = %s\n' %l2f
         up_txt += 'ND1 = NODE(ROU)\n'
 
@@ -1063,7 +1055,6 @@ YWC(4) = -1.
 def tetieqn(parse, itype=3):
 
     var_defined = parse.var_defined
-    pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
 
     assign_type = parse.assign_d['TE']
     impl, asstyp = assign_type.split('_', 1)
@@ -1159,7 +1150,7 @@ def tetieqn(parse, itype=3):
     if rho_bnd is None:
         teti += 'ND1 = NA1\n'
     else:
-        l2f = pa.LINE2FOR(rho_bnd, pack)
+        l2f = pa.LINE2FOR(rho_bnd, parse)
         teti += 'ROE = %s\n' %(l2f)
         teti += 'ND1 = NODE(ROE)\n'
     teti += 'NA1E = ND1\n'
@@ -1317,7 +1308,7 @@ def tetieqn(parse, itype=3):
     if rho_bnd is None:
         teti += 'ND1 = NA1\n'
     else:
-        l2f = pa.LINE2FOR(rho_bnd, pack)
+        l2f = pa.LINE2FOR(rho_bnd, parse)
         teti += 'ROI = %s\n' %l2f
         teti += 'ND1 = NODE(ROI)\n'
     teti += 'NA1I = ND1\n'

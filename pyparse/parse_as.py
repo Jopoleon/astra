@@ -22,12 +22,11 @@ def doublise(sarg):
 
 def apptmp(lbl, parse):
 
-    pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
     txt = ''
     var = lbl.split('|', 1)[0]
     if lbl in parse.right_hand_d.keys():
         line = '%s = %s\n' %(var, parse.right_hand_d[lbl])
-        txt += LINE2FOR(line, pack)
+        txt += LINE2FOR(line, parse)
 
     return txt
 
@@ -203,32 +202,31 @@ def equ_prepare(f_equ):
     return equ_lines
 
 
-def indicise(line_in, pack):
+def indicise(line_in, parse):
     '''Add proper FORTRAN index to ASTRA arrays'''
 
-    fml_list, fnc_list, profiles, arr_nam2 = pack
     pieces = rec_split(line_in)
 
     line_out = ''
     for var in pieces:
 
         out = var      # including case var in ('+', '-', '*', '/', '(', ')', ',')
-        if var in profiles + arr_nam2:
+        if var in parse.profiles + parse.arr_nam2:
             out = '%s(J)' %var
-        elif var in fnc_list:
+        elif var in parse.fnc_list:
             out = '%sR(RHO(J))' %var
         else:
             tmp1 = var[:-1]
             if var[-1] == 'B':
-                if tmp1 in fnc_list + profiles:
-                    if tmp1 in fnc_list:
+                if tmp1 in parse.fnc_list + parse.profiles:
+                    if tmp1 in parse.fnc_list:
                         out = '%sR(ROC)' %tmp1
                     else:
                         out = '%s(NA1)' %tmp1
             if var[-1] == 'C':
-                if tmp1 in profiles:
+                if tmp1 in parse.profiles:
                     out = 'RADIAL(%s, 0.d0)' %tmp1
-                if tmp1 in fnc_list:
+                if tmp1 in parse.fnc_list:
                     out = '%sR(0.d0)' %tmp1
         line_out += out
     return line_out
@@ -407,9 +405,8 @@ def rec_fill_fml(txt_in):
     return tmp1.upper()
 
 
-def parse_pieces(pieces, pack, flag_fml):
+def parse_pieces(pieces, parse, flag_fml):
 
-    fml_list, fnc_list, profiles, arr_nam2 = pack
     line_out = ''
     n_pieces = len(pieces)
 
@@ -440,7 +437,7 @@ def parse_pieces(pieces, pack, flag_fml):
                     break
                 if jcomma == -1:
                     block_left += format_number(piec)
-            if block_left in fnc_list:
+            if block_left in parse.fnc_list:
                 out = 'RADIAL(%sR, RFA(%s))' %(pieces[jpos], block_left)
             else:
                 out = 'RADIAL(%s, RFA(%s))' %(pieces[jpos], block_left)
@@ -450,15 +447,15 @@ def parse_pieces(pieces, pack, flag_fml):
             var3 = pieces[jpos+2]
             tmp3 = var3[:-1]
             if var3[-1] == 'B':
-                if tmp3 in fnc_list:
+                if tmp3 in parse.fnc_list:
                     out = '%s(%sR, ROC)' %(var, tmp3)
-                if tmp3 in profiles:
+                if tmp3 in parse.profiles:
                     out = '%s(%s, ROC)'  %(var, tmp3)
                 jpos += 3
             elif len(pieces[jpos+2:]) == 2:
-                if var3 in fnc_list:
+                if var3 in parse.fnc_list:
                     out = '%s(%sR, j*HRO)' %(var, var3)
-                if var3 in profiles:
+                if var3 in parse.profiles:
                     out = '%s(%s, j*HRO)'  %(var, var3)
                 jpos += 3
             else:
@@ -481,7 +478,7 @@ def parse_pieces(pieces, pack, flag_fml):
                         block_right += piec
                 if not block_right: # VINT(CAR11) * ...
                     block_right = 'j'
-                if block_left in fnc_list:
+                if block_left in parse.fnc_list:
                     out = '%s(%sR, %s*ROC)' %(var, block_left, block_right)
                 else:
                     out = '%s(%s, %s*ROC)'  %(var, block_left, block_right)
@@ -494,7 +491,7 @@ def parse_pieces(pieces, pack, flag_fml):
             jbra = function_args(pieces[jpos+1:])
             out = ''
             for j in range(jpos, jpos+jbra):
-                if pieces[j] in profiles:
+                if pieces[j] in parse.profiles:
                     out += '%s(1:NA1)' %pieces[j]
                 else:
                     out += doublise(pieces[j])
@@ -511,24 +508,24 @@ def parse_pieces(pieces, pack, flag_fml):
             var3 = pieces[jpos+2]
             tmp3 = var3[:-1]
             if var3[-1] == 'B':
-                if tmp3 in fnc_list:
+                if tmp3 in parse.fnc_list:
                     out = '%s(%sR, NA1)' %(var, tmp3)
-                if tmp3 in profiles:
+                if tmp3 in parse.profiles:
                     out = '%s(%s, NA1)'  %(var, tmp3)
             elif var3[-1] == 'C':
-                if tmp3 in fnc_list:
+                if tmp3 in parse.fnc_list:
                     out = '%s(%sR, 1)' %(var, tmp3)
-                if tmp3 in profiles:
+                if tmp3 in parse.profiles:
                     out = '%s(%s, 1)'  %(var, tmp3)
             else:
-                if var3 in fnc_list:
+                if var3 in parse.fnc_list:
                     out = '%s(%sR, J)' %(var, var3)
-                if var3 in profiles:
+                if var3 in parse.profiles:
                     out = '%s(%s, J)'  %(var, var3)
             jpos += 3
 
 # Formula
-        elif var in fml_list:
+        elif var in parse.fml_list:
             if flag_fml[var.lower()]:
                 tmp4 = insert_fml(var)
                 line_out = 'replaced_fml' + rec_fill_fml(tmp4)
@@ -536,10 +533,10 @@ def parse_pieces(pieces, pack, flag_fml):
                 return line_out, flag_fml
             out = var
 # Between brackets
-        elif var in profiles + fnc_list:
-            if var in profiles:
+        elif var in parse.profiles + parse.fnc_list:
+            if var in parse.profiles:
                 varR = var
-            elif var in fnc_list:
+            elif var in parse.fnc_list:
                 varR = var + 'R'
             if (jpos < n_pieces - 3) and (pieces[jpos+1] == '(' and pieces[jpos+3] == ')'):
                 try: # double precision
@@ -555,10 +552,10 @@ def parse_pieces(pieces, pack, flag_fml):
                 except: # integer
                     out = var
             else:
-                out = indicise(var, pack)
+                out = indicise(var, parse)
 
         else:
-            out = indicise(var, pack)
+            out = indicise(var, parse)
 
         line_out += out
         jpos += 1
@@ -646,7 +643,7 @@ def parse_sbr(line):
     return sbr_dic
 
 
-def astra2fortran(line_in, pack, flag_fml):
+def astra2fortran(line_in, parse, flag_fml):
 # Convert an "equ" statement in Fortran format
 
     tmp = line_in
@@ -674,7 +671,7 @@ def astra2fortran(line_in, pack, flag_fml):
 
     pieces = rec_split(tmp)
 
-    line_out, flag_fml = parse_pieces(pieces, pack, flag_fml)
+    line_out, flag_fml = parse_pieces(pieces, parse, flag_fml)
 
 # Reinserting exponential notation, after parsing for operational '+', '-'
     line_out = line_out.replace('"', '')
@@ -684,19 +681,18 @@ def astra2fortran(line_in, pack, flag_fml):
     return line_out, flag_fml
 
 
-def LINE2FOR(equStatement, pack):
+def LINE2FOR(equStatement, parse):
 
-     fml_list, _, _, _ = pack
      flag_fml = {}
-     for fml in fml_list:
+     for fml in parse.fml_list:
          flag_fml[fml.lower()] = True
 
      fcode = ''
 
-     tmp, flag_fml = astra2fortran(equStatement, pack, flag_fml)
+     tmp, flag_fml = astra2fortran(equStatement, parse, flag_fml)
      while 'replaced_fml' in tmp: # If there's more than one formula in one line
          fcode += tmp.replace('replaced_fml', '')
-         tmp, flag_fml = astra2fortran(equStatement, pack, flag_fml)
+         tmp, flag_fml = astra2fortran(equStatement, parse, flag_fml)
      fcode += '%s\n' %tmp
 
      return fcode

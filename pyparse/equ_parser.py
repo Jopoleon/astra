@@ -43,31 +43,23 @@ class EQU_PARSER:
 # Lists of arrays, constants, variables
 #--------------------------------------
 
-        f_prof    = '%s/main/profiles.txt'   %config.awd
-        f_profx   = '%s/main/profiles_x.txt' %config.awd
-        f_prof_ext= '%s/main/prof_ext.txt'   %config.awd
-        f_const   = '%s/main/constants.txt'  %config.awd
-        f_intern  = '%s/main/internal.txt'   %config.awd
-        f_intern2 = '%s/main/intern2.txt'    %config.awd
-        f_vars    = '%s/main/variables.txt'  %config.awd
-        f_asfnc   = '%s/main/functions.txt'  %config.awd
+        f_prof    = '%s/main/profiles.txt'    %config.awd
+        f_profx   = '%s/main/profiles_x.txt'  %config.awd
+        f_prof_ext= '%s/main/prof_ext.txt'    %config.awd
+        f_const   = '%s/main/constants.txt'   %config.awd
+        f_intern  = '%s/main/internal.txt'    %config.awd
+        f_intern2 = '%s/main/intern2.txt'     %config.awd
+        f_vars    = '%s/main/variables.txt'   %config.awd
+        f_varsx   = '%s/main/variables_x.txt' %config.awd
+        f_asfnc   = '%s/main/functions.txt'   %config.awd
         prof     = parse_inc(f_prof)
         profx    = parse_inc(f_profx)
         prof_ext = parse_inc(f_prof_ext)
-        self.profiles = prof + profx + prof_ext
+        self.profiles  = prof + profx + prof_ext
         self.constants = parse_inc(f_const)
         self.internals = parse_inc(f_intern) + parse_inc(f_intern2)
         self.variables = parse_inc(f_vars)
-        self.astra_fnc = parse_inc(f_asfnc)
-
-        if len(self.profiles) > config.NCVA:
-            logger.error('Error, total amount of arrays > %d', config.NCVA)
-        if len(self.constants) > config.NCVA:
-            logger.error('Error, total amount of constants > %d', config.NCVA)
-        if len(self.variables) > config.NCVA:
-            logger.error('Error, total amount of variables > %d', config.NCVA)
-        if len(self.internals) > config.NCVA:
-            logger.error('Error, total amount of variables > %d', config.NCVA)
+        self.varx      = parse_inc(f_varsx)
 
 #--------------------        
         self.arr_nam2 = []
