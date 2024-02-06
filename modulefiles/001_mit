@@ -1,7 +1,7 @@
 module-whatis "ASTRA is a suite of transport codes"
 
 proc ModulesHelp { } {
-    puts stderr "See <https://www.aug.ipp.mpg.de/aug/manuals/astra/index.html>. "
+    puts stderr "See <https://gitlab.mpcdf.mpg.de/git/astra/-/wikis/The-ASTRA-code>. "
 }
 
 module use /orcd/nese/psfc/001/software/spack/2023-07-01-physics-rpp/spack/share/spack/modules-test/linux-rocky8-x86_64

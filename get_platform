@@ -16,6 +16,9 @@ then
 elif [[ $AWD == "/home/matlab"* ]]
 then
    platform=docker
+elif [[ $AWD == "/global/homes"* ]]
+then
+   platform=perlmutter
 elif [[ $AWD == "/compass"* ]]
 then
    platform=cz

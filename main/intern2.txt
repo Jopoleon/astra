@@ -46,7 +46,6 @@ ROU      m                         Boundary position for UPAR equation
 VOLUME   m^3                       Total volume
 PSIAX    Tm^2                      PSI on axis
 PSIBO    Tm^2                      PSI boundary
-DFPDRB   None                      dPSI/drho at boundary, as a result from FP equation.
 GP       None                      3.1415926
 GP2      None                      2*GO
 PSIFB    T*m^2                     psi(x=1), bc for diff equation by fbe code

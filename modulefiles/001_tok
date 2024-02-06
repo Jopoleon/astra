@@ -7,7 +7,7 @@
 module-whatis "ASTRA is a suite of transport codes"
 
 proc ModulesHelp { } {
-    puts stderr "See <https://www.aug.ipp.mpg.de/aug/manuals/astra/index.html>. "
+    puts stderr "See <https://gitlab.mpcdf.mpg.de/git/astra/-/wikis/The-ASTRA-code>. "
 }
 
 conflict meld
@@ -17,10 +17,12 @@ prereq impi/2021.9
 prereq impi-interactive/1.0
 prereq anaconda/3/2023.03
 
-setenv ASTRA_EXT /tokp/work/software/TOK_2023/software/ASTRA_LIBRARIES_EXT 
+#setenv ASTRA_EXT /shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT
+setenv ASTRA_EXT /tokp/work/software/TOK_2023/software/ASTRA_LIBRARIES_EXT
 setenv MKL_LIBDIR  /tok/u/system/soft/SLE_15/packages/x86_64/intel_oneapi/2023.1/mkl/latest/lib/intel64
 setenv COMP_LIBDIR /tok/u/system/soft/SLE_15/packages/x86_64/intel_oneapi/2023.1/compiler/2023.1.0/linux/compiler/lib/intel64_lin
-set NETCDF_HOME /afs/ipp/common/soft/netcdf/4.2.1.1/amd64_sles11/intel/14.0/impi-4.1.3
+#set NETCDF_HOME /mpcdf/soft/SLE_15/packages/skylake/netcdf-serial/intel_2023.1.0.x-2023.1.0.x/4.8.1
+set NETCDF_HOME /tok/u/system/soft/SLE_15/packages/skylake/netcdf-mpi/intel_2023.1.0.x-2023.1.0.x-impi_2021.9-2021.9.0/4.8.1
 set NETCDF_LIBDIR $NETCDF_HOME/lib
 setenv NETCDF_LIB "-L${NETCDF_LIBDIR} -lnetcdf -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}"
 setenv NETCDF_INC $NETCDF_HOME/include
