@@ -137,6 +137,7 @@ def rec_split(line_in, syms='+|-|*|/|(|)|,|='):
 
 
 def functionArgs(pieces):
+    '''Returns a function or array argument within brackets, waiting for the final bracket to close'''
 
     if not pieces:
         return None, None, None
@@ -164,12 +165,6 @@ def functionArgs(pieces):
 
     jclose = jpiec + 2
     return jclose, arg1, arg2
-
-
-def posBracketClose(pieces):
-
-    jclose, _, _ = functionArgs(pieces)
-    return jclose
 
 
 def equ_prepare(f_equ):
@@ -402,7 +397,7 @@ def parse_pieces(pieces, parse):
     while jpos < n_pieces:
 
         var2 = pieces[jpos]
-# avoid: integer array labels -> double precision
+# Keep array labels integer (avoid double precision!)
         var = format_number(var2).upper().strip()
         if '.' not in var2:
             if pieces[jpos-1] == '(' and pieces[jpos+1] == ')' or \
@@ -433,7 +428,7 @@ def parse_pieces(pieces, parse):
                      'AFVAL', 'AFVEX', 'AFVIN',
                      'ASTEP', 'RSTEP', 'XSTEP',
                      'ATX', 'ATR', 'V_95_POS', 'RFMAX', 'RFMIN', 'FRMAX', 'FRMIN'):
-            jbra = posBracketClose(pieces[jpos+1:])
+            jbra, _, _ = functionArgs(pieces[jpos+1:])
             out = ''
             for j in range(jpos, jpos+jbra):
                 if pieces[j] in parse.profiles:
@@ -472,7 +467,7 @@ def parse_pieces(pieces, parse):
             else:
                 out = ''
                 try: # double precision
-                    out = 'RADIAL(%s, RFA(%s))' %(var, format_number(block_left))
+                    out = 'RADIAL(%s, RFA(%s))' %(var, block_left)
                     jpos += jbra
                 except: # integer
                     out = var
