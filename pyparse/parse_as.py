@@ -44,16 +44,7 @@ def write_fortran(f_out, text, fortran='f90'):
         line_break  = ' &\n' + indent_step*' '
         llen = 110 #90
 
-    lines_in = text.split('\n')
-
-# Add enddo-do in presence of "J+1" functions
-    lines = []
-    for line in lines_in:
-        pieces = rec_split(line)
-        if ('GRAD' in pieces or 'GRADS' in pieces) and ('declar.fnc' not in f_out):
-            lines.append('enddo')
-            lines.append('do J=1, NA1')
-        lines.append(line)
+    lines = text.split('\n')
 
 # Add proper indentation and line-breaking
     indent = indent0
@@ -490,7 +481,11 @@ def fml_fnc(line_in, fnc_list, fml_list):
         if piece in fnc_list:
             line_out += 'R'
     fmls = fml.FML(pieces, fml_list)
-    line_out = fmls.txt + line_out
+    grad_lines = ''
+    if 'GRAD' in pieces or 'GRADS' in pieces:
+        grad_lines += 'enddo\n'
+        grad_lines += 'do J=1, NA1\n'
+    line_out = grad_lines + fmls.txt + line_out
 
     return line_out
 
