@@ -1,5 +1,4 @@
 import os, argparse
-import equ_parser
 from parse_as import LINE2FOR
 from equ_parser import EQU_PARSER
 
