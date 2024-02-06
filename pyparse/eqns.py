@@ -44,10 +44,9 @@ itype:
     0: MU profile prescribed
     '''
 
-    var_defined = parse.right_hand_d.keys()
     cuas_txt = const_text.CUAS.header
  
-    if 'MV' in var_defined:
+    if 'MV' in parse.var_defined:
         cuas_txt += const_text.CUAS.mv1
         cuas_txt += pa.apptmp('MV', parse)
         cuas_txt += const_text.CUAS.mv2
@@ -57,17 +56,17 @@ itype:
     cuas_txt += 'do j=1, NA1\n'
     for var in ('DC', 'HC', 'XC', 'CD', 'CC'):
         cuas_txt += pa.apptmp(var, parse)
-    if none_in(['HC', 'DC', 'XC'], var_defined):
-        if 'CUBS' in var_defined:
+    if none_in(['HC', 'DC', 'XC'], parse.var_defined):
+        if 'CUBS' in parse.var_defined:
             cuas_txt += pa.apptmp('CUBS', parse)
         else:
             cuas_txt += 'CUBS(J) = 0.\n'
     else:
         cuas_txt += const_text.CUAS.cubs
-        cuas_txt += cubs(var_defined)
+        cuas_txt += cubs(parse.var_defined)
         cuas_txt += 'endif\n'
 
-    if 'CD' in var_defined:
+    if 'CD' in parse.var_defined:
         cuas_txt += 'YWA(J) = CUBS(J) + CD(J)\n'
     else:
         cuas_txt += 'YWA(J) = CUBS(J)\n'
@@ -86,7 +85,7 @@ itype:
         cuas_txt += const_text.CUAS.cu1
         cuas_txt += pa.apptmp('CU', parse)
         cuas_txt += const_text.CUAS.cu2
-        if 'MV' in var_defined:
+        if 'MV' in parse.var_defined:
             cuas_txt += 'MU(J) = YJ_CU*MU(J) + MV(j)\n'
             cuas_txt += 'FP(J) = YJ_CU*(FP(J) - FP(1)) + FP(1) + FV(J)\n'
         else:
@@ -101,10 +100,9 @@ itype:
 def cuas_uloop(parse, neq=1):
     '''current adjusted to match prescribed Uloop'''
 
-    var_defined = parse.right_hand_d.keys()
     cuasu_txt = const_text.CUAS.header
  
-    if 'MV' in var_defined:
+    if 'MV' in parse.var_defined:
         cuasu_txt += const_text.CUAS.mv1
         cuasu_txt += pa.apptmp('MV', parse)
         cuasu_txt += const_text.CUAS.mv2
@@ -116,17 +114,17 @@ def cuas_uloop(parse, neq=1):
     cuasu_txt += 'do j=1, NA1\n'
     for var in ('DC', 'HC', 'XC', 'CD', 'CC'):
         cuasu_txt += pa.apptmp(var, parse)
-    if none_in(['HC', 'DC', 'XC'], var_defined):
-        if 'CUBS' in var_defined:
+    if none_in(['HC', 'DC', 'XC'], parse.var_defined):
+        if 'CUBS' in parse.var_defined:
             cuasu_txt += pa.apptmp('CUBS', parse)
         else:
             cuasu_txt += 'CUBS(J) = 0.\n'
     else:
         cuasu_txt += const_text.CUAS.cubs
-        cuasu_txt += cubs(var_defined)
+        cuasu_txt += cubs(parse.var_defined)
         cuasu_txt += 'endif\n'
 
-    if 'CD' in var_defined:
+    if 'CD' in parse.var_defined:
         cuasu_txt += 'YWA(J) = CUBS(J) + CD(J)\n'
     else:
         cuasu_txt += 'YWA(J) = CUBS(J)\n'
@@ -138,7 +136,7 @@ YWD(J) = YWA(J)*YD/(IPOL(J)**3 * G33(J))
     cuasu_txt += 'enddo ! j (radial loop)\n'
 
     cuasu_txt += const_text.CUAS.uloop_2
-    if 'MV' in var_defined:
+    if 'MV' in parse.var_defined:
         cuasu_txt += \
 '''FP(NA1) = FP(NA)*(IPL + FPO(NA1)*FP(NA1)) + YDF
 CV(NA1) = CV(NA) + YWD(NA1) + ((CV(NA) + YWD(NA1)) - (CV(NA-1) + YWD(NA)))
@@ -147,7 +145,7 @@ CV(NA1) = CV(NA) + YWD(NA1) + ((CV(NA) + YWD(NA1)) - (CV(NA-1) + YWD(NA)))
         cuasu_txt += 'FP(NA1) = FP(NA)*(IPL + FPO(NA1)*FP(NA1))\n'
     cuasu_txt += const_text.CUAS.uloop_3
 
-    if 'MV' in var_defined:
+    if 'MV' in parse.var_defined:
         cuasu_txt += 'CU(1: NA1) = CU(1: NA1) - CV(1: NA1)\n'
     if neq == 0:
         cuasu_txt += const_text.CUAS.beta
@@ -176,7 +174,7 @@ def pre_eqn(parse, key, assign_type=None):
     if assign_type is None:
         assign_type = parse.assign_d[key]
 
-    var_defined = list(right_hand.keys())
+    var_defined = parse.var_defined
 
     if none_in(config.coeff_d[key] + config.flux_d[key], var_defined):
         for var in config.bnd_d[key]:
@@ -262,7 +260,7 @@ def neeqn(parse, assign_type=None):
     if rho_bnd is None:
         ne_txt += 'ND1 = NA1\n'
     else:
-        l2f = pa.LINE2FOR('', rho_bnd, pack)
+        l2f = pa.LINE2FOR(rho_bnd, pack)
         ne_txt += 'RO%s = %s\n' %(short, l2f)
         ne_txt += 'ND1 = NODE(RO%s)\n' %short
 
@@ -437,7 +435,7 @@ def tieqn(parse, assign_type=None):
     if rho_bnd is None:
         ti_txt += 'ND1 = NA1\n'
     else:
-        l2f = pa.LINE2FOR('', rho_bnd, pack)
+        l2f = pa.LINE2FOR(rho_bnd, pack)
         ti_txt += 'RO%s = %s\n' %(short, l2f)
         ti_txt += 'ND1 = NODE(RO%s)\n' %short
 
@@ -609,7 +607,7 @@ def teeqn(parse, assign_type=None):
     if rho_bnd is None:
         te_txt += 'ND1 = NA1\n'
     else:
-        l2f = pa.LINE2FOR('', rho_bnd, pack)
+        l2f = pa.LINE2FOR(rho_bnd, pack)
         te_txt += 'RO%s = %s\n' %(short, l2f)
         te_txt += 'ND1 = NODE(RO%s)\n' %short
 
@@ -707,18 +705,17 @@ YWC(4) = 1.
 
 def cueqn(parse):
 
-    var_defined = parse.right_hand_d.keys()
     pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
 
     cueq_txt = const_text.CUEQN.header
-    if 'MV' in var_defined:
+    if 'MV' in parse.var_defined:
         cueq_txt += const_text.CUEQN.mv
 
     for coeff in ('DC', 'HC', 'XC', 'CD', 'CC'):
         cueq_txt += pa.apptmp(coeff, parse)
 
-    if none_in(['DC', 'HC', 'XC'], var_defined):
-        if 'CUBS' in var_defined:
+    if none_in(['DC', 'HC', 'XC'], parse.var_defined):
+        if 'CUBS' in parse.var_defined:
             cueq_txt += pa.apptmp('CUBS', parse)
         else:
             cueq_txt += 'CUBS(J) = 0.\n'
@@ -727,16 +724,16 @@ def cueqn(parse):
         cueq_txt += 'CUBS(J)= max(0., (2*CUBS(NA) - CUBS(NA-1)))\n'
         cueq_txt += 'else\n'
         cueq_txt += 'CUBS(J) = YA*(FP(J+1) - FP(J))*(0.'
-        if 'HC' in var_defined:
+        if 'HC' in parse.var_defined:
             cueq_txt += ' + HC(J)*(TE(J+1) - TE(J))/(TE(J+1) + TE(J))'
-        if 'XC' in var_defined:
+        if 'XC' in parse.var_defined:
             cueq_txt += ' + XC(J)*(TI(J+1) - TI(J))/(TI(J+1) + TI(J))'
-        if 'DC' in var_defined:
+        if 'DC' in parse.var_defined:
             cueq_txt += ' + DC(J)*(NE(J+1) - NE(J))/(NE(J+1) + NE(J))'
         cueq_txt += ' )*0.5*(IPOL(J) + IPOL(J+1))\n'
         cueq_txt += 'endif\n'
 
-    if 'CD' in var_defined:
+    if 'CD' in parse.var_defined:
         cueq_txt += pa.apptmp('CD', parse)
         cueq_txt += 'YWD(J) = CUBS(J) + CD(J)\n'
     else:
@@ -746,21 +743,21 @@ def cueqn(parse):
     cueq_txt += 'YWB(J) = 0.4*GP*CC(J)*YC/IPOL(J)**2\n'
     cueq_txt += 'enddo\n'
 
-    if 'UEXT' not in var_defined and 'LEXT' not in var_defined and 'IPL' in var_defined:
+    if 'UEXT' not in parse.var_defined and 'LEXT' not in parse.var_defined and 'IPL' in parse.var_defined:
         cueq_txt += const_text.CUEQN.prescribed_ipl
-    if 'UEXT' in var_defined and 'LEXT' not in var_defined:
+    if 'UEXT' in parse.var_defined and 'LEXT' not in parse.var_defined:
         cueq_txt += const_text.CUEQN.prescribed_uloop
-    if 'LEXT' in var_defined:
+    if 'LEXT' in parse.var_defined:
         cueq_txt += const_text.CUEQN.circuit_eqn
 
     cueq_txt += const_text.CUEQN.eqn
 
-    if 'LEXT' in var_defined:
+    if 'LEXT' in parse.var_defined:
         cueq_txt += 'PSIFB = PSIEXT - PSPLEX*dfpdrbm12\n'
 
     cueq_txt += 'do J=1, NA1\n'
 
-    if 'MV' in var_defined:
+    if 'MV' in parse.var_defined:
         cueq_txt += 'CU(J) = CU(J) - CV(j)\n'
 
     cueq_txt += \
@@ -771,7 +768,7 @@ enddo
 call CUOFP
 '''
 
-    if 'UEXT' in var_defined or 'LEXT' in var_defined:
+    if 'UEXT' in parse.var_defined or 'LEXT' in parse.var_defined:
         cueq_txt += '!DFPDR = ((FP(NA1) - FP(NA) - (FV(NA1) - FV(NA)))/HRO)\n'
         cueq_txt += 'IPL = 5.*IPOL(NA1)*G22(NA)*((FP(NA1) - FP(NA) - (FV(NA1) - FV(NA)))/HRO)/GP2/RTOR\n'
 
@@ -837,7 +834,7 @@ def fjeqn(parse, jeq, assign_type=None):
         if rho_bnd is None:
             fj_txt += 'ND1 = NA1\n'
         else:
-            l2f = pa.LINE2FOR('', rho_bnd, pack)
+            l2f = pa.LINE2FOR(rho_bnd, pack)
             fj_txt += '%s = %s\n' %(ro, l2f)
             fj_txt += 'ND1 = NODE(%s)\n' %ro
 
@@ -896,12 +893,6 @@ def fjeqn(parse, jeq, assign_type=None):
         if gf in var_defined:
             fj_txt += '%s(J) = %s(J) + SLAT(J)*%s(J)\n' %(qf, qf, gf)
 
-# GIT
-#    if gf not in var_defined:
-#        fj_txt += '%s(J) = %s(J)/SLAT(J)\n' %(gf, qf)
-
-#    if sff in var_defined:
-#        fj_txt += '%sTOT(J) = %sTOT(J) + %s(J)*%s(J)\n' %(sf, sf, sff, key)
     fj_txt += 'enddo\n'
 
     if gf not in var_defined:
@@ -909,8 +900,6 @@ def fjeqn(parse, jeq, assign_type=None):
 
     if sff in var_defined:
         fj_txt += '%sTOT(NA1) = %sTOT(NA1) + %s(NA1)*%s(NA1)\n' %(sf, sf, sff, key)
-
-
 
     if qfb in var_defined and none_in([qffb, varb, ro], var_defined):
         fj_txt += '%s(NA1) = %sB\n' %(qf, qf)
@@ -984,7 +973,7 @@ def upeqn(parse, assign_type=None):
     if rho_bnd is None:
         up_txt += 'ND1 = NA1\n'
     else:
-        l2f = pa.LINE2FOR('', rho_bnd, pack)
+        l2f = pa.LINE2FOR(rho_bnd, pack)
         up_txt += 'ROU = %s\n' %l2f
         up_txt += 'ND1 = NODE(ROU)\n'
 
@@ -1073,7 +1062,7 @@ YWC(4) = -1.
 
 def tetieqn(parse, itype=3):
 
-    var_defined = list(parse.right_hand_d.keys())
+    var_defined = parse.var_defined
     pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
 
     assign_type = parse.assign_d['TE']
@@ -1170,7 +1159,7 @@ def tetieqn(parse, itype=3):
     if rho_bnd is None:
         teti += 'ND1 = NA1\n'
     else:
-        l2f = pa.LINE2FOR('', rho_bnd, pack)
+        l2f = pa.LINE2FOR(rho_bnd, pack)
         teti += 'ROE = %s\n' %(l2f)
         teti += 'ND1 = NODE(ROE)\n'
     teti += 'NA1E = ND1\n'
@@ -1328,7 +1317,7 @@ def tetieqn(parse, itype=3):
     if rho_bnd is None:
         teti += 'ND1 = NA1\n'
     else:
-        l2f = pa.LINE2FOR('', rho_bnd, pack)
+        l2f = pa.LINE2FOR(rho_bnd, pack)
         teti += 'ROI = %s\n' %l2f
         teti += 'ND1 = NODE(ROI)\n'
     teti += 'NA1I = ND1\n'

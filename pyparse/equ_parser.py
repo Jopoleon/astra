@@ -115,6 +115,7 @@ class EQU_PARSER:
 
         self.detv_lines = []
         self.eqns_lines = []
+        self.statements = []
 
         self.right_hand_d = {}
         self.right_hand_count = {}
@@ -139,6 +140,7 @@ class EQU_PARSER:
                     self.right_hand_count[key] = 0
                     lbl = key
                 self.right_hand_d[lbl] = val
+                self.statements.append(line)
                 if key in config.eqn_list + fluxes + coeffs:
                     self.eqns_lines.append(line)
                 else:
@@ -156,6 +158,7 @@ class EQU_PARSER:
                         self.eqns_lines.append(line)
                     else:
                         self.sbr_lines.append(line)
+        self.var_defined = [x for x in self.right_hand_d.keys() if '|' not in x]
 
 # Equations, assignments
 

@@ -5,7 +5,6 @@ from parse_as import *
 def eqns_init(parse):
 # Corresponds to model2:alldef
 
-    var_defined = parse.right_hand_d.keys()
     pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
     eqns_lin = parse.eqns_lines
 
@@ -68,9 +67,9 @@ def eqns_init(parse):
     if parse.assign_d['TI'] == 'Missing':
         eqns_txt += ti_as
 
-    if 'CU' in var_defined:
+    if 'CU' in parse.var_defined:
         cu_as = eqns.cuasn(parse, itype=-1)
-    elif 'MU' in var_defined:
+    elif 'MU' in parse.var_defined:
         cu_as = eqns.cuasn(parse, itype=0)
     else:
         cu_as = eqns.cuas_uloop(parse)
@@ -116,9 +115,9 @@ def eqns_init(parse):
     if parse.assign_d['CU'][:2] == 'EQ':
         eqns_txt += eqns.cueqn(parse)
     else:
-        if 'CU' in var_defined:
+        if 'CU' in parse.var_defined:
             eqns_txt += eqns.cuasn(parse, -1)
-        elif 'MU' in var_defined:
+        elif 'MU' in parse.var_defined:
             eqns_txt += eqns.cuasn(parse, 0)
         else:
              eqns_txt += eqns.cuas_uloop(parse)

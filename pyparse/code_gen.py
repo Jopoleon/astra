@@ -21,8 +21,6 @@ class CODE_GEN:
     def __init__(self, parse):
 
 
-        right_hand = parse.right_hand_d
-        var_defined = right_hand.keys()
         eqns_lin = parse.eqns_lines
         pack = parse.fml_list, parse.fnc_list, parse.profiles, parse.arr_nam2
 
@@ -71,7 +69,7 @@ class CODE_GEN:
                         sval = pa.format_number(fval)
                         setv_sbr += 'DTEQ(%d,%d) = %s\n' %(j_arg, j_sbr, sval)
                     except:
-                        l2f = pa.LINE2FOR('', val, pack)
+                        l2f = pa.LINE2FOR(val, pack)
                         detv_sbr += 'DTEQ(%d,%d) = %s\n' %(j_arg, j_sbr, l2f)
                 j_arg += 1
             j_sbr += 1
@@ -155,8 +153,8 @@ end subroutine POSTEP'''
                 if var == varm:
                     jvar = jv + 1
                     detv_time += 'IFDFVX(%d) = max(IFDFVX(%d), 2)\n' %(jvar, jvar)
-                    l2f = pa.LINE2FOR('', right_hand[lbl], pack)
-                    detv_time += 'if (IFDFVX(%d) <= 2) %s = %s\n'%(jvar, var, l2f)
+                    l2f = pa.LINE2FOR(line, pack)
+                    detv_time += 'if (IFDFVX(%d) <= 2) %s\n'%(jvar, l2f)
                     break
             if var in parse.constants + parse.internals:
                 detv_time += pa.apptmp(lbl, parse)
@@ -227,7 +225,7 @@ end subroutine DETVAR_init
         for jf in range(10):
             fj   = 'F%d' %jf
             inivar += 'do J=1, NA1\n'
-            if fj in var_defined:
+            if fj in parse.var_defined:
                 inivar += pa.apptmp(fj, parse)
             else:
                 inivar += '%s(J) = 1.\n' %fj
@@ -259,7 +257,7 @@ end subroutine DETVAR_init
                 if varb in parse.init_d.keys():
                     inivar += 'ND1 = NA1\n'
                     inivar += pa.apptmp(varb, parse)
-                if rlbl in var_defined:
+                if rlbl in parse.var_defined:
                     inivar += pa.apptmp(rlbl, parse)
                 else:
                     inivar += 'ND1 = NA1\n'
@@ -269,11 +267,11 @@ end subroutine DETVAR_init
 # Current
 
         inivar += 'do J=1, NA1\n'
-        if 'CC' in var_defined:
+        if 'CC' in parse.var_defined:
             inivar += pa.apptmp('CC', parse)
         else:
-            inivar += pa.LINE2FOR('CC', 'CCSP', pack)
-        if 'CU' not in var_defined:
+            inivar += pa.LINE2FOR('CC = CCSP', pack)
+        if 'CU' not in parse.var_defined:
             inivar += pa.apptmp('MU', parse)
             if parse.assign_d['CU'] == 'AS':
                 inivar += 'CU(J) = CC(J)\n'
@@ -368,11 +366,16 @@ end subroutine setvar'''
  
         self.astra_out  = const_text.RADOUT.header
         for jsgr, name in enumerate(parse.asnamer):
-            self.astra_out += pa.LINE2FOR('ROUT(J, %d)' %(jsgr+1), name, pack)
+            if name:
+                self.astra_out += pa.LINE2FOR('ROUT(J, %d) = %s' %(jsgr+1, name), pack)
+            else:
+                self.astra_out += 'ROUT(J, %d) = 0.d0\n' %(jsgr+1)
         self.astra_out += const_text.TIMOUT.header
         for jsig, name in enumerate(parse.asnamet):
-            l2f = pa.LINE2FOR('', name, pack)
-            self.astra_out += 'TOUT(LTOUT, %d) = %s\n' %(jsig+1, l2f)
+            if name:
+                self.astra_out +=  pa.LINE2FOR('TOUT(LTOUT, %d) = %s' %(jsig+1, name), pack)
+            else:
+                self.astra_out += 'TOUT(LTOUT, %d) = 0.d0\n' %(jsig+1)
         self.astra_out +=  """
 return
 end subroutine TIMOUT

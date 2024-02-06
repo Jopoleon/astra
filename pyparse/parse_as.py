@@ -26,7 +26,8 @@ def apptmp(lbl, parse):
     txt = ''
     var = lbl.split('|', 1)[0]
     if lbl in parse.right_hand_d.keys():
-        txt += LINE2FOR(var, parse.right_hand_d[lbl], pack)
+        line = '%s = %s\n' %(var, parse.right_hand_d[lbl])
+        txt += LINE2FOR(line, pack)
 
     return txt
 
@@ -103,20 +104,6 @@ def add_line_break(line_in, llen=68, line_break='\n'):
     return line_out
 
 
-def runeq(key, fl1, fl2, fl3):
-
-    run_txt = """
-call RUNEQ_EF(YWGN(1:NA1), YWHN(1:NA1), YWGO(1:NA1), YWHO(1:NA1), %sO(1:NA1), YWNB(1:NA1), YWWB(1:NA1), YVR(1:NA1), YWM(1:NA1), G11(1:NA1), YWA(1:NA1), """
-
-    run_txt += 'YWB(1:NA1), YWR(1:NA1), %s(1:NA1), ' %fl1
-    run_txt += '%s(1:NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ' %fl2
-    run_txt += 'ROC, RHO(1:NA1), imethod, YWC(1:7), '
-    run_txt += '%s(1:NA1), %s(1:NA1), YQDCM(1:NA1), ' %(key, fl3)
-    run_txt += 'ADCMPF, MPHIT(1:NA1))\n'
-
-    return run_txt
-
-
 def set_rho(ass_type):
 
     rho_val = None
@@ -153,7 +140,7 @@ def insert_fml(fml):
     return txt.replace('INCLUDE', 'include')
 
 
-def rec_split(line_in, syms='+|-|*|/|(|)|,'):
+def rec_split(line_in, syms='+|-|*|/|(|)|,|='):
     '''Regex split with several delimiters'''
 
     syms2 = '('
@@ -216,29 +203,8 @@ def equ_prepare(f_equ):
     return equ_lines
 
 
-def indicise_lefteq(var, pack):
-    '''Add proper FORTRAN index to ASTRA arrays, eqn left hand side'''
-
-    fml_list, fnc_list, profiles, arr_nam2 = pack
-    var = var.strip()
-    out = var
-    tmp1 = var[:-1]
-    if var in profiles + arr_nam2:
-        out = '%s(J)' %var
-
-    elif tmp1 in fnc_list + profiles:
-
-        if var[-1] == 'B':
-            if tmp1 in profiles:
-                out = '%s(ND1)' %tmp1
-        if var[-1] == 'C':
-            out = '%s(1)' %tmp1
-
-    return out
-
-
-def indicise_righteq(line_in, pack):
-    '''Add proper FORTRAN idnex to ASTRA arrays, eqn right hand side'''
+def indicise(line_in, pack):
+    '''Add proper FORTRAN index to ASTRA arrays'''
 
     fml_list, fnc_list, profiles, arr_nam2 = pack
     pieces = rec_split(line_in)
@@ -364,8 +330,6 @@ def write_declar_fml(fml_files):
                 else:
                     logger.warning('Variable name %s in file fml/%s is not allowed, skipped!' %(new_var, fml))
 
-    logger.debug(dummy_flt)
-    logger.debug(dummy_int)
     declar_txt  = write_declar(fml_files)
     if len(dummy_int) > 0:
         declar_txt += write_declar(dummy_int, ftype='integer')
@@ -455,7 +419,6 @@ def parse_pieces(pieces, pack, flag_fml):
         var2 = pieces[jpos]
 # avoid: integer array labels -> double precision
         var = format_number(var2).upper().strip()
-        logger.debug('var2=%s, var=%s, jpos=%d', var2, var, jpos)
         if '.' not in var2:
             if pieces[jpos-1] == '(' and pieces[jpos+1] == ')' or \
                pieces[jpos-1] == '(' and pieces[jpos+1] == ',' or \
@@ -493,7 +456,6 @@ def parse_pieces(pieces, pack, flag_fml):
                     out = '%s(%s, ROC)'  %(var, tmp3)
                 jpos += 3
             elif len(pieces[jpos+2:]) == 2:
-                logger.debug('var3 %s', var3)
                 if var3 in fnc_list:
                     out = '%s(%sR, j*HRO)' %(var, var3)
                 if var3 in profiles:
@@ -524,9 +486,6 @@ def parse_pieces(pieces, pack, flag_fml):
                 else:
                     out = '%s(%s, %s*ROC)'  %(var, block_left, block_right)
                 jpos += jpiec + 2
-                logger.debug(block_left)
-                logger.debug(block_right)
-                logger.debug(out)
 
         elif var in ('RFVAL', 'RFVEX', 'RFVIN',
                      'AFVAL', 'AFVEX', 'AFVIN',
@@ -596,10 +555,10 @@ def parse_pieces(pieces, pack, flag_fml):
                 except: # integer
                     out = var
             else:
-                out = indicise_righteq(var, pack)
+                out = indicise(var, pack)
 
         else:
-            out = indicise_righteq(var, pack)
+            out = indicise(var, pack)
 
         line_out += out
         jpos += 1
@@ -687,7 +646,7 @@ def parse_sbr(line):
     return sbr_dic
 
 
-def fmt_right_hand(line_in, pack, flag_fml):
+def astra2fortran(line_in, pack, flag_fml):
 # Convert an "equ" statement in Fortran format
 
     tmp = line_in
@@ -695,8 +654,6 @@ def fmt_right_hand(line_in, pack, flag_fml):
     if line_in.strip() == '':
         line_out = ''
         return line_out, flag_fml
-
-    logger.debug('IN:'+ line_in + '$')
 
 # Check: exponential notation or real '-' between variables?
     for sym in ('E-', 'e-', 'D-', 'd-', 'E+', 'e+', 'D+', 'd+'):
@@ -708,7 +665,6 @@ def fmt_right_hand(line_in, pack, flag_fml):
             piece0, piece1 = tmp.split(sym, 1)
             piece2 = rec_split(piece1)[0]
             piece3 = rec_split(piece0)[-1]
-            logger.debug('piece3 %s', piece3)
             try:
                 flt = float(piece3) #Make sure there's a digit before "E-"
                 num = int(piece2) #Make sure there's an integer after "E-"
@@ -724,34 +680,23 @@ def fmt_right_hand(line_in, pack, flag_fml):
     line_out = line_out.replace('"', '')
     line_out = line_out.replace('$', 'd-')
     line_out = line_out.replace('#', 'd+')
-    logger.debug('OUT: %s', line_out)
-    logger.debug('')
 
     return line_out, flag_fml
 
 
-def LINE2FOR(left_hand, right_hand, pack):
+def LINE2FOR(equStatement, pack):
 
      fml_list, _, _, _ = pack
      flag_fml = {}
      for fml in fml_list:
          flag_fml[fml.lower()] = True
 
-     if right_hand.strip() == '':
-         fcode = '%s = 0.d0\n' %left_hand
-     else:
-         fcode = ''
+     fcode = ''
 
-         tmp, flag_fml = fmt_right_hand(right_hand, pack, flag_fml)
-         while 'replaced_fml' in tmp: # If there's more than one formula in one line
-             fcode += tmp.replace('replaced_fml', '')
-             tmp, flag_fml = fmt_right_hand(right_hand, pack, flag_fml)
-         right = tmp
-
-         if left_hand.strip() == '':
-             fcode = right
-         else:
-             left = indicise_lefteq(left_hand, pack)
-             fcode += '%s = %s\n' %(left, right)
+     tmp, flag_fml = astra2fortran(equStatement, pack, flag_fml)
+     while 'replaced_fml' in tmp: # If there's more than one formula in one line
+         fcode += tmp.replace('replaced_fml', '')
+         tmp, flag_fml = astra2fortran(equStatement, pack, flag_fml)
+     fcode += '%s\n' %tmp
 
      return fcode
