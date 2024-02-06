@@ -62,7 +62,7 @@ def write_fortran(f_out, text, fortran='f90'):
         for line in lines:
             lin_strip = line.lower().strip()
             lin_now = lin_strip.split('!')[0].strip()
-            if len(lin_old.strip()) > 0:
+            if lin_old.strip():
                 if lin_old[:2] == 'if' and lin_old[-4:] == 'then':
                     indent += indent_step
                 if lin_old.split()[0].strip() == 'do':
@@ -73,7 +73,7 @@ def write_fortran(f_out, text, fortran='f90'):
                 indent -= indent_step
             indent_str = indent*' '
             indented_line = indent_str + line
-            if len(lin_strip) > 0:
+            if lin_strip:
                 if lin_strip[0] == '!':
                    indented_line = line
 
@@ -334,9 +334,9 @@ def write_declar_fml(fml_files):
                     logger.warning('Variable name %s in file fml/%s is not allowed, skipped!' %(new_var, fml))
 
     declar_txt  = write_declar(fml_files)
-    if len(dummy_int) > 0:
+    if dummy_int:
         declar_txt += write_declar(dummy_int, ftype='integer')
-    if len(dummy_flt) > 0:
+    if dummy_flt:
         declar_txt += write_declar(dummy_flt)
 
     return declar_txt

@@ -198,21 +198,22 @@ end subroutine DETVAR_init
         self.mtxt += ' =====   Radial profiles output   =====\n'
         self.mtxt += '  #  Scale  Name  Output expression\n'
         for jvar, var in enumerate(parse.asnamer):
-            if var == '':
-                out = '0.d0'
-            else:
+            if var:
                 out = var + '(r)'
+            else:
+                out = '0.d0'
+
             self.mtxt += '%3d  %6s %6s%s\n' %(jvar, parse.scaler[jvar].ljust(6), parse.namer[jvar].ljust(6), out)
         self.mtxt += ' =====   Time dependent values output   =====\n'
         self.mtxt += '  #  Scale  Name  Output expression\n'
         for jvar, var in enumerate(parse.asnamet):
-            if len(var) < 1: continue
-            tmp1 = var[:-1]
-            out = var
-            if var[-1] == 'B':
-                if tmp1 in parse.fnc_list + parse.profiles:
-                    out = var.replace('B', '(a)')
-            self.mtxt += '%3d  %6s %6s%s\n' %(jvar, parse.scalet[jvar].ljust(6), parse.namet[jvar].ljust(6), out)
+            if var:
+                tmp1 = var[:-1]
+                out = var
+                if var[-1] == 'B':
+                    if tmp1 in parse.fnc_list + parse.profiles:
+                        out = var.replace('B', '(a)')
+                self.mtxt += '%3d  %6s %6s%s\n' %(jvar, parse.scalet[jvar].ljust(6), parse.namet[jvar].ljust(6), out)
 
 #-----------
 # inivar.tmp
@@ -290,7 +291,7 @@ end subroutine INIVAR'''
 
         inam  = ''
 
-        if len(parse.arxuse) > 0:
+        if parse.arxuse:
             for j, arx in enumerate(parse.arxuse):
                 inam += 'ARXUSE(%d) = %d\n' %(j+1, arx)
         for jlbl, lbl in enumerate(config.eqn_list):
