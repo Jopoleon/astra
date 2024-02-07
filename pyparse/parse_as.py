@@ -446,7 +446,7 @@ def parse_pieces(pieces, parse):
                 else:
                     out = indiciseVar(var, parse)
             else:
-                out = 'RADIAL(%s, RFA(%s))' %(var, block_left)
+                out = '%s((%s)*ROC)' %(var, block_left)
                 jpos += jbra
         else: # Numbers, constants
             if '.' not in var2: # Keep int array labels integer
