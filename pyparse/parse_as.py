@@ -1,4 +1,4 @@
-import os, re, logging
+import os, sys, re, logging
 import config, fml
 
 logger = logging.getLogger('as_parse.parse_as')
@@ -194,33 +194,28 @@ def equ_prepare(f_equ):
     return equ_lines
 
 
-def indicise(line_in, parse):
+def indiciseVar(var, parse):
     '''Add proper FORTRAN index to ASTRA arrays'''
 
-    pieces = rec_split(line_in)
+    out = var      # including case var in ('+', '-', '*', '/', '(', ')', ',')
+    if var in parse.profiles + parse.arr_nam2:
+        out = '%s(J)' %var
+    elif var in parse.fnc_list:
+        out = '%sR(RHO(J))' %var
+    else:
+        tmp1 = var[:-1]
+        if var[-1] == 'B':
+            if tmp1 in parse.profiles:
+                out = '%s(NA1)' %tmp1
+            elif tmp1 in parse.fnc_list:
+                out = '%sR(ROC)' %tmp1
+        if var[-1] == 'C':
+            if tmp1 in parse.profiles:
+                out = '%s(1)' %tmp1
+            elif tmp1 in parse.fnc_list:
+                out = '%sR(0.d0)' %tmp1
 
-    line_out = ''
-    for var in pieces:
-
-        out = var      # including case var in ('+', '-', '*', '/', '(', ')', ',')
-        if var in parse.profiles + parse.arr_nam2:
-            out = '%s(J)' %var
-        elif var in parse.fnc_list:
-            out = '%sR(RHO(J))' %var
-        else:
-            tmp1 = var[:-1]
-            if var[-1] == 'B':
-                if tmp1 in parse.profiles:
-                    out = '%s(NA1)' %tmp1
-                elif tmp1 in parse.fnc_list:
-                    out = '%sR(ROC)' %tmp1
-            if var[-1] == 'C':
-                if tmp1 in parse.profiles:
-                    out = '%s(1)' %tmp1
-                elif tmp1 in parse.fnc_list:
-                    out = '%sR(0.d0)' %tmp1
-        line_out += out
-    return line_out
+    return out
 
 
 def format_number(str_num):
@@ -379,6 +374,32 @@ def write_xpr(sbr_dic, j_ipc):
     return out_txt
 
 
+def getInnermostBra(pieces):
+
+    jright = pieces.index(')')
+    jleft = jright - pieces[jright::-1].index('(')
+    return jleft, jright
+
+
+def recParse(pieces_in, parse):
+    pieces = pieces_in
+    while '(' in pieces:
+        pieces = ParseBracket(pieces, parse)
+    return parse_pieces(pieces, parse)
+
+
+def ParseBracket(pieces_in, parse):
+
+    jleft, jright = getInnermostBra(pieces_in)
+    if pieces_in[jleft-1] == 'AFX':
+        jleft -= 2
+        jright += 1
+    pieces_within = pieces_in[jleft-1: jright+1]
+    str_mid = parse_pieces(pieces_within, parse)
+    pieces_out = pieces_in[:jleft-1] + [str_mid] + pieces_in[jright+1:]
+    return pieces_out
+
+
 def parse_pieces(pieces, parse):
 
     line_out = ''
@@ -414,7 +435,10 @@ def parse_pieces(pieces, parse):
             jpos += jbra
         elif var in parse.profiles + parse.fnc_list: # Profiles(), fnc()
             if jbra is None:
-                out = indicise(var, parse)
+                if jpos < n_pieces-1 and pieces[jpos+1] == '(':
+                    out = var
+                else:
+                    out = indiciseVar(var, parse)
             else:
                 out = 'RADIAL(%s, RFA(%s))' %(var, block_left)
                 jpos += jbra
@@ -424,7 +448,10 @@ def parse_pieces(pieces, parse):
                    pieces[jpos-1] == '(' and pieces[jpos+1] == ',' or \
                    pieces[jpos-1] == ',' and pieces[jpos+1] == ')':
                     var = var2
-            out = indicise(var, parse)
+            if jpos < n_pieces-1 and pieces[jpos+1] == '(':
+                out = var
+            else:
+                out = indiciseVar(var, parse)
 
         line_out += out
         jpos += 1
@@ -556,7 +583,7 @@ def LINE2FOR(equStatement, parse):
                 pass
 
     pieces = rec_split(tmp)
-    line_out = parse_pieces(pieces, parse)
+    line_out = recParse(pieces, parse)
     line_out = fml_fnc(line_out, parse)
 
 # Reinserting exponential notation, after parsing for operational '+', '-'
