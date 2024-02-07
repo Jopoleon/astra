@@ -417,37 +417,18 @@ def parse_pieces(pieces, parse):
 
         elif var in ('RFVAL', 'RFVEX', 'RFVIN',
                      'AFVAL', 'AFVEX', 'AFVIN',
-                     'ASTEP', 'RSTEP', 'XSTEP',
+                     'ASTEP', 'RSTEP', 'XSTEP', 'GRAD', 'GRADS',
                      'ATX', 'ATR', 'V_95_POS', 'RFMAX', 'RFMIN', 'FRMAX', 'FRMIN'):
-            jbra, _, _ = functionArgs(pieces[jpos+1:])
-            out = ''
-            for j in range(jpos, jpos+jbra):
-                if pieces[j] in parse.profiles:
-                    out += '%s(1:NA1)' %pieces[j]
-                else:
-                    out += doublise(pieces[j])
+            jbra, block_left, _ = functionArgs(pieces[jpos+1:])
+            out = '%s(%s' %(var, block_left)
             if var in ('RFVAL', 'RFVEX', 'RFVIN'):
                 out += '*ROC'
             elif var in ('AFVAL', 'AFVEX', 'AFVIN'):
                 out += '*ABC'
-            elif var in ('ASTEP', 'RSTEP', 'XSTEP'):
+            elif var in ('ASTEP', 'RSTEP', 'XSTEP', 'GRAD', 'GRADS'):
                 out += ', J'
             out += ')'
             jpos += jbra
-
-        elif var in ('GRAD', 'GRADS'):
-            var3 = pieces[jpos+2]
-            tmp3 = var3[:-1]
-            if var3[-1] == 'B':
-                if tmp3 in parse.fnc_list + parse.profiles:
-                    out = '%s(%s, NA1)'  %(var, tmp3)
-            elif var3[-1] == 'C':
-                if tmp3 in parse.fnc_list + parse.profiles:
-                    out = '%s(%s, 1)'  %(var, tmp3)
-            else:
-                if var3 in parse.fnc_list + parse.profiles:
-                    out = '%s(%s, J)'  %(var, var3)
-            jpos += 3
 
 # Profile(), fnc()
         elif var in parse.profiles + parse.fnc_list:
@@ -472,15 +453,15 @@ def parse_pieces(pieces, parse):
     return line_out
 
 
-def fml_fnc(line_in, fnc_list, fml_list):
+def fml_fnc(line_in, parse):
 
     pieces = rec_split(line_in)
     line_out = ''
     for piece in pieces:
         line_out += piece
-        if piece in fnc_list:
+        if piece in parse.fnc_list:
             line_out += 'R'
-    fmls = fml.FML(pieces, fml_list)
+    fmls = fml.FML(pieces, parse.fml_list)
     grad_lines = ''
     if 'GRAD' in pieces or 'GRADS' in pieces:
         grad_lines += 'enddo\n'
@@ -596,7 +577,7 @@ def LINE2FOR(equStatement, parse):
 
     pieces = rec_split(tmp)
     line_out = parse_pieces(pieces, parse)
-    line_out = fml_fnc(line_out, parse.fnc_list, parse.fml_list)
+    line_out = fml_fnc(line_out, parse)
 
 # Reinserting exponential notation, after parsing for operational '+', '-'
     line_out = line_out.replace('"', '')
