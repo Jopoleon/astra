@@ -374,7 +374,8 @@ def write_xpr(sbr_dic, j_ipc):
     return out_txt
 
 
-def getInnermostBra(pieces):
+def getInnermostBracket(pieces):
+    '''Localises first ")" occurrence and previous "("'''
 
     jright = pieces.index(')')
     jleft = jright - pieces[jright::-1].index('(')
@@ -382,6 +383,8 @@ def getInnermostBra(pieces):
 
 
 def recParse(pieces_in, parse):
+    '''Recursive fortranisation from innermost to outermost ()'''
+
     pieces = pieces_in
     while '(' in pieces:
         pieces = ParseBracket(pieces, parse)
@@ -389,18 +392,20 @@ def recParse(pieces_in, parse):
 
 
 def ParseBracket(pieces_in, parse):
+    '''Fortranise innermost () block'''
 
-    jleft, jright = getInnermostBra(pieces_in)
+    jleft, jright = getInnermostBracket(pieces_in)
     if pieces_in[jleft-1] == 'AFX':
         jleft -= 2
         jright += 1
-    pieces_within = pieces_in[jleft-1: jright+1]
+    pieces_within = pieces_in[jleft-1: jright+1] # function, '(', ..., ')'
     str_mid = parse_pieces(pieces_within, parse)
     pieces_out = pieces_in[:jleft-1] + [str_mid] + pieces_in[jright+1:]
     return pieces_out
 
 
 def parse_pieces(pieces, parse):
+    '''Fortranise a block [func, '(', ...')'" into a string'''
 
     line_out = ''
     n_pieces = len(pieces)
@@ -461,6 +466,7 @@ def parse_pieces(pieces, parse):
 
 
 def fml_fnc(line_in, parse):
+    '''Prepend enddo - do J-1,NA1 in case of GRAD; then fml-block; then append "R" to fnc names'''
 
     pieces = rec_split(line_in)   
     line_out = ''
@@ -480,14 +486,11 @@ def fml_fnc(line_in, parse):
 
 
 def parse_inc(f_inc):
+    '''Reads a variables list'''
 
-    profiles = []
     with open(f_inc, 'r') as f:
-        for line in f.readlines()[2:]:
-            arr = line.split()[0].strip()
-            profiles.append(arr)
-
-    return profiles
+        lines = f.readlines()[2:]
+    return [line.split(' ', 1)[0] for line in lines]
 
 
 def parse_sbr(line):
@@ -577,8 +580,8 @@ def LINE2FOR(equStatement, parse):
             piece2 = rec_split(piece1)[0]
             piece3 = rec_split(piece0)[-1]
             try:
-                flt = float(piece3) #Make sure there's a digit before "E-"
-                num = int(piece2) #Make sure there's an integer after "E-"
+                flt = float(piece3) # Make sure there's a digit before "E-"
+                num = int(piece2)   # Make sure there's an integer after "E-"
                 tmp = tmp.replace(sym, repl) # avoid splitting if exp notation
             except:
                 pass
