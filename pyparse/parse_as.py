@@ -417,13 +417,14 @@ def parse_pieces(pieces, parse):
             var3 = pieces[jpos+2]
             tmp3 = var3[:-1]
             if var3[-1] == 'B':
-                if tmp3 in parse.fnc_list + parse.profiles:
+                if tmp3 in parse.profiles:
                     out = '%s(%s, ROC)'  %(var, tmp3)
             elif block_right == 'j':
-                if var3 in parse.fnc_list + parse.profiles:
+                if var3 in parse.profiles:
                     out = '%s(%s, j*HRO)'  %(var, block_left)
             else:
-                out = '%s(%s, %s*ROC)'  %(var, block_left, block_right)
+                if block_left in parse.profiles:
+                    out = '%s(%s, %s*ROC)'  %(var, block_left, block_right)
             jpos += jbra
         elif var in ('RFVAL', 'RFVEX', 'RFVIN', 'AFVAL', 'AFVEX', 'AFVIN', 'ATX',
                      'ASTEP', 'RSTEP', 'XSTEP', 'GRAD', 'GRADS', 'RADIAL', 'ATR',
