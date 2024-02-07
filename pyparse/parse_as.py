@@ -404,20 +404,12 @@ def parse_pieces(pieces, parse):
             else:
                 out = '%s(%s, %s*ROC)'  %(var, block_left, block_right)
             jpos += jbra
-        elif var in ('RFVAL', 'RFVEX', 'RFVIN',
-                     'AFVAL', 'AFVEX', 'AFVIN',
-                     'ATX', 'ATR',
+        elif var in ('RFVAL', 'RFVEX', 'RFVIN', 'AFVAL', 'AFVEX', 'AFVIN', 'ATX',
                      'ASTEP', 'RSTEP', 'XSTEP', 'GRAD', 'GRADS',
                      'V_95_POS', 'RFMAX', 'RFMIN', 'FRMAX', 'FRMIN'):
             out = '%s(%s' %(var, block_left)
-            if var in ('RFVAL', 'RFVEX', 'RFVIN'):
-                out += ',(%s)*ROC' %block_right
-            elif var in ('AFVAL', 'AFVEX', 'AFVIN'):
-                out += ',(%s)*ABC' %block_right
-            elif var in ('ATX', 'ATR'):
+            if var in ('RFVAL', 'RFVEX', 'RFVIN', 'AFVAL', 'AFVEX', 'AFVIN', 'ATX', 'ASTEP', 'RSTEP', 'XSTEP', 'GRAD', 'GRADS'):
                 out += ',%s' %block_right
-            elif var in ('ASTEP', 'RSTEP', 'XSTEP', 'GRAD', 'GRADS'):
-                out += ', J'
             out += ')'
             jpos += jbra
         elif var in parse.profiles + parse.fnc_list: # Profiles(), fnc()
