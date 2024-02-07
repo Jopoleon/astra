@@ -386,25 +386,16 @@ def parse_pieces(pieces, parse):
 
     jpos = 0
     while jpos < n_pieces:
-
         var2 = pieces[jpos]
-# Keep array labels integer (avoid double precision!)
         var = format_number(var2).upper().strip()
-        if '.' not in var2:
-            if pieces[jpos-1] == '(' and pieces[jpos+1] == ')' or \
-               pieces[jpos-1] == '(' and pieces[jpos+1] == ',' or \
-               pieces[jpos-1] == ',' and pieces[jpos+1] == ')':
-                var = var2
 
+        jbra, block_left, block_right = functionArgs(pieces[jpos+1:])
         if (jpos < n_pieces-2 and pieces[jpos+2] == 'AFX'):
-            jbra, block_left, _ = functionArgs(pieces[jpos+1:])
             out = 'RADIAL(%s, RFA(%s))' %(pieces[jpos], block_left)
             jpos += jbra + 1
-
         elif var in ('VINT', 'IINT', 'LININT'):
             var3 = pieces[jpos+2]
             tmp3 = var3[:-1]
-            jbra, block_left, block_right = functionArgs(pieces[jpos+1:])
             if var3[-1] == 'B':
                 if tmp3 in parse.fnc_list + parse.profiles:
                     out = '%s(%s, ROC)'  %(var, tmp3)
@@ -414,37 +405,33 @@ def parse_pieces(pieces, parse):
             else:
                 out = '%s(%s, %s*ROC)'  %(var, block_left, block_right)
             jpos += jbra
-
         elif var in ('RFVAL', 'RFVEX', 'RFVIN',
                      'AFVAL', 'AFVEX', 'AFVIN',
                      'ASTEP', 'RSTEP', 'XSTEP', 'GRAD', 'GRADS',
                      'ATX', 'ATR', 'V_95_POS', 'RFMAX', 'RFMIN', 'FRMAX', 'FRMIN'):
-            jbra, block_left, _ = functionArgs(pieces[jpos+1:])
             out = '%s(%s' %(var, block_left)
             if var in ('RFVAL', 'RFVEX', 'RFVIN'):
-                out += '*ROC'
+                out += ',%s*ROC' %block_right
             elif var in ('AFVAL', 'AFVEX', 'AFVIN'):
-                out += '*ABC'
+                out += ',%s*ABC' %block_right
+            elif var in ('ATX', 'ATR'):
+                out += ',%s' %block_right
             elif var in ('ASTEP', 'RSTEP', 'XSTEP', 'GRAD', 'GRADS'):
                 out += ', J'
             out += ')'
             jpos += jbra
-
-# Profile(), fnc()
-        elif var in parse.profiles + parse.fnc_list:
-            jbra, block_left, _ = functionArgs(pieces[jpos+1:])
-            
+        elif var in parse.profiles + parse.fnc_list: # Profiles(), fnc()
             if jbra is None:
                 out = indicise(var, parse)
             else:
-                out = ''
-                try: # double precision
-                    out = 'RADIAL(%s, RFA(%s))' %(var, block_left)
-                    jpos += jbra
-                except: # integer
-                    out = var
-
-        else:
+                out = 'RADIAL(%s, RFA(%s))' %(var, block_left)
+                jpos += jbra
+        else: # Numbers, constants
+            if '.' not in var2: # Keep int array labels integer
+                if pieces[jpos-1] == '(' and pieces[jpos+1] == ')' or \
+                   pieces[jpos-1] == '(' and pieces[jpos+1] == ',' or \
+                   pieces[jpos-1] == ',' and pieces[jpos+1] == ')':
+                    var = var2
             out = indicise(var, parse)
 
         line_out += out
@@ -455,20 +442,21 @@ def parse_pieces(pieces, parse):
 
 def fml_fnc(line_in, parse):
 
-    pieces = rec_split(line_in)
+    pieces = rec_split(line_in)   
     line_out = ''
     for piece in pieces:
         line_out += piece
         if piece in parse.fnc_list:
             line_out += 'R'
+
     fmls = fml.FML(pieces, parse.fml_list)
+
     grad_lines = ''
     if 'GRAD' in pieces or 'GRADS' in pieces:
         grad_lines += 'enddo\n'
         grad_lines += 'do J=1, NA1\n'
-    line_out = grad_lines + fmls.txt + line_out
-
-    return line_out
+        
+    return grad_lines + fmls.txt + line_out
 
 
 def parse_inc(f_inc):
