@@ -4,6 +4,8 @@ awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 fml_dir = '%s/fml' %awd
 fnc_dir = '%s/fnc' %awd
 
+checkeqn = False
+
 NCVA  = 512
 NFML  = 500
 NSBMX = 20

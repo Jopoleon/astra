@@ -5,6 +5,7 @@ slurm-*
 mod
 obj
 pyparse/__pycache__
+pyparse/iondens_ass.py
 /dat
 /exe
 /equ
