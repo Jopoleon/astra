@@ -388,7 +388,6 @@ def parse_pieces(pieces, parse):
     while jpos < n_pieces:
         var2 = pieces[jpos]
         var = format_number(var2).upper().strip()
-
         jbra, block_left, block_right = functionArgs(pieces[jpos+1:])
         if (jpos < n_pieces-2 and pieces[jpos+2] == 'AFX'):
             out = 'RADIAL(%s, RFA(%s))' %(pieces[jpos], block_left)
@@ -407,13 +406,14 @@ def parse_pieces(pieces, parse):
             jpos += jbra
         elif var in ('RFVAL', 'RFVEX', 'RFVIN',
                      'AFVAL', 'AFVEX', 'AFVIN',
+                     'ATX', 'ATR',
                      'ASTEP', 'RSTEP', 'XSTEP', 'GRAD', 'GRADS',
-                     'ATX', 'ATR', 'V_95_POS', 'RFMAX', 'RFMIN', 'FRMAX', 'FRMIN'):
+                     'V_95_POS', 'RFMAX', 'RFMIN', 'FRMAX', 'FRMIN'):
             out = '%s(%s' %(var, block_left)
             if var in ('RFVAL', 'RFVEX', 'RFVIN'):
-                out += ',%s*ROC' %block_right
+                out += ',(%s)*ROC' %block_right
             elif var in ('AFVAL', 'AFVEX', 'AFVIN'):
-                out += ',%s*ABC' %block_right
+                out += ',(%s)*ABC' %block_right
             elif var in ('ATX', 'ATR'):
                 out += ',%s' %block_right
             elif var in ('ASTEP', 'RSTEP', 'XSTEP', 'GRAD', 'GRADS'):
@@ -444,7 +444,7 @@ def fml_fnc(line_in, parse):
 
     pieces = rec_split(line_in)   
     line_out = ''
-    for piece in pieces:
+    for jpos, piece in enumerate(pieces):
         line_out += piece
         if piece in parse.fnc_list:
             line_out += 'R'
