@@ -406,10 +406,13 @@ def parse_pieces(pieces, parse):
             jpos += jbra
         elif var in ('RFVAL', 'RFVEX', 'RFVIN', 'AFVAL', 'AFVEX', 'AFVIN', 'ATX',
                      'ASTEP', 'RSTEP', 'XSTEP', 'GRAD', 'GRADS',
+                     'RADIAL', 'ATR',
                      'V_95_POS', 'RFMAX', 'RFMIN', 'FRMAX', 'FRMIN'):
             out = '%s(%s' %(var, block_left)
             if var in ('RFVAL', 'RFVEX', 'RFVIN', 'AFVAL', 'AFVEX', 'AFVIN', 'ATX', 'ASTEP', 'RSTEP', 'XSTEP', 'GRAD', 'GRADS'):
                 out += ',%s' %block_right
+            elif var in ('RADIAL', 'ATR'):
+                out += ',(%s)*ROC' %block_right
             out += ')'
             jpos += jbra
         elif var in parse.profiles + parse.fnc_list: # Profiles(), fnc()
