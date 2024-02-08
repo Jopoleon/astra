@@ -26,15 +26,17 @@ def none_in(list_in, var_list):
 
 def write_equ_bnd(prof, rhob):
 
-    lin_int  = 'if (ND1 < NA) then\n'
-    lin_int += 'YA = (%s(NA1) - %s(ND1))/(ROC - %s)\n' %(prof, prof, rhob)
-    lin_int += 'YB = (%s(ND1)*ROC - %s(NA1)*%s)/(ROC - %s)\n' %(prof, prof, rhob, rhob)
-    lin_int += \
-'''do j=ND1+1, NA'
-lin_int += '%s(j) = YB + RHO(j)*YA
+    lin_int  = '''
+if (ND1 < NA) then
+YA = (%s(NA1) - %s(ND1))/(ROC - %s)
+YB = (%s(ND1)*ROC - %s(NA1)*%s)/(ROC - %s)
+do j=ND1+1, NA
+%s(j) = YB + RHO(j)*YA
 enddo
 endif
-''' %prof
+'''  %(prof, prof, rhob, prof, prof, rhob, rhob, prof)
+
+    return lin_int
 
 
 def cuasn(parse, itype, neq=1):

@@ -47,7 +47,10 @@ integer :: IFSUB
 
 """
 
-ininam_header = \
+
+class ININAM:
+    
+    header = \
 """subroutine ININAM(LISTSB)
 
 use parameter_inc, only: NSBMX, NRD
@@ -63,6 +66,14 @@ character(len=64), dimension(NSBMX), intent(out) :: LISTSB
 integer :: j
 
 call markloc("xar_usage")
+"""
+
+    sb = \
+"""do j=1, NSBMX
+IFSBP(j) = 0
+LISTSB(j) = char(0)
+IFSBX(j) = 0
+enddo
 """
 
 
@@ -290,14 +301,7 @@ NI(j) = min(NI(j), NE(j)*ZEF(j)/ZMAIN(j)**2)
 enddo
 """
 
-inam_sb = \
-"""do j=1, NSBMX
-IFSBP(j) = 0
-LISTSB(j) = char(0)
-IFSBX(j) = 0
-enddo
-"""
-
+    
 class DETVAR:
 
     header = \
@@ -618,7 +622,6 @@ MPHIT = 0.
 QU(J) = -G11(J)*(YWA(J)*(UPAR(J+1) - UPAR(J))/HRO + 0.5*YWB(J)*(UPAR(J+1) + UPAR(J)))*0.0016
 enddo
 '''
-
 
     uparo = \
 '''UPARO(ND1: NA1) = UPAR(ND1: NA1)

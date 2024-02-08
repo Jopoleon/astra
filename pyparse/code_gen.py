@@ -296,7 +296,7 @@ end subroutine INIVAR'''
                 inam += 'ARXUSE(%d) = %d\n' %(j+1, arx)
         for jlbl, lbl in enumerate(config.eqn_list):
             inam += 'LEQ(%d) = %d\n' %(jlbl+1, parse.leq_d[lbl])
-        inam += const_text.inam_sb
+        inam += const_text.ININAM.sb
         for jlin, line in enumerate(sbp_lines):
             inam += 'IFSBX(%d) = %d\n' %(jlin + 1, sbrs_d[line]['neq'])
         inam += 'call markloc("ininam.tmp")\n'
@@ -336,7 +336,7 @@ end subroutine INIVAR'''
         if NSBP > 0:
             inam += 'call checkexec(NSBP,64,LISTSB)\n'
 
-        self.ininam  = const_text.ininam_header
+        self.ininam  = const_text.ININAM.header
         self.ininam += inam
         self.ininam += \
 '''
