@@ -290,7 +290,7 @@ call rabbit_lib_get_Wfi(wfi_par, wfi_perp, wfi_par_lab, n_nbi, nrhoout)
 
 pe_rb   = sum(powe (: , 1: n_nbi), 2)/1.d6
 pi_rb   = sum(powi (: , 1: n_nbi), 2)/1.d6
-tq_rb   = sum(torqi(: , 1: n_nbi), 2)
+tq_rb   = sum(torqi(: , 1: n_nbi), 2) + sum(torqe(: , 1: n_nbi), 2) + sum(torqjxb(: , 1: n_nbi), 2)
 nfi_rb  = sum(bdens(: , 1: n_nbi), 2)/1.d19
 jcd_rb  = sum(jnbcd(: , 1: n_nbi), 2)/1.d6
 src_rb  = sum(bdep (: , 1: n_nbi), 2)/1.d19

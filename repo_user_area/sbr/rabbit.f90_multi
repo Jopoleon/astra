@@ -11,7 +11,7 @@ use const_inc, only: GP2, AIM1, TIME, TAU, QNBI, ROC, &
 use status_inc, only: FP, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
    XRHO, VOLUM, IPOL, PEBM, PIBM, NIBM, CUBM, SNEBM, SCUBM, &
    PBLON, PBPER, MU, VTOR, ZEF, NI, NHYDR, NDEUT, NTRIT
- 
+
 use fs_coupling_variables, only: fs_pow_NB
 use debugger, only: flightsim
 use parameters_a2equil, only : equil_now
@@ -141,16 +141,15 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
     read(53, nml=physics, iostat=ios)
     close(53)
     write(6, *) '#NBI', n_nbi
+
     ios = 0
     write(6, *) 'Limiter file', TRIM(limiter_file)
     open(unit_lim, file=TRIM(limiter_file), status='OLD', iostat=ios)
     if (ios /= 0) then
-       write(*, *) 'Error opening limiter file: iostat=', ios
+        write(*, *) 'Error opening limiter file: iostat=', ios
     endif
     read(unit_lim, '(2i)') dum, n_lim
-
     allocate(r_lim(n_lim), z_lim(n_lim))
-
     do jlim=1, n_lim
         read(unit_lim, *) r_lim(jlim), z_lim(jlim)
     enddo
@@ -170,8 +169,6 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
         Zrect = equil_now%eqgeometry%rectgrid%z2d
     endif
 
-!    aplasma = AMAIN(1)
-!    zplasma = ZMAIN(1)
     aimp = AIM1
     zimp = ZIM1(1)
  
@@ -293,7 +290,7 @@ call rabbit_lib_get_Wfi(wfi_par, wfi_perp, wfi_par_lab, n_nbi, nrhoout)
 
 pe_rb   = sum(powe (: , 1: n_nbi), 2)/1.d6
 pi_rb   = sum(powi (: , 1: n_nbi), 2)/1.d6
-tq_rb   = sum(torqi(: , 1: n_nbi), 2)
+tq_rb   = sum(torqi(: , 1: n_nbi), 2) + sum(torqe(: , 1: n_nbi), 2) + sum(torqjxb(: , 1: n_nbi), 2)
 nfi_rb  = sum(bdens(: , 1: n_nbi), 2)/1.d19
 jcd_rb  = sum(jnbcd(: , 1: n_nbi), 2)/1.d6
 src_rb  = sum(bdep (: , 1: n_nbi), 2)/1.d19
