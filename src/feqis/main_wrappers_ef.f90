@@ -851,10 +851,10 @@ read(32, *) lim_maxR
 read(32, *) lim_minR
 read(32, *) lim_maxZ
 read(32, *) lim_minZ
-allocate(r_cond(npassive))
-allocate(z_cond(npassive))
-do i=nactive + 1, nactive + npassive
-    read(32, *) r_cond(i), z_cond(i)
+allocate(r_cond(nactive+npassive))
+allocate(z_cond(nactive+npassive))
+do i=1, npassive
+    read(32, *) r_cond(nactive+i), z_cond(nactive+i)
 enddo
 read(32, *) nconduc
 allocate(curconduc(nconduc))
