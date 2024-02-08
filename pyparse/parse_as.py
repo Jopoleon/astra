@@ -416,7 +416,7 @@ def parse_pieces(pieces, parse):
         var = format_number(var2).upper().strip()
         jbra, block_left, block_right = functionArgs(pieces[jpos+1:])
         if (jpos < n_pieces-2 and pieces[jpos+2] == 'AFX'):
-            out = 'RADIAL(%s, RFA(%s))' %(pieces[jpos], block_left)
+            out = 'RADIAL(%s, RFA(%s))' %(var, block_left)
             jpos += jbra + 1
         elif var in ('VINT', 'IINT', 'LININT'):
             var3 = pieces[jpos+2]

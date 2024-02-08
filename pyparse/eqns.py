@@ -309,14 +309,13 @@ def neeqn(parse, assign_type=None):
             if var in var_defined:
                 bnd_count += 1
         if bnd_count == 0: # No boundary condition is set
-            logger.warning('Boundary condition for %s is not given' %key)
+            logger.warning('Boundary condition for %s is not given', key)
             if rho_bnd is None:
-                logger.warning('  It is set to %sX(t0)') %key
+                logger.warning('  It is set to %sX(t0)', key)
             elif key not in var_defined:
-                logger.warning('  Using %sX(t0) at the shifted boundary') %key
+                logger.warning('  Using %sX(t0) at the shifted boundary', key)
             else:
-                logger.warning('  Using %sX(t) at the shifted boundary') %key
-    
+                logger.warning('  Using %sX(t) at the shifted boundary', key)
             ne_txt += 'NEO(ND1: NA1) = NE(ND1: NA1)\n'
             ne_txt += 'YWC(4) = 1.\n'
         else:
@@ -491,8 +490,9 @@ def tieqn(parse, assign_type=None):
             elif key not in var_defined:
                 logger.warning('  Using TIX(t0) at the shifted boundary')
             else:
-                logger.warning('  Using %TIX(t) at the shifted boundary')
-    
+                logger.warning('  Using TIX(t) at the shifted boundary')
+            ti_txt += 'TIO(ND1: NA1) = TI(ND1: NA1)\n'
+            ti_txt += 'YWC(4) = 1.\n'
         else:
             if varb in var_defined:
                 ti_txt += pa.apptmp(varb, parse)
@@ -663,15 +663,14 @@ def teeqn(parse, assign_type=None):
                 logger.warning('  Using TEX(t0) at the shifted boundary')
             else:
                 logger.warning('  Using TEX(t) at the shifted boundary')
-    
+                te_txt += 'TEO(ND1: NA1) = TE(ND1: NA1)\n'
+                te_txt += 'YWC(4) = 1.\n'
         else:
             if varb in var_defined:
                 te_txt += pa.apptmp(varb, parse)
-                te_txt += \
-'''TEO(ND1: NA1) = TE(ND1: NA1)
-QE(4)  = 1.
-YWC(4) = 1.
-'''
+                te_txt += 'TEO(ND1: NA1) = TE(ND1: NA1)\n'
+                te_txt += 'QE(4)  = 1.\n'
+                te_txt += 'YWC(4) = 1.\n'
             else:
                 j_var = 2
                 for var in ('QEB', 'QETB'):
