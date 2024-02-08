@@ -260,20 +260,18 @@ def neeqn(parse, assign_type=None):
         ne_txt += 'ND1 = NA1\n'
     else:
         l2f = pa.LINE2FOR(rho_bnd, parse)
-        ne_txt += 'RO%s = %s\n' %(short, l2f)
+        ne_txt += 'RO%s = %s' %(short, l2f)
         ne_txt += 'ND1 = NODE(RO%s)\n' %short
 
     ne_txt += 'NA1%s = ND1\n' %short
     ne_txt += 'ND = ND1 - 1\n'
-
-    varb = key + 'B'
 
     if assign_type == 'AS':
 # code_gen.CODE_GEN.ne_as
 
         if key in var_defined:
             ne_txt += 'if (ND1 < NA1) then\n'
-            if varb in var_defined:
+            if 'NEB' in var_defined:
                 ne_txt += 'do j=ND1, NA\n'
             else:
                 ne_txt += 'do j=ND1, NA1\n'
@@ -320,7 +318,7 @@ def neeqn(parse, assign_type=None):
             ne_txt += 'YWC(4) = 1.\n'
         else:
             if 'NEB' in var_defined:
-                ne_txt += pa.apptmp('NEB', parse)
+                ne_txt += 'NE(ND1) = %s' %pa.LINE2FOR(parse.right_hand_d['NEB'], parse)
                 ne_txt += 'NEO(ND1: NA1) = NE(ND1: NA1)\n'
                 ne_txt += 'YWC(4) = 1.\n'
             else:
@@ -433,20 +431,18 @@ def tieqn(parse, assign_type=None):
         ti_txt += 'ND1 = NA1\n'
     else:
         l2f = pa.LINE2FOR(rho_bnd, parse)
-        ti_txt += 'RO%s = %s\n' %(short, l2f)
+        ti_txt += 'RO%s = %s' %(short, l2f)
         ti_txt += 'ND1 = NODE(RO%s)\n' %short
 
     ti_txt += 'NA1%s = ND1\n' %short
     ti_txt += 'ND = ND1 - 1\n'
-
-    varb = key + 'B'
 
     if assign_type == 'AS':
 # code_gen.CODE_GEN.t_as
 
         if key in var_defined:
             ti_txt += 'if (ND1 < NA1) then\n'
-            if varb in var_defined:
+            if 'TIB' in var_defined:
                 ti_txt += 'do j=ND1, NA\n'
             else:
                 ti_txt += 'do j=ND1, NA1\n'
@@ -459,7 +455,7 @@ def tieqn(parse, assign_type=None):
     
         ti_txt += const_text.TIEQN.assigned
         if ('QIB' in var_defined) and ('QITB' not in var_defined) and \
-           (varb not in var_defined) and rho_bnd is None:
+           ('TIB' not in var_defined) and rho_bnd is None:
             ti_txt += 'QIB\n'
         else:
             ti_txt += 'QI(NA)\n'
@@ -471,7 +467,7 @@ def tieqn(parse, assign_type=None):
         ti_txt += 'YWC(1) = RHO(ND1) - RHO(ND)\n'
         if key in var_defined:
             ti_txt += 'if (ND1 < NA1) then\n'
-            if varb in var_defined:
+            if 'TIB' in var_defined:
                 ti_txt += 'do j=ND1, NA\n'
             else:
                 ti_txt += 'do j=ND1, NA1\n' # NA1, not NA
@@ -494,8 +490,8 @@ def tieqn(parse, assign_type=None):
             ti_txt += 'TIO(ND1: NA1) = TI(ND1: NA1)\n'
             ti_txt += 'YWC(4) = 1.\n'
         else:
-            if varb in var_defined:
-                ti_txt += pa.apptmp(varb, parse)
+            if 'TIB' in var_defined:
+                ti_txt += 'TI(ND1) = %s' %pa.LINE2FOR(parse.right_hand_d['TIB'], parse)
                 ti_txt += 'TIO(ND1: NA1) = TI(ND1: NA1)\n'
                 ti_txt += 'QI(4)  = 1.\n'
                 ti_txt += 'YWC(4) = 1.\n'
@@ -605,20 +601,18 @@ def teeqn(parse, assign_type=None):
         te_txt += 'ND1 = NA1\n'
     else:
         l2f = pa.LINE2FOR(rho_bnd, parse)
-        te_txt += 'RO%s = %s\n' %(short, l2f)
+        te_txt += 'RO%s = %s' %(short, l2f)
         te_txt += 'ND1 = NODE(RO%s)\n' %short
 
     te_txt += 'NA1%s = ND1\n' %short
     te_txt += 'ND = ND1-1\n'
 
-    varb = key + 'B'
-
     if assign_type == 'AS':
-# code_gen.CODE_GEN.ne_as
+# code_gen.CODE_GEN.te_as
 
         if key in var_defined:
             te_txt += 'if (ND1 < NA1) then\n'
-            if varb in var_defined:
+            if 'TEB' in var_defined:
                 te_txt += 'do j=ND1, NA\n'
             else:
                 te_txt += 'do j=ND1, NA1\n'
@@ -631,7 +625,7 @@ def teeqn(parse, assign_type=None):
 
         te_txt += const_text.TEEQN.assigned
         if ('QEB' in var_defined) and ('QETB' not in var_defined) and \
-           (varb not in var_defined) and rho_bnd is None:
+           ('TEB' not in var_defined) and rho_bnd is None:
             te_txt += 'QEB\n'
         else:
             te_txt += 'QE(NA)\n'
@@ -643,7 +637,7 @@ def teeqn(parse, assign_type=None):
         te_txt += 'YWC(1) = RHO(ND1) - RHO(ND)\n'
         if key in var_defined:
             te_txt += 'if (ND1 < NA1) then\n'
-            if varb in var_defined:
+            if 'TEB' in var_defined:
                 te_txt += 'do j=ND1, NA\n'
             else:
                 te_txt += 'do j=ND1, NA1\n' # NA1, not NA
@@ -666,8 +660,8 @@ def teeqn(parse, assign_type=None):
                 te_txt += 'TEO(ND1: NA1) = TE(ND1: NA1)\n'
                 te_txt += 'YWC(4) = 1.\n'
         else:
-            if varb in var_defined:
-                te_txt += pa.apptmp(varb, parse)
+            if 'TEB' in var_defined:
+                te_txt += 'TE(ND1) = %s' %pa.LINE2FOR(parse.right_hand_d['TEB'], parse)
                 te_txt += 'TEO(ND1: NA1) = TE(ND1: NA1)\n'
                 te_txt += 'QE(4)  = 1.\n'
                 te_txt += 'YWC(4) = 1.\n'
@@ -828,7 +822,7 @@ def fjeqn(parse, jeq, assign_type=None):
             fj_txt += 'ND1 = NA1\n'
         else:
             l2f = pa.LINE2FOR(rho_bnd, parse)
-            fj_txt += '%s = %s\n' %(ro, l2f)
+            fj_txt += '%s = %s' %(ro, l2f)
             fj_txt += 'ND1 = NODE(%s)\n' %ro
 
         fj_txt += 'NA1%s = ND1\n' %short
@@ -965,7 +959,7 @@ def upeqn(parse, assign_type=None):
         up_txt += 'ND1 = NA1\n'
     else:
         l2f = pa.LINE2FOR(rho_bnd, parse)
-        up_txt += 'ROU = %s\n' %l2f
+        up_txt += 'ROU = %s' %l2f
         up_txt += 'ND1 = NODE(ROU)\n'
 
     if 'UPAR' not in var_defined:
@@ -1150,7 +1144,7 @@ def tetieqn(parse, itype=3):
         teti += 'ND1 = NA1\n'
     else:
         l2f = pa.LINE2FOR(rho_bnd, parse)
-        teti += 'ROE = %s\n' %(l2f)
+        teti += 'ROE = %s' %(l2f)
         teti += 'ND1 = NODE(ROE)\n'
     teti += 'NA1E = ND1\n'
     teti += 'ND = ND1 - 1\n'
@@ -1179,7 +1173,7 @@ def tetieqn(parse, itype=3):
         teti += const_text.TETIEQN.teold
 
     elif 'TEB' in var_defined:
-        teti += pa.apptmp('TEB', parse)
+        teti += 'TE(ND1) = %s' %pa.LINE2FOR(parse.right_hand_d['TEB'], parse)
         teti += const_text.TETIEQN.teold
     else:
         if 'QEB' in var_defined:
@@ -1308,11 +1302,10 @@ def tetieqn(parse, itype=3):
         teti += 'ND1 = NA1\n'
     else:
         l2f = pa.LINE2FOR(rho_bnd, parse)
-        teti += 'ROI = %s\n' %l2f
+        teti += 'ROI = %s' %l2f
         teti += 'ND1 = NODE(ROI)\n'
     teti += 'NA1I = ND1\n'
     teti += 'ND = ND1 - 1\n' # 2567
-
     teti += 'QI(1)  = RHO(ND1) - RHO(ND)\n'
     teti += 'YWC(1) = RHO(ND1) - RHO(ND)\n'
         
@@ -1332,11 +1325,9 @@ def tetieqn(parse, itype=3):
                 logger.warning('Using TIX(t0) at shifted boundary')
         else:
             logger.warning('Using TIX(t0)')
-
         teti += const_text.TETIEQN.tiold
-    
     elif 'TIB' in var_defined:
-        teti += pa.apptmp('TIB', parse)
+        teti += 'TI(ND1) = %s' %pa.LINE2FOR(parse.right_hand_d['TIB'], parse)
         teti += const_text.TETIEQN.tiold
 
     if 'QIB' not in var_defined and 'QITB' not in var_defined:
