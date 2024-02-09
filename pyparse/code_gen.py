@@ -152,6 +152,8 @@ end subroutine POSTEP'''
                 if var == varm:
                     jvar = jv + 1
                     detv_time += 'IFDFVX(%d) = max(IFDFVX(%d), 2)\n' %(jvar, jvar)
+                    if '|' in line:
+                        line = line.replace(lbl, var)
                     l2f = pa.LINE2FOR(line, parse)
                     detv_time += 'if (IFDFVX(%d) <= 2) %s\n'%(jvar, l2f)
                     break
