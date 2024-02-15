@@ -179,7 +179,7 @@ do jthe=1, ntheta
         dhdX = -dYdri1*Mdet_invi1
         drdY = -dXdhi1*Mdet_invi1
         dhdY =  dXdri1*Mdet_invi1
-        if ((jrho == 0) .or. (jrho == nrho)) then
+        if (jrho == 1 .or. jrho == nrho) then
             gradhi1(jrho, jthe) = 0.
             grti1  (jrho, jthe) = 0.
         else
@@ -204,11 +204,8 @@ enddo
 
 do jthe=1, ntheta
     jthe_l = jthe - 1
-    jthe_r = jthe + 1
     if (jthe == 1) then
         jthe_l = ntheta
-    elseif (jthe == ntheta) then
-        jthe_r = 1
     endif
     do jrho=1, nrho
         dArc_tm1 (jrho, jthe) = Jcbni1(jrho, jthe_l)*gradhi1(jrho, jthe_l)*ddr_i(jrho)/X_i1(jrho, jthe_l)
