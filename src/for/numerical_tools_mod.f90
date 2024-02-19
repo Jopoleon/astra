@@ -61,19 +61,23 @@ contains
     do i=1, Nx_out
         xloc_out = x_out(i)
         do j=2, Nx_in
-            x1 = x_in(j-2)
+            if (j > 2) then
+                x1 = x_in(j-2)
+                y1 = y_in(j-2)
+            endif
             x2 = x_in(j-1)
             x3 = x_in(j) 
-            x4 = x_in(j+1)
-            y1 = y_in(j-2)
             y2 = y_in(j-1)
             y3 = y_in(j)
-            y4 = y_in(j+1)
+            if (j < Nx_in) then
+                x4 = x_in(j+1)
+                y4 = y_in(j+1)
+            endif
             if (xloc_out == x2) then
-                y_out(i) = y_in(j-1)
+                y_out(i) = y2
                 EXIT
             else if (xloc_out == x3) then
-                y_out(i) = y_in(j)
+                y_out(i) = y3
                 EXIT
             else if (xloc_out > x2 .and. xloc_out < x3) then
                 if (j == 2) then

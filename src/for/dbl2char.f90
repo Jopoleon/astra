@@ -224,8 +224,7 @@ module dbl2char
     integer :: J
     double precision :: R
    
-    R = R1
-    if (R >= 1.e13 .or. R < 1.e-9) then
+    if (R1 >= 1.e13 .or. R1 < 1.e-9) then
         ROUNDN = R1
     else
         R = R1*1.e9
