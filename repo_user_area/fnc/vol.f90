@@ -20,5 +20,7 @@ DO J=1, JK
 enddo
 YV = YV - YDR
 
+VOLR = YV
+
 return
 end function VOLR

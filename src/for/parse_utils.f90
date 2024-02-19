@@ -17,7 +17,8 @@ contains
     character(len=6), intent(in) :: XARNAM
 
     integer :: j
-
+    
+    IFDEFX = .false.
     j = str_in_list(XARNAM, EXARNM)
     if (j > 0) then
         if (IFDFAX(j) /= -1) IFDEFX = .true. ! True (X-array is defined)

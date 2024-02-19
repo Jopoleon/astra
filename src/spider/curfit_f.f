@@ -2030,7 +2030,7 @@
 
       integer :: i, j, k, l, ic, ik, jc, jk, nsh
       real*8 :: r0, z0, rrx, zzx
-      real*8, dimension(5) :: dp
+      real*8, dimension(9) :: dp
       real*8, dimension(nshp) :: xs, ys, fun
       real*8, external :: blin
 
@@ -2110,7 +2110,7 @@
 
       integer :: i, j, k, l, ik, jk, nsh
       real*8 :: rrx, zzx
-      real*8, dimension(5) :: dp
+      real*8, dimension(9) :: dp
       real*8, dimension(nshp) :: xs, ys, fun
       real*8, external :: blin
 

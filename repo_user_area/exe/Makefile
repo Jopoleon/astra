@@ -26,6 +26,8 @@ LIB = -lnbi -lsbr -lnbi -L/usr/lib64 -lX11 $(NETCDF_LIB) $(QLKNN_LIB) $(TGLF_LIB
 
 AENV = $(AWD)/exe/astra_rc
 
+AFC_FLAGS = $(CHECKALLCOMP) -qopenmp -g -traceback -o   
+
 FOR_SRC = \
 $(FOR_DIR)/astra_main.f90 \
 $(WORKFLOW)
@@ -75,7 +77,7 @@ modules:
 
 $(ATASK): $(LIBFOR) $(LIBNBI) $(LIBFEQIS) $(LIBSPIDER) $(LIBSBR) $(LIBFNC) $(AENV) $(EQU) $(FOR_SRC) $(PYFILES) $(FMLS)
 	$(PY_TMP_GEN)
-	$(AFC) -qopenmp -g -traceback -o $(ATASK) $(FOR_SRC) $(TMP_SRC) -I$(MOD_DIR) -I$(NBI_INC) $(LIB)
+	$(AFC) $(AFC_FLAGS) $(ATASK) $(FOR_SRC) $(TMP_SRC) -I$(MOD_DIR) -I$(NBI_INC) $(LIB)
 
 # User defined sbr and fnc
 

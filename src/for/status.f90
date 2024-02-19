@@ -596,7 +596,7 @@ contains
     use outcmn_inc, only: exp_file, NSBR, DTNAME
     use const_inc, only: GP2, RTOR, BTOR, HRO, ROC, ABC, NA1, NB1, NAB, &
         NSDELOUT, TIME, TAU, TSTART, WTE, WTI, WNE
-    use debugger, only: markloc, astra_stop, flightsim
+    use debugger, only: markloc, astra_stop
 
     integer :: j, js
     double precision :: YV, YF, YMU, YN, YNE, YNI, YTE, YTI, YZF
@@ -622,7 +622,7 @@ contains
             if (TIME <= TSTART + TAU/2.) write(*, '(2A,1H"/)') &
                 '               Check if it is defined in the data file "', &
                 TRIM(exp_file)
-            if (flightsim >= 0) call err_catch_a
+            call err_catch_a
             call astra_stop
         endif
         VP(j) = ULON(j)/(YV*j*MU(j))

@@ -59,6 +59,8 @@ source $AWD/exe/astra_rc
 export expfile="${exp_file}"
 export equfile="${equ_file}"
 
+export CHECKALLCOMP=" "    # "-check all -traceback" for debugging
+
 echo Compile main ASTRA executable $equ_file $AWD 
 make -f exe/Makefile MODEL=$equ_file WORKFLOW=$AWD/main/stepup.f90
 status=$?

@@ -368,12 +368,16 @@ end subroutine setvar'''
  
         self.astra_out  = const_text.RADOUT.header
         for jsgr, name in enumerate(parse.asnamer):
+            if (jsgr > 128):
+                raise ValueError('\n\n No more than 128 radial profiles in the output part (parameter NRW in astra_modules.f90)! \n\n') 
             if name:
                 self.astra_out += pa.LINE2FOR('ROUT(J, %d) = %s' %(jsgr+1, name), parse)
             else:
                 self.astra_out += 'ROUT(J, %d) = 0.d0\n' %(jsgr+1)
         self.astra_out += const_text.TIMOUT.header
         for jsig, name in enumerate(parse.asnamet):
+            if (jsig > 128):
+                raise ValueError('\n\n No more than 128 time traces in the output part (parameter NRW in astra_modules.f90)! \n\n') 
             if name:
                 self.astra_out +=  pa.LINE2FOR('TOUT(LTOUT, %d) = %s' %(jsig+1, name), parse)
             else:

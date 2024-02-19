@@ -258,7 +258,7 @@
 
       implicit none
 
-      character(len=120), intent(in) :: name
+      character(len=80), intent(in) :: name
      
       path = name
 

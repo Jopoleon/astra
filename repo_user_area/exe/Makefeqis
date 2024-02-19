@@ -10,7 +10,7 @@ LIB_DIR = $(AWD)/lib
 LIBNAM = libfeqis.a
 LIB = $(LIB_DIR)/$(LIBNAM)
 
-FFLAGS	= -O2 -g -traceback -I. -I$(MOD_FOR) -I$(MOD_DIR)
+FFLAGS	= -O2 -g -traceback -I. -I$(MOD_FOR) -I$(MOD_DIR) $(CHECKALLCOMP)
 
 # FEQIS objs
 

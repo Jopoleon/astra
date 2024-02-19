@@ -384,12 +384,6 @@ endif
 ROC = VR(NA1)/GP2**2 * G33(NA1)/RTOR
 RHO(1: NA1) = XRHO(1: NA1)*ROC
 
-if (flightsim == 1) then
-    do j=1,NA1
-        VRS(j) = 0.5*(VR(J+1) + VR(j))
-    enddo
-endif
-
 if (debug > 0) then
     write(*, *) 'metric', RHO(1: 10)
     write(*, *) VR(1: 10)
@@ -423,6 +417,14 @@ if (flightsim == 0) then
         else
             DRODA(J) = 1.
         endif
+    enddo  
+else if (flightsim==1) then
+    do j=1,NA1
+        VRS(j)   = 0.5*(VR(J+1) + VR(j))
+        SLAT(J)  = 0.5*(SLAT(J+1) + SLAT(j))
+        G11(J)   = 0.5*(G11(j) + G11(j+1))
+        G22(J)   = 0.5*(G22(j) + G22(j+1))
+        DRODA(J) = 0.5*(DRODA(j) + DRODA(j+1))
     enddo
 endif
 
@@ -997,7 +999,7 @@ use const_inc, only: NEQUIL, MEQUIL, NBND, IPART, IPCTRL, TAU, NA, NA1, NAB, NCN
     RTOR, BTOR, IPL, GP, GP2, HRO, ROC, ABC, &
     VOLUME, SHIFT, ELONG, UPDWN, TRIAN, &
     INUME3, ITFBP, IPLFBE, IFBEY, ITREQ, ICIRCQ, ITFBE, &
-    NB2EQL, TIME, LEQ, PSIFB, PSPLEX, PSIEXT
+    NB2EQL, TIME, LEQ, PSIFB, PSPLEX, PSIEXT, LEXT, IPEQL
 use status_inc, only: G11, G22, G22E, G33, G33E, G41, G42, G43, G44, G45, &
     FP, IPOL, MU, SHEAR, &
     AMETR, VR, VRS, SLAT, GRADRO, DRODA, &
@@ -1195,6 +1197,10 @@ call new_grid ! The RHO-grid and NA, NA1, HRO are updated
 
 VOLUM(NA1) = yvolum(NA1)
 
+if (IPEQL == 5) then  ! FEQIS
+    PSPLEX = PSPLEX/(VRS(NA1)*ROC*1.6*GP**3)*G22(NA1) !if LEXT only
+endif
+
 G22 = G22/VRS*RTOR/(GP2**2)/IPOL
 G11 = G11/VRS
 GRADRO = GRADRO/VRS
@@ -1210,7 +1216,7 @@ do J=1, NA
 enddo
 SHEAR(NA1) = SHEAR(NA)
 
-do J=1, NAB
+do J=1, NA1
     SHIV(J) = yshiv(J) 
     SQUARN(J) = ysquare(J) 
 enddo
@@ -1906,7 +1912,7 @@ if (LEQ(4) > 0) then
     CASE(3) ! psi_n+g dpsidrb=psiext
         FP(NA1) = (HRO*PSIEXT + FP(NA)*ROC*PSPLEX)/(HRO + ROC*PSPLEX)
     CASE(4)
-        FP(NA1) = (HRO*PSIEXT + FP(NA)*PSPLEX)/(HRO + PSPLEX)  
+        FP(NA1) = (HRO*PSIEXT + FP(NA)*ROC*PSPLEX)/(HRO + ROC*PSPLEX)  
     CASE DEFAULT
         J = NA1
         FP(J) = FP(J) + TAU*RBDOT*XRHO(J)*XST(J)

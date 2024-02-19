@@ -348,7 +348,7 @@ CASE(6)  ! Time traces
    if (LTOUT2 < 3) then ! No plot for small time
       return
    endif
-   do jj=1, NTOUT
+   do jj=1, min(NTOUT, NRW)
       do j=LTOUT1, LTOUT1 + LTOUT2
          TOUT(j, jj) = TOUT(j, jj) + OSHIFT(jj)
       enddo
@@ -356,7 +356,7 @@ CASE(6)  ! Time traces
    call SCAL(NTOUT, SC, SCALET, TOUT(LTOUT1, 1), LTOUT2, ITIMES)
 
    j_curve = 0
-   plot_traces: do jtrace=1, NTOUT
+   plot_traces: do jtrace=1, min(NRW, NTOUT)
       JW = NWIND3(jtrace) - curves_per_frame(MOD10)*active_tab(MOD10)
       if (NAMET(jtrace) == '    ') CYCLE plot_traces
       if (JW <= 0 .or. JW > curves_per_frame(MOD10)) CYCLE plot_traces
@@ -390,10 +390,10 @@ CASE(6)  ! Time traces
       endif
       test_posx = 0
       text_posy = FSHIFT + DYLET*(2*jplot_in_canv + 1) + (j_canv - 1)*canv_hei
-      call CMARKT(text_posy, test_posx, SC(jtrace), OSHIFT(jj), NAMET(jtrace), STYL)
+      call CMARKT(text_posy, test_posx, SC(jtrace), OSHIFT(jtrace), NAMET(jtrace), STYL)
    
       do j=LTOUT1, LTOUT1 + LTOUT2
-         TOUT(j, jj) = TOUT(j, jj) - OSHIFT(jj)
+         TOUT(j, jtrace) = TOUT(j, jtrace) - OSHIFT(jtrace)
       enddo
    enddo plot_traces
 
@@ -603,7 +603,7 @@ call colovm(Red)
 if (NBNT <= 1) then
    jj = 1
    do j=1, NBND, j2
-      j1 = NBNT + (j - 1)*jj
+      j1 = max(1, NBNT + (j - 1)*jj)
       PTM(1) = BNDR(j1)*SC8
       PTM(2) = YS0 - BNDZ(j1)*SC8
       call NMARK(PTM, 4)   !Use (PTM, 4) for *

@@ -300,6 +300,8 @@ if (JTOUT /= 0) then
 endif
 write(3) TIME
 
+CHORDN = lineav()
+
 write(3) (CONSTF(J), J=1, NCFNAM), (DEVAR(J), J=1, NPRNAM), ABC, ROC, CHORDN, 1./MU(NA)
 write(3) NA1, NAB, (0, j=1, 10), (0.d0, j=1, 10)
 
@@ -1137,9 +1139,9 @@ read_loop: do
             call textvm((NP - 1)*canv_wid + 4*DXLET, jnl + DYLET + 2, ST, 5)
         endif
 
-        jxout = NP1
         if (MOD10 == 4) then
             NP1 = JAB
+            jxout = NP1
             YL = GRAL(jj)/YWA(NP1)
             YR = GRAP(jj)/YWA(NP1)
             if (YL >= YR) YL = 0.d0
@@ -1153,6 +1155,7 @@ read_loop: do
                 call drawvm(0, plot_arr(1), plot_arr(2) + 2, plot_arr(3), plot_arr(2) + 2)
             endif
             jxout = 0
+	    YA = 0.
             do j=1, NP1
                 YX = YWA(j)/YWA(NP1)
                 if (YX > YL .and. YX < YR) then
@@ -1194,6 +1197,7 @@ read_loop: do
 ! Mode 5
 ! Take AMETR(x, t) and SHIF(x, t) from "profile.dat"
             NP1 = 2*JAB
+            jxout = NP1
             do j=1, JAB
                 YROUT = (DOWN + (32768 + INTY(j))*SCL/65535.)/SC(jj)
                 YROUT = min(max(YROUT, -7.d0), 7.d0)

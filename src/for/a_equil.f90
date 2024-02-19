@@ -215,6 +215,10 @@ if (parameters_equil%k_fixfree == 1) then
 endif
 
 
+!PSPLEX in FEQIS is the Lext already. In SPIDER NOT.
+PSPLEX = equil_out%global_param%psplex
+
+
 return
 end subroutine A_equil
 

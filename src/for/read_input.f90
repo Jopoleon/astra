@@ -54,7 +54,7 @@ double precision, allocatable :: t_u(:), x_u(:), var_u(:), bnd_rz(:)
 double precision :: XBDRY, YB, YB1, YXB, YXB1, ALFA, ALFA_GLOB, &
     VRDATA, FACTOR, TIMEVR, VRERR, ROC3A, YTP=-1.d9
 character(len=6) :: VNAM, VNAMO, VNAMU, VNAMX, VTIM, VDAT, VERR, VARNAM, ARRNAM, keyword
-character(len=30) :: rholbl
+character(len=31) :: rholbl
 character(len=132) :: strarray(10), STRI, lin_upper, dir_path, fname, &
     err_msg, err_format, err_msg_exp, file_in, uname, uvar
 
@@ -563,8 +563,10 @@ parse_exp_2d: do
 
     jexar = str_in_list(VNAMX, EXARNM) ! Checks if VNAMX-string is in array EXARNM
 
-    if (VNAM /= VNAMO .and. IFDFAX(jexar) < 0) then
-        jbeg_arrx(jexar) = NGR + 1
+    if (jexar > 0) then
+        if (VNAM /= VNAMO .and. IFDFAX(jexar) < 0) then
+           jbeg_arrx(jexar) = NGR + 1
+        endif
     endif
 
 ! Special arrays

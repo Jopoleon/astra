@@ -46,8 +46,8 @@ if (LEQ(5) <= 2) then
     enddo
 else
 ! SPIDER, FEQIS
-    r_surf = equil_now%coord_sys%position%r
-    z_surf = equil_now%coord_sys%position%z
+    r_surf = equil_now%coord_sys%position%r(1:nrho_surf, 1:nthe_surf)
+    z_surf = equil_now%coord_sys%position%z(1:nrho_surf, 1:nthe_surf)
 endif
 
 return

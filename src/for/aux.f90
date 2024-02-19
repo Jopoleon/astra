@@ -61,6 +61,8 @@ TAUN   = MIN(TAUMAX, TAUN/CTAU, DTOUT, DPOUT)
 
 TAUN = MAX(TAUMIN, TAUN)   ! due to DELVAR & TAUINC
 TAU = TAUN 
+
+!below, if tau is supposed to synchronized external workflows, 1e-6 is the minimum error or time step allowed.
 if (flightsim >= 1) tauo = 1.d-6*nint(tauo*1.d6)
 if (flightsim >= 1) tau = 1.d-6*nint(tau*1.d6)
 

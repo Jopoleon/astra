@@ -13,7 +13,7 @@ LIB = $(LIB_DIR)/$(LIBNAM)
 
 # Compilers
 
-AFC_FLAGS = -r8 -no-prec-div -ip -O0 
+AFC_FLAGS = -r8 -no-prec-div -ip -O0 $(CHECKALLCOMP)
 ACC = cc
 
 MODOBJS = \

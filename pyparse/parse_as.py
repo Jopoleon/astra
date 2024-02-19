@@ -244,7 +244,7 @@ def undef_inivar(var, short, defl='', varx2='', varx3=''):
         varx2 = varx
     if varx3 == '':
         varx3 = varx + '(J)'
-    inivar  = 'j1 = 0\n'
+    inivar  = 'j1 = 1\n'
     inivar += 'do j=1, NARRX\n'
     inivar += 'if (EXARNM(j) == "%s" .and. IFDFAX(j) < 0) j1 = j\n' %varx2.ljust(6)
     inivar += 'enddo\n'
