@@ -1088,37 +1088,7 @@ def tetieqn(parse, itype=3):
 
 # From here, itype is /= 0
 
-    if none_in(['QETB', 'QEB', 'TEB'], var_defined):
-        logger.warning('Boundary condition for TE is not set')
-        if 'ROE' not in var_defined:
-            logger.warning('It is set to TEX(t0)')
-        else:
-            if 'TE' in var_defined:
-                logger.warning('Using TEX(t) at shifted boundary')
-            else:
-                logger.warning('Using TEX(t0) at shifted boundary')
-        teti += const_text.TETIEQN.teold
-
-    elif 'TEB' in var_defined:
-        teti += 'TE(ND1) = %s' %pa.LINE2FOR(parse.right_hand_d['TEB'], parse)
-        teti += const_text.TETIEQN.teold
-    else:
-        if 'QEB' in var_defined:
-            teti += pa.apptmp('QEB', parse)
-            teti += 'QE(2)   = QEB\n'
-            teti += 'YWC1(2) = QEB\n'
-        else:
-            teti += 'QE(2)   = 0.\n'
-            teti += 'YWC1(2) = 0.\n'
-        if 'QETB' in var_defined:
-            teti += pa.apptmp('QETB', parse)
-            teti += 'QE(3)   = QETB\n'
-            teti += 'YWC1(3) = QETB\n'
-        else:
-            teti += 'QE(3)   = 0.\n'
-            teti += 'YWC1(3) = 0.\n'
-        teti += 'QE(4)   = -1.\n'
-        teti += 'YWC1(4) = -1.\n'
+    teti += bnd_text('TE', var_defined, parse, rho_bnd)
 
     if 'DVE' in var_defined:
         teti += 'YWD(ND1) = 1.\n'
@@ -1243,39 +1213,7 @@ def tetieqn(parse, itype=3):
         teti += 'enddo\n'
         teti += 'endif\n'
 
-    if none_in(['QITB', 'QIB', 'TIB'], var_defined):
-        logger.warning('Boundary condition for TI is not set')
-        if 'ROI' in var_defined:
-            if 'TI' in var_defined:
-                logger.warning('Using TIX(t) at shifted boundary')
-            else:
-                logger.warning('Using TIX(t0) at shifted boundary')
-        else:
-            logger.warning('Using TIX(t0)')
-        teti += const_text.TETIEQN.tiold
-    elif 'TIB' in var_defined:
-        teti += 'TI(ND1) = %s' %pa.LINE2FOR(parse.right_hand_d['TIB'], parse)
-        teti += const_text.TETIEQN.tiold
-
-    if 'QIB' not in var_defined and 'QITB' not in var_defined:
-        teti += const_text.TETIEQN.tiold
-    else:
-        if 'QIB' in var_defined:
-            teti += pa.apptmp('QIB', var_defined)
-            teti += 'QI(2)   = QIB\n'
-            teti += 'YWC2(2) = QIB\n'
-        else:
-            teti += 'QI(2)   = 0.\n'
-            teti += 'YWC2(2) = 0.\n'
-        if 'QITB' in var_defined:
-            teti += pa.apptmp('QITB', var_defined)
-            teti += 'QI(3)   = QITB\n'
-            teti += 'YWC2(3) = QITB\n'
-        else:
-            teti += 'QI(3)   = 0.\n'
-            teti += 'YWC2(3) = 0.\n'
-        teti += 'QI(4)   = -1.\n'
-        teti += 'YWC2(4) = -1.\n'
+    teti += bnd_text('TI', var_defined, parse, rho_bnd)
 
     if 'DVI' in var_defined:
         teti += 'YWD(ND1) = 1.\n'
