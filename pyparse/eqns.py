@@ -852,7 +852,7 @@ def fjeqn(parse, jeq, assign_type=None):
                 if varb not in var_defined:
                     logger.warning('Boundary condition for %s is not set', key)
                 else:
-                    fj_txt += pa.apptmp(varb, parse)
+                    fj_txt += '%s(ND1) = %s' %(key, pa.LINE2FOR(parse.right_hand_d[varb], parse))
                 fj_txt += '%sO(ND1: NA1) = %s(ND1: NA1)\n' %(key, key)
                 fj_txt += 'YWC(4) = 1.\n'
 
@@ -1019,7 +1019,7 @@ def upeqn(parse, assign_type=None):
                 logger.warning('VTORX(t0) will be used at the shifted boundary')
 
     if 'UPARB' in var_defined:
-        up_txt += pa.apptmp('UPARB', parse)
+        up_txt += 'UPAR(ND1) = %s' %pa.LINE2FOR(parse.right_hand_d['UPARB'], parse)
         if assign_type[:2] == 'EQ':
             up_txt += const_text.UPEQN.uparo
     elif 'TTRQB' in var_defined:
