@@ -15,13 +15,53 @@ logger.setLevel(logging.INFO)
 
 def none_in(list_in, var_list):
 
-    flag = True
+    return not count_in(list_in, var_list)
+
+
+def count_in(list_in, var_list):
+
+    count = 0
     for lbl in list_in:
         if lbl in var_list:
-            flag = False
-            break
+            count += 1
 
-    return flag
+    return count
+
+
+def bnd_text(var, var_defined, parse, rho_bnd):
+    '''Writing boundary condition for TE, TI, NE, F* equations'''
+
+    bnd_txt = ''
+    varb_list = config.bnd_d[var]
+    bnd_count = count_in(varb_list, var_defined)
+    if bnd_count == 0: # No boundary condition is set
+        logger.warning('Boundary condition for %s is not given' %var)
+        if rho_bnd is None:
+            logger.warning('  It is set to %sX(t0)' %var)
+        elif var not in var_defined:
+            logger.warning('  Using %sX(t0) at the shifted boundary' %var)
+        else:
+            logger.warning('  Using %sX(t) at the shifted boundary' %var)
+        bnd_txt += '%sO(ND1: NA1) = %s(ND1: NA1)\n' %(var, var)
+        bnd_txt += 'YWC(4) = 1.\n'
+    elif bnd_count == 1:
+        if varb_list[0] in var_defined:
+            bnd_txt += '%s(ND1) = %s' %(var, pa.LINE2FOR(parse.right_hand_d['NEB'], parse) )
+            bnd_txt += '%sO(ND1: NA1) = %s(ND1: NA1)\n' %(var, var)
+            bnd_txt += 'YWC(4) = 1.\n'
+        else:
+            flux = varb_list[1][:-1]     # flux is 'QN', 'QE',...
+            if varb_list[1] in var_defined:
+                bnd_txt += '%s(ND1) = %s' %(flux, pa.LINE2FOR(parse.right_hand_d[varb_list[1]], parse) )
+                bnd_txt += 'YWC(2) = %s(ND1)\n' %flux
+            else:
+                bnd_txt += '%s(ND1) = %s' %(flux, pa.LINE2FOR(parse.right_hand_d[varb_list[2]], parse) )
+                bnd_txt += 'YWC(2) = %s(ND1)*%s(ND1)\n' %(flux, var)
+            bnd_txt += 'YWC(4) = -1.\n'
+    else:
+        raise ValueError('Too many boundary conditions defined for %s in the equ file', var)
+
+    return bnd_txt
 
 
 def write_equ_bnd(prof, rhob):
@@ -304,36 +344,7 @@ def neeqn(parse, assign_type=None):
             ne_txt += 'enddo\n'
             ne_txt += 'endif\n'
 
-        bnd_count = 0
-        for var in config.bnd_d[key]:
-            if var in var_defined:
-                bnd_count += 1
-        if bnd_count == 0: # No boundary condition is set
-            logger.warning('Boundary condition for %s is not given', key)
-            if rho_bnd is None:
-                logger.warning('  It is set to %sX(t0)', key)
-            elif key not in var_defined:
-                logger.warning('  Using %sX(t0) at the shifted boundary', key)
-            else:
-                logger.warning('  Using %sX(t) at the shifted boundary', key)
-            ne_txt += 'NEO(ND1: NA1) = NE(ND1: NA1)\n'
-            ne_txt += 'YWC(4) = 1.\n'
-        else:
-            if 'NEB' in var_defined:
-                ne_txt += 'NE(ND1) = %s' %pa.LINE2FOR(parse.right_hand_d['NEB'], parse)
-                ne_txt += 'NEO(ND1: NA1) = NE(ND1: NA1)\n'
-                ne_txt += 'YWC(4) = 1.\n'
-            else:
-                j_var = 2
-                for var in ('QNB', 'QNNB'):
-                    if var in var_defined:
-                        ne_txt += pa.apptmp(var, parse)
-                        ne_txt += 'YWC(%d) = %s\n' %(j_var, var)
-                    else:
-                        ne_txt += 'YWC(%d) = 0.\n' %j_var
-                    j_var += 1
-                ne_txt += 'YWC(4) = -1.\n'
-    
+        ne_txt += bnd_text('NE', var_defined, parse, rho_bnd)
         ne_txt += const_text.NEEQN.eqn
 
     ne_txt += 'do J=1, NA\n'
@@ -477,40 +488,8 @@ def tieqn(parse, assign_type=None):
             ti_txt += 'enddo\n'
             ti_txt += 'endif\n'
 
-        bnd_count = 0
-        for var in config.bnd_d[key]:
-            if var in var_defined:
-                bnd_count += 1
-        if bnd_count == 0:
-            logger.warning( 'Boundary condition for TI is not given')
-            if rho_bnd is None:
-                logger.warning('  It is set to TIX(t0)')
-            elif key not in var_defined:
-                logger.warning('  Using TIX(t0) at the shifted boundary')
-            else:
-                logger.warning('  Using TIX(t) at the shifted boundary')
-            ti_txt += 'TIO(ND1: NA1) = TI(ND1: NA1)\n'
-            ti_txt += 'YWC(4) = 1.\n'
-        else:
-            if 'TIB' in var_defined:
-                ti_txt += 'TI(ND1) = %s' %pa.LINE2FOR(parse.right_hand_d['TIB'], parse)
-                ti_txt += 'TIO(ND1: NA1) = TI(ND1: NA1)\n'
-                ti_txt += 'QI(4)  = 1.\n'
-                ti_txt += 'YWC(4) = 1.\n'
-            else:
-                j_var = 2
-                for var in ('QIB', 'QITB'):
-                    if var in var_defined:
-                        ti_txt += pa.apptmp(var, parse)
-                        ti_txt += 'QI(%d)  = %s\n' %(j_var, var)
-                        ti_txt += 'YWC(%d) = %s\n' %(j_var, var)
-                    else:
-                        ti_txt += 'QI(%d)  = 0.\n' %j_var
-                        ti_txt += 'YWC(%d) = 0.\n' %j_var
-                    j_var += 1
-                ti_txt += 'QI(4)  = -1.\n'
-                ti_txt += 'YWC(4) = -1.\n'
-    
+        ti_txt += bnd_text('TI', var_defined, parse, rho_bnd)
+
         if 'DVI' in var_defined:
             ti_txt += 'YWD(ND1) = 1.\n'
         else:
@@ -646,41 +625,9 @@ def teeqn(parse, assign_type=None):
             te_txt += pa.apptmp(key, parse)
             te_txt += 'enddo\n'
             te_txt += 'endif\n'
-    
-        bnd_count = 0
-        for var in config.bnd_d[key]:
-            if var in var_defined:
-                bnd_count += 1
-        if bnd_count == 0:
-            logger.warning( 'Boundary condition for TE is not given')
-            if rho_bnd is None:
-                logger.warning('  It is set to TEX(t0)')
-            elif key not in var_defined:
-                logger.warning('  Using TEX(t0) at the shifted boundary')
-            else:
-                logger.warning('  Using TEX(t) at the shifted boundary')
-                te_txt += 'TEO(ND1: NA1) = TE(ND1: NA1)\n'
-                te_txt += 'YWC(4) = 1.\n'
-        else:
-            if 'TEB' in var_defined:
-                te_txt += 'TE(ND1) = %s' %pa.LINE2FOR(parse.right_hand_d['TEB'], parse)
-                te_txt += 'TEO(ND1: NA1) = TE(ND1: NA1)\n'
-                te_txt += 'QE(4)  = 1.\n'
-                te_txt += 'YWC(4) = 1.\n'
-            else:
-                j_var = 2
-                for var in ('QEB', 'QETB'):
-                    if var in var_defined:
-                        te_txt += pa.apptmp(var, parse)
-                        te_txt += 'QE(%d)  = %s\n' %(j_var, var)
-                        te_txt += 'YWC(%d) = %s\n' %(j_var, var)
-                    else:
-                        te_txt += 'QE(%d)  = 0.\n' %j_var
-                        te_txt += 'YWC(%d) = 0.\n' %j_var
-                    j_var += 1
-                te_txt += 'QE(4)  = -1.\n'
-                te_txt += 'YWC(4) = -1.\n'
-    
+
+        te_txt += bnd_text('TE', var_defined, parse, rho_bnd)
+
         if 'DVE' in var_defined:
             te_txt += 'YWD(ND1) = 1.\n'
         else:
@@ -848,32 +795,10 @@ def fjeqn(parse, jeq, assign_type=None):
             fj_txt += pa.apptmp(key, parse)
             fj_txt += 'enddo\n'
         else:
-            if qffb not in var_defined and qfb not in var_defined:
-                if varb not in var_defined:
-                    logger.warning('Boundary condition for %s is not set', key)
-                else:
-                    fj_txt += '%s(ND1) = %s' %(key, pa.LINE2FOR(parse.right_hand_d[varb], parse))
-                fj_txt += '%sO(ND1: NA1) = %s(ND1: NA1)\n' %(key, key)
-                fj_txt += 'YWC(4) = 1.\n'
-
-            if qfb in var_defined:
-                fj_txt += pa.apptmp(qfb, parse)
-                fj_txt += 'YWC(2) = %s\n' %qfb
-                fj_txt += 'YWC(4) = -1.\n'
-            else:
-                fj_txt += 'YWC(2) = 0.\n'
-
-            if qffb in var_defined:
-                fj_txt += pa.apptmp(qffb, parse)
-                fj_txt += 'YWC(3) = %s\n' %qffb
-                fj_txt += 'YWC(4) = -1.\n'
-            else:
-                fj_txt += 'YWC(3) = 0.\n'
-
+            fj_txt += bnd_text(key, var_defined, parse, rho_bnd)
             fj_txt += const_text.FJEQN.eqn
             fj_txt += \
 'call RUNEQ_EF(YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), F%dO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), SFF%d(1: NA1),SF%d(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, YWC(1:7), F%d(1: NA1), QF%d(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1))\n' %(jeq, jeq, jeq, jeq, jeq)
-
 
     fj_txt += 'do j=1, NA-1\n'
 
