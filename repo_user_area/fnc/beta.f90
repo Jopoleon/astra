@@ -9,7 +9,7 @@
 double precision function BETAR(YR)
 
 use const_inc, only: ROC, HRO, NA1, BTOR
-use status_inc, only: VR, TE, TI, NE, NI, PBLON, PBPER
+use status_inc, only: VR, TE, TI, NE, NI, PBLON, PBPER, PFAST
 
 implicit  none
 
@@ -23,10 +23,10 @@ YV = 0.
 BETAR = 0.
 do J=1, JK
    YV = YV + VR(J)
-   BETAR = BETAR + VR(j)*(TE(J)*NE(J) + TI(J)*NI(J) + .5*(PBLON(J) + PBPER(J)))
+   BETAR = BETAR + VR(j)*(TE(J)*NE(J) + TI(J)*NI(J) + 0.5*(PBLON(J) + PBPER(J)) + PFAST(J))
 enddo
 YV = YV - YDR
-BETAR = BETAR - YDR*(TE(JK)*NE(JK) + TI(JK)*NI(JK) + .5*(PBLON(JK) + PBPER(JK)))
+BETAR = BETAR - YDR*(TE(JK)*NE(JK) + TI(JK)*NI(JK) + 0.5*(PBLON(JK) + PBPER(JK)) + PFAST(J))
 BETAR = 0.402*BETAR/(YV*BTOR*BTOR)
 
 return

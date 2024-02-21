@@ -8,7 +8,7 @@
 double precision function BETANR(YR)
 
 use const_inc, only: BTOR, IPL, ABC, NA1, HRO, ROC
-use status_inc, only: TE, TI, NE, NI, PBLON, PBPER, VR
+use status_inc, only: TE, TI, NE, NI, PBLON, PBPER, PFAST, VR
 
 implicit  none
 
@@ -22,10 +22,10 @@ YV = 0.
 BETANR = 0.
 do J = 1, JK
    YV = YV + VR(J)
-   BETANR = BETANR + VR(j)*(TE(J)*NE(J) + TI(J)*NI(J) + .5*(PBLON(J) + PBPER(J)))
+   BETANR = BETANR + VR(j)*(TE(J)*NE(J) + TI(J)*NI(J) + 0.5*(PBLON(J) + PBPER(J)) + PFAST(J))
 enddo
 YV = YV - YDR
-BETANR = BETANR - YDR*(TE(JK)*NE(JK) + TI(JK)*NI(JK) + .5*(PBLON(JK) + PBPER(JK)))
+BETANR = BETANR - YDR*(TE(JK)*NE(JK) + TI(JK)*NI(JK) + 0.5*(PBLON(JK) + PBPER(JK)) + PFAST(JK))
 BETANR = 0.402*BETANR*ABC/(YV*BTOR*IPL)
 
 return
