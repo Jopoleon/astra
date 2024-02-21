@@ -53,10 +53,9 @@ def bnd_text(var, var_defined, parse, rho_bnd):
             flux = varb_list[1][:-1]     # flux is 'QN', 'QE',...
             if varb_list[1] in var_defined:
                 bnd_txt += '%s(ND1) = %s' %(flux, pa.LINE2FOR(parse.right_hand_d[varb_list[1]], parse) )
-                bnd_txt += 'YWC(2) = %s(ND1)\n' %flux
             else:
-                bnd_txt += '%s(ND1) = %s' %(flux, pa.LINE2FOR(parse.right_hand_d[varb_list[2]], parse) )
-                bnd_txt += 'YWC(2) = %s(ND1)*%s(ND1)\n' %(flux, var)
+                bnd_txt += '%s(ND1) = %s(ND1)*(%s)\n' %(flux, var, pa.LINE2FOR(parse.right_hand_d[varb_list[2]], parse).strip() )
+            bnd_txt += 'YWC(2) = %s(ND1)\n' %flux
             bnd_txt += 'YWC(4) = -1.\n'
     else:
         raise ValueError('Too many boundary conditions defined for %s in the equ file', var)
