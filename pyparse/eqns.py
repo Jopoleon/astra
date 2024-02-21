@@ -46,7 +46,7 @@ def bnd_text(var, var_defined, parse, rho_bnd):
         bnd_txt += 'YWC(4) = 1.\n'
     elif bnd_count == 1:
         if varb_list[0] in var_defined:
-            bnd_txt += '%s(ND1) = %s' %(var, pa.LINE2FOR(parse.right_hand_d['NEB'], parse) )
+            bnd_txt += '%s(ND1) = %s' %(var, pa.LINE2FOR(parse.right_hand_d[varb_list[0]], parse) )
             bnd_txt += '%sO(ND1: NA1) = %s(ND1: NA1)\n' %(var, var)
             bnd_txt += 'YWC(4) = 1.\n'
         else:
