@@ -521,10 +521,6 @@ do j=jr_min, jr_max
        DPH(j) = ion_pflux_m(3, j)/AMETR(nrho)/gradrhosq_exp(j)/(ni_m(3, j)/NE(j))  ! 2nd imp convection
     endif
     XTB(j) = exchi_m(j)  ! turbulent e-i equipartition in MW/m^3
-
-    CHI(j) = max( -10., min(10., CHI(j)) )
-    CHE(j) = max( -10., min(10., CHE(j)) )
-    VIN(j) = max( -20., min(20., VIN(j)) )
     GM1(j) = gamma_m(j)*(cs0/a0)
     OM1(j) = omega_m(j)*(cs0/a0)
 enddo

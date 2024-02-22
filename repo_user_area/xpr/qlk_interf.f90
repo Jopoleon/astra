@@ -631,9 +631,7 @@ FR1(1:nrho) = 0.d0
 do j=jr_min, jr_max
     CHI(j) = chii_m(j)/gradrhosq_exp(j) ! \chi_i, m^2/s : starts from work(21,:) 
     CHE(j) = chie_m(j)/gradrhosq_exp(j) ! \chi_e, m^2/s
-    VIN(j) = min(20., pfluxi_m(j)/AMETR(nrho)/gradrhosq_exp(j)) ! D flux
-    VIN(j) = max(-20., VIN(j)) ! D flux
-!    VIN(j) = pfluxi_m(j)/AMETR(nrho)/gradrhosq_exp(j)
+    VIN(j) = pfluxi_m(j)/AMETR(nrho)/gradrhosq_exp(j) ! D flux
     XTB(j) = exchi_m(j)  ! turbulent e-i equipartition in MW/m^3
 enddo   ! End of main loop
 
