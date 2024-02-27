@@ -1087,7 +1087,7 @@ def tetieqn(parse, itype=3):
 
 # From here, itype is /= 0
 
-    teti += bnd_text('TE', var_defined, parse, rho_bnd)
+    teti += bnd_text('TE', var_defined, parse, rho_bnd).replace('YWC', 'YWC1')
 
     if 'DVE' in var_defined:
         teti += 'YWD(ND1) = 1.\n'
@@ -1212,7 +1212,7 @@ def tetieqn(parse, itype=3):
         teti += 'enddo\n'
         teti += 'endif\n'
 
-    teti += bnd_text('TI', var_defined, parse, rho_bnd)
+    teti += bnd_text('TI', var_defined, parse, rho_bnd).replace('YWC', 'YWC2')
 
     if 'DVI' in var_defined:
         teti += 'YWD(ND1) = 1.\n'
