@@ -67,8 +67,8 @@ double precision, intent(out), dimension(*) :: CHI, CHE, DIF, VIN, &
     DPH, DPL, DPR, XTB, EGM, GAM, GM1, GM2, OM1, OM2, FR1
 
 !----------------------------------------------------------------------
-integer :: jna, jinterval, jr_min, jr_max, jrho, j0, j01, j02
-integer :: j, jradial, j3r, jjgrid(nradial), j1, j2, jspec
+integer :: jna, jinterval, jr_min, jr_max, jrho, j0, j01, j02, nr_max, n_radial
+integer :: j, jradial, j3r, jjgrid(nradial), jspec
 integer :: i_ion, n_ions
 real :: bmod, bpolz, alpha_zf_in, ion_eflux
 real :: drmin, drmaj, drho, dte, dne, dq, &
@@ -78,14 +78,14 @@ real :: T0, anorm, mnorm, tnorm, nnorm, vnorm, &
    pflux_e_neo, eflux_e_neo, jboots, tgyro_neo_gv_flag, &
    Gamma_neo_GB, Q_neo_GB, Pi_neo_GB, Jpar_GB
 
-real, dimension(jpd) :: rho_m, vexb2, vpar_m, vper_m, &
+real, dimension(nrho) :: rho_m, vexb2, vpar_m, vper_m, &
     gradrhosq_exp, epar0_in, rmaj_exp, q_exp, &
     chie_m, chii_m, vippd_m, vittd_m, vippi1_m, vitti1_m, j_boot, elec_pflux_m
 
 real, dimension(nradial) :: chie, chii, elec_pflux, rho_tg, &
    vippd, vittd, vippi1, vitti1, jbs
 real, dimension(nsm-1) :: dti, dni, pflux_i_neo, eflux_i_neo, vpflux_neo, vtflux_neo
-real, dimension(nsm-1, jpd) :: ni_m, ti_m
+real, dimension(nsm-1, nrho) :: ni_m, ti_m
 real, dimension(nsm, 2) :: energy_flux, particle_flux
  
 character(len=80) :: path_in
@@ -93,10 +93,27 @@ character(len=80) :: path_in
 !--------------
 
 jna = max(NA1E, NA1I, NA1N)
-if (jna .eq. 0) jna = nrho
-if (jna .gt. jpd) then
+if (jna == 0) jna = nrho
+nr_max = min(jna, nrho)
+
+jr_min = max(1, jr1_in)
+jr_max = min(nr_max, jr2_in)
+if (jr_min >= jr_max) then
+    write(*, *) 'Error! jr_min >= jr_max', jr_max
     return
 endif
+
+jinterval = jr_max - jr_min
+j3r = max(1, INT(jinterval/nradial))
+n_radial = nradial
+do jradial = 1, nradial-1
+    jjgrid(jradial) = jr_min + (jradial - 1)*j3r
+    if (jjgrid(jradial) >= jr_max) then
+        n_radial = jradial
+        EXIT
+    endif
+enddo
+jjgrid(n_radial) = jr_max
 
 tgyro_neo_gv_flag = 0.
 
@@ -110,7 +127,7 @@ neo_mass_in(3) = AIM1/AMJ
 neo_mass_in(4) = AIM2/AMJ
 neo_mass_in(5) = AIM3/AMJ
 
-do jrho=1, nrho
+do jrho=1, nr_max
     rho_m(jrho) = RHO(jrho)
     ti_m(1:4, jrho) = TI(jrho)
     if (NDEUT(jrho) >= 0.01*NE(jrho)) then
@@ -142,16 +159,6 @@ vittd_m  = 0.0
 vippi1_m = 0.0
 vitti1_m = 0.0
 
-jr_min = max(1, jr1_in)
-jr_max = min(nrho, jr2_in)
-
-jinterval = 1 + (jr_max - jr_min)
-j3r = max(1, INT(jinterval/nradial))
-do jradial = 1, nradial-1
-    jjgrid(jradial) = jr_min + (jradial - 1)*j3r
-enddo
-jjgrid(nradial) = min(nrho, jr_max)
-
 ! Number of species
 
 n_ions = nsm - 1
@@ -179,7 +186,7 @@ neo_temp_in   = 0.
 neo_dlnndr_in = 0.
 neo_dlntdr_in = 0.
 
-radial_loop: do jradial=1, nradial
+radial_loop: do jradial=1, n_radial
 
     path_in='./'
     call neo_init_serial(path_in)
@@ -234,7 +241,7 @@ radial_loop: do jradial=1, nradial
     j02 = j0-1
     if (j0 == 1) then
         j02 = j0
-    else if (j0 == nrho) then
+    else if (j0 == nr_max) then
         j01 = j0
     endif
     dstep = 1./float(j01 - j02)
@@ -405,17 +412,14 @@ radial_loop: do jradial=1, nradial
 
 enddo radial_loop
 
-j1 = jjgrid(1)
-j2 = jjgrid(nradial)
-
-call qinterp(rho_tg, chii  , nradial, rho_m(j1:j2), chii_m  (j1:j2), j2-j1+1)
-call qinterp(rho_tg, chie  , nradial, rho_m(j1:j2), chie_m  (j1:j2), j2-j1+1)
-call qinterp(rho_tg, vippd , nradial, rho_m(j1:j2), vippd_m (j1:j2), j2-j1+1)
-call qinterp(rho_tg, vittd , nradial, rho_m(j1:j2), vittd_m (j1:j2), j2-j1+1)
-call qinterp(rho_tg, vippi1, nradial, rho_m(j1:j2), vippi1_m(j1:j2), j2-j1+1)
-call qinterp(rho_tg, vitti1, nradial, rho_m(j1:j2), vitti1_m(j1:j2), j2-j1+1)
-call qinterp(rho_tg, jbs   , nradial, rho_m(j1:j2), j_boot  (j1:j2), j2-j1+1)
-call qinterp(rho_tg, elec_pflux, nradial, rho_m(j1:j2), elec_pflux_m(j1:j2), j2-j1+1)
+call qinterp(rho_tg, chii  , nradial, rho_m(jr_min:jr_max), chii_m  (jr_min:jr_max), jr_max-jr_min+1)
+call qinterp(rho_tg, chie  , nradial, rho_m(jr_min:jr_max), chie_m  (jr_min:jr_max), jr_max-jr_min+1)
+call qinterp(rho_tg, vippd , nradial, rho_m(jr_min:jr_max), vippd_m (jr_min:jr_max), jr_max-jr_min+1)
+call qinterp(rho_tg, vittd , nradial, rho_m(jr_min:jr_max), vittd_m (jr_min:jr_max), jr_max-jr_min+1)
+call qinterp(rho_tg, vippi1, nradial, rho_m(jr_min:jr_max), vippi1_m(jr_min:jr_max), jr_max-jr_min+1)
+call qinterp(rho_tg, vitti1, nradial, rho_m(jr_min:jr_max), vitti1_m(jr_min:jr_max), jr_max-jr_min+1)
+call qinterp(rho_tg, jbs   , nradial, rho_m(jr_min:jr_max), j_boot  (jr_min:jr_max), jr_max-jr_min+1)
+call qinterp(rho_tg, elec_pflux, nradial, rho_m(jr_min:jr_max), elec_pflux_m(jr_min:jr_max), jr_max-jr_min+1)
 
 chii_m  (1:2) = chii_m  (3)
 chie_m  (1:2) = chie_m  (3)
@@ -444,32 +448,6 @@ do j=jr_min, jr_max
     GAM(j) = vittd_m(j)   ! main ions toroidal flow
     GM1(j) = vitti1_m(j)  ! 1st imp toroidal flow
 enddo
-
-if (jr_max .lt. nrho-1) return
-
-do j=jna-2, jna-1
-    CHI(j) = CHI(jna-3)
-    CHE(j) = CHE(jna-3)
-    VIN(j) = VIN(jna-3)
-    DPR(j) = DPR(jna-3)
-    XTB(j) = XTB(jna-3)
-    EGM(j) = EGM(jna-3)
-    GAM(j) = GAM(jna-3)
-    GM1(j) = GM1(jna-3)
-enddo
-
-if (jna .lt. nrho) then
-    do j=jna-1, nrho
-        CHI(j) = 0.d0
-        CHE(j) = 0.d0
-        VIN(j) = 0.d0
-        DPR(j) = 0.d0
-        XTB(j) = 0.d0
-        EGM(j) = 0.d0
-        GAM(j) = 0.d0
-        GM1(j) = 0.d0
-    enddo
-endif  
 
 return
 END subroutine neo_interf

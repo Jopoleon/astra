@@ -80,7 +80,7 @@ type(qlk_primi_meth_1)        :: primi_meth_1
 type(qlk_primi_meth_2)        :: primi_meth_2
 
 
-integer, parameter :: ntheta=64, numecoefs=13, numicoefs=7, dimx=1, dimn=16, numsols=3, phys_meth=0, jpd=700, nradial=5, nspec_max=7
+integer, parameter :: ntheta=64, numecoefs=13, numicoefs=7, dimx=1, dimn=16, numsols=3, phys_meth=0, nradial=5, nspec_max=7
 
 real, parameter :: &
    k0   = 1.6022E-12, &       ! erg/ev
@@ -119,8 +119,8 @@ LOGICAL :: exist1, exist2, exist3, exist4, exist5 !used for checking for existen
 !MPI variables:
 INTEGER :: mpi_ierr, nproc, myrank
 INTEGER :: myunit=700, i_mpic
-integer :: jna, jinterval, jr_min, jr_max, jrho, j0, j01, j02
-integer :: i, j, k, jradial, j3r, jjgrid(nradial), j1, j2, jion
+integer :: jna, jinterval, jr_min, jr_max, jrho, j0, j01, j02, nr_max, n_radial
+integer :: i, j, k, jradial, j3r, jjgrid(nradial), jion
 
 real(kind=DBL) :: bmod, bpolz
 real(kind=DBL) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
@@ -173,9 +173,26 @@ nions = nspec_max - 1
 
 jna = max(NA1E, NA1I, NA1N)
 if (jna == 0) jna = nrho
-if (jna > jpd) then
+nr_max = min(jna, nrho)
+
+jr_min = max(1, jr1_in)
+jr_max = min(nr_max, jr2_in)
+if (jr_min >= jr_max) then
+    write(*, *) 'Error! jr_min >= jr_max', jr_max
     return
 endif
+
+jinterval = jr_max - jr_min
+j3r = max(1, INT(jinterval/nradial))
+n_radial = nradial
+do jradial = 1, nradial-1
+    jjgrid(jradial) = jr_min + (jradial - 1)*j3r
+    if (jjgrid(jradial) >= jr_max) then
+        n_radial = jradial
+        EXIT
+    endif
+enddo
+jjgrid(n_radial) = jr_max
 
 ! Electrons and main ions
 Zi_in(1, 1) = ZMJ
@@ -185,7 +202,7 @@ Ai_in(1, 2) = AIM1
 Ai_in(1, 3) = AIM2
 Ai_in(1, 4) = AIM3
 
-do jrho=1, nrho
+do jrho=1, nr_max
     ti_m(1:4, jrho) = TI(jrho)
     ni_m(1, jrho) = NDEUT(jrho)
     ni_m(2, jrho) = max(1.e-9, NIZ1(jrho))
@@ -212,17 +229,6 @@ pfluxi_m  = 0.0
 chie_m  = 0.0
 chii_m  = 0.0
 exchi_m = 0.0
-
-jr_min = max(1, jr1_in)
-jr_max = min(nrho, jr2_in)
-
-jinterval = 1 + (jr_max - jr_min)
-j3r = max(1, INT(jinterval/nradial))
-do jradial = 1, nradial-1
-    jjgrid(jradial) = jr_min + (jradial - 1)*j3r
-enddo
-jjgrid(nradial) = min(nrho, jr_max)
-
 
 ! These will be reset locally in the radial loop
 Zi_in(1, 2) = MAXVAL(ZIM1(1:nrho))
@@ -262,7 +268,7 @@ rhoscale = rho(nrho)
 
 WRITE(fmtn, '(A, I0, A)') '(', dimn, 'G15.7)'
 
-radial_loop: do jradial=1, nradial
+radial_loop: do jradial=1, n_radial
    
     j0 = jjgrid(jradial)
     write(fname1, '(A, i0)') 'qlkzin_' , j0
@@ -304,7 +310,7 @@ radial_loop: do jradial=1, nradial
     j02 = j0-1
     if (j0 == 1) then
         j02 = j0
-    else if (j0 == nrho) then
+    else if (j0 == nr_max) then
         j01 = j0
     endif
     dstep = 1./float(j01 - j02)
@@ -604,13 +610,10 @@ radial_loop: do jradial=1, nradial
 
 enddo radial_loop
 
-j1 = jjgrid(1)
-j2 = jjgrid(nradial)
-
-call qinterp(rho_tg, chii  , nradial, RHO(j1:j2), chii_m(j1:j2)  , j2-j1+1)
-call qinterp(rho_tg, chie  , nradial, RHO(j1:j2), chie_m(j1:j2)  , j2-j1+1)
-call qinterp(rho_tg, pfluxi, nradial, RHO(j1:j2), pfluxi_m(j1:j2), j2-j1+1)
-call qinterp(rho_tg, exchi , nradial, RHO(j1:j2), exchi_m(j1:j2) , j2-j1+1)
+call qinterp(rho_tg, chii  , n_radial, RHO(jr_min:jr_max), chii_m(jr_min:jr_max)  , jr_max-jr_min+1)
+call qinterp(rho_tg, chie  , n_radial, RHO(jr_min:jr_max), chie_m(jr_min:jr_max)  , jr_max-jr_min+1)
+call qinterp(rho_tg, pfluxi, n_radial, RHO(jr_min:jr_max), pfluxi_m(jr_min:jr_max), jr_max-jr_min+1)
+call qinterp(rho_tg, exchi , n_radial, RHO(jr_min:jr_max), exchi_m(jr_min:jr_max) , jr_max -jr_min+1)
 
 chii_m  (1:2) = chii_m(3)
 chie_m  (1:2) = chie_m(3)
@@ -634,24 +637,6 @@ do j=jr_min, jr_max
     VIN(j) = pfluxi_m(j)/AMETR(nrho)/gradrhosq_exp(j) ! D flux
     XTB(j) = exchi_m(j)  ! turbulent e-i equipartition in MW/m^3
 enddo   ! End of main loop
-
-if (jr_max < nrho-1) return
-
-do j=jna-2, jna-1
-    CHI(j) = CHI(jna-3)
-    CHE(j) = CHE(jna-3)
-    VIN(j) = VIN(jna-3)
-    XTB(j) = XTB(jna-3)
-enddo
-
-if (jna < nrho) then
-    do j=jna-1, nrho
-        CHI(j) = 0.d0
-        CHE(j) = 0.d0
-        VIN(j) = 0.d0
-        XTB(j) = 0.d0
-    enddo
-endif  
 
 return
 END subroutine qlk_interf

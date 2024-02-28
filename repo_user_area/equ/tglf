@@ -95,13 +95,15 @@ xpr/tglfi(int(CRAD3)*15+1,int(CRAD3)*16)&<:CF12:::;
 CAR17 = "mem_tglf(j,1)"; ! chi_i
 CAR18 = "mem_tglf(j,2)"; ! chi_e
 CAR20 = "mem_tglf(j,4)"; ! Particle flux
-CAR42 = "mem_tglf(j,8)"; !turbulent equipartition to be added to PE and subtracted to PI
+CAR41 = "mem_tglf(j,7)"; ! toroidal momentum flux
+CAR42 = "mem_tglf(j,8)"; ! turbulent equipartition to be added to PE and subtracted to PI
 CAR43 = "mem_tglf(j,11)"; !gamma
 CAR44 = "mem_tglf(j,13)"; !omega
 
-SMEARR(CF4,CAR17,CAR21)::::;
-SMEARR(CF4,CAR18,CAR22)::::;
-SMEARR(CF5,CAR20,CAR24)::::;
+SMEARR(CF4, CAR17, CAR21)::::;
+SMEARR(CF4, CAR18, CAR22)::::;
+SMEARR(CF5, CAR20, CAR24)::::;
+SMEARR(CF4, CAR41, CAR45)::::;
 
 XI = min(20., max(0., CAR21)) + HNASI;
 HE = min(20., max(0., CAR22)) + HNGSE;

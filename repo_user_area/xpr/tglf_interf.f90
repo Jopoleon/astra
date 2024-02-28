@@ -43,13 +43,41 @@ subroutine tglf_interf(jr1_in, jr2_in, nrho, NA1N, NA1E, NA1I, &
 !                              (when i_delay=0 and egamma_d is not used)
 !----------------------------------------------------------------------|
 
-USE tglf_interface
+use tglf_interface, only: nsm, tglf_zs_in, tglf_ns_in, tglf_mass_in, &
+    tglf_find_width_in, tglf_iflux_in, tglf_use_bper_in, tglf_use_mhd_rule_in, &
+    tglf_use_bisection_in, tglf_use_inboard_detrapped_in, tglf_new_eikonal_in, &
+    tglf_adiabatic_elec_in, tglf_ibranch_in, tglf_use_bpar_in, tglf_nmodes_in, &
+    tglf_nbasis_max_in, tglf_nbasis_min_in, tglf_nxgrid_in, tglf_nky_in, &
+    tglf_units_in, tglf_path_in, tglf_use_transport_model_in, &
+    tglf_use_ave_ion_grid_in, tglf_sign_Bt_in, tglf_ky_in, tglf_width_in, &
+    tglf_width_min_in, tglf_nwidth_in, tglf_geometry_flag_in, tglf_dump_flag_in, &
+    tglf_test_flag_in, tglf_nn_max_error_in, tglf_write_wavefunction_flag_in, &
+    tglf_theta_trapped_in, tglf_wdia_trapped_in, tglf_park_in, tglf_ghat_in, &
+    tglf_gchat_in, tglf_sign_It_in, tglf_wd_zero_in, tglf_linsker_factor_in, &
+    tglf_gradB_factor_in, tglf_filter_in, tglf_damp_psi_in, tglf_damp_sig_in, &
+    tglf_kx0_loc_in, tglf_alpha_e_in, tglf_alpha_p_in, tglf_alpha_quench_in, &
+    tglf_alpha_zf_in, tglf_xnu_factor_in, tglf_debye_factor_in, &
+    tglf_etg_factor_in, tglf_sat_rule_in, tglf_kygrid_model_in, &
+    tglf_xnu_model_in, tglf_vpar_model_in, tglf_vpar_shear_model_in, &
+    tglf_b_model_sa_in, tglf_ft_model_sa_in, tglf_as_in, tglf_taus_in, &
+    tglf_rlns_in, tglf_rlts_in, tglf_vpar_in, tglf_vpar_shear_in, &
+    tglf_alpha_mach_in, tglf_vexb_shear_in, tglf_vexb_in, tglf_betae_in, &
+    tglf_xnue_in, tglf_zeff_in, tglf_debye_in, tglf_rmin_loc_in, &
+    tglf_rmaj_loc_in, tglf_zmaj_loc_in, tglf_drmindx_loc_in, tglf_drmajdx_loc_in, &
+    tglf_dzmajdx_loc_in, tglf_kappa_loc_in, tglf_s_kappa_loc_in, &
+    tglf_delta_loc_in, tglf_s_delta_loc_in, tglf_zeta_loc_in, tglf_s_zeta_loc_in, &
+    tglf_q_loc_in, tglf_q_prime_loc_in, tglf_p_prime_loc_in, tglf_rmin_sa_in, &
+    tglf_rmaj_sa_in, tglf_q_sa_in, tglf_shat_sa_in, tglf_alpha_sa_in, &
+    tglf_xwell_sa_in, tglf_theta0_sa_in, file_dump_local, &
+    tglf_elec_eflux_out, tglf_ion_eflux_out, tglf_ion_mflux_out, &
+    tglf_elec_pflux_out, tglf_ion_pflux_out, tglf_ion_expwd_out
+    
 use tglf_pkg, only: get_eigenvalue_spectrum_out, get_ky_spectrum_out, &
     get_flux_spectrum_out
 
 implicit none
 
-integer, parameter :: jpd=700, nradial=5
+integer, parameter :: nradial=5
 
 double precision, parameter :: &
    k0   = 1.6022d-12, &       ! erg/ev
@@ -76,38 +104,58 @@ double precision, intent(out), dimension(*) :: CHI, CHE, DIF, VIN, &
 
 !----------------------------------------------------------------------
 
-integer :: jna, jinterval, jr_min, jr_max, jrho, j0, j01, j02, jgamma_max
-integer :: j, jradial, j3r, jjgrid(nradial), j1, j2, jspec, kyloop
+integer :: jna, jinterval, jr_min, jr_max, jrho, j0, j01, j02, jgamma_max, nr_max, n_radial
+integer :: j, jradial, j3r, jjgrid(nradial), jspec, kyloop
 integer :: sat_rule           ! Saturation rule
 integer :: nmodes_tg          ! number of unstable modes to use in computing fluxes (max=4)
 integer :: kygrid_model_tg    ! select version of ky-grid to use 1
 integer :: xnu_model_tg       ! select version of trapped-passing 2
 
-real :: bmod, bpolz, alpha_zf_in, ion_eflux
+real :: bmod, bpolz, alpha_zf_in, ion_eflux, ion_mflux
 real :: drmin, drmaj, drho, dte, dne, dq, dptot, &
         delong, dtrian, dvper, drhodr, dstep, dr, dv_r
 real :: Bunit, cs0, cs00, rhos0, omega0, rhostar2, lnlamda, taue, cexb
 real :: a0, T0, N0, m0, rmin_tg, drho_cs, drho_nt, nt_cs
 real :: wdia_trap_tg          ! parameter for trapped fraction model
 
-real, dimension(jpd) :: rho_m, vexb2, vpar_m, vper_m, &
-    gradrhosq_exp, rmaj_exp, q_exp, &
+real, dimension(nrho) :: gradrhosq_exp, rmaj_exp, q_exp, &
+    rho_m, vexb2, vpar_m, vper_m, mtori_m, &
     chie_m, chii_m, elec_pflux_m, exchi_m, ptot, gamma_m, omega_m
-real, dimension(nsm-1,jpd) :: ion_pflux_m
+real, dimension(nsm-1, nrho) :: ion_pflux_m
 
-real, dimension(nradial) :: chie, chii, exchi, elec_pflux, rho_tg, gamma_max, omega_max, kymax
+real, dimension(nradial) :: mtori, chie, chii, exchi, elec_pflux, rho_tg, &
+    gamma_max, omega_max, kymax
 real, dimension(nsm-1, nradial) :: ion_pflux
 real, allocatable, dimension(:) :: gamma, omega, kyspectrum, efluxspectrum
 real, dimension(nsm-1) :: dti, dni
-real, dimension(nsm-1, jpd) :: ni_m, ti_m
+real, dimension(nsm-1, nrho) :: ni_m, ti_m
 
-!--------------
+!-----------------
+! Radial subdomain
+!-----------------
 
 jna = max(NA1E, NA1I, NA1N)
 if (jna == 0) jna = nrho
-if (jna > jpd) then
+nr_max = min(jna, nrho)
+
+jr_min = max(1, jr1_in)
+jr_max = min(nr_max, jr2_in)
+if (jr_min >= jr_max) then
+    write(*, *) 'Error! jr_min >= jr_max', jr_max
     return
 endif
+
+jinterval = jr_max - jr_min
+j3r = max(1, INT(jinterval/nradial))
+n_radial = nradial
+do jradial = 1, nradial-1
+    jjgrid(jradial) = jr_min + (jradial - 1)*j3r
+    if (jjgrid(jradial) >= jr_max) then
+        n_radial = jradial
+        EXIT
+    endif
+enddo
+jjgrid(n_radial) = jr_max
 
 ! Electrons and main ions
 tglf_zs_in(1) = -1.
@@ -119,7 +167,7 @@ tglf_mass_in(3) = AIM1/AMJ
 tglf_mass_in(4) = AIM2/AMJ
 tglf_mass_in(5) = AIM3/AMJ
 
-do jrho=1, nrho
+do jrho=1, nr_max
     rho_m(jrho) = RHO(jrho)
     ti_m(1:4, jrho) = TI(jrho)
     if (NDEUT(jrho) >= 0.01*NE(jrho)) then
@@ -144,25 +192,15 @@ do jrho=1, nrho
 
 enddo
 
-m0 = AMJ*mp                ! Ref. mass = D ion mass [g]
+m0 = AMJ*mp             ! Ref. mass = D ion mass [g]
 a0 = 1E2*AMETR(nrho)    ! length scale used by GYRO from AMETR (meters) to cm
 
-elec_pflux_m = 0.0
-ion_pflux_m  = 0.0
-chie_m  = 0.0
-chii_m  = 0.0
-exchi_m = 0.0
-
-jr_min = max(1, jr1_in)
-jr_max = min(nrho, jr2_in)
-if (jr_min >= jr_max) return
-
-jinterval = 1 + (jr_max - jr_min)
-j3r = max(1, INT(jinterval/nradial))
-do jradial = 1, nradial-1
-    jjgrid(jradial) = jr_min + (jradial - 1)*j3r
-enddo
-jjgrid(nradial) = min(nrho, jr_max)
+elec_pflux_m = 0.
+ion_pflux_m  = 0.
+chie_m  = 0.
+chii_m  = 0.
+mtori_m = 0.
+exchi_m = 0.
 
 ! Number of species
 
@@ -173,8 +211,8 @@ tglf_zs_in(4) = MAXVAL(ZIM2(1:nrho))
 tglf_zs_in(5) = MAXVAL(ZIM3(1:nrho))
 
 if (tglf_zs_in(5) >= 1.) tglf_ns_in = 5
-if (tglf_zs_in(5) < 1.) tglf_ns_in = 4
-if (tglf_zs_in(4) < 1.) tglf_ns_in = 3
+if (tglf_zs_in(5) <  1.) tglf_ns_in = 4
+if (tglf_zs_in(4) <  1.) tglf_ns_in = 3
 if (tglf_zs_in(5) >= 1. .and. tglf_ns_in == 3) then 
     tglf_ns_in = 4
 endif
@@ -186,7 +224,7 @@ endif
 kygrid_model_tg = 4 !1 Email Angioni Aug 1st 2023
 
 sat_rule = 2
-write(6, '(A, 6i4)') 'Call TGLF...', jr1_in, jr2_in, nrho, jna, sat_rule, tglf_ns_in
+write(6, '(A, 9i4)') 'Call TGLF...', jjgrid(1:n_radial), jna, nrho, sat_rule, tglf_ns_in
 
 if (sat_rule == 0) then
     nmodes_tg = 2
@@ -289,7 +327,7 @@ allocate(omega(tglf_nky_in))
 allocate(kyspectrum(tglf_nky_in))
 allocate(efluxspectrum(tglf_nky_in))
 
-radial_loop: do jradial=1, nradial
+radial_loop: do jradial=1, n_radial
    
     j0 = jjgrid(jradial)
 
@@ -327,7 +365,7 @@ radial_loop: do jradial=1, nradial
     j02 = j0-1
     if (j0 == 1) then
         j02 = j0
-    else if (j0 == nrho) then
+    else if (j0 == nr_max) then
         j01 = j0
     endif
     dstep = 1./float(j01 - j02)
@@ -455,14 +493,16 @@ radial_loop: do jradial=1, nradial
 
     ion_eflux = SUM(tglf_ion_eflux_out(1: tglf_ns_in-1))
     ion_eflux = ion_eflux/(tglf_taus_in(2) * 1e13*NI(j0)/N0)
-    chii(jradial) = ion_eflux          /(1e-4 + abs(tglf_rlts_in(2))) *drho_cs
-    chie(jradial) = tglf_elec_eflux_out/(1e-4 + abs(tglf_rlts_in(1))) *drho_cs
+    ion_mflux = SUM(tglf_ion_mflux_out(1: tglf_ns_in-1))
+    chii (jradial) = ion_eflux          /(1e-4 + abs(tglf_rlts_in(2))) *drho_cs
+    chie (jradial) = tglf_elec_eflux_out/(1e-4 + abs(tglf_rlts_in(1))) *drho_cs
+    mtori(jradial) = ion_mflux*drho_nt
     elec_pflux(jradial) = tglf_elec_pflux_out/drhodr *drho_cs         ! particle flux
     do jspec=1, tglf_ns_in-1
         ion_pflux(jspec, jradial) = tglf_ion_pflux_out(jspec)/drhodr *drho_cs  !ion particle flux
     enddo
     exchi(jradial) = tglf_ion_expwd_out(1) * nt_cs                ! Equipartition
-    do kyloop=1, tglf_nky_in 
+    do kyloop=1, tglf_nky_in
         gamma(kyloop) = get_eigenvalue_spectrum_out(1, kyloop, 1)
         omega(kyloop) = get_eigenvalue_spectrum_out(2, kyloop, 1)
         kyspectrum(kyloop) = get_ky_spectrum_out(kyloop)
@@ -477,25 +517,24 @@ radial_loop: do jradial=1, nradial
 
 enddo radial_loop
 
-j1 = jjgrid(1)
-j2 = jjgrid(nradial)
-
-call qinterp(rho_tg, chii  , nradial, rho_m(j1:j2), chii_m(j1:j2)  , j2-j1+1)
-call qinterp(rho_tg, chie  , nradial, rho_m(j1:j2), chie_m(j1:j2)  , j2-j1+1)
-call qinterp(rho_tg, elec_pflux, nradial, rho_m(j1:j2), elec_pflux_m(j1:j2), j2-j1+1)
-call qinterp(rho_tg, exchi , nradial, rho_m(j1:j2), exchi_m(j1:j2) , j2-j1+1)
-call qinterp(rho_tg, gamma_max, nradial, rho_m(j1:j2), gamma_m(j1:j2) , j2-j1+1)
-call qinterp(rho_tg, omega_max, nradial, rho_m(j1:j2), omega_m(j1:j2) , j2-j1+1)
+call qinterp(rho_tg, chii      , n_radial, rho_m(jr_min:jr_max), chii_m(jr_min:jr_max)      , jr_max-jr_min+1)
+call qinterp(rho_tg, chie      , n_radial, rho_m(jr_min:jr_max), chie_m(jr_min:jr_max)      , jr_max-jr_min+1)
+call qinterp(rho_tg, mtori     , n_radial, rho_m(jr_min:jr_max), mtori_m(jr_min:jr_max)     , jr_max-jr_min+1)
+call qinterp(rho_tg, elec_pflux, n_radial, rho_m(jr_min:jr_max), elec_pflux_m(jr_min:jr_max), jr_max-jr_min+1)
+call qinterp(rho_tg, exchi     , n_radial, rho_m(jr_min:jr_max), exchi_m(jr_min:jr_max)     , jr_max-jr_min+1)
+call qinterp(rho_tg, gamma_max , n_radial, rho_m(jr_min:jr_max), gamma_m(jr_min:jr_max)     , jr_max-jr_min+1)
+call qinterp(rho_tg, omega_max , n_radial, rho_m(jr_min:jr_max), omega_m(jr_min:jr_max)     , jr_max-jr_min+1)
 do jspec=1, tglf_ns_in-1
-    call qinterp(rho_tg, ion_pflux(jspec, 1:nradial), nradial, rho_m(j1:j2), ion_pflux_m(jspec, j1:j2), j2-j1+1)
+    call qinterp(rho_tg, ion_pflux(jspec, 1:n_radial), n_radial, rho_m(jr_min:jr_max), ion_pflux_m(jspec, jr_min:jr_max), jr_max-jr_min+1)
 enddo
 
-chii_m  (1:2) = chii_m(3)
-chie_m  (1:2) = chie_m(3)
+chii_m (1:2) = chii_m (3)
+chie_m (1:2) = chie_m (3)
+mtori_m(1:2) = mtori_m(3)
 elec_pflux_m(1:2) = elec_pflux_m(3)
-exchi_m (1:2) = exchi_m(3)
-omega_m (1:2) = omega_m(3)
-gamma_m (1:2) = gamma_m(3)
+exchi_m(1:2) = exchi_m(3)
+omega_m(1:2) = omega_m(3)
+gamma_m(1:2) = gamma_m(3)
 
 DIF(1:nrho) = 0.d0       ! D, electron diffusivity, m^2/s
 DPH(1:nrho) = 0.d0       ! 2nd imp convection
@@ -513,6 +552,7 @@ do j=jr_min, jr_max
     CHI(j) = chii_m(j)/gradrhosq_exp(j) ! \chi_i, m^2/s -> work(21,:) 
     CHE(j) = chie_m(j)/gradrhosq_exp(j) ! \chi_e, m^2/s
     VIN(j) = elec_pflux_m(j)/AMETR(nrho)/gradrhosq_exp(j) ! D flux
+    DPR(j) = mtori_m(j)
 !First impurity only, index 2 of ion species
     if (tglf_ns_in >= 3) then
        DPL(j) = ion_pflux_m(2, j)/AMETR(nrho)/gradrhosq_exp(j)/(ni_m(2, j)/NE(j))  ! 1st imp convection
@@ -527,24 +567,6 @@ enddo
 
 DPL(1) = 0.d0 !ensure NIZ1 convection equal to zero on axis
 DPH(1) = 0.d0 !ensure NIZ2 convection equal to zero on axis (already 0 otherwise)
-
-if (jr_max < nrho-1) return
-
-do j=jna-2, jna-1
-    CHI(j) = CHI(jna-3)
-    CHE(j) = CHE(jna-3)
-    VIN(j) = VIN(jna-3)
-    XTB(j) = XTB(jna-3)
-enddo
-
-if (jna < nrho) then
-    do j=jna-1, nrho
-        CHI(j) = 0.d0
-        CHE(j) = 0.d0
-        VIN(j) = 0.d0
-        XTB(j) = 0.d0
-    enddo
-endif  
 
 return
 END subroutine tglf_interf
