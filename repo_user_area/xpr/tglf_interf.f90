@@ -70,7 +70,7 @@ use tglf_interface, only: nsm, tglf_zs_in, tglf_ns_in, tglf_mass_in, &
     tglf_rmaj_sa_in, tglf_q_sa_in, tglf_shat_sa_in, tglf_alpha_sa_in, &
     tglf_xwell_sa_in, tglf_theta0_sa_in, file_dump_local, &
     tglf_elec_eflux_out, tglf_ion_eflux_out, tglf_ion_mflux_out, &
-    tglf_elec_pflux_out, tglf_ion_pflux_out, tglf_ion_expwd_out
+    tglf_elec_pflux_out, tglf_ion_pflux_out, tglf_elec_expwd_out
     
 use tglf_pkg, only: get_eigenvalue_spectrum_out, get_ky_spectrum_out, &
     get_flux_spectrum_out
@@ -443,8 +443,8 @@ radial_loop: do jradial=1, n_radial
 
     rhostar2 = (rhos0/a0)**2
     drho_cs = drhodr**2*a0/1e2*rhostar2*cs00
-    drho_nt = drhodr**2*a0/1e2*rhostar2*N0*e00*T0/(1.e13*mpp)
-    nt_cs = 0.0016*N0/1.e13*T0/1.e3*cs00/(a0/1.e2)*rhostar2
+    drho_nt = drhodr*a0/1e2*rhostar2*N0*e00*T0/(1.e13*mpp)
+    nt_cs = 0.001602*N0/1.e13*T0/1.e3*cs00/(a0/1.e2)*rhostar2
 
 ! Share variables with tglf_run via module tglf_interface
 
@@ -501,7 +501,7 @@ radial_loop: do jradial=1, n_radial
     do jspec=1, tglf_ns_in-1
         ion_pflux(jspec, jradial) = tglf_ion_pflux_out(jspec)/drhodr *drho_cs  !ion particle flux
     enddo
-    exchi(jradial) = tglf_ion_expwd_out(1) * nt_cs                ! Equipartition
+    exchi(jradial) = tglf_elec_expwd_out * nt_cs                ! Equipartition
     do kyloop=1, tglf_nky_in
         gamma(kyloop) = get_eigenvalue_spectrum_out(1, kyloop, 1)
         omega(kyloop) = get_eigenvalue_spectrum_out(2, kyloop, 1)
