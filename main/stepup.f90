@@ -13,7 +13,6 @@ use status_inc, only: TE, TI, NE, NI, NIO, FP, defarr
 use outcmn_inc, only: CCOIL, CCOILO, VCOIL, MACHINE, TASK
 use plasma_state, only: plasma_up
 use debugger, only: markloc, flightsim, astra_stop
-use fs_coupling_variables, only: fs_dt_smlk
 
 implicit none
 

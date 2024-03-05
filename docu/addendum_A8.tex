@@ -490,7 +490,7 @@ G. Tardini and E.~Fable
 Addendum with changes and new features
 \vfill\rm\large\noindent
  \\
-April 2023
+February 2024
 \eject
 \thispagestyle{empty}
 \begin{center}\LARGE\bf\sf
@@ -542,29 +542,31 @@ Then the 2 layers are:
 1) a8code/
 
 2) a8code/repo\_user\_area/ \\
+"a8code" contains the source code directory "src/", in which for, feqis, spider, nbi are contained. It also contains the directory "main/", which has the main program workflow and a few lists of variables. The main ASTRA program is astra\_main.f90 and the workflow subroutine is stepup.f90, and text files containing the list of all the native variables of various types. 
 
-"a8code" contains the source code directory src/, in which for, feqis, spider, nbi are contained. 
+"a8code/repo\_user\_area" contains the working directories with the pre--installed formulas, subroutines, and example model and experimental files.
 
-"a8code/repo\_user\_area" contains the working directories with the pre--installed formulas, subroutines, and example model and experimental files. In addition, it contains the directories: "main" - main ASTRA program astra\_main.f90 and subroutine stepup.f90, and text files containing the list of all the native variables of various types. 
+The command "install.sh" will copy from "repo\_user\_area" to the main directory, all the sub--directories contained there. As such, the user should eventually back--up any changes done to the pre--installed files in sbr/ xpr/ fnc/ etc.
 
-The command "install.sh" will copy from "repo\_user\_area" to the main directory, all the sub--directories contained there. As such, the user should eventually back--up any changes done to the pre--installed files.
 The rationale behind this is that the copied directories like sbr/, fnc/, fml/, xpr/, ... can now include user--defined files, or the user can even modify the pre--installed ones, without affecting the repository layer.\\%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ----------------------------------------------------------------------------------\\
 {\bf Platform and libraries}
 Then install.sh command will copy also a directory called "exe/", inside which there are a few compilation files. \\
 In particular, "exe/astra\_rc" contains the detailed list of the needed libraries and their paths. \\
 It is good for the user to check once if these paths are correct. \\
-If the user does not have specific libraries that are listed, these can be left blank. However, the user may need to also remove some subroutines or change the makefile "exe/Makesub" and "exe/Makexpr", which contains links to code--specific libraries.\\
+The other two files which define the environment variables are exe/as\_exe and exe/Build. Check these ones in case the compilation returns errors. Note that, in absence of some libraries, one may need to comment out the xpr calls in exe/Build, or remove some subroutines from sbr/.\\
 ----------------------------------------------------------------------------------\\\\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 After the "install.sh" copy is done, the user can now run ASTRA using the new command line: \\
-{\bf exe/as\_exe -m (modelfile) -v (expfile) -s (starttime) -e (endtime) -dev (machinename) -tpause (pausetime) -f -b}
+{\bf exe/as\_exe -m (modelfile) -v (expfile) -s (starttime) -e (endtime) -dev (machinename) -tpause (pausetime) -f -b -i (template\_file)}
 
-Note that any of these arguments is optional and does not need to be inserted. In which case, the last used value will be adopted.
-
-The new argument "-f" launches ASTRA in "flight--simulator" mode, meaning it will crash if its not linked to the control system (whatever framework it maybe). 
-
-The argument "-dev" tells ASTRA which machine its running for configuration file purposes.
+Note that all of these arguments are optional and do not need to be inserted. In which case, the last used value will be adopted.\\
+- The new argument "-f" launches ASTRA in "flight--simulator" mode, meaning it will crash if its not linked to the control system (whatever framework it maybe). \\
+- The argument "-dev" tells ASTRA which machine its running for configuration file purposes. This is needed also for free--boundary modeling.\\
+- The argument "-b" has the same effect as in the previous versions (batch mode). 
+- The new argument "-i" calls a pre--parses which parses through "template\_file", which is a model file which has inside lines like:\\
+INCLUDE: filename \\
+and it replaces the text in "filename" in the place of the INCLUDE. This is useful if one wants to generate modelfiles from a template, but simply replacing text blocks in "filename" with its own selection. The option "-i" is new and may not work on a version which is not yet upgraded to have it.
 
 Once Astra is called, it will compile everything present in the source code and the user--defined directories sbr/ and fnc/ 
 
@@ -572,49 +574,101 @@ Once Astra is called, it will compile everything present in the source code and 
 \section{Changes in the model file syntax}
 A few changes have appeared in the way the model file syntax has to be given.
 
-(Not sure what to put here, but some syntax IS different).
+Here below the new rules are summarized:\\\\
+1) The functions (from "fnc") has to be given either as arrays (e.g. CARxx = QETOT), or as boundary integrals (e.g. CV1 = QETOTB). It does not work to call them as a function of RHO; \\
+2) All intrinsic arrays like TE, TI, NE, have to be defined as a function of minor radius, but only using AFX!. So for example, to have TE on axis in the plots: TE(AFX(0.)). To have TE at mid radius (mid minor radius): TE(AFX(0.5)); \\
+3) If an initial condition is given, e.g. NE = NEX, then the boundary condition will be automatically set as NEB = NEX(boundary position given in the EQ[] command). Only if NEB is explicitly defined, than it will be assigned in the way the user has defined it; \\
+4) A formula "fml" and the command GRAD cannot be used on the same line; \\
+ 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Equilibrium solvers}
 The variable {\bf IPEQL}, that can be defined in the equ/log/ file in the "Parameter" block, can now attain several values, which correspond to the following equilibrium options:\\\\
 "-2" * cylindrical analytical equilibrium;\\\\
-"-1" * take the metric coefficients from the experimental file. The parameters (profiles) that should be given are: SHX (shift), ELX (elon), TRX (tria), G33X (G33), IPOLX (IPOL), VRX (VR), SLATX (slat), G11X (G11), G22X (G22), DRODAX (droda);\\\\
+"-1" * take the metric coefficients from the experimental file. The parameters (profiles) that should be given are: SHX (shift), SHIVX (shiv), SQUAX (squarn), ELX (elon), TRX (tria), G33X (G33), IPOLX (IPOL), VRX (VR), SLATX (slat), G11X (G11), G22X (G22), DRODAX (droda);\\\\
+"-6" *  same as "-1", but takes them from a file called "input\_metric.dat", which has to be in the astra main directory, and contains the same quantity defined from 1:NA1 (so already interpolated on the ASTRA rhotor norm grid). The order is: shif, elon, tria, g33, ipol, vr, slat, g11, g22, droda, shiv, squarn;\\\\
 "0" * fixed guess and no equilibrium from outside;\\\\
 "1" * 3--moment equilibrium EMEQ;\\\\
 "2" * not used;\\\\
 "3" * not used;\\\\
 "4" * SPIDER prescribed boundary;\\\\
 "5" * FEQIS prescribed or free boundary;\\\\
+Note that options -1 and -6 are bypassed if flightsim = 1, in which case those quantities will have to arrive from external codes.
+Also note that SPIDER free boundary is not available anymore. 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Generate the machine configuration grid for FEQIS}
-In the main Astra directory, run the following command first:\\\\
-./Makegenerate \\\\
-and then run the program:\\\\
-./generate\_grids\_equil.exe \\\\
-when prompted which machines to generate, insert 0 or 1 depending on which machine the user wants to generate.
+The FEQIS Grad--Shafranov solver can do both prescribed and free--boundary mode. For free--boundary mode, one needs first to create the machine description file. This is stored in exp/cnf/ and is called "machine\_description\_out.(dev)" dove (dev) e' lo stesso nome dato nell'opzione -dev nella linea di comando di Astra.
+
+To generate this file, first prepare the input file in the directory exp/cnf/.
+The input file is called "(dev)\_description\_in.json". \\
+If it is there, then just run: green/greenMatrices.py. This will automatically create the output files needed by FEQIS.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{The namelist files}
 Astra now has a few namelist files to instruct some of the additional physics modules.
 In particular, in the "exp/nml/" directory, a namelist with the same name of the exp/ file, contains the following namelists:\\
-rabbit\_beam\_geo (RABBIT); partmix (NBI?); nbi\_par (NBI?); species (RABBIT); output\_settings (RABBIT); physics (RABBIT); numerics (RABBIT); nbinj\_par (NBI?); torbeam (TORBEAM); 
+rabbit\_beam\_geo (RABBIT); partmix (NBI?); nbi\_par (NBI?); species (RABBIT); output\_settings (RABBIT); physics (RABBIT); numerics (RABBIT); nbinj\_par (NBI?); torbeam (TORBEAM); \\
+It also contains equil\_settings (astra coupling to equilibrium);  spider (SPIDER); fenix (flight simulator physics models parameters);
 
-Morevoer, in the directory exp/equ/(dev)/, a namelist called "namelist\_astra.txt" contains the following namelists:\\
-equil\_settings (astra coupling to equilibrium);  spider (SPIDER); fenix (flight simulator physics models parameters);
-
-Finally, when running the free boundary solver FEQIS, in exp/equ/(dev)/, the following files are needed:
-
-data.dat (general grid info), coil.dat (active coil config file), blanbp.dat (first wall config file), blanbpc.dat (first wall config file), blanfw.dat (first wall config file), coilres.dat (active coil resistances), efonfit.dat (fit parameters for FEQIS inverse mode), limpnt.dat (limiter description), refit\_ef.dat (refit parameters FEQIS).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Coupling to FEQIS}
+To couple Astra to FEQIS, there needs to be a subroutine defined in sbr/, which an example is given in repo\_user\_area/sbr/eqctst.f90, and called in the model file, which defines all the parameters for FEQIS.
+In particular, the module to be used is:
+
+use astra2fbe\\
+Then, the following variable have to be assigned (default values are given). Note that below the variable "nequiv\_coils" has to be replaced with the actual number of equivalent coils, whereas "nconductors" is the total number of conductors (equivalent coils + passive elements):\\\\
+tau\_circuit\_feqis = tau ! time step to be used in the ciruit equations;\\
+tau\_gseq\_feqis    = tau ! time step to be used in the dPsi/dt term (explicit in the circuit equations). Notice that these 2 taus can be different if the GS solver is called less than the actual circuit equations (see below execute\_plasma variable);\\
+activate\_coil\_feqis(1:nequiv\_coils) = 1 ! if an index is set to 0, the coil is forced to 0 current; \\
+current\_limit\_feqis(1:nequiv\_coils, 1) =  1.e6 ! 1 is upper, 2 is lower; \\
+current\_limit\_feqis(1:nequiv\_coils, 2) = -1.e6 ! 1 is upper, 2 is lower; \\
+force\_coil(i,j) = 0. ! where it is 1, forces coil i,i to current of i,j; \\
+use\_reduce\_circuit = 0 ! run with reconnected circuits, does not reset the matrix; \\
+reconnect\_circuits = 0 ! this resets the circuit matrix, to change connections; \\
+n\_equivalence = 0 ! number of equivalent re-connections to be done;\\
+new\_equivalence = 0 !rules to recircuit. Example: $(/1,1,1,0,0,...0) \rightarrow$ the first 3 coils are re--combined into 1 equivalent coil. The matrix is long nequiv\_coils and the nr of rows is given by the value of new\_equivalence; \\
+resistance\_change = 0 ! this resets the circuit matrix, to change resistances (diagonals) \\
+new\_resistance=0 ! if given as a vector of length nequiv\_coils, change the finite values in the code resistance;\\
+raxis\_astra = RTOR + SHIFT ! initial guess for magnetic axis R;\\
+zaxis\_astra = UPDWN ! initial guess for magnetic axis Z;\\
+psi0\_astra = FP(1)  !initial guess for axis value of poloidal flux;\\
+psib\_astra = FP(NA1) ! same but for separatrix value\\
+n\_fourier\_restab\_boundary = 5 !nr of Fourier modes if Fourier refit mode is used (refit\_mode = 1);\\
+use\_limiter\_astra = 1   ! Use the limiter \\
+refit\_mode = 0   ! the following values are allowed: -1 * only 1 non--linear calculation, no convergence. 0 * no refit. 1 * refits only passive currents as Fourier harmonics. 2 * unused. 3 * refits all currents using sigma\_B, sigma\_axis, sigma\_coils(1:nconductors), and cur\_init(1:nconductors) as initial guess currents. 4 * finds the active coil currents from scratch, minimizes also global magnetic energy using sigma\_energy. 5 * finds active coil currents from scratch, between 2 time points, for which two files need to be given: dat/feqis\_time1\_file.dat and dat/feqis\_time2\_file.dat. Each file contains: jrho, rho, teta, rbndp, zbndp, raxp,zaxp,ipl, psigrid, pprim, ffprim from prescribed boundary, then Lext, t, Vloop. Minimized magnetic energy and enforces exact flux balance;\\
+sigma\_B = 1. ! Strength coefficient of boundary points in cost function;\\
+sigma\_axis = 50000. ! Strength coefficient of magnetic axis position in cost function;\\
+sigma\_coils(1:nconductors) = 1.e5 !strength coefficient for each individual conductor in the cost function;\\
+sigma\_energy = 1 !strength coefficient for all the coils for energy budget;\\
+solve\_fix = 0   ! if 0 * solve full fix boundary problem, >0 * N pass only;  \\
+execute\_plasma = 1   ! if 0 * only circuit equations, if 1 * solve plasma gseq too; \\
+n\_of\_newton\_iterations = 150 !maximum number of Newton iterations for initial convergence;\\
+dr\_factor\_init\_astra = 1. !factors of dr and dz for initial iterations; \\
+dz\_factor\_init\_astra = 1. \\
+fast\_mode = 0 ! if 1, it does only 1 non--linear iteration in the GS solver. Becomes much faster but also less accurate in time (needs to decrease time step then);\\
+cur\_init( 1:nequiv\_coils) = CCOIL(1:nequiv\_coils)/1.e3 ! initial conductor currents, where CCOIL comes from the exp file and it is in [kA], whereas cur\_init is in [A]; recommended to initialize it to 0 before assigning the equivalent coils. Also allowed is to assign the additional passive conductors. \\\\
+These declarations need to be given otherwise the free boundary code will crash.
+
+For refit\_mode = 5, the files can be created like this:\\\\
+open(32,file='dat/feqis\_time1\_file.dat') \\
+write(32,*) equil\_now\%coord\_sys\%jphi \\
+write(32,*) equil\_now\%coord\_sys\%position\%rmin \\
+write(32,*) equil\_now\%coord\_sys\%position\%teta2d \\
+write(32,*) equil\_now\%coord\_sys\%position\%r(nint(nequil),1:nint(mequil)) \\
+write(32,*) equil\_now\%coord\_sys\%position\%z(nint(nequil),1:nint(mequil)) \\
+write(32,*) rtor+shif(1),updwn,ipl \\
+write(32,*) equil\_now\%profiles\_1d\%psi,  equil\_now\%profiles\_1d\%pprime,equil\_now\%profiles\_1d\%ffprime \\
+write(32,*) LEXT, TIME, UPL(NA1) \\
+close(32)\\\\
+and similarly for file 2.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Additional routines for the flight simulator}
 Astra can be coupled to an external control framework using a generic C interface (developed by C. Wu at KIT, Germany). It can then be run in "flight simulator" mode adding the "-f" flag in the command line.
 
-The coupling routines are in src/for/, wrsdug.f90, rrsudg.f90, and shmrw.c. These are generic, but machine--dependent needs are specifically in wrsudg.f90 and rrsudg.f90.
-
-Additional physics files are in the FLIGHT\_SIMULATOR directory for common or specific machines.
+The coupling routines (not part of the nominal repository) must be in sbr/: wrsdug.f90, rrsudg.f90, and shmrw.c. These are generic, but machine--dependent needs are specifically in wrsudg.f90 and rrsudg.f90.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
