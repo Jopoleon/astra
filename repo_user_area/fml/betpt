@@ -2,5 +2,5 @@
 !  Fable May 2014
 ! betpl=4*pi*(ne*Te+ni*Ti)/Bpo**2
 
-BETPT = 6.4E-4*GP*(NE(J)*TE(J) + NI(J)*TI(J)) * (RTOR/(BTOR*ROC*ABS(MU(J) + .0001)))**2
+BETPT = 6.4E-4*GP*(NE(J)*TE(J) + NI(J)*TI(J)) * (RTOR/(BTOR*J*HRO*ABS(MU(J) + .0001)))**2
 

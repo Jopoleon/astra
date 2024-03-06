@@ -2,4 +2,4 @@
 !  Pereverzev 25.04.89
 ! betpl=4*pi*ne*Te/Bpo**2
 
-BETPL = 6.4E-4*GP*NE(J)*TE(J) * (RTOR/(BTOR*ROC*ABS(MU(J) + .0001)))**2
+BETPL = 6.4E-4*GP*NE(J)*TE(J) * (RTOR/(BTOR*J*HRO*ABS(MU(J) + .0001)))**2
