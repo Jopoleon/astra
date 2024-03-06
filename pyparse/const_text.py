@@ -659,6 +659,7 @@ QI(j) = QI(ND1)
 enddo
 endif
 PETOT=PE+PET*TE
+PITOT=PI+PIT*TI
 '''
 
     teold = \
