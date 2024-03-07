@@ -324,15 +324,6 @@ def neeqn(parse, assign_type=None):
             ne_txt += 'enddo\n'
 
         ne_txt += const_text.NEEQN.assigned
-        if 'SNN' in var_defined:
-            ne_txt += 'SNTOT(NA) = SNTOT(NA) + SNN(NA)*NE(NA)\n'
-        if ('QNB' in var_defined) and ('QNNB' not in var_defined) and \
-           ('NEB' not in var_defined) and rho_bnd is None:
-            ne_txt += 'QN(NA1) = QNB\n'
-        else:
-            ne_txt += 'QN(NA1) = QN(NA)\n'
-        ne_txt += 'GN(NA1) = QN(NA1)/SLAT(NA1)\n'
-        ne_txt += 'SNTOT(NA1) = SNTOT(NA)\n'
 
     elif assign_type[:2] == 'EQ':      
 # code_gen.CODE_GEN.ne_eq
@@ -346,15 +337,12 @@ def neeqn(parse, assign_type=None):
         ne_txt += bnd_text('NE', var_defined, parse, rho_bnd)
         ne_txt += const_text.NEEQN.eqn
 
-    ne_txt += 'do J=1, NA\n'
-    if assign_type[:2] != 'EQ':
-        ne_txt += 'QN(J) = G11(J)*(-YWA(J)*(NE(J+1) - NE(J))/HRO - 0.5*YWB(J)*(NE(J+1) + NE(J)))\n'
-
-    ne_txt += 'QN(J) = QN(J) + SLAT(J)*GNX(J)\n'
-    ne_txt += 'GN(J) = QN(J)/SLAT(J)\n'
-    if 'SNN' in var_defined:
-        ne_txt += 'SNTOT(J) = SNTOT(J) + SNN(J)*NE(J)\n'
-    ne_txt += 'enddo\n'
+        ne_txt += 'do J=1, NA\n'
+        ne_txt += 'QN(J) = QN(J) + SLAT(J)*GNX(J)\n'
+        ne_txt += 'GN(J) = QN(J)/SLAT(J)\n'
+        if 'SNN' in var_defined:
+            ne_txt += 'SNTOT(J) = SNTOT(J) + SNN(J)*NE(J)\n'
+        ne_txt += 'enddo\n'
 
     if ('QNB' in var_defined) and ('QNNB' not in var_defined) and \
        ('NEB' not in var_defined) and rho_bnd is None:
@@ -362,7 +350,7 @@ def neeqn(parse, assign_type=None):
     else:
         ne_txt += 'QN(NA1) = QN(NA)\n'
     ne_txt += 'GN(NA1) = QN(NA1)/SLAT(NA1)\n'
-    ne_txt += 'SNTOT(NA1) = SNTOT(NA)\n'
+    ne_txt += 'SNTOT(NA1) = SNTOT(NA)\n\n'
 
     return ne_txt
 
