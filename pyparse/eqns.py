@@ -47,7 +47,7 @@ def pre_eqn(parse, key, assign_type=None):
         for varb in config.bnd_d[key]:
             if varb in var_defined:
                 logger.warning('Boundary condition for "%s" ignored in interpretive mode', key)
-                var_defined.remove(varb)
+#                var_defined.remove(varb)
 
     pre_txt = ''
     if assign_type in ('AS', 'Missing'):
@@ -121,6 +121,7 @@ def bnd_init(var, var_defined, assign_type, parse):
         bnd_txt += '%sO(ND1: NA1) = %s(ND1: NA1)\n' %(var, var)
         bnd_txt += 'YWC(4) = 1.\n'
     elif bnd_count == 1:
+        print(bnd_count, varb_list[0], var_defined)
         if varb_list[0] in var_defined: # NEB
             bnd_txt += '%s(ND1) = %s' %(var, pa.LINE2FOR(parse.right_hand_d[varb_list[0]], parse) )
             bnd_txt += '%sO(ND1: NA1) = %s(ND1: NA1)\n' %(var, var)
