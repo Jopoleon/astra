@@ -7,10 +7,9 @@ logger.setLevel(logging.INFO)
 
 # Input:
 #    var_defined: list of all variables assigned in the equ file
-#             (left hand side of any '=' statement)
-#             "if 'XN' in var_defined" corresponds to "IF(NBEG(LXN).GT.0)"
+#        (left hand side of any '=' statement)
 #
-#    ass_type/ITYPE: None/-1, 'AS'/0, 'EQ'/1, 'EQ[j,rho]'/1, 'FU'/?
+#    ass_type: 'Missing', 'AS', 'EQ', 'EQ[j,rho]', 'FU'?
 
 
 def none_in(list_in, var_list):
@@ -28,28 +27,116 @@ def count_in(list_in, var_list):
     return count
 
 
-def bnd_text(var, var_defined, parse, rho_bnd):
-    '''Writing boundary condition for TE, TI, NE, F* equations'''
+def pre_eqn(parse, key, assign_type=None):
+
+    right_hand = parse.right_hand_d
+    if assign_type is None:
+        assign_type = parse.assign_d[key]
+
+    var_defined = parse.var_defined
+
+    if none_in(config.coeff_d[key] + config.flux_d[key], var_defined):
+        for varb in config.bnd_d[key]:
+            if varb in var_defined:
+                logger.warning('Equation for "%s" requested, but not defined', key)
+                logger.warning('Boundary condition ignored:')
+                logger.warning('%s = %s', varb, right_hand[var])
+                var_defined.remove(varb)
+
+    if assign_type in ('Missing', 'AS'):
+        for varb in config.bnd_d[key]:
+            if varb in var_defined:
+                logger.warning('Boundary condition for "%s" ignored in interpretive mode', key)
+                var_defined.remove(varb)
+
+    pre_txt = ''
+    if assign_type in ('AS', 'Missing'):
+        pre_txt += '! **** %s assignment\n' %config.labels_d[key]
+        pre_txt += 'call markloc("%s assignment")\n' %key
+    if assign_type[:2] == 'EQ':
+        pre_txt += '! **** %s equation\n' %config.labels_d[key]
+        pre_txt += 'call markloc("%s equation")\n' %key
+
+    pre_txt += 'do J=1, NA1\n'
+    for var in config.coeff_d[key]:
+        pre_txt += pa.apptmp(var, parse)
+    for var in config.flux_d[key]:
+        if var in var_defined:
+            pre_txt += pa.apptmp(var, parse)
+        else:
+            pre_txt += '%s(J) = 0.\n' %var
+    if key != 'UPAR':
+        flux = config.flux_d[key][0]
+        pre_txt += '%sTOT(J) = %s(J)\n' %(flux, flux)
+        pre_txt += 'enddo\n'
+
+    return pre_txt, var_defined
+
+
+def set_rho(ass_type):
+
+    rho_val = None
+    if '[' in ass_type:
+        tmp = ass_type.split('[')[1].split(']')[0]
+        if ',' in tmp:
+            tmp2 = tmp.split(',')
+            jprof = int(tmp2[0])
+            if jprof == 1:
+                rho_val = 'RFAN(%s)' %tmp2[1]
+            elif jprof == 2:
+                rho_val = '%s*ROC' %tmp2[1]
+            else:
+                logger.error('First argument in ...:EQ[ , ] can be only either 1 or 2')
+                logger.error('Please amend your equ file')
+                sys.exit()
+        else:
+            rho_val = 'RFA(%s)' %tmp
+    return rho_val
+
+
+def bnd_init(var, var_defined, assign_type, parse):
+    '''Writing boundary/initial condition for TE, TI, NE, F*, UPAR equations'''
 
     bnd_txt = ''
+    rho_bnd = set_rho(assign_type)
+    if rho_bnd is None:
+        bnd_txt += 'ND1 = NA1\n'
+    else:
+        l2f = pa.LINE2FOR(rho_bnd, parse)
+        bnd_txt += 'ND1 = NODE(%s)\n' %l2f.strip()
+    if var in var_defined:
+        bnd_txt += 'do j=ND1, NA1\n'
+        bnd_txt += pa.apptmp(var, parse)
+        bnd_txt += 'enddo\n'
+    if var == 'UPAR':
+        varx = 'VTORX'
+    else:
+        varx = '%sX' %var
     varb_list = config.bnd_d[var]
     bnd_count = count_in(varb_list, var_defined)
     if bnd_count == 0: # No boundary condition is set
         logger.warning('Boundary condition for %s is not given' %var)
-        if rho_bnd is None:
-            logger.warning('  It is set to %sX(t0)' %var)
-        elif var not in var_defined:
-            logger.warning('  Using %sX(t0) at the shifted boundary' %var)
-        else:
-            logger.warning('  Using %sX(t) at the shifted boundary' %var)
+        if var not in var_defined:
+            bnd_txt += '%s(ND1: NA1) = %s(ND1: NA1)\n' %(var, varx)
         bnd_txt += '%sO(ND1: NA1) = %s(ND1: NA1)\n' %(var, var)
         bnd_txt += 'YWC(4) = 1.\n'
     elif bnd_count == 1:
-        if varb_list[0] in var_defined:
+        if varb_list[0] in var_defined: # NEB
             bnd_txt += '%s(ND1) = %s' %(var, pa.LINE2FOR(parse.right_hand_d[varb_list[0]], parse) )
             bnd_txt += '%sO(ND1: NA1) = %s(ND1: NA1)\n' %(var, var)
             bnd_txt += 'YWC(4) = 1.\n'
-        else:
+            if var not in var_defined: # Linear extrapolation towards rho=1
+                bnd_txt += '''
+if (ND1 < NA) then
+YA = (%s(NA1) - %s(ND1))/(ROC - RHO(ND1))
+YB = (%s(ND1)*ROC - %s(NA1)*RHO(ND1))/(ROC - RHO(ND1))
+do j=ND1+1, NA
+%s(j) = YB + RHO(j)*YA
+enddo
+endif
+'''  %(var, var, var, var, var)
+
+        else: # QNB
             flux = varb_list[1][:-1]     # flux is 'QN', 'QE',...
             if varb_list[1] in var_defined:
                 bnd_txt += '%s(ND1) = %s' %(flux, pa.LINE2FOR(parse.right_hand_d[varb_list[1]], parse) )
@@ -63,27 +150,7 @@ def bnd_text(var, var_defined, parse, rho_bnd):
     return bnd_txt
 
 
-def write_equ_bnd(prof, rhob):
-
-    lin_int  = '''
-if (ND1 < NA) then
-YA = (%s(NA1) - %s(ND1))/(ROC - %s)
-YB = (%s(ND1)*ROC - %s(NA1)*%s)/(ROC - %s)
-do j=ND1+1, NA
-%s(j) = YB + RHO(j)*YA
-enddo
-endif
-'''  %(prof, prof, rhob, prof, prof, rhob, rhob, prof)
-
-    return lin_int
-
-
-def cuasn(parse, itype, neq=1):
-    '''
-itype:
-   -1: CU profile prescribed
-    0: MU profile prescribed
-    '''
+def cuasn(parse, bc='CU', neq=1):
 
     cuas_txt = const_text.CUAS.header
  
@@ -118,7 +185,7 @@ itype:
     else:
         cuas_txt += 'FP(1) = FPO(1) + UPL(1)*TAU\n'
 
-    if itype == 0: # MU
+    if bc == 'MU': # MU
         cuas_txt += 'do j=1, NA1\n'
         cuas_txt += pa.apptmp('MU', parse)
         cuas_txt += const_text.CUAS.mu
@@ -173,8 +240,8 @@ def cuas_uloop(parse, neq=1):
     cuasu_txt += \
 '''YWB(J) = YF*CC(J)*YB/IPOL(J)**2
 YWD(J) = YWA(J)*YD/(IPOL(J)**3 * G33(J))
+enddo ! j (radial loop)
 '''
-    cuasu_txt += 'enddo ! j (radial loop)\n'
 
     cuasu_txt += const_text.CUAS.uloop_2
     if 'MV' in parse.var_defined:
@@ -209,65 +276,14 @@ def cubs(var_defined):
     return cubs_line
 
 
-def pre_eqn(parse, key, assign_type=None):
-
-    right_hand = parse.right_hand_d
-    if assign_type is None:
-        assign_type = parse.assign_d[key]
-
-    var_defined = parse.var_defined
-
-    if none_in(config.coeff_d[key] + config.flux_d[key], var_defined):
-        for var in config.bnd_d[key]:
-            if var in var_defined:
-                logger.warning('Equation for "%s" requested, but not defined', key)
-                logger.warning('Boundary condition ignored:')
-                logger.warning('%s = %s', var, right_hand[var])
-                var_defined.remove(var)
-        if assign_type == 'Missing':
-            return None, var_defined
-
-    pre_txt = ''
-    if assign_type in ('AS', 'Missing'):
-        pre_txt += '! **** %s assignment\n' %config.labels_d[key]
-        pre_txt += 'call markloc("%s assignment")\n' %key
-    if assign_type[:2] == 'EQ':
-        pre_txt += '! **** %s equation\n' %config.labels_d[key]
-        pre_txt += 'call markloc("%s equation")\n' %key
-
-    pre_txt += 'do J=1, NA1\n'
-
-    for var in config.coeff_d[key]:
-        pre_txt += pa.apptmp(var, parse)
-
-    for var in config.flux_d[key]:
-        if var in var_defined:
-            pre_txt += pa.apptmp(var, parse)
-        else:
-            pre_txt += '%s(J) = 0.\n' %var
-
-    if key != 'UPAR':
-        flux = config.flux_d[key][0]
-        pre_txt += '%sTOT(J) = %s(J)\n' %(flux, flux) # misplaced?
-        pre_txt += 'enddo\n'
-        pre_txt += 'YWC(1) = HRO\n'
-
-    return pre_txt, var_defined
-
-
 def neeqn(parse, assign_type=None):
 
-    key = 'NE'
     if assign_type is None:
-        assign_type = parse.assign_d[key]
+        assign_type = parse.assign_d['NE']
 
-    short = config.short_d[key]
-
-    ne_txt, var_defined = pre_eqn(parse, key, assign_type=assign_type)
-    if ne_txt is None:
-        return ''
-
-# Previous neeqn
+    ne_txt, var_defined = pre_eqn(parse, 'NE', assign_type=assign_type)
+    if assign_type == 'Missing':
+        return ne_txt
 
     ne_txt += 'do J=1, NA\n'
     ne_txt += 'YWA(J) = 0.'
@@ -289,66 +305,21 @@ def neeqn(parse, assign_type=None):
     ne_txt += '\n'
     ne_txt += 'enddo\n'
 
-# End previous neeqn
-
-    if assign_type != 'Missing':
-        if key not in var_defined:
-            logger.warning('Initial condition for %s is not defined', key)
-            logger.warning('  Using %s=%sX(TSTART)', key, key)
-
-    rho_bnd = pa.set_rho(assign_type)
-    if rho_bnd is None:
-        ne_txt += 'ND1 = NA1\n'
-    else:
-        l2f = pa.LINE2FOR(rho_bnd, parse)
-        ne_txt += 'RO%s = %s' %(short, l2f)
-        ne_txt += 'ND1 = NODE(RO%s)\n' %short
-
-    ne_txt += 'NA1%s = ND1\n' %short
-    ne_txt += 'ND = ND1 - 1\n'
-
     if assign_type == 'AS':
-# code_gen.CODE_GEN.ne_as
-
-        if key in var_defined:
-            ne_txt += 'if (ND1 < NA1) then\n'
-            if 'NEB' in var_defined:
-                ne_txt += 'do j=ND1, NA\n'
-            else:
-                ne_txt += 'do j=ND1, NA1\n'
-            ne_txt += pa.apptmp(key, parse)
-            ne_txt += 'enddo\n'
-            ne_txt += 'endif\n'
-            ne_txt += 'do j=1, ND1\n'
-            ne_txt += pa.apptmp(key, parse)
-            ne_txt += 'enddo\n'
-
+        ne_txt += 'do j=1, NA1\n'
+        if 'NE' in var_defined:
+            ne_txt += pa.apptmp('NE', parse)
+        else:
+            logger.warning('Missing NE assignment, assuming NEX(t)')
+            ne_txt += 'NE(J) = NEX(J)\n'
+        ne_txt += 'enddo\n'
         ne_txt += const_text.NEEQN.assigned
-
-    elif assign_type[:2] == 'EQ':      
-# code_gen.CODE_GEN.ne_eq
-        if key in var_defined:
-            ne_txt += 'if (ND1 < NA1) then\n'
-            ne_txt += 'do j=ND1, NA1\n'
-            ne_txt += pa.apptmp(key, parse)
-            ne_txt += 'enddo\n'
-            ne_txt += 'endif\n'
-
-        ne_txt += bnd_text('NE', var_defined, parse, rho_bnd)
+    elif assign_type[:2] == 'EQ':
+        ne_txt += bnd_init('NE', var_defined, assign_type, parse)
         ne_txt += const_text.NEEQN.eqn
 
-        ne_txt += 'do J=1, NA\n'
-        ne_txt += 'QN(J) = QN(J) + SLAT(J)*GNX(J)\n'
-        ne_txt += 'GN(J) = QN(J)/SLAT(J)\n'
-        if 'SNN' in var_defined:
-            ne_txt += 'SNTOT(J) = SNTOT(J) + SNN(J)*NE(J)\n'
-        ne_txt += 'enddo\n'
-
-    if ('QNB' in var_defined) and ('QNNB' not in var_defined) and \
-       ('NEB' not in var_defined) and rho_bnd is None:
-        ne_txt += 'QN(NA1) = QNB\n'
-    else:
-        ne_txt += 'QN(NA1) = QN(NA)\n'
+    if 'SNN' in var_defined:
+        ne_txt += 'SNTOT(1: NA) = SNTOT(1: NA) + SNN(1: NA)*NE(1: NA)\n'
     ne_txt += 'GN(NA1) = QN(NA1)/SLAT(NA1)\n'
     ne_txt += 'SNTOT(NA1) = SNTOT(NA)\n\n'
 
@@ -357,17 +328,12 @@ def neeqn(parse, assign_type=None):
 
 def tieqn(parse, assign_type=None):
 
-    key = 'TI'
     if assign_type is None:
-        assign_type = parse.assign_d[key]
+        assign_type = parse.assign_d['TI']
 
-    short = config.short_d[key]
-
-# Previous tieqn
-
-    ti_txt, var_defined = pre_eqn(parse, key, assign_type=assign_type)
-    if ti_txt is None:
-        return ''
+    ti_txt, var_defined = pre_eqn(parse, 'TI', assign_type=assign_type)
+    if assign_type == 'Missing':
+        return ti_txt
 
     ti_txt += 'do J=1, NA\n'
     ti_txt += 'YWA(J) = 0.'
@@ -420,63 +386,17 @@ def tieqn(parse, assign_type=None):
     ti_txt += 'YWC(J) = PI(j)\n'
     ti_txt += 'enddo\n'
 
-# End previous tieqn
-
-    if (assign_type != 'Missing') and (key not in var_defined):
-        logger.warning('Initial condition for %s is not defined', key)
-        logger.warning('  Using %s=%sX(TSTART)', key, key)
-
-    rho_bnd = pa.set_rho(assign_type)
-    if rho_bnd is None:
-        ti_txt += 'ND1 = NA1\n'
-    else:
-        l2f = pa.LINE2FOR(rho_bnd, parse)
-        ti_txt += 'RO%s = %s' %(short, l2f)
-        ti_txt += 'ND1 = NODE(RO%s)\n' %short
-
-    ti_txt += 'NA1%s = ND1\n' %short
-    ti_txt += 'ND = ND1 - 1\n'
-
     if assign_type == 'AS':
-# code_gen.CODE_GEN.t_as
-
-        if key in var_defined:
-            ti_txt += 'if (ND1 < NA1) then\n'
-            if 'TIB' in var_defined:
-                ti_txt += 'do j=ND1, NA\n'
-            else:
-                ti_txt += 'do j=ND1, NA1\n'
-            ti_txt += pa.apptmp(key, parse)
-            ti_txt += 'enddo\n'
-            ti_txt += 'endif\n'
-            ti_txt += 'do j=1, ND1\n'
-            ti_txt += pa.apptmp(key, parse)
-            ti_txt += 'enddo\n'
-    
-        ti_txt += const_text.TIEQN.assigned
-        if ('QIB' in var_defined) and ('QITB' not in var_defined) and \
-           ('TIB' not in var_defined) and rho_bnd is None:
-            ti_txt += 'QIB\n'
+        ti_txt += 'do j=1, NA1\n'
+        if 'TI' in var_defined:
+            ti_txt += pa.apptmp('TI', parse)
         else:
-            ti_txt += 'QI(NA)\n'
-
+            logger.warning('Missing TI assignment, assuming TIX(t)')
+            ti_txt += 'TI(J) = TIX(J)\n'
+        ti_txt += 'enddo\n'
+        ti_txt += const_text.TIEQN.assigned
     elif assign_type[:2] == 'EQ':
-# code_gen.CODE_GEN.t_eq
-
-        ti_txt += 'QI(1)  = RHO(ND1) - RHO(ND)\n'
-        ti_txt += 'YWC(1) = RHO(ND1) - RHO(ND)\n'
-        if key in var_defined:
-            ti_txt += 'if (ND1 < NA1) then\n'
-            if 'TIB' in var_defined:
-                ti_txt += 'do j=ND1, NA\n'
-            else:
-                ti_txt += 'do j=ND1, NA1\n' # NA1, not NA
-            ti_txt += pa.apptmp(key, parse)
-            ti_txt += 'enddo\n'
-            ti_txt += 'endif\n'
-
-        ti_txt += bnd_text('TI', var_defined, parse, rho_bnd)
-
+        ti_txt += bnd_init('TI', var_defined, assign_type, parse)
         if 'DVI' in var_defined:
             ti_txt += 'YWD(ND1) = 1.\n'
         else:
@@ -485,7 +405,6 @@ def tieqn(parse, assign_type=None):
             ti_txt += 'DSI(ND1) = 1.\n'
         else:
             ti_txt += 'DSI(ND1) = 0.\n'
-
         ti_txt += const_text.TIEQN.eqn
 
     return ti_txt
@@ -493,17 +412,12 @@ def tieqn(parse, assign_type=None):
 
 def teeqn(parse, assign_type=None):
 
-    key = 'TE'
     if assign_type is None:
-        assign_type = parse.assign_d[key]
+        assign_type = parse.assign_d['TE']
 
-    short = config.short_d[key]
-
-    te_txt, var_defined = pre_eqn(parse, key, assign_type=assign_type)
-    if te_txt is None:
-        return ''
-
-# Previous teeqn
+    te_txt, var_defined = pre_eqn(parse, 'TE', assign_type=assign_type)
+    if assign_type == 'Missing':
+        return te_txt
 
     te_txt += 'do J=1, NA\n'
     te_txt += 'YWA(J) = 0.'
@@ -558,63 +472,17 @@ def teeqn(parse, assign_type=None):
     te_txt += 'YWC(J) = PE(j)\n'
     te_txt += 'enddo\n'
 
-# End previous teeqn
-
-    if (assign_type != 'Missing') and (key not in var_defined):
-        logger.warning('Initial condition for %s is not defined', key)
-        logger.warning('  Using %s=%sX(TSTART)', key, key)
-
-    rho_bnd = pa.set_rho(assign_type)
-    if rho_bnd is None:
-        te_txt += 'ND1 = NA1\n'
-    else:
-        l2f = pa.LINE2FOR(rho_bnd, parse)
-        te_txt += 'RO%s = %s' %(short, l2f)
-        te_txt += 'ND1 = NODE(RO%s)\n' %short
-
-    te_txt += 'NA1%s = ND1\n' %short
-    te_txt += 'ND = ND1-1\n'
-
     if assign_type == 'AS':
-# code_gen.CODE_GEN.te_as
-
-        if key in var_defined:
-            te_txt += 'if (ND1 < NA1) then\n'
-            if 'TEB' in var_defined:
-                te_txt += 'do j=ND1, NA\n'
-            else:
-                te_txt += 'do j=ND1, NA1\n'
-            te_txt += pa.apptmp(key, parse)
-            te_txt += 'enddo\n'
-            te_txt += 'endif\n'
-            te_txt += 'do j=1, ND1\n'
-            te_txt += pa.apptmp(key, parse)
-            te_txt += 'enddo\n'
-
-        te_txt += const_text.TEEQN.assigned
-        if ('QEB' in var_defined) and ('QETB' not in var_defined) and \
-           ('TEB' not in var_defined) and rho_bnd is None:
-            te_txt += 'QEB\n'
+        te_txt += 'do j=1, NA1\n'
+        if 'TE' in var_defined:
+            te_txt += pa.apptmp('TE', parse)
         else:
-            te_txt += 'QE(NA)\n'
-
+            logger.warning('Missing TE assignment, assuming TEX(t)')
+            te_txt += 'TE(J) = TEX(J)\n'
+        te_txt += 'enddo\n'
+        te_txt += const_text.TEEQN.assigned
     elif assign_type[:2] == 'EQ':
-# code_gen.CODE_GEN.t_eq
-
-        te_txt += 'QE(1)  = RHO(ND1) - RHO(ND)\n'
-        te_txt += 'YWC(1) = RHO(ND1) - RHO(ND)\n'
-        if key in var_defined:
-            te_txt += 'if (ND1 < NA1) then\n'
-            if 'TEB' in var_defined:
-                te_txt += 'do j=ND1, NA\n'
-            else:
-                te_txt += 'do j=ND1, NA1\n' # NA1, not NA
-            te_txt += pa.apptmp(key, parse)
-            te_txt += 'enddo\n'
-            te_txt += 'endif\n'
-
-        te_txt += bnd_text('TE', var_defined, parse, rho_bnd)
-
+        te_txt += bnd_init('TE', var_defined, assign_type, parse)
         if 'DVE' in var_defined:
             te_txt += 'YWD(ND1) = 1.\n'
         else:
@@ -623,7 +491,6 @@ def teeqn(parse, assign_type=None):
             te_txt += 'DSE(ND1) = 1.\n'
         else:
             te_txt += 'DSE(ND1) = 0.\n'
-
         te_txt += const_text.TEEQN.eqn
 
     return te_txt
@@ -701,6 +568,11 @@ call CUOFP
 
 def fjeqn(parse, jeq, assign_type=None):
 
+    if assign_type is None:
+        assign_type = parse.assign_d[key]
+    if assign_type == 'Missing': # is actually prevented ahead
+        return ''
+
     key  = 'F%d'   %jeq
     ro   = 'RO%d'  %jeq
     df   = 'D%s'   %key
@@ -715,16 +587,7 @@ def fjeqn(parse, jeq, assign_type=None):
     qfb  = 'Q%sB'  %key
     qffb = 'QF%sB' %key
 
-    if assign_type is None:
-        assign_type = parse.assign_d[key]
-
-    short = config.short_d[key]
-
     fj_txt, var_defined = pre_eqn(parse, key, assign_type=assign_type)
-    if fj_txt is None:
-        return ''
-
-# Previous fjeqn
 
     fj_txt += 'do J=1, NA1\n'
     fj_txt += 'YWA(J) = 0.'
@@ -745,59 +608,22 @@ def fjeqn(parse, jeq, assign_type=None):
     fj_txt += lin2 + '\n'
     fj_txt += 'enddo\n'
 
-# end previous fjeqn
-
-    if assign_type != 'Missing':
-
-        if  key not in var_defined:
-            logger.warning('Initial condition for %s is not defined', key)
-            logger.warning('  Using %s=%sX(TSTART)', key, key)
-
-        rho_bnd = pa.set_rho(assign_type)
-        if rho_bnd is None:
-            fj_txt += 'ND1 = NA1\n'
-        else:
-            l2f = pa.LINE2FOR(rho_bnd, parse)
-            fj_txt += '%s = %s' %(ro, l2f)
-            fj_txt += 'ND1 = NODE(%s)\n' %ro
-
-        fj_txt += 'NA1%s = ND1\n' %short
-        fj_txt += 'ND = ND1 - 1\n'
-
-        if assign_type[:2] == 'EQ':
-            fj_txt += 'YWC(1) = HRO\n'
-
+    if assign_type == 'AS':
         if key in var_defined:
-            fj_txt += 'if (ND1 < NA1) then\n'
-            if assign_type == 'AS' and varb in var_defined:
-                fj_txt += 'do j=ND1, NA\n'
-            else:
-                fj_txt += 'do j=ND1, NA1\n'
+            fj_txt += 'do j=1, NA1\n'
             fj_txt += pa.apptmp(key, parse)
             fj_txt += 'enddo\n'
-            fj_txt += 'endif\n'
-
-        if assign_type == 'AS':
-            fj_txt += 'do j=1, ND1\n'
-            fj_txt += pa.apptmp(key, parse)
-            fj_txt += 'enddo\n'
-        else:
-            fj_txt += bnd_text(key, var_defined, parse, rho_bnd)
-            fj_txt += const_text.FJEQN.eqn
-            fj_txt += \
-'call RUNEQ_EF(YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), F%dO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), SFF%d(1: NA1),SF%d(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, YWC(1:7), F%d(1: NA1), QF%d(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1))\n' %(jeq, jeq, jeq, jeq, jeq)
-
-    fj_txt += 'do j=1, NA-1\n'
-
-    if assign_type in ('Missing', 'AS'):
-        fj_txt += '%s(J) = -G11(J)*(YWA(J)*(%s(J+1) - %s(J))/HRO + 0.5*YWB(J)*(%s(J+1) + %s(J)))\n'      %(qf, key, key, key, key)
+        fj_txt += 'do j=1, NA\n'
+        fj_txt += '%s(J) = -G11(J)*(YWA(J)*(%s(J+1) - %s(J))/HRO + 0.5*YWB(J)*(%s(J+1) + %s(J)))\n' %(qf, key, key, key, key)
         if gf in var_defined:
             fj_txt += '%s(J) = %s(J) + SLAT(J)*%s(J)\n' %(qf, qf, gf)
-
-    fj_txt += 'enddo\n'
-
-    if gf not in var_defined:
-        fj_txt += '%s(NA1) = %s(NA1)/SLAT(NA1)\n' %(gf, qf)
+        fj_txt += 'enddo\n'
+    else:
+        fj_txt += bnd_init(key, var_defined, assign_type, parse)
+        fj_txt += const_text.FJEQN.eqn
+        fj_txt += 'NA1%d = ND1\n' %jeq
+        fj_txt += \
+'call RUNEQ_EF(YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), F%dO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), SFF%d(1: NA1),SF%d(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, YWC(1:7), F%d(1: NA1), QF%d(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1))\n' %(jeq, jeq, jeq, jeq, jeq)
 
     if sff in var_defined:
         fj_txt += '%sTOT(NA1) = %sTOT(NA1) + %s(NA1)*%s(NA1)\n' %(sf, sf, sff, key)
@@ -817,15 +643,12 @@ def fjeqn(parse, jeq, assign_type=None):
 
 def upeqn(parse, assign_type=None):
 
-    key = 'UPAR'
     if assign_type is None:
-        assign_type = parse.assign_d[key]
-
-    up_txt, var_defined = pre_eqn(parse, key, assign_type=assign_type)
-    if up_txt is None:
+        assign_type = parse.assign_d['UPAR']
+    if assign_type == 'Missing': # never occurs, prevented ahe
         return ''
 
-# Previous UPEQN
+    up_txt, var_defined = pre_eqn(parse, 'UPAR', assign_type=assign_type)
 
     if 'XUPAR' in var_defined:
         up_txt += 'YWA(J) = XUPAR(J)*MRHO(J)/IPOL(J)*RTOR\n'
@@ -858,108 +681,22 @@ def upeqn(parse, assign_type=None):
     up_txt += 'UPS2(j) = SGNEO(J)*RTOR*BTOR*IPOL(j)*(1. - BDB02(j)*G41(j)/IPOL(j)**0.2)\n'
     up_txt += 'enddo\n'
 
-    if assign_type == 'Missing':
-        up_txt += const_text.UPEQN.assigned
-#        if 'TTRQB' in var_defined and 'UPARB' not in var_defined and 'ROU' not in var_defined:
-#            up_txt += 'TTRQB\n'
-#        else:
-#            up_txt += 'QU(NA)\n'
-        return up_txt
-
-# From here, assign_type is either AS or EQ, not Missing
-
-    rho_bnd = pa.set_rho(assign_type)
-    if rho_bnd is None:
-        up_txt += 'ND1 = NA1\n'
-    else:
-        l2f = pa.LINE2FOR(rho_bnd, parse)
-        up_txt += 'ROU = %s' %l2f
-        up_txt += 'ND1 = NODE(ROU)\n'
-
-    if 'UPAR' not in var_defined:
-        logger.warning('   Initial condition for UPAR is not defined\n' + \
-                       '      UPAR=VTORX(TSTART) will be used')
-
-    if assign_type == 'AS' and 'UPARB' in var_defined:
-        up_txt += 'ND1 = NA1\n'
-        up_txt += pa.apptmp('UPARB', parse)
-
-#    if 'ROU' not in var_defined:
-#        up_txt += 'ND1 = NA1\n'
-#    else:
-#        up_txt += pa.apptmp('ROU', parse)
-#        up_txt += 'ND1 = NODE(ROU)\n'
-
-    up_txt += 'NA1U = ND1\n'
-    up_txt += 'ND = ND1 - 1\n'
-
-    if assign_type[:2] == 'EQ':
-        up_txt += 'QU(1)  = RHO(ND1) - RHO(ND)\n'
-        up_txt += 'YWC(1) = RHO(ND1) - RHO(ND)\n'
-
-    if 'UPAR' in var_defined:
-        up_txt += 'if (ND1 < NA1) then\n'
-        if assign_type == 'AS' and 'UPARB' in var_defined:
-            up_txt += 'do j=ND1, NA\n'
-        else:
-            up_txt += 'do j=ND1, NA1\n'
-        up_txt += pa.apptmp('UPAR', parse)
-        up_txt += 'enddo\n'
-        up_txt += 'endif\n'
-
     if assign_type == 'AS':
-        up_txt += 'do j=1, ND1\n'
-        up_txt += pa.apptmp('UPAR', parse)
+        up_txt += 'do j=1, NA1\n'
+        if 'UPAR' in var_defined:
+            up_txt += pa.apptmp('UPAR', parse)
+        else:
+            up_txt += 'UPAR(J) = VTORX(J)\n'
         up_txt += 'enddo\n'
         up_txt += const_text.UPEQN.assigned
-#        if 'TTRQB' in var_defined and 'UPARB' not in var_defined and 'ROU' not in var_defined:
-#            up_txt += 'TTRQB\n'
-#        else:
-#            up_txt += 'QU(NA)\n'
-        return up_txt
-
-# From here, assign_type = EQ
-# Line 1835 in model1.f90
-    if 'TTRQB' not in var_defined and not 'UPARB' not in var_defined:
-        logger.warning('Boundary condition for UPAR is not set')
-        if 'ROU' not in var_defined:
-            logger.warning('It is set to VTORX(t0)')
-        else:
-            if 'UPAR' in var_defined:
-                logger.warning('VTORX(t) will be used at the shifted boundary')
-            else:
-                logger.warning('VTORX(t0) will be used at the shifted boundary')
-
-    if 'UPARB' in var_defined:
-        up_txt += 'UPAR(ND1) = %s' %pa.LINE2FOR(parse.right_hand_d['UPARB'], parse)
-        if assign_type[:2] == 'EQ':
-            up_txt += const_text.UPEQN.uparo
-    elif 'TTRQB' in var_defined:
-        up_txt += \
-'''QU(2)  = TTRQB
-YWC(2) = TTRQB
-QU(3)  = 0.
-QU(4)  = -1.
-YWC(3) = 0.
-YWC(4) = -1.
-'''
     else:
-        if assign_type[:2] == 'EQ':
-            up_txt += const_text.UPEQN.uparo
-
-    if assign_type[:2] == 'EQ':
+        up_txt += bnd_init('UPAR', var_defined, assign_type, parse)
         up_txt += const_text.UPEQN.eqn
-    else:
-        up_txt += const_text.UPEQN.assigned
-        if 'TTRQB' in var_defined and 'UPARB' not in var_defined and 'ROU' not in var_defined:
-            up_txt += 'QU(NA1) = TTRQB\n'
-        else:
-            up_txt += 'QU(NA1) = QU(NA)\n'
 
     return up_txt
 
 
-def tetieqn(parse, itype=3):
+def tetieqn(parse):
 
     var_defined = parse.var_defined
 
@@ -990,7 +727,7 @@ def tetieqn(parse, itype=3):
     txt = 'YWA1(J) = 0.'
     if 'HE' in var_defined:
         txt += ' + HE(J)'
-    if 'HN' in var_defined and itype > 1:
+    if 'HN' in var_defined:
         txt += ' + GN2E*HN(J)'
     if 'DVE' in var_defined:
         txt += ' + DVE(J)'
@@ -998,7 +735,7 @@ def tetieqn(parse, itype=3):
     teti += 'YWA1(J) = YWA1(J)*(NE(J+1) + NE(J))*0.5\n'
 
     LB = 1
-    if itype > 1 and 'DN' in var_defined:
+    if 'DN' in var_defined:
         if 'DE' in var_defined:
             teti += 'YWB1(J) = (DE(J) + GN2E*DN(J))\n'
         else:
@@ -1010,7 +747,7 @@ def tetieqn(parse, itype=3):
             LB = 0
 
     LC = 1
-    if itype > 1 and 'XN' in var_defined:
+    if 'XN' in var_defined:
         if 'XE' in var_defined:
             teti += 'YWC(J) = (XE(J) + GN2E*XN(J))*(NE(J+1) + NE(J))/(TI(J+1) + TI(J))\n'
         else:
@@ -1024,7 +761,7 @@ def tetieqn(parse, itype=3):
     txt = 'YWD(J) = 0.'
     if 'CE' in var_defined:
         txt += ' + CE(J)'
-    if 'CN' in var_defined and itype > 1:
+    if 'CN' in var_defined:
         txt += '+ GN2E*CN(J)'
     teti += txt + '\n'
     teti += 'YWD(J) = YWD(J)*(NE(J+1) + NE(J))*0.5 + GN2E*GNX(J)*SLAT(J)/G11(J)\n'
@@ -1053,29 +790,7 @@ def tetieqn(parse, itype=3):
     if 'TE' not in var_defined:
         logger.warning('Initial condition for TE is not defined\nTE=TEX(TSTART) will be used')
 
-    rho_bnd = pa.set_rho(asstyp)
-    if rho_bnd is None:
-        teti += 'ND1 = NA1\n'
-    else:
-        l2f = pa.LINE2FOR(rho_bnd, parse)
-        teti += 'ROE = %s' %(l2f)
-        teti += 'ND1 = NODE(ROE)\n'
-    teti += 'NA1E = ND1\n'
-    teti += 'ND = ND1 - 1\n'
-
-    teti += 'QE( 1) = RHO(ND1)-RHO(ND)\n'
-    teti += 'YWC(1) = RHO(ND1)-RHO(ND)\n' # model1.f90, line 2315
-
-    if 'TE' in var_defined:
-        teti += 'if (ND1 < NA1) then\n'
-        teti += 'do j=ND1, NA1\n'
-        teti += pa.apptmp('TE', parse)
-        teti += 'enddo\n'
-        teti += 'endif\n'
-
-# From here, itype is /= 0
-
-    teti += bnd_text('TE', var_defined, parse, rho_bnd).replace('YWC', 'YWC1')
+    teti += bnd_init('TE', var_defined, assign_type, parse).replace('YWC', 'YWC1')
 
     if 'DVE' in var_defined:
         teti += 'YWD(ND1) = 1.\n'
@@ -1117,7 +832,7 @@ def tetieqn(parse, itype=3):
     txt = 'YWA2(J) = 0.'
     if 'XI' in var_defined:
         txt += ' + XI(J)'
-    if 'XN' in var_defined and itype > 1:
+    if 'XN' in var_defined:
         txt += ' + GN2I*XN(J)'
     if 'DVI' in var_defined:
         txt += ' + DVI(J)'
@@ -1125,7 +840,7 @@ def tetieqn(parse, itype=3):
     teti += 'YWA2(J) = YWA2(J)*(NI(J+1) + NI(J))*0.5\n'
 
     LB = 1
-    if itype > 1 and 'DN' in var_defined:
+    if 'DN' in var_defined:
         if 'DI' in var_defined:
             teti += 'YWB2(J) = (DI(J) + GN2I*DN(J))\n'
         else:
@@ -1137,7 +852,7 @@ def tetieqn(parse, itype=3):
             LB = 0
 
     LC = 1
-    if itype > 1 and 'HN' in var_defined:
+    if 'HN' in var_defined:
         if 'HI' in var_defined:
             teti += 'YWC(J) = (HI(J) + GN2I*HN(J))*(NI(J+1) + NI(J))/(TE(J+1) + TE(J))\n'
         else:
@@ -1151,7 +866,7 @@ def tetieqn(parse, itype=3):
     txt = 'YWD(J) = 2.*GN2I*GNX(J)*SLAT(J)/G11(J)/(NE(J+1) + NE(J))'
     if 'CI' in var_defined:
         txt += ' + CI(J)'
-    if 'CN' in var_defined and itype > 1:
+    if 'CN' in var_defined:
         txt += '+ GN2I*CN(J)'
     teti += txt + '\n'
     teti += 'YWD(J) = YWD(J)*(NI(J+1) + NI(J))*0.5\n'
@@ -1181,26 +896,7 @@ def tetieqn(parse, itype=3):
         logger.warning('Initial condition for TI is not defined')
         logger.warning('Using TI=TIX(TSTART)')
 
-    rho_bnd = pa.set_rho(asstyp)
-    if rho_bnd is None:
-        teti += 'ND1 = NA1\n'
-    else:
-        l2f = pa.LINE2FOR(rho_bnd, parse)
-        teti += 'ROI = %s' %l2f
-        teti += 'ND1 = NODE(ROI)\n'
-    teti += 'NA1I = ND1\n'
-    teti += 'ND = ND1 - 1\n' # 2567
-    teti += 'QI(1)  = RHO(ND1) - RHO(ND)\n'
-    teti += 'YWC(1) = RHO(ND1) - RHO(ND)\n'
-        
-    if 'TI' in var_defined:
-        teti += 'if (ND1 < NA1) then\n'
-        teti += 'do j=ND1, NA1\n'
-        teti += pa.apptmp('TI', parse)
-        teti += 'enddo\n'
-        teti += 'endif\n'
-
-    teti += bnd_text('TI', var_defined, parse, rho_bnd).replace('YWC', 'YWC2')
+    teti += bnd_init('TI', var_defined, assign_type, parse).replace('YWC', 'YWC2')
 
     if 'DVI' in var_defined:
         teti += 'YWD(ND1) = 1.\n'

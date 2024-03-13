@@ -94,27 +94,6 @@ def add_line_break(line_in, llen=68, line_break='\n'):
     return line_out
 
 
-def set_rho(ass_type):
-
-    rho_val = None
-    if '[' in ass_type:
-        tmp = ass_type.split('[')[1].split(']')[0]
-        if ',' in tmp:
-            tmp2 = tmp.split(',')
-            jprof = int(tmp2[0])
-            if jprof == 1:
-                rho_val = 'RFAN(%s)' %tmp2[1]
-            elif jprof == 2:
-                rho_val = '%s*ROC' %tmp2[1]
-            else:
-                logger.error('First argument in ...:EQ[ , ] can be only either 1 or 2')
-                logger.error('Please amend your equ file')
-                sys.exit()
-        else:
-            rho_val = 'RFA(%s)' %tmp
-    return rho_val
-
-
 def rec_split(line_in, syms='+|-|*|/|(|)|,|='):
     '''Regex split with several delimiters'''
 
@@ -280,8 +259,8 @@ def write_declar_fml(fml_files):
 
     dummy_flt = []
     dummy_int = []
-    for fml in fml_files:
-        ffml = '%s/%s' %(config.fml_dir, fml.lower())
+    for formula in fml_files:
+        ffml = '%s/%s' %(config.fml_dir, formula.lower())
         with open(ffml, 'r') as f:
             for lin in f.readlines():
                 line = lin.strip().upper()
@@ -312,7 +291,7 @@ def write_declar_fml(fml_files):
                 elif new_var[0] in ('I', 'J', 'K', 'L', 'M', 'N'):
                     dummy_int.append(new_var)
                 else:
-                    logger.warning('Variable name %s in file fml/%s is not allowed, skipped!' %(new_var, fml))
+                    logger.warning('Variable name %s in file fml/%s is not allowed, skipped!' %(new_var, formula))
 
     declar_txt  = write_declar(fml_files)
     if dummy_int:

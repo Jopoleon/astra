@@ -20,9 +20,9 @@ class EQU_PARSER:
         self.fml_list = []
         self.fnc_list = []
 
-        for fml in sorted(os.listdir(config.fml_dir)):
-            if os.path.isfile('%s/%s' %(config.fml_dir, fml)) and ('~' not in fml) and ('.' not in fml):
-                self.fml_list.append(fml.upper())
+        for formula in sorted(os.listdir(config.fml_dir)):
+            if os.path.isfile('%s/%s' %(config.fml_dir, formula)) and ('~' not in formula) and ('.' not in formula):
+                self.fml_list.append(formula.upper())
         for fnc in sorted(os.listdir(config.fnc_dir)):
             if os.path.isfile('%s/%s' %(config.fnc_dir, fnc)) and (fnc[-1] in ('f','0','F','c', 'C')):
                 tmp = fnc.split('.')[0]
@@ -34,9 +34,9 @@ class EQU_PARSER:
         if len(self.fnc_list) > config.NFML:
             logger.error('Error, total amount of functions > %d', config.NFML)
 
-        for fml in self.fnc_list:
-            if fml+'R' in self.fml_list:
-                logger.error('Error! %s is both fml and fnc', fml)
+        for formula in self.fnc_list:
+            if formula+'R' in self.fml_list:
+                logger.error('Error! %s is both fml and fnc', formula)
                 sys.exit()
 
 #--------------------------------------

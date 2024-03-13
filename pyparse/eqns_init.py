@@ -43,38 +43,25 @@ def eqns_init(parse):
         init_txt += const_text.SUBPROC.sbp_init
         init_txt += 'call markloc("inikids")\n'
         init_txt += 'call inikids(NSBP, 64, LISTSB)\n'
-    eqns_txt += 'call markloc("eqns.inc")\n'
-    init_txt += 'call markloc("init.inc")\n'
+    eqns_txt += 'call markloc("eqns")\n'
+    init_txt += 'call markloc("init")\n'
     str_out = 'NITOT = NITOT + 1\n'
     eqns_txt += str_out
     init_txt += str_out
 
 # If Fj, UPAR missing, do not fall back to any default, just skip
 
-    ne_as = eqns.neeqn(parse, assign_type='Missing')
-    init_txt += ne_as
-    if parse.assign_d['NE'] == 'Missing':
-        eqns_txt += ne_as
-
-    te_as = eqns.teeqn(parse, assign_type='Missing')
-    init_txt += te_as
-    if parse.assign_d['TE'] == 'Missing':
-        eqns_txt += te_as
-
-    ti_as = eqns.tieqn(parse, assign_type='Missing')
-    init_txt += ti_as
-    if parse.assign_d['TI'] == 'Missing':
-        eqns_txt += ti_as
+    init_txt += eqns.neeqn(parse, assign_type='Missing')
+    init_txt += eqns.teeqn(parse, assign_type='Missing')
+    init_txt += eqns.tieqn(parse, assign_type='Missing')
 
     if 'CU' in parse.var_defined:
-        cu_as = eqns.cuasn(parse, itype=-1)
+        cu_as = eqns.cuasn(parse, bc='CU')
     elif 'MU' in parse.var_defined:
-        cu_as = eqns.cuasn(parse, itype=0)
+        cu_as = eqns.cuasn(parse, bc='MU')
     else:
         cu_as = eqns.cuas_uloop(parse)
     init_txt += cu_as
-    if parse.assign_d['CU'] == 'Missing':
-        eqns_txt += cu_as
 
 # Subroutines
 
@@ -95,19 +82,16 @@ def eqns_init(parse):
         if parse.assign_d[fj] != 'Missing':
             eqns_txt += eqns.fjeqn(parse, jf, assign_type=parse.assign_d[fj])
 
-    if parse.assign_d['NE'] != 'Missing':
-        eqns_txt += eqns.neeqn(parse, assign_type=parse.assign_d['NE'])
-        if config.checkeqn:
-            import iondens_ass
-            eqns_txt += iondens_ass.NIAS.iondensassign
+    eqns_txt += eqns.neeqn(parse, assign_type=parse.assign_d['NE'])
+    if config.checkeqn:
+        import iondens_ass
+        eqns_txt += iondens_ass.NIAS.iondensassign
 
     if 'implicit' in parse.assign_d['TE'] or 'implicit' in parse.assign_d['TI']:
         eqns_txt += eqns.tetieqn(parse)
     else:
-        if parse.assign_d['TE'] != 'Missing':
-            eqns_txt += eqns.teeqn(parse, assign_type=parse.assign_d['TE'])
-        if parse.assign_d['TI'] != 'Missing':
-            eqns_txt += eqns.tieqn(parse, assign_type=parse.assign_d['TI'])
+        eqns_txt += eqns.teeqn(parse, assign_type=parse.assign_d['TE'])
+        eqns_txt += eqns.tieqn(parse, assign_type=parse.assign_d['TI'])
 
     if parse.assign_d['UPAR'] != 'Missing':
         eqns_txt += eqns.upeqn(parse, assign_type=parse.assign_d['UPAR'])
@@ -115,12 +99,7 @@ def eqns_init(parse):
     if parse.assign_d['CU'][:2] == 'EQ':
         eqns_txt += eqns.cueqn(parse)
     else:
-        if 'CU' in parse.var_defined:
-            eqns_txt += eqns.cuasn(parse, -1)
-        elif 'MU' in parse.var_defined:
-            eqns_txt += eqns.cuasn(parse, 0)
-        else:
-             eqns_txt += eqns.cuas_uloop(parse)
+        eqns_txt += cu_as
 
 # Closing statements
 

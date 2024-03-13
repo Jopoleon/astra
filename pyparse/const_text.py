@@ -145,7 +145,7 @@ enddo ! j (radial loop)
 '''
 
     uloop_1 = \
-'''do  j=1, NA1
+'''do j=1, NA1
 FPO(j) = FV(j) + 0.2*GP*RTOR*IPL*(RHO(j)/ROC)**2
 enddo
 do JCALL=1, 10
@@ -341,7 +341,6 @@ class CUEQ:
     ipl = \
 """
 ! Prescribed plasma current
-YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 2.
@@ -353,7 +352,6 @@ bc_type_for_fp = 1
 if (ITFBP /= 0.0 .and. ITFBE < TIME) then
 if (ibcpsi_fb >= 0) then
 if (ITFBP < 0.0 .and. ibcpsi_fb >= 2.) then
-YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 2.
@@ -364,7 +362,6 @@ bc_type_for_fp = 3
 endif
 endif
 if (ibcpsi_fb <= 1) then
-YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 2.
@@ -381,7 +378,6 @@ endif
 """
 ! Prescribed loop voltage:
 FP(NA1) = FPO(NA1) + TAU*UEXT
-YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 1.
@@ -389,7 +385,6 @@ bc_type_for_fp = 2
 if (ITFBP /= 0.0 .and. ITFBE < TIME) then
 if (ibcpsi_fb > 0) then
 if (ITFBP < 0.0 .and. ibcpsi_fb >= 2.) then
-YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 2.
@@ -400,7 +395,6 @@ bc_type_for_fp = 3
 endif
 endif
 if (ibcpsi_fb <= 1) then
-YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 1.
@@ -418,7 +412,6 @@ PSPLEX = LEXT/ROC*5.*IPOL(NA1)*G22(NA)/GP2/RTOR
 endif
 PSPLEX = LEXT/ROC*5.*IPOL(NA1)*G22(NA)/GP2/RTOR
 PSIEXT = PSIEXT + TAU*UEXT
-YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 2.
@@ -429,7 +422,6 @@ bc_type_for_fp = 3
 if (ITFBP /= 0.0 .and. ITFBE < TIME) then
 if (ibcpsi_fb > 0) then
 if (ITFBP < 0.0 .and. ibcpsi_fb >= 2.) then
-YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 2.
@@ -440,7 +432,6 @@ bc_type_for_fp = 3
 endif
 endif
 if (ibcpsi_fb <= 1) then
-YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 1.
@@ -483,6 +474,7 @@ class TEEQN:
 
     eqn = \
 """
+QE(1) = HRO
 do j=1, NA1
 YWH(j) = 1.
 YWR(j) = 0.
@@ -504,19 +496,23 @@ call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), TEO(1: NA
 do j=1, NA1
 te(j) = max(te(j), 0.001)
 enddo
+NA1E = ND1
 """
 
     assigned = \
 '''do j=1, NA
 QE(J) = -G11(J)*(YWA(J)*(TE(J+1) - TE(J))/HRO + 0.5*YWB(J)*(TE(J+1) + TE(J)))*0.0016
 enddo
-QE(NA1) = '''
+QE(NA1) = QE(NA)
+NA1E = NA1
+'''
 
 
 class TIEQN:
 
     eqn = \
 """
+QI(1)  = HRO
 do j=1, NA1
 YWH(j) = 1.
 YWR(j) = 0.
@@ -538,13 +534,16 @@ call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), TIO(1: NA
 do j=1, NA1
 ti(j) = max(ti(j), 0.001)
 enddo
+NA1I = ND1
 """
 
     assigned = \
 '''do J=1, NA
 QI(J) = -G11(J)*(YWA(J)*(TI(J+1) - TI(J))/HRO + 0.5*YWB(J)*(TI(J+1) + TI(J)))*0.0016
 enddo
-QI(NA1) = '''
+QI(NA1) = QI(NA)
+NA1I = NA1
+'''
 
 
 class NEEQN:
@@ -567,6 +566,11 @@ RABDOT = abs(ADCMPF)*RBDOT
 BABDOT = abs(ADCMPF)*BBDOT
 
 call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), NEO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), SNN(1: NA1), SN(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, YWC(1: 7), NE(1: NA1), QN(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1) )
+do J=1, NA
+QN(J) = QN(J) + SLAT(J)*GNX(J)
+GN(J) = QN(J)/SLAT(J)
+enddo
+NA1N = ND1
 """
 
     assigned = \
@@ -574,15 +578,17 @@ call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), NEO(1: NA
 do J=1, NA
 QN(J) = G11(J)*(-YWA(J)*(NE(J+1) - NE(J))/HRO - 0.5*YWB(J)*(NE(J+1)+NE(J))) + SLAT(J)*GNX(J)
 GN(J) = QN(J)/SLAT(J)
-SNTOT(J) = SNTOT(J) + SNN(J)*NE(J)
 enddo
+QN(NA1) = QN(NA)
+NA1N = NA1
 """
 
 
 class UPEQN:
 
     eqn = \
-'''YWD(ND1) = 0.
+'''QU(1) = HRO
+YWD(ND1) = 0.
 do j=1, NA1
 YWH(j) = 1.
 YWD(j)  = TTRQI(j)
@@ -615,12 +621,14 @@ BABDOT = (abs(ADCMPF))*BBDOT
 call RUNEQ_EF(YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), UPARO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWD(1: NA1), TTRQ(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, YWC(1:7), UPAR(1: NA1), QU(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1))
 
 MPHIT = 0.
+NA1U = ND1
 '''
 
     assigned = \
 '''do j=1, NA
 QU(J) = -G11(J)*(YWA(J)*(UPAR(J+1) - UPAR(J))/HRO + 0.5*YWB(J)*(UPAR(J+1) + UPAR(J)))*0.0016
 enddo
+QU(NA1) = QU(NA)
 '''
 
     uparo = \
@@ -633,7 +641,11 @@ YWC(4) = 1.
 class TETIEQN:
 
     eqn = \
-'''do j=1, NA1
+'''
+QE(1)  = HRO
+NA1E = ND1
+
+do j=1, NA1
 YWH(j) = 1.
 YWGN(j) = VR(j)**(5./3.)
 YWGO(j) = VRO(j)**(5./3.)
@@ -651,7 +663,8 @@ BABDOT = (abs(ADCMPF))*BBDOT
 '''
 
     runeq = \
-'''call RUNEQTIMP_EF(YWGN(1:NA1), 3./2.*NE(1:NA1), 3./2.*NI(1:NA1), YWGO(1:NA1), 3./2.*NEO(1:NA1), 3./2.*NIO(1:NA1), TEO(1:NA1), TIO(1:NA1), YWN1B(1:NA1), YWN2B(1:NA1), YWW1B(1:NA1), YWW2B(1:NA1), YVR(1:NA1), YWM(1:NA1), G11(1:NA1)/625, YWA1(1:NA1), YWA2(1:NA1), YWB1(1:NA1), YWB2(1:NA1), YWR(1:NA1), YWR(1:NA1), 625*PET(1:NA1), 625*PIT(1:NA1), 625*PETOT(1:NA1), 625*PITOT(1:NA1), 0.0*YWR(1:NA1), 0.0*YWR(1:NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1:NA1), imethod, YWC1(1:NA1), YWC2(1:NA1), TE(1:NA1), TI(1:NA1), QE(1:NA1), QI(1:NA1), ADCMPF)
+'''NA1I = ND1
+call RUNEQTIMP_EF(YWGN(1:NA1), 3./2.*NE(1:NA1), 3./2.*NI(1:NA1), YWGO(1:NA1), 3./2.*NEO(1:NA1), 3./2.*NIO(1:NA1), TEO(1:NA1), TIO(1:NA1), YWN1B(1:NA1), YWN2B(1:NA1), YWW1B(1:NA1), YWW2B(1:NA1), YVR(1:NA1), YWM(1:NA1), G11(1:NA1)/625, YWA1(1:NA1), YWA2(1:NA1), YWB1(1:NA1), YWB2(1:NA1), YWR(1:NA1), YWR(1:NA1), 625*PET(1:NA1), 625*PIT(1:NA1), 625*PETOT(1:NA1), 625*PITOT(1:NA1), 0.0*YWR(1:NA1), 0.0*YWR(1:NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1:NA1), imethod, YWC1(1:NA1), YWC2(1:NA1), TE(1:NA1), TI(1:NA1), QE(1:NA1), QI(1:NA1), ADCMPF)
 if (ND1 < NA1) then
 do j=ND1+1, NA1
 QE(j) = QE(ND1)
@@ -737,7 +750,8 @@ call markloc('timout.tmp')
 class FJEQN:
 
     eqn = \
-'''do j=1, NA1
+'''
+do j=1, NA1
 YWHN(j) = 1.
 YWHO(j) = 1.
 YWGN(j) = VR(j)
@@ -788,7 +802,6 @@ enddo
 
     prescribed_ipl = \
 '''! Prescribed plasma current:
-YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 2.
@@ -804,7 +817,6 @@ if (ITFBP /= 0.0 .and. ITFBE < TIME) then
 if (ibcpsi_fb > 0) then
 !case implicit
 if (ITFBP < 0.0 .and. ibcpsi_fb >= 2.) then
-YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 2.
@@ -815,14 +827,12 @@ bc_type_for_fp = 3
 endif
 endif
 if (ibcpsi_fb <= 1) then
-YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 2.
 YWC(5) = 1.
 YWC(6) = -1.
-YWC(7) = 1./G22(NA)*IPL*RTOR/IPOL(NA1)
-YWC(7) = HRO*0.4*GP*YWC(7)
+YWC(7) = HRO*0.4*GP/G22(NA)*IPL*RTOR/IPOL(NA1)
 bc_type_for_fp = 1
 endif
 endif
@@ -831,7 +841,6 @@ endif
     prescribed_uloop = \
 '''! Prescribed loop voltage:
 FP(NA1) = FPO(NA1) + TAU*UEXT
-YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 1.
@@ -843,7 +852,6 @@ if (ITFBP /= 0.0 .and. ITFBE < TIME) then
 if (ibcpsi_fb > 0) then
 !case implicit
 if (ITFBP < 0.0 .and. ibcpsi_fb >= 2.) then
-YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 2.
@@ -854,7 +862,6 @@ bc_type_for_fp = 3
 endif
 endif
 if (ibcpsi_fb <=  1) then
-YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 1.
@@ -871,7 +878,6 @@ PSPLEX = LEXT/ROC*5.*IPOL(NA1)*G22(NA)/GP2/RTOR
 endif
 PSPLEX = LEXT/ROC*5.*IPOL(NA1)*G22(NA)/GP2/RTOR
 PSIEXT = PSIEXT + TAU*UEXT
-YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 2.
@@ -886,7 +892,6 @@ if (ITFBP /= 0.0 .and. ITFBE < TIME) then
 if (ibcpsi_fb > 0) then
 ! case implicit
 if (ITFBP < 0.0 .and. ibcpsi_fb >= 2.) then
-YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 2.
@@ -897,7 +902,6 @@ bc_type_for_fp = 3
 endif
 endif
 if (ibcpsi_fb <= 1) then
-YWC(1) = HRO
 YWC(2) = 0.0
 YWC(3) = 0.0
 YWC(4) = 1.

@@ -14,7 +14,6 @@ subroutine RUNEQ_EF(GN, HN, GO, HO, YO, N, W, V, M, G11, A, B, R, S, P, &
 !   while A, B, R, G11 are on shifted grid
 !      dx, dt, x (main grid, 1:Ngrid), should be RHO, imethod
 !      C: boundary conditions on y or on Q  
-!  C(1) = HRO
 !  C(4) < 0 if (yb isn't set) .and. (QB is set)
 !   then C(2)=QB, otherwise, if C(4)>0, use yb = y(Ngrid)
 !   In the case C(4) < 0, solves up to Ngrid
