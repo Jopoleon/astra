@@ -77,7 +77,8 @@ type type_global_param  !
     real(DP) :: psiaxis=-9.0D40       ! /global_param/psiaxis - psi at mag axis [Wb]
     real(DP) :: psplex=-9.0D40       ! /global_param/psplex - integral at plasma boundary [?]
     real(DP) :: Vloop=-9.0D40       ! /global_param/Vloop - loop voltage at plasma boundary [V]
-    real(DP) :: li3=-9.0D40       ! /global_param/li3 - l_i defined as in ITER li3
+    real(DP) :: li3=-9.0D40       ! /global_param/li3 - l_i defined as in ITER li3: 2 V <Bp^2>_volavg / (R0*(mu0 Ip)^2)
+    real(DP) :: li_aug=-9.0D40       ! /global_param/li_aug - l_i defined as in AUG:  s^2 /(mu0*Ip)^2 * <Bp^2>_volavg = li3 * s^2 R0 / (2V), with s the boundary perimeter.
     real(DP) :: betpol=-9.0D40       ! /global_param/betpol - beta poloidal
     real(DP) :: wkin=-9.0D40       ! /global_param/wkin - pressure energy
     real(DP) :: bpkin=-9.0D40       ! /global_param/bpkin - poloidal energy
