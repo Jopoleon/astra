@@ -115,8 +115,8 @@ class CUAS:
 call markloc("CU adjustment")
 YB = 0.4*GP
 YC = YB*RTOR/BTOR
-YD = -0.8*GP*GP*RTOR
-YA = 2./(HRO**2*YD)
+YD = -0.8*GP**2 * RTOR
+YA = 2./(HRO**2 * YD)
 '''
 
     mv1 = \
@@ -150,10 +150,14 @@ FPO(j) = FV(j) + 0.2*GP*RTOR*IPL*(RHO(j)/ROC)**2
 enddo
 do JCALL=1, 10
 YF = 1.E3
+do j=1, NA1
 '''
 
     uloop_2 = \
-'''FP(NA) = 0.4*GP*HRO*RTOR/(G22(NA)*IPOL(NA1))
+'''YWB(J) = YF*CC(J)*YB/IPOL(J)**2
+YWD(J) = YWA(J)*YD/(IPOL(J)**3 * G33(J))
+enddo
+FP(NA) = 0.4*GP*HRO*RTOR/(G22(NA)*IPOL(NA1))
 FP(NA1) = (HRO - 0.5*HRO)*ROC*CC(NA1)/RTOR/IPOL(NA1)/TAU
 FP(NA-1) = 1. + FP(NA)*FP(NA1)
 '''
@@ -194,12 +198,6 @@ enddo
 UPL(NA1)  = UPL(NA-2)
 ULON(NA1) = ULON(NA)
 call CUOFP
-'''
-
-    cubs = \
-'''if (j == NA1) then
-CUBS(NA1) = CUBS(NA) + (CUBS(NA) - CUBS(NA-1))*HRO/HRO
-else
 '''
 
     beta = \

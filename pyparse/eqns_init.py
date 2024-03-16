@@ -50,10 +50,9 @@ def eqns_init(parse):
     init_txt += str_out
 
 # If Fj, UPAR missing, do not fall back to any default, just skip
-
-    init_txt += eqns.neeqn(parse, assign_type='Missing')
-    init_txt += eqns.teeqn(parse, assign_type='Missing')
-    init_txt += eqns.tieqn(parse, assign_type='Missing')
+    for lbl in ('NE', 'TE', 'TI'):
+        lbl_init, _ = eqns.pre_eqn(parse, lbl, assign_type='Missing')
+        init_txt += lbl_init
 
     if 'CU' in parse.var_defined:
         cu_as = eqns.cuasn(parse, bc='CU')
@@ -80,9 +79,9 @@ def eqns_init(parse):
     for jf in range(10):
         fj = 'F%d' %jf
         if parse.assign_d[fj] != 'Missing':
-            eqns_txt += eqns.fjeqn(parse, jf, assign_type=parse.assign_d[fj])
+            eqns_txt += eqns.fjeqn(parse, jf)
 
-    eqns_txt += eqns.neeqn(parse, assign_type=parse.assign_d['NE'])
+    eqns_txt += eqns.neeqn(parse)
     if config.checkeqn:
         import iondens_ass
         eqns_txt += iondens_ass.NIAS.iondensassign
@@ -90,11 +89,11 @@ def eqns_init(parse):
     if 'implicit' in parse.assign_d['TE'] or 'implicit' in parse.assign_d['TI']:
         eqns_txt += eqns.tetieqn(parse)
     else:
-        eqns_txt += eqns.teeqn(parse, assign_type=parse.assign_d['TE'])
-        eqns_txt += eqns.tieqn(parse, assign_type=parse.assign_d['TI'])
+        eqns_txt += eqns.teeqn(parse)
+        eqns_txt += eqns.tieqn(parse)
 
     if parse.assign_d['UPAR'] != 'Missing':
-        eqns_txt += eqns.upeqn(parse, assign_type=parse.assign_d['UPAR'])
+        eqns_txt += eqns.upeqn(parse)
 
     if parse.assign_d['CU'][:2] == 'EQ':
         eqns_txt += eqns.cueqn(parse)
