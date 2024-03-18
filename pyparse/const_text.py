@@ -2,7 +2,7 @@ pol_flux = \
 '''call EXTRAP(XRHO(1:NA1), FP(1:NA1), 0.d0, 1, PSIAX, 1, NA1)
 PSIBO = FP(NA1)
 FP_NORM(1:NA1) = (FP(1:NA1) - PSIAX)/(PSIBO - PSIAX)
-rho_pol(1:NA1) = SQRT(FP_NORM)
+rho_pol(1:NA1) = SQRT(FP_NORM(1: NA1))
 '''
 
 
