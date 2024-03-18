@@ -10,8 +10,8 @@ subroutine SETARX(ICALL)
 !--------------------------------------------------------------------
 
 use parameter_inc, only: NRD, NRDX, NTARR
-use const_inc, only: TIME, BTOR, GP, AB, ABC, ROC, VOLUME, NA1, NAB
-use status_inc, only: AMETR, RHO, FP, VOLUM, EXT
+use const_inc, only: TIME, BTOR, GP, AB, ABC, ROC, VOLUME, NA1, NAB, PSIAX
+use status_inc, only: AMETR, RHO, FP, VOLUM, EXT, rho_pol
 use numerical_tools, only: qinterp, sortab
 use outcmn_inc, only: jbeg_arrx, IFDFAX, XAXES, &
     DATAX, NPTM, TOUTX
@@ -148,7 +148,7 @@ var_loop: do jtarr=1, NTARR
 
         CASE(3)
             NP1 = NA1
-            XA(: NP1) = sqrt((FP(: NP1) - FP(1))/(FP(NP1) - FP(1)))
+            XA(: NP1) = rho_pol(: NP1)
             call qinterp(XA, AMETR, NP1, x_grid(1: n_grid), XAXES(1: n_grid, KN), n_grid)
 
         CASE(4)
@@ -199,7 +199,7 @@ var_loop: do jtarr=1, NTARR
 
         CASE(13)
             NP1 = NA1
-            XA(: NP1) = sqrt((FP(: NP1) - FP(1))/(FP(NP1) - FP(1)))
+            XA(: NP1) = rho_pol(: NP1)
             do N11=n_grid, 1, -1
                 if (x_grid(N11) <= dxr) EXIT
             enddo
@@ -221,7 +221,7 @@ var_loop: do jtarr=1, NTARR
 
         CASE(15)
             NP1 = NA1
-            XA(: NP1) = (FP(: NP1) - FP(1))/(FP(j3) - FP(NP1))
+            XA(: NP1) = (FP(: NP1) - PSIAX)/(FP(j3) - FP(NP1))
             do N11=n_grid, 1, -1
                 if (x_grid(N11) <= dxr) EXIT
             enddo

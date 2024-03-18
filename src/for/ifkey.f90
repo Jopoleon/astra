@@ -444,6 +444,7 @@ CASE(66) ! 'B'
             else
                 J = NROUT
             endif
+            if (JJ == 0) JJ = 1
             active_tab(MOD10) = (J - 1)/JJ
         endif
     endif

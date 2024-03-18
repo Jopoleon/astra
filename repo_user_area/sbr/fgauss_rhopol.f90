@@ -12,20 +12,19 @@ subroutine FGAUSS_RHOPOL(rhop_center, rhop_width, gauss)
 
 use parameter_inc, only: NRD
 use const_inc, only: NA1, ROC, HRO
-use status_inc, only: RHO, VR, FP
+use status_inc, only: RHO, VR, rho_pol
 
 implicit none
 
 double precision, intent(in) :: rhop_center, rhop_width
 double precision, intent(out), dimension(NRD) :: gauss
-double precision :: rho_pol, pow, YR, gauss_vol_int
+double precision :: pow, YR, gauss_vol_int
 integer :: j
 
 gauss_vol_int = 0.
 do j=1, NA1
-   rho_pol = SQRT((FP(j) - FP(1))/(FP(NA1) - FP(1)))
-   YR = (rho_pol - rhop_center)/rhop_width
-   gauss(j)= exp(-YR*YR)
+   YR = (rho_pol(j) - rhop_center)/rhop_width
+   gauss(j)= exp(-YR**2)
    if (j < NA1) gauss_vol_int = gauss_vol_int + gauss(j)*VR(j)
 enddo
 gauss_vol_int = gauss_vol_int*HRO

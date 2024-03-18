@@ -98,7 +98,7 @@ if (nstep == 0) then
         close(53)
         kprs2 = kprs
     endif
-    fix_adapgrid = fixadapgrid
+!    fix_adapgrid = fixadapgrid
 endif
 
 if (s_fazt == 0) then

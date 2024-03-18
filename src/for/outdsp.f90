@@ -802,8 +802,8 @@ double precision function ABSC(YIN)
 !----------------------------------------------------------------------|
 
 use outcmn_inc, only: MOD10
-use status_inc, only: AMETR, FP
-use const_inc, only: XOUT, AB, ABC, ROC, NA1
+use status_inc, only: AMETR, FP_NORM
+use const_inc, only: XOUT, AB, ABC, ROC, NA1, PSIAX, PSIBO
 use numerical_tools, only: QUADIN
 
 implicit none
@@ -829,8 +829,7 @@ CASE DEFAULT ! Unknown option
 END SELECT
 
 if (MOD10 == 3 .or. MODEX == 3) then
-   ABSC = QUADIN(NA1, AMETR, FP, YIN)
-   ABSC = (ABSC - FP(1))/(FP(NA1) - FP(1))
+   ABSC = QUADIN(NA1, AMETR, FP_NORM, YIN)
    return
 endif
 

@@ -1107,7 +1107,7 @@ use parameter_inc, only: NRW
 use outcmn_inc, only: exp_file, equ_file, AWD, RUNID, &
     LTOUT, ROUT, XWH, WarningColor, null_ch
 use const_inc, only: NAB, NA1, ABC, ROC, VOLUME
-use status_inc, only: AMETR, RHO, FP, VOLUM
+use status_inc, only: AMETR, RHO, FP, VOLUM, FP_NORM, rho_pol
 
 implicit none
 
@@ -1255,11 +1255,11 @@ do jj=1, jgr   ! 999 - max Fig #
             CASE(2)
                 YY = RHO(j0)/ROC
             CASE(3)
-                YY = (FP(j0) - FP(1))/(FP(NA1) - FP(1))
+                YY = FP_NORM(j0)
             CASE(4)
                 YY = sqrt(VOLUM(j0)/VOLUME)
             CASE(5)
-                YY = sqrt((FP(j0) - FP(1))/(FP(NA1) - FP(1)))
+                YY = rho_pol(j0)
             CASE(-1)
                 YY = TTOUT(j0)
             END SELECT
@@ -1335,7 +1335,7 @@ do j1=1, NP1
     CASE(4)
         YY = sqrt(VOLUM(j1)/VOLUME)
     CASE(5)
-        YY = sqrt((FP(j1) - FP(1))/(FP(NA1) - FP(1)))
+        YY = rho_pol(j1)
     CASE(-1)
         YY = TTOUT(j1)
     END SELECT

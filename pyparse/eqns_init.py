@@ -100,6 +100,9 @@ def eqns_init(parse):
     else:
         eqns_txt += cu_as
 
+    eqns_txt += const_text.pol_flux
+    init_txt += const_text.pol_flux
+
 # Closing statements
 
     init_txt += const_text.INIT.end

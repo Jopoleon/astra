@@ -7,8 +7,8 @@ use rabbit_variables, only: fusion_power, neutron_power
 
 use outcmn_inc, only: AWD, nml_file
 use const_inc, only: GP2, AIM1, TIME, TAU, QNBI, ROC, &
-   RTOR, BTOR, NA1
-use status_inc, only: FP, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
+   RTOR, BTOR, NA1, PSIAX, PSIBO
+use status_inc, only: FP, FP_NORM, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
    XRHO, VOLUM, IPOL, PEBM, PIBM, NIBM, CUBM, SNEBM, SCUBM, &
    PBLON, PBPER, MU, VTOR, ZEF, NI, NHYDR, NDEUT, NTRIT
 
@@ -78,17 +78,17 @@ allocate(pf_eq(nrho_surf), rho_eq(nrho_surf))
 allocate(r_surf(nrho_surf, nthe_surf), z_surf(nrho_surf, nthe_surf))
 call SURF_CTR(nrho_surf, nthe_surf, r_surf, z_surf)
 
-psi_axis = FP(1)/GP2
-psi_sep  = FP(NA1)/GP2
+psi_axis = PSIAX/GP2
+psi_sep  = PSIBO/GP2
 rmag = r_surf(1, 1)
 zmag = z_surf(1, 1)
 
 drho_eq = 1./(nrho_surf - 1.d0)
 rho_eq = (/ (drho_eq*(i - 1.d0), i=1, nrho_surf) /)
 
-psi1d_n = (FP(1:NA1) - FP(1))/(FP(NA1) - FP(1))
-psi1d_n(1) = 1.d-8
-psi1d_n(NA1) = 1.d0
+psi1d_n = FP_NORM(1: NA1)
+!psi1d_n(1) = 1.d-8
+!psi1d_n(NA1) = 1.d0
 
 if (.not. allocated(aplasma)) then
     allocate(aplasma(0))

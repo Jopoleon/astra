@@ -1577,7 +1577,7 @@ subroutine CUOFMU
 !            FP(1:NA1) - poloidal flux [Vs]
 !---------------------------------------------------------------------
 
-use const_inc, only: GP, GP2, RTOR, BTOR, NA1, NA, PSIBO, PSIAX, HRO
+use const_inc, only: GP, GP2, RTOR, BTOR, NA1, NA, HRO
 use status_inc, only: RHO, SRHO, XRHO, CU, MU, FP, G22, G33, IPOL
 use numerical_tools, only: extrap, integr
 
@@ -1629,9 +1629,6 @@ do J=1, NA1
     CU(j) = YCJ*CU(j)*G33(J)*IPOL(J)**3
 enddo
 
-PSIBO = FP(NA1)
-call EXTRAP(XRHO(1:NA1), FP(1:NA1), 0.0, 1, PSIAX, 1, NA1)
-
 return
 end subroutine CUOFMU
 
@@ -1653,7 +1650,7 @@ subroutine CUOFP
 !---------------------------------------------------------------------
 
 use status_inc, only: RHO, SRHO, XRHO, FP, MU, CU, IPOL, G22, G33
-use const_inc, only: GP, GP2, RTOR, HRO, BTOR, NA, NA1, PSIBO, PSIAX
+use const_inc, only: GP, GP2, RTOR, HRO, BTOR, NA, NA1
 use numerical_tools, only: extrap, deriv
 
 implicit none
@@ -1683,10 +1680,6 @@ do J=1, NA1
 enddo
 
 MUVAC = 0.4*GP
-
-! Compute PSIAX, PSIBO
-PSIBO = FP(NA1)
-call EXTRAP(XRHO(1: NA1), FP(1: NA1), 0.0, 1, PSIAX, 1, NA1)
 
 YAR(1: NA1) = RHO(1: NA1)
 

@@ -4,8 +4,8 @@ use mod_rabbit_lib
 
 use outcmn_inc, only: AWD, nml_file
 use const_inc, only: GP2, AIM1, TIME, TAU, QNBI, ROC, &
-   RTOR, BTOR, NA1
-use status_inc, only: FP, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
+   RTOR, BTOR, NA1, PSIAX, PSIBO
+use status_inc, only: FP, FP_NORM, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
    XRHO, VOLUM, IPOL, PEBM, PIBM, NIBM, CUBM, SNEBM, SCUBM, &
    PBLON, PBPER, MU, VTOR, ZEF
 
@@ -37,7 +37,7 @@ double precision :: part_mix(nspc, nnb_max), dt_in, output_timing
 double precision :: tim_prev=-1.d0
 
 double precision, dimension(:), allocatable :: pf_eq, rho_eq
-double precision, dimension(:, :) :: r_surf, z_surf
+double precision, dimension(:, :), allocatable :: r_surf, z_surf
 double precision, dimension(NA1) :: rho_interp_plasma, rho_interp_eq, &
    ti_interp, te_interp, ne_interp, omg_interp, zef_interp,  &
    iota, area, vol, ffp, psi_n
@@ -69,17 +69,17 @@ allocate(pf_eq(nrho_surf), rho_eq(nrho_surf))
 allocate(r_surf(nrho_surf, nthe_surf), z_surf(nrho_surf, nthe_surf))
 call SURF_CTR(nrho_surf, nthe_surf, r_surf, z_surf)
 
-psi_axis = FP(1)/GP2
-psi_sep  = FP(NA1)/GP2
+psi_axis = PSIAX/GP2
+psi_sep  = PSIBO/GP2
 rmag = r_surf(1, 1)
 zmag = z_surf(1, 1)
 
 drho_eq = 1./(nrho_surf - 1.d0)
 rho_eq = (/ (drho_eq*(i - 1.d0), i=1, nrho_surf) /)
 
-psi1d_n = (FP(1:NA1) - FP(1))/(FP(NA1) - FP(1))
-psi1d_n(1) = 1.d-8
-psi1d_n(NA1) = 1.d0
+psi1d_n = FP_NORM(1: NA1)
+!psi1d_n(1) = 1.d-8
+!psi1d_n(NA1) = 1.d0
 
 if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---       
     as_nml = TRIM(AWD) // TRIM(nml_file)
@@ -228,6 +228,7 @@ tq_rb   = sum(torqi(: , 1: n_nbi), 2)
 nfi_rb  = sum(bdens(: , 1: n_nbi), 2)/1.d19
 jcd_rb  = sum(jnbcd(: , 1: n_nbi), 2)/1.d6
 src_rb  = sum(bdep (: , 1: n_nbi), 2)/1.d19
+
 !      pfi_par = sum(press(: , 1: n_nbi), 2)/1602.d0
 pfi_par = 2*sum(wfi_par_lab(: , 1: n_nbi), 2)/1602.d0
 pfi_perp = sum(wfi_perp(: , 1: n_nbi), 2)/1602.d0
@@ -262,9 +263,9 @@ if (ALFA > 0.) then
     call smearr(ALFA, SNEBM, SNEBM)
 endif
 
-write(*, * ) 'Pi  integrals', p_i/VINT(PIBM, ROC)
-write(*, * ) 'Pe  integrals', p_e/VINT(PEBM, ROC)
-write(*, * ) 'Icd integrals', i_cd/IINT(CUBM, ROC)
+write(*, * ) 'Pi  integral', p_i/VINT(PIBM, ROC)
+write(*, * ) 'Pe  integral', p_e/VINT(PEBM, ROC)
+write(*, * ) 'Icd integral', i_cd/IINT(CUBM, ROC)
 if (p_i > 0.d0) then
     PIBM(1: NA1)  = PIBM( 1: NA1)*p_i/VINT(PIBM, ROC)
     PEBM(1: NA1)  = PEBM( 1: NA1)*p_e/VINT(PEBM, ROC)

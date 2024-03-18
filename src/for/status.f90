@@ -23,7 +23,7 @@ double precision, dimension(NRD) :: &
 
 double precision, dimension(NRD) :: &
     B0DB2, BDB02, BDB0, BMAXT, BMINT, FOFB, GRADRO, &
-    EQFF, EQPF, SLAT, FV, MV, XRHO, &
+    EQFF, EQPF, SLAT, FV, MV, XRHO, rho_pol, FP_NORM, &
     SXHO, SRHO, G22E, G33E, AREAT, PERIM
 
 double precision, dimension(:), pointer :: &
@@ -174,6 +174,8 @@ contains
     PERIM = 1.
     VOLUM = 1.
     ER = 0.
+    FP_NORM = 0.
+    rho_pol = 0.
 
     UPS0 = 0.
     UPS1 = 0.

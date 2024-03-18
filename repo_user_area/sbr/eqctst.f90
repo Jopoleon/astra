@@ -81,8 +81,8 @@ new_resistance=0.
 
 raxis_astra = RTOR + SHIFT
 zaxis_astra = UPDWN
-psi0_astra = FP(1)
-psib_astra = FP(NA1)
+psi0_astra = PSIAX
+psib_astra = PSIBO
 n_fourier_restab_boundary = 5
 use_limiter_astra = 1   ! do not use limiter for DEMO
 refit_mode = 0   ! if -1 - 1 turn only, 0 - stab method, if 1 - restab with prescribed axis , 3 - full fit like spider but only for eddy currents, 101 - only Z stab

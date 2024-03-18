@@ -11,7 +11,7 @@ use parameter_inc, only: NRD
 use const_inc, only: NA1, RTOR, BTOR, TIME, ROC, SGNIP, SGNBT
 use debugger, only: flightsim
 use status_inc, only: TE, NE, FP, XRHO, ZEF, MU, ELON, SHif , IPOL, &
-   AMETR, VOLUM, PEECR, CUECR, AREAT
+   AMETR, VOLUM, PEECR, CUECR, AREAT, rho_pol, FP_NORM
 use fs_coupling_variables, only: fs_pol_EC, fs_pow_EC
 use outcmn_inc, only: AWD, nml_file 
 use numerical_tools, only: qinterp, integr
@@ -49,7 +49,7 @@ double precision :: volprofw(2*nprofvw)
 double precision, dimension(6*ndat) :: t1data, t1tdata
 double precision, dimension(5*ndat) :: t2data
 double precision, dimension(3*npnt) :: t2ndata
-double precision, dimension(NA1) :: rhop, rhotor1d, ECR, CCD, total_int
+double precision, dimension(NA1) :: rhotor1d, ECR, CCD, total_int
 double precision, dimension(npnt) :: ctorb, rtorb, ptorb
 double precision :: Rmin, Rmax, zmin, zmax, dr, dz, drho_eq, drho_interp
 double precision, dimension(:), allocatable :: Rrect, Zrect, ggg, B_t
@@ -115,8 +115,6 @@ call SURF_CTR(nrho_surf, nthe_surf, r_surf, z_surf)
 
 ! From polar to rectangluar grid
 
-rhop = ((FP(1:NA1) - FP(1))/(FP(NA1) - FP(1)))**0.5
-
 if (flightsim == 0) then
     Rmin = MINVAL(r_surf(nrho_surf, :)) - 0.03 ! 1.08
     Rmax = MAXVAL(r_surf(nrho_surf, :)) + 0.03 ! 2.26
@@ -156,7 +154,7 @@ else
         b_rrect(:, jz) = -1./(GP2*Rrect(:))* &
             (psi_rect(:, jz+1) - psi_rect(:, jz)) / (zrect(jz+1) - zrect(jz))
         ggg = ((psi_rect(:, jz) - psi_axis)/(psi_sep - psi_axis))
-        call qinterp(rhop**2, ipol(1:NA1), NA1, ggg, B_T(:), n_Rrect)
+        call qinterp(FP_NORM(1:NA1), ipol(1:NA1), NA1, ggg, B_T(:), n_Rrect)
         b_trect(:, jz) = B_T(:)/Rrect(:)*rtor*btor
     enddo
     do jr=1, n_Rrect-1
@@ -200,10 +198,10 @@ allocate( ne_interp(n_rho))
 if (n_interp < NA1) then ! Interpolate on reduced space grid
     drho_interp = 1./(n_rho - 1.d0)
     rho_interp = (/ (drho_interp*(i - 1.d0), i=1, n_rho) /)
-    call qinterp(rhop, NE(1: NA1), NA1, rho_interp, ne_interp, n_rho)
-    call qinterp(rhop, TE(1: NA1), NA1, rho_interp, te_interp, n_rho)
+    call qinterp(rho_pol(1: NA1), NE(1: NA1), NA1, rho_interp, ne_interp, n_rho)
+    call qinterp(rho_pol(1: NA1), TE(1: NA1), NA1, rho_interp, te_interp, n_rho)
 else ! use original profiles
-    rho_interp = rhop
+    rho_interp = rho_pol(1:n_rho)
     ne_interp  = NE(1:n_rho)
     te_interp  = TE(1:n_rho)
 endif
@@ -447,8 +445,8 @@ gyro_loop: do jgy=1, n_gyro
             ECR = 0.d0
             CCD = 0.d0
 
-            call qinterp(rtorb, ptorb, npnt, rhop, ECR, NA1)
-            call qinterp(rtorb, ctorb, npnt, rhop, CCD, NA1)
+            call qinterp(rtorb, ptorb, npnt, rho_pol(1: NA1), ECR, NA1)
+            call qinterp(rtorb, ctorb, npnt, rho_pol(1: NA1), CCD, NA1)
 
 ! Profiles are equidistand in rho_tor, even though they are expressed
 ! as function of (irregular) rho_pol, because this rho_pol grid is
@@ -472,7 +470,7 @@ gyro_loop: do jgy=1, n_gyro
 
             if (rhoresult(0) >= 0.0) then
                 do jrho=1, NA1
-                    ECR(jrho) = exp(-(rhop(jrho) - rhoresult(0))**2/ &
+                    ECR(jrho) = exp(-(rho_pol(jrho) - rhoresult(0))**2/ &
                                (rhoresult(11) - rhoresult(10))**2)
                 enddo
                 CCD = ECR
