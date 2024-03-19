@@ -1197,14 +1197,14 @@ call new_grid ! The RHO-grid and NA, NA1, HRO are updated
 
 VOLUM(NA1) = yvolum(NA1)
 
-if (IPEQL == 5) then  ! FEQIS
-    PSPLEX = PSPLEX/(VRS(NA1)*ROC*1.6*GP**3)*G22(NA1) !if LEXT only
-endif
-
 G22 = G22/VRS*RTOR/(GP2**2)/IPOL
 G11 = G11/VRS
 GRADRO = GRADRO/VRS
 DRODA  = DRODA/VRS
+
+if (IPEQL == 5) then  ! FEQIS
+    PSPLEX = PSPLEX/(0.4*GP*RTOR*ROC)*0.5*(G22(NA)+G22(NA1)) !if LEXT only
+endif
 
 do J=1, NA
     if (j == 1) then

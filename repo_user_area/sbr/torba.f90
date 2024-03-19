@@ -39,7 +39,7 @@ double precision :: xrtol, xatol, xstep, xtbeg, xtend, xpw0, xrmaj,  &
     xrmin, xb0, xdns, edgdns, xe1, xe2,  xte0, xteedg, xe1t, xe2t,  &
     xdel0, xdeled, xelo0, xeloed, xq0, xqedg
 double precision :: xpoldeg, xtordeg, alpha, beta
-double precision :: rhoresult(20)
+double precision :: rhoresult(0: 20)
 double precision, dimension(n_gy_max) :: power_gyro, freq_n, &
     xryyb, xrzzb, xwyyb, xwzzb, theta_n, phi_n, theta_t, phi_t, RR_n, ZZ_n
 double precision :: floatinbeam(maxflt)
@@ -411,12 +411,12 @@ gyro_loop: do jgy=1, n_gyro
                 rhoresult, extrap_coef_cPoints, extrap_coef_cFreq)
         endif
 
-        if (rhoresult(20) /= 0.0) then
-            write(6, *) 'Error on exit', rhoresult(20)
+        if (rhoresult(19) /= 0.0) then
+            write(6, *) 'Error on exit', rhoresult(19)
             if (dump_flag) then
                 write(fort_name, '(A, i1, 3A)') 'tb_err_gy', jgy, '_t', TRIM(time_str), 's.dat'
                 open(63, file=TRIM(fort_name))
-                write(63, *) rhoresult(20)
+                write(63, *) rhoresult(19)
                 close(63)
             endif 
         endif 
@@ -429,7 +429,7 @@ gyro_loop: do jgy=1, n_gyro
                 ptorb(lfd) = t2ndata(npnt+lfd)
                 ctorb(lfd) = t2ndata(2*npnt+lfd)
             enddo
-            if (rhoresult(20) /= 0.0) then
+            if (rhoresult(19) /= 0.0) then
                 do lfd=1, npnt
                     if (ISNAN(ptorb(lfd))) then
                         write(6, *) 'P isnan at j=', lfd, rtorb(lfd)
@@ -459,12 +459,12 @@ gyro_loop: do jgy=1, n_gyro
                 CCD = CCD/eccd_int
             endif 
             write(*, *) 'P_gyro=', power_gyro(jgy)
-            write(*, *) 'Absorption per injected MW', rhoresult(14)
+            write(*, *) 'Absorption per injected MW', rhoresult(13)
             write(*, *) 'Total driven current MA per MW / total MA', &
-                1.e-3*rhoresult(13), &
+                1.e-3*rhoresult(12), &
                 1.e-3*rhoresult(13)*SGNIP*power_gyro(jgy)
-            PEECR(1: NA1) = PEECR(1: NA1) + rhoresult(14)*power_gyro(jgy)*ECR
-            CUECR(1: NA1) = CUECR(1: NA1) + 1.e-3*rhoresult(13)*SGNIP*power_gyro(jgy)*CCD
+            PEECR(1: NA1) = PEECR(1: NA1) + rhoresult(13)*power_gyro(jgy)*ECR
+            CUECR(1: NA1) = CUECR(1: NA1) + 1.e-3*rhoresult(12)*SGNIP*power_gyro(jgy)*CCD
 
         else ! fenix below check
 

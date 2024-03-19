@@ -7,7 +7,6 @@ use status_inc
 use outcmn_inc
 use plasma_state
 use fenix_params
-use fs_coupling_variables, only: fs_dt_tctrl
 use parameters_a2equil, only: equil_now
 use debugger, only: flightsim
 
