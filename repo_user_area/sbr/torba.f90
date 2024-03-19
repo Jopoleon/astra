@@ -39,7 +39,7 @@ double precision :: xrtol, xatol, xstep, xtbeg, xtend, xpw0, xrmaj,  &
     xrmin, xb0, xdns, edgdns, xe1, xe2,  xte0, xteedg, xe1t, xe2t,  &
     xdel0, xdeled, xelo0, xeloed, xq0, xqedg
 double precision :: xpoldeg, xtordeg, alpha, beta
-double precision :: rhoresult(0: 19)
+double precision :: rhoresult(0: 20)
 double precision, dimension(n_gy_max) :: power_gyro, freq_n, &
     xryyb, xrzzb, xwyyb, xwzzb, theta_n, phi_n, theta_t, phi_t, RR_n, ZZ_n
 double precision :: floatinbeam(maxflt)
