@@ -66,11 +66,7 @@ Y0o = Y0
 jrho_axis = 1
 jthe_axis = 1
 
-! Unnormalise psi
-psi = psi*(psib - psiax_in)
-psiax = 0.
-
-!psiax = psiax_in
+psiax = psiax_in
 
 if (solve_fix > 0) then
     max_iter = solve_fix
