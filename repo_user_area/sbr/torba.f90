@@ -13,7 +13,7 @@ use debugger, only: flightsim
 use status_inc, only: TE, NE, FP, XRHO, ZEF, MU, ELON, SHif , IPOL, &
    AMETR, VOLUM, PEECR, CUECR, AREAT, rho_pol, FP_NORM
 use fs_coupling_variables, only: fs_pol_EC, fs_pow_EC
-use outcmn_inc, only: AWD, nml_file 
+use outcmn_inc, only: AWD, nml_file
 use numerical_tools, only: qinterp, integr
 use parameters_a2equil, only : equil_now, GP2
 
@@ -39,7 +39,7 @@ double precision :: xrtol, xatol, xstep, xtbeg, xtend, xpw0, xrmaj,  &
     xrmin, xb0, xdns, edgdns, xe1, xe2,  xte0, xteedg, xe1t, xe2t,  &
     xdel0, xdeled, xelo0, xeloed, xq0, xqedg
 double precision :: xpoldeg, xtordeg, alpha, beta
-double precision :: rhoresult(0: 20)
+double precision :: rhoresult(0: 19)
 double precision, dimension(n_gy_max) :: power_gyro, freq_n, &
     xryyb, xrzzb, xwyyb, xwzzb, theta_n, phi_n, theta_t, phi_t, RR_n, ZZ_n
 double precision :: floatinbeam(maxflt)
