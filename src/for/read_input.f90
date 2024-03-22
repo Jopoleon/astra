@@ -937,7 +937,7 @@ PSIBO = FP(NA1)
 call EXTRAP(XRHO(1: NA1), FP(1: NA1), 0.0, 1, PSIAX, 2, NA1)
 
 FP_NORM(1: NA1) = (FP(1: NA1) - PSIAX)/(PSIBO - PSIAX)
-rho_pol(1: NA1) = SQRT(Fp_NOEM(1: NA1))
+rho_pol(1: NA1) = SQRT(FP_NORM(1: NA1))
 
 VOLUME = VOLUM(NA1)
 
