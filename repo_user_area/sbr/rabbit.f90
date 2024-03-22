@@ -28,7 +28,7 @@ integer :: i, j, jlim, jnb, ios, nrho_surf, nthe_surf
 
 double precision :: aimp, zimp, p_i, p_e, tq_i, fi, i_cd, src, nfi
 double precision, allocatable, dimension(:) :: aplasma, zplasma, species_plasma_ratio
-double precision, dimension(NA1) :: psi1d_n, rhotor1d
+double precision, dimension(NA1) :: rhotor1d
 double precision, allocatable, dimension(:, :), save :: powe, powi, &
       press, bdep, bdens, jfi, jnbcd,  wfi_par, wfi_perp, wfi_par_lab, &
       torqe, torqi, torqjxb, torqth, torqthcxloss, torqdepo
@@ -85,10 +85,6 @@ zmag = z_surf(1, 1)
 
 drho_eq = 1./(nrho_surf - 1.d0)
 rho_eq = (/ (drho_eq*(i - 1.d0), i=1, nrho_surf) /)
-
-psi1d_n = FP_NORM(1: NA1)
-!psi1d_n(1) = 1.d-8
-!psi1d_n(NA1) = 1.d0
 
 if (.not. allocated(aplasma)) then
     allocate(aplasma(0))
@@ -240,13 +236,12 @@ rho_interp_eq = rhotor1d
 iota = MU(1:NA1)
 vol = VOLUM(1:NA1)
 ffp = IPOL(1:NA1)*BTOR*RTOR
-psi_n = psi1d_n
+psi_n = FP_NORM(1: NA1)
 vol(1) = 0.d0
 psi_n(1) = 0.d0
 area = vol/(GP2*RTOR)
 
-call qinterp(rhotor1d(1: NA1), FP(1: NA1), NA1, &
-      rho_eq(1: nrho_surf), pf_eq(1: nrho_surf), nrho_surf)
+call qinterp(XRHO(1: NA1), FP(1: NA1), NA1, rho_eq, pf_eq, nrho_surf)
 
 !------------
 ! RABBIT call

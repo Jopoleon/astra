@@ -49,7 +49,7 @@ double precision :: volprofw(2*nprofvw)
 double precision, dimension(6*ndat) :: t1data, t1tdata
 double precision, dimension(5*ndat) :: t2data
 double precision, dimension(3*npnt) :: t2ndata
-double precision, dimension(NA1) :: rhotor1d, ECR, CCD, total_int
+double precision, dimension(NA1) :: ECR, CCD, total_int
 double precision, dimension(npnt) :: ctorb, rtorb, ptorb
 double precision :: Rmin, Rmax, zmin, zmax, dr, dz, drho_eq, drho_interp
 double precision, dimension(:), allocatable :: Rrect, Zrect, ggg, B_t
@@ -131,12 +131,9 @@ endif
 
 drho_eq = 1./(nrho_surf - 1.d0)
 rho_eq = (/ (drho_eq*(i - 1.d0), i=1, nrho_surf) /)
-rhotor1d = XRHO(1:NA1)
-rhotor1d(NA1) = 1.d0
-rhotor1d(1) = 1.d-8
 
-call qinterp(rhotor1d, IPOL(1:NA1)*RTOR*BTOR, NA1, rho_eq, ffp_eq, nrho_surf)
-call qinterp(rhotor1d, FP  (1:NA1)          , NA1, rho_eq, pf_eq , nrho_surf)
+call qinterp(XRHO(1:NA1), IPOL(1:NA1)*RTOR*BTOR, NA1, rho_eq, ffp_eq, nrho_surf)
+call qinterp(XRHO(1:NA1), FP  (1:NA1)          , NA1, rho_eq, pf_eq , nrho_surf)
 
 write(6, *) 'TORBEAM surf dims:', nthe_surf, nrho_surf
 eqdata = 0.d0

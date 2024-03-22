@@ -55,6 +55,7 @@ VTOR=VTORX;
 !ER=BTOR*(VTOR/RTOR*FRS*MU+VDIA-VPOL)
 
 a2cdf>:.05:::;
+eqdsk>:.05:::;
 
 ! ECH
 ! TORBEAM
