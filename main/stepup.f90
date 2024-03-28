@@ -19,30 +19,31 @@ implicit none
 integer :: IFKEY, IFSUB, &
     ibcpsi_fb, jreadd, icurradj, bc_type_for_fp, jkey, &
     IFTREQ, IFSTEP
-double precision :: tau_new, updwno, zipctrl, &
+double precision :: updwno, zipctrl, &
     iplfbeo, Apsibcfac, Bpsibcfac, dfpdrbm12, time_ext, &
-    tau_temp_smlk, tau_old, dt_smlk, Y
+    dt_smlk, Y, tau_old, tau_new
 double precision, dimension(NRD) :: dummycoils
 
 data ibcpsi_fb /0/
 data jreadd /0/
-data tau_temp_smlk /0./
 
 save ibcpsi_fb, jreadd  ! counter to use psi as bc stuff
 save dt_smlk
 save time_ext
-save tau_temp_smlk
+save tau_old, tau_new
 
 !Initialize a few variables for toroidal field
 BTN = BTOR
 FTN = FTO
 
+if (TIME <= TSTART) tau_old = tau
+if (TIME <= TSTART) tau_new = tau
+
 !tau treatment to avoid machine precision errors
 
-dfpdrbm12 = 0.
+tau = tau_old !still using old one up to equations
 
-tau_old = tau
-tau_new = tau
+dfpdrbm12 = 0.
 
 !MPHIT=0. ??? astra7
 IPART = 2             ! Mark time evolution section
@@ -64,7 +65,7 @@ endif
 !include 'tmp/detvar.tmp' ! GIT 
 call detvar
 ! Subroutines with the "<" symbol are put here
-! here it computes the new NI also
+! here it computes the new NI also. These are run with tau_old
 
 if (plasma_up == 1 .or. ifbey == 0) then
     call OLDNEW           ! Time advance: F(t-tau):=F(t) neo=ne, etc,except ni
@@ -78,8 +79,8 @@ iplfbeo = iplfbe
 !reset some quantities
 CCOILO = CCOIL
 PSIFBO = PSIFB       ! reset boundary flux
-RBDOT = 0.           ! reset boundary adiabatic factor
-BBDOT = 0.           ! reset boundary adiabatic factor
+RBDOT  = 0.          ! reset boundary adiabatic factor
+BBDOT  = 0.          ! reset boundary adiabatic factor
 PSIEXO = PSIEXT      ! reset also external flux from fbe and ce, this is for test!
 PSPLXO = PSPLEX      ! reset also green function flux from fbe and ce, this is for test!
 
@@ -101,6 +102,8 @@ endif
 updwno = updwn          ! for fsim
 
 time_step_accuracy: do
+
+    tau = tau_new !use new tau now
 
     ITREQ = 0               ! Start Tr-Eq loop
 
@@ -141,7 +144,6 @@ time_step_accuracy: do
             endif
         endif
 
-        tau_old = tau !remember old tau for later
         if (isnan(hro)) then
             write(*, *) 'hro is nan'
             call err_catch_a
@@ -219,18 +221,24 @@ time_step_accuracy: do
     if (plasma_up == 1 .or. IFBEY == 0) then
         call DEFARR                  ! F(t)>0? Define F(t) outside ABC
     endif
-    tau_old = tau
+    
+    tau_old = tau !store old tau before changing it
 
     if (IFSTEP(jkey, updwno) == 0 .and. IFBEY /= 1) then
 ! Time step accuracy accepted? No(0)
 ! note that here TAU is modified and TIME updated with time_new = TIME+TAU !
-    else
         tau_new = tau
-        tau = tau_old
+    else
         EXIT
     endif                        
 
 enddo time_step_accuracy
+
+tau = max(taumin, tau) !just reforce it to be between limits
+tau = min(taumax, tau) !just reforce it to be between limits
+
+tau_new = tau !store new tau
+tau = tau_old !reuse old for postep routines
 
 ! When circuit equations are used do this
 if (IFBEY >= 1.) then         ! is doing free boundary
@@ -249,16 +257,19 @@ if (nint(ADCMPF) == 0 .and. icurradj == 0) then
 endif
 
 TIME = TIME + TAU
-TAUPRP = tau_new
+TAUPRP = tau
 call POSTEP
 
-! Special Sbrs call (METRIC?)  Subroutines with the ">" symbol in their 
+if (TAU /= TAUPRP) then
+    tau_new = tau !store new tau in case it has been changed in postep
+    tau = tau_old !in case tau has been changed
+    tauprp = tau
+endif
+
+! Special Sbrs call.  Subroutines with the ">" symbol in their 
 ! call are put here, so outside the convergence or time step check loop
 ! note that in postep if one wants to modify tau, like in tsctrl, better to do it in tauprp
-                                                                      
-tau_new = tauprp
-tau = min(taumax, tau_new)
-tau = max(taumin, tau)
+! call TSCTRL at the end of all other subroutines
 
 return
 end subroutine STEPUP

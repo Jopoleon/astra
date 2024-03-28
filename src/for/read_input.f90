@@ -56,10 +56,10 @@ double precision :: XBDRY, YB, YB1, YXB, YXB1, ALFA, ALFA_GLOB, &
 character(len=6) :: VNAM, VNAMO, VNAMU, VNAMX, VTIM, VDAT, VERR, VARNAM, ARRNAM, keyword
 character(len=31) :: rholbl
 character(len=132) :: strarray(10), STRI, lin_upper, dir_path, fname, &
-    err_msg, err_format, err_msg_exp, file_in, uname, uvar
+    err_msg, err_format, err_msg_exp, file_in, uname, uvar, workflow
 
 namelist / astra_log / AWD, exp_file, equ_file, rev_file, TASK, machine, &
-debug, tbeg_nml, tend_nml, tpause_nml, flightsim, resize
+debug, tbeg_nml, tend_nml, tpause_nml, flightsim, resize, workflow
 
 !----------------------------------------------------------------------|
 ! Fortran tests
@@ -501,8 +501,8 @@ parse_exp_2d: do
     if (lin_upper(1: 3) == 'END') EXIT parse_exp_2d
 
     VNAM = VARNAM(lin_upper(1: 6), ier_tab)
+    if (ier_tab /= 0 .or. vnam == '') CYCLE parse_exp_2d    ! Ignore lines starting with a blank
     VNAMX = ARRNAM(VNAM)
-    if (ier_tab /= 0) CYCLE parse_exp_2d    ! Ignore lines starting with a blank
     jex1 = str_in_list(VNAMX, EXARNM) ! Checks if VNAM is in array list
 
     if (jex1 == 0) then ! 1d, or no u-file
@@ -936,8 +936,8 @@ n_bouncon = NA1
 PSIBO = FP(NA1)
 call EXTRAP(XRHO(1: NA1), FP(1: NA1), 0.0, 1, PSIAX, 2, NA1)
 
-FP_NORM(1: NA1) = (FP(1: NA1) - PSIAX)/(PSIBO - PSIAX)
-rho_pol(1: NA1) = SQRT(FP_NORM(1: NA1))
+FP_NORM = (FP - PSIAX)/(PSIBO - PSIAX)
+rho_pol = SQRT(FP_NORM)
 
 VOLUME = VOLUM(NA1)
 

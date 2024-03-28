@@ -1,5 +1,5 @@
-!---------------------------------------------------------------------
 integer function IFSTEP(IFCONV, updwno)
+
 ! IFCONV dummy parameter
 ! Input
 !       LEQ(1)  LEQ(2)  LEQ(3)  LEQ(4)  LEQ(5)  LEQ(6-9)
@@ -22,7 +22,7 @@ use const_inc, only: TIME, TAUINC, DELVAR, TAU, TAUPRP, TAUMIN, TAUMAX, &
     BTN, IPLN, FTN, FTO
 use status_inc, only: NEO, NIO, TEO, TIO, FJO, FPO, VRO, UPARO, &
     NE, NI, TE, TI, FJ, FP, VR, UPAR
-use debugger, only: markloc, flightsim
+use debugger, only: markloc
 
 implicit none
 
@@ -40,7 +40,6 @@ do j = 1, NA
     if (LEQ(1) > 0) CTAU = MAX(CTAU, ABS(NEO(j)/NE(j) - 1.)/DELVAR)
     if (LEQ(2) > 0) CTAU = MAX(CTAU, ABS(TEO(j)/TE(j) - 1.)/DELVAR)
     if (LEQ(3) > 0) CTAU = MAX(CTAU, ABS(TIO(j)/TI(j) - 1.)/DELVAR)
-    if (flightsim >= 1 .and. j == 1) CTAU = MAX(CTAU, ABS(Updwno/UPDWN - 1.)/DELVAR)
     do jj=0, 9
         if (LEQ(jj+10) > 0) then
             YY = 0.5*(abs(FJO(j, jj)) + abs(FJ(j, jj)))
@@ -59,12 +58,7 @@ TAUPRP = TAUO
 TAUN   = TAU
 TAUN   = MIN(TAUMAX, TAUN/CTAU, DTOUT, DPOUT)
 
-TAUN = MAX(TAUMIN, TAUN)   ! due to DELVAR & TAUINC
-TAU = TAUN 
-
-!below, if tau is supposed to synchronized external workflows, 1e-6 is the minimum error or time step allowed.
-if (flightsim >= 1) tauo = 1.d-6*nint(tauo*1.d6)
-if (flightsim >= 1) tau = 1.d-6*nint(tau*1.d6)
+TAU = MAX(TAUMIN, TAUN)   ! due to DELVAR & TAUINC
 
 if (TAU >= TAUO) then
     IFSTEP = 1

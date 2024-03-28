@@ -1,7 +1,7 @@
 subroutine foureqc
 
 use const_inc, only: NA1, NEQUIl, MEQUIL, IPART, GP2, ABC
-use status_inc, only: FP_NORM
+use status_inc, only: FP
 use parameters_a2equil, only: equil_now
 
 implicit none
@@ -9,6 +9,7 @@ implicit none
 integer, parameter :: four_order_max=7, four_types=8, unit_out=223 ! #Four. coeff: MAX 11 for num stability. 7-9 Optimal. Including mode 0. 
 integer :: jrho, jthe, mom_order, mom_type, nrho, ntheta
 double precision :: Z0
+double precision, dimension(NA1) :: psi_as
 double precision :: four_coef_as(four_types, four_order_max, NA1)
 double precision, allocatable, dimension(:) :: theta, theta_half, dtheta, cos_mthe, sin_mthe, damin, psi_n
 double precision, allocatable, dimension(:, :) :: RR, ZZ, drdr, dzdr
@@ -55,6 +56,8 @@ do jthe=1, ntheta
     dtheta(jthe) = abs(theta_half(jthe+1) - theta_half(jthe)) !d_teheta
 enddo
 
+psi_as = (FP(1:NA1) - FP(1))/(FP(NA1) - FP(1)) !ASTRA PSIN
+
 ! Radial derivatives
 do jrho=2, nrho-1
     psi_n(jrho) = (psi_n(jrho) - psi_n(1))/(psi_n(nrho) - psi_n(1)) !psiN
@@ -93,7 +96,7 @@ four_coef(1:4, :, :) = four_coef(1:4, :, :)/ABC
 ! Interpolation to ASTRA grid
 do mom_order=1, four_order_max
     do mom_type=1, four_types
-        call qinterp(psi_n(:), four_coef(mom_type, mom_order, :), nrho, FP_NORM(1: NA1), four_coef_as(mom_type, mom_order, :), NA1)
+        call qinterp(psi_n(:), four_coef(mom_type, mom_order, :), nrho, psi_as, four_coef_as(mom_type, mom_order, :), NA1)
     enddo
 enddo
 
