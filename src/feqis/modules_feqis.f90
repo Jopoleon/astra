@@ -68,7 +68,7 @@ use feqis_dimensions, only: i_dim2
 double precision, dimension(:), allocatable :: dpsidvbez, psibez, &
     g2bez, g2ibez, gm1bez, routbez, rinbez, vbez, g1bez, gm41bez, &
     ggrhobez, bmaxbez, bminbez, gm4bez, bdb0bez, gm5bez, fofbbez, &
-    areatbez, perimbez, shifbez, kbez, surfbez, triaubez, phibez, &
+    areatbez, perimbez, shifbez, triaubez, trialbez, kbez, surfbez, phibez, &
     qbez, t2dbez, rbp2_b2bez, &
     ffprimebez, pprimebez, pressbez, ipolbez, shivbez, squarebez
 

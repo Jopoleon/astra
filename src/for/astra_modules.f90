@@ -74,7 +74,7 @@ module flight_sim_geometrics ! for flight simulator diagnostics
 
 implicit none
 
-double precision, dimension(300) :: geom1d
+double precision, dimension(1000) :: geom1d
 
 end module flight_sim_geometrics
 
@@ -87,18 +87,27 @@ double precision :: wallpos, d_j_m, dw_j_m, dw2_j_m, &
     vsoldiv, solwidth, &
     recycl_wall, boron_wall, predep_w, &
     transp_variance, hmodetransp, lmodetransp, &
-    solmod_dt, tctr_dt, equi_dt, &
+    solmod_dt,  &
     saves_dt, savep_dt, neocl_dt, trmod_ty, nbieqmix_dt, &
-    torba_dt, simdtmultip, ped_width, chie_chii, &
+    torba_dt, simdtmultip, simdtmultip_min, ped_width, chie_chii, &
     D_chie, D_ped_mult, gs2d_tmin_multip, timecirc, timepsi, &
     diohdt, diohdtthreshold, dteqz2, zibkdw, zifbey, &
     dt_adapt, VV, dt_fazt, ipl_bf_bkdw, &
-    alp0, alpnew0, rx00, zx00
+    alp0, alpnew0, rx00, zx00, w_wall_source, pedtop_multiplier, &
+    pfast_pressure_coef, denssource_fast, &
+    tesep_multip, pellet_pos, pellet_width,tavg_psep, &
+    Dped_H_multi, sh_crit_saw, ntm_m, ntm_n, ntm_seed, &
+    elm_area, elm_res, elm_fbs, dioh_thresh, iprd_thresh, &
+    eq_err_thres, pel_speed, nbi_model, ec_model, ic_model, pel_model, &
+    coil_start_time(15)
+
 integer :: lhmodel, btipdirec, pr_clamp, reinitcirc, reinitpsi, &
     ipsmk2, eq_cmd, use_zlim_pot, cmnd_dioh2s, cmnd_dioh2u, nequiz, &
-    s_adapt, yesfitcc, s_fazt, kastr2, com_solver, &
+    s_adapt, yesfitcc, s_fazt, kastr2,  &
     isafazt, ispid_contour, res_trigts06, resres_oh6, &
     max_max_iteri, max_max_iterb, max_max_iterj
+
+double precision :: radial_error, vertical_error
 double precision, dimension(500, 2) :: psitok
 
 end module fenix_params
@@ -106,17 +115,27 @@ end module fenix_params
 !--------------------------------
 module fs_coupling_variables
 
+!F2A
+double precision, dimension(:), allocatable :: fs_voltages ! max 100 circuits
+double precision, dimension(:), allocatable :: fs_pow_IC ! max 10 antennas
+double precision, dimension(:), allocatable :: fs_pol_EC, fs_pow_EC, fs_pow_NB ! max 8 independent gyros
+double precision, dimension(:), allocatable :: fs_pellet !max 10 injectors - nr of particles in 1e19 per injected pellet. First 2 positions are reserved for D and T.
+double precision, dimension(:), allocatable :: fs_valves, fs_pumped_gases !valves for gas puff
+double precision, dimension(:, :), allocatable :: fs_geometric_profiles  !500 x 13 max
+double precision, dimension(:, :), allocatable :: fs_bnd_in ! 50 , 2 boundary values R,Z
 integer :: fs_bnd_yes
-double precision :: fs_a_crash, fs_dt_smlk, fs_dt_tctrl, fs_paux, fs_pump, &
-     fs_NTM_trig, fs_NTM_M, fs_NTM_N, fs_NTM_seed, fs_stop_time, &
-     fs_prad, fs_psep, fs_pintrinsic, fs_pfus, fs_ipl_in
-double precision, dimension(2) :: fs_pow_IC
-double precision, dimension(8) :: fs_pol_EC, fs_pow_EC, fs_pow_NB
-double precision, dimension(10) :: fs_pellet
-double precision, dimension(24) :: fs_valves
-double precision, dimension(500) :: fs_magnetics
-double precision, dimension( 50, 2) :: fs_bnd_in
-double precision, dimension(100, 2) :: fs_cforces
+double precision :: fs_next_sim_time, fs_pump, &
+    fs_NTM_trig, fs_NTM_M, fs_NTM_N, fs_NTM_seed, fs_stop_time, fs_ipl_in, &
+    fs_oh_switch
+
+!A2F
+double precision, dimension(:), allocatable :: fs_currents ! max 500 magnetics signals
+double precision, dimension(:), allocatable :: fs_magnetics ! max 500 magnetics signals
+double precision, dimension(:, :), allocatable :: fs_cforces ! 100 , 2 coil forces max
+double precision :: fs_paux, fs_prad, fs_psep, fs_pintrinsic, fs_pfus, fs_ipl_out
+
+!interpolants
+double precision, dimension(:,:), allocatable :: fs_interpolants
 
 end module fs_coupling_variables
 
@@ -143,10 +162,14 @@ integer :: plasma_config      ! 0 if limiter, 1 if xpoint
 
 double precision :: tau_circuit_feqis, tau_gseq_feqis, time_astra
 double precision :: dr_factor_init_astra, dz_factor_init_astra ! factors of dr and dz for initial iterations
-double precision :: raxis_astra, zaxis_astra, psi0_astra, psib_astra, sigma_B, sigma_axis, sigma_energy, sigma_forces   ! sigma_B multiplies the boundary, sigma_axis the axis, sigma_energy the block (sum sigma_coil coil_cur**2 induc), sigma_forces multiplies the force block: sum_ij force_ij I_i I_j
+double precision :: raxis_astra, zaxis_astra, psi0_astra, psib_astra, sigma_B, sigma_axis, & 
+ sigma_xpoint, r_xpoint_fit(5), z_xpoint_fit(5), sigma_energy, sigma_forces   ! sigma_B multiplies the boundary, sigma_axis the axis, sigma_energy the block (sum sigma_coil coil_cur**2 induc), sigma_forces multiplies the force block: sum_ij force_ij I_i I_j. sigma_xpoint can be up to 5 x points to fit.
+integer :: n_xpoint_fit
 
+double precision :: vloop_avg, L_ext, dIp_dt   ! use tau_gseq_feqis here for refit mode 818
+ 
 double precision :: x_point_save(20, 2) ! R, Z of xpoints, max 20 x points
-double precision, dimension(ncoil_dim) :: activate_coil_feqis, cur_init, sigma_coils ! initial currents from astra exp, not from coil.dat, in MA/turn
+double precision, dimension(ncoil_dim) :: activate_coil_feqis, cur_init, sigma_coils, sigma_coils_psiext ! initial currents from astra exp, not from coil.dat, in MA/turn
 double precision, dimension(ncoil_dim) :: new_resistance ! whichever is > 0, it is used as new resistance.
 double precision, dimension(ncoil_dim, 2) :: current_limit_feqis ! 1 is upper, 2 is lower
 double precision, dimension(ncoil_dim, ncoil_dim) :: force_coil ! where it is 1, forces coil i,i to current of i,j

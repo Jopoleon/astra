@@ -15,6 +15,13 @@ integer :: i, j_iter
 double precision :: error_temp
 double precision, dimension(300) :: cur_temp
 
+if (j_init == -818) then !!!refit mode 818, special case
+    write(*,*) 'special refit time dependent mode'
+    call psi_external_calc
+    call solve_gse2d_fbe_full_feqis(0)
+ return
+endif
+
 ! time stepping
 ! at iteration 0, dpsidt = 0
 if (j_init == 0) then
@@ -34,7 +41,7 @@ if (j_init == 0) then
 endif
 
 ! Full iterations
-write(*, *) 'iter full system'
+!write(*, *) 'iter full system'
 
 if (fast_mode == 1 .and. execute_plasma == 1) then
     psi_cur_old(1:nconduc) = psiplasmatoconduc(1:nconduc)
@@ -67,13 +74,11 @@ do j_iter=1, max_iter
         if (execute_plasma == 1 .or. fast_mode == 0) then
             j_init = -1
         endif
-        write(*, *) 'circuit eq done'
         return
     endif
 
     if (j_iter >= max_iter) then
         write(*, *) 'circuit equations not converging, max number of iterations override... going on', error_temp
-!        stop
     endif
 
 enddo
@@ -89,9 +94,10 @@ use feqis_circuit, only: nr, nz, nr2, nz2, psiextrz, redo_bnd, &
     r, z, dr, dz, dr_factor_init, dz_factor_init, rax, zax, raxp, zaxp, &
     trax, tzax, iaxis, jaxis, psistabr, psistabz, &
     restab_axis_with_fourier_wall, restab_boundary_with_fourier_wall, & !doesnt work well
-    restab_F_function_full_fonfit, restab_F_function_full_currents, &
+    restab_F_function_full_fonfit, restab_F_function_full_fonfit_xpoints, restab_F_function_full_currents, &
     restab_2_timepoints_evolution, restab_F_function_full_currents_forces, &
-    restab_F_function_full_currents_limits,restab_2_timepoints_evolution_limits
+    restab_F_function_full_currents_limits,restab_2_timepoints_evolution_limits, &
+    restab_j_timepoints_evolution_limits_xpoints
 use astra2fbe, only: refit_mode, n_of_newton_iterations
 use feqis_tools, only: closest_index
 
@@ -279,8 +285,11 @@ CASE(1) ! refit eddy currents using fourier method for axis stability. doesnt re
 CASE(2) ! doesn't work
     call restab_boundary_with_fourier_wall !doesnt work well
 
-CASE(3) ! refits all currents (active and passive) with F minimization cost function, no constraints.
+CASE(3) ! refits all currents (active and passive) with F minimization cost function, no constraints. valid also for limited plasmas.
     call restab_F_function_full_fonfit 
+
+CASE(313) ! refits all currents (active and passive) with F minimization cost function, no constraints. Fits also additional X points positions. Use only if n_xpoint_fit > 0
+    call restab_F_function_full_fonfit_xpoints 
 
 CASE(4) !finds active currents from scratch, eddy currents zero
     call restab_F_function_full_currents
@@ -296,6 +305,9 @@ CASE(7) !finds active currents from scratch, eddy currents zero. minimize magnet
 
 CASE(8) !finds active currents from scratch including evolution from time t1 to time t2, with constraint on the consumed flux. eddy currents = 0. also respect current limits
     call restab_2_timepoints_evolution_limits
+
+CASE(818) !finds active currents from scratch including evolution from time j-1 to time j, with constraint on the consumed flux. eddy currents = 0. also respect current limits, with xpoints
+    call restab_j_timepoints_evolution_limits_xpoints
 
 END SELECT
 
@@ -353,13 +365,11 @@ if (j_stab == 1) then
     delz = 0.
     call compound_psi
     call find_new_axis_part1
-!    write(*, *) 'natural ax', rax, zax
-
     call nine_point_coeffs_only(raxold, zaxold, c, zum1, zum2)
+
 ! dpsidr
     zum1 = (raxold - zum1)/dr
     zum2 = (zaxold - zum2)/dz
-
     dum1 = 2.*c(2)*(zum1*zum2**2 + 2.*c(2)*zum1*zum2) +  &
               c(3)*zum2**2 + c(4)*zum2 + 2*c(5)*zum1 + c(7)
 
@@ -786,8 +796,8 @@ use astra2fbe, only: cur_init
 implicit none
 
 type(type_ferromag), dimension(:), allocatable :: ferromag
-
 integer :: i, j, ii, jj, nferrosub, imagvalues
+integer, dimension(:), allocatable :: n_sames
 character(len=80) :: fname
 
 fname = 'exp/cnf/machine_description_out.'//trim(machine)
@@ -818,8 +828,8 @@ dr = r(2) - r(1)
 dz = z(2) - z(1)
 
 !some allocate
-allocate(sintable(nz,nz))
-allocate(costable(nz,nz))
+allocate(sintable(nz, nz))
+allocate(costable(nz, nz))
 
 do i=1, nz
     do j=1, nz
@@ -853,6 +863,20 @@ read(32, *) lim_maxZ
 read(32, *) lim_minZ
 allocate(r_cond(nactive+npassive))
 allocate(z_cond(nactive+npassive))
+allocate(n_sames(nactive))
+r_cond = 0.
+z_cond = 0.
+n_sames = 0
+do i=1, ncoils
+    r_cond(mequivalence(i)) = r_cond(mequivalence(i)) + rcoil(i)
+    z_cond(mequivalence(i)) = z_cond(mequivalence(i)) + zcoil(i)
+    n_sames(mequivalence(i)) = n_sames(mequivalence(i)) + 1
+enddo
+do i=1, nactive
+    r_cond(i) = r_cond(i)/(0.+n_sames(i))
+    z_cond(i) = z_cond(i)/(0.+n_sames(i))
+enddo
+deallocate(n_sames)
 do i=1, npassive
     read(32, *) r_cond(nactive+i), z_cond(nactive+i)
 enddo
@@ -969,7 +993,7 @@ use feqis_circuit, only: nr, nrho, nteta, raxp, zaxp, rbndp, zbndp, rho, teta, &
     psiaxisp, psirhoteta, psigrida, psplex, psibndp, &
     psia_1d, ffp_1d, ppp_1d, &
     ffprime, pprime, pressure, ipol, &
-    Rgeom0, Btor0, Rpol, Zpol, Rpul, Zpul, jrhoteta, li3, betapol, iplasma
+    Rgeom0, Btor0, Rpol, Zpol, Rpul, Zpul, jrhoteta, li3, li_aug, betapol, iplasma
 use astra2fbe, only: raxis_astra, zaxis_astra, psi0_astra, psib_astra, &
     solve_fix
 use metric_coefficients_pbe, only: lambda2d, R_curr_0d, Z_curr_0d, dator
@@ -978,7 +1002,7 @@ use transfer_functions, only: rpbez, zpbez, psibez, t2dbez, &
     areatbez, surfbez, perimbez, vbez, qbez, phibez, &
     bmaxbez, bminbez, bdb0bez, fofbbez, bcell2dbez, bpcell2dbez, &
     ffprimebez, pprimebez, pressbez, ipolbez, rinbez, routbez, &
-    kbez, triaubez, shifbez, rbp2_b2bez, rmin2dbez, dpsidvbez, &
+    kbez, triaubez, trialbez, shifbez, rbp2_b2bez, rmin2dbez, dpsidvbez, &
     jrhobez, shivbez, squarebez, g2ibez, &
     rminbez, bpcellbez, bcellbez
 use pi_vars, only: GPI, GPI2, GPI4, muvac
@@ -1033,6 +1057,7 @@ if (j_init == 0) then
     allocate(kbez(nrho))
     allocate(surfbez(nrho))
     allocate(triaubez(nrho))
+    allocate(trialbez(nrho))
     allocate(phibez(nrho))
     allocate(qbez(nrho))
     allocate(t2dbez(nteta))
@@ -1118,7 +1143,8 @@ R_curr_0D = sqrt(sum(jrho2(1:jr, :)*Rmaj2(1:jr, :)**2*darea2(1:jr, :))/ &
 
 !regrid
 call build_2dgrid(nrho, nteta, psibez(1:nrho), &
-    psirhoteta(1:nrho, 1:nteta), rgeom0, pressure(1:nrho), &
+    psirhoteta(1:nrho, 1:nteta),jrho2(1:nrho,1:nteta),darea2(1:nrho,1:nteta),YY2(1:nrho,1:nteta), &
+    rgeom0, pressure(1:nrho), &
     btor0, ipol(1:nrho), iplasma, rpbez(1:nrho, 1:nteta), zpbez(1:nrho, 1:nteta), &
     rmaj2(1:nrho, 1:nteta), r_min(1:nrho, 1:nteta), jcbn2(1:nrho, 1:nteta), &
     thetap_i(1:nteta), q_new(1:nrho), rhoedge, gradr2(1:nrho, 1:nteta), &
@@ -1127,8 +1153,8 @@ call build_2dgrid(nrho, nteta, psibez(1:nrho), &
     gm4bez(1:nrho), bdb0bez(1:nrho), gm5bez(1:nrho), fofbbez(1:nrho), surfbez(1:nrho), & ! lateral surface
     li3, betapol, psplex, &
     bpcell2dbez(1:nrho, 1:nteta), bcell2dbez(1:nrho, 1:nteta), &
-    routbez(1:nrho), rinbez(1:nrho), kbez(1:nrho), triaubez(1:nrho), shifbez(1:nrho), &
-    gm41bez(1:nrho), qbez(1:nrho), shivbez(1:nrho), squarebez(1:nrho))
+    routbez(1:nrho), rinbez(1:nrho), kbez(1:nrho), triaubez(1:nrho), trialbez(1:nrho), shifbez(1:nrho), &
+    gm41bez(1:nrho), qbez(1:nrho), shivbez(1:nrho), squarebez(1:nrho), li_aug)
 
 phibez(1:nrho) = 0.
 rbp2_b2bez(1:nrho) = 0.
@@ -1169,10 +1195,10 @@ use pi_vars, only: GPI, GPI2
 use imas_ids, only: type_equilibrium
 use feqis_circuit, only: nr2, nz2, nrho, nteta, &
     psplex, psiaxis, psibnd, psirhoteta, psirz, &
-    r, z, betapol, li3, iplasma
+    r, z, betapol, li3, li_aug, iplasma
 use transfer_functions, only: rpbez, zpbez, t2dbez, &
     rinbez, routbez, rmin2dbez, vbez, areatbez, perimbez, surfbez, &
-    kbez, shifbez, triaubez, qbez, phibez, &
+    kbez, shifbez, triaubez, trialbez, qbez, phibez, &
     g1bez, g2bez, g2ibez, gm1bez, gm4bez, gm41bez, gm5bez, ggrhobez, &
     bcell2dbez, bpcell2dbez, bminbez, bmaxbez, bdb0bez, fofbbez, &
     psibez, dpsidvbez, rbp2_b2bez, &
@@ -1187,6 +1213,7 @@ equil_out%global_param%psplex   = psplex
 equil_out%global_param%psibound = -GPI2*psibnd
 equil_out%global_param%psiaxis  = -GPI2*psiaxis
 equil_out%global_param%li3      = li3
+equil_out%global_param%li_aug   = li_aug
 equil_out%global_param%betpol   = betapol
 equil_out%global_param%i_plasma = iplasma*1.e6
 
@@ -1240,7 +1267,7 @@ equil_out%profiles_1d%squareness(1:nrho) = squarebez(1:nrho)
 equil_out%profiles_1d%elongation(1:nrho) = kbez(1:nrho)
 equil_out%profiles_1d%surface   (1:nrho) = surfbez(1:nrho) ! lateral surface
 equil_out%profiles_1d%tria_upper(1:nrho) = triaubez(1:nrho)
-equil_out%profiles_1d%tria_lower(1:nrho) = triaubez(1:nrho)
+equil_out%profiles_1d%tria_lower(1:nrho) = trialbez(1:nrho)
 equil_out%profiles_1d%phi       (1:nrho) = phibez(1:nrho)
 equil_out%profiles_1d%q         (1:nrho) = qbez(1:nrho)
 equil_out%profiles_1d%rbp_b2    (1:nrho) = rbp2_b2bez(1:nrho)
@@ -1472,7 +1499,7 @@ end subroutine solve_gs2d
 
 !---------------------------------------------------------------------
 subroutine coil_forces_feqis(ncoilz, force_R, force_Z, plasma_state)
-
+! this one is only between coils and coils
 use feqis_circuit, only: nblocks, npassive, jrz, nr2, nz2, area_eff, &
     curconduc, mequivalence
 use green_matrix, only: dgreenirpl, dgreenizpl, dgreenirj, dgreenizj
@@ -1486,15 +1513,6 @@ double precision :: x1
 force_R = 0.
 force_Z = 0.
 nblock_a = nblocks - npassive
-
-if (plasma_state == 1) then !not sure about the plasma response...
-    do i=1, nblock_a
-        x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreeniRpl(1:nr2, 1:nz2, i))
-        force_R(i) = force_R(i) + curconduc(mequivalence(i)) * x1
-        x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreeniZpl(1:nr2, 1:nz2, i))
-        force_Z(i) = force_Z(i) + curconduc(mequivalence(i)) * x1
-    enddo
-endif
 
 !block-to-block
 do i=1, nblock_a
@@ -1510,3 +1528,50 @@ enddo
 
 return
 end subroutine coil_forces_feqis
+
+!---------------------------------------------------------------------
+subroutine all_forces_feqis(ncoilz, force_R, force_Z, plasma_state, plasma_force)
+
+!this one is between everything , including plasma. ncoilz = nblocks (active subcoils and passive leemnets)
+
+use feqis_circuit, only: nblocks, npassive, jrz, nr2, nz2, area_eff, &
+    curconduc, mequivalence
+use green_matrix, only: dgreenirpl, dgreenizpl, dgreenirj, dgreenizj
+
+integer, intent(in) :: ncoilz, plasma_state
+double precision, intent(out), dimension(ncoilz) :: force_R, force_Z
+double precision, intent(out) :: plasma_force(2) !index 1 is Radial, index 2 is vertical
+
+integer :: i, j, k, nblock_a
+double precision :: x1
+
+force_R = 0.
+force_Z = 0.
+nblock_a = nblocks - npassive
+
+if (plasma_state == 1) then !not sure about the plasma response...
+    do i=1, nblocks
+        x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreeniRpl(1:nr2, 1:nz2, i))
+        force_R(i) = force_R(i) + curconduc(mequivalence(i)) * x1
+        x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreeniZpl(1:nr2, 1:nz2, i))
+        force_Z(i) = force_Z(i) + curconduc(mequivalence(i)) * x1
+    enddo
+endif
+
+!full force on plasma
+plasma_force(1) = -sum(force_R)
+plasma_force(2) = -sum(force_Z)
+
+!block-to-block
+do i=1, nblocks
+    do j=1, nblocks
+        if (i /= j) then
+            force_R(i) = force_R(i) + curconduc(mequivalence(j)) * curconduc(mequivalence(i)) * dgreeniRj(i, j)
+            force_Z(i) = force_Z(i) + curconduc(mequivalence(j)) * curconduc(mequivalence(i)) * dgreeniZj(i, j)
+        endif
+    enddo
+enddo
+
+
+return
+end subroutine all_forces_feqis

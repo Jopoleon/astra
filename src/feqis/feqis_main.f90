@@ -8,6 +8,7 @@ use feqis_circuit, only: nrho, nteta, nr2, nz2, &
     psplex, psibndp, psiaxisp, &
     ucoils, voltage, &
     psi_external_calc
+use astra2fbe, only: refit_mode
 
 implicit none
 
@@ -30,7 +31,7 @@ nrplasma = nrho
 
 ! Init coils and grid
 if (j_call == 0) then
-    if (parameters_equil%k_fixfree == 1) then
+    if (parameters_equil%k_fixfree == 1.or.refit_mode.eq.818) then   ! also if refit mode = 818, initialize free boundary stuff
         call equil_feqis_init_circ
     endif
 endif
@@ -100,7 +101,7 @@ if (ifplasma == 1) then
     allocate(equil_out%profiles_1d%squareness(nrplasma))
 endif
 
-if (parameters_equil%k_fixfree == 1) then
+if (parameters_equil%k_fixfree == 1.and.refit_mode.ne.818) then !any other mode than 818
     voltage=0.
     voltage(1:nucoils) = ucoils(1:nucoils) ! voltage inputs for active conductors
     if (ifplasma == 0) then       ! only circuit equations solved
@@ -119,7 +120,7 @@ if (parameters_equil%k_fixfree == 1) then
         endif
         j_vacplas = 1
     endif
-else if (parameters_equil%k_fixfree == 0) then
+else if (parameters_equil%k_fixfree == 0.and.refit_mode.ne.818) then !any other mode than 818
     call fix_boundary_feqis(j_init)
     equil_out%global_param%psplex   = psplex
     equil_out%global_param%psibound = psibndp
@@ -128,6 +129,19 @@ else if (parameters_equil%k_fixfree == 0) then
     j_init = 1
     return
 endif
+
+if (refit_mode.eq.818) then  ! run prescribed boundary but with coil currents fitting in the bakcground
+    call full_system_advance_feqis(-818)
+    call fix_boundary_feqis(1)
+    equil_out%global_param%psplex   = psplex
+    equil_out%global_param%psibound = psibndp
+    equil_out%global_param%psiaxis  = psiaxisp
+    call equil_assignments(equil_out)
+    j_call=1
+    j_init=1
+    return
+endif
+
 
 j_call = 1
 j_init = 1

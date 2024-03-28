@@ -510,7 +510,7 @@ use status_inc, only: SHIF, ELON, TRIA, G33, IPOL, VR, SLAT, G11, G22, &
 
 implicit none
 
-open(32, file='input_metric.dat')	
+open(32, file='input_metric.dat')
 read(32, '(5555E25.11)') SHIF(1:na1), elon(1:na1), tria(1:na1), & 
     g33(1:na1), ipol(1:na1), vr(1:na1), slat(1:na1), g11(1:na1), & 
     g22(1:na1), droda(1:na1), shiv(1:na1), squarn(1:na1)
@@ -1280,7 +1280,7 @@ if (NBNT <= 1) then
         if (NBND /= 8) then
             if (fs_bnd_yes == 1) then
                 do j=1, NBND
-	            ZPB(j) = fs_bnd_in(j, 2)
+                    ZPB(j) = fs_bnd_in(j, 2)
                     RPB(j) = fs_bnd_in(j, 1)
                     BNDZ(j) = ZPB(j)
                     BNDR(j) = RPB(j)
