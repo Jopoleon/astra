@@ -503,6 +503,7 @@ do j=1, NA1
 te(j) = max(te(j), 0.001)
 enddo
 NA1E = ND1
+PETOT=PE+PET*TE
 """
 
     assigned = \
@@ -511,6 +512,7 @@ QE(J) = -G11(J)*(YWA(J)*(TE(J+1) - TE(J))/HRO + 0.5*YWB(J)*(TE(J+1) + TE(J)))*0.
 enddo
 QE(NA1) = QE(NA)
 NA1E = NA1
+PETOT=PE+PET*TE
 '''
 
 
@@ -541,6 +543,7 @@ do j=1, NA1
 ti(j) = max(ti(j), 0.001)
 enddo
 NA1I = ND1
+PITOT=PI+PIT*TI
 """
 
     assigned = \
@@ -549,6 +552,7 @@ QI(J) = -G11(J)*(YWA(J)*(TI(J+1) - TI(J))/HRO + 0.5*YWB(J)*(TI(J+1) + TI(J)))*0.
 enddo
 QI(NA1) = QI(NA)
 NA1I = NA1
+PITOT=PI+PIT*TI
 '''
 
 

@@ -11,9 +11,6 @@ use const_inc, only: GP2, AIM1, TIME, TAU, QNBI, ROC, &
 use status_inc, only: FP, FP_NORM, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
    XRHO, VOLUM, IPOL, PEBM, PIBM, NIBM, CUBM, SNEBM, SCUBM, &
    PBLON, PBPER, MU, VTOR, ZEF, NI, NHYDR, NDEUT, NTRIT
-
-use fs_coupling_variables, only: fs_pow_NB
-use debugger, only: flightsim
 use parameters_a2equil, only : equil_now
 
 implicit none
@@ -111,13 +108,9 @@ do i=1, size(Aplasma)
 enddo
 species_plasma_ratio = species_plasma_ratio / sum(species_plasma_ratio)
 
-if (flightsim == 0) then
-    n_Rrect = Nrrect
-    n_Zrect = Nzrect
-else
-    n_Rrect = SIZE(equil_now%eqgeometry%rectgrid%r2d)
-    n_Zrect = SIZE(equil_now%eqgeometry%rectgrid%z2d)
-endif
+n_Rrect = Nrrect
+n_Zrect = Nzrect
+
 if (.not. allocated(psi_rect)) allocate(psi_rect(n_Rrect, n_Zrect))
 if (.not. allocated(Rrect)) allocate(Rrect(n_Rrect), Zrect(n_Zrect))
 
@@ -151,19 +144,14 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
     enddo
     close(unit_lim)
 
-    if (flightsim == 0) then
-        R_min = MINVAL(R_lim) - 0.05
-        R_max = MAXVAL(R_lim) + 0.05
-        z_min = MINVAL(z_lim) - 0.05
-        z_max = MAXVAL(z_lim) + 0.05
-        dr = (R_max - R_min)/(n_Rrect - 1.d0)
-        dz = (z_max - z_min)/(n_Zrect - 1.d0)
-        Rrect = (/ (R_min + dr*(i - 1.d0), i=1, n_Rrect) /)
-        Zrect = (/ (z_min + dz*(i - 1.d0), i=1, n_Zrect) /)
-    else
-        Rrect = equil_now%eqgeometry%rectgrid%r2d
-        Zrect = equil_now%eqgeometry%rectgrid%z2d
-    endif
+    R_min = MINVAL(R_lim) - 0.05
+    R_max = MAXVAL(R_lim) + 0.05
+    z_min = MINVAL(z_lim) - 0.05
+    z_max = MAXVAL(z_lim) + 0.05
+    dr = (R_max - R_min)/(n_Rrect - 1.d0)
+    dz = (z_max - z_min)/(n_Zrect - 1.d0)
+    Rrect = (/ (R_min + dr*(i - 1.d0), i=1, n_Rrect) /)
+    Zrect = (/ (z_min + dz*(i - 1.d0), i=1, n_Zrect) /)
 
     aimp = AIM1
     zimp = ZIM1(1)
@@ -213,12 +201,8 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
     allocate(wfi_par_lab(nrhoout, n_nbi))
 endif
 
-if (flightsim == 1) then
-    pinj(1:8) = fs_pow_NB(1:8)*1d6
-else
-    pinj_file2 = TRIM(awd) // TRIM(pinj_file)
-    call uf2dr(pinj_file2, TIME, pinj(1:n_nbi))
-endif
+pinj_file2 = TRIM(awd) // TRIM(pinj_file)
+call uf2dr(pinj_file2, TIME, pinj(1:n_nbi))
 
 QNBI = sum(pinj(1:n_nbi))*1d-6
 
@@ -249,17 +233,9 @@ call qinterp(XRHO(1: NA1), FP(1: NA1), NA1, rho_eq, pf_eq, nrho_surf)
 
 write(6, *) 'Call rabbit_lib_step'
 
-if (flightsim == 0) then
-    call ctr2rz_fun(nrho_surf, nthe_surf, pf_eq(1: nrho_surf)/GP2, &
-         r_surf(1: nrho_surf, 1: nthe_surf),  z_surf(1: nrho_surf, 1: nthe_surf), &
-         n_Rrect, n_Zrect, Rrect, zrect, PSI_rect)
-else
-    psi_rect = equil_now%eqgeometry%rectgrid%psirz2d(1:n_Rrect, 1:n_Zrect)
-    dumba1 = equil_now%eqgeometry%rectgrid%psi_axis
-    dumba2 = equil_now%eqgeometry%rectgrid%psi_boundary
-    psi_rect = (psi_rect - dumba1)/(dumba2 - dumba1)
-    psi_rect = (psi_sep - psi_axis)*psi_rect + psi_axis
-endif
+call ctr2rz_fun(nrho_surf, nthe_surf, pf_eq(1: nrho_surf)/GP2, &
+    r_surf(1: nrho_surf, 1: nthe_surf),  z_surf(1: nrho_surf, 1: nthe_surf), &
+    n_Rrect, n_Zrect, Rrect, zrect, PSI_rect)
 
 call rabbit_lib_set_sp_plasma_ratio(species_plasma_ratio, size(species_plasma_ratio))
 

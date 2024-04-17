@@ -113,31 +113,12 @@ double precision, dimension(500, 2) :: psitok
 end module fenix_params
 
 !--------------------------------
-module fs_coupling_variables
+module ext_bnd
 
-!F2A
-double precision, dimension(:), allocatable :: fs_voltages ! max 100 circuits
-double precision, dimension(:), allocatable :: fs_pow_IC ! max 10 antennas
-double precision, dimension(:), allocatable :: fs_pol_EC, fs_pow_EC, fs_pow_NB ! max 8 independent gyros
-double precision, dimension(:), allocatable :: fs_pellet !max 10 injectors - nr of particles in 1e19 per injected pellet. First 2 positions are reserved for D and T.
-double precision, dimension(:), allocatable :: fs_valves, fs_pumped_gases !valves for gas puff
-double precision, dimension(:, :), allocatable :: fs_geometric_profiles  !500 x 13 max
-double precision, dimension(:, :), allocatable :: fs_bnd_in ! 50 , 2 boundary values R,Z
-integer :: fs_bnd_yes
-double precision :: fs_next_sim_time, fs_pump, &
-    fs_NTM_trig, fs_NTM_M, fs_NTM_N, fs_NTM_seed, fs_stop_time, fs_ipl_in, &
-    fs_oh_switch
+double precision, dimension(:, :), allocatable :: ext_bnd_in ! 50 , 2 boundary values R,Z
+integer :: use_ext_bnd
 
-!A2F
-double precision, dimension(:), allocatable :: fs_currents ! max 500 magnetics signals
-double precision, dimension(:), allocatable :: fs_magnetics ! max 500 magnetics signals
-double precision, dimension(:, :), allocatable :: fs_cforces ! 100 , 2 coil forces max
-double precision :: fs_paux, fs_prad, fs_psep, fs_pintrinsic, fs_pfus, fs_ipl_out
-
-!interpolants
-double precision, dimension(:,:), allocatable :: fs_interpolants
-
-end module fs_coupling_variables
+end module ext_bnd
 
 !-------------------------------------
 module astra2fbe  !these are coupling variables with the equilibrium solver and astra

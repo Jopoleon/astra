@@ -650,7 +650,7 @@ end subroutine TRIDIAG1_EF
 double precision function GETPEI(j)
 
 use status_inc, only: PEIQI, NE, NI, TE, TI, ZMAIN, AMAIN, NMAIN, & 
-       NIZ1, NIZ2, NIZ3, ZIM1, ZIM2, ZIM3
+       NIZ1, NIZ2, NIZ3, ZIM1, ZIM2, ZIM3, PET, PIT
 use const_inc, only: IPROT, AIM1, AIM2, AIM3, NA1
 
 implicit none
@@ -664,7 +664,7 @@ t2 = TE(j) - TI(j)
 
 if (t1 == 0. .and. t2 /= 0.) then
     COULG = 15.9 - 0.5*LOG(NE(J)) + log(TE(J))
-    if (nint(abs(IPROT)) == 2) then
+    if (nint(abs(IPROT)) == 2 .or. nint(ABS(IPROT)) == 4) then
         SUZPEI = NMAIN(J)/AMAIN(J)*ZMAIN(J)**2 + &
             NIZ1(J)/AIM1*ZIM1(J)**2 + &
             NIZ2(J)/AIM2*ZIM2(J)**2 + &
@@ -674,6 +674,10 @@ if (t1 == 0. .and. t2 /= 0.) then
         GETPEI = 0.00246*COULG*NE(J)*NI(J)*ZMAIN(J)**2/(AMAIN(J)*TE(J)*SQRT(TE(J)))
     endif
 endif
+
+!This will reflect equipartition in PETOT and PITOT after equations are solved, for plotting and post-processing.
+PET(J) = PET(J) - GETPEI*t2/TE(J)
+PIT(J) = PIT(J) + GETPEI*t2/TI(J)
 
 end function GETPEI
 

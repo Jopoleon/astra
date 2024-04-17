@@ -1,0 +1,30 @@
+! ZIWO2 [ ]: Average W charge^2 
+! T [eV] Electron temperature
+!       POST D.E. JENSEN R.V. e.a., Atomic Data and Nuclear Tables, 
+!        Vol.20 (1977) 397.
+!    (Fable 2024)
+
+T = TE(J)*1.E3
+Z = LOG10(TE(J))
+ZIWO2 = 0.
+
+if (T < 200. .and. T > 0.) then
+    Y =     -1.057516e4 - Z   *6.461370e4 - Z**2*1.535776e5 - &
+        Z**3*1.806057e5 - Z**4*1.050800e5 - Z**5*2.408997e4
+endif
+if (T < 2000. .and. T > 200.) then
+    Y =      6.620789e2 + Z   *1.417530e3 + Z**2*1.722973e3 + &
+        Z**3*1.884802e3 + Z**4*3.569429e2 - Z**5*1.384352e3
+endif
+if (T < 20000. .and. T > 2000.) then
+    Y =     -7.481742e3 + Z   *5.666677e4 - Z**2*1.210664e5 + &
+        Z**3*1.084440e5 - Z**4*3.344618e4 - Z**5*8.941927e1
+endif
+if (T > 20000.) then
+    Y =      8.064275e5 - Z   *2.358791e6 + Z**2*2.749159e6 - &
+        Z**3*1.590203e6 + Z**4*4.572558e5 - Z**5*5.234089e4
+endif
+
+ZIWO2 = Y
+if (T < 100.) ZIWO2 = 0.  
+

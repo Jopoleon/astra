@@ -6,7 +6,6 @@ use const_inc, only: IPART, FTO, FTN, ROC, GP, BTOR, ROCO, RTOR, SHIFT, &
     ABC, ELONG, TRIAN, NB1, LEQ, IPEQL, &
     TIME, TSTART, TIMEQL, DTEQL, BTN
 use debugger, only: markloc, astra_stop
-use fs_coupling_variables, only: fs_bnd_yes
 
 implicit none
 
@@ -24,7 +23,6 @@ if (IPART == 1) then ! do only at initiation
     ROC = sqrt(FTO/GP/BTOR)
     ROCO = ROC
     VRO(1: NB1) = VR(1: NB1)
-    fs_bnd_yes = 0
 endif
 
 LEQ(5) = nint(IPEQL)
@@ -493,7 +491,7 @@ endif
 ELONG = ELON(NA1)
 TRIAN = TRIA(NA1)
 SHIFT = SHIF(NA1)
-UPDWN = SHIV(1)
+UPDWN = SHIV(NA1)
 
 return
 end subroutine set_external_metric
@@ -568,7 +566,7 @@ HROX = (RHO(2) - RHO(1))/ROC
 ELONG = ELON(NA1)
 TRIAN = TRIA(NA1)
 SHIFT = SHIF(NA1)
-UPDWN = SHIV(1)
+UPDWN = SHIV(NA1)
 
 ! Flux grid: j*h
 do J=1, NA
@@ -1263,7 +1261,7 @@ subroutine BNDRY(RPB, ZPB)
 use outcmn_inc, only: NBNT
 use expdat, only: BNDTIM, BNDR, BNDZ
 use const_inc, only: NBND, GP2, TIME, RTOR, SHIFT, ABC, TRIAN, UPDWN, ELONG
-use fs_coupling_variables, only: fs_bnd_in, fs_bnd_yes
+use ext_bnd, only: ext_bnd_in, use_ext_bnd
 
 implicit none
 
@@ -1278,10 +1276,10 @@ if (NBNT <= 1) then
 
         if (NBND == 0) NBND = 8    ! call from ESC
         if (NBND /= 8) then
-            if (fs_bnd_yes == 1) then
+            if (use_ext_bnd == 1) then
                 do j=1, NBND
-                    ZPB(j) = fs_bnd_in(j, 2)
-                    RPB(j) = fs_bnd_in(j, 1)
+                    ZPB(j) = ext_bnd_in(j, 2)
+                    RPB(j) = ext_bnd_in(j, 1)
                     BNDZ(j) = ZPB(j)
                     BNDR(j) = RPB(j)
                 enddo

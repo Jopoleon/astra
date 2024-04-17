@@ -28,7 +28,7 @@ INUME1   None                      Numerical flag for NE, 11 is explicit, center
 INUME2   None                      Numerical flag for TE and TI
 INUME3   None                      Numerical flag for FP
 INUME4   None                      Numerical flag for UPAR
-IPROT    None                      Numerical flag for poloidal terms in parallel momentum transport, 0 if no poloidal rot, 1 if yes
+IPROT    None                      Numerical flag for poloidal terms in parallel momentum transport: < 1  - do not add poloidal rotation corrections to equation. >= 1 - add correction terms. If -2 or 2 : use suzpei in getpei equipartiton for implicit scheme. If -3 or 3: add centrifugal force from VTOR to equilibrium. Note that VTOR in this case is explicitly the LFS VTOR (so that Omega = VTOR/(RLFS_local). If -4 or 4, use both suzpei and rotation in equilibrium.  
 ITFBE    None                      Time at which FBE is switched on. If negative, FBE is switched off. By default it is negative
 ITFBP    None                      if 0, nothing. If 1, uses PSIFB as bc for PSI equation.
 ICIRCQ   None                      if 0, nothing. If 1, does circuit equations

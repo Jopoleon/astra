@@ -9,6 +9,7 @@ use const_inc, only: IPART, const_init, XOUT, NA, &
     TIME, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT
 use status_inc, only: status_init, MU, defarr
 use debugger, only: debug, flightsim, astra_stop, markloc
+use ext_bnd, only: use_ext_bnd
 
 implicit none
 
@@ -34,6 +35,7 @@ call fenvex()   !  Enable floating exception handling
 call outcmn_init
 call const_init
 call status_init
+use_ext_bnd = 0
 
 debug = 0 ! Initialise to: no debugging
 

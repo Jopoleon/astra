@@ -9,10 +9,8 @@ subroutine TORBA
 
 use parameter_inc, only: NRD
 use const_inc, only: NA1, RTOR, BTOR, TIME, ROC, SGNIP, SGNBT
-use debugger, only: flightsim
 use status_inc, only: TE, NE, FP, XRHO, ZEF, MU, ELON, SHif , IPOL, &
    AMETR, VOLUM, PEECR, CUECR, AREAT, rho_pol, FP_NORM
-use fs_coupling_variables, only: fs_pol_EC, fs_pow_EC
 use outcmn_inc, only: AWD, nml_file
 use numerical_tools, only: qinterp, integr
 use parameters_a2equil, only : equil_now, GP2
@@ -78,13 +76,9 @@ prdata = 0.d0
 extrap_coef_cPoints = 3 ! skips 3 steps
 extrap_coef_cFreq   = 6 ! skips 6 steps to make it faster
 
-if (flightsim == 0) then
-    n_Rrect = Nrrect
-    n_Zrect = Nzrect
-else
-    n_Rrect = SIZE(equil_now%eqgeometry%rectgrid%r2d)
-    n_Zrect = SIZE(equil_now%eqgeometry%rectgrid%z2d)
-endif
+n_Rrect = Nrrect
+n_Zrect = Nzrect
+
 if (.not. allocated(psi_rect)) then
     allocate(psi_rect(n_Rrect, n_Zrect))
     allocate(B_Rrect (n_Rrect, n_Zrect))
@@ -115,19 +109,14 @@ call SURF_CTR(nrho_surf, nthe_surf, r_surf, z_surf)
 
 ! From polar to rectangluar grid
 
-if (flightsim == 0) then
-    Rmin = MINVAL(r_surf(nrho_surf, :)) - 0.03 ! 1.08
-    Rmax = MAXVAL(r_surf(nrho_surf, :)) + 0.03 ! 2.26
-    zmin = MINVAL(z_surf(nrho_surf, :)) - 0.03 ! -1.0
-    zmax = MAXVAL(z_surf(nrho_surf, :)) + 0.03 ! 1.0
-    dr = (Rmax - Rmin)/(n_Rrect - 1.d0)
-    dz = (zmax - zmin)/(n_Zrect - 1.d0)
-    Rrect = (/ (Rmin + dr*(i - 1.d0), i=1, n_Rrect) /)
-    zrect = (/ (zmin + dz*(i - 1.d0), i=1, n_Zrect) /)
-else
-    Rrect = equil_now%eqgeometry%rectgrid%r2d
-    Zrect = equil_now%eqgeometry%rectgrid%z2d
-endif
+Rmin = MINVAL(r_surf(nrho_surf, :)) - 0.03 ! 1.08
+Rmax = MAXVAL(r_surf(nrho_surf, :)) + 0.03 ! 2.26
+zmin = MINVAL(z_surf(nrho_surf, :)) - 0.03 ! -1.0
+zmax = MAXVAL(z_surf(nrho_surf, :)) + 0.03 ! 1.0
+dr = (Rmax - Rmin)/(n_Rrect - 1.d0)
+dz = (zmax - zmin)/(n_Zrect - 1.d0)
+Rrect = (/ (Rmin + dr*(i - 1.d0), i=1, n_Rrect) /)
+zrect = (/ (zmin + dz*(i - 1.d0), i=1, n_Zrect) /)
 
 drho_eq = 1./(nrho_surf - 1.d0)
 rho_eq = (/ (drho_eq*(i - 1.d0), i=1, nrho_surf) /)
@@ -137,28 +126,10 @@ call qinterp(XRHO(1:NA1), FP  (1:NA1)          , NA1, rho_eq, pf_eq , nrho_surf)
 
 write(6, *) 'TORBEAM surf dims:', nthe_surf, nrho_surf
 eqdata = 0.d0
-if (flightsim == 0) then
-    call ctr2rz_b(nrho_surf, nthe_surf, pf_eq, ffp_eq, &
-        r_surf, z_surf, n_Rrect, n_Zrect, Rrect, zrect,  &
-        PSI_rect, B_Rrect, B_Zrect, B_Trect)
-    eqdata(1) = FP(NA1)
-else
-    psi_sep  = equil_now%eqgeometry%rectgrid%psi_boundary
-    psi_axis = equil_now%eqgeometry%rectgrid%psi_axis
-    psi_rect = equil_now%eqgeometry%rectgrid%psirz2d
-    eqdata(1) = psi_sep
-    do jz=1, n_Zrect-1
-        b_rrect(:, jz) = -1./(GP2*Rrect(:))* &
-            (psi_rect(:, jz+1) - psi_rect(:, jz)) / (zrect(jz+1) - zrect(jz))
-        ggg = ((psi_rect(:, jz) - psi_axis)/(psi_sep - psi_axis))
-        call qinterp(FP_NORM(1:NA1), ipol(1:NA1), NA1, ggg, B_T(:), n_Rrect)
-        b_trect(:, jz) = B_T(:)/Rrect(:)*rtor*btor
-    enddo
-    do jr=1, n_Rrect-1
-        b_zrect(jr, :) = 1./(GP2*Rrect(jr))* &
-            (psi_rect(jr+1, :) - psi_rect(jr, :)) / (rrect(jr+1) - rrect(jr))
-    enddo
-endif
+call ctr2rz_b(nrho_surf, nthe_surf, pf_eq, ffp_eq, &
+    r_surf, z_surf, n_Rrect, n_Zrect, Rrect, zrect,  &
+    PSI_rect, B_Rrect, B_Zrect, B_Trect)
+eqdata(1) = FP(NA1)
 
 write(*, '(A)') 'Acquiring eqdata'
 write(*, '(A, f9.4, f9.4)') 'Sign of Ip, Bt', SGNIP, SGNBT
@@ -295,12 +266,9 @@ pecr_file  = TRIM(awd) // TRIM(pecr_file)
 theta_file = TRIM(awd) // TRIM(theta_file)
 phi_file   = TRIM(awd) // TRIM(phi_file)
 
-if (flightsim == 0) then
-    call uf2dr(pecr_file, TIME, power_gyro(1:n_gyro))
-    power_gyro(1:n_gyro) = 1d-6*power_gyro(1:n_gyro)
-    call uf2dr(theta_file, TIME, theta_t(1:n_gyro))
-endif
-
+call uf2dr(pecr_file, TIME, power_gyro(1:n_gyro))
+power_gyro(1:n_gyro) = 1d-6*power_gyro(1:n_gyro)
+call uf2dr(theta_file, TIME, theta_t(1:n_gyro))
 call uf2dr(phi_file, TIME, phi_t(1:n_gyro))
 
 if (dump_flag) then
@@ -329,11 +297,6 @@ PEECR = 0.d0
 CUECR = 0.d0
 
 gyro_loop: do jgy=1, n_gyro
-
-    if (flightsim == 1) then !from fenix
-        power_gyro(jgy) = fs_pow_EC(jgy)
-        theta_n(jgy) = -fs_pol_EC(jgy+8)
-    endif
 
 ! TORBEAM only for gyrotrons with finite power 
     if (beam_on(jgy) .and. (power_gyro(jgy) > 0.02)) then
@@ -397,16 +360,11 @@ gyro_loop: do jgy=1, n_gyro
         t2ndata = 0.d0
         rhoresult = 0.d0
 
-        if (flightsim == 0) then ! use libtorbeamB
-            call beam(intinbeam, floatinbeam, n_Rrect, n_Zrect, &
-                eqdata, n_ne, n_te, prdata, &
-                rhoresult, iend, t1data, t1tdata, kend, t2data, t2ndata, &
-                icnt, ibgout, nprofvw, volprofw)
-        else ! use libtorbeamA
-            call beam(intinbeam, floatinbeam, n_Rrect, n_Zrect, &
-                eqdata, n_ne, n_te, prdata, &
-                rhoresult, extrap_coef_cPoints, extrap_coef_cFreq)
-        endif
+! use libtorbeamB
+        call beam(intinbeam, floatinbeam, n_Rrect, n_Zrect, &
+            eqdata, n_ne, n_te, prdata, &
+            rhoresult, iend, t1data, t1tdata, kend, t2data, t2ndata, &
+            icnt, ibgout, nprofvw, volprofw)
 
         if (rhoresult(19) /= 0.0) then
             write(6, *) 'Error on exit', rhoresult(19)
@@ -420,70 +378,48 @@ gyro_loop: do jgy=1, n_gyro
 
 ! Trajectories
 
-        if (flightsim == 0) then
+        do lfd=1, npnt
+            rtorb(lfd) = t2ndata(lfd)
+            ptorb(lfd) = t2ndata(npnt+lfd)
+            ctorb(lfd) = t2ndata(2*npnt+lfd)
+        enddo
+        if (rhoresult(19) /= 0.0) then
             do lfd=1, npnt
-                rtorb(lfd) = t2ndata(lfd)
-                ptorb(lfd) = t2ndata(npnt+lfd)
-                ctorb(lfd) = t2ndata(2*npnt+lfd)
+                if (ISNAN(ptorb(lfd))) then
+                    write(6, *) 'P isnan at j=', lfd, rtorb(lfd)
+                endif 
+                if (ISNAN(ctorb(lfd))) then
+                    write(6, *) 'CU isnan at j=', lfd, rtorb(lfd)
+                endif 
             enddo
-            if (rhoresult(19) /= 0.0) then
-                do lfd=1, npnt
-                    if (ISNAN(ptorb(lfd))) then
-                        write(6, *) 'P isnan at j=', lfd, rtorb(lfd)
-                    endif 
-                    if (ISNAN(ctorb(lfd))) then
-                        write(6, *) 'CU isnan at j=', lfd, rtorb(lfd)
-                    endif 
-                enddo
-                write(6, *) 'P  max', maxval(abs(ptorb))
-                write(6, *) 'CU max', maxval(abs(ctorb))
-            endif
+            write(6, *) 'P  max', maxval(abs(ptorb))
+            write(6, *) 'CU max', maxval(abs(ctorb))
+        endif
 
-            ECR = 0.d0
-            CCD = 0.d0
+        ECR = 0.d0
+        CCD = 0.d0
 
-            call qinterp(rtorb, ptorb, npnt, rho_pol(1: NA1), ECR, NA1)
-            call qinterp(rtorb, ctorb, npnt, rho_pol(1: NA1), CCD, NA1)
+        call qinterp(rtorb, ptorb, npnt, rho_pol(1: NA1), ECR, NA1)
+        call qinterp(rtorb, ctorb, npnt, rho_pol(1: NA1), CCD, NA1)
 
 ! Profiles are equidistand in rho_tor, even though they are expressed
 ! as function of (irregular) rho_pol, because this rho_pol grid is
 ! equidistand in rho_tor
-            ecrh_int = VINT(ECR, ROC)
-            eccd_int = IINT(CCD, ROC)
-            write(6, *) 'ecr int', ecrh_int
-            if (ecrh_int > 1.d-6) then
-                ECR = ECR/ecrh_int
-                CCD = CCD/eccd_int
-            endif 
-            write(*, *) 'P_gyro=', power_gyro(jgy)
-            write(*, *) 'Absorption per injected MW', rhoresult(13)
-            write(*, *) 'Total driven current MA per MW / total MA', &
-                1.e-3*rhoresult(12), &
-                1.e-3*rhoresult(13)*SGNIP*power_gyro(jgy)
-            PEECR(1: NA1) = PEECR(1: NA1) + rhoresult(13)*power_gyro(jgy)*ECR
-            CUECR(1: NA1) = CUECR(1: NA1) + 1.e-3*rhoresult(12)*SGNIP*power_gyro(jgy)*CCD
+        ecrh_int = VINT(ECR, ROC)
+        eccd_int = IINT(CCD, ROC)
+        write(6, *) 'ecr int', ecrh_int
+        if (ecrh_int > 1.d-6) then
+            ECR = ECR/ecrh_int
+            CCD = CCD/eccd_int
+        endif 
+        write(*, *) 'P_gyro=', power_gyro(jgy)
+        write(*, *) 'Absorption per injected MW', rhoresult(13)
+        write(*, *) 'Total driven current MA per MW / total MA', &
+            1.e-3*rhoresult(12), &
+            1.e-3*rhoresult(13)*SGNIP*power_gyro(jgy)
+        PEECR(1: NA1) = PEECR(1: NA1) + rhoresult(13)*power_gyro(jgy)*ECR
+        CUECR(1: NA1) = CUECR(1: NA1) + 1.e-3*rhoresult(12)*SGNIP*power_gyro(jgy)*CCD
 
-        else ! fenix below check
-
-            if (rhoresult(0) >= 0.0) then
-                do jrho=1, NA1
-                    ECR(jrho) = exp(-(rho_pol(jrho) - rhoresult(0))**2/ &
-                               (rhoresult(11) - rhoresult(10))**2)
-                enddo
-                CCD = ECR
-
-                call INTEGR(VOLUM(1:NA1), 1, ECR, total_int, NA1)
-                call INTEGR(AREAT(1:NA1), 1, CCD, total_int, NA1)
-                ECR = ECR/total_int(na1)
-                CCD = CCD/total_int(na1)
-
-                do jrho=1, NA1
-                    PEECR(jrho) = PEECR(jrho) + power_gyro(i)*ECR(jrho)
-                    CUECR(jrho) = CUECR(jrho) + SGNIP*power_gyro(i)* &
-                        rhoresult(12)*CCD(jrho)/1.e3
-                enddo
-            endif
-        endif !flightsim
     endif
 enddo gyro_loop
 

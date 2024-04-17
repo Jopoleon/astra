@@ -778,8 +778,8 @@ else
 !         call colovm(valix(j1)) ! git use blue instead
             do j=ixbeg(j1), ixbeg(j1) + lenix(j1) - 1
                jgc = j - ixbeg(j1) + 1
-               plot_arr(2*jgc - 1) = 10.*YSC8*xyGC(j, 1)
-               plot_arr(2*jgc)     = 10.*(YS0 - YSC8*xyGC(j, 2))
+               plot_arr(min(100,2*jgc - 1)) = 10.*YSC8*xyGC(j, 1)
+               plot_arr(min(100,2*jgc))     = 10.*(YS0 - YSC8*xyGC(j, 2))
             enddo
             call d2polyline(0, plot_arr, jgc )
          endif
