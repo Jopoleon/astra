@@ -8,7 +8,7 @@ implicit none
 
 double precision, intent(in) :: YR
 
-H98ITR = 0.0562 * IPL**0.93 * BTOR**0.15 * &
+H98ITERR = 0.0562 * IPL**0.93 * BTOR**0.15 * &
     sum(NE(1:NA1)/DBLE(NA1))**0.41 * AMJ**0.19 * RTOR**1.97 * &
     (ABC/RTOR)**0.58 * ELONG**0.78
 
