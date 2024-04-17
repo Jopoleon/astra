@@ -1,0 +1,22 @@
+cv   main ion brems       SXR     spectral brems      thermal CX       nbicx
+             1             0            0                 0   0
+
+cv  diagnostic lines
+             0       
+
+cc begin atomicData
+acd:acd89_ni.dat           recombination
+scd:scd89_ni.dat           ionisation
+prb:prb89_ni.dat           continuum radiation 
+plt:plt89_ni.dat           line radiation
+cc end atomic Data        
+
+********************Diagnostic Lines******************** 
+
+
+cd     excitation     recombination   charge exchange
+          0                0               0
+
+         -1917
+cd   # of lines
+         -1
