@@ -406,7 +406,7 @@ iter_loop: do jiter=1, miter_ext
 
     psifb = psifb_in
     Rmag  = equil_now%coord_sys%position%r(1, 1)
-    updwn = equil_now%coord_sys%position%z(1, 1)
+    updwn = equil_now%profiles_1d%shiv(nr_equ)
     Hout(     1:nr_equ) = equil_now%profiles_1d%dPSIdV(1:nr_equ)
     g11_sp(   2:nr_equ) = equil_now%profiles_1d%g1(2:nr_equ)
     G2p(      2:nr_equ) = equil_now%profiles_1d%g2(2:nr_equ)
