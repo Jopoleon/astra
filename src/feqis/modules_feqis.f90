@@ -83,7 +83,7 @@ module metric_coefficients_pbe
 
 ! metric coefficients in polar coordinates 
 double precision :: R_curr_0D, Z_curr_0D
-double precision, dimension(:, :), allocatable :: lambda2d, dator
+double precision, dimension(:, :), allocatable :: lambda2d, dator, fsa_kernel
 
 end module metric_coefficients_pbe
 

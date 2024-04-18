@@ -61,7 +61,7 @@ integer :: NUM(4), JMIN, JMAX, NKL1, NKL2, MODK(2)
 end module ac_neg1
 
 !--------------------------------
-module plasma_state ! for flight simulator plasma yes/no
+module plasma_state ! for plasma yes/no (no will not solve the transport equations)
 
 implicit none
 

@@ -997,16 +997,17 @@ use const_inc, only: NEQUIL, MEQUIL, NBND, IPART, IPCTRL, TAU, NA, NA1, NAB, NCN
     RTOR, BTOR, IPL, GP, GP2, HRO, ROC, ABC, &
     VOLUME, SHIFT, ELONG, UPDWN, TRIAN, &
     INUME3, ITFBP, IPLFBE, IFBEY, ITREQ, ICIRCQ, ITFBE, &
-    NB2EQL, TIME, LEQ, PSIFB, PSPLEX, PSIEXT, LEXT, IPEQL
+    NB2EQL, TIME, LEQ, PSIFB, PSPLEX, PSIEXT, LEXT, IPEQL, IPROT
 use status_inc, only: G11, G22, G22E, G33, G33E, G41, G42, G43, G44, G45, &
     FP, IPOL, MU, SHEAR, &
     AMETR, VR, VRS, SLAT, GRADRO, DRODA, &
-    NE, TE, NI, TI, PBLON, PBPER, PFAST, EQPF, EQFF, &
+    NE, TE, NI, TI, MRHO, PBLON, PBPER, PFAST, EQPF, EQFF, &
     BMAXT, BMINT, BDB02, BDB0, B0DB2, FOFB, &
-    VOLUM, SHIF, ELON, TRIA, XRHO, AREAT, PERIM, SHIV, squarn
+    VOLUM, SHIF, ELON, TRIA, XRHO, AREAT, PERIM, SHIV, SQUARN, VTOR
 use plasma_state, only: plasma_up, plasma_trig
 use debugger, only: markloc
 use parameters_a2equil, only: equil_now
+use ext_bnd, only: use_ext_bnd
 
 implicit none
 
@@ -1014,13 +1015,13 @@ integer, parameter :: itfbe_ctrl=0
 
 integer, intent(in) :: equil_solver
 
-integer :: i, j, jneql, jnteta, jnbnd, jnstep, jstepp, j_save_bound
+integer :: i, j, jneql, jnteta, jnbnd, jnstep, jstepp, j_save_bound, j_rotation
 double precision :: tau_resistive, dampfacpsplex, &
      yrocnew, iplnew, ychipfp, dfpdrb12, yiplout, yipl, yupdwn
 double precision, dimension(NA1) :: yg11, yg22, yg33, yvr, yvrs, yslat, yg41, &
     ygradro, yipol, ydroda, ypres, ybmaxt, ybmint, yfp, &
     ybdb02, ybdb0, yb0db2, yvolum, yametr, yshif, yelon, &
-    ytria, yfofb, yeqpf, yeqff, yshiv, ysquare
+    ytria, yfofb, yeqpf, yeqff, yshiv, ysquare, omega_rot
 double precision, dimension(NCNB) :: yccoil, yvcoil
 double precision, dimension(1000) ::  rbnd, zbnd
 
@@ -1080,6 +1081,13 @@ if (LEQ(4) <= 0) iplnew = IPL !if CU:AS, current is assigned from model file
 
 yipl  = iplnew
 
+j_rotation = 0
+omega_rot = 0.
+if (nint(abs(IPROT)) == 3 .or. nint(abs(IPROT)) == 4) then
+    j_rotation = 1
+    omega_rot(1:NA1) = VTOR(1:NA1)/(RTOR+SHIF(1:NA1) + AMETR(1:NA1)) ! Flux function Omega from Vtor_LFS / R_LFS
+endif
+
 do j=1, NA1
     yfp(j) = FP(j)
     yametr(j) = AMETR(j)
@@ -1125,6 +1133,7 @@ call GS_SOLVER( &
     VOLUME, NCNB, yccoil, yvcoil, i, IPART, ITREQ, &
     nint(INUME3), TAU, nint(ITFBP), nint(ICIRCQ), nint(IPCTRL), nint(IFBEY), &
     TIME, ychipfp, PSIFB, PSIEXT, PSPLEX, &
+    omega_rot, j_rotation, TI(1: NA1), NI(1: NA1), MRHO(1: NA1), &
 ! Output: 
     yrocnew, yipl, yg11, yg41, yg22, &
     yg33, G22E(1: jneql), G33E(1: jneql), &
@@ -1173,7 +1182,7 @@ do j=1, NA1
     EQFF(J)  = yeqff(J)    ! due to adiabatic compression done in the code
 enddo
 
-if (NBNT > 0 .or. TIME > ITFBE) then
+if (NBNT > 0 .or. TIME > ITFBE .or. use_ext_bnd == 1) then
     UPDWN = yupdwn
     ABC   = yametr(NA1) 
     ELONG = ELON(NA1)

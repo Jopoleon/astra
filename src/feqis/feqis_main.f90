@@ -33,6 +33,8 @@ nrplasma = nrho
 if (j_call == 0) then
     if (parameters_equil%k_fixfree == 1.or.refit_mode.eq.818) then   ! also if refit mode = 818, initialize free boundary stuff
         call equil_feqis_init_circ
+    if (refit_mode == 818) j_call = 1 ! this is because if free boundary was never called, it needs to initialize these arrays
+    if (refit_mode == 818) refit_mode = 0 ! this is because if free boundary was never called, it needs to initialize these arrays
     endif
 endif
 

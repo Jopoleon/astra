@@ -1523,7 +1523,7 @@ contains
     end subroutine restab_2_timepoints_evolution_limits
 
 !--------------------------------------------------------------------
-    subroutine restab_j_timepoints_evolution_limits_xpoints
+    subroutine restab_j_timepoints_evolution_limits_xpoints_boundariz  ! this one does everthing, boundary and isoflux 4 and more isoflux
 
 ! Finds active currents from scratch including evolution from time point j-1 to point j
 
@@ -1533,13 +1533,15 @@ contains
     use astra2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy, &
         current_limit_feqis, sigma_xpoint, r_xpoint_fit, z_xpoint_fit, &
        n_xpoint_fit, sigma_coils_psiext, vloop_avg, L_ext, &
-       dIp_dt, tau_gseq_feqis, time_astra
+       dIp_dt, tau_gseq_feqis, time_astra, &
+       use_isoflux, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
+			 voltage_limits_active_coils, sigma_limits, cur_init
     use green_matrix, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
     use pi_vars, only: GPI, GPI2, GPI4, muvac, mu0
     use numerical_tools, only: linterp
 
-    integer :: i, j, k, j_iter, iax, jax, jt, j_time
+    integer :: i, j, k, j_iter, iax, jax, jt, j_time, nteta_temp
     double precision :: temp_err, curr, f_correction, x1, x2, x3, &
         Ffunc, Ffunc_old, lambda, deltapsiext, psibexto, psibext !lagrange multplier lambda
     double precision, dimension(9) :: bub
@@ -1552,7 +1554,9 @@ contains
     double precision, dimension(:, :), allocatable :: G_00xr, G_00xz
     double precision, dimension(:), allocatable :: dummyx
     double precision, dimension(nblocks-npassive) :: force_r, force_z
-    double precision :: raxref, zaxref
+    double precision :: raxref, zaxref, r_norm_ref
+		double precision :: currents_limits_adds(nactive,2)
+		integer, dimension(:), allocatable :: gridpoint_tipe
     character(len=80) :: file_time
     logical :: file_exists
     data j_time/0/
@@ -1562,11 +1566,8 @@ contains
     write(*, *) 'deltapsi', deltapsiext, tau_gseq_feqis, vloop_avg, L_ext, dIp_dt, &
    curconduc(1:nactive), j_time
 
-    if (n_xpoint_fit > 0) then
-        allocate(G_00xr(nactive, n_xpoint_fit))
-        allocate(G_00xz(nactive, n_xpoint_fit))
-        allocate(dummyx(n_xpoint_fit))
-    endif
+
+    r_norm_ref = 0.5*(rmin+rmax)
 
     psicorr   = 0.
     Ffunc_old = 1.e6
@@ -1589,14 +1590,52 @@ contains
     zaxref = zaxp
     rbref(1:nteta) = rbndp(1:nteta)
     zbref(1:nteta) = zbndp(1:nteta)
+    nteta_temp = nteta
     nbnd = nteta
     rbnd(1:nbnd) = rbref(1:nteta)
     zbnd(1:nbnd) = zbref(1:nteta)
 
+    if (use_isoflux > 0) then
+    !the code assumes that isoflux 1 is raus, isoflux 2 is ztop, isoflux 3 is rin, isoflux 4 is zbot. if one or more than one are x points is given in which_x_point
+		 nteta_temp = n_isoflux
+     n_xpoint_fit = n_isoflux
+     if (n_xpoint_fit > 0) then
+        allocate(G_00xr(nactive, n_xpoint_fit))
+        allocate(G_00xz(nactive, n_xpoint_fit))
+        allocate(dummyx(n_xpoint_fit))
+     endif
+     allocate(gridpoint_tipe(n_isoflux))
+     rbref(1:nteta_temp) = r_isoflux(1:nteta_temp)          
+     zbref(1:nteta_temp) = z_isoflux(1:nteta_temp)          
+     r_xpoint_fit(1:nteta_temp)=rbref(1:nteta_temp)
+     z_xpoint_fit(1:nteta_temp)=zbref(1:nteta_temp)
+     gridpoint_tipe = -1
+      do i = 1, n_isoflux
+       if (which_x_point(i) == -1) gridpoint_tipe(i)=-1
+		   if (which_x_point(i) == 0)  gridpoint_tipe(i)=0
+		   if (which_x_point(i) == 1)  gridpoint_tipe(i)=1
+       if (which_x_point(i) == 2)  gridpoint_tipe(i)=2
+      enddo
+    else
+     if (n_xpoint_fit > 0) then
+        allocate(G_00xr(nactive, n_xpoint_fit))
+        allocate(G_00xz(nactive, n_xpoint_fit))
+        allocate(dummyx(n_xpoint_fit))
+        allocate(gridpoint_tipe(n_xpoint_fit))
+     endif
+		endif
+		
 ! Axis is given by raxp, zaxp; boundary by rbndp, zbndp; coilref by curconduc(passive)
-    curref(1:nactive) = curconduc(1:nactive)
-    curnow(1:nactive) = curconduc(1:nactive)
+    if (j_time == 0) curnow(1:nactive) = cur_init(1:nactive)
+    if (j_time > 0) curnow(1:nactive) = curconduc(1:nactive)
+    curref(1:nactive) = curnow(1:nactive)
     curdiff = 0.
+
+		!calculate additional current limits				
+    do i=1,nactive
+      currents_limits_adds(i,1)=curref(i)+tau_gseq_feqis*(voltage_limits_active_coils(i,1)-resconduc(i,i)*curref(i))/indconduc(i,i)
+      currents_limits_adds(i,2)=curref(i)+tau_gseq_feqis*(voltage_limits_active_coils(i,2)-resconduc(i,i)*curref(i))/indconduc(i,i)
+    enddo
 
 ! calculate the matrix F_li of the F function, including the green function terms
     matrix    = 0.
@@ -1606,10 +1645,10 @@ contains
     write(*, *) 'psiext', psiextrz(30,30), rax, zax, jrz(30, 30)
 
     do j=1, nactive
-        do k=1, nteta
+        do k=1, nteta_temp
             G_00(j, k) = interp2d_psi(rbref(k), zbref(k), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
         enddo
-        G_00c(j) = sum(G_00(j, 1:nteta))/(0. + nteta)
+        G_00c(j) = sum(G_00(j, 1:nteta_temp))/(0. + nteta_temp)
         bub(1) = interp2d_psi(raxref - dr/2., zaxref, r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
         bub(2) = interp2d_psi(raxref + dr/2., zaxref, r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
         bub(3) = interp2d_psi(raxref, zaxref - dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
@@ -1622,8 +1661,22 @@ contains
                 bub(2) = interp2d_psi(r_xpoint_fit(k) + dr/2., z_xpoint_fit(k), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
                 bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(k) - dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
                 bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(k) + dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-                G_00xr(j,k) = (bub(2) - bub(1))/dr
-                G_00xz(j,k) = (bub(4) - bub(3))/dz
+                if (gridpoint_tipe(k)==-1) then
+                 G_00xr(j,k) = 0*(bub(2) - bub(1))/dr
+                 G_00xz(j,k) = 0*(bub(4) - bub(3))/dz
+                endif
+                if (gridpoint_tipe(k)==0) then
+                 G_00xr(j,k) = 0*(bub(2) - bub(1))/dr
+                 G_00xz(j,k) = (bub(4) - bub(3))/dz
+                endif
+                if (gridpoint_tipe(k)==1) then
+                 G_00xr(j,k) = (bub(2) - bub(1))/dr
+                 G_00xz(j,k) = 0*(bub(4) - bub(3))/dz
+                endif
+                if (gridpoint_tipe(k)==2) then
+                 G_00xr(j,k) = (bub(2) - bub(1))/dr
+                 G_00xz(j,k) = (bub(4) - bub(3))/dz
+                endif
             enddo
         endif
     enddo
@@ -1634,7 +1687,7 @@ contains
         do i=1, nactive
             if (i == j) matrix(i, j) = matrix(i, j) + sigma_energy*sigma_coils(i)*indconduc(i,i) + 2.*sigma_coils(i)
             matrix(i, j) = matrix(i, j) +  &
-                2.*sigma_B*sum((G_00(i, 1:nteta) - G_00c(i))*(G_00(j, 1:nteta) - G_00c(j))) +  &
+                2.*sigma_B*sum((G_00(i, 1:nteta_temp) - G_00c(i))*(G_00(j, 1:nteta_temp) - G_00c(j))) +  &
                 2.*sigma_axis*(G_00r(i)*G_00r(j) + G_00z(i)*G_00z(j))
             if (n_xpoint_fit > 0) then
                 dummyx(1:n_xpoint_fit) = G_00xr(i, 1:n_xpoint_fit)*G_00xr(j, 1:n_xpoint_fit) + &
@@ -1679,11 +1732,11 @@ contains
             enddo
         enddo
 
-        do j=1, nteta
+        do j=1, nteta_temp
             psicorr(j) = interp2d_psi(rbref(j), zbref(j), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
         enddo
 
-        x1 = sum(psicorr)/(nteta + 0.) !average psi on the boundary
+        x1 = sum(psicorr(1:nteta_temp))/(nteta_temp + 0.) !average psi on the boundary
 
 ! Derivative at ref axis
         bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
@@ -1693,7 +1746,7 @@ contains
         x2 = (bub(2) - bub(1))/dr ! dPsi/dr
         x3 = (bub(4) - bub(3))/dz ! dPsi/dz
 
-        Ffunc = sigma_B*sum((psicorr - x1)**2) + sigma_axis*(x2**2 + x3**2)
+        Ffunc = sigma_B*sum((psicorr(1:nteta_temp) - x1)**2) + sigma_axis*(x2**2 + x3**2)
         do i=1, nactive
             Ffunc = Ffunc+0.5*indconduc(i, i)*sigma_energy*sigma_coils(i)*curnow(i)**2 + sigma_coils(i)*curdiff(i)**2
         enddo
@@ -1704,8 +1757,22 @@ contains
                 bub(2) = interp2d_psi(r_xpoint_fit(k) + 0.5*dr, z_xpoint_fit(K), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
                 bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
                 bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-                x2 = (bub(2) - bub(1))/dr ! dPsi/dr
-                x3 = (bub(4) - bub(3))/dz ! dPsi/dz
+                if (gridpoint_tipe(k)==-1) then
+                 x2 = 0*(bub(2) - bub(1))/dr
+                 x3 = 0*(bub(4) - bub(3))/dz
+                endif
+                if (gridpoint_tipe(k)==0) then
+                 x2 = 0*(bub(2) - bub(1))/dr
+                 x3 = (bub(4) - bub(3))/dz
+                endif
+                if (gridpoint_tipe(k)==1) then
+                 x2 = (bub(2) - bub(1))/dr
+                 x3 = 0*(bub(4) - bub(3))/dz
+                endif
+                if (gridpoint_tipe(k)==2) then
+                 x2 = (bub(2) - bub(1))/dr
+                 x3 = (bub(4) - bub(3))/dz
+                endif
                 Ffunc = Ffunc +  sigma_xpoint*(x2**2 + x3**2)
              enddo
         endif
@@ -1719,7 +1786,7 @@ contains
         Fderiv = 0.
         do i=1, nactive
             Fderiv(i) = 2.*(0.5*indconduc(i,i)*sigma_energy*sigma_coils(i)*curnow(i) + &
-                sigma_coils(i)*curdiff(i) + sigma_B*sum((psicorr - x1)*(G_00(i, 1:nteta) - G_00c(i))))
+                sigma_coils(i)*curdiff(i) + sigma_B*sum((psicorr(1:nteta_temp) - x1)*(G_00(i, 1:nteta_temp) - G_00c(i))))
             bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
             bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
             bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
@@ -1733,8 +1800,22 @@ contains
                     bub(2) = interp2d_psi(r_xpoint_fit(k) + 0.5*dr, z_xpoint_fit(K), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
                     bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
                     bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-                    x2 = (bub(2) - bub(1))/dr ! dPsi/dr
-                    x3 = (bub(4) - bub(3))/dz ! dPsi/dz
+                    if (gridpoint_tipe(k)==-1) then
+                     x2 = 0*(bub(2) - bub(1))/dr
+                     x3 = 0*(bub(4) - bub(3))/dz
+                    endif
+                    if (gridpoint_tipe(k)==0) then
+                     x2 = 0*(bub(2) - bub(1))/dr
+                     x3 = (bub(4) - bub(3))/dz
+                    endif
+                    if (gridpoint_tipe(k)==1) then
+                     x2 = (bub(2) - bub(1))/dr
+                     x3 = 0*(bub(4) - bub(3))/dz
+                    endif
+                    if (gridpoint_tipe(k)==2) then
+                     x2 = (bub(2) - bub(1))/dr
+                     x3 = (bub(4) - bub(3))/dz
+                    endif
                     Fderiv(i) = Fderiv(i) +  2.*sigma_xpoint*(x2*G_00xr(i,k) + x3*G_00xz(i,k))
                 enddo
             endif
@@ -1756,15 +1837,25 @@ contains
         enddo
         lambda = lambda - sum(invmatrix(nactive+1, 1:nactive+1)*Fderiv(1:nactive+1))
 
-! cut new currents to limits
+! cut new currents to limits due to current
+        write(*, *) 'result vector', curnow(1:nactive), lambda
         do i=1, nactive
             curnow(i) = min(curnow(i), current_limit_feqis(i, 1))
             curnow(i) = max(curnow(i), current_limit_feqis(i, 2))
         enddo
+        write(*, *) 'result vector', curnow(1:nactive), lambda
+! cut new currents to limits due to voltage if jtime> 0
+        if (j_time > 0) then 
+         do i=1, nactive
+            curnow(i) = min(curnow(i), currents_limits_adds(i, 1))
+            curnow(i) = max(curnow(i), currents_limits_adds(i, 2))
+         enddo
+        endif
+	
         curdiff = curnow - curref
 
         write(*, *) 'result vector', curnow(1:nactive), lambda
-
+! pause
 ! Construct correction
         call compound_psi
         do j=1, nz2
@@ -1814,8 +1905,8 @@ contains
         tau_gseq_feqis, vloop_avg, L_ext*dIp_dt, &
         nr2, nz2, psirz(1:nr2, 1:nz2), nblocks - npassive, force_R, force_Z, &
         psibnd, psiaxis, indconduc(1:nactive, 1:nactive), resconduc(1:nactive, 1:nactive), &
-        nlimiter, limiterR(1:nlimiter), limiterZ(1:nlimiter), r(1), r(nr2), z(1), z(nz2), nteta, &
-        rbref(1:nteta), zbref(1:nteta), time_astra, tau_gseq_feqis, GPI2*psiplasmatoconduc(1:nactive)  !saved in kA
+        nlimiter, limiterR(1:nlimiter), limiterZ(1:nlimiter), r(1), r(nr2), z(1), z(nz2), nteta_temp, &
+        rbref(1:nteta_temp), zbref(1:nteta_temp), time_astra, tau_gseq_feqis, GPI2*psiplasmatoconduc(1:nactive)  !saved in kA
     close(32)
 
 !update time
@@ -1826,11 +1917,13 @@ contains
         deallocate(G_00xz)
         deallocate(dummyx)
     endif
+    if (allocated(gridpoint_tipe)) deallocate(gridpoint_tipe)
 
     return
-    end subroutine restab_j_timepoints_evolution_limits_xpoints
+    end subroutine restab_j_timepoints_evolution_limits_xpoints_boundariz
   
 !--------------------------------------------------------------------
+
     subroutine diagnose_feqis(filename)  !call it in sbr/assign_geom.f90 in astra for example, it has access to this module.
 
     use metric_coefficients_pbe, only: dator
@@ -3098,9 +3191,9 @@ contains
         x2 = psi_limp(i5)
         psibnd = max(x1, x2)
         if (x2 > x1) then
-            i_plasmatype = 0
+            i_plasmatype = 0  ! limiter
         else
-            i_plasmatype = 1
+            i_plasmatype = 1  ! X-point
         endif
     endif
 

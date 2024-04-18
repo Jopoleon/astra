@@ -12,6 +12,7 @@ subroutine build_2dgrid(nrho, ntheta, psin_grid, &
 use pi_vars, only: GPI, GPI2
 use numerical_tools, only: qinterp, extrapolate, polyfitcc
 use feqis_tools, only: green_function_includingsamepoint
+use metric_coefficients_pbe, only: fsa_kernel
 
 implicit none
 
@@ -81,16 +82,20 @@ dl_arc = 0.0
 do jrho=1, nrho
     dl_arc = 0.0
     square(jrho)=0.0
+    dumba1 = 0.5*(maxval(XX(jrho, :)) + minval(XX(jrho, :)))
+    dumba2 = 0.5*(maxval(XX(jrho, :)) - minval(XX(jrho, :)))
     do jthe=2, ntheta 
+        z1 = sin(thetap_i(jthe) + thetap_i(jthe-1))*sin(0.5*(thetap_i(jthe) + thetap_i(jthe-1)))
         dl_arc(jthe) = rmin(jrho, jthe)*(thetap_i(jthe) - thetap_i(jthe-1)) !on the full grid
-        square(jrho) = square(jrho) + XX(jrho, jthe)*sin(thetap_i(jthe) + thetap_i(jthe-1))*dl_arc(jthe)
+        square(jrho) = square(jrho) + (XX(jrho, jthe)-dumba1)/dumba2*z1*dl_arc(jthe)
     enddo
     dl_arc(1) = rmin(jrho, 1)*(thetap_i(1) + GPI2 - thetap_i(ntheta))
-    square(jrho) = square(jrho) + XX(jrho, 1)*sin((thetap_i(1) + GPI2 + thetap_i(ntheta)))*dl_arc(1)
+    z1 = sin((thetap_i(1) + GPI2 + thetap_i(ntheta)))*sin(0.5*(thetap_i(1) + GPI2 + thetap_i(ntheta)))
+    square(jrho) = square(jrho) + (XX(jrho, 1)-dumba1)/dumba2*z1*dl_arc(1)
     perim(jrho)  = sum(dl_arc)
     square(jrho) = square(jrho)/perim(jrho)
 enddo
-square = -square
+square = 4.*square-1.
 square(1) = square(2)
 
 !Compute Bpol, gradPSI, gradV
@@ -162,50 +167,47 @@ slat = slat*GPI2   !full grid
 
 do jrho=1, nrho
     ametr(jrho) = 0.5*(maxval(XX(jrho, 1: ntheta)) - minval(XX(jrho, 1: ntheta)))
-    shiv(jrho)  = 0.5*(maxval(YY(jrho, 1: ntheta)) + minval(YY(jrho, 1: ntheta)))  !avg between zmax and zmin or mean of Z ???
+    shiv(jrho)  = 0.5*(maxval(YY(jrho, 1: ntheta)) + minval(YY(jrho, 1: ntheta)))  !avg between zmax and zmin or mean of Z 
+enddo
+
+!flux surface average kernel
+do jrho=1, nrho-1
+    fsa_kernel(jrho,1: ntheta) = dV2da(jrho, 1: ntheta)/dVa(jrho)
 enddo
 
 !Cycle over positions  ! half grid
 do jrho=1, nrho-1
-    tar2 = dV2da(jrho, 1: ntheta)/dVa(jrho)
+
     tar1 = 1./(Rmaj2(jrho, 1: ntheta)**2)
-    z1 = sum(tar1*tar2)
-    G3(jrho) = z1
-    z1 = sum(tar2)
-    ONEZ(jrho) = z1
+    G3(jrho) = sum(tar1*fsa_kernel(jrho,: )) ! this is the definition of flux surface average of <f> of f = tar1
+
+    ONEZ(jrho) = sum(fsa_kernel(jrho,: ))
+
     tar1 = (gradVa(jrho, 1: ntheta)/Rmaj2(jrho, 1: ntheta))**2
-    z1 = sum(tar1*tar2)
-    G2(jrho) = z1
+    G2(jrho) = sum(tar1*fsa_kernel(jrho,: ))
 
     tar1 = gradVa(jrho, 1: ntheta)**2
-    z1 = sum(tar1*tar2)
-    G1(jrho) = z1
+    G1(jrho) = sum(tar1*fsa_kernel(jrho,: ))
 
     tar1 = gradVa(jrho, 1: ntheta)
-    z1 = sum(tar1*tar2)
-    GRADRO(jrho) = z1
+    GRADRO(jrho) = sum(tar1*fsa_kernel(jrho,: ))
 
     tar1 = B_ABSa(jrho, 1: ntheta)**2
-    z1 = sum(tar1*tar2)
-    BDB02(jrho) = z1
+    BDB02(jrho) = sum(tar1*fsa_kernel(jrho,: ))
 
     tar1 = B_ABSa(jrho, 1: ntheta)
-    z1 = sum(tar1*tar2)
-    BDB0(jrho) = z1
+    BDB0(jrho) = sum(tar1*fsa_kernel(jrho,: ))
 
     tar1 = 1./(B_ABSa(jrho, 1: ntheta)**2)
-    z1 = sum(tar1*tar2)
+    B0DB2(jrho) = sum(tar1*fsa_kernel(jrho,: ))
 
-    B0DB2(jrho) = z1
     BMAXT(jrho) = maxval(B_ABSa(jrho, : ))
     BMINT(jrho) = minval(B_ABSa(jrho, : ))
 
-    tar2 = B_ABSa(jrho, 1: ntheta)/BMAXT(jrho)
     tar1 = ((btor/B_ABSa(jrho, 1: ntheta))**2) * &
-        ( 1. - (sqrt(1. - tar2)) * (1. + 0.5*tar2) )
-    tar2 = dV2da(jrho, 1: ntheta)/dVa(jrho)
-    z1 = sum(tar1*tar2)
-    FOFB(jrho) = z1
+        ( 1. - (sqrt(1. - (B_ABSa(jrho, 1: ntheta)/BMAXT(jrho)))) * (1. + 0.5*(B_ABSa(jrho, 1: ntheta)/BMAXT(jrho))) )
+    FOFB(jrho) = sum(tar1*fsa_kernel(jrho,: ))
+
 
 enddo
 

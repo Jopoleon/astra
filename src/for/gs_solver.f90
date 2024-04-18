@@ -13,6 +13,7 @@ subroutine GS_SOLVER( &
     ncoils, yccoil, yvcoil, iter_step, iter_part, iter_itreq, &
     inume_3, tau_step, ipsibcf, icircq, ipctrl, ifbey, time_a, &
     psifb_in, psifb, psiext, psplex, &
+    omega_rot, i_rotation, ion_temp, ion_dens, plasma_mass, &
 ! Output:
     rocnew, ipl, g11, g41, g22, g33, g22e, g33e, eqpf, eqff, &
     vr, vrs, slat, gradro, ipol, bmaxt, bmint, bdb02, bdb0, b0db2, &
@@ -36,12 +37,13 @@ integer, parameter :: nbtabp=1000
 
 integer, intent(in) :: equil_solver, nteta, nr_equ, jna1, nbnd, ncoils, &
     iter_step, iter_part, ipsibcf, icircq, ipctrl, &
-    iter_itreq, inume_3, ifbey
+    iter_itreq, inume_3, ifbey, i_rotation
 
 double precision, intent(in) :: tau_step, psifb_in, rtor, btor, roc, time_a
 double precision, intent(in), dimension(ncoils) :: yccoil, yvcoil
 double precision, intent(in), dimension(nbtabp) :: rbnd, zbnd
-double precision, intent(in), dimension(jna1) :: xrho, pres_in, fp
+double precision, intent(in), dimension(jna1) :: xrho, pres_in, fp, & 
+    omega_rot, ion_temp, ion_dens, plasma_mass
 
 double precision, intent(out) :: rocnew, updwn, psifb, psiext, psplex
 double precision, intent(out), dimension(jna1) :: ametr, vr, vrs, &
@@ -56,7 +58,7 @@ integer :: i, j, n_theta, i_call_gsss, k, k1, key_start, keyplc, &
     iter_step_call, jiter, p, jveps
 double precision :: dum1r, R0, Z0, Fvacuum, dxrho_sp, dx, &
     phib, PSIb, deltaPSI, PSI0, phibm, phibl, IPLX, Vtemp, Veps, &
-    zfuncb, errG, roc_sp, g2ediff, errght, ybound, Rmag
+    zfuncb, errG, roc_sp, g2ediff, errght, ybound, Rmag, vtemp_counter
 double precision, dimension(nbnd) :: Rb, Zb
 double precision, dimension(jna1) :: dpsi_ad, dp_ad, pres, sxho, vxho
 double precision, dimension(nr_equ) :: volum_in, PSI, PRESS, xrho_sp, &
@@ -70,10 +72,10 @@ double precision, dimension(nr_equ) :: volum_in, PSI, PRESS, xrho_sp, &
     expAA, expAAm, y, H, dPSIdV, zfunc, &
     G2m, G3m, G2p, G3p, G2mt, G2pt, dum1, dum2, dum3, &
     Hout, Houtt, hin1, hin2, hout1, hout2, &
-    G2tild1, Htild1, G2tild2, Htild2, G2corr2, Hcorr2
+    G2tild1, Htild1, G2tild2, Htild2, G2corr2, Hcorr2, & 
+		o_rot, i_temp, i_dens, i_mass
 character(len=80) :: fname
 type(type_equilibrium) :: equil_in
-double precision :: vtemp_counter
 
 !----------------------------------------------------------------------
 
@@ -168,6 +170,13 @@ call reinterp_back(xrho**2, pres , jna1, xrho_sp**2, PRESS   , nr_equ, interp_ro
 call reinterp_back(sxho**2, g22  , jna1, xrho_sp**2, GG2     , nr_equ, interp_routine)
 call reinterp_back(xrho**2, g33  , jna1, xrho_sp**2, GG3     , nr_equ, interp_routine)
 call reinterp_back(vxho**2, volum, jna1, xrho_sp**2, volum_in, nr_equ, interp_routine)
+
+if (i_rotation == 1) then
+    call reinterp_back(xrho**2, omega_rot  , jna1, xrho_sp**2, o_rot , nr_equ, interp_routine)
+    call reinterp_back(xrho**2, ion_temp   , jna1, xrho_sp**2, i_temp, nr_equ, interp_routine)
+    call reinterp_back(xrho**2, ion_dens   , jna1, xrho_sp**2, i_dens, nr_equ, interp_routine)
+    call reinterp_back(xrho**2, plasma_mass, jna1, xrho_sp**2, i_mass, nr_equ, interp_routine)
+endif
 
 GG2(1) = 0.0
 volum_in(1) = 0.0
@@ -290,7 +299,7 @@ iter_loop: do jiter=1, miter_ext
         call integrcc(nr_equ, PSI, 1./H, dum1)
 !end of algorithm
 
-        Vtemp = vtemp_counter*vtemp+(1.-vtemp_counter)*dum1(nr_equ)
+        Vtemp = vtemp_counter*vtemp+(1. - vtemp_counter)*dum1(nr_equ)
 
         Veps = abs(Vtemp - volume)/volume
 
@@ -315,7 +324,7 @@ iter_loop: do jiter=1, miter_ext
 
     enddo fsa_gse_loop
 
-    vtemp_counter=0.
+    vtemp_counter = 0.
 
 ! G2f = G2m   ! Be careful this is now done because numerically I have to find a good way to integrate G2f...
 

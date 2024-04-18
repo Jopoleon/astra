@@ -97,8 +97,8 @@ use feqis_circuit, only: nr, nz, nr2, nz2, psiextrz, redo_bnd, &
     restab_F_function_full_fonfit, restab_F_function_full_fonfit_xpoints, restab_F_function_full_currents, &
     restab_2_timepoints_evolution, restab_F_function_full_currents_forces, &
     restab_F_function_full_currents_limits,restab_2_timepoints_evolution_limits, &
-    restab_j_timepoints_evolution_limits_xpoints
-use astra2fbe, only: refit_mode, n_of_newton_iterations
+    restab_j_timepoints_evolution_limits_xpoints_boundariz
+use astra2fbe, only: refit_mode, n_of_newton_iterations, use_isoflux
 use feqis_tools, only: closest_index
 
 implicit none
@@ -306,8 +306,8 @@ CASE(7) !finds active currents from scratch, eddy currents zero. minimize magnet
 CASE(8) !finds active currents from scratch including evolution from time t1 to time t2, with constraint on the consumed flux. eddy currents = 0. also respect current limits
     call restab_2_timepoints_evolution_limits
 
-CASE(818) !finds active currents from scratch including evolution from time j-1 to time j, with constraint on the consumed flux. eddy currents = 0. also respect current limits, with xpoints
-    call restab_j_timepoints_evolution_limits_xpoints
+CASE(818) !finds active currents from scratch including evolution from time j-1 to time j, with constraint on the consumed flux. eddy currents = 0. also respect current limits, with xpoints. This one does isoflux
+    call restab_j_timepoints_evolution_limits_xpoints_boundariz ! uses full boundary
 
 END SELECT
 
@@ -791,7 +791,8 @@ use ferromagstructure, only: type_ferromag
 
 use green_matrix, only: greeni, dgreenirj, dgreenizj, dgreenirpl, dgreenizpl
 use outcmn_inc, only: machine
-use astra2fbe, only: cur_init
+use astra2fbe, only: cur_init, use_isoflux, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
+ voltage_limits_active_coils
 
 implicit none
 
@@ -982,6 +983,13 @@ allocate(omega_pl(nr2, nz2))
 allocate(area_eff(nr2, nz2))
 allocate(psi_cur_old(nconduc))
 allocate(dpc(nconduc))
+allocate(voltage_limits_active_coils(nactive,2))
+
+if (n_isoflux > 0) then
+ allocate(r_isoflux(n_isoflux))
+ allocate(z_isoflux(n_isoflux))
+ allocate(which_x_point(n_isoflux))
+endif
 
 return
 end subroutine equil_feqis_init_circ
@@ -996,7 +1004,7 @@ use feqis_circuit, only: nr, nrho, nteta, raxp, zaxp, rbndp, zbndp, rho, teta, &
     Rgeom0, Btor0, Rpol, Zpol, Rpul, Zpul, jrhoteta, li3, li_aug, betapol, iplasma
 use astra2fbe, only: raxis_astra, zaxis_astra, psi0_astra, psib_astra, &
     solve_fix
-use metric_coefficients_pbe, only: lambda2d, R_curr_0d, Z_curr_0d, dator
+use metric_coefficients_pbe, only: lambda2d, R_curr_0d, Z_curr_0d, dator, fsa_kernel
 use transfer_functions, only: rpbez, zpbez, psibez, t2dbez, &
     g1bez, g2bez, gm1bez, gm4bez, gm41bez, gm5bez, ggrhobez, &
     areatbez, surfbez, perimbez, vbez, qbez, phibez, &
@@ -1077,6 +1085,7 @@ if (j_init == 0) then
     allocate(bpcell2dbez(nrho, nteta))
     allocate(bcell2dbez(nrho, nteta))
     allocate(lambda2d(nrho, nteta))
+    allocate(fsa_kernel(nrho, nteta))
     allocate(dator(nrho, nteta))
 
     raxp = raxis_astra
@@ -1575,3 +1584,57 @@ enddo
 
 return
 end subroutine all_forces_feqis
+
+
+!---------------------------------------------------------------------
+subroutine all_forces_feqis_components(ncoilz, force_R, force_Z, force_tot, plasma_state, plasma_contrib_R, plasma_contrib_Z)
+
+!this one is between everything , including plasma. ncoilz = nblocks-npassive (active subcoils only)
+
+use feqis_circuit, only: nblocks, npassive, jrz, nr2, nz2, area_eff, &
+    curconduc, mequivalence
+use green_matrix, only: dgreenirpl, dgreenizpl, dgreenirj, dgreenizj
+
+integer, intent(in) :: ncoilz, plasma_state
+double precision, intent(out), dimension(ncoilz) :: force_R, force_Z, force_tot, plasma_contrib_R, plasma_contrib_Z
+
+integer :: i, j, k, nblock_a
+double precision :: x1
+
+force_R = 0.
+force_Z = 0.
+force_tot = 0.
+plasma_contrib = 0.
+nblock_a = nblocks - npassive
+
+if (ncoilz.ne.nblock_a) then
+ write(*,*) 'wrong nr of coils. please set the first argument to the call to: ', nblock_a
+ stop
+endif
+
+
+if (plasma_state == 1) then !not sure about the plasma response...
+    do i=1, nblock_a
+        x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreeniRpl(1:nr2, 1:nz2, i))
+        force_R(i) = force_R(i) + curconduc(mequivalence(i)) * x1
+        x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreeniZpl(1:nr2, 1:nz2, i))
+        force_Z(i) = force_Z(i) + curconduc(mequivalence(i)) * x1
+        plasma_contrib_R(i) = force_R(i)
+        plasma_contrib_Z(i) = force_Z(i)
+    enddo
+endif
+
+!block-to-block
+do i=1, nblock_a
+    do j=1, nblock_a
+        if (i /= j) then
+            force_R(i) = force_R(i) + curconduc(mequivalence(j)) * curconduc(mequivalence(i)) * dgreeniRj(i, j)
+            force_Z(i) = force_Z(i) + curconduc(mequivalence(j)) * curconduc(mequivalence(i)) * dgreeniZj(i, j)
+        endif
+    enddo
+enddo
+
+force_tot = sqrt(force_R**2.+force_Z**2.)
+
+return
+end subroutine all_forces_feqis_components

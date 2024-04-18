@@ -189,7 +189,7 @@ iter_loop: do jiter=1, max_iter+1
     X0o = X0
     Y0o = Y0
     if (axis_change < 1.e-8) then
-        write(*, '(A, i3)') 'FEQIS converged, step #', jiter
+!        write(*, '(A, i3)') 'FEQIS converged, step #', jiter
         EXIT iter_loop
     endif
 enddo iter_loop
