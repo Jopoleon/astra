@@ -8,8 +8,8 @@ use astra2fbe, only: tau_circuit_feqis, tau_gseq_feqis, time_astra, solve_fix, &
     raxis_astra, zaxis_astra, psi0_astra, psib_astra, &
     sigma_b, sigma_axis, sigma_coils, sigma_energy, &
     cur_init, dr_factor_init_astra, dz_factor_init_astra, psplex_from_fbe
-use const_inc, only: tau, time, RTOR, shift, updwn, psiax, psibo, iplx, taumin, ncnb, NA1
-use status_inc, only: MU
+use const_inc, only: tau, time, RTOR, shift, psiax, psibo, iplx, taumin, ncnb, NA1
+use status_inc, only: MU, SHIV
 use outcmn_inc, only: machine, ccoil, ncnbt
 
 implicit none
@@ -79,7 +79,7 @@ new_resistance=0.
 !	new_resistance(1:12) = (/0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0./) !diagonal resistance in microOhm
 
 raxis_astra = RTOR + SHIFT
-zaxis_astra = UPDWN
+zaxis_astra = SHIV(1)
 psi0_astra = PSIAX
 psib_astra = PSIBO
 n_fourier_restab_boundary = 5
