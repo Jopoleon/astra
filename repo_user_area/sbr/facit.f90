@@ -22,7 +22,7 @@ subroutine facit(Z_imp_in, A_imp_in, N_imp_in, rot_mod, Dz_out, Vz_out)
 
   use parameter_inc, only: NRD
   use const_inc,     only: NA1, BTOR, RTOR, ZMJ, AMJ
-  use status_inc,    only: TE, TI, NE, NI, IPOL, MU, SQEPS, AMETR, VTOR, ZEF, NMAIN
+  use status_inc,    only: TE, TI, NE, NI, IPOL, MU, SQEPS, AMETR, VTOR, ZEF, NMAIN, VRS, G11, RHO
 
   implicit none
 
@@ -51,11 +51,13 @@ subroutine facit(Z_imp_in, A_imp_in, N_imp_in, rot_mod, Dz_out, Vz_out)
   double precision :: B0, R0                     ! equilibrium
   double precision, dimension(NA1)  :: qmag, FF  ! equilibrium
 
-  integer :: rotation_model 
+  integer :: rotation_model
+
+  double precision, dimension(NA1) :: grad_rho_sq, r_tor, drtor_drmin !gradrhosq_exp, drhodr, drho, drmin ! to convert to ASTRA grid
   
   ! OUTPUTS
 
-  double precision, dimension(NA1) :: Dz_lfs, Vz_lfs
+  double precision, dimension(NA1) :: Dz_lfs, Vz_lfs, Dz_fsa, Vz_fsa
 
   ! OTHER:
   !double precision:: cimp, fH, bC, sigH, nsigH, TperpsTpar_axis
@@ -130,25 +132,37 @@ subroutine facit(Z_imp_in, A_imp_in, N_imp_in, rot_mod, Dz_out, Vz_out)
   !print *, "Done with FACIT call"
 
   !-----------------------------------------------------------------------------------------------!
+
+  ! Transform to ASTRA grid (r_min -> r_tor)
+  grad_rho_sq = G11(1:NA1)/VRS(1:NA1)
+  r_tor = RHO(1:NA1)
+
+  do i=2,nx-1
+     drtor_drmin(i) = (r_tor(i+1)-r_tor(i-1))/(r_min(i+1)-r_min(i-1))
+  enddo
+
+  drtor_drmin(nx) = (r_tor(nx)-r_tor(nx-1))/(r_min(nx)-r_min(nx-1))
+  drtor_drmin(1) = (r_tor(2)-r_tor(1))/(r_min(2)-r_min(1))
+  
   ! In case rotation model = 2, transform LFS to FSA coefficients, otherwise already output is FSA
 
-  ! extract output for arguments of equ file call to impflux sbr
+  ! extract output for arguments of equ file call to FACIT sbr
   if (rotation_model .eq. 0 .or. rotation_model .eq. 1) then
      
-     Dz_out(1:NA1) = Dz_lfs
-     Vz_out(1:NA1) = Vz_lfs
+     Dz_out(1:NA1) = Dz_lfs*(drtor_drmin**2/grad_rho_sq)
+     Vz_out(1:NA1) = Vz_lfs*(drtor_drmin/grad_rho_sq)
 
   elseif (rotation_model .eq. 2) then
 
-     call lfs2fsa_impDV(2, 0, Zimp, Aimp, Dz_lfs, Vz_lfs, Dz_out(1:NA1), Vz_out(1:NA1))
+     call lfs2fsa_impDV(2, 0, Zimp, Aimp, Dz_lfs, Vz_lfs, Dz_fsa, Vz_fsa)
+
+     Dz_out(1:NA1) = Dz_fsa*(drtor_drmin**2/grad_rho_sq)
+     Vz_out(1:NA1) = Vz_fsa*(drtor_drmin/grad_rho_sq)
 
   else
      print *, "Please select correct rotation model = 0, 1 or 2. It's the 4th argument of the FACIT call"
 
   endif
-  
-
-  !write(*,*) "I'm here"
 
 end subroutine facit
 
@@ -309,7 +323,6 @@ subroutine FACIT_LFS(nx, eps, &                                 ! grid parameter
      Mach_ion = 0.0
   else
      Mach_ion = Mach_ii
-     !print *, Mach_ii
   endif
 
   Mzstar = Mach_ion*sqrt(Az/Ai - (Zz/Zi)*Zeff/(Zeff + T_i/T_e)) ! effective impurity Mach number
@@ -603,7 +616,8 @@ function C2_lfs(alpha, g, f1, f2, Aimp, Ai)
   double precision, intent(in) :: alpha, g, f1, f2, Aimp, Ai
   double precision :: C2_lfs
 
-  C2_lfs = 1.5/(1.0 + (Ai/Aimp)*f1) - (0.29 + 0.68*alpha)/(0.59 + alpha + (1.34 + f2)/g**2)
+  !C2_lfs = 1.5/(1.0 + (Ai/Aimp)*f1) - (0.29 + 0.68*alpha)/(0.59 + alpha + (1.34 + f2)/g**2)
+  C2_lfs = 1.5/(1.0 + (2.0/184.0)*f1) - (0.29 + 0.68*alpha)/(0.59 + alpha + (1.34 + f2)/g**2)
 
   return
 end function C2_lfs
