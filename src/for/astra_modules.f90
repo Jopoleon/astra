@@ -70,49 +70,6 @@ integer :: plasma_up, plasma_trig
 end module plasma_state
 
 !--------------------------------
-module flight_sim_geometrics ! for flight simulator diagnostics
-
-implicit none
-
-double precision, dimension(1000) :: geom1d
-
-end module flight_sim_geometrics
-
-!--------------------------------
-module fenix_params !for flight simulator parameters
-
-implicit none
-
-double precision :: wallpos, d_j_m, dw_j_m, dw2_j_m, &
-    vsoldiv, solwidth, &
-    recycl_wall, boron_wall, predep_w, &
-    transp_variance, hmodetransp, lmodetransp, &
-    solmod_dt,  &
-    saves_dt, savep_dt, neocl_dt, trmod_ty, nbieqmix_dt, &
-    torba_dt, simdtmultip, simdtmultip_min, ped_width, chie_chii, &
-    D_chie, D_ped_mult, gs2d_tmin_multip, timecirc, timepsi, &
-    diohdt, diohdtthreshold, dteqz2, zibkdw, zifbey, &
-    dt_adapt, VV, dt_fazt, ipl_bf_bkdw, &
-    alp0, alpnew0, rx00, zx00, w_wall_source, pedtop_multiplier, &
-    pfast_pressure_coef, denssource_fast, &
-    tesep_multip, pellet_pos, pellet_width,tavg_psep, &
-    Dped_H_multi, sh_crit_saw, ntm_m, ntm_n, ntm_seed, &
-    elm_area, elm_res, elm_fbs, dioh_thresh, iprd_thresh, &
-    eq_err_thres, pel_speed, nbi_model, ec_model, ic_model, pel_model, &
-    coil_start_time(15)
-
-integer :: lhmodel, btipdirec, pr_clamp, reinitcirc, reinitpsi, &
-    ipsmk2, eq_cmd, use_zlim_pot, cmnd_dioh2s, cmnd_dioh2u, nequiz, &
-    s_adapt, yesfitcc, s_fazt, kastr2,  &
-    isafazt, ispid_contour, res_trigts06, resres_oh6, &
-    max_max_iteri, max_max_iterb, max_max_iterj
-
-double precision :: radial_error, vertical_error
-double precision, dimension(500, 2) :: psitok
-
-end module fenix_params
-
-!--------------------------------
 module ext_bnd
 
 double precision, dimension(:, :), allocatable :: ext_bnd_in ! 50 , 2 boundary values R,Z
@@ -141,10 +98,15 @@ integer :: n_fourier_restab_boundary ! nr of fourier modes for boundary restab, 
 integer :: psplex_from_fbe    ! put 1 to get psplex fromfree boundary
 integer :: plasma_config      ! 0 if limiter, 1 if xpoint
 
+integer :: use_isoflux, n_isoflux         ! 0 does nothing, 1 when mode 818 is used to reconstruct coil currents, the boundary is obtained on the isoflux points r_isoflux and z_isoflux , of length n_isoflux
+integer, dimension(:), allocatable :: which_x_point !same length of n_isoflux. where 0 --> continous point, where 1 --> x point
+double precision, dimension(:), allocatable :: r_isoflux, z_isoflux
+double precision, dimension(:,:), allocatable :: voltage_limits_active_coils
+
 double precision :: tau_circuit_feqis, tau_gseq_feqis, time_astra
 double precision :: dr_factor_init_astra, dz_factor_init_astra ! factors of dr and dz for initial iterations
 double precision :: raxis_astra, zaxis_astra, psi0_astra, psib_astra, sigma_B, sigma_axis, & 
- sigma_xpoint, r_xpoint_fit(5), z_xpoint_fit(5), sigma_energy, sigma_forces   ! sigma_B multiplies the boundary, sigma_axis the axis, sigma_energy the block (sum sigma_coil coil_cur**2 induc), sigma_forces multiplies the force block: sum_ij force_ij I_i I_j. sigma_xpoint can be up to 5 x points to fit.
+   sigma_xpoint, r_xpoint_fit(5), z_xpoint_fit(5), sigma_energy, sigma_forces, sigma_limits   ! sigma_B multiplies the boundary, sigma_axis the axis, sigma_energy the block (sum sigma_coil coil_cur**2 induc), sigma_forces multiplies the force block: sum_ij force_ij I_i I_j. sigma_xpoint can be up to 5 x points to fit.
 integer :: n_xpoint_fit
 
 double precision :: vloop_avg, L_ext, dIp_dt   ! use tau_gseq_feqis here for refit mode 818

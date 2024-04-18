@@ -10,8 +10,7 @@ subroutine A_EQUIL( &
     key_start, PSIEXT, PSPLEX, keyplc, equil_out)
 
 use imas_ids, only: type_equilibrium
-use fenix_params, only: s_adapt, s_fazt
-use parameters_a2equil, only: type_parameters, fix_adapgrid, GP, GP2
+use parameters_a2equil, only: type_parameters, fix_adapgrid, GP, GP2, s_fazt
 use const_inc, only : rtor,shift, updwn
 use feqis_circuit, only: psib_ext_feqis, get_zccurb_feqis, find_demo_gaps_feqis
 
@@ -30,7 +29,7 @@ integer, intent(out) :: key_start, keyplc
 double precision, intent(out) :: PSIEXT, PSPLEX
 type(type_equilibrium), intent(out) :: equil_out
 
-logical :: file_existence 
+logical :: file_existence
 integer :: nstep, i, j, key_equil, nrp, nz, &
     toric_fourc, toric_file, strahl_file, strahl_fourc, &
     write_coils_diagn, key_plcs, kprs, k_grids, &
@@ -85,13 +84,13 @@ if (nstep == 0) then
     strahl_fourc = 3
     write_coils_diagn = 0
     k_filessss = 0.
-    psplexavg = 0. 
+    psplexavg = 0.
     psplexavgexp = 0.
     fix_adapgrid = 0
     raxis_astra = rtor + shift
     zaxis_astra = updwn
     fname = trim(nml_file)
-    INQUIRE( FILE=trim(fname), EXIST=file_existence) 
+    INQUIRE( FILE=trim(fname), EXIST=file_existence)
     if (file_existence) then
         open(53, FILE=fname)
         read(53, nml=spider)
@@ -106,17 +105,13 @@ if (s_fazt == 0) then
 else
     kprs = -2
 endif
-if (s_adapt == 0) then
-    k_grids = 0
-else
-    k_grids = 1
-endif
+k_grids = 0
 
 parameters_equil%kpr     = kprs
 parameters_equil%k_grid  = k_grids
 parameters_equil%epsro   = epsros
 parameters_equil%enels   = enelss
-parameters_equil%key_plc = key_plcs      
+parameters_equil%key_plc = key_plcs
 parameters_equil%key_dmf = 0
 
 parameters_equil%key_plc = 1    !force plc = 1 if current diffusion is solved
@@ -139,7 +134,7 @@ if (parameters_equil%k_fixfree == 1) then
     parameters_equil%key_out = 0  ! keep this and use spidupdate call instead
 
     if (nstep >= 1) parameters_equil%key_start = 0 !fbe with circuit equations, no refit
-endif      
+endif
 
 !Coil currents
 if (ncoils > 0) then
@@ -154,16 +149,16 @@ endif
 !use refits currents in coil.dat, only for nitreq >1
 if (key_no_refits == 1) then
     if (key_start == 1 .and. iter_itreq > 0) then
-        fname = trim(parameters_equil%prename) // 'tcurrs.wr' 
+        fname = trim(parameters_equil%prename) // 'tcurrs.wr'
         open(1, file=TRIM(fname))
         do i=1, ncoils
-            read(1, *) t_currents(i)  
+            read(1, *) t_currents(i)
         enddo
         close(1)
         write(*, *) 'rewriting coil.dat with new fitted currents'
 !        call coil2spider(t_currents*1.e3, ncoils, parameters_equil)  !Write coil currents in coil.dat when key_start inside iterations NITREQ
     endif
-endif 
+endif
 
 if (parameters_equil%k_fixfree == 1) then
     ucoils(1:ncoils)  = vcoils(1:ncoils)
@@ -173,12 +168,12 @@ endif
 if (equil_solver == 101) then
     call feqis_main(ncoils, ucoils, parameters_equil, 1, equil_in, equil_out)
 else
-    call spider_run(ncoils, ucoils, equil_in, equil_out, parameters_equil)     
+    call spider_run(ncoils, ucoils, equil_in, equil_out, parameters_equil)
 endif
 
 if (ipsibcf /= 0) parameters_equil%key_psibcf = 1
 
-!output from equil_out structure 
+!output from equil_out structure
 
 !psifb = psifb_in
 dampfacpsplex = 0.
@@ -192,7 +187,7 @@ if (parameters_equil%k_fixfree == 1) then
             call psib_ext(PSIEXT)
         endif
     endif
-    if (ipsibcf >= 0) then     ! case with PSI_B and dPSI_B implicit 
+    if (ipsibcf >= 0) then     ! case with PSI_B and dPSI_B implicit
         PSIEXT = -GP2*PSIEXT
         PSPLEX = equil_out%global_param%psplex
         PSPLEX = ((psplexavg*ipl**psplexavgexp)/tau_step*psplexold + PSPLEX) / &
@@ -262,9 +257,9 @@ ucoils(1:ncoils) = vcoils(1:ncoils)
 parameters_equil%nstep = nstep
 
 if (eq_solver == 101) then
-    call feqis_main(ncoils, ucoils, parameters_equil, 0, equil_in, equil_out)     
+    call feqis_main(ncoils, ucoils, parameters_equil, 0, equil_in, equil_out)
 else if (eq_solver == 3) then
-    call spider_run_2(ncoils, ucoils, parameters_equil)     
+    call spider_run_2(ncoils, ucoils, parameters_equil)
 endif
 
 return

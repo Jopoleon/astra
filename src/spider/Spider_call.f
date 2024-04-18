@@ -5,18 +5,18 @@
 !   MAIN  PROGRAM  OF  THE EVOLUTION CODE  "PET"
 !-----------------------------------------------
 
-      use fenix_params, only: s_adapt, s_fazt
       use keys, only: key_0st, kpr, key_out
 
       implicit none
 
+      integer, parameter :: s_adapt=0
       integer, intent(in) :: key_dmf, k_grid, k_fixfree, key_start
       real*8, intent(in) :: time, dt, dpsdt
       integer, intent(out) :: nstep, k_auto
       double precision, intent(out), dimension(*) :: voltpf
 
       integer :: plasma_up, plasma_trig, j_switch, kluch, yesfitcc, 
-     &   k_dmf, nstep_local, nnstep, kkey_dmf
+     &   k_dmf, nstep_local, nnstep, kkey_dmf, s_fazt
 
       real*8 :: rax, zax
       real*8, dimension(2500) :: contvals_mat

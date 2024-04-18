@@ -2,7 +2,7 @@ module parameters_a2equil       ! declaration of code parameters
 
 use imas_ids, only: type_equilibrium
 
-integer :: fix_adapgrid
+integer :: fix_adapgrid, s_fazt=0
 integer, parameter, private :: DP=kind(1.0D0)
 double precision, parameter :: GP=3.14159265359, GP2=2.*GP, GP4=GP2**2.0, muvac=0.4*GP*1.E-06
 double precision :: epsf_tol, epss_tol, ydiff, ydiff2, epsv_tol, sorparam, epsg_tol, &
