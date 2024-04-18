@@ -66,7 +66,7 @@ clean:
 	rm -f *.mod
 	rm -f $(MOD_DIR)/*.mod
 	rm -rf $(OBJ_DIR)
-	rm -f $(LIBFOR)
+	rm -rf $(LIB_DIR)
 
 .PHONY: modules
 modules:

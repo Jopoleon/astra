@@ -22,6 +22,7 @@ chmod 744 $AWD/exe/wr_nml
 chmod 744 $AWD/exe/CheckObjs
 chmod 744 $AWD/pyparse/parser_main.py
 chmod 744 $AWD/green/greenMatrices.py
+chmod 744 $AWD/clean.sh
 
 make -f exe/Makefile clean
 exe/as_exe -m fluxes -v aug34954 -s 4 -e 5
