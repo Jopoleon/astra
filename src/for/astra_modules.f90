@@ -72,6 +72,8 @@ end module plasma_state
 !--------------------------------
 module ext_bnd
 
+implicit none
+
 double precision, dimension(:, :), allocatable :: ext_bnd_in ! 50 , 2 boundary values R,Z
 integer :: use_ext_bnd
 
@@ -79,6 +81,12 @@ end module ext_bnd
 
 !-------------------------------------
 module astra2fbe  !these are coupling variables with the equilibrium solver and astra
+
+use const_inc, only: tau, time, RTOR, shift, psiax, psibo, iplx, taumin, NA1
+use status_inc, only: SHIV
+use outcmn_inc, only: machine, ccoil
+
+implicit none
 
 integer, parameter :: ncoil_dim=300
 
@@ -118,4 +126,62 @@ double precision, dimension(ncoil_dim, 2) :: current_limit_feqis ! 1 is upper, 2
 double precision, dimension(ncoil_dim, ncoil_dim) :: force_coil ! where it is 1, forces coil i,i to current of i,j
 character(len=80) :: machine_description ! name of device, in astra it's called MACHINE
 
+contains
+    subroutine astra2fbe_init
+
+    tau_circuit_feqis = tau
+    tau_gseq_feqis    = tau
+    time_astra     = time
+    activate_coil_feqis = 1 ! if 0, coil is disconnected if use_reduce_circuit and reconnect_circuits is used, otherwise just sets the current to zero (you will get a different result!)
+    current_limit_feqis(:, 1) =  1.e6 ! 1 is upper, 2 is lower
+    current_limit_feqis(:, 2) = -1.e6 ! 1 is upper, 2 is lower
+    force_coil = 0. ! where it is 1, forces coil i,i to current of i,j --> better use reconnect circuits.
+    
+    use_reduce_circuit = 0 ! run with reconnected circuits, does not reset the matrix
+    reconnect_circuits = 0 ! this resets the circuit matrix, to change connections
+    n_equivalence = 0
+    new_equivalence = 0
+    !new_equivalence(1:14,1) = (/0,0,0,0,0,0,0,0,0,0,0,0,0,0/)
+    resistance_change = 0 ! this resets the circuit matrix, to change resistances (diagonals)
+    new_resistance = 0.
+    !	new_resistance(1:12) = (/0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0./) !diagonal resistance in microOhm
+    
+    raxis_astra = RTOR + SHIFT
+    zaxis_astra = SHIV(1)
+    psi0_astra = PSIAX
+    psib_astra = PSIBO
+    n_fourier_restab_boundary = 5
+    use_limiter_astra = 1   ! do not use limiter for DEMO
+    refit_mode = 0   ! if -1 - 1 turn only, 0 - stab method, if 1 - restab with prescribed axis , 3 - full fit like spider but only for eddy currents, 101 - only Z stab
+    sigma_B = 1.
+    sigma_axis = 50000.
+    sigma_coils = 1.e5
+    sigma_energy = 1
+    
+    solve_fix = 0   ! if 0 - solve full fix boundary problem, >0 - N pass only, -2 - uses fbe solution 
+    execute_plasma = 1   ! if 0 - only circuit equations, if 1 - solve plasma gseq too
+    n_of_newton_iterations = 150
+    
+    !factors of dr and dz for initial iterations
+    dr_factor_init_astra = 1.
+    dz_factor_init_astra = 1.
+    fast_mode = 0
+    psplex_from_fbe = 0
+    
+    execute_plasma = 1
+    tau_gseq_feqis = taumin ! spider GS solver time step
+    
+    if (MACHINE(1:3) == 'aug') then
+        cur_init( 1:12) = CCOIL(1:12)/1.e3
+        cur_init(13:52) = 0.
+    endif
+    
+    if (TIME > 2.52) fast_mode = 1
+    
+    write(*, *) 'eqtime', time, fast_mode, execute_plasma, tau_gseq_feqis, cur_init(1:12)
+    
+    return
+    end subroutine astra2fbe_init
+
 end module astra2fbe
+    
