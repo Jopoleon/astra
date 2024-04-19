@@ -10,6 +10,7 @@ use const_inc, only: IPART, const_init, XOUT, NA, &
 use status_inc, only: status_init, MU, defarr
 use debugger, only: debug, flightsim, astra_stop, markloc
 use ext_bnd, only: use_ext_bnd
+use astra2fbe, only: astra2fbe_init
 
 implicit none
 
@@ -98,6 +99,8 @@ call DETVAR_INIT
 call EQGUESS
 call INIVAR
 
+call astra2fbe_init
+
 jt_req = 0
 do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set in IFTREQ (for/defarr.f90)
     if (TASK(1:3) /= 'BGD') jkey = IFKEY(256) 
@@ -122,6 +125,7 @@ enddo
 !---------------
 
 do while (TIME - TEND + 1.E-8 < DPOUT + TAU)
+    call astra2fbe_init
     call STEPUP 
 enddo
 
