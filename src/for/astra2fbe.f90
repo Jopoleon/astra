@@ -3,6 +3,7 @@ module astra2fbe  !these are coupling variables with the equilibrium solver and 
 use const_inc, only: tau, time, RTOR, shift, psiax, psibo, iplx, taumin, NA1
 use status_inc, only: SHIV
 use outcmn_inc, only: machine, ccoil
+use debugger, only: debug
 
 implicit none
 
@@ -95,9 +96,10 @@ contains
     endif
     
     if (TIME > 2.52) fast_mode = 1
-    
-    write(*, *) 'eqtime', time, fast_mode, execute_plasma, tau_gseq_feqis, cur_init(1:12)
-    
+    if (debug > 0) then
+        write(*, *) 'eqtime', time, fast_mode, execute_plasma, tau_gseq_feqis, cur_init(1:12)
+     endif
+
     return
     end subroutine astra2fbe_init
 

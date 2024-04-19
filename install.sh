@@ -26,6 +26,3 @@ chmod 744 $AWD/clean.sh
 
 make -f exe/Makefile clean
 exe/as_exe -m fluxes -v aug34954 -s 4 -e 5
-
-# Generate Green-functions for FBE
-green/greenMatrices.py
