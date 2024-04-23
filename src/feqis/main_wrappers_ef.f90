@@ -3,7 +3,7 @@ subroutine full_system_advance_feqis(j_init)
 use errors_params, only: err_epsilon, err_circ_plasma_iter
 use feqis_circuit, only: nr2, nz2, nconduc, iplasma, psi_cur_old, &
     psiplasmatoconduc, curconduc, jrz, area_eff, psi_external_calc
-use astra2fbe, only: fast_mode, execute_plasma
+use transport2fbe, only: fast_mode, execute_plasma
 use parameters_a2equil, only: max_iter
 use green_matrix, only: greeni
 
@@ -16,10 +16,10 @@ double precision :: error_temp
 double precision, dimension(300) :: cur_temp
 
 if (j_init == -818) then !!!refit mode 818, special case
-    write(*,*) 'special refit time dependent mode'
+    write(*, *) 'special refit time dependent mode'
     call psi_external_calc
     call solve_gse2d_fbe_full_feqis(0)
- return
+    return
 endif
 
 ! time stepping
@@ -98,7 +98,7 @@ use feqis_circuit, only: nr, nz, nr2, nz2, psiextrz, redo_bnd, &
     restab_2_timepoints_evolution, restab_F_function_full_currents_forces, &
     restab_F_function_full_currents_limits,restab_2_timepoints_evolution_limits, &
     restab_j_timepoints_evolution_limits_xpoints_boundariz
-use astra2fbe, only: refit_mode, n_of_newton_iterations, use_isoflux
+use transport2fbe, only: refit_mode, n_of_newton_iterations, use_isoflux
 use feqis_tools, only: closest_index
 
 implicit none
@@ -404,7 +404,7 @@ subroutine FEQISUPDATE(coilzzz, nccc)
 use pi_vars, only: GPI2
 use feqis_circuit, only: nconduc, cur_con_old, curconduc, &
     psi_cur_old, psiplasmatoconduc
-use astra2fbe, only: fast_mode
+use transport2fbe, only: fast_mode
 
 implicit none
 
@@ -429,7 +429,7 @@ use feqis_circuit, only: nconduc, i_dim1, tau_new, &
     tau_old, cur_con_old, curconduc, voltage, &
     dpc, psiplasmatoconduc, resconduc, indconduc, psi_cur_old
 use feqis_tools, only: solve_circuit_equations
-use astra2fbe, only: tau_circuit_feqis, tau_gseq_feqis, activate_coil_feqis, &
+use transport2fbe, only: tau_circuit_feqis, tau_gseq_feqis, activate_coil_feqis, &
     n_equivalence, reconnect_circuits, new_equivalence, &
     use_reduce_circuit, current_limit_feqis, force_coil, resistance_change, &
     new_resistance
@@ -474,16 +474,14 @@ do j=1, nconduc
     if (activate_coil_feqis(j) == 0) dpc(j) = 0.
 enddo
 
-
 if (resistance_change == 1) then
     invertcommand = 1
-    do k=1,nconduc
+    do k=1, nconduc
         if (new_resistance(k)>0.) then
             resconduc(k,k) = new_resistance(k)
         endif
     enddo
 endif
-
 
 if (reconnect_circuits == 1.and.use_reduce_circuit == 1) then
     rem_coils=0
@@ -629,7 +627,7 @@ use feqis_circuit, only: nrho, nrho2d, nteta, use_limiter_yesno, &
     pressure, ipol, pprime, ffprime, &
     psia_2d, ffp_2d, ppp_2d, ncoils, &
     psistabr, psistabz, psigrid, psigrida, psibnd
-use astra2fbe, only: dr_factor_init_astra, dz_factor_init_astra, &
+use transport2fbe, only: dr_factor_init_astra, dz_factor_init_astra, &
     tau_circuit_feqis, tau_gseq_feqis, activate_coil_feqis, current_limit_feqis, &
     raxis_astra, zaxis_astra, psi0_astra, psib_astra, use_limiter_astra
 use numerical_tools, only: linterp
@@ -697,7 +695,6 @@ if (j_call == 0) then
     allocate(zbndp(2*nteta))
     allocate(rbnd(2*nteta))
     allocate(zbnd(2*nteta))
-
 endif
 
 if (ifplasma == 1) then
@@ -791,7 +788,7 @@ use ferromagstructure, only: type_ferromag
 
 use green_matrix, only: greeni, dgreenirj, dgreenizj, dgreenirpl, dgreenizpl
 use outcmn_inc, only: machine
-use astra2fbe, only: cur_init, use_isoflux, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
+use transport2fbe, only: cur_init, use_isoflux, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
  voltage_limits_active_coils
 
 implicit none
@@ -972,23 +969,23 @@ curconduc(1:nconduc) = cur_init(1:nconduc)
 
 allocate(jrz(nr2, nz2))
 allocate(psirz(nr2, nz2))
-psirz=0.
+psirz = 0.
 allocate(psiextrz(nr2, nz2))
-psiextrz=0.
+psiextrz = 0.
 allocate(psiplasrz(nr2, nz2))
-psiplasrz=0.
+psiplasrz = 0.
 allocate(psiferro(nr2, nz2))
 allocate(u_n(nr2, nz2))
 allocate(omega_pl(nr2, nz2))
 allocate(area_eff(nr2, nz2))
 allocate(psi_cur_old(nconduc))
 allocate(dpc(nconduc))
-allocate(voltage_limits_active_coils(nactive,2))
+allocate(voltage_limits_active_coils(nactive, 2))
 
 if (n_isoflux > 0) then
- allocate(r_isoflux(n_isoflux))
- allocate(z_isoflux(n_isoflux))
- allocate(which_x_point(n_isoflux))
+    allocate(r_isoflux(n_isoflux))
+    allocate(z_isoflux(n_isoflux))
+    allocate(which_x_point(n_isoflux))
 endif
 
 return
@@ -1002,7 +999,7 @@ use feqis_circuit, only: nr, nrho, nteta, raxp, zaxp, rbndp, zbndp, rho, teta, &
     psia_1d, ffp_1d, ppp_1d, &
     ffprime, pprime, pressure, ipol, &
     Rgeom0, Btor0, Rpol, Zpol, Rpul, Zpul, jrhoteta, li3, li_aug, betapol, iplasma
-use astra2fbe, only: raxis_astra, zaxis_astra, psi0_astra, psib_astra, &
+use transport2fbe, only: raxis_astra, zaxis_astra, psi0_astra, psib_astra, &
     solve_fix
 use metric_coefficients_pbe, only: lambda2d, R_curr_0d, Z_curr_0d, dator, fsa_kernel
 use transfer_functions, only: rpbez, zpbez, psibez, t2dbez, &
@@ -1147,7 +1144,7 @@ enddo
 jr = nrho - 1 !nint(1.*nx)
 Z_curr_0D = sum(jrho2(1:jr, :)*YY2(1:jr, :)*darea2(1:jr, :))/ &
             sum(jrho2(1:jr, :)*darea2(1:jr, :))
-R_curr_0D = sqrt(sum(jrho2(1:jr, :)*Rmaj2(1:jr, :)**2*darea2(1:jr, :))/ &
+R_curr_0D = sqrt(sum(jrho2(1:jr, :)*Rmaj2(1:jr, :)**2 * darea2(1:jr, :))/ &
                  sum(jrho2(1:jr, :)*darea2(1:jr, :)))
 
 !regrid
@@ -1319,7 +1316,7 @@ if (psirz(k, j) == psibnd) then
 else
     rbnd(1) = r(k) - (psirz(k, j) - psibnd)/(psirz(k, j) - psirz(k-1, j))*dr
 endif
-    zbnd(1) = z(j)
+zbnd(1) = z(j)
 teta_fbe(1) = pol_angle(rax, zax, rbnd(1), zbnd(1))
 
 theta_loop: do i=2, nteta
@@ -1424,6 +1421,138 @@ return
 end subroutine convert_boundary_to_pbe
 
 !--------------------------------------------------------------------
+subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
+
+use pi_vars, only: GPI2
+use feqis_circuit, only: nr, nr2, nz, i_dim5, iaxis, jaxis, &
+    teta, dteta, raus, rinner, zbot, ztop, &
+    r, z, dr, dz, rax, zax,  &
+    psiaxis, psibnd, psirz
+use feqis_tools, only: pol_angle, interp2d_psi
+
+implicit none
+
+integer, intent(IN) :: ntetaz
+double precision, intent(OUT), dimension(ntetaz) :: rbnd, zbnd
+
+integer :: i, j, k, j4, nteta
+double precision :: x1, x2, t1, t2, t3, z1, z2, z3, x11, dx
+double precision, dimension(i_dim5) :: teta_fbe
+
+nteta = ntetaz
+rbnd = 0.
+zbnd = 0.
+
+do i=1, nteta + 1
+    teta(i) = GPI2*(i - 1.)/(nteta + 0.)
+enddo
+dteta = teta(2) - teta(1)
+
+dx = sqrt(dr**2 + dz**2)
+
+! Find boundary
+j = jaxis
+do i=iaxis, nr2
+    if (psirz(i, j) >= psibnd) k = i
+    if (psirz(i, j) <= psibnd) EXIT
+enddo
+
+if (psirz(k, j) == psibnd) then
+    rbnd(1) = r(k)
+else
+    rbnd(1) = r(k) - (psirz(k, j) - psibnd)/(psirz(k, j) - psirz(k-1, j))*dr
+endif
+zbnd(1) = z(j)
+teta_fbe(1) = pol_angle(rax, zax, rbnd(1), zbnd(1))
+
+theta_loop: do i=2, nteta
+    dx = sqrt(dr**2 + dz**2)
+    x1 = sqrt((rbnd(i-1) - rax)**2 + (zbnd(i-1) - zax)**2)
+    teta_fbe(i) = teta_fbe(i-1) + dteta
+
+    t1 = rax + x1*cos(teta_fbe(i))
+    t2 = zax + x1*sin(teta_fbe(i))
+
+    if (t1 >= raus) then
+        x1 = (raus - rax)/cos(teta_fbe(i))
+    endif
+    if (t1 <= rinner) then
+        x1 = (rinner - rax)/cos(teta_fbe(i))
+    endif
+    if (t2 >= ztop) then
+        x1 = (ztop - zax)/sin(teta_fbe(i))
+    endif
+    if (t2 <= zbot) then
+        x1 = (zbot - zax)/sin(teta_fbe(i))
+    endif
+    t1 = rax + x1*cos(teta_fbe(i))
+    t2 = zax + x1*sin(teta_fbe(i))
+    t3 = interp2d_psi(t1, t2, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+
+    if (t3 == psibnd) then
+        rbnd(i) = t1
+        zbnd(i) = t2
+    elseif (t3 < psibnd) then
+        do
+            z1 = rax + (x1 - dx)*cos(teta_fbe(i))
+            z2 = zax + (x1 - dx)*sin(teta_fbe(i))
+            z3 = interp2d_psi(z1, z2, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+            if (z3 < psibnd) then
+                dx = 1.1*dx
+            else
+                EXIT
+            endif
+        enddo
+        x11 = x1 - (t3 - psibnd)/(t3 - z3)*dx
+        rbnd(i) = rax + x11*cos(teta_fbe(i))
+        zbnd(i) = zax + x11*sin(teta_fbe(i))
+    else
+        do
+            j4 = 0
+            x2 = x1 + dx
+            z1 = rax + x2*cos(teta_fbe(i))
+            z2 = zax + x2*sin(teta_fbe(i))
+            if (z1 >= raus) then
+                x2 = (raus - rax)/cos(teta_fbe(i))
+                j4 = 1
+            endif
+            if (z1 <= rinner) then
+                x2 = (rinner - rax)/cos(teta_fbe(i))
+                j4 = 1
+            endif
+            if (z2 >= ztop) then
+                x2 = (ztop - zax)/sin(teta_fbe(i))
+                j4 = 1
+            endif
+            if (z2 <= zbot) then
+                x2 = (zbot - zax)/sin(teta_fbe(i))
+                j4 = 1
+            endif
+            z1 = rax + x2*cos(teta_fbe(i))
+            z2 = zax + x2*sin(teta_fbe(i))
+            z3 = interp2d_psi(z1, z2, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+            if (z3 > psibnd) then
+                if (j4 == 1) then
+                    rbnd(i) = z1
+                    zbnd(i) = z2
+                    CYCLE theta_loop
+                endif
+                dx = dx*1.1
+            else
+                EXIT
+            endif
+        enddo
+        x11 = x1 + (t3 - psibnd)/(t3 - z3)*dx
+        rbnd(i) = rax + x11*cos(teta_fbe(i))
+        zbnd(i) = zax + x11*sin(teta_fbe(i))
+   endif
+
+enddo theta_loop
+
+return
+end subroutine estimate_boundary_to_pbe
+
+!--------------------------------------------------------------------
 subroutine solve_gs2d(g)
 
 use pi_vars, only: mu0
@@ -1523,6 +1652,15 @@ force_R = 0.
 force_Z = 0.
 nblock_a = nblocks - npassive
 
+if (plasma_state == 1) then !not sure about the plasma response...
+    do i=1, nblock_a
+        x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreeniRpl(1:nr2, 1:nz2, i))
+        force_R(i) = force_R(i) + curconduc(mequivalence(i)) * x1
+        x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreeniZpl(1:nr2, 1:nz2, i))
+        force_Z(i) = force_Z(i) + curconduc(mequivalence(i)) * x1
+    enddo
+endif
+
 !block-to-block
 do i=1, nblock_a
     do j=1, nblock_a
@@ -1581,10 +1719,8 @@ do i=1, nblocks
     enddo
 enddo
 
-
 return
 end subroutine all_forces_feqis
-
 
 !---------------------------------------------------------------------
 subroutine all_forces_feqis_components(ncoilz, force_R, force_Z, force_tot, plasma_state, plasma_contrib_R, plasma_contrib_Z)
@@ -1607,11 +1743,10 @@ force_tot = 0.
 plasma_contrib = 0.
 nblock_a = nblocks - npassive
 
-if (ncoilz.ne.nblock_a) then
- write(*,*) 'wrong nr of coils. please set the first argument to the call to: ', nblock_a
- stop
+if (ncoilz /= nblock_a) then
+    write(*, *) 'wrong nr of coils. please set the first argument to the call to: ', nblock_a
+    stop
 endif
-
 
 if (plasma_state == 1) then !not sure about the plasma response...
     do i=1, nblock_a
@@ -1634,7 +1769,7 @@ do i=1, nblock_a
     enddo
 enddo
 
-force_tot = sqrt(force_R**2.+force_Z**2.)
+force_tot = sqrt(force_R**2 + force_Z**2)
 
 return
 end subroutine all_forces_feqis_components

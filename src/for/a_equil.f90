@@ -15,7 +15,7 @@ use const_inc, only : rtor,shift, updwn
 use feqis_circuit, only: psib_ext_feqis, get_zccurb_feqis, find_demo_gaps_feqis
 
 use outcmn_inc, only: MACHINE, nml_file
-use astra2fbe, only: raxis_astra, zaxis_astra
+use transport2fbe, only: raxis_astra, zaxis_astra
 
 implicit none
 
@@ -218,7 +218,7 @@ return
 end subroutine A_equil
 
 !---------------------------------------------------------------------
-subroutine A_equil_2(ncoils, ifbey, time_a, tau_step, vcoils, eq_solver)
+subroutine A_equil_2(ncoils, ifbey, time_a, tau_step, vcoils, eq_solver, iplas_vac)
 
 use imas_ids, only: type_equilibrium
 use parameters_a2equil, only: type_parameters
@@ -227,7 +227,7 @@ use outcmn_inc, only: MACHINE
 implicit none
 
 integer, intent(in) :: ifbey, eq_solver, ncoils
-double precision, intent(in) :: tau_step, time_a
+double precision, intent(in) :: tau_step, time_a, iplas_vac
 double precision, dimension(ncoils), intent(in) :: vcoils
 
 integer :: nstep, key_equil
@@ -238,6 +238,8 @@ type(type_equilibrium) :: equil_in, equil_out
 
 key_equil = 0
 nstep = max(0, ifbey - 1)
+
+equil_in%global_param%i_plasma = iplas_vac*1e6   !itm is in A
 
 parameters_equil%dt      = tau_step
 parameters_equil%time    = time_a
@@ -264,5 +266,3 @@ endif
 
 return
 end subroutine a_equil_2
-
-

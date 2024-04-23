@@ -93,6 +93,25 @@ contains
     end subroutine psi_mutual_effect_conductors
 
 !---------------------------------------------------------------------
+    subroutine psi_mutual_effect_conductors_simple(psi_to_conductors)
+
+    use green_matrix, only: greeni
+
+    implicit none
+
+    double precision, intent(out) :: psi_to_conductors(nconduc)
+    integer :: i, j, k
+    
+    i = nint((raxp-rmin)/dr)+1
+    j = nint((zaxp-zmin)/dz)+1
+    do k=1, nconduc
+        psi_to_conductors(k) = iplasma * greeni(i, j, k)
+    enddo
+
+    return
+    end subroutine psi_mutual_effect_conductors_simple
+
+!---------------------------------------------------------------------
     subroutine get_zccurb_feqis(rc_cur, zc_cur, z2c_cur, rgeoc, zgeoc, ahorc)
 
     use metric_coefficients_pbe, only: R_curr_0D, Z_curr_0D, dator
@@ -161,8 +180,6 @@ contains
     dllt = dllt + dlt
 
     psib_ext_feqis = psiext_out/dllt
-
-!    write(*, *) 'psibbb', psibnd, psiext_out
 
     return
     end function psib_ext_feqis
@@ -270,6 +287,22 @@ contains
 
     return
     end subroutine psi_external_calc
+
+!---------------------------------------------------------------------
+    subroutine psi_external_calc_position(r_target, z_target, psi_target)
+
+    use green_matrix, only: greeni
+    
+    double precision, intent(IN) :: r_target, z_target
+    double precision, intent(OUT) :: psi_target
+    integer :: i, j
+
+    i = nint((r_target-rmin)/dr)+1   
+    j = nint((z_target-zmin)/dz)+1   
+    psi_target = sum(curconduc(1: nconduc)*greeni(i, j, 1: nconduc))
+
+    return
+    end subroutine psi_external_calc_position
 
 !---------------------------------------------------------------------
     subroutine nine_point_regression(r_in, z_in, pos_xpoint, ddpsi, f00)
@@ -577,7 +610,7 @@ contains
 ! Refits all currents
 
     use errors_params, only: err_find_psistab
-    use astra2fbe, only: sigma_coils, sigma_b, sigma_axis
+    use transport2fbe, only: sigma_coils, sigma_b, sigma_axis
     use green_matrix, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
 
@@ -737,19 +770,17 @@ contains
     call new_jrz_feqis  ! calculate new right hand side
 
     write(*, *) curconduc(1:nconduc), rax, zax
-    write(*, *) 'full fonfit eddy currents converged',temp_err,err_find_psistab
+    write(*, *) 'full fonfit eddy currents converged', temp_err, err_find_psistab
 
     return
     end subroutine restab_F_function_full_fonfit
-
-!--------------------------------------------------------------------
 
 !--------------------------------------------------------------------
     subroutine restab_F_function_full_fonfit_xpoints ! valid only if n_xpoint_fit > 0
 ! Refits all currents and x points
 
     use errors_params, only: err_find_psistab
-    use astra2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_xpoint, &
+    use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_xpoint, &
         r_xpoint_fit, z_xpoint_fit, n_xpoint_fit
     use green_matrix, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
@@ -935,7 +966,7 @@ contains
 
         temp_err = abs(Ffunc - Ffunc_old)
         Ffunc_old = Ffunc
-        write(*,*) 'iteration ',j_iter, curnow(1:nconduc), rax, zax, temp_err, Ffunc, sum(abs(Fderiv(1:nconduc)))
+        write(*, *) 'iteration ', j_iter, curnow(1:nconduc), rax, zax, temp_err, Ffunc, sum(abs(Fderiv(1:nconduc)))
         if (temp_err <= err_find_psistab) EXIT
 
     enddo
@@ -962,7 +993,7 @@ contains
 ! Finds active currents from scratch including evolution from time point t1 to time point t2
 
     use errors_params, only: err_find_psistab
-    use astra2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy
+    use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy
     use green_matrix, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
     use pi_vars, only: GPI, GPI2, GPI4, muvac, mu0
@@ -1195,13 +1226,13 @@ contains
 
 ! boundary block
            n_of_xpoints = nxp_ev(jt)
-    if (n_of_xpoints > 0) then
-        r_xpoint(1: n_of_xpoints) = rxp_ev(1: n_of_xpoints, jt)
-        z_xpoint(1: n_of_xpoints) = zxp_ev(1: n_of_xpoints, jt)
+           if (n_of_xpoints > 0) then
+               r_xpoint(1: n_of_xpoints) = rxp_ev(1: n_of_xpoints, jt)
+               z_xpoint(1: n_of_xpoints) = zxp_ev(1: n_of_xpoints, jt)
            endif
-    call find_psi_boundary
+           call find_psi_boundary
            nxp_ev(jt) = n_of_xpoints
-    if (n_of_xpoints > 0) then
+           if (n_of_xpoints > 0) then
                rxp_ev(1: n_of_xpoints, jt) = r_xpoint(1: n_of_xpoints)
                zxp_ev(1: n_of_xpoints, jt) = z_xpoint(1: n_of_xpoints)
            endif
@@ -1241,7 +1272,7 @@ contains
 ! Finds active currents from scratch including evolution from time point t1 to time point t2
 
     use errors_params, only: err_find_psistab
-    use astra2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy, &
+    use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy, &
         current_limit_feqis
     use green_matrix, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
@@ -1484,9 +1515,9 @@ contains
                 r_xpoint(1: n_of_xpoints) = rxp_ev(1: n_of_xpoints, jt)
                 z_xpoint(1: n_of_xpoints) = zxp_ev(1: n_of_xpoints, jt)
             endif
-     call find_psi_boundary
+            call find_psi_boundary
             nxp_ev(jt) = n_of_xpoints
-     if (n_of_xpoints > 0) then
+            if (n_of_xpoints > 0) then
                 rxp_ev(1: n_of_xpoints, jt) = r_xpoint(1: n_of_xpoints)
                 zxp_ev(1: n_of_xpoints, jt) = z_xpoint(1: n_of_xpoints)
             endif
@@ -1509,7 +1540,7 @@ contains
     enddo
 
     write(*, *) ''
-    write(*, *) 'full fonfit active currents converged',temp_err,err_find_psistab
+    write(*, *) 'full fonfit active currents converged', temp_err, err_find_psistab
     write(*, *) ''
     write(*, *) 'closing program but saving data in output_timefit.dat'
     open(32, file='dat/output_timefit.dat')
@@ -1530,12 +1561,12 @@ contains
 ! to calculate forces using this mode, call: call coil_forces_feqis(ncoil_blocks, force_R, force_Z, 0)   !the 0 at the end means no plasma contribution. also eddy currents are ignored.
 
     use errors_params, only: err_find_psistab
-    use astra2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy, &
+    use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy, &
         current_limit_feqis, sigma_xpoint, r_xpoint_fit, z_xpoint_fit, &
-       n_xpoint_fit, sigma_coils_psiext, vloop_avg, L_ext, &
-       dIp_dt, tau_gseq_feqis, time_astra, &
-       use_isoflux, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
-			 voltage_limits_active_coils, sigma_limits, cur_init
+        n_xpoint_fit, sigma_coils_psiext, vloop_avg, L_ext, &
+        dIp_dt, tau_gseq_feqis, time_astra, &
+        use_isoflux, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
+        voltage_limits_active_coils, sigma_limits, cur_init
     use green_matrix, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
     use pi_vars, only: GPI, GPI2, GPI4, muvac, mu0
@@ -1552,11 +1583,11 @@ contains
     double precision, dimension(nactive) :: G_00c, G_00r, G_00z, curref, curnow, curdiff
     double precision, dimension(nactive+1,nactive+1) :: matrix, invmatrix
     double precision, dimension(:, :), allocatable :: G_00xr, G_00xz
-    double precision, dimension(:), allocatable :: dummyx
+    double precision, dimension(:), allocatable :: dummyx, rbndtemp, zbndtemp
     double precision, dimension(nblocks-npassive) :: force_r, force_z
     double precision :: raxref, zaxref, r_norm_ref
-		double precision :: currents_limits_adds(nactive,2)
-		integer, dimension(:), allocatable :: gridpoint_tipe
+    double precision :: currents_limits_adds(nactive, 2)
+    integer, dimension(:), allocatable :: gridpoint_tipe
     character(len=80) :: file_time
     logical :: file_exists
     data j_time/0/
@@ -1564,11 +1595,9 @@ contains
 
     deltapsiext = tau_gseq_feqis*(vloop_avg+L_ext*dIp_dt)   ! jump in psiext
     write(*, *) 'deltapsi', deltapsiext, tau_gseq_feqis, vloop_avg, L_ext, dIp_dt, &
-   curconduc(1:nactive), j_time
+    curconduc(1:nactive), j_time
 
-
-    r_norm_ref = 0.5*(rmin+rmax)
-
+    r_norm_ref = 0.5*(rmin + rmax)
     psicorr   = 0.
     Ffunc_old = 1.e6
 
@@ -1594,47 +1623,48 @@ contains
     nbnd = nteta
     rbnd(1:nbnd) = rbref(1:nteta)
     zbnd(1:nbnd) = zbref(1:nteta)
+    allocate(rbndtemp(nteta),zbndtemp(nteta))
 
     if (use_isoflux > 0) then
     !the code assumes that isoflux 1 is raus, isoflux 2 is ztop, isoflux 3 is rin, isoflux 4 is zbot. if one or more than one are x points is given in which_x_point
-		 nteta_temp = n_isoflux
-     n_xpoint_fit = n_isoflux
-     if (n_xpoint_fit > 0) then
-        allocate(G_00xr(nactive, n_xpoint_fit))
-        allocate(G_00xz(nactive, n_xpoint_fit))
-        allocate(dummyx(n_xpoint_fit))
-     endif
-     allocate(gridpoint_tipe(n_isoflux))
-     rbref(1:nteta_temp) = r_isoflux(1:nteta_temp)          
-     zbref(1:nteta_temp) = z_isoflux(1:nteta_temp)          
-     r_xpoint_fit(1:nteta_temp)=rbref(1:nteta_temp)
-     z_xpoint_fit(1:nteta_temp)=zbref(1:nteta_temp)
-     gridpoint_tipe = -1
-      do i = 1, n_isoflux
-       if (which_x_point(i) == -1) gridpoint_tipe(i)=-1
-		   if (which_x_point(i) == 0)  gridpoint_tipe(i)=0
-		   if (which_x_point(i) == 1)  gridpoint_tipe(i)=1
-       if (which_x_point(i) == 2)  gridpoint_tipe(i)=2
-      enddo
+        nteta_temp = n_isoflux
+        n_xpoint_fit = n_isoflux
+        if (n_xpoint_fit > 0) then
+            allocate(G_00xr(nactive, n_xpoint_fit))
+            allocate(G_00xz(nactive, n_xpoint_fit))
+            allocate(dummyx(n_xpoint_fit))
+        endif
+        allocate(gridpoint_tipe(n_isoflux))
+        rbref(1:nteta_temp) = r_isoflux(1:nteta_temp)          
+        zbref(1:nteta_temp) = z_isoflux(1:nteta_temp)          
+        r_xpoint_fit(1:nteta_temp)=rbref(1:nteta_temp)
+        z_xpoint_fit(1:nteta_temp)=zbref(1:nteta_temp)
+        gridpoint_tipe = -1
+        do i = 1, n_isoflux
+            if (which_x_point(i) == -1) gridpoint_tipe(i) = -1
+            if (which_x_point(i) == 0)  gridpoint_tipe(i) =  0
+            if (which_x_point(i) == 1)  gridpoint_tipe(i) =  1
+            if (which_x_point(i) == 2)  gridpoint_tipe(i) =  2
+        enddo
     else
-     if (n_xpoint_fit > 0) then
-        allocate(G_00xr(nactive, n_xpoint_fit))
-        allocate(G_00xz(nactive, n_xpoint_fit))
-        allocate(dummyx(n_xpoint_fit))
-        allocate(gridpoint_tipe(n_xpoint_fit))
-     endif
-		endif
-		
+        if (n_xpoint_fit > 0) then
+            allocate(G_00xr(nactive, n_xpoint_fit))
+            allocate(G_00xz(nactive, n_xpoint_fit))
+            allocate(dummyx(n_xpoint_fit))
+            allocate(gridpoint_tipe(n_xpoint_fit))
+        endif
+    endif
+
 ! Axis is given by raxp, zaxp; boundary by rbndp, zbndp; coilref by curconduc(passive)
     if (j_time == 0) curnow(1:nactive) = cur_init(1:nactive)
-    if (j_time > 0) curnow(1:nactive) = curconduc(1:nactive)
+    if (j_time  > 0) curnow(1:nactive) = curconduc(1:nactive)
     curref(1:nactive) = curnow(1:nactive)
     curdiff = 0.
 
-		!calculate additional current limits				
-    do i=1,nactive
-      currents_limits_adds(i,1)=curref(i)+tau_gseq_feqis*(voltage_limits_active_coils(i,1)-resconduc(i,i)*curref(i))/indconduc(i,i)
-      currents_limits_adds(i,2)=curref(i)+tau_gseq_feqis*(voltage_limits_active_coils(i,2)-resconduc(i,i)*curref(i))/indconduc(i,i)
+! Calculate additional current limits
+    do i=1, nactive
+         currents_limits_adds(i, 1) = curref(i) + tau_gseq_feqis*(voltage_limits_active_coils(i, 1) - resconduc(i, i)*curref(i))/indconduc(i, i)
+         currents_limits_adds(i, 2) = curref(i) + tau_gseq_feqis*(voltage_limits_active_coils(i, 2) - resconduc(i,i)*curref(i))/indconduc(i, i)
     enddo
 
 ! calculate the matrix F_li of the F function, including the green function terms
@@ -1655,28 +1685,26 @@ contains
         bub(4) = interp2d_psi(raxref, zaxref + dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
         G_00r(j) = (bub(2) - bub(1))/dr
         G_00z(j) = (bub(4) - bub(3))/dz
-        if (n_xpoint_fit>0) then
+        if (n_xpoint_fit > 0) then
             do k=1, n_xpoint_fit
                 bub(1) = interp2d_psi(r_xpoint_fit(k) - dr/2., z_xpoint_fit(k), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
                 bub(2) = interp2d_psi(r_xpoint_fit(k) + dr/2., z_xpoint_fit(k), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
                 bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(k) - dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
                 bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(k) + dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-                if (gridpoint_tipe(k)==-1) then
-                 G_00xr(j,k) = 0*(bub(2) - bub(1))/dr
-                 G_00xz(j,k) = 0*(bub(4) - bub(3))/dz
-                endif
-                if (gridpoint_tipe(k)==0) then
-                 G_00xr(j,k) = 0*(bub(2) - bub(1))/dr
-                 G_00xz(j,k) = (bub(4) - bub(3))/dz
-                endif
-                if (gridpoint_tipe(k)==1) then
-                 G_00xr(j,k) = (bub(2) - bub(1))/dr
-                 G_00xz(j,k) = 0*(bub(4) - bub(3))/dz
-                endif
-                if (gridpoint_tipe(k)==2) then
-                 G_00xr(j,k) = (bub(2) - bub(1))/dr
-                 G_00xz(j,k) = (bub(4) - bub(3))/dz
-                endif
+                SELECT CASE(gridpoint_tipe(k))
+                CASE(-1)
+                    G_00xr(j,k) = 0.
+                    G_00xz(j,k) = 0.
+                CASE(0)
+                    G_00xr(j,k) = 0.
+                    G_00xz(j,k) = (bub(4) - bub(3))/dz
+                CASE(1)
+                    G_00xr(j,k) = (bub(2) - bub(1))/dr
+                    G_00xz(j,k) = 0.
+                CASE(2)
+                    G_00xr(j,k) = (bub(2) - bub(1))/dr
+                    G_00xz(j,k) = (bub(4) - bub(3))/dz
+                END SELECT
             enddo
         endif
     enddo
@@ -1685,7 +1713,7 @@ contains
 
     do j=1, nactive
         do i=1, nactive
-            if (i == j) matrix(i, j) = matrix(i, j) + sigma_energy*sigma_coils(i)*indconduc(i,i) + 2.*sigma_coils(i)
+            if (i == j) matrix(i, j) = matrix(i, j) + sigma_energy*sigma_coils(i)*indconduc(i, i) + 2.*sigma_coils(i)
             matrix(i, j) = matrix(i, j) +  &
                 2.*sigma_B*sum((G_00(i, 1:nteta_temp) - G_00c(i))*(G_00(j, 1:nteta_temp) - G_00c(j))) +  &
                 2.*sigma_axis*(G_00r(i)*G_00r(j) + G_00z(i)*G_00z(j))
@@ -1757,22 +1785,20 @@ contains
                 bub(2) = interp2d_psi(r_xpoint_fit(k) + 0.5*dr, z_xpoint_fit(K), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
                 bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
                 bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-                if (gridpoint_tipe(k)==-1) then
-                 x2 = 0*(bub(2) - bub(1))/dr
-                 x3 = 0*(bub(4) - bub(3))/dz
-                endif
-                if (gridpoint_tipe(k)==0) then
-                 x2 = 0*(bub(2) - bub(1))/dr
-                 x3 = (bub(4) - bub(3))/dz
-                endif
-                if (gridpoint_tipe(k)==1) then
-                 x2 = (bub(2) - bub(1))/dr
-                 x3 = 0*(bub(4) - bub(3))/dz
-                endif
-                if (gridpoint_tipe(k)==2) then
-                 x2 = (bub(2) - bub(1))/dr
-                 x3 = (bub(4) - bub(3))/dz
-                endif
+                SELECT CASE(gridpoint_tipe(k))
+                CASE(-1)
+                    x2 = 0.
+                    x3 = 0.
+                CASE(0)
+                    x2 = 0.
+                    x3 = (bub(4) - bub(3))/dz
+                CASE(1)
+                    x2 = (bub(2) - bub(1))/dr
+                    x3 = 0.
+                CASE(2)
+                    x2 = (bub(2) - bub(1))/dr
+                    x3 = (bub(4) - bub(3))/dz
+                END SELECT
                 Ffunc = Ffunc +  sigma_xpoint*(x2**2 + x3**2)
              enddo
         endif
@@ -1800,23 +1826,21 @@ contains
                     bub(2) = interp2d_psi(r_xpoint_fit(k) + 0.5*dr, z_xpoint_fit(K), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
                     bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
                     bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-                    if (gridpoint_tipe(k)==-1) then
-                     x2 = 0*(bub(2) - bub(1))/dr
-                     x3 = 0*(bub(4) - bub(3))/dz
-                    endif
-                    if (gridpoint_tipe(k)==0) then
-                     x2 = 0*(bub(2) - bub(1))/dr
-                     x3 = (bub(4) - bub(3))/dz
-                    endif
-                    if (gridpoint_tipe(k)==1) then
-                     x2 = (bub(2) - bub(1))/dr
-                     x3 = 0*(bub(4) - bub(3))/dz
-                    endif
-                    if (gridpoint_tipe(k)==2) then
-                     x2 = (bub(2) - bub(1))/dr
-                     x3 = (bub(4) - bub(3))/dz
-                    endif
-                    Fderiv(i) = Fderiv(i) +  2.*sigma_xpoint*(x2*G_00xr(i,k) + x3*G_00xz(i,k))
+                    SELECT CASE(gridpoint_tipe(k))
+                    CASE(-1)
+                        x2 = 0.
+                        x3 = 0.
+                    CASE(0)
+                        x2 = 0.
+                        x3 = (bub(4) - bub(3))/dz
+                    CASE(1)
+                        x2 = (bub(2) - bub(1))/dr
+                        x3 = 0.
+                    CASE(2)
+                        x2 = (bub(2) - bub(1))/dr
+                        x3 = (bub(4) - bub(3))/dz
+                    END SELECT
+                    Fderiv(i) = Fderiv(i) +  2.*sigma_xpoint*(x2*G_00xr(i, k) + x3*G_00xz(i, k))
                 enddo
             endif
         enddo
@@ -1846,12 +1870,12 @@ contains
         write(*, *) 'result vector', curnow(1:nactive), lambda
 ! cut new currents to limits due to voltage if jtime> 0
         if (j_time > 0) then 
-         do i=1, nactive
-            curnow(i) = min(curnow(i), currents_limits_adds(i, 1))
-            curnow(i) = max(curnow(i), currents_limits_adds(i, 2))
-         enddo
+            do i=1, nactive
+                curnow(i) = min(curnow(i), currents_limits_adds(i, 1))
+                curnow(i) = max(curnow(i), currents_limits_adds(i, 2))
+            enddo
         endif
-	
+
         curdiff = curnow - curref
 
         write(*, *) 'result vector', curnow(1:nactive), lambda
@@ -1895,9 +1919,11 @@ contains
     if (file_exists) call execute_command_line('rm '//trim(file_time), wait=.true.)
 
 ! Evaluate forces
-    call coil_forces_feqis(nblocks - npassive, force_R, force_Z, 0)
+    call coil_forces_feqis(nblocks - npassive, force_R, force_Z, 1)
 
     call psi_mutual_effect_conductors(psiplasmatoconduc)
+
+    call estimate_boundary_to_pbe(rbndtemp, zbndtemp, nteta)
 
     write(*, *) 'Saving new currents in ', file_time
     open(32, file = file_time)
@@ -1906,7 +1932,8 @@ contains
         nr2, nz2, psirz(1:nr2, 1:nz2), nblocks - npassive, force_R, force_Z, &
         psibnd, psiaxis, indconduc(1:nactive, 1:nactive), resconduc(1:nactive, 1:nactive), &
         nlimiter, limiterR(1:nlimiter), limiterZ(1:nlimiter), r(1), r(nr2), z(1), z(nz2), nteta_temp, &
-        rbref(1:nteta_temp), zbref(1:nteta_temp), time_astra, tau_gseq_feqis, GPI2*psiplasmatoconduc(1:nactive)  !saved in kA
+        rbref(1:nteta_temp), zbref(1:nteta_temp), time_astra, tau_gseq_feqis, GPI2*psiplasmatoconduc(1:nactive), &  !saved in kA
+        nteta, rbndtemp(1:nteta), zbndtemp(1:nteta)
     close(32)
 
 !update time
@@ -1918,12 +1945,12 @@ contains
         deallocate(dummyx)
     endif
     if (allocated(gridpoint_tipe)) deallocate(gridpoint_tipe)
+    deallocate(rbndtemp, zbndtemp)
 
     return
     end subroutine restab_j_timepoints_evolution_limits_xpoints_boundariz
   
 !--------------------------------------------------------------------
-
     subroutine diagnose_feqis(filename)  !call it in sbr/assign_geom.f90 in astra for example, it has access to this module.
 
     use metric_coefficients_pbe, only: dator
@@ -1960,7 +1987,7 @@ contains
 ! Finds active currents from scratch. Passive currents are given.
 
     use errors_params, only: err_find_psistab
-    use astra2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy
+    use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy
     use green_matrix, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
 
@@ -2141,7 +2168,7 @@ contains
 ! Finds active currents from scratch. Passive currents are given.
 
     use errors_params, only: err_find_psistab
-    use astra2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy, &
+    use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy, &
       current_limit_feqis
     use green_matrix, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
@@ -2265,8 +2292,6 @@ contains
                 sigma_axis*(x2*G_00r(i) + x3*G_00z(i)) )
         enddo
 
-        write(*, *) 'fderiv', fderiv
-
 ! Calculate new currents
 
         do i=1, nactive
@@ -2317,7 +2342,7 @@ contains
 
     write(*, *) ' '
     write(*, *) curconduc(1:nconduc), rax, zax
-    write(*, *) 'full fonfit active currents converged',temp_err, err_find_psistab
+    write(*, *) 'full fonfit active currents converged', temp_err, err_find_psistab
 
     return
     end subroutine restab_F_function_full_currents_limits
@@ -2329,7 +2354,7 @@ contains
 ! how to include forces???
 
     use errors_params, only: err_find_psistab
-    use astra2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy, sigma_forces
+    use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy, sigma_forces
     use green_matrix, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
 
@@ -2379,7 +2404,7 @@ contains
     matrix    = 0.
     invmatrix = 0.
 
-    write(*,*) 'psiext', psiextrz(30, 30), rax, zax, jrz(30, 30)
+    write(*, *) 'psiext', psiextrz(30, 30), rax, zax, jrz(30, 30)
 
     do j=1, nactive
         do k=1, nteta
@@ -2453,8 +2478,6 @@ contains
                 sigma_axis*(x2*G_00r(i) + x3*G_00z(i)) )
         enddo
 
-        write(*, *) 'fderiv', fderiv
-
 ! Calculate new currents
 
         do i=1, nactive
@@ -2481,7 +2504,7 @@ contains
 
         temp_err = sum(abs(Fderiv))
         Ffunc_old = Ffunc
-        write(*,*) 'iteration ',j_iter, curnow(1:nactive),rax,zax,temp_err,sum(abs(Fderiv(1:nactive)))
+        write(*, *) 'iteration ', j_iter, curnow(1:nactive), rax, zax, temp_err, sum(abs(Fderiv(1:nactive)))
 
         if (temp_err <= err_find_psistab) EXIT
 
@@ -2508,7 +2531,7 @@ contains
     subroutine restab_boundary_with_fourier_wall !not working well
 
     use errors_params, only: err_find_psistab
-    use astra2fbe, only: n_fourier_restab_boundary
+    use transport2fbe, only: n_fourier_restab_boundary
     use green_matrix, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, pol_angle
 
@@ -2609,8 +2632,7 @@ contains
 
     do i=1, npassive
         do j=1, n_fourier_restab_boundary
-            curconduc(nactive + i) = curconduc(nactive + i) + &
-                C_00(j)*cos(j*anglr(i)) + S_00(j)*sin(j*anglr(i))
+            curconduc(nactive + i) = curconduc(nactive + i) + C_00(j)*cos(j*anglr(i)) + S_00(j)*sin(j*anglr(i))
         enddo
     enddo
 
@@ -2753,8 +2775,7 @@ contains
     enddo
 
     do i=1, npassive
-        curconduc(nactive + i) = curconduc(nactive + i) + &
-            psistabr*cos(anglr(i)) + psistabz*sin(anglr(i))
+        curconduc(nactive + i) = curconduc(nactive + i) + psistabr*cos(anglr(i)) + psistabz*sin(anglr(i))
     enddo
 
     call psi_external_calc
@@ -2767,6 +2788,57 @@ contains
 
     return
     end subroutine restab_axis_with_fourier_wall
+
+!--------------------------------------------------------------------
+    subroutine estimate_tau_VDE_feqis(n_coil_de, n_coil_st, i_coil_de, i_coil_st, tau_LR, tau_VDE, F_stab, F_destab)
+
+    use green_matrix, only: greeni
+    use pi_vars, only: GPI, GPI2, GPI4, muvac
+
+    integer, intent(IN) :: n_coil_de, n_coil_st, i_coil_de(n_coil_de), i_coil_st(n_coil_st)
+    double precision, intent(IN) :: tau_LR
+    
+    double precision, intent(OUT) :: tau_VDE
+    
+    integer i,i1,j,k
+    double precision :: F_stab, F_destab, f_ratio, dum1, dum2
+    
+! Calculate the time scale of the VDE based on the simple estimate tau_VDE = ()    
+
+! Compute F_destab
+    F_destab = 0.
+    do i1=1, n_coil_de
+        i = i_coil_de(i1)  
+        dum1 = 0.
+        do j=2, nz1
+            do k=2, nr1
+                dum2 = 1./dz**2 * ( greeni(k, j+1, i) - 2.*greeni(k, j, i) + greeni(k, j-1, i) )
+                dum1 = dum1 + jrz(k,j) * curconduc(i) * dum2
+            enddo
+        enddo
+        F_destab = F_destab + dum1
+    enddo
+
+! Compute F_stab
+    F_stab = 0.
+    do i1=1, n_coil_st
+        i = i_coil_st(i1)  
+        dum1 = 0.
+        do j=2,nz1
+            do k=2,nr1
+                dum2 = GPI2/indconduc(i, i)*( 1./(2.*dz) * (greeni(k, j+1, i) - greeni(k, j-1, i)) )**2
+                dum1 = dum1 + jrz(k,j) * dum2
+            enddo
+        enddo
+        F_stab = F_stab + dum1
+    enddo
+ 
+    F_stab = F_stab * iplasma
+    f_ratio = F_stab / F_destab     
+    tau_VDE = tau_LR * (f_ratio - 1.)
+
+    return
+    end subroutine estimate_tau_VDE_feqis
 
 !--------------------------------------------------------------------
     subroutine find_new_axis_part1
@@ -2951,7 +3023,7 @@ contains
     subroutine find_psi_boundary
 
     use pi_vars, only: GPI
-    use astra2fbe, only: x_point_save, plasma_config
+    use transport2fbe, only: x_point_save, plasma_config
     use errors_params, only: err_find_oxpoints_derivs
     use feqis_tools, only: closest_index, pol_angle, &
         interp2d_psi

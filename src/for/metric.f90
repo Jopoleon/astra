@@ -1118,7 +1118,7 @@ if (IFBEY >= 1.) i = 2    !fbe is on
 if (IPART == 1 ) i = 1    !fbe is off
 
 if (ifbey > 0..and.plasma_up == 0) then
-    call A_EQUIL_2(NCNB, nint(ifbey), time, tau, vcoil(1:ncnb), equil_solver)
+    call A_EQUIL_2(NCNB, nint(ifbey), time, tau, vcoil(1:ncnb), equil_solver, IPLFBE)
     jnstep = jnstep + 1
     return
 endif
