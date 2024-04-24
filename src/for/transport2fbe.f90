@@ -1,8 +1,7 @@
 module transport2fbe  !these are coupling variables with the equilibrium solver and astra
 
-use const_inc, only: TAU, TSTART, RTOR, UPDWN, SHIFT, NA1, NCNB
+use const_inc, only: TAU, TSTART, RTOR, UPDWN, SHIFT, NA1, NCNB, PSIAX, PSIBO
 use outcmn_inc, only: MACHINE, CCOILX, NCNBT
-use status_inc, only: FP
 use debugger, only: debug
 
 implicit none
@@ -78,10 +77,10 @@ contains
 
     dr_factor_init_astra = 1.
     dz_factor_init_astra = 1.
-    raxis_astra = RTOR+SHIFT
+    raxis_astra = RTOR + SHIFT
     zaxis_astra = UPDWN
-    psi0_astra=FP(1)
-    psib_astra=FP(NA1)
+    psi0_astra = PSIAX
+    psib_astra = PSIBO
     sigma_B = 1.
     sigma_axis = 1.
     sigma_xpoint = 1.
