@@ -1,6 +1,5 @@
 subroutine full_system_advance_feqis(j_init)
 
-use const_inc, only: TIME, UPDWN
 use errors_params, only: err_epsilon, err_circ_plasma_iter
 use feqis_circuit, only: nr2, nz2, nconduc, iplasma, psi_cur_old, &
     psiplasmatoconduc, curconduc, jrz, area_eff, psi_external_calc
@@ -40,9 +39,6 @@ if (j_init == 0) then
     j_init = -1
     return
 endif
-
-! Full iterations
-write(*, '(A, f6.3, A, f6.3, A)') 'FBE full system, t=', TIME, 's, updown shift=', UPDWN, 'm'
 
 if (fast_mode == 1 .and. execute_plasma == 1) then
     psi_cur_old(1:nconduc) = psiplasmatoconduc(1:nconduc)
