@@ -103,7 +103,8 @@ contains
     sigma_coils = 1.
     sigma_coils_psiext = 0. ! initial currents from astra exp, not from coil.dat, in MA/turn
     new_resistance = 0. ! whichever is > 0, it is used as new resistance.
-    current_limit_feqis = 0. ! 1 is upper, 2 is lower
+    current_limit_feqis(:, 1) =  1.e6 ! 1 is upper, 2 is lower
+    current_limit_feqis(:, 2) = -1.e6 ! 1 is upper, 2 is lower
     force_coil = 0 ! where it is 1, forces coil i,i to current of i,j
     machine_description = trim(MACHINE(1:4))
 

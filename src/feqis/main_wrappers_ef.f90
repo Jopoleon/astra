@@ -668,11 +668,6 @@ if (j_call == 0) then
     err_fix_boundary         = err_fix_boundary_in
 
     Rgeom0 = equil_in%global_param%toroid_field%r0
-    tau_circuit_feqis = 0.001 !default value
-    tau_gseq_feqis = 0.001  !default value
-    activate_coil_feqis = 1. ! when 0., coil is forced to 0 current
-    current_limit_feqis(:, 1) = 1e6 ! cant be higher than 1e6 MA
-    current_limit_feqis(:, 2) = -1e6 ! cant be lower than -1e6 MA
     max_iter = 1000 !hardwired
 ! teta for polar grid, goes from 0 to 2*pi-dteta, but point nt + 1 is the periodic one
     omega_pl = 0.
