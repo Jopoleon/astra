@@ -316,10 +316,10 @@ radial_loop: do jradial=1, n_radial
     neo_shear_in       = AMETR(j0)*dq/(drmin*q_exp(j0))
     neo_shift_in       = drmaj/drmin
     neo_kappa_in       = ELON(j0)
-    neo_s_kappa_in     = AMETR(j0)*delong/(drmin*ELON(j0))
+    neo_s_kappa_in     = AMETR(j0)*delong/drmin
 
     neo_delta_in       = TRIA(j0)
-    neo_s_delta_in     = AMETR(j0)*dtrian/(drmin*TRIA(j0))
+    neo_s_delta_in     = AMETR(j0)*dtrian/drmin
 
     if (verbose) then
        write(*, '(A, 8f8.4, e11.4)') 'GEO', neo_rmin_over_a_in, neo_rmaj_over_a_in, neo_q_in, &
