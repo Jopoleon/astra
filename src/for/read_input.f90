@@ -931,7 +931,8 @@ enddo
 
 call INTEGR(RHO, 1, VR, VOLUM, NA1)
 
-n_bouncon = NA1
+n_bouncon = 0
+n_bouncon(1) = NA1
 
 PSIBO = FP(NA1)
 call EXTRAP(XRHO(1: NA1), FP(1: NA1), 0.0, 1, PSIAX, 2, NA1)

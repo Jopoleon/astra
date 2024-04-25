@@ -15,82 +15,109 @@ use const_inc, only: NA1
 use status_inc, only: RHO
 
 implicit none
+
 double precision, intent(in) :: ALFA, f_in(*)
 double precision, intent(out) :: f_out(*)
 
 call SGLAZH(ALFA, NA1, f_in, RHO, NA1, f_out, RHO)
+
+return
 end subroutine SMEARR
 
 !----------------------------------------------------------------------|
-subroutine SGLAZH(ALFA, NO, f_in, XO, N, f_out, XN) ! same as SMOOTH
+
+subroutine SMEARR2(ALFA, f_in, f_out)
+
+use const_inc, only: NA1, NA1N, NA1E, NA1I, NA1U, NA10, NA11, NA12, NA13, &
+    NA14, NA15, NA16, NA17, NA18, NA19
+use status_inc, only: RHO
+
+implicit none
+
+double precision, intent(in) :: ALFA, f_in(*)
+double precision, intent(out) :: f_out(*)
+integer :: nrho_max
+
+nrho_max = maxval((/ NA1N, NA1E, NA1I, NA1U, NA10, NA11, NA12, NA13, NA14, NA15, NA16, NA17, NA18, NA19 /)) + 1
+nrho_max = MIN(nrho_max, NA1)
+
+call SGLAZH(ALFA, nrho_max, f_in(1: nrho_max), RHO(1: nrho_max), nrho_max, f_out, RHO(1:nrho_max))
+f_out(nrho_max+1: NA1) = f_in(nrho_max+1: NA1)
+
+return
+end subroutine SMEARR2
+
+!----------------------------------------------------------------------|
+subroutine SGLAZH(ALFA, n_in, f_in, x_in, n_out, f_out, x_out) ! same as SMOOTH
 
 use parameter_inc, only: NRD
 
 implicit none
 
-integer :: NO, N, J, I
-double precision, intent(in) :: ALFA, XO(*), f_in(*), XN(*)
+integer, intent(in) :: n_in, n_out
+double precision, intent(in) :: ALFA, x_in(*), f_in(*), x_out(*)
 double precision, intent(out) :: f_out(*)
+integer :: i, j
 double precision :: YF, YX, YP, YQ, YD, FJ, P(NRD)
 
-if (N > NRD .or. NO .le. 0) then
-   write(*, *)' >>> SMEARR: array is out of limits'
-   stop
+if (n_out > NRD .or. n_in .le. 0) then
+    write(*, *)' >>> SMEARR: array is out of limits'
+    stop
 endif
-if (NO == 1) then
-   do j=1, N
-      f_out(j) = f_in(1)
-   enddo
-   return
+if (n_in == 1) then
+    do j=1, n_out
+        f_out(j) = f_in(1)
+    enddo
+    return
 endif
-if (NO == 2) then
-   do j=1, N
-      f_out(j) = (f_in(2)*(XN(j) - XO(1)) - f_in(1)*(XN(j) - XO(2)))/(XO(2) - XO(1))
-   enddo
-   return
+if (n_in == 2) then
+    do j=1, n_out
+        f_out(j) = (f_in(2)*(x_out(j) - x_in(1)) - f_in(1)*(x_out(j) - x_in(2)))/(x_in(2) - x_in(1))
+    enddo
+    return
 endif
-if (N < 2) then
-   write(*, *)' >>> SMEARR: no output grid is provided'
-   stop
+if (n_out < 2) then
+    write(*, *)' >>> SMEARR: no output grid is provided'
+    stop
 endif
-if (abs(XO(NO)-XN(N)) > XN(N)/N) then
-   write(*, *)'>>> SMEARR: grids are not aligned'
-   write(*, '(1A23, I4, F8.4)')'     Old grid size/edge', NO, XO(NO)
-   write(*, '(1A23, I4, F8.4)')'     New grid size/edge', N, XN(N)
-   stop
+if (abs(x_in(n_in) - x_out(n_out)) > x_out(n_out)/n_out) then
+    write(*, *)'>>> SMEARR: grids are not aligned'
+    write(*, '(1A23, i4, F8.4)')'     Old grid size/edge', n_in, x_in(n_in)
+    write(*, '(1A23, i4, F8.4)')'     New grid size/edge', n_out, x_out(n_out)
+    stop
 endif
-do j=2, N
-   P(j) = ALFA/(XN(j) - XN(j-1))/XO(NO)**2
+do j=2, n_out
+    P(j) = ALFA/(x_out(j) - x_out(j-1))/x_in(n_in)**2
 enddo
 P(1)  = 0.
 f_out(1) = f_in(1) ! git 0.
-I = 1
-YF = (f_in(2) - f_in(1))/(XO(2) - XO(1))
-YX = 2./(XN(2) + XN(1))
+i = 1
+YF = (f_in(2) - f_in(1))/(x_in(2) - x_in(1))
+YX = 2./(x_out(2) + x_out(1))
 YP = 0.
 YQ = 0.
-do j=1, N-1
-   if (XO(I) <= XN(j)) then
-      do
-         I = I + 1
-         I = min(I, NO)
-         if (I == NO .or. XO(I) >= XN(j)) EXIT
-      enddo
-      YF = (f_in(I) - f_in(I-1))/(XO(I) - XO(I-1))
-   endif
-   FJ = f_in(I) + YF*(XN(j) - XO(I))
-   YD = 1. + YX*(YP + P(j+1))
-   P(j) = YX*P(j+1)/YD
-   f_out(j) = (FJ + YX*YQ)/YD
-   YX = 2./(XN(j+2) - XN(j))
-   YP = (1. - P(j))*P(j+1)
-   YQ = f_out(j)*P(j+1)
+do j=1, n_out-1
+    if (x_in(i) <= x_out(j)) then
+        do
+            i = i + 1
+            i = min(i, n_in)
+            if (i == n_in .or. x_in(i) >= x_out(j)) EXIT
+        enddo
+        YF = (f_in(i) - f_in(i-1))/(x_in(i) - x_in(i-1))
+    endif
+    FJ = f_in(i) + YF*(x_out(j) - x_in(i))
+    YD = 1. + YX*(YP + P(j+1))
+    P(j) = YX*P(j+1)/YD
+    f_out(j) = (FJ + YX*YQ)/YD
+    YX = 2./(x_out(j+2) - x_out(j))
+    YP = (1. - P(j))*P(j+1)
+    YQ = f_out(j)*P(j+1)
 enddo
 
-f_out(N) = f_in(NO)
+f_out(n_out) = f_in(n_in)
 
-do j=N-1, 1, -1
-   f_out(j) = P(j)*f_out(j+1) + f_out(j)
+do j=n_out-1, 1, -1
+    f_out(j) = P(j)*f_out(j+1) + f_out(j)
 enddo
 
 return

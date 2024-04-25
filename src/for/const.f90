@@ -105,7 +105,7 @@ integer :: ARXUSE(NARRX)
 character(len=132) :: XLINE1, XLINE2
 
 integer, pointer :: NA1N, NA1E, NA1I, NA1U, &
-     NA10, NA11, NA12,NA13, NA14, NA15, NA16, NA17, NA18, NA19
+     NA10, NA11, NA12, NA13, NA14, NA15, NA16, NA17, NA18, NA19
 integer, dimension(14), target :: n_bouncon
 
 contains
