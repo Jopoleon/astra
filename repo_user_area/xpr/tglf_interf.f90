@@ -116,14 +116,14 @@ double precision, intent(out), dimension(*) :: CHI, CHE, DIF, VIN, &
 !----------------------------------------------------------------------
 
 integer :: i_ion, n
-integer :: jinterval, jr_min, jr_max, jrho, j0, j01, j02, jgamma_max, n_radial
-integer :: j, jradial, j3r, jjgrid(nradial), jspec, kyloop
+integer :: jr_min, jr_max, jrho, j0, j01, j02, jgamma_max, n_radial
+integer :: j, jradial, jjgrid(nradial), jspec, kyloop
 integer :: sat_rule           ! Saturation rule
 integer :: nmodes_tg          ! number of unstable modes to use in computing fluxes (max=4)
 integer :: kygrid_model_tg    ! select version of ky-grid to use 1
 integer :: xnu_model_tg       ! select version of trapped-passing 2
 
-real :: bmod, bpolz, alpha_zf_in, ion_eflux, ion_mflux
+real :: bmod, bpolz, alpha_zf_in, ion_eflux, ion_mflux, xstep
 real :: drmin, drmaj, drho, dte, dne, dq, dptot, &
         delong, dtrian, dvper, drhodr, dstep, dr, dv_r
 real :: Bunit, cs0, cs00, rhos0, omega0, rhostar2, lnlamda, taue, cexb
@@ -153,17 +153,20 @@ if (jr_min > jr_max) then
     return
 endif
 
-jinterval = jr_max - jr_min
-j3r = max(1, INT(jinterval/nradial))
-n_radial = nradial
-do jradial = 1, nradial-1
-    jjgrid(jradial) = jr_min + (jradial - 1)*j3r
-    if (jjgrid(jradial) >= jr_max) then
-        n_radial = jradial
-        EXIT
-    endif
-enddo
-jjgrid(n_radial) = jr_max
+xstep = float(jr_max - jr_min)/(nradial - 1.)
+if (xstep <= 1.) then
+    do jradial=1, nradial
+        jjgrid(jradial) = jr_min + jradial - 1
+        if (jjgrid(jradial) == jr_max) EXIT
+    enddo
+    n_radial = jradial
+else
+    n_radial = nradial
+    do jradial = 1, n_radial-1
+        jjgrid(jradial) = jr_min + nint((jradial-1)*xstep)
+    enddo
+    jjgrid(n_radial) = jr_max
+endif
 
 ! Electrons and main ions
 tglf_zs_in(1) = -1.
@@ -232,7 +235,8 @@ endif
 kygrid_model_tg = 4 !1 Email Angioni Aug 1st 2023
 
 sat_rule = 2
-write(6, '(A, 8i4)') 'Call TGLF...', jjgrid(1:n_radial), nrho, sat_rule, tglf_ns_in
+
+write(6, '(A, 10i4)') 'Call TGLF...', jjgrid(1: nradial), jr_min, jr_max, nrho, sat_rule, tglf_ns_in
 
 if (sat_rule == 0) then
     nmodes_tg = 2

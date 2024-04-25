@@ -67,12 +67,12 @@ double precision, intent(out), dimension(*) :: CHI, CHE, DIF, VIN, &
     DPH, DPL, DPR, XTB, EGM, GAM, GM1, GM2, OM1, OM2, FR1
 
 !----------------------------------------------------------------------
-integer :: jinterval, jr_min, jr_max, jrho, j0, j01, j02, n_radial
-integer :: j, jradial, j3r, jjgrid(nradial), jspec
+integer :: jr_min, jr_max, jrho, j0, j01, j02, n_radial
+integer :: j, jradial, jjgrid(nradial), jspec
 integer :: i_ion, n_ions
 real :: bmod, bpolz, alpha_zf_in, ion_eflux
 real :: drmin, drmaj, drho, dte, dne, dq, &
-        delong, dtrian, dvpar, dvper, drhodr, dstep, dr
+        delong, dtrian, dvpar, dvper, drhodr, dstep, dr, xstep
 real :: Bunit, cs0, rhos0, omega0, rhostar2, lnlamda, taue, cexb, xnuei
 real :: T0, anorm, mnorm, tnorm, nnorm, vnorm, &
    pflux_e_neo, eflux_e_neo, jboots, tgyro_neo_gv_flag, &
@@ -90,26 +90,34 @@ real, dimension(nsm, 2) :: energy_flux, particle_flux
  
 character(len=80) :: path_in
 
-!--------------
+!-----------------
+! Radial subdomain
+!-----------------
 
 jr_min = max(1, jr1_in)
 jr_max = min(nrho, jr2_in)
-if (jr_min >= jr_max) then
-    write(*, *) 'Error! jr_min >= jr_max', jr_max
+if (jr_min > jr_max) then
+    write(*, *) 'Error! jr_min > jr_max', jr_max
     return
 endif
 
-jinterval = jr_max - jr_min
-j3r = max(1, INT(jinterval/nradial))
-n_radial = nradial
-do jradial = 1, nradial-1
-    jjgrid(jradial) = jr_min + (jradial - 1)*j3r
-    if (jjgrid(jradial) >= jr_max) then
-        n_radial = jradial
-        EXIT
-    endif
-enddo
-jjgrid(n_radial) = jr_max
+xstep = float(jr_max - jr_min)/(nradial - 1.)
+if (xstep <= 1.) then
+    do jradial=1, nradial
+        jjgrid(jradial) = jr_min + jradial - 1
+        if (jjgrid(jradial) == jr_max) EXIT
+    enddo
+    n_radial = jradial
+else
+    n_radial = nradial
+    do jradial = 1, n_radial-1
+        jjgrid(jradial) = jr_min + nint((jradial-1)*xstep)
+    enddo
+    jjgrid(n_radial) = jr_max
+endif
+
+!-----------------
+! Flags and inputs
 
 tgyro_neo_gv_flag = 0.
 

@@ -99,7 +99,7 @@ integer :: nions, coll_flag_in, rot_flag_in, verbose_in, el_type_in, &
 integer, dimension(dimx, nspec_max-1) :: ion_type_in
 
 real(kind=DBL) :: relacc1_in, relacc2_in, absacc1_in, absacc2_in, R0_in, &
-   ETGmultin, collmultin, timeout_in, rhomin, rhomax, rhoscale
+   ETGmultin, collmultin, timeout_in, rhomin, rhomax, rhoscale, xstep
 real(kind=DBL), dimension(dimn) :: kthetarhos_in
 real(kind=DBL), dimension(dimx) :: x_in, rho_in, Ro_in, Rmin_in, Bo_in, &
     qx_in, smag_in, alphax_in, Tex_in, Nex_in, Ate_in, Ane_in, anise_in, &
@@ -119,8 +119,8 @@ LOGICAL :: exist1, exist2, exist3, exist4, exist5 !used for checking for existen
 !MPI variables:
 INTEGER :: mpi_ierr, nproc, myrank
 INTEGER :: myunit=700, i_mpic
-integer :: jinterval, jr_min, jr_max, jrho, j0, j01, j02, n_radial
-integer :: i, j, k, jradial, j3r, jjgrid(nradial), jion
+integer :: jr_min, jr_max, jrho, j0, j01, j02, n_radial
+integer :: i, j, k, jradial, jjgrid(nradial), jion
 
 real(kind=DBL) :: bmod, bpolz
 real(kind=DBL) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
@@ -171,24 +171,31 @@ endif
 
 nions = nspec_max - 1
 
+!-----------------
+! Radial subdomain
+!-----------------
+
 jr_min = max(1, jr1_in)
 jr_max = min(nrho, jr2_in)
-if (jr_min >= jr_max) then
-    write(*, *) 'Error! jr_min >= jr_max', jr_max
+if (jr_min > jr_max) then
+    write(*, *) 'Error! jr_min > jr_max', jr_max
     return
 endif
 
-jinterval = jr_max - jr_min
-j3r = max(1, INT(jinterval/nradial))
-n_radial = nradial
-do jradial = 1, nradial-1
-    jjgrid(jradial) = jr_min + (jradial - 1)*j3r
-    if (jjgrid(jradial) >= jr_max) then
-        n_radial = jradial
-        EXIT
-    endif
-enddo
-jjgrid(n_radial) = jr_max
+xstep = float(jr_max - jr_min)/(nradial - 1.)
+if (xstep <= 1.) then
+    do jradial=1, nradial
+        jjgrid(jradial) = jr_min + jradial - 1
+        if (jjgrid(jradial) == jr_max) EXIT
+    enddo
+    n_radial = jradial
+else
+    n_radial = nradial
+    do jradial = 1, n_radial-1
+        jjgrid(jradial) = jr_min + nint((jradial-1)*xstep)
+    enddo
+    jjgrid(n_radial) = jr_max
+endif
 
 ! Electrons and main ions
 Zi_in(1, 1) = ZMJ
