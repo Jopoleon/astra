@@ -116,7 +116,7 @@ double precision, intent(out), dimension(*) :: CHI, CHE, DIF, VIN, &
 !----------------------------------------------------------------------
 
 integer :: i_ion, n
-integer :: jna, jinterval, jr_min, jr_max, jrho, j0, j01, j02, jgamma_max, nr_max, n_radial
+integer :: jinterval, jr_min, jr_max, jrho, j0, j01, j02, jgamma_max, n_radial
 integer :: j, jradial, j3r, jjgrid(nradial), jspec, kyloop
 integer :: sat_rule           ! Saturation rule
 integer :: nmodes_tg          ! number of unstable modes to use in computing fluxes (max=4)
@@ -146,14 +146,10 @@ real, dimension(nsm-1, nrho) :: ni_m, ti_m
 ! Radial subdomain
 !-----------------
 
-jna = max(NA1E, NA1I, NA1N)
-if (jna == 0) jna = nrho
-nr_max = min(jna, nrho)
-
 jr_min = max(1, jr1_in)
-jr_max = min(nr_max, jr2_in)
-if (jr_min >= jr_max) then
-    write(*, *) 'Error! jr_min >= jr_max', jr_max
+jr_max = min(nrho, jr2_in)
+if (jr_min > jr_max) then
+    write(*, *) 'Error! jr_min > jr_max', jr_max
     return
 endif
 
@@ -179,7 +175,7 @@ tglf_mass_in(3) = AIM1/AMJ
 tglf_mass_in(4) = AIM2/AMJ
 tglf_mass_in(5) = AIM3/AMJ
 
-do jrho=1, nr_max
+do jrho=1, nrho
     rho_m(jrho) = RHO(jrho)
     ti_m(1:4, jrho) = TI(jrho)
     if (NDEUT(jrho) >= 0.01*NE(jrho)) then
@@ -236,7 +232,7 @@ endif
 kygrid_model_tg = 4 !1 Email Angioni Aug 1st 2023
 
 sat_rule = 2
-write(6, '(A, 9i4)') 'Call TGLF...', jjgrid(1:n_radial), jna, nrho, sat_rule, tglf_ns_in
+write(6, '(A, 8i4)') 'Call TGLF...', jjgrid(1:n_radial), nrho, sat_rule, tglf_ns_in
 
 if (sat_rule == 0) then
     nmodes_tg = 2
@@ -373,11 +369,11 @@ radial_loop: do jradial=1, n_radial
 
 ! Differentials
 
-    j01 = j0+1
-    j02 = j0-1
+    j01 = j0 + 1
+    j02 = j0 - 1
     if (j0 == 1) then
         j02 = j0
-    else if (j0 == nr_max) then
+    else if (j0 == nrho) then
         j01 = j0
     endif
     dstep = 1./float(j01 - j02)
@@ -388,13 +384,26 @@ radial_loop: do jradial=1, n_radial
     delong = dstep*(ELON(j01) - ELON(j02))
     dtrian = dstep*(TRIA(j01) - TRIA(j02))
     dptot  = dstep*(ptot(j01) - ptot(j02)) * 1E3*1E13
-    dte    = dstep*(TE(j01) - TE(j02))
-    dne    = dstep*(NE(j01) - NE(j02))
-    dq     = dstep*(q_exp(j01) - q_exp(j02))
-    dvper  = dstep*(vper_m(j01) - vper_m(j02))
+    if (j0 == NA1E .and. NA1E /= nrho) then
+        dte = 0.5*dstep*(TE(j0) - TE(j02)) ! Left derivative
+    else
+        dte = dstep*(TE(j01) - TE(j02))
+    endif
+    if (j0 == NA1N .and. NA1N /= nrho) then
+        dne = 0.5*dstep*(NE(j0) - NE(j02)) ! Left derivative
+    else
+        dne = dstep*(NE(j01) - NE(j02))
+    endif
+    dq    = dstep*(q_exp(j01) - q_exp(j02))
+    dvper = dstep*(vper_m(j01) - vper_m(j02))
     do jspec=1, tglf_ns_in-1
-        dti(jspec) = dstep*(ti_m(jspec, j01) - ti_m(jspec, j02))
-        dni(jspec) = dstep*(ni_m(jspec, j01) - ni_m(jspec, j02))
+        if (j0 == NA1I .and. NA1I /= nrho) then
+            dti(jspec) = 0.5*dstep*(ti_m(jspec, j0) - ti_m(jspec, j02))
+            dni(jspec) = 0.5*dstep*(ni_m(jspec, j0) - ni_m(jspec, j02))
+        else
+            dti(jspec) = dstep*(ti_m(jspec, j01) - ti_m(jspec, j02))
+            dni(jspec) = dstep*(ni_m(jspec, j01) - ni_m(jspec, j02))
+        endif
     enddo
     dv_r = dstep* &
         (vpar_m(j01)/(rmaj_exp(j01) + AMETR(j01)) - &

@@ -119,7 +119,7 @@ LOGICAL :: exist1, exist2, exist3, exist4, exist5 !used for checking for existen
 !MPI variables:
 INTEGER :: mpi_ierr, nproc, myrank
 INTEGER :: myunit=700, i_mpic
-integer :: jna, jinterval, jr_min, jr_max, jrho, j0, j01, j02, nr_max, n_radial
+integer :: jinterval, jr_min, jr_max, jrho, j0, j01, j02, n_radial
 integer :: i, j, k, jradial, j3r, jjgrid(nradial), jion
 
 real(kind=DBL) :: bmod, bpolz
@@ -171,12 +171,8 @@ endif
 
 nions = nspec_max - 1
 
-jna = max(NA1E, NA1I, NA1N)
-if (jna == 0) jna = nrho
-nr_max = min(jna, nrho)
-
 jr_min = max(1, jr1_in)
-jr_max = min(nr_max, jr2_in)
+jr_max = min(nrho, jr2_in)
 if (jr_min >= jr_max) then
     write(*, *) 'Error! jr_min >= jr_max', jr_max
     return
@@ -202,7 +198,7 @@ Ai_in(1, 2) = AIM1
 Ai_in(1, 3) = AIM2
 Ai_in(1, 4) = AIM3
 
-do jrho=1, nr_max
+do jrho=1, nrho
     ti_m(1:4, jrho) = TI(jrho)
     ni_m(1, jrho) = NDEUT(jrho)
     ni_m(2, jrho) = max(1.e-9, NIZ1(jrho))
@@ -310,7 +306,7 @@ radial_loop: do jradial=1, n_radial
     j02 = j0-1
     if (j0 == 1) then
         j02 = j0
-    else if (j0 == nr_max) then
+    else if (j0 == nrho) then
         j01 = j0
     endif
     dstep = 1./float(j01 - j02)
@@ -321,13 +317,26 @@ radial_loop: do jradial=1, n_radial
     delong = dstep*(ELON(j01) - ELON(j02))
     dtrian = dstep*(TRIA(j01) - TRIA(j02))
     dptot  = dstep*(ptot(j01) - ptot(j02))
-    dte    = dstep*(TE(j01) - TE(j02))
-    dne    = dstep*(NE(j01) - NE(j02))
-    dq     = dstep*(q_exp(j01) - q_exp(j02))
-    dvper  = dstep*(vper_m(j01) - vper_m(j02))
+    if (j0 == NA1E .and. NA1E /= nrho) then
+        dte = 0.5*dstep*(TE(j0) - TE(j02)) ! Left derivative
+    else
+        dte = dstep*(TE(j01) - TE(j02))
+    endif
+    if (j0 == NA1N .and. NA1N /= nrho) then
+        dne = 0.5*dstep*(NE(j0) - NE(j02)) ! Left derivative
+    else
+        dne = dstep*(NE(j01) - NE(j02))
+    endif
+    dq    = dstep*(q_exp(j01) - q_exp(j02))
+    dvper = dstep*(vper_m(j01) - vper_m(j02))
     do jion=1, nions
-        dti(jion) = dstep*(ti_m(jion, j01) - ti_m(jion, j02))
-        dni(jion) = dstep*(ni_m(jion, j01) - ni_m(jion, j02))
+        if (j0 == NA1I .and. NA1I /= nrho) then
+            dti(jion) = 0.5*dstep*(ti_m(jion, j0) - ti_m(jion, j02))
+            dni(jion) = 0.5*dstep*(ni_m(jion, j0) - ni_m(jion, j02))
+        else
+            dti(jion) = dstep*(ti_m(jion, j01) - ti_m(jion, j02))
+            dni(jion) = dstep*(ni_m(jion, j01) - ni_m(jion, j02))
+        endif
     enddo
     dv_r = dstep* &
         (vpar_m(j01)/(rmaj_exp(j01) + AMETR(j01)) - &
