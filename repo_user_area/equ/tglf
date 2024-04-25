@@ -73,7 +73,7 @@ CAR11=CUBM;
 ! physics
 CF16=0.85;  ! Boundary
 CF12=0.02; ! Frequency of calls
-CRAD3=nint((CF16*NA1 - 1)/16.);
+CRAD3=nint((NA1 - 1)/16.);
 xpr/tglfi(int(CRAD3)*0+1 ,int(CRAD3)*1 )&<:CF12:::;
 xpr/tglfi(int(CRAD3)*1+1 ,int(CRAD3)*2 )&<:CF12:::;
 xpr/tglfi(int(CRAD3)*2+1 ,int(CRAD3)*3 )&<:CF12:::;
