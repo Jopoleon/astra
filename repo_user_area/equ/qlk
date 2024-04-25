@@ -97,9 +97,9 @@ CAR18 = "mem_qlkz(j,2)"; ! chi_e
 CAR20 = "mem_qlkz(j,4)"; ! Particle flux
 CAR42 = "mem_qlkz(j,8)"; !turbulent equipartition to be added to PE and subtracted to PI
 
-SMEARR(CF4,CAR17,CAR21)::::;
-SMEARR(CF4,CAR18,CAR22)::::;
-SMEARR(CF5,CAR20,CAR24)::::;
+SMEARR2(CF4,CAR17,CAR21)::::;
+SMEARR2(CF4,CAR18,CAR22)::::;
+SMEARR2(CF5,CAR20,CAR24)::::;
 
 XI = min(20., max(0., CAR21)) + HNASI;
 HE = min(20., max(0., CAR22)) + HNGSE;
