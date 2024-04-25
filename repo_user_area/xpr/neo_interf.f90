@@ -316,7 +316,7 @@ radial_loop: do jradial=1, n_radial
     neo_shear_in       = AMETR(j0)*dq/(drmin*q_exp(j0))
     neo_shift_in       = drmaj/drmin
     neo_kappa_in       = ELON(j0)
-    neo_s_kappa_in     = AMETR(j0)*delong/drmin
+    neo_s_kappa_in     = AMETR(j0)*delong/(drmin*ELON(j0))
 
     neo_delta_in       = TRIA(j0)
     neo_s_delta_in     = AMETR(j0)*dtrian/drmin
