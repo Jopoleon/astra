@@ -236,7 +236,7 @@ kygrid_model_tg = 4 !1 Email Angioni Aug 1st 2023
 
 sat_rule = 2
 
-write(6, '(A, 10i4)') 'Call TGLF...', jjgrid(1: nradial), jr_min, jr_max, nrho, sat_rule, tglf_ns_in
+write(6, '(A, 8i4)') 'Call TGLF...', jjgrid(1: nradial), nrho, sat_rule, tglf_ns_in
 
 if (sat_rule == 0) then
     nmodes_tg = 2
