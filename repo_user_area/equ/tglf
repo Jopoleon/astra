@@ -89,7 +89,7 @@ xpr/tglfi( int(CRAD3*11)+1,int(CRAD3*12) )&<:CF12:::;
 xpr/tglfi( int(CRAD3*12)+1,int(CRAD3*13) )&<:CF12:::;
 xpr/tglfi( int(CRAD3*13)+1,int(CRAD3*14) )&<:CF12:::;
 xpr/tglfi( int(CRAD3*14)+1,int(CRAD3*15) )&<:CF12:::;
-xpr/tglfi( int(CRAD3*15)+1,int(CRAD3*16) )&<:CF12:::;
+xpr/tglfi( int(CRAD3*15)+1,int(CRAD3*16) + 1 )&<:CF12:::;
 
 CAR17 = "mem_tglf(j,1)"; ! chi_i
 CAR18 = "mem_tglf(j,2)"; ! chi_e
