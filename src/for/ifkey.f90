@@ -675,8 +675,6 @@ CASE(89) ! 'Y'
     if (IFKL == KEY) return
 
 CASE(88) ! 'X'
-! STR = "Test window" // null_ch
-! call wintitle(STR)
     MODEX = XOUT + 0.49
     if (MOD10 == 0) then
         write(*, *) 'X-axis:   none'

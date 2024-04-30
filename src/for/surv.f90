@@ -339,13 +339,11 @@ else if (STYL > 0) then
     LE = NM/5*STYL    ! 1st marker position
     if (LE >= NM+2) LE = LE - NM
     LE = max(1, LE)
-! call getcolor(j1)
     do jj=LE, NP, NM
         J  = 2*jj
         PT1(1) = plot_arr(j-1)
         PT1(2) = plot_arr(j)/10
         call NMARK(PT1, STYL)
-!    call puto(jx, jy, j1, STYL)
     enddo
 endif
 
@@ -1383,14 +1381,19 @@ subroutine curvvm(id, npnts, array)
 !   -> drawvm(PSADrawLine) is not used any more
 ! dimension array(2*npnts)
 
+use outcmn_inc, only: frame_wid
+ 
 implicit none
 
 integer, intent(in) :: npnts, array(*), id
+integer :: LineWidth
+
+LineWidth = int(frame_wid/700) + 1
 
 if (npnts == 1) then
     call drawvm(id, array(1), array(2), array(1), array(2))
 elseif (npnts > 1) then
-    call drawline(id, array, npnts)
+    call drawline(id, npnts, LineWidth, array)
 endif
 
 return
