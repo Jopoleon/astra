@@ -19,7 +19,7 @@ integer :: &
 integer :: &
     MODEY, frame_wid, frame_hei, DXLET, DYLET, IY0, IYM, canv_hei, canv_wid, &
     IDX, IDT, KPRI, NST, XWX, XWY, XWW, XWH, LRJJ, &
-    AVERS, ARLEAS, AEDIT, NBFLAG, SHOTNB
+    AVERS, ARLEAS, AEDIT, NBFLAG, SHOTNB, LineWidth
 integer*4 :: COLTAB(64) ! i*4 needed for compatibility with C
 integer, dimension(plot_modes) :: active_tab, curves_per_frame
 integer :: nx_canvas, ny_canvas
@@ -60,6 +60,7 @@ MSFILE = '***'
 
 ! Screen parameters: default
 
+LineWidth = 1
 SHOTNB = 0
 frame_wid = 640
 frame_hei = 350

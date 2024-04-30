@@ -1,8 +1,7 @@
 /*The file includes the C-functions:
-        createGC     Change_Color     Open_Screen      Close_Screen	
-     Open_Window        MoveArrow    PutColorName initDefaultColors	
-PSASetForeground PSADrawRectangle     PSADrawLine           PSAMove	
-         PSALine   PSADrawLString  PSADrawRString    PSADrawMString
+     createGC         Change_Color     Open_Screen  close_Screen	
+     Open_Window      MoveArrow        PutColorName initDefaultColors	
+     PSASetForeground PSADrawRectangle PSADrawLine  PSADrawLString
 and interfaces for FORTRAN calls
     initvm    drawvm  rectvm  erasrw  setlin  redraw
     psopen    psclos  pcurso  rcurso  textvm  textbf  pscom   colovm
@@ -26,45 +25,33 @@ and interfaces for FORTRAN calls
 #endif
 
 void initvm_(INT_*, INT_*, INT_*, INT_*, INT_*, char*, INT_*);
-void endvm_();
 void redraw_(INT_*);
 void erasrw_();
 void pcurso();
 void pcurso_();
 void savepm_(INT_*, INT_*);
-void textvm(INT_*, INT_*, char*, INT_*);
 void textvm_(INT_*, INT_*, char*, INT_*);
-void textbf(INT_*, INT_*, char*, INT_*);
 void textbf_(INT_*, INT_*, char*, INT_*);
-void textnb(INT_*, INT_*, char*, INT_*);
 void textnb_(INT_*, INT_*, char*, INT_*);
-void createpixmap(INT_*);
+void putString(GC, INT_*, INT_*, char*, INT_*);
 void createpixmap_(INT_*);
-void getcolor_(INT_*);
-void colovm(INT_*);
+void changeGCcolor(GC, INT_*);
 void colovm_(INT_*);
 void colorb(INT_*);
-void colorb_(INT_*);
-void pscom(char*, INT_*);
 void pscom_(char*, INT_*);
-void psopen (char*, INT_*, INT_*);
 void psopen_(char*, INT_*, INT_*);
-void psclos ();
-void psclos_();
-void endvm_();
+void psclose_();
+void close_screen_();
 void drawvm_(INT_*, INT_*, INT_*, INT_*, INT_*); 
 void rectvm_(INT_*, INT_*, INT_*, INT_*, INT_*);
-void cleare (INT_*, INT_*, INT_*, INT_*, INT_*); 
+void cleare(INT_*, INT_*, INT_*, INT_*, INT_*); 
 void cleare_(INT_*, INT_*, INT_*, INT_*, INT_*);
-void d1line_(INT_*, INT_*, INT_*, INT_*, INT_*);
 
 void GetRWgeometry(int*, int*);
 void PSADrawRectangle(double, double, double, double);
 void PSADrawLine(double, double, double, double);
 void PSASetForeground(int);
 void PSADrawLString(double, double, char*, int, double);
-void PSADrawRString(double, double, char*, int, double);
-void PSADrawMString(double, double, char*, int, double);
 
 #define BORDER_WIDTH 2
 #define NORMAL_WINDOW 0
@@ -85,7 +72,7 @@ void PSADrawMString(double, double, char*, int, double);
 
 Display *theDisplay;
 Window theRootWindow;
-GC theGCA, hghGC, hgh_menuGC, hintGC, iconGC;
+GC theGCA, hghGC, hgh_menuGC, hintGC;
 Colormap theColormap;
 Drawable Pixmaps[maxPixmaps] = {0, 0, 0, 0, 0, 0}, marker[11];
 Drawable theIconPixmap;
@@ -161,7 +148,7 @@ FILE *PSAfile;
 /* FlagPSA = 0 (no hard copy), -1 (white), 1 (other colors) */
 int FlagPSA=0, FigAcount=1; 
 
-/************************************************************/
+/********************************************************************/
 void createGC(Window theWindow, GC *theNewGC, char *fontName)
 {
     XGCValues theGCValues;
@@ -170,21 +157,21 @@ void createGC(Window theWindow, GC *theNewGC, char *fontName)
     theValueMask =0L;
     *theNewGC = XCreateGC(theDisplay, theWindow, theValueMask, &theGCValues);
     if (*theNewGC != 0){
-        fontStruct = XLoadQueryFont (theDisplay, fontName);
+        fontStruct = XLoadQueryFont(theDisplay, fontName);
         if(fontStruct != 0) XSetFont(theDisplay, *theNewGC, fontStruct->fid);
         XSetForeground(theDisplay, *theNewGC, theBlackPixel);
         XSetBackground(theDisplay, *theNewGC, theWhitePixel);
     }
 }
 
-/************************************************************/
+/********************************************************************/
 void Change_Color(GC anyGC, int frgColor, int bkgColor){
     XSetForeground(theDisplay, anyGC, thePixels[frgColor]);
     theCurrentColor = thePixels[frgColor];
     XSetBackground(theDisplay, anyGC, thePixels[bkgColor]);
 }
 
-/**************************************************************/
+/********************************************************************/
 void Open_Screen(){
     theDisplay =XOpenDisplay(NULL);
     if (theDisplay == NULL){
@@ -203,8 +190,8 @@ void Open_Screen(){
     theHeight = DisplayHeight(theDisplay, theScreen);
 }
 
-/*************************************************************/
-void Close_Screen(){
+/********************************************************************/
+void close_screen_(){
     int i;
     for (i = 1; i < maxPixmaps-1; i++){
         if (Pixmaps[i]) XFreePixmap(theDisplay, Pixmaps[i]);
@@ -215,7 +202,7 @@ void Close_Screen(){
     XCloseDisplay(theDisplay);
 }
 
-/***************************************************************/
+/********************************************************************/
 void makeIcon(Window theNewWindow){
   /* Get pre-defined two-color Icon Pixmap */
 
@@ -295,14 +282,14 @@ void makeIcon(Window theNewWindow){
         0x93, 0x3f, 0xfc, 0x93, 0x3f, 0xfc, 0x97, 0x3f, 0xfc, 0xc7, 0xff, 0xff, 
         0xc7, 0xff, 0xff, 0xcf, 0x3f, 0xfc, 0xef, 0x3f, 0xfc, 0xff, 0xff, 0xff};
 
-    theIconPixmap = XCreatePixmapFromBitmapData (theDisplay, theNewWindow, 
+    theIconPixmap = XCreatePixmapFromBitmapData(theDisplay, theNewWindow, 
         sqF1_bits, sqF1_width, sqF1_height, //Use sqF1
         theWhitePixel, thePixels[50], theDepth); // Red on white
 
     return;
 }
 
-/*************************************************************/
+/********************************************************************/
 Window Open_Window(int x, int y, int width, int height, int flag, char* theTitle, 
     int iconicState, Window theParent, Cursor theCursor){
   
@@ -325,17 +312,21 @@ Window Open_Window(int x, int y, int width, int height, int flag, char* theTitle
         theWindowAttributes.override_redirect = False;
         theWindowMask  = CWBackPixel | CWBorderPixel | CWCursor;
     }
-    theNewWindow = XCreateWindow (theDisplay, theParent, 
+    theNewWindow = XCreateWindow(theDisplay, theParent, 
         x, y, width, height, BORDER_WIDTH, theDepth, InputOutput, 
     CopyFromParent, theWindowMask, &theWindowAttributes);
     theWMHints.input = True;
-    if (iconicState == 0) theWMHints.initial_state = NormalState;
-    else  theWMHints.initial_state= IconicState;
+    if (iconicState == 0){
+        theWMHints.initial_state = NormalState;
+    }
+    else{
+        theWMHints.initial_state= IconicState;
+    }
     theWMHints.flags = InputHint | StateHint;
     makeIcon(theNewWindow);
     theWMHints.icon_pixmap = theIconPixmap;
     theWMHints.flags  = theWMHints.flags | IconPixmapHint;
-    XSetWMHints (theDisplay, theNewWindow, &theWMHints);
+    XSetWMHints(theDisplay, theNewWindow, &theWMHints);
     XStoreName (theDisplay, theNewWindow, theTitle);
     theSizeHints.flags = USPosition | PSize | PMinSize | PMaxSize;
     theSizeHints.x = x;
@@ -346,20 +337,20 @@ Window Open_Window(int x, int y, int width, int height, int flag, char* theTitle
     theSizeHints.min_height = height; /* forbidden */
     theSizeHints.max_width = width;
     theSizeHints.max_height = height;
-    XSetNormalHints (theDisplay, theNewWindow, &theSizeHints);
-    XMapWindow (theDisplay, theNewWindow);
-    XFlush (theDisplay);
+    XSetNormalHints(theDisplay, theNewWindow, &theSizeHints);
+    XMapWindow(theDisplay, theNewWindow);
+    XFlush(theDisplay);
     if (flag == NORMAL_WINDOW) sleep(1);
     return theNewWindow;
 }
 
-/*******************************************************************/
-void MoveArrow (Window wind, int fromx, int fromy, int tox, int toy){
+/********************************************************************/
+void MoveArrow(Window wind, int fromx, int fromy, int tox, int toy){
     int Xx, Xy;
     if (fromx > 0){
         Xx = fromx;
 	Xy = fromy;
-        Change_Color (theGCA, 0, 0);
+        Change_Color(theGCA, 0, 0);
         XDrawLine(theDisplay, wind, theGCA, Xx, Xy, Xx, Xy+5);
         XDrawLine(theDisplay, wind, theGCA, Xx+1, Xy+1, Xx+1, Xy+5);
         XDrawLine(theDisplay, wind, theGCA, Xx-1, Xy+1, Xx-1, Xy+5);
@@ -372,7 +363,7 @@ void MoveArrow (Window wind, int fromx, int fromy, int tox, int toy){
     if (tox > 0){
         Xx = tox;
 	Xy = toy;
-        Change_Color (theGCA, 3, 0); /* 3 - blue */
+        Change_Color(theGCA, 3, 0); /* 3 - blue */
         XDrawLine(theDisplay, wind, theGCA, Xx, Xy, Xx, Xy+5);
         XDrawLine(theDisplay, wind, theGCA, Xx+1, Xy+1, Xx+1, Xy+5);
         XDrawLine(theDisplay, wind, theGCA, Xx-1, Xy+1, Xx-1, Xy+5);
@@ -381,10 +372,10 @@ void MoveArrow (Window wind, int fromx, int fromy, int tox, int toy){
         XDrawLine(theDisplay, wind, theGCA, Xx+3, Xy+5, Xx+3, Xy+5);
         XDrawLine(theDisplay, wind, theGCA, Xx-3, Xy+5, Xx-3, Xy+5);
     }
-    Change_Color (theGCA, 1, 0);
+    Change_Color(theGCA, 1, 0);
 }
 
-/*******************************************************************/
+/********************************************************************/
 /* (  x >= 0,      y >= 0)  - upper left corner  of the rectangle
  (x+w <= XWW, y+h <= XWH) - lower right corner of the rectangle
  the function puts a mark (circle) of the color 1 (red) 
@@ -400,32 +391,40 @@ void PutColorName(Window wind, int ix, int iy, int iw, int num){
     theColorNames[num], len);
 }
 
-/*******************************************************************/
+/********************************************************************/
 void initDefaultColors(){
     XColor theRGBColor, theHardwareColor;
     int theStatus, i;
     if (theDepth > 1){
         ColorNum = maxPixels;
-        for (i = 0; i < maxPixels; i++){
-	    theStatus = XLookupColor (theDisplay, theColormap, theColorNames[i],
+        for (i=0; i < maxPixels; i++){
+	    theStatus = XLookupColor(theDisplay, theColormap, theColorNames[i],
                 &theRGBColor, &theHardwareColor);
             if (theStatus != 0){
-	        theStatus = XAllocColor (theDisplay, theColormap, &theHardwareColor);
-                if (theStatus != 0) thePixels[i] = theHardwareColor.pixel; 
-                else thePixels[i] = theBlackPixel; 
+	        theStatus = XAllocColor(theDisplay, theColormap, &theHardwareColor);
+                if (theStatus != 0){
+		    thePixels[i] = theHardwareColor.pixel;
+		}
+                else{
+		    thePixels[i] = theBlackPixel;
+		}
             }
         }
     }
     else{  /* Monochrome system */
-        for (i = 0; i < maxPixels; i++){
-	    if (strcmp("White", theColorNames[i]) == 0) thePixels[i] = theWhitePixel; 
-            else thePixels[i] = theBlackPixel;
+        for (i=0; i < maxPixels; i++){
+	    if (strcmp("White", theColorNames[i]) == 0){
+	        thePixels[i] = theWhitePixel;
+	    }
+            else{
+	        thePixels[i] = theBlackPixel;
+	    }
         }
     }
 }
 
-/*******************************************************************/
-void initvm_ (INT_ *x, INT_ *y, INT_ *wid, INT_ *hei, INT_ *Atable, char* Title, INT_ *titlen){
+/********************************************************************/
+void initvm_(INT_ *x, INT_ *y, INT_ *wid, INT_ *hei, INT_ *Atable, char* Title, INT_ *titlen){
 // Use the unix command "bitmap" to create the data
     static char
     circle_bits[]  = {0x1c, 0x22, 0x41, 0x41, 0x41, 0x22, 0x1c}, 
@@ -453,7 +452,7 @@ void initvm_ (INT_ *x, INT_ *y, INT_ *wid, INT_ *hei, INT_ *Atable, char* Title,
     Xmode = 1;
 
     if (sizeof(int) != 4) printf(" >>> Warning >>> Incompatibility in color table\n");
-    Open_Screen ();
+    Open_Screen();
     initDefaultColors();
     XWX = *x;
     XWY = *y;
@@ -472,45 +471,36 @@ void initvm_ (INT_ *x, INT_ *y, INT_ *wid, INT_ *hei, INT_ *Atable, char* Title,
     createGC(theRootWindow, &theGCA, STDfont);
     createGC(theRootWindow, &hgh_menuGC, "8x13bold");
     createGC(theRootWindow, &hintGC, "variable");
-    XSetLineAttributes (theDisplay, hgh_menuGC, 2L, LineSolid, CapRound, JoinRound);
-    XDrawRectangle (theDisplay, theRootWindow, theGCA, 0L, 0L, *wid-1L, *hei-1L);
+    XSetLineAttributes(theDisplay, hgh_menuGC, 2L, LineSolid, CapRound, JoinRound);
+    XDrawRectangle(theDisplay, theRootWindow, theGCA, 0L, 0L, *wid-1L, *hei-1L);
     XWarpPointer(theDisplay, None, theRootWindow, 0, 0, 0, 0, *wid/2, *hei-120);
 
     Pixmaps[0] = theRootWindow;
-    marker[0]  = XCreateBitmapFromData (theDisplay, theRootWindow, fdiamon_bits, 7, 7);
-    marker[1]  = XCreateBitmapFromData (theDisplay, theRootWindow,  circle_bits, 7, 7);
-    marker[2]  = XCreateBitmapFromData (theDisplay, theRootWindow,  square_bits, 7, 7);
-    marker[3]  = XCreateBitmapFromData (theDisplay, theRootWindow,   aster_bits, 7, 7);
-    marker[4]  = XCreateBitmapFromData (theDisplay, theRootWindow,   cross_bits, 7, 7);
-    marker[5]  = XCreateBitmapFromData (theDisplay, theRootWindow,  triarr_bits, 7, 7);
-    marker[6]  = XCreateBitmapFromData (theDisplay, theRootWindow, fcircle_bits, 7, 7);
-    marker[7]  = XCreateBitmapFromData (theDisplay, theRootWindow, fsquare_bits, 7, 7);
-    marker[8]  = XCreateBitmapFromData (theDisplay, theRootWindow, diamond_bits, 7, 7);
-    marker[9]  = XCreateBitmapFromData (theDisplay, theRootWindow,    rct4_bits, 4, 4);
-    marker[10] = XCreateBitmapFromData (theDisplay, theRootWindow,    rct5_bits, 5, 5);
+    marker[0]  = XCreateBitmapFromData(theDisplay, theRootWindow, fdiamon_bits, 7, 7);
+    marker[1]  = XCreateBitmapFromData(theDisplay, theRootWindow,  circle_bits, 7, 7);
+    marker[2]  = XCreateBitmapFromData(theDisplay, theRootWindow,  square_bits, 7, 7);
+    marker[3]  = XCreateBitmapFromData(theDisplay, theRootWindow,   aster_bits, 7, 7);
+    marker[4]  = XCreateBitmapFromData(theDisplay, theRootWindow,   cross_bits, 7, 7);
+    marker[5]  = XCreateBitmapFromData(theDisplay, theRootWindow,  triarr_bits, 7, 7);
+    marker[6]  = XCreateBitmapFromData(theDisplay, theRootWindow, fcircle_bits, 7, 7);
+    marker[7]  = XCreateBitmapFromData(theDisplay, theRootWindow, fsquare_bits, 7, 7);
+    marker[8]  = XCreateBitmapFromData(theDisplay, theRootWindow, diamond_bits, 7, 7);
+    marker[9]  = XCreateBitmapFromData(theDisplay, theRootWindow,    rct4_bits, 4, 4);
+    marker[10] = XCreateBitmapFromData(theDisplay, theRootWindow,    rct5_bits, 5, 5);
 }
 
-/***************************************************************/
+/********************************************************************/
 void createpixmap_(INT_ *id){
     INT_ i=0, j, k;
     if (Pixmaps[*id] == 0){
         Pixmaps[*id] = XCreatePixmap(theDisplay, theRootWindow, XWW, XWH, theDepth);
-        j = XWW-1;
-        k = XWH-1;
+        j = XWW - 1;
+        k = XWH - 1;
         cleare(id, &i, &i, &j, &k);
     }
 }
 
-void createpixmap(INT_ *id){
-    createpixmap_(id);
-}
-
-/***************************************************************/
-void endvm_(){
-    Close_Screen();
-}
-
-/***************************************************************/
+/********************************************************************/
 void redraw_(INT_ *id){
     if (*id != 0){
         if (Pixmaps[*id] == 0) return;
@@ -521,44 +511,48 @@ void redraw_(INT_ *id){
     XFlush(theDisplay);
 }
 
-/***************************************************************/
+/********************************************************************/
 void savepm_(INT_ *source, INT_ *destination){
 // Copy pixmap
     XCopyArea(theDisplay, Pixmaps[*source], Pixmaps[*destination], theGCA, 0, 0, XWW, XWH, 0, 0);
     XFlush(theDisplay);
 }
 
-/***************************************************************/
+/********************************************************************/
 void erasrw_(){
 // Clear the root window
     XClearWindow(theDisplay, theRootWindow);
 }
 
-/***************************************************************/
+/********************************************************************/
 void cleare(INT_ *id, INT_ *ix, INT_ *iy, INT_ *iw, INT_ *ih){
-    cleare_ (id, ix, iy, iw, ih);
+    cleare_(id, ix, iy, iw, ih);
 }
 
 void cleare_(INT_ *id, INT_ *ix, INT_ *iy, INT_ *iw, INT_ *ih){
    if (Pixmaps[*id] == 0) return;
-   if (*id == 0) XSetForeground(theDisplay, theGCA, theWhitePixel);
-   if (*id)      XSetForeground(theDisplay, theGCA, theBlackPixel);
+   if (*id == 0){
+       XSetForeground(theDisplay, theGCA, theWhitePixel);
+   }
+   else{
+       XSetForeground(theDisplay, theGCA, theBlackPixel);
+   }
    XFillRectangle(theDisplay, Pixmaps[*id], theGCA, *ix, *iy, *iw, *ih);
    XSetForeground(theDisplay, theGCA, theCurrentColor);
 }
 
-/***************************************************************/
+/********************************************************************/
 void rcurso_(){
     XUndefineCursor(theDisplay, theRootWindow);
 }
 
-/***************************************************************/
+/********************************************************************/
 void pcurso_(){
 // Enter "xfd -center -fn cursor" to get all cursors available
     XDefineCursor(theDisplay, theRootWindow, thePauseCursor);
 }
 
-/***************************************************************/
+/********************************************************************/
 void drawvm_(INT_ *id, INT_ *x1, INT_ *y1, INT_ *x2, INT_ *y2){
 // Draw line from (x1, y1) to (x2, y2)
     int Xx1, Xy1, Xx2, Xy2;
@@ -579,36 +573,12 @@ void drawvm_(INT_ *id, INT_ *x1, INT_ *y1, INT_ *x2, INT_ *y2){
     }
 }
 
-/***************************************************************/
-void d1line_(INT_ *id, INT_ *x1, INT_ *y1, INT_ *x2, INT_ *y2){
-// Draw a line from (x1, y1) to (x2, y2)
-    int Xx1, Xy1, Xx2, Xy2;
-    double dx1, dy1, dx2, dy2;
-    Xx1 = *x1 + 10;
-    Xx2 = *x2 + 10;
-    dy1 = *y1/10. + 10;
-    dy2 = *y2/10. + 10;
-    Xy1 = dy1;
-    Xy2 = dy2;
-    if (*id) XSetForeground(theDisplay, theGCA, ~theCurrentColor);
-    XDrawLine(theDisplay, Pixmaps[*id], theGCA, Xx1, Xy1, Xx2, Xy2);
-    if (*id) XSetForeground(theDisplay, theGCA, theCurrentColor);
-    if (FlagPSA > 0){
-        dx1 = Xx1*PSsc;
-	dx2 = Xx2*PSsc;
-        dy1 *= PSsc;
-	dy2 *= PSsc;
-	PSADrawLine(dx1, dy1, dx2, dy2);
-     }
-}
-
-/***************************************************************/
+/********************************************************************/
 void drawline_(int *id, int *n, int *LineWidth, int *iXY){
     int j, n2, Xx1, Xy1, Xx2, Xy2;
     double dx1, dy1;
 
     if (*id) XSetForeground(theDisplay, theGCA, ~theCurrentColor);
-
     n2 = 2*(*n) - 3;
     for (j=0; j < n2; j+=2){
         Xx1 = iXY[j]   + 10;
@@ -630,8 +600,8 @@ void drawline_(int *id, int *n, int *LineWidth, int *iXY){
     }
 }
 
-/***************************************************************/
-void d1polyline_(INT_ *id, INT_ *iXY, INT_ *n){
+/********************************************************************/
+void d1polyline_(INT_ *id, INT_ *n, int *LineWidth, INT_ *iXY){
     int j, n2, x1, y1, x2, y2;
     double dx1, dy1, dx2, dy2;
     if (*id) XSetForeground(theDisplay, theGCA, ~theCurrentColor);
@@ -646,6 +616,7 @@ void d1polyline_(INT_ *id, INT_ *iXY, INT_ *n){
         XDrawLine(theDisplay, Pixmaps[*id], theGCA, x1, y1, x2, y2);
     }
     if (*id) XSetForeground(theDisplay, theGCA, theCurrentColor);
+    XSetLineAttributes(theDisplay, theGCA, *LineWidth, LineSolid, CapRound, JoinRound);
     if (FlagPSA > 0){
         n2 = 2*(*n);
         for (j=0; j < n2; j+=2){
@@ -666,14 +637,13 @@ void d1polyline_(INT_ *id, INT_ *iXY, INT_ *n){
             dx2 = x2*PSsc;
             dy1 *= PSsc;
             dy2 *= PSsc;
-            fprintf(PSAfile, "%11.4e %11.4e %11.4e %11.4e moveto lineto\n",
-                dx2+PS_xA, PS_yA-dy2, dx1+PS_xA, PS_yA-dy1);
+	    PSADrawLine(dx1, dy1, dx2, dy2);
         }
 #endif
     }
 }
 
-/***************************************************************/
+/********************************************************************/
 void d2polyline_(INT_ *id, INT_ *iXY, INT_ *n){
     int j, n2, x1, y1, x2, y2;
     double dx1, dy1, dx2, dy2;
@@ -715,286 +685,246 @@ void d2polyline_(INT_ *id, INT_ *iXY, INT_ *n){
             dx2 *= PSsc;
             dy1 *= PSsc;
             dy2 *= PSsc;
-            fprintf(PSAfile, "%11.4e %11.4e %11.4e %11.4e moveto lineto\n",
-                dx2+PS_xA, PS_yA-dy2, dx1+PS_xA, PS_yA-dy1);
+            PSADrawLine(dx1, dy1, dx2, dy2);
         }
 #endif
     }
 }
 
 /********************************************************************/
-void rectvm_ (id, x, y, width, height) INT_ *id, *x, *y, *width, *height;
-{ int Xx, Xy; unsigned int Xwidth, Xheight;
- double x1, y1, w1, h1;
- Xx=*x; Xy=*y; Xwidth=*width; Xheight=*height;
+void rectvm_(INT_ *id, INT_ *x, INT_ *y, INT_ *width, INT_ *height){
+    int Xx, Xy;
+    unsigned int Xwidth, Xheight;
+    double x1, y1, w1, h1;
+    Xx = *x;
+    Xy = *y;
+    Xwidth  = *width;
+    Xheight = *height;
     if (*id) XSetForeground(theDisplay, theGCA, ~theCurrentColor);
     XDrawRectangle(theDisplay, Pixmaps[*id], theGCA, Xx, Xy, Xwidth, Xheight);
     if (*id) XSetForeground(theDisplay, theGCA, theCurrentColor);
-    if (FlagPSA > 0)  { x1=Xx*PSsc; y1=Xy*PSsc; 
-   w1=Xwidth*PSsc; h1=(Xheight-80)*PSsc;
-   PSADrawRectangle(x1, y1, w1, h1); }
-}
-/***********************************************************************/
-void colovm (clnumb) INT_ *clnumb;
-{ colovm_ (clnumb); }
-void colovm_(clnumb) INT_ *clnumb;
-{ int inum;
- if (*clnumb < 32) inum=2*(*clnumb); else inum=62;
-/* if (*clnumb >4 && *clnumb < 9) printf("%d\n", *clnumb); */
- Change_Color (theGCA, AstraColorNum[inum], AstraColorNum[inum+1]);
- theCurrentColorNo = *clnumb;
- if(FlagPSA) { PSASetForeground(inum); }
-}
-/***********************************************************************/
-void colorb (clnumb) INT_ *clnumb;
-{ colorb_ (clnumb); }
-void colorb_(clnumb) INT_ *clnumb;
-{ int inum;
- if (*clnumb < 32) inum=2*(*clnumb); else inum=62;
-/* if (*clnumb >4 && *clnumb < 9) printf("%d\n", *clnumb); */
- Change_Color (hghGC, AstraColorNum[inum], AstraColorNum[inum+1]);
- theCurrentColorNo = *clnumb;
- if(FlagPSA) { PSASetForeground(inum); }
-}
-/****** ! Note ! the function cannot be called from FORTRAN *******/
-void textbf (x, y, str, str_len) INT_ *x, *y, *str_len; char str[];
-{    textbf_(x, y, str, str_len); }
-void textbf_(x, y, str, str_len) INT_ *x, *y, *str_len; char str[];
-{ int Xx, Xy, Xstlen;
- double x1, y1, psth;
- Xx =*x+10; Xy =*y+10; Xstlen=*str_len;
- XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy, str, Xstlen);
- if(FlagPSA > 0) { x1=Xx*PSsc; y1=Xy*PSsc;
-  psth=F1sh*PSsc; PSADrawLString(x1, y1, str, Xstlen, psth); }
-}
-/*******************************************************************/
-void textvm (x, y, str, str_len) INT_ *x, *y, *str_len; char str[];
-{    textvm_(x, y, str, str_len); }
-void textvm_(x, y, str, str_len) INT_ *x, *y, *str_len; char str[];
-{ int Xx, Xy, Xstlen;
- double x1, y1, psth;
- Xx =*x+10; Xy =*y+10; Xstlen=*str_len;
- XDrawImageString(theDisplay, theRootWindow, theGCA, Xx, Xy, str, Xstlen);
- if(FlagPSA > 0) { x1=Xx*PSsc; y1=Xy*PSsc;
-  psth=F1sh*PSsc;PSADrawLString(x1, y1, str, Xstlen, psth);
- }
-}
-/*******************************************************************/
-void textnb (x, y, str, str_len) INT_ *x, *y, *str_len; char str[];
-{    textnb_(x, y, str, str_len); }
-void textnb_(x, y, str, str_len) INT_ *x, *y, *str_len; char str[];
-{ int Xx, Xy, Xstlen;
- double x1, y1, psth;
- Xx =*x+10; Xy =*y+10; Xstlen=*str_len;
- XSetForeground(theDisplay, theGCA, ~theCurrentColor);
- XDrawString(theDisplay, Pixmaps[2], theGCA, Xx, Xy, str, Xstlen);
- XSetForeground(theDisplay, theGCA, theCurrentColor);
- if(FlagPSA > 0) { x1=Xx*PSsc; y1=Xy*PSsc;
-  psth=F1sh*PSsc;PSADrawLString(x1, y1, str, Xstlen, psth);
- }
-}
-/*******************************************************************/
-void pscom_(str, str_len)
-     INT_ *str_len; char str[];
-{
-  int j;
-  if(FlagPSA > 0) {
-    fprintf(PSAfile, "%% ");
-    for (j=0; j < *str_len; j++) fprintf(PSAfile, "%c", str[j]);
-    fprintf(PSAfile, "\n");
-  }
-  return;
-}
-void pscom(str, str_len)
-     INT_ *str_len; char str[];
-{
-  pscom_(str, str_len);
-}
-
-/**************************************************************************/
-/* Function px2pnm dump an image of X window (see command "xwd") 
-/**************************************************************************/
-static int icount=0, kPnm=0;
-
-int px2pnm_(name)
-     char *name;
-{
-  int i, L;
-  char str[0x100];
-  FILE *lF;
-
-  sprintf(str, "(xwd -silent -id %ld|xwdtopnm > %s%3.3d.ppm) >& /dev/null", 
-   theRootWindow, name, kPnm);
-  system(str);
-  /* printf("%s\n", str); */
-  /* printf("%s%3.3d.pnm  %d %d\n", name, kPnm, XWW, XWH); */
-  kPnm++;
-  return(0);
-}
-
-void PSnumber(name, count)
-     char *name; int *count;
-{
-  int i;
-
-  icount =*count;
-  for (i=0; i<128; i++){
-    if( name[i] == '\0' ) break;
-  }
- con1:
-  if(*count<10){
-    sprintf( name+i, "-%1d.ps\0", *count); goto con2;
-  }
-  if(*count<100){
-    sprintf( name+i, "-%2d.ps\0", *count);
-    goto con2;
-  }
-  if(*count<1000){
-    sprintf( name+i, "-%3d.ps\0", *count);
-    goto con2;
-  }
-  sprintf( name+i, ".ps\0");
-  return;
- con2:
-  PSAfile = fopen(name, "r");
-  if(PSAfile){
-    fclose(PSAfile);
-    *count=*count+1;
-    goto con1;
-  }
-}
-/**************************************************************************/
-void psopen (PSname, sty, iret) char *PSname; INT_ *sty, *iret;
-{
-  psopen_(PSname, sty, iret);
-}
-
-void psopen_(PSname, sty, iret)
-     char *PSname; INT_ *sty, *iret;
-{
-  if(FlagPSA){
-    *iret=-1;
-    return;
-  }
-
-  PSnumber(PSname, &FigAcount);
-  PSAfile = fopen(PSname, "w");
-
-  if(PSAfile != NULL){
-    FlagPSA = 1;
-    *iret=0;
-    fprintf(PSAfile, "%%!PS-Adobe-2.0\n");
-    fprintf(PSAfile, "/Lshow {exch dup scale show dup scale}def\n");
-    fprintf(PSAfile, "/Rshow {dup stringwidth pop 3 -1 roll\n");
-    fprintf(PSAfile, "dup 3 -1 roll mul neg 0 rmoveto\n");
-    fprintf(PSAfile, "dup scale show dup scale}def\n");
-    fprintf(PSAfile, "/Mshow {dup stringwidth pop 3 -1 roll\n");
-    fprintf(PSAfile, "dup 3 -1 roll -0.5 mul mul 0 rmoveto\n");
-    fprintf(PSAfile, "dup scale show dup scale}def\n");
-    fprintf(PSAfile, "%%Page: %d %d\n", icount, icount);
-    switch(*sty){
-    case 0:
-      PSsc=.7;
-      fprintf(PSAfile, "%%Figure %2d\n %g setlinewidth\n", FigAcount, 0.4);
-      fprintf(PSAfile, "/Courier-Bold findfont 1.02 scalefont setfont\n");
-      break;
-    case 1:
-      PSsc=.98;
-      fprintf(PSAfile, "%%Figure %2d\n %g setlinewidth\n", FigAcount, 0.5);
-      fprintf(PSAfile, "756 0 translate\n");
-      fprintf(PSAfile, "90 rotate\n");
-      fprintf(PSAfile, "/Courier-Bold findfont 1.02 scalefont setfont\n");
-      break;
-    default:
-      printf(" >>> PSOPEN >>> Unknown style option: %d\n", *sty);
+    if (FlagPSA > 0){
+        x1 = Xx*PSsc;
+	y1 = Xy*PSsc; 
+        w1 = Xwidth*PSsc;
+	h1 = (Xheight - 80)*PSsc;
+        PSADrawRectangle(x1, y1, w1, h1);
     }
-    PSASetForeground(0);
-    FigAcount++;
-    return;
-  }
-  else{
-    *iret=1;
-    return;
-  }
-}
-/**************************************************************************/
-void psclos ()
-{ psclos_(); }
-void psclos_ ()
-{ if (FlagPSA) { fprintf(PSAfile, "stroke\nshowpage\n\n");
-    FlagPSA = 0;  fclose(PSAfile); }
-}
-/**************************************************************************/
-void PSASetForeground(i) int i;
-{   XColor theRGBColor;  float r, g, b;
-/* Zakharov's colors:
-    static char    *CNm[24] = {
- "0 0 0", "0 0 .6", "0 .5 0", "0 .6 .6", 
- ".6 0 0", ".6 0 .6", ".7 .2 .2", ".8 .8 .8", 
- ".7 .7 .7", "0 0 1", "0 1 0", "0 1 1", 
- "1 0 0", "1 0 1", "1 1 0", "1 1 1", 
- "0 0 0", "0 0 0", "0 0 0", "0 0 0", 
- "0 0 0", "0 0 0", "0 0 0", "0 0 0" };*/
- fprintf(PSAfile, "stroke\n");
- theRGBColor.pixel = thePixels[AstraColorNum[i]];
- XQueryColor (theDisplay, theColormap, &theRGBColor);
- if ((theRGBColor.red & theRGBColor.green & theRGBColor.blue) != 0xffff)
- FlagPSA = 1; else {FlagPSA = -1; return; }
- r = theRGBColor.red; g = theRGBColor.green; b = theRGBColor.blue; 
- r = r/0xffff;      g = g/0xffff;     b = b/0xffff;
- fprintf(PSAfile, "%5.3f %5.3f %5.3f setrgbcolor\n", r, g, b);
-/* printf("ACN[i] = %d,   RGB  %x  %x  %x,   %5.3f %5.3f %5.3f\n", 
- AstraColorNum[i], theRGBColor.red, theRGBColor.green, theRGBColor.blue, r, g, b); */
-}
-/**************************************************************************/
-void PSADrawRectangle(x, y, w, h) double x, y, w, h;
-{ fprintf(PSAfile, "newpath %%Rectangle\n");
- fprintf(PSAfile, "%10.3e %10.3e  moveto\n", x+PS_xA, PS_yA-y);
-   fprintf(PSAfile, "%10.3e %10.3e %10.3e %10.3e rlineto rlineto\n", w, 0., 0., -h);
-   fprintf(PSAfile, "%10.3e %10.3e %10.3e %10.3e rlineto rlineto\n", -w, 0., 0., h);
- fprintf(PSAfile, "stroke\n");
-}
-/**************************************************************************/
-void PSADrawLine(x1, y1, x2, y2)
-double x1, y1, x2, y2;
-{
-  fprintf(PSAfile, "%11.4e %11.4e %11.4e %11.4e moveto lineto\n"
-   , x2+PS_xA, PS_yA-y2, x1+PS_xA, PS_yA-y1);
 }
 
-/**************************************************************************/
-void PSAMove(x, y) double x, y;
-{ fprintf(PSAfile, "%10.3e %10.3e moveto\n", x+PS_xA, PS_yA-y);
+/********************************************************************/
+void colovm_(INT_ *clnumb){
+    changeGCcolor(theGCA, clnumb);
 }
-/**************************************************************************/
-void PSALine(x, y) double x, y;
-{ fprintf(PSAfile, "%10.3e %10.3e lineto\n", x+PS_xA, PS_yA-y);
+
+/********************************************************************/
+void changeGCcolor(GC gc_in, INT_ *clnumb){
+    int inum;
+    if (*clnumb < 32){
+        inum = 2*(*clnumb);
+    }
+    else{
+        inum = 62;
+    }
+    Change_Color(gc_in, AstraColorNum[inum], AstraColorNum[inum+1]);
+    theCurrentColorNo = *clnumb;
+    if (FlagPSA) PSASetForeground(inum);
 }
-/**************************************************************************/
-void PSADrawLString(x, y, ln, n, psfsc) double x, y, psfsc; char *ln; int n;
-{ char tlin[256]; double psfsc1;
- int i;
- psfsc1=1./psfsc;
- for (i=0; i <= n-1 ; ++i) *(tlin+i) = *(ln+i); *(tlin+n) = '\0';
- fprintf(PSAfile, "%10.3e %10.3e moveto\n", x+PS_xA, PS_yA-y);
- fprintf(PSAfile, "%15.8e %15.8e (%s) Lshow\n", psfsc1, psfsc, tlin);
+
+/********************************************************************/
+void textbf_(INT_ *x, INT_ *y, char *str, INT_ *str_len){
+    putString(hghGC, x, y, str, str_len); 
 }
-/**************************************************************************/
-void PSADrawRString(x, y, ln, n, psfsc) double x, y, psfsc; char *ln; int n;
-{ char tlin[256]; double psfsc1;
- int i;
- psfsc1=1./psfsc;
- for (i=0; i <= n-1 ; ++i) *(tlin+i) = *(ln+i); *(tlin+n) = '\0';
- fprintf(PSAfile, "%10.3e %10.3e moveto\n", x+PS_xA, PS_yA-y);
- fprintf(PSAfile, "%15.8e %15.8e (%s) Rshow\n", psfsc1, psfsc, tlin);
+
+/********************************************************************/
+void textvm_(INT_ *x, INT_ *y, char *str, INT_ *str_len){
+    putString(theGCA, x, y, str, str_len);
 }
-/**************************************************************************/
-void PSADrawMString(x, y, ln, n, psfsc) double x, y, psfsc; char *ln; int n;
-{ char tlin[256]; double psfsc1;
- int i;
- psfsc1=1./psfsc;
- for (i=0; i <= n-1 ; ++i) *(tlin+i) = *(ln+i); *(tlin+n) = '\0';
- fprintf(PSAfile, "%10.3e %10.3e moveto\n", x+PS_xA, PS_yA-y);
- fprintf(PSAfile, "%15.8e %15.8e (%s) Mshow\n", psfsc1, psfsc, tlin);
+
+/********************************************************************/
+void putString(GC gc_in, INT_ *x, INT_ *y, char *str, INT_ *str_len){
+    int Xx, Xy, Xstlen;
+    double x1, y1, psth;
+    Xx = *x + 10;
+    Xy = *y + 10;
+    Xstlen = *str_len;
+    XDrawImageString(theDisplay, theRootWindow, gc_in, Xx, Xy, str, Xstlen);
+    if (FlagPSA > 0){
+        x1 = Xx*PSsc;
+	y1 = Xy*PSsc;
+        psth = F1sh*PSsc;
+	PSADrawLString(x1, y1, str, Xstlen, psth);
+    }
 }
-/**************************************************************************/
+
+/********************************************************************/
+void textnb_(INT_ *x, INT_ *y, char *str, INT_ *str_len){
+    int Xx, Xy, Xstlen;
+    double x1, y1, psth;
+    Xx = *x + 10;
+    Xy = *y + 10;
+    Xstlen = *str_len;
+    XSetForeground(theDisplay, theGCA, ~theCurrentColor);
+    XDrawString(theDisplay, Pixmaps[2], theGCA, Xx, Xy, str, Xstlen);
+    XSetForeground(theDisplay, theGCA, theCurrentColor);
+    if (FlagPSA > 0){
+        x1 = Xx*PSsc;
+	y1 = Xy*PSsc;
+        psth = F1sh*PSsc;
+	PSADrawLString(x1, y1, str, Xstlen, psth);
+    }
+}
+
+/********************************************************************/
+void pscom_(char *str, INT_ *str_len){
+    int j;
+    if (FlagPSA > 0){
+        fprintf(PSAfile, "%% ");
+        for (j=0; j < *str_len; j++) fprintf(PSAfile, "%c", str[j]);
+        fprintf(PSAfile, "\n");
+    }
+    return;
+}
+
+static int icount = 0;
+/********************************************************************/
+void PSnumber(char *name, int *count){
+    int i;
+    icount = *count;
+    for (i=0; i<128; i++){
+        if( name[i] == '\0' ) break;
+    }
+
+    con1:
+        if (*count < 10){
+            sprintf(name+i, "-%1d.ps", *count);
+            goto con2;
+        }
+        if (*count < 100){
+            sprintf(name+i, "-%2d.ps", *count);
+            goto con2;
+        }
+        if (*count < 1000){
+            sprintf(name+i, "-%3d.ps", *count);
+            goto con2;
+        }
+        sprintf( name+i, ".ps");
+        return;
+ 
+    con2:
+        PSAfile = fopen(name, "r");
+        if (PSAfile){
+            fclose(PSAfile);
+        *count++;
+        goto con1;
+    }
+}
+
+/********************************************************************/
+void psopen_(char *PSname, INT_ *sty, INT_ *iret){
+  
+    if (FlagPSA){
+        *iret = -1;
+        return;
+    }
+
+    PSnumber(PSname, &FigAcount);
+    PSAfile = fopen(PSname, "w");
+
+    if (PSAfile != NULL){
+        FlagPSA = 1;
+        *iret = 0;
+        fprintf(PSAfile, "%%!PS-Adobe-2.0\n");
+        fprintf(PSAfile, "/Lshow {exch dup scale show dup scale}def\n");
+        fprintf(PSAfile, "/Rshow {dup stringwidth pop 3 -1 roll\n");
+        fprintf(PSAfile, "dup 3 -1 roll mul neg 0 rmoveto\n");
+        fprintf(PSAfile, "dup scale show dup scale}def\n");
+        fprintf(PSAfile, "/Mshow {dup stringwidth pop 3 -1 roll\n");
+        fprintf(PSAfile, "dup 3 -1 roll -0.5 mul mul 0 rmoveto\n");
+        fprintf(PSAfile, "dup scale show dup scale}def\n");
+        fprintf(PSAfile, "%%Page: %d %d\n", icount, icount);
+
+        switch(*sty){
+        case 0:
+            PSsc = 0.7;
+            fprintf(PSAfile, "%%Figure %2d\n %g setlinewidth\n", FigAcount, 0.4);
+            fprintf(PSAfile, "/Courier-Bold findfont 1.02 scalefont setfont\n");
+            break;
+        case 1:
+            PSsc = 0.98;
+            fprintf(PSAfile, "%%Figure %2d\n %g setlinewidth\n", FigAcount, 0.5);
+            fprintf(PSAfile, "756 0 translate\n");
+            fprintf(PSAfile, "90 rotate\n");
+            fprintf(PSAfile, "/Courier-Bold findfont 1.02 scalefont setfont\n");
+            break;
+        default:
+            printf(" >>> PSOPEN >>> Unknown style option: %d\n", *sty);
+        }
+        PSASetForeground(0);
+        FigAcount++;
+    }
+    else{
+        *iret = 1;
+    }
+    return;
+}
+
+/********************************************************************/
+void psclose_(){
+    if (FlagPSA){
+        fprintf(PSAfile, "stroke\nshowpage\n\n");
+        FlagPSA = 0;  fclose(PSAfile);
+    }
+    return;
+}
+
+/********************************************************************/
+void PSASetForeground(int i){
+    XColor theRGBColor;
+    float r, g, b;
+    fprintf(PSAfile, "stroke\n");
+    theRGBColor.pixel = thePixels[AstraColorNum[i]];
+    XQueryColor(theDisplay, theColormap, &theRGBColor);
+    if ((theRGBColor.red & theRGBColor.green & theRGBColor.blue) != 0xffff){
+        FlagPSA = 1;
+        r = theRGBColor.red;
+        g = theRGBColor.green;
+        b = theRGBColor.blue; 
+        r = r/0xffff;
+        g = g/0xffff;
+        b = b/0xffff;
+        fprintf(PSAfile, "%5.3f %5.3f %5.3f setrgbcolor\n", r, g, b);
+    }
+    else{
+        FlagPSA = -1;
+    }
+}
+
+/********************************************************************/
+void PSADrawRectangle(double x, double y, double w, double h){
+    fprintf(PSAfile, "newpath %%Rectangle\n");
+    fprintf(PSAfile, "%10.3e %10.3e  moveto\n", x+PS_xA, PS_yA-y);
+    fprintf(PSAfile, "%10.3e %10.3e %10.3e %10.3e rlineto rlineto\n",  w, 0., 0., -h);
+    fprintf(PSAfile, "%10.3e %10.3e %10.3e %10.3e rlineto rlineto\n", -w, 0., 0.,  h);
+    fprintf(PSAfile, "stroke\n");
+}
+
+/********************************************************************/
+void PSADrawLine(double x1, double y1, double x2, double y2){
+    fprintf(PSAfile, "%11.4e %11.4e %11.4e %11.4e moveto lineto\n",
+        x2+PS_xA, PS_yA-y2, x1+PS_xA, PS_yA-y1);
+}
+
+/********************************************************************/
+void PSADrawLString(double x, double y, char *ln, int n, double psfsc){
+    char tlin[256];
+    double psfsc1;
+    int i;
+    psfsc1 = 1./psfsc;
+    for (i=0; i <= n-1 ; ++i){
+        *(tlin+i) = *(ln+i);
+	*(tlin+n) = '\0';
+    }
+    fprintf(PSAfile, "%10.3e %10.3e moveto\n", x+PS_xA, PS_yA-y);
+    fprintf(PSAfile, "%15.8e %15.8e (%s) Lshow\n", psfsc1, psfsc, tlin);
+}

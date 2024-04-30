@@ -4,7 +4,7 @@ use parameter_inc, only: NSBMX, NRD
 use outcmn_inc, only: VCOIL, CCOIL, CCOILO, outcmn_init, &
     XWH, XWW, XWX, XWY, DXLET, DYLET, LRJJ, frame_wid, frame_hei, &
     TASK, machine, exp_file, equ_file, rev_file, AWD, &
-    COLTAB, RUNID, NST, MOD10, NTOUT
+    COLTAB, RUNID, NST, MOD10, NTOUT, LineWidth
 use const_inc, only: IPART, const_init, XOUT, NA, &
     TIME, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT
 use status_inc, only: status_init, MU, defarr
@@ -74,6 +74,7 @@ if (TASK(1: 3) /= 'BGD') then
     LRJJ  = resize*LRJJ
     jj = max(0, (15 + NTOUT - 64)/16)
     XWH = XWH + 2*jj*(DYLET + 2)
+    LineWidth = int(frame_wid/700) + 1
     win_title = 'Per aspera ad ASTRA'
     call initvm(XWX, XWY, XWW, XWH, COLTAB, TRIM(win_title), LEN_TRIM(win_title)) ! Initialise graphic window
 

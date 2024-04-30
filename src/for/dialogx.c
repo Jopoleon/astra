@@ -108,8 +108,7 @@ void Menu_table(int, int, int, char[], char*[], Button[], int);
 void Put_button(Button, GC);
 void numstrA(double, char*, int);
 void MoveArrow(Window, int, int, int, int);
-void colorb (INT_*);
-void colorb_(INT_*);
+void changeGCcolor(GC, INT_*);
 void PutColorName(Window, int, int, int, int);
 void stcopy(char*, char*, int);
 int isascii(int);
@@ -900,7 +899,7 @@ int  caution_ ()
 
     theWindow = Open_Window (UpLeftx, UpLefty, Width, Height, 1, title, 0,
 		       RootWindow(theDisplay,theScreen), theMenuCursor);
-    i = 30; colorb(&i);
+    i = 30;  changeGCcolor(hghGC, &i);
 //  Change_Color(hghGC,AstraColorNum[14],AstraColorNum[20]);/* Magenta on Yellow */
     XDrawImageString(theDisplay, theWindow, hghGC, margin, margin+10,
 		     stri256, charLength);

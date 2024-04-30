@@ -1381,20 +1381,13 @@ subroutine curvvm(id, npnts, array)
 !   -> drawvm(PSADrawLine) is not used any more
 ! dimension array(2*npnts)
 
-use outcmn_inc, only: frame_wid
- 
+use outcmn_inc, only: LineWidth
+
 implicit none
 
 integer, intent(in) :: npnts, array(*), id
-integer :: LineWidth
 
-LineWidth = int(frame_wid/700) + 1
-
-if (npnts == 1) then
-    call drawvm(id, array(1), array(2), array(1), array(2))
-elseif (npnts > 1) then
-    call drawline(id, npnts, LineWidth, array)
-endif
+call drawline(id, npnts, LineWidth, array)
 
 return
 end subroutine curvvm
@@ -1407,15 +1400,13 @@ subroutine drcurv(id, npnts, array)
 !       PLOTCR -> CURV1 -> DRCURV -> d1line
 ! dimension array(2*npnts)
 
+use outcmn_inc, only: LineWidth
+
 implicit none
 
 integer, intent(in) :: npnts, array(*), id
 
-if (npnts == 1) then
-    call d1line(id, array(1), array(2), array(1), array(2))
-elseif (npnts > 1) then
-    call d1polyline(id, array, npnts)
-endif
+call d1polyline(id, npnts, LineWidth, array)
 
 return
 end subroutine drcurv

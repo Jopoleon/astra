@@ -893,7 +893,7 @@ goto 1
 ! Exit ASTRA
 97 continue
 
-if (TASK(4:4) /= 'B') call endvm
+if (TASK(4:4) /= 'B') call Close_Screen
 if (IFKL == 257) then
     write(6, '(A)')' >>> ASTRA error >>>'
     write(6, '(A, F11.6, A)')"    Floating point exception at  t =", TIME, ' sec'
@@ -982,7 +982,7 @@ character(len=132) :: STRI
 call markloc('re_draw', debug_lev=2*debug)
 
 if (IFKL == 256 .and. TASK(1: 3) /= 'DSP') then
-    call PSCLOS
+    call PSCLOSE
     return
 endif
 
@@ -1018,7 +1018,7 @@ if (KPRI == 1 .or. KPRI == 2) then
     if (KPRI == 1) call const2ps
     STRI = 'The figure is stored in the file: ' // TRIM(PSNAME)
     call textvm(10, LRJJ, TRIM(STRI), LEN_TRIM(STRI))
-    call PSCLOS
+    call PSCLOSE
     KPRI = 0
 endif
 
