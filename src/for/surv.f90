@@ -196,7 +196,7 @@ subroutine PLOTXY(YARR, NP, JX, IX, IXO, IY, IYO, DMET, STYL, plot_arr)
 ! Entry: YARR - time array (TTOUT)
 ! NP, JX, IY, IX, DMET, STYL
 
-use outcmn_inc, only: EraseColor
+use outcmn_inc, only: EraseColor, LineWidth
 
 implicit none
 
@@ -220,7 +220,7 @@ do J0=0, 1
     JMET = 0
     do JJ=1, NP - 1 + J0
         if (YARR(JJ) - YARR(1) >= JMET*DMETO .or. JJ == 1) then
-            if (JJ > 1) call curvvm(0, JPOINT + 1, plot_arr(J1))
+            if (JJ > 1) call drawline(0, JPOINT + 1, LineWidth, plot_arr(J1))
             J1 = 2*JJ - 1
             call NMARK(plot_arr(J1), STYL)
             JMET = JMET + 1
@@ -229,7 +229,7 @@ do J0=0, 1
             JPOINT = JPOINT+1
         endif
     enddo
-    if (JPOINT /= 0) call curvvm(0, JPOINT, plot_arr(J1))
+    if (JPOINT /= 0) call drawline(0, JPOINT, LineWidth, plot_arr(J1))
     if (J0 == 1) return   ! J0=0 <- erasing
     do J=1, NP
         IXO(J) = IX(J)
@@ -292,6 +292,7 @@ enddo
 !olor: 1 2 3 4 5 6 7   1 2 3  4  5  6  7   1  2  3  4  5  6 7
 call colovm(ICOLOR)
 call CURV1(NP, plot_arr, STYL)
+
 if (NPO < 0) return
 do J=1, NP
     IYOLD(J) = IY(J)
@@ -302,9 +303,100 @@ return
 end subroutine PLOTCR
 
 !---------------------------------------------------------------------
-subroutine CURV1(NP, plot_arr, STYL)
-! The subroutine has replaced older subroutine CURV
+subroutine update_curve(NP, np_old, ICOLOR, STYL, xold, yold, xnew, ynew)
 
+! The subroutine displays NP points of the integer array IY
+! NP  is a number of points to plot
+! NPO is a number of points to erase, in addition, 
+! NPO is a control parameter:
+! NPO > 0  the old curve is erased, the drawn one is stored in IYOLD 
+! NPO <= 0 a new curve IY(1:NP) is drawn, (IXOLD, IYOLD) are NOT used
+! NPO = 0  no erasure, the drawn curve is stored in IYOLD
+! The points of the array IYOLD are used for erasing
+! curve of the previous call and are determined inside PLOTG1
+! STYL
+! plot_arr is a working array 2*NB1
+! Input: NP, IY, IYOLD, ICOLOR, STYL
+! Output: IXOLD, IYOLD
+
+use outcmn_inc, only: EraseColor
+
+implicit none
+
+integer, intent(in) :: STYL, NP, np_old, ICOLOR
+double precision, intent(in), dimension(np) :: xold, yold, xnew, ynew
+
+integer :: J
+
+if (np_old > 0) then
+! erase the old curve
+    call colovm(EraseColor)
+    call plot_curve(np_old, STYL, xold, yold)
+endif
+
+! draw a new curve
+
+call colovm(ICOLOR)
+call plot_curve(NP, STYL, xnew, ynew)
+
+return
+end subroutine update_curve
+
+!---------------------------------------------------------------------
+subroutine plot_curve(np, STYL, xplot, yplot)
+
+use outcmn_inc, only: LineWidth
+  
+implicit none
+
+integer, intent(in) :: STYL, np
+double precision, intent(in), dimension(*) :: xplot, yplot
+
+integer :: LE, NF, J, j1, JJ, NM, PT1(2)
+
+if (STYL < 0) then  ! Draw dashed curves
+    jj = -STYL
+    if (jj >= 7) jj = jj + 1 - jj/7*7
+    if (jj > 1) then
+        LE = 8
+        do j=1, jj
+            j1 = j + 1
+            LE = LE + j1
+        enddo
+        j1 = jj
+        if (jj == 2) LE = min(LE, 16)
+        if (jj == 3) LE = min(LE, 8)
+        if (jj == 4) LE = min(LE, 4)
+        NF = max(1, LE/4)
+        do j=1, NP, LE
+            j1 = min(NP - j + 1, LE - NF)
+            call drawcurve(0, j1, LineWidth, xplot(1: j1), yplot(1:j1))
+        enddo
+        return
+    endif
+else if (STYL > 0) then
+    NM = NP/5
+    NM = max(10, NP/5)
+    LE = NM/5*STYL    ! 1st marker position
+    if (LE >= NM+2) LE = LE - NM
+    LE = max(1, LE)
+    do jj=LE, NP, NM
+        J  = 2*jj
+        PT1(1) = xplot(jj)
+        PT1(2) = yplot(jj)/10
+        call NMARK(PT1, STYL)
+    enddo
+endif
+
+call drawcurve(0, NP, LineWidth, xplot(1:NP), yplot(1:np))
+
+end subroutine plot_curve
+
+!---------------------------------------------------------------------
+subroutine CURV1(NP, plot_arr, STYL)
+
+use outcmn_inc, only: LineWidth
+  
 implicit none
 
 integer, intent(in) :: plot_arr(*), STYL, NP
@@ -327,13 +419,11 @@ if (STYL < 0) then  ! Draw dashed curves
         NF = max(1, LE/4)
         do j=1, NP, LE
             j1 = min(NP - j + 1, LE - NF)
-            call drcurv(0, j1, plot_arr(2*j-1))
+            call d1polyline(0, j1, LineWidth, plot_arr(2*j-1))
         enddo
         return
     endif
-
 else if (STYL > 0) then
-
     NM = NP/5
     NM = max(10, NP/5)
     LE = NM/5*STYL    ! 1st marker position
@@ -347,12 +437,14 @@ else if (STYL > 0) then
     enddo
 endif
 
-call drcurv(0, NP, plot_arr(1))
+call d1polyline(0, NP, LineWidth, plot_arr(1))
 
 end subroutine CURV1
 
 !---------------------------------------------------------------------
 subroutine NMARK(POINT, STYL)
+
+use outcmn_inc, only: LineWidth
 
 implicit none
 
@@ -390,7 +482,7 @@ do JJ=1, N(IST)
     plot_arr(J-1) = POINT(1) + DX(JJ, IST)
     plot_arr(J)   = POINT(2) + DY(JJ, IST)
 enddo
-call curvvm(0, N(IST), plot_arr(1))
+call drawline(0, N(IST), LineWidth, plot_arr(1))
 
 end subroutine NMARK
 
@@ -1373,43 +1465,6 @@ return
 return
 
 end subroutine WRFIGS
-
-!---------------------------------------------------------------------
-subroutine curvvm(id, npnts, array)
-! The same as drcurv but without the factor 10 
-! The chain: PLOTGR(obsolete) -> CURV(obsolete) -> CURVVM
-!   -> drawvm(PSADrawLine) is not used any more
-! dimension array(2*npnts)
-
-use outcmn_inc, only: LineWidth
-
-implicit none
-
-integer, intent(in) :: npnts, array(*), id
-
-call drawline(id, npnts, LineWidth, array)
-
-return
-end subroutine curvvm
-
-!---------------------------------------------------------------------
-subroutine drcurv(id, npnts, array)
-! The same as curvvm but the supplied integer array is multiplied 
-!     by the factor 10 in order to enhance PS resolution
-!     This factor is then removed in C function d1line
-!       PLOTCR -> CURV1 -> DRCURV -> d1line
-! dimension array(2*npnts)
-
-use outcmn_inc, only: LineWidth
-
-implicit none
-
-integer, intent(in) :: npnts, array(*), id
-
-call d1polyline(id, npnts, LineWidth, array)
-
-return
-end subroutine drcurv
 
 !---------------------------------------------------------------------
 subroutine get_runid

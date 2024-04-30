@@ -35,9 +35,9 @@ integer, intent(out) :: plot_arr(*)
 double precision, intent(in) :: TTOUT(ITIMES)
 double precision, intent(inout) :: TOUT(ITIMES, NRW)
 
-integer :: IXO(NRD, ICVMX), IX(2*NRD), PTM(2), PTMO(2, NRDX, NRW), &
-    IY(2*NRD), IWN(16), EQOLD(260, 11), &
-    IST, IQ1, IQ2, YS0, text_posy, JS, MODEX, &
+integer :: PTM(2), PTMO(2, NRDX, NRW), &
+    IWN(16), EQOLD(260, 11), &
+    IST, IQ1, IQ2, YS0, text_posy, jt_old, JS, MODEX, &
     IYM0, LTOUT1, LTOUT2, JFNEW, STYL, x_shift, y_shift, jx_canv, jy_canv, JY, jxout, &
     JW, j_curve, j_canv, &
     IYMN, IYMX, JDSP, test_posx, NPTMO(NRW), jlx(8), IWX(8), &
@@ -45,12 +45,14 @@ integer :: IXO(NRD, ICVMX), IX(2*NRD), PTM(2), PTMO(2, NRDX, NRW), &
     j1, jj, jsco, jn, jpnt, jsc, jposy, jarr, jtyp, n_canvas, &
     jplot_in_canv, jcol, jcol2, jprof, jtrace
 double precision :: SC(NRW), YX, r_out, YA, YL, YR, YQ1, YQ2, &
-   XROUT, YSC8, YZ, ABSC
+     XROUT, YSC8, YZ, ABSC, ymin, ymax
+double precision, dimension(NRD) :: xplot, yplot, xtrace, ytrace, xtrace_old
+double precision, dimension(NRD, ICVMX) :: xold, yold, ytrace_old
 character(len=80) :: STRI
 character(len=5 ) :: XF4
 character(len=6 ) :: CHAR6
 
-save EQOLD, IXO, PTMO, NPTMO, YQ1, YQ2, IQ1, IQ2, IWN
+save EQOLD, PTMO, NPTMO, YQ1, YQ2, IQ1, IQ2, IWN, xold, yold, xtrace_old, ytrace_old
 
 !----------------------------------------------------------------------|
 call markloc('OUTDSP')
@@ -88,6 +90,9 @@ IYMN = frame_hei - IYM
 IYM0 = IYM - canv_hei
 IYMX = frame_hei - IY0
 JY = 10*frame_hei
+
+ymin = dble(frame_hei - IYM)
+ymax = dble(frame_hei - IY0)
 
 !----------------------------------------------------------------------|
 n_canvas = nx_canvas*ny_canvas
@@ -145,25 +150,25 @@ CASE(1: 3)  ! Profiles
          if (YX >= YL .and. YX <= YR) then
             jxout = jxout + 1
             if (jxout == 1 .and. j > 1) then ! left edge interpolation
-               IX(jxout) = x_shift
                YA = ROUT(J, jprof) + (ROUT(J-1, jprof) - ROUT(J, jprof))*(YL - YX)/(YA - YX)
                r_out = min(max(YA/SC(jprof), -7.d0), 7.d0)
                JDSP  = 10*(canv_hei*r_out + IYMN + y_shift)
-               IY(jxout) = JY - min(max(JDSP, 10*IYMN), 10*IYMX)
+               xplot(jxout) = dble(x_shift)
+               yplot(jxout) = frame_hei - min(max(dble(canv_hei)*r_out + ymin + dble(y_shift), ymin), ymax)
                jxout = jxout + 1
             endif
-            IX(jxout) = x_shift + frame_wid/nx_canvas*(YX - YL)/(YR - YL)
             r_out = min(max(ROUT(J, jprof)/SC(jprof), -7.d0), 7.d0)
             JDSP  = 10*(canv_hei*r_out + IYMN + y_shift)
-            IY(jxout) = JY - min(max(JDSP, 10*IYMN), 10*IYMX)
+            xplot(jxout) = dble(x_shift) + dble(frame_wid)/dble(nx_canvas)*(YX - YL)/(YR - YL)
+            yplot(jxout) = frame_hei - min(max(dble(canv_hei)*r_out + ymin + dble(y_shift), ymin), ymax)
          endif
          if (YA <= YR .and. YX > YR) then ! right edge interpolation
             jxout = jxout + 1
-            IX(jxout) = x_shift + frame_wid/nx_canvas
             YA = ROUT(J, jprof) + (ROUT(J-1, jprof) - ROUT(J, jprof))*(YR - YX)/(YA - YX)
             r_out = min(max(YA/SC(jprof), -7.d0), 7.d0)
             JDSP  = 10*(canv_hei*r_out + IYMN + y_shift)
-            IY(jxout) = JY - min(max(JDSP, 10*IYMN), 10*IYMX)
+            xplot(jxout) = dble(x_shift) + dble(frame_wid)/dble(nx_canvas)
+            yplot(jxout) = dble(frame_hei) - min(max(dble(canv_hei)*r_out + ymin + dble(y_shift), ymin), ymax)
          endif
          YA = YX
       enddo
@@ -175,7 +180,9 @@ CASE(1: 3)  ! Profiles
       STYL = (jcol - 1)*MARK
       j_curve = j_curve + 1
       if (j_curve <= ICVMX) then
-         call PLOTCR(jxout, IWN(JW), IX, IXO(1, j_curve), IY, IYO(1, j_curve), jcol, STYL, plot_arr)
+         call update_curve(jxout, IWN(JW), jcol, STYL, xold(1:, j_curve), yold(1:, j_curve), xplot, yplot)
+         xold(1: jxout, j_curve) = xplot(1: jxout)
+         yold(1: jxout, j_curve) = yplot(1: jxout)
       endif
       IWN(JW) = jxout
       do J=1, NP1
@@ -341,8 +348,9 @@ CASE(6)  ! Time traces
    do J=1, LTOUT-1
       r_out = (TTOUT(J) - TINIT)*575/abs(TSCALE)
       IYO(J, ICVMX+1) = 6*DXLET + r_out
-      if(r_out < 0)  LTOUT1 = J + 1
-      if(IYO(J, ICVMX+1) <= frame_wid - 1) LTOUT2 = J - 1
+      xtrace(J) = 6*DXLET + r_out
+      if (r_out < 0)  LTOUT1 = J + 1
+      if (IYO(J, ICVMX+1) <= frame_wid - 1) LTOUT2 = J - 1
    enddo
    LTOUT2 = LTOUT2 - LTOUT1 + 1
    if (LTOUT2 < 3) then ! No plot for small time
@@ -368,12 +376,13 @@ CASE(6)  ! Time traces
          JDSP  = 10*(canv_hei*r_out + IYMN + (n_canvas - j_canv)*canv_hei)
          JDSP  = max(JDSP, 10*IYMN)
          IYO(J, ICVMX+2) = JY - min(JDSP, 10*IYMX)
+         ytrace(J) = dble(frame_hei) - min(max(canv_hei*r_out + ymin + (n_canvas - j_canv)*canv_hei, ymin), ymax)
       enddo
 
       if (JFNEW == 0) then
-         text_posy = LTOUT2
+         jt_old = LTOUT2
       else
-         text_posy = 0
+         jt_old = 0
       endif
       if (KPRI >= 1 .and. KPRI <= 2) then
          write(STRI, '(1A6, 1A4, 1A1)')'Plot "', NAMET(jj), '"'
@@ -385,8 +394,10 @@ CASE(6)  ! Time traces
       jcol  = jcol  + 1
       j_curve = j_curve + 1
       if (j_curve <= ICVMX) then
-         call PLOTCR(LTOUT2 + 1, text_posy, IYO(LTOUT1, ICVMX+1), IXO(1, 1), &
-            IYO(LTOUT1, ICVMX+2), IYO(LTOUT1, j_curve), jcol, STYL, plot_arr)
+         call update_curve(LTOUT2 + 1, jt_old, jcol, STYL, xtrace_old(1:jt_old), ytrace_old(1: jt_old, j_curve), &
+              xtrace(1), ytrace(1) )
+         xtrace_old(1: jt_old+1) = xtrace(1: jt_old+1)
+         ytrace_old(1: jt_old+1, j_curve) = ytrace(1: jt_old+1)
       endif
       test_posx = 0
       text_posy = FSHIFT + DYLET*(2*jplot_in_canv + 1) + (j_canv - 1)*canv_hei
@@ -647,7 +658,7 @@ subroutine DRAW3M(jifnew, DYLET, YS0, YSC8, plot_arr, EQOLD, &
    NA1, NAB, RTOR, AMETR, SHIF, UPDWN, ELON, TRIA)
 !----------------------------------------------------------------------|
 
-use outcmn_inc, only: Magenta, Pink, EraseColor, Red, frame_hei
+use outcmn_inc, only: Magenta, Pink, EraseColor, Red, frame_hei, LineWidth
 
 use const_inc, only: GP
 
@@ -673,7 +684,7 @@ do J=1, 10
       enddo
       jj = 0
       jn = 130
-      call d2polyline(jj, plot_arr, jn)
+      call d2polyline(jj, jn, LineWidth, plot_arr)
    endif
 
 ! New configuration:
@@ -706,7 +717,7 @@ do J=1, 10
    enddo
    jj = 0
    jn = 130
-   call d2polyline(jj, plot_arr, jn)
+   call d2polyline(jj, jn, LineWidth, plot_arr)
 enddo
 
 plot_arr(1) = (RTOR + SHIF(1))*YSC8
@@ -720,7 +731,7 @@ subroutine drconf(YS0, YSC8)
 !----------------------------------------------------------------------|
 
 use const_inc, only: AB, ELONM, RTOR, TRICH, GP
-use outcmn_inc, only: wall_gc_file, Blue, White, DYLET, frame_hei
+use outcmn_inc, only: wall_gc_file, Blue, White, DYLET, frame_hei, LineWidth
 use debugger, only: debug
 
 implicit none
@@ -748,7 +759,7 @@ if (ios /= 0) then
       plot_arr(2*j-1) = 10.*Rwall*YSC8
       plot_arr(2*j) = 10.*(YS0 - Zwall*YSC8)
    enddo
-   call d2polyline(0, plot_arr, jgc)
+   call d2polyline(0, jgc, LineWidth, plot_arr)
    write(*, *) '>>> drconf: problems opening file ' // TRIM(wall_gc_file)
 
 else
@@ -781,7 +792,7 @@ else
                plot_arr(min(100,2*jgc - 1)) = 10.*YSC8*xyGC(j, 1)
                plot_arr(min(100,2*jgc))     = 10.*(YS0 - YSC8*xyGC(j, 2))
             enddo
-            call d2polyline(0, plot_arr, jgc )
+            call d2polyline(0, jgc, LineWidth, plot_arr)
          endif
       enddo
    else
@@ -1042,7 +1053,7 @@ subroutine DRAWSPFLUX(jifnew, YS0, YSC8)
 !----------------------------------------------------------------------|
 ! Redraw magnetic surfaces:
 
-use outcmn_inc, only: Pink, Magenta, White
+use outcmn_inc, only: Pink, Magenta, White, LineWidth
 use const_inc, only: NEQUIL, MEQUIL
 use parameters_a2equil, only: equil_now
 
@@ -1066,7 +1077,7 @@ do J=2, n_rho_surf + nskip - 1, nskip
    jloc = min(J, n_rho_surf)
    if (jifnew == 0) then  ! Erase
       call colovm(White)
-      call d2polyline(0, plot_arr(jt+1), n_the_surf+1)
+      call d2polyline(0, n_the_surf+1, LineWidth, plot_arr(jt+1))
    endif
    call colovm(Magenta)
    do JJ=1, n_the_surf
@@ -1075,7 +1086,7 @@ do J=2, n_rho_surf + nskip - 1, nskip
    enddo
    plot_arr(jt + 2*n_the_surf + 1) = 10.*YSC8*equil_now%coord_sys%position%r(jloc, 1)
    plot_arr(jt + 2*n_the_surf + 2) = 10.*(YS0 - YSC8*equil_now%coord_sys%position%z(jloc, 1))
-   call d2polyline(0, plot_arr(jt+1), n_the_surf+1)
+   call d2polyline(0, n_the_surf+1, LineWidth, plot_arr(jt+1))
    jt = jt + 2*n_the_surf + 2
 enddo
 
