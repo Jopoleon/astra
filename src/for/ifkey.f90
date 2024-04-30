@@ -941,9 +941,9 @@ call TIMOUT
 call RADOUT
 
 if (MOD10 == 4 .or. MOD10 == 5) then
-    call SMODE5(MARK, plot_arr, PRMARK, NAMEP, NTIMES)
+    call SMODE5(MARK, PRMARK, NAMEP, NTIMES)
 else
-    call OUTDSP(MARK, 0, plot_arr, ITO, ntrun, TTOUT, TOUT)
+    call OUTDSP(MARK, 0, ITO, ntrun, TTOUT, TOUT)
 endif
 CHORDN = lineav()
 call UPSTR(CHORDN, 1./MU(NA))
@@ -1002,9 +1002,9 @@ call RADOUT
 call TIMOUT
 
 if (MOD10 == 4 .or. MOD10 == 5) then
-    call SMODE5(MARK, plot_arr, PRMARK, NAMEP, NTIMES)
+    call SMODE5(MARK, PRMARK, NAMEP, NTIMES)
 else
-    call OUTDSP(MARK, 1, plot_arr, ITO, NTRUN, TTOUT, TOUT)
+    call OUTDSP(MARK, 1, ITO, NTRUN, TTOUT, TOUT)
 endif
 CHORDN = lineav()
 call UPSTR(CHORDN, 1./MU(NA))
@@ -1026,7 +1026,7 @@ return
 end subroutine re_draw
 
 !---------------------------------------------------------------------
-subroutine SMODE5(MARK, plot_arr, PRMARK, NAMEP, ITIMES)
+subroutine SMODE5(MARK, PRMARK, NAMEP, ITIMES)
 
 use parameter_inc, only: NRD, NRW
 use outcmn_inc, only: frame_hei, frame_wid, IYM, IY0, NROUT, ICVMX, SCALER, &
@@ -1041,7 +1041,6 @@ implicit none
 
 integer, parameter :: fshift=10
 integer, intent(in) :: MARK, ITIMES
-integer, intent(out) :: plot_arr(*)
 double precision, intent(in) :: PRMARK(*)
 character(len=6), intent(in) :: NAMEP(*)
 
@@ -1049,6 +1048,7 @@ integer*2 :: INTY(NRD)
 integer :: IX(2*NRD), IY(2*NRD), JTIM, ixold(1), iyold(1), ios, &
        j, jj, int2, jab, i, is, NP, NP1, jxout, jx, jy, jnl, &
        jc, JDSP, IYMN, IYMX, STYL, jpos, jk(5), SKIPM, half_wid
+integer, dimension(3) :: plot_arr
 double precision :: &
        SC(NRW), TEMPR, SCL, DOWN, YWA(NRD), YWB(NRD), YS, YL, YR, YX, &
        YROUT, YA, YQ1, YQ2, YXR, YXL
@@ -1231,7 +1231,7 @@ read_loop: do
             j = len_trim_tab(STRI)
             call pscom(STRI, j)
         endif
-        call PLOTCR(NP1, -1, IX, ixold, IY, iyold, jc, STYL, plot_arr)
+        call PLOTCR(NP1, -1, IX, ixold, IY, iyold, jc, STYL)
         if (PRMARK(JTIM) /= 0) then
             JPOS = 3*DXLET + PRMARK(JTIM)*canv_wid/6.5 + canv_wid*(NP - 1)
             call CMARKP(jnl, JPOS, NAMEP(JTIM), STYL)

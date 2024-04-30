@@ -243,7 +243,7 @@ return
 end subroutine PLOTXY
 
 !---------------------------------------------------------------------
-subroutine PLOTCR(NP, NPO, IX, IXOLD, IY, IYOLD, ICOLOR, STYL, plot_arr)
+subroutine PLOTCR(NP, NPO, IX, IXOLD, IY, IYOLD, ICOLOR, STYL)
 
 ! The subroutine displays NP points of the integer array IY
 ! NP  is a number of points to plot
@@ -265,10 +265,10 @@ implicit none
 
 integer, intent(in) :: STYL, NP, NPO, ICOLOR
 integer, intent(in) :: IX(*), IY(*)
-integer, intent(out) :: plot_arr(*)
 integer, intent(inout) :: IXOLD(*), IYOLD(*)
 
 integer :: J
+integer, dimension(2*NP) :: plot_arr
 
 if (NPO > 0) then
 ! erase the old curve

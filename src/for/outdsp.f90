@@ -1,5 +1,5 @@
 !----------------------------------------------------------------------|
-subroutine OUTDSP(MARK, JIFNEW, plot_arr, IYO, ITIMES, TTOUT, TOUT)
+subroutine OUTDSP(MARK, JIFNEW, IYO, ITIMES, TTOUT, TOUT)
 !----------------------------------------------------------------------|
 ! Drawing options:
 !   X - axis
@@ -20,6 +20,7 @@ use status_inc, only: AMETR, MU, SHIF, ELON, TRIA
 use const_inc, only: XOUT, NAB, NA1, ABC, TINIT, TSCALE, RTOR, &
     MEQUIL, LEQ, UPDWN, TIME
 use outcmn_inc
+use timeoutput_inc, only: NTIMES
 use expdat, only: raw_profile_map, DATARR, BNDR, BNDZ
 use ac_neg1, only: NUM, NKL1, NKL2, JMIN, JMAX, MODK
 use dbl2char, only: fmt_xf, fmt4
@@ -31,7 +32,6 @@ implicit none
 integer, parameter :: jzero=0, fshift=10
 integer, intent(in) :: MARK, JIFNEW, ITIMES
 integer, intent(inout) :: IYO(ITIMES,*)
-integer, intent(out) :: plot_arr(*)
 double precision, intent(in) :: TTOUT(ITIMES)
 double precision, intent(inout) :: TOUT(ITIMES, NRW)
 
@@ -44,6 +44,7 @@ integer :: PTM(2), PTMO(2, NRDX, NRW), &
     NP1, i, j, half_wid, &
     j1, jj, jsco, jn, jpnt, jsc, jposy, jarr, jtyp, n_canvas, &
     jplot_in_canv, jcol, jcol2, jprof, jtrace
+integer, dimension(4*NRD+2*NTIMES) :: plot_arr
 double precision :: SC(NRW), YX, r_out, YA, YL, YR, YQ1, YQ2, &
      XROUT, YSC8, YZ, ABSC, ymin, ymax
 double precision, dimension(NRD) :: xplot, yplot, xtrace, ytrace, xtrace_old
