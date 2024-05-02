@@ -243,81 +243,12 @@ return
 end subroutine PLOTXY
 
 !---------------------------------------------------------------------
-subroutine PLOTCR(NP, NPO, IX, IXOLD, IY, IYOLD, ICOLOR, STYL)
-
-! The subroutine displays NP points of the integer array IY
-! NP  is a number of points to plot
-! NPO is a number of points to erase, in addition, 
-! NPO is a control parameter:
-! NPO > 0  the old curve is erased, the drawn one is stored in IYOLD 
-! NPO <= 0 a new curve IY(1:NP) is drawn, (IXOLD, IYOLD) are NOT used
-! NPO = 0  no erasure, the drawn curve is stored in IYOLD
-! The points of the array IYOLD are used for erasing
-! curve of the previous call and are determined inside PLOTG1
-! STYL
-! plot_arr is a working array 2*NB1
-! Input: NP, IY, IYOLD, ICOLOR, STYL
-! Output: IXOLD, IYOLD
-
-use outcmn_inc, only: EraseColor
-
-implicit none
-
-integer, intent(in) :: STYL, NP, NPO, ICOLOR
-integer, intent(in) :: IX(*), IY(*)
-integer, intent(inout) :: IXOLD(*), IYOLD(*)
-
-integer :: J
-integer, dimension(2*NP) :: plot_arr
-
-if (NPO > 0) then
-! erase the old curve
-    do J=1, NPO
-        plot_arr(2*J - 1) = IXOLD(J)
-        plot_arr(2*J)     = IYOLD(J)
-    enddo
-    call colovm(EraseColor)
-    call CURV1(NPO, plot_arr, STYL)
-endif
-
-! draw a new curve
-
-do J=1, NP
-    plot_arr(2*J - 1) = IX(J)
-    plot_arr(2*J)     = IY(J)
-enddo
-! Colors: 1(Red) 2(Blue) 3(MeduimSeeGreen) 4(VioletRed) 5(Brown) 6(LightBlue)
-! 7(Turquoise)
-! STYL 1 2 3 4 5 6 7  8 9 10 11 12 13 14 15 16 17 18
-!olor: 1 2 3 4 5 6 7   1 2 3  4  5  6  7   1  2  3  4  5  6 7
-call colovm(ICOLOR)
-call CURV1(NP, plot_arr, STYL)
-
-if (NPO < 0) return
-do J=1, NP
-    IYOLD(J) = IY(J)
-    IXOLD(J) = IX(J)
-enddo
-
-return
-end subroutine PLOTCR
-
-!---------------------------------------------------------------------
 subroutine update_curve(NP, np_old, ICOLOR, STYL, xold, yold, xnew, ynew)
 
-! The subroutine displays NP points of the integer array IY
+! The subroutine displays NP points of the float array YNEW
 ! NP  is a number of points to plot
-! NPO is a number of points to erase, in addition, 
-! NPO is a control parameter:
-! NPO > 0  the old curve is erased, the drawn one is stored in IYOLD 
-! NPO <= 0 a new curve IY(1:NP) is drawn, (IXOLD, IYOLD) are NOT used
-! NPO = 0  no erasure, the drawn curve is stored in IYOLD
-! The points of the array IYOLD are used for erasing
-! curve of the previous call and are determined inside PLOTG1
-! STYL
-! plot_arr is a working array 2*NB1
-! Input: NP, IY, IYOLD, ICOLOR, STYL
-! Output: IXOLD, IYOLD
+! NPO is a number of points to erase
+! The points of the array YOLD are used for erasing
 
 use outcmn_inc, only: EraseColor
 
@@ -325,8 +256,6 @@ implicit none
 
 integer, intent(in) :: STYL, NP, np_old, ICOLOR
 double precision, intent(in), dimension(np) :: xold, yold, xnew, ynew
-
-integer :: J
 
 if (np_old > 0) then
 ! erase the old curve
@@ -391,55 +320,6 @@ endif
 call drawcurve(0, NP, LineWidth, xplot(1:NP), yplot(1:np))
 
 end subroutine plot_curve
-
-!---------------------------------------------------------------------
-subroutine CURV1(NP, plot_arr, STYL)
-
-use outcmn_inc, only: LineWidth
-  
-implicit none
-
-integer, intent(in) :: plot_arr(*), STYL, NP
-
-integer :: LE, NF, J, j1, JJ, NM, PT1(2)
-
-if (STYL < 0) then  ! Draw dashed curves
-    jj = -STYL
-    if (jj >= 7) jj = jj + 1 - jj/7*7
-    if (jj > 1) then
-        LE = 8
-        do j=1, jj
-            j1 = j + 1
-            LE = LE + j1
-        enddo
-        j1 = jj
-        if (jj == 2) LE = min(LE, 16)
-        if (jj == 3) LE = min(LE, 8)
-        if (jj == 4) LE = min(LE, 4)
-        NF = max(1, LE/4)
-        do j=1, NP, LE
-            j1 = min(NP - j + 1, LE - NF)
-            call d1polyline(0, j1, LineWidth, plot_arr(2*j-1))
-        enddo
-        return
-    endif
-else if (STYL > 0) then
-    NM = NP/5
-    NM = max(10, NP/5)
-    LE = NM/5*STYL    ! 1st marker position
-    if (LE >= NM+2) LE = LE - NM
-    LE = max(1, LE)
-    do jj=LE, NP, NM
-        J  = 2*jj
-        PT1(1) = plot_arr(j-1)
-        PT1(2) = plot_arr(j)/10
-        call NMARK(PT1, STYL)
-    enddo
-endif
-
-call d1polyline(0, NP, LineWidth, plot_arr(1))
-
-end subroutine CURV1
 
 !---------------------------------------------------------------------
 subroutine NMARK(POINT, STYL)

@@ -1045,13 +1045,14 @@ double precision, intent(in) :: PRMARK(*)
 character(len=6), intent(in) :: NAMEP(*)
 
 integer*2 :: INTY(NRD)
-integer :: IX(2*NRD), IY(2*NRD), JTIM, ixold(1), iyold(1), ios, &
-       j, jj, int2, jab, i, is, NP, NP1, jxout, jx, jy, jnl, &
+integer :: JTIM, ios, &
+       j, jj, int2, jab, i, is, NP, NP1, jxout, jx, jnl, &
        jc, JDSP, IYMN, IYMX, STYL, jpos, jk(5), SKIPM, half_wid
 integer, dimension(3) :: plot_arr
 double precision :: &
        SC(NRW), TEMPR, SCL, DOWN, YWA(NRD), YWB(NRD), YS, YL, YR, YX, &
-       YROUT, YA, YQ1, YQ2, YXR, YXL
+       YROUT, YA, YQ1, YQ2, YXR, YXL, yloc, ymin, ymax
+double precision, dimension(2*NRD) :: xplot, yplot
 character(len=4) :: CHAR4
 character(len=9) :: ST
 character(len=80) :: STRI
@@ -1060,8 +1061,9 @@ call markloc('SMODE5', debug_lev=2*debug)
 
 IYMN = frame_hei - IYM
 IYMX = frame_hei - IY0
+ymin = dble(frame_hei - IYM)
+ymax = dble(frame_hei - IY0)
 half_wid = frame_wid/2
-JY = 3500
 
 !-------------------------------------------------------
 ! Mode 4 & 5:
@@ -1160,34 +1162,36 @@ read_loop: do
                 if (YX > YL .and. YX < YR) then
                     jxout = jxout + 1
                     if (jxout == 1 .and. j > 1) then ! left edge interpolation
-                        IX(jxout) = JX
+                        xplot(jxout) = dble(JX)
                         YQ1 = DOWN + (32768 + INTY(j-1))*SCL/65535.
                         YQ2 = DOWN + (32768 + INTY(j))  *SCL/65535.
                         YA = YQ2 + (YQ1 - YQ2)*(YL - YX)/(YA - YX)
                         YROUT = min(max(YA/SC(jj), -7.d0), 7.d0)
-                        JDSP = 10*(canv_hei*YROUT + IYMN)
-                        if (MODEY == -1) JDSP = JDSP + 10*canv_hei
-                        IY(jxout) = JY - min(max(JDSP, 10*IYMN), 10*IYMX)
+                        yloc = canv_hei*YROUT + IYMN
+                        if (MODEY == -1) then
+                            yloc = yloc + dble(canv_hei)
+                        endif
+                        yplot = dble(frame_hei) - min(max(yloc, ymin), ymax)
                         jxout = jxout + 1
                     endif
-                    IX(jxout) = JX + half_wid*(YX - YL)/(YR - YL)
+                    xplot(jxout) = dble(JX) + dble(half_wid)*(YX - YL)/(YR - YL)
                     YROUT = (DOWN + (32768 + INTY(j))*SCL/65535.)/SC(jj)
                     YROUT = min(max(YROUT, -7.d0), 7.d0)
-                    JDSP = 10*(canv_hei*YROUT + IYMN)
-                    if (MODEY == -1) JDSP = JDSP + 10*canv_hei
-                    IY(jxout) = JY - min(max(JDSP, 10*IYMN), 10*IYMX)
+                    yloc = canv_hei*YROUT + IYMN
+                    if (MODEY == -1) yloc = yloc + canv_hei
+                    yplot(jxout) = canv_hei - min(max(yloc, ymin), ymax)
                 endif
 
                 if (YA <= YR .and. YX > YR) then ! right edge interpolation
                      jxout = jxout + 1
-                     IX(jxout) = JX + half_wid
+                     xplot(jxout) = dble(JX + half_wid)
                      YQ1 = DOWN + (32768 + INTY(j-1))*SCL/65535.
                      YQ2 = DOWN + (32768 + INTY(j))  *SCL/65535.
                      YA = YQ2 + (YQ1 - YQ2)*(YR - YX)/(YA - YX)
                      YROUT = min(max(YA/SC(jj), -7.d0), 7.d0)
-                     JDSP = 10*(canv_hei*YROUT + IYMN)
-                     if (MODEY == -1) JDSP = JDSP + 10*canv_hei
-                     IY(jxout) = JY - min(max(JDSP, 10*IYMN), 10*IYMX)
+                     yloc = canv_hei*YROUT + IYMN
+                     if (MODEY == -1) yloc = yloc + canv_hei
+                     yplot(jxout) = dble(canv_hei) - min(max(yloc, ymin), ymax)
                 endif
                 YA = YX
             enddo
@@ -1200,20 +1204,22 @@ read_loop: do
             do j=1, JAB
                 YROUT = (DOWN + (32768 + INTY(j))*SCL/65535.)/SC(jj)
                 YROUT = min(max(YROUT, -7.d0), 7.d0)
-                JDSP = 10*(canv_hei*YROUT + IYMN)
-                if (MODEY == -1) JDSP = JDSP + 10*canv_hei
-                IY(j) = JY-min(max(JDSP, 10*IYMN), 10*IYMX)
-                IY(JAB+j) = IY(j)
+                yloc = canv_hei*YROUT + IYMN
+                if (MODEY == -1) then
+                   yloc = yloc + canv_hei
+                endif
+                yplot(j) = canv_hei - min(max(yloc, ymin), ymax)
+                yplot(JAB+j) = yplot(j)
             enddo
-            do j = 1, JAB
+            do j=1, JAB
                 YXR = (YWB(j) + YWA(j))/AB
                 YXL = (YWB(j) - YWA(j))/AB
-                IX(JAB+j) = JX + 160*(1. + min(1.d0, YXR))
-                IX(JAB+1-j) = JX + 160*(1. + max(-1.d0, YXL))
-                IY(JAB+1-j) = IY(JAB+j)
+                xplot(JAB+j)   = dble(JX) + half_wid*(1. + min( 1.d0, YXR))
+                xplot(JAB+1-j) = dble(JX) + half_wid*(1. + max(-1.d0, YXL))
+                yplot(JAB+1-j) = yplot(JAB+j)
             enddo
-            IX(1) = min(IX(1), JX)
-            IX(NP1) = max(IX(NP1), JX + half_wid)
+            xplot(1) = min(xplot(1), dble(JX))
+            xplot(NP1) = max(xplot(NP1), dble(JX + half_wid))
         endif
         jc = 31  ! non-marked profiles (shadow color)
         do IS=1, 5
@@ -1231,7 +1237,8 @@ read_loop: do
             j = len_trim_tab(STRI)
             call pscom(STRI, j)
         endif
-        call PLOTCR(NP1, -1, IX, ixold, IY, iyold, jc, STYL)
+        call colovm(jc)
+        call plot_curve(NP1, STYL, xplot, yplot)
         if (PRMARK(JTIM) /= 0) then
             JPOS = 3*DXLET + PRMARK(JTIM)*canv_wid/6.5 + canv_wid*(NP - 1)
             call CMARKP(jnl, JPOS, NAMEP(JTIM), STYL)
