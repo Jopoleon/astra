@@ -426,7 +426,7 @@ CASE(8)
             NA1, NAB, RTOR, AMETR, SHIF, UPDWN, ELON, TRIA)
     CASE(3)
         call bnd_draw(JIFNEW, YS0, YSC8, IYO, TIME)
-        call DRAWSPFLUX(jifnew, YS0, YSC8)
+        call DRAWSPFLUX(YS0, YSC8)
     CASE(4: 5)
         if (MEQUIL == 0) then
             SHIF = 0.0
@@ -436,7 +436,7 @@ CASE(8)
                 NA1, NAB, RTOR, AMETR, SHIF, UPDWN, ELON, TRIA)
         else
             call bnd_draw(JIFNEW, YS0, YSC8, IYO, TIME)
-            call DRAWSPFLUX(jifnew, YS0, YSC8)
+            call DRAWSPFLUX(YS0, YSC8)
         endif
     END SELECT
 
@@ -619,7 +619,6 @@ do J=1, 10
 ! New configuration:
     JX = max(1., 0.1*NA1*J - 1)
     JX = min(NA1, JX)
-    if (J <= 10) call colovm(Magenta)  ! Outermost flux surface
     if (J == 10) then
         call colovm(Red)
         JX = NA1
@@ -627,6 +626,8 @@ do J=1, 10
             call drawvm(0, frame_hei, 55, 400, 55)
             call textvm(410, 55+DYLET/2, 'Transport boundary', 18)
         endif
+    else
+        call colovm(Magenta)  ! Outermost flux surface
     endif
     do JJ=1, 130
         YFI = GP*(JJ - 1)/64.
@@ -886,45 +887,43 @@ return
 end subroutine DRAWFOOT
 
 !======================================================================|
-subroutine DRAWSPFLUX(jifnew, YS0, YSC8)
+subroutine DRAWSPFLUX(YS0, YSC8)
 !----------------------------------------------------------------------|
 ! Redraw magnetic surfaces:
 
-use outcmn_inc, only: Pink, Magenta, White, LineWidth
+use outcmn_inc, only: Magenta
 use const_inc, only: NEQUIL, MEQUIL
 use parameters_a2equil, only: equil_now
 
 implicit none
 
-integer, parameter :: n_surf=556
-integer, intent(in) :: jifnew, YS0
+integer, parameter :: n_surf=556, nrho_plot=8
+integer, intent(in) :: YS0
 double precision, intent(in) :: YSC8
 
-integer :: j, jj, jt, nskip, jloc, n_the_surf, n_rho_surf
-integer :: plot_arr(2*n_surf*n_surf)
+integer :: jrho, jr, nskip, jrho_loc, n_theta, n_theta1, n_rho_surf
+double precision, dimension(n_surf) :: xplot, yplot
+double precision, dimension(nrho_plot+1, n_surf) :: xplot_old, yplot_old
 
-save plot_arr
-!----------------------------------------------------------------------|
+save xplot_old, yplot_old
 
 n_rho_surf = NINT(NEQUIL)
-n_the_surf = NINT(MEQUIL)
-nskip = 1 + n_rho_surf/8
-jt = 0
-do J=2, n_rho_surf + nskip - 1, nskip
-    jloc = min(J, n_rho_surf)
-    if (jifnew == 0) then  ! Erase
-        call colovm(White)
-        call d2polyline(0, n_the_surf+1, LineWidth, plot_arr(jt+1))
-    endif
-    call colovm(Magenta)
-    do JJ=1, n_the_surf
-        plot_arr(jt + 2*JJ - 1) = 10.*YSC8*equil_now%coord_sys%position%r(jloc, jj)
-        plot_arr(jt + 2*JJ)     = 10.*(YS0 - YSC8*equil_now%coord_sys%position%z(jloc, jj))
-    enddo
-    plot_arr(jt + 2*n_the_surf + 1) = 10.*YSC8*equil_now%coord_sys%position%r(jloc, 1)
-    plot_arr(jt + 2*n_the_surf + 2) = 10.*(YS0 - YSC8*equil_now%coord_sys%position%z(jloc, 1))
-    call d2polyline(0, n_the_surf+1, LineWidth, plot_arr(jt+1))
-    jt = jt + 2*n_the_surf + 2
+n_theta = NINT(MEQUIL)
+n_theta1 = n_theta + 1
+nskip = 1 + n_rho_surf/nrho_plot
+
+jr = 1
+do jrho=1, n_rho_surf + nskip - 1, nskip
+    jrho_loc = min(jrho, n_rho_surf)
+    xplot(1: n_theta) = YSC8*equil_now%coord_sys%position%r(jrho_loc, 1: n_theta)
+    xplot(n_theta1)   = YSC8*equil_now%coord_sys%position%r(jrho_loc, 1)  ! Close polygon
+    yplot(1: n_theta) = dble(YS0) - YSC8*equil_now%coord_sys%position%z(jrho_loc, 1:n_theta)
+    yplot(n_theta1)   = dble(YS0) - YSC8*equil_now%coord_sys%position%z(jrho_loc, 1)
+    call update_curve(n_theta1, n_theta1, Magenta, 0, xplot_old(jr, 1:n_theta1), &
+         yplot_old(jr, 1:n_theta1), xplot(1:n_theta1), yplot(1:n_theta1))
+    xplot_old(jr, 1:n_theta1) = xplot(1:n_theta1)
+    yplot_old(jr, 1:n_theta1) = yplot(1:n_theta1)
+    jr = jr + 1
 enddo
 
 return
