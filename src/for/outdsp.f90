@@ -660,9 +660,13 @@ implicit none
 integer, intent(in) :: YS0
 double precision, intent(in) :: YSC8
 
-integer :: j, j1, jgc, ios, nSHOT, Ndim, NGC, plot_arr(100)
+integer, parameter :: n_wall=64, ngc_max=750
+integer :: j, j1, jgc, ios, nSHOT, Ndim, NGC, plot_arr(100), ndim_gc
 integer, dimension(40) :: ixbeg, lenix, valix
-double precision :: xyGC(750, 2), pol_ang, Rwall, Zwall
+double precision :: pol_ang, Rwall, Zwall
+double precision, dimension(n_wall) :: xwall, ywall
+double precision, dimension(ngc_max) :: xGC, yGC
+double precision, dimension(ngc_max, 2) :: xyGC
 character(len=64) :: STRI
 
 open(7, FILE=TRIM(wall_gc_file), iostat=ios)
@@ -672,26 +676,22 @@ if (ios /= 0) then
     call drawvm(0, frame_hei, 35, 400, 35)
 ! git hardcoded 410
     call textvm(410, 35 + DYLET/2, 'Wall', 4)
-    jgc = 130
-    do j=1, jgc
-        pol_ang = GP*(j - 1)/64.
+    do j=1, n_wall
+        pol_ang = GP*(j - 1)/float(n_wall)
         Zwall = AB*ELONM*SIN(pol_ang)
         Rwall = RTOR + AB*(COS(pol_ang) + 0.5*TRICH*(COS(2.*pol_ang) - 1.))
-        plot_arr(2*j-1) = 10.*Rwall*YSC8
-        plot_arr(2*j) = 10.*(YS0 - Zwall*YSC8)
+        xwall(j) = Rwall*YSC8
+        ywall(j) = dble(YS0) - Zwall*YSC8
     enddo
-    call d2polyline(0, jgc, LineWidth, plot_arr)
+    call plot_curve(jgc, 0, LineWidth, xwall, ywall)
     write(*, *) '>>> drconf: problems opening file ' // TRIM(wall_gc_file)
-
 else
-
     read(7, *) STRI
     read(7, *) nSHOT
     read(7, *) Ndim
     if (Ndim <= 750) then
         read(7, *) NGC
     endif
-
     if (Ndim <= 750 .and. NGC <= 40) then
         read(7, *) ((xyGC(j, j1), j1=1, 2), j=1, Ndim)
         read(7, *) STRI
@@ -707,13 +707,12 @@ else
         call colovm(Blue)
         do j1=1, NGC
             if (valix(j1) /= White) then
-!            call colovm(valix(j1)) ! git use blue instead
-                do j=ixbeg(j1), ixbeg(j1) + lenix(j1) - 1
-                    jgc = j - ixbeg(j1) + 1
-                    plot_arr(min(100,2*jgc - 1)) = 10.*YSC8*xyGC(j, 1)
-                    plot_arr(min(100,2*jgc))      = 10.*(YS0 - YSC8*xyGC(j, 2))
+                ndim_gc = lenix(j1)
+                do j=1, ndim_gc
+                    xgc(j) = YSC8*xyGC(ixbeg(j1)+j-1, 1)
+                    ygc(j) = dble(YS0) - YSC8*xyGC(ixbeg(j1)+j-1, 2)
                 enddo
-                call d2polyline(0, jgc, LineWidth, plot_arr)
+                call plot_curve(ndim_gc, 0, xgc(1:ndim_gc), ygc(1:ndim_gc))
             endif
         enddo
     else
