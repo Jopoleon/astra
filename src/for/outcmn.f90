@@ -29,7 +29,7 @@ double precision, dimension(NCNBM) :: CCOIL, CCOILO, VCOIL
 double precision, dimension((NCNBM+1)*NCNBTM) :: CCOILX, VCOILX
 double precision, dimension(NRDX, NARRX) :: XAXES, DATAX
 double precision, dimension(NRD, NRW) :: ROUT
-double precision :: TIM7(4), scale_bnd
+double precision :: TIM7(4), scale_bnd, pixel_ymid, meter2pixel
 double precision :: cpuTime_tot, cpuTime_equ, cpuTime_tra, cpuTime_sbr(NSBMX)
 
 character(len=4), dimension(NRW) :: NAMET, NAMER
@@ -52,6 +52,8 @@ cpuTime_tot = 0.
 cpuTime_equ = 0.
 cpuTime_tra = 0.
 cpuTime_sbr = 0.
+pixel_ymid  = 0.
+meter2pixel = 0.
 
 VERSION = repeat(' ', 32)
 wall_gc_file = '***'

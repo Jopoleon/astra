@@ -697,7 +697,7 @@ subroutine set_plot(plot_mode, canv_x_left, canv_x_right)
 use const_inc, only: TSCALE, TINIT, ABC
 use outcmn_inc, only: Black, MOD10, KPRI, &
     XWW, XWH, IY0, IYM, IDX, IDT, DXLET, DYLET, scale_bnd, &
-    frame_hei, frame_wid, canv_hei, canv_wid
+    frame_hei, frame_wid, canv_hei, canv_wid, pixel_ymid, meter2pixel
 use dbl2char, only: fmt_xf
 use char_manip, only: len_trim_tab
 
@@ -866,6 +866,9 @@ if (KPRI >= 1 .and. KPRI <= 2) then
      j = len_trim_tab(COMMENT)
      call pscom(COMMENT, j)
 endif
+
+pixel_ymid  = 0.5*(IY0 + IYM)
+meter2pixel = dble(IDX*IDT)/scale_bnd
 
 return
 end subroutine set_plot

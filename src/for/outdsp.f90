@@ -16,10 +16,19 @@ subroutine OUTDSP(MARK, JIFNEW, IYO, ITIMES, TTOUT, TOUT)
 ! JIFNEW > 10  Call from Review. (JIFNEW-10) is used to control erasing
 !----------------------------------------------------------------------|
 
+use parameter_inc, only: NRD, NRDX, NRW
 use status_inc, only: AMETR, MU, SHIF, ELON, TRIA
 use const_inc, only: XOUT, NAB, NA1, ABC, TINIT, TSCALE, RTOR, &
     MEQUIL, LEQ, UPDWN, TIME
-use outcmn_inc
+use outcmn_inc, only: frame_wid, frame_hei, canv_hei, canv_wid, nx_canvas, ny_canvas, &
+    curves_per_frame, active_tab, MOD10, NWIND1, NWIND3, NWINDX, &
+    IFDFAX, IY0, IYM, KPRI, DXLET, DYLET, NPTM, ICVMX, &
+    NROUT, ROUT, OSHIFR, NAMER, SCALER, &
+    NTOUT, TOUT, OSHIFT, NAMET, SCALET, &
+    NXOUT, NAMEX, NARRX, EXARNM, DATAX, TOUTX, LTOUT, &
+    XAXES, GRAL, GRAP, pixel_ymid, meter2pixel, LineWidth, &
+    Black, WarningColor, EraseColor, &
+    equ_file, NBFILE, NBFLAG
 use timeoutput_inc, only: NTIMES
 use expdat, only: raw_profile_map, DATARR, BNDR, BNDZ
 use ac_neg1, only: NUM, NKL1, NKL2, JMIN, JMAX, MODK
@@ -37,7 +46,7 @@ double precision, intent(inout) :: TOUT(ITIMES, NRW)
 
 integer :: PTM(2), PTMO(2, NRDX, NRW), &
     IWN(16), EQOLD(260, 11), &
-    IST, IQ1, IQ2, YS0, text_posy, jt_old, JS, MODEX, &
+    IST, IQ1, IQ2, text_posy, jt_old, JS, MODEX, &
     IYM0, LTOUT1, LTOUT2, JFNEW, STYL, x_shift, y_shift, jx_canv, jy_canv, JY, jxout, &
     JW, j_curve, j_canv, &
     IYMN, IYMX, JDSP, test_posx, NPTMO(NRW), jlx(8), &
@@ -45,7 +54,7 @@ integer :: PTM(2), PTMO(2, NRDX, NRW), &
     j1, jj, jsco, jn, jpnt, jsc, jposy, jarr, jtyp, n_canvas, &
     jplot_in_canv, jcol, jcol2, jprof, jtrace
 double precision :: SC(NRW), YX, r_out, YA, YL, YR, YQ1, YQ2, &
-     XROUT, YSC8, YZ, ABSC, ymin, ymax, px_ymid, px_rmag
+     XROUT, YZ, ABSC, ymin, ymax, px_rmag
 double precision, dimension(NRD) :: xplot, yplot, xtrace, ytrace, xtrace_old
 double precision, dimension(NRD, ICVMX) :: xold, yold, ytrace_old
 character(len=80) :: STRI
@@ -401,14 +410,11 @@ CASE(7)
 CASE(8)
 
     call markloc('Drawing mode 8', debug_lev=2*debug)
-    px_ymid = 0.5*(IY0 + IYM)
-    YS0 = (IY0 + IYM)/2        ! Mid-plane y-pixel
-    YSC8 = IDX*IDT/scale_bnd   ! Scale terms are set in typdsp:set_plot
-    px_rmag = (RTOR + SHIF(1))*YSC8
+    px_rmag = (RTOR + SHIF(1))*meter2pixel
     call colovm(Black)
-    call drawcurve(0, 2, LineWidth, (/0., px_rmag/), (/px_ymid, px_ymid/))
+    call drawcurve(0, 2, LineWidth, (/0., px_rmag/), (/pixel_ymid, pixel_ymid/))
 ! Plot the complete wall structure (Pixmap # 1)
-    call drconf(YS0, YSC8)
+    call plot_wall
 
     if (NBFLAG /= 0 .and. NBFILE(1:1) /= '*' .and. jifnew /= 0) then ! Create/update NBI Pixmap # 2
         call drawfoot(jifnew)
@@ -422,21 +428,21 @@ CASE(8)
 
     SELECT CASE(LEQ(5))
     CASE(:1)
-        call DRAW3M(jifnew, DYLET, YS0, YSC8, EQOLD, &
+        call DRAW3M(jifnew, DYLET, EQOLD, &
             NA1, NAB, RTOR, AMETR, SHIF, UPDWN, ELON, TRIA)
     CASE(3)
-        call bnd_draw(JIFNEW, YS0, YSC8, IYO, TIME)
-        call DRAWSPFLUX(YS0, YSC8)
+        call bnd_draw(JIFNEW, IYO, TIME)
+        call DRAWSPFLUX
     CASE(4: 5)
         if (MEQUIL == 0) then
             SHIF = 0.0
             ELON = 1.0
             TRIA = 0.0 
-            call DRAW3M(jifnew, DYLET, YS0, YSC8, EQOLD, &
+            call DRAW3M(jifnew, DYLET, EQOLD, &
                 NA1, NAB, RTOR, AMETR, SHIF, UPDWN, ELON, TRIA)
         else
-            call bnd_draw(JIFNEW, YS0, YSC8, IYO, TIME)
-            call DRAWSPFLUX(YS0, YSC8)
+            call bnd_draw(JIFNEW, IYO, TIME)
+            call DRAWSPFLUX
         endif
     END SELECT
 
@@ -483,8 +489,8 @@ CASE(8)
             else
                 write(*, *) 'Unknown input-grid type'
             endif
-            PTM(1) = YR*YSC8
-            PTM(2) = YS0 - YZ*YSC8
+            PTM(1) = YR*meter2pixel
+            PTM(2) = pixel_ymid - YZ*meter2pixel
             call NMARK(PTM, 7)
             PTMO(1, j, jxout) = PTM(1)
             PTMO(2, j, jxout) = PTM(2)
@@ -504,22 +510,22 @@ return
 end subroutine outdsp
 
 !======================================================================|
-subroutine bnd_draw(ifnew, YS0, SC8, IYO, time_in)
+subroutine bnd_draw(ifnew, IYO, time_in)
 !----------------------------------------------------------------------|
 ! IFNEW  =  0 Re-draw (erase) the previous curves
 ! IFNEW =/= 0 New curves only
 ! IFNEW < 0 Don't mark resonances q=m/n
 ! IFNEW  > 10 Call from Review. (JIFNEW-10) is used to control erasing
 
-use outcmn_inc, only: Red, NBNT
+use outcmn_inc, only: Red, NBNT, pixel_ymid, meter2pixel
 use expdat, only: BNDTIM, BNDR, BNDZ
 use const_inc, only: NBND
 
 implicit none
 
-integer, intent(in) :: ifnew, YS0
+integer, intent(in) :: ifnew
 integer, intent(inout) :: IYO(2, *)
-double precision, intent(in) :: time_in, SC8
+double precision, intent(in) :: time_in
 
 integer :: j, j1, j2, jj, PTM(2)
 double precision :: YS, YX, YXL, YXR, YZ
@@ -544,8 +550,8 @@ if (NBNT <= 1) then
     jj = 1
     do j=1, NBND, j2
         j1 = max(1, NBNT + (j - 1)*jj)
-        PTM(1) = BNDR(j1)*SC8
-        PTM(2) = YS0 - BNDZ(j1)*SC8
+        PTM(1) = BNDR(j1)*meter2pixel
+        PTM(2) = pixel_ymid - BNDZ(j1)*meter2pixel
         call NMARK(PTM, 4)   !Use (PTM, 4) for *
         IYO(1, j) = PTM(1)
         IYO(2, j) = PTM(2)
@@ -554,8 +560,8 @@ else if (time_in <= BNDTIM(1) .or. time_in >= BNDTIM(NBNT)) then ! extrapolate f
     jj = NBNT
     do j=1, NBND, j2
         j1 = NBNT + (j - 1)*jj
-        PTM(1) = BNDR(j1)*SC8
-        PTM(2) = YS0 - BNDZ(j1+jj)*SC8
+        PTM(1) = BNDR(j1)*meter2pixel
+        PTM(2) = pixel_ymid - BNDZ(j1+jj)*meter2pixel
         call NMARK(PTM, 4)   !Use (PTM, 4) for *
         IYO(1, j) = PTM(1)
         IYO(2, j) = PTM(2)
@@ -571,8 +577,8 @@ else               ! interpolate linearly
         j1 = jj + (j - 1)*NBNT
         YX = YXL*BNDR(j1+1) - YXR*BNDR(j1)
         YZ = YXL*BNDZ(j1+1) - YXR*BNDZ(j1)
-        PTM(1) = YX*SC8
-        PTM(2) = YS0 - YZ*SC8
+        PTM(1) = YX*meter2pixel
+        PTM(2) = pixel_ymid - YZ*meter2pixel
         call NMARK(PTM, 4)
         IYO(1, j) = PTM(1)
         IYO(2, j) = PTM(2)
@@ -583,20 +589,22 @@ return
 end subroutine bnd_draw
 
 !======================================================================|
-subroutine DRAW3M(jifnew, DYLET, YS0, YSC8, EQOLD, &
+subroutine DRAW3M(jifnew, DYLET, EQOLD, &
     NA1, NAB, RTOR, AMETR, SHIF, UPDWN, ELON, TRIA)
 !----------------------------------------------------------------------|
 
-use outcmn_inc, only: Magenta, Pink, EraseColor, Red, frame_hei, LineWidth
+use outcmn_inc, only: Magenta, Pink, EraseColor, Red, frame_hei, &
+    LineWidth, pixel_ymid, meter2pixel
 
 use const_inc, only: GP
 
 implicit none
 
-integer, intent(in) :: jifnew, DYLET, YS0, NA1, NAB
+integer, intent(in) :: jifnew, DYLET, NA1, NAB
 integer, intent(inout) :: EQOLD(260, 11)
-double precision, intent(in) :: YSC8, RTOR, AMETR(*), ELON(*), TRIA(*), UPDWN, SHIF(*)
+double precision, intent(in) :: RTOR, AMETR(*), ELON(*), TRIA(*), UPDWN, SHIF(*)
 
+integer, parameter :: n_theta=64
 integer :: j, jj, jn, JX
 integer, dimension(260) :: plot_arr
 double precision :: YR, YZ, YFI
@@ -633,8 +641,8 @@ do J=1, 10
         YFI = GP*(JJ - 1)/64.
         YZ = UPDWN + AMETR(JX)*ELON(JX)*sin(YFI)
         YR = RTOR + SHIF(JX) + AMETR(JX)*(cos(YFI) + 0.5*TRIA(JX)*(cos(2.*YFI) - 1.))
-        plot_arr(2*JJ-1) = 10.*YR*YSC8
-        plot_arr(2*JJ) = 10.*(YS0 - YZ*YSC8)
+        plot_arr(2*JJ-1) = 10.*YR*meter2pixel
+        plot_arr(2*JJ) = 10.*(pixel_ymid - YZ*meter2pixel)
 ! Save picture:
         EQOLD(2*JJ-1, J) = plot_arr(2*JJ-1)
         EQOLD(2*JJ  , J) = plot_arr(2*JJ)
@@ -648,43 +656,38 @@ return
 end subroutine DRAW3M
 
 !======================================================================|
-subroutine drconf(YS0, YSC8)
+subroutine plot_wall
 !----------------------------------------------------------------------|
 
-use const_inc, only: AB, ELONM, RTOR, TRICH, GP
-use outcmn_inc, only: wall_gc_file, Blue, White, DYLET, frame_hei, LineWidth
+use const_inc, only: AB, ELONM, RTOR, TRICH, GP2
+use outcmn_inc, only: wall_gc_file, Blue, White, LineWidth, pixel_ymid, &
+    meter2pixel
 use debugger, only: debug
 
 implicit none
 
-integer, intent(in) :: YS0
-double precision, intent(in) :: YSC8
-
-integer, parameter :: n_wall=64, ngc_max=750
+integer, parameter :: n_theta=64, ngc_max=750
 integer :: j, j1, jgc, ios, nSHOT, Ndim, NGC, plot_arr(100), ndim_gc
 integer, dimension(40) :: ixbeg, lenix, valix
 double precision :: pol_ang, Rwall, Zwall
-double precision, dimension(n_wall) :: xwall, ywall
+double precision, dimension(n_theta) :: xwall, ywall
 double precision, dimension(ngc_max) :: xGC, yGC
 double precision, dimension(ngc_max, 2) :: xyGC
 character(len=64) :: STRI
 
+call colovm(Blue)
 open(7, FILE=TRIM(wall_gc_file), iostat=ios)
 if (ios /= 0) then
 ! plot the AWALL boundary in blue instead
-    call colovm(Blue)
-    call drawvm(0, frame_hei, 35, 400, 35)
-! git hardcoded 410
-    call textvm(410, 35 + DYLET/2, 'Wall', 4)
-    do j=1, n_wall
-        pol_ang = GP*(j - 1)/float(n_wall)
+    do j=1, n_theta
+        pol_ang = GP2*(j - 1)/float(n_theta)
         Zwall = AB*ELONM*SIN(pol_ang)
         Rwall = RTOR + AB*(COS(pol_ang) + 0.5*TRICH*(COS(2.*pol_ang) - 1.))
-        xwall(j) = Rwall*YSC8
-        ywall(j) = dble(YS0) - Zwall*YSC8
+        xwall(j) = Rwall*meter2pixel
+        ywall(j) = pixel_ymid - Zwall*meter2pixel
     enddo
     call plot_curve(jgc, 0, LineWidth, xwall, ywall)
-    write(*, *) '>>> drconf: problems opening file ' // TRIM(wall_gc_file)
+    write(*, *) '>>> plot_wall: problems opening file ' // TRIM(wall_gc_file)
 else
     read(7, *) STRI
     read(7, *) nSHOT
@@ -702,15 +705,14 @@ else
         read(7, *) (valix(j), j=1, NGC)
         close(7)
         if (debug > 0) then
-             write(*, *) "Plotting device wall contour from " // TRIM(wall_gc_file), YSC8
+             write(*, *) "Plotting device wall contour from " // TRIM(wall_gc_file), meter2pixel
         endif
-        call colovm(Blue)
         do j1=1, NGC
             if (valix(j1) /= White) then
                 ndim_gc = lenix(j1)
                 do j=1, ndim_gc
-                    xgc(j) = YSC8*xyGC(ixbeg(j1)+j-1, 1)
-                    ygc(j) = dble(YS0) - YSC8*xyGC(ixbeg(j1)+j-1, 2)
+                    xgc(j) = meter2pixel*xyGC(ixbeg(j1)+j-1, 1)
+                    ygc(j) = pixel_ymid - meter2pixel*xyGC(ixbeg(j1)+j-1, 2)
                 enddo
                 call plot_curve(ndim_gc, 0, xgc(1:ndim_gc), ygc(1:ndim_gc))
             endif
@@ -719,11 +721,10 @@ else
         close(7)
         write(*, *) "Configuration file is too long"
     endif
-
 endif
 
 return
-end subroutine drconf
+end subroutine plot_wall
 
 !======================================================================|
 double precision function ABSC(YIN)
@@ -782,12 +783,11 @@ subroutine DRAWFOOT(jifnew)
 ! YHBM  the upshift of the beam footprint
 ! YASP  the aspect ratio of the beam footprint
 ! YQ    the beam power
-! NBFILE, XWW, XWH, DYLET, IY0, IYM, IDX, IDT, scale_bnd are taken from "outcmn.inc"
 !----------------------------------------------------------------------|
 
+use parameter_inc, only: NRD
 use const_inc, only: CNB1
-use outcmn_inc
-
+use outcmn_inc, only: NBFILE, XWH, XWW, Magenta, DYLET, meter2pixel, pixel_ymid
 use debugger, only: markloc, astra_stop
 
 implicit none
@@ -795,7 +795,7 @@ implicit none
 integer, intent(in) :: jifnew
 
 integer :: j, jj, JL, JN, ERCODE
-double precision :: YS0, YSC8, YRBMN, YRBMX, YHBM, YASP, YH, YQ
+double precision :: YRBMN, YRBMX, YHBM, YASP, YH, YQ
 double precision, dimension(10) :: plot_arr
 double precision, dimension(15, 2*NRD+7) :: work_nbi
 character(len=16) :: STRI
@@ -860,15 +860,13 @@ do JN=1, anint(CNB1)
         call textnb(16, 35 - 3 + JL*DYLET, STRI(1: 10), 10)
         call textnb(10, 35 - 3, 'Beam  Power', 11)
 
-        YS0 = (IY0 + IYM)/2
-        YSC8 = IDX*IDT/scale_bnd
         YH = 0.5*YASP*(YRBMX - YRBMN)
-        plot_arr(1) = max(YRBMN, 0.d0)*YSC8
-        plot_arr(2) = YS0 + (-YHBM - YH)*YSC8
-        plot_arr(3) = YRBMX*YSC8
+        plot_arr(1) = max(YRBMN, 0.d0)*meter2pixel
+        plot_arr(2) = pixel_ymid + (-YHBM - YH)*meter2pixel
+        plot_arr(3) = YRBMX*meter2pixel
         plot_arr(4) = plot_arr(2)
         plot_arr(5) = plot_arr(3)
-        plot_arr(6) = YS0 + (-YHBM + YH)*YSC8
+        plot_arr(6) = pixel_ymid + (-YHBM + YH)*meter2pixel
         plot_arr(7) = plot_arr(1)
         plot_arr(8) = plot_arr(6)
         plot_arr(9) = plot_arr(1)
@@ -886,20 +884,17 @@ return
 end subroutine DRAWFOOT
 
 !======================================================================|
-subroutine DRAWSPFLUX(YS0, YSC8)
+subroutine DRAWSPFLUX
 !----------------------------------------------------------------------|
 ! Redraw magnetic surfaces:
 
-use outcmn_inc, only: Magenta
+use outcmn_inc, only: Magenta, pixel_ymid, meter2pixel
 use const_inc, only: NEQUIL, MEQUIL
 use parameters_a2equil, only: equil_now
 
 implicit none
 
-integer, parameter :: n_surf=556, nrho_plot=8
-integer, intent(in) :: YS0
-double precision, intent(in) :: YSC8
-
+integer, parameter :: n_surf=556, nrho_plot=12
 integer :: jrho, jr, nskip, jrho_loc, n_theta, n_theta1, n_rho_surf
 double precision, dimension(n_surf) :: xplot, yplot
 double precision, dimension(nrho_plot+1, n_surf) :: xplot_old, yplot_old
@@ -914,10 +909,10 @@ nskip = 1 + n_rho_surf/nrho_plot
 jr = 1
 do jrho=1, n_rho_surf + nskip - 1, nskip
     jrho_loc = min(jrho, n_rho_surf)
-    xplot(1: n_theta) = YSC8*equil_now%coord_sys%position%r(jrho_loc, 1: n_theta)
-    xplot(n_theta1)   = YSC8*equil_now%coord_sys%position%r(jrho_loc, 1)  ! Close polygon
-    yplot(1: n_theta) = dble(YS0) - YSC8*equil_now%coord_sys%position%z(jrho_loc, 1:n_theta)
-    yplot(n_theta1)   = dble(YS0) - YSC8*equil_now%coord_sys%position%z(jrho_loc, 1)
+    xplot(1: n_theta) = meter2pixel*equil_now%coord_sys%position%r(jrho_loc, 1: n_theta)
+    xplot(n_theta1)   = meter2pixel*equil_now%coord_sys%position%r(jrho_loc, 1)  ! Close polygon
+    yplot(1: n_theta) = pixel_ymid - meter2pixel*equil_now%coord_sys%position%z(jrho_loc, 1:n_theta)
+    yplot(n_theta1)   = pixel_ymid - meter2pixel*equil_now%coord_sys%position%z(jrho_loc, 1)
     call update_curve(n_theta1, n_theta1, Magenta, 0, xplot_old(jr, 1:n_theta1), &
          yplot_old(jr, 1:n_theta1), xplot(1:n_theta1), yplot(1:n_theta1))
     xplot_old(jr, 1:n_theta1) = xplot(1:n_theta1)
