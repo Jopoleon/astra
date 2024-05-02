@@ -512,91 +512,21 @@ void drawcurve_(int *id, int *n, int *LineWidth, double *X, double *Y){
 
     if (*id) XSetForeground(theDisplay, theGCA, ~theCurrentColor);
     for (j=0; j < *n-1; j++){
-        Xx1 = X[j]  +10;
-        Xy1 = Y[j]  +10;
-        Xx2 = X[j+1]+10;
-        Xy2 = Y[j+1]+10;
+        Xx1 = X[j]   + 10;
+        Xy1 = Y[j]   + 10;
+        Xx2 = X[j+1] + 10;
+        Xy2 = Y[j+1] + 10;
         XDrawLine(theDisplay, Pixmaps[*id], theGCA, Xx1, Xy1, Xx2, Xy2);
     }
     if (*id) XSetForeground(theDisplay, theGCA, theCurrentColor);
     XSetLineAttributes(theDisplay, theGCA, *LineWidth, LineSolid, CapRound, JoinRound);
     if (FlagPSA > 0){
         for (j=0; j < *n-1; j++){
-            dx1 = X[j]*PSsc;
-            dy1 = Y[j]*PSsc;
+            dx1 = X[j] + 10.;
+            dy1 = Y[j] + 10.;
             fprintf(PSAfile, "%12.5e %12.5e\n", dx1+PS_xA, PS_yA-dy1);
         }
         fprintf(PSAfile, "moveto %d{lineto}repeat\n", (*n)-1);
-    }
-}
-
-/********************************************************************/
-void drawline_(int *id, int *n, int *LineWidth, int *iXY){
-    int j, n2, Xx1, Xy1, Xx2, Xy2;
-    double dx1, dy1;
-
-    if (*id) XSetForeground(theDisplay, theGCA, ~theCurrentColor);
-    n2 = 2*(*n) - 3;
-    for (j=0; j < n2; j+=2){
-        Xx1 = iXY[j]   + 10;
-        Xy1 = iXY[j+1] + 10;
-        Xx2 = iXY[j+2] + 10;
-        Xy2 = iXY[j+3] + 10;
-        XDrawLine(theDisplay, Pixmaps[*id], theGCA, Xx1, Xy1, Xx2, Xy2);
-    }
-    if (*id) XSetForeground(theDisplay, theGCA, theCurrentColor);
-    XSetLineAttributes(theDisplay, theGCA, *LineWidth, LineSolid, CapRound, JoinRound);
-    if (FlagPSA > 0){
-        n2 =2*(*n);
-        for (j=0; j < n2; j+=2){
-            dx1 = (iXY[j]   + 10)*PSsc;
-            dy1 = (iXY[j+1] + 10)*PSsc;
-            fprintf(PSAfile, "%12.5e %12.5e\n", dx1+PS_xA, PS_yA-dy1);
-        }
-        fprintf(PSAfile, "moveto %d{lineto}repeat\n", (*n)-1);
-    }
-}
-
-/********************************************************************/
-void d1polyline_(INT_ *id, INT_ *n, int *LineWidth, INT_ *iXY){
-    int j, n2, x1, y1, x2, y2;
-    double dx1, dy1, dx2, dy2;
-    if (*id) XSetForeground(theDisplay, theGCA, ~theCurrentColor);
-    n2 = 2*(*n) - 3;
-    for (j=0; j < n2; j+=2){
-        x1 = iXY[j  ] + 10;
-        x2 = iXY[j+2] + 10;
-        dy1 = iXY[j+1]/10. + 10;
-        dy2 = iXY[j+3]/10. + 10;
-        y1 = dy1;
-        y2 = dy2;
-        XDrawLine(theDisplay, Pixmaps[*id], theGCA, x1, y1, x2, y2);
-    }
-    if (*id) XSetForeground(theDisplay, theGCA, theCurrentColor);
-    XSetLineAttributes(theDisplay, theGCA, *LineWidth, LineSolid, CapRound, JoinRound);
-    if (FlagPSA > 0){
-        n2 = 2*(*n);
-        for (j=0; j < n2; j+=2){
-            dx1 = (iXY[j] + 10)*PSsc;
-            dy1 = (iXY[j+1]/10. + 10)*PSsc;
-            fprintf(PSAfile, "%12.5e %12.5e\n", dx1+PS_xA, PS_yA-dy1);
-        }
-        fprintf(PSAfile, "moveto %d{lineto}repeat\n", (*n)-1);
-#ifdef H
-        for (j=0; j < n2; j+=2){
-            x1 = iXY[j  ] + 10;
-            x2 = iXY[j+2] + 10;
-            dy1 = iXY[j+1]/10. + 10;
-            dy2 = iXY[j+3]/10. + 10;
-            y1 = dy1;
-            y2 = dy2;
-            dx1 = x1*PSsc;
-            dx2 = x2*PSsc;
-            dy1 *= PSsc;
-            dy2 *= PSsc;
-	    PSADrawLine(dx1, dy1, dx2, dy2);
-        }
-#endif
     }
 }
 

@@ -188,61 +188,6 @@ call textvm(JPOS, NL, ST, 5)
 end subroutine CMARKP
 
 !---------------------------------------------------------------------
-subroutine PLOTXY(YARR, NP, JX, IX, IXO, IY, IYO, DMET, STYL, plot_arr)
-
-! The subroutine displays NP points
-! of integer array IY vs IX to screen with the style=STYL
-! and puts marks with time interval equal to DMET(sec)
-! Entry: YARR - time array (TTOUT)
-! NP, JX, IY, IX, DMET, STYL
-
-use outcmn_inc, only: EraseColor, LineWidth
-
-implicit none
-
-integer, intent(in) :: NP, STYL, JX, IX(*), IY(*)
-integer, intent(out), dimension(*) :: IXO, IYO, plot_arr
-double precision, intent(in) :: DMET, YARR(NP)
-
-integer :: J, J0, JMET, JJ, JPOINT, J1
-double precision :: DMETO
-
-save DMETO
-data DMETO/999999./
-
-call colovm(EraseColor)
-JPOINT = 0
-do J0=0, 1
-    do J=1, NP
-        plot_arr(2*J - 1) = JX  + IXO(J)
-        plot_arr(2*J)     = 350 - IYO(J)
-    enddo
-    JMET = 0
-    do JJ=1, NP - 1 + J0
-        if (YARR(JJ) - YARR(1) >= JMET*DMETO .or. JJ == 1) then
-            if (JJ > 1) call drawline(0, JPOINT + 1, LineWidth, plot_arr(J1))
-            J1 = 2*JJ - 1
-            call NMARK(plot_arr(J1), STYL)
-            JMET = JMET + 1
-            JPOINT = 1
-        else
-            JPOINT = JPOINT+1
-        endif
-    enddo
-    if (JPOINT /= 0) call drawline(0, JPOINT, LineWidth, plot_arr(J1))
-    if (J0 == 1) return   ! J0=0 <- erasing
-    do J=1, NP
-        IXO(J) = IX(J)
-        IYO(J) = IY(J)
-    enddo
-    DMETO = DMET
-    call colovm(1)
-enddo
-
-return
-end subroutine PLOTXY
-
-!---------------------------------------------------------------------
 subroutine update_curve(NP, np_old, ICOLOR, STYL, xold, yold, xnew, ynew)
 
 ! The subroutine displays NP points of the float array YNEW
@@ -333,6 +278,7 @@ integer, parameter, dimension(7) :: N=(/16, 13, 5, 9, 14, 9, 10/)
 integer, intent(in) :: POINT(2), STYL
 
 integer :: plot_arr(32), DX(16, 7), DY(16, 7), J, JJ, IST
+double precision, dimension(32) :: xsym, ysym
 
 ! IST definition shoud coincide with NBIT() in CMARK
 ! IST = 1-filled diamond, 2-o, 3-+, 4-*, 5-x(#), 6-<, 7-filled square
@@ -357,12 +303,11 @@ data DY/ &
    -2, -2,  2,  2, -1, -1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0/  
 
 IST = max(1, min(STYL, 7))
-do JJ=1, N(IST)
-    J = 2*JJ
-    plot_arr(J-1) = POINT(1) + DX(JJ, IST)
-    plot_arr(J)   = POINT(2) + DY(JJ, IST)
+do J=1, N(IST)
+    xsym(J) = POINT(1) + DX(J, IST)
+    ysym(J) = POINT(2) + DY(J, IST)
 enddo
-call drawline(0, N(IST), LineWidth, plot_arr(1))
+call drawcurve(0, N(IST), LineWidth, xsym, ysym)
 
 end subroutine NMARK
 
