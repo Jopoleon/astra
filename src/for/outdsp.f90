@@ -199,7 +199,7 @@ CASE(1: 3)  ! Profiles
     jn = 0
 
     plot_profx: do jxout=1, NXOUT
-        if (NWINDX(jxout) == 0) CYCLE plot_profx ! NWINDX set in ininam.tmp
+        if (NWINDX(jxout) == 0) CYCLE plot_profx ! NWINDX set in ininam.f90
         CHAR6 = NAMEX(jxout)
         if (CHAR6(1: 1) == ' ') CYCLE plot_profx
         do jprof=1, NARRX
@@ -287,9 +287,8 @@ CASE(1: 3)  ! Profiles
 
 ! Erase/put q=1 radius, BC for Te
     yq1   = ABSC(AFVAL(MU, 1.0))
-    te_bc = ABSC(dble(NA1E)/dble(NA1)*ABC)
-    ymax = dble(IYM0)/dble(ny_canvas)
-    write(*, *) 'ROE', NA1E, te_bc
+    te_bc = ABSC(AMETR(NA1E))
+    ymax = dble(IYM0) - 0.8*canv_hei
     do j_canv=1, nx_canvas
         xq1 = canv_wid*(j_canv -1 + YQ1)
         xte = canv_wid*(j_canv -1 + te_bc)
