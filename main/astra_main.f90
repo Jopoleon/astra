@@ -2,9 +2,9 @@ program astra
 
 use parameter_inc, only: NSBMX, NRD
 use outcmn_inc, only: VCOIL, CCOIL, CCOILO, outcmn_init, &
-    XWH, XWW, XWX, XWY, DXLET, DYLET, LRJJ, frame_wid, frame_hei, &
-    TASK, &
-    COLTAB, RUNID, NST, MOD10, NTOUT, LineWidth, resizeGraph
+    Xwin_height, Xwin_width, Xwin_xpos, Xwin_ypos, &
+    DXLET, DYLET, LRJJ, frame_wid, frame_hei, TASK, &
+    RUNID, NST, MOD10, NTOUT, LineWidth, resizeGraph
 use const_inc, only: IPART, const_init, XOUT, NA, &
     TIME, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT
 use status_inc, only: status_init, MU, defarr
@@ -21,7 +21,7 @@ implicit none
 integer :: j, jj, IM, ios, XSC0, XSC, jt1, jt2, jt3, jt_req, jkey
 double precision :: CHORDN, Y, timeb
 character(len=64) :: LISTSB(NSBMX)
-character(len=132) :: file_in, STRI, win_title
+character(len=132) :: file_in, STRI, Xwin_title
 double precision, external :: LINEAV, SWATCH
 integer, external :: IFKEY, IFTREQ
 
@@ -50,18 +50,15 @@ if (TASK(1: 3) /= 'BGD') then
 ! Resize
     frame_wid = resizeGraph*frame_wid
     frame_hei = resizeGraph*frame_hei
-    XWW   = resizeGraph*XWW
-    XWH   = resizeGraph*XWH
-    XWX   = resizeGraph*XWX
-    XWY   = resizeGraph*XWY
     DXLET = resizeGraph*DXLET
     DYLET = resizeGraph*DYLET
     LRJJ  = resizeGraph*LRJJ
     jj = max(0, (15 + NTOUT - 64)/16)
-    XWH = XWH + 2*jj*(DYLET + 2)
-    LineWidth = int(frame_wid/700) + 1
-    win_title = 'Per aspera ad ASTRA'
-    call initvm(XWX, XWY, XWW, XWH, COLTAB, TRIM(win_title), LEN_TRIM(win_title)) ! Initialise graphic window
+    Xwin_width  = resizeGraph*Xwin_width
+    Xwin_height = resizeGraph*Xwin_height + 2*jj*(DYLET + 2)
+    LineWidth = int(0.8*resizeGraph) + 1
+    Xwin_title = 'Per aspera ad ASTRA'
+    call initvm(Xwin_xpos, Xwin_ypos, Xwin_width, Xwin_height, TRIM(Xwin_title), LEN_TRIM(Xwin_title)) ! Initialise graphic window
 
     IM = 1
     NST = 0
@@ -72,7 +69,7 @@ if (TASK(1: 3) /= 'BGD') then
     j = XOUT + 0.49
 
     call ASRUMN(j) ! Task menu
-    call textbf(0, XWH-104, RUNID, 80) ! Task ID
+    call textbf(0, Xwin_Width-104, RUNID, 80) ! Task ID
 
     CHORDN = LINEAV()
     call up_label(CHORDN, 1./MU(NA))

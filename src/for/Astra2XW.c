@@ -24,7 +24,7 @@ and interfaces for FORTRAN calls
 #define INT_ long
 #endif
 
-void initvm_(INT_*, INT_*, INT_*, INT_*, INT_*, char*, INT_*);
+void initvm_(INT_*, INT_*, INT_*, INT_*, char*, INT_*);
 void redraw_(INT_*);
 void erasrw_();
 void savepm_(INT_*, INT_*);
@@ -355,7 +355,7 @@ void initDefaultColors(){
 }
 
 /********************************************************************/
-void initvm_(INT_ *x, INT_ *y, INT_ *wid, INT_ *hei, INT_ *Atable, char* Title, INT_ *titlen){
+void initvm_(INT_ *x, INT_ *y, INT_ *wid, INT_ *hei, char* Title, INT_ *titlen){
 // Use the unix command "bitmap" to create the data
     static char
     circle_bits[]  = {0x1c, 0x22, 0x41, 0x41, 0x41, 0x22, 0x1c}, 
@@ -388,7 +388,7 @@ void initvm_(INT_ *x, INT_ *y, INT_ *wid, INT_ *hei, INT_ *Atable, char* Title, 
     XWX = *x;
     XWY = *y;
     XWW = *wid;
-    XWH=*hei;
+    XWH = *hei;
  /* Ignore *x, *y and put the window in the top right corner */
     XWX = theWidth - XWW - 2*(BORDER_WIDTH + 5);
     XWY = 5; 

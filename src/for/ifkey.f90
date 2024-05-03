@@ -42,7 +42,7 @@ use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, XLINE1, &
    BTOR, IPL, CONSTF, DEVAR, DELOUT, XFLAG
 use outcmn_inc, only: Black, Blue, WarningColor, &
     active_tab, curves_per_frame, coltab, &
-    frame_hei, DXLET, DYLET, MOD10, LTOUT, NARRX, IPOUT, MODEY, XWH, &
+    frame_hei, DXLET, DYLET, MOD10, LTOUT, NARRX, IPOUT, MODEY, Xwin_height, &
     NWINDX, NWIND1, NWIND3, NWIND4, NWIND7, &
     NROUT, NTOUT, NXOUT, NSBR, NGR, NST, &
     NAMER, NAMET, NAMEX, SCALER, SCALET, ROUT, OSHIFR, OSHIFT, &
@@ -478,7 +478,7 @@ CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
         call set_plot(IM, XSC0, XSC)
         j = XOUT + 0.49
         call ASRUMN(j)   ! Task menu
-        call textbf(0, XWH - 104, RUNID, 80) ! Task ID
+        call textbf(0, Xwin_height - 104, RUNID, 80) ! Task ID
     endif
     call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
     if (IFKL == KEY) return
@@ -958,7 +958,7 @@ subroutine re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
 ! Corresponds to block from statement 201
 
 use parameter_inc, only: NRD
-use outcmn_inc, only: KPRI, MOD10, TASK, XWH, RUNID, WarningColor, null_ch, LRJJ, ICVMX
+use outcmn_inc, only: KPRI, MOD10, TASK, Xwin_height, RUNID, WarningColor, null_ch, LRJJ, ICVMX
 use timeoutput_inc, only: NTIMES, TOUT, TTOUT
 use const_inc, only: XOUT, TIME, TAU, NA
 use status_inc, only: MU
@@ -997,7 +997,7 @@ call set_plot(IM, XSC0, XSC)
 
 j = XOUT + 0.49
 call ASRUMN(j)   ! Task menu
-call textbf(0, XWH - 104, RUNID, 80) ! Task ID
+call textbf(0, Xwin_height - 104, RUNID, 80) ! Task ID
 call RADOUT
 call TIMOUT
 

@@ -740,7 +740,7 @@ subroutine DRAWFOOT(jifnew)
 
 use parameter_inc, only: NRD
 use const_inc, only: CNB1
-use outcmn_inc, only: NBFILE, XWH, XWW, Magenta, DYLET, meter2pixel, pixel_ymid
+use outcmn_inc, only: NBFILE, Xwin_height, Xwin_width, Magenta, DYLET, meter2pixel, pixel_ymid
 use debugger, only: markloc, astra_stop
 
 implicit none
@@ -788,7 +788,7 @@ END SELECT
 
 close(2)
 if (jifnew == 0) call redraw(2) ! Erase previous
-call cleare(2, 0, 0, XWW - 1, XWH - 1)
+call cleare(2, 0, 0, Xwin_width - 1, Xwin_height - 1)
 call colovm(Magenta)
 
 JL = 0

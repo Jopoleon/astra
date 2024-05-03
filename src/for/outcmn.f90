@@ -18,7 +18,8 @@ integer :: &
     NBNT, NCNBT, LTOUT, IPOUT, MOD10, NGR, NXOUT, IFDFVX(NCONST)
 integer :: &
     MODEY, frame_wid, frame_hei, DXLET, DYLET, IY0, IYM, canv_hei, canv_wid, &
-    IDX, IDT, KPRI, NST, XWX, XWY, XWW, XWH, LRJJ, &
+    IDX, IDT, KPRI, NST, LRJJ, &
+    Xwin_xpos, Xwin_ypos, Xwin_width, Xwin_height, &
     AVERS, ARLEAS, AEDIT, NBFLAG, SHOTNB, LineWidth
 integer*4 :: COLTAB(64) ! i*4 needed for compatibility with C
 integer, dimension(plot_modes) :: active_tab, curves_per_frame
@@ -70,10 +71,10 @@ frame_hei = 350
 DXLET = 8
 DYLET = 13
 IDT = 5
-XWX = 470
-XWY = 10
-XWW = 660
-XWH = 550
+Xwin_xpos   = 470
+Xwin_ypos   = 10
+Xwin_width  = 660
+Xwin_height = 550
 LRJJ = 426 ! y-position of text messages in ASTRA's graphic frame
 !ICVMX = 32 parameter
 ! TEst

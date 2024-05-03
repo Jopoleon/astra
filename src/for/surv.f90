@@ -1020,7 +1020,7 @@ subroutine WRFIGS(JNB, JXMODE, JGR, OUTFIG, OUTNAME, IBOX, ITIMES, TTOUT, TOUT)
 
 use parameter_inc, only: NRW
 use outcmn_inc, only: exp_file, equ_file, AWD, RUNID, &
-    LTOUT, ROUT, XWH, WarningColor, null_ch
+    LTOUT, ROUT, Xwin_height, WarningColor, null_ch
 use const_inc, only: NAB, NA1, ABC, ROC, VOLUME
 use status_inc, only: AMETR, RHO, FP, VOLUM, FP_NORM, rho_pol
 
@@ -1056,7 +1056,7 @@ call colovm(WarningColor)
 
 STRI = ' >>> Dataset is written in the file: ' // TRIM(FNAME)
 write(*, '(/, A)') TRIM(STRI)
-JLR = XWH - 125
+JLR = Xwin_height - 125
 call textvm(JN0, JLR, STRI, LEN_TRIM(STRI))
 open(7, file=TRIM(FNAME), iostat=ios)
 if (ios /= 0) then

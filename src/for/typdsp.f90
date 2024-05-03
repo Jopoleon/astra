@@ -1,19 +1,19 @@
 subroutine ERASXY()
 
-use outcmn_inc, only: XWH, XWW, DXLET, White
+use outcmn_inc, only: Xwin_height, Xwin_width, DXLET, White
 
 implicit none
 
 integer :: JN0, JLR
 character(len=118) :: STRI
 
-JLR = XWH - 125
+JLR = Xwin_height - 125
 JN0 = 0
 STRI = repeat(' ', 80)
 
 call colovm(White)
 call textvm(JN0, JLR, STRI(1: 15), 15)
-call textvm(XWW - 83*DXLET + 2, JLR, STRI(1: 80), 80)
+call textvm(Xwin_width - 83*DXLET + 2, JLR, STRI(1: 80), 80)
 
 end subroutine ERASXY
 
@@ -26,7 +26,7 @@ use const_inc, only: XOUT, NAB, NA1, NA, XLINE1, IPL, BTOR, RTOR, ABC, &
     TIME, TAU, CONSTF
 use status_inc, only: MU, AMETR, RHO, FP
 use outcmn_inc, only: NCFNAM, LTOUT, NTOUT, NROUT, MOD10, RUNID, AWD, &
-    equ_file, exp_file, NAMER, NAMET, WarningColor, ROUT, XWH
+    equ_file, exp_file, NAMER, NAMET, WarningColor, ROUT, Xwin_height
 use dbl2char, only: fmt4, fmt_xf
 
 implicit none
@@ -66,7 +66,7 @@ CASE(0:1) ! Write output to a file:
 
     call colovm(WarningColor)
     write(*, *) '>>>  Data are written into the file: ' // TRIM(FNAME)
-    JLR = XWH - 125
+    JLR = Xwin_height - 125
 
     open(7, file=TRIM(FNAME), iostat=ios)
 
@@ -372,7 +372,7 @@ subroutine PUTXY(IX, IY, ITIMES, TTOUT, TOUT)
 !---------------------------------------------------------------------
 
 use parameter_inc, only: NRW
-use outcmn_inc, only: XWH, XWW, MOD10, IY0, IYM, scale_bnd, canv_hei, canv_wid, &
+use outcmn_inc, only: Xwin_height, Xwin_width, MOD10, IY0, IYM, scale_bnd, canv_hei, canv_wid, &
     IDT, IDX, MODEY, DXLET, DYLET, frame_hei, LTOUT, NTOUT, active_tab, &
     NWIND3, NAMET, White, Red, Blue, nx_canvas, ny_canvas
 use status_inc, only: AMETR, SHIF, ELON, TRIA, FP, RHO
@@ -392,10 +392,10 @@ double precision :: DX, DY, YX, YX1, YY, YY1, YA, YA1, YD, YE, YT, &
 character(len=80) :: STRI
 
 JN0 = 0
-JLR = XWH - 125
-! DLINER_ theGCA, 0, XWH-128, XWW-1, XWH-128);
-! DLINER_ theGCA, 0, XWH-110, XWW-1, XWH-110);
-! DLINER_ theGCA, 0, XWH-109, XWW-1, XWH-109);
+JLR = Xwin_height - 125
+! DLINER_ theGCA, 0, Xwin_height-128, Xwin_width-1, Xwin_height-128);
+! DLINER_ theGCA, 0, Xwin_height-110, Xwin_width-1, Xwin_height-110);
+! DLINER_ theGCA, 0, Xwin_height-109, Xwin_width-1, Xwin_height-109);
 if (MOD10 <= 0) return
 if (MOD10 == 7) call NEGA(IM, ITIMES, TOUT)
 call set_frame(IM, IX0, IXM)
@@ -407,7 +407,7 @@ if (IX0 > JX .or. JX > IXM .or. IY0 > JY .or. JY > IYM) then
     STRI = repeat(' ', 80)
     call colovm(White)
     call textvm(JN0, JLR, "               ", 15)
-    call textvm(XWW - 83*DXLET + 2, JLR, STRI(1: 80), 80)
+    call textvm(Xwin_width - 83*DXLET + 2, JLR, STRI(1: 80), 80)
     return
 endif
 
@@ -531,7 +531,7 @@ STRI(20: 24) = fmt5(YY)
 call colovm(Blue)
 
 call textvm(JN0, JLR, "               ", 15)
-call textvm(XWW - 83*DXLET + 2, JLR, STRI(1: 80), 80)
+call textvm(Xwin_width - 83*DXLET + 2, JLR, STRI(1: 80), 80)
 
 return
 end subroutine putxy
@@ -688,7 +688,7 @@ subroutine set_plot(plot_mode, canv_x_left, canv_x_right)
 
 use const_inc, only: TSCALE, TINIT, ABC
 use outcmn_inc, only: Black, MOD10, KPRI, &
-    XWW, XWH, IY0, IYM, IDX, IDT, DXLET, DYLET, scale_bnd, &
+    Xwin_width, Xwin_height, IY0, IYM, IDX, IDT, DXLET, DYLET, scale_bnd, &
     frame_hei, frame_wid, canv_hei, canv_wid, pixel_ymid, meter2pixel
 use dbl2char, only: fmt_xf
 use char_manip, only: len_trim_tab
@@ -718,11 +718,11 @@ TIMWIN = 0
 if (plot_mode == 5 .or. plot_mode == 6 .or. plot_mode == 8 .or. plot_mode == 9)  TIMWIN = 1
 
 call colovm(Black)
-call rectvm(0, JN0, JN0, XWW-1, XWH-1)
+call rectvm(0, JN0, JN0, Xwin_width-1, Xwin_height-1)
 
 if (MOD10 == 6)  then
     call colovm(Black)
-    j = XWW - 20*DXLET + 1
+    j = Xwin_width - 20*DXLET + 1
     jj = frame_hei + DYLET
     call textvm(j, jj, 'time, s', 7)
 endif
@@ -1011,7 +1011,7 @@ end subroutine down_label
 ! Upper string of a picture
 subroutine up_label(YN, YQ)
 
-use outcmn_inc, only: XWH, XWW, DXLET, DYLET, active_tab, MOD10, Black, Blue
+use outcmn_inc, only: Xwin_height, Xwin_width, DXLET, DYLET, active_tab, MOD10, Black, Blue
 use const_inc, only: RTOR, BTOR, IPL, ABC, XLINE1
 use dbl2char, only: fmt40
 
@@ -1039,7 +1039,7 @@ call colovm(Blue)
 write(CHR, '(1I2)') active_tab(MOD10) + 1
 call textvm(JN0 + 79*DXLET, FSHIFT + DYLET - 2, CHR, 2) ! Screen No.
 call colovm(Black)
-call rectvm(0, JN0, JN0, XWW - 1, XWH - 1)
+call rectvm(0, JN0, JN0, Xwin_width - 1, Xwin_height - 1)
 
 return
 end subroutine up_label
