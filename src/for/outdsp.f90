@@ -53,7 +53,7 @@ integer :: PTM(2), PTMO(2, NRDX, NRW), &
     jplot_in_canv, jcol, jcol2, jprof, jtrace
 double precision :: SC(NRW), YX, r_out, YA, YL, YR, &
      XROUT, YZ, ABSC, ymin, ymax, px_rmag, yqmax, yq1, xq1, xte, te_bc
-double precision ,dimension(2) :: yq_arr
+double precision ,dimension(2) :: ybar
 double precision, dimension(16) :: xq1_old, xte_old
 double precision, dimension(NRD) :: xplot, yplot, xtrace, ytrace, xtrace_old
 double precision, dimension(NRD, ICVMX) :: xold, yold, ytrace_old
@@ -293,10 +293,12 @@ CASE(1: 3)  ! Profiles
         xq1 = canv_wid*(j_canv -1 + YQ1)
         xte = canv_wid*(j_canv -1 + te_bc)
         do jy=1, ny_canvas
-            yq_arr = (/ dble(IYM0) - (jy-2)*canv_hei, ymax - (jy-2)*canv_hei/)
-            call update_curve(2, 2,   Red, 0, (/ xq1_old(j_canv), xq1_old(j_canv) /), yq_arr, (/ xq1, xq1 /), yq_arr)
-            if (te_bc > 1.d-3) then
-                call update_curve(2, 2, Green, 0, (/ xte_old(j_canv), xte_old(j_canv) /), yq_arr, (/ xte, xte /), yq_arr)
+            ybar = (/ dble(IYM0) - (jy-2)*canv_hei, ymax - (jy-2)*canv_hei/)
+            if (yq1 > 1.d-3 .and. yq1 < 0.999) then
+                call update_curve(2, 2,   Red, 0, (/ xq1_old(j_canv), xq1_old(j_canv) /), ybar, (/ xq1, xq1 /), ybar)
+            endif
+            if (te_bc > 1.d-3 .and. te_bc < 0.999) then
+                call update_curve(2, 2, Green, 0, (/ xte_old(j_canv), xte_old(j_canv) /), ybar, (/ xte, xte /), ybar)
             endif
         enddo
         xq1_old(j_canv) = xq1

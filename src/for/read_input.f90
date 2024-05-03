@@ -18,7 +18,7 @@ use parameter_inc, only: NTVAR, NBDMAX, NBDTMAX
 use const_inc
 use status_inc
 use outcmn_inc, only: AWD, exp_file, nml_file, equ_file, rev_file, &
-    TASK, machine, cpuTime_tra, &
+    TASK, machine, cpuTime_tra, resizeGraph, &
     TASKID, VERSION, AVERS, ARLEAS, AEDIT, COLTAB, IFDFVX, IFDFAX, jbeg_arrx, &
     PRNAME, CFNAME, SRNAME, EXARNM, NBFILE, MSFILE, wall_gc_file, &
     NPRNAM, NCFNAM, NSRNAM, NEXNAM, &
@@ -156,6 +156,8 @@ file_in = 'tmp/' // TRIM(exp_file) // TRIM(equ_file) // '.nml'
 OPEN(161, FILE=TRIM(file_in), delim='apostrophe')
 READ(161, nml=astra_log, iostat=ios)
 CLOSE(161)
+
+resizeGraph = resize
 
 !define namelist file nml_file
 nml_file = 'exp/nml/' // trim(exp_file)

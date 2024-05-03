@@ -35,7 +35,6 @@ void putString(GC, INT_*, INT_*, char*, INT_*);
 void createpixmap_(INT_*);
 void changeGCcolor(GC, INT_*);
 void colovm_(INT_*);
-void colorb(INT_*);
 void pscom_(char*, INT_*);
 void psopen_(char*, INT_*, INT_*);
 void psclose_();
