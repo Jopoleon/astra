@@ -24,7 +24,7 @@ and interfaces for FORTRAN calls
 #define INT_ long
 #endif
 
-void initvm_(INT_*, INT_*, INT_*, INT_*, char*, INT_*);
+void initvm_(INT_*, INT_*, INT_*, INT_*, INT_*, char*, INT_*);
 void redraw_(INT_*);
 void erasrw_();
 void textvm_(INT_*, INT_*, char*, INT_*);
@@ -42,7 +42,6 @@ void drawvm_(INT_*, INT_*, INT_*, INT_*, INT_*);
 void rectvm_(INT_*, INT_*, INT_*, INT_*, INT_*);
 void cleare(INT_*, INT_*, INT_*, INT_*, INT_*); 
 void cleare_(INT_*, INT_*, INT_*, INT_*, INT_*);
-
 void GetRWgeometry(int*, int*);
 void PSADrawRectangle(double, double, double, double);
 void PSADrawLine(double, double, double, double);
@@ -70,7 +69,7 @@ Display *theDisplay;
 Window theRootWindow;
 GC theGCA, hghGC, hgh_menuGC, hintGC;
 Colormap theColormap;
-Drawable Pixmaps[maxPixmaps] = {0, 0, 0, 0, 0, 0}; //, marker[11];
+Drawable Pixmaps[maxPixmaps] = {0, 0, 0, 0, 0, 0};
 Drawable theIconPixmap;
 Cursor thePauseCursor, theMenuCursor;
 int Xmode=0;  /* Default: NoX - Batch mode */
@@ -354,7 +353,7 @@ void initDefaultColors(){
 }
 
 /********************************************************************/
-void initvm_(INT_ *x, INT_ *y, INT_ *wid, INT_ *hei, char* Title, INT_ *titlen){
+void initvm_(INT_ *x, INT_ *y, INT_ *wid, INT_ *hei, INT_ *LineWidth, char* Title, INT_ *titlen){
 // Use the unix command "bitmap" to create the data
 
     Window openWindow();
@@ -382,9 +381,10 @@ void initvm_(INT_ *x, INT_ *y, INT_ *wid, INT_ *hei, char* Title, INT_ *titlen){
     YCorrection = iy - XWY;
     createGC(theRootWindow, &hghGC, HGHfont);
     createGC(theRootWindow, &theGCA, STDfont);
-    createGC(theRootWindow, &hgh_menuGC, "8x13bold");
+    createGC(theRootWindow, &hgh_menuGC, HGHfont);
     createGC(theRootWindow, &hintGC, "variable");
     XSetLineAttributes(theDisplay, hgh_menuGC, 2L, LineSolid, CapRound, JoinRound);
+    XSetLineAttributes(theDisplay, theGCA, *LineWidth, LineSolid, CapRound, JoinRound);
     XDrawRectangle(theDisplay, theRootWindow, theGCA, 0L, 0L, *wid-1L, *hei-1L);
     XWarpPointer(theDisplay, None, theRootWindow, 0, 0, 0, 0, *wid/2, *hei-120);
 
@@ -482,7 +482,6 @@ void drawcurve_(int *id, int *n, int *LineWidth, double *X, double *Y){
         XDrawLine(theDisplay, Pixmaps[*id], theGCA, Xx1, Xy1, Xx2, Xy2);
     }
     if (*id) XSetForeground(theDisplay, theGCA, theCurrentColor);
-    XSetLineAttributes(theDisplay, theGCA, *LineWidth, LineSolid, CapRound, JoinRound);
     if (FlagPSA > 0){
         for (j=0; j < *n-1; j++){
             dx1 = X[j] + 10.;

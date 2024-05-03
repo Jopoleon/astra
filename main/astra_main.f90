@@ -58,7 +58,7 @@ if (TASK(1: 3) /= 'BGD') then
     Xwin_height = resizeGraph*Xwin_height + 2*jj*(DYLET + 2)
     LineWidth = int(0.8*resizeGraph) + 1
     Xwin_title = 'Per aspera ad ASTRA'
-    call initvm(Xwin_xpos, Xwin_ypos, Xwin_width, Xwin_height, TRIM(Xwin_title), LEN_TRIM(Xwin_title)) ! Initialise graphic window
+    call initvm(Xwin_xpos, Xwin_ypos, Xwin_width, Xwin_height, LineWidth, TRIM(Xwin_title), LEN_TRIM(Xwin_title)) ! Initialise graphic window
 
     IM = 1
     NST = 0
