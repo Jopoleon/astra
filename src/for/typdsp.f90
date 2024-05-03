@@ -420,10 +420,32 @@ YY1 = 1. - (JY - IY0 + 0.)/(IYM - IY0)
 if (MOD10 == 6) then
 ! (window_width)/(step=IDX=23)/(n_labels)=592/23/25=1.0295652
     YX = TINIT + 1.029565*YX1*abs(TSCALE)
+    do j=1, ny_canvas
+        YY1 = YY1 - DY
+        if (YY1 < 0) EXIT
+    enddo
+    YY = (YY1 + DY)/DY
+    JN2 = frame_hei + 15 + 3*DYLET
+    JC = 0
+    JL = 0
 
-    goto 2
-endif
-if (MOD10 == 8) then
+    YY1 = max(TIME, TTOUT(LTOUT-1), TTOUT(LTOUT))
+    YY1 = min(YX, YY1)
+    YY1 = max(TTOUT(1), YY1)
+    j = GETIME(YX, TTOUT, LTOUT)
+    do J1=1, NTOUT
+        JW = NWIND3(J1) - 8*active_tab(MOD10)
+        if (NAMET(J1) == '    ') JW = 0
+        if (JW > 0 .and. JW <= 8) call down_label(j, ITIMES, TOUT) ! for the all modes
+    enddo
+
+    call colovm(Red)
+    STRI(1 :  5) = 'Time='
+    STRI(6 : 10) = fmt5(YY1)
+    STRI(11: 11) = 's'
+    call textvm(DXLET, JN2 - 3*DYLET + DYLET/2, STRI, 11)
+    return
+else if (MOD10 == 8) then
 !    YX = 5.*YX1*scale_bnd
     YX = YX1*scale_bnd*canv_wid/IDT/IDX
     YY = (YY1 - 0.5)*scale_bnd*canv_hei/IDT/IDX
@@ -440,98 +462,68 @@ if (MOD10 == 8) then
     STRI(63: 75) = '(     ,     )'
     STRI(64: 68) = fmt5(YE)
     STRI(70: 74) = fmt5(YT)
-    goto 4
-endif
-
-do j=1, nx_canvas
-    YX1 = YX1 - DX
-    if (YX1 < 0) EXIT
-enddo
-
-YX = (YX1 + DX)/DX
-
-if (MOD10 >= 5) goto 2
-
-YA = 0.
-YFP = 0.
-YRHO = 0.
-YFPC = 1.125*FP(1) - 0.125*FP(2)
-MODEX = XOUT + 0.49
-if (MOD10 == 3) MODEX = 3
-if (MOD10 == 4) MODEX = 0
-
-SELECT CASE(modex)
-CASE(0)
-    YA = YX*AB
-    YRHO = QUADIN(NA1, AMETR, RHO, YA)
-    YFP  = QUADIN(NA1, AMETR, FP , YA)
-CASE(1)
-    YA = YX*ABC
-    YRHO = QUADIN(NA1, AMETR, RHO, YA)
-    YFP  = QUADIN(NA1, AMETR, FP , YA)
-CASE(2)
-    YRHO = YX*ROC
-    YA   = QUADIN(NA1, RHO, AMETR, YRHO)
-    YFP  = QUADIN(NA1, RHO, FP   , YRHO)
-CASE(3)
-    YFP  = YFPC + (FP(NA1) - YFPC)*YX
-    YA   = QUADIN(NA1, FP, AMETR, YFP)
-    YRHO = QUADIN(NA1, FP, RHO  , YFP)
-END SELECT
-
-j = YRHO/HRO + 1
-if (YRHO > 0.5*(RHO(NA) + ROC)) j = NA1
-
-STRI(32: 33) = "a="
-STRI(34: 38) = fmt5(YA)
-YRHO = YRHO/ROC
-STRI(39: 49) = 'm,   rho_t='
-STRI(50: 54) = fmt5(YRHO)
-if (YFP > YFPC) then
-    YFP = sqrt((YFP - YFPC)/(FP(NA1) - YFPC))
 else
-    YFP = 0.
-endif
-STRI(55: 64) = ",   rho_p="
-STRI(65: 69) = fmt5(YFP)
-STRI(70: 77) = ",  Node:"
-write(STRI(78: 80), '(1I3)')j
-
- 2 continue
-
-do j=1, ny_canvas
-    YY1 = YY1 - DY
-    if (YY1 < 0) EXIT
-enddo
-YY = (YY1 + DY)/DY
-if (MOD10 > 1 .and. MOD10 < 6 .and. MODEY == -1) then
-    if (JY - IY0 > (IYM - IY0)/ny_canvas) YY = YY - 1.
-endif
-
- 4 continue
-
-if (MOD10 == 6) then
-
-    JN2 = frame_hei + 15 + 3*DYLET
-    JC = 0
-    JL = 0
-
-    YY1 = max(TIME, TTOUT(LTOUT-1), TTOUT(LTOUT))
-    YY1 = min(YX, YY1)
-    YY1 = max(TTOUT(1), YY1)
-    j = GETIME(YX, TTOUT, LTOUT)
-    do J1=1, NTOUT
-        JW = NWIND3(J1) - 8*active_tab(MOD10)
-        if (NAMET(J1) == '    ') JW = 0
-        if (JW > 0 .and. JW <= 8) call DNSTR(j, ITIMES, TOUT) ! for the all modes
+    do j=1, nx_canvas
+        YX1 = YX1 - DX
+        if (YX1 < 0) EXIT
     enddo
+    YX = (YX1 + DX)/DX
+    if (MOD10 < 5) then
+        YA = 0.
+        YFP = 0.
+        YRHO = 0.
+        YFPC = 1.125*FP(1) - 0.125*FP(2)
+        MODEX = XOUT + 0.49
+        if (MOD10 == 3) MODEX = 3
+        if (MOD10 == 4) MODEX = 0
 
-    call colovm(Red)
-    STRI(1 :  5) = 'Time='
-    STRI(6 : 10) = fmt5(YY1)
-    STRI(11: 11) = 's'
-    call textvm(DXLET, JN2 - 3*DYLET + DYLET/2, STRI, 11)
-    return
+        SELECT CASE(modex)
+        CASE(0)
+            YA = YX*AB
+            YRHO = QUADIN(NA1, AMETR, RHO, YA)
+            YFP  = QUADIN(NA1, AMETR, FP , YA)
+        CASE(1)
+            YA = YX*ABC
+            YRHO = QUADIN(NA1, AMETR, RHO, YA)
+            YFP  = QUADIN(NA1, AMETR, FP , YA)
+        CASE(2)
+            YRHO = YX*ROC
+            YA   = QUADIN(NA1, RHO, AMETR, YRHO)
+            YFP  = QUADIN(NA1, RHO, FP   , YRHO)
+        CASE(3)
+            YFP  = YFPC + (FP(NA1) - YFPC)*YX
+            YA   = QUADIN(NA1, FP, AMETR, YFP)
+            YRHO = QUADIN(NA1, FP, RHO  , YFP)
+        END SELECT
+
+        j = YRHO/HRO + 1
+        if (YRHO > 0.5*(RHO(NA) + ROC)) j = NA1
+
+        STRI(32: 33) = "a="
+        STRI(34: 38) = fmt5(YA)
+        YRHO = YRHO/ROC
+        STRI(39: 49) = 'm,   rho_t='
+        STRI(50: 54) = fmt5(YRHO)
+        if (YFP > YFPC) then
+            YFP = sqrt((YFP - YFPC)/(FP(NA1) - YFPC))
+        else
+            YFP = 0.
+        endif
+        STRI(55: 64) = ",   rho_p="
+        STRI(65: 69) = fmt5(YFP)
+        STRI(70: 77) = ",  Node:"
+        write(STRI(78: 80), '(1I3)')j
+    endif
+
+    do j=1, ny_canvas
+        YY1 = YY1 - DY
+        if (YY1 < 0) EXIT
+    enddo
+    YY = (YY1 + DY)/DY
+    if (MOD10 > 1 .and. MOD10 < 6 .and. MODEY == -1) then
+        if (JY - IY0 > (IYM - IY0)/ny_canvas) YY = YY - 1.
+    endif
+
 endif
 
 STRI(14: 18) = fmt5(YX)
@@ -747,7 +739,7 @@ call colovm(Black)
 do JJ=canv_x_left, canv_x_right, canv_wid
     JX = MIN0(canv_x_right, JJ)
     XP = MIN(canv_x_right , JX + LENG)
-    XM = MAX(canv_x_left, JX - LENG)
+    XM = MAX(canv_x_left  , JX - LENG)
     call drawvm(0, JX, IY0, JX, IYM)
 ! Y-line labels
     if (KPRI >= 1 .and. KPRI <= 2) then
@@ -922,9 +914,9 @@ return
 end subroutine NEGA
 
 !---------------------------------------------------------------------
-! Time dependences for radial output
-  subroutine DNSTR(jt, ITIMES, TOUT)
+subroutine down_label(jt, ITIMES, TOUT)
 !----------------------------------------------------------------------|
+! Time dependences for radial output
 ! Curve to digit conversion
 !  Input:  jt defines the current time
 !
@@ -988,16 +980,12 @@ if (MOD10 == 6) then
     call textvm(JN0, JN2, STRI, JL)
     JN2 = JN2 - DYLET + 1
     call textvm(JN0, JN2, STRIN, JL)
-
 else
-
     JB = 1
     JN0 = 0
     JN2 = frame_hei - 5*DYLET + FSHIFT + 2
-
     do
         JEND = MIN0(JB + 15, NTOUT)
-
         do J=JB, JEND
             XF4 = fmt_xf(TOUT(jt, J), 4)
             if (NAMET(J) == ' ') XF4 = '    '
@@ -1014,15 +1002,14 @@ else
         if (JEND == NTOUT .or. JEND == NRW) EXIT
         JB = JB + 16
     enddo
-
 endif
 
 return
-end subroutine DNSTR
+end subroutine down_label
 
 !---------------------------------------------------------------------
 ! Upper string of a picture
-subroutine UPSTR(YN, YQ)
+subroutine up_label(YN, YQ)
 
 use outcmn_inc, only: XWH, XWW, DXLET, DYLET, active_tab, MOD10, Black, Blue
 use const_inc, only: RTOR, BTOR, IPL, ABC, XLINE1
@@ -1055,7 +1042,7 @@ call colovm(Black)
 call rectvm(0, JN0, JN0, XWW - 1, XWH - 1)
 
 return
-end subroutine UPSTR
+end subroutine up_label
 
 !---------------------------------------------------------------------
 subroutine TIMEDT(TIME, DT)
@@ -1278,9 +1265,9 @@ write(NCHU, 1001) NSHOT, DEVID, 2, 0
 write(NCHU, 1002)
 write(NCHU, 1003) NASC
 if (NASC /= 0) then
-   write(NCHU, *) "Warning: don't know how to write 2D U-file"
-   write(*, *)    "Warning: don't know how to write 2D U-file"
-   write(*, *)    "         associated scalar is not defined"
+    write(NCHU, *) "Warning: don't know how to write 2D U-file"
+    write(*, *)    "Warning: don't know how to write 2D U-file"
+    write(*, *)    "         associated scalar is not defined"
 endif
 ! NOTE! a radially contiguous u-file is written
 write(NCHU, 1007)
@@ -1412,27 +1399,26 @@ n = 1
 STR = "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
 
 do
-   read(NCHR) CH1, STRI(1: ichar(CH1))
-   if (ichar(CH1) == 32 .and. STR == STRI(1:32)) then
-      j = j + 1 ! No. of adjacent strings 32*"^"
-      n = n + 1 ! Total No. of strings 32*"^" already encountered
-      if (j == 2) then
-         if (n <= 2) write(*, *) "Error in binary output file: wrong format"
-         if (n <= 3) then
-            if (NCHL /= 0) then
-               close(NCHL)
-               NCHL = 0
+    read(NCHR) CH1, STRI(1: ichar(CH1))
+    if (ichar(CH1) == 32 .and. STR == STRI(1:32)) then
+        j = j + 1 ! No. of adjacent strings 32*"^"
+        n = n + 1 ! Total No. of strings 32*"^" already encountered
+        if (j == 2) then
+            if (n <= 2) write(*, *) "Error in binary output file: wrong format"
+            if (n <= 3) then
+                if (NCHL /= 0) then
+                    close(NCHL)
+                    NCHL = 0
+                endif
+                return
             endif
-            return
-         endif
-         if (n <= 4) return
-      endif
-      if (n == 2 .and. NCHL /= 0) open(NCHL, STATUS='SCRATCH')
-   else
-      j = 0
-   endif
-   if (j == 0 .and. n == 2 .and. NCHL /= 0) write(NCHL, '(A)') STRI(1:ichar(CH1))
-
+            if (n <= 4) return
+        endif
+        if (n == 2 .and. NCHL /= 0) open(NCHL, STATUS='SCRATCH')
+    else
+        j = 0
+    endif
+    if (j == 0 .and. n == 2 .and. NCHL /= 0) write(NCHL, '(A)') STRI(1:ichar(CH1))
 enddo
 
 return
@@ -1456,10 +1442,10 @@ EXI = .True.
 jext = 0
 
 do while(EXI)
-   jext = jext + 1
-   write(ext, '(A, i0)') '.', jext
-   filename = TRIM(FNAME) // TRIM(ext)
-   inquire(FILE=TRIM(filename), EXIST=EXI)
+    jext = jext + 1
+    write(ext, '(A, i0)') '.', jext
+    filename = TRIM(FNAME) // TRIM(ext)
+    inquire(FILE=TRIM(filename), EXIST=EXI)
 enddo
 FNAME = TRIM(filename)
 

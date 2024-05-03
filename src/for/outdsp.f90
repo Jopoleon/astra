@@ -1,6 +1,6 @@
-!----------------------------------------------------------------------|
-subroutine OUTDSP(MARK, JIFNEW, IYO, ITIMES, TTOUT, TOUT)
-!----------------------------------------------------------------------|
+subroutine OUTDSP(MARK, JIFNEW, IYO, ITIMES, TT_out, t_out)
+
+!---------------------------------------------------------------------
 ! Drawing options:
 !   X - axis
 !      0 <= rho <= ROC=RHO(NA1)
@@ -14,25 +14,23 @@ subroutine OUTDSP(MARK, JIFNEW, IYO, ITIMES, TTOUT, TOUT)
 ! JIFNEW =/= 0 New curves only
 ! JIFNEW < 0   Don't mark resonances q=m/n
 ! JIFNEW > 10  Call from Review. (JIFNEW-10) is used to control erasing
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 
 use parameter_inc, only: NRD, NRDX, NRW
 use status_inc, only: AMETR, MU, SHIF, ELON, TRIA
-use const_inc, only: XOUT, NAB, NA1, ABC, TINIT, TSCALE, RTOR, &
+use const_inc, only: XOUT, NAB, NA1, NA1E, ABC, ROC, TINIT, TSCALE, RTOR, &
     MEQUIL, LEQ, UPDWN, TIME
 use outcmn_inc, only: frame_wid, frame_hei, canv_hei, canv_wid, nx_canvas, ny_canvas, &
     curves_per_frame, active_tab, MOD10, NWIND1, NWIND3, NWINDX, &
     IFDFAX, IY0, IYM, KPRI, DXLET, DYLET, NPTM, ICVMX, &
     NROUT, ROUT, OSHIFR, NAMER, SCALER, &
-    NTOUT, TOUT, OSHIFT, NAMET, SCALET, &
+    NTOUT, OSHIFT, NAMET, SCALET, &
     NXOUT, NAMEX, NARRX, EXARNM, DATAX, TOUTX, LTOUT, &
     XAXES, GRAL, GRAP, pixel_ymid, meter2pixel, LineWidth, &
-    Black, WarningColor, EraseColor, &
+    Black, WarningColor, EraseColor, Red, Blue, Green, &
     equ_file, NBFILE, NBFLAG
-use timeoutput_inc, only: NTIMES
-use expdat, only: raw_profile_map, DATARR, BNDR, BNDZ
-use ac_neg1, only: NUM, NKL1, NKL2, JMIN, JMAX, MODK
-use dbl2char, only: fmt_xf, fmt4
+use expdat, only: raw_profile_map, DATARR
+use dbl2char, only: fmt_xf
 use char_manip, only: len_trim_tab, str_in_list
 use debugger, only: markloc, debug, astra_stop
 
@@ -41,29 +39,32 @@ implicit none
 integer, parameter :: jzero=0, fshift=10
 integer, intent(in) :: MARK, JIFNEW, ITIMES
 integer, intent(inout) :: IYO(ITIMES,*)
-double precision, intent(in) :: TTOUT(ITIMES)
-double precision, intent(inout) :: TOUT(ITIMES, NRW)
+double precision, intent(in) :: TT_out(ITIMES)
+double precision, intent(inout) :: t_out(ITIMES, NRW)
 
 integer :: PTM(2), PTMO(2, NRDX, NRW), &
-    IWN(16), EQOLD(260, 11), &
-    IST, IQ1, IQ2, text_posy, jt_old, JS, MODEX, &
+    IWN(16), &
+    IST, text_posy, jt_old, JS, MODEX, &
     IYM0, LTOUT1, LTOUT2, JFNEW, STYL, x_shift, y_shift, jx_canv, jy_canv, JY, jxout, &
-    JW, j_curve, j_canv, &
+    JW, j_curve, j_canv, jplot, &
     IYMN, IYMX, JDSP, test_posx, NPTMO(NRW), jlx(8), &
     NP1, i, j, half_wid, &
     j1, jj, jsco, jn, jpnt, jsc, jposy, jarr, jtyp, n_canvas, &
     jplot_in_canv, jcol, jcol2, jprof, jtrace
-double precision :: SC(NRW), YX, r_out, YA, YL, YR, YQ1, YQ2, &
-     XROUT, YZ, ABSC, ymin, ymax, px_rmag
+double precision :: SC(NRW), YX, r_out, YA, YL, YR, &
+     XROUT, YZ, ABSC, ymin, ymax, px_rmag, yqmax, yq1, xq1, xte, te_bc
+double precision ,dimension(2) :: yq_arr
+double precision, dimension(16) :: xq1_old, xte_old
 double precision, dimension(NRD) :: xplot, yplot, xtrace, ytrace, xtrace_old
 double precision, dimension(NRD, ICVMX) :: xold, yold, ytrace_old
+double precision, external :: AFVAL
 character(len=80) :: STRI
 character(len=5 ) :: XF4
 character(len=6 ) :: CHAR6
 
-save EQOLD, PTMO, NPTMO, YQ1, YQ2, IQ1, IQ2, IWN, xold, yold, xtrace_old, ytrace_old
+save PTMO, NPTMO, IWN, xq1_old, xte_old, xold, yold, xtrace_old, ytrace_old
 
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 call markloc('OUTDSP')
 
 half_wid = frame_wid/2
@@ -103,12 +104,11 @@ JY = 10*frame_hei
 ymin = dble(frame_hei - IYM)
 ymax = dble(frame_hei - IY0)
 
-!----------------------------------------------------------------------|
 n_canvas = nx_canvas*ny_canvas
 
 SELECT CASE(MOD10)
 
-!------------
+!-----------------
 CASE(1: 3)  ! Profiles
 
     call markloc('Drawing mode 1-3', debug_lev=debug*2)
@@ -285,54 +285,30 @@ CASE(1: 3)  ! Profiles
         if (jcol2 == 7) jcol2 = 1
     enddo plot_profx
 
-    if (JIFNEW >= 10) return
-   
-! Erase/put resonance radii
-    call colovm(EraseColor)
-    do J=1, frame_wid, frame_wid/nx_canvas
-        if (IQ1 /= 0) then
-            test_posx = J + frame_wid/nx_canvas*YQ1 - 1
-            call drawvm(0, test_posx, IYM0, test_posx, IYM0 - 4)
-        endif
-        if(IQ2 == 0) CYCLE
-        test_posx = J + frame_wid/nx_canvas*YQ2 - 1
-        call drawvm(0, test_posx, IYM0, test_posx, IYM0 - 4)
-        test_posx = test_posx + 2
-        call drawvm(0, test_posx, IYM0, test_posx, IYM0 - 4)
+! Erase/put q=1 radius, BC for Te
+    yq1   = ABSC(AFVAL(MU, 1.0))
+    te_bc = ABSC(dble(NA1E)/dble(NA1)*ABC)
+    ymax = dble(IYM0)/dble(ny_canvas)
+    write(*, *) 'ROE', NA1E, te_bc
+    do j_canv=1, nx_canvas
+        xq1 = canv_wid*(j_canv -1 + YQ1)
+        xte = canv_wid*(j_canv -1 + te_bc)
+        do jy=1, ny_canvas
+            yq_arr = (/ dble(IYM0) - (jy-2)*canv_hei, ymax - (jy-2)*canv_hei/)
+            call update_curve(2, 2,   Red, 0, (/ xq1_old(j_canv), xq1_old(j_canv) /), yq_arr, (/ xq1, xq1 /), yq_arr)
+            if (te_bc > 1.d-3) then
+                call update_curve(2, 2, Green, 0, (/ xte_old(j_canv), xte_old(j_canv) /), yq_arr, (/ xte, xte /), yq_arr)
+            endif
+        enddo
+        xq1_old(j_canv) = xq1
+        xte_old(j_canv) = xte
     enddo
 
-    call colovm(WarningColor)
-    IQ1 = 0
-    IQ2 = 0
-    do J=1, NAB-1
-        if (MU(J) > 1. .and. MU(J+1) <= 1.) IQ1 = J
-        if (MU(J) > .5 .and. MU(J+1) <= .5) IQ2 = J
-    enddo
-    if (KPRI >= 1 .and. KPRI <= 2) then
-        write(STRI, '(1A)') 'Mark resonance radii'
-        j = len_trim_tab(STRI)
-        call pscom(STRI, j)
-    endif
-    if (IQ1 /= 0) YQ1 = ABSC(AMETR(IQ1)) 
-    if (IQ2 /= 0) YQ2 = ABSC(AMETR(IQ2)) 
-
-    do J=1, frame_wid, frame_wid/nx_canvas
-        if (IQ1 /= 0) then
-            test_posx = J + frame_wid/nx_canvas*YQ1 - 1
-            call drawvm(0, test_posx, IYM0, test_posx, IYM0 - 4)
-        endif
-        if (IQ2 == 0) CYCLE
-        test_posx = J + frame_wid/nx_canvas*YQ2 - 1
-        call drawvm(0, test_posx, IYM0, test_posx, IYM0 - 4)
-        test_posx = test_posx + 2
-        call drawvm(0, test_posx, IYM0, test_posx, IYM0 - 4)
-    enddo
-
-!----------------
+!-------------------
 CASE(4:5)
     call markloc('Drawing mode 4/5', debug_lev=2*debug)
 
-!----------------
+!-------------------
 CASE(6)  ! Time traces
 
     call markloc('Drawing mode 6', debug_lev=2*debug)
@@ -341,7 +317,7 @@ CASE(6)  ! Time traces
 
 ! right_label_position=JDX*JDMX=23*5*5=575 (see typdsp.f)
     do J=1, LTOUT-1
-        r_out = (TTOUT(J) - TINIT)*575/abs(TSCALE)
+        r_out = (TT_out(J) - TINIT)*575/abs(TSCALE)
         IYO(J, ICVMX+1) = 6*DXLET + r_out
         xtrace(J) = 6*DXLET + r_out
         if (r_out < 0)  LTOUT1 = J + 1
@@ -353,10 +329,10 @@ CASE(6)  ! Time traces
     endif
     do jj=1, min(NTOUT, NRW)
         do j=LTOUT1, LTOUT1 + LTOUT2
-            TOUT(j, jj) = TOUT(j, jj) + OSHIFT(jj)
+            t_out(j, jj) = t_out(j, jj) + OSHIFT(jj)
         enddo
     enddo
-    call SCAL(NTOUT, SC, SCALET, TOUT(LTOUT1, 1), LTOUT2, ITIMES)
+    call SCAL(NTOUT, SC, SCALET, t_out(LTOUT1, 1), LTOUT2, ITIMES)
 
     j_curve = 0
     plot_traces: do jtrace=1, min(NRW, NTOUT)
@@ -366,7 +342,7 @@ CASE(6)  ! Time traces
         jplot_in_canv = (JW - 1)/n_canvas       ! <-> color
         j_canv = MOD(JW - 1, n_canvas) + 1      ! 1-8 for mode '1'
         do J=1, LTOUT
-            r_out = max(TOUT(J, jtrace)/SC(jtrace), -7.d0)
+            r_out = max(t_out(J, jtrace)/SC(jtrace), -7.d0)
             r_out = min(r_out, 7.d0)
             JDSP  = 10*(canv_hei*r_out + IYMN + (n_canvas - j_canv)*canv_hei)
             JDSP  = max(JDSP, 10*IYMN)
@@ -399,14 +375,15 @@ CASE(6)  ! Time traces
         call CMARKT(text_posy, test_posx, SC(jtrace), OSHIFT(jtrace), NAMET(jtrace), STYL)
 
         do j=LTOUT1, LTOUT1 + LTOUT2
-            TOUT(j, jtrace) = TOUT(j, jtrace) - OSHIFT(jtrace)
+            t_out(j, jtrace) = t_out(j, jtrace) - OSHIFT(jtrace)
         enddo
     enddo plot_traces
 
-!----------------
+!-------------------
 CASE(7)
     call markloc('Drawing mode 7', debug_lev=2*debug)
 
+!-------------------
 CASE(8)
 
     call markloc('Drawing mode 8', debug_lev=2*debug)
@@ -428,8 +405,8 @@ CASE(8)
 
     SELECT CASE(LEQ(5))
     CASE(:1)
-        call DRAW3M(jifnew, DYLET, EQOLD, &
-            NA1, NAB, RTOR, AMETR, SHIF, UPDWN, ELON, TRIA)
+        call DRAW3M(jifnew, DYLET, NA1, NAB, &
+            RTOR, AMETR, SHIF, UPDWN, ELON, TRIA)
     CASE(3)
         call bnd_draw(JIFNEW, IYO, TIME)
         call DRAWSPFLUX
@@ -438,8 +415,8 @@ CASE(8)
             SHIF = 0.0
             ELON = 1.0
             TRIA = 0.0 
-            call DRAW3M(jifnew, DYLET, EQOLD, &
-                NA1, NAB, RTOR, AMETR, SHIF, UPDWN, ELON, TRIA)
+            call DRAW3M(jifnew, DYLET, NA1, NAB, &
+                RTOR, AMETR, SHIF, UPDWN, ELON, TRIA)
         else
             call bnd_draw(JIFNEW, IYO, TIME)
             call DRAWSPFLUX
@@ -500,7 +477,7 @@ CASE(8)
         NPTMO(jxout) = jpnt
     enddo loop8
 
-!----------------
+!-------------------
 CASE(9)
     call markloc('User drawing mode', debug_lev=2*debug)
 
@@ -509,15 +486,15 @@ END SELECT
 return
 end subroutine outdsp
 
-!======================================================================|
+!---------------------------------------------------------------------
 subroutine bnd_draw(ifnew, IYO, time_in)
-!----------------------------------------------------------------------|
+
 ! IFNEW  =  0 Re-draw (erase) the previous curves
 ! IFNEW =/= 0 New curves only
 ! IFNEW < 0 Don't mark resonances q=m/n
-! IFNEW  > 10 Call from Review. (JIFNEW-10) is used to control erasing
+! IFNEW > 10 Call from Review. (JIFNEW-10) is used to control erasing
 
-use outcmn_inc, only: Red, NBNT, pixel_ymid, meter2pixel
+use outcmn_inc, only: Red, EraseColor, NBNT, pixel_ymid, meter2pixel
 use expdat, only: BNDTIM, BNDR, BNDZ
 use const_inc, only: NBND
 
@@ -533,9 +510,7 @@ double precision :: YS, YX, YXL, YXR, YZ
 j2 = 1 + NBND/32
 
 if (IFNEW == 0) then
-    j = 0   ! Erase the old points
-! j = 31   ! Draw the old points with shadow color
-    call colovm(j)
+    call colovm(EraseColor)
     do j=1, NBND, j2
         PTM(1) = IYO(1, j)
         PTM(2) = IYO(2, j)
@@ -588,76 +563,55 @@ endif
 return
 end subroutine bnd_draw
 
-!======================================================================|
-subroutine DRAW3M(jifnew, DYLET, EQOLD, &
-    NA1, NAB, RTOR, AMETR, SHIF, UPDWN, ELON, TRIA)
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
+subroutine DRAW3M(jifnew, DYLET, NA1, NAB, &
+    RTOR, AMETR, SHIF, UPDWN, ELON, TRIA)
+!---------------------------------------------------------------------
+! Update plot of magnetic surfaces
 
 use outcmn_inc, only: Magenta, Pink, EraseColor, Red, frame_hei, &
     LineWidth, pixel_ymid, meter2pixel
 
-use const_inc, only: GP
+use const_inc, only: GP2
 
 implicit none
 
 integer, intent(in) :: jifnew, DYLET, NA1, NAB
-integer, intent(inout) :: EQOLD(260, 11)
 double precision, intent(in) :: RTOR, AMETR(*), ELON(*), TRIA(*), UPDWN, SHIF(*)
 
-integer, parameter :: n_theta=64
-integer :: j, jj, jn, JX
+integer, parameter :: n_theta=64, nrho_plot=10
+integer :: jrho, jthe, jrho_loc, nskip
 integer, dimension(260) :: plot_arr
 double precision :: YR, YZ, YFI
+double precision, dimension(n_theta) :: xplot, yplot
+double precision, dimension(n_theta, nrho_plot) :: xplot_old, yplot_old
 
-!----------------------------------------------------------------------|
-! Redraw magnetic surfaces:
-do J=1, 10
-! Erase:
-    if (jifnew == 0) then
-        call colovm(EraseColor)
-        do JJ=1, 130
-            plot_arr(2*JJ-1) = EQOLD(2*JJ-1, J)
-            plot_arr(2*JJ  ) = EQOLD(2*JJ, J)
-        enddo
-        jj = 0
-        jn = 130
-        call d2polyline(jj, jn, LineWidth, plot_arr)
-    endif
+save xplot_old, yplot_old
 
-! New configuration:
-    JX = max(1., 0.1*NA1*J - 1)
-    JX = min(NA1, JX)
-    if (J == 10) then
-        call colovm(Red)
-        JX = NA1
-        if (NA1 /= NAB) then
-            call drawvm(0, frame_hei, 55, 400, 55)
-            call textvm(410, 55+DYLET/2, 'Transport boundary', 18)
-        endif
-    else
-        call colovm(Magenta)  ! Outermost flux surface
-    endif
-    do JJ=1, 130
-        YFI = GP*(JJ - 1)/64.
-        YZ = UPDWN + AMETR(JX)*ELON(JX)*sin(YFI)
-        YR = RTOR + SHIF(JX) + AMETR(JX)*(cos(YFI) + 0.5*TRIA(JX)*(cos(2.*YFI) - 1.))
-        plot_arr(2*JJ-1) = 10.*YR*meter2pixel
-        plot_arr(2*JJ) = 10.*(pixel_ymid - YZ*meter2pixel)
-! Save picture:
-        EQOLD(2*JJ-1, J) = plot_arr(2*JJ-1)
-        EQOLD(2*JJ  , J) = plot_arr(2*JJ)
+do jrho=1, nrho_plot
+    jrho_loc = NA1*jrho/nrho_plot - 1
+    jrho_loc = min(max(1, NA1), jrho_loc)
+    do jthe=1, n_theta
+        YFI = GP2*(jthe - 1)/64.
+        YZ = UPDWN + AMETR(jrho_loc)*ELON(jrho_loc)*sin(YFI)
+        YR = RTOR + SHIF(jrho_loc) + AMETR(jrho_loc)*(cos(YFI) + 0.5*TRIA(jrho_loc)*(cos(2.*YFI) - 1.))
+        xplot(jthe) = YR*meter2pixel
+        yplot(jthe) = pixel_ymid - YZ*meter2pixel
     enddo
-    jj = 0
-    jn = 130
-    call d2polyline(jj, jn, LineWidth, plot_arr)
+    call update_curve(nrho_plot, nrho_plot, Magenta, 0, LineWidth, xplot_old(:, jrho), &
+        yplot_old(:, jrho), xplot, yplot)
+! Save picture:
+    xplot_old(:, jrho) = xplot(:)
+    yplot_old(:, jrho) = yplot(:)
 enddo
 
 return
 end subroutine DRAW3M
 
-!======================================================================|
+!---------------------------------------------------------------------
 subroutine plot_wall
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
+! Plot vessel components reading them from "wall_gc_file"
 
 use const_inc, only: AB, ELONM, RTOR, TRICH, GP2
 use outcmn_inc, only: wall_gc_file, Blue, White, LineWidth, pixel_ymid, &
@@ -726,12 +680,11 @@ endif
 return
 end subroutine plot_wall
 
-!======================================================================|
+!---------------------------------------------------------------------
 double precision function ABSC(YIN)
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 ! Input: MODEX, YIN, FP
 ! Output: Value a=YIN mapped to the current abscissa
-!----------------------------------------------------------------------|
 
 use outcmn_inc, only: MOD10
 use status_inc, only: AMETR, FP_NORM
@@ -775,15 +728,14 @@ endif
 
 end function ABSC
 
-!======================================================================|
+!---------------------------------------------------------------------
 subroutine DRAWFOOT(jifnew)
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 ! YRBMN maximum radius of the footprint 
 ! YRBMX minimum radius of the footprint 
 ! YHBM  the upshift of the beam footprint
 ! YASP  the aspect ratio of the beam footprint
 ! YQ    the beam power
-!----------------------------------------------------------------------|
 
 use parameter_inc, only: NRD
 use const_inc, only: CNB1
@@ -800,10 +752,8 @@ double precision, dimension(10) :: plot_arr
 double precision, dimension(15, 2*NRD+7) :: work_nbi
 character(len=16) :: STRI
 character(len=132) :: err_msg
-!----------------------------------------------------------------------|
 
 call markloc('DRAWFOOT')
-
 call createpixmap(2) ! All calls except the first are ignored
 
 open(2, file=TRIM(NBFILE), status='OLD')
@@ -843,9 +793,7 @@ call colovm(Magenta)
 JL = 0
 
 do JN=1, anint(CNB1)
-
     YQ = work_nbi(1, JN)
-
     if (YQ >= 1.d-2) then
         YHBM = work_nbi(11, JN)
         YASP = work_nbi(15, JN)
@@ -875,17 +823,15 @@ do JN=1, anint(CNB1)
         j = 2
         jj = 5
         call drawcurve(j, plot_arr, jj)
-
     endif
-
 enddo
 
 return
 end subroutine DRAWFOOT
 
-!======================================================================|
+!---------------------------------------------------------------------
 subroutine DRAWSPFLUX
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 ! Redraw magnetic surfaces:
 
 use outcmn_inc, only: Magenta, pixel_ymid, meter2pixel

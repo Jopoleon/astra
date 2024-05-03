@@ -946,9 +946,9 @@ else
     call OUTDSP(MARK, 0, ITO, ntrun, TTOUT, TOUT)
 endif
 CHORDN = lineav()
-call UPSTR(CHORDN, 1./MU(NA))
+call up_label(CHORDN, 1./MU(NA))
 jt = 0
-if (MOD10 <= 7) call DNSTR(jt, NTRUN, TOUT)
+if (MOD10 <= 7) call down_label(jt, NTRUN, TOUT)
 call redraw(0)
 
 end subroutine graph_output
@@ -1007,11 +1007,11 @@ else
     call OUTDSP(MARK, 1, ITO, NTRUN, TTOUT, TOUT)
 endif
 CHORDN = lineav()
-call UPSTR(CHORDN, 1./MU(NA))
+call up_label(CHORDN, 1./MU(NA))
 if (IFKL /= 256) call TIMEDT(TIME, 1000.*TAU)
 j = 0
-if (MOD10 <= 5 .or. MOD10 == 7) call DNSTR(j, NTRUN, TOUT)
-if (MOD10 == 6 .and. KPRI == 0) call DNSTR(j, NTRUN, TOUT)
+if (MOD10 <= 5 .or. MOD10 == 7) call down_label(j, NTRUN, TOUT)
+if (MOD10 == 6 .and. KPRI == 0) call down_label(j, NTRUN, TOUT)
 if (KPRI == 1 .or. KPRI == 2) then
     write(*, '(//A//)') '>>>  The figure is stored in the file: ' // TRIM(PSNAME)
     call colovm(WarningColor)

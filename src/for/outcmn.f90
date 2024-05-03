@@ -6,7 +6,7 @@ use parameter_inc, only: NRD, NRDX, NRW, NTARR, NARRX, NSBMX, NCNBM, NCNBTM, &
 implicit none
 
 ! Colors, array AstraColorNum in Astra2XW.c
-integer, parameter :: White=0, Black=1, Red=2, Blue=3, &
+integer, parameter :: White=0, Black=1, Red=2, Blue=3, Green=5, &
      WarningColor=30, EraseColor=31, Magenta=14, Pink=13, ICVMX=32
 character(len=1), parameter :: null_ch=char(0), tab_ch=char(9), esc_ch=char(13), backslash=char(92)
 

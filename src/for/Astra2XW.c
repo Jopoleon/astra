@@ -1,6 +1,6 @@
 /*The file includes the C-functions:
-     createGC         Change_Color     Open_Screen  close_Screen	
-     Open_Window      MoveArrow        PutColorName initDefaultColors	
+     createGC         Change_Color     Open_Screen  close_Screen
+     Open_Window      MoveArrow        PutColorName initDefaultColors
      PSASetForeground PSADrawRectangle PSADrawLine  PSADrawLString
 and interfaces for FORTRAN calls
     initvm    drawvm  rectvm  erasrw  setlin  redraw
@@ -174,7 +174,7 @@ void Open_Screen(){
     theDisplay =XOpenDisplay(NULL);
     if (theDisplay == NULL){
         printf(">>> ERROR: Cannot establish a connection to the X Server %s\n", XDisplayName(NULL));
-	return;
+        return;
     }
     theScreen = DefaultScreen(theDisplay);
     theDepth = DefaultDepth(theDisplay, theScreen);
@@ -208,11 +208,11 @@ void makeIcon(Window theNewWindow){
 #define sqF1_height 20
     static unsigned char sqF1_bits[] = {
         0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01, 0xe0, 0xff,
-	0x00, 0xe0, 0xff, 0xfc, 0xff, 0xff, 0xfc, 0xff, 0x7c, 0x3e,
-	0xfc, 0x7c, 0x3e, 0xfc, 0x7d, 0x3e, 0xfc, 0x39, 0x3f, 0xfc,
-	0x39, 0x3f, 0xfc, 0x3b, 0x3f, 0xfc, 0x93, 0x3f, 0xfc, 0x93,
-	0x3f, 0xfc, 0x97, 0x3f, 0xfc, 0xc7, 0xff, 0xff, 0xc7, 0xff,
-	0xff, 0xcf, 0x3f, 0xfc, 0xef, 0x3f, 0xfc, 0xff, 0xff, 0xff};
+        0x00, 0xe0, 0xff, 0xfc, 0xff, 0xff, 0xfc, 0xff, 0x7c, 0x3e,
+        0xfc, 0x7c, 0x3e, 0xfc, 0x7d, 0x3e, 0xfc, 0x39, 0x3f, 0xfc,
+        0x39, 0x3f, 0xfc, 0x3b, 0x3f, 0xfc, 0x93, 0x3f, 0xfc, 0x93,
+        0x3f, 0xfc, 0x97, 0x3f, 0xfc, 0xc7, 0xff, 0xff, 0xc7, 0xff,
+        0xff, 0xcf, 0x3f, 0xfc, 0xef, 0x3f, 0xfc, 0xff, 0xff, 0xff};
 
     theIconPixmap = XCreatePixmapFromBitmapData(theDisplay, theNewWindow, 
         sqF1_bits, sqF1_width, sqF1_height, //Use sqF1
@@ -281,7 +281,7 @@ void MoveArrow(Window wind, int fromx, int fromy, int tox, int toy){
     int Xx, Xy;
     if (fromx > 0){
         Xx = fromx;
-	Xy = fromy;
+        Xy = fromy;
         Change_Color(theGCA, 0, 0);
         XDrawLine(theDisplay, wind, theGCA, Xx, Xy, Xx, Xy+5);
         XDrawLine(theDisplay, wind, theGCA, Xx+1, Xy+1, Xx+1, Xy+5);
@@ -294,7 +294,7 @@ void MoveArrow(Window wind, int fromx, int fromy, int tox, int toy){
 
     if (tox > 0){
         Xx = tox;
-	Xy = toy;
+        Xy = toy;
         Change_Color(theGCA, 3, 0); /* 3 - blue */
         XDrawLine(theDisplay, wind, theGCA, Xx, Xy, Xx, Xy+5);
         XDrawLine(theDisplay, wind, theGCA, Xx+1, Xy+1, Xx+1, Xy+5);
@@ -330,27 +330,27 @@ void initDefaultColors(){
     if (theDepth > 1){
         ColorNum = maxPixels;
         for (i=0; i < maxPixels; i++){
-	    theStatus = XLookupColor(theDisplay, theColormap, theColorNames[i],
+            theStatus = XLookupColor(theDisplay, theColormap, theColorNames[i],
                 &theRGBColor, &theHardwareColor);
             if (theStatus != 0){
-	        theStatus = XAllocColor(theDisplay, theColormap, &theHardwareColor);
+                theStatus = XAllocColor(theDisplay, theColormap, &theHardwareColor);
                 if (theStatus != 0){
-		    thePixels[i] = theHardwareColor.pixel;
-		}
+                    thePixels[i] = theHardwareColor.pixel;
+                }
                 else{
-		    thePixels[i] = theBlackPixel;
-		}
+                    thePixels[i] = theBlackPixel;
+                }
             }
         }
     }
     else{  /* Monochrome system */
         for (i=0; i < maxPixels; i++){
-	    if (strcmp("White", theColorNames[i]) == 0){
-	        thePixels[i] = theWhitePixel;
-	    }
+            if (strcmp("White", theColorNames[i]) == 0){
+                thePixels[i] = theWhitePixel;
+            }
             else{
-	        thePixels[i] = theBlackPixel;
-	    }
+                thePixels[i] = theBlackPixel;
+            }
         }
     }
 }
@@ -498,17 +498,17 @@ void drawvm_(INT_ *id, INT_ *x1, INT_ *y1, INT_ *x2, INT_ *y2){
     if (*id) XSetForeground(theDisplay, theGCA, theCurrentColor);
     if (FlagPSA > 0){
         dx1 = Xx1*PSsc;
-	dx2 = Xx2*PSsc;
-	dy1 = Xy1*PSsc;
+        dx2 = Xx2*PSsc;
+        dy1 = Xy1*PSsc;
         dy2 = Xy2*PSsc;
-	PSADrawLine(dx1, dy1, dx2, dy2);
+        PSADrawLine(dx1, dy1, dx2, dy2);
     }
 }
 
 /********************************************************************/
 void drawcurve_(int *id, int *n, int *LineWidth, double *X, double *Y){
     int j, Xx1, Xy1, Xx2, Xy2;
-    double dx1, dy1;
+    double dx1, dy1, dx2, dy2;
 
     if (*id) XSetForeground(theDisplay, theGCA, ~theCurrentColor);
     for (j=0; j < *n-1; j++){
@@ -524,58 +524,10 @@ void drawcurve_(int *id, int *n, int *LineWidth, double *X, double *Y){
         for (j=0; j < *n-1; j++){
             dx1 = X[j] + 10.;
             dy1 = Y[j] + 10.;
-            fprintf(PSAfile, "%12.5e %12.5e\n", dx1+PS_xA, PS_yA-dy1);
-        }
-        fprintf(PSAfile, "moveto %d{lineto}repeat\n", (*n)-1);
-    }
-}
-
-/********************************************************************/
-void d2polyline_(INT_ *id, INT_ *n, int *LineWidth, INT_ *iXY){
-    int j, n2, x1, y1, x2, y2;
-    double dx1, dy1, dx2, dy2;
-    if (*id) XSetForeground(theDisplay, theGCA, ~theCurrentColor);
-    n2 = 2*(*n) - 3;
-    for (j=0; j < n2; j+=2){
-        dx1 = iXY[j  ]/10. + 10;
-        dy1 = iXY[j+1]/10. + 10;
-        dx2 = iXY[j+2]/10. + 10;
-        dy2 = iXY[j+3]/10. + 10;
-        x1 = dx1;
-        y1 = dy1;
-        x2 = dx2;
-        y2 = dy2;
-        XDrawLine(theDisplay, Pixmaps[*id], theGCA, x1, y1, x2, y2);
-    }
-    if (*id) XSetForeground(theDisplay, theGCA, theCurrentColor);
-    XSetLineAttributes(theDisplay, theGCA, *LineWidth, LineSolid, CapRound, JoinRound);
-    if (FlagPSA > 0){
-        fprintf(PSAfile, "newpath\n");
-        n2 = 2*(*n);
-        for (j=0; j < n2; j+=2){
-            dx1 = (iXY[j]/10. + 10)*PSsc;
-            dy1 = (iXY[j+1]/10.+10)*PSsc;
-            fprintf(PSAfile, "%12.5e %12.5e\n", dx1+PS_xA, PS_yA-dy1);
-        }
-        fprintf(PSAfile, "moveto %d{lineto}repeat\n", (*n)-1);
-
-#ifdef H
-        for (j=0; j < n2; j+=2){
-            dx1 = iXY[j  ]/10. + 10;
-            dy1 = iXY[j+1]/10. + 10;
-            dx2 = iXY[j+2]/10. + 10;
-            dy2 = iXY[j+3]/10. + 10;
-            x1 = dx1;
-            x2 = dx2;
-            y1 = dy1;
-            y2 = dy2;
-            dx1 *= PSsc;
-            dx2 *= PSsc;
-            dy1 *= PSsc;
-            dy2 *= PSsc;
+            dx2 = X[j+1] + 10.;
+            dy2 = Y[j+1] + 10.;
             PSADrawLine(dx1, dy1, dx2, dy2);
         }
-#endif
     }
 }
 
@@ -593,9 +545,9 @@ void rectvm_(INT_ *id, INT_ *x, INT_ *y, INT_ *width, INT_ *height){
     if (*id) XSetForeground(theDisplay, theGCA, theCurrentColor);
     if (FlagPSA > 0){
         x1 = Xx*PSsc;
-	y1 = Xy*PSsc; 
+        y1 = Xy*PSsc; 
         w1 = Xwidth*PSsc;
-	h1 = (Xheight - 80)*PSsc;
+        h1 = (Xheight - 80)*PSsc;
         PSADrawRectangle(x1, y1, w1, h1);
     }
 }
@@ -639,9 +591,9 @@ void putString(GC gc_in, INT_ *x, INT_ *y, char *str, INT_ *str_len){
     XDrawImageString(theDisplay, theRootWindow, gc_in, Xx, Xy, str, Xstlen);
     if (FlagPSA > 0){
         x1 = Xx*PSsc;
-	y1 = Xy*PSsc;
+        y1 = Xy*PSsc;
         psth = F1sh*PSsc;
-	PSADrawLString(x1, y1, str, Xstlen, psth);
+        PSADrawLString(x1, y1, str, Xstlen, psth);
     }
 }
 
@@ -657,9 +609,9 @@ void textnb_(INT_ *x, INT_ *y, char *str, INT_ *str_len){
     XSetForeground(theDisplay, theGCA, theCurrentColor);
     if (FlagPSA > 0){
         x1 = Xx*PSsc;
-	y1 = Xy*PSsc;
+        y1 = Xy*PSsc;
         psth = F1sh*PSsc;
-	PSADrawLString(x1, y1, str, Xstlen, psth);
+        PSADrawLString(x1, y1, str, Xstlen, psth);
     }
 }
 
@@ -811,7 +763,7 @@ void PSADrawLString(double x, double y, char *ln, int n, double psfsc){
     psfsc1 = 1./psfsc;
     for (i=0; i <= n-1 ; ++i){
         *(tlin+i) = *(ln+i);
-	*(tlin+n) = '\0';
+        *(tlin+n) = '\0';
     }
     fprintf(PSAfile, "%10.3e %10.3e moveto\n", x+PS_xA, PS_yA-y);
     fprintf(PSAfile, "%15.8e %15.8e (%s) Lshow\n", psfsc1, psfsc, tlin);

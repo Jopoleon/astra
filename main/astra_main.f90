@@ -90,7 +90,7 @@ if (TASK(1: 3) /= 'BGD') then
     call textbf(0, XWH-104, RUNID, 80) ! Task ID
 
     CHORDN = LINEAV()
-    call UPSTR(CHORDN, 1./MU(NA))
+    call up_label(CHORDN, 1./MU(NA))
 endif
 
 call SETARX(1)
