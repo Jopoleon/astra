@@ -269,7 +269,7 @@ end subroutine plot_curve
 !---------------------------------------------------------------------
 subroutine NMARK(POINT, STYL)
 
-use outcmn_inc, only: LineWidth
+use outcmn_inc, only: LineWidth, resizeGraph
 
 implicit none
 
@@ -304,8 +304,8 @@ data DY/ &
 
 IST = max(1, min(STYL, 7))
 do J=1, N(IST)
-    xsym(J) = POINT(1) + DX(J, IST)
-    ysym(J) = POINT(2) + DY(J, IST)
+    xsym(J) = POINT(1) + resizeGraph*DX(J, IST)
+    ysym(J) = POINT(2) + resizeGraph*DY(J, IST)
 enddo
 call drawcurve(0, N(IST), LineWidth, xsym, ysym)
 

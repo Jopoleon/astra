@@ -27,7 +27,6 @@ and interfaces for FORTRAN calls
 void initvm_(INT_*, INT_*, INT_*, INT_*, char*, INT_*);
 void redraw_(INT_*);
 void erasrw_();
-void savepm_(INT_*, INT_*);
 void textvm_(INT_*, INT_*, char*, INT_*);
 void textbf_(INT_*, INT_*, char*, INT_*);
 void textnb_(INT_*, INT_*, char*, INT_*);
@@ -71,7 +70,7 @@ Display *theDisplay;
 Window theRootWindow;
 GC theGCA, hghGC, hgh_menuGC, hintGC;
 Colormap theColormap;
-Drawable Pixmaps[maxPixmaps] = {0, 0, 0, 0, 0, 0}, marker[11];
+Drawable Pixmaps[maxPixmaps] = {0, 0, 0, 0, 0, 0}; //, marker[11];
 Drawable theIconPixmap;
 Cursor thePauseCursor, theMenuCursor;
 int Xmode=0;  /* Default: NoX - Batch mode */
@@ -357,23 +356,6 @@ void initDefaultColors(){
 /********************************************************************/
 void initvm_(INT_ *x, INT_ *y, INT_ *wid, INT_ *hei, char* Title, INT_ *titlen){
 // Use the unix command "bitmap" to create the data
-    static char
-    circle_bits[]  = {0x1c, 0x22, 0x41, 0x41, 0x41, 0x22, 0x1c}, 
-    plus_bits[]    = {0x08, 0x08, 0x08, 0x7f, 0x08, 0x08, 0x08}, 
-    diamond_bits[] = {0x08, 0x14, 0x22, 0x41, 0x22, 0x14, 0x08}, 
-    square_bits[]  = {0x7f, 0x41, 0x41, 0x41, 0x41, 0x41, 0x7f}, 
-    cross_bits[]   = {0x41, 0x22, 0x14, 0x08, 0x14, 0x22, 0x41}, 
-    aster_bits[]   = {0x22, 0x14, 0x08, 0x7f, 0x08, 0x14, 0x22}, 
-    arrow_bits[]   = {0x08, 0x1c, 0x1c, 0x2a, 0x2a, 0x08, 0x08}, 
-    triarr_bits[]  = {0x08, 0x1c, 0x1c, 0x3e, 0x3e, 0x7f, 0x00}, 
-    rtriar_bits[]  = {0x08, 0x18, 0x38, 0x78, 0x38, 0x18, 0x08}, 
-    fsquare_bits[] = {0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f}, 
-    fdiamon_bits[] = {0x08, 0x1c, 0x3e, 0x7f, 0x3e, 0x1c, 0x08}, 
-    dies_bits[]    = {0x14, 0x14, 0x7f, 0x14, 0x7f, 0x14, 0x14}, 
-    fcircle_bits[] = {0x1c, 0x3e, 0x7f, 0x7f, 0x7f, 0x3e, 0x1c},
-    rct3_bits[] = {0x07, 0x05, 0x07},
-    rct4_bits[] = {0x0f, 0x09, 0x09, 0x0f},
-    rct5_bits[] = {0x1f, 0x11, 0x11, 0x11, 0x1f};
 
     Window openWindow();
     int i, ix, iy;
@@ -407,17 +389,6 @@ void initvm_(INT_ *x, INT_ *y, INT_ *wid, INT_ *hei, char* Title, INT_ *titlen){
     XWarpPointer(theDisplay, None, theRootWindow, 0, 0, 0, 0, *wid/2, *hei-120);
 
     Pixmaps[0] = theRootWindow;
-    marker[0]  = XCreateBitmapFromData(theDisplay, theRootWindow, fdiamon_bits, 7, 7);
-    marker[1]  = XCreateBitmapFromData(theDisplay, theRootWindow,  circle_bits, 7, 7);
-    marker[2]  = XCreateBitmapFromData(theDisplay, theRootWindow,  square_bits, 7, 7);
-    marker[3]  = XCreateBitmapFromData(theDisplay, theRootWindow,   aster_bits, 7, 7);
-    marker[4]  = XCreateBitmapFromData(theDisplay, theRootWindow,   cross_bits, 7, 7);
-    marker[5]  = XCreateBitmapFromData(theDisplay, theRootWindow,  triarr_bits, 7, 7);
-    marker[6]  = XCreateBitmapFromData(theDisplay, theRootWindow, fcircle_bits, 7, 7);
-    marker[7]  = XCreateBitmapFromData(theDisplay, theRootWindow, fsquare_bits, 7, 7);
-    marker[8]  = XCreateBitmapFromData(theDisplay, theRootWindow, diamond_bits, 7, 7);
-    marker[9]  = XCreateBitmapFromData(theDisplay, theRootWindow,    rct4_bits, 4, 4);
-    marker[10] = XCreateBitmapFromData(theDisplay, theRootWindow,    rct5_bits, 5, 5);
 }
 
 /********************************************************************/
@@ -439,13 +410,6 @@ void redraw_(INT_ *id){
         XCopyArea(theDisplay, Pixmaps[*id], theRootWindow, theGCA, 0, 0, XWW, XWH, 0, 0);
         XSetFunction(theDisplay, theGCA, GXcopy);
     }
-    XFlush(theDisplay);
-}
-
-/********************************************************************/
-void savepm_(INT_ *source, INT_ *destination){
-// Copy pixmap
-    XCopyArea(theDisplay, Pixmaps[*source], Pixmaps[*destination], theGCA, 0, 0, XWW, XWH, 0, 0);
     XFlush(theDisplay);
 }
 
