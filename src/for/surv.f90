@@ -242,7 +242,7 @@ if (STYL < 0) then  ! Draw dashed curves
         NF = max(1, LE/4)
         do j=1, NP, LE
             j1 = min(NP - j + 1, LE - NF)
-            call drawcurve(0, j1, xplot(1: j1), yplot(1:j1))
+            call drawcurve(0, j1, xplot(j: j+j1-1), yplot(j: j+j1-1))
         enddo
         return
     endif
@@ -261,6 +261,7 @@ endif
 
 call drawcurve(0, NP, xplot(1:NP), yplot(1:np))
 
+return
 end subroutine plot_curve
 
 !---------------------------------------------------------------------
