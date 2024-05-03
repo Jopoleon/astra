@@ -26,7 +26,7 @@ use outcmn_inc, only: frame_wid, frame_hei, canv_hei, canv_wid, nx_canvas, ny_ca
     NROUT, ROUT, OSHIFR, NAMER, SCALER, &
     NTOUT, OSHIFT, NAMET, SCALET, &
     NXOUT, NAMEX, NARRX, EXARNM, DATAX, TOUTX, LTOUT, &
-    XAXES, GRAL, GRAP, pixel_ymid, meter2pixel, LineWidth, &
+    XAXES, GRAL, GRAP, pixel_ymid, meter2pixel, &
     Black, WarningColor, EraseColor, Red, Blue, Green, &
     equ_file, NBFILE, NBFLAG
 use expdat, only: raw_profile_map, DATARR
@@ -390,7 +390,7 @@ CASE(8)
     call markloc('Drawing mode 8', debug_lev=2*debug)
     px_rmag = (RTOR + SHIF(1))*meter2pixel
     call colovm(Black)
-    call drawcurve(0, 2, LineWidth, (/0., px_rmag/), (/pixel_ymid, pixel_ymid/))
+    call drawcurve(0, 2, (/0., px_rmag/), (/pixel_ymid, pixel_ymid/))
 ! Plot the complete wall structure (Pixmap # 1)
     call plot_wall
 
@@ -571,7 +571,7 @@ subroutine DRAW3M(jifnew, DYLET, NA1, NAB, &
 ! Update plot of magnetic surfaces
 
 use outcmn_inc, only: Magenta, Pink, EraseColor, Red, frame_hei, &
-    LineWidth, pixel_ymid, meter2pixel
+    pixel_ymid, meter2pixel
 
 use const_inc, only: GP2
 
@@ -599,7 +599,7 @@ do jrho=1, nrho_plot
         xplot(jthe) = YR*meter2pixel
         yplot(jthe) = pixel_ymid - YZ*meter2pixel
     enddo
-    call update_curve(nrho_plot, nrho_plot, Magenta, 0, LineWidth, xplot_old(:, jrho), &
+    call update_curve(nrho_plot, nrho_plot, Magenta, 0, xplot_old(:, jrho), &
         yplot_old(:, jrho), xplot, yplot)
 ! Save picture:
     xplot_old(:, jrho) = xplot(:)
@@ -615,7 +615,7 @@ subroutine plot_wall
 ! Plot vessel components reading them from "wall_gc_file"
 
 use const_inc, only: AB, ELONM, RTOR, TRICH, GP2
-use outcmn_inc, only: wall_gc_file, Blue, White, LineWidth, pixel_ymid, &
+use outcmn_inc, only: wall_gc_file, Blue, White, pixel_ymid, &
     meter2pixel
 use debugger, only: debug
 
@@ -641,7 +641,7 @@ if (ios /= 0) then
         xwall(j) = Rwall*meter2pixel
         ywall(j) = pixel_ymid - Zwall*meter2pixel
     enddo
-    call plot_curve(jgc, 0, LineWidth, xwall, ywall)
+    call plot_curve(jgc, 0, xwall, ywall)
     write(*, *) '>>> plot_wall: problems opening file ' // TRIM(wall_gc_file)
 else
     read(7, *) STRI

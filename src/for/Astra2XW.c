@@ -469,7 +469,7 @@ void drawvm_(INT_ *id, INT_ *x1, INT_ *y1, INT_ *x2, INT_ *y2){
 }
 
 /********************************************************************/
-void drawcurve_(int *id, int *n, int *LineWidth, double *X, double *Y){
+void drawcurve_(int *id, int *n, double *X, double *Y){
     int j, Xx1, Xy1, Xx2, Xy2;
     double dx1, dy1, dx2, dy2;
 

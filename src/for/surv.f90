@@ -218,8 +218,6 @@ end subroutine update_curve
 
 !---------------------------------------------------------------------
 subroutine plot_curve(np, STYL, xplot, yplot)
-
-use outcmn_inc, only: LineWidth
   
 implicit none
 
@@ -244,7 +242,7 @@ if (STYL < 0) then  ! Draw dashed curves
         NF = max(1, LE/4)
         do j=1, NP, LE
             j1 = min(NP - j + 1, LE - NF)
-            call drawcurve(0, j1, LineWidth, xplot(1: j1), yplot(1:j1))
+            call drawcurve(0, j1, xplot(1: j1), yplot(1:j1))
         enddo
         return
     endif
@@ -255,30 +253,31 @@ else if (STYL > 0) then
     if (LE >= NM+2) LE = LE - NM
     LE = max(1, LE)
     do jj=LE, NP, NM
-        J  = 2*jj
         PT1(1) = xplot(jj)
-        PT1(2) = yplot(jj)/10
+        PT1(2) = yplot(jj)
         call NMARK(PT1, STYL)
     enddo
 endif
 
-call drawcurve(0, NP, LineWidth, xplot(1:NP), yplot(1:np))
+call drawcurve(0, NP, xplot(1:NP), yplot(1:np))
 
 end subroutine plot_curve
 
 !---------------------------------------------------------------------
 subroutine NMARK(POINT, STYL)
 
-use outcmn_inc, only: LineWidth, resizeGraph
+use outcmn_inc, only: resizeGraph
 
 implicit none
 
-integer, parameter, dimension(7) :: N=(/16, 13, 5, 9, 14, 9, 10/)
+integer, parameter :: n_symbols=7, sym_points=16
+integer, parameter, dimension(n_symbols) :: sym_size = (/16, 13, 5, 9, 14, 9, 10/)
+integer, dimension(sym_points, n_symbols) :: dx, dy
 
 integer, intent(in) :: POINT(2), STYL
 
-integer :: plot_arr(32), DX(16, 7), DY(16, 7), J, JJ, IST
-double precision, dimension(32) :: xsym, ysym
+integer :: J, IST
+double precision, dimension(sym_points) :: xsym, ysym
 
 ! IST definition shoud coincide with NBIT() in CMARK
 ! IST = 1-filled diamond, 2-o, 3-+, 4-*, 5-x(#), 6-<, 7-filled square
@@ -303,11 +302,11 @@ data DY/ &
    -2, -2,  2,  2, -1, -1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0/  
 
 IST = max(1, min(STYL, 7))
-do J=1, N(IST)
-    xsym(J) = POINT(1) + resizeGraph*DX(J, IST)
-    ysym(J) = POINT(2) + resizeGraph*DY(J, IST)
+do J=1, sym_size(IST)
+    xsym(J) = POINT(1) + resizeGraph*dx(J, IST)
+    ysym(J) = POINT(2) + resizeGraph*dy(J, IST)
 enddo
-call drawcurve(0, N(IST), LineWidth, xsym, ysym)
+call drawcurve(0, sym_size(IST), xsym, ysym)
 
 end subroutine NMARK
 
