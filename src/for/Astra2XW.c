@@ -358,9 +358,7 @@ void initvm_(INT_ *x, INT_ *y, INT_ *wid, INT_ *hei, INT_ *LineWidth, char* Titl
 
     Window openWindow();
     int i, ix, iy;
-    char theTitle[120];
-    strncpy(theTitle, Title, *titlen);
-    if ( strncmp(theTitle, "BGD", 3) == 0 ) return; /* Background mode */
+
     Xmode = 1;
 
     if (sizeof(int) != 4) printf(" >>> Warning >>> Incompatibility in color table\n");
@@ -373,7 +371,7 @@ void initvm_(INT_ *x, INT_ *y, INT_ *wid, INT_ *hei, INT_ *LineWidth, char* Titl
  /* Ignore *x, *y and put the window in the top right corner */
     XWX = theWidth - XWW - 2*(BORDER_WIDTH + 5);
     XWY = 5; 
-    theRootWindow = Open_Window(XWX, XWY, XWW, XWH, 0, theTitle, 
+    theRootWindow = Open_Window(XWX, XWY, XWW, XWH, 0, Title, 
         iconState, RootWindow(theDisplay, theScreen), theMenuCursor);
     GetRWgeometry(&ix, &iy);
 /* Each bloody XWindow Manager tries to do it in its own unique manner */

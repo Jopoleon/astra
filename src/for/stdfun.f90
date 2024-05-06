@@ -813,9 +813,10 @@ use numerical_tools, only: qinterp
 implicit none
 
 double precision, intent(in) :: YR, ARR(*)
-double precision :: rad_out(1)
+double precision, dimension(1) :: rad_in, rad_out
 
-call qinterp(RHO(1:NA1), ARR(1:NA1), NA1, (/YR/), rad_out, 1)
+rad_in(1) = YR
+call qinterp(RHO(1:NA1), ARR(1:NA1), NA1, rad_in, rad_out, 1)
 RADIAL = rad_out(1)
 
 return
@@ -1500,7 +1501,7 @@ implicit none
 integer, intent(in) :: nx_in
 double precision, intent(in) :: R_in, Z_in
 
-integer :: j, j1
+integer :: j
 double precision :: Y1, YAS, YAO, YA
 double precision :: YHOR, YVER, YELO, YTRI
 

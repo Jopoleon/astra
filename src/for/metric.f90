@@ -524,9 +524,9 @@ subroutine set_external_metric_2
 
 use const_inc, only: RTOR, BTOR, ABC, ROC, HRO, HROX, &
     SHIFT, ELONG, TRIAN, VOLUME, GP, GP2, NA, NA1, NAB, updwn
-use status_inc, only: SHIF, ELON, TRIA, SHX, ELX, TRX, &
-    G11, G22, G33, G11X, G22X, G33X, GRADRO, DRODA, DRODAX, &
-    IPOL, IPOLX, VR, VRS, VRX, RHO, XRHO, AMETR, SLAT, SLATX, &
+use status_inc, only: SHIF, ELON, TRIA, &
+    G11, G22, G33, GRADRO, DRODA, &
+    IPOL, VR, VRS, RHO, XRHO, AMETR, SLAT, &
     BDB0, BDB02, B0DB2, BMINT, BMAXT, FOFB, VOLUM, SHEAR, FP, MU, SHIV, SQUARN
 use debugger, only: markloc, debug, flightsim
 use parse_utils, only: ifdefx2
@@ -729,7 +729,7 @@ use emeq_mod, only: NP, emeq
 use const_inc, only: HRO, ABC, ROC, RTOR, BTOR, IPL, & 
      TIME, ELONG, TRIAN, SHIFT, UPDWN, VOLUME, & 
      NA1, NA, NAB, NEQUIL, GP, GP2
-use status_inc, only: TE, TI, CU, CUTOR, SHEAR, SHIV, & 
+use status_inc, only: TE, TI, CU, SHEAR, SHIV, & 
      RHO, AMETR, EQPF, EQFF, IPOL, MU, FP, SXHO, & 
      SLAT, VOLUM, SHIF, ELON, TRIA, DRODA, GRADRO, VR, VRS, XRHO, & 
      G11, G22, G33, G41, G42, G43, G44, G45, & 
@@ -997,7 +997,7 @@ use const_inc, only: NEQUIL, MEQUIL, NBND, IPART, IPCTRL, TAU, NA, NA1, NAB, NCN
     RTOR, BTOR, IPL, GP, GP2, HRO, ROC, ABC, &
     VOLUME, SHIFT, ELONG, UPDWN, TRIAN, &
     INUME3, ITFBP, IPLFBE, IFBEY, ITREQ, ICIRCQ, ITFBE, &
-    NB2EQL, TIME, LEQ, PSIFB, PSPLEX, PSIEXT, LEXT, IPEQL, IPROT
+    NB2EQL, TIME, LEQ, PSIFB, PSPLEX, PSIEXT, IPEQL, IPROT
 use status_inc, only: G11, G22, G22E, G33, G33E, G41, G42, G43, G44, G45, &
     FP, IPOL, MU, SHEAR, &
     AMETR, VR, VRS, SLAT, GRADRO, DRODA, &
@@ -1006,7 +1006,6 @@ use status_inc, only: G11, G22, G22E, G33, G33E, G41, G42, G43, G44, G45, &
     VOLUM, SHIF, ELON, TRIA, XRHO, AREAT, PERIM, SHIV, SQUARN, VTOR
 use plasma_state, only: plasma_up, plasma_trig
 use debugger, only: markloc
-use parameters_a2equil, only: equil_now
 use ext_bnd, only: use_ext_bnd
 
 implicit none
@@ -1016,14 +1015,13 @@ integer, parameter :: itfbe_ctrl=0
 integer, intent(in) :: equil_solver
 
 integer :: i, j, jneql, jnteta, jnbnd, jnstep, jstepp, j_save_bound, j_rotation
-double precision :: tau_resistive, dampfacpsplex, &
-     yrocnew, iplnew, ychipfp, dfpdrb12, yiplout, yipl, yupdwn
+double precision :: yrocnew, iplnew, ychipfp, dfpdrb12, yiplout, yipl, yupdwn
 double precision, dimension(NA1) :: yg11, yg22, yg33, yvr, yvrs, yslat, yg41, &
     ygradro, yipol, ydroda, ypres, ybmaxt, ybmint, yfp, &
     ybdb02, ybdb0, yb0db2, yvolum, yametr, yshif, yelon, &
     ytria, yfofb, yeqpf, yeqff, yshiv, ysquare, omega_rot
 double precision, dimension(NCNB) :: yccoil, yvcoil
-double precision, dimension(1000) ::  rbnd, zbnd
+double precision, dimension(1000) :: rbnd, zbnd
 
 save jnstep, j_save_bound, yiplout, iplnew
 
@@ -1210,7 +1208,7 @@ GRADRO = GRADRO/VRS
 DRODA  = DRODA/VRS
 
 if (IPEQL == 5) then  ! FEQIS
-    PSPLEX = PSPLEX/(0.4*GP*RTOR*ROC)*0.5*(G22(NA)+G22(NA1)) !if LEXT only
+    PSPLEX = PSPLEX/(0.4*GP*RTOR*ROC)*0.5*(G22(NA) + G22(NA1)) ! If LEXT only
 endif
 
 do J=1, NA

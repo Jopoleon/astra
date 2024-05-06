@@ -38,7 +38,7 @@ use parameter_inc, only: NRD, NRW
 use status_inc, only: MU, AMETR, SHIF, ELON, TRIA, EQFF, EQPF, FP, RHO
 use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, XLINE1, &
    NA, NB1, NA1, NAB, NUF, LEQ, NBND, TIME, TAU, TINIT, TSCALE, &
-   TSTART, TEND, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
+   TSTART, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
    BTOR, IPL, CONSTF, DEVAR, DELOUT, XFLAG
 use outcmn_inc, only: Black, Blue, WarningColor, &
     active_tab, curves_per_frame, coltab, &
@@ -929,7 +929,6 @@ double precision, intent(in), dimension(NTIMES) :: PRMARK
 character(len=6) , intent(in) :: NAMEP(NTIMES)
 
 integer :: jt
-integer :: plot_arr(4*NRD+2*NTIMES)
 double precision :: CHORDN, lineav
 
 call markloc('graph_output', debug_lev=2*debug)
@@ -974,7 +973,7 @@ double precision, intent(in), dimension(NTIMES) :: PRMARK
 character(len=*) :: PSNAME
 
 integer :: IM, NST, j
-integer :: plot_arr(4*NRD+2*NTIMES), ITO(NTIMES, ICVMX+2)
+integer :: ITO(NTIMES, ICVMX+2)
 double precision :: CHORDN, lineav
 character(len=6) :: NAMEP(NTIMES)
 character(len=132) :: STRI
@@ -1047,7 +1046,7 @@ character(len=6), intent(in) :: NAMEP(*)
 integer*2 :: INTY(NRD)
 integer :: JTIM, ios, &
        j, jj, int2, jab, i, is, NP, NP1, jxout, jx, jnl, &
-       jc, JDSP, IYMN, IYMX, STYL, jpos, jk(5), SKIPM, half_wid
+       jc, IYMN, STYL, jpos, jk(5), SKIPM, half_wid
 integer, dimension(3) :: plot_arr
 double precision :: &
        SC(NRW), TEMPR, SCL, DOWN, YWA(NRD), YWB(NRD), YS, YL, YR, YX, &
@@ -1060,7 +1059,6 @@ character(len=80) :: STRI
 call markloc('SMODE5', debug_lev=2*debug)
 
 IYMN = frame_hei - IYM
-IYMX = frame_hei - IY0
 ymin = dble(frame_hei - IYM)
 ymax = dble(frame_hei - IY0)
 half_wid = frame_wid/2

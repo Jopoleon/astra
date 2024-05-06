@@ -317,7 +317,6 @@ double precision function GETNUM(FIELD, ERCODE)
 use outcmn_inc, only: PRNAME, CFNAME
 use const_inc , only: CONSTF, DEVARX
 use char_manip, only: str_in_list
-use debugger, only: debug
 
 implicit none
 
@@ -393,7 +392,6 @@ subroutine STREAD(NCH, NFIELD, ARRAY, ERCODE)
 
 use char_manip, only: to_upper
 use dbl2char, only: isnum
-use debugger, only: debug
 
 implicit none
 

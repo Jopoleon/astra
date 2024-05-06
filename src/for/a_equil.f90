@@ -30,29 +30,23 @@ double precision, intent(out) :: PSIEXT, PSPLEX
 type(type_equilibrium), intent(out) :: equil_out
 
 logical :: file_existence
-integer :: nstep, i, j, key_equil, nrp, nz, &
+integer :: nstep, i, key_equil, nrp, &
     toric_fourc, toric_file, strahl_file, strahl_fourc, &
     write_coils_diagn, key_plcs, kprs, k_grids, &
-    kprs2, fixadapgrid, &
-    jzmin, jzmax, jdemogaps, i_gaps
+    kprs2, fixadapgrid
 
 double precision :: dampfacpsplex, psplexold, epsros, enelss, k_filessss, ipl
 double precision, dimension(ncoils) :: t_currents, ucoils
-double precision :: psplexavg, psplexavgexp, Rmag, Zmag, Rgeo, Zgeo, &
-    rcurr, zcurr, rgeoc, zgeoc, ahorc, zsquad, psi_sep, psi_axis, &
-    Rin, Raus, zoben, zunten, elong, &
-    R_strike_in_aug, R_strike_out_aug, delr_oben, amin
-double precision, dimension(n_theta) :: Rbnd, Zbnd
+double precision :: psplexavg, psplexavgexp, ahorc
 character(len=80) :: fname
 
 type(type_parameters) :: parameters_equil
 
-data jdemogaps /0/
 data psplexold /2./
 save toric_fourc, toric_file
 save strahl_file, strahl_fourc, write_coils_diagn
 save kprs, k_grids, epsros, enelss, key_plcs, k_filessss
-save psplexavg, psplexold, kprs2, psplexavgexp, jdemogaps, i_gaps
+save psplexavg, psplexold, kprs2, psplexavgexp
 
 namelist / spider / kprs, k_grids, epsros, enelss, key_plcs, &
     toric_fourc, toric_file, strahl_file, strahl_fourc, write_coils_diagn, &

@@ -18,8 +18,8 @@ subroutine OUTDSP(MARK, JIFNEW, IYO, ITIMES, TT_out, t_out)
 
 use parameter_inc, only: NRD, NRDX, NRW
 use status_inc, only: AMETR, MU, SHIF, ELON, TRIA
-use const_inc, only: XOUT, NAB, NA1, NA1E, ABC, ROC, TINIT, TSCALE, RTOR, &
-    MEQUIL, LEQ, UPDWN, TIME
+use const_inc, only: XOUT, NAB, NA1, NA1E, ABC, TINIT, TSCALE, RTOR, &
+    MEQUIL, LEQ, TIME
 use outcmn_inc, only: frame_wid, frame_hei, canv_hei, canv_wid, nx_canvas, ny_canvas, &
     curves_per_frame, active_tab, MOD10, NWIND1, NWIND3, NWINDX, &
     IFDFAX, IY0, IYM, KPRI, DXLET, DYLET, NPTM, ICVMX, &
@@ -46,14 +46,14 @@ integer :: PTM(2), PTMO(2, NRDX, NRW), &
     IWN(16), &
     IST, text_posy, jt_old, JS, MODEX, &
     IYM0, LTOUT1, LTOUT2, JFNEW, STYL, x_shift, y_shift, jx_canv, jy_canv, JY, jxout, &
-    JW, j_curve, j_canv, jplot, &
+    JW, j_curve, j_canv, &
     IYMN, IYMX, JDSP, test_posx, NPTMO(NRW), jlx(8), &
-    NP1, i, j, half_wid, &
-    j1, jj, jsco, jn, jpnt, jsc, jposy, jarr, jtyp, n_canvas, &
+    NP1, j, half_wid, &
+    j1, jj, jsco, jn, jpnt, jsc, jarr, jtyp, n_canvas, &
     jplot_in_canv, jcol, jcol2, jprof, jtrace
 double precision :: SC(NRW), YX, r_out, YA, YL, YR, &
-     XROUT, YZ, ABSC, ymin, ymax, px_rmag, yqmax, yq1, xq1, xte, te_bc
-double precision ,dimension(2) :: ybar
+     YZ, ABSC, ymin, ymax, px_rmag, yq1, xq1, xte, te_bc
+double precision ,dimension(2) :: xbar, xbar_old, ybar
 double precision, dimension(16) :: xq1_old, xte_old
 double precision, dimension(NRD) :: xplot, yplot, xtrace, ytrace, xtrace_old
 double precision, dimension(NRD, ICVMX) :: xold, yold, ytrace_old
@@ -287,7 +287,7 @@ CASE(1: 3)  ! Profiles
 
 ! Erase/put q=1 radius, BC for Te
     yq1   = ABSC(AFVAL(MU, 1.0))
-    te_bc = ABSC(AMETR(NA1E))
+    te_bc = ABSC(AMETR(max(NA1E, 1)))
     ymax = dble(IYM0) - 0.8*canv_hei
     do j_canv=1, nx_canvas
         xq1 = canv_wid*(j_canv -1 + YQ1)
@@ -295,10 +295,14 @@ CASE(1: 3)  ! Profiles
         do jy=1, ny_canvas
             ybar = (/ dble(IYM0) - (jy-2)*canv_hei, ymax - (jy-2)*canv_hei/)
             if (yq1 > 1.d-3 .and. yq1 < 0.999) then
-                call update_curve(2, 2,   Red, 0, (/ xq1_old(j_canv), xq1_old(j_canv) /), ybar, (/ xq1, xq1 /), ybar)
+                xbar_old = xq1_old(j_canv)
+                xbar = xq1
+                call update_curve(2, 2,   Red, 0, xbar_old, ybar, xbar, ybar)
             endif
-            if (te_bc > 1.d-3 .and. te_bc < 0.999) then
-                call update_curve(2, 2, Green, 0, (/ xte_old(j_canv), xte_old(j_canv) /), ybar, (/ xte, xte /), ybar)
+            if (te_bc > 1.d-2 .and. te_bc < 0.999) then
+                xbar_old = xte_old(j_canv)
+                xbar = xte
+                call update_curve(2, 2, Green, 0, xbar_old, ybar, xbar, ybar)
             endif
         enddo
         xq1_old(j_canv) = xq1
@@ -406,8 +410,7 @@ CASE(8)
 
     SELECT CASE(LEQ(5))
     CASE(:1)
-        call DRAW3M(jifnew, DYLET, NA1, NAB, &
-            RTOR, AMETR, SHIF, UPDWN, ELON, TRIA)
+        call DRAW3M
     CASE(3)
         call bnd_draw(JIFNEW, IYO, TIME)
         call DRAWSPFLUX
@@ -416,8 +419,7 @@ CASE(8)
             SHIF = 0.0
             ELON = 1.0
             TRIA = 0.0 
-            call DRAW3M(jifnew, DYLET, NA1, NAB, &
-                RTOR, AMETR, SHIF, UPDWN, ELON, TRIA)
+            call DRAW3M
         else
             call bnd_draw(JIFNEW, IYO, TIME)
             call DRAWSPFLUX
@@ -565,24 +567,20 @@ return
 end subroutine bnd_draw
 
 !---------------------------------------------------------------------
-subroutine DRAW3M(jifnew, DYLET, NA1, NAB, &
-    RTOR, AMETR, SHIF, UPDWN, ELON, TRIA)
+subroutine DRAW3M
 !---------------------------------------------------------------------
 ! Update plot of magnetic surfaces
 
-use outcmn_inc, only: Magenta, Pink, EraseColor, Red, frame_hei, &
+use outcmn_inc, only: Magenta, Pink, EraseColor, Red, &
     pixel_ymid, meter2pixel
 
-use const_inc, only: GP2
+use const_inc, only: GP2, NA1, RTOR
+use status_inc, only: AMETR, SHIF, SHIV, ELON, TRIA
 
 implicit none
 
-integer, intent(in) :: jifnew, DYLET, NA1, NAB
-double precision, intent(in) :: RTOR, AMETR(*), ELON(*), TRIA(*), UPDWN, SHIF(*)
-
 integer, parameter :: n_theta=64, nrho_plot=10
-integer :: jrho, jthe, jrho_loc, nskip
-integer, dimension(260) :: plot_arr
+integer :: jrho, jthe, jrho_loc
 double precision :: YR, YZ, YFI
 double precision, dimension(n_theta) :: xplot, yplot
 double precision, dimension(n_theta, nrho_plot) :: xplot_old, yplot_old
@@ -594,7 +592,7 @@ do jrho=1, nrho_plot
     jrho_loc = min(max(1, NA1), jrho_loc)
     do jthe=1, n_theta
         YFI = GP2*(jthe - 1)/64.
-        YZ = UPDWN + AMETR(jrho_loc)*ELON(jrho_loc)*sin(YFI)
+        YZ = SHIV(jrho_loc) + AMETR(jrho_loc)*ELON(jrho_loc)*sin(YFI)
         YR = RTOR + SHIF(jrho_loc) + AMETR(jrho_loc)*(cos(YFI) + 0.5*TRIA(jrho_loc)*(cos(2.*YFI) - 1.))
         xplot(jthe) = YR*meter2pixel
         yplot(jthe) = pixel_ymid - YZ*meter2pixel
@@ -622,7 +620,7 @@ use debugger, only: debug
 implicit none
 
 integer, parameter :: n_theta=64, ngc_max=750
-integer :: j, j1, jgc, ios, nSHOT, Ndim, NGC, plot_arr(100), ndim_gc
+integer :: j, j1, jgc, ios, nSHOT, Ndim, NGC, ndim_gc
 integer, dimension(40) :: ixbeg, lenix, valix
 double precision :: pol_ang, Rwall, Zwall
 double precision, dimension(n_theta) :: xwall, ywall
@@ -689,15 +687,16 @@ double precision function ABSC(YIN)
 
 use outcmn_inc, only: MOD10
 use status_inc, only: AMETR, FP_NORM
-use const_inc, only: XOUT, AB, ABC, ROC, NA1, PSIAX, PSIBO
+use const_inc, only: XOUT, AB, ABC, ROC, NA1
 use numerical_tools, only: QUADIN
 
 implicit none
 
 double precision, intent(in) :: YIN
 
-integer :: MODEX, j
-double precision :: YAB, RFA, Y
+integer :: MODEX
+double precision :: YAB
+double precision, external :: RFA
 
 MODEX = XOUT + 0.49
 
@@ -727,6 +726,7 @@ else
     write(*, *) "MODEX is neither 0, nor 1, nor 2, it cannot be"
 endif
 
+return
 end function ABSC
 
 !---------------------------------------------------------------------

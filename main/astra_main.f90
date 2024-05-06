@@ -4,7 +4,7 @@ use parameter_inc, only: NSBMX, NRD
 use outcmn_inc, only: VCOIL, CCOIL, CCOILO, outcmn_init, &
     Xwin_height, Xwin_width, Xwin_xpos, Xwin_ypos, &
     DXLET, DYLET, LRJJ, frame_wid, frame_hei, TASK, &
-    RUNID, NST, MOD10, NTOUT, LineWidth, resizeGraph
+    RUNID, NST, MOD10, NTOUT, LineWidth, resizeGraph, null_ch
 use const_inc, only: IPART, const_init, XOUT, NA, &
     TIME, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT
 use status_inc, only: status_init, MU, defarr
@@ -57,7 +57,7 @@ if (TASK(1: 3) /= 'BGD') then
     Xwin_width  = resizeGraph*Xwin_width
     Xwin_height = resizeGraph*Xwin_height + 2*jj*(DYLET + 2)
     LineWidth = int(0.8*resizeGraph) + 1
-    Xwin_title = 'Per aspera ad ASTRA'
+    Xwin_title = 'Per aspera ad ASTRA' // null_ch
     call initvm(Xwin_xpos, Xwin_ypos, Xwin_width, Xwin_height, LineWidth, TRIM(Xwin_title), LEN_TRIM(Xwin_title)) ! Initialise graphic window
 
     IM = 1

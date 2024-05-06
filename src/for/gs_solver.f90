@@ -23,13 +23,13 @@ use imas_ids, only: type_equilibrium
 use numerical_tools, only: reinterp_back, reinterp_back_quad, qinterp, &
     derivcc, integrcc
 use parameters_a2equil, only: GP, GP2, GP4, muvac, &
-    name_gsefdir, time_fix_eqpff, fix_eqpf_eqff, &
+    time_fix_eqpff, fix_eqpf_eqff, &
     cheb_degree, spidat_yes, iter_one_only_fbe, advanced_methods, &
     i3method, diagnostic_gsef, do_adcmp, urelax, urelax2, &
     murelax2, ydiff, ydiff2, max_iter, miter_ext, interp_routine, &
     interp_method_rect, epsf_tol, epss_tol, epsv_tol, epsg_tol, &
     key_no_startz, key_no_refits, equil_now
-use outcmn_inc, only: MACHINE, nml_file
+use outcmn_inc, only: nml_file
 
 implicit none
 
@@ -55,32 +55,29 @@ double precision, intent(inout) :: ipl, volume
 
 logical :: file_existence
 integer :: i, j, n_theta, i_call_gsss, k, k1, key_start, keyplc, &
-    iter_step_call, jiter, p, jveps
+    jiter, p, jveps
 double precision :: dum1r, R0, Z0, Fvacuum, dxrho_sp, dx, &
     phib, PSIb, deltaPSI, PSI0, phibm, phibl, IPLX, Vtemp, Veps, &
     zfuncb, errG, roc_sp, g2ediff, errght, ybound, Rmag, vtemp_counter
 double precision, dimension(nbnd) :: Rb, Zb
-double precision, dimension(jna1) :: dpsi_ad, dp_ad, pres, sxho, vxho
-double precision, dimension(nr_equ) :: volum_in, PSI, PRESS, xrho_sp, &
-    GG2, GG3, g11_sp, g41_sp, gradro_sp, &
+double precision, dimension(jna1) :: dpsi_ad, dp_ad, pres, sxho, vxho, xrho_sq, sxho_sq, vxho_sq
+double precision, dimension(nr_equ) :: volum_in, PSI, psi_minus, PRESS, xrho_sp, xrho_sp_sq, &
+    GG2, GG3, g11_sp, g41_sp, gradro_sp, xrho_roc_sp, &
     bdb02_sp, ipol_sp, &
     bdb0_sp, b0db2_sp, droda_sp, vr_sp, ametr_sp, &
     volum_sp, tria_sp, &
     eqpf_sp, eqff_sp, dPSI_adcmp, dP_adcmp, &
     PSIn_grid, G2f, pprimp, pprimx, ffprimp, yprimp, &
     psipx, Chat, betahat, lhs, PHI, qqsg, qg3s, As, Bm, AAs, &
-    expAA, expAAm, y, H, dPSIdV, zfunc, &
+    expAA, expAAm, y, H, Hinv, dPSIdV, zfunc, &
     G2m, G3m, G2p, G3p, G2mt, G2pt, dum1, dum2, dum3, &
     Hout, Houtt, hin1, hin2, hout1, hout2, &
     G2tild1, Htild1, G2tild2, Htild2, G2corr2, Hcorr2, & 
-		o_rot, i_temp, i_dens, i_mass
+    o_rot, i_temp, i_dens, i_mass
 character(len=80) :: fname
 type(type_equilibrium) :: equil_in
 
 !----------------------------------------------------------------------
-
-data iter_step_call /0/
-save iter_step_call
 
 data i_call_gsss /0/
 save i_call_gsss
@@ -165,17 +162,21 @@ do j=1, nr_equ
 enddo
 
 !go from astra grid to equilibrium radial grid
-call reinterp_back(xrho**2, fp   , jna1, xrho_sp**2, PSI     , nr_equ, interp_routine)
-call reinterp_back(xrho**2, pres , jna1, xrho_sp**2, PRESS   , nr_equ, interp_routine)
-call reinterp_back(sxho**2, g22  , jna1, xrho_sp**2, GG2     , nr_equ, interp_routine)
-call reinterp_back(xrho**2, g33  , jna1, xrho_sp**2, GG3     , nr_equ, interp_routine)
-call reinterp_back(vxho**2, volum, jna1, xrho_sp**2, volum_in, nr_equ, interp_routine)
+xrho_sq = xrho**2
+sxho_sq = sxho**2
+vxho_sq = vxho**2
+xrho_sp_sq = xrho_sp**2
+call reinterp_back(xrho_sq, fp   , jna1, xrho_sp_sq, PSI     , nr_equ, interp_routine)
+call reinterp_back(xrho_sq, pres , jna1, xrho_sp_sq, PRESS   , nr_equ, interp_routine)
+call reinterp_back(sxho_sq, g22  , jna1, xrho_sp_sq, GG2     , nr_equ, interp_routine)
+call reinterp_back(xrho_sq, g33  , jna1, xrho_sp_sq, GG3     , nr_equ, interp_routine)
+call reinterp_back(vxho_sq, volum, jna1, xrho_sp_sq, volum_in, nr_equ, interp_routine)
 
 if (i_rotation == 1) then
-    call reinterp_back(xrho**2, omega_rot  , jna1, xrho_sp**2, o_rot , nr_equ, interp_routine)
-    call reinterp_back(xrho**2, ion_temp   , jna1, xrho_sp**2, i_temp, nr_equ, interp_routine)
-    call reinterp_back(xrho**2, ion_dens   , jna1, xrho_sp**2, i_dens, nr_equ, interp_routine)
-    call reinterp_back(xrho**2, plasma_mass, jna1, xrho_sp**2, i_mass, nr_equ, interp_routine)
+    call reinterp_back(xrho_sq, omega_rot  , jna1, xrho_sp_sq, o_rot , nr_equ, interp_routine)
+    call reinterp_back(xrho_sq, ion_temp   , jna1, xrho_sp_sq, i_temp, nr_equ, interp_routine)
+    call reinterp_back(xrho_sq, ion_dens   , jna1, xrho_sp_sq, i_dens, nr_equ, interp_routine)
+    call reinterp_back(xrho_sq, plasma_mass, jna1, xrho_sp_sq, i_mass, nr_equ, interp_routine)
 endif
 
 GG2(1) = 0.0
@@ -261,7 +262,7 @@ iter_loop: do jiter=1, miter_ext
         p = p + 1
 
 !start of algorithm
-        PHI = phibm*(xrho_sp**2)
+        PHI = phibm*(xrho_sp_sq)
         call derivcc(nr_equ, PSI, PHI, qqsg, 2)
         qg3s = qqsg/G3m
 
@@ -294,9 +295,10 @@ iter_loop: do jiter=1, miter_ext
         y = sqrt(2.*zfunc)
         H = y/qg3s
         dPSIdV = H
+        Hinv = 1./H
 
 ! Compute new volume
-        call integrcc(nr_equ, PSI, 1./H, dum1)
+        call integrcc(nr_equ, PSI, Hinv, dum1)
 !end of algorithm
 
         Vtemp = vtemp_counter*vtemp+(1. - vtemp_counter)*dum1(nr_equ)
@@ -339,7 +341,7 @@ iter_loop: do jiter=1, miter_ext
 
     phib = phibm
     roc_sp =  sqrt(phib/(GP*btor))
-    PHI = phib * xrho_sp**2
+    PHI = phib * xrho_sp_sq
 
     call derivcc(nr_equ, PSI, PHI, qqsg, 2)
 
@@ -433,8 +435,9 @@ iter_loop: do jiter=1, miter_ext
     G2p(1)       = 0.
     G3p(1)       = 1./Rmag**2
     gradro_sp(1) = 0.
-
-    call derivcc(nr_equ, volum_sp, -equil_now%profiles_1d%psi(1:nr_equ), Hout, 2)
+    psi_minus = -equil_now%profiles_1d%psi(1:nr_equ)
+    
+    call derivcc(nr_equ, volum_sp, psi_minus, Hout, 2)
     call derivcc(nr_equ, ametr_sp, volum_sp, droda_sp, 1)
 
     droda_sp(1)  = 0. 
@@ -607,10 +610,11 @@ deallocate(equil_in%eqgeometry%boundary%z)
 GG2 = G2p
 GG3 = G3p
 
-PHI = phib * xrho_sp**2
+PHI = phib * xrho_sp_sq
 
 call derivcc(nr_equ, PSI, PHI, qqsg, 2)
-call derivcc(nr_equ, roc_sp*xrho_sp, volum_sp, vr_sp, 1)
+xrho_roc_sp = roc_sp*xrho_sp
+call derivcc(nr_equ, xrho_roc_sp, volum_sp, vr_sp, 1)
 
 IPL = IPLX
 
