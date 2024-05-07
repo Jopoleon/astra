@@ -1,11 +1,10 @@
 /* Here are C-functions:
-	viewmn		If_empty	GetKey		GetKeySym
+	If_empty	GetKey		GetKeySym
 	asrumn		pollevent	asktab
 	waitevent	nextevent	askcol		askgrf
 	Cursor_in_Box	Menu_table 	Put_button	asklis	
-	askuna		GetName		setcol		xaxis
-	GetValue	FindBoxNum	GetEsc		Root_window_event
-	Del_Menu	Del_button	getatr				*/
+	askuna		GetName		xaxis
+	GetValue	FindBoxNum	GetEsc		Root_window_event */
 #include 	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
@@ -25,11 +24,8 @@
 #endif
 void	asrumn(INT_*);			void	asrumn_(INT_*);
 void	xaxis(INT_*);			void	xaxis_(INT_*);
-void	viewmn(INT_*);			void	viewmn_(INT_*);
 void	mvcursor(INT_*,INT_*,INT_*);	void	mvcursor_(INT_*,INT_*,INT_*);
 void	ProcessRootWindowEvent (XEvent*);
-INT_	getatr();			INT_	getatr_();
-INT_	setcol(INT_*);			INT_	setcol_(INT_*);
 INT_	pollevent(INT_*);		INT_	pollevent_(INT_*);
 INT_	waitevent(INT_*,INT_*,INT_*);	INT_	waitevent_(INT_*,INT_*,INT_*);
 int	Cursor_in_Box();
@@ -106,7 +102,7 @@ struct	{int xcur, ycur;}	Kevent;
 void Change_Color(GC, int, int);
 void Menu_table(int, int, int, char[], char*[], Button[], int);
 void Put_button(Button, GC);
-void numstrA(double, char*, int);
+void num2str(double, char*, int);
 void MoveArrow(Window, int, int, int, int);
 void changeGCcolor(GC, INT_*);
 void PutColorName(Window, int, int, int, int);
@@ -676,7 +672,7 @@ Create_table:
 		WRITE_ theGCA, ix, hsym+iy, theNames+ind, namlen); }
 	if ( lname*lvalue ) { 
 		WRITE_ theGCA, ix+vpos-wsym, hsym+iy, &vsym, 1); }
-	if ( lvalue ) { valn=*(array+i-1); numstrA(valn, value, lvalue); 
+	if ( lvalue ) { valn=*(array+i-1); num2str(valn, value, lvalue); 
 		WRITE_ theGCA, ix+vpos, hsym+iy, value, lvalue); }
 	XFlush(theDisplay);		}
 	oldparam = nparam;	ixold = ix;	iyold = iy; 
@@ -732,7 +728,7 @@ Table_control:
 		if (ibox) { oldparam = ibox;	ixold = ix;	iyold = iy; 
 			if (spos>0)  { 	sscanf(stri,"%6g",&param);
 					*(array+ibox-1)=param; valn=param; 
-					numstrA(valn, value, lvalue); spos=-1;
+					num2str(valn, value, lvalue); spos=-1;
 				     }
 			for (i=0; i<lvalue; i++) 	ovalue[i]=value[i];
 			  }
@@ -762,7 +758,7 @@ Newparam:
 		    Change_Color(hghGC,AstraColorNum[8],AstraColorNum[9]);
 		    WRITE_ hghGC, ix+vpos-wsym, hsym+iy, &vsym, 1);
 		    Change_Color(hghGC,AstraColorNum[2],AstraColorNum[3]); }
-		if ( lvalue ) {valn=*(array+ibox-1); numstrA(valn,value,lvalue);
+		if ( lvalue ) {valn=*(array+ibox-1); num2str(valn,value,lvalue);
 		    WRITE_ theGCA, ixold+vpos, hsym+iyold, ovalue, lvalue); 
 		    Change_Color(hghGC,AstraColorNum[8],AstraColorNum[9]);
 		    WRITE_ hghGC, ix+vpos, hsym+iy, value, lvalue); 
@@ -787,7 +783,7 @@ Escend:	if ( contr==0 ){/*printf("iret %d\n",iret);*/	goto EndDialog;}
 	   { 	sscanf(stri,"%6g",&param);
 		/*printf("input =%s,    double =%g \n",stri,param);*/
 		*(array+ibox-1) = param; valn=param;
-		numstrA(valn, value, lvalue); spos=-1;	}
+		num2str(valn, value, lvalue); spos=-1;	}
 	if ( iret == -1 )  	goto EndDialog;
 	if ( iret == -2 )
 	   { i = 0;	ii = namlen;
@@ -2269,123 +2265,7 @@ EndDialog:
 	XFlush(theDisplay); 
 	return (0);
 }
-/****************** Color table setting ********************************/
-INT_ setcol  (Atable)  INT_  *Atable;
-{   INT_	i;
-	i = setcol_ (Atable);
-	return i;
-}
-INT_ setcol_ (Atable)  INT_  *Atable;
-{ Window	theWindow;
-  XEvent	theEvent;
-  int	UpLeftx=200,UpLefty=10,	/* Upper left window corner	*/
-	Width =230, Height =220;/* window size			*/
-  int	ibox1, wbox1, hbox1, 	/* # of parameter box and size	*/
-	llin1 = 8, nclmn1 = 1, 	/* 1st str length & # of columns*/
-	xshif1 =9, yshif1 =3,	/* 1st table corner and # of columns*/
-	nparam1 = 14, 		/* # of parameters		*/
-	ibox2, wbox2 = 27,	/* # of parameter box and width	*/
-	nclmn2 = 5,		/* # of columns*/
-	xshif2=80, yshif2 =5,	/* 2nd table corner and # of columns*/
-	wsym = 8, hsym = 13,	/* font symbol width and height	*/
-	i, ii=-1, ix, iy, xButton, yButton, ind;
-  char	but[113];
-    strcpy(but,"BackgrndCurve 1 Curve 2 Curve 3 Curve 4 Curve 5 Curve 0 ");
-    strcpy(but+56,"Color 1 Message History TEXT frgTEXT bkgHIGH frgHIGH bkg");
-    ibox1 = 0;	hbox1 = hsym+2;		wbox1 = wsym*(llin1+1);
-    Height =2*yshif1+((nparam1-1)/nclmn1+2)*hbox1;
-    /*  i = XWX-Width-10;     UpLeftx = 2;    if (i > UpLeftx)  UpLeftx = i; */
-    GetRWgeometry (&XRW,&YRW);
-    UpLeftx = 2;       i = XRW-Width-8;		UpLefty = YRW;
-    if (i > UpLeftx)   UpLeftx = i;		i = YRW+Height+30;
-    if (i > theHeight) UpLefty = theHeight-Height-30;
-    theWindow = Open_Window(UpLeftx, UpLefty, Width, Height, 0, 
-		"Set ASTRA colors",0,
-		RootWindow(theDisplay,theScreen), theMenuCursor);
-    XSelectInput (theDisplay, theWindow, POLL_EV_MASK);
-Create_table:
-    i = Height-hbox1; 	LINGCA_ 0,i,Width,i);
-    i--;   		LINGCA_ 0,i,Width,i);
-    WRITE_ hintGC, xshif1,    Height-2, " OK ",4);
-    WRITE_ hintGC, xshif1+60, Height-2, " Click (1) type, (2) color box",30);
-    if ( ii < 0 ) MVPOINTER_ xshif1+10,yshif1+8);
-    for (i = 1; i < ColorNum; i++)
-	{   Change_Color(theGCA, i, 0);	ix = i-1;
-	    iy = yshif2+(ix-ix%nclmn2)*3;	ix = xshif2+30*(ix%nclmn2);
-	    XFillRectangle(theDisplay,theWindow,theGCA,ix,iy,wbox2,hsym);
-	}
-Newcolors:
-    Change_Color (theGCA, *Atable, *(Atable+1));
-    Change_Color (hghGC, *(Atable+22), *(Atable+23));
-    for (i=0; i < nparam1; i++)
-	{ind = i*llin1;
-	 ix =wbox1*(i%nclmn1)+xshif1;	iy =hbox1*(i/nclmn1)+yshif1;
-	if (i==0  || i==9 || i==12 || i==13){
-		Change_Color(theGCA,*(Atable+22),*(Atable+23));
-/*printf("Box No. %d,   Color No.  %d   %d  %s\n",i,*(Atable+22),ind,but+ind); */
-}
-	 if (i>=1  && i<=8 ) {
-		Change_Color(theGCA,*(Atable+2*i),*(Atable+2*i+1));
-/*printf("Box No. %d,   Color No.  %d   %d  %s\n",i,*(Atable+2*i),ind,but+ind); */
-}
-	 if (i==10 || i==11) {
-		Change_Color(theGCA,*(Atable+20), *(Atable+21));
-/*printf("Box No. %d,   Color No.  %d   %d  %s\n",i,*(Atable+20),ind,but+ind); */
-}
-	 WRITE_ theGCA, ix, hsym+iy, but+ind, llin1);
-	}
-    XFlush(theDisplay);
-Table_control:
-	XNextEvent (theDisplay, &theEvent);
-	if ( theEvent.xany.window == theRootWindow )
-           { ProcessRootWindowEvent (&theEvent);
-	     goto Table_control;
-	   }
-	if (theEvent.type == Expose)	{ii = 0;  goto	Create_table;}
-	if (theEvent.type == ButtonPress)
-	{  xButton	= theEvent.xbutton.x;
-	   yButton = theEvent.xbutton.y;
-	   i = FindBoxNum(xButton-xshif1+wsym/2,yButton-yshif1,
-				  wbox1,hbox1,nclmn1,nparam1);
-	   if(i) {ibox1 = i;
-		  if (ibox1 >= 1 && ibox1<=10) i = *(Atable+2*ibox1-2);
-		  if (ibox1 == 11)	i = *(Atable+20);
-		  if (ibox1 == 12)	i = *(Atable+21);
-		  if (ibox1 == 13)	i = *(Atable+22);
-		  if (ibox1 == 14)	i = *(Atable+23); 
-		  PutColorName(theWindow,80,199,Width-80,i);
-		 }
-	   ibox2 = FindBoxNum(xButton-xshif2+2,yButton-yshif2,
-				  wbox2+3,hsym+2,nclmn2,ColorNum+5);
-	   if (ibox2)
-	      {	if (ibox2 >= ColorNum)   ibox2 = 0;
-		PutColorName(theWindow,80,199,Width-80,ibox2);
-		if(ibox1==1)
-		   { *(Atable+1) = ibox2; 
-		     for(i=0; i<10; i++) *(Atable+2*i+1) = ibox2; 
-		   }
-		if(ibox1>1 &&  ibox1<=10) *(Atable+2*ibox1-2) =ibox2;
-		if(ibox1==11)	*(Atable+20) = ibox2;
-		if(ibox1==12)	*(Atable+21) = ibox2;
-		if(ibox1==13)	*(Atable+22) = ibox2;
-		if(ibox1==14)	*(Atable+23) = ibox2; 
-		goto Newcolors;
-	      }
-	   ind  = FindBoxNum(xButton-xshif1, yButton-Height+hbox1+1,
-					 	4*wsym, hbox1, 1, 1);
-	   if(ind)	goto Close_Win;
-	   goto Table_control;
-	}
-    if (GetEsc(theEvent.xkey) != 1) goto Table_control;
-Close_Win:
-    for( i = 0; i < 24; i++ ) AstraColorNum[i]=*(Atable+i) ;
-    RETURNPOINTER_;
-    XFlush(theDisplay);
-    XDestroyWindow(theDisplay,theWindow);
-    ibcursor = -1;
-    XFlush(theDisplay); 
-    return (0);
-}
+
 /************** Returns box # or 0 ***********************************/
 int FindBoxNum (ix,iy,wBox,hBox,nclmn,nBox)
 int	ix,iy;				/*current coordinates*/
@@ -2400,43 +2280,3 @@ int	wBox,hBox;			/*box width & height*/
 	if (pnum > nBox) 		return (0);
 	return (pnum);
 }
-/*********************** Sets Window Attributes **********************/
-INT_ getatr()
-{  INT_ i;    i = (INT_)getatr_();	return (i);  }
-INT_ getatr_()
-{  int i;
-   XWindowAttributes	theAttributes;
-   Status		theStatus;
-	theStatus =
-	  XGetWindowAttributes (theDisplay, theRootWindow, &theAttributes);
-	printf("theStatus = %d\n",theStatus);
-	i = theAttributes.map_state;
-	printf("theAttributes.x = %d,   ",theAttributes.x);
-	printf("theAttributes.map_state = %d,   ", i);
-	if (i == IsUnmapped)	printf("IsUnmapped\n");
-	if (i == IsUnviewable)	printf("IsUnviewable\n");
-	if (i == IsViewable)	printf("IsViewable\n");
-	return (i);
-}
-/*********************** Not Used ************************************/
-void Del_Menu (NButt, B) int NButt; Button B[];
-{	int i;
-	for (i=0; i<NButt; i++) 	CLREC_ B[i].mexl, B[i].meyu, 
-		B[i].mexr-B[i].mexl+1, B[i].meyd-B[i].meyu+1, False);
-}
-/*********************** Not Used ************************************/
-void Del_button (B)  Button B;
-{	CLREC_ B.mexl-2, B.meyu-2, B.mexr-B.mexl+4, B.meyd-B.meyu+4, False);
-}
-/**************************************************************************/
-/*	printf("%d,<%.20s><%.20s>\n",spos,stri,array+ind);
-	printf("<Tab>,<%.20s><%.20s>\n",stri,array+ind);
-	printf("%d,<%.20s><%.20s>\n",spos,stri,array+ind);
-	printf("theEvent.type = %d\n",theEvent.type);
-	for (j=0; j < nclmn; j++) printf("%d, ",nwid[j]);	printf("  ");
-	for (j=0; j < nclmn; j++) printf("%d, ",nsta[j]);	printf("\n");
-for (j=0; j < nclmn; j++) printf("%d + %d,  ",nsta[j],nwid[j]);	printf("\n");
-	for (j=0; j < nclmn; j++) printf("\n[%10.10s] ",stri+nwid[j]+1);
-	printf("\n%d\n",nclmn);
-	printf("Width = %d, Height = %d;  %d x %d\n",Width,Height,nlines,nclmn);
-*/

@@ -40,6 +40,9 @@ then
 elif [[ $node == "iris"* ]]
 then
    platform=iris
+elif [[ $node == "e2dea0ffab23" ]]
+then
+   platform=ncku
 fi
 
 echo $platform

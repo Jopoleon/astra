@@ -53,7 +53,7 @@ integer :: PTM(2), PTMO(2, NRDX, NRW), &
     jplot_in_canv, jcol, jcol2, jprof, jtrace
 double precision :: SC(NRW), YX, r_out, YA, YL, YR, &
      YZ, ABSC, ymin, ymax, px_rmag, yq1, xq1, xte, te_bc
-double precision ,dimension(2) :: xbar, xbar_old, ybar
+double precision ,dimension(2) :: xbar, xbar_old, ybar, x8bar, y8bar
 double precision, dimension(16) :: xq1_old, xte_old
 double precision, dimension(NRD) :: xplot, yplot, xtrace, ytrace, xtrace_old
 double precision, dimension(NRD, ICVMX) :: xold, yold, ytrace_old
@@ -394,7 +394,9 @@ CASE(8)
     call markloc('Drawing mode 8', debug_lev=2*debug)
     px_rmag = (RTOR + SHIF(1))*meter2pixel
     call colovm(Black)
-    call drawcurve(0, 2, (/0., px_rmag/), (/pixel_ymid, pixel_ymid/))
+    x8bar = (/0., px_rmag/)
+    y8bar = (/pixel_ymid, pixel_ymid/)
+    call drawcurve(0, 2, x8bar, y8bar)
 ! Plot the complete wall structure (Pixmap # 1)
     call plot_wall
 
@@ -843,7 +845,7 @@ implicit none
 
 integer, parameter :: n_surf=556, nrho_plot=12
 integer :: jrho, jr, nskip, jrho_loc, n_theta, n_theta1, n_rho_surf
-double precision, dimension(n_surf) :: xplot, yplot
+double precision, dimension(n_surf) :: xplot, yplot, xplotold, yplotold
 double precision, dimension(nrho_plot+1, n_surf) :: xplot_old, yplot_old
 
 save xplot_old, yplot_old
@@ -860,8 +862,10 @@ do jrho=1, n_rho_surf + nskip - 1, nskip
     xplot(n_theta1)   = meter2pixel*equil_now%coord_sys%position%r(jrho_loc, 1)  ! Close polygon
     yplot(1: n_theta) = pixel_ymid - meter2pixel*equil_now%coord_sys%position%z(jrho_loc, 1:n_theta)
     yplot(n_theta1)   = pixel_ymid - meter2pixel*equil_now%coord_sys%position%z(jrho_loc, 1)
-    call update_curve(n_theta1, n_theta1, Magenta, 0, xplot_old(jr, 1:n_theta1), &
-         yplot_old(jr, 1:n_theta1), xplot(1:n_theta1), yplot(1:n_theta1))
+    xplotold(1:n_theta1) = xplot_old(jr, 1:n_theta1)
+    yplotold(1:n_theta1) = yplot_old(jr, 1:n_theta1)
+    call update_curve(n_theta1, n_theta1, Magenta, 0, xplotold(1:n_theta1), &
+         yplotold(1:n_theta1), xplot(1:n_theta1), yplot(1:n_theta1))
     xplot_old(jr, 1:n_theta1) = xplot(1:n_theta1)
     yplot_old(jr, 1:n_theta1) = yplot(1:n_theta1)
     jr = jr + 1

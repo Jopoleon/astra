@@ -24,7 +24,6 @@
 #include "A_proc.h"
 
 void AstraEvent();
-double swatch (double*);
 double swatch_(double*);
 
 int semtimedop();
