@@ -477,7 +477,7 @@ CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
         call set_frame(IM, XSC0, XSC)
         call set_plot(IM, XSC0, XSC)
         j = XOUT + 0.49
-        call ASRUMN(j)   ! Task menu
+        call TaskMenu(j)
         call textbf(0, Xwin_height - 104, RUNID, 80) ! Task ID
     endif
     call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
@@ -995,7 +995,7 @@ call set_frame(IM, XSC0, XSC)
 call set_plot(IM, XSC0, XSC)
 
 j = XOUT + 0.49
-call ASRUMN(j)   ! Task menu
+call TaskMenu(j)
 call textbf(0, Xwin_height - 104, RUNID, 80) ! Task ID
 call RADOUT
 call TIMOUT

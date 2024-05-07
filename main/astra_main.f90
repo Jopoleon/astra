@@ -68,7 +68,7 @@ if (TASK(1: 3) /= 'BGD') then
 
     j = XOUT + 0.49
 
-    call ASRUMN(j) ! Task menu
+    call taskmenu(j) ! Task menu
     call textbf(0, Xwin_Width-104, RUNID, 80) ! Task ID
 
     CHORDN = LINEAV()

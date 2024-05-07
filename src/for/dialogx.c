@@ -1,103 +1,94 @@
-/* Here are C-functions:
-	If_empty	GetKey		GetKeySym
-	asrumn		pollevent	asktab
-	waitevent	nextevent	askcol		askgrf
-	Cursor_in_Box	Menu_table 	Put_button	asklis	
-	askuna		GetName		xaxis
-	GetValue	FindBoxNum	GetEsc		Root_window_event */
-#include 	<stdio.h>
-#include	<stdlib.h>
-#include	<string.h>
-/*#include 	<ctype.h> */
-#include 	<unistd.h>
-#include	<X11/Xlib.h>
-#include	<X11/Xutil.h>
-#include	<X11/keysym.h>
-#include	<X11/keysymdef.h>
-/*#include	<signal.h>*/
-/*#include	<math.h>*/
-/*#include 	<X11/cursorfont.h>*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/keysym.h>
+#include <X11/keysymdef.h>
 #ifndef INT8
-#define INT_	int
+#define INT_ int
 #else
-#define INT_	long
+#define INT_ long
 #endif
-void	asrumn(INT_*);			void	asrumn_(INT_*);
-void	xaxis(INT_*);			void	xaxis_(INT_*);
-void	mvcursor(INT_*,INT_*,INT_*);	void	mvcursor_(INT_*,INT_*,INT_*);
-void	ProcessRootWindowEvent (XEvent*);
-INT_	pollevent(INT_*);		INT_	pollevent_(INT_*);
-INT_	waitevent(INT_*,INT_*,INT_*);	INT_	waitevent_(INT_*,INT_*,INT_*);
-int	Cursor_in_Box();
-INT_	Root_window_event(INT_*,int);
 
-/*int	GetKeySym (XKeyEvent); */
-extern	Display	*theDisplay;
-extern	Window	theRootWindow;
-// git extern	Cursor	theRootCursor, theMenuCursor;
-extern	Cursor	theMenuCursor;
-extern	GC	theGCA, hghGC, hgh_menuGC, hintGC;
-extern	int	theScreen, theDepth, iconState, ColorNum;
-extern	int	XWX, XWY, XWW, XWH, XCorrection, YCorrection, theHeight;
-int	XRW, YRW;
-extern	int	Xmode;
-extern	int	AstraColorNum[];
-static	int	iact = -1, ibcursor = -1;
-		      /*#define R7 65496
-			#define R9 65498
-			#define R13 65502
-			#define R15 65504*/
+void taskmenu_(INT_*);
+void xaxis(INT_*);
+void xaxis_(INT_*);
+void mvcursor_(INT_*, INT_*, INT_*);
+void ProcessRootWindowEvent(XEvent*);
+INT_ pollevent_(INT_*);
+INT_ waitevent_(INT_*, INT_*, INT_*);
+int  Cursor_in_Box();
+INT_ Root_window_event(INT_*, int);
+
+extern Display *theDisplay;
+extern Window theRootWindow;
+extern Cursor theMenuCursor;
+extern GC theGCA, hghGC, hgh_menuGC, hintGC;
+extern int theScreen, theDepth, iconState, ColorNum;
+extern int XWX, XWY, XWW, XWH, XCorrection, YCorrection, theHeight;
+int XRW, YRW;
+extern int Xmode;
+extern int AstraColorNum[];
+static int iact = -1, ibcursor = -1;
+
 #define ROOT_EV_MASK  (  ButtonPressMask | KeyPressMask |\
         EnterWindowMask | StructureNotifyMask |  FocusChangeMask |\
         ExposureMask | LeaveWindowMask )
 #define POLL_EV_MASK (ButtonPressMask | KeyPressMask | ExposureMask |\
-                      StructureNotifyMask | FocusChangeMask |\
-                      EnterWindowMask | LeaveWindowMask)
+        StructureNotifyMask | FocusChangeMask | EnterWindowMask | LeaveWindowMask)
 #define GET_EV_MASK (POLL_EV_MASK     | PointerMotionMask |\
-                     ButtonMotionMask | ButtonReleaseMask)
+        ButtonMotionMask | ButtonReleaseMask)
 #define WRITE_ XDrawImageString(theDisplay,theWindow,
 #define MVPOINTER_ XWarpPointer(theDisplay,None,theWindow,0,0,0,0,
 #define RETURNPOINTER_ XWarpPointer(theDisplay, None, theRootWindow, 0,0,0,0, Kevent.xcur,Kevent.ycur)
-#define WRITER_ XDrawImageString(theDisplay,theRootWindow,
 #define DLINER_ XDrawLine(theDisplay,theRootWindow,
 #define LINGCA_ XDrawLine (theDisplay,theWindow,theGCA,
-#define CLREC_ XClearArea(theDisplay,theRootWindow,
-#define	F1sw	8			/*font 1 symbol width		*/
-#define	F1sh	13			/*font 1 symbol height		*/
-#define	BTyof	0			/*button text vertical offset	*/
-#define	BTxof	0			/*button text horizontal offset	*/
-#define	BVers	4			/*button vertical separation	*/
-#define NMRMB   36			/*main Review menu table	*/
-int	nmamb=NMRMB;			/*main Astra  menu table       	*/
-char	*MAMT[NMRMB];			/*   Dimension is defined as	*/
-char	MAMK[NMRMB];			/*	max(nmamb,NMRMB)	*/
+
+#define F1sw 8      /*font 1 symbol width */
+#define F1sh 13     /*font 1 symbol height */
+#define BTyof 0     /*button text vertical offset */
+#define BTxof 0     /*button text horizontal offset */
+#define BVers 4     /*button vertical separation */
+#define NMRMB   36  /*main Review menu table */
+int nmamb = NMRMB;  /*main Astra  menu table */
+char *MAMT[NMRMB];  /* Dimension is defined as */
+char MAMK[NMRMB];   /* max(nmamb,NMRMB) */
 #define Button struct BUTTON
-Button 	{int mexl, meyd, mexr, meyu, melen; char keysym, *mename;};
-Button	MAMB[NMRMB];
-#define NDW     12			/*number of dialog windows	*/
-char	*DWTitle[NDW] =	
-  {	"Variable control",	/*No. 1  "V"*/
-	"Constant control",	/*No. 2  "C"*/
-	"Times & Grids",	/*No. 3  "D"*/
-	"Window control",	/*No. 4  "W"*/
-	"Scale control",	/*No. 5  "S"*/
-	"Y-shift",		/*No. 6  "Y"*/
-	"Time interval",	/*No. 7  "M" in the mode 7*/
-	"Mark times:  < 0 - skip,  0 - dim,  > 0 - color #", /*"M" modes 4,5*/
-	"Equilibrium control",	/*No. 9  call from metric */
-	"1D_Ufile",		/*No. 10 Not used */
-	"2D_Ufile",		/*No. 11 Not used */
-	"NBI const for beam No",/*No. 12 call from nbiext */
-   };
-int	DWnamlen[NDW] =	{
-	    6,	/*No. 1  PRNAME*/	6,	/*No. 2  CFNAME*/
-	    6,	/*No. 3  DTNAME*/	4,	/*No. 4  NAME[TR]*/
-	    4,	/*No. 5  NAME[TR]*/	4,	/*No. 6  NAME[TR]*/
-	    6,	/*No. 7  NAM7*/		6,	/*No. 8  NAMEP*/
-	    6,	/*No. 9  DTNAME*/	6,	/*No. 10 1D_Ufi*/
-	    6,	/*No. 11 2D_Ufi*/	6,	/*No. 12 NBI control*/
-			};
-struct	{int xcur, ycur;}	Kevent;
+Button {int mexl, meyd, mexr, meyu, melen; char keysym, *mename;};
+Button MAMB[NMRMB];
+#define NDW 12      /* number of dialog windows */
+char *DWTitle[NDW] = {
+    "Variable control", /*No. 1  "V"*/
+    "Constant control", /*No. 2  "C"*/
+    "Times & Grids",    /*No. 3  "D"*/
+    "Window control",   /*No. 4  "W"*/
+    "Scale control",    /*No. 5  "S"*/
+    "Y-shift",	        /*No. 6  "Y"*/
+    "Time interval",    /*No. 7  "M" in the mode 7*/
+    "Mark times:  < 0 - skip,  0 - dim,  > 0 - color #", /*"M" modes 4,5*/
+    "Equilibrium control",   /*No. 9  call from metric */
+    "1D_Ufile",	             /*No. 10 Not used */
+    "2D_Ufile",	             /*No. 11 Not used */
+    "NBI const for beam No", /*No. 12 call from nbiext */
+};
+int DWnamlen[NDW] = {
+    6, /*No. 1  PRNAME*/
+    6, /*No. 2  CFNAME*/
+    6, /*No. 3  DTNAME*/
+    4, /*No. 4  NAME[TR]*/
+    4, /*No. 5  NAME[TR]*/
+    4, /*No. 6  NAME[TR]*/
+    6, /*No. 7  NAM7*/
+    6, /*No. 8  NAMEP*/
+    6, /*No. 9  DTNAME*/
+    6, /*No. 10 1D_Ufi*/
+    6, /*No. 11 2D_Ufi*/
+    6, /*No. 12 NBI control*/
+};
+
+struct {int xcur, ycur;} Kevent;
 
 void Change_Color(GC, int, int);
 void Menu_table(int, int, int, char[], char*[], Button[], int);
@@ -122,33 +113,39 @@ int GetValue(XKeyEvent, char[], int, char[], int*);
 int caution_();
 int If_empty(int, int, int, int[], int[], char[], int);
 int GetKey(XKeyEvent, char[], int*);
-
-Window Open_Window(int, int, int, int, int, char[], 
-      	           int, Window, Cursor);
+Window Open_Window(int, int, int, int, int, char[], int, Window, Cursor);
 
 /**********************************************************************/
-void xaxis (modex) INT_ *modex;		/* Change of X-axis */
-{    xaxis_(modex);	}
-void xaxis_(modex) INT_ *modex;		/* Change of X-axis */
-{  
-  switch (*modex)
-    {	case 0:	MAMT[0]="16*f(a)"; MAMT[1]="8*f(a)";
-		break;
-	case 1:	MAMT[0]="16*f(a)"; MAMT[1]="8*f(a)";
-		break;
-	case 2:	MAMT[0]="16*f(rho)"; MAMT[1]="8*f(rho)";
-		break;
-	case 3:	MAMT[0]="16*f(psi)"; MAMT[1]="8*f(psi)";
-		break;
-    }
-  return;
+void xaxis(INT_ *modex){
+    xaxis_(modex);
 }
-/********** Draw lower part of the root window ************************/
-/* The function defines menu table in the Astra run mode */
-void asrumn (modex)	INT_ *modex;
-{    asrumn_(modex);	}
-void asrumn_(modex)	INT_ *modex;
-{   int	Xx, Xy, i, ixx=8, dx=5, iyy;
+
+void xaxis_(INT_ *modex){ /* Change of X-coordinate for plots */
+    switch (*modex){
+    case 0:
+        MAMT[0] = "16*f(a)";
+	MAMT[1] = "8*f(a)";
+	break;
+    case 1:
+        MAMT[0] = "16*f(a)";
+	MAMT[1] = "8*f(a)";
+	break;
+    case 2:
+        MAMT[0] = "16*f(rho)";
+	MAMT[1] = "8*f(rho)";
+	break;
+    case 3:
+        MAMT[0] = "16*f(psi)";
+	MAMT[1] = "8*f(psi)";
+	break;
+    }
+    return;
+}
+
+/**********************************************************************/
+void taskmenu_(INT_ *modex){
+/* Draw menu table in Astra interactive mode, at the bottom of the main graphic window */
+    int Xx, Xy, i, ixx=8, dx=5, iyy;
     int	BHors=5;		/*button horizontal separation	*/
     char *BUTEXT[NMRMB] = 
 	{"16*f(a)", "8*f(a)", "Refresh", "2*f(a,t)",
@@ -159,49 +156,38 @@ void asrumn_(modex)	INT_ *modex;
 	 "Select", "Grids", "Write data", "U-files",
 	 "Style", "Type model", "What X-axis", "Y-shift",
 	 "Run", "Step", "Quit", "Help"};
-	char	BUTKEY[NMRMB]={	'1','2','R',
-				'4','6','9',
-				'5','7','N',
-				'3','8','B',
-				'S','V','T','G',
-				'W','C','I','Q',
-				'M','D','F','U',
-				'.','L','X','Y',
-				'\015','\040','\057','H'};
-	nmamb = 32;
-	/* Draw separating lines between plots and menu */
-	Change_Color (theGCA, AstraColorNum[2], AstraColorNum[3]);
-	DLINER_ theGCA, 0, XWH-128, XWW-1, XWH-128);
-	DLINER_ theGCA, 0, XWH-110, XWW-1, XWH-110);
-	DLINER_ theGCA, 0, XWH-109, XWW-1, XWH-109);
-	for ( i=0; i<nmamb; i++ )
-	    { MAMT[i] = BUTEXT[i];	MAMK[i] = BUTKEY[i];	}
-	xaxis (modex);	iyy=XWH-74;
-/* git
-	Menu_table (ixx, iyy, 12, 3, MAMK, MAMT, MAMB, BHors);
-	Menu_table (ixx+XWH/2-3, iyy, 16, 4, MAMK+12, MAMT+12, MAMB+12, BHors);
-	Menu_table (ixx+XWW-50, iyy, 4, 1, MAMK+28, MAMT+28, MAMB+28, BHors); */
-	Menu_table(ixx               , iyy, 4, MAMK   , MAMT   , MAMB   , BHors);
-	Menu_table(ixx +   (XWW/8+dx), iyy, 4, MAMK+4 , MAMT+4 , MAMB+4 , BHors);
-	Menu_table(ixx + 2*(XWW/8+dx), iyy, 4, MAMK+8 , MAMT+8 , MAMB+8 , BHors);
-	Menu_table(ixx + 3*(XWW/8+dx), iyy, 4, MAMK+12, MAMT+12, MAMB+12, BHors);
-	Menu_table(ixx + 4*(XWW/8+dx), iyy, 4, MAMK+16, MAMT+16, MAMB+16, BHors);
-	Menu_table(ixx + 5*(XWW/8+dx), iyy, 4, MAMK+20, MAMT+20, MAMB+20, BHors);
-	Menu_table(ixx + 6*(XWW/8+dx), iyy, 4, MAMK+24, MAMT+24, MAMB+24, BHors);
-	Menu_table(ixx + 7*(XWW/8+dx), iyy, 4, MAMK+28, MAMT+28, MAMB+28, BHors);
-
-	if (ibcursor >= 0) Put_button(MAMB[ibcursor],hgh_menuGC);
+    char BUTKEY[NMRMB] = {
+        '1', '2', 'R', '4', '6', '9', '5', '7', 'N', '3', '8', 'B',
+	'S', 'V', 'T', 'G', 'W', 'C', 'I', 'Q', 'M', 'D', 'F', 'U',
+	'.', 'L', 'X', 'Y', '\015', '\040', '\057', 'H'};
+    nmamb = 32;
+/* Draw separating lines between plots and menu */
+    Change_Color(theGCA, AstraColorNum[2], AstraColorNum[3]);
+    DLINER_ theGCA, 0, XWH-128, XWW-1, XWH-128);
+    DLINER_ theGCA, 0, XWH-110, XWW-1, XWH-110);
+    DLINER_ theGCA, 0, XWH-109, XWW-1, XWH-109);
+    for (i=0; i<nmamb; i++){
+        MAMT[i] = BUTEXT[i];
+	MAMK[i] = BUTKEY[i];
+    }
+    xaxis(modex);
+    iyy = XWH - 74;
+    for (i=0; i<8; i++){
+        Menu_table(ixx + i*(XWW/8+dx), iyy, 4, MAMK+4*i, MAMT+4*i, MAMB+4*i, BHors);
+    }
+    if (ibcursor >= 0) Put_button(MAMB[ibcursor], hgh_menuGC);
 /* Menu titles */
-	Change_Color (hghGC, AstraColorNum[2], AstraColorNum[3]);
-	Xx=ixx+40;	Xy=iyy-5;
-	XDrawImageString(theDisplay,theRootWindow,hghGC,Xx,Xy,
-	"Graphic mode           Presentation       Control",49); Xx=Xx+475;
-	XDrawImageString(theDisplay,theRootWindow,hghGC,Xx,Xy,
-	"In/Out     Status",17);
+    Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+    Xx = ixx + 40;
+    Xy = iyy - 5;
+    XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy,
+        "Graphic mode           Presentation       Control", 49);
+    Xx += 475;
+    XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy, "In/Out     Status", 17);
 }
 
 /**********************************************************************/
-void Menu_table (xm, ym, nbutt, mek, met, butt, BHors)
+void Menu_table(xm, ym, nbutt, mek, met, butt, BHors)
 	int xm, ym, nbutt, BHors;
         char mek[], *met[]; Button butt[];
     {
@@ -209,66 +195,78 @@ void Menu_table (xm, ym, nbutt, mek, met, butt, BHors)
 
 	lenm=0;
         for (i=0; i<nbutt; i++){ 	
-	    leng=strlen(met[i]);
-            if(leng>lenm) lenm=leng;
+	    leng = strlen(met[i]);
+            if (leng>lenm) lenm = leng;
         }
-	xwid = lenm*F1sw+2*BTxof+BHors;
+	xwid = lenm*F1sw + 2*BTxof + BHors;
 	for (i=0; i<nbutt; i++){ 
 	    leng=strlen(met[i]);
-	    butt[i].mexl=xm;
-	    butt[i].mexr=butt[i].mexl+xwid;
-	    butt[i].meyu=ym + i*(F1sh+2*BTyof+1+BVers);
-	    butt[i].meyd=butt[i].meyu+F1sh+2*BTyof+1;
-	    butt[i].melen=leng;
-	    butt[i].mename=met[i];
-	    butt[i].keysym=mek[i];
+	    butt[i].mexl = xm;
+	    butt[i].mexr = butt[i].mexl + xwid;
+	    butt[i].meyu = ym + i*(F1sh + 2*BTyof + 1+BVers);
+	    butt[i].meyd = butt[i].meyu + F1sh + 2*BTyof + 1;
+	    butt[i].melen  = leng;
+	    butt[i].mename = met[i];
+	    butt[i].keysym = mek[i];
         }
 	for (i=0; i<nbutt; i++){ 
             Put_button(butt[i],theGCA);
         }
 }
-/*************** Button drawing ************************************/
-void Put_button (but, aGC) Button but; GC aGC;
-{	int	yd, xd, yu, xu;
-	yd = but.meyd;	xd = but.mexl;
-	yu = but.meyu;	xu = but.mexr;
-	Change_Color(aGC,1,0);
-	CLREC_ xd-2, yu-2, xu-xd+4, yd-yu+4, False);
-	WRITER_ aGC,xd+BTxof+2,yd-BTyof-3,but.mename,but.melen); 
-	DLINER_ aGC,xd+2,yd,xu-2,yd);	DLINER_ aGC,xu-2,yd,xu,yd-2);
-	DLINER_ aGC,xu,yd-2,xu,yu+2);	DLINER_ aGC,xu,yu+2,xu-2,yu);
-	DLINER_ aGC,xu-2,yu,xd+2,yu);	DLINER_ aGC,xd+2,yu,xd,yu+2);
-	DLINER_ aGC,xd,yu+2,xd,yd-2);	DLINER_ aGC,xd,yd-2,xd+2,yd);
-	/* No round caps:
-	DLINER_ aGC,xd,yd,xu,yd);	DLINER_ aGC,xu,yd,xu,yu);
-	DLINER_ aGC,xu,yu,xd,yu);	DLINER_ aGC,xd,yu,xd,yd);*/
-}
+
 /**********************************************************************/
-void AstraEvent_ ()
-{
-  int  ii;
-  INT_ key;
-  if (!Xmode)	return;
-  ii = 1;	Root_window_event(&key,ii);	return; 
+void Put_button(Button but, GC aGC){
+/* Button drawing */
+    int yd, xd, yu, xu;
+    yd = but.meyd;
+    xd = but.mexl;
+    yu = but.meyu;
+    xu = but.mexr;
+    Change_Color(aGC, 1, 0);
+    XClearArea(theDisplay, theRootWindow, xd-2, yu-2, xu-xd+4, yd-yu+4, False);
+    XDrawImageString(theDisplay,theRootWindow, aGC, xd+BTxof+2, yd-BTyof-3, but.mename, but.melen);
+
+    DLINER_ aGC, xd+2, yd  , xu-2, yd  );
+    DLINER_ aGC, xu-2, yd  , xu  , yd-2);
+    DLINER_ aGC, xu  , yd-2, xu  , yu+2);
+    DLINER_ aGC, xu  , yu+2, xu-2, yu  );
+    DLINER_ aGC, xu-2, yu  , xd+2, yu  );
+    DLINER_ aGC, xd+2, yu  , xd  , yu+2);
+    DLINER_ aGC, xd  , yu+2, xd  , yd-2);
+    DLINER_ aGC, xd  , yd-2, xd+2, yd  );
+/* No round caps:
+    DLINER_ aGC, xd, yd, xu, yd);
+    DLINER_ aGC, xu, yd, xu, yu);
+    DLINER_ aGC, xu, yu, xd, yu);
+    DLINER_ aGC, xd, yu, xd, yd);
+*/
 }
+
 /**********************************************************************/
-void AstraEvent ()
-{ if (!Xmode)	return;	(void)AstraEvent_ (); 
+void AstraEvent(){
+   int ii;
+   INT_ key;
+   if (!Xmode) return;
+   ii = 1;
+   Root_window_event(&key, ii);
+   return; 
 }
+
 /**********************************************************************/
-void astraevent_ ()
-{ (void)AstraEvent_ (); }
-/**********************************************************************/
-INT_ pollevent (key) INT_ *key;
-{	pollevent_ (key);	}
-INT_ pollevent_(key) INT_ *key;
-{
-  int ii;
-  ii = 0;	return Root_window_event(key,ii);
+void astraevent_(){
+    (void)AstraEvent();
 }
+
+/**********************************************************************/
+INT_ pollevent_(INT_ *key){
+    int ii;
+    ii = 0;
+    return Root_window_event(key, ii);
+}
+
 /***************** Polling for events *********************************/
-INT_ Root_window_event(key,ii)	INT_ *key; int ii;
-{	XEvent		theEvent;
+INT_ Root_window_event(INT_ *key, int ii){
+	XEvent		theEvent;
 	XKeyEvent	theKeyEvent;
 	XComposeStatus	theComposeStatus;
 	KeySym		theKeySym;
@@ -278,7 +276,6 @@ INT_ Root_window_event(key,ii)	INT_ *key; int ii;
    *key = 0;
    XSelectInput (theDisplay, theRootWindow, ROOT_EV_MASK);
    count = XEventsQueued(theDisplay, mode);
-   /*	printf("EventsQueued:  %d\n",count); */
    if (ii && count != 0)
      {  			/* Call from other processes */
        XNextEvent (theDisplay, &theEvent);
@@ -290,16 +287,7 @@ INT_ Root_window_event(key,ii)	INT_ *key; int ii;
    if ( count == 0 )
      { XFlush(theDisplay); *key = 0;	return 0; }
 XNextEvent (theDisplay, &theEvent);
-     /*	printf("ButtonPress:  %d\n",ButtonPress); 
-   	printf("KeyPress   :  %d\n",KeyPress   ); 
-   	printf("Expose     :  %d\n",Expose     ); 
-   	printf("UnmapNotify:  %d\n",UnmapNotify); 
-   	printf("MapNotify  :  %d\n",MapNotify  ); 
-   	printf("FocusIn    :  %d\n",FocusIn    ); 
-   	printf("FocusOut   :  %d\n",FocusOut   ); 
-   	printf("ConfigureNo:  %d\n",ConfigureNotify); 
-   	printf("theEvent.type:  %d\n",theEvent.type); */
-     /* See other values of case in file /usr/include/X11/X.h */
+/* See other values of case in file /usr/include/X11/X.h */
    switch( theEvent.type )
      {	case ButtonPress:				/* Linux 4 */
 	     Kevent.xcur = theEvent.xbutton.x;	
@@ -313,8 +301,6 @@ XNextEvent (theDisplay, &theEvent);
 	     Kevent.xcur = theEvent.xbutton.x;	
 	     Kevent.ycur = theEvent.xbutton.y;
 	     theKeyEvent = theEvent.xkey;
-	  /* count = XLookupString (&theEvent.xkey, theKeyBuffer,
-	        theKeyBufferMaxLen, &theKeySym, &theComposeStatus); */
 	     count = XLookupString (&theKeyEvent, theKeyBuffer,
 	       theKeyBufferMaxLen, &theKeySym, &theComposeStatus);
 	     if ( count > theKeyBufferMaxLen ) 
@@ -322,94 +308,62 @@ XNextEvent (theDisplay, &theEvent);
 			break; }
 	     if ( theKeyEvent.state & Mod1Mask)
 	       { if ( theKeySym <= 127 )	{ ch = theKeySym;
-		 /* printf("<Alt>+%s is pressed,   ASCII code =%d\n",
-		                        theKeyBuffer,theKeySym);     */
 		 *key = ch;	return 2;	}
 	       }
 	     if ( theKeyEvent.state & ControlMask)
 	       { if ( isascii((int)theKeySym) )	{ ch = theKeySym;
-	         /* printf("<Ctrl>+%c is pressed,   ASCII code =%d\n",
-		                          ch,theKeySym);	     */
 		 *key = ch;	return 1;	}
 	       }
 	     theKeyBuffer[count]='\0';		*key = theKeyBuffer[0];
 	     if (theDepth==1 && (*key=='A' || *key=='a') ) *key=0;
-	       /* printf("%d  %d  %d\n",theKeyEvent,count,theKeySym); */
-	       /* printf("%d  %d  %d  %d  %d\n",Mod1Mask,Mod2Mask
-				,Mod3Mask,Mod4Mask,&theEvent); */
 	     return 0;
 	case Expose:
 	     if(theEvent.xexpose.count == 0)
 	     *key=(int)'R';	return 0;
 	case UnmapNotify:
-	  /*	     printf("UnmapNotify  %d\n",theEvent.type); */
 	     *key = 0;		return 65005;
 	case FocusIn:
-	  /*	     printf("FocusIn     %d\n",theEvent.type); */
 	     *key = 0;		return 65006;
 	case EnterNotify:
-	  /*	     printf("EnterNotify %d\n",theEvent.type); */
 	     *key = 0;		return 65006;
 	case MapNotify:
-	  /*	     printf("MapNotify   %d\n",theEvent.type); */
 	     *key = 0;		return 0;
 	case FocusOut:
-	  /*         printf("theRootWindow is out of focus\n\n"); */
 	     *key = 0;		return 0;
 	case ConfigureNotify:				/* Linux 22 */
-	  /* printf("Configure Notify Event\n"); */ /* Window movement */
 	     *key = 0;		return 0;
        	default:
-	  /*	     printf("Event.type %d\n",theEvent.type); */
 	     *key = 0;		return 0;
      }
-
 	*key = 0;	        return 0;
 }
+
 /**********************************************************************/
-void GetRWgeometry (XRW,YRW)	int *XRW, *YRW;
-{
-   Window	        theRW, theCW;
-   int		Wx, Wy, iX, iY;
-   unsigned int	Ww, Wh, Wb, Wd;
-   /*   Status		theS; */
-   /*   XWindowAttributes theAttributes; */
-   /* printf("%d %d (x,y)=(%d,%d)\n",*x,*y,XWX,XWY); */
-   XGetGeometry(theDisplay,theRootWindow,
-			       &theRW, &Wx, &Wy,  &Ww, &Wh,  &Wb, &Wd);
-   XTranslateCoordinates(theDisplay, theRootWindow,
-			theRW, 0, 0, &iX, &iY, &theCW);
-   *XRW = iX-Wx;	*XRW -= XCorrection;
-   *YRW = iY-Wy;	*YRW -= YCorrection;
-   /* printf("Translate: (x,y)=(%d,%d) -> (x,y)=(%d,%d) get\n",Wx,Wy,iX,iY); */
-   /* printf(" -> (x,y)=(%d,%d)\n",Wx+XRW,Wy+YRW); */
-   /* printf("{%d,%d}\n",theRW,theCW); */
-   /* printf("New position (x,y)=(%d,%d)\n",Wx+XRW,Wy+YRW); */
-   /* printf("(x,y)=(%d,%d);   dest_(x,y)=(%d,%d);\n",Wx,Wy,iX,iY); */
-   /* theS = XGetWindowAttributes(theDisplay,theRootWindow, */
-   /*			 &theAttributes); */
-   /* printf("theEvent.type %d\n",theEvent.type); */
-   /* printf(" status %d\n",theS); */
-   /* printf(" (x,y)=(%d,%d)\n",theAttributes.x,theAttributes.y); */
-   /* printf("(width,heigth)=(%d,%d);   ",Ww,Wh); */
-   /* printf("(border,depth)=(%d,%d)\n",Wb,Wd); */
-   return;
+void GetRWgeometry(int *XRW, int *YRW){
+    Window theRW, theCW;
+    int Wx, Wy, iX, iY;
+    unsigned int Ww, Wh, Wb, Wd;
+
+    XGetGeometry(theDisplay,theRootWindow, &theRW, &Wx, &Wy,  &Ww, &Wh, &Wb, &Wd);
+    XTranslateCoordinates(theDisplay, theRootWindow, theRW, 0, 0, &iX, &iY, &theCW);
+    *XRW = iX - Wx - XCorrection;
+    *YRW = iY - Wy - YCorrection;
+
+    return;
 }
+
 /**********************************************************************/
-INT_ waitevent (theKey, xCursor, yCursor)	INT_ *theKey, *xCursor, *yCursor;
-{	INT_ i;
-	i = waitevent_ (theKey, xCursor, yCursor);
-	return i;
+INT_ waitevent_ (INT_ *theKey, INT_ *xCursor, INT_ *yCursor){
+/* Waiting for events from Astra in WAIT mode & and from dialog windows */
+    INT_ i;
+    i = nextevent(theKey, xCursor, yCursor, nmamb, MAMB, MAMK, MAMT);
+    while (i == 0 && *theKey == 0 ){
+        i = nextevent(theKey, xCursor, yCursor, nmamb, MAMB, MAMK, MAMT);
+    }
+    return i;
 }
-/* Waiting events from Astra in WAIT mode & and from dialog windows */
-INT_ waitevent_ (theKey, xCursor, yCursor)	INT_ *theKey, *xCursor, *yCursor;
-{	INT_ i;
-  Wait:	i=nextevent(theKey, xCursor, yCursor, nmamb, MAMB, MAMK, MAMT);
-	if (i==0 && *theKey==0 ) goto Wait;
-	/*printf("next_event: %d   %d\n",i,*theKey); */
-	return i;
-}
-/*********************** Waiting events ********************************/
+
+/*********************** Waiting events *******************************/
 int nextevent(theKey, xCursor, yCursor, nmbt, mbb, mbk, mbt) 
 		INT_ *theKey, *xCursor, *yCursor; int nmbt;
 		Button mbb[]; char mbk[]; char *mbt[];
@@ -424,7 +378,6 @@ int nextevent(theKey, xCursor, yCursor, nmbt, mbb, mbk, mbt)
 	int		longKey;
 XSelectInput (theDisplay, theRootWindow, GET_EV_MASK);
 XNextEvent (theDisplay, &theEvent);
-/* printf("next_event: %d   %d\n",theEvent.type, theEvent.xany.window); */
 
 switch( theEvent.type )
   { case MapNotify:
@@ -440,12 +393,8 @@ switch( theEvent.type )
 	Kevent.ycur = theEvent.xbutton.y;   *yCursor=Kevent.ycur;
 	theKeyEvent = theEvent.xkey;
 
-	/* *theKey = GetKeySym(theKeyEvent);
-	   printf("%d,%d,%d\n",*theKey,theKeyEvent,&theKeyEvent);
-	   return; */
 	length = XLookupString (&theKeyEvent, theKeyBuffer,
 		theKeyBufferMaxLen, &theKeySym, &theComposeStatus);
-		/*  printf("%d,  %d\n",length,theKeySym); */
 	if ( length > theKeyBufferMaxLen || length < 0 ) 
 	  { printf("String translation error:  Bufferlength =%d\n",length);
 	    break; }
@@ -466,14 +415,10 @@ switch( theEvent.type )
 	  }
 	if ( theKeyEvent.state & Mod1Mask)
 	  { if ( theKeySym <= 127 )	{ 
-	    /*	 printf("<Alt>+%s is pressed,   ASCII code =%d\n",
-		 theKeyBuffer,theKeySym);	*/
 	    *theKey = theKeySym;	return 2;	}
 	  }
 	if ( theKeyEvent.state & ControlMask)
 	  { if ( isascii((int)theKeySym) )	{ 
-	    /*	 printf("<Ctrl>+%c is pressed,   ASCII code =%d\n",
-		 toascii(theKeySym),theKeySym);		*/
 	    *theKey =  theKeySym;	return 1;	}
 	  }
 	longKey	=theKeyBuffer[0];
@@ -484,24 +429,19 @@ switch( theEvent.type )
 	      {	*theKey	= longKey;
 		if(theDepth==1 && (theKeySym=='A' || theKeySym=='a'))
 		   *theKey=0;
-		/*printf("Key   %d \n",*theKey);*/
 	      }
 	    else
-	      {	/*printf("ASCII key was hit: [%s]\n",theKeyBuffer);
-		  printf("longKey   %d \n",longKey);*/
+	      {	
 		*theKey = longKey;
 		if( longKey == 8 )  { return 65361; /* BS equiv <- */}
 	      }
 	    return 65000;
 	  }
     case ButtonPress:
-      /*printf("ButtonPressMask:  %d,  %d\n", ButtonPressMask, ButtonPress); */
  	Kevent.xcur = theEvent.xbutton.x;   *xCursor=Kevent.xcur;
 	Kevent.ycur = theEvent.xbutton.y;   *yCursor=Kevent.ycur;
 	ibox = Cursor_in_Box ();
-	/* printf("ibox:  %d, %d, %s\n", ibox, (int)mbk[ibox], mbt[ibox]); */
-	/* printf("Button  pressed  x = %d,  y = %d,  key = %d\n"
-			,*xCursor,*yCursor,*theKey); */
+
 	if (ibox == -1) return 65001;
 	if (ibox >= 0) *theKey=(int)mbk[ibox];
 	if (theDepth==1 && *theKey=='A') *theKey=0;    /*No color table*/
@@ -518,18 +458,13 @@ switch( theEvent.type )
 	return 65001;
 
     case ButtonRelease:		
-      /* printf("ButtonReleaseMask: %d, %d\n",ButtonReleaseMask,ButtonRelease); */
  	Kevent.xcur = theEvent.xbutton.x;   *xCursor=Kevent.xcur;
 	Kevent.ycur = theEvent.xbutton.y;   *yCursor=Kevent.ycur;
-	/* printf("Button released  x = %d,  y = %d  key = %d\n"
-			,*xCursor,*yCursor,*theKey); */
 	return 65002;
 
     case MotionNotify:
-      /*     	printf("Case Motion\n"); */
  	Kevent.xcur = theEvent.xbutton.x;   *xCursor=Kevent.xcur;
 	Kevent.ycur = theEvent.xbutton.y;   *yCursor=Kevent.ycur;
-	/*printf("Cursor position   x=%d,  y=%d\n",*xCursor,*yCursor);*/
 	ibcursor = Cursor_in_Box ();
 	if (iact == ibcursor )  return 65000;	/* No changes */
 	if (iact >= 0) 				/* Hgh_box -> std */
@@ -546,77 +481,48 @@ switch( theEvent.type )
 	return 65000;
 
     case ConfigureNotify:				/* Linux 22 */
-      /* printf("Configure Notify Event\n");*//* Occurs when moving a window */ 
 	*theKey = 0;	     return 0;
 
-/*    case EnterWindow:
-	printf(" EnterWindowMask #:  %d  \n", theEvent.type);
-	return 65000;
-    case LeaveWindow:
-	printf(" LeaveWindowMask #:  %d  \n", theEvent.type);
-	return 65000;
-    case StructureNotify:
-	printf(" StructureNotifyMask #:  %d  \n", theEvent.type);
-	return 65000;
-    case DestroyNotify:
-	printf(" DestroyNotifyMask #:  %d  \n", theEvent.type);
-	return 65000;
-    default:
-	longKey=theEvent.type;
-	if(longKey == 18)	*theKey	=318;
-	if(longKey == 19)	*theKey	=319;
-	printf(" default  %d  \n", theEvent.type);
-	if(longKey == 18 || longKey == 19 ) return 65000;
-*/
   }
 return 0;
 }
+
 /****** Returns:  menu box number, -1 if no match; 
         Makes use of global structures 
 	Button	MAMB[NMRMB];	Event	Kevent;		******/
-int Cursor_in_Box ()
-{	int	i;
-	for(i=0; i<nmamb; i++)
-	{   if (Kevent.xcur>=MAMB[i].mexl && Kevent.xcur<=MAMB[i].mexr &&
-		Kevent.ycur>=MAMB[i].meyu && Kevent.ycur<=MAMB[i].meyd  )
-		return i;
+int Cursor_in_Box(){
+    int i;
+    for (i=0; i<nmamb; i++){
+        if (Kevent.xcur >= MAMB[i].mexl && Kevent.xcur <= MAMB[i].mexr &&
+	    Kevent.ycur >= MAMB[i].meyu && Kevent.ycur <= MAMB[i].meyd){
+	    return i;
 	}
-	return -1;
+    }
+    return -1;
 }
+
 /**********************************************************************/
-void mvcursor (key,ix,iy) INT_ *key, *ix, *iy;
-{	mvcursor_ (key,ix,iy);	}
+void mvcursor_(INT_ *key, INT_ *ix, INT_ *iy){
 /* Move cursor by one pixel */
-void mvcursor_ (key,ix,iy) INT_ *key, *ix, *iy;
-{	if (*key == 361) *ix = *ix-1; /* <- */
-	if (*key == 362) *iy = *iy-1; /* Up */
-	if (*key == 363) *ix = *ix+1; /* -> */
-	if (*key == 364) *iy = *iy+1; /* Dn */
-	XWarpPointer(theDisplay, None, theRootWindow, 0,0,0,0, *ix,*iy);
+    switch(*key){
+    case(361):
+        *ix -= 1; /* <- */
+        break;
+    case(362):
+        *iy -= 1; /* Up */
+	break;
+    case(363):
+        *ix += 1; /* -> */
+	break;
+    case(364):
+        *iy += 1; /* Dn */
+        break;
+    }
+    XWarpPointer(theDisplay, None, theRootWindow, 0, 0, 0, 0, *ix, *iy);
 }
-/*******    ASKLIS is called by IFKEY (keys "S,Y,D,C,V,M[modes 4,5,7])
-************************************************************************/
-/*	Example call from FORTRAN
-	if (N3EQL .eq. -1)	then		! Option (2)
-		 N3EQL = int(NEQUIL)
-		 CHAR6 = DTNAME(17)
-		 YACC = DELOUT(17)
-		 DELOUT(17) = ACC
-		 DTNAME(17) = "Toler"
-		 call ASKLIS(4,DELOUT(17),DTNAME(17),9)
-		 DTNAME(17) = Char6
-		 ACC = DELOUT(17)
-		 DELOUT(17) = YACC
-C		 write(*,*)"Time =",TIME
-		 goto	3
-	endif
-*/
-int asklis (nofbox, array, theNames, id)
-     INT_    *nofbox, *id;
-     char   theNames[]; double *array;
-{	return asklis_(nofbox, array, theNames, id);
-}
-int asklis_ (nofbox, array, theNames, id)
+
+/**********************************************************************/
+int asklis_(nofbox, array, theNames, id)
     INT_  *nofbox, *id;
     char theNames[];
     double *array;
@@ -865,53 +771,51 @@ EndDialog:
 	XFlush(theDisplay);
 	return (0);
 }
-/************************************************************************/
-int  caution ()
-{    int i;	i = caution_();	return i;	}
-int  caution_ ()
-{
-    Window		theWindow;
-    int	UpLeftx = 2, UpLefty = 10,/* window corner location	*/
-	Width, Height;		/* window size			*/
-    int	wsym = 8, hsym = 13,	/* width and height, font 8x13bold */
-	margin = 6, i, charLength; 	/* Margin */
-    char	stri256[256], title[70] = "Caution!";
 
-    strcpy (stri256,"Writing movie");
+/**********************************************************************/
+int caution_(){
+    Window theWindow;
+    int	UpLeftx=2, UpLefty=10, /* window corner location	*/
+	Width, Height;	           /* window size */
+    int	wsym=8, hsym=13,	   /* width and height, font 8x13bold */
+	margin=6, i, charLength; 	/* Margin */
+    char stri256[256], title[70] = "Caution!";
+
+    strcpy(stri256, "Writing movie");
     charLength = strlen(&stri256[0]);
-    Width = wsym*charLength+2*margin;
-    Height =hsym+2*margin;
+    Width = wsym*charLength + 2*margin;
+    Height =hsym + 2*margin;
 
-    GetRWgeometry (&XRW,&YRW);
-    UpLeftx = 2;     i = XRW-Width-8;		UpLefty = YRW;
-    if (i > UpLeftx)  UpLeftx = i;		i = YRW+Height+30;
-    if (i > theHeight) UpLefty = theHeight-Height-30;
-/*  printf("stri256 = %s[%d],\t\n",stri256, strlen(&stri256[0]));			
-    printf("theTitle = %s[%d],\t\n", title, strlen(title));
-    printf("Width = %d,\tHeight = %d,\t%d,\t%d,\t\n", Width, Height);
-*/
-    printf("XRW = %d,\tYRW = %d,\tUpLeftX = %d,\tUpLeftY = %d,\t \n"
-	   ,XRW,YRW, UpLeftx, UpLefty);
+    GetRWgeometry(&XRW,&YRW);
+    UpLeftx = 2;
+    i = XRW - Width - 8;
+    UpLefty = YRW;
+    if (i > UpLeftx)  UpLeftx = i;
+    i = YRW + Height + 30;
+    if (i > theHeight) UpLefty = theHeight - Height - 30;
+    printf("XRW = %d,\tYRW = %d,\tUpLeftX = %d,\tUpLeftY = %d,\t \n",
+	   XRW, YRW, UpLeftx, UpLefty);
 
     theWindow = Open_Window (UpLeftx, UpLefty, Width, Height, 1, title, 0,
 		       RootWindow(theDisplay,theScreen), theMenuCursor);
-    i = 30;  changeGCcolor(hghGC, &i);
-//  Change_Color(hghGC,AstraColorNum[14],AstraColorNum[20]);/* Magenta on Yellow */
+    i = 30;
+    changeGCcolor(hghGC, &i);
     XDrawImageString(theDisplay, theWindow, hghGC, margin, margin+10,
 		     stri256, charLength);
     XFlush(theDisplay);
     sleep(5);
-EndDialog:
     XDestroyWindow(theDisplay, theWindow);
     XFlush(theDisplay);
-    return (0);
+    return 0;
 }
-/********** ASKTAB is called from ASXWIN and ASTWIN (file surv.f)
-            that in turn are invoked by key "M" from IFKEY	*********/
-int asktab (title, template, array, len, nrows, ngroup, morow)
+
+/**********************************************************************/
+int asktab_(title, template, array, len, nrows, ngroup, morow)
      INT_     *len, *nrows, *ngroup, *morow;
      char    title[], template[], array[];
 /*
+Called from ASXWIN and ASTWIN (file surv.f90) that in turn are invoked by key "M" from IFKEY
+
 Input:	title	- Title of the table 
 	template  string defining a structure of the table and its 1st line
 		  1st line does not appear if all non-'|' symbols are spaces
@@ -950,13 +854,6 @@ Add features:
    If (Width=2*xshif+wsym*(last_pos) < 37*wsym)
        or (Height=2*yshif+(nlines+3)*hbox > theHeight) double Width
 */
-{  INT_	i;
-  i = asktab_(title, template, array, len, nrows, ngroup, morow);
-  return i;
-}
-int asktab_ (title, template, array, len, nrows, ngroup, morow)
-INT_ *len, *nrows, *ngroup, *morow;
-char title[], template[], array[];
 {
   XEvent	theEvent;
   static	Window	theWindow;
@@ -1194,16 +1091,15 @@ EndDialog:
 	mode = 0;
 	return 0;
 }
-/********** The function is called from ASKXGR (file for/surv.f) 
-            that in turn is called from IFKEY (key "O")		*********/
-int askgrf  (title, template, array, len, nrows, ngroup, morow, modex)
-   INT_	*len, *nrows, *ngroup, *morow, *modex;
-   char title[], template[], array[];
-{  INT_	i;
-   i = askgrf_ (title, template, array, len, nrows, ngroup, morow, modex);
-	return i;
-}
-/* The same as "asktab", but the 1st column and the column next to "||"
+
+/**********************************************************************/
+int askgrf_ (title, template, array, len, nrows, ngroup, morow, modex)
+			INT_ *len, *nrows, *ngroup, *morow, *modex;
+			char title[], template[], array[];
+/* The function is called from ASKXGR (file for/surv.f) 
+            that in turn is called from IFKEY (key "O")
+
+   The same as "asktab", but the 1st column and the column next to "||"
    		are drawn in blue and closed for access
 Input:	title	- Title of the table 
 	template  string defining a structure of the table and its 1st line
@@ -1219,9 +1115,6 @@ Input:	title	- Title of the table
    ! Note: this parameter is used for output
 	modex	- current radial grid type (input)
 */
-int askgrf_ (title, template, array, len, nrows, ngroup, morow, modex)
-			INT_ *len, *nrows, *ngroup, *morow, *modex;
-			char title[], template[], array[];
 {	XEvent	theEvent;
 	Window	theWindow;
 		int	UpLeftx =2, UpLefty =10,/* window corner location */
@@ -1348,10 +1241,7 @@ Create_table:
 	WRITE_ hghGC,  xshif, Height-4, " OK ",4);
 	Change_Color (theGCA, 1, 0);	Change_Color (hghGC, 1, 0);
 						/* black on white */
-/*printf("&Root %d  &Win %d;",&theRootWindow,&theWindow);
-  printf("   Root %d  Win %d\n\n",theRootWindow,theWindow);
-  printf("Start: &theEvent %d  theEvent %d\n\n",&theEvent,theEvent);
-*/
+
 		/*********  Draw input data  *********/
 	for (   i=0; i < *nrows; i++ )				/* row loop */
  	    {	iy =yshif+hsym+hbox*(i+irow0);	Change_Color(theGCA,3,0);
@@ -1471,7 +1361,7 @@ FillXbox:  if ( *modex < 0 )  goto	Unselect;
 	   XFlush(theDisplay);
 	   goto Table_control;
 	}
-/*printf("theEvent.type = %d,  KeyPress = %d\n",theEvent.type,KeyPress); */
+
    if (theEvent.type != KeyPress)	goto	Table_control;
 	iret = GetKey (theEvent.xkey, stri, &spos);
 	if ( ixbox > 0 )
@@ -1493,9 +1383,6 @@ FillXbox:  if ( *modex < 0 )  goto	Unselect;
 	      if ( stri[0] > '5')	{
 		   stri[0] = '5';	goto	Printinfo;
 					}
-//	      if ( stri[0] < '0' || stri[0] > '5')	goto	FillXbox;
-//              strncpy(&test,&stri[0],1);
-//              test = stri[0];
               strcpy(&test,&stri[0]);
 	      goto	FillXbox;
 Printinfo:    printf(" The following flux labels are allowed:\n");
@@ -1517,10 +1404,7 @@ Escape:	      { strncpy(array+ind,stri,wbox);   goto EndDialog;
 	        if ( stri[spos] == '?' )
 		 { printf("%d  %.13s\n",spos,stri);
 		printf("\"%.8s\"\n",array+ind);
-
-		 /*		sscanf(&str,"%[^ ]%s",array+ind);*/
 		printf("\"%s\"\n",str);
-		 /*		sscanf(&str,"%s","grep -w \"");*/
 		printf("\"%s\"\n",array+ind);
 		for(j=0; j<=wbox; j++)
 		if (array[ind+j] != ' ') strncat(str,array+ind+j,1);
@@ -1600,70 +1484,73 @@ EndDialog:
 	ibcursor = -1;
 	return (0);
 }
-/***********************************************************************/
+
+/**********************************************************************/
+void Call_ifkey(int j){
+    if (j == 47 ||			/* "/" Exit -> */
+        j == 13 || 			/* <Enter> */
+        j == 32 || 			/* <Space> */
+        j == 37 || 			/* "%" */
+        (j >= 48 && j <= 57  ) ||		/* "0" -> "9" */
+        j == 66 || 				/* "B" */
+        j == 67 || 				/* "C" */
+        j == 68 || 				/* "D" */
+        j == 72 ||  				/* "H" */
+        j == 78 ||  				/* "N" */
+        j == 79 ||  				/* "O" */
+        j == 82 ||  				/* "R" */
+        j == 83 ||  				/* "S" */
+        j == 87 ||  				/* "W" */
+        j == 88  				/* "X" */
+	) ifkey_(&j);
+    return;
+}
+
+/**********************************************************************/
+void ProcessRootWindowEvent(XEvent *theEvent){
 /* The function processes selected events in theRootWindow,
    e.g. redrawing in case of exposure. 
 	changing mode
 	   0 otherwise */
-void ProcessRootWindowEvent (theEvent)   XEvent	*theEvent;
-{  int	j, k;
-   XKeyEvent	theKeyEvent;
-   XComposeStatus	theComposeStatus;
-   KeySym		theKeySym;
-   char 		theKeyBuffer[5];
-   switch( theEvent->type )
-     {	case ButtonPress:
-	   Kevent.xcur = theEvent->xbutton.x;
-	   Kevent.ycur = theEvent->xbutton.y;
-	   k = Cursor_in_Box ();		  /* Returns box number */
-	   if (k >= 0 && k <= nmamb)	j = (int)MAMK[k];
-			   /* printf("Button pressed,  No = %d\n",j); */
-	   goto 	Call_ifkey;
-	case KeyPress:
-	   theKeyEvent = theEvent->xkey;
-	   j = XLookupString (&theKeyEvent, theKeyBuffer, 4,
-			      &theKeySym, &theComposeStatus);
-	   if ( j == 0 )		/* <Ret>, <Alt>, etc. is pressed */
-	   return; 
-	   if ( j != 1 ) 
-	      { printf("String translation error:  Bufferlength =%d\n", j);
-	        return; }
-	   j = theKeySym;
-	      /* printf("Key pressed:  Key = \"%c\",  Key = %d\n",
-					theKeySym, theEvent->xkey); */
-	   if (  j > 96 && j < 123 )	j -= 32;
-Call_ifkey:
-	   if ( j == 47 ||				/* "/" Exit -> */
-	        j == 13 || 				/* <Enter> */
-	        j == 32 || 				/* <Space> */
-	        j == 37 || 				/* "%" */
-	       (j >= 48 && j <= 57  ) ||		/* "0" -> "9" */
-	        j == 66 || 				/* "B" */
-	        j == 67 || 				/* "C" */
-	        j == 68 || 				/* "D" */
-	        j == 72 ||  				/* "H" */
-	        j == 78 ||  				/* "N" */
-	        j == 79 ||  				/* "O" */
-	        j == 82 ||  				/* "R" */
-	        j == 83 ||  				/* "S" */
-	        j == 87 ||  				/* "W" */
-	        j == 88  				/* "X" */
-	      )		ifkey_(&j);
-	   j = 0; 
-	   return;
-	case Expose:		/* printf("Expose %d\n",theEvent->type); */
-	   j = 82;	ifkey_(&j);	j = 0;
-	   return;
-/*	case MapNotify:		 printf("Mapping %d\n",theEvent->type);
-	   return;
-	case UnmapNotify:	 printf("UnmapNotify %d\n",theEvent->type);
-	   return;
-*/	default:	      /* printf("Unrecognized %d\n",theEvent->type); */
-	   return;
-      }
+    int j, k;
+    XKeyEvent theKeyEvent;
+    XComposeStatus theComposeStatus;
+    KeySym theKeySym;
+    char theKeyBuffer[5];
+
+    switch( theEvent->type ){
+    case ButtonPress:
+        Kevent.xcur = theEvent->xbutton.x;
+        Kevent.ycur = theEvent->xbutton.y;
+        k = Cursor_in_Box ();		  /* Returns box number */
+        if (k >= 0 && k <= nmamb) j = (int)MAMK[k];
+        Call_ifkey(j);
+	j = 0; 
+	break;
+    case KeyPress:
+        theKeyEvent = theEvent->xkey;
+        j = XLookupString (&theKeyEvent, theKeyBuffer, 4, &theKeySym, &theComposeStatus);
+        if (j == 0) return;		/* <Ret>, <Alt>, etc. is pressed */
+        if ( j != 1 ){
+            printf("String translation error:  Bufferlength =%d\n", j);
+            return;
+        }
+        j = theKeySym;
+        if (j > 96 && j < 123 )	j -= 32;
+        Call_ifkey(j);
+	j = 0; 
+	break;
+    case Expose:
+        j = 82;
+        ifkey_(&j);
+        j = 0;
+        break;
+    }
+    return;
 }
-/***********************************************************************/
-int askcol  (title, template, array, len, nrows, ngroup, morow)
+
+/**********************************************************************/
+int askcol_ (title, template, array, len, nrows, ngroup, morow)
 				INT_ *len, *nrows, *ngroup, *morow;
 				char title[], template[], array[];
 /* The same as "asktab", but the 1st column 
@@ -1679,10 +1566,6 @@ Input:	title	- Title of the table
 	morow	- if > 0 separates bottom of the table with a fat blue line
 
 */
-{	askcol_(title, template, array, len, nrows, ngroup, morow);	}
-int askcol_ (title, template, array, len, nrows, ngroup, morow)
-				INT_ *len, *nrows, *ngroup, *morow;
-				char title[], template[], array[];
 {	Window	theWindow;
 	XEvent	theEvent;
 	int	UpLeftx =2, UpLefty =10,/* window corner location	*/
@@ -1913,9 +1796,10 @@ EndDialog:
 	ibcursor = -1;
 	return (ibold);
 }
-/***************  True if cursor is in empty box ***********************/
-int If_empty (icol, irow, nclmn, nsta, nwid, array, arrdim)
-/*
+
+/**********************************************************************/
+int If_empty(icol, irow, nclmn, nsta, nwid, array, arrdim)
+/*  True if cursor is in empty box
     icol - current column
     irow - current row
     nclmn - total # of columns
@@ -1935,8 +1819,9 @@ R2:	if ( strspn(array+(irow-1)*arrdim+nsta[imin-1]," ")
 		> nsta[imax-1]+nwid[imax-1]-nsta[imin-1])	return (1);
 	return (0);
 }
-/***********************************************************************/
-int GetValue (theEvent, str, lvalue, tstri, pos) XKeyEvent theEvent; 
+
+/**********************************************************************/
+int GetValue(theEvent, str, lvalue, tstri, pos) XKeyEvent theEvent; 
 			char str[], tstri[]; int *pos, lvalue;
 {	int		i;
 	XComposeStatus	theComposeStatus;
@@ -1974,8 +1859,9 @@ int GetValue (theEvent, str, lvalue, tstri, pos) XKeyEvent theEvent;
 							return (0);
 	}
 }
-/*******************************************************************/
-int GetKey (theKeyEvent, str, pos) XKeyEvent theKeyEvent; char str[]; 
+
+/**********************************************************************/
+int GetKey(theKeyEvent, str, pos) XKeyEvent theKeyEvent; char str[]; 
 					int *pos;
 {	XComposeStatus	theComposeStatus;
 	KeySym		theKeySym;
@@ -1985,21 +1871,9 @@ int GetKey (theKeyEvent, str, pos) XKeyEvent theKeyEvent; char str[];
 		theKeyBufferMaxLen, &theKeySym, &theComposeStatus);
 	  if ( theKeyEvent.state & Mod1Mask)
 	     { if ( theKeySym == XK_Escape )	{
-		 /* printf("<Alt>+<Esc> is pressed\n"); */
 	     return(7); }
 	     }
-/*	  if ( theKeyEvent.state & Mod1Mask)
-	     { if ( theKeySym <= 127 )	{ ch = theKeySym;
-	        printf("<Alt>+%s is pressed,   ASCII code =%d\n",
-		theKeyBuffer,theKeySym);}
-	     }
-	  if ( theKeyEvent.state & ControlMask)
-	     { if ( isascii((int)theKeySym) )	{ 
-	        printf("<Ctrl>+%c is pressed,   ASCII code =%d\n",
-		(char)theKeySym,theKeySym);          }
-	     }
-	  printf("%s %d  %d\n","GetKey >>>  theKeySym =",theKeySym,*pos);
-*/
+
     switch(theKeySym)
       {	case	XK_Escape:			return (-1);
 	case	XK_BackSpace:
@@ -2029,20 +1903,25 @@ int GetKey (theKeyEvent, str, pos) XKeyEvent theKeyEvent; char str[];
 		 str[*pos]=theKeySym;		return (0);
       }
 }
-/*********************************************************************/
-int GetEsc (theKeyEvent) XKeyEvent theKeyEvent;
-{	XComposeStatus	theComposeStatus;
-	KeySym		theKeySym;
-	int		theKeyBufferMaxLen = 4;
-	char		theKeyBuffer[5];
-	XLookupString(&theKeyEvent, theKeyBuffer,
-		theKeyBufferMaxLen, &theKeySym, &theComposeStatus);
-	switch(theKeySym) {
-		case	XK_Escape:	return (1) ;
-		default: 		return (0) ; }
+
+/**********************************************************************/
+int GetEsc(XKeyEvent theKeyEvent){
+    XComposeStatus theComposeStatus;
+    KeySym theKeySym;
+    int	theKeyBufferMaxLen=4;
+    char theKeyBuffer[5];
+    XLookupString(&theKeyEvent, theKeyBuffer, theKeyBufferMaxLen,
+	          &theKeySym, &theComposeStatus);
+    switch(theKeySym){
+        case XK_Escape:
+	    return 1;
+	default:
+	    return 0;
+    }
 }
-/********************************************************************/
-int GetName (theKeyEvent, str, lvalue, pos) XKeyEvent theKeyEvent; char str[]; 
+
+/**********************************************************************/
+int GetName(theKeyEvent, str, lvalue, pos) XKeyEvent theKeyEvent; char str[]; 
 					int *pos, lvalue;
 {   XComposeStatus	theComposeStatus;
     KeySym		theKeySym;
@@ -2081,17 +1960,12 @@ int GetName (theKeyEvent, str, lvalue, pos) XKeyEvent theKeyEvent; char str[];
 	    }	 return (0);
       }
 }
-/*********************** U-file name setting ***************************/
-int askuna (nofbox, una, theNames, unad)
-    INT_ *nofbox; char una[], theNames[], unad[];
-{   INT_	i;
-	i = askuna_(nofbox, una, theNames, unad);
-	return i;
-}
-int askuna_ (nofbox, una, theNames, unad) INT_ *nofbox; char una[], 
+
+/**********************************************************************/
+int askuna_(nofbox, una, theNames, unad) INT_ *nofbox; char una[], 
 					theNames[], unad[];
+/* U-file name setting */
 {	Window		theWindow;
-/*	Cursor		theTextCursor, theBoxCursor;*/
 	XEvent		theEvent;
 	int	UpLeftx =2, UpLefty =10,/* window corner location	*/
 		Width =452, Height =480;/* window size			*/
@@ -2231,12 +2105,7 @@ Escend:	   if ( spos >= 0 )
 	   WRITE_ theGCA,xshif+4*wsym,Height-4, 
 		"/<ESC> - done;    Button, <TAB> or Arrow - select   ", i);
 HighlightName:
-/*	   if ( strncmp(una+ind,unad,lvalue) ) 
-	      {	ierr = 0;	ierr = access(Ufile_Name,W_OK);
-	      if ( ierr )  printf("Bad  name: \"%.14s\",%d\n",Ufile_Name,ierr);
-	      if ( !(ierr) )printf("Good name: \"%.14s\"\n",Ufile_Name);
-	      }
-*/	   WRITE_ hghGC, ix+vpos, hsym+iy, una+ind, lvalue);
+	   WRITE_ hghGC, ix+vpos, hsym+iy, una+ind, lvalue);
 	   if ( iret == 0 )  	goto Table_control;
 	   if ( iret == -1 )  	goto EndDialog;
 	   if ( iret == 2 ) { oldparam = ibox;	ixold = ix;	iyold = iy;
@@ -2266,17 +2135,18 @@ EndDialog:
 	return (0);
 }
 
-/************** Returns box # or 0 ***********************************/
-int FindBoxNum (ix,iy,wBox,hBox,nclmn,nBox)
-int	ix,iy;				/*current coordinates*/
-int	nclmn,nBox;			/*# of columns and boxes*/
-int	wBox,hBox;			/*box width & height*/
+/**********************************************************************/
+int FindBoxNum(ix, iy, wBox, hBox, nclmn, nBox)
+int ix, iy;	     /*current coordinates*/
+int nclmn, nBox;     /*# of columns and boxes*/
+int wBox, hBox;	     /*box width & height*/
+/* Returns box # or 0 */
 {
-	int	icol, pnum;
-	if ((ix <= 0) || (iy < 0))	return (0);
-	icol	= ix/wBox;
-	if (icol >= nclmn) 		return (0);
-	pnum = (iy/hBox)*nclmn+icol+1;
-	if (pnum > nBox) 		return (0);
-	return (pnum);
+    int icol, pnum;
+    if (ix <= 0 || iy < 0) return 0;
+    icol = ix/wBox;
+    if (icol >= nclmn) return 0;
+    pnum = (iy/hBox)*nclmn + icol + 1;
+    if (pnum > nBox) return 0;
+    return pnum;
 }
