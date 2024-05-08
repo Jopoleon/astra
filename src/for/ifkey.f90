@@ -517,7 +517,7 @@ CASE(73) ! 'I'
    endif
 
 CASE(69) ! 'E'
-    call caution
+    call warning_dialogBox ! Exercise of Xlib child window
 
 CASE(46) ! '.'
     MARK = MARK + 1
@@ -539,7 +539,7 @@ CASE(85) ! 'U'
 
 ! Different options for radial array 
     if (MOD10 >= 1 .and. MOD10 <= 4) then
-        call ASKUNA(NROUT, UNAMES, NAMER, DEFUNA)
+        call ufileBox(NROUT, UNAMES, NAMER, DEFUNA)
         jj = 0
         do j=1, NROUT
             if (UNAMES(j) /= DEFUNA) jj = 1
@@ -611,7 +611,7 @@ CASE(85) ! 'U'
  
     if (MOD10 == 6) then
         call TIMOUT
-        call ASKUNA(NTOUT, UNAMES, NAMET, DEFUNA)
+        call ufileBox(NTOUT, UNAMES, NAMET, DEFUNA)
         do jj=1, NTOUT
             if (UNAMES(jj) /= DEFUNA) then
                 call UF1DWA('AUGD', RUNID, UNAMES(jj), TIME, NAMET(jj), LTOUT-1, 0, &
