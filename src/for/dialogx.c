@@ -525,16 +525,16 @@ void mvcursor_(INT_ *key, INT_ *ix, INT_ *iy){
 /* Move cursor by one pixel */
     switch(*key){
     case(361):
-        *ix -= 1; /* <- */
+        *ix--; /* <- */
         break;
     case(362):
-        *iy -= 1; /* Up */
+        *iy--; /* Up */
 	break;
     case(363):
-        *ix += 1; /* -> */
+        *ix++; /* -> */
 	break;
     case(364):
-        *iy += 1; /* Dn */
+        *iy++; /* Dn */
         break;
     }
     XWarpPointer(theDisplay, None, theRootWindow, 0, 0, 0, 0, *ix, *iy);
@@ -1996,177 +1996,210 @@ int GetName(XKeyEvent theKeyEvent, char str[], int lvalue, int *pos){
 }
 
 /**********************************************************************/
-int ufilebox_(nofbox, una, theNames, unad) INT_ *nofbox; char una[],
-					theNames[], unad[];
+int ufilebox_(INT_ *nofbox, char una[], char theNames[], char unad[]){
 /* U-file name setting */
-{	Window		theWindow;
-	XEvent		theEvent;
-	int	UpLeftx =2, UpLefty =10,/* window corner location	*/
-		Width =452, Height =480;/* window size			*/
-	int	ix, iy, wbox, hbox, 	/* parameter box corner and size*/
-		wsym = 8, hsym = 13,	/* symbol width and height	*/
-		lvalue = 10, lname = 4,	/* length of value and name	*/
-		xshif = 5, yshif = 3,	/* table corner and 		*/
-		nclmn = 3, nparam, 	/* # of columns and parameters	*/
-		ixa0=0, iya0=0, ixa,iya,/* arrow (textcursor) position	*/
-		i, j, ibox, spos = 0, vpos, lsym=4,
-		iret, oldparam, ixold, iyold, ii=-1,
-		icol, dcol, irow, drow;
-	int	lline, xButton, yButton, ind, ind1, ierr;
-	char	Ufile_Name[40], vsym[5];
-	/*	FILE	*cfilen; */
-	strcpy(vsym," => ");		strcpy(Ufile_Name,"udb/");
-	lline = 18; 	hbox = hsym+3;		wbox = wsym*(lline+1);
-	vpos= wsym*(lname+4); 	nparam   = *nofbox;
-	Width =2*xshif+nclmn*wbox-wsym;
-	Height =2*yshif+((nparam-1)/nclmn+3)*hbox;
-	ibox = 0;                       UpLeftx = 2;
-	/*  j = XWX-Width-10;	if (j > UpLeftx)  UpLeftx = j; */
-	GetRWgeometry (&XRW,&YRW);
-	UpLeftx = 2;	   j = XRW-Width-8;	UpLefty = YRW;
-	if (j > UpLeftx)   UpLeftx = j;		j = YRW+Height+30;
-	if (j > theHeight) UpLefty = theHeight-Height-30;
-	theWindow = Open_Window(UpLeftx, UpLefty, Width, Height, 0,
-		 "Save data in U-file format", 0,
-		  RootWindow(theDisplay,theScreen), theMenuCursor);
-	XSelectInput (theDisplay, theWindow, POLL_EV_MASK);
-Create_table:
-	Change_Color (theGCA, 1, 0);	/* white background, black foreground */
-	for (i=1; i <= nparam; i++)
- 	{
-	ix =wbox*((i-1)%nclmn)+xshif;
-	iy =hbox*((i-1)/nclmn)+yshif;
-	ind = (i-1)*lname;
-	WRITE_ theGCA, ix, hsym+iy, theNames+ind, lname);
-	ind = (i-1)*lvalue;
-	for (j=0; j<lvalue; j++) una[ind+j]=unad[j];
-	WRITE_ theGCA, ix+lname*wsym, hsym+iy, vsym, lsym);
-	WRITE_ theGCA,ix+vpos, hsym+iy, una+ind, lvalue);
-	XFlush(theDisplay);
-	}
-	oldparam = nparam;	ixold = ix;	iyold = iy;
-	if ( ii < 0 ) MVPOINTER_ xshif+40,yshif+13);
-	Change_Color (theGCA, 50, 0);
-	for (i=1; i < nclmn; i++) { ind = xshif+i*wbox-wsym/2;
-	LINGCA_ ind,0,ind,Height-2*hbox); }
-	i = Height-2*hbox; 	LINGCA_ 0,i,Width,i);
-	i--; 		 	LINGCA_ 0,i,Width,i);
-	Change_Color (hghGC, 50, 0);
-	WRITE_ hghGC, xshif, Height-4, " OK ",4);
-	XDrawRectangle (theDisplay,theWindow,hghGC,5L,Height-17L,30L,16L);
-	Change_Color (theGCA, 1, 0);
-	i = nclmn*wbox/wsym-5;	WRITE_ theGCA, xshif+4*wsym, Height-4,
-	"/<ESC> - done;    Button, <TAB> or Arrow - select   ", i);
-	WRITE_ theGCA, xshif, Height-4-hbox,
-	"           Select box and enter U-file name              ", i+4);
-Table_control:
-	XNextEvent (theDisplay, &theEvent);
-	if ( theEvent.xany.window == theRootWindow )
-           { ProcessRootWindowEvent (&theEvent);
-	     goto Table_control;
-	   }
-	if (theEvent.type == Expose)	{ii = 0;  goto	Create_table;}
-	if (theEvent.type == ButtonPress)
-	   {	xButton	= theEvent.xbutton.x;
-		yButton = theEvent.xbutton.y;
-		if (ibox) { oldparam=ibox; ixold=ix; iyold=iy; }
-		ibox = FindBoxNum(xButton-xshif+wsym/2, yButton-yshif,
-				  wbox, hbox, nclmn, nparam);
-		i = FindBoxNum(xButton-xshif, yButton-Height+hbox+1,
-						 	4*wsym, hbox, 1, 1);
-		if( i ) { iret = -1;	ibox = oldparam;
-				ixold = ix;	iyold = iy; goto Escend; }
-		if (ibox == 0)	goto Table_control;
-		ind = (oldparam-1)*lvalue;
-Newparam:	i = ibox;
-		ix =wbox*((i-1)%nclmn)+xshif;	iy =hbox*((i-1)/nclmn)+yshif;
-		ind = (oldparam-1)*lname; ind1 = (i-1)*lname;
-		WRITE_ theGCA, ixold, hsym+iyold, theNames+ind, lname);
- 		WRITE_ hghGC, ix, hsym+iy, theNames+ind1, lname);
-		WRITE_ theGCA, ixold+lname*wsym, hsym+iyold, vsym, lsym);
-		WRITE_ hghGC, ix+lname*wsym, hsym+iy, vsym, lsym);
-		ind = (oldparam-1)*lvalue; ind1 = (i-1)*lvalue;
-		WRITE_ theGCA, ixold+vpos, hsym+iyold, una+ind, lvalue);
-		WRITE_ hghGC, ix+vpos, hsym+iy, una+ind1, lvalue);
-		spos = 0; 	/*MVPOINTER_ ix+vpos, iy+hsym);*/
-		ixa = ix+vpos;	iya = iy+hsym+2;
-		MoveArrow(theWindow,ixa0,iya0,ixa,iya);
-		ixa0 = ixa;		iya0 = iya;
-		XFlush(theDisplay);
-		goto Table_control;
-	   }
-	if (ibox == 0)
-	{   if(GetEsc(theEvent.xkey)) goto EndDialog;
-	else
-	    goto Table_control;
-	}
-	if (theEvent.type == KeyPress)
-	{
-	   ind = (ibox-1)*lvalue;
-	   iret = GetName (theEvent.xkey, una+ind, lvalue, &spos);
-/*	printf("File name: \"%.10s\"\n",una+ind); */
-Escend:	   if ( spos >= 0 )
-	      { ixa = ix+vpos+spos*wsym;	iya = iy+hsym+2;
-		MoveArrow(theWindow,ixa0,iya0,ixa,iya);
-		ixa0 = ixa;			iya0 = iya;
-	      }
-	   if ( spos < 0)
-	      {	spos = -1;	strncpy(una+ind,unad,lvalue);
-	      }
-	   if ( strncmp(una+ind,unad,lvalue) )
-	      {	stcopy(Ufile_Name+4,una+ind,spos);
-		ierr = 0;	ierr = access(Ufile_Name,F_OK);
-		if ( ierr )
-		   { i = nclmn*wbox/wsym-5;
-			WRITE_ theGCA, xshif+4*wsym, Height-4,
-		   "/<ESC> - done;    Button, <TAB> or Arrow - select   ", i);
-		   }
-		if ( !(ierr) )
-		   { if ( !(strncmp(una+ind,"          ",lvalue)))
-			  strncpy(una+ind,unad,lvalue);
-		     else
-			{ WRITE_ hghGC,xshif+19*wsym,Height-4,
-					"              ",14);
-			  WRITE_ hghGC,xshif+33*wsym,Height-4,
-					" - file already exists",22);
-			  WRITE_ hghGC,xshif+(33-4-spos)*wsym,Height-4,
-					Ufile_Name,4+spos);
-			  goto	HighlightName;
-			}
-		   }
-	      }
-	   i = nclmn*wbox/wsym-5;
-	   WRITE_ theGCA,xshif+4*wsym,Height-4,
-		"/<ESC> - done;    Button, <TAB> or Arrow - select   ", i);
-HighlightName:
-	   WRITE_ hghGC, ix+vpos, hsym+iy, una+ind, lvalue);
-	   if ( iret == 0 )  	goto Table_control;
-	   if ( iret == -1 )  	goto EndDialog;
-	   if ( iret == 2 ) { oldparam = ibox;	ixold = ix;	iyold = iy;
-		spos=0; ibox++; if(ibox > nparam) ibox=1; goto Newparam; }
+    Window theWindow;
+    XEvent theEvent;
+    int	UpLeftx=2, UpLefty=10,  /* window corner location	*/
+    	Width=452, Height=480;  /* window size			*/
+    int	ix, iy, wbox, hbox,     /* parameter box corner and size*/
+    	wsym=8, hsym=13,        /* symbol width and height	*/
+    	lvalue=10, lname=4,     /* length of value and name	*/
+    	xshif=5, yshif=3,       /* table corner and 		*/
+    	nclmn=3, nparam,        /* # of columns and parameters	*/
+    	ixa0=0, iya0=0, ixa,iya,/* arrow (textcursor) position	*/
+    	i, j, ibox, spos = 0, vpos, lsym=4,
+    	iret, oldparam, ixold, iyold, ii=-1,
+    	icol, dcol, irow, drow;
+    int	lline, xButton, yButton, ind, ind1, ierr;
+    char Ufile_Name[40], vsym[5];
 
-	   if ( iret > 2 )
-	   {    oldparam = ibox;	ixold = ix;	iyold = iy;
-		spos=0; stcopy(Ufile_Name+4,una+ind,lvalue);
-		dcol=iret%10-2; 	icol =(ibox-1)%nclmn+dcol;
-		if (icol<0) icol=0;	if (icol>=nclmn) icol--;
-		drow=iret/10-2;		irow =(ibox-1)/nclmn+drow;
-		if (irow<0) irow=0;	if (irow>(nparam-1)/nclmn) irow--;
-		ibox =irow*nclmn+icol+1;
-		if(ibox == oldparam && icol == nclmn-1 && drow != -1) ibox++;
-		if(ibox == oldparam && icol == 0       && drow != 1)  ibox--;
-		if (ibox < 1) ibox=1;	if (ibox > nparam) ibox=nparam;
-		goto Newparam;
-	    }
+    strcpy(vsym, " => ");
+    strcpy(Ufile_Name, "udb/");
+    lline = 18;
+    hbox = hsym+3;
+    wbox = wsym*(lline+1);
+    vpos = wsym*(lname+4);
+    nparam = *nofbox;
+    Width = 2*xshif + nclmn*wbox - wsym;
+    Height =2*yshif + ((nparam - 1)/nclmn + 3)*hbox;
+    ibox = 0;
+    UpLeftx = 2;
+
+    GetRWgeometry(&XRW, &YRW);
+    UpLeftx = 2;
+    j = XRW - Width - 8;
+    UpLefty = YRW;
+    if (j > UpLeftx) UpLeftx = j;
+    j = YRW + Height + 30;
+    if (j > theHeight) UpLefty = theHeight - Height - 30;
+    theWindow = Open_Window(UpLeftx, UpLefty, Width, Height, 0,
+    	"Save data in U-file format", 0,
+    	 RootWindow(theDisplay, theScreen), theMenuCursor);
+    XSelectInput (theDisplay, theWindow, POLL_EV_MASK);
+
+Create_table:
+    Change_Color(theGCA, 1, 0);  /* white background, black foreground */
+    for (i=1; i <= nparam; i++){
+        ix = wbox*((i - 1)%nclmn) + xshif;
+        iy = hbox*((i - 1)/nclmn) + yshif;
+        ind = (i - 1)*lname;
+        WRITE_ theGCA, ix, hsym+iy, theNames+ind, lname);
+        ind = (i - 1)*lvalue;
+        for (j=0; j<lvalue; j++) una[ind+j] = unad[j];
+        WRITE_ theGCA, ix+lname*wsym, hsym+iy, vsym, lsym);
+        WRITE_ theGCA,ix+vpos, hsym+iy, una+ind, lvalue);
+        XFlush(theDisplay);
+    }
+    oldparam = nparam;
+    ixold = ix;
+    iyold = iy;
+    if (ii < 0) MVPOINTER_ xshif+40, yshif+13);
+    Change_Color(theGCA, 50, 0);
+    for (i=1; i < nclmn; i++){
+        ind = xshif + i*wbox - wsym/2;
+        LINGCA_ ind, 0, ind, Height - 2*hbox);
+    }
+    i = Height-2*hbox;
+    LINGCA_ 0, i, Width, i);
+    i--;
+    LINGCA_ 0, i, Width, i);
+    Change_Color(hghGC, 50, 0);
+    WRITE_ hghGC, xshif, Height-4, " OK ", 4);
+    XDrawRectangle(theDisplay, theWindow, hghGC, 5L, Height-17L, 30L, 16L);
+    Change_Color(theGCA, 1, 0);
+    i = nclmn*wbox/wsym-5;
+    WRITE_ theGCA, xshif+4*wsym, Height-4, "/<ESC> - done;    Button, <TAB> or Arrow - select   ", i);
+    WRITE_ theGCA, xshif, Height-4-hbox, "           Select box and enter U-file name              ", i+4);
+
+Table_control:
+    XNextEvent(theDisplay, &theEvent);
+    if (theEvent.xany.window == theRootWindow ){
+        ProcessRootWindowEvent (&theEvent);
+        goto Table_control;
+    }
+    if (theEvent.type == Expose){
+        ii = 0;
+	goto Create_table;
+    }
+    if (theEvent.type == ButtonPress){
+        xButton = theEvent.xbutton.x;
+    	yButton = theEvent.xbutton.y;
+    	if (ibox){
+	    oldparam = ibox;
+	    ixold = ix;
+	    iyold = iy;
 	}
-	goto Table_control;
+    	ibox = FindBoxNum(xButton-xshif+wsym/2, yButton-yshif, wbox, hbox, nclmn, nparam);
+    	i = FindBoxNum(xButton-xshif, yButton-Height+hbox+1, 4*wsym, hbox, 1, 1);
+    	if (i){
+	    iret = -1;
+	    ibox = oldparam;
+    	    ixold = ix;
+	    iyold = iy;
+	    goto Escend;
+	}
+    	if (ibox == 0) goto Table_control;
+    	ind = (oldparam - 1)*lvalue;
+
+Newparam:
+    i = ibox;
+    ix = wbox*((i - 1)%nclmn) + xshif;
+    iy = hbox*((i - 1)/nclmn) + yshif;
+    ind = (oldparam - 1)*lname;
+    ind1 = (i - 1)*lname;
+    WRITE_ theGCA, ixold, hsym+iyold, theNames+ind, lname);
+    WRITE_ hghGC, ix, hsym+iy, theNames+ind1, lname);
+    WRITE_ theGCA, ixold+lname*wsym, hsym+iyold, vsym, lsym);
+    WRITE_ hghGC, ix+lname*wsym, hsym+iy, vsym, lsym);
+    ind = (oldparam - 1)*lvalue;
+    ind1 = (i - 1)*lvalue;
+    WRITE_ theGCA, ixold+vpos, hsym+iyold, una+ind, lvalue);
+    WRITE_ hghGC, ix+vpos, hsym+iy, una+ind1, lvalue);
+    spos = 0;
+    ixa = ix + vpos;
+    iya = iy + hsym + 2;
+    MoveArrow(theWindow, ixa0, iya0, ixa, iya);
+    ixa0 = ixa;
+    iya0 = iya;
+    XFlush(theDisplay);
+    goto Table_control;
+       }
+    if (ibox == 0){
+        if (GetEsc(theEvent.xkey)){
+	    goto EndDialog;
+        }
+        else{
+            goto Table_control;
+        }
+    }
+    if (theEvent.type == KeyPress)
+    {
+       ind = (ibox-1)*lvalue;
+       iret = GetName (theEvent.xkey, una+ind, lvalue, &spos);
+
+Escend:	   if ( spos >= 0 )
+          { ixa = ix+vpos+spos*wsym;	iya = iy+hsym+2;
+    	MoveArrow(theWindow,ixa0,iya0,ixa,iya);
+    	ixa0 = ixa;			iya0 = iya;
+          }
+       if ( spos < 0)
+          {	spos = -1;	strncpy(una+ind,unad,lvalue);
+          }
+       if ( strncmp(una+ind,unad,lvalue) )
+          {	stcopy(Ufile_Name+4,una+ind,spos);
+    	ierr = 0;	ierr = access(Ufile_Name,F_OK);
+    	if ( ierr )
+    	   { i = nclmn*wbox/wsym-5;
+    		WRITE_ theGCA, xshif+4*wsym, Height-4,
+    	   "/<ESC> - done;    Button, <TAB> or Arrow - select   ", i);
+    	   }
+    	if ( !(ierr) )
+    	   { if ( !(strncmp(una+ind,"          ",lvalue)))
+    		  strncpy(una+ind,unad,lvalue);
+    	     else
+    		{ WRITE_ hghGC,xshif+19*wsym,Height-4,
+    				"              ",14);
+    		  WRITE_ hghGC,xshif+33*wsym,Height-4,
+    				" - file already exists",22);
+    		  WRITE_ hghGC,xshif+(33-4-spos)*wsym,Height-4,
+    				Ufile_Name,4+spos);
+    		  goto	HighlightName;
+    		}
+    	   }
+          }
+       i = nclmn*wbox/wsym-5;
+       WRITE_ theGCA,xshif+4*wsym,Height-4,
+    	"/<ESC> - done;    Button, <TAB> or Arrow - select   ", i);
+HighlightName:
+       WRITE_ hghGC, ix+vpos, hsym+iy, una+ind, lvalue);
+       if ( iret == 0 )  	goto Table_control;
+       if ( iret == -1 )  	goto EndDialog;
+       if ( iret == 2 ) { oldparam = ibox;	ixold = ix;	iyold = iy;
+    	spos=0; ibox++; if(ibox > nparam) ibox=1; goto Newparam; }
+
+       if ( iret > 2 )
+       {    oldparam = ibox;	ixold = ix;	iyold = iy;
+    	spos=0; stcopy(Ufile_Name+4,una+ind,lvalue);
+    	dcol=iret%10-2; 	icol =(ibox-1)%nclmn+dcol;
+    	if (icol<0) icol=0;	if (icol>=nclmn) icol--;
+    	drow=iret/10-2;		irow =(ibox-1)/nclmn+drow;
+    	if (irow<0) irow=0;	if (irow>(nparam-1)/nclmn) irow--;
+    	ibox =irow*nclmn+icol+1;
+    	if(ibox == oldparam && icol == nclmn-1 && drow != -1) ibox++;
+    	if(ibox == oldparam && icol == 0       && drow != 1)  ibox--;
+    	if (ibox < 1) ibox=1;	if (ibox > nparam) ibox=nparam;
+    	goto Newparam;
+        }
+    }
+    goto Table_control;
 EndDialog:
-	RETURNPOINTER_;
-	XFlush(theDisplay);
-	XDestroyWindow(theDisplay, theWindow);
-	ibcursor = -1;
-	XFlush(theDisplay);
-	return (0);
+    RETURNPOINTER_;
+    XFlush(theDisplay);
+    XDestroyWindow(theDisplay, theWindow);
+    ibcursor = -1;
+    XFlush(theDisplay);
+    return (0);
 }
 
 /**********************************************************************/

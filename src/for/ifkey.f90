@@ -54,16 +54,18 @@ use outcmn_inc, only: Black, Blue, WarningColor, &
 use expdat, only: raw_profile_map, DATARR
 use timeoutput_inc, only: NTIMES, TTOUT, TPOUT, TOUT
 use dbl2char, only: fmt6
+use char_manip, only: str_in_list
 use debugger, only: markloc, debug, astra_stop
 
 implicit none
 
 integer, parameter :: n_portrait=0, n_landscape=1
 integer, intent(in) :: IFKL
+character(len=10), parameter :: DEFUNA='      .tmp'
 
 logical :: MODADD
 integer*2, dimension(NRD) :: YWD
-integer :: POLLEVENT, OUTFIG(NRW), WAITEVENT, KIBM, KASCII
+integer :: POLLEVENT, OUTFIG(NRW), WAITEVENT, KIBM, KASCII, jpos
 integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
     IFLAG, INT4, IRET, NTRUN, IM, &
     XSC0, XSC, MODEX, IX, IY, NU1, j2, J1, ios, &
@@ -76,7 +78,7 @@ double precision, dimension(NTIMES) :: PRMARK, TIMOD4
 double precision, dimension(NRD) :: YWA, YWB, YWC
 character(len=6) :: NAMEP(NTIMES)
 character(len=8) :: OUTNAME(NRW)
-character(len=10) :: UNAMES(NRW), DEFUNA 
+character(len=10), dimension(NRW) :: UNAMES
 character(len=40) :: CNSFIL
 character(len=80) :: HELP(28), PSNAME, STR, STRB
 character(len=132) :: STRI
@@ -85,7 +87,7 @@ save ITO, IFLAG, TROUT, MARK, LTOUTO, IDSP
 save NAMEP
 ! save OUTFIG, OUTNAME
 data PRMARK/NTIMES*0./  TROUT/-99999./ &
-     IFLAG/0/  DEFUNA/'      .tmp'/ &
+     IFLAG/0/  &
      JTOUT/0/ LTOUTO/0/ MARK /0/       IDSP/0/ &
      OUTFIG /NRW*0/
 
@@ -128,6 +130,8 @@ data (HELP(j),j=21,28)/ &
 !----------------------------------------------------------------------|
 
 call markloc('IFKEY', debug_lev=2*debug)
+
+CHORDN = lineav()
 
 NTRUN = NTIMES
 if (IFKL == 257) goto 97 ! EXIT
@@ -299,8 +303,6 @@ if (JTOUT /= 0) then
     JTOUT = 0
 endif
 write(3) TIME
-
-CHORDN = lineav()
 
 write(3) (CONSTF(J), J=1, NCFNAM), (DEVAR(J), J=1, NPRNAM), ABC, ROC, CHORDN, 1./MU(NA)
 write(3) NA1, NAB, (0, j=1, 10), (0.d0, j=1, 10)
@@ -485,7 +487,6 @@ CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
 
 CASE(70) ! 'F'
     call TIMOUT
-    CHORDN = LINEAV()
     call TYPDSP(0, CHORDN, NTRUN, TTOUT, TOUT)
 
 CASE(73) ! 'I'
@@ -540,11 +541,8 @@ CASE(85) ! 'U'
 ! Different options for radial array 
     if (MOD10 >= 1 .and. MOD10 <= 4) then
         call ufileBox(NROUT, UNAMES, NAMER, DEFUNA)
-        jj = 0
-        do j=1, NROUT
-            if (UNAMES(j) /= DEFUNA) jj = 1
-        enddo
-        if (jj == 0) goto 1
+        jpos = str_in_list(DEFUNA, UNAMES(1: NROUT), 10)
+        if (jpos == 0) goto 1
 
         call RADOUT
         MODEX = XOUT + 0.49
@@ -909,6 +907,7 @@ endif
 call CPUSE(6)
 call astra_stop
 
+return
 end function ifkey
 
 !---------------------------------------------------------------------

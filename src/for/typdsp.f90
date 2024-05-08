@@ -1165,7 +1165,7 @@ implicit none
 integer, intent(in) :: NPOINT, NASC, PROCOD, MODEX
 double precision, intent(in) :: TIME, YN, IPL, RTOR, AB, BTOR
 double precision, intent(in), dimension(NPOINT) :: ARGUM, SIGNAL
-character(len=40), intent(in) :: UFNAME
+character(len=*), intent(in) :: UFNAME
 character(len=4 ), intent(in) :: DEVID, SIGNAM
 character(len=80), intent(in) :: ARUNID
 
@@ -1199,9 +1199,9 @@ write(NCHU, '(1X, 1P, 6E13.5)') (ARGUM(J) , J=1, NPOINT)
 write(NCHU, '(1X, 1P, 6E13.5)') (SIGNAL(J), J=1, NPOINT)
 write(NCHU, *) ' ;----END-OF-DATA---------------COMMENTS:-----------'
 write(NCHU, '(1A80)') ARUNID
-write(NCHU, '(1A4, 1F6.2, 3(1A8, 1F6.2), 1A13, 1F6.2, 1A7)') &
+write(NCHU, '(5(A, F6.2), A)') &
     ' R =', RTOR, 'm,   a =', AB, 'm,   B =', BTOR, &
-    'T,   I =', IPL, 'MA,   <n_e> =', .1*YN, 'E20m^-3'
+    'T,   I =', IPL, 'MA,   <n_e> =', 0.1*YN, 'E20m^-3'
 write(*, *) '>>>  Dataset "', SIGNAM, '" is written in the 1D ' // &
      'U-file "udb/' // TRIM(UFNAME), '"'
 close(NCHU)

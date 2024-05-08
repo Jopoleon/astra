@@ -116,7 +116,7 @@ module char_manip
    integer function str_in_list(str_in, str_arr, len_str)
 
       integer, intent(in), optional :: len_str
-      character(len=6), intent(in) :: str_in, str_arr(:)
+      character(len=*), intent(in) :: str_in, str_arr(:)
 
       integer :: j, n_arr, len
 
