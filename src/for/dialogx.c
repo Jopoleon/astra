@@ -101,7 +101,7 @@ int asklis_(INT_*, double*, char[], INT_*);
 int askcol_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
 int asktab_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
 int askgrf_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*, INT_*);
-int ufile_dialogbox_(INT_*, char[], char[], char[]);
+int ufilebox_(INT_*, char[], char[], char[]);
 int FindBoxNum(int, int, int, int, int, int);
 int GetEsc(XKeyEvent);
 int GetValue(XKeyEvent, char[], int, char[], int*);
@@ -2103,28 +2103,28 @@ Table_control:
     	ind = (oldparam - 1)*lvalue;
 
 Newparam:
-    i = ibox;
-    ix = wbox*((i - 1)%nclmn) + xshif;
-    iy = hbox*((i - 1)/nclmn) + yshif;
-    ind = (oldparam - 1)*lname;
-    ind1 = (i - 1)*lname;
-    WRITE_ theGCA, ixold, hsym+iyold, theNames+ind, lname);
-    WRITE_ hghGC, ix, hsym+iy, theNames+ind1, lname);
-    WRITE_ theGCA, ixold+lname*wsym, hsym+iyold, vsym, lsym);
-    WRITE_ hghGC, ix+lname*wsym, hsym+iy, vsym, lsym);
-    ind = (oldparam - 1)*lvalue;
-    ind1 = (i - 1)*lvalue;
-    WRITE_ theGCA, ixold+vpos, hsym+iyold, una+ind, lvalue);
-    WRITE_ hghGC, ix+vpos, hsym+iy, una+ind1, lvalue);
-    spos = 0;
-    ixa = ix + vpos;
-    iya = iy + hsym + 2;
-    MoveArrow(theWindow, ixa0, iya0, ixa, iya);
-    ixa0 = ixa;
-    iya0 = iya;
-    XFlush(theDisplay);
-    goto Table_control;
-       }
+        i = ibox;
+        ix = wbox*((i - 1)%nclmn) + xshif;
+        iy = hbox*((i - 1)/nclmn) + yshif;
+        ind = (oldparam - 1)*lname;
+        ind1 = (i - 1)*lname;
+        WRITE_ theGCA, ixold, hsym+iyold, theNames+ind, lname);
+        WRITE_ hghGC, ix, hsym+iy, theNames+ind1, lname);
+        WRITE_ theGCA, ixold+lname*wsym, hsym+iyold, vsym, lsym);
+        WRITE_ hghGC, ix+lname*wsym, hsym+iy, vsym, lsym);
+        ind = (oldparam - 1)*lvalue;
+        ind1 = (i - 1)*lvalue;
+        WRITE_ theGCA, ixold+vpos, hsym+iyold, una+ind, lvalue);
+        WRITE_ hghGC, ix+vpos, hsym+iy, una+ind1, lvalue);
+        spos = 0;
+        ixa = ix + vpos;
+        iya = iy + hsym + 2;
+        MoveArrow(theWindow, ixa0, iya0, ixa, iya);
+        ixa0 = ixa;
+        iya0 = iya;
+        XFlush(theDisplay);
+        goto Table_control;
+    }
     if (ibox == 0){
         if (GetEsc(theEvent.xkey)){
 	    goto EndDialog;
@@ -2133,66 +2133,78 @@ Newparam:
             goto Table_control;
         }
     }
-    if (theEvent.type == KeyPress)
-    {
-       ind = (ibox-1)*lvalue;
-       iret = GetName (theEvent.xkey, una+ind, lvalue, &spos);
+    if (theEvent.type == KeyPress){
+        ind = (ibox-1)*lvalue;
+        iret = GetName(theEvent.xkey, una+ind, lvalue, &spos);
 
-Escend:	   if ( spos >= 0 )
-          { ixa = ix+vpos+spos*wsym;	iya = iy+hsym+2;
-    	MoveArrow(theWindow,ixa0,iya0,ixa,iya);
-    	ixa0 = ixa;			iya0 = iya;
-          }
-       if ( spos < 0)
-          {	spos = -1;	strncpy(una+ind,unad,lvalue);
-          }
-       if ( strncmp(una+ind,unad,lvalue) )
-          {	stcopy(Ufile_Name+4,una+ind,spos);
-    	ierr = 0;	ierr = access(Ufile_Name,F_OK);
-    	if ( ierr )
-    	   { i = nclmn*wbox/wsym-5;
-    		WRITE_ theGCA, xshif+4*wsym, Height-4,
-    	   "/<ESC> - done;    Button, <TAB> or Arrow - select   ", i);
-    	   }
-    	if ( !(ierr) )
-    	   { if ( !(strncmp(una+ind,"          ",lvalue)))
-    		  strncpy(una+ind,unad,lvalue);
-    	     else
-    		{ WRITE_ hghGC,xshif+19*wsym,Height-4,
-    				"              ",14);
-    		  WRITE_ hghGC,xshif+33*wsym,Height-4,
-    				" - file already exists",22);
-    		  WRITE_ hghGC,xshif+(33-4-spos)*wsym,Height-4,
-    				Ufile_Name,4+spos);
-    		  goto	HighlightName;
-    		}
-    	   }
-          }
-       i = nclmn*wbox/wsym-5;
-       WRITE_ theGCA,xshif+4*wsym,Height-4,
-    	"/<ESC> - done;    Button, <TAB> or Arrow - select   ", i);
-HighlightName:
-       WRITE_ hghGC, ix+vpos, hsym+iy, una+ind, lvalue);
-       if ( iret == 0 )  	goto Table_control;
-       if ( iret == -1 )  	goto EndDialog;
-       if ( iret == 2 ) { oldparam = ibox;	ixold = ix;	iyold = iy;
-    	spos=0; ibox++; if(ibox > nparam) ibox=1; goto Newparam; }
+Escend:
+        if (spos >= 0){
+	    ixa = ix + vpos + spos*wsym;
+	    iya = iy + hsym + 2;
+            MoveArrow(theWindow, ixa0, iya0, ixa, iya);
+            ixa0 = ixa;
+	    iya0 = iya;
+        }
+        else{
+            spos = -1;
+ 	    strncpy(una+ind,unad,lvalue);
+        }
+        i = nclmn*wbox/wsym - 5;
+        WRITE_ theGCA, xshif+4*wsym, Height-4,
+            "/<ESC> - done;    Button, <TAB> or Arrow - select   ", i);
+        if (strncmp(una+ind, unad, lvalue)){
+	    stcopy(Ufile_Name+4, una+ind, spos);
+            ierr = 0;
+	    ierr = access(Ufile_Name, F_OK);
+            if (!(ierr)){
+	        if ( !(strncmp(una+ind, "          ", lvalue))){
+	            strncpy(una+ind, unad, lvalue);
+	        }
+    	        else{
+	            WRITE_ hghGC, xshif+19*wsym, Height-4, "              ", 14);
+     	            WRITE_ hghGC, xshif+33*wsym, Height-4, " - file already exists", 22);
+                    WRITE_ hghGC, xshif+(33-4-spos)*wsym, Height-4, Ufile_Name, 4+spos);
+    	        }
+    	    }
+        }
 
-       if ( iret > 2 )
-       {    oldparam = ibox;	ixold = ix;	iyold = iy;
-    	spos=0; stcopy(Ufile_Name+4,una+ind,lvalue);
-    	dcol=iret%10-2; 	icol =(ibox-1)%nclmn+dcol;
-    	if (icol<0) icol=0;	if (icol>=nclmn) icol--;
-    	drow=iret/10-2;		irow =(ibox-1)/nclmn+drow;
-    	if (irow<0) irow=0;	if (irow>(nparam-1)/nclmn) irow--;
-    	ibox =irow*nclmn+icol+1;
-    	if(ibox == oldparam && icol == nclmn-1 && drow != -1) ibox++;
-    	if(ibox == oldparam && icol == 0       && drow != 1)  ibox--;
-    	if (ibox < 1) ibox=1;	if (ibox > nparam) ibox=nparam;
-    	goto Newparam;
+        WRITE_ hghGC, ix+vpos, hsym+iy, una+ind, lvalue);
+        if (iret ==  0) goto Table_control;
+        if (iret == -1) goto EndDialog;
+        if (iret ==  2){
+	    oldparam = ibox;
+	    ixold = ix;
+	    iyold = iy;
+            spos = 0;
+	    ibox++;
+	    if (ibox > nparam) ibox = 1;
+	    goto Newparam;
+	}
+
+        if (iret > 2){
+	    oldparam = ibox;
+	    ixold = ix;
+	    iyold = iy;
+    	    spos=0;
+	    stcopy(Ufile_Name+4, una+ind, lvalue);
+            dcol = iret%10 - 2;
+            icol = (ibox - 1)%nclmn + dcol;
+            if (icol < 0) icol=0;
+	    if (icol >= nclmn) icol--;
+            drow = iret/10 - 2;
+	    irow = (ibox - 1)/nclmn + drow;
+            if (irow < 0) irow=0;
+	    if (irow > (nparam-1)/nclmn) irow--;
+            ibox = irow*nclmn + icol + 1;
+            if (ibox == oldparam && icol == nclmn-1 && drow != -1) ibox++;
+            if (ibox == oldparam && icol == 0       && drow != 1)  ibox--;
+            if (ibox < 1) ibox = 1;
+	    if (ibox > nparam) ibox = nparam;
+    	    goto Newparam;
         }
     }
     goto Table_control;
+
 EndDialog:
     RETURNPOINTER_;
     XFlush(theDisplay);
