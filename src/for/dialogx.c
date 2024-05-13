@@ -2083,6 +2083,7 @@ Create_table:
             ii = 0;
 	    goto Create_table;
         }
+	esc_flag = 0;
         if (theEvent.type == ButtonPress){
             xButton = theEvent.xbutton.x;
             yButton = theEvent.xbutton.y;
@@ -2093,7 +2094,6 @@ Create_table:
             }
             ibox = FindBoxNum(xButton-xshif+wsym/2, yButton-yshif, wbox, hbox, nclmn, nparam);
             i = FindBoxNum(xButton-xshif, yButton-Height+hbox+1, 4*wsym, hbox, 1, 1);
-	    esc_flag = 0;
             if (i){
                 iret = -1;
                 ibox = oldparam;
@@ -2135,10 +2135,12 @@ Create_table:
 	        continue;
             }
         }
-        if (theEvent.type == KeyPress){
-            ind = (ibox-1)*lvalue;
-            iret = GetName(theEvent.xkey, una+ind, lvalue, &spos);
-	    esc_flag = 1;
+        else{
+            if (theEvent.type == KeyPress){
+                ind = (ibox-1)*lvalue;
+                iret = GetName(theEvent.xkey, una+ind, lvalue, &spos);
+	        esc_flag = 1;
+            }
 	}
 
 Escend:
