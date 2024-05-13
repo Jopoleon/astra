@@ -673,7 +673,7 @@ CASE(88) ! 'X'
     if (MOD10 == 0) then
         write(*, *) 'X-axis:   none'
     elseif (MOD10 == 3) then
-        write(*, 112)'poloidal flux,  1 < j < NA1 =', NA1
+        write(*, 112) 'poloidal flux,  1 < j < NA1 =', NA1
     elseif (MOD10 == 4) then
         write(*, 114) '0 < a < AB =', AB, 'm     1 < j < NAB =', NAB
     elseif (MOD10 == 5) then
@@ -1202,18 +1202,16 @@ read_loop: do
                 if (MODEY == -1) then
                    yloc = yloc + canv_hei
                 endif
-                yplot(j) = canv_hei - min(max(yloc, ymin), ymax)
+                yplot(j) = frame_hei - min(max(yloc, ymin), ymax)
                 yplot(JAB+j) = yplot(j)
             enddo
             do j=1, JAB
                 YXR = (YWB(j) + YWA(j))/AB
                 YXL = (YWB(j) - YWA(j))/AB
-                xplot(JAB+j)   = dble(JX) + half_wid*(1. + min( 1.d0, YXR))
-                xplot(JAB+1-j) = dble(JX) + half_wid*(1. + max(-1.d0, YXL))
+                xplot(JAB+j)   = dble(JX) + 0.5*half_wid*(1. + min( 1.d0, YXR))
+                xplot(JAB+1-j) = dble(JX) + 0.5*half_wid*(1. + max(-1.d0, YXL))
                 yplot(JAB+1-j) = yplot(JAB+j)
             enddo
-            xplot(1) = min(xplot(1), dble(JX))
-            xplot(NP1) = max(xplot(NP1), dble(JX + half_wid))
         endif
         jc = 31  ! non-marked profiles (shadow color)
         do IS=1, 5
