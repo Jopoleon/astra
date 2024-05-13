@@ -38,7 +38,6 @@ static int iact=-1, ibcursor=-1;
 #define WRITE_ XDrawImageString(theDisplay, theWindow,
 #define MVPOINTER_ XWarpPointer(theDisplay, None, theWindow, 0, 0, 0, 0,
 #define RETURNPOINTER_ XWarpPointer(theDisplay, None, theRootWindow, 0, 0, 0, 0, Kevent.xcur, Kevent.ycur)
-#define DLINER_ XDrawLine(theDisplay, theRootWindow,
 #define LINGCA_ XDrawLine(theDisplay, theWindow, theGCA,
 
 #define F1sw 8      /*font 1 symbol width */
@@ -46,7 +45,7 @@ static int iact=-1, ibcursor=-1;
 #define BTyof 0     /*button text vertical offset */
 #define BTxof 0     /*button text horizontal offset */
 #define BVers 4     /*button vertical separation */
-#define NMRMB   36  /*main Review menu table */
+#define NMRMB 36    /*main Review menu table */
 int nmamb = NMRMB;  /*main Astra  menu table */
 char *MAMT[NMRMB];  /* Dimension is defined as */
 char MAMK[NMRMB];   /* max(nmamb,NMRMB) */
@@ -60,12 +59,12 @@ char *DWTitle[NDW] = {
     "Times & Grids",    /*No. 3  "D"*/
     "Window control",   /*No. 4  "W"*/
     "Scale control",    /*No. 5  "S"*/
-    "Y-shift",	        /*No. 6  "Y"*/
+    "Y-shift",          /*No. 6  "Y"*/
     "Time interval",    /*No. 7  "M" in the mode 7*/
     "Mark times:  < 0 - skip,  0 - dim,  > 0 - color #", /*"M" modes 4,5*/
     "Equilibrium control",   /*No. 9  call from metric */
-    "1D_Ufile",	             /*No. 10 Not used */
-    "2D_Ufile",	             /*No. 11 Not used */
+    "1D_Ufile",              /*No. 10 Not used */
+    "2D_Ufile",              /*No. 11 Not used */
     "NBI const for beam No", /*No. 12 call from nbiext */
 };
 int DWnamlen[NDW] = {
@@ -120,16 +119,16 @@ void xaxis_(INT_ *modex){ /* Change of X-coordinate for plots */
     case 0:
     case 1:
         MAMT[0] = "16*f(a)";
-	MAMT[1] = "8*f(a)";
-	break;
+        MAMT[1] = "8*f(a)";
+        break;
     case 2:
         MAMT[0] = "16*f(rho)";
-	MAMT[1] = "8*f(rho)";
-	break;
+        MAMT[1] = "8*f(rho)";
+        break;
     case 3:
         MAMT[0] = "16*f(psi)";
-	MAMT[1] = "8*f(psi)";
-	break;
+        MAMT[1] = "8*f(psi)";
+        break;
     }
     return;
 }
@@ -138,29 +137,29 @@ void xaxis_(INT_ *modex){ /* Change of X-coordinate for plots */
 void taskmenu_(INT_ *modex){
 /* Draw menu table in Astra interactive mode, at the bottom of the main graphic window */
     int Xx, Xy, i, ixx=8, dx=5, iyy;
-    int	BHors=5;		/*button horizontal separation	*/
+    int BHors=5;                /*button horizontal separation */
     char *BUTEXT[NMRMB] =
-	{"16*f(a)", "8*f(a)", "Refresh", "2*f(a,t)",
+        {"16*f(a)", "8*f(a)", "Refresh", "2*f(a,t)",
          "8*f(t)", "User graph", "2*f(R,t)", "Phase space",
          "Next", "8*f(psi)", "Equil", "Backward",
-	 "Scales", "Variables", "Type data", "Port_PS",
-	 "Windows", "Constants", "Save log" , "Land_PS",
-	 "Select", "Grids", "Write data", "U-files",
-	 "Style", "Type model", "What X-axis", "Y-shift",
-	 "Run", "Step", "Quit", "Help"};
+         "Scales", "Variables", "Type data", "Port_PS",
+         "Windows", "Constants", "Save log" , "Land_PS",
+         "Select", "Grids", "Write data", "U-files",
+         "Style", "Type model", "What X-axis", "Y-shift",
+         "Run", "Step", "Quit", "Help"};
     char BUTKEY[NMRMB] = {
         '1', '2', 'R', '4', '6', '9', '5', '7', 'N', '3', '8', 'B',
-	'S', 'V', 'T', 'G', 'W', 'C', 'I', 'Q', 'M', 'D', 'F', 'U',
-	'.', 'L', 'X', 'Y', '\015', '\040', '\057', 'H'};
+        'S', 'V', 'T', 'G', 'W', 'C', 'I', 'Q', 'M', 'D', 'F', 'U',
+        '.', 'L', 'X', 'Y', '\015', '\040', '\057', 'H'};
     nmamb = 32;
 /* Draw separating lines between plots and menu */
     Change_Color(theGCA, AstraColorNum[2], AstraColorNum[3]);
-    DLINER_ theGCA, 0, XWH-128, XWW-1, XWH-128);
-    DLINER_ theGCA, 0, XWH-110, XWW-1, XWH-110);
-    DLINER_ theGCA, 0, XWH-109, XWW-1, XWH-109);
+    XDrawLine(theDisplay, theRootWindow, theGCA, 0, XWH-128, XWW-1, XWH-128);
+    XDrawLine(theDisplay, theRootWindow, theGCA, 0, XWH-110, XWW-1, XWH-110);
+    XDrawLine(theDisplay, theRootWindow, theGCA, 0, XWH-109, XWW-1, XWH-109);
     for (i=0; i<nmamb; i++){
         MAMT[i] = BUTEXT[i];
-	MAMK[i] = BUTKEY[i];
+        MAMK[i] = BUTKEY[i];
     }
     xaxis(modex);
     iyy = XWH - 74;
@@ -183,13 +182,13 @@ void Menu_table(int xm, int ym, int nbutt, char mek[], char *met[], Button butt[
     int i, leng, lenm, xwid;
 
     lenm = 0;
-    for (i=0; i<nbutt; i++){ 	
+    for (i=0; i<nbutt; i++){
         leng = strlen(met[i]);
         if (leng > lenm) lenm = leng;
     }
     xwid = lenm*F1sw + 2*BTxof + BHors;
     for (i=0; i<nbutt; i++){
-	leng = strlen(met[i]);
+        leng = strlen(met[i]);
         butt[i].mexl = xm;
         butt[i].mexr = butt[i].mexl + xwid;
         butt[i].meyu = ym + i*(F1sh + 2*BTyof + 1+BVers);
@@ -215,19 +214,19 @@ void Put_button(Button but, GC aGC){
     XClearArea(theDisplay, theRootWindow, xd-2, yu-2, xu-xd+4, yd-yu+4, False);
     XDrawImageString(theDisplay,theRootWindow, aGC, xd+BTxof+2, yd-BTyof-3, but.mename, but.melen);
 
-    DLINER_ aGC, xd+2, yd  , xu-2, yd  );
-    DLINER_ aGC, xu-2, yd  , xu  , yd-2);
-    DLINER_ aGC, xu  , yd-2, xu  , yu+2);
-    DLINER_ aGC, xu  , yu+2, xu-2, yu  );
-    DLINER_ aGC, xu-2, yu  , xd+2, yu  );
-    DLINER_ aGC, xd+2, yu  , xd  , yu+2);
-    DLINER_ aGC, xd  , yu+2, xd  , yd-2);
-    DLINER_ aGC, xd  , yd-2, xd+2, yd  );
+    XDrawLine(theDisplay, theRootWindow, aGC, xd+2, yd  , xu-2, yd  );
+    XDrawLine(theDisplay, theRootWindow, aGC, xu-2, yd  , xu  , yd-2);
+    XDrawLine(theDisplay, theRootWindow, aGC, xu  , yd-2, xu  , yu+2);
+    XDrawLine(theDisplay, theRootWindow, aGC, xu  , yu+2, xu-2, yu  );
+    XDrawLine(theDisplay, theRootWindow, aGC, xu-2, yu  , xd+2, yu  );
+    XDrawLine(theDisplay, theRootWindow, aGC, xd+2, yu  , xd  , yu+2);
+    XDrawLine(theDisplay, theRootWindow, aGC, xd  , yu+2, xd  , yd-2);
+    XDrawLine(theDisplay, theRootWindow, aGC, xd  , yd-2, xd+2, yd  );
 /* No round caps:
-    DLINER_ aGC, xd, yd, xu, yd);
-    DLINER_ aGC, xu, yd, xu, yu);
-    DLINER_ aGC, xu, yu, xd, yu);
-    DLINER_ aGC, xd, yu, xd, yd);
+    XDrawLine(theDisplay, theRootWindow, aGC, xd, yd, xu, yd);
+    XDrawLine(theDisplay, theRootWindow, aGC, xu, yd, xu, yu);
+    XDrawLine(theDisplay, theRootWindow, aGC, xu, yu, xd, yu);
+    XDrawLine(theDisplay, theRootWindow, aGC, xd, yu, xd, yd);
 */
 }
 
@@ -251,42 +250,41 @@ INT_ Root_window_event(INT_ *key, int ii){
     XKeyEvent theKeyEvent;
     XComposeStatus theComposeStatus;
     KeySym theKeySym;
-    int	i, count, mode=QueuedAfterReading;
-    int	theKeyBufferMaxLen=4;
+    int i, count, mode=QueuedAfterReading;
+    int theKeyBufferMaxLen=4;
     char ch, theKeyBuffer[5];
 
     *key = 0;
     XSelectInput( theDisplay, theRootWindow,
-	(ButtonPressMask | KeyPressMask | EnterWindowMask | StructureNotifyMask |\
-	 FocusChangeMask | ExposureMask | LeaveWindowMask) );
+        (ButtonPressMask | KeyPressMask | EnterWindowMask | StructureNotifyMask |\
+        FocusChangeMask | ExposureMask | LeaveWindowMask) );
     count = XEventsQueued(theDisplay, mode);
     if (ii && count != 0){   /* Call from other processes */
-         XNextEvent(theDisplay, &theEvent);
-         if (theEvent.xany.window == theRootWindow) ProcessRootWindowEvent(&theEvent);
-         XFlush(theDisplay);
-         return 0;
+        XNextEvent(theDisplay, &theEvent);
+        if (theEvent.xany.window == theRootWindow) ProcessRootWindowEvent(&theEvent);
+        XFlush(theDisplay);
+        return 0;
     }
     if (count == 0){
         XFlush(theDisplay);
-	*key = 0;
-	return 0;
+        return 0;
     }
     XNextEvent(theDisplay, &theEvent);
 /* See other values of case in file /usr/include/X11/X.h */
     switch(theEvent.type){
     case ButtonPress:
-        Kevent.xcur = theEvent.xbutton.x;	
+        Kevent.xcur = theEvent.xbutton.x;
         Kevent.ycur = theEvent.xbutton.y;
         i = Cursor_in_Box();
         if (i >= 0 && i <= nmamb) *key = (int)MAMK[i];
         if (*key == '\033'){
-	    *key = 'c';
-	    return 1; /* <Ctrl>+C */
-	}
-	if (theDepth == 1 &&  *key == 'A') *key = 0;
-	return 0;
+            *key = 'c';
+            return 1; /* <Ctrl>+C */
+        }
+        if (theDepth == 1 &&  *key == 'A') *key = 0;
+        return 0;
     case KeyPress:
-        Kevent.xcur = theEvent.xbutton.x;	
+        Kevent.xcur = theEvent.xbutton.x;
         Kevent.ycur = theEvent.xbutton.y;
         theKeyEvent = theEvent.xkey;
         count = XLookupString(&theKeyEvent, theKeyBuffer,
@@ -296,40 +294,36 @@ INT_ Root_window_event(INT_ *key, int ii){
             break;
         }
         if (theKeyEvent.state & Mod1Mask){
-	    if (theKeySym <= 127){
-	        ch = theKeySym;
+            if (theKeySym <= 127){
+                ch = theKeySym;
                 *key = ch;
-		return 2;
-	    }
-	}
+                return 2;
+            }
+        }
         if (theKeyEvent.state & ControlMask){
-	    if (isascii((int)theKeySym)){
-	        ch = theKeySym;
-		*key = ch;
-		return 1;
-	    }
-	 }
-         theKeyBuffer[count] = '\0';
-	 *key = theKeyBuffer[0];
-         if (theDepth == 1 && (*key == 'A' || *key == 'a') ) *key = 0;
-	 return 0;
+            if (isascii((int)theKeySym)){
+                ch = theKeySym;
+                *key = ch;
+                return 1;
+            }
+        }
+        theKeyBuffer[count] = '\0';
+        *key = theKeyBuffer[0];
+        if (theDepth == 1 && (*key == 'A' || *key == 'a') ) *key = 0;
+        return 0;
     case Expose:
         if (theEvent.xexpose.count == 0)
-	*key = (int)'R';
-	return 0;
+        *key = (int)'R';
+        return 0;
     case UnmapNotify:
-	*key = 0;
-	return 65005;
+        return 65005;
     case FocusIn:
-        *key = 0;
-	return 65006;
+        return 65006;
     case EnterNotify:
-	*key = 0;
-	return 65006;
+        return 65006;
     default:
-	break;
+        break;
     }
-    *key = 0;
     return 0;
 }
 
@@ -361,146 +355,145 @@ INT_ waitevent_(INT_ *theKey, INT_ *xCursor, INT_ *yCursor){
 /*********************** Waiting events *******************************/
 int nextevent(INT_ *theKey, INT_ *xCursor, INT_ *yCursor, int nmbt,
     Button mbb[], char mbk[], char *mbt[]){
-/* ibcursor -  current box # or -1
+/* ibcursor -     current box # or -1
    iact     - highlighted box # or -1 */
     XEvent theEvent;
     XKeyEvent theKeyEvent;
     XComposeStatus theComposeStatus;
     KeySym theKeySym;
-    int	length, ibox, longKey, theKeyBufferMaxLen=4;
+    int length, ibox, longKey, theKeyBufferMaxLen=4;
     char theKeyBuffer[5];
 
     XSelectInput(theDisplay, theRootWindow,
-	(POLL_EV_MASK | PointerMotionMask | ButtonMotionMask | ButtonReleaseMask) );
+        (POLL_EV_MASK | PointerMotionMask | ButtonMotionMask | ButtonReleaseMask) );
     XNextEvent(theDisplay, &theEvent);
 
     switch(theEvent.type){
 
     case MapNotify:
-	*theKey = 0;
-	return 65004;
+        *theKey = 0;
+        return 65004;
 
     case UnmapNotify:
-	*theKey = 0;
-	return 65003;
+        *theKey = 0;
+        return 65003;
 
     case KeyPress:
- 	Kevent.xcur = theEvent.xbutton.x;
-	Kevent.ycur = theEvent.xbutton.y;
-	*xCursor = Kevent.xcur;
-	*yCursor = Kevent.ycur;
-	theKeyEvent = theEvent.xkey;
-	length = XLookupString (&theKeyEvent, theKeyBuffer,
-		theKeyBufferMaxLen, &theKeySym, &theComposeStatus);
-	if (length > theKeyBufferMaxLen || length < 0){
-	    printf("String translation error:  Bufferlength =%d\n",length);
-	    break;
-	}
-	if (length == 0){
+        Kevent.xcur = theEvent.xbutton.x;
+        Kevent.ycur = theEvent.xbutton.y;
+        *xCursor = Kevent.xcur;
+        *yCursor = Kevent.ycur;
+        theKeyEvent = theEvent.xkey;
+        length = XLookupString (&theKeyEvent, theKeyBuffer,
+                theKeyBufferMaxLen, &theKeySym, &theComposeStatus);
+        if (length > theKeyBufferMaxLen || length < 0){
+            printf("String translation error:  Bufferlength =%d\n",length);
+            break;
+        }
+        if (length == 0){
             if (theKeySym >= 65000){ /* A special key (as <Ctrl>, <Alt>, <F1>, Home, etc) is pressed */
-	        *theKey = theKeySym;
-	        switch(theKeySym){
-		case XK_Left:  return 65361;
-	        case XK_Up:    return 65362;
-	        case XK_Right: return 65363;
-	        case XK_Down:  return 65364;
-	        default: return 0;
-	        }
+                *theKey = theKeySym;
+                switch(theKeySym){
+                case XK_Left:  return 65361;
+                case XK_Up:    return 65362;
+                case XK_Right: return 65363;
+                case XK_Down:  return 65364;
+                default: return 0;
+                }
             }
-	    else{
-	        *theKey = theKeySym;
+            else{
+                *theKey = theKeySym;
                 return 65000;
-	    }
+            }
         }
         if (theKeyEvent.state & Mod1Mask){
             if (theKeySym <= 127){
-	        *theKey = theKeySym;
-	        return 2;
+                *theKey = theKeySym;
+                return 2;
             }
         }
         if (theKeyEvent.state & ControlMask){
             if (isascii((int)theKeySym)){
                 *theKey =  theKeySym;
-	        return 1;
+                return 1;
             }
         }
         longKey = theKeyBuffer[0];
         theKeyBuffer[1] = '\0';
         if (length > 0){
-            if (theKeySym >= ' ' && theKeySym <= '~' ){	/* ASCII 32, 126  */
-	        *theKey = longKey;
-	        if (theDepth == 1 && (theKeySym == 'A' || theKeySym == 'a')) *theKey = 0;
-            }
-            else{	
+            if (theKeySym >= ' ' && theKeySym <= '~' ){ /* ASCII 32, 126  */
                 *theKey = longKey;
-	        if (longKey == 8)  return 65361; /* BS equiv <- */
+                if (theDepth == 1 && (theKeySym == 'A' || theKeySym == 'a')) *theKey = 0;
+            }
+            else{
+                *theKey = longKey;
+                if (longKey == 8)  return 65361; /* BS equiv <- */
             }
             return 65000;
         }
-	break;
+        break;
 
     case ButtonPress:
- 	Kevent.xcur = theEvent.xbutton.x;
-	Kevent.ycur = theEvent.xbutton.y;
-	*xCursor = Kevent.xcur;
-	*yCursor = Kevent.ycur;
-	ibox = Cursor_in_Box();
+        Kevent.xcur = theEvent.xbutton.x;
+        Kevent.ycur = theEvent.xbutton.y;
+        *xCursor = Kevent.xcur;
+        *yCursor = Kevent.ycur;
+        ibox = Cursor_in_Box();
+        if (ibox >= 0) *theKey = (int)mbk[ibox];
+        if (theDepth == 1 && *theKey == 'A') *theKey = 0;        /*No color table*/
+        if (*theKey == 015) Put_button(mbb[ibox], theGCA);  /*Undo highlight*/
+        if (*theKey != 0) ibox = -1;
+        switch(ibox){
+        case(-1): return 65001;
+        case(24): return 65363;  /*   >    */
+        case(25): return 65502;  /*  End   */
+        case(26): return 65361;  /*   <    */
+        case(27): return 65496;  /*  Home  */
+        case(28): return 65364;  /*   >>   */
+        case(29): return 65504;  /*  PgDn  */
+        case(30): return 65362;  /*   <<   */
+        case(31): return 65498;  /*  PgUp  */
+        default : return 65001;
+        }
 
-	if (ibox >= 0) *theKey=(int)mbk[ibox];
-	if (theDepth==1 && *theKey=='A') *theKey=0;        /*No color table*/
-	if (*theKey == 015) Put_button(mbb[ibox],theGCA);  /*Undo highlight*/
-	if (*theKey != 0)   ibox = -1;
-	switch(ibox){
-	case(-1): return 65001;
-	case(24): return 65363;  /*   >    */
-	case(25): return 65502;  /*  End   */
-	case(26): return 65361;  /*   <    */
-	case(27): return 65496;  /*  Home  */
-	case(28): return 65364;  /*   >>   */
-	case(29): return 65504;  /*  PgDn  */
-	case(30): return 65362;  /*   <<   */
-	case(31): return 65498;  /*  PgUp  */
-	default : return 65001;
-	}
-
-    case ButtonRelease:		
- 	Kevent.xcur = theEvent.xbutton.x;
-	Kevent.ycur = theEvent.xbutton.y;
-	*xCursor = Kevent.xcur;
-	*yCursor = Kevent.ycur;
-	return 65002;
+    case ButtonRelease:
+        Kevent.xcur = theEvent.xbutton.x;
+        Kevent.ycur = theEvent.xbutton.y;
+        *xCursor = Kevent.xcur;
+        *yCursor = Kevent.ycur;
+        return 65002;
 
     case MotionNotify:
- 	Kevent.xcur = theEvent.xbutton.x;
-	Kevent.ycur = theEvent.xbutton.y;
-	*xCursor = Kevent.xcur;
-	*yCursor = Kevent.ycur;
-	ibcursor = Cursor_in_Box();
-	if (iact == ibcursor) return 65000;   /* No changes */
-	if (iact >= 0){ 		      /* Hgh_box -> std */
-	    Put_button(mbb[iact], theGCA);
-	    iact = -1;
-	}
-	if (ibcursor >= 0){                   /* Std_box -> hgh */
-	    Put_button(mbb[ibcursor], hgh_menuGC);
-	    iact = ibcursor;
-	}
-	*theKey = 0;
-	return 65000;
+        Kevent.xcur = theEvent.xbutton.x;
+        Kevent.ycur = theEvent.xbutton.y;
+        *xCursor = Kevent.xcur;
+        *yCursor = Kevent.ycur;
+        ibcursor = Cursor_in_Box();
+        if (iact == ibcursor) return 65000;   /* No changes */
+        if (iact >= 0){                       /* Hgh_box -> std */
+            Put_button(mbb[iact], theGCA);
+            iact = -1;
+        }
+        if (ibcursor >= 0){                   /* Std_box -> hgh */
+            Put_button(mbb[ibcursor], hgh_menuGC);
+            iact = ibcursor;
+        }
+        *theKey = 0;
+        return 65000;
 
     case Expose:
         if (theEvent.xexpose.count == 0){
-	    longKey = 'R';  /* ASCII 82 */
+            longKey = 'R';  /* ASCII 82 */
         }
-	else{
-	    longKey = 0;
-	}
-	*theKey	= longKey;
-	return 65000;
+        else{
+            longKey = 0;
+        }
+        *theKey = longKey;
+        return 65000;
 
     case ConfigureNotify:
-	*theKey = 0;
-	return 0;
+        *theKey = 0;
+        return 0;
     }
     return 0;
 }
@@ -509,13 +502,13 @@ int nextevent(INT_ *theKey, INT_ *xCursor, INT_ *yCursor, int nmbt,
 int Cursor_in_Box(){
 /* Returns:  menu box number, -1 if no match;
    Makes use of global structures
-   Button	MAMB[NMRMB];	Event	Kevent;	*/
+   Button MAMB[NMRMB];    Event Kevent; */
     int i;
     for (i=0; i<nmamb; i++){
         if (Kevent.xcur >= MAMB[i].mexl && Kevent.xcur <= MAMB[i].mexr &&
-	    Kevent.ycur >= MAMB[i].meyu && Kevent.ycur <= MAMB[i].meyd){
-	    return i;
-	}
+            Kevent.ycur >= MAMB[i].meyu && Kevent.ycur <= MAMB[i].meyd){
+            return i;
+        }
     }
     return -1;
 }
@@ -525,16 +518,16 @@ void mvcursor_(INT_ *key, INT_ *ix, INT_ *iy){
 /* Move cursor by one pixel */
     switch(*key){
     case(361):
-        *ix--; /* <- */
+        *ix--; /* Left  */
         break;
     case(362):
-        *iy--; /* Up */
-	break;
+        *iy--; /* Up    */
+        break;
     case(363):
-        *ix++; /* -> */
-	break;
+        *ix++; /* Right */
+        break;
     case(364):
-        *iy++; /* Dn */
+        *iy++; /* Down  */
         break;
     }
     XWarpPointer(theDisplay, None, theRootWindow, 0, 0, 0, 0, *ix, *iy);
@@ -542,109 +535,107 @@ void mvcursor_(INT_ *key, INT_ *ix, INT_ *iy){
 
 /**********************************************************************/
 int asklis_(nofbox, array, theNames, id)
-    INT_  *nofbox, *id;
+    INT_ *nofbox, *id;
     char theNames[];
     double *array;
-{	Window		theWindow;
-	XEvent		theEvent;
-	double		valn;
-	int	UpLeftx =2, UpLefty =10,/* window corner location	*/
-		Width =452, Height =480;/* window size			*/
-	int	ix, iy, wbox, hbox, 	/* parameter box corner and size*/
-		wsym = 8, hsym = 13,	/* symbol width and height	*/
-		lvalue = 6, lname = 6,	/* length of value and name	*/
-		xshif = 5, yshif = 3,	/* table corner 		*/
-		nclmn = 4, nparam, 	/* # of columns and parameters	*/
-		spos  = 0, vpos, 	/* edit & edit start positions	*/
-		ixa0=0, iya0=0, ixa,iya,/* arrow (textcursor) position	*/
-		namlen, ibox, iret, oldparam, ixold, iyold;
-	int	lline, xButton, yButton, i, ii=-1, ind, ind1,
-		ihelp, selalb=0,  contr, icol, dcol, irow, drow;
-	float	param;
-	char	value[10],  ovalue[10],  stri[10],  vsym = '=',title[70],
-	        exp_name[60], equ_name[60],
-		stri50[50],stri40[40], stri256[256], theName[10], legend[128];
-	i = *id-1;	namlen = DWnamlen[i];	strcpy(title,*(DWTitle+i));
-/*	printf("theID = %d,  theTitle = %s[%d],   \t theNameLength = %d\n",
-			*id, title, strlen(title),namlen);
-*/	lline = lname + lvalue + 1;
-	if ((lvalue == 0) || (lname == 0)) lline = lname+lvalue;
-	hbox = hsym+3;		wbox = wsym*(lline+1);	vpos= wsym*(lname+1);
- 	selalb = 1;	nparam   = *nofbox;	contr=1;
-	if( nparam==0 ) return (-1);
-	if( nparam<0 ) { nparam = -nparam; selalb = 0; }
-	if( nparam>1000 ) { nparam=nparam-1000;	contr=0; }
-	if( *id == 3 )  contr=1;
-	Width =2*xshif+nclmn*wbox-wsym;
-	Height =2*yshif+((nparam-1)/nclmn+2)*hbox;
-	ibox = 1;	if (contr == 0 ) ibox = 0;
-       	if( *id == 8 )  { ibox = 0;	selalb = -1; }
+{        Window                theWindow;
+        XEvent                theEvent;
+        double                valn;
+        int        UpLeftx =2, UpLefty =10,/* window corner location        */
+                Width =452, Height =480;/* window size                        */
+        int        ix, iy, wbox, hbox,         /* parameter box corner and size*/
+                wsym = 8, hsym = 13,        /* symbol width and height        */
+                lvalue = 6, lname = 6,        /* length of value and name        */
+                xshif = 5, yshif = 3,        /* table corner                 */
+                nclmn = 4, nparam,         /* # of columns and parameters        */
+                spos  = 0, vpos,         /* edit & edit start positions        */
+                ixa0=0, iya0=0, ixa,iya,/* arrow (textcursor) position        */
+                namlen, ibox, iret, oldparam, ixold, iyold;
+        int        lline, xButton, yButton, i, ii=-1, ind, ind1,
+                ihelp, selalb=0,  contr, icol, dcol, irow, drow;
+        float        param;
+        char        value[10],  ovalue[10],  stri[10],  vsym = '=',title[70],
+                exp_name[60], equ_name[60],
+                stri50[50],stri40[40], stri256[256], theName[10], legend[128];
+        i = *id-1;        namlen = DWnamlen[i];        strcpy(title,*(DWTitle+i));
 
-	GetRWgeometry (&XRW,&YRW);
-	/*	UpLeftx = 2;     i = XWX-Width-10; */
-	UpLeftx = 2;     i = XRW-Width-8;		UpLefty = YRW;
-	if (i > UpLeftx)  UpLeftx = i;		i = YRW+Height+30;
-	if (i > theHeight) UpLefty = theHeight-Height-30;
-	theWindow
-	  = Open_Window (UpLeftx, UpLefty, Width, Height, 0, title, 0,
-	     RootWindow(theDisplay,theScreen), theMenuCursor);
-	XSelectInput (theDisplay, theWindow, POLL_EV_MASK);	ihelp = 0;
+        lline = lname + lvalue + 1;
+        if ((lvalue == 0) || (lname == 0)) lline = lname+lvalue;
+        hbox = hsym+3;                wbox = wsym*(lline+1);        vpos= wsym*(lname+1);
+         selalb = 1;        nparam   = *nofbox;        contr=1;
+        if( nparam==0 ) return (-1);
+        if( nparam<0 ) { nparam = -nparam; selalb = 0; }
+        if( nparam>1000 ) { nparam=nparam-1000;        contr=0; }
+        if( *id == 3 )  contr=1;
+        Width =2*xshif+nclmn*wbox-wsym;
+        Height =2*yshif+((nparam-1)/nclmn+2)*hbox;
+        ibox = 1;        if (contr == 0 ) ibox = 0;
+               if( *id == 8 )  { ibox = 0;        selalb = -1; }
+
+        GetRWgeometry (&XRW,&YRW);
+        UpLeftx = 2;     i = XRW-Width-8;                UpLefty = YRW;
+        if (i > UpLeftx)  UpLeftx = i;                i = YRW+Height+30;
+        if (i > theHeight) UpLefty = theHeight-Height-30;
+        theWindow
+          = Open_Window (UpLeftx, UpLefty, Width, Height, 0, title, 0,
+             RootWindow(theDisplay,theScreen), theMenuCursor);
+        XSelectInput (theDisplay, theWindow, POLL_EV_MASK);        ihelp = 0;
 Create_table:
-	Change_Color (theGCA, 1, 0);	/* white background, black foreground */
-	for (i=1; i <= nparam; i++) 	{
-	ix =wbox*((i-1)%nclmn)+xshif;	iy =hbox*((i-1)/nclmn)+yshif;
-	if ( lname ) {	ind = (i-1)*namlen;
-		WRITE_ theGCA, ix, hsym+iy, theNames+ind, namlen); }
-	if ( lname*lvalue ) {
-		WRITE_ theGCA, ix+vpos-wsym, hsym+iy, &vsym, 1); }
-	if ( lvalue ) { valn=*(array+i-1); num2str(valn, value, lvalue);
-		WRITE_ theGCA, ix+vpos, hsym+iy, value, lvalue); }
-	XFlush(theDisplay);		}
-	oldparam = nparam;	ixold = ix;	iyold = iy;
-	for (i=0; i<lvalue; i++) 	ovalue[i]=value[i];
-	if (ibox == 1 && selalb != -1 && ii < 0) MVPOINTER_ xshif+40,yshif+13);
-	Change_Color (theGCA, 50, 0);
-	for (i=1; i < nclmn; i++) { ind = xshif+i*wbox-wsym/2;
-	LINGCA_ ind,0,ind,Height-hbox); }
-	i = Height-hbox; LINGCA_ 0,i,Width,i);
-	i--; 		 LINGCA_ 0,i,Width,i);
-	WRITE_ hghGC, xshif, Height-3, "OK",2);
-	if ( ibox == 0 && contr == 0 ) MVPOINTER_ xshif+5,Height-5);
-       	if ( *id == 8 )  MVPOINTER_ xshif+Width-50,Height-5);
-	i = nclmn*wbox/wsym-5;	ind = 50;	if(i<50)	ind=i;
+        Change_Color (theGCA, 1, 0);        /* white background, black foreground */
+        for (i=1; i <= nparam; i++)         {
+        ix =wbox*((i-1)%nclmn)+xshif;        iy =hbox*((i-1)/nclmn)+yshif;
+        if ( lname ) {        ind = (i-1)*namlen;
+                WRITE_ theGCA, ix, hsym+iy, theNames+ind, namlen); }
+        if ( lname*lvalue ) {
+                WRITE_ theGCA, ix+vpos-wsym, hsym+iy, &vsym, 1); }
+        if ( lvalue ) { valn=*(array+i-1); num2str(valn, value, lvalue);
+                WRITE_ theGCA, ix+vpos, hsym+iy, value, lvalue); }
+        XFlush(theDisplay);                }
+        oldparam = nparam;        ixold = ix;        iyold = iy;
+        for (i=0; i<lvalue; i++)         ovalue[i]=value[i];
+        if (ibox == 1 && selalb != -1 && ii < 0) MVPOINTER_ xshif+40,yshif+13);
+        Change_Color (theGCA, 50, 0);
+        for (i=1; i < nclmn; i++) { ind = xshif+i*wbox-wsym/2;
+        LINGCA_ ind,0,ind,Height-hbox); }
+        i = Height-hbox; LINGCA_ 0,i,Width,i);
+        i--;                  LINGCA_ 0,i,Width,i);
+        WRITE_ hghGC, xshif, Height-3, "OK",2);
+        if ( ibox == 0 && contr == 0 ) MVPOINTER_ xshif+5,Height-5);
+               if ( *id == 8 )  MVPOINTER_ xshif+Width-50,Height-5);
+        i = nclmn*wbox/wsym-5;        ind = 50;        if(i<50)        ind=i;
 /*      Modified by Antoine Merle on 09/18/2013
-	I have modified the layout of the legend bar to make it fit into
-	the 70 character length corresponding to its initialization, since
-	this could cause a code crash due to buffer overflow on some systems */
-	strcpy(legend,"/ Esc - done;");
-	if (*id <= 6) {	strcat(legend," Button/Tab - select;");
-			strcat(legend," Return/Tab - enter;");
-			strcat(legend," ? - quick help");		}
-	else	      {	strcat(legend,"     Button/Tab - select;");
-			strcat(legend,"     Return/Tab - enter;");	}
-	Change_Color (hintGC, 42, 0);	ind = strlen(legend);
-	if (contr == 1) WRITE_ hintGC, xshif+2*wsym, Height-3, legend, ind);
-	Change_Color (hintGC, 1, 0);
-	if (contr == 0) WRITE_ theGCA, xshif+4*wsym, Height-3,
-	"    Information table.   No changes permitted.     ", ind);
-	if ( *id == 8 )	{
-	      if (selalb == 0)	WRITE_ hintGC,
-			xshif+8+(i-6)*wsym,Height-3," (Select all ) ",15);
-	      if (selalb == -1)	WRITE_ hintGC,
-			xshif+8+(i-6)*wsym,Height-3,"(Unselect 0)",12);
-			}
-	Change_Color (theGCA, 1, 0);
-	if (ibox) goto Newparam;
+        I have modified the layout of the legend bar to make it fit into
+        the 70 character length corresponding to its initialization, since
+        this could cause a code crash due to buffer overflow on some systems */
+        strcpy(legend,"/ Esc - done;");
+        if (*id <= 6) { strcat(legend," Button/Tab - select;");
+                        strcat(legend," Return/Tab - enter;");
+                        strcat(legend," ? - quick help"); }
+        else          { strcat(legend,"     Button/Tab - select;");
+                        strcat(legend,"     Return/Tab - enter;"); }
+        Change_Color (hintGC, 42, 0);        ind = strlen(legend);
+        if (contr == 1) WRITE_ hintGC, xshif+2*wsym, Height-3, legend, ind);
+        Change_Color (hintGC, 1, 0);
+        if (contr == 0) WRITE_ theGCA, xshif+4*wsym, Height-3,
+        "    Information table.   No changes permitted.     ", ind);
+        if ( *id == 8 ) {
+              if (selalb == 0) WRITE_ hintGC,
+                        xshif+8+(i-6)*wsym,Height-3," (Select all ) ",15);
+              if (selalb == -1) WRITE_ hintGC,
+                        xshif+8+(i-6)*wsym,Height-3,"(Unselect 0)",12);
+                        }
+        Change_Color (theGCA, 1, 0);
+        if (ibox) goto Newparam;
 Table_control:
-	XNextEvent (theDisplay, &theEvent);
-	if ( theEvent.xany.window == theRootWindow )
+        XNextEvent (theDisplay, &theEvent);
+        if ( theEvent.xany.window == theRootWindow )
            { /*  printf("theRootWindowEvent.type =%d\n",theEvent.type); */
-	     ProcessRootWindowEvent (&theEvent);
-	     goto Table_control;
-	   }
-	if(theEvent.type == Expose)	{ ii = 0;  goto	Create_table;}
-	if(theEvent.type == ButtonPress)
-	   {	xButton	= theEvent.xbutton.x;
+             ProcessRootWindowEvent (&theEvent);
+             goto Table_control;
+           }
+        if(theEvent.type == Expose) { ii = 0;  goto Create_table;}
+        if(theEvent.type == ButtonPress)
+           {	xButton	= theEvent.xbutton.x;
 		yButton = theEvent.xbutton.y;
 		ind  = FindBoxNum(xButton-xshif, yButton-Height+hbox+1,
 						 	4*wsym, hbox, 1, 1);
@@ -789,43 +780,6 @@ EndDialog:
 	ibcursor = -1;
 	XFlush(theDisplay);
 	return (0);
-}
-
-/**********************************************************************/
-int warning_dialogbox_(){
-    Window theWindow;
-    int	UpLeftx=2, UpLefty=10,   /* window corner location	*/
-	Width, Height;	         /* window size */
-    int	wsym=8, hsym=13,	 /* width and height, font 8x13bold */
-	margin=6, i, charLength; /* Margin */
-    char stri256[256], title[70] = "Warning!";
-
-    strcpy(stri256, "Test warning");
-    charLength = strlen(&stri256[0]);
-    Width = wsym*charLength + 2*margin;
-    Height =hsym + 2*margin;
-
-    GetRWgeometry(&XRW, &YRW);
-    UpLeftx = 2;
-    i = XRW - Width - 8;
-    UpLefty = YRW;
-    if (i > UpLeftx)  UpLeftx = i;
-    i = YRW + Height + 30;
-    if (i > theHeight) UpLefty = theHeight - Height - 30;
-    printf("XRW = %d,\tYRW = %d,\tUpLeftX = %d,\tUpLeftY = %d,\t \n",
-	XRW, YRW, UpLeftx, UpLefty);
-
-    theWindow = Open_Window (UpLeftx, UpLefty, Width, Height, 1, title, 0,
-		       RootWindow(theDisplay,theScreen), theMenuCursor);
-    i = 30;
-    changeGCcolor(hghGC, &i);
-    XDrawImageString(theDisplay, theWindow, hghGC, margin, margin+10,
-		     stri256, charLength);
-    XFlush(theDisplay);
-    sleep(5);
-    XDestroyWindow(theDisplay, theWindow);
-    XFlush(theDisplay);
-    return 0;
 }
 
 /**********************************************************************/
@@ -1501,22 +1455,22 @@ EndDialog:
 
 /**********************************************************************/
 void Call_ifkey(int j){
-    if (j == 47 ||			/* "/" Exit -> */
-        j == 13 || 			/* <Enter> */
-        j == 32 || 			/* <Space> */
-        j == 37 || 			/* "%" */
-        (j >= 48 && j <= 57  ) ||		/* "0" -> "9" */
-        j == 66 || 				/* "B" */
-        j == 67 || 				/* "C" */
-        j == 68 || 				/* "D" */
-        j == 72 ||  				/* "H" */
-        j == 78 ||  				/* "N" */
-        j == 79 ||  				/* "O" */
-        j == 82 ||  				/* "R" */
-        j == 83 ||  				/* "S" */
-        j == 87 ||  				/* "W" */
-        j == 88  				/* "X" */
-	) ifkey_(&j);
+    if (j == 47 ||                 /* "/" Exit -> */
+        j == 13 ||                 /* <Enter> */
+        j == 32 ||                 /* <Space> */
+        j == 37 ||                 /* "%" */
+        (j >= 48 && j <= 57  ) ||  /* "0" -> "9" */
+        j == 66 ||                 /* "B" */
+        j == 67 ||                 /* "C" */
+        j == 68 ||                 /* "D" */
+        j == 72 ||                 /* "H" */
+        j == 78 ||                 /* "N" */
+        j == 79 ||                 /* "O" */
+        j == 82 ||                 /* "R" */
+        j == 83 ||                 /* "S" */
+        j == 87 ||                 /* "W" */
+        j == 88                    /* "X" */
+        ) ifkey_(&j);
     return;
 }
 
@@ -1534,24 +1488,24 @@ void ProcessRootWindowEvent(XEvent *theEvent){
     case ButtonPress:
         Kevent.xcur = theEvent->xbutton.x;
         Kevent.ycur = theEvent->xbutton.y;
-        k = Cursor_in_Box();		  /* Returns box number */
+        k = Cursor_in_Box();         /* Returns box number */
         if (k >= 0 && k <= nmamb) j = (int)MAMK[k];
         Call_ifkey(j);
-	j = 0;
-	break;
+        j = 0;
+        break;
     case KeyPress:
         theKeyEvent = theEvent->xkey;
         j = XLookupString (&theKeyEvent, theKeyBuffer, 4, &theKeySym, &theComposeStatus);
-        if (j == 0) return;		/* <Ret>, <Alt>, etc. is pressed */
+        if (j == 0) return;          /* <Ret>, <Alt>, etc. is pressed */
         if ( j != 1 ){
             printf("String translation error:  Bufferlength =%d\n", j);
             return;
         }
         j = theKeySym;
-        if (j > 96 && j < 123 )	j -= 32;
+        if (j > 96 && j < 123 ) j -= 32;
         Call_ifkey(j);
-	j = 0;
-	break;
+        j = 0;
+        break;
     case Expose:
         j = 82;
         ifkey_(&j);
@@ -1822,21 +1776,21 @@ int If_empty(int icol, int irow, int nclmn, int nsta[], int nwid[], char array[]
     imax = nclmn;
 
     R1: for (j=imin-1; j<nclmn ; j++){
-	    if (nwid[j] == 0){
-	        if (j >= icol){
-		    imax = j;
-		    break;
-		}
-		imin = j + 2;
-		goto R1;
-	    }
-	}
+            if (nwid[j] == 0){
+                if (j >= icol){
+                    imax = j;
+                    break;
+                }
+                imin = j + 2;
+                goto R1;
+            }
+        }
 
     if (strspn(array+(irow-1)*arrdim+nsta[imin-1], " ") > nsta[imax-1]+nwid[imax-1]-nsta[imin-1]){
         return 1;
     }
     else{
-	return 0;
+        return 0;
     }
 }
 
@@ -1848,7 +1802,7 @@ int GetValue(XKeyEvent theEvent, char str[], int lvalue, char tstri[], int *pos)
     int theBufferLength, theKeyBufferMaxLen = 4;
     char theKeyBuffer[5];
 
-    theBufferLength=XLookupString(&theEvent, theKeyBuffer,
+    theBufferLength = XLookupString(&theEvent, theKeyBuffer,
         theKeyBufferMaxLen, &theKeySym, &theComposeStatus);
     theKeyBuffer[theBufferLength] = '\0';
 
@@ -1858,10 +1812,10 @@ int GetValue(XKeyEvent theEvent, char str[], int lvalue, char tstri[], int *pos)
           if (*pos > 0){
               for (i=*pos; i<lvalue; i++) str[i-1] = str[i];
               str[lvalue-1] = ' ';
-	  }
-	  *pos -= 1;
+          }
+          *pos -= 1;
           break;
-     case XK_Return:   return 1;
+     case XK_Return:
      case XK_KP_Enter: return 1;
      case XK_Tab:      return 2;
      case XK_Escape:   return -1;
@@ -1876,14 +1830,14 @@ int GetValue(XKeyEvent theEvent, char str[], int lvalue, char tstri[], int *pos)
      case XK_R15:      return 33;
      default:
          if (*pos<lvalue){
-	     for (i=0; tstri[i] != 0; i++){
+             for (i=0; tstri[i] != 0; i++){
                  if (theKeySym == tstri[i]){
-		     if (*pos < 0) *pos=0;
+                     if (*pos < 0) *pos=0;
                      str[*pos] = theKeyBuffer[0];
-		     *pos += 1;
-		 }
-	     }
-	 }
+                     *pos += 1;
+                 }
+             }
+         }
          break;
     }
     return 0;
@@ -1901,14 +1855,14 @@ int GetKey(XKeyEvent theKeyEvent, char str[], int *pos){
     if (theKeyEvent.state & Mod1Mask){
         if (theKeySym == XK_Escape){
             return 7;
-	}
+        }
     }
 
     switch(theKeySym){
     case XK_Escape:    return -1;
     case XK_BackSpace:
     case XK_Delete:    return 1;
-    case XK_Return:    break;
+    case XK_Return:
     case XK_KP_Enter:  return 2;
     case XK_Tab:       return 3;
     case XK_R7:        return 11;
@@ -1929,12 +1883,12 @@ int GetKey(XKeyEvent theKeyEvent, char str[], int *pos){
     case XK_Alt_R:     return 37;  /* Right alt */
     default:
         if (!isprint(theKeySym)){
-	    return 99;
-	}
-	else{
+            return 99;
+        }
+        else{
             str[*pos] = theKeySym;
-	    break;
-	}
+            break;
+        }
     }
     return 0;
 }
@@ -1943,11 +1897,11 @@ int GetKey(XKeyEvent theKeyEvent, char str[], int *pos){
 int GetEsc(XKeyEvent theKeyEvent){
     XComposeStatus theComposeStatus;
     KeySym theKeySym;
-    int	theKeyBufferMaxLen=4;
+    int theKeyBufferMaxLen=4;
     char theKeyBuffer[5];
 
     XLookupString(&theKeyEvent, theKeyBuffer, theKeyBufferMaxLen,
-	&theKeySym, &theComposeStatus);
+        &theKeySym, &theComposeStatus);
     if (theKeySym == XK_Escape) return 1;
     return 0;
 }
@@ -1956,7 +1910,7 @@ int GetEsc(XKeyEvent theKeyEvent){
 int GetName(XKeyEvent theKeyEvent, char str[], int lvalue, int *pos){
     XComposeStatus theComposeStatus;
     KeySym theKeySym;
-    int	theKeyBufferMaxLen = 4, i;
+    int theKeyBufferMaxLen = 4, i;
     char theKeyBuffer[5], lsym;
 
     XLookupString(&theKeyEvent, theKeyBuffer,
@@ -1981,16 +1935,16 @@ int GetName(XKeyEvent theKeyEvent, char str[], int lvalue, int *pos){
     case XK_R15:      return 33;
     default:
         if (theKeySym > 127) return 0;
-	if (*pos < lvalue){
-	    if (*pos < 0) *pos = 0;     /* Restore default name */
-	    for (i=*pos; i<lvalue; i++) str[i]=' ';
-	    lsym = theKeySym;
-	    if (isalnum(lsym) || lsym == '/' || lsym == '.' || lsym == '_'){
-	        str[*pos] = lsym;
-		*pos += 1;
-	    }
-	}
-	break;
+        if (*pos < lvalue){
+            if (*pos < 0) *pos = 0;     /* Restore default name */
+            for (i=*pos; i<lvalue; i++) str[i]=' ';
+            lsym = theKeySym;
+            if (isalnum(lsym) || lsym == '/' || lsym == '.' || lsym == '_'){
+                str[*pos] = lsym;
+                *pos += 1;
+            }
+        }
+        break;
     }
     return 0;
 }
@@ -2000,18 +1954,18 @@ int ufilebox_(INT_ *nofbox, char una[], char theNames[], char unad[]){
 /* U-file name setting */
     Window theWindow;
     XEvent theEvent;
-    int	UpLeftx=2, UpLefty=10,  /* window corner location	*/
-    	Width=452, Height=480;  /* window size			*/
-    int	ix, iy, wbox, hbox,     /* parameter box corner and size*/
-    	wsym=8, hsym=13,        /* symbol width and height	*/
-    	lvalue=10, lname=4,     /* length of value and name	*/
-    	xshif=5, yshif=3,       /* table corner and 		*/
-    	nclmn=3, nparam,        /* # of columns and parameters	*/
-    	ixa0=0, iya0=0, ixa,iya,/* arrow (textcursor) position	*/
-    	i, j, ibox, spos = 0, vpos, lsym=4,
-    	iret, oldparam, ixold, iyold, ii=-1,
-    	icol, dcol, irow, drow;
-    int	lline, xButton, yButton, ind, ind1, ierr, esc_flag;
+    int UpLeftx=2, UpLefty=10,  /* window corner location       */
+        Width=452, Height=480;  /* window size                  */
+    int ix, iy, wbox, hbox,     /* parameter box corner and size*/
+        wsym=8, hsym=13,        /* symbol width and height      */
+        lvalue=10, lname=4,     /* length of value and name     */
+        xshif=5, yshif=3,       /* table corner and             */
+        nclmn=3, nparam,        /* # of columns and parameters  */
+        ixa0=0, iya0=0, ixa,iya,/* arrow (textcursor) position  */
+        i, j, ibox, spos = 0, vpos, lsym=4,
+        iret, oldparam, ixold, iyold, ii=-1,
+        icol, dcol, irow, drow;
+    int lline, xButton, yButton, ind, ind1, ierr, key_flag;
     char Ufile_Name[40], vsym[5];
 
     strcpy(vsym, " => ");
@@ -2034,11 +1988,10 @@ int ufilebox_(INT_ *nofbox, char una[], char theNames[], char unad[]){
     j = YRW + Height + 30;
     if (j > theHeight) UpLefty = theHeight - Height - 30;
     theWindow = Open_Window(UpLeftx, UpLefty, Width, Height, 0,
-    	"Save data in U-file format", 0,
-    	 RootWindow(theDisplay, theScreen), theMenuCursor);
-    XSelectInput (theDisplay, theWindow, POLL_EV_MASK);
+        "Save data in U-file format", 0,
+        RootWindow(theDisplay, theScreen), theMenuCursor);
+    XSelectInput(theDisplay, theWindow, POLL_EV_MASK);
 
-Create_table:
     Change_Color(theGCA, 1, 0);  /* white background, black foreground */
     for (i=1; i <= nparam; i++){
         ix = wbox*((i - 1)%nclmn) + xshif;
@@ -2054,7 +2007,7 @@ Create_table:
     oldparam = nparam;
     ixold = ix;
     iyold = iy;
-    if (ii < 0) MVPOINTER_ xshif+40, yshif+13);
+    if (ii < 0) XWarpPointer(theDisplay, None, theWindow, 0, 0, 0, 0, xshif+40, yshif+13);
     Change_Color(theGCA, 50, 0);
     for (i=1; i < nclmn; i++){
         ind = xshif + i*wbox - wsym/2;
@@ -2077,20 +2030,16 @@ Create_table:
         XNextEvent(theDisplay, &theEvent);
         if (theEvent.xany.window == theRootWindow ){
             ProcessRootWindowEvent(&theEvent);
-            continue; //goto Table_control;
+            continue;
         }
-        if (theEvent.type == Expose){
-            ii = 0;
-	    goto Create_table;
-        }
-	esc_flag = 0;
+        key_flag = 0;
         if (theEvent.type == ButtonPress){
             xButton = theEvent.xbutton.x;
             yButton = theEvent.xbutton.y;
-    	    if (ibox){
-	        oldparam = ibox;
-	        ixold = ix;
-	        iyold = iy;
+            if (ibox){
+                oldparam = ibox;
+                ixold = ix;
+                iyold = iy;
             }
             ibox = FindBoxNum(xButton-xshif+wsym/2, yButton-yshif, wbox, hbox, nclmn, nparam);
             i = FindBoxNum(xButton-xshif, yButton-Height+hbox+1, 4*wsym, hbox, 1, 1);
@@ -2099,62 +2048,63 @@ Create_table:
                 ibox = oldparam;
                 ixold = ix;
                 iyold = iy;
-		esc_flag = 1;
-		goto Escend;
-	    }
-	    if (ibox == 0) continue; //goto Table_control;
-            ind = (oldparam - 1)*lvalue;
-            i = ibox;
-            ix = wbox*((i - 1)%nclmn) + xshif;
-            iy = hbox*((i - 1)/nclmn) + yshif;
-            ind = (oldparam - 1)*lname;
-            ind1 = (i - 1)*lname;
-            WRITE_ theGCA, ixold, hsym+iyold, theNames+ind, lname);
-            WRITE_ hghGC, ix, hsym+iy, theNames+ind1, lname);
-            WRITE_ theGCA, ixold+lname*wsym, hsym+iyold, vsym, lsym);
-            WRITE_ hghGC, ix+lname*wsym, hsym+iy, vsym, lsym);
-            ind = (oldparam - 1)*lvalue;
-            ind1 = (i - 1)*lvalue;
-            WRITE_ theGCA, ixold+vpos, hsym+iyold, una+ind, lvalue);
-            WRITE_ hghGC, ix+vpos, hsym+iy, una+ind1, lvalue);
-            spos = 0;
-            ixa = ix + vpos;
-            iya = iy + hsym + 2;
-            MoveArrow(theWindow, ixa0, iya0, ixa, iya);
-            ixa0 = ixa;
-            iya0 = iya;
-            XFlush(theDisplay);
-            continue;
-        }
-
-        if (ibox == 0){
-            if (GetEsc(theEvent.xkey)){
-	        break;
+                key_flag = 1;
             }
             else{
-	        continue;
+                if (ibox == 0) continue;
+                ind = (oldparam - 1)*lvalue;
+                i = ibox;
+                ix = wbox*((i - 1)%nclmn) + xshif;
+                iy = hbox*((i - 1)/nclmn) + yshif;
+                ind = (oldparam - 1)*lname;
+                ind1 = (i - 1)*lname;
+                WRITE_ theGCA, ixold, hsym+iyold, theNames+ind, lname);
+                WRITE_ hghGC, ix, hsym+iy, theNames+ind1, lname);
+                WRITE_ theGCA, ixold+lname*wsym, hsym+iyold, vsym, lsym);
+                WRITE_ hghGC, ix+lname*wsym, hsym+iy, vsym, lsym);
+                ind = (oldparam - 1)*lvalue;
+                ind1 = (i - 1)*lvalue;
+                WRITE_ theGCA, ixold+vpos, hsym+iyold, una+ind, lvalue);
+                WRITE_ hghGC, ix+vpos, hsym+iy, una+ind1, lvalue);
+                spos = 0;
+                ixa = ix + vpos;
+                iya = iy + hsym + 2;
+                MoveArrow(theWindow, ixa0, iya0, ixa, iya);
+                ixa0 = ixa;
+                iya0 = iya;
+                XFlush(theDisplay);
+                continue;
+            }
+        } // end if "button press"
+        else{
+            if (ibox == 0){
+                if (GetEsc(theEvent.xkey)){
+                    break; // destroy u-file menu window
+                }
+                else{
+                    continue;
+                }
+            }
+            else{
+                if (theEvent.type == KeyPress){
+                    ind = (ibox-1)*lvalue;
+                    iret = GetName(theEvent.xkey, una+ind, lvalue, &spos);
+                    key_flag = 1;
+                }
             }
         }
-        else{
-            if (theEvent.type == KeyPress){
-                ind = (ibox-1)*lvalue;
-                iret = GetName(theEvent.xkey, una+ind, lvalue, &spos);
-	        esc_flag = 1;
-            }
-	}
 
-Escend:
-        if (esc_flag == 1){
+        if (key_flag == 1){
             if (spos >= 0){
-	        ixa = ix + vpos + spos*wsym;
-	        iya = iy + hsym + 2;
+                ixa = ix + vpos + spos*wsym;
+                iya = iy + hsym + 2;
                 MoveArrow(theWindow, ixa0, iya0, ixa, iya);
                 ixa0 = ixa;
                 iya0 = iya;
             }
             else{
                 spos = -1;
- 	        strncpy(una+ind,unad,lvalue);
+                 strncpy(una+ind,unad,lvalue);
             }
             i = nclmn*wbox/wsym - 5;
             WRITE_ theGCA, xshif+4*wsym, Height-4,
@@ -2162,33 +2112,33 @@ Escend:
             if (strncmp(una+ind, unad, lvalue)){
                 stcopy(Ufile_Name+4, una+ind, spos);
                 ierr = 0;
-	        ierr = access(Ufile_Name, F_OK);
+                ierr = access(Ufile_Name, F_OK);
                 if (!(ierr)){
                     if ( !(strncmp(una+ind, "          ", lvalue))){
-	                strncpy(una+ind, unad, lvalue);
-	            }
-    	            else{
-	                WRITE_ hghGC, xshif+19*wsym, Height-4, "              ", 14);
-       	                WRITE_ hghGC, xshif+33*wsym, Height-4, " - file already exists", 22);
+                        strncpy(una+ind, unad, lvalue);
+                    }
+                    else{
+                        WRITE_ hghGC, xshif+19*wsym, Height-4, "              ", 14);
+                        WRITE_ hghGC, xshif+33*wsym, Height-4, " - file already exists", 22);
                         WRITE_ hghGC, xshif+(33-4-spos)*wsym, Height-4, Ufile_Name, 4+spos);
-      	            }
+                    }
                 }
             }
 
             WRITE_ hghGC, ix+vpos, hsym+iy, una+ind, lvalue);
             if (iret ==  0) continue;
             if (iret == -1) break;
-	    oldparam = ibox;
+            oldparam = ibox;
             if (iret ==  2){
-	        ibox++;
+                ibox++;
                 if (ibox > nparam) ibox = 1;
             }
             else{
                 stcopy(Ufile_Name+4, una+ind, lvalue);
                 dcol = iret%10 - 2;
                 icol = (ibox - 1)%nclmn + dcol;
-                if (icol < 0) icol=0;
-	        if (icol >= nclmn) icol--;
+                if (icol < 0) icol = 0;
+                if (icol >= nclmn) icol--;
                 drow = iret/10 - 2;
                 irow = (ibox - 1)/nclmn + drow;
                 if (irow < 0) irow = 0;
@@ -2200,7 +2150,7 @@ Escend:
                 if (ibox > nparam) ibox = nparam;
             }
             ixold = ix;
-	    iyold = iy;
+            iyold = iy;
             spos = 0;
             i = ibox;
             ix = wbox*((i - 1)%nclmn) + xshif;
@@ -2222,7 +2172,7 @@ Escend:
             ixa0 = ixa;
             iya0 = iya;
             XFlush(theDisplay);
-        } // key press
+        } // if key_flag
     } // end Table_control;
 
     RETURNPOINTER_;
@@ -2236,9 +2186,9 @@ Escend:
 /**********************************************************************/
 int FindBoxNum(int ix, int iy, int wBox, int hBox, int nclmn, int nBox){
 /* Returns box # or 0
-  ix, iy:	   current coordinates
+  ix, iy:          current coordinates
   nclmn, nBox:     #columns, #boxes
-  wBox, hBox:	   box width, height
+  wBox, hBox:      box width, height
 */
     int icol, pnum;
 

@@ -250,9 +250,8 @@ if (LTOUTO /= 0)  then
     endif
 else
 
-! The file rev_file='.res/profil.dat' (default name) is used in 7 places: 
-!  here, outdsp (modes 4, 5), typdsp (writing 2D U-file ), 
-!  in review*3, in listres
+! The file rev_file='.res/profil.dat' (default name) is used in 3 places: 
+!  here (w), ifkey.smode5 - modes 4, 5 (r), typdsp - writing 2D U-file (r) 
 
     open(unit=12, file='equ/'//TRIM(equ_file), iostat=ios)
     if (ios /= 0) write(*, *) '>>> IFKEY: Model file "equ/', TRIM(equ_file), '" open error'
@@ -516,9 +515,6 @@ CASE(73) ! 'I'
        close (1)
        write(*, *)"Default start file is modified"
    endif
-
-CASE(69) ! 'E'
-    call warning_dialogBox ! Exercise of Xlib child window
 
 CASE(46) ! '.'
     MARK = MARK + 1
@@ -1155,11 +1151,12 @@ read_loop: do
             jxout = 0
 	    YA = 0.
             do j=1, NP1
+                write(*, *) 'GIT ifkey', frame_hei, canv_hei        
                 YX = YWA(j)/YWA(NP1)
                 if (YX > YL .and. YX < YR) then
                     jxout = jxout + 1
                     if (jxout == 1 .and. j > 1) then ! left edge interpolation
-                        xplot(jxout) = dble(JX)
+                        xplot(jxout) = dble(JX) + 1.
                         YQ1 = DOWN + (32768 + INTY(j-1))*SCL/65535.
                         YQ2 = DOWN + (32768 + INTY(j))  *SCL/65535.
                         YA = YQ2 + (YQ1 - YQ2)*(YL - YX)/(YA - YX)
@@ -1168,27 +1165,27 @@ read_loop: do
                         if (MODEY == -1) then
                             yloc = yloc + dble(canv_hei)
                         endif
-                        yplot = dble(frame_hei) - min(max(yloc, ymin), ymax)
+                        yplot = frame_hei - min(max(yloc, ymin), ymax)
                         jxout = jxout + 1
                     endif
-                    xplot(jxout) = dble(JX) + dble(half_wid)*(YX - YL)/(YR - YL)
+                    xplot(jxout) = dble(JX) + dble(half_wid)*(YX - YL)/(YR - YL) + 1.
                     YROUT = (DOWN + (32768 + INTY(j))*SCL/65535.)/SC(jj)
                     YROUT = min(max(YROUT, -7.d0), 7.d0)
                     yloc = canv_hei*YROUT + IYMN
                     if (MODEY == -1) yloc = yloc + canv_hei
-                    yplot(jxout) = canv_hei - min(max(yloc, ymin), ymax)
+                    yplot(jxout) = frame_hei - min(max(yloc, ymin), ymax)
                 endif
 
                 if (YA <= YR .and. YX > YR) then ! right edge interpolation
                      jxout = jxout + 1
-                     xplot(jxout) = dble(JX + half_wid)
+                     xplot(jxout) = dble(JX + half_wid) + 1. ! git + 1
                      YQ1 = DOWN + (32768 + INTY(j-1))*SCL/65535.
                      YQ2 = DOWN + (32768 + INTY(j))  *SCL/65535.
                      YA = YQ2 + (YQ1 - YQ2)*(YR - YX)/(YA - YX)
                      YROUT = min(max(YA/SC(jj), -7.d0), 7.d0)
                      yloc = canv_hei*YROUT + IYMN
                      if (MODEY == -1) yloc = yloc + canv_hei
-                     yplot(jxout) = dble(canv_hei) - min(max(yloc, ymin), ymax)
+                     yplot(jxout) = frame_hei - min(max(yloc, ymin), ymax)
                 endif
                 YA = YX
             enddo

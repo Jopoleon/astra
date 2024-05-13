@@ -1370,7 +1370,6 @@ end subroutine UF2DWA
 !---------------------------------------------------------------------
 integer function SKIPM(NCHR, NCHL)
 ! Skip model & model.log records
-! A retrieving routine is in the file .srv/listres.f
 ! If NCHL =/= 0 then SCRATCH file containing model.log is writen
 ! Returns (a returned value is used in the postviewer only)
 !   0 for the old format (version before 5.1)
