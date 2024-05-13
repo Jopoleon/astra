@@ -2011,7 +2011,7 @@ int ufilebox_(INT_ *nofbox, char una[], char theNames[], char unad[]){
     	i, j, ibox, spos = 0, vpos, lsym=4,
     	iret, oldparam, ixold, iyold, ii=-1,
     	icol, dcol, irow, drow;
-    int	lline, xButton, yButton, ind, ind1, ierr;
+    int	lline, xButton, yButton, ind, ind1, ierr, esc_flag;
     char Ufile_Name[40], vsym[5];
 
     strcpy(vsym, " => ");
@@ -2076,7 +2076,7 @@ Create_table:
     while(1){
         XNextEvent(theDisplay, &theEvent);
         if (theEvent.xany.window == theRootWindow ){
-            ProcessRootWindowEvent (&theEvent);
+            ProcessRootWindowEvent(&theEvent);
             continue; //goto Table_control;
         }
         if (theEvent.type == Expose){
@@ -2093,17 +2093,17 @@ Create_table:
             }
             ibox = FindBoxNum(xButton-xshif+wsym/2, yButton-yshif, wbox, hbox, nclmn, nparam);
             i = FindBoxNum(xButton-xshif, yButton-Height+hbox+1, 4*wsym, hbox, 1, 1);
+	    esc_flag = 0;
             if (i){
                 iret = -1;
                 ibox = oldparam;
                 ixold = ix;
                 iyold = iy;
-                goto Escend;
+		esc_flag = 1;
+		goto Escend;
 	    }
-            if (ibox == 0) continue; //goto Table_control;
-    	    ind = (oldparam - 1)*lvalue;
-
-Newparam:
+	    if (ibox == 0) continue; //goto Table_control;
+            ind = (oldparam - 1)*lvalue;
             i = ibox;
             ix = wbox*((i - 1)%nclmn) + xshif;
             iy = hbox*((i - 1)/nclmn) + yshif;
@@ -2126,6 +2126,7 @@ Newparam:
             XFlush(theDisplay);
             continue;
         }
+
         if (ibox == 0){
             if (GetEsc(theEvent.xkey)){
 	        break;
@@ -2137,8 +2138,11 @@ Newparam:
         if (theEvent.type == KeyPress){
             ind = (ibox-1)*lvalue;
             iret = GetName(theEvent.xkey, una+ind, lvalue, &spos);
+	    esc_flag = 1;
+	}
 
 Escend:
+        if (esc_flag == 1){
             if (spos >= 0){
 	        ixa = ix + vpos + spos*wsym;
 	        iya = iy + hsym + 2;
@@ -2196,8 +2200,27 @@ Escend:
             ixold = ix;
 	    iyold = iy;
             spos = 0;
-            goto Newparam;
-        }
+            i = ibox;
+            ix = wbox*((i - 1)%nclmn) + xshif;
+            iy = hbox*((i - 1)/nclmn) + yshif;
+            ind = (oldparam - 1)*lname;
+            ind1 = (i - 1)*lname;
+            WRITE_ theGCA, ixold, hsym+iyold, theNames+ind, lname);
+            WRITE_ hghGC, ix, hsym+iy, theNames+ind1, lname);
+            WRITE_ theGCA, ixold+lname*wsym, hsym+iyold, vsym, lsym);
+            WRITE_ hghGC, ix+lname*wsym, hsym+iy, vsym, lsym);
+            ind = (oldparam - 1)*lvalue;
+            ind1 = (i - 1)*lvalue;
+            WRITE_ theGCA, ixold+vpos, hsym+iyold, una+ind, lvalue);
+            WRITE_ hghGC, ix+vpos, hsym+iy, una+ind1, lvalue);
+            spos = 0;
+            ixa = ix + vpos;
+            iya = iy + hsym + 2;
+            MoveArrow(theWindow, ixa0, iya0, ixa, iya);
+            ixa0 = ixa;
+            iya0 = iya;
+            XFlush(theDisplay);
+        } // key press
     } // end Table_control;
 
     RETURNPOINTER_;
