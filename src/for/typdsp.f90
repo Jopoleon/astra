@@ -18,7 +18,7 @@ call textvm(Xwin_width - 83*DXLET + 2, JLR, STRI(1: 80), 80)
 end subroutine ERASXY
 
 !---------------------------------------------------------------------
-subroutine TYPDSP(NCH, YN, ITIMES, TTOUT, TOUT)
+subroutine TYPDSP(YN, ITIMES, TTOUT, TOUT)
 ! NCH= 5 - terminal, 0 - file (old format), 1 - file (new format)
 
 use parameter_inc, only: NRW
@@ -35,7 +35,7 @@ integer, parameter :: NLINSC=50
 character(len=40), parameter :: STRMN=' R=     a=     B=     I=     q=     <n>='
 character(len=6), dimension(6), parameter :: &
     CONN = (/ ' CF   ', ' CV   ', ' CH   ', ' CCD  ', ' CBND ', ' CRAD ' /)
-integer, intent(in) :: NCH, ITIMES
+integer, intent(in) :: ITIMES
 double precision, intent(in) :: YN, TTOUT(ITIMES), TOUT(ITIMES, NRW)
 
 integer :: NP1, ITBE, ITEND, ITEN, MODEX, &
@@ -55,265 +55,58 @@ MODEX = XOUT + 0.49
 NP1 = NAB
 if (MODEX >= 1 .and. MODEX <= 3 .or. MOD10 == 3) NP1 = NA1
 
-SELECT CASE(NCH)
-
-CASE(0:1) ! Write output to a file:
-
-    dat_dir = TRIM(AWD) // 'dat/'
-    call system('mkdir -p ' // TRIM(dat_dir))
-    FNAME = TRIM(dat_dir) // TRIM(exp_file) // '.' // TRIM(equ_file)
-    call set_filename(FNAME)
-
-    call colovm(WarningColor)
-    write(*, *) '>>>  Data are written into the file: ' // TRIM(FNAME)
-    JLR = Xwin_height - 125
-
-    open(7, file=TRIM(FNAME), iostat=ios)
-
-    if (ios /= 0) then
-        write(*, *) '>>> TYPDSP: Output file error'
-        stop
-    endif
-
-! Creating UPSTRI
-    STRI = XLINE1(1:16)
-    STRI(17:) = STRMN
-    STRI(20: 23) = fmt4(RTOR)
-    STRI(27: 30) = fmt4(ABC)
-    STRI(34: 37) = fmt4(BTOR)
-    STRI(41: 44) = fmt4(IPL)
-! Triangularity corrected MHD q (accoding to ITER guidelines)
-! YQ =ELON(NA)**2
-! YD =TRIA(NA)
-! YQ=(1.+YQ*(1.+YD**2*(2.-1.2*YD)))/(MU(NA)*(1.+YQ))
-    YQ = 1./MU(NA)
-    STRI(48: 51) = fmt4(YQ)
-    STRI(57: 60) = fmt4(YN)
-    write(STRI(62: 76), '(A, 1F6.3, A)') 'Time=', TIME, ' dt='
-    STRI(77: 80) = fmt4(1000.*TAU)
-    write(7, 104) STRI
-
-    if (NCH == 0) then
-
-        if (MOD10 <= 5) then   ! Writing radial data
-            JBE = 1
-            JEND = 16
-            do
-                JEN = MIN0(NTOUT, JEND)
-                write(7, 102) (NAMET(J), J=JBE, JEN)
-                STRI = ' '
-                STRI(1:5) = fmt_xf(TIME, 4)
-                do J=JBE, JEN
-                    JJ = 7*(J - JBE) + 8
-                    STRI(JJ: JJ+5) = fmt_xf(TOUT(LTOUT, J), 5)
-                enddo
-                write(7, 104) STRI
-                if (JEN == NTOUT) EXIT
-                JBE  = JEN + 1
-                JEND = JEN + 16
+if (MOD10 <= 5) then
+    JBE  = 1
+    JEND = 16
+    do
+        JEN = MIN0(NROUT, JEND)
+        write(STRI, '(16(1X, 1A4))') (NAMER(J), J=JBE, JEN)
+        write(*, '(1X, A)') TRIM(STRI)
+        do J=1, NP1
+            STRI = ' '
+            do JJ=JBE, JEN
+                J1 = 5*(JJ - JBE + 1) - 4
+                STRI(J1: J1+4) = fmt_xf(ROUT(J, JJ), 4)
             enddo
-
-            JBE  = 1
-            JEND = 16
-
-            do
-                JEN = MIN0(NROUT, JEND)
-                if (MODEX == 0 .or. MODEX == 1) then
-                    write(7, '("     a  ", 16(3X, 1A4))') (NAMER(J), J=JBE, JEN)
-                elseif (MODEX == 2) then
-                    write(7, '("     rho", 16(3X, 1A4))') (NAMER(J), J=JBE, JEN)
-                elseif (MODEX == 3 .or. MOD10 == 3) then
-                    write(7, '("     psi", 16(3X, 1A4))') (NAMER(J), J=JBE, JEN)
-                else
-                    write(7, '("     ???", 16(3X, 1A4))') (NAMER(J), J=JBE, JEN)
-                endif
-                do J=1, NP1
-                    STRI = ' '
-                    do JJ=JBE, JEN
-                        J1 = 7*(JJ - JBE + 1) + 1
-                        STRI(J1: J1+5) = fmt_xf(ROUT(J, JJ), 5)
-                    enddo
-! Different options for a radial variable 
-                    if (MODEX == 0) then
-                        STRI(1: 5) = fmt_xf(AMETR(j), 4)
-                    elseif (MODEX == 1) then
-                        STRI(1: 5) = fmt_xf(AMETR(j), 4)
-                    elseif (MODEX == 2) then
-                        STRI(1: 5) = fmt_xf(RHO(j), 4)
-                    elseif (MODEX == 3 .or. MOD10 == 3) then
-                        STRI(1: 5) = fmt_xf(FP(j), 4)
-                    else
-                        STRI(1: 5) = fmt_xf(AMETR(j), 4)
-                    endif
-                    write(7, 104)STRI
-                enddo
-                if (JEN == NROUT) EXIT
-                JBE  = JEN + 1
-                JEND = JEN + 16
-            enddo
-
-        else if (MOD10 == 6) then ! Writing time data
-
-            JBE  = 1
-            JEND = 16
-            do
-                JEN = MIN0(NTOUT, JEND)
-                write(7, 102) (NAMET(J), J=JBE, JEN)
-                do J1=1, LTOUT - 1
-                    STRI = ' '
-                    STRI(1: 5) = fmt_xf(TTOUT(J1), 4)
-                    do J=JBE, JEN
-                        JJ = 7*(J - JBE) + 8
-                        STRI(JJ: JJ+5) = fmt_xf(TOUT(J1, J), 5)
-                    enddo
-                    write(7, 104)STRI
-                enddo
-                if (JEN == NTOUT) EXIT
-                JBE  = JEN + 1
-                JEND = JEN + 16
-            enddo
-        endif
-
-    endif !NCH=0
-
-! Writing constants
-
-    write(7, '(10X, 1A80)') RUNID
-    J1 = 0
-    do JEN = 1, 100
-        STRI = ' '
-        do J = 1, 16
-            J1 = J1 + 1
-            if (J1 > NCFNAM) EXIT
-            CH6 = fmt_xf(CONSTF(J1), 5)
-            JJ = 7*(J - 1) + 1
-            STRI(JJ: JJ+5) = CH6
-        enddo
-        write(7, 101) CONN(JEN), STRI
-    enddo
-    write(7, 101) CONN(JEN), STRI
-
-    if (NCH == 1) then
-
-        if (MOD10 <= 5) then   ! Writing radial data
-            JBE  = 1
-            JEND = 16
-            do
-                JEN = MIN0(NTOUT, JEND)
-                write(7, '(3X, "Time", 16(3X, 1A4))') (NAMET(J), J=JBE, JEN)
-                STRI = ' '
-                STRI(1: 5) = fmt_xf(TIME, 4)
-                do J=JBE, JEN
-                    JJ = 7*(J - JBE) + 8
-                    STRI(JJ: JJ+5) = fmt_xf(TOUT(LTOUT, J), 5)
-                enddo
-                write(7, 104) STRI
-                if (JEN == NTOUT) EXIT
-                JBE  = JEN + 1
-                JEND = JEN + 16
-            enddo
-
-            JBE  = 1
-            JEND = NRW
-            JEN  = MIN0(NROUT, JEND)
-! Different options for radial variable 
-            if (MODEX == 2) then
-                write(7, '(8X, "rho ", 64(8X, 1A4))') (NAMER(J), J=JBE, JEN)
-                do j=1, NP1
-                    write(7, 408)RHO(j), (ROUT(J, JJ), JJ=JBE, JEN)
-                enddo
-            elseif (MODEX == 3 .or. MOD10 == 3) then
-                write(7, '(8X, "psi ", 64(8X, 1A4))') (NAMER(J), J=JBE, JEN)
-                do j=1, NP1
-                    write(7, 408) FP(j), (ROUT(J, JJ), JJ=JBE, JEN)
-                enddo
-            else
-                write(7, '(8X, "a   ", 64(8X, 1A4))') (NAMER(J), J=JBE, JEN)
-                do j=1, NP1
-                    write(7, 408) AMETR(j), (ROUT(J, JJ), JJ=JBE, JEN)
-                enddo
-            endif
-
-        else if (MOD10 == 6) then  ! Writing time data
-
-            STRI=' '
-            write(7, 104) STRI
-            write(7, 104) STRI
-            write(7, 104) STRI
-            write(7, 104) STRI
-            JBE  = 1
-            JEND = MIN(NTOUT, NRW)
-            do while(JBE < JEND)
-                JEN = JBE + 7
-                write(7, '(8X, "Time", 64(8X, 1A4))') (NAMET(J), J=JBE, JEN)
-                do J1=1, LTOUT-1
-                    STRI = ' '
-                    STRI(1: 5) = fmt_xf(TTOUT(J1), 4)
-                    write(7, 408) TTOUT(J1), (TOUT(J1, J), J=JBE, min(JEN, JEND))
-                enddo
-                JBE = JBE + 8
-            enddo
-        endif
-    endif
-
-    close(7)
-
-CASE(5) ! Output to the terminal
-
-    if (MOD10 <= 5) then
-        JBE  = 1
-        JEND = 16
-        do
-            JEN = MIN0(NROUT, JEND)
-            write(STRI, '(16(1X, 1A4))') (NAMER(J), J=JBE, JEN)
             write(*, '(1X, A)') TRIM(STRI)
-            do J=1, NP1
-                STRI = ' '
-                do JJ=JBE, JEN
-                    J1 = 5*(JJ - JBE + 1) - 4
-                    STRI(J1: J1+4) = fmt_xf(ROUT(J, JJ), 4)
-                enddo
-                write(*, '(1X, A)') TRIM(STRI)
-            enddo
-            if (JEN == NROUT) return
-            JBE  = JEN + 1
-            JEND = JEN + 16
-        enddo 
-
-    endif
-
-    if (MOD10 <= 7) then
-        JBE  = 1
-        JEND = 15
-        do
-            JEN = MIN(NTOUT, JEND)
-            ITBE  = 1
-            ITEND = NLINSC
-            do
-                ITEN = MIN(LTOUT-1, ITEND)
-                write(STRI, 308) (NAMET(J), J=JBE, JEN)
-                write(*, '(1X, A)') TRIM(STRI)
-
-                do J1=ITBE, ITEN
-                    STRI = ' '
-                    STRI(1: 5) = fmt_xf(TTOUT(J1), 4)
-                    do J=JBE, JEN
-                        JJ = 5*(J - JBE) + 6
-                        STRI(JJ: JJ+4) = fmt_xf(TOUT(J1, J), 4)
-                    enddo
-                    write(*, '(1X, A)') TRIM(STRI)
-                enddo
-                if (ITEN == LTOUT - 1) EXIT
-                ITBE  = ITEN
-                ITEND = ITEN + NLINSC - 1
-            enddo
-            if (JEN == NTOUT) EXIT
-            JBE  = JEN + 1
-            JEND = JEN + 15
         enddo
-    endif
+        if (JEN == NROUT) return
+        JBE  = JEN + 1
+        JEND = JEN + 16
+    enddo 
 
-END SELECT
+endif
+
+if (MOD10 <= 7) then
+    JBE  = 1
+    JEND = 15
+    do
+        JEN = MIN(NTOUT, JEND)
+        ITBE  = 1
+        ITEND = NLINSC
+        do
+            ITEN = MIN(LTOUT-1, ITEND)
+            write(STRI, 308) (NAMET(J), J=JBE, JEN)
+            write(*, '(1X, A)') TRIM(STRI)
+
+            do J1=ITBE, ITEN
+                STRI = ' '
+                STRI(1: 5) = fmt_xf(TTOUT(J1), 4)
+                do J=JBE, JEN
+                    JJ = 5*(J - JBE) + 6
+                    STRI(JJ: JJ+4) = fmt_xf(TOUT(J1, J), 4)
+                enddo
+                write(*, '(1X, A)') TRIM(STRI)
+            enddo
+            if (ITEN == LTOUT - 1) EXIT
+            ITBE  = ITEN
+            ITEND = ITEN + NLINSC - 1
+        enddo
+        if (JEN == NTOUT) EXIT
+        JBE  = JEN + 1
+        JEND = JEN + 15
+    enddo
+endif
 
 101 format(1X, 1A6, 1A111)
 102 format('   Time', 16(3X, 1A4))

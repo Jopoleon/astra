@@ -416,11 +416,6 @@ CASE(37) ! '%'
     call wrtime(6, '  >>> Astra run time  ', 22, swatch(Y), -1.d0)
     call CPUSE(6)
 
-CASE(80) ! 'P'
-!  Optional output format (G.W.Pacher)
-    call TIMOUT
-    call TYPDSP(1, CHORDN, NTRUN, TTOUT, TOUT)
-
 CASE(78) ! 'N'
     if (MOD10 >= 0 .and. MOD10 < 7) then
         active_tab(MOD10) = active_tab(MOD10) + 1
@@ -483,10 +478,6 @@ CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
     endif
     call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
     if (IFKL == KEY) return
-
-CASE(70) ! 'F'
-    call TIMOUT
-    call TYPDSP(0, CHORDN, NTRUN, TTOUT, TOUT)
 
 CASE(73) ! 'I'
     CNSFIL = 'equ/log/' // TRIM(equ_file)
@@ -699,19 +690,6 @@ CASE(88) ! 'X'
     endif
  112 format('X-axis:   ', A, 1I4)
  114 format('X-axis:   ', 1A, F5.2, 1A, 1I4)
-    call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
-    if (IFKL == KEY) return
-
-! Write file for figure production
-CASE(79) ! 'O'
-    if (MOD10 == 6)  then
-        call ASKXGR(NTOUT, NWIND3, NAMET, MODEY, jj, j1, j2, OUTFIG, OUTNAME)
-        call TIMOUT
-        call WRFIGS(jj, j1, j2, OUTFIG, OUTNAME, NWIND3, NTRUN, TTOUT, TOUT)
-    elseif (MOD10 <= 3) then
-        call ASKXGR(NROUT, NWIND1, NAMER, MODEY, jj, j1, j2, OUTFIG, OUTNAME)
-        call WRFIGS(jj, j1, j2, OUTFIG, OUTNAME, NWIND1, NTRUN, TTOUT, TOUT)
-    endif
     call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
     if (IFKL == KEY) return
 
