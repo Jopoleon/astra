@@ -495,7 +495,7 @@ integer, intent(out) :: IBOX(*)
 double precision, intent(in) :: SCALE(*), SHIFT(*)
 character(len=4), intent(out) :: NAME(*)
 
-integer :: JMODE, JGR, j, j1, j2, jj, jn, jm, js, jb, jw, jsep, ASKTAB
+integer :: JMODE, JGR, j, j1, j2, jj, jn, jm, js, jb, jw, jsep, layoutBox
 integer, dimension(NRW) :: IB
 character(len=80) :: rows(NRW16), STR, TITLE
 character(len=1) :: KEY
@@ -577,7 +577,7 @@ ask_key: do while(KEY == 'Y')
     j = 1
     do while(j > 0)
         j1 = (jm + 1)/2
-        j = ASKTAB(TITLE, STR, rows, 80, jn, JGR, j1)
+        j = layoutBox(TITLE, STR, rows, 80, jn, JGR, j1)
     enddo
 
     jn = 0
@@ -654,7 +654,7 @@ integer, intent(out) :: IBOX(*)
 double precision, intent(in), dimension(*) :: SCALE, YSHIFT, XL, XR
 character(len=4), intent(out) :: NAME(*)
 
-integer :: JMODE, JGR, j, j1, j2, jj, jn, jm, js, jb, jw, jsep, ASKTAB
+integer :: JMODE, JGR, j, j1, j2, jj, jn, jm, js, jb, jw, jsep, layoutBox
 integer, dimension(NRW) :: IB
 double precision :: YY
 character(len=80) :: rows(NRW16), STR, TITLE
@@ -746,7 +746,7 @@ endif
 j = 1
 do while(j > 0)
     j1 = (jm + 1)/2
-    j = ASKTAB(TITLE, STR, rows, 80, jn, JGR, j1)
+    j = layoutBox(TITLE, STR, rows, 80, jn, JGR, j1)
 enddo
 
 jn = 0

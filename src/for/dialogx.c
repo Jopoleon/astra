@@ -37,7 +37,6 @@ static int iact=-1, ibcursor=-1;
         StructureNotifyMask | FocusChangeMask | EnterWindowMask | LeaveWindowMask )
 #define WRITE_ XDrawImageString(theDisplay, theWindow,
 #define MVPOINTER_ XWarpPointer(theDisplay, None, theWindow, 0, 0, 0, 0,
-#define RETURNPOINTER_ XWarpPointer(theDisplay, None, theRootWindow, 0, 0, 0, 0, Kevent.xcur, Kevent.ycur)
 #define LINGCA_ XDrawLine(theDisplay, theWindow, theGCA,
 
 #define F1sw 8      /*font 1 symbol width */
@@ -98,7 +97,7 @@ int isalnum(int);
 int nextevent(INT_*, INT_*, INT_*, int, Button[], char[], char*[]);
 int asklis_(INT_*, double*, char[], INT_*);
 int askcol_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
-int asktab_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
+int layoutbox_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
 int ufilebox_(INT_*, char[], char[], char[]);
 int FindBoxNum(int, int, int, int, int, int);
 int GetEsc(XKeyEvent);
@@ -771,7 +770,7 @@ TableQuestionMark:    strncpy(theName,theNames+(ibox-1)*namlen+i,ii);
 		goto Newparam; }
 				goto Table_control;
 EndDialog:
-	RETURNPOINTER_;
+	XWarpPointer(theDisplay, None, theRootWindow, 0, 0, 0, 0, Kevent.xcur, Kevent.ycur);
 	XSetInputFocus(theDisplay,theRootWindow,
 	         RevertToPointerRoot,theEvent.xkey.time);
 	XFlush(theDisplay);
@@ -782,286 +781,348 @@ EndDialog:
 }
 
 /**********************************************************************/
-int asktab_(title, template, array, len, nrows, ngroup, morow)
-     INT_     *len, *nrows, *ngroup, *morow;
-     char    title[], template[], array[];
-/*
-Called from ASXWIN and ASTWIN (file surv.f90) that in turn are invoked by key "M" from IFKEY
+int layoutbox_(char title[], char template[], char array[], INT_ *len,
+    INT_ *nrows, INT_ *ngroup, INT_ *morow)
 
-Input:	title	- Title of the table
-	template  string defining a structure of the table and its 1st line
-		  1st line does not appear if all non-'|' symbols are spaces
-	array	- data (numbers or strings) for input and output
-	len	- length of "array" element according to description
-			in the calling routine (80 in the example below)
-	nrows	- number of rows in a table to be created
-	ngroup	- if > 0 distance (in rows) between blue separating lines
-	morow	- if > 0 separates bottom of the table with a fat blue line
+/*
+Called from ASXWIN and ASTWIN (file surv.f90) , invoked by key "M" from IFKEY
+
+Input:
+    title    - Title of the table
+    template - string defining a structure of the table and its 1st line
+               1st line does not appear if all non-'|' symbols are spaces
+    array    - data (numbers or strings) for input and output
+    len      - length of "array" element according to description
+               in the calling routine (80 in the example below)
+    nrows    - number of rows in a table to be created
+    ngroup   - if > 0 distance (in rows) between blue separating lines
+    morow    - if > 0 separates bottom of the table with a fat blue line
 
 Returned value:
-	-1  - Error (window was not created)
-	 0  - Normal exit (table updated)
-	>0  - Temporary exit (the returned value goes to the calling routine)
+    -1  - Error (window was not created)
+     0  - Normal exit (table updated)
+    >0  - Temporary exit (the returned value goes to the calling routine)
 Call from FORTRAN
     Example 1:
-	integer		nrow, len
-	character*80	title, template, array(10)
-	len = 80
-	nrow = 5	! must be <= 10
-	title = "Example"//char(0)
-	template = " field1 |field2|    | f4 |       "//char(0)
-	array(1) = " CumBol &  10.1& 2  &    &-1.E+5 "
-	array(2) = "                                 "	! Empty string
-	array(3) = "                                 "	! Empty string
-	array(4) = "                                 "	! Empty string
-	array(5) = "                                 "	! Empty string
-C symbols in the positions "|" will not appear in the table
-C 4th parameter must be 80
-C 5th parameter must be <= 10
-	call	asktab(title,template,array,80,3,0,0)
+        integer	        nrow, len
+        character*80    title, template, array(10)
+        len = 80
+        nrow = 5        ! must be <= 10
+        title = "Example"//char(0)
+        template = " field1 |field2|    | f4 |       "//char(0)
+        array(1) = " CumBol &  10.1& 2  &    &-1.E+5 "
+        array(2) = "                                 "	! Empty string
+        array(3) = "                                 "	! Empty string
+        array(4) = "                                 "	! Empty string
+        array(5) = "                                 "	! Empty string
+Symbols in the positions "|" will not appear in the table
+4th parameter must be 80
+5th parameter must be <= 10
+    call layoutbox(title,template,array,80,3,0,0)
 
-More examples in the file "for/surv.f" subroutine "ASXWIN" or "ASTWIN"
-
-Add features:
-   If (Width=2*xshif+wsym*(last_pos) < 37*wsym)
-       or (Height=2*yshif+(nlines+3)*hbox > theHeight) double Width
+More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
 */
+
 {
-  XEvent	theEvent;
-  static	Window	theWindow;
-  static	int	xshif = 5, yshif = 3,	/* table corner	*/
-    ind, ibold, hbox,	 /* current/old box No. & height	*/
-    irow0=0, 	wbox, 	      /* number of chars in box 	*/
-    Width =452, Height =480,     /* defaut window sizes		*/
-    inold, ixold, iyold, icold, ixa0, iya0, arrdim,
-    nclmn, nwid[20], nsta[20], mode=0, ii=0,
-    icol, isym, irow, ixa, iya,  /* arrow (textcursor) position */
-    spos=0,	   /* abs. and rel. position of symbol in table */
-    lvalue,		/* 1 if box was changed, 0 otherwise	*/
-    wsym = 8, hsym = 13;	/* symbol width and height	*/
-  int	UpLeftx, UpLefty =10,	/* window corner location	*/
-    nend, ibox, iret, ix, ix1, iy, i, j,
-    mxfields = 20;		/* max / actual # of columns	*/
-                  /* int      count, mode = QueuedAfterReading; */
-  static	char	stri[132];
-  if ( mode == 1 )  goto	Table_control;		mode = 0;
-  j = strlen(title);	if ( j > 132 )			{
-    printf("%s\n\"%s\"\n%s\n","ASKTAB >>> Title",title,
-	   "           is too long");		return -1;	}
-  if  ( *len > 132 )				{
-    printf("%s \"%s\" %s\n","ASKTAB >>> Table",title,
-	   ". Input string is too long");	return -1;	}
-	nend = strlen(template);
-	if ( nend > 132 )	{
-		printf("%s \"%s\" %s\n","ASKTAB >>> Table",title,
-		     ". Requested width is too large");	return -1;	}
-	for ( j=0; j < nend ; j++)
-	      if ( template[j] != '|'  &&  template[j] != ' ' ) irow0 = 1;
+    XEvent theEvent;
+    static Window theWindow;
+    static int xshif=5, yshif=3,    /* table corner */
+        ind, ibold, hbox,	    /* current/old box No. & height */
+        irow0=0, wbox,              /* number of chars in box */
+        Width=452, Height=480,      /* defaut window sizes */
+        inold, ixold, iyold, icold, ixa0, iya0, arrdim,
+        nclmn, nwid[20], nsta[20], ii=0,
+        icol, isym, irow, ixa, iya, /* arrow (textcursor) position */
+        spos=0,                     /* abs. and rel. position of symbol in table */
+        lvalue,	                    /* 1 if box was changed, 0 otherwise */
+        wsym=8, hsym=13;            /* symbol width and height */
+    int UpLeftx, UpLefty=10,        /* window corner location */
+        nend, ibox, iret, ix, ix1, iy, i, j,
+        mxfields=20;	            /* max / actual # of columns */
+    static char stri[132];
 
-		/****   Split "template" in blocks  ****/
-	for ( j=nclmn=nsta[0]=0; j < nend ; j++ )
-	    { if ( template[j] == '|' )
-		 { nwid[nclmn] = j-nsta[nclmn]; nsta[++nclmn] = j+1;}
-	      if ( nclmn > mxfields ) {
-		printf("%s %d\n","ASKTAB >>>  Too many input fields ",nclmn);
-			return -1;	}
-	    }
-	nwid[nclmn] = nend-nsta[nclmn];		nclmn++;	arrdim = *len;
+    j = strlen(title);
+    if (j > 132){
+        printf("LAYOUTBOX >>> Title\n\"%s\"\n           is too long\n", title);
+        return -1;
+    }
+    if (*len > 132){
+        printf("LAYOUTBOX >>> Table \"%s\" . Input string is too long\n", title);
+        return -1;
+    }
+    nend = strlen(template);
+    if (nend > 132){
+        printf("LAYOUTBOX >>> Table \"%s\" . Requested width is too large\n", title);
+        return -1;
+    }
+    for (j=0; j<nend ; j++){
+	if (template[j] != '|' && template[j] != ' ') irow0 = 1;
+	break;
+    }
 
-	ixa0  = ibold = 0;	UpLeftx = 2;   	hbox   = hsym+3;
-	Width = 2*xshif+nend*wsym;   Height = 2*yshif+(*nrows+4+irow0)*hbox;
-	if (Kevent.xcur+Kevent.ycur < 10)
-	  { Kevent.xcur = 330;
-	    Kevent.ycur = 430;
-	  }
-       	/*  j = XWX-Width-10;	if (j > UpLeftx)  UpLeftx = j; */
-	GetRWgeometry (&XRW,&YRW);
-	UpLeftx = 2;	   j = XRW-Width-8;	UpLefty = YRW;
-	if (j > UpLeftx)   UpLeftx = j;		j = YRW+Height+30;
-	if (j > theHeight) UpLefty = theHeight-Height-30;
-	theWindow = Open_Window(UpLeftx, UpLefty, Width, Height, 0, title, 0,
-		    RootWindow(theDisplay,theScreen), theMenuCursor);
-	MVPOINTER_ xshif+wsym*nwid[0]/2,yshif+irow0*hbox+hsym);
-	XSelectInput (theDisplay, theWindow, POLL_EV_MASK);
+/**** Split "template" in blocks ****/
+    nclmn = 0;
+    nsta[0] = 0;
+    for (j=0; j<nend; j++){
+        if (template[j] == '|'){
+            nwid[nclmn] = j - nsta[nclmn];
+            nsta[nclmn+1] = j + 1;
+	    nclmn++;
+	}
+        if (nclmn > mxfields){
+            printf("%s %d\n", "LAYOUTBOX >>>  Too many input fields ", nclmn);
+            return -1;
+        }
+    }
+    nwid[nclmn] = nend - nsta[nclmn];
+    nclmn++;
+    arrdim = *len;
+    ixa0 = ibold = 0;
+    UpLeftx = 2;
+    hbox = hsym + 3;
+    Width = 2*xshif + nend*wsym;
+    Height = 2*yshif + (*nrows + 4 + irow0)*hbox;
+    if (Kevent.xcur+Kevent.ycur < 10){
+        Kevent.xcur = 330;
+        Kevent.ycur = 430;
+    }
 
-Create_table:
-	Change_Color (theGCA, 3, 0); /* white background, blue  foreground */
-	if  ( irow0 )
-	    {	/*********  Type template in blue  *********/
-	    for ( j=0, ix=xshif; j < nclmn ; j++)
-		{ WRITE_ theGCA, ix, hsym, template+nsta[j], nwid[j]);
-		  if (j+1 == nclmn) break;	ix += wsym*(nwid[j]+1);
-		}
-		/*********  Draw blue horizontal lines  *********/
-	    j = hbox;			LINGCA_ 0,j+4,Width,j+4);
-	    }
-	if  ( *ngroup > 0 )
-	    for ( j = (*ngroup+irow0)*hbox; j+4+yshif < Height-2*hbox ;
-		  j += (*ngroup)*hbox )	  LINGCA_ 0,j+4,Width,j+4);
-	if  ( *morow > 0 )
-	    {	j = Height-(*morow+2)*hbox-3;	LINGCA_ 0,j,Width,j);
-		++j;				LINGCA_ 0,j,Width,j);
-	    }
-		/*********  Draw blue vertical lines  *********/
-	for ( j = 0, ix=xshif-0.5*wsym; j < nclmn-1; j++)
-	    { ix += wsym*(nwid[j]+1);	ix1 = ix;
-	      if (nwid[j] == 0)		ix1 = ix1-2;
-	      if (nwid[j+1] == 0)	ix1 = ix1+2;
-	      LINGCA_ ix1,0,ix1,Height-2*hbox);
-	    }
-		/*********  Draw bottom line & comments  *********/
-	WRITE_ theGCA, xshif, Height-3-hbox,
-		"Button - select,  <Tab>, <Ret>, Arrows - move", 45);
-	WRITE_ theGCA, xshif+4*wsym, Height-4, "/<ESC> - done", 13);
-	Change_Color (theGCA, 50, 0);  /* white background, red foreground */
-	j = Height-2*hbox; 	LINGCA_ 0,j,Width,j);
-	j++; 		   	LINGCA_ 0,j,Width,j);
-	Change_Color (hghGC, 50, 0);
-	WRITE_ hghGC,  xshif, Height-4, " OK ",4);
-	XDrawRectangle (theDisplay,theWindow,hghGC,5L,Height-17L,30L,16L);
-	Change_Color (theGCA, 1, 0);	Change_Color (hghGC, 1, 0);
-					/* white background, black foreground */
-		/*********  Draw input data  *********/
-	for (   i=0; i < *nrows; i++ )				/* row loop */
- 	    {	iy =yshif+hsym+hbox*(i+irow0);
-	    for ( j=isym=0, ix=xshif; j < nclmn ; j++)	     /* column loop */
-	    	{ if (j > 0) { isym = nsta[j]; ix += wsym*(nwid[j-1]+1); }
-	    	  WRITE_ theGCA, ix, iy, array+i*arrdim+isym, nwid[j]);
-		}
-	    }
-	if ( ibold > 0 )				/* after Expose event */
-	   {	isym = 0;	if ( icol > 1)  isym = nsta[icol-1];
-		ix=xshif+wsym*isym;	iy=yshif+hsym+hbox*(irow+irow0-1);
-		WRITE_ hghGC, ix, iy, stri, wbox);
-		MoveArrow(theWindow, 0, iya0, ixa, iya);
-	   }
-	if ( ii == 0 )		/* Select Upper Left box on entry */
-	   { ibox = ibold = irow = icol = icold =ii = 1;
-		inold = ind = isym = lvalue = 0;	wbox = nwid[0];
-		ix = ixold = ixa = ixa0 = xshif+wsym*isym;
-		iy = iyold = iya = iya0 = yshif+hsym+hbox*irow0;
-		WRITE_ hghGC, ix, iy, array, wbox);
-		strncpy(stri,array,wbox);
-		MoveArrow(theWindow, 0, iya0, ixa, iya);
-	   }
-	XFlush(theDisplay);
+    GetRWgeometry (&XRW,&YRW);
+    UpLeftx = 2;
+    j = XRW - Width - 8;
+    UpLefty = YRW;
+    if (j > UpLeftx) UpLeftx = j;
+    j = YRW + Height + 30;
+    if (j > theHeight) UpLefty = theHeight - Height - 30;
+    theWindow = Open_Window(UpLeftx, UpLefty, Width, Height, 0, title, 0,
+	RootWindow(theDisplay,theScreen), theMenuCursor);
+    MVPOINTER_ xshif+wsym*nwid[0]/2, yshif+irow0*hbox+hsym);
+    XSelectInput(theDisplay, theWindow, POLL_EV_MASK);
 
-Table_control:
-	XNextEvent (theDisplay, &theEvent);
-	if ( theEvent.xany.window == theRootWindow )
-           { ProcessRootWindowEvent (&theEvent);
-	     goto Table_control;
-	   }
-	if (theEvent.type == Expose)	goto	Create_table;
-	if (theEvent.type == ButtonPress)
-	{   ix = theEvent.xbutton.x;	iy = theEvent.xbutton.y;
-	    irow = iy-yshif-hbox*irow0-2;
-	    if ( irow >= 0)
-	    {	irow = irow/hbox+1;		i=(ix-xshif)/wsym;
-		if ( ibold > 0 )	strncpy(array+ind,stri,wbox);
-		if ( irow > *nrows )		  /* No selection or Exit */
-		   { if ( i > 3 || iy < Height-4-hsym ) goto Unselect;
-			goto EndDialog;			/* OK was pressed */
-		   }
-		for ( j=0; j < nclmn; )			/* Selection is made */
-		    { i -= nwid[j]+1;	icol=++j;   if ( i < 0 ) break;	}
-		if ( If_empty (icol, irow, nclmn, nsta, nwid, array, arrdim)
-				|| nwid[icol-1] == 0 )	goto	Unselect;
-Fillbox:	isym = spos = 0;	if ( icol > 1)  isym = nsta[icol-1];
-		ix=ixa=xshif+wsym*isym;	iy=iya=yshif+hsym+hbox*(irow+irow0-1);
-		ind = (irow-1)*arrdim+isym;	wbox = nwid[icol-1];
-		ibox = (irow-1)*nclmn+icol;
-		if ( ibold != 0 )
-		     WRITE_ theGCA, ixold, iyold, stri, nwid[icold-1]);
-		strncpy(stri,array+ind,wbox);
-		WRITE_ hghGC, ix, iy, stri, wbox);
-		MoveArrow(theWindow, ixa0, iya0, ixa, iya);
-		icold = icol;	inold = ind;	ixold = ix;	iyold = iy;
-		ixa0 = ixa;	iya0 = iya;	ibold = ibox;	lvalue = 0;
-	    }
-	    else
-Unselect:   {	if ( ibold > 0 )			{
-		WRITE_ theGCA, ixold, iyold, array+inold, nwid[icold-1]);
-		MoveArrow(theWindow,ixa0,iya0,0,iy);	ibold=spos=0;	}
-	    }
+/*** Create table ***/
+    Change_Color(theGCA, 3, 0); /* white background, blue  foreground */
+    if (irow0){
+/*** Type template in blue ***/
+        ix = xshif;
+        for (j=0; j<nclmn; j++){
+            WRITE_ theGCA, ix, hsym, template+nsta[j], nwid[j]);
+            if (j+1 == nclmn) break;
+            ix += wsym*(nwid[j]+1);
+        }
+/*** Draw blue horizontal lines ***/
+        j = hbox;
+        LINGCA_ 0, j+4, Width, j+4);
+    }
+    if (*ngroup > 0)
+       for (j=(*ngroup+irow0)*hbox; j+4+yshif<Height-2*hbox; j += (*ngroup)*hbox) LINGCA_ 0, j+4, Width, j+4);
+    if (*morow > 0){
+        j = Height - (*morow + 2)*hbox - 3;
+        LINGCA_ 0, j, Width, j);
+        ++j;
+        LINGCA_ 0, j, Width, j);
+    }
+/*** Draw blue vertical lines ***/
+    ix = xshif - 0.5*wsym;
+    for (j=0; j<nclmn-1; j++){
+        ix += wsym*(nwid[j] + 1);
+        ix1 = ix;
+        if (nwid[j]   == 0) ix1 -= 2;
+        if (nwid[j+1] == 0) ix1 += 2;
+        LINGCA_ ix1, 0, ix1, Height-2*hbox);
+    }
+/*** Draw bottom line & comments ***/
+    WRITE_ theGCA, xshif, Height-3-hbox, "Button - select,  <Tab>, <Ret>, Arrows - move", 45);
+    WRITE_ theGCA, xshif+4*wsym, Height-4, "/<ESC> - done", 13);
+    Change_Color(theGCA, 50, 0);  /* white background, red foreground */
+    j = Height - 2*hbox;
+    LINGCA_ 0, j, Width, j);
+    j++;
+    LINGCA_ 0, j, Width, j);
+    Change_Color(hghGC, 50, 0);
+    WRITE_ hghGC,  xshif, Height-4, " OK ", 4);
+    XDrawRectangle(theDisplay, theWindow, hghGC, 5L, Height-17L, 30L, 16L);
+    Change_Color(theGCA, 1, 0);
+    Change_Color(hghGC , 1, 0);      /* white background, black foreground */
+/*** Draw input data ***/
+    for (i=0; i<*nrows; i++){
+        iy = yshif + hsym + hbox*(i + irow0);
+        for (j=isym=0, ix=xshif; j<nclmn; j++){
+	    if (j > 0){
+                isym = nsta[j];
+                ix += wsym*(nwid[j-1]+1);
+            }
+            WRITE_ theGCA, ix, iy, array+i*arrdim+isym, nwid[j]);
+	}
+    }
+    if (ibold > 0){  /* after Expose event */
+        isym = 0;
+        if ( icol > 1)  isym = nsta[icol-1];
+	ix = xshif + wsym*isym;
+	iy = yshif + hsym + hbox*(irow + irow0 - 1);
+        WRITE_ hghGC, ix, iy, stri, wbox);
+        MoveArrow(theWindow, 0, iya0, ixa, iya);
+    }
+    if (ii == 0){    /* Select Upper Left box on entry */
+        ibox = ibold = irow = icol = icold = ii = 1;
+        inold = ind = isym = lvalue = 0;
+        wbox = nwid[0];
+	ix = ixold = ixa = ixa0 = xshif + wsym*isym;
+	iy = iyold = iya = iya0 = yshif + hsym + hbox*irow0;
+        WRITE_ hghGC, ix, iy, array, wbox);
+        strncpy(stri, array, wbox);
+        MoveArrow(theWindow, 0, iya0, ixa, iya);
+    }
+    XFlush(theDisplay);
+
+/*** Table Control ***/
+    while(1){
+        XNextEvent(theDisplay, &theEvent);
+        if (theEvent.xany.window == theRootWindow){
+            ProcessRootWindowEvent(&theEvent);
+            continue;
+        }
+        if (theEvent.type == ButtonPress){
+            ix = theEvent.xbutton.x;
+            iy = theEvent.xbutton.y;
+            irow = iy - yshif - hbox*irow0 - 2;
+            if (irow >= 0){
+                irow = irow/hbox + 1;
+                i = (ix - xshif)/wsym;
+                if (ibold > 0) strncpy(array+ind, stri, wbox);
+                if (irow > *nrows) break; /* No selection or Exit */
+                for (j=0; j<nclmn; ){   /* Selection is made */
+                    i -= nwid[j] + 1;
+                    icol = ++j;
+                    if (i < 0) break;
+                }
+
+Fillbox:
+                isym = spos = 0;
+                if (icol > 1) isym = nsta[icol-1];
+                ix = ixa = xshif + wsym*isym;
+                iy = iya = yshif + hsym + hbox*(irow + irow0 - 1);
+                ind = (irow-1)*arrdim + isym;
+                wbox = nwid[icol-1];
+                ibox = (irow - 1)*nclmn + icol;
+                if (ibold != 0) WRITE_ theGCA, ixold, iyold, stri, nwid[icold-1]);
+                strncpy(stri, array+ind, wbox);
+                WRITE_ hghGC, ix, iy, stri, wbox);
+                MoveArrow(theWindow, ixa0, iya0, ixa, iya);
+                icold = icol;
+                inold = ind;
+                ixold = ix;
+                iyold = iy;
+                ixa0 = ixa;
+                iya0 = iya;
+                ibold = ibox;
+                lvalue = 0;
+            }
+            else{
+                if (ibold > 0){
+                    WRITE_ theGCA, ixold, iyold, array+inold, nwid[icold-1]);
+                    MoveArrow(theWindow, ixa0, iya0, 0, iy);
+		ibold = spos = 0;
+                }
+            }
 	    XFlush(theDisplay);
-	    goto Table_control;
-	}
+	    continue;
+        }
 
-	if ( ibold > 0 )
-	{
-	   iret = GetKey (theEvent.xkey, stri, &spos);
-	   if ( iret == -1 && ibold > 0 )			/* <Esc> */
-	      { strncpy(array+ind,stri,wbox);   goto EndDialog;
-	      }
-	   if ( iret == 0 )
-	      {	if (spos == 0 ) { 		/* 1-st entry in the box */
-		for (j=1; j < 132; j++) stri[j]=' '; stri[wbox] = '\0';  }
-		if (++spos > wbox) spos = wbox;		lvalue = 1;
-		WRITE_ hghGC, ix, iy, stri, wbox);	ixa = ix+spos*wsym;
-		MoveArrow(theWindow,ixa0,iya0,ixa,iy);	ixa0 = ixa; iya0 = iy;
-	      }
-	   if ( iret == 1 )				/* <Del> or <BS> */
-	      {	if (--spos >= 0) { strncpy(stri+spos,stri+spos+1,wbox-spos);
-				  stri[wbox-1] = ' ';	}
-		if (spos < 0) { spos = 0;  strncpy(stri,array+ind,wbox); }
-		WRITE_ hghGC, ix, iy, stri, wbox);	ixa = ix+spos*wsym;
-		MoveArrow(theWindow,ixa0,iya0,ixa,iy);	ixa0 = ixa; iya0 = iy;
-	      }
-	   if ( (iret == 2 || iret == 3) && ibold > 0 )	/* <Tab> or <Ret> */
-	      {	Move_right:
-		do { if ( ++icol > nclmn )	icol = 1; }
-		while ( If_empty (icol, irow, nclmn, nsta, nwid, array, arrdim)
-				|| nwid[icol-1] == 0 );
-		if ( icol == 1 )  goto	Move_down;
-		if ( spos != 0 )  goto	Insert;		goto Fillbox;
-	      }
-	   if ( iret == 12 )				/* case	XK_Up:	  */
-	      { Move_up:
-		if ( --irow == 0 ) irow = *nrows;
-		if ( If_empty (icol, irow, nclmn, nsta, nwid, array, arrdim)
-			 && irow >= 0)		goto	Move_up;
-		if ( spos != 0 )  goto	Insert;	  goto	Fillbox;
-	      }
-	   if ( iret == 21 )				/* case	XK_Left:  */
-	      { Move_left:
-		if ( --spos < 0 )
-		{ spos = 0;
-		     if (--icol == 0 ) { icol = nclmn;   --irow;}
-		     if ( irow == 0 )	 icol = irow = 1;
-		     if (If_empty(icol, irow, nclmn, nsta, nwid, array, arrdim)
-				|| nwid[icol-1] == 0 )	goto	Move_left;
-		     if ( lvalue != 0 )	goto  Insert;	goto	Fillbox;
-		}	ixa = ix+spos*wsym;
-		MoveArrow(theWindow,ixa0,iya0,ixa,iy);	ixa0 = ixa; iya0 = iy;
-	      }
-	   if ( iret == 23 )				/* case	XK_Right: */
-	      {	if (spos == 0 && lvalue == 0)	strncpy(stri,array+ind,wbox);
-		if (++spos > wbox)	goto	Move_right;
-		ixa = ix+spos*wsym;		lvalue = 1;
-		MoveArrow(theWindow,ixa0,iya0,ixa,iy);	ixa0 = ixa; iya0 = iy;
-	      }
-	   if ( iret == 32 )				/* case	XK_Down:  */
-	      { Move_down:
-		if ( ++irow > *nrows)	irow = 1;
-		if ( If_empty (icol, irow, nclmn, nsta, nwid, array, arrdim)
-			 && irow <= *nrows)	goto	Move_down;
-		if (spos != 0)	goto Insert;	goto Fillbox;
- 	      }
-	}
-	if ( GetEsc(theEvent.xkey) ) goto EndDialog;
-	goto Table_control;
-Insert:
-	strncpy(array+ind,stri,wbox);   goto Fillbox;
+        if (ibold > 0){
+            iret = GetKey(theEvent.xkey, stri, &spos);
 
-EndDialog:
-	RETURNPOINTER_;
-	XFlush(theDisplay);
-	XDestroyWindow(theDisplay, theWindow);
-	XFlush(theDisplay);
-	ibcursor = -1;
-	mode = 0;
-	return 0;
+            if (iret == -1 && ibold > 0){        /* <Esc> */
+                strncpy(array+ind, stri, wbox);
+                break;
+            }
+            if (iret == 0){
+                if (spos == 0){           /* 1-st entry in the box */
+                    for (j=1; j<132; j++) stri[j] = ' ';
+                    stri[wbox] = '\0';
+                }
+                if (++spos > wbox) spos = wbox;
+                lvalue = 1;
+                WRITE_ hghGC, ix, iy, stri, wbox);
+                ixa = ix + spos*wsym;
+                MoveArrow(theWindow, ixa0, iya0, ixa, iy);
+                ixa0 = ixa;
+                iya0 = iy;
+            }
+            if (iret == 1){             /* <Del> or <BS> */
+                if (--spos >= 0){
+                    strncpy(stri+spos, stri+spos+1, wbox-spos);
+                    stri[wbox-1] = ' ';
+                }
+                if (spos < 0){
+                    spos = 0;
+                    strncpy(stri, array+ind, wbox);
+                }
+                WRITE_ hghGC, ix, iy, stri, wbox);
+                ixa = ix + spos*wsym;
+                MoveArrow(theWindow, ixa0, iya0, ixa, iy);
+                ixa0 = ixa;
+                iya0 = iy;
+            }
+            if ( (iret == 2 || iret == 3) && ibold > 0){  /* <Tab> or <Ret> */
+Move_right:
+                icol++;
+                if (icol > nclmn) icol = 1;
+                if (icol == 1) goto Move_down;
+                if (spos != 0) strncpy(array+ind, stri, wbox);
+                goto Fillbox;
+            }
+            if (iret == 12){              /* case XK_Up: */
+Move_up:
+                if (--irow == 0) irow = *nrows;
+                if (If_empty(icol, irow, nclmn, nsta, nwid, array, arrdim) && irow >= 0) goto Move_up;
+                if (spos != 0 ) strncpy(array+ind, stri, wbox);
+                goto Fillbox;
+            }
+            if (iret == 21){              /* case XK_Left: */
+Move_left:
+                if (--spos < 0){
+                    spos = 0;
+                    if (--icol == 0){
+                        icol = nclmn;
+                        --irow;
+                    }
+                    if (irow == 0) icol = irow = 1;
+                    if (If_empty(icol, irow, nclmn, nsta, nwid, array, arrdim) || nwid[icol-1] == 0) goto Move_left;
+                    if (lvalue != 0) strncpy(array+ind, stri, wbox);
+                    goto Fillbox;
+                }
+                ixa = ix + spos*wsym;
+                MoveArrow(theWindow, ixa0, iya0, ixa, iy);
+                ixa0 = ixa;
+                iya0 = iy;
+            }
+            if (iret == 23){              /* case XK_Right: */
+                if (spos == 0 && lvalue == 0) strncpy(stri, array+ind, wbox);
+                if (++spos > wbox) goto Move_right;
+                ixa = ix + spos*wsym;
+                lvalue = 1;
+                MoveArrow(theWindow, ixa0, iya0, ixa, iy);
+                ixa0 = ixa;
+                iya0 = iy;
+            }
+            if (iret == 32){              /* case XK_Down: */
+Move_down:
+                irow++;
+                if (irow > *nrows) irow = 1;
+                if (If_empty(icol, irow, nclmn, nsta, nwid, array, arrdim) && irow <= *nrows) goto Move_down;
+                if (spos != 0) strncpy(array+ind, stri, wbox);
+                goto Fillbox;
+            }
+        }
+        if (GetEsc(theEvent.xkey)) break;
+    } /* End table control */
+
+    XWarpPointer(theDisplay, None, theRootWindow, 0, 0, 0, 0, Kevent.xcur, Kevent.ycur);
+    XFlush(theDisplay);
+    XDestroyWindow(theDisplay, theWindow);
+    XFlush(theDisplay);
+    ibcursor = -1;
+    return 0;
 }
 
 /**********************************************************************/
@@ -1130,8 +1191,9 @@ void ProcessRootWindowEvent(XEvent *theEvent){
 int askcol_ (title, template, array, len, nrows, ngroup, morow)
 				INT_ *len, *nrows, *ngroup, *morow;
 				char title[], template[], array[];
-/* The same as "asktab", but the 1st column
+/* The same as "layoutbox", but the 1st column
    		is drawn in blue and closed for access
+Called only from src/nbi/nbinj.f
 Input:	title	- Title of the table
 	template  string defining a structure of the table and its 1st line
 		  1st line does not appear if all non-'|' symbols are spaces
@@ -1366,7 +1428,7 @@ Insert:
 	strncpy(array+ind,stri,wbox);   goto Fillbox;
 
 EndDialog:
-	RETURNPOINTER_;
+	XWarpPointer(theDisplay, None, theRootWindow, 0, 0, 0, 0, Kevent.xcur, Kevent.ycur);
 	XFlush(theDisplay);
 	XDestroyWindow(theDisplay, theWindow);
 	XFlush(theDisplay);
@@ -1786,7 +1848,7 @@ int ufilebox_(INT_ *nofbox, char una[], char theNames[], char unad[]){
         } // if key_flag
     } // end Table_control;
 
-    RETURNPOINTER_;
+    XWarpPointer(theDisplay, None, theRootWindow, 0, 0, 0, 0, Kevent.xcur, Kevent.ycur);
     XFlush(theDisplay);
     XDestroyWindow(theDisplay, theWindow);
     ibcursor = -1;
