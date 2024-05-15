@@ -40,7 +40,7 @@ static int iact=-1, ibcursor=-1;
 #define BTxof 0     /*button text horizontal offset */
 #define nbuttons_max 36
 
-int n_buttons=32;  /*main Astra  menu table */
+int n_buttons=28;  /*main Astra  menu table */
 char *MAMT[nbuttons_max];
 char MAMK[nbuttons_max];
 double width_ratio, height_ratio;
@@ -80,7 +80,7 @@ int DWnamlen[NDW] = {
 struct {int xcur, ycur;} Kevent;
 
 void Change_Color(GC, int, int);
-void Menu_table(int, int, int, char[], char*[], Button[]);
+void Menu_Column(int, int, int, char[], char*[], Button[]);
 void Put_button(Button, GC);
 void MoveArrow(Window, int, int, int, int);
 void changeGCcolor(GC, INT_*);
@@ -128,27 +128,25 @@ void xaxis_(INT_ *modex){ /* Change of X-coordinate for plots */
 /**********************************************************************/
 void taskmenu_(INT_ *modex){
 /* Draw menu table in Astra interactive mode, at the bottom of the main graphic window */
-  int Xx, Xy, i, ixx=8, dx=5, iyy, ny;
+    int Xx, Xy, i, ixx=8, iyy, ny, ratio;
     int Wx, Wy;
     unsigned int Ww, Wh, Wb, Wd;
     Window theRW;
     const char *BUTEXT[nbuttons_max] =
         {"16*f(a)", "8*f(a)", "8*f(psi)", "2*f(a,t)",
-         "2*f(R,t)", "8*f(t)", "Equil", "Phase space",
-         "Refresh", "User graph", "Next", "Back",
-         "Scales", "Variables", "Type data", "Port PS",
-         "Windows", "Constants", "Save log" , "Land PS",
-         "Layout", "Grids", "Write data", "U-files",
-         "Style", "Type model", "What X-axis", "Y-shift",
+         "2*f(R,t)", "8*f(t)", "Equil", "Layout",
+         "Refresh", "Style", "Next", "Back",
+         "Variables", "Constants", "Grids", "Type data",
+         "Save log", "U-files", "Land PS", "Port PS",
+         "Write data", "Type model", "Get X-axis", "Test",
          "Run", "Step", "Quit", "Help"};
     char BUTKEY[nbuttons_max] = {
         '1', '2', '3', '4',
-        '5', '6', '8', '7',
-        'R', '9', 'N', 'B',
-        'S', 'V', 'T', 'G',
-        'W', 'C', 'I', 'Q',
-        'M', 'D', 'F', 'U',
-        '.', 'L', 'X', 'Y',
+        '5', '6', '8', 'M',
+        'R', '.', 'N', 'B',
+        'V', 'C', 'D', 'T',
+        'I', 'U', 'Q', 'G',
+        'F', 'L', 'X', 'S',
         '\015', '\040', '\057', 'H'};
 
     XGetGeometry(theDisplay,theRootWindow, &theRW, &Wx, &Wy, &Ww, &Wh, &Wb, &Wd);
@@ -169,50 +167,43 @@ void taskmenu_(INT_ *modex){
     }
     xaxis(modex);
     iyy = XWH - 74*height_ratio;
-    for (i=0; i<8; i++){
-        Menu_table(ixx + i*(XWW/8+dx), iyy, 4, MAMK+4*i, MAMT+4*i, MAMB+4*i);
+    ratio = (double)(XWW*4)/(double)n_buttons;
+    for (i=0; i<n_buttons/4; i++){
+        Menu_Column(ixx + i*ratio, iyy, 4, MAMK+4*i, MAMT+4*i, MAMB+4*i);
     }
     if (ibcursor >= 0) Put_button(MAMB[ibcursor], hgh_menuGC);
 /* Menu titles */
     Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
-    Xx = ixx + 40*width_ratio;
+    Xx = ixx + 5*width_ratio;
     Xy = iyy - 5*height_ratio;
     XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Graphic mode", 12);
-    Xx += (int)(125*width_ratio);
-    XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Presentation", 12);
-    Xx += (int)(125*width_ratio);
+    Xx += (int)(188*width_ratio);
+    XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Select", 6);
+    Xx += (int)( 94*width_ratio);
     XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Control", 7);
-    Xx += (int)(125*width_ratio);
+    Xx += (int)( 94*width_ratio);
     XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy, "In/Out", 6);
-    Xx += (int)(125*width_ratio);
+    Xx += (int)(188*width_ratio);
     XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Status", 6);
 }
 
 /**********************************************************************/
-void Menu_table(int xm, int ym, int nbutt, char mek[], char *met[], Button butt[]){
-  int i, leng, lenm, font_sym_width, font_sym_height, xwid, button_vert_sep=4, button_hor_sep=5;
-    double F1sw=7.5, F1sh=13.;      /*font 1 symbol width, height */
-
-    lenm = 0;
-    for (i=0; i<nbutt; i++){
-        leng = strlen(met[i]);
-        if (leng > lenm) lenm = leng;
-    }
+void Menu_Column(int xm, int ym, int nbutt, char mek[], char *met[], Button butt[]){
+  int i, lenm=11, leng, font_sym_width, font_sym_height, xwid, button_vert_sep=4, button_hor_sep=1;
+    double F1sw=7.7, F1sh=13.;      /*font 1 symbol width, height */
 
     font_sym_width  = width_ratio *F1sw;
     font_sym_height = height_ratio*F1sh;
-    xwid = lenm*font_sym_width + 2*BTxof + button_hor_sep;
+    xwid = lenm*font_sym_width + button_hor_sep;
     for (i=0; i<nbutt; i++){
         leng = strlen(met[i]);
         butt[i].mexl = xm;
         butt[i].mexr = butt[i].mexl + xwid;
-        butt[i].meyu = ym + i*(font_sym_height + 2*BTyof + 1+button_vert_sep);
-        butt[i].meyd = butt[i].meyu + font_sym_height + 2*BTyof + 1;
+        butt[i].meyu = ym + i*(font_sym_height + button_vert_sep + 1);
+        butt[i].meyd = butt[i].meyu + font_sym_height + 1;
         butt[i].melen  = leng;
         butt[i].mename = met[i];
         butt[i].keysym = mek[i];
-    }
-    for (i=0; i<nbutt; i++){
         Put_button(butt[i], theGCA);
     }
 }

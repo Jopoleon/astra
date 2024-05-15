@@ -587,7 +587,7 @@ do JY=IYM, IY0, -canv_hei
         else
             LYM = YM
         endif
-        if (LYM > IY0 + LENG)  call  drawvm(0, JX, LYM, JX, YP)
+        if (LYM > IY0 + LENG)  call drawvm(0, JX, LYM, JX, YP)
     enddo
 enddo
 
@@ -595,9 +595,9 @@ if (plot_mode == 8) then
     JY = (IY0 + IYM)/2
     do j=0, 10
         jj = JY + IDX*j
-        if (jj < IYM) call  drawvm(0, XM, JJ, XP, JJ)
+        if (jj < IYM) call drawvm(0, XM, JJ, XP, JJ)
         jj = JY - IDX*j
-        if (jj > IY0) call  drawvm(0, XM, JJ, XP, JJ)
+        if (jj > IY0) call drawvm(0, XM, JJ, XP, JJ)
     enddo
 endif
 

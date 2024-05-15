@@ -1,13 +1,10 @@
 program astra
 
 use parameter_inc, only: NSBMX, NRD
-use outcmn_inc, only: VCOIL, CCOIL, CCOILO, outcmn_init, &
-    Xwin_height, Xwin_width, Xwin_xpos, Xwin_ypos, &
-    DXLET, DYLET, LRJJ, frame_wid, frame_hei, TASK, &
-    RUNID, NST, MOD10, NTOUT, LineWidth, resizeGraph, null_ch
-use const_inc, only: IPART, const_init, XOUT, NA, &
+use outcmn_inc, only: VCOIL, CCOIL, CCOILO, outcmn_init, TASK
+use const_inc, only: IPART, const_init, &
     TIME, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT
-use status_inc, only: status_init, MU, defarr
+use status_inc, only: status_init, defarr
 use debugger, only: debug, astra_stop, markloc
 use ext_bnd, only: use_ext_bnd
 use transport2fbe, only: transport2fbe_init
@@ -46,33 +43,7 @@ call read_input
 !--------------------
 
 if (TASK(1: 3) /= 'BGD') then
-    call get_runid()
-! Resize
-    frame_wid = resizeGraph*frame_wid
-    frame_hei = resizeGraph*frame_hei
-    DXLET = resizeGraph*DXLET
-    DYLET = resizeGraph*DYLET
-    LRJJ  = resizeGraph*LRJJ
-    jj = max(0, (15 + NTOUT - 64)/16)
-    Xwin_width  = resizeGraph*Xwin_width
-    Xwin_height = resizeGraph*Xwin_height + 2*jj*(DYLET + 2)
-    LineWidth = int(0.8*resizeGraph) + 1
-    Xwin_title = 'Per aspera ad ASTRA' // null_ch
-    call initvm(Xwin_xpos, Xwin_ypos, Xwin_width, Xwin_height, LineWidth, TRIM(Xwin_title), LEN_TRIM(Xwin_title)) ! Initialise graphic window
-
-    IM = 1
-    NST = 0
-    MOD10 = 1
-    call set_frame(IM, XSC0, XSC)
-    call set_plot(IM, XSC0, XSC)
-
-    j = XOUT + 0.49
-
-    call taskmenu(j) ! Task menu
-    call textbf(0, Xwin_height-int(104*resizeGraph), RUNID, 80) ! Task ID
-
-    CHORDN = LINEAV()
-    call up_label(CHORDN, 1./MU(NA))
+    call initMainWindow
 endif
 
 call SETARX(1)

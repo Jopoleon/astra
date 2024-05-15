@@ -1,3 +1,53 @@
+subroutine initMainWindow
+  
+use outcmn_inc, only: &
+    Xwin_height, Xwin_width, Xwin_xpos, Xwin_ypos, &
+    DXLET, DYLET, LRJJ, frame_wid, frame_hei, &
+    RUNID, NST, MOD10, NTOUT, LineWidth, resizeGraph, null_ch
+use const_inc, only: XOUT, NA
+use status_inc, only: MU
+
+implicit none
+
+integer :: j, jj, IM, XSC0, XSC
+double precision :: CHORDN
+character(len=132) :: Xwin_title
+double precision, external :: LINEAV
+
+call get_runid()
+! Resize
+jj = max(0, (15 + NTOUT - 64)/16)
+Xwin_height = Xwin_height + 2*jj*(DYLET + 2)
+LineWidth = int(0.85*resizeGraph) + 1
+Xwin_title = 'Per aspera ad ASTRA' // null_ch
+!call initvm(Xwin_xpos, Xwin_ypos, Xwin_width, Xwin_height, LineWidth, TRIM(Xwin_title), LEN_TRIM(Xwin_title)) ! Initialise graphic window
+frame_wid = resizeGraph*frame_wid
+frame_hei = resizeGraph*frame_hei
+DXLET = resizeGraph*DXLET
+DYLET = resizeGraph*DYLET
+LRJJ  = resizeGraph*LRJJ
+Xwin_width  = resizeGraph*Xwin_width
+Xwin_height = resizeGraph*Xwin_height
+!call resizewindow(Xwin_width, Xwin_height)
+call initvm(Xwin_xpos, Xwin_ypos, Xwin_width, Xwin_height, LineWidth, TRIM(Xwin_title), LEN_TRIM(Xwin_title)) ! Initialise graphic window
+IM = 1
+NST = 0
+MOD10 = 1
+call set_frame(IM, XSC0, XSC)
+call set_plot(IM, XSC0, XSC)
+
+j = XOUT + 0.49
+
+call taskmenu(j) ! Task menu
+call textbf(0, Xwin_height-int(104*resizeGraph), RUNID, 80) ! Task ID
+
+CHORDN = LINEAV()
+call up_label(CHORDN, 1./MU(NA))
+  
+return
+end subroutine initMainWindow
+
+!---------------------------------------------------------------------
 subroutine OUTDSP(MARK, JIFNEW, IYO, ITIMES, TT_out, t_out)
 
 !---------------------------------------------------------------------

@@ -27,6 +27,7 @@ and interfaces for FORTRAN calls
 void initvm_(INT_*, INT_*, INT_*, INT_*, INT_*, char*, INT_*);
 void redraw_(INT_*);
 void erasrw_();
+void resizeWindow(unsigned int, unsigned int);
 void textvm_(INT_*, INT_*, char*, INT_*);
 void textbf_(INT_*, INT_*, char*, INT_*);
 void textnb_(INT_*, INT_*, char*, INT_*);
@@ -144,8 +145,17 @@ FILE *PSAfile;
 int FlagPSA=0, FigAcount=1; 
 
 /********************************************************************/
-void createGC(Window theWindow, GC *theNewGC, char *fontName)
-{
+void resizewindow_(unsigned int *width, unsigned int *height){
+    printf("width=%d, height=%d\n", *width, *height);
+    int result = XResizeWindow(theDisplay, theRootWindow, *width, *height);
+    if (result == BadValue ) printf("   bad value!!!\n");
+    if (result == BadWindow) printf("   bad window!!!\n");
+    XClearArea(theDisplay, theRootWindow, 0, 0, 0, 0, True);
+    XFlush(theDisplay);
+}
+		   
+/********************************************************************/
+void createGC(Window theWindow, GC *theNewGC, char *fontName){
     XGCValues theGCValues;
     XFontStruct *fontStruct; 
     unsigned long theValueMask;
@@ -153,7 +163,7 @@ void createGC(Window theWindow, GC *theNewGC, char *fontName)
     *theNewGC = XCreateGC(theDisplay, theWindow, theValueMask, &theGCValues);
     if (*theNewGC != 0){
         fontStruct = XLoadQueryFont(theDisplay, fontName);
-        if(fontStruct != 0) XSetFont(theDisplay, *theNewGC, fontStruct->fid);
+        if (fontStruct != 0) XSetFont(theDisplay, *theNewGC, fontStruct->fid);
         XSetForeground(theDisplay, *theNewGC, theBlackPixel);
         XSetBackground(theDisplay, *theNewGC, theWhitePixel);
     }
@@ -168,7 +178,7 @@ void Change_Color(GC anyGC, int frgColor, int bkgColor){
 
 /********************************************************************/
 void Open_Screen(){
-    theDisplay =XOpenDisplay(NULL);
+    theDisplay = XOpenDisplay(NULL);
     if (theDisplay == NULL){
         printf(">>> ERROR: Cannot establish a connection to the X Server %s\n", XDisplayName(NULL));
         return;
@@ -239,7 +249,7 @@ Window Open_Window(int x, int y, int width, int height, int flag, char* theTitle
     }
     else{
         theWindowAttributes.override_redirect = False;
-        theWindowMask  = CWBackPixel | CWBorderPixel | CWCursor;
+        theWindowMask = CWBackPixel | CWBorderPixel | CWCursor;
     }
     theNewWindow = XCreateWindow(theDisplay, theParent, 
         x, y, width, height, BORDER_WIDTH, theDepth, InputOutput, 
@@ -274,32 +284,25 @@ Window Open_Window(int x, int y, int width, int height, int flag, char* theTitle
 }
 
 /********************************************************************/
+void DrawArrow(Window wind, int Xx, int Xy, int color){
+    Change_Color(theGCA, color, 0);
+    XDrawLine(theDisplay, wind, theGCA, Xx, Xy, Xx, Xy+5);
+    XDrawLine(theDisplay, wind, theGCA, Xx+1, Xy+1, Xx+1, Xy+5);
+    XDrawLine(theDisplay, wind, theGCA, Xx-1, Xy+1, Xx-1, Xy+5);
+    XDrawLine(theDisplay, wind, theGCA, Xx+2, Xy+3, Xx+2, Xy+5);
+    XDrawLine(theDisplay, wind, theGCA, Xx-2, Xy+3, Xx-2, Xy+5);
+    XDrawLine(theDisplay, wind, theGCA, Xx+3, Xy+5, Xx+3, Xy+5);
+    XDrawLine(theDisplay, wind, theGCA, Xx-3, Xy+5, Xx-3, Xy+5);
+}
+
+/********************************************************************/
 void MoveArrow(Window wind, int fromx, int fromy, int tox, int toy){
-    int Xx, Xy;
     if (fromx > 0){
-        Xx = fromx;
-        Xy = fromy;
-        Change_Color(theGCA, 0, 0);
-        XDrawLine(theDisplay, wind, theGCA, Xx, Xy, Xx, Xy+5);
-        XDrawLine(theDisplay, wind, theGCA, Xx+1, Xy+1, Xx+1, Xy+5);
-        XDrawLine(theDisplay, wind, theGCA, Xx-1, Xy+1, Xx-1, Xy+5);
-        XDrawLine(theDisplay, wind, theGCA, Xx+2, Xy+3, Xx+2, Xy+5);
-        XDrawLine(theDisplay, wind, theGCA, Xx-2, Xy+3, Xx-2, Xy+5);
-        XDrawLine(theDisplay, wind, theGCA, Xx+3, Xy+5, Xx+3, Xy+5);
-        XDrawLine(theDisplay, wind, theGCA, Xx-3, Xy+5, Xx-3, Xy+5);
+        DrawArrow(wind, fromx, fromy, 0); /* white to erase */
     }
 
     if (tox > 0){
-        Xx = tox;
-        Xy = toy;
-        Change_Color(theGCA, 3, 0); /* 3 - blue */
-        XDrawLine(theDisplay, wind, theGCA, Xx, Xy, Xx, Xy+5);
-        XDrawLine(theDisplay, wind, theGCA, Xx+1, Xy+1, Xx+1, Xy+5);
-        XDrawLine(theDisplay, wind, theGCA, Xx-1, Xy+1, Xx-1, Xy+5);
-        XDrawLine(theDisplay, wind, theGCA, Xx+2, Xy+3, Xx+2, Xy+5);
-        XDrawLine(theDisplay, wind, theGCA, Xx-2, Xy+3, Xx-2, Xy+5);
-        XDrawLine(theDisplay, wind, theGCA, Xx+3, Xy+5, Xx+3, Xy+5);
-        XDrawLine(theDisplay, wind, theGCA, Xx-3, Xy+5, Xx-3, Xy+5);
+        DrawArrow(wind, tox, toy, 3); /* 3 - blue */
     }
     Change_Color(theGCA, 1, 0);
 }

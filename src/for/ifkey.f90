@@ -1,6 +1,5 @@
 ! 10.03.95 G.P.
 ! 19.11.20 GIT major f90 cleaning
-
 !---------------------------------------------------------------------
 integer function IFKEY_(IFKL)
 ! IFKEY for calls from c
@@ -73,7 +72,8 @@ integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
 ! plot_arr dimension: 4*NRD(Mode 5, 8) 320(7) 2*NTIMES(Mode 6) 2*NRD(Modes 1-4)
 integer :: ITO(NTIMES, ICVMX+2)
 double precision :: DEVARO(NCONST), LINEAV, CHORDN, Y, ABD, &
-    ALFA, TIMEB, TROUT, SWATCH
+     ALFA, TIMEB, TROUT, SWATCH
+double precision, dimension(1) :: rescale_array
 double precision, dimension(NTIMES) :: PRMARK, TIMOD4
 double precision, dimension(NRD) :: YWA, YWB, YWC
 character(len=6) :: NAMEP(NTIMES)
@@ -82,6 +82,7 @@ character(len=10), dimension(NRW) :: UNAMES
 character(len=40) :: CNSFIL
 character(len=80) :: HELP(28), PSNAME, STR, STRB
 character(len=132) :: STRI
+character(len=7), dimension(1), parameter :: rescale_label = (/ 'Rescale' /)
 
 save ITO, IFLAG, TROUT, MARK, LTOUTO, IDSP
 save NAMEP
@@ -639,21 +640,10 @@ CASE(76) ! 'L'
     close (1)
 
 CASE(83) ! 'S'
-    if (MOD10 <= 5) then
-        call ASKLIS(NROUT, SCALER, NAMER, 5)
-    else
-        call ASKLIS(NTOUT, SCALET, NAMET, 5)
-    endif
-    call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
-    if (IFKL == KEY) return
-
-CASE(89) ! 'Y'
-    if (MOD10 <= 5) then
-        call ASKLIS(NROUT, OSHIFR, NAMER, 6)
-    else
-        call ASKLIS(NTOUT, OSHIFT, NAMET, 6)
-    endif
-    call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
+    rescale_array(1) = resizeGraph
+    call ASKLIS(1, rescale_array, rescale_label, 5)
+    resizeGraph = rescale_array(1)
+!    call initMainWindow
     if (IFKL == KEY) return
 
 CASE(88) ! 'X'
