@@ -36,8 +36,6 @@ static int iact=-1, ibcursor=-1;
 #define MVPOINTER_ XWarpPointer(theDisplay, None, theWindow, 0, 0, 0, 0,
 #define LINGCA_ XDrawLine(theDisplay, theWindow, theGCA,
 
-#define F1sw 8      /*font 1 symbol width */
-#define F1sh 13     /*font 1 symbol height */
 #define BTyof 0     /*button text vertical offset */
 #define BTxof 0     /*button text horizontal offset */
 #define BVers 4     /*button vertical separation */
@@ -45,6 +43,7 @@ static int iact=-1, ibcursor=-1;
 int nmamb = NMRMB;  /*main Astra  menu table */
 char *MAMT[NMRMB];  /* Dimension is defined as */
 char MAMK[NMRMB];   /* max(nmamb,NMRMB) */
+double width_ratio, height_ratio;
 #define Button struct BUTTON
 Button {int mexl, meyd, mexr, meyu, melen; char keysym, *mename;};
 Button MAMB[NMRMB];
@@ -129,63 +128,87 @@ void xaxis_(INT_ *modex){ /* Change of X-coordinate for plots */
 /**********************************************************************/
 void taskmenu_(INT_ *modex){
 /* Draw menu table in Astra interactive mode, at the bottom of the main graphic window */
-    int Xx, Xy, i, ixx=8, dx=5, iyy;
+  int Xx, Xy, i, ixx=8, dx=5, iyy, ny;
     int BHors=5;                /*button horizontal separation */
+    int Wx, Wy;
+    unsigned int Ww, Wh, Wb, Wd;
+    Window theRW;
     char *BUTEXT[NMRMB] =
         {"16*f(a)", "8*f(a)", "Refresh", "2*f(a,t)",
          "8*f(t)", "User graph", "2*f(R,t)", "Phase space",
-         "Next", "8*f(psi)", "Equil", "Backward",
+         "8*f(psi)", "Equil", "Next", "Back",
          "Scales", "Variables", "Type data", "Port_PS",
          "Windows", "Constants", "Save log" , "Land_PS",
-         "Select", "Grids", "Write data", "U-files",
+         "Layout", "Grids", "Write data", "U-files",
          "Style", "Type model", "What X-axis", "Y-shift",
          "Run", "Step", "Quit", "Help"};
     char BUTKEY[NMRMB] = {
-        '1', '2', 'R', '4', '6', '9', '5', '7', 'N', '3', '8', 'B',
-        'S', 'V', 'T', 'G', 'W', 'C', 'I', 'Q', 'M', 'D', 'F', 'U',
-        '.', 'L', 'X', 'Y', '\015', '\040', '\057', 'H'};
+        '1', '2', 'R', '4',
+        '6', '9', '5', '7',
+        '3', '8', 'N', 'B',
+        'S', 'V', 'T', 'G',
+        'W', 'C', 'I', 'Q',
+        'M', 'D', 'F', 'U',
+        '.', 'L', 'X', 'Y',
+        '\015', '\040', '\057', 'H'};
+
+    XGetGeometry(theDisplay,theRootWindow, &theRW, &Wx, &Wy, &Ww, &Wh, &Wb, &Wd);
+
+    width_ratio  = (double)Ww/660.;
+    height_ratio = (double)Wh/550.;
     nmamb = 32;
 /* Draw separating lines between plots and menu */
     Change_Color(theGCA, AstraColorNum[2], AstraColorNum[3]);
-    XDrawLine(theDisplay, theRootWindow, theGCA, 0, XWH-128, XWW-1, XWH-128);
-    XDrawLine(theDisplay, theRootWindow, theGCA, 0, XWH-110, XWW-1, XWH-110);
-    XDrawLine(theDisplay, theRootWindow, theGCA, 0, XWH-109, XWW-1, XWH-109);
+    ny = XWH - 128.*height_ratio;
+    XDrawLine(theDisplay, theRootWindow, theGCA, 0, ny, XWW-1, ny);
+    ny = XWH - 110.*height_ratio;
+    XDrawLine(theDisplay, theRootWindow, theGCA, 0, ny  , XWW-1, ny);
+    XDrawLine(theDisplay, theRootWindow, theGCA, 0, ny+1, XWW-1, ny+1);
     for (i=0; i<nmamb; i++){
         MAMT[i] = BUTEXT[i];
         MAMK[i] = BUTKEY[i];
     }
     xaxis(modex);
-    iyy = XWH - 74;
+    iyy = XWH - 74*height_ratio;
     for (i=0; i<8; i++){
         Menu_table(ixx + i*(XWW/8+dx), iyy, 4, MAMK+4*i, MAMT+4*i, MAMB+4*i, BHors);
     }
     if (ibcursor >= 0) Put_button(MAMB[ibcursor], hgh_menuGC);
 /* Menu titles */
     Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
-    Xx = ixx + 40;
-    Xy = iyy - 5;
-    XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy,
-        "Graphic mode           Presentation       Control", 49);
-    Xx += 475;
-    XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy, "In/Out     Status", 17);
+    Xx = ixx + 40*width_ratio;
+    Xy = iyy - 5*height_ratio;
+    XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Graphic mode", 12);
+    Xx += (int)(125*width_ratio);
+    XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Presentation", 12);
+    Xx += (int)(125*width_ratio);
+    XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Control", 7);
+    Xx += (int)(125*width_ratio);
+    XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy, "In/Out", 6);
+    Xx += (int)(125*width_ratio);
+    XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Status", 6);
 }
 
 /**********************************************************************/
 void Menu_table(int xm, int ym, int nbutt, char mek[], char *met[], Button butt[], int BHors){
-    int i, leng, lenm, xwid;
+    int i, leng, lenm, font_sym_width, font_sym_height, xwid;
+    double F1sw=7.5, F1sh=13.;      /*font 1 symbol width, height */
 
     lenm = 0;
     for (i=0; i<nbutt; i++){
         leng = strlen(met[i]);
         if (leng > lenm) lenm = leng;
     }
-    xwid = lenm*F1sw + 2*BTxof + BHors;
+
+    font_sym_width  = width_ratio *F1sw;
+    font_sym_height = height_ratio*F1sh;
+    xwid = lenm*font_sym_width + 2*BTxof + BHors;
     for (i=0; i<nbutt; i++){
         leng = strlen(met[i]);
         butt[i].mexl = xm;
         butt[i].mexr = butt[i].mexl + xwid;
-        butt[i].meyu = ym + i*(F1sh + 2*BTyof + 1+BVers);
-        butt[i].meyd = butt[i].meyu + F1sh + 2*BTyof + 1;
+        butt[i].meyu = ym + i*(font_sym_height + 2*BTyof + 1+BVers);
+        butt[i].meyd = butt[i].meyu + font_sym_height + 2*BTyof + 1;
         butt[i].melen  = leng;
         butt[i].mename = met[i];
         butt[i].keysym = mek[i];
@@ -778,21 +801,21 @@ EndDialog:
 
 /**********************************************************************/
 int layoutbox_(char title[], char template[], char array[], INT_ *len,
-    INT_ *nrows, INT_ *ngroup, INT_ *morow)
+    INT_ *nrows, INT_ *ngroup, INT_ *add_sep_line)
 
 /*
 Called from ASXWIN and ASTWIN (file surv.f90) , invoked by key "M" from IFKEY
 
 Input:
-    title    - Title of the table
-    template - string defining a structure of the table and its 1st line
-               1st line does not appear if all non-'|' symbols are spaces
-    array    - data (numbers or strings) for input and output
-    len      - length of "array" element according to description
-               in the calling routine (80 in the example below)
-    nrows    - number of rows in a table to be created
-    ngroup   - if > 0 distance (in rows) between blue separating lines
-    morow    - if > 0 separates bottom of the table with a fat blue line
+    title        - Title of the table
+    template     - string defining a structure of the table and its 1st line
+                   1st line does not appear if all non-'|' symbols are spaces
+    array        - data (numbers or strings) for input and output
+    len          - length of "array" element according to description
+                   in the calling routine (80 in the example below)
+    nrows        - number of rows in a table to be created
+    ngroup       - if > 0 distance (in rows) between blue separating lines
+    add_sep_line - if > 0 separates bottom of the table with a fat blue line
 
 Returned value:
     -1  - Error (window was not created)
@@ -826,16 +849,16 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
         ind, jbox_old, hbox,	    /* current/old box No. & height */
         irow0=0, wbox,              /* number of chars in box */
         Width=452, Height=480,      /* defaut window sizes */
-        inold, ixold, iyold, icold, ixa0, iya0, arrdim,
-        nclmn, nwid[20], nsta[20], ii=0,
-        icol, isym, irow, ixa, iya, /* arrow (textcursor) position */
+        ixold, iyold, icold, ixa0, iya0, arrdim,
+        j_col, nwid[20], nsta[20], ii=0,
+        icol, isym, irow, ixa,      /* arrow (textcursor) position */
         spos=0,                     /* abs. and rel. position of symbol in table */
         lvalue,	                    /* 1 if box was changed, 0 otherwise */
         fill_flag,
         wsym=8, hsym=13;            /* symbol width and height */
     int UpLeftx, UpLefty=10,        /* window corner location */
         nend, jbox, iret, ix, ix1, iy, i, j,
-        mxfields=20;	            /* max / actual # of columns */
+        ncol_max=20;	            /* max / actual # of columns */
     static char stri[132];
 
     j = strlen(title);
@@ -858,21 +881,21 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
     }
 
 /**** Split "template" in blocks ****/
-    nclmn = 0;
+    j_col = 0;
     nsta[0] = 0;
     for (j=0; j<nend; j++){
         if (template[j] == '|'){
-            nwid[nclmn] = j - nsta[nclmn];
-            nsta[nclmn+1] = j + 1;
-	    nclmn++;
+            nwid[j_col] = j - nsta[j_col];
+            nsta[j_col+1] = j + 1;
+	    j_col++;
 	}
-        if (nclmn > mxfields){
-            printf("%s %d\n", "LAYOUTBOX >>>  Too many input fields ", nclmn);
+        if (j_col > ncol_max){
+            printf("%s %d\n", "LAYOUTBOX >>>  Too many input fields ", j_col);
             return -1;
         }
     }
-    nwid[nclmn] = nend - nsta[nclmn];
-    nclmn++;
+    nwid[j_col] = nend - nsta[j_col];
+    j_col++;
     arrdim = *len;
     ixa0 = jbox_old = 0;
     UpLeftx = 2;
@@ -901,9 +924,9 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
     if (irow0){
 /*** Type template in blue ***/
         ix = xshif;
-        for (j=0; j<nclmn; j++){
+        for (j=0; j<j_col; j++){
             WRITE_ theGCA, ix, hsym, template+nsta[j], nwid[j]);
-            if (j+1 == nclmn) break;
+            if (j+1 == j_col) break;
             ix += wsym*(nwid[j]+1);
         }
 /*** Draw blue horizontal lines ***/
@@ -912,15 +935,15 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
     }
     if (*ngroup > 0)
        for (j=(*ngroup+irow0)*hbox; j+4+yshif<Height-2*hbox; j += (*ngroup)*hbox) LINGCA_ 0, j+4, Width, j+4);
-    if (*morow > 0){
-        j = Height - (*morow + 2)*hbox - 3;
+    if (*add_sep_line > 0){
+        j = Height - (*add_sep_line + 2)*hbox - 3;
         LINGCA_ 0, j, Width, j);
         ++j;
         LINGCA_ 0, j, Width, j);
     }
 /*** Draw blue vertical lines ***/
     ix = xshif - 0.5*wsym;
-    for (j=0; j<nclmn-1; j++){
+    for (j=0; j<j_col-1; j++){
         ix += wsym*(nwid[j] + 1);
         ix1 = ix;
         if (nwid[j]   == 0) ix1 -= 2;
@@ -943,7 +966,7 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
 /*** Draw input data ***/
     for (i=0; i<*nrows; i++){
         iy = yshif + hsym + hbox*(i + irow0);
-        for (j=isym=0, ix=xshif; j<nclmn; j++){
+        for (j=isym=0, ix=xshif; j<j_col; j++){
 	    if (j > 0){
                 isym = nsta[j];
                 ix += wsym*(nwid[j-1]+1);
@@ -953,17 +976,17 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
     }
     if (jbox_old > 0){  /* after Expose event */
         isym = 0;
-        if ( icol > 1)  isym = nsta[icol-1];
+        if (icol > 1)  isym = nsta[icol-1];
 	ix = xshif + wsym*isym;
 	iy = yshif + hsym + hbox*(irow + irow0 - 1);
         WRITE_ hghGC, ix, iy, stri, wbox);
     }
     if (ii == 0){    /* Select Upper Left box on entry */
         jbox = jbox_old = irow = icol = icold = ii = 1;
-        inold = ind = isym = lvalue = 0;
+        ind = isym = lvalue = 0;
         wbox = nwid[0];
 	ix = ixold = ixa = ixa0 = xshif + wsym*isym;
-	iy = iyold = iya = iya0 = yshif + hsym + hbox*irow0;
+	iy = iyold = iya0 = yshif + hsym + hbox*irow0;
         WRITE_ hghGC, ix, iy, array, wbox);
         strncpy(stri, array, wbox);
     }
@@ -985,7 +1008,7 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
                 i = (ix - xshif)/wsym;
                 if (jbox_old > 0) strncpy(array+ind, stri, wbox);
                 if (irow > *nrows) break; /* No selection or Exit */
-                for (j=0; j<nclmn; ){   /* Selection is made */
+                for (j=0; j<j_col; ){   /* Selection is made */
                     i -= nwid[j] + 1;
                     icol = ++j;
                     if (i < 0) break;
@@ -1011,8 +1034,6 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
                 WRITE_ hghGC, ix, iy, stri, wbox);
                 ixa = ix + spos*wsym;
                 MoveArrow(theWindow, ixa0, iya0, ixa, iy);
-                ixa0 = ixa;
-                iya0 = iy;
                 break;
             case 1:             /* <Del> or <BackSpace> */
                 spos--;
@@ -1027,12 +1048,10 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
                 WRITE_ hghGC, ix, iy, stri, wbox);
                 ixa = ix + spos*wsym;
                 MoveArrow(theWindow, ixa0, iya0, ixa, iy);
-                ixa0 = ixa;
-                iya0 = iy;
                 break;
             case 2: case 3:  /* <Tab> or <Ret> */
                 icol++;
-                if (icol > nclmn) icol = 1;
+                if (icol > j_col) icol = 1;
                 if (icol == 1){
                     irow++;
                     if (irow > *nrows) irow = 1;
@@ -1052,7 +1071,7 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
                     spos = 0;
                     icol--;
                     if (icol == 0){
-                        icol = nclmn;
+                        icol = j_col;
                         irow--;
                     }
                     if (irow == 0) icol = irow = 1;
@@ -1062,8 +1081,6 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
                 else{
                     ixa = ix + spos*wsym;
                     MoveArrow(theWindow, ixa0, iya0, ixa, iy);
-                    ixa0 = ixa;
-                    iya0 = iy;
                 }
                 break;
             case 23:              /* case XK_Right: */
@@ -1071,7 +1088,7 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
                 spos++;
                 if (spos > wbox){ // Move to next box on the right
                     icol++;
-                    if (icol > nclmn) icol = 1;
+                    if (icol > j_col) icol = 1;
                     if (icol == 1){
                         irow++;
                         if (irow > *nrows) irow = 1;
@@ -1083,8 +1100,6 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
                     ixa = ix + spos*wsym;
                     lvalue = 1;
                     MoveArrow(theWindow, ixa0, iya0, ixa, iy);
-                    ixa0 = ixa;
-                    iya0 = iy;
                 }
                 break;
             case 32:              /* case XK_Down: */
@@ -1104,24 +1119,23 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
             isym = spos = 0;
             if (icol > 1) isym = nsta[icol-1];
             ix = ixa = xshif + wsym*isym;
-            iy = iya = yshif + hsym + hbox*(irow + irow0 - 1);
+            iy = yshif + hsym + hbox*(irow + irow0 - 1);
             ind = (irow-1)*arrdim + isym;
             wbox = nwid[icol-1];
-            jbox = (irow - 1)*nclmn + icol;
+            jbox = (irow - 1)*j_col + icol;
             if (jbox_old != 0) WRITE_ theGCA, ixold, iyold, stri, nwid[icold-1]);
             strncpy(stri, array+ind, wbox);
             WRITE_ hghGC, ix, iy, stri, wbox);
-            MoveArrow(theWindow, ixa0, iya0, ixa, iya);
+            MoveArrow(theWindow, ixa0, iya0, ixa, iy);
             icold = icol;
-            inold = ind;
             ixold = ix;
             iyold = iy;
-            ixa0 = ixa;
-            iya0 = iya;
             jbox_old = jbox;
             lvalue = 0;
 	    XFlush(theDisplay);
         }
+        ixa0 = ixa;
+        iya0 = iy;
     } /* End table control */
 
     XDestroyWindow(theDisplay, theWindow);
