@@ -774,7 +774,7 @@ CASE(47) ! '/', '<ESC>'
 
 CASE(84) ! 'T'
     call TIMOUT
-    call TYPDSP(5, CHORDN, NTRUN, TTOUT, TOUT)
+    call TYPDSP(CHORDN, NTRUN, TTOUT, TOUT)
 
 CASE(32) ! 'space'
     KEY = 0

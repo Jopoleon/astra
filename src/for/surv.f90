@@ -480,7 +480,7 @@ return
 end subroutine ASKINT
 
 !---------------------------------------------------------------------
-subroutine ASTWIN(NB, IBOX, NAME, SCALE, SHIFT, MOD10, YMODE)
+subroutine ASTWIN(NB, IBOX, NAME, yscale, yshift, MOD10, YMODE)
 
 use parameter_inc, only: NRW
 use outcmn_inc, only: IP1, IP2, IP30, IP31, null_ch
@@ -492,7 +492,7 @@ integer, parameter :: NRW16=NRW+16, NRW96=NRW-128
 
 integer, intent(in) :: NB, YMODE, MOD10
 integer, intent(out) :: IBOX(*)
-double precision, intent(in) :: SCALE(*), SHIFT(*)
+double precision, intent(inout), dimension(NB) :: yscale, yshift
 character(len=4), intent(out) :: NAME(*)
 
 integer :: JMODE, JGR, j, j1, j2, jj, jn, jm, js, jb, jw, jsep, layoutBox
@@ -549,25 +549,25 @@ ask_key: do while(KEY == 'Y')
         endif
         js = jsep*(1 - jw + jw/2*2)
         jj = 1 + (jw - 1)/2
-        write(rows(jj)(js+1:js+4), '(1A4)') NAME(j)
-        write(rows(jj)(js+6:js+8), '(1I3)') jb
-        call num2str(SCALE(j), rows(jj)(js+10:js+15), 6)
-        call num2str(SHIFT(j), rows(jj)(js+17:js+22), 6)
+        write(rows(jj)(js+1:js+4), '(A4)') NAME(j)
+        write(rows(jj)(js+6:js+8), '(I3)') jb
+        write(rows(jj)(js+10:js+15), '(f6.1)') yscale(j)
+        write(rows(jj)(js+17:js+22), '(f6.1)') yshift(j)
         jn = max(jn, jj)
     enddo
 
     if (jm /= 0 ) then
         j2 = jn
         j1 = 2*jn + 1
-        do j = 1, NB
+        do j=1, NB
             if (IBOX(j) <= 0 ) then
                 jw = j1
                 js = jsep*(1 - jw + jw/2*2)
                 jj = 1 + (jw - 1)/2
-                write(rows(jj)(js+1: js+4), '(1A4)') NAME(j)
-                write(rows(jj)(js+6: js+8), '(1I3)') IBOX(j)
-                call num2str(SCALE(j), rows(jj)(js+10: js+15), 6)
-                call num2str(SHIFT(j), rows(jj)(js+17: js+22), 6)
+                write(rows(jj)(js+1: js+4), '(A4)') NAME(j)
+                write(rows(jj)(js+6: js+8), '(I3)') IBOX(j)
+                write(rows(jj)(js+10:js+15), '(f6.1)') yscale(j)
+                write(rows(jj)(js+17:js+22), '(f6.1)') yshift(j)
                 jn = max(jn, jj)
                 j1 = j1 + 1
             endif
@@ -592,10 +592,10 @@ ask_key: do while(KEY == 'Y')
             endif
             js = jsep*(1 - jw + jw/2*2)
             jj = 1 + (jw - 1)/2
-            write(NAME(j), '(1A4)', ERR=77) rows(jj)(js+1: js+4)
+            write(NAME(j), '(A4)', ERR=77) rows(jj)(js+1: js+4)
             read(rows(jj)(js+6 : js+8 ), *, ERR=77) IB(j)
-            read(rows(jj)(js+10: js+15), *, ERR=77) SCALE(j)
-            read(rows(jj)(js+17: js+22), *, ERR=77) SHIFT(j)
+            read(rows(jj)(js+10: js+15), *, ERR=77) yscale(j)
+            read(rows(jj)(js+17: js+22), *, ERR=77) yshift(j)
             jn = max(jn, jj)
         endif
     enddo
@@ -607,10 +607,10 @@ ask_key: do while(KEY == 'Y')
                 jw = j1
                 js = jsep*(1 - jw + jw/2*2)
                 jj = 1 + (jw - 1)/2
-                write(NAME(j), '(1A4)', ERR=77) rows(jj)(js+1: js+4)
+                write(NAME(j), '(A4)', ERR=77) rows(jj)(js+1: js+4)
                 read(rows(jj)(js+6: js+8), *, ERR=77) IB(j)
-                read(rows(jj)(js+10:js+15), *, ERR=77) SCALE(j)
-                read(rows(jj)(js+17:js+22), *, ERR=77) SHIFT(j)
+                read(rows(jj)(js+10:js+15), *, ERR=77) yscale(j)
+                read(rows(jj)(js+17:js+22), *, ERR=77) yshift(j)
                 jn = max(jn, jj)
                 j1 = j1 + 1
             endif
@@ -639,7 +639,7 @@ return
 end subroutine ASTWIN
 
 !---------------------------------------------------------------------
-subroutine ASXWIN(NB, IBOX, NAME, SCALE, YSHIFT, XL, XR, MOD10, YMODE)
+subroutine ASXWIN(NB, IBOX, NAME, yscale, yshift, r_min, r_max, MOD10, YMODE)
 
 use parameter_inc, only: NRW
 use const_inc, only: AB
@@ -651,7 +651,7 @@ integer, parameter :: NRW16=NRW+16, NRW96=NRW-128
 
 integer, intent(in) :: NB, YMODE, MOD10
 integer, intent(out) :: IBOX(*)
-double precision, intent(in), dimension(*) :: SCALE, YSHIFT, XL, XR
+double precision, intent(inout), dimension(NB) :: yscale, yshift, r_min, r_max
 character(len=4), intent(out) :: NAME(*)
 
 integer :: JMODE, JGR, j, j1, j2, jj, jn, jm, js, jb, jw, jsep, layoutBox
@@ -682,7 +682,7 @@ endif
 
 10 continue
 
-do j = 1, NRW
+do j=1, NRW
     write(rows(j)(1:80), '(79X, 1A1)') null_ch
 enddo
 
@@ -694,8 +694,8 @@ enddo
 
 jn = 0
 jm = 0
-call num2str(AB, ABNUM, 6)
-do j = 1, NB
+write(ABNUM, '(f6.3)') ABNUM
+do j=1, NB
     jb = IBOX(j)
     if (jb <= 0 ) then
         jm = jm + 1
@@ -708,15 +708,15 @@ do j = 1, NB
         if (YMODE == 0) jw = IP30(jb)
         if (YMODE  == -1) jw = IP31(jb)
     endif
-    YY = XR(j)
+    YY = r_max(j)
     js = jsep*(1 - jw + jw/2*2)
     jj = 1 + (jw - 1)/2
-    write(rows(jj)(js+1: js+4), '(1A4)') NAME(j)
-    write(rows(jj)(js+6: js+8), '(1I3)') jb
-    call num2str(SCALE(j) , rows(jj)(js+10: js+15), 6)
-    call num2str(YSHIFT(j), rows(jj)(js+17: js+22), 6)
-    call num2str(XL(j)    , rows(jj)(js+24: js+29), 6)
-    call num2str(XR(j)    , rows(jj)(js+31: js+36), 6)
+    write(rows(jj)(js+1: js+4), '(A4)') NAME(j)
+    write(rows(jj)(js+6: js+8), '(I3)') jb
+    write(rows(jj)(js+10: js+15), '(f6.1)') yscale(j)
+    write(rows(jj)(js+17: js+22), '(f6.1)') yshift(j)
+    write(rows(jj)(js+24: js+29), '(f6.3)') r_min(j)
+    write(rows(jj)(js+31: js+36), '(f6.3)') r_max(j)
     if (YY > AB) rows(jj)(js+31:js+36) = ABNUM
     jn = max(jn, jj)
 enddo
@@ -726,16 +726,16 @@ if (jm /= 0 ) then
     j1 = 2*jn+1
     do j = 1, NB
         if (IBOX(j) <= 0 ) then
-            YY = XR(j)
+            YY = r_max(j)
             jw = j1
             js = jsep*(1 - jw + jw/2*2)
             jj = 1 + (jw - 1)/2
-            write(rows(jj)(js+1: js+4), '(1A4)') NAME(j)
-            write(rows(jj)(js+6: js+8), '(1I3)') IBOX(j)
-            call num2str(SCALE(j) , rows(jj)(js+10: js+15), 6)
-            call num2str(YSHIFT(j), rows(jj)(js+17: js+22), 6)
-            call num2str(XL(j)    , rows(jj)(js+24: js+29), 6)
-            call num2str(XR(j)    , rows(jj)(js+31: js+36), 6)
+            write(rows(jj)(js+1: js+4), '(A4)') NAME(j)
+            write(rows(jj)(js+6: js+8), '(I3)') IBOX(j)
+            write(rows(jj)(js+10: js+15), '(f6.1)') yscale(j)
+            write(rows(jj)(js+17: js+22), '(f6.1)') yshift(j)
+            write(rows(jj)(js+24: js+29), '(f6.3)') r_min(j)
+            write(rows(jj)(js+31: js+36), '(f6.3)') r_max(j)
             if (YY > AB) rows(jj)(js+31: js+36) = ABNUM
             jn = max(jn, jj)
             j1 = j1 + 1
@@ -763,12 +763,12 @@ do j = 1, NB
         jj = 1 + (jw - 1)/2
         write(NAME(j), '(1A4)', ERR=77) rows(jj)(js+1: js+4)
         read(rows(jj)(js+6 : js+8), *, ERR=77) IB(j)
-        read(rows(jj)(js+10: js+15), *, ERR=77) SCALE(j)
-        read(rows(jj)(js+17: js+22), *, ERR=77) YSHIFT(j)
-        read(rows(jj)(js+24: js+29), *, ERR=77) XL(j)
+        read(rows(jj)(js+10: js+15), *, ERR=77) yscale(j)
+        read(rows(jj)(js+17: js+22), *, ERR=77) yshift(j)
+        read(rows(jj)(js+24: js+29), *, ERR=77) r_min(j)
         read(rows(jj)(js+31: js+36), *, ERR=77) YY
         if (rows(jj)(js+31: js+36) /= ABNUM) then
-            read(rows(jj)(js+31: js+36), *, ERR=77) XR(j)
+            read(rows(jj)(js+31: js+36), *, ERR=77) r_max(j)
         endif
         jn = max(jn, jj)
     endif
@@ -783,11 +783,11 @@ if (jm /= 0 ) then
             jj = 1 + (jw - 1)/2
             write(NAME(j), '(1A4)', ERR=77) rows(jj)(js+1: js+4)
             read(rows(jj)(js+6 : js+8), *, ERR=77) IB(j)
-            read(rows(jj)(js+10: js+15), *, ERR=77) SCALE(j)
-            read(rows(jj)(js+17: js+22), *, ERR=77) YSHIFT(j)
-            read(rows(jj)(js+24: js+29), *, ERR=77) XL(j)
+            read(rows(jj)(js+10: js+15), *, ERR=77) yscale(j)
+            read(rows(jj)(js+17: js+22), *, ERR=77) yshift(j)
+            read(rows(jj)(js+24: js+29), *, ERR=77) r_min(j)
             if  (rows(jj)(js+31: js+36) /= ABNUM) then
-                read(rows(jj)(js+31:js+36), *, ERR=77) XR(j)
+                read(rows(jj)(js+31:js+36), *, ERR=77) r_max(j)
             endif
             jn = max(jn, jj)
             j1 = j1 + 1
