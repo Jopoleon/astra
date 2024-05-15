@@ -108,7 +108,7 @@ void xaxis(INT_ *modex){
 }
 
 void xaxis_(INT_ *modex){ /* Change of X-coordinate for plots */
-    switch (*modex){
+    switch(*modex){
     case 0:
     case 1:
         MAMT[0] = "16*f(a)";
@@ -831,6 +831,7 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
         icol, isym, irow, ixa, iya, /* arrow (textcursor) position */
         spos=0,                     /* abs. and rel. position of symbol in table */
         lvalue,	                    /* 1 if box was changed, 0 otherwise */
+        fill_flag,
         wsym=8, hsym=13;            /* symbol width and height */
     int UpLeftx, UpLefty=10,        /* window corner location */
         nend, jbox, iret, ix, ix1, iy, i, j,
@@ -956,7 +957,6 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
 	ix = xshif + wsym*isym;
 	iy = yshif + hsym + hbox*(irow + irow0 - 1);
         WRITE_ hghGC, ix, iy, stri, wbox);
-        MoveArrow(theWindow, 0, iya0, ixa, iya);
     }
     if (ii == 0){    /* Select Upper Left box on entry */
         jbox = jbox_old = irow = icol = icold = ii = 1;
@@ -966,7 +966,6 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
 	iy = iyold = iya = iya0 = yshif + hsym + hbox*irow0;
         WRITE_ hghGC, ix, iy, array, wbox);
         strncpy(stri, array, wbox);
-        MoveArrow(theWindow, 0, iya0, ixa, iya);
     }
     XFlush(theDisplay);
 
@@ -991,60 +990,32 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
                     icol = ++j;
                     if (i < 0) break;
                 }
-
-Fillbox:
-                isym = spos = 0;
-                if (icol > 1) isym = nsta[icol-1];
-                ix = ixa = xshif + wsym*isym;
-                iy = iya = yshif + hsym + hbox*(irow + irow0 - 1);
-                ind = (irow-1)*arrdim + isym;
-                wbox = nwid[icol-1];
-                jbox = (irow - 1)*nclmn + icol;
-                if (jbox_old != 0) WRITE_ theGCA, ixold, iyold, stri, nwid[icold-1]);
-                strncpy(stri, array+ind, wbox);
-                WRITE_ hghGC, ix, iy, stri, wbox);
-                MoveArrow(theWindow, ixa0, iya0, ixa, iya);
-                icold = icol;
-                inold = ind;
-                ixold = ix;
-                iyold = iy;
-                ixa0 = ixa;
-                iya0 = iya;
-                jbox_old = jbox;
-                lvalue = 0;
+                fill_flag = 1;
             }
-            else{
-                if (jbox_old > 0){
-                    WRITE_ theGCA, ixold, iyold, array+inold, nwid[icold-1]);
-                    MoveArrow(theWindow, ixa0, iya0, 0, iy);
-		jbox_old = spos = 0;
-                }
-            }
-	    XFlush(theDisplay);
-	    continue;
         }
-
-        if (jbox_old > 0){
+        else{
+            fill_flag = 0;
             iret = GetKey(theEvent.xkey, stri, &spos);
-            if (iret == -1 && jbox_old > 0){       /* <Esc> */
+            switch(iret){
+            case -1:       /* <Esc> */
                 strncpy(array+ind, stri, wbox);
-                break; // Exit menu
-	    }
-	    if (iret == 0){
+                break;
+            case 0:
                 if (spos == 0){           /* 1-st entry in the box */
                     for (j=1; j<132; j++) stri[j] = ' ';
                     stri[wbox] = '\0';
                 }
-                if (++spos > wbox) spos = wbox;
+                spos++;
+                if (spos > wbox) spos = wbox;
                 lvalue = 1;
                 WRITE_ hghGC, ix, iy, stri, wbox);
                 ixa = ix + spos*wsym;
                 MoveArrow(theWindow, ixa0, iya0, ixa, iy);
                 ixa0 = ixa;
                 iya0 = iy;
-           }
-           if (iret == 1){             /* <Del> or <BackSpace> */
-	        spos--;
+                break;
+            case 1:             /* <Del> or <BackSpace> */
+                spos--;
                 if (spos >= 0){
                     strncpy(stri+spos, stri+spos+1, wbox-spos);
                     stri[wbox-1] = ' ';
@@ -1058,46 +1029,46 @@ Fillbox:
                 MoveArrow(theWindow, ixa0, iya0, ixa, iy);
                 ixa0 = ixa;
                 iya0 = iy;
-            }
-            if ((iret == 2 || iret == 3) && jbox_old > 0){  /* <Tab> or <Ret> */
+                break;
+            case 2: case 3:  /* <Tab> or <Ret> */
                 icol++;
                 if (icol > nclmn) icol = 1;
                 if (icol == 1){
                     irow++;
                     if (irow > *nrows) irow = 1;
-		}
+                }
                 if (spos != 0) strncpy(array+ind, stri, wbox);
-                goto Fillbox;
-            }
-            if (iret == 12){              /* case XK_Up: */
-	        irow--;
+                fill_flag = 1;
+                break;
+            case 12:              /* case XK_Up: */
+                irow--;
                 if (irow == 0) irow = *nrows;
                 if (spos != 0 ) strncpy(array+ind, stri, wbox);
-                goto Fillbox;
-            }
-            if (iret == 21){              /* case XK_Left: */
-	        spos--;
+                fill_flag = 1;
+                break;
+            case 21:              /* case XK_Left: */
+                spos--;
                 if (spos < 0){
                     spos = 0;
-		    icol--;
+                    icol--;
                     if (icol == 0){
                         icol = nclmn;
                         irow--;
                     }
                     if (irow == 0) icol = irow = 1;
                     if (lvalue != 0) strncpy(array+ind, stri, wbox);
-                    goto Fillbox;
+                    fill_flag = 1;
                 }
-		else{
+                else{
                     ixa = ix + spos*wsym;
                     MoveArrow(theWindow, ixa0, iya0, ixa, iy);
                     ixa0 = ixa;
                     iya0 = iy;
-		}
-            }
-            if (iret == 23){              /* case XK_Right: */
+                }
+                break;
+            case 23:              /* case XK_Right: */
                 if (spos == 0 && lvalue == 0) strncpy(stri, array+ind, wbox);
-		spos++;
+                spos++;
                 if (spos > wbox){ // Move to next box on the right
                     icol++;
                     if (icol > nclmn) icol = 1;
@@ -1106,9 +1077,9 @@ Fillbox:
                         if (irow > *nrows) irow = 1;
                     }
                     if (spos != 0) strncpy(array+ind, stri, wbox);
-                    goto Fillbox;
-		}
-		else{
+                    fill_flag = 1;
+                }
+                else{
                     ixa = ix + spos*wsym;
                     lvalue = 1;
                     MoveArrow(theWindow, ixa0, iya0, ixa, iy);
@@ -1116,25 +1087,46 @@ Fillbox:
                     iya0 = iy;
                 }
                 break;
-            }
-            if (iret == 32){              /* case XK_Down: */
+            case 32:              /* case XK_Down: */
                 irow++;
                 if (irow > *nrows) irow = 1;
                 if (spos != 0) strncpy(array+ind, stri, wbox);
-                goto Fillbox;
+                fill_flag = 1;
+                break;
+            default:
+                break;
             }
+            if (iret == -1) break; // Esc -> destroy child window
         }
-        if (GetEsc(theEvent.xkey)) break;
+
+// Fill box
+        if (fill_flag == 1){
+            isym = spos = 0;
+            if (icol > 1) isym = nsta[icol-1];
+            ix = ixa = xshif + wsym*isym;
+            iy = iya = yshif + hsym + hbox*(irow + irow0 - 1);
+            ind = (irow-1)*arrdim + isym;
+            wbox = nwid[icol-1];
+            jbox = (irow - 1)*nclmn + icol;
+            if (jbox_old != 0) WRITE_ theGCA, ixold, iyold, stri, nwid[icold-1]);
+            strncpy(stri, array+ind, wbox);
+            WRITE_ hghGC, ix, iy, stri, wbox);
+            MoveArrow(theWindow, ixa0, iya0, ixa, iya);
+            icold = icol;
+            inold = ind;
+            ixold = ix;
+            iyold = iy;
+            ixa0 = ixa;
+            iya0 = iya;
+            jbox_old = jbox;
+            lvalue = 0;
+	    XFlush(theDisplay);
+        }
     } /* End table control */
 
-    XWarpPointer(theDisplay, None, theRootWindow, 0, 0, 0, 0, Kevent.xcur, Kevent.ycur);
-    XFlush(theDisplay);
     XDestroyWindow(theDisplay, theWindow);
     XFlush(theDisplay);
     ibcursor = -1;
-    for (j=0; j<10; j++){
-        printf("%s\n", array+j*arrdim);
-    }
     return 0;
 }
 
