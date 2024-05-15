@@ -69,7 +69,7 @@ if (TASK(1: 3) /= 'BGD') then
     j = XOUT + 0.49
 
     call taskmenu(j) ! Task menu
-    call textbf(0, Xwin_Width-104, RUNID, 80) ! Task ID
+    call textbf(0, Xwin_height-int(104*resizeGraph), RUNID, 80) ! Task ID
 
     CHORDN = LINEAV()
     call up_label(CHORDN, 1./MU(NA))

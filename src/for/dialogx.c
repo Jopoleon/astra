@@ -160,7 +160,7 @@ void taskmenu_(INT_ *modex){
     Change_Color(theGCA, AstraColorNum[2], AstraColorNum[3]);
     ny = XWH - 128.*height_ratio;
     XDrawLine(theDisplay, theRootWindow, theGCA, 0, ny, XWW-1, ny);
-    ny = XWH - 110.*height_ratio;
+    ny = XWH - 112.*height_ratio;
     XDrawLine(theDisplay, theRootWindow, theGCA, 0, ny  , XWW-1, ny);
     XDrawLine(theDisplay, theRootWindow, theGCA, 0, ny+1, XWW-1, ny+1);
     for (i=0; i<n_buttons; i++){

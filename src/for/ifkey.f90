@@ -40,7 +40,7 @@ use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, XLINE1, &
    NA, NB1, NA1, NAB, NUF, LEQ, NBND, TIME, TAU, TINIT, TSCALE, &
    TSTART, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
    BTOR, IPL, CONSTF, DEVAR, DELOUT, XFLAG
-use outcmn_inc, only: Black, Blue, WarningColor, &
+use outcmn_inc, only: Black, Blue, WarningColor, resizeGraph, &
     active_tab, curves_per_frame, coltab, &
     frame_hei, DXLET, DYLET, MOD10, LTOUT, NARRX, IPOUT, MODEY, Xwin_height, &
     NWINDX, NWIND1, NWIND3, NWIND4, NWIND7, &
@@ -472,9 +472,6 @@ CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
         if (MOD10 == 7) call NEGA(IM, NTRUN, TOUT)
         call set_frame(IM, XSC0, XSC)
         call set_plot(IM, XSC0, XSC)
-        j = XOUT + 0.49
-        call TaskMenu(j)
-        call textbf(0, Xwin_height - 104, RUNID, 80) ! Task ID
     endif
     call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
     if (IFKL == KEY) return
@@ -969,7 +966,7 @@ call set_plot(IM, XSC0, XSC)
 
 j = XOUT + 0.49
 call TaskMenu(j)
-call textbf(0, Xwin_height - int(104*resizeGraph), RUNID, 80) ! Task ID
+call textbf(0, Xwin_height - int(104.*resizeGraph), RUNID, 80) ! Task ID
 call RADOUT
 call TIMOUT
 
@@ -1129,7 +1126,6 @@ read_loop: do
             jxout = 0
 	    YA = 0.
             do j=1, NP1
-                write(*, *) 'GIT ifkey', frame_hei, canv_hei        
                 YX = YWA(j)/YWA(NP1)
                 if (YX > YL .and. YX < YR) then
                     jxout = jxout + 1

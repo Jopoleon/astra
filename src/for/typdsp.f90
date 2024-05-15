@@ -165,7 +165,8 @@ subroutine PUTXY(IX, IY, ITIMES, TTOUT, TOUT)
 !---------------------------------------------------------------------
 
 use parameter_inc, only: NRW
-use outcmn_inc, only: Xwin_height, Xwin_width, MOD10, IY0, IYM, scale_bnd, canv_hei, canv_wid, &
+use outcmn_inc, only: Xwin_height, Xwin_width, MOD10, IY0, IYM, &
+    scale_bnd, canv_hei, canv_wid, resizeGraph, &
     IDT, IDX, MODEY, DXLET, DYLET, frame_hei, LTOUT, NTOUT, active_tab, &
     NWIND3, NAMET, White, Red, Blue, nx_canvas, ny_canvas
 use status_inc, only: AMETR, SHIF, ELON, TRIA, FP, RHO
@@ -185,7 +186,7 @@ double precision :: DX, DY, YX, YX1, YY, YY1, YA, YA1, YD, YE, YT, &
 character(len=80) :: STRI
 
 JN0 = 0
-JLR = Xwin_height - 125
+JLR = Xwin_height - int(125*resizeGraph)
 ! DLINER_ theGCA, 0, Xwin_height-128, Xwin_width-1, Xwin_height-128);
 ! DLINER_ theGCA, 0, Xwin_height-110, Xwin_width-1, Xwin_height-110);
 ! DLINER_ theGCA, 0, Xwin_height-109, Xwin_width-1, Xwin_height-109);
