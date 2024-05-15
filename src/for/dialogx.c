@@ -38,15 +38,15 @@ static int iact=-1, ibcursor=-1;
 
 #define BTyof 0     /*button text vertical offset */
 #define BTxof 0     /*button text horizontal offset */
-#define BVers 4     /*button vertical separation */
-#define NMRMB 36    /*main Review menu table */
-int nmamb = NMRMB;  /*main Astra  menu table */
-char *MAMT[NMRMB];  /* Dimension is defined as */
-char MAMK[NMRMB];   /* max(nmamb,NMRMB) */
+#define nbuttons_max 36
+
+int n_buttons=32;  /*main Astra  menu table */
+char *MAMT[nbuttons_max];
+char MAMK[nbuttons_max];
 double width_ratio, height_ratio;
 #define Button struct BUTTON
 Button {int mexl, meyd, mexr, meyu, melen; char keysym, *mename;};
-Button MAMB[NMRMB];
+Button MAMB[nbuttons_max];
 #define NDW 12      /* number of dialog windows */
 char *DWTitle[NDW] = {
     "Variable control", /*No. 1  "V"*/
@@ -80,7 +80,7 @@ int DWnamlen[NDW] = {
 struct {int xcur, ycur;} Kevent;
 
 void Change_Color(GC, int, int);
-void Menu_table(int, int, int, char[], char*[], Button[], int);
+void Menu_table(int, int, int, char[], char*[], Button[]);
 void Put_button(Button, GC);
 void MoveArrow(Window, int, int, int, int);
 void changeGCcolor(GC, INT_*);
@@ -129,23 +129,22 @@ void xaxis_(INT_ *modex){ /* Change of X-coordinate for plots */
 void taskmenu_(INT_ *modex){
 /* Draw menu table in Astra interactive mode, at the bottom of the main graphic window */
   int Xx, Xy, i, ixx=8, dx=5, iyy, ny;
-    int BHors=5;                /*button horizontal separation */
     int Wx, Wy;
     unsigned int Ww, Wh, Wb, Wd;
     Window theRW;
-    const char *BUTEXT[NMRMB] =
-        {"16*f(a)", "8*f(a)", "Refresh", "2*f(a,t)",
-         "8*f(t)", "User graph", "2*f(R,t)", "Phase space",
-         "8*f(psi)", "Equil", "Next", "Back",
+    const char *BUTEXT[nbuttons_max] =
+        {"16*f(a)", "8*f(a)", "8*f(psi)", "2*f(a,t)",
+         "2*f(R,t)", "8*f(t)", "Equil", "Phase space",
+         "Refresh", "User graph", "Next", "Back",
          "Scales", "Variables", "Type data", "Port PS",
          "Windows", "Constants", "Save log" , "Land PS",
          "Layout", "Grids", "Write data", "U-files",
          "Style", "Type model", "What X-axis", "Y-shift",
          "Run", "Step", "Quit", "Help"};
-    char BUTKEY[NMRMB] = {
-        '1', '2', 'R', '4',
-        '6', '9', '5', '7',
-        '3', '8', 'N', 'B',
+    char BUTKEY[nbuttons_max] = {
+        '1', '2', '3', '4',
+        '5', '6', '8', '7',
+        'R', '9', 'N', 'B',
         'S', 'V', 'T', 'G',
         'W', 'C', 'I', 'Q',
         'M', 'D', 'F', 'U',
@@ -156,7 +155,7 @@ void taskmenu_(INT_ *modex){
 
     width_ratio  = (double)Ww/660.;
     height_ratio = (double)Wh/550.;
-    nmamb = 32;
+ 
 /* Draw separating lines between plots and menu */
     Change_Color(theGCA, AstraColorNum[2], AstraColorNum[3]);
     ny = XWH - 128.*height_ratio;
@@ -164,14 +163,14 @@ void taskmenu_(INT_ *modex){
     ny = XWH - 110.*height_ratio;
     XDrawLine(theDisplay, theRootWindow, theGCA, 0, ny  , XWW-1, ny);
     XDrawLine(theDisplay, theRootWindow, theGCA, 0, ny+1, XWW-1, ny+1);
-    for (i=0; i<nmamb; i++){
+    for (i=0; i<n_buttons; i++){
         MAMT[i] = BUTEXT[i];
         MAMK[i] = BUTKEY[i];
     }
     xaxis(modex);
     iyy = XWH - 74*height_ratio;
     for (i=0; i<8; i++){
-        Menu_table(ixx + i*(XWW/8+dx), iyy, 4, MAMK+4*i, MAMT+4*i, MAMB+4*i, BHors);
+        Menu_table(ixx + i*(XWW/8+dx), iyy, 4, MAMK+4*i, MAMT+4*i, MAMB+4*i);
     }
     if (ibcursor >= 0) Put_button(MAMB[ibcursor], hgh_menuGC);
 /* Menu titles */
@@ -190,8 +189,8 @@ void taskmenu_(INT_ *modex){
 }
 
 /**********************************************************************/
-void Menu_table(int xm, int ym, int nbutt, char mek[], char *met[], Button butt[], int BHors){
-    int i, leng, lenm, font_sym_width, font_sym_height, xwid;
+void Menu_table(int xm, int ym, int nbutt, char mek[], char *met[], Button butt[]){
+  int i, leng, lenm, font_sym_width, font_sym_height, xwid, button_vert_sep=4, button_hor_sep=5;
     double F1sw=7.5, F1sh=13.;      /*font 1 symbol width, height */
 
     lenm = 0;
@@ -202,12 +201,12 @@ void Menu_table(int xm, int ym, int nbutt, char mek[], char *met[], Button butt[
 
     font_sym_width  = width_ratio *F1sw;
     font_sym_height = height_ratio*F1sh;
-    xwid = lenm*font_sym_width + 2*BTxof + BHors;
+    xwid = lenm*font_sym_width + 2*BTxof + button_hor_sep;
     for (i=0; i<nbutt; i++){
         leng = strlen(met[i]);
         butt[i].mexl = xm;
         butt[i].mexr = butt[i].mexl + xwid;
-        butt[i].meyu = ym + i*(font_sym_height + 2*BTyof + 1+BVers);
+        butt[i].meyu = ym + i*(font_sym_height + 2*BTyof + 1+button_vert_sep);
         butt[i].meyd = butt[i].meyu + font_sym_height + 2*BTyof + 1;
         butt[i].melen  = leng;
         butt[i].mename = met[i];
@@ -292,7 +291,7 @@ INT_ Root_window_event(INT_ *key, int ii){
         Kevent.xcur = theEvent.xbutton.x;
         Kevent.ycur = theEvent.xbutton.y;
         i = Cursor_in_Box();
-        if (i >= 0 && i <= nmamb) *key = (int)MAMK[i];
+        if (i >= 0 && i <= n_buttons) *key = (int)MAMK[i];
         if (*key == '\033'){
             *key = 'c';
             return 1; /* <Ctrl>+C */
@@ -519,7 +518,7 @@ int Cursor_in_Box(){
    Makes use of global structures
    Button MAMB[NMRMB];    Event Kevent; */
     int i;
-    for (i=0; i<nmamb; i++){
+    for (i=0; i<n_buttons; i++){
         if (Kevent.xcur >= MAMB[i].mexl && Kevent.xcur <= MAMB[i].mexr &&
             Kevent.ycur >= MAMB[i].meyu && Kevent.ycur <= MAMB[i].meyd){
             return i;
@@ -1179,7 +1178,7 @@ void ProcessRootWindowEvent(XEvent *theEvent){
         Kevent.xcur = theEvent->xbutton.x;
         Kevent.ycur = theEvent->xbutton.y;
         k = Cursor_in_Box();         /* Returns box number */
-        if (k >= 0 && k <= nmamb) j = (int)MAMK[k];
+        if (k >= 0 && k <= n_buttons) j = (int)MAMK[k];
         Call_ifkey(j);
         j = 0;
         break;
