@@ -80,7 +80,7 @@ int DWnamlen[NDW] = {
 struct {int xcur, ycur;} Kevent;
 
 void Change_Color(GC, int, int);
-void Menu_Column(int, int, int, char[], char*[], Button[]);
+void Menu_Column(int, int, int, char*[], Button[]);
 void Put_button(Button, GC);
 void MoveArrow(Window, int, int, int, int);
 void changeGCcolor(GC, INT_*);
@@ -136,17 +136,17 @@ void taskmenu_(INT_ *modex){
         {"16*f(a)", "8*f(a)", "8*f(psi)", "2*f(a,t)",
          "2*f(R,t)", "8*f(t)", "Equil", "Layout",
          "Refresh", "Style", "Next", "Back",
-         "Variables", "Constants", "Grids", "Type data",
+         "Variables", "Constants", "Grids", "Get X-axis",
          "Save log", "U-files", "Land PS", "Port PS",
-         "Write data", "Type model", "Get X-axis", "Test",
+         "Write data", "Type model", "Type data", "Test",
          "Run", "Step", "Quit", "Help"};
     char BUTKEY[nbuttons_max] = {
         '1', '2', '3', '4',
         '5', '6', '8', 'M',
         'R', '.', 'N', 'B',
-        'V', 'C', 'D', 'T',
+        'V', 'C', 'D', 'X',
         'I', 'U', 'Q', 'G',
-        'F', 'L', 'X', 'S',
+        'F', 'L', 'T', 'S',
         '\015', '\040', '\057', 'H'};
 
     XGetGeometry(theDisplay,theRootWindow, &theRW, &Wx, &Wy, &Ww, &Wh, &Wb, &Wd);
@@ -169,7 +169,7 @@ void taskmenu_(INT_ *modex){
     iyy = XWH - 74*height_ratio;
     ratio = (double)(XWW*4)/(double)n_buttons;
     for (i=0; i<n_buttons/4; i++){
-        Menu_Column(ixx + i*ratio, iyy, 4, MAMK+4*i, MAMT+4*i, MAMB+4*i);
+        Menu_Column(ixx + i*ratio, iyy, 4, MAMT+4*i, MAMB+4*i);
     }
     if (ibcursor >= 0) Put_button(MAMB[ibcursor], hgh_menuGC);
 /* Menu titles */
@@ -188,7 +188,7 @@ void taskmenu_(INT_ *modex){
 }
 
 /**********************************************************************/
-void Menu_Column(int xm, int ym, int nbutt, char mek[], char *met[], Button butt[]){
+void Menu_Column(int xm, int ym, int nbutt, char *met[], Button butt[]){
   int i, lenm=11, leng, font_sym_width, font_sym_height, xwid, button_vert_sep=4, button_hor_sep=1;
     double F1sw=7.7, F1sh=13.;      /*font 1 symbol width, height */
 
@@ -203,7 +203,6 @@ void Menu_Column(int xm, int ym, int nbutt, char mek[], char *met[], Button butt
         butt[i].meyd = butt[i].meyu + font_sym_height + 1;
         butt[i].melen  = leng;
         butt[i].mename = met[i];
-        butt[i].keysym = mek[i];
         Put_button(butt[i], theGCA);
     }
 }
