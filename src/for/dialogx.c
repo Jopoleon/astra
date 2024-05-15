@@ -89,7 +89,7 @@ void stcopy(char*, char*, int);
 int isascii(int);
 int isprint(int);
 int isalnum(int);
-int nextevent(INT_*, INT_*, INT_*, int, Button[], char[], char*[]);
+int nextevent(INT_*, INT_*, INT_*, Button[], char[]);
 int asklis_(INT_*, double*, char[], INT_*);
 int askcol_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
 int layoutbox_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
@@ -133,12 +133,12 @@ void taskmenu_(INT_ *modex){
     int Wx, Wy;
     unsigned int Ww, Wh, Wb, Wd;
     Window theRW;
-    char *BUTEXT[NMRMB] =
+    const char *BUTEXT[NMRMB] =
         {"16*f(a)", "8*f(a)", "Refresh", "2*f(a,t)",
          "8*f(t)", "User graph", "2*f(R,t)", "Phase space",
          "8*f(psi)", "Equil", "Next", "Back",
-         "Scales", "Variables", "Type data", "Port_PS",
-         "Windows", "Constants", "Save log" , "Land_PS",
+         "Scales", "Variables", "Type data", "Port PS",
+         "Windows", "Constants", "Save log" , "Land PS",
          "Layout", "Grids", "Write data", "U-files",
          "Style", "Type model", "What X-axis", "Y-shift",
          "Run", "Step", "Quit", "Help"};
@@ -361,16 +361,15 @@ void GetRWgeometry(int *XRW, int *YRW){
 INT_ waitevent_(INT_ *theKey, INT_ *xCursor, INT_ *yCursor){
 /* Waiting for events from Astra in WAIT mode & and from dialog windows */
     INT_ i;
-    i = nextevent(theKey, xCursor, yCursor, nmamb, MAMB, MAMK, MAMT);
+    i = nextevent(theKey, xCursor, yCursor, MAMB, MAMK);
     while (i == 0 && *theKey == 0 ){
-        i = nextevent(theKey, xCursor, yCursor, nmamb, MAMB, MAMK, MAMT);
+        i = nextevent(theKey, xCursor, yCursor, MAMB, MAMK);
     }
     return i;
 }
 
 /*********************** Waiting events *******************************/
-int nextevent(INT_ *theKey, INT_ *xCursor, INT_ *yCursor, int nmbt,
-    Button mbb[], char mbk[], char *mbt[]){
+int nextevent(INT_ *theKey, INT_ *xCursor, INT_ *yCursor, Button mbb[], char mbk[]){
 /* ibcursor -     current box # or -1
    iact     - highlighted box # or -1 */
     XEvent theEvent;
