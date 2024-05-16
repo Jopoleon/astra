@@ -47,35 +47,6 @@ double width_ratio, height_ratio;
 #define Button struct BUTTON
 Button {int xleft, yup, xright, ydown, length; char *label;};
 Button MAMB[nbuttons_max];
-#define NDW 12      /* number of dialog windows */
-char *DWTitle[NDW] = {
-    "Variable control", /*No. 1  "V"*/
-    "Constant control", /*No. 2  "C"*/
-    "Times & Grids",    /*No. 3  "D"*/
-    "Window control",   /*No. 4  "W"*/
-    "Scale control",    /*No. 5  "S"*/
-    "Y-shift",          /*No. 6  "Y"*/
-    "Time interval",    /*No. 7  "M" in the mode 7*/
-    "Mark times:  < 0 - skip,  0 - dim,  > 0 - color #", /*"M" modes 4,5*/
-    "Equilibrium control",   /*No. 9  call from metric */
-    "1D_Ufile",              /*No. 10 Not used */
-    "2D_Ufile",              /*No. 11 Not used */
-    "NBI const for beam No", /*No. 12 call from nbiext */
-};
-int DWnamlen[NDW] = {
-    6, /*No. 1  PRNAME*/
-    6, /*No. 2  CFNAME*/
-    6, /*No. 3  DTNAME*/
-    4, /*No. 4  NAME[TR]*/
-    4, /*No. 5  NAME[TR]*/
-    4, /*No. 6  NAME[TR]*/
-    6, /*No. 7  NAM7*/
-    6, /*No. 8  NAMEP*/
-    6, /*No. 9  DTNAME*/
-    6, /*No. 10 1D_Ufi*/
-    6, /*No. 11 2D_Ufi*/
-    6, /*No. 12 NBI control*/
-};
 
 struct {int xcur, ycur;} Kevent;
 
@@ -90,7 +61,7 @@ int isascii(int);
 int isprint(int);
 int isalnum(int);
 int nextevent(INT_*, INT_*, INT_*, Button[], char[]);
-int menubox_(INT_*, double*, char[], INT_*, INT_*);
+int menubox_(char[], INT_*, double*, char[], INT_*, INT_*, INT_*);
 int nbibox_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
 int layoutbox_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
 int ufilebox_(INT_*, char[], char[], char[]);
@@ -533,7 +504,8 @@ void mvcursor_(INT_ *key, INT_ *ix, INT_ *iy){
 }
 
 /**********************************************************************/
-int menubox_(INT_ *nofbox, double *array, char varNames[], INT_ *id, INT_ *editable){
+int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
+	     INT_* nameLength, INT_ *id, INT_ *editable){
     Window theWindow;
     XEvent theEvent;
     double valn;
@@ -550,13 +522,10 @@ int menubox_(INT_ *nofbox, double *array, char varNames[], INT_ *id, INT_ *edita
         lline, xButton, yButton, i, ii=-1, ind, ind1, ind2, esc_flag,
         ihelp, selalb=0, icol, dcol, irow, drow;
     float param;
-    char value[10], ovalue[10], stri[10], vsym='=', title[70],
+    char value[10], ovalue[10], stri[10], vsym='=',
         grep_str[128], var_name[10], legend[128];
 
-    i = *id - 1;
-    namlen = DWnamlen[i];
-    strcpy(title, *(DWTitle+i));
-
+    namlen = *nameLength;
     lline = lname + lvalue + 1;
     if ((lvalue == 0) || (lname == 0)) lline = lname + lvalue;
     hbox = hsym + 3;
@@ -581,7 +550,7 @@ int menubox_(INT_ *nofbox, double *array, char varNames[], INT_ *id, INT_ *edita
     if (i > UpLeftx) UpLeftx = i;
     i = YRW + Height + 30;
     if (i > theHeight) UpLefty = theHeight - Height - 30;
-    theWindow = Open_Window (UpLeftx, UpLefty, Width, Height, 0, title, 0,
+    theWindow = Open_Window(UpLeftx, UpLefty, Width, Height, 0, title, 0,
         RootWindow(theDisplay, theScreen), theMenuCursor);
     XSelectInput (theDisplay, theWindow, POLL_EV_MASK);
     ihelp = 0;

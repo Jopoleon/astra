@@ -471,7 +471,7 @@ double precision :: VAR(NRW)
 do J=1, NV
     VAR(J) = NVAR(J)
 enddo
-call MENUBOX(NV, VAR, NAME, 4, 1)
+call MENUTABLE(NV, VAR, NAME, 4)
 do J=1, NV
     NVAR(J) = VAR(J)
 enddo
