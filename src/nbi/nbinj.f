@@ -894,7 +894,7 @@ C           ---------1---------2---------3---------4---------5---
      +	      "Orb_av|Penc.#"//char(0)         ! CBMS1,CBMS2
 	STR = "NBI configuration file: "//FILNAM(1:lnbinp)//char(0)
         j = len(ADATA(1))
-	call	ASKCOL(STR,STRI,ADATA,j,NBS,0,0)
+	call	NBIBOX(STR,STRI,ADATA,j,NBS,0,0)
 C        do	jj=1,NBS
 C           if (ADATA(jj)(1:72) .ne. BDATA(jj)(1:72))	WRI = .TRUE.
 C        enddo
@@ -912,7 +912,7 @@ C	STR = "NB parameters"//char(0)
         j = len(CDATA(1))
 C        call	sleep(1)
 C        call	IFKEY(82)
-	call	ASKCOL(STR,STRI,CDATA,j,NBS,0,0)
+	call	NBIBOX(STR,STRI,CDATA,j,NBS,0,0)
 C        do	jj=1,NBS
 C           if (CDATA(jj)(1:72) .ne. BDATA(jj)(1:72))	WRI = .TRUE.
 C        enddo

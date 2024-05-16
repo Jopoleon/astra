@@ -90,8 +90,8 @@ int isascii(int);
 int isprint(int);
 int isalnum(int);
 int nextevent(INT_*, INT_*, INT_*, Button[], char[]);
-int menubox_(INT_*, double*, char[], INT_*);
-int askcol_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
+int menubox_(INT_*, double*, char[], INT_*, INT_*);
+int nbibox_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
 int layoutbox_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
 int ufilebox_(INT_*, char[], char[], char[]);
 int FindBoxNum(int, int, int, int, int, int);
@@ -533,7 +533,7 @@ void mvcursor_(INT_ *key, INT_ *ix, INT_ *iy){
 }
 
 /**********************************************************************/
-int menubox_(INT_ *nofbox, double *array, char theNames[], INT_ *id){
+int menubox_(INT_ *nofbox, double *array, char varNames[], INT_ *id, INT_ *editable){
     Window theWindow;
     XEvent theEvent;
     double valn;
@@ -548,10 +548,10 @@ int menubox_(INT_ *nofbox, double *array, char theNames[], INT_ *id){
         ixa0=0, iya0=0, ixa, iya, /* arrow (textcursor) position */
         namlen, jbox, iret, oldparam, ixold, iyold,
         lline, xButton, yButton, i, ii=-1, ind, ind1, ind2, esc_flag,
-        ihelp, selalb=0,  editable, icol, dcol, irow, drow;
+        ihelp, selalb=0, icol, dcol, irow, drow;
     float param;
     char value[10], ovalue[10], stri[10], vsym='=', title[70],
-        str128[128], theName[10], legend[128];
+        grep_str[128], var_name[10], legend[128];
 
     i = *id - 1;
     namlen = DWnamlen[i];
@@ -564,13 +564,11 @@ int menubox_(INT_ *nofbox, double *array, char theNames[], INT_ *id){
     vpos = wsym*(lname + 1);
     selalb = 1;
     nparam = *nofbox;
-    editable = 1;
 
-    if (*id == 3) editable = 1;
     Width = 2*xshif + nclmn*wbox - wsym;
     Height= 2*yshif + ((nparam - 1)/nclmn + 2)*hbox;
     jbox = 1;
-    if (editable == 0) jbox = 0;
+    if (*editable == 0) jbox = 0;
     if (*id == 8){
         jbox = 0;
         selalb = -1;
@@ -595,7 +593,7 @@ int menubox_(INT_ *nofbox, double *array, char theNames[], INT_ *id){
         iy = hbox*((i - 1)/nclmn) + yshif;
         if (lname){
             ind = (i - 1)*namlen;
-            WRITE_ theGCA, ix, hsym+iy, theNames+ind, namlen);
+            WRITE_ theGCA, ix, hsym+iy, varNames+ind, namlen);
         }
         if (lname*lvalue){
             WRITE_ theGCA, ix+vpos-wsym, hsym+iy, &vsym, 1);
@@ -622,7 +620,7 @@ int menubox_(INT_ *nofbox, double *array, char theNames[], INT_ *id){
     i--;
     LINGCA_ 0, i, Width, i);
     WRITE_ hghGC, xshif, Height-3, "OK",2);
-    if (jbox == 0 && editable == 0) MVPOINTER_ xshif+5, Height-5);
+    if (jbox == 0 && *editable == 0) MVPOINTER_ xshif+5, Height-5);
     if (*id == 8) MVPOINTER_ xshif+Width-50, Height-5);
     i = nclmn*wbox/wsym - 5;
     ind = 50;
@@ -638,9 +636,9 @@ int menubox_(INT_ *nofbox, double *array, char theNames[], INT_ *id){
     }
     Change_Color(hintGC, 42, 0);
     ind = strlen(legend);
-    if (editable == 1) WRITE_ hintGC, xshif+2*wsym, Height-3, legend, ind);
+    if (*editable == 1) WRITE_ hintGC, xshif+2*wsym, Height-3, legend, ind);
     Change_Color(hintGC, 1, 0);
-    if (editable == 0) WRITE_ theGCA, xshif+4*wsym, Height-3,
+    if (*editable == 0) WRITE_ theGCA, xshif+4*wsym, Height-3,
         "    Information table.   No changes permitted.     ", ind);
     if (*id == 8){
         if (selalb ==  0) WRITE_ hintGC, xshif+8+(i-6)*wsym, Height-3,
@@ -653,14 +651,14 @@ int menubox_(INT_ *nofbox, double *array, char theNames[], INT_ *id){
     while(1){
         XNextEvent(theDisplay, &theEvent);
         if (theEvent.xany.window == theRootWindow){
-            ProcessRootWindowEvent (&theEvent);
+            ProcessRootWindowEvent(&theEvent);
             continue;
         }
         if (theEvent.type == ButtonPress){
             xButton = theEvent.xbutton.x;
             yButton = theEvent.xbutton.y;
             ind  = FindBoxNum(xButton-xshif, yButton-Height+hbox+1, 4*wsym, hbox, 1, 1);
-	    if (editable){
+	    if (*editable == 1){
                 if (jbox){
                     oldparam = jbox;
                     ixold = ix;
@@ -691,9 +689,9 @@ int menubox_(INT_ *nofbox, double *array, char theNames[], INT_ *id){
                 if (lname){
                     ind1 = (oldparam - 1)*namlen;
                     ind2 = (jbox - 1)*namlen;
-                    WRITE_ theGCA, ixold, hsym+iyold, theNames+ind1, namlen);
+                    WRITE_ theGCA, ixold, hsym+iyold, varNames+ind1, namlen);
                     Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
-                    WRITE_ hghGC, ix, hsym+iy, theNames+ind2, namlen);
+                    WRITE_ hghGC, ix, hsym+iy, varNames+ind2, namlen);
                     Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
                 }
                 if (lname*lvalue){
@@ -734,7 +732,6 @@ int menubox_(INT_ *nofbox, double *array, char theNames[], INT_ *id){
             iret = GetValue(theEvent.xkey, stri, lvalue, "0123456789.-+eE", &spos);
         }
 
-        if (editable == 0) break;
         if (spos >= 0){
             ixa = ix + vpos + spos*wsym;
             iya = iy + hsym + 2;
@@ -753,37 +750,37 @@ int menubox_(INT_ *nofbox, double *array, char theNames[], INT_ *id){
         if (iret == -2){ // Question mark: document usage of a selected variable
             for (i=0; i<namlen; i++){
                 ii = namlen-i;
-                strncpy(theName, theNames+(jbox-1)*namlen+i, ii);
-                if (theName[0] != ' ') break;
+                strncpy(var_name, varNames+(jbox-1)*namlen+i, ii);
+                if (var_name[0] != ' ') break;
             }
-            theName[ii] = '\0';
+            var_name[ii] = '\0';
             ii--;
-            while (theName[ii] == ' '){
-                theName[ii] = '\0';
+            while (var_name[ii] == ' '){
+                var_name[ii] = '\0';
                 ii--;
             }
             ii++;
 
             switch(*id){
             case 1:        // Variables
-                strcpy (str128, "grep -i \"");
-                strncat(str128, theName, ii);
-                strcat (str128, " \" main/variables.txt");
+                strcpy (grep_str, "grep -i \"");
+                strncat(grep_str, var_name, ii);
+                strcat (grep_str, " \" main/variables.txt");
                 break;
             case 2:        // Constants, usage in equ file (missing)
-                strcpy (str128,"grep -i -w ");
-                strncat(str128, theName, ii);
-                strcat (str128, " tmp/model.tmp");
+                strcpy (grep_str,"grep -i -w ");
+                strncat(grep_str, var_name, ii);
+                strcat (grep_str, " tmp/model.tmp");
                 break;
             case 3:        // Time, grid control
-                strcpy (str128, "grep -i \"");
-                strncat(str128, theName, ii);
-                strcat (str128," \" main/internal.txt");
+                strcpy (grep_str, "grep -i \"");
+                strncat(grep_str, var_name, ii);
+                strcat (grep_str," \" main/internal.txt");
                 break;
             case 4:
-                strcpy (str128, "grep -w ");
-                strncat(str128, theName, ii);
-                strcat (str128," tmp/model.txt");
+                strcpy (grep_str, "grep -w ");
+                strncat(grep_str, var_name, ii);
+                strcat (grep_str," tmp/model.txt");
                 break;
             case 7:
                 printf("Curve presentation\n");
@@ -793,8 +790,8 @@ int menubox_(INT_ *nofbox, double *array, char theNames[], INT_ *id){
                 break;
 	    }
             if (*id < 5){
-                ii = system(str128);
-                if (ii == 128) printf("The constant %s is not assigned\n", theName);
+                ii = system(grep_str);
+                if (ii == 128) printf("The constant %s is not assigned\n", var_name);
             }
 	}
 
@@ -835,9 +832,9 @@ int menubox_(INT_ *nofbox, double *array, char theNames[], INT_ *id){
             if (lname){
                 ind1 = (oldparam - 1)*namlen;
                 ind2 = (jbox - 1)*namlen;
-                WRITE_ theGCA, ixold, hsym+iyold, theNames+ind1, namlen);
+                WRITE_ theGCA, ixold, hsym+iyold, varNames+ind1, namlen);
                 Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
-                WRITE_ hghGC, ix, hsym+iy, theNames+ind2, namlen);
+                WRITE_ hghGC, ix, hsym+iy, varNames+ind2, namlen);
                 Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
             }
             if (lname*lvalue){
@@ -1282,10 +1279,9 @@ void ProcessRootWindowEvent(XEvent *theEvent){
 }
 
 /**********************************************************************/
-int askcol_ (title, template, array, len, nrows, ngroup, morow)
-				INT_ *len, *nrows, *ngroup, *morow;
-				char title[], template[], array[];
-/* The same as "layoutbox", but the 1st column
+int nbibox_ (char title[], char template[], char array[], INT_ *len,
+	     INT_ * nrows, INT_ *ngroup, INT_ *morow){
+/* The same as "menubox", but the 1st column
    		is drawn in blue and closed for access
 Called only from src/nbi/nbinj.f
 Input:	title	- Title of the table
@@ -1299,235 +1295,6 @@ Input:	title	- Title of the table
 	morow	- if > 0 separates bottom of the table with a fat blue line
 
 */
-{	Window	theWindow;
-	XEvent	theEvent;
-	int	UpLeftx =2, UpLefty =10,/* window corner location	*/
-		Width =452, Height =480,/* defaut window sizes		*/
-		jbox, jbox_old, hbox,	/* current/old box No. & height	*/
-		wsym = 8, hsym = 13,	/* symbol width and height	*/
-		wbox, 			/* number of chars in box 	*/
-		xshif = 5, yshif = 3,	/* table corner 		*/
-		mxfields = 20,	nclmn,	/* max / actual # of columns	*/
-		nsta[20],nwid[20],nend,	/* ! <= mxfields=20 are allowed	*/
-		ixa0, iya0, ixa, iya,   /* arrow (textcursor) position	*/
-		ind,  inold,	/* address of the selected word in "array" */
-		isym, spos=0,	/* abs. and rel. position of symbol in table*/
-		lvalue,		/* 1 if box was changed, 0 otherwise	*/
-		iret, ixold, iyold, icold, i, j,
-		icol, irow, irow0=0, arrdim, ix, ix1, iy, ii=0;
-	char	stri[132];
-	j = strlen(title);	if ( j > 132 )			{
-		printf("%s\n\"%s\"\n%s\n","ASKCOL >>> Title",title,
-		     "           is too long");		return 0;	}
-	if  ( *len > 132 )				{
-		printf("%s \"%s\" %s\n","ASKCOL >>> Table",title,
-		     ". Input string is too long");	return 0;	}
-	nend = strlen(template);	if ( nend > 132 )	{
-		printf("%s \"%s\" %s\n","ASKCOL >>> Table",title,
-		     ". Requested width is too large");	return 0;	}
-	for ( j=0; j < nend ; j++)
-	      if ( template[j] != '|'  &&  template[j] != ' ' ) irow0 = 1;
-
-		/****   Split "template" in blocks  ****/
-	for ( j=nclmn=nsta[0]=0; j < nend ; j++ )
-	    { if ( template[j] == '|' )
-		 { nwid[nclmn] = j-nsta[nclmn]; nsta[++nclmn] = j+1;}
-	      if ( nclmn > mxfields ) {
-		printf("%s %d\n","ASKCOL >>>  Too many input fields ",nclmn);
-			return 0;	}
-	    }
-	nwid[nclmn] = nend-nsta[nclmn];		nclmn++;	arrdim = *len;
-
-	ixa0  = jbox_old = 0;		hbox   = hsym+3;	UpLeftx = 2;
-	Width = 2*xshif+nend*wsym;	Height = 2*yshif+(*nrows+2+irow0)*hbox;
-	if (Kevent.xcur+Kevent.ycur < 10)
-			{Kevent.xcur = 330; Kevent.ycur = 430;}
-	/*  j = XWX-Width-20;	if (j > UpLeftx)  UpLeftx = j; */
-	GetRWgeometry (&XRW,&YRW);
-	UpLeftx = 2;	   j = XRW-Width-8;	UpLefty = YRW;
-	if (j > UpLeftx)   UpLeftx = j;		j = YRW+Height+30;
-	if (j > theHeight) UpLefty = theHeight-Height-30;
-	theWindow = Open_Window(UpLeftx, UpLefty, Width, Height, 0, title, 0,
-		    RootWindow(theDisplay,theScreen), theMenuCursor);
-	MVPOINTER_ xshif+wsym*nwid[0]/2,yshif+irow0*hbox+hsym);
-	XSelectInput (theDisplay, theWindow, POLL_EV_MASK);
-
-Create_table:
-	Change_Color (theGCA, 3, 0); /* white background, blue  foreground */
-	if  ( irow0 )
-	    {	/*********  Type template in blue  *********/
-	    for ( j=0, ix=xshif; j < nclmn ; j++)
-		{ WRITE_ theGCA, ix, hsym, template+nsta[j], nwid[j]);
-		  if (j+1 == nclmn) break;	ix += wsym*(nwid[j]+1);
-		}
-		/*********  Draw blue horizontal lines  *********/
-	    j = hbox;			LINGCA_ 0,j+4,Width,j+4);
-	    }
-	if  ( *ngroup > 0 )
-	    for ( j = (*ngroup+irow0)*hbox; j+4+yshif < Height-2*hbox ;
-		  j += (*ngroup)*hbox )	  LINGCA_ 0,j+4,Width,j+4);
-	if  ( *morow > 0 )
-	    {	j = Height-(*morow+2)*hbox-3;	LINGCA_ 0,j,Width,j);
-		++j;				LINGCA_ 0,j,Width,j);
-	    }
-		/*********  Draw blue vertical lines  *********/
-	for ( j = 0, ix=xshif-0.5*wsym; j < nclmn-1; j++)
-	    { ix += wsym*(nwid[j]+1);	ix1 = ix;
-	      if (nwid[j] == 0)		ix1 = ix1-2;
-	      if (nwid[j+1] == 0)	ix1 = ix1+2;
-	      LINGCA_ ix1,0,ix1,Height-2*hbox);
-	    }
-		/*********  Draw bottom line & comments  *********/
-	WRITE_ theGCA, xshif, Height-3-hbox,
-		"Button - select, <Tab>,<Ret>,Arrows - move", 42);
-	WRITE_ theGCA, xshif+4*wsym, Height-4, "/<ESC> - done", 13);
-	Change_Color (theGCA, 50, 0);  /* white background, red foreground */
-	j = Height-2*hbox; 	LINGCA_ 0,j,Width,j);
-	j++; 		   	LINGCA_ 0,j,Width,j);
-	Change_Color (hghGC, 50, 0);
-	WRITE_ hghGC,  xshif, Height-4, " OK ",4);
-	Change_Color (theGCA, 1, 0);	Change_Color (hghGC, 1, 0);
-				/* white background, black foreground */
-		/*********  Draw input data  *********/
-	for (   i=0; i < *nrows; i++ )				/* row loop */
- 	    {	iy =yshif+hsym+hbox*(i+irow0);	Change_Color (theGCA, 3, 0);
-	    for ( j=isym=0, ix=xshif; j < nclmn ; j++)	     /* column loop */
-	    	{ if (j > 0) { isym = nsta[j]; ix += wsym*(nwid[j-1]+1); }
-	    	  WRITE_ theGCA, ix, iy, array+i*arrdim+isym, nwid[j]);
-		  Change_Color (theGCA, 1, 0);
-		}
-	    }
-	if ( jbox_old > 0 )			/* after Expose event */
-	   {	isym = 0;	if ( icol > 1)  isym = nsta[icol-1];
-		ix=xshif+wsym*isym;	iy=yshif+hsym+hbox*(irow+irow0-1);
-		WRITE_ hghGC, ix, iy, stri, wbox);
-		MoveArrow(theWindow, 0, iya0, ixa, iya);
-	   }
-	if ( ii == 0 )		/* Select Upper Left box on entry */
-	   { irow =ii = 1;	jbox = jbox_old = icol = icold = 2;    lvalue = 0;
-		inold = ind = isym = nsta[1];		wbox = nwid[1];
-		ix = ixold = ixa = ixa0 = xshif+wsym*isym;
-		iy = iyold = iya = iya0 = yshif+hsym+hbox*irow0;
-		WRITE_ hghGC, ix, iy, array+ind, wbox);
-		strncpy(stri,array+ind,wbox);
-		MoveArrow(theWindow, 0, iya0, ixa, iya);
-	   }
-	XFlush(theDisplay);
-
-Table_control:
-	XNextEvent (theDisplay, &theEvent);
-	if ( theEvent.xany.window == theRootWindow )
-           { ProcessRootWindowEvent (&theEvent);
-	     goto Table_control;
-	   }
-	if (theEvent.type == Expose)	goto	Create_table;
-	if (theEvent.type == ButtonPress)
-	{   ix = theEvent.xbutton.x;	iy = theEvent.xbutton.y;
-	    irow = iy-yshif-hbox*irow0-2;
-	    if ( irow >= 0)
-	    {	irow = irow/hbox+1;		i=(ix-xshif)/wsym;
-		if ( jbox_old > 0 )	strncpy(array+ind,stri,wbox);
-		if ( irow > *nrows )		  /* No selection or Exit */
-		   { if ( i > 3 || iy < Height-4-hsym ) goto Unselect;
-			goto EndDialog;			/* OK was pressed */
-		   }
-		for ( j=0; j < nclmn; )			/* Selection is made */
-		    { i -= nwid[j]+1;	icol=++j;   if ( i < 0 ) break;	}
-		if ( If_empty (icol, irow, nclmn, nsta, nwid, array, arrdim)
-		   || icol == 1	|| nwid[icol-1] == 0 )	goto	Unselect;
-Fillbox:	isym = spos = 0;	if ( icol > 1)  isym = nsta[icol-1];
-		ix=ixa=xshif+wsym*isym;	iy=iya=yshif+hsym+hbox*(irow+irow0-1);
-		ind = (irow-1)*arrdim+isym;	wbox = nwid[icol-1];
-		jbox = (irow-1)*nclmn+icol;
-		if ( jbox_old != 0 )
-		     WRITE_ theGCA, ixold, iyold, stri, nwid[icold-1]);
-		strncpy(stri,array+ind,wbox);
-		WRITE_ hghGC, ix, iy, stri, wbox);
-		MoveArrow(theWindow, ixa0, iya0, ixa, iya);
-		icold = icol;	inold = ind;	ixold = ix;	iyold = iy;
-		ixa0 = ixa;	iya0 = iya;	jbox_old = jbox;	lvalue = 0;
-	    }
-	    else
-Unselect:   {	if ( jbox_old > 0 )			{
-		WRITE_ theGCA, ixold, iyold, array+inold, nwid[icold-1]);
-		MoveArrow(theWindow,ixa0,iya0,0,iy);	jbox_old=spos=0;	}
-	    }
-	    XFlush(theDisplay);
-	    goto Table_control;
-	}
-	if ( jbox_old > 0 )
-	{
-	   iret = GetKey (theEvent.xkey, stri, &spos);
-	   if ( iret == -1 && jbox_old > 0 )			/* <Esc> */
-	      { strncpy(array+ind,stri,wbox);   goto EndDialog;
-	      }
-	   if ( iret == 0 )
-	      {	if (spos == 0 ) { 		/* 1-st entry in the box */
-		for (j=1; j < 132; j++) stri[j]=' '; stri[wbox] = '\0';  }
-		if (++spos > wbox) spos = wbox;		lvalue = 1;
-		WRITE_ hghGC, ix, iy, stri, wbox);	ixa = ix+spos*wsym;
-		MoveArrow(theWindow,ixa0,iya0,ixa,iy);	ixa0 = ixa; iya0 = iy;
-	      }
-	   if ( iret == 1 )				/* <Del> or <BS> */
-	      {	if (--spos >= 0) { strncpy(stri+spos,stri+spos+1,wbox-spos);
-				  stri[wbox-1] = ' ';	}
-		if (spos < 0) { spos = 0;  strncpy(stri,array+ind,wbox); }
-		WRITE_ hghGC, ix, iy, stri, wbox);	ixa = ix+spos*wsym;
-		MoveArrow(theWindow,ixa0,iya0,ixa,iy);	ixa0 = ixa; iya0 = iy;
-	      }
-	   if ( (iret == 2 || iret == 3) && jbox_old > 0 )	/* <Tab> or <Ret> */
-	      {	Move_right:
-		do { if ( ++icol > nclmn )	icol = 2; }
-		while ( If_empty (icol, irow, nclmn, nsta, nwid, array, arrdim)
-				|| nwid[icol-1] == 0 );
-		if ( icol == 2 )  goto	Move_down;
-		if ( spos != 0 )  goto	Insert;		goto Fillbox;
-	      }
-	   if ( iret == 12 )				/* case	XK_Up:	  */
-	      { Move_up:
-		if ( --irow == 0 ) irow = *nrows;
-		if ( If_empty (icol, irow, nclmn, nsta, nwid, array, arrdim)
-			 && irow >= 0)		goto	Move_up;
-		if ( spos != 0 )  goto	Insert;	  goto	Fillbox;
-	      }
-	   if ( iret == 21 )				/* case	XK_Left:  */
-	      { Move_left:
-		if ( --spos < 0 )
-		{ spos = 0;
-		     if (--icol == 1 )	{ icol = nclmn;   --irow; }
-		     if ( irow == 0 )	{ irow = 1;	icol = 2; }
-		     if (If_empty(icol, irow, nclmn, nsta, nwid, array, arrdim)
-				|| nwid[icol-1] == 0 )	goto	Move_left;
-		     if ( lvalue != 0 )	goto  Insert;	goto	Fillbox;
-		}	ixa = ix+spos*wsym;
-		MoveArrow(theWindow,ixa0,iya0,ixa,iy);	ixa0 = ixa; iya0 = iy;
-	      }
-	   if ( iret == 23 )				/* case	XK_Right: */
-	      {	if (spos == 0 && lvalue == 0)	strncpy(stri,array+ind,wbox);
-		if (++spos > wbox)	goto	Move_right;
-		ixa = ix+spos*wsym;		lvalue = 1;
-		MoveArrow(theWindow,ixa0,iya0,ixa,iy);	ixa0 = ixa; iya0 = iy;
-	      }
-	   if ( iret == 32 )				/* case	XK_Down:  */
-	      { Move_down:
-		if ( ++irow > *nrows)	irow = 1;
-		if ( If_empty (icol, irow, nclmn, nsta, nwid, array, arrdim)
-			 && irow <= *nrows)	goto	Move_down;
-		if (spos != 0)	goto Insert;	goto Fillbox;
- 	      }
-	}
-	if ( GetEsc(theEvent.xkey) ) goto EndDialog;
-	goto Table_control;
-Insert:
-	strncpy(array+ind,stri,wbox);   goto Fillbox;
-
-EndDialog:
-	XWarpPointer(theDisplay, None, theRootWindow, 0, 0, 0, 0, Kevent.xcur, Kevent.ycur);
-	XFlush(theDisplay);
-	XDestroyWindow(theDisplay, theWindow);
-	XFlush(theDisplay);
-	ibcursor = -1;
-	return (jbox_old);
 }
 
 /**********************************************************************/
@@ -1717,7 +1484,7 @@ int GetName(XKeyEvent theKeyEvent, char str[], int lvalue, int *pos){
 }
 
 /**********************************************************************/
-int ufilebox_(INT_ *nofbox, char una[], char theNames[], char unad[]){
+int ufilebox_(INT_ *nofbox, char una[], char varNames[], char unad[]){
 /* U-file name setting */
     Window theWindow;
     XEvent theEvent;
@@ -1764,7 +1531,7 @@ int ufilebox_(INT_ *nofbox, char una[], char theNames[], char unad[]){
         ix = wbox*((i - 1)%nclmn) + xshif;
         iy = hbox*((i - 1)/nclmn) + yshif;
         ind = (i - 1)*lname;
-        WRITE_ theGCA, ix, hsym+iy, theNames+ind, lname);
+        WRITE_ theGCA, ix, hsym+iy, varNames+ind, lname);
         ind = (i - 1)*lvalue;
         for (j=0; j<lvalue; j++) una[ind+j] = unad[j];
         WRITE_ theGCA, ix+lname*wsym, hsym+iy, vsym, lsym);
@@ -1825,8 +1592,8 @@ int ufilebox_(INT_ *nofbox, char una[], char theNames[], char unad[]){
                 iy = hbox*((i - 1)/nclmn) + yshif;
                 ind = (oldparam - 1)*lname;
                 ind1 = (i - 1)*lname;
-                WRITE_ theGCA, ixold, hsym+iyold, theNames+ind, lname);
-                WRITE_ hghGC, ix, hsym+iy, theNames+ind1, lname);
+                WRITE_ theGCA, ixold, hsym+iyold, varNames+ind, lname);
+                WRITE_ hghGC, ix, hsym+iy, varNames+ind1, lname);
                 WRITE_ theGCA, ixold+lname*wsym, hsym+iyold, vsym, lsym);
                 WRITE_ hghGC, ix+lname*wsym, hsym+iy, vsym, lsym);
                 ind = (oldparam - 1)*lvalue;
@@ -1924,8 +1691,8 @@ int ufilebox_(INT_ *nofbox, char una[], char theNames[], char unad[]){
             iy = hbox*((i - 1)/nclmn) + yshif;
             ind = (oldparam - 1)*lname;
             ind1 = (i - 1)*lname;
-            WRITE_ theGCA, ixold, hsym+iyold, theNames+ind, lname);
-            WRITE_ hghGC, ix, hsym+iy, theNames+ind1, lname);
+            WRITE_ theGCA, ixold, hsym+iyold, varNames+ind, lname);
+            WRITE_ hghGC, ix, hsym+iy, varNames+ind1, lname);
             WRITE_ theGCA, ixold+lname*wsym, hsym+iyold, vsym, lsym);
             WRITE_ hghGC, ix+lname*wsym, hsym+iy, vsym, lsym);
             ind = (oldparam - 1)*lvalue;
