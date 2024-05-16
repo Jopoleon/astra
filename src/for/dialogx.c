@@ -45,7 +45,7 @@ char *MAMT[nbuttons_max];
 char MAMK[nbuttons_max];
 double width_ratio, height_ratio;
 #define Button struct BUTTON
-Button {int mexl, meyd, mexr, meyu, melen; char keysym, *mename;};
+Button {int xleft, yup, xright, ydown, length; char *label;};
 Button MAMB[nbuttons_max];
 #define NDW 12      /* number of dialog windows */
 char *DWTitle[NDW] = {
@@ -189,20 +189,19 @@ void taskmenu_(INT_ *modex){
 
 /**********************************************************************/
 void Menu_Column(int xm, int ym, int nbutt, char *met[], Button butt[]){
-  int i, lenm=11, leng, font_sym_width, font_sym_height, xwid, button_vert_sep=4, button_hor_sep=1;
+    int i, lenm=10, font_sym_width, font_sym_height, xwid, vert_sep=4, hor_sep=1;
     double F1sw=7.7, F1sh=13.;      /*font 1 symbol width, height */
 
-    font_sym_width  = width_ratio *F1sw;
-    font_sym_height = height_ratio*F1sh;
-    xwid = lenm*font_sym_width + button_hor_sep;
+    font_sym_width  = width_ratio *F1sw + 1;
+    font_sym_height = height_ratio*F1sh + 1;
+    xwid = lenm*font_sym_width + hor_sep;
     for (i=0; i<nbutt; i++){
-        leng = strlen(met[i]);
-        butt[i].mexl = xm;
-        butt[i].mexr = butt[i].mexl + xwid;
-        butt[i].meyu = ym + i*(font_sym_height + button_vert_sep + 1);
-        butt[i].meyd = butt[i].meyu + font_sym_height + 1;
-        butt[i].melen  = leng;
-        butt[i].mename = met[i];
+        butt[i].xleft  = xm;
+        butt[i].xright = butt[i].xleft + xwid;
+        butt[i].yup    = ym + i*(font_sym_height + vert_sep);
+        butt[i].ydown  = butt[i].yup + font_sym_height;
+        butt[i].length = strlen(met[i]);
+        butt[i].label  = met[i];
         Put_button(butt[i], theGCA);
     }
 }
@@ -210,29 +209,26 @@ void Menu_Column(int xm, int ym, int nbutt, char *met[], Button butt[]){
 /**********************************************************************/
 void Put_button(Button but, GC aGC){
 /* Button drawing */
-    int yd, xd, yu, xu;
-    yd = but.meyd;
-    xd = but.mexl;
-    yu = but.meyu;
-    xu = but.mexr;
+    int xl, xr, yd, yu;
+    xl = but.xleft;
+    xr = but.xright;
+    yd = but.ydown;
+    yu = but.yup;
     Change_Color(aGC, 1, 0);
-    XClearArea(theDisplay, theRootWindow, xd-2, yu-2, xu-xd+4, yd-yu+4, False);
-    XDrawImageString(theDisplay,theRootWindow, aGC, xd+BTxof+2, yd-BTyof-3, but.mename, but.melen);
 
-    XDrawLine(theDisplay, theRootWindow, aGC, xd+2, yd  , xu-2, yd  );
-    XDrawLine(theDisplay, theRootWindow, aGC, xu-2, yd  , xu  , yd-2);
-    XDrawLine(theDisplay, theRootWindow, aGC, xu  , yd-2, xu  , yu+2);
-    XDrawLine(theDisplay, theRootWindow, aGC, xu  , yu+2, xu-2, yu  );
-    XDrawLine(theDisplay, theRootWindow, aGC, xu-2, yu  , xd+2, yu  );
-    XDrawLine(theDisplay, theRootWindow, aGC, xd+2, yu  , xd  , yu+2);
-    XDrawLine(theDisplay, theRootWindow, aGC, xd  , yu+2, xd  , yd-2);
-    XDrawLine(theDisplay, theRootWindow, aGC, xd  , yd-2, xd+2, yd  );
-/* No round caps:
-    XDrawLine(theDisplay, theRootWindow, aGC, xd, yd, xu, yd);
-    XDrawLine(theDisplay, theRootWindow, aGC, xu, yd, xu, yu);
-    XDrawLine(theDisplay, theRootWindow, aGC, xu, yu, xd, yu);
-    XDrawLine(theDisplay, theRootWindow, aGC, xd, yu, xd, yd);
-*/
+    XClearArea(theDisplay, theRootWindow, xl-2, yu-2, xr-xl+4, yd-yu+4, False);
+    XDrawImageString(theDisplay, theRootWindow, aGC, xl+BTxof+2, yd-BTyof-3, but.label, but.length);
+
+    printf("Xleft=%d, Xright=%d, Yup=%d, Ydown=%d\n", xl, xr, yu, yd);
+    XDrawLine(theDisplay, theRootWindow, aGC, xl+2, yd  , xr-2, yd  ); // horizontal down
+    XDrawLine(theDisplay, theRootWindow, aGC, xl+2, yu  , xr-2, yu  );
+    XDrawLine(theDisplay, theRootWindow, aGC, xl  , yd-2, xl  , yu+2);
+    XDrawLine(theDisplay, theRootWindow, aGC, xr  , yd-2, xr  , yu+2);
+
+    XDrawLine(theDisplay, theRootWindow, aGC, xl  , yd-2, xl+2, yd  ); // bottom left
+    XDrawLine(theDisplay, theRootWindow, aGC, xl  , yu+2, xl+2, yu  ); // top left
+    XDrawLine(theDisplay, theRootWindow, aGC, xr-2, yu  , xr  , yu+2); // top right
+    XDrawLine(theDisplay, theRootWindow, aGC, xr  , yd-2, xr-2, yd  ); // bottom right
 }
 
 /**********************************************************************/
@@ -509,8 +505,8 @@ int Cursor_in_Box(){
    Button MAMB[NMRMB];    Event Kevent; */
     int i;
     for (i=0; i<n_buttons; i++){
-        if (Kevent.xcur >= MAMB[i].mexl && Kevent.xcur <= MAMB[i].mexr &&
-            Kevent.ycur >= MAMB[i].meyu && Kevent.ycur <= MAMB[i].meyd){
+        if (Kevent.xcur >= MAMB[i].xleft && Kevent.xcur <= MAMB[i].xright &&
+            Kevent.ycur >= MAMB[i].yup   && Kevent.ycur <= MAMB[i].ydown){
             return i;
         }
     }
