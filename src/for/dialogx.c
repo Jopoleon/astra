@@ -845,7 +845,7 @@ int layoutbox_(char title[], char template[], char array[], INT_ *len,
     INT_ *nrows, INT_ *ngroup, INT_ *add_sep_line)
 
 /*
-Called from ASXWIN and ASTWIN (file surv.f90) , invoked by key "M" from IFKEY
+Called from ASXWIN and ASTWIN (file src/for/surv.f90) , invoked by key "M" from IFKEY
 
 Input:
     title        - Title of the table
@@ -1252,7 +1252,6 @@ int nbibox_ (char title[], char template[], char array[], INT_ *len,
 	     INT_ * nrows, INT_ *ngroup, INT_ *morow){
 /* The same as "menubox", but the 1st column
    		is drawn in blue and closed for access
-Called only from src/nbi/nbinj.f
 Input:	title	- Title of the table
 	template  string defining a structure of the table and its 1st line
 		  1st line does not appear if all non-'|' symbols are spaces
@@ -1263,6 +1262,8 @@ Input:	title	- Title of the table
 	ngroup	- if > 0 distance (in rows) between blue separating lines
 	morow	- if > 0 separates bottom of the table with a fat blue line
 
+Called only from src/nbi/nbinj.f
+Just a placeholder, if needed use the abstract "menubox"
 */
 }
 
@@ -1301,7 +1302,7 @@ int If_empty(int icol, int irow, int nclmn, int nsta[], int nwid[], char array[]
 int GetValue(XKeyEvent theEvent, char str[], int lvalue, char tstri[], int *pos){
     int i;
     XComposeStatus theComposeStatus;
-    KeySym  theKeySym;
+    KeySym theKeySym;
     int theBufferLength, theKeyBufferMaxLen = 4;
     char theKeyBuffer[5];
 
@@ -1347,14 +1348,21 @@ int GetValue(XKeyEvent theEvent, char str[], int lvalue, char tstri[], int *pos)
 }
 
 /**********************************************************************/
-int GetKey(XKeyEvent theKeyEvent, char str[], int *pos){
+KeySym GetKeySym(XKeyEvent theKeyEvent){
     XComposeStatus theComposeStatus;
     KeySym theKeySym;
     int theKeyBufferMaxLen = 4;
     char theKeyBuffer[5];
-
     XLookupString(&theKeyEvent, theKeyBuffer, theKeyBufferMaxLen,
         &theKeySym, &theComposeStatus);
+    //    return &theKeySym;
+    return theKeySym; // ok for ufilebox
+}
+
+/**********************************************************************/
+int GetKey(XKeyEvent theKeyEvent, char str[], int *pos){
+    KeySym theKeySym = GetKeySym(theKeyEvent);
+
     if (theKeyEvent.state & Mod1Mask){
         if (theKeySym == XK_Escape){
             return 7;
@@ -1363,6 +1371,7 @@ int GetKey(XKeyEvent theKeyEvent, char str[], int *pos){
 
     switch(theKeySym){
     case XK_Escape:    return -1;
+    case XK_question:  return -2;
     case XK_BackSpace:
     case XK_Delete:    return 1;
     case XK_Return:
@@ -1380,7 +1389,7 @@ int GetKey(XKeyEvent theKeyEvent, char str[], int *pos){
     case XK_Shift_R:   return 34;  /* Right shift */
     case XK_Control_L:             /* Left control */
     case XK_Control_R: return 35;  /* Right control*/
-    case XK_Meta_L:    break;      /* Left meta */
+    case XK_Meta_L:                /* Left meta */
     case XK_Meta_R:    return 36;  /* Right meta */
     case XK_Alt_L:                 /* Left alt */
     case XK_Alt_R:     return 37;  /* Right alt */
@@ -1398,26 +1407,16 @@ int GetKey(XKeyEvent theKeyEvent, char str[], int *pos){
 
 /**********************************************************************/
 int GetEsc(XKeyEvent theKeyEvent){
-    XComposeStatus theComposeStatus;
-    KeySym theKeySym;
-    int theKeyBufferMaxLen=4;
-    char theKeyBuffer[5];
-
-    XLookupString(&theKeyEvent, theKeyBuffer, theKeyBufferMaxLen,
-        &theKeySym, &theComposeStatus);
-    if (theKeySym == XK_Escape) return 1;
-    return 0;
+    KeySym theKeySym = GetKeySym(theKeyEvent);
+    return (theKeySym == XK_Escape);
 }
 
 /**********************************************************************/
 int GetName(XKeyEvent theKeyEvent, char str[], int lvalue, int *pos){
-    XComposeStatus theComposeStatus;
-    KeySym theKeySym;
-    int theKeyBufferMaxLen = 4, i;
-    char theKeyBuffer[5], lsym;
+    int i;
+    char lsym;
+    KeySym theKeySym = GetKeySym(theKeyEvent);
 
-    XLookupString(&theKeyEvent, theKeyBuffer, theKeyBufferMaxLen,
-        &theKeySym, &theComposeStatus);
     switch(theKeySym){
     case XK_BackSpace:
     case XK_Delete:
