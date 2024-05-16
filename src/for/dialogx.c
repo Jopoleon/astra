@@ -90,7 +90,7 @@ int isascii(int);
 int isprint(int);
 int isalnum(int);
 int nextevent(INT_*, INT_*, INT_*, Button[], char[]);
-int asklis_(INT_*, double*, char[], INT_*);
+int menubox_(INT_*, double*, char[], INT_*);
 int askcol_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
 int layoutbox_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
 int ufilebox_(INT_*, char[], char[], char[]);
@@ -219,7 +219,6 @@ void Put_button(Button but, GC aGC){
     XClearArea(theDisplay, theRootWindow, xl-2, yu-2, xr-xl+4, yd-yu+4, False);
     XDrawImageString(theDisplay, theRootWindow, aGC, xl+BTxof+2, yd-BTyof-3, but.label, but.length);
 
-    printf("Xleft=%d, Xright=%d, Yup=%d, Ydown=%d\n", xl, xr, yu, yd);
     XDrawLine(theDisplay, theRootWindow, aGC, xl+2, yd  , xr-2, yd  ); // horizontal down
     XDrawLine(theDisplay, theRootWindow, aGC, xl+2, yu  , xr-2, yu  );
     XDrawLine(theDisplay, theRootWindow, aGC, xl  , yd-2, xl  , yu+2);
@@ -534,252 +533,319 @@ void mvcursor_(INT_ *key, INT_ *ix, INT_ *iy){
 }
 
 /**********************************************************************/
-int asklis_(nofbox, array, theNames, id)
-    INT_ *nofbox, *id;
-    char theNames[];
-    double *array;
-{        Window                theWindow;
-        XEvent                theEvent;
-        double                valn;
-        int        UpLeftx =2, UpLefty =10,/* window corner location        */
-                Width =452, Height =480;/* window size                        */
-        int        ix, iy, wbox, hbox,         /* parameter box corner and size*/
-                wsym = 8, hsym = 13,        /* symbol width and height        */
-                lvalue = 6, lname = 6,        /* length of value and name        */
-                xshif = 5, yshif = 3,        /* table corner                 */
-                nclmn = 4, nparam,         /* # of columns and parameters        */
-                spos  = 0, vpos,         /* edit & edit start positions        */
-                ixa0=0, iya0=0, ixa,iya,/* arrow (textcursor) position        */
-                namlen, jbox, iret, oldparam, ixold, iyold;
-        int        lline, xButton, yButton, i, ii=-1, ind, ind1,
-                ihelp, selalb=0,  contr, icol, dcol, irow, drow;
-        float        param;
-        char        value[10],  ovalue[10],  stri[10],  vsym = '=',title[70],
-                exp_name[60], equ_name[60],
-                stri50[50],stri40[40], stri256[256], theName[10], legend[128];
-        i = *id-1;        namlen = DWnamlen[i];        strcpy(title,*(DWTitle+i));
+int menubox_(INT_ *nofbox, double *array, char theNames[], INT_ *id){
+    Window theWindow;
+    XEvent theEvent;
+    double valn;
+    int UpLeftx=2, UpLefty=10,    /* window corner location */
+        Width=452, Height=480,    /* window size */
+        ix, iy, wbox, hbox,       /* parameter box corner and size*/
+        wsym=8, hsym=13,          /* symbol width and height */
+        lvalue=6, lname=6,        /* length of value and name */
+        xshif=5, yshif=3,         /* table corner */
+        nclmn=4, nparam,          /* # of columns and parameters */
+        spos=0, vpos,             /* edit & edit start positions */
+        ixa0=0, iya0=0, ixa, iya, /* arrow (textcursor) position */
+        namlen, jbox, iret, oldparam, ixold, iyold,
+        lline, xButton, yButton, i, ii=-1, ind, ind1,
+        ihelp, selalb=0,  contr, icol, dcol, irow, drow;
+    float param;
+    char value[10], ovalue[10], stri[10], vsym='=', title[70],
+        str128[128], theName[10], legend[128];
 
-        lline = lname + lvalue + 1;
-        if ((lvalue == 0) || (lname == 0)) lline = lname+lvalue;
-        hbox = hsym+3;                wbox = wsym*(lline+1);        vpos= wsym*(lname+1);
-         selalb = 1;        nparam   = *nofbox;        contr=1;
-        if( nparam==0 ) return (-1);
-        if( nparam<0 ) { nparam = -nparam; selalb = 0; }
-        if( nparam>1000 ) { nparam=nparam-1000;        contr=0; }
-        if( *id == 3 )  contr=1;
-        Width =2*xshif+nclmn*wbox-wsym;
-        Height =2*yshif+((nparam-1)/nclmn+2)*hbox;
-        jbox = 1;        if (contr == 0 ) jbox = 0;
-               if( *id == 8 )  { jbox = 0;        selalb = -1; }
+    i = *id - 1;
+    namlen = DWnamlen[i];
+    strcpy(title, *(DWTitle+i));
 
-        GetRWgeometry (&XRW,&YRW);
-        UpLeftx = 2;     i = XRW-Width-8;                UpLefty = YRW;
-        if (i > UpLeftx)  UpLeftx = i;                i = YRW+Height+30;
-        if (i > theHeight) UpLefty = theHeight-Height-30;
-        theWindow
-          = Open_Window (UpLeftx, UpLefty, Width, Height, 0, title, 0,
-             RootWindow(theDisplay,theScreen), theMenuCursor);
-        XSelectInput (theDisplay, theWindow, POLL_EV_MASK);        ihelp = 0;
-Create_table:
-        Change_Color (theGCA, 1, 0);        /* white background, black foreground */
-        for (i=1; i <= nparam; i++)         {
-        ix =wbox*((i-1)%nclmn)+xshif;        iy =hbox*((i-1)/nclmn)+yshif;
-        if ( lname ) {        ind = (i-1)*namlen;
-                WRITE_ theGCA, ix, hsym+iy, theNames+ind, namlen); }
-        if ( lname*lvalue ) {
-                WRITE_ theGCA, ix+vpos-wsym, hsym+iy, &vsym, 1); }
-        if ( lvalue ) { valn=*(array+i-1); num2str(valn, value, lvalue);
-                WRITE_ theGCA, ix+vpos, hsym+iy, value, lvalue); }
-        XFlush(theDisplay);                }
-        oldparam = nparam;        ixold = ix;        iyold = iy;
-        for (i=0; i<lvalue; i++)         ovalue[i]=value[i];
-        if (jbox == 1 && selalb != -1 && ii < 0) MVPOINTER_ xshif+40,yshif+13);
-        Change_Color (theGCA, 50, 0);
-        for (i=1; i < nclmn; i++) { ind = xshif+i*wbox-wsym/2;
-        LINGCA_ ind,0,ind,Height-hbox); }
-        i = Height-hbox; LINGCA_ 0,i,Width,i);
-        i--;                  LINGCA_ 0,i,Width,i);
-        WRITE_ hghGC, xshif, Height-3, "OK",2);
-        if ( jbox == 0 && contr == 0 ) MVPOINTER_ xshif+5,Height-5);
-               if ( *id == 8 )  MVPOINTER_ xshif+Width-50,Height-5);
-        i = nclmn*wbox/wsym-5;        ind = 50;        if(i<50)        ind=i;
-/*      Modified by Antoine Merle on 09/18/2013
-        I have modified the layout of the legend bar to make it fit into
-        the 70 character length corresponding to its initialization, since
-        this could cause a code crash due to buffer overflow on some systems */
-        strcpy(legend,"/ Esc - done;");
-        if (*id <= 6) { strcat(legend," Button/Tab - select;");
-                        strcat(legend," Return/Tab - enter;");
-                        strcat(legend," ? - quick help"); }
-        else          { strcat(legend,"     Button/Tab - select;");
-                        strcat(legend,"     Return/Tab - enter;"); }
-        Change_Color (hintGC, 42, 0);        ind = strlen(legend);
-        if (contr == 1) WRITE_ hintGC, xshif+2*wsym, Height-3, legend, ind);
-        Change_Color (hintGC, 1, 0);
-        if (contr == 0) WRITE_ theGCA, xshif+4*wsym, Height-3,
+    lline = lname + lvalue + 1;
+    if ((lvalue == 0) || (lname == 0)) lline = lname + lvalue;
+    hbox = hsym + 3;
+    wbox = wsym*(lline + 1);
+    vpos = wsym*(lname + 1);
+    selalb = 1;
+    nparam = *nofbox;
+    contr = 1;
+    if (nparam == 0) return -1;
+    if (nparam < 0){
+        nparam = -nparam;
+        selalb = 0;
+    }
+    if (nparam > 1000){
+        nparam = nparam - 1000;
+        contr = 0;
+    }
+    if (*id == 3) contr = 1;
+    Width = 2*xshif + nclmn*wbox - wsym;
+    Height= 2*yshif + ((nparam - 1)/nclmn + 2)*hbox;
+    jbox = 1;
+    if (contr == 0) jbox = 0;
+    if(*id == 8){
+        jbox = 0;
+        selalb = -1;
+    }
+
+    GetRWgeometry (&XRW, &YRW);
+    UpLeftx = 2;
+    i = XRW - Width - 8;
+    UpLefty = YRW;
+    if (i > UpLeftx) UpLeftx = i;
+    i = YRW + Height + 30;
+    if (i > theHeight) UpLefty = theHeight - Height - 30;
+    theWindow = Open_Window (UpLeftx, UpLefty, Width, Height, 0, title, 0,
+        RootWindow(theDisplay, theScreen), theMenuCursor);
+    XSelectInput (theDisplay, theWindow, POLL_EV_MASK);
+    ihelp = 0;
+
+// Create table
+    Change_Color(theGCA, 1, 0);        /* white background, black foreground */
+    for (i=1; i<=nparam; i++){
+        ix = wbox*((i - 1)%nclmn) + xshif;
+        iy = hbox*((i - 1)/nclmn) + yshif;
+        if (lname){
+            ind = (i - 1)*namlen;
+            WRITE_ theGCA, ix, hsym+iy, theNames+ind, namlen);
+        }
+        if (lname*lvalue){
+            WRITE_ theGCA, ix+vpos-wsym, hsym+iy, &vsym, 1);
+        }
+        if (lvalue){
+            valn = *(array+i-1);
+            num2str(valn, value, lvalue);
+            WRITE_ theGCA, ix+vpos, hsym+iy, value, lvalue);
+        }
+        XFlush(theDisplay);
+    }
+    oldparam = nparam;
+    ixold = ix;
+    iyold = iy;
+    for (i=0; i<lvalue; i++) ovalue[i] = value[i];
+    if (jbox == 1 && selalb != -1 && ii < 0) MVPOINTER_ xshif+40, yshif+13);
+    Change_Color(theGCA, 50, 0);
+    for (i=1; i<nclmn; i++){
+	ind = xshif + i*wbox - wsym/2;
+        LINGCA_ ind,0,ind,Height-hbox);
+    }
+    i = Height - hbox;
+    LINGCA_ 0, i, Width, i);
+    i--;
+    LINGCA_ 0, i, Width, i);
+    WRITE_ hghGC, xshif, Height-3, "OK",2);
+    if (jbox == 0 && contr == 0) MVPOINTER_ xshif+5, Height-5);
+    if (*id == 8) MVPOINTER_ xshif+Width-50, Height-5);
+    i = nclmn*wbox/wsym - 5;
+    ind = 50;
+    if (i < 50) ind = i;
+    strcpy(legend, "/ Esc - done;");
+    if (*id <= 6){
+        strcat(legend, " Button/Tab - select;");
+        strcat(legend, " Return/Tab - enter;");
+        strcat(legend, " ? - quick help"); }
+    else{
+        strcat(legend, "     Button/Tab - select;");
+        strcat(legend, "     Return/Tab - enter;" );
+    }
+    Change_Color(hintGC, 42, 0);
+    ind = strlen(legend);
+    if (contr == 1) WRITE_ hintGC, xshif+2*wsym, Height-3, legend, ind);
+    Change_Color(hintGC, 1, 0);
+    if (contr == 0) WRITE_ theGCA, xshif+4*wsym, Height-3,
         "    Information table.   No changes permitted.     ", ind);
-        if ( *id == 8 ) {
-              if (selalb == 0) WRITE_ hintGC,
-                        xshif+8+(i-6)*wsym,Height-3," (Select all ) ",15);
-              if (selalb == -1) WRITE_ hintGC,
-                        xshif+8+(i-6)*wsym,Height-3,"(Unselect 0)",12);
-                        }
-        Change_Color (theGCA, 1, 0);
-        if (jbox) goto Newparam;
-Table_control:
-        XNextEvent (theDisplay, &theEvent);
-        if ( theEvent.xany.window == theRootWindow )
-           { /*  printf("theRootWindowEvent.type =%d\n",theEvent.type); */
-             ProcessRootWindowEvent (&theEvent);
-             goto Table_control;
-           }
-        if(theEvent.type == Expose) { ii = 0;  goto Create_table;}
-        if(theEvent.type == ButtonPress)
-           {	xButton	= theEvent.xbutton.x;
-		yButton = theEvent.xbutton.y;
-		ind  = FindBoxNum(xButton-xshif, yButton-Height+hbox+1,
-						 	4*wsym, hbox, 1, 1);
-		if(contr)
-		{
-		if (jbox) { oldparam = jbox;	ixold = ix;	iyold = iy;
-			if (spos>0)  { 	sscanf(stri,"%6g",&param);
-					*(array+jbox-1)=param; valn=param;
-					num2str(valn, value, lvalue); spos=-1;
-				     }
-			for (i=0; i<lvalue; i++) 	ovalue[i]=value[i];
-			  }
-		jbox = FindBoxNum(xButton-xshif+wsym/2, yButton-yshif,
-				  wbox, hbox, nclmn, nparam);
-		ind1 = FindBoxNum(xButton-xshif-nclmn*wbox+10*wsym,
-				yButton-Height+hbox+1, 10*wsym, hbox, 1, 1);
-		if(ind1!=0 && selalb!=1)
-		   { for (i=0; i<nparam; i++)
-			{ if( *(array+i)<=0 ) *(array+i)=selalb; }
-			{ if(selalb)  selalb=0; else selalb=-1; }
-			  goto Create_table;
-		   }
-		}
-		if( ind ) { iret = -1;	jbox = oldparam;  goto Escend; }
-		if (jbox == 0)	goto Table_control;
-Newparam:
-		ix =wbox*((jbox-1)%nclmn)+xshif;
-		iy =hbox*((jbox-1)/nclmn)+yshif;
-		if ( lname ) {ind = (oldparam-1)*namlen; ind1 = (jbox-1)*namlen;
-		    WRITE_ theGCA, ixold, hsym+iyold, theNames+ind, namlen);
-		    Change_Color(hghGC,AstraColorNum[8],AstraColorNum[9]);
- 		    WRITE_ hghGC, ix, hsym+iy, theNames+ind1, namlen);
-		    Change_Color(hghGC,AstraColorNum[2],AstraColorNum[3]); }
-		if ( lname*lvalue ) {
-		    WRITE_ theGCA, ixold+vpos-wsym, hsym+iyold, &vsym, 1);
-		    Change_Color(hghGC,AstraColorNum[8],AstraColorNum[9]);
-		    WRITE_ hghGC, ix+vpos-wsym, hsym+iy, &vsym, 1);
-		    Change_Color(hghGC,AstraColorNum[2],AstraColorNum[3]); }
-		if ( lvalue ) {valn=*(array+jbox-1); num2str(valn,value,lvalue);
-		    WRITE_ theGCA, ixold+vpos, hsym+iyold, ovalue, lvalue);
-		    Change_Color(hghGC,AstraColorNum[8],AstraColorNum[9]);
-		    WRITE_ hghGC, ix+vpos, hsym+iy, value, lvalue);
-		    Change_Color(hghGC,AstraColorNum[2],AstraColorNum[3]);
-		    spos = -1; for (i=0; i<lvalue; i++) stri[i]=' ';
-		    ixa = ix+vpos;	iya = iy+hsym+2;
-		    MoveArrow(theWindow,ixa0,iya0,ixa,iya);
-		    ixa0 = ixa;		iya0 = iya; }
-		XFlush(theDisplay);
-		goto Table_control;
-	   }
-	if ((jbox == 0)||(lvalue == 0)) {
-			if(GetEsc(theEvent.xkey)) goto EndDialog;
-				else	goto Table_control; }
-	iret = GetValue(theEvent.xkey, stri, lvalue, "0123456789.-+eE", &spos);
-Escend:	if ( contr==0 ){/*printf("iret %d\n",iret);*/	goto EndDialog;}
-	if ( spos >= 0 )
-	   {	ixa = ix+vpos+spos*wsym;	iya = iy+hsym+2;
-		MoveArrow(theWindow,ixa0,iya0,ixa,iya);
-	        ixa0 = ixa;			iya0 = iya; }
-	if ( iret && (spos>0) )
-	   { 	sscanf(stri,"%6g",&param);
-		/*printf("input =%s,    double =%g \n",stri,param);*/
-		*(array+jbox-1) = param; valn=param;
-		num2str(valn, value, lvalue); spos=-1;	}
-	if ( iret == -1 )  	goto EndDialog;
-	if ( iret == -2 )
-	   { i = 0;	ii = namlen;
-TableQuestionMark:    strncpy(theName,theNames+(jbox-1)*namlen+i,ii);
-	     if ( theName[0]  == ' ' )	{ii--;	i++;  goto TableQuestionMark;}
-	     theName[ii] = '\0';
-	     while ( theName[--ii] == ' ' ) theName[ii] = '\0';	ii++;
+    if (*id == 8){
+        if (selalb ==  0) WRITE_ hintGC, xshif+8+(i-6)*wsym, Height-3,
+	    " (Select all)", 13);
+        if (selalb == -1) WRITE_ hintGC, xshif+8+(i-6)*wsym, Height-3,
+	    "(Unselect 0)", 12);
+    }
+    Change_Color(theGCA, 1, 0);
 
-	     if (*id == 1)		/*Variables <- for/const.in*/
-		{ strcpy(stri50,"grep -i \"");   strncat(stri50,theName,ii);
-	          strcat(stri50," \" main/variables.txt");   system(stri50);  }
-	     if (*id == 2)		/*Constant table*/
-		{
-		  strcpy (stri256,"grep -i -w ");
-		  strncat(stri256,theName,ii);
-   		  strcat (stri256," tmp/model.tmp");
-		  ii = system(stri256);
-		  if (ii == 256) {
-                      printf("The constant %s is not assigned\n", theName);
-		  }
-		  }
-	     if (*id == 3)		/*Time, grid control*/
-		{  strcpy(stri50,"grep -i \"");  strncat(stri50,theName,ii);
-	           strcat(stri50," \" main/internal.txt");   system(stri50);  }
-	     if (*id == 4)
-		{  strcpy (stri256,"grep -w ");    strncat(stri256,theName,ii);
-		   strcat (stri256," tmp/model.txt");
-		   if (!ihelp) printf(" No. Scale  Name  Output expression\n");
-		   system(stri256);	ihelp = 1;	}
-	     if (*id == 5)		/*Scale control*/
-		{  strcpy (stri256,"grep -w ");    strncat(stri256,theName,ii);
-		   strcat (stri256," tmp/model.txt");
-		   if (!ihelp) printf(" No. Scale  Name  Output expression\n");
-		   system(stri256);	ihelp = 1;	}
-	     if (*id == 6)		/*Vertical shift*/
-		{  strcpy (stri256,"grep -w ");    strncat(stri256,theName,ii);
-		   strcat (stri256," tmp/model.txt");
-		   if (!ihelp) printf(" No. Scale  Name  Output expression\n");
-		   system(stri256);	ihelp = 1;	}
-	     if (*id == 7)
-		{  printf("Curve presentation\n");	}
-	     if (*id == 8)
-		{  printf("Mark time slices\n");	}
-		/* Control print:	printf("[%s]\n",stri50);  */
-	   }
-	if ( spos < 0 )
-	   {	spos = -1; for (i=0; i<lvalue; i++) stri[i]=' ';
-		Change_Color(hghGC,AstraColorNum[8],AstraColorNum[9]);
-		WRITE_ hghGC, ix+vpos, hsym+iy, value, lvalue);
-		Change_Color(hghGC,AstraColorNum[2],AstraColorNum[3]); }
-	else
-	   {    Change_Color(hghGC,AstraColorNum[8],AstraColorNum[9]);
-		WRITE_ hghGC, ix+vpos, hsym+iy, stri, lvalue);
-		Change_Color(hghGC,AstraColorNum[2],AstraColorNum[3]); }
-	if ( iret == 2 )
-	   {	oldparam = jbox;	ixold = ix;	iyold = iy;
-		for (i=0; i<lvalue; i++) 	ovalue[i]=value[i];
-		jbox++; if(jbox > nparam) jbox=1; goto Newparam; }
-	if ( iret > 2 )
-	   {	oldparam = jbox;	ixold = ix;	iyold = iy;
-		for (i=0; i<lvalue; i++) 	ovalue[i]=value[i];
- 		dcol=iret%10-2; 	icol =(jbox-1)%nclmn+dcol;
-		if (icol<0) icol=0;	if (icol>=nclmn) icol--;
-		drow=iret/10-2;		irow =(jbox-1)/nclmn+drow;
-		if (irow<0) irow=0;	if (irow>(nparam-1)/nclmn) irow--;
-		jbox =irow*nclmn+icol+1;
-		if(jbox == oldparam && icol == nclmn-1 && drow != -1) jbox++;
-		if(jbox == oldparam && icol == 0       && drow != 1)  jbox--;
-		if (jbox < 1) jbox=1;	if (jbox > nparam) jbox=nparam;
-		goto Newparam; }
-				goto Table_control;
+Table_control:
+        XNextEvent(theDisplay, &theEvent);
+        if (theEvent.xany.window == theRootWindow){
+            ProcessRootWindowEvent (&theEvent);
+            goto Table_control;
+        }
+        if (theEvent.type == ButtonPress){
+            xButton = theEvent.xbutton.x;
+            yButton = theEvent.xbutton.y;
+            ind  = FindBoxNum(xButton-xshif, yButton-Height+hbox+1, 4*wsym, hbox, 1, 1);
+	    if (contr){
+                if (jbox){
+                    oldparam = jbox;
+                    ixold = ix;
+                    iyold = iy;
+                    if (spos > 0){
+                        sscanf(stri, "%6g", &param);
+			*(array+jbox-1) = param;
+                        valn = param;
+                        num2str(valn, value, lvalue);
+                        spos = -1;
+                    }
+                    for (i=0; i<lvalue; i++) ovalue[i] = value[i];
+                }
+                jbox = FindBoxNum(xButton-xshif+wsym/2, 
+                    yButton-yshif, wbox, hbox, nclmn, nparam);
+            }
+            if (ind){
+                iret = -1;
+                jbox = oldparam;
+                goto Escend;
+            }
+            if (jbox == 0) goto Table_control;
+
+Newparam:
+            ix = wbox*((jbox - 1)%nclmn) + xshif;
+            iy = hbox*((jbox - 1)/nclmn) + yshif;
+            if (lname){
+                ind = (oldparam - 1)*namlen;
+                ind1 = (jbox - 1)*namlen;
+                WRITE_ theGCA, ixold, hsym+iyold, theNames+ind, namlen);
+                Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+                WRITE_ hghGC, ix, hsym+iy, theNames+ind1, namlen);
+                Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+            }
+            if (lname*lvalue){
+                WRITE_ theGCA, ixold+vpos-wsym, hsym+iyold, &vsym, 1);
+                Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+                WRITE_ hghGC, ix+vpos-wsym, hsym+iy, &vsym, 1);
+                Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+            }
+            if (lvalue){
+                valn = *(array+jbox-1);
+                num2str(valn, value, lvalue);
+                WRITE_ theGCA, ixold+vpos, hsym+iyold, ovalue, lvalue);
+                Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+                WRITE_ hghGC, ix+vpos, hsym+iy, value, lvalue);
+                Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+                spos = -1;
+                for (i=0; i<lvalue; i++) stri[i] = ' ';
+                ixa = ix + vpos;
+                iya = iy + hsym + 2;
+                MoveArrow(theWindow, ixa0, iya0, ixa, iya);
+                ixa0 = ixa;
+                iya0 = iya;
+            }
+            XFlush(theDisplay);
+            goto Table_control;
+	}
+        if (jbox == 0 || lvalue == 0){
+            if (GetEsc(theEvent.xkey)){
+               goto EndDialog;
+            }
+            else{
+                goto Table_control;
+            }
+        }
+        iret = GetValue(theEvent.xkey, stri, lvalue, "0123456789.-+eE", &spos);
+
+Escend:
+        if (contr == 0) goto EndDialog;
+        if (spos >= 0){
+            ixa = ix + vpos + spos*wsym;
+            iya = iy + hsym + 2;
+            MoveArrow(theWindow, ixa0, iya0, ixa, iya);
+            ixa0 = ixa;
+            iya0 = iya;
+        }
+        if (iret && spos > 0){
+            sscanf(stri, "%6g", &param);
+            *(array+jbox-1) = param;
+            valn = param;
+            num2str(valn, value, lvalue);
+            spos = -1;
+        }
+        if (iret == -1) goto EndDialog;
+        if (iret == -2){ // Question mark: document usage of a selected variable
+            for (i=0; i<namlen; i++){
+                ii = namlen-i;
+                strncpy(theName, theNames+(jbox-1)*namlen+i, ii);
+                if (theName[0] != ' ') break;
+            }
+            theName[ii] = '\0';
+            ii--;
+            while (theName[ii] == ' '){
+                theName[ii] = '\0';
+                ii--;
+            }
+            ii++;
+
+            switch(*id){
+            case 1:        // Variables
+                strcpy (str128, "grep -i \"");
+                strncat(str128, theName, ii);
+                strcat (str128, " \" main/variables.txt");
+                break;
+            case 2:        // Constants, usage in equ file (missing)
+                strcpy (str128,"grep -i -w ");
+                strncat(str128, theName, ii);
+                strcat (str128, " tmp/model.tmp");
+                break;
+            case 3:        // Time, grid control
+                strcpy (str128, "grep -i \"");
+                strncat(str128, theName, ii);
+                strcat (str128," \" main/internal.txt");
+                break;
+            case 4:
+                strcpy (str128, "grep -w ");
+                strncat(str128, theName, ii);
+                strcat (str128," tmp/model.txt");
+                break;
+            case 7:
+                printf("Curve presentation\n");
+                break;
+            case 8:
+                printf("Mark time slices\n");
+                break;
+	    }
+            if (*id < 5){
+                ii = system(str128);
+                if (ii == 128) printf("The constant %s is not assigned\n", theName);
+            }
+	}
+
+        if (spos < 0){
+            spos = -1;
+            for (i=0; i<lvalue; i++) stri[i] = ' ';
+        }
+        Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+        WRITE_ hghGC, ix+vpos, hsym+iy, stri, lvalue);
+        Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+
+        if (iret >= 2){
+            oldparam = jbox;
+            ixold = ix;
+            iyold = iy;
+            for (i=0; i<lvalue; i++) ovalue[i] = value[i];
+	    if (iret == 2){
+                jbox++;
+                if (jbox > nparam) jbox = 1;
+	    }
+	    else{
+                dcol = iret%10 - 2;
+                icol = (jbox - 1)%nclmn + dcol;
+                if (icol < 0) icol = 0;
+                if (icol >= nclmn) icol--;
+                drow = iret/10 - 2;
+                irow = (jbox - 1)/nclmn + drow;
+                if (irow < 0) irow = 0;
+                if (irow > (nparam - 1)/nclmn) irow--;
+                jbox = irow*nclmn + icol + 1;
+                if (jbox == oldparam && icol == nclmn-1 && drow != -1) jbox++;
+                if (jbox == oldparam && icol == 0       && drow !=  1) jbox--;
+                if (jbox < 1) jbox = 1;
+                if (jbox > nparam) jbox = nparam;
+            }
+            goto Newparam;
+        }
+        goto Table_control;
+
 EndDialog:
-	XWarpPointer(theDisplay, None, theRootWindow, 0, 0, 0, 0, Kevent.xcur, Kevent.ycur);
-	XSetInputFocus(theDisplay,theRootWindow,
-	         RevertToPointerRoot,theEvent.xkey.time);
-	XFlush(theDisplay);
-	XDestroyWindow(theDisplay, theWindow);
-	ibcursor = -1;
-	XFlush(theDisplay);
-	return (0);
+    XWarpPointer(theDisplay, None, theRootWindow, 0, 0, 0, 0, Kevent.xcur, Kevent.ycur);
+    XSetInputFocus(theDisplay, theRootWindow, RevertToPointerRoot, theEvent.xkey.time);
+    XFlush(theDisplay);
+    XDestroyWindow(theDisplay, theWindow);
+    ibcursor = -1;
+    XFlush(theDisplay);
+    return 0;
 }
 
 
@@ -1805,7 +1871,7 @@ int ufilebox_(INT_ *nofbox, char una[], char theNames[], char unad[]){
             if (iret ==  0) continue;
             if (iret == -1) break;
             oldparam = jbox;
-            if (iret ==  2){
+            if (iret == 2){
                 jbox++;
                 if (jbox > nparam) jbox = 1;
             }

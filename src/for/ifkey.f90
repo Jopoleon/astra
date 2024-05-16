@@ -641,7 +641,7 @@ CASE(76) ! 'L'
 
 CASE(83) ! 'S'
     rescale_array(1) = resizeGraph
-    call ASKLIS(1, rescale_array, rescale_label, 5)
+    call MENUBOX(1, rescale_array, rescale_label, 5)
     resizeGraph = rescale_array(1)
 !    call initMainWindow
     if (IFKL == KEY) return
@@ -691,7 +691,7 @@ CASE(68) ! 'D'
     NDTNAM = NSDELOUT + 4*NSBR
     TIMEB = TIME
     MODEX = XOUT + 0.49
-    call ASKLIS(NDTNAM, DELOUT, DTNAME, 3) ! Only place requiring DELOUT(j>44)
+    call MENUBOX(NDTNAM, DELOUT, DTNAME, 3) ! Only place requiring DELOUT(j>44)
     if (int(DELOUT(13)) /= NA1) then
         write(*, *)">>> NA1 re-definition ignored"
     endif
@@ -719,14 +719,14 @@ CASE(68) ! 'D'
     endif
 
 CASE(67) ! 'C'
-    call ASKLIS(NCFNAM, CONSTF, CFNAME, 2)
+    call MENUBOX(NCFNAM, CONSTF, CFNAME, 2)
 
 CASE(86) ! 'V'
     do J=1, NPRNAM
         DEVARO(J) = DEVAR(J)
     enddo
     INT4 = NPRNAM - 96  ! INT4 = NPRNAM - No. of ZRDs
-    call ASKLIS(INT4, DEVAR, PRNAME, 1)
+    call MENUBOX(INT4, DEVAR, PRNAME, 1)
     do J=1, NPRNAM
         if (IFDFVX(J) > 3) DEVAR(J) = DEVARO(J)
         if (ABS(DEVAR(J)-DEVARO(J)) > 1.d-6*ABS(DEVAR(J))) IFDFVX(J) = 3
@@ -738,11 +738,11 @@ CASE(77) ! 'M'
     if (MOD10 == 6) call ASTWIN(NTOUT, NWIND3, NAMET, SCALET, &
         OSHIFT, MOD10, MODEY)
     if (MOD10 == 7) then
-        call ASKLIS(4, TIM7, NAM7, 7)
+        call MENUBOX(4, TIM7, NAM7, 7)
     endif
     if (MOD10 == 4 .or. MOD10 == 5) then
         INT4 = -MAX(4, IPOUT-1)
-        call ASKLIS(INT4, PRMARK, NAMEP, 8)
+        call MENUBOX(INT4, PRMARK, NAMEP, 8)
     endif
     if (MOD10 <= 7) then
         call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
