@@ -547,8 +547,8 @@ int menubox_(INT_ *nofbox, double *array, char theNames[], INT_ *id){
         spos=0, vpos,             /* edit & edit start positions */
         ixa0=0, iya0=0, ixa, iya, /* arrow (textcursor) position */
         namlen, jbox, iret, oldparam, ixold, iyold,
-        lline, xButton, yButton, i, ii=-1, ind, ind1,
-        ihelp, selalb=0,  contr, icol, dcol, irow, drow;
+        lline, xButton, yButton, i, ii=-1, ind, ind1, ind2, esc_flag,
+        ihelp, selalb=0,  editable, icol, dcol, irow, drow;
     float param;
     char value[10], ovalue[10], stri[10], vsym='=', title[70],
         str128[128], theName[10], legend[128];
@@ -564,22 +564,14 @@ int menubox_(INT_ *nofbox, double *array, char theNames[], INT_ *id){
     vpos = wsym*(lname + 1);
     selalb = 1;
     nparam = *nofbox;
-    contr = 1;
-    if (nparam == 0) return -1;
-    if (nparam < 0){
-        nparam = -nparam;
-        selalb = 0;
-    }
-    if (nparam > 1000){
-        nparam = nparam - 1000;
-        contr = 0;
-    }
-    if (*id == 3) contr = 1;
+    editable = 1;
+
+    if (*id == 3) editable = 1;
     Width = 2*xshif + nclmn*wbox - wsym;
     Height= 2*yshif + ((nparam - 1)/nclmn + 2)*hbox;
     jbox = 1;
-    if (contr == 0) jbox = 0;
-    if(*id == 8){
+    if (editable == 0) jbox = 0;
+    if (*id == 8){
         jbox = 0;
         selalb = -1;
     }
@@ -630,7 +622,7 @@ int menubox_(INT_ *nofbox, double *array, char theNames[], INT_ *id){
     i--;
     LINGCA_ 0, i, Width, i);
     WRITE_ hghGC, xshif, Height-3, "OK",2);
-    if (jbox == 0 && contr == 0) MVPOINTER_ xshif+5, Height-5);
+    if (jbox == 0 && editable == 0) MVPOINTER_ xshif+5, Height-5);
     if (*id == 8) MVPOINTER_ xshif+Width-50, Height-5);
     i = nclmn*wbox/wsym - 5;
     ind = 50;
@@ -646,9 +638,9 @@ int menubox_(INT_ *nofbox, double *array, char theNames[], INT_ *id){
     }
     Change_Color(hintGC, 42, 0);
     ind = strlen(legend);
-    if (contr == 1) WRITE_ hintGC, xshif+2*wsym, Height-3, legend, ind);
+    if (editable == 1) WRITE_ hintGC, xshif+2*wsym, Height-3, legend, ind);
     Change_Color(hintGC, 1, 0);
-    if (contr == 0) WRITE_ theGCA, xshif+4*wsym, Height-3,
+    if (editable == 0) WRITE_ theGCA, xshif+4*wsym, Height-3,
         "    Information table.   No changes permitted.     ", ind);
     if (*id == 8){
         if (selalb ==  0) WRITE_ hintGC, xshif+8+(i-6)*wsym, Height-3,
@@ -658,17 +650,17 @@ int menubox_(INT_ *nofbox, double *array, char theNames[], INT_ *id){
     }
     Change_Color(theGCA, 1, 0);
 
-Table_control:
+    while(1){
         XNextEvent(theDisplay, &theEvent);
         if (theEvent.xany.window == theRootWindow){
             ProcessRootWindowEvent (&theEvent);
-            goto Table_control;
+            continue;
         }
         if (theEvent.type == ButtonPress){
             xButton = theEvent.xbutton.x;
             yButton = theEvent.xbutton.y;
             ind  = FindBoxNum(xButton-xshif, yButton-Height+hbox+1, 4*wsym, hbox, 1, 1);
-	    if (contr){
+	    if (editable){
                 if (jbox){
                     oldparam = jbox;
                     ixold = ix;
@@ -685,60 +677,64 @@ Table_control:
                 jbox = FindBoxNum(xButton-xshif+wsym/2, 
                     yButton-yshif, wbox, hbox, nclmn, nparam);
             }
+	    esc_flag = 0;
             if (ind){
                 iret = -1;
                 jbox = oldparam;
-                goto Escend;
-            }
-            if (jbox == 0) goto Table_control;
-
-Newparam:
-            ix = wbox*((jbox - 1)%nclmn) + xshif;
-            iy = hbox*((jbox - 1)/nclmn) + yshif;
-            if (lname){
-                ind = (oldparam - 1)*namlen;
-                ind1 = (jbox - 1)*namlen;
-                WRITE_ theGCA, ixold, hsym+iyold, theNames+ind, namlen);
-                Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
-                WRITE_ hghGC, ix, hsym+iy, theNames+ind1, namlen);
-                Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
-            }
-            if (lname*lvalue){
-                WRITE_ theGCA, ixold+vpos-wsym, hsym+iyold, &vsym, 1);
-                Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
-                WRITE_ hghGC, ix+vpos-wsym, hsym+iy, &vsym, 1);
-                Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
-            }
-            if (lvalue){
-                valn = *(array+jbox-1);
-                num2str(valn, value, lvalue);
-                WRITE_ theGCA, ixold+vpos, hsym+iyold, ovalue, lvalue);
-                Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
-                WRITE_ hghGC, ix+vpos, hsym+iy, value, lvalue);
-                Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
-                spos = -1;
-                for (i=0; i<lvalue; i++) stri[i] = ' ';
-                ixa = ix + vpos;
-                iya = iy + hsym + 2;
-                MoveArrow(theWindow, ixa0, iya0, ixa, iya);
-                ixa0 = ixa;
-                iya0 = iya;
-            }
-            XFlush(theDisplay);
-            goto Table_control;
-	}
-        if (jbox == 0 || lvalue == 0){
-            if (GetEsc(theEvent.xkey)){
-               goto EndDialog;
+	 	esc_flag = 1;
             }
             else{
-                goto Table_control;
+                if (jbox == 0) continue;
+
+                ix = wbox*((jbox - 1)%nclmn) + xshif;
+                iy = hbox*((jbox - 1)/nclmn) + yshif;
+                if (lname){
+                    ind1 = (oldparam - 1)*namlen;
+                    ind2 = (jbox - 1)*namlen;
+                    WRITE_ theGCA, ixold, hsym+iyold, theNames+ind1, namlen);
+                    Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+                    WRITE_ hghGC, ix, hsym+iy, theNames+ind2, namlen);
+                    Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+                }
+                if (lname*lvalue){
+                    WRITE_ theGCA, ixold+vpos-wsym, hsym+iyold, &vsym, 1);
+                    Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+                    WRITE_ hghGC, ix+vpos-wsym, hsym+iy, &vsym, 1);
+                    Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+                }
+                if (lvalue){
+                    valn = *(array+jbox-1);
+                    num2str(valn, value, lvalue);
+                    WRITE_ theGCA, ixold+vpos, hsym+iyold, ovalue, lvalue);
+                    Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+                    WRITE_ hghGC, ix+vpos, hsym+iy, value, lvalue);
+                    Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+                    spos = -1;
+                    for (i=0; i<lvalue; i++) stri[i] = ' ';
+                    ixa = ix + vpos;
+                    iya = iy + hsym + 2;
+                    MoveArrow(theWindow, ixa0, iya0, ixa, iya);
+                    ixa0 = ixa;
+                    iya0 = iya;
+                }
+                XFlush(theDisplay);
+                continue;
             }
         }
-        iret = GetValue(theEvent.xkey, stri, lvalue, "0123456789.-+eE", &spos);
 
-Escend:
-        if (contr == 0) goto EndDialog;
+        if (esc_flag == 0){
+            if (jbox == 0 || lvalue == 0){
+                if (GetEsc(theEvent.xkey)){
+                    break;
+                }
+                else{
+                    continue;
+                }
+            }
+            iret = GetValue(theEvent.xkey, stri, lvalue, "0123456789.-+eE", &spos);
+        }
+
+        if (editable == 0) break;
         if (spos >= 0){
             ixa = ix + vpos + spos*wsym;
             iya = iy + hsym + 2;
@@ -753,7 +749,7 @@ Escend:
             num2str(valn, value, lvalue);
             spos = -1;
         }
-        if (iret == -1) goto EndDialog;
+        if (iret == -1) break;
         if (iret == -2){ // Question mark: document usage of a selected variable
             for (i=0; i<namlen; i++){
                 ii = namlen-i;
@@ -834,14 +830,43 @@ Escend:
                 if (jbox < 1) jbox = 1;
                 if (jbox > nparam) jbox = nparam;
             }
-            goto Newparam;
+            ix = wbox*((jbox - 1)%nclmn) + xshif;
+            iy = hbox*((jbox - 1)/nclmn) + yshif;
+            if (lname){
+                ind1 = (oldparam - 1)*namlen;
+                ind2 = (jbox - 1)*namlen;
+                WRITE_ theGCA, ixold, hsym+iyold, theNames+ind1, namlen);
+                Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+                WRITE_ hghGC, ix, hsym+iy, theNames+ind2, namlen);
+                Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+            }
+            if (lname*lvalue){
+                WRITE_ theGCA, ixold+vpos-wsym, hsym+iyold, &vsym, 1);
+                Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+                WRITE_ hghGC, ix+vpos-wsym, hsym+iy, &vsym, 1);
+                Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+            }
+            if (lvalue){
+                valn = *(array+jbox-1);
+                num2str(valn, value, lvalue);
+                WRITE_ theGCA, ixold+vpos, hsym+iyold, ovalue, lvalue);
+                Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+                WRITE_ hghGC, ix+vpos, hsym+iy, value, lvalue);
+                Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+                spos = -1;
+                for (i=0; i<lvalue; i++) stri[i] = ' ';
+                ixa = ix + vpos;
+                iya = iy + hsym + 2;
+                MoveArrow(theWindow, ixa0, iya0, ixa, iya);
+                ixa0 = ixa;
+                iya0 = iya;
+            }
+            XFlush(theDisplay);
         }
-        goto Table_control;
+    }
 
-EndDialog:
     XWarpPointer(theDisplay, None, theRootWindow, 0, 0, 0, 0, Kevent.xcur, Kevent.ycur);
     XSetInputFocus(theDisplay, theRootWindow, RevertToPointerRoot, theEvent.xkey.time);
-    XFlush(theDisplay);
     XDestroyWindow(theDisplay, theWindow);
     ibcursor = -1;
     XFlush(theDisplay);
