@@ -68,7 +68,6 @@ int ufilebox_(INT_*, char[], char[], char[]);
 int FindBoxNum(int, int, int, int, int, int);
 int GetEsc(XKeyEvent);
 int GetValue(XKeyEvent, char[], int, char[], int*);
-int If_empty(int, int, int, int[], int[], char[], int);
 int GetKey(XKeyEvent, char[], int*);
 Window Open_Window(int, int, int, int, int, char[], int, Window, Cursor);
 
@@ -504,42 +503,45 @@ void mvcursor_(INT_ *key, INT_ *ix, INT_ *iy){
 }
 
 /**********************************************************************/
-int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
+int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
 	     INT_* nameLength, INT_ *id, INT_ *editable){
     Window theWindow;
     XEvent theEvent;
     double valn;
-    int UpLeftx=2, UpLefty=10,    /* window corner location */
-        Width=452, Height=480,    /* window size */
-        ix, iy, wbox, hbox,       /* parameter box corner and size*/
+    const int num_str_len=6, var_name_len=6, /* length of value and name */
         wsym=8, hsym=13,          /* symbol width and height */
-        lvalue=6, lname=6,        /* length of value and name */
-        xshif=5, yshif=3,         /* table corner */
-        nclmn=4, nparam,          /* # of columns and parameters */
+        n_columns=4,              /* # of columns */
+        xshif=5, yshif=3;         /* table corner */
+    int UpLeftx, UpLefty,         /* window corner location */
+        Width, Height,            /* window size */
+        ix, iy, wbox, hbox,       /* parameter box corner and size*/
+        nparam,                   /* # of parameters (array size) */
         spos=0, vpos,             /* edit & edit start positions */
         ixa0=0, iya0=0, ixa, iya, /* arrow (textcursor) position */
-        namlen, jbox, iret, oldparam, ixold, iyold,
+        name_len, jbox, iret, oldparam, ixold, iyold,
         lline, xButton, yButton, i, ii=-1, ind, ind1, ind2, esc_flag,
         ihelp, selalb=0, icol, dcol, irow, drow;
     float param;
     char value[10], ovalue[10], stri[10], vsym='=',
         grep_str[128], var_name[10], legend[128];
 
-    namlen = *nameLength;
-    lline = lname + lvalue + 1;
+    name_len = *nameLength;
+    lline = var_name_len + num_str_len + 1;
     hbox = hsym + 3;
     wbox = wsym*(lline + 1);
-    vpos = wsym*(lname + 1);
-    selalb = 1;
-    nparam = *nofbox;
+    vpos = wsym*(var_name_len + 1);
+    nparam = *arr_size;
 
-    Width = 2*xshif + nclmn*wbox - wsym;
-    Height= 2*yshif + ((nparam - 1)/nclmn + 2)*hbox;
-    jbox = 1;
+    Width = 2*xshif + n_columns*wbox - wsym;
+    Height= 2*yshif + ((nparam - 1)/n_columns + 2)*hbox;
     if (*editable == 0) jbox = 0;
     if (*id == 6){
         jbox = 0;
         selalb = -1;
+    }
+    else{
+        jbox = 1;
+        selalb = 1;
     }
 
     GetRWgeometry (&XRW, &YRW);
@@ -557,28 +559,22 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
 // Create table
     Change_Color(theGCA, 1, 0);        /* white background, black foreground */
     for (i=0; i<nparam; i++){
-        ix = wbox*(i%nclmn) + xshif;
-        iy = hbox*(i/nclmn) + yshif;
-        if (lname){
-            ind = i*namlen;
-            WRITE_ theGCA, ix, hsym+iy, varNames+ind, namlen);
-        }
-        if (lname*lvalue){
-            WRITE_ theGCA, ix+vpos-wsym, hsym+iy, &vsym, 1);
-        }
-        if (lvalue){
-            valn = *(array+i);
-            num2str(valn, value, lvalue);
-            WRITE_ theGCA, ix+vpos, hsym+iy, value, lvalue);
-        }
+        ix = wbox*(i%n_columns) + xshif;
+        iy = hbox*(i/n_columns) + yshif;
+        ind = i*name_len;
+        WRITE_ theGCA, ix, hsym+iy, varNames+ind, name_len);
+        WRITE_ theGCA, ix+vpos-wsym, hsym+iy, &vsym, 1);
+        valn = *(array+i);
+        num2str(valn, value, num_str_len);
+        WRITE_ theGCA, ix+vpos, hsym+iy, value, num_str_len);
     }
     oldparam = nparam;
     ixold = ix;
     iyold = iy;
-    for (i=0; i<lvalue; i++) ovalue[i] = value[i];
+    for (i=0; i<num_str_len; i++) ovalue[i] = value[i];
     if (jbox == 1 && selalb != -1 && ii < 0) MVPOINTER_ xshif+40, yshif+13);
     Change_Color(theGCA, 50, 0);
-    for (i=1; i<nclmn; i++){
+    for (i=1; i<n_columns; i++){
 	ind = xshif + i*wbox - wsym/2;
         LINGCA_ ind, 0, ind, Height-hbox);
     }
@@ -589,7 +585,7 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
     WRITE_ hghGC, xshif, Height-3, "OK",2);
     if (jbox == 0 && *editable == 0) MVPOINTER_ xshif+5, Height-5);
     if (*id == 6) MVPOINTER_ xshif+Width-50, Height-5);
-    i = nclmn*wbox/wsym - 5;
+    i = n_columns*wbox/wsym - 5;
     ind = 50;
     if (i < 50) ind = i;
     strcpy(legend, "/ Esc - done;");
@@ -615,37 +611,31 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
     }
     Change_Color(theGCA, 1, 0);
 
-    ix = wbox*((jbox - 1)%nclmn) + xshif;
-    iy = hbox*((jbox - 1)/nclmn) + yshif;
-    if (lname){
-        ind1 = (oldparam - 1)*namlen;
-        ind2 = (jbox - 1)*namlen;
-        WRITE_ theGCA, ixold, hsym+iyold, varNames+ind1, namlen);
-        Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
-        WRITE_ hghGC, ix, hsym+iy, varNames+ind2, namlen);
-        Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
-    }
-    if (lname*lvalue){
-        WRITE_ theGCA, ixold+vpos-wsym, hsym+iyold, &vsym, 1);
-        Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
-        WRITE_ hghGC, ix+vpos-wsym, hsym+iy, &vsym, 1);
-        Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
-    }
-    if (lvalue){
-        valn = *(array+jbox-1);
-        num2str(valn, value, lvalue);
-        WRITE_ theGCA, ixold+vpos, hsym+iyold, ovalue, lvalue);
-        Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
-        WRITE_ hghGC, ix+vpos, hsym+iy, value, lvalue);
-        Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
-        spos = -1;
-        for (i=0; i<lvalue; i++) stri[i] = ' ';
-        ixa = ix + vpos;
-        iya = iy + hsym + 2;
-        MoveArrow(theWindow, ixa0, iya0, ixa, iya);
-        ixa0 = ixa;
-        iya0 = iya;
-    }
+    ix = wbox*((jbox - 1)%n_columns) + xshif;
+    iy = hbox*((jbox - 1)/n_columns) + yshif;
+    ind1 = (oldparam - 1)*name_len;
+    ind2 = (jbox - 1)*name_len;
+    WRITE_ theGCA, ixold, hsym+iyold, varNames+ind1, name_len);
+    Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+    WRITE_ hghGC, ix, hsym+iy, varNames+ind2, name_len);
+    Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+    WRITE_ theGCA, ixold+vpos-wsym, hsym+iyold, &vsym, 1);
+    Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+    WRITE_ hghGC, ix+vpos-wsym, hsym+iy, &vsym, 1);
+    valn = *(array+jbox-1);
+    num2str(valn, value, num_str_len);
+    Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+    WRITE_ theGCA, ixold+vpos, hsym+iyold, ovalue, num_str_len);
+    Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+    WRITE_ hghGC, ix+vpos, hsym+iy, value, num_str_len);
+    Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+    spos = -1;
+    for (i=0; i<num_str_len; i++) stri[i] = ' ';
+    ixa = ix + vpos;
+    iya = iy + hsym + 2;
+    MoveArrow(theWindow, ixa0, iya0, ixa, iya);
+    ixa0 = ixa;
+    iya0 = iya;
 
     while(1){
         XFlush(theDisplay);
@@ -669,13 +659,13 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
                         sscanf(stri, "%6g", &param);
 			*(array+jbox-1) = param;
                         valn = param;
-                        num2str(valn, value, lvalue);
+                        num2str(valn, value, num_str_len);
                         spos = -1;
                     }
-                    for (i=0; i<lvalue; i++) ovalue[i] = value[i];
+                    for (i=0; i<num_str_len; i++) ovalue[i] = value[i];
                 }
                 jbox = FindBoxNum(xButton-xshif+wsym/2, 
-                    yButton-yshif, wbox, hbox, nclmn, nparam);
+                    yButton-yshif, wbox, hbox, n_columns, nparam);
             }
             if (ind){
                 iret = -1;
@@ -683,33 +673,27 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
 	 	esc_flag = 1;
             }
             else{
-                if (jbox == 0) continue;
-
-                ix = wbox*((jbox - 1)%nclmn) + xshif;
-                iy = hbox*((jbox - 1)/nclmn) + yshif;
-                if (lname){
-                    ind1 = (oldparam - 1)*namlen;
-                    ind2 = (jbox - 1)*namlen;
-                    WRITE_ theGCA, ixold, hsym+iyold, varNames+ind1, namlen);
+                if (jbox != 0){
+                    ix = wbox*((jbox - 1)%n_columns) + xshif;
+                    iy = hbox*((jbox - 1)/n_columns) + yshif;
+                    ind1 = (oldparam - 1)*name_len;
+                    ind2 = (jbox - 1)*name_len;
+                    WRITE_ theGCA, ixold, hsym+iyold, varNames+ind1, name_len);
                     Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
-                    WRITE_ hghGC, ix, hsym+iy, varNames+ind2, namlen);
+                    WRITE_ hghGC, ix, hsym+iy, varNames+ind2, name_len);
                     Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
-                }
-                if (lname*lvalue){
                     WRITE_ theGCA, ixold+vpos-wsym, hsym+iyold, &vsym, 1);
                     Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
                     WRITE_ hghGC, ix+vpos-wsym, hsym+iy, &vsym, 1);
-                    Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
-                }
-                if (lvalue){
                     valn = *(array+jbox-1);
-                    num2str(valn, value, lvalue);
-                    WRITE_ theGCA, ixold+vpos, hsym+iyold, ovalue, lvalue);
+                    num2str(valn, value, num_str_len);
+                    Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+                    WRITE_ theGCA, ixold+vpos, hsym+iyold, ovalue, num_str_len);
                     Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
-                    WRITE_ hghGC, ix+vpos, hsym+iy, value, lvalue);
+                    WRITE_ hghGC, ix+vpos, hsym+iy, value, num_str_len);
                     Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
                     spos = -1;
-                    for (i=0; i<lvalue; i++) stri[i] = ' ';
+                    for (i=0; i<num_str_len; i++) stri[i] = ' ';
                     ixa = ix + vpos;
                     iya = iy + hsym + 2;
                     MoveArrow(theWindow, ixa0, iya0, ixa, iya);
@@ -721,7 +705,7 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
         } // Mouse button
 
         if (esc_flag == 0){
-            if (jbox == 0 || lvalue == 0){
+            if (jbox == 0){
                 if (GetEsc(theEvent.xkey)){
                     break;
                 }
@@ -729,7 +713,7 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
                     continue;
                 }
             }
-            iret = GetValue(theEvent.xkey, stri, lvalue, "0123456789.-+eE", &spos);
+            iret = GetValue(theEvent.xkey, stri, num_str_len, "0123456789.-+eE", &spos);
         }
 
         if (spos >= 0){
@@ -743,15 +727,15 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
             sscanf(stri, "%6g", &param);
             *(array+jbox-1) = param;
             valn = param;
-            num2str(valn, value, lvalue);
+            num2str(valn, value, num_str_len);
             spos = -1;
         }
 
         if (iret == -1) break;
         if (iret == -2){ // Question mark: document usage of a selected variable
-            for (i=0; i<namlen; i++){
-                ii = namlen-i;
-                strncpy(var_name, varNames+(jbox-1)*namlen+i, ii);
+            for (i=0; i<name_len; i++){
+                ii = name_len-i;
+                strncpy(var_name, varNames+(jbox-1)*name_len+i, ii);
                 if (var_name[0] != ' ') break;
             }
             var_name[ii] = '\0';
@@ -796,74 +780,66 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
             }
 	}
 
+        Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
         if (spos < 0){
             spos = -1;
-            for (i=0; i<lvalue; i++) stri[i] = ' ';
-            Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
-            WRITE_ hghGC, ix+vpos, hsym+iy, value, lvalue);
-            Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+            for (i=0; i<num_str_len; i++) stri[i] = ' ';
+            WRITE_ hghGC, ix+vpos, hsym+iy, value, num_str_len);
         }
         else{
-            Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
-            WRITE_ hghGC, ix+vpos, hsym+iy, stri, lvalue);
-            Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+            WRITE_ hghGC, ix+vpos, hsym+iy, stri, num_str_len);
         }
+        Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
 
         if (iret >= 2){
             oldparam = jbox;
             ixold = ix;
             iyold = iy;
-            for (i=0; i<lvalue; i++) ovalue[i] = value[i];
+            for (i=0; i<num_str_len; i++) ovalue[i] = value[i];
 	    if (iret == 2){
                 jbox++;
                 if (jbox > nparam) jbox = 1;
 	    }
 	    else{
                 dcol = iret%10 - 2;
-                icol = (jbox - 1)%nclmn + dcol;
+                icol = (jbox - 1)%n_columns + dcol;
                 if (icol < 0) icol = 0;
-                if (icol >= nclmn) icol--;
+                if (icol >= n_columns) icol--;
                 drow = iret/10 - 2;
-                irow = (jbox - 1)/nclmn + drow;
+                irow = (jbox - 1)/n_columns + drow;
                 if (irow < 0) irow = 0;
-                if (irow > (nparam - 1)/nclmn) irow--;
-                jbox = irow*nclmn + icol + 1;
-                if (jbox == oldparam && icol == nclmn-1 && drow != -1) jbox++;
+                if (irow > (nparam - 1)/n_columns) irow--;
+                jbox = irow*n_columns + icol + 1;
+                if (jbox == oldparam && icol == n_columns-1 && drow != -1) jbox++;
                 if (jbox == oldparam && icol == 0       && drow !=  1) jbox--;
                 if (jbox < 1) jbox = 1;
                 if (jbox > nparam) jbox = nparam;
             }
-            ix = wbox*((jbox - 1)%nclmn) + xshif;
-            iy = hbox*((jbox - 1)/nclmn) + yshif;
-            if (lname){
-                ind1 = (oldparam - 1)*namlen;
-                ind2 = (jbox - 1)*namlen;
-                WRITE_ theGCA, ixold, hsym+iyold, varNames+ind1, namlen);
-                Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
-                WRITE_ hghGC, ix, hsym+iy, varNames+ind2, namlen);
-                Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
-            }
-            if (lname*lvalue){
-                WRITE_ theGCA, ixold+vpos-wsym, hsym+iyold, &vsym, 1);
-                Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
-                WRITE_ hghGC, ix+vpos-wsym, hsym+iy, &vsym, 1);
-                Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
-            }
-            if (lvalue){
-                valn = *(array+jbox-1);
-                num2str(valn, value, lvalue);
-                WRITE_ theGCA, ixold+vpos, hsym+iyold, ovalue, lvalue);
-                Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
-                WRITE_ hghGC, ix+vpos, hsym+iy, value, lvalue);
-                Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
-                spos = -1;
-                for (i=0; i<lvalue; i++) stri[i] = ' ';
-                ixa = ix + vpos;
-                iya = iy + hsym + 2;
-                MoveArrow(theWindow, ixa0, iya0, ixa, iya);
-                ixa0 = ixa;
-                iya0 = iya;
-            }
+            ix = wbox*((jbox - 1)%n_columns) + xshif;
+            iy = hbox*((jbox - 1)/n_columns) + yshif;
+            ind1 = (oldparam - 1)*name_len;
+            ind2 = (jbox - 1)*name_len;
+            WRITE_ theGCA, ixold, hsym+iyold, varNames+ind1, name_len);
+            Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+            WRITE_ hghGC, ix, hsym+iy, varNames+ind2, name_len);
+            Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+            WRITE_ theGCA, ixold+vpos-wsym, hsym+iyold, &vsym, 1);
+            Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+            WRITE_ hghGC, ix+vpos-wsym, hsym+iy, &vsym, 1);
+            valn = *(array+jbox-1);
+            num2str(valn, value, num_str_len);
+            Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+            WRITE_ theGCA, ixold+vpos, hsym+iyold, ovalue, num_str_len);
+            Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+            WRITE_ hghGC, ix+vpos, hsym+iy, value, num_str_len);
+            Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+            spos = -1;
+            for (i=0; i<num_str_len; i++) stri[i] = ' ';
+            ixa = ix + vpos;
+            iya = iy + hsym + 2;
+            MoveArrow(theWindow, ixa0, iya0, ixa, iya);
+            ixa0 = ixa;
+            iya0 = iya;
         }
     }
 
@@ -921,22 +897,23 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
 
 {
     XEvent theEvent;
-    static Window theWindow;
-    static int xshif=5, yshif=3,    /* table corner */
-        ind, jbox_old, hbox,	    /* current/old box No. & height */
+    Window theWindow;
+    const int xshif=5, yshif=3,    /* table corner */
+        wsym=8, hsym=13,           /* symbol width and height */
+        ncol_max=20;	            /* max / actual # of columns */
+
+    int ind, jbox_old, hbox,	    /* current/old box No. & height */
         irow0=0, wbox,              /* number of chars in box */
-        Width=452, Height=480,      /* defaut window sizes */
+        Width, Height,              /* defaut window sizes */
         ixold, iyold, icold, ixa0, iya0, arrdim,
         j_col, nwid[20], nsta[20], ii=0,
         icol, isym, irow, ixa,      /* arrow (textcursor) position */
         spos=0,                     /* abs. and rel. position of symbol in table */
         lvalue,	                    /* 1 if box was changed, 0 otherwise */
-        fill_flag,
-        wsym=8, hsym=13;            /* symbol width and height */
-    int UpLeftx, UpLefty=10,        /* window corner location */
-        nend, jbox, iret, ix, ix1, iy, i, j,
-        ncol_max=20;	            /* max / actual # of columns */
-    static char stri[132];
+        fill_flag;
+    int UpLeftx, UpLefty,           /* window corner location */
+        nend, jbox, iret, ix, ix1, iy, i, j;
+    char stri[132];
 
     j = strlen(title);
     if (j > 132){
@@ -975,7 +952,6 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
     j_col++;
     arrdim = *len;
     ixa0 = jbox_old = 0;
-    UpLeftx = 2;
     hbox = hsym + 3;
     Width  = 2*xshif + nend*wsym;
     Height = 2*yshif + (*nrows + 4 + irow0)*hbox;
@@ -1304,37 +1280,6 @@ Just a placeholder, if needed use the abstract "menubox"
 }
 
 /**********************************************************************/
-int If_empty(int icol, int irow, int nclmn, int nsta[], int nwid[], char array[], int arrdim){
-/* True if cursor is in empty box
-  icol - current column
-  irow - current row
-  nclmn - total # of columns
-*/
-
-    int j, imin, imax;
-    imin = 1;
-    imax = nclmn;
-
-    R1: for (j=imin-1; j<nclmn ; j++){
-            if (nwid[j] == 0){
-                if (j >= icol){
-                    imax = j;
-                    break;
-                }
-                imin = j + 2;
-                goto R1;
-            }
-        }
-
-    if (strspn(array+(irow-1)*arrdim+nsta[imin-1], " ") > nsta[imax-1]+nwid[imax-1]-nsta[imin-1]){
-        return 1;
-    }
-    else{
-        return 0;
-    }
-}
-
-/**********************************************************************/
 KeySym GetKeySym(XKeyEvent theKeyEvent){
     XComposeStatus theComposeStatus;
     KeySym theKeySym;
@@ -1481,19 +1426,21 @@ int GetValue(XKeyEvent theKeyEvent, char str[], int lvalue, char tstri[], int *p
 }
 
 /**********************************************************************/
-int ufilebox_(INT_ *nofbox, char una[], char varNames[], char unad[]){
+int ufilebox_(INT_ *arr_size, char una[], char varNames[], char unad[]){
 /* U-file name setting */
     Window theWindow;
     XEvent theEvent;
-    int UpLeftx=2, UpLefty=10,  /* window corner location       */
-        Width=452, Height=480;  /* window size                  */
-    int ix, iy, wbox, hbox,     /* parameter box corner and size*/
-        wsym=8, hsym=13,        /* symbol width and height      */
-        lvalue=10, lname=4,     /* length of value and name     */
-        xshif=5, yshif=3,       /* table corner and             */
-        nclmn=3, nparam,        /* # of columns and parameters  */
-        ixa0=0, iya0=0, ixa,iya,/* arrow (textcursor) position  */
-        i, j, jbox, spos = 0, vpos, lsym=4,
+    const int wsym=8, hsym=13, /* symbol width and height */
+        lvalue=10, lname=4,    /* length of value and name */
+        xshif=5, yshif=3,      /* table corner and */
+        lsym=4,
+        n_columns=3;             /* # of columns */
+    int UpLeftx, UpLefty,      /* window corner location */
+        Width, Height,         /* window size */
+        ix, iy, wbox, hbox,    /* parameter box corner and size*/
+        nparam,                /* # of columns and parameters */
+        ixa0=0, iya0=0, ixa, iya, /* arrow (textcursor) position */
+        i, j, jbox, spos=0, vpos,
         iret, oldparam, ixold, iyold, ii=-1,
         icol, dcol, irow, drow;
     int lline, xButton, yButton, ind, ind1, ierr, key_flag;
@@ -1505,9 +1452,9 @@ int ufilebox_(INT_ *nofbox, char una[], char varNames[], char unad[]){
     hbox = hsym+3;
     wbox = wsym*(lline+1);
     vpos = wsym*(lname+4);
-    nparam = *nofbox;
-    Width = 2*xshif + nclmn*wbox - wsym;
-    Height =2*yshif + ((nparam - 1)/nclmn + 3)*hbox;
+    nparam = *arr_size;
+    Width = 2*xshif + n_columns*wbox - wsym;
+    Height =2*yshif + ((nparam - 1)/n_columns + 3)*hbox;
     jbox = 0;
     UpLeftx = 2;
 
@@ -1525,8 +1472,8 @@ int ufilebox_(INT_ *nofbox, char una[], char varNames[], char unad[]){
 
     Change_Color(theGCA, 1, 0);  /* white background, black foreground */
     for (i=1; i <= nparam; i++){
-        ix = wbox*((i - 1)%nclmn) + xshif;
-        iy = hbox*((i - 1)/nclmn) + yshif;
+        ix = wbox*((i - 1)%n_columns) + xshif;
+        iy = hbox*((i - 1)/n_columns) + yshif;
         ind = (i - 1)*lname;
         WRITE_ theGCA, ix, hsym+iy, varNames+ind, lname);
         ind = (i - 1)*lvalue;
@@ -1540,7 +1487,7 @@ int ufilebox_(INT_ *nofbox, char una[], char varNames[], char unad[]){
     iyold = iy;
     if (ii < 0) XWarpPointer(theDisplay, None, theWindow, 0, 0, 0, 0, xshif+40, yshif+13);
     Change_Color(theGCA, 50, 0);
-    for (i=1; i < nclmn; i++){
+    for (i=1; i < n_columns; i++){
         ind = xshif + i*wbox - wsym/2;
         LINGCA_ ind, 0, ind, Height - 2*hbox);
     }
@@ -1552,7 +1499,7 @@ int ufilebox_(INT_ *nofbox, char una[], char varNames[], char unad[]){
     WRITE_ hghGC, xshif, Height-4, " OK ", 4);
     XDrawRectangle(theDisplay, theWindow, hghGC, 5L, Height-17L, 30L, 16L);
     Change_Color(theGCA, 1, 0);
-    i = nclmn*wbox/wsym-5;
+    i = n_columns*wbox/wsym-5;
     WRITE_ theGCA, xshif+4*wsym, Height-4, "/<ESC> - done;    Button, <TAB> or Arrow - select   ", i);
     WRITE_ theGCA, xshif, Height-4-hbox, "           Select box and enter U-file name              ", i+4);
 
@@ -1572,7 +1519,7 @@ int ufilebox_(INT_ *nofbox, char una[], char varNames[], char unad[]){
                 ixold = ix;
                 iyold = iy;
             }
-            jbox = FindBoxNum(xButton-xshif+wsym/2, yButton-yshif, wbox, hbox, nclmn, nparam);
+            jbox = FindBoxNum(xButton-xshif+wsym/2, yButton-yshif, wbox, hbox, n_columns, nparam);
             i = FindBoxNum(xButton-xshif, yButton-Height+hbox+1, 4*wsym, hbox, 1, 1);
             if (i){
                 iret = -1;
@@ -1585,8 +1532,8 @@ int ufilebox_(INT_ *nofbox, char una[], char varNames[], char unad[]){
                 if (jbox == 0) continue;
                 ind = (oldparam - 1)*lvalue;
                 i = jbox;
-                ix = wbox*((i - 1)%nclmn) + xshif;
-                iy = hbox*((i - 1)/nclmn) + yshif;
+                ix = wbox*((i - 1)%n_columns) + xshif;
+                iy = hbox*((i - 1)/n_columns) + yshif;
                 ind = (oldparam - 1)*lname;
                 ind1 = (i - 1)*lname;
                 WRITE_ theGCA, ixold, hsym+iyold, varNames+ind, lname);
@@ -1637,7 +1584,7 @@ int ufilebox_(INT_ *nofbox, char una[], char varNames[], char unad[]){
                 spos = -1;
                  strncpy(una+ind,unad,lvalue);
             }
-            i = nclmn*wbox/wsym - 5;
+            i = n_columns*wbox/wsym - 5;
             WRITE_ theGCA, xshif+4*wsym, Height-4,
                 "/<ESC> - done;    Button, <TAB> or Arrow - select   ", i);
             if (strncmp(una+ind, unad, lvalue)){
@@ -1667,15 +1614,15 @@ int ufilebox_(INT_ *nofbox, char una[], char varNames[], char unad[]){
             else{
                 stcopy(Ufile_Name+4, una+ind, lvalue);
                 dcol = iret%10 - 2;
-                icol = (jbox - 1)%nclmn + dcol;
+                icol = (jbox - 1)%n_columns + dcol;
                 if (icol < 0) icol = 0;
-                if (icol >= nclmn) icol--;
+                if (icol >= n_columns) icol--;
                 drow = iret/10 - 2;
-                irow = (jbox - 1)/nclmn + drow;
+                irow = (jbox - 1)/n_columns + drow;
                 if (irow < 0) irow = 0;
-                if (irow > (nparam-1)/nclmn) irow--;
-                jbox = irow*nclmn + icol + 1;
-                if (jbox == oldparam && icol == nclmn-1 && drow != -1) jbox++;
+                if (irow > (nparam-1)/n_columns) irow--;
+                jbox = irow*n_columns + icol + 1;
+                if (jbox == oldparam && icol == n_columns-1 && drow != -1) jbox++;
                 if (jbox == oldparam && icol == 0       && drow !=  1) jbox--;
                 if (jbox < 1) jbox = 1;
                 if (jbox > nparam) jbox = nparam;
@@ -1684,8 +1631,8 @@ int ufilebox_(INT_ *nofbox, char una[], char varNames[], char unad[]){
             iyold = iy;
             spos = 0;
             i = jbox;
-            ix = wbox*((i - 1)%nclmn) + xshif;
-            iy = hbox*((i - 1)/nclmn) + yshif;
+            ix = wbox*((i - 1)%n_columns) + xshif;
+            iy = hbox*((i - 1)/n_columns) + yshif;
             ind = (oldparam - 1)*lname;
             ind1 = (i - 1)*lname;
             WRITE_ theGCA, ixold, hsym+iyold, varNames+ind, lname);
@@ -1715,18 +1662,18 @@ int ufilebox_(INT_ *nofbox, char una[], char varNames[], char unad[]){
 }
 
 /**********************************************************************/
-int FindBoxNum(int ix, int iy, int wBox, int hBox, int nclmn, int nBox){
+int FindBoxNum(int ix, int iy, int wBox, int hBox, int n_columns, int nBox){
 /* Returns box # or 0
   ix, iy:          current coordinates
-  nclmn, nBox:     #columns, #boxes
+  n_columns, nBox:     #columns, #boxes
   wBox, hBox:      box width, height
 */
     int icol, pnum;
 
     if (ix <= 0 || iy < 0) return 0;
     icol = ix/wBox;
-    if (icol >= nclmn) return 0;
-    pnum = (iy/hBox)*nclmn + icol + 1;
+    if (icol >= n_columns) return 0;
+    pnum = (iy/hBox)*n_columns + icol + 1;
     if (pnum > nBox) return 0;
     return pnum;
 }

@@ -93,11 +93,11 @@ void stcopy(char *s1, char *s2, int n){
 }
 
 /**************************************************************************/
-int num2str(double x, char *str, int l){
+int num2str(double x, char *str, int str_len){
 /* 
 Input:
-   x : number
-   l : string length
+   x       : number
+   str_len : string length
 Output:
    str : string of length "l"
 */
@@ -106,12 +106,12 @@ Output:
     int i, ne, is, ll, k, i5;
     char ch[30];
 
-    for (i = 0; i < l; i++){
+    for (i=0; i<str_len; i++){
         str[i] = ' ';
     }
-    str[l] = '\0';
+    str[str_len] = '\0';
     if (x == 0.){
-        str[l - 1] = '0';
+        str[str_len-1] = '0';
         return 0;
     }
     sprintf(ch, "%+.*e", n, x);
@@ -122,18 +122,18 @@ Output:
     else{
         is = 0;
     }
-    ll = l - is;
+    ll = str_len - is;
     if (ll < 1){
-        str[l-1] = '*';
+        str[str_len-1] = '*';
         return 1;
     }
     k = n + 2;
     while (ch[k] == '0'){
         k--;
     }
-   ch[0] = ch[1];
-   for (i=1; i < k; ch[i]=ch[i+2], i++){
-       k--;
+    ch[0] = ch[1];
+    for (i=1; i<k; ch[i]=ch[i+2], i++){
+        k--;
     }
     ch[k] = '\0'; ne += (1 - k);
     i5 = 0;
@@ -146,7 +146,7 @@ Output:
     while (k) {
         if (ne >= 0) {
             if (ne + k <= ll) {
-                for (i=l-1; ne > 0; ne--, str[i--] = '0');
+                for (i=str_len-1; ne > 0; ne--, str[i--] = '0');
                 for (k--; k >= 0; str[i--] = ch[k--]);
                 if (is) str[i] = '-';
                 return 0;
@@ -158,14 +158,14 @@ Output:
                 if (k + i > ll){
                     k--;
                     if (k == 0){
-                        str[l-1] = '*';
+                        str[str_len-1] = '*';
                         return 1;
                     }
                     ne++;
                     iroundA(ch, &k, &ne, &i5);
                 }
                 else{
-                    i = l - i;
+                    i = str_len - i;
                     sprintf(str + i, "e%d", ne);
                     for (--k; k >= 0; str[--i]=ch[k--]);
                     if (is) str[--i] = '-';
@@ -178,7 +178,7 @@ Output:
                 if (k - ll){
                     i = k + ne;
                     if (i >= 0){
-                        i = l;
+                        i = str_len;
                         while (ne){
                             k--;
                             i--;
@@ -194,7 +194,7 @@ Output:
                         }
                     }
                     else{
-                        i = l;
+                        i = str_len;
                         while (k){
                             k--;
                             i--;
@@ -226,7 +226,7 @@ Output:
                 if (ne <  -9) i = 4;
                 if (ne < -99) i = 5;
                 if (ll >= k + i){
-                    i = l - i;
+                    i = str_len - i;
                     sprintf(str + i, "e%d", ne);
                     while (k){
                         i--;
@@ -241,7 +241,7 @@ Output:
                 }
                 k--;
                 if (k == 0){
-                    str[l-1] = '*';
+                    str[str_len-1] = '*';
                     return 1;
                 }
                 ne++;
