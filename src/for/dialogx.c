@@ -92,13 +92,14 @@ Input:
    x       : number
    str_len : string length
 Output:
-   str : string of length "l"
+   str : string of length str_len
 */
 
-    static int n=12;
+    const int max_len=12;
     int i, ne, is, ll, k, i5;
     char ch[30];
 
+// Initialise output string
     for (i=0; i<str_len; i++){
         str[i] = ' ';
     }
@@ -107,8 +108,9 @@ Output:
         str[str_len-1] = '0';
         return 0;
     }
-    sprintf(ch, "%+.*e", n, x);
-    i = sscanf((ch + n + 4), "%d", &ne);
+    sprintf(ch, "%+.*e", max_len, x);
+    i = sscanf((ch + max_len + 4), "%d", &ne);
+
     if (ch[0] == '-'){
         is = 1;
     }
@@ -120,15 +122,16 @@ Output:
         str[str_len-1] = '*';
         return 1;
     }
-    k = n + 2;
-    while (ch[k] == '0'){
-        k--;
-    }
+    k = max_len + 2;
+
     ch[0] = ch[1];
-    for (i=1; i<k; ch[i]=ch[i+2], i++){
-        k--;
+    for (i=1; i<k; i++){
+        ch[i] = ch[i+2];
+	k--;
     }
-    ch[k] = '\0'; ne += (1 - k);
+
+    ch[k] = '\0';
+    ne += (1 - k);
     i5 = 0;
     if (k > ll){
         ne = ne + k - ll;
@@ -713,7 +716,6 @@ int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
 	     INT_* nameLength, INT_ *id, INT_ *editable){
     Window theWindow;
     XEvent theEvent;
-    double valn;
     const int num_str_len=6, var_name_len=6, /* length of value and name */
         wsym=8, hsym=13,          /* symbol width and height */
         n_columns=4,              /* # of columns */
@@ -727,7 +729,7 @@ int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
         name_len, jbox, iret, oldparam, ixold, iyold,
         lline, xButton, yButton, i, ii=-1, ind, ind1, ind2, esc_flag,
         ihelp, selalb=0, icol, dcol, irow, drow;
-    float param;
+    double valn, param;
     char value[10], ovalue[10], stri[10], vsym='=',
         grep_str[128], var_name[10], legend[128];
 
@@ -862,10 +864,9 @@ int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
                     ixold = ix;
                     iyold = iy;
                     if (spos > 0){
-                        sscanf(stri, "%6g", &param);
+                        sscanf(stri, "%6lf", &param);
 			*(array+jbox-1) = param;
-                        valn = param;
-                        num2str(valn, value, num_str_len);
+                        num2str(param, value, num_str_len);
                         spos = -1;
                     }
                     for (i=0; i<num_str_len; i++) ovalue[i] = value[i];
@@ -930,10 +931,10 @@ int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
             iya0 = iya;
         }
         if (iret && spos > 0){
-            sscanf(stri, "%6g", &param);
+            sscanf(stri, "%8lf", &param);
             *(array+jbox-1) = param;
-            valn = param;
-            num2str(valn, value, num_str_len);
+            num2str(param, value, num_str_len);
+	    //	    printf("%s\n", value);
             spos = -1;
         }
 
