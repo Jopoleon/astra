@@ -3,10 +3,10 @@
 #include <sys/times.h>
 
 void getid_(double*, int*, int*);
-void stcopy(char*, char*, int);
-void iroundA(char*, int*, int*, int*);
+void fenvex_(void);
 
-/**************************************************************************/
+/**********************************************************************/
+double swatch_(double *secs){
 /* The function returns the total CPU time [sec] spent by the calling process.
       It adds the CPU time spent between two successive calls to the argument.
    The  function "times" returns the number of clock ticks that have elapsed
@@ -14,8 +14,7 @@ void iroundA(char*, int*, int*, int*);
    The  "tms_utime"  field contains the CPU time spent executing instructions
       of the calling process.
    The  "tms_stime"  field contains the CPU time spent in the system while 
-      executing tasks on behalf of the calling process.                     */
-double swatch_(double *secs){
+      executing tasks on behalf of the calling process.               */
     double runsec;
     clock_t cpu_time, run_time;
     static clock_t time0=0, prev_time;
@@ -38,7 +37,7 @@ double swatch_(double *secs){
     return runsec;
 }
 
-/**************************************************************************/
+/**********************************************************************/
 void getid_(double *var, int *mediator, int *id){
 /* Get ID of calling function and its parent
    No more than 16 functions for no more than 2200 calling each */
@@ -81,218 +80,13 @@ void getid_(double *var, int *mediator, int *id){
     return;
 }
 
-/**************************************************************************/
-void stcopy(char *s1, char *s2, int n){
-/* Copy n characters from string s2 to string s1 
-   equivalent to { strncpy(s1, s2, n); s1[n] = '\0'; }  */
-    int i;
-    for (i=0; i<n; ++i){
-        *(s1+i) = *(s2+i);
-    }
-    *(s1+i) = '\0';
-}
-
-/**************************************************************************/
-int num2str(double x, char *str, int str_len){
-/* 
-Input:
-   x       : number
-   str_len : string length
-Output:
-   str : string of length "l"
-*/
-
-    static int n=12;
-    int i, ne, is, ll, k, i5;
-    char ch[30];
-
-    for (i=0; i<str_len; i++){
-        str[i] = ' ';
-    }
-    str[str_len] = '\0';
-    if (x == 0.){
-        str[str_len-1] = '0';
-        return 0;
-    }
-    sprintf(ch, "%+.*e", n, x);
-    i = sscanf((ch + n + 4), "%d", &ne);
-    if (ch[0] == '-'){
-        is = 1;
-    }
-    else{
-        is = 0;
-    }
-    ll = str_len - is;
-    if (ll < 1){
-        str[str_len-1] = '*';
-        return 1;
-    }
-    k = n + 2;
-    while (ch[k] == '0'){
-        k--;
-    }
-    ch[0] = ch[1];
-    for (i=1; i<k; ch[i]=ch[i+2], i++){
-        k--;
-    }
-    ch[k] = '\0'; ne += (1 - k);
-    i5 = 0;
-    if (k > ll){
-        ne = ne + k - ll;
-        k = ll;
-        iroundA(ch, &k, &ne, &i5);
-    }
-
-    while (k) {
-        if (ne >= 0) {
-            if (ne + k <= ll) {
-                for (i=str_len-1; ne > 0; ne--, str[i--] = '0');
-                for (k--; k >= 0; str[i--] = ch[k--]);
-                if (is) str[i] = '-';
-                return 0;
-            }
-            else{
-                i = 2;
-                if (ne >  9) i++;
-                if (ne > 99) i++;
-                if (k + i > ll){
-                    k--;
-                    if (k == 0){
-                        str[str_len-1] = '*';
-                        return 1;
-                    }
-                    ne++;
-                    iroundA(ch, &k, &ne, &i5);
-                }
-                else{
-                    i = str_len - i;
-                    sprintf(str + i, "e%d", ne);
-                    for (--k; k >= 0; str[--i]=ch[k--]);
-                    if (is) str[--i] = '-';
-                    return 0;
-                }
-            }
-        } 
-        else{
-            if (ll > -ne){
-                if (k - ll){
-                    i = k + ne;
-                    if (i >= 0){
-                        i = str_len;
-                        while (ne){
-                            k--;
-                            i--;
-                            str[i] = ch[k];
-                            ne++;
-                        }
-                        i--;
-                        str[i] = '.';
-                        while (k){
-                            k--;
-                            i--;
-                            str[i] = ch[k];
-                        }
-                    }
-                    else{
-                        i = str_len;
-                        while (k){
-                            k--;
-                            i--;
-                            str[i] = ch[k];
-                            ne++;
-                        }
-                        while (ne){
-                            i--;
-                            str[i] = '0';
-                            ne++;
-                        }
-                        i--;
-                        str[i] = '.';
-                    }
-                    if (is){
-                        i--;
-                        str[i] = '-';
-                    }
-                    return 0;
-                }
-                else{
-                    k--;
-                    ne++;
-                    iroundA(ch, &k, &ne, &i5);
-                }
-            }
-            else{
-                i = 3;
-                if (ne <  -9) i = 4;
-                if (ne < -99) i = 5;
-                if (ll >= k + i){
-                    i = str_len - i;
-                    sprintf(str + i, "e%d", ne);
-                    while (k){
-                        i--;
-                        k--;
-                        str[i] = ch[k];
-                    }
-                    if (is){
-                        i--;
-                        str[i] = '-';
-                    }
-                    return 0;
-                }
-                k--;
-                if (k == 0){
-                    str[str_len-1] = '*';
-                    return 1;
-                }
-                ne++;
-                iroundA(ch, &k, &ne, &i5);
-            }
-        }
-    }
-    return 0;
-}
-
-/**************************************************************************/
-void iroundA(char *ch, int *k, int *ne, int *i5){
-    int i;
-    i = *k - 1;
-    if (ch[*k] >= 53 + *i5){
-        ch[i]++;
-        *i5 = 0;
-        if (ch[i] == 53) *i5 = 1;
-    }
-    while (ch[i] == 58){
-        if (i > 0){
-            ch[i] = 48;
-            i--;
-            ch[i]++;
-            *i5 = 0;
-            if (ch[i] == 53) *i5 = 1;
-            (*k)--;
-            (*ne)++;
-        }
-        else{
-            ch[i] = 49;
-            (*ne)++;
-        }
-    }
-    while (ch[(*k) - 1] == 48){
-        if ((*k) > 1){
-            (*k)--;
-            (*ne)++;
-        }
-    }
-}
-
-
-void fenvex_(void);
 
 #ifdef AFENV
 
 #include <signal.h>
 #include <fenv.h>
 void float_error(int);
-void sigint_handler(int sig); /* prototype */
+void sigint_handler(int); /* prototype */
 
 void fenvex_(void){
     feenableexcept(FE_INVALID | FE_OVERFLOW | FE_DIVBYZERO);

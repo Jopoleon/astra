@@ -18,6 +18,9 @@ INT_ pollevent_(INT_*);
 INT_ waitevent_(INT_*, INT_*, INT_*);
 int  Cursor_in_Box();
 INT_ Root_window_event(INT_*, int);
+void stcopy(char*, char*, int);
+int num2str(double, char*, int);
+void iroundA(char*, int*, int*, int*);
 
 extern Display *theDisplay;
 extern Window theRootWindow;
@@ -72,6 +75,209 @@ int GetKey(XKeyEvent, char[], int*);
 Window Open_Window(int, int, int, int, int, char[], int, Window, Cursor);
 
 /**********************************************************************/
+void stcopy(char *s1, char *s2, int n){
+/* Copy n characters from string s2 to string s1 
+   equivalent to { strncpy(s1, s2, n); s1[n] = '\0'; }  */
+    int i;
+    for (i=0; i<n; ++i){
+        *(s1+i) = *(s2+i);
+    }
+    *(s1+i) = '\0';
+}
+
+/**********************************************************************/
+int num2str(double x, char *str, int str_len){
+/* 
+Input:
+   x       : number
+   str_len : string length
+Output:
+   str : string of length "l"
+*/
+
+    static int n=12;
+    int i, ne, is, ll, k, i5;
+    char ch[30];
+
+    for (i=0; i<str_len; i++){
+        str[i] = ' ';
+    }
+    str[str_len] = '\0';
+    if (x == 0.){
+        str[str_len-1] = '0';
+        return 0;
+    }
+    sprintf(ch, "%+.*e", n, x);
+    i = sscanf((ch + n + 4), "%d", &ne);
+    if (ch[0] == '-'){
+        is = 1;
+    }
+    else{
+        is = 0;
+    }
+    ll = str_len - is;
+    if (ll < 1){
+        str[str_len-1] = '*';
+        return 1;
+    }
+    k = n + 2;
+    while (ch[k] == '0'){
+        k--;
+    }
+    ch[0] = ch[1];
+    for (i=1; i<k; ch[i]=ch[i+2], i++){
+        k--;
+    }
+    ch[k] = '\0'; ne += (1 - k);
+    i5 = 0;
+    if (k > ll){
+        ne = ne + k - ll;
+        k = ll;
+        iroundA(ch, &k, &ne, &i5);
+    }
+
+    while (k) {
+        if (ne >= 0) {
+            if (ne + k <= ll) {
+                for (i=str_len-1; ne > 0; ne--, str[i--] = '0');
+                for (k--; k >= 0; str[i--] = ch[k--]);
+                if (is) str[i] = '-';
+                return 0;
+            }
+            else{
+                i = 2;
+                if (ne >  9) i++;
+                if (ne > 99) i++;
+                if (k + i > ll){
+                    k--;
+                    if (k == 0){
+                        str[str_len-1] = '*';
+                        return 1;
+                    }
+                    ne++;
+                    iroundA(ch, &k, &ne, &i5);
+                }
+                else{
+                    i = str_len - i;
+                    sprintf(str + i, "e%d", ne);
+                    for (--k; k >= 0; str[--i]=ch[k--]);
+                    if (is) str[--i] = '-';
+                    return 0;
+                }
+            }
+        } 
+        else{
+            if (ll > -ne){
+                if (k - ll){
+                    i = k + ne;
+                    if (i >= 0){
+                        i = str_len;
+                        while (ne){
+                            k--;
+                            i--;
+                            str[i] = ch[k];
+                            ne++;
+                        }
+                        i--;
+                        str[i] = '.';
+                        while (k){
+                            k--;
+                            i--;
+                            str[i] = ch[k];
+                        }
+                    }
+                    else{
+                        i = str_len;
+                        while (k){
+                            k--;
+                            i--;
+                            str[i] = ch[k];
+                            ne++;
+                        }
+                        while (ne){
+                            i--;
+                            str[i] = '0';
+                            ne++;
+                        }
+                        i--;
+                        str[i] = '.';
+                    }
+                    if (is){
+                        i--;
+                        str[i] = '-';
+                    }
+                    return 0;
+                }
+                else{
+                    k--;
+                    ne++;
+                    iroundA(ch, &k, &ne, &i5);
+                }
+            }
+            else{
+                i = 3;
+                if (ne <  -9) i = 4;
+                if (ne < -99) i = 5;
+                if (ll >= k + i){
+                    i = str_len - i;
+                    sprintf(str + i, "e%d", ne);
+                    while (k){
+                        i--;
+                        k--;
+                        str[i] = ch[k];
+                    }
+                    if (is){
+                        i--;
+                        str[i] = '-';
+                    }
+                    return 0;
+                }
+                k--;
+                if (k == 0){
+                    str[str_len-1] = '*';
+                    return 1;
+                }
+                ne++;
+                iroundA(ch, &k, &ne, &i5);
+            }
+        }
+    }
+    return 0;
+}
+
+/**********************************************************************/
+void iroundA(char *ch, int *k, int *ne, int *i5){
+    int i;
+    i = *k - 1;
+    if (ch[*k] >= 53 + *i5){
+        ch[i]++;
+        *i5 = 0;
+        if (ch[i] == 53) *i5 = 1;
+    }
+    while (ch[i] == 58){
+        if (i > 0){
+            ch[i] = 48;
+            i--;
+            ch[i]++;
+            *i5 = 0;
+            if (ch[i] == 53) *i5 = 1;
+            (*k)--;
+            (*ne)++;
+        }
+        else{
+            ch[i] = 49;
+            (*ne)++;
+        }
+    }
+    while (ch[(*k) - 1] == 48){
+        if ((*k) > 1){
+            (*k)--;
+            (*ne)++;
+        }
+    }
+}
+
+/**********************************************************************/
 void xaxis(INT_ *modex){
     xaxis_(modex);
 }
@@ -102,14 +308,14 @@ void taskmenu_(INT_ *modex){
     int Wx, Wy;
     unsigned int Ww, Wh, Wb, Wd;
     Window theRW;
-    const char *BUTEXT[nbuttons_max] =
-        {"16*f(a)", "8*f(a)", "8*f(psi)", "2*f(a,t)",
-         "2*f(R,t)", "8*f(t)", "Equil", "Layout",
-         "Refresh", "Style", "Next", "Back",
-         "Variables", "Constants", "Grids", "Get X-axis",
-         "Save log", "U-files", "Land PS", "Port PS",
-         "Write data", "Type model", "Type data", "Test",
-         "Run", "Step", "Quit", "Help"};
+    char *BUTEXT[nbuttons_max] = {
+        "16*f(a)", "8*f(a)", "8*f(psi)", "2*f(a,t)",
+        "2*f(R,t)", "8*f(t)", "Equil", "Layout",
+        "Refresh", "Style", "Next", "Back",
+        "Variables", "Constants", "Grids", "Get X-axis",
+        "Save log", "U-files", "Land PS", "Port PS",
+        "Write data", "Type model", "Type data", "Test",
+        "Run", "Step", "Quit", "Help"};
     char BUTKEY[nbuttons_max] = {
         '1', '2', '3', '4',
         '5', '6', '8', 'M',
