@@ -641,7 +641,7 @@ CASE(76) ! 'L'
 
 CASE(83) ! 'S'
     rescale_array(1) = resizeGraph
-    call MENUTABLE(1, rescale_array, rescale_label, 5)
+    call MENUTABLE(1, rescale_array, rescale_label, 4)
     resizeGraph = rescale_array(1)
 !    call initMainWindow
     if (IFKL == KEY) return
@@ -738,11 +738,11 @@ CASE(77) ! 'M'
     if (MOD10 == 6) call ASTWIN(NTOUT, NWIND3, NAMET, SCALET, &
         OSHIFT, MOD10, MODEY)
     if (MOD10 == 7) then
-        call MENUTABLE(4, TIM7, NAM7, 7)
+        call MENUTABLE(4, TIM7, NAM7, 5)
     endif
     if (MOD10 == 4 .or. MOD10 == 5) then
         INT4 = -MAX(4, IPOUT-1)
-        call MENUTABLE(INT4, PRMARK, NAMEP, 8)
+        call MENUTABLE(INT4, PRMARK, NAMEP, 6)
     endif
     if (MOD10 <= 7) then
         call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
@@ -1520,15 +1520,17 @@ integer, intent(in) :: arr_size, id
 double precision, intent(in), dimension(arr_size) :: array_in
 character(len=6), intent(in), dimension(arr_size) :: var_names
 
-integer :: nameLength=6, editable=1
-character(len=70), dimension(12), parameter :: titles = (/ &
+integer :: nameLength, editable=1
+character(len=70), dimension(10), parameter :: titles = (/ &
     'Variable control', 'Constant control', 'Times & Grids', &
-    'Window control', 'Scale control', 'Y-shift', &
+    'Scale control', &
     'Time interval', 'Mark times:  < 0 - skip,  0 - dim,  > 0 - color #', &
     'Equilibrium control', '1D_Ufile', '2D_Ufile', 'NBI const for beam No' /)
 
-if (id == 4 .or. id == 5) then
-     nameLength = 4
+if (id == 4) then
+    nameLength = 4
+else
+    namelength = 6
 endif
 
 call menubox(TRIM(titles(id)) // null_ch, arr_size, array_in, var_names, nameLength, id, editable)

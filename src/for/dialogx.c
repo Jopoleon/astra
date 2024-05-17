@@ -57,9 +57,9 @@ void MoveArrow(Window, int, int, int, int);
 void changeGCcolor(GC, INT_*);
 void PutColorName(Window, int, int, int, int);
 void stcopy(char*, char*, int);
-int isascii(int);
-int isprint(int);
-int isalnum(int);
+extern int isascii(int); // 0 if the character is not ASCII, nonzero if it is ASCII
+extern int isprint(int); // check if a character passed as the argument is a printable character or not
+extern int isalnum(int); // checks whether a character is alphabet or number
 int nextevent(INT_*, INT_*, INT_*, Button[], char[]);
 int menubox_(char[], INT_*, double*, char[], INT_*, INT_*, INT_*);
 int nbibox_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
@@ -527,7 +527,6 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
 
     namlen = *nameLength;
     lline = lname + lvalue + 1;
-    if ((lvalue == 0) || (lname == 0)) lline = lname + lvalue;
     hbox = hsym + 3;
     wbox = wsym*(lline + 1);
     vpos = wsym*(lname + 1);
@@ -538,7 +537,7 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
     Height= 2*yshif + ((nparam - 1)/nclmn + 2)*hbox;
     jbox = 1;
     if (*editable == 0) jbox = 0;
-    if (*id == 8){
+    if (*id == 6){
         jbox = 0;
         selalb = -1;
     }
@@ -557,22 +556,21 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
 
 // Create table
     Change_Color(theGCA, 1, 0);        /* white background, black foreground */
-    for (i=1; i<=nparam; i++){
-        ix = wbox*((i - 1)%nclmn) + xshif;
-        iy = hbox*((i - 1)/nclmn) + yshif;
+    for (i=0; i<nparam; i++){
+        ix = wbox*(i%nclmn) + xshif;
+        iy = hbox*(i/nclmn) + yshif;
         if (lname){
-            ind = (i - 1)*namlen;
+            ind = i*namlen;
             WRITE_ theGCA, ix, hsym+iy, varNames+ind, namlen);
         }
         if (lname*lvalue){
             WRITE_ theGCA, ix+vpos-wsym, hsym+iy, &vsym, 1);
         }
         if (lvalue){
-            valn = *(array+i-1);
+            valn = *(array+i);
             num2str(valn, value, lvalue);
             WRITE_ theGCA, ix+vpos, hsym+iy, value, lvalue);
         }
-        XFlush(theDisplay);
     }
     oldparam = nparam;
     ixold = ix;
@@ -582,7 +580,7 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
     Change_Color(theGCA, 50, 0);
     for (i=1; i<nclmn; i++){
 	ind = xshif + i*wbox - wsym/2;
-        LINGCA_ ind,0,ind,Height-hbox);
+        LINGCA_ ind, 0, ind, Height-hbox);
     }
     i = Height - hbox;
     LINGCA_ 0, i, Width, i);
@@ -590,12 +588,12 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
     LINGCA_ 0, i, Width, i);
     WRITE_ hghGC, xshif, Height-3, "OK",2);
     if (jbox == 0 && *editable == 0) MVPOINTER_ xshif+5, Height-5);
-    if (*id == 8) MVPOINTER_ xshif+Width-50, Height-5);
+    if (*id == 6) MVPOINTER_ xshif+Width-50, Height-5);
     i = nclmn*wbox/wsym - 5;
     ind = 50;
     if (i < 50) ind = i;
     strcpy(legend, "/ Esc - done;");
-    if (*id <= 6){
+    if (*id <= 4){
         strcat(legend, " Button/Tab - select;");
         strcat(legend, " Return/Tab - enter;");
         strcat(legend, " ? - quick help"); }
@@ -609,7 +607,7 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
     Change_Color(hintGC, 1, 0);
     if (*editable == 0) WRITE_ theGCA, xshif+4*wsym, Height-3,
         "    Information table.   No changes permitted.     ", ind);
-    if (*id == 8){
+    if (*id == 6){
         if (selalb ==  0) WRITE_ hintGC, xshif+8+(i-6)*wsym, Height-3,
 	    " (Select all)", 13);
         if (selalb == -1) WRITE_ hintGC, xshif+8+(i-6)*wsym, Height-3,
@@ -617,16 +615,51 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
     }
     Change_Color(theGCA, 1, 0);
 
+    ix = wbox*((jbox - 1)%nclmn) + xshif;
+    iy = hbox*((jbox - 1)/nclmn) + yshif;
+    if (lname){
+        ind1 = (oldparam - 1)*namlen;
+        ind2 = (jbox - 1)*namlen;
+        WRITE_ theGCA, ixold, hsym+iyold, varNames+ind1, namlen);
+        Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+        WRITE_ hghGC, ix, hsym+iy, varNames+ind2, namlen);
+        Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+    }
+    if (lname*lvalue){
+        WRITE_ theGCA, ixold+vpos-wsym, hsym+iyold, &vsym, 1);
+        Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+        WRITE_ hghGC, ix+vpos-wsym, hsym+iy, &vsym, 1);
+        Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+    }
+    if (lvalue){
+        valn = *(array+jbox-1);
+        num2str(valn, value, lvalue);
+        WRITE_ theGCA, ixold+vpos, hsym+iyold, ovalue, lvalue);
+        Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+        WRITE_ hghGC, ix+vpos, hsym+iy, value, lvalue);
+        Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+        spos = -1;
+        for (i=0; i<lvalue; i++) stri[i] = ' ';
+        ixa = ix + vpos;
+        iya = iy + hsym + 2;
+        MoveArrow(theWindow, ixa0, iya0, ixa, iya);
+        ixa0 = ixa;
+        iya0 = iya;
+    }
+
     while(1){
+        XFlush(theDisplay);
         XNextEvent(theDisplay, &theEvent);
         if (theEvent.xany.window == theRootWindow){
             ProcessRootWindowEvent(&theEvent);
             continue;
         }
-        if (theEvent.type == ButtonPress){
+
+	esc_flag = 0;
+        if (theEvent.type == ButtonPress){ // mouse
             xButton = theEvent.xbutton.x;
             yButton = theEvent.xbutton.y;
-            ind  = FindBoxNum(xButton-xshif, yButton-Height+hbox+1, 4*wsym, hbox, 1, 1);
+            ind = FindBoxNum(xButton-xshif, yButton-Height+hbox+1, 4*wsym, hbox, 1, 1);
 	    if (*editable == 1){
                 if (jbox){
                     oldparam = jbox;
@@ -644,7 +677,6 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
                 jbox = FindBoxNum(xButton-xshif+wsym/2, 
                     yButton-yshif, wbox, hbox, nclmn, nparam);
             }
-	    esc_flag = 0;
             if (ind){
                 iret = -1;
                 jbox = oldparam;
@@ -684,10 +716,9 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
                     ixa0 = ixa;
                     iya0 = iya;
                 }
-                XFlush(theDisplay);
                 continue;
             }
-        }
+        } // Mouse button
 
         if (esc_flag == 0){
             if (jbox == 0 || lvalue == 0){
@@ -715,6 +746,7 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
             num2str(valn, value, lvalue);
             spos = -1;
         }
+
         if (iret == -1) break;
         if (iret == -2){ // Question mark: document usage of a selected variable
             for (i=0; i<namlen; i++){
@@ -751,14 +783,14 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
                 strncat(grep_str, var_name, ii);
                 strcat (grep_str," tmp/model.txt");
                 break;
-            case 7:
+            case 5:
                 printf("Curve presentation\n");
                 break;
-            case 8:
+            case 6:
                 printf("Mark time slices\n");
                 break;
 	    }
-            if (*id < 5){
+            if (*id < 4){
                 ii = system(grep_str);
                 if (ii == 128) printf("The constant %s is not assigned\n", var_name);
             }
@@ -767,10 +799,15 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
         if (spos < 0){
             spos = -1;
             for (i=0; i<lvalue; i++) stri[i] = ' ';
+            Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+            WRITE_ hghGC, ix+vpos, hsym+iy, value, lvalue);
+            Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
         }
-        Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
-        WRITE_ hghGC, ix+vpos, hsym+iy, stri, lvalue);
-        Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+        else{
+            Change_Color(hghGC, AstraColorNum[8], AstraColorNum[9]);
+            WRITE_ hghGC, ix+vpos, hsym+iy, stri, lvalue);
+            Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
+        }
 
         if (iret >= 2){
             oldparam = jbox;
@@ -827,7 +864,6 @@ int menubox_(char title[], INT_ *nofbox, double *array, char varNames[],
                 ixa0 = ixa;
                 iya0 = iya;
             }
-            XFlush(theDisplay);
         }
     }
 
@@ -1059,9 +1095,9 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
         }
         else{
             fill_flag = 0;
-            iret = GetKey(theEvent.xkey, stri, &spos);
+	    iret = GetKey(theEvent.xkey, stri, &spos);
             switch(iret){
-            case -1:       /* <Esc> */
+            case XK_Escape:       /* <Esc> */
                 strncpy(array+ind, stri, wbox);
                 break;
             case 0:
@@ -1076,7 +1112,17 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
                 ixa = ix + spos*wsym;
                 MoveArrow(theWindow, ixa0, iya0, ixa, iy);
                 break;
-            case 1:             /* <Del> or <BackSpace> */
+            case 1: case 2:  /* <Tab> or <Ret> */
+                icol++;
+                if (icol > j_col) icol = 1;
+                if (icol == 1){
+                    irow++;
+                    if (irow > *nrows) irow = 1;
+                }
+                if (spos != 0) strncpy(array+ind, stri, wbox);
+                fill_flag = 1;
+                break;
+            case 3:             /* <Del> or <BackSpace> */
                 spos--;
                 if (spos >= 0){
                     strncpy(stri+spos, stri+spos+1, wbox-spos);
@@ -1089,16 +1135,6 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
                 WRITE_ hghGC, ix, iy, stri, wbox);
                 ixa = ix + spos*wsym;
                 MoveArrow(theWindow, ixa0, iya0, ixa, iy);
-                break;
-            case 2: case 3:  /* <Tab> or <Ret> */
-                icol++;
-                if (icol > j_col) icol = 1;
-                if (icol == 1){
-                    irow++;
-                    if (irow > *nrows) irow = 1;
-                }
-                if (spos != 0) strncpy(array+ind, stri, wbox);
-                fill_flag = 1;
                 break;
             case 12:              /* case XK_Up: */
                 irow--;
@@ -1299,55 +1335,6 @@ int If_empty(int icol, int irow, int nclmn, int nsta[], int nwid[], char array[]
 }
 
 /**********************************************************************/
-int GetValue(XKeyEvent theEvent, char str[], int lvalue, char tstri[], int *pos){
-    int i;
-    XComposeStatus theComposeStatus;
-    KeySym theKeySym;
-    int theBufferLength, theKeyBufferMaxLen = 4;
-    char theKeyBuffer[5];
-
-    theBufferLength = XLookupString(&theEvent, theKeyBuffer,
-        theKeyBufferMaxLen, &theKeySym, &theComposeStatus);
-    theKeyBuffer[theBufferLength] = '\0';
-
-    switch(theKeySym){
-    case XK_BackSpace:
-    case XK_Delete:
-          if (*pos > 0){
-              for (i=*pos; i<lvalue; i++) str[i-1] = str[i];
-              str[lvalue-1] = ' ';
-          }
-          *pos -= 1;
-          break;
-     case XK_Return:
-     case XK_KP_Enter: return 1;
-     case XK_Tab:      return 2;
-     case XK_Escape:   return -1;
-     case XK_question: return -2;
-     case XK_R7:       return 11;
-     case XK_Left:     return 21;
-     case XK_Up:       return 12;
-     case XK_Right:    return 23;
-     case XK_Down:     return 32;
-     case XK_R9:       return 13;
-     case XK_R13:      return 31;
-     case XK_R15:      return 33;
-     default:
-         if (*pos<lvalue){
-             for (i=0; tstri[i] != 0; i++){
-                 if (theKeySym == tstri[i]){
-                     if (*pos < 0) *pos=0;
-                     str[*pos] = theKeyBuffer[0];
-                     *pos += 1;
-                 }
-             }
-         }
-         break;
-    }
-    return 0;
-}
-
-/**********************************************************************/
 KeySym GetKeySym(XKeyEvent theKeyEvent){
     XComposeStatus theComposeStatus;
     KeySym theKeySym;
@@ -1355,28 +1342,28 @@ KeySym GetKeySym(XKeyEvent theKeyEvent){
     char theKeyBuffer[5];
     XLookupString(&theKeyEvent, theKeyBuffer, theKeyBufferMaxLen,
         &theKeySym, &theComposeStatus);
-    //    return &theKeySym;
-    return theKeySym; // ok for ufilebox
+    return theKeySym;
+}
+
+/**********************************************************************/
+int GetEsc(XKeyEvent theKeyEvent){
+    KeySym theKeySym = GetKeySym(theKeyEvent);
+    return (theKeySym == XK_Escape);
 }
 
 /**********************************************************************/
 int GetKey(XKeyEvent theKeyEvent, char str[], int *pos){
     KeySym theKeySym = GetKeySym(theKeyEvent);
 
-    if (theKeyEvent.state & Mod1Mask){
-        if (theKeySym == XK_Escape){
-            return 7;
-        }
-    }
-
     switch(theKeySym){
-    case XK_Escape:    return -1;
-    case XK_question:  return -2;
     case XK_BackSpace:
-    case XK_Delete:    return 1;
+    case XK_Delete:    return 3;
+
+    case XK_question:  return -2;
+    case XK_Escape:    return -1;
     case XK_Return:
-    case XK_KP_Enter:  return 2;
-    case XK_Tab:       return 3;
+    case XK_KP_Enter:  return 1;
+    case XK_Tab:       return 2;
     case XK_R7:        return 11;
     case XK_Left:      return 21;
     case XK_Up:        return 12;
@@ -1385,14 +1372,7 @@ int GetKey(XKeyEvent theKeyEvent, char str[], int *pos){
     case XK_R9:        return 13;
     case XK_R13:       return 31;
     case XK_R15:       return 33;
-    case XK_Shift_L:               /* Left shift */
-    case XK_Shift_R:   return 34;  /* Right shift */
-    case XK_Control_L:             /* Left control */
-    case XK_Control_R: return 35;  /* Right control*/
-    case XK_Meta_L:                /* Left meta */
-    case XK_Meta_R:    return 36;  /* Right meta */
-    case XK_Alt_L:                 /* Left alt */
-    case XK_Alt_R:     return 37;  /* Right alt */
+
     default:
         if (!isprint(theKeySym)){
             return 99;
@@ -1403,12 +1383,6 @@ int GetKey(XKeyEvent theKeyEvent, char str[], int *pos){
         }
     }
     return 0;
-}
-
-/**********************************************************************/
-int GetEsc(XKeyEvent theKeyEvent){
-    KeySym theKeySym = GetKeySym(theKeyEvent);
-    return (theKeySym == XK_Escape);
 }
 
 /**********************************************************************/
@@ -1423,10 +1397,12 @@ int GetName(XKeyEvent theKeyEvent, char str[], int lvalue, int *pos){
         *pos -= 1;
         if (*pos >= 0) str[*pos] = ' ';
         break;
+
+    case XK_question: return -2;
+    case XK_Escape:   return -1;
     case XK_Return:
     case XK_KP_Enter: return 1;
     case XK_Tab:      return 2;
-    case XK_Escape:   return -1;
     case XK_R7:       return 11;
     case XK_Left:     return 21;
     case XK_Up:       return 12;
@@ -1435,18 +1411,71 @@ int GetName(XKeyEvent theKeyEvent, char str[], int lvalue, int *pos){
     case XK_R9:       return 13;
     case XK_R13:      return 31;
     case XK_R15:      return 33;
+
     default:
-        if (theKeySym > 127) return 0;
-        if (*pos < lvalue){
-            if (*pos < 0) *pos = 0;     /* Restore default name */
-            for (i=*pos; i<lvalue; i++) str[i]=' ';
-            lsym = theKeySym;
-            if (isalnum(lsym) || lsym == '/' || lsym == '.' || lsym == '_'){
-                str[*pos] = lsym;
-                *pos += 1;
+        if (theKeySym <= 127){
+            if (*pos < lvalue){
+                if (*pos < 0) *pos = 0;     /* Restore default name */
+                for (i=*pos; i<lvalue; i++) str[i]=' ';
+                lsym = theKeySym;
+                if (isalnum(lsym) || lsym == '/' || lsym == '.' || lsym == '_'){
+                    str[*pos] = lsym;
+                    *pos += 1;
+                }
             }
         }
         break;
+    }
+    return 0;
+}
+
+/**********************************************************************/
+int GetValue(XKeyEvent theKeyEvent, char str[], int lvalue, char tstri[], int *pos){
+    int i;
+    XComposeStatus theComposeStatus;
+    KeySym theKeySym;
+    int theBufferLength, theKeyBufferMaxLen = 4;
+    char theKeyBuffer[5];
+
+    theBufferLength = XLookupString(&theKeyEvent, theKeyBuffer,
+        theKeyBufferMaxLen, &theKeySym, &theComposeStatus);
+    theKeyBuffer[theBufferLength] = '\0';
+
+    switch(theKeySym){
+    case XK_BackSpace:
+    case XK_Delete:
+          if (*pos > 0){
+              for (i=*pos; i<lvalue; i++) str[i-1] = str[i];
+              str[lvalue-1] = ' ';
+          }
+          *pos -= 1;
+          break;
+
+     case XK_question: return -2;
+     case XK_Escape:   return -1;
+     case XK_Return:
+     case XK_KP_Enter: return 1;
+     case XK_Tab:      return 2;
+     case XK_R7:       return 11;
+     case XK_Left:     return 21;
+     case XK_Up:       return 12;
+     case XK_Right:    return 23;
+     case XK_Down:     return 32;
+     case XK_R9:       return 13;
+     case XK_R13:      return 31;
+     case XK_R15:      return 33;
+
+     default:
+         if (*pos < lvalue){
+             for (i=0; tstri[i] != 0; i++){
+                 if (theKeySym == tstri[i]){
+                     if (*pos < 0) *pos = 0;
+                     str[*pos] = theKeyBuffer[0];
+                     *pos += 1;
+                 }
+             }
+         }
+         break;
     }
     return 0;
 }
