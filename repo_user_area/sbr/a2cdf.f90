@@ -27,6 +27,8 @@ character(len = l_desc), parameter :: t_desc='Time', r_desc='rho toroidal', rh_d
 integer :: n_t, n_r, n_rh, n_th, ios, j, jid, jrho, jthe
 integer :: varid(1000), t_id, r_id, rh_id, th_id, nrho_surf, nthe_surf
 integer :: n_devar, n_devarx, n_const, n_delout, n_int2, n_prof, n_profx, neq_1d, neq_2d
+integer, dimension(1) :: dim1d
+integer, dimension(2) :: dim2d
 double precision, dimension(:, :), allocatable :: tmp
 character(len=120) :: f_var, f_varx, f_const, f_intern, f_intern2, f_prof, f_profx, feq_1d, feq_2d, netcdf_out
 
@@ -69,10 +71,14 @@ call nfcheck( nf90_def_dim(ncid, th_lbl, nthe_surf, n_th) )
 if (verbose) then
     write(*, *) '   Defining coordinate variables...'
 endif
-call nfcheck( nf90_def_var(ncid,  t_lbl, NF90_DOUBLE, (/n_t /),  t_id) )
-call nfcheck( nf90_def_var(ncid,  r_lbl, NF90_DOUBLE, (/n_r /),  r_id) )
-call nfcheck( nf90_def_var(ncid, rh_lbl, NF90_DOUBLE, (/n_rh/), rh_id) )
-call nfcheck( nf90_def_var(ncid, th_lbl, NF90_DOUBLE, (/n_th/), th_id) )
+dim1d(1) = n_t
+call nfcheck( nf90_def_var(ncid,  t_lbl, NF90_DOUBLE, dim1d,  t_id) )
+dim1d(1) = n_r
+call nfcheck( nf90_def_var(ncid,  r_lbl, NF90_DOUBLE, dim1d,  r_id) )
+dim1d(1) = n_rh
+call nfcheck( nf90_def_var(ncid, rh_lbl, NF90_DOUBLE, dim1d, rh_id) )
+dim1d(1) = n_th
+call nfcheck( nf90_def_var(ncid, th_lbl, NF90_DOUBLE, dim1d, th_id) )
 
 if (verbose) then
     write(*, *) '   Assigning attributes to coordinate variables...'
@@ -93,26 +99,28 @@ call nfcheck( NF90_PUT_ATT(ncid, th_id, DESC, th_desc) )
 ! Time traces
 
 if (verbose) write(6, *) '   Defining scalar variables...'
+dim1d(1) = n_t
 jid = 1
-call nf90_set(ncid, jid, 1, (/n_t/), f_var, n_devar, varid)
+call nf90_set(ncid, jid, 1, dim1d, f_var, n_devar, varid)
 jid = jid + n_devar
-call nf90_set(ncid, jid, 1, (/n_t/), f_varx, n_devarx, varid)
+call nf90_set(ncid, jid, 1, dim1d, f_varx, n_devarx, varid)
 jid = jid + n_devarx
-call nf90_set(ncid, jid, 1, (/n_t/), f_const, n_const, varid)
+call nf90_set(ncid, jid, 1, dim1d, f_const, n_const, varid)
 jid = jid + n_const
-call nf90_set(ncid, jid, 1, (/n_t/), f_intern, n_delout, varid)
+call nf90_set(ncid, jid, 1, dim1d, f_intern, n_delout, varid)
 jid = jid + n_delout
-call nf90_set(ncid, jid, 1, (/n_t/), f_intern2, n_int2, varid)
+call nf90_set(ncid, jid, 1, dim1d, f_intern2, n_int2, varid)
 
 ! Profiles
 
 if (verbose) write(*, *) '   Defining profileX variables...'
 
+dim1d(1) = n_r
 jid = jid + n_int2
-call nf90_set(ncid, jid, 1, (/n_r/), f_profx, n_profx, varid)
+call nf90_set(ncid, jid, 1, dim1d, f_profx, n_profx, varid)
 if (verbose) write(*, *) '   Defining profile variables...'
 jid = jid + n_profx
-call nf90_set(ncid, jid, 1, (/n_r/), f_prof, n_prof, varid)
+call nf90_set(ncid, jid, 1, dim1d, f_prof, n_prof, varid)
 
 ! Equilibrium
 
@@ -120,13 +128,15 @@ jid = jid + n_prof
 if (verbose) then
     write(*, *) '   Assigning attributes to 1d variables...'
 endif
-call nf90_set(ncid, jid, 1, (/n_rh/), feq_1d, neq_1d, varid)
+dim1d(1) = n_rh
+call nf90_set(ncid, jid, 1, dim1d, feq_1d, neq_1d, varid)
 
 if (verbose) then
     write(*, *) '   Assigning attributes to 2d variables...'
 endif
 jid = jid + neq_1d
-call nf90_set(ncid, jid, 2, (/n_th, n_rh/), feq_2d, neq_2d, varid)
+dim2d = (/n_th, n_rh/)
+call nf90_set(ncid, jid, 2, dim2d, feq_2d, neq_2d, varid)
 
 call nfcheck( nf90_enddef(ncid) ) ! End define mode
 
@@ -337,469 +347,473 @@ do j = 1, 64
 enddo
 
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), AIMPT(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), AIMPT  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), AMAIN (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), AMAIN  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), AMETR (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), AMETR  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), AREAT (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), AREAT  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), B0DB2 (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), B0DB2  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), BDB0  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), BDB0   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), BDB02 (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), BDB02  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), BMAXT (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), BMAXT  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), BMINT (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), BMINT  (1:NA1)) )
 jid=jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), CC    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), CC     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), CD    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), CD     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), CE    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), CE     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), CI    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), CI     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), CN    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), CN     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), CNPAD (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), CNPAD  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), CNPAP (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), CNPAP  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), CNPAR (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), CNPAR  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), CU    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), CU     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), CUBM  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), CUBM   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), CUBS  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), CUBS   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), CUECR (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), CUECR  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), CUFI  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), CUFI   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), CUFW  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), CUFW   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), CUICR (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), CUICR  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), CULH  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), CULH   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), CUTOR (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), CUTOR  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), CV    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), CV     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), DC    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), DC     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), DN    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), DN     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), DDNEO (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), DDNEO  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), DDNEOD(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), DDNEOD (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), DIMP1 (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), DIMP1  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), DIMP2 (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), DIMP2  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), DIMP3 (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), DIMP3  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), DLNEO (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), DLNEO  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), DLNEOD(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), DLNEOD (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), DRODA (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), DRODA  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), ELON  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), ELON   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), EQFF  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), EQFF   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), EQPF  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), EQPF   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), ER    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), ER     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F0    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F0     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F0O   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F0O    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F1    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F1     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F1O   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F1O    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F2    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F2     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F2O   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F2O    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F3    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F3     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F3O   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F3O    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F4    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F4     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F4O   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F4O    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F5    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F5     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F5O   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F5O    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F6    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F6     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F6O   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F6O    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F7    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F7     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F7O   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F7O    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F8    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F8     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F8O   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F8O    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F9    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F9     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), F9O   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), F9O    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), FOFB  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), FOFB   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), FP    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), FP     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), FPO   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), FPO    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), FV    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), FP_NORM(1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), G11   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), FV     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), G22   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), G11    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), G22E  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), G22    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), G33   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), G22E   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), G33E  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), G33    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), G41   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), G33E   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), G42   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), G41    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), G43   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), G42    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), G44   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), G43    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), G45   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), G44    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), GN    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), G45    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), GRADRO(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), GN     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), HC(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), GRADRO (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), HE(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), HC     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), IPOL  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), HE     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), MRHO  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), IPOL   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), MU    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), MRHO   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), MV    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), MU     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), NALF  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), MV     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), NDEUT (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), NALF   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), NE    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), NDEUT  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), NEO   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), NE     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), NHE3  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), NEO    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), NHYDR (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), NHE3   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), NI    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), NHYDR  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), NIBM  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), NI     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), NIMPT (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), NIBM   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), NIO   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), NIMPT  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), NIZ1  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), NIO    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), NIZ2  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), NIZ1   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), NIZ3  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), NIZ2   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), NMAIN (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), NIZ3   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), NN    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), NMAIN  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), NNBM1 (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), NN     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), NNBM2 (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), NNBM1  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), NNBM3 (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), NNBM2  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), NTRIT (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), NNBM3  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PBEAM (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), NTRIT  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PBLON (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PBEAM  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PBOL1 (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PBLON  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PBOL2 (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PBOL1  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PBOL3 (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PBOL2  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PBPER (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PBOL3  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PDE   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PBPER  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PDI   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PDE    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PE    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PDI    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PEBM  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PE     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PEECR (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PEBM   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PEFW  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PEECR  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PEICR (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PEFW   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PEIQI (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PEICR  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PELH  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PEIQI  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PELON (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PELH   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PEPER (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PELON  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PERIM (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PEPER  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PETOT (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PERIM  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PFAST (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PETOT  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PI    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PFAST  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PIBM  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PI     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PIFW  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PIBM   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PIICR (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PIFW   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PITOT (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PIICR  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PRAD  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PITOT  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PRES  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PRAD   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PSXR1 (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PRES   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PSXR2 (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PSXR1  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), PSXR3 (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PSXR2  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), QE    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), PSXR3  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), QF0   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), QE     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), QF1   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), QF0    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), QF2   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), QF1    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), QF3   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), QF2    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), QF4   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), QF3    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), QF5   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), QF4    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), QF6   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), QF5    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), QF7   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), QF6    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), QF8   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), QF7    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), QF9   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), QF8    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), QI    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), QF9    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), QN    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), QI     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), QU    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), QN     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), RHO   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), QU     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), RUPAR (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), RHO    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), RUPFR (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), RHO_POL(1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), RUPYR (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), RUPAR  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SCUBM (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), RUPFR  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SD0   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), RUPYR  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SD1   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SCUBM  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SD2   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SD0    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SD3   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SD1    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SD4   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SD2    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SD5   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SD3    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SD6   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SD4    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SD7   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SD5    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SD8   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SD6    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SD9   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SD7    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SDN   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SD8    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SF0TOT(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SD9    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SF1TOT(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SDN    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SF2TOT(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SF0TOT (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SF3TOT(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SF1TOT (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SF4TOT(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SF2TOT (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SF5TOT(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SF3TOT (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SF6TOT(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SF4TOT (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SF7TOT(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SF5TOT (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SF8TOT(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SF6TOT (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SF9TOT(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SF7TOT (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SGNEO (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SF8TOT (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SGNEOD(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SF9TOT (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SHEAR (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SGNEO  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SHIF  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SGNEOD (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SHIV  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SHEAR  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SLAT  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SHIF   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SN    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SHIV   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SNEBM (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SLAT   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SNIBM1(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SN     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SNIBM2(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SNEBM  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SNIBM3(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SNIBM1 (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SNNBM (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SNIBM2 (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SNTOT (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SNIBM3 (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SQEPS (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SNNBM  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SQUARN(1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SNTOT  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SRHO  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SQEPS  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), SXHO  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SQUARN (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), TE    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SRHO   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), TEO   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), SXHO   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), TI    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), TE     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), TIO   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), TEO    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), TN    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), TI     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), TRIA  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), TIO    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), TTRQ  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), TN     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), TTRQI (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), TRIA   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), ULON  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), TTRQ   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), UPAR  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), TTRQI  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), UPARO (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), ULON   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), UPL   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), UPAR   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), UPS0  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), UPARO  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), UPS0O (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), UPL    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), UPS1  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), UPS0   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), UPS1O (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), UPS0O  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), UPS2  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), UPS1   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), UPS2O (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), UPS1O  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), VIMP1 (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), UPS2   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), VIMP2 (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), UPS2O  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), VIMP3 (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), VIMP1  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), VOLUM (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), VIMP2  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), VP    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), VIMP3  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), VPFP  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), VOLUM  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), VPOL  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), VP     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), VR    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), VPFP   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), VRO   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), VPOL   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), VRS   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), VR     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), VTOR  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), VRO    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), XC    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), VRS    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), XI    (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), VTOR   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), XUPAD (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), XC     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), XUPAP (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), XI     (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), XUPAR (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), XUPAD  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), ZEF   (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), XUPAP  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), ZEF1  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), XUPAR  (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), ZEF2  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), ZEF    (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), ZEF3  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), ZEF1   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), ZIM1  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), ZEF2   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), ZIM2  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), ZEF3   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), ZIM3  (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), ZIM1   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), ZIMPT (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), ZIM2   (1:NA1)) )
 jid = jid + 1
-call nfcheck( nf90_put_var(ncid, varid(jid), ZMAIN (1:NA1)) )
+call nfcheck( nf90_put_var(ncid, varid(jid), ZIM3   (1:NA1)) )
+jid = jid + 1
+call nfcheck( nf90_put_var(ncid, varid(jid), ZIMPT  (1:NA1)) )
+jid = jid + 1
+call nfcheck( nf90_put_var(ncid, varid(jid), ZMAIN  (1:NA1)) )
 
 ! Equilibrium quantities
 !------------------------------------------------

@@ -128,6 +128,7 @@ F9O      None                      None
 FOFB     None                      <(B0/B)**2*(1.
 FP       V*s                       Poloidal flux
 FPO      V*s                       Poloidal flux from the previous time step
+FP_NORM  None                      Normalised poloidal flux
 FV       V*s                       Vacuum poloidal flux
 G11      m^2                       <(nabla(Rho))**2>*dV/dRho
 G22      m                         V'/(4pi^2)*<(nabla(Rho)/r)**2>*RTOR/IPOL
@@ -211,6 +212,7 @@ QI       MW                        Total ion energy flux
 QN       10^19/s                   Total electron flux
 QU       None                      Total momentum flux
 RHO      m                         Current magnetic surface equivalent radius (Rho) [drho/2,roc
+RHO_POL  None                      rho poloidal (square roort of normalised poloidal flux)
 RUPAR    1/s^2                     Par
 RUPFR    1/s^2                     Tor
 RUPYR    1/s^2                     Perp
