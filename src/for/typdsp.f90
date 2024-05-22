@@ -187,9 +187,6 @@ character(len=80) :: STRI
 
 JN0 = 0
 JLR = Xwin_height - int(125*resizeGraph)
-! DLINER_ theGCA, 0, Xwin_height-128, Xwin_width-1, Xwin_height-128);
-! DLINER_ theGCA, 0, Xwin_height-110, Xwin_width-1, Xwin_height-110);
-! DLINER_ theGCA, 0, Xwin_height-109, Xwin_width-1, Xwin_height-109);
 if (MOD10 <= 0) return
 if (MOD10 == 7) call NEGA(IM, ITIMES, TOUT)
 call set_frame(IM, IX0, IXM)
@@ -725,18 +722,16 @@ subroutine down_label(jt, ITIMES, TOUT)
 
 use parameter_inc, only: NRW
 use outcmn_inc, only: LTOUT, MOD10, DXLET, DYLET, frame_hei, NTOUT, &
-    NWIND3, active_tab, NAMET, Black, Blue, curves_per_frame
+    NWIND3, active_tab, NAMET, Black, Blue, curves_per_frame, resizeGraph
 use dbl2char, only: fmt_xf
 
 implicit none
-
-integer, parameter :: fshift=10
 
 integer, intent(in) :: ITIMES
 integer, intent(inout) :: jt
 double precision, intent(in) :: TOUT(ITIMES, *)
 
-integer :: JN2, JN0, JEND, JB, JL, JC, JW, JJ, J
+integer :: JN2, JN0, JEND, JB, JL, JC, JW, JJ, J, fshift
 character(len=5) :: XF4
 character(len=7) :: XF7
 character(len=80) :: STRI, STRIN
@@ -747,6 +742,8 @@ if (jt == 0) then
 else
     call colovm(Blue)
 endif
+
+fshift = int(10*resizeGraph)
 
 if (MOD10 == 6) then
 
@@ -760,7 +757,7 @@ if (MOD10 == 6) then
         JW = NWIND3(j) - curves_per_frame(MOD10)*active_tab(MOD10)
         if (NAMET(j) == '    ') JW = 0
         if (JW <= 0 .or. JW > curves_per_frame(MOD10)) CYCLE
-        JC = JC + 1   ! Actual curve number in the mindow
+        JC = JC + 1   ! Actual curve number in the window
         jj = 8*JC - 6
         if (jj > 74) CYCLE
         if (jj >= 66) JN0 = 5*DXLET
@@ -802,7 +799,7 @@ return
 end subroutine down_label
 
 !---------------------------------------------------------------------
-! Upper string of a picture
+! Upper string of the Astra graphic window
 subroutine up_label(YN, YQ)
 
 use outcmn_inc, only: Xwin_height, Xwin_width, DXLET, DYLET, active_tab, MOD10, Black, Blue

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <X11/Xutil.h>
+
 #ifndef INT8
 #define INT_ int
 #else
@@ -355,15 +356,19 @@ void taskmenu_(INT_ *modex){
     Change_Color(hghGC, AstraColorNum[2], AstraColorNum[3]);
     Xx = ixx + 5*width_ratio;
     Xy = iyy - 5*height_ratio;
-    XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Graphic mode", 12);
+    XFontStruct* font;
+    char* name = "8x13bold";
+    font = XLoadQueryFont(theDisplay, name);
+    XSetFont(theDisplay, hghGC, font->fid);
+    XDrawString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Graphic mode", 12);
     Xx += (int)(188*width_ratio);
-    XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Select", 6);
+    XDrawString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Select", 6);
     Xx += (int)( 94*width_ratio);
-    XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Control", 7);
+    XDrawString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Control", 7);
     Xx += (int)( 94*width_ratio);
-    XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy, "In/Out", 6);
+    XDrawString(theDisplay, theRootWindow, hghGC, Xx, Xy, "In/Out", 6);
     Xx += (int)(188*width_ratio);
-    XDrawImageString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Status", 6);
+    XDrawString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Status", 6);
 }
 
 /**********************************************************************/

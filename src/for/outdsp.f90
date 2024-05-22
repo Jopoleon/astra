@@ -20,7 +20,6 @@ jj = max(0, (15 + NTOUT - 64)/16)
 Xwin_height = Xwin_height + 2*jj*(DYLET + 2)
 LineWidth = int(0.85*resizeGraph) + 1
 Xwin_title = 'Per aspera ad ASTRA' // null_ch
-!call initvm(Xwin_xpos, Xwin_ypos, Xwin_width, Xwin_height, LineWidth, TRIM(Xwin_title), LEN_TRIM(Xwin_title)) ! Initialise graphic window
 frame_wid = resizeGraph*frame_wid
 frame_hei = resizeGraph*frame_hei
 DXLET = resizeGraph*DXLET
@@ -71,7 +70,7 @@ use status_inc, only: AMETR, MU, SHIF, ELON, TRIA
 use const_inc, only: XOUT, NAB, NA1, NA1E, ABC, TINIT, TSCALE, RTOR, &
     MEQUIL, LEQ, TIME
 use outcmn_inc, only: frame_wid, frame_hei, canv_hei, canv_wid, nx_canvas, ny_canvas, &
-    curves_per_frame, active_tab, MOD10, NWIND1, NWIND3, NWINDX, &
+    curves_per_frame, active_tab, MOD10, NWIND1, NWIND3, NWINDX, resizeGraph, &
     IFDFAX, IY0, IYM, KPRI, DXLET, DYLET, NPTM, ICVMX, &
     NROUT, ROUT, OSHIFR, NAMER, SCALER, &
     NTOUT, OSHIFT, NAMET, SCALET, &
@@ -86,21 +85,21 @@ use debugger, only: markloc, debug, astra_stop
 
 implicit none
 
-integer, parameter :: jzero=0, fshift=10
+integer, parameter :: jzero=0
 integer, intent(in) :: MARK, JIFNEW, ITIMES
 integer, intent(inout) :: IYO(ITIMES,*)
 double precision, intent(in) :: TT_out(ITIMES)
 double precision, intent(inout) :: t_out(ITIMES, NRW)
 
 integer :: PTM(2), PTMO(2, NRDX, NRW), &
-    IWN(16), &
-    IST, text_posy, jt_old, JS, MODEX, &
+    IWN(16), fshift, &
+    IST, text_posx, text_posy, jt_old, JS, MODEX, &
     IYM0, LTOUT1, LTOUT2, JFNEW, STYL, x_shift, y_shift, jx_canv, jy_canv, JY, jxout, &
     JW, j_curve, j_canv, &
-    IYMN, IYMX, JDSP, test_posx, NPTMO(NRW), jlx(8), &
+    IYMN, IYMX, JDSP, NPTMO(NRW), jlx(8), &
     NP1, j, half_wid, &
     j1, jj, jsco, jn, jpnt, jsc, jarr, jtyp, n_canvas, &
-    jplot_in_canv, jcol, jcol2, jprof, jtrace
+    jplot_in_canv, jcol, jsym, jprof, jtrace
 double precision :: SC(NRW), YX, r_out, YA, YL, YR, &
      YZ, ABSC, ymin, ymax, px_rmag, yq1, xq1, xte, te_bc
 double precision ,dimension(2) :: xbar, xbar_old, ybar, x8bar, y8bar
@@ -117,6 +116,7 @@ save PTMO, NPTMO, IWN, xq1_old, xte_old, xold, yold, xtrace_old, ytrace_old
 !---------------------------------------------------------------------
 call markloc('OUTDSP')
 
+fshift = 12
 half_wid = frame_wid/2
 YA = 0.
 JFNEW = JIFNEW
@@ -235,9 +235,9 @@ CASE(1: 3)  ! Profiles
         enddo
 ! Variable labels
         call colovm(jcol)
-        test_posx = x_shift + jplot_in_canv*canv_wid*n_canvas/curves_per_frame(mod10)
-        text_posy = DYLET + FSHIFT + (IYM - IY0 + 2 + DYLET)*jy_canv + 2
-        call CMARK(text_posy, test_posx, SC(jprof), OSHIFR(jprof), NAMER(jprof), STYL)
+        text_posx = x_shift
+        text_posy = DYLET + FSHIFT + (IYM - IY0 + 3 + DYLET)*jy_canv
+        call CMARK(text_posx, text_posy, SC(jprof), OSHIFR(jprof), NAMER(jprof), STYL, jplot_in_canv)
 
     enddo plot_prof
 
@@ -277,15 +277,15 @@ CASE(1: 3)  ! Profiles
 
         call colovm(jcol)
         if (jsc /= jsco) then
-            jcol2 = 5  ! 13
+            jsym = 5  ! 13
         else
-            jcol2 = jcol2 + 1
+            jsym = jsym + 1
         endif
 
         if (JFNEW == 0) then
             call colovm(EraseColor)
             do j=1, NPTMO(jxout)
-                call NMARK(PTMO(1, j, jxout), jcol2)
+                call NMARK(PTMO(1, j, jxout), jsym)
             enddo
         endif
 
@@ -310,7 +310,7 @@ CASE(1: 3)  ! Profiles
             JDSP = canv_hei*r_out + IYMN + y_shift
             PTM(2) = frame_hei - min(max(JDSP, IYMN), IYMX)
             call colovm(jcol, 2)
-            call NMARK(PTM, jcol2)
+            call NMARK(PTM, jsym)
             PTMO(1, j1, jxout) = PTM(1)
             PTMO(2, j1, jxout) = PTM(2)
         enddo
@@ -322,17 +322,17 @@ CASE(1: 3)  ! Profiles
             call pscom(STRI, j)
         endif
         jlx(j_canv) = jlx(j_canv) + 1
-        test_posx = x_shift + canv_wid - 6*DXLET
+        text_posx = x_shift + canv_wid - DXLET - 45
         text_posy = (1 + jlx(j_canv))*DYLET + FSHIFT + (IYM - IY0 - canv_hei)*(jy_canv) + 3
         XF4 = fmt_xf(TOUTX(jn), 4)
-        call textvm(test_posx, text_posy, XF4, 5)
-        PTM(1) = test_posx + 5.5*DXLET
-        PTM(2) = text_posy - DYLET/2 + 1
+        call textvm(text_posx, text_posy, XF4, 5) ! Text (time) -> plot legend
+        PTM(1) = text_posx + DXLET + 37 ! 12 is fixed, as the font size does not scale
+        PTM(2) = text_posy - 0.3*DYLET
         jcol = (JW - 1)/n_canvas + 2
-        call NMARK(PTM, jcol2)
+        call NMARK(PTM, jsym) ! Marker symbol -> plot legend
 
         jsco = jsc
-        if (jcol2 == 7) jcol2 = 1
+        if (jsym == 7) jsym = 1
     enddo plot_profx
 
 ! Erase/put q=1 radius, BC for Te
@@ -425,9 +425,9 @@ CASE(6)  ! Time traces
             xtrace_old(1: jt_old+1) = xtrace(1: jt_old+1)
             ytrace_old(1: jt_old+1, j_curve) = ytrace(1: jt_old+1)
         endif
-        test_posx = 0
-        text_posy = FSHIFT + DYLET*(2*jplot_in_canv + 1) + (j_canv - 1)*canv_hei
-        call CMARKT(text_posy, test_posx, SC(jtrace), OSHIFT(jtrace), NAMET(jtrace), STYL)
+        text_posx = 0
+        text_posy = (j_canv-1)*canv_hei + DYLET*(jplot_in_canv*2 + 2) + 2*jplot_in_canv
+        call CMARKT(text_posx, text_posy, SC(jtrace), OSHIFT(jtrace), NAMET(jtrace), STYL)
 
         do j=LTOUT1, LTOUT1 + LTOUT2
             t_out(j, jtrace) = t_out(j, jtrace) - OSHIFT(jtrace)

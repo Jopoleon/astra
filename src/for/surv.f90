@@ -81,41 +81,39 @@ SCALA = YS(J)
 end function SCALA
 
 !---------------------------------------------------------------------
-subroutine CMARK(NL, JPOS, SC, OS, NAME, STYL)
+subroutine CMARK(xpos_in, ypos_in, prof_yscale, yshift, prof_name, STYL, jplot_parity)
 ! Mark variable/scale in 1 & 2 modes
 
-use outcmn_inc, only: frame_hei, DXLET, DYLET
+use outcmn_inc, only: frame_hei, canv_wid
 use dbl2char, only: fmt4
 
 implicit none
 
-integer, intent(in) :: STYL, JPOS, NL
-double precision, intent(in) :: SC, OS
-character(len=4), intent(in) :: NAME
+integer, intent(in) :: STYL, xpos_in, ypos_in, jplot_parity
+double precision, intent(in) :: prof_yscale, yshift
+character(len=4), intent(in) :: prof_name
 
-integer :: JY, POINT(2)
-character(len=10) :: ST
+integer :: POINT(2), xpos, ypos
+character(len=10) :: name_scale_label
 character(len=4 ) :: F4
 character(len=5 ) :: F5
 
-ST(1: 4) = fmt4(SC)
-ST(5: 5)  = ' '
-ST(6: 10) = NAME
-if (OS /= 0) then
-    F4 = fmt4(abs(OS))
-    if (OS < 0) F5 = '-' // F4
-    if (OS > 0) F5 = '+' // F4
-    if (NL < frame_hei/2) then
-        JY = DYLET + 2
-    else
-        JY = -DYLET - 2
-    endif
-    call textvm(JPOS + 4*DXLET, NL + JY, F5, 5)
+xpos = xpos_in + jplot_parity*(canv_wid - 80)
+ypos = ypos_in
+
+name_scale_label(1: 4) = fmt4(prof_yscale)
+name_scale_label(5: 5)  = ' '
+name_scale_label(6: 10) = prof_name
+if (yshift /= 0) then
+    F4 = fmt4(abs(yshift))
+    if (yshift < 0) F5 = '-' // F4
+    if (yshift > 0) F5 = '+' // F4
+    call textvm(xpos_in + 85 + jplot_parity*(canv_wid - 190), ypos, F5, 5) ! Note plot y-shift
 endif
-call textvm(JPOS, NL, ST, 10)
-if (STYL > 0) then
-    POINT(1) = JPOS + 4*DXLET + 4
-    POINT(2) = NL - 4
+call textvm(xpos, ypos, name_scale_label, 10)
+if (STYL > 0) then ! If clicking 'Style' in ASTRA graphic window
+    POINT(1) = xpos_in + 95 + jplot_parity*(canv_wid - 195)
+    POINT(2) = ypos - 5
     call NMARK(POINT, STYL)
 endif
 
@@ -123,44 +121,43 @@ return
 end subroutine CMARK
 
 !---------------------------------------------------------------------
-subroutine CMARKT(NL, JPOS, SC, OS, NAME, STYL)
+subroutine CMARKT(xpos_in, ypos_in, sig_yscale, yshift, sig_name, STYL)
 ! Mark variable/scale in 6th (time) mode
 
-use outcmn_inc, only: DXLET, DYLET
+use outcmn_inc, only: DXLET
 use dbl2char, only: fmt4
 
 implicit none
 
-integer, intent(in) :: NL, JPOS, STYL
-double precision, intent(in) :: SC, OS
-character(len=4), intent(in) :: NAME
+integer, intent(in) :: xpos_in, ypos_in, STYL
+double precision, intent(in) :: sig_yscale, yshift
+character(len=4), intent(in) :: sig_name
 
-integer :: J, JP, plot_arr(2)
-character(len=10) :: ST
+integer :: str_len, xpos, ypos, plot_arr(2)
+character(len=10) :: name_shift_label
 character(len=4 ) :: F4
 
-ST(1: 10) = '          '
-ST(2: 5)  = NAME
-if (OS == 0) then
-    JP = JPOS
-    J  = 5
-else
-    F4 = fmt4(abs(OS))
-    if (OS < 0) ST(6: 10) = '-' // F4
-    if (OS > 0) ST(6: 10) = '+' // F4
-    JP = JPOS - DXLET
-    if (ST(1: 1) == ' ') JP = JP - DXLET
-    j = LEN_TRIM(ST(2: 10))
-    if (j <= 6) JP = JP + DXLET
+xpos = xpos_in
+ypos = ypos_in
+name_shift_label(1: 10) = '          '
+name_shift_label(2: 5)  = sig_name
+if (yshift /= 0) then
+    F4 = fmt4(abs(yshift))
+    if (yshift < 0) name_shift_label(6: 10) = '-' // F4
+    if (yshift > 0) name_shift_label(6: 10) = '+' // F4
+    xpos = xpos_in - DXLET
+    if (name_shift_label(1: 1) == ' ') xpos = xpos - DXLET
+    str_len = LEN_TRIM(name_shift_label(2: 10))
+    if (str_len <= 6) xpos = xpos + DXLET
 endif
 
-call textvm(JP, NL, ST, J)   ! type name+yshift
-plot_arr(1) = JP + 3
-plot_arr(2) = NL - 5
-F4 = fmt4(SC)
-J = NL + DYLET
-JP = JPOS + DXLET
-call textvm(JP, J, F4, 4)   ! type scale
+call textvm(xpos, ypos, TRIM(name_shift_label), LEN_TRIM(name_shift_label))   ! type name+yshift
+plot_arr(1) = xpos + 3
+plot_arr(2) = ypos - 5
+F4 = fmt4(sig_yscale)
+ypos = ypos + 15
+xpos = xpos + DXLET
+call textvm(xpos, ypos, F4, 4)   ! type scale
 if (STYL > 0) call NMARK(plot_arr, STYL)
 
 return
