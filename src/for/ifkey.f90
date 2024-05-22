@@ -999,6 +999,8 @@ use debugger, only: markloc, debug
 implicit none
 
 integer, parameter :: fshift=10
+integer, parameter, dimension(6) :: symbols=(/ 1, 111, 43, 42, 120, 36 /)
+
 integer, intent(in) :: MARK, ITIMES
 double precision, intent(in) :: PRMARK(*)
 character(len=6), intent(in) :: NAMEP(*)
@@ -1013,6 +1015,7 @@ double precision :: &
        YROUT, YA, YQ1, YQ2, YXR, YXL, yloc, ymin, ymax
 double precision, dimension(2*NRD) :: xplot, yplot
 character(len=4) :: CHAR4
+character(len=5) :: axis_label
 character(len=9) :: ST
 character(len=80) :: STRI
 
@@ -1197,7 +1200,13 @@ read_loop: do
         call plot_curve(NP1, STYL, xplot, yplot)
         if (PRMARK(JTIM) /= 0) then
             JPOS = 3*DXLET + PRMARK(JTIM)*canv_wid/6.5 + canv_wid*(NP - 1)
-            call CMARKP(jnl, JPOS, NAMEP(JTIM), STYL)
+            axis_label(2: 5) = NAMEP(JTIM)
+            if (STYL >= 7 .and. STYL <= 12) then
+                axis_label(1: 1) = char(symbols(STYL - 6))
+            else
+                axis_label(1: 1) = ' '
+            endif
+            call textvm(JPOS, jnl, axis_label, 5)
         endif
     enddo
 

@@ -164,27 +164,6 @@ return
 end subroutine CMARKT
 
 !---------------------------------------------------------------------
-subroutine CMARKP(NL, JPOS, NAME, STYL)
-! Mark variable/scale in 4 & 5 (time-radial) modes
-
-implicit none
-
-character(len=4), intent(in) :: NAME
-integer, intent(in) :: NL, JPOS, STYL
-
-integer :: NBIT(6)
-character(len=5) :: ST
-
-! diamond(1), o(111), +(43), *(42), x(120), #(35), $(36), 
-data NBIT / 1, 111, 43, 42, 120, 36 /
-ST(2: 5) = NAME
-ST(1: 1) = ' '
-if (STYL >= 7 .and. STYL <= 12) ST(1:1) = char(NBIT(STYL - 6))
-call textvm(JPOS, NL, ST, 5)
-
-end subroutine CMARKP
-
-!---------------------------------------------------------------------
 subroutine update_curve(NP, np_old, ICOLOR, STYL, xold, yold, xnew, ynew)
 
 ! The subroutine displays NP points of the float array YNEW
