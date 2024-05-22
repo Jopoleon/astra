@@ -776,6 +776,7 @@ int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
         num2str(valn, value, num_str_len);
         WRITE_ theGCA, ix+vpos, hsym+iy, value, num_str_len);
     }
+
     oldparam = nparam;
     ixold = ix;
     iyold = iy;
@@ -934,7 +935,7 @@ int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
             sscanf(stri, "%8lf", &param);
             *(array+jbox-1) = param;
             num2str(param, value, num_str_len);
-	    //	    printf("%s\n", value);
+	    //		    printf("num2str 1: %s\n", value);
             spos = -1;
         }
 
@@ -1280,7 +1281,7 @@ More examples in the file "src/for/surv.f90", subroutines ASXWIN ASTWIN
             fill_flag = 0;
 	    iret = GetKey(theEvent.xkey, stri, &spos);
             switch(iret){
-            case XK_Escape:       /* <Esc> */
+            case -1:       /* <Esc> */
                 strncpy(array+ind, stri, wbox);
                 break;
             case 0:
