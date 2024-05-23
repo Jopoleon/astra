@@ -26,11 +26,7 @@ integer, dimension(NSBMX) :: SIGNSB, IFSBX, IFSBP
 integer :: &
     NDTNAM, NCFNAM, NPRNAM, NSRNAM, NARNAM, NEXNAM, NTOUT, NROUT, NSBR, NSBP, &
     NBNT, NCNBT, LTOUT, IPOUT, MOD10, NGR, NXOUT, IFDFVX(NCONST)
-integer :: &
-    MODEY, frame_wid, frame_hei, DXLET, DYLET, IY0, IYM, canv_hei, canv_wid, &
-    IDX, IDT, KPRI, NST, LRJJ, &
-    Xwin_width, Xwin_height, &
-    AVERS, ARLEAS, AEDIT, NBFLAG, LineWidth
+integer :: MODEY, IDX, IDT, KPRI, NST, AVERS, ARLEAS, AEDIT, NBFLAG
 integer*4 :: COLTAB(64) ! i*4 needed for compatibility with C
 integer, dimension(plot_modes) :: active_tab, curves_per_frame
 double precision, dimension(NRW)   :: GRAL, GRAP, OSHIFT, OSHIFR, SCALET, SCALER
@@ -91,6 +87,10 @@ plot_area_ref%width  = 640
 plot_area_ref%height = 350
 plot_area_ref%nx_canvas = 0
 plot_area_ref%ny_canvas = 0
+plot_area_ref%xmin = 0
+plot_area_ref%xmax = 0
+plot_area_ref%ymin = 0
+plot_area_ref%ymax = 0
 
 ! Astra colors: 
 !   #0 - background, ##1-7 - plots 1-7

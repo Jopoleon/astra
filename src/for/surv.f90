@@ -84,7 +84,7 @@ end function SCALA
 subroutine CMARK(xpos_in, ypos_in, prof_yscale, yshift, prof_name, STYL, jplot_parity)
 ! Mark variable/scale in 1 & 2 modes
 
-use outcmn_inc, only: canv_wid
+use outcmn_inc, only: plot_area
 use dbl2char, only: fmt4
 
 implicit none
@@ -111,10 +111,10 @@ if (yshift /= 0) then
 endif
 str_len = LEN_TRIM(name_scale_label)
 str_pixels = 8*str_len
-xpos = xpos_in + 2 + jplot_parity*(canv_wid - str_pixels - 4)
+xpos = xpos_in + 2 + jplot_parity*(plot_area%canvas_width - str_pixels - 4)
 call textvm(xpos, ypos, TRIM(name_scale_label), str_len)
 if (STYL > 0) then ! If clicking 'Style' in ASTRA graphic window
-    POINT(1) = xpos_in + str_pixels + 8 + jplot_parity*(canv_wid - 2*str_pixels - 16)
+    POINT(1) = xpos_in + str_pixels + 8 + jplot_parity*(plot_area%canvas_width - 2*str_pixels - 16)
     POINT(2) = ypos - 5
     call NMARK(POINT, STYL)
 endif

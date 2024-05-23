@@ -1,9 +1,7 @@
 subroutine initMainWindow
 
 use outcmn_inc, only: astra_gui_ref, astra_gui, plot_area_ref, plot_area, &
-    Xwin_height, Xwin_width, &
-    DXLET, DYLET, LRJJ, frame_wid, frame_hei, &
-    RUNID, NST, MOD10, NTOUT, LineWidth, resizeGraph, null_ch
+    RUNID, NST, MOD10, NTOUT, resizeGraph, null_ch
 use const_inc, only: XOUT, NA
 use status_inc, only: MU
 
@@ -16,15 +14,6 @@ double precision, external :: LINEAV
 call get_runid()
 ! Resize
 jj = max(0, (15 + NTOUT - 64)/16)
-Xwin_height = astra_gui_ref%Height + 2*jj*resizeGraph*(astra_gui_ref%dylet + 2)
-LineWidth = int(0.85*resizeGraph) + astra_gui_ref%LineWidth
-frame_wid   = resizeGraph*plot_area_ref%width
-frame_hei   = resizeGraph*plot_area_ref%height
-DXLET       = resizeGraph*astra_gui_ref%dxlet
-DYLET       = resizeGraph*astra_gui_ref%dylet
-LRJJ        = resizeGraph*astra_gui_ref%yMessage + 135
-Xwin_width  = resizeGraph*astra_gui_ref%width
-Xwin_height = resizeGraph*Xwin_height
 
 astra_gui%LineWidth = int(0.85*resizeGraph) + astra_gui_ref%LineWidth
 astra_gui%dxlet    = resizeGraph*astra_gui_ref%dxlet
@@ -40,7 +29,7 @@ astra_gui%resizeGraph = resizeGraph
 plot_area%width  = resizeGraph*plot_area_ref%width
 plot_area%height = resizeGraph*plot_area_ref%height
 
-!call resizewindow(Xwin_width, Xwin_height)
+!call resizewindow(astra_gui%width, astra_gui%height)
 call initvm(astra_gui%xpos, astra_gui%ypos, astra_gui%Width, astra_gui%Height, astra_gui%LineWidth, astra_gui%title, LEN(astra_gui%title)) ! Initialise graphic window
 IM = 1
 NST = 0
@@ -51,7 +40,7 @@ call set_plot(IM)
 j = XOUT + 0.49
 
 call taskmenu(j) ! Task menu
-call textbf(0, Xwin_height-int(104*resizeGraph), RUNID, 80) ! Task ID
+call textbf(0, astra_gui%Height-int(104*resizeGraph), RUNID, 80) ! Task ID
 
 CHORDN = LINEAV()
 call up_label(CHORDN, 1./MU(NA))
@@ -82,9 +71,9 @@ use parameter_inc, only: NRD, NRDX, NRW
 use status_inc, only: AMETR, MU, SHIF, ELON, TRIA
 use const_inc, only: XOUT, NAB, NA1, NA1E, ABC, TINIT, TSCALE, RTOR, &
     MEQUIL, LEQ, TIME
-use outcmn_inc, only: plot_area, frame_wid, frame_hei, canv_hei, canv_wid, &
+use outcmn_inc, only: astra_gui, plot_area, &
     curves_per_frame, active_tab, MOD10, NWIND1, NWIND3, NWINDX, resizeGraph, &
-    IFDFAX, IY0, IYM, KPRI, DXLET, DYLET, NPTM, ICVMX, &
+    IFDFAX, KPRI, NPTM, ICVMX, &
     NROUT, ROUT, OSHIFR, NAMER, SCALER, &
     NTOUT, OSHIFT, NAMET, SCALET, &
     NXOUT, NAMEX, NARRX, EXARNM, DATAX, TOUTX, LTOUT, &
@@ -130,7 +119,7 @@ save PTMO, NPTMO, IWN, xq1_old, xte_old, xold, yold, xtrace_old, ytrace_old
 call markloc('OUTDSP')
 
 fshift = 12
-half_wid = frame_wid/2
+half_wid = plot_area%width/2
 YA = 0.
 JFNEW = JIFNEW
 if (JFNEW >= 10) JFNEW = JFNEW - 10
@@ -159,13 +148,13 @@ endif
 if (MARK ==  0) IST = 1
 if (MARK ==  1) IST = 8
 if (MARK == -1) IST = 15
-IYMN = frame_hei - IYM
-IYM0 = IYM - canv_hei
-IYMX = frame_hei - IY0
-JY = 10*frame_hei
+IYMN = plot_area%height - plot_area%ymin
+IYM0 = plot_area%ymin - plot_area%canvas_height
+IYMX = plot_area%height - plot_area%ymax
+JY = 10*plot_area%height
 
-ymin = dble(frame_hei - IYM)
-ymax = dble(frame_hei - IY0)
+ymin = dble(plot_area%height - plot_area%ymin)
+ymax = dble(plot_area%height - plot_area%ymax)
 
 n_canvas = plot_area%nx_canvas*plot_area%ny_canvas
 
@@ -194,8 +183,8 @@ CASE(1: 3)  ! Profiles
         jy_canv = (j_canv - 1)/plot_area%nx_canvas          ! 0-1
         jplot_in_canv = (JW - 1)/n_canvas
         jcol = jplot_in_canv + 2
-        y_shift = canv_hei * (plot_area%ny_canvas - 1 - jy_canv)
-        x_shift = canv_wid*jx_canv
+        y_shift = plot_area%canvas_height * (plot_area%ny_canvas - 1 - jy_canv)
+        x_shift = plot_area%canvas_width*jx_canv
 
         YL = max(0.d0, ABSC(GRAL(jprof)))
         YR = ABSC(GRAP(jprof))
@@ -210,23 +199,23 @@ CASE(1: 3)  ! Profiles
                 if (jxout == 1 .and. j > 1) then ! left edge interpolation
                     YA = ROUT(J, jprof) + (ROUT(J-1, jprof) - ROUT(J, jprof))*(YL - YX)/(YA - YX)
                     r_out = min(max(YA/SC(jprof), -7.d0), 7.d0)
-                    JDSP  = 10*(canv_hei*r_out + IYMN + y_shift)
+                    JDSP  = 10*(plot_area%canvas_height*r_out + IYMN + y_shift)
                     xplot(jxout) = dble(x_shift)
-                    yplot(jxout) = frame_hei - min(max(dble(canv_hei)*r_out + ymin + dble(y_shift), ymin), ymax)
+                    yplot(jxout) = plot_area%height - min(max(dble(plot_area%canvas_height)*r_out + ymin + dble(y_shift), ymin), ymax)
                     jxout = jxout + 1
                 endif
                 r_out = min(max(ROUT(J, jprof)/SC(jprof), -7.d0), 7.d0)
-                JDSP  = 10*(canv_hei*r_out + IYMN + y_shift)
-                xplot(jxout) = dble(x_shift) + dble(frame_wid)/dble(plot_area%nx_canvas)*(YX - YL)/(YR - YL)
-                yplot(jxout) = frame_hei - min(max(dble(canv_hei)*r_out + ymin + dble(y_shift), ymin), ymax)
+                JDSP  = 10*(plot_area%canvas_height*r_out + IYMN + y_shift)
+                xplot(jxout) = dble(x_shift) + dble(plot_area%width)/dble(plot_area%nx_canvas)*(YX - YL)/(YR - YL)
+                yplot(jxout) = plot_area%height - min(max(dble(plot_area%canvas_height)*r_out + ymin + dble(y_shift), ymin), ymax)
             endif
             if (YA <= YR .and. YX > YR) then ! right edge interpolation
                 jxout = jxout + 1
                 YA = ROUT(J, jprof) + (ROUT(J-1, jprof) - ROUT(J, jprof))*(YR - YX)/(YA - YX)
                 r_out = min(max(YA/SC(jprof), -7.d0), 7.d0)
-                JDSP  = 10*(canv_hei*r_out + IYMN + y_shift)
-                xplot(jxout) = dble(x_shift) + dble(frame_wid)/dble(plot_area%nx_canvas)
-                yplot(jxout) = dble(frame_hei) - min(max(dble(canv_hei)*r_out + ymin + dble(y_shift), ymin), ymax)
+                JDSP  = 10*(plot_area%canvas_height*r_out + IYMN + y_shift)
+                xplot(jxout) = dble(x_shift) + dble(plot_area%width)/dble(plot_area%nx_canvas)
+                yplot(jxout) = dble(plot_area%height) - min(max(dble(plot_area%canvas_height)*r_out + ymin + dble(y_shift), ymin), ymax)
             endif
             YA = YX
         enddo
@@ -249,7 +238,7 @@ CASE(1: 3)  ! Profiles
 ! Variable labels
         call colovm(jcol)
         text_posx = x_shift
-        text_posy = DYLET + FSHIFT + (IYM - IY0 + 3 + DYLET)*jy_canv
+        text_posy = astra_gui%dylet + FSHIFT + (plot_area%ymin - plot_area%ymax + 3 + astra_gui%dylet)*jy_canv
         call CMARK(text_posx, text_posy, SC(jprof), OSHIFR(jprof), NAMER(jprof), STYL, jplot_in_canv)
 
     enddo plot_prof
@@ -285,8 +274,8 @@ CASE(1: 3)  ! Profiles
         jx_canv = MOD(j_canv - 1, plot_area%nx_canvas)      ! 0-3 for mode '1'
         jy_canv = (j_canv - 1)/plot_area%nx_canvas          ! 0-1
         jcol = (JW - 1)/n_canvas + 2
-        y_shift = canv_hei * (plot_area%ny_canvas - 1 - jy_canv)
-        x_shift = canv_wid*jx_canv
+        y_shift = plot_area%canvas_height * (plot_area%ny_canvas - 1 - jy_canv)
+        x_shift = plot_area%canvas_width*jx_canv
 
         call colovm(jcol)
         if (jsc /= jsco) then
@@ -317,11 +306,11 @@ CASE(1: 3)  ! Profiles
             YA = ABSC(YX)
             if (YA > 1. .or. YA < YL .or. YA > YR) CYCLE
             j1 = j1 + 1
-            PTM(1) = x_shift + frame_wid/plot_area%nx_canvas*(YA-YL)/(YR-YL)
+            PTM(1) = x_shift + plot_area%width/plot_area%nx_canvas*(YA-YL)/(YR-YL)
             r_out= max((DATAX(j, jn) + OSHIFR(jsc))/SC(jsc), -7.d0)
             r_out= min(r_out, 7.d0)
-            JDSP = canv_hei*r_out + IYMN + y_shift
-            PTM(2) = frame_hei - min(max(JDSP, IYMN), IYMX)
+            JDSP = plot_area%canvas_height*r_out + IYMN + y_shift
+            PTM(2) = plot_area%height - min(max(JDSP, IYMN), IYMX)
             call colovm(jcol, 2)
             call NMARK(PTM, jsym)
             PTMO(1, j1, jxout) = PTM(1)
@@ -335,12 +324,12 @@ CASE(1: 3)  ! Profiles
             call pscom(STRI, j)
         endif
         jlx(j_canv) = jlx(j_canv) + 1
-        text_posx = x_shift + canv_wid - DXLET - 45
-        text_posy = (1 + jlx(j_canv))*DYLET + FSHIFT + (IYM - IY0 - canv_hei)*(jy_canv) + 3
+        text_posx = x_shift + plot_area%canvas_width - astra_gui%dxlet - 45
+        text_posy = (1 + jlx(j_canv))*astra_gui%dylet + FSHIFT + (plot_area%ymin - plot_area%ymax - plot_area%canvas_height)*(jy_canv) + 3
         XF4 = fmt_xf(TOUTX(jn), 4)
         call textvm(text_posx, text_posy, XF4, 5) ! Text (time) -> plot legend
-        PTM(1) = text_posx + DXLET + 37 ! 12 is fixed, as the font size does not scale
-        PTM(2) = text_posy - 0.3*DYLET
+        PTM(1) = text_posx + astra_gui%dxlet + 37 ! 12 is fixed, as the font size does not scale
+        PTM(2) = text_posy - 0.3*astra_gui%dylet
         jcol = (JW - 1)/n_canvas + 2
         call NMARK(PTM, jsym) ! Marker symbol -> plot legend
 
@@ -351,12 +340,12 @@ CASE(1: 3)  ! Profiles
 ! Erase/put q=1 radius, BC for Te
     yq1   = ABSC(AFVAL(MU, 1.0))
     te_bc = ABSC(AMETR(max(NA1E, 1)))
-    ymax = dble(IYM0) - 0.8*canv_hei
+    ymax = dble(IYM0) - 0.8*plot_area%canvas_height
     do j_canv=1, plot_area%nx_canvas
-        xq1 = canv_wid*(j_canv -1 + YQ1)
-        xte = canv_wid*(j_canv -1 + te_bc)
+        xq1 = plot_area%canvas_width*(j_canv -1 + YQ1)
+        xte = plot_area%canvas_width*(j_canv -1 + te_bc)
         do jy=1, plot_area%ny_canvas
-            ybar = (/ dble(IYM0) - (jy-2)*canv_hei, ymax - (jy-2)*canv_hei/)
+            ybar = (/ dble(IYM0) - (jy-2)*plot_area%canvas_height, ymax - (jy-2)*plot_area%canvas_height/)
             if (yq1 > 1.d-3 .and. yq1 < 0.999) then
                 xbar_old = xq1_old(j_canv)
                 xbar = xq1
@@ -386,10 +375,10 @@ CASE(6)  ! Time traces
 ! right_label_position=JDX*JDMX=23*5*5=575 (see typdsp.f)
     do J=1, LTOUT-1
         r_out = (TT_out(J) - TINIT)*575/abs(TSCALE)
-        IYO(J, ICVMX+1) = 6*DXLET + r_out
-        xtrace(J) = 6*DXLET + r_out
+        IYO(J, ICVMX+1) = 6*astra_gui%dxlet + r_out
+        xtrace(J) = 6*astra_gui%dxlet + r_out
         if (r_out < 0)  LTOUT1 = J + 1
-        if (IYO(J, ICVMX+1) <= frame_wid - 1) LTOUT2 = J - 1
+        if (IYO(J, ICVMX+1) <= plot_area%width - 1) LTOUT2 = J - 1
     enddo
     LTOUT2 = LTOUT2 - LTOUT1 + 1
     if (LTOUT2 < 3) then ! No plot for small time
@@ -412,10 +401,10 @@ CASE(6)  ! Time traces
         do J=1, LTOUT
             r_out = max(t_out(J, jtrace)/SC(jtrace), -7.d0)
             r_out = min(r_out, 7.d0)
-            JDSP  = 10*(canv_hei*r_out + IYMN + (n_canvas - j_canv)*canv_hei)
+            JDSP  = 10*(plot_area%canvas_height*r_out + IYMN + (n_canvas - j_canv)*plot_area%canvas_height)
             JDSP  = max(JDSP, 10*IYMN)
             IYO(J, ICVMX+2) = JY - min(JDSP, 10*IYMX)
-            ytrace(J) = dble(frame_hei) - min(max(canv_hei*r_out + ymin + (n_canvas - j_canv)*canv_hei, ymin), ymax)
+            ytrace(J) = dble(plot_area%height) - min(max(plot_area%canvas_height*r_out + ymin + (n_canvas - j_canv)*plot_area%canvas_height, ymin), ymax)
         enddo
 
         if (JFNEW == 0) then
@@ -439,7 +428,7 @@ CASE(6)  ! Time traces
             ytrace_old(1: jt_old+1, j_curve) = ytrace(1: jt_old+1)
         endif
         text_posx = 0
-        text_posy = (j_canv-1)*canv_hei + DYLET*(jplot_in_canv*2 + 2) + 2*jplot_in_canv
+        text_posy = (j_canv-1)*plot_area%canvas_height + astra_gui%dylet*(jplot_in_canv*2 + 2) + 2*jplot_in_canv
         call CMARKT(text_posx, text_posy, SC(jtrace), OSHIFT(jtrace), NAMET(jtrace), STYL)
 
         do j=LTOUT1, LTOUT1 + LTOUT2
@@ -541,7 +530,7 @@ CASE(8)
             PTMO(2, j, jxout) = PTM(2)
         enddo
 ! git hardcoded 510
-        call textvm(510, 100 + 2*DYLET*jcol, NAMEX(jxout), 6)
+        call textvm(510, 100 + 2*astra_gui%dylet*jcol, NAMEX(jxout), 6)
         NPTMO(jxout) = jpnt
     enddo loop8
 
@@ -805,7 +794,7 @@ subroutine DRAWFOOT(jifnew)
 
 use parameter_inc, only: NRD
 use const_inc, only: CNB1
-use outcmn_inc, only: NBFILE, Xwin_height, Xwin_width, Magenta, DYLET, meter2pixel, pixel_ymid
+use outcmn_inc, only: astra_gui, NBFILE, Magenta, meter2pixel, pixel_ymid
 use debugger, only: markloc, astra_stop
 
 implicit none
@@ -853,7 +842,7 @@ END SELECT
 
 close(2)
 if (jifnew == 0) call redraw(2) ! Erase previous
-call cleare(2, 0, 0, Xwin_width - 1, Xwin_height - 1)
+call cleare(2, 0, 0, astra_gui%width - 1, astra_gui%height - 1)
 call colovm(Magenta)
 
 JL = 0
@@ -871,7 +860,7 @@ do JN=1, anint(CNB1)
         STRI(3: 4) = '  '
         write(STRI(5: 10), '(1F6.3)') YQ
 
-        call textnb(16, 35 - 3 + JL*DYLET, STRI(1: 10), 10)
+        call textnb(16, 35 - 3 + JL*astra_gui%dylet, STRI(1: 10), 10)
         call textnb(10, 35 - 3, 'Beam  Power', 11)
 
         YH = 0.5*YASP*(YRBMX - YRBMN)

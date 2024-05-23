@@ -165,8 +165,8 @@ subroutine PUTXY(IX, IY, ITIMES, TTOUT, TOUT)
 !---------------------------------------------------------------------
 
 use parameter_inc, only: NRW
-use outcmn_inc, only: astra_gui, plot_area, MOD10, IY0, IYM, &
-    scale_bnd, canv_hei, canv_wid, resizeGraph, &
+use outcmn_inc, only: astra_gui, plot_area, MOD10, &
+    scale_bnd, resizeGraph, &
     IDT, IDX, MODEY, LTOUT, NTOUT, active_tab, &
     NWIND3, NAMET, White, Red, Blue
 use status_inc, only: AMETR, SHIF, ELON, TRIA, FP, RHO
@@ -194,7 +194,7 @@ STRI = repeat(' ', 80)
 STRI(7:25) = '(x, y)=(     ,     )'
 JX = IX - 10
 JY = IY - 10
-if (IX0 > JX .or. JX > IXM .or. IY0 > JY .or. JY > IYM) then
+if (IX0 > JX .or. JX > IXM .or. plot_area%ymax > JY .or. JY > plot_area%ymin) then
     STRI = repeat(' ', 80)
     call colovm(White)
     call textvm(JN0, JLR, "               ", 15)
@@ -207,7 +207,7 @@ DX = 1./plot_area%nx_canvas
 DY = 1./plot_area%ny_canvas
 
 YX1 =      (JX - IX0 + 0.)/(IXM - IX0)
-YY1 = 1. - (JY - IY0 + 0.)/(IYM - IY0)
+YY1 = 1. - (JY - plot_area%ymax + 0.)/(plot_area%ymin - plot_area%ymax)
 
 if (MOD10 == 6) then
 ! (window_width)/(step=IDX=23)/(n_labels)=592/23/25=1.0295652
@@ -240,8 +240,8 @@ if (MOD10 == 6) then
     return
 else if (MOD10 == 8) then
 !    YX = 5.*YX1*scale_bnd
-    YX = YX1*scale_bnd*canv_wid/IDT/IDX
-    YY = (YY1 - 0.5)*scale_bnd*canv_hei/IDT/IDX
+    YX = YX1*scale_bnd*plot_area%canvas_width/IDT/IDX
+    YY = (YY1 - 0.5)*scale_bnd*plot_area%canvas_height/IDT/IDX
     YA1= RZ2A(YX, YY, NAB)
     YD = QUADIN(NAB, AMETR, SHIF, YA1)
     YE = QUADIN(NAB, AMETR, ELON, YA1)
@@ -315,7 +315,7 @@ else
     enddo
     YY = (YY1 + DY)/DY
     if (MOD10 > 1 .and. MOD10 < 6 .and. MODEY == -1) then
-        if (JY - IY0 > (IYM - IY0)/plot_area%ny_canvas) YY = YY - 1.
+        if (JY - plot_area%ymax > (plot_area%ymin - plot_area%ymax)/plot_area%ny_canvas) YY = YY - 1.
     endif
 
 endif
@@ -340,24 +340,19 @@ subroutine set_frame(plot_mode)
 !  NST - for using in set_plot
 !----------------------------------------------------------------------|
 
-use outcmn_inc, only: astra_gui, plot_area, MOD10, IY0, IYM, &
-    canv_wid, canv_hei, MODEY, NST
+use outcmn_inc, only: astra_gui, plot_area, MOD10, MODEY, NST
 
 implicit none
 
 integer, intent(inout) :: plot_mode
 
-integer :: STRUP, STRDN
+integer :: n_str_up, n_str_down
 
-! IY0, IYM     - upper & lower plot boundaries
-! canv_wid, canv_hei     - X & Y window dimension
-! STRUP, STRDN - number of text strings up & down
-! nx_canvas, ny_canvas       - number of windows in horisontal & vertical axises
-! plot_area%xmin, plot_area%xmax    - left & right plot boundaries
+! n_str_up, n_str_down - number of text strings up & down
 
 if (NST >= 1 .or. plot_mode == 11 .or. plot_mode == 12 .or. plot_mode == 21 .or. plot_mode == 22) then
-    STRUP = 2
-    STRDN = 4
+    n_str_up   = 2
+    n_str_down = 4
     NST = NST + 1
     plot_area%xmin = 0
     plot_area%xmax = plot_area%width
@@ -395,32 +390,32 @@ else
 
     SELECT CASE(plot_mode)
     CASE(1)
-        STRUP = 2
-        STRDN = 5
+        n_str_up   = 2
+        n_str_down = 5
         plot_area%xmin = 0
         plot_area%xmax = plot_area%width
         plot_area%nx_canvas = 4
         plot_area%ny_canvas = 2
 ! modes 2, 3, 4, 5 at y-mode = +1, dummy mode (plot_mode=4 - not used)
     CASE(2, 4, 7)
-        STRUP = 2
-        STRDN = 5
+        n_str_up   = 2
+        n_str_down = 5
         plot_area%xmin = 0
         plot_area%xmax = plot_area%width
         plot_area%nx_canvas = 2
         plot_area%ny_canvas = 1
 ! modes 2, 3, 4, 5 at y-mode = -1
     CASE(3)
-        STRUP = 2
-        STRDN = 5
+        n_str_up   = 2
+        n_str_down = 5
         plot_area%xmin = 0
         plot_area%xmax = plot_area%width
         plot_area%nx_canvas = 2
         plot_area%ny_canvas = 2
 ! mode # 6 (time) at y-mode=1 (2 windows)
     CASE(5)
-        STRUP = 1
-        STRDN = 1
+        n_str_up   = 1
+        n_str_down = 1
         plot_area%xmin = 6*astra_gui%dxlet
         plot_area%xmax = plot_area%width
         plot_area%nx_canvas = 1
@@ -428,24 +423,24 @@ else
 
 ! mode # 6 (time) at y-mode=-1 (4 windows)
     CASE(6)
-        STRUP = 1
-        STRDN = 1
+        n_str_up   = 1
+        n_str_down = 1
         plot_area%xmin = 6*astra_gui%dxlet
         plot_area%xmax = plot_area%width
         plot_area%nx_canvas = 1
         plot_area%ny_canvas = 4
 ! mode 8 (equilibrium)
     CASE(8)
-        STRUP = 1
-        STRDN = -2
+        n_str_up   = 1
+        n_str_down = -2
         plot_area%xmin = 0
         plot_area%xmax = 0.7*plot_area%width
         plot_area%nx_canvas = 1
         plot_area%ny_canvas = 1
 ! mode # 6 (time) at y-mode=0 (1 window), mode 9 (user's plot)
     CASE(9)
-        STRUP = 1
-        STRDN = 1
+        n_str_up   = 1
+        n_str_down = 1
         plot_area%xmin = 6*astra_gui%dxlet
         plot_area%xmax = plot_area%width
         plot_area%nx_canvas = 1
@@ -454,10 +449,10 @@ else
 
 endif
 
-IY0 = STRUP*astra_gui%dylet + 1
-IYM = plot_area%height - STRDN*astra_gui%dylet - 1
-canv_wid = (plot_area%xmax - plot_area%xmin)/plot_area%nx_canvas
-canv_hei = (IYM - IY0)/plot_area%ny_canvas
+plot_area%ymax = n_str_up*astra_gui%dylet + 1
+plot_area%ymin = plot_area%height - n_str_down*astra_gui%dylet - 1
+plot_area%canvas_width = (plot_area%xmax - plot_area%xmin)/plot_area%nx_canvas
+plot_area%canvas_height = (plot_area%ymin - plot_area%ymax)/plot_area%ny_canvas
 
 return
 end subroutine set_frame
@@ -468,8 +463,7 @@ subroutine set_plot(plot_mode)
 
 use const_inc, only: TSCALE, TINIT, ABC
 use outcmn_inc, only: astra_gui, plot_area, Black, MOD10, KPRI, &
-    IY0, IYM, IDX, IDT, scale_bnd, &
-    canv_hei, canv_wid, pixel_ymid, meter2pixel
+    IDX, IDT, scale_bnd, pixel_ymid, meter2pixel
 use dbl2char, only: fmt_xf
 use char_manip, only: len_trim_tab
 
@@ -486,11 +480,9 @@ character(len=80) :: COMMENT
 
 data LENG/3/ JN0/0/
 
-! IY0, IYM     - upper & lower grafic boundary
-! canv_wid, canv_hei     - X & Y window dimension
-! IDX, DY      - X & Y distance (in points) between X & Y axis labels
-! IDT       - distance (in labels) between longer labels in modes 6&8
-! LENG        - label length
+! IDX, DY  - X & Y distance (in points) between X & Y axis labels
+! IDT      - distance (in labels) between longer labels in modes 6&8
+! LENG     - label length
 
 if (plot_mode <= 0) return
 
@@ -516,24 +508,24 @@ endif
 call colovm(Black)
 
 ! Skipping from a subplot to the next along x-axis
-do JJ=plot_area%xmin, plot_area%xmax, canv_wid
+do JJ=plot_area%xmin, plot_area%xmax, plot_area%canvas_width
     JX = MIN0(plot_area%xmax, JJ)
     XP = MIN(plot_area%xmax , JX + LENG)
     XM = MAX(plot_area%xmin  , JX - LENG)
-    call drawvm(0, JX, IY0, JX, IYM)
+    call drawvm(0, JX, plot_area%ymax, JX, plot_area%ymin)
 ! Y-line labels
     if (KPRI >= 1 .and. KPRI <= 2) then
         write(COMMENT, '(A)') "Y-line labels"
         j = len_trim_tab(COMMENT)
         call pscom(COMMENT, j)
     endif
-    DY = (IYM - IY0)/20.
-    YY = dble(IYM)
+    DY = (plot_area%ymin - plot_area%ymax)/20.
+    YY = dble(plot_area%ymin)
     do
         JY = YY
         if (plot_mode /= 8) call drawvm(0, XM, JY, XP, JY)
         YY = YY - DY
-        if (sign(1.d0, DY)*(YY - dble(IY0)) < 0.d0) EXIT
+        if (sign(1.d0, DY)*(YY - dble(plot_area%ymax)) < 0.d0) EXIT
     enddo
 enddo
 
@@ -544,12 +536,12 @@ if (KPRI >= 1 .and. KPRI <= 2) then
     call pscom(COMMENT, j)
 endif
 
-do JY=IYM, IY0, -canv_hei
-    YM = MAX(IY0, JY - LENG)
+do JY=plot_area%ymin, plot_area%ymax, -plot_area%canvas_height
+    YM = MAX(plot_area%ymax, JY - LENG)
     if (plot_mode == 4 .or. plot_mode == 5 .or. plot_mode == 6) then
         YP = JY
     else
-        YP = MIN0(IYM, JY + LENG)
+        YP = MIN0(plot_area%ymin, JY + LENG)
     endif
     call drawvm(0, plot_area%xmin, JY, plot_area%xmax, JY)
 ! X-line labels
@@ -573,17 +565,17 @@ do JY=IYM, IY0, -canv_hei
         else
             LYM = YM
         endif
-        if (LYM > IY0 + LENG)  call drawvm(0, JX, LYM, JX, YP)
+        if (LYM > plot_area%ymax + LENG)  call drawvm(0, JX, LYM, JX, YP)
     enddo
 enddo
 
 if (plot_mode == 8) then
-    JY = (IY0 + IYM)/2
+    JY = (plot_area%ymax + plot_area%ymin)/2
     do j=0, 10
         jj = JY + IDX*j
-        if (jj < IYM) call drawvm(0, XM, JJ, XP, JJ)
+        if (jj < plot_area%ymin) call drawvm(0, XM, JJ, XP, JJ)
         jj = JY - IDX*j
-        if (jj > IY0) call drawvm(0, XM, JJ, XP, JJ)
+        if (jj > plot_area%ymax) call drawvm(0, XM, JJ, XP, JJ)
     enddo
 endif
 
@@ -615,7 +607,7 @@ if (MOD10 == 8) then
     scale_bnd = nint(20.*ABC)/10.
     scale_fac = dble(plot_area%height)/350.
     IDX = IDX*scale_fac
-    JJ = IYM + astra_gui%dylet + 2
+    JJ = plot_area%ymin + astra_gui%dylet + 2
     call colovm(Black)
     do J=1, 5
         JX = IDX*IDT*J - 24
@@ -626,7 +618,7 @@ if (MOD10 == 8) then
     enddo
 ! vertical axis labels
     do J=-1, 1
-        JX = (IYM + IY0 + astra_gui%dylet)/2 + IDT*IDX*J - 0.5*astra_gui%dylet
+        JX = (plot_area%ymin + plot_area%ymax + astra_gui%dylet)/2 + IDT*IDX*J - 0.5*astra_gui%dylet
         YY = -J*scale_bnd
         XF4 = fmt_xf(YY, 4)
         call textvm(plot_area%xmax + 2, JX, XF4, 5)
@@ -639,7 +631,7 @@ if (KPRI >= 1 .and. KPRI <= 2) then
      call pscom(COMMENT, j)
 endif
 
-pixel_ymid  = 0.5*(IY0 + IYM)
+pixel_ymid  = 0.5*(plot_area%ymax + plot_area%ymin)
 meter2pixel = dble(IDX*IDT)/scale_bnd
 
 return
@@ -695,19 +687,13 @@ end subroutine NEGA
 
 !---------------------------------------------------------------------
 subroutine down_label(jt, ITIMES, TOUT)
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 ! Time dependences for radial output
 ! Curve to digit conversion
 !  Input:  jt defines the current time
 !
-!    if mod10 != 6 or call from run then jt = LTOUT  
-!
-! Data used from outcmn.inc
-! double precision TOUT(1, 1)
-! integer LTOUT, frame_hei, DXLET, DYLET, MOD10, active_tab(*), NTOUT
-! integer NWIND3(*)
-! character*4 NAMET(*)
-!----------------------------------------------------------------------|
+! if mod10 != 6 or call from run then jt = LTOUT
+!---------------------------------------------------------------------
 
 use parameter_inc, only: NRW
 use outcmn_inc, only: astra_gui, plot_area, LTOUT, MOD10, NTOUT, &

@@ -992,7 +992,7 @@ end subroutine A2EMEQ
 subroutine A2GSSOLVER(equil_solver)
 
 use parameter_inc, only: NRD
-use outcmn_inc, only: TASK, DXLET, CCOIL, VCOIL, NBNT
+use outcmn_inc, only: astra_gui, astra_gui_ref, TASK, CCOIL, VCOIL, NBNT
 use const_inc, only: NEQUIL, MEQUIL, NBND, IPART, IPCTRL, TAU, NA, NA1, NAB, NCNB, &
     RTOR, BTOR, IPL, GP, GP2, HRO, ROC, ABC, &
     VOLUME, SHIFT, ELONG, UPDWN, TRIAN, &
@@ -1035,7 +1035,7 @@ jstepp = 10
 
 if (jnstep == 0 .and. TASK(1:3) /= 'BGD') then
     call colovm(14) ! Iteration # in blue
-    call textvm(62*DXLET, 2, "equil iterations", 17)
+    call textvm(astra_gui%width-18*astra_gui_ref%dxlet, 2, "equil iterations", 17)
     call redraw(0)
 endif
 

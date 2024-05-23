@@ -39,9 +39,10 @@ use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, XLINE1, &
    NA, NB1, NA1, NAB, NUF, LEQ, NBND, TIME, TAU, TINIT, TSCALE, &
    TSTART, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
    BTOR, IPL, CONSTF, DEVAR, DELOUT, XFLAG
-use outcmn_inc, only: Black, Blue, WarningColor, resizeGraph, &
+use outcmn_inc, only: astra_gui, plot_area, resizeGraph, &
+    Black, Blue, WarningColor, &
     active_tab, curves_per_frame, coltab, null_ch, &
-    frame_hei, DXLET, DYLET, MOD10, LTOUT, NARRX, IPOUT, MODEY, Xwin_height, &
+    MOD10, LTOUT, NARRX, IPOUT, MODEY, &
     NWINDX, NWIND1, NWIND3, NWIND4, NWIND7, &
     NROUT, NTOUT, NXOUT, NSBR, NGR, NST, &
     NAMER, NAMET, NAMEX, SCALER, SCALET, ROUT, OSHIFR, OSHIFT, &
@@ -49,7 +50,7 @@ use outcmn_inc, only: Black, Blue, WarningColor, resizeGraph, &
     CFNAME, PRNAME, SRNAME, DTNAME, &
     runid, TASK, VERSION, AVERS, ARLEAS, AEDIT, &
     NCFNAM, NPRNAM, NCONST, NDTNAM, NSDELOUT, &
-    jbeg_arrx, GRAP, GRAL, IFDFVX, TIM7, NAM7, LRJJ, KPRI, ICVMX
+    jbeg_arrx, GRAP, GRAL, IFDFVX, TIM7, NAM7, KPRI, ICVMX
 use expdat, only: raw_profile_map, DATARR
 use timeoutput_inc, only: NTIMES, TTOUT, TPOUT, TOUT
 use dbl2char, only: fmt6
@@ -147,7 +148,7 @@ endif
 if (IFKL == 259) then ! Call once after STEPIN is done
     write(STRI, '(15x)')  ! Erase iteration number
     call colovm(Black)
-    call textvm(64*DXLET, DYLET + 1, STRI, 15)
+    call textvm(64*astra_gui%dxlet, astra_gui%dylet + 1, STRI, 15)
     return
 endif
 
@@ -162,7 +163,7 @@ if (IFKL > 0 .and. IFKL < 256) then
 elseif (IFKL == 256)   then
     write(STRI, '(a, i3, 1x)') "Iteration #", ITREQ
     call colovm(Blue) ! Iteration
-    call textvm(64*DXLET, DYLET+1, STRI, 15)
+    call textvm(64*astra_gui%dxlet, astra_gui%dylet+1, STRI, 15)
     TROUT = TIME
     call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
 endif
@@ -622,12 +623,12 @@ CASE(76) ! 'L'
 
     do
         if (j2 < 0) EXIT
-        do J1=1, int(1.333*frame_hei/DYLET) - 1
+        do J1=1, int(1.333*plot_area%height/astra_gui%dylet) - 1
             if (j2 >= 0) then
                 read(1, '(1A80)', iostat=ios) STR
                 if (ios < 0) j2 = -1
             endif
-            NNN = (J1 - 1)*DYLET + 1
+            NNN = (J1 - 1)*astra_gui%dylet + 1
             if (j2 < 0) then
                 STRB = repeat(' ', 35)
                 write(*, '(1X, A)') TRIM(STRB)
@@ -792,7 +793,7 @@ CASE(71, 81) ! 71:'G'=portrait, 81:'Q'=landscape
         if (IRET == 1) then
             STRI = '>>>  Can not open file: ' // TRIM(PSNAME)
             call colovm(WarningColor)
-            call textvm(0, LRJJ, STRI, 24+LEN_TRIM(PSNAME))
+            call textvm(0, astra_gui%yMessage, STRI, 24+LEN_TRIM(PSNAME))
         endif
         KEY = 0
     endif
@@ -917,7 +918,8 @@ subroutine re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
 ! Corresponds to block from statement 201
 
 use parameter_inc, only: NRD
-use outcmn_inc, only: KPRI, MOD10, TASK, Xwin_height, RUNID, WarningColor, null_ch, LRJJ, ICVMX, resizeGraph
+use outcmn_inc, only: astra_gui, KPRI, MOD10, TASK, RUNID, &
+    WarningColor, null_ch, ICVMX, resizeGraph
 use timeoutput_inc, only: NTIMES, TOUT, TTOUT
 use const_inc, only: XOUT, TIME, TAU, NA
 use status_inc, only: MU
@@ -955,7 +957,7 @@ call set_plot(IM)
 
 j = XOUT + 0.49
 call TaskMenu(j)
-call textbf(0, Xwin_height - int(104.*resizeGraph), RUNID, 80) ! Task ID
+call textbf(0, astra_gui%Height - int(104.*resizeGraph), RUNID, 80) ! Task ID
 call RADOUT
 call TIMOUT
 
@@ -975,7 +977,7 @@ if (KPRI == 1 .or. KPRI == 2) then
     call colovm(WarningColor)
     if (KPRI == 1) call const2ps
     STRI = 'The figure is stored in the file: ' // TRIM(PSNAME)
-    call textvm(10, LRJJ, TRIM(STRI), LEN_TRIM(STRI))
+    call textvm(10, astra_gui%yMessage, TRIM(STRI), LEN_TRIM(STRI))
     call PSCLOSE
     KPRI = 0
 endif
@@ -987,9 +989,9 @@ end subroutine re_draw
 subroutine SMODE5(MARK, PRMARK, NAMEP, ITIMES)
 
 use parameter_inc, only: NRD, NRW
-use outcmn_inc, only: frame_hei, frame_wid, IYM, IY0, NROUT, ICVMX, SCALER, &
-    ROUT, rev_file, NXOUT, NGR, NAMER, NWIND4, active_tab, canv_wid, canv_hei, OSHIFR, &
-    DXLET, DYLET, MOD10, GRAL, GRAP, MODEY, KPRI, null_ch, Black, Red
+use outcmn_inc, only: astra_gui, plot_area, NROUT, ICVMX, SCALER, &
+    ROUT, rev_file, NXOUT, NGR, NAMER, NWIND4, active_tab, OSHIFR, &
+    MOD10, GRAL, GRAP, MODEY, KPRI, null_ch, Black, Red
 use const_inc, only: AB, NAB
 use dbl2char, only: fmt4
 use char_manip, only: len_trim_tab
@@ -1020,10 +1022,10 @@ character(len=80) :: STRI
 
 call markloc('SMODE5', debug_lev=2*debug)
 
-IYMN = frame_hei - IYM
-ymin = dble(frame_hei - IYM)
-ymax = dble(frame_hei - IY0)
-half_wid = frame_wid/2
+IYMN = plot_area%height - plot_area%ymin
+ymin = dble(plot_area%height - plot_area%ymin)
+ymax = dble(plot_area%height - plot_area%ymax)
+half_wid = plot_area%width/2
 
 !-------------------------------------------------------
 ! Mode 4 & 5:
@@ -1076,10 +1078,10 @@ read_loop: do
         read(3, ERR=38) SCL, DOWN, (INTY(j), j=1, JAB)
         if(NAMER(jj) == '    ' .or. PRMARK(JTIM) < 0) CYCLE
         NP = NWIND4(jj) - 2*active_tab(MOD10)
-        JX = (NP - 1)*canv_wid
+        JX = (NP - 1)*plot_area%canvas_width
         if (NP /= 1 .and. NP /= 2) CYCLE
         DOWN = DOWN + OSHIFR(jj)
-        jnl = DYLET + FSHIFT
+        jnl = astra_gui%dylet + FSHIFT
         do IS=1, 5
             jk(IS) = 0
         enddo
@@ -1087,17 +1089,17 @@ read_loop: do
         ST(1:4) = fmt4(SC(jj))
         ST(5: 9) = NAMER(jj)
         call colovm(Black)
-        call textvm((NP - 1)*canv_wid, jnl, ST, 9)
+        call textvm((NP - 1)*plot_area%canvas_width, jnl, ST, 9)
         YS = OSHIFR(jj)
         if (YS < 0) then
             YS = -YS
             CHAR4 = fmt4(YS)
             ST = '-' // CHAR4
-            call textvm((NP - 1)*canv_wid + 4*DXLET, jnl + DYLET + 2, ST, 5)
+            call textvm((NP - 1)*plot_area%canvas_width + 4*astra_gui%dxlet, jnl + astra_gui%dylet + 2, ST, 5)
         else
             CHAR4 = fmt4(YS)
             ST = '+' // CHAR4
-            call textvm((NP - 1)*canv_wid + 4*DXLET, jnl + DYLET + 2, ST, 5)
+            call textvm((NP - 1)*plot_area%canvas_width + 4*astra_gui%dxlet, jnl + astra_gui%dylet + 2, ST, 5)
         endif
 
         if (MOD10 == 4) then
@@ -1108,7 +1110,7 @@ read_loop: do
             if (YL >= YR) YL = 0.d0
             if (YL < YR .and. (YL > 0.001 .or. YR < 0.999)) then
                 plot_arr(1) = NP + half_wid*YL
-                plot_arr(2) = frame_hei - IYMN
+                plot_arr(2) = plot_area%height - IYMN
                 plot_arr(3) = NP + half_wid*YR
                 call colovm(Red)
                 call drawvm(0, plot_arr(1), plot_arr(2)    , plot_arr(3), plot_arr(2))
@@ -1127,19 +1129,19 @@ read_loop: do
                         YQ2 = DOWN + (32768 + INTY(j))  *SCL/65535.
                         YA = YQ2 + (YQ1 - YQ2)*(YL - YX)/(YA - YX)
                         YROUT = min(max(YA/SC(jj), -7.d0), 7.d0)
-                        yloc = canv_hei*YROUT + IYMN
+                        yloc = plot_area%canvas_height*YROUT + IYMN
                         if (MODEY == -1) then
-                            yloc = yloc + dble(canv_hei)
+                            yloc = yloc + dble(plot_area%canvas_height)
                         endif
-                        yplot = frame_hei - min(max(yloc, ymin), ymax)
+                        yplot = plot_area%height - min(max(yloc, ymin), ymax)
                         jxout = jxout + 1
                     endif
                     xplot(jxout) = dble(JX) + dble(half_wid)*(YX - YL)/(YR - YL) + 1.
                     YROUT = (DOWN + (32768 + INTY(j))*SCL/65535.)/SC(jj)
                     YROUT = min(max(YROUT, -7.d0), 7.d0)
-                    yloc = canv_hei*YROUT + IYMN
-                    if (MODEY == -1) yloc = yloc + canv_hei
-                    yplot(jxout) = frame_hei - min(max(yloc, ymin), ymax)
+                    yloc = plot_area%canvas_height*YROUT + IYMN
+                    if (MODEY == -1) yloc = yloc + plot_area%canvas_height
+                    yplot(jxout) = plot_area%height - min(max(yloc, ymin), ymax)
                 endif
 
                 if (YA <= YR .and. YX > YR) then ! right edge interpolation
@@ -1149,9 +1151,9 @@ read_loop: do
                      YQ2 = DOWN + (32768 + INTY(j))  *SCL/65535.
                      YA = YQ2 + (YQ1 - YQ2)*(YR - YX)/(YA - YX)
                      YROUT = min(max(YA/SC(jj), -7.d0), 7.d0)
-                     yloc = canv_hei*YROUT + IYMN
-                     if (MODEY == -1) yloc = yloc + canv_hei
-                     yplot(jxout) = frame_hei - min(max(yloc, ymin), ymax)
+                     yloc = plot_area%canvas_height*YROUT + IYMN
+                     if (MODEY == -1) yloc = yloc + plot_area%canvas_height
+                     yplot(jxout) = plot_area%height - min(max(yloc, ymin), ymax)
                 endif
                 YA = YX
             enddo
@@ -1164,11 +1166,11 @@ read_loop: do
             do j=1, JAB
                 YROUT = (DOWN + (32768 + INTY(j))*SCL/65535.)/SC(jj)
                 YROUT = min(max(YROUT, -7.d0), 7.d0)
-                yloc = canv_hei*YROUT + IYMN
+                yloc = plot_area%canvas_height*YROUT + IYMN
                 if (MODEY == -1) then
-                   yloc = yloc + canv_hei
+                   yloc = yloc + plot_area%canvas_height
                 endif
-                yplot(j) = frame_hei - min(max(yloc, ymin), ymax)
+                yplot(j) = plot_area%height - min(max(yloc, ymin), ymax)
                 yplot(JAB+j) = yplot(j)
             enddo
             do j=1, JAB
@@ -1198,7 +1200,7 @@ read_loop: do
         call colovm(jc)
         call plot_curve(NP1, STYL, xplot, yplot)
         if (PRMARK(JTIM) /= 0) then
-            JPOS = 3*DXLET + PRMARK(JTIM)*canv_wid/6.5 + canv_wid*(NP - 1)
+            JPOS = 3*astra_gui%dxlet + PRMARK(JTIM)*plot_area%canvas_width/6.5 + plot_area%canvas_width*(NP - 1)
             axis_label(2: 5) = NAMEP(JTIM)
             if (STYL >= 7 .and. STYL <= 12) then
                 axis_label(1: 1) = char(symbols(STYL - 6))
