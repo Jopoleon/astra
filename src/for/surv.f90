@@ -84,7 +84,7 @@ end function SCALA
 subroutine CMARK(xpos_in, ypos_in, prof_yscale, yshift, prof_name, STYL, jplot_parity)
 ! Mark variable/scale in 1 & 2 modes
 
-use outcmn_inc, only: frame_hei, canv_wid
+use outcmn_inc, only: canv_wid
 use dbl2char, only: fmt4
 
 implicit none
@@ -93,26 +93,28 @@ integer, intent(in) :: STYL, xpos_in, ypos_in, jplot_parity
 double precision, intent(in) :: prof_yscale, yshift
 character(len=4), intent(in) :: prof_name
 
-integer :: POINT(2), xpos, ypos
-character(len=10) :: name_scale_label
-character(len=4 ) :: F4
-character(len=5 ) :: F5
+integer :: POINT(2), xpos, ypos, str_len, str_pixels
+character(len=15) :: name_scale_label
 
-xpos = xpos_in + jplot_parity*(canv_wid - 80)
 ypos = ypos_in
 
+name_scale_label(:)  = ' '
 name_scale_label(1: 4) = fmt4(prof_yscale)
-name_scale_label(5: 5)  = ' '
 name_scale_label(6: 10) = prof_name
 if (yshift /= 0) then
-    F4 = fmt4(abs(yshift))
-    if (yshift < 0) F5 = '-' // F4
-    if (yshift > 0) F5 = '+' // F4
-    call textvm(xpos_in + 85 + jplot_parity*(canv_wid - 190), ypos, F5, 5) ! Note plot y-shift
+    if (yshift < 0) then
+        name_scale_label(11: 11) = '-'
+    else
+        name_scale_label(11: 11) = '+'
+    endif
+    name_scale_label(12: 15) = fmt4(abs(yshift))  
 endif
-call textvm(xpos, ypos, name_scale_label, 10)
+str_len = LEN_TRIM(name_scale_label)
+str_pixels = 8*str_len
+xpos = xpos_in + 2 + jplot_parity*(canv_wid - str_pixels - 4)
+call textvm(xpos, ypos, TRIM(name_scale_label), str_len)
 if (STYL > 0) then ! If clicking 'Style' in ASTRA graphic window
-    POINT(1) = xpos_in + 95 + jplot_parity*(canv_wid - 195)
+    POINT(1) = xpos_in + str_pixels + 8 + jplot_parity*(canv_wid - 2*str_pixels - 16)
     POINT(2) = ypos - 5
     call NMARK(POINT, STYL)
 endif
@@ -223,7 +225,6 @@ if (STYL < 0) then  ! Draw dashed curves
         return
     endif
 else if (STYL > 0) then
-    NM = NP/5
     NM = max(10, NP/5)
     LE = NM/5*STYL    ! 1st marker position
     if (LE >= NM+2) LE = LE - NM
@@ -280,8 +281,8 @@ data DY/ &
 
 IST = max(1, min(STYL, 7))
 do J=1, sym_size(IST)
-    xsym(J) = POINT(1) + resizeGraph*dx(J, IST)
-    ysym(J) = POINT(2) + resizeGraph*dy(J, IST)
+    xsym(J) = POINT(1) + NINT(resizeGraph*dx(J, IST))
+    ysym(J) = POINT(2) + NINT(resizeGraph*dy(J, IST))
 enddo
 call drawcurve(0, sym_size(IST), xsym, ysym)
 
@@ -823,34 +824,3 @@ RUNID = "ASTRA " // vers // " -- " // datetime // ' -- Model: ' // &
 
 return
 end subroutine get_runid
-
-!---------------------------------------------------------------------
-subroutine getnames_(awd_path, equ_name, exp_name)
-
-character(len=*), intent(out) :: awd_path, equ_name, exp_name
-
-call getnames(awd_path, equ_name, exp_name)
-
-return
-end subroutine getnames_
-
-!---------------------------------------------------------------------
-subroutine getnames(awd_path, equ_name, exp_name)
-!---------------------------------------------------------------------
-! The subroutine can be called from C function, returns equ_file, exp_file
-! G.V.Pereverzev 16.02.2004
-!---------------------------------------------------------------------
-
-use outcmn_inc, only: awd, equ_file, exp_file, null_ch
-
-implicit none
-
-character(len=*), intent(out) :: awd_path, equ_name, exp_name
-
-awd_path = TRIM(awd)      // null_ch
-equ_name = TRIM(equ_file) // null_ch
-exp_name = TRIM(exp_file) // null_ch
-write(6, *) 'getnames', TRIM(equ_name)
-
-return
-end subroutine getnames

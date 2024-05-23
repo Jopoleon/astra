@@ -6,10 +6,9 @@ integer, parameter, private :: DP=kind(1.0D0)
 type type_coreprofile  !    Structure for core plasma profile; Time-dependent
     real(DP),pointer :: value(:) => null()     ! /value - Signal value; Time-dependent; Vector (nrho)
     character(len=132), dimension(:), pointer ::source => null()       ! /source - Source of the profile (any comment describing the origin of the profile : code, path to diagnostic s
-endtype
+endtype type_coreprofile
 
-
-type type_profiles_1d  !    
+type type_profiles_1d
     real(DP),pointer :: rho_tor(:) => null()     ! /profiles_1d/rho_tor - Toroidal flux coordinate [m], to be used by the ETS and in many CPOs (coreprof, ...). Defined as sqrt(phi/pi/B0), where B0 = equil
     real(DP),pointer :: phi(:) => null()     ! /profiles_1d/phi - toroidal flux [Wb]; Time-dependent; Vector (npsi)
     real(DP),pointer :: psi(:) => null()     ! /profiles_1d/psi - Poloidal flux [Wb], without 1/2pi and such that Bp=|grad psi| /R/2/pi. Time-dependent; Vector (npsi)
@@ -61,14 +60,14 @@ type type_profiles_1d  !
     type (type_coreprofile) :: sigmapar  ! /coreprof/profiles1d/sigmapar - Parallel conductivity [ohm^-1.m^-1].  Time-dependent. 
     type (type_coreprofile) :: te  ! /coreprof/te - Electron temperature [eV]; (source term in [W.m^-3]). Time-dependent;
 
-endtype
+endtype type_profiles_1d
 
 type type_b0r0  !    Characteristics of the vacuum toroidal field, redundant with the toroidfield CPO, normalisation used by the ETS
     real(DP) :: r0=-9.0D40       ! /r0 - Characteristic major radius of the device (used in publications, usually middle of the vessel at the equatorial midplane) [m]. Sca
     real(DP) :: b0=-9.0D40       ! /b0 - Vacuum field at r0 [T]; Positive sign means anti-clockwise when viewed from above. Scalar. Time-dependent. 
-endtype
+endtype type_b0r0
 
-type type_global_param  !    
+type type_global_param
     type (type_b0r0) :: toroid_field  ! /global_param/toroid_field - Characteristics of the vacuum toroidal field, redundant with the toroidfield CPO, to be used by the ETS
     real(DP) :: i_plasma=-9.0D40       ! /global_param/i_plasma - total toroidal plasma current [A]; Positive sign means anti-clockwise when viewed from above. Time-dependent; Scalar
     real(DP) :: Zcurr=-9.0D40       ! /global_param/Zcurr - current centroid, time dep, scalar [m]
@@ -82,7 +81,7 @@ type type_global_param  !
     real(DP) :: betpol=-9.0D40       ! /global_param/betpol - beta poloidal
     real(DP) :: wkin=-9.0D40       ! /global_param/wkin - pressure energy
     real(DP) :: bpkin=-9.0D40       ! /global_param/bpkin - poloidal energy
-endtype
+endtype type_global_param
 
 type type_rz2D  !    Structure for list of R,Z positions (2D)
     real(DP),pointer :: r(:,:) => null()     ! /r - Major radius [m]
@@ -91,9 +90,9 @@ type type_rz2D  !    Structure for list of R,Z positions (2D)
     real(DP),pointer :: rmin(:,:) => null()     ! /r minor local [m]
     real(DP),pointer :: psirz(:,:) => null()     ! /r minor local [m]
 !  real(DP),pointer :: Epol_eta(:,:) => null()     ! /poloidal electric field PS over eta [V/m * sigma]
-endtype
+endtype type_rz2D
 
-type type_coord_sys  !    
+type type_coord_sys
      type (type_rz2D) :: position  ! /coord_sys/position - R and Z position of grid points; Time-dependent; Matrix (ndim1, ndim2)
      
      real(DP),pointer :: gradvcell(:,:) => null() ! /coord_sys/gradvcell - |grad_V| [m^2] in cells; Time-dependent; Vector (ndim1-1,ndim2-1)
@@ -103,7 +102,7 @@ type type_coord_sys  !
      real(DP),pointer :: darea(:,:) => null() ! /coord_sys/darea - dA [m^2] in cells; Time-dependent; Vector (ndim1-1,ndim2-1)
      real(DP),pointer :: jphi(:,:) => null() ! /coord_sys/jphi - j toroidal [MA/m^2] in cells; Time-dependent; Vector (ndim1-1,ndim2-1)
       
-endtype
+endtype type_coord_sys
 
 type type_rz1D_npoints  !    Structure for list of R,Z positions (1D)
     real(DP),pointer :: r(:) => null()     ! /r - Major radius [m]. Vector(max_npoints). Time-dependent
@@ -119,19 +118,19 @@ type type_rect_npoints  !    Structure for list of R,Z positions (1D)
     integer :: npointsz=-999999999        ! /npoints - Number of meaningful points in the above vectors at a given time slice. Time-dependent
     double precision :: psi_axis=0.       !value of psi on axis
     double precision :: psi_boundary=0.   !value of psi on plasma boundary
-endtype
+endtype type_rect_npoints
 
-type type_eqgeometry  !    
+type type_eqgeometry
     type (type_rz1D_npoints) :: boundary  ! /eqgeometry/boundary - RZ description of the plasma boundary; Time-dependent;
     type (type_rect_npoints) :: rectgrid  ! /eqgeometry/rectgrid - RZ description of the equilibrium; Time-dependent;
-endtype
+endtype type_eqgeometry
 
-type type_equilibrium  !    
+type type_equilibrium
     type (type_profiles_1d) :: profiles_1d  ! /equilibrium/profiles_1d
     type (type_eqgeometry) :: eqgeometry  ! /equilibrium/eqgeometry - 
     type (type_coord_sys) :: coord_sys  ! /equilibrium/coord_sys
     type (type_global_param) :: global_param  ! /equilibrium/global_param - 
     type (type_coreprofile) :: coreprofile  ! /equilibrium/global_param - 
-endtype
+endtype type_equilibrium
 
 end module

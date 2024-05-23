@@ -5,6 +5,12 @@ use parameter_inc, only: NRD, NRDX, NRW, NTARR, NARRX, NSBMX, NCNBM, NCNBTM, &
 
 implicit none
 
+type astra_xwindow
+    integer :: Width, Height, Xpos, Ypos, dxlet, dylet, LineWidth, yMessage, plot_frame_width, plot_frame_height
+    double precision :: resizeGraph
+    character(len=128) :: title='Per aspera ad ASTRA'//char(0)
+endtype astra_xwindow
+
 ! Colors, array AstraColorNum in Astra2XW.c
 integer, parameter :: White=0, Black=1, Red=2, Blue=3, Green=5, &
      WarningColor=30, EraseColor=31, Magenta=14, Pink=13, ICVMX=32
@@ -19,8 +25,8 @@ integer :: &
 integer :: &
     MODEY, frame_wid, frame_hei, DXLET, DYLET, IY0, IYM, canv_hei, canv_wid, &
     IDX, IDT, KPRI, NST, LRJJ, &
-    Xwin_xpos, Xwin_ypos, Xwin_width, Xwin_height, &
-    AVERS, ARLEAS, AEDIT, NBFLAG, SHOTNB, LineWidth
+    Xwin_width, Xwin_height, &
+    AVERS, ARLEAS, AEDIT, NBFLAG, LineWidth
 integer*4 :: COLTAB(64) ! i*4 needed for compatibility with C
 integer, dimension(plot_modes) :: active_tab, curves_per_frame
 integer :: nx_canvas, ny_canvas
@@ -40,6 +46,7 @@ character(len=6), dimension(NRW) :: NAMEX
 character(len=6), dimension(NARRX) :: EXARNM
 character(len=6) :: DTNAME(NSDELOUT+4*NSBMX), NAM7(4)
 character(132) :: nml_file, exp_file, equ_file, rev_file, TASKID, wall_gc_file, NBFILE, MSFILE, VERSION, RUNID, AWD, WHOME, FILEX
+type(astra_xwindow) :: astra_gui_ref, astra_gui
 
 contains
 
@@ -62,22 +69,21 @@ wall_gc_file = '***'
 NBFILE = '***'
 MSFILE = '***'
 
-! Screen parameters: default
-
-LineWidth = 1
-SHOTNB = 0
-frame_wid = 640
-frame_hei = 350
-DXLET = 8
-DYLET = 13
 IDT = 5
-Xwin_xpos   = 470
-Xwin_ypos   = 10
-Xwin_width  = 660
-Xwin_height = 550
-LRJJ = 426 ! y-position of text messages in ASTRA's graphic frame
-!ICVMX = 32 parameter
-! TEst
+
+! Screen parameters: default (-resize 1)
+
+astra_gui_ref%Width  = 660
+astra_gui_ref%Height = 550
+astra_gui_ref%Xpos   = 470
+astra_gui_ref%Ypos   = 10
+astra_gui_ref%dxlet  = 8
+astra_gui_ref%dylet  = 13
+astra_gui_ref%LineWidth         = 1
+astra_gui_ref%yMessage          = 426
+astra_gui_ref%plot_frame_width  = 640
+astra_gui_ref%plot_frame_height = 350
+astra_gui_ref%resizeGraph = 1.d0
 
 ! Astra colors: 
 !   #0 - background, ##1-7 - plots 1-7
@@ -128,13 +134,13 @@ NWIND1 = (/ (j, j=1, NRW) /)
 NWIND3 = (/ (j, j=1, NRW) /)
 NWIND7 = (/ (j, j=1, NRW) /)
 do j=1, 4
-   NWIND4(j) = 4*j-3
-   NWIND4(j+4)  = NWIND4(j) + 2
-   NWIND4(j+8)  = NWIND4(j) + 1
-   NWIND4(j+12) = NWIND4(j) + 3
+    NWIND4(j) = 4*j-3
+    NWIND4(j+4)  = NWIND4(j) + 2
+    NWIND4(j+8)  = NWIND4(j) + 1
+    NWIND4(j+12) = NWIND4(j) + 3
 enddo
 do j=17, NRW
-  NWIND4(j) = NWIND4(j-16) + 16
+    NWIND4(j) = NWIND4(j-16) + 16
 enddo
 curves_per_frame = (/ 16, 8, 8, 2, 2, 8, 4, 0, 0 /)
 nx_canvas = 0

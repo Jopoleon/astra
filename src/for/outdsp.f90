@@ -1,7 +1,7 @@
 subroutine initMainWindow
   
-use outcmn_inc, only: &
-    Xwin_height, Xwin_width, Xwin_xpos, Xwin_ypos, &
+use outcmn_inc, only: astra_gui_ref, astra_gui, &
+    Xwin_height, Xwin_width, &
     DXLET, DYLET, LRJJ, frame_wid, frame_hei, &
     RUNID, NST, MOD10, NTOUT, LineWidth, resizeGraph, null_ch
 use const_inc, only: XOUT, NA
@@ -9,26 +9,26 @@ use status_inc, only: MU
 
 implicit none
 
-integer :: j, jj, IM, XSC0, XSC
+integer :: j, jj, IM, XSC0, XSC, Xwin_xpos, Xwin_ypos
 double precision :: CHORDN
-character(len=132) :: Xwin_title
 double precision, external :: LINEAV
 
 call get_runid()
 ! Resize
 jj = max(0, (15 + NTOUT - 64)/16)
-Xwin_height = Xwin_height + 2*jj*(DYLET + 2)
-LineWidth = int(0.85*resizeGraph) + 1
-Xwin_title = 'Per aspera ad ASTRA' // null_ch
-frame_wid = resizeGraph*frame_wid
-frame_hei = resizeGraph*frame_hei
-DXLET = resizeGraph*DXLET
-DYLET = resizeGraph*DYLET
-LRJJ  = resizeGraph*LRJJ
-Xwin_width  = resizeGraph*Xwin_width
+Xwin_height = astra_gui_ref%Height + 2*jj*resizeGraph*(astra_gui_ref%dylet + 2)
+LineWidth = int(0.85*resizeGraph) + astra_gui_ref%LineWidth
+frame_wid   = resizeGraph*astra_gui_ref%plot_frame_width
+frame_hei   = resizeGraph*astra_gui_ref%plot_frame_height
+DXLET       = resizeGraph*astra_gui_ref%dxlet
+DYLET       = resizeGraph*astra_gui_ref%dylet
+LRJJ        = resizeGraph*astra_gui_ref%yMessage + 135
+Xwin_width  = resizeGraph*astra_gui_ref%width
 Xwin_height = resizeGraph*Xwin_height
+Xwin_xpos  = astra_gui_ref%Xpos
+Xwin_ypos  = astra_gui_ref%Ypos
 !call resizewindow(Xwin_width, Xwin_height)
-call initvm(Xwin_xpos, Xwin_ypos, Xwin_width, Xwin_height, LineWidth, TRIM(Xwin_title), LEN_TRIM(Xwin_title)) ! Initialise graphic window
+call initvm(Xwin_xpos, Xwin_ypos, Xwin_width, Xwin_height, LineWidth, astra_gui_ref%title, LEN(astra_gui_ref%title)) ! Initialise graphic window
 IM = 1
 NST = 0
 MOD10 = 1
