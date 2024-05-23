@@ -6,10 +6,14 @@ use parameter_inc, only: NRD, NRDX, NRW, NTARR, NARRX, NSBMX, NCNBM, NCNBTM, &
 implicit none
 
 type astra_xwindow
-    integer :: Width, Height, Xpos, Ypos, dxlet, dylet, LineWidth, yMessage, plot_frame_width, plot_frame_height
+    integer :: Width, Height, Xpos, Ypos, dxlet, dylet, LineWidth, yMessage
     double precision :: resizeGraph
     character(len=128) :: title='Per aspera ad ASTRA'//char(0)
 endtype astra_xwindow
+
+type plot_frame
+    integer :: width, height, xmin, xmax, ymin, ymax, nx_canvas, ny_canvas, canvas_height, canvas_width
+endtype plot_frame
 
 ! Colors, array AstraColorNum in Astra2XW.c
 integer, parameter :: White=0, Black=1, Red=2, Blue=3, Green=5, &
@@ -29,7 +33,6 @@ integer :: &
     AVERS, ARLEAS, AEDIT, NBFLAG, LineWidth
 integer*4 :: COLTAB(64) ! i*4 needed for compatibility with C
 integer, dimension(plot_modes) :: active_tab, curves_per_frame
-integer :: nx_canvas, ny_canvas
 double precision, dimension(NRW)   :: GRAL, GRAP, OSHIFT, OSHIFR, SCALET, SCALER
 double precision, dimension(NARRX) :: TOUTX
 double precision, dimension(NCNBM) :: CCOIL, CCOILO, VCOIL
@@ -47,6 +50,7 @@ character(len=6), dimension(NARRX) :: EXARNM
 character(len=6) :: DTNAME(NSDELOUT+4*NSBMX), NAM7(4)
 character(132) :: nml_file, exp_file, equ_file, rev_file, TASKID, wall_gc_file, NBFILE, MSFILE, VERSION, RUNID, AWD, WHOME, FILEX
 type(astra_xwindow) :: astra_gui_ref, astra_gui
+type(plot_frame) :: plot_area_ref, plot_area
 
 contains
 
@@ -79,11 +83,14 @@ astra_gui_ref%Xpos   = 470
 astra_gui_ref%Ypos   = 10
 astra_gui_ref%dxlet  = 8
 astra_gui_ref%dylet  = 13
-astra_gui_ref%LineWidth         = 1
-astra_gui_ref%yMessage          = 426
-astra_gui_ref%plot_frame_width  = 640
-astra_gui_ref%plot_frame_height = 350
+astra_gui_ref%LineWidth = 1
+astra_gui_ref%yMessage  = 426
 astra_gui_ref%resizeGraph = 1.d0
+
+plot_area_ref%width  = 640
+plot_area_ref%height = 350
+plot_area_ref%nx_canvas = 0
+plot_area_ref%ny_canvas = 0
 
 ! Astra colors: 
 !   #0 - background, ##1-7 - plots 1-7
@@ -143,8 +150,6 @@ do j=17, NRW
     NWIND4(j) = NWIND4(j-16) + 16
 enddo
 curves_per_frame = (/ 16, 8, 8, 2, 2, 8, 4, 0, 0 /)
-nx_canvas = 0
-ny_canvas = 0
 
 IP1 = (/ &
   1,   3,   5,   7,   9,  11,  13,  15,   2,   4,   6,  8,   10,  12,  14,  16, &
@@ -187,19 +192,19 @@ IP31 = (/ &
 113, 114, 117, 118, 115, 116, 119, 120, 121, 122, 125, 126, 123, 124, 127, 128 /)
 
 DTNAME(1: NSDELOUT) = (/ &
-   'dRout ', 'dTout ', 'dPout ', 'Time  ', 'TAUmin', 'TAUmax', &
-   'TAUinc', 'DELvar', 'Iterex', 'NiTrEq', 'Tinit ', 'Tscale', &
-   'NA1   ', 'NUF   ', 'Xaxis ', 'Xdeflt', 'NB2EQL', 'NEQUIL', &
-   'NBND  ', 'Xflag ', 'DTeql ', 'MEQUIL', 'Tpause', 'Tend  ', &
-   'Inume1', 'Inume2', 'Inume3', 'Inume4', 'Iprot ', 'Itfbe ', &
-   'Itfbp ', 'Icircq', 'Ipctrl', 'Adcmpf', 'Flxdr ', 'Sgnip ', &
-   'Sgnbt ', 'Ifbeg ', 'Ipeql ' /)
+    'dRout ', 'dTout ', 'dPout ', 'Time  ', 'TAUmin', 'TAUmax', &
+    'TAUinc', 'DELvar', 'Iterex', 'NiTrEq', 'Tinit ', 'Tscale', &
+    'NA1   ', 'NUF   ', 'Xaxis ', 'Xdeflt', 'NB2EQL', 'NEQUIL', &
+    'NBND  ', 'Xflag ', 'DTeql ', 'MEQUIL', 'Tpause', 'Tend  ', &
+    'Inume1', 'Inume2', 'Inume3', 'Inume4', 'Iprot ', 'Itfbe ', &
+    'Itfbp ', 'Icircq', 'Ipctrl', 'Adcmpf', 'Flxdr ', 'Sgnip ', &
+    'Sgnbt ', 'Ifbeg ', 'Ipeql ' /)
 do j=1, 30
-   i = (j-1)*4 + NSDELOUT
-   write(DTNAME(i+1), '(A, i0)') 'DTeq', j
-   write(DTNAME(i+2), '(A, i0)') 'BEeq', j
-   write(DTNAME(i+3), '(A, i0)') 'ENeq', j
-   write(DTNAME(i+4), '(A, i0)') ' Keq', j
+    i = (j-1)*4 + NSDELOUT
+    write(DTNAME(i+1), '(A, i0)') 'DTeq', j
+    write(DTNAME(i+2), '(A, i0)') 'BEeq', j
+    write(DTNAME(i+3), '(A, i0)') 'ENeq', j
+    write(DTNAME(i+4), '(A, i0)') ' Keq', j
 enddo
 
 end subroutine outcmn_init

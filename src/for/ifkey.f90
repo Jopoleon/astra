@@ -67,7 +67,7 @@ integer*2, dimension(NRD) :: YWD
 integer :: POLLEVENT, OUTFIG(NRW), WAITEVENT, KIBM, KASCII, jpos
 integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
     IFLAG, INT4, IRET, NTRUN, IM, &
-    XSC0, XSC, MODEX, IX, IY, NU1, j2, J1, ios, &
+    MODEX, IX, IY, NU1, j2, J1, ios, &
     YEAR, MONTH, DAY, HOUR, MINUTE, time_arr(8)
 ! plot_arr dimension: 4*NRD(Mode 5, 8) 320(7) 2*NTIMES(Mode 6) 2*NRD(Modes 1-4)
 integer :: ITO(NTIMES, ICVMX+2)
@@ -219,7 +219,7 @@ JTOUT = JTOUT + 1
 
 if (MOD10 == 6 .or. MOD10 == 7) then
     if (JJ /= 0) then
-        call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
+        call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
         if (IFKL == KEY) return
         goto 1
     endif
@@ -428,7 +428,7 @@ CASE(78) ! 'N'
         endif
         if (J <= JJ*active_tab(MOD10)) active_tab(MOD10) = 0
     endif
-    call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
+    call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
     if (IFKL == KEY) return
 
 CASE(66) ! 'B'
@@ -445,7 +445,7 @@ CASE(66) ! 'B'
             active_tab(MOD10) = (J - 1)/JJ
         endif
     endif
-    call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
+    call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
     if (IFKL == KEY) return
 
 CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
@@ -471,10 +471,10 @@ CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
         IM = 1
         NST = 0
         if (MOD10 == 7) call NEGA(IM, NTRUN, TOUT)
-        call set_frame(IM, XSC0, XSC)
-        call set_plot(IM, XSC0, XSC)
+        call set_frame(IM)
+        call set_plot(IM)
     endif
-    call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
+    call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
     if (IFKL == KEY) return
 
 CASE(73) ! 'I'
@@ -508,11 +508,11 @@ CASE(73) ! 'I'
 CASE(46) ! '.'
     MARK = MARK + 1
     if (MARK == 2) MARK = -1
-    call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
+    call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
     if (IFKL == KEY) return
 
 CASE(82) ! 'R'
-    call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
+    call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
     if (IFKL == KEY) return
 
 CASE(85) ! 'U'
@@ -608,7 +608,7 @@ CASE(87) ! 'W'
     if (MOD10 == 4 .or. MOD10 == 5) call ASKINT(NROUT, NWIND4, NAMER)
     if (MOD10 == 6) call ASKINT(NTOUT, NWIND3, NAMET)
     if (MOD10 == 7) call ASKINT(NTOUT, NWIND7, NAMET)
-    call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
+    call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
     if (IFKL == KEY) return
 
 CASE(76) ! 'L'
@@ -677,14 +677,14 @@ CASE(88) ! 'X'
     endif
  112 format('X-axis:   ', A, 1I4)
  114 format('X-axis:   ', 1A, F5.2, 1A, 1I4)
-    call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
+    call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
     if (IFKL == KEY) return
 
 ! Test field
 CASE(74) ! 'J'
     call system("ipcs -s") ! Report active semaphore sets
     call system("ipcs -m") ! Report active shared memory segments
-    call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
+    call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
     if (IFKL == KEY) return
 
 CASE(68) ! 'D'
@@ -707,7 +707,7 @@ CASE(68) ! 'D'
     endif
     if (j /= MODEX) call xaxis(j)
     IF(TIME >= TIMEB) then
-        call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
+        call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
         if (IFKL == KEY) return
     else
         TROUT = TIME
@@ -745,7 +745,7 @@ CASE(77) ! 'M'
         call MENUTABLE(INT4, PRMARK, NAMEP, 6)
     endif
     if (MOD10 <= 7) then
-        call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
+        call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
         if (IFKL == KEY) return
     endif
 
@@ -786,7 +786,7 @@ CASE(71, 81) ! 71:'G'=portrait, 81:'Q'=landscape
     if (IRET == 0) then
         if (KEY == 71) KPRI = 1
         if (KEY == 81) KPRI = 2
-        call re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
+        call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
         if (IFKL == KEY) return
     else
         if (IRET == 1) then
@@ -913,7 +913,7 @@ call redraw(0)
 end subroutine graph_output
 
 !---------------------------------------------------------------------
-subroutine re_draw(IFKL, MARK, NTRUN, XSC0, XSC, PRMARK, PSNAME)
+subroutine re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
 ! Corresponds to block from statement 201
 
 use parameter_inc, only: NRD
@@ -928,7 +928,6 @@ implicit none
 integer, parameter :: nn80=80
 
 integer, intent(in) :: IFKL, MARK, NTRUN
-integer, intent(out) :: XSC0, XSC
 double precision, intent(in), dimension(NTIMES) :: PRMARK
 character(len=*) :: PSNAME
 
@@ -951,8 +950,8 @@ IM = 1
 NST = 0
 
 if (MOD10 == 7) call NEGA(IM, NTRUN, TOUT)
-call set_frame(IM, XSC0, XSC)
-call set_plot(IM, XSC0, XSC)
+call set_frame(IM)
+call set_plot(IM)
 
 j = XOUT + 0.49
 call TaskMenu(j)

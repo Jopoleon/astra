@@ -1,6 +1,6 @@
 subroutine initMainWindow
-  
-use outcmn_inc, only: astra_gui_ref, astra_gui, &
+
+use outcmn_inc, only: astra_gui_ref, astra_gui, plot_area_ref, plot_area, &
     Xwin_height, Xwin_width, &
     DXLET, DYLET, LRJJ, frame_wid, frame_hei, &
     RUNID, NST, MOD10, NTOUT, LineWidth, resizeGraph, null_ch
@@ -9,7 +9,7 @@ use status_inc, only: MU
 
 implicit none
 
-integer :: j, jj, IM, XSC0, XSC, Xwin_xpos, Xwin_ypos
+integer :: j, jj, IM
 double precision :: CHORDN
 double precision, external :: LINEAV
 
@@ -18,22 +18,35 @@ call get_runid()
 jj = max(0, (15 + NTOUT - 64)/16)
 Xwin_height = astra_gui_ref%Height + 2*jj*resizeGraph*(astra_gui_ref%dylet + 2)
 LineWidth = int(0.85*resizeGraph) + astra_gui_ref%LineWidth
-frame_wid   = resizeGraph*astra_gui_ref%plot_frame_width
-frame_hei   = resizeGraph*astra_gui_ref%plot_frame_height
+frame_wid   = resizeGraph*plot_area_ref%width
+frame_hei   = resizeGraph*plot_area_ref%height
 DXLET       = resizeGraph*astra_gui_ref%dxlet
 DYLET       = resizeGraph*astra_gui_ref%dylet
 LRJJ        = resizeGraph*astra_gui_ref%yMessage + 135
 Xwin_width  = resizeGraph*astra_gui_ref%width
 Xwin_height = resizeGraph*Xwin_height
-Xwin_xpos  = astra_gui_ref%Xpos
-Xwin_ypos  = astra_gui_ref%Ypos
+
+astra_gui%LineWidth = int(0.85*resizeGraph) + astra_gui_ref%LineWidth
+astra_gui%dxlet    = resizeGraph*astra_gui_ref%dxlet
+astra_gui%dylet    = resizeGraph*astra_gui_ref%dylet
+astra_gui%yMessage = resizeGraph*astra_gui_ref%yMessage + 135
+astra_gui%Width    = resizeGraph*astra_gui_ref%width
+astra_gui%Height   = resizeGraph*(astra_gui_ref%Height + 2*jj*resizeGraph*(astra_gui_ref%dylet + 2))
+astra_gui%Xpos  = astra_gui_ref%Xpos
+astra_gui%Ypos  = astra_gui_ref%Ypos
+astra_gui%title = astra_gui_ref%title
+astra_gui%resizeGraph = resizeGraph
+
+plot_area%width  = resizeGraph*plot_area_ref%width
+plot_area%height = resizeGraph*plot_area_ref%height
+
 !call resizewindow(Xwin_width, Xwin_height)
-call initvm(Xwin_xpos, Xwin_ypos, Xwin_width, Xwin_height, LineWidth, astra_gui_ref%title, LEN(astra_gui_ref%title)) ! Initialise graphic window
+call initvm(astra_gui%xpos, astra_gui%ypos, astra_gui%Width, astra_gui%Height, astra_gui%LineWidth, astra_gui%title, LEN(astra_gui%title)) ! Initialise graphic window
 IM = 1
 NST = 0
 MOD10 = 1
-call set_frame(IM, XSC0, XSC)
-call set_plot(IM, XSC0, XSC)
+call set_frame(IM)
+call set_plot(IM)
 
 j = XOUT + 0.49
 
@@ -69,7 +82,7 @@ use parameter_inc, only: NRD, NRDX, NRW
 use status_inc, only: AMETR, MU, SHIF, ELON, TRIA
 use const_inc, only: XOUT, NAB, NA1, NA1E, ABC, TINIT, TSCALE, RTOR, &
     MEQUIL, LEQ, TIME
-use outcmn_inc, only: frame_wid, frame_hei, canv_hei, canv_wid, nx_canvas, ny_canvas, &
+use outcmn_inc, only: plot_area, frame_wid, frame_hei, canv_hei, canv_wid, &
     curves_per_frame, active_tab, MOD10, NWIND1, NWIND3, NWINDX, resizeGraph, &
     IFDFAX, IY0, IYM, KPRI, DXLET, DYLET, NPTM, ICVMX, &
     NROUT, ROUT, OSHIFR, NAMER, SCALER, &
@@ -154,7 +167,7 @@ JY = 10*frame_hei
 ymin = dble(frame_hei - IYM)
 ymax = dble(frame_hei - IY0)
 
-n_canvas = nx_canvas*ny_canvas
+n_canvas = plot_area%nx_canvas*plot_area%ny_canvas
 
 SELECT CASE(MOD10)
 
@@ -177,11 +190,11 @@ CASE(1: 3)  ! Profiles
         if (NAMER(jprof) == '    ') JW = 0
         if (JW <= 0 .or. JW > curves_per_frame(MOD10)) CYCLE plot_prof
         j_canv = MOD(JW - 1, n_canvas) + 1        ! 1-8 for mode '1'
-        jx_canv = MOD(j_canv - 1, nx_canvas)      ! 0-3 for mode '1'
-        jy_canv = (j_canv - 1)/nx_canvas          ! 0-1
+        jx_canv = MOD(j_canv - 1, plot_area%nx_canvas)      ! 0-3 for mode '1'
+        jy_canv = (j_canv - 1)/plot_area%nx_canvas          ! 0-1
         jplot_in_canv = (JW - 1)/n_canvas
         jcol = jplot_in_canv + 2
-        y_shift = canv_hei * (ny_canvas - 1 - jy_canv)
+        y_shift = canv_hei * (plot_area%ny_canvas - 1 - jy_canv)
         x_shift = canv_wid*jx_canv
 
         YL = max(0.d0, ABSC(GRAL(jprof)))
@@ -204,7 +217,7 @@ CASE(1: 3)  ! Profiles
                 endif
                 r_out = min(max(ROUT(J, jprof)/SC(jprof), -7.d0), 7.d0)
                 JDSP  = 10*(canv_hei*r_out + IYMN + y_shift)
-                xplot(jxout) = dble(x_shift) + dble(frame_wid)/dble(nx_canvas)*(YX - YL)/(YR - YL)
+                xplot(jxout) = dble(x_shift) + dble(frame_wid)/dble(plot_area%nx_canvas)*(YX - YL)/(YR - YL)
                 yplot(jxout) = frame_hei - min(max(dble(canv_hei)*r_out + ymin + dble(y_shift), ymin), ymax)
             endif
             if (YA <= YR .and. YX > YR) then ! right edge interpolation
@@ -212,7 +225,7 @@ CASE(1: 3)  ! Profiles
                 YA = ROUT(J, jprof) + (ROUT(J-1, jprof) - ROUT(J, jprof))*(YR - YX)/(YA - YX)
                 r_out = min(max(YA/SC(jprof), -7.d0), 7.d0)
                 JDSP  = 10*(canv_hei*r_out + IYMN + y_shift)
-                xplot(jxout) = dble(x_shift) + dble(frame_wid)/dble(nx_canvas)
+                xplot(jxout) = dble(x_shift) + dble(frame_wid)/dble(plot_area%nx_canvas)
                 yplot(jxout) = dble(frame_hei) - min(max(dble(canv_hei)*r_out + ymin + dble(y_shift), ymin), ymax)
             endif
             YA = YX
@@ -269,10 +282,10 @@ CASE(1: 3)  ! Profiles
         JW = NWIND1(jsc) - curves_per_frame(MOD10)*active_tab(MOD10)
         if (JW <= 0 .or. JW > curves_per_frame(MOD10)) CYCLE plot_profx
         j_canv = MOD(JW - 1, n_canvas) + 1        ! 1-8 for mode '1'
-        jx_canv = MOD(j_canv - 1, nx_canvas)      ! 0-3 for mode '1'
-        jy_canv = (j_canv - 1)/nx_canvas          ! 0-1
+        jx_canv = MOD(j_canv - 1, plot_area%nx_canvas)      ! 0-3 for mode '1'
+        jy_canv = (j_canv - 1)/plot_area%nx_canvas          ! 0-1
         jcol = (JW - 1)/n_canvas + 2
-        y_shift = canv_hei * (ny_canvas - 1 - jy_canv)
+        y_shift = canv_hei * (plot_area%ny_canvas - 1 - jy_canv)
         x_shift = canv_wid*jx_canv
 
         call colovm(jcol)
@@ -304,7 +317,7 @@ CASE(1: 3)  ! Profiles
             YA = ABSC(YX)
             if (YA > 1. .or. YA < YL .or. YA > YR) CYCLE
             j1 = j1 + 1
-            PTM(1) = x_shift + frame_wid/nx_canvas*(YA-YL)/(YR-YL)
+            PTM(1) = x_shift + frame_wid/plot_area%nx_canvas*(YA-YL)/(YR-YL)
             r_out= max((DATAX(j, jn) + OSHIFR(jsc))/SC(jsc), -7.d0)
             r_out= min(r_out, 7.d0)
             JDSP = canv_hei*r_out + IYMN + y_shift
@@ -339,10 +352,10 @@ CASE(1: 3)  ! Profiles
     yq1   = ABSC(AFVAL(MU, 1.0))
     te_bc = ABSC(AMETR(max(NA1E, 1)))
     ymax = dble(IYM0) - 0.8*canv_hei
-    do j_canv=1, nx_canvas
+    do j_canv=1, plot_area%nx_canvas
         xq1 = canv_wid*(j_canv -1 + YQ1)
         xte = canv_wid*(j_canv -1 + te_bc)
-        do jy=1, ny_canvas
+        do jy=1, plot_area%ny_canvas
             ybar = (/ dble(IYM0) - (jy-2)*canv_hei, ymax - (jy-2)*canv_hei/)
             if (yq1 > 1.d-3 .and. yq1 < 0.999) then
                 xbar_old = xq1_old(j_canv)

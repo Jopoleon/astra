@@ -126,7 +126,7 @@ end subroutine CMARK
 subroutine CMARKT(xpos_in, ypos_in, sig_yscale, yshift, sig_name, STYL)
 ! Mark variable/scale in 6th (time) mode
 
-use outcmn_inc, only: DXLET
+use outcmn_inc, only: astra_gui
 use dbl2char, only: fmt4
 
 implicit none
@@ -147,10 +147,10 @@ if (yshift /= 0) then
     F4 = fmt4(abs(yshift))
     if (yshift < 0) name_shift_label(6: 10) = '-' // F4
     if (yshift > 0) name_shift_label(6: 10) = '+' // F4
-    xpos = xpos_in - DXLET
-    if (name_shift_label(1: 1) == ' ') xpos = xpos - DXLET
+    xpos = xpos_in - astra_gui%dxlet
+    if (name_shift_label(1: 1) == ' ') xpos = xpos - astra_gui%dxlet
     str_len = LEN_TRIM(name_shift_label(2: 10))
-    if (str_len <= 6) xpos = xpos + DXLET
+    if (str_len <= 6) xpos = xpos + astra_gui%dxlet
 endif
 
 call textvm(xpos, ypos, TRIM(name_shift_label), LEN_TRIM(name_shift_label))   ! type name+yshift
@@ -158,7 +158,7 @@ plot_arr(1) = xpos + 3
 plot_arr(2) = ypos - 5
 F4 = fmt4(sig_yscale)
 ypos = ypos + 15
-xpos = xpos + DXLET
+xpos = xpos + astra_gui%dxlet
 call textvm(xpos, ypos, F4, 4)   ! type scale
 if (STYL > 0) call NMARK(plot_arr, STYL)
 
