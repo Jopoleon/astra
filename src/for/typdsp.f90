@@ -179,7 +179,7 @@ implicit none
 integer, intent(in) :: ITIMES, IX, IY
 double precision, intent(in) :: TTOUT(ITIMES), TOUT(ITIMES, NRW)
 
-integer :: IM, JX, JY, JLR, j, j1, JC, JL, IX0, IXM, MODEX, &
+integer :: IM, JX, JY, JLR, j, j1, JC, JL, MODEX, &
     GETIME, JW, JN0, JN2
 double precision :: DX, DY, YX, YX1, YY, YY1, YA, YA1, YD, YE, YT, &
     YRHO, YFP, YFPC, RZ2A
@@ -194,7 +194,7 @@ STRI = repeat(' ', 80)
 STRI(7:25) = '(x, y)=(     ,     )'
 JX = IX - 10
 JY = IY - 10
-if (IX0 > JX .or. JX > IXM .or. plot_area%ymax > JY .or. JY > plot_area%ymin) then
+if (plot_area%xmin > JX .or. JX > plot_area%xmax .or. plot_area%ymax > JY .or. JY > plot_area%ymin) then
     STRI = repeat(' ', 80)
     call colovm(White)
     call textvm(JN0, JLR, "               ", 15)
@@ -206,7 +206,7 @@ if (MOD10 == 7) plot_area%nx_canvas = 2
 DX = 1./plot_area%nx_canvas
 DY = 1./plot_area%ny_canvas
 
-YX1 =      (JX - IX0 + 0.)/(IXM - IX0)
+YX1 =      (JX - plot_area%xmin + 0.)/(plot_area%xmax - plot_area%xmin)
 YY1 = 1. - (JY - plot_area%ymax + 0.)/(plot_area%ymin - plot_area%ymax)
 
 if (MOD10 == 6) then
@@ -236,7 +236,7 @@ if (MOD10 == 6) then
     STRI(1 :  5) = 'Time='
     STRI(6 : 10) = fmt5(YY1)
     STRI(11: 11) = 's'
-    call textvm(astra_gui%dxlet, JN2 - 3*astra_gui%dylet + astra_gui%dylet/2, STRI, 11)
+    call textvm(astra_gui%dxlet, JN2 - int(2.5*astra_gui%dylet), STRI, 11)
     return
 else if (MOD10 == 8) then
 !    YX = 5.*YX1*scale_bnd

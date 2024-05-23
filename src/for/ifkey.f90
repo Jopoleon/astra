@@ -1532,8 +1532,7 @@ character(len=6), intent(in), dimension(arr_size) :: var_names
 
 integer :: nameLength, editable=1
 character(len=70), dimension(10), parameter :: titles = (/ &
-    'Variable control', 'Constant control', 'Times & Grids', &
-    'Scale control', &
+    'Variable control', 'Constant control', 'Times & Grids', 'Scale control', &
     'Time interval', 'Mark times:  < 0 - skip,  0 - dim,  > 0 - color #', &
     'Equilibrium control', '1D_Ufile', '2D_Ufile', 'NBI const for beam No' /)
 
