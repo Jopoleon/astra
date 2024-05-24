@@ -17,9 +17,9 @@ integer function IFSTEP(IFCONV, updwno)
 !  0 - time step will be repeated
 !---------------------------------------------------------------------
 
-use const_inc, only: TIME, TAUINC, DELVAR, TAU, TAUPRP, TAUMIN, TAUMAX, &
-    DTOUT, DPOUT, NA, NB1, LEQ, NSTEPS, UPDWN, ROC, ROCO, &
-    BTN, IPLN, FTN, FTO
+use const_inc, only: TAUINC, DELVAR, TAU, TAUPRP, TAUMIN, TAUMAX, &
+    DTOUT, DPOUT, NA, NB1, LEQ, NSTEPS, ROC, ROCO, &
+    FTN, FTO
 use status_inc, only: NEO, NIO, TEO, TIO, FJO, FPO, VRO, UPARO, &
     NE, NI, TE, TI, FJ, FP, VR, UPAR
 use debugger, only: markloc
@@ -223,7 +223,7 @@ subroutine OLDNEW
 use status_inc, only: NE, TE, TI, FP, VR, FJO, UPAR, &
     UPS0, UPS1, UPS2, NEO, TEO, TIO, FPO, VRO, FJ, &
     UPARO, UPS0O, UPS1O, UPS2O
-use const_inc, only: NB1, BTN, TIME, TAU, IPLN, FTO, FTN, ROCO, ROC, BTOR, BTN
+use const_inc, only: NB1, BTN, FTO, FTN, ROCO, ROC, BTOR, BTN
 use debugger, only: markloc
 
 implicit none

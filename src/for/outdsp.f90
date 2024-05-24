@@ -72,7 +72,7 @@ use status_inc, only: AMETR, MU, SHIF, ELON, TRIA
 use const_inc, only: XOUT, NAB, NA1, NA1E, ABC, TINIT, TSCALE, RTOR, &
     MEQUIL, LEQ, TIME
 use outcmn_inc, only: astra_gui, plot_area, &
-    curves_per_frame, active_tab, MOD10, NWIND1, NWIND3, NWINDX, resizeGraph, &
+    curves_per_frame, active_tab, MOD10, NWIND1, NWIND3, NWINDX, &
     IFDFAX, KPRI, NPTM, ICVMX, &
     NROUT, ROUT, OSHIFR, NAMER, SCALER, &
     NTOUT, OSHIFT, NAMET, SCALET, &

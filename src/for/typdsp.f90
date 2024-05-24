@@ -18,16 +18,13 @@ call textvm(astra_gui%Width - 83*astra_gui%dxlet + 2, JLR, STRI(1: 80), 80)
 end subroutine ERASXY
 
 !---------------------------------------------------------------------
-subroutine TYPDSP(YN, ITIMES, TTOUT, TOUT)
+subroutine TYPDSP(ITIMES, TTOUT, TOUT)
 ! NCH= 5 - terminal, 0 - file (old format), 1 - file (new format)
 
 use parameter_inc, only: NRW
-use const_inc, only: XOUT, NAB, NA1, NA, XLINE1, IPL, BTOR, RTOR, ABC, &
-    TIME, TAU, CONSTF
-use status_inc, only: MU, AMETR, RHO, FP
-use outcmn_inc, only: NCFNAM, LTOUT, NTOUT, NROUT, MOD10, RUNID, AWD, &
-    equ_file, exp_file, NAMER, NAMET, WarningColor, ROUT
-use dbl2char, only: fmt4, fmt_xf
+use const_inc, only: XOUT, NAB, NA1
+use outcmn_inc, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, WarningColor, ROUT
+use dbl2char, only: fmt_xf
 
 implicit none
 
@@ -36,14 +33,10 @@ character(len=40), parameter :: STRMN=' R=     a=     B=     I=     q=     <n>='
 character(len=6), dimension(6), parameter :: &
     CONN = (/ ' CF   ', ' CV   ', ' CH   ', ' CCD  ', ' CBND ', ' CRAD ' /)
 integer, intent(in) :: ITIMES
-double precision, intent(in) :: YN, TTOUT(ITIMES), TOUT(ITIMES, NRW)
+double precision, intent(in) :: TTOUT(ITIMES), TOUT(ITIMES, NRW)
 
-integer :: NP1, ITBE, ITEND, ITEN, MODEX, &
-    JBE, JEND, J, JEN, JJ, J1, JLR, ios
-double precision :: YQ
-character(len=6) :: CH6
+integer :: NP1, ITBE, ITEND, ITEN, MODEX, JBE, JEND, J, JEN, JJ, J1
 character(len=118) :: STRI
-character(len=132) :: FNAME, dat_dir
 
 ! NLINSC - maximum line number 
 MODEX = XOUT + 0.49
@@ -73,8 +66,7 @@ if (MOD10 <= 5) then
         if (JEN == NROUT) return
         JBE  = JEN + 1
         JEND = JEN + 16
-    enddo 
-
+    enddo
 endif
 
 if (MOD10 <= 7) then
@@ -108,11 +100,7 @@ if (MOD10 <= 7) then
     enddo
 endif
 
-101 format(1X, 1A6, 1A111)
-102 format('   Time', 16(3X, 1A4))
-104 format(1X, 1A120)
 308 format(1X, 'Time', 15(1X, 1A4))
-408 format(1PE12.3, 64(1PE12.3))
 
 return
 end subroutine TYPDSP

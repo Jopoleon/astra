@@ -3,20 +3,18 @@ integer function N_95_POS(i)
 ! Returns the radial integer index of the psi_95 position, at the left
 ! i in input is a dummy integer, so call it as N_95_POS(0)
 
-use const_inc, only: NA1, PSIAX
-use status_inc, only: FP
+use const_inc, only: NA1
+use status_inc, only: FP_NORM
 
 implicit none
 
 integer, intent(in) :: i
 
-integer :: j, k
-double precision, dimension(NA1) :: rhop
+integer :: j
 
-rhop = (FP(1:NA1) - PSIAX)/(FP(NA1) - PSIAX)
 N_95_POS = 1
 do j=1, NA1
-    if (rhop(j) <= 0.95) N_95_POS = j
+    if (FP_NORM(j) <= 0.95) N_95_POS = j
 enddo
 
 return
@@ -33,7 +31,7 @@ implicit none
 
 double precision, intent(in), dimension(NA1) :: Yin
 
-integer :: j, k
+integer :: j
 integer, external :: N_95_POS
 double precision :: r1, r2, y1, y2
 double precision, dimension(NA1) :: rhop

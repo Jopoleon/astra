@@ -65,7 +65,7 @@ character(len=10), parameter :: DEFUNA='      .tmp'
 
 logical :: MODADD
 integer*2, dimension(NRD) :: YWD
-integer :: POLLEVENT, OUTFIG(NRW), WAITEVENT, KIBM, KASCII, jpos
+integer :: POLLEVENT, WAITEVENT, KIBM, KASCII, jpos
 integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
     IFLAG, INT4, IRET, NTRUN, IM, &
     MODEX, IX, IY, NU1, j2, J1, ios, &
@@ -78,7 +78,6 @@ double precision, dimension(1) :: rescale_array
 double precision, dimension(NTIMES) :: PRMARK, TIMOD4
 double precision, dimension(NRD) :: YWA, YWB, YWC
 character(len=6) :: NAMEP(NTIMES)
-character(len=8) :: OUTNAME(NRW)
 character(len=10), dimension(NRW) :: UNAMES
 character(len=40) :: CNSFIL
 character(len=80) :: HELP(28), PSNAME, STR, STRB
@@ -87,11 +86,9 @@ character(len=7), dimension(1), parameter :: rescale_label = (/ 'Rescale' /)
 
 save ITO, IFLAG, TROUT, MARK, LTOUTO, IDSP
 save NAMEP
-! save OUTFIG, OUTNAME
 data PRMARK/NTIMES*0./  TROUT/-99999./ &
      IFLAG/0/  &
-     JTOUT/0/ LTOUTO/0/ MARK /0/       IDSP/0/ &
-     OUTFIG /NRW*0/
+     JTOUT/0/ LTOUTO/0/ MARK /0/       IDSP/0/
 
 ! ASCII codes: ^C 3  <Esc>27 <Space>32  % 37  * 42  . 46  / 47  ? 63
 !   0 48  1 49  2 50  3 51  4 52  5 53  6 54  7 55  8 56  9 57
@@ -762,7 +759,7 @@ CASE(47) ! '/', '<ESC>'
 
 CASE(84) ! 'T'
     call TIMOUT
-    call TYPDSP(CHORDN, NTRUN, TTOUT, TOUT)
+    call TYPDSP(NTRUN, TTOUT, TOUT)
 
 CASE(32) ! 'space'
     KEY = 0

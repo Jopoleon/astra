@@ -1,16 +1,10 @@
 subroutine err_catch_a
 
-use const_inc, only: TIME,  NA1
+use const_inc, only: NA1
 use status_inc, only: TE, FP, NE, G11
 use debugger, only: astra_stop
 
 implicit none
-
-double precision :: time_ext
-integer :: j
-
-data time_ext / 0. /
-save time_ext   ! counter to use psi as bc stuff
 
 write(*, *) 'TE    Fp    NE    G11 '
 write(*, *) te(1)  , fp(1)  , ne(1)  , g11(1)

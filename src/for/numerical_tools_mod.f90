@@ -438,10 +438,7 @@ contains
     integer, intent(in) :: n_in
     double precision, intent(in) :: x_out
     double precision, intent(in), dimension(n_in) :: x_in, y_in
-    double precision, dimension(1) :: qint1
 
-!    call qinterp(x_in, y_in, n_in, (/x_out/), qint1, 1)
-!    QUADIN = qint1(1)
     integer :: j, jj
     double precision :: YF1, YF2, YF3, Y, YY, YX, &
         YD21, YD23, YD31, YDX1, YDX2, YDX3

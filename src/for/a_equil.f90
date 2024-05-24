@@ -37,7 +37,7 @@ integer :: nstep, i, key_equil, nrp, &
 
 double precision :: dampfacpsplex, psplexold, epsros, enelss, k_filessss, ipl
 double precision, dimension(ncoils) :: t_currents, ucoils
-double precision :: psplexavg, psplexavgexp, ahorc
+double precision :: psplexavg, psplexavgexp
 character(len=80) :: fname
 
 type(type_parameters) :: parameters_equil
