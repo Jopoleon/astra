@@ -1,7 +1,7 @@
 program astra
 
 use parameter_inc, only: NSBMX, NRD
-use outcmn_inc, only: VCOIL, CCOIL, CCOILO, outcmn_init, TASK
+use outcmn_inc, only: astra_gui, astra_gui_ref, VCOIL, CCOIL, CCOILO, outcmn_init, TASK
 use const_inc, only: IPART, const_init, &
     TIME, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT
 use status_inc, only: status_init, defarr
@@ -16,10 +16,10 @@ implicit none
 !-------------------------------------------
 
 integer :: j, jj, IM, ios, XSC0, XSC, jt1, jt2, jt3, jt_req, jkey
-double precision :: CHORDN, Y, timeb
+double precision :: Y, timeb
 character(len=64) :: LISTSB(NSBMX)
-character(len=132) :: file_in, STRI, Xwin_title
-double precision, external :: LINEAV, SWATCH
+character(len=132) :: STRI
+double precision, external :: SWATCH
 integer, external :: IFKEY, IFTREQ
 
 call fenvex()   !  Enable floating exception handling
@@ -73,7 +73,11 @@ do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set 
     call METRIC
     jt_req = IFTREQ(ATREQ)     ! ++ITREQ; Convergence check; 1 - yes
 enddo
-if (TASK(1:3) /= 'BGD') jkey = IFKEY(259) ! Erase "Iteration #" label in GUI
+if (TASK(1:3) /= 'BGD') then
+    STRI(1:16) = ' ' ! Erase iteration number, iterations label top right
+    call textvm(astra_gui%width-18*astra_gui_ref%dxlet, 2, STRI(1:16), 16)
+    call textvm(astra_gui%width-17*astra_gui_ref%dxlet, astra_gui_ref%dylet + 1, STRI(1:14), 14)
+endif
 
 !---------------
 ! Time step loop

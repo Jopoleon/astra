@@ -140,14 +140,6 @@ IFKEY = 0
 if (IFKL == -1) then
 ! This sets "pause" mode each time when IFKEY(-1) is called
     TASK(1:3) = 'DSP'
-! git   IFKL = 0
-endif
-
-if (IFKL == 259) then ! Call once after STEPIN is done
-    STRI(1:16) = ' ' ! Erase iteration number
-    call textvm(astra_gui%width-18*astra_gui_ref%dxlet, 2, STRI(1:16), 16)
-    call textvm(astra_gui%width-17*astra_gui_ref%dxlet, astra_gui_ref%dylet + 1, STRI(1:14), 14)
-    return
 endif
 
 if (IFKL < 0 .or. IFKL > 257) then
