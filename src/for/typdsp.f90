@@ -78,7 +78,7 @@ if (MOD10 <= 7) then
         ITEND = NLINSC
         do
             ITEN = MIN(LTOUT-1, ITEND)
-            write(STRI, 308) (NAMET(J), J=JBE, JEN)
+            write(STRI, '(1X, A4, 15(1X, A4))') 'Time', (NAMET(J), J=JBE, JEN)
             write(*, '(1X, A)') TRIM(STRI)
 
             do J1=ITBE, ITEN
@@ -99,8 +99,6 @@ if (MOD10 <= 7) then
         JEND = JEN + 15
     enddo
 endif
-
-308 format(1X, 'Time', 15(1X, 1A4))
 
 return
 end subroutine TYPDSP
@@ -463,16 +461,15 @@ use char_manip, only: len_trim_tab
 
 implicit none
 
+integer, parameter :: LENG=3, JN0=0
 integer, intent(in) :: plot_mode
 
-integer :: JJ, J, JN0, TIMWIN, JX, JY, &
-    LENG, XP, XM, YP, YM, JXSCM, LYM
+integer :: JJ, J, TIMWIN, JX, JY, &
+    XP, XM, YP, YM, JXSCM, LYM
 double precision :: DY, YY, TIND, scale_fac
 character(len=5) :: XF4
 character(len=6) :: CH6
 character(len=80) :: COMMENT
-
-data LENG/3/ JN0/0/
 
 ! IDX, DY  - X & Y distance (in points) between X & Y axis labels
 ! IDT      - distance (in labels) between longer labels in modes 6&8
@@ -504,8 +501,8 @@ call colovm(Black)
 ! Skipping from a subplot to the next along x-axis
 do JJ=plot_area%xmin, plot_area%xmax, plot_area%canvas_width
     JX = MIN0(plot_area%xmax, JJ)
-    XP = MIN(plot_area%xmax , JX + LENG)
-    XM = MAX(plot_area%xmin  , JX - LENG)
+    XP = MIN (plot_area%xmax, JX + LENG)
+    XM = MAX (plot_area%xmin, JX - LENG)
     call drawvm(0, JX, plot_area%ymax, JX, plot_area%ymin)
 ! Y-line labels
     if (KPRI >= 1 .and. KPRI <= 2) then
@@ -1145,18 +1142,18 @@ implicit none
 character(len=*), intent(inout) :: FNAME
 
 integer :: jext
-logical :: EXI
+logical :: fileExists
 character(len=4) :: ext
 character(len=140) :: filename
 
-EXI = .True.
+fileExists = .True.
 jext = 0
 
-do while(EXI)
+do while(fileExists)
     jext = jext + 1
     write(ext, '(A, i0)') '.', jext
     filename = TRIM(FNAME) // TRIM(ext)
-    inquire(FILE=TRIM(filename), EXIST=EXI)
+    inquire(FILE=TRIM(filename), EXIST=fileExists)
 enddo
 FNAME = TRIM(filename)
 
