@@ -756,8 +756,8 @@ LEQ = -1
 CONSTF(1 :16) = 1.
 CONSTF(17:32) = 0.
 CONSTF(33:NCONST) = 1.
-XLINE1 = '                                '
-XLINE2 = '                                '
+XLINE1(:) = ' '
+XLINE2(:) = ' '
 
 end subroutine const_init
 

@@ -159,16 +159,16 @@ use numerical_tools, only: QUADIN
 
 implicit none
 
+integer, parameter :: JN0=0
 integer, intent(in) :: ITIMES, IX, IY
 double precision, intent(in) :: TTOUT(ITIMES), TOUT(ITIMES, NRW)
 
-integer :: JX, JY, JLR, j, j1, JC, JL, MODEX, &
-    GETIME, JW, JN0, JN2
+integer :: JX, JY, JLR, j, j1, JC, JL, MODEX, JW, JN2
 double precision :: DX, DY, YX, YX1, YY, YY1, YA, YA1, YD, YE, YT, &
     YRHO, YFP, YFPC, RZ2A
 character(len=80) :: STRI
+integer, external :: GETIME
 
-JN0 = 0
 JLR = astra_gui%Height - int(125*resizeGraph)
 if (MOD10 <= 0) return
 
@@ -192,7 +192,8 @@ YX1 =      (JX - plot_area%xmin + 0.)/(plot_area%xmax - plot_area%xmin)
 YY1 = 1. - (JY - plot_area%ymax + 0.)/(plot_area%ymin - plot_area%ymax)
 
 if (MOD10 == 6) then
-! (window_width)/(step=IDX=23)/(n_labels)=592/23/25=1.0295652
+   ! (window_width)/(step=IDX=23)/(n_labels)=592/23/25=1.0295652
+    write(*, *) 'Debug putxy', dble(plot_area%width)/(IDT*IDX)
     YX = TINIT + 1.029565*YX1*abs(TSCALE)
     do j=1, plot_area%ny_canvas
         YY1 = YY1 - DY
@@ -202,7 +203,6 @@ if (MOD10 == 6) then
     JN2 = plot_area%height + 15 + 3*astra_gui%dylet
     JC = 0
     JL = 0
-
     YY1 = max(TIME, TTOUT(LTOUT-1), TTOUT(LTOUT))
     YY1 = min(YX, YY1)
     YY1 = max(TTOUT(1), YY1)
@@ -212,7 +212,6 @@ if (MOD10 == 6) then
         if (NAMET(J1) == '    ') JW = 0
         if (JW > 0 .and. JW <= 8) call down_label(j, ITIMES, TOUT) ! for the all modes
     enddo
-
     call colovm(Red)
     STRI(1 :  5) = 'Time='
     STRI(6 : 10) = fmt5(YY1)
@@ -289,7 +288,6 @@ else
     endif
 
     do j=1, plot_area%ny_canvas
-
         YY1 = YY1 - DY
         if (YY1 < 0) EXIT
     enddo
@@ -357,89 +355,63 @@ integer, intent(in) :: plot_mode
 integer :: n_str_up, n_str_down
 
 ! n_str_up, n_str_down - number of text strings up & down
-
-if (NST >= 1 .or. plot_mode == 11 .or. plot_mode == 12 .or. plot_mode == 21 .or. plot_mode == 22) then
+SELECT CASE(plot_mode)
+CASE(1)
     n_str_up   = 2
-    n_str_down = 4
-    NST = NST + 1
+    n_str_down = 5
     plot_area%xmin = 0
+    plot_area%xmax = plot_area%width
+    plot_area%nx_canvas = 4
+    plot_area%ny_canvas = 2
+! modes 2, 3, 4, 5 at y-mode = +1, dummy mode (plot_mode=4 - not used)
+CASE(2, 4, 7)
+    n_str_up   = 2
+    n_str_down = 5
+    plot_area%xmin = 0
+    plot_area%xmax = plot_area%width
+    plot_area%nx_canvas = 2
+    plot_area%ny_canvas = 1
+! modes 2, 3, 4, 5 at y-mode = -1
+CASE(3)
+    n_str_up   = 2
+    n_str_down = 5
+    plot_area%xmin = 0
+    plot_area%xmax = plot_area%width
+    plot_area%nx_canvas = 2
+    plot_area%ny_canvas = 2
+! mode # 6 (time) at y-mode=1 (2 windows)
+CASE(5)
+    n_str_up   = 1
+    n_str_down = 1
+    plot_area%xmin = 6*astra_gui%dxlet
+    plot_area%xmax = plot_area%width
+    plot_area%nx_canvas = 1
+    plot_area%ny_canvas = 2
+! mode # 6 (time) at y-mode=-1 (4 windows)
+CASE(6)
+    n_str_up   = 1
+    n_str_down = 1
+    plot_area%xmin = 6*astra_gui%dxlet
+    plot_area%xmax = plot_area%width
+    plot_area%nx_canvas = 1
+    plot_area%ny_canvas = 4
+! mode 8 (equilibrium)
+CASE(8)
+    n_str_up   = 1
+    n_str_down = -2
+    plot_area%xmin = 0
+    plot_area%xmax = 0.7*plot_area%width
+    plot_area%nx_canvas = 1
+    plot_area%ny_canvas = 1
+! mode # 6 (time) at y-mode=0 (1 window), mode 9 (user's plot)
+CASE(9)
+    n_str_up   = 1
+    n_str_down = 1
+    plot_area%xmin = 6*astra_gui%dxlet
     plot_area%xmax = plot_area%width
     plot_area%nx_canvas = 1
     plot_area%ny_canvas = 1
-    if (NST == 1) then
-        plot_area%xmax = 0.5*plot_area%width
-        if (plot_mode == 21 .or. plot_mode == 22) then
-            plot_area%nx_canvas = 2
-            plot_area%ny_canvas = 2
-        endif
-    else if (NST == 2) THEN
-        plot_area%xmin = 0.5*plot_area%width
-        if (plot_mode == 12 .or. plot_mode == 22) then
-            plot_area%nx_canvas = 2
-            plot_area%ny_canvas = 2
-        endif
-    endif
-else
-    SELECT CASE(plot_mode)
-    CASE(1)
-        n_str_up   = 2
-        n_str_down = 5
-        plot_area%xmin = 0
-        plot_area%xmax = plot_area%width
-        plot_area%nx_canvas = 4
-        plot_area%ny_canvas = 2
-! modes 2, 3, 4, 5 at y-mode = +1, dummy mode (plot_mode=4 - not used)
-    CASE(2, 4, 7)
-        n_str_up   = 2
-        n_str_down = 5
-        plot_area%xmin = 0
-        plot_area%xmax = plot_area%width
-        plot_area%nx_canvas = 2
-        plot_area%ny_canvas = 1
-! modes 2, 3, 4, 5 at y-mode = -1
-    CASE(3)
-        n_str_up   = 2
-        n_str_down = 5
-        plot_area%xmin = 0
-        plot_area%xmax = plot_area%width
-        plot_area%nx_canvas = 2
-        plot_area%ny_canvas = 2
-! mode # 6 (time) at y-mode=1 (2 windows)
-    CASE(5)
-        n_str_up   = 1
-        n_str_down = 1
-        plot_area%xmin = 6*astra_gui%dxlet
-        plot_area%xmax = plot_area%width
-        plot_area%nx_canvas = 1
-        plot_area%ny_canvas = 2
-
-! mode # 6 (time) at y-mode=-1 (4 windows)
-    CASE(6)
-        n_str_up   = 1
-        n_str_down = 1
-        plot_area%xmin = 6*astra_gui%dxlet
-        plot_area%xmax = plot_area%width
-        plot_area%nx_canvas = 1
-        plot_area%ny_canvas = 4
-! mode 8 (equilibrium)
-    CASE(8)
-        n_str_up   = 1
-        n_str_down = -2
-        plot_area%xmin = 0
-        plot_area%xmax = 0.7*plot_area%width
-        plot_area%nx_canvas = 1
-        plot_area%ny_canvas = 1
-! mode # 6 (time) at y-mode=0 (1 window), mode 9 (user's plot)
-    CASE(9)
-        n_str_up   = 1
-        n_str_down = 1
-        plot_area%xmin = 6*astra_gui%dxlet
-        plot_area%xmax = plot_area%width
-        plot_area%nx_canvas = 1
-        plot_area%ny_canvas = 1
-    END SELECT
-
-endif
+END SELECT
 
 plot_area%ymax = n_str_up*astra_gui%dylet + 1
 plot_area%ymin = plot_area%height - n_str_down*astra_gui%dylet - 1
@@ -537,7 +509,7 @@ do JY=plot_area%ymin, plot_area%ymax, -plot_area%canvas_height
     call drawvm(0, plot_area%xmin, JY, plot_area%xmax, JY)
 ! X-line labels
     if (KPRI >= 1 .and. KPRI <= 2) then
-        write(COMMENT, '(A)')"X-line labels"
+        write(COMMENT, '(A)') "X-line labels"
         j = len_trim_tab(COMMENT)
         call pscom(COMMENT, j)
     endif
@@ -571,7 +543,6 @@ if (plot_mode == 8) then
 endif
 
 if (MOD10 == 6) then
-
 ! time-axis legend:
     call colovm(Black)
     JJ = plot_area%height - astra_gui%dylet + 12
@@ -589,12 +560,10 @@ if (MOD10 == 6) then
             call textvm(JX, JJ, XF4, 5)
         endif
   enddo
-
 endif
 
 if (MOD10 == 8) then
 ! horizontal axis labels
-
     scale_bnd = nint(20.*ABC)/10.
     scale_fac = dble(plot_area%height)/350.
     IDX = IDX*scale_fac
@@ -720,7 +689,7 @@ end subroutine down_label
 ! Upper string of the Astra graphic window
 subroutine up_label(YN, YQ)
 
-use outcmn_inc, only: astra_gui, active_tab, MOD10, Black, Blue
+use outcmn_inc, only: astra_gui, active_tab, MOD10, Black, Blue, null_ch
 use const_inc, only: RTOR, BTOR, IPL, ABC, XLINE1
 use dbl2char, only: fmt40
 
@@ -730,9 +699,9 @@ integer, parameter :: JN0=0, fshift=2
 double precision, intent(in) :: YN, YQ
 
 character(len=2) :: CHR
-character(len=62) :: STRMN
+character(len=42) :: STRMN
 
-STRMN = ' R=     a=     B=     I=     q=     n=     '
+STRMN(1: 42) = ' R=     a=     B=     I=     q=     n=    '
 
 STRMN( 4:  7) = fmt40(RTOR)
 STRMN(11: 14) = fmt40(ABC)
@@ -742,13 +711,12 @@ STRMN(32: 35) = fmt40(YQ)
 STRMN(39: 42) = fmt40(YN)
 
 call colovm(Black)
-call textvm(JN0, FSHIFT, XLINE1(1: 19) // STRMN, 61)
-call textvm(JN0 + 55*astra_gui%dxlet, FSHIFT - astra_gui%dylet + 4, '_', 1)
+call textvm(JN0, FSHIFT, XLINE1(1: 15) // STRMN(1: 42), 56)
 call colovm(Blue)
 write(CHR, '(1I2)') active_tab(MOD10) + 1
-call textvm(JN0 + 79*astra_gui%dxlet, FSHIFT + astra_gui%dylet - 2, CHR, 2) ! Screen No.
+call textvm(JN0 + 79*astra_gui%dxlet, FSHIFT, CHR, 2) ! Screen No.
 call colovm(Black)
-call rectvm(0, JN0, JN0, astra_gui%Width - 1, astra_gui%Height - 1)
+call rectvm(0, JN0, JN0, astra_gui%Width - 1, astra_gui%Height - 1) ! Outer frame
 
 return
 end subroutine up_label
@@ -756,22 +724,22 @@ end subroutine up_label
 !---------------------------------------------------------------------
 subroutine TIMEDT(TIME, DT)
 
-use outcmn_inc, only: astra_gui, Black
+use outcmn_inc, only: astra_gui, astra_gui_ref, Black
 use dbl2char, only: fmt50
 
 implicit none
 
-integer, parameter :: FSHIFT=2
+integer, parameter :: FSHIFT=2, str_len=19
 double precision, intent(in) :: TIME, DT
 
-character(len=19) :: STRI
+character(len=str_len) :: STRI
 
 STRI(1 : 5 ) = 'Time='
 STRI(11: 16) = ' dt='
 STRI( 6: 10) = fmt50(TIME)
 STRI(15: 19) = fmt50(DT)
 call colovm(Black)
-call textvm(62*astra_gui%dxlet, FSHIFT, STRI, 19)
+call textvm(astra_gui%width - (str_len+3)*astra_gui_ref%dxlet, FSHIFT, STRI, str_len)
 
 return
 end subroutine TIMEDT
@@ -781,7 +749,7 @@ subroutine const2ps
 ! Appending the list of constants to a PS file
 
 use const_inc, only: CONSTF, DEVAR
-use outcmn_inc, only: NCFNAM, NPRNAM, PRNAME, null_ch
+use outcmn_inc, only: NCFNAM, NPRNAM, PRNAME, null_ch, resizeGraph
 use dbl2char, only: fmt_xf
 
 implicit none
@@ -800,8 +768,8 @@ character(len=80) :: STRI
 
 ! Writing constants
 
-JNY = 540
-JNX = 10
+JNY = 540*resizeGraph
+JNX = 10*resizeGraph
 
 ps_loop: do J2=1, 11
 
