@@ -146,11 +146,8 @@ end function GETIME
 
 !---------------------------------------------------------------------
 subroutine PUTXY(IX, IY, ITIMES, TTOUT, TOUT)
-!---------------------------------------------------------------------
-! Input: IX
-!  IY
-!  MODEY
-!---------------------------------------------------------------------
+
+! Prints x, y coordinates on GUI in "Step" mode
 
 use parameter_inc, only: NRW
 use outcmn_inc, only: astra_gui, plot_area, MOD10, &
@@ -167,7 +164,7 @@ implicit none
 integer, intent(in) :: ITIMES, IX, IY
 double precision, intent(in) :: TTOUT(ITIMES), TOUT(ITIMES, NRW)
 
-integer :: IM, JX, JY, JLR, j, j1, JC, JL, MODEX, &
+integer :: JX, JY, JLR, j, j1, JC, JL, MODEX, &
     GETIME, JW, JN0, JN2
 double precision :: DX, DY, YX, YX1, YY, YY1, YA, YA1, YD, YE, YT, &
     YRHO, YFP, YFPC, RZ2A
@@ -176,8 +173,7 @@ character(len=80) :: STRI
 JN0 = 0
 JLR = astra_gui%Height - int(125*resizeGraph)
 if (MOD10 <= 0) return
-if (MOD10 == 7) call NEGA(IM, ITIMES, TOUT)
-call set_frame(IM)
+
 STRI = repeat(' ', 80)
 STRI(7:25) = '(x, y)=(     ,     )'
 JX = IX - 10
@@ -201,7 +197,6 @@ if (MOD10 == 6) then
 ! (window_width)/(step=IDX=23)/(n_labels)=592/23/25=1.0295652
     YX = TINIT + 1.029565*YX1*abs(TSCALE)
     do j=1, plot_area%ny_canvas
-
         YY1 = YY1 - DY
         if (YY1 < 0) EXIT
     enddo
@@ -227,7 +222,6 @@ if (MOD10 == 6) then
     call textvm(astra_gui%dxlet, JN2 - int(2.5*astra_gui%dylet), STRI, 11)
     return
 else if (MOD10 == 8) then
-!    YX = 5.*YX1*scale_bnd
     YX = YX1*scale_bnd*plot_area%canvas_width/IDT/IDX
     YY = (YY1 - 0.5)*scale_bnd*plot_area%canvas_height/IDT/IDX
     YA1= RZ2A(YX, YY, NAB)
@@ -319,7 +313,35 @@ return
 end subroutine putxy
 
 !---------------------------------------------------------------------
-subroutine set_frame(plot_mode)
+integer function plotMode(mod_10, mode_y)
+
+implicit none
+  
+integer, intent(in) :: mod_10, mode_y
+
+if (mod_10 <= 1 .or. mod_10 >= 7) then
+    plotMode = mod_10
+elseif (mod_10 >= 2 .and. mod_10 <= 5) then
+    if (mode_y == 1) then
+        plotMode = 2
+    else
+        plotMode = 3
+    endif
+else ! mod_10 = 6
+    if (mode_y == 1) then
+        plotMode = 5
+    else if (mode_y == 0) then
+        plotMode = 9
+    else
+        plotMode = 6
+    endif
+endif
+
+return
+end function plotMode
+
+!---------------------------------------------------------------------
+subroutine set_plot_area(plot_mode)
 !----------------------------------------------------------------------|
 ! Input: MODEY
 ! Output: plot_area%xmin - x_left  of the graphic area
@@ -332,7 +354,7 @@ use outcmn_inc, only: astra_gui, plot_area, MOD10, MODEY, NST
 
 implicit none
 
-integer, intent(inout) :: plot_mode
+integer, intent(in) :: plot_mode
 
 integer :: n_str_up, n_str_down
 
@@ -360,22 +382,6 @@ if (NST >= 1 .or. plot_mode == 11 .or. plot_mode == 12 .or. plot_mode == 21 .or.
         endif
     endif
 else
-    if (MOD10 <= 1 .or. MOD10 >= 7) then
-        plot_mode = MOD10
-    elseif (MOD10 >= 2 .and. MOD10 <= 5) then
-        if (MODEY == 1)  plot_mode = 2
-        if (MODEY == -1) plot_mode = 3
-    else
-        if (MODEY == 1)  plot_mode = 5
-        if (MODEY == 0)  plot_mode = 9
-        if (MODEY == -1) plot_mode = 6
-    endif
-     
-    if (plot_mode <= 0 .or. plot_mode >= 10) then
-        plot_mode = 0
-        return
-    endif
-
     SELECT CASE(plot_mode)
     CASE(1)
         n_str_up   = 2
@@ -443,7 +449,7 @@ plot_area%canvas_width = (plot_area%xmax - plot_area%xmin)/plot_area%nx_canvas
 plot_area%canvas_height = (plot_area%ymin - plot_area%ymax)/plot_area%ny_canvas
 
 return
-end subroutine set_frame
+end subroutine set_plot_area
 
 !---------------------------------------------------------------------
 subroutine set_plot(plot_mode)
@@ -624,54 +630,6 @@ meter2pixel = dble(IDX*IDT)/scale_bnd
 
 return
 end subroutine set_plot
-
-!---------------------------------------------------------------------
-subroutine NEGA(J1, ITIMES, TOUT)
-
-use parameter_inc, only: NRW
-use ac_neg1, only: NKL1, NKL2, JMIN, JMAX, NUM, MODK
-
-implicit none
-
-integer, intent(in) :: ITIMES
-integer, intent(out) :: J1
-double precision, intent(in) :: TOUT(ITIMES, NRW)
-
-integer :: IBEG, JJ, J
-
-save IBEG
-data IBEG/0/
-
-IBEG = IBEG + 1
-J1 = 11
-if (IBEG < 3) return
-do JJ=NKL1, NKL2
-    if (JJ <= 0) CYCLE
-    MODK(JJ) = 0
-    do  J=JMIN, JMAX
-        if (TOUT(J, NUM(2*JJ-1)) < 0.0 .or. TOUT(J, NUM(2*JJ)) < 0.0) then
-            MODK(JJ) = 1
-            EXIT
-        endif
-    enddo
-enddo
-! (0, 0) - 11, (-1, 0) - 21, (0, -1) - 12, (-1, -1) - 22
-if (MODK(1) == 0) then
-    if (MODK(2) == 0) then
-        J1 = 11
-    else
-        J1 = 12
-    endif
-else
-    if (MODK(2) == 0) then
-        J1 = 21
-    else
-        J1 = 22
-    endif
-endif
-
-return
-end subroutine NEGA
 
 !---------------------------------------------------------------------
 subroutine down_label(jt, ITIMES, TOUT)

@@ -67,7 +67,7 @@ logical :: MODADD
 integer*2, dimension(NRD) :: YWD
 integer :: POLLEVENT, WAITEVENT, KIBM, KASCII, jpos
 integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
-    IFLAG, INT4, IRET, NTRUN, IM, &
+    IFLAG, INT4, IRET, NTRUN, plot_mode, &
     MODEX, IX, IY, NU1, j2, J1, ios, &
     YEAR, MONTH, DAY, HOUR, MINUTE, time_arr(8)
 ! plot_arr dimension: 4*NRD(Mode 5, 8) 320(7) 2*NTIMES(Mode 6) 2*NRD(Modes 1-4)
@@ -83,6 +83,7 @@ character(len=40) :: CNSFIL
 character(len=80) :: HELP(28), PSNAME, STR, STRB
 character(len=132) :: STRI
 character(len=7), dimension(1), parameter :: rescale_label = (/ 'Rescale' /)
+integer, external :: plotMode
 
 save ITO, IFLAG, TROUT, MARK, LTOUTO, IDSP
 save NAMEP
@@ -466,11 +467,11 @@ CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
     if (MOD10 /= KEY - 48) then
         MOD10 = KEY - 48
         call erasrw
-        IM = 1
+        plot_mode = 1
         NST = 0
-        if (MOD10 == 7) call NEGA(IM, NTRUN, TOUT)
-        call set_frame(IM)
-        call set_plot(IM)
+        plot_mode = plotMode(MOD10, MODEY)
+        call set_plot_area(plot_mode)
+        call set_plot(plot_mode)
     endif
     call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
     if (IFKL == KEY) return
@@ -478,7 +479,7 @@ CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
 CASE(73) ! 'I'
     CNSFIL = 'equ/log/' // TRIM(equ_file)
     open(1, file=TRIM(CNSFIL), iostat=ios)
-    if(ios /= 0) then
+    if (ios /= 0) then
         write(*, *) '>>> IFKEY: file "', TRIM(CNSFIL), '" open error'
     else
 ! New format of the equ/MODEL.log file for versions => 5.3
@@ -915,7 +916,7 @@ subroutine re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
 ! Corresponds to block from statement 201
 
 use parameter_inc, only: NRD
-use outcmn_inc, only: astra_gui, KPRI, MOD10, TASK, RUNID, &
+use outcmn_inc, only: astra_gui, KPRI, MOD10, MODEY, TASK, RUNID, &
     WarningColor, null_ch, ICVMX, resizeGraph
 use timeoutput_inc, only: NTIMES, TOUT, TTOUT
 use const_inc, only: XOUT, TIME, TAU, NA
@@ -930,11 +931,12 @@ integer, intent(in) :: IFKL, MARK, NTRUN
 double precision, intent(in), dimension(NTIMES) :: PRMARK
 character(len=*) :: PSNAME
 
-integer :: IM, NST, j
+integer :: plot_mode, NST, j
 integer :: ITO(NTIMES, ICVMX+2)
 double precision :: CHORDN, lineav
 character(len=6) :: NAMEP(NTIMES)
 character(len=132) :: STRI
+integer, external :: plotMode
 
 call markloc('re_draw', debug_lev=2*debug)
 
@@ -945,12 +947,12 @@ endif
 
 call erasrw
 
-IM = 1
+plot_mode = 1
 NST = 0
 
-if (MOD10 == 7) call NEGA(IM, NTRUN, TOUT)
-call set_frame(IM)
-call set_plot(IM)
+plot_mode = plotMode(MOD10, MODEY)
+call set_plot_area(plot_mode)
+call set_plot(plot_mode)
 
 j = XOUT + 0.49
 call TaskMenu(j)

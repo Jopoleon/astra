@@ -1,15 +1,16 @@
 subroutine initMainWindow
 
 use outcmn_inc, only: astra_gui_ref, astra_gui, plot_area_ref, plot_area, &
-    RUNID, NST, MOD10, NTOUT, resizeGraph, null_ch
+    RUNID, NST, MOD10, MODEY, NTOUT, resizeGraph, null_ch
 use const_inc, only: XOUT, NA
 use status_inc, only: MU
 
 implicit none
 
-integer :: j, jj, IM
+integer :: j, jj, plot_mode
 double precision :: CHORDN
 double precision, external :: LINEAV
+integer, external :: plotMode
 
 call get_runid()
 ! Resize
@@ -31,11 +32,12 @@ plot_area%height = resizeGraph*plot_area_ref%height
 
 !call resizewindow(astra_gui%width, astra_gui%height)
 call initvm(astra_gui%xpos, astra_gui%ypos, astra_gui%Width, astra_gui%Height, astra_gui%LineWidth, astra_gui%title, LEN(astra_gui%title)) ! Initialise graphic window
-IM = 1
+plot_mode = 1
 NST = 0
 MOD10 = 1
-call set_frame(IM)
-call set_plot(IM)
+plot_mode = plotMode(MOD10, MODEY)
+call set_plot_area(plot_mode)
+call set_plot(plot_mode)
 
 j = XOUT + 0.49
 
