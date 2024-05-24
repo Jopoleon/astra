@@ -57,7 +57,7 @@ call transport2fbe_init
 
 jt_req = 0
 do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set in IFTREQ (for/defarr.f90)
-    if (TASK(1:3) /= 'BGD') jkey = IFKEY(256) 
+    if (TASK(1:3) /= 'BGD') jkey = IFKEY(256)
     call INTVAR      ! Set exp scalars
     call DETVAR_INIT
     call DEFARR
@@ -73,6 +73,7 @@ do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set 
     call METRIC
     jt_req = IFTREQ(ATREQ)     ! ++ITREQ; Convergence check; 1 - yes
 enddo
+if (TASK(1:3) /= 'BGD') jkey = IFKEY(259) ! Erase "Iteration #" label in GUI
 
 !---------------
 ! Time step loop

@@ -992,7 +992,7 @@ end subroutine A2EMEQ
 subroutine A2GSSOLVER(equil_solver)
 
 use parameter_inc, only: NRD
-use outcmn_inc, only: astra_gui, astra_gui_ref, TASK, CCOIL, VCOIL, NBNT
+use outcmn_inc, only: TASK, CCOIL, VCOIL, NBNT
 use const_inc, only: NEQUIL, MEQUIL, NBND, IPART, IPCTRL, TAU, NA, NA1, NAB, NCNB, &
     RTOR, BTOR, IPL, GP, GP2, HRO, ROC, ABC, &
     VOLUME, SHIFT, ELONG, UPDWN, TRIAN, &
@@ -1014,7 +1014,7 @@ integer, parameter :: itfbe_ctrl=0
 
 integer, intent(in) :: equil_solver
 
-integer :: i, j, jneql, jnteta, jnbnd, jnstep, jstepp, j_save_bound, j_rotation
+integer :: i, j, jneql, jnteta, jnbnd, j_save_bound, j_rotation
 double precision :: yrocnew, iplnew, ychipfp, dfpdrb12, yiplout, yipl, yupdwn
 double precision, dimension(NA1) :: yg11, yg22, yg33, yvr, yvrs, yslat, yg41, &
     ygradro, yipol, ydroda, ypres, ybmaxt, ybmint, yfp, &
@@ -1023,21 +1023,12 @@ double precision, dimension(NA1) :: yg11, yg22, yg33, yvr, yvrs, yslat, yg41, &
 double precision, dimension(NCNB) :: yccoil, yvcoil
 double precision, dimension(1000) :: rbnd, zbnd
 
-save jnstep, j_save_bound, yiplout, iplnew
+save j_save_bound, yiplout, iplnew
 
-data jnstep/0/  
 data j_save_bound/0/
 data yiplout/0./
 
 call markloc('A2GSSOLVER')
-
-jstepp = 10
-
-if (jnstep == 0 .and. TASK(1:3) /= 'BGD') then
-    call colovm(14) ! Iteration # in blue
-    call textvm(astra_gui%width-18*astra_gui_ref%dxlet, 2, "equil iterations", 17)
-    call redraw(0)
-endif
 
 jneql  = abs(nint(NEQUIL))
 jnteta = abs(nint(MEQUIL))
@@ -1063,9 +1054,6 @@ iplnew = G22(NA)/RTOR/0.4/GP * (FP(NA1) - FP(NA))/HRO * IPOL(NA1)
 if (ITFBP /= 0.) IPLFBE = iplnew      ! current for free boundary equilibrium
 if (IPART == 1) then
     iplnew = IPL            ! if in initialization mode, use plasma current
-    jstepp = 0              ! if in initialization mode, use plasma current
-else
-    jstepp = 1              ! if in initialization mode, use plasma current
 endif
 
 dfpdrb12 = (FP(NA1) - FP(NA))/HRO
@@ -1117,7 +1105,6 @@ if (IPART == 1 ) i = 1    !fbe is off
 
 if (ifbey > 0..and.plasma_up == 0) then
     call A_EQUIL_2(NCNB, nint(ifbey), time, tau, vcoil(1:ncnb), equil_solver, IPLFBE)
-    jnstep = jnstep + 1
     return
 endif
 
@@ -1237,8 +1224,6 @@ do J=NA1, NAB
 enddo
 
 VOLUME = VOLUM(NA1)
-
-jnstep = jnstep + 1 ! Count equil calls, this was outside enddo
 
 return
 end subroutine A2GSSOLVER

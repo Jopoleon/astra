@@ -39,8 +39,8 @@ use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, XLINE1, &
    NA, NB1, NA1, NAB, NUF, LEQ, NBND, TIME, TAU, TINIT, TSCALE, &
    TSTART, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
    BTOR, IPL, CONSTF, DEVAR, DELOUT, XFLAG
-use outcmn_inc, only: astra_gui, plot_area, resizeGraph, &
-    Black, Blue, WarningColor, &
+use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
+    Black, Blue, Magenta, WarningColor, &
     active_tab, curves_per_frame, coltab, null_ch, &
     MOD10, LTOUT, NARRX, IPOUT, MODEY, &
     NWINDX, NWIND1, NWIND3, NWIND4, NWIND7, &
@@ -144,9 +144,9 @@ if (IFKL == -1) then
 endif
 
 if (IFKL == 259) then ! Call once after STEPIN is done
-    write(STRI, '(15x)')  ! Erase iteration number
-    call colovm(Black)
-    call textvm(64*astra_gui%dxlet, astra_gui%dylet + 1, STRI, 15)
+    STRI(1:16) = ' ' ! Erase iteration number
+    call textvm(astra_gui%width-18*astra_gui_ref%dxlet, 2, STRI(1:16), 16)
+    call textvm(astra_gui%width-17*astra_gui_ref%dxlet, astra_gui_ref%dylet + 1, STRI(1:14), 14)
     return
 endif
 
@@ -158,10 +158,12 @@ endif
 if (IFKL > 0 .and. IFKL < 256) then
     KEY = IFKL
     goto 10
-elseif (IFKL == 256)   then
-    write(STRI, '(a, i3, 1x)') "Iteration #", ITREQ
-    call colovm(Blue) ! Iteration
-    call textvm(64*astra_gui%dxlet, astra_gui%dylet+1, STRI, 15)
+elseif (IFKL == 256) then
+    write(STRI, '(a, i3)') "Iteration #", ITREQ
+    call colovm(Magenta) ! Iterations
+    call textvm(astra_gui%width-18*astra_gui_ref%dxlet, 2, "equil iterations", 16)
+    call colovm(Blue) ! Iteration #
+    call textvm(astra_gui%width-17*astra_gui_ref%dxlet, astra_gui_ref%dylet+1, STRI(1:14), 14)
     TROUT = TIME
     call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
 endif

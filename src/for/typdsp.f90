@@ -193,7 +193,6 @@ YY1 = 1. - (JY - plot_area%ymax + 0.)/(plot_area%ymin - plot_area%ymax)
 
 if (MOD10 == 6) then
    ! (window_width)/(step=IDX=23)/(n_labels)=592/23/25=1.0295652
-    write(*, *) 'Debug putxy', dble(plot_area%width)/(IDT*IDX)
     YX = TINIT + 1.029565*YX1*abs(TSCALE)
     do j=1, plot_area%ny_canvas
         YY1 = YY1 - DY
@@ -300,10 +299,10 @@ endif
 
 STRI(14: 18) = fmt5(YX)
 STRI(20: 24) = fmt5(YY)
-call colovm(Blue)
 
+call colovm(Blue)
 call textvm(JN0, JLR, "               ", 15)
-call textvm(astra_gui%Width - 83*astra_gui%dxlet + 2, JLR, STRI(1: 80), 80)
+call textvm(astra_gui%Width - 83*astra_gui%dxlet, JLR, STRI(1: 80), 80)
 
 return
 end subroutine putxy
@@ -415,7 +414,7 @@ END SELECT
 
 plot_area%ymax = n_str_up*astra_gui%dylet + 1
 plot_area%ymin = plot_area%height - n_str_down*astra_gui%dylet - 1
-plot_area%canvas_width = (plot_area%xmax - plot_area%xmin)/plot_area%nx_canvas
+plot_area%canvas_width  = (plot_area%xmax - plot_area%xmin)/plot_area%nx_canvas
 plot_area%canvas_height = (plot_area%ymin - plot_area%ymax)/plot_area%ny_canvas
 
 return
@@ -450,7 +449,7 @@ character(len=80) :: COMMENT
 if (plot_mode <= 0) return
 
 TIMWIN = 0
-if (plot_mode == 5 .or. plot_mode == 6 .or. plot_mode == 8 .or. plot_mode == 9)  TIMWIN = 1
+if (plot_mode == 5 .or. plot_mode == 6 .or. plot_mode == 8 .or. plot_mode == 9) TIMWIN = 1
 
 call colovm(Black)
 call rectvm(0, JN0, JN0, astra_gui%Width-1, astra_gui%Height-1)
@@ -598,7 +597,7 @@ return
 end subroutine set_plot
 
 !---------------------------------------------------------------------
-subroutine down_label(jt, ITIMES, TOUT)
+subroutine down_label(jt_in, ITIMES, TOUT)
 !---------------------------------------------------------------------
 ! Time dependences for radial output
 ! Curve to digit conversion
@@ -615,18 +614,19 @@ use dbl2char, only: fmt_xf
 implicit none
 
 integer, intent(in) :: ITIMES
-integer, intent(inout) :: jt
+integer, intent(in) :: jt_in
 double precision, intent(in) :: TOUT(ITIMES, *)
 
-integer :: JN2, JN0, JEND, JB, JL, JC, JW, JJ, J, fshift
+integer :: jt, JN2, JN0, JEND, JB, JL, JC, JW, JJ, J, fshift
 character(len=5) :: XF4
 character(len=7) :: XF7
 character(len=80) :: STRI, STRIN
 
-if (jt == 0) then
+if (jt_in == 0) then
     jt = LTOUT
     call colovm(Black)
 else
+    jt = jt_in
     call colovm(Blue)
 endif
 
@@ -695,7 +695,6 @@ use dbl2char, only: fmt40
 
 implicit none
 
-integer, parameter :: JN0=0, fshift=2
 double precision, intent(in) :: YN, YQ
 
 character(len=2) :: CHR
@@ -711,12 +710,12 @@ STRMN(32: 35) = fmt40(YQ)
 STRMN(39: 42) = fmt40(YN)
 
 call colovm(Black)
-call textvm(JN0, FSHIFT, XLINE1(1: 15) // STRMN(1: 42), 56)
+call textvm(0, 2, XLINE1(1: 15) // STRMN(1: 42), 56)
 call colovm(Blue)
 write(CHR, '(1I2)') active_tab(MOD10) + 1
-call textvm(JN0 + 79*astra_gui%dxlet, FSHIFT, CHR, 2) ! Screen No.
+call textvm(astra_gui%width - 2*astra_gui%dxlet, astra_gui%dylet + 1, CHR, 2) ! Screen No.
 call colovm(Black)
-call rectvm(0, JN0, JN0, astra_gui%Width - 1, astra_gui%Height - 1) ! Outer frame
+call rectvm(0, 0, 0, astra_gui%Width - 1, astra_gui%Height - 1) ! Outer frame
 
 return
 end subroutine up_label
