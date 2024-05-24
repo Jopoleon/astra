@@ -63,7 +63,7 @@ integer, parameter :: n_portrait=0, n_landscape=1
 integer, intent(in) :: IFKL
 character(len=10), parameter :: DEFUNA='      .tmp'
 
-logical :: MODADD
+logical :: MODADD, skip_poll
 integer*2, dimension(NRD) :: YWD
 integer :: POLLEVENT, WAITEVENT, KIBM, KASCII, jpos
 integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
@@ -134,7 +134,15 @@ call markloc('IFKEY', debug_lev=2*debug)
 CHORDN = lineav()
 
 NTRUN = NTIMES
-if (IFKL == 257) goto 97 ! EXIT
+if (IFKL == 257) then ! Stop ASTRA
+    if (TASK(4:4) /= 'B') call Close_Screen ! Kill GUI window
+    write(6, '(A)')' >>> ASTRA error >>>'
+    write(6, '(A, F11.6, A)')"    Floating point exception at  t =", TIME, ' sec'
+    call wrtime(6, '    Run time', 12, swatch(Y), -1.d0)
+    call CPUSE(6)
+    call astra_stop
+endif
+ 
 IFKEY = 0
 
 if (IFKL == -1) then
@@ -147,9 +155,11 @@ if (IFKL < 0 .or. IFKL > 257) then
     return
 endif
 
+skip_poll = .False.
 if (IFKL > 0 .and. IFKL < 256) then
     KEY = IFKL
-    goto 10
+    skip_poll = .True.
+    goto 1
 elseif (IFKL == 256) then
     write(STRI, '(a, i3)') "Iteration #", ITREQ
     call colovm(Magenta) ! Iterations
@@ -212,7 +222,7 @@ JTOUT = JTOUT + 1
 
 if (MOD10 == 6 .or. MOD10 == 7) then
     if (JJ /= 0) then
-        call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
         if (IFKL == KEY) return
         goto 1
     endif
@@ -324,79 +334,71 @@ if (IPOUT < NTRUN) IPOUT = IPOUT + 1
 
  1 continue
 
-call markloc(str_in='IFKEY (loop)')
-KEY = 0
-
-if (TASK(4:4) /= 'B') call redraw(0)
+if (.not. skip_poll) then
+    KEY = 0
+    if (TASK(4:4) /= 'B') call redraw(0)
 
 ! Check Pause time condition
-if (TIME >= TPAUSE .and. IDSP == 0) then
-    IDSP = 1
-    KEY = 32
-    goto 10
-endif
-
-!---------------
-! Polling events
-KEY = 0
-if (TASK(1:3) == 'RUN') then
-    KIBM = pollevent(KEY)
+    if (TIME >= TPAUSE .and. IDSP == 0) then
+        IDSP = 1
+        KEY = 32
+    else ! Polling events
+        KEY = 0
+        if (TASK(1:3) == 'RUN') then
+            KIBM = pollevent(KEY)
 ! KIBM = 1 - <Ctrl> was pressed
 ! KIBM = 2 - <Alt>  was pressed
 ! KEY=318 - the root window was closed
 ! KEY=322 and then KEY=319 - the root window is opened
 
-    if (KEY == 0) return
+            if (KEY == 0) return
+            if (KIBM == 1 .and. (KEY == 99 .or. KEY == 67)) goto 97 ! <Ctrl>+C
 
-    if (KIBM == 1 .and. (KEY == 99 .or. KEY == 67)) goto 97 ! <Ctrl>+C
-
-    if (KIBM == 65006) then
-        TASK = 'RUN '
-        KIBM  = 0
-        return
-    endif
-    if (KIBM == 65005) then
-        TASK = 'RUNB'
-        return
-    else
-        TASK = 'RUN '
-    endif
-    if (KIBM == 1 .or. KIBM == 2) goto 49
-    if (KEY >= 97 .and. KEY <= 122) KEY=KEY-32
-endif
+            if (KIBM == 65006) then
+                TASK = 'RUN '
+                KIBM  = 0
+                return
+            endif
+            if (KIBM == 65005) then
+                TASK = 'RUNB'
+                return
+            else
+                TASK = 'RUN '
+            endif
+            if (KIBM == 1 .or. KIBM == 2) goto 49
+            if (KEY >= 97 .and. KEY <= 122) KEY=KEY-32
+        endif
 
 !-------------------
 ! Waiting for events
 
-if (TASK(1:3) == 'DSP') then
-    if (IFLAG == 1) then
+        if (TASK(1:3) == 'DSP') then
+            if (IFLAG == 1) then
 ! IFLAG is equal 1 if
 ! (1) <Space> is pressed 
 ! (2) when a subroutine-call KEY is pressed.
 ! One time step and re-drawing is done
-        KEY = 0
-        IFLAG = 0
-        call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
-    endif
+                KEY = 0
+                IFLAG = 0
+                call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
+            endif
 
-    call PUTXY(IX, IY, NTRUN, TTOUT, TOUT)
-    KASCII = 0
-    KIBM = waitevent(KASCII, ix, iy)
-    KEY  = KASCII
-    if (KEY == 0) goto 1
-    if (KEY  < 127 .and. (KIBM == 1 .or. KIBM == 2)) goto 49
-    if (KIBM < 65000) goto 1
-    KIBM = KIBM - 65000
-    if (KIBM >= 361 .and. KIBM <= 364) then
-        call mvcursor(KIBM, ix, iy)
-        goto 1
-    endif
-    if (KEY >= 97) KEY = KEY - 32
+            call PUTXY(IX, IY, NTRUN, TTOUT, TOUT)
+            KASCII = 0
+            KIBM = waitevent(KASCII, ix, iy)
+            KEY  = KASCII
+            if (KEY == 0) goto 1
+            if (KEY  < 127 .and. (KIBM == 1 .or. KIBM == 2)) goto 49
+            if (KIBM < 65000) goto 1
+            KIBM = KIBM - 65000
+            if (KIBM >= 361 .and. KIBM <= 364) then
+                call mvcursor(KIBM, ix, iy)
+                goto 1
+            endif
+            if (KEY >= 97) KEY = KEY - 32
+        endif
+    endif ! Poll key event
 endif
-
-!----------------------------------------------------------------------|
-
-10 continue
 
 SELECT CASE(KEY)
 
@@ -421,7 +423,7 @@ CASE(78) ! 'N'
         endif
         if (J <= JJ*active_tab(MOD10)) active_tab(MOD10) = 0
     endif
-    call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+    call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
     if (IFKL == KEY) return
 
 CASE(66) ! 'B'
@@ -438,7 +440,7 @@ CASE(66) ! 'B'
             active_tab(MOD10) = (J - 1)/JJ
         endif
     endif
-    call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+    call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
     if (IFKL == KEY) return
 
 CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
@@ -467,7 +469,7 @@ CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
         call set_plot_area(plot_mode)
         call set_plot(plot_mode)
     endif
-    call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+    call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
     if (IFKL == KEY) return
 
 CASE(73) ! 'I'
@@ -501,11 +503,11 @@ CASE(73) ! 'I'
 CASE(46) ! '.'
     MARK = MARK + 1
     if (MARK == 2) MARK = -1
-    call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+    call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
     if (IFKL == KEY) return
 
 CASE(82) ! 'R'
-    call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+    call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
     if (IFKL == KEY) return
 
 CASE(85) ! 'U'
@@ -601,7 +603,7 @@ CASE(87) ! 'W'
     if (MOD10 == 4 .or. MOD10 == 5) call ASKINT(NROUT, NWIND4, NAMER)
     if (MOD10 == 6) call ASKINT(NTOUT, NWIND3, NAMET)
     if (MOD10 == 7) call ASKINT(NTOUT, NWIND7, NAMET)
-    call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+    call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
     if (IFKL == KEY) return
 
 CASE(76) ! 'L'
@@ -609,7 +611,13 @@ CASE(76) ! 'L'
     open(1, file=TRIM(CNSFIL), iostat=ios)
     if (ios /= 0) then
         write(*, *) '>>> IFKEY: "', TRIM(CNSFIL), '" file error'
-        goto 70
+        if (KEY == 27)  then
+            write(*, '(/2A)') 'Use key "/" for exit', char(7) ! Beep
+        elseif (KEY /= 0 .and. KIBM == 0) then
+            write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, char(7)
+        endif
+        KEY = 0
+        goto 1
     endif
     j2 = 0
 
@@ -670,14 +678,14 @@ CASE(88) ! 'X'
     endif
  112 format('X-axis:   ', A, 1I4)
  114 format('X-axis:   ', 1A, F5.2, 1A, 1I4)
-    call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+    call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
     if (IFKL == KEY) return
 
 ! Test field
 CASE(74) ! 'J'
     call system("ipcs -s") ! Report active semaphore sets
     call system("ipcs -m") ! Report active shared memory segments
-    call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+    call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
     if (IFKL == KEY) return
 
 CASE(68) ! 'D'
@@ -700,7 +708,7 @@ CASE(68) ! 'D'
     endif
     if (j /= MODEX) call xaxis(j)
     IF(TIME >= TIMEB) then
-        call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
         if (IFKL == KEY) return
     else
         TROUT = TIME
@@ -738,7 +746,7 @@ CASE(77) ! 'M'
         call MENUTABLE(INT4, PRMARK, NAMEP, 6)
     endif
     if (MOD10 <= 7) then
-        call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
         if (IFKL == KEY) return
     endif
 
@@ -779,7 +787,7 @@ CASE(71, 81) ! 71:'G'=portrait, 81:'Q'=landscape
     if (IRET == 0) then
         if (KEY == 71) KPRI = 1
         if (KEY == 81) KPRI = 2
-        call re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
         if (IFKL == KEY) return
     else
         if (IRET == 1) then
@@ -794,13 +802,17 @@ END SELECT
 
 goto 1
 
-49 continue 
+49 continue
 
 !--------------------------------------------------------------------
     if (KIBM == 2) then
 !-------- <Alt>'M' or  <Alt>'m'
         if (KEY == 77 .or. KEY == 109) then
-            goto 70
+             if (KIBM == 0) then
+                 write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, char(7)
+             endif
+             KEY = 0
+             goto 1
         endif
         if (KEY == 47) goto 97 ! <Alt>+/
         if (KIBM == 2 .and. (KEY >= 32 .and. KEY <= 126) ) then
@@ -828,16 +840,11 @@ goto 1
         IFKEY = 0
         return
     endif
-    goto 70
-!------
 
- 70 continue
-
-!--------------------------------
 if (KEY == 27)  then
-    write(*, '(/2A)')'Use key "/" for exit', char(7) ! Beep
+    write(*, '(/2A)') 'Use key "/" for exit', char(7) ! Beep
 elseif (KEY /= 0 .and. KIBM == 0) then
-    write(*, *)'Unrecognized key: "', char(KEY), '"', KEY, char(7)
+    write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, char(7)
 endif
 KEY = 0
 goto 1
@@ -846,18 +853,13 @@ goto 1
 97 continue
 
 if (TASK(4:4) /= 'B') call Close_Screen
-if (IFKL == 257) then
-    write(6, '(A)')' >>> ASTRA error >>>'
-    write(6, '(A, F11.6, A)')"    Floating point exception at  t =", TIME, ' sec'
-    call wrtime(6, '    Run time', 12, swatch(Y), -1.d0)
-else
-    TIMEB = swatch(Y)
-    j1 = TIMEB
-    j2 = j1/3600
-    jj = (j1 - 3600*j2)/60
-    j1 = timeb - 60*jj - 3600*j2
-    write(6, '(A, I4.2, 2(A1, I2.2))') '>>> ASTRA normal exit >>>  Run time', j2, ':', jj, ':', j1
-endif
+TIMEB = swatch(Y)
+j1 = TIMEB
+j2 = j1/3600
+jj = (j1 - 3600*j2)/60
+j1 = timeb - 60*jj - 3600*j2
+write(6, '(A, I4.2, 2(A1, I2.2))') '>>> ASTRA normal exit >>>  Run time', j2, ':', jj, ':', j1
+
 call CPUSE(6)
 call astra_stop
 
@@ -906,7 +908,7 @@ call redraw(0)
 end subroutine graph_output
 
 !---------------------------------------------------------------------
-subroutine re_draw(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+subroutine refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
 ! Corresponds to block from statement 201
 
 use parameter_inc, only: NRD
@@ -932,7 +934,7 @@ character(len=6) :: NAMEP(NTIMES)
 character(len=132) :: STRI
 integer, external :: plotMode
 
-call markloc('re_draw', debug_lev=2*debug)
+call markloc('refresh_plot', debug_lev=2*debug)
 
 if (IFKL == 256 .and. TASK(1: 3) /= 'DSP') then
     call PSCLOSE
@@ -961,7 +963,7 @@ else
 endif
 CHORDN = lineav()
 call up_label(CHORDN, 1./MU(NA))
-if (IFKL /= 256) call TIMEDT(TIME, 1000.*TAU)
+if (IFKL /= 256) call TIMEDT(TIME, 1000.*TAU) ! 256 <-> initial iterations
 j = 0
 if (MOD10 <= 5 .or. MOD10 == 7) call down_label(j, NTRUN, TOUT)
 if (MOD10 == 6 .and. KPRI == 0) call down_label(j, NTRUN, TOUT)
@@ -976,7 +978,7 @@ if (KPRI == 1 .or. KPRI == 2) then
 endif
 
 return
-end subroutine re_draw
+end subroutine refresh_plot
 
 !---------------------------------------------------------------------
 subroutine SMODE5(MARK, PRMARK, NAMEP, ITIMES)
