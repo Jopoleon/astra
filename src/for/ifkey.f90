@@ -511,91 +511,79 @@ CASE(82) ! 'R'
     if (IFKL == KEY) return
 
 CASE(85) ! 'U'
-    if (MOD10 >= 7) goto 1
     if (NUF > NRD) then
         write(*, *) '>>> No. of radial points in a U-file is too large:'
         write(*, *) '           Decrease NUF or increase NB1'
         goto 1
-    endif
-
+    else
+        SELECT CASE(MOD10)
 ! Different options for radial array 
-    if (MOD10 >= 1 .and. MOD10 <= 4) then
-        call ufileBox(NROUT, UNAMES, NAMER, DEFUNA)
-        jpos = str_in_list(DEFUNA, UNAMES(1: NROUT), 10)
-        if (jpos == 0) goto 1
-
-        call RADOUT
-        MODEX = XOUT + 0.49
-
-        if (MOD10 == 4) then
-            if (MODEX == 1) then
+        CASE(4)
+            call ufileBox(NROUT, UNAMES, NAMER, DEFUNA)
+            jpos = str_in_list(DEFUNA, UNAMES(1: NROUT), 10)
+            if (jpos > 0) then
+                call RADOUT
+                MODEX = XOUT + 0.49
+                if (MODEX == 1) then
 ! Write up to ABC against "a"
-                NU1 = NA1
-                ABD = ABC
-                do j = 1, NA1
-                    YWC(j) = AMETR(j)/ABC
-                enddo
-            elseif (MODEX == 2) then
+                    NU1 = NA1
+                    ABD = ABC
+                    do j = 1, NA1
+                        YWC(j) = AMETR(j)/ABC
+                    enddo
+                elseif (MODEX == 2) then
 ! Write up to ROC against "rho"
-                NU1 = NA1
-                ABD = 1.
-                do j = 1, NA1
-                    YWC(j) = RHO(j)/ROC
-                enddo
-            else
+                    NU1 = NA1
+                   ABD = 1.
+                    do j = 1, NA1
+                        YWC(j) = RHO(j)/ROC
+                    enddo
+                else
 ! Write up to AB against "a" (default)
-                if (MODEX /= 0) write(*, *) ">>>  Warning: Unknown radial mode.  Writing anyway [0, AB]"
-                NU1 = NAB
-                ABD = AB
-                do j = 1, NAB
-                    YWC(j) = AMETR(j)/AB
-                enddo
-            endif
+                    if (MODEX /= 0) write(*, *) ">>>  Warning: Unknown radial mode.  Writing anyway [0, AB]"
+                    NU1 = NAB
+                    ABD = AB
+                    do j = 1, NAB
+                        YWC(j) = AMETR(j)/AB
+                    enddo
+                endif
 ! Radial coordinate in a U-file in [m] (presently)
-            do jj=1, NROUT
-                if (UNAMES(jj) /= DEFUNA) then
-                    ALFA = 1.d-4
+                do jj=1, NROUT
+                    if (UNAMES(jj) /= DEFUNA) then
+                        ALFA = 1.d-4
 ! Transfer to an equidistant radial grid
-                    do j=1, NUF
-                        YWA(j) = (j - 1.)/(NUF - 1.)
-                    enddo
-                    call SMOOTH(ALFA, NU1, ROUT(1, jj), YWC, NUF, YWB, YWA)
-                    do j=1, NUF
-                        YWA(j) = YWA(j)*ABD
-                    enddo
-                    call UF1DWA('AUGD', RUNID, UNAMES(jj), TIME, NAMER(jj), NUF, 1, 4, &
-                        YWA, YWB, RTOR, AB, BTOR, IPL, CHORDN, MODEX)
-                endif
-            enddo
-            goto 1
-
-            if (MODEX /= 0) write(*, *) ">>>  Warning: ", &
-              "2D U-file incompatible radial mode.  Writing anyway [0, AB]"
+                        do j=1, NUF
+                            YWA(j) = (j - 1.)/(NUF - 1.)
+                        enddo
+                        call SMOOTH(ALFA, NU1, ROUT(1, jj), YWC, NUF, YWB, YWA)
+                        do j=1, NUF
+                            YWA(j) = YWA(j)*ABD
+                        enddo
+                        call UF1DWA('AUGD', RUNID, UNAMES(jj), TIME, NAMER(jj), NUF, 1, 4, &
+                            YWA, YWB, RTOR, AB, BTOR, IPL, CHORDN, MODEX)
+                    endif
+                enddo
 !  Write up to AB against "a" (default)
-            do jj=1, NROUT
+!                do jj=1, NROUT
+!                    if (UNAMES(jj) /= DEFUNA) then
+!                        call UF2DWA('AUGD', UNAMES(jj), NAMER(jj), jj, NUF, 0, 4, PRMARK, &
+!                            TIMOD4, RTOR, AB, BTOR, IPL, CHORDN, YWA, YWB, YWC)
+!                    endif
+!                enddo
+            endif
+
+        CASE(6)
+            call TIMOUT
+            call ufileBox(NTOUT, UNAMES, NAMET, DEFUNA)
+            do jj=1, NTOUT
                 if (UNAMES(jj) /= DEFUNA) then
-                    call UF2DWA('AUGD', UNAMES(jj), NAMER(jj), jj, NUF, 0, 4, PRMARK, &
-                        TIMOD4, RTOR, AB, BTOR, IPL, CHORDN, YWA, YWB, YWC)
+                    call UF1DWA('AUGD', RUNID, UNAMES(jj), TIME, NAMET(jj), LTOUT-1, 0, &
+                        4, TTOUT(1), TOUT(1, jj), RTOR, AB, BTOR, IPL, CHORDN, MODEX)
                 endif
             enddo
-            goto 1
-        endif
-    endif
-
-    if (MOD10 == 5) then
-        write(*, *) '>>>  WARNING: U-file writing is not implemented in this mode'
-        goto 1
-    endif
- 
-    if (MOD10 == 6) then
-        call TIMOUT
-        call ufileBox(NTOUT, UNAMES, NAMET, DEFUNA)
-        do jj=1, NTOUT
-            if (UNAMES(jj) /= DEFUNA) then
-                call UF1DWA('AUGD', RUNID, UNAMES(jj), TIME, NAMET(jj), LTOUT-1, 0, &
-                     4, TTOUT(1), TOUT(1, jj), RTOR, AB, BTOR, IPL, CHORDN, MODEX)
-            endif
-        enddo
+        CASE DEFAULT
+            write(*, *) '>>>  WARNING: U-file writing is not implemented in this mode'
+        END SELECT
     endif
 
 CASE(87) ! 'W'
