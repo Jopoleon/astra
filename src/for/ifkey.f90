@@ -221,8 +221,11 @@ JTOUT = JTOUT + 1
 if (MOD10 == 6 .or. MOD10 == 7) then
     if (JJ /= 0) then
         call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
-        if (IFKL == KEY) return
-        goto 1
+        if (IFKL == KEY) then
+            return
+        else
+            goto 1
+        endif
     endif
     call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
 endif

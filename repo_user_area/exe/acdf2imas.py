@@ -1,5 +1,5 @@
 import os, datetime, logging, argparse
-from scipy.io import netcdf
+from scipy.io import netcdf_file
 import imas
 import numpy as np
 
@@ -25,7 +25,7 @@ def ACDF2IMAS(args, write_ids=True):
         db = imas.DBEntry(imas.imasdef.ASCII_BACKEND  , 'aug', args.shot, args.ids_run, os.getenv('USER'), '3')
     status, _ = db.create()
 
-    cv = netcdf.netcdf_file(args.fcdf, 'r', mmap=False).variables
+    cv = netcdf_file(args.fcdf, 'r', mmap=False).variables
     cp = fill_core_profiles(cv)
 
     if write_ids:
