@@ -79,7 +79,7 @@ use outcmn_inc, only: astra_gui, plot_area, &
     NXOUT, NAMEX, NARRX, EXARNM, DATAX, TOUTX, LTOUT, &
     XAXES, GRAL, GRAP, pixel_ymid, meter2pixel, &
     Black, WarningColor, EraseColor, Red, Blue, Green, White, &
-    equ_file, NBFILE, NBFLAG
+    equ_file
 use expdat, only: raw_profile_map, DATARR
 use dbl2char, only: fmt_xf
 use char_manip, only: len_trim_tab, str_in_list
@@ -447,11 +447,6 @@ CASE(8)
 ! Plot the complete wall structure (Pixmap # 1)
     call plot_wall
 
-    if (NBFLAG /= 0 .and. NBFILE(1:1) /= '*' .and. jifnew /= 0) then ! Create/update NBI Pixmap # 2
-        call drawfoot(jifnew)
-        NBFLAG = 0
-    endif
-
 ! if (data file includes NAMEXP BND) then (NBND > 0);
 ! or (NBND == 8) after calling equil with no boundary points provided;
 !     NBND == 0 otherwise
@@ -776,107 +771,6 @@ endif
 
 return
 end function ABSC
-
-!---------------------------------------------------------------------
-subroutine DRAWFOOT(jifnew)
-!---------------------------------------------------------------------
-! YRBMN maximum radius of the footprint 
-! YRBMX minimum radius of the footprint 
-! YHBM  the upshift of the beam footprint
-! YASP  the aspect ratio of the beam footprint
-! YQ    the beam power
-
-use parameter_inc, only: NRD
-use const_inc, only: CNB1
-use outcmn_inc, only: astra_gui, NBFILE, Magenta, meter2pixel, pixel_ymid
-use debugger, only: markloc, astra_stop
-
-implicit none
-
-integer, intent(in) :: jifnew
-
-integer :: j, jj, JL, JN, ERCODE
-double precision :: YRBMN, YRBMX, YHBM, YASP, YH, YQ
-double precision, dimension(10) :: plot_arr
-double precision, dimension(15, 2*NRD+7) :: work_nbi
-character(len=16) :: STRI
-character(len=132) :: err_msg
-
-call markloc('DRAWFOOT')
-call createpixmap(2) ! All calls except the first are ignored
-
-open(2, file=TRIM(NBFILE), status='OLD')
-
-if (anint(CNB1) < 1) return
-
-do JN=1, anint(CNB1)
-! Read a record for one beam source
-    call STREAD(2, 20, work_nbi(1, JN), ERCODE)
-    if (ERCODE /= 0) EXIT
-enddo
-
-SELECT CASE(ERCODE)
-CASE(1)
-    err_msg = '>>> NB drawing >>> Error in file "' // TRIM(NBFILE) // &
-         '": unrecognized variable name'
-    call astra_stop(err_msg)
-CASE(2)
-    call astra_stop('>>> NB file "' // TRIM(NBFILE) // '" read error')
-CASE(3)
-    write(*, *) '>>> NB file "' // TRIM(NBFILE) // '" wrong format:'
-    call astra_stop('            More records expected than available.')
-CASE(4) 
-    call astra_stop('>>> NB drawing STREAD: array out of limits')
-CASE(5)
-    write(*, *) '>>> NB file "', TRIM(NBFILE), '" wrong format:'
-    write(err_msg, '(A, I2, A, I2, A)')'     ', JN-1, ' beam records available, ', &
-         int(CNB1), ' records required.'
-    call astra_stop(err_msg)
-END SELECT
-
-close(2)
-!if (jifnew == 0) call redraw(2) ! Erase previous
-call cleare(2, 0, 0, astra_gui%width - 1, astra_gui%height - 1)
-call setColor(Magenta)
-
-JL = 0
-
-do JN=1, anint(CNB1)
-    YQ = work_nbi(1, JN)
-    if (YQ >= 1.d-2) then
-        YHBM = work_nbi(11, JN)
-        YASP = work_nbi(15, JN)
-        YRBMX = work_nbi(12, JN)
-        YRBMN = work_nbi(13, JN)
-! Beam footprint drawing:
-        JL = JL + 1
-        write(STRI(1: 2), '(I2)') JN
-        STRI(3: 4) = '  '
-        write(STRI(5: 10), '(1F6.3)') YQ
-
-        call textnb(16, 35 - 3 + JL*astra_gui%dylet, STRI(1: 10), 10)
-        call textnb(10, 35 - 3, 'Beam  Power', 11)
-
-        YH = 0.5*YASP*(YRBMX - YRBMN)
-        plot_arr(1) = max(YRBMN, 0.d0)*meter2pixel
-        plot_arr(2) = pixel_ymid + (-YHBM - YH)*meter2pixel
-        plot_arr(3) = YRBMX*meter2pixel
-        plot_arr(4) = plot_arr(2)
-        plot_arr(5) = plot_arr(3)
-        plot_arr(6) = pixel_ymid + (-YHBM + YH)*meter2pixel
-        plot_arr(7) = plot_arr(1)
-        plot_arr(8) = plot_arr(6)
-        plot_arr(9) = plot_arr(1)
-        plot_arr(10) = plot_arr(2)
-
-        j = 2
-        jj = 5
-        call drawcurve(j, plot_arr, jj)
-    endif
-enddo
-
-return
-end subroutine DRAWFOOT
 
 !---------------------------------------------------------------------
 subroutine DRAWSPFLUX

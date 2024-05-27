@@ -612,11 +612,11 @@ do while(.True.)
         if (MOD10 == 0) then
             write(*, *) 'X-axis:   none'
         elseif (MOD10 == 3) then
-            write(*, 112) 'poloidal flux,  1 < j < NA1 =', NA1
+            write(*, '(A, I)') 'X-axis:   poloidal flux,  1 < j < NA1 =', NA1
         elseif (MOD10 == 4) then
-            write(*, 114) '0 < a < AB =', AB, 'm     1 < j < NAB =', NAB
+            write(*, '(A, F5.2, A, I)') 'X-axis:   0 < a < AB =', AB, 'm     1 < j < NAB =', NAB
         elseif (MOD10 == 5) then
-            write(*, 112) 'major radius in the mid-plane'
+            write(*, '(A, I)') 'X-axis:   major radius in the mid-plane'
         elseif (MOD10 == 6) then
             write(*, *) 'X-axis:   time [s]'
         elseif (MOD10 == 7) then
@@ -626,18 +626,17 @@ do while(.True.)
         elseif (MOD10 == 9) then
             write(*, *) "User's plot"
         elseif (MODEX == 0) then
-            write(*, 114) '0 < a < AB =', AB, 'm,     1 < j < NAB =', NAB
+            write(*, '(A, F5.2, A, I)') 'X-axis:   0 < a < AB =', AB, 'm,     1 < j < NAB =', NAB
         elseif (MODEX == 1) then
-            write(*, 114) '0 < a < ABC =', ABC, 'm,    1 < j < NA1 =', NA1
+            write(*, '(A, F5.2, A, I)') 'X-axis:   0 < a < ABC =', ABC, 'm,    1 < j < NA1 =', NA1
         elseif (MODEX == 2) then
-            write(*, 114) '0 < rho < ROC =', ROC, 'm,    1 < j < NA1 =', NA1
+            write(*, '(A, F5.2, A, I)') 'X-axis:   0 < rho < ROC =', ROC, 'm,    1 < j < NA1 =', NA1
         elseif (MODEX == 3) then
-            write(*, 112) '0 < Psi < FP(NA1),  1 < j < NA1 =', NA1
+            write(*, '(A, I)') 'X-axis:   0 < Psi < FP(NA1),  1 < j < NA1 =', NA1
         else
             write(*, *) 'X-axis:   Unknown option'
         endif
- 112 format('X-axis:   ', A, 1I4)
- 114 format('X-axis:   ', 1A, F5.2, 1A, 1I4)
+
         call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
         if (IFKL == KEY) return
 

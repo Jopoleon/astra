@@ -35,7 +35,7 @@ subroutine NBI
 
 use const_inc
 use status_inc
-use outcmn_inc, only: NBFILE, NBFLAG
+use outcmn_inc, only: NBFILE
 
 implicit none
 
@@ -79,8 +79,6 @@ call nbstatus(JINOUT, NB1, NA1, NE, NHYDR, NDEUT, NTRIT, NHE3, &
     NN, TN, ZEF, G33, IPOL, NIBM, PIBM, PEBM, PBLON, PBPER, & 
     PBEAM, SNEBM, SNNBM, CUFI, CUBM, SCUBM, &
     SNIBM1, SNIBM2, SNIBM3, NNBM1, NNBM2, NNBM3)
-
-NBFLAG = 1 ! Used for footprint drawing
 
 return
 end subroutine nbi
