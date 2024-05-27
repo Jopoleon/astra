@@ -46,7 +46,7 @@ def fill_core_profiles(cv):
     cp.ids_properties.homogeneous_time = 1   # same timebase for core_profiles IDS
     cp.ids_properties.creation_date = datetime.datetime.today().strftime("%d/%m/%y")
 
-    cp.time = cv['TIME'].data
+    cp.time = np.atleast_1d(cv['TIME'].data)
     nt_cp = len(cp.time)
 
 #    cp.vacuum_toroidal_field.r0 = cv['RMAJ'].data
