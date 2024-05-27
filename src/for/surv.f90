@@ -182,13 +182,13 @@ double precision, intent(in), dimension(np) :: xold, yold, xnew, ynew
 
 if (np_old > 0) then
 ! erase the old curve
-    call colovm(EraseColor)
+    call setColor(EraseColor)
     call plot_curve(np_old, STYL, xold, yold)
 endif
 
 ! draw a new curve
 
-call colovm(ICOLOR)
+call setColor(ICOLOR)
 call plot_curve(NP, STYL, xnew, ynew)
 
 return

@@ -106,7 +106,7 @@ data (HELP(j), j=1, 10)/  &
       '  7      - Trace of the discharge in a phase space', &
       '  8      - Magnetic flux surfaces', &
       '  .      - Curve style'/
-data (HELP(j),j=11,20)/ &
+data (HELP(j), j=11, 20)/ &
       '  A      - Adjust colors (for a color monitor only)', &
       '  B & N  - Backward & forward screen scan', &
       '  C & V  - Constants & main Variables control', &
@@ -117,7 +117,7 @@ data (HELP(j),j=11,20)/ &
       '  I      - Save the model constants for the next run', &
       '  L      - Model listing', &
       '  M      - Mark time slice[s] in the modes 4, 5, 7'/
-data (HELP(j),j=21,28)/ &
+data (HELP(j), j=21, 28)/ &
       '  R      - Refresh screen', &
       '  S      - New scales', &
       '  T      - Type numerical values of the current curves', &
@@ -160,9 +160,9 @@ if (IFKL > 0 .and. IFKL < 256) then
     goto 1
 elseif (IFKL == 256) then
     write(STRI, '(a, i3)') "Iteration #", ITREQ
-    call colovm(Magenta) ! Iterations
+    call setColor(Magenta) ! Iterations
     call textvm(astra_gui%width-18*astra_gui_ref%dxlet, 2, "equil iterations", 16)
-    call colovm(Blue) ! Iteration #
+    call setColor(Blue) ! Iteration #
     call textvm(astra_gui%width-17*astra_gui_ref%dxlet, astra_gui_ref%dylet+1, STRI(1:14), 14)
     TROUT = TIME
     call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
@@ -304,7 +304,7 @@ endif
 do while(.True.)
     if (.not. skip_poll) then
         KEY = 0
-        if (TASK(4:4) /= 'B') call redraw(0)
+        if (TASK(4:4) /= 'B') call redraw
 
 ! Check Pause time condition
         if (TIME >= TPAUSE .and. IDSP == 0) then
@@ -755,7 +755,7 @@ do while(.True.)
         else
             if (IRET == 1) then
                 STRI = '>>>  Can not open file: ' // TRIM(PSNAME)
-                call colovm(WarningColor)
+                call setColor(WarningColor)
                 call textvm(0, astra_gui%yMessage, STRI, 24+LEN_TRIM(PSNAME))
             endif
             KEY = 0
@@ -819,7 +819,7 @@ enddo
 ! Exit ASTRA
 
 if (TASK(4:4) /= 'B') call Close_Screen
-write(6, *) '>>> ASTRA normal exit >>>'
+write(6, *) '>>> ASTRA exit: reached END time >>>'
 call CPUSE(6)
 call astra_stop
 
@@ -862,7 +862,7 @@ CHORDN = lineav()
 call up_label(CHORDN, 1./MU(NA))
 jt = 0
 if (MOD10 <= 7) call down_label(jt, NTRUN, TOUT)
-call redraw(0)
+call redraw
 
 end subroutine graph_output
 
@@ -927,7 +927,7 @@ if (MOD10 <= 5 .or. MOD10 == 7) call down_label(j, NTRUN, TOUT)
 if (MOD10 == 6 .and. KPRI == 0) call down_label(j, NTRUN, TOUT)
 if (KPRI == 1 .or. KPRI == 2) then
     write(*, '(//A//)') '>>>  The figure is stored in the file: ' // TRIM(PSNAME)
-    call colovm(WarningColor)
+    call setColor(WarningColor)
     if (KPRI == 1) call const2ps
     STRI = 'The figure is stored in the file: ' // TRIM(PSNAME)
     call textvm(10, astra_gui%yMessage, TRIM(STRI), LEN_TRIM(STRI))
@@ -1041,7 +1041,7 @@ read_loop: do
 
         ST(1:4) = fmt4(SC(jj))
         ST(5: 9) = NAMER(jj)
-        call colovm(Black)
+        call setColor(Black)
         call textvm((NP - 1)*plot_area%canvas_width, jnl, ST, 9)
         YS = OSHIFR(jj)
         if (YS < 0) then
@@ -1065,7 +1065,7 @@ read_loop: do
                 plot_arr(1) = NP + half_wid*YL
                 plot_arr(2) = plot_area%height - IYMN
                 plot_arr(3) = NP + half_wid*YR
-                call colovm(Red)
+                call setColor(Red)
                 call drawvm(0, plot_arr(1), plot_arr(2)    , plot_arr(3), plot_arr(2))
                 call drawvm(0, plot_arr(1), plot_arr(2) + 1, plot_arr(3), plot_arr(2) + 1)
                 call drawvm(0, plot_arr(1), plot_arr(2) + 2, plot_arr(3), plot_arr(2) + 2)
@@ -1150,7 +1150,7 @@ read_loop: do
             j = len_trim_tab(STRI)
             call pscom(STRI, j)
         endif
-        call colovm(jc)
+        call setColor(jc)
         call plot_curve(NP1, STYL, xplot, yplot)
         if (PRMARK(JTIM) /= 0) then
             JPOS = 3*astra_gui%dxlet + PRMARK(JTIM)*plot_area%canvas_width/6.5 + plot_area%canvas_width*(NP - 1)

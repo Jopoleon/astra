@@ -101,7 +101,7 @@ void fenvex_(void){
 }
 
 void sigint_handler(int sig){   /* this is the handler */
-    const int j = 47;  
+    const int j = 47;
     ifkey_(&j);
 }
 

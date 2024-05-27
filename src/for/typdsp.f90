@@ -11,7 +11,7 @@ JLR = astra_gui%Height - 125
 JN0 = 0
 STRI = repeat(' ', 80)
 
-call colovm(White)
+call setColor(White)
 call textvm(JN0, JLR, STRI(1: 15), 15)
 call textvm(astra_gui%Width - 83*astra_gui%dxlet + 2, JLR, STRI(1: 80), 80)
 
@@ -52,7 +52,7 @@ if (MOD10 <= 5) then
     JBE  = 1
     JEND = 16
     do
-        JEN = MIN0(NROUT, JEND)
+        JEN = MIN(NROUT, JEND)
         write(STRI, '(16(1X, 1A4))') (NAMER(J), J=JBE, JEN)
         write(*, '(1X, A)') TRIM(STRI)
         do J=1, NP1
@@ -178,7 +178,7 @@ JX = IX - 10
 JY = IY - 10
 if (plot_area%xmin > JX .or. JX > plot_area%xmax .or. plot_area%ymax > JY .or. JY > plot_area%ymin) then
     STRI = repeat(' ', 80)
-    call colovm(White)
+    call setColor(White)
     call textvm(JN0, JLR, "               ", 15)
     call textvm(astra_gui%Width - 83*astra_gui%dxlet + 2, JLR, STRI(1: 80), 80)
     return
@@ -211,7 +211,7 @@ if (MOD10 == 6) then
         if (NAMET(J1) == '    ') JW = 0
         if (JW > 0 .and. JW <= 8) call down_label(j, ITIMES, TOUT) ! for the all modes
     enddo
-    call colovm(Red)
+    call setColor(Red)
     STRI(1 :  5) = 'Time='
     STRI(6 : 10) = fmt5(YY1)
     STRI(11: 11) = 's'
@@ -300,7 +300,7 @@ endif
 STRI(14: 18) = fmt5(YX)
 STRI(20: 24) = fmt5(YY)
 
-call colovm(Blue)
+call setColor(Blue)
 call textvm(JN0, JLR, "               ", 15)
 call textvm(astra_gui%Width - 83*astra_gui%dxlet, JLR, STRI(1: 80), 80)
 
@@ -451,11 +451,11 @@ if (plot_mode <= 0) return
 TIMWIN = 0
 if (plot_mode == 5 .or. plot_mode == 6 .or. plot_mode == 8 .or. plot_mode == 9) TIMWIN = 1
 
-call colovm(Black)
+call setColor(Black)
 call rectvm(0, JN0, JN0, astra_gui%Width-1, astra_gui%Height-1)
 
 if (MOD10 == 6)  then
-    call colovm(Black)
+    call setColor(Black)
     j = astra_gui%Width - 20*astra_gui%dxlet + 1
     jj = plot_area%height + astra_gui%dylet
     call textvm(j, jj, 'time, s', 7)
@@ -467,13 +467,13 @@ if (KPRI >= 1 .and. KPRI <= 2) then
     j = len_trim_tab(COMMENT)
     call pscom(COMMENT, j)
 endif
-call colovm(Black)
+call setColor(Black)
 
 ! Skipping from a subplot to the next along x-axis
 do JJ=plot_area%xmin, plot_area%xmax, plot_area%canvas_width
-    JX = MIN0(plot_area%xmax, JJ)
-    XP = MIN (plot_area%xmax, JX + LENG)
-    XM = MAX (plot_area%xmin, JX - LENG)
+    JX = MIN(plot_area%xmax, JJ)
+    XP = MIN(plot_area%xmax, JX + LENG)
+    XM = MAX(plot_area%xmin, JX - LENG)
     call drawvm(0, JX, plot_area%ymax, JX, plot_area%ymin)
 ! Y-line labels
     if (KPRI >= 1 .and. KPRI <= 2) then
@@ -503,7 +503,7 @@ do JY=plot_area%ymin, plot_area%ymax, -plot_area%canvas_height
     if (plot_mode == 4 .or. plot_mode == 5 .or. plot_mode == 6) then
         YP = JY
     else
-        YP = MIN0(plot_area%ymin, JY + LENG)
+        YP = MIN(plot_area%ymin, JY + LENG)
     endif
     call drawvm(0, plot_area%xmin, JY, plot_area%xmax, JY)
 ! X-line labels
@@ -543,7 +543,7 @@ endif
 
 if (MOD10 == 6) then
 ! time-axis legend:
-    call colovm(Black)
+    call setColor(Black)
     JJ = plot_area%height - astra_gui%dylet + 12
     do J=0, plot_area%width, IDX
         JX = (J - IDT)*IDT + plot_area%xmin
@@ -567,7 +567,7 @@ if (MOD10 == 8) then
     scale_fac = dble(plot_area%height)/350.
     IDX = IDX*scale_fac
     JJ = plot_area%ymin + astra_gui%dylet + 2
-    call colovm(Black)
+    call setColor(Black)
     do J=1, 5
         JX = IDX*IDT*J - 24
         if (JX > JXSCM) CYCLE
@@ -624,10 +624,10 @@ character(len=80) :: STRI, STRIN
 
 if (jt_in == 0) then
     jt = LTOUT
-    call colovm(Black)
+    call setColor(Black)
 else
     jt = jt_in
-    call colovm(Blue)
+    call setColor(Blue)
 endif
 
 fshift = int(10*resizeGraph)
@@ -663,7 +663,7 @@ else
     JN0 = 0
     JN2 = plot_area%height - 5*astra_gui%dylet + FSHIFT + 2
     do
-        JEND = MIN0(JB + 15, NTOUT)
+        JEND = MIN(JB + 15, NTOUT)
         do J=JB, JEND
             XF4 = fmt_xf(TOUT(jt, J), 4)
             if (NAMET(J) == ' ') XF4 = '    '
@@ -709,12 +709,12 @@ STRMN(25: 28) = fmt40(IPL)
 STRMN(32: 35) = fmt40(YQ)
 STRMN(39: 42) = fmt40(YN)
 
-call colovm(Black)
+call setColor(Black)
 call textvm(0, 2, XLINE1(1: 15) // STRMN(1: 42), 56)
-call colovm(Blue)
+call setColor(Blue)
 write(CHR, '(1I2)') active_tab(MOD10) + 1
 call textvm(astra_gui%width - 2*astra_gui%dxlet, astra_gui%dylet + 1, CHR, 2) ! Screen No.
-call colovm(Black)
+call setColor(Black)
 call rectvm(0, 0, 0, astra_gui%Width - 1, astra_gui%Height - 1) ! Outer frame
 
 return
@@ -737,7 +737,7 @@ STRI(1 : 5 ) = 'Time='
 STRI(11: 16) = ' dt='
 STRI( 6: 10) = fmt50(TIME)
 STRI(15: 19) = fmt50(DT)
-call colovm(Black)
+call setColor(Black)
 call textvm(astra_gui%width - (str_len+3)*astra_gui_ref%dxlet, FSHIFT, STRI, str_len)
 
 return

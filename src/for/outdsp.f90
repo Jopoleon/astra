@@ -234,7 +234,7 @@ CASE(1: 3)  ! Profiles
             ROUT(j, jprof) = ROUT(j, jprof) - OSHIFR(jprof)
         enddo
 ! Variable labels
-        call colovm(jcol)
+        call setColor(jcol)
         text_posx = x_shift
         text_posy = astra_gui%dylet + FSHIFT + (plot_area%ymin - plot_area%ymax + 3 + astra_gui%dylet)*jy_canv
         call CMARK(text_posx, text_posy, SC(jprof), OSHIFR(jprof), NAMER(jprof), STYL, jplot_in_canv)
@@ -275,7 +275,7 @@ CASE(1: 3)  ! Profiles
         y_shift = plot_area%canvas_height * (plot_area%ny_canvas - 1 - jy_canv)
         x_shift = plot_area%canvas_width*jx_canv
 
-        call colovm(jcol)
+        call setColor(jcol)
         if (jsc /= jsco) then
             jsym = 5  ! 13
         else
@@ -283,7 +283,7 @@ CASE(1: 3)  ! Profiles
         endif
 
         if (JIFNEW == 0) then
-            call colovm(EraseColor)
+            call setColor(EraseColor)
             do j=1, NPTMO(jxout)
                 call NMARK(PTMO(1, j, jxout), jsym)
             enddo
@@ -309,7 +309,7 @@ CASE(1: 3)  ! Profiles
             r_out= min(r_out, 7.d0)
             JDSP = plot_area%canvas_height*r_out + IYMN + y_shift
             PTM(2) = plot_area%height - min(max(JDSP, IYMN), IYMX)
-            call colovm(jcol, 2)
+            call setColor(jcol, 2)
             call NMARK(PTM, jsym)
             PTMO(1, j1, jxout) = PTM(1)
             PTMO(2, j1, jxout) = PTM(2)
@@ -415,9 +415,9 @@ CASE(6)  ! Time traces
         jcol  = jcol  + 1
         j_curve = j_curve + 1
         if (j_curve <= ICVMX) then
-            call colovm(White)
+            call setColor(White)
             call plot_curve(LTOUT2, STYL, xtrace_old(1:LTOUT2), ytrace_old(1:LTOUT2, j_curve))
-            call colovm(jcol)
+            call setColor(jcol)
             call plot_curve(LTOUT2+1, STYL, xtrace(1:LTOUT2+1), ytrace(1:LTOUT2+1) )
             xtrace_old(1: LTOUT2+1) = xtrace(1: LTOUT2+1)
             ytrace_old(1: LTOUT2+1, j_curve) = ytrace(1: LTOUT2+1)
@@ -440,7 +440,7 @@ CASE(8)
 
     call markloc('Drawing mode 8', debug_lev=2*debug)
     px_rmag = (RTOR + SHIF(1))*meter2pixel
-    call colovm(Black)
+    call setColor(Black)
     x8bar = (/0., px_rmag/)
     y8bar = (/pixel_ymid, pixel_ymid/)
     call drawcurve(0, 2, x8bar, y8bar)
@@ -449,7 +449,6 @@ CASE(8)
 
     if (NBFLAG /= 0 .and. NBFILE(1:1) /= '*' .and. jifnew /= 0) then ! Create/update NBI Pixmap # 2
         call drawfoot(jifnew)
-        call redraw(2)
         NBFLAG = 0
     endif
 
@@ -499,12 +498,12 @@ CASE(8)
         js = raw_profile_map%jbeg_grid(jarr)
 
         if (JIFNEW == 0) then
-            call colovm(EraseColor)
+            call setColor(EraseColor)
             do j=1, NPTMO(jxout)
                 call NMARK(PTMO(1, j, jxout), 7)
             enddo
         endif
-        call colovm(jcol+2)
+        call setColor(jcol+2)
         do j=1, jpnt
             if (jtyp == 18)  then
                 YR = DATARR(js)
@@ -562,7 +561,7 @@ double precision :: YS, YX, YXL, YXR, YZ
 j2 = 1 + NBND/32
 
 if (IFNEW == 0) then
-    call colovm(EraseColor)
+    call setColor(EraseColor)
     do j=1, NBND, j2
         PTM(1) = IYO(1, j)
         PTM(2) = IYO(2, j)
@@ -571,7 +570,7 @@ if (IFNEW == 0) then
 endif
 
 ! Boundary points
-call colovm(Red)
+call setColor(Red)
 
 if (NBNT <= 1) then
     jj = 1
@@ -677,7 +676,7 @@ double precision, dimension(ngc_max) :: xGC, yGC
 double precision, dimension(ngc_max, 2) :: xyGC
 character(len=64) :: STRI
 
-call colovm(Blue)
+call setColor(Blue)
 open(7, FILE=TRIM(wall_gc_file), iostat=ios)
 if (ios /= 0) then
 ! plot the AWALL boundary in blue instead
@@ -836,9 +835,9 @@ CASE(5)
 END SELECT
 
 close(2)
-if (jifnew == 0) call redraw(2) ! Erase previous
+!if (jifnew == 0) call redraw(2) ! Erase previous
 call cleare(2, 0, 0, astra_gui%width - 1, astra_gui%height - 1)
-call colovm(Magenta)
+call setColor(Magenta)
 
 JL = 0
 

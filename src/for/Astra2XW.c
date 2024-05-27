@@ -4,7 +4,7 @@
      PSASetForeground PSADrawRectangle PSADrawLine  PSADrawLString
 and interfaces for FORTRAN calls
     initvm    drawvm  rectvm  erasrw  setlin  redraw
-    psopen    psclos  pcurso  rcurso  textvm  textbf  pscom   colovm
+    psopen    psclos  pcurso  rcurso  textvm  textbf  pscom   setcolor
 */
 
 #include <stdio.h>
@@ -25,7 +25,7 @@ and interfaces for FORTRAN calls
 #endif
 
 void initvm_(INT_*, INT_*, INT_*, INT_*, INT_*, char*, INT_*);
-void redraw_(INT_*);
+void redraw_();
 void erasrw_();
 void resizeWindow(unsigned int, unsigned int);
 void textvm_(INT_*, INT_*, char*, INT_*);
@@ -34,7 +34,7 @@ void textnb_(INT_*, INT_*, char*, INT_*);
 void putString(GC, INT_*, INT_*, char*, INT_*);
 void createpixmap_(INT_*);
 void changeGCcolor(GC, INT_*);
-void colovm_(INT_*);
+void setcolor_(INT_*);
 void pscom_(char*, INT_*);
 void psopen_(char*, INT_*, INT_*);
 void psclose_();
@@ -404,19 +404,13 @@ void createpixmap_(INT_ *id){
 }
 
 /********************************************************************/
-void redraw_(INT_ *id){
-    if (*id != 0){
-        if (Pixmaps[*id] == 0) return;
-        XSetFunction(theDisplay, theGCA, GXxor);
-        XCopyArea(theDisplay, Pixmaps[*id], theRootWindow, theGCA, 0, 0, XWW, XWH, 0, 0);
-        XSetFunction(theDisplay, theGCA, GXcopy);
-    }
+void redraw_(){
     XFlush(theDisplay);
 }
 
 /********************************************************************/
 void erasrw_(){
-// Clear the root window
+// Clear the whole ASTRA GUI window
     XClearWindow(theDisplay, theRootWindow);
 }
 
@@ -516,7 +510,7 @@ void rectvm_(INT_ *id, INT_ *x, INT_ *y, INT_ *width, INT_ *height){
 }
 
 /********************************************************************/
-void colovm_(INT_ *clnumb){
+void setcolor_(INT_ *clnumb){
     changeGCcolor(theGCA, clnumb);
 }
 
