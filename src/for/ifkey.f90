@@ -72,8 +72,7 @@ integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
     YEAR, MONTH, DAY, HOUR, MINUTE, time_arr(8)
 ! plot_arr dimension: 4*NRD(Mode 5, 8) 320(7) 2*NTIMES(Mode 6) 2*NRD(Modes 1-4)
 integer :: ITO(NTIMES, ICVMX+2)
-double precision :: DEVARO(NCONST), LINEAV, CHORDN, Y, ABD, &
-     ALFA, TIMEB, TROUT, SWATCH
+double precision :: DEVARO(NCONST), LINEAV, CHORDN, ABD, ALFA, TIMEB, TROUT
 double precision, dimension(1) :: rescale_array
 double precision, dimension(NTIMES) :: PRMARK, TIMOD4
 double precision, dimension(NRD) :: YWA, YWB, YWC
@@ -138,7 +137,6 @@ if (IFKL == 257) then ! Stop ASTRA
     if (TASK(4:4) /= 'B') call Close_Screen ! Kill GUI window
     write(6, '(A)')' >>> ASTRA error >>>'
     write(6, '(A, F11.6, A)')"    Floating point exception at  t =", TIME, ' sec'
-    call wrtime(6, '    Run time', 12, swatch(Y), -1.d0)
     call CPUSE(6)
     call astra_stop
 endif
@@ -244,8 +242,6 @@ call markloc(str_in='RADOUT|1 call from IFKEY')
 call RADOUT
 
 if (LTOUTO /= 0)  then
-! Logical units 1 & 2 are used
-
     open(3, FILE=rev_file, STATUS='OLD', iostat=ios, &
 !        ACCESS='APPEND', FORM='UNFORMATTED')   ! SUN, Alpha
          POSITION='APPEND', FORM='UNFORMATTED') ! Intel
@@ -253,10 +249,8 @@ if (LTOUTO /= 0)  then
         write(*, '( // A // )') '>>> IFKEY: Review file append error'
     endif
 else
-
 ! The file rev_file='.res/profil.dat' (default name) is used in 3 places: 
 !  here (w), ifkey.smode5 - modes 4, 5 (r), typdsp - writing 2D U-file (r) 
-
     open(unit=12, file='equ/'//TRIM(equ_file), iostat=ios)
     if (ios /= 0) write(*, *) '>>> IFKEY: Model file "equ/', TRIM(equ_file), '" open error'
     open(3, file=TRIM(rev_file), iostat=ios, form='unformatted')
@@ -298,7 +292,7 @@ else
             (jbeg_arrx(j), j=1, NARRX)
     endif
 endif
-!----------------------------------------------------------------------|
+
 LTOUTO = LTOUT - JTOUT
 write(3) JTOUT
 if (JTOUT /= 0) then
@@ -329,240 +323,246 @@ TIMOD4(IPOUT) = TPOUT
 NAMEP(IPOUT) = fmt6(TPOUT)
 if (IPOUT < NTRUN) IPOUT = IPOUT + 1
 
-!-------------------
-! Key analysis start
+!-------------
+! Key analysis
+!-------------
 
  1 continue
 
-if (.not. skip_poll) then
-    KEY = 0
-    if (TASK(4:4) /= 'B') call redraw(0)
+do while(.True.)
+    if (.not. skip_poll) then
+        KEY = 0
+        if (TASK(4:4) /= 'B') call redraw(0)
 
 ! Check Pause time condition
-    if (TIME >= TPAUSE .and. IDSP == 0) then
-        IDSP = 1
-        KEY = 32
-    else ! Polling events
-        KEY = 0
-        if (TASK(1:3) == 'RUN') then
-            KIBM = pollevent(KEY)
+        if (TIME >= TPAUSE .and. IDSP == 0) then
+            IDSP = 1
+            KEY = 32
+        else ! Polling events
+            KEY = 0
+            if (TASK(1:3) == 'RUN') then
+                KIBM = pollevent(KEY)
 ! KIBM = 1 - <Ctrl> was pressed
 ! KIBM = 2 - <Alt>  was pressed
 ! KEY=318 - the root window was closed
 ! KEY=322 and then KEY=319 - the root window is opened
 
-            if (KEY == 0) return
-            if (KIBM == 1 .and. (KEY == 99 .or. KEY == 67)) goto 97 ! <Ctrl>+C
+                if (KEY == 0) return
+                if (KIBM == 1 .and. (KEY == 99 .or. KEY == 67)) then ! <Ctrl>+C
+                    if (TASK(4:4) /= 'B') call Close_Screen
+                    write(6, *) '>>> ASTRA <Ctrl>+C exit >>>'
+                    call CPUSE(6)
+                    call astra_stop
+                endif
 
-            if (KIBM == 65006) then
-                TASK = 'RUN '
-                KIBM  = 0
-                return
+                if (KIBM == 65006) then
+                    TASK = 'RUN '
+                    KIBM  = 0
+                    return
+                endif
+                if (KIBM == 65005) then
+                    TASK = 'RUNB'
+                    return
+                else
+                    TASK = 'RUN '
+                endif
+                if (KIBM == 1 .or. KIBM == 2) goto 49
+                if (KEY >= 97 .and. KEY <= 122) KEY = KEY - 32
             endif
-            if (KIBM == 65005) then
-                TASK = 'RUNB'
-                return
-            else
-                TASK = 'RUN '
-            endif
-            if (KIBM == 1 .or. KIBM == 2) goto 49
-            if (KEY >= 97 .and. KEY <= 122) KEY=KEY-32
-        endif
 
 !-------------------
 ! Waiting for events
 
-        if (TASK(1:3) == 'DSP') then
-            if (IFLAG == 1) then
+            if (TASK(1:3) == 'DSP') then
+                if (IFLAG == 1) then
 ! IFLAG is equal 1 if
 ! (1) <Space> is pressed 
 ! (2) when a subroutine-call KEY is pressed.
 ! One time step and re-drawing is done
-                KEY = 0
-                IFLAG = 0
-                call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
+                    KEY = 0
+                    IFLAG = 0
+                    call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
+                endif
+
+                call PUTXY(IX, IY, NTRUN, TTOUT, TOUT)
+                KASCII = 0
+                KIBM = waitevent(KASCII, ix, iy)
+                KEY  = KASCII
+                if (KEY == 0) CYCLE
+                if (KEY  < 127 .and. (KIBM == 1 .or. KIBM == 2)) goto 49
+                if (KIBM < 65000) CYCLE
+                KIBM = KIBM - 65000
+                if (KIBM >= 361 .and. KIBM <= 364) then
+                    call mvcursor(KIBM, ix, iy)
+                    CYCLE
+                endif
+                if (KEY >= 97) KEY = KEY - 32
             endif
-
-            call PUTXY(IX, IY, NTRUN, TTOUT, TOUT)
-            KASCII = 0
-            KIBM = waitevent(KASCII, ix, iy)
-            KEY  = KASCII
-            if (KEY == 0) goto 1
-            if (KEY  < 127 .and. (KIBM == 1 .or. KIBM == 2)) goto 49
-            if (KIBM < 65000) goto 1
-            KIBM = KIBM - 65000
-            if (KIBM >= 361 .and. KIBM <= 364) then
-                call mvcursor(KIBM, ix, iy)
-                goto 1
-            endif
-            if (KEY >= 97) KEY = KEY - 32
-        endif
-    endif ! Poll key event
-endif
-
-SELECT CASE(KEY)
-
-CASE(13) ! 'ESC'
-    TASK = 'RUN '
-    call rcurso
-    call ERASXY() ! git (IX, IY)
-
-CASE(37) ! '%'
-    write(6, *)
-    call wrtime(6, '  >>> Astra run time  ', 22, swatch(Y), -1.d0)
-    call CPUSE(6)
-
-CASE(78) ! 'N'
-    if (MOD10 >= 0 .and. MOD10 < 7) then
-        active_tab(MOD10) = active_tab(MOD10) + 1
-        JJ = curves_per_frame(MOD10)
-        if (MOD10 == 6 .or. MOD10 == 7) then
-            J = NTOUT
-        else
-            J = NROUT
-        endif
-        if (J <= JJ*active_tab(MOD10)) active_tab(MOD10) = 0
+        endif ! Poll key event
     endif
-    call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
-    if (IFKL == KEY) return
 
-CASE(66) ! 'B'
-    if (MOD10 >= 1 .and. MOD10 <= 8) then
-        active_tab(MOD10) = active_tab(MOD10) - 1
-        if (active_tab(MOD10) < 0) then
+    SELECT CASE(KEY)
+
+    CASE(13) ! 'ESC'
+        TASK = 'RUN '
+        call rcurso
+        call ERASXY() ! git (IX, IY)
+
+    CASE(37) ! '%'
+        write(6, *)
+        call CPUSE(6)
+
+    CASE(78) ! 'N'
+        if (MOD10 >= 0 .and. MOD10 < 7) then
+            active_tab(MOD10) = active_tab(MOD10) + 1
             JJ = curves_per_frame(MOD10)
             if (MOD10 == 6 .or. MOD10 == 7) then
                 J = NTOUT
             else
                 J = NROUT
             endif
-            if (JJ == 0) JJ = 1
-            active_tab(MOD10) = (J - 1)/JJ
+            if (J <= JJ*active_tab(MOD10)) active_tab(MOD10) = 0
         endif
-    endif
-    call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
-    if (IFKL == KEY) return
+        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+        if (IFKL == KEY) return
 
-CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
-    if (MOD10 >= 2 .and. MOD10 <= 5) then
-        if (MOD10 == KEY - 48) then
-            MODEY = -MODEY
-        else
-            MODEY = 1
-        endif
-    endif
-    if (MOD10 == 1 .and. KEY == 49) active_tab(MOD10) = 0
-    if (MOD10 == 6) then
-        if (KEY == 54) then
-            MODEY = MODEY+1
-            if (MODEY == 2) MODEY = -1
-        else
-            MODEY = 1
-        endif
-    endif
-    if (MOD10 /= KEY - 48) then
-        MOD10 = KEY - 48
-        call erasrw
-        plot_mode = 1
-        NST = 0
-        plot_mode = plotMode(MOD10, MODEY)
-        call set_plot_area(plot_mode)
-        call set_plot(plot_mode)
-    endif
-    call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
-    if (IFKL == KEY) return
-
-CASE(73) ! 'I'
-    CNSFIL = 'equ/log/' // TRIM(equ_file)
-    open(1, file=TRIM(CNSFIL), iostat=ios)
-    if (ios /= 0) then
-        write(*, *) '>>> IFKEY: file "', TRIM(CNSFIL), '" open error'
-    else
-! New format of the equ/MODEL.log file for versions => 5.3
-       write(1, '(3(1A, 1I1))') ' Start file for version ', AVERS, '.', ARLEAS, '.', AEDIT
-       write(1, *) 'Variables:'
-       do J=1, NPRNAM
-           if (PRNAME(J) == 'ZRD1  ') EXIT
-           write(1, '(1A6, 1A2, 1P, 8E11.3)') PRNAME(J), ' =', DEVAR(J)
-       enddo
-
-       write(1, '(A)')' Constants:'
-       do J=1, NCFNAM
-           write(1, '(1A6, 1A2, 1P, 8E11.3)') CFNAME(J), ' =', CONSTF(J)
-       enddo
-       write(1, '(A, I2)') ' Control parameters:', 22
-       do J=1, 22   ! Don't save TPAUSE and TEND
-           write(1, '(1A6, 1A2, 1P, 8E11.3)') SRNAME(J), ' =', DELOUT(J)
-       enddo
-       write(1, *) 'Color table (description: forlib/Astra2XW.c)', 32
-       write(1, '(4(2I4, 3X))')(COLTAB(j), j=1, 64)
-       close (1)
-       write(*, *)"Default start file is modified"
-   endif
-
-CASE(46) ! '.'
-    MARK = MARK + 1
-    if (MARK == 2) MARK = -1
-    call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
-    if (IFKL == KEY) return
-
-CASE(82) ! 'R'
-    call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
-    if (IFKL == KEY) return
-
-CASE(85) ! 'U'
-    if (NUF > NRD) then
-        write(*, *) '>>> No. of radial points in a U-file is too large:'
-        write(*, *) '           Decrease NUF or increase NB1'
-        goto 1
-    else
-        SELECT CASE(MOD10)
-! Different options for radial array 
-        CASE(4)
-            call ufileBox(NROUT, UNAMES, NAMER, DEFUNA)
-            jpos = str_in_list(DEFUNA, UNAMES(1: NROUT), 10)
-            if (jpos > 0) then
-                call RADOUT
-                MODEX = XOUT + 0.49
-                if (MODEX == 1) then
-! Write up to ABC against "a"
-                    NU1 = NA1
-                    ABD = ABC
-                    do j = 1, NA1
-                        YWC(j) = AMETR(j)/ABC
-                    enddo
-                elseif (MODEX == 2) then
-! Write up to ROC against "rho"
-                    NU1 = NA1
-                   ABD = 1.
-                    do j = 1, NA1
-                        YWC(j) = RHO(j)/ROC
-                    enddo
+    CASE(66) ! 'B'
+        if (MOD10 >= 1 .and. MOD10 <= 8) then
+            active_tab(MOD10) = active_tab(MOD10) - 1
+            if (active_tab(MOD10) < 0) then
+                JJ = curves_per_frame(MOD10)
+                if (MOD10 == 6 .or. MOD10 == 7) then
+                    J = NTOUT
                 else
-! Write up to AB against "a" (default)
-                    if (MODEX /= 0) write(*, *) ">>>  Warning: Unknown radial mode.  Writing anyway [0, AB]"
-                    NU1 = NAB
-                    ABD = AB
-                    do j = 1, NAB
-                        YWC(j) = AMETR(j)/AB
-                    enddo
+                    J = NROUT
                 endif
-! Radial coordinate in a U-file in [m] (presently)
-                do jj=1, NROUT
-                    if (UNAMES(jj) /= DEFUNA) then
-                        ALFA = 1.d-4
-! Transfer to an equidistant radial grid
-                        do j=1, NUF
-                            YWA(j) = (j - 1.)/(NUF - 1.)
+                if (JJ == 0) JJ = 1
+                active_tab(MOD10) = (J - 1)/JJ
+            endif
+        endif
+        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+        if (IFKL == KEY) return
+
+    CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+        if (MOD10 >= 2 .and. MOD10 <= 5) then
+            if (MOD10 == KEY - 48) then
+                MODEY = -MODEY
+            else
+                MODEY = 1
+            endif
+        endif
+        if (MOD10 == 1 .and. KEY == 49) active_tab(MOD10) = 0
+        if (MOD10 == 6) then
+            if (KEY == 54) then
+                MODEY = MODEY+1
+                if (MODEY == 2) MODEY = -1
+            else
+                MODEY = 1
+            endif
+        endif
+        if (MOD10 /= KEY - 48) then
+            MOD10 = KEY - 48
+            call erasrw
+            plot_mode = 1
+            NST = 0
+            plot_mode = plotMode(MOD10, MODEY)
+            call set_plot_area(plot_mode)
+            call set_plot(plot_mode)
+        endif
+        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+        if (IFKL == KEY) return
+
+    CASE(73) ! 'I'
+        CNSFIL = 'equ/log/' // TRIM(equ_file)
+        open(1, file=TRIM(CNSFIL), iostat=ios)
+        if (ios /= 0) then
+            write(*, *) '>>> IFKEY: file "', TRIM(CNSFIL), '" open error'
+        else
+! New format of the equ/MODEL.log file for versions => 5.3
+           write(1, '(3(1A, 1I1))') ' Start file for version ', AVERS, '.', ARLEAS, '.', AEDIT
+           write(1, *) 'Variables:'
+           do J=1, NPRNAM
+               if (PRNAME(J) == 'ZRD1  ') EXIT
+               write(1, '(1A6, 1A2, 1P, 8E11.3)') PRNAME(J), ' =', DEVAR(J)
+           enddo
+
+           write(1, '(A)')' Constants:'
+           do J=1, NCFNAM
+               write(1, '(1A6, 1A2, 1P, 8E11.3)') CFNAME(J), ' =', CONSTF(J)
+           enddo
+           write(1, '(A, I2)') ' Control parameters:', 22
+           do J=1, 22   ! Don't save TPAUSE and TEND
+               write(1, '(1A6, 1A2, 1P, 8E11.3)') SRNAME(J), ' =', DELOUT(J)
+           enddo
+           write(1, *) 'Color table (description: forlib/Astra2XW.c)', 32
+           write(1, '(4(2I4, 3X))')(COLTAB(j), j=1, 64)
+           close (1)
+           write(*, *)"Default start file is modified"
+       endif
+
+    CASE(46) ! '.'
+        MARK = MARK + 1
+        if (MARK == 2) MARK = -1
+        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+        if (IFKL == KEY) return
+
+    CASE(82) ! 'R'
+        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+        if (IFKL == KEY) return
+
+    CASE(85) ! 'U'
+        if (NUF > NRD) then
+            write(*, *) '>>> No. of radial points in a U-file is too large:'
+            write(*, *) '           Decrease NUF or increase NB1'
+            CYCLE
+        else
+            SELECT CASE(MOD10)
+! Different options for radial array 
+            CASE(4)
+                call ufileBox(NROUT, UNAMES, NAMER, DEFUNA)
+                jpos = str_in_list(DEFUNA, UNAMES(1: NROUT), 10)
+                if (jpos > 0) then
+                    call RADOUT
+                    MODEX = XOUT + 0.49
+                    if (MODEX == 1) then
+! Write up to ABC against "a"
+                        NU1 = NA1
+                        ABD = ABC
+                        do j = 1, NA1
+                            YWC(j) = AMETR(j)/ABC
                         enddo
-                        call SMOOTH(ALFA, NU1, ROUT(1, jj), YWC, NUF, YWB, YWA)
-                        do j=1, NUF
-                            YWA(j) = YWA(j)*ABD
+                    elseif (MODEX == 2) then
+! Write up to ROC against "rho"
+                        NU1 = NA1
+                       ABD = 1.
+                        do j = 1, NA1
+                            YWC(j) = RHO(j)/ROC
                         enddo
-                        call UF1DWA('AUGD', RUNID, UNAMES(jj), TIME, NAMER(jj), NUF, 1, 4, &
-                            YWA, YWB, RTOR, AB, BTOR, IPL, CHORDN, MODEX)
+                    else
+! Write up to AB against "a" (default)
+                        if (MODEX /= 0) write(*, *) ">>>  Warning: Unknown radial mode.  Writing anyway [0, AB]"
+                        NU1 = NAB
+                        ABD = AB
+                        do j = 1, NAB
+                            YWC(j) = AMETR(j)/AB
+                        enddo
                     endif
-                enddo
+! Radial coordinate in a U-file in [m] (presently)
+                    do jj=1, NROUT
+                        if (UNAMES(jj) /= DEFUNA) then
+                            ALFA = 1.d-4
+! Transfer to an equidistant radial grid
+                            do j=1, NUF
+                                YWA(j) = (j - 1.)/(NUF - 1.)
+                            enddo
+                            call SMOOTH(ALFA, NU1, ROUT(1, jj), YWC, NUF, YWB, YWA)
+                            do j=1, NUF
+                                YWA(j) = YWA(j)*ABD
+                            enddo
+                            call UF1DWA('AUGD', RUNID, UNAMES(jj), TIME, NAMER(jj), NUF, 1, 4, &
+                                YWA, YWB, RTOR, AB, BTOR, IPL, CHORDN, MODEX)
+                        endif
+                    enddo
 !  Write up to AB against "a" (default)
 !                do jj=1, NROUT
 !                    if (UNAMES(jj) /= DEFUNA) then
@@ -570,239 +570,245 @@ CASE(85) ! 'U'
 !                            TIMOD4, RTOR, AB, BTOR, IPL, CHORDN, YWA, YWB, YWC)
 !                    endif
 !                enddo
-            endif
+                endif
 
-        CASE(6)
-            call TIMOUT
-            call ufileBox(NTOUT, UNAMES, NAMET, DEFUNA)
-            do jj=1, NTOUT
-                if (UNAMES(jj) /= DEFUNA) then
-                    call UF1DWA('AUGD', RUNID, UNAMES(jj), TIME, NAMET(jj), LTOUT-1, 0, &
-                        4, TTOUT(1), TOUT(1, jj), RTOR, AB, BTOR, IPL, CHORDN, MODEX)
+            CASE(6)
+                call TIMOUT
+                call ufileBox(NTOUT, UNAMES, NAMET, DEFUNA)
+                do jj=1, NTOUT
+                    if (UNAMES(jj) /= DEFUNA) then
+                        call UF1DWA('AUGD', RUNID, UNAMES(jj), TIME, NAMET(jj), LTOUT-1, 0, &
+                            4, TTOUT(1), TOUT(1, jj), RTOR, AB, BTOR, IPL, CHORDN, MODEX)
+                    endif
+                enddo
+            CASE DEFAULT
+                write(*, *) '>>>  WARNING: U-file writing is not implemented in this mode'
+            END SELECT
+        endif
+
+    CASE(87) ! 'W'
+        if (MOD10 == 1 .or. MOD10 == 2 .or. MOD10 == 3) call ASKINT(NROUT, NWIND1, NAMER)
+        if (MOD10 == 4 .or. MOD10 == 5) call ASKINT(NROUT, NWIND4, NAMER)
+        if (MOD10 == 6) call ASKINT(NTOUT, NWIND3, NAMET)
+        if (MOD10 == 7) call ASKINT(NTOUT, NWIND7, NAMET)
+        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+        if (IFKL == KEY) return
+
+    CASE(76) ! 'L'
+        CNSFIL = 'tmp/model.txt'
+        open(1, file=TRIM(CNSFIL), iostat=ios)
+        if (ios /= 0) then
+            write(*, *) '>>> IFKEY: "', TRIM(CNSFIL), '" file error'
+            if (KEY == 27)  then
+                write(*, '(/2A)') 'Use key "/" for exit', char(7) ! Beep
+            elseif (KEY /= 0 .and. KIBM == 0) then
+                write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, char(7)
+            endif
+            KEY = 0
+            CYCLE
+        endif
+        j2 = 0
+
+        do
+            if (j2 < 0) EXIT
+            do J1=1, int(1.333*plot_area%height/astra_gui%dylet) - 1
+                if (j2 >= 0) then
+                    read(1, '(1A80)', iostat=ios) STR
+                    if (ios < 0) j2 = -1
+                endif
+                NNN = (J1 - 1)*astra_gui%dylet + 1
+                if (j2 < 0) then
+                    STRB = repeat(' ', 35)
+                    write(*, '(1X, A)') TRIM(STRB)
+                else
+                    write(*, '(1X, A)') TRIM(STR)
                 endif
             enddo
-        CASE DEFAULT
-            write(*, *) '>>>  WARNING: U-file writing is not implemented in this mode'
-        END SELECT
-    endif
-
-CASE(87) ! 'W'
-    if (MOD10 == 1 .or. MOD10 == 2 .or. MOD10 == 3) call ASKINT(NROUT, NWIND1, NAMER)
-    if (MOD10 == 4 .or. MOD10 == 5) call ASKINT(NROUT, NWIND4, NAMER)
-    if (MOD10 == 6) call ASKINT(NTOUT, NWIND3, NAMET)
-    if (MOD10 == 7) call ASKINT(NTOUT, NWIND7, NAMET)
-    call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
-    if (IFKL == KEY) return
-
-CASE(76) ! 'L'
-    CNSFIL = 'tmp/model.txt'
-    open(1, file=TRIM(CNSFIL), iostat=ios)
-    if (ios /= 0) then
-        write(*, *) '>>> IFKEY: "', TRIM(CNSFIL), '" file error'
-        if (KEY == 27)  then
-            write(*, '(/2A)') 'Use key "/" for exit', char(7) ! Beep
-        elseif (KEY /= 0 .and. KIBM == 0) then
-            write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, char(7)
-        endif
-        KEY = 0
-        goto 1
-    endif
-    j2 = 0
-
-    do
-        if (j2 < 0) EXIT
-        do J1=1, int(1.333*plot_area%height/astra_gui%dylet) - 1
-            if (j2 >= 0) then
-                read(1, '(1A80)', iostat=ios) STR
-                if (ios < 0) j2 = -1
-            endif
-            NNN = (J1 - 1)*astra_gui%dylet + 1
-            if (j2 < 0) then
-                STRB = repeat(' ', 35)
-                write(*, '(1X, A)') TRIM(STRB)
-            else
-                write(*, '(1X, A)') TRIM(STR)
-            endif
         enddo
-    enddo
 
-    close (1)
+        close (1)
 
-CASE(83) ! 'S'
-    rescale_array(1) = resizeGraph
-    call MENUTABLE(1, rescale_array, rescale_label, 4)
-    resizeGraph = rescale_array(1)
+    CASE(83) ! 'S'
+        rescale_array(1) = resizeGraph
+        call MENUTABLE(1, rescale_array, rescale_label, 4)
+        resizeGraph = rescale_array(1)
 !    call initMainWindow
-    if (IFKL == KEY) return
+        if (IFKL == KEY) return
 
-CASE(88) ! 'X'
-    MODEX = XOUT + 0.49
-    if (MOD10 == 0) then
-        write(*, *) 'X-axis:   none'
-    elseif (MOD10 == 3) then
-        write(*, 112) 'poloidal flux,  1 < j < NA1 =', NA1
-    elseif (MOD10 == 4) then
-        write(*, 114) '0 < a < AB =', AB, 'm     1 < j < NAB =', NAB
-    elseif (MOD10 == 5) then
-        write(*, 112) 'major radius in the mid-plane'
-    elseif (MOD10 == 6) then
-        write(*, *) 'X-axis:   time [s]'
-    elseif (MOD10 == 7) then
-        write(*, *) 'X-axis:   phase space'
-    elseif (MOD10 == 8) then
-        write(*, *) 'X-axis:   major radius [m]'
-    elseif (MOD10 == 9) then
-        write(*, *) "User's plot"
-    elseif (MODEX == 0) then
-        write(*, 114) '0 < a < AB =', AB, 'm,     1 < j < NAB =', NAB
-    elseif (MODEX == 1) then
-        write(*, 114) '0 < a < ABC =', ABC, 'm,    1 < j < NA1 =', NA1
-    elseif (MODEX == 2) then
-        write(*, 114)'0 < rho < ROC =', ROC, 'm,    1 < j < NA1 =', NA1
-    elseif (MODEX == 3) then
-        write(*, 112) '0 < Psi < FP(NA1),  1 < j < NA1 =', NA1
-    else
-        write(*, *) 'X-axis:   Unknown option'
-    endif
+    CASE(88) ! 'X'
+        MODEX = XOUT + 0.49
+        if (MOD10 == 0) then
+            write(*, *) 'X-axis:   none'
+        elseif (MOD10 == 3) then
+            write(*, 112) 'poloidal flux,  1 < j < NA1 =', NA1
+        elseif (MOD10 == 4) then
+            write(*, 114) '0 < a < AB =', AB, 'm     1 < j < NAB =', NAB
+        elseif (MOD10 == 5) then
+            write(*, 112) 'major radius in the mid-plane'
+        elseif (MOD10 == 6) then
+            write(*, *) 'X-axis:   time [s]'
+        elseif (MOD10 == 7) then
+            write(*, *) 'X-axis:   phase space'
+        elseif (MOD10 == 8) then
+            write(*, *) 'X-axis:   major radius [m]'
+        elseif (MOD10 == 9) then
+            write(*, *) "User's plot"
+        elseif (MODEX == 0) then
+            write(*, 114) '0 < a < AB =', AB, 'm,     1 < j < NAB =', NAB
+        elseif (MODEX == 1) then
+            write(*, 114) '0 < a < ABC =', ABC, 'm,    1 < j < NA1 =', NA1
+        elseif (MODEX == 2) then
+            write(*, 114) '0 < rho < ROC =', ROC, 'm,    1 < j < NA1 =', NA1
+        elseif (MODEX == 3) then
+            write(*, 112) '0 < Psi < FP(NA1),  1 < j < NA1 =', NA1
+        else
+            write(*, *) 'X-axis:   Unknown option'
+        endif
  112 format('X-axis:   ', A, 1I4)
  114 format('X-axis:   ', 1A, F5.2, 1A, 1I4)
-    call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
-    if (IFKL == KEY) return
+        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+        if (IFKL == KEY) return
 
 ! Test field
-CASE(74) ! 'J'
-    call system("ipcs -s") ! Report active semaphore sets
-    call system("ipcs -m") ! Report active shared memory segments
-    call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
-    if (IFKL == KEY) return
-
-CASE(68) ! 'D'
-    NDTNAM = NSDELOUT + 4*NSBR
-    TIMEB = TIME
-    MODEX = XOUT + 0.49
-    call MENUTABLE(NDTNAM, DELOUT, DTNAME, 3) ! Only place requiring DELOUT(j>44)
-    if (int(DELOUT(13)) /= NA1) then
-        write(*, *)">>> NA1 re-definition ignored"
-    endif
-    DELOUT(13) = NA1
-    NUF = DELOUT(14)
-    NBND = DELOUT(19)
-    XFLAG = DELOUT(20)
-    j = XOUT + 0.49
-    if (j < 0 .or. j > 3) then
-        write(*, *)">>> Unknown X-axis. Redefinition ignored"
-        j = MODEX
-        XOUT = MODEX
-    endif
-    if (j /= MODEX) call xaxis(j)
-    IF(TIME >= TIMEB) then
+    CASE(74) ! 'J'
+        call system("ipcs -s") ! Report active semaphore sets
+        call system("ipcs -m") ! Report active shared memory segments
         call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
         if (IFKL == KEY) return
-    else
-        TROUT = TIME
-        TTOUT(LTOUT-1) = TIME
-        TPOUT = TIME
-        do J=1, NSBR
-            TEQ(J) = TIME
-        enddo
-    endif
 
-CASE(67) ! 'C'
-    call MENUTABLE(NCFNAM, CONSTF, CFNAME, 2)
-
-CASE(86) ! 'V'
-    do J=1, NPRNAM
-        DEVARO(J) = DEVAR(J)
-    enddo
-    INT4 = NPRNAM - 96  ! INT4 = NPRNAM - No. of ZRDs
-    call MENUTABLE(INT4, DEVAR, PRNAME, 1)
-    do J=1, NPRNAM
-        if (IFDFVX(J) > 3) DEVAR(J) = DEVARO(J)
-        if (ABS(DEVAR(J)-DEVARO(J)) > 1.d-6*ABS(DEVAR(J))) IFDFVX(J) = 3
-    enddo
-
-CASE(77) ! 'M'
-    if (MOD10 == 1 .or. MOD10 == 2 .or. MOD10 == 3) call ASXWIN(NROUT, NWIND1, NAMER, SCALER, &
-        OSHIFR, GRAL, GRAP, MOD10, MODEY)
-    if (MOD10 == 6) call ASTWIN(NTOUT, NWIND3, NAMET, SCALET, &
-        OSHIFT, MOD10, MODEY)
-    if (MOD10 == 7) then
-        call MENUTABLE(4, TIM7, NAM7, 5)
-    endif
-    if (MOD10 == 4 .or. MOD10 == 5) then
-        INT4 = -MAX(4, IPOUT-1)
-        call MENUTABLE(INT4, PRMARK, NAMEP, 6)
-    endif
-    if (MOD10 <= 7) then
-        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
-        if (IFKL == KEY) return
-    endif
-
-CASE(63, 72) ! 'H', '?'
-    write(*, *)
-    write(*, *) "The following keys are operable in this mode:"
-    do J=1, 28
-        write(*, '(1X, A)') TRIM(HELP(J))
-    enddo
-
-CASE(47) ! '/', '<ESC>'
-    call astra_stop ! GIT
-
-CASE(84) ! 'T'
-    call TIMOUT
-    call TYPDSP(NTRUN, TTOUT, TOUT)
-
-CASE(32) ! 'space'
-    KEY = 0
-    if (TASK(1:3) == 'DSP') then
-        IFLAG = 1    ! for DSP mode only
-        IFKEY = 0
-        return
-    endif
-    if (TASK(1:3) == 'RUN') then
-        TASK = 'DSP '
-        ix = 0
-        iy = 0
-        call pcurso
-    endif
-
-CASE(71, 81) ! 71:'G'=portrait, 81:'Q'=landscape
-    PSNAME = 'dat/' // TRIM(exp_file) // '-' // TRIM(equ_file)
-    if (KEY == 71) INT4 = n_portrait
-    if (KEY == 81) INT4 = n_landscape
-    call PSOPEN(TRIM(PSNAME)//char(0), INT4, IRET)
-
-    if (IRET == 0) then
-        if (KEY == 71) KPRI = 1
-        if (KEY == 81) KPRI = 2
-        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
-        if (IFKL == KEY) return
-    else
-        if (IRET == 1) then
-            STRI = '>>>  Can not open file: ' // TRIM(PSNAME)
-            call colovm(WarningColor)
-            call textvm(0, astra_gui%yMessage, STRI, 24+LEN_TRIM(PSNAME))
+    CASE(68) ! 'D'
+        NDTNAM = NSDELOUT + 4*NSBR
+        TIMEB = TIME
+        MODEX = XOUT + 0.49
+        call MENUTABLE(NDTNAM, DELOUT, DTNAME, 3) ! Only place requiring DELOUT(j>44)
+        if (int(DELOUT(13)) /= NA1) then
+            write(*, *)">>> NA1 re-definition ignored"
         endif
+        DELOUT(13) = NA1
+        NUF = DELOUT(14)
+        NBND = DELOUT(19)
+        XFLAG = DELOUT(20)
+        j = XOUT + 0.49
+        if (j < 0 .or. j > 3) then
+            write(*, *)">>> Unknown X-axis. Redefinition ignored"
+            j = MODEX
+            XOUT = MODEX
+        endif
+        if (j /= MODEX) call xaxis(j)
+        IF(TIME >= TIMEB) then
+            call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+            if (IFKL == KEY) return
+        else
+            TROUT = TIME
+            TTOUT(LTOUT-1) = TIME
+            TPOUT = TIME
+            do J=1, NSBR
+                TEQ(J) = TIME
+            enddo
+        endif
+
+    CASE(67) ! 'C'
+        call MENUTABLE(NCFNAM, CONSTF, CFNAME, 2)
+
+    CASE(86) ! 'V'
+        do J=1, NPRNAM
+            DEVARO(J) = DEVAR(J)
+        enddo
+        INT4 = NPRNAM - 96  ! INT4 = NPRNAM - No. of ZRDs
+        call MENUTABLE(INT4, DEVAR, PRNAME, 1)
+        do J=1, NPRNAM
+            if (IFDFVX(J) > 3) DEVAR(J) = DEVARO(J)
+            if (ABS(DEVAR(J)-DEVARO(J)) > 1.d-6*ABS(DEVAR(J))) IFDFVX(J) = 3
+        enddo
+
+    CASE(77) ! 'M'
+        if (MOD10 == 1 .or. MOD10 == 2 .or. MOD10 == 3) call ASXWIN(NROUT, NWIND1, NAMER, SCALER, &
+            OSHIFR, GRAL, GRAP, MOD10, MODEY)
+        if (MOD10 == 6) call ASTWIN(NTOUT, NWIND3, NAMET, SCALET, &
+            OSHIFT, MOD10, MODEY)
+        if (MOD10 == 7) then
+            call MENUTABLE(4, TIM7, NAM7, 5)
+        endif
+        if (MOD10 == 4 .or. MOD10 == 5) then
+            INT4 = -MAX(4, IPOUT-1)
+            call MENUTABLE(INT4, PRMARK, NAMEP, 6)
+        endif
+        if (MOD10 <= 7) then
+            call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+            if (IFKL == KEY) return
+        endif
+
+    CASE(63, 72) ! 'H', '?'
+        write(*, *)
+        write(*, *) "The following keys are operable in this mode:"
+        do J=1, 28
+            write(*, '(1X, A)') TRIM(HELP(J))
+        enddo
+
+    CASE(47) ! '/'
+        if (TASK(4:4) /= 'B') call Close_Screen
+        write(6, *) '>>> ASTRA / exit >>>'
+        call CPUSE(6)
+        call astra_stop
+
+    CASE(84) ! 'T'
+        call TIMOUT
+        call TYPDSP(NTRUN, TTOUT, TOUT)
+
+    CASE(32) ! 'space'
         KEY = 0
-    endif
+        if (TASK(1:3) == 'DSP') then
+            IFLAG = 1    ! for DSP mode only
+            IFKEY = 0
+            return
+        endif
+        if (TASK(1:3) == 'RUN') then
+            TASK = 'DSP '
+            ix = 0
+            iy = 0
+            call pcurso
+        endif
 
-END SELECT
+    CASE(71, 81) ! 71:'G'=portrait, 81:'Q'=landscape
+        PSNAME = 'dat/' // TRIM(exp_file) // '-' // TRIM(equ_file)
+        if (KEY == 71) INT4 = n_portrait
+        if (KEY == 81) INT4 = n_landscape
+        call PSOPEN(TRIM(PSNAME)//char(0), INT4, IRET)
 
-goto 1
+        if (IRET == 0) then
+            if (KEY == 71) KPRI = 1
+            if (KEY == 81) KPRI = 2
+            call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+            if (IFKL == KEY) return
+        else
+            if (IRET == 1) then
+                STRI = '>>>  Can not open file: ' // TRIM(PSNAME)
+                call colovm(WarningColor)
+                call textvm(0, astra_gui%yMessage, STRI, 24+LEN_TRIM(PSNAME))
+            endif
+            KEY = 0
+        endif
+
+    END SELECT
+
+    CYCLE
 
 49 continue
 
-!--------------------------------------------------------------------
-    if (KIBM == 2) then
-!-------- <Alt>'M' or  <Alt>'m'
+    if (KIBM == 2) then !-------- <Alt> pressed'
         if (KEY == 77 .or. KEY == 109) then
              if (KIBM == 0) then
                  write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, char(7)
              endif
              KEY = 0
-             goto 1
+             CYCLE
         endif
-        if (KEY == 47) goto 97 ! <Alt>+/
+        if (KEY == 47) then ! <Alt>+/
+            if (TASK(4:4) /= 'B') call Close_Screen
+            write(6, *) '>>> ASTRA <Alt>+/ exit >>>'
+            call CPUSE(6)
+            call astra_stop
+        endif
         if (KIBM == 2 .and. (KEY >= 32 .and. KEY <= 126) ) then
             write(*, *) '  "<Alt>+<', char(KEY), '>"  pressed'
         endif
@@ -823,31 +829,25 @@ goto 1
         IFKEY = 0
         return
     endif
-    if (TASK(1:3) == 'DSP') goto 1
+    if (TASK(1:3) == 'DSP') CYCLE
     if (jj == 1) then
         IFKEY = 0
         return
     endif
 
-if (KEY == 27)  then
-    write(*, '(/2A)') 'Use key "/" for exit', char(7) ! Beep
-elseif (KEY /= 0 .and. KIBM == 0) then
-    write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, char(7)
-endif
-KEY = 0
-goto 1
+    if (KEY == 27)  then
+        write(*, '(/2A)') 'Use key "/" for exit', char(7) ! Beep
+    elseif (KEY /= 0 .and. KIBM == 0) then
+        write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, char(7)
+    endif
+    KEY = 0
+
+enddo
 
 ! Exit ASTRA
-97 continue
 
 if (TASK(4:4) /= 'B') call Close_Screen
-TIMEB = swatch(Y)
-j1 = TIMEB
-j2 = j1/3600
-jj = (j1 - 3600*j2)/60
-j1 = timeb - 60*jj - 3600*j2
-write(6, '(A, I4.2, 2(A1, I2.2))') '>>> ASTRA normal exit >>>  Run time', j2, ':', jj, ':', j1
-
+write(6, *) '>>> ASTRA normal exit >>>'
 call CPUSE(6)
 call astra_stop
 
@@ -879,7 +879,6 @@ call markloc('graph_output', debug_lev=2*debug)
 if (TASK(1:3) == 'BGD' .or. TASK(4:4) == 'B') return
 
 call TIMOUT
-
 call RADOUT
 
 if (MOD10 == 4 .or. MOD10 == 5) then
@@ -1205,21 +1204,21 @@ return
 end subroutine SMODE5
 
 !---------------------------------------------------------------------
-subroutine wrtime(nch, string, len, tim, time)
+subroutine writeTime(nch, string, tim, time)
 
 use outcmn_inc, only: tab_ch
 use debugger, only: markloc
 
 implicit none
 
-integer, intent(in) :: nch, len
+integer, intent(in) :: nch
 character(len=*), intent(in) :: string
 double precision, intent(in) :: tim, time
 
 integer :: jh, jm, js
 double precision :: t1
 
-call markloc('wrtime')
+call markloc('writeTime')
 
 js = tim
 jh = js/3600
@@ -1227,15 +1226,15 @@ jm = (js - 3600*jh)/60
 t1 = tim - 60*jm - 3600*jh
 js = t1
 if (time >= 0.) then
-    write(nch, '(2A, I4.2, 2(A1, I2.2), F8.1, A1)') string(1:len), &
+    write(nch, '(2A, I4.2, 2(A1, I2.2), F8.1, A1)') TRIM(string), &
         tab_ch, jh, ':', jm, ':', js, 100.*tim/time, '%'
 else
-    write(nch, '(2A, I4.2, 2(A1, I2.2))') string(1: len), &
+    write(nch, '(2A, I4.2, 2(A1, I2.2))') TRIM(string), &
        tab_ch, jh, ':', jm, ':', js
 endif
 
 return
-end subroutine wrtime
+end subroutine writeTime
 
 !---------------------------------------------------------------------
 subroutine CPUSE(nch)
@@ -1252,8 +1251,10 @@ integer, intent(in) :: nch
 
 integer :: j, j1, j2
 double precision :: Y
+double precision, external :: swatch
 
 call markloc('CPUSE')
+call writeTime(nch, '  >>> Astra run time  ', swatch(Y), -1.d0)
 
 cpuTime_tot = cpuTime_tra + cpuTime_equ
 do j=1, NSBR
@@ -1273,21 +1274,21 @@ Y = cpuTime_tot/(TIME - TSTART)
 if (Y < 60.) then
     write(nch, '(A, F6.3, A)')"    CPU per 1 sec       ", Y, " sec"
 else
-    call wrtime(nch, '    CPU per 1 sec ', 18, Y, -1.d0)
+    call writeTime(nch, '    CPU per 1 sec ', Y, -1.d0)
 endif
-call wrtime(nch, '    Total CPU time', 18, cpuTime_tot  , cpuTime_tot)
-call wrtime(nch, '    Transport core', 18, cpuTime_tra  , cpuTime_tot)
-call wrtime(nch, '    Equilibrium   ', 18, cpuTime_equ, cpuTime_tot)
+call writeTime(nch, '    Total CPU time', cpuTime_tot  , cpuTime_tot)
+call writeTime(nch, '    Transport core', cpuTime_tra  , cpuTime_tot)
+call writeTime(nch, '    Equilibrium   ', cpuTime_equ, cpuTime_tot)
 j2 = 1
 do j1=1, NSBR
     j = min(6, LEN_TRIM(DTNAME(NSDELOUT+4*j1)))
     if (j1 == IFSBX(j2)) then
-        call wrtime(nch, '    Xroutine   "' // &
-            DTNAME(NSDELOUT+4*j1)(1: j) // '"', 17 + j, cpuTime_sbr(j1), cpuTime_tot)
+        call writeTime(nch, '    Xroutine   "' // &
+            DTNAME(NSDELOUT+4*j1)(1: j) // '"', cpuTime_sbr(j1), cpuTime_tot)
         j2 = j2 + 1
     else
-        call wrtime(nch, '    Subroutine "' // &
-            DTNAME(NSDELOUT+4*j1)(1: j) // '"', 17 + j, cpuTime_sbr(j1), cpuTime_tot)
+        call writeTime(nch, '    Subroutine "' // &
+            DTNAME(NSDELOUT+4*j1)(1: j) // '"', cpuTime_sbr(j1), cpuTime_tot)
     endif
 enddo
 write(nch, *)
@@ -1472,7 +1473,6 @@ use debugger, only: markloc
 implicit none
 
 integer :: j1, jb, ios
-double precision :: swatch, Y
 character(len=80) :: string
 
 call markloc('REPORT')
@@ -1494,7 +1494,6 @@ else
     else
         write(7, '(A/A, F8.3)') RUNID, '     Time =', TIME
     endif
-    call wrtime(7, '  >>> Astra run time  ', 22, swatch(Y), -1.d0)
     call CPUSE(7)
     close(7)
 endif
@@ -1540,10 +1539,7 @@ use const_inc, only: TIME
 
 implicit none
 
-double precision :: swatch, Y
-
 write(6, '(A/A, F8.3)') RUNID, '     Time =', TIME
-call wrtime(6, '  >>> Astra run time  ', 22, swatch(Y), -1.d0)
 call CPUSE(6)
 
 return
