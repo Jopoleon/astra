@@ -95,7 +95,7 @@ double precision, intent(inout) :: t_out(ITIMES, NRW)
 
 integer :: PTM(2), PTMO(2, NRDX, NRW), &
     IWN(16), fshift, &
-    IST, text_posx, text_posy, jt_old, JS, MODEX, &
+    IST, text_posx, text_posy, JS, MODEX, &
     IYM0, LTOUT1, LTOUT2, STYL, x_shift, y_shift, jx_canv, jy_canv, JY, jxout, &
     JW, j_curve, j_canv, &
     IYMN, IYMX, JDSP, NPTMO(NRW), jlx(8), &
@@ -405,11 +405,6 @@ CASE(6)  ! Time traces
             ytrace(J) = dble(plot_area%height) - min(max(plot_area%canvas_height*r_out + ymin + (n_canvas - j_canv)*plot_area%canvas_height, ymin), ymax)
         enddo
 
-        if (JIFNEW == 0) then
-            jt_old = LTOUT2
-        else
-            jt_old = 1
-        endif
         if (KPRI >= 1 .and. KPRI <= 2) then
             write(STRI, '(1A6, 1A4, 1A1)') 'Plot "', NAMET(jj), '"'
             j = len_trim_tab(STRI)
@@ -420,8 +415,10 @@ CASE(6)  ! Time traces
         jcol  = jcol  + 1
         j_curve = j_curve + 1
         if (j_curve <= ICVMX) then
-            call update_curve(LTOUT2 + 1, jt_old, jcol, STYL, xtrace_old(1:jt_old), ytrace_old(1: jt_old, j_curve), &
-                xtrace(1:LTOUT2+1), ytrace(1:LTOUT2+1))
+            call colovm(White)
+            call plot_curve(LTOUT2, STYL, xtrace_old(1:LTOUT2), ytrace_old(1:LTOUT2, j_curve))
+            call colovm(jcol)
+            call plot_curve(LTOUT2+1, STYL, xtrace(1:LTOUT2+1), ytrace(1:LTOUT2+1) )
             xtrace_old(1: LTOUT2+1) = xtrace(1: LTOUT2+1)
             ytrace_old(1: LTOUT2+1, j_curve) = ytrace(1: LTOUT2+1)
         endif

@@ -170,7 +170,6 @@ endif
 
 if (IFKL /= 256 .and. TASK(4:4) /= 'B') call TIMEDT(TIME, 1000.*TAU)
 
-
 if (LTOUT > 1) then
     call markloc(str_in='IFKEY (saving time traces)')
     if (LTOUT >= NTRUN) then
@@ -204,98 +203,97 @@ if (MOD10 == 6 .or. MOD10 == 7) then
 endif
 
 !-----------------------------------------------
-! Writing post-view file,  2D Radial/Time output 
+! Append data to post-view file,  2D Radial/Time output 
 
 ! The next line suppresses writing a view file during the iteration loop
-if (TPOUT + DPOUT >= TSTART) then
-   if (IFKL == 256) goto 1
-   if (TIME + 0.5*TAU < TPOUT + DPOUT) goto 1  
-endif
-call markloc(str_in='RADOUT|1 call from IFKEY')
+if (TPOUT + DPOUT < TSTART .or. (IFKL /= 256 .and. TIME + 0.5*TAU >= TPOUT + DPOUT)) then
 
-call RADOUT
+    call markloc(str_in='RADOUT|1 call from IFKEY')
+    call RADOUT
 
-if (LTOUTO /= 0)  then
-    open(3, FILE=rev_file, STATUS='OLD', iostat=ios, &
+    if (LTOUTO /= 0)  then
+        open(3, FILE=rev_file, STATUS='OLD', iostat=ios, &
 !        ACCESS='APPEND', FORM='UNFORMATTED')   ! SUN, Alpha
-         POSITION='APPEND', FORM='UNFORMATTED') ! Intel
-    if (ios /= 0) then
-        write(*, '( // A // )') '>>> IFKEY: Review file append error'
-    endif
-else
+             POSITION='APPEND', FORM='UNFORMATTED') ! Intel
+        if (ios /= 0) then
+            write(*, '( // A // )') '>>> IFKEY: Review file append error'
+        endif
+    else
 ! The file rev_file='.res/profil.dat' (default name) is used in 3 places: 
 !  here (w), ifkey.smode5 - modes 4, 5 (r), typdsp - writing 2D U-file (r) 
-    open(unit=12, file='equ/'//TRIM(equ_file), iostat=ios)
-    if (ios /= 0) write(*, *) '>>> IFKEY: Model file "equ/', TRIM(equ_file), '" open error'
-    open(3, file=TRIM(rev_file), iostat=ios, form='unformatted')
-    if (ios /= 0) write(*, *) '>>> IFKEY: Review file open error ' // TRIM(rev_file)
-    CNSFIL = 'equ/log/' // TRIM(equ_file)
-    inquire(FILE=TRIM(CNSFIL), EXIST=MODADD)
-    if (MODADD) then
-        open(1, file=TRIM(CNSFIL), iostat=ios)
-        if (ios /= 0) write(*, *) '>>> IFKEY: File "', TRIM(CNSFIL), '" open error'
-        call ADDMOD(3, 12, 1)
-        close(1)
-    else
-        call ADDMOD(3, 12, 0)
-    endif
-    close(12)
+        open(unit=12, file='equ/'//TRIM(equ_file), iostat=ios)
+        if (ios /= 0) write(*, *) '>>> IFKEY: Model file "equ/', TRIM(equ_file), '" open error'
+        open(3, file=TRIM(rev_file), iostat=ios, form='unformatted')
+        if (ios /= 0) write(*, *) '>>> IFKEY: Review file open error ' // TRIM(rev_file)
+        CNSFIL = 'equ/log/' // TRIM(equ_file)
+        inquire(FILE=TRIM(CNSFIL), EXIST=MODADD)
+        if (MODADD) then
+            open(1, file=TRIM(CNSFIL), iostat=ios)
+            if (ios /= 0) write(*, *) '>>> IFKEY: File "', TRIM(CNSFIL), '" open error'
+            call ADDMOD(3, 12, 1)
+            close(1)
+        else
+            call ADDMOD(3, 12, 0)
+        endif
+        close(12)
 
-    call date_and_time(VALUES=time_arr)
-    YEAR   = time_arr(1)
-    MONTH  = time_arr(2)
-    DAY    = time_arr(3)
-    HOUR   = time_arr(5)
-    MINUTE = time_arr(6)
+        call date_and_time(VALUES=time_arr)
+        YEAR   = time_arr(1)
+        MONTH  = time_arr(2)
+        DAY    = time_arr(3)
+        HOUR   = time_arr(5)
+        MINUTE = time_arr(6)
 
-    write(3) exp_file, equ_file, VERSION, XLINE1, &
-        YEAR, MONTH, DAY, HOUR, MINUTE, NCFNAM, NPRNAM, &
-        NROUT, (NAMER(J), J=1, NROUT), (SCALER(J), J=1, NROUT), &
-        NTOUT, (NAMET(J), J=1, NTOUT), (SCALET(J), J=1, NTOUT), &
-        HRO, NB1, NSBR, NGR, NXOUT, (LEQ(j), j=1, 7)
+        write(3) exp_file, equ_file, VERSION, XLINE1, &
+            YEAR, MONTH, DAY, HOUR, MINUTE, NCFNAM, NPRNAM, &
+            NROUT, (NAMER(J), J=1, NROUT), (SCALER(J), J=1, NROUT), &
+            NTOUT, (NAMET(J), J=1, NTOUT), (SCALET(J), J=1, NTOUT), &
+            HRO, NB1, NSBR, NGR, NXOUT, (LEQ(j), j=1, 7)
 ! Note Change the cycle in NEQNS, (LEQ(j), j=1, NEQNS)
 ! Presently LEQ is not used by review.f and need not be stored
 !     . , HRO, NB1, NSBR, NGR, NXOUT
-    if (NXOUT > 0 .and. NGR > 0) then
+        if (NXOUT > 0 .and. NGR > 0) then
 ! Total length: 3*NGR*int+(3*NGR+GDEY(NGR)+NGRIDX(NGR)-1)*real+3*NARRX*int
-        write(3) &
-            (raw_profile_map%arr_index(j), j=1, NGR), (raw_profile_map%nrho(j), j=1, NGR), (raw_profile_map%grid_type(j), j=1, NGR), &
-            (raw_profile_map%time(j), j=1, NGR), (raw_profile_map%jbeg_grid(j), j=1, NGR), (raw_profile_map%jbeg_data(j), j=1, NGR), &
-            (DATARR(j), j=1, raw_profile_map%jbeg_data(NGR) + raw_profile_map%nrho(NGR) - 1), &
-            (NAMEX(j), j=1, NARRX), (NWINDX(j), j=1, NARRX), &
-            (jbeg_arrx(j), j=1, NARRX)
+            write(3) &
+                (raw_profile_map%arr_index(j), j=1, NGR), (raw_profile_map%nrho(j), j=1, NGR), (raw_profile_map%grid_type(j), j=1, NGR), &
+                (raw_profile_map%time(j), j=1, NGR), (raw_profile_map%jbeg_grid(j), j=1, NGR), (raw_profile_map%jbeg_data(j), j=1, NGR), &
+                (DATARR(j), j=1, raw_profile_map%jbeg_data(NGR) + raw_profile_map%nrho(NGR) - 1), &
+                (NAMEX(j), j=1, NARRX), (NWINDX(j), j=1, NARRX), &
+                (jbeg_arrx(j), j=1, NARRX)
+        endif
     endif
+
+    LTOUTO = LTOUT - JTOUT
+    write(3) JTOUT
+    if (JTOUT /= 0) then
+        write(3) (TTOUT(J), (TOUT(J, JJ), JJ=1, NTOUT), J=LTOUTO, LTOUT-1)
+        JTOUT = 0
+    endif
+    write(3) TIME
+
+    write(3) (CONSTF(J), J=1, NCFNAM), (DEVAR(J), J=1, NPRNAM), ABC, ROC, CHORDN, 1./MU(NA)
+    write(3) NA1, NAB, (0, j=1, 10), (0.d0, j=1, 10)
+
+    if (LEQ(5) /= 5) call RHSEQ !call this only if equil is not active
+
+    call STUFF(3, AMETR, NAB, YWD)
+    call STUFF(3, SHIF , NAB, YWD)
+    call STUFF(3, ELON , NAB, YWD)
+    call STUFF(3, TRIA , NAB, YWD)
+    call STUFF(3, EQFF , NAB, YWD)
+    call STUFF(3, EQPF , NAB, YWD)
+    call STUFF(3, FP   , NAB, YWD)
+    do J=1, NROUT
+        call STUFF(3, ROUT(1, J), NAB, YWD)
+    enddo
+    close(3)
+
+    TPOUT = TIME
+    TIMOD4(IPOUT) = TPOUT
+    NAMEP(IPOUT) = fmt6(TPOUT)
+    if (IPOUT < NTRUN) IPOUT = IPOUT + 1
+
 endif
-
-LTOUTO = LTOUT - JTOUT
-write(3) JTOUT
-if (JTOUT /= 0) then
-    write(3) (TTOUT(J), (TOUT(J, JJ), JJ=1, NTOUT), J=LTOUTO, LTOUT-1)
-    JTOUT = 0
-endif
-write(3) TIME
-
-write(3) (CONSTF(J), J=1, NCFNAM), (DEVAR(J), J=1, NPRNAM), ABC, ROC, CHORDN, 1./MU(NA)
-write(3) NA1, NAB, (0, j=1, 10), (0.d0, j=1, 10)
-
-if (LEQ(5) /= 5) call RHSEQ !call this only if equil is not active
-
-call STUFF(3, AMETR, NAB, YWD)
-call STUFF(3, SHIF , NAB, YWD)
-call STUFF(3, ELON , NAB, YWD)
-call STUFF(3, TRIA , NAB, YWD)
-call STUFF(3, EQFF , NAB, YWD)
-call STUFF(3, EQPF , NAB, YWD)
-call STUFF(3, FP   , NAB, YWD)
-do J=1, NROUT
-    call STUFF(3, ROUT(1, J), NAB, YWD)
-enddo
-close(3)
-
-TPOUT = TIME
-TIMOD4(IPOUT) = TPOUT
-NAMEP(IPOUT) = fmt6(TPOUT)
-if (IPOUT < NTRUN) IPOUT = IPOUT + 1
 
 !-------------
 ! Key analysis
@@ -721,7 +719,7 @@ do while(.True.)
 
     CASE(47) ! '/'
         if (TASK(4:4) /= 'B') call Close_Screen
-        write(6, *) '>>> ASTRA / exit >>>'
+        write(6, *) '>>> ASTRA / or "Quit" button exit >>>'
         call CPUSE(6)
         call astra_stop
 
