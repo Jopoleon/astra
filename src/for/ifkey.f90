@@ -170,26 +170,12 @@ endif
 
 if (IFKL /= 256 .and. TASK(4:4) /= 'B') call TIMEDT(TIME, 1000.*TAU)
 
-!--------------
-! Radial output
 
-if (MOD10 <= 3 .or. MOD10 >= 8) then
-    if (TIME + .5*TAU >= TROUT + DROUT) then
-        TROUT = TIME
-        call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
-    endif
-endif
-
-!------------
-! Time output
-
-if (LTOUT /= 1) then
-    if (TIME + 0.5*TAU < TTOUT(LTOUT-1) + DTOUT) goto 437
-
+if (LTOUT > 1) then
     call markloc(str_in='IFKEY (saving time traces)')
     if (LTOUT >= NTRUN) then
-        do J =1, NTRUN-1
-            do JJ =1, NTOUT
+        do J=1, NTRUN-1
+            do JJ=1, NTOUT
                 TOUT(J, JJ) = TOUT(J+1, JJ)
             enddo
             TTOUT(J) = TTOUT(J+1)
@@ -198,39 +184,24 @@ if (LTOUT /= 1) then
     endif
 endif
 
-JJ = 0
-
-! Moves the time window when the current time goes beyond the right border
-do while (TIME > TINIT + 1.025*abs(TSCALE) .and. TSCALE < 0.)
-    TINIT = TINIT + 0.2*abs(TSCALE)
-    JJ = 1
-enddo
-
-! Moves the time window when the current time stays beyond the left border
-do while (TIME < TINIT .and. TSCALE < 0.)
-    TINIT = TINIT - abs(TSCALE)
-    JJ = 1
-enddo
-
 call TIMOUT
 
 TTOUT(LTOUT) = TIME
 LTOUT = LTOUT + 1
 JTOUT = JTOUT + 1
 
-if (MOD10 == 6 .or. MOD10 == 7) then
-    if (JJ /= 0) then
-        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
-        if (IFKL == KEY) then
-            return
-        else
-            goto 1
-        endif
+! Radial output
+if (MOD10 <= 3 .or. MOD10 >= 8) then
+    if (TIME + .5*TAU >= TROUT + DROUT) then
+        TROUT = TIME
+        call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
     endif
-    call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
 endif
 
-437 continue
+! Time output
+if (MOD10 == 6 .or. MOD10 == 7) then
+    call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
+endif
 
 !-----------------------------------------------
 ! Writing post-view file,  2D Radial/Time output 
@@ -238,7 +209,7 @@ endif
 ! The next line suppresses writing a view file during the iteration loop
 if (TPOUT + DPOUT >= TSTART) then
    if (IFKL == 256) goto 1
-   if (TIME + 0.5*TAU < TPOUT + DPOUT) goto 1
+   if (TIME + 0.5*TAU < TPOUT + DPOUT) goto 1  
 endif
 call markloc(str_in='RADOUT|1 call from IFKEY')
 
@@ -457,13 +428,13 @@ do while(.True.)
         if (MOD10 == 1 .and. KEY == 49) active_tab(MOD10) = 0
         if (MOD10 == 6) then
             if (KEY == 54) then
-                MODEY = MODEY+1
+                MODEY = MODEY + 1
                 if (MODEY == 2) MODEY = -1
             else
                 MODEY = 1
             endif
         endif
-        if (MOD10 /= KEY - 48) then
+        if (MOD10 /= KEY - 48) then ! Just changed plotting mode
             MOD10 = KEY - 48
             call erasrw
             plot_mode = 1
@@ -926,11 +897,6 @@ integer, external :: plotMode
 
 call markloc('refresh_plot', debug_lev=2*debug)
 
-if (IFKL == 256 .and. TASK(1: 3) /= 'DSP') then
-    call PSCLOSE
-    return
-endif
-
 call erasrw
 
 plot_mode = 1
@@ -943,6 +909,10 @@ call set_plot(plot_mode)
 j = XOUT + 0.49
 call TaskMenu(j)
 call textbf(0, astra_gui%Height - int(104.*resizeGraph), RUNID, 80) ! Task ID
+if (IFKL == 256 .and. TASK(1: 3) /= 'DSP') then
+    call PSCLOSE
+    return
+endif
 call RADOUT
 call TIMOUT
 

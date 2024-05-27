@@ -657,11 +657,13 @@ else
     return
 endif
 
-10 continue
+YKEY = 'y'
 
-do j=1, NRW
-    write(rows(j)(1:80), '(79X, 1A1)') null_ch
-enddo
+do while (YKEY == 'Y' .or. YKEY == 'y')
+
+    do j=1, NRW
+        write(rows(j)(1:80), '(79X, 1A1)') null_ch
+    enddo
 
 ! j  - ordinal box No.
 ! jb - box No. in the Astra nominations
@@ -669,93 +671,73 @@ enddo
 ! jj - horizontal row
 ! js - position in the current row
 
-jn = 0
-jm = 0
-write(ABNUM, '(f6.3)') ABNUM
-do j=1, NB
-    jb = IBOX(j)
-    if (jb <= 0 ) then
-        jm = jm + 1
-        CYCLE
-    endif
-    if (JMODE == 1) jw = IP1(jb)
-    if (JMODE == 2 .or. JMODE == 3) jw = IP2(jb)
-    if (JMODE == 6) then
-        if (YMODE == 1) jw = jb
-        if (YMODE == 0) jw = IP30(jb)
-        if (YMODE  == -1) jw = IP31(jb)
-    endif
-    YY = r_max(j)
-    js = jsep*(1 - jw + jw/2*2)
-    jj = 1 + (jw - 1)/2
-    write(rows(jj)(js+1: js+4), '(A4)') NAME(j)
-    write(rows(jj)(js+6: js+8), '(I3)') jb
-    write(rows(jj)(js+10: js+15), '(f6.1)') yscale(j)
-    write(rows(jj)(js+17: js+22), '(f6.1)') yshift(j)
-    write(rows(jj)(js+24: js+29), '(f6.3)') r_min(j)
-    write(rows(jj)(js+31: js+36), '(f6.3)') r_max(j)
-    if (YY > AB) rows(jj)(js+31:js+36) = ABNUM
-    jn = max(jn, jj)
-enddo
-
-if (jm /= 0 ) then
-    j2 = jn
-    j1 = 2*jn+1
-    do j = 1, NB
-        if (IBOX(j) <= 0 ) then
-            YY = r_max(j)
-            jw = j1
-            js = jsep*(1 - jw + jw/2*2)
-            jj = 1 + (jw - 1)/2
-            write(rows(jj)(js+1: js+4), '(A4)') NAME(j)
-            write(rows(jj)(js+6: js+8), '(I3)') IBOX(j)
-            write(rows(jj)(js+10: js+15), '(f6.1)') yscale(j)
-            write(rows(jj)(js+17: js+22), '(f6.1)') yshift(j)
-            write(rows(jj)(js+24: js+29), '(f6.3)') r_min(j)
-            write(rows(jj)(js+31: js+36), '(f6.3)') r_max(j)
-            if (YY > AB) rows(jj)(js+31: js+36) = ABNUM
-            jn = max(jn, jj)
-            j1 = j1 + 1
+    jn = 0
+    jm = 0
+    write(ABNUM, '(f6.3)') ABNUM
+    do j=1, NB
+        jb = IBOX(j)
+        if (jb <= 0 ) then
+            jm = jm + 1
+            CYCLE
         endif
-    enddo
-endif
-
-j = 1
-do while(j > 0)
-    j1 = (jm + 1)/2
-    j = layoutBox(TITLE, STR, rows, 80, jn, JGR, j1)
-enddo
-
-jn = 0
-do j = 1, NB
-    if (IBOX(j) > 0) then
-        if (JMODE == 1) jw = IP1(IBOX(j))
-        if (JMODE == 2 .or. JMODE == 3) jw = IP2(IBOX(j))
+        if (JMODE == 1) jw = IP1(jb)
+        if (JMODE == 2 .or. JMODE == 3) jw = IP2(jb)
         if (JMODE == 6) then
-            if (YMODE ==  1) jw = IBOX(j)
-            if (YMODE ==  0) jw = IP30(IBOX(j))
-            if (YMODE == -1) jw = IP31(IBOX(j))
+            if (YMODE == 1) jw = jb
+            if (YMODE == 0) jw = IP30(jb)
+            if (YMODE  == -1) jw = IP31(jb)
         endif
+        YY = r_max(j)
         js = jsep*(1 - jw + jw/2*2)
         jj = 1 + (jw - 1)/2
-        write(NAME(j), '(1A4)', ERR=77) rows(jj)(js+1: js+4)
-        read(rows(jj)(js+6 : js+8), *, ERR=77) IB(j)
-        read(rows(jj)(js+10: js+15), *, ERR=77) yscale(j)
-        read(rows(jj)(js+17: js+22), *, ERR=77) yshift(j)
-        read(rows(jj)(js+24: js+29), *, ERR=77) r_min(j)
-        read(rows(jj)(js+31: js+36), *, ERR=77) YY
-        if (rows(jj)(js+31: js+36) /= ABNUM) then
-            read(rows(jj)(js+31: js+36), *, ERR=77) r_max(j)
-        endif
+        write(rows(jj)(js+1: js+4), '(A4)') NAME(j)
+        write(rows(jj)(js+6: js+8), '(I3)') jb
+        write(rows(jj)(js+10: js+15), '(f6.1)') yscale(j)
+        write(rows(jj)(js+17: js+22), '(f6.1)') yshift(j)
+        write(rows(jj)(js+24: js+29), '(f6.3)') r_min(j)
+        write(rows(jj)(js+31: js+36), '(f6.3)') r_max(j)
+        if (YY > AB) rows(jj)(js+31:js+36) = ABNUM
         jn = max(jn, jj)
-    endif
-enddo
+    enddo
 
-if (jm /= 0 ) then
-    j1 = 2*jn + 1
-    do j=1, NB
-        if (IBOX(j) <= 0) then
-            jw = j1
+    if (jm /= 0 ) then
+        j2 = jn
+        j1 = 2*jn+1
+        do j = 1, NB
+            if (IBOX(j) <= 0 ) then
+                YY = r_max(j)
+                jw = j1
+                js = jsep*(1 - jw + jw/2*2)
+                jj = 1 + (jw - 1)/2
+                write(rows(jj)(js+1: js+4), '(A4)') NAME(j)
+                write(rows(jj)(js+6: js+8), '(I3)') IBOX(j)
+                write(rows(jj)(js+10: js+15), '(f6.1)') yscale(j)
+                write(rows(jj)(js+17: js+22), '(f6.1)') yshift(j)
+                write(rows(jj)(js+24: js+29), '(f6.3)') r_min(j)
+                write(rows(jj)(js+31: js+36), '(f6.3)') r_max(j)
+                if (YY > AB) rows(jj)(js+31: js+36) = ABNUM
+                jn = max(jn, jj)
+                j1 = j1 + 1
+            endif
+        enddo
+    endif
+
+    j = 1
+    do while(j > 0)
+        j1 = (jm + 1)/2
+        j = layoutBox(TITLE, STR, rows, 80, jn, JGR, j1)
+    enddo
+
+    jn = 0
+    do j = 1, NB
+        if (IBOX(j) > 0) then
+            if (JMODE == 1) jw = IP1(IBOX(j))
+            if (JMODE == 2 .or. JMODE == 3) jw = IP2(IBOX(j))
+            if (JMODE == 6) then
+                if (YMODE ==  1) jw = IBOX(j)
+                if (YMODE ==  0) jw = IP30(IBOX(j))
+                if (YMODE == -1) jw = IP31(IBOX(j))
+            endif
             js = jsep*(1 - jw + jw/2*2)
             jj = 1 + (jw - 1)/2
             write(NAME(j), '(1A4)', ERR=77) rows(jj)(js+1: js+4)
@@ -763,29 +745,49 @@ if (jm /= 0 ) then
             read(rows(jj)(js+10: js+15), *, ERR=77) yscale(j)
             read(rows(jj)(js+17: js+22), *, ERR=77) yshift(j)
             read(rows(jj)(js+24: js+29), *, ERR=77) r_min(j)
-            if  (rows(jj)(js+31: js+36) /= ABNUM) then
-                read(rows(jj)(js+31:js+36), *, ERR=77) r_max(j)
+            read(rows(jj)(js+31: js+36), *, ERR=77) YY
+            if (rows(jj)(js+31: js+36) /= ABNUM) then
+                read(rows(jj)(js+31: js+36), *, ERR=77) r_max(j)
             endif
             jn = max(jn, jj)
-            j1 = j1 + 1
         endif
     enddo
-endif
+    
+    if (jm /= 0 ) then
+        j1 = 2*jn + 1
+        do j=1, NB
+            if (IBOX(j) <= 0) then
+                jw = j1
+                js = jsep*(1 - jw + jw/2*2)
+                jj = 1 + (jw - 1)/2
+                write(NAME(j), '(1A4)', ERR=77) rows(jj)(js+1: js+4)
+                read(rows(jj)(js+6 : js+8), *, ERR=77) IB(j)
+                read(rows(jj)(js+10: js+15), *, ERR=77) yscale(j)
+                read(rows(jj)(js+17: js+22), *, ERR=77) yshift(j)
+                read(rows(jj)(js+24: js+29), *, ERR=77) r_min(j)
+                if  (rows(jj)(js+31: js+36) /= ABNUM) then
+                    read(rows(jj)(js+31:js+36), *, ERR=77) r_max(j)
+                endif
+                jn = max(jn, jj)
+                j1 = j1 + 1
+            endif
+        enddo
+    endif
 
-do j = 1, NB
-    IBOX(j) = IB(j)
+    do j = 1, NB
+        IBOX(j) = IB(j)
+    enddo
+
+    return
+
+    77 continue
+    write(*, *)
+    write(*, '(A)') '>>> INPUT ERROR encountered in the dialog window "Presentation"'
+    write(*, '(A, A52, A1)') '                Line: "', rows(j)(1:52), '"'
+    write(*, '(A52, $)') '     Enter "Y" to return, any other key to ignore > '
+    YKEY = 'X'
+    read(*, '(:, A1)') YKEY
 enddo
-
-return
-
-77 continue
-write(*, *)
-write(*, '(A)') '>>> INPUT ERROR encountered in the dialog window "Presentation"'
-write(*, '(A, A52, A1)') '                Line: "', rows(j)(1:52), '"'
-write(*, '(A52, $)') '     Enter "Y" to return, any other key to ignore > '
-YKEY = 'X'
-read(*, '(:, A1)')YKEY
-if (YKEY == 'Y' .or. YKEY == 'y') goto 10
 
 return
 end subroutine ASXWIN

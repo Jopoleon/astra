@@ -63,10 +63,8 @@ subroutine OUTDSP(MARK, JIFNEW, IYO, ITIMES, TT_out, t_out)
 ! MARK = 1     Put marks
 ! MARK = 0     Solid lines
 ! MARK =-1     Dashed lines
-! JIFNEW  =  0 Re-draw (erase) the previous curves
-! JIFNEW =/= 0 New curves only
-! JIFNEW < 0   Don't mark resonances q=m/n
-! JIFNEW > 10  Call from Review. (JIFNEW-10) is used to control erasing
+! JIFNEW =  0 Re-draw (erase) the previous curves
+! JIFNEW = 1 New curves only
 !---------------------------------------------------------------------
 
 use parameter_inc, only: NRD, NRDX, NRW
@@ -80,7 +78,7 @@ use outcmn_inc, only: astra_gui, plot_area, &
     NTOUT, OSHIFT, NAMET, SCALET, &
     NXOUT, NAMEX, NARRX, EXARNM, DATAX, TOUTX, LTOUT, &
     XAXES, GRAL, GRAP, pixel_ymid, meter2pixel, &
-    Black, WarningColor, EraseColor, Red, Blue, Green, &
+    Black, WarningColor, EraseColor, Red, Blue, Green, White, &
     equ_file, NBFILE, NBFLAG
 use expdat, only: raw_profile_map, DATARR
 use dbl2char, only: fmt_xf
@@ -98,7 +96,7 @@ double precision, intent(inout) :: t_out(ITIMES, NRW)
 integer :: PTM(2), PTMO(2, NRDX, NRW), &
     IWN(16), fshift, &
     IST, text_posx, text_posy, jt_old, JS, MODEX, &
-    IYM0, LTOUT1, LTOUT2, JFNEW, STYL, x_shift, y_shift, jx_canv, jy_canv, JY, jxout, &
+    IYM0, LTOUT1, LTOUT2, STYL, x_shift, y_shift, jx_canv, jy_canv, JY, jxout, &
     JW, j_curve, j_canv, &
     IYMN, IYMX, JDSP, NPTMO(NRW), jlx(8), &
     NP1, j, half_wid, &
@@ -123,9 +121,7 @@ call markloc('OUTDSP')
 fshift = 12
 half_wid = plot_area%width/2
 YA = 0.
-JFNEW = JIFNEW
-if (JFNEW >= 10) JFNEW = JFNEW - 10
-if (JFNEW /= 0) then
+if (JIFNEW /= 0) then
     do J=1, 16
         IWN(J) = 0
     enddo
@@ -286,7 +282,7 @@ CASE(1: 3)  ! Profiles
             jsym = jsym + 1
         endif
 
-        if (JFNEW == 0) then
+        if (JIFNEW == 0) then
             call colovm(EraseColor)
             do j=1, NPTMO(jxout)
                 call NMARK(PTMO(1, j, jxout), jsym)
@@ -373,8 +369,8 @@ CASE(6)  ! Time traces
     call markloc('Drawing mode 6', debug_lev=2*debug)
     LTOUT1 = 1
     LTOUT2 = LTOUT
-
-! right_label_position=JDX*JDMX=23*5*5=575 (see typdsp.f)
+    if (LTOUT < 2) return
+    ! right_label_position=JDX*JDMX=23*5*5=575 (see typdsp.f)
     do J=1, LTOUT-1
         r_out = (TT_out(J) - TINIT)*575/abs(TSCALE)
         IYO(J, ICVMX+1) = 6*astra_gui%dxlet + r_out
@@ -409,13 +405,13 @@ CASE(6)  ! Time traces
             ytrace(J) = dble(plot_area%height) - min(max(plot_area%canvas_height*r_out + ymin + (n_canvas - j_canv)*plot_area%canvas_height, ymin), ymax)
         enddo
 
-        if (JFNEW == 0) then
+        if (JIFNEW == 0) then
             jt_old = LTOUT2
         else
-            jt_old = 0
+            jt_old = 1
         endif
         if (KPRI >= 1 .and. KPRI <= 2) then
-            write(STRI, '(1A6, 1A4, 1A1)')'Plot "', NAMET(jj), '"'
+            write(STRI, '(1A6, 1A4, 1A1)') 'Plot "', NAMET(jj), '"'
             j = len_trim_tab(STRI)
             call pscom(STRI, j)
         endif
@@ -425,9 +421,9 @@ CASE(6)  ! Time traces
         j_curve = j_curve + 1
         if (j_curve <= ICVMX) then
             call update_curve(LTOUT2 + 1, jt_old, jcol, STYL, xtrace_old(1:jt_old), ytrace_old(1: jt_old, j_curve), &
-                xtrace(1), ytrace(1) )
-            xtrace_old(1: jt_old+1) = xtrace(1: jt_old+1)
-            ytrace_old(1: jt_old+1, j_curve) = ytrace(1: jt_old+1)
+                xtrace(1:LTOUT2+1), ytrace(1:LTOUT2+1))
+            xtrace_old(1: LTOUT2+1) = xtrace(1: LTOUT2+1)
+            ytrace_old(1: LTOUT2+1, j_curve) = ytrace(1: LTOUT2+1)
         endif
         text_posx = 0
         text_posy = (j_canv-1)*plot_area%canvas_height + astra_gui%dylet*(jplot_in_canv*2 + 2) + 2*jplot_in_canv
@@ -505,7 +501,7 @@ CASE(8)
         jcol = jcol+1
         js = raw_profile_map%jbeg_grid(jarr)
 
-        if (JFNEW == 0) then
+        if (JIFNEW == 0) then
             call colovm(EraseColor)
             do j=1, NPTMO(jxout)
                 call NMARK(PTMO(1, j, jxout), 7)
