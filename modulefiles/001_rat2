@@ -1,0 +1,33 @@
+#%Module######################################################################
+##
+##      ASTRA modulefile
+##      author: G. Tardini       (git@ipp.mpg.de)
+##
+
+module-whatis "ASTRA is a suite of transport codes"
+
+proc ModulesHelp { } {
+    puts stderr "See <https://gitlab.mpcdf.mpg.de/git/astra/-/wikis/The-ASTRA-code>. "
+}
+
+conflict meld
+
+prereq intel/pe-xe-2018
+prereq anaconda/3
+
+#setenv ASTRA_EXT /shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT
+#set INTEL_HOME /cluster/local/rh7/intel-2018u1
+setenv ASTRA_EXT /home/tardini/ASTRA_LIBRARIES_EXT
+setenv MKL_LIBDIR $INTEL_HOME/mkl/lib/intel64
+setenv COMP_LIBDIR $INTEL_HOME/compilers_and_libraries/linux/lib/intel64_lin
+#set NETCDF_HOME /mpcdf/soft/SLE_15/packages/skylake/netcdf-serial/intel_2023.1.0.x-2023.1.0.x/4.8.1
+set NETCDF_HOME 
+set NETCDF_LIBDIR $NETCDF_HOME/lib
+setenv NETCDF_LIB "-L${NETCDF_LIBDIR} -lnetcdf -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}"
+setenv NETCDF_INC $NETCDF_HOME/include
+
+setenv AFC ifort
+setenv ACC "cc -O"
+setenv MPIFC mpiifort
+
+set-alias ae exe/as_exe
