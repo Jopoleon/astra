@@ -54,11 +54,12 @@ then
    export INTEL_LICENSE_FILE=/opt/intel/oneapi/mkl/latest/licencing
 elif [[ $platform == "ncku" ]]
 then
-    PKG=/opt/intel/oneapi/compiler/2024.1/bin/compiler
+    # /compiler/2024.1/bin/compiler
+    PKG=/opt/intel/oneapi
     export MKL_LIBDIR=${PKG}/mkl/lib/intel64_lin
-    export COMP_LIBDIR=${PKG}/intel/ics2018.4/compilers_and_libraries_2018.5.274/linux/compiler/lib/intel64_lin
-    export I_MPI_ROOT=${PKG}/intel/impi/4.1.0.030/intel64
-    export IFORT_BIN=${INTEL}/bin/intel64/bin
+    export COMP_LIBDIR=${PKG}/compiler/2024.1/lib
+    export I_MPI_ROOT=${PKG}/mpi/2021.12
+    export IFORT_BIN=${PKG}/compiler/2024.1/bin
     export MPIFORT_BIN=${I_MPI_ROOT}/bin
     export AFC=ifort
     export ACC="cc -O"
