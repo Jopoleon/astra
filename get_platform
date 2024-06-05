@@ -43,6 +43,9 @@ then
 elif [[ $node == "e2dea0ffab23" ]]
 then
    platform=ncku
+elif [[ $node == "rat2"* ]]
+then
+   platform=rat2
 fi
 
 echo $platform
