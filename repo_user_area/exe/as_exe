@@ -7,9 +7,9 @@ platform=`$AWD/get_platform`
 
 module_sh=/etc/profile.d/modules.sh
 
-if [ -f $module_sf ]
+if [ -f $module_sh ]
 then
-    source /etc/profile.d/modules.sh
+    source $module_sh
     module purge
     RES="Ok"
     if [[ $platform == "iter" ]]
