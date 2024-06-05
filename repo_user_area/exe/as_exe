@@ -1,16 +1,15 @@
 #!/bin/bash -f
 
-source /etc/profile.d/modules.sh
-
 rootdir=`dirname $0`        # may be relative path
 AWD=`cd $rootdir/.. && pwd` # ensure absolute path
 
 platform=`$AWD/get_platform`
 
-if ! command -v module &> /dev/null
+module_sh=/etc/profile.d/modules.sh
+
+if [ -f $module_sf ]
 then
-    echo "module tool not available on this platform, set environment in exe/Build"
-else
+    source /etc/profile.d/modules.sh
     module purge
     RES="Ok"
     if [[ $platform == "iter" ]]
@@ -32,25 +31,6 @@ else
     elif [[ $platform == "lddsk" ]]
     then
         module load astra/lddsk
-    elif [[ $platform == "ncku" ]]
-    then
-	PKG=/opt/intel/oneapi/compiler/2024.1/bin/compiler
-        export MKL_LIBDIR=${PKG}/mkl/lib/intel64_lin
-        export COMP_LIBDIR=${PKG}/intel/ics2018.4/compilers_and_libraries_2018.5.274/linux/compiler/lib/intel64_lin
-        export I_MPI_ROOT=${PKG}/intel/impi/4.1.0.030/intel64
-        export IFORT_BIN=${INTEL}/bin/intel64/bin
-        export MPIFORT_BIN=${I_MPI_ROOT}/bin
-        export AFC=ifort
-        export ACC="cc -O"
-        export MPIFC=mpiifort
-        export ASTRA_EXT=/home/astrainstaller/ASTRA_LIBRARIES_EXT
-# MPI
-        export MPI_INC="-I${I_MPI_ROOT}/include"
-        export MPI_LIB="-L${I_MPI_ROOT}/lib -lmpigf -lmpi"
-# NetCDF
-        NETCDF_HOME=${PKG}/netcdf/4.2.1.1/amd64_sles11/intel/14.0/impi-4.1.3
-        export NETCDF_LIB="-L${NETCDF_HOME}/lib -lnetcdf -lnetcdff"
-        export NETCDF_INC=${NETCDF_HOME}/include
     else 
         module load astra
         RES=$( { module load astra; } 2>&1 )
@@ -65,6 +45,8 @@ else
             exit 1
         fi
     fi
+else
+    echo "module tool not available on this platform, setting in exe/Build"
 fi
 
 # Generate Green-functions for FBE
