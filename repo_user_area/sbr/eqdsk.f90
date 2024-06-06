@@ -1,6 +1,6 @@
 subroutine EQDSK
 
-use const_inc, only: NA1, RTOR, BTOR, IPL, UPDWN, TIME, TSTART, MEQUIL, NEQUIL,
+use const_inc, only: NA1, RTOR, BTOR, IPL, UPDWN, TIME, TSTART, MEQUIL, NEQUIL, &
     PSIAX, PSIBO, IPEQL, SGNBT, SGNIP
 use status_inc, only: SHIF, FP, XRHO
 use parameters_a2equil, only : equil_now, GP, GP2
