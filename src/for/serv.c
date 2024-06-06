@@ -3,7 +3,6 @@
 #include <sys/times.h>
 
 void getid_(double*, int*, int*);
-void fenvex_(void);
 
 /**********************************************************************/
 double swatch_(double *secs){
@@ -79,44 +78,3 @@ void getid_(double *var, int *mediator, int *id){
     }
     return;
 }
-
-
-#ifdef AFENV
-
-#include <signal.h>
-#include <fenv.h>
-void float_error(int);
-void sigint_handler(int); /* prototype */
-
-void fenvex_(void){
-    feenableexcept(FE_INVALID | FE_OVERFLOW | FE_DIVBYZERO);
-/*
-    feenableexcept( FE_INVALID | FE_OVERFLOW | FE_DIVBYZERO | FE_UNDERFLOW);
-    @ Linux FE_INVALID=1,  FE_OVERFLOW=8,  FE_DIVBYZERO=4,  FE_UNDERFLOW=16
-    printf("%d %d %d %d\n",FE_INVALID,FE_OVERFLOW,FE_DIVBYZERO,FE_UNDERFLOW);
-*/
-    signal(SIGFPE, float_error);
-    signal(SIGINT, sigint_handler);
-    return;
-}
-
-void sigint_handler(int sig){   /* this is the handler */
-    const int j = 47;
-    ifkey_(&j);
-}
-
-void float_error(int i){
-    int j;
-    fprintf(stderr,"\n >>> Floating point exception in\n");
-    j = 257;
-    ifkey_(&j);
-    exit(EXIT_FAILURE);
-}
-
-#else
-
-void fenvex_(void){
-    return;
-}
-
-#endif

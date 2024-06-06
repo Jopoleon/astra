@@ -12,6 +12,7 @@ FOR_DIR = $(AWD)/main
 MOD_DIR = $(AWD)/mod/for
 OBJ_DIR = $(AWD)/obj/for
 TMP_DIR = $(AWD)/tmp
+NBI_INC = $(AWD)/mod/nbi
 ATASK = $(TSK_DIR)/$(MODEL).exe
 EQU  = $(AWD)/equ/$(MODEL)
 LIBSBR = $(LIB_DIR)/libsbr.a

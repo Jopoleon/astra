@@ -22,8 +22,6 @@ character(len=132) :: STRI
 double precision, external :: SWATCH
 integer, external :: IFKEY, IFTREQ
 
-call fenvex()   !  Enable floating exception handling
-
 !-------------------- Initial settings --------------------------------|
 
 call outcmn_init

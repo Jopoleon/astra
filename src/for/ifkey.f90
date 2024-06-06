@@ -16,8 +16,6 @@ end function IFKEY_
 !---------------------------------------------------------------------
 integer function IFKEY(IFKL)
 !---------------------------------------------------------------------
-! IFKL = 257 floating point exception event. IFKEY(257) 
-!   is called from signal_handler for/serv.c
 ! IFKL = 256 call from initial iteration loop,
 !         move to KEY analysis skipping D[PRT]OUT checks,
 !   no drawing unless in "DSP" mode
@@ -133,14 +131,6 @@ call markloc('IFKEY', debug_lev=2*debug)
 CHORDN = lineav()
 
 NTRUN = NTIMES
-if (IFKL == 257) then ! Stop ASTRA
-    if (TASK(4:4) /= 'B') call Close_Screen ! Kill GUI window
-    write(6, '(A)')' >>> ASTRA error >>>'
-    write(6, '(A, F11.6, A)')"    Floating point exception at  t =", TIME, ' sec'
-    call CPUSE(6)
-    call astra_stop
-endif
- 
 IFKEY = 0
 
 if (IFKL == -1) then
@@ -148,7 +138,7 @@ if (IFKL == -1) then
     TASK(1:3) = 'DSP'
 endif
 
-if (IFKL < 0 .or. IFKL > 257) then
+if (IFKL < 0 .or. IFKL > 256) then
     write(*, *) '>>> IFKEY: wrong input parameter. Call ignored.'
     return
 endif
