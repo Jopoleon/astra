@@ -65,6 +65,7 @@ directories:
 clean:
 	rm -f *.mod
 	rm -f $(MOD_DIR)/*.mod
+	rm -f $(TSK_DIR)/*
 	rm -rf $(OBJ_DIR)
 	rm -rf $(LIB_DIR)
 
