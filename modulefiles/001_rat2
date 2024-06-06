@@ -12,19 +12,26 @@ proc ModulesHelp { } {
 
 conflict meld
 
-prereq intel/pe-xe-2018
-prereq anaconda/3
+if [ module-info mode load ] {
+    module load intel/pe-xe-2018
+    module load anaconda/3
+}
+if [ module-info mode remove ] {
+    module unload intel/pe-xe-2018
+    module unload anaconda/3
+}
 
 #setenv ASTRA_EXT /shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT
-#set INTEL_HOME /cluster/local/rh7/intel-2018u1
+set INTEL_HOME /cluster/local/rh7/intel-2018u1
 setenv ASTRA_EXT /home/tardini/ASTRA_LIBRARIES_EXT
 setenv MKL_LIBDIR $INTEL_HOME/mkl/lib/intel64
 setenv COMP_LIBDIR $INTEL_HOME/compilers_and_libraries/linux/lib/intel64_lin
-#set NETCDF_HOME /mpcdf/soft/SLE_15/packages/skylake/netcdf-serial/intel_2023.1.0.x-2023.1.0.x/4.8.1
-set NETCDF_HOME 
-set NETCDF_LIBDIR $NETCDF_HOME/lib
-setenv NETCDF_LIB "-L${NETCDF_LIBDIR} -lnetcdf -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}"
-setenv NETCDF_INC $NETCDF_HOME/include
+set NETCDF_HOME  /usr/local/netcdf-c/4.8.1
+set NETCDFF_HOME /usr/local/netcdf-f/4.5.4/intelmpi-2018
+set NETCDF_LIBDIR ${NETCDF_HOME}/lib
+set NETCDFF_LIBDIR ${NETCDFF_HOME}/lib
+setenv NETCDF_LIB "-L${NETCDF_LIBDIR} -lnetcdf -L${NETCDFF_LIBDIR} -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}:${NETCDFF_LIBDIR}"
+setenv NETCDF_INC ${NETCDFF_HOME}/include
 
 setenv AFC ifort
 setenv ACC "cc -O"
