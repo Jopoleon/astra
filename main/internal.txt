@@ -22,7 +22,7 @@ NBND     None                      No. of points on the boundary
 XFLAG    None                      X
 DTEQL    s                         Time interval to recalculate equilibrium
 MEQUIL   None                      Poloidal M (for ESC), grid size (for equil)
-TPAUSE   s                         Time to set "pause" mode
+TPAUSE   s                         Time to set pause mode
 TEND     s                         End time, t_end, t_start <= t <= t_end
 INUME1   None                      Numerical flag for NE, 11 is explicit, centered diff. 12 is explicit, power law, 21 is implicit, centered diff, 22 is implicit, power law. 31 is Crank
 INUME2   None                      Numerical flag for TE and TI

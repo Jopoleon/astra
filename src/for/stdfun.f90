@@ -1006,7 +1006,7 @@ double precision function TIMDER(Y)
 !     dIdt_cv1;   dWdt_cv2;
 ! Note! the function cannot be used in the time output directly !!!!!!!!
 !   (Yushmanov 13-FEB-91)
-!hanged by Pereverzev 15.10.98
+! Changed by Pereverzev 15.10.98
 
 use const_inc, only: TIME
 

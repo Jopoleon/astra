@@ -15,11 +15,11 @@ FXBOX                      ASTRA function: FXBOX(x1,x2)=[1 if x1<x<x2][0 otherwi
 FTMIN                      ASTRA function: FTMIN(Y)=min_t(y), where y=y(t[,r])
 FTMAX                      ASTRA function: FTMAX(Y)=max_t(y)
 AFVAL                      ASTRA function: a          position of array=value
-RFVAL                      ASTRA function: rho          position of array=value
-AFVEX                      ASTRA function: Outermost a          position of array=value
-RFVEX                      ASTRA function: Outermost rho          position of array=value
-AFVIN                      ASTRA function: Innermost a          position of array=value
-RFVIN                      ASTRA function: Innermost rho          position of array=value
+RFVAL                      ASTRA function: rho        position of array=value
+AFVEX                      ASTRA function: Outermost a    position of array=value
+RFVEX                      ASTRA function: Outermost rho  position of array=value
+AFVIN                      ASTRA function: Innermost a    position of array=value
+RFVIN                      ASTRA function: Innermost rho  position of array=value
 RFMIN                      ASTRA function: position of minimal array value
 RFMAX                      ASTRA function: position of maximal array value
 AFR                        ASTRA function: a=a(rho)
@@ -37,9 +37,9 @@ TIMINT                     ASTRA function: time integral
 RECR                       ASTRA function: RECR(z,n) rho_tor of resonance surface
 STEP                       ASTRA function: Heavyside = 0 if arg < 0, = 1 otherwise
 GAUSS                      ASTRA function: Gauss distribution function
-ASTEP                      ASTRA function: Radial step function with "a" [m]
-RSTEP                      ASTRA function: Radial step function with "rho*ROC" [m]
-XSTEP                      ASTRA function: Radial step function with "xrho" []
+ASTEP                      ASTRA function: Radial step function with a [m]
+RSTEP                      ASTRA function: Radial step function with rho*ROC [m]
+XSTEP                      ASTRA function: Radial step function with xrho []
 STEP                       ASTRA function: step function with dummy argument
 GRAD                       ASTRA function: d/drho
 GRADS                      ASTRA function: d/drho (HROA at boundary)

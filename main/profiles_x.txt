@@ -84,7 +84,7 @@ PRADX    MW/m^3                    External radiation power
 TEX      keV                       External electron temperature
 TIX      keV                       External ion temperature
 NEX      10^19/m^3                 External electron density
-CUX      MA/m^2                    External current density		!to be
+CUX      MA/m^2                    External current density
 ZEFX     None                      External Z effective
 VRX      m^2                       VR (dV/dRho) as taken from a data file
 SHX      m                         SHIF as taken from a data file
