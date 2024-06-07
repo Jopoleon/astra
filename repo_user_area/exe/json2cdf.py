@@ -56,7 +56,6 @@ def json_concat(expequ):
 #        n_th = len(var_d['THETA']['data'])
 
         for key, val in var_d.items():
-            ds[key] = []
             dat = val['data']
             if key not in ('XRHO', 'THETA', 'RHO_SURF'):
                 if j_json == 1:
@@ -67,7 +66,6 @@ def json_concat(expequ):
                             ds[key] = nx*[0.]
                     else: # scalar
                         ds[key] = [dat]
-#                    logger.debug('#1 %s', key)
                 else:
                     if type(dat) == type([]): # list
                         if len(dat) > 0:
@@ -79,17 +77,16 @@ def json_concat(expequ):
                         
         f_json_prev = f_json
         j_json += 1
-    nt = j_json
+    nt = j_json - 1
     logger.info('nt = %d, nrho = %d, n_json = %d' %(nt, nx, j_json-1))
     
     dtyp = '>f8' #np.float64
     for key, val in ds.items():
-#        print(key, val)
         if len(val) == nt:
-            val = np.array(val, dtype=dtyp)
+            ds[key] = np.array(val, dtype=dtyp)
             var_d[key]['dimensions'] = ['TIME']
         if len(val) == nt*nx:
-            val = val.reshape((nt, nx))
+            ds[key] = np.array(val, dtype=dtyp).reshape((nt, nx))
             var_d[key]['dimensions'] = ['TIME', 'XRHO']
 
     f = netcdf_file(cdf_out, 'w', mmap=False)
@@ -100,7 +97,7 @@ def json_concat(expequ):
 #    f.createDimension('THETA', n_th)
 
     rho = f.createVariable('XRHO', dtyp, ('XRHO', ))
-    rho.data = var_d['XRHO']['data'].astype(dtyp)
+    rho.data  = np.array(var_d['XRHO']['data'], dtype=dtyp)
     rho.units = var_d['XRHO']['units']
     rho.long_name = var_d['XRHO']['long_name']
 

@@ -81,16 +81,16 @@ CN       m/s                       Particle convection for electrons
 CNPAD    m/s                       Momentum pinch, H_p contributions
 CNPAP    m/s                       Momentum pinch, poloidal contributions
 CNPAR    m/s                       Momentum pinch, H_e
-CU       MA/m^2                    Longitudinal current density		!currents
-CUBM     MA/m^2                    Beam driven current			!here
-CUBS     MA/m^2                    Bootstrep current
-CUECR    MA/m^2                    EC driven current			!except
-CUFI     MA/m^2                    Fast ion current			!for CUTOR
+CU       MA/m^2                    Longitudinal current density
+CUBM     MA/m^2                    Beam driven current
+CUBS     MA/m^2                    Bootstrap current
+CUECR    MA/m^2                    EC driven current
+CUFI     MA/m^2                    Fast ion current
 CUFW     MA/m^2                    FW driven current
-CUICR    MA/m^2                    IC driven current			!are
-CULH     MA/m^2                    LH driven current			!assumed
+CUICR    MA/m^2                    IC driven current
+CULH     MA/m^2                    LH driven current
 CUTOR    MA/m^2                    Toroidal current density
-CV       MA/m^2                    Current density creating MV		!parallel to B
+CV       MA/m^2                    Current density creating MV (parallel to B)
 DC       None                      Bootstrap coefficient for density gradient
 DN       m*2/s                     Particle diffusivity
 DDNEO    kg/m**3*m/s/(1e19*m_p)    neoclassical sum of diamagnetic rotations (dneo=sum(ms ns F H_p/B_0 ))
