@@ -1,0 +1,230 @@
+&rabbit_beam_geo
+
+   start_pos(1:3, 1) =  7.0021462, -6.1559992,  0.6000009
+   start_pos(1:3, 2) =  6.2954221, -6.7757797,  0.6000009
+   start_pos(1:3, 3) =  6.3297009, -6.7457175, -0.6000009
+   start_pos(1:3, 4) =  7.0021462, -6.1559992, -0.6000009
+   start_pos(1:3, 5) = -6.5441732,  7.2219219,  0.6000009
+   start_pos(1:3, 6) = -5.6940045,  7.7814612,  0.6990121
+   start_pos(1:3, 7) = -5.6973538,  7.7772808, -0.6978514
+   start_pos(1:3, 8) = -6.4582291,  7.2868133, -0.5860376
+
+   unit_vec(1:3, 1) = -0.7092472,  0.6997620, -0.0854488
+   unit_vec(1:3, 2) = -0.6012002,  0.7945168, -0.0854488
+   unit_vec(1:3, 3) = -0.6067322,  0.7903003,  0.0854491
+   unit_vec(1:3, 4) = -0.7092472,  0.6997620,  0.0854488
+   unit_vec(1:3, 5) =  0.6042659, -0.7921877, -0.0854485
+   unit_vec(1:3, 6) =  0.4771475, -0.8710114, -0.1169166
+   unit_vec(1:3, 7) =  0.4763195, -0.8713034,  0.1181101
+   unit_vec(1:3, 8) =  0.5931473, -0.8005483,  0.0854326
+
+
+   width_poly(1:3, 1) = 0.0000000, 0.0098729131, 0.0000000
+   width_poly(1:3, 2) = 0.0000000, 0.0098729131, 0.0000000
+   width_poly(1:3, 3) = 0.0000000, 0.0098729131, 0.0000000
+   width_poly(1:3, 4) = 0.0000000, 0.0098729131, 0.0000000
+   width_poly(1:3, 5) = 0.0000000, 0.0116500000, 0.0000000
+   width_poly(1:3, 6) = 0.0000000, 0.0116500000, 0.0000000
+   width_poly(1:3, 7) = 0.0000000, 0.0116500000, 0.0000000
+   width_poly(1:3, 8) = 0.0000000, 0.0116500000, 0.0000000
+
+/
+
+&partmix
+
+   part_mix(1:3, 1) =  0.4689018,  0.3642054,  0.1668928
+   part_mix(1:3, 2) =  0.4689018,  0.3642054,  0.1668928
+   part_mix(1:3, 3) =  0.4689018,  0.3642054,  0.1668928
+   part_mix(1:3, 4) =  0.4689018,  0.3642054,  0.1668928
+   part_mix(1:3, 5) =  0.4307239,  0.3903196,  0.1789565
+   part_mix(1:3, 6) =  0.4307239,  0.3903196,  0.1789565
+   part_mix(1:3, 7) =  0.4307239,  0.3903196,  0.1789565
+   part_mix(1:3, 8) =  0.4307239,  0.3903196,  0.1789565
+
+/
+
+&nbi_par
+
+   n_nbi = 8
+   a_beam =  2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0
+   z_beam =  1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
+   pinj_file = 'udb/33040_2500/P33040.NBI_AVG0'
+   einj(1) = 6.0000e+04, 6.0000e+04, 5.9276e+04, 6.0000e+04
+   einj(5) = 9.2537e+04, 9.3000e+04, 9.3000e+04, 9.3352e+04
+
+/
+
+
+&species
+   Aimp = 200.00
+   Zimp = 100.00
+/
+&output_settings
+   it_orbout = -1
+/
+&physics
+   jumpcor = 2
+   table_path   = '/home/tardini/ASTRA_LIBRARIES_EXT/rabbit/tables_highRes'
+   limiter_file = '/home/tardini/ASTRA_LIBRARIES_EXT/rabbit/limiters/limiter_aug.dat'
+   Rlim = 2.20 !AUG defaults, overridden if limiter_file exists
+   zlim = 0.20
+   Rmax = 2.26 !AUG defaults
+   Rmin = 1.08
+   torqjxb_model = 3
+/
+
+&numerics
+   norbits=20
+   orbit_dt_fac = 1.56
+   distfun_nv = 200
+   distfun_vmax = 4.5e6
+/
+
+&torbeam
+
+   n_gyro = 8
+   pecr_file  = 'udb/33040_2500/P33040.ECH_AVG0'
+   theta_file = 'udb/33040_2500/THEAS33040.ECH_AVG0'
+   phi_file   = 'udb/33040_2500/PHIAS33040.ECH_AVG0'
+   beam_on = F, F, F, F, T, F, F, T
+   nmod = -1, -1, -1, -1, -1, -1, -1,  -1
+   freq_n(1) = 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00
+   freq_n(5) = 1.4000e+11, 1.4000e+11, 1.0500e+11, 1.4000e+11
+   phi_n(1) = -0.0000e+00, -0.0000e+00, -1.6782e+00, 1.6782e+00
+   phi_n(5) = 1.9412e-01, -9.6637e+00, -4.9307e+00, 4.9290e+00
+   theta_n(1) = -0.0000e+00, -0.0000e+00, -2.4406e-08, 2.4406e-08
+   theta_n(5) = 1.7068e+01, 3.0480e+01, -2.4176e+01, -2.4916e+01
+   RR_n(1) = 2.3800e+02, 2.3800e+02, 2.3122e+02, 2.3122e+02
+   RR_n(5) = 2.3638e+02, 2.3638e+02, 2.3638e+02, 2.3638e+02
+   ZZ_n(1) = 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00
+   ZZ_n(5) = 3.2025e+01, 3.2025e+01, -3.2025e+01, -3.2025e+01
+   xwyyb(1) = 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00
+   xwyyb(5) = 2.5500e+00, 2.5500e+00, 3.0100e+00, 2.5500e+00
+   xwzzb(1) = 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00
+   xwzzb(5) = 2.5500e+00, 2.5500e+00, 3.0100e+00, 2.5500e+00
+   xryyb(1) = 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00
+   xryyb(5) = 8.5510e+01, 8.5510e+01, 1.1580e+02, 8.5510e+01
+   xrzzb(1) = 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00
+   xrzzb(5) = 8.5510e+01, 8.5510e+01, 1.1580e+02, 8.5510e+01
+
+/
+
+
+
+&strahl_par
+   tau_strahl = 1.e-5
+   rho_coord = 'poloidal rho'
+   ne_decayl = 2.
+   te_decayl = 2.
+   ti_decayl = 2.
+   nfour_c = 3
+   nimp_touse = 3
+   elements_touse(1) = 'B_'
+   aweight(1) = 10.
+   eneutr(1) = 1.
+   ridecay(1) = 2.
+   irecycl(1) = 0
+   wrecycl(1) = 0.
+   elements_touse(2) = 'W_'
+   aweight(2) = 184.
+   eneutr(2) = 6.
+   ridecay(2) = 2.
+   irecycl(2) = 0
+   wrecycl(2) = 0.
+   elements_touse(3) = 'Ar'
+   aweight(3) = 40.
+   eneutr(3) = 0.1
+   ridecay(3) = 2.
+   irecycl(3) = 0
+   wrecycl(3) = 0.
+   diffname1_s = ''
+   z_K = 8.
+   n_grids = 135
+   zdr_0 = 2.5
+   zdr_1 = 0.250
+   rsources(1) = 4.5
+   rrates(1) = 0.
+   trates(1) = 0.
+   rsources(2) = 4.5
+   rrates(2) = 0.
+   trates(2) = 0.
+   rsources(3) = 4.5
+   rrates(3) = 0.
+   trates(3) = 0.
+   ineocla = 1
+   rneocl = 0.95
+   divpuff(1) = 0
+   swincm(1)  = 0.00
+   swoutcm(1) = 0.00
+   promptredep(1) = 0.
+   taudiv(1) = 100.
+   taupump(1) = 100.
+   divpuff(2) = 0
+   swincm(2)  = 0.00
+   swoutcm(2) = 0.00
+   promptredep(2) = 0.
+   taudiv(2) = 100.
+   taupump(2) = 100.
+   divpuff(3) = 0
+   swincm(3)  = 0.00
+   swoutcm(3) = 0.00
+   promptredep(3) = 0.
+   taudiv(3) = 100.
+   taupump(3) = 100.
+   rbrlcfs   = 8.
+   rlimrlcfs = 4.5
+   todivert = 25.
+   tolimiter = 0.5
+   solflow = 0.
+   addsheathvoltage = 0.
+   solrout1 = 1.01
+   solrout2 = 1.02
+   solrout3 = 1.03
+   solrout4 = 1.05
+/
+
+&equil_settings
+
+   time_fix_eqpff = 0.0021
+   fix_eqpf_eqff = 0
+   cheb_degree = 5
+   spidat_yes = 0
+   iter_one_only_fbe = 0
+   advanced_methods = 3
+   i3method = 3
+   diagnostic_gsef = 0
+   do_adcmp = 0
+   urelax = 0.85
+   urelax2 = 0.1
+   murelax2 = 0.2
+   ydiff = 1.e2
+   ydiff2 = 1.
+   max_iter = 10000
+   miter_ext = 1
+   interp_routine = 2
+   interp_method_rect = 4
+   epsf_tol = 1.e-9 !1.e-9
+   epss_tol = 1.e-5
+   epsv_tol = 1.e-5
+   epsg_tol = 1.e-8  !1.e-8
+   key_no_startz = 0
+   key_no_refits = 0
+
+/
+
+&spider
+
+   kprs = -1 !-1
+   k_grids = 0
+   epsros = 1.d-9 !1.d-9
+   enelss  = 1.d-7 !1.d-7
+   key_plcs = 1
+   toric_fourc = 11
+   strahl_fourc = 4
+   write_coils_diagn = 0
+   k_filessss = 0
+   psplexavg = 0.01 ! 0.01
+   psplexavgexp = 0. !exponent of Ip in psplexavg
+   fixadapgrid = 0 !0 for standard spider adaptive grid, 1 for EF variation
+
+/
