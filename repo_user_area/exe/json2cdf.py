@@ -52,8 +52,8 @@ def json_concat(expequ):
         with open(f_json, 'r') as fjson:
             var_d = json.load(fjson)
         nx = len(var_d['NEX']['data'])
-#        n_eq = len(var_d['RHO_SURF']['data'])
-#        n_th = len(var_d['THETA']['data'])
+        n_eq = len(var_d['RHO_SURF']['data'])
+        n_th = len(var_d['THETA']['data'])
 
         for key, val in var_d.items():
             dat = val['data']
@@ -82,19 +82,25 @@ def json_concat(expequ):
     
     dtyp = '>f8' #np.float64
     for key, val in ds.items():
-        if len(val) == nt:
-            ds[key] = np.array(val, dtype=dtyp)
+        ds[key] = np.array(val, dtype=dtyp)
+        if key in ('phi', 'pprime', 'ffprim'):
+            ds[key] = ds[key].reshape((nt, n_eq))
+            var_d[key]['dimensions'] = ['TIME', 'RHO_SURF']
+        elif key in ('r2d', 'z2d', 'psi2d'):
+            ds[key] = np.transpose(ds[key].reshape((nt, n_th, n_eq)), (0, 2, 1) )
+            var_d[key]['dimensions'] = ['TIME', 'RHO_SURF', 'THETA']
+        elif len(val) == nt:
             var_d[key]['dimensions'] = ['TIME']
-        if len(val) == nt*nx:
-            ds[key] = np.array(val, dtype=dtyp).reshape((nt, nx))
+        elif len(val) == nt*nx:
+            ds[key] = ds[key].reshape((nt, nx))
             var_d[key]['dimensions'] = ['TIME', 'XRHO']
 
     f = netcdf_file(cdf_out, 'w', mmap=False)
 
     f.createDimension('TIME', nt)
     f.createDimension('XRHO', nx)
-#    f.createDimension('RHO_SURF', n_eq)
-#    f.createDimension('THETA', n_th)
+    f.createDimension('RHO_SURF', n_eq)
+    f.createDimension('THETA', n_th)
 
     rho = f.createVariable('XRHO', dtyp, ('XRHO', ))
     rho.data  = np.array(var_d['XRHO']['data'], dtype=dtyp)
@@ -106,23 +112,19 @@ def json_concat(expequ):
     time.units = 's'
     time.long_name = 'Time'
 
-#    rho_surf = f.createVariable('RHO_SURF', dtyp, ('RHO_SURF', ))
-#    rho_surf.data = var_d['RHO_SURF']['data'].astype(dtyp)
-#    rho_surf.units = '-'
-#    rho_surf.long_name = var_d['RHO_SURF']['long_name']
+    rho_surf = f.createVariable('RHO_SURF', dtyp, ('RHO_SURF', ))
+    rho_surf.data = np.array(var_d['RHO_SURF']['data'], dtype=dtyp)
+    rho_surf.units = '-'
+    rho_surf.long_name = var_d['RHO_SURF']['long_name']
 
-#    theta = f.createVariable('THETA', dtyp, ('THETA', ))
-#    theta.data = var_d['THETA']['data'].astype(dtyp)
-#    theta.units = 'rad'
-#    theta.long_name = var_d['THETA']['long_name']
+    theta = f.createVariable('THETA', dtyp, ('THETA', ))
+    theta.data = np.array(var_d['THETA']['data'], dtype=dtyp)
+    theta.units = 'rad'
+    theta.long_name = var_d['THETA']['long_name']
 
     for key, val in ds.items():
         if key != 'TIME':
-            if 'TIME' in var_d[key]['dimensions']:
-                dims = var_d[key]['dimensions']
-            else:
-                dims = ('TIME', ) + var_d[key]['dimensions']
-            tmp = f.createVariable(key, dtyp, dims)
+            tmp = f.createVariable(key, dtyp, var_d[key]['dimensions'])
             tmp[:] = val
             tmp.units = var_d[key]['units']
             tmp.long_name = var_d[key]['long_name']
@@ -133,6 +135,19 @@ def json_concat(expequ):
 
 if __name__ == '__main__':
 
+    import matplotlib.pylab as plt
+
     exp = 'aug34954'
     equ = 'test'
     json_concat(exp+equ)
+
+    f_cdf = '/shares/departments/AUG/users/git/a8/ncdf_out/aug34954test-js.CDF'
+    cv = netcdf_file(f_cdf, 'r', mmap=False).variables
+
+    plt.figure(1)
+    plt.plot(cv['XRHO'].data, cv['TI'][-1, :])
+    plt.figure(2)
+    plt.plot(cv['r2d'][-1, -1, :], cv['z2d'][-1, -1, :])
+    plt.figure(3)
+    plt.plot(cv['TIME'].data, cv['IPL'].data)
+    plt.show()

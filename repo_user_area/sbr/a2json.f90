@@ -12,8 +12,8 @@ implicit none
 logical, parameter :: verbose=.True.
 integer, parameter :: l_name=8, l_unit=25, l_desc=60, nunit=25
 
-integer :: jid, jrho, nvars, ios, j_call=1
-character(len=120) :: file_in, feq_1d, feq_2d, json_out
+integer :: jid, jrho, nvars, ios, j_call=1, nrho_surf, nthe_surf, ndim
+character(len=120) :: file_in, feq_2d, json_out
 character(len=l_name), allocatable, dimension(:) :: s_name
 character(len=l_unit), allocatable, dimension(:) :: s_unit
 character(len=l_desc), allocatable, dimension(:) :: s_desc
@@ -22,8 +22,10 @@ integer, external :: get_nvars
 
 save j_call
 
+nrho_surf = SIZE(equil_now%profiles_1d%rho_tor)
+nthe_surf = SIZE(equil_now%coord_sys%position%teta2d)
+
 if (verbose) write(*, '(A, i)') 'Starting a2json', j_call
-feq_1d = TRIM(AWD) // '/main/equil_1d.txt'
 feq_2d = TRIM(AWD) // '/main/equil_2d.txt'
 
 write(json_out, '(5A, i0, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), TRIM(equ_file), '-', j_call, '.json'
@@ -131,7 +133,7 @@ call write_scalar_block(nunit, file_in, time_traces)
 !-----------
 ! Profiles
 !-----------
-102 format('    "', A, '": {"units": "', A, '", "long_name": "', A, '", "data": [')
+
 ! Exp profiles
 
 file_in = TRIM(AWD) // '/main/profiles_x.txt'
@@ -605,6 +607,8 @@ call write_array(nunit, NA1,     XC(1:NA1), s_name(jid), s_unit(jid), s_desc(jid
 jid = jid + 1
 call write_array(nunit, NA1,     XI(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
 jid = jid + 1
+call write_array(nunit, NA1,   XRHO(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
 call write_array(nunit, NA1,  XUPAD(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
 jid = jid + 1
 call write_array(nunit, NA1,  XUPAP(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
@@ -626,16 +630,54 @@ jid = jid + 1
 call write_array(nunit, NA1,   ZIM3(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
 jid = jid + 1
 call write_array(nunit, NA1,  ZIMPT(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
-
 jid = jid + 1
-write(nunit, 102) TRIM(s_name(jid)), TRIM(s_unit(jid)), TRIM(s_desc(jid))
-if (MAXVAL(ABS(ZMAIN(1:NA1))) > 0.) then
-    write(nunit, '(5(es15.8, ","))') (ZMAIN(jrho), jrho=1, NA1-1)
-    write(nunit, '(es15.8)') ZMAIN(NA1) ! No comma after last array entry
-endif
-write(nunit, '(A/)') ']}' ! No comma after last array
+call write_array(nunit, NA1,  ZMAIN(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
 
+! Equilibrium 1d profiles
+
+
+file_in = TRIM(AWD) // '/main/equil_1d.txt'
+deallocate(s_name)
+deallocate(s_unit)
+deallocate(s_desc)
+nvars = get_nvars(file_in)
+allocate(s_name(nvars), s_unit(nvars), s_desc(nvars))
+call getAttributes(file_in, nvars, s_name, s_desc, s_unit)
+jid = 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%phi    , s_name(jid), s_unit(jid), s_desc(jid))
+jid = 2
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%pprime , s_name(jid), s_unit(jid), s_desc(jid))
+jid = 3
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%ffprime, s_name(jid), s_unit(jid), s_desc(jid))
+
+file_in = TRIM(AWD) // '/main/equil_2d.txt'
+ndim = nrho_surf*nthe_surf
+deallocate(s_name)
+deallocate(s_unit)
+deallocate(s_desc)
+nvars = get_nvars(file_in)
+allocate(s_name(nvars), s_unit(nvars), s_desc(nvars))
+call getAttributes(file_in, nvars, s_name, s_desc, s_unit)
+jid = 1
+call write_array(nunit, ndim, equil_now%coord_sys%position%r, s_name(jid), s_unit(jid), s_desc(jid))
+jid = 2
+call write_array(nunit, ndim, equil_now%coord_sys%position%z, s_name(jid), s_unit(jid), s_desc(jid))
+jid = 3
+call write_array(nunit, ndim, equil_now%coord_sys%position%psirz, s_name(jid), s_unit(jid), s_desc(jid))
+
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%rho_tor, 'RHO_SURF', '-', 'rho toroidal')
+call write_array(nunit, NA1, equil_now%coord_sys%position%teta2d, 'THETA', 'rad', 'Pol. angle')
+
+write(nunit, '(A)') '    "THETA": {"units": "rad", "long_name": "Pol. angle", "data": ['
+write(nunit, '(5(es15.8, ","))') (equil_now%coord_sys%position%teta2d(jrho), jrho=1, nthe_surf-1)
+write(nunit, '(es15.8)') equil_now%coord_sys%position%teta2d(nthe_surf) ! No comma after last array entry
+
+write(nunit, '(A/)') ']}'
+
+!-----------
 ! Close json
+!-----------
+
 write(nunit, '(A)') '}'
 close(nunit)
 write(*, '(A)') '   Written file ' // json_out
@@ -700,7 +742,7 @@ if (MAXVAL(ABS(arr)) > 0.) then
     write(nunit, '(5(es15.8, ","))') (arr(i), i=1, ndim-1)
     write(nunit, '(es15.8)') arr(ndim) ! No comma after last array entry
 endif
-write(nunit, '(A)') ']},'
+write(nunit, '(A/)') ']},'
 
 return
 end subroutine write_array
