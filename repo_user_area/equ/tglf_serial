@@ -143,7 +143,7 @@ CD = CUBM; !+CUECR; !CD source from NBI + PECRH
 !----------------
 
 ! NetCDF output
-a2cdf>:.050:::;
+a2json>:.050:::;
 
 ! Page 1
 

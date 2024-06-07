@@ -166,7 +166,7 @@ TTRQ = SCUBM*5.977e7; !rtor depends on RABBIT output.
 !----------------
 
 ! NetCDF output
-a2cdf>:.050:::;
+a2json>:.050:::;
 
 ! Page 1
 

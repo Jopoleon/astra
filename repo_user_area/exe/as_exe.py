@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os, logging, argparse, traceback
-from nc_concat import nc_concat
+from json2cdf import json_concat
 
 fmt = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s: %(message)s', '%H:%M:%S')
 
@@ -106,7 +106,7 @@ if __name__ == '__main__':
     os.system(cmd)
 
     try:
-        nc_concat(expequ)
+        json_concat(expequ)
     except:
 #        logger.debug(traceback.format_exc())
         pass
