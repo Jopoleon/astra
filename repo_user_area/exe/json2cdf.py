@@ -24,7 +24,7 @@ def json_concat(expequ):
     
     loc = '%s/ncdf_out/%s' %(awd, expequ)
 
-    cdf_out = '%s-js.CDF' %loc
+    cdf_out = '%s.CDF' %loc
 
     j_json = 1
     f_json = '%s-%d.json' %(loc, j_json)
