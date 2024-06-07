@@ -13,8 +13,8 @@ if len(logger.handlers) == 0:
     hnd.setFormatter(fmt)
     logger.addHandler(hnd)
 
-logger.setLevel(logging.DEBUG)
-#logger.setLevel(logging.INFO)
+#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 awd = os.getenv('AWD')
 if awd is None:
@@ -78,7 +78,7 @@ def json_concat(expequ):
         f_json_prev = f_json
         j_json += 1
     nt = j_json - 1
-    logger.info('nt = %d, nrho = %d, n_json = %d' %(nt, nx, j_json-1))
+    logger.debug('nt=%d, nrho=%d, nr_eq=%d, nthe_eq=%d' %(nt, nx, n_eq, n_th))
     
     dtyp = '>f8' #np.float64
     for key, val in ds.items():
@@ -135,19 +135,7 @@ def json_concat(expequ):
 
 if __name__ == '__main__':
 
-    import matplotlib.pylab as plt
-
-    exp = 'aug34954'
-    equ = 'test'
-    json_concat(exp+equ)
-
-    f_cdf = '/shares/departments/AUG/users/git/a8/ncdf_out/aug34954test-js.CDF'
-    cv = netcdf_file(f_cdf, 'r', mmap=False).variables
-
-    plt.figure(1)
-    plt.plot(cv['XRHO'].data, cv['TI'][-1, :])
-    plt.figure(2)
-    plt.plot(cv['r2d'][-1, -1, :], cv['z2d'][-1, -1, :])
-    plt.figure(3)
-    plt.plot(cv['TIME'].data, cv['IPL'].data)
-    plt.show()
+    parser = argparse.ArgumentParser(description='astra.nml writer')
+    parser.add_argument('-e', '--expequ', help='<exp><equ>', required=True)
+    args = parser.parse_args()
+    json_concat(args.expequ)

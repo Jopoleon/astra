@@ -9,11 +9,11 @@ use outcmn_inc, only: AWD, exp_file, equ_file
 
 implicit none
 
-logical, parameter :: verbose=.True.
+logical, parameter :: verbose=.False.
 integer, parameter :: l_name=8, l_unit=25, l_desc=60, nunit=25
 
 integer :: jid, jrho, nvars, ios, j_call=1, nrho_surf, nthe_surf, ndim
-character(len=120) :: file_in, feq_2d, json_out
+character(len=120) :: file_in, json_out
 character(len=l_name), allocatable, dimension(:) :: s_name
 character(len=l_unit), allocatable, dimension(:) :: s_unit
 character(len=l_desc), allocatable, dimension(:) :: s_desc
@@ -26,7 +26,6 @@ nrho_surf = SIZE(equil_now%profiles_1d%rho_tor)
 nthe_surf = SIZE(equil_now%coord_sys%position%teta2d)
 
 if (verbose) write(*, '(A, i)') 'Starting a2json', j_call
-feq_2d = TRIM(AWD) // '/main/equil_2d.txt'
 
 write(json_out, '(5A, i0, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), TRIM(equ_file), '-', j_call, '.json'
 
@@ -48,15 +47,15 @@ call write_scalar_block(nunit, file_in, DELOUT)
 ! Sparse scalars
 
 file_in = TRIM(AWD) // '/main/intern2.txt'
-time_traces(1) = TSTART
-time_traces(2) = TAU
-time_traces(3) = TAUPRP
-time_traces(4) = HRO
-time_traces(5) = HROX
-time_traces(6) = ALBPL
-time_traces(7) = NNCX
-time_traces(8) = QETB
-time_traces(9) = QFF0B
+time_traces(1)  = TSTART
+time_traces(2)  = TAU
+time_traces(3)  = TAUPRP
+time_traces(4)  = HRO
+time_traces(5)  = HROX
+time_traces(6)  = ALBPL
+time_traces(7)  = NNCX
+time_traces(8)  = QETB
+time_traces(9)  = QFF0B
 time_traces(10) = QFF1B
 time_traces(11) = QFF2B
 time_traces(12) = QFF3B
@@ -666,12 +665,9 @@ jid = 3
 call write_array(nunit, ndim, equil_now%coord_sys%position%psirz, s_name(jid), s_unit(jid), s_desc(jid))
 
 call write_array(nunit, nrho_surf, equil_now%profiles_1d%rho_tor, 'RHO_SURF', '-', 'rho toroidal')
-call write_array(nunit, NA1, equil_now%coord_sys%position%teta2d, 'THETA', 'rad', 'Pol. angle')
-
 write(nunit, '(A)') '    "THETA": {"units": "rad", "long_name": "Pol. angle", "data": ['
 write(nunit, '(5(es15.8, ","))') (equil_now%coord_sys%position%teta2d(jrho), jrho=1, nthe_surf-1)
 write(nunit, '(es15.8)') equil_now%coord_sys%position%teta2d(nthe_surf) ! No comma after last array entry
-
 write(nunit, '(A/)') ']}'
 
 !-----------
