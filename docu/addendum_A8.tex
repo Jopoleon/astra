@@ -617,7 +617,7 @@ It also contains equil\_settings (astra coupling to equilibrium);  spider (SPIDE
 To couple Astra to FEQIS, there needs to be a subroutine defined in sbr/, which an example is given in repo\_user\_area/sbr/eqctst.f90, and called in the model file, which defines all the parameters for FEQIS.
 In particular, the module to be used is:
 
-use astra2fbe\\
+use transport2fbe\\
 Then, the following variable have to be assigned (default values are given). Note that below the variable "nequiv\_coils" has to be replaced with the actual number of equivalent coils, whereas "nconductors" is the total number of conductors (equivalent coils + passive elements):\\\\
 tau\_circuit\_feqis = tau ! time step to be used in the ciruit equations;\\
 tau\_gseq\_feqis    = tau ! time step to be used in the dPsi/dt term (explicit in the circuit equations). Notice that these 2 taus can be different if the GS solver is called less than the actual circuit equations (see below execute\_plasma variable);\\

@@ -44,7 +44,7 @@ character(len=80) :: machine_description ! name of device, in astra it's called 
 
 !below, allocatable
 integer, dimension(:), allocatable :: which_x_point !same length of n_isoflux. where 0 --> continous point, where 1 --> x point
-double precision, dimension(:), allocatable :: r_isoflux, z_isoflux
+double precision, dimension(:), allocatable :: r_isoflux, z_isoflux, sigma_isoflux !sigma_isoflux is weight of isoflux point to boundary
 double precision, dimension(:,:), allocatable :: voltage_limits_active_coils
 
 contains

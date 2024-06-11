@@ -189,7 +189,7 @@ YVR(j) = CC(j)*.4*GP*RHO(j)/IPOL(j)**2.0
 YWM(j) = 1./YVR(j)
 YWD(j) = -(VR(j)/(GP2*RHO(j)*CC(j))) *(CUBS(j)+CD(j))
 enddo
-imethod = int(INUME3)
+imethod = nint(INUME3)
 RABDOT = (abs(ADCMPF))*RBDOT
 BABDOT = (abs(ADCMPF))*BBDOT
 
@@ -464,7 +464,7 @@ YVR(j) = CC(j)*.4*GP*RHO(j)/IPOL(j)**2.0
 YWM(j) = 1./YVR(j)
 YWD(j) = -(VR(j)/(GP2*RHO(j)*CC(j))) * (CUBS(j) + CD(j))
 enddo
-imethod = int(INUME3)
+imethod = nint(INUME3)
 RABDOT = (abs(ADCMPF))*RBDOT
 BABDOT = (abs(ADCMPF))*BBDOT
 
@@ -493,7 +493,7 @@ YWM(j) = 625./VR(j)
 YWWB(j) = VR(j)**(5./3.)
 YWNB(j) = 3./2.*NE(j)*YWWB(j)/YVR(j)/YWM(j)
 enddo
-imethod = int(INUME2)
+imethod = nint(INUME2)
 RABDOT = abs(ADCMPF)*RBDOT
 BABDOT = abs(ADCMPF)*BBDOT
 
@@ -533,7 +533,7 @@ YWM(j) = 625./VR(j)
 YWWB(j) = VR(j)**(5./3.)
 YWNB(j) = 3./2.*NI(j)*YWWB(j)/YVR(j)/YWM(j)
 enddo
-imethod = int(INUME2)
+imethod = nint(INUME2)
 RABDOT = abs(ADCMPF)*RBDOT
 BABDOT = abs(ADCMPF)*BBDOT
 
@@ -571,7 +571,7 @@ YWM(j)  = 1./VR(j)
 YWNB(j) = VR(j)
 YWWB(j) = VR(j)
 enddo
-imethod = int(INUME1)
+imethod = nint(INUME1)
 RABDOT = abs(ADCMPF)*RBDOT
 BABDOT = abs(ADCMPF)*BBDOT
 
@@ -624,7 +624,7 @@ YWgradb2(J) = 2.*(BDB02(J+1) - BDB02(J))/(BDB02(J+1) + BDB02(J))/HRO  !d log <B*
 YWR(J) = YWR(J) + RTOR/IPOL(J)*XUPAR(J)*DLNEOD(J) - RTOR/IPOL(J)*(CNPAR(J) + XUPAR(J)*YWgradF(J))*DLNEO(J) + (XUPAR(J) - XUPAP(J))*RTOR/IPOL(J)*BDB02(J)*BTOR*SGNEOD(J) + RTOR/IPOL(J)*BDB02(J)*BTOR*(XUPAR(J)*YWgradb2(J) - XUPAR(J)*YWgradF(J) + CNPAP(J) - CNPAR(J))*SGNEO(J) + RTOR/IPOL(J)*(CNPAD(J) - CNPAR(J) - XUPAD(J)*YWgradF(J))*DDNEO(J) + RTOR/IPOL(J)*(XUPAR(J) - XUPAD(J))*DDNEOD(J)
 endif
 enddo
-imethod = int(INUME4)
+imethod = nint(INUME4)
 RABDOT = (abs(ADCMPF))*RBDOT
 BABDOT = (abs(ADCMPF))*BBDOT
 
@@ -667,7 +667,7 @@ YWN1B(j) = 3./2.*NE(j)*YWW1B(j)/YVR(j)/YWM(j)
 YWW2B(j) = VR(j)**(5./3.)
 YWN2B(j) = 3./2.*NI(j)*YWW2B(j)/YVR(j)/YWM(j)
 enddo
-imethod = int(INUME2)
+imethod = nint(INUME2)
 RABDOT = (abs(ADCMPF))*RBDOT
 BABDOT = (abs(ADCMPF))*BBDOT
 '''
@@ -772,7 +772,7 @@ YWM(j)  = 1./VR(j)
 YWNB(j) = VR(j)
 YWWB(j) = VR(j)
 enddo
-imethod = int(INUME1)
+imethod = nint(INUME1)
 RABDOT = (abs(ADCMPF))*RBDOT
 BABDOT = (abs(ADCMPF))*BBDOT
 '''
@@ -938,7 +938,7 @@ YVR(j) = CC(j)*0.4*GP*RHO(j)/IPOL(j)**2.0
 YWM(j) = 1./YVR(j)
 YWD(j) = -(VR(j)/(GP2*RHO(j)*CC(j))) * (CUBS(j) + CD(j))
 enddo
-imethod = int(INUME3)
+imethod = nint(INUME3)
 RABDOT = (abs(ADCMPF))*RBDOT
 BABDOT = (abs(ADCMPF))*BBDOT
 

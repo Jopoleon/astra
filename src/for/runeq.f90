@@ -275,17 +275,17 @@ END SELECT
 
 !Diagnostics
 if (idiagnostic == 1) then
-     write(28, *) Ngrid, Ngridb, rbdot
-     write(28, *) x
-     write(28, *) Vtilde
-     write(28, *) V
-     write(28, *) M
-     write(28, *) G11
-     write(28, *) R
-     write(28, *) B
-     write(28, *) rbgxhat
-     write(28, *) S
-     write(28, *) P
+    write(28, *) Ngrid, Ngridb, rbdot
+    write(28, *) x
+    write(28, *) Vtilde
+    write(28, *) V
+    write(28, *) M
+    write(28, *) G11
+    write(28, *) R
+    write(28, *) B
+    write(28, *) rbgxhat
+    write(28, *) S
+    write(28, *) P
 endif
 dum1b = GN(1: Ngridb)*theta + GO(1: Ngridb)*(1 - theta)
 call SOLVER_EF(x(1: Ngridb), dx, dt, dum1b, & 
