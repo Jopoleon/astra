@@ -15,7 +15,6 @@ use const_inc, only : rtor,shift, updwn
 use feqis_circuit, only: psib_ext_feqis, get_zccurb_feqis, find_demo_gaps_feqis
 
 use outcmn_inc, only: MACHINE, nml_file
-use transport2fbe, only: raxis_astra, zaxis_astra
 
 implicit none
 
@@ -81,8 +80,6 @@ if (nstep == 0) then
     psplexavg = 0.
     psplexavgexp = 0.
     fix_adapgrid = 0
-    raxis_astra = rtor + shift
-    zaxis_astra = updwn
     fname = trim(nml_file)
     INQUIRE( FILE=trim(fname), EXIST=file_existence)
     if (file_existence) then
@@ -112,9 +109,10 @@ parameters_equil%key_plc = 1    !force plc = 1 if current diffusion is solved
 keyplc = parameters_equil%key_plc
 parameters_equil%key_out = 0
 
-!if (icircq == 0) nstep = 0    !no circuit equations, only static fbe !obsolete
 if (iter_step == 1) parameters_equil%k_fixfree = 0 !astra initialization, no fbe
 if (parameters_equil%k_fixfree == 0) nstep = 0  !no fbe, nstep=0
+parameters_equil%no_circuit_eq = 0
+if (icircq == 0) parameters_equil%no_circuit_eq = 1    !no circuit equations, only static fbe
 
 if (parameters_equil%k_fixfree == 1) then
     SELECT CASE(ipctrl)

@@ -11,7 +11,7 @@ subroutine build_2dgrid(nrho, ntheta, psin_grid, &
 
 use pi_vars, only: GPI, GPI2
 use numerical_tools, only: qinterp, extrapolate, polyfitcc
-use feqis_tools, only: green_function_includingsamepoint
+use feqis_tools, only: green_function_includingsamepoint, pol_angle
 use metric_coefficients_pbe, only: fsa_kernel
 
 implicit none
@@ -34,11 +34,11 @@ double precision, intent(out), dimension(nrho) :: r_out, r_in, elon, shif, &
 
 integer :: jrho, jthe, jthe_l, k, j, i, ji, i1, i2, ip0, ip1, ip2, ip3
 double precision :: drdX, drdY, Mdet, dpsi, dthe, ipol_rmaj, z1, z2, z3, rho_interp, &
-    dumba1, dumba2, qedge, rhoedge, greenf, t4, &
+    dumba1, dumba2, dumba3, dumba4, qedge, rhoedge, greenf, t4, &
     yrzmin, yrzmax, yzmax, yrmin, yrmax, yrr, yzmin, ya
 double precision, dimension(3) :: xxxx1, yyyy1, pppp1
 double precision, dimension(nrho) :: rhot, rhoa, dPSIdV, dVa, daa, dum1, AMETR, ONEZ
-double precision, dimension(ntheta) :: dl_arc, tar1, tar2
+double precision, dimension(ntheta) :: dl_arc, tar1, tar2, theta_special, dl_arc_special
 double precision, dimension(nrho, ntheta) :: gradPSIa, gradVa, dV2da, dA2da, &
     B_pola, B_ABSa, B_Ta
 
@@ -81,13 +81,22 @@ enddo
 dl_arc = 0.0
 do jrho=1, nrho
     dl_arc = 0.0
-    square(jrho)=0.0
-    dumba1 = 0.5*(maxval(XX(jrho, :)) + minval(XX(jrho, :)))
-    dumba2 = 0.5*(maxval(XX(jrho, :)) - minval(XX(jrho, :)))
+    dl_arc_special = 0.0
+    square(jrho) = 0.0
+    dumba1 = 0.5*(maxval(XX(jrho, :)) + minval(XX(jrho, :))) !Rgeo
+    dumba2 = 0.5*(maxval(XX(jrho, :)) - minval(XX(jrho, :))) !a
+    dumba3 = 0.5*(maxval(YY(jrho, :)) + minval(YY(jrho, :))) !Zgeo
+    dumba4 = 0.5*(maxval(YY(jrho, :)) - minval(YY(jrho, :)))/dumba2 !elongation
+    theta_special(1) = pol_angle(dumba1, dumba3/dumba4, XX(jrho, 1), YY(jrho, 1)/dumba4)
     do jthe=2, ntheta 
-        z1 = sin(thetap_i(jthe) + thetap_i(jthe-1))*sin(0.5*(thetap_i(jthe) + thetap_i(jthe-1)))
+        theta_special(jthe) = pol_angle(dumba1, dumba3/dumba4, XX(jrho, jthe), YY(jrho, jthe)/dumba4)
+        if (theta_special(jthe) < theta_special(jthe-1) - GPI2/ntheta) then
+            theta_special(jthe) = theta_special(jthe) + GPI2
+        endif
+        z1 = sin(theta_special(jthe) + theta_special(jthe-1))*sin(0.5*(theta_special(jthe) + theta_special(jthe-1)))
         dl_arc(jthe) = rmin(jrho, jthe)*(thetap_i(jthe) - thetap_i(jthe-1)) !on the full grid
-        square(jrho) = square(jrho) + (XX(jrho, jthe)-dumba1)/dumba2*z1*dl_arc(jthe)
+        dl_arc_special(jthe) = rmin(jrho, jthe)*(theta_special(jthe) - theta_special(jthe-1)) !on the full grid
+        square(jrho) = square(jrho) + (XX(jrho, jthe) - dumba1)/dumba2*z1*dl_arc_special(jthe)
     enddo
     dl_arc(1) = rmin(jrho, 1)*(thetap_i(1) + GPI2 - thetap_i(ntheta))
     z1 = sin((thetap_i(1) + GPI2 + thetap_i(ntheta)))*sin(0.5*(thetap_i(1) + GPI2 + thetap_i(ntheta)))
@@ -95,7 +104,7 @@ do jrho=1, nrho
     perim(jrho)  = sum(dl_arc)
     square(jrho) = square(jrho)/perim(jrho)
 enddo
-square = 4.*square-1.
+square = 4.*square - 1.
 square(1) = square(2)
 
 !Compute Bpol, gradPSI, gradV

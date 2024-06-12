@@ -80,7 +80,7 @@ CASE(4: 5)  ! SPIDER, FEQIS
     if (TIME == TSTART) NDTEQUILMY = 0
     if (TIME >  TSTART) NDTEQUILMY = 1
     if (TIME-TIMEQL >= NDTEQUILMY*DTEQL) then
-        call RHSEQ    ! Define p', FF', j_tor=CUTOR
+        call RHSEQ2    ! Define p', FF', j_tor=CUTOR, but using the gssolver definitions
         call A2GSSOLVER(equil_solver)
         call ADDTIME(cpuTime_equ)
         TIMEQL = TIME
@@ -1515,12 +1515,13 @@ use debugger, only: markloc, debug
 implicit none
 
 integer :: j
-double precision :: YCB, YG, YTH2
+double precision :: YCB, YG, YTH2, residual_num
 
 call markloc('RHSEQ', debug_lev=3*debug)
 
+residual_num = abs(nint(INUME3) - INUME3)
 ! Preparing input for the 3M equilibrium solver:
-if (nint(INUME3) >= 0) then     ! if inume3 < 0 , uses eqpf, eqff from model file (user-prescribed)
+if (residual_num < 0.01) then     ! inume3 = 22 --> calculates this. if inume3 = 22.02, calculate it elsewhere (user defined) 
     YCB = 1.6E-3*RTOR/(BTOR*HRO*HRO)
     do J=2, NA
         if (j == NA) YCB = YCB*HRO/HRO
@@ -1542,10 +1543,83 @@ if (nint(INUME3) >= 0) then     ! if inume3 < 0 , uses eqpf, eqff from model fil
         EQFF(J)  = (CU(J)/IPOL(J) - EQPF(j))/YG
         CUTOR(J) = (CU(J)/IPOL(J) + YTH2*EQPF(j))/(1. + YTH2)
     enddo
+else ! calculates only cutor
+    do J=1, NA1
+        YTH2 = RHO(j)*G22(J)*(MU(J)/RTOR)**2
+        CUTOR(J) = (CU(J)/IPOL(J) + YTH2*EQPF(j))/(1. + YTH2)
+    enddo
 endif
 
 return
 end subroutine RHSEQ
+
+!---------------------------------------------------------------------
+subroutine RHSEQ2
+
+!---------------------------------------------------------------------
+! Input: RTOR, BTOR, NA, NA1, HRO, NB2EQL, 
+!  NE, NI, TE, TI, MU, CU, AMETR, RHO, PBLON, PBPER, G22, G33, IPOL
+! Output:
+!         EQPF
+!         EQFF
+!         CUTOR
+! Both quantities EQPF (~p') and EQFF (~II') are given in [MA/m^2]
+! EQPF = -1.6E-3*(2*\pi*R_0)\prti{n_13*T_keV}{\psi[Vs=T*m^2]}
+!        = -1.E-6*/(2*\pi*R_0)\prti{p[J/m^3=Pascal]}{\psi[Vs]}
+! EQFF = -1.E-6*2*\pi/(R_0*\mu_0)*I*\prti{I}{\psi}
+!        = -5./R_0*I*\prti{I}{\psi}
+! Local toroidal current density j[MA/m^2] is EQPF*r/R_0+EQFF*R_0/r, i.e.
+!         j(r, z) = r*(\vec j\cdot\nabla\zeta) = EQPF*r/R_0+EQFF*R_0/r , 
+! ASTRA average toroidal current density is
+!    R_0*<\vec j\cdot\nabla\zeta> = EQPF+EQFF*<R_0^2/r^2>
+!---------------------------------------------------------------------
+
+use const_inc, only: INUME3, RTOR, BTOR, HRO, NA, NA1, NB2EQL, GP2
+use status_inc, only: EQPF, EQFF, NE, TE, NI, TI, PBLON, PBPER, PFAST, &
+    RHO, AMETR, CU, CUTOR, G22, G33, MU, IPOL, FP, BDB02
+use debugger, only: markloc, debug
+
+implicit none
+
+integer :: j
+double precision :: YCB, YG, YTH2, residual_num, press
+double precision :: z1
+
+call markloc('RHSEQ2', debug_lev=3*debug)
+
+residual_num = abs(nint(INUME3)-INUME3)
+! Preparing input for the 3M equilibrium solver:
+if (residual_num < 0.01) then     ! inume3 = 22 --> calculates this. if inume3 = 22.02, calculate it elsewhere (user defined) 
+    do J=2, NA
+        press = ( (NE(J+1)*TE(J+1) - NE(J)*TE(J)) + (NI(J+1)*TI(J+1) - NI(J)*TI(J)) )
+        press = press + 0.5*NB2EQL * (PBLON(J+1) - PBLON(J) + PBPER(J+1) - PBPER(J))
+        press = press + (PFAST(J+1) - PFAST(J))
+        EQPF(J) = 1602.*press/(FP(J+1)-FP(J))
+    enddo
+    EQPF(1) = EQPF(2)
+    EQPF(NA1) = EQPF(NA) + (EQPF(NA) - EQPF(NA-1)) * (AMETR(NA) - AMETR(NA-1))/(AMETR(NA1) - AMETR(NA))
+    EQPF(NA1) = EQPF(NA) + (EQPF(NA) - EQPF(NA-1))/HRO*HRO
+    do J=2, NA
+        press = 0.5*(IPOL(J+1)**2. - IPOL(J)**2.)/(FP(J+1)-FP(J))
+        EQFF(J) = press * (RTOR*BTOR)**2. 
+    enddo
+    EQFF(1) = EQFF(2)
+    EQFF(NA1) = EQFF(NA) + (EQFF(NA) - EQFF(NA-1)) * (AMETR(NA) - AMETR(NA-1))/(AMETR(NA1) - AMETR(NA))
+    EQFF(NA1) = EQFF(NA) + (EQFF(NA) - EQFF(NA-1))/HRO*HRO
+    do J=1, NA1
+        z1 = 1.e-6/(GP2*RTOR)*EQPF(j) 
+        YTH2 = RHO(j)*G22(J)*(MU(J)/RTOR)**2
+        CUTOR(J) = (CU(J)/IPOL(J) + YTH2*z1)/(1. + YTH2)
+    enddo
+else ! calculates only cutor
+    do J=1, NA1
+        YTH2 = RHO(j)*G22(J)*(MU(J)/RTOR)**2
+        CUTOR(J) = (CU(J)/IPOL(J) + YTH2*EQPF(j))/(1. + YTH2)
+    enddo
+endif
+
+return
+end subroutine RHSEQ2
 
 !---------------------------------------------------------------------
 subroutine CUOFMU

@@ -48,8 +48,9 @@ double precision, intent(in), dimension(jna1) :: xrho, pres_in, fp, &
 double precision, intent(out) :: rocnew, updwn, psifb, psiext, psplex
 double precision, intent(out), dimension(jna1) :: ametr, vr, vrs, &
    slat, gradro, shif, tria, elon, ipol, bmaxt, bmint, bdb02, &
-   bdb0, b0db2, droda, fofb, areat, perim, volum, eqpf, eqff, &
+   bdb0, b0db2, droda, fofb, areat, perim, volum, &
    g11, g41, g22, g33, shiv, square
+double precision, intent(inout), dimension(jna1) :: eqpf, eqff
 double precision, intent(out), dimension(nr_equ) :: g22e, g33e
 double precision, intent(inout) :: ipl, volume
 
@@ -171,6 +172,10 @@ call reinterp_back(xrho_sq, pres , jna1, xrho_sp_sq, PRESS   , nr_equ, interp_ro
 call reinterp_back(sxho_sq, g22  , jna1, xrho_sp_sq, GG2     , nr_equ, interp_routine)
 call reinterp_back(xrho_sq, g33  , jna1, xrho_sp_sq, GG3     , nr_equ, interp_routine)
 call reinterp_back(vxho_sq, volum, jna1, xrho_sp_sq, volum_in, nr_equ, interp_routine)
+if (fix_eqpf_eqff == -1) then !use eqpf and eqff from metric or user defined
+    call reinterp_back(xrho_sq, eqpf, jna1, xrho_sp_sq, eqpf_sp, nr_equ, interp_routine)
+    call reinterp_back(xrho_sq, eqff, jna1, xrho_sp_sq, eqff_sp, nr_equ, interp_routine)
+endif
 
 if (i_rotation == 1) then
     call reinterp_back(xrho_sq, omega_rot  , jna1, xrho_sp_sq, o_rot , nr_equ, interp_routine)
@@ -371,9 +376,14 @@ iter_loop: do jiter=1, miter_ext
 
     PSIn_grid = sqrt((PSI - PSI(1))/(PSI(nr_equ) - PSI(1)))
 
-    eqpf_sp(1:nr_equ) = pprimp(1:nr_equ)
-    eqff_sp(1:nr_equ) = ffprimp(1:nr_equ)
-
+    if (fix_eqpf_eqff == -1) then !use eqpf and eqff from metric or user defined
+        ffprimp(1:nr_equ) = eqff_sp(1:nr_equ)
+        pprimp(1:nr_equ)  = eqpf_sp(1:nr_equ)
+    else
+        eqpf_sp(1:nr_equ) = pprimp(1:nr_equ)
+        eqff_sp(1:nr_equ) = ffprimp(1:nr_equ)
+    endif
+		
 ! Compute F according to newfound dPSIdV
     call integrcc(nr_equ, PSI, ffprimp, dum3)
     do j=1, nr_equ

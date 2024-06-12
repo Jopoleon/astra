@@ -1,4 +1,4 @@
-subroutine full_system_advance_feqis(j_init)
+subroutine full_system_advance_feqis(j_init, no_circuit_eq)
 
 use errors_params, only: err_epsilon, err_circ_plasma_iter
 use feqis_circuit, only: nr2, nz2, nconduc, iplasma, psi_cur_old, &
@@ -9,6 +9,7 @@ use green_matrix, only: greeni
 
 implicit none
 
+integer, intent(in) :: no_circuit_eq
 integer, intent(inout) :: j_init
 
 integer :: i, j_iter
@@ -24,7 +25,7 @@ endif
 
 ! time stepping
 ! at iteration 0, dpsidt = 0
-if (j_init == 0) then
+if (j_init == 0 .or. no_circuit_eq == 1) then
     write(*, *) 'init full system'
 ! First do full equilibrium solution at time t=0
     call psi_external_calc
@@ -94,7 +95,8 @@ use feqis_circuit, only: nr, nz, nr2, nz2, psiextrz, redo_bnd, &
     restab_F_function_full_fonfit, restab_F_function_full_fonfit_xpoints, restab_F_function_full_currents, &
     restab_2_timepoints_evolution, restab_F_function_full_currents_forces, &
     restab_F_function_full_currents_limits,restab_2_timepoints_evolution_limits, &
-    restab_j_timepoints_evolution_limits_xpoints_boundariz
+    restab_j_timepoints_evolution_limits_xpoints_boundariz, & 
+    restab_1_timepoint_limits_xpoints_boundariz
 use transport2fbe, only: refit_mode, n_of_newton_iterations, use_isoflux
 use feqis_tools, only: closest_index
 
@@ -290,6 +292,9 @@ CASE(313) ! refits all currents (active and passive) with F minimization cost fu
 
 CASE(4) !finds active currents from scratch, eddy currents zero
     call restab_F_function_full_currents
+
+CASE(41) !refit active currents from scratch for 1 point also isoflux
+    call restab_1_timepoint_limits_xpoints_boundariz
 
 CASE(5) !finds active currents from scratch including evolution from time t1 to time t2, with constraint on the consumed flux. eddy currents = 0.
     call restab_2_timepoints_evolution
@@ -781,7 +786,7 @@ use ferromagstructure, only: type_ferromag
 use green_matrix, only: greeni, dgreenirj, dgreenizj, dgreenirpl, dgreenizpl
 use outcmn_inc, only: machine
 use transport2fbe, only: cur_init, use_isoflux, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
- voltage_limits_active_coils
+    voltage_limits_active_coils, sigma_isoflux
 
 implicit none
 
@@ -974,10 +979,11 @@ allocate(psi_cur_old(nconduc))
 allocate(dpc(nconduc))
 allocate(voltage_limits_active_coils(nactive, 2))
 
-if (n_isoflux > 0) then
+if (n_isoflux > 0 .and. not(allocated(r_isoflux))) then
     allocate(r_isoflux(n_isoflux))
     allocate(z_isoflux(n_isoflux))
     allocate(which_x_point(n_isoflux))
+    allocate(sigma_isoflux(n_isoflux))
 endif
 
 return

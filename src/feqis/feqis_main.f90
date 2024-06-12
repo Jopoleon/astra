@@ -124,7 +124,7 @@ if (parameters_equil%k_fixfree == 1 .and. refit_mode /= 818) then !any other mod
         j_vacplas = 0
     else if (ifplasma == 1) then  ! full plasma solved
         if (j_vacplas == 0) j_call = 0
-        call full_system_advance_feqis(j_call)
+        call full_system_advance_feqis(j_call, parameters_equil%no_circuit_eq)
         if (j_call == -1) then
             call convert_boundary_to_pbe
             call fix_boundary_feqis(1)
@@ -142,7 +142,7 @@ else if (parameters_equil%k_fixfree == 0 .and. refit_mode /= 818) then !any othe
 endif
 
 if (refit_mode == 818) then  ! run prescribed boundary but with coil currents fitting in the bakcground
-    call full_system_advance_feqis(-818)
+    call full_system_advance_feqis(-818, 0)
     call fix_boundary_feqis(1)
     equil_out%global_param%psplex   = psplex
     equil_out%global_param%psibound = psibndp
