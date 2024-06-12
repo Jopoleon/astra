@@ -71,9 +71,9 @@ psiax = psiax_in
 if (solve_fix > 0) then
     max_iter = solve_fix
 else if (solve_fix == -2) then
-    max_iter=250  ! uses fbe
+    max_iter = 500  ! uses fbe
 else
-    max_iter=250
+    max_iter = 500
 endif
 
 iter_loop: do jiter=1, max_iter+1
@@ -167,7 +167,10 @@ iter_loop: do jiter=1, max_iter+1
         y0 = YY(jrho_axis, jthe_axis)
         psiax = PSI(jrho_axis, jthe_axis)
     endif
-
+    
+    x0 = 0.75*x0o + 0.25*x0
+    y0 = 0.75*y0o + 0.25*y0
+		
     relambda_flag = (jrho_axis == 1 .and. jthe_axis == 1)
 
     nan_count = 0
