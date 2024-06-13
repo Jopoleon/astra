@@ -1,12 +1,10 @@
-netcdf
 intel >2018
  1) ifort with openMP flag
  2) mpifort with openMP flag
 cc
 MKL
-NAG
 python >= 3
 scipy >= 0.19.1 (probably even less)
 
 torbeam
-rabbit
+rabbit (then ialso NetCDF for c and f90)
