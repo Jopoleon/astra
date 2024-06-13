@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include <sys/times.h>
 
-void getid_(double*, int*, int*);
-
 /**********************************************************************/
 double swatch_(double *secs){
 /* The function returns the total CPU time [sec] spent by the calling process.
@@ -34,47 +32,4 @@ double swatch_(double *secs){
     prev_time = cpu_time; 
     runsec = run_time*secs_per_tick;
     return runsec;
-}
-
-/**********************************************************************/
-void getid_(double *var, int *mediator, int *id){
-/* Get ID of calling function and its parent
-   No more than 16 functions for no more than 2200 calling each */
-    static double *varid[16][2200];
-    static int *callid[16];
-    int i, j;
-
-    if (*mediator == 0){
-        for (i=0; i<16; i++){
-            if (callid[i] == 0) break;
-        }
-        if (i == 16){
-            printf(">>> GetID:  > 16 calling functions\n");
-            return;
-        }
-        callid[i] = mediator; /* identify & store calling function */
-        *mediator = i + 1;
-    }    /* loop over calling functions */
-    if (*mediator < 0 || *mediator >= 17){
-        printf(">>> GetID:  Illegal 2nd parameter\n");
-        *id = -2;
-        return;
-    }
-    i = *mediator - 1;
-    for (j=0; j<2200; j++){
-        if (varid[i][j] == var){
-            *id = ++j;
-            return;
-        }
-        if (varid[i][j] == 0) break;
-    }
-    if (j == 2200){
-        printf("Too many varibles > 2200\n");
-        *id = -1;
-    }
-    else{
-        varid[i][j] = var;
-        *id = ++j;
-    }
-    return;
 }

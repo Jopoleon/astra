@@ -999,6 +999,29 @@ return
 end function FXBOX
 
 !---------------------------------------------------------------------
+integer function fun_call_id(id_in)
+
+use const_inc, only: TIME
+  
+implicit none
+
+integer, intent(in) :: id_in
+
+double precision :: time_loc
+
+save time_loc
+
+if (time_loc /= TIME) then
+   fun_call_id = 1
+else
+   fun_call_id = id_in + 1
+endif
+time_loc = TIME
+
+return
+end function fun_call_id
+
+!---------------------------------------------------------------------
 double precision function TIMDER(Y)
 ! Time derivative
 !  Examples:
@@ -1015,31 +1038,32 @@ implicit none
 integer, parameter :: NLOC=2200
 double precision, intent(in) :: Y
 
-integer :: IY, ITSME, ICALL
-double precision, dimension(NLOC) :: YO, YT
+integer :: IY, ICALL
+double precision, dimension(NLOC) :: y_old, YT
+integer, external :: fun_call_id
 
-save ITSME, ICALL, YO, YT
-data ITSME/0/ ICALL/0/ YO/NLOC*0./ IY/0/
+save ICALL, y_old, YT
+data ICALL/0/ y_old/NLOC*0./ IY/0/
 
-call getid(Y, itsme, IY)
+IY = fun_call_id(IY)
 
 TIMDER = 0.
-if (IY < 0 .or. IY > NLOC) then
+if (IY > NLOC) then
     write(*, *) "            Calling from TIMDER"
     write(*, *) ' too many time derivatives >', NLOC
     return
 endif
 
-if (ICALL == 0.) then
+if (ICALL == 0) then
     ICALL  = 1
     TIMDER = 0.
-    YO(IY) = Y
-    YT(IY) = TIME
 else if (TIME > YT(IY)) then
-    TIMDER = (Y - YO(IY))/(TIME - YT(IY))
-    YO(IY) = Y
-    YT(IY) = TIME
+    write(*, *) 'TIMDER', IY, Y, y_old(IY), TIME, YT(IY)
+    TIMDER = (Y - y_old(IY))/(TIME - YT(IY))
 endif
+y_old(IY) = Y
+YT(IY) = TIME
+
 
 return
 end function TIMDER
@@ -1062,30 +1086,30 @@ implicit none
 integer, parameter :: NLOC=2200
 double precision, intent(in) :: Y
 
-integer :: IY, ITSME, ICALL
-double precision, dimension(NLOC) :: YO, YT
+integer :: IY, ICALL
+double precision, dimension(NLOC) :: y_old, YT
+integer, external :: fun_call_id
 
-save ITSME, YO, YT, ICALL
-data ITSME/0/ ICALL/0/ YO/NLOC*0./ IY/0/
+save y_old, YT, ICALL
+data ICALL/0/ y_old/NLOC*0./ IY/0/
 
-call getid(Y, itsme, IY)
+IY = fun_call_id(IY)
 
 TIMINT = 0.
-if (IY < 0 .or. IY > NLOC) then
+if (IY > NLOC) then
     write(*, *) "            Calling from TIMINT"
     write(*, *) ' too many time integrals >', NLOC
     return
 endif
 
-if (ICALL == 0.) then
+if (ICALL == 0) then
     ICALL  = 1
     TIMINT = 0.
-    YT(IY) = TIME
 else
-    TIMINT = YO(IY) + Y*(TIME - YT(IY))
-    YO(IY) = TIMINT
-    YT(IY) = TIME
+    TIMINT = y_old(IY) + Y*(TIME - YT(IY))
+    y_old(IY) = TIMINT
 endif
+YT(IY) = TIME
 
 return
 end function TIMINT
@@ -1112,17 +1136,18 @@ implicit none
 integer, parameter :: NLOC=2200
 double precision, intent(in) :: Y, YTINT
 
-integer :: IY, ITSME, j
+integer :: IY, j
 double precision :: YST
 double precision, dimension(NLOC) :: YI, YT
+integer, external :: fun_call_id
 
-save ITSME, YI, YT
-data ITSME/0/ YI/NLOC*-1.E9/  IY/0/
+save YI, YT
+data YI/NLOC*-1.E9/  IY/0/
 
-call getid(Y, itsme, IY)
+IY = fun_call_id(IY)
 
 TIMAVG = 0.
-if (IY < 0 .or. IY > NLOC) then
+if (IY > NLOC) then
     write(*, *) "            Calling from TIMAVG"
     write(*, *) ' too many time averages >', NLOC
     return
@@ -1132,7 +1157,6 @@ if (YI(IY) < -0.9E9) then  ! 1st call for IY
     YI(IY) = 0.
     YST = TIME
     TIMAVG = Y
-    YT(IY) = TIME
 else
     j = TIME/YTINT
     YST = j*YTINT
@@ -1144,8 +1168,8 @@ else
         TIMAVG = YI(IY)/YTINT
         YI(IY) = Y*(TIME - YST)
     endif
-    YT(IY) = TIME
 endif
+YT(IY) = TIME
 
 return
 end function TIMAVG
@@ -1165,23 +1189,24 @@ implicit none
 integer, parameter :: NLOC=2200
 double precision, intent(in) :: Y, YTIME
 
-integer IY, ITSME
-double precision :: YO(NLOC)
+integer :: IY
+double precision :: y_old(NLOC)
+integer, external :: fun_call_id
 
-save ITSME, YO
-data ITSME/0/ IY/0/
+save y_old
+data IY/0/
 ! IY is the ID (ordinal number) of "Y"
 
-call getid(Y, itsme, IY)
+IY = fun_call_id(IY)
 
 FIXVAL = 0.
-if (IY < 0 .or. IY > NLOC) then
+if (IY > NLOC) then
     write(*, *) ' >>> FIXVAL >>> too many calls: > ', NLOC
     return
 endif
 
-if (TIME <= YTIME) YO(IY) = Y
-FIXVAL = YO(IY)
+if (TIME <= YTIME) y_old(IY) = Y
+FIXVAL = y_old(IY)
 
 return
 end function FIXVAL
@@ -1217,34 +1242,33 @@ implicit none
 integer, parameter :: NLOC=2200
 double precision, intent(in) :: Y, YTAV
 
-integer :: IY, ITSME, ICALL
-double precision :: YO(NLOC)
+integer :: IY, ICALL
+double precision :: y_old(NLOC)
+integer, external :: fun_call_id
 
-save ITSME, ICALL, YO
-data ITSME/0/ ICALL/0/ YO/NLOC*0./ IY/0/
+save ICALL, y_old
+data ICALL/0/ y_old/NLOC*0./ IY/0/
 
-call getid(Y, itsme, IY)
+IY = fun_call_id(IY)
 ! IY is the ID (ordinal number) of "Y"
-! itsme is the ID (ordinal number) of the calling function (FTAV)
 
 FTAV = 0.
-if (IY < 0 .or. IY > NLOC) then
+if (IY > NLOC) then
     write(*, *) ' >>> FTAV >>> vuffer overflow: >', NLOC
     return
 endif
 
 if (ICALL == 0) then
     FTAV = Y
-    YO(IY) = FTAV
     ICALL  = 1
 else
     if (YTAV <= .1*TAU) then
         FTAV = Y    ! Return the input value
     else
-        FTAV = Y + (YO(IY) - Y)*EXP(-TAU/YTAV) ! Return a weighted value
+        FTAV = Y + (y_old(IY) - Y)*EXP(-TAU/YTAV) ! Return a weighted value
     endif
-    YO(IY) = FTAV    ! Save the previous value
 endif
+y_old(IY) = FTAV    ! Save the previous value
 
 return
 end function FTAV
@@ -1378,25 +1402,26 @@ implicit none
 integer, parameter :: NLOC=2200
 double precision, intent(in) :: Y
 
-integer :: IY, ITSME
-double precision :: YO(NLOC)
+integer :: IY
+double precision :: y_old(NLOC)
+integer, external :: fun_call_id
 
-save ITSME,YO
-data ITSME/0/ YO/NLOC*1.E37/  IY/0/
+save y_old
+data y_old/NLOC*1.E37/  IY/0/
 
 ! IY is the ID (ordinal number) of "Y"
-call getid(Y, itsme, IY)
+IY = fun_call_id(IY)
 
-if (IY < 0 .or. IY > NLOC) then
+if (IY > NLOC) then
     FTMIN = 0.
     write(*, *)' >>> FTMIN >>> too many calls: >', NLOC
 else
     FTMIN = 1.E37
-    if (YO(IY) <= Y) then
-        FTMIN = YO(IY)
+    if (y_old(IY) <= Y) then
+        FTMIN = y_old(IY)
     else
         FTMIN = Y
-        YO(IY) = Y
+        y_old(IY) = Y
     endif
 endif
 
@@ -1427,25 +1452,26 @@ implicit none
 integer, parameter :: NLOC=2200
 double precision, intent(in) :: Y
 
-integer :: IY, ITSME
-double precision :: YO(NLOC)
+integer :: IY
+double precision :: y_old(NLOC)
+integer, external :: fun_call_id
 
-save ITSME, YO
-data ITSME/0/ YO/NLOC*-1.E37/  IY/0/
+save y_old
+data y_old/NLOC*-1.E37/  IY/0/
 ! IY is the ID (ordinal number) of "Y"
 
-call getid(Y, itsme, IY)
+IY = fun_call_id(IY)
 
-if (IY < 0 .or. IY > NLOC) then
+if (IY > NLOC) then
     FTMAX = 0.
     write(*, *) ' >>> FTMAX >>> too many calls: >', NLOC
 else
     FTMAX = -1.E37
-    if (YO(IY) >= Y) then
-        FTMAX = YO(IY)
+    if (y_old(IY) >= Y) then
+        FTMAX = y_old(IY)
     else
         FTMAX = Y
-        YO(IY) = Y
+        y_old(IY) = Y
     endif
 endif
 
