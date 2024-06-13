@@ -144,7 +144,7 @@ EOT
         echo sbatch $bat
         date
         module unload impi-interactive
-#        sbatch -W $bat # -W: waiting for process to finish before running nc_concat
+#        sbatch -W $bat # -W: waiting for process to finish before running json2cdf 
         sbatch $WAIT_SLURM $bat
     fi
 else
