@@ -4,10 +4,7 @@ endif
 
 XPR = $(AWD)/xpr
 INC_DIR = $(AWD)/inc
-MOD_DIR = $(AWD)/mod/for
-LIB_DIR = $(AWD)/lib
-LIBFOR = $(LIB_DIR)/libfor.a
-IPC_OBJ = $(AWD)/obj/for/ipc_control.o
+LIBFOR = $(AWD)/lib/libfor.a
 AENV = $(AWD)/exe/astra_rc
 
 # TGLF
@@ -25,7 +22,6 @@ all: directories $(XPR)/tglfi $(XPR)/qlki $(XPR)/neo
 
 .PHONY: directories
 directories:
-	@mkdir -p $(LIB_DIR)
 	@mkdir -p $(AWD)/tglf
 	@mkdir -p $(AWD)/qualikiz
 
