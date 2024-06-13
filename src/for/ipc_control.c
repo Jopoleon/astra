@@ -24,8 +24,6 @@
 #include "A_proc.h"
 
 void AstraEvent();
-double swatch_(double*);
-
 int semtimedop();
 int read_aipc(INT_*, INT_*, char*);
 void freeshm();
