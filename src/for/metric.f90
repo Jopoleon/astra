@@ -164,8 +164,29 @@ VOLUME = VOLUM(NA1)
 end subroutine EQCYL
 
 !---------------------------------------------------------------------
-subroutine EQGUESS
+subroutine extrap_fields_flat
 
+use const_inc, only: NA1, NAB
+use status_inc, only: SHEAR, BDB02, B0DB2, BMAXT, BMINT, BDB0, FOFB
+
+integer :: j
+
+do J=NA1+1, NAB
+    SHEAR(j) = SHEAR(NA1)
+    BDB02(j) = BDB02(NA1)
+    B0DB2(j) = B0DB2(NA1)
+    BMAXT(j) = BMAXT(NA1)
+    BMINT(j) = BMINT(NA1)
+    BDB0(j)  = BDB0(NA1)
+    FOFB(j)  = FOFB(NA1)
+enddo
+
+return
+end subroutine extrap_fields_flat
+
+!---------------------------------------------------------------------
+subroutine EQGUESS
+  
 !---------------------------------------------------------------------
 ! Guessed equibrium: Called if LEQ(5)==0 or data_initiation @ 1st_entry
 !
@@ -287,16 +308,8 @@ do J=1, NA1
     FOFB(j)  = 1. - sqrt(YR1)*(1. + 0.5*YR1)
 enddo
 SHEAR(NA1) = SHEAR(NA)
-do J=NA1, NAB
-    SHEAR(j) = SHEAR(NA1)
-    BDB02(j) = BDB02(NA1)
-    B0DB2(j) = B0DB2(NA1)
-    BMAXT(j) = BMAXT(NA1)
-    BMINT(j) = BMINT(NA1)
-    BDB0(j)  = BDB0(NA1)
-    FOFB(j)  = FOFB(NA1)
-enddo
 
+call extrap_fields_flat
 call INTEGR(RHO, 1, VR, VOLUM, NA1)
 
 VOLUME = VOLUM(NA1)
@@ -327,9 +340,11 @@ double precision :: YNF, YR1
 
 call markloc('set_external_metric', debug_lev=3*debug)
 
-if (flightsim == 1 .and. ipart == 1) call eqguess   ! for initialisation
-if (flightsim == 1 .and. ipart == 1) return         ! for initialisation
-
+if (flightsim == 1 .and. ipart == 1) then   ! for initialisation
+    call eqguess
+    return
+endif
+    
 if (flightsim == 0) then
     YNF = RTOR*GP2**2
     do J=1, NA1
@@ -373,7 +388,6 @@ if (flightsim == 0) then
         else
             VR(J) = YNF*RHO(j)/(IPOL(j)*G33(j))
         endif
-        AMETR(J) = RHO(J)
     enddo
 endif
 
@@ -435,7 +449,6 @@ DRODA(NA1) = 1.5*DRODA(NA) - 0.5*DRODA(NA-1)
 
 ! Compute new minor radius => better just take from data?
 call INTEGR(RHO(1: NA1), 1, 1./DRODA(1: NA1), AMETR(1: NA1), NA1)
-ABC = AMETR(NA1)
 
 do J=1, NA1
     if (j == 1) then
@@ -471,23 +484,14 @@ if (NA1 < NAB) then
         G22(J) = RTOR*VRS(j)/(RTOR + SHIFT)**2
         DRODA(J) = 1.
         SLAT(J)  = VRS(J)*DRODA(J)
-        SHEAR(j) = SHEAR(NA1)
-        BDB02(j) = BDB02(NA1)
-        B0DB2(j) = B0DB2(NA1)
-        BMAXT(j) = BMAXT(NA1)
-        BMINT(j) = BMINT(NA1)
-        BDB0(j)  = BDB0(NA1)
-        FOFB(j)  = FOFB(NA1)
     enddo
-
-! Volume (on the shifted grid) is calculated using VR:
-    call INTEGR(RHO, 1, VR, VOLUM, NA1)
-
+    call extrap_fields_flat
+    call INTEGR(RHO, 1, VR, VOLUM, NA1) ! Compute volume(rho) on shifted grid integrating VR
     call new_grid ! The RHO-grid and NA, NA1 are updated
-
     VOLUME = VOLUM(NA1)
 endif
 
+ABC   = AMETR(NA1)
 ELONG = ELON(NA1)
 TRIAN = TRIA(NA1)
 SHIFT = SHIF(NA1)
@@ -498,9 +502,6 @@ end subroutine set_external_metric
 
 !---------------------------------------------------------------------
 subroutine extmetric_input
-! EQDSK creator from annular equilibrium, valid also for SPIDER adaptive grid!
-!
-! E Fable 2012
 
 use const_inc, only: NA1
 use status_inc, only: SHIF, ELON, TRIA, G33, IPOL, VR, SLAT, G11, G22, &
@@ -520,7 +521,7 @@ end subroutine extmetric_input
 !---------------------------------------------------------------------
 subroutine set_external_metric_2
 
-! Set external metric  (Pereverzev 10.02.2005)
+! Set external metric
 
 use const_inc, only: RTOR, BTOR, ABC, ROC, HRO, HROX, &
     SHIFT, ELONG, TRIAN, VOLUME, GP, GP2, NA, NA1, NAB, updwn
@@ -537,18 +538,15 @@ implicit none
 integer :: j
 double precision :: YNF, YR1
 
-call markloc('set_external_metric', debug_lev=3*debug)
+call markloc('set_external_metric_2', debug_lev=3*debug)
 
 if (flightsim == 0) then
     call extmetric_input
 endif
 
 YNF = RTOR*GP2**2
-do J=1, NA1
-    AMETR(J) = RHO(J)
-enddo
 
-!computes new roc
+! Compute new roc
 
 ROC = VR(NA1)/GP2**2 * G33(NA1)/RTOR
 RHO(1: NA1) = XRHO(1: NA1)*ROC
@@ -561,12 +559,6 @@ if (debug > 0) then
 endif
 HRO  =  RHO(2) - RHO(1)
 HROX = (RHO(2) - RHO(1))/ROC
-
-!boundary
-ELONG = ELON(NA1)
-TRIAN = TRIA(NA1)
-SHIFT = SHIF(NA1)
-UPDWN = SHIV(NA1)
 
 ! Flux grid: j*h
 do J=1, NA
@@ -582,7 +574,6 @@ DRODA(NA1) = 1.5*DRODA(NA) - 0.5*DRODA(NA-1)
 
 ! Compute new minor radius
 call INTEGR(RHO(1: NA1), 1, 1./DRODA(1: NA1), AMETR(1: NA1), NA1)
-ABC = AMETR(NA1)
 
 do J=1, NA1
     if (j == 1) then
@@ -618,22 +609,18 @@ if (NA1 < NAB) then
         G22(J) = RTOR*VRS(j)/(RTOR + SHIFT)**2
         DRODA(J) = 1.
         SLAT(J)  = VRS(J)*DRODA(J)
-        SHEAR(j) = SHEAR(NA1)
-        BDB02(j) = BDB02(NA1)
-        B0DB2(j) = B0DB2(NA1)
-        BMAXT(j) = BMAXT(NA1)
-        BMINT(j) = BMINT(NA1)
-        BDB0(j)  = BDB0(NA1)
-        FOFB(j)  = FOFB(NA1)
     enddo
-
-! Volume (on the shifted grid) is calculated using VR:
-    call INTEGR(RHO, 1, VR, VOLUM, NA1)
-
+    call extrap_fields_flat
+    call INTEGR(RHO, 1, VR, VOLUM, NA1) ! Compute volume(rho) integrating VR
     call new_grid ! The RHO-grid and NA, NA1 are updated
-
     VOLUME = VOLUM(NA1)
-endif
+endif 
+
+ABC   = AMETR(NA1)
+ELONG = ELON(NA1)
+TRIAN = TRIA(NA1)
+SHIFT = SHIF(NA1)
+UPDWN = SHIV(NA1)
 
 return
 end subroutine set_external_metric_2
@@ -963,15 +950,7 @@ BDB02 = BDB02*BTOOO**2 / BTOR**2
 BDB0  = BDB0*BTOOO/BTOR
 B0DB2 = B0DB2/BTOOO**2 * BTOR**2
 
-do J=NA1, NAB
-    SHEAR(j) = SHEAR(NA1)
-    BDB02(j) = BDB02(NA1)
-    B0DB2(j) = B0DB2(NA1)
-    BMAXT(j) = BMAXT(NA1)
-    BMINT(j) = BMINT(NA1)
-    BDB0(j)  = BDB0(NA1)
-    FOFB(j)  = FOFB(NA1)
-enddo
+call extrap_fields_flat
 
 call INTEGR(RHO, 1, VR, VOLUM, NA1)
 VOLUME = VOLUM(NA1)
@@ -1213,15 +1192,7 @@ do J=1, NA1
     SQUARN(J) = ysquare(J) 
 enddo
 
-do J=NA1, NAB
-    SHEAR(j) = SHEAR(NA1)
-    BDB02(j) = BDB02(NA1)
-    B0DB2(j) = B0DB2(NA1)
-    BMAXT(j) = BMAXT(NA1)
-    BMINT(j) = BMINT(NA1)
-    BDB0(j)  = BDB0(NA1)
-    FOFB(j)  = FOFB(NA1)
-enddo
+call extrap_fields_flat
 
 VOLUME = VOLUM(NA1)
 
@@ -1522,11 +1493,10 @@ call markloc('RHSEQ', debug_lev=3*debug)
 residual_num = abs(nint(INUME3) - INUME3)
 ! Preparing input for the 3M equilibrium solver:
 if (residual_num < 0.01) then     ! inume3 = 22 --> calculates this. if inume3 = 22.02, calculate it elsewhere (user defined) 
-    YCB = 1.6E-3*RTOR/(BTOR*HRO*HRO)
+    YCB = 1.6E-3*RTOR/(BTOR*HRO**2)
     do J=2, NA
-        if (j == NA) YCB = YCB*HRO/HRO
         EQFF(J) = ( (NE(J+1)*TE(J+1) - NE(J)*TE(J)) + &
-                        (NI(J+1)*TI(J+1) - NI(J)*TI(J)) )/J
+                    (NI(J+1)*TI(J+1) - NI(J)*TI(J)) )/J
         EQFF(J) = EQFF(J) + 0.5*NB2EQL * &
             (PBLON(J+1) - PBLON(J) + PBPER(J+1) - PBPER(J))/J
         EQFF(J) = EQFF(J) + (PFAST(J+1) - PFAST(J))/J
@@ -1535,7 +1505,7 @@ if (residual_num < 0.01) then     ! inume3 = 22 --> calculates this. if inume3 =
     EQFF(1) = EQFF(2)
     EQFF(NA1) = EQFF(NA) + (EQFF(NA) - EQFF(NA-1)) * &
         (AMETR(NA) - AMETR(NA-1))/(AMETR(NA1) - AMETR(NA))
-    EQFF(NA1) = EQFF(NA) + (EQFF(NA) - EQFF(NA-1))/HRO*HRO
+    EQFF(NA1) = EQFF(NA) + (EQFF(NA) - EQFF(NA-1))
     do J=1, NA1
         EQPF(j) = EQFF(j)
         YTH2 = RHO(j)*G22(J)*(MU(J)/RTOR)**2
@@ -1576,7 +1546,7 @@ subroutine RHSEQ2
 
 use const_inc, only: INUME3, RTOR, BTOR, HRO, NA, NA1, NB2EQL, GP2
 use status_inc, only: EQPF, EQFF, NE, TE, NI, TI, PBLON, PBPER, PFAST, &
-    RHO, AMETR, CU, CUTOR, G22, G33, MU, IPOL, FP, BDB02
+    RHO, AMETR, CU, CUTOR, G22, MU, IPOL, FP
 use debugger, only: markloc, debug
 
 implicit none
@@ -1598,14 +1568,14 @@ if (residual_num < 0.01) then     ! inume3 = 22 --> calculates this. if inume3 =
     enddo
     EQPF(1) = EQPF(2)
     EQPF(NA1) = EQPF(NA) + (EQPF(NA) - EQPF(NA-1)) * (AMETR(NA) - AMETR(NA-1))/(AMETR(NA1) - AMETR(NA))
-    EQPF(NA1) = EQPF(NA) + (EQPF(NA) - EQPF(NA-1))/HRO*HRO
+    EQPF(NA1) = EQPF(NA) + (EQPF(NA) - EQPF(NA-1))
     do J=2, NA
-        press = 0.5*(IPOL(J+1)**2. - IPOL(J)**2.)/(FP(J+1)-FP(J))
-        EQFF(J) = press * (RTOR*BTOR)**2. 
+        press = 0.5*(IPOL(J+1)**2 - IPOL(J)**2)/(FP(J+1)-FP(J))
+        EQFF(J) = press * (RTOR*BTOR)**2 
     enddo
     EQFF(1) = EQFF(2)
     EQFF(NA1) = EQFF(NA) + (EQFF(NA) - EQFF(NA-1)) * (AMETR(NA) - AMETR(NA-1))/(AMETR(NA1) - AMETR(NA))
-    EQFF(NA1) = EQFF(NA) + (EQFF(NA) - EQFF(NA-1))/HRO*HRO
+    EQFF(NA1) = EQFF(NA) + (EQFF(NA) - EQFF(NA-1))
     do J=1, NA1
         z1 = 1.e-6/(GP2*RTOR)*EQPF(j) 
         YTH2 = RHO(j)*G22(J)*(MU(J)/RTOR)**2
@@ -1966,10 +1936,8 @@ if (LEQ(4) > 0) then
         FP(J) = FP(J-1) + HRO*dfpdrbm12
     CASE(2) ! Prescribed psi_b
         FP(NA1) = FP(NA1)
-    CASE(3) ! psi_n+g dpsidrb=psiext
+    CASE(3: 4) ! psi_n+g dpsidrb=psiext
         FP(NA1) = (HRO*PSIEXT + FP(NA)*ROC*PSPLEX)/(HRO + ROC*PSPLEX)
-    CASE(4)
-        FP(NA1) = (HRO*PSIEXT + FP(NA)*ROC*PSPLEX)/(HRO + ROC*PSPLEX)  
     CASE DEFAULT
         J = NA1
         FP(J) = FP(J) + TAU*RBDOT*XRHO(J)*XST(J)
