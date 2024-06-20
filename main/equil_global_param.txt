@@ -1,7 +1,7 @@
 LABEL            UNITS                     DESCRIPTION
 ------------------------------------------------------------
-betpol           -                         Beta poloidal
+betpol           None                      Beta poloidal
 i_plasma         A                         Plasma current
-li3              -                         Internal inductance ITER defintion
-psi_bound        Wb                        Boundary psi value
+li3              None                      Internal inductance ITER defintion
+psibound         Wb                        Boundary psi value
 psiaxis          Wb                        Axis psi value

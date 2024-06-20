@@ -17,7 +17,7 @@ character(len=120) :: file_in, json_out
 character(len=l_name), allocatable, dimension(:) :: s_name
 character(len=l_unit), allocatable, dimension(:) :: s_unit
 character(len=l_desc), allocatable, dimension(:) :: s_desc
-double precision, dimension(200) :: time_traces
+double precision, dimension(200) :: time_traces, equil_traces
 integer, external :: get_nvars
 
 save j_call
@@ -644,6 +644,17 @@ write(nunit, '(A/)') '},' ! End of "astra" dictionary
 !------------
 
 write(nunit, '(A/)') '"equil": {'
+
+! Scalars
+
+file_in = TRIM(AWD) // '/main/equil_global_param.txt'
+
+equil_traces(1) = equil_now%global_param%betpol
+equil_traces(2) = equil_now%global_param%i_plasma
+equil_traces(3) = equil_now%global_param%li3
+equil_traces(4) = equil_now%global_param%psibound
+equil_traces(5) = equil_now%global_param%psiaxis
+call write_scalar_block(nunit, file_in, equil_traces(1: 5))
 
 ! 1 d profiles
 
