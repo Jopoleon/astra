@@ -116,7 +116,9 @@ def json_concat(expequ):
 
     for key, val in ds_equil.items():
         ds_equil[key] = np.array(val, dtype=dtyp)
-        if len(val) == nt*n_eq:
+        if len(val) == nt:
+            equil_d[key]['dimensions'] = ['TIME']
+        elif len(val) == nt*n_eq:
             ds_equil[key] = ds_equil[key].reshape((nt, n_eq))
             equil_d[key]['dimensions'] = ['TIME', 'RHO_SURF']
         elif len(val) == nt*n_th*n_eq:
