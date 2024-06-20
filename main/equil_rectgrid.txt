@@ -1,0 +1,7 @@
+LABEL            UNITS                     DESCRIPTION
+------------------------------------------------------------
+psirz2d          Wb/rad                    Psi on rectangular grid, ASTRA has -2*PI*PSI_EQUIL
+psi_axis         Wb/rad                    Psi on axis
+psi_boundary     Wb/rad                    Psi at boundary
+r2d              m                         Rectangular grid major radius coordinate
+z2d              m                         Rectangular grid vertical coordinate

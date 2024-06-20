@@ -1,164 +1,164 @@
-LABEL    UNITS                     DESCRIPTION
+LABEL            UNITS                     DESCRIPTION
 ------------------------------------------------------------
-CF1      None                      Model control constant (=1 default)
-CF2      None                      Model control constant (=1 default)
-CF3      None                      Model control constant (=1 default)
-CF4      None                      Model control constant (=1 default)
-CF5      None                      Model control constant (=1 default)
-CF6      None                      Model control constant (=1 default)
-CF7      None                      Model control constant (=1 default)
-CF8      None                      Model control constant (=1 default)
-CF9      None                      Model control constant (=1 default)
-CF10     None                      Model control constant (=1 default)
-CF11     None                      Model control constant (=1 default)
-CF12     None                      Model control constant (=1 default)
-CF13     None                      Model control constant (=1 default)
-CF14     None                      Model control constant (=1 default)
-CF15     None                      Model control constant (=1 default)
-CF16     None                      Model control constant (=1 default)
-CV1      None                      Model control constant (=0 default)
-CV2      None                      Model control constant (=0 default)
-CV3      None                      Model control constant (=0 default)
-CV4      None                      Model control constant (=0 default)
-CV5      None                      Model control constant (=0 default)
-CV6      None                      Model control constant (=0 default)
-CV7      None                      Model control constant (=0 default)
-CV8      None                      Model control constant (=0 default)
-CV9      None                      Model control constant (=0 default)
-CV10     None                      Model control constant (=0 default)
-CV11     None                      Model control constant (=0 default)
-CV12     None                      Model control constant (=0 default)
-CV13     None                      Model control constant (=0 default)
-CV14     None                      Model control constant (=0 default)
-CV15     None                      Model control constant (=0 default)
-CV16     None                      Model control constant (=0 default)
-CHE1     None                      None
-CHE2     None                      None
-CHE3     None                      None
-CHE4     None                      None
-CHI1     None                      None
-CHI2     None                      None
-CHI3     None                      None
-CHI4     None                      None
-CNB1     None                      CNB1=1,...,82    number of 'pencils'
-CNB2     None                      No. of internal grid points N1=(NA1
-CNB3     None                      None
-CNB4     None                      None
-CNBI1    None                      NBI FP solver control
-CNBI2    None                      not used
-CNBI3    None                      not used
-CNBI4    None                      None
-CCD1     None                      None
-CCD2     None                      None
-CCD3     None                      None
-CCD4     None                      None
-CRF1     None                      None
-CRF2     None                      None
-CRF3     None                      None
-CRF4     None                      None
-CNEUT1   None                      Neutrals control constant
-CNEUT2   None                      Neutrals control constant
-CNEUT3   None                      Neutrals control constant
-CNEUT4   None                      Neutrals control constant
-CPEL1    None                      Pellet control constant
-CPEL2    None                      Pellet control constant
-CPEL3    None                      Pellet control constant
-CPEL4    None                      Pellet control constant
-CBND1    None                      Boundary control constant
-CBND2    None                      Boundary control constant
-CBND3    None                      Boundary control constant
-CBND4    None                      Boundary control constant
-CFUS1    None                      Fusion control constant
-CFUS2    None                      Fusion control constant
-CFUS3    None                      Fusion control constant
-CFUS4    None                      Fusion control constant
-CIMP1    None                      Impurity control constant
-CIMP2    None                      Impurity control constant
-CIMP3    None                      Impurity control constant
-CIMP4    None                      Impurity control constant
-CMHD1    None                      MHD modes control constant
-CMHD2    None                      MHD modes control constant
-CMHD3    None                      MHD modes control constant
-CMHD4    None                      MHD modes control constant
-CRAD1    None                      Radiation control constant
-CRAD2    None                      Radiation control constant
-CRAD3    None                      Radiation control constant
-CRAD4    None                      Radiation control constant
-CSOL1    None                      Boundary control constant
-CSOL2    None                      Boundary control constant
-CSOL3    None                      Boundary control constant
-CSOL4    None                      Boundary control constant
-CSCL1    None                      Additional control constant
-CSCL2    None                      Additional control constant
-CSCL3    None                      Additional control constant
-CSCL4    None                      Additional control constant
-CSCL5    None                      Additional control constant
-CSCL6    None                      Additional control constant
-CSCL7    None                      Additional control constant
-CSCL8    None                      Additional control constant
-CDWM0    None                      Additional dummy constant can be used for anything
-CDWM1    None                      Additional dummy constant can be used for anything
-CDWM2    None                      Additional dummy constant can be used for anything
-CDWM3    None                      Additional dummy constant can be used for anything
-CDWM4    None                      Additional dummy constant can be used for anything
-CDWM5    None                      Additional dummy constant can be used for anything
-CDWM6    None                      Additional dummy constant can be used for anything
-CDWM7    None                      Additional dummy constant can be used for anything
-CDWM8    None                      Additional dummy constant can be used for anything
-CDWM9    None                      Additional dummy constant can be used for anything
-CDYM0    None                      Additional dummy constant can be used for anything
-CDYM1    None                      Additional dummy constant can be used for anything
-CDYM2    None                      Additional dummy constant can be used for anything
-CDYM3    None                      Additional dummy constant can be used for anything
-CDYM4    None                      Additional dummy constant can be used for anything
-CDYM5    None                      Additional dummy constant can be used for anything
-CDYM6    None                      Additional dummy constant can be used for anything
-CDYM7    None                      Additional dummy constant can be used for anything
-CDYM8    None                      Additional dummy constant can be used for anything
-CDYM9    None                      Additional dummy constant can be used for anything
-CDVM0    None                      Additional dummy constant can be used for anything
-CDVM1    None                      Additional dummy constant can be used for anything
-CDVM2    None                      Additional dummy constant can be used for anything
-CDVM3    None                      Additional dummy constant can be used for anything
-CDVM4    None                      Additional dummy constant can be used for anything
-CDVM5    None                      Additional dummy constant can be used for anything
-CDVM6    None                      Additional dummy constant can be used for anything
-CDVM7    None                      Additional dummy constant can be used for anything
-CDVM8    None                      Additional dummy constant can be used for anything
-CDVM9    None                      Additional dummy constant can be used for anything
-CDBC1    None                      Additional dummy constant can be used for anything
-CDBC2    None                      Additional dummy constant can be used for anything
-CDBC3    None                      Additional dummy constant can be used for anything
-CDBC4    None                      Additional dummy constant can be used for anything
-CDBC5    None                      Additional dummy constant can be used for anything
-CDBC6    None                      Additional dummy constant can be used for anything
-CDBC7    None                      Additional dummy constant can be used for anything
-CDBC8    None                      Additional dummy constant can be used for anything
-CDBC9    None                      Additional dummy constant can be used for anything
-CDJM1    None                      Additional dummy constant can be used for anything
-CDJM2    None                      Additional dummy constant can be used for anything
-CDJM3    None                      Additional dummy constant can be used for anything
-CDJM4    None                      Additional dummy constant can be used for anything
-CDJM5    None                      Additional dummy constant can be used for anything
-CDJM6    None                      Additional dummy constant can be used for anything
-CDJM7    None                      Additional dummy constant can be used for anything
-CDJM8    None                      Additional dummy constant can be used for anything
-CDJM9    None                      Additional dummy constant can be used for anything
-CDMJ1    None                      Additional dummy constant can be used for anything
-CDMJ2    None                      Additional dummy constant can be used for anything
-CDMJ3    None                      Additional dummy constant can be used for anything
-CDMJ4    None                      Additional dummy constant can be used for anything
-CDMJ5    None                      Additional dummy constant can be used for anything
-CDMJ6    None                      Additional dummy constant can be used for anything
-CDMJ7    None                      Additional dummy constant can be used for anything
-CDMJ8    None                      Additional dummy constant can be used for anything
-CDMJ9    None                      Additional dummy constant can be used for anything
-CDHJ1    None                      Additional dummy constant can be used for anything
-CDHJ2    None                      Additional dummy constant can be used for anything
-CDHJ3    None                      Additional dummy constant can be used for anything
-CDHJ4    None                      Additional dummy constant can be used for anything
-CDHJ5    None                      Additional dummy constant can be used for anything
-CDHJ6    None                      Additional dummy constant can be used for anything
-CDHJ7    None                      Additional dummy constant can be used for anything
-CDHJ8    None                      Additional dummy constant can be used for anything
-CDHJ9    None                      Additional dummy constant can be used for anything
+CF1              None                      Model control constant (=1 default)
+CF2              None                      Model control constant (=1 default)
+CF3              None                      Model control constant (=1 default)
+CF4              None                      Model control constant (=1 default)
+CF5              None                      Model control constant (=1 default)
+CF6              None                      Model control constant (=1 default)
+CF7              None                      Model control constant (=1 default)
+CF8              None                      Model control constant (=1 default)
+CF9              None                      Model control constant (=1 default)
+CF10             None                      Model control constant (=1 default)
+CF11             None                      Model control constant (=1 default)
+CF12             None                      Model control constant (=1 default)
+CF13             None                      Model control constant (=1 default)
+CF14             None                      Model control constant (=1 default)
+CF15             None                      Model control constant (=1 default)
+CF16             None                      Model control constant (=1 default)
+CV1              None                      Model control constant (=0 default)
+CV2              None                      Model control constant (=0 default)
+CV3              None                      Model control constant (=0 default)
+CV4              None                      Model control constant (=0 default)
+CV5              None                      Model control constant (=0 default)
+CV6              None                      Model control constant (=0 default)
+CV7              None                      Model control constant (=0 default)
+CV8              None                      Model control constant (=0 default)
+CV9              None                      Model control constant (=0 default)
+CV10             None                      Model control constant (=0 default)
+CV11             None                      Model control constant (=0 default)
+CV12             None                      Model control constant (=0 default)
+CV13             None                      Model control constant (=0 default)
+CV14             None                      Model control constant (=0 default)
+CV15             None                      Model control constant (=0 default)
+CV16             None                      Model control constant (=0 default)
+CHE1             None                      None
+CHE2             None                      None
+CHE3             None                      None
+CHE4             None                      None
+CHI1             None                      None
+CHI2             None                      None
+CHI3             None                      None
+CHI4             None                      None
+CNB1             None                      CNB1=1,...,82    number of 'pencils'
+CNB2             None                      No. of internal grid points N1=(NA1
+CNB3             None                      None
+CNB4             None                      None
+CNBI1            None                      NBI FP solver control
+CNBI2            None                      not used
+CNBI3            None                      not used
+CNBI4            None                      None
+CCD1             None                      None
+CCD2             None                      None
+CCD3             None                      None
+CCD4             None                      None
+CRF1             None                      None
+CRF2             None                      None
+CRF3             None                      None
+CRF4             None                      None
+CNEUT1           None                      Neutrals control constant
+CNEUT2           None                      Neutrals control constant
+CNEUT3           None                      Neutrals control constant
+CNEUT4           None                      Neutrals control constant
+CPEL1            None                      Pellet control constant
+CPEL2            None                      Pellet control constant
+CPEL3            None                      Pellet control constant
+CPEL4            None                      Pellet control constant
+CBND1            None                      Boundary control constant
+CBND2            None                      Boundary control constant
+CBND3            None                      Boundary control constant
+CBND4            None                      Boundary control constant
+CFUS1            None                      Fusion control constant
+CFUS2            None                      Fusion control constant
+CFUS3            None                      Fusion control constant
+CFUS4            None                      Fusion control constant
+CIMP1            None                      Impurity control constant
+CIMP2            None                      Impurity control constant
+CIMP3            None                      Impurity control constant
+CIMP4            None                      Impurity control constant
+CMHD1            None                      MHD modes control constant
+CMHD2            None                      MHD modes control constant
+CMHD3            None                      MHD modes control constant
+CMHD4            None                      MHD modes control constant
+CRAD1            None                      Radiation control constant
+CRAD2            None                      Radiation control constant
+CRAD3            None                      Radiation control constant
+CRAD4            None                      Radiation control constant
+CSOL1            None                      Boundary control constant
+CSOL2            None                      Boundary control constant
+CSOL3            None                      Boundary control constant
+CSOL4            None                      Boundary control constant
+CSCL1            None                      Additional control constant
+CSCL2            None                      Additional control constant
+CSCL3            None                      Additional control constant
+CSCL4            None                      Additional control constant
+CSCL5            None                      Additional control constant
+CSCL6            None                      Additional control constant
+CSCL7            None                      Additional control constant
+CSCL8            None                      Additional control constant
+CDWM0            None                      Additional dummy constant can be used for anything
+CDWM1            None                      Additional dummy constant can be used for anything
+CDWM2            None                      Additional dummy constant can be used for anything
+CDWM3            None                      Additional dummy constant can be used for anything
+CDWM4            None                      Additional dummy constant can be used for anything
+CDWM5            None                      Additional dummy constant can be used for anything
+CDWM6            None                      Additional dummy constant can be used for anything
+CDWM7            None                      Additional dummy constant can be used for anything
+CDWM8            None                      Additional dummy constant can be used for anything
+CDWM9            None                      Additional dummy constant can be used for anything
+CDYM0            None                      Additional dummy constant can be used for anything
+CDYM1            None                      Additional dummy constant can be used for anything
+CDYM2            None                      Additional dummy constant can be used for anything
+CDYM3            None                      Additional dummy constant can be used for anything
+CDYM4            None                      Additional dummy constant can be used for anything
+CDYM5            None                      Additional dummy constant can be used for anything
+CDYM6            None                      Additional dummy constant can be used for anything
+CDYM7            None                      Additional dummy constant can be used for anything
+CDYM8            None                      Additional dummy constant can be used for anything
+CDYM9            None                      Additional dummy constant can be used for anything
+CDVM0            None                      Additional dummy constant can be used for anything
+CDVM1            None                      Additional dummy constant can be used for anything
+CDVM2            None                      Additional dummy constant can be used for anything
+CDVM3            None                      Additional dummy constant can be used for anything
+CDVM4            None                      Additional dummy constant can be used for anything
+CDVM5            None                      Additional dummy constant can be used for anything
+CDVM6            None                      Additional dummy constant can be used for anything
+CDVM7            None                      Additional dummy constant can be used for anything
+CDVM8            None                      Additional dummy constant can be used for anything
+CDVM9            None                      Additional dummy constant can be used for anything
+CDBC1            None                      Additional dummy constant can be used for anything
+CDBC2            None                      Additional dummy constant can be used for anything
+CDBC3            None                      Additional dummy constant can be used for anything
+CDBC4            None                      Additional dummy constant can be used for anything
+CDBC5            None                      Additional dummy constant can be used for anything
+CDBC6            None                      Additional dummy constant can be used for anything
+CDBC7            None                      Additional dummy constant can be used for anything
+CDBC8            None                      Additional dummy constant can be used for anything
+CDBC9            None                      Additional dummy constant can be used for anything
+CDJM1            None                      Additional dummy constant can be used for anything
+CDJM2            None                      Additional dummy constant can be used for anything
+CDJM3            None                      Additional dummy constant can be used for anything
+CDJM4            None                      Additional dummy constant can be used for anything
+CDJM5            None                      Additional dummy constant can be used for anything
+CDJM6            None                      Additional dummy constant can be used for anything
+CDJM7            None                      Additional dummy constant can be used for anything
+CDJM8            None                      Additional dummy constant can be used for anything
+CDJM9            None                      Additional dummy constant can be used for anything
+CDMJ1            None                      Additional dummy constant can be used for anything
+CDMJ2            None                      Additional dummy constant can be used for anything
+CDMJ3            None                      Additional dummy constant can be used for anything
+CDMJ4            None                      Additional dummy constant can be used for anything
+CDMJ5            None                      Additional dummy constant can be used for anything
+CDMJ6            None                      Additional dummy constant can be used for anything
+CDMJ7            None                      Additional dummy constant can be used for anything
+CDMJ8            None                      Additional dummy constant can be used for anything
+CDMJ9            None                      Additional dummy constant can be used for anything
+CDHJ1            None                      Additional dummy constant can be used for anything
+CDHJ2            None                      Additional dummy constant can be used for anything
+CDHJ3            None                      Additional dummy constant can be used for anything
+CDHJ4            None                      Additional dummy constant can be used for anything
+CDHJ5            None                      Additional dummy constant can be used for anything
+CDHJ6            None                      Additional dummy constant can be used for anything
+CDHJ7            None                      Additional dummy constant can be used for anything
+CDHJ8            None                      Additional dummy constant can be used for anything
+CDHJ9            None                      Additional dummy constant can be used for anything

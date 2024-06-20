@@ -10,7 +10,7 @@ use outcmn_inc, only: AWD, exp_file, equ_file
 implicit none
 
 logical, parameter :: verbose=.False.
-integer, parameter :: l_name=8, l_unit=25, l_desc=60, nunit=25
+integer, parameter :: l_name=16, l_unit=25, l_desc=60, nunit=25
 
 integer :: jid, jrho, nvars, ios, j_call=1, nrho_surf, nthe_surf, ndim
 character(len=120) :: file_in, json_out
@@ -30,11 +30,16 @@ if (verbose) write(*, '(A, i)') 'Starting a2json', j_call
 write(json_out, '(5A, i0, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), TRIM(equ_file), '-', j_call, '.json'
 
 open(nunit, file=TRIM(json_out), iostat=ios)
-write(nunit, '(A\)') '{'
+write(nunit, '(A/)') '{'
 
-!-----------
+!------
+! ASTRA
+!------
+
+write(nunit, '(A/)') '"astra": {'
+
 ! Scalars
-!-----------
+
 file_in = TRIM(AWD) // '/main/variables.txt'
 call write_scalar_block(nunit, file_in, DEVAR)
 file_in = TRIM(AWD) // '/main/variables_x.txt'
@@ -630,12 +635,19 @@ call write_array(nunit, NA1,   ZIM3(1:NA1), s_name(jid), s_unit(jid), s_desc(jid
 jid = jid + 1
 call write_array(nunit, NA1,  ZIMPT(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
 jid = jid + 1
-call write_array(nunit, NA1,  ZMAIN(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
+call write_last_array(nunit, NA1,  ZMAIN(1:NA1), s_name(jid), s_unit(jid), s_desc(jid)) ! no comma
 
-! Equilibrium 1d profiles
+write(nunit, '(A/)') '},' ! End of "astra" dictionary
 
+!------------
+! Equilibrium
+!------------
 
-file_in = TRIM(AWD) // '/main/equil_1d.txt'
+write(nunit, '(A/)') '"equil": {'
+
+! 1 d profiles
+
+file_in = TRIM(AWD) // '/main/equil_profiles1d.txt'
 deallocate(s_name)
 deallocate(s_unit)
 deallocate(s_desc)
@@ -643,13 +655,61 @@ nvars = get_nvars(file_in)
 allocate(s_name(nvars), s_unit(nvars), s_desc(nvars))
 call getAttributes(file_in, nvars, s_name, s_desc, s_unit)
 jid = 1
-call write_array(nunit, nrho_surf, equil_now%profiles_1d%phi    , s_name(jid), s_unit(jid), s_desc(jid))
-jid = 2
-call write_array(nunit, nrho_surf, equil_now%profiles_1d%pprime , s_name(jid), s_unit(jid), s_desc(jid))
-jid = 3
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%areat  , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%bdb0   , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%bmaxt  , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%bmint  , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%dpsidv , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%elongation, s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
 call write_array(nunit, nrho_surf, equil_now%profiles_1d%ffprime, s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%fofb   , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%g1     , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%g2     , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%ggradro, s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%gm1    , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%gm4    , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%gm41   , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%gm5    , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%perim  , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%phi    , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%pprime , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%pressure, s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%psi    , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%q      , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%r_inboard , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%r_outboard, s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%rho_tor, s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%shif   , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%surface, s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nrho_surf, equil_now%profiles_1d%volume , s_name(jid), s_unit(jid), s_desc(jid))
 
-file_in = TRIM(AWD) // '/main/equil_2d.txt'
+file_in = TRIM(AWD) // '/main/equil_coord_sys_position.txt'
 ndim = nrho_surf*nthe_surf
 deallocate(s_name)
 deallocate(s_unit)
@@ -658,17 +718,21 @@ nvars = get_nvars(file_in)
 allocate(s_name(nvars), s_unit(nvars), s_desc(nvars))
 call getAttributes(file_in, nvars, s_name, s_desc, s_unit)
 jid = 1
-call write_array(nunit, ndim, equil_now%coord_sys%position%r, s_name(jid), s_unit(jid), s_desc(jid))
-jid = 2
-call write_array(nunit, ndim, equil_now%coord_sys%position%z, s_name(jid), s_unit(jid), s_desc(jid))
-jid = 3
-call write_array(nunit, ndim, equil_now%coord_sys%position%psirz, s_name(jid), s_unit(jid), s_desc(jid))
+call write_array(nunit, ndim, equil_now%coord_sys%bcell , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, ndim, equil_now%coord_sys%bpcell, s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, ndim, equil_now%coord_sys%position%r     , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, ndim, equil_now%coord_sys%position%rmin  , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, ndim, equil_now%coord_sys%position%psirz , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, ndim, equil_now%coord_sys%position%teta2d, s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_last_array(nunit, ndim, equil_now%coord_sys%position%z     , s_name(jid), s_unit(jid), s_desc(jid)) ! No comma
 
-call write_array(nunit, nrho_surf, equil_now%profiles_1d%rho_tor, 'RHO_SURF', '-', 'rho toroidal')
-write(nunit, '(A)') '    "THETA": {"units": "rad", "long_name": "Pol. angle", "data": ['
-write(nunit, '(5(es15.8, ","))') (equil_now%coord_sys%position%teta2d(jrho), jrho=1, nthe_surf-1)
-write(nunit, '(es15.8)') equil_now%coord_sys%position%teta2d(nthe_surf) ! No comma after last array entry
-write(nunit, '(A/)') ']}'
+write(nunit, '(A)') '}' ! End of "equil" dictionary
 
 !-----------
 ! Close json
@@ -692,7 +756,7 @@ subroutine write_scalar_block(nunit, file_in, scalar_list)
 
 implicit none
 
-integer, parameter :: l_name=8, l_unit=25, l_desc=60
+integer, parameter :: l_name=16, l_unit=25, l_desc=60
 
 integer, intent(in) :: nunit
 character(len=*), intent(in) :: file_in
@@ -704,7 +768,7 @@ character(len=l_unit), allocatable, dimension(:) :: s_unit
 character(len=l_desc), allocatable, dimension(:) :: s_desc
 integer, external :: get_nvars
 
-101 format('    "', A, '": {"units": "', A, '", "long_name": "', A, '", "data": ', es15.8, '},', /)
+101 format('    "', A, '": {"units": "', A, '", "long_name": "', A, '", "data": ', es15.8, '},')
 
 nvars = get_nvars(file_in)
 allocate(s_name(nvars), s_unit(nvars), s_desc(nvars))
@@ -720,28 +784,73 @@ return
 end subroutine write_scalar_block
 
 !---------------------------------------------------------------
+subroutine write_last_array(nunit, ndim, arr, sname, sunit, sdesc)
+
+implicit none
+
+integer, parameter :: l_name=16, l_unit=25, l_desc=60
+
+integer, intent(in) :: nunit, ndim
+double precision, intent(in), dimension(ndim) :: arr
+character(len=*), intent(in) :: sname, sunit, sdesc
+
+call write_arr(nunit, ndim, arr, sname, sunit, sdesc)
+write(nunit, '(A/)') ']}' ! No comma after closing last var-dict
+
+return
+end subroutine write_last_array
+
+!---------------------------------------------------------------
 subroutine write_array(nunit, ndim, arr, sname, sunit, sdesc)
 
 implicit none
 
-integer, parameter :: l_name=8, l_unit=25, l_desc=60
+integer, parameter :: l_name=16, l_unit=25, l_desc=60
+
+integer, intent(in) :: nunit, ndim
+double precision, intent(in), dimension(ndim) :: arr
+character(len=*), intent(in) :: sname, sunit, sdesc
+
+call write_arr(nunit, ndim, arr, sname, sunit, sdesc)
+write(nunit, '(A/)') ']},'
+
+return
+end subroutine write_array
+
+!---------------------------------------------------------------
+subroutine write_arr(nunit, ndim, arr, sname, sunit, sdesc)
+
+implicit none
+
+integer, parameter :: l_name=16, l_unit=25, l_desc=60
 
 integer, intent(in) :: nunit, ndim
 double precision, intent(in), dimension(ndim) :: arr
 character(len=*), intent(in) :: sname, sunit, sdesc
 
 integer :: i
+double precision :: abs_val
+double precision, dimension(ndim) :: array
 
 102 format('    "', A, '": {"units": "', A, '", "long_name": "', A, '", "data": [')
 write(nunit, 102) TRIM(sname), TRIM(sunit), TRIM(sdesc)
-if (MAXVAL(ABS(arr)) > 0.) then
-    write(nunit, '(5(es15.8, ","))') (arr(i), i=1, ndim-1)
-    write(nunit, '(es15.8)') arr(ndim) ! No comma after last array entry
+
+do i=1, ndim
+    abs_val = ABS(arr(i))
+    if (abs_val < 1e-20 .or. abs_val > 1e20) then
+        array(i) = 0.
+    else
+        array(i) = arr(i)
+    endif
+enddo
+
+if (MAXVAL(ABS(array)) > 0.) then
+    write(nunit, '(5(es15.8, ","))') (array(i), i=1, ndim-1)
+    write(nunit, '(es15.8)') array(ndim) ! No comma after last array entry
 endif
-write(nunit, '(A/)') ']},'
 
 return
-end subroutine write_array
+end subroutine write_arr
 
 !---------------------------------------------------------------
 integer function get_nvars(file_in)
@@ -773,7 +882,7 @@ subroutine getAttributes(file_in, nvars, s_name, s_desc, s_unit)
 implicit none
 
 
-integer, parameter :: nunit=31, l_name=8, l_unit=25, l_desc=60
+integer, parameter :: nunit=31, l_name=16, l_unit=25, l_desc=60
 
 integer, intent(in) :: nvars
 character(len=*), intent(in) :: file_in
@@ -791,7 +900,7 @@ varid = 0
 open(nunit, file=TRIM(file_in), iostat=ios)
 read(nunit, '(/A)')
 do
-    read(nunit, '(A8, X, A25, X, A60)', iostat=ios) sname, sunit, sdesc
+    read(nunit, '(A16, X, A25, X, A60)', iostat=ios) sname, sunit, sdesc
     if (ios /= 0) EXIT
     varid = varid + 1
     s_name(varid) = sname

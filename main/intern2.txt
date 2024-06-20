@@ -1,82 +1,82 @@
-LABEL    UNITS                     DESCRIPTION
+LABEL            UNITS                     DESCRIPTION
 ------------------------------------------------------------
-TSTART   s                         Start time, t_start <= t <= t_end
-TAU      s                         Time step
-TAUPRP   s                         Time step old after ifstep, but not yet updated so that it is consitent with what has been used in eqns
-HRO      m                         Radial grid size
-HROX     None                      Normalized radial grid size
-ALBPL    None                      Albedo of plasma (Neutral outflux)/(Neutral influx)
-NNCX     None                      No. of iterations in the neutral solver
-QETB     MJ/keV                    Coefficient for Electron_heat_outflux = QETB*TEB
-QFF0B    1/s                       Coefficient for F0_outflux = QFF0B*F0B
-QFF1B    1/s                       Coefficient for F1_outflux = QFF1B*F1B
-QFF2B    1/s                       Coefficient for F2_outflux = QFF2B*F2B
-QFF3B    1/s                       Coefficient for F3_outflux = QFF3B*F3B
-QFF4B    1/s                       Coefficient for F3_outflux = QFF4B*F4B
-QFF5B    1/s                       Coefficient for F3_outflux = QFF5B*F5B
-QFF6B    1/s                       Coefficient for F3_outflux = QFF6B*F6B
-QFF7B    1/s                       Coefficient for F3_outflux = QFF7B*F7B
-QFF8B    1/s                       Coefficient for F3_outflux = QFF8B*F8B
-QFF9B    1/s                       Coefficient for F3_outflux = QFF9B*F9B
-QITB     MJ/keV                    Coefficient for Ion_heat_outflux = QITB*TIB
-QNNB     m^3/s                     Coefficient for Density_outflux = QNNB*NEB
-FTO      V.s                       Toroidal flux Phi at the edge at TIME
-FTN      V.s                       Toroidal flux Phi at the edge at TIME-TAU
-BTN      T                         Toroidal field at TIME-TAU (BTOR is the new one at time TIME)
-IPLN     MA                        Plasma current at TIME-TAU (not used for anything yet)
-IFBEY    None                      switched to = 1 if doing fbe, to 0 if doing PBE
-ROB      m                         Limiter position (in rho)
-ROWALL   m                         Wall position    (in rho)
-ROC      m                         Limiter/separatrix radius (in the variable rho)
-ROCO     m                         Limiter/separatrix radius (in the variable rho) at previous time step
-RON      m                         Boundary position for density equation
-ROE      m                         Boundary position for electron temperature equation
-ROI      m                         Boundary position for ion temprature equation
-RO0      m                         Boundary position for F0 equation
-RO1      m                         Boundary position for F1 equation
-RO2      m                         Boundary position for F2 equation
-RO3      m                         Boundary position for F3 equation
-RO4      m                         Boundary position for F4 equation
-RO5      m                         Boundary position for F5 equation
-RO6      m                         Boundary position for F6 equation
-RO7      m                         Boundary position for F7 equation
-RO8      m                         Boundary position for F8 equation
-RO9      m                         Boundary position for F9 equation
-ROU      m                         Boundary position for UPAR equation
-VOLUME   m^3                       Total volume
-PSIAX    Tm^2                      PSI on axis
-PSIBO    Tm^2                      PSI boundary
-GP       None                      3.1415926
-GP2      None                      2*GO
-PSIFB    T*m^2                     psi(x=1), bc for diff equation by fbe code
-PSIFBO   T*m^2                     psi(x=1), bc for diff equation by fbe code, at t-dt. 
-PSIEXT   T*m^2                     psi from plasma b to external, bc for diff equation by fbe code
-PSPLEX   T*m^2                     psi from coils to plasma b, bc for diff equation by fbe code
-PSIEXO   T*m^2                     psi from plasma b to external, bc for diff equation by fbe code, at t-dt
-PSPLXO   T*m^2                     psi from coils to plasma b, bc for diff equation by fbe code, at t-dt
-IPLFBE   MA                        Current from free boundary calculations when using PSI as bc
-ATREQ    None                      Tolerance for iterations on transport equations (default 1e-5)
-PTREQ    None                      Tolerance on plasma current when using psi as bc for fbe (default 1e-5)
-RBDOT    None                      1/(2*Phib)*dPhib/dtpsi(x=1), for adcmp
-BBDOT    None                      1/(2*BTOR)*dBTOR/dtpsi(x=1), for adcmp
-NA       None                      NA1-1
-NA1      None                      Limiter/separatrix position: ROC=RHO(NA1), is fixed
-NA1N     None                      Eq:NE boundary position:     RON=RHO(NA1N)
-NA1E     None                      Eq:TE boundary position:     ROE=RHO(NA1E)
-NA1I     None                      Eq:TI boundary position:     ROI=RHO(NA1I)
-NA1U     None                      Eq:UPAR boundary position:   ROU=RHO(NA1U)
-NA10     None                      Eq:F0 boundary position:     RO1=RHO(NA11)
-NA11     None                      Eq:F1 boundary position:     RO1=RHO(NA11)
-NA12     None                      Eq:F2 boundary position:     RO2=RHO(NA12)
-NA13     None                      Eq:F3 boundary position:     RO3=RHO(NA13)
-NA14     None                      Eq:F4 boundary position:     RO4=RHO(NA14)
-NA15     None                      Eq:F5 boundary position:     RO5=RHO(NA15)
-NA16     None                      Eq:F6 boundary position:     RO6=RHO(NA16)
-NA17     None                      Eq:F7 boundary position:     RO7=RHO(NA17)
-NA18     None                      Eq:F8 boundary position:     RO8=RHO(NA18)
-NA19     None                      Eq:F9 boundary position:     RO9=RHO(NA19)
-NAB      None                      AB=AMETR(NAB), ABC=AMETR(NA1)
-ITREQ    None                      Actual number of iterations in TR+EQ loop
-NITOT    None                      Total number of iterations NSTEPS*<NITERQ>
-NSTEPS   None                      Total number of time steps
-QBEAM    MW                        Total beam power (alias QNBI)
+TSTART           s                         Start time, t_start <= t <= t_end
+TAU              s                         Time step
+TAUPRP           s                         Time step old after ifstep, but not yet updated so that it is consitent with what has been used in eqns
+HRO              m                         Radial grid size
+HROX             None                      Normalized radial grid size
+ALBPL            None                      Albedo of plasma (Neutral outflux)/(Neutral influx)
+NNCX             None                      No. of iterations in the neutral solver
+QETB             MJ/keV                    Coefficient for Electron_heat_outflux = QETB*TEB
+QFF0B            1/s                       Coefficient for F0_outflux = QFF0B*F0B
+QFF1B            1/s                       Coefficient for F1_outflux = QFF1B*F1B
+QFF2B            1/s                       Coefficient for F2_outflux = QFF2B*F2B
+QFF3B            1/s                       Coefficient for F3_outflux = QFF3B*F3B
+QFF4B            1/s                       Coefficient for F3_outflux = QFF4B*F4B
+QFF5B            1/s                       Coefficient for F3_outflux = QFF5B*F5B
+QFF6B            1/s                       Coefficient for F3_outflux = QFF6B*F6B
+QFF7B            1/s                       Coefficient for F3_outflux = QFF7B*F7B
+QFF8B            1/s                       Coefficient for F3_outflux = QFF8B*F8B
+QFF9B            1/s                       Coefficient for F3_outflux = QFF9B*F9B
+QITB             MJ/keV                    Coefficient for Ion_heat_outflux = QITB*TIB
+QNNB             m^3/s                     Coefficient for Density_outflux = QNNB*NEB
+FTO              V.s                       Toroidal flux Phi at the edge at TIME
+FTN              V.s                       Toroidal flux Phi at the edge at TIME-TAU
+BTN              T                         Toroidal field at TIME-TAU (BTOR is the new one at time TIME)
+IPLN             MA                        Plasma current at TIME-TAU (not used for anything yet)
+IFBEY            None                      switched to = 1 if doing fbe, to 0 if doing PBE
+ROB              m                         Limiter position (in rho)
+ROWALL           m                         Wall position    (in rho)
+ROC              m                         Limiter/separatrix radius (in the variable rho)
+ROCO             m                         Limiter/separatrix radius (in the variable rho) at previous time step
+RON              m                         Boundary position for density equation
+ROE              m                         Boundary position for electron temperature equation
+ROI              m                         Boundary position for ion temprature equation
+RO0              m                         Boundary position for F0 equation
+RO1              m                         Boundary position for F1 equation
+RO2              m                         Boundary position for F2 equation
+RO3              m                         Boundary position for F3 equation
+RO4              m                         Boundary position for F4 equation
+RO5              m                         Boundary position for F5 equation
+RO6              m                         Boundary position for F6 equation
+RO7              m                         Boundary position for F7 equation
+RO8              m                         Boundary position for F8 equation
+RO9              m                         Boundary position for F9 equation
+ROU              m                         Boundary position for UPAR equation
+VOLUME           m^3                       Total volume
+PSIAX            Tm^2                      PSI on axis
+PSIBO            Tm^2                      PSI boundary
+GP               None                      3.1415926
+GP2              None                      2*GO
+PSIFB            T*m^2                     psi(x=1), bc for diff equation by fbe code
+PSIFBO           T*m^2                     psi(x=1), bc for diff equation by fbe code, at t-dt. 
+PSIEXT           T*m^2                     psi from plasma b to external, bc for diff equation by fbe code
+PSPLEX           T*m^2                     psi from coils to plasma b, bc for diff equation by fbe code
+PSIEXO           T*m^2                     psi from plasma b to external, bc for diff equation by fbe code, at t-dt
+PSPLXO           T*m^2                     psi from coils to plasma b, bc for diff equation by fbe code, at t-dt
+IPLFBE           MA                        Current from free boundary calculations when using PSI as bc
+ATREQ            None                      Tolerance for iterations on transport equations (default 1e-5)
+PTREQ            None                      Tolerance on plasma current when using psi as bc for fbe (default 1e-5)
+RBDOT            None                      1/(2*Phib)*dPhib/dtpsi(x=1), for adcmp
+BBDOT            None                      1/(2*BTOR)*dBTOR/dtpsi(x=1), for adcmp
+NA               None                      NA1-1
+NA1              None                      Limiter/separatrix position: ROC=RHO(NA1), is fixed
+NA1N             None                      Eq:NE boundary position:     RON=RHO(NA1N)
+NA1E             None                      Eq:TE boundary position:     ROE=RHO(NA1E)
+NA1I             None                      Eq:TI boundary position:     ROI=RHO(NA1I)
+NA1U             None                      Eq:UPAR boundary position:   ROU=RHO(NA1U)
+NA10             None                      Eq:F0 boundary position:     RO1=RHO(NA11)
+NA11             None                      Eq:F1 boundary position:     RO1=RHO(NA11)
+NA12             None                      Eq:F2 boundary position:     RO2=RHO(NA12)
+NA13             None                      Eq:F3 boundary position:     RO3=RHO(NA13)
+NA14             None                      Eq:F4 boundary position:     RO4=RHO(NA14)
+NA15             None                      Eq:F5 boundary position:     RO5=RHO(NA15)
+NA16             None                      Eq:F6 boundary position:     RO6=RHO(NA16)
+NA17             None                      Eq:F7 boundary position:     RO7=RHO(NA17)
+NA18             None                      Eq:F8 boundary position:     RO8=RHO(NA18)
+NA19             None                      Eq:F9 boundary position:     RO9=RHO(NA19)
+NAB              None                      AB=AMETR(NAB), ABC=AMETR(NA1)
+ITREQ            None                      Actual number of iterations in TR+EQ loop
+NITOT            None                      Total number of iterations NSTEPS*<NITERQ>
+NSTEPS           None                      Total number of time steps
+QBEAM            MW                        Total beam power (alias QNBI)

@@ -1,135 +1,135 @@
-LABEL    UNITS                     DESCRIPTION
+LABEL            UNITS                     DESCRIPTION
 ------------------------------------------------------------
-AB       m                         Limiter position in the mid
-ABC      m                         Calculation boundary in the mid
-AIM1     None                      Impurity 1 ions atom mass/Mp
-AIM2     None                      Impurity 2 ions atom mass/Mp
-AIM3     None                      Impurity 3 ions atom mass/Mp
-AMJ      None                      (Main ions atom mass)/Mp
-AWALL    m                         Wall position in horisontal axis
-BTOR     T                         Toroidal field at vacuum chamber center
-ELONG    None                      Elongation of boundary surface
-ELONM    None                      Chamber elongation
-ENCL     keV                       Edge cold neutrals energy
-ENWM     keV                       Edge warm neutrals energy
-FECR     GHz                       EC frequency
-FFW      GHz                       FW frequency
-FICR     GHz                       IC frequency
-FLH      GHz                       LH frequency
-GN2E     None                      Factor in convective electron heat flux
-GN2I     None                      Factor in convective ion heat flux
-IPL      MA                        Plasma current
-LEXT     mkH                       External inductance
-NNCL     10^19/m^3                 Edge cold neutrals density
-NNWM     10^19/m^3                 Edge warm neutrals density
-QECR     MW                        Total EC power input
-QFW      MW                        Total FW power input
-QICR     MW                        Total IC power input
-QLH      MW                        Total LH power input
-QNBI     MW                        Total beam power
-RTOR     m                         Major radius (vacuum chamber center)
-SHIFT    m                         Edge magnetic surface shift
-TRIAN    None                      Triangularity of the boundary surface
-TRICH    None                      Chamber triangularity
-UEXT     V                         External voltage
-UPDWN    m                         Plasma LCFS vertical centroid 0.5*(Ztop+Zbot)
-WNE      m                         Width of NE exponential decay in SOL (j > NA1)
-WTE      m                         Width of TE exponential decay in SOL (j > NA1)
-WTI      m                         Width of TI exponential decay in SOL (j > NA1)
-ZMJ      None                      Main
-ZRD1     None                      Reserved variable for reading from exp file
-ZRD2     None                      Reserved variable for reading from exp file
-ZRD3     None                      Reserved variable for reading from exp file
-ZRD4     None                      Reserved variable for reading from exp file
-ZRD5     None                      Reserved variable for reading from exp file
-ZRD6     None                      Reserved variable for reading from exp file
-ZRD7     None                      Reserved variable for reading from exp file
-ZRD8     None                      Reserved variable for reading from exp file
-ZRD9     None                      Reserved variable for reading from exp file
-ZRD10    None                      Reserved variable for reading from exp file
-ZRD11    None                      Reserved variable for reading from exp file
-ZRD12    None                      Reserved variable for reading from exp file
-ZRD13    None                      Reserved variable for reading from exp file
-ZRD14    None                      Reserved variable for reading from exp file
-ZRD15    None                      Reserved variable for reading from exp file
-ZRD16    None                      Reserved variable for reading from exp file
-ZRD17    None                      Reserved variable for reading from exp file
-ZRD18    None                      Reserved variable for reading from exp file
-ZRD19    None                      Reserved variable for reading from exp file
-ZRD20    None                      Reserved variable for reading from exp file
-ZRD21    None                      Reserved variable for reading from exp file
-ZRD22    None                      Reserved variable for reading from exp file
-ZRD23    None                      Reserved variable for reading from exp file
-ZRD24    None                      Reserved variable for reading from exp file
-ZRD25    None                      Reserved variable for reading from exp file
-ZRD26    None                      Reserved variable for reading from exp file
-ZRD27    None                      Reserved variable for reading from exp file
-ZRD28    None                      Reserved variable for reading from exp file
-ZRD29    None                      Reserved variable for reading from exp file
-ZRD30    None                      Reserved variable for reading from exp file
-ZRD31    None                      Reserved variable for reading from exp file
-ZRD32    None                      Reserved variable for reading from exp file
-ZRD33    None                      Reserved variable for reading from exp file
-ZRD34    None                      Reserved variable for reading from exp file
-ZRD35    None                      Reserved variable for reading from exp file
-ZRD36    None                      Reserved variable for reading from exp file
-ZRD37    None                      Reserved variable for reading from exp file
-ZRD38    None                      Reserved variable for reading from exp file
-ZRD39    None                      Reserved variable for reading from exp file
-ZRD40    None                      Reserved variable for reading from exp file
-ZRD41    None                      Reserved variable for reading from exp file
-ZRD42    None                      Reserved variable for reading from exp file
-ZRD43    None                      Reserved variable for reading from exp file
-ZRD44    None                      Reserved variable for reading from exp file
-ZRD45    None                      Reserved variable for reading from exp file
-ZRD46    None                      Reserved variable for reading from exp file
-ZRD47    None                      Reserved variable for reading from exp file
-ZRD48    None                      Reserved variable for reading from exp file
-ZRD49    None                      Reserved variable for reading from exp file
-ZRD50    None                      Reserved variable for reading from exp file
-ZRD51    None                      Reserved variable for reading from exp file
-ZRD52    None                      Reserved variable for reading from exp file
-ZRD53    None                      Reserved variable for reading from exp file
-ZRD54    None                      Reserved variable for reading from exp file
-ZRD55    None                      Reserved variable for reading from exp file
-ZRD56    None                      Reserved variable for reading from exp file
-ZRD57    None                      Reserved variable for reading from exp file
-ZRD58    None                      Reserved variable for reading from exp file
-ZRD59    None                      Reserved variable for reading from exp file
-ZRD60    None                      Reserved variable for reading from exp file
-ZRD61    None                      Reserved variable for reading from exp file
-ZRD62    None                      Reserved variable for reading from exp file
-ZRD63    None                      Reserved variable for reading from exp file
-ZRD64    None                      Reserved variable for reading from exp file
-ZRD65    None                      Reserved variable for reading from exp file
-ZRD66    None                      Reserved variable for reading from exp file
-ZRD67    None                      Reserved variable for reading from exp file
-ZRD68    None                      Reserved variable for reading from exp file
-ZRD69    None                      Reserved variable for reading from exp file
-ZRD70    None                      Reserved variable for reading from exp file
-ZRD71    None                      Reserved variable for reading from exp file
-ZRD72    None                      Reserved variable for reading from exp file
-ZRD73    None                      Reserved variable for reading from exp file
-ZRD74    None                      Reserved variable for reading from exp file
-ZRD75    None                      Reserved variable for reading from exp file
-ZRD76    None                      Reserved variable for reading from exp file
-ZRD77    None                      Reserved variable for reading from exp file
-ZRD78    None                      Reserved variable for reading from exp file
-ZRD79    None                      Reserved variable for reading from exp file
-ZRD80    None                      Reserved variable for reading from exp file
-ZRD81    None                      Reserved variable for reading from exp file
-ZRD82    None                      Reserved variable for reading from exp file
-ZRD83    None                      Reserved variable for reading from exp file
-ZRD84    None                      Reserved variable for reading from exp file
-ZRD85    None                      Reserved variable for reading from exp file
-ZRD86    None                      Reserved variable for reading from exp file
-ZRD87    None                      Reserved variable for reading from exp file
-ZRD88    None                      Reserved variable for reading from exp file
-ZRD89    None                      Reserved variable for reading from exp file
-ZRD90    None                      Reserved variable for reading from exp file
-ZRD91    None                      Reserved variable for reading from exp file
-ZRD92    None                      Reserved variable for reading from exp file
-ZRD93    None                      Reserved variable for reading from exp file
-ZRD94    None                      Reserved variable for reading from exp file
-ZRD95    None                      Reserved variable for reading from exp file
-ZRD96    None                      Reserved variable for reading from exp file
+AB               m                         Limiter position in the mid
+ABC              m                         Calculation boundary in the mid
+AIM1             None                      Impurity 1 ions atom mass/Mp
+AIM2             None                      Impurity 2 ions atom mass/Mp
+AIM3             None                      Impurity 3 ions atom mass/Mp
+AMJ              None                      (Main ions atom mass)/Mp
+AWALL            m                         Wall position in horisontal axis
+BTOR             T                         Toroidal field at vacuum chamber center
+ELONG            None                      Elongation of boundary surface
+ELONM            None                      Chamber elongation
+ENCL             keV                       Edge cold neutrals energy
+ENWM             keV                       Edge warm neutrals energy
+FECR             GHz                       EC frequency
+FFW              GHz                       FW frequency
+FICR             GHz                       IC frequency
+FLH              GHz                       LH frequency
+GN2E             None                      Factor in convective electron heat flux
+GN2I             None                      Factor in convective ion heat flux
+IPL              MA                        Plasma current
+LEXT             mkH                       External inductance
+NNCL             10^19/m^3                 Edge cold neutrals density
+NNWM             10^19/m^3                 Edge warm neutrals density
+QECR             MW                        Total EC power input
+QFW              MW                        Total FW power input
+QICR             MW                        Total IC power input
+QLH              MW                        Total LH power input
+QNBI             MW                        Total beam power
+RTOR             m                         Major radius (vacuum chamber center)
+SHIFT            m                         Edge magnetic surface shift
+TRIAN            None                      Triangularity of the boundary surface
+TRICH            None                      Chamber triangularity
+UEXT             V                         External voltage
+UPDWN            m                         Plasma LCFS vertical centroid 0.5*(Ztop+Zbot)
+WNE              m                         Width of NE exponential decay in SOL (j > NA1)
+WTE              m                         Width of TE exponential decay in SOL (j > NA1)
+WTI              m                         Width of TI exponential decay in SOL (j > NA1)
+ZMJ              None                      Main
+ZRD1             None                      Reserved variable for reading from exp file
+ZRD2             None                      Reserved variable for reading from exp file
+ZRD3             None                      Reserved variable for reading from exp file
+ZRD4             None                      Reserved variable for reading from exp file
+ZRD5             None                      Reserved variable for reading from exp file
+ZRD6             None                      Reserved variable for reading from exp file
+ZRD7             None                      Reserved variable for reading from exp file
+ZRD8             None                      Reserved variable for reading from exp file
+ZRD9             None                      Reserved variable for reading from exp file
+ZRD10            None                      Reserved variable for reading from exp file
+ZRD11            None                      Reserved variable for reading from exp file
+ZRD12            None                      Reserved variable for reading from exp file
+ZRD13            None                      Reserved variable for reading from exp file
+ZRD14            None                      Reserved variable for reading from exp file
+ZRD15            None                      Reserved variable for reading from exp file
+ZRD16            None                      Reserved variable for reading from exp file
+ZRD17            None                      Reserved variable for reading from exp file
+ZRD18            None                      Reserved variable for reading from exp file
+ZRD19            None                      Reserved variable for reading from exp file
+ZRD20            None                      Reserved variable for reading from exp file
+ZRD21            None                      Reserved variable for reading from exp file
+ZRD22            None                      Reserved variable for reading from exp file
+ZRD23            None                      Reserved variable for reading from exp file
+ZRD24            None                      Reserved variable for reading from exp file
+ZRD25            None                      Reserved variable for reading from exp file
+ZRD26            None                      Reserved variable for reading from exp file
+ZRD27            None                      Reserved variable for reading from exp file
+ZRD28            None                      Reserved variable for reading from exp file
+ZRD29            None                      Reserved variable for reading from exp file
+ZRD30            None                      Reserved variable for reading from exp file
+ZRD31            None                      Reserved variable for reading from exp file
+ZRD32            None                      Reserved variable for reading from exp file
+ZRD33            None                      Reserved variable for reading from exp file
+ZRD34            None                      Reserved variable for reading from exp file
+ZRD35            None                      Reserved variable for reading from exp file
+ZRD36            None                      Reserved variable for reading from exp file
+ZRD37            None                      Reserved variable for reading from exp file
+ZRD38            None                      Reserved variable for reading from exp file
+ZRD39            None                      Reserved variable for reading from exp file
+ZRD40            None                      Reserved variable for reading from exp file
+ZRD41            None                      Reserved variable for reading from exp file
+ZRD42            None                      Reserved variable for reading from exp file
+ZRD43            None                      Reserved variable for reading from exp file
+ZRD44            None                      Reserved variable for reading from exp file
+ZRD45            None                      Reserved variable for reading from exp file
+ZRD46            None                      Reserved variable for reading from exp file
+ZRD47            None                      Reserved variable for reading from exp file
+ZRD48            None                      Reserved variable for reading from exp file
+ZRD49            None                      Reserved variable for reading from exp file
+ZRD50            None                      Reserved variable for reading from exp file
+ZRD51            None                      Reserved variable for reading from exp file
+ZRD52            None                      Reserved variable for reading from exp file
+ZRD53            None                      Reserved variable for reading from exp file
+ZRD54            None                      Reserved variable for reading from exp file
+ZRD55            None                      Reserved variable for reading from exp file
+ZRD56            None                      Reserved variable for reading from exp file
+ZRD57            None                      Reserved variable for reading from exp file
+ZRD58            None                      Reserved variable for reading from exp file
+ZRD59            None                      Reserved variable for reading from exp file
+ZRD60            None                      Reserved variable for reading from exp file
+ZRD61            None                      Reserved variable for reading from exp file
+ZRD62            None                      Reserved variable for reading from exp file
+ZRD63            None                      Reserved variable for reading from exp file
+ZRD64            None                      Reserved variable for reading from exp file
+ZRD65            None                      Reserved variable for reading from exp file
+ZRD66            None                      Reserved variable for reading from exp file
+ZRD67            None                      Reserved variable for reading from exp file
+ZRD68            None                      Reserved variable for reading from exp file
+ZRD69            None                      Reserved variable for reading from exp file
+ZRD70            None                      Reserved variable for reading from exp file
+ZRD71            None                      Reserved variable for reading from exp file
+ZRD72            None                      Reserved variable for reading from exp file
+ZRD73            None                      Reserved variable for reading from exp file
+ZRD74            None                      Reserved variable for reading from exp file
+ZRD75            None                      Reserved variable for reading from exp file
+ZRD76            None                      Reserved variable for reading from exp file
+ZRD77            None                      Reserved variable for reading from exp file
+ZRD78            None                      Reserved variable for reading from exp file
+ZRD79            None                      Reserved variable for reading from exp file
+ZRD80            None                      Reserved variable for reading from exp file
+ZRD81            None                      Reserved variable for reading from exp file
+ZRD82            None                      Reserved variable for reading from exp file
+ZRD83            None                      Reserved variable for reading from exp file
+ZRD84            None                      Reserved variable for reading from exp file
+ZRD85            None                      Reserved variable for reading from exp file
+ZRD86            None                      Reserved variable for reading from exp file
+ZRD87            None                      Reserved variable for reading from exp file
+ZRD88            None                      Reserved variable for reading from exp file
+ZRD89            None                      Reserved variable for reading from exp file
+ZRD90            None                      Reserved variable for reading from exp file
+ZRD91            None                      Reserved variable for reading from exp file
+ZRD92            None                      Reserved variable for reading from exp file
+ZRD93            None                      Reserved variable for reading from exp file
+ZRD94            None                      Reserved variable for reading from exp file
+ZRD95            None                      Reserved variable for reading from exp file
+ZRD96            None                      Reserved variable for reading from exp file

@@ -1,5 +1,0 @@
-LABEL    UNITS                     DESCRIPTION
-------------------------------------------------------------
-phi      Weber                     Toroidal flux
-pprime   -                         dpres/dpsi
-ffprime  -                         dF/dpsi
