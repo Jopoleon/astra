@@ -24,11 +24,11 @@ def ACDF2IMAS(args, write_ids=True):
     logger.info('Creating IDS structure')
 
     if args.ids_backend == 'HDF5':
-        db = imas.DBEntry(imas.imasdef.HDF5_BACKEND   , 'aug', args.shot, args.ids_run, os.getenv('USER'), '3')
+        db = imas.DBEntry(imas.imasdef.HDF5_BACKEND   , 'aug', args.shot, args.ids_run, os.getenv('IMASDB'), '3')
     elif args.ids_backend == 'MDS+':
-        db = imas.DBEntry(imas.imasdef.MDSPLUS_BACKEND, 'aug', args.shot, args.ids_run, os.getenv('USER'), '3')
+        db = imas.DBEntry(imas.imasdef.MDSPLUS_BACKEND, 'aug', args.shot, args.ids_run, os.getenv('IMASDB'), '3')
     elif args.ids_backend == 'ASCII':
-        db = imas.DBEntry(imas.imasdef.ASCII_BACKEND  , 'aug', args.shot, args.ids_run, os.getenv('USER'), '3')
+        db = imas.DBEntry(imas.imasdef.ASCII_BACKEND  , 'aug', args.shot, args.ids_run, os.getenv('IMASDB'), '3')
     status, _ = db.create()
 
     cv = netcdf_file(args.fcdf, 'r', mmap=False).variables
@@ -117,7 +117,9 @@ def fill_equilibrium(cv):
 
     eq.time = np.atleast_1d(cv['TIME'].data)
     nt_eq = len(eq.time)
-    
+    logger.debug('%d', nt_eq)
+    print(cv['TIME'].data)
+
     eq.vacuum_toroidal_field.r0 = cv['RTOR'].data[0]
     eq.vacuum_toroidal_field.b0 = cv['BTOR'].data
     
