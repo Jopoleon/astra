@@ -55,9 +55,9 @@ def json_concat(expequ):
             json_d = json.load(fjson)
             astra_d = json_d['astra']
             equil_d = json_d['equil']
-        nx = len(astra_d['NEX']['data'])
-        n_eq = len(equil_d['rho_tor']['data'])
-        n_th = len(equil_d['teta2d']['data'])
+        nx   = astra_d['NEX']['ndim']
+        n_eq = equil_d['rho_tor']['ndim']
+        n_th = equil_d['teta2d']['ndim']
 
         for key, val in astra_d.items():
             dat = val['data']
@@ -67,7 +67,7 @@ def json_concat(expequ):
                         if len(dat) > 0:
                             ds_astra[key] = dat
                         else: # array, all zeros
-                            ds_astra[key] = nx*[0.]
+                            ds_astra[key] = val['ndim']*[0.]
                     else: # scalar
                         ds_astra[key] = [dat]
                 else:
@@ -75,7 +75,7 @@ def json_concat(expequ):
                         if len(dat) > 0:
                             ds_astra[key] += dat
                         else: # array, all zeros
-                            ds_astra[key] += nx*[0.]
+                            ds_astra[key] += val['ndim']*[0.]
                     else: # scalar
                         ds_astra[key].append(dat)
 
@@ -87,7 +87,7 @@ def json_concat(expequ):
                         if len(dat) > 0:
                             ds_equil[key] = dat
                         else: # array, all zeros
-                            ds_equil[key] = nx*[0.]
+                            ds_equil[key] = val['ndim']*[0.]
                     else: # scalar
                         ds_equil[key] = [dat]
                 else:
@@ -95,7 +95,7 @@ def json_concat(expequ):
                         if len(dat) > 0:
                             ds_equil[key] += dat
                         else: # array, all zeros
-                            ds_equil[key] += nx*[0.]
+                            ds_equil[key] += val['ndim']*[0.]
                     else: # scalar
                         ds_equil[key].append(dat)
                         

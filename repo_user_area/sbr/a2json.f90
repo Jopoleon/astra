@@ -9,10 +9,10 @@ use outcmn_inc, only: AWD, exp_file, equ_file
 
 implicit none
 
-logical, parameter :: verbose=.False.
+logical, parameter :: verbose=.True.
 integer, parameter :: l_name=16, l_unit=25, l_desc=60, nunit=25
 
-integer :: jid, jrho, nvars, ios, j_call=1, nrho_surf, nthe_surf, ndim
+integer :: jid, jrho, nvars, ios, j_call=1, nrho_surf, nthe_surf, nR, nZ, ndim
 character(len=120) :: file_in, json_out
 character(len=l_name), allocatable, dimension(:) :: s_name
 character(len=l_unit), allocatable, dimension(:) :: s_unit
@@ -24,8 +24,10 @@ save j_call
 
 nrho_surf = SIZE(equil_now%profiles_1d%rho_tor)
 nthe_surf = SIZE(equil_now%coord_sys%position%teta2d)
+nR = SIZE(equil_now%eqgeometry%rectgrid%r2d)
+nZ = SIZE(equil_now%eqgeometry%rectgrid%z2d)
 
-if (verbose) write(*, '(A, i)') 'Starting a2json', j_call
+if (verbose) write(*, '(A, 3i)') 'Starting a2json', j_call, nrho_surf, nthe_surf
 
 write(json_out, '(5A, i0, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), TRIM(equ_file), '-', j_call, '.json'
 
@@ -739,9 +741,25 @@ call write_array(nunit, ndim, equil_now%coord_sys%position%rmin  , s_name(jid), 
 jid = jid + 1
 call write_array(nunit, ndim, equil_now%coord_sys%position%psirz , s_name(jid), s_unit(jid), s_desc(jid))
 jid = jid + 1
-call write_array(nunit, ndim, equil_now%coord_sys%position%teta2d, s_name(jid), s_unit(jid), s_desc(jid))
+call write_array(nunit, nthe_surf, equil_now%coord_sys%position%teta2d, s_name(jid), s_unit(jid), s_desc(jid))
 jid = jid + 1
-call write_last_array(nunit, ndim, equil_now%coord_sys%position%z     , s_name(jid), s_unit(jid), s_desc(jid)) ! No comma
+call write_array(nunit, ndim, equil_now%coord_sys%position%z, s_name(jid), s_unit(jid), s_desc(jid)) ! No comma
+
+file_in = TRIM(AWD) // '/main/equil_rectgrid.txt'
+ndim = nR*nZ
+deallocate(s_name)
+deallocate(s_unit)
+deallocate(s_desc)
+nvars = get_nvars(file_in)
+allocate(s_name(nvars), s_unit(nvars), s_desc(nvars))
+call getAttributes(file_in, nvars, s_name, s_desc, s_unit)
+jid = 1
+call write_array(nunit, ndim, equil_now%eqgeometry%rectgrid%psirz2d, s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, nR  , equil_now%eqgeometry%rectgrid%r2d    , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_last_array(nunit, nZ  , equil_now%eqgeometry%rectgrid%z2d    , s_name(jid), s_unit(jid), s_desc(jid))
+
 
 write(nunit, '(A)') '}' ! End of "equil" dictionary
 
@@ -751,13 +769,14 @@ write(nunit, '(A)') '}' ! End of "equil" dictionary
 
 write(nunit, '(A)') '}'
 close(nunit)
-write(*, '(A)') '   Written file ' // json_out
 
 deallocate(s_name)
 deallocate(s_unit)
 deallocate(s_desc)
 
 j_call = j_call + 1
+
+write(*, '(A)') '   Written file ' // json_out
 
 return
 end subroutine a2json
@@ -799,8 +818,6 @@ subroutine write_last_array(nunit, ndim, arr, sname, sunit, sdesc)
 
 implicit none
 
-integer, parameter :: l_name=16, l_unit=25, l_desc=60
-
 integer, intent(in) :: nunit, ndim
 double precision, intent(in), dimension(ndim) :: arr
 character(len=*), intent(in) :: sname, sunit, sdesc
@@ -815,8 +832,6 @@ end subroutine write_last_array
 subroutine write_array(nunit, ndim, arr, sname, sunit, sdesc)
 
 implicit none
-
-integer, parameter :: l_name=16, l_unit=25, l_desc=60
 
 integer, intent(in) :: nunit, ndim
 double precision, intent(in), dimension(ndim) :: arr
@@ -843,8 +858,8 @@ integer :: i
 double precision :: abs_val
 double precision, dimension(ndim) :: array
 
-102 format('    "', A, '": {"units": "', A, '", "long_name": "', A, '", "data": [')
-write(nunit, 102) TRIM(sname), TRIM(sunit), TRIM(sdesc)
+102 format('    "', A, '": {"ndim": ', i0, ', "units": "', A, '", "long_name": "', A, '", "data": [')
+write(nunit, 102) TRIM(sname), ndim, TRIM(sunit), TRIM(sdesc)
 
 do i=1, ndim
     abs_val = ABS(arr(i))
