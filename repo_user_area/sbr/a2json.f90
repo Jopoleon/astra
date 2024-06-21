@@ -761,7 +761,7 @@ call write_array(nunit, ndim, equil_now%eqgeometry%rectgrid%psirz2d, s_name(jid)
 jid = jid + 1
 call write_array(nunit, nR  , equil_now%eqgeometry%rectgrid%r2d    , s_name(jid), s_unit(jid), s_desc(jid))
 jid = jid + 1
-call write_last_array(nunit, nZ  , equil_now%eqgeometry%rectgrid%z2d    , s_name(jid), s_unit(jid), s_desc(jid))
+call write_last_array(nunit, nZ, equil_now%eqgeometry%rectgrid%z2d , s_name(jid), s_unit(jid), s_desc(jid))
 
 
 write(nunit, '(A)') '}' ! End of "equil" dictionary

@@ -33,7 +33,7 @@ def ACDF2IMAS(args, write_ids=True):
 
     cv = netcdf_file(args.fcdf, 'r', mmap=False).variables
     cp = fill_core_profiles(cv)
-    eq = fill_core_profiles(cv)
+    eq = fill_equilibrium(cv)
 
     if write_ids:
         logger.info('Dumping IDS file %s', args.ids_backend)
@@ -111,15 +111,17 @@ def fill_equilibrium(cv):
 
     eq = imas.equilibrium()
     eq.code.name = "astra"
-    eq.code.version = "2025.06.01"
+    eq.code.version = "2024.06.01"
     eq.ids_properties.homogeneous_time = 1   # same timebase for core_profiles IDS
     eq.ids_properties.creation_date = datetime.datetime.today().strftime("%d/%m/%y")
 
     eq.time = np.atleast_1d(cv['TIME'].data)
     nt_eq = len(eq.time)
     
+    eq.vacuum_toroidal_field.r0 = cv['RTOR'].data[0]
+    eq.vacuum_toroidal_field.b0 = cv['BTOR'].data
+    
     prof_map = {'psi': 'psi', 'phi': 'phi', \
-        'rho_tor_norm': 'rho_tor', \
         'pressure': 'pressure', 'dpressure_dpsi': 'pprime', \
         'f_df_dpsi': 'ffprime', 'q': 'q', \
         'volume': 'volume', 'area': 'areat'}
@@ -133,7 +135,7 @@ def fill_equilibrium(cv):
         eqt[itim].boundary.outline.z = cv['z'][itim, -1, :]
         eqt[itim].boundary_separatrix.outline.r = cv['r'][itim, -1, :]
         eqt[itim].boundary_separatrix.outline.z = cv['z'][itim, -1, :]
-        eqt[itim].profiles_1d.f = 2e-7*np.array(self.jpol[itim])
+        eqt[itim].profiles_1d.rho_tor_norm = cv['RHO_SURF'].data
         for imas_lbl, sf_lbl in prof_map.items():
             eqt[itim].profiles_1d.__dict__[imas_lbl] = \
                 np.array(cv[sf_lbl][itim])
@@ -141,12 +143,14 @@ def fill_equilibrium(cv):
 # global quantities
 # this all assumes standard AUG shotfile writing starting from separatrix and moving towards axis
 # This should be checked in future, as, I believe, IDE does not do this...
-        eqt[itim].global_quantities.volume = np.double(cv['volume'][itim, -1])
-        eqt[itim].global_quantities.area   = np.double(cv['area'  ][itim, -1])
-        eqt[itim].global_quantities.psi_axis = np.double(cv['psiaxis'][itim])
-        eqt[itim].global_quantities.psi_boundary = np.double(cv['psibound'][itim])
-        eqt[itim].global_quantities.ip = np.double(cv['i_plasma'][itim])
-        eqt[itim].global_quantities.magnetic_axis.b_field_tor = np.double(cv['b0'][itim])
+        eqt[itim].global_quantities.volume       = cv['volume'][itim, -1]
+        eqt[itim].global_quantities.area         = cv['areat' ][itim, -1]
+        eqt[itim].global_quantities.psi_axis     = cv['psiaxis'][itim]
+        eqt[itim].global_quantities.psi_boundary = cv['psibound'][itim]
+        eqt[itim].global_quantities.ip           = cv['i_plasma'][itim]
+        eqt[itim].global_quantities.magnetic_axis.r = cv['r'][itim, 1, 1]
+        eqt[itim].global_quantities.magnetic_axis.z = cv['z'][itim, 1, 1]
+        eqt[itim].global_quantities.magnetic_axis.b_field_tor = cv['b0'][itim]
 
     return eq
 
