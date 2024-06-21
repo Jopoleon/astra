@@ -651,12 +651,15 @@ write(nunit, '(A/)') '"equil": {'
 
 file_in = TRIM(AWD) // '/main/equil_global_param.txt'
 
-equil_traces(1) = equil_now%global_param%betpol
-equil_traces(2) = equil_now%global_param%i_plasma
-equil_traces(3) = equil_now%global_param%li3
-equil_traces(4) = equil_now%global_param%psibound
-equil_traces(5) = equil_now%global_param%psiaxis
-call write_scalar_block(nunit, file_in, equil_traces(1: 5))
+equil_traces(1) = equil_now%global_param%toroid_field%b0
+equil_traces(2) = equil_now%global_param%betpol
+equil_traces(3) = equil_now%global_param%i_plasma
+equil_traces(4) = equil_now%global_param%li3
+equil_traces(5) = equil_now%global_param%psibound
+equil_traces(6) = equil_now%global_param%psiaxis
+equil_traces(7) = equil_now%global_param%toroid_field%r0
+equil_traces(8) = equil_now%global_param%Vloop
+call write_scalar_block(nunit, file_in, equil_traces(1: 8))
 
 ! 1 d profiles
 

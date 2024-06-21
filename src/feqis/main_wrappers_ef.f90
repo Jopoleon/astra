@@ -1211,6 +1211,7 @@ use metric_coefficients_pbe, only: dator
 
 implicit none
 
+integer :: i
 type(type_equilibrium), intent(inout) :: equil_out
 
 equil_out%global_param%psplex   = psplex
@@ -1244,7 +1245,7 @@ endif
 equil_out%profiles_1d%ffprime   (1:nrho) = ffprimebez(1:nrho)
 equil_out%profiles_1d%pprime    (1:nrho) = pprimebez(1:nrho)
 equil_out%profiles_1d%pressure  (1:nrho) = pressbez (1:nrho)
-equil_out%profiles_1d%rho_tor   (1:nrho) = 0.
+equil_out%profiles_1d%rho_tor   (1:nrho) = (/ ((i-1.)/(nrho-1.), i=1, nrho) /)
 equil_out%profiles_1d%F_dia     (1:nrho) = ipolbez(1:nrho)
 equil_out%profiles_1d%dPSIdV    (1:nrho) = dpsidvbez(1:nrho)
 equil_out%profiles_1d%psi       (1:nrho) = psibez(1:nrho) ! psi nnormalized from 0 to 1 (rhopol^2)

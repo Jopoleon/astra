@@ -12,6 +12,12 @@ if len(logger.handlers) == 0:
 #logger.setLevel(logging.DEBUG)
 logger.setLevel(logging.INFO)
 
+# Units conversion factors
+
+keV_m3_to_Pa = 1.602*1e-16
+e19m3_to_m3  = 1e19
+keV_to_eV    = 1e3
+
 
 def ACDF2IMAS(args, write_ids=True):
 
@@ -27,20 +33,19 @@ def ACDF2IMAS(args, write_ids=True):
 
     cv = netcdf_file(args.fcdf, 'r', mmap=False).variables
     cp = fill_core_profiles(cv)
+    eq = fill_core_profiles(cv)
 
     if write_ids:
         logger.info('Dumping IDS file %s', args.ids_backend)
         logger.info('in dir %s' %os.getenv('IMASDB'))
         logger.info('Putting core_profiles')
         db.put(cp)
+        logger.info('Putting equilibrium')
+        db.put(eq)
         logger.info('Closed IMAS file')
 
 
 def fill_core_profiles(cv):
-
-    keV_m3_to_Pa = 1.602*1e-16
-    e19m3_to_m3  = 1e19
-    keV_to_eV    = 1e3
 
     cp = imas.core_profiles()
     cp.ids_properties.homogeneous_time = 1   # same timebase for core_profiles IDS
@@ -102,6 +107,50 @@ def fill_core_profiles(cv):
     return cp
 
 
+def fill_equilibrium(cv):
+
+    eq = imas.equilibrium()
+    eq.code.name = "astra"
+    eq.code.version = "2025.06.01"
+    eq.ids_properties.homogeneous_time = 1   # same timebase for core_profiles IDS
+    eq.ids_properties.creation_date = datetime.datetime.today().strftime("%d/%m/%y")
+
+    eq.time = np.atleast_1d(cv['TIME'].data)
+    nt_eq = len(eq.time)
+    
+    prof_map = {'psi': 'psi', 'phi': 'phi', \
+        'rho_tor_norm': 'rho_tor', \
+        'pressure': 'pressure', 'dpressure_dpsi': 'pprime', \
+        'f_df_dpsi': 'ffprime', 'q': 'q', \
+        'volume': 'volume', 'area': 'areat'}
+
+    eqt = eq.time_slice
+    eqt.resize(nt_eq)
+
+    for itim in range(nt_eq):
+ 
+        eqt[itim].boundary.outline.r = cv['r'][itim, -1, :]
+        eqt[itim].boundary.outline.z = cv['z'][itim, -1, :]
+        eqt[itim].boundary_separatrix.outline.r = cv['r'][itim, -1, :]
+        eqt[itim].boundary_separatrix.outline.z = cv['z'][itim, -1, :]
+        eqt[itim].profiles_1d.f = 2e-7*np.array(self.jpol[itim])
+        for imas_lbl, sf_lbl in prof_map.items():
+            eqt[itim].profiles_1d.__dict__[imas_lbl] = \
+                np.array(cv[sf_lbl][itim])
+
+# global quantities
+# this all assumes standard AUG shotfile writing starting from separatrix and moving towards axis
+# This should be checked in future, as, I believe, IDE does not do this...
+        eqt[itim].global_quantities.volume = np.double(cv['volume'][itim, -1])
+        eqt[itim].global_quantities.area   = np.double(cv['area'  ][itim, -1])
+        eqt[itim].global_quantities.psi_axis = np.double(cv['psiaxis'][itim])
+        eqt[itim].global_quantities.psi_boundary = np.double(cv['psibound'][itim])
+        eqt[itim].global_quantities.ip = np.double(cv['i_plasma'][itim])
+        eqt[itim].global_quantities.magnetic_axis.b_field_tor = np.double(cv['b0'][itim])
+
+    return eq
+
+    
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='CDF to IMAS conversion')
