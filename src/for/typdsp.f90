@@ -18,13 +18,14 @@ call textvm(astra_gui%Width - 83*astra_gui%dxlet + 2, JLR, STRI(1: 80), 80)
 end subroutine ERASXY
 
 !---------------------------------------------------------------------
-subroutine TYPDSP(ITIMES, TTOUT, TOUT)
+subroutine TYPDSP
 ! NCH= 5 - terminal, 0 - file (old format), 1 - file (new format)
 
 use parameter_inc, only: NRW
 use const_inc, only: XOUT, NAB, NA1
 use outcmn_inc, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, WarningColor, ROUT
 use dbl2char, only: fmt_xf
+use timeoutput_inc, only: NTIMES, TTOUT, TOUT
 
 implicit none
 
@@ -32,8 +33,6 @@ integer, parameter :: NLINSC=50
 character(len=40), parameter :: STRMN=' R=     a=     B=     I=     q=     <n>='
 character(len=6), dimension(6), parameter :: &
     CONN = (/ ' CF   ', ' CV   ', ' CH   ', ' CCD  ', ' CBND ', ' CRAD ' /)
-integer, intent(in) :: ITIMES
-double precision, intent(in) :: TTOUT(ITIMES), TOUT(ITIMES, NRW)
 
 integer :: NP1, ITBE, ITEND, ITEN, MODEX, JBE, JEND, J, JEN, JJ, J1
 character(len=118) :: STRI
@@ -143,7 +142,7 @@ return
 end function GETIME
 
 !---------------------------------------------------------------------
-subroutine PUTXY(IX, IY, ITIMES, TTOUT, TOUT)
+subroutine PUTXY(IX, IY)
 
 ! Prints x, y coordinates on GUI in "Step" mode
 
@@ -156,12 +155,12 @@ use status_inc, only: AMETR, SHIF, ELON, TRIA, FP, RHO
 use const_inc, only: TIME, TINIT, TSCALE, NA, NA1, NAB, XOUT, AB, ABC, ROC, HRO
 use dbl2char, only: fmt5
 use numerical_tools, only: QUADIN
+use timeoutput_inc, only: NTIMES, TOUT, TTOUT
 
 implicit none
 
 integer, parameter :: JN0=0
-integer, intent(in) :: ITIMES, IX, IY
-double precision, intent(in) :: TTOUT(ITIMES), TOUT(ITIMES, NRW)
+integer, intent(in) :: IX, IY
 
 integer :: JX, JY, JLR, j, j1, JC, JL, MODEX, JW, JN2
 double precision :: DX, DY, YX, YX1, YY, YY1, YA, YA1, YD, YE, YT, &
@@ -209,7 +208,7 @@ if (MOD10 == 6) then
     do J1=1, NTOUT
         JW = NWIND3(J1) - 8*active_tab(MOD10)
         if (NAMET(J1) == '    ') JW = 0
-        if (JW > 0 .and. JW <= 8) call down_label(j, ITIMES, TOUT) ! for the all modes
+        if (JW > 0 .and. JW <= 8) call down_label(j, TOUT) ! for the all modes
     enddo
     call setColor(Red)
     STRI(1 :  5) = 'Time='
@@ -597,7 +596,7 @@ return
 end subroutine set_plot
 
 !---------------------------------------------------------------------
-subroutine down_label(jt_in, ITIMES, TOUT)
+subroutine down_label(jt_in, TOUT)
 !---------------------------------------------------------------------
 ! Time dependences for radial output
 ! Curve to digit conversion
@@ -610,12 +609,12 @@ use parameter_inc, only: NRW
 use outcmn_inc, only: astra_gui, plot_area, LTOUT, MOD10, NTOUT, &
     NWIND3, active_tab, NAMET, Black, Blue, curves_per_frame, resizeGraph
 use dbl2char, only: fmt_xf
+use timeoutput_inc, only: NTIMES
 
 implicit none
 
-integer, intent(in) :: ITIMES
 integer, intent(in) :: jt_in
-double precision, intent(in) :: TOUT(ITIMES, *)
+double precision, intent(in) :: TOUT(NTIMES, *)
 
 integer :: jt, JN2, JN0, JEND, JB, JL, JC, JW, JJ, J, fshift
 character(len=5) :: XF4

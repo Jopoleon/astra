@@ -51,7 +51,7 @@ return
 end subroutine initMainWindow
 
 !---------------------------------------------------------------------
-subroutine OUTDSP(MARK, JIFNEW, IYO, ITIMES, TT_out, t_out)
+subroutine OUTDSP(MARK, JIFNEW, IYO, TT_out, t_out)
 
 !---------------------------------------------------------------------
 ! Drawing options:
@@ -84,14 +84,15 @@ use expdat, only: raw_profile_map, DATARR
 use dbl2char, only: fmt_xf
 use char_manip, only: len_trim_tab, str_in_list
 use debugger, only: markloc, debug, astra_stop
+use timeoutput_inc, only: NTIMES
 
 implicit none
 
 integer, parameter :: jzero=0
-integer, intent(in) :: MARK, JIFNEW, ITIMES
-integer, intent(inout) :: IYO(ITIMES,*)
-double precision, intent(in) :: TT_out(ITIMES)
-double precision, intent(inout) :: t_out(ITIMES, NRW)
+integer, intent(in) :: MARK, JIFNEW
+integer, intent(inout) :: IYO(NTIMES,*)
+double precision, intent(in) :: TT_out(NTIMES)
+double precision, intent(inout) :: t_out(NTIMES, NRW)
 
 integer :: PTM(2), PTMO(2, NRDX, NRW), &
     IWN(16), fshift, &
@@ -106,8 +107,10 @@ double precision :: SC(NRW), YX, r_out, YA, YL, YR, &
      YZ, ABSC, ymin, ymax, px_rmag, yq1, xq1, xte, te_bc
 double precision ,dimension(2) :: xbar, xbar_old, ybar, x8bar, y8bar
 double precision, dimension(16) :: xq1_old, xte_old
-double precision, dimension(NRD) :: xplot, yplot, xtrace, ytrace, xtrace_old
-double precision, dimension(NRD, ICVMX) :: xold, yold, ytrace_old
+double precision, dimension(NRD) :: xplot, yplot
+double precision, dimension(NTIMES) :: xtrace, ytrace, xtrace_old
+double precision, dimension(NRD, ICVMX) :: xold, yold
+double precision, dimension(NTIMES, ICVMX) :: ytrace_old
 double precision, external :: AFVAL
 character(len=80) :: STRI
 character(len=5 ) :: XF4
@@ -116,6 +119,7 @@ character(len=6 ) :: CHAR6
 save PTMO, NPTMO, IWN, xq1_old, xte_old, xold, yold, xtrace_old, ytrace_old
 
 !---------------------------------------------------------------------
+
 call markloc('OUTDSP')
 
 fshift = 12
@@ -387,7 +391,7 @@ CASE(6)  ! Time traces
             t_out(j, jj) = t_out(j, jj) + OSHIFT(jj)
         enddo
     enddo
-    call SCAL(NTOUT, SC, SCALET, t_out(LTOUT1, 1), LTOUT2, ITIMES)
+    call SCAL(NTOUT, SC, SCALET, t_out(LTOUT1, 1), LTOUT2, NTIMES)
 
     j_curve = 0
     plot_traces: do jtrace=1, min(NRW, NTOUT)

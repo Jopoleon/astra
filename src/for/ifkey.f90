@@ -65,7 +65,7 @@ logical :: MODADD, skip_poll
 integer*2, dimension(NRD) :: YWD
 integer :: POLLEVENT, WAITEVENT, KIBM, KASCII, jpos
 integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
-    IFLAG, INT4, IRET, NTRUN, plot_mode, &
+    IFLAG, INT4, IRET, plot_mode, &
     MODEX, IX, IY, NU1, j2, J1, ios, &
     YEAR, MONTH, DAY, HOUR, MINUTE, time_arr(8)
 ! plot_arr dimension: 4*NRD(Mode 5, 8) 320(7) 2*NTIMES(Mode 6) 2*NRD(Modes 1-4)
@@ -130,7 +130,6 @@ call markloc('IFKEY', debug_lev=2*debug)
 
 CHORDN = lineav()
 
-NTRUN = NTIMES
 IFKEY = 0
 
 if (IFKL == -1) then
@@ -155,21 +154,21 @@ elseif (IFKL == 256) then
     call setColor(Blue) ! Iteration #
     call textvm(astra_gui%width-17*astra_gui_ref%dxlet, astra_gui_ref%dylet+1, STRI(1:14), 14)
     TROUT = TIME
-    call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
+    call graph_output(MARK, PRMARK, NAMEP, ITO)
 endif
 
 if (IFKL /= 256 .and. TASK(4:4) /= 'B') call TIMEDT(TIME, 1000.*TAU)
 
 if (LTOUT > 1) then
     call markloc(str_in='IFKEY (saving time traces)')
-    if (LTOUT >= NTRUN) then
-        do J=1, NTRUN-1
+    if (LTOUT >= NTIMES) then
+        do J=1, NTIMES-1
             do JJ=1, NTOUT
                 TOUT(J, JJ) = TOUT(J+1, JJ)
             enddo
             TTOUT(J) = TTOUT(J+1)
         enddo
-        LTOUT = NTRUN - 1
+        LTOUT = NTIMES - 1
     endif
 endif
 
@@ -183,13 +182,13 @@ JTOUT = JTOUT + 1
 if (MOD10 <= 3 .or. MOD10 >= 8) then
     if (TIME + .5*TAU >= TROUT + DROUT) then
         TROUT = TIME
-        call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
+        call graph_output(MARK, PRMARK, NAMEP, ITO)
     endif
 endif
 
 ! Time output
 if (MOD10 == 6 .or. MOD10 == 7) then
-    call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
+    call graph_output(MARK, PRMARK, NAMEP, ITO)
 endif
 
 !-----------------------------------------------
@@ -281,7 +280,7 @@ if (TPOUT + DPOUT < TSTART .or. (IFKL /= 256 .and. TIME + 0.5*TAU >= TPOUT + DPO
     TPOUT = TIME
     TIMOD4(IPOUT) = TPOUT
     NAMEP(IPOUT) = fmt6(TPOUT)
-    if (IPOUT < NTRUN) IPOUT = IPOUT + 1
+    if (IPOUT < NTIMES) IPOUT = IPOUT + 1
 
 endif
 
@@ -343,10 +342,10 @@ do while(.True.)
 ! One time step and re-drawing is done
                     KEY = 0
                     IFLAG = 0
-                    call graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
+                    call graph_output(MARK, PRMARK, NAMEP, ITO)
                 endif
 
-                call PUTXY(IX, IY, NTRUN, TTOUT, TOUT)
+                call PUTXY(IX, IY)
                 KASCII = 0
                 KIBM = waitevent(KASCII, ix, iy)
                 KEY  = KASCII
@@ -385,7 +384,7 @@ do while(.True.)
             endif
             if (J <= JJ*active_tab(MOD10)) active_tab(MOD10) = 0
         endif
-        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
         if (IFKL == KEY) return
 
     CASE(66) ! 'B'
@@ -402,7 +401,7 @@ do while(.True.)
                 active_tab(MOD10) = (J - 1)/JJ
             endif
         endif
-        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
         if (IFKL == KEY) return
 
     CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
@@ -431,7 +430,7 @@ do while(.True.)
             call set_plot_area(plot_mode)
             call set_plot(plot_mode)
         endif
-        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
         if (IFKL == KEY) return
 
     CASE(73) ! 'I'
@@ -465,11 +464,11 @@ do while(.True.)
     CASE(46) ! '.'
         MARK = MARK + 1
         if (MARK == 2) MARK = -1
-        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
         if (IFKL == KEY) return
 
     CASE(82) ! 'R'
-        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
         if (IFKL == KEY) return
 
     CASE(85) ! 'U'
@@ -553,7 +552,7 @@ do while(.True.)
         if (MOD10 == 4 .or. MOD10 == 5) call ASKINT(NROUT, NWIND4, NAMER)
         if (MOD10 == 6) call ASKINT(NTOUT, NWIND3, NAMET)
         if (MOD10 == 7) call ASKINT(NTOUT, NWIND7, NAMET)
-        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
         if (IFKL == KEY) return
 
     CASE(76) ! 'L'
@@ -627,14 +626,14 @@ do while(.True.)
             write(*, *) 'X-axis:   Unknown option'
         endif
 
-        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
         if (IFKL == KEY) return
 
 ! Test field
     CASE(74) ! 'J'
         call system("ipcs -s") ! Report active semaphore sets
         call system("ipcs -m") ! Report active shared memory segments
-        call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
         if (IFKL == KEY) return
 
     CASE(68) ! 'D'
@@ -657,7 +656,7 @@ do while(.True.)
         endif
         if (j /= MODEX) call xaxis(j)
         IF(TIME >= TIMEB) then
-            call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+            call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
             if (IFKL == KEY) return
         else
             TROUT = TIME
@@ -695,7 +694,7 @@ do while(.True.)
             call MENUTABLE(INT4, PRMARK, NAMEP, 6)
         endif
         if (MOD10 <= 7) then
-            call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+            call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
             if (IFKL == KEY) return
         endif
 
@@ -714,7 +713,7 @@ do while(.True.)
 
     CASE(84) ! 'T'
         call TIMOUT
-        call TYPDSP(NTRUN, TTOUT, TOUT)
+        call TYPDSP
 
     CASE(32) ! 'space'
         KEY = 0
@@ -739,7 +738,7 @@ do while(.True.)
         if (IRET == 0) then
             if (KEY == 71) KPRI = 1
             if (KEY == 81) KPRI = 2
-            call refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+            call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
             if (IFKL == KEY) return
         else
             if (IRET == 1) then
@@ -816,7 +815,7 @@ return
 end function ifkey
 
 !---------------------------------------------------------------------
-subroutine graph_output(MARK, PRMARK, NAMEP, ntrun, ITO)
+subroutine graph_output(MARK, PRMARK, NAMEP, ITO)
 
 use parameter_inc, only: NRD
 use const_inc, only: NA
@@ -827,7 +826,7 @@ use debugger, only: markloc, debug
 
 implicit none
 
-integer, intent(in) :: MARK, ntrun
+integer, intent(in) :: MARK
 integer, intent(inout) :: ITO(NTIMES, ICVMX+2)
 double precision, intent(in), dimension(NTIMES) :: PRMARK
 character(len=6) , intent(in) :: NAMEP(NTIMES)
@@ -845,18 +844,18 @@ call RADOUT
 if (MOD10 == 4 .or. MOD10 == 5) then
     call SMODE5(MARK, PRMARK, NAMEP, NTIMES)
 else
-    call OUTDSP(MARK, 0, ITO, ntrun, TTOUT, TOUT)
+    call OUTDSP(MARK, 0, ITO, TTOUT, TOUT)
 endif
 CHORDN = lineav()
 call up_label(CHORDN, 1./MU(NA))
 jt = 0
-if (MOD10 <= 7) call down_label(jt, NTRUN, TOUT)
+if (MOD10 <= 7) call down_label(jt, TOUT)
 call redraw
 
 end subroutine graph_output
 
 !---------------------------------------------------------------------
-subroutine refresh_plot(IFKL, MARK, NTRUN, PRMARK, PSNAME)
+subroutine refresh_plot(IFKL, MARK, PRMARK, PSNAME)
 ! Corresponds to block from statement 201
 
 use parameter_inc, only: NRD
@@ -871,7 +870,7 @@ implicit none
 
 integer, parameter :: nn80=80
 
-integer, intent(in) :: IFKL, MARK, NTRUN
+integer, intent(in) :: IFKL, MARK
 double precision, intent(in), dimension(NTIMES) :: PRMARK
 character(len=*) :: PSNAME
 
@@ -906,14 +905,14 @@ call TIMOUT
 if (MOD10 == 4 .or. MOD10 == 5) then
     call SMODE5(MARK, PRMARK, NAMEP, NTIMES)
 else
-    call OUTDSP(MARK, 1, ITO, NTRUN, TTOUT, TOUT)
+    call OUTDSP(MARK, 1, ITO, TTOUT, TOUT)
 endif
 CHORDN = lineav()
 call up_label(CHORDN, 1./MU(NA))
 if (IFKL /= 256) call TIMEDT(TIME, 1000.*TAU) ! 256 <-> initial iterations
 j = 0
-if (MOD10 <= 5 .or. MOD10 == 7) call down_label(j, NTRUN, TOUT)
-if (MOD10 == 6 .and. KPRI == 0) call down_label(j, NTRUN, TOUT)
+if (MOD10 <= 5 .or. MOD10 == 7) call down_label(j, TOUT)
+if (MOD10 == 6 .and. KPRI == 0) call down_label(j, TOUT)
 if (KPRI == 1 .or. KPRI == 2) then
     write(*, '(//A//)') '>>>  The figure is stored in the file: ' // TRIM(PSNAME)
     call setColor(WarningColor)
@@ -928,7 +927,7 @@ return
 end subroutine refresh_plot
 
 !---------------------------------------------------------------------
-subroutine SMODE5(MARK, PRMARK, NAMEP, ITIMES)
+subroutine SMODE5(MARK, PRMARK, NAMEP)
 
 use parameter_inc, only: NRD, NRW
 use outcmn_inc, only: astra_gui, plot_area, NROUT, ICVMX, SCALER, &
@@ -938,13 +937,14 @@ use const_inc, only: AB, NAB
 use dbl2char, only: fmt4
 use char_manip, only: len_trim_tab
 use debugger, only: markloc, debug
+use timeoutput_inc, only: NTIMES
 
 implicit none
 
 integer, parameter :: fshift=10
 integer, parameter, dimension(6) :: symbols=(/ 1, 111, 43, 42, 120, 36 /)
 
-integer, intent(in) :: MARK, ITIMES
+integer, intent(in) :: MARK
 double precision, intent(in) :: PRMARK(*)
 character(len=6), intent(in) :: NAMEP(*)
 
@@ -992,7 +992,7 @@ read_loop: do
     if (INT2 /= 0) read(3, ERR=38) TEMPR
     read(3, END=39) TEMPR
     read(3, END=39) TEMPR
-    if (JTIM > ITIMES) then
+    if (JTIM > NTIMES) then
         write(*, *) ">>> Too many time slices. Data skipped"
         write(*, *) "    Use Astra post-viewer or reduce DPOUT"
         close(3)
