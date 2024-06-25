@@ -78,7 +78,7 @@ data TMIX/-99999./
 ! Store the ASTRA start time:
 if (TMIX < -99998.) TMIX = TSTART
 
-IOPT = OPTION + 0.001
+IOPT = nint(OPTION + 0.001)
 if (iopt > 9) then
     verbose = .TRUE.
 else
