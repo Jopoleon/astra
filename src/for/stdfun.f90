@@ -1001,8 +1001,8 @@ end function FXBOX
 !---------------------------------------------------------------------
 integer function fun_call_id(id_in)
 
-use const_inc, only: TIME
-  
+use const_inc, only: TIME, TSTART
+
 implicit none
 
 integer, intent(in) :: id_in
@@ -1011,11 +1011,12 @@ double precision :: time_loc
 
 save time_loc
 
-if (time_loc /= TIME) then
+if (time_loc /= TIME .or. TIME == TSTART) then
    fun_call_id = 1
 else
    fun_call_id = id_in + 1
 endif
+write(*, *) 'fun_call_id', fun_call_id, time_loc, TIME
 time_loc = TIME
 
 return
@@ -1251,7 +1252,7 @@ data ICALL/0/ y_old/NLOC*0./ IY/0/
 
 IY = fun_call_id(IY)
 ! IY is the ID (ordinal number) of "Y"
-
+write(*, *) 'FTAV: IY', IY
 FTAV = 0.
 if (IY > NLOC) then
     write(*, *) ' >>> FTAV >>> vuffer overflow: >', NLOC
