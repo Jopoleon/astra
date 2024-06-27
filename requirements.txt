@@ -7,4 +7,4 @@ python >= 3
 scipy >= 0.19.1 (probably even less)
 
 torbeam
-rabbit (then ialso NetCDF for c and f90)
+rabbit (then also NetCDF for c and f90)

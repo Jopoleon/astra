@@ -22,10 +22,6 @@ setenv ASTRA_EXT /shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT
 set INTEL_HOME /shares/software/aug-dv/moduledata/Intel/oneapi
 setenv MKL_LIBDIR $env(MKLROOT)/lib/intel64
 setenv COMP_LIBDIR $INTEL_HOME/compiler/2023.1.0/linux/compiler/lib/intel64_lin
-set NETCDF_HOME /shares/departments/AUG/users/git/local
-set NETCDF_LIBDIR $NETCDF_HOME/lib
-setenv NETCDF_LIB "-L${NETCDF_LIBDIR} -lnetcdf -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}"
-setenv NETCDF_INC $NETCDF_HOME/include
 
 setenv AFC ifort
 setenv ACC "cc -O"
