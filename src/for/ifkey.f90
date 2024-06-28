@@ -433,6 +433,10 @@ do while(.True.)
         call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
         if (IFKL == KEY) return
 
+    CASE(70) ! 'F'
+        call TIMOUT
+        call writeData(CHORDN)
+
     CASE(73) ! 'I'
         CNSFIL = 'equ/log/' // TRIM(equ_file)
         open(1, file=TRIM(CNSFIL), iostat=ios)

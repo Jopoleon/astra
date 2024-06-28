@@ -18,12 +18,251 @@ call textvm(astra_gui%Width - 83*astra_gui%dxlet + 2, JLR, STRI(1: 80), 80)
 end subroutine ERASXY
 
 !---------------------------------------------------------------------
+subroutine writeData(CHORDN)
+
+use parameter_inc, only: NRW
+use const_inc, only: XOUT, NAB, NA, NA1, XLINE1, RTOR, ABC, BTOR, IPL, TIME, TAU, CONSTF
+use status_inc, only: MU, AMETR, RHO, FP
+use outcmn_inc, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, WarningColor, ROUT, &
+     AWD, RUNID, equ_file, exp_file, NCFNAM
+use dbl2char, only: fmt4, fmt_xf
+use timeoutput_inc, only: NTIMES, TTOUT, TOUT
+
+implicit none
+
+integer, parameter :: NLINSC=50
+character(len=40), parameter :: STRMN=' R=     a=     B=     I=     q=     <n>='
+
+double precision, intent(in) :: CHORDN
+
+integer :: NCH=0, NP1, MODEX, JBE, JEND, J, JEN, JJ, J1, ios
+double precision :: YQ
+character(len=6) :: CH6
+character(len=118) :: STRI
+character(len=132) :: FNAME, dat_dir
+
+! NLINSC - maximum line number 
+MODEX = XOUT + 0.49
+! MODEX = 0 [0, AB]  against "a"
+! MODEX = 1 [0, ABC] against "a"
+! MODEX = 2 [0, ROC] against "rho"
+! MODEX = 3 [FP(1), FP(NA1)] against "psi"
+! otherwise Unknown option => MODEX=0
+NP1 = NAB
+if (MODEX >= 1 .and. MODEX <= 3 .or. MOD10 == 3) NP1 = NA1
+
+dat_dir = TRIM(AWD) // 'dat/'
+call system('mkdir -p ' // TRIM(dat_dir))
+FNAME = TRIM(dat_dir) // TRIM(exp_file) // '.' // TRIM(equ_file)
+call set_filename(FNAME)
+
+call setColor(WarningColor)
+write(*, *) '>>>  Data are written into the file: ' // TRIM(FNAME)
+
+open(7, file=TRIM(FNAME), iostat=ios)
+
+if (ios /= 0) then
+    write(*, *) '>>> TYPDSP: Output file error'
+    stop
+endif
+
+! Creating UPSTRI
+STRI = XLINE1(1:16)
+STRI(17:) = STRMN
+STRI(20: 23) = fmt4(RTOR)
+STRI(27: 30) = fmt4(ABC)
+STRI(34: 37) = fmt4(BTOR)
+STRI(41: 44) = fmt4(IPL)
+! Triangularity corrected MHD q (accoding to ITER guidelines)
+! YQ =ELON(NA)**2
+! YD =TRIA(NA)
+! YQ=(1.+YQ*(1.+YD**2*(2.-1.2*YD)))/(MU(NA)*(1.+YQ))
+YQ = 1./MU(NA)
+STRI(48: 51) = fmt4(YQ)
+STRI(57: 60) = fmt4(CHORDN)
+write(STRI(62: 76), '(A, 1F6.3, A)') 'Time=', TIME, ' dt='
+STRI(77: 80) = fmt4(1000.*TAU)
+write(7, 104) STRI
+
+if (NCH == 0) then
+
+    if (MOD10 <= 5) then   ! Writing radial data
+        JBE = 1
+        JEND = 16
+        do
+            JEN = MIN0(NTOUT, JEND)
+            write(7, 102) (NAMET(J), J=JBE, JEN)
+            STRI = ' '
+            STRI(1:5) = fmt_xf(TIME, 4)
+            do J=JBE, JEN
+                JJ = 7*(J - JBE) + 8
+                STRI(JJ: JJ+5) = fmt_xf(TOUT(LTOUT, J), 5)
+            enddo
+            write(7, 104) STRI
+            if (JEN == NTOUT) EXIT
+            JBE  = JEN + 1
+            JEND = JEN + 16
+        enddo
+
+        JBE  = 1
+        JEND = 16
+
+        do
+            JEN = MIN0(NROUT, JEND)
+            if (MODEX == 0 .or. MODEX == 1) then
+                write(7, '("     a  ", 16(3X, 1A4))') (NAMER(J), J=JBE, JEN)
+            elseif (MODEX == 2) then
+                write(7, '("     rho", 16(3X, 1A4))') (NAMER(J), J=JBE, JEN)
+            elseif (MODEX == 3 .or. MOD10 == 3) then
+                write(7, '("     psi", 16(3X, 1A4))') (NAMER(J), J=JBE, JEN)
+            else
+                write(7, '("     ???", 16(3X, 1A4))') (NAMER(J), J=JBE, JEN)
+            endif
+            do J=1, NP1
+                STRI = ' '
+                do JJ=JBE, JEN
+                    J1 = 7*(JJ - JBE + 1) + 1
+                    STRI(J1: J1+5) = fmt_xf(ROUT(J, JJ), 5)
+                enddo
+! Different options for a radial variable 
+                if (MODEX == 0) then
+                    STRI(1: 5) = fmt_xf(AMETR(j), 4)
+                elseif (MODEX == 1) then
+                    STRI(1: 5) = fmt_xf(AMETR(j), 4)
+                elseif (MODEX == 2) then
+                    STRI(1: 5) = fmt_xf(RHO(j), 4)
+                elseif (MODEX == 3 .or. MOD10 == 3) then
+                    STRI(1: 5) = fmt_xf(FP(j), 4)
+                else
+                    STRI(1: 5) = fmt_xf(AMETR(j), 4)
+                endif
+                write(7, 104)STRI
+            enddo
+            if (JEN == NROUT) EXIT
+            JBE  = JEN + 1
+            JEND = JEN + 16
+        enddo
+
+    else if (MOD10 == 6) then ! Writing time data
+
+        JBE  = 1
+        JEND = 16
+        do
+            JEN = MIN0(NTOUT, JEND)
+            write(7, 102) (NAMET(J), J=JBE, JEN)
+            do J1=1, LTOUT - 1
+                STRI = ' '
+                STRI(1: 5) = fmt_xf(TTOUT(J1), 4)
+                do J=JBE, JEN
+                    JJ = 7*(J - JBE) + 8
+                    STRI(JJ: JJ+5) = fmt_xf(TOUT(J1, J), 5)
+                enddo
+                write(7, 104) STRI
+            enddo
+            if (JEN == NTOUT) EXIT
+            JBE  = JEN + 1
+            JEND = JEN + 16
+        enddo
+    endif
+
+endif !NCH=0
+
+! Writing constants
+
+write(7, '(10X, 1A80)') RUNID
+write(7, '(A)') 'Constants'
+J1 = 0
+do JEN=1, 11
+    STRI = ' '
+    do J=1, 16
+        J1 = J1 + 1
+        if (J1 > NCFNAM) EXIT
+        CH6 = fmt_xf(CONSTF(J1), 5)
+        JJ = 7*(J - 1) + 1
+        STRI(JJ: JJ+5) = CH6
+    enddo
+    write(7, '(A)') TRIM(STRI)
+enddo
+
+if (NCH == 1) then
+
+    if (MOD10 <= 5) then   ! Writing radial data
+        JBE  = 1
+        JEND = 16
+        do
+            JEN = MIN0(NTOUT, JEND)
+            write(7, '(3X, "Time", 16(3X, 1A4))') (NAMET(J), J=JBE, JEN)
+            STRI = ' '
+            STRI(1: 5) = fmt_xf(TIME, 4)
+            do J=JBE, JEN
+                JJ = 7*(J - JBE) + 8
+                STRI(JJ: JJ+5) = fmt_xf(TOUT(LTOUT, J), 5)
+            enddo
+            write(7, 104) STRI
+            if (JEN == NTOUT) EXIT
+            JBE  = JEN + 1
+            JEND = JEN + 16
+        enddo
+
+        JBE  = 1
+        JEND = NRW
+        JEN  = MIN0(NROUT, JEND)
+! Different options for radial variable 
+        if (MODEX == 2) then
+            write(7, '(8X, "rho ", 64(8X, 1A4))') (NAMER(J), J=JBE, JEN)
+            do j=1, NP1
+                write(7, 408) RHO(j), (ROUT(J, JJ), JJ=JBE, JEN)
+            enddo
+        elseif (MODEX == 3 .or. MOD10 == 3) then
+            write(7, '(8X, "psi ", 64(8X, 1A4))') (NAMER(J), J=JBE, JEN)
+            do j=1, NP1
+                write(7, 408) FP(j), (ROUT(J, JJ), JJ=JBE, JEN)
+            enddo
+        else
+            write(7, '(8X, "a   ", 64(8X, 1A4))') (NAMER(J), J=JBE, JEN)
+            do j=1, NP1
+                write(7, 408) AMETR(j), (ROUT(J, JJ), JJ=JBE, JEN)
+            enddo
+        endif
+
+    else if (MOD10 == 6) then  ! Writing time data
+
+        STRI=' '
+        write(7, 104) STRI
+        write(7, 104) STRI
+        write(7, 104) STRI
+        write(7, 104) STRI
+        JBE  = 1
+        JEND = MIN(NTOUT, NRW)
+        do while(JBE < JEND)
+            JEN = JBE + 7
+            write(7, '(8X, "Time", 64(8X, 1A4))') (NAMET(J), J=JBE, JEN)
+            do J1=1, LTOUT-1
+                STRI = ' '
+                STRI(1: 5) = fmt_xf(TTOUT(J1), 4)
+                write(7, 408) TTOUT(J1), (TOUT(J1, J), J=JBE, min(JEN, JEND))
+            enddo
+            JBE = JBE + 8
+        enddo
+    endif
+endif
+
+close(7)
+
+101 format(1X, 1A6, 1A111)
+102 format('   Time', 16(3X, 1A4))
+104 format(1X, 1A120)
+408 format(1PE12.3, 64(1PE12.3))
+
+return
+end subroutine writeData
+
+!---------------------------------------------------------------------
 subroutine TYPDSP
-! NCH= 5 - terminal, 0 - file (old format), 1 - file (new format)
 
 use parameter_inc, only: NRW
 use const_inc, only: XOUT, NAB, NA1
-use outcmn_inc, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, WarningColor, ROUT
+use outcmn_inc, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, ROUT
 use dbl2char, only: fmt_xf
 use timeoutput_inc, only: NTIMES, TTOUT, TOUT
 
