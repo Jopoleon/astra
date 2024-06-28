@@ -369,40 +369,34 @@ do while(.True.)
         call rcurso
         call ERASXY() ! git (IX, IY)
 
+    CASE(32) ! 'space'
+        KEY = 0
+        if (TASK(1:3) == 'DSP') then
+            IFLAG = 1    ! for DSP mode only
+            IFKEY = 0
+            return
+        endif
+        if (TASK(1:3) == 'RUN') then
+            TASK = 'DSP '
+            ix = 0
+            iy = 0
+            call pcurso
+        endif
+
     CASE(37) ! '%'
         write(6, *)
         call CPUSE(6)
 
-    CASE(78) ! 'N'
-        if (MOD10 >= 0 .and. MOD10 < 7) then
-            active_tab(MOD10) = active_tab(MOD10) + 1
-            JJ = curves_per_frame(MOD10)
-            if (MOD10 == 6 .or. MOD10 == 7) then
-                J = NTOUT
-            else
-                J = NROUT
-            endif
-            if (J <= JJ*active_tab(MOD10)) active_tab(MOD10) = 0
-        endif
+    CASE(46) ! '.'
+        MARK = MARK + 1
+        if (MARK == 2) MARK = -1
         call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
-        if (IFKL == KEY) return
 
-    CASE(66) ! 'B'
-        if (MOD10 >= 1 .and. MOD10 <= 8) then
-            active_tab(MOD10) = active_tab(MOD10) - 1
-            if (active_tab(MOD10) < 0) then
-                JJ = curves_per_frame(MOD10)
-                if (MOD10 == 6 .or. MOD10 == 7) then
-                    J = NTOUT
-                else
-                    J = NROUT
-                endif
-                if (JJ == 0) JJ = 1
-                active_tab(MOD10) = (J - 1)/JJ
-            endif
-        endif
-        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
-        if (IFKL == KEY) return
+    CASE(47) ! '/'
+        if (TASK(4:4) /= 'B') call Close_Screen
+        write(6, *) '>>> ASTRA / or "Quit" button exit >>>'
+        call CPUSE(6)
+        call astra_stop
 
     CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
         if (MOD10 >= 2 .and. MOD10 <= 5) then
@@ -431,11 +425,87 @@ do while(.True.)
             call set_plot(plot_mode)
         endif
         call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
-        if (IFKL == KEY) return
+
+    CASE(63, 72) ! 'H', '?'
+        write(*, *)
+        write(*, *) "The following keys are operable in this mode:"
+        do J=1, 28
+            write(*, '(1X, A)') TRIM(HELP(J))
+        enddo
+
+    CASE(66) ! 'B'
+        if (MOD10 >= 1 .and. MOD10 <= 8) then
+            active_tab(MOD10) = active_tab(MOD10) - 1
+            if (active_tab(MOD10) < 0) then
+                JJ = curves_per_frame(MOD10)
+                if (MOD10 == 6 .or. MOD10 == 7) then
+                    J = NTOUT
+                else
+                    J = NROUT
+                endif
+                if (JJ == 0) JJ = 1
+                active_tab(MOD10) = (J - 1)/JJ
+            endif
+        endif
+        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
+
+    CASE(67) ! 'C'
+        call MENUTABLE(NCFNAM, CONSTF, CFNAME, 2)
+
+    CASE(68) ! 'D'
+        NDTNAM = NSDELOUT + 4*NSBR
+        TIMEB = TIME
+        MODEX = XOUT + 0.49
+        call MENUTABLE(NDTNAM, DELOUT, DTNAME, 3) ! Only place requiring DELOUT(j>44)
+        if (int(DELOUT(13)) /= NA1) then
+            write(*, *)">>> NA1 re-definition ignored"
+        endif
+        DELOUT(13) = NA1
+        NUF = DELOUT(14)
+        NBND = DELOUT(19)
+        XFLAG = DELOUT(20)
+        j = XOUT + 0.49
+        if (j < 0 .or. j > 3) then
+            write(*, *)">>> Unknown X-axis. Redefinition ignored"
+            j = MODEX
+            XOUT = MODEX
+        endif
+        if (j /= MODEX) call xaxis(j)
+        IF(TIME >= TIMEB) then
+            call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
+            if (IFKL == KEY) return
+        else
+            TROUT = TIME
+            TTOUT(LTOUT-1) = TIME
+            TPOUT = TIME
+            do J=1, NSBR
+                TEQ(J) = TIME
+            enddo
+        endif
 
     CASE(70) ! 'F'
         call TIMOUT
         call writeData(CHORDN)
+
+    CASE(71, 81) ! 71:'G'=portrait, 81:'Q'=landscape
+        PSNAME = 'dat/' // TRIM(exp_file) // '-' // TRIM(equ_file)
+        if (KEY == 71) INT4 = n_portrait
+        if (KEY == 81) INT4 = n_landscape
+        call PSOPEN(TRIM(PSNAME)//char(0), INT4, IRET)
+
+        if (IRET == 0) then
+            if (KEY == 71) KPRI = 1
+            if (KEY == 81) KPRI = 2
+            call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
+            if (IFKL == KEY) return
+        else
+            if (IRET == 1) then
+                STRI = '>>>  Can not open file: ' // TRIM(PSNAME)
+                call setColor(WarningColor)
+                call textvm(0, astra_gui%yMessage, STRI, 24+LEN_TRIM(PSNAME))
+            endif
+            KEY = 0
+        endif
 
     CASE(73) ! 'I'
         CNSFIL = 'equ/log/' // TRIM(equ_file)
@@ -462,18 +532,89 @@ do while(.True.)
            write(1, *) 'Color table (description: forlib/Astra2XW.c)', 32
            write(1, '(4(2I4, 3X))')(COLTAB(j), j=1, 64)
            close (1)
-           write(*, *)"Default start file is modified"
+           write(*, *) "Default start file is modified"
        endif
 
-    CASE(46) ! '.'
-        MARK = MARK + 1
-        if (MARK == 2) MARK = -1
+! Test field
+    CASE(74) ! 'J'
+        call system("ipcs -s") ! Report active semaphore sets
+        call system("ipcs -m") ! Report active shared memory segments
         call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
-        if (IFKL == KEY) return
+
+    CASE(76) ! 'L'
+        CNSFIL = 'tmp/model.txt'
+        open(1, file=TRIM(CNSFIL), iostat=ios)
+        if (ios /= 0) then
+            write(*, *) '>>> IFKEY: "', TRIM(CNSFIL), '" file error'
+            if (KEY == 27)  then
+                write(*, '(/2A)') 'Use key "/" for exit', char(7) ! Beep
+            elseif (KEY /= 0 .and. KIBM == 0) then
+                write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, char(7)
+            endif
+            KEY = 0
+            CYCLE
+        endif
+        j2 = 0
+
+        do
+            if (j2 < 0) EXIT
+            do J1=1, int(1.333*plot_area%height/astra_gui%dylet) - 1
+                if (j2 >= 0) then
+                    read(1, '(1A80)', iostat=ios) STR
+                    if (ios < 0) j2 = -1
+                endif
+                NNN = (J1 - 1)*astra_gui%dylet + 1
+                if (j2 < 0) then
+                    STRB = repeat(' ', 35)
+                    write(*, '(1X, A)') TRIM(STRB)
+                else
+                    write(*, '(1X, A)') TRIM(STR)
+                endif
+            enddo
+        enddo
+        close (1)
+
+    CASE(77) ! 'M'
+        if (MOD10 == 1 .or. MOD10 == 2 .or. MOD10 == 3) call ASXWIN(NROUT, NWIND1, NAMER, SCALER, &
+            OSHIFR, GRAL, GRAP, MOD10, MODEY)
+        if (MOD10 == 6) call ASTWIN(NTOUT, NWIND3, NAMET, SCALET, &
+            OSHIFT, MOD10, MODEY)
+        if (MOD10 == 7) then
+            call MENUTABLE(4, TIM7, NAM7, 5)
+        endif
+        if (MOD10 == 4 .or. MOD10 == 5) then
+            INT4 = -MAX(4, IPOUT-1)
+            call MENUTABLE(INT4, PRMARK, NAMEP, 6)
+        endif
+        if (MOD10 <= 7) then
+            call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
+        endif
+
+    CASE(78) ! 'N'
+        if (MOD10 >= 0 .and. MOD10 < 7) then
+            active_tab(MOD10) = active_tab(MOD10) + 1
+            JJ = curves_per_frame(MOD10)
+            if (MOD10 == 6 .or. MOD10 == 7) then
+                J = NTOUT
+            else
+                J = NROUT
+            endif
+            if (J <= JJ*active_tab(MOD10)) active_tab(MOD10) = 0
+        endif
+        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
 
     CASE(82) ! 'R'
         call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
-        if (IFKL == KEY) return
+
+    CASE(83) ! 'S'
+        rescale_array(1) = resizeGraph
+        call MENUTABLE(1, rescale_array, rescale_label, 4)
+        resizeGraph = rescale_array(1)
+!    call initMainWindow
+
+    CASE(84) ! 'T'
+        call TIMOUT
+        call TYPDSP
 
     CASE(85) ! 'U'
         if (NUF > NRD) then
@@ -551,54 +692,23 @@ do while(.True.)
             END SELECT
         endif
 
+    CASE(86) ! 'V'
+        do J=1, NPRNAM
+            DEVARO(J) = DEVAR(J)
+        enddo
+        INT4 = NPRNAM - 96  ! INT4 = NPRNAM - No. of ZRDs
+        call MENUTABLE(INT4, DEVAR, PRNAME, 1)
+        do J=1, NPRNAM
+            if (IFDFVX(J) > 3) DEVAR(J) = DEVARO(J)
+            if (ABS(DEVAR(J)-DEVARO(J)) > 1.d-6*ABS(DEVAR(J))) IFDFVX(J) = 3
+        enddo
+
     CASE(87) ! 'W'
         if (MOD10 == 1 .or. MOD10 == 2 .or. MOD10 == 3) call ASKINT(NROUT, NWIND1, NAMER)
         if (MOD10 == 4 .or. MOD10 == 5) call ASKINT(NROUT, NWIND4, NAMER)
         if (MOD10 == 6) call ASKINT(NTOUT, NWIND3, NAMET)
         if (MOD10 == 7) call ASKINT(NTOUT, NWIND7, NAMET)
         call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
-        if (IFKL == KEY) return
-
-    CASE(76) ! 'L'
-        CNSFIL = 'tmp/model.txt'
-        open(1, file=TRIM(CNSFIL), iostat=ios)
-        if (ios /= 0) then
-            write(*, *) '>>> IFKEY: "', TRIM(CNSFIL), '" file error'
-            if (KEY == 27)  then
-                write(*, '(/2A)') 'Use key "/" for exit', char(7) ! Beep
-            elseif (KEY /= 0 .and. KIBM == 0) then
-                write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, char(7)
-            endif
-            KEY = 0
-            CYCLE
-        endif
-        j2 = 0
-
-        do
-            if (j2 < 0) EXIT
-            do J1=1, int(1.333*plot_area%height/astra_gui%dylet) - 1
-                if (j2 >= 0) then
-                    read(1, '(1A80)', iostat=ios) STR
-                    if (ios < 0) j2 = -1
-                endif
-                NNN = (J1 - 1)*astra_gui%dylet + 1
-                if (j2 < 0) then
-                    STRB = repeat(' ', 35)
-                    write(*, '(1X, A)') TRIM(STRB)
-                else
-                    write(*, '(1X, A)') TRIM(STR)
-                endif
-            enddo
-        enddo
-
-        close (1)
-
-    CASE(83) ! 'S'
-        rescale_array(1) = resizeGraph
-        call MENUTABLE(1, rescale_array, rescale_label, 4)
-        resizeGraph = rescale_array(1)
-!    call initMainWindow
-        if (IFKL == KEY) return
 
     CASE(88) ! 'X'
         MODEX = XOUT + 0.49
@@ -631,129 +741,12 @@ do while(.True.)
         endif
 
         call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
-        if (IFKL == KEY) return
-
-! Test field
-    CASE(74) ! 'J'
-        call system("ipcs -s") ! Report active semaphore sets
-        call system("ipcs -m") ! Report active shared memory segments
-        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
-        if (IFKL == KEY) return
-
-    CASE(68) ! 'D'
-        NDTNAM = NSDELOUT + 4*NSBR
-        TIMEB = TIME
-        MODEX = XOUT + 0.49
-        call MENUTABLE(NDTNAM, DELOUT, DTNAME, 3) ! Only place requiring DELOUT(j>44)
-        if (int(DELOUT(13)) /= NA1) then
-            write(*, *)">>> NA1 re-definition ignored"
-        endif
-        DELOUT(13) = NA1
-        NUF = DELOUT(14)
-        NBND = DELOUT(19)
-        XFLAG = DELOUT(20)
-        j = XOUT + 0.49
-        if (j < 0 .or. j > 3) then
-            write(*, *)">>> Unknown X-axis. Redefinition ignored"
-            j = MODEX
-            XOUT = MODEX
-        endif
-        if (j /= MODEX) call xaxis(j)
-        IF(TIME >= TIMEB) then
-            call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
-            if (IFKL == KEY) return
-        else
-            TROUT = TIME
-            TTOUT(LTOUT-1) = TIME
-            TPOUT = TIME
-            do J=1, NSBR
-                TEQ(J) = TIME
-            enddo
-        endif
-
-    CASE(67) ! 'C'
-        call MENUTABLE(NCFNAM, CONSTF, CFNAME, 2)
-
-    CASE(86) ! 'V'
-        do J=1, NPRNAM
-            DEVARO(J) = DEVAR(J)
-        enddo
-        INT4 = NPRNAM - 96  ! INT4 = NPRNAM - No. of ZRDs
-        call MENUTABLE(INT4, DEVAR, PRNAME, 1)
-        do J=1, NPRNAM
-            if (IFDFVX(J) > 3) DEVAR(J) = DEVARO(J)
-            if (ABS(DEVAR(J)-DEVARO(J)) > 1.d-6*ABS(DEVAR(J))) IFDFVX(J) = 3
-        enddo
-
-    CASE(77) ! 'M'
-        if (MOD10 == 1 .or. MOD10 == 2 .or. MOD10 == 3) call ASXWIN(NROUT, NWIND1, NAMER, SCALER, &
-            OSHIFR, GRAL, GRAP, MOD10, MODEY)
-        if (MOD10 == 6) call ASTWIN(NTOUT, NWIND3, NAMET, SCALET, &
-            OSHIFT, MOD10, MODEY)
-        if (MOD10 == 7) then
-            call MENUTABLE(4, TIM7, NAM7, 5)
-        endif
-        if (MOD10 == 4 .or. MOD10 == 5) then
-            INT4 = -MAX(4, IPOUT-1)
-            call MENUTABLE(INT4, PRMARK, NAMEP, 6)
-        endif
-        if (MOD10 <= 7) then
-            call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
-            if (IFKL == KEY) return
-        endif
-
-    CASE(63, 72) ! 'H', '?'
-        write(*, *)
-        write(*, *) "The following keys are operable in this mode:"
-        do J=1, 28
-            write(*, '(1X, A)') TRIM(HELP(J))
-        enddo
-
-    CASE(47) ! '/'
-        if (TASK(4:4) /= 'B') call Close_Screen
-        write(6, *) '>>> ASTRA / or "Quit" button exit >>>'
-        call CPUSE(6)
-        call astra_stop
-
-    CASE(84) ! 'T'
-        call TIMOUT
-        call TYPDSP
-
-    CASE(32) ! 'space'
-        KEY = 0
-        if (TASK(1:3) == 'DSP') then
-            IFLAG = 1    ! for DSP mode only
-            IFKEY = 0
-            return
-        endif
-        if (TASK(1:3) == 'RUN') then
-            TASK = 'DSP '
-            ix = 0
-            iy = 0
-            call pcurso
-        endif
-
-    CASE(71, 81) ! 71:'G'=portrait, 81:'Q'=landscape
-        PSNAME = 'dat/' // TRIM(exp_file) // '-' // TRIM(equ_file)
-        if (KEY == 71) INT4 = n_portrait
-        if (KEY == 81) INT4 = n_landscape
-        call PSOPEN(TRIM(PSNAME)//char(0), INT4, IRET)
-
-        if (IRET == 0) then
-            if (KEY == 71) KPRI = 1
-            if (KEY == 81) KPRI = 2
-            call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
-            if (IFKL == KEY) return
-        else
-            if (IRET == 1) then
-                STRI = '>>>  Can not open file: ' // TRIM(PSNAME)
-                call setColor(WarningColor)
-                call textvm(0, astra_gui%yMessage, STRI, 24+LEN_TRIM(PSNAME))
-            endif
-            KEY = 0
-        endif
 
     END SELECT
+
+    if (KEY >= 46 .and. KEY <= 90) then ! ASCII keys
+        if (IFKL == KEY) return ! Important in call from c (tglf-like models)
+    endif
 
     CYCLE
 
