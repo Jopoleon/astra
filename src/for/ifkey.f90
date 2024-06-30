@@ -368,12 +368,14 @@ do while(.True.)
         TASK = 'RUN '
         call rcurso
         call ERASXY() ! git (IX, IY)
+        return
 
     CASE(32) ! 'space'
         KEY = 0
         if (TASK(1:3) == 'DSP') then
             IFLAG = 1    ! for DSP mode only
             IFKEY = 0
+            skip_poll = .False.
             return
         endif
         if (TASK(1:3) == 'RUN') then
@@ -381,6 +383,7 @@ do while(.True.)
             ix = 0
             iy = 0
             call pcurso
+            skip_poll = .False.
         endif
 
     CASE(37) ! '%'
@@ -461,19 +464,18 @@ do while(.True.)
             write(*, *)">>> NA1 re-definition ignored"
         endif
         DELOUT(13) = NA1
-        NUF = DELOUT(14)
-        NBND = DELOUT(19)
+        NUF   = DELOUT(14)
+        NBND  = DELOUT(19)
         XFLAG = DELOUT(20)
         j = XOUT + 0.49
         if (j < 0 .or. j > 3) then
-            write(*, *)">>> Unknown X-axis. Redefinition ignored"
+            write(*, *) ">>> Unknown X-axis. Redefinition ignored"
             j = MODEX
             XOUT = MODEX
         endif
         if (j /= MODEX) call xaxis(j)
-        IF(TIME >= TIMEB) then
+        if (TIME >= TIMEB) then
             call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
-            if (IFKL == KEY) return
         else
             TROUT = TIME
             TTOUT(LTOUT-1) = TIME

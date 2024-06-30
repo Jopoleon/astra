@@ -1473,7 +1473,7 @@ void ProcessRootWindowEvent(XEvent *theEvent){
         break;
     case Expose:
         j = 82;
-        ifkey_(&j);
+        Call_ifkey(j);
         j = 0;
         break;
     }
