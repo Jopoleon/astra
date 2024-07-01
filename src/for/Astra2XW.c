@@ -586,38 +586,6 @@ void pscom_(char *str, INT_ *str_len){
 }
 
 static int icount = 0;
-/********************************************************************/
-void PSnumber(char *name, int *count){
-    int i;
-    icount = *count;
-    for (i=0; i<128; i++){
-        if( name[i] == '\0' ) break;
-    }
-
-    con1:
-        if (*count < 10){
-            sprintf(name+i, "-%1d.ps", *count);
-            goto con2;
-        }
-        if (*count < 100){
-            sprintf(name+i, "-%2d.ps", *count);
-            goto con2;
-        }
-        if (*count < 1000){
-            sprintf(name+i, "-%3d.ps", *count);
-            goto con2;
-        }
-        sprintf( name+i, ".ps");
-        return;
- 
-    con2:
-        PSAfile = fopen(name, "r");
-        if (PSAfile){
-            fclose(PSAfile);
-        *count++;
-        goto con1;
-    }
-}
 
 /********************************************************************/
 void psopen_(char *PSname, INT_ *sty, INT_ *iret){
@@ -627,7 +595,6 @@ void psopen_(char *PSname, INT_ *sty, INT_ *iret){
         return;
     }
 
-    PSnumber(PSname, &FigAcount);
     PSAfile = fopen(PSname, "w");
 
     if (PSAfile != NULL){
@@ -672,7 +639,8 @@ void psopen_(char *PSname, INT_ *sty, INT_ *iret){
 void psclose_(){
     if (FlagPSA){
         fprintf(PSAfile, "stroke\nshowpage\n\n");
-        FlagPSA = 0;  fclose(PSAfile);
+        FlagPSA = 0;
+	fclose(PSAfile);
     }
     return;
 }

@@ -61,9 +61,9 @@ integer, parameter :: n_portrait=0, n_landscape=1
 integer, intent(in) :: IFKL
 character(len=10), parameter :: DEFUNA='      .tmp'
 
-logical :: MODADD, skip_poll
+logical :: MODADD, skip_poll, ps_exists
 integer*2, dimension(NRD) :: YWD
-integer :: POLLEVENT, WAITEVENT, KIBM, KASCII, jpos
+integer :: POLLEVENT, WAITEVENT, KIBM, KASCII, jpos, jps
 integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
     IFLAG, INT4, IRET, plot_mode, &
     MODEX, IX, IY, NU1, j2, J1, ios, &
@@ -77,8 +77,8 @@ double precision, dimension(NRD) :: YWA, YWB, YWC
 character(len=6) :: NAMEP(NTIMES)
 character(len=10), dimension(NRW) :: UNAMES
 character(len=40) :: CNSFIL
-character(len=80) :: HELP(28), PSNAME, STR, STRB
-character(len=132) :: STRI
+character(len=80) :: HELP(28), STR, STRB
+character(len=132) :: STRI, ps_root, PSNAME
 character(len=7), dimension(1), parameter :: rescale_label = (/ 'Rescale' /)
 integer, external :: plotMode
 
@@ -489,8 +489,15 @@ do while(.True.)
         call TIMOUT
         call writeData(CHORDN)
 
-    CASE(71, 81) ! 71:'G'=portrait, 81:'Q'=landscape
-        PSNAME = 'dat/' // TRIM(exp_file) // '-' // TRIM(equ_file)
+     CASE(71, 81) ! 71:'G'=portrait, 81:'Q'=landscape
+        ps_root = 'dat/' // TRIM(exp_file) // '-' // TRIM(equ_file) // '-'
+        ps_exists = .True.
+        jps = 0
+        do while(ps_exists)
+            jps = jps + 1
+            write(PSNAME, '(A, i0, A)') TRIM(ps_root), jps, '.ps'
+            inquire(file=TRIM(PSNAME), exist=ps_exists)
+        enddo
         if (KEY == 71) INT4 = n_portrait
         if (KEY == 81) INT4 = n_landscape
         call PSOPEN(TRIM(PSNAME)//char(0), INT4, IRET)
@@ -913,7 +920,7 @@ j = 0
 if (MOD10 <= 5 .or. MOD10 == 7) call down_label(j, TOUT)
 if (MOD10 == 6 .and. KPRI == 0) call down_label(j, TOUT)
 if (KPRI == 1 .or. KPRI == 2) then
-    write(*, '(//A//)') '>>>  The figure is stored in the file: ' // TRIM(PSNAME)
+    write(*, '(/A/)') '>>>  The figure is stored in the file: ' // TRIM(PSNAME)
     call setColor(WarningColor)
     if (KPRI == 1) call const2ps
     STRI = 'The figure is stored in the file: ' // TRIM(PSNAME)
