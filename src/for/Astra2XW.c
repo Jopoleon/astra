@@ -481,10 +481,10 @@ void drawcurve_(int *id, int *n, double *X, double *Y){
     if (*id) XSetForeground(theDisplay, theGCA, theCurrentColor);
     if (FlagPSA > 0){
         for (j=0; j < *n-1; j++){
-            dx1 = X[j] + 10.;
-            dy1 = Y[j] + 10.;
-            dx2 = X[j+1] + 10.;
-            dy2 = Y[j+1] + 10.;
+            dx1 = (X[j]   + 10.)*PSsc;
+            dy1 = (Y[j]   + 10.)*PSsc;
+            dx2 = (X[j+1] + 10.)*PSsc;
+            dy2 = (Y[j+1] + 10.)*PSsc;
             PSADrawLine(dx1, dy1, dx2, dy2);
         }
     }
