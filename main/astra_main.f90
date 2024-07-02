@@ -16,10 +16,8 @@ implicit none
 !-------------------------------------------
 
 integer :: j, jj, IM, ios, XSC0, XSC, jt1, jt2, jt3, jt_req, jkey
-double precision :: Y, timeb
 character(len=64) :: LISTSB(NSBMX)
 character(len=132) :: STRI
-double precision, external :: SWATCH
 integer, external :: IFKEY, IFTREQ
 
 !-------------------- Initial settings --------------------------------|
@@ -82,16 +80,10 @@ endif
 !---------------
 
 do while (TIME - TEND + 1.E-8 < DPOUT + TAU)
-    call STEPUP 
+    call STEPUP
 enddo
 
-timeb = swatch(Y)
-jt1 = timeb
-jt2 = jt1/3600
-jt3 = (jt1 - 3600*jt2)/60
-jt1 = timeb - 60*jt3 - 3600*jt2
-write(6, '(A, I4.2, 2(A1, I2.2))') '>>> ASTRA normal exit >>>  Run time', jt2, ':', jt3, ':', jt1
-call CPUSE(6)
+call CPU_usage('>>> ASTRA normal exit >>>' // char(0))
 call astra_stop
 
 end program astra

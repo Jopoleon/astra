@@ -714,10 +714,10 @@ double swatch_(double *secs){
     if (time0 == -1){
         return -1.;
     }  /* Overflow range of clock_t*/
-    if (time0 ==  0){     /* Set time0 at start */
+    if (time0 == 0){     /* Set time0 at start */
         secs_per_tick = 1./sysconf(_SC_CLK_TCK);
         time0 = times(&buf);
-        prev_time = buf.tms_utime+buf.tms_stime;
+        prev_time = buf.tms_utime + buf.tms_stime;
         return 0.;
     }
     run_time = times(&buf) - time0;  /* Set time difference */

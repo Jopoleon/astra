@@ -192,7 +192,7 @@ if (MOD10 == 6 .or. MOD10 == 7) then
 endif
 
 !-----------------------------------------------
-! Append data to post-view file,  2D Radial/Time output 
+! Append data to post-view file, 2D Radial/Time output 
 
 ! The next line suppresses writing a view file during the iteration loop
 if (TPOUT + DPOUT < TSTART .or. (IFKL /= 256 .and. TIME + 0.5*TAU >= TPOUT + DPOUT)) then
@@ -210,7 +210,7 @@ if (TPOUT + DPOUT < TSTART .or. (IFKL /= 256 .and. TIME + 0.5*TAU >= TPOUT + DPO
     else
 ! The file rev_file='.res/profil.dat' (default name) is used in 3 places: 
 !  here (w), ifkey.smode5 - modes 4, 5 (r), typdsp - writing 2D U-file (r) 
-        open(unit=12, file='equ/'//TRIM(equ_file), iostat=ios)
+        open(unit=12, file='equ/' // TRIM(equ_file), iostat=ios)
         if (ios /= 0) write(*, *) '>>> IFKEY: Model file "equ/', TRIM(equ_file), '" open error'
         open(3, file=TRIM(rev_file), iostat=ios, form='unformatted')
         if (ios /= 0) write(*, *) '>>> IFKEY: Review file open error ' // TRIM(rev_file)
@@ -311,8 +311,7 @@ do while(.True.)
                 if (KEY == 0) return
                 if (KIBM == 1 .and. (KEY == 99 .or. KEY == 67)) then ! <Ctrl>+C
                     if (TASK(4:4) /= 'B') call Close_Screen
-                    write(6, *) '>>> ASTRA <Ctrl>+C exit >>>'
-                    call CPUSE(6)
+                    call CPU_usage('>>> ASTRA <Ctrl>+C exit >>>' // char(0))
                     call astra_stop
                 endif
 
@@ -387,8 +386,7 @@ do while(.True.)
         endif
 
     CASE(37) ! '%'
-        write(6, *)
-        call CPUSE(6)
+        call CPU_usage(char(0))
 
     CASE(46) ! '.'
         MARK = MARK + 1
@@ -397,8 +395,7 @@ do while(.True.)
 
     CASE(47) ! '/'
         if (TASK(4:4) /= 'B') call Close_Screen
-        write(6, *) '>>> ASTRA / or "Quit" button exit >>>'
-        call CPUSE(6)
+        call CPU_usage('>>> ASTRA / or "Quit" button exit >>>' // char(0))
         call astra_stop
 
     CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
@@ -500,7 +497,7 @@ do while(.True.)
         enddo
         if (KEY == 71) INT4 = n_portrait
         if (KEY == 81) INT4 = n_landscape
-        call PSOPEN(TRIM(PSNAME)//char(0), INT4, IRET)
+        call PSOPEN(TRIM(PSNAME) // char(0), INT4, IRET)
 
         if (IRET == 0) then
             if (KEY == 71) KPRI = 1
@@ -771,8 +768,7 @@ do while(.True.)
         endif
         if (KEY == 47) then ! <Alt>+/
             if (TASK(4:4) /= 'B') call Close_Screen
-            write(6, *) '>>> ASTRA <Alt>+/ exit >>>'
-            call CPUSE(6)
+            call CPU_usage('>>> ASTRA <Alt>+/ exit >>>' // char(0))
             call astra_stop
         endif
         if (KIBM == 2 .and. (KEY >= 32 .and. KEY <= 126) ) then
@@ -813,8 +809,8 @@ enddo
 ! Exit ASTRA
 
 if (TASK(4:4) /= 'B') call Close_Screen
-write(6, *) '>>> ASTRA exit: reached END time >>>'
-call CPUSE(6)
+
+call CPU_usage('>>> ASTRA exit: reached END time >>>' // char(0))
 call astra_stop
 
 return
@@ -1203,8 +1199,7 @@ return
 end subroutine writeTime
 
 !---------------------------------------------------------------------
-subroutine CPUSE(nch)
-! 10.03.95 G.P.
+subroutine CPU_usage(str_in)
 
 use parameter_inc, only: NSDELOUT
 use outcmn_inc, only: cpuTime_tot, cpuTime_tra, cpuTime_equ, cpuTime_sbr, NSBR, DTNAME, IFSBX
@@ -1213,18 +1208,22 @@ use debugger, only: markloc
 
 implicit none
 
-integer, intent(in) :: nch
+integer, parameter :: nch=6
+
+character(len=*), intent(in) :: str_in
 
 integer :: j, j1, j2
 double precision :: Y
 double precision, external :: swatch
 
-call markloc('CPUSE')
-call writeTime(nch, '  >>> Astra run time  ', swatch(Y), -1.d0)
+call markloc('CPU_usage')
+Y = 0.
+write(nch, '(A)') TRIM(str_in)
+call writeTime(nch, '  >>> Astra run time  ' // char(0), swatch(Y), -1.d0)
 
 cpuTime_tot = cpuTime_tra + cpuTime_equ
 do j=1, NSBR
-   cpuTime_tot = cpuTime_tot + cpuTime_sbr(j)
+    cpuTime_tot = cpuTime_tot + cpuTime_sbr(j)
 enddo
 write(nch, '(A, I8)')    "    Total time steps  ", NSTEPS
 if (NSTEPS == 0) return
@@ -1240,11 +1239,11 @@ Y = cpuTime_tot/(TIME - TSTART)
 if (Y < 60.) then
     write(nch, '(A, F6.3, A)')"    CPU per 1 sec       ", Y, " sec"
 else
-    call writeTime(nch, '    CPU per 1 sec ', Y, -1.d0)
+    call writeTime(nch, '    CPU per 1 sec ' // char(0), Y, -1.d0)
 endif
-call writeTime(nch, '    Total CPU time', cpuTime_tot  , cpuTime_tot)
-call writeTime(nch, '    Transport core', cpuTime_tra  , cpuTime_tot)
-call writeTime(nch, '    Equilibrium   ', cpuTime_equ, cpuTime_tot)
+call writeTime(nch, '    Total CPU time' // char(0), cpuTime_tot, cpuTime_tot)
+call writeTime(nch, '    Transport core' // char(0), cpuTime_tra, cpuTime_tot)
+call writeTime(nch, '    Equilibrium   ' // char(0), cpuTime_equ, cpuTime_tot)
 j2 = 1
 do j1=1, NSBR
     j = min(6, LEN_TRIM(DTNAME(NSDELOUT+4*j1)))
@@ -1260,7 +1259,7 @@ enddo
 write(nch, *)
 
 return
-end subroutine CPUSE
+end subroutine CPU_usage
 
 !---------------------------------------------------------------------
 subroutine ADDMOD(NCHW, NCHM, NCHL)
@@ -1320,7 +1319,7 @@ read_loop: do
     INCNAM = STR(9: LSTRI)
 
     NCHI = NCHM + 1
-    open(NCHI, file="equ/"//TRIM(INCNAM), iostat=ios)
+    open(NCHI, file="equ/" // TRIM(INCNAM), iostat=ios)
     if (ios /= 0) then
         write(*, *) '>>> Cannot open include file ', &
                 '"equ/' // TRIM(INCNAM), '". Saving model failed'
@@ -1338,7 +1337,7 @@ read_loop: do
         endif
         if (ios /= 0) EXIT
         if (STRI(1: 8) == "#include") then
-            write(*, * )'>>> Error in include file: "', INCNAM(1:j), '"'
+            write(*, *) '>>> Error in include file: "', INCNAM(1:j), '"'
             write(*, *) '    Recurrent "#include" is not allowed. Saving model failed'
             write(*, *)
             NCHI = 0
@@ -1417,55 +1416,13 @@ implicit none
 
 double precision, intent(in) :: anyTime
 
-double precision :: cpuTime, swatch
+double precision :: cpuTime
+double precision, external :: swatch
 
 cpuTime = swatch(anyTime)
 
 return
 end subroutine ADDTIME
-
-!---------------------------------------------------------------------
-subroutine REPORT
-
-! When in background mode this subroutine allows to write
-! the current status of the run in file tmp/status.$ObjectCode
-! It should be requested in the model as
-!    REPORT:0.1; or similar
-
-use outcmn_inc, only: rev_file, RUNID
-use const_inc, only: TIME
-use debugger, only: markloc
-
-implicit none
-
-integer :: j1, jb, ios
-character(len=80) :: string
-
-call markloc('REPORT')
-
-j1 = index(TRIM(rev_file), 'profil.dat')
-if (j1 == 0) then
-    jb = index(TRIM(rev_file), '/', back=.True.)
-    string = './tmp/status.' // TRIM(rev_file(jb:))
-else
-    string = './tmp/status'
-endif
-
-open(7, file=TRIM(string), status="UNKNOWN", iostat=ios)
-if (ios > 0) then
-    write(*, *) '>>> ERROR opening status file "', TRIM(string), '". Call ignored.'
-else
-    if (TIME < 1.d1) then
-        write(7, '(A/A, F9.6)') RUNID, '     Time =', TIME
-    else
-        write(7, '(A/A, F8.3)') RUNID, '     Time =', TIME
-    endif
-    call CPUSE(7)
-    close(7)
-endif
-
-return
-end subroutine REPORT
 
 !---------------------------------------------------------------------
 subroutine menutable(arr_size, array_in, var_names, id)
@@ -1494,19 +1451,3 @@ call menubox(TRIM(titles(id)) // null_ch, arr_size, array_in, var_names, nameLen
 
 return
 end subroutine menutable
-
-!---------------------------------------------------------------------
-subroutine A_POSTMORTEM
-
-! Print time table before exit 
-
-use outcmn_inc, only: RUNID
-use const_inc, only: TIME
-
-implicit none
-
-write(6, '(A/A, F8.3)') RUNID, '     Time =', TIME
-call CPUSE(6)
-
-return
-end subroutine A_POSTMORTEM
