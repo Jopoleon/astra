@@ -36,7 +36,7 @@ integer :: n_xpoint_fit
 double precision :: vloop_avg, L_ext, dIp_dt   ! use tau_gseq_feqis here for refit mode 818
  
 double precision :: x_point_save(20, 2) ! R, Z of xpoints, max 20 x points
-double precision, dimension(ncoil_dim) :: activate_coil_feqis, cur_init, sigma_coils, sigma_coils_psiext ! initial currents from astra exp, not from coil.dat, in MA/turn
+double precision, dimension(ncoil_dim) :: activate_coil_feqis, cur_init, sigma_coils, sigma_coils_ref ! initial currents from astra exp, not from coil.dat, in MA/turn
 double precision, dimension(ncoil_dim) :: new_resistance ! whichever is > 0, it is used as new resistance.
 double precision, dimension(ncoil_dim, 2) :: current_limit_feqis ! 1 is upper, 2 is lower
 double precision, dimension(ncoil_dim, ncoil_dim) :: force_coil ! where it is 1, forces coil i,i to current of i,j
@@ -100,7 +100,7 @@ contains
     cur_init = 0.
     cur_init(1: NCNB) = CCOILX(NCNBT+1: NCNBT+NCNB)/1.e3
     sigma_coils = 1.
-    sigma_coils_psiext = 0. ! initial currents from astra exp, not from coil.dat, in MA/turn
+    sigma_coils_ref = 1.
     new_resistance = 0. ! whichever is > 0, it is used as new resistance.
     current_limit_feqis(:, 1) =  1.e6 ! 1 is upper, 2 is lower
     current_limit_feqis(:, 2) = -1.e6 ! 1 is upper, 2 is lower

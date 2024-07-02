@@ -1228,7 +1228,7 @@ enddo
 write(nch, '(A, I8)')    "    Total time steps  ", NSTEPS
 if (NSTEPS == 0) return
 Y = (TIME - TSTART)/NSTEPS
-if (Y < .99999999d-1) then
+if (Y < 1.d-1) then
     Y = 1.d3*Y
     write(nch, '(A, F6.3, A)')"    Average time step   ", Y, " msec"
 else

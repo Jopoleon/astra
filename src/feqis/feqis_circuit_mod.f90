@@ -1560,10 +1560,21 @@ contains
 
 ! to calculate forces using this mode, call: call coil_forces_feqis(ncoil_blocks, force_R, force_Z, 0)   !the 0 at the end means no plasma contribution. also eddy currents are ignored.
 
+! The cost function should be:
+
+! F = 1/2 * G
+
+! G = sigma_b*sum_b(psib-psibavg)^2 + 
+!     sigma_ax*grad(psi)_ax^2 + 
+!     sigma_X*sum_E grad(psi)_E^2 + 
+!     lambda*(dpsiext - Vloop dt) + 
+!     sum_j ( sigma_coils_j*I_j^2 + 0.5*sigma_energy*L_j*I_j^2 + sigma_coils_ref_j*(I_j -I_j_ref)^2 )
+
+
     use errors_params, only: err_find_psistab
-    use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy, &
+    use transport2fbe, only: sigma_coils, sigma_coils_ref, sigma_b, sigma_axis, sigma_energy, &
         current_limit_feqis, sigma_xpoint, r_xpoint_fit, z_xpoint_fit, &
-        n_xpoint_fit, sigma_coils_psiext, vloop_avg, L_ext, &
+        n_xpoint_fit, vloop_avg, L_ext, &
         dIp_dt, tau_gseq_feqis, time_astra, &
         use_isoflux, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
         voltage_limits_active_coils, sigma_limits, cur_init, sigma_isoflux
@@ -1720,7 +1731,7 @@ contains
 
     do j=1, nactive
         do i=1, nactive
-            if (i == j) matrix(i, j) = matrix(i, j) + sigma_energy*sigma_coils(i)*indconduc(i, i) + 2.*sigma_coils(i)
+            if (i == j) matrix(i, j) = matrix(i, j) + sigma_energy*indconduc(i, i) + 2.*(sigma_coils(i) + sigma_coils_ref(i))
             matrix(i, j) = matrix(i, j) +  &
                 2.*sigma_B*sum((G_002(i, 1:nteta_temp) - G_00c2(i))*(G_002(j, 1:nteta_temp) - G_00c2(j))) +  &
                 2.*sigma_axis*(G_00r(i)*G_00r(j) + G_00z(i)*G_00z(j))
@@ -1783,7 +1794,8 @@ contains
 
         Ffunc = sigma_B*sum((psicorr(1:nteta_temp) - x1)**2) + sigma_axis*(x2**2 + x3**2)
         do i=1, nactive
-            Ffunc = Ffunc+0.5*indconduc(i, i)*sigma_energy*sigma_coils(i)*curnow(i)**2 + sigma_coils(i)*curdiff(i)**2
+            Ffunc = Ffunc+0.5*indconduc(i, i)*sigma_energy*curnow(i)**2 + sigma_coils(i)*curnow(i)**2 + &
+                    sigma_coils_ref(i)*curdiff(i)**2
         enddo
 
         if (n_xpoint_fit > 0) then
@@ -1818,8 +1830,9 @@ contains
 ! Calculate F derivative
         Fderiv = 0.
         do i=1, nactive
-            Fderiv(i) = 2.*(0.5*indconduc(i,i)*sigma_energy*sigma_coils(i)*curnow(i) + &
-                sigma_coils(i)*curdiff(i) + sigma_B*sum((psicorr(1:nteta_temp) - x1)*(G_002(i, 1:nteta_temp) - G_00c2(i))))
+            Fderiv(i) = 2.*(0.5*indconduc(i,i)*sigma_energy*curnow(i) + &
+                sigma_coils_ref(i)*curdiff(i) + &
+                sigma_coils(i)*curnow(i) + sigma_B*sum((psicorr(1:nteta_temp) - x1)*(G_002(i, 1:nteta_temp) - G_00c2(i))))
             bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
             bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
             bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
@@ -1965,7 +1978,7 @@ contains
     use errors_params, only: err_find_psistab
     use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy, &
         current_limit_feqis, sigma_xpoint, r_xpoint_fit, z_xpoint_fit, &
-        n_xpoint_fit, sigma_coils_psiext, vloop_avg, L_ext, &
+        n_xpoint_fit, vloop_avg, L_ext, &
         dIp_dt, tau_gseq_feqis, time_astra, &
         use_isoflux, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
         voltage_limits_active_coils, sigma_limits, cur_init

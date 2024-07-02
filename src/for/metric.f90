@@ -186,7 +186,7 @@ end subroutine extrap_fields_flat
 
 !---------------------------------------------------------------------
 subroutine EQGUESS
-  
+
 !---------------------------------------------------------------------
 ! Guessed equibrium: Called if LEQ(5)==0 or data_initiation @ 1st_entry
 !
@@ -344,7 +344,7 @@ if (flightsim == 1 .and. ipart == 1) then   ! for initialisation
     call eqguess
     return
 endif
-    
+
 if (flightsim == 0) then
     YNF = RTOR*GP2**2
     do J=1, NA1
@@ -614,7 +614,7 @@ if (NA1 < NAB) then
     call INTEGR(RHO, 1, VR, VOLUM, NA1) ! Compute volume(rho) integrating VR
     call new_grid ! The RHO-grid and NA, NA1 are updated
     VOLUME = VOLUM(NA1)
-endif 
+endif
 
 ABC   = AMETR(NA1)
 ELONG = ELON(NA1)
