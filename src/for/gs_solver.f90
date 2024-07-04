@@ -30,7 +30,7 @@ use parameters_a2equil, only: GP, GP2, GP4, muvac, &
     interp_method_rect, epsf_tol, epss_tol, epsv_tol, epsg_tol, &
     key_no_startz, key_no_refits, equil_now
 use outcmn_inc, only: nml_file, machine
-use parse_utils, only: json_intvar
+use parse_utils, only: json_intvar, json_floatvar
 
 implicit none
 
@@ -57,10 +57,11 @@ double precision, intent(inout) :: ipl, volume
 
 logical :: file_existence
 integer :: i, j, n_theta, i_call_gsss, k, k1, key_start, keyplc, &
-    jiter, p, jveps, nr, nz
+    jiter, p, jveps, jr, jz, nr, nz
 double precision :: dum1r, R0, Z0, Fvacuum, dxrho_sp, dx, &
     phib, PSIb, deltaPSI, PSI0, phibm, phibl, IPLX, Vtemp, Veps, &
-    zfuncb, errG, roc_sp, g2ediff, errght, ybound, Rmag, vtemp_counter
+    zfuncb, errG, roc_sp, g2ediff, errght, ybound, Rmag, vtemp_counter, &
+    Rmin, Rmax, Zmin, Zmax
 double precision, dimension(nbnd) :: Rb, Zb
 double precision, dimension(jna1) :: dpsi_ad, dp_ad, pres, sxho, vxho, xrho_sq, sxho_sq, vxho_sq
 double precision, dimension(nr_equ) :: volum_in, PSI, psi_minus, PRESS, xrho_sp, xrho_sp_sq, &
@@ -251,10 +252,23 @@ allocate(equil_in%eqgeometry%boundary%z(n_theta))
 
 equil_in%eqgeometry%boundary%npoints = n_theta    !one periodic point
 
-! Allocate equil_now variables
 f_json = 'exp/cnf/' // trim(machine) // '_description_in.json'
 nr = json_intvar(TRIM(f_json), 'nR')
 nz = json_intvar(TRIM(f_json), 'nZ')
+Rmin = json_floatvar(TRIM(f_json), 'Rmin')
+Rmax = json_floatvar(TRIM(f_json), 'Rmax')
+Zmin = json_floatvar(TRIM(f_json), 'Zmin')
+Zmax = json_floatvar(TRIM(f_json), 'Zmax')
+allocate(equil_in%eqgeometry%rectgrid%r2d(nr))
+allocate(equil_in%eqgeometry%rectgrid%z2d(nz))
+do jr=1, nr
+    equil_in%eqgeometry%rectgrid%r2d(jr) = Rmin + (jr - 1.)*(Rmax - Rmin)/(nr - 1.)
+enddo
+do jz=1, nz
+    equil_in%eqgeometry%rectgrid%z2d(jz) = Zmin + (jz - 1.)*(Zmax - Zmin)/(nz - 1.)
+enddo
+
+! Allocate equil_now variables
 call equil_allocate(nr, nz, nr_equ, n_theta)
 
 !Iteration cycle
@@ -688,7 +702,6 @@ rocnew = sqrt(phib/(GP*btor))
 
 g22e = GG2
 g33e = GG3/R0**2
-
 
 return
 end subroutine GS_SOLVER

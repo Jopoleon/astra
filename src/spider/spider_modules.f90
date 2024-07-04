@@ -23,6 +23,16 @@ module sp_parameters
 end module sp_parameters
 
 !--------------------
+module rectgrid
+  
+  implicit none
+
+  integer :: nr, nz
+  double precision, allocatable, dimension(:) :: Rrect, Zrect
+  
+end module rectgrid
+
+!--------------------
 module iopath
 
    implicit none

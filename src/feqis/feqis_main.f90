@@ -10,8 +10,6 @@ use feqis_circuit, only: nrho, nteta, nr2, nz2, nr1, nz1, &
     ucoils, voltage, iplasma, &
     psi_external_calc, psi_mutual_effect_conductors_simple
 use transport2fbe, only: refit_mode, simple_plasma_model_breakdown
-use parse_utils, only: json_intvar, json_floatvar
-use outcmn_inc, only: machine
 
 implicit none
 
@@ -22,7 +20,6 @@ type(type_equilibrium), intent(in) :: equil_in
 type(type_equilibrium), intent(out) :: equil_out
 
 integer :: nrplasma, j_init, j_call, j_vacplas, i
-character(len=120) :: f_json
 
 data j_call/0/
 data j_vacplas/0/
@@ -33,26 +30,17 @@ call feqis_init(equil_in, parameters_equil, j_init, ifplasma)
 
 nrplasma = nrho
 if (j_call == 0) then
-    f_json = 'exp/cnf/' // trim(machine) // '_description_in.json'
-    nr2 = json_intvar(TRIM(f_json), 'nR')
-    nz2 = json_intvar(TRIM(f_json), 'nZ')
+    nr2 = SIZE(equil_in%eqgeometry%rectgrid%r2d)
+    nz2 = SIZE(equil_in%eqgeometry%rectgrid%z2d)
     nr1 = nr2 - 1
     nz1 = nz2 - 1
-    Rmin = json_floatvar(TRIM(f_json), 'Rmin')
-    Rmax = json_floatvar(TRIM(f_json), 'Rmax')
-    Zmin = json_floatvar(TRIM(f_json), 'Zmin')
-    Zmax = json_floatvar(TRIM(f_json), 'Zmax')
     if (.not. allocated(Rrect)) then
         allocate(Rrect(nr2))
         allocate(Zrect(nz2))
         allocate(psirz(nr2, nz2))
     endif
-    do i=1, nr2
-        Rrect(i) = Rmin + (i - 1.)*(Rmax - Rmin)/nr1
-    enddo
-    do i=1, nz2
-        Zrect(i) = Zmin + (i - 1.)*(Zmax - Zmin)/nz1
-    enddo
+    Rrect = equil_in%eqgeometry%rectgrid%r2d
+    Zrect = equil_in%eqgeometry%rectgrid%z2d
 
     if (parameters_equil%k_fixfree == 1 .or. refit_mode == 818) then   ! also if refit mode = 818, initialize free boundary stuff
         call equil_feqis_init_circ

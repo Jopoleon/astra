@@ -3,6 +3,7 @@
       use imas_ids, only: type_equilibrium
       use parameters_a2equil, only: type_parameters 
       use keys, only: key_0st, key_prs
+      use rectgrid, only: nr, nz, Rrect, Zrect
 
       implicit none
 
@@ -75,9 +76,16 @@
       endif
       btor = equil_in%global_param%toroid_field%b0
 
-      call get_eq(equil_out, psi_boundary, press0, btor)
+      nr = SIZE(equil_in%eqgeometry%rectgrid%r2d)
+      nz = SIZE(equil_in%eqgeometry%rectgrid%z2d)
+      if (.not. allocated(Rrect)) then
+          allocate(Rrect(nr), Zrect(nz))
+      endif
+      Rrect = equil_in%eqgeometry%rectgrid%r2d
+      Zrect = equil_in%eqgeometry%rectgrid%z2d
 
-      call put_eq(equil_out, params)     
+      call get_eq(equil_out, psi_boundary, press0, btor)
+      call put_eq(equil_out, params)
 
       return
       end subroutine spider_run
@@ -1689,44 +1697,22 @@
 
       use imas_ids, only: type_equilibrium
       use sp_parameters, only: twopi
-      use comblc, only: ni1, nj1, r, z, u, um, up
-      use parse_utils, only: json_intvar, json_floatvar
-      use outcmn_inc, only: machine
+      use rectgrid, only: nr, nz, Rrect, Zrect
+      use comblc, only: up, um
 
       implicit none
 
-      integer :: i, j
-      double precision :: Rmin, Rmax, Zmin, Zmax
-      character(len=120) :: f_json
       type(type_equilibrium), intent(inout) :: equil_out
-      
-      f_json = 'exp/cnf/' // trim(machine) // '_description_in.json'
-      ni1 = json_intvar(TRIM(f_json), 'nR')
-      nj1 = json_intvar(TRIM(f_json), 'nZ')
-      Rmin = json_floatvar(TRIM(f_json), 'Rmin')
-      Rmax = json_floatvar(TRIM(f_json), 'Rmax')
-      Zmin = json_floatvar(TRIM(f_json), 'Zmin')
-      Zmax = json_floatvar(TRIM(f_json), 'Zmax')
-
-      if(.NOT. associated(equil_out%eqgeometry%rectgrid%r2d)) then
-         allocate(equil_out%eqgeometry%rectgrid%r2d(ni1))
-         allocate(equil_out%eqgeometry%rectgrid%z2d(nj1))
-         allocate(equil_out%eqgeometry%rectgrid%psirz2d(ni1, nj1))
-         allocate(equil_out%eqgeometry%rectgrid%fdia2d(ni1, nj1))    
+      if (.not. associated(equil_out%eqgeometry%rectgrid%r2d)) then
+          allocate(equil_out%eqgeometry%rectgrid%r2d(nr))
+          allocate(equil_out%eqgeometry%rectgrid%z2d(nz))
+          allocate(equil_out%eqgeometry%rectgrid%psirz2d(nr, nz))
+          allocate(equil_out%eqgeometry%rectgrid%fdia2d(nr, nz))
       endif
-
-      equil_out%eqgeometry%rectgrid%npointsr = ni1
-      equil_out%eqgeometry%rectgrid%npointsz = nj1
-
-      do i=1, ni1
-          r(i) = Rmin + (i - 1.)*(Rmax - Rmin)/(ni1 - 1.)
-          equil_out%eqgeometry%rectgrid%r2d(i) = r(i)
-      enddo
-      do j=1, nj1
-          z(j) = Zmin + (j - 1.)*(Zmax - Zmin)/(nj1 - 1.)
-          equil_out%eqgeometry%rectgrid%z2d(j) = z(j)
-      enddo
-
+      equil_out%eqgeometry%rectgrid%npointsr = nr
+      equil_out%eqgeometry%rectgrid%npointsz = nz
+      equil_out%eqgeometry%rectgrid%r2d = Rrect 
+      equil_out%eqgeometry%rectgrid%z2d = Zrect
       equil_out%global_param%psibound = -TWOPI*up
       equil_out%global_param%psiaxis  = -TWOPI*um
 

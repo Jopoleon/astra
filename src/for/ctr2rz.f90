@@ -261,16 +261,15 @@ use parameters_a2equil, only: equil_now
 implicit none
 
 integer :: jr, jz, irho, jleft, jrho, n_rho, n_the, nr_rect, nz_rect
-integer, dimension(2) :: jmin, nrho_the
+integer, dimension(2) :: jmin
 double precision :: norm, tht, Rpos, Zpos, Rmag, Zmag
 double precision, allocatable, dimension(:) :: Rctr1, Zctr1
 double precision, allocatable, dimension(:, :) :: Rctr, Zctr, rdist, zdist
 double precision, dimension(3) :: norm3, pf3, rb3
 
 ! Use reference arounf Rmag, Zmag
-nrho_the = SHAPE(equil_now%coord_sys%position%r)
-n_rho = nrho_the(1)
-n_the = nrho_the(2)
+n_rho = SIZE(equil_now%coord_sys%position%r, 1)
+n_the = SIZE(equil_now%coord_sys%position%r, 2)
 nr_rect = SIZE(equil_now%eqgeometry%rectgrid%r2d)
 nz_rect = SIZE(equil_now%eqgeometry%rectgrid%z2d)
 if (.not. allocated(Rctr1)) then

@@ -37,7 +37,7 @@ integer :: nstep, i, key_equil, nrp, &
 double precision :: dampfacpsplex, psplexold, epsros, enelss, k_filessss, ipl
 double precision, dimension(ncoils) :: t_currents, ucoils
 double precision :: psplexavg, psplexavgexp
-character(len=80) :: fname
+character(len=120) :: fname
 
 type(type_parameters) :: parameters_equil
 
@@ -80,10 +80,9 @@ if (nstep == 0) then
     psplexavg = 0.
     psplexavgexp = 0.
     fix_adapgrid = 0
-    fname = trim(nml_file)
-    INQUIRE( FILE=trim(fname), EXIST=file_existence)
+    INQUIRE( FILE=TRIM(nml_file), EXIST=file_existence)
     if (file_existence) then
-        open(53, FILE=fname)
+        open(53, FILE=TRIM(nml_file))
         read(53, nml=spider)
         close(53)
         kprs2 = kprs
@@ -162,7 +161,6 @@ if (equil_solver == 101) then
 else
     call spider_run(ncoils, ucoils, equil_in, equil_out, parameters_equil)
 endif
-
 if (ipsibcf /= 0) parameters_equil%key_psibcf = 1
 
 !output from equil_out structure
@@ -201,10 +199,8 @@ if (parameters_equil%k_fixfree == 1) then
     endif
 endif
 
-
 !PSPLEX in FEQIS is the Lext already. In SPIDER NOT.
 PSPLEX = equil_out%global_param%psplex
-
 
 return
 end subroutine A_equil
