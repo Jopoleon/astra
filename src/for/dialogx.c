@@ -328,7 +328,9 @@ void taskmenu_(INT_ *modex){
         'I', 'U', 'Q', 'G',
         'F', 'L', 'T', 'S',
         '\015', '\040', '\057', 'H'};
-
+    char **list_installed_fonts;
+    int num_installed_fonts;
+        
     XGetGeometry(theDisplay,theRootWindow, &theRW, &Wx, &Wy, &Ww, &Wh, &Wb, &Wd);
 
     width_ratio  = (double)Ww/660.;
@@ -341,10 +343,12 @@ void taskmenu_(INT_ *modex){
     ny = XWH - 112.*height_ratio;
     XDrawLine(theDisplay, theRootWindow, theGCA, 0, ny  , XWW-1, ny);
     XDrawLine(theDisplay, theRootWindow, theGCA, 0, ny+1, XWW-1, ny+1);
+
     for (i=0; i<n_buttons; i++){
         MAMT[i] = BUTEXT[i];
         MAMK[i] = BUTKEY[i];
     }
+    
     xaxis(modex);
     iyy = XWH - 74*height_ratio;
     ratio = (double)(XWW*4)/(double)n_buttons;
@@ -357,8 +361,24 @@ void taskmenu_(INT_ *modex){
     Xx = ixx + 5*width_ratio;
     Xy = iyy - 5*height_ratio;
     XFontStruct* font;
-    char* name = "8x13bold";
-    font = XLoadQueryFont(theDisplay, name);
+    char* font_name = "8x13bold";
+    //    char* font_name = "lucidasans-bold-8";
+    
+    /* */
+    font = XLoadQueryFont(theDisplay, font_name);
+    if (font == NULL) {
+        printf("dialogx:taskmenu font = %x\n", font); fflush(stdout);
+        printf("dialogx:taskmenu font_name = |%s| not available \n", font_name); fflush(stdout);
+        printf("dialogx:taskmenu List of avaiable fonts: \n", font); fflush(stdout);
+        list_installed_fonts = XListFonts (theDisplay, "*", 1000, &num_installed_fonts);
+        printf("dialogx:taskmenu num_installed_fonts = %d\n", num_installed_fonts); fflush(stdout);
+        for (i=0; i<num_installed_fonts; i++) {
+            printf("dialogx:taskmenu list_installed_fonts[%d] = |%s|\n", i, list_installed_fonts[i]); fflush(stdout);
+        }
+        exit(-1);
+    }
+    /* */
+
     XSetFont(theDisplay, hghGC, font->fid);
     XDrawString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Graphic mode", 12);
     Xx += (int)(188*width_ratio);

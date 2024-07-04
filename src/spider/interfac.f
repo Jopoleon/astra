@@ -1727,10 +1727,6 @@
           equil_out%eqgeometry%rectgrid%z2d(j) = z(j)
       enddo
 
-      write(*, *) 'Spider interfac r2d', ni1, nj1,
-     &     equil_out%eqgeometry%rectgrid%r2d(1),
-     &      equil_out%eqgeometry%rectgrid%r2d(ni1)
-
       equil_out%global_param%psibound = -TWOPI*up
       equil_out%global_param%psiaxis  = -TWOPI*um
 
