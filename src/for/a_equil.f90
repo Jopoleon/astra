@@ -252,8 +252,6 @@ parameters_equil%nstep = nstep
 
 if (eq_solver == 101) then
     call feqis_main(ncoils, ucoils, parameters_equil, 0, equil_in, equil_out)
-else if (eq_solver == 3) then
-    call spider_run_2(ncoils, ucoils, parameters_equil)
 endif
 
 return

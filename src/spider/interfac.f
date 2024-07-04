@@ -1832,32 +1832,3 @@
 
       return
       end subroutine EXTRAP_EFSP
-
-
-
-
-      subroutine spider_run_2(ncoils,vcoils,params)
-
-      use imas_ids       
-      use parameters_a2equil, only: type_parameters
- 
-      implicit none
- 
-      type(type_equilibrium) equil_in, equil_out
-      type(type_parameters) params
-      integer ncoils
-      real*8 vcoils(ncoils)
-      integer key_0st,key_prs
-	common /com_0st/ key_0st,key_prs
-      
-      !locals
-      integer nstep, key_dmf, k_grid, k_auto, k_fixfree, key_start
-      integer kpr, kname,npointzz
-      real(8) time, dt, dpsdt
-      integer i,neql
-      integer itmastra
-      real*8 um, psi_boundary,press0,btor
-      
-
-      return
-      end
