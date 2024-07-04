@@ -1,16 +1,18 @@
 subroutine METRIC
 
 use outcmn_inc, only: cpuTime_tra, cpuTime_equ
-use status_inc, only: VRO, VR
-use const_inc, only: IPART, FTO, FTN, ROC, GP, BTOR, ROCO, RTOR, SHIFT, &
-    ABC, ELONG, TRIAN, NB1, LEQ, IPEQL, &
-    TIME, TSTART, TIMEQL, DTEQL, BTN
+use status_inc, only: VRO, VR, SHIF, AMETR, ELON, TRIA
+use const_inc, only: IPART, FTO, FTN, ROC, GP, GP2, &
+    BTOR, ROCO, RTOR, SHIFT, &
+    ABC, ELONG, TRIAN, UPDWN, NA1, NB1, MEQUIL, NEQUIL, &
+    LEQ, IPEQL, TIME, TSTART, TIMEQL, DTEQL, BTN
 use debugger, only: markloc, astra_stop
+use parameters_a2equil, only: equil_now
 
 implicit none
 
-integer :: jexit, NDTEQUILMY, equil_solver
-double precision :: ROC3A
+integer :: jexit, NDTEQUILMY, equil_solver, jthe, nthe_surf
+double precision :: ROC3A, theta
 character(len=120) :: err_msg
 
 call markloc('METRIC')
@@ -87,6 +89,22 @@ CASE(4: 5)  ! SPIDER, FEQIS
     endif
 
 END SELECT
+
+if (LEQ(5) < 3) then
+    nthe_surf = abs(nint(MEQUIL))
+    if (nthe_surf == 0) nthe_surf = 41
+    if (.not. associated(equil_now%coord_sys%position%r)) then
+        allocate(equil_now%coord_sys%position%r(NA1, nthe_surf))
+        allocate(equil_now%coord_sys%position%z(NA1, nthe_surf))
+    endif
+    do jthe = 1, nthe_surf
+        theta = GP2/DBLE(nthe_surf-1)*(jthe - 1)
+        equil_now%coord_sys%position%r(:, jthe) = RTOR + SHIF(1:NA1) + AMETR(1:NA1) * &
+              ( COS(theta) + 0.5*TRIA(1:NA1) * (COS(2.*theta) - 1.))
+        equil_now%coord_sys%position%z(:, jthe) = UPDWN + AMETR(1:NA1)*ELON(1:NA1)*SIN(theta)
+    enddo
+     
+endif
 
 call ADDTIME(cpuTime_tra)
 
@@ -1082,7 +1100,7 @@ i = 1    !fbe is off
 if (IFBEY >= 1.) i = 2    !fbe is on
 if (IPART == 1 ) i = 1    !fbe is off
 
-if (ifbey > 0..and.plasma_up == 0) then
+if (ifbey > 0. .and. plasma_up == 0) then
     call A_EQUIL_2(NCNB, nint(ifbey), time, tau, vcoil(1:ncnb), equil_solver, IPLFBE)
     return
 endif

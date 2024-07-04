@@ -3,7 +3,7 @@ subroutine EQDSK
 use const_inc, only: NA1, RTOR, BTOR, IPL, UPDWN, TIME, TSTART, MEQUIL, NEQUIL, &
     PSIAX, PSIBO, IPEQL, SGNBT, SGNIP
 use status_inc, only: SHIF, FP, XRHO
-use parameters_a2equil, only : equil_now, GP, GP2
+use parameters_a2equil, only: equil_now, GP, GP2
 use outcmn_inc, only: AWD, exp_file, equ_file
 
 implicit none
@@ -30,7 +30,9 @@ n_Zrect = Nzrect
 
 raxis = RTOR + SHIF(1)
 zaxis = UPDWN
-call GET_NRHO_NTHETA(nrho_surf, nthe_surf)
+
+nrho_surf = SIZE(equil_now%coord_sys%position%r, 1)
+nthe_surf = SIZE(equil_now%coord_sys%position%r, 2)
 allocate(pf_eq(nrho_surf), rhot_eq(nrho_surf), psin_eq(nrho_surf), pres_eq(nrho_surf), &
     fdia_eq(nrho_surf), q_eq(nrho_surf), pprime_eq(nrho_surf), fprime_eq(nrho_surf), &
     psi_g_norm(nrho_surf))

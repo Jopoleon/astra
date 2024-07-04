@@ -1023,6 +1023,7 @@ subroutine flux_surf_geom(geom_type, ntheta_in, rmin_out, theta_out, R_out, Z_ou
 
   use const_inc,     only: NA1, RTOR
   use status_inc,    only: AMETR, SHIF, SHIV
+  use parameters_a2equil, only: equil_now
 
   implicit none
 
@@ -1044,15 +1045,12 @@ subroutine flux_surf_geom(geom_type, ntheta_in, rmin_out, theta_out, R_out, Z_ou
 
   ! intermediate variables
   double precision, allocatable, dimension(:)   :: rmin_equ 
-  double precision, allocatable, dimension(:,:) :: r_surf, z_surf ! R(rho,theta), Z(rho,theta) from SPIDER/FEQUIS
   double precision, allocatable, dimension(:)   :: th0, th1
-  double precision, allocatable, dimension(:,:) :: R_0, Z_0, R_1, Z_1
+  double precision, allocatable, dimension(:,:) :: R_1, Z_1
   double precision, allocatable, dimension(:)   :: th2
   double precision, allocatable, dimension(:,:) :: R_2, Z_2
   double precision, allocatable, dimension(:,:) :: R_3, Z_3
   double precision, allocatable, dimension(:)   :: pf_eq, rho_eq
-
-
   double precision, dimension(NA1, ntheta_in) :: dRdr, dRdth, dZdr, dZdth, grr, grt, gtt
  
   !-----------------------------------------------------------------------------------------------!
@@ -1062,27 +1060,21 @@ subroutine flux_surf_geom(geom_type, ntheta_in, rmin_out, theta_out, R_out, Z_ou
 
   ! get flux surface contours from equilibrium
   ! new call to surf_ctr as suggested by Giovanni
-  call get_nrho_ntheta(nrho_surf, nthe_surf)
+  nrho_surf = SIZE(equil_now%coord_sys%position%r, 1)
+  nthe_surf = SIZE(equil_now%coord_sys%position%r, 2)
   allocate(pf_eq(nrho_surf), rho_eq(nrho_surf))
-  allocate(r_surf(nrho_surf, nthe_surf), z_surf(nrho_surf, nthe_surf))
-  call surf_ctr(nrho_surf, nthe_surf, r_surf, z_surf)
 
   ! allocate other quantities
   allocate(rmin_equ(nrho_surf))
   allocate(th0(nthe_surf), th1(nthe_surf))
-  allocate(R_0(nrho_surf,nthe_surf), Z_0(nrho_surf,nthe_surf), R_1(nrho_surf,nthe_surf), Z_1(nrho_surf,nthe_surf))
+  allocate(R_1(nrho_surf,nthe_surf), Z_1(nrho_surf,nthe_surf))
   allocate(th2(nthe_surf + 2))
   allocate(R_2(nrho_surf,nthe_surf+2), Z_2(nrho_surf,nthe_surf+2))
   allocate(R_3(nrho_surf,ntheta_in), Z_3(nrho_surf,ntheta_in))
 
-  ! bring to form where first index of theta is LFS
-
-  R_0 = r_surf(1:nrho_surf,1:nthe_surf)
-  Z_0 = z_surf(1:nrho_surf,1:nthe_surf)
-
   ! initial poloidal coordinate
   do j=1, nthe_surf
-     th0(j) = atan2(z_surf(nrho_surf,j)-SHIV(NA1), r_surf(nrho_surf,j)-(RTOR+SHIF(NA1)))
+     th0(j) = atan2(equil_now%coord_sys%position%z(nrho_surf,j)-SHIV(NA1), equil_now%coord_sys%position%r(nrho_surf,j)-(RTOR+SHIF(NA1)))
   enddo
 
   ! find location where th0 is closest to -pi
@@ -1093,11 +1085,11 @@ subroutine flux_surf_geom(geom_type, ntheta_in, rmin_out, theta_out, R_out, Z_ou
   th1(nthe_surf-idxmpi+2:) = th0(:nthe_surf-(idxmpi-1))
 
   ! now that th1 is correct, roll R_1, Z_1
-  R_1(:,1:nthe_surf-idxmpi+1) = R_0(:,idxmpi:)
-  R_1(:,nthe_surf-idxmpi+2:)  = R_0(:,:nthe_surf-(idxmpi-1))
+  R_1(:,1:nthe_surf-idxmpi+1) = equil_now%coord_sys%position%r(:,idxmpi:)
+  R_1(:,nthe_surf-idxmpi+2:)  = equil_now%coord_sys%position%r(:,:nthe_surf-(idxmpi-1))
 
-  Z_1(:,1:nthe_surf-idxmpi+1) = Z_0(:,idxmpi:)
-  Z_1(:,nthe_surf-idxmpi+2:)  = Z_0(:,:nthe_surf-(idxmpi-1))
+  Z_1(:,1:nthe_surf-idxmpi+1) = equil_now%coord_sys%position%z(:,idxmpi:)
+  Z_1(:,nthe_surf-idxmpi+2:)  = equil_now%coord_sys%position%z(:,:nthe_surf-(idxmpi-1))
 
   ! finish the poloidal turn:
   th2(2:nthe_surf+1) = th1
@@ -1121,7 +1113,7 @@ subroutine flux_surf_geom(geom_type, ntheta_in, rmin_out, theta_out, R_out, Z_ou
   theta_out(ntheta_in) = pi
 
   do i=1, nrho_surf
-     rmin_equ(i) = max(0.5*(maxval(R_0(i,:))-minval(R_0(i,:))), 1.e-3)
+     rmin_equ(i) = max(0.5*(maxval(equil_now%coord_sys%position%r(i,:))-minval(equil_now%coord_sys%position%r(i,:))), 1.e-3)
   enddo
 
   if (geom_type.eq.2) then
@@ -1196,7 +1188,7 @@ subroutine flux_surf_geom(geom_type, ntheta_in, rmin_out, theta_out, R_out, Z_ou
 
   R_LFS_out = RTOR + SHIF(1:NA1) + rmin_out
 
-  deallocate(pf_eq, rho_eq, r_surf, z_surf, rmin_equ, th0, th1, R_0, Z_0, R_1, Z_1, th2, R_2, Z_2, R_3, Z_3)
+  deallocate(pf_eq, rho_eq, rmin_equ, th0, th1, R_1, Z_1, th2, R_2, Z_2, R_3, Z_3)
 
   
   return
