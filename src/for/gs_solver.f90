@@ -268,9 +268,6 @@ do jz=1, nz
     equil_in%eqgeometry%rectgrid%z2d(jz) = Zmin + (jz - 1.)*(Zmax - Zmin)/(nz - 1.)
 enddo
 
-! Allocate equil_now variables
-call equil_allocate(nr, nz, nr_equ, n_theta)
-
 !Iteration cycle
 iter_loop: do jiter=1, miter_ext
     p = 1
