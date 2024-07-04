@@ -114,6 +114,7 @@ type type_rect_npoints  !    Structure for list of R,Z positions (1D)
     real(DP),pointer :: r2d(:) => null()     ! /r - Major radius [m]. Vector(max_npoints). Time-dependent
     real(DP),pointer :: z2d(:) => null()     ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
     real(DP),pointer :: psirz2d(:,:) => null()     ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
+    real(DP),pointer :: fdia2d(:,:) => null()     ! F function
     integer :: npointsr=-999999999        ! /npoints - Number of meaningful points in the above vectors at a given time slice. Time-dependent
     integer :: npointsz=-999999999        ! /npoints - Number of meaningful points in the above vectors at a given time slice. Time-dependent
     double precision :: psi_axis=0.       !value of psi on axis

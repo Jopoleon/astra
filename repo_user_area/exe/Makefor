@@ -39,6 +39,7 @@ OBJS = \
 $(OBJ_DIR)/Astra2XW.o \
 $(OBJ_DIR)/aux.o \
 $(OBJ_DIR)/dialogx.o \
+$(OBJ_DIR)/equil_allocate.o \
 $(OBJ_DIR)/err_catch_a.o \
 $(OBJ_DIR)/ifkey.o \
 $(OBJ_DIR)/ipc_control.o \

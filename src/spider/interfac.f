@@ -1701,6 +1701,7 @@
          allocate(equil_out%eqgeometry%rectgrid%r2d(ni1))
          allocate(equil_out%eqgeometry%rectgrid%z2d(nj1))
          allocate(equil_out%eqgeometry%rectgrid%psirz2d(ni1, nj1))
+         allocate(equil_out%eqgeometry%rectgrid%fdia2d(ni1, nj1))    
       endif
 
       equil_out%eqgeometry%rectgrid%npointsr = ni1
