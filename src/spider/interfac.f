@@ -1690,12 +1690,23 @@
       use imas_ids, only: type_equilibrium
       use sp_parameters, only: twopi
       use comblc, only: ni1, nj1, r, z, u, um, up
+      use parse_utils, only: json_intvar, json_floatvar
+      use outcmn_inc, only: machine
 
       implicit none
 
       integer :: i, j
-
-      type(type_equilibrium) :: equil_out
+      double precision :: Rmin, Rmax, Zmin, Zmax
+      character(len=120) :: f_json
+      type(type_equilibrium), intent(inout) :: equil_out
+      
+      f_json = 'exp/cnf/' // trim(machine) // '_description_in.json'
+      ni1 = json_intvar(TRIM(f_json), 'nR')
+      nj1 = json_intvar(TRIM(f_json), 'nZ')
+      Rmin = json_floatvar(TRIM(f_json), 'Rmin')
+      Rmax = json_floatvar(TRIM(f_json), 'Rmax')
+      Zmin = json_floatvar(TRIM(f_json), 'Zmin')
+      Zmax = json_floatvar(TRIM(f_json), 'Zmax')
 
       if(.NOT. associated(equil_out%eqgeometry%rectgrid%r2d)) then
          allocate(equil_out%eqgeometry%rectgrid%r2d(ni1))
@@ -1707,13 +1718,18 @@
       equil_out%eqgeometry%rectgrid%npointsr = ni1
       equil_out%eqgeometry%rectgrid%npointsz = nj1
 
-      do j=1, nj1
-         do i=1, ni1
-            equil_out%eqgeometry%rectgrid%r2d(i) = r(i)
-            equil_out%eqgeometry%rectgrid%z2d(j) = z(j)
-            equil_out%eqgeometry%rectgrid%psirz2d(i, j) = u(i, j)
-         enddo
+      do i=1, ni1
+          r(i) = Rmin + (i - 1.)*(Rmax - Rmin)/(ni1 - 1.)
+          equil_out%eqgeometry%rectgrid%r2d(i) = r(i)
       enddo
+      do j=1, nj1
+          z(j) = Zmin + (j - 1.)*(Zmax - Zmin)/(nj1 - 1.)
+          equil_out%eqgeometry%rectgrid%z2d(j) = z(j)
+      enddo
+
+      write(*, *) 'Spider interfac r2d', ni1, nj1,
+     &     equil_out%eqgeometry%rectgrid%r2d(1),
+     &      equil_out%eqgeometry%rectgrid%r2d(ni1)
 
       equil_out%global_param%psibound = -TWOPI*up
       equil_out%global_param%psiaxis  = -TWOPI*um

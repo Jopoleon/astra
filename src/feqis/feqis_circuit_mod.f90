@@ -37,7 +37,7 @@ integer, dimension(:, :), allocatable :: zlimpotential
 
 double precision :: rmin, rmax, zmin, zmax, dr, dz, dteta, &
     zbot, ztop, raus, rinner
-double precision, dimension(:), allocatable :: r, z, rcomp, zcomp
+double precision, dimension(:), allocatable :: Rrect, Zrect, rcomp, zcomp
 double precision, dimension(:), allocatable :: teta, psigrid
 double precision, dimension(:, :), allocatable :: rho, area_eff, &
     rpol, zpol, rpul, zpul, psirhoteta
@@ -165,10 +165,10 @@ contains
 !cycle over boundary
     psiext_out = 0.
     dllt = 0.
-    psi_ext_1 = interp2d_psi(rbnd(1), zbnd(1), r(1:nr), z(1:nz), psiextrz(1:nr, 1:nz))
+    psi_ext_1 = interp2d_psi(rbnd(1), zbnd(1), Rrect(1:nr), Zrect(1:nz), psiextrz(1:nr, 1:nz))
     psiext1 = psi_ext_1
     do i=1, nbnd-1
-        psiext2 = interp2d_psi(rbnd(i+1), zbnd(i+1), r(1:nr), z(1:nz), psiextrz(1:nr, 1:nz))
+        psiext2 = interp2d_psi(rbnd(i+1), zbnd(i+1), Rrect(1:nr), Zrect(1:nz), psiextrz(1:nr, 1:nz))
         dlt = sqrt((rbnd(i+1) - rbnd(i))**2 + (zbnd(i+1) - zbnd(i))**2)
         psiext_out = psiext_out + 0.5*(psiext1 + psiext2)*dlt
         dllt = dllt + dlt
@@ -203,8 +203,8 @@ contains
         y1 = geom(2) + dur1*sin(geom(3))
         x2 = geom(1) + dur2*cos(geom(3))
         y2 = geom(2) + dur2*sin(geom(3))
-        u001 = interp2d_psi(x1, y1, r(1:nr), z(1:nz), psirz(1: nr, 1:nz))
-        u002 = interp2d_psi(x2, y2, r(1:nr), z(1:nz), psirz(1: nr, 1:nz))
+        u001 = interp2d_psi(x1, y1, Rrect(1:nr), Zrect(1:nz), psirz(1: nr, 1:nz))
+        u002 = interp2d_psi(x2, y2, Rrect(1:nr), Zrect(1:nz), psirz(1: nr, 1:nz))
         if (abs(l_ref) < err_gaptolez) then
             find_l_gap = 0.5*(dur1 + dur2)
             EXIT
@@ -319,8 +319,8 @@ contains
     double precision :: rax, zax
     double precision, dimension(ndim) :: bub
 
-    iax = closest_index(r_in, r(1), dr)
-    jax = closest_index(z_in, z(1), dz)
+    iax = closest_index(r_in, Rrect(1), dr)
+    jax = closest_index(z_in, Zrect(1), dz)
 
     k = 0
     do j=-1, 1
@@ -329,8 +329,8 @@ contains
             bub(k) = psirz(iax+i, jax+j)
         enddo
     enddo
-    rax = r(iax)
-    zax = z(jax)
+    rax = Rrect(iax)
+    zax = Zrect(jax)
 
     call exact_biquad(rax, zax, bub(1:ndim), ndim, &
         pos_xpoint(1), pos_xpoint(2), f00, ddpsi, dr, dz)
@@ -351,11 +351,11 @@ contains
     integer :: iax, jax, i, j, k
     double precision, dimension(90) :: bub
 
-    iax = closest_index(r_in, r(1), dr)
-    jax = closest_index(z_in, z(1), dz)
+    iax = closest_index(r_in, Rrect(1), dr)
+    jax = closest_index(z_in, Zrect(1), dz)
 
-    rax_out = r(iax)
-    zax_out = z(jax)
+    rax_out = Rrect(iax)
+    zax_out = Zrect(jax)
 
 !find true axis
     k = 0
@@ -386,15 +386,15 @@ contains
 
     double precision, dimension(ndim) :: bub
 
-    bub(1) = interp2d_psi(rx - dr, zx - dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-    bub(2) = interp2d_psi(rx     , zx - dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-    bub(3) = interp2d_psi(rx + dr, zx - dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-    bub(4) = interp2d_psi(rx - dr, zx     , r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-    bub(5) = interp2d_psi(rx     , zx     , r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-    bub(6) = interp2d_psi(rx + dr, zx     , r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-    bub(7) = interp2d_psi(rx - dr, zx + dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-    bub(8) = interp2d_psi(rx     , zx + dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-    bub(9) = interp2d_psi(rx + dr, zx + dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+    bub(1) = interp2d_psi(rx - dr, zx - dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+    bub(2) = interp2d_psi(rx     , zx - dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+    bub(3) = interp2d_psi(rx + dr, zx - dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+    bub(4) = interp2d_psi(rx - dr, zx     , Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+    bub(5) = interp2d_psi(rx     , zx     , Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+    bub(6) = interp2d_psi(rx + dr, zx     , Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+    bub(7) = interp2d_psi(rx - dr, zx + dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+    bub(8) = interp2d_psi(rx     , zx + dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+    bub(9) = interp2d_psi(rx + dr, zx + dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
 
     call exact_biquad_regress(rx, zx, bub(1:ndim), ndim,  &
         pos_xpoint(1), pos_xpoint(2), f00, ddpsi, dr, dz)
@@ -424,7 +424,7 @@ contains
     n_add = 0
     jinc  = 0
 
-    if (rbnd(1) <= r(1)) return ! boundary doesnt exist yet
+    if (rbnd(1) <= Rrect(1)) return ! boundary doesnt exist yet
 
     ierr = 0
 
@@ -530,7 +530,7 @@ contains
     do j=2, nr1
         jcounty = jcounty + 1
         greenf  = green_bnd_f(jcounty)
-        dgdn(j) = -green_in(j, 2)/dz*greenf*dr/r(j)
+        dgdn(j) = -green_in(j, 2)/dz*greenf*dr/Rrect(j)
     enddo
     bgint = bgint - sum(dgdn(2:nr1))
 
@@ -538,7 +538,7 @@ contains
     do j=2, nz1
         jcounty = jcounty + 1
         greenf  = green_bnd_f(jcounty)
-        dgdn(j) = -green_in(nr1, j)/dr*greenf*dz/(r(nr2) + r(nr1))*2.
+        dgdn(j) = -green_in(nr1, j)/dr*greenf*dz/(Rrect(nr2) + Rrect(nr1))*2.
     enddo
     bgint = bgint - sum(dgdn(2:nz1))
 
@@ -546,7 +546,7 @@ contains
     do j=2, nr1
         jcounty = jcounty + 1
         greenf  = green_bnd_f(jcounty)
-        dgdn(j) = -green_in(j, nz1)/dz*greenf*dr/r(j)
+        dgdn(j) = -green_in(j, nz1)/dz*greenf*dr/Rrect(j)
     enddo
     bgint = bgint - sum(dgdn(2:nr1))
 
@@ -554,7 +554,7 @@ contains
     do j=2, nz1
         jcounty = jcounty + 1
         greenf  = green_bnd_f(jcounty)
-        dgdn(j) = -green_in(2, j)/dr*greenf*dz/(r(1) + r(2))*2.
+        dgdn(j) = -green_in(2, j)/dr*greenf*dz/(Rrect(1) + Rrect(2))*2.
     enddo
     bgint = bgint - sum(dgdn(2:nz1))
 
@@ -589,8 +589,8 @@ contains
         t2 = zax + dd*(i - 1)*sin(angl)
         t3 = rax + dd*i*cos(angl)
         t4 = zax + dd*i*sin(angl)
-        z1 = interp2d_psi(t1, t2, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        z2 = interp2d_psi(t3, t4, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+        z1 = interp2d_psi(t1, t2, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        z2 = interp2d_psi(t3, t4, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         z3 = (z2 - z1)*psiold
         psiold = z2 - z1
         if (z3 < 0) then
@@ -639,8 +639,8 @@ contains
 
     rax = raxp
     zax = zaxp
-    iaxis = closest_index(rax, r(1), dr)
-    jaxis = closest_index(zax, z(1), dz)
+    iaxis = closest_index(rax, Rrect(1), dr)
+    jaxis = closest_index(zax, Zrect(1), dz)
     iax = iaxis
     jax = jaxis
 
@@ -662,13 +662,13 @@ contains
     invmatrix = 0.
     do j=1, nconduc
         do k=1, nteta
-            G_00(j, k) = interp2d_psi(rbref(k), zbref(k), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+            G_00(j, k) = interp2d_psi(rbref(k), zbref(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         enddo
         G_00c(j) = sum(G_00(j, 1:nteta))/(0. + nteta)
-        bub(1) = interp2d_psi(raxref - dr/2., zaxref, r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(2) = interp2d_psi(raxref + dr/2., zaxref, r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(3) = interp2d_psi(raxref, zaxref - dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(4) = interp2d_psi(raxref, zaxref + dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+        bub(1) = interp2d_psi(raxref - dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(2) = interp2d_psi(raxref + dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(3) = interp2d_psi(raxref, zaxref - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(4) = interp2d_psi(raxref, zaxref + dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         G_00r(j) = (bub(2) - bub(1))/dr
         G_00z(j) = (bub(4) - bub(3))/dz
     enddo
@@ -707,16 +707,16 @@ contains
         enddo
 
         do j=1, nteta
-            psicorr(j) = interp2d_psi(rbref(j), zbref(j), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+            psicorr(j) = interp2d_psi(rbref(j), zbref(j), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         enddo
 
         x1 = sum(psicorr)/(nteta + 0.) !average psi on the boundary
 
 ! Derivative at ref axis
-        bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+        bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         x2 = (bub(2) - bub(1))/dr ! dPsi/dr
         x3 = (bub(4) - bub(3))/dz ! dPsi/dz
 
@@ -814,8 +814,8 @@ contains
 
     rax = raxp
     zax = zaxp
-    iaxis = closest_index(rax, r(1), dr)
-    jaxis = closest_index(zax, z(1), dz)
+    iaxis = closest_index(rax, Rrect(1), dr)
+    jaxis = closest_index(zax, Zrect(1), dz)
     iax = iaxis
     jax = jaxis
 
@@ -837,20 +837,20 @@ contains
     invmatrix = 0.
     do j=1, nconduc
         do k=1, nteta
-            G_00(j, k) = interp2d_psi(rbref(k), zbref(k), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+            G_00(j, k) = interp2d_psi(rbref(k), zbref(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         enddo
         G_00c(j) = sum(G_00(j, 1:nteta))/(0. + nteta)
-        bub(1) = interp2d_psi(raxref - dr/2., zaxref, r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(2) = interp2d_psi(raxref + dr/2., zaxref, r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(3) = interp2d_psi(raxref, zaxref - dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(4) = interp2d_psi(raxref, zaxref + dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+        bub(1) = interp2d_psi(raxref - dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(2) = interp2d_psi(raxref + dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(3) = interp2d_psi(raxref, zaxref - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(4) = interp2d_psi(raxref, zaxref + dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         G_00r(j) = (bub(2) - bub(1))/dr
         G_00z(j) = (bub(4) - bub(3))/dz
         do k=1, n_xpoint_fit
-            bub(1) = interp2d_psi(r_xpoint_fit(k) - dr/2., z_xpoint_fit(k), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-            bub(2) = interp2d_psi(r_xpoint_fit(k) + dr/2., z_xpoint_fit(k), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-            bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(k) - dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-            bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(k) + dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+            bub(1) = interp2d_psi(r_xpoint_fit(k) - dr/2., z_xpoint_fit(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+            bub(2) = interp2d_psi(r_xpoint_fit(k) + dr/2., z_xpoint_fit(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+            bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(k) - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+            bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(k) + dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
             G_00xr(j,k) = (bub(2) - bub(1))/dr
             G_00xz(j,k) = (bub(4) - bub(3))/dz
         enddo
@@ -892,7 +892,7 @@ contains
         enddo
 
         do j=1, nteta
-            psicorr(j) = interp2d_psi(rbref(j), zbref(j), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+            psicorr(j) = interp2d_psi(rbref(j), zbref(j), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         enddo
 
         x1 = sum(psicorr)/(nteta + 0.) !average psi on the boundary
@@ -901,18 +901,18 @@ contains
         Ffunc = sigma_B*sum((psicorr - x1)**2) + sum(sigma_coils(1:nconduc)*curdiff**2)
 
 ! Derivative at ref axis
-        bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+        bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         x2 = (bub(2) - bub(1))/dr ! dPsi/dr
         x3 = (bub(4) - bub(3))/dz ! dPsi/dz
         Ffunc = Ffunc +  sigma_axis*(x2**2 + x3**2)
         do k=1, n_xpoint_fit
-            bub(1) = interp2d_psi(r_xpoint_fit(k) - 0.5*dr, z_xpoint_fit(K), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-            bub(2) = interp2d_psi(r_xpoint_fit(k) + 0.5*dr, z_xpoint_fit(K), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-            bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-            bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+            bub(1) = interp2d_psi(r_xpoint_fit(k) - 0.5*dr, z_xpoint_fit(K), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+            bub(2) = interp2d_psi(r_xpoint_fit(k) + 0.5*dr, z_xpoint_fit(K), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+            bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+            bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) + 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             x2 = (bub(2) - bub(1))/dr ! dPsi/dr
             x3 = (bub(4) - bub(3))/dz ! dPsi/dz
             Ffunc = Ffunc +  sigma_xpoint*(x2**2 + x3**2)
@@ -923,18 +923,18 @@ contains
 ! Calculate F derivative
         do i=1, nconduc
             Fderiv(i) = 2.*(sigma_coils(i)*curdiff(i) + sigma_B*sum((psicorr - x1)*(G_00(i, 1:nteta) - G_00c(i))))
-            bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-            bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-            bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-            bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+            bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+            bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+            bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+            bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             x2 = (bub(2) - bub(1))/dr ! dPsi/dr
             x3 = (bub(4) - bub(3))/dz ! dPsi/dz
             Fderiv(i) = Fderiv(i) + 2.*sigma_axis*(x2*G_00r(i) + x3*G_00z(i))
             do k=1, n_xpoint_fit
-                bub(1) = interp2d_psi(r_xpoint_fit(k) - 0.5*dr, z_xpoint_fit(K), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-                bub(2) = interp2d_psi(r_xpoint_fit(k) + 0.5*dr, z_xpoint_fit(K), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-                bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-                bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+                bub(1) = interp2d_psi(r_xpoint_fit(k) - 0.5*dr, z_xpoint_fit(K), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+                bub(2) = interp2d_psi(r_xpoint_fit(k) + 0.5*dr, z_xpoint_fit(K), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+                bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+                bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) + 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
                 x2 = (bub(2) - bub(1))/dr ! dPsi/dr
                 x3 = (bub(4) - bub(3))/dz ! dPsi/dz
                 Fderiv(i) = Fderiv(i) +  2.*sigma_xpoint*(x2*G_00xr(i,k) + x3*G_00xz(i,k))
@@ -1096,13 +1096,13 @@ contains
     do jt=1,n_evol
         do j=1, nactive
             do k=1, nteta
-                G_00(j, k, jt) = interp2d_psi(rbref_ev(k,jt), zbref_ev(k,jt), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+                G_00(j, k, jt) = interp2d_psi(rbref_ev(k,jt), zbref_ev(k,jt), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
             enddo
             G_00c(j, jt) = sum(G_00(j, 1:nteta, jt))/(0. + nteta)
-            bub(1) = interp2d_psi(raxref_ev(jt) - dr/2., zaxref_ev(jt), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-            bub(2) = interp2d_psi(raxref_ev(jt) + dr/2., zaxref_ev(jt), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-            bub(3) = interp2d_psi(raxref_ev(jt), zaxref_ev(jt) - dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-            bub(4) = interp2d_psi(raxref_ev(jt), zaxref_ev(jt) + dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+            bub(1) = interp2d_psi(raxref_ev(jt) - dr/2., zaxref_ev(jt), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+            bub(2) = interp2d_psi(raxref_ev(jt) + dr/2., zaxref_ev(jt), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+            bub(3) = interp2d_psi(raxref_ev(jt), zaxref_ev(jt) - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+            bub(4) = interp2d_psi(raxref_ev(jt), zaxref_ev(jt) + dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
             G_00r(j,jt) = (bub(2) - bub(1))/dr
             G_00z(j,jt) = (bub(4) - bub(3))/dz
         enddo
@@ -1154,14 +1154,14 @@ contains
                enddo
            enddo
            do j=1, nteta
-               psicorr(j) = interp2d_psi(rbref_ev(j,jt), zbref_ev(j,jt), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+               psicorr(j) = interp2d_psi(rbref_ev(j,jt), zbref_ev(j,jt), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
            enddo
            x1 = sum(psicorr)/(nteta + 0.) !average psi on the boundary
 ! Derivative at ref axis
-           bub(1) = interp2d_psi(raxref_ev(jt) - 0.5*dr, zaxref_ev(jt), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-           bub(2) = interp2d_psi(raxref_ev(jt) + 0.5*dr, zaxref_ev(jt), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-           bub(3) = interp2d_psi(raxref_ev(jt), zaxref_ev(jt) - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-           bub(4) = interp2d_psi(raxref_ev(jt), zaxref_ev(jt) + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+           bub(1) = interp2d_psi(raxref_ev(jt) - 0.5*dr, zaxref_ev(jt), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+           bub(2) = interp2d_psi(raxref_ev(jt) + 0.5*dr, zaxref_ev(jt), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+           bub(3) = interp2d_psi(raxref_ev(jt), zaxref_ev(jt) - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+           bub(4) = interp2d_psi(raxref_ev(jt), zaxref_ev(jt) + 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
            x2 = (bub(2) - bub(1))/dr ! dPsi/dr
            x3 = (bub(4) - bub(3))/dz ! dPsi/dz
 
@@ -1374,13 +1374,13 @@ contains
     do jt=1, n_evol
         do j=1, nactive
             do k=1, nteta
-                G_00(j, k, jt) = interp2d_psi(rbref_ev(k, jt), zbref_ev(k, jt), r(1: nr), z(1: nz), greeni(1: nr, 1: nz, j))
+                G_00(j, k, jt) = interp2d_psi(rbref_ev(k, jt), zbref_ev(k, jt), Rrect(1: nr), Zrect(1: nz), greeni(1: nr, 1: nz, j))
             enddo
             G_00c(j, jt) = sum(G_00(j, 1:nteta, jt))/(0. + nteta)
-            bub(1) = interp2d_psi(raxref_ev(jt) - dr/2., zaxref_ev(jt), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-            bub(2) = interp2d_psi(raxref_ev(jt) + dr/2., zaxref_ev(jt), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-            bub(3) = interp2d_psi(raxref_ev(jt), zaxref_ev(jt) - dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-            bub(4) = interp2d_psi(raxref_ev(jt), zaxref_ev(jt) + dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+            bub(1) = interp2d_psi(raxref_ev(jt) - dr/2., zaxref_ev(jt), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+            bub(2) = interp2d_psi(raxref_ev(jt) + dr/2., zaxref_ev(jt), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+            bub(3) = interp2d_psi(raxref_ev(jt), zaxref_ev(jt) - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+            bub(4) = interp2d_psi(raxref_ev(jt), zaxref_ev(jt) + dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
             G_00r(j, jt) = (bub(2) - bub(1))/dr
             G_00z(j, jt) = (bub(4) - bub(3))/dz
         enddo
@@ -1435,14 +1435,14 @@ contains
                 enddo
             enddo
             do j=1, nteta
-                psicorr(j) = interp2d_psi(rbref_ev(j, jt), zbref_ev(j, jt), r(1: nr), z(1: nz), psirz(1: nr, 1: nz))
+                psicorr(j) = interp2d_psi(rbref_ev(j, jt), zbref_ev(j, jt), Rrect(1: nr), Zrect(1: nz), psirz(1: nr, 1: nz))
             enddo
             x1 = sum(psicorr)/(nteta + 0.) !average psi on the boundary
 ! Derivative at ref axis
-            bub(1) = interp2d_psi(raxref_ev(jt) - 0.5*dr, zaxref_ev(jt), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-            bub(2) = interp2d_psi(raxref_ev(jt) + 0.5*dr, zaxref_ev(jt), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-            bub(3) = interp2d_psi(raxref_ev(jt), zaxref_ev(jt) - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-            bub(4) = interp2d_psi(raxref_ev(jt), zaxref_ev(jt) + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+            bub(1) = interp2d_psi(raxref_ev(jt) - 0.5*dr, zaxref_ev(jt), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+            bub(2) = interp2d_psi(raxref_ev(jt) + 0.5*dr, zaxref_ev(jt), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+            bub(3) = interp2d_psi(raxref_ev(jt), zaxref_ev(jt) - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+            bub(4) = interp2d_psi(raxref_ev(jt), zaxref_ev(jt) + 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             x2 = (bub(2) - bub(1))/dr ! dPsi/dr
             x3 = (bub(4) - bub(3))/dz ! dPsi/dz
             psi_ext_ev(jt) = sum(G_00c(:,jt)*curdiff(:,jt))
@@ -1622,8 +1622,8 @@ contains
 
     rax = raxp
     zax = zaxp
-    iaxis = closest_index(rax, r(1), dr)
-    jaxis = closest_index(zax, z(1), dz)
+    iaxis = closest_index(rax, Rrect(1), dr)
+    jaxis = closest_index(zax, Zrect(1), dz)
     iax = iaxis
     jax = jaxis
     raxref = raxp
@@ -1692,23 +1692,23 @@ contains
 
     do j=1, nactive
         do k=1, nteta_temp
-            G_00(j, k) = interp2d_psi(rbref(k), zbref(k), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-            G_002(j, k) = sigma_boundary_points(k)*interp2d_psi(rbref(k), zbref(k), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+            G_00(j, k) = interp2d_psi(rbref(k), zbref(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+            G_002(j, k) = sigma_boundary_points(k)*interp2d_psi(rbref(k), zbref(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         enddo
         G_00c(j) = sum(G_00(j, 1:nteta_temp))/(0. + nteta_temp)
         G_00c2(j) = sum(G_002(j, 1:nteta_temp))/boundary_weight
-        bub(1) = interp2d_psi(raxref - dr/2., zaxref, r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(2) = interp2d_psi(raxref + dr/2., zaxref, r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(3) = interp2d_psi(raxref, zaxref - dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(4) = interp2d_psi(raxref, zaxref + dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+        bub(1) = interp2d_psi(raxref - dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(2) = interp2d_psi(raxref + dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(3) = interp2d_psi(raxref, zaxref - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(4) = interp2d_psi(raxref, zaxref + dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         G_00r(j) = (bub(2) - bub(1))/dr
         G_00z(j) = (bub(4) - bub(3))/dz
         if (n_xpoint_fit > 0) then
             do k=1, n_xpoint_fit
-                bub(1) = interp2d_psi(r_xpoint_fit(k) - dr/2., z_xpoint_fit(k), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-                bub(2) = interp2d_psi(r_xpoint_fit(k) + dr/2., z_xpoint_fit(k), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-                bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(k) - dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-                bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(k) + dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+                bub(1) = interp2d_psi(r_xpoint_fit(k) - dr/2., z_xpoint_fit(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+                bub(2) = interp2d_psi(r_xpoint_fit(k) + dr/2., z_xpoint_fit(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+                bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(k) - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+                bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(k) + dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
                 SELECT CASE(gridpoint_tipe(k))
                 CASE(-1)
                     G_00xr(j,k) = 0.
@@ -1779,16 +1779,16 @@ contains
         enddo
 
         do j=1, nteta_temp
-            psicorr(j) = sigma_boundary_points(j)*interp2d_psi(rbref(j), zbref(j), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+            psicorr(j) = sigma_boundary_points(j)*interp2d_psi(rbref(j), zbref(j), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         enddo
 
         x1 = sum(psicorr(1:nteta_temp))/boundary_weight !average psi on the boundary
 
 ! Derivative at ref axis
-        bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+        bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         x2 = (bub(2) - bub(1))/dr ! dPsi/dr
         x3 = (bub(4) - bub(3))/dz ! dPsi/dz
 
@@ -1800,10 +1800,10 @@ contains
 
         if (n_xpoint_fit > 0) then
             do k=1, n_xpoint_fit
-                bub(1) = interp2d_psi(r_xpoint_fit(k) - 0.5*dr, z_xpoint_fit(K), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-                bub(2) = interp2d_psi(r_xpoint_fit(k) + 0.5*dr, z_xpoint_fit(K), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-                bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-                bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+                bub(1) = interp2d_psi(r_xpoint_fit(k) - 0.5*dr, z_xpoint_fit(K), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+                bub(2) = interp2d_psi(r_xpoint_fit(k) + 0.5*dr, z_xpoint_fit(K), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+                bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+                bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) + 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
                 SELECT CASE(gridpoint_tipe(k))
                 CASE(-1)
                     x2 = 0.
@@ -1833,19 +1833,19 @@ contains
             Fderiv(i) = 2.*(0.5*indconduc(i,i)*sigma_energy*curnow(i) + &
                 sigma_coils_ref(i)*curdiff(i) + &
                 sigma_coils(i)*curnow(i) + sigma_B*sum((psicorr(1:nteta_temp) - x1)*(G_002(i, 1:nteta_temp) - G_00c2(i))))
-            bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-            bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-            bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-            bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+            bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+            bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+            bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+            bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             x2 = (bub(2) - bub(1))/dr ! dPsi/dr
             x3 = (bub(4) - bub(3))/dz ! dPsi/dz
             Fderiv(i) = Fderiv(i) + 2.*sigma_axis*(x2*G_00r(i) + x3*G_00z(i))
             if (n_xpoint_fit > 0) then
                 do k=1, n_xpoint_fit
-                    bub(1) = interp2d_psi(r_xpoint_fit(k) - 0.5*dr, z_xpoint_fit(K), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-                    bub(2) = interp2d_psi(r_xpoint_fit(k) + 0.5*dr, z_xpoint_fit(K), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-                    bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-                    bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+                    bub(1) = interp2d_psi(r_xpoint_fit(k) - 0.5*dr, z_xpoint_fit(K), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+                    bub(2) = interp2d_psi(r_xpoint_fit(k) + 0.5*dr, z_xpoint_fit(K), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+                    bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+                    bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) + 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
                     SELECT CASE(gridpoint_tipe(k))
                     CASE(-1)
                         x2 = 0.
@@ -1951,7 +1951,7 @@ contains
         tau_gseq_feqis, vloop_avg, L_ext*dIp_dt, &
         nr2, nz2, psirz(1:nr2, 1:nz2), nblocks - npassive, force_R, force_Z, &
         psibnd, psiaxis, indconduc(1:nactive, 1:nactive), resconduc(1:nactive, 1:nactive), &
-        nlimiter, limiterR(1:nlimiter), limiterZ(1:nlimiter), r(1), r(nr2), z(1), z(nz2), nteta_temp, &
+        nlimiter, limiterR(1:nlimiter), limiterZ(1:nlimiter), Rrect(1), Rrect(nr2), Zrect(1), Zrect(nz2), nteta_temp, &
         rbref(1:nteta_temp), zbref(1:nteta_temp), time_astra, tau_gseq_feqis, GPI2*psiplasmatoconduc(1:nactive), &  !saved in kA
         nteta, rbndtemp(1:nteta), zbndtemp(1:nteta), rbndp(1:nteta), zbndp(1:nteta)
     close(32)
@@ -2022,8 +2022,8 @@ contains
 
     rax = raxp
     zax = zaxp
-    iaxis = closest_index(rax, r(1), dr)
-    jaxis = closest_index(zax, z(1), dz)
+    iaxis = closest_index(rax, Rrect(1), dr)
+    jaxis = closest_index(zax, Zrect(1), dz)
     iax = iaxis
     jax = jaxis
     raxref = raxp
@@ -2081,21 +2081,21 @@ contains
 
     do j=1, nactive
         do k=1, nteta_temp
-            G_00(j, k) = interp2d_psi(rbref(k), zbref(k), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+            G_00(j, k) = interp2d_psi(rbref(k), zbref(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         enddo
         G_00c(j) = sum(G_00(j, 1:nteta_temp))/(0. + nteta_temp)
-        bub(1) = interp2d_psi(raxref - dr/2., zaxref, r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(2) = interp2d_psi(raxref + dr/2., zaxref, r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(3) = interp2d_psi(raxref, zaxref - dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(4) = interp2d_psi(raxref, zaxref + dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+        bub(1) = interp2d_psi(raxref - dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(2) = interp2d_psi(raxref + dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(3) = interp2d_psi(raxref, zaxref - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(4) = interp2d_psi(raxref, zaxref + dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         G_00r(j) = (bub(2) - bub(1))/dr
         G_00z(j) = (bub(4) - bub(3))/dz
         if (n_xpoint_fit > 0) then
             do k=1, n_xpoint_fit
-                bub(1) = interp2d_psi(r_xpoint_fit(k) - dr/2., z_xpoint_fit(k), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-                bub(2) = interp2d_psi(r_xpoint_fit(k) + dr/2., z_xpoint_fit(k), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-                bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(k) - dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-                bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(k) + dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+                bub(1) = interp2d_psi(r_xpoint_fit(k) - dr/2., z_xpoint_fit(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+                bub(2) = interp2d_psi(r_xpoint_fit(k) + dr/2., z_xpoint_fit(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+                bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(k) - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+                bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(k) + dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
                 SELECT CASE(gridpoint_tipe(k))
                 CASE(-1)
                     G_00xr(j,k) = 0.
@@ -2155,16 +2155,16 @@ contains
         enddo
 
         do j=1, nteta_temp
-            psicorr(j) = interp2d_psi(rbref(j), zbref(j), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+            psicorr(j) = interp2d_psi(rbref(j), zbref(j), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         enddo
 
         x1 = sum(psicorr(1:nteta_temp))/(nteta_temp + 0.) !average psi on the boundary
 
 ! Derivative at ref axis
-        bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+        bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         x2 = (bub(2) - bub(1))/dr ! dPsi/dr
         x3 = (bub(4) - bub(3))/dz ! dPsi/dz
 
@@ -2175,10 +2175,10 @@ contains
 
         if (n_xpoint_fit > 0) then
             do k=1, n_xpoint_fit
-                bub(1) = interp2d_psi(r_xpoint_fit(k) - 0.5*dr, z_xpoint_fit(K), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-                bub(2) = interp2d_psi(r_xpoint_fit(k) + 0.5*dr, z_xpoint_fit(K), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-                bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-                bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+                bub(1) = interp2d_psi(r_xpoint_fit(k) - 0.5*dr, z_xpoint_fit(K), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+                bub(2) = interp2d_psi(r_xpoint_fit(k) + 0.5*dr, z_xpoint_fit(K), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+                bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+                bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) + 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
                 SELECT CASE(gridpoint_tipe(k))
                 CASE(-1)
                     x2 = 0.
@@ -2204,19 +2204,19 @@ contains
         do i=1, nactive
             Fderiv(i) = 2.*(0.5*indconduc(i,i)*sigma_energy/sigma_coils(i)*curnow(i) + &
                 sigma_coils(i)*curdiff(i) + sigma_B*sum((psicorr(1:nteta_temp) - x1)*(G_00(i, 1:nteta_temp) - G_00c(i))))
-            bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-            bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-            bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-            bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+            bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+            bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+            bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+            bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             x2 = (bub(2) - bub(1))/dr ! dPsi/dr
             x3 = (bub(4) - bub(3))/dz ! dPsi/dz
             Fderiv(i) = Fderiv(i) + 2.*sigma_axis*(x2*G_00r(i) + x3*G_00z(i))
             if (n_xpoint_fit > 0) then
                 do k=1, n_xpoint_fit
-                    bub(1) = interp2d_psi(r_xpoint_fit(k) - 0.5*dr, z_xpoint_fit(K), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-                    bub(2) = interp2d_psi(r_xpoint_fit(k) + 0.5*dr, z_xpoint_fit(K), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-                    bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-                    bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+                    bub(1) = interp2d_psi(r_xpoint_fit(k) - 0.5*dr, z_xpoint_fit(K), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+                    bub(2) = interp2d_psi(r_xpoint_fit(k) + 0.5*dr, z_xpoint_fit(K), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+                    bub(3) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+                    bub(4) = interp2d_psi(r_xpoint_fit(k), z_xpoint_fit(K) + 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
                     SELECT CASE(gridpoint_tipe(k))
                     CASE(-1)
                         x2 = 0.
@@ -2308,7 +2308,7 @@ contains
         tau_gseq_feqis, vloop_avg, L_ext*dIp_dt, &
         nr2, nz2, psirz(1:nr2, 1:nz2), nblocks - npassive, force_R, force_Z, &
         psibnd, psiaxis, indconduc(1:nactive, 1:nactive), resconduc(1:nactive, 1:nactive), &
-        nlimiter, limiterR(1:nlimiter), limiterZ(1:nlimiter), r(1), r(nr2), z(1), z(nz2), nteta_temp, &
+        nlimiter, limiterR(1:nlimiter), limiterZ(1:nlimiter), Rrect(1), Rrect(nr2), Zrect(1), Zrect(nz2), nteta_temp, &
         rbref(1:nteta_temp), zbref(1:nteta_temp), time_astra, tau_gseq_feqis, GPI2*psiplasmatoconduc(1:nactive), &  !saved in kA
         nteta, rbndtemp(1:nteta), zbndtemp(1:nteta)
     close(32)
@@ -2343,8 +2343,8 @@ contains
         write(unit, *) rpol, zpol, jrhoteta, psirhoteta  !R, Z, jrhoteta, PSI
         write(unit, *) dator !area elements
 !now free boundary
-        if (allocated(r)) then
-            write(unit, *) nr2, nz2, r, z !grid
+        if (allocated(Rrect)) then
+            write(unit, *) nr2, nz2, Rrect, Zrect !grid
             write(unit, *) psiextrz, psiplasrz, psirz !psivacuum, psiplasma, psitotal maps [radiants]
             write(unit, *) jrz, area_eff !current densiy, area elements
             write(unit, *) nconduc, r_cond, z_cond !conductors positions
@@ -2392,8 +2392,8 @@ contains
 
     rax = raxp
     zax = zaxp
-    iaxis = closest_index(rax, r(1), dr)
-    jaxis = closest_index(zax, z(1), dz)
+    iaxis = closest_index(rax, Rrect(1), dr)
+    jaxis = closest_index(zax, Zrect(1), dz)
     iax = iaxis
     jax = jaxis
 
@@ -2417,13 +2417,13 @@ contains
 
     do j=1, nactive
         do k=1, nteta
-            G_00(j, k) = interp2d_psi(rbref(k), zbref(k), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+            G_00(j, k) = interp2d_psi(rbref(k), zbref(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         enddo
         G_00c(j) = sum(G_00(j, 1:nteta))/(0. + nteta)
-        bub(1) = interp2d_psi(raxref - dr/2., zaxref, r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(2) = interp2d_psi(raxref + dr/2., zaxref, r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(3) = interp2d_psi(raxref, zaxref - dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(4) = interp2d_psi(raxref, zaxref + dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+        bub(1) = interp2d_psi(raxref - dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(2) = interp2d_psi(raxref + dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(3) = interp2d_psi(raxref, zaxref - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(4) = interp2d_psi(raxref, zaxref + dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         G_00r(j) = (bub(2) - bub(1))/dr
         G_00z(j) = (bub(4) - bub(3))/dz
     enddo
@@ -2463,16 +2463,16 @@ contains
         enddo
 
         do j=1, nteta
-            psicorr(j) = interp2d_psi(rbref(j), zbref(j), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+            psicorr(j) = interp2d_psi(rbref(j), zbref(j), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         enddo
 
         x1 = sum(psicorr)/(nteta + 0.) !average psi on the boundary
 
 ! Derivative at ref axis
-        bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+        bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         x2 = (bub(2) - bub(1))/dr ! dPsi/dr
         x3 = (bub(4) - bub(3))/dz ! dPsi/dz
 
@@ -2574,8 +2574,8 @@ contains
 
     rax = raxp
     zax = zaxp
-    iaxis = closest_index(rax, r(1), dr)
-    jaxis = closest_index(zax, z(1), dz)
+    iaxis = closest_index(rax, Rrect(1), dr)
+    jaxis = closest_index(zax, Zrect(1), dz)
     iax = iaxis
     jax = jaxis
 
@@ -2599,13 +2599,13 @@ contains
 
     do j=1, nactive
         do k=1, nteta
-            G_00(j, k) = interp2d_psi(rbref(k), zbref(k), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+            G_00(j, k) = interp2d_psi(rbref(k), zbref(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         enddo
         G_00c(j) = sum(G_00(j, 1:nteta))/(0. + nteta)
-        bub(1) = interp2d_psi(raxref - dr/2., zaxref, r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(2) = interp2d_psi(raxref + dr/2., zaxref, r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(3) = interp2d_psi(raxref, zaxref - dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(4) = interp2d_psi(raxref, zaxref + dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+        bub(1) = interp2d_psi(raxref - dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(2) = interp2d_psi(raxref + dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(3) = interp2d_psi(raxref, zaxref - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(4) = interp2d_psi(raxref, zaxref + dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         G_00r(j) = (bub(2) - bub(1))/dr
         G_00z(j) = (bub(4) - bub(3))/dz
     enddo
@@ -2643,16 +2643,16 @@ contains
         enddo
 
         do j=1, nteta
-            psicorr(j) = interp2d_psi(rbref(j), zbref(j), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+            psicorr(j) = interp2d_psi(rbref(j), zbref(j), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         enddo
 
         x1 = sum(psicorr)/(nteta + 0.) !average psi on the boundary
 
 ! Derivative at ref axis
-        bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+        bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         x2 = (bub(2) - bub(1))/dr ! dPsi/dr
         x3 = (bub(4) - bub(3))/dz ! dPsi/dz
 
@@ -2759,8 +2759,8 @@ contains
 
     rax = raxp
     zax = zaxp
-    iaxis = closest_index(rax, r(1), dr)
-    jaxis = closest_index(zax, z(1), dz)
+    iaxis = closest_index(rax, Rrect(1), dr)
+    jaxis = closest_index(zax, Zrect(1), dz)
     iax = iaxis
     jax = jaxis
 
@@ -2784,13 +2784,13 @@ contains
 
     do j=1, nactive
         do k=1, nteta
-            G_00(j, k) = interp2d_psi(rbref(k), zbref(k), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+            G_00(j, k) = interp2d_psi(rbref(k), zbref(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         enddo
         G_00c(j) = sum(G_00(j, 1:nteta))/(0. + nteta)
-        bub(1) = interp2d_psi(raxref - dr/2., zaxref, r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(2) = interp2d_psi(raxref + dr/2., zaxref, r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(3) = interp2d_psi(raxref, zaxref - dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
-        bub(4) = interp2d_psi(raxref, zaxref + dz/2., r(1:nr), z(1:nz), greeni(1:nr, 1:nz, j))
+        bub(1) = interp2d_psi(raxref - dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(2) = interp2d_psi(raxref + dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(3) = interp2d_psi(raxref, zaxref - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
+        bub(4) = interp2d_psi(raxref, zaxref + dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         G_00r(j) = (bub(2) - bub(1))/dr
         G_00z(j) = (bub(4) - bub(3))/dz
     enddo
@@ -2829,16 +2829,16 @@ contains
         enddo
 
         do j=1, nteta
-            psicorr(j) = interp2d_psi(rbref(j), zbref(j), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+            psicorr(j) = interp2d_psi(rbref(j), zbref(j), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         enddo
 
         x1 = sum(psicorr)/(nteta + 0.) ! average psi on the boundary
 
 ! Derivative at ref axis
-        bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+        bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(4) = interp2d_psi(raxref, zaxref + 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         x2 = (bub(2) - bub(1))/dr ! dPsi/dr
         x3 = (bub(4) - bub(3))/dz ! dPsi/dz
 
@@ -2931,8 +2931,8 @@ contains
 
     rax = raxp
     zax = zaxp
-    iaxis = closest_index(rax, r(1), dr)
-    jaxis = closest_index(zax, z(1), dz)
+    iaxis = closest_index(rax, Rrect(1), dr)
+    jaxis = closest_index(zax, Zrect(1), dz)
     iax = iaxis
     jax = jaxis
 
@@ -2944,7 +2944,7 @@ contains
         anglr(i) = pol_angle(rax, zax, r_cond(nactive + i), z_cond(nactive + i))
 ! Find true axis
         do j=1, nteta
-            bub(2) = interp2d_psi(rbndp(j), zbndp(j), r(1:nr), z(1:nz), greeni(1:nr, 1:nz, nactive + i))
+            bub(2) = interp2d_psi(rbndp(j), zbndp(j), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, nactive + i))
             do k=1, n_fourier_restab_boundary
                 G_00c(j, k) = G_00c(j, k) + cos(k*anglr(i))*bub(2)
                 G_00s(j, k) = G_00s(j, k) + sin(k*anglr(i))*bub(2)
@@ -2970,7 +2970,7 @@ contains
         psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
         call compound_psi
         do j=1, nteta
-            psicorr(j) = interp2d_psi(rbndp(j), zbndp(j), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+            psicorr(j) = interp2d_psi(rbndp(j), zbndp(j), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         enddo
 
         x1 = sum(psicorr)/(nteta + 0.)
@@ -3052,8 +3052,8 @@ contains
 
     rax = raxp
     zax = zaxp
-    iaxis = closest_index(rax, r(1), dr)
-    jaxis = closest_index(zax, z(1), dz)
+    iaxis = closest_index(rax, Rrect(1), dr)
+    jaxis = closest_index(zax, Zrect(1), dz)
     iax = iaxis
     jax = jaxis
 
@@ -3061,24 +3061,24 @@ contains
     do i=1, npassive
         anglr(i) = pol_angle(rax, zax, r_cond(nactive + i), z_cond(nactive + i))
 ! Find true axis
-        xub(1) = r(iax-1)
-        xub(2) = r(iax)
-        xub(3) = r(iax + 1)
-        xub(4) = r(iax)
-        xub(5) = r(iax)
-        xub(6) = r(iax-1)
-        xub(7) = r(iax-1)
-        xub(8) = r(iax + 1)
-        xub(9) = r(iax + 1)
-        yub(1) = z(jax)
-        yub(2) = z(jax)
-        yub(3) = z(jax)
-        yub(4) = z(jax-1)
-        yub(5) = z(jax + 1)
-        yub(6) = z(jax-1)
-        yub(7) = z(jax + 1)
-        yub(8) = z(jax-1)
-        yub(9) = z(jax + 1)
+        xub(1) = Rrect(iax-1)
+        xub(2) = Rrect(iax)
+        xub(3) = Rrect(iax + 1)
+        xub(4) = Rrect(iax)
+        xub(5) = Rrect(iax)
+        xub(6) = Rrect(iax-1)
+        xub(7) = Rrect(iax-1)
+        xub(8) = Rrect(iax + 1)
+        xub(9) = Rrect(iax + 1)
+        yub(1) = Zrect(jax)
+        yub(2) = Zrect(jax)
+        yub(3) = Zrect(jax)
+        yub(4) = Zrect(jax-1)
+        yub(5) = Zrect(jax + 1)
+        yub(6) = Zrect(jax-1)
+        yub(7) = Zrect(jax + 1)
+        yub(8) = Zrect(jax-1)
+        yub(9) = Zrect(jax + 1)
         bub(1) = greeni(iax - 1, jax    , nactive + i)
         bub(2) = greeni(iax    , jax    , nactive + i)
         bub(3) = greeni(iax + 1, jax    , nactive + i)
@@ -3122,10 +3122,10 @@ contains
         call find_new_axis_part1
         dum1 = C_00r*S_00z - C_00z*S_00r
 
-        bub(1) = interp2d_psi(raxp + dr, zaxp, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(2) = interp2d_psi(raxp - dr, zaxp, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(3) = interp2d_psi(raxp, zaxp + dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
-        bub(4) = interp2d_psi(raxp, zaxp - dz, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+        bub(1) = interp2d_psi(raxp + dr, zaxp, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(2) = interp2d_psi(raxp - dr, zaxp, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(3) = interp2d_psi(raxp, zaxp + dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+        bub(4) = interp2d_psi(raxp, zaxp - dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
 
         xub(1) = (bub(1) - bub(2))/(2.*dr)
         yub(1) = (bub(3) - bub(4))/(2.*dz)
@@ -3283,9 +3283,9 @@ contains
 
     iaxis = iax
     jaxis = jax
-    call nine_point_regression(r(iax), z(jax), ppx, derivpsi, psiaxis)
+    call nine_point_regression(Rrect(iax), Zrect(jax), ppx, derivpsi, psiaxis)
 
-    rax = ppx(1)  !r(iaxis)
+    rax = ppx(1) !r(iaxis)
     zax = ppx(2) !z(jaxis)
     trax = rax
     tzax = zax
@@ -3339,10 +3339,10 @@ contains
         nval = ferromag(iferro)%mhrelation%nvalues
 ! Construct vacuum field
         do j=1, iii
-            x1 = interp2d_psi(ferromag(iferro)%position%r(j) + dr/2, ferromag(iferro)%position%z(j), r, z, psirz)
-            x2 = interp2d_psi(ferromag(iferro)%position%r(j) - dr/2, ferromag(iferro)%position%z(j), r, z, psirz)
-            x3 = interp2d_psi(ferromag(iferro)%position%r(j), ferromag(iferro)%position%z(j) + dz/2, r, z, psirz)
-            x4 = interp2d_psi(ferromag(iferro)%position%r(j), ferromag(iferro)%position%z(j) - dz/2, r, z, psirz)
+            x1 = interp2d_psi(ferromag(iferro)%position%r(j) + dr/2, ferromag(iferro)%position%z(j), Rrect, Zrect, psirz)
+            x2 = interp2d_psi(ferromag(iferro)%position%r(j) - dr/2, ferromag(iferro)%position%z(j), Rrect, Zrect, psirz)
+            x3 = interp2d_psi(ferromag(iferro)%position%r(j), ferromag(iferro)%position%z(j) + dz/2, Rrect, Zrect, psirz)
+            x4 = interp2d_psi(ferromag(iferro)%position%r(j), ferromag(iferro)%position%z(j) - dz/2, Rrect, Zrect, psirz)
 
             z1(1) = -2./(x1 + x2)*(x1 - x2)/dr ! Bz=-1/r dpsi/dr
             z2(1) =  2./(x1 + x2)*(x3 - x4)/dz ! Br=1/r dpsi/dz
@@ -3383,9 +3383,9 @@ contains
             do iferro=1, nferromag
                 iii = ferromag(iferro)%position%npoints
                 do j=1, iii
-                    d = abs(r(ii) - ferromag(iferro)%position%r(j)) + abs(z(ii) - ferromag(iferro)%position%z(j))
+                    d = abs(Rrect(ii) - ferromag(iferro)%position%r(j)) + abs(Zrect(ii) - ferromag(iferro)%position%z(j))
                    if (d > 0) then
-                       psiferro(ii, jj) = psiferro(ii, jj) + muvac/GPI*green_function(r(ii), z(jj), ferromag(iferro)%position%r(j), ferromag(iferro)%position%z(j))*ferromag(iferro)%position%current(j)
+                       psiferro(ii, jj) = psiferro(ii, jj) + muvac/GPI*green_function(Rrect(ii), Zrect(jj), ferromag(iferro)%position%r(j), ferromag(iferro)%position%z(j))*ferromag(iferro)%position%current(j)
                    endif
                enddo
            enddo
@@ -3443,8 +3443,8 @@ contains
                     z_xpoint(i) = pos_xpoint(2)
                     if ( (abs(ddipsi(1)) + abs(ddipsi(2))) <= err_find_oxpoints_derivs) then
 ! Check if point outside of domain
-                        if ((pos_xpoint(1) > r(nr2) - dr) .or. (pos_xpoint(1) < r(1) + dr) .or.  &
-                            (pos_xpoint(2) > z(nz2) - dz) .or. (pos_xpoint(2) < z(1) + dz)) then
+                        if ((pos_xpoint(1) > Rrect(nr2) - dr) .or. (pos_xpoint(1) < Rrect(1) + dr) .or.  &
+                            (pos_xpoint(2) > Zrect(nz2) - dz) .or. (pos_xpoint(2) < Zrect(1) + dz)) then
 ! xpoint doesnt exist anymore
                             r_xpoint(i) = 1.e6
                             z_xpoint(i) = 0.
@@ -3464,8 +3464,8 @@ contains
                         z_xpoint(i) = 0.
                         EXIT
                     endif
-                    if ((pos_xpoint(1) > r(nr2) - dr) .or. (pos_xpoint(1) < r(1) + dr) .or.  &
-                        (pos_xpoint(2) > z(nz2) - dz) .or. (pos_xpoint(2) < z(1) + dz)) then
+                    if ((pos_xpoint(1) > Rrect(nr2) - dr) .or. (pos_xpoint(1) < Rrect(1) + dr) .or.  &
+                        (pos_xpoint(2) > Zrect(nz2) - dz) .or. (pos_xpoint(2) < Zrect(1) + dz)) then
 ! xpoint doesn't exist anymore
                         r_xpoint(i) = 1.e6
                         z_xpoint(i) = 0.
@@ -3478,12 +3478,12 @@ contains
 ! Scan the boundary to find new x-points
         do j=2, nz1, nz1-2
             do i=2, nr1
-                call nine_point_regression(r(i), z(j), pos_xpoint, ddipsi, x1)
+                call nine_point_regression(Rrect(i), Zrect(j), pos_xpoint, ddipsi, x1)
                 x5 = (ddipsi(5)**2 - ddipsi(3)*ddipsi(4))
-                if ((pos_xpoint(1) >= r(i) - dr) .and.  &
-                    (pos_xpoint(1) <= r(i) + dr) .and.  &
-                    (pos_xpoint(2) >= z(j) - dz) .and.  &
-                    (pos_xpoint(2) <= z(j) + dz) .and.  &
+                if ((pos_xpoint(1) >= Rrect(i) - dr) .and.  &
+                    (pos_xpoint(1) <= Rrect(i) + dr) .and.  &
+                    (pos_xpoint(2) >= Zrect(j) - dz) .and.  &
+                    (pos_xpoint(2) <= Zrect(j) + dz) .and.  &
                     (x5 >= 0.)) then
 
                     n_of_xpoints = min(max_xpoints, n_of_xpoints + 1)
@@ -3495,12 +3495,12 @@ contains
 
         do i=2, nr1, nr1-2
             do j=2, nz1
-                call nine_point_regression(r(i), z(j), pos_xpoint, ddipsi, x1)
+                call nine_point_regression(Rrect(i), Zrect(j), pos_xpoint, ddipsi, x1)
                 x5 = (ddipsi(5)**2 - ddipsi(3)*ddipsi(4))
-                if ((pos_xpoint(1) >= r(i) - dr) .and.  &
-                    (pos_xpoint(1) <= r(i) + dr) .and.  &
-                    (pos_xpoint(2) >= z(j) - dz) .and.  &
-                    (pos_xpoint(2) <= z(j) + dz) .and.  &
+                if ((pos_xpoint(1) >= Rrect(i) - dr) .and.  &
+                    (pos_xpoint(1) <= Rrect(i) + dr) .and.  &
+                    (pos_xpoint(2) >= Zrect(j) - dz) .and.  &
+                    (pos_xpoint(2) <= Zrect(j) + dz) .and.  &
                     (x5 >= 0.)) then
 
                     n_of_xpoints = min(max_xpoints, n_of_xpoints + 1)
@@ -3517,13 +3517,13 @@ contains
         n_of_xpoints = 0
         do j=2, nz1
             do i=2, nr1
-                call nine_point_regression(r(i), z(j), pos_xpoint, ddipsi, x1)
+                call nine_point_regression(Rrect(i), Zrect(j), pos_xpoint, ddipsi, x1)
                 x5 = (ddipsi(5)**2 - ddipsi(3)*ddipsi(4))
 
-                if ((pos_xpoint(1) >= r(i) - dr) .and.  &
-                    (pos_xpoint(1) <= r(i) + dr) .and.  &
-                    (pos_xpoint(2) >= z(j) - dz) .and.  &
-                    (pos_xpoint(2) <= z(j) + dz) .and.  &
+                if ((pos_xpoint(1) >= Rrect(i) - dr) .and.  &
+                    (pos_xpoint(1) <= Rrect(i) + dr) .and.  &
+                    (pos_xpoint(2) >= Zrect(j) - dz) .and.  &
+                    (pos_xpoint(2) <= Zrect(j) + dz) .and.  &
                     (x5 >= 0.)) then
 
                     if (abs(pos_xpoint(1) - rax) > 2.*dr .or. abs(pos_xpoint(2) - zax) > 2.*dz) then
@@ -3573,13 +3573,13 @@ contains
 
 ! Ignore limiter if use_limiter_astra is 0, da trasferirsi in init
     if (use_limiter_yesno == 0) then
-        limiterR = r(nr1)
-        limiterZ = z(nz1)
+        limiterR = Rrect(nr1)
+        limiterZ = Zrect(nz1)
     endif
 
 ! Calculate limiter flux
     do i=1, nlimiter
-        psi_limp(i) = interp2d_psi(limiterR(i), limiterZ(i), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+        psi_limp(i) = interp2d_psi(limiterR(i), limiterZ(i), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
     enddo
 
     if (n_of_xpoints == 0) then ! No x-points, take largest limiter flux
@@ -3598,12 +3598,12 @@ contains
 
 ! First pass, remove X-points behind the limiter area
         do i=1, n_of_xpoints
-            j = closest_index(r_xpoint(i), r(1), dr)
-            k = closest_index(z_xpoint(i), z(1), dz)
+            j = closest_index(r_xpoint(i), Rrect(1), dr)
+            k = closest_index(z_xpoint(i), Zrect(1), dz)
             if (zlimpotential(j, k) == 0) then
                 psi_xpoint(i) = -1.e6
             else
-                psi_xpoint(i) = interp2d_psi(r_xpoint(i), z_xpoint(i), r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+                psi_xpoint(i) = interp2d_psi(r_xpoint(i), z_xpoint(i), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             endif
         enddo
 
@@ -3686,8 +3686,8 @@ contains
 ! sweep from axis to exterior and fill in the current
 !start from axis position
 
-        i1 = floor_index(rax, r(1), dr)
-        j1 = floor_index(zax, z(1), dz)
+        i1 = floor_index(rax, Rrect(1), dr)
+        j1 = floor_index(zax, Zrect(1), dz)
 
         SELECT CASE(quadrant)
         CASE(1)
@@ -3722,7 +3722,7 @@ contains
                 stop
             endif
 
-            dumc(i, j) = fill_in_current(r(i), nrho2d, ppp_2d, ffp_2d, u_n(i, j))
+            dumc(i, j) = fill_in_current(Rrect(i), nrho2d, ppp_2d, ffp_2d, u_n(i, j))
             iconvex(i, j) = 1.
             i_griddo_j = i_griddo_j + 1
             internal_griddo(i_griddo_j, 1) = i
@@ -3797,10 +3797,10 @@ contains
         je2 = 0.
         je3 = 0.
         je4 = 0.
-        z11 = r(i1-1)*(1 - t1) + r(i1)*t1
-        z12 = r(i1)
-        z13 = r(i1 + 1)*(1 - t3) + r(i1)*t3
-        z14 = r(i1)
+        z11 = Rrect(i1-1)*(1 - t1) + Rrect(i1)*t1
+        z12 = Rrect(i1)
+        z13 = Rrect(i1 + 1)*(1 - t3) + Rrect(i1)*t3
+        z14 = Rrect(i1)
         if (t1 > 0.) je1 = fill_in_current(z11, nrho2d, ppp_2d, ffp_2d, 1.d0)
         if (t2 > 0.) je2 = fill_in_current(z12, nrho2d, ppp_2d, ffp_2d, 1.d0)
         if (t3 > 0.) je3 = fill_in_current(z13, nrho2d, ppp_2d, ffp_2d, 1.d0)
@@ -3849,8 +3849,8 @@ contains
     t3 = 0.
     do j=1, nz2
          do i=1, nr2
-            t1 = t1 + r(i)**2*jrz(i, j)*darea
-            t2 = t2 + z(j)*jrz(i, j)*darea
+            t1 = t1 + Rrect(i)**2*jrz(i, j)*darea
+            t2 = t2 + Zrect(j)*jrz(i, j)*darea
             t3 = t3 + jrz(i, j)*darea
         enddo
     enddo
@@ -3874,7 +3874,7 @@ contains
     jrhoteta(1:nrho, nteta+1) = jrhoteta(1:nrho, 1)
     do j=1, nz2
         do i=1, nr2
-            jrz(i, j) = curinterp(r(i), z(j), jrhoteta(1:nrho, 1:nteta+1),  &
+            jrz(i, j) = curinterp(Rrect(i), Zrect(j), jrhoteta(1:nrho, 1:nteta+1),  &
                 rho(1:nrho, 1:nteta+1), teta(1:nteta+1), raxp, zaxp, nrho, nteta+1)
         enddo
     enddo

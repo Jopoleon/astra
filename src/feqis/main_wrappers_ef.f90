@@ -89,7 +89,7 @@ subroutine solve_gse2d_fbe_full_feqis(j_init)
 
 use errors_params, only: err_find_psistab
 use feqis_circuit, only: nr, nz, nr2, nz2, psiextrz, redo_bnd, &
-    r, z, dr, dz, dr_factor_init, dz_factor_init, rax, zax, raxp, zaxp, &
+    Rrect, Zrect, dr, dz, dr_factor_init, dz_factor_init, rax, zax, raxp, zaxp, &
     trax, tzax, iaxis, jaxis, psistabr, psistabz, &
     restab_axis_with_fourier_wall, restab_boundary_with_fourier_wall, & !doesnt work well
     restab_F_function_full_fonfit, restab_F_function_full_fonfit_xpoints, restab_F_function_full_currents, &
@@ -118,10 +118,10 @@ CASE(-1) ! 1 turn only, linearized solution
 
 CASE(0) ! full static convergent solution with given currents
 ! Start iterations to find self-consistent solution
-    iaxis = closest_index(raxp, r(1), dr)
-    jaxis = closest_index(zaxp, z(1), dz)
-    rax = r(iaxis)
-    zax = z(jaxis)
+    iaxis = closest_index(raxp, Rrect(1), dr)
+    jaxis = closest_index(zaxp, Zrect(1), dz)
+    rax = Rrect(iaxis)
+    zax = Zrect(jaxis)
     raxold = rax
     zaxold = zax
     raxoldo = rax
@@ -205,10 +205,10 @@ CASE(0) ! full static convergent solution with given currents
 
 CASE(101) ! refit_mode=101: only vertical stab (doesn't work well)
 !start iterations to find self-consistent solution
-    iaxis = closest_index(raxp, r(1), dr)
-    jaxis = closest_index(zaxp, z(1), dz)
-    rax = r(iaxis)
-    zax = z(jaxis)
+    iaxis = closest_index(raxp, Rrect(1), dr)
+    jaxis = closest_index(zaxp, Zrect(1), dz)
+    rax = Rrect(iaxis)
+    zax = Zrect(jaxis)
     raxold    = rax
     zaxold    = zax
     raxoldo   = rax
@@ -320,7 +320,7 @@ end subroutine solve_gse2d_fbe_full_feqis
 subroutine solve_gse2d_fbe_full_feqis_1turn(j_init, j_stab, raxold, zaxold)
 
 use feqis_circuit, only : nr2, nz2, iaxis, jaxis, &
-    r, z, dr, dz, rax, zax, raxp, zaxp, &
+    Rrect, Zrect, dr, dz, rax, zax, raxp, zaxp, &
     iplasma, jrz, psirz, psiextrz, psiplasrz, psistabr, psistabz, &
     nine_point_coeffs_only, boundary, interp_j_fromrhotorz, &
     find_new_axis_part1, find_psi_boundary, new_jrz_feqis, &
@@ -347,10 +347,10 @@ if (j_init == 0) then
     jrz = jrz/curr*iplasma
     rax = raxp
     zax = zaxp
-    iaxis = closest_index(rax, r(1), dr)
-    jaxis = closest_index(zax, z(1), dz)
-    rax = r(iaxis)
-    zax = z(jaxis)
+    iaxis = closest_index(rax, Rrect(1), dr)
+    jaxis = closest_index(zax, Zrect(1), dz)
+    rax = Rrect(iaxis)
+    zax = Zrect(jaxis)
     write(*, *) raxp, zaxp, rax, zax
 endif
 
@@ -385,7 +385,7 @@ if (j_stab == 1) then
     call compound_psi
     do i=1, nr2
         do j=1, nz2
-            psirz(i, j) = psirz(i, j) + psistabr*r(i)**2 + psistabz*z(j) ! Total flux
+            psirz(i, j) = psirz(i, j) + psistabr*Rrect(i)**2 + psistabz*Zrect(j) ! Total flux
         enddo
     enddo
     call find_new_axis_part1
@@ -774,7 +774,7 @@ use fft_mod_eff, only: sintable, costable
 use feqis_circuit, only: nr, nr1, nr2, nz, nz1, nz2, &
     nactive, npassive, ncoils, nconduc, nlimiter, nblocks, ngbnd, &
     lim_minr, lim_maxr, lim_minz, lim_maxz, &
-    rmin, rmax, zmin, zmax, r, z, dr, dz, rcomp, zcomp, r_cond, z_cond, &
+    rmin, rmax, zmin, zmax, Rrect, Zrect, dr, dz, rcomp, zcomp, r_cond, z_cond, &
     rcoil, zcoil, drcoil, dzcoil, anglecoil, anglehcoil, mequivalence, &
     limiterr, limiterz, alpsep, curconduc, resconduc, indconduc, &
     zlimpotential, green_bnd_f, nferromag, psiplasmatoconduc, &
@@ -793,34 +793,21 @@ implicit none
 type(type_ferromag), dimension(:), allocatable :: ferromag
 integer :: i, j, ii, jj, nferrosub, imagvalues
 integer, dimension(:), allocatable :: n_sames
-character(len=80) :: fname
+character(len=80) :: fname, dummy
 
 fname = 'exp/cnf/machine_description_out.'//trim(machine)
 open(32, file=TRIM(fname))
-read(32, *) nr2, nz2
-read(32, *) rmin
-read(32, *) rmax
-read(32, *) zmin
-read(32, *) zmax
+read(32, '(////A)') dummy
 read(32, *) alpsep
-nr1 = nr2 - 1
-nz1 = nz2 - 1
+
 nr  = nr1 - 1
 nz  = nz1 - 1
-allocate(r(nr2))
-allocate(z(nz2))
 allocate(rcomp(nr))
 allocate(zcomp(nz))
-do i=1, nr2
-    r(i) = rmin + (i - 1.)*(rmax - rmin)/nr1     ! computational domain is r(2:nr + 1), boundaries are r(1) and r(nr + 2)
-enddo
-do i=1, nz2
-    z(i) = zmin + (i - 1.)*(zmax - zmin)/nz1
-enddo
-rcomp(1:nr) = r(2:nr1)
-zcomp(1:nz) = z(2:nz1)
-dr = r(2) - r(1)
-dz = z(2) - z(1)
+rcomp(1:nr) = Rrect(2:nr1)
+zcomp(1:nz) = Zrect(2:nz1)
+dr = Rrect(2) - Rrect(1)
+dz = Zrect(2) - Zrect(1)
 
 !some allocate
 allocate(sintable(nz, nz))
@@ -1199,7 +1186,7 @@ use pi_vars, only: GPI, GPI2
 use imas_ids, only: type_equilibrium
 use feqis_circuit, only: nr2, nz2, nrho, nteta, &
     psplex, psiaxis, psibnd, psirhoteta, psirz, &
-    r, z, betapol, li3, li_aug, iplasma
+    Rrect, Zrect, betapol, li3, li_aug, iplasma
 use transfer_functions, only: rpbez, zpbez, t2dbez, &
     rinbez, routbez, rmin2dbez, vbez, areatbez, perimbez, surfbez, &
     kbez, shifbez, triaubez, trialbez, qbez, phibez, &
@@ -1234,9 +1221,9 @@ equil_out%coord_sys%jphi          (1:nrho, 1:nteta) = jrhobez(1:nrho, 1:nteta)
 
 equil_out%eqgeometry%rectgrid%npointsr = nr2
 equil_out%eqgeometry%rectgrid%npointsz = nz2
-if (allocated(r)) then
-    equil_out%eqgeometry%rectgrid%r2d(1:nr2) = r(1:nr2)
-    equil_out%eqgeometry%rectgrid%z2d(1:nz2) = z(1:nz2)
+if (allocated(Rrect)) then
+    equil_out%eqgeometry%rectgrid%r2d(1:nr2) = Rrect(1:nr2)
+    equil_out%eqgeometry%rectgrid%z2d(1:nz2) = Zrect(1:nz2)
     equil_out%eqgeometry%rectgrid%psirz2d(1:nr2, 1:nz2) = psirz(1:nr2, 1:nz2)
     equil_out%eqgeometry%rectgrid%psi_axis     = psiaxis
     equil_out%eqgeometry%rectgrid%psi_boundary = psibnd
@@ -1286,7 +1273,7 @@ subroutine convert_boundary_to_pbe
 use pi_vars, only: GPI2
 use feqis_circuit, only: nr, nr2, nz, nteta, nbnd, i_dim5, iaxis, jaxis, &
     teta, dteta, raus, rinner, zbot, ztop, &
-    r, z, dr, dz, rax, zax, raxp, zaxp, rbnd, zbnd, rbndp, zbndp, &
+    Rrect, Zrect, dr, dz, rax, zax, raxp, zaxp, rbnd, zbnd, rbndp, zbndp, &
     psiaxis, psibnd, psiaxisp, psibndp, psirz
 use feqis_tools, only: pol_angle, interp2d_psi
 
@@ -1311,11 +1298,11 @@ do i=iaxis, nr2
 enddo
 
 if (psirz(k, j) == psibnd) then
-    rbnd(1) = r(k)
+    rbnd(1) = Rrect(k)
 else
-    rbnd(1) = r(k) - (psirz(k, j) - psibnd)/(psirz(k, j) - psirz(k-1, j))*dr
+    rbnd(1) = Rrect(k) - (psirz(k, j) - psibnd)/(psirz(k, j) - psirz(k-1, j))*dr
 endif
-zbnd(1) = z(j)
+zbnd(1) = Zrect(j)
 teta_fbe(1) = pol_angle(rax, zax, rbnd(1), zbnd(1))
 
 theta_loop: do i=2, nteta
@@ -1340,7 +1327,7 @@ theta_loop: do i=2, nteta
     endif
     t1 = rax + x1*cos(teta_fbe(i))
     t2 = zax + x1*sin(teta_fbe(i))
-    t3 = interp2d_psi(t1, t2, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+    t3 = interp2d_psi(t1, t2, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
 
     if (t3 == psibnd) then
         rbnd(i) = t1
@@ -1349,7 +1336,7 @@ theta_loop: do i=2, nteta
         do
             z1 = rax + (x1 - dx)*cos(teta_fbe(i))
             z2 = zax + (x1 - dx)*sin(teta_fbe(i))
-            z3 = interp2d_psi(z1, z2, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+            z3 = interp2d_psi(z1, z2, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             if (z3 < psibnd) then
                 dx = 1.1*dx
             else
@@ -1383,7 +1370,7 @@ theta_loop: do i=2, nteta
             endif
             z1 = rax + x2*cos(teta_fbe(i))
             z2 = zax + x2*sin(teta_fbe(i))
-            z3 = interp2d_psi(z1, z2, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+            z3 = interp2d_psi(z1, z2, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             if (z3 > psibnd) then
                 if (j4 == 1) then
                     rbnd(i) = z1
@@ -1425,7 +1412,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
 use pi_vars, only: GPI2
 use feqis_circuit, only: nr, nr2, nz, i_dim5, iaxis, jaxis, &
     teta, dteta, raus, rinner, zbot, ztop, &
-    r, z, dr, dz, rax, zax,  &
+    Rrect, Zrect, dr, dz, rax, zax,  &
     psiaxis, psibnd, psirz
 use feqis_tools, only: pol_angle, interp2d_psi
 
@@ -1457,11 +1444,11 @@ do i=iaxis, nr2
 enddo
 
 if (psirz(k, j) == psibnd) then
-    rbnd(1) = r(k)
+    rbnd(1) = Rrect(k)
 else
-    rbnd(1) = r(k) - (psirz(k, j) - psibnd)/(psirz(k, j) - psirz(k-1, j))*dr
+    rbnd(1) = Rrect(k) - (psirz(k, j) - psibnd)/(psirz(k, j) - psirz(k-1, j))*dr
 endif
-zbnd(1) = z(j)
+zbnd(1) = Zrect(j)
 teta_fbe(1) = pol_angle(rax, zax, rbnd(1), zbnd(1))
 
 theta_loop: do i=2, nteta
@@ -1486,7 +1473,7 @@ theta_loop: do i=2, nteta
     endif
     t1 = rax + x1*cos(teta_fbe(i))
     t2 = zax + x1*sin(teta_fbe(i))
-    t3 = interp2d_psi(t1, t2, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+    t3 = interp2d_psi(t1, t2, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
 
     if (t3 == psibnd) then
         rbnd(i) = t1
@@ -1495,7 +1482,7 @@ theta_loop: do i=2, nteta
         do
             z1 = rax + (x1 - dx)*cos(teta_fbe(i))
             z2 = zax + (x1 - dx)*sin(teta_fbe(i))
-            z3 = interp2d_psi(z1, z2, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+            z3 = interp2d_psi(z1, z2, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             if (z3 < psibnd) then
                 dx = 1.1*dx
             else
@@ -1529,7 +1516,7 @@ theta_loop: do i=2, nteta
             endif
             z1 = rax + x2*cos(teta_fbe(i))
             z2 = zax + x2*sin(teta_fbe(i))
-            z3 = interp2d_psi(z1, z2, r(1:nr), z(1:nz), psirz(1:nr, 1:nz))
+            z3 = interp2d_psi(z1, z2, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             if (z3 > psibnd) then
                 if (j4 == 1) then
                     rbnd(i) = z1
@@ -1556,7 +1543,7 @@ subroutine solve_gs2d(g)
 
 use pi_vars, only: mu0
 use feqis_circuit, only: nr, nr1, nr2, nz, nz1, nz2, i_dim2, &
-    r, dr, dz, rcomp, jrz
+    Rrect, dr, dz, rcomp, jrz
 use fft_mod_eff, only: costable
 use feqis_tools, only: discrete_sine_transform, solve_tridiag_fbe
 
@@ -1572,12 +1559,12 @@ save A, B, C, j_init, z_fourier
 
 do j=1, nz2
     do i=1, nr2
-        rhs(i, j) = -mu0*r(i)*jrz(i, j)
+        rhs(i, j) = -mu0*Rrect(i)*jrz(i, j)
     enddo
 enddo
 
-r1m_1 = r(  2)/dr**2/((r(  1) + r(  2))/2.)
-r2m_1 = r(nr1)/dr**2/((r(nr1) + r(nr2))/2.)
+r1m_1 = Rrect(  2)/dr**2/((Rrect(  1) + Rrect(  2))/2.)
+r2m_1 = Rrect(nr1)/dr**2/((Rrect(nr1) + Rrect(nr2))/2.)
 
 rhs(2:nr1,   2) = rhs(2:nr1,   2) - g(2:nr1,   1)/dz**2
 rhs(2:nr1, nz1) = rhs(2:nr1, nz1) - g(2:nr1, nz2)/dz**2
@@ -1602,13 +1589,13 @@ if (j_init == 0) then
         C(i) =  rcomp(i)/x1/dr**2
     enddo
     i = 1
-    x1 = 0.5*(rcomp(  i) + r(1))
+    x1 = 0.5*(rcomp(  i) + Rrect(1))
     x2 = 0.5*(rcomp(i+1) + rcomp(i))
     B(i) = -rcomp(i)/dr**2 * (1./x2 + 1./x1)
     A(i) =  rcomp(i)/x2/dr**2
     i = nr
-    x1 = 0.5*(rcomp(i) + rcomp(i-1))
-    x2 = 0.5*(r(nr2)   + rcomp(i)  )
+    x1 = 0.5*(rcomp(i)   + rcomp(i-1))
+    x2 = 0.5*(Rrect(nr2) + rcomp(i)  )
     B(i) = -rcomp(i)/dr**2 * (1./x2 + 1./x1)
     C(i) =  rcomp(i)/x1/dr**2
     j_init = 1
