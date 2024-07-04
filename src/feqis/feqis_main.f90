@@ -44,6 +44,7 @@ if (ifplasma == 1) then
     allocate(equil_out%eqgeometry%rectgrid%r2d(nr2))
     allocate(equil_out%eqgeometry%rectgrid%z2d(nz2))
     allocate(equil_out%eqgeometry%rectgrid%psirz2d(nr2, nz2))
+    allocate(equil_out%eqgeometry%rectgrid%fdia2d(nr2, nz2))
 
     allocate(equil_out%coord_sys%position%r(nrplasma, nteta))
     allocate(equil_out%coord_sys%position%z(nrplasma, nteta))    

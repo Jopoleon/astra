@@ -122,9 +122,9 @@ if (ifbey == 0) then
     epsg_tol = 1.E-8
     key_no_startz = 0
     key_no_refits = 0
-    INQUIRE(FILE=trim(nml_file), EXIST=file_existence)
+    INQUIRE(FILE=TRIM(nml_file), EXIST=file_existence)
     if (file_existence) then
-        open(53, FILE=nml_file)
+        open(53, FILE=TRIM(nml_file))
         read(53, nml=equil_settings)
         close(53)
     endif
@@ -614,6 +614,8 @@ iter_loop: do jiter=1, miter_ext
     volum_sp = volum_sp/volum_sp(nr_equ)*volume
 
 enddo iter_loop
+
+call ctr2rz
 
 deallocate(equil_in%profiles_1d%psi)
 deallocate(equil_in%profiles_1d%pprime)

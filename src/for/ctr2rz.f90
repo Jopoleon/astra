@@ -251,3 +251,88 @@ enddo
 
 return
 end SUBROUTINE ctr2rz_fun
+
+!----------------------------------------------------------
+SUBROUTINE ctr2rz
+! 2D interpolation of Psi, Fdia from contours(rho, theta) to Cartesian R, z 2D-grid
+  
+use parameters_a2equil, only: equil_now
+
+implicit none
+
+integer :: jr, jz, irho, jleft, jrho, n_rho, n_the, nr_rect, nz_rect
+integer, dimension(2) :: jmin, nrho_the
+double precision :: norm, tht, Rpos, Zpos, Rmag, Zmag
+double precision, allocatable, dimension(:) :: Rctr1, Zctr1
+double precision, allocatable, dimension(:, :) :: Rctr, Zctr, rdist, zdist
+double precision, dimension(3) :: norm3, pf3, rb3
+
+! Use reference arounf Rmag, Zmag
+nrho_the = SHAPE(equil_now%coord_sys%position%r)
+n_rho = nrho_the(1)
+n_the = nrho_the(2)
+nr_rect = SIZE(equil_now%eqgeometry%rectgrid%r2d)
+nz_rect = SIZE(equil_now%eqgeometry%rectgrid%z2d)
+if (.not. allocated(Rctr1)) then
+    allocate(Rctr1(n_the-1))
+    allocate(Zctr1(n_the-1))
+    allocate(Rctr(n_rho-1, n_the-1), rdist(n_rho-1, n_the-1), &
+             Zctr(n_rho-1, n_the-1), zdist(n_rho-1, n_the-1))
+endif
+ 
+Rmag = equil_now%coord_sys%position%r(1, 1)
+Zmag = equil_now%coord_sys%position%z(1, 1)
+Rctr = equil_now%coord_sys%position%r(2:, :n_the-1) - Rmag
+Zctr = equil_now%coord_sys%position%z(2:, :n_the-1) - Zmag
+
+! Biquadratic interpolation
+write(6, *) 'Biquadratic interpolation'
+do jr=1, nr_rect
+    Rpos = equil_now%eqgeometry%rectgrid%r2d(jr) - Rmag
+    rdist = (Rctr - Rpos)**2
+    do jz=1, nz_rect
+        Zpos = equil_now%eqgeometry%rectgrid%z2d(jz) - Zmag
+        zdist = (Zctr - Zpos)**2
+        tht  = ATAN2(Zpos, Rpos)
+        norm = SQRT(Rpos**2 + Zpos**2)
+
+        jmin = MINLOC(rdist + zdist)
+        irho = jmin(1)
+        if (irho == 1) then
+            norm3(1) = 0.
+            Rctr1 = Rctr(1, :)
+            Zctr1 = Zctr(1, :)
+            CALL interp_norm(n_the - 1, Rctr1, Zctr1, tht, norm3(2))
+            Rctr1 = Rctr(2, :)
+            Zctr1 = Zctr(2, :)
+            CALL interp_norm(n_the - 1, Rctr1, Zctr1, tht, norm3(3))
+            pf3 = equil_now%profiles_1d%psi(1:3)
+            rb3 = equil_now%profiles_1d%F_dia(1:3)
+        else
+            if (irho == n_rho-1) then
+                jleft = n_rho - 3
+            else
+                jleft = irho - 1
+            endif
+            do jrho = 1, 3
+                Rctr1(:) = Rctr(jleft + jrho - 1, :)
+                Zctr1(:) = Zctr(jleft + jrho - 1, :)
+                CALL interp_norm(n_the - 1, Rctr1, Zctr1, tht, norm3(jrho))
+                pf3(jrho) = equil_now%profiles_1d%psi(jleft + jrho)
+                rb3(jrho) = equil_now%profiles_1d%F_dia(jleft + jrho)
+            enddo
+        endif
+        if ( (irho == n_rho-1) .and. (norm > norm3(3)) ) then
+!            f2d(jr, jz) = 2.*pf3(3) - pf3(2)
+         !linear extrapolation (for Rabbit, such that orbits outside of the last closed flux surface can be calculated.)
+            CALL lin_int(norm, norm3(2:3), pf3(2:3), equil_now%eqgeometry%rectgrid%psirz2d(jr, jz))
+            CALL lin_int(norm, norm3(2:3), rb3(2:3), equil_now%eqgeometry%rectgrid%fdia2d(jr, jz))
+        else
+            CALL quad_int(norm, norm3, pf3, equil_now%eqgeometry%rectgrid%psirz2d(jr, jz))
+            CALL quad_int(norm, norm3, rb3, equil_now%eqgeometry%rectgrid%fdia2d(jr, jz))
+        endif
+    enddo
+enddo
+
+return
+end SUBROUTINE ctr2rz
