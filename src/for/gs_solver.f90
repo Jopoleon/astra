@@ -29,7 +29,8 @@ use parameters_a2equil, only: GP, GP2, GP4, muvac, &
     murelax2, ydiff, ydiff2, max_iter, miter_ext, interp_routine, &
     interp_method_rect, epsf_tol, epss_tol, epsv_tol, epsg_tol, &
     key_no_startz, key_no_refits, equil_now
-use outcmn_inc, only: nml_file
+use outcmn_inc, only: nml_file, machine
+use parse_utils, only: json_intvar
 
 implicit none
 
@@ -56,7 +57,7 @@ double precision, intent(inout) :: ipl, volume
 
 logical :: file_existence
 integer :: i, j, n_theta, i_call_gsss, k, k1, key_start, keyplc, &
-    jiter, p, jveps
+    jiter, p, jveps, nr, nz
 double precision :: dum1r, R0, Z0, Fvacuum, dxrho_sp, dx, &
     phib, PSIb, deltaPSI, PSI0, phibm, phibl, IPLX, Vtemp, Veps, &
     zfuncb, errG, roc_sp, g2ediff, errght, ybound, Rmag, vtemp_counter
@@ -75,7 +76,7 @@ double precision, dimension(nr_equ) :: volum_in, PSI, psi_minus, PRESS, xrho_sp,
     Hout, Houtt, hin1, hin2, hout1, hout2, &
     G2tild1, Htild1, G2tild2, Htild2, G2corr2, Hcorr2, & 
     o_rot, i_temp, i_dens, i_mass
-character(len=80) :: fname
+character(len=120) :: f_json
 type(type_equilibrium) :: equil_in
 
 !----------------------------------------------------------------------
@@ -121,10 +122,9 @@ if (ifbey == 0) then
     epsg_tol = 1.E-8
     key_no_startz = 0
     key_no_refits = 0
-    fname = TRIM(nml_file)
-    INQUIRE(FILE=trim(fname), EXIST=file_existence)
+    INQUIRE(FILE=trim(nml_file), EXIST=file_existence)
     if (file_existence) then
-        open(53, FILE=fname)
+        open(53, FILE=nml_file)
         read(53, nml=equil_settings)
         close(53)
     endif
@@ -250,6 +250,12 @@ allocate(equil_in%eqgeometry%boundary%r(n_theta))
 allocate(equil_in%eqgeometry%boundary%z(n_theta))
 
 equil_in%eqgeometry%boundary%npoints = n_theta    !one periodic point
+
+! Allocate equil_now variables
+f_json = 'exp/cnf/' // trim(machine) // '_description_in.json'
+nr = json_intvar(TRIM(f_json), 'nR')
+nz = json_intvar(TRIM(f_json), 'nZ')
+call equil_allocate(nr, nz, nr_equ, n_theta)
 
 !Iteration cycle
 iter_loop: do jiter=1, miter_ext

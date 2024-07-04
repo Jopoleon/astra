@@ -12,8 +12,6 @@ contains
     use outcmn_inc, only: EXARNM, IFDFAX
     use char_manip, only: str_in_list
 
-    implicit none
-
     character(len=6), intent(in) :: XARNAM
 
     integer :: j
@@ -35,8 +33,6 @@ contains
     use outcmn_inc, only: EXARNM, IFDFAX
     use char_manip, only: str_in_list
 
-    implicit none
-
     character(len=6), intent(in) :: XARNAM
 
     integer :: j
@@ -54,8 +50,6 @@ contains
     SUBROUTINE set_vars(file_in, vars, nvars)
 
     use debugger, only: astra_stop
-
-    implicit none
 
     integer, parameter :: nunit=31, ndel=6
 
@@ -84,12 +78,72 @@ contains
     END SUBROUTINE set_vars
 
 !--------------------------------------------------
+    integer function json_intvar(f_json, str_in)
+
+    integer, parameter :: n_unit=32
+
+    character(len=*), intent(in) :: f_json, str_in
+
+    integer :: jpos_str, jpos_colon, jpos_comma, ios, j
+    character(len=120) :: line, string, str_val
+
+    string(:) = ' '
+    string = '"' // str_in // '"'
+    json_intvar = -100
+    open(n_unit, file=TRIM(f_json))
+    do
+        read(n_unit, '(A)', iostat=ios) line
+        if (ios < 0) EXIT
+        jpos_str = INDEX(line, TRIM(string))
+        if (jpos_str > 0) then
+            jpos_colon = INDEX(line(jpos_str:), ':')
+            jpos_comma = INDEX(line(jpos_str:), ',')
+            str_val = line(jpos_str + jpos_colon: jpos_str + jpos_comma) // char(0)
+            read(str_val, *) json_intvar
+            EXIT
+        endif
+    enddo
+    close(n_unit)
+
+    return
+    end function json_intvar
+
+!--------------------------------------------------
+    double precision function json_floatvar(f_json, str_in)
+
+    integer, parameter :: n_unit=32
+
+    character(len=*), intent(in) :: f_json, str_in
+
+    integer :: jpos_str, jpos_colon, jpos_comma, ios, j
+    character(len=120) :: line, string, str_val
+
+    string(:) = ' '
+    string = '"' // TRIM(str_in) // '"'
+    json_floatvar = -100.
+    open(n_unit, file=TRIM(f_json))
+    do
+        read(n_unit, '(A)', iostat=ios) line
+        if (ios < 0) EXIT
+        jpos_str = INDEX(line, TRIM(string))
+        if (jpos_str > 0) then
+            jpos_colon = INDEX(line(jpos_str:), ':')
+            jpos_comma = INDEX(line(jpos_str:), ',')
+            str_val = line(jpos_str + jpos_colon: jpos_str + jpos_comma) // char(0)
+            read(str_val, *) json_floatvar
+            EXIT
+        endif
+    enddo
+    close(n_unit)
+
+    return
+    end function json_floatvar
+
+!--------------------------------------------------
 ! Set variable list from file parsing
     SUBROUTINE assign_val(file_in, narr, arr_in, arr_out, n_dim_next)
 
     use debugger, only: markloc, astra_stop
-
-    implicit none
 
     integer, intent(in) :: narr
     character(len=6), dimension(narr), intent(in) :: arr_in
@@ -135,8 +189,6 @@ contains
     subroutine path_split(str_path_in, dir_path, fname, jpos)
 
     use char_manip, only: clean_string
-    implicit none
-
     character(len=*), intent(in)  :: str_path_in
     integer, intent(out) :: jpos
 !character(len=len(str_path_in)), intent(out) :: dir_path, fname
@@ -173,8 +225,6 @@ contains
 ! note any facing space/blank in substrings will be removed
 
     use char_manip, only: clean_string
-
-    implicit none
 
     character(len=*), intent(in) :: str_in
     character, intent(in) :: delim
@@ -218,8 +268,6 @@ contains
 
     use char_manip, only: clean_string
     use outcmn_inc, only: null_ch, tab_ch
-
-    implicit none
 
     integer, parameter :: nwords_max=10
     character(len=*), intent(in) :: str_in
@@ -270,8 +318,6 @@ contains
 
     use outcmn_inc, only: exp_file, NCNBM, NCNBTM
     use debugger, only: markloc, astra_stop
-
-    implicit none
 
     integer, intent(in) :: nunit, ntim
     character(len=*), intent(in) :: stri_in
@@ -327,8 +373,6 @@ contains
     use char_manip, only: to_upper
     use debugger, only: markloc, astra_stop
 
-    implicit none
-
     character(len=*), intent(in) :: str_in
     character(len=len(str_in)), intent(out) :: var_name, uname
     double precision, intent(out) :: factor
@@ -375,8 +419,6 @@ end subroutine parse_u_line
 
     use char_manip, only: to_upper
     use debugger, only: markloc, astra_stop
-
-    implicit none
 
     integer, intent(out) :: nt, nx, n_dim
     character(len=*), intent(in) :: uname
@@ -477,8 +519,6 @@ end subroutine parse_u_line
 
     use debugger, only: markloc, astra_stop
 
-    implicit none
-
     character(len=*), intent(in) :: uname
     integer, intent(in) :: nt, nx, n_dim
     double precision, intent(out) :: t_out(nt), x_out(nx), arr_out(nt*nx)
@@ -560,8 +600,6 @@ end subroutine parse_u_line
     subroutine inquire_fname(ftype, fdefault, dev_name, fname)
 
     use char_manip, only: to_lower
-
-    implicit none
 
     character(len=3), intent(in) :: ftype
     character(len=*), intent(in) :: dev_name, fdefault
