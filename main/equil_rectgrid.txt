@@ -1,5 +1,6 @@
 LABEL            UNITS                     DESCRIPTION
 ------------------------------------------------------------
 psirz2d          Wb/rad                    Psi on rectangular grid, ASTRA has -2*PI*PSI_EQUIL
+fdia2d           T*m                       R*Bphi, F function in the Grad-Shafranov equation
 r2d              m                         Rectangular grid major radius coordinate
 z2d              m                         Rectangular grid vertical coordinate

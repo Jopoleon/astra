@@ -195,8 +195,6 @@ area = vol/(GP2*RTOR)
 
 write(6, *) 'Call rabbit_lib_step'
 
-!call ctr2rz
-
 call rabbit_lib_set_sp_plasma_ratio(species_plasma_ratio, size(species_plasma_ratio))
 
 call rabbit_lib_step(                                     & ! input

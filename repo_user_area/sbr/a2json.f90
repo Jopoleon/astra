@@ -759,6 +759,8 @@ call getAttributes(file_in, nvars, s_name, s_desc, s_unit)
 jid = 1
 call write_array(nunit, ndim, equil_now%eqgeometry%rectgrid%psirz2d, s_name(jid), s_unit(jid), s_desc(jid))
 jid = jid + 1
+call write_array(nunit, ndim, equil_now%eqgeometry%rectgrid%fdia2d , s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
 call write_array(nunit, nR  , equil_now%eqgeometry%rectgrid%r2d    , s_name(jid), s_unit(jid), s_desc(jid))
 jid = jid + 1
 call write_last_array(nunit, nZ, equil_now%eqgeometry%rectgrid%z2d , s_name(jid), s_unit(jid), s_desc(jid))
