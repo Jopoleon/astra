@@ -1058,8 +1058,7 @@ subroutine flux_surf_geom(geom_type, ntheta_in, rmin_out, theta_out, R_out, Z_ou
 
   rmin_out  = AMETR(1:NA1)     ! minor radius [m]
 
-  ! get flux surface contours from equilibrium
-  ! new call to surf_ctr as suggested by Giovanni
+  ! flux surface contours from equilibrium
   nrho_surf = SIZE(equil_now%coord_sys%position%r, 1)
   nthe_surf = SIZE(equil_now%coord_sys%position%r, 2)
   allocate(pf_eq(nrho_surf), rho_eq(nrho_surf))

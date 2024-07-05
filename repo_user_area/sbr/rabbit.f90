@@ -29,7 +29,7 @@ double precision, dimension(NA1) :: rhotor1d
 double precision, allocatable, dimension(:, :), save :: powe, powi, &
       press, bdep, bdens, jfi, jnbcd,  wfi_par, wfi_perp, wfi_par_lab, &
       torqe, torqi, torqjxb, torqth, torqthcxloss, torqdepo
-     
+
 double precision, dimension(nnb_max) :: a_beam, z_beam, pinj,  &
       einj, prot, powe_tot, powi_tot, pshine, porbloss, pcxloss,  &
       Inbcd
@@ -43,7 +43,6 @@ double precision :: part_mix(nspc, nnb_max), dt_in, output_timing
 double precision :: tim_prev=-1.d0, dumba1, dumba2
 
 double precision, dimension(:), allocatable :: pf_eq, rho_eq
-double precision, allocatable, dimension(:, :) :: r_surf, z_surf
 double precision, dimension(NA1) :: rho_interp_plasma, rho_interp_eq, &
    ti_interp, te_interp, ne_interp, omg_interp, zef_interp,  &
    iota, area, vol, ffp, psi_n
@@ -70,15 +69,14 @@ rhotor1d(1) = 0.d0
 pdim = NA1    !Rabbit input plasma grid size
 ldim = NA1    !Rabbit input 1D EQ grid size
 
-call GET_NRHO_NTHETA(nrho_surf, nthe_surf)
+nrho_surf = SIZE(equil_now%coord_sys%position%r, 1)
+nthe_surf = SIZE(equil_now%coord_sys%position%r, 2)
 allocate(pf_eq(nrho_surf), rho_eq(nrho_surf))
-allocate(r_surf(nrho_surf, nthe_surf), z_surf(nrho_surf, nthe_surf))
-call SURF_CTR(nrho_surf, nthe_surf, r_surf, z_surf)
 
 psi_axis = PSIAX/GP2
 psi_sep  = PSIBO/GP2
-rmag = r_surf(1, 1)
-zmag = z_surf(1, 1)
+rmag = equil_now%coord_sys%position%r(1, 1)
+zmag = equil_now%coord_sys%position%z(1, 1)
 
 drho_eq = 1./(nrho_surf - 1.d0)
 rho_eq = (/ (drho_eq*(i - 1.d0), i=1, nrho_surf) /)
@@ -234,7 +232,8 @@ call qinterp(XRHO(1: NA1), FP(1: NA1), NA1, rho_eq, pf_eq, nrho_surf)
 write(6, *) 'Call rabbit_lib_step'
 
 call ctr2rz_fun(nrho_surf, nthe_surf, pf_eq(1: nrho_surf)/GP2, &
-    r_surf(1: nrho_surf, 1: nthe_surf),  z_surf(1: nrho_surf, 1: nthe_surf), &
+    equil_now%coord_sys%position%r, &
+    equil_now%coord_sys%position%z, &
     n_Rrect, n_Zrect, Rrect, zrect, PSI_rect)
 
 call rabbit_lib_set_sp_plasma_ratio(species_plasma_ratio, size(species_plasma_ratio))

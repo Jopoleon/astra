@@ -53,7 +53,6 @@ $(OBJ_DIR)/surv.o \
 $(OBJ_DIR)/typdsp.o \
 $(OBJ_DIR)/gs_solver.o \
 $(OBJ_DIR)/a_equil.o \
-$(OBJ_DIR)/surf_ctr.o \
 $(OBJ_DIR)/ctr2rz.o \
 $(OBJ_DIR)/four_mom.o
 

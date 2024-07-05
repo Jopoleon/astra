@@ -53,7 +53,6 @@ double precision :: Rmin, Rmax, zmin, zmax, dr, dz, drho_eq, drho_interp
 double precision, dimension(:), allocatable :: Rrect, Zrect, ggg, B_t
 double precision, dimension(:, :), allocatable :: PSI_rect, B_Rrect, B_Zrect, B_Trect
 double precision, dimension(:), allocatable :: pf_eq, rho_eq, ffp_eq
-double precision, dimension(:, :), allocatable :: r_surf, z_surf
 double precision, dimension(:), allocatable :: rho_interp, te_interp, ne_interp
 
 double precision :: ecrh_int, eccd_int, psi_sep, psi_axis
@@ -102,17 +101,16 @@ close(57)
 
 xrmaj = RTOR*100.
 
-call GET_NRHO_NTHETA(nrho_surf, nthe_surf)
+nrho_surf = SIZE(equil_now%coord_sys%position%r, 1)
+nthe_surf = SIZE(equil_now%coord_sys%position%r, 2)
 allocate(pf_eq(nrho_surf), rho_eq(nrho_surf), ffp_eq(nrho_surf))
-allocate(r_surf(nrho_surf, nthe_surf), z_surf(nrho_surf, nthe_surf))
-call SURF_CTR(nrho_surf, nthe_surf, r_surf, z_surf)
 
 ! From polar to rectangluar grid
 
-Rmin = MINVAL(r_surf(nrho_surf, :)) - 0.03 ! 1.08
-Rmax = MAXVAL(r_surf(nrho_surf, :)) + 0.03 ! 2.26
-zmin = MINVAL(z_surf(nrho_surf, :)) - 0.03 ! -1.0
-zmax = MAXVAL(z_surf(nrho_surf, :)) + 0.03 ! 1.0
+Rmin = MINVAL(equil_now%coord_sys%position%r(nrho_surf, :)) - 0.03 ! 1.08
+Rmax = MAXVAL(equil_now%coord_sys%position%r(nrho_surf, :)) + 0.03 ! 2.26
+zmin = MINVAL(equil_now%coord_sys%position%z(nrho_surf, :)) - 0.03 ! -1.0
+zmax = MAXVAL(equil_now%coord_sys%position%z(nrho_surf, :)) + 0.03 ! 1.0
 dr = (Rmax - Rmin)/(n_Rrect - 1.d0)
 dz = (zmax - zmin)/(n_Zrect - 1.d0)
 Rrect = (/ (Rmin + dr*(i - 1.d0), i=1, n_Rrect) /)
@@ -127,7 +125,7 @@ call qinterp(XRHO(1:NA1), FP  (1:NA1)          , NA1, rho_eq, pf_eq , nrho_surf)
 write(6, *) 'TORBEAM surf dims:', nthe_surf, nrho_surf
 eqdata = 0.d0
 call ctr2rz_b(nrho_surf, nthe_surf, pf_eq, ffp_eq, &
-    r_surf, z_surf, n_Rrect, n_Zrect, Rrect, zrect,  &
+    equil_now%coord_sys%position%r, equil_now%coord_sys%position%z, n_Rrect, n_Zrect, Rrect, zrect,  &
     PSI_rect, B_Rrect, B_Zrect, B_Trect)
 eqdata(1) = FP(NA1)
 

@@ -14,7 +14,7 @@ double precision :: raxis, zaxis, drhot_eq, dpsin_rect, psib, Rmin, Rmax, zmin, 
 double precision, allocatable, dimension(:) :: r_rect, z_rect, rhotor1d, pf1d, &
     rhot_eq, pf_eq, psin_eq, pres_eq, fdia_eq, q_eq, pprime_eq, fprime_eq, &
     psin_rect, pres_rect, fdia_rect, q_rect, pprime_rect, fprime_rect, psi_g_norm
-double precision, allocatable, dimension(:, :) :: r_surf, z_surf, psi_rect
+double precision, allocatable, dimension(:, :) :: psi_rect
 character(len=120) :: f_eqdsk, checks_nico
 
 if (TIME <= TSTART) return
@@ -39,7 +39,6 @@ allocate(pf_eq(nrho_surf), rhot_eq(nrho_surf), psin_eq(nrho_surf), pres_eq(nrho_
 allocate(psin_rect(n_Rrect), pres_rect(n_Rrect), fdia_rect(n_Rrect), q_rect(n_Rrect), &
     pprime_rect(n_Rrect), fprime_rect(n_Rrect))
 allocate(r_rect(n_Rrect), z_rect(n_Zrect), psi_rect(n_Rrect, n_Zrect))
-allocate(r_surf(nrho_surf, nthe_surf), z_surf(nrho_surf, nthe_surf))
 
 ! rho_tor grids
 
@@ -69,12 +68,10 @@ endif
 
 call qinterp(rhotor1d, pf1d, NA1+1, rhot_eq, pf_eq, nrho_surf)
 
-call SURF_CTR(nrho_surf, nthe_surf, r_surf, z_surf)
-
-Rmin = MINVAL(r_surf(nrho_surf, :)) - 0.03 ! 1.08
-Rmax = MAXVAL(r_surf(nrho_surf, :)) + 0.03 ! 2.26
-zmin = MINVAL(z_surf(nrho_surf, :)) - 0.03 ! -1.0
-zmax = MAXVAL(z_surf(nrho_surf, :)) + 0.03 ! 1.0
+Rmin = MINVAL(equil_now%coord_sys%position%r(nrho_surf, :)) - 0.03 ! 1.08
+Rmax = MAXVAL(equil_now%coord_sys%position%r(nrho_surf, :)) + 0.03 ! 2.26
+zmin = MINVAL(equil_now%coord_sys%position%z(nrho_surf, :)) - 0.03 ! -1.0
+zmax = MAXVAL(equil_now%coord_sys%position%z(nrho_surf, :)) + 0.03 ! 1.0
 dr = (Rmax - Rmin)/(n_Rrect - 1.d0)
 dz = (zmax - zmin)/(n_Zrect - 1.d0)
 r_rect = (/ (Rmin + dr*(i - 1.d0), i=1, n_Rrect) /)
@@ -82,7 +79,7 @@ z_rect = (/ (zmin + dz*(i - 1.d0), i=1, n_Zrect) /)
 
 ! Biquadratic interpolation from psi(rho,theta) to psi(R, Z)
 call ctr2rz_fun(nrho_surf, nthe_surf, pf_eq, &
-    r_surf, z_surf, n_Rrect, n_Zrect, r_rect, z_rect, psi_rect)
+    equil_now%coord_sys%position%r, equil_now%coord_sys%position%z, n_Rrect, n_Zrect, r_rect, z_rect, psi_rect)
 
 ! Quadratic interpolation ro n_Rrect grid (eqdsk requires that)
 call qinterp(psin_eq,   pres_eq, nrho_surf, psin_rect,   pres_rect, n_Rrect)
@@ -101,9 +98,9 @@ write(eqdsk_unit, '(A48, 3i4)') 'ASTRA', 3, n_Rrect, n_Zrect
 write(eqdsk_unit, '(5E16.9)') R_rect(n_Rrect) - R_rect(1), Z_rect(n_Zrect) - Z_rect(1), RTOR, &
     R_rect(1), 0.5*(Z_rect(1) + Z_rect(n_Zrect))
 ! Rmagnaxis(m), Zmagnaxis(m)
-write(eqdsk_unit, '(5E16.9)') r_surf(1, 1), z_surf(1, 1), SGNIP*PSIAX/GP2, SGNIP*PSIBO/GP2, SGNBT*BTOR
-write(eqdsk_unit, '(5E16.9)') SGNIP*IPL*1.d6, SGNIP*PSIAX/GP2, 0., r_surf(1, 1), 0.
-write(eqdsk_unit, '(5E16.9)') z_surf(1, 1), 0., SGNIP*PSIBO/GP2, 0., 0.
+write(eqdsk_unit, '(5E16.9)') equil_now%coord_sys%position%r(1, 1), equil_now%coord_sys%position%z(1, 1), SGNIP*PSIAX/GP2, SGNIP*PSIBO/GP2, SGNBT*BTOR
+write(eqdsk_unit, '(5E16.9)') SGNIP*IPL*1.d6, SGNIP*PSIAX/GP2, 0., equil_now%coord_sys%position%r(1, 1), 0.
+write(eqdsk_unit, '(5E16.9)') equil_now%coord_sys%position%z(1, 1), 0., SGNIP*PSIBO/GP2, 0., 0.
 write(eqdsk_unit, '(5E16.9)') (SGNBT*fdia_rect(i), i=1, n_Rrect)
 write(eqdsk_unit, '(5E16.9)') (pres_rect(i), i=1, n_Rrect)
 write(eqdsk_unit, '(5E16.9)') (SGNIP*fprime_rect(i)*GP2, i=1, n_Rrect)
@@ -111,13 +108,13 @@ write(eqdsk_unit, '(5E16.9)') (SGNIP*pprime_rect(i)*GP2, i=1, n_Rrect)
 write(eqdsk_unit, '(5E16.9)') ((SGNIP*psi_rect(i, j)/GP2, i=1, n_Rrect), j=1, n_Zrect)
 write(eqdsk_unit, '(5E16.9)') (SGNBT*SGNIP*q_rect(i), i=1, n_Rrect)
 write(eqdsk_unit, '(2i5)') nthe_surf, nthe_surf
-write(eqdsk_unit, '(5E16.9)') (r_surf(nrho_surf, i), z_surf(nrho_surf, i), i=1, nthe_surf)
-write(eqdsk_unit, '(5E16.9)') (r_surf(nrho_surf, i), z_surf(nrho_surf, i), i=1, nthe_surf)
+write(eqdsk_unit, '(5E16.9)') (equil_now%coord_sys%position%r(nrho_surf, i), equil_now%coord_sys%position%z(nrho_surf, i), i=1, nthe_surf)
+write(eqdsk_unit, '(5E16.9)') (equil_now%coord_sys%position%r(nrho_surf, i), equil_now%coord_sys%position%z(nrho_surf, i), i=1, nthe_surf)
 close(eqdsk_unit)
 
 deallocate(pf_eq, rhot_eq, psin_eq, pres_eq, fdia_eq, q_eq, pprime_eq, fprime_eq)
 deallocate(psin_rect, pres_rect, fdia_rect, q_rect, pprime_rect, fprime_rect)
-deallocate(r_rect, z_rect, psi_rect, r_surf, z_surf, psi_g_norm)
+deallocate(r_rect, z_rect, psi_rect, equil_now%coord_sys%position%r, equil_now%coord_sys%position%z, psi_g_norm)
 
 return
 end subroutine EQDSK
