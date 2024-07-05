@@ -253,12 +253,22 @@ allocate(equil_in%eqgeometry%boundary%z(n_theta))
 equil_in%eqgeometry%boundary%npoints = n_theta    !one periodic point
 
 f_json = 'exp/cnf/' // trim(machine) // '_description_in.json'
-nr = json_intvar(TRIM(f_json), 'nR')
-nz = json_intvar(TRIM(f_json), 'nZ')
-Rmin = json_floatvar(TRIM(f_json), 'Rmin')
-Rmax = json_floatvar(TRIM(f_json), 'Rmax')
-Zmin = json_floatvar(TRIM(f_json), 'Zmin')
-Zmax = json_floatvar(TRIM(f_json), 'Zmax')
+INQUIRE(FILE=TRIM(f_json), EXIST=file_existence)
+if (file_existence) then
+    nr = json_intvar(TRIM(f_json), 'nR')
+    nz = json_intvar(TRIM(f_json), 'nZ')
+    Rmin = json_floatvar(TRIM(f_json), 'Rmin')
+    Rmax = json_floatvar(TRIM(f_json), 'Rmax')
+    Zmin = json_floatvar(TRIM(f_json), 'Zmin')
+    Zmax = json_floatvar(TRIM(f_json), 'Zmax')
+else
+    nr = 65
+    nz = 65
+    Rmin = MINVAL(Rbnd) - 0.05
+    Rmax = MAXVAL(Rbnd) + 0.05
+    Zmin = MINVAL(Zbnd) - 0.05
+    Zmax = MAXVAL(Zbnd) + 0.05
+endif
 allocate(equil_in%eqgeometry%rectgrid%r2d(nr))
 allocate(equil_in%eqgeometry%rectgrid%z2d(nz))
 do jr=1, nr

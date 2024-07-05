@@ -952,6 +952,7 @@ close(32)
 curconduc(1:nconduc) = cur_init(1:nconduc)
 
 allocate(jrz(nr2, nz2))
+if (allocated(psirz)) deallocate(psirz)
 allocate(psirz(nr2, nz2))
 psirz = 0.
 allocate(psiextrz(nr2, nz2))
