@@ -166,6 +166,7 @@ NN               None                      Neutral relative density (NN/NN_B)
 NNBM1            10^19/m^3                 Hot neutrals densities
 NNBM2            10^19/m^3                 Hot neutrals densities
 NNBM3            10^19/m^3                 Hot neutrals densities
+NRATE            10^19/m^3/s               Neutron rate emission density profile
 NTRIT            10^19/m^3                 Tritium ion density
 PBEAM            MW/m^3                    Total beam power source
 PBLON            10^19keV/m^3              Longitudinal beam pressure

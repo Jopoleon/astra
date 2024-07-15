@@ -373,6 +373,8 @@ call write_array(nunit, NA1,  NNBM2(1:NA1), s_name(jid), s_unit(jid), s_desc(jid
 jid = jid + 1
 call write_array(nunit, NA1,  NNBM3(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
 jid = jid + 1
+call write_array(nunit, NA1,  NRATE(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
 call write_array(nunit, NA1,  NTRIT(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
 jid = jid + 1
 call write_array(nunit, NA1,  PBEAM(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))

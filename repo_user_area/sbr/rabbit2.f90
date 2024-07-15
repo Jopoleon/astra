@@ -9,7 +9,7 @@ use outcmn_inc, only: AWD, nml_file
 use const_inc, only: GP2, AIM1, TIME, TAU, QNBI, ROC, &
    RTOR, BTOR, NA1, PSIAX, PSIBO
 use status_inc, only: FP, FP_NORM, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
-   XRHO, VOLUM, IPOL, PEBM, PIBM, NIBM, CUBM, SNEBM, SCUBM, &
+   XRHO, VOLUM, IPOL, PEBM, PIBM, NIBM, CUBM, SNEBM, SCUBM, NRATE, &
    PBLON, PBPER, MU, VTOR, ZEF, NI, NHYDR, NDEUT, NTRIT
 use parameters_a2equil, only : equil_now
 
@@ -28,7 +28,7 @@ double precision, allocatable, dimension(:) :: aplasma, zplasma, species_plasma_
 double precision, dimension(NA1) :: rhotor1d
 double precision, allocatable, dimension(:, :), save :: powe, powi, &
       press, bdep, bdens, jfi, jnbcd,  wfi_par, wfi_perp, wfi_par_lab, &
-      torqe, torqi, torqjxb, torqth, torqthcxloss, torqdepo
+      torqe, torqi, torqjxb, torqth, torqthcxloss, torqdepo, n_rate
      
 double precision, dimension(nnb_max) :: a_beam, z_beam, pinj,  &
       einj, prot, powe_tot, powi_tot, pshine, porbloss, pcxloss,  &
@@ -46,7 +46,7 @@ double precision, dimension(NA1) :: rho_interp_plasma, rho_interp_eq, &
    iota, area, vol, ffp, psi_n
 double precision, dimension(nrhoout) :: rho_rab_out, &
     bdens_in, pi_rb, pe_rb, dvol, darea, &
-    nfi_rb, jcd_rb, src_rb, tq_rb, pfi_par, pfi_perp, nrate
+    nfi_rb, jcd_rb, src_rb, tq_rb, pfi_par, pfi_perp, nrate_in
 double precision, dimension(:), allocatable :: r_lim, z_lim
 
 character(len=120) :: as_nml, pinj_file, pinj_file2, limiter_file, table_path
@@ -154,6 +154,7 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
     allocate(bdens(nrhoout, n_nbi))
     allocate(jfi(nrhoout, n_nbi))
     allocate(jnbcd(nrhoout, n_nbi))
+    allocate(n_rate(nrhoout, n_nbi))
     allocate(torqe(nrhoout, n_nbi))
     allocate(torqi(nrhoout, n_nbi))
     allocate(torqjxb(nrhoout, n_nbi))
@@ -208,7 +209,7 @@ call rabbit_lib_step(                                     & ! input
     nspc, n_nbi, bdens_in, dt_in, output_timing,           & ! Output
     powe, powi, press, bdep, bdens, jfi, jnbcd,            &
     torqe, torqi, torqjxb, torqth, torqthcxloss, torqdepo, &
-    nrate, rho_rab_out, nrhoout,     &
+    n_rate, rho_rab_out, nrhoout,     &
     powe_tot(1: n_nbi), powi_tot(1: n_nbi), pshine(1: n_nbi), & 
     prot(1: n_nbi), porbloss(1: n_nbi), pcxloss(1: n_nbi),    &
     Inbcd(1: n_nbi), ierr(1: n_nbi))
@@ -229,6 +230,7 @@ src_rb  = sum(bdep (: , 1: n_nbi), 2)/1.d19
 pfi_par = 2*sum(wfi_par_lab(: , 1: n_nbi), 2)/1602.d0
 pfi_perp = sum(wfi_perp(: , 1: n_nbi), 2)/1602.d0
 bdens_in = sum(bdens(: , 1: n_nbi), 2)   !store for next call (bdens_in is saved).
+nrate_in = sum(n_rate(: , 1: n_nbi), 2)/1.e19
 
 ! Integrals
 
@@ -249,6 +251,7 @@ call qinterp(rho_rab_out, jcd_rb  , nrhoout, XRHO(1: NA1), CUBM( 1: NA1), NA1)
 call qinterp(rho_rab_out, src_rb  , nrhoout, XRHO(1: NA1), SNEBM(1: NA1), NA1)
 call qinterp(rho_rab_out, pfi_par , nrhoout, XRHO(1: NA1), PBLON(1: NA1), NA1)
 call qinterp(rho_rab_out, pfi_perp, nrhoout, XRHO(1: NA1), PBPER(1: NA1), NA1)
+call qinterp(rho_rab_out, nrate_in, nrhoout, XRHO(1: NA1), NRATE(1: NA1), NA1)
 
 if (ALFA > 0.) then 
     call smearr(ALFA, PIBM , PIBM )

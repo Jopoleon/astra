@@ -69,7 +69,7 @@ double precision, dimension(NRD, NARRX), target :: EXT
 double precision, dimension(NRD) :: &
     PBEAM, SNNBM, SNEBM, NNBM1, NNBM2, NNBM3, &
     SCUBM, CUBM, PEBM, PIBM, &
-    CUFI, PBFUS, SNIBM1, SNIBM2, SNIBM3
+    CUFI, PBFUS, SNIBM1, SNIBM2, SNIBM3, NRATE
 
 double precision :: NNBM(NRD, 3), IOBMN(NRD, 17)
 

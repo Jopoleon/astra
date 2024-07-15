@@ -46,7 +46,7 @@ NEUT:.05:::;
 !CNB1=8; CNB2=1; CNB3=2; CNB4=1;
 !NBI:0.05;
 
-RABBIT>:0.050:::;
+RABBIT2>:0.050:::;
 
 VPOL=VPSWW;
 VTOR=VTORX;
@@ -58,7 +58,7 @@ a2json>:.05:::;
 ! ECH
 ! TORBEAM
 
-TORBA(PEECR, CUECR, 0.d0)>:.05:::;
+TORBA2(PEECR, CUECR, 0.d0)>:.05:::;
 
 TE:AS;		TE=TEX;
 TI:AS;		TI=TIX
@@ -99,7 +99,7 @@ MU=1./(CAR2X + 0.0001);
 
 	Profile output
 
-Tex\TE\\TEX;	pinb\PIBM\-3;	Pecr\PEECR;	nT\NTRIT;
+Tex\TE\\TEX;	pinb\PIBM\-3;	Pecr\PEECR;	neut\NRATE;
 dens\NE\\NEX;	j\CU;		Pohm\POH\-1;	Sne\SNEBM; 
 Tix\TI\\TIX; 	penb\PEBM\-3; 	Jecr\CUECR;	nD\NDEUT;
 Zeff\ZEF;	q\1./MU\\CAR2X;	Prad\PRAD\-1;	sneu\SNNEU;
@@ -113,4 +113,4 @@ X_nc\HNCHI\-7;	\;	X_as\HNASI\-7;	hexp\HEXP;
 
 QE_QETOTB;	QI_QITOTB;	QOH_QOHB;	NA1_NA1; 
 q0_1/MUC;	qa_1/MUB; 	q95_1/MU(AFX(0.95));	q95r_ZRD13X;
-qmin_QMINB;	PNBi_VINT(PIBMB);	PNBe_VINT(PEBMB);	Pecr_VINT(PEECRB); Inb_IINT(CUBMB); Iec_IINT(CUECRB); betn_BETANB;
+qmin_QMINB;	PNBi_VINT(PIBMB);	PNBe_VINT(PEBMB);	Pecr_VINT(PEECRB); Inb_IINT(CUBMB); Iec_IINT(CUECRB); betn_BETANB; neut_VINT(NRATEB);
