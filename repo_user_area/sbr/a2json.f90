@@ -170,10 +170,11 @@ enddo
 
 ! Sparse profiles
 
-jid = jid + 1
 call write_array(nunit, NA1,  AIMPT(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
 jid = jid + 1
 call write_array(nunit, NA1,  AMAIN(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
+jid = jid + 1
+call write_array(nunit, NA1,  AMETR(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
 jid = jid + 1
 call write_array(nunit, NA1,  AREAT(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
 jid = jid + 1
@@ -185,7 +186,7 @@ call write_array(nunit, NA1,  BDB02(1:NA1), s_name(jid), s_unit(jid), s_desc(jid
 jid = jid + 1
 call write_array(nunit, NA1,  BMAXT(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
 jid = jid + 1
-call write_array(nunit, NA1, BMINT (1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
+call write_array(nunit, NA1,  BMINT(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
 jid=jid + 1
 call write_array(nunit, NA1,     CC(1:NA1), s_name(jid), s_unit(jid), s_desc(jid))
 jid = jid + 1
