@@ -4,7 +4,7 @@ subroutine facit(Z_imp_in, A_imp_in, N_imp_in, rot_mod, Dz_out, Vz_out)
   !
   ! Calculate flux surface averaged neoclassical impurity transport coefficients with FACIT
   !
-  ! --- D. Fajardo, December 2023
+  ! --- D. Fajardo, July 2024
   !
   ! * INPUTS
   ! --------
@@ -21,8 +21,8 @@ subroutine facit(Z_imp_in, A_imp_in, N_imp_in, rot_mod, Dz_out, Vz_out)
   !============================================================================================!
 
   use parameter_inc, only: NRD
-  use const_inc,     only: NA1, BTOR, RTOR, ZMJ, AMJ
-  use status_inc,    only: TE, TI, NE, NI, IPOL, MU, SQEPS, AMETR, VTOR, ZEF, NMAIN, VRS, G11, RHO
+  use const_inc,     only: NA1, BTOR, RTOR, AMJ
+  use status_inc,    only: TE, TI, NE, IPOL, MU, SQEPS, AMETR, VTOR, ZEF, ZMAIN, NMAIN, VRS, G11, RHO
 
   implicit none
 
@@ -42,8 +42,8 @@ subroutine facit(Z_imp_in, A_imp_in, N_imp_in, rot_mod, Dz_out, Vz_out)
   integer :: nx                                         ! grid parameters
   double precision, dimension(NA1)    :: r_min, epsilon ! grid parameters
 
-  double precision, dimension(NA1)  :: Zimp ! impurity and main ion charge and mass
-  double precision :: Aimp, Zi, Ai          ! impurity and main ion charge and mass
+  double precision, dimension(NA1)  :: Zimp, Zi ! impurity and main ion charge
+  double precision :: Aimp, Ai          ! impurity and main ion mass
 
   double precision, dimension(NA1)  :: T_e, T_i, N_e, N_i, N_z, Mach, Zeff ! plasma profiles
   double precision, dimension(NA1)  :: grad_Ti, grad_Ni, grad_Nz            ! gradients
@@ -53,6 +53,7 @@ subroutine facit(Z_imp_in, A_imp_in, N_imp_in, rot_mod, Dz_out, Vz_out)
 
   integer :: rotation_model
 
+  double precision, dimension(NA1) :: qstar, torflux_ov2pi, dtorflux_dr  ! modified q profile for flux surface geometry
   double precision, dimension(NA1) :: grad_rho_sq, r_tor, drtor_drmin !gradrhosq_exp, drhodr, drho, drmin ! to convert to ASTRA grid
   
   ! OUTPUTS
@@ -82,7 +83,7 @@ subroutine facit(Z_imp_in, A_imp_in, N_imp_in, rot_mod, Dz_out, Vz_out)
   Zeff  = ZEF(1:NA1)                               ! effective charge 
   Zimp  = Z_imp_in(1:NA1)                          ! impurity charge profile from equ file input to impflux sbr
   Aimp  = A_imp_in                                 ! impurity mass from equ file input to impflux sbr
-  Zi    = ZMJ                                      ! main ion charge number
+  Zi    = ZMAIN(1:NA1)                             ! main ion charge number
   Ai    = AMJ                                      ! main ion mass number
   Mach = abs(VTOR(1:NA1))/sqrt(2*q_e*T_i/(Ai*mp))  ! main ion Mach number
   
@@ -98,6 +99,19 @@ subroutine facit(Z_imp_in, A_imp_in, N_imp_in, rot_mod, Dz_out, Vz_out)
 
   FF = IPOL(1:NA1)*R0*B0
 
+  ! modified q profile for flux surface geometry
+  r_tor = RHO(1:NA1)
+  torflux_ov2pi = 0.5 * B0 * r_tor**2
+
+  do i=2,nx-1
+     dtorflux_dr(i) = (torflux_ov2pi(i+1)-torflux_ov2pi(i-1))/(r_min(i+1)-r_min(i-1))
+  enddo
+  dtorflux_dr(nx) = (torflux_ov2pi(nx)-torflux_ov2pi(nx-1))/(r_min(nx)-r_min(nx-1))
+  dtorflux_dr(1) = dtorflux_dr(2)
+  
+  qstar = qmag * (epsilon * FF / dtorflux_dr)
+  qstar(1) = qstar(2)
+  
   !-----------------------------------------------------------------------------------------------!
   ! gradients
   
@@ -123,9 +137,9 @@ subroutine facit(Z_imp_in, A_imp_in, N_imp_in, rot_mod, Dz_out, Vz_out)
 
   call FACIT_LFS(nx, epsilon, &                          ! grid parameters
                  Zimp, Aimp, Zi, Ai, &                   ! impurity and main ion charge and mass
-                 T_e, T_i, N_e, N_i, N_z, Mach, Zeff, & ! plasma profiles
+                 T_e, T_i, N_e, N_i, N_z, Mach, Zeff, &  ! plasma profiles
                  grad_Ti, grad_Ni, grad_Nz, &            ! gradients
-                 B0, R0, qmag, FF, &                     ! equilibrium
+                 B0, R0, qstar, FF, &                    ! equilibrium
                  rotation_model, &                       ! model options
                  Dz_lfs, Vz_lfs)                         ! output coefficients
 
@@ -135,7 +149,6 @@ subroutine facit(Z_imp_in, A_imp_in, N_imp_in, rot_mod, Dz_out, Vz_out)
 
   ! Transform to ASTRA grid (r_min -> r_tor)
   grad_rho_sq = G11(1:NA1)/VRS(1:NA1)
-  r_tor = RHO(1:NA1)
 
   do i=2,nx-1
      drtor_drmin(i) = (r_tor(i+1)-r_tor(i-1))/(r_min(i+1)-r_min(i-1))
@@ -154,7 +167,7 @@ subroutine facit(Z_imp_in, A_imp_in, N_imp_in, rot_mod, Dz_out, Vz_out)
 
   elseif (rotation_model .eq. 2) then
 
-     call lfs2fsa_impDV(2, 0, Zimp, Aimp, Dz_lfs, Vz_lfs, Dz_fsa, Vz_fsa)
+     call lfs2fsa_impDV(2, 1, Zimp, Aimp, Dz_lfs, Vz_lfs, Dz_fsa, Vz_fsa)
 
      Dz_out(1:NA1) = Dz_fsa*(drtor_drmin**2/grad_rho_sq)
      Vz_out(1:NA1) = Vz_fsa*(drtor_drmin/grad_rho_sq)
@@ -380,9 +393,6 @@ subroutine FACIT_LFS(nx, eps, &                                 ! grid parameter
 
   rhoLimp2 = (2.0*q_e*T_i/mz)/wca**2 ! Impurity Larmor radius (squared)
 
-  
-
-
   !---------------------------------------------------------------------------
   !-----------------------  Poloidal asymmetry  ------------------------------
   !---------------------------------------------------------------------------
@@ -428,7 +438,6 @@ subroutine FACIT_LFS(nx, eps, &                                 ! grid parameter
 
   ! Pfirsch-Schlüter flux
 
-  !Da_PS   = adps*ma*L11impi*FV**2*q_e*Ti*Cgeo_G*amin**2/(Za**2*q_e**2*B2avg*(dpsidx**2 + 1.e-33))
   Da_PS   = adps*qmag**2*rhoLimp2*L11impi*(Cgeo_G/(2.0*eps2))
   Ka_PS   = (Zz/Zi)*Da_PS
   Ha_PS   = -((1.0 + (Zz/Zi)*(C0a - 1.0)) + (Cgeo_U/Cgeo_G)*(Zz/Zi)*(C0a + ki))*Da_PS
@@ -616,8 +625,7 @@ function C2_lfs(alpha, g, f1, f2, Aimp, Ai)
   double precision, intent(in) :: alpha, g, f1, f2, Aimp, Ai
   double precision :: C2_lfs
 
-  !C2_lfs = 1.5/(1.0 + (Ai/Aimp)*f1) - (0.29 + 0.68*alpha)/(0.59 + alpha + (1.34 + f2)/g**2)
-  C2_lfs = 1.5/(1.0 + (2.0/184.0)*f1) - (0.29 + 0.68*alpha)/(0.59 + alpha + (1.34 + f2)/g**2)
+  C2_lfs = 1.5/(1.0 + (2.0/Aimp)*f1) - (0.29 + 0.68*alpha)/(0.59 + alpha + (1.34 + f2)/g**2)
 
   return
 end function C2_lfs
@@ -1246,8 +1254,8 @@ subroutine lfs2fsa_impDV(geom_type, output_op, Zimp_in, Aimp_in, Dz_lfs_in, Vz_l
   double precision, dimension(n_theta) :: theta
   double precision, dimension(NA1, n_theta) :: R_2D, Z_2D, Jacobian
 
-  double precision, dimension(NA1, n_theta) :: exp_m_Eimp, dexpmEimp_dr, dlnJ_dr
-  double precision, dimension(NA1) :: e0imp, FVimp, Gr_jacob, grj1, grj2, fv0
+  double precision, dimension(NA1, n_theta) :: exp_m_Eimp
+  double precision, dimension(NA1) :: e0imp, FVimp, d_e0imp_dr
 
   !-----------------------------------------------------------------------------------------------!
   ! plasma profiles
@@ -1273,38 +1281,24 @@ subroutine lfs2fsa_impDV(geom_type, output_op, Zimp_in, Aimp_in, Dz_lfs_in, Vz_l
      exp_m_Eimp(i,:)  = exp(Mz_star_sq(i)*((R_2D(i,:)**2. - R_LFS(i)**2.)/RTOR**2.))
   enddo
 
-  ! some derivatives
-
-  do i=2,nr-1
-     dexpmEimp_dr(i,:) = (exp_m_Eimp(i+1,:)-exp_m_Eimp(i-1,:))/(r_min(i+1)-r_min(i-1))
-  enddo
-
-  dexpmEimp_dr(1,:)  = (exp_m_Eimp(2,:)-exp_m_Eimp(1,:))/(r_min(2)-r_min(1))
-  dexpmEimp_dr(nr,:) = (exp_m_Eimp(nr,:)-exp_m_Eimp(nr-1,:))/(r_min(nr)-r_min(nr-1))
-
-  
-  do i=2,nr-1
-     dlnJ_dr(i,:) = ((Jacobian(i+1,:)-Jacobian(i-1,:))/(r_min(i+1)-r_min(i-1)))/Jacobian(i,:)
-  enddo
-
-  dlnJ_dr(1,:)  = ((Jacobian(2,:)-Jacobian(1,:))/(r_min(2)-r_min(1)))/Jacobian(1,:)
-  dlnJ_dr(nr,:) = ((Jacobian(nr,:)-Jacobian(nr-1,:))/(r_min(nr)-r_min(nr-1)))/Jacobian(nr,:)
-
   !-----------------------------------------------------------------------------------------------!
   ! take averages
 
   do i=1,nr
-
      call flux_surf_avg(n_theta, theta , exp_m_Eimp(i,:), Jacobian(i,:), e0imp(i))
-     call flux_surf_avg(n_theta, theta , exp_m_Eimp(i,:)*dlnJ_dr(i,:), Jacobian(i,:), grj1(i))
-     call flux_surf_avg(n_theta, theta , dlnJ_dr(i,:), Jacobian(i,:), grj2(i))
-     call flux_surf_avg(n_theta, theta , dexpmEimp_dr(i,:), Jacobian(i,:), fv0(i))
-
   enddo
 
-  Gr_jacob = grj1 - e0imp*grj2
-  FVimp    = (fv0 + Gr_jacob)/e0imp
+  do i=2,nr-1
+     d_e0imp_dr(i) = (e0imp(i+1)-e0imp(i-1))/(r_min(i+1)-r_min(i-1))
+  enddo
 
+  d_e0imp_dr(1)  = (e0imp(2)-e0imp(1))/(r_min(2)-r_min(1))
+  d_e0imp_dr(nr) = (e0imp(nr)-e0imp(nr-1))/(r_min(nr)-r_min(nr-1))
+
+  FVimp = d_e0imp_dr/e0imp
+
+  !-----------------------------------------------------------------------------------------------!
+  ! outputs
   Dz_fsa_out(1:NA1) = Dz_lfs_in(1:NA1)/e0imp
 
   if (output_op.eq.0) then
