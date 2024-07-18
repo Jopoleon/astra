@@ -30,9 +30,12 @@ ZEF = 1.+ZEF1;
 !----------
 ! Sources
 
-! ECH
-! TORBEAM
-TORBA(PEECR, CUECR, 0.d0)>:0.06:::;
+NNCL=1.d-5; !Cold neutrals
+NNWM=1.d-5; !Warm neutrals
+NEUT:.05:::;
+
+! ECH: TORBEAM, NBI: RABBIT
+TORBEAM_RABBIT>:.05:::;
 
 ! ICRF
 
@@ -46,15 +49,6 @@ TORBA(PEECR, CUECR, 0.d0)>:0.06:::;
 !CAR51 = (1. - FLIN)*XSTEP(ZRD24X);
 !CAR55 = CAR51/VINT(CAR51B);
 !CAR52 = CF15*CAR55; ! Factor CF15 arbitrary, for sensitivity study
-
-NNCL=1.d-5; !Cold neutrals
-NNWM=1.d-5; !Warm neutrals
-NEUT:.05:::;
-
-!CNB1=8; CNB2=1; CNB3=2; CNB4=1;
-!NBI<:0.02:::;
-
-RABBIT>:0.06:::;
 
 ! Radiation
 

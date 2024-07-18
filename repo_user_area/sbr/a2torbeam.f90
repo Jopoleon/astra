@@ -1,6 +1,6 @@
 ! http://www2.ipp.mpg.de/~emp/index.php?page=input
 !======================================================================|
-subroutine TORBA2
+subroutine A2TORBEAM
 
 !----------------------------------------------------------------------|
 ! File input for: beam curvature and width, 
@@ -396,4 +396,4 @@ deallocate( ne_interp)
 write(*, *) 'Exiting torba'
 
 return
-end subroutine torba2
+end subroutine A2TORBEAM

@@ -43,11 +43,6 @@ NNCL=1.e-5;
 NNWM=3.e-5;
 NEUT:.05:::;
 
-!CNB1=8; CNB2=1; CNB3=2; CNB4=1;
-!NBI:0.05;
-
-RABBIT>:0.050:::;
-
 ABLATION(CF16, CAR51)>::::;
 CAR53 = CF16*CAR51/VINT(CAR51B);
 
@@ -58,12 +53,8 @@ VTOR=VTORX;
 
 a2json>:.05:::;
 
-! ECH            else
-                pel_prof(jr) = 0.d0
-
-! TORBEAM
-
-TORBA(PEECR, CUECR, 0.d0)>:.05:::;
+! ECH: TORBEAM, NBI: RABBIT
+TORBEAM_RABBIT>:.05:::;
 
 TE:AS;		TE=TEX;
 TI:AS;		TI=TIX

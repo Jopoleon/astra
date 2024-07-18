@@ -1,4 +1,4 @@
-subroutine RABBIT2
+subroutine A2RABBIT
 
 use mod_rabbit_lib, only: do_dump, rabbit_lib_init, rabbit_lib_set_dump_dir, &
     rabbit_lib_dump_beams, rabbit_lib_set_sp_plasma_ratio, rabbit_lib_step, &
@@ -280,4 +280,4 @@ endif
 write(6, *) 'Done RABBIT'
 
 return
-end subroutine RABBIT2
+end subroutine A2RABBIT

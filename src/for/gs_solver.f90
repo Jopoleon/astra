@@ -636,8 +636,6 @@ iter_loop: do jiter=1, miter_ext
 
 enddo iter_loop
 
-call ctr2rz
-
 deallocate(equil_in%profiles_1d%psi)
 deallocate(equil_in%profiles_1d%pprime)
 deallocate(equil_in%profiles_1d%ffprime)

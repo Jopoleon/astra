@@ -30,10 +30,6 @@ ZEF = 1.+ZEF1;
 !----------
 ! Sources
 
-! ECH
-! TORBEAM
-TORBA(PEECR, CUECR, 0.d0)>:0.06:::;
-
 ! ICRF
 
 !FGAUSS_RHOPOL(0.5d0, 0.3d0, CAR54)>:.2:2.:5.:;
@@ -51,10 +47,8 @@ NNCL=1.d-5; !Cold neutrals
 NNWM=1.d-5; !Warm neutrals
 NEUT:.05:::;
 
-!CNB1=8; CNB2=1; CNB3=2; CNB4=1;
-!NBI<:0.02:::;
-
-RABBIT>:0.06:::;
+! ECH: TORBEAM, NBI: RABBIT
+TORBEAM_RABBIT>:.05:::;
 
 ! Radiation
 
