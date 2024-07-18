@@ -246,7 +246,7 @@ contains
     integer :: i, onlypos
     double precision :: d_step, gapmin, gapmax, l_gap, l_gap_pos, l_gap_neg
 
-    d_step = 0.1 ! advance in 1 cm steps
+    d_step = 0.01 ! advance in 1 cm steps
     gapmin = -1.5
     gapmax = 2.5
 

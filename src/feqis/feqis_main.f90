@@ -31,17 +31,18 @@ call feqis_init(equil_in, parameters_equil, j_init, ifplasma)
 nrplasma = nrho
 if (j_call == 0) then
     nr2 = SIZE(equil_in%eqgeometry%rectgrid%r2d)
-    nz2 = SIZE(equil_in%eqgeometry%rectgrid%z2d)
-    nr1 = nr2 - 1
-    nz1 = nz2 - 1
-    if (.not. allocated(Rrect)) then
-        allocate(Rrect(nr2))
-        allocate(Zrect(nz2))
-        allocate(psirz(nr2, nz2))
+    if (nr2 > 0) then
+        nz2 = SIZE(equil_in%eqgeometry%rectgrid%z2d)
+        nr1 = nr2 - 1
+        nz1 = nz2 - 1
+        if (.not. allocated(Rrect)) then
+            allocate(Rrect(nr2))
+            allocate(Zrect(nz2))
+            allocate(psirz(nr2, nz2))
+        endif
+        Rrect = equil_in%eqgeometry%rectgrid%r2d
+        Zrect = equil_in%eqgeometry%rectgrid%z2d
     endif
-    Rrect = equil_in%eqgeometry%rectgrid%r2d
-    Zrect = equil_in%eqgeometry%rectgrid%z2d
-
     if (parameters_equil%k_fixfree == 1 .or. refit_mode == 818) then   ! also if refit mode = 818, initialize free boundary stuff
         call equil_feqis_init_circ
         if (refit_mode == 818) then

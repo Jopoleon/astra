@@ -641,8 +641,11 @@ integer, intent(in) :: j_call, ifplasma
 type(type_parameters ), intent(in) :: params
 type(type_equilibrium), intent(in) :: equil_in
 
-integer :: i, j, k
+integer :: it_was_fbe_before, i, j, k
 double precision, dimension(700) :: rdum, zdum, tdum
+
+data it_was_fbe_before/0/
+save it_was_fbe_before
 
 if (j_call == 0) then
     nteta = equil_in%eqgeometry%boundary%npoints
@@ -717,7 +720,9 @@ if (ifplasma == 1) then
     ppp_2d = -GPI2*1.e-6*ppp_2d
     ipol(1:nrho) = equil_in%profiles_1d%F_dia(1:nrho)
 
-    if (params%k_fixfree == 0) then ! If 1, comes from free boundary
+    if (params%k_fixfree == 1) it_was_fbe_before = 1
+
+    if (params%k_fixfree == 0 .and. it_was_fbe_before == 0) then ! If 1, comes from free boundary
         rexp(1:nteta) = equil_in%eqgeometry%boundary%r(1:nteta)
         zexp(1:nteta) = equil_in%eqgeometry%boundary%z(1:nteta)
 ! Define angle not based on mag axis, but on geometrical center
