@@ -97,7 +97,7 @@ namelist / equil_settings / time_fix_eqpff, fix_eqpf_eqff, &
 
 !-----------------------------
 
-if (ifbey == 0) then
+if (ifbey == 0 .and. i_call_gsss == 0) then
 !defaults
     time_fix_eqpff = 0.
     fix_eqpf_eqff = 0
@@ -188,9 +188,7 @@ endif
 GG2(1) = 0.0
 volum_in(1) = 0.0
 
-if (i_call_gsss == 0) then
-    i_call_gsss = 1
-else
+if (i_call_gsss /= 0) then
     GG2 = g22e
     GG3 = g33e
 endif
