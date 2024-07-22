@@ -7,7 +7,7 @@ subroutine build_2dgrid(nrho, ntheta, psin_grid, &
     G2, G3, areat, perim, volum, G1, GRADRO, &
     BMAXT, BMINT, BDB02, BDB0, B0DB2, FOFB, &
     slat, li3, betapol, psplex, bpcell, bcell, r_out, r_in, &
-    elon, tria_u, tria_l, shif, g41, q_out, shiv, square, li_aug)
+    elon, tria_u, tria_l, shif, g41, q_out, shiv, square, li_aug, betapol_iter)
 
 use pi_vars, only: GPI, GPI2
 use numerical_tools, only: qinterp, extrapolate, polyfitcc
@@ -22,7 +22,7 @@ double precision, intent(in), dimension(ntheta) :: thetap_i
 double precision, intent(in), dimension(nrho) :: psin_grid, ipol, pressure, q_new
 double precision, intent(in), dimension(nrho, ntheta) :: PSI, jrho2, darea2, yy2
 
-double precision, intent(out) :: li3, betapol, psplex, li_aug
+double precision, intent(out) :: li3, betapol, psplex, li_aug, betapol_iter
 double precision, intent(out), dimension(nrho) :: G1, G2, G3, &
     volum, areat, perim, slat, &
     FOFB, GRADRO, BMAXT, BMINT, BDB02, BDB0, B0DB2
@@ -158,12 +158,15 @@ enddo
 psplex = dumba1/sum(dl_arc)
 psplex = psplex/(1.*sum(B_pola(nrho, 1:ntheta)*dl_arc(1:ntheta))/0.4) ! for LEXT part, alternative
 
-li3 = 2.*sum(B_pola**2 * dV2da)/rtor/(0.4*GPI*iplasma)**2
-li_aug = li3 * rtor * perim(nrho)**2./(2.*volum(nrho))
+!li3 = 2.*sum(B_pola**2 * dV2da)/rtor/(0.4*GPI*iplasma)**2
+dumba1 = 0.5*(maxval(XX(nrho, :)) + minval(XX(nrho, :))) !Rgeo
+li3 = 2.*sum(B_pola**2 * dV2da)/dumba1/(0.4*GPI*iplasma)**2
+li_aug = li3 * dumba1 * perim(nrho)**2./(2.*volum(nrho))
 do jrho=1, nrho-1
     onez(jrho) = 0.5*(pressure(jrho) + pressure(jrho+1))
 enddo
 betapol = 0.4*GPI2*1.e-6*sum(onez*dva)/sum(B_pola**2 * dV2da)
+betapol_iter = 4.*1.e-6*sum(onez*dva)/(0.4*GPI*dumba1*iplasma**2.)
 
 slat = 0.
 do jrho=2, nrho

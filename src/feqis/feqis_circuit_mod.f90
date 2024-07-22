@@ -65,7 +65,7 @@ double precision, dimension(:), allocatable :: green_bnd_f
 double precision, dimension(:), allocatable :: rbndp, zbndp, rexp, zexp, tetaexp
 
 ! plasma parameters
-double precision :: iplasma, btor0, rgeom0, psplex, li3, li_aug, betapol
+double precision :: iplasma, btor0, rgeom0, psplex, li3, li_aug, betapol, betapol_iter
 double precision, dimension(:), allocatable :: pprime, ffprime, pressure, psigrida, ipol
 double precision, dimension(:, :), allocatable :: jrz
 double precision, dimension(:, :), allocatable :: jrhoteta

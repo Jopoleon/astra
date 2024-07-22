@@ -127,6 +127,9 @@ export equfile=${equfile}
 export OMP_PLACES=cores
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 export ASTRA_EXT=${ASTRA_EXT}
+source /etc/profile.d/modules.sh
+module purge
+module load astra
 srun $ATASK
 EOT
 
