@@ -7,7 +7,7 @@ implicit none
 
 call ctr2rz
 call A2RABBIT
-CALL A2TORBEAM(PEECR, CUECR, 0.d0)
+CALL A2TORBEAM
 
 return
 end subroutine torbeam_rabbit
