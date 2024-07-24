@@ -999,30 +999,6 @@ return
 end function FXBOX
 
 !---------------------------------------------------------------------
-integer function fun_call_id(id_in)
-
-use const_inc, only: TIME, TSTART
-
-implicit none
-
-integer, intent(in) :: id_in
-
-double precision :: time_loc
-
-save time_loc
-
-if (time_loc /= TIME .or. TIME == TSTART) then
-   fun_call_id = 1
-else
-   fun_call_id = id_in + 1
-endif
-
-time_loc = TIME
-
-return
-end function fun_call_id
-
-!---------------------------------------------------------------------
 double precision function TIMDER(Y)
 ! Time derivative
 !  Examples:
@@ -1033,28 +1009,21 @@ double precision function TIMDER(Y)
 ! Changed by Pereverzev 15.10.98
 
 use const_inc, only: TIME
+use time_functions, only: f_id, function_id, nloc
 
 implicit none
 
-integer, parameter :: NLOC=2200
 double precision, intent(in) :: Y
 
 integer :: IY, ICALL
 double precision, dimension(NLOC) :: y_old, YT
-integer, external :: fun_call_id
 
 save ICALL, y_old, YT
-data ICALL/0/ y_old/NLOC*0./ IY/0/
+data ICALL/0/ y_old/NLOC*0./
 
-IY = fun_call_id(IY)
-
+call function_id('TIMDER')
+IY = f_id
 TIMDER = 0.
-if (IY > NLOC) then
-    write(*, *) "            Calling from TIMDER"
-    write(*, *) ' too many time derivatives >', NLOC
-    return
-endif
-
 if (ICALL == 0) then
     ICALL  = 1
     TIMDER = 0.
@@ -1064,7 +1033,6 @@ else if (TIME > YT(IY)) then
 endif
 y_old(IY) = Y
 YT(IY) = TIME
-
 
 return
 end function TIMDER
@@ -1081,28 +1049,21 @@ double precision function TIMINT(Y)
 ! Changed by Pereverzev 15.10.98
 
 use const_inc, only: TIME
+use time_functions, only: f_id, function_id, nloc
 
 implicit none
 
-integer, parameter :: NLOC=2200
 double precision, intent(in) :: Y
 
 integer :: IY, ICALL
 double precision, dimension(NLOC) :: y_old, YT
-integer, external :: fun_call_id
 
 save y_old, YT, ICALL
-data ICALL/0/ y_old/NLOC*0./ IY/0/
+data ICALL/0/ y_old/NLOC*0./
 
-IY = fun_call_id(IY)
-
+call function_id('TIMINT')
+IY = f_id
 TIMINT = 0.
-if (IY > NLOC) then
-    write(*, *) "            Calling from TIMINT"
-    write(*, *) ' too many time integrals >', NLOC
-    return
-endif
-
 if (ICALL == 0) then
     ICALL  = 1
     TIMINT = 0.
@@ -1131,29 +1092,23 @@ double precision function TIMAVG(Y, YTINT)
 !   YT(IY) - time of the previous calling
 
 use const_inc, only: TIME
+use time_functions, only: f_id, function_id, nloc
 
 implicit none
 
-integer, parameter :: NLOC=2200
 double precision, intent(in) :: Y, YTINT
 
 integer :: IY, j
 double precision :: YST
 double precision, dimension(NLOC) :: YI, YT
-integer, external :: fun_call_id
 
 save YI, YT
-data YI/NLOC*-1.E9/  IY/0/
+data YI/NLOC*-1.E9/
 
-IY = fun_call_id(IY)
+call function_id('TIMAVG')
+IY = f_id
 
 TIMAVG = 0.
-if (IY > NLOC) then
-    write(*, *) "            Calling from TIMAVG"
-    write(*, *) ' too many time averages >', NLOC
-    return
-endif
-
 if (YI(IY) < -0.9E9) then  ! 1st call for IY
     YI(IY) = 0.
     YST = TIME
@@ -1184,28 +1139,22 @@ double precision function FIXVAL(Y, YTIME)
 !   (Pereverzev 15-OCT-98)
 
 use const_inc, only: TIME
+use time_functions, only: f_id, function_id, nloc
 
 implicit none
 
-integer, parameter :: NLOC=2200
 double precision, intent(in) :: Y, YTIME
 
 integer :: IY
 double precision :: y_old(NLOC)
-integer, external :: fun_call_id
 
 save y_old
-data IY/0/
+
 ! IY is the ID (ordinal number) of "Y"
 
-IY = fun_call_id(IY)
-
+call function_id('FIXVAL')
+IY = f_id
 FIXVAL = 0.
-if (IY > NLOC) then
-    write(*, *) ' >>> FIXVAL >>> too many calls: > ', NLOC
-    return
-endif
-
 if (TIME <= YTIME) y_old(IY) = Y
 FIXVAL = y_old(IY)
 
@@ -1236,29 +1185,23 @@ double precision function FTAV(Y, YTAV)
 ! G.W. Pacher (18/01/1994)
 ! Changed by Pereverzev 15.10.98
 
-use const_inc, only: TAU
+use const_inc, only: TAU, TIME
+use time_functions, only: f_id, function_id, nloc
 
 implicit none
 
-integer, parameter :: NLOC=2200
 double precision, intent(in) :: Y, YTAV
 
 integer :: IY, ICALL
 double precision :: y_old(NLOC)
-integer, external :: fun_call_id
 
 save ICALL, y_old
-data ICALL/0/ y_old/NLOC*0./ IY/0/
+data ICALL/0/ y_old/NLOC*0./
 
-IY = fun_call_id(IY)
-! IY is the ID (ordinal number) of "Y"
+call function_id('FTAV')
+IY = f_id
 
 FTAV = 0.
-if (IY > NLOC) then
-    write(*, *) ' >>> FTAV >>> buffer overflow: >', NLOC
-    return
-endif
-
 if (ICALL == 0) then
     FTAV = Y
     ICALL  = 1
@@ -1398,32 +1341,27 @@ double precision function FTMIN(Y)
 !
 ! Changed by Pereverzev 15.10.98
 
+use time_functions, only: f_id, function_id, nloc
+
 implicit none
 
-integer, parameter :: NLOC=2200
 double precision, intent(in) :: Y
 
 integer :: IY
 double precision :: y_old(NLOC)
-integer, external :: fun_call_id
 
 save y_old
-data y_old/NLOC*1.E37/  IY/0/
+data y_old/NLOC*1.E37/
 
-! IY is the ID (ordinal number) of "Y"
-IY = fun_call_id(IY)
+call function_id('FTMIN')
+IY = f_id
 
-if (IY > NLOC) then
-    FTMIN = 0.
-    write(*, *)' >>> FTMIN >>> too many calls: >', NLOC
+FTMIN = 1.E37
+if (y_old(IY) <= Y) then
+    FTMIN = y_old(IY)
 else
-    FTMIN = 1.E37
-    if (y_old(IY) <= Y) then
-        FTMIN = y_old(IY)
-    else
-        FTMIN = Y
-        y_old(IY) = Y
-    endif
+    FTMIN = Y
+    y_old(IY) = Y
 endif
 
 return
@@ -1448,32 +1386,26 @@ double precision function FTMAX(Y)
 !
 ! G.V.Pereverzev 15.10.98
 
+use time_functions, only: f_id, function_id, nloc
+
 implicit none
 
-integer, parameter :: NLOC=2200
 double precision, intent(in) :: Y
 
 integer :: IY
 double precision :: y_old(NLOC)
-integer, external :: fun_call_id
 
 save y_old
-data y_old/NLOC*-1.E37/  IY/0/
-! IY is the ID (ordinal number) of "Y"
+data y_old/NLOC*-1.E37/
 
-IY = fun_call_id(IY)
-
-if (IY > NLOC) then
-    FTMAX = 0.
-    write(*, *) ' >>> FTMAX >>> too many calls: >', NLOC
+call function_id('FTMAX')
+IY = f_id
+FTMAX = -1.E37
+if (y_old(IY) >= Y) then
+    FTMAX = y_old(IY)
 else
-    FTMAX = -1.E37
-    if (y_old(IY) >= Y) then
-        FTMAX = y_old(IY)
-    else
-        FTMAX = Y
-        y_old(IY) = Y
-    endif
+    FTMAX = Y
+    y_old(IY) = Y
 endif
 
 return

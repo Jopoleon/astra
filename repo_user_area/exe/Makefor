@@ -32,6 +32,7 @@ $(OBJ_DIR)/parameters_a2equil.o \
 $(OBJ_DIR)/ipc_mod.o \
 $(OBJ_DIR)/nclass_mod.o \
 $(OBJ_DIR)/strahl_mod.o \
+$(OBJ_DIR)/time_functions.o \
 $(OBJ_DIR)/numerical_tools_mod.o
 
 
