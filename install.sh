@@ -16,13 +16,14 @@ do
     then
         cp -r repo_user_area/$DIR .
     else
-        read -p "Create backup + copy '$DIR' from repo_user_area_dir? y/n " OVERWRITE
+        read -p "'$DIR': backup + copy from repo_user_area_dir? y/n " OVERWRITE
         if [ "$OVERWRITE" = "y" ]
 	then
             rm -rf ${DIR}_backup
             cp -r $DIR ${DIR}_backup
-            printf "Created backup for '$DIR' in $AWD/${DIR}_backup\n\n"
             cp -r repo_user_area/$DIR .
+            echo "Backup in $AWD/${DIR}_backup"
+            printf "Copy $AWD/repo_use_area/$DIR to $AWD/$DIR\n\n"
         fi
     fi
 done
