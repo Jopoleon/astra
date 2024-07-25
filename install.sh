@@ -40,5 +40,15 @@ chmod 744 $AWD/pyparse/parser_main.py
 chmod 744 $AWD/green/greenMatrices.py
 chmod 744 $AWD/clean.sh
 
-make -f exe/Makefile clean
+if [ "$SAFE" = "-safe" ]
+then
+    read -p "Clean dirs for full Make? y/n " CLEAN
+    if [ "$CLEAN" = "y" ]
+    then
+	make -f exe/Makefile clean
+    fi
+else
+    echo hello
+    make -f exe/Makefile clean
+fi
 exe/as_exe -m fluxes -v aug34954 -s 4 -e 5
