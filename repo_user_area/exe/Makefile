@@ -9,8 +9,8 @@ endif
 LIB_DIR = $(AWD)/lib
 TSK_DIR = $(AWD)/bin
 FOR_DIR = $(AWD)/main
-MOD_DIR = $(AWD)/mod/for
-OBJ_DIR = $(AWD)/obj/for
+MOD_DIR = $(AWD)/mod
+OBJ_DIR = $(AWD)/obj
 TMP_DIR = $(AWD)/tmp
 NBI_INC = $(AWD)/mod/nbi
 ATASK = $(TSK_DIR)/$(MODEL).exe
@@ -65,8 +65,8 @@ directories:
 .PHONY: clean
 clean:
 	rm -f *.mod
-	rm -f $(MOD_DIR)/*.mod
-	rm -f $(TSK_DIR)/*
+	rm -rf $(MOD_DIR)
+	rm -rf $(TSK_DIR)
 	rm -rf $(OBJ_DIR)
 	rm -rf $(LIB_DIR)
 
@@ -79,7 +79,7 @@ modules:
 
 $(ATASK): $(LIBFOR) $(LIBNBI) $(LIBFEQIS) $(LIBSPIDER) $(LIBSBR) $(LIBFNC) $(AENV) $(EQU) $(FOR_SRC) $(PYFILES) $(FMLS)
 	$(PY_TMP_GEN)
-	$(AFC) $(AFC_FLAGS) $(ATASK) $(FOR_SRC) $(TMP_SRC) -I$(MOD_DIR) -I$(NBI_INC) $(LIB)
+	$(AFC) $(AFC_FLAGS) $(ATASK) $(FOR_SRC) $(TMP_SRC) -I$(MOD_DIR)/for -I$(NBI_INC) $(LIB)
 
 # User defined sbr and fnc
 

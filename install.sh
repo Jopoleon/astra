@@ -8,25 +8,31 @@ platform=`$AWD/get_platform`
 SAFE=$1
 
 cd $AWD
-for DIR in $(ls repo_user_area)
+
+# Create backup
+for DIR in exe fml fnc sbr xpr
 do
-    if [ -d "$DIR" ]
+    if [ ! -d "$DIR" ]
     then
         printf "Subdir '$DIR' exists, creating backup in $AWD/${DIR}_backup\n"
-	cp -r $DIR ${DIR}_backup
-	if [ "$SAFE" = "-safe" ]
+        rm -rf ${DIR}_backup
+        cp -r $DIR ${DIR}_backup
+    fi
+done
+
+# Prompt overwriting option
+for DIR in $(ls repo_user_area)
+do
+    if [ ! -d "$DIR" ] || [ "$SAFE" != "-safe" ] || [ "$DIR" = "equ" ] || [ "$DIR" = "exp" ] || [ "$DIR" = "pyparse" ] || [ "$DIR" = "strahl" ] || [ "$DIR" = "tmp" ] || [ "$DIR" = "udb" ]
+    then
+        cp -r repo_user_area/$DIR .
+    else
+        read -p "Overwrite safely '$DIR' from repo_user_area_dir? y/n " OVERWRITE
+        if [ "$OVERWRITE" = "y" ]
 	then
-            read -p "Overwrite safely $DIR from repo_user_area_dir? y/n " OVERWRITE
-	    if [ "$OVERWRITE" = "y" ]
-	    then
-                cp -r repo_user_area/$DIR .
-            fi
-            printf "\n"
-	else
             cp -r repo_user_area/$DIR .
         fi
-    else
-        cp -r repo_user_area/$DIR .
+        printf "\n"
     fi
 done
 
