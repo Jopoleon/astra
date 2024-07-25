@@ -205,11 +205,11 @@ class GREEN_MATRICES:
             ind_pc2 = ind_pc**2
             int0_iipc = np.zeros(ind_pc2*n_blanket_pc, dtype=gr_int)
             nctype = np.append(nctype, 2 + int0_iipc)
+            flt0_ii = np.zeros(ind_pc2, dtype=gr_flt)
+            int0_ii = np.zeros(ind_pc2, dtype=gr_int)
             for j in range(n_blanket_pc):
                 nConduc += 1
                 nBlocks += 1
-                flt0_ii = np.zeros(ind_pc2, dtype=gr_flt)
-                int0_ii = np.zeros(ind_pc2, dtype=gr_int)
                 equivtmp   = np.append(equivtmp  , nConduc + int0_ii)
                 equivforce = np.append(equivforce, nBlocks + int0_ii)
                 dRce  = np.append(dRce , dx[j]      + flt0_ii)
