@@ -12,7 +12,7 @@ cd $AWD
 # Create backup
 for DIR in exe fml fnc sbr xpr
 do
-    if [ ! -d "$DIR" ]
+    if [ -d "$DIR" ]
     then
         printf "Subdir '$DIR' exists, creating backup in $AWD/${DIR}_backup\n"
         rm -rf ${DIR}_backup
