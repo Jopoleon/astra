@@ -1,24 +1,13 @@
 #!/bin/bash -f
 
 rootdir=`dirname $0`      # may be relative path
-AWD=`cd $rootdir && pwd`  # ensure absolute path
+export AWD=`cd $rootdir && pwd`  # ensure absolute path
 
 chmod 744 $AWD/get_platform
 platform=`$AWD/get_platform`
 SAFE=$1
 
 cd $AWD
-
-# Create backup
-for DIR in exe fml fnc sbr xpr
-do
-    if [ -d "$DIR" ]
-    then
-        printf "Subdir '$DIR' exists, creating backup in $AWD/${DIR}_backup\n"
-        rm -rf ${DIR}_backup
-        cp -r $DIR ${DIR}_backup
-    fi
-done
 
 # Prompt overwriting option
 for DIR in $(ls repo_user_area)
@@ -27,12 +16,14 @@ do
     then
         cp -r repo_user_area/$DIR .
     else
-        read -p "Overwrite safely '$DIR' from repo_user_area_dir? y/n " OVERWRITE
+        read -p "Create backup + copy '$DIR' from repo_user_area_dir? y/n " OVERWRITE
         if [ "$OVERWRITE" = "y" ]
 	then
+            rm -rf ${DIR}_backup
+            cp -r $DIR ${DIR}_backup
+            printf "Created backup for '$DIR' in $AWD/${DIR}_backup\n\n"
             cp -r repo_user_area/$DIR .
         fi
-        printf "\n"
     fi
 done
 
