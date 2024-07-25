@@ -12,8 +12,8 @@ if len(logger.handlers) == 0:
     hnd.setFormatter(fmt)
     logger.addHandler(hnd)
 
-logger.setLevel(logging.DEBUG)
-#logger.setLevel(logging.INFO)
+#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 grIOdir = '%s/exp/cnf' %awd
@@ -133,7 +133,7 @@ class GREEN_MATRICES:
         if hasattr(self, 'r0ferro'):
             self.angleferro = np.radians(self.angleferro)
         
-        logger.debug('nactive, ncoils, nconduc, ssfw %d %d %d %12.4e', self.nActive, nCoils, nConduc, ssfw)
+        logger.debug('nactive, ncoils, nconduc %d %d %d', self.nActive, nCoils, nConduc)
 
 
     def calcGreenf(self):
@@ -200,20 +200,16 @@ class GREEN_MATRICES:
             n_blanket_pc = len(self.R_blan_pc)
             n_elem_blanket_pc = 9 # sub element of a blanket element, hardwired to 9 for now
             ind_pc = np.round(np.sqrt(n_elem_blanket_pc + 1.e-6)).astype(gr_int)
-            dx = 0.5*np.sqrt(self.area_blan_pc/ind_pc)
+            dx = np.sqrt(self.area_blan_pc)/ind_pc
             dx_area = dx**2/self.area_blan_pc
-            r1 = self.R_blan_pc - 0.5*dx
-            z1 = self.Z_blan_pc - 0.5*dx
-            flt0_iipc = np.zeros(ind_pc**2*n_blanket_pc, dtype=gr_flt)
-            int0_iipc = np.zeros(ind_pc**2*n_blanket_pc, dtype=gr_int)
-            dRce   = np.append(dRce, dx + flt0_iipc)
-            dZce   = np.append(dZce, dx + flt0_iipc)
-            nctype = np.append(nctype , 2  + int0_iipc)
+            ind_pc2 = ind_pc**2
+            int0_iipc = np.zeros(ind_pc2*n_blanket_pc, dtype=gr_int)
+            nctype = np.append(nctype, 2 + int0_iipc)
             for j in range(n_blanket_pc):
                 nConduc += 1
                 nBlocks += 1
-                flt0_ii = np.zeros(indi_pc**2, dtype=gr_flt)
-                int0_ii = np.zeros(indi_pc**2, dtype=gr_int)
+                flt0_ii = np.zeros(ind_pc2, dtype=gr_flt)
+                int0_ii = np.zeros(ind_pc2, dtype=gr_int)
                 equivtmp   = np.append(equivtmp  , nConduc + int0_ii)
                 equivforce = np.append(equivforce, nBlocks + int0_ii)
                 dRce  = np.append(dRce , dx[j]      + flt0_ii)
