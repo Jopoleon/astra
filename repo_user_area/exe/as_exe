@@ -25,12 +25,6 @@ then
         module load netcdf-fortran/4.6.0-intel-2021.9.0-module-2v44tym
         module use /home/gtardini/modulefiles
 	module load astra
-    elif [[ $platform == "ldaug" ]]
-    then
-        module load astra/ldaug
-    elif [[ $platform == "lddsk" ]]
-    then
-        module load astra/lddsk
     else 
         module load astra
         RES=$( { module load astra; } 2>&1 )
