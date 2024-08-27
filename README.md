@@ -20,9 +20,9 @@ Compile or execute:
 
 Supported platforms:
   IPP tok
-  IPP lxts
   IPP ldaug
   IPP lddsk
+  IPP cs-ld-prod
   IPP-cz
   gateway
   iter-sdcc
@@ -30,6 +30,7 @@ Supported platforms:
   GA-omega
   Perlmutter
   mit.edu
+  rat2 (Padua)
 
 The supported platforms are automatically recognised. If not, execute
 ```

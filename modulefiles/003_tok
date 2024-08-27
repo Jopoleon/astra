@@ -17,13 +17,13 @@ if [ module-info mode load ] {
     module load mpi/2021.9.0
     module load compiler/2023.1.0
     module load mkl/2023.1.0
-    module load anaconda3/2023.03
+    module load anaconda/3/2023.03
 }
 if [ module-info mode remove ] {
     module unload mpi/2021.9.0
     module unload compiler/2023.1.0
     module unload mkl/2023.1.0
-    module unload anaconda3/2023.03
+    module unload anaconda/3/2023.03
 }
 
 #setenv ASTRA_EXT /shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT
