@@ -806,7 +806,7 @@ character(len=l_unit), allocatable, dimension(:) :: s_unit
 character(len=l_desc), allocatable, dimension(:) :: s_desc
 integer, external :: get_nvars
 
-101 format('    "', A, '": {"units": "', A, '", "long_name": "', A, '", "data": ', es15.8, '},')
+101 format('    "', A, '": {"units": "', A, '", "long_name": "', A, '", "data": ', es16.8e3, '},')
 
 nvars = get_nvars(file_in)
 allocate(s_name(nvars), s_unit(nvars), s_desc(nvars))
@@ -879,8 +879,8 @@ do i=1, ndim
 enddo
 
 if (MAXVAL(ABS(array)) > 0.) then
-    write(nunit, '(5(es15.8, ","))') (array(i), i=1, ndim-1)
-    write(nunit, '(es15.8)') array(ndim) ! No comma after last array entry
+    write(nunit, '(5(es16.8e3, ","))') (array(i), i=1, ndim-1)
+    write(nunit, '(es16.8e3)') array(ndim) ! No comma after last array entry
 endif
 
 return
