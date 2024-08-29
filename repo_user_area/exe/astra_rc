@@ -1,5 +1,7 @@
 #!/bin/bash -f
 
+node=`uname -n`
+
 # TORBEAM
 
 IRC_LIB="-L${COMP_LIBDIR} -lirc" # necessary for libtorbeam.so
@@ -9,7 +11,16 @@ export TORB_LIB="-L${TORB_LIBDIR} -ltorbeamB  -Wl,-rpath,${TORB_LIBDIR} ${IRC_LI
 
 # RABBIT
 
-RABBIT_HOME="${ASTRA_EXT}/rabbit/may23"
+if [[ $node = "cx-ld-prod"* ]]
+then
+   RABBIT_HOME="${ASTRA_EXT}/rabbit/jul24_cddsk"
+elif [[ $node = "hz-ld-"* ]]
+then
+    RABBIT_HOME="${ASTRA_EXT}/rabbit/jul24_cddsk"
+else
+    RABBIT_HOME="${ASTRA_EXT}/rabbit/may23"
+fi
+
 RABBIT_LIBDIR=${RABBIT_HOME}/lib
 export RABBIT_LIB="-L${RABBIT_LIBDIR} -lrabbit -Wl,-rpath,${RABBIT_LIBDIR}"
 export RABBIT_INC=${RABBIT_HOME}/inc

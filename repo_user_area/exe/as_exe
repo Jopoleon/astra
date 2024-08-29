@@ -12,11 +12,11 @@ then
     source $module_sh
     module purge
     RES="Ok"
-    if [[ $platform == "iter" ]]
+    if [[ $platform = "iter" ]]
     then
         module use /home/ITER/tarding/modulefiles
 	module load astra
-    elif [[ $platform == "mit" ]]
+    elif [[ $platform = "mit" ]]
     then
         module use /orcd/nese/psfc/001/software/spack/2023-07-01-physics-rpp/spack/share/spack/modules-test/linux-rocky8-x86_64
         module load intel-oneapi-compilers/2023.1.0-gcc-12.2.0-module-3vfzgf
@@ -30,11 +30,11 @@ then
         RES=$( { module load astra; } 2>&1 )
     fi
     echo $RES
-    if [[ "$RES" == *"ERROR"* ]];
+    if [[ "$RES" = *"ERROR"* ]];
     then
         echo module astra not loaded, proceed anyway?
         read -p "y/n:" proc
-        if [[ $proc == "n" ]]
+        if [[ $proc = "n" ]]
         then
             exit 1
         fi

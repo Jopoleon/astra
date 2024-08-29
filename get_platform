@@ -4,49 +4,49 @@ rootdir=`dirname $0`          # may be relative path
 AWD=`cd $rootdir && pwd`  # ensure absolute path
 node=`uname -n`
 
-if [[ $AWD == "/afs/eufus"* ]]
+if [[ $AWD = "/afs/eufus"* ]]
 then
    platform=gway
-elif [[ $AWD == "/localhome"* ]]
+elif [[ $AWD = "/localhome"* ]]
 then
    platform=goblin
-elif [[ $AWD == "/home/ITER"* ]]
+elif [[ $AWD = "/home/ITER"* ]]
 then
    platform=iter
-elif [[ $AWD == "/home/matlab"* ]]
+elif [[ $AWD = "/home/matlab"* ]]
 then
    platform=docker
-elif [[ $AWD == "/global/homes"* ]]
+elif [[ $AWD = "/global/homes"* ]]
 then
    platform=perlmutter
-elif [[ $AWD == "/compass"* ]]
+elif [[ $AWD = "/compass"* ]]
 then
    platform=cz
-elif [[ $node == *"mit.edu" ]]
+elif [[ $node = *"mit.edu" ]]
 then
    platform=mit
-elif [[ $node == "omega"* ]]
+elif [[ $node = "omega"* ]]
 then
    platform=omega
-elif [[ $node == "CX-LD"* ]]
+elif [[ $node = "CX-LD"* ]]
 then
    platform=cxaug
-elif [[ $node == "cx-ld-prod"* ]]
+elif [[ $node = "cx-ld-prod"* ]]
 then
    platform=cxaug
-elif [[ $node == "hz-ld-"* ]]
+elif [[ $node = "hz-ld-"* ]]
 then
    platform=cxaug
-elif [[ $node == "tok"* ]]
+elif [[ $node = "tok"* ]]
 then
    platform=tok
-elif [[ $node == "iris"* ]]
+elif [[ $node = "iris"* ]]
 then
    platform=iris
-elif [[ $node == "e2dea0ffab23" ]]
+elif [[ $node = "e2dea0ffab23" ]]
 then
    platform=ncku
-elif [[ $node == "rat2"* ]]
+elif [[ $node = "rat2"* ]]
 then
    platform=rat2
 fi

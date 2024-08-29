@@ -28,11 +28,11 @@ do
     fi
 done < $ALOG
 
-if [[ $platform == "mit" ]]
+if [[ $platform = "mit" ]]
 then
     export COMP_LIBDIR=${INTEL_ONEAPI_MKL_ROOT}/compiler/2023.1.0/linux/compiler/lib/intel64_lin
     export MKL_LIBDIR=${MKLROOT}/lib/intel64
-elif [[ $platform == "docker" ]]
+elif [[ $platform = "docker" ]]
 then
    # Same as "module load astra" on AUG machines
    export ASTRA_EXT=/shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT
@@ -45,7 +45,7 @@ then
    export MPIFC=mpiifort
    export IFORT_BIN=/opt/intel/oneapi/compiler/latest/linux/bin/intel64
    export INTEL_LICENSE_FILE=/opt/intel/oneapi/mkl/latest/licencing
-elif [[ $platform == "ncku" ]]
+elif [[ $platform = "ncku" ]]
 then
     # /compiler/2024.1/bin/compiler
     PKG=/opt/intel/oneapi
@@ -101,7 +101,7 @@ fi
 
 ATASK=$AWD/bin/$equ_file.exe
 
-if [ "$TASK" == 'BGD' ]
+if [ "$TASK" = 'BGD' ]
 then
     if ! command -v sbatch &> /dev/null
     then
