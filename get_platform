@@ -34,6 +34,9 @@ then
 elif [[ $node == "cx-ld-prod"* ]]
 then
    platform=cxaug
+elif [[ $node == "hz-ld-"* ]]
+then
+   platform=cxaug
 elif [[ $node == "tok"* ]]
 then
    platform=tok
