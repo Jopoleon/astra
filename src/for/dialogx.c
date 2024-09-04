@@ -364,21 +364,17 @@ void taskmenu_(INT_ *modex){
     char* font_name = "8x13bold";
     font = XLoadQueryFont(theDisplay, font_name);
     if (font == NULL) {
-	char* font_name = "lucidasans-bold-8";
+        list_installed_fonts = XListFonts(theDisplay, "*", 1000, &num_installed_fonts);
+	if (num_installed_fonts <= 0){
+	    exit(-1);
+	}
+        font_name = list_installed_fonts[0];
         font = XLoadQueryFont(theDisplay, font_name);
-        if (font == NULL) {
-            printf("dialogx:taskmenu font = %x\n", font); fflush(stdout);
-            printf("dialogx:taskmenu font_name = |%s| not available \n", font_name); fflush(stdout);
-            printf("dialogx:taskmenu List of avaiable fonts: \n", font); fflush(stdout);
-            list_installed_fonts = XListFonts (theDisplay, "*", 1000, &num_installed_fonts);
-            printf("dialogx:taskmenu num_installed_fonts = %d\n", num_installed_fonts); fflush(stdout);
-            for (i=0; i<num_installed_fonts; i++) {
-                printf("dialogx:taskmenu list_installed_fonts[%d] = |%s|\n", i, list_installed_fonts[i]); fflush(stdout);
-            }
-            exit(-1);
+        for (i=0; i<20; i++) {
+            printf("dialogx: installed_font[%d] = |%s|\n", i, list_installed_fonts[i]);
 	}
     }
-    /* */
+    printf("dialogx: ASTRA GUI using font = |%s|\n", font_name);
 
     XSetFont(theDisplay, hghGC, font->fid);
     XDrawString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Graphic mode", 12);
