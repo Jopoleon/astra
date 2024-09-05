@@ -13,7 +13,7 @@ export TORB_LIB="-L${TORB_LIBDIR} -ltorbeamB  -Wl,-rpath,${TORB_LIBDIR} ${IRC_LI
 
 if [[ $node = "cx-ld-prod"* ]] || [[ $node = "hz-ld-"* ]]
 then
-    RABBIT_HOME="${ASTRA_EXT}/rabbit/jul24_cddsk"
+    RABBIT_HOME="${ASTRA_EXT}/rabbit/sep24"
 else
     RABBIT_HOME="${ASTRA_EXT}/rabbit/may23"
 fi
