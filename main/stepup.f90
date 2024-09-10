@@ -251,10 +251,10 @@ if (IFBEY >= 1.) then         ! is doing free boundary
     endif
 endif
 
-!adiabatic compression, not more useful...
-if (nint(ADCMPF) == 0 .and. icurradj == 0) then
-    call ADCMP(bc_type_for_fp, dfpdrbm12)  ! Do AdComp once per time step, since if 
-endif
+!adiabatic compression, not more useful... OBSOLETE
+!if (nint(ADCMPF) == 0 .and. icurradj == 0) then
+!    call ADCMP(bc_type_for_fp, dfpdrbm12)  ! Do AdComp once per time step, since if 
+!endif
 
 TIME = TIME + TAU
 TAUPRP = tau
