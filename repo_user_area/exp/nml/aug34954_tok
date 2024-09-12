@@ -64,8 +64,8 @@
 
 &physics
    jumpcor = 2
-   table_path   = '/tokp/work/software/TOK_2023/software/ASTRA_LIBRARIES_EXT/rabbit/tables_highRes'
-   limiter_file = '/tokp/work/software/TOK_2023/software/ASTRA_LIBRARIES_EXT/rabbit/limiters/limiter_aug.dat'
+   table_path   = '/shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT/rabbit/tables_highRes'
+   limiter_file = '/shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT/rabbit/limiters/limiter_aug.dat'
    Rlim = 2.20 !AUG defaults, overridden if limiter_file exists
    zlim = 0.20
    Rmax = 2.26 !AUG defaults
