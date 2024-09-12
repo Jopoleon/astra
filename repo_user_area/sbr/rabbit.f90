@@ -1,4 +1,4 @@
-subroutine RABBIT
+subroutine RABBIT(power_W_in)
 
 use mod_rabbit_lib, only: do_dump, rabbit_lib_init, rabbit_lib_set_dump_dir, &
     rabbit_lib_dump_beams, rabbit_lib_set_sp_plasma_ratio, rabbit_lib_step, &
@@ -17,6 +17,8 @@ implicit none
 
 integer, parameter :: Nrrect=64, Nzrect=64, nnb_max=30, nspc=3, nrhoout=21, unit_lim=11
 double precision, parameter :: ALFA=1.d-5
+
+double precision, intent(in) :: power_W_in
 
 integer, dimension(nnb_max) :: ierr
 integer :: n_Rrect, n_Zrect, n_nbi, dum, n_lim, jumpcor, torqjxb_model
@@ -200,8 +202,12 @@ if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
     allocate(wfi_par_lab(nrhoout, n_nbi))
 endif
 
-pinj_file2 = TRIM(awd) // TRIM(pinj_file)
-call uf2dr(pinj_file2, TIME, pinj(1:n_nbi))
+if (TRIM(pinj_file) == 'None') then
+    pinj(1) = power_W_in
+else
+    pinj_file2 = TRIM(awd) // TRIM(pinj_file)
+    call uf2dr(pinj_file2, TIME, pinj(1:n_nbi))
+endif
 
 QNBI = sum(pinj(1:n_nbi))*1d-6
 

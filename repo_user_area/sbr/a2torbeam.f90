@@ -1,6 +1,4 @@
-! http://www2.ipp.mpg.de/~emp/index.php?page=input
-!======================================================================|
-subroutine A2TORBEAM
+subroutine A2TORBEAM(power_W_in)
 
 !----------------------------------------------------------------------|
 ! File input for: beam curvature and width, 
@@ -22,6 +20,8 @@ integer, parameter :: n_gy_max=30, maxint=50, maxflt=50, &
      mmax=150, nmax=150, prdim = 2*mmax+2*nmax, ndat=100000, &
      npnt=5000, ianexp=2, &
      nprofvw=25, n_interp=150
+
+double precision, intent(in) :: power_W_in
 
 logical, dimension(n_gy_max) :: beam_on
 integer :: jr, jz, i, jrho, jgy, j, n_ne, n_te, ios, n_rho
@@ -56,7 +56,8 @@ double precision, dimension(:), allocatable :: rho_interp, te_interp, ne_interp
 double precision :: ecrh_int, eccd_int, psi_sep, psi_axis
 double precision, external :: VINT, IINT
 
-character(len=120) :: fort_name, as_nml, time_str, pecr_file, phi_file, theta_file
+character(len=120) :: fort_name, as_nml, time_str, pecr_file, phi_file, theta_file, &
+     pecr_file2, phi_file2, theta_file2
 
 NAMELIST / torbeam / n_gyro, pecr_file, theta_file, phi_file, &
            beam_on, nmod, freq_n,  &
@@ -232,14 +233,19 @@ floatinbeam(33) = xqedg
 floatinbeam(34) = 1.
 floatinbeam(35) = ZEF(1)
 
-pecr_file  = TRIM(awd) // TRIM(pecr_file)
-theta_file = TRIM(awd) // TRIM(theta_file)
-phi_file   = TRIM(awd) // TRIM(phi_file)
+if (TRIM(pecr_file) == 'None') then
+    power_gyro(1) = power_W_in
+else
+    pecr_file2  = TRIM(awd) // TRIM(pecr_file)
+    call uf2dr(pecr_file2, TIME, power_gyro(1:n_gyro))
+    power_gyro(1:n_gyro) = 1d-6*power_gyro(1:n_gyro)
+endif
 
-call uf2dr(pecr_file, TIME, power_gyro(1:n_gyro))
-power_gyro(1:n_gyro) = 1d-6*power_gyro(1:n_gyro)
-call uf2dr(theta_file, TIME, theta_t(1:n_gyro))
-call uf2dr(phi_file, TIME, phi_t(1:n_gyro))
+theta_file2 = TRIM(awd) // TRIM(theta_file)
+phi_file2   = TRIM(awd) // TRIM(phi_file)
+
+call uf2dr(theta_file2, TIME, theta_t(1:n_gyro))
+call uf2dr(phi_file2, TIME, phi_t(1:n_gyro))
 
 if (dump_flag) then
     write(*, *) 'Writing fort.61, 62 files for TORBEAM standalone'
