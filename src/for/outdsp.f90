@@ -667,12 +667,11 @@ use debugger, only: debug
 implicit none
 
 integer, parameter :: n_theta=64, ngc_max=750
-integer :: j, j1, jgc, ios, nSHOT, Ndim, NGC, ndim_gc
-integer, dimension(40) :: ixbeg, lenix, valix
+integer :: j, j1, jgc, jbeg, ios, nSHOT, Ndim, NGC, ndim_gc
+integer, dimension(40) :: contour_len, contour_color
 double precision :: pol_ang, Rwall, Zwall
 double precision, dimension(n_theta) :: xwall, ywall
-double precision, dimension(ngc_max) :: xGC, yGC
-double precision, dimension(ngc_max, 2) :: xyGC
+double precision, dimension(ngc_max) :: xGC, yGC, rGC, zGC
 character(len=64) :: STRI
 
 call setColor(Blue)
@@ -696,26 +695,27 @@ else
         read(7, *) NGC
     endif
     if (Ndim <= 750 .and. NGC <= 40) then
-        read(7, *) ((xyGC(j, j1), j1=1, 2), j=1, Ndim)
+        read(7, *) (rGC(j), zGC(j), j=1, Ndim)
         read(7, *) STRI
-        read(7, *) (ixbeg(j), j=1, NGC)
+        read(7, *) (contour_len(j), j=1, NGC)
         read(7, *) STRI
-        read(7, *) (lenix(j), j=1, NGC)
-        read(7, *) STRI
-        read(7, *) (valix(j), j=1, NGC)
+        read(7, *) (contour_color(j), j=1, NGC)
         close(7)
         if (debug > 0) then
-             write(*, *) "Plotting device wall contour from " // TRIM(wall_gc_file), meter2pixel
+            write(*, *) "Plotting device wall contour from " // TRIM(wall_gc_file), meter2pixel
         endif
+
+        jbeg = 0
         do j1=1, NGC
-            if (valix(j1) /= White) then
-                ndim_gc = lenix(j1)
+            if (contour_color(j1) /= White) then
+                ndim_gc = contour_len(j1)
                 do j=1, ndim_gc
-                    xgc(j) = meter2pixel*xyGC(ixbeg(j1)+j-1, 1)
-                    ygc(j) = pixel_ymid - meter2pixel*xyGC(ixbeg(j1)+j-1, 2)
+                    xgc(j) = meter2pixel*rGC(jbeg+j)
+                    ygc(j) = pixel_ymid - meter2pixel*zGC(jbeg+j)
                 enddo
                 call plot_curve(ndim_gc, 0, xgc(1:ndim_gc), ygc(1:ndim_gc))
             endif
+            jbeg = jbeg + contour_len(j1) 
         enddo
     else
         close(7)
