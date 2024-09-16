@@ -50,9 +50,6 @@ $(OBJ_DIR)/rabbit.o: $(SRC_DIR)/rabbit.f90
 $(OBJ_DIR)/a2rabbit.o: $(SRC_DIR)/a2rabbit.f90
 	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -I$(RABBIT_INC) -c $< -o $@
 
-$(OBJ_DIR)/a2json2.o: $(SRC_DIR)/a2json2.f90
-	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -I$(JSON_INC) -c $< -o $@
-
 $(OBJ_DIR)/assign_geom.o: $(SRC_DIR)/assign_geom.f90
 	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -I$(MODE_DIR) -c $< -o $@
 

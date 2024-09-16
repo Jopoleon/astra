@@ -2,11 +2,6 @@
 
 node=`uname -n`
 
-#JSON
-JSON_HOME="${ASTRA_EXT}/json/sep24"
-export JSON_LIB="$JSON_HOME/lib/libjsonfortran.a"
-export JSON_INC="$JSON_HOME/inc"
-
 # TORBEAM
 
 IRC_LIB="-L${COMP_LIBDIR} -lirc" # necessary for libtorbeam.so

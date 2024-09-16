@@ -7,7 +7,6 @@ OBJ_DIR = $(AWD)/obj/for
 MOD_DIR = $(AWD)/mod/for
 INC_DIR = $(AWD)/inc
 MOD_FEQ = $(AWD)/mod/feqis
-
 LIB_DIR = $(AWD)/lib
 LIBNAM = libfor.a
 LIB = $(LIB_DIR)/$(LIBNAM)
@@ -23,7 +22,6 @@ $(OBJ_DIR)/astra_modules.o \
 $(OBJ_DIR)/debugger.o \
 $(OBJ_DIR)/outcmn.o \
 $(OBJ_DIR)/const.o \
-$(OBJ_DIR)/machine_config.o \
 $(OBJ_DIR)/status.o \
 $(OBJ_DIR)/transport2fbe.o \
 $(OBJ_DIR)/char_manip.o \
@@ -88,7 +86,7 @@ clean:
 # Rules
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f90
-	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -I$(MOD_FEQ) -I$(JSON_INC) -c $< -o $@
+	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -I$(MOD_FEQ) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.c
 	$(ACC) -c $< -o $@ -I$(INC_DIR)

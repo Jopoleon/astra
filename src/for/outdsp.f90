@@ -657,45 +657,27 @@ end subroutine DRAW3M
 !---------------------------------------------------------------------
 subroutine plot_wall
 !---------------------------------------------------------------------
-! Plot vessel components reading them from json machine file
+! Plot vessel components reading them from "wall_gc_file"
 
 use const_inc, only: AB, ELONM, RTOR, TRICH, GP2
-use outcmn_inc, only: Blue, White, pixel_ymid, meter2pixel
+use outcmn_inc, only: wall_gc_file, Blue, White, pixel_ymid, &
+    meter2pixel
 use debugger, only: debug
-use machine_config, only: config, json_cfg, cfg_exists
 
 implicit none
 
 integer, parameter :: n_theta=64, ngc_max=750
-integer :: j, j1, jgc, jbeg, ios, nSHOT, NGC, ndim_gc
-integer, allocatable, dimension(:) :: contour_len, contour_color
+integer :: j, j1, jgc, jbeg, ios, nSHOT, Ndim, NGC, ndim_gc
+integer, dimension(40) :: contour_len, contour_color
 double precision :: pol_ang, Rwall, Zwall
 double precision, dimension(n_theta) :: xwall, ywall
-double precision, dimension(ngc_max) :: xGC, yGC
-double precision, allocatable, dimension(:) :: rGC, zGC
+double precision, dimension(ngc_max) :: xGC, yGC, rGC, zGC
 character(len=64) :: STRI
 
 call setColor(Blue)
-
-if (cfg_exists) then
-    call config%get('contour_len', contour_len)
-    call config%get('contour_color', contour_color)
-    call config%get('Rvessel', rGC)
-    call config%get('Zvessel', zGC)
-    NGC = SIZE(contour_len)
-    jbeg = 0
-    do j1=1, NGC
-        if (contour_color(j1) /= White) then
-            ndim_gc = contour_len(j1)
-            do j=1, ndim_gc
-                xgc(j) = meter2pixel*rGC(jbeg+j)
-                ygc(j) = pixel_ymid - meter2pixel*zGC(jbeg+j)
-            enddo
-            call plot_curve(ndim_gc, 0, xgc(1:ndim_gc), ygc(1:ndim_gc))
-        endif
-        jbeg = jbeg + contour_len(j1) 
-    enddo
-else
+open(7, FILE=TRIM(wall_gc_file), iostat=ios)
+if (ios /= 0) then
+! plot the AWALL boundary in blue instead
     do j=1, n_theta
         pol_ang = GP2*(j - 1)/float(n_theta)
         Zwall = AB*ELONM*SIN(pol_ang)
@@ -704,7 +686,41 @@ else
         ywall(j) = pixel_ymid - Zwall*meter2pixel
     enddo
     call plot_curve(jgc, 0, xwall, ywall)
-    write(*, *) '>>> plot_wall: problems opening file ' // TRIM(json_cfg)
+    write(*, *) '>>> plot_wall: problems opening file ' // TRIM(wall_gc_file)
+else
+    read(7, *) STRI
+    read(7, *) nSHOT
+    read(7, *) Ndim
+    if (Ndim <= 750) then
+        read(7, *) NGC
+    endif
+    if (Ndim <= 750 .and. NGC <= 40) then
+        read(7, *) (rGC(j), zGC(j), j=1, Ndim)
+        read(7, *) STRI
+        read(7, *) (contour_len(j), j=1, NGC)
+        read(7, *) STRI
+        read(7, *) (contour_color(j), j=1, NGC)
+        close(7)
+        if (debug > 0) then
+            write(*, *) "Plotting device wall contour from " // TRIM(wall_gc_file), meter2pixel
+        endif
+
+        jbeg = 0
+        do j1=1, NGC
+            if (contour_color(j1) /= White) then
+                ndim_gc = contour_len(j1)
+                do j=1, ndim_gc
+                    xgc(j) = meter2pixel*rGC(jbeg+j)
+                    ygc(j) = pixel_ymid - meter2pixel*zGC(jbeg+j)
+                enddo
+                call plot_curve(ndim_gc, 0, xgc(1:ndim_gc), ygc(1:ndim_gc))
+            endif
+            jbeg = jbeg + contour_len(j1) 
+        enddo
+    else
+        close(7)
+        write(*, *) "Configuration file is too long"
+    endif
 endif
 
 return
