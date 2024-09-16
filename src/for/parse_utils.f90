@@ -1,5 +1,6 @@
 module parse_utils
-
+    use machine_config, only: config
+  
 implicit none
 
 contains
@@ -76,68 +77,6 @@ contains
 
     return
     END SUBROUTINE set_vars
-
-!--------------------------------------------------
-    integer function json_intvar(f_json, str_in)
-
-    integer, parameter :: n_unit=32
-
-    character(len=*), intent(in) :: f_json, str_in
-
-    integer :: jpos_str, jpos_colon, jpos_comma, ios, j
-    character(len=120) :: line, string, str_val
-
-    string(:) = ' '
-    string = '"' // str_in // '"'
-    json_intvar = -100
-    open(n_unit, file=TRIM(f_json))
-    do
-        read(n_unit, '(A)', iostat=ios) line
-        if (ios < 0) EXIT
-        jpos_str = INDEX(line, TRIM(string))
-        if (jpos_str > 0) then
-            jpos_colon = INDEX(line(jpos_str:), ':')
-            jpos_comma = INDEX(line(jpos_str:), ',')
-            str_val = line(jpos_str + jpos_colon: jpos_str + jpos_comma) // char(0)
-            read(str_val, *) json_intvar
-            EXIT
-        endif
-    enddo
-    close(n_unit)
-
-    return
-    end function json_intvar
-
-!--------------------------------------------------
-    double precision function json_floatvar(f_json, str_in)
-
-    integer, parameter :: n_unit=32
-
-    character(len=*), intent(in) :: f_json, str_in
-
-    integer :: jpos_str, jpos_colon, jpos_comma, ios, j
-    character(len=120) :: line, string, str_val
-
-    string(:) = ' '
-    string = '"' // TRIM(str_in) // '"'
-    json_floatvar = -100.
-    open(n_unit, file=TRIM(f_json))
-    do
-        read(n_unit, '(A)', iostat=ios) line
-        if (ios < 0) EXIT
-        jpos_str = INDEX(line, TRIM(string))
-        if (jpos_str > 0) then
-            jpos_colon = INDEX(line(jpos_str:), ':')
-            jpos_comma = INDEX(line(jpos_str:), ',')
-            str_val = line(jpos_str + jpos_colon: jpos_str + jpos_comma) // char(0)
-            read(str_val, *) json_floatvar
-            EXIT
-        endif
-    enddo
-    close(n_unit)
-
-    return
-    end function json_floatvar
 
 !--------------------------------------------------
 ! Set variable list from file parsing

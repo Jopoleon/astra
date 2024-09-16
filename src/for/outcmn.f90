@@ -44,7 +44,7 @@ character(len=6), dimension(NCONST) :: CFNAME, PRNAME, SRNAME
 character(len=6), dimension(NRW) :: NAMEX
 character(len=6), dimension(NARRX) :: EXARNM
 character(len=6) :: DTNAME(NSDELOUT+4*NSBMX), NAM7(4)
-character(132) :: nml_file, exp_file, equ_file, rev_file, TASKID, wall_gc_file, NBFILE, MSFILE, VERSION, RUNID, AWD, WHOME, FILEX
+character(132) :: nml_file, exp_file, equ_file, rev_file, TASKID, NBFILE, VERSION, RUNID, AWD, WHOME, FILEX
 type(astra_xwindow) :: astra_gui_ref, astra_gui
 type(plot_frame) :: plot_area_ref, plot_area
 
@@ -65,9 +65,7 @@ meter2pixel = 0.
 resizeGraph = 1.
 
 VERSION = repeat(' ', 32)
-wall_gc_file = '***'
 NBFILE = '***'
-MSFILE = '***'
 
 IDT = 5
 

@@ -1,4 +1,4 @@
-subroutine A2TORBEAM(power_W_in)
+subroutine A2TORBEAM(power_MW_in)
 
 !----------------------------------------------------------------------|
 ! File input for: beam curvature and width, 
@@ -21,7 +21,7 @@ integer, parameter :: n_gy_max=30, maxint=50, maxflt=50, &
      npnt=5000, ianexp=2, &
      nprofvw=25, n_interp=150
 
-double precision, intent(in) :: power_W_in
+double precision, intent(in) :: power_MW_in
 
 logical, dimension(n_gy_max) :: beam_on
 integer :: jr, jz, i, jrho, jgy, j, n_ne, n_te, ios, n_rho
@@ -234,7 +234,7 @@ floatinbeam(34) = 1.
 floatinbeam(35) = ZEF(1)
 
 if (TRIM(pecr_file) == 'None') then
-    power_gyro(1) = power_W_in
+    power_gyro(1) = power_MW_in
 else
     pecr_file2  = TRIM(awd) // TRIM(pecr_file)
     call uf2dr(pecr_file2, TIME, power_gyro(1:n_gyro))

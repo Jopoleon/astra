@@ -20,10 +20,11 @@ use status_inc
 use outcmn_inc, only: AWD, exp_file, nml_file, equ_file, rev_file, &
     TASK, machine, cpuTime_tra, resizeGraph, &
     TASKID, VERSION, AVERS, ARLEAS, AEDIT, COLTAB, IFDFVX, IFDFAX, jbeg_arrx, &
-    PRNAME, CFNAME, SRNAME, EXARNM, NBFILE, MSFILE, wall_gc_file, &
+    PRNAME, CFNAME, SRNAME, EXARNM, NBFILE, &
     NPRNAM, NCFNAM, NSRNAM, NEXNAM, &
     NGR, NBNT, NCNBT, NRDX, NTARR, NRW, &
     CCOILX, VCOILX, GRAP, TIM7
+use machine_config, only: config, config_read
 
 use expdat, only: raw_scalar, raw_profile_map, DATARR, BNDR, BNDZ, BNDTIM
 use char_manip, only: to_upper, str_in_list, clean_string
@@ -40,9 +41,10 @@ implicit none
 
 integer, parameter :: MPEX=101, MSIGEX=1, MTEX=50, MSIG=1, MEXT=MPEX*MTEX
 
-logical :: exilog, file_existence
+logical :: exilog, file_existence, found
 
 integer :: jarr, INTYPE, jtype, SYSTEM, jbdry, ntim, ntim1, IVAR
+integer, allocatable, dimension(:) :: int_json
 integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
 integer :: KAB, KABC, KAWALL, KRTOR, KELONM, KTRICH
 integer :: n_var, n_color, n_words, i_filter_glob
@@ -170,6 +172,11 @@ call path_split(rev_file, dir_path, fname, jpos)
 if (LEN_TRIM(fname) == 0) fname = 'profil.dat'
 ! Disallowing user-defined subdirs for Review file
 rev_file = '.res/' // TRIM(fname)
+
+!----------------------------------------------------------------------|
+! Read machine configuration, if available (need "machine" variable defined)
+
+call config_read()
 
 !----------------------------------------------------------------------|
 ! Read file equ/log/<model>, checking existence of obsolete equ/<model>.log 
@@ -1001,9 +1008,7 @@ TIM7(1) = TINIT
 if (TIME > TINIT + 1.025*abs(TSCALE)) TINIT = TSTART
 TIM7(3) = abs(TSCALE)/8.
 
-call inquire_fname('cnf', TRIM(exp_file), TRIM(machine), wall_gc_file)
 call inquire_fname('nbi', TRIM(exp_file), TRIM(machine), NBFILE)
-call inquire_fname('mse', TRIM(exp_file), TRIM(machine), MSFILE)
 
 return
 
