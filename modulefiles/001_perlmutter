@@ -18,10 +18,6 @@ prereq python
 setenv ASTRA_EXT /tokp/work/software/TOK_2023/software/ASTRA_LIBRARIES_EXT 
 setenv MKL_LIBDIR /opt/intel/oneapi/mkl/latest/lib/intel64
 setenv COMP_LIBDIR /opt/intel/oneapi/compiler/latest/lib/intel64
-set NETCDF_HOME /opt/cray/pe/netcdf/4.9.0.9/intel/2023.2
-set NETCDF_LIBDIR $NETCDF_HOME/lib
-setenv NETCDF_LIB "-L${NETCDF_LIBDIR} -lnetcdf -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}"
-setenv NETCDF_INC $NETCDF_HOME/include
 
 setenv AFC ifort
 setenv ACC "gcc -O"

@@ -1,23 +1,25 @@
 module parse_utils
-
+    use machine_config, only: config
+  
 implicit none
 
 contains
 
 !------------------------------------------------------------
     logical function IFDEFX(XARNAM)
-! Name exists in EXARNM, and the array is defined
+! Name exists in profxNames, and the array is defined
     
     use parameter_inc, only: NARRX
-    use outcmn_inc, only: EXARNM, IFDFAX
+    use outcmn_inc, only: IFDFAX
     use char_manip, only: str_in_list
+    use json_vars, only: profxNames
 
     character(len=6), intent(in) :: XARNAM
 
     integer :: j
     
     IFDEFX = .false.
-    j = str_in_list(XARNAM, EXARNM)
+    j = str_in_list(XARNAM, profxNames)
     if (j > 0) then
         if (IFDFAX(j) /= -1) IFDEFX = .true. ! True (X-array is defined)
     endif
@@ -27,117 +29,24 @@ contains
 
 !----------------------------------------------------------
     logical function IFDEFX2(XARNAM)
-! Name exists in EXARNM, and the array is defined
+! Name exists in profxNames, and the array is defined
 
     use parameter_inc, only: NARRX
-    use outcmn_inc, only: EXARNM, IFDFAX
+    use outcmn_inc, only: IFDFAX
     use char_manip, only: str_in_list
+    use json_vars, only: profxNames
 
     character(len=6), intent(in) :: XARNAM
 
     integer :: j
 
-    j = str_in_list(XARNAM, EXARNM)
+    j = str_in_list(XARNAM, profxNames)
     if (j > 0) then
         if (IFDFAX(j) > 0) IFDEFX2 = .true. ! True (X-array is defined)
     endif
 
     return
     end function IFDEFX2
-
-!----------------------------------------------------------
-! Set variable list from file parsing
-    SUBROUTINE set_vars(file_in, vars, nvars)
-
-    use debugger, only: astra_stop
-
-    integer, parameter :: nunit=31, ndel=6
-
-    character(len=*), intent(in) :: file_in
-    integer, intent(out) :: nvars
-    character(len=ndel), intent(out), dimension(*) :: vars
-
-    integer :: j, ios
-    character(ndel) :: VNAM
-
-    VNAM = '123456'
-    j = 1
-    open(nunit, FILE=TRIM(file_in), iostat=ios)
-    if (ios > 0) call astra_stop(TRIM(file_in) // ' not found')
-    read(nunit, '(/A)')
-    do
-        read(nunit, '(A)', iostat=ios) VNAM
-        if (ios < 0) EXIT
-        vars(j) = VNAM
-        j = j + 1
-    enddo
-    nvars = j - 1
-    close(nunit)
-
-    return
-    END SUBROUTINE set_vars
-
-!--------------------------------------------------
-    integer function json_intvar(f_json, str_in)
-
-    integer, parameter :: n_unit=32
-
-    character(len=*), intent(in) :: f_json, str_in
-
-    integer :: jpos_str, jpos_colon, jpos_comma, ios, j
-    character(len=120) :: line, string, str_val
-
-    string(:) = ' '
-    string = '"' // str_in // '"'
-    json_intvar = -100
-    open(n_unit, file=TRIM(f_json))
-    do
-        read(n_unit, '(A)', iostat=ios) line
-        if (ios < 0) EXIT
-        jpos_str = INDEX(line, TRIM(string))
-        if (jpos_str > 0) then
-            jpos_colon = INDEX(line(jpos_str:), ':')
-            jpos_comma = INDEX(line(jpos_str:), ',')
-            str_val = line(jpos_str + jpos_colon: jpos_str + jpos_comma) // char(0)
-            read(str_val, *) json_intvar
-            EXIT
-        endif
-    enddo
-    close(n_unit)
-
-    return
-    end function json_intvar
-
-!--------------------------------------------------
-    double precision function json_floatvar(f_json, str_in)
-
-    integer, parameter :: n_unit=32
-
-    character(len=*), intent(in) :: f_json, str_in
-
-    integer :: jpos_str, jpos_colon, jpos_comma, ios, j
-    character(len=120) :: line, string, str_val
-
-    string(:) = ' '
-    string = '"' // TRIM(str_in) // '"'
-    json_floatvar = -100.
-    open(n_unit, file=TRIM(f_json))
-    do
-        read(n_unit, '(A)', iostat=ios) line
-        if (ios < 0) EXIT
-        jpos_str = INDEX(line, TRIM(string))
-        if (jpos_str > 0) then
-            jpos_colon = INDEX(line(jpos_str:), ':')
-            jpos_comma = INDEX(line(jpos_str:), ',')
-            str_val = line(jpos_str + jpos_colon: jpos_str + jpos_comma) // char(0)
-            read(str_val, *) json_floatvar
-            EXIT
-        endif
-    enddo
-    close(n_unit)
-
-    return
-    end function json_floatvar
 
 !--------------------------------------------------
 ! Set variable list from file parsing

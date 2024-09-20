@@ -51,8 +51,6 @@ VTOR=VTORX;
 ! ZRD23X=1 using angular velocity, =0 using vtor;
 !ER=BTOR*(VTOR/RTOR*FRS*MU+VDIA-VPOL)
 
-a2json>:.05:::;
-
 ! ECH: TORBEAM, NBI: RABBIT
 TORBEAM_RABBIT>:.05:::;
 

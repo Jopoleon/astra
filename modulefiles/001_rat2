@@ -26,12 +26,6 @@ set INTEL_HOME /cluster/local/rh7/intel-2018u1
 setenv ASTRA_EXT /home/tardini/ASTRA_LIBRARIES_EXT
 setenv MKL_LIBDIR $INTEL_HOME/mkl/lib/intel64
 setenv COMP_LIBDIR $INTEL_HOME/compilers_and_libraries/linux/lib/intel64_lin
-set NETCDF_HOME  /usr/local/netcdf-c/4.8.1/intelmpi-2018
-set NETCDFF_HOME /usr/local/netcdf-f/4.5.4/intelmpi-2018
-set NETCDF_LIBDIR ${NETCDF_HOME}/lib
-set NETCDFF_LIBDIR ${NETCDFF_HOME}/lib
-setenv NETCDF_LIB "-L${NETCDF_LIBDIR} -lnetcdf -L${NETCDFF_LIBDIR} -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}:${NETCDFF_LIBDIR}"
-setenv NETCDF_INC ${NETCDFF_HOME}/include
 
 setenv AFC ifort
 setenv ACC "cc -O"

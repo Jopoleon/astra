@@ -291,9 +291,9 @@ end subroutine NMARK
 !---------------------------------------------------------------------
 double precision function GETNUM(FIELD, ERCODE)
 
-use outcmn_inc, only: PRNAME, CFNAME
 use const_inc , only: CONSTF, DEVARX
 use char_manip, only: str_in_list
+use json_vars, only: constNames, varNames
 
 implicit none
 
@@ -307,7 +307,7 @@ save ISHIFT
 data ISHIFT/0/
 
 if (ISHIFT == 0) then
-    j = str_in_list('ZRD1  ', PRNAME)
+    j = str_in_list('ZRD1  ', varNames)
     ISHIFT = max(j-1, 0)
 endif
 
@@ -316,11 +316,11 @@ jpos = index(TRIM(FIELD), 'ZRD')
 
 if (jpos == 0) then
     jpos1 = index(TRIM(FIELD), 'C')
-    ERCODE = 1 ! Only initial, before CFNAME-search
+    ERCODE = 1 ! Only initial, before constNames-search
     if (jpos1 >  0) then
         j1 = min(LEN_TRIM(FIELD(jpos1: l)), l - jpos1 + 1)
         ZNUM = FIELD(jpos1: jpos1+j1-1)
-        jnam = str_in_list(ZNUM, CFNAME)
+        jnam = str_in_list(ZNUM, constNames)
         if (jnam > 0) then
             ERCODE = 0
             GETNUM = CONSTF(jnam)

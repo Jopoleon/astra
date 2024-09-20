@@ -1,5 +1,5 @@
 import os, sys, re, logging
-import config, fml
+import config, fml, json
 
 logger = logging.getLogger('as_parse.parse_as')
 #logger.setLevel(logging.DEBUG)
@@ -225,7 +225,7 @@ def undef_inivar(var, short, defl='', varx2='', varx3=''):
         varx3 = varx + '(J)'
     inivar  = 'j1 = 1\n'
     inivar += 'do j=1, NARRX\n'
-    inivar += 'if (EXARNM(j) == "%s" .and. IFDFAX(j) < 0) j1 = j\n' %varx2.ljust(6)
+    inivar += 'if (profxNames(j) == "%s" .and. IFDFAX(j) < 0) j1 = j\n' %varx2.ljust(6)
     inivar += 'enddo\n'
     inivar += 'if (NA1%s == NA1 .and. j1 /= 0 .and. ITREQ == 0) then\n' %short
     inivar += 'write(*, *) " >>> Warning: %s and %s are not defined"\n' %(var, varx)
@@ -462,14 +462,6 @@ def fml_fnc(line_in, parse):
         grad_lines += 'do J=1, NA1\n'
         
     return grad_lines + fmls.txt + line_out
-
-
-def parse_inc(f_inc):
-    '''Reads a variables list'''
-
-    with open(f_inc, 'r') as f:
-        lines = f.readlines()[2:]
-    return [line.split(' ', 1)[0] for line in lines]
 
 
 def parse_sbr(line):

@@ -373,8 +373,8 @@ void taskmenu_(INT_ *modex){
         for (i=0; i<20; i++) {
             printf("dialogx: installed_font[%d] = |%s|\n", i, list_installed_fonts[i]);
 	}
+        printf("dialogx: ASTRA GUI using font = |%s|\n", font_name);
     }
-    printf("dialogx: ASTRA GUI using font = |%s|\n", font_name);
 
     XSetFont(theDisplay, hghGC, font->fid);
     XDrawString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Graphic mode", 12);
@@ -978,9 +978,9 @@ int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
 
             switch(*id){
             case 1:        // Variables
-                strcpy (grep_str, "grep -i \"");
+                strcpy (grep_str, "grep -i \\\"");
                 strncat(grep_str, var_name, ii);
-                strcat (grep_str, " \" main/variables.txt");
+                strcat (grep_str, "\\\"  main/astra_variables.json");
                 break;
             case 2:        // Constants, usage in equ file (missing)
                 strcpy (grep_str,"grep -i -w ");
@@ -988,9 +988,9 @@ int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
                 strcat (grep_str, " tmp/model.tmp");
                 break;
             case 3:        // Time, grid control
-                strcpy (grep_str, "grep -i \"");
+                strcpy (grep_str, "grep -i \\\"");
                 strncat(grep_str, var_name, ii);
-                strcat (grep_str," \" main/internal.txt");
+                strcat (grep_str, "\\\" main/astra_variables.json");
                 break;
             case 4:
                 strcpy (grep_str, "grep -w ");

@@ -58,7 +58,9 @@ class GREEN_MATRICES:
                 setattr(self, key, val)
 
 # Spatial grids
-
+        if not hasattr(self, 'Rmin'):
+            logger.warning('"Rmin" not found, skipping Green-function calculation for %s', f_json)
+            return
         self.Rgrid = np.linspace(self.Rmin, self.Rmax, self.nR, endpoint=True, dtype=gr_flt)
         self.Zgrid = np.linspace(self.Zmin, self.Zmax, self.nZ, endpoint=True, dtype=gr_flt)
         dr = (self.Rmax - self.Rmin)/float(self.nR - 1)
@@ -442,5 +444,6 @@ if __name__ == '__main__':
             if not os.path.isfile(f_machineOut):
                 gm = GREEN_MATRICES()
                 gm.fromMachineInput(f_machineIn)
-                gm.calcGreenf()
-                gm.dumpMachineDescr(f_out=f_machineOut)
+                if hasattr(gm, 'Rmin'):
+                    gm.calcGreenf()
+                    gm.dumpMachineDescr(f_out=f_machineOut)

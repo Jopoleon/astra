@@ -24,9 +24,10 @@ use parameter_inc, only: NRW
 use const_inc, only: XOUT, NAB, NA, NA1, XLINE1, RTOR, ABC, BTOR, IPL, TIME, TAU, CONSTF
 use status_inc, only: MU, AMETR, RHO, FP
 use outcmn_inc, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, WarningColor, ROUT, &
-     AWD, RUNID, equ_file, exp_file, NCFNAM
+     AWD, RUNID, equ_file, exp_file
 use dbl2char, only: fmt4, fmt_xf
 use timeoutput_inc, only: NTIMES, TTOUT, TOUT
+use json_vars, only: n_const
 
 implicit none
 
@@ -176,7 +177,7 @@ do JEN=1, 11
     STRI = ' '
     do J=1, 16
         J1 = J1 + 1
-        if (J1 > NCFNAM) EXIT
+        if (J1 > n_const) EXIT
         CH6 = fmt_xf(CONSTF(J1), 5)
         JJ = 7*(J - 1) + 1
         STRI(JJ: JJ+5) = CH6
@@ -986,8 +987,9 @@ subroutine const2ps
 ! Appending the list of constants to a PS file
 
 use const_inc, only: CONSTF, DEVAR
-use outcmn_inc, only: NCFNAM, NPRNAM, PRNAME, null_ch, resizeGraph
+use outcmn_inc, only: null_ch, resizeGraph
 use dbl2char, only: fmt_xf
+use json_vars, only: n_const, n_var, varNames
 
 implicit none
 
@@ -1015,7 +1017,7 @@ ps_loop: do J2=1, 11
 
     do J=1, 4
         J1 = J1 + 1
-        if (J1 > NCFNAM) EXIT ps_loop
+        if (J1 > n_const) EXIT ps_loop
         CH6 = fmt_xf(CONSTF(J1), 5)
         JJ = 7*(J - 1) + 8
     enddo
@@ -1025,7 +1027,7 @@ ps_loop: do J2=1, 11
 
     do J=5, 8
         J1 = J1 + 1
-        if (J1 > NCFNAM) EXIT ps_loop
+        if (J1 > n_const) EXIT ps_loop
         CH6 = fmt_xf(CONSTF(J1), 5)
         JJ = 7*(J - 1) + 20
     enddo
@@ -1040,11 +1042,11 @@ enddo ps_loop
 ! Writing variables
 j1 = 1
 JNY = JNY + 20
-JDUM = NPRNAM - 48
+JDUM = n_var - 48
 
 do j=1, JDUM
     CH6 = fmt_xf(DEVAR(j), 5)
-    STRI(j1: j1+19) = PRNAME(j) // '=' // CH6 // '     '
+    STRI(j1: j1+19) = varNames(j) // '=' // CH6 // '     '
     j1 = j1+20
     if (j1 > 70 .or. j == JDUM) then
         STRI(j1-5:) = null_ch

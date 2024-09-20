@@ -168,14 +168,7 @@ F3 = NIZ3;	     ! initial condition
 F3:EQ[2,1.0]; 	     ! evolution equation 
 F3B=NIZ3(AFX(1.0));  ! boundary condition
 
-
-!------------------ write profile output --------------------!
-
-! NetCDF output
-A2JSON>:.05:::;
-
 !----------------- plotting radial profiles ------------------!
-
 
 ! Page 1: main profiles, radiation and Zeff
 

@@ -66,6 +66,7 @@ use outcmn_inc
 use const_inc
 use status_inc
 use debugger, only: markloc
+use json_vars, only: profxNames
 
 implicit none
 
@@ -277,6 +278,7 @@ use const_inc
 use nclass_mod
 use status_inc
 use debugger, only: markloc
+use json_vars, only: profxNames
 
 implicit none
 
@@ -294,7 +296,7 @@ TAU = TAUMIN
 '''if (NA1N == NB1) then
 j1 = 0
 do j=1, NARRX
-if(EXARNM(j) == "NEX   " .and. IFDFAX(j) < 0) j1 = j
+if(profxNames(j) == "NEX   " .and. IFDFAX(j) < 0) j1 = j
 enddo
 if (j1 /= 0) write(*, *) " >>> Warning: NEX is not defined"
 endif
@@ -319,6 +321,7 @@ use ipc_mod
 use nclass_mod
 use strahl_mod
 use outcmn_inc
+use json_vars, only: profxNames
 use debugger, only: markloc
 
 implicit none

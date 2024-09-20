@@ -22,7 +22,7 @@ then
 elif [[ $AWD = "/compass"* ]]
 then
    platform=cz
-elif [[ $node = *"mit.edu" ]]
+elif [[ $node = *"mit.edu" ]]|| [[ $node = "node"* ]]
 then
    platform=mit
 elif [[ $node = "omega"* ]]

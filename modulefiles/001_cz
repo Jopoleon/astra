@@ -14,14 +14,10 @@ conflict meld
 
 prereq python3/anaconda3.5
 prereq intelstudio/18
-prereq netcdf/4.7.4-hdf5-1.12.0-intelmpi-18
 
 setenv ASTRA_EXT /compass/home/tardini/astra_ext
 setenv COMP_LIBDIR /sw/intel/compilers_and_libraries_2018.3.222/linux/compiler/lib/intel64_lin
 setenv MKL_LIBDIR $env(MKLROOT)/lib/intel64
-set NETCDF_LIBDIR $env(NETCDF_DIR)/lib
-setenv NETCDF_LIB "-L$NETCDF_LIBDIR -lnetcdf -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}"
-setenv NETCDF_INC $env(NETCDF_DIR)/include
 
 setenv AFC ifort
 setenv ACC "cc -O"

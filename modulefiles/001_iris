@@ -18,10 +18,6 @@ prereq conda/omfit
 setenv ASTRA_EXT /fusion/projects/codes/astra/c8/8.2/intel2020/ASTRA_LIBRARIES_EXT
 setenv MKL_LIBDIR /fusion/usc/opt/intel2018/compilers_and_libraries_2018.2.199/linux/mkl/lib/intel64_lin
 setenv COMP_LIBDIR /fusion/usc/opt/intel2020/compilers_and_libraries/linux/lib/intel64
-set NETCDF_HOME /fusion/usc/opt/netcdf/netcdf-4.4.1_mpich-3.2_intel2018
-set NETCDF_LIBDIR $NETCDF_HOME/lib
-setenv NETCDF_LIB "-L${NETCDF_LIBDIR} -lnetcdf -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}"
-setenv NETCDF_INC $NETCDF_HOME/include
 set MPIFORT_BIN /fusion/usc/opt/mpich/mpich-3.2/intel2018/bin
 prepend-path PATH $MPIFORT_BIN
 

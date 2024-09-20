@@ -2,7 +2,7 @@ subroutine INTVAR
 !-----------------------------------------------------------------------
 ! Time evolution of the scalar input data
 ! For the current time, a value is stored in the array
-! DEVARX(NCONST) - (description in the file main/variables_x.txt)
+! DEVARX(NCONST) - (description in the file src/for/const.f90)
 !
 ! Input:
 !    IVAR, raw_scalar

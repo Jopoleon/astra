@@ -1,6 +1,14 @@
 #!/bin/bash -f
 
-node=`uname -n`
+rootdir=`dirname $0`        # may be relative path
+AWD=`cd $rootdir/.. && pwd` # ensure absolute path
+
+platform=`$AWD/get_platform`
+
+#JSON
+JSON_HOME="${ASTRA_EXT}/json/9.0.2"
+export JSON_LIB="$JSON_HOME/lib/libjsonfortran.a"
+export JSON_INC="$JSON_HOME/inc"
 
 # TORBEAM
 
@@ -11,13 +19,11 @@ export TORB_LIB="-L${TORB_LIBDIR} -ltorbeamB  -Wl,-rpath,${TORB_LIBDIR} ${IRC_LI
 
 # RABBIT
 
-if [[ $node = "cx-ld-prod"* ]] || [[ $node = "hz-ld-"* ]] || [[ $node = "tok"* ]]
+if [[ $platform = "cxaug" ]] || [[ $platform = "tok" ]]
 then
-    RABBIT_HOME="${ASTRA_EXT}/rabbit/sep24"
-    TGLF_HOME=${ASTRA_EXT}/tglf/jun24
+    RABBIT_HOME=${ASTRA_EXT}/rabbit/sep24
 else
-    RABBIT_HOME="${ASTRA_EXT}/rabbit/may23"
-    TGLF_HOME=${ASTRA_EXT}/tglf/oct22
+    RABBIT_HOME=${ASTRA_EXT}/rabbit/may23
 fi
 
 RABBIT_LIBDIR=${RABBIT_HOME}/lib
@@ -36,6 +42,7 @@ export QLKNN_LIB=${QLKNN_HOME}/lib/libQLKNN-intel-release-default.a
 
 # TGLF
 
+TGLF_HOME=${ASTRA_EXT}/tglf/jun24
 export TGLF_INC=${TGLF_HOME}/inc
 export TGLF_LIB=${TGLF_HOME}/lib/libtglf.a
 

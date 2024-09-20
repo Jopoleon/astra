@@ -24,7 +24,7 @@ integer, dimension(NRW)   :: MARKT, MARKR, NWIND1, NWIND3, NWIND4, NWIND7, NWIND
 integer, dimension(NARRX) :: IFDFAX, jbeg_arrx, NPTM
 integer, dimension(NSBMX) :: SIGNSB, IFSBX, IFSBP
 integer :: &
-    NDTNAM, NCFNAM, NPRNAM, NSRNAM, NARNAM, NEXNAM, NTOUT, NROUT, NSBR, NSBP, &
+    NDTNAM, NARNAM, NTOUT, NROUT, NSBR, NSBP, &
     NBNT, NCNBT, LTOUT, IPOUT, MOD10, NGR, NXOUT, IFDFVX(NCONST)
 integer :: MODEY, IDX, IDT, KPRI, NST, AVERS, ARLEAS, AEDIT
 integer*4 :: COLTAB(64) ! i*4 needed for compatibility with C
@@ -40,11 +40,9 @@ double precision :: cpuTime_tot, cpuTime_equ, cpuTime_tra, cpuTime_sbr(NSBMX)
 
 character(len=4), dimension(NRW) :: NAMET, NAMER
 character(len=4) :: TASK, machine
-character(len=6), dimension(NCONST) :: CFNAME, PRNAME, SRNAME
 character(len=6), dimension(NRW) :: NAMEX
-character(len=6), dimension(NARRX) :: EXARNM
 character(len=6) :: DTNAME(NSDELOUT+4*NSBMX), NAM7(4)
-character(132) :: nml_file, exp_file, equ_file, rev_file, TASKID, wall_gc_file, NBFILE, MSFILE, VERSION, RUNID, AWD, WHOME, FILEX
+character(132) :: nml_file, exp_file, equ_file, rev_file, TASKID, NBFILE, VERSION, RUNID, AWD, WHOME, FILEX
 type(astra_xwindow) :: astra_gui_ref, astra_gui
 type(plot_frame) :: plot_area_ref, plot_area
 
@@ -65,9 +63,7 @@ meter2pixel = 0.
 resizeGraph = 1.
 
 VERSION = repeat(' ', 32)
-wall_gc_file = '***'
 NBFILE = '***'
-MSFILE = '***'
 
 IDT = 5
 

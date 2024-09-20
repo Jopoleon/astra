@@ -45,15 +45,17 @@ use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     NROUT, NTOUT, NXOUT, NSBR, NGR, NST, &
     NAMER, NAMET, NAMEX, SCALER, SCALET, ROUT, OSHIFR, OSHIFT, &
     rev_file, equ_file, exp_file, &
-    CFNAME, PRNAME, SRNAME, DTNAME, &
+    DTNAME, &
     runid, TASK, VERSION, AVERS, ARLEAS, AEDIT, &
-    NCFNAM, NPRNAM, NCONST, NDTNAM, NSDELOUT, &
+    NCONST, NDTNAM, NSDELOUT, &
     jbeg_arrx, GRAP, GRAL, IFDFVX, TIM7, NAM7, KPRI, ICVMX
 use expdat, only: raw_profile_map, DATARR
 use timeoutput_inc, only: NTIMES, TTOUT, TPOUT, TOUT
 use dbl2char, only: fmt6
 use char_manip, only: str_in_list
 use debugger, only: markloc, debug, astra_stop
+use json_vars, only: write_json, internNames, constNames, varNames, &
+     n_const, n_var
 
 implicit none
 
@@ -200,6 +202,8 @@ if (TPOUT + DPOUT < TSTART .or. (IFKL /= 256 .and. TIME + 0.5*TAU >= TPOUT + DPO
     call markloc(str_in='RADOUT|1 call from IFKEY')
     call RADOUT
 
+    call write_json
+
     if (LTOUTO /= 0)  then
         open(3, FILE=rev_file, STATUS='OLD', iostat=ios, &
 !        ACCESS='APPEND', FORM='UNFORMATTED')   ! SUN, Alpha
@@ -234,7 +238,7 @@ if (TPOUT + DPOUT < TSTART .or. (IFKL /= 256 .and. TIME + 0.5*TAU >= TPOUT + DPO
         MINUTE = time_arr(6)
 
         write(3) exp_file, equ_file, VERSION, XLINE1, &
-            YEAR, MONTH, DAY, HOUR, MINUTE, NCFNAM, NPRNAM, &
+            YEAR, MONTH, DAY, HOUR, MINUTE, n_const, n_var, &
             NROUT, (NAMER(J), J=1, NROUT), (SCALER(J), J=1, NROUT), &
             NTOUT, (NAMET(J), J=1, NTOUT), (SCALET(J), J=1, NTOUT), &
             HRO, NB1, NSBR, NGR, NXOUT, (LEQ(j), j=1, 7)
@@ -260,7 +264,7 @@ if (TPOUT + DPOUT < TSTART .or. (IFKL /= 256 .and. TIME + 0.5*TAU >= TPOUT + DPO
     endif
     write(3) TIME
 
-    write(3) (CONSTF(J), J=1, NCFNAM), (DEVAR(J), J=1, NPRNAM), ABC, ROC, CHORDN, 1./MU(NA)
+    write(3) (CONSTF(J), J=1, n_const), (DEVAR(J), J=1, n_var), ABC, ROC, CHORDN, 1./MU(NA)
     write(3) NA1, NAB, (0, j=1, 10), (0.d0, j=1, 10)
 
     if (LEQ(5) /= 5) call RHSEQ !call this only if equil is not active
@@ -450,7 +454,7 @@ do while(.True.)
         call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
 
     CASE(67) ! 'C'
-        call MENUTABLE(NCFNAM, CONSTF, CFNAME, 2)
+        call MENUTABLE(n_const, CONSTF, constNames, 2)
 
     CASE(68) ! 'D'
         NDTNAM = NSDELOUT + 4*NSBR
@@ -522,18 +526,18 @@ do while(.True.)
 ! New format of the equ/MODEL.log file for versions => 5.3
            write(1, '(3(1A, 1I1))') ' Start file for version ', AVERS, '.', ARLEAS, '.', AEDIT
            write(1, *) 'Variables:'
-           do J=1, NPRNAM
-               if (PRNAME(J) == 'ZRD1  ') EXIT
-               write(1, '(1A6, 1A2, 1P, 8E11.3)') PRNAME(J), ' =', DEVAR(J)
+           do J=1, n_var
+               if (varNames(J) == 'ZRD1  ') EXIT
+               write(1, '(1A6, 1A2, 1P, 8E11.3)') varNames(J), ' =', DEVAR(J)
            enddo
 
            write(1, '(A)')' Constants:'
-           do J=1, NCFNAM
-               write(1, '(1A6, 1A2, 1P, 8E11.3)') CFNAME(J), ' =', CONSTF(J)
+           do J=1, n_const
+               write(1, '(1A6, 1A2, 1P, 8E11.3)') constNames(J), ' =', CONSTF(J)
            enddo
            write(1, '(A, I2)') ' Control parameters:', 22
            do J=1, 22   ! Don't save TPAUSE and TEND
-               write(1, '(1A6, 1A2, 1P, 8E11.3)') SRNAME(J), ' =', DELOUT(J)
+               write(1, '(1A6, 1A2, 1P, 8E11.3)') internNames(J), ' =', DELOUT(J)
            enddo
            write(1, *) 'Color table (description: forlib/Astra2XW.c)', 32
            write(1, '(4(2I4, 3X))')(COLTAB(j), j=1, 64)
@@ -699,12 +703,12 @@ do while(.True.)
         endif
 
     CASE(86) ! 'V'
-        do J=1, NPRNAM
+        do J=1, n_var
             DEVARO(J) = DEVAR(J)
         enddo
-        INT4 = NPRNAM - 96  ! INT4 = NPRNAM - No. of ZRDs
-        call MENUTABLE(INT4, DEVAR, PRNAME, 1)
-        do J=1, NPRNAM
+        INT4 = n_var - 96  ! INT4 = n_var - No. of ZRDs
+        call MENUTABLE(INT4, DEVAR, varNames, 1)
+        do J=1, n_var
             if (IFDFVX(J) > 3) DEVAR(J) = DEVARO(J)
             if (ABS(DEVAR(J)-DEVARO(J)) > 1.d-6*ABS(DEVAR(J))) IFDFVX(J) = 3
         enddo

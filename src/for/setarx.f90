@@ -6,7 +6,7 @@ subroutine SETARX(ICALL)
 !  - data array  |  for arrays
 !
 ! Then it is stored for the current time in the arrays
-!  EXT(NRD, NARRX) - (description in the file main/profiles_x.txt)
+!  EXT(NRD, NARRX) - (description in src/for/status.f90)
 !--------------------------------------------------------------------
 
 use parameter_inc, only: NRD, NRDX, NTARR

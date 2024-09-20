@@ -20,32 +20,33 @@ use status_inc
 use outcmn_inc, only: AWD, exp_file, nml_file, equ_file, rev_file, &
     TASK, machine, cpuTime_tra, resizeGraph, &
     TASKID, VERSION, AVERS, ARLEAS, AEDIT, COLTAB, IFDFVX, IFDFAX, jbeg_arrx, &
-    PRNAME, CFNAME, SRNAME, EXARNM, NBFILE, MSFILE, wall_gc_file, &
-    NPRNAM, NCFNAM, NSRNAM, NEXNAM, &
+    NBFILE, &
     NGR, NBNT, NCNBT, NRDX, NTARR, NRW, &
     CCOILX, VCOILX, GRAP, TIM7
+use machine_config, only: config, config_read
 
 use expdat, only: raw_scalar, raw_profile_map, DATARR, BNDR, BNDZ, BNDTIM
 use char_manip, only: to_upper, str_in_list, clean_string
 use debugger, only: markloc, debug, astra_stop, flightsim
-use parse_utils, only: IFDEFX, set_vars, path_split, split2array2, &
+use parse_utils, only: IFDEFX, path_split, split2array2, &
     ufheader, ufrd, parse_u_line, inquire_fname, assign_val, read_arrx
 use timeoutput_inc, only: NTIMES, TTOUT
-
 use numerical_tools, only: EXTRAP, INTEGR
-
 use plasma_state, only: plasma_up
+use json_vars, only: read_metadata, internNames, constNames, varNames, profxNames, &
+    n_intern, n_const, n_var, n_profx
 
 implicit none
 
 integer, parameter :: MPEX=101, MSIGEX=1, MTEX=50, MSIG=1, MEXT=MPEX*MTEX
 
-logical :: exilog, file_existence
+logical :: exilog, file_existence, found
 
 integer :: jarr, INTYPE, jtype, SYSTEM, jbdry, ntim, ntim1, IVAR
+integer, allocatable, dimension(:) :: int_json
 integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
 integer :: KAB, KABC, KAWALL, KRTOR, KELONM, KTRICH
-integer :: n_var, n_color, n_words, i_filter_glob
+integer :: nvar, n_color, n_words, i_filter_glob
 integer :: nt_u, nx_u, ios, ndim_u, jvar, jrt, jt, jthe
 
 double precision :: resize
@@ -108,21 +109,19 @@ else
         if (j1 == 0) then
             AEDIT = 0
         else
-            read(VERSION(j0+j1+1: j0+j1+1), *) AEDIT 
+            read(VERSION(j0+j1+1: j0+j1+1), *) AEDIT
         endif
     endif
 endif
 
 !----------------------------------------------------------------------|
-! Read tables to set global arrays PRNAME, CFNAME, SRNAME
+! Read tables to set global scalars varNames, constNames, internNames
 !----------------------------------------------------------------------|
 
-call set_vars('main/variables.txt', PRNAME , NPRNAM)
-call set_vars('main/constants.txt', CFNAME , NCFNAM)
-call set_vars('main/internal.txt' , SRNAME , NSRNAM)
+call read_metadata
 
-do j=1, NPRNAM
-    SELECT CASE (PRNAME(j))
+do j=1, n_var
+    SELECT CASE (varNames(j))
     CASE('AB    ')
         KAB    = j
     CASE('ABC   ')
@@ -139,10 +138,6 @@ do j=1, NPRNAM
 enddo
 
 TIME = TSTART  ! Here TSTART=0
-
-! Read file status.inc
-
-call set_vars('main/profiles_x.txt', EXARNM, NEXNAM)
 
 !----------------------------------------------------------------------|
 ! Read file 'tmp/<exp><equ>.nml'
@@ -170,6 +165,11 @@ call path_split(rev_file, dir_path, fname, jpos)
 if (LEN_TRIM(fname) == 0) fname = 'profil.dat'
 ! Disallowing user-defined subdirs for Review file
 rev_file = '.res/' // TRIM(fname)
+
+!----------------------------------------------------------------------|
+! Read machine configuration, if available (need "machine" variable defined)
+
+call config_read()
 
 !----------------------------------------------------------------------|
 ! Read file equ/log/<model>, checking existence of obsolete equ/<model>.log 
@@ -202,10 +202,10 @@ if (.not. EXILOG)  then ! Missing log file
 
 else  ! Read log file
 
-    n_var = 37
-    call assign_val(file_in, n_var , PRNAME(1: n_var) , DEVAR (1: n_var) , n_color)
-    call assign_val(file_in, NCFNAM, CFNAME(1: NCFNAM), CONSTF(1: NCFNAM), n_color)
-    call assign_val(file_in, NSRNAM, SRNAME(1: NSRNAM), DELOUT(1: NSRNAM), n_color)
+    nvar = 37
+    call assign_val(file_in, nvar    ,    varNames(1: nvar    ), DEVAR (1: nvar)    , n_color)
+    call assign_val(file_in, n_const ,  constNames(1: n_const ), CONSTF(1: n_const ), n_color)
+    call assign_val(file_in, n_intern, internNames(1: n_intern), DELOUT(1: n_intern), n_color)
 
     NA1   = DELOUT(13)
     NUF   = DELOUT(14)
@@ -265,7 +265,7 @@ parse_exp_1d: do
         VNAM = strarray(2)
         VTIM = strarray(4)
         VERR = '0.'
-        jvar = str_in_list(VNAM(1:6), PRNAME) 
+        jvar = str_in_list(VNAM(1:6), varNames) 
         if (jvar == 0) CYCLE parse_exp_1d  ! var doesnt exist
         ntim = 0
         read(vtim, *) ntim !from NTIMES
@@ -328,7 +328,7 @@ parse_exp_1d: do
     ntim = 0
     factor = 1.
 
-    jvar = str_in_list(VNAM, PRNAME)
+    jvar = str_in_list(VNAM, varNames)
     if (jvar == 0) CYCLE parse_exp_1d
 
 ! U-file name duplicated:
@@ -505,7 +505,7 @@ parse_exp_2d: do
     VNAM = VARNAM(lin_upper(1: 6), ier_tab)
     if (ier_tab /= 0 .or. vnam == '') CYCLE parse_exp_2d    ! Ignore lines starting with a blank
     VNAMX = ARRNAM(VNAM)
-    jex1 = str_in_list(VNAMX, EXARNM) ! Checks if VNAM is in array list
+    jex1 = str_in_list(VNAMX, profxNames) ! Checks if VNAM is in array list
 
     if (jex1 == 0) then ! 1d, or no u-file
         jpos = str_in_list(VNAM, (/'POINTS', 'NAMEXP', 'GRIDTY', 'NTIMES', 'FILTER', 'FACTOR'/) )
@@ -563,7 +563,7 @@ parse_exp_2d: do
 ! VNAM is updated via NAMEXP keyword, in case of old non-u-file array
     VNAMX = ARRNAM(VNAM) ! Appends 'X'
 
-    jexar = str_in_list(VNAMX, EXARNM) ! Checks if VNAMX-string is in array EXARNM
+    jexar = str_in_list(VNAMX, profxNames) ! Checks if VNAMX-string is in array profxNames
 
     if (jexar > 0) then
         if (VNAM /= VNAMO .and. IFDFAX(jexar) < 0) then
@@ -965,11 +965,11 @@ MRHO  = AMAIN*NE
 UPS0  = MRHO*RTOR 
 UPS0O = UPS0
 
-do j=1, NEXNAM
+do j=1, n_profx
     if (ARXUSE(j) /= 0) then
         if (IFDFAX(ARXUSE(j)) < 0) then
             write(*, *) '>>> Warning >>> X-array used but not defined: "', &
-                TRIM(EXARNM(ARXUSE(j))), '"', ARXUSE(j), IFDFAX(ARXUSE(j))
+                TRIM(profxNames(ARXUSE(j))), '"', ARXUSE(j), IFDFAX(ARXUSE(j))
         endif
     endif
 enddo
@@ -1001,9 +1001,7 @@ TIM7(1) = TINIT
 if (TIME > TINIT + 1.025*abs(TSCALE)) TINIT = TSTART
 TIM7(3) = abs(TSCALE)/8.
 
-call inquire_fname('cnf', TRIM(exp_file), TRIM(machine), wall_gc_file)
 call inquire_fname('nbi', TRIM(exp_file), TRIM(machine), NBFILE)
-call inquire_fname('mse', TRIM(exp_file), TRIM(machine), MSFILE)
 
 return
 

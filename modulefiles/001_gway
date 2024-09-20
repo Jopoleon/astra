@@ -20,12 +20,6 @@ prereq intelmpi/2020--binary
 setenv ASTRA_EXT /afs/eufus.eu/user/g/g2gtardi/ASTRA_LIBRARIES_EXT
 setenv MKL_LIBDIR $env(MKLROOT)/lib/intel64
 setenv COMP_LIBDIR $env(INTEL_HOME)/compilers_and_libraries/linux/lib/intel64
-set NETCDF_HOME /cineca/prod/opt/libraries/netcdf/4.4.1/intel--pe-xe-2017--binary
-set NETCDFF_HOME /cineca/prod/opt/libraries/netcdff/4.4.4/intel--pe-xe-2017--binary
-set NETCDF_LIBDIR ${NETCDF_HOME}/lib
-set NETCDFF_LIBDIR ${NETCDFF_HOME}/lib
-setenv NETCDF_LIB "-L${NETCDF_LIBDIR} -lnetcdf -L${NETCDFF_LIBDIR} -lnetcdff -Wl,-rpath,${NETCDF_LIBDIR}:${NETCDFF_LIBDIR}"
-setenv NETCDF_INC ${NETCDFF_HOME}/include
 
 setenv AFC ifort
 setenv ACC "cc -O"

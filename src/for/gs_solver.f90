@@ -30,7 +30,7 @@ use parameters_a2equil, only: GP, GP2, GP4, muvac, &
     interp_method_rect, epsf_tol, epss_tol, epsv_tol, epsg_tol, &
     key_no_startz, key_no_refits, equil_now
 use outcmn_inc, only: nml_file, machine
-use parse_utils, only: json_intvar, json_floatvar
+use machine_config, only: json_cfg, config, cfg_exists
 
 implicit none
 
@@ -55,7 +55,7 @@ double precision, intent(inout), dimension(jna1) :: eqpf, eqff
 double precision, intent(out), dimension(nr_equ) :: g22e, g33e
 double precision, intent(inout) :: ipl, volume
 
-logical :: file_existence
+logical :: file_existence, found
 integer :: i, j, n_theta, i_call_gsss, k, k1, key_start, keyplc, &
     jiter, p, jveps, jr, jz, nr, nz
 double precision :: dum1r, R0, Z0, Fvacuum, dxrho_sp, dx, &
@@ -77,7 +77,6 @@ double precision, dimension(nr_equ) :: volum_in, PSI, psi_minus, PRESS, xrho_sp,
     Hout, Houtt, hin1, hin2, hout1, hout2, &
     G2tild1, Htild1, G2tild2, Htild2, G2corr2, Hcorr2, & 
     o_rot, i_temp, i_dens, i_mass
-character(len=120) :: f_json
 type(type_equilibrium) :: equil_in
 
 !----------------------------------------------------------------------
@@ -250,15 +249,13 @@ allocate(equil_in%eqgeometry%boundary%z(n_theta))
 
 equil_in%eqgeometry%boundary%npoints = n_theta    !one periodic point
 
-f_json = 'exp/cnf/' // trim(machine) // '_description_in.json'
-INQUIRE(FILE=TRIM(f_json), EXIST=file_existence)
-if (file_existence) then
-    nr = json_intvar(TRIM(f_json), 'nR')
-    nz = json_intvar(TRIM(f_json), 'nZ')
-    Rmin = json_floatvar(TRIM(f_json), 'Rmin')
-    Rmax = json_floatvar(TRIM(f_json), 'Rmax')
-    Zmin = json_floatvar(TRIM(f_json), 'Zmin')
-    Zmax = json_floatvar(TRIM(f_json), 'Zmax')
+if (cfg_exists) then
+    call config%get('nR', nr, found)
+    call config%get('nZ', nz, found)
+    call config%get('Rmin', Rmin, found)
+    call config%get('Rmax', Rmax, found)
+    call config%get('Zmin', Zmin, found)
+    call config%get('Zmax', Zmax, found)
 else
     nr = 65
     nz = 65

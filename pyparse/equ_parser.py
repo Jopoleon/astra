@@ -1,7 +1,7 @@
-import os, sys, logging
+import os, sys, logging, json
 import const_text, eqns
 import config
-from parse_as import parse_inc, equ_prepare
+from parse_as import equ_prepare
 
 logger = logging.getLogger('as_parse.equ_parser')
 #logger.setLevel(logging.DEBUG)
@@ -43,23 +43,18 @@ class EQU_PARSER:
 # Lists of arrays, constants, variables
 #--------------------------------------
 
-        f_prof    = '%s/main/profiles.txt'    %config.awd
-        f_profx   = '%s/main/profiles_x.txt'  %config.awd
-        f_prof_ext= '%s/main/prof_ext.txt'    %config.awd
-        f_const   = '%s/main/constants.txt'   %config.awd
-        f_intern  = '%s/main/internal.txt'    %config.awd
-        f_intern2 = '%s/main/intern2.txt'     %config.awd
-        f_vars    = '%s/main/variables.txt'   %config.awd
-        f_varsx   = '%s/main/variables_x.txt' %config.awd
-        f_asfnc   = '%s/main/functions.txt'   %config.awd
-        prof     = parse_inc(f_prof)
-        profx    = parse_inc(f_profx)
-        prof_ext = parse_inc(f_prof_ext)
+        f_json = '%s/main/astra_variables.json' %config.awd
+        with open(f_json, 'r') as fjson:
+            json_d = json.load(fjson)
+        json_keys = {key: list(val.keys()) for key, val in json_d.items()}
+        prof     = json_keys['profiles']
+        profx    = json_keys['profiles_x']
+        prof_ext = json_keys['strahl']
         self.profiles  = prof + profx + prof_ext
-        self.constants = parse_inc(f_const)
-        self.internals = parse_inc(f_intern) + parse_inc(f_intern2)
-        self.variables = parse_inc(f_vars)
-        self.varx      = parse_inc(f_varsx)
+        self.constants = json_keys['constants']
+        self.internals = json_keys['internal'] + json_keys['intern2']
+        self.variables = json_keys['variables']
+        self.varx      = json_keys['variables_x']
 
 #--------------------        
         self.arr_nam2 = []

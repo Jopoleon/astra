@@ -21,11 +21,6 @@ if {![info exists ::env(LMOD_VERSION_MAJOR)]} {
 } else {
     depends-on anaconda3/2022.05-x86_64
 }
-if {![info exists ::env(LMOD_VERSION_MAJOR)]} {
-    module load netcdf-fortran/4.6.0-intel-2021.9.0-module-2v44tym
-} else {
-    depends-on netcdf-fortran/4.6.0-intel-2021.9.0-module-2v44tym
-}
 
 setenv ASTRA_EXT /home/gtardini/ASTRA_LIBRARIES_EXT
 setenv AFC ifort

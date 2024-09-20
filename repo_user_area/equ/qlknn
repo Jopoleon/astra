@@ -130,12 +130,6 @@ CD = CUBM+CUECR; !CD source from NBI + PECRH
 ! Profile output
 !----------------
 
-! NetCDF output
-a2json>:.050:::;
-
-! Page 1
-
-
 Te\TE\\TEX\-3;	Ne\NE\\NEX;	chie\HE\10;	Ware\-VP*VRAS\5;
 Pnbe\PEBM\-6; 	Zef\ZEF;	snNB\SNEBM\50;	Prad\PRAD;
 

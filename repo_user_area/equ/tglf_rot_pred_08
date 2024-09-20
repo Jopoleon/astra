@@ -159,12 +159,6 @@ TTRQ = SCUBM*5.977e7; !rtor depends on RABBIT output.
 ! Profile output
 !----------------
 
-! NetCDF output
-a2json>:.050:::;
-
-! Page 1
-
-
 Pr\XUPAR/XI\2; Ti\TI\\TIX; xphi\XUPAR; xi\XI;
 Co\-CNPAR/XI; Pnbe\PEBM\-6; 	Zef\ZEF; snNB\SNEBM\50;
 
