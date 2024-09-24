@@ -1,5 +1,5 @@
 import os, sys, re, logging
-import config, fml, json
+import config, fml
 
 logger = logging.getLogger('as_parse.parse_as')
 #logger.setLevel(logging.DEBUG)

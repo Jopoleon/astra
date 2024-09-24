@@ -1,28 +1,32 @@
+#%Module######################################################################
+##
+##      ASTRA modulefile
+##      author: G. Tardini       (git@ipp.mpg.de)
+##
+
 module-whatis "ASTRA is a suite of transport codes"
 
 proc ModulesHelp { } {
-    puts stderr "See <https://gitlab.mpcdf.mpg.de/git/astra/-/wikis/The-ASTRA-code>. "
+    puts stderr "See <https://www.aug.ipp.mpg.de/aug/manuals/astra/index.html>. "
 }
 
-module use /orcd/nese/psfc/001/software/spack/2023-07-01-physics-rpp/spack/share/spack/modules-test/linux-rocky8-x86_64
+conflict meld
 
-if {![info exists ::env(LMOD_VERSION_MAJOR)]} {
-    module load intel-oneapi-compilers/2023.1.0-gcc-12.2.0-module-3vfzgf
-} else {
-    depends-on intel-oneapi-compilers/2023.1.0-gcc-12.2.0-module-3vfzgf
+if [ module-info mode load ] {
+    module load intel/2021.3.0
+    module load impi/2021.3.0
+    module load anaconda3/2023.07
 }
-if {![info exists ::env(LMOD_VERSION_MAJOR)]} {
-    module load intel-oneapi-mkl/2023.1.0-intel-oneapi-mpi-2021.9.0-gcc-12.2.0-module-seow5n
-} else {
-    depends-on intel-oneapi-mkl/2023.1.0-intel-oneapi-mpi-2021.9.0-gcc-12.2.0-module-seow5n
-}
-if {![info exists ::env(LMOD_VERSION_MAJOR)]} {
-    module load anaconda3/2022.05-x86_64
-} else {
-    depends-on anaconda3/2022.05-x86_64
+if [ module-info mode remove ] {
+    module unload intel/2021.3.0
+    module unload impi/2021.3.0
+    module unload anaconda3/2023.07
 }
 
 setenv ASTRA_EXT /home/gtardini/ASTRA_LIBRARIES_EXT
+setenv MKL_LIBDIR /home/software/intel/2021.3.0/mkl/2021.3.0/lib/intel64
+setenv COMP_LIBDIR /home/software/intel/2021.3.0/compiler/2021.3.0/linux/compiler/lib/intel64
+
 setenv AFC ifort
 setenv ACC "cc -O"
 setenv MPIFC mpiifort
