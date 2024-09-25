@@ -15,15 +15,15 @@ then
     if [[ $platform = "iter" ]]
     then
         module use /home/ITER/tarding/modulefiles
-	module load astra
     elif [[ $platform = "mit" ]]
     then
         module use /home/gtardini/modulefiles
-	module load astra
-    else 
-        module load astra
-        RES=$( { module load astra; } 2>&1 )
+    elif [[ $platform = "rat2" ]]
+    then
+        module use /home/tardini/modulefiles
     fi
+    module load astra
+    RES=$( { module load astra; } 2>&1 )
     echo $RES
     if [[ "$RES" = *"ERROR"* ]];
     then

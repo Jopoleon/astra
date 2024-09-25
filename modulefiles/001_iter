@@ -13,7 +13,6 @@ proc ModulesHelp { } {
 conflict meld
 
 prereq SciPy-bundle/2020.11-intel-2020b
-prereq netCDF/4.7.4-iimpi-2020b
 
 setenv ASTRA_EXT /home/ITER/tarding/ASTRA_LIBRARIES_EXT
 set PKG /work/imas/opt/EasyBuild/software
