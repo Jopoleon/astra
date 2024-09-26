@@ -31,4 +31,6 @@ setenv AFC ifort
 setenv ACC "cc -O"
 setenv MPIFC mpiifort
 
+prepend-path LD_LIBRARY_PATH /home/tardini/netCDF/build/lib
+
 set-alias ae exe/as_exe
