@@ -48,7 +48,12 @@ export TGLF_LIB=${TGLF_HOME}/lib/libtglf.a
 
 # NEO
 
-NEO_HOME=${ASTRA_EXT}/neo/apr21
+if [[ $platform = "rat2" ]]
+then
+    NEO_HOME=${ASTRA_EXT}/neo/jun24
+else
+    NEO_HOME=${ASTRA_EXT}/neo/apr21
+fi
 NEO_LIBDIR=${NEO_HOME}/lib
 export NEO_INC=${NEO_HOME}/inc
 export NEO_LIB="${NEO_LIBDIR}/neo_lib.a ${NEO_LIBDIR}/nclass_lib.a ${NEO_LIBDIR}/UMFPACK_lib.a ${NEO_LIBDIR}/math_lib.a ${NEO_LIBDIR}/expro_lib.a ${NEO_LIBDIR}/geo_lib.a"
