@@ -30,7 +30,7 @@ def pre_eqn(parse, key, assign_type=None):
             for varb in config.bnd_d[key]:
                 if varb in var_defined:
                     logger.warning('Equation for "%s" requested, but not defined', key)
-                    logger.warning('Boundary condition %s = %s ignored', varb, parse.right_hand_d[var])
+                    logger.warning('Boundary condition %s = %s ignored', varb, parse.right_hand_d[varb])
                     var_defined.remove(varb)
         pre_txt += '! **** %s equation\n' %config.labels_d[key]
         pre_txt += 'call markloc("%s equation")\n' %key
