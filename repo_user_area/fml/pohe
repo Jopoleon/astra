@@ -1,0 +1,4 @@
+! POHE [MW/m#3]: Power of Ohmic Heating as it should be: frictional heating
+! P=eta*j**2, here approximated as POHE = (<jpar*B>_FSA/BTOR)^2 / sigma_par, whereas it should be <eta_perp*jperp^2 + eta_par jpar^2>_FSA
+!  (Fable 28-SEPT-2024)
+POHE=CU(J)**2./CC(J)

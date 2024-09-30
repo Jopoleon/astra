@@ -519,7 +519,7 @@ cr		YNN0	=(NNCL+NNWM)*NN(J2)	*4.373E7*T0/2.
 	ENDDO
 C...Fast ions CX due to cold neutrals
 C...Fast ions CX due to NB neutrals
-	goto 21	! temporary path while NNBM1,2,3 are used for other goals
+!	goto 21	! temporary path while NNBM1,2,3 are used for other goals
 	IF(CBM4.GT.0.d0.or.CBM3.GT.0.d0) 		then
 		YNN0	=CNSNN0*NN(J2)	+ 
      +			CNSNN*(NNBM1(J2)+NNBM2(J2)+NNBM3(J2))
@@ -532,7 +532,7 @@ C...Fast ions CX due to NB neutrals
 		enddo
 	enddo
  				endif
- 21	continue
+! 21	continue
 C...End of CX losses..................................................
 
 		YSRSE	=0.

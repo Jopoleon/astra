@@ -8,7 +8,7 @@
 
 ! Approximate
 TPF=1.-SQEPS(J)*SQEPS(J)
-TPF = min(1.d0, max(1.-TPF*SQRT(TPF)/(1.+1.46*SQEPS(J)), 0.209*  (sqrt(TI(j)*AMAIN(j))/(ZMAIN(j)*MU(j)*RTOR*BTOR))**0.33333))
+TPF = min(1.d0, 1.-TPF*SQRT(TPF)/(1.+1.46*SQEPS(J)))
 
 !Using FOFB
 ! TPF=FTLLM

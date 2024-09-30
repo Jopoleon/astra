@@ -56,7 +56,7 @@ double precision :: XBDRY, YB, YB1, YXB, YXB1, ALFA, ALFA_GLOB, &
     VRDATA, FACTOR, TIMEVR, VRERR, ROC3A, YTP=-1.d9
 character(len=6) :: VNAM, VNAMO, VNAMU, VNAMX, VTIM, VDAT, VERR, VARNAM, ARRNAM, keyword
 character(len=31) :: rholbl
-character(len=132) :: strarray(10), STRI, lin_upper, dir_path, fname, &
+character(len=132) :: strarray(20), STRI, lin_upper, dir_path, fname, &
     err_msg, err_format, err_msg_exp, file_in, uname, uvar, workflow
 
 namelist / astra_log / AWD, exp_file, equ_file, rev_file, TASK, machine, &

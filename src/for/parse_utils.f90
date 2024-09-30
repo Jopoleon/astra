@@ -138,7 +138,7 @@ contains
     character(len=*), intent(in) :: str_in
     character, intent(in) :: delim
     integer, intent(out) :: nout
-    character(len=len(str_in)), intent(out) :: strarray(10)
+    character(len=len(str_in)), intent(out) :: strarray(20)
 
     integer :: m, i, jpos
     character(len=len(str_in)):: strtmp
@@ -178,7 +178,7 @@ contains
     use char_manip, only: clean_string
     use outcmn_inc, only: null_ch, tab_ch
 
-    integer, parameter :: nwords_max=10
+    integer, parameter :: nwords_max=20
     character(len=*), intent(in) :: str_in
     integer, intent(out) :: nout
     character(len=len(str_in)), intent(out) :: strarray(nwords_max)
@@ -287,7 +287,7 @@ contains
     double precision, intent(out) :: factor
 
     integer :: n_words
-    character(len=132) :: str1, strarray(10), err_msg
+    character(len=132) :: str1, strarray(20), err_msg
 
     call markloc('parse_u_line')
 

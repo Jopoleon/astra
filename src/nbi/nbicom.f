@@ -754,7 +754,7 @@ CC					ENDIF
 	do 32	J	=JNA1,JNAC
 		YFVDA	=F(1,JN1)*VNB(1)/A
 ccc	write(*,*) YFDVA
-	goto 3219	! temporary path while NNBM1,2,3 are used fo other goals
+!	goto 3219	! temporary path while NNBM1,2,3 are used fo other goals
   	if(YFVDA.NE.0.d0)
      . 		NNBM1(J)= NNBM1(J)+YANBA(3,JN1)/YFVDA
 		YFVDA	=F(2,JN1)*VNB(2)/A
@@ -763,7 +763,7 @@ ccc	write(*,*) YFDVA
 		YFVDA	=F(3,JN1)*VNB(3)/A
   	if(YFVDA.NE.0.d0)
      .  	NNBM3(J)= NNBM3(J)+YANBA(1,JN1)/YFVDA
- 3219	continue !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! tmp
+! 3219	continue !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! tmp
 C...Calc. of total proton content:	YNHDT
 		YNHDT	=0.d0
 	DO 320	JS	=2,ISPEND

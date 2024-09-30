@@ -64,7 +64,7 @@ use const_inc, only: GP2, ABC, ROC, BTOR, RTOR, HRO, NA, NA1, &
 use status_inc, only: BDB0, B0DB2, BDB02, BMAXT, FOFB, IPOL, &
    ULON, ER, VRS, G11, &
    MU, ELON, SHIF, TE, TI, &
-   NE, NHYDR, NDEUT, NTRIT, NHE3, NALF, ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3
+   NE, NHYDR, NDEUT, NTRIT, NHE3, NALF, ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3, NMAIN
 use nclass_mod
 
 implicit none
@@ -250,13 +250,9 @@ do j=1,NA
 ! in the model
 ! or/and
 ! is used to satisfy the quasineutrality condition
-   YNMAIN = 1./ZMJ * ( NE(j) - NHYDR(j) - NDEUT(j) - NTRIT(j) - &
-            2.*NHE3(j) - 2.*NALF(j) - &
-            ZIM1(j)*NIZ1(j) - ZIM2(j)*NIZ2(j) - ZIM3(j)*NIZ3(j) )
+   YNMAIN = NMAIN(J)
    ni_nc(j) = YNMAIN
-   YNMAIN1 = 1./ZMJ * ( NE(j+1) - NHYDR(j+1) - NDEUT(j+1) - NTRIT(j+1) - &
-             2.*NHE3(j+1) - 2.*NALF(j+1) - &
-             ZIM1(j+1)*NIZ1(j+1) - ZIM2(j+1)*NIZ2(j+1) - ZIM3(j+1)*NIZ3(j+1) )
+   YNMAIN1 = NMAIN(J+1)
    if (YNMAIN .gt. y_den) then
       m_i = m_i + 1
       k_mainion = m_i
