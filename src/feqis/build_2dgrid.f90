@@ -7,7 +7,7 @@ subroutine build_2dgrid(nrho, ntheta, psin_grid, &
     G2, G3, areat, perim, volum, G1, GRADRO, &
     BMAXT, BMINT, BDB02, BDB0, B0DB2, FOFB, &
     slat, li3, betapol, psplex, bpcell, bcell, r_out, r_in, &
-    elon, tria_u, tria_l, shif, g41, q_out, shiv, square, li_aug, betapol_iter)
+    elon, tria_u, tria_l, shif, g41, q_out, shiv, square, li_aug, betapol_iter, dl_dt)
 
 use pi_vars, only: GPI, GPI2
 use numerical_tools, only: qinterp, extrapolate, polyfitcc
@@ -20,7 +20,7 @@ integer, intent(in) :: ntheta, nrho
 double precision, intent(in) :: btor, iplasma, Rtor, rhoedge_in
 double precision, intent(in), dimension(ntheta) :: thetap_i
 double precision, intent(in), dimension(nrho) :: psin_grid, ipol, pressure, q_new
-double precision, intent(in), dimension(nrho, ntheta) :: PSI, jrho2, darea2, yy2
+double precision, intent(in), dimension(nrho, ntheta) :: PSI, jrho2, darea2, yy2, dl_dt
 
 double precision, intent(out) :: li3, betapol, psplex, li_aug, betapol_iter
 double precision, intent(out), dimension(nrho) :: G1, G2, G3, &
@@ -40,7 +40,7 @@ double precision, dimension(3) :: xxxx1, yyyy1, pppp1
 double precision, dimension(nrho) :: rhot, rhoa, dPSIdV, dVa, daa, dum1, AMETR, ONEZ
 double precision, dimension(ntheta) :: dl_arc, tar1, tar2, theta_special, dl_arc_special
 double precision, dimension(nrho, ntheta) :: gradPSIa, gradVa, dV2da, dA2da, &
-    B_pola, B_ABSa, B_Ta
+    B_pola, B_ABSa, B_Ta, dldt_temp
 
 do jrho=1, nrho
     rhoa(jrho) = (jrho - 1.)/(nrho - 1.) ! full grid
@@ -73,9 +73,19 @@ daa = sum(da2da, 2)
 slat  = 0.
 areat = 0.
 volum = 0.
+dldt_temp = 0.
 do jrho=2, nrho
     volum(jrho) = volum(jrho-1) + dva(jrho-1)
     areat(jrho) = areat(jrho-1) + daa(jrho-1)
+    dldt_temp(jrho, :) = 0.5*(dl_dt(jrho, :) + dl_dt(jrho-1, :))
+enddo
+ip0 = nrho
+ip1 = nrho-3
+ip2 = nrho-2
+ip3 = nrho-1
+t4 = rhoa(ip0)
+do jthe=1, ntheta
+    dldt_temp(nrho, jthe) = extrapolate(t4, ip3, ip2, ip1, ip0, rhot, dl_dt(:, jthe))
 enddo
 
 dl_arc = 0.0
@@ -94,11 +104,11 @@ do jrho=1, nrho
             theta_special(jthe) = theta_special(jthe) + GPI2
         endif
         z1 = sin(theta_special(jthe) + theta_special(jthe-1))*sin(0.5*(theta_special(jthe) + theta_special(jthe-1)))
-        dl_arc(jthe) = rmin(jrho, jthe)*(thetap_i(jthe) - thetap_i(jthe-1)) !on the full grid
-        dl_arc_special(jthe) = rmin(jrho, jthe)*(theta_special(jthe) - theta_special(jthe-1)) !on the full grid
+        dl_arc(jthe) = dldt_temp(jrho, jthe)*(thetap_i(jthe) - thetap_i(jthe-1)) !on the full grid
+        dl_arc_special(jthe) = dldt_temp(jrho, jthe)*(theta_special(jthe) - theta_special(jthe-1)) !on the full grid
         square(jrho) = square(jrho) + (XX(jrho, jthe) - dumba1)/dumba2*z1*dl_arc_special(jthe)
     enddo
-    dl_arc(1) = rmin(jrho, 1)*(thetap_i(1) + GPI2 - thetap_i(ntheta))
+    dl_arc(1) = dldt_temp(jrho, 1)*(thetap_i(1) + GPI2 - thetap_i(ntheta))
     z1 = sin((thetap_i(1) + GPI2 + thetap_i(ntheta)))*sin(0.5*(thetap_i(1) + GPI2 + thetap_i(ntheta)))
     square(jrho) = square(jrho) + (XX(jrho, 1)-dumba1)/dumba2*z1*dl_arc(1)
     perim(jrho)  = sum(dl_arc)
@@ -145,6 +155,8 @@ do jthe=1, ntheta
       B_pola  (nrho, jthe) = extrapolate(t4, ip3, ip2, ip1, ip0, rhot, B_pola  (:, jthe))
 enddo   
 B_absa = sqrt(B_Ta**2 + B_pola**2)
+!write(*,*) 'perim extrap', extrapolate(t4, ip3, ip2, ip1, ip0, rhoa(1:nrho), perim(1:nrho)), &
+! perim(nrho),perim(nrho-1)
 
 !calculate psplex, the external inductance of the plasma 
 dumba1 = 0.
@@ -159,9 +171,10 @@ psplex = dumba1/sum(dl_arc)
 psplex = psplex/(1.*sum(B_pola(nrho, 1:ntheta)*dl_arc(1:ntheta))/0.4) ! for LEXT part, alternative
 
 !li3 = 2.*sum(B_pola**2 * dV2da)/rtor/(0.4*GPI*iplasma)**2
-dumba1 = 0.5*(maxval(XX(nrho, :)) + minval(XX(nrho, :))) !Rgeo
+dumba1 = 0.5*(maxval(XX(nrho, 1:ntheta)) + minval(XX(nrho, 1:ntheta))) !Rgeo
 li3 = 2.*sum(B_pola**2 * dV2da)/dumba1/(0.4*GPI*iplasma)**2
 li_aug = li3 * dumba1 * perim(nrho)**2./(2.*volum(nrho))
+!write(*,*) 'liaug',li3,dumba1,perim(nrho),volum(nrho)
 do jrho=1, nrho-1
     onez(jrho) = 0.5*(pressure(jrho) + pressure(jrho+1))
 enddo
@@ -171,9 +184,9 @@ betapol_iter = 4.*1.e-6*sum(onez*dva)/(0.4*GPI*dumba1*iplasma**2.)
 slat = 0.
 do jrho=2, nrho
     do jthe=1, ntheta-1 
-        slat(jrho) = slat(jrho) + XX(jrho, jthe)*rmin(jrho, jthe)*(thetap_i(jthe+1) - thetap_i(jthe))
+        slat(jrho) = slat(jrho) + XX(jrho, jthe)*dldt_temp(jrho, jthe)*(thetap_i(jthe+1) - thetap_i(jthe))
     enddo
-    slat(jrho) = slat(jrho) + XX(jrho, ntheta)*rmin(jrho, ntheta)*(thetap_i(1) - thetap_i(ntheta) + GPI2)
+    slat(jrho) = slat(jrho) + XX(jrho, ntheta)*dldt_temp(jrho, ntheta)*(thetap_i(1) - thetap_i(ntheta) + GPI2)
 enddo
 slat = slat*GPI2   !full grid
 

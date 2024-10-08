@@ -1013,7 +1013,7 @@ double precision, dimension(nrho) :: q_new, effprimp, epprimp
 double precision, dimension(nteta) :: thetap_i
 double precision, dimension(512, 512) :: psisave
 double precision, dimension(nrho, nteta) :: rmaj2, jcbn2, darea2, &
-    r_min, yy2, jrho2, gradr2, darea
+    r_min, yy2, jrho2, gradr2, darea, dl_dt
 
 data ierr/0/
 save psisave, ierr
@@ -1104,7 +1104,7 @@ call PHI_EQ_2d_PBE(nrho, nteta, psigrida(1:nrho), iplasma, &
     psirhoteta(1:nrho, 1:nteta), psibez(1:nrho), &   ! psinorm new
     lambda2d(1:nrho, 1:nteta), t2dbez(1:nteta), &
     psiaxis_new, cnorm, rax_new, zax_new, thetap_i, rmaj2, &
-    jcbn2, q_new, rhoedge, darea2, epprimp, effprimp, r_min, yy2, gradr2, darea, ierr)
+    jcbn2, q_new, rhoedge, darea2, epprimp, effprimp, r_min, yy2, gradr2, darea, ierr, dl_dt)
 
 raxp = rax_new
 zaxp = zax_new
@@ -1152,7 +1152,7 @@ call build_2dgrid(nrho, nteta, psibez(1:nrho), &
     li3, betapol, psplex, &
     bpcell2dbez(1:nrho, 1:nteta), bcell2dbez(1:nrho, 1:nteta), &
     routbez(1:nrho), rinbez(1:nrho), kbez(1:nrho), triaubez(1:nrho), trialbez(1:nrho), shifbez(1:nrho), &
-    gm41bez(1:nrho), qbez(1:nrho), shivbez(1:nrho), squarebez(1:nrho), li_aug, betapol_iter)
+    gm41bez(1:nrho), qbez(1:nrho), shivbez(1:nrho), squarebez(1:nrho), li_aug, betapol_iter, dl_dt)
 
 phibez(1:nrho) = 0.
 rbp2_b2bez(1:nrho) = 0.

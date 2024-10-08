@@ -5,7 +5,7 @@ subroutine PHI_EQ_2d_PBE(nrho, ntheta, psin_grid_in, iplasma, &
     XX, YY, PSI, &
     psin_grid, lambda2d, thetap_out, &
     psiax, cnorm, X0, Y0, thetap_i_out, rmaj2, jcbn2, q_new, rhoedge, &
-    darea2,epprim_out,efprim_out,r_min, yy2, gradr2, darea, ierr)
+    darea2, epprim_out, efprim_out, r_min, yy2, gradr2, darea, ierr, dl_dt)
 
 use pi_vars, only: GPI, GPI2, GPI4, muvac
 implicit none
@@ -22,7 +22,7 @@ double precision, intent(out) :: psiax, cnorm, X0, Y0, rhoedge
 double precision, intent(out), dimension(nrho) :: psin_grid, q_new,epprim_out,efprim_out
 double precision, intent(out), dimension(ntheta) :: thetap_out, thetap_i_out
 double precision, intent(out), dimension(nrho, ntheta) :: XX, YY, rmaj2, jcbn2, &
-    darea2, r_min, yy2, gradr2, dArea
+    darea2, r_min, yy2, gradr2, dArea, dl_dt
 
 double precision, intent(inout), dimension(nrho, ntheta) :: Psi, lambda2d
 
@@ -111,7 +111,7 @@ iter_loop: do jiter=1, max_iter+1
         dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
         dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
         ddr, ddr_i, dtp, dtm, dt_i, XX, YY, &
-        thetap, thetap_i, lambda2d, lambda2dp, jcbn2, r_min, yy2, gradr2)
+        thetap, thetap_i, lambda2d, lambda2dp, jcbn2, r_min, yy2, gradr2, dl_dt)
 
     do jthe=1, ntheta
         known_term(:, jthe) = (effprimp(:) * dArea(:, jthe)/XX(:, jthe) + &

@@ -5,7 +5,7 @@ subroutine jacobians(nrho, ntheta, Rb, Zb, X0, Y0, lambda2d_in, lambda2dp_in, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
     ddr, ddr_i, dtp, dtm, dt_i, X, Y, &
-    thetap, thetap_i, lambda2d, lambda2dp, jcbn2, r_min, y2, gradr2)
+    thetap, thetap_i, lambda2d, lambda2dp, jcbn2, r_min, y2, gradr2, dl_dt)
 
 use pi_vars, only: GPI2
 use numerical_tools, only: linterp
@@ -25,7 +25,7 @@ double precision, intent(out), dimension(ntheta+1) :: thetap, thetap_i
 double precision, intent(out), dimension(nrho, ntheta) :: dArea, dArea2, &
     dArc_rp1, dArc_rm1, dArc_rpt1, dArc_rmt1, &
     dArc_tp1, dArc_tm1, dArc_tpr1, dArc_tmr1, &
-    X, Y, X2, lambda2d, lambda2dp, jcbn2, r_min, y2, gradr2
+    X, Y, X2, lambda2d, lambda2dp, jcbn2, r_min, y2, gradr2, dl_dt
 
 integer :: jrho, jthe, jthe_l, jthe_r, k
 double precision :: drdX, dhdX, drdY, dhdY, &
@@ -116,7 +116,7 @@ enddo
 
 ! Compute jacobian
 ! J = det( {dX/dr dX/dtheta}  {dY/dr dY/dtheta} ) = dX/dr*dY/dtheta - dX/dtheta*dY/dr= J(r, theta)
-
+dl_dt = 0.
 do jthe=1, ntheta
     jthe_l = jthe - 1
     jthe_r = jthe + 1
@@ -195,9 +195,10 @@ do jthe=1, ntheta
         dArc_rpt1(jrho, jthe) = Jcbn2(jrho,jthe) *grt2  *dt_i(jthe)/X2(jrho, jthe)
         dArc_tp1 (jrho, jthe) = Jcbni1(jrho, jthe)*gradhi1(jrho, jthe)*ddr_i(jrho)/X_i1(jrho, jthe)
         dArc_tpr1(jrho, jthe) = Jcbni1(jrho, jthe)*grti1  (jrho, jthe)*ddr_i(jrho)/X_i1(jrho, jthe)
+        dl_dt(jrho, jthe) = Jcbn2(jrho, jthe)*sqrt(gradr2(jrho, jthe))
         if (jrho < nrho) then
-            dArc_rm1 (jrho+1, jthe) = Jcbn2(jrho,jthe)*gradr2(jrho,jthe)*dt_i(jthe)/X2(jrho, jthe)
-            dArc_rmt1(jrho+1, jthe) = Jcbn2(jrho,jthe)*grt2  *dt_i(jthe)/X2(jrho, jthe)
+            dArc_rm1 (jrho+1, jthe) = Jcbn2(jrho, jthe)*gradr2(jrho, jthe)*dt_i(jthe)/X2(jrho, jthe)
+            dArc_rmt1(jrho+1, jthe) = Jcbn2(jrho, jthe)*grt2              *dt_i(jthe)/X2(jrho, jthe)
         endif
     enddo
 enddo

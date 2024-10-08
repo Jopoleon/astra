@@ -1920,7 +1920,7 @@ contains
         Ffunc_old = Ffunc
         write(*,*) 'iteration ',j_iter, curnow(1:nactive),rax,zax,temp_err,sum(abs(Fderiv(1:nactive)))
 
-        if (j_iter > 15000) stop
+        if (j_iter > 15000) EXIT
         if (temp_err <= err_find_psistab) EXIT
 
     enddo

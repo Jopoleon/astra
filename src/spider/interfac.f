@@ -1274,7 +1274,8 @@
       enddo 
 
       equil_out%global_param%li3 = 4.d0*pi*bp2/
-     &   (rtor*(.4d0*pi*tokp)**2)
+     &   (0.5*(maxval(r(iplas, 2:nt1))+
+     &    minval(r(iplas, 2:nt1)))*(0.4d0*pi*tokp)**2)
       equil_out%global_param%betpol = 
      &   (pressvoli/bp2)*2.*(2.*TWOPI*1.E-7)
       equil_out%global_param%wkin = TWOPI*pressvoli
@@ -1625,6 +1626,9 @@
          allocate(equil_out%profiles_1d%squareness(iplas))
       endif
       equil_out%profiles_1d%volume = volum*twopi
+      equil_out%global_param%li_aug = equil_out%global_param%li3 * 
+     &    0.5*(maxval(r(iplas, 2:nt1)) + minval(r(iplas, 2:nt1))) *
+     &    perim(iplas)**2/(2.*volum(iplas)*twopi)
       equil_out%profiles_1d%r_inboard = yri
       equil_out%profiles_1d%r_outboard = yra
       equil_out%profiles_1d%elongation = yelon
