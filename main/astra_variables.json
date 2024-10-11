@@ -663,7 +663,7 @@
     "DLNEO" : {"units": "kg/m^3*m/s/(1e19*m_p)", "desc": "neoclassical sum of neoclassical rotation differentials (dneo=sum(ms ns dupar Ds))"},
     "DLNEOD": {"units": "kg/m^3*1/s/(1e19*m_p)", "desc": "neoclassical sum of neoclassical rotation differentials gradients (dneo=sum(ms ns d/drho dupar Ds))"},
     "DRODA" : {"desc": "drho/da"},
-    "ELON " : {"desc": "Magnetic surface elongation"},
+    "ELON"  : {"desc": "Magnetic surface elongation"},
     "EQFF"  : {"units": "MA/m^2", "desc": "Toroidal current density j(r,z) is:"},
     "EQPF"  : {"units": "MA/m^2", "desc": "j(r,z) = R0/r*EQFF(rho) + r/R0*EQPF(rho)"},
     "ER"    : {"units": "V/m", "desc": "Radial electric field"},
