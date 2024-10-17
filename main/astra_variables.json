@@ -1039,7 +1039,7 @@
     "rmin": {"units": "m", "desc": "Minor radius local distance from axis to point"},
     "psirz": {"units": "Wb", "desc": "Psi in polar coordinates"},
     "teta2d": {"units": "rad", "desc": "Poloidal angle of magnetic surfaces' points"},
-    "z": {"units": "m", "desc": "Verical coordinate of magnetic surfaces' points"}
+    "z": {"units": "m", "desc": "Vertical coordinate of magnetic surfaces' points"}
 }
     
 }

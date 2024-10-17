@@ -3,11 +3,12 @@ program astra
 use parameter_inc, only: NSBMX, NRD
 use outcmn_inc, only: astra_gui, astra_gui_ref, VCOIL, CCOIL, CCOILO, outcmn_init, TASK
 use const_inc, only: IPART, const_init, &
-    TIME, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT
+    TIME, TSTART, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT
 use status_inc, only: status_init, defarr
 use debugger, only: debug, astra_stop, markloc
 use ext_bnd, only: use_ext_bnd
 use transport2fbe, only: transport2fbe_init
+use json_vars, only: write_json
 
 implicit none
 
@@ -15,10 +16,13 @@ implicit none
 ! Find self-consistent initial configuration
 !-------------------------------------------
 
-integer :: j, jj, IM, ios, XSC0, XSC, jt1, jt2, jt3, jt_req, jkey
+integer :: j, jj, IM, ios, XSC0, XSC, jt1, jt2, jt3, jt_req, jkey, jt_out
 character(len=64) :: LISTSB(NSBMX)
 character(len=132) :: STRI
 integer, external :: IFKEY, IFTREQ
+
+save jt_out
+data jt_out/0/
 
 !-------------------- Initial settings --------------------------------|
 
@@ -81,6 +85,10 @@ endif
 
 do while (TIME - TEND + 1.E-8 < DPOUT + TAU)
     call STEPUP
+    if ((TIME - TSTART + 1.E-8)/DPOUT >= jt_out) then
+        call write_json
+        jt_out = jt_out + 1
+    endif
 enddo
 
 call CPU_usage('>>> ASTRA normal exit >>>' // char(0))

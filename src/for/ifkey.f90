@@ -202,7 +202,7 @@ if (TPOUT + DPOUT < TSTART .or. (IFKL /= 256 .and. TIME + 0.5*TAU >= TPOUT + DPO
     call markloc(str_in='RADOUT|1 call from IFKEY')
     call RADOUT
 
-    call write_json
+!GIT    call write_json
 
     if (LTOUTO /= 0)  then
         open(3, FILE=rev_file, STATUS='OLD', iostat=ios, &
