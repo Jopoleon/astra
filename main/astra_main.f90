@@ -84,11 +84,11 @@ endif
 !---------------
 
 do while (TIME - TEND + 1.E-8 < DPOUT + TAU)
-    call STEPUP
     if ((TIME - TSTART + 1.E-8)/DPOUT >= jt_out) then
         call write_json
         jt_out = jt_out + 1
     endif
+    call STEPUP
 enddo
 
 call CPU_usage('>>> ASTRA normal exit >>>' // char(0))
