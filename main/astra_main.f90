@@ -16,13 +16,12 @@ implicit none
 ! Find self-consistent initial configuration
 !-------------------------------------------
 
-integer :: j, jj, IM, ios, XSC0, XSC, jt1, jt2, jt3, jt_req, jkey, jt_out
+integer :: j, jj, IM, ios, XSC0, XSC, jt1, jt2, jt3, jt_req, jkey, jt_out=0
 character(len=64) :: LISTSB(NSBMX)
 character(len=132) :: STRI
 integer, external :: IFKEY, IFTREQ
 
 save jt_out
-data jt_out/0/
 
 !-------------------- Initial settings --------------------------------|
 

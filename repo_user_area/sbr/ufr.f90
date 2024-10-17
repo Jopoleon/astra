@@ -14,11 +14,18 @@ double precision, intent(in) :: tim_in
 character(len=120), intent(in) :: ufnam
 double precision, intent(out) :: val
 
-logical :: is_file
+logical :: uf_exists
 integer :: nt_u, nx_u, ndim_u, j, jt, jch, jtprev
 double precision :: tim1, tim2, tmp1, tmp2
 double precision, dimension(:), allocatable :: t_u, x_u, var_u
 character(len=30) :: rholbl
+
+INQUIRE(file=TRIM(ufnam), exist=uf_exists)
+if (.not. uf_exists) then
+    write(*, '(3A)') 'File ' // TRIM(ufnam) // ' not found, returning 0'
+    val = 0.
+    return
+endif
 
 call ufheader(TRIM(ufnam), ndim_u, nt_u, nx_u, rholbl)
 allocate(t_u(nt_u))
@@ -67,11 +74,18 @@ double precision, intent(in) :: tim_in
 character(len=120), intent(in) :: ufnam
 double precision, intent(out) :: arr1d(*)
 
-logical :: is_file
+logical :: uf_exists
 integer :: nt_u, nx_u, ndim_u, j, jt, jch, jtprev
 double precision :: tim1, tim2
-double precision, dimension(:), allocatable :: t_u, x_u, var_u, tmp1(:), tmp2(:)
+double precision, dimension(:), allocatable :: t_u, x_u, var_u, tmp1, tmp2
 character(len=30) :: rholbl
+
+INQUIRE(file=TRIM(ufnam), exist=uf_exists)
+if (.not. uf_exists) then
+    write(*, '(3A)') 'File ' // TRIM(ufnam) // ' not found, returning 0'
+    arr1d(1: 20) = 0.
+    return
+endif
 
 call ufheader(TRIM(ufnam), ndim_u, nt_u, nx_u, rholbl)
 allocate(t_u(nt_u))
