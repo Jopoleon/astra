@@ -46,6 +46,9 @@ then
 elif [[ $node = "ncku-first" ]]
 then
    platform=ncku
+elif [[ $node = "smartssv"* ]]
+then
+   platform=sevilla
 elif [[ $node = "rat2"* ]]
 then
    platform=rat2

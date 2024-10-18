@@ -54,6 +54,9 @@ then
     export MPIFC=mpiifort
     export ASTRA_EXT=/home/astrainstaller/ASTRA_LIBRARIES_EXT
     export LD_LIBRARY_PATH=$COMP_LIBDIR
+elif [[ $platform = "sevilla" ]]
+then
+    export ASTRA_EXT=/home/software/ASTRA/ASTRA_EXT_NEW
 fi
 
 source $AWD/exe/astra_rc
