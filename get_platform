@@ -43,7 +43,7 @@ then
 elif [[ $node = "iris"* ]]
 then
    platform=iris
-elif [[ $node = "e2dea0ffab23" ]]
+elif [[ $node = "ncku-first" ]]
 then
    platform=ncku
 elif [[ $node = "rat2"* ]]

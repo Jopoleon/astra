@@ -42,4 +42,4 @@ fi
 green/greenMatrices.py
 
 ulimit -s 50000
-python ${AWD}/exe/as_exe.py "$@"
+python3 ${AWD}/exe/as_exe.py "$@"
