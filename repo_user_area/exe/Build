@@ -39,24 +39,21 @@ then
    export AFC=ifort
    export ACC="gcc -O"
    export MPIFC=mpiifort
-   export IFORT_BIN=/opt/intel/oneapi/compiler/latest/linux/bin/intel64
    export INTEL_LICENSE_FILE=/opt/intel/oneapi/mkl/latest/licencing
 elif [[ $platform = "ncku" ]]
 then
-    # /compiler/2024.1/bin/compiler
     PKG=/opt/intel/oneapi
-    export MKL_LIBDIR=${PKG}/mkl/lib/intel64_lin
-    export COMP_LIBDIR=${PKG}/compiler/2024.1/lib
-    export I_MPI_ROOT=${PKG}/mpi/2021.12
-    export IFORT_BIN=${PKG}/compiler/2024.1/bin
-    export MPIFORT_BIN=${I_MPI_ROOT}/bin
+    export MKL_LIBDIR=${PKG}/mkl/2024.2/lib/intel64
+    export COMP_LIBDIR=${PKG}/compiler/2024.2/lib
+    I_MPI_ROOT=${PKG}/mpi/2021.13
+    IFORT_BIN=${PKG}/compiler/2024.2/bin
+    MPIFORT_BIN=${I_MPI_ROOT}/bin
+    export PATH="${PATH}:${IFORT_BIN}:${MPIFORT_BIN}"
     export AFC=ifort
     export ACC="cc -O"
     export MPIFC=mpiifort
     export ASTRA_EXT=/home/astrainstaller/ASTRA_LIBRARIES_EXT
-# MPI
-    export MPI_INC="-I${I_MPI_ROOT}/include"
-    export MPI_LIB="-L${I_MPI_ROOT}/lib -lmpigf -lmpi"
+    export LD_LIBRARY_PATH=$COMP_LIBDIR
 fi
 
 source $AWD/exe/astra_rc

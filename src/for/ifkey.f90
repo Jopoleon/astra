@@ -54,8 +54,7 @@ use timeoutput_inc, only: NTIMES, TTOUT, TPOUT, TOUT
 use dbl2char, only: fmt6
 use char_manip, only: str_in_list
 use debugger, only: markloc, debug, astra_stop
-use json_vars, only: write_json, internNames, constNames, varNames, &
-     n_const, n_var
+use json_vars, only: internNames, constNames, varNames, n_const, n_var
 
 implicit none
 
@@ -201,8 +200,6 @@ if (TPOUT + DPOUT < TSTART .or. (IFKL /= 256 .and. TIME + 0.5*TAU >= TPOUT + DPO
 
     call markloc(str_in='RADOUT|1 call from IFKEY')
     call RADOUT
-
-!GIT    call write_json
 
     if (LTOUTO /= 0)  then
         open(3, FILE=rev_file, STATUS='OLD', iostat=ios, &
