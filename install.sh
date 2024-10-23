@@ -28,6 +28,34 @@ do
     fi
 done
 
+if [ "$SAFE" = "-safe" ]
+then
+    read -p "Do you havea working installation for RABBIT ? y/n " RABBIT
+    read -p "Do you havea working installation for TORBEAM? y/n " TORBEAM
+    if [ "$RABBIT" = "n" ]
+    then
+	rm $AWD/sbr/rabbit.f90
+	rm $AWD/sbr/a2rabbit.f90
+	rm $AWD/sbr/torbeam_rabbit.f90
+	if [ "$TORBEAM" = "n" ]
+	then
+            rm $AWD/sbr/torba.f90
+            rm $AWD/sbr/a2torbeam.f90
+            sed -i "s#TORBEAM_RABBIT#\!TORBEAM_RABBIT#g" $AWD/equ/fluxes
+	else
+            sed -i "s#TORBEAM_RABBIT#TORBA#g" $AWD/equ/fluxes
+	fi
+    else
+	if [ "$TORBEAM" = "n" ]
+	then
+            rm $AWD/sbr/torba.f90
+            rm $AWD/sbr/a2torbeam.f90
+            rm $AWD/sbr/torbeam_rabbit.f90
+            sed -i "s#TORBEAM_RABBIT#RABBIT#g" $AWD/equ/fluxes
+	fi
+    fi
+fi
+
 source $AWD/platform/env.$platform                     # get platform dependent $ASTRA_EXT
 echo $ASTRA_EXT
 sed -i "s#\$ASTRA_EXT#$ASTRA_EXT#g" exp/nml/aug34954   # insert path to RABBIT's tables and limiter file
