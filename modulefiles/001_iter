@@ -13,14 +13,3 @@ proc ModulesHelp { } {
 conflict meld
 
 prereq SciPy-bundle/2020.11-intel-2020b
-
-setenv ASTRA_EXT /home/ITER/tarding/ASTRA_LIBRARIES_EXT
-set PKG /work/imas/opt/EasyBuild/software
-setenv MKL_LIBDIR $env(MKLROOT)/lib/intel64
-setenv COMP_LIBDIR $PKG/iccifort/2020.4.304/compilers_and_libraries_2020.4.304/linux/compiler/lib/intel64_lin
-
-setenv AFC ifort
-setenv ACC "cc -O"
-setenv MPIFC mpiifort
-
-set-alias ae exe/as_exe

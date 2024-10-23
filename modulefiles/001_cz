@@ -14,13 +14,3 @@ conflict meld
 
 prereq python3/anaconda3.5
 prereq intelstudio/18
-
-setenv ASTRA_EXT /compass/home/tardini/astra_ext
-setenv COMP_LIBDIR /sw/intel/compilers_and_libraries_2018.3.222/linux/compiler/lib/intel64_lin
-setenv MKL_LIBDIR $env(MKLROOT)/lib/intel64
-
-setenv AFC ifort
-setenv ACC "cc -O"
-setenv MPIFC mpiifort
-
-set-alias ae exe/as_exe

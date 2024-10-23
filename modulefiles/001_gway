@@ -16,13 +16,3 @@ prereq cineca
 prereq intel/pe-xe-2020--binary
 prereq mkl/2020--binary
 prereq intelmpi/2020--binary
-
-setenv ASTRA_EXT /afs/eufus.eu/user/g/g2gtardi/ASTRA_LIBRARIES_EXT
-setenv MKL_LIBDIR $env(MKLROOT)/lib/intel64
-setenv COMP_LIBDIR $env(INTEL_HOME)/compilers_and_libraries/linux/lib/intel64
-
-setenv AFC ifort
-setenv ACC "cc -O"
-setenv MPIFC mpiifort
-
-set-alias ae exe/as_exe

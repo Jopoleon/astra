@@ -28,45 +28,7 @@ do
     fi
 done < $ALOG
 
-if [[ $platform = "docker" ]]
-then
-   # Same as "module load astra" on AUG machines
-   export ASTRA_EXT=/shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT
-
-   # Corresponds to the default installation of the Fenix Docker
-   export MKL_LIBDIR=/opt/intel/oneapi/mkl/latest/lib/intel64
-   export COMP_LIBDIR=/opt/intel/oneapi/compiler/latest/linux/compiler/lib/intel64_lin
-   export AFC=ifort
-   export ACC="gcc -O"
-   export MPIFC=mpiifort
-   export INTEL_LICENSE_FILE=/opt/intel/oneapi/mkl/latest/licencing
-elif [[ $platform = "ncku" ]]
-then
-    PKG=/opt/intel/oneapi
-    export MKL_LIBDIR=${PKG}/mkl/2024.2/lib/intel64
-    export COMP_LIBDIR=${PKG}/compiler/2024.2/lib
-    I_MPI_ROOT=${PKG}/mpi/2021.13
-    IFORT_BIN=${PKG}/compiler/2024.2/bin
-    MPIFORT_BIN=${I_MPI_ROOT}/bin
-    export PATH="${PATH}:${IFORT_BIN}:${MPIFORT_BIN}"
-    export AFC=ifort
-    export ACC="cc -O"
-    export MPIFC=mpiifort
-    export ASTRA_EXT=/home/astrainstaller/ASTRA_LIBRARIES_EXT
-    export LD_LIBRARY_PATH=$COMP_LIBDIR
-elif [[ $platform = "sevilla" ]]
-then
-    export ASTRA_EXT=/home/software/ASTRA/ASTRA_EXT_NEW
-    export MKL_LIBDIR=/opt/intel/oneapi/mkl/latest/lib/intel64
-    export COMP_LIBDIR=/opt/intel/oneapi/compiler/2024.2/lib
-    export AFC="ifort -diag-disable=10448"
-    export ACC="gcc -O"
-    export MPIFC="mpiifort -diag-disable=10448"
-    NETCDF="-Wl,-rpath,/home/alfrodgon/netCDF/build/lib"
-    INTEL_EXTRA="-Wl,-rpath,/opt/intel/oneapi/2024.2/lib"
-    export LD_LIBRARY_PATH="${NETCDF}:${INTEL_EXTRA}"
-fi
-
+source $AWD/platform/env.$platform
 source $AWD/exe/astra_rc
 
 export expfile="${exp_file}"

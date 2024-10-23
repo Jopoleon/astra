@@ -25,13 +25,3 @@ if [ module-info mode remove ] {
     module unload mkl/2023.1.0
     module unload anaconda/3/2023.03
 }
-
-#setenv ASTRA_EXT /shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT
-setenv ASTRA_EXT /tokp/work/software/TOK_2023/software/ASTRA_LIBRARIES_EXT
-set INTEL_HOME /shares/software/aug-dv/moduledata/Intel/oneapi
-setenv MKL_LIBDIR /shares/software/aug-dv/moduledata/Intel/oneapi/mkl/2023.1.0/lib/intel64
-setenv COMP_LIBDIR $INTEL_HOME/compiler/2023.1.0/linux/compiler/lib/intel64_lin
-
-setenv AFC ifort
-setenv ACC "cc -O"
-setenv MPIFC mpiifort

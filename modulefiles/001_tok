@@ -16,13 +16,3 @@ prereq intel/2023.1.0.x
 prereq impi/2021.9
 prereq impi-interactive/1.0
 prereq anaconda/3/2023.03
-
-setenv ASTRA_EXT /tokp/work/software/TOK_2023/software/ASTRA_LIBRARIES_EXT
-setenv MKL_LIBDIR  /tok/u/system/soft/SLE_15/packages/x86_64/intel_oneapi/2023.1/mkl/latest/lib/intel64
-setenv COMP_LIBDIR /tok/u/system/soft/SLE_15/packages/x86_64/intel_oneapi/2023.1/compiler/2023.1.0/linux/compiler/lib/intel64_lin
-
-setenv AFC ifort
-setenv ACC "cc -O"
-setenv MPIFC mpiifort
-
-set-alias ae exe/as_exe

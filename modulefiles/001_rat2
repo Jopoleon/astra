@@ -21,16 +21,4 @@ if [ module-info mode remove ] {
     module unload anaconda/3
 }
 
-#setenv ASTRA_EXT /shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT
-set INTEL_HOME /cluster/local/rh7/intel-2018u1
-setenv ASTRA_EXT /home/tardini/ASTRA_LIBRARIES_EXT
-setenv MKL_LIBDIR $INTEL_HOME/mkl/lib/intel64
-setenv COMP_LIBDIR $INTEL_HOME/compilers_and_libraries/linux/lib/intel64_lin
-
-setenv AFC ifort
-setenv ACC "cc -O"
-setenv MPIFC mpiifort
-
 prepend-path LD_LIBRARY_PATH /home/tardini/netCDF/build/lib
-
-set-alias ae exe/as_exe

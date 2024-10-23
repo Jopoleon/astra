@@ -28,8 +28,10 @@ do
     fi
 done
 
-cp $AWD/repo_user_area/exp/nml/aug34954_${platform} $AWD/exp/nml/aug34954
-cp $AWD/repo_user_area/exp/nml/AUG33040_2500_${platform} $AWD/exp/nml/AUG33040_2500
+source $AWD/platform/env.$platform                     # get platform dependent $ASTRA_EXT
+echo $ASTRA_EXT
+sed -i "s#\$ASTRA_EXT#$ASTRA_EXT#g" exp/nml/aug34954   # insert path to RABBIT's tables and limiter file
+sed -i "s#\$ASTRA_EXT#$ASTRA_EXT#g" exp/nml/AUG33040_2500
 
 chmod 744 $AWD/exe/Build
 chmod 744 $AWD/exe/as_exe
@@ -48,7 +50,6 @@ then
 	make -f exe/Makefile clean
     fi
 else
-    echo hello
     make -f exe/Makefile clean
 fi
 exe/as_exe -m fluxes -v aug34954 -s 4 -e 5

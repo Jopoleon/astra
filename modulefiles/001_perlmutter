@@ -14,13 +14,3 @@ conflict meld
 
 prereq PrgEnv-intel
 prereq python
-
-setenv ASTRA_EXT /tokp/work/software/TOK_2023/software/ASTRA_LIBRARIES_EXT 
-setenv MKL_LIBDIR /opt/intel/oneapi/mkl/latest/lib/intel64
-setenv COMP_LIBDIR /opt/intel/oneapi/compiler/latest/lib/intel64
-
-setenv AFC ifort
-setenv ACC "gcc -O"
-setenv MPIFC mpiifort
-
-set-alias ae exe/as_exe
