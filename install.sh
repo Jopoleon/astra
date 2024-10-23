@@ -37,11 +37,13 @@ then
 	rm $AWD/sbr/rabbit.f90
 	rm $AWD/sbr/a2rabbit.f90
 	rm $AWD/sbr/torbeam_rabbit.f90
+	sed -i "s#export\ RABBIT_LIB#\#export\ RABBIT_LIB#g" $AWD/exe/astra_rc
 	if [ "$TORBEAM" = "n" ]
 	then
             rm $AWD/sbr/torba.f90
             rm $AWD/sbr/a2torbeam.f90
             sed -i "s#TORBEAM_RABBIT#\!TORBEAM_RABBIT#g" $AWD/equ/fluxes
+            sed -i "s#export\ TORB_LIB#\#export\ TORB_LIB#g" $AWD/exe/astra_rc
 	else
             sed -i "s#TORBEAM_RABBIT#TORBA#g" $AWD/equ/fluxes
 	fi
