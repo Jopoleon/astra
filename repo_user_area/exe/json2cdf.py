@@ -58,6 +58,8 @@ def json_concat(expequ):
         nx   = astra_d['NEX']['ndim']
         n_eq = equil_d['rho_tor']['ndim']
         n_th = equil_d['teta2d']['ndim']
+        nR   = equil_d['r2d']['ndim']
+        nZ   = equil_d['z2d']['ndim']
 
         for key, val in astra_d.items():
             dat = val['data']
@@ -115,6 +117,7 @@ def json_concat(expequ):
             astra_d[key]['dimensions'] = ['TIME', 'XRHO']
 
     for key, val in ds_equil.items():
+        print(key, len(val), nt, nt*n_eq, nt*n_th*n_eq)
         ds_equil[key] = np.array(val, dtype=dtyp)
         if len(val) == nt:
             equil_d[key]['dimensions'] = ['TIME']
@@ -124,6 +127,9 @@ def json_concat(expequ):
         elif len(val) == nt*n_th*n_eq:
             ds_equil[key] = np.transpose(ds_equil[key].reshape((nt, n_th, n_eq)), (0, 2, 1) )
             equil_d[key]['dimensions'] = ['TIME', 'RHO_SURF', 'THETA']
+        elif len(val) == nt*nR*nZ:
+            ds_equil[key] = np.transpose(ds_equil[key].reshape((nt, nZ, nR)), (0, 2, 1) )
+            equil_d[key]['dimensions'] = ['TIME', 'R', 'Z']
 
     f = netcdf_file(cdf_out, 'w', mmap=False)
 
@@ -131,6 +137,8 @@ def json_concat(expequ):
     f.createDimension('XRHO', nx)
     f.createDimension('RHO_SURF', n_eq)
     f.createDimension('THETA', n_th)
+    f.createDimension('R', nR)
+    f.createDimension('Z', nZ)
 
     rho = f.createVariable('XRHO', dtyp, ('XRHO', ))
     rho.data  = np.array(astra_d['XRHO']['data'], dtype=dtyp)
@@ -151,6 +159,16 @@ def json_concat(expequ):
     theta.data = np.array(equil_d['teta2d']['data'], dtype=dtyp)
     theta.units = 'rad'
     theta.long_name = equil_d['teta2d']['long_name']
+
+    rgrid = f.createVariable('R', dtyp, ('R', ))
+    rgrid.data = np.array(equil_d['r2d']['data'], dtype=dtyp)
+    rgrid.units = 'm'
+    rgrid.long_name = equil_d['r2d']['long_name']
+
+    zgrid = f.createVariable('Z', dtyp, ('Z', ))
+    zgrid.data = np.array(equil_d['z2d']['data'], dtype=dtyp)
+    zgrid.units = 'm'
+    zgrid.long_name = equil_d['z2d']['long_name']
 
     for key, val in ds_astra.items():
         if key != 'TIME':

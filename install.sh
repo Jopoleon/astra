@@ -30,8 +30,8 @@ done
 
 if [ "$SAFE" = "-safe" ]
 then
-    read -p "Do you havea working installation for RABBIT ? y/n " RABBIT
-    read -p "Do you havea working installation for TORBEAM? y/n " TORBEAM
+    read -p "Do you have a working installation for RABBIT ? y/n " RABBIT
+    read -p "Do you have a working installation for TORBEAM? y/n " TORBEAM
     if [ "$RABBIT" = "n" ]
     then
 	rm $AWD/sbr/rabbit.f90
