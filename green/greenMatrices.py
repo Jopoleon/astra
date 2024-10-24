@@ -249,7 +249,7 @@ class GREEN_MATRICES:
         self.indConduc = np.zeros((nConduc, nConduc))
         for i in range(ielem):
             iii = equivtmp[i] - 1
-            self.indConduc[iii, iii] += gf_diag[i]*tatmp[i]**2/2.
+            self.indConduc[iii, iii] += gf_diag[i]*tatmp[i]**2
             gf_ta = tatmp*gf.nonIdentity(Rce[i], Zce[i], Rce, Zce, dRce[i], dZce[i], dRce, dZce, nctype[i], nctype)
             for j in range(ielem):
                 if j != i:

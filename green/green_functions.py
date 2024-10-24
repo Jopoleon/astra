@@ -60,17 +60,21 @@ def greenBoundary(Rgrid, Zgrid):
 
 def identity(R, dr, dz, ntype):
 
+# below replicates what is done in SPIDER (A. A. Ivanov and S. Yu. Medvedev, KIAM Preprint Nr 39, 2009 Moscow)
     (ind1, ) = np.where(ntype == 1)
     (ind2, ) = np.where(ntype == 2)
     gfi = np.zeros_like(R)
     if len(ind2) > 0:
-        gfi[ind2] = R[ind2]*(np.log(8.*R[ind2]/(0.2236*(dr[ind2] + dz[ind2]))) - 2.)
+        gfi[ind2] = R[ind2]*(np.log(8.*R[ind2]/(0.2236*(dr[ind2] + dz[ind2]))) - 2.)/2. # From A. Kavin,  used in SPIDER (A. A. Ivanov and S. Yu. Medvedev, KIAM Preprint Nr 39, 2009 Moscow),  self inductance of a rectangular coil in toroidal direction
     if len(ind1) > 0:
         dl  = np.hypot(dr, dz)
         for i in (-1, 0, 1):
-            gfi[ind1] += (R[ind1] + dr[ind1]*i/3.) * (np.log( 8.*(R[ind1] + dr[ind1]*i/3.)/(dl[ind1]/3.) ) - 0.5)
-            for j in range(-1, i):
-                gfi[ind1] += 4.*greenFunction(R[ind1] + dr[ind1]*i/3., dz[ind1]*i/3., R[ind1] + dr[ind1]*j/3., dz[ind1]*j/3.)
+            for j in (-1, 0, 1):
+                if i == j:
+                    gfi[ind1] += (R[ind1] + dr[ind1]*i/3.) * (np.log( 8.*(R[ind1] + dr[ind1]*i/3.)/(dl[ind1]/3.) ) - 0.5)/2.
+                else:
+                    gfi[ind1] += greenFunction(R[ind1] + dr[ind1]*i/3., dz[ind1]*i/3., R[ind1] + dr[ind1]*j/3., dz[ind1]*j/3.)
+                
         gfi[ind1] /= 9.
 
     return gfi

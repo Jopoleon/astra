@@ -631,7 +631,8 @@ use feqis_circuit, only: nrho, nrho2d, nteta, use_limiter_yesno, &
     psistabr, psistabz, psigrid, psigrida, psibnd
 use transport2fbe, only: dr_factor_init_astra, dz_factor_init_astra, &
     tau_circuit_feqis, tau_gseq_feqis, activate_coil_feqis, current_limit_feqis, &
-    raxis_astra, zaxis_astra, psi0_astra, psib_astra, use_limiter_astra
+    raxis_astra, zaxis_astra, psi0_astra, psib_astra, use_limiter_astra, &
+    fix_shape_after_fbe_off
 use numerical_tools, only: linterp
 use feqis_tools, only: pol_angle
 
@@ -720,7 +721,7 @@ if (ifplasma == 1) then
     ppp_2d = -GPI2*1.e-6*ppp_2d
     ipol(1:nrho) = equil_in%profiles_1d%F_dia(1:nrho)
 
-    if (params%k_fixfree == 1) it_was_fbe_before = 1
+    if (params%k_fixfree == 1.and.fix_shape_after_fbe_off == 1) it_was_fbe_before = 1
 
     if (params%k_fixfree == 0 .and. it_was_fbe_before == 0) then ! If 1, comes from free boundary
         rexp(1:nteta) = equil_in%eqgeometry%boundary%r(1:nteta)

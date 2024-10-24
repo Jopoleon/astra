@@ -237,7 +237,7 @@ C*DEC*07
 C Read a record for one beam source
 
         call	STREAD(2,20,ARRAY,ERCODE)
-	write(*,*)">>> NBINJ: After STREAD: ercode =",ERCODE
+C	write(*,*)">>> NBINJ: After STREAD: ercode =",ERCODE
 C	write(*,'(1I3,1P,5E12.4)')JN,ARRAY(1),CBM1
 
 c	ABEAM = ARRAY(3)	EBEAM = ARRAY(5)
