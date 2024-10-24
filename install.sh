@@ -32,6 +32,9 @@ if [ "$SAFE" = "-safe" ]
 then
     read -p "Do you have a working installation for RABBIT ? y/n " RABBIT
     read -p "Do you have a working installation for TORBEAM? y/n " TORBEAM
+    read -p "Do you want QualiKiZ? y/n " QLK
+    read -p "Do you want NEO? y/n " NEO
+# RABBIT, TORBEAM
     if [ "$RABBIT" = "n" ]
     then
 	rm $AWD/sbr/rabbit.f90
@@ -56,6 +59,21 @@ then
             sed -i "s#TORBEAM_RABBIT#RABBIT#g" $AWD/equ/fluxes
 	fi
     fi
+# NEO, QUALIKIZ (needing MPI)
+    if [ "$QLK" = "n" ]
+    then
+	if [ "$NEO" = "n" ]
+	then
+	    sed -i "s#\$(XPR)\/qlki\ \$(XPR)\/neo#\ #g" $AWD/exe/Makexpr
+	else
+	    sed -i "s#\$(XPR)\/qlki\ \$(XPR)\/neo#\$(XPR)\/neo#g" $AWD/exe/Makexpr
+	fi
+    else
+	if [ "$NEO" = "n" ]
+	then
+	    sed -i "s#\$(XPR)\/qlki\ \$(XPR)\/neo#\$(XPR)\/qlki#g" $AWD/exe/Makexpr
+	fi
+    fi    
 fi
 
 source $AWD/platform/env.$platform                     # get platform dependent $ASTRA_EXT

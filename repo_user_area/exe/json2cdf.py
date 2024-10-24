@@ -117,7 +117,6 @@ def json_concat(expequ):
             astra_d[key]['dimensions'] = ['TIME', 'XRHO']
 
     for key, val in ds_equil.items():
-        print(key, len(val), nt, nt*n_eq, nt*n_th*n_eq)
         ds_equil[key] = np.array(val, dtype=dtyp)
         if len(val) == nt:
             equil_d[key]['dimensions'] = ['TIME']
