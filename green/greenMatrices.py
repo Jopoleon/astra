@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os, logging, argparse, json
 import numpy as np
@@ -15,7 +15,8 @@ if len(logger.handlers) == 0:
 #logger.setLevel(logging.DEBUG)
 logger.setLevel(logging.INFO)
 
-awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+loc_dir = os.path.dirname(os.path.realpath(__file__))
+awd = os.path.dirname(loc_dir)
 grIOdir = '%s/exp/cnf' %awd
 
 gr_flt = np.float64
@@ -424,7 +425,15 @@ class GREEN_MATRICES:
         logger.info('Stored %s', f_out)
 
 
-if __name__ == '__main__':
+def write_green(f_in, f_out):
+    gm = GREEN_MATRICES()
+    gm.fromMachineInput(f_in)
+    if hasattr(gm, 'Rmin'):
+        gm.calcGreenf()
+        gm.dumpMachineDescr(f_out=f_out)
+
+    
+def main():
 
 #    parser = argparse.ArgumentParser(description='Write Green matrices for FEQIS')
 #    parser.add_argument('-t', '--tok', help='tokamak name', required=False, default='aug')
@@ -436,14 +445,27 @@ if __name__ == '__main__':
             f_machineIn  = '%s/%s_description_in.json'  %(grIOdir, tok)
             f_machineOut = '%s/machine_description_out.%s' %(grIOdir, tok)
 
-            if os.path.isfile(f_machineOut):
-                fsize = os.path.getsize(f_machineOut)
-                if fsize == 0:
-                    logger.info('File %s exists, but it has zero size. Removing', f_machineOut)
-                    os.system('rm %s' %fsize)
-            if not os.path.isfile(f_machineOut):
-                gm = GREEN_MATRICES()
-                gm.fromMachineInput(f_machineIn)
-                if hasattr(gm, 'Rmin'):
-                    gm.calcGreenf()
-                    gm.dumpMachineDescr(f_out=f_machineOut)
+            if os.path.isfile(f_machineIn):
+                if os.path.isfile(f_machineOut):
+                    t_out = os.stat(f_machineOut).st_ctime
+                    t_in  = os.stat(f_machineIn ).st_ctime
+                    t_py1 = os.stat('%s/greenMatrices.py' %loc_dir).st_ctime
+                    t_py2 = os.stat('%s/green_functions.py' %loc_dir).st_ctime
+                    fsize = os.path.getsize(f_machineOut)
+                    if fsize == 0:
+                        logger.info('File %s exists, but it has zero size. Removing', f_machineOut)
+                        write_green(f_machineIn, f_machineOut)
+                    if t_in > t_out:
+                        logger.info('Input file %s newer than output %s', f_machineIn, f_machineOut)
+                        write_green(f_machineIn, f_machineOut)
+                    if t_py1 > t_out:
+                        logger.info('exe/greenMatrifces.py newer than output file %s', f_machineOut)
+                        write_green(f_machineIn, f_machineOut)
+                    if t_py2 > t_out:
+                        logger.info('exe/green_functions.py newer than output file %s', f_machineOut)
+                        write_green(f_machineIn, f_machineOut)
+                else:
+                    write_green(f_machineIn, f_machineOut)
+
+if __name__ == '__main__':
+    main()

@@ -372,6 +372,7 @@ void taskmenu_(INT_ *modex){
         font = XLoadQueryFont(theDisplay, font_name);
         for (i=0; i<20; i++) {
             printf("dialogx: installed_font[%d] = |%s|\n", i, list_installed_fonts[i]);
+	    if (i == num_installed_fonts-1) break;
 	}
         printf("dialogx: ASTRA GUI using font = |%s|\n", font_name);
     }
