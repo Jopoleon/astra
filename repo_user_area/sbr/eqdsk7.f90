@@ -1,4 +1,4 @@
-subroutine EQDSK
+subroutine EQDSK7
 
 use const_inc, only: NA1, RTOR, BTOR, IPL, UPDWN, TIME, TSTART, MEQUIL, NEQUIL, &
     PSIAX, PSIBO, IPEQL, SGNBT, SGNIP
@@ -8,7 +8,7 @@ use outcmn_inc, only: AWD, exp_file, equ_file
 
 implicit none
 
-integer, parameter :: Nrrect=192, Nzrect=192, eqdsk_unit=11
+integer, parameter :: Nrrect=256, Nzrect=256, eqdsk_unit=11
 integer :: i, j, nrho_surf, nthe_surf, n_Rrect, n_Zrect
 double precision :: raxis, zaxis, drhot_eq, dpsin_rect, psib, Rmin, Rmax, zmin, zmax, dr, dz
 double precision, allocatable, dimension(:) :: r_rect, z_rect, rhotor1d, pf1d, &
@@ -95,14 +95,14 @@ write(eqdsk_unit, '(A48, 3i4)') 'ASTRA', 3, n_Rrect, n_Zrect
 write(eqdsk_unit, '(5E16.9)') R_rect(n_Rrect) - R_rect(1), Z_rect(n_Zrect) - Z_rect(1), RTOR, &
     R_rect(1), 0.5*(Z_rect(1) + Z_rect(n_Zrect))
 ! Rmagnaxis(m), Zmagnaxis(m)
-write(eqdsk_unit, '(5E16.9)') equil_now%coord_sys%position%r(1, 1), equil_now%coord_sys%position%z(1, 1), SGNIP*PSIAX/GP2, SGNIP*PSIBO/GP2, SGNBT*BTOR
-write(eqdsk_unit, '(5E16.9)') SGNIP*IPL*1.d6, SGNIP*PSIAX/GP2, 0., equil_now%coord_sys%position%r(1, 1), 0.
+write(eqdsk_unit, '(5E16.9)') equil_now%coord_sys%position%r(1, 1), equil_now%coord_sys%position%z(1, 1), -SGNIP*PSIAX/GP2, -SGNIP*PSIBO/GP2, SGNBT*BTOR
+write(eqdsk_unit, '(5E16.9)') SGNIP*IPL*1.d6, -SGNIP*PSIAX/GP2, 0., equil_now%coord_sys%position%r(1, 1), 0.
 write(eqdsk_unit, '(5E16.9)') equil_now%coord_sys%position%z(1, 1), 0., SGNIP*PSIBO/GP2, 0., 0.
 write(eqdsk_unit, '(5E16.9)') (SGNBT*fdia_rect(i), i=1, n_Rrect)
 write(eqdsk_unit, '(5E16.9)') (pres_rect(i), i=1, n_Rrect)
-write(eqdsk_unit, '(5E16.9)') (SGNIP*fprime_rect(i)*GP2, i=1, n_Rrect)
-write(eqdsk_unit, '(5E16.9)') (SGNIP*pprime_rect(i)*GP2, i=1, n_Rrect)
-write(eqdsk_unit, '(5E16.9)') ((SGNIP*psi_rect(i, j)/GP2, i=1, n_Rrect), j=1, n_Zrect)
+write(eqdsk_unit, '(5E16.9)') (-SGNIP*fprime_rect(i)*GP2, i=1, n_Rrect)
+write(eqdsk_unit, '(5E16.9)') (-SGNIP*pprime_rect(i)*GP2, i=1, n_Rrect)
+write(eqdsk_unit, '(5E16.9)') ((-SGNIP*psi_rect(i, j)/GP2, i=1, n_Rrect), j=1, n_Zrect)
 write(eqdsk_unit, '(5E16.9)') (SGNBT*SGNIP*q_rect(i), i=1, n_Rrect)
 write(eqdsk_unit, '(2i5)') nthe_surf, nthe_surf
 write(eqdsk_unit, '(5E16.9)') (equil_now%coord_sys%position%r(nrho_surf, i), equil_now%coord_sys%position%z(nrho_surf, i), i=1, nthe_surf)
@@ -113,5 +113,6 @@ deallocate(pf_eq, rhot_eq, psin_eq, pres_eq, fdia_eq, q_eq, pprime_eq, fprime_eq
 deallocate(psin_rect, pres_rect, fdia_rect, q_rect, pprime_rect, fprime_rect)
 deallocate(r_rect, z_rect, psi_rect, equil_now%coord_sys%position%r, equil_now%coord_sys%position%z, psi_g_norm)
 
+
 return
-end subroutine EQDSK
+end subroutine EQDSK7
