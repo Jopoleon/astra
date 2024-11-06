@@ -28,18 +28,9 @@ then
 elif [[ $node = "omega"* ]]
 then
    platform=omega
-elif [[ $node = "CX-LD"* ]]
+elif [[ $node = "cx-ld-prod"* ]] || [[ $node = "hz-ld-"* ]] || [[ $node = "tok"* ]]
 then
-   platform=cxaug
-elif [[ $node = "cx-ld-prod"* ]]
-then
-   platform=cxaug
-elif [[ $node = "hz-ld-"* ]]
-then
-   platform=cxaug
-elif [[ $node = "tok"* ]]
-then
-   platform=tok
+   platform=aug
 elif [[ $node = "iris"* ]]
 then
    platform=iris
