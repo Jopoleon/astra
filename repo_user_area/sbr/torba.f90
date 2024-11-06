@@ -19,14 +19,14 @@ logical, parameter :: dump_flag=.FALSE.
 integer, parameter :: n_gy_max=30, maxint=50, maxflt=50, &
      mmax=150, nmax=150, prdim = 2*mmax+2*nmax, ndat=100000, &
      npnt=5000, Nrrect=64, Nzrect=64, ianexp=2, &
-     nprofvw=25, n_interp=150
+     maxvol=100, n_interp=150
 
 double precision, intent(in) :: power_MW_in
 
 logical, dimension(n_gy_max) :: beam_on
 integer :: jr, jz, i, jrho, jgy, j, n_ne, n_te, ios, n_rho
 integer :: npow, ncd, ndns, nte, nshot, nastra, n_gyro
-integer :: ncdroutine, lfd
+integer :: ncdroutine, lfd, nprofvw=25
 integer :: n_Rrect, n_Zrect, nrho_surf, nthe_surf, eqdim
 integer, dimension(maxint) :: intinbeam
 integer, dimension(n_gy_max) :: nmod
@@ -43,7 +43,7 @@ double precision, dimension(n_gy_max) :: power_gyro, freq_n, &
 double precision :: floatinbeam(maxflt)
 double precision, dimension(:), allocatable :: eqdata
 double precision :: prdata(prdim)
-double precision :: volprofw(2*nprofvw)
+double precision :: volprofw(2*maxvol)
 double precision, dimension(6*ndat) :: t1data, t1tdata
 double precision, dimension(5*ndat) :: t2data
 double precision, dimension(3*npnt) :: t2ndata
