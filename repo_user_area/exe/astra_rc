@@ -21,7 +21,7 @@ export TORB_LIB="-L${TORB_LIBDIR} -ltorbeamB  -Wl,-rpath,${TORB_LIBDIR} ${IRC_LI
 
 if [[ $platform = "aug" ]] || [[ $platform = "mit" ]] || [[ $platform = "rat2" ]]
 then
-    RABBIT_HOME=${ASTRA_EXT}/rabbit/sep24
+    RABBIT_HOME=${ASTRA_EXT}/rabbit/oct24
 else
     RABBIT_HOME=${ASTRA_EXT}/rabbit/may23
 fi
