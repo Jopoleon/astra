@@ -91,11 +91,8 @@ export OMP_NUM_THREADS=\${SLURM_CPUS_PER_TASK:-1}
 export expfile=${expfile}
 export equfile=${equfile}
 export OMP_PLACES=cores
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=${COMP_LIBDIR}
 export ASTRA_EXT=${ASTRA_EXT}
-source /etc/profile.d/modules.sh
-module purge
-module load astra
 srun $ATASK
 EOT
 
