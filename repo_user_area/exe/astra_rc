@@ -13,7 +13,7 @@ export JSON_INC="$JSON_HOME/inc"
 # TORBEAM
 
 IRC_LIB="-L${COMP_LIBDIR} -lirc" # necessary for libtorbeam.so
-TORB_HOME="${ASTRA_EXT}/torbeam/oct24"  # needed at runtime too
+TORB_HOME="${ASTRA_EXT}/torbeam/jun24"  # needed at runtime too
 TORB_LIBDIR=${TORB_HOME}/lib
 export TORB_LIB="-L${TORB_LIBDIR} -ltorbeamB  -Wl,-rpath,${TORB_LIBDIR} ${IRC_LIB}"
 
@@ -23,7 +23,7 @@ if [[ $platform = "mit" ]] || [[ $platform = "rat2" ]]
 then
     RABBIT_HOME=${ASTRA_EXT}/rabbit/sep24
 else
-    RABBIT_HOME=${ASTRA_EXT}/rabbit/oct24
+    RABBIT_HOME=${ASTRA_EXT}/rabbit/sep24
 fi
 
 RABBIT_LIBDIR=${RABBIT_HOME}/lib

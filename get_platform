@@ -6,31 +6,34 @@ node=`uname -n`
 
 if [[ $AWD = "/afs/eufus"* ]]
 then
-   platform=gway
+    platform=gway
 elif [[ $AWD = "/localhome"* ]]
 then
-   platform=goblin
+    platform=goblin
 elif [[ $AWD = "/home/ITER"* ]]
 then
-   platform=iter
+    platform=iter
 elif [[ $AWD = "/home/matlab"* ]]
 then
-   platform=docker
+    platform=docker
 elif [[ $AWD = "/global/homes"* ]]
 then
-   platform=perlmutter
+    platform=perlmutter
 elif [[ $AWD = "/compass"* ]]
 then
-   platform=cz
+    platform=cz
 elif [[ $node = *"mit.edu" ]]|| [[ $node = "node"* ]]
 then
-   platform=mit
+    platform=mit
 elif [[ $node = "omega"* ]]
 then
-   platform=omega
-elif [[ $node = "cx-ld-prod"* ]] || [[ $node = "hz-ld-"* ]] || [[ $node = "tok"* ]]
+    platform=omega
+elif [[ $node = "cx-ld-prod"* ]] || [[ $node = "hz-ld-"* ]]
 then
-   platform=aug
+    platform=aug
+elif [[ $node = "tok"* ]]
+then
+    platform=tok
 elif [[ $node = "iris"* ]]
 then
    platform=iris
