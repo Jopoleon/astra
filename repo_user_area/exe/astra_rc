@@ -15,7 +15,7 @@ export JSON_INC="$JSON_HOME/inc"
 IRC_LIB="-L${COMP_LIBDIR} -lirc" # necessary for libtorbeam.so
 if [[ $platform = "tok" ]]
 then
-    TORB_HOME="${ASTRA_EXT}/torbeam/jun24"
+    TORB_HOME="${ASTRA_EXT}/torbeam/aug21_ifort"
 else
     TORB_HOME="${ASTRA_EXT}/torbeam/oct24"
 fi
