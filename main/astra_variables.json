@@ -631,7 +631,7 @@
     "AMETR" : {"units": "m", "desc": "Equatorial magnetic surface size"},
     "AREAT" : {"units": "m^2", "desc": "Area of poloidal cross"},
     "B0DB2" : {"desc": "<B0^2/B^2> (for Neoclassical)"},
-    "BDB0 " : {"desc": "<B/B0> (for Neoclassical)"},
+    "BDB0"  : {"desc": "<B/B0> (for Neoclassical)"},
     "BDB02" : {"desc": "<B^2/B0^2> (for Neoclassical)"},
     "BMAXT" : {"units": "T", "desc": "Maximum B field on the surface"},
     "BMINT" : {"units": "T", "desc": "Minimum B field on the surface"},
@@ -687,7 +687,7 @@
     "F8O"   : {},
     "F9"    : {},
     "F9O"   : {},
-    "FOFB " : {"desc": "<(B0/B)^2*(1."},
+    "FOFB"  : {"desc": "<(B0/B)^2*(1."},
     "FP"    : {"units": "V*s", "desc": "Poloidal flux"},
     "FPO"   : {"units": "V*s", "desc": "Poloidal flux from the previous time step"},
     "FP_NORM":{"desc": "Normalised poloidal flux"},
@@ -823,7 +823,7 @@
     "TI"    : {"units": "keV", "desc": "Ion temperature"},
     "TIO"   : {"units": "keV", "desc": "Old ion temperature"},
     "TN"    : {"units": "keV", "desc": "Neutral temperature"},
-    "TRIA " : {"desc": "Current magnetic surface triangularity"},
+    "TRIA"  : {"desc": "Current magnetic surface triangularity"},
     "TTRQ"  : {"units": "mkg/m^3m/s^2./(1e19m_p) Toroidal torque <R sum(S_phi,s)>/(1e19*m_proton) for momentum transport equation, I guess TTRQ = 5.9773e+07 * RTOR*SCUBM then. Can also contain radial current terms from ignored species. Explicit term"},
     "TTRQI" : {"units": "mkg/m^3m/s^2./(1e19m_p) Toroidal torque <R sum(S_phi,s)>/(1e19*m_proton) for momentum transport equation, I guess TTRQ = 5.9773e+07 * RTOR*SCUBM then. Can also contain radial current terms from ignored species. Implicit term"},
     "ULON"  : {"units": "V", "desc": "Parallel loop voltage (<UB>/Bo=ULON)"},
@@ -975,8 +975,8 @@
     "zeff_strahl": {"desc": "Effective charge profile, STRAHL output"},
     "prad_tot_strahl": {"units": "MW/m^3", "desc": "Total radiated power density profile, STRAHL output"},
     "nmain_strahl": {"units": "1e19/m^3", "desc": "Main ion density, STRAHL output"},
-    "prad_main_strahl": {"units": "MW/m^3", "desc": " Bulk plasma radiated power density profile, STRAHL output"},
-    "prad_strahl": {"units": "MW/m^3", "desc": " Radiated power density profile by each impurity species, STRAHL output"},
+    "prad_main_strahl": {"units": "MW/m^3", "desc": "Bulk plasma radiated power density profile, STRAHL output"},
+    "prad_strahl": {"units": "MW/m^3", "desc": "Radiated power density profile by each impurity species, STRAHL output"},
     "nimp_strahl": {"units": "1e19/m^3", "desc": "Impurity density profile of each species, STRAHL output"},
     "zavg_strahl": {"desc": "Average charge profile of each species, STRAHL output"},
     "nesrc_strahl": {"units": "1e19/m^3/s", "desc": "Electron source due to each species, STRAHL output"},
@@ -992,7 +992,7 @@
     "psibound": {"units": "Wb", "desc": "Boundary psi value"},
     "psiaxis": {"units": "Wb", "desc": "Axis psi value"},
     "r0": {"units": "m", "desc": "Major radius"},
-    "Vloop  ": {"units": "V", "desc": "Loop voltage"}
+    "Vloop": {"units": "V", "desc": "Loop voltage"}
 },
 
 "equil_profiles": {
