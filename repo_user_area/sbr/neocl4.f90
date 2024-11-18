@@ -255,9 +255,9 @@ do j=1, NA
 ! in the model
 ! or/and
 ! is used to satisfy the quasineutrality condition
-    YNMAIN = NE(J) - 1./ZMJ*(ZIM1(J)*NIZ1(J) - ZIM2(J)*NIZ2(J) - ZIM3(J)*NIZ3(J) - &
+    YNMAIN = 1./ZMJ*(NE(J) - ZIM1(J)*NIZ1(J) - ZIM2(J)*NIZ2(J) - ZIM3(J)*NIZ3(J) - &
              NHYDR(J) - NDEUT(J) - NTRIT(J) - 2.*NHE3(J) - 2.*NALF(J))
-    YNMAIN1 = NE(J+1) - 1./ZMJ*(ZIM1(J+1)*NIZ1(J+1) - ZIM2(J+1)*NIZ2(J+1) - ZIM3(J+1)*NIZ3(J+1) - &
+    YNMAIN1 = 1./ZMJ*(NE(J+1) - ZIM1(J+1)*NIZ1(J+1) - ZIM2(J+1)*NIZ2(J+1) - ZIM3(J+1)*NIZ3(J+1) - &
               NHYDR(J+1) - NDEUT(J+1) - NTRIT(J+1) - 2.*NHE3(J+1) - 2.*NALF(J+1))
     if (YNMAIN > y_den) then
         ni_nc(j) = ni_nc(j) + ynmain
