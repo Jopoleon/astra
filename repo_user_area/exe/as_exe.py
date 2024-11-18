@@ -1,7 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os, logging, argparse, traceback
 from json2cdf import json_concat
+import greenMatrices
 
 fmt = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s: %(message)s', '%H:%M:%S')
 
@@ -36,6 +37,7 @@ def parse_alog():
 
 if __name__ == '__main__':
 
+    greenMatrices.main()
     alog_d = parse_alog()
     parser = argparse.ArgumentParser(description='Write settings & run ASTRA')
     parser.add_argument('-m', '--equ', help='Model file', required=False, default=alog_d['equ_file'])

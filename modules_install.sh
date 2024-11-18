@@ -1,0 +1,247 @@
+#!/bin/bash
+
+rootdir=`dirname $0`      # may be relative path
+export AWD=`cd $rootdir && pwd`  # ensure absolute path
+
+chmod 744 $AWD/get_platform
+platform=`$AWD/get_platform`
+
+#--------------------
+# User dependent part
+#--------------------
+
+source $AWD/platform/env.$platform
+
+#------------------
+# Packages versions
+#------------------
+
+GACODE_HASH=c18ebaf5331853745063679c94e9b48ca97d48d5 # before compatibility break in tglf_inout, put_miller_equilibrium
+CMAKE_VERSION=cmake-3.30.3-linux-x86_64
+JSON_VERSION=9.0.2
+RABBIT_VERSION=unstable
+TORBEAM_VERSION=unstable
+QLK_VERSION=unstable
+GA_VERSION=unstable
+
+#--------------------
+# ASTRA install paths
+#--------------------
+
+SOFT_ROOT=$HOME/soft
+JSON_INSTALL=$ASTRA_EXT/json/$JSON_VERSION
+RABBIT_INSTALL=$ASTRA_EXT/rabbit/$RABBIT_VERSION
+TORBEAM_INSTALL=$ASTRA_EXT/torbeam/$TORBEAM_VERSION
+QLK_INSTALL=$ASTRA_EXT/qualikiz/$QLK_VERSION
+TGLF_INSTALL=$ASTRA_EXT/tglf/$GA_VERSION
+NEO_INSTALL=$ASTRA_EXT/neo/$GA_VERSION
+
+# To restore at the script end
+PATH_OLD=$PATH
+
+export PATH=$SOFT_ROOT/$CMAKE_VERSION/bin:$PATH
+export FFLAGS="-qopenmp"
+CMAKE=$SOFT_ROOT/$CMAKE_VERSION/bin/cmake
+mkdir -p $SOFT_ROOT
+
+#------
+# CMAKE
+#------
+
+read -p "Install CMAKE (y/n) " CMAKE_FLAG
+if [ "$CMAKE_FLAG" = "y" ]
+then
+    cd $SOFT_ROOT
+    wget https://github.com/Kitware/CMake/releases/download/v3.30.3/$CMAKE_VERSION.sh
+    sh $CMAKE_VERSION.sh
+    rm $CMAKE_VERSION.sh
+    chmod u+x $CMAKE
+    echo Installed cmake in $SOFT_ROOT/$CMAKE_VERSION
+fi
+
+#-------------
+# json-fortran
+#-------------
+
+read -p "Install JSON (y/n) " JSON_FLAG
+if [ "$JSON_FLAG" = "y" ]
+then
+    cd $SOFT_ROOT
+    JSON_ROOT=$SOFT_ROOT/json-fortran-${JSON_VERSION}
+    rm -rf $JSON_ROOT
+    wget https://github.com/jacobwilliams/json-fortran/archive/refs/tags/${JSON_VERSION}.tar.gz
+    tar xvf ${JSON_VERSION}.tar.gz
+    cd $JSON_ROOT
+    mkdir -p build
+    $CMAKE -S $JSON_ROOT $JSON_ROOT/build
+    cd build
+    make
+
+    mkdir -p $JSON_INSTALL/lib
+    mkdir -p $JSON_INSTALL/inc
+    cp $JSON_ROOT/build/lib/libjsonfortran.a $JSON_INSTALL/lib/
+    cp $JSON_ROOT/build/*.mod $JSON_INSTALL/inc/
+    rm $SOFT_ROOT/${JSON_VERSION}.tar.gz
+    echo Installed JSON in $JSON_ROOT
+fi
+
+#-------
+# NetCDF
+#-------
+
+read -p "Install NetCDF (y/n) " NETCDF_FLAG
+if [ "$NETCDF_FLAG" = "y" ]
+then
+    cd $SOFT_ROOT
+    rm -rf netCDF
+    git clone https://github.com/erdc/netCDF.git
+    cd netCDF
+    chmod u+x configure
+    ./configure --with-pic --disable-netcdf-4 --disable-dap
+    make
+    echo Installed NetCDF in $SOFT_ROOT/netCDF
+fi
+
+#-------
+# RABBIT
+#-------
+
+read -p "Install RABBIT (y/n) " RABBIT_FLAG
+if [ "$RABBIT_FLAG" = "y" ]
+then
+    cd $SOFT_ROOT
+    rm -rf rabbit
+# git clone https://gitlab.mpcdf.mpg.de/markusw/rabbit
+    git clone git@gitlab.mpcdf.mpg.de:markusw/rabbit.git
+    cd rabbit
+    RABBIT_HASH=`git rev-parse HEAD`
+    mkdir build
+    cd build
+    $CMAKE .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_Fortran_COMPILER=$FC -DOpenMP_Fortran_FLAGS=-qopenmp -DNETCDF_HOME=$SOFT_ROOT/netCDF
+    make
+
+    mkdir -p $RABBIT_INSTALL/lib
+    mkdir -p $RABBIT_INSTALL/inc
+    cp $SOFT_ROOT/rabbit/build/librabbit.so $RABBIT_INSTALL/lib/
+    cp $SOFT_ROOT/rabbit/build/modules/*.mod $RABBIT_INSTALL/inc/
+    echo $RABBIT_HASH | cat > $RABBIT_INSTALL/hash
+    echo Installed RABBIT in $SOFT_ROOT/rabbit
+fi
+
+#--------
+# TORBEAM
+#--------
+
+read -p "Install TORBEAM (y/n) " TORBEAM_FLAG
+if [ "$TORBEAM_FLAG" = "y" ]
+then
+    cd $SOFT_ROOT
+    rm -rf torbeam
+    git clone git@gitlab.mpcdf.mpg.de:ipp-aug/torbeam
+    cd torbeam
+    TORBEAM_HASH=`git rev-parse HEAD`
+    which cmake
+    make
+
+    mkdir -p $TORBEAM_INSTALL/lib
+    cp $SOFT_ROOT/torbeam/build-generic/lib/libtorbeamB.so $TORBEAM_INSTALL/lib
+    echo $TORBEAM_HASH | cat > $TORBEAM_INSTALL/hash
+    echo Installed TORBEAM in $SOFT_ROOT/torbeam
+fi
+
+#---------
+# QuaLiKiz
+#---------
+
+read -p "Install QuaLiKiz (y/n) " QLK_FLAG
+if [ "$QLK_FLAG" = "y" ]
+then
+    cd $SOFT_ROOT
+    rm -rf QuaLiKiz
+    git clone https://gitlab.com/qualikiz-group/QuaLiKiz.git
+    cd $SOFT_ROOT/QuaLiKiz
+    QLK_HASH=`git rev-parse HEAD`
+    git submodule init
+    git submodule update
+    export FC=$MPIFC
+    export LINK=$MPIFC
+    export QLK_HAVE_NAG=0
+    make
+
+    mkdir -p $QLK_INSTALL/lib
+    mkdir -p $QLK_INSTALL/inc
+    cp $SOFT_ROOT/QuaLiKiz/lib/libQLK-intel-release-default-mpi.a $QLK_INSTALL/lib/
+    cp $SOFT_ROOT/QuaLiKiz/include/intel-release-default-mpi/* $QLK_INSTALL/inc/
+    echo $QLK_HASH | cat > $QLK_INSTALL/hash
+    echo Installed qualikiz in $SOFT_ROOT/QuaLiKiz
+fi
+
+#-------
+# GACODE
+#-------
+
+read -p "Install TGLF/NEO (y/n) " GA_FLAG
+if [ "$GA_FLAG" = "y" ]
+then
+    cd $SOFT_ROOT
+    rm -rf gacode
+    git clone git@github.com:gafusion/gacode.git
+    export GACODE_ROOT=$SOFT_ROOT/gacode
+    export GACODE_PLATFORM=MYLOC
+    cd gacode
+    git reset --hard $GACODE_HASH
+
+    cat << EOT > ${GACODE_ROOT}/platform/build/make.inc.${GACODE_PLATFORM}
+IDENTITY="IPP linux cluster"
+CORES_PER_NODE=16
+NUMAS_PER_NODE=1
+
+FC  = ${MPIFC} -module ${GACODE_ROOT}/modules
+F77 = ${FC}
+FOMP   =-qopenmp
+FMATH  =-real-size 64
+FOPT   =-Ofast
+FDEBUG =-eD -Ktrap=fp -m 1
+LMATH = -qmkl
+FFTW_INC=${FFTW_INC}
+ARCH = ar cr
+EOT
+
+    cd $GACODE_ROOT/tglf
+    make
+    cd $GACODE_ROOT/neo
+    make
+
+    mkdir -p $TGLF_INSTALL/lib
+    mkdir -p $TGLF_INSTALL/inc
+    mkdir -p $NEO_INSTALL/lib
+    mkdir -p $NEO_INSTALL/inc
+    cp $GACODE_ROOT/tglf/src/tglf_lib.a $TGLF_INSTALL/lib/libtglf.a
+    cp $GACODE_ROOT/neo/src/neo_lib.a $NEO_INSTALL/lib/
+    cp $GACODE_ROOT/shared/UMFPACK/UMFPACK_lib.a $NEO_INSTALL/lib/
+    cp $GACODE_ROOT/shared/math/math_lib.a $NEO_INSTALL/lib/
+    cp $GACODE_ROOT/shared/nclass/nclass_lib.a $NEO_INSTALL/lib/
+    cp $GACODE_ROOT/f2py/geo/geo_lib.a $NEO_INSTALL/lib/
+    cp $GACODE_ROOT/f2py/expro/expro_lib.a $NEO_INSTALL/lib/
+    cp $GACODE_ROOT/modules/tglf*.mod $TGLF_INSTALL/inc/
+    cp $GACODE_ROOT/modules/neo_interface.mod $NEO_INSTALL/inc/.
+    echo $GACODE_HASH | cat > $TGLF_INSTALL/hash
+    echo $GACODE_HASH | cat > $NEO_INSTALL/hash
+    echo Installed GACODE in $SOFT_ROOT/gacode
+fi
+
+#------
+# ASTRA
+#------
+
+read -p "Install ASTRA (y/n) " ASTRA_FLAG
+if [ "$ASTRA_FLAG" = "y" ]
+then
+    cd $AWD
+    chmod u+x install.sh
+    ./install.sh
+fi
+
+# Restore initial paths
+
+export PATH=$PATH_OLD

@@ -1,45 +1,9 @@
-#!/bin/bash -f
+#!/bin/bash
 
 rootdir=`dirname $0`        # may be relative path
 AWD=`cd $rootdir/.. && pwd` # ensure absolute path
 
 platform=`$AWD/get_platform`
 
-module_sh=/etc/profile.d/modules.sh
-
-if [ -f $module_sh ]
-then
-    source $module_sh
-    module purge
-    RES="Ok"
-    if [[ $platform = "iter" ]]
-    then
-        module use /home/ITER/tarding/modulefiles
-    elif [[ $platform = "mit" ]]
-    then
-        module use /home/gtardini/modulefiles
-    elif [[ $platform = "rat2" ]]
-    then
-        module use /home/tardini/modulefiles
-    fi
-    module load astra
-    RES=$( { module load astra; } 2>&1 )
-    echo $RES
-    if [[ "$RES" = *"ERROR"* ]];
-    then
-        echo module astra not loaded, proceed anyway?
-        read -p "y/n:" proc
-        if [[ $proc = "n" ]]
-        then
-            exit 1
-        fi
-    fi
-else
-    echo "module tool not available on this platform, setting in exe/Build"
-fi
-
-# Generate Green-functions for FBE
-green/greenMatrices.py
-
-ulimit -s 50000
+source $AWD/platform/env.$platform
 python3 ${AWD}/exe/as_exe.py "$@"

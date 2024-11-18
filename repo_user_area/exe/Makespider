@@ -96,10 +96,10 @@ clean:
 # Rules
 
 $(OBJ_DIR)%.o : $(SRC_DIR)%.f
-	$(AFC) $(FFLAGS) -c $< -o $@
+	$(FC) $(FFLAGS) -c $< -o $@
 
 $(OBJ_DIR)%.o : $(SRC_DIR)%.f90
-	$(AFC) $(FFLAGS) -c $< -o $@
+	$(FC) $(FFLAGS) -c $< -o $@
 
 $(LIB): $(SPMODOBJS) $(SPOBJS)
 	ar -u -rv $(LIB) $(SPMODOBJS) $(SPOBJS)

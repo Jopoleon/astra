@@ -12,6 +12,7 @@ FOR_DIR = $(AWD)/main
 MOD_DIR = $(AWD)/mod
 OBJ_DIR = $(AWD)/obj
 TMP_DIR = $(AWD)/tmp
+XPR_DIR = $(AWD)/xpr
 NBI_INC = $(AWD)/mod/nbi
 ATASK = $(TSK_DIR)/$(MODEL).exe
 EQU  = $(AWD)/equ/$(MODEL)
@@ -27,7 +28,7 @@ LIB = -lnbi -lsbr -lnbi -L/usr/lib64 -lX11 $(QLKNN_LIB) $(TGLF_LIB) $(TORB_LIB) 
 
 AENV = $(AWD)/exe/astra_rc
 
-AFC_FLAGS = $(CHECKALLCOMP) -qopenmp -g -traceback -o   
+FC_FLAGS = $(CHECKALLCOMP) -qopenmp -g -traceback -o   
 
 FOR_SRC = \
 $(FOR_DIR)/astra_main.f90 \
@@ -65,6 +66,7 @@ directories:
 .PHONY: clean
 clean:
 	rm -f *.mod
+	make -f $(AWD)/exe/Makexpr clean
 	rm -rf $(MOD_DIR)
 	rm -rf $(TSK_DIR)
 	rm -rf $(OBJ_DIR)
@@ -79,7 +81,7 @@ modules:
 
 $(ATASK): $(LIBFOR) $(LIBNBI) $(LIBFEQIS) $(LIBSPIDER) $(LIBSBR) $(LIBFNC) $(AENV) $(EQU) $(FOR_SRC) $(PYFILES) $(FMLS)
 	$(PY_TMP_GEN)
-	$(AFC) $(AFC_FLAGS) $(ATASK) $(FOR_SRC) $(TMP_SRC) -I$(MOD_DIR)/for -I$(NBI_INC) $(LIB)
+	$(FC) $(FC_FLAGS) $(ATASK) $(FOR_SRC) $(TMP_SRC) -I$(MOD_DIR)/for -I$(NBI_INC) $(LIB)
 
 # User defined sbr and fnc
 

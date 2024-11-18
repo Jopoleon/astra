@@ -13,31 +13,20 @@ export JSON_INC="$JSON_HOME/inc"
 # TORBEAM
 
 IRC_LIB="-L${COMP_LIBDIR} -lirc" # necessary for libtorbeam.so
-if [[ $platform = "tok" ]]
-then
-    TORB_HOME="${ASTRA_EXT}/torbeam/aug21_ifort"
-else
-    TORB_HOME="${ASTRA_EXT}/torbeam/oct24"
-fi
+TORB_HOME="${ASTRA_EXT}/torbeam/nov24"
 TORB_LIBDIR=${TORB_HOME}/lib
 export TORB_LIB="-L${TORB_LIBDIR} -ltorbeamB  -Wl,-rpath,${TORB_LIBDIR} ${IRC_LIB}"
 
 # RABBIT
 
-if [[ $platform = "mit" ]] || [[ $platform = "rat2" ]] || [[ $platform = "tok" ]]
-then
-    RABBIT_HOME=${ASTRA_EXT}/rabbit/sep24
-else
-    RABBIT_HOME=${ASTRA_EXT}/rabbit/oct24
-fi
-
+RABBIT_HOME=${ASTRA_EXT}/rabbit/nov24
 RABBIT_LIBDIR=${RABBIT_HOME}/lib
 export RABBIT_LIB="-L${RABBIT_LIBDIR} -lrabbit -Wl,-rpath,${RABBIT_LIBDIR}"
 export RABBIT_INC=${RABBIT_HOME}/inc
 
 # QuaLiKiZ
 
-QLK_HOME=${ASTRA_EXT}/qualikiz/apr23
+QLK_HOME=${ASTRA_EXT}/qualikiz/nov24
 export QLK_INC=${QLK_HOME}/inc
 export QLK_LIB=${QLK_HOME}/lib/libQLK-intel-release-default-mpi.a
 
@@ -47,18 +36,13 @@ export QLKNN_LIB=${QLKNN_HOME}/lib/libQLKNN-intel-release-default.a
 
 # TGLF
 
-TGLF_HOME=${ASTRA_EXT}/tglf/jun24
+TGLF_HOME=${ASTRA_EXT}/tglf/nov24
 export TGLF_INC=${TGLF_HOME}/inc
 export TGLF_LIB=${TGLF_HOME}/lib/libtglf.a
 
 # NEO
 
-if [[ $platform = "rat2" ]]
-then
-    NEO_HOME=${ASTRA_EXT}/neo/jun24
-else
-    NEO_HOME=${ASTRA_EXT}/neo/apr21
-fi
+NEO_HOME=${ASTRA_EXT}/neo/nov24
 NEO_LIBDIR=${NEO_HOME}/lib
 export NEO_INC=${NEO_HOME}/inc
 export NEO_LIB="${NEO_LIBDIR}/neo_lib.a ${NEO_LIBDIR}/nclass_lib.a ${NEO_LIBDIR}/UMFPACK_lib.a ${NEO_LIBDIR}/math_lib.a ${NEO_LIBDIR}/expro_lib.a ${NEO_LIBDIR}/geo_lib.a"

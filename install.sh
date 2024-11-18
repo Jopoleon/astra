@@ -1,4 +1,4 @@
-#!/bin/bash -f
+#!/bin/bash
 
 rootdir=`dirname $0`      # may be relative path
 export AWD=`cd $rootdir && pwd`  # ensure absolute path
@@ -83,11 +83,9 @@ sed -i "s#\$ASTRA_EXT#$ASTRA_EXT#g" exp/nml/AUG33040_2500
 
 chmod 744 $AWD/exe/Build
 chmod 744 $AWD/exe/as_exe
-chmod 744 $AWD/exe/json2cdf.py
 chmod 744 $AWD/exe/wr_nml
 chmod 744 $AWD/exe/CheckObjs
 chmod 744 $AWD/pyparse/parser_main.py
-chmod 744 $AWD/green/greenMatrices.py
 chmod 744 $AWD/clean.sh
 
 if [ "$SAFE" = "-safe" ]

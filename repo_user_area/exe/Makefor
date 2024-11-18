@@ -14,8 +14,7 @@ LIB = $(LIB_DIR)/$(LIBNAM)
 
 # Compilers
 
-AFC_FLAGS = -r8 -no-prec-div -ip -O0 $(CHECKALLCOMP)
-ACC = cc
+FC_FLAGS = -r8 -no-prec-div -ip -O0 $(CHECKALLCOMP)
 
 MODOBJS = \
 $(OBJ_DIR)/imas_ids.o \
@@ -89,10 +88,10 @@ clean:
 # Rules
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f90
-	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -I$(MOD_FEQ) -I$(JSON_INC) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -I$(MOD_FEQ) -I$(JSON_INC) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.c
-	$(ACC) -c $< -o $@ -I$(INC_DIR)
+	$(CC) -c $< -o $@ -I$(INC_DIR)
 
 $(LIB): $(MODOBJS) $(OBJS)
 	ar rv $(LIB) $(MODOBJS) $(OBJS) >/dev/null

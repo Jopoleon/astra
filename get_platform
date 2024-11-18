@@ -1,4 +1,4 @@
-#!/bin/bash -f
+#!/bin/bash
 
 rootdir=`dirname $0`          # may be relative path
 AWD=`cd $rootdir && pwd`  # ensure absolute path
@@ -36,16 +36,16 @@ then
     platform=tok
 elif [[ $node = "iris"* ]]
 then
-   platform=iris
+    platform=iris
 elif [[ $node = "ncku-first" ]]
 then
-   platform=ncku
+    platform=ncku
 elif [[ $node = "smartssv"* ]]
 then
-   platform=sevilla
+    platform=sevilla
 elif [[ $node = "rat2"* ]]
 then
-   platform=rat2
+    platform=rat2
 fi
 
 echo $platform

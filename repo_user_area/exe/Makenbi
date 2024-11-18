@@ -12,7 +12,7 @@ LIB = $(LIB_DIR)/$(LIBNAM)
 
 # Compilers
 
-AFC_FLAGS = -r8 -no-prec-div -ip -O0 
+FC_FLAGS = -r8 -no-prec-div -ip -O0 
 
 # Make Commands
 .PHONY: all
@@ -50,14 +50,14 @@ $(OBJ_DIR)/nbtrag.o \
 $(OBJ_DIR)/nbuser.o
 
 $(OBJ_DIR)/nbstatus_inc.o: $(SRC_DIR)/nbstatus_inc.f90
-	$(AFC) $(AFC_FLAGS) -I$(MOD_FOR) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -c $< -o $@
 	mv nbstatus_inc.mod $(MOD_DIR)/
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f
-	$(AFC) $(AFC_FLAGS) -I$(MOD_FOR) -I$(MOD_DIR) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -I$(MOD_DIR) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f90
-	$(AFC) $(AFC_FLAGS) -I$(MOD_FOR) -I$(MOD_DIR) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -I$(MOD_DIR) -c $< -o $@
 
 $(LIB): $(MODOBJS) $(OBJS)
 	ar rv $(LIB) $(MODOBJS) $(OBJS) >/dev/null

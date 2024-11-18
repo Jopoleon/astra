@@ -1,6 +1,4 @@
-#!/bin/bash -f
-
-source /etc/profile.d/modules.sh
+#!/bin/bash
 
 if [[ $# > 0 ]]; then
     WAIT_SLURM=$1
@@ -36,6 +34,8 @@ export equfile="${equ_file}"
 
 export CHECKALLCOMP=" "
 #export CHECKALLCOMP="-check all -traceback"
+
+ulimit -s 100000
 
 echo Compile main ASTRA executable $equ_file $AWD 
 make -f exe/Makefile MODEL=$equ_file WORKFLOW=$AWD/main/stepup.f90
@@ -91,14 +91,14 @@ export OMP_NUM_THREADS=\${SLURM_CPUS_PER_TASK:-1}
 export expfile=${expfile}
 export equfile=${equfile}
 export OMP_PLACES=cores
-export LD_LIBRARY_PATH=${COMP_LIBDIR}
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 export ASTRA_EXT=${ASTRA_EXT}
 srun $ATASK
 EOT
 
         echo sbatch $bat
         date
-        module unload impi-interactive
+	export I_MPI_FABRICS=""
 #        sbatch -W $bat # -W: waiting for process to finish before running json2cdf 
         sbatch $WAIT_SLURM $bat
     fi

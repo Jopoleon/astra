@@ -1,4 +1,4 @@
-#!/bin/bash -f
+#!/bin/bash
 
 rootdir=`dirname $0`       # may be relative path
 export AWD=`cd $rootdir && pwd`  # ensure absolute path

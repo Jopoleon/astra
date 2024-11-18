@@ -10,8 +10,7 @@ MODE_DIR = $(AWD)/mod/feqis
 LIB_DIR = $(AWD)/lib
 LIB = $(LIB_DIR)/lib$(sub).a
 
-AFC_FLAGS = -r8 -no-prec-div -ip -O0 -w -qopenmp $(CHECKALLCOMP)
-ACC = cc
+FC_FLAGS = -r8 -no-prec-div -ip -O0 -w -qopenmp $(CHECKALLCOMP)
 
 SRCF90 := $(wildcard $(SRC_DIR)/*.f90)
 SRCF   := $(wildcard $(SRC_DIR)/*.f)
@@ -36,28 +35,28 @@ clean:
 	rm $(LIB)
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f
-	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -c $< -o $@
 
 $(OBJ_DIR)/tglf_serial.o: $(SRC_DIR)/tglf_serial.f90
-	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -I$(TGLF_INC) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -I$(TGLF_INC) -c $< -o $@
 
 $(OBJ_DIR)/qlknn_serial.o: $(SRC_DIR)/qlknn_serial.f90
-	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -I$(QLKNN_INC) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -I$(QLKNN_INC) -c $< -o $@
 
 $(OBJ_DIR)/rabbit.o: $(SRC_DIR)/rabbit.f90
-	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -I$(RABBIT_INC) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -I$(RABBIT_INC) -c $< -o $@
 
 $(OBJ_DIR)/a2rabbit.o: $(SRC_DIR)/a2rabbit.f90
-	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -I$(RABBIT_INC) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -I$(RABBIT_INC) -c $< -o $@
 
 $(OBJ_DIR)/assign_geom.o: $(SRC_DIR)/assign_geom.f90
-	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -I$(MODE_DIR) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -I$(MODE_DIR) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f90
-	$(AFC) $(AFC_FLAGS) -I$(MOD_DIR) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.c
-	$(ACC) -I$(INC_DIR) -c $< -o $@
+	$(CC) -I$(INC_DIR) -c $< -o $@
 
 $(LIB): $(OBJF90) $(OBJF) $(OBJC)
 	ar rv $(LIB) $(OBJF90) >/dev/null

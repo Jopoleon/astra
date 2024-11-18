@@ -6,10 +6,10 @@ XPR = $(AWD)/xpr
 INC_DIR = $(AWD)/inc
 LIBFOR = $(AWD)/lib/libfor.a
 AENV = $(AWD)/exe/astra_rc
+ACC=cc
 
 # TGLF
 
-ACC = cc
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
 #-----
 
@@ -34,7 +34,7 @@ clean:
 
 
 $(XPR)/tglfi:	$(XPR)/tglf_interf.f90 $(XPR)/qinterp.f90 $(XPR)/tglfinter.o $(LIBFOR) $(AENV)
-		$(AFC) -o $@ $(XPR)/tglf_interf.f90 $(XPR)/qinterp.f90 $(XPR)/tglfinter.o $(LIBFOR)	\
+		$(FC) -o $@ $(XPR)/tglf_interf.f90 $(XPR)/qinterp.f90 $(XPR)/tglfinter.o $(LIBFOR)	\
 		-I$(TGLF_INC) $(TGLF_LIB) $(MKL_LIB) -lpthread -lm
 
 $(XPR)/neo:	$(XPR)/neo_interf.f90 $(XPR)/qinterp.f90 $(XPR)/neointer.o $(LIBFOR) $(AENV)
