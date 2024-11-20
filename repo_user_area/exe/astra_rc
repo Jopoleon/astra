@@ -30,8 +30,8 @@ QLK_HOME=${ASTRA_EXT}/qualikiz/nov24
 export QLK_INC=${QLK_HOME}/inc
 export QLK_LIB=${QLK_HOME}/lib/libQLK-intel-release-default-mpi.a
 
-QLKNN_HOME=${ASTRA_EXT}/qlk_nn/apr21
-export QLKNN_INC=${QLKNN_HOME}/inc/serial
+QLKNN_HOME=${ASTRA_EXT}/qlk_nn/nov24
+export QLKNN_INC=${QLKNN_HOME}/inc
 export QLKNN_LIB=${QLKNN_HOME}/lib/libQLKNN-intel-release-default.a
 
 # TGLF

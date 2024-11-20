@@ -11,6 +11,7 @@ platform=`$AWD/get_platform`
 #--------------------
 
 source $AWD/platform/env.$platform
+FC_SERIAL=$FC
 
 #------------------
 # Packages versions
@@ -195,15 +196,16 @@ then
     QLKNN_HASH=`git rev-parse HEAD`
     git submodule init
     git submodule update
-    export FC=$MPIFC
-    export LINK=$MPIFC
+    export FC=$FC_SERIAL
+    export LINK=$FC_SERIAL
     export QLK_HAVE_NAG=0
+    export TUBSCFG_MPI=0
     make
 
     mkdir -p $QLKNN_INSTALL/lib
     mkdir -p $QLKNN_INSTALL/inc
-    cp $QLKNN_HOME/lib/libQLKNN-intel-release-default-mpi.a $QLKNN_INSTALL/lib
-    cp $QLKNN_HOME/include/intel-release-default-mpi/* $QLKNN_INSTALL/inc/
+    cp $QLKNN_HOME/lib/libQLKNN-intel-release-default.a $QLKNN_INSTALL/lib
+    cp $QLKNN_HOME/include/intel-release-default/* $QLKNN_INSTALL/inc/
     echo $QLKNN_HASH | cat > $QLKNN_INSTALL/hash
     echo Installed qualikiz in $QLKNN_HOME
 fi
