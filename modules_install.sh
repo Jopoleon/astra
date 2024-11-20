@@ -22,6 +22,7 @@ JSON_VERSION=9.0.2
 RABBIT_VERSION=unstable
 TORBEAM_VERSION=unstable
 QLK_VERSION=unstable
+QLKNN_VERSION=unstable
 GA_VERSION=unstable
 
 #--------------------
@@ -33,6 +34,7 @@ JSON_INSTALL=$ASTRA_EXT/json/$JSON_VERSION
 RABBIT_INSTALL=$ASTRA_EXT/rabbit/$RABBIT_VERSION
 TORBEAM_INSTALL=$ASTRA_EXT/torbeam/$TORBEAM_VERSION
 QLK_INSTALL=$ASTRA_EXT/qualikiz/$QLK_VERSION
+QLKNN_INSTALL=$ASTRA_EXT/qlk_nn/$QLKNN_VERSION
 TGLF_INSTALL=$ASTRA_EXT/tglf/$GA_VERSION
 NEO_INSTALL=$ASTRA_EXT/neo/$GA_VERSION
 
@@ -113,7 +115,8 @@ then
     rm -rf rabbit
 # git clone https://gitlab.mpcdf.mpg.de/markusw/rabbit
     git clone git@gitlab.mpcdf.mpg.de:markusw/rabbit.git
-    cd rabbit
+    RABBIT_HOME=$SOFT_ROOT/rabbit
+    cd $RABBIT_HOME
     RABBIT_HASH=`git rev-parse HEAD`
     mkdir build
     cd build
@@ -122,10 +125,10 @@ then
 
     mkdir -p $RABBIT_INSTALL/lib
     mkdir -p $RABBIT_INSTALL/inc
-    cp $SOFT_ROOT/rabbit/build/librabbit.so $RABBIT_INSTALL/lib/
-    cp $SOFT_ROOT/rabbit/build/modules/*.mod $RABBIT_INSTALL/inc/
+    cp $RABBIT_HOME/build/librabbit.so $RABBIT_INSTALL/lib/
+    cp $RABBIT_HOME/build/modules/*.mod $RABBIT_INSTALL/inc/
     echo $RABBIT_HASH | cat > $RABBIT_INSTALL/hash
-    echo Installed RABBIT in $SOFT_ROOT/rabbit
+    echo Installed RABBIT in $RABBIT_HOME
 fi
 
 #--------
@@ -138,15 +141,16 @@ then
     cd $SOFT_ROOT
     rm -rf torbeam
     git clone git@gitlab.mpcdf.mpg.de:ipp-aug/torbeam
-    cd torbeam
+    TORBEAM_HOME=$SOFT_ROOT/torbeam
+    cd $TORBEAM_HOME
     TORBEAM_HASH=`git rev-parse HEAD`
     which cmake
     make
 
     mkdir -p $TORBEAM_INSTALL/lib
-    cp $SOFT_ROOT/torbeam/build-generic/lib/libtorbeamB.so $TORBEAM_INSTALL/lib
+    cp $TORBEAM_HOME/build-generic/lib/libtorbeamB.so $TORBEAM_INSTALL/lib
     echo $TORBEAM_HASH | cat > $TORBEAM_INSTALL/hash
-    echo Installed TORBEAM in $SOFT_ROOT/torbeam
+    echo Installed TORBEAM in $TORBEAM_HOME
 fi
 
 #---------
@@ -159,7 +163,8 @@ then
     cd $SOFT_ROOT
     rm -rf QuaLiKiz
     git clone https://gitlab.com/qualikiz-group/QuaLiKiz.git
-    cd $SOFT_ROOT/QuaLiKiz
+    QLK_HOME=$SOFT_ROOT/QuaLiKiz
+    cd $QLK_HOME
     QLK_HASH=`git rev-parse HEAD`
     git submodule init
     git submodule update
@@ -170,10 +175,37 @@ then
 
     mkdir -p $QLK_INSTALL/lib
     mkdir -p $QLK_INSTALL/inc
-    cp $SOFT_ROOT/QuaLiKiz/lib/libQLK-intel-release-default-mpi.a $QLK_INSTALL/lib/
-    cp $SOFT_ROOT/QuaLiKiz/include/intel-release-default-mpi/* $QLK_INSTALL/inc/
+    cp $QLK_HOME/lib/libQLK-intel-release-default-mpi.a $QLK_INSTALL/lib/
+    cp $QLK_HOME/include/intel-release-default-mpi/* $QLK_INSTALL/inc/
     echo $QLK_HASH | cat > $QLK_INSTALL/hash
-    echo Installed qualikiz in $SOFT_ROOT/QuaLiKiz
+    echo Installed qualikiz in $QLK_HOME
+fi
+#------------
+# QuaLiKiz-NN
+#------------
+
+read -p "Install QuaLiKiz NN (y/n) " QLKNN_FLAG
+if [ "$QLKNN_FLAG" = "y" ]
+then
+    cd $SOFT_ROOT
+    rm -rf QLKNN-fortran
+    git clone https://gitlab.com/qualikiz-group/QLKNN-fortran.git
+    QLKNN_HOME=$SOFT_ROOT/QLKNN-fortran
+    cd $QLKNN_HOME
+    QLKNN_HASH=`git rev-parse HEAD`
+    git submodule init
+    git submodule update
+    export FC=$MPIFC
+    export LINK=$MPIFC
+    export QLK_HAVE_NAG=0
+    make
+
+    mkdir -p $QLKNN_INSTALL/lib
+    mkdir -p $QLKNN_INSTALL/inc
+    cp $QLKNN_HOME/lib/libQLKNN-intel-release-default-mpi.a $QLKNN_INSTALL/lib
+    cp $QLKNN_HOME/include/intel-release-default-mpi/* $QLKNN_INSTALL/inc/
+    echo $QLKNN_HASH | cat > $QLKNN_INSTALL/hash
+    echo Installed qualikiz in $QLKNN_HOME
 fi
 
 #-------
@@ -188,7 +220,7 @@ then
     git clone git@github.com:gafusion/gacode.git
     export GACODE_ROOT=$SOFT_ROOT/gacode
     export GACODE_PLATFORM=MYLOC
-    cd gacode
+    cd $GACODE_ROOT
     git reset --hard $GACODE_HASH
 
     cat << EOT > ${GACODE_ROOT}/platform/build/make.inc.${GACODE_PLATFORM}
@@ -227,7 +259,7 @@ EOT
     cp $GACODE_ROOT/modules/neo_interface.mod $NEO_INSTALL/inc/.
     echo $GACODE_HASH | cat > $TGLF_INSTALL/hash
     echo $GACODE_HASH | cat > $NEO_INSTALL/hash
-    echo Installed GACODE in $SOFT_ROOT/gacode
+    echo Installed GACODE in $GACODE_ROOT
 fi
 
 #------
