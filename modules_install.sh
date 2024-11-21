@@ -206,6 +206,10 @@ then
     mkdir -p $QLKNN_INSTALL/inc
     cp $QLKNN_HOME/lib/libQLKNN-intel-release-default.a $QLKNN_INSTALL/lib
     cp $QLKNN_HOME/include/intel-release-default/* $QLKNN_INSTALL/inc/
+    cp -r $QLKNN_HOME/data/qlknn-fullflux-namelists $QLKNN_INSTALL/
+    cp -r $QLKNN_HOME/data/qlknn-hornnet-namelists $QLKNN_INSTALL/
+    cp -r $QLKNN_HOME/data/qlknn-hyper-namelists $QLKNN_INSTALL/
+    cp -r $QLKNN_HOME/data/qlknn-jetexp-namelists $QLKNN_INSTALL/
     echo $QLKNN_HASH | cat > $QLKNN_INSTALL/hash
     echo Installed qualikiz in $QLKNN_HOME
 fi

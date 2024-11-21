@@ -94,7 +94,7 @@ character(len=132) :: qlknn_sets_dir
 !---------------------------------
 
 call GETENV('ASTRA_EXT', AEXT)
-qlknn_sets_dir = TRIM(AEXT) // '/qlk_nn/apr21/'
+qlknn_sets_dir = TRIM(AEXT) // '/qlk_nn/nov24/'
 
 nions = nspec_max - 1
 
