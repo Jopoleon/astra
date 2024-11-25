@@ -249,29 +249,31 @@ allocate(equil_in%eqgeometry%boundary%z(n_theta))
 
 equil_in%eqgeometry%boundary%npoints = n_theta    !one periodic point
 
-if (cfg_exists) then
-    call config%get('nR', nr, found)
-    call config%get('nZ', nz, found)
-    call config%get('Rmin', Rmin, found)
-    call config%get('Rmax', Rmax, found)
-    call config%get('Zmin', Zmin, found)
-    call config%get('Zmax', Zmax, found)
-else
-    nr = 65
-    nz = 65
-    Rmin = MINVAL(Rbnd) - 0.05
-    Rmax = MAXVAL(Rbnd) + 0.05
-    Zmin = MINVAL(Zbnd) - 0.05
-    Zmax = MAXVAL(Zbnd) + 0.05
+if (i_call_gsss == 0) then
+    if (cfg_exists) then
+        call config%get('nR', nr, found)
+        call config%get('nZ', nz, found)
+        call config%get('Rmin', Rmin, found)
+        call config%get('Rmax', Rmax, found)
+        call config%get('Zmin', Zmin, found)
+        call config%get('Zmax', Zmax, found)
+    else
+        nr = 65
+        nz = 65
+        Rmin = MINVAL(Rbnd) - 0.05
+        Rmax = MAXVAL(Rbnd) + 0.05
+        Zmin = MINVAL(Zbnd) - 0.05
+        Zmax = MAXVAL(Zbnd) + 0.05
+    endif
+    allocate(equil_in%eqgeometry%rectgrid%r2d(nr))
+    allocate(equil_in%eqgeometry%rectgrid%z2d(nz))
+    do jr=1, nr
+        equil_in%eqgeometry%rectgrid%r2d(jr) = Rmin + (jr - 1.)*(Rmax - Rmin)/(nr - 1.)
+    enddo
+    do jz=1, nz
+        equil_in%eqgeometry%rectgrid%z2d(jz) = Zmin + (jz - 1.)*(Zmax - Zmin)/(nz - 1.)
+    enddo
 endif
-allocate(equil_in%eqgeometry%rectgrid%r2d(nr))
-allocate(equil_in%eqgeometry%rectgrid%z2d(nz))
-do jr=1, nr
-    equil_in%eqgeometry%rectgrid%r2d(jr) = Rmin + (jr - 1.)*(Rmax - Rmin)/(nr - 1.)
-enddo
-do jz=1, nz
-    equil_in%eqgeometry%rectgrid%z2d(jz) = Zmin + (jz - 1.)*(Zmax - Zmin)/(nz - 1.)
-enddo
 
 !Iteration cycle
 iter_loop: do jiter=1, miter_ext

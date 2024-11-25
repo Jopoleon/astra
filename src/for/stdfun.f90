@@ -1028,7 +1028,7 @@ if (ICALL == 0) then
     ICALL  = 1
     TIMDER = 0.
 else if (TIME > YT(IY)) then
-    write(*, *) 'TIMDER', IY, Y, y_old(IY), TIME, YT(IY)
+    !write(*, *) 'TIMDER', IY, Y, y_old(IY), TIME, YT(IY)
     TIMDER = (Y - y_old(IY))/(TIME - YT(IY))
 endif
 y_old(IY) = Y

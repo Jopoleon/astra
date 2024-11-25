@@ -1596,14 +1596,14 @@
          i = maxloc(r(ji, 2:nt1), 1)  
          yrmax = r(ji, i+1)
          yrr = .5d0*(yrmax+yrmin)
-         ya(ji) = .5*(yrmax-yrmin)
-         yra(ji)  =  yrmax
-         yri(ji)  =  yrmin
-         yshif(ji) = yrr-rtor
-         yshiv(ji) = .5d0*(yzmin+yzmax)
-         yelon(ji) = (yzmax-yzmin)/(yrmax-yrmin)
-         ytria_u(ji) = (yrr-yrzmax)/ya(ji)
-         ytria_l(ji) = (yrr-yrzmin)/ya(ji)
+         ya(ji) = .5*(yrmax-yrmin)  ! minor radius
+         yra(ji)  =  yrmax          ! maximum radius of flux surface
+         yri(ji)  =  yrmin          ! minimum radius of flux surface
+         yshif(ji) = yrr-rtor       ! SHIF definition
+         yshiv(ji) = .5d0*(yzmin+yzmax) ! SHIV definition
+         yelon(ji) = (yzmax-yzmin)/(yrmax-yrmin) ! ELON definition
+         ytria_u(ji) = (yrr-yrzmax)/ya(ji)  ! TRIA definition
+         ytria_l(ji) = (yrr-yrzmin)/ya(ji)  ! TRIA definition
       enddo
       ya(1) = 0.d0
       yra(1) = r(1, 2)

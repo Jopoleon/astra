@@ -3643,11 +3643,11 @@ contains
         else
             i_plasmatype = 1  ! X-point
         endif
+        x_point_save(20, 1) = r_xpoint(i4)
+        x_point_save(20, 2) = z_xpoint(i4)
     endif
 
     plasma_config = i_plasmatype
-    x_point_save(20, 1) = r_xpoint(i4)
-    x_point_save(20, 2) = z_xpoint(i4)
 
 ! if (i_plasmatype == 1)
     psibnd = psiaxis + (psibnd - psiaxis)*alpsep
