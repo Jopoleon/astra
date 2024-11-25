@@ -6,7 +6,7 @@ XPR = $(AWD)/xpr
 INC_DIR = $(AWD)/inc
 LIBFOR = $(AWD)/lib/libfor.a
 AENV = $(AWD)/exe/astra_rc
-ACC=cc
+ACC=gcc
 
 # TGLF
 

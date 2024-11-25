@@ -13,6 +13,9 @@ double precision, intent(in) :: r_in
 integer :: J, JK, jbeg
 double precision :: YR, YXO, YX, YDEL
 
+YX = 0.
+YXO = 0.
+NECHR = 0.
 if(r_in >= HRO*NA) then
     NECHR = 0.
     return

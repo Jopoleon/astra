@@ -91,7 +91,7 @@ $(OBJ_DIR)%.o: $(SRC_DIR)%.f90
 	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -I$(MOD_FEQ) -I$(JSON_INC) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.c
-	cc -c $< -o $@ -I$(INC_DIR)
+	gcc -c $< -o $@ -I$(INC_DIR)
 
 $(LIB): $(MODOBJS) $(OBJS)
 	ar rv $(LIB) $(MODOBJS) $(OBJS) >/dev/null
