@@ -172,12 +172,13 @@ then
     export FC=$MPIFC
     export LINK=$MPIFC
     export QLK_HAVE_NAG=0
+    export TUBSCFG_MPI=0
     make
 
     mkdir -p $QLK_INSTALL/lib
     mkdir -p $QLK_INSTALL/inc
-    cp $QLK_HOME/lib/libQLK-intel-release-default-mpi.a $QLK_INSTALL/lib/
-    cp $QLK_HOME/include/intel-release-default-mpi/* $QLK_INSTALL/inc/
+    cp $QLK_HOME/lib/libQLK-intel-release-default.a $QLK_INSTALL/lib/
+    cp $QLK_HOME/include/intel-release-default/* $QLK_INSTALL/inc/
     echo $QLK_HASH | cat > $QLK_INSTALL/hash
     echo Installed qualikiz in $QLK_HOME
 fi
