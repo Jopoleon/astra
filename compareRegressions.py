@@ -48,7 +48,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     if len(logger.handlers) == 0:
-        hnd = logging.FileHandler('%s/regressions/%s%s.log' %(awd, args.exp, args.equ))
+        hnd = logging.FileHandler('%s/regressions/%s%s.log' %(awd, args.exp, args.equ), mode='w')
         hnd.setFormatter(fmt)
         logger.addHandler(hnd)
         logger.setLevel(logging.INFO)
