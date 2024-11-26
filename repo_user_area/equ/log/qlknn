@@ -203,7 +203,7 @@ CDHJ9  =  1.000E+00
  Control parameters (common block A_OUTPUT):22
 DROUT  =  1.000E-03
 DTOUT  =  1.000E-03
-DPOUT  =  1.000E-03
+DPOUT  =  1.000E-02
 TIME   =  3.000E+00
 TAUMIN =  5.000E-02
 TAUMAX =  5.000E-02

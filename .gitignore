@@ -30,3 +30,4 @@ pyparse/iondens_ass.py
 user
 profiles.dat
 *_backup
+regressions/*.log

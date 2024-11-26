@@ -50,6 +50,7 @@ CSCL2  =  500.0 !integral parameter Xped
 CSCL3  =  1.000E+00
 CSCL4  =  0.01 !integral parameter neutri
  Control parameters (common block A_OUTPUT):22
+DPOUT  =  1.000E-01
 NEQUIL =  46
 MEQUIL =  46
 TAUMIN =  1.e-4

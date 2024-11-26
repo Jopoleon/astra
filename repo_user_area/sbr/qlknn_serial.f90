@@ -109,7 +109,6 @@ do jradial = 1, n_red
 enddo
 n_red = jradial
 jjgrid(n_red) = jna
-write(*, *) 'GIT qlkNN', jjgrid(1:n_red)
 
 ! Electrons and main ions
 Zi_in(1, 1) = ZMJ

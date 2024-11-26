@@ -113,7 +113,6 @@ do jradial = 1, n_red
 enddo
 n_red = jradial
 jjgrid(n_red) = jna
-write(*, *) 'GIT tglf', jjgrid(1:n_red)
 
 ! Number of species
 

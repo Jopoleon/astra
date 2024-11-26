@@ -50,7 +50,6 @@ do jt=1, nt_u
     if (tpel_next + dt >= TIME) then
         trace = mass/dt
         rho_abl = var_u(jt)
-        write(6, *) 'GIT ablation', trace, rho_abl, dt
         do jr=1, NA1
             if (XRHO(jr) > rho_abl) then
                 pel_prof(jr) = 1.d0 - XRHO(jr)
