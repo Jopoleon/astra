@@ -41,7 +41,7 @@ contains
         call jCore%info(dictPointer, name=sname)
         names_out(j) = sname
     enddo
-    
+
     return
     end subroutine get_subdict
   
@@ -505,8 +505,6 @@ contains
 
     ndim = nrho_surf*nthe_surf
     jid = 0
-    call write_array(ndim, equil_now%coord_sys%bcell , equil_coordPtr)
-    call write_array(ndim, equil_now%coord_sys%bpcell, equil_coordPtr)
     call write_array(ndim, equil_now%coord_sys%position%r     , equil_coordPtr)
     call write_array(ndim, equil_now%coord_sys%position%rmin  , equil_coordPtr)
     call write_array(ndim, equil_now%coord_sys%position%psirz , equil_coordPtr)

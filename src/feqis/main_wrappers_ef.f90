@@ -803,13 +803,28 @@ character(len=80) :: fname, dummy
 
 fname = 'exp/cnf/machine_description_out.'//trim(machine)
 open(32, file=TRIM(fname))
-read(32, '(////A)') dummy
+read(32, *) nr2, nz2
+read(32, *) rmin
+read(32, *) rmax
+read(32, *) zmin
+read(32, *) zmax
 read(32, *) alpsep
-
+nr1 = nr2 - 1
+nz1 = nz2 - 1
 nr  = nr1 - 1
 nz  = nz1 - 1
+if (allocated(Rrect)) deallocate(Rrect)
+if (allocated(Zrect)) deallocate(Zrect)
+allocate(Rrect(nr2))
+allocate(Zrect(nz2))
 allocate(rcomp(nr))
 allocate(zcomp(nz))
+do i=1, nr2
+    Rrect(i) = rmin + (i - 1.)*(rmax - rmin)/nr1     ! computational domain is r(2:nr + 1), boundaries are r(1) and r(nr + 2)
+enddo
+do i=1, nz2
+    Zrect(i) = zmin + (i - 1.)*(zmax - zmin)/nz1
+enddo
 rcomp(1:nr) = Rrect(2:nr1)
 zcomp(1:nz) = Zrect(2:nz1)
 dr = Rrect(2) - Rrect(1)

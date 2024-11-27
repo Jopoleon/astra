@@ -1069,7 +1069,9 @@
      
       allocate (traps(iplas+1))
       allocate (yFOFB(iplas))
-    
+
+      equil_out%coord_sys%bcell = 0.
+      equil_out%coord_sys%bpcell = 0.
       btor = b0ax
       rtor = r0ax
 

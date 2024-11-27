@@ -87,6 +87,7 @@ chmod 744 $AWD/exe/wr_nml
 chmod 744 $AWD/exe/CheckObjs
 chmod 744 $AWD/pyparse/parser_main.py
 chmod 744 $AWD/clean.sh
+chmod 744 $AWD/compReg.sh
 
 if [ "$SAFE" = "-safe" ]
 then

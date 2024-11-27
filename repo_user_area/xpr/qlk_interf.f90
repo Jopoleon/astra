@@ -36,13 +36,10 @@ subroutine qlk_interf(jr1_in, jr2_in, nrho, NA1N, NA1E, NA1I, &
     CHI, CHE, DIF, VIN, DPH, DPL, DPR, XTB, EGM, GAM, GM1, GM2, OM1, OM2, FR1)
  
 USE mod_qualikiz, only: qualikiz
-USE kind, only: qlk_output_meth_0, qlk_output_meth_0_sep_0, qlk_output_meth_0_sep_1, &
-         qlk_output_meth_1, qlk_output_meth_1_sep_0, qlk_output_meth_1_sep_1, &
-         qlk_output_meth_2, qlk_output_meth_2_sep_0, qlk_output_meth_2_sep_1, &
-         qlk_primi_meth_0, qlk_primi_meth_1, qlk_primi_meth_2, qlk_sizes, &
-         qlk_in_regular, qlk_in_newt
+USE kind, only: qlk_output_meth_0, qlk_output_meth_0_sep_0, &
+    qlk_primi_meth_0, qlk_sizes, qlk_in_regular, qlk_in_newt
 USE mod_make_io, only: zeroout_qlk_in_newt, zeroout_qlk_in_regular, &
-         allocate_qlk_in_regular, allocate_qlk_in_newt
+    allocate_qlk_in_regular, allocate_qlk_in_newt
 USE mpi
 USE nanfilter
 
@@ -62,44 +59,35 @@ double precision, intent(out), dimension(*) :: CHI, CHE, DIF, VIN, &
     DPH, DPL, DPR, XTB, EGM, GAM, GM1, GM2, OM1, OM2, FR1
 
 !--------------------------------
-type(qlk_sizes) :: sizes
+type(qlk_sizes)      :: sizes
 type(qlk_in_regular) :: in_regular
-type(qlk_in_newt) :: in_newt
+type(qlk_in_newt)    :: in_newt
 
-type(qlk_output_meth_0) :: output_meth_0
+type(qlk_output_meth_0)       :: output_meth_0
 type(qlk_output_meth_0_sep_0) :: output_meth_0_sep_0_SI , output_meth_0_sep_0_GB
-type(qlk_output_meth_0_sep_1) :: output_meth_0_sep_1_SI, output_meth_0_sep_1_GB
-type(qlk_output_meth_1) :: output_meth_1
-type(qlk_output_meth_1_sep_0) :: output_meth_1_sep_0_SI, output_meth_1_sep_0_GB
-type(qlk_output_meth_1_sep_1) :: output_meth_1_sep_1_SI, output_meth_1_sep_1_GB
-type(qlk_output_meth_2)       :: output_meth_2
-type(qlk_output_meth_2_sep_0) :: output_meth_2_sep_0_SI, output_meth_2_sep_0_GB
-type(qlk_output_meth_2_sep_1) :: output_meth_2_sep_1_SI, output_meth_2_sep_1_GB
 type(qlk_primi_meth_0)        :: primi_meth_0
-type(qlk_primi_meth_1)        :: primi_meth_1
-type(qlk_primi_meth_2)        :: primi_meth_2
 
 
 integer, parameter :: ntheta=64, numecoefs=13, numicoefs=7, dimx=1, dimn=16, numsols=3, phys_meth=0, nradial=5, nspec_max=7
 
 real, parameter :: &
-   k0   = 1.6022E-12, &       ! erg/ev
-   e0   = 4.8032E-10, &       ! elementary charge (statcoulombs)
-   e00  = 1.6020e-19, &       ! elementary charge (C)
-   c0   = 2.9979E+10, &       ! speed of light (cm/sec)
-   mp   = 1.6726E-24, &       ! proton mass (g)
-   mpp  = 1.6726E-27, &       ! proton mass (kg)
-   pi   = 3.141592653589793 
+    k0  = 1.6022E-12, &       ! erg/ev
+    e0  = 4.8032E-10, &       ! elementary charge (statcoulombs)
+    e00 = 1.6020e-19, &       ! elementary charge (C)
+    c0  = 2.9979E+10, &       ! speed of light (cm/sec)
+    mp  = 1.6726E-24, &       ! proton mass (g)
+    mpp = 1.6726E-27, &       ! proton mass (kg)
+    pi  = 3.141592653589793 
 
 !-----------------------------------------
 
-integer :: simple_mpi_only_in, maxpts_in, maxruns_in, runcounter_in, nspecies
+integer :: simple_mpi_only_in, maxpts_in, maxruns_in, runcounter_in
 integer :: nions, coll_flag_in, rot_flag_in, verbose_in, el_type_in, &
     integration_routine_in, separateflux_in
 integer, dimension(dimx, nspec_max-1) :: ion_type_in
 
 real(kind=DBL) :: relacc1_in, relacc2_in, absacc1_in, absacc2_in, R0_in, &
-   ETGmultin, collmultin, timeout_in, rhomin, rhomax, rhoscale, xstep
+    ETGmultin, collmultin, timeout_in, rhomin, rhomax, rhoscale, xstep
 real(kind=DBL), dimension(dimn) :: kthetarhos_in
 real(kind=DBL), dimension(dimx) :: x_in, rho_in, Ro_in, Rmin_in, Bo_in, &
     qx_in, smag_in, alphax_in, Tex_in, Nex_in, Ate_in, Ane_in, anise_in, &
@@ -124,11 +112,11 @@ integer :: i, j, k, jradial, jjgrid(nradial), jion
 
 real(kind=DBL) :: bmod, bpolz
 real(kind=DBL) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
-        delong, dtrian, dvper, drhodr, dstep, dr, dv_r
+    delong, dtrian, dvper, drhodr, dstep, dr, dv_r
 real(kind=DBL) :: Bunit, cs00, rhos00, omega0, rhostar2
 real(kind=DBL) :: T0, m0, drho_cs
 ! Shifted cicle geometry inputs
-real(kind=DBL) :: gamma_e_tg, vpar_tg, mach_fac, ql_fac
+real(kind=DBL) :: gamma_e_tg, mach_fac, ql_fac
 
 real(kind=DBL), dimension(nrho) :: vexb2, vpar_m, vper_m, &
     gradrhosq_exp, rmaj_exp, q_exp, &
@@ -144,7 +132,6 @@ complex(kind=DBL), dimension(dimx, dimn, numsols) :: sol_out, fdsol_out
 
 CHARACTER(len=20) :: fmtn
 character(len=80) :: fname1, prim_dir
-logical :: oldsol_loaded = .false.
 
 !---------------------------------
 
@@ -154,17 +141,11 @@ data i_mpic /0/
 verbose_in = 0
 
 if (i_mpic == 0) then
-    if (verbose_in > 0) then
-        write(6, *) 'GIt qlk_interface first call mpi_init'
-    endif
     CALL mpi_init(mpi_ierr)
     if (mpi_ierr /= 0) then
         write(6, *) 'GIt qlk_interface mpi_init error=', mpi_ierr
     endif
     CALL mpi_comm_size(mpi_comm_world, nproc,  mpi_ierr)
-    if (verbose_in > 0) then
-        write(6, *) 'GIt qlk_interface debug 2'
-    endif
     CALL mpi_comm_rank(mpi_comm_world, myrank, mpi_ierr)
     i_mpic = 1
 endif

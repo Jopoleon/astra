@@ -1033,8 +1033,6 @@
 },
 
 "equil_coord": {
-    "bcell": {"units": "T", "desc": "Total magnetic field"},
-    "bpcell": {"units": "T", "desc": "Poloidal magnetic field absolute value"},
     "r": {"units": "m", "desc": "Major radius of magnetic surfaces' points"},
     "rmin": {"units": "m", "desc": "Minor radius local distance from axis to point"},
     "psirz": {"units": "Wb", "desc": "Psi in polar coordinates"},
