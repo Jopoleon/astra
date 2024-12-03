@@ -6,14 +6,14 @@ AWD=`cd $rootdir/.. && pwd` # ensure absolute path
 platform=`$AWD/get_platform`
 
 #JSON
-JSON_HOME="${ASTRA_EXT}/json/9.0.2"
-export JSON_LIB="$JSON_HOME/lib/libjsonfortran.a"
-export JSON_INC="$JSON_HOME/inc"
+JSON_HOME=${ASTRA_EXT}/json/9.0.2
+export JSON_LIB=$JSON_HOME/lib/libjsonfortran.a
+export JSON_INC=$JSON_HOME/inc
 
 # TORBEAM
 
 IRC_LIB="-L${COMP_LIBDIR} -lirc" # necessary for libtorbeam.so
-TORB_HOME="${ASTRA_EXT}/torbeam/nov24"
+TORB_HOME=${ASTRA_EXT}/torbeam/nov24
 TORB_LIBDIR=${TORB_HOME}/lib
 export TORB_LIB="-L${TORB_LIBDIR} -ltorbeamB  -Wl,-rpath,${TORB_LIBDIR} ${IRC_LIB}"
 

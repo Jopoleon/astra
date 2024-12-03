@@ -22,5 +22,5 @@ then
 fi
 export ASTRA_EXT=/shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT
 export FC=ifort
-export CC=icc
+export CC=/usr/bin/x86_64-linux-gnu-gcc-11
 export MPIFC=mpiifort

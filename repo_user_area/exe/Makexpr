@@ -6,7 +6,6 @@ XPR = $(AWD)/xpr
 INC_DIR = $(AWD)/inc
 LIBFOR = $(AWD)/lib/libfor.a
 AENV = $(AWD)/exe/astra_rc
-ACC=gcc
 
 # TGLF
 
@@ -46,10 +45,10 @@ $(XPR)/qlki:	$(XPR)/qlk_interf.f90 $(XPR)/qinterp.f90 $(XPR)/qlkinter.o $(LIBFOR
 		-I$(QLK_INC) $(QLK_LIB)
 
 $(XPR)/neointer.o:    $(XPR)/tra_interf.c
-		$(ACC) -I$(INC_DIR) -o $@ -c $< -Dneo
+		$(CC) -I$(INC_DIR) -o $@ -c $< -Dneo
 
 $(XPR)/tglfinter.o:   $(XPR)/tra_interf.c
-		$(ACC) -I$(INC_DIR) -o $@ -c $< -Dtglf
+		$(CC) -I$(INC_DIR) -o $@ -c $< -Dtglf
 
 $(XPR)/qlkinter.o:    $(XPR)/tra_interf.c
-		$(ACC) -I$(INC_DIR) -o $@ -c $< -Dqlk
+		$(CC) -I$(INC_DIR) -o $@ -c $< -Dqlk
