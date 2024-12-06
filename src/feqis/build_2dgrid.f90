@@ -140,7 +140,7 @@ q_out(1:nrho-1) = q_new(1:nrho-1)
 q_out(nrho) = qedge
 
 do jthe=1, ntheta 
-   do jrho=1, nrho-1
+    do jrho=1, nrho-1
         z1 = dVa(jrho)/(psin_grid(jrho+1) - psin_grid(jrho))
         z2 = (PSI(jrho+1, jthe) - PSI(jrho, jthe))/(psin_grid(jrho+1) - psin_grid(jrho))
         B_pola(jrho, jthe) = z2/(GPI2*Rmaj2(jrho, jthe))*sqrt(gradr2(jrho, jthe))
@@ -149,10 +149,12 @@ do jthe=1, ntheta
         gradVa  (jrho, jthe) = z1*sqrt(gradr2(jrho, jthe))
         B_Ta(jrho, jthe) = onez(jrho)/Rmaj2(jrho, jthe)
         bcell(jrho, jthe) = sqrt(B_pola(jrho, jthe)**2 + B_Ta(jrho, jthe)**2)
-   enddo
-      gradVa  (nrho, jthe) = extrapolate(t4, ip3, ip2, ip1, ip0, rhot, gradVa(:, jthe))
-      gradpsia(nrho, jthe) = extrapolate(t4, ip3, ip2, ip1, ip0, rhot, gradpsia(:, jthe))
-      B_pola  (nrho, jthe) = extrapolate(t4, ip3, ip2, ip1, ip0, rhot, B_pola  (:, jthe))
+    enddo
+    bcell  (nrho, jthe) = extrapolate(t4, ip3, ip2, ip1, ip0, rhot, bcell(:, jthe))   !note that these values could also use the last-1 half grid point value for more accurate extrapolation (todo)
+    bpcell  (nrho, jthe) = extrapolate(t4, ip3, ip2, ip1, ip0, rhot, bpcell(:, jthe))
+    gradVa  (nrho, jthe) = extrapolate(t4, ip3, ip2, ip1, ip0, rhot, gradVa(:, jthe))
+    gradpsia(nrho, jthe) = extrapolate(t4, ip3, ip2, ip1, ip0, rhot, gradpsia(:, jthe))
+    B_pola  (nrho, jthe) = extrapolate(t4, ip3, ip2, ip1, ip0, rhot, B_pola  (:, jthe))
 enddo   
 B_absa = sqrt(B_Ta**2 + B_pola**2)
 !write(*,*) 'perim extrap', extrapolate(t4, ip3, ip2, ip1, ip0, rhoa(1:nrho), perim(1:nrho)), &

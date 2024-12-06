@@ -84,6 +84,7 @@ then
     mkdir -p $JSON_INSTALL/inc
     cp $JSON_ROOT/build/lib/libjsonfortran.a $JSON_INSTALL/lib/
     cp $JSON_ROOT/build/*.mod $JSON_INSTALL/inc/
+    cp $AWD/platform/env.$platform $JSON_INSTALL/
     rm $SOFT_ROOT/${JSON_VERSION}.tar.gz
     echo Installed JSON in $JSON_ROOT
 fi
@@ -128,6 +129,7 @@ then
     mkdir -p $RABBIT_INSTALL/inc
     cp $RABBIT_HOME/build/librabbit.so $RABBIT_INSTALL/lib/
     cp $RABBIT_HOME/build/modules/*.mod $RABBIT_INSTALL/inc/
+    cp $AWD/platform/env.$platform $RABBIT_INSTALL/
     echo $RABBIT_HASH | cat > $RABBIT_INSTALL/hash
     echo Installed RABBIT in $RABBIT_HOME
 fi
@@ -150,6 +152,7 @@ then
 
     mkdir -p $TORBEAM_INSTALL/lib
     cp $TORBEAM_HOME/build-generic/lib/libtorbeamB.so $TORBEAM_INSTALL/lib
+    cp $AWD/platform/env.$platform $TORBEAM_INSTALL/
     echo $TORBEAM_HASH | cat > $TORBEAM_INSTALL/hash
     echo Installed TORBEAM in $TORBEAM_HOME
 fi
@@ -179,6 +182,7 @@ then
     mkdir -p $QLK_INSTALL/inc
     cp $QLK_HOME/lib/libQLK-intel-release-default.a $QLK_INSTALL/lib/
     cp $QLK_HOME/include/intel-release-default/* $QLK_INSTALL/inc/
+    cp $AWD/platform/env.$platform $QLK_INSTALL/
     echo $QLK_HASH | cat > $QLK_INSTALL/hash
     echo Installed qualikiz in $QLK_HOME
 fi
@@ -207,6 +211,7 @@ then
     mkdir -p $QLKNN_INSTALL/inc
     cp $QLKNN_HOME/lib/libQLKNN-intel-release-default.a $QLKNN_INSTALL/lib
     cp $QLKNN_HOME/include/intel-release-default/* $QLKNN_INSTALL/inc/
+    cp $AWD/platform/env.$platform $QLKNN_INSTALL/
     cd $QLKNN_INSTALL/
     rm -rf qlknn-hyper-namelists
     rm -rf qlknn-jetexp-namelists
@@ -269,6 +274,8 @@ EOT
     cp $GACODE_ROOT/f2py/expro/expro_lib.a $NEO_INSTALL/lib/
     cp $GACODE_ROOT/modules/tglf*.mod $TGLF_INSTALL/inc/
     cp $GACODE_ROOT/modules/neo_interface.mod $NEO_INSTALL/inc/.
+    cp $AWD/platform/env.$platform $TGLF_INSTALL/
+    cp $AWD/platform/env.$platform $NEO_INSTALL/
     echo $GACODE_HASH | cat > $TGLF_INSTALL/hash
     echo $GACODE_HASH | cat > $NEO_INSTALL/hash
     echo Installed GACODE in $GACODE_ROOT
@@ -285,6 +292,8 @@ then
     chmod u+x install.sh
     ./install.sh
 fi
+
+chmod -R a+rx $ASTRA_EXT
 
 # Restore initial paths
 

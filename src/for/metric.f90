@@ -1630,35 +1630,14 @@ subroutine CUOFMU
 !---------------------------------------------------------------------
 
 use const_inc, only: GP, GP2, RTOR, BTOR, NA1, NA, HRO
-use status_inc, only: RHO, SRHO, XRHO, CU, MU, FP, G22, G33, IPOL
+use status_inc, only: SRHO, XRHO, CU, MU, FP, G22, G33, IPOL
 use numerical_tools, only: extrap, integr
 
 implicit none
 
 integer :: j
-double precision :: YH, YM, YM1, YM2, YC, YF, YAJ, YCJ, MUVAC
+double precision :: YAJ, YCJ
 double precision, dimension(NA1) :: YAR
-
-YC = 0.2*GP2*RTOR/BTOR
-YH = RHO(2) - RHO(1)
-YF = GP2*YH**2 * BTOR
-YM = 0.
-do J=1, NA1
-    YM1 = MU(j)*j
-    YM2 = YM1*G22(j)
-    if (j < NA) then
-        CU(j) = (YM2 - YM)*G33(j)*IPOL(j)**3/YC/RHO(j)
-        FP(j+1) = FP(j) + YF*YM1
-    elseif (j == NA) then
-        CU(j) = (YM2 - YM)*G33(j)*IPOL(j)**3/YC/RHO(j)
-        FP(j+1) = FP(j) + GP2*BTOR*YM1*YH*(RHO(NA1) - RHO(NA))
-    else
-! Be careful because of instability in the loop: j -> FF' -> G22 -> j ->
-        CU(NA1) = CU(NA)
-    endif
-    YM = YM2
-enddo
-MUVAC = 0.4*GP
 
 do j=1, NA1
     YAR(j) = GP2*BTOR*MU(j)*SRHO(j)
@@ -1676,7 +1655,6 @@ enddo
 
 call EXTRAP(XRHO(1:NA), CU(1:NA), XRHO(NA1), NA, CU(NA1), 2, NA)
 YCJ = 1.25/(GP**2 * RTOR)
-YAJ = 0.5/(GP*BTOR)
 do J=1, NA1
     CU(j) = YCJ*CU(j)*G33(J)*IPOL(J)**3
 enddo
@@ -1701,45 +1679,13 @@ subroutine CUOFP
 !  MU(1:NA1) - (1/rho)dF/d(rho)      rotational transform
 !---------------------------------------------------------------------
 
-use status_inc, only: RHO, SRHO, XRHO, FP, MU, CU, IPOL, G22, G33
-use const_inc, only: GP, GP2, RTOR, HRO, BTOR, NA, NA1
-use numerical_tools, only: extrap, deriv
+use status_inc, only: FP, MU, CU, IPOL, G22, G33
+use const_inc, only: GP, RTOR, HRO, BTOR, NA, NA1
 
 implicit none
 
 integer :: j
-double precision, dimension(NA1) :: YAR, YAR1
-double precision :: MUVAC, YAJ, YCJ
-
-YAJ = 0.
-
-do J=1, NA
-    YCJ = YAJ
-    YAJ = (FP(j+1) - FP(j))/HRO**2
-    MU(j) = YAJ/j
-    YAJ = G22(j)*YAJ
-    CU(j) = (YAJ - YCJ)/HRO
-    CU(j) = CU(j)/(j - 0.5)
-enddo
-
-call EXTRAP(XRHO(1: NA), CU(1: NA), XRHO(NA1), NA, CU(NA1), 2, NA)
-
-YCJ = 1.25/(GP**2 * RTOR)
-YAJ = 0.5/(GP*BTOR)
-do J=1, NA1
-    CU(j) = YCJ*CU(j)*G33(J)*IPOL(J)**3
-    MU(J) = YAJ*MU(j)
-enddo
-
-MUVAC = 0.4*GP
-
-YAR(1: NA1) = RHO(1: NA1)
-
-call DERIV(YAR(1: NA1), SRHO(1: NA1), 1, FP(1:NA1), YAR1(1:NA1), 1, NA1, 1)
-
-do j=1, NA1
-    MU(j) = YAR1(j)/(GP2*BTOR*SRHO(j))
-enddo
+double precision :: YAJ, YCJ
 
 YAJ = 0.
 CU  = 0.

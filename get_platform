@@ -46,6 +46,8 @@ then
 elif [[ $node = "rat2"* ]]
 then
     platform=rat2
+else
+    platform=mypc
 fi
 
 echo $platform
