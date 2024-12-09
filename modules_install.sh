@@ -17,7 +17,6 @@ FC_SERIAL=$FC
 # Packages versions
 #------------------
 
-GACODE_HASH=c18ebaf5331853745063679c94e9b48ca97d48d5 # before compatibility break in tglf_inout, put_miller_equilibrium
 CMAKE_VERSION=cmake-3.30.3-linux-x86_64
 JSON_VERSION=9.0.2
 RABBIT_VERSION=unstable
@@ -238,7 +237,7 @@ then
     export GACODE_ROOT=$SOFT_ROOT/gacode
     export GACODE_PLATFORM=MYLOC
     cd $GACODE_ROOT
-    git reset --hard $GACODE_HASH
+    GACODE_HASH=`git rev-parse HEAD`
 
     cat << EOT > ${GACODE_ROOT}/platform/build/make.inc.${GACODE_PLATFORM}
 IDENTITY="IPP linux cluster"

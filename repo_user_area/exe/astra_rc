@@ -36,13 +36,13 @@ export QLKNN_LIB=${QLKNN_HOME}/lib/libQLKNN-intel-release-default.a
 
 # TGLF
 
-TGLF_HOME=${ASTRA_EXT}/tglf/nov24
+TGLF_HOME=${ASTRA_EXT}/tglf/dec24
 export TGLF_INC=${TGLF_HOME}/inc
 export TGLF_LIB=${TGLF_HOME}/lib/libtglf.a
 
 # NEO
 
-NEO_HOME=${ASTRA_EXT}/neo/nov24
+NEO_HOME=${ASTRA_EXT}/neo/dec24
 NEO_LIBDIR=${NEO_HOME}/lib
 export NEO_INC=${NEO_HOME}/inc
 export NEO_LIB="${NEO_LIBDIR}/neo_lib.a ${NEO_LIBDIR}/nclass_lib.a ${NEO_LIBDIR}/UMFPACK_lib.a ${NEO_LIBDIR}/math_lib.a ${NEO_LIBDIR}/expro_lib.a ${NEO_LIBDIR}/geo_lib.a"
