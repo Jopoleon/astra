@@ -36,7 +36,7 @@ export QLKNN_LIB=${QLKNN_HOME}/lib/libQLKNN-intel-release-default.a
 
 # TGLF
 
-TGLF_HOME=${ASTRA_EXT}/tglf/dec24
+TGLF_HOME=${ASTRA_EXT}/tglf/dec24_zgeev
 export TGLF_INC=${TGLF_HOME}/inc
 export TGLF_LIB=${TGLF_HOME}/lib/libtglf.a
 
