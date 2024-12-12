@@ -251,7 +251,7 @@ FOMP   =-qopenmp
 FMATH  =-real-size 64
 FOPT   =-Ofast
 FDEBUG =-eD -Ktrap=fp -m 1
-LMATH = -qmkl
+LMATH = -qmkl -mkl
 FFTW_INC=${FFTW_INC}
 ARCH = ar cr
 EOT
