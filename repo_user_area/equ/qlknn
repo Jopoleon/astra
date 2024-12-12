@@ -69,11 +69,7 @@ CF16=0.85;  ! Boundary
 CF12=0.02; ! Frequency of calls
 CRAD3=nint((CF16*NA1 - 1)/16.);
 
-qlknn_serial(CAR17, CAR18, CAR20)>::::;
-
-SMEARR(CF4,CAR17,CAR21)::::;
-SMEARR(CF4,CAR18,CAR22)::::;
-SMEARR(CF5,CAR20,CAR24)::::;
+qlknn_serial(CAR21, CAR22, CAR24)>::::;
 
 XI = min(20., max(0., CAR21)) + HNASI;
 HE = min(20., max(0., CAR22)) + HNGSE;

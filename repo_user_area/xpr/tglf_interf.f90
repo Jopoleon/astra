@@ -4,7 +4,7 @@ program main
 implicit none
 
 integer :: iargc, mampid, mamkey, eignr
-character*132 :: STRING, eigpath, mampath
+character(len=132) :: STRING, eigpath, mampath
 
 if (iargc() /= 4) then
     write(6, '(A)') "Error"
@@ -34,15 +34,6 @@ subroutine tglf_interf(jr1_in, jr2_in, nrho, NA1N, NA1E, NA1I, &
 ! output
     CHI, CHE, DIF, VIN, DPH, DPL, DPR, XTB, EGM, GAM, GM1, GM2, OM1, OM2, FR1)
 
-!----------------------------------------------------------------------|
-! based on stand-alone driver for the GLF23 model
-!       "testglf.f" 18-fev-03 version 1.61
-!       written by Jon Kinsey, General Atomics
-!----------------------------------------------------------------------|
-! WORK(1:NA1,1:13) array is used for output
-!                              (when i_delay=0 and egamma_d is not used)
-!----------------------------------------------------------------------|
-
 use tglf_interface, only: nsm, tglf_zs_in, tglf_ns_in, tglf_mass_in, &
     tglf_find_width_in, tglf_iflux_in, tglf_use_bper_in, tglf_use_mhd_rule_in, &
     tglf_use_bisection_in, tglf_use_inboard_detrapped_in, tglf_new_eikonal_in, &
@@ -70,21 +61,10 @@ use tglf_interface, only: nsm, tglf_zs_in, tglf_ns_in, tglf_mass_in, &
     tglf_rmaj_sa_in, tglf_q_sa_in, tglf_shat_sa_in, tglf_alpha_sa_in, &
     tglf_xwell_sa_in, tglf_theta0_sa_in, file_dump_local, &
     tglf_elec_eflux_out, tglf_ion_eflux_out, tglf_ion_mflux_out, &
-    tglf_elec_pflux_out, tglf_ion_pflux_out, tglf_elec_expwd_out, &    
-    tglf_rlnp_cutoff_in, tglf_fourier_in, tglf_q_fourier_in, tglf_q_prime_fourier_in, &
-    tglf_p_prime_fourier_in, tglf_nfourier_in, tglf_elec_eflux_low_out, tglf_ion_eflux_low_out, &
-    tglf_elec_mflux_out, tglf_ion_expwd_out, tglf_error_message, tglf_error_status, &
-    tglf_eigenvalue_out, tglf_beta_loc_in, interchange_DR, interchange_DM, &
-    tglf_dump_local, tglf_dump_global, &
-    tglf_q_elite_in, tglf_q_prime_elite_in, & !tglf_p_prime_elite_in, &
-    tglf_n_ELITE_in, tglf_R_ELITE_in, tglf_Z_ELITE_in, tglf_Bp_ELITE_in
+    tglf_elec_pflux_out, tglf_ion_pflux_out, tglf_elec_expwd_out
 
 use tglf_pkg, only: get_eigenvalue_spectrum_out, get_ky_spectrum_out, &
-     get_flux_spectrum_out, get_particle_flux, get_q_low, get_energy_flux, &
-     get_stress_tor, get_exchange, get_frequency, get_growthrate, get_DR, get_DM, &
-     tglf_ky
-
-use tglf_global, only: valid_nn, ns_in, xi
+     get_flux_spectrum_out
 
 implicit none
 
@@ -119,6 +99,7 @@ integer :: i_ion, n
 integer :: jr_min, jr_max, jrho, j0, j01, j02, jgamma_max, n_radial
 integer :: j, jradial, jjgrid(nradial), jspec, kyloop
 integer :: sat_rule           ! Saturation rule
+integer :: geom_flag          ! 1: Miller; 2: Fourier; 3: ELITE
 integer :: nmodes_tg          ! number of unstable modes to use in computing fluxes (max=4)
 integer :: kygrid_model_tg    ! select version of ky-grid to use 1
 integer :: xnu_model_tg       ! select version of trapped-passing 2
@@ -138,7 +119,7 @@ real, dimension(nsm-1, nrho) :: ion_pflux_m
 real, dimension(nradial) :: mtori, chie, chii, exchi, elec_pflux, rho_tg, &
     gamma_max, omega_max, kymax
 real, dimension(nsm-1, nradial) :: ion_pflux
-real, allocatable, dimension(:) :: gamma, omega, kyspectrum, efluxspectrum
+real, allocatable, dimension(:) :: gamma, omega, kyspectrum, efluxspectrum, ifluxspectrum, pfluxspectrum
 real, dimension(nsm-1) :: dti, dni
 real, dimension(nsm-1, nrho) :: ni_m, ti_m
 
@@ -235,28 +216,29 @@ endif
 kygrid_model_tg = 4 !1 Email Angioni Aug 1st 2023
 
 sat_rule = 2
+geom_flag = 1
 
 write(6, '(A, 8i4)') 'Call TGLF...', jjgrid(1: nradial), nrho, sat_rule, tglf_ns_in
 
-if (sat_rule == 0) then
+SELECT CASE(sat_rule)
+CASE(0)
     nmodes_tg = 2
     xnu_model_tg = 2
     wdia_trap_tg = 0.
     alpha_zf_in  = 0.
-endif
-if (sat_rule == 1) then
+CASE(1)
     nmodes_tg = tglf_ns_in + 2
     xnu_model_tg = 2
     wdia_trap_tg = 0.
     alpha_zf_in  = 1.
-endif
-if (sat_rule == 2) then
+CASE(2)
     nmodes_tg = tglf_ns_in + 2
     xnu_model_tg = 3
     wdia_trap_tg = 1.
     alpha_zf_in  = 1.
-endif
+END SELECT
 
+!-------------------------
 ! General TGLF settings
 
 tglf_find_width_in     = .True.
@@ -288,7 +270,7 @@ tglf_width_in      = 1.65
 tglf_width_min_in  = 0.3
 tglf_nwidth_in     = 21
 
-tglf_geometry_flag_in = 1
+tglf_geometry_flag_in = geom_flag
 tglf_dump_flag_in     = .False.   ! Dumps input file
 tglf_test_flag_in     = 0
 tglf_nn_max_error_in  = 0
@@ -338,9 +320,11 @@ allocate(gamma(tglf_nky_in))
 allocate(omega(tglf_nky_in))
 allocate(kyspectrum(tglf_nky_in))
 allocate(efluxspectrum(tglf_nky_in))
+allocate(ifluxspectrum(tglf_nky_in))
+allocate(pfluxspectrum(tglf_nky_in))
 
 radial_loop: do jradial=1, n_radial
-   
+
     j0 = jjgrid(jradial)
 
 !thermal impurities
@@ -532,13 +516,14 @@ radial_loop: do jradial=1, n_radial
         omega(kyloop) = get_eigenvalue_spectrum_out(2, kyloop, 1)
         kyspectrum(kyloop) = get_ky_spectrum_out(kyloop)
         efluxspectrum(kyloop) = get_flux_spectrum_out(2, 1, 1, kyloop, 1)
+        ifluxspectrum(kyloop) = get_flux_spectrum_out(2, 2, 1, kyloop, 1)
+        pfluxspectrum(kyloop) = get_flux_spectrum_out(1, 1, 1, kyloop, 1)
     enddo
 
     jgamma_max = maxloc(efluxspectrum(1:tglf_nky_in), 1)
     gamma_max(jradial) = gamma(jgamma_max)
     omega_max(jradial) = omega(jgamma_max)
     kymax(jradial) = kyspectrum(jgamma_max)
-!    write(6, '(A,i3,2e10.2)') 'tglf freq', jradial, gamma_max(jradial), omega_max(jradial)
 
 enddo radial_loop
 
@@ -574,7 +559,7 @@ OM2(1:nrho) = 0.d0
 FR1(1:nrho) = 0.d0
 
 do j=jr_min, jr_max
-    CHI(j) = chii_m(j)/gradrhosq_exp(j) ! \chi_i, m^2/s -> work(21,:) 
+    CHI(j) = chii_m(j)/gradrhosq_exp(j) ! \chi_i, m^2/s
     CHE(j) = chie_m(j)/gradrhosq_exp(j) ! \chi_e, m^2/s
     VIN(j) = elec_pflux_m(j)/AMETR(nrho)/gradrhosq_exp(j) ! D flux
     DPR(j) = mtori_m(j)
@@ -592,6 +577,13 @@ enddo
 
 DPL(1) = 0.d0 !ensure NIZ1 convection equal to zero on axis
 DPH(1) = 0.d0 !ensure NIZ2 convection equal to zero on axis (already 0 otherwise)
+
+deallocate(gamma)
+deallocate(omega)
+deallocate(kyspectrum)
+deallocate(efluxspectrum)
+deallocate(ifluxspectrum)
+deallocate(pfluxspectrum)
 
 return
 END subroutine tglf_interf

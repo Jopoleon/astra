@@ -1,7 +1,7 @@
  Start file for version 7.1.0
  Variables as described in the file "for/const.inc"
 AB     =  6.000E-01
-ABC    =  4.892E-01
+ABC    =  5.000E-01
 AIM1   =  1.200E+01
 AIM2   =  0.000E+00
 AIM3   =  0.000E+00
@@ -41,8 +41,8 @@ ZMJ    =  1.000E+00
 CF1    =  1.000E+00
 CF2    =  1.000E+00
 CF3    =  4.000E+00
-CF4    =  2.000E-04
-CF5    =  4.000E-05
+CF4    =  1.000E-06
+CF5    =  1.000E-06
 CF6    =  1.000E+00
 CF7    =  1.000E+00
 CF8    =  1.000E+00

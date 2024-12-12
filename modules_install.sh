@@ -238,6 +238,7 @@ then
     export GACODE_PLATFORM=MYLOC
     cd $GACODE_ROOT
     GACODE_HASH=`git rev-parse HEAD`
+    sed -i "s#zgeev\ =\ .false#zgeev\ =\ .true#g" $GACODE_ROOT/tglf/src/tglf_eigensolver.f90
 
     cat << EOT > ${GACODE_ROOT}/platform/build/make.inc.${GACODE_PLATFORM}
 IDENTITY="IPP linux cluster"

@@ -48,8 +48,8 @@ double precision, dimension(dimx, nspec_max-1) :: Tix_in, ninorm_in, &
     Ati_in, Ani_in, Ai_in, Zi_in, ipf_GB_out, ief_GB_out
 integer :: NN_ETG, NN_part_trans_switch, NN_TEM, NN_MODEL
 
-integer :: n_red, n_step, jna, jrho, j0, j01, j02
-integer :: i, j, k, ihi, ilow, jradial, jjgrid(100), jion
+integer :: n_red, n_step, jna, jrho, jr_l, jr_r
+integer :: i, j, k, ihi, ilow, jion
 
 double precision :: bmod, bpolz
 double precision :: drmin, drmaj, drho, dte, dne, dq, dptot, &
@@ -99,16 +99,6 @@ qlknn_sets_dir = TRIM(AEXT) // '/qlk_nn/nov24/'
 nions = nspec_max - 1
 
 jna = max(NA1E, NA1I, NA1N)
-if (jna .eq. 0) jna = NA1
-
-n_red = 25
-n_step = int(jna/n_red) + 1
-do jradial = 1, n_red
-    jjgrid(jradial) = 1 + (jradial - 1)*n_step
-    if (jjgrid(jradial) >= jna) EXIT
-enddo
-n_red = jradial
-jjgrid(n_red) = jna
 
 ! Electrons and main ions
 Zi_in(1, 1) = ZMJ
@@ -180,21 +170,20 @@ Rmin_in(1) = AMETR(NA1)
 rhoscale = rho(NA1)
 write(6, *) 'Calling qualikiz NN', nions, NN_MODEL
 
-radial_loop: do jradial=1, n_red
+radial_loop: do jrho=1, NA1
 
-    j0 = jjgrid(jradial)
-    qx_in(1) = q_exp(j0)
-    rho_in(1) = RHO(j0)
-    x_in(1) = AMETR(j0)/Rmin_in(1)
-    rho_tg(jradial) = rho_in(1)
-    Ro_in(1) = RTOR + SHIF(j0)
-    T0  = 1E3 *te(j0)   ! eV
+    qx_in(1) = q_exp(jrho)
+    rho_in(1) = RHO(jrho)
+    x_in(1) = AMETR(jrho)/Rmin_in(1)
+    rho_tg(jrho) = rho_in(1)
+    Ro_in(1) = RTOR + SHIF(jrho)
+    T0  = 1E3 *te(jrho)   ! eV
 
 !thermal impurities
 
-    Zi_in(1, 2) = max(1., ZIM1(j0))
-    Zi_in(1, 3) = ZIM2(j0)
-    Zi_in(1, 4) = ZIM3(j0)
+    Zi_in(1, 2) = max(1., ZIM1(jrho))
+    Zi_in(1, 3) = ZIM2(jrho)
+    Zi_in(1, 4) = ZIM3(jrho)
 
     if (Zi_in(1, 4) .ge. 1. .and. nions .eq. 2) then
         Zi_in(1, 3) = Zi_in(1, 4)
@@ -216,48 +205,48 @@ radial_loop: do jradial=1, n_red
 
 ! Differentials
 
-    j01 = j0+1
-    j02 = j0-1
-    if (j0 == 1) then
-        j02 = j0
-    else if (j0 == NA1) then
-        j01 = j0
+    jr_r = jrho+1
+    jr_l = jrho-1
+    if (jrho == 1) then
+        jr_l = jrho
+    else if (jrho == NA1) then
+        jr_r = jrho
     endif
-    dstep = 1./float(j01 - j02)
+    dstep = 1./float(jr_r - jr_l)
 
-    drmin  = dstep*(AMETR(j01) - AMETR(j02))
-    drmaj  = dstep*(rmaj_exp(j01) - rmaj_exp(j02))
-    drho   = dstep*(rho(j01) - rho(j02))
-    delong = dstep*(ELON(j01) - ELON(j02))
-    dtrian = dstep*(TRIA(j01) - TRIA(j02))
-    dptot  = dstep*(ptot(j01) - ptot(j02))
-    dte    = dstep*(TE(j01) - TE(j02))
-    dne    = dstep*(NE(j01) - NE(j02))
-    dq     = dstep*(q_exp(j01) - q_exp(j02))
-    dvper  = dstep*(vper_m(j01) - vper_m(j02))
+    drmin  = dstep*(AMETR(jr_r) - AMETR(jr_l))
+    drmaj  = dstep*(rmaj_exp(jr_r) - rmaj_exp(jr_l))
+    drho   = dstep*(rho(jr_r) - rho(jr_l))
+    delong = dstep*(ELON(jr_r) - ELON(jr_l))
+    dtrian = dstep*(TRIA(jr_r) - TRIA(jr_l))
+    dptot  = dstep*(ptot(jr_r) - ptot(jr_l))
+    dte    = dstep*(TE(jr_r) - TE(jr_l))
+    dne    = dstep*(NE(jr_r) - NE(jr_l))
+    dq     = dstep*(q_exp(jr_r) - q_exp(jr_l))
+    dvper  = dstep*(vper_m(jr_r) - vper_m(jr_l))
     do jion=1, nions
-        dti(jion) = dstep*(ti_m(jion, j01) - ti_m(jion, j02))
-        dni(jion) = dstep*(ni_m(jion, j01) - ni_m(jion, j02))
+        dti(jion) = dstep*(ti_m(jion, jr_r) - ti_m(jion, jr_l))
+        dni(jion) = dstep*(ni_m(jion, jr_r) - ni_m(jion, jr_l))
     enddo
     dv_r = dstep* &
-        (vpar_m(j01)/(rmaj_exp(j01) + AMETR(j01)) - &
-         vpar_m(j02)/(rmaj_exp(j02) + AMETR(j02)))
+        (vpar_m(jr_r)/(rmaj_exp(jr_r) + AMETR(jr_r)) - &
+         vpar_m(jr_l)/(rmaj_exp(jr_l) + AMETR(jr_l)))
     dr = drmin/Rmin_in(1)    ! gradients w.r.t. minor radius even for s-alpha geometry
     drhodr = drho/drmin
     smag_in(1) = (x_in(1)/qx_in(1))*dq/dr        ! r/q dq/dr
 
 ! local field averages
-    Nex_in(1) = NE(j0)
-    Tex_in(1) = TE(j0)
-    ZEFFX(1) = ZEF(j0)
+    Nex_in(1) = NE(jrho)
+    Tex_in(1) = TE(jrho)
+    ZEFFX(1) = ZEF(jrho)
     epsilon(1) = Rmin_in(1) / Ro_in(1)
     Ate_in(1) = -dte*R0_in/(drmin*Tex_in(1))
     Ane_in(1) = -dne*R0_in/(drmin*Nex_in(1))
     do jion=1, nions
-        ninorm_in(1, jion) = ni_m(jion, j0)/Nex_in(1)
-        Tix_in(1, jion) = ti_m(jion, j0)
-        Ati_in(1, jion) = -dti(jion)*R0_in/(drmin*ti_m(jion, j0))
-        Ani_in(1, jion) = -dni(jion)*R0_in/(drmin*ni_m(jion, j0))
+        ninorm_in(1, jion) = ni_m(jion, jrho)/Nex_in(1)
+        Tix_in(1, jion) = ti_m(jion, jrho)
+        Ati_in(1, jion) = -dti(jion)*R0_in/(drmin*ti_m(jion, jrho))
+        Ani_in(1, jion) = -dni(jion)*R0_in/(drmin*ni_m(jion, jrho))
     enddo
 
 ! Restore quasi-neutrality via main ions
@@ -267,13 +256,13 @@ radial_loop: do jradial=1, n_red
 
 ! derived units for the plasma
 
-    Bunit = 1E4*BTOR*drhodr*rho_in(1)/AMETR(j0)  ! Miller geometry magnetic field unit
+    Bunit = 1E4*BTOR*drhodr*rho_in(1)/AMETR(jrho)  ! Miller geometry magnetic field unit
     cs00 = SQRT(e00*T0/(AMJ*mpp))                ! thermal velocity unit m/sec
     omega0 = e0*Bunit/(m0*c0)                    ! gyrofrequency unit 1/sec
     rhos00 = cs00/omega0                         ! gyroradius unit m
 
-    vpar_shear_in = -rmaj_exp(j0)*dv_r/(dr*cs00) ! From m/s to cm/s for vpar
-    vpar_in = vpar_m(j0)/cs00
+    vpar_shear_in = -rmaj_exp(jrho)*dv_r/(dr*cs00) ! From m/s to cm/s for vpar
+    vpar_in = vpar_m(jrho)/cs00
 
 ! Local magnetic geometry
 
@@ -284,7 +273,7 @@ radial_loop: do jradial=1, n_red
     if (NN_MODEL == 0) then
         smag_in = smag_in - 0.5*alphax_in
     endif
-    cexb = AMETR(j0)/qx_in(1)         ! r/(q)
+    cexb = AMETR(jrho)/qx_in(1)         ! r/(q)
     gamma_e_tg = cexb*dvper/(dr*cs00) ! Waltz-Miller definition
     mach_fac = sqrt(Tex_in(1)/AMJ)
 
@@ -294,7 +283,7 @@ radial_loop: do jradial=1, n_red
     Aupar_in(1)  = vpar_shear_in*R0_in/Rmin_in(1)*mach_fac
     gammaE_in(1) = gamma_e_tg   *R0_in/Rmin_in(1)*mach_fac
 
-    if(FIRST_RUN) then
+    if (FIRST_RUN) then
         SELECT CASE(NN_model)
         CASE(0)
             write(*, *) 'Using QLKNN-hyper as QuaLiKiz surrogate'
@@ -661,9 +650,9 @@ radial_loop: do jradial=1, n_red
 
 ! Chii
 
-    chii(jradial)   = ql_fac * ief_gb_out(1, 1)/(1e-4 + Rmin_in(1)/R0_in * abs(Ati_in(1, 1)))
-    chie(jradial)   = ql_fac * eef_gb_out(1)/(1e-4 + Rmin_in(1)/R0_in * abs(Ate_in(1)))
-    pfluxi(jradial) = ql_fac * epf_gb_out(1)
+    chii(jrho)   = ql_fac * ief_gb_out(1, 1)/(1e-4 + Rmin_in(1)/R0_in * abs(Ati_in(1, 1)))
+    chie(jrho)   = ql_fac * eef_gb_out(1)/(1e-4 + Rmin_in(1)/R0_in * abs(Ate_in(1)))
+    pfluxi(jrho) = ql_fac * epf_gb_out(1)
 
 enddo radial_loop
 

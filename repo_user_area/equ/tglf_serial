@@ -50,15 +50,6 @@ NEUT:.05:::;
 ! ECH: TORBEAM, NBI: RABBIT
 TORBEAM_RABBIT>:.05:::;
 
-!--------
-! NBI from TRANSP
-
-!PIBM=CAR1X;
-!PEBM=CAR2X;
-!SNEBM=CAR3X;
-!NIBM=CAR4X;
-!CUBM=CAR6X;
-
 ! Radiation
 
 PRAD=PBRAD;
@@ -76,11 +67,11 @@ CAR11=CUBM;
 ! physics
 CF16=0.85;  ! Boundary
 CF12=0.05; ! Frequency of calls
-tglf_serial(CAR17, CAR18, CAR20, CAR42)>:CF12:::;
+tglf_serial(CAR21, CAR22, CAR24, CAR42, CAR31, CAR32, CAR33, CAR34, CAR35)>:CF12:::;
 
-SMEARR(CF4,CAR17,CAR21)::::;
-SMEARR(CF4,CAR18,CAR22)::::;
-SMEARR(CF5,CAR20,CAR24)::::;
+!SMEARR(CF4,CAR17,CAR21)::::;
+!SMEARR(CF4,CAR18,CAR22)::::;
+!SMEARR(CF5,CAR20,CAR24)::::;
 
 XI = min(20., max(0., CAR21)) + HNASI;
 HE = min(20., max(0., CAR22)) + HNGSE;
@@ -123,9 +114,9 @@ TI:EQ[2,CF16];
 
 CU:EQ; 
 
+MU = 1./(CAR2X + 0.0001);
 CC = CNHR; !CNSA;
-CU = CC;
-CD = CUBM; !+CUECR; !CD source from NBI + PECRH 
+CD = CUBM+CUECR; !CD source from NBI + PECRH 
 
 !------------------------------------------
 ! NCLASS 

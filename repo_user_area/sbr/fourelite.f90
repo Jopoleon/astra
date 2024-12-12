@@ -22,7 +22,7 @@ if (IPART == 1) return
 ! nequil, mequil are reals
 nrho   = int(nequil)
 ntheta = int(mequil)
-nELITE = 300
+nELITE = 256
 
 allocate(dtheta(ntheta), cos_mthe(ntheta), sin_mthe(ntheta), damin(ntheta))
 allocate(theta(ntheta+1), theta_half(ntheta+1), theta_el(nELITE))
@@ -166,32 +166,21 @@ enddo
 !write(*, *) 'Written Elite geometry for TGLF into '//TRIM(f_four)
 close(unit_out)
 
-f_four = 'xpr/fort.elite_geom_flip'
-open(unit_out, file=TRIM(f_four))
-do jrho=1, NA1
-    do jthe=nELITE+1,1,-1
-        write(unit_out, '(3F)') RRel_tg(jrho,jthe), ZZel_tg(jrho,jthe), BBpel_tg(jrho,jthe)
-    enddo
-enddo
+!f_four = 'xpr/fort.elite_fequis'
+!open(unit_out, file=TRIM(f_four))
+!    do jthe=1,ntheta+1
+!        write(unit_out, '(4F)') theta(jthe), RRel(20,jthe), ZZel(20,jthe), BBpel(nrho,jthe)
+!    enddo
 !write(*, *) 'Written Elite geometry for TGLF into '//TRIM(f_four)
-close(unit_out)
+!close(unit_out)
 
-
-f_four = 'xpr/fort.elite_fequis'
-open(unit_out, file=TRIM(f_four))
-    do jthe=1,ntheta+1
-        write(unit_out, '(4F)') theta(jthe), RRel(20,jthe), ZZel(20,jthe), BBpel(nrho,jthe)
-    enddo
+!f_four = 'xpr/fort.elite_tglf'
+!open(unit_out, file=TRIM(f_four))
+!    do jthe=1,nELITE+1
+!        write(unit_out, '(4F)') theta_el(jthe), RRel_tg(36,jthe), ZZel_tg(36,jthe), BBpel_tg(NA1,jthe)
+!    enddo
 !write(*, *) 'Written Elite geometry for TGLF into '//TRIM(f_four)
-close(unit_out)
-
-f_four = 'xpr/fort.elite_tglf'
-open(unit_out, file=TRIM(f_four))
-    do jthe=1,nELITE+1
-        write(unit_out, '(4F)') theta_el(jthe), RRel_tg(36,jthe), ZZel_tg(36,jthe), BBpel_tg(NA1,jthe)
-    enddo
-!write(*, *) 'Written Elite geometry for TGLF into '//TRIM(f_four)
-close(unit_out)
+!close(unit_out)
 
 
 deallocate(theta, dtheta, cos_mthe, sin_mthe, damin, theta_half, psi_n, RR, ZZ, drdr, dzdr, four_coef)
