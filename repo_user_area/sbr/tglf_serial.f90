@@ -1,8 +1,6 @@
 !----------------------------------------------------------------------|
 subroutine tglf_serial(CHI, CHE, VIN, DPH, DPL, DPR, XTB, GM1, OM1)
 
-use parameter_inc, only: NRD
-
 use tglf_interface, only: nsm, tglf_zs_in, tglf_ns_in, tglf_mass_in, &
     tglf_find_width_in, tglf_iflux_in, tglf_use_bper_in, tglf_use_mhd_rule_in, &
     tglf_use_bisection_in, tglf_use_inboard_detrapped_in, tglf_new_eikonal_in, &
@@ -30,23 +28,28 @@ use tglf_interface, only: nsm, tglf_zs_in, tglf_ns_in, tglf_mass_in, &
     tglf_rmaj_sa_in, tglf_q_sa_in, tglf_shat_sa_in, tglf_alpha_sa_in, &
     tglf_xwell_sa_in, tglf_theta0_sa_in, file_dump_local, &
     tglf_elec_eflux_out, tglf_ion_eflux_out, tglf_ion_mflux_out, &
-    tglf_elec_pflux_out, tglf_ion_pflux_out, tglf_elec_expwd_out
+    tglf_elec_pflux_out, tglf_ion_pflux_out, tglf_elec_expwd_out, &
+    tglf_q_elite_in, tglf_q_prime_elite_in, tglf_p_prime_elite_in, &
+    tglf_n_ELITE_in, tglf_R_ELITE_in, tglf_Z_ELITE_in, tglf_Bp_ELITE_in
 
 use tglf_pkg, only: get_eigenvalue_spectrum_out, get_ky_spectrum_out, &
      get_flux_spectrum_out
 
-use const_inc, only: BTOR, RTOR, AMJ, AIM1, AIM2, AIM3, ZMJ, &
+use parameter_inc, only: NRD
+use const_inc, only: BTOR, RTOR, GP2, ABC, &
+    AMJ, AIM1, AIM2, AIM3, ZMJ, &
     NA1, NA1N, NA1E, NA1I
 use status_inc, only: NE, TE, NI, TI, &
     ZEF, ZIM1, ZIM2, ZIM3, PBLON, PBPER, &
-    PFAST, NIZ3, AMAIN, ER, MU, &
+    PFAST, NIZ3, AMAIN, ER, MU, FP_NORM, &
     RHO, AMETR, SHIF, ELON, &
     NDEUT, NIZ1, NTRIT, NIZ2, NHE3, &
     TRIA, VTOR, NIBM, G11, VPOL, VRS, SHEAR
+use parameters_a2equil, only: equil_now
 
 implicit none
 
-integer, parameter :: nrho_tg=40
+integer, parameter :: nrho_tg=40, nthe_elite=256
 double precision, parameter :: &
    k0   = 1.6022E-12, &       ! erg/ev
    e0   = 4.8032E-10, &       ! elementary charge (statcoulombs)
@@ -70,6 +73,7 @@ integer :: geom_flag          ! 1: Miller; 2: Fourier; 3: ELITE
 integer :: nmodes_tg          ! number of unstable modes to use in computing fluxes (max=4)
 integer :: kygrid_model_tg    ! select version of ky-grid to use 1
 integer :: xnu_model_tg       ! select version of trapped-passing 2
+integer :: jthe, nrho_equ, nthe_equ ! for ELITE geometry
 
 double precision :: bmod, bpolz, alpha_zf_in, ion_eflux, ion_mflux, xstep, rho_min, rho_max
 double precision :: drmin, drmaj, drho, dte, dne, dq, dptot, &
@@ -81,14 +85,17 @@ double precision :: wdia_trap_tg          ! parameter for trapped fraction model
 double precision, dimension(NRD) :: gradrhosq_exp, rmaj_exp, q_exp, &
     vexb_exp, vpar_exp, vper_exp, mtori_m, &
     chie_m, chii_m, elec_pflux_m, exchi_m, ptot_exp, gamma_m, omega_m
-double precision, dimension(nsm-1, NRD) :: ni_exp, ion_pflux_m
-
 double precision, dimension(nrho_tg) :: mtori, chie, chii, exchi, elec_pflux, rho_tg, &
     gamma_max, omega_max, kymax, te_tg, ne_tg, vpar_tg, vper_tg, vexb_tg, &
-    ametr_tg, elon_tg, tria_tg, gradrhosq_tg, rmaj_tg, ptot_tg, q_tg, zef_tg
+    ametr_tg, fpn_tg, elon_tg, tria_tg, gradrhosq_tg, rmaj_tg, ptot_tg, q_tg, zef_tg
+double precision, dimension(nthe_elite) :: theta_elite
 double precision, allocatable, dimension(:) :: gamma, omega, kyspectrum, efluxspectrum, ifluxspectrum, pfluxspectrum
 double precision, dimension(nsm-1) :: dti, dni
 double precision, dimension(nsm-1, nrho_tg) :: ni_tg, ti_tg, z_tg, ion_pflux
+double precision, dimension(nsm-1, NRD) :: ni_exp, ion_pflux_m
+! ELITE
+double precision, allocatable, dimension(:) :: theta_equ, Bp
+double precision, allocatable, dimension(:, :) :: Bp_tmp, RR_tmp, ZZ_tmp, Bp_tg, RR_tg, ZZ_tg
 character(10) :: time_loc
 
 call DATE_AND_TIME(TIME=time_loc)
@@ -97,20 +104,20 @@ write(*, *) time_loc, ' BEGIN tglf_serial.f90'
 ! Interpolate from ASTRA grid to TGLF grid
 rho_min = RHO(1)
 rho_max = max(RHO(NA1I), RHO(NA1E), RHO(NA1N))
-write(*, *) 'Debug tglf rhomin,max', rho_min, rho_max
 xstep = (rho_max - rho_min)/(nrho_tg - 1.)
 rho_tg = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_tg) /)
 
-call qinterp(RHO(1:NA1),    TI(1:NA1), NA1, rho_tg, ti_tg(1, :), nrho_tg)
-call qinterp(RHO(1:NA1),    TE(1:NA1), NA1, rho_tg,       te_tg, nrho_tg)
-call qinterp(RHO(1:NA1),  ZIM1(1:NA1), NA1, rho_tg,  z_tg(2, :), nrho_tg)
-call qinterp(RHO(1:NA1),  ZIM2(1:NA1), NA1, rho_tg,  z_tg(3, :), nrho_tg)
-call qinterp(RHO(1:NA1),  ZIM3(1:NA1), NA1, rho_tg,  z_tg(4, :), nrho_tg)
-call qinterp(RHO(1:NA1),    NE(1:NA1), NA1, rho_tg,       ne_tg, nrho_tg)
-call qinterp(RHO(1:NA1),   ZEF(1:NA1), NA1, rho_tg,      zef_tg, nrho_tg)
-call qinterp(RHO(1:NA1), AMETR(1:NA1), NA1, rho_tg,    ametr_tg, nrho_tg)
-call qinterp(RHO(1:NA1),  ELON(1:NA1), NA1, rho_tg,     elon_tg, nrho_tg)
-call qinterp(RHO(1:NA1),  TRIA(1:NA1), NA1, rho_tg,     tria_tg, nrho_tg)
+call qinterp(RHO(1:NA1),     TI(1:NA1), NA1, rho_tg, ti_tg(1, :), nrho_tg)
+call qinterp(RHO(1:NA1),     TE(1:NA1), NA1, rho_tg,       te_tg, nrho_tg)
+call qinterp(RHO(1:NA1),   ZIM1(1:NA1), NA1, rho_tg,  z_tg(2, :), nrho_tg)
+call qinterp(RHO(1:NA1),   ZIM2(1:NA1), NA1, rho_tg,  z_tg(3, :), nrho_tg)
+call qinterp(RHO(1:NA1),   ZIM3(1:NA1), NA1, rho_tg,  z_tg(4, :), nrho_tg)
+call qinterp(RHO(1:NA1),     NE(1:NA1), NA1, rho_tg,       ne_tg, nrho_tg)
+call qinterp(RHO(1:NA1),    ZEF(1:NA1), NA1, rho_tg,      zef_tg, nrho_tg)
+call qinterp(RHO(1:NA1),  AMETR(1:NA1), NA1, rho_tg,    ametr_tg, nrho_tg)
+call qinterp(RHO(1:NA1),   ELON(1:NA1), NA1, rho_tg,     elon_tg, nrho_tg)
+call qinterp(RHO(1:NA1),   TRIA(1:NA1), NA1, rho_tg,     tria_tg, nrho_tg)
+call qinterp(RHO(1:NA1),FP_NORM(1:NA1), NA1, rho_tg,      fpn_tg, nrho_tg)
 ti_tg(2, :) = ti_tg(1, :)
 ti_tg(3, :) = ti_tg(1, :)
 ti_tg(4, :) = ti_tg(1, :)
@@ -197,7 +204,36 @@ kygrid_model_tg = 4 !1 Email Angioni Aug 1st 2023
 sat_rule = 2
 geom_flag = 1
 
-write(6, '(A, 8i4)') 'Call TGLF...', NA1, sat_rule, tglf_ns_in
+if (geom_flag == 3) then ! ELITE
+    tglf_n_elite_in = nthe_elite - 1
+    nrho_equ = SIZE(equil_now%coord_sys%position%r, dim=1)
+    nthe_equ = SIZE(equil_now%coord_sys%position%r, dim=2)
+    allocate(theta_equ(nthe_equ))
+    allocate(RR_tmp(nrho_tg, nthe_equ), ZZ_tmp(nrho_tg, nthe_equ), Bp_tmp(nrho_tg, nthe_equ  ))
+    allocate(RR_tg(nrho_tg, nthe_elite), ZZ_tg(nrho_tg, nthe_elite), Bp_tg(nrho_tg, nthe_elite))
+
+    theta_equ = equil_now%coord_sys%position%teta2d - equil_now%coord_sys%position%teta2d(1) ! theta_equ(1)=0, theta_equ(last)=2*pi
+    theta_equ(nthe_equ) = GP2
+    theta_elite = (/ ((jthe - 1.)*GP2/(nthe_elite - 1.), jthe=1, nthe_elite) /)
+
+! Interpolation on TGLF rho-grid
+    do jthe=1, nthe_equ
+        Bp = equil_now%coord_sys%bpcell(:, jthe)
+        Bp(nrho_equ) = Bp(nrho_equ-1)  ! Defined up to nequil-1
+        call qinterp(equil_now%profiles_1d%psi, equil_now%coord_sys%position%r(:, jthe), nrho_equ, fpn_tg, RR_tmp(:, jthe), nrho_tg)
+        call qinterp(equil_now%profiles_1d%psi, equil_now%coord_sys%position%z(:, jthe), nrho_equ, fpn_tg, ZZ_tmp(:, jthe), nrho_tg)
+        call qinterp(equil_now%profiles_1d%psi, Bp, nrho_equ, fpn_tg, Bp_tmp(:, jthe), nrho_tg)
+    enddo
+
+! Interpolation on ELITE theta-grid
+    do jrho=1, nrho_tg
+        call qinterp(theta_equ, RR_tmp(jrho, :), nthe_equ, theta_elite, RR_tg(jrho, :), nthe_elite)
+        call qinterp(theta_equ, ZZ_tmp(jrho, :), nthe_equ, theta_elite, ZZ_tg(jrho, :), nthe_elite)
+        call qinterp(theta_equ, Bp_tmp(jrho, :), nthe_equ, theta_elite, Bp_tg(jrho, :), nthe_elite)
+    enddo
+endif
+
+write(6, '(A, 8i4)') 'Call TGLF...', NA1, nrho_tg, sat_rule, tglf_ns_in
 
 SELECT CASE(sat_rule)
 CASE(0)
@@ -233,7 +269,7 @@ tglf_ibranch_in    = -1
 tglf_nmodes_in     = nmodes_tg
 tglf_nbasis_max_in = 6 ! 4 email Angioni Aug 1st 2023
 tglf_nbasis_min_in = 2
-tglf_nxgrid_in     = 16
+tglf_nxgrid_in     = 16 ! (24 email Gary, for ELITE)
 tglf_nky_in        = 19
 tglf_units_in   = 'CGYRO'
 tglf_path_in = '../tglf/'
@@ -385,6 +421,18 @@ radial_loop: do jr=1, nrho_tg
     T0  = 1E3 *te_tg(jr)   ! temperature scale used by GYRO
     Bunit = 1E4*BTOR*drhodr*rho_tg(jr)/ametr_tg(jr)  ! Miller geometry magnetic field unit
 
+! Magnetic surface contour for ELITE
+    if (geom_flag == 3) then
+        tglf_R_elite_in  = 0.
+        tglf_Z_elite_in  = 0.
+        tglf_Bp_elite_in = 0.
+        tglf_R_elite_in (1: nthe_elite) = 100.*RR_tg(jr, :)/a0
+        tglf_Z_elite_in (1: nthe_elite) = 100.*ZZ_tg(jr, :)/a0
+        tglf_Bp_elite_in(1: nthe_elite) = Bp_tg(jr, :)/(Bunit*1.E-4)
+        write(*, *) jr, tglf_R_elite_in (1: 50)
+        write(*, *) jr, tglf_Bp_elite_in (1: 50)
+    endif
+
 ! derived units for the plasma
 
     cs0 = SQRT(k0*T0/m0)          ! thermal velocity unit cm/sec
@@ -442,7 +490,12 @@ radial_loop: do jr=1, nrho_tg
     tglf_q_loc_in       = q_tg(jr)
     tglf_q_prime_loc_in = (q_tg(jr)/rmin_tg)*dq/dr
     tglf_p_prime_loc_in = (k0/Bunit**2)*(q_tg(jr)/rmin_tg)*dptot/dr
+! ELITE settings
+    tglf_q_ELITE_in       = tglf_q_loc_in
+    tglf_q_prime_ELITE_in = tglf_q_prime_loc_in
+    tglf_p_prime_ELITE_in = tglf_p_prime_loc_in
 
+    
     tglf_rmin_sa_in     = 1E2*ametr_tg(jr)/a0
     tglf_rmaj_sa_in     = 1E2*rmaj_tg(jr)/a0
     tglf_q_sa_in        = q_tg(jr)
@@ -456,9 +509,13 @@ radial_loop: do jr=1, nrho_tg
         write(file_dump_local, '(A11, I0)') 'input.tglf_', jr
     endif
 
+
+! ------ Call TGLF ------
+    write(*, *) 'Calling TGLF', jr
     call tglf_run
     write(*, *) 'Calling TGLF done', jr
-
+! -----------------------
+    
 ! Transport coefficients
 
     ion_eflux = SUM(tglf_ion_eflux_out(1: tglf_ns_in-1))
