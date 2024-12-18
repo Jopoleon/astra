@@ -1,4 +1,3 @@
-!----------------------------------------------------------------------|
 subroutine tglf_serial(CHI, CHE, VIN, DPH, DPL, DPR, XTB, GM1, OM1)
 
 use tglf_interface, only: nsm, tglf_zs_in, tglf_ns_in, tglf_mass_in, &
@@ -41,7 +40,7 @@ use const_inc, only: BTOR, RTOR, GP2, ABC, &
     NA1, NA1N, NA1E, NA1I
 use status_inc, only: NE, TE, NI, TI, &
     ZEF, ZIM1, ZIM2, ZIM3, PBLON, PBPER, &
-    PFAST, NIZ3, AMAIN, ER, MU, FP_NORM, &
+    PFAST, NIZ3, AMAIN, ER, MU, FP, &
     RHO, AMETR, SHIF, ELON, &
     NDEUT, NIZ1, NTRIT, NIZ2, NHE3, &
     TRIA, VTOR, NIBM, G11, VPOL, VRS, SHEAR
@@ -49,7 +48,7 @@ use parameters_a2equil, only: equil_now
 
 implicit none
 
-integer, parameter :: nrho_tg=40, nthe_elite=256
+integer, parameter :: nrho_tg=40, nthe_elite=400
 double precision, parameter :: &
    k0   = 1.6022E-12, &       ! erg/ev
    e0   = 4.8032E-10, &       ! elementary charge (statcoulombs)
@@ -87,7 +86,7 @@ double precision, dimension(NRD) :: gradrhosq_exp, rmaj_exp, q_exp, &
     chie_m, chii_m, elec_pflux_m, exchi_m, ptot_exp, gamma_m, omega_m
 double precision, dimension(nrho_tg) :: mtori, chie, chii, exchi, elec_pflux, rho_tg, &
     gamma_max, omega_max, kymax, te_tg, ne_tg, vpar_tg, vper_tg, vexb_tg, &
-    ametr_tg, fpn_tg, elon_tg, tria_tg, gradrhosq_tg, rmaj_tg, ptot_tg, q_tg, zef_tg
+    ametr_tg, fp_tg, elon_tg, tria_tg, gradrhosq_tg, rmaj_tg, ptot_tg, q_tg, zef_tg
 double precision, dimension(nthe_elite) :: theta_elite
 double precision, allocatable, dimension(:) :: gamma, omega, kyspectrum, efluxspectrum, ifluxspectrum, pfluxspectrum
 double precision, dimension(nsm-1) :: dti, dni
@@ -117,7 +116,7 @@ call qinterp(RHO(1:NA1),    ZEF(1:NA1), NA1, rho_tg,      zef_tg, nrho_tg)
 call qinterp(RHO(1:NA1),  AMETR(1:NA1), NA1, rho_tg,    ametr_tg, nrho_tg)
 call qinterp(RHO(1:NA1),   ELON(1:NA1), NA1, rho_tg,     elon_tg, nrho_tg)
 call qinterp(RHO(1:NA1),   TRIA(1:NA1), NA1, rho_tg,     tria_tg, nrho_tg)
-call qinterp(RHO(1:NA1),FP_NORM(1:NA1), NA1, rho_tg,      fpn_tg, nrho_tg)
+call qinterp(RHO(1:NA1),     FP(1:NA1), NA1, rho_tg,       fp_tg, nrho_tg)
 ti_tg(2, :) = ti_tg(1, :)
 ti_tg(3, :) = ti_tg(1, :)
 ti_tg(4, :) = ti_tg(1, :)
@@ -202,7 +201,7 @@ endif
 kygrid_model_tg = 4 !1 Email Angioni Aug 1st 2023
 
 sat_rule = 2
-geom_flag = 1
+geom_flag = 3
 
 if (geom_flag == 3) then ! ELITE
     tglf_n_elite_in = nthe_elite - 1
@@ -220,9 +219,11 @@ if (geom_flag == 3) then ! ELITE
     do jthe=1, nthe_equ
         Bp = equil_now%coord_sys%bpcell(:, jthe)
         Bp(nrho_equ) = Bp(nrho_equ-1)  ! Defined up to nequil-1
-        call qinterp(equil_now%profiles_1d%psi, equil_now%coord_sys%position%r(:, jthe), nrho_equ, fpn_tg, RR_tmp(:, jthe), nrho_tg)
-        call qinterp(equil_now%profiles_1d%psi, equil_now%coord_sys%position%z(:, jthe), nrho_equ, fpn_tg, ZZ_tmp(:, jthe), nrho_tg)
-        call qinterp(equil_now%profiles_1d%psi, Bp, nrho_equ, fpn_tg, Bp_tmp(:, jthe), nrho_tg)
+        write(*, *) 'eq psi1d', equil_now%profiles_1d%psi
+        write(*, *) 'tg psin', fp_tg
+        call qinterp(equil_now%profiles_1d%psi, equil_now%coord_sys%position%r(:, jthe), nrho_equ, fp_tg, RR_tmp(:, jthe), nrho_tg)
+        call qinterp(equil_now%profiles_1d%psi, equil_now%coord_sys%position%z(:, jthe), nrho_equ, fp_tg, ZZ_tmp(:, jthe), nrho_tg)
+        call qinterp(equil_now%profiles_1d%psi, Bp, nrho_equ, fp_tg, Bp_tmp(:, jthe), nrho_tg)
     enddo
 
 ! Interpolation on ELITE theta-grid
@@ -267,9 +268,9 @@ tglf_new_eikonal_in    = .True.
 tglf_adiabatic_elec_in = .False.
 tglf_ibranch_in    = -1
 tglf_nmodes_in     = nmodes_tg
-tglf_nbasis_max_in = 6 ! 4 email Angioni Aug 1st 2023
+tglf_nbasis_max_in = 6 ! email Angioni Aug 1st 2023, 4 old default
 tglf_nbasis_min_in = 2
-tglf_nxgrid_in     = 16 ! (24 email Gary, for ELITE)
+tglf_nxgrid_in     = 24 ! (24 email Gary, for ELITE), 16 old default
 tglf_nky_in        = 19
 tglf_units_in   = 'CGYRO'
 tglf_path_in = '../tglf/'
@@ -280,10 +281,10 @@ tglf_use_ave_ion_grid_in    = .true. ! Email Angioni Aug 1st 2023
 tglf_sign_Bt_in = 1
 tglf_sign_It_in = 1
 
-tglf_ky_in = 0.3
-tglf_width_in      = 1.65
-tglf_width_min_in  = 0.3
-tglf_nwidth_in     = 21
+tglf_ky_in        = 0.3
+tglf_width_in     = 1.65
+tglf_width_min_in = 0.3
+tglf_nwidth_in    = 21
 
 tglf_geometry_flag_in = geom_flag
 tglf_dump_flag_in     = .False.   ! Dumps input file
@@ -421,18 +422,6 @@ radial_loop: do jr=1, nrho_tg
     T0  = 1E3 *te_tg(jr)   ! temperature scale used by GYRO
     Bunit = 1E4*BTOR*drhodr*rho_tg(jr)/ametr_tg(jr)  ! Miller geometry magnetic field unit
 
-! Magnetic surface contour for ELITE
-    if (geom_flag == 3) then
-        tglf_R_elite_in  = 0.
-        tglf_Z_elite_in  = 0.
-        tglf_Bp_elite_in = 0.
-        tglf_R_elite_in (1: nthe_elite) = 100.*RR_tg(jr, :)/a0
-        tglf_Z_elite_in (1: nthe_elite) = 100.*ZZ_tg(jr, :)/a0
-        tglf_Bp_elite_in(1: nthe_elite) = Bp_tg(jr, :)/(Bunit*1.E-4)
-        write(*, *) jr, tglf_R_elite_in (1: 50)
-        write(*, *) jr, tglf_Bp_elite_in (1: 50)
-    endif
-
 ! derived units for the plasma
 
     cs0 = SQRT(k0*T0/m0)          ! thermal velocity unit cm/sec
@@ -490,11 +479,9 @@ radial_loop: do jr=1, nrho_tg
     tglf_q_loc_in       = q_tg(jr)
     tglf_q_prime_loc_in = (q_tg(jr)/rmin_tg)*dq/dr
     tglf_p_prime_loc_in = (k0/Bunit**2)*(q_tg(jr)/rmin_tg)*dptot/dr
-! ELITE settings
     tglf_q_ELITE_in       = tglf_q_loc_in
     tglf_q_prime_ELITE_in = tglf_q_prime_loc_in
     tglf_p_prime_ELITE_in = tglf_p_prime_loc_in
-
     
     tglf_rmin_sa_in     = 1E2*ametr_tg(jr)/a0
     tglf_rmaj_sa_in     = 1E2*rmaj_tg(jr)/a0
@@ -509,6 +496,12 @@ radial_loop: do jr=1, nrho_tg
         write(file_dump_local, '(A11, I0)') 'input.tglf_', jr
     endif
 
+! Magnetic surface contour for ELITE
+    if (geom_flag == 3) then
+        tglf_R_elite_in (1: tglf_n_elite_in+1) = 100.*RR_tg(jr, 1:tglf_n_elite_in+1)/a0
+        tglf_Z_elite_in (1: tglf_n_elite_in+1) = 100.*ZZ_tg(jr, 1:tglf_n_elite_in+1)/a0
+        tglf_Bp_elite_in(1: tglf_n_elite_in+1) = Bp_tg(jr, 1:tglf_n_elite_in+1)/(Bunit*1.E-4)
+    endif
 
 ! ------ Call TGLF ------
     write(*, *) 'Calling TGLF', jr
