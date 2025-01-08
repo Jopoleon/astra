@@ -37,10 +37,10 @@ clean:
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f
 	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -c $< -o $@
 
-$(OBJ_DIR)/tglf_serial.o: $(SRC_DIR)/tglf_serial.f90
+$(OBJ_DIR)/tglf_serial.o: $(SRC_DIR)/tglf_serial.f90 $(TGLF_LIB)
 	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -I$(TGLF_INC) -c $< -o $@
 
-$(OBJ_DIR)/qlknn_serial.o: $(SRC_DIR)/qlknn_serial.f90
+$(OBJ_DIR)/qlknn_serial.o: $(SRC_DIR)/qlknn_serial.f90 $(QLKNN_LIB)
 	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -I$(QLKNN_INC) -c $< -o $@
 
 $(OBJ_DIR)/rabbit.o: $(SRC_DIR)/rabbit.f90
