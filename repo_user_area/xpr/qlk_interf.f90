@@ -70,7 +70,7 @@ type(qlk_primi_meth_0)        :: primi_meth_0
 
 integer, parameter :: ntheta=64, numecoefs=13, numicoefs=7, dimx=1, dimn=16, numsols=3, phys_meth=0, nradial=5, nspec_max=7
 
-real, parameter :: &
+double precision, parameter :: &
     k0  = 1.6022E-12, &       ! erg/ev
     e0  = 4.8032E-10, &       ! elementary charge (statcoulombs)
     e00 = 1.6020e-19, &       ! elementary charge (C)
@@ -86,20 +86,20 @@ integer :: nions, coll_flag_in, rot_flag_in, verbose_in, el_type_in, &
     integration_routine_in, separateflux_in
 integer, dimension(dimx, nspec_max-1) :: ion_type_in
 
-real(kind=DBL) :: relacc1_in, relacc2_in, absacc1_in, absacc2_in, R0_in, &
+double precision :: relacc1_in, relacc2_in, absacc1_in, absacc2_in, R0_in, &
     ETGmultin, collmultin, timeout_in, rhomin, rhomax, rhoscale, xstep
-real(kind=DBL), dimension(dimn) :: kthetarhos_in
-real(kind=DBL), dimension(dimx) :: x_in, rho_in, Ro_in, Rmin_in, Bo_in, &
+double precision, dimension(dimn) :: kthetarhos_in
+double precision, dimension(dimx) :: x_in, rho_in, Ro_in, Rmin_in, Bo_in, &
     qx_in, smag_in, alphax_in, Tex_in, Nex_in, Ate_in, Ane_in, anise_in, &
     danisedr_in, Machtor_in, Autor_in, Machpar_in, Aupar_in, gammaE_in, &
     epf_GB_out, eef_GB_out
-real(kind=DBL), dimension(dimx, nspec_max-1) :: Tix_in, ninorm_in, &
+double precision, dimension(dimx, nspec_max-1) :: Tix_in, ninorm_in, &
     Ati_in, Ani_in, anis_in, danisdr_in, Ai_in, Zi_in, ipf_GB_out, ief_GB_out
-real(kind=DBL), dimension(dimx, dimn, numsols) :: gam_GB_out, ome_GB_out
-real(kind=DBL), dimension(dimx, nspec_max - 1, numicoefs) :: cftrans_out
+double precision, dimension(dimx, dimn, numsols) :: gam_GB_out, ome_GB_out
+double precision, dimension(dimx, nspec_max - 1, numicoefs) :: cftrans_out
 
 ! Old solution for non-reset runs
-REAL(KIND=DBL), DIMENSION(:, :, :), ALLOCATABLE :: oldrsol, oldisol, oldrfdsol, oldifdsol
+double precision, DIMENSION(:, :, :), ALLOCATABLE :: oldrsol, oldisol, oldrfdsol, oldifdsol
 
 !-----------------------------------------
 LOGICAL :: exist1, exist2, exist3, exist4, exist5 !used for checking for existence of files
@@ -110,22 +110,22 @@ INTEGER :: myunit=700, i_mpic
 integer :: jr_min, jr_max, jrho, j0, j01, j02, n_radial
 integer :: i, j, k, jradial, jjgrid(nradial), jion
 
-real(kind=DBL) :: bmod, bpolz
-real(kind=DBL) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
+double precision :: bmod, bpolz
+double precision :: drmin, drmaj, drho, dte, dne, dq, dptot, &
     delong, dtrian, dvper, drhodr, dstep, dr, dv_r
-real(kind=DBL) :: Bunit, cs00, rhos00, omega0, rhostar2
-real(kind=DBL) :: T0, m0, drho_cs
+double precision :: Bunit, cs00, rhos00, omega0, rhostar2
+double precision :: T0, m0, drho_cs
 ! Shifted cicle geometry inputs
-real(kind=DBL) :: gamma_e_tg, mach_fac, ql_fac
+double precision :: gamma_e_tg, mach_fac, ql_fac
 
-real(kind=DBL), dimension(nrho) :: vexb2, vpar_m, vper_m, &
+double precision, dimension(nrho) :: vexb2, vpar_m, vper_m, &
     gradrhosq_exp, rmaj_exp, q_exp, &
     chie_m, chii_m, pfluxi_m, exchi_m, ptot
 
-real(kind=DBL), dimension(nradial) :: chie, chii, exchi, pfluxi, rho_tg
-real(kind=DBL), dimension(nspec_max-1) :: dti, dni
-real(kind=DBL), dimension(nspec_max-1, nrho) :: ni_m, ti_m
-real(kind=DBL) :: vpar_in, vpar_shear_in, cexb
+double precision, dimension(nradial) :: chie, chii, exchi, pfluxi, rho_tg
+double precision, dimension(nspec_max-1) :: dti, dni
+double precision, dimension(nspec_max-1, nrho) :: ni_m, ti_m
+double precision :: vpar_in, vpar_shear_in, cexb
 
 COMPLEX(kind=DBL), DIMENSION(:, :, :), ALLOCATABLE :: oldsol_in, oldfdsol_in
 complex(kind=DBL), dimension(dimx, dimn, numsols) :: sol_out, fdsol_out

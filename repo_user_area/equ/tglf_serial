@@ -128,10 +128,10 @@ CD = CUBM+CUECR; !CD source from NBI + PECRH
 ! Profile output
 !----------------
 
-Te\TE\\TEX\-3;	Ne\NE\\NEX;	hetg\CAR22\10;	Ware\-VP*VRAS\5;
+Te\TE\\TEX\-3;	Ne\NE\\NEX;	hetg\CAR22\5;	Ware\-VP*VRAS\2;
 Pnbe\PEBM\-6; 	Zef\ZEF;	snNB\SNEBM\50;	Prad\PRAD;
 
-TI\TI\\TIX\-3;	vtor\VTOR;	xitg\CAR21\10;	CNtg\CAR24\5;
+TI\TI\\TIX\-3;	vtor\VTOR;	xitg\CAR21\5;	CNtg\CAR24\2;
 Pnbi\PIBM\-6; 	exch\CAR42;	sneu\SNNEU*NE\50;	Pecr\PEECR;
 
 q\1./MU;	QE\QE\5;	QI\QI\5;	eccd\CUECR\-4;

@@ -28,8 +28,6 @@ use tglf_interface, only: nsm, tglf_zs_in, tglf_ns_in, tglf_mass_in, &
     tglf_xwell_sa_in, tglf_theta0_sa_in, file_dump_local, &
     tglf_elec_eflux_out, tglf_ion_eflux_out, tglf_ion_mflux_out, &
     tglf_elec_pflux_out, tglf_ion_pflux_out, tglf_elec_expwd_out, &
-    tglf_q_fourier_in, tglf_q_prime_fourier_in, tglf_p_prime_fourier_in, &
-    tglf_nfourier_in, tglf_fourier_in, &
     tglf_q_elite_in, tglf_q_prime_elite_in, tglf_p_prime_elite_in, &
     tglf_n_ELITE_in, tglf_R_ELITE_in, tglf_Z_ELITE_in, tglf_Bp_ELITE_in
 use tglf_pkg, only: get_eigenvalue_spectrum_out, get_ky_spectrum_out, &
@@ -49,7 +47,7 @@ use parameters_a2equil, only: equil_now
 
 implicit none
 
-logical, parameter :: debug=.false.
+logical, parameter :: debug_elite=.false.
 integer, parameter :: nrho_tg=40, nthe_elite=400, mpol=6
 double precision, parameter :: &
    k0   = 1.6022E-12, &       ! erg/ev
@@ -88,22 +86,20 @@ double precision, dimension(NRD) :: gradrhosq_exp, rmaj_exp, q_exp, &
     chie_m, chii_m, elec_pflux_m, exchi_m, ptot_exp, gamma_m, omega_m
 double precision, dimension(nrho_tg) :: mtori, chie, chii, exchi, elec_pflux, rho_tg, &
     gamma_max, omega_max, kymax, te_tg, ne_tg, vpar_tg, vper_tg, vexb_tg, &
-    ametr_tg, pf_tg, pfn_tg, elon_tg, tria_tg, rmaj_tg, ptot_tg, q_tg, zef_tg
-double precision, dimension(nthe_elite) :: theta_elite, cos_mthe, sin_mthe, da_elite, drda, dzda
+    ametr_tg, elon_tg, tria_tg, rmaj_tg, ptot_tg, q_tg, zef_tg, pfn_tg
+double precision, dimension(nthe_elite) :: theta_elite, RR_elite, ZZ_elite, Bp_elite
 double precision, allocatable, dimension(:) :: gamma, omega, kyspectrum, efluxspectrum, ifluxspectrum, pfluxspectrum
 double precision, dimension(nsm-1) :: dti, dni
 double precision, dimension(nsm-1, nrho_tg) :: ni_tg, ti_tg, z_tg, ion_pflux
 double precision, dimension(nsm-1, NRD) :: ni_exp, ion_pflux_m
-! Fourier moments
-double precision, dimension(mpol) :: xrc, xrs, xzc, xzs
 ! ELITE
-double precision, allocatable, dimension(:) :: pfn_equ, theta_equ, Bp_elite, RR_elite, ZZ_elite
-double precision, allocatable, dimension(:, :) :: Bp_tg, RR_tg, ZZ_tg, da_tg
+double precision, allocatable, dimension(:) :: theta_equ, pfn_equ
+double precision, allocatable, dimension(:, :) :: RR_tg, ZZ_tg, Bp_tg
 character(len=10) :: time_loc
-character(len=120) :: f_fourier, f_elite
+character(len=120) :: f_elite
 
 call DATE_AND_TIME(TIME=time_loc)
-write(*, *) time_loc, ' BEGIN tglf_serial.f90'
+write(*, '(6A)') time_loc(1:2), ':', time_loc(3:4), ':', time_loc(5:6), ' BEGIN tglf_serial.f90'
 
 ! Interpolate from ASTRA grid to TGLF grid
 rho_min = RHO(1)
@@ -122,7 +118,7 @@ call qinterp(RHO(1:NA1),    ZEF(1:NA1), NA1, rho_tg,      zef_tg, nrho_tg)
 call qinterp(RHO(1:NA1),  AMETR(1:NA1), NA1, rho_tg,    ametr_tg, nrho_tg)
 call qinterp(RHO(1:NA1),   ELON(1:NA1), NA1, rho_tg,     elon_tg, nrho_tg)
 call qinterp(RHO(1:NA1),   TRIA(1:NA1), NA1, rho_tg,     tria_tg, nrho_tg)
-call qinterp(RHO(1:NA1),FP_NORM(1:NA1), NA1, rho_tg,      pfn_tg, nrho_tg)
+
 ti_tg(2, :) = ti_tg(1, :)
 ti_tg(3, :) = ti_tg(1, :)
 ti_tg(4, :) = ti_tg(1, :)
@@ -158,6 +154,7 @@ call qinterp(RHO(1:NA1), ptot_exp(1:NA1), NA1, rho_tg,  ptot_tg, nrho_tg)
 call qinterp(RHO(1:NA1), vpar_exp(1:NA1), NA1, rho_tg,  vpar_tg, nrho_tg)
 call qinterp(RHO(1:NA1), vper_exp(1:NA1), NA1, rho_tg,  vper_tg, nrho_tg)
 call qinterp(RHO(1:NA1), vexb_exp(1:NA1), NA1, rho_tg,  vexb_tg, nrho_tg)
+call qinterp(RHO(1:NA1),  FP_NORM(1:NA1), NA1, rho_tg,   pfn_tg, nrho_tg)
 
 ! Electrons and main ions
 tglf_zs_in(1) = -1.
@@ -210,36 +207,41 @@ endif
 kygrid_model_tg = 4 !1 Email Angioni Aug 1st 2023
 
 sat_rule = 2
-geom_flag = 3
+geom_flag = 1
 
-if (geom_flag == 2 .or. geom_flag == 3) then
-    tglf_nfourier_in = mpol
+if (geom_flag == 3) then
     tglf_n_elite_in  = nthe_elite - 1
     nrho_equ = SIZE(equil_now%coord_sys%position%r, dim=1)
     nthe_equ = SIZE(equil_now%coord_sys%position%r, dim=2)
-    allocate(theta_equ(nthe_equ))
     allocate(pfn_equ(nrho_equ))
-    allocate(RR_tg(nrho_tg, nthe_equ), ZZ_tg(nrho_tg, nthe_equ), Bp_tg(nrho_tg, nthe_equ), da_tg(nrho_tg, nthe_equ))
-    allocate(RR_elite(nthe_elite), ZZ_elite(nthe_elite), Bp_elite(nthe_elite))
+    allocate(theta_equ(nthe_equ))
+    allocate(RR_tg(nrho_tg, nthe_equ), ZZ_tg(nrho_tg, nthe_equ), Bp_tg(nrho_tg, nthe_equ))
 
-    theta_equ = equil_now%coord_sys%position%teta2d
-    dtheta_elite = GP2/dble(nthe_elite-1)
-    theta_elite = (/ ((jthe - 1.)*dtheta_elite, jthe=1, nthe_elite) /)
+! Interpolation on TGLF rho-grid
+    rho_min = RHO(1)
+    rho_max = max(RHO(NA1I), RHO(NA1E), RHO(NA1N))
+    xstep = (rho_max - rho_min)/(nrho_tg - 1.)
+    rho_tg = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_tg) /)
+
+    call qinterp(RHO(1:NA1), FP_NORM(1:NA1), NA1, rho_tg, pfn_tg, nrho_tg)
 
     pfn_equ = (equil_now%profiles_1d%psi - equil_now%profiles_1d%psi(1))/(equil_now%profiles_1d%psi(nrho_equ) - equil_now%profiles_1d%psi(1))
 
 ! Interpolation on TGLF rho-grid
     do jthe=1, nthe_equ
-        call qinterp(pfn_equ, equil_now%coord_sys%position%r   (:, jthe), nrho_equ, pfn_tg, RR_tg(:, jthe), nrho_tg)
-        call qinterp(pfn_equ, equil_now%coord_sys%position%z   (:, jthe), nrho_equ, pfn_tg, ZZ_tg(:, jthe), nrho_tg)
-        call qinterp(pfn_equ, equil_now%coord_sys%bpcell       (:, jthe), nrho_equ, pfn_tg, Bp_tg(:, jthe), nrho_tg)
-        call qinterp(pfn_equ, equil_now%coord_sys%position%rmin(:, jthe), nrho_equ, pfn_tg, da_tg(:, jthe), nrho_tg)
+        call qinterp(pfn_equ, equil_now%coord_sys%position%r(:, jthe), nrho_equ, pfn_tg, RR_tg(:, jthe), nrho_tg)
+        call qinterp(pfn_equ, equil_now%coord_sys%position%z(:, jthe), nrho_equ, pfn_tg, ZZ_tg(:, jthe), nrho_tg)
+        call qinterp(pfn_equ, equil_now%coord_sys%bpcell    (:, jthe), nrho_equ, pfn_tg, Bp_tg(:, jthe), nrho_tg)
     enddo
-    da_tg(1, :) = da_tg(2, :) 
-    da_tg(nrho_tg, :) = da_tg(nrho_tg-1, :) 
+
+    deallocate(pfn_equ)
+
+    theta_equ = equil_now%coord_sys%position%teta2d
+    dtheta_elite = GP2/dble(nthe_elite-1)
+    theta_elite = (/ ((jthe - 1.)*dtheta_elite, jthe=1, nthe_elite) /)
 endif
 
-write(6, '(A, 4i4)') 'Call TGLF...', NA1, nrho_tg, sat_rule, tglf_ns_in
+write(6, '(A, 5i4)') 'Call TGLF...', NA1, nrho_tg, sat_rule, geom_flag, tglf_ns_in
 
 SELECT CASE(sat_rule)
 CASE(0)
@@ -486,9 +488,6 @@ radial_loop: do jr=1, nrho_tg
     tglf_q_prime_loc_in = (q_tg(jr)/rmin_tg)*dq/dr
     tglf_p_prime_loc_in = (k0/Bunit_gauss**2)*(q_tg(jr)/rmin_tg)*dptot/dr
 
-    tglf_q_fourier_in       = tglf_q_loc_in
-    tglf_q_prime_fourier_in = tglf_q_prime_loc_in
-    tglf_p_prime_fourier_in = tglf_p_prime_loc_in
     tglf_q_ELITE_in       = tglf_q_loc_in
     tglf_q_prime_ELITE_in = tglf_q_prime_loc_in
     tglf_p_prime_ELITE_in = tglf_p_prime_loc_in
@@ -506,26 +505,7 @@ radial_loop: do jr=1, nrho_tg
         write(file_dump_local, '(A11, I0)') 'input.tglf_', jr
     endif
 
-    if (geom_flag == 2) then ! Fourier moments
-        call scrunch2d(mpol, nthe_elite, RR_tg(jr, :), ZZ_tg(jr, :), xrc, xrs, xzc, xzs)
-        tglf_fourier_in(1, 0:mpol-1) = xrc/a0_m
-        tglf_fourier_in(2, 0:mpol-1) = xrs/a0_m
-        tglf_fourier_in(3, 0:mpol-1) = xzc/a0_m
-        tglf_fourier_in(4, 0:mpol-1) = xzs/a0_m
-! Radial derivatives       
-        call qinterp(theta_equ, da_tg(jr, :), nthe_equ, theta_elite, da_elite, nthe_elite)
-        drda = (RR_tg(jr_r, :) - RR_tg(jr_l, :))/da_elite
-        dzda = (ZZ_tg(jr_r, :) - ZZ_tg(jr_l, :))/da_elite
-        do mom_order=0, mpol-1
-            cos_mthe(:) = cos(dble(mom_order)*theta_elite(:))
-            sin_mthe(:) = sin(dble(mom_order)*theta_elite(:))
-            tglf_fourier_in(5, mom_order) = sum(drda*cos_mthe)  ! <Zsin>
-            tglf_fourier_in(6, mom_order) = sum(drda*sin_mthe)  ! <Rsin>
-            tglf_fourier_in(7, mom_order) = sum(dzda*cos_mthe)  ! <Zsin>
-            tglf_fourier_in(8, mom_order) = sum(dzda*sin_mthe)  ! <Rsin>
-        enddo
-        tglf_fourier_in(5:8, :) = 2.*tglf_fourier_in(5:8, :)/dble(nthe_elite - 1)
-    else if (geom_flag == 3) then ! R, Z contours for ELITE
+    if (geom_flag == 3) then ! R, Z contours for ELITE
 ! Interpolation on ELITE theta-grid
         call qinterp(theta_equ, RR_tg(jr, :), nthe_equ, theta_elite, RR_elite, nthe_elite)
         call qinterp(theta_equ, ZZ_tg(jr, :), nthe_equ, theta_elite, ZZ_elite, nthe_elite)
@@ -533,18 +513,11 @@ radial_loop: do jr=1, nrho_tg
         RR_elite(tglf_n_elite_in+1) = RR_elite(1)
         ZZ_elite(tglf_n_elite_in+1) = ZZ_elite(1)
         Bp_elite(tglf_n_elite_in+1) = Bp_elite(1)
-        tglf_R_elite_in  = RR_elite/a0_m
-        tglf_Z_elite_in  = ZZ_elite/a0_m
-        tglf_Bp_elite_in = Bp_elite/Bunit_T
+        tglf_R_elite_in(1:tglf_n_elite_in+1)  = RR_elite/a0_m
+        tglf_Z_elite_in(1:tglf_n_elite_in+1)  = ZZ_elite/a0_m
+        tglf_Bp_elite_in(1:tglf_n_elite_in+1) = Bp_elite/Bunit_T
 
-        if (debug) then
-            write(f_fourier, '(A11, I0)') 'four4tglf_', jr
-            open(21, FILE=f_fourier)
-            do jthe=1, nthe_elite
-                write(21, '(8F)') tglf_fourier_in(1:8, jthe)
-            enddo
-            close(21)
-
+        if (debug_elite) then
             write(f_elite, '(A11, I0)') 'elite4tglf_', jr
             open(31, FILE=f_elite)
             do jthe=1, nthe_elite
@@ -629,7 +602,7 @@ do jrho=1, NA1
 enddo
 
 call DATE_AND_TIME(TIME=time_loc)
-write(*, *) time_loc, ' END tglf_serial.f90'
+write(*, '(6A)') time_loc(1:2), ':', time_loc(3:4), ':', time_loc(5:6), ' END tglf_serial.f90'
 
 return
 END subroutine tglf_serial

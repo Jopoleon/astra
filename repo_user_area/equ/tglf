@@ -3,6 +3,7 @@
 IPL=IPLX;
 SGNIP=1.d0;
 SGNBT=-1.d0;
+IPEQL=5;
 
 NEQUIL = 91;
 MEQUIL = 90;
@@ -68,6 +69,7 @@ CAR11=CUBM;
 CF16=0.85;  ! Boundary
 CF12=0.02;  ! Frequency of calls
 CRAD3=CF16*NA1/16. + 0.001;
+a2tglf_elite<:CF12:::;
 xpr/tglfi( int(CRAD3*0)+1 ,int(CRAD3*1 ) )&<:CF12:::;
 xpr/tglfi( int(CRAD3*1)+1 ,int(CRAD3*2 ) )&<:CF12:::;
 xpr/tglfi( int(CRAD3*2)+1 ,int(CRAD3*3 ) )&<:CF12:::;

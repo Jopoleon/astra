@@ -1,77 +1,50 @@
-!quadratic inerpolation
-!----------------------------------------------------------------------|
-subroutine qinterp(x_in, y_in, n_in, x_out, y_out, n_out)
-!----------------------------------------------------------------------|
-implicit none
+subroutine qinterp(x_in, y_in, Nx_in, x_out, y_out, Nx_out)
 
-integer, intent(in) :: n_in, n_out
+! Quadratic inerpolation
+
+integer, intent(in) :: Nx_in, Nx_out
+double precision, intent(in), dimension(Nx_in) :: x_in, y_in
+double precision, intent(in)  :: x_out(Nx_out)
+double precision, intent(out) :: y_out(Nx_out)
+
 integer :: i, j
+double precision :: A, B, C, x1, x2, x3, y1, y2, y3, xloc_out
 
-real, intent(in) , dimension(n_in)  :: x_in, y_in
-real, intent(in) , dimension(n_out) :: x_out
-real, intent(out), dimension(n_out) :: y_out
-real A, B
-real z1, z2, z3, z4
-real t1, t3, t4
-
-do i=1, n_out
-
-    t1 = x_out(i)
-
-    do j=2, n_in
-        z1 = x_in(j-1)
-        z2 = x_in(j)
- 
-        if (t1 .eq. z1) then
-            y_out(i) = y_in(j-1)
+do i=1, Nx_out
+    xloc_out = x_out(i)
+    do j=2, Nx_in-1
+        x1 = x_in(j-1)
+        x2 = x_in(j)
+        x3 = x_in(j+1)
+        y1 = y_in(j-1)
+        y2 = y_in(j)
+        y3 = y_in(j+1)
+        if (xloc_out == x1) then
+            y_out(i) = y1
+            EXIT
+        else if (xloc_out == x2) then
+            y_out(i) = y2
+            EXIT
+        else if (xloc_out == x3) then
+            y_out(i) = y3
+            EXIT
+        else if (xloc_out < x1 .and. j == 2) then
+            x1 = x_in(j-1)**2
+            x2 = x_in(j)**2
+            B = (y1 - y2)/(x1 - x2)
+            C = y2 - B*x2
+            y_out(i) = B * xloc_out**2 + C
+            EXIT
+        else if ( (xloc_out > x1 .and. xloc_out < x3) .or. &
+                  (xloc_out > x3 .and. j == Nx_in-1) ) then
+            A = (y3 - y2 - (x3 - x2)*(y1 - y2)/(x1 - x2)) / ((x3 - x2)*(x3 - x1))
+            B = (y1 - y2)/(x1 - x2) - A*(x1 + x2)
+            C = y2 - A* x2**2 - B*x2
+            y_out(i) = A * xloc_out**2 + B*xloc_out + C
             EXIT
         endif
-
-        if (t1 .eq. z2) then
-            y_out(i) = y_in(j)
-            EXIT
-        endif
-
-        if (t1 .gt. z1 .and. t1 .lt. z2) then
-            t3 = x_in(j-1)
-            t4 = x_in(j)
- 
-            z3 = y_in(j-1)
-            z4 = y_in(j)
-            A = (z4 - z3)/(t4 - t3)
-            B = z3 - t3*A
-            y_out(i) = A*t1 + B
-
-            EXIT
-        endif
-
-        if (t1 .lt. z1 .and. j .eq. 2) then
-            t3 = x_in(j-1)**2.0
-            t4 = x_in(j)**2.0
- 
-            z3 = y_in(j-1)
-            z4 = y_in(j)
-            A = (z4 - z3)/(t4 - t3)
-            B = z3 - t3*A
-            y_out(i) = A*t1**2.0 + B
-
-            EXIT
-        endif
-
-        if (t1 .gt. z2 .and. j .eq. n_in) then
-            t3 = x_in(j-1)
-            t4 = x_in(j)
- 
-            z3 = y_in(j-1)
-            z4 = y_in(j)
-            A = (z4 - z3)/(t4 - t3)
-            B = z3 - t3*A
-            y_out(i) = A*t1 + B
-
-            EXIT
-        endif
-
     enddo
 enddo
 
+return
 end subroutine qinterp

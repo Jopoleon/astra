@@ -61,15 +61,17 @@ use tglf_interface, only: nsm, tglf_zs_in, tglf_ns_in, tglf_mass_in, &
     tglf_rmaj_sa_in, tglf_q_sa_in, tglf_shat_sa_in, tglf_alpha_sa_in, &
     tglf_xwell_sa_in, tglf_theta0_sa_in, file_dump_local, &
     tglf_elec_eflux_out, tglf_ion_eflux_out, tglf_ion_mflux_out, &
-    tglf_elec_pflux_out, tglf_ion_pflux_out, tglf_elec_expwd_out
+    tglf_elec_pflux_out, tglf_ion_pflux_out, tglf_elec_expwd_out, &
+    tglf_q_elite_in, tglf_q_prime_elite_in, tglf_p_prime_elite_in, &
+    tglf_n_ELITE_in, tglf_R_ELITE_in, tglf_Z_ELITE_in, tglf_Bp_ELITE_in
 
 use tglf_pkg, only: get_eigenvalue_spectrum_out, get_ky_spectrum_out, &
      get_flux_spectrum_out
 
 implicit none
 
-integer, parameter :: nradial=5
-
+logical, parameter :: debug_elite=.false.
+integer, parameter :: nradial=5, unit_elite=11, nthe_elite=400
 double precision, parameter :: &
    k0   = 1.6022d-12, &       ! erg/ev
    e0   = 4.8032d-10, &       ! elementary charge (statcoulombs)
@@ -78,12 +80,11 @@ double precision, parameter :: &
    mp   = 1.6726d-24, &       ! proton mass (g)
    mpp  = 1.6726d-27, &       ! proton mass (kg)
    pi   = 3.141592653589793 
-double precision, parameter :: c_vpol = 1.d0
+double precision, parameter :: c_vpol=1.d0
 
 integer, intent(in) :: nrho, jr1_in, jr2_in, NA1N, NA1E, NA1I
 
-double precision, intent(in) :: BTOR, RTOR, &
-    AMJ, AIM1, AIM2, AIM3, ZMJ
+double precision, intent(in) :: BTOR, RTOR, AMJ, AIM1, AIM2, AIM3, ZMJ
 double precision, intent(in), dimension(*) :: NE, TE, NI, TI, &
     ZEF, ZIM1, ZIM2, ZIM3, PBLON, PBPER, PFAST, NIZ3, AMAIN, &
     ER, MU, RHO, AMETR, SHIF, ELON, NDEUT, NIZ1, NTRIT, &
@@ -95,8 +96,8 @@ double precision, intent(out), dimension(*) :: CHI, CHE, DIF, VIN, &
 
 !----------------------------------------------------------------------
 
-integer :: i_ion, n
-integer :: jr_min, jr_max, jrho, j0, j01, j02, jgamma_max, n_radial
+integer :: i_ion, n, ios
+integer :: jr_min, jr_max, jrho, j0, j01, j02, jgamma_max, n_radial, jthe, nthe_equ, nrho_as
 integer :: j, jradial, jjgrid(nradial), jspec, kyloop
 integer :: sat_rule           ! Saturation rule
 integer :: geom_flag          ! 1: Miller; 2: Fourier; 3: ELITE
@@ -104,24 +105,28 @@ integer :: nmodes_tg          ! number of unstable modes to use in computing flu
 integer :: kygrid_model_tg    ! select version of ky-grid to use 1
 integer :: xnu_model_tg       ! select version of trapped-passing 2
 
-real :: bmod, bpolz, alpha_zf_in, ion_eflux, ion_mflux, xstep
-real :: drmin, drmaj, drho, dte, dne, dq, dptot, &
-        delong, dtrian, dvper, drhodr, dstep, dr, dv_r
-real :: Bunit, cs0, cs00, rhos0, omega0, rhostar2, lnlamda, taue, cexb
-real :: a0, T0, N0, m0, rmin_tg, drho_cs, drho_nt, nt_cs
-real :: wdia_trap_tg          ! parameter for trapped fraction model
+double precision :: bmod, bpolz, alpha_zf_in, ion_eflux, ion_mflux
+double precision :: drmin, drmaj, drho, dte, dne, dq, dptot, &
+    delong, dtrian, dvper, drhodr, dstep, dr, dv_r
+double precision :: Bunit, cs0, cs00, rhos0, omega0, rhostar2, lnlamda, taue, cexb
+double precision :: a0_m, a0_cm, T0, N0, m0, rmin_tg, drho_cs, drho_nt, nt_cs
+double precision :: wdia_trap_tg          ! parameter for trapped fraction model
 
-real, dimension(nrho) :: gradrhosq_exp, rmaj_exp, q_exp, &
+double precision, dimension(nrho) :: gradrhosq_exp, rmaj_exp, q_exp, &
     rho_m, vexb2, vpar_m, vper_m, mtori_m, &
     chie_m, chii_m, elec_pflux_m, exchi_m, ptot, gamma_m, omega_m
-real, dimension(nsm-1, nrho) :: ion_pflux_m
-
-real, dimension(nradial) :: mtori, chie, chii, exchi, elec_pflux, rho_tg, &
+double precision, dimension(nradial) :: mtori, chie, chii, exchi, elec_pflux, rho_tg, &
     gamma_max, omega_max, kymax
-real, dimension(nsm-1, nradial) :: ion_pflux
-real, allocatable, dimension(:) :: gamma, omega, kyspectrum, efluxspectrum, ifluxspectrum, pfluxspectrum
-real, dimension(nsm-1) :: dti, dni
-real, dimension(nsm-1, nrho) :: ni_m, ti_m
+double precision, dimension(nsm-1, nrho) :: ion_pflux_m
+double precision, dimension(nsm-1, nradial) :: ion_pflux
+double precision, allocatable, dimension(:) :: gamma, omega, kyspectrum, efluxspectrum, ifluxspectrum, pfluxspectrum
+double precision, dimension(nsm-1) :: dti, dni
+double precision, dimension(nsm-1, nrho) :: ni_m, ti_m
+double precision :: dtheta_elite, xstep
+double precision, dimension(nthe_elite) :: theta_elite, RR_elite, ZZ_elite, Bp_elite
+double precision, allocatable, dimension(:) :: theta_equ
+double precision, allocatable, dimension(:, :) :: RR_as, ZZ_as, Bp_as
+character(len=120) :: f_elite
 
 !-----------------
 ! Radial subdomain
@@ -134,7 +139,7 @@ if (jr_min > jr_max) then
     return
 endif
 
-xstep = float(jr_max - jr_min)/(nradial - 1.)
+xstep = dble(jr_max - jr_min)/(nradial - 1.)
 if (xstep <= 1.) then
     do jradial=1, nradial
         jjgrid(jradial) = jr_min + jradial - 1
@@ -185,7 +190,8 @@ do jrho=1, nrho
 enddo
 
 m0 = AMJ*mp             ! Ref. mass = D ion mass [g]
-a0 = 1E2*AMETR(nrho)    ! length scale used by GYRO from AMETR (meters) to cm
+a0_m = AMETR(nrho)    ! length scale used by GYRO from AMETR (meters) to cm
+a0_cm = 1E2*a0_m    ! length scale used by GYRO from AMETR (meters) to cm
 
 elec_pflux_m = 0.
 ion_pflux_m  = 0.
@@ -218,7 +224,7 @@ kygrid_model_tg = 4 !1 Email Angioni Aug 1st 2023
 sat_rule = 2
 geom_flag = 1
 
-write(6, '(A, 8i4)') 'Call TGLF...', jjgrid(1: nradial), nrho, sat_rule, tglf_ns_in
+write(6, '(A, 9i4)') 'Call TGLF...', jjgrid(1: nradial), nrho, sat_rule, geom_flag, tglf_ns_in
 
 SELECT CASE(sat_rule)
 CASE(0)
@@ -237,6 +243,40 @@ CASE(2)
     wdia_trap_tg = 1.
     alpha_zf_in  = 1.
 END SELECT
+
+!-------------------------
+! Fourier and ELITE coefficients
+
+if (geom_flag == 3) then ! Read ELITE file
+    tglf_n_elite_in  = nthe_elite - 1
+    dtheta_elite = 2.*pi/dble(nthe_elite-1)
+    theta_elite = (/ ((jthe - 1.)*dtheta_elite, jthe=1, nthe_elite) /)
+    f_elite = '../tglf/tglf4elite.dat'
+    open(unit_elite, file=TRIM(f_elite), iostat=ios, status='OLD')
+    if (ios == 0) then
+        read(unit_elite, '(i)') nthe_equ
+        if (.not. allocated(theta_equ)) allocate(theta_equ(nthe_equ))
+        do jthe=1, nthe_equ
+            read (unit_elite, '(e14.6)') theta_equ(jthe)
+        enddo
+        read(unit_elite, '(2i)') nrho_as, nthe_equ
+        if (.not. allocated(RR_as)) then
+            allocate(RR_as(nrho_as, nthe_equ))
+            allocate(ZZ_as(nrho_as, nthe_equ))
+            allocate(Bp_as(nrho_as, nthe_equ))
+        endif
+
+        do jrho=1, nrho_as
+            do jthe=1, nthe_equ
+                read(unit_elite, '(3e14.6)') RR_as(jrho, jthe), ZZ_as(jrho, jthe), Bp_as(jrho, jthe)
+            enddo
+        enddo
+    else
+        write(*, *) 'Seeting geom_flag=1 only for this time step', ios
+        geom_flag = 1
+    endif
+    close(unit_elite)
+endif
 
 !-------------------------
 ! General TGLF settings
@@ -364,7 +404,7 @@ radial_loop: do jradial=1, n_radial
     else if (j0 == nrho) then
         j01 = j0
     endif
-    dstep = 1./float(j01 - j02)
+    dstep = 1./dble(j01 - j02)
 
     drmin  = dstep*(AMETR(j01) - AMETR(j02))
     drmaj  = dstep*(rmaj_exp(j01) - rmaj_exp(j02))
@@ -396,7 +436,7 @@ radial_loop: do jradial=1, n_radial
     dv_r = dstep* &
         (vpar_m(j01)/(rmaj_exp(j01) + AMETR(j01)) - &
          vpar_m(j02)/(rmaj_exp(j02) + AMETR(j02)))
-    dr = 1E2*drmin/a0    ! gradients w.r.t. minor radius even for s-alpha geometry
+    dr = drmin/a0_m    ! gradients w.r.t. minor radius even for s-alpha geometry
     drhodr = drho/drmin
 
 ! local field averages
@@ -434,7 +474,7 @@ radial_loop: do jradial=1, n_radial
     lnlamda = 24.0 -0.5*LOG(tglf_as_in(1)*N0) + LOG(tglf_taus_in(1)*T0)       
     taue = 3.44E5 * (tglf_taus_in(1)*T0)**1.5 / (tglf_as_in(1)*N0*lnlamda)  !  sec
 
-    rmin_tg = 1E2*AMETR(j0)/a0
+    rmin_tg = AMETR(j0)/a0_m
     cexb = AMETR(j0)/q_exp(j0)
 
     tglf_vpar_shear_in(2) = -1E2*rmaj_exp(j0)*dv_r/(dr*cs0)  !From m/s to cm/s for vpar
@@ -450,10 +490,10 @@ radial_loop: do jradial=1, n_radial
 
 ! local magnetic geometry
 
-    rhostar2 = (rhos0/a0)**2
-    drho_cs = drhodr**2*a0/1e2*rhostar2*cs00
-    drho_nt = drhodr*a0/1e2*rhostar2*N0*e00*T0/(1.e13*mpp)
-    nt_cs = 0.001602*N0/1.e13*T0/1.e3*cs00/(a0/1.e2)*rhostar2
+    rhostar2 = (rhos0/a0_cm)**2
+    drho_cs = drhodr**2*a0_m*rhostar2*cs00
+    drho_nt = drhodr*a0_m*rhostar2*N0*e00*T0/(1.e13*mpp)
+    nt_cs = 0.001602*N0/1.e13*T0/1.e3*cs00/a0_m*rhostar2
 
 ! Share variables with tglf_run via module tglf_interface
 
@@ -463,15 +503,15 @@ radial_loop: do jradial=1, n_radial
 
     tglf_vexb_in  = 1E2*vexb2(j0)/cs0
     tglf_betae_in = 8.0*pi*k0*N0*T0/Bunit**2
-    tglf_xnue_in  = 0.75*SQRT(pi)*a0/(taue*cs0)
+    tglf_xnue_in  = 0.75*SQRT(pi)*a0_cm/(taue*cs0)
     tglf_zeff_in  = ZEF(j0) 
     tglf_debye_in = SQRT(k0*T0/(4.0*pi*N0*e0**2))/rhos0
 
-    tglf_rmin_loc_in    = 1E2*AMETR(j0)/a0
-    tglf_rmaj_loc_in    = 1E2*rmaj_exp(j0)/a0
+    tglf_rmin_loc_in    = rmin_tg
+    tglf_rmaj_loc_in    = rmaj_exp(j0)/a0_m
     tglf_zmaj_loc_in    = 0.
     tglf_drmindx_loc_in = 1.
-    tglf_drmajdx_loc_in = 1E2*drmaj/(dr*a0)
+    tglf_drmajdx_loc_in = drmaj/(dr*a0_m)
     tglf_dzmajdx_loc_in = 0.
     tglf_kappa_loc_in   = ELON(j0)
     tglf_s_kappa_loc_in = AMETR(j0)*delong/(drmin*ELON(j0))
@@ -483,8 +523,12 @@ radial_loop: do jradial=1, n_radial
     tglf_q_prime_loc_in = (q_exp(j0)/rmin_tg)*dq/dr
     tglf_p_prime_loc_in = (k0/Bunit**2)*(q_exp(j0)/rmin_tg)*dptot/dr
 
-    tglf_rmin_sa_in     = 1E2*AMETR(j0)/a0
-    tglf_rmaj_sa_in     = 1E2*rmaj_exp(j0)/a0
+    tglf_q_ELITE_in       = tglf_q_loc_in
+    tglf_q_prime_ELITE_in = tglf_q_prime_loc_in
+    tglf_p_prime_ELITE_in = tglf_p_prime_loc_in
+
+    tglf_rmin_sa_in     = rmin_tg
+    tglf_rmaj_sa_in     = rmaj_exp(j0)/a0_m
     tglf_q_sa_in        = q_exp(j0)
     tglf_shat_sa_in     = (AMETR(j0)/q_exp(j0))*dq/drmin
     tglf_alpha_sa_in    = -(8.0*pi*k0/Bunit**2)*q_exp(j0)**2 * rmaj_exp(j0)*dptot/drmin
@@ -494,6 +538,28 @@ radial_loop: do jradial=1, n_radial
 ! Settings
     if (tglf_dump_flag_in) then
         write(file_dump_local, '(A11, I0)') 'input.tglf_', j0
+    endif
+
+    if (geom_flag == 3) then ! R, Z contours for ELITE
+! Interpolation on ELITE theta-grid
+        call qinterp(theta_equ, RR_as(j0, :), nthe_equ, theta_elite, RR_elite, nthe_elite)
+        call qinterp(theta_equ, ZZ_as(j0, :), nthe_equ, theta_elite, ZZ_elite, nthe_elite)
+        call qinterp(theta_equ, Bp_as(j0, :), nthe_equ, theta_elite, Bp_elite, nthe_elite)
+        RR_elite(tglf_n_elite_in+1) = RR_elite(1)
+        ZZ_elite(tglf_n_elite_in+1) = ZZ_elite(1)
+        Bp_elite(tglf_n_elite_in+1) = Bp_elite(1)
+        tglf_R_elite_in(1:tglf_n_elite_in+1)  = RR_elite/a0_m
+        tglf_Z_elite_in(1:tglf_n_elite_in+1)  = ZZ_elite/a0_m
+        tglf_Bp_elite_in(1:tglf_n_elite_in+1) = 1.d4*Bp_elite/Bunit
+
+        if (debug_elite) then
+            write(f_elite, '(A11, I0)') 'elite4tglf_', j0
+            open(31, FILE=f_elite)
+            do jthe=1, nthe_elite
+                write(31, '(3F)') tglf_R_elite_in(jthe), tglf_Z_elite_in(jthe), Bp_elite(jthe)
+            enddo
+            close(31)
+        endif
     endif
 
     call tglf_run
@@ -571,8 +637,8 @@ do j=jr_min, jr_max
        DPH(j) = ion_pflux_m(3, j)/AMETR(nrho)/gradrhosq_exp(j)/(ni_m(3, j)/NE(j))  ! 2nd imp convection
     endif
     XTB(j) = exchi_m(j)  ! turbulent e-i equipartition in MW/m^3
-    GM1(j) = gamma_m(j)*(cs0/a0)
-    OM1(j) = omega_m(j)*(cs0/a0)
+    GM1(j) = gamma_m(j)*(cs0/a0_cm)
+    OM1(j) = omega_m(j)*(cs0/a0_cm)
 enddo
 
 DPL(1) = 0.d0 !ensure NIZ1 convection equal to zero on axis

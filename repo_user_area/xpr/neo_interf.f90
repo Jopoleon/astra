@@ -46,7 +46,7 @@ implicit none
 logical, parameter :: verbose=.False.
 integer, parameter :: jpd=700, nradial=5, nsm=11
 
-real, parameter :: &
+double precision, parameter :: &
    k0   = 1.6022E-12, &       ! erg/ev
    e00  = 1.6020e-19, &       ! elementary charge (C)
    c0   = 2.9979E+10, &       ! speed of light (cm/sec)
@@ -70,24 +70,24 @@ double precision, intent(out), dimension(*) :: CHI, CHE, DIF, VIN, &
 integer :: jr_min, jr_max, jrho, j0, j01, j02, n_radial
 integer :: j, jradial, jjgrid(nradial), jspec
 integer :: i_ion, n_ions
-real :: bmod, bpolz, alpha_zf_in, ion_eflux
-real :: drmin, drmaj, drho, dte, dne, dq, &
+double precision :: bmod, bpolz, alpha_zf_in, ion_eflux
+double precision :: drmin, drmaj, drho, dte, dne, dq, &
         delong, dtrian, dvpar, dvper, drhodr, dstep, dr, xstep
-real :: Bunit, cs0, rhos0, omega0, rhostar2, lnlamda, taue, cexb, xnuei
-real :: T0, anorm, mnorm, tnorm, nnorm, vnorm, &
+double precision :: Bunit, cs0, rhos0, omega0, rhostar2, lnlamda, taue, cexb, xnuei
+double precision :: T0, anorm, mnorm, tnorm, nnorm, vnorm, &
    pflux_e_neo, eflux_e_neo, jboots, tgyro_neo_gv_flag, &
    Gamma_neo_GB, Q_neo_GB, Pi_neo_GB, Jpar_GB
 
-real, dimension(nrho) :: rho_m, vexb2, vpar_m, vper_m, &
+double precision, dimension(nrho) :: rho_m, vexb2, vpar_m, vper_m, &
     gradrhosq_exp, epar0_in, rmaj_exp, q_exp, &
     chie_m, chii_m, vippd_m, vittd_m, vippi1_m, vitti1_m, j_boot, elec_pflux_m
 
-real, dimension(nradial) :: chie, chii, elec_pflux, rho_tg, &
+double precision, dimension(nradial) :: chie, chii, elec_pflux, rho_tg, &
    vippd, vittd, vippi1, vitti1, jbs
-real, dimension(nsm-1) :: dti, dni, pflux_i_neo, eflux_i_neo, vpflux_neo, vtflux_neo
-real, dimension(nsm-1, nrho) :: ni_m, ti_m
-real, dimension(nsm, 2) :: energy_flux, particle_flux
- 
+double precision, dimension(nsm-1) :: dti, dni, pflux_i_neo, eflux_i_neo, vpflux_neo, vtflux_neo
+double precision, dimension(nsm-1, nrho) :: ni_m, ti_m
+double precision, dimension(nsm, 2) :: energy_flux, particle_flux
+
 character(len=80) :: path_in
 
 !-----------------
