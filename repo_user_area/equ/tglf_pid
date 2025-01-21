@@ -1,0 +1,175 @@
+!  AUG 
+
+IPL=IPLX;
+SGNIP=1.d0;
+SGNBT=-1.d0;
+IPEQL=5;
+
+NEQUIL = 91;
+MEQUIL = 90;
+ATREQ = 1.;
+!MEQUIL = 0;
+
+TAUMIN=0.05;
+TAUMAX=0.05;
+
+AMAIN=AMJ;
+ZMAIN=ZMJ;
+
+AIM1=12.; ! C
+ZIM1=ZICAR;
+NIZ1=CIMP1*NE;
+ZIM2=1.e-1;
+ZIM3=1.e-1;
+!Deuterium density
+NDEUT=NE-ZIM1*NIZ1;
+NMAIN=NDEUT;
+NI=NDEUT+NIZ1;  !Thermal ion density
+ZEF1 = ZIM1*(ZIM1-1.)*NIZ1/NE;
+ZEF = 1.+ZEF1;
+
+!----------
+! Sources
+
+! Density sources
+! feedback loop to guarantee programmed line averaged density
+
+CF1=VINT(NEXB)/VOLUME; ! this is the desired volume averaged density
+CF2=VINT(NEB)/VOLUME;  ! this is the current volume averaged density
+
+CNEUT1 = 1.; ! this is the minimum level, one might need to change it in case of conditions with very high ne_sep                       ! compared to ne_averaged (can also go in the log)
+
+CNEUT3 = 0.01; ! initial value of NNCL
+
+! new PID
+PID_CONTROL(CSCL1*TAU, CSCL1*TAU*CSCL2, CSCL1*TAU*CSCL3, CF1-CF2, NNCL, CF3)>::::;
+
+NNCL=FJUMP(0.1)*max(1.e-7*CNEUT1,CF3)+(1.-FJUMP(0.1))*CNEUT3; ! cold neutral density
+ENCL=CNEUT2; ! between 2 and 10 eV (now it's 5 eV = 0.005 keV)
+
+NEUT>::::; ! calculates neutral density NN and temperature TN
+
+! ECH: TORBEAM, NBI: RABBIT
+TORBEAM_RABBIT>:.05:::;
+
+! Radiation
+
+PRAD=PBRAD;
+
+PE = PEBM+POH+PEECR-PRAD-PEICL; !+CAR42;
+PI = PIBM+PEICL; !-CAR42;
+
+SN=SNEBM;
+SNN=SNNEU;
+CAR11=CUBM;
+
+! PFAST = PBLON*1/3+2/3*PBPER; in kev*1/m**3 10**19
+
+
+!TGLF call
+! physics
+CF16=1.0;  ! Boundary
+CF12=0.02;  ! Frequency of calls
+CRAD3=CF16*NA1/16. + 0.001;
+a2tglf_elite<:CF12:::;
+xpr/tglfi( int(CRAD3*0)+1 ,int(CRAD3*1 ) )&<:CF12:::;
+xpr/tglfi( int(CRAD3*1)+1 ,int(CRAD3*2 ) )&<:CF12:::;
+xpr/tglfi( int(CRAD3*2)+1 ,int(CRAD3*3 ) )&<:CF12:::;
+xpr/tglfi( int(CRAD3*3)+1 ,int(CRAD3*4 ) )&<:CF12:::;
+xpr/tglfi( int(CRAD3*4)+1 ,int(CRAD3*5 ) )&<:CF12:::;
+xpr/tglfi( int(CRAD3*5)+1 ,int(CRAD3*6 ) )&<:CF12:::;
+xpr/tglfi( int(CRAD3*6)+1 ,int(CRAD3*7 ) )&<:CF12:::;
+xpr/tglfi( int(CRAD3*7)+1 ,int(CRAD3*8 ) )&<:CF12:::;
+xpr/tglfi( int(CRAD3*8)+1 ,int(CRAD3*9 ) )&<:CF12:::;
+xpr/tglfi( int(CRAD3*9)+1 ,int(CRAD3*10) )&<:CF12:::;
+xpr/tglfi( int(CRAD3*10)+1,int(CRAD3*11) )&<:CF12:::;
+xpr/tglfi( int(CRAD3*11)+1,int(CRAD3*12) )&<:CF12:::;
+xpr/tglfi( int(CRAD3*12)+1,int(CRAD3*13) )&<:CF12:::;
+xpr/tglfi( int(CRAD3*13)+1,int(CRAD3*14) )&<:CF12:::;
+xpr/tglfi( int(CRAD3*14)+1,int(CRAD3*15) )&<:CF12:::;
+xpr/tglfi( int(CRAD3*15)+1,int(CRAD3*16) + 1 )&<:CF12:::;
+
+CAR17 = "mem_tglf(j,1)"; ! chi_i
+CAR18 = "mem_tglf(j,2)"; ! chi_e
+CAR20 = "mem_tglf(j,4)"; ! Particle flux
+CAR41 = "mem_tglf(j,7)"; ! toroidal momentum flux
+CAR42 = "mem_tglf(j,8)"; ! turbulent equipartition to be added to PE and subtracted to PI
+CAR43 = "mem_tglf(j,11)"; !gamma
+CAR44 = "mem_tglf(j,13)"; !omega
+
+SMEARR2(CF4, CAR17, CAR21)::::;
+SMEARR2(CF4, CAR18, CAR22)::::;
+SMEARR2(CF5, CAR20, CAR24)::::;
+SMEARR2(CF4, CAR41, CAR45)::::;
+
+XI = min(20., max(0., CAR21)) + HNASI;
+HE = min(20., max(0., CAR22)) + HNGSE;
+DN = HNGSE; ! + CAR23;
+CN = CAR24 -VP*VRAS; !max(-20., min(20.,CAR24));
+
+DVN=CF14;
+DVE=CF14;
+DVI=CF14;
+
+XE=0.0; 
+HI=0.0;
+CI=0.0;
+DI=0.0;   
+HN=0.0;
+XN=0.0; 
+DE=0.0; 
+
+!Bootstrap coefficients
+HC=HCSA;
+DC=DCSA; 
+XC=XCSA; 
+
+!Plasma rotation
+VPOL=VPSWW; !Poloidal rotation
+VTOR=VTORX; !Toroidal rotation
+ER=BTOR*(VDIA-VPOL)+BTOR*AMETR*MU*VTOR/RTOR;
+
+!---------------------
+! Transport equations
+
+NE=NEX; 
+NE:EQ[2,CF16];
+
+TE=TEX;
+TE:EQ[2,CF16];
+
+TI=TIX;
+TI:EQ[2,CF16];
+
+CU:EQ; 
+
+MU = 1./(CAR2X + 0.0001);
+CC = CNHR; !CNSA;
+CD = CUBM+CUECR; !CD source from NBI + PECRH 
+
+!------------------------------------------
+! NCLASS 
+
+!NEOCL4>::::;
+
+!----------------
+! Profile output
+!----------------
+
+Te\TE\\TEX\-3;	Ne\NE\\NEX;	chie\HE\10;	Ware\-VP*VRAS\5;
+Pnbe\PEBM\-6; 	Zef\ZEF;	snNB\SNEBM\50;	Prad\PRAD;
+
+TI\TI\\TIX\-3;	vtor\VTOR;	Chii\XI\10;	CN\CN\5;
+Pnbi\PIBM\-6; 	exch\CAR42;	sneu\SNNEU*NE\50;	Pecr\PEECR;
+
+q\1./MU\\CAR2X;	QE\QE\5;	QI\QI\5;	eccd\CUECR\-4;
+gamm\CAR43\1e6;		jbs\CUBS;		cc\CC;		cu\CU;
+shea\SHEAR;	QETO\QETOT\5;	QITO\QITOT\5;	nbcd\CUBM\-4;
+omeg\CAR44\1e6;	vtor\VTOR;		\;		\;
+
+!-------------
+! Time traces
+!-------------
+
+PNBi_VINT(PIBMB); PNBe_VINT(PEBMB); Pech_VINT(PEECRB); Prad_VINT(PRADB); 
+eccd_IINT(CUECRB); nbcd_IINT(CAR11B); nxav_CF1; neav_CF2;
