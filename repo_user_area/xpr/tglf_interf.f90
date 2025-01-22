@@ -553,7 +553,7 @@ radial_loop: do jradial=1, n_radial
         tglf_Bp_elite_in(1:tglf_n_elite_in+1) = 1.d4*Bp_elite/Bunit
 
         if (debug_elite) then
-            write(f_elite, '(A11, I0)') 'elite4tglf_', j0
+            write(f_elite, '(A, I0)') '../tglf/elite4tglf_', j0
             open(31, FILE=f_elite)
             do jthe=1, nthe_elite
                 write(31, '(3F)') tglf_R_elite_in(jthe), tglf_Z_elite_in(jthe), Bp_elite(jthe)

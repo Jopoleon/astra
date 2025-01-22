@@ -9,18 +9,23 @@ source $AWD/platform/env.$platform
 EXP=aug34954
 for EQU in fluxes flux_neo feqis qlknn qlk tglf
 do
-    $AWD/exe/as_exe -m $EQU -v $EXP -s 4 -e 5
+    $AWD/exe/as_exe -m $EQU -v $EXP -s 4. -e 5.
     python3 $AWD/compareRegressions.py -m $EQU -v $EXP
 done
 
 EQU=fbe
 EXP=AUG33040_2500
-$AWD/exe/as_exe -m $EQU -v $EXP -s 2.48 -e 3.0
+$AWD/exe/as_exe -m $EQU -v $EXP -s 2.48 -e 3.
+python3 $AWD/compareRegressions.py -m $EQU -v $EXP
+
+EQU=tglf_pid
+EXP=AUG36982_3400
+$AWD/exe/as_exe -m $EQU -v $EXP -s 4. -e 6.
 python3 $AWD/compareRegressions.py -m $EQU -v $EXP
 
 EXP=30000_3.4
 for EQU in imep_pw04 imep_pw08
 do
-    $AWD/exe/as_exe -m $EQU -v $EXP -s 4 -e 5
+    $AWD/exe/as_exe -m $EQU -v $EXP -s 4. -e 5.
     python3 $AWD/compareRegressions.py -m $EQU -v $EXP
 done
