@@ -298,12 +298,15 @@
 
       implicit none
 
-      integer, intent(in) :: NFW, NBP, NVV, ngra1
-      integer, intent(out) :: NC, NCEQUI, NCPFC, NOUT, NTER, NINFW
-      integer, intent(out), dimension(*) :: NTYPE, NECON
+      integer, intent(in) :: NCPFC, NFW, NBP, NVV, ngra1
+      integer, intent(in), dimension(*) :: NECON
+      real*8, intent(in), dimension(*) :: WECON
+
+      integer, intent(out) :: NC, NCEQUI, NOUT, NTER, NINFW
+      integer, intent(out), dimension(*) :: NTYPE
       real*8, dimension(nclim) :: VC, HC
       real*8, intent(out), dimension(*) :: PC, RC, RC1, RC2, RC3, RC4,
-     &   ZC, ZC1, ZC2, ZC3, ZC4, VOLK, VOLKP1, WECON
+     &   ZC, ZC1, ZC2, ZC3, ZC4, VOLK, VOLKP1
       real*8, intent(out), dimension(njlim, njlim) :: RES
 
       integer :: i, j, l, nsegbp, nsegvv, nsegfw

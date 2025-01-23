@@ -10,7 +10,7 @@ LIB_DIR = $(AWD)/lib
 LIBNAM = libspider.a
 LIB = $(LIB_DIR)/$(LIBNAM)
 
-FFLAGS	= -O2 -g -traceback -I$(MOD_FOR) -I. -I$(MOD_DIR) -nostandard-realloc-lhs -qopenmp #-warn all
+FFLAGS	= -O2 -g -traceback -I$(MOD_FOR) -I. -I$(MOD_DIR) -nostandard-realloc-lhs -qopenmp
 
 # SPIDER objs
 
@@ -62,6 +62,7 @@ $(OBJ_DIR)/solc.o \
 $(OBJ_DIR)/solver.o \
 $(OBJ_DIR)/SPAR1.o \
 $(OBJ_DIR)/Spider_call.o \
+$(OBJ_DIR)/spidupdate.o \
 $(OBJ_DIR)/sstepon.o \
 $(OBJ_DIR)/sstepon_r.o \
 $(OBJ_DIR)/Trecur_2.o \

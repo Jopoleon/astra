@@ -66,10 +66,9 @@
       integer, intent(in) :: isol
       real*8, intent(out), dimension(neqp) :: zw
 
-      integer :: i, j, i1, i2, ieq, ic, il, im,
-     &     isp(nspp), ipath, flag, esp
-      integer, dimension(neqp) :: icp, p, ip
-      real*8 :: znes
+      integer :: i, j, i1, i2, ieq, ic, il, im, icp(neqp), ip(neqp), 
+     &   isp(nspp), ipath, flag, esp
+      real*8 :: znes, p
       real*8, dimension(nspp) :: rsp
       real*8, dimension(neqp) :: zyy, wpp, wzz, wrr, zuu
       integer, external :: numlin

@@ -26,9 +26,8 @@ implicit none
 
 integer, intent(in) :: knin, knout, kopt, mdamat
 real*8, intent(in) :: ptaus, pbclft, pbcrgt
-real*8, intent(in), dimension(knin) :: pxin, pyin
+real*8, intent(in), dimension(knin) :: pxin, pyin, py2, pwork, pyinnew
 real*8, intent(in), dimension(knout) :: pxout
-real*8, intent(out), dimension(knin) :: py2, pwork, pyinnew
 real*8, intent(out), dimension(knout) :: pyout, pyoutp, pyoutpp
 real*8, intent(out), dimension(mdamat, knin) :: pamat
 
@@ -155,6 +154,7 @@ real*8, intent(out), dimension(mdamat, n) :: amat
 
 integer :: i, j, k, iband, idiag, idima, idimrhs, info2, irhs, iup
 real*8 :: taus, ztaueff, yp1, ypn, zyp1, zypn
+integer, dimension(mnonsym) :: ipivot
 real*8, dimension(mnonsym*7) :: anonsym
 real*8, external :: FCCCC1
 
@@ -511,11 +511,11 @@ return
 end function FQDQ1
 
 !----------------------------------------------------------------
-real*8 function FQDQ2(X1, F1, P1, X2, F2)
+real*8 function FQDQ2(X1, F1, P1, X2, F2, PX)
 
 implicit none
 
-real*8, intent(in) :: X1, F1, P1, X2, F2
+real*8, intent(in) :: X1, F1, P1, X2, F2, PX
 real*8, external :: FD2
 
 FQDQ2 = 2.D0* FD2(X1, F1, P1, X2, F2)

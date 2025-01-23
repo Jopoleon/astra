@@ -37,20 +37,20 @@
       use sp_parameters
       use iopath, only: path
       use keys, only: kpr, kstep
-      use jb, only: Bj_av
-      use tim, only: ctim
 
       implicit none
 
       integer :: i, j
       real*8 :: ddps
-      real*8, dimension(nrp) :: psf, sqtor, b2_av, sigma, cbut_b
+      real*8, dimension(nrp) :: psf, sqtor, bj_av, curfi_av, 
+     &   b2_av, sigma, cbut_b
       character(len=80) :: fname
 
       include 'compol.inc'
       include 'compol_add.inc'
 
       common/compsf/ psf, sqtor
+      common /com_jb/ BJ_av, curfi_av
       common /com_b2/ B2_av
       common/com_but/ sigma,cbut_b
 
@@ -133,7 +133,6 @@
 
       use sp_parameters
       use iopath, only: path
-      use tim, only: dtim, ctim
 
       implicit none
 
