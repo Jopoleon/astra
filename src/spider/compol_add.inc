@@ -19,18 +19,34 @@
       real*8, dimension(nloopp, ntp) :: adginl
       real*8, dimension(nprobp, ntp) :: adginr, adginz
 
-      common /comblm/ rblm, zblm, ublmax, 
-     &                iblm, jblm, nblm, nctrl, numlim
-      common /comcon_add/ alp, alpnew, pscen
-      common /commat_add/ zpro
-      common /comitr_add/ ich, itrmax, Nitmax
-      common /compot_add/ psie, psii, g, 
-     +                   psix0, psix1, psxi2, 
-     +                   rx0, zx0, rx1, zx1, rx2, zx2, 
-     +                   ixp1, jxp1, ixp2, jxp2
-      common /combnd_add/ dgdn, binadg, pinadg, adginl, adginr, adginz,
-     +                    iprcon , nk_out, iprlop, nlop_out, 
-     +                    iprprob, nprob_out
-      common /comstb_add/ rl, zl, clr, clz, 
-     &   rolim, jrolim, iterbf, ron_max, ron_max_g
-      common /compla_add/ aex, fpv
+      common /compol_add/ rblm, zblm, ublmax, 
+     & iblm, jblm, nblm, nctrl, numlim,
+     & alp, alpnew, pscen,
+     & zpro,
+     & ich, itrmax, Nitmax,
+     % psie, psii, g, 
+     & psix0, psix1, psxi2, 
+     & rx0, zx0, rx1, zx1, rx2, zx2, 
+     & ixp1, jxp1, ixp2, jxp2,
+     & dgdn, binadg, pinadg, adginl, adginr, adginz,
+     & iprcon , nk_out, iprlop, nlop_out, 
+     & iprprob, nprob_out,
+     & rl, zl, clr, clz, 
+     & rolim, jrolim, iterbf, ron_max, ron_max_g,
+     & aex, fpv
+
+!      common /comblm/ rblm, zblm, ublmax, 
+!     &                iblm, jblm, nblm, nctrl, numlim
+!      common /comcon_add/ alp, alpnew, pscen
+!      common /commat_add/ zpro
+!      common /comitr_add/ ich, itrmax, Nitmax
+!      common /compot_add/ psie, psii, g, 
+!     +                   psix0, psix1, psxi2, 
+!     +                   rx0, zx0, rx1, zx1, rx2, zx2, 
+!     +                   ixp1, jxp1, ixp2, jxp2
+!      common /combnd_add/ dgdn, binadg, pinadg, adginl, adginr, adginz,
+!     +                    iprcon , nk_out, iprlop, nlop_out, 
+!     +                    iprprob, nprob_out
+!      common /comstb_add/ rl, zl, clr, clz, 
+!     &   rolim, jrolim, iterbf, ron_max, ron_max_g
+!      common /compla_add/ aex, fpv

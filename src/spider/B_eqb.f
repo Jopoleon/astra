@@ -605,13 +605,11 @@
 !----------------------------------------------------------------
       subroutine put_tim(dt, time)
 
-      use sp_parameters
+      use tim, only: dtim, ctim
 
       implicit none
 
       real*8, intent(in) :: dt, time
-
-      include 'compol.inc'
 
       dtim=dt
       ctim=time
@@ -622,13 +620,11 @@
 !----------------------------------------------------------------
       subroutine get_tim(dt, time)
 
-      use sp_parameters
+      use tim, only: dtim, ctim
 
       implicit none
 
       real*8, intent(out) :: dt, time
-
-      include 'compol.inc'
 
       dt=dtim
       time=ctim

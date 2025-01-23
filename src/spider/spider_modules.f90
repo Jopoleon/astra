@@ -157,7 +157,7 @@ module compol
 ! Careful, names overlapping comblc
    real*8 :: tok, tokp, cnor, qcen, b0ax, r0ax, erru, errx, errm, eps, &
       psipla, psip, psim, rm, zm, psiax, psibon, psibon0, psi_eav, &
-      toksfi, fvac, flucfm, tokff, tokpp, tokww, dtim, ctim
+      toksfi, fvac, flucfm, tokff, tokpp, tokww
    real*8, dimension(lp) :: a, aop0, daop, app0, dapp
    real*8, dimension(neqp) :: right
    real*8, dimension(nrp) :: psia, dpsda, f, q, dwdpsi, dpdpsi, dfdpsi, flx_fi
@@ -192,8 +192,52 @@ end module compol_add
 
 !--------------------
 module keys
-
+   implicit none
    integer :: kpr, kastr, kastr2, key_0st, key_prs, key_plc, kxwx, ksnf, &
       key_fixfree, kstep, key_out, key_fixbon
-
 end module keys
+
+!--------------------
+module e_nels
+    implicit none
+    real*8 :: enels
+end module e_nels
+
+!--------------------
+module curpl
+    implicit none
+    real*8 :: cur_pl
+end module curpl
+
+!--------------------
+module ndmf
+    implicit none
+    integer :: n_dmf
+end module ndmf
+
+!--------------------
+module pres
+    use sp_parameters, only: nrp
+    implicit none
+    real*8, dimension(nrp) :: dPdFi
+end module pres
+
+!--------------------
+module sigcd
+    use sp_parameters, only: nrp
+    implicit none
+    real*8, dimension(nrp) :: C_sig, T_el, C_bts, C_driv
+end module sigcd
+
+!--------------------
+module jb
+    use sp_parameters, only: nrp
+    implicit none
+    real*8, dimension(nrp) :: Bj_av, curfi_av
+end module jb
+
+!--------------------
+module tim
+    implicit none
+    real*8 :: dtim, ctim
+end module tim

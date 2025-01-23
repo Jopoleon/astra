@@ -681,7 +681,8 @@
 
       implicit none
 
-      real*8, intent(in) :: betplx, betpol
+      real*8, intent(in) :: betplx
+      real*8, intent(out) :: betpol
 
       integer :: i, nurs
       real*8 :: zcoin, coin
@@ -712,6 +713,8 @@
 
       use sp_parameters
       use keys, only: kastr
+      use jb, only: Bj_av, curfi_av
+      use tim, only: dtim
 
       implicit none
 
@@ -720,7 +723,7 @@
      &   b2_av_m, xa, fun_sig, fun_sig_a, sebeb, fm, ebm, em, see, 
      &   dpsdt05, dfidt05
       real*8, dimension(nrp) :: psi0, fi0, f0, ri0, q0, dpsidt, 
-     &   dfidt, BJ_av, curfi_av, B2_av, EB, EB_c, Epar_c, WDj,
+     &   dfidt, B2_av, EB, EB_c, Epar_c, WDj,
      &   BfJf, alfa22, alfa33, ds, dsk, dv, dvk, cj, alp33k,
      &   sigma, z_nvzk
 
@@ -728,7 +731,6 @@
 
       common/savt0/ psi0, fi0, f0, ri0, q0, 
      &              dpsidt, dfidt, rm0, ac0n, skcen0
-      common /com_jb/ BJ_av, curfi_av
       common /com_b2/ B2_av
       common /com_eb/ EB, EB_c, Epar_c
       common/com_heat_Dj/ WDj

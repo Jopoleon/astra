@@ -16,10 +16,9 @@
       double precision, intent(out), dimension(*) :: voltpf
 
       integer :: plasma_up, plasma_trig, j_switch, kluch, yesfitcc, 
-     &   k_dmf, nstep_local, nnstep, kkey_dmf, s_fazt
+     &   nstep_local, nnstep, kkey_dmf, s_fazt
 
       real*8 :: rax, zax
-      real*8, dimension(2500) :: contvals_mat
       real*8, dimension(500)  :: d_pf_mat, d_cam_mat
       double precision :: ibkdw, ifbey
 
@@ -69,16 +68,10 @@
                write(*,*) 'fix grid call'
                call sstepon( KLUCH, k_auto, nstep, dt, time,
      &                       voltpf, d_pf_mat, d_cam_mat, key_dmf)    
-               if(key_out.gt.0) then
-                  call spidupdate
-               endif
             else
                write(*,*) 'fix grid call init'
                call cf_init( k_auto, nstep, dt, time,
      &                       voltpf, d_pf_mat, d_cam_mat )
-               if(key_out.gt.0) then
-                  call spidupdate
-               endif
             endif
 
             call wrrec
@@ -90,9 +83,6 @@
             if(k_grid.eq.1) then
                call f_stepon( KLUCH, k_auto, nstep, dt, time, voltpf,
      &                        d_pf_mat, d_cam_mat, rax, zax, key_dmf)
-               if(key_out.gt.0) then
-                  call f_spidupdate
-               endif
             endif
 
          elseif(KLUCH.eq.1) then   !time steping
@@ -103,17 +93,11 @@
                if (s_fazt.eq.3) kpr=-2
                call sstepon( KLUCH, k_auto, nstep, dt, time, voltpf,
      &                       d_pf_mat, d_cam_mat, key_dmf)
-               if(key_out.gt.0) then
-                  call spidupdate
-               endif
                if(kpr.ge.0) call wrd
           
             elseif(k_grid.eq.1) then
                call f_stepon( KLUCH, k_auto, nstep, dt, time, voltpf,
      &                        d_pf_mat, d_cam_mat, rax, zax, key_dmf)
-               if(key_out.gt.0) then
-                  call f_spidupdate
-               endif
                call cur_avg
                if(kpr.ge.0) call f_wrd
             endif
@@ -148,12 +132,6 @@
       
          if(KLUCH.eq.0) then    !initialization
 
-            if (plasma_up.eq.0) then	
-               call fbkdw_stepon( KLUCH, k_auto, nstep, dt, time,
-     &                 voltpf, d_pf_mat, d_cam_mat, rax, zax, key_dmf)
-               return
-            endif
-
             if (yesfitcc.eq.0) then
                call sstepon_bkdw( KLUCH, k_auto, nstep, dt, time,
      &                            voltpf, d_pf_mat, d_cam_mat, key_dmf)
@@ -170,17 +148,11 @@
 
          elseif(KLUCH.eq.1) then   !time steping
 
-            if (plasma_up.eq.0) then
-               call fbkdw_stepon( KLUCH, k_auto, nstep, dt, time,
-     &                  voltpf, d_pf_mat, d_cam_mat, rax, zax, key_dmf)
-               return
-            endif
-
             if(k_grid.eq.0) then
                if (s_fazt.eq.2) kpr=-1
                if (s_fazt.eq.3) kpr=-2
                call sstepon_bkdw( KLUCH, k_auto, nstep, dt, time,
-     &                  voltpf, d_pf_mat, d_cam_mat, rax, zax, key_dmf)
+     &                  voltpf, d_pf_mat, d_cam_mat, key_dmf)
                if(kpr.ge.0) call wrd
             else
                if (j_switch.eq.2) then
@@ -194,7 +166,7 @@
                   write(*,*) 'reset rectangular grid'
                   kpr=0
                   call sstepon_bkdw000( 0, 0, 0, dt, time, voltpf,
-     &                  d_pf_mat, d_cam_mat, rax, zax, key_dmf)
+     &                  d_pf_mat, d_cam_mat, key_dmf)
                   call wrrec
                   write(*,*) 'switch to adaptive'     
                   call f_stepon_bkdw( 0, 0, 0, dt, time, voltpf,
@@ -236,63 +208,6 @@
 
       return
       end subroutine get_psib
-
-!----------------------------------------------------------------
-      subroutine kpr_calc(kpr_xx)
-
-      use keys, only: kpr
-
-      implicit none
-
-      integer, intent(in) :: kpr_xx
-
-      kpr=kpr_xx
-
-      return
-      end subroutine kpr_calc
-
-!----------------------------------------------------------------
-      subroutine put_name(name)
-
-      use iopath, only: path
-
-      implicit none
-
-      character(len=80), intent(in) :: name
-     
-      path = name
-
-      return
-      end subroutine put_name
-
-!----------------------------------------------------------------
-      subroutine put_Ipl(placur)
-
-      implicit none
-
-      real*8, intent(in) :: placur
-      real*8 :: cur_pl
-      common /com_curpl/ cur_pl         
-
-      cur_pl = placur
-
-      return
-      end subroutine put_Ipl
-
-!----------------------------------------------------------------
-      subroutine get_Ipl(placur)
-
-      implicit none
-
-      real*8, intent(out) :: placur
-      real*8 :: cur_pl
-
-      common /com_curpl/ cur_pl         
-
-      placur=cur_pl
-
-      return
-      end subroutine get_Ipl
 
 !----------------------------------------------------------------
       subroutine get_zccur(rc_cur, zc_cur, z2c_cur)
@@ -446,7 +361,7 @@
 
       integer :: i, j, n_iterz, j1, j2, j3, j4
       double precision :: dumx, dumy, dumz, l_ref, l_gap, dumx2, dumy2,
-     &   dumu1, dumu2, dumx3, dumy3, l_gap2, l_gap3, dumx0, dumy0, 
+     &   l_gap2, l_gap3, dumx0, dumy0, 
      &   dumxx, dumyy, d_step, gapmin, gapmax, x00, x002, x003, 
      &   y00, y002, y003, u00, u002
       real*8 :: blin_

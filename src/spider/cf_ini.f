@@ -20,13 +20,14 @@
       integer, dimension(nclim) :: ntype
       integer, dimension(nilim) :: necon
       real*8 :: alp_b, psi_bnd, psi0_bnd, platok, dt, time, ereve0,
-     &   erps, e_psi, pscout, tokout, zli3, betpol, ftok, psicen
-      real*8, dimension(nclim) :: pc, psip, vc, hc, ccurx, ccury,
-     &   rc, rc1, rc2, rc3, rc4, zc, zc1, zc2, zc3, zc4, 
-     &   alw0, alw1, alw2 
+     &    erps, e_psi, pscout, tokout, zli3, betpol, ftok, psicen,
+     &    alw0, alw1, alw2 
+
+      real*8, dimension(nclim) :: pc, vc, hc, ccurx,
+     &    rc, rc1, rc2, rc3, rc4, zc, zc1, zc2, zc3, zc4
       real*8, dimension(nilim) :: wecon
       real*8, dimension(njlim) :: volk, volkp1, pjk, pjkp1, pjkp, pjkd,
-     &   psk, pskp1, pskp, pskm1
+     &    psk, pskp1, pskp, pskm1
       real*8, dimension(nloopp) :: rloop, zloop
       real*8, dimension(nprobp) :: rprob, zprob, fiprob
       real*8, dimension(njlim, njlim) :: res
@@ -351,10 +352,10 @@
       integer, dimension(nclim) :: ntype
       integer, dimension(nilim) :: necon
       real*8 :: alp_b, psi_bnd, psi0_bnd, platok, dt, time, ereve0,
-     &   erps, e_psi, pscout, tokout, zli3, betpol, ftok, psicen
-      real*8, dimension(nclim) :: pc, psip, vc, hc, ccurx, ccury,
-     &   rc, rc1, rc2, rc3, rc4, zc, zc1, zc2, zc3, zc4, 
+     &   erps, e_psi, pscout, tokout, zli3, betpol, ftok, psicen,
      &   alw0, alw1, alw2 
+      real*8, dimension(nclim) :: pc, psip, vc, hc, ccurx, ccury,
+     &   rc, rc1, rc2, rc3, rc4, zc, zc1, zc2, zc3, zc4
       real*8, dimension(nilim) :: wecon
       real*8, dimension(njlim) :: volk, volkp1, pjk, pjkp1, pjkp, pjkd,
      &   psk, pskp1, pskp, pskm1
@@ -676,16 +677,14 @@
       integer, intent(out) :: nstep
       real*8, intent(in), dimension(*) :: voltpf, d_pf_mat, d_tcam_mat
 
-      integer :: i, j, k, l, ncequi, i_bsh, ik, iq, ncpfc, ngrid, nvv, 
-     &   nbp, nfw, nc, nloop, n_ctrl, ngav1, ngra1, nprob, nursb,
-     &   nout, nter, isymm, ninfw, ninf, nequiold, nbpold
-      integer, dimension(nclim) :: ntype
+      integer :: j, k, l, ncequi, i_bsh, ik, iq, ncpfc, ngrid,
+     &   nc, nloop, n_ctrl, ngav1, nprob, nursb,
+     &   isymm, ninf, nequiold, nbpold
       integer, dimension(nilim) :: necon
       real*8 :: alp_b, psi_bnd, psi0_bnd, platok, dt, time, ereve0,
-     &   erps, e_psi, pscout, tokout, zli3, betpol, ftok, psicen
-      real*8, dimension(nclim) :: pc, psip, vc, hc, ccurx, ccury,
-     &   rc, rc1, rc2, rc3, rc4, zc, zc1, zc2, zc3, zc4, 
+     &   erps, e_psi, pscout, tokout, zli3, betpol, ftok, psicen,
      &   alw0, alw1, alw2 
+      real*8, dimension(nclim) :: pc, ccurx, rc, zc
       real*8, dimension(nilim) :: wecon
       real*8, dimension(njlim) :: volk, volkp1, pjk, pjkp1, pjkp, pjkd,
      &   psk, pskp1, pskp, pskm1

@@ -14,7 +14,6 @@
       include 'compol.inc'
 
       common /compsf/ psf, sqtor
-      common /com_jb/ BJ_av, curfi_av
       common /com_b2/ B2_av
 
       if(kpr.lt.0) return
