@@ -1,6 +1,9 @@
       subroutine metrix
 
       use sp_parameters
+      use compol, only: nt, iplas, iplas1, dlr, dlt, r, z, sr, st, nt1,
+     &     cos1, cos2, cos3, cos4, sin1, sin2, sin3, sin4,
+     & vol, vol1, vol2, vol3, vol4, sq1, sq2, sq3, sq4, s
 
       implicit none
 
@@ -12,8 +15,6 @@
      &   cos_1, cos_2, cos_3, cos_4, sin_1, sin_2, sin_3, sin_4,
      &   vol_1, vol_2, vol_3, vol_4, dl12, dl14, dl23, dl34
       real*8, external :: funsq
-
-      include 'compol.inc'
 
       do j=1,Nt
          do i=1,iplas1
@@ -137,14 +138,14 @@
       subroutine matcof
 
       use sp_parameters
+      use compol, only: nt1, iplas1, st, sr, vol1, vol2, vol3, vol4,
+     & cos1, cos2, cos3, cos4, sin1, sin2, sin3, sin4
 
       implicit none
 
       integer :: i, j
       real*8 :: s12, s14, s34, s23
       real*8, dimension(nrp, ntp) :: a12, a23, a34, a14, a13, a24
-
-      include 'compol.inc'
       common/comaaa/ a12, a23, a34, a14, a13, a24
 
       do j=1,nt1
@@ -199,6 +200,8 @@
 
       use sp_parameters
       use keys, only: kstep
+      use compol, only: ngav, tok, erru, iplas, iter, dpdpsi, dfdpsi,
+     & f, fvac, flx_fi, psia, psim, psi_eav, psibon0, q, rm 
 
       implicit none
 
@@ -206,8 +209,6 @@
       real*8, intent(out) :: cur_mu
 
       real*8 :: pspl_av
-
-      include 'compol.inc'
 
       if(ngav.eq.0) cur_mu=tok*amu0
       call psib_pla(pspl_av)
@@ -238,6 +239,9 @@
       subroutine procof_fl(icq)
 
       use sp_parameters
+      use compol, only: iplas, iplas1, iter, itin, nt1, q, f, rm,
+     &  psia, psiax, psip, dpsda,
+     & r, s, sq1, sq2, sq3, sq4, dpdpsi, dwdpsi, dfdpsi 
 
       implicit none
 
@@ -253,8 +257,6 @@
      &   avrk, delsk, delv, bmn, b0, bpl, wrk1, wrk2, rhs, delv3,
      &   dfdpsn, delf, qs, qsn, psfn, dpsdas, psf, sqtor
       real*8, dimension(nrp, ntp) :: a12, a23, a34, a14, a13, a24
-
-      include 'compol.inc'
 
       common/comaaa/ a12, a23, a34, a14, a13, a24
       common/compsf/ psf, sqtor
@@ -504,6 +506,9 @@
       subroutine procof_I(icq)
 
       use sp_parameters
+      use compol, only: iplas, iplas1, iter, itin, nt1, q, f, rm,
+     &  psia, psiax, psip, psim, dpsda,
+     & r, s, sq1, sq2, sq3, sq4, dpdpsi, dwdpsi, dfdpsi, tok
 
       implicit none
 
@@ -520,8 +525,6 @@
      &   avrk, delsk, delv, bmn, b0, bpl, wrk1, wrk2, rhs, delv3,
      &   dfdpsn, delf, qcapp, qs, qsn, psfn, dpsdas, psf, sqtor, dfdpsw
       real*8, dimension(nrp, ntp) :: a12, a23, a34, a14, a13, a24
-
-      include 'compol.inc'
 
       common/comaaa/ a12, a23, a34, a14, a13, a24
       common/compsf/ psf, sqtor

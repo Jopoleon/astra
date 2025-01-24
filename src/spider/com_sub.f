@@ -1,6 +1,7 @@
       subroutine grdef(igdf)
 
       use sp_parameters
+      use compol, only: iplas, iplas1, psia, dpsda, q
 
       implicit none
 
@@ -9,8 +10,6 @@
       integer :: i
       real*8 :: znam, psnor, zn_gp
       real*8, dimension(nrp) :: h_fi, fia
-
-      include 'compol.inc'
 
       if(igdf.eq.0) then
          do i=1,iplas
@@ -66,6 +65,7 @@
       subroutine axdef(rma, zma, psima, dpm)
 
       use sp_parameters
+      use compol, only: r, z, rm, zm, psi, nt1
 
       implicit none
 
@@ -77,8 +77,6 @@
       integer :: j, nsh
       real*8 :: rm0, zm0, det, erroma, psim0
       real*8, dimension(nshp) :: xs, ys, fun
-
-      include 'compol.inc'
 
       rm0=rm
       zm0=zm
@@ -119,6 +117,7 @@
       subroutine avr2_c(arr2, nro, nteta, arr1)
 
       use sp_parameters
+      use compol, only: iplas, nt1
 
       implicit none
 
@@ -129,8 +128,6 @@
 
       integer :: i, j
       real*8, dimension(nteta) :: arrw
-
-      include 'compol.inc'
       
       do i=1,iplas-1
          do j=2,nt1
@@ -146,6 +143,7 @@
       real*8 function avr1_c(arr1_c, i)
 
       use sp_parameters
+      use compol, only: nt1, vol
 
       implicit none
 
@@ -154,8 +152,6 @@
 
       integer :: j
       real*8 :: avrg, sum_vol
-
-      include 'compol.inc'
       
       avrg=0.d0
       sum_vol=0.d0
@@ -172,6 +168,7 @@
       real*8 function avr_bnd(arr)
 
       use sp_parameters
+      use compol, only: nt1, dlt, iplas
 
       implicit none
 
@@ -179,8 +176,6 @@
 
       integer :: j
       real*8 :: avrg, sum_len
-
-      include 'compol.inc'
 
       avrg=0.d0
       sum_len=0.d0
@@ -197,6 +192,7 @@
       subroutine bongri
 
       use sp_parameters
+      use compol, only: iplas, nt1, r, z
 
       implicit none
 
@@ -204,8 +200,6 @@
       real*8 :: rr, zz, r0, r1, z0, z1, Fint
       real*8, dimension(ntp) :: dg_dn
       real*8, dimension(ntp, ntp) :: bin_adg
-
-      include 'compol.inc'
 
       common/com_bgr/ bin_adg, dg_dn
 
@@ -229,6 +223,7 @@
       subroutine cof_bon(cps_bon, bps_bon, dps_bon)
 
       use sp_parameters
+      use compol, only: nt1, iplas, nt, psi, sq2, sq3, dlt, cur, r
 
       implicit none
 
@@ -240,8 +235,6 @@
       real*8, dimension(ntp) :: dg_dn, aj, aj_G, bj, bj_g, dj, dj_G
       real*8, dimension(nrp, ntp) :: a12, a23, a34, a14, a13, a24
       real*8, dimension(ntp, ntp) :: bin_adg
-
-      include 'compol.inc'
 
       common/comaaa/ a12, a23, a34, a14, a13, a24
       common/com_bgr/ bin_adg, dg_dn
@@ -330,14 +323,13 @@
       subroutine get_flfi(flfi_m)
 
       use sp_parameters
+      use compol, only: iplas, q, psia, psim
 
       implicit none
 
       real*8, intent(out) :: flfi_m
 
       integer :: i
-
-      include 'compol.inc'
        
       flfi_m=0.d0
 
@@ -353,6 +345,8 @@
      *                  alp33k, delsk, delvk)
 
       use sp_parameters
+      use compol, only: iplas, iplas1, nt1, r, s, vol, cur,
+     &  psia, psipla, sq1, sq2, sq3, sq4
 
       implicit none
 
@@ -366,8 +360,6 @@
      &   r0, r1, r2, r3, r4, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9
       real*8, dimension(nrp) :: psf, sqtor, curj_I, deviat
       real*8, dimension(nrp, ntp) :: a12, a23, a34, a14, a13, a24
-
-      include 'compol.inc'
 
       common/comaaa/ a12, a23, a34, a14, a13, a24
       common/compsf/ psf, sqtor
@@ -493,6 +485,8 @@
       subroutine qst_b
 
       use sp_parameters
+      use compol, only: nt1, iplas, r, z, r0ax, b0ax, fvac, f, dfdpsi,
+     & psin, psim, psia, psip, s, sq2, sq3, flx_fi, q, flucfm
 
       implicit none
 
@@ -503,8 +497,6 @@
      &   tg2a, cos2a, sin2a, ffp, dflufi, q2pi, r0, r1, r2, r3, r4
       real*8, dimension(5) :: dp
       real*8, dimension(nshp) :: xs, ys, fun
-
-      include 'compol.inc'
 
       common/efites/ fcefit, rc_efit, iefit
 
@@ -640,6 +632,8 @@
       subroutine bt_pol(betpol)
 
       use sp_parameters
+      use compol, only: nt1, iplas1, sq1, sq2, sq3, sq4, tokp, cnor,
+     & psin, psim, psip 
 
       implicit none
 
@@ -648,8 +642,6 @@
       integer :: i, j
       real*8 :: sqcen, sqk, psn, zpres, pintg
       real*8, external :: funppp
-
-      include 'compol.inc'
 
       sqcen=0.d0
       do j=2,nt1
@@ -678,15 +670,15 @@
       subroutine skbetp(betplx, betpol)
 
       use sp_parameters
+      use compol, only: ngav, tok, cnor, tokff, iplas, dpdpsi
 
       implicit none
 
-      real*8, intent(in) :: betplx, betpol
+      real*8, intent(in) :: betplx
+      real*8, intent(out) :: betpol
 
       integer :: i, nurs
       real*8 :: zcoin, coin
-
-      include 'compol.inc'
 
       call bt_pol(betpol)
 
@@ -712,6 +704,10 @@
 
       use sp_parameters
       use keys, only: kastr
+      use jb, only: Bj_av, curfi_av
+      use tim, only: dtim
+      use compol, only: iplas, iplas1, nt1, vol1, vol2, vol3, vol4,
+     & psim, psia, r, rm, tokp, flx_fi, cur, f
 
       implicit none
 
@@ -720,15 +716,12 @@
      &   b2_av_m, xa, fun_sig, fun_sig_a, sebeb, fm, ebm, em, see, 
      &   dpsdt05, dfidt05
       real*8, dimension(nrp) :: psi0, fi0, f0, ri0, q0, dpsidt, 
-     &   dfidt, BJ_av, curfi_av, B2_av, EB, EB_c, Epar_c, WDj,
+     &   dfidt, B2_av, EB, EB_c, Epar_c, WDj,
      &   BfJf, alfa22, alfa33, ds, dsk, dv, dvk, cj, alp33k,
      &   sigma, z_nvzk
 
-      include 'compol.inc'
-
       common/savt0/ psi0, fi0, f0, ri0, q0, 
      &              dpsidt, dfidt, rm0, ac0n, skcen0
-      common /com_jb/ BJ_av, curfi_av
       common /com_b2/ B2_av
       common /com_eb/ EB, EB_c, Epar_c
       common/com_heat_Dj/ WDj
@@ -852,6 +845,8 @@
 ! JA(IM) -- number of matrix column for element a(im)
 
       use sp_parameters
+      use compol, only: ia, ja, a, nt, nt1, nt2, nr, iplas, neqpla,
+     & itin, nitbeg, nitdel, app0, dapp 
 
       implicit none
 
@@ -859,8 +854,6 @@
       real*8 :: a1, a2, a3, a4, a5, a6, a7, a8, a9
       real*8, dimension(nrp, ntp) :: a12, a23, a34, a14, a13, a24
       integer, external :: numlin
-
-      include 'compol.inc'
 
       common/comaaa/ a12, a23, a34, a14, a13, a24
 

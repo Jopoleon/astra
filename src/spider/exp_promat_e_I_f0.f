@@ -892,18 +892,14 @@
 !----------------------------------------------------------------
       real*8 function fun_sig(a, i)
 
-      use sp_parameters, only: nrp, pi, amu0
+      use sp_parameters, only: amu0
+      use sigcd, only: C_sig
+      use tim, only: dtim, ctim
 
       implicit none
 
       integer, intent(in) :: i
       real*8, intent(in) :: a
-
-      real*8 :: dtim, ctim, t
-      real*8, dimension(nrp) :: C_sig, T_el, C_bts, C_driv
-
-      common /com_tim/ dtim, ctim
-      common /com_sigcd/ C_sig, T_el, C_bts, C_driv
 
       fun_sig=-C_sig(i)*amu0/dtim
 
@@ -914,14 +910,13 @@
       real*8 function fun_sig_a(a, i)
 
       use sp_parameters, only: pi
+      use tim, only: dtim
 
       implicit none
 
       integer, intent(in) :: i
       real*8, intent(in) :: a
-
-      real*8 :: a0, a1, t, t0, t1, dtim, ctim, fun_sig
-      common /com_tim/ dtim, ctim
+      real*8 :: a0, a1, t, t0, t1, fun_sig
 
       a0=0.0d0
       a1=1.0d0
@@ -949,14 +944,12 @@
       real*8 function fun_jb(a, i)
 
       use sp_parameters, only: nrp, amu0
+      use sigcd, only: C_bts, c_driv
 
       implicit none
 
       integer, intent(in) :: i
       real*8, intent(in) :: a
-
-      real*8, dimension(nrp) :: C_sig, T_el, C_bts, C_driv
-      common /com_sigcd/ C_sig, T_el, C_bts, C_driv
 
       fun_jb=(C_bts(i)+C_driv(i))*amu0
 
@@ -967,6 +960,7 @@
       real*8 function fun_jb_a(a, i)
 
       use sp_parameters, only: nrp, pi
+      use jb, only: Bj_av
 
       implicit none
 
@@ -974,8 +968,6 @@
       real*8, intent(in) :: a
 
       real*8 :: ampl, a0, w, fun
-      real*8, dimension(nrp) :: BJ_av, curfi_av
-      common/com_jb/ BJ_av, curfi_av
 
       ampl=0.0d0
       a0=0.50d0
@@ -994,6 +986,7 @@
 ! Newton metod with linearisation
 
       use sp_parameters, only: nrp
+      use jb, only: Bj_av
 
       implicit none
 
@@ -1018,10 +1011,9 @@
       real*8, dimension(nrp, 4) :: a, b, c
       real*8, dimension(nrp) :: psi, fi, ri, alfa22, alfa33, alp33k, 
      &   ds, dsk, dv, dvk, dpsi, dfi, dri, df, Fk, rIk, Qk, delf, dfdpsn
-      real*8, dimension(nrp) :: bj_av, curfi_av, sigma, cbut_b,
+      real*8, dimension(nrp) :: sigma, cbut_b,
      &   psi0, fi0, f0, ri0, q0, dpsidt, dfidt
 
-      common /com_jb/ BJ_av, curfi_av
       common /savt0/ psi0, fi0, f0, ri0, q0, 
      &               dpsidt, dfidt, rm0,ac0n,skcen0
       common /com_but/ sigma, cbut_b

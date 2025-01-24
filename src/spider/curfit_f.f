@@ -2318,10 +2318,9 @@
 
       use sp_parameters
       use parcur
+      use compol, only: iplas, nt1, psi, dlt, nt, r, z
 
       implicit none
-
-      include 'compol.inc'
 
       integer :: i, j, l, jb
       real*8 :: a1, a2, a3, g1, g2, g3, dltk, dgdnl, psb, fint,

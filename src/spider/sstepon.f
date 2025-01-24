@@ -6,6 +6,8 @@
       use iopath, only: path
       use comevl
       use keys, only: kstep, kpr, key_fixbon, kastr, kastr2, key_out
+      use e_nels, only: enels
+      use ndmf, only: n_dmf
 
       implicit none
 
@@ -15,7 +17,7 @@
 
       integer :: i, j, l, ipsmk, eq_cmd, i_bsh, ngrid, nprob, nvv,
      &   kstop, k_step, kstepr, kstepy, keypri, knel, knels, 
-     &   n_ctrl, nctrl, numlim, it_dmf, nreg, n_dmf, nles,
+     &   n_ctrl, nctrl, numlim, it_dmf, nreg, nles,
      &   npro, nloop, nc, ncequi, ncpfc, nfw, nbp, ngav, ngav1, nursb,
      &   nfrpr1, nfrwr1, nout, nter, ninfw, ninev, ngra1, ngra2, numwr
       integer, dimension(nilim) :: necon
@@ -26,7 +28,7 @@
      &   alw0, alw1, alw2, helinp, helout, diftok, platok, ftok, 
      &   psi_bnd, psi0_bnd, psicen, psiax, psiout, psi0_ax, pspl_av,
      &   psex_av, psidel, psibou, psax_sta, e_psi, erps, betpol, zli3,
-     &   ereve, enels, ztok_n, zpsim_n, beold, tokout,
+     &   ereve, ztok_n, zpsim_n, beold, tokout,
      &   alp, alp_b, alpnew, up, f_wes, zpsim, ztok, flx_fi, difpsi,
      &   curmin, curmax, sgmcur, errcu1, errcu2,
      &   rx0, zx0, rmax0, zmax0, rm, zm, rxpold, zxpold, rxppr, zxppr,
@@ -52,8 +54,6 @@
       common /comst1/ PJK, PJKP1, PJKP, PJKD
       common /comloo/ rloop, zloop, rprob, zprob, fiprob, nloop, nprob
       common /comst2/ PSK, PSKP1, PSKP, PSKM1
-      common /com_enels/ ENELS
-      common /com_ndmf/ n_dmf
       common /timingcmdipsmk/ ipsmk, eq_cmd, dteqz
 
       kstep = nstep
@@ -576,6 +576,8 @@
       use iopath, only: path
       use comevl
       use keys, only: kstep, kpr, key_fixbon, kastr, kastr2, key_out
+      use e_nels, only: enels
+      use ndmf, only: n_dmf
 
       implicit none
 
@@ -585,7 +587,7 @@
 
       integer :: i, j, l, ipsmk, eq_cmd, i_bsh, ngrid, nprob, nvv,
      &   kstop, k_step, kstepr, kstepy, keypri, knel, knels, 
-     &   n_ctrl, nctrl, numlim, it_dmf, nreg, n_dmf, nles,
+     &   n_ctrl, nctrl, numlim, it_dmf, nreg, nles,
      &   npro, nloop, nc, ncequi, ncpfc, nfw, nbp, ngav, ngav1, nursb,
      &   nfrpr1, nfrwr1, nout, nter, ninfw, ninev, ngra1, ngra2, numwr,
      &   j_calll, ispid_contour, res_trigts06
@@ -597,7 +599,7 @@
      &   alw0, alw1, alw2, helinp, helout, diftok, platok, ftok, 
      &   psi_bnd, psi0_bnd, psicen, psiax, psiout, psi0_ax, pspl_av,
      &   psex_av, psidel, psibou, psax_sta, e_psi, erps, betpol, zli3,
-     &   ereve, enels, ztok_n, zpsim_n, beold, tokout,
+     &   ereve, ztok_n, zpsim_n, beold, tokout,
      &   alp, alp_b, alpnew, up, f_wes, zpsim, ztok, flx_fi, difpsi,
      &   curmin, curmax, sgmcur, errcu1, errcu2,
      &   rx0, zx0, rmax0, zmax0, rm, zm, rxpold, zxpold, rxppr, zxppr,
@@ -624,8 +626,6 @@
       common /comst1/ PJK, PJKP1, PJKP, PJKD
       common /comloo/ rloop, zloop, rprob, zprob, fiprob, nloop, nprob
       common /comst2/ PSK, PSKP1, PSKP, PSKM1
-      common /com_enels/ ENELS
-      common /com_ndmf/ n_dmf
       common /timingcmdipsmk/ ipsmk, eq_cmd, dteqz
       common /commanddioh/ cmnd_dioh2s, cmnd_dioh2u
       common /ioh_ts06_res/ res_trigts06, resres_oh6

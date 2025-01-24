@@ -6,6 +6,7 @@
       use sp_parameters
       use iopath, only: path
       use keys, only: kpr, kstep
+      use compol
 
       implicit none
 
@@ -27,8 +28,6 @@
       real*8 :: rrk(nursp4), cck(nursp4), wrk(nursp6), cwk(4)
       real*8 :: tabp, tabf
       character(len=80) :: fname
-
-      include 'compol.inc'
 
       common /combsh/ rm0, zm0, rc0, zc0, asp0, el_up, el_lw, 
      &                tr_up, tr_lw, nbsh
@@ -244,6 +243,7 @@
 
       use sp_parameters
       use keys, only: kpr, kstep
+      use compol
 
       implicit none
 
@@ -263,8 +263,6 @@
       real*8, dimension(nursp) :: pstab, qtab
       real*8 :: rrk(nursp4), cck(nursp4), wrk(nursp6), cwk(4)
       real*8 :: tabp, tabf
-
-      include 'compol.inc'
 
       common /combsh/ rm0, zm0, rc0, zc0, asp0, el_up, el_lw, 
      &                tr_up, tr_lw, nbsh
@@ -360,6 +358,7 @@
 
       use sp_parameters
       use keys, only: kpr
+      use compol, only: iplas, psia, dfdpsi, dpdpsi
 
       implicit none
 
@@ -367,8 +366,6 @@
       real*8 :: wes, zpsi, dpsi, furs_n, purs_n
       real*8, dimension(nursp) :: psit, purs, furs, wurs,
      &   ppp, fff, www, pstab, pptab, fptab
-
-      include 'compol.inc'
 
       common/comurs/ psit, purs, furs, wurs, nurs
       common/comppp/ ppp, fff, www
@@ -422,6 +419,7 @@
 
       use sp_parameters
       use keys, only: kpr
+      use compol, only: iplas, psia, dpdpsi
 
       implicit none
 
@@ -429,8 +427,6 @@
       real*8 :: zpsi, dpsi
       real*8, dimension(nursp) :: psit, purs, furs, wurs,
      &   ppp, fff, www, pstab, pptab, fptab
-
-      include 'compol.inc'
 
       common/comurs/ psit, purs, furs, wurs, nurs
       common/comppp/ ppp, fff, www
@@ -472,6 +468,8 @@
       subroutine bt_tot(bettot)
 
       use sp_parameters
+      use compol, only: nt1, psin, iplas1, b0ax, psim, psip, cnor,
+     & vol, vol1, vol2, vol3, vol4
 
       implicit none
 
@@ -480,8 +478,6 @@
       integer :: i, j
       real*8 :: volcen, volpl, psn, zpres, pintg, volk, paverg
       real*8, external :: funppp
-
-      include 'compol.inc'
 
       volcen=0.d0
 
@@ -516,6 +512,8 @@
 
       use sp_parameters
       use keys, only: kpr
+      use compol, only: iter, itin, z, zm, psi, psim, psip, psipla,
+     & iplas, iplas1, nt1, cnor, tokp, rm, fvac, f
 
       implicit none
 
@@ -524,8 +522,6 @@
 
       integer :: i, j, imov, imax, jmax
       real*8 :: erro, errod, errpsi, psimax, platok, rax, zax, psax
-
-      include 'compol.inc'
 
       imov=0
       iter=0
@@ -605,13 +601,11 @@
 !----------------------------------------------------------------
       subroutine put_tim(dt, time)
 
-      use sp_parameters
+      use tim, only: dtim, ctim
 
       implicit none
 
       real*8, intent(in) :: dt, time
-
-      include 'compol.inc'
 
       dtim=dt
       ctim=time
@@ -622,13 +616,11 @@
 !----------------------------------------------------------------
       subroutine get_tim(dt, time)
 
-      use sp_parameters
+      use tim, only: dtim, ctim
 
       implicit none
 
       real*8, intent(out) :: dt, time
-
-      include 'compol.inc'
 
       dt=dtim
       time=ctim

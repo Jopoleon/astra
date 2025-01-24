@@ -2,6 +2,7 @@
 
       use sp_parameters
       use keys, only: kpr
+      use compol, only: psi, iplas1, nt1, iswtch, iter, ngav
 
       implicit none
 
@@ -10,8 +11,6 @@
 
       integer :: i, j, imax, jmax
       real*8 :: psimax
-
-      include 'compol.inc'
 
       psimax=psi(1,2)
       imax=1
@@ -57,6 +56,8 @@
 
       use sp_parameters
       use keys, only: kpr
+      use compol, only: r, z, rm, zm, nt1, psi, psia, psim, psin, psip, 
+     & teta, iplas, iplas1, ro, nr, nt
 
       implicit none
 
@@ -73,8 +74,6 @@
       real*8, dimension(5) :: dp
       real*8, dimension(nshp) :: xs, ys, fun
       real*8, dimension(ntp) :: ron, rop, rn, zn, tetn, rob, teti, roi
-
-      include 'compol.inc'
 
 ! New position of magnetic axis
 
@@ -345,6 +344,10 @@
 
       use sp_parameters
       use keys, only: kpr
+      use compol, only: ngav, rm, zm, r, z, teta, q, errm, 
+     &  iplas, iplas1, nt, nt1, nr,
+     &  ro, ronor,
+     &  psi, psia, psin, psip, psim
 
       implicit none
 
@@ -359,8 +362,6 @@
       real*8, dimension(5) :: dp
       real*8, dimension(ntp) :: ron, rop, rn, zn, tetn, rob, teti, roi
       real*8, dimension(nrp, ntp) :: roplt
-
-      include 'compol.inc'
 
       if(kpr.eq.1) then
          write(*,*) 'regrid:::'
@@ -597,6 +598,10 @@
 
       use sp_parameters
       use keys, only: kpr
+      use compol, only: ngav, rm, zm, r, z, teta, q, errm, 
+     &  iplas, iplas1, nt, nt1, nr,
+     &  ro, ronor,
+     &  psi, psia, psin, psip, psim
 
       implicit none
 
@@ -611,8 +616,6 @@
       real*8, dimension(5) :: dp
       real*8, dimension(ntp) :: ron, rop, rn, zn, tetn, rob, teti, roi
       real*8, dimension(nrp, ntp) :: roplt
-
-      include 'compol.inc'
 
       if(kpr.eq.1) then
          write(*,*) 'regrid0:::'
@@ -832,6 +835,9 @@
          
       use bnd_modul       
       use sp_parameters
+      use compol, only: nr, nt, nt1, iplas, iplas1,
+     & ro, ronor, rm, zm, r, z, 
+     & teta, psia, psin , psi, psip, psim
 
       implicit none
 
@@ -844,8 +850,6 @@
      &   rbomax, rbomin, zbomax, zbomin, rc0new, zc0new, drc0, dzc0,
      &   drx, dzx, tetp
       real*8, dimension(nbtabp) :: robn, tetbn
-
-      include 'compol.inc'
 
       common /combsh/ rm0, zm0, rc0, zc0, asp0, el_up, el_lw, 
      &   tr_up, tr_lw, nbsh
@@ -982,14 +986,13 @@
       subroutine grid_p0(igdf, nstep)
 
       use sp_parameters
+      use compol, only: erru, nt, psi, iplas
 
       implicit none
 
       integer, intent(in) :: igdf, nstep
 
       integer :: j
-
-      include 'compol.inc'
 
       erru=1.d0
       do j=1,nt
@@ -1003,14 +1006,13 @@
       subroutine grid_p1(igdf, nstep)
 
       use sp_parameters
+      use compol, only: nt, iplas, psi
 
       implicit none
 
       integer, intent(in) :: igdf, nstep
 
       integer :: j
-
-      include 'compol.inc'
 
       do j=1,nt
          psi(iplas, j)=0.d0
@@ -1047,6 +1049,9 @@
       use bnd_modul       
       use sp_parameters
       use keys, only: kpr
+      use compol, only: iplas, iplas1, rm, zm, r, z,
+     & nr, nt, nt1, ro, teta,
+     & psia, psim, psip, psin, psi, dpsda
 
       implicit none
 
@@ -1062,8 +1067,6 @@
      &   ron, tetn
       real*8, dimension(nbtabp) :: robn, tetbn
       real*8, external :: frbon, fzbon
-
-      include 'compol.inc'
 
       common /combsh/ rm0, zm0, rc0, zc0, asp0, el_up, el_lw, 
      &   tr_up, tr_lw, nbsh
@@ -1374,6 +1377,9 @@
       subroutine grid_b(igdf, nstep)
 
       use sp_parameters
+      use compol, only: iplas, iplas1, rm, zm, r, z,
+     & nr, nt, nt1, ro, teta,
+     & psia, psim, psip, psin, psi, dpsda
 
       implicit none
 
@@ -1393,8 +1399,6 @@
       real*8, dimension(nip, njp) :: u, ue, un, ui, g, ut
       real*8, dimension(ntp) :: ron, ronm
       real*8, dimension(nshp) :: xs, ys, fun
-
-      include 'compol.inc'
 
       common /comrz/ x, y, dx, dy, dxi, dyj, x12
       common /compot/ u, ue, un, ui, g,
@@ -1529,6 +1533,9 @@
 
       use numerical_tools, only: reinterp_back_quad
       use sp_parameters
+      use compol, only: iplas, iplas1, rm, zm, r, z,
+     & nr, nt, nt1, ro, ronor, teta,
+     & psia, psim, psip, psin, psi, dpsda
 
       implicit none
 
@@ -1553,8 +1560,6 @@
       real*8, dimension(ntp) :: ron, ronm
       real*8, dimension(nshp) :: xs, ys, fun
       real*8, dimension(iplas) :: rggr, psitemp
-
-      include 'compol.inc'
 
       common /comrz/ x, y, dx, dy, dxi, dyj, x12
       common /compot/ u, ue, un, ui, g,
@@ -1793,6 +1798,9 @@ Cquadratic inerpolation
       subroutine grid_b1_ef(igdf, nstep)
 
       use sp_parameters
+      use compol, only: iplas, iplas1, rm, zm, r, z,
+     & nr, nt, nt1, ro, ronor, teta,
+     & psia, psim, psip, psin, psi, dpsda
 
       implicit none
 
@@ -1805,8 +1813,6 @@ Cquadratic inerpolation
      &          psi_bon, u0, dtet
       real*8, dimension(ntp) :: ron
       real*8, dimension(nip, njp) :: u, ue, un, ui, g
-
-      include 'compol.inc'
 
       common /compot/ u, ue, un, ui, g,
      &                ux0, ux1, ux2, up, um, xm, ym,
@@ -1879,6 +1885,9 @@ Cquadratic inerpolation
       subroutine grid_b1(igdf, nstep)
 
       use sp_parameters
+      use compol, only: iplas, iplas1, rm, zm, r, z,
+     & nr, nt, nt1, ro, ronor, teta,
+     & psia, psim, psip, psin, psi, dpsda
 
       implicit none
 
@@ -1891,8 +1900,6 @@ Cquadratic inerpolation
      &   dtet, u0
       real*8, dimension(ntp) :: ron
       real*8, dimension(nip, njp) :: u, ue, un, ui, g
-
-      include 'compol.inc'
 
       common /compot/ u, ue, un, ui, g, 
      &                ux0, ux1, ux2, up, um, xm, ym, 

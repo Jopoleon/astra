@@ -2,8 +2,11 @@
 
 ! right-hand side for problem L(g)=J
 
-      use sp_parameters
+      use sp_parameters, only: neqp, amu0
       use keys, only: kstep, kastr, key_plc, kpr, key_prs
+      use compol, only: nr, nt, nt1, neq, ngav, iplas, cur, right, erru,
+     &    dpdpsi, dfdpsi, cnor, tok, tokp, tokff, tokpp, r, rm, psin,
+     & sq1, sq2, sq3, sq4
 
       implicit none
 
@@ -11,8 +14,6 @@
       real*8 :: cur_mu, curp, curf, sqk, r0, psn, curcen, sqcen
       integer, external :: numlin
       real*8, external :: tabf, tabp
-
-      include 'compol.inc'
 
       save cur_mu
         
@@ -192,7 +193,9 @@
 !----------------------------------------------------------------
       subroutine f_rightp
 
-      use sp_parameters
+      use sp_parameters, only: nrp, ntp
+      use compol_add, only: dgdn, binadg, psii, g
+      use compol, only: nr, nr1, nt, nt1, dlt, right
 
       implicit none
 
@@ -200,9 +203,6 @@
       real*8 :: a1, a2, a3, a7, a8, a9, g1, g2, g3, dltk, dgdnl, psb
       real*8, dimension(ntp) :: psib
       real*8, dimension(nrp, ntp) :: a12, a23, a34, a14, a13, a24
-
-      include 'compol.inc'
-      include 'compol_add.inc'
 
       common/comaaa/ a12, a23, a34, a14, a13, a24
 
@@ -254,7 +254,9 @@
 !----------------------------------------------------------------
       subroutine rigext
 
-      use sp_parameters
+      use sp_parameters, only: neqp, nrp, ntp
+      use compol_add, only: psie
+      use compol, only: nr, nt, nt1, iplas, right
 
       implicit none
 
@@ -263,9 +265,6 @@
       real*8, dimension(nrp) :: psib
       real*8, dimension(nrp, ntp) :: a12, a23, a34, a14, a13, a24
       integer, external :: numlin
-
-      include 'compol.inc'
-      include 'compol_add.inc'
 
       common/comaaa/ a12, a23, a34, a14, a13, a24
 
@@ -295,8 +294,10 @@
 !----------------------------------------------------------------
       subroutine toksur
 
-      use sp_parameters, only: nrp, ntp, lp, neqp, neq1p, nblmp,
-     &   nprobp, nloopp, nkp
+      use sp_parameters, only: nrp, ntp
+      use compol_add, only: psii, psie, fpv
+      use compol, only: nr, nt, nt1, iplas, f, fvac, cur, curs,
+     & toksfi, right, dlt, r, sq2, sq3
 
       implicit none
 
@@ -306,9 +307,6 @@
      &   DpiDni, DpiDne, DpeDni, DpsDni, DpsDne, sqk, dlt0, r0, fvv
       real*8, dimension(nrp, ntp) :: a12, a23, a34, a14, a13, a24
       integer, external :: numlin
-
-      include 'compol.inc'
-      include 'compol_add.inc'
 
       common/comaaa/ a12, a23, a34, a14, a13, a24
 
@@ -384,8 +382,9 @@
 !----------------------------------------------------------------
       subroutine f_psib_ext(psex_av)
 
-      use sp_parameters, only: nrp, ntp, lp, neqp, neq1p, nblmp,
-     &   nprobp, nloopp, nkp
+      use sp_parameters, only: ntp
+      use compol_add, only: psie
+      use compol, only: nt, nt1, iplas
 
       implicit none
 
@@ -394,9 +393,6 @@
       integer :: i, j
       real*8, dimension(ntp) :: psex_b
       real*8 :: avr_bnd
-
-      include 'compol.inc'
-      include 'compol_add.inc'
 
       i=iplas
 
@@ -414,8 +410,9 @@
 !----------------------------------------------------------------
       subroutine f_psib_pla(pspl_av)
 
-      use sp_parameters, only: nrp, ntp, lp, neqp, neq1p, nblmp,
-     &   nprobp, nloopp, nkp
+      use sp_parameters, only: ntp
+      use compol_add, only: psii
+      use compol, only: nt, nt1, iplas
 
       implicit none
 
@@ -424,9 +421,6 @@
       integer :: i, j
       real*8, dimension(ntp) :: pspl_b
       real*8 :: avr_bnd
-
-      include 'compol.inc'
-      include 'compol_add.inc'
 
       i=iplas
 
@@ -444,13 +438,11 @@
 !----------------------------------------------------------------
       subroutine put_psib0(psi0_bnd)
 
-      use sp_parameters, only: nrp, ntp, lp, neqp, neq1p
+      use compol, only: psibon0
 
       implicit none
 
       real*8, intent(in) :: psi0_bnd
-
-      include 'compol.inc'
 
       psibon0=psi0_bnd
 	            

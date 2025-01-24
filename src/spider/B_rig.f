@@ -3,6 +3,10 @@
 ! right-hand side for problem L(g)=J
       use sp_parameters
       use keys
+      use compol, only: tok, tokp, tokpp, tokff, tokww, right, ngav,
+     & iplas, neqpla, erru, fvac, f, psia, psim, 
+     &     nr, nt, nt1, cur, psin, r, rm, dpdpsi, dfdpsi, dwdpsi, cnor,
+     & sq1, sq2, sq3, sq4
 
       implicit none
 
@@ -11,8 +15,6 @@
      &   tok_pl, dfdpsi_sur
       integer, external :: numlin
       real*8, external :: tabf, tabp, tabw
-
-      include 'compol.inc'
 
       save cur_mu
 
@@ -221,6 +223,7 @@
       subroutine psib_pla(pspl_av)
 
       use sp_parameters
+      use compol, only: iplas, nt, nt1, psi, psip, dlt, cur, sq2, sq3
 
       implicit none
 
@@ -232,8 +235,6 @@
       real*8, dimension(ntp) :: pspl_b, dgdn
       real*8, dimension(nrp, ntp) :: a12, a23, a34, a14, a13, a24
       real*8, dimension(ntp, ntp) :: binadg
-
-      include 'compol.inc'
 
       common/comaaa/ a12, a23, a34, a14, a13, a24
       common/com_bgr/ binadg, dgdn
@@ -343,6 +344,7 @@
       subroutine psib_ext(psex_av)
 
       use sp_parameters
+      use compol, only: iplas, nt, nt1, r, z
 
       implicit none
 
@@ -353,8 +355,6 @@
       real*8, dimension(ntp) :: psex_b, rbon, zbon
       real*8 :: psexk_b(ntp, 500), psexk_av(500)
       double precision rzzz
-
-      include 'compol.inc'
 
       i=iplas
 

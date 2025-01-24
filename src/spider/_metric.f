@@ -1,6 +1,9 @@
       subroutine f_metric
 
-      use sp_parameters
+      use compol, only: nr, nr1, nt, nt1, r, z, dlr, dlt,
+     & s, sr, st, sq1, sq2, sq3, sq4,
+     & vol, vol1, vol2, vol3, vol4, cos1, cos2, cos3, cos4,
+     & sin1, sin2, sin3, sin4
 
       implicit none
 
@@ -12,8 +15,6 @@
      &   dr0, dr1, dr2, dr3, dr4, dr12, dr23, dr34, dr14,
      &   dz0, dz1, dz2, dz3, dz4, dz12, dz23, dz34, dz14
       real*8 :: funsq
-
-      include 'compol.inc'
 
       do i=1,Nr1
          do j=1,Nt
@@ -104,15 +105,15 @@
 !----------------------------------------------------------------
       subroutine f_matcof
 
-      use sp_parameters
+      use sp_parameters, only: nrp, ntp
+      use compol, only: nr1, nt1, sr, st, vol1, vol2, vol3, vol4,
+     & cos1, cos2, cos3, cos4, sin1, sin2, sin3, sin4 
 
       implicit none
 
       integer :: i, j
       real*8 :: s12, s14, s34, s23
       real*8, dimension(nrp, ntp) :: a12, a23, a34, a14, a13, a24
-
-      include 'compol.inc'
 
       common/comaaa/ a12, a23, a34, a14, a13, a24
 
@@ -176,7 +177,9 @@
 ! IA(IL) -- number of first nonzero element in line IL
 ! JA(IM) -- number of matrix column for element a(im)
 
-      use sp_parameters
+      use sp_parameters, only: nrp, ntp
+      use compol, only: nr, nr1, nt, nt1, nt2, neq, nitbeg, nitdel,
+     & itin, ia, ja, a, aop0, daop
 
       implicit none
 
@@ -184,9 +187,6 @@
       real*8 :: a1, a2, a3, a4, a5, a6, a7, a8, a9
       real*8, dimension(nrp, ntp) :: a12, a23, a34, a14, a13, a24
       integer, external :: numlin
-
-      include 'compol.inc'
-      include 'compol_add.inc'
 
       common /comaaa/ a12, a23, a34, a14, a13, a24
 
@@ -530,8 +530,11 @@
 !----------------------------------------------------------------
       subroutine f_procof(icq, cur_mu)
 
-      use sp_parameters
+      use sp_parameters, only: amu0
       use keys, only: kstep
+      use compol, only: iplas, ngav, itin, tok, erru, q, rm, 
+     &     psia, psibon, psibon0, psi_eav, psipla, f, fvac, flx_fi,
+     & dfdpsi, dpdpsi, erru
 
       implicit none
 
@@ -540,8 +543,6 @@
 
       real*8 :: tok_mu, psi_bon, psex_av, pspl_av, 
      &   bps_bon, cps_bon, dps_bon
-
-      include 'compol.inc'
 
       tok_mu=tok*amu0
 
@@ -579,7 +580,11 @@
 !----------------------------------------------------------------
       subroutine f_procof_fl(icq)
 
-      use sp_parameters
+      use sp_parameters, only: nrp, ntp
+      use compol_add, only: aex
+      use compol, only: nt1, iplas, iplas1, r, rm, f, dfdpsi, dpdpsi,
+     &     psia, psip, psipla,
+     & q, s, sq1, sq2, sq3, sq4
 
       implicit none
 
@@ -594,9 +599,6 @@
       real*8, dimension(nrp) :: amn, a0, apl, capp, avrc, delsc, avrk, 
      &   delsk, delv, bmn, b0, bpl, wrk1, wrk2, psf, rhs, sqtor
       real*8, dimension(nrp, ntp) :: a12, a23, a34, a14, a13, a24
-
-      include 'compol.inc'
-      include 'compol_add.inc'
 
       common/comaaa/ a12, a23, a34, a14, a13, a24
       common/compsf/ psf, sqtor
@@ -792,7 +794,9 @@
 !----------------------------------------------------------------
       subroutine f_procof_i(icq)
 
-      use sp_parameters
+      use sp_parameters, only: nrp, ntp
+      use compol, only: nt1, iplas, iplas1, itin, r, rm, q, tok, f,
+     & dpsda, dpdpsi, dfdpsi, psia, psim, psip, s, sq1, sq2, sq3, sq4
 
       implicit none
 
@@ -809,9 +813,6 @@
      &   delsc, delsk, delv, bmn, b0, bpl, wrk1, wrk2, psf, rhs, 
      &   sqtor, dfdpsn
       real*8, dimension(nrp, ntp) :: a12, a23, a34, a14, a13, a24
-
-      include 'compol.inc'
-      include 'compol_add.inc'
 
       common/comaaa/ a12, a23, a34, a14, a13, a24
       common/compsf/ psf, sqtor

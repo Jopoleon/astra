@@ -34,23 +34,23 @@
 !----------------------------------------------------------------
       subroutine f_wrd
 
-      use sp_parameters
+      use sp_parameters, only: nrp
       use iopath, only: path
       use keys, only: kpr, kstep
+      use jb, only: Bj_av
+      use tim, only: ctim
+      use compol_add, only: g, psii, psie, aex, rx0, zx0
+      use compol, only: nr, nt, nr1, nt1, nr2, nt2, iplas, r, z,
+     &    cur, psi, q, f, rm, zm, psia, dpdpsi, dfdpsi
 
       implicit none
 
       integer :: i, j
       real*8 :: ddps
-      real*8, dimension(nrp) :: psf, sqtor, bj_av, curfi_av, 
-     &   b2_av, sigma, cbut_b
+      real*8, dimension(nrp) :: psf, sqtor, b2_av, sigma, cbut_b
       character(len=80) :: fname
 
-      include 'compol.inc'
-      include 'compol_add.inc'
-
       common/compsf/ psf, sqtor
-      common /com_jb/ BJ_av, curfi_av
       common /com_b2/ B2_av
       common/com_but/ sigma,cbut_b
 
@@ -131,8 +131,11 @@
 !----------------------------------------------------------------
       subroutine wr_step(numwr, time, istep)
 
-      use sp_parameters
       use iopath, only: path
+      use tim, only: dtim, ctim
+      use compol, only: nr, nt, iplas, q, ro, r, z, rm, zm,
+     &   psi, psia, psin, psim, psip, psi_eav, psibon0,
+     &   teta, f, dfdpsi, dpdpsi, tok
 
       implicit none
 
@@ -141,9 +144,6 @@
       integer :: i, j
       character(len=40) :: str, dummy
       character(len=80) :: fname
-
-      include 'compol.inc'
-      include 'compol_add.inc'
 
       write(fname,'(a,a)') TRIM(path), '/nmwr.wr'
       open(1,file=fname)

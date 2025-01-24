@@ -8,7 +8,9 @@
 !--
 !--WDM    two dimensional grid array containing rezult of solving
 
-      use sp_parameters
+      use sp_parameters, only: nrp, ntp, neqp, nspp
+      use compol, only: nr, nr1, nt, nt1, neq, itin, nitdel, nitbeg,
+     &  ia, ja, a, right
 
       implicit none
 
@@ -19,9 +21,6 @@
      &   p(neqp), ip(neqp), isp(nspp), ipath, flag, esp
       real*8 zw(neqp), rsp(nspp)
       integer, external :: numlin
-
-      include 'compol.inc'
-      include 'compol_add.inc'
 
       common /comwrc/ rsp,p,ip
 
@@ -59,22 +58,23 @@
 !----------------------------------------------------------------
       subroutine solvit(isol, zw)
 
-      use sp_parameters
+      use sp_parameters, only: neqp, nspp
+      use compol_add, only: g, psii
+      use compol, only: nr, nr1, nt, nt1, neq, ia, ja, daop, aop0,
+     & right 
 
       implicit none
 
       integer, intent(in) :: isol
       real*8, intent(out), dimension(neqp) :: zw
 
-      integer :: i, j, i1, i2, ieq, ic, il, im, icp(neqp), ip(neqp), 
-     &   isp(nspp), ipath, flag, esp
-      real*8 :: znes, p
+      integer :: i, j, i1, i2, ieq, ic, il, im,
+     &     isp(nspp), ipath, flag, esp
+      integer, dimension(neqp) :: icp, p, ip
+      real*8 :: znes
       real*8, dimension(nspp) :: rsp
       real*8, dimension(neqp) :: zyy, wpp, wzz, wrr, zuu
       integer, external :: numlin
-
-      include 'compol.inc'
-      include 'compol_add.inc'
 
       common /comwrc/ rsp,p,ip
 
@@ -120,7 +120,10 @@
 !----------------------------------------------------------------
       subroutine solext
 
-      use sp_parameters
+      use sp_parameters, only: neqp, nspp
+      use compol_add, only: psie
+      use compol, only: itin, nitdel, nitbeg, iplas, nr, nt, nt1,
+     & neqpla, right, ia, ja, a
 
       implicit none
 
@@ -128,9 +131,6 @@
      &   ipath, flag, esp
       real*8 :: zw(neqp), rsp1(nspp)
       integer, external :: numlin
-
-      include 'compol.inc'
-      include 'compol_add.inc'
 
       common /comwrp/ rsp1,p1,ip1
 
@@ -164,7 +164,10 @@
 !----------------------------------------------------------------
       subroutine soleit(zw)
 
-      use sp_parameters
+      use sp_parameters, only: neqp, nspp
+      use compol_add, only: psie
+      use compol, only: nr, nr1, nt, nt1, neqpla, right, ia, ja,
+     & dapp, app0 
 
       implicit none
 
@@ -176,9 +179,6 @@
       real*8, dimension(nspp) :: rsp1
       real*8, dimension(neqp) :: zyy, wpp, wzz, wrr, zuu
       integer, external :: numlin
-
-      include 'compol.inc'
-      include 'compol_add.inc'
 
       common /comwrp/ rsp1, p1, ip1
 

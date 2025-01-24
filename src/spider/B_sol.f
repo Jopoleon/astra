@@ -2,6 +2,9 @@
 
       use sp_parameters
       use keys, only: kpr
+      use compol, only: itin, neqpla, a, nr, nt, nt1, iplas, iplas1,
+     &     ia, ja, q, iter, iswtch, ngav, psi, psia, right, errm,
+     & nitbeg, nitdel
 
       implicit none
 
@@ -13,7 +16,6 @@
       real*8 :: zw(neqp), rsp1(nspp), wght(nrp)
 
       equivalence (rsp1(1),isp1(1))
-      include 'compol.inc'
 
       common /comwrp/ rsp1, p1, ip1
 
@@ -80,6 +82,8 @@
       subroutine solbit(zw)
 
       use sp_parameters
+      use compol, only: nr, nr1, nt, nt1, ia, ja, dapp, app0, right,
+     & neqpla, psi 
 
       implicit none
 
@@ -93,8 +97,6 @@
       integer, external :: numlin
 
       equivalence (rsp1(1), isp1(1))
-
-      include 'compol.inc'
 
       common /comwrp/ rsp1,p1,ip1
 

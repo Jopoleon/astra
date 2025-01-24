@@ -9,7 +9,7 @@
       real*8, intent(inout), dimension(nip, njp) :: wdm
 
       integer :: com_solver, i, j
-      real*8 :: time_beg, time_end, wght
+      real*8 :: wght
       real*8, dimension(nip) :: axm, ax0, axp
       real*8, dimension(nip, njp) :: wdmx, fwrk, ffwrk
 
@@ -138,14 +138,11 @@
       real*8, intent(in), dimension(nip, njp) :: f
       real*8, intent(out), dimension(nip, njp) :: u, ff
 
-      integer :: i, j, k, j_callax, m, md, mm, ni1, nj1
+      integer :: i, j, k, m, md, mm, ni1, nj1
       real*8 :: hy, slam
       real*8, dimension(njp) :: w, a
       real*8, dimension(nip) :: ap, bp, cp, fp, alf, bet, u1
-
-      data j_callax/0/
-      save j_callax
-      
+     
 !power nj=2*mm definition
       md=nj-1
       do m=1,100
@@ -240,13 +237,10 @@
       real*8, intent(in), dimension(nip, njp) :: f
       real*8, intent(out), dimension(nip, njp) :: u, ff
 
-      integer :: i, j, k, j_callax, m, md, mm, ni1, nj1
+      integer :: i, j, k, m, md, mm, ni1, nj1
       real*8 :: hy, slam
       real*8, dimension(njp) :: w, a
       real*8, dimension(nip) :: ap, bp, cp, fp, alf, bet, u1
-
-      data j_callax/0/
-      save j_callax
 
 ! power nj=2*mm definition
       md=nj-1
@@ -340,11 +334,10 @@
       real*8, intent(out), dimension(nip, njp) :: u, ff
 
       integer :: i, j, k, j_callax, m, md, mm, ni1, nj1, jk1
-      integer, dimension(63, 63, 63) :: ifmatrixx
       real*8 :: hy, slam
       real*8, dimension(njp) :: w, a
-      real*8, dimension(nip) :: ap, bp, cp, fp, alf, bet, u1
-      real*8, dimension(63, 63, 63) :: fmatrixx
+      real*8, dimension(nip) :: u1
+      real*8, dimension(63, 63, 63) :: fmatrixx, ifmatrixx
 
       data j_callax/0/
       save j_callax
@@ -489,10 +482,10 @@
 
       implicit none
 
-      integer :: L, IT, NQ, NT, NIR, NOR, NI, NII, NOI, NO1, NO2, 
+      integer :: L, IT, NQ, NT, NIR, NOR, NII, NOI, NO1, NO2, 
      &   NI1, NI2
       real*8 :: CC, SS, RE, AI
-      integer :: N, N2, M, MD, NC, NS, NDATA, NRES
+      integer :: N, N2, M, NC, NS, NDATA, NRES
       real*8 :: F, RTTWO, W(2048)
 
       common /FDATA/ F, RTTWO, N, N2, M, NC, NS, NDATA, NRES

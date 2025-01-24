@@ -3,6 +3,7 @@
       use sp_parameters
       use iopath, only: path
       use keys, only: kpr
+      use compol, only: iplas
 
       implicit none
 
@@ -11,10 +12,7 @@
       character(len=8) :: etitl(5)
       character(len=120) :: fname
 
-      include 'compol.inc'
-
       common /compsf/ psf, sqtor
-      common /com_jb/ BJ_av, curfi_av
       common /com_b2/ B2_av
 
       if(kpr.lt.0) return
@@ -159,16 +157,7 @@
 !----------------------------------------------------------------
       subroutine wr_spik
 
-      use sp_parameters
-      use iopath, only: path
-      use keys, only: kpr
-
       implicit none
-
-      integer :: i, j, nm
-      character(len=120) :: fname
-
-      include 'compol.inc'
 
       return
       end subroutine wr_spik

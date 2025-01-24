@@ -272,7 +272,8 @@
       integer, intent(in) :: ncequi, nstep, ngav1, nursb
       real*8, intent(in) :: alf0, alf1, alf2, bet0, bet1, bet2,
      &   betplx, psi_bnd, rax, zax
-      real*8, intent(in), dimension(*) :: pcequi, psicon
+      real*8, intent(in) , dimension(*) :: pcequi
+      real*8, intent(out), dimension(*) :: psicon
       integer, intent(inout) :: ngrid
       real*8, intent(out) :: betpol, zli3, ftok, tokout, 
      &   psicen, pscout, alp_b
@@ -626,7 +627,8 @@
       integer, intent(in) :: ncequi, nstep, ngrid, ngav1, isymm
       real*8, intent(in) :: alf0, alf1, alf2, bet0, bet1, bet2,
      &   betplx, psi_bnd, EREVE0
-      real*8, intent(in), dimension(*) :: pcequi, psicon
+      real*8, intent(in) , dimension(*) :: pcequi
+      real*8, intent(out), dimension(*) :: psicon
       real*8, intent(out) :: betpol, zli3, ftok, tokout, 
      &   psicen, pscout, alp_b, rax, zax, ERPS
 
@@ -701,7 +703,7 @@
          call taburs( 1,coin,nursb) ! nursb used but not defined! git
       endif
 
-      call psi_fil( psicon,ncequi )
+      call psi_fil( psicon, ncequi )
 
       tokout = tok
       pscout = um
@@ -806,7 +808,7 @@
 
       use comblc, only: nitl, nitin, icont, iter, iterbf, itin, nrun, 
      &   nnstpp, alp, alp_b, alpnew, clr, clz, cnor, erru, f_cur, g, 
-     &   qcen, psi_bon, b0ax, r0ax, tok, ucen, ui, um, 
+     &   psi_bon, tok, ucen, ui, um, 
      &   rx0, zx0, rl, rm, zl, zm
 
       implicit none
@@ -814,13 +816,13 @@
       integer, intent(in) :: ncequi, nstep, ngrid, ngav1, isymm
       real*8, intent(in) :: alf0, alf1, alf2, bet0, bet1, bet2,
      &   betplx, psi_bnd, EREVE0
-      real*8, intent(in), dimension(*) :: pcequi, psicon
+      real*8, intent(in) , dimension(*) :: pcequi
+      real*8, intent(out), dimension(*) :: psicon
       real*8, intent(out) :: betpol, zli3, ftok, tokout, 
      &   psicen, pscout, alp_b, rax, zax, ERPS
 
-      integer :: isol, nwr, il, jl, icelm, jcelm, nursb
-      real*8 :: alf0p, alf1p, alf2p, bet0f, bet1f, bet2f, 
-     &   eps0, coin, zcoin
+      integer :: isol, nwr, nursb
+      real*8 :: eps0, coin, zcoin
       real*8 :: omega, sigma, alf0n
       double precision :: alpef, alpnewef, rx0ef, zx0ef
 

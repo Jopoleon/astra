@@ -157,10 +157,11 @@ module compol
 ! Careful, names overlapping comblc
    real*8 :: tok, tokp, cnor, qcen, b0ax, r0ax, erru, errx, errm, eps, &
       psipla, psip, psim, rm, zm, psiax, psibon, psibon0, psi_eav, &
-      toksfi, fvac, flucfm, tokff, tokpp, tokww, dtim, ctim
+      toksfi, fvac, flucfm, tokff, tokpp, tokww
    real*8, dimension(lp) :: a, aop0, daop, app0, dapp
    real*8, dimension(neqp) :: right
    real*8, dimension(nrp) :: psia, dpsda, f, q, dwdpsi, dpdpsi, dfdpsi, flx_fi
+   real*8, dimension(ntp) :: teta, curs
    real*8, dimension(nrp, ntp) :: r, z, ro, tta, ronor, dlr, dlt, &
       sr, st, vol, s, sq1, sq2, sq3, sq4, vol1, vol2, vol3, vol4, &
       cos1, cos2, cos3, cos4, sin1, sin2, sin3, sin4, psi, psin, cur
@@ -170,20 +171,23 @@ end module compol
 !--------------------
 module compol_add
 
-   use sp_parameters, only: nrp, ntp, neqp, nloopp, nkp, nprobp
+   use sp_parameters, only: nrp, nblmp, ntp, neqp, nloopp, nkp, nprobp
 
    implicit none
 
-   integer :: ich, itrmax, Nitmax, ixp1, jxp1, ixp2, jxp2, nk_out, &
-      nlop_out, nprob_out
+   integer :: nblm, nctrl, numlim, ich, itrmax, Nitmax, &
+       ixp1, jxp1, ixp2, jxp2, nk_out, nlop_out, nprob_out, jrolim, iterbf
+   integer, dimension(nblmp) :: iblm, jblm
    integer, dimension(nkp) :: iprcon
    integer, dimension(nloopp) :: iprlop
    integer, dimension(nprobp) :: iprprob
    real*8 :: alp, alpnew, pscen, psix0, psix1, psxi2, rx0, zx0, rx1, zx1, &
       rx2, zx2, rl, zl, clr, clz, rolim, ron_max, ron_max_g(500), fpv
+   real*8, dimension(nblmp) :: rblm, zblm
    real*8, dimension(neqp) :: zpro
    real*8, dimension(ntp) :: dgdn
-   real*8, dimension(nrp, ntp) :: psie, psii, g, binadg, aex
+   real*8, dimension(ntp, ntp) :: binadg
+   real*8, dimension(nrp, ntp) :: psie, psii, g, aex
    real*8, dimension(nkp, ntp) :: pinadg
    real*8, dimension(nloopp, ntp) :: adginl
    real*8, dimension(nprobp, ntp) :: adginr, adginz
@@ -192,8 +196,52 @@ end module compol_add
 
 !--------------------
 module keys
-
+   implicit none
    integer :: kpr, kastr, kastr2, key_0st, key_prs, key_plc, kxwx, ksnf, &
       key_fixfree, kstep, key_out, key_fixbon
-
 end module keys
+
+!--------------------
+module e_nels
+    implicit none
+    real*8 :: enels
+end module e_nels
+
+!--------------------
+module curpl
+    implicit none
+    real*8 :: cur_pl
+end module curpl
+
+!--------------------
+module ndmf
+    implicit none
+    integer :: n_dmf
+end module ndmf
+
+!--------------------
+module pres
+    use sp_parameters, only: nrp
+    implicit none
+    real*8, dimension(nrp) :: dPdFi
+end module pres
+
+!--------------------
+module sigcd
+    use sp_parameters, only: nrp
+    implicit none
+    real*8, dimension(nrp) :: C_sig, T_el, C_bts, C_driv
+end module sigcd
+
+!--------------------
+module jb
+    use sp_parameters, only: nrp
+    implicit none
+    real*8, dimension(nrp) :: Bj_av, curfi_av
+end module jb
+
+!--------------------
+module tim
+    implicit none
+    real*8 :: dtim, ctim
+end module tim
