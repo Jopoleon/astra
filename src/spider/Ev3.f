@@ -84,7 +84,7 @@
 !----------------------------------------------------------------
       subroutine PROPNT( NOUT, NTER, NINFW, NGRA1,
      &                   NPRO, RPRO, ZPRO,  FIPRO )
-C--- INPUT OF POSITIONS OF "PF_PROBE" POINTS:
+!--- INPUT OF POSITIONS OF "PF_PROBE" POINTS:
 
       use iopath, only: path
 
@@ -145,7 +145,7 @@ C--- INPUT OF POSITIONS OF "PF_PROBE" POINTS:
 
 !-------------------------------------------------------------------
       subroutine LOOPNT(NOUT, NTER, NINFW, NGRA1, NLOO, RLOO, ZLOO)
-C--- INPUT OF POSITIONS OF "FL_LOOP" POINTS:
+!--- INPUT OF POSITIONS OF "FL_LOOP" POINTS:
 
       use iopath, only: path
 

@@ -16,11 +16,11 @@ u1 = yarr(j1)
 u2 = yarr(j2)
 u3 = yarr(j3)     
 call EXTRP2(x0, u0, X1, X2, X3, u1, u2, u3)
-if(j > nrp .or. j < 1) then
-   write(*, *) 'Equil: in b_extrp j = ',  j, ' out of range 1 <', j, ' < ', nrp
-   jerr = 1
+if (j > nrp .or. j < 1) then
+    write(*, *) 'Equil: in b_extrp j = ',  j, ' out of range 1 <', j, ' < ', nrp
+    jerr = 1
 else
-   yarr(j) = u0
+    yarr(j) = u0
 endif
 
 return

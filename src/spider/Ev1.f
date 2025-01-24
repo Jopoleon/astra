@@ -309,7 +309,7 @@
       integer :: i, j, l, nsegbp, nsegvv, nsegfw
       real*8 :: BBB
       integer, dimension(nplim) :: KDFW, KDBP, KDVV, 
-     &   NTYBP, NTYFV, NTYVV, NTYFW
+     &   NTYBP, NTYVV, NTYFW
       real*8, dimension(nplim) :: RP1FW, ZP1FW, RP2FW, ZP2FW, RFWSEG, 
      &   CFWSEG, RP1BP, ZP1BP, RP2BP, ZP2BP, RBPSEG, CBPSEG, RP1VV, 
      &   ZP1VV, RP2VV, ZP2VV, RVVSEG, CVVSEG, RFW, ZFW, DFW, HFW, 
@@ -328,8 +328,7 @@
 
 !--- INPUT OF PFC SYSTEM PARAMETERS
 
-      CALL TRECUR( NCPFC, RC, ZC, PC, NTYPE, NECON, WECON,
-     &             HC, VC, NOUT, NTER )
+      CALL TRECUR(NCPFC, RC, ZC, PC, NTYPE, NECON, WECON, HC, VC)
 
       do l=1,NEQUI
          do j=1,NEQUI

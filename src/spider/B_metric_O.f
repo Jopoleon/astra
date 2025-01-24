@@ -1,6 +1,5 @@
       subroutine metrix
 
-      use sp_parameters
       use compol, only: nt, iplas, iplas1, dlr, dlt, r, z, sr, st, nt1,
      &     cos1, cos2, cos3, cos4, sin1, sin2, sin3, sin4,
      & vol, vol1, vol2, vol3, vol4, sq1, sq2, sq3, sq4, s
@@ -137,7 +136,7 @@
 !----------------------------------------------------------------
       subroutine matcof
 
-      use sp_parameters
+      use sp_parameters, only: nrp, ntp
       use compol, only: nt1, iplas1, st, sr, vol1, vol2, vol3, vol4,
      & cos1, cos2, cos3, cos4, sin1, sin2, sin3, sin4
 
@@ -198,7 +197,7 @@
 !----------------------------------------------------------------
       subroutine procof(icq, cur_mu)
 
-      use sp_parameters
+      use sp_parameters, only: amu0
       use keys, only: kstep
       use compol, only: ngav, tok, erru, iplas, iter, dpdpsi, dfdpsi,
      & f, fvac, flx_fi, psia, psim, psi_eav, psibon0, q, rm 
@@ -214,7 +213,7 @@
       call psib_pla(pspl_av)
 
       if(ngav.eq.1) then
-         call procof_I(icq)
+         call procof_I
       elseif(ngav.eq.2) then
          call procof_fl(icq)
       elseif(ngav.eq.-10 .AND. erru.lt.5.d-3) then
@@ -238,7 +237,7 @@
 !----------------------------------------------------------------
       subroutine procof_fl(icq)
 
-      use sp_parameters
+      use sp_parameters, only: nrp, ntp
       use compol, only: iplas, iplas1, iter, itin, nt1, q, f, rm,
      &  psia, psiax, psip, dpsda,
      & r, s, sq1, sq2, sq3, sq4, dpdpsi, dwdpsi, dfdpsi 
@@ -503,27 +502,25 @@
       end subroutine procof_fl
 
 !----------------------------------------------------------------
-      subroutine procof_I(icq)
+      subroutine procof_I
 
-      use sp_parameters
-      use compol, only: iplas, iplas1, iter, itin, nt1, q, f, rm,
-     &  psia, psiax, psip, psim, dpsda,
+      use sp_parameters, only: nrp, ntp, amu0
+      use compol, only: iplas, iplas1, itin, nt1, q, f, rm,
+     &  psia, psip, psim, dpsda,
      & r, s, sq1, sq2, sq3, sq4, dpdpsi, dwdpsi, dfdpsi, tok
 
       implicit none
 
-      integer, intent(in) :: icq
-
-      integer :: i, j, npro
-      real*8 :: r0, r1, r2, r3, r4, sqk, zavrk, zapro, zdelsk, qk,
+      integer :: i, j
+      real*8 :: r0, r1, r2, r3, r4, sqk, zavrk, zdelsk, qk,
      &   af0, afmn, afpl, sa0, samn, sapl, za0, zamn, zapl, qmn, qpl,
-     &   a1, a2, a3, a4, a5, a6, a7, a8, a9, cappl, capmn, ac0, acj,
-     &   cappa, skcen, dpsids, qn, q14, avr14, psiai, vrh, wgt, dmon,
+     &   a1, a2, a3, a4, a5, a6, a7, a8, a9, ac0, acj,
+     &   skcen, wgt, dmon,
      &   zdelv, zdelv3, zdelsc, zavrc, dftor, delpsi, deldf, zdfdps,
      &   f2n1, qcappl, qcapmn, errdf, zff
-      real*8, dimension(nrp) :: amn, a0, apl, capp, avrc, delsc, 
-     &   avrk, delsk, delv, bmn, b0, bpl, wrk1, wrk2, rhs, delv3,
-     &   dfdpsn, delf, qcapp, qs, qsn, psfn, dpsdas, psf, sqtor, dfdpsw
+      real*8, dimension(nrp) :: amn, a0, apl, avrc, delsc, 
+     &   avrk, delsk, delv, rhs, delv3,
+     &   dfdpsn, delf, qcapp, psf, sqtor, dfdpsw
       real*8, dimension(nrp, ntp) :: a12, a23, a34, a14, a13, a24
 
       common/comaaa/ a12, a23, a34, a14, a13, a24

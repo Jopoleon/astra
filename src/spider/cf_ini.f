@@ -1,25 +1,26 @@
-      subroutine cf_init(k_auto, nstep, dt, time,
-     &                   voltpf, d_pf_mat, d_tcam_mat)
+      subroutine cf_init(k_auto, nstep)
 
-      use durs_d_modul
-      use sp_parameters
+      use durs_d_modul, only: n_tht, nurs, n_psi, igdf, 
+     & epsro, keyctr, i_eqdsk, i_betp, betplx,
+     &     tokf, psax, r0, b0, rax, zax,
+     & alf0, alf1, alf2, bet0, bet1, bet2
+      use sp_parameters, only: nprobp, nclim, nilim, nloopp
       use iopath, only: path
       use parcur, only: curref
-      use comevl
-      use keys
+      use comevl, only: nequi, nepfc, njlim, npfc, pfceqw
+      use keys, only: kstep, kastr, kxwx, ksnf
 
       implicit none
 
       integer, intent(in) :: k_auto
       integer, intent(out) :: nstep
-      real*8, intent(in), dimension(*) :: voltpf, d_pf_mat, d_tcam_mat
 
       integer :: i, j, l, ncequi, i_bsh, ik, iq, ncpfc, ngrid, nvv, 
      &   nbp, nfw, nc, nloop, n_ctrl, ngav1, ngra1, nprob, nursb,
      &   nout, nter, isymm, ninfw, ninf
       integer, dimension(nclim) :: ntype
       integer, dimension(nilim) :: necon
-      real*8 :: alp_b, psi_bnd, psi0_bnd, platok, dt, time, ereve0,
+      real*8 :: alp_b, psi_bnd, psi0_bnd, platok, ereve0,
      &    erps, e_psi, pscout, tokout, zli3, betpol, ftok, psicen,
      &    alw0, alw1, alw2 
 
@@ -199,7 +200,7 @@
          curref(iq)=PFCEQW(iq)
       enddo
 
-      call curfit_(rc,zc,ncpfc,NECON,WECON,psi_bnd)
+      call curfit_(psi_bnd)
 
       do ik=1,nequi
          ccurx(ik)=PFCEQW(ik)
@@ -217,10 +218,9 @@
 
       call eq_0(pjk, psk, ncequi, nstep, ngrid,
      &          alf0, alf1, alf2, bet0, bet1, bet2,
-     &          betpol, betplx, zli3,
-     &          ngav1,
-     &          ftok, tokout, psicen, pscout, 
-     &          nursb, psi_bnd, alp_b, rax, zax, n_ctrl, b0, r0 )
+     &          betplx, ngav1,
+     &          ftok, tokout, psicen, nursb,
+     &          psi_bnd, alp_b, rax, zax, n_ctrl, b0, r0)
       call rdexf(ncequi)
       call eq_ax(pjk, psk, ncequi, nstep, ngrid,
      &           alf0, alf1, alf2, bet0, bet1, bet2,
@@ -248,9 +248,9 @@
          endif
 
          if(n_ctrl.eq.1 .OR. kastr.eq.1) then  !limiter point
-            call curfit_L(rc,zc,ncpfc,NECON,WECON,psi_bnd)
+            call curfit_L(psi_bnd)
          else
-            call curfit(rc,zc,ncpfc,NECON,WECON,psi_bnd)
+            call curfit(psi_bnd)
          endif
 
          do ik=1,nequi
@@ -330,31 +330,31 @@
       end subroutine cf_init
 
 !-----------------------------------------------------------
-      subroutine cf_init_full(k_auto, nstep, dt, time,
-     &                        voltpf, d_pf_mat, d_tcam_mat)
+      subroutine cf_init_full(k_auto, nstep)
 
-      use durs_d_modul
-      use sp_parameters
+      use durs_d_modul, only: n_tht, n_psi, igdf, nurs, keyctr,
+     & i_eqdsk, i_betp, epsro, betplx, tokf, r0, b0, rax, zax, psax,
+     & alf0, alf1, alf2, bet0, bet1, bet2
+      use sp_parameters, only: nclim, nilim, nloopp, nprobp
       use iopath, only: path
       use parcur, only: curref
-      use comevl
-      use keys
+      use comevl, only: nequi, nepfc, njlim, npfc, pfceqw
+      use keys, only: kstep, kastr, kxwx, ksnf
 
       implicit none
 
       integer, intent(in) :: k_auto
       integer, intent(out) :: nstep
-      real*8, intent(in), dimension(*) :: voltpf, d_pf_mat, d_tcam_mat
 
       integer :: i, j, l, ncequi, i_bsh, ik, iq, ncpfc, ngrid, nvv, 
      &   nbp, nfw, nc, nloop, n_ctrl, ngav1, ngra1, nprob, nursb,
      &   nout, nter, isymm, ninfw, ninf
       integer, dimension(nclim) :: ntype
       integer, dimension(nilim) :: necon
-      real*8 :: alp_b, psi_bnd, psi0_bnd, platok, dt, time, ereve0,
+      real*8 :: alp_b, psi_bnd, psi0_bnd, platok, ereve0,
      &   erps, e_psi, pscout, tokout, zli3, betpol, ftok, psicen,
      &   alw0, alw1, alw2 
-      real*8, dimension(nclim) :: pc, psip, vc, hc, ccurx, ccury,
+      real*8, dimension(nclim) :: pc, vc, hc, ccurx,
      &   rc, rc1, rc2, rc3, rc4, zc, zc1, zc2, zc3, zc4
       real*8, dimension(nilim) :: wecon
       real*8, dimension(njlim) :: volk, volkp1, pjk, pjkp1, pjkp, pjkd,
@@ -530,7 +530,7 @@
          curref(iq)=PFCEQW(iq)
       enddo
 
-      call curfit_(rc,zc,ncpfc,NECON,WECON,psi_bnd)
+      call curfit_(psi_bnd)
 
       do ik=1,nequi
          ccurx(ik)=PFCEQW(ik)
@@ -545,12 +545,11 @@
       nstep=0
       ngrid=1
 
-      call eq_0(pjk,psk,ncequi,nstep,ngrid,
+      call eq_0(pjk, psk, ncequi, nstep, ngrid,
      &          alf0, alf1, alf2, bet0, bet1, bet2,
-     &          betpol, betplx, zli3,
-     &          ngav1,
-     &          ftok, tokout, psicen, pscout, 
-     &          nursb,psi_bnd,alp_b,rax,zax,n_ctrl,b0,r0)
+     &          betplx, ngav1,
+     &          ftok, tokout, psicen, nursb, 
+     &          psi_bnd, alp_b, rax, zax, n_ctrl, b0, r0)
       call rdexf(ncequi)
       call eq_ax(pjk, psk, ncequi, nstep,ngrid,
      &           alf0, alf1, alf2, bet0, bet1, bet2,
@@ -578,9 +577,9 @@
          endif
 
          if(n_ctrl.eq.1 .OR. kastr.eq.1) then  !limiter point
-            call curfit_L(rc,zc,ncpfc,NECON,WECON,psi_bnd)
+            call curfit_L(psi_bnd)
          else
-            call curfit(rc,zc,ncpfc,NECON,WECON,psi_bnd)
+            call curfit(psi_bnd)
          endif
 
          do ik=1,nequi
@@ -661,27 +660,27 @@
       end subroutine cf_init_full
 
 !-------------------------------------------------------------------
-      subroutine cf_init_bkwd(k_auto, nstep, dt, time,
-     &                        voltpf, d_pf_mat, d_tcam_mat)
+      subroutine cf_init_bkwd(nstep)
 
-      use durs_d_modul
-      use sp_parameters
+      use durs_d_modul, only: n_tht, nurs, n_psi, igdf, 
+     & epsro, keyctr, i_eqdsk, i_betp, betplx,
+     &     tokf, psax, r0, b0, rax, zax,
+     & alf0, alf1, alf2, bet0, bet1, bet2
+      use sp_parameters, only: nprobp, nclim, nilim, nloopp
       use iopath, only: path
       use parcur, only: curref
-      use comevl
-      use keys
+      use comevl, only: nequi, nepfc, njlim, npfc, pfceqw
+      use keys, only: kstep, kastr, kxwx, ksnf
 
       implicit none
 
-      integer, intent(in) :: k_auto
       integer, intent(out) :: nstep
-      real*8, intent(in), dimension(*) :: voltpf, d_pf_mat, d_tcam_mat
 
       integer :: j, k, l, ncequi, i_bsh, ik, iq, ncpfc, ngrid,
      &   nc, nloop, n_ctrl, ngav1, nprob, nursb,
      &   isymm, ninf, nequiold, nbpold
       integer, dimension(nilim) :: necon
-      real*8 :: alp_b, psi_bnd, psi0_bnd, platok, dt, time, ereve0,
+      real*8 :: alp_b, psi_bnd, psi0_bnd, platok, ereve0,
      &   erps, e_psi, pscout, tokout, zli3, betpol, ftok, psicen,
      &   alw0, alw1, alw2 
       real*8, dimension(nclim) :: pc, ccurx, rc, zc
@@ -755,7 +754,7 @@
       enddo
 
       write(*,*) nequi,curref(1:nequi)
-      call curfit_(rc,zc,nc,NECON,WECON,psi_bnd)
+      call curfit_(psi_bnd)
       write(*,*) nequi,PFCEQW(1:nequi)
 
       do ik=1,nequi
@@ -774,12 +773,11 @@
       nstep=0
       ngrid=1
 
-      call eq_0(pjk,psk,ncequi,nstep,ngrid,
+      call eq_0(pjk, psk, ncequi, nstep, ngrid,
      &          alf0, alf1, alf2, bet0, bet1, bet2,
-     &          betpol, betplx, zli3,
-     &          ngav1,
-     &          ftok, tokout, psicen, pscout, 
-     &          nursb,psi_bnd,alp_b,rax,zax,n_ctrl,b0,r0 )
+     &          betplx, ngav1,
+     &          ftok, tokout, psicen, nursb, 
+     &          psi_bnd, alp_b, rax, zax, n_ctrl, b0, r0)
 
       write(*,*) nequi, ncequi
       call rdexf(ncequi)
@@ -812,9 +810,9 @@
          endif
 
          if(n_ctrl.eq.1 .OR. kastr.eq.1) then  !limiter point
-            call curfit_L(rc,zc,nc,NECON,WECON,psi_bnd)
+            call curfit_L(psi_bnd)
          else
-            call curfit(rc,zc,nc,NECON,WECON,psi_bnd)
+            call curfit(psi_bnd)
          endif
 
          do ik=1,nequi

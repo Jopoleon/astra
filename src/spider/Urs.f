@@ -80,7 +80,7 @@
 !----------------------------------------------------------------
       subroutine taburs(ien, coin, nursb)
  
-      use ppf_modul       
+      use ppf_modul, only: nutab, pstab, pptab, fptab
       use sp_parameters, only: nursp
       use keys, only: kastr
 

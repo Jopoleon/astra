@@ -1,8 +1,8 @@
       subroutine rightg
 
 ! right-hand side for problem L(g)=J
-      use sp_parameters
-      use keys
+      use sp_parameters, only: neqp, amu0
+      use keys, only: kstep, key_plc, key_0st, kastr, key_prs, kpr
       use compol, only: tok, tokp, tokpp, tokff, tokww, right, ngav,
      & iplas, neqpla, erru, fvac, f, psia, psim, 
      &     nr, nt, nt1, cur, psin, r, rm, dpdpsi, dfdpsi, dwdpsi, cnor,
@@ -222,7 +222,7 @@
 !----------------------------------------------------------------
       subroutine psib_pla(pspl_av)
 
-      use sp_parameters
+      use sp_parameters, only: nrp, ntp
       use compol, only: iplas, nt, nt1, psi, psip, dlt, cur, sq2, sq3
 
       implicit none
@@ -343,7 +343,7 @@
 !----------------------------------------------------------------
       subroutine psib_ext(psex_av)
 
-      use sp_parameters
+      use sp_parameters, only: ntp
       use compol, only: iplas, nt, nt1, r, z
 
       implicit none

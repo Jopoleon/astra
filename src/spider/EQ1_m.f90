@@ -602,7 +602,7 @@ end subroutine zero_ax
 !----------------------------------------------------------------
 subroutine cur_map(curden, rk, zk)
 
-use sp_parameters
+use sp_parameters, only: twopi
 use compol, only: rm, zm, teta, nr, nt, nt1, ro, iplas, cur
 
 implicit none

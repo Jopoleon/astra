@@ -53,16 +53,16 @@
 !
 !***********************************************************************
 
-subroutine TRECUR( NCPFC, RI, ZI, PC, NTYPE, NECON, WECON, &
-                   HORS, VERS, NPRI, NTER )
+subroutine TRECUR(NCPFC, RI, ZI, PC, NTYPE, NECON, WECON, &
+                  HORS, VERS)
 
 use sp_parameters, only: nloopp, nprobp, njlim, nplim, npfc0
 use iopath, only: path
-use comevl
+use comevl, only: nequi, npfc, nloc, nturn, nepfc, ndiv, &
+    pfcd1, pfceqw, pfcur1, pfcur2, pfcw1, pfres, pfvol1, wepfc
 
 implicit none
 
-integer, intent(in) :: NPRI, NTER ! Unused
 integer, intent(out) :: NCPFC
 integer, intent(out), dimension(*) :: ntype, necon
 real*8, intent(out), dimension(*) :: PC, HORS, VERS, RI, ZI, WECON

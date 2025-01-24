@@ -148,7 +148,7 @@
 
       implicit none
 
-      integer :: i, j, l, ig, nxb
+      integer :: i, j, ig, nxb
       real*8, dimension(nbndp2) :: rxb, zxb
       character(len=80) :: fname
 
@@ -191,7 +191,7 @@
 
       implicit none
 
-      integer :: i, j, l
+      integer :: i, j
       character(len=80) :: fname
 
       write(fname,'(a,a)') TRIM(path), '/rect.wr'

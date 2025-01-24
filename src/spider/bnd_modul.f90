@@ -1,9 +1,9 @@
-module    bnd_modul       ! for tab_bnd.dat file 
+module bnd_modul
 
-integer, parameter, private :: DP=kind(1.0D0)
+    implicit none
 
-    integer :: nbtab         ! 
-    
+    integer, parameter, private :: DP=kind(1.0D0)
+    integer :: nbtab 
     real(DP), allocatable :: rbtab(:),zbtab(:)
     
-end module
+end module bnd_modul

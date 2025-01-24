@@ -1,12 +1,11 @@
       subroutine remesh(erro, errpsi, imov)
 
-      use sp_parameters
       use keys, only: kpr
       use compol, only: psi, iplas1, nt1, iswtch, iter, ngav
 
       implicit none
 
-      integer, intent(out) :: imov
+      integer, intent(in) :: imov
       real*8, intent(out) :: erro, errpsi
 
       integer :: i, j, imax, jmax
@@ -54,7 +53,7 @@
 !----------------------------------------------------------------
       subroutine prgrid(imax, jmax, erro, imov, errpsi)
 
-      use sp_parameters
+      use sp_parameters, only: ntp, twopi
       use keys, only: kpr
       use compol, only: r, z, rm, zm, nt1, psi, psia, psim, psin, psip, 
      & teta, iplas, iplas1, ro, nr, nt
@@ -67,13 +66,13 @@
       real*8, intent(out) :: erro, errpsi
 
       integer :: i, j, k, l, nsh, ierm, jerm, ibeg, is, isc, jj
-      real*8 :: rmx, zmx, rm0, zm0, drx, drz, dzx, zps,
+      real*8 :: rmx, zmx, rm0, zm0, drx, dzx, zps,
      &   psim0, psinm0, det, psnn, delpsn, robj, tetp, ps0, pspl, ro0,
      &   ropl, ro2j, rodeb, grad, zro, rnj, znj, tetv, tt0, ttpl, ttj,
      &   ros1, ros2, rosi, psa1, psa2, psai
       real*8, dimension(5) :: dp
       real*8, dimension(nshp) :: xs, ys, fun
-      real*8, dimension(ntp) :: ron, rop, rn, zn, tetn, rob, teti, roi
+      real*8, dimension(ntp) :: ron, rop, tetn, rob, teti, roi
 
 ! New position of magnetic axis
 
@@ -342,7 +341,7 @@
 !----------------------------------------------------------------
       subroutine regrid(erro, imov, errpsi)
 
-      use sp_parameters
+      use sp_parameters, only: nrp, ntp, twopi
       use keys, only: kpr
       use compol, only: ngav, rm, zm, r, z, teta, q, errm, 
      &  iplas, iplas1, nt, nt1, nr,
@@ -360,7 +359,7 @@
      &   grad, gradpl, gradmn, zro, rnj, znj,
      &   robj, ro2j, ro0, romn, ropl, roerr
       real*8, dimension(5) :: dp
-      real*8, dimension(ntp) :: ron, rop, rn, zn, tetn, rob, teti, roi
+      real*8, dimension(ntp) :: ron, rop, tetn, rob, teti, roi
       real*8, dimension(nrp, ntp) :: roplt
 
       if(kpr.eq.1) then
@@ -594,11 +593,11 @@
       end subroutine regrid
 
 !----------------------------------------------------------------
-      subroutine regrid0(erro,imov,errpsi)
+      subroutine regrid0(erro, imov, errpsi)
 
-      use sp_parameters
+      use sp_parameters, only: nrp, ntp, twopi
       use keys, only: kpr
-      use compol, only: ngav, rm, zm, r, z, teta, q, errm, 
+      use compol, only: ngav, rm, zm, r, z, teta, errm, 
      &  iplas, iplas1, nt, nt1, nr,
      &  ro, ronor,
      &  psi, psia, psin, psip, psim
@@ -610,11 +609,11 @@
 
       integer :: i, j, is, ierm, jerm, jj
       real*8 :: rmold, zmold, alfa, rma, zma, psima, psnn, delpsn,
-     &   drx, dzx, tetp, tetv, ttj, tt0, ttpl, zps, ps0, psmn, pspl, 
-     &   grad, gradpl, gradmn, zro, rnj, znj,
-     &   robj, ro2j, ro0, romn, ropl, roerr
+     &   drx, dzx, tetp, tetv, ttj, tt0, ttpl, zps, ps0, pspl, 
+     &   zro, rnj, znj,
+     &   robj, ro2j, ro0, ropl, roerr
       real*8, dimension(5) :: dp
-      real*8, dimension(ntp) :: ron, rop, rn, zn, tetn, rob, teti, roi
+      real*8, dimension(ntp) :: ron, rop, tetn, rob, teti, roi
       real*8, dimension(nrp, ntp) :: roplt
 
       if(kpr.eq.1) then
@@ -832,9 +831,9 @@
 
 !----------------------------------------------------------------
       subroutine grid_1(igdf, nstep)
-         
-      use bnd_modul       
-      use sp_parameters
+
+      use bnd_modul, only: nbtab, rbtab, zbtab
+      use sp_parameters, only: twopi
       use compol, only: nr, nt, nt1, iplas, iplas1,
      & ro, ronor, rm, zm, r, z, 
      & teta, psia, psin , psi, psip, psim
@@ -985,7 +984,6 @@
 !----------------------------------------------------------------
       subroutine grid_p0(igdf, nstep)
 
-      use sp_parameters
       use compol, only: erru, nt, psi, iplas
 
       implicit none
@@ -1005,7 +1003,6 @@
 !----------------------------------------------------------------
       subroutine grid_p1(igdf, nstep)
 
-      use sp_parameters
       use compol, only: nt, iplas, psi
 
       implicit none
@@ -1046,9 +1043,8 @@
 !----------------------------------------------------------------
       subroutine grid_0(igdf, nstep)
 
-      use bnd_modul       
-      use sp_parameters
-      use keys, only: kpr
+      use bnd_modul, only: nbtab, rbtab, zbtab
+      use sp_parameters, only: twopi
       use compol, only: iplas, iplas1, rm, zm, r, z,
      & nr, nt, nt1, ro, teta,
      & psia, psim, psip, psin, psi, dpsda
@@ -1063,8 +1059,6 @@
       real*8 :: rm0, zm0, rc0, zc0, asp0, el_up, el_lw, tr_up, tr_lw,
      &   dtet, tet, tetp, tri, ell, rrr, zzz, roxx, drx, dzx,
      &   rbomin, rbomax, zbomin, zbomax
-      real*8, dimension(ntp) :: drds, dzds, rcrv, rcrn, dls, drodt,
-     &   ron, tetn
       real*8, dimension(nbtabp) :: robn, tetbn
       real*8, external :: frbon, fzbon
 
@@ -1222,7 +1216,7 @@
 !----------------------------------------------------------------
       subroutine loopL_b(tetpol, ntet, ro0, u0)
 
-      use sp_parameters
+      use sp_parameters, only: nip, njp, nbndp2, pi, twopi
       use keys, only: kpr
 
       implicit none
@@ -1376,7 +1370,7 @@
 !----------------------------------------------------------------
       subroutine grid_b(igdf, nstep)
 
-      use sp_parameters
+      use sp_parameters, only: nip, njp, ntp, twopi
       use compol, only: iplas, iplas1, rm, zm, r, z,
      & nr, nt, nt1, ro, teta,
      & psia, psim, psip, psin, psi, dpsda
@@ -1396,7 +1390,7 @@
       real*8, dimension(5) :: dp
       real*8, dimension(nip) :: x, dx, dxi, x12
       real*8, dimension(njp) :: y, dy, dyj
-      real*8, dimension(nip, njp) :: u, ue, un, ui, g, ut
+      real*8, dimension(nip, njp) :: u, ue, un, ui, g
       real*8, dimension(ntp) :: ron, ronm
       real*8, dimension(nshp) :: xs, ys, fun
 
@@ -1532,7 +1526,7 @@
       subroutine grid_b_ef(igdf, nstep)
 
       use numerical_tools, only: reinterp_back_quad
-      use sp_parameters
+      use sp_parameters, only: nip, njp, twopi
       use compol, only: iplas, iplas1, rm, zm, r, z,
      & nr, nt, nt1, ro, ronor, teta,
      & psia, psim, psip, psin, psi, dpsda
@@ -1544,21 +1538,18 @@
 
       integer, intent(in) :: igdf, nstep
 
-      integer :: i, j, k, l, ii, jj, ibeg, imax, jmax, nsh,
-     &   ix1, ix2, jx1, jx2, imax_t, jmax_t, j1, j2
+      integer :: i, j, k, imax, jmax,
+     &   ix1, ix2, jx1, jx2, j1, j2
       real*8 :: ux0, ux1, ux2, up, um, xm, ym, xx0, yx0, xx1, yx1, 
      &   xx2, yx2, xx10, yx10, xx20, yx20, xm0, ym0, psi_bon
-      real*8 :: u0, ur0, stpx, stpy, dtet, ttj, ro2j, xstepp, u002,
-     &   um_t, up_t, xm_t, ym_t, up_new, dumx, dumy, ronzz, ronzz2
-      real*8, dimension(5) :: dp
+      real*8 :: u0, ur0, dtet, xstepp, u002,
+     &   um_t, up_t, xm_t, ym_t, dumx, dumy, ronzz, ronzz2
       real*8, dimension(9) :: uuuu
       real*8, dimension(9, 2) :: xxx
       real*8, dimension(500) :: ucaz
       real*8, dimension(nip) :: x, dx, dxi, x12
       real*8, dimension(njp) :: y, dy, dyj
       real*8, dimension(nip, njp) :: u, ue, un, ui, g, utemp
-      real*8, dimension(ntp) :: ron, ronm
-      real*8, dimension(nshp) :: xs, ys, fun
       real*8, dimension(iplas) :: rggr, psitemp
 
       common /comrz/ x, y, dx, dy, dxi, dyj, x12
@@ -1742,7 +1733,7 @@ Cquadratic inerpolation
       double precision, intent(in), dimension(9) :: uuuu
       double precision, intent(out) :: z1, z2, z3, y2
 
-      integer :: i, j, k
+      integer :: j
       double precision :: A, B, C, t1, t2, t3
       double precision, dimension(3) :: yy, thet1, r0, p0
       double precision, dimension(3, 3) :: r1, y1
@@ -1797,16 +1788,16 @@ Cquadratic inerpolation
 !----------------------------------------------------------------
       subroutine grid_b1_ef(igdf, nstep)
 
-      use sp_parameters
-      use compol, only: iplas, iplas1, rm, zm, r, z,
+      use sp_parameters, only: nip, njp, ntp, twopi
+      use compol, only: iplas, rm, zm, r, z,
      & nr, nt, nt1, ro, ronor, teta,
-     & psia, psim, psip, psin, psi, dpsda
+     & psia, psim, psip, psin, psi
 
       implicit none
 
       integer, intent(in) :: igdf, nstep
 
-      integer :: i, j, imax, jmax, ix1, jx1, ix2, jx2
+      integer :: i, j
       real*8 :: ux0, ux1, ux2, up, um, xm, ym, 
      &          xx0, yx0, xx1, yx1, xx2, yx2, 
      &          xx10, yx10, xx20, yx20, xm0, ym0, 
@@ -1884,10 +1875,10 @@ Cquadratic inerpolation
 !----------------------------------------------------------------
       subroutine grid_b1(igdf, nstep)
 
-      use sp_parameters
-      use compol, only: iplas, iplas1, rm, zm, r, z,
+      use sp_parameters, only: nip, njp, ntp, twopi
+      use compol, only: iplas, rm, zm, r, z,
      & nr, nt, nt1, ro, ronor, teta,
-     & psia, psim, psip, psin, psi, dpsda
+     & psia, psim, psip, psin, psi
 
       implicit none
 
@@ -1972,8 +1963,7 @@ Cquadratic inerpolation
 !----------------------------------------------------------------
       subroutine arc_x_bnd(nteta)
 
-      use bnd_modul
-      use sp_parameters
+      use bnd_modul, only: nbtab, rbtab, zbtab
       use keys, only: kpr
 
       implicit none

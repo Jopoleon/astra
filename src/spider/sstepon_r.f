@@ -367,7 +367,7 @@
      &         necon, wecon, ntype, nflag, errarr)
       call f_wrd
       call renet
-      call f_bndmat(rc, zc, nc, rloop,zloop, nloop, rprob,zprob, nprob)
+      call f_bndmat
       call f_wrd
 
       call eqa(keyctr, igdf, kstep, platok, psax, i_betp, betplx, 
@@ -786,7 +786,7 @@
 
       call f_wrd
       call renet
-      call f_bndmat(rc,zc,nc,rloop,zloop,nloop,rprob,zprob,nprob)
+      call f_bndmat
       call f_wrd
 
       call eqa(keyctr,igdf,kstep,platok, psax,i_betp,betplx, 

@@ -133,9 +133,8 @@
 !----------------------------------------------------------------
       subroutine eq_0( pcequi, psitok, ncequi, nstep, ngrid, 
      &                 alf0, alf1, alf2, bet0, bet1, bet2, 
-     &                 betpol, betplx, zli3, 
-     &                 ngav1, 
-     &                 ftok, tokout, psicen, pscout, nursb, 
+     &                 betplx, ngav1, 
+     &                 ftok, tokout, psicen, nursb, 
      &                 psi_bnd, alp_b, rax, zax, n_ctrl, b_0, r_0 )
 
       use iopath, only: path
@@ -147,11 +146,10 @@
 
       integer, intent(in) :: ncequi, nstep, ngrid, ngav1, nursb
       real*8, intent(in) :: alf0, alf1, alf2, bet0, bet1, bet2,
-     &   betplx, psi_bnd, rax, zax, b_0, r_0
+     &   betplx, ftok, psicen, psi_bnd, rax, zax, b_0, r_0
       real*8, intent(in), dimension(*) :: pcequi, psitok
       integer, intent(out) :: n_ctrl
-      real*8, intent(out) :: betpol, zli3, ftok, tokout, 
-     &   psicen, pscout, alp_b
+      real*8, intent(out) :: tokout, alp_b
 
       integer :: isol, ien, nflag, nwr
       real*8 :: alf0p, alf1p, alf2p, bet0f, bet1f, bet2f, 
@@ -253,9 +251,8 @@
 !----------------------------------------------------------------
       subroutine eq( pcequi, psicon, ncequi, nstep, ngrid,
      &               alf0, alf1, alf2, bet0, bet1, bet2,
-     &               betpol, betplx, zli3,
-     &               ngav1,
-     &               ftok, tokout, psicen, pscout, 
+     &               betpol, betplx,
+     &               ngav1, tokout, pscout, 
      &               nursb, psi_bnd, alp_b, rax, zax )
 
       use iopath, only: path
@@ -265,7 +262,7 @@
      &   alp, clr, clz, cnor, eps, erru, f_cur, g, qcen, tok,
      &   ui, um, up, r0ax, b0ax,
      &   rm, zm, rl, zl, dr, dz,
-     &   rx0, rx1, rx2, rx10, rx20, zx0, zx1, zx2, zx10, zx20
+     &   rx1, rx2, rx10, rx20, zx0
 
       implicit none
 
@@ -275,13 +272,11 @@
       real*8, intent(in) , dimension(*) :: pcequi
       real*8, intent(out), dimension(*) :: psicon
       integer, intent(inout) :: ngrid
-      real*8, intent(out) :: betpol, zli3, ftok, tokout, 
-     &   psicen, pscout, alp_b
+      real*8, intent(out) :: betpol, tokout, pscout, alp_b
 
       integer :: ich, iflag, il, jl, isol, ien, nflag, nwr, itl,
      &   icelm, jcelm, nstp, istep
-      real*8 :: alf0p, alf1p, alf2p, bet0f, bet1f, bet2f, 
-     &   eps0, epsin, epscrz, eps0l, epsl, epsinl, sigm, omg,
+      real*8 :: eps0, epsin, epscrz, eps0l, epsl, epsinl, sigm, omg,
      &   coin, zcoin, rl0, zl0, r_ax, z_ax,
      &   ceps, cepsl, clr0, clr1, clz0, clz1, crz,
      &   dll, dllim, ddrr, ddzz, ddrl, ddzl, dcrdr, dcrdz, 
@@ -615,26 +610,24 @@
      &                  EREVE0, ERPS,
      &                  psi_bnd, alp_b, rax, zax, isymm )
 
-      use comblc, only: ni, nj, ix1, ix2, jx1, jx2, iter, itin, iterbf,
-     &   imax, jmax, nitl, nitin, nrun, icont, nnstpp,
-     &   alp, alpnew, clr, clz, cnor, eps, erru, f_cur, g, qcen, tok,
-     &   ucen, ui, um, up, r0ax, b0ax, psi_bon,
-     &   rm, zm, rl, zl, dr, dz,
-     &   rx0, rx1, rx2, rx10, rx20, zx0, zx1, zx2, zx10, zx20
+      use comblc, only: iter, itin, iterbf,
+     &   nitl, nitin, nrun, icont, nnstpp,
+     &   alp, alpnew, clr, clz, cnor, erru, f_cur, g, qcen, tok,
+     &   ucen, ui, um, r0ax, b0ax, psi_bon,
+     &   rm, zm, rl, zl, rx0, zx0
 
       implicit none
 
       integer, intent(in) :: ncequi, nstep, ngrid, ngav1, isymm
       real*8, intent(in) :: alf0, alf1, alf2, bet0, bet1, bet2,
-     &   betplx, psi_bnd, EREVE0
+     &   betplx, ftok, psicen, psi_bnd, EREVE0
       real*8, intent(in) , dimension(*) :: pcequi
       real*8, intent(out), dimension(*) :: psicon
-      real*8, intent(out) :: betpol, zli3, ftok, tokout, 
-     &   psicen, pscout, alp_b, rax, zax, ERPS
+      real*8, intent(out) :: betpol, zli3, tokout, 
+     &   pscout, alp_b, rax, zax, ERPS
 
       integer :: isol, nwr, il, jl, icelm, jcelm, nursb
-      real*8 :: alf0p, alf1p, alf2p, bet0f, bet1f, bet2f, 
-     &   eps0, coin, zcoin
+      real*8 :: eps0, coin, zcoin
       real*8 :: omega, sigma, alf0n
       double precision :: alpef, alpnewef, rx0ef, zx0ef
 
@@ -729,11 +722,11 @@
 !----------------------------------------------------------------
       subroutine eq_ax0( pcequi, psicon, ncequi, nstep, ngrid,
      &                   alf0, alf1, alf2, bet0, bet1, bet2,
-     &                   betpol, betplx, zli3,
+     &                   betplx,
      &                   ngav1,
-     &                   ftok, tokout, psicen, pscout,
-     &                   EREVE0, ERPS,
-     &                   psi_bnd, alp_b, rax, zax, isymm )
+     &                   ftok, psicen,
+     &                   EREVE0,
+     &                   psi_bnd)
 
       use comblc, only: nitl, nitin, icont, iter, iterbf, itin, nrun, 
      &   nnstpp, clr, clz, cnor, erru, qcen, psi_bon, b0ax, r0ax, 
@@ -741,14 +734,12 @@
 
       implicit none
 
-      integer, intent(in) :: ncequi, nstep, ngrid, ngav1, isymm
+      integer, intent(in) :: ncequi, nstep, ngrid, ngav1
       real*8, intent(in) :: alf0, alf1, alf2, bet0, bet1, bet2,
-     &   betplx, psi_bnd, EREVE0
+     &   betplx, ftok, psicen, psi_bnd, EREVE0
       real*8, intent(in), dimension(*) :: pcequi, psicon
-      real*8, intent(out) :: betpol, zli3, ftok, tokout, 
-     &   psicen, pscout, alp_b, rax, zax, ERPS
 
-      integer :: il, jl, icelm, jcelm, nursb
+      integer :: il, jl, icelm, jcelm
       real*8 :: omega, sigma, alf0n
       double precision :: alpef, alpnewef, rx0ef, zx0ef
 
@@ -800,7 +791,7 @@
 !----------------------------------------------------------------
       subroutine eq_ax2( pcequi, psicon, ncequi, nstep, ngrid,
      &                   alf0, alf1, alf2, bet0, bet1, bet2,
-     &                   betpol, betplx, zli3,
+     &                   betpol, betplx,
      &                   ngav1,
      &                   ftok, tokout, psicen, pscout,
      &                   EREVE0, ERPS,
@@ -815,11 +806,11 @@
 
       integer, intent(in) :: ncequi, nstep, ngrid, ngav1, isymm
       real*8, intent(in) :: alf0, alf1, alf2, bet0, bet1, bet2,
-     &   betplx, psi_bnd, EREVE0
+     &   betplx, ftok, psicen, psi_bnd, EREVE0
       real*8, intent(in) , dimension(*) :: pcequi
       real*8, intent(out), dimension(*) :: psicon
-      real*8, intent(out) :: betpol, zli3, ftok, tokout, 
-     &   psicen, pscout, alp_b, rax, zax, ERPS
+      real*8, intent(out) :: betpol, tokout, 
+     &   pscout, alp_b, rax, zax, ERPS
 
       integer :: isol, nwr, nursb
       real*8 :: eps0, coin, zcoin

@@ -1,6 +1,6 @@
       subroutine closest_knot(r0, z0, ik, jk)
 
-      use comblc, only: rmin, rmax, zmin, zmax, dr, dz, r, z
+      use comblc, only: rmin, rmax, zmin, dr, dz, r, z
 
       implicit none
 
@@ -35,11 +35,12 @@
 !----------------------------------------------------------------
       subroutine prefit(rk, zk, ncpfc, NECON, WECON, rax, zax, 
      &   alp_b, psi_bnd)
-        
-      use bnd_modul
-      use sp_parameters
+
+      use bnd_modul, only: nbtab, rbtab, zbtab
       use iopath, only: path
-      use parcur
+      use parcur, only: alph, n_cc, m_cc, r_ax, z_ax, lfit, rfit, zfit,
+     & lpre, rpre, zpre, rx_p, rx2_p, zx_p, zx2_p,
+     & c_wght, d_wght, g_wght, s_wght, w_wght, cpir, cxc
       use comevl, only: nequi
       use keys, only: kastr, ksnf, kxwx
 
@@ -176,16 +177,13 @@
       end subroutine prefit
 
 !----------------------------------------------------------------
-      subroutine curfit(rk, zk, nk, NECON, WECON, psi_bnd)
+      subroutine curfit(psi_bnd)
 
-      use sp_parameters
       use comevl, only: nequi, pfceqw
       use keys, only: kxwx, ksnf
 
       implicit none
 
-      integer, intent(in) :: nk, NECON(*)
-      real*8, intent(in), dimension(*) :: rk, zk, wecon
       real*8, intent(out) :: psi_bnd
 
       integer :: ik
@@ -216,15 +214,12 @@
       end subroutine curfit
 
 !----------------------------------------------------------------
-      subroutine curfit_L(rk, zk, nk, NECON, WECON, psi_bnd)
+      subroutine curfit_L(psi_bnd)
 
-      use sp_parameters
       use comevl, only: nequi, pfceqw
 
       implicit none
 
-      integer, intent(in) :: nk, NECON(*)
-      real*8, intent(in), dimension(*) :: rk, zk, wecon
       real*8, intent(out) :: psi_bnd
 
       call psi_cpn
@@ -234,15 +229,12 @@
       end subroutine curfit_L
 
 !----------------------------------------------------------------
-      subroutine curfit_(rk,zk,nk,NECON,WECON,psi_bnd)
+      subroutine curfit_(psi_bnd)
 
-      use sp_parameters
       use comevl, only: nequi, pfceqw
 
       implicit none
 
-      integer, intent(in) :: nk, NECON(*)
-      real*8, intent(in), dimension(*) :: rk, zk, wecon
       real*8, intent(out) :: psi_bnd
 
       integer :: ik
@@ -262,8 +254,9 @@
 !----------------------------------------------------------------
       subroutine grimat(rk,zk,ncpfc,NECON, WECON )
 
-      use sp_parameters
-      use parcur
+      use sp_parameters, only: pi
+      use parcur, only: lfit, rfit, zfit, lpre, rpre, zpre,
+     & gx_r, gx_z, gx_rr, gx_rz, gx_zz, rx_p, zx_p, gindk, gindp
       use comevl, only: nequi
 
       implicit none
@@ -271,7 +264,7 @@
       integer, intent(in) :: ncpfc, NECON(*)
       real*8, intent(in), dimension(*) :: rk, zk, wecon
 
-      integer :: ip, l, ik, iq
+      integer :: l, ik, iq
       real*8 :: dgdr, dgdz, d2gdrr, d2gdrz, d2gdzz, zgindk, zgindp
       real*8 :: greeni
 
@@ -336,8 +329,8 @@
 !----------------------------------------------------------------
       subroutine grimat2x(rk,zk,ncpfc,NECON, WECON )
 
-      use sp_parameters
-      use parcur
+      use sp_parameters, only: pi
+      use parcur, only: gx2_r, gx2_z, rx2_p, zx2_p
       use comevl, only: nequi
 
       implicit none
@@ -367,7 +360,7 @@
       subroutine precal(rk, zk, nk, NECON, WECON)
 
       use sp_parameters, only: pi
-      use parcur
+      use parcur, only: ginda, gindx, r_ax, z_ax, rx_p, zx_p, psip_a
       use comevl, only: NEQUI
       use comblc, only: r, z, ui
 
@@ -434,7 +427,7 @@
       subroutine precal_wx(rk, zk, nk, NECON, WECON )
 
       use sp_parameters, only: pi
-      use parcur
+      use parcur, only: ginda, gindx, r_ax, z_ax, psip_a
       use comevl, only: NEQUI
       use comblc, only: rx0, zx0, r, z, ui
 
@@ -500,7 +493,9 @@
       subroutine cursol(n_equi, pf_ceqw, psi_bnd)
 
       use sp_parameters, only: ncf_p, amu0
-      use parcur
+      use parcur, only: lfit, lpre, ginda, gindk, gindp, gindx,
+     & alph, curref, d_wght, s_wght, w_wght,
+     & psifit, psipre, psip_a, psip_x, dpsx_r, dpsx_z, gx_r, gx_z
 
       implicit none
 
@@ -810,7 +805,11 @@
       subroutine cursol_snf(n_equi, pf_ceqw, psi_bnd)
 
       use sp_parameters, only: ncf_p, amu0
-      use parcur
+      use parcur, only: lfit, lpre, ginda, gindk, gindp, gindx,
+     & alph, curref, cxc, c_wght, d_wght, s_wght, w_wght,
+     & psifit, psipre, psip_a, psip_x,
+     & gx_r, gx_z, gx_rr, gx_rz, gx_zz, rx_p,
+     & dpsx_r, dpsx_z, dpsx_rr, dpsx_rz, dpsx_zz
 
       implicit none
 
@@ -1270,7 +1269,11 @@
       subroutine cursol_2x(n_equi, pf_ceqw, psi_bnd)
 
       use sp_parameters, only: ncf_p, amu0
-      use parcur
+      use parcur, only: lfit, lpre, ginda, gindk, gindp, gindx,
+     & alph, curref, cxc, c_wght, d_wght, s_wght, w_wght,
+     & psifit, psipre, psip_a, psip_x,
+     & gx_r, gx_z, gx2_r, gx2_z,
+     & dpsx_r, dpsx_z, dpsx2_r, dpsx2_z
 
       implicit none
 
@@ -1749,7 +1752,11 @@
       subroutine cursol_wx(n_equi, pf_ceqw, psi_bnd)
 
       use sp_parameters, only: ncf_p, amu0
-      use parcur
+      use parcur, only: lfit, lpre, ginda, gindk, gindp, gindx,
+     & alph, curref, d_wght, s_wght, w_wght,
+     & psifit, psipre, psip_a, psip_x,
+     & gx_r, gx_z,
+     & dpsx_r, dpsx_z
 
       implicit none
 
@@ -1951,8 +1958,10 @@
 !------------------------------------------------------
       subroutine psi_cpn_wx
 
-      use parcur
       use comblc, only: rmin, zmin, rx0, zx0, dr, dz, r, z, ui
+      use parcur, only: lfit, rfit, zfit, lpre, rpre, zpre, 
+     & psifit, psipre, psip_x,
+     & dpsx_r, dpsx_z, dpsx_rr, dpsx_rz, dpsx_zz
 
       implicit none
 
@@ -2021,8 +2030,10 @@
 !----------------------------------------------------------------
       subroutine psi_cpn
 
-      use parcur
       use comblc, only: rmin, zmin, dr, dz, r, z, ui, ni, nj
+      use parcur, only: lfit, rfit, zfit, lpre, rpre, zpre, 
+     & psifit, psipre, psip_x, rx_p, zx_p, 
+     & dpsx_r, dpsx_z, dpsx_rr, dpsx_rz, dpsx_zz
 
       implicit none
 
@@ -2101,8 +2112,8 @@
 !----------------------------------------------------------------
       subroutine psi_cpn_2x
 
-      use parcur
       use comblc, only: r, z, ui
+      use parcur, only: rx2_p, zx2_p, dpsx2_r, dpsx2_z, psip_x2
 
       implicit none
 
@@ -2162,7 +2173,8 @@
       subroutine cursol_(n_equi, pf_ceqw, psi_bnd)
 
       use sp_parameters, only: ncf_p, amu0
-      use parcur
+      use parcur, only: lfit, lpre, gindk, gindp,
+     & d_wght, s_wght, w_wght, curref, psifit, psipre 
 
       implicit none
 
@@ -2172,7 +2184,7 @@
 
       integer :: j, k, l, ll, iq
       integer, dimension(ncf_p) :: IP
-      real*8 :: asum, gr_xp, gz_xp, ps_ma, ps_xp
+      real*8 :: asum
       real*8, dimension(ncf_p) :: X, Y, psictr
       real*8, dimension(ncf_p, ncf_p) :: A
 
@@ -2316,8 +2328,9 @@
 !----------------------------------------------------------------
       subroutine bonpsi
 
-      use sp_parameters
-      use parcur
+      use sp_parameters, only: nrp, ntp
+      use parcur, only: lfit, rfit, zfit, psifit,
+     & lpre, rpre, zpre, psipre
       use compol, only: iplas, nt1, psi, dlt, nt, r, z
 
       implicit none

@@ -281,18 +281,16 @@
 
       call eq_0(pjk, psip, ncequi, kstep, ngrid, 
      &          alf0, alf1, alf2, bet0, bet1, bet2, 
-     &          betpol, betplx, zli3, 
-     &          ngav1, 
-     &          ftok, tokout, psiax, psiout, 
-     &          nursb, psi_bnd, alp_b, rax, zax, n_ctrl, b0, r0 )
+     &          betplx, ngav1, 
+     &          ftok, tokout, psiax, nursb, 
+     &          psi_bnd, alp_b, rax, zax, n_ctrl, b0, r0 )
 
       call rdexf(ncequi)
 
       call eq(pjk, psk, ncequi, kstep, ngrid, 
      &        alf0, alf1, alf2, bet0, bet1, bet2, 
-     &        betpol, betplx, zli3, 
-     &        ngav1, 
-     &        ftok, tokout, psiax, psiout, 
+     &        betpol, betplx, ngav1, 
+     &        tokout, psiout, 
      &        nursb, psi_bnd, alp_b, rax, zax )
 
       do L=1, NCEQUI
@@ -859,16 +857,14 @@
 
       call eq_0(pjk, psip, ncequi, kstep, ngrid, 
      &          alf0, alf1, alf2, bet0, bet1, bet2, 
-     &          betpol, betplx, zli3, 
-     &          ngav1, 
-     &          ftok, tokout, psiax, psiout, 
-     &          nursb, psi_bnd, alp_b, rax, zax, n_ctrl, b0, r0)
+     &          betplx, ngav1, 
+     &          ftok, tokout, psiax, nursb, 
+     &          psi_bnd, alp_b, rax, zax, n_ctrl, b0, r0)
       call rdexf(ncequi)
       call eq(pjk, psk, ncequi, kstep, ngrid, 
      &        alf0, alf1, alf2, bet0, bet1, bet2, 
-     &        betpol, betplx, zli3, 
-     &        ngav1, 
-     &        ftok, tokout, psiax, psiout, 
+     &        betpol, betplx, ngav1, 
+     &        tokout, psiout, 
      &        nursb, psi_bnd, alp_b, rax, zax)
 
       do L=1, NCEQUI
@@ -1077,11 +1073,11 @@
             PSK   = PSKP1
             call EQ_AX0(pjk, PSkp1, NCequi, KSTEP, NGRID, 
      &                  ALF0, ALF1, ALF2, BET0, BET1, BET2, 
-     &                  BETPOL, BETPLX, ZLI3, 
+     &                  BETPLX, 
      &                  NGAV1, 
-     &                  FTOK, TOKOUT, PSIAX, PSIOUT, 
-     &                  ENELS,   ERPS, 
-     &                  psi_bnd, alp_b, rax, zax, 0)
+     &                  FTOK, PSIAX, 
+     &                  ENELS,
+     &                  psi_bnd)
       	    if (ispid_contour.eq.0) then
                call eqb(alf0, alf1, alf2, 
      &             bet0, bet1, bet2, alw0, alw1, alw2, 
@@ -1099,7 +1095,7 @@
             endif
             call EQ_AX2( pjk, PSkp1, NCequi,  KSTEP, NGRID, 
      &         ALF0, ALF1, ALF2, BET0, BET1, BET2, 
-     &         BETPOL, BETPLX, ZLI3, 
+     &         BETPOL, BETPLX,
      &         NGAV1, 
      &         FTOK, TOKOUT, PSIAX, PSIOUT, 
      &         ENELS, ERPS, 
@@ -1454,17 +1450,15 @@
 
       call eq_0(pjk, psip, ncequi, kstep, ngrid, 
      &          alf0, alf1, alf2, bet0, bet1, bet2, 
-     &          betpol, betplx, zli3, 
-     &          ngav1, 
-     &          ftok, tokout, psiax, psiout, 
-     &          nursb, psi_bnd, alp_b, rax, zax, n_ctrl, b0, r0)
+     &          betplx, ngav1, 
+     &          ftok, tokout, psiax, nursb, 
+     &          psi_bnd, alp_b, rax, zax, n_ctrl, b0, r0)
       call rdexf(ncequi)
 
       call eq(pjk, psip, ncequi, kstep, ngrid, 
      &        alf0, alf1, alf2, bet0, bet1, bet2, 
-     &        betpol, betplx, zli3, 
-     &        ngav1, 
-     &        ftok, tokout, psiax, psiout, 
+     &        betpol, betplx, ngav1, 
+     &        tokout, psiout, 
      &        nursb, psi_bnd, alp_b, rax, zax)
 
       call eq_par(z0cen, alp, alpnew, qcen, nctrl, numlim, up, 

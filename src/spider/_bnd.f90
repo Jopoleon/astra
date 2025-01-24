@@ -1,12 +1,9 @@
-subroutine f_bndmat(rk, zk, nk, rlop, zlop, nlop, rprob, zprob, nprob)
+subroutine f_bndmat
 
 use compol_add, only: binadg
 use compol, only: nr, nt1, r, z
       
 implicit none
-
-integer, intent(in) :: nk, nlop, nprob
-real*8, intent(in), dimension(*) :: rk, zk, rlop, zlop, rprob, zprob
 
 integer :: j, jb
 real*8 :: r0, r1, z0, z1, rr, zz, fint

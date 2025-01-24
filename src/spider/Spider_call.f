@@ -5,7 +5,7 @@
 !   MAIN  PROGRAM  OF  THE EVOLUTION CODE  "PET"
 !-----------------------------------------------
 
-      use keys, only: key_0st, kpr, key_out
+      use keys, only: key_0st, kpr
 
       implicit none
 
@@ -70,8 +70,7 @@
      &                       voltpf, d_pf_mat, d_cam_mat, key_dmf)    
             else
                write(*,*) 'fix grid call init'
-               call cf_init( k_auto, nstep, dt, time,
-     &                       voltpf, d_pf_mat, d_cam_mat )
+               call cf_init(k_auto, nstep)
             endif
 
             call wrrec
@@ -136,12 +135,9 @@
                call sstepon_bkdw( KLUCH, k_auto, nstep, dt, time,
      &                            voltpf, d_pf_mat, d_cam_mat, key_dmf)
             else
-               if (yesfitcc.eq.1) call cf_init( k_auto, nstep, dt, time,
-     &                     voltpf, d_pf_mat,d_cam_mat ) !fit only 12 currents up to psl
-      	       if (yesfitcc.eq.2) call cf_init_bkwd( k_auto, nstep, dt,
-     &                     time, voltpf, d_pf_mat,d_cam_mat ) !now it works
-      	       if (yesfitcc.eq.3) call cf_init_full( k_auto, nstep, dt,
-     &                     time, voltpf, d_pf_mat,d_cam_mat ) !not yet implemented 
+               if (yesfitcc.eq.1) call cf_init(k_auto, nstep) !fit only 12 currents up to psl
+      	       if (yesfitcc.eq.2) call cf_init_bkwd(nstep) !now it works
+      	       if (yesfitcc.eq.3) call cf_init_full(k_auto, nstep) !not yet implemented 
             endif
 
             call  wrrec

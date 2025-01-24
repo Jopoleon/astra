@@ -25,14 +25,13 @@ real*8, intent(out), dimension(*) :: errarr
 integer :: iplasm, nroi, ntetj, itout, ish, nshift
 integer, dimension(4) :: iwrk
 real*8 :: epscrz, epspsm, epsfpv, errpsm, errfpv, errpsb, epsro, &
-    erro, erroo, cab, fvv, fpv0, det, &
+    erro, cab, fvv, fpv0, det, &
     dell, delr, delz, delro, delfpv, drolim, &
     cr0, cr1, cr2, cr3, cr4, cz0, cz1, cz2, cz3, cz4, &
     pm0, pm1, pm2, pm3, pm4, fv0, fv1, fv2, fv3, fv4, &
     rm0, zm0, rolim0, drm, dfpv, dfvdr, dfvdz, dfvdro, dfvdf, &
     dcrdr, dcrdz, dczdz, dczdr, dpmdr, dpmdz, dpmdf, dpmdro, &
     dcrdro, dczdro, dcrdf, dczdf
-real*8  :: alf0, alf1, alf2, bet0, bet1, bet2
 real*8, dimension(4) :: blm, xlm
 real*8, dimension(4, 4) :: alm
 
@@ -59,7 +58,7 @@ iter = 0
 itin = 0
 ich = 0
 
-call f_bndmat(rk,zk,nk,rloop,zloop,nloop,rprob,zprob,nprob)
+call f_bndmat
 
  1000 continue
 
@@ -485,7 +484,7 @@ if (nstep /= nstepO) then
     erru = 0.d0
     write(*, *)'renet', platok !EFable
     call renet
-    call f_bndmat(rk, zk, nk, rloop, zloop, nloop, rprob, zprob, nprob)
+    call f_bndmat
 endif
 
 iter =iter + 1

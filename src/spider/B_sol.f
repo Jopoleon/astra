@@ -1,6 +1,6 @@
       subroutine solint(imov)
 
-      use sp_parameters
+      use sp_parameters, only: neqp, nrp, nspp
       use keys, only: kpr
       use compol, only: itin, neqpla, a, nr, nt, nt1, iplas, iplas1,
      &     ia, ja, q, iter, iswtch, ngav, psi, psia, right, errm,
@@ -81,9 +81,9 @@
 !----------------------------------------------------------------
       subroutine solbit(zw)
 
-      use sp_parameters
+      use sp_parameters, only: neqp, nspp
       use compol, only: nr, nr1, nt, nt1, ia, ja, dapp, app0, right,
-     & neqpla, psi 
+     & neqpla, psi
 
       implicit none
 
@@ -93,7 +93,7 @@
       integer :: p1(neqp), ip1(neqp), isp1(nspp)
       real*8 :: znes
       real*8, dimension(nspp) :: rsp1
-      real*8, dimension(neqp) :: zyy, wpp, wzz, wrr, zuu(neqp)
+      real*8, dimension(neqp) :: zyy, wrr
       integer, external :: numlin
 
       equivalence (rsp1(1), isp1(1))

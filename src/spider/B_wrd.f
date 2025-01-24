@@ -1,16 +1,13 @@
       subroutine wrb
 
-      use sp_parameters
-      use iopath, only: path
+      use sp_parameters, only: nrp
       use keys, only: kpr
       use compol, only: iplas
 
       implicit none
 
-      integer :: i, j, ib, nrr
-      real*8, dimension(nrp) :: psf, sqtor, bj_av, curfi_av, b2_av
-      character(len=8) :: etitl(5)
-      character(len=120) :: fname
+      integer :: nrr
+      real*8, dimension(nrp) :: psf, sqtor, b2_av
 
       common /compsf/ psf, sqtor
       common /com_b2/ B2_av
@@ -28,11 +25,10 @@
 !----------------------------------------------------------------
       subroutine tab_efit(tokf, psax, eqdfn, rax, zax, b0, r0)
          
-      use ppf_modul
-      use bnd_modul
+      use ppf_modul, only: pstab, pptab, fptab, nutab
+      use bnd_modul, only: nbtab, rbtab, zbtab
       use sp_parameters, only: pi, amu0, twopi
       use iopath, only: path
-      use keys, only: kpr
 
       implicit none
 
@@ -44,7 +40,7 @@
       integer :: i, j, iefit, idum, nw, nh, nbbbs, limitr, i_sign
       real*8 :: simag, sibry, rdim, zdim, rcentr, rleft, zmid, rmaxis,
      &   zmaxis, bcentr, current, xdum, p_intgr, f0c, fvefit, fcefit
-      real*8, dimension(np) :: ps, p, f, q, fpol, pres, qpsi, ffprim,
+      real*8, dimension(np) :: fpol, pres, qpsi, ffprim,
      &   pprime, rlimtr, zlimtr, x, y
       real*8, dimension(np,np) :: psirz, u
       real*8, dimension(nbp) :: rbbbs, zbbbs

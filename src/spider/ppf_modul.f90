@@ -1,9 +1,8 @@
-module    ppf_modul       ! for tabppf.dat file 
+module ppf_modul
 
-integer, parameter, private :: DP=kind(1.0D0)
-
-    integer :: nutab         ! 
-    
+    implicit none
+    integer, parameter, private :: DP=kind(1.0D0)
+    integer :: nutab
     real(DP), allocatable :: pstab(:),pptab(:),fptab(:)
     
-end module
+end module ppf_modul

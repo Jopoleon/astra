@@ -1,6 +1,6 @@
       subroutine grdef(igdf)
 
-      use sp_parameters
+      use sp_parameters, only: nrp
       use compol, only: iplas, iplas1, psia, dpsda, q
 
       implicit none
@@ -64,7 +64,7 @@
 !----------------------------------------------------------------
       subroutine axdef(rma, zma, psima, dpm)
 
-      use sp_parameters
+      use sp_parameters, only: ntp
       use compol, only: r, z, rm, zm, psi, nt1
 
       implicit none
@@ -116,7 +116,6 @@
 !----------------------------------------------------------------
       subroutine avr2_c(arr2, nro, nteta, arr1)
 
-      use sp_parameters
       use compol, only: iplas, nt1
 
       implicit none
@@ -142,7 +141,6 @@
 !----------------------------------------------------------------
       real*8 function avr1_c(arr1_c, i)
 
-      use sp_parameters
       use compol, only: nt1, vol
 
       implicit none
@@ -167,7 +165,6 @@
 !----------------------------------------------------------------
       real*8 function avr_bnd(arr)
 
-      use sp_parameters
       use compol, only: nt1, dlt, iplas
 
       implicit none
@@ -191,7 +188,7 @@
 !----------------------------------------------------------------
       subroutine bongri
 
-      use sp_parameters
+      use sp_parameters, only: ntp
       use compol, only: iplas, nt1, r, z
 
       implicit none
@@ -222,7 +219,7 @@
 !----------------------------------------------------------------
       subroutine cof_bon(cps_bon, bps_bon, dps_bon)
 
-      use sp_parameters
+      use sp_parameters, only: nrp, ntp
       use compol, only: nt1, iplas, nt, psi, sq2, sq3, dlt, cur, r
 
       implicit none
@@ -322,7 +319,6 @@
 !----------------------------------------------------------------
       subroutine get_flfi(flfi_m)
 
-      use sp_parameters
       use compol, only: iplas, q, psia, psim
 
       implicit none
@@ -344,7 +340,7 @@
       subroutine metcof(alp22, alp33, delsc, delv, ac0, skcen, cur_I,
      *                  alp33k, delsk, delvk)
 
-      use sp_parameters
+      use sp_parameters, only: nrp, ntp
       use compol, only: iplas, iplas1, nt1, r, s, vol, cur,
      &  psia, psipla, sq1, sq2, sq3, sq4
 
@@ -357,7 +353,7 @@
       integer :: i, j
       real*8 :: zdelsc, zdelsk, zdelv, zavrc, zavrk, zamn, za0, zapl,
      &   acj, sqk, dpsids, samn, sa0, sapl, diff, dcur_i, dcurj_i,
-     &   r0, r1, r2, r3, r4, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9
+     &   r0, r1, r2, r3, r4, a1, a2, a3, a4, a5, a6, a7, a8, a9
       real*8, dimension(nrp) :: psf, sqtor, curj_I, deviat
       real*8, dimension(nrp, ntp) :: a12, a23, a34, a14, a13, a24
 
@@ -484,7 +480,7 @@
 !----------------------------------------------------------------
       subroutine qst_b
 
-      use sp_parameters
+      use sp_parameters, only: ntp
       use compol, only: nt1, iplas, r, z, r0ax, b0ax, fvac, f, dfdpsi,
      & psin, psim, psia, psip, s, sq2, sq3, flx_fi, q, flucfm
 
@@ -631,7 +627,7 @@
 !----------------------------------------------------------------
       subroutine bt_pol(betpol)
 
-      use sp_parameters
+      use sp_parameters, only: pi, amu0
       use compol, only: nt1, iplas1, sq1, sq2, sq3, sq4, tokp, cnor,
      & psin, psim, psip 
 
@@ -669,7 +665,6 @@
 !----------------------------------------------------------------
       subroutine skbetp(betplx, betpol)
 
-      use sp_parameters
       use compol, only: ngav, tok, cnor, tokff, iplas, dpdpsi
 
       implicit none
@@ -702,7 +697,7 @@
 !----------------------------------------------------------------
       subroutine cur_avg
 
-      use sp_parameters
+      use sp_parameters, only: nrp, amu0
       use keys, only: kastr
       use jb, only: Bj_av, curfi_av
       use tim, only: dtim
@@ -844,7 +839,7 @@
 ! IA(IL) -- number of first nonzero element in line IL
 ! JA(IM) -- number of matrix column for element a(im)
 
-      use sp_parameters
+      use sp_parameters, only: nrp, ntp
       use compol, only: ia, ja, a, nt, nt1, nt2, nr, iplas, neqpla,
      & itin, nitbeg, nitdel, app0, dapp 
 

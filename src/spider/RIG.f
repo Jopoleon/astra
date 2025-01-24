@@ -97,9 +97,16 @@
 !----------------------------------------------------------------
       subroutine right0(ill, jll, icelm, jcelm, ngav1)
 
-      use sp_parameters
-      use keys, only: kpr, kxwx, key_plc
-      use comblc
+      use sp_parameters, only: nip, njp, neqp, amu0
+      use keys, only: kpr, key_plc
+      use comblc, only: nctrl, right, u, up, un, ucen, imax, jmax,
+     & rl, zl, r, z, rm, zm, um, errm, clr, clz, alp, alpnew,
+     & ni, ni1, ni2, nj, nj1, nj2,
+     & ux0, ux1, ux2, ix1, ix2, jx1, jx2,
+     & rx0, rx1, rx2, rx10, rx20, zx0, zx1, zx2, zx10, zx20,
+     & numlim, psi_bon, nblm, rblm, zblm, iblm, jblm, ipr, 
+     & iter, iterbf, ublmax, erru, dr, dri, dz, dzj, curf, 
+     & nnstpp, tok, tokn, rmin, rmax, cnor
 
       implicit none
 
@@ -112,7 +119,7 @@
      &   ilm, ilma, jlm, jlma, icelma, jcelma, llim, isum, nloc,
      &   ipr1, ipr2, ipr3, ipr4, i_rus, iprij
       real*8 :: omg, sigm, helinp, helout, tokp, sij, sij4, wght,
-     &   umax, uem, uen, uumm, uxold, uix, ublm, unold, ups, upp,
+     &   umax, uem, uumm, uxold, uix, ublm, unold, ups, upp,
      &   ulmax1, ulmax2, uartm,
      &   rrmm, zzmm, rmold, zmold, rix, zjx, 
      &   rlim1, rlim2, rmlim1, rmlim2, frlim,

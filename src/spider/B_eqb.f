@@ -3,10 +3,13 @@
      &   keyctr, nstep, platok, rax, zax, b0cen, r0cen, psax, igdf,
      &   n_tht, n_psi, epsro, nurs, i_eqdsk, i_bsh, psi_bnd, psi0_bnd)
 
-      use sp_parameters
+      use sp_parameters, only: nursp
       use iopath, only: path
       use keys, only: kpr, kstep
-      use compol
+      use compol, only: nr, nr1, nr2, nt, nt1, nt2, iplas, iplas1, ngav,
+     & nitbeg, nitdel, iter, itin, tokp, fvac,
+     & psia, psiax, psibon, psi_eav, psibon0, psim, psip, psipla,
+     &     r0ax, b0ax, tok, dfdpsi, dpdpsi, cnor, erru, r, z, rm, zm
 
       implicit none
 
@@ -24,8 +27,6 @@
       real*8 :: rm0, zm0, rc0, zc0, asp0, el_up, el_lw, tr_up, tr_lw,
      &   alf0p, alf1p, alf2p, bet0f, bet1f, bet2f, alw0p, alw1p, alw2p,
      &   betpol, bettot, dummy_nbsh, erro, errpsi, errod, qax, q_giv0
-      real*8, dimension(nursp) :: pstab, qtab
-      real*8 :: rrk(nursp4), cck(nursp4), wrk(nursp6), cwk(4)
       real*8 :: tabp, tabf
       character(len=80) :: fname
 
@@ -241,9 +242,13 @@
      &    keyctr, nstep, platok, rax, zax, b0cen, r0cen, psax, igdf,
      &    n_tht, n_psi, epsro, nurs, i_eqdsk, i_bsh, psi_bnd, psi0_bnd)
 
-      use sp_parameters
-      use keys, only: kpr, kstep
-      use compol
+      use sp_parameters, only: nursp
+      use keys, only: kstep
+      use compol, only: nr, nr1, nr2, nt, nt1, nt2, iplas, iplas1,
+     & ngav, nitdel, nitbeg, iter, itin,
+     & r0ax, b0ax, psiax,
+     &     psia, psiax, psibon, psibon0, psi_eav, psim, psip, psipla,
+     & dpdpsi, dfdpsi, cnor, tok, tokp, rm, zm
 
       implicit none
 
@@ -260,8 +265,6 @@
       real*8 :: rm0, zm0, rc0, zc0, asp0, el_up, el_lw, tr_up, tr_lw,
      &   alf0p, alf1p, alf2p, bet0f, bet1f, bet2f, alw0p, alw1p, alw2p,
      &   betpol, bettot
-      real*8, dimension(nursp) :: pstab, qtab
-      real*8 :: rrk(nursp4), cck(nursp4), wrk(nursp6), cwk(4)
       real*8 :: tabp, tabf
 
       common /combsh/ rm0, zm0, rc0, zc0, asp0, el_up, el_lw, 
@@ -356,8 +359,7 @@
 !----------------------------------------------------------------
       subroutine retab_L
 
-      use sp_parameters
-      use keys, only: kpr
+      use sp_parameters, only: nursp
       use compol, only: iplas, psia, dfdpsi, dpdpsi
 
       implicit none
@@ -365,7 +367,7 @@
       integer :: i, nurs, it, ic
       real*8 :: wes, zpsi, dpsi, furs_n, purs_n
       real*8, dimension(nursp) :: psit, purs, furs, wurs,
-     &   ppp, fff, www, pstab, pptab, fptab
+     &   ppp, fff, www, pstab
 
       common/comurs/ psit, purs, furs, wurs, nurs
       common/comppp/ ppp, fff, www
@@ -417,8 +419,7 @@
 !----------------------------------------------------------------
       subroutine retab_p
 
-      use sp_parameters
-      use keys, only: kpr
+      use sp_parameters, only: nursp
       use compol, only: iplas, psia, dpdpsi
 
       implicit none
@@ -426,7 +427,7 @@
       integer :: i, nurs, it, ic
       real*8 :: zpsi, dpsi
       real*8, dimension(nursp) :: psit, purs, furs, wurs,
-     &   ppp, fff, www, pstab, pptab, fptab
+     &   ppp, fff, www, pstab
 
       common/comurs/ psit, purs, furs, wurs, nurs
       common/comppp/ ppp, fff, www
@@ -467,7 +468,6 @@
 !----------------------------------------------------------------
       subroutine bt_tot(bettot)
 
-      use sp_parameters
       use compol, only: nt1, psin, iplas1, b0ax, psim, psip, cnor,
      & vol, vol1, vol2, vol3, vol4
 
@@ -510,7 +510,6 @@
 !----------------------------------------------------------------
       subroutine presol(i_betp, betplx, betpol)
 
-      use sp_parameters
       use keys, only: kpr
       use compol, only: iter, itin, z, zm, psi, psim, psip, psipla,
      & iplas, iplas1, nt1, cnor, tokp, rm, fvac, f
@@ -518,7 +517,8 @@
       implicit none
 
       integer, intent(in) :: i_betp
-      real*8, intent(in) :: betplx, betpol
+      real*8, intent(in) :: betplx
+      real*8, intent(out) :: betpol
 
       integer :: i, j, imov, imax, jmax
       real*8 :: erro, errod, errpsi, psimax, platok, rax, zax, psax
