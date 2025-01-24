@@ -46,8 +46,8 @@
 &physics
    jumpcor=2
    Elimitfac=1.5
-   table_path='/afs/ipp/home/a/astra/ASTRA_LIBRARIES_EXT/rabbit/tables_ITERDEMO'
-   limiter_file='/afs/ipp/home/a/astra/ASTRA_LIBRARIES_EXT/rabbit/limiters/limiter_dtt.dat'
+   table_path   = '$ASTRA_EXT/rabbit/tables_ITERDEMO'
+   limiter_file = 'rabbit/limiters/limiter_dtt.dat'
    Rmax=2.92200
    Rmin=1.47820
 /
