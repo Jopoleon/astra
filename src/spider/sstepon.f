@@ -1,11 +1,16 @@
-      subroutine SSTEPON(KLUCH, k_auto, nstep, dt, time, 
-     &                   voltpf, d_pf_mat, d_tcam_mat, key_dmf)
+      subroutine SSTEPON(KLUCH, k_auto, nstep, dt, time, voltpf,
+     &    key_dmf)
 
-      use durs_d_modul       
-      use sp_parameters
+      use durs_d_modul, only: n_tht, n_psi, igdf, nurs, i_eqdsk, i_betp, 
+     &    keyctr, epsro, betplx, tokf, 
+     &    b0, r0, rax, zax, psax, rxpnt, zxpnt,
+     &    alf0, alf1, alf2, bet0, bet1, bet2
+      use sp_parameters, only: nilim, njlim, nclim, nloopp, nprobp,
+     &    twopi
       use iopath, only: path
-      use comevl
-      use keys, only: kstep, kpr, key_fixbon, kastr, kastr2, key_out
+      use comevl, only: nequi, pfceqw, rm_ef, zm_ef, rxpnt_ef, zxpnt_ef,
+     &    tstep_ef, dt_ef, time_ef
+      use keys, only: kstep, kpr, kastr, kastr2
       use e_nels, only: enels
       use ndmf, only: n_dmf
 
@@ -13,10 +18,10 @@
 
       integer, intent(in) :: kluch, k_auto, nstep, key_dmf
       real*8, intent(in) :: dt, time
-      real*8, intent(in), dimension(*) :: voltpf, d_pf_mat, d_tcam_mat
+      real*8, intent(in), dimension(*) :: voltpf
 
       integer :: i, j, l, ipsmk, eq_cmd, i_bsh, ngrid, nprob, nvv,
-     &   kstop, k_step, kstepr, kstepy, keypri, knel, knels, 
+     &   kstop, k_step, kstepr, keypri, knel, knels, 
      &   n_ctrl, nctrl, numlim, it_dmf, nreg, nles,
      &   npro, nloop, nc, ncequi, ncpfc, nfw, nbp, ngav, ngav1, nursb,
      &   nfrpr1, nfrwr1, nout, nter, ninfw, ninev, ngra1, ngra2, numwr
@@ -41,7 +46,6 @@
       real*8, dimension(njlim, njlim) :: res
       real*8, dimension(nloopp) :: rloop, zloop
       real*8, dimension(nprobp) :: rprob, zprob, fiprob
-      real*8, dimension(nstep_p) :: psiplb, psiexb, psimag, flu_tor
       double precision :: dteqz
       character(len=40) :: eqdfn
       character(len=80) :: fname
@@ -80,7 +84,7 @@
       ngra1 = 14
       ngra2 = 15
 
-      if( KLUCH .NE. 0 ) goto 1111
+      if ( KLUCH .NE. 0 ) goto 1111
 
       numwr  = 0
 
@@ -93,8 +97,8 @@
 !-----------------------------------------------------------------
 ! INPUT OF "BASIC" EQULIBRIUM PARAMETERS FROM FILE "durs.dat"
 
-      if(k_auto.eq.0) goto 2005
-      if(kastr.ne.1) then
+      if (k_auto.eq.0) goto 2005
+      if (kastr.ne.1) then
          write(fname, '(a, a)') TRIM(path), '/durs.dat'
          open(1, file=fname)
             read(1, *) n_tht
@@ -122,7 +126,7 @@
             read(1, *) rax
             read(1, *) zax
          close(1)
-         if(i_eqdsk.eq.1) then
+         if (i_eqdsk.eq.1) then
             call tab_efit(tokf, psax, eqdfn, rax, zax, b0, r0)
             nurs   = -3999
             i_betp = 0
@@ -165,7 +169,7 @@
 ! Initial condition (currents) for circuit equations
 
       do L=1, NCEQUI
-	 if( L.LE.NEQUI ) then
+	 if ( L.LE.NEQUI ) then
             PJK(L)  = PFCEQW(L)
             PJKP(L) = PJK(L)
          else
@@ -181,7 +185,7 @@
          close(32)
          pjk(nequi+1:ncequi)=0.d0
          do L=1, NCEQUI
-            if( L.LE.NEQUI ) then
+            if ( L.LE.NEQUI ) then
                PFCEQW(L)  = PJK(L)
                PJKP(L) = PJK(L)
             else
@@ -212,7 +216,7 @@
 
  2005 continue
 
-      if(kastr.eq.0 .AnD. i_eqdsk.eq.0) then 
+      if (kastr.eq.0 .AnD. i_eqdsk.eq.0) then 
          write(fname, '(a, a)') TRIM(path), '/inpol.dat'
          open(1, file=fname, form='formatted')
             read(1, *) i_bsh
@@ -221,7 +225,7 @@
          i_bsh=1
       endif
 
-      if(kastr.eq.0 ) then 
+      if (kastr.eq.0 ) then 
          write(fname, '(a, a)') TRIM(path), '/durs_d.dat'
          open(1, file=fname, form='formatted')
             read(1, *) n_tht, n_psi, igdf, nurs, keyctr, i_eqdsk, i_betp
@@ -334,7 +338,7 @@
 
 ! If we need to compute the "basic" equilibrium only -> KSTOP=0
 
-      if(KSTOP.EQ.0) then
+      if (KSTOP.EQ.0) then
          return
       endif
 
@@ -368,7 +372,7 @@
  1111 continue
 
       keyctr = key_dmf
-      if(keyctr .eq. 0) platok = tokf
+      if (keyctr .eq. 0) platok = tokf
       call get_par(psi_bnd)
       call bongri
       call psib_pla(pspl_av)
@@ -382,18 +386,18 @@
 
 ! Definition of input equil. paramters: BETPLX, PSIAX, FTOK, HELINP
 
-      if(NGAV1.EQ.0 .OR. NGAV1.EQ.2 .OR. NGAV1.EQ.4) then
+      if (NGAV1.EQ.0 .OR. NGAV1.EQ.2 .OR. NGAV1.EQ.4) then
          BETPLX = BETPOL
       endif
-      if( NGAV1.EQ.0 .OR. NGAV1.EQ.1 ) then
+      if ( NGAV1.EQ.0 .OR. NGAV1.EQ.1 ) then
          PSIAX  = PSIOUT
          HELINP = HELOUT
       endif
-      if( NGAV1.EQ.2 .OR. NGAV1.EQ.3 ) then
+      if ( NGAV1.EQ.2 .OR. NGAV1.EQ.3 ) then
          FTOK   = TOKOUT
          HELINP = HELOUT
       endif
-      if( NGAV1.EQ.4 .OR. NGAV1.EQ.5 ) then
+      if ( NGAV1.EQ.4 .OR. NGAV1.EQ.5 ) then
          FTOK   = TOKOUT
          PSIAX  = PSIOUT
       endif
@@ -420,11 +424,11 @@
       zpsim=psax
       i_bsh=-1
 
-      if(keyctr.eq.0) n_dmf=1
+      if (keyctr.eq.0) n_dmf=1
 
       do it_dmf=1, n_dmf ! it_dmf <<< mag.field diffusion iter. loop
-         if(kpr.eq.1) print *, ' it_dfm==', it_dmf
-         if(keyctr.ne.0) then
+         if (kpr.eq.1) print *, ' it_dfm==', it_dmf
+         if (keyctr.ne.0) then
             call eqb(alf0, alf1, alf2, bet0, bet1, bet2, 
      &               alw0, alw1, alw2, betplx, i_betp, keyctr,
      &               kstep, platok, rax, zax, b0, r0, psax, igdf, 
@@ -432,12 +436,12 @@
      &               psi_bnd, psi0_bnd )
          endif
          f_wes=1.0d0
-         if(it_dmf.eq.1)then
+         if (it_dmf.eq.1)then
             ftok=platok
          else
             ftok=f_wes*platok+(1.d0-f_wes)*ftok
          endif
-         if( KSTEP.EQ.1 ) then
+         if ( KSTEP.EQ.1 ) then
             NGRID  = 1
             do L=1, NCEQUI
                PSKP1(L) = PSK(L)
@@ -509,16 +513,16 @@
      &                 FTOK, TOKOUT, PSIAX, PSIOUT, 
      &                 ENELS, ERPS, 
      &                 psi_bnd, alp_b, rax, zax, 0)
-            if(kpr.gt.0) write(*, *) 'stepon:EQ_AX done, erru=', ERPS
+            if (kpr.gt.0) write(*, *) 'stepon:EQ_AX done, erru=', ERPS
                call eq_par(z0cen, alp, alpnew, qcen, nctrl, numlim, up,
      &                     rm, zm, rx0, zx0)
             endif     
-            if(NGAV1.EQ.2 .OR. NGAV1.EQ.3)  FTOK = TOKOUT
-            if(NGAV1.EQ.4 .OR. NGAV1.EQ.5)  FTOK = TOKOUT
-            if(kpr.gt.0) write(*, *) 'stepon:DIFTIM, erru=', ERPS
+            if (NGAV1.EQ.2 .OR. NGAV1.EQ.3)  FTOK = TOKOUT
+            if (NGAV1.EQ.4 .OR. NGAV1.EQ.5)  FTOK = TOKOUT
+            if (kpr.gt.0) write(*, *) 'stepon:DIFTIM, erru=', ERPS
             if (kpr.lt.-1) erps=ereve !for skip EFable fsim
-            if(ERPS .LT. ENELS) EXIT
-            if(KNEL .EQ. KNELS) then
+            if (ERPS .LT. ENELS) EXIT
+            if (KNEL .EQ. KNELS) then
                KEYPRI = 1
                write(*, *) 'spider, sstepon: no covergence ' 
                write(*, *) 'KNEL .GE. KNELS  ', KNEL, KNELS 
@@ -535,7 +539,7 @@
          diftok=dabs(platok-ztok)/(dabs(platok-ztok_n)+1.d-8)
          difpsi=dabs(psax-zpsim)/(dabs(psax-zpsim_n)+1.d-8)
 
-         if((diftok.lt.5.0d-3 .AnD. it_dmf.gt.0) .OR. keyctr.eq.0) then
+         if ((diftok.lt.5.0d-3 .AnD. it_dmf.gt.0) .OR. keyctr.eq.0) then
             call eqb(alf0, alf1, alf2, bet0, bet1, bet2, alw0, alw1,
      &               alw2, betplx, i_betp, 
      &               keyctr, kstep, platok, rax, zax, b0, r0, psax,
@@ -565,26 +569,30 @@
       return
       end subroutine SSTEPON
 
-!----------------------------------------------------------------
-      subroutine SSTEPON_BKDW(KLUCH, k_auto, nstep, dt, time, 
-     &                        voltpf, d_pf_mat, d_tcam_mat, key_dmf)
+!---------------------------------------------------------------------
+      subroutine SSTEPON_BKDW(KLUCH, k_auto, nstep, dt, time, voltpf)
 
-      use durs_d_modul       
-      use sp_parameters
+      use durs_d_modul, only: n_tht, n_psi, igdf, nurs, i_eqdsk, i_betp,
+     &    keyctr, betplx, tokf, b0, r0, epsro,
+     &    rax, zax, psax, rxpnt, zxpnt,
+     &    alf0, alf1, alf2, bet0, bet1, bet2
+      use sp_parameters, only: nilim, njlim, nclim, nloopp, nprobp,
+     &    twopi
       use iopath, only: path
-      use comevl
-      use keys, only: kstep, kpr, key_fixbon, kastr, kastr2, key_out
+      use comevl, only: nequi, rm_ef, zm_ef, tstep_ef, dt_ef, time_ef,
+     &    rxpnt_ef, zxpnt_ef, pfceqw
+      use keys, only: kstep, kpr, kastr
       use e_nels, only: enels
       use ndmf, only: n_dmf
 
       implicit none
 
-      integer, intent(in) :: kluch, k_auto, nstep, key_dmf
+      integer, intent(in) :: kluch, k_auto, nstep
       real*8, intent(in) :: dt, time
-      real*8, intent(in), dimension(*) :: voltpf, d_pf_mat, d_tcam_mat
+      real*8, intent(in), dimension(*) :: voltpf
 
       integer :: i, j, l, ipsmk, eq_cmd, i_bsh, ngrid, nprob, nvv,
-     &   kstop, k_step, kstepr, kstepy, keypri, knel, knels, 
+     &   kstop, k_step, kstepr,  keypri, knel, knels, 
      &   n_ctrl, nctrl, numlim, it_dmf, nreg, nles,
      &   npro, nloop, nc, ncequi, ncpfc, nfw, nbp, ngav, ngav1, nursb,
      &   nfrpr1, nfrwr1, nout, nter, ninfw, ninev, ngra1, ngra2, numwr,
@@ -611,7 +619,6 @@
       real*8, dimension(njlim, njlim) :: res
       real*8, dimension(nloopp) :: rloop, zloop
       real*8, dimension(nprobp) :: rprob, zprob, fiprob
-      real*8, dimension(nstep_p) :: psiplb, psiexb, psimag, flu_tor
       double precision :: dteqz, dt_nowww, resres_oh6
       character(len=40) :: eqdfn
       character(len=80) :: fname
@@ -626,11 +633,10 @@
       common /comst2/ PSK, PSKP1, PSKP, PSKM1
       common /timingcmdipsmk/ ipsmk, eq_cmd, dteqz
       common /commanddioh/ cmnd_dioh2s, cmnd_dioh2u
-      common /ioh_ts06_res/ res_trigts06, resres_oh6
       common /spidcontouring/ ispid_contour
 
       data j_calll/0/
-      save dt_nowww, j_calll
+      save dt_nowww, j_calll, resres_oh6, res_trigts06
 
       kstep = nstep
       timev = time
@@ -659,7 +665,7 @@
       ngra1 = 14
       ngra2 = 15
 
-      if( KLUCH .NE. 0 ) goto 1111
+      if ( KLUCH .NE. 0 ) goto 1111
 
       numwr  = 0
 
@@ -674,9 +680,9 @@
 !------------------------------------------------------------
 ! INPUT OF "BASIC" EQULIBRIUM PARAMETERS FROM FILE "durs.dat"
 
-      if(k_auto.eq.0) goto 2005
+      if (k_auto.eq.0) goto 2005
 
-      if(kastr.ne.1) then
+      if (kastr.ne.1) then
          write(fname, '(a, a)') TRIM(path), '/durs.dat'
          open(1, file=fname)
             read(1, *) n_tht
@@ -705,7 +711,7 @@
             read(1, *) zax
          close(1)
 
-         if(i_eqdsk.eq.1) then
+         if (i_eqdsk.eq.1) then
             call tab_efit(tokf, psax, eqdfn, rax, zax, b0, r0)
             nurs   = -3999
             i_betp = 0
@@ -751,14 +757,14 @@
 ! Initial condition (currents) for circuit equations
 
       do L=1, NCEQUI
-         if( L.LE.NEQUI ) then
+         if ( L.LE.NEQUI ) then
             PFCEQW(L)  = PJK(L)
          else
             PC(NCPFC+L-NEQUI)=PJK(L)
          endif
       enddo
       do L=1, NCEQUI
-         if( L.LE.NEQUI ) then
+         if ( L.LE.NEQUI ) then
             PJKP(L) = PJK(L)
          else
             PJKP(L) = PJK(L)
@@ -788,7 +794,7 @@
 
  2005 continue
 
-      if(kastr.eq.0 .AnD. i_eqdsk.eq.0) then 
+      if (kastr.eq.0 .AnD. i_eqdsk.eq.0) then 
          write(fname, '(a, a)') TRIM(path), '/inpol.dat'
          open(1, file=fname, form='formatted')
             read(1, *) i_bsh
@@ -797,7 +803,7 @@
             i_bsh=1
          endif
 
-         if(kastr.eq.0 ) then 
+         if (kastr.eq.0 ) then 
          write(fname, '(a, a)') TRIM(path), '/durs_d.dat'
          open(1, file=fname, form='formatted')
             read(1, *) n_tht, n_psi, igdf, nurs, keyctr, i_eqdsk, i_betp
@@ -909,7 +915,7 @@
 
 ! If we need to compute the "basic" equilibrium only -> KSTOP=0
 
-      if( KSTOP.EQ.0 ) then
+      if ( KSTOP.EQ.0 ) then
          return
       endif
 
@@ -941,7 +947,7 @@
  1111 continue
 
       keyctr = 0
-      if(keyctr .eq. 0) platok = tokf
+      if (keyctr .eq. 0) platok = tokf
       call get_par(psi_bnd)
       call bongri
       call psib_pla(pspl_av)
@@ -957,16 +963,16 @@
 !-------------------------------------------------------------------
 ! DEFINITION OF INPUT EQUIL. PARAMETERS: BETPLX, PSIAX, FTOK, HELINP
 
-      if(NGAV1.EQ.0 .OR. NGAV1.EQ.2 .OR. NGAV1.EQ.4) BETPLX = BETPOL
-      if( NGAV1.EQ.0 .OR. NGAV1.EQ.1 ) then
+      if (NGAV1.EQ.0 .OR. NGAV1.EQ.2 .OR. NGAV1.EQ.4) BETPLX = BETPOL
+      if ( NGAV1.EQ.0 .OR. NGAV1.EQ.1 ) then
          PSIAX  = PSIOUT
          HELINP = HELOUT
       endif
-      if( NGAV1.EQ.2 .OR. NGAV1.EQ.3 ) then
+      if ( NGAV1.EQ.2 .OR. NGAV1.EQ.3 ) then
          FTOK   = TOKOUT
          HELINP = HELOUT
       endif
-      if( NGAV1.EQ.4 .OR. NGAV1.EQ.5 ) then
+      if ( NGAV1.EQ.4 .OR. NGAV1.EQ.5 ) then
          FTOK   = TOKOUT
          PSIAX  = PSIOUT
       endif
@@ -995,20 +1001,20 @@
       zpsim=psax
       i_bsh=-1
 
-      if(keyctr.eq.0) n_dmf=1
+      if (keyctr.eq.0) n_dmf=1
 
       do it_dmf=1, n_dmf ! it_dmf <<< mag.field diffusion iter. loop
 
-         if(kpr.eq.1)print *, ' it_dfm==', it_dmf
+         if (kpr.eq.1)print *, ' it_dfm==', it_dmf
 
          f_wes=1.0d0
-         if(it_dmf.eq.1)then
+         if (it_dmf.eq.1)then
             ftok=platok
          else
             ftok=f_wes*platok+(1.d0-f_wes)*ftok
          endif
 
-         if( KSTEP.EQ.1 ) then
+         if ( KSTEP.EQ.1 ) then
             NGRID  = 1
             do L=1, NCEQUI
                PSKP1(L) = PSK(L)
@@ -1065,7 +1071,7 @@
                endif
             endif
 !Efable dioh block end
-         endif    !  if( KSTEP.EQ.1 )
+         endif    !  if ( KSTEP.EQ.1 )
 
 !-------------------------------------------------
          if (eq_cmd.eq.1.and.ipsmk.ge.1.and.kpr.eq.-2) then
@@ -1134,7 +1140,7 @@
 !----------------------------
 ! Start of the iteration loop 
 
-         if(KSTEP.NE.1) then
+         if (KSTEP.NE.1) then
 
 !----------------------------------------------------------------
 ! Initial approximation for the case of closed-loop evolution
@@ -1191,7 +1197,7 @@
             endif
 !Efable dioh block end
 
-         endif  ! if( KSTEP.NE.1 )
+         endif  ! if ( KSTEP.NE.1 )
 
          do KNEL=1, KNELS
 
@@ -1269,7 +1275,7 @@
      &                       FTOK, TOKOUT, PSIAX, PSIOUT, 
      &                       ENELS, ERPS, 
      &                       psi_bnd, alp_b, rax, zax, 0)
-                  if(kpr.gt.0) write(*, *) 'stepon:EQ_AX done, erru=', 
+                  if (kpr.gt.0) write(*, *) 'stepon:EQ_AX done, erru=', 
      &               ERPS
                   call eq_par(z0cen, alp, alpnew, qcen, nctrl, numlim,
      &                        up, rm, zm, rx0, zx0)
@@ -1285,21 +1291,21 @@
      &                       ENELS, ERPS,
      &                       psi_bnd, alp_b, rax, zax, 0)
 
-                  if(kpr.gt.0) write(*, *) 'stepon:EQ_AX done, erru=', 
+                  if (kpr.gt.0) write(*, *) 'stepon:EQ_AX done, erru=', 
      &               ERPS
                   call eq_par(z0cen, alp, alpnew, qcen, nctrl, numlim, 
      &                        up, rm, zm, rx0, zx0)
                endif
             endif     
 
-            if(NGAV1.EQ.2 .OR. NGAV1.EQ.3) FTOK = TOKOUT
-            if(NGAV1.EQ.4 .OR. NGAV1.EQ.5) FTOK = TOKOUT
-            if(kpr.gt.0) write(*, *) 'stepon:DIFTIM, erru=', ERPS
+            if (NGAV1.EQ.2 .OR. NGAV1.EQ.3) FTOK = TOKOUT
+            if (NGAV1.EQ.4 .OR. NGAV1.EQ.5) FTOK = TOKOUT
+            if (kpr.gt.0) write(*, *) 'stepon:DIFTIM, erru=', ERPS
             if (kpr.lt.-1) erps=ereve !for skip EFable fsim
-            if(ERPS .LT. ENELS) then
+            if (ERPS .LT. ENELS) then
                EXIT
             endif
-            if(KNEL .EQ. KNELS) then
+            if (KNEL .EQ. KNELS) then
                KEYPRI = 1
                write(*, *) 'spider, sstepon: no covergence ' 
                write(*, *) 'KNEL .GE. KNELS  ', KNEL, KNELS
@@ -1316,7 +1322,7 @@
          diftok=dabs(platok-ztok)/(dabs(platok-ztok_n)+1.d-8)
          difpsi=dabs(psax-zpsim)/(dabs(psax-zpsim_n)+1.d-8)
 
-         if((diftok.lt.5.0d-3 .AnD. it_dmf.gt.0) .OR. keyctr.eq.0) then
+         if ((diftok.lt.5.0d-3 .AnD. it_dmf.gt.0) .OR. keyctr.eq.0) then
             if (ipsmk.lt.1.or.kpr.ge.-1) then
                call eqb( alf0, alf1, alf2, bet0, bet1, bet2, 
      &             alw0, alw1, alw2, betplx, i_betp, 
@@ -1351,27 +1357,27 @@
       return
       end subroutine SSTEPON_BKDW
 
-!----------------------------------------------------------------
-      subroutine SSTEPON_BKDW000(KLUCH, k_auto, nstep, dt, time, 
-     &                     voltpf, d_pf_mat, d_tcam_mat, key_dmf )
+!---------------------------------------------------------------------
+      subroutine SSTEPON_BKDW000(dt, time)
 
-      use durs_d_modul
-      use sp_parameters
+      use durs_d_modul, only: n_tht, n_psi, keyctr, i_betp, igdf, nurs,
+     &    tokf, i_eqdsk, epsro, betplx,
+     &    rax, zax, b0, r0, psax, rxpnt, zxpnt,
+     &    alf0, alf1, alf2, bet0, bet1, bet2 
+      use sp_parameters, only: nilim, njlim, nclim, twopi
       use iopath, only: path
-      use keys, only: kstep, kpr, key_fixbon, kastr, key_out
+      use keys, only: kstep
 
       implicit none
 
-      integer, intent(in) :: kluch, k_auto, nstep, key_dmf
       real*8, intent(in) :: dt, time
-      real*8, intent(in), dimension(*) :: voltpf, d_pf_mat, d_tcam_mat
 
       integer :: i, j, ngra1, ngra2, numwr, k_step, kstop, knels, 
      &   ngav, ngav1, nursb, ipsmk, nfrpr1, nfrwr1, nout, nter, 
      &   ninfw, ninev, nequi, ncequi, ngrid, n_ctrl, nctrl, i_bsh,
      &   numlim, eq_cmd
       real*8 :: alw0, alw1, alw2, alp, alp_b, alpnew, helinp, helout, 
-     &   diftok, platok, ftok, tokout, qcen,
+     &   platok, ftok, tokout, qcen,
      &   psiax, psicen, psi_bnd, psi0_bnd, psiout, psax_sta, psibou,
      &   psidel, e_psi, pspl_av, psex_av, zpsim_n, ztok_n,
      &   timev, tstep, tstepr, tstart, tstop, time_sta, time_fin,

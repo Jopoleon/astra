@@ -1,6 +1,6 @@
 subroutine flux_r(psitok, ncequi)
 
-use comrec
+use comrec, only: x, y, zaindk
 use compol, only: nt1, r, z, rm, zm, cur, sq1, sq2, sq3, sq4, iplas
 
 implicit none
@@ -90,8 +90,7 @@ do i=2, iplas
             u2 = zaindk(ic+1, jc, k)
             u3 = zaindk(ic+1, jc+1, k)
             u4 = zaindk(ic, jc+1, k)
-            psitok(k) = psitok(k) + &
-                blin_(r0, z0, r1, r2, z1, z2, u1, u2, u3, u4)*cur(i, j)*sqk
+            psitok(k) = psitok(k) + blin_(r0, z0, r1, r2, z1, z2, u1, u2, u3, u4)*cur(i, j)*sqk
         enddo
     enddo
 enddo
@@ -99,7 +98,7 @@ enddo
 return
 end subroutine flux_r
 
-!----------------------------------------------------------------
+!---------------------------------------------------------------------
 subroutine numcel(rrk, zzk, icell, jcell)
 
 use sp_parameters, only: twopi
@@ -163,7 +162,7 @@ endif
 return
 end subroutine numcel
 
-!----------------------------------------------------------------
+!---------------------------------------------------------------------
 real*8 function blin_tr(tet0, ro0, tet1, tet2, &
     ro1, ro2, ro3, ro4, u1, u2, u3, u4)
 

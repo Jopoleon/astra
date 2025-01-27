@@ -1,7 +1,7 @@
 subroutine renet
 
 use sp_parameters, only: twopi
-use comrec
+use comrec, only: xmin, xmax, ymin, ymax
 use keys, only: kpr
 use compol_add, only: ron_max_g
 use compol, only: iplas, nr, nt, nt1, ro, ronor, psia, teta, rm, zm, r, z
@@ -176,7 +176,7 @@ real*8 :: delpsn, det, errox, errpsi, grad, spro, zps, zwgt, &
 real*8, dimension(5) :: dp
 real*8, dimension(nshp) :: xs, ys, fun
 real*8, dimension(nrp) :: roh, rh, zh
-real*8, dimension(ntp) :: ron, rop, rn, zn, tetn, rob, teti, roi
+real*8, dimension(ntp) :: ron, rop, tetn, rob, teti, roi
 real*8, dimension(nrp, ntp) :: roplt, psiold
 
 nctrli = nctrl
@@ -566,7 +566,7 @@ real*8 :: alfa, alp_pr, delpsn, errpsi, spro, errox, zwgt, zps, &
     ps0, ps1, ps2, psiblm, psima, psix2, psipn, psipr, psnn, pspl
 real*8, dimension(5) :: dp
 real*8, dimension(nrp) :: roh, rh, zh
-real*8, dimension(ntp) :: ron, rop, rn, zn, tetn, rob, teti, roi
+real*8, dimension(ntp) :: ron, rop, tetn, rob, teti, roi
 real*8, dimension(nrp, ntp) :: roplt, psiold
 
 save psiold
@@ -910,7 +910,7 @@ end subroutine f_regrid0
 !---------------------------------------------------------------------
 subroutine grid_spdr
 
-use comrec
+use comrec, only: xmin, xmax, ymin, ymax, xx0, xx1, xx2, yx0, yx1, yx2, um, up
 use keys, only: kpr
 use compol_add, only: ron_max_g, rx0, rx1, rx2, zx0, zx1, zx2, ixp1, ixp2, jxp1, jxp2
 use compol, only: nr, nt, nt1, iplas, ro, teta, ronor, r, z, rm, zm, &

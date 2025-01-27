@@ -18,8 +18,6 @@
       integer :: plasma_up, plasma_trig, j_switch, kluch, yesfitcc, 
      &   nstep_local, nnstep, kkey_dmf, s_fazt
 
-      real*8 :: rax, zax
-      real*8, dimension(500)  :: d_pf_mat, d_cam_mat
       double precision :: ibkdw, ifbey
 
       data j_switch /0/
@@ -43,14 +41,12 @@
          endif
 
          if(k_fixfree.eq.0) then    
-            call B_STEPON( KLUCH, k_auto, nstep, dt, time,
-     &                     rax, zax, key_dmf, dpsdt)
+            call B_STEPON(KLUCH, k_auto, nstep, dt, key_dmf, dpsdt)
             if(key_0st.eq.1 .AnD. nstep.eq.0) then
                nnstep=1
                kkey_dmf=-10        
                KLUCH = 1
-               call B_STEPON( KLUCH, k_auto, nnstep, dt, time,
-     &                        rax, zax, kkey_dmf, dpsdt)
+               call B_STEPON(KLUCH, k_auto, nnstep, dt, kkey_dmf, dpsdt)
                nstep=0
             endif
 
@@ -67,7 +63,7 @@
             if(key_start .le. 0) then
                write(*,*) 'fix grid call'
                call sstepon( KLUCH, k_auto, nstep, dt, time,
-     &                       voltpf, d_pf_mat, d_cam_mat, key_dmf)    
+     &                       voltpf, key_dmf)    
             else
                write(*,*) 'fix grid call init'
                call cf_init(k_auto, nstep)
@@ -80,8 +76,8 @@
             k_auto= 0  ! don't change!
 
             if(k_grid.eq.1) then
-               call f_stepon( KLUCH, k_auto, nstep, dt, time, voltpf,
-     &                        d_pf_mat, d_cam_mat, rax, zax, key_dmf)
+               call f_stepon(KLUCH, k_auto, nstep, dt, time, voltpf,
+     &                       key_dmf)
             endif
 
          elseif(KLUCH.eq.1) then   !time steping
@@ -91,12 +87,12 @@
                if (s_fazt.eq.2) kpr=-1
                if (s_fazt.eq.3) kpr=-2
                call sstepon( KLUCH, k_auto, nstep, dt, time, voltpf,
-     &                       d_pf_mat, d_cam_mat, key_dmf)
+     &                       key_dmf)
                if(kpr.ge.0) call wrd
           
             elseif(k_grid.eq.1) then
-               call f_stepon( KLUCH, k_auto, nstep, dt, time, voltpf,
-     &                        d_pf_mat, d_cam_mat, rax, zax, key_dmf)
+               call f_stepon(KLUCH, k_auto, nstep, dt, time, voltpf,
+     &                       key_dmf)
                call cur_avg
                if(kpr.ge.0) call f_wrd
             endif
@@ -132,8 +128,8 @@
          if(KLUCH.eq.0) then    !initialization
 
             if (yesfitcc.eq.0) then
-               call sstepon_bkdw( KLUCH, k_auto, nstep, dt, time,
-     &                            voltpf, d_pf_mat, d_cam_mat, key_dmf)
+               call sstepon_bkdw(KLUCH, k_auto, nstep, dt, time,
+     &                            voltpf)
             else
                if (yesfitcc.eq.1) call cf_init(k_auto, nstep) !fit only 12 currents up to psl
       	       if (yesfitcc.eq.2) call cf_init_bkwd(nstep) !now it works
@@ -148,7 +144,7 @@
                if (s_fazt.eq.2) kpr=-1
                if (s_fazt.eq.3) kpr=-2
                call sstepon_bkdw( KLUCH, k_auto, nstep, dt, time,
-     &                  voltpf, d_pf_mat, d_cam_mat, key_dmf)
+     &                  voltpf)
                if(kpr.ge.0) call wrd
             else
                if (j_switch.eq.2) then
@@ -156,20 +152,17 @@
      &               nstep_local, dt, time, s_fazt
                   if (s_fazt.eq.0) kpr=0
                   if (s_fazt.eq.1) kpr=-2
-                  call f_stepon_bkdw( 1, 0, 1+nstep_local, dt, time,
-     &                  voltpf, d_pf_mat, d_cam_mat, rax, zax, key_dmf)
+                  call f_stepon_bkdw( 1, 1+nstep_local, dt, time,
+     &                  voltpf, key_dmf)
       	       else
                   write(*,*) 'reset rectangular grid'
                   kpr=0
-                  call sstepon_bkdw000( 0, 0, 0, dt, time, voltpf,
-     &                  d_pf_mat, d_cam_mat, key_dmf)
+                  call sstepon_bkdw000(dt, time)
                   call wrrec
                   write(*,*) 'switch to adaptive'     
-                  call f_stepon_bkdw( 0, 0, 0, dt, time, voltpf,
-     &                  d_pf_mat, d_cam_mat, rax, zax, key_dmf)
+                  call f_stepon_bkdw( 0, 0, dt, time, voltpf, key_dmf)
                   write(*,*) 'adaptive evol'     
-                  call f_stepon_bkdw( 1, 0, 1, dt, time, voltpf,
-     &                  d_pf_mat, d_cam_mat, rax, zax, key_dmf)
+                  call f_stepon_bkdw( 1, 1, dt, time, voltpf, key_dmf)
                   j_switch=2
                endif
 

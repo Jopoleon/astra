@@ -1,22 +1,19 @@
-subroutine eqa(keyctr, igdf, nstep, platok, psax, i_betp, betplx, &
-    rax, zax, rxpnt, zxpnt, psbo, psdel, rk, zk, nk, pcequi, ncequi, &
-    psitok, rloop, zloop, nloop, rprob, zprob, nprob, &
-    zli3, betpol, betful, necon, wecon, ntipe, nflag, errarr)
+subroutine eqa(keyctr, igdf, platok, psax, i_betp, betplx, &
+    rax, zax, rxpnt, zxpnt, psbo, psdel, ncequi, psitok, &
+    betpol, nflag, errarr)
 
-use sp_parameters
 use keys, only: kpr
 use compol_add, only: rolim, jrolim, ich, g, psii, clr, clz, &
     itrmax, nitmax, rx0, zx0, fpv
-use compol
+use compol, only: nr, nt, iplas, ngav, iter, itin, &
+    psi, psiax, psibon, psim, psip, psipla, &
+    rm, zm, f, fvac, cnor, ro, tok, tokp
 
 implicit none
 
-integer, intent(in) :: keyctr, igdf, nstep, i_betp, nk, ncequi, &
-    nloop, nprob
-integer, intent(in), dimension(*) :: necon, ntipe
-real*8, intent(in) :: betplx, zli3, betpol, betful
-real*8, intent(in), dimension(*) :: rk, zk, pcequi, psitok, &
-   rloop, zloop, rprob, zprob, wecon
+integer, intent(in) :: keyctr, igdf, i_betp, ncequi
+real*8, intent(in) :: betplx, betpol
+real*8, intent(in), dimension(*) :: psitok
 
 integer, intent(out) :: nflag
 real*8, intent(out) :: platok, rax, zax, rxpnt, zxpnt, psax, psbo, psdel
@@ -65,7 +62,6 @@ call f_bndmat
 do
     iter = iter + 1
     itin = itin + 1
-
     call f_metric
     call f_matcof
     call matpla 
@@ -81,13 +77,13 @@ do
 
     call f_solve(0, g)
     call f_rightp
-    call f_solve(1,psii)
+    call f_solve(1, psii)
     call f_psiful
     call artfil
     if (kpr == 1) then
         write(*, *) 'artfil    ', clr, clz
         write(*, *) 'psiax, psim', psiax, psim
-        if (isnan(psi(1,1))) call err_catch_a
+        if (isnan(psi(1, 1))) call err_catch_a
     endif
 
     if (ngav == 0 .AND. igdf == 2) then
@@ -97,8 +93,8 @@ do
 
     call ada(erro)
     if (kpr == 1) then
-        write(*, *)'ada       '
-        write(*, *)'erro=', erro
+        write(*, *) 'ada       '
+        write(*, *) 'erro=', erro
     endif
 
 ! accuracy test parameters
@@ -114,10 +110,10 @@ do
         fvv = sqrt(f(iplas)**2 + fpv)
         errfpv = 0.d0
     elseif (ngav == 2) then
-        errpsm=dabs((psiax-psim)/psipla)
-        errpsb=dabs((psip-psibon)/psipla)
-        fvv=sqrt(f(iplas)**2+fpv)
-        errfpv=dabs((fvac-fvv)/(f(1)-f(iplas)))
+        errpsm = dabs((psiax - psim)/psipla)
+        errpsb = dabs((psip - psibon)/psipla)
+        fvv = sqrt(f(iplas)**2 + fpv)
+        errfpv = dabs((fvac - fvv)/(f(1) - f(iplas)))
     endif
 
     if (erro < epsro .OR. itin > itrmax) then
@@ -143,14 +139,14 @@ if (ich == 0) then
     cr0 = clr
     cz0 = clz
     pm0 = psim
-    fv0 = f(iplas)**2+fpv
+    fv0 = f(iplas)**2 + fpv
     rm0 = rm
     zm0 = zm
     rolim0 = rolim
     fpv0 = fpv
     ich = 1
-    drm = 0.101*(ro(2, 1)-ro(1, 1))
-    zm = zm+drm
+    drm = 0.101*(ro(2, 1) - ro(1, 1))
+    zm = zm + drm
 
     call reform
     goto 1000
@@ -158,9 +154,9 @@ elseif (ich == 1) then
     cr1 = clr
     cz1 = clz
     pm1 = psim
-    fv1 = f(iplas)**2+fpv
+    fv1 = f(iplas)**2 + fpv
     ich = 2
-    rm = rm0+drm
+    rm = rm0 + drm
     zm = zm0
     rolim = rolim0
     fpv = fpv0
@@ -172,47 +168,44 @@ elseif (ich == 2 .AND. ngav/10*10 == ngav) then
 
     cr2 = clr
     cz2 = clz
-    dcrdr = (cr2-cr0)/drm
-    dczdr = (cz2-cz0)/drm
-    dcrdz = (cr1-cr0)/drm
-    dczdz = (cz1-cz0)/drm
-    det = dcrdr*dczdz-dczdr*dcrdz
-    delr =  (cz0*dcrdz-cr0*dczdz)/det
-    delz =  (cr0*dczdr-cz0*dcrdr)/det
+    dcrdr = (cr2 - cr0)/drm
+    dczdr = (cz2 - cz0)/drm
+    dcrdz = (cr1 - cr0)/drm
+    dczdz = (cz1 - cz0)/drm
+    det = dcrdr*dczdz - dczdr*dcrdz
+    delr = (cz0*dcrdz - cr0*dczdz)/det
+    delz = (cr0*dczdr - cz0*dcrdr)/det
 
-    dell = sqrt(delr**2+delz**2)
+    dell = sqrt(delr**2 + delz**2)
     if (dell > drm*10.d0) then
-       nshift = dell/(drm*10.d0)
-       delr = drm*10.d0*delr/dell
-       delz = drm*10.d0*delz/dell
-	    if (nshift > 10) nshift = 10
-       do ish=1, nshift
-          rm = rm0+ delr*ish
-          zm = zm0+ delz*ish
-
-          call reform
-          call f_metric
-          call extpol
-          call f_matcof
-          call matpla
-          call rigext
-          call solext
-          call f_matrix
-          call f_rightg
-          call f_solve(0, g)
-          call f_rightp
-          call f_solve(1, psii)
-          call f_psiful
-          call artfil
-          call ada(erro)
-       enddo
-
+        nshift = dell/(drm*10.d0)
+        delr = drm*10.d0*delr/dell
+        delz = drm*10.d0*delz/dell
+        if (nshift > 10) nshift = 10
+        do ish=1, nshift
+            rm = rm0 + delr*ish
+            zm = zm0 + delz*ish
+            call reform
+            call f_metric
+            call extpol
+            call f_matcof
+            call matpla
+            call rigext
+            call solext
+            call f_matrix
+            call f_rightg
+            call f_solve(0, g)
+            call f_rightp
+            call f_solve(1, psii)
+            call f_psiful
+            call artfil
+            call ada(erro)
+        enddo
     else
-       rm = rm0+ delr
-       zm = zm0+ delz
-       call reform
+        rm = rm0 + delr
+        zm = zm0 + delz
+        call reform
     endif
-
     ich = 0
     itout = itout+1
     goto 1000
@@ -222,15 +215,13 @@ elseif (ich == 2 .AND. ngav > 0) then
     cr2 = clr
     cz2 = clz
     pm2 = psim
-    fv2 = f(iplas)**2+fpv
-
+    fv2 = f(iplas)**2 + fpv
     ich = 3
     rm = rm0
     zm = zm0
     drolim = -drm
-    rolim = rolim0+drolim
+    rolim = rolim0 + drolim
     fpv = fpv0
-
     call reform
     goto 1000
 
@@ -239,16 +230,15 @@ elseif (ich == 3 .AnD. ngav == 1) then
     cr3 = clr
     cz3 = clz
     pm3 = psim
-
-    dcrdr = (cr2-cr0)/drm
-    dczdr = (cz2-cz0)/drm
-    dpmdr = (pm2-pm0)/drm
-    dcrdz = (cr1-cr0)/drm
-    dczdz = (cz1-cz0)/drm
-    dpmdz = (pm1-pm0)/drm
-    dcrdro = (cr3-cr0)/drolim
-    dczdro = (cz3-cz0)/drolim
-    dpmdro = (pm3-pm0)/drolim
+    dcrdr = (cr2 - cr0)/drm
+    dczdr = (cz2 - cz0)/drm
+    dpmdr = (pm2 - pm0)/drm
+    dcrdz = (cr1 - cr0)/drm
+    dczdz = (cz1 - cz0)/drm
+    dpmdz = (pm1 - pm0)/drm
+    dcrdro = (cr3 - cr0)/drolim
+    dczdro = (cz3 - cz0)/drolim
+    dpmdro = (pm3 - pm0)/drolim
 
     alm(1, 1) = dcrdr
     alm(1, 2) = dcrdz
@@ -262,22 +252,21 @@ elseif (ich == 3 .AnD. ngav == 1) then
 
     blm(1) = -cr0
     blm(2) = -cz0
-    blm(3) =  psiax-pm0
+    blm(3) =  psiax - pm0
 
     call ge(3, 4, alm, blm, xlm, iwrk)
 
     delr = xlm(1)
     delz = xlm(2)
     delro = xlm(3)
-
-    rm = rm0+ delr
-    zm = zm0+ delz
-    rolim = rolim0+delro
+    rm = rm0 + delr
+    zm = zm0 + delz
+    rolim = rolim0 + delro
 
     call reform
 
     ich = 0
-    itout = itout+1
+    itout = itout + 1
     goto 1000
 
 elseif (ich == 3 .AnD. ngav > 1) then
@@ -285,17 +274,15 @@ elseif (ich == 3 .AnD. ngav > 1) then
     cr3 = clr
     cz3 = clz
     pm3 = psim
-    fv3 = f(iplas)**2+fpv
-
+    fv3 = f(iplas)**2 + fpv
     ich = 4
     rm = rm0
     zm = zm0
     rolim = rolim0
-    dfpv = (f(1)**2-fvac**2)*1.d-3
-    fpv = fpv0+dfpv
+    dfpv = (f(1)**2 - fvac**2)*1.d-3
+    fpv = fpv0 + dfpv
 
     call reform
-
     goto 1000
 
 elseif (ich == 4) then
@@ -303,26 +290,24 @@ elseif (ich == 4) then
     cr4 = clr
     cz4 = clz
     pm4 = psim
-    fv4 = f(iplas)**2+fpv
+    fv4 = f(iplas)**2 + fpv
 
-    dcrdr = (cr2-cr0)/drm
-    dczdr = (cz2-cz0)/drm
-    dpmdr = (pm2-pm0)/drm
-    dfvdr = (fv2-fv0)/drm
-    dcrdz = (cr1-cr0)/drm
-    dczdz = (cz1-cz0)/drm
-    dpmdz = (pm1-pm0)/drm
-    dfvdz = (fv1-fv0)/drm
-
-    dcrdro = (cr3-cr0)/drolim
-    dczdro = (cz3-cz0)/drolim
-    dpmdro = (pm3-pm0)/drolim
-    dfvdro = (fv3-fv0)/drolim
-
-    dcrdf = (cr4-cr0)/dfpv
-    dczdf = (cz4-cz0)/dfpv
-    dpmdf = (pm4-pm0)/dfpv
-    dfvdf = (fv4-fv0)/dfpv
+    dcrdr = (cr2 - cr0)/drm
+    dczdr = (cz2 - cz0)/drm
+    dpmdr = (pm2 - pm0)/drm
+    dfvdr = (fv2 - fv0)/drm
+    dcrdz = (cr1 - cr0)/drm
+    dczdz = (cz1 - cz0)/drm
+    dpmdz = (pm1 - pm0)/drm
+    dfvdz = (fv1 - fv0)/drm
+    dcrdro = (cr3 - cr0)/drolim
+    dczdro = (cz3 - cz0)/drolim
+    dpmdro = (pm3 - pm0)/drolim
+    dfvdro = (fv3 - fv0)/drolim
+    dcrdf = (cr4 - cr0)/dfpv
+    dczdf = (cz4 - cz0)/dfpv
+    dpmdf = (pm4 - pm0)/dfpv
+    dfvdf = (fv4 - fv0)/dfpv
 
     alm(1, 1) = dcrdr
     alm(1, 2) = dcrdz
@@ -356,15 +341,15 @@ elseif (ich == 4) then
     delro = xlm(3)
     delfpv = xlm(4)
 
-    rm = rm0+ delr
-    zm = zm0+ delz
-    rolim = rolim0+delro
-    fpv = fpv0+delfpv
+    rm = rm0 + delr
+    zm = zm0 + delz
+    rolim = rolim0 + delro
+    fpv = fpv0 + delfpv
 
     call reform
  
     ich = 0
-    itout = itout+1
+    itout = itout + 1
     goto 1000
 
 endif
@@ -379,7 +364,7 @@ errarr(2) = cab
 errarr(3) = errpsm
 errarr(4) = errfpv
 
-if ( itout < 1) then
+if (itout < 1) then
     go to 2000
 endif
 
@@ -414,25 +399,23 @@ itin = 0
 return
 end subroutine eqa
 
-!----------------------------------------------------------------
+!---------------------------------------------------------------------
 subroutine eqa_ax(dt, time, keyctr, igdf, nstep, platok, psax, i_betp, betplx, &
-    rax, zax, rxpnt, zxpnt, psbo, psdel, rk, zk, nk, pcequi, ncequi, psitok, &
-    rloop, zloop, nloop, rprob, zprob, nprob, zli3, betpol, betful, &
-    necon, wecon, ntipe, nflag, errarr)
+    rax, zax, rxpnt, zxpnt, psbo, psdel, pcequi, ncequi, psitok, &
+    betpol, nflag, errarr)
 
-use sp_parameters
 use keys, only: kpr, kstep
 use tim, only: dtim, ctim
 use compol_add, only: itrmax, nitmax, g, psii, rx0, zx0
-use compol
+use compol, only: ngav, nitdel, nitbeg, iter, itin, &
+    rm, zm, cnor, tok, tokp, erru, &
+    psiax, psim, psip, psipla
 
 implicit none
 
-integer, intent(in) :: keyctr, igdf, nstep, i_betp, nk, ncequi, nloop, nprob
-integer, intent(in), dimension(*) :: necon, ntipe
-real*8, intent(in) :: dt, time, betplx, zli3, betpol, betful
-real*8, intent(in), dimension(*) :: rk, zk, pcequi, psitok, &
-    rloop, zloop, rprob, zprob, wecon
+integer, intent(in) :: keyctr, igdf, nstep, i_betp, ncequi
+real*8, intent(in) :: dt, time, betplx, betpol
+real*8, intent(in), dimension(*) :: pcequi, psitok
 
 integer, intent(out) :: nflag
 real*8, intent(out) :: platok, rax, zax, rxpnt, zxpnt, psax, psbo, psdel
@@ -466,7 +449,7 @@ if (kpr == -2) then
     else
         j_ip_count = j_ip_count + 1
         if (j_ip_count >= 1) then
-            plappok = plappok+platok
+            plappok = plappok + platok
         endif
         tok = plappok/j_ip_count
     endif
@@ -482,7 +465,7 @@ call f_ext_fil(pcequi, ncequi)
 if (nstep /= nstepO) then 
     itin = 0
     erru = 0.d0
-    write(*, *)'renet', platok !EFable
+    write(*, *) 'renet', platok !EFable
     call renet
     call f_bndmat
 endif
@@ -491,8 +474,8 @@ iter =iter + 1
 itin =itin + 1
 
 if (kpr == 1) then
-    write(*, *)' '
-    write(*, *)'iter=', iter, itin
+    write(*, *) ' '
+    write(*, *) 'iter=', iter, itin
 endif
 
 call f_metric

@@ -1,9 +1,8 @@
-subroutine eqa_in(alf0, alf1, alf2, bet0, bet1, bet2, nursb, &
-    keyctr, igdf, nstep, platok, pcequi, ncequi, b0cen, r0cen, &
-    rloop, zloop, nloop, rprob, zprob, nprob, necon, wecon, ntipe )
+subroutine eqa_in(alf0, alf1, alf2, bet0, bet1, bet2, platok, &
+    pcequi, ncequi, b0cen, r0cen)
 
 use parameters_a2equil, only: fix_adapgrid
-use sp_parameters
+use sp_parameters, only: nursp
 use iopath, only: path
 use compol_add, only: alp, nctrl, ron_max, ron_max_g, itrmax, &
     nitmax, jrolim, nblm, rblm, zblm
@@ -14,17 +13,13 @@ implicit none
 
 integer, parameter :: nursp4=nursp+4, nursp6=nursp4*6
 
-integer, intent(in) :: nursb, keyctr, igdf, nstep, ncequi, nloop, nprob
-integer, intent(in), dimension(*) :: ntipe, necon
+integer, intent(in) :: ncequi
 real*8, intent(in) :: alf0, alf1, alf2, bet0, bet1, bet2, platok, b0cen, r0cen
-real*8, intent(in), dimension(*) :: pcequi, rloop, zloop, rprob, zprob, wecon
+real*8, intent(in), dimension(*) :: pcequi
 
 logical :: file_existence
 integer :: i, i_vac, k_dummy, nlimadap, nroi, ntetj, iplasm
 real*8 :: alf0p, alf1p, alf2p, bet0f, bet1f, bet2f
-real*8, dimension(nursp) :: pstab, qtab
-real*8 :: RRK(nursp4), CCK(nursp4), WRK(nursp6)
-real*8 :: CWK(4)
 real*8, dimension(500) :: rlimadap, zlimadap
 character(len=80) :: fname
 
@@ -69,7 +64,7 @@ if (fix_adapgrid == 1) then
     endif
 endif
 
-Nr = iplas+i_vac
+Nr = iplas + i_vac
 itrmax = 100
 Nitmax = 5
 nitdel = 7
@@ -97,8 +92,8 @@ nr1 = nr - 1
 nt1 = nt - 1
 nr2 = nr - 2
 nt2 = nt - 2
-nroi = nr
-ntetj= nt
+nroi  = nr
+ntetj = nt
 
 iplas1 = iplas - 1
 iplasm = iplas

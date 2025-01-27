@@ -1,7 +1,6 @@
 subroutine extpol
 
-use sp_parameters
-use comrec
+use comrec, only: x, y, ue
 use compol_add, only: psie
 use compol, only: nr, nt, r, z
 
@@ -41,7 +40,6 @@ end subroutine extpol
 !----------------------------------------------------------------
 subroutine f_psiful
 
-use sp_parameters
 use compol_add, only: psii, psie
 use compol, only: nr, nt, psi
 
@@ -61,7 +59,6 @@ end subroutine f_psiful
 !----------------------------------------------------------------
 subroutine f_getdrdz(rl_1, zl_1, rr_1, zr_1, drdzl, drdzr)
 
-use sp_parameters
 use compol_add, only: psii, psie
 use compol, only: nr, nt, nt1, iplas, r, z, psi
 
@@ -149,10 +146,10 @@ end subroutine f_getdrdz
 !----------------------------------------------------------------
 subroutine artfil
 
-use sp_parameters
+use sp_parameters, only: ntp
 use keys, only: kpr
 use compol_add, only: clr, clz
-use compol
+use compol, only: nr, nt, nt1, r, z, psi, rm
 
 implicit none
 
@@ -200,8 +197,8 @@ end subroutine artfil
 !----------------------------------------------------------------
 subroutine f_xpoint(rx, zx, ix, jx, psx, tet0, kodex)
 
-use sp_parameters
-use compol
+use sp_parameters, only: twopi
+use compol, only: nr, nr1, nt, nt1, teta, r, z, psi, rm, zm
 
 implicit none
 

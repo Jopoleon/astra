@@ -10,46 +10,48 @@
 
       use sp_parameters, only: nrp, ntp, neqp, nspp
       use compol, only: nr, nr1, nt, nt1, neq, itin, nitdel, nitbeg,
-     &  ia, ja, a, right
+     &    ia, ja, a, right
 
       implicit none
 
       integer, intent(in) :: isol
       real*8, intent(out) :: wdm(nrp, ntp)
 
-      integer :: i, j, ieq, 
-     &   p(neqp), ip(neqp), isp(nspp), ipath, flag, esp
-      real*8 zw(neqp), rsp(nspp)
+      integer :: i, j, ieq, ipath, flag, esp
+      integer, dimension(neqp) :: p, ip
+      integer, dimension(nspp) :: isp
+      real*8, dimension(neqp) :: zw
+      real*8, dimension(nspp) :: rsp
       integer, external :: numlin
 
-      common /comwrc/ rsp,p,ip
+      common /comwrc/ rsp, p, ip
 
-      equivalence (rsp(1),isp(1))
+      equivalence (rsp(1), isp(1))
 
-      if( itin/nitdel*nitdel+nitbeg .eq. itin 
-     * 		.OR. itin.lt.nitbeg ) then
-         ipath=3
-         if(isol.eq.0) then
-            call odrvd(neq,ia,ja,a,p,ip,nspp,isp,1,flag)
-            ipath=1
-         endif
-         call sdrvd(neq,p,ip,ia,ja,a,right,zw,nspp,
-     *              isp,rsp,esp,ipath,flag)
+      if (itin/nitdel*nitdel + nitbeg == itin
+     &    .OR. itin < nitbeg ) then
+          ipath = 3
+          if (isol == 0) then
+              call odrvd(neq, ia, ja, a, p, ip, nspp, isp, 1, flag)
+              ipath = 1
+          endif
+          call sdrvd(neq, p, ip, ia, ja, a, right, zw, nspp,
+     &               isp, rsp, esp, ipath, flag)
 
       else
-         call solvit(isol,zw)
+          call solvit(isol, zw)
       endif
 
-      do i=1,Nr1
-         do j=2,Nt1
-            ieq=numlin(i,j,nr,nt)
-            wdm(i,j)=zw(ieq)
+      do i=1, Nr1
+          do j=2, Nt1
+              ieq = numlin(i, j, nr, nt)
+              wdm(i, j) = zw(ieq)
          enddo
       enddo
 
-      do i=1,Nr
-         wdm(i,1)=wdm(i,nt1)
-         wdm(i,nt)=wdm(i,2)
+      do i=1, Nr
+          wdm(i,  1) = wdm(i, nt1)
+          wdm(i, nt) = wdm(i, 2)
       enddo
 
       return
@@ -61,7 +63,7 @@
       use sp_parameters, only: neqp, nspp
       use compol_add, only: g, psii
       use compol, only: nr, nr1, nt, nt1, neq, ia, ja, daop, aop0,
-     & right 
+     &    right
 
       implicit none
 
@@ -69,50 +71,50 @@
       real*8, intent(out), dimension(neqp) :: zw
 
       integer :: i, j, i1, i2, ieq, ic, il, im,
-     &     isp(nspp), ipath, flag, esp
-      integer, dimension(neqp) :: icp, p, ip
+     &    isp(nspp), flag, esp
+      integer, dimension(neqp) :: p, ip
       real*8 :: znes
       real*8, dimension(nspp) :: rsp
-      real*8, dimension(neqp) :: zyy, wpp, wzz, wrr, zuu
+      real*8, dimension(neqp) :: zyy, wrr
       integer, external :: numlin
 
-      common /comwrc/ rsp,p,ip
+      common /comwrc/ rsp, p, ip
 
-      equivalence (rsp(1),isp(1))
+      equivalence (rsp(1), isp(1))
 
-      do il=1,neq
-         wrr(il)=right(il)
+      do il=1, neq
+          wrr(il) = right(il)
       enddo
 
-      if(isol.eq.0) then
-         do i=1,Nr1
-            do j=2,Nt1
-               ieq=numlin(i,j,nr,nt)
-               zw(ieq)=g(i,j)
-            enddo
-         enddo
-      else if(isol.eq.1) then
-         do i=1,Nr1
-            do j=2,Nt1
-               ieq=numlin(i,j,nr,nt)          
-               zw(ieq)=psii(i,j)
-            enddo
-         enddo
+      if (isol == 0) then
+          do i=1, Nr1
+              do j=2, Nt1
+                  ieq = numlin(i, j, nr, nt)
+                  zw(ieq) = g(i, j)
+              enddo
+          enddo
+      else if (isol == 1) then
+          do i=1, Nr1
+              do j=2, Nt1
+                  ieq = numlin(i, j, nr, nt)
+                  zw(ieq) = psii(i, j)
+              enddo
+          enddo
       endif
 
-      do il=1,neq
-         i1=ia(il)
-         i2=ia(il+1)-1
-         znes=0.d0
-         do im=i1,i2
-            ic=ja(im)
-            znes=znes+daop(im)*zw(ic)
-         enddo
-         zyy(il)=wrr(il)-znes
+      do il=1, neq
+          i1 = ia(il)
+          i2 = ia(il+1)-1
+          znes = 0.d0
+          do im=i1, i2
+              ic = ja(im)
+              znes = znes + daop(im)*zw(ic)
+          enddo
+          zyy(il) = wrr(il) - znes
       enddo
 
-      call sdrvd(neq,p,ip,ia,ja,aop0,zyy,zw,nspp,
-     *           isp,rsp,esp,3,flag)
+      call sdrvd(neq, p, ip, ia, ja, aop0, zyy, zw, nspp,
+     &           isp, rsp, esp, 3, flag)
 
       return
       end subroutine solvit
@@ -123,91 +125,94 @@
       use sp_parameters, only: neqp, nspp
       use compol_add, only: psie
       use compol, only: itin, nitdel, nitbeg, iplas, nr, nt, nt1,
-     & neqpla, right, ia, ja, a
+     &    neqpla, right, ia, ja, a
 
       implicit none
 
-      integer :: i, j, ieq, p1(neqp),ip1(neqp),isp1(nspp),
-     &   ipath, flag, esp
-      real*8 :: zw(neqp), rsp1(nspp)
+      integer :: i, j, ieq, ipath, flag, esp
+      integer, dimension(neqp) :: p1, ip1
+      integer, dimension(nspp) :: isp1
+      real*8, dimension(neqp) :: zw(neqp)
+      real*8, dimension(nspp) :: rsp1
       integer, external :: numlin
 
-      common /comwrp/ rsp1,p1,ip1
+      common /comwrp/ rsp1, p1, ip1
 
-      equivalence (rsp1(1),isp1(1))
+      equivalence (rsp1(1), isp1(1))
 
-      if( itin/nitdel*nitdel+nitbeg .eq. itin 
-     * 		.OR. itin.lt.nitbeg ) then
-         call odrvd(neqpla,ia,ja,a,p1,ip1,nspp,isp1,1,flag)
-         ipath=1
-         call sdrvd(neqpla,p1,ip1,ia,ja,a,right,zw,nspp,
-     *              isp1,rsp1,esp,ipath,flag)
+      if ( itin/nitdel*nitdel+nitbeg == itin
+     &    .OR. itin < nitbeg ) then
+          call odrvd(neqpla, ia, ja, a, p1, ip1, nspp, isp1, 1, flag)
+          ipath = 1
+          call sdrvd(neqpla, p1, ip1, ia, ja, a, right, zw, nspp,
+     &               isp1, rsp1, esp, ipath, flag)
       else
-         call soleit(zw)
+          call soleit(zw)
       endif
 
-      do i=1,iplas-1
-         do j=2,Nt1
-            ieq=numlin(i,j,nr,nt)
-            psie(i,j)=zw(ieq)
+      do i=1, iplas-1
+          do j=2, Nt1
+              ieq = numlin(i, j, nr, nt)
+              psie(i, j) = zw(ieq)
          enddo
       enddo
 
-      do i=1,Nr
-         psie(i,1)=psie(i,nt1)
-         psie(i,nt)=psie(i,2)
+      do i=1, Nr
+          psie(i,  1) = psie(i, nt1)
+          psie(i, nt) = psie(i, 2)
       enddo
 
       return
       end subroutine solext
 
-!----------------------------------------------------------------
+!---------------------------------------------------------------------
       subroutine soleit(zw)
 
       use sp_parameters, only: neqp, nspp
       use compol_add, only: psie
       use compol, only: nr, nr1, nt, nt1, neqpla, right, ia, ja,
-     & dapp, app0 
+     &    dapp, app0
 
       implicit none
 
       real*8, intent(out), dimension(neqp) :: zw
 
-      integer :: i, j, i1, i2, ic, ieq, il, im, p1(neqp), ip1(neqp), 
-     &   isp1(nspp), ipath, flag, esp
+      integer :: i, j, i1, i2, ic, ieq, il, im, flag, esp
+      integer, dimension(neqp) :: p1, ip1
+      integer, dimension(nspp) :: isp1
       real*8 :: znes
       real*8, dimension(nspp) :: rsp1
-      real*8, dimension(neqp) :: zyy, wpp, wzz, wrr, zuu
+      real*8, dimension(neqp) :: zyy, wrr
       integer, external :: numlin
 
       common /comwrp/ rsp1, p1, ip1
 
-      equivalence (rsp1(1),isp1(1))
+      equivalence (rsp1(1), isp1(1))
 
       do i=1, Nr1
-         do j=2, Nt1
-            ieq=numlin(i, j, nr, nt)
-            zw(ieq)=psie(i, j)
-         enddo
+          do j=2, Nt1
+              ieq = numlin(i, j, nr, nt)
+              zw(ieq) = psie(i, j)
+          enddo
       enddo
 
       do il=1, neqpla
-         wrr(il)=right(il)
+          wrr(il) = right(il)
       enddo
 
       do il=1, neqpla
-         i1=ia(il)
-         i2=ia(il+1)-1
-         znes=0.d0
-         do im=i1,i2
-            ic=ja(im)
-            znes=znes+dapp(im)*zw(ic)
-         enddo
-         zyy(il)=wrr(il)-znes
+          i1 = ia(il)
+          i2 = ia(il+1)-1
+          znes = 0.d0
+          do im=i1, i2
+              ic = ja(im)
+              znes = znes + dapp(im)*zw(ic)
+          enddo
+          zyy(il) = wrr(il) - znes
       enddo
 
       call sdrvd(neqpla, p1, ip1, ia, ja, app0, zyy, zw, nspp,
-     *           isp1, rsp1, esp, 3, flag)
+     &           isp1, rsp1, esp, 3, flag)
 
       return
       end subroutine soleit

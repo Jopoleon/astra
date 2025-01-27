@@ -13,7 +13,6 @@ character(len=80) :: fname
 
 write(fname, '(a, a)') TRIM(path), '/ecur.wr'
 open(1, file=fname, form='formatted')
-
 write(1, *) nk, nkcoil
 write(1, *) (rk(j), j=1, nk)
 write(1, *) (zk(j), j=1, nk)
@@ -40,7 +39,6 @@ character(len=80) :: fname
 
 write(fname, '(a, a)') TRIM(path), '/ecur.wr'
 open(1, file=fname, form='formatted')
-
 read(1, *) nk, nkcoil
 read(1, *) (rk(j), j=1, nk)
 read(1, *) (zk(j), j=1, nk)
