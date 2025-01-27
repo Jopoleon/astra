@@ -111,7 +111,7 @@ close(eqdsk_unit)
 
 deallocate(pf_eq, rhot_eq, psin_eq, pres_eq, fdia_eq, q_eq, pprime_eq, fprime_eq)
 deallocate(psin_rect, pres_rect, fdia_rect, q_rect, pprime_rect, fprime_rect)
-deallocate(r_rect, z_rect, psi_rect, equil_now%coord_sys%position%r, equil_now%coord_sys%position%z, psi_g_norm)
+deallocate(r_rect, z_rect, psi_rect, psi_g_norm)
 
 return
 end subroutine EQDSK
