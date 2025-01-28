@@ -1,4 +1,4 @@
-subroutine TREFW(NOUT, NTER, NINFW, NP, KD, RP1, ZP1, RP2, ZP2, &
+subroutine TREFW(NINFW, NP, KD, RP1, ZP1, RP2, ZP2, &
                  RESSEG, CURSEG, ND, NTYD, RD, ZD, VV, HH, &
                  RESD, CURD, R1, Z1, R2, Z2)
 
@@ -9,7 +9,7 @@ use iopath, only: path
 
 implicit none
 
-integer, intent(in) :: NOUT, NTER, NINFW
+integer, intent(in) :: NINFW
 integer, intent(out) :: NP
 integer, intent(out), dimension(*) :: KD, NTYD
 real*8, intent(out), dimension(*) :: RP1, ZP1, RP2, ZP2, RESSEG, &
@@ -89,7 +89,7 @@ return
 end subroutine TREFW
 
 !------------------------------------------------------------------
-subroutine TREBP(NOUT, NTER, NINFW, NP, KD, RP1, ZP1, RP2, ZP2, &
+subroutine TREBP(NINFW, NP, KD, RP1, ZP1, RP2, ZP2, &
                  RESSEG, CURSEG, ND, NTYD, RD, ZD, VV, HH, &
                  RESD, CURD, R1, Z1, R2, Z2)
 
@@ -100,7 +100,7 @@ use iopath, only: path
 
 implicit none
 
-integer, intent(in) :: NOUT, NTER, NINFW
+integer, intent(in) :: NINFW
 integer, intent(out) :: NP
 integer, intent(out), dimension(*) :: KD, NTYD
 real*8, intent(out), dimension(*) :: RP1, ZP1, RP2, ZP2, RESSEG, &
@@ -174,7 +174,7 @@ return
 end subroutine TREBP
 
 !-----------------------------------------------------------------
-subroutine TREVV(NOUT, NTER, NINFW, NP, KD, RP1, ZP1, RP2, ZP2, &
+subroutine TREVV(NINFW, NP, KD, RP1, ZP1, RP2, ZP2, &
                  RESSEG, CURSEG, ND, NTYD, RD, ZD, VV, HH, &
                  RESD, CURD, R1, Z1, R2, Z2)
 
@@ -185,7 +185,7 @@ use iopath, only: path
 
 implicit none
 
-integer, intent(in) :: NOUT, NTER, NINFW
+integer, intent(in) :: NINFW
 integer, intent(out) :: NP
 integer, intent(out), dimension(*) :: KD, NTYD
 real*8, intent(out), dimension(*) :: RP1, ZP1, RP2, ZP2, RESSEG, &

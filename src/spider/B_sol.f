@@ -2,9 +2,9 @@
 
       use sp_parameters, only: neqp, nrp, nspp
       use keys, only: kpr
-      use compol, only: itin, neqpla, a, nr, nt, nt1, iplas, iplas1,
-     &     ia, ja, q, iter, iswtch, ngav, psi, psia, right, errm,
-     & nitbeg, nitdel
+      use compol, only: itin, neqpla, a, nt, nt1, iplas, iplas1,
+     &    ia, ja, q, iter, iswtch, ngav, psi, psia, right, errm,
+     &    nitbeg, nitdel
 
       implicit none
 
@@ -63,9 +63,9 @@
 
       do i=1,iplas-1
          do j=2,Nt1
-            ieq=numlin(i,j,nr,nt)
-            delpsi=dabs(psi(i,j)-zw(ieq))
-            errpss=dmax1(errpss,delpsi)
+            ieq=numlin(i,j,nt)
+            delpsi=ABS(psi(i,j)-zw(ieq))
+            errpss=MAX(errpss,delpsi)
             psi(i,j)=zw(ieq)*wght(i)+(1.d0-wght(i))*psi(i,j)
          enddo
       enddo
@@ -82,7 +82,7 @@
       subroutine solbit(zw)
 
       use sp_parameters, only: neqp, nspp
-      use compol, only: nr, nr1, nt, nt1, ia, ja, dapp, app0, right,
+      use compol, only: nr1, nt, nt1, ia, ja, dapp, app0, right,
      & neqpla, psi
 
       implicit none
@@ -102,7 +102,7 @@
 
       do i=1,Nr1
          do j=2,Nt1
-            ieq=numlin(i,j,nr,nt)
+            ieq=numlin(i,j,nt)
             zw(ieq)=psi(i,j)
          enddo
       enddo

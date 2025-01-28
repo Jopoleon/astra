@@ -127,7 +127,7 @@
       Rm = Xs(1) + ( dp(2)*dp(4) - dp(1)*dp(5) )/DET
       Zm = Ys(1) + ( dp(1)*dp(4) - dp(2)*dp(3) )/DET
 
-      erro=dsqrt( (rm-rm0)**2+(zm-zm0)**2 )
+      erro=SQRT( (rm-rm0)**2+(zm-zm0)**2 )
 
       rmx=r(imax,jmax)
       zmx=z(imax,jmax)
@@ -150,7 +150,7 @@
          do j=1,nt
             psnn=psin(i,j)
             psin(i,j)=(psi(i,j)-psip)/(psim-psip)
-            delpsn=dabs(psin(i,j)-psnn)
+            delpsn=ABS(psin(i,j)-psnn)
             if(delpsn.gt.errpsi) then
                ierm=i
                jerm=j
@@ -168,9 +168,9 @@
       do j=1,nt
          drx=r(iplas,j)-rm
          dzx=z(iplas,j)-zm
-         robj=dsqrt(drx**2+dzx**2)
+         robj=SQRT(drx**2+dzx**2)
          rob(j)=robj
-         tetp=dacos(drx/robj)
+         tetp=ACOS(drx/robj)
          if(dzx.lt.0.d0) then
             teta(j)=-tetp
          else
@@ -219,12 +219,12 @@
             ron(j)=zro
          enddo
          do j=1,nt
-            rnj=rm0+ron(j)*dcos(tetn(j))
-            znj=zm0+ron(j)*dsin(tetn(j))
+            rnj=rm0+ron(j)*COS(tetn(j))
+            znj=zm0+ron(j)*SIN(tetn(j))
             drx=rnj-rm
             dzx=znj-zm
-            roi(j)=dsqrt(drx**2+dzx**2)
-            tetp=dacos(drx/roi(j))
+            roi(j)=SQRT(drx**2+dzx**2)
+            tetp=ACOS(drx/roi(j))
             if(dzx.lt.0.d0) then
                teti(j)=-tetp
             else
@@ -263,8 +263,8 @@
             enddo
 
             rop(j)=zro
-            r(i,j)=rop(j)*dcos(teta(j))+rm
-            z(i,j)=rop(j)*dsin(teta(j))+zm
+            r(i,j)=rop(j)*COS(teta(j))+rm
+            z(i,j)=rop(j)*SIN(teta(j))+zm
          enddo
 
       enddo  ! i-loop
@@ -277,13 +277,13 @@
 
       do j=1,nt
          ttj=teta(j)
-         ro2j=(ps0-psim)/( 0.5d0*dp(3)*dcos(ttj)**2 +
-     &                           dp(4)*dcos(ttj)*dsin(ttj) +
-     &                     0.5d0*dp(5)*dsin(ttj)**2 )
+         ro2j=(ps0-psim)/( 0.5d0*dp(3)*COS(ttj)**2 +
+     &                           dp(4)*COS(ttj)*SIN(ttj) +
+     &                     0.5d0*dp(5)*SIN(ttj)**2 )
          rodeb=ro2j
-         rop(j)=dsqrt(ro2j)
-         r(i,j)=rm+rop(j)*dcos(teta(j))
-         z(i,j)=zm+rop(j)*dsin(teta(j))
+         rop(j)=SQRT(ro2j)
+         r(i,j)=rm+rop(j)*COS(teta(j))
+         z(i,j)=zm+rop(j)*SIN(teta(j))
       enddo
 
       if(ibeg.gt.3) then
@@ -295,23 +295,23 @@
             do i=3,ibeg-1
                psai=psia(i)
                rosi=( (psa2-psai)*ros1+(psai-psa1)*ros2 )/(psa2-psa1)
-               rosi=dsqrt(rosi)
-               r(i,j)=rm+rosi*dcos(teta(j))
-               z(i,j)=zm+rosi*dsin(teta(j))
+               rosi=SQRT(rosi)
+               r(i,j)=rm+rosi*COS(teta(j))
+               z(i,j)=zm+rosi*SIN(teta(j))
             enddo
          enddo
       endif
 
       do i=2,iplas1
          do j=2,nt1
-            ro(i,j)=dsqrt((r(i,j)-rm)**2+(z(i,j)-zm)**2)
+            ro(i,j)=SQRT((r(i,j)-rm)**2+(z(i,j)-zm)**2)
          enddo
       enddo
 
       do j=2,nt1
          ro(iplas,j)=rob(j)
-         r(iplas,j)=rob(j)*dcos(teta(j))+rm
-         z(iplas,j)=rob(j)*dsin(teta(j))+zm
+         r(iplas,j)=rob(j)*COS(teta(j))+rm
+         z(iplas,j)=rob(j)*SIN(teta(j))+zm
          ro(1,j)=0.d0
          r(1,j)=rm
          z(1,j)=zm
@@ -390,7 +390,7 @@
       rm=rma
       zm=zma
       psim=psima
-      erro=dsqrt((rmold-rm)**2+(zmold-zm)**2)
+      erro=SQRT((rmold-rm)**2+(zmold-zm)**2)
 
       if(kpr.eq.1) then
          write(6,*) 'erro mag.axis',erro
@@ -402,7 +402,7 @@
          do j=1,nt
             psnn=psin(i,j)
             psin(i,j)=(psi(i,j)-psip)/(psim-psip)
-            delpsn=dabs(psin(i,j)-psnn)
+            delpsn=ABS(psin(i,j)-psnn)
             if(delpsn.gt.errpsi) then
                ierm=i
                jerm=j
@@ -425,9 +425,9 @@
       do j=1,nt
          drx=r(iplas,j)-rm
          dzx=z(iplas,j)-zm
-         robj=dsqrt(drx**2+dzx**2)
+         robj=SQRT(drx**2+dzx**2)
          rob(j)=robj
-         tetp=dacos(drx/robj)
+         tetp=ACOS(drx/robj)
          if(dzx.lt.0.d0) then
             teta(j)=-tetp
          else
@@ -454,12 +454,12 @@
 
       do j=1,nt
          ttj=teta(j)
-         ro2j=(ps0-psim)/( 0.5d0*dp(3)*dcos(ttj)**2 +
-     &                           dp(4)*dcos(ttj)*dsin(ttj) +
-     &                     0.5d0*dp(5)*dsin(ttj)**2 )
-         rop(j)=dsqrt(ro2j)
-         r(i,j)=rm+rop(j)*dcos(teta(j))
-         z(i,j)=zm+rop(j)*dsin(teta(j))
+         ro2j=(ps0-psim)/( 0.5d0*dp(3)*COS(ttj)**2 +
+     &                           dp(4)*COS(ttj)*SIN(ttj) +
+     &                     0.5d0*dp(5)*SIN(ttj)**2 )
+         rop(j)=SQRT(ro2j)
+         r(i,j)=rm+rop(j)*COS(teta(j))
+         z(i,j)=zm+rop(j)*SIN(teta(j))
       enddo
 
 ! grid moving along rais
@@ -475,11 +475,11 @@
             ropl=ro(i+1,j)
             gradpl=-(pspl-ps0)/(ropl-ro0)
             gradmn=-(ps0-psmn)/(ro0-romn)
-            grad=dmax1(gradpl,gradmn)
+            grad=MAX(gradpl,gradmn)
             if (ngav.eq.0) then
                alfa=1.5d0
             else
-               alfa=1.0d0+0.45d0*dabs(q(i)-q(1))/q(1)
+               alfa=1.0d0+0.45d0*ABS(q(i)-q(1))/q(1)
             endif
             if(alfa.lt.1.5d0) alfa=1.5d0 
             if(ngav.gt.0) grad=grad*alfa
@@ -488,12 +488,12 @@
          enddo
 
          do j=1,nt
-            rnj=rmold+ron(j)*dcos(tetn(j))
-            znj=zmold+ron(j)*dsin(tetn(j))
+            rnj=rmold+ron(j)*COS(tetn(j))
+            znj=zmold+ron(j)*SIN(tetn(j))
             drx=rnj-rm
             dzx=znj-zm
-            roi(j)=dsqrt(drx**2+dzx**2)
-            tetp=dacos(drx/roi(j))
+            roi(j)=SQRT(drx**2+dzx**2)
+            tetp=ACOS(drx/roi(j))
             if(dzx.lt.0.d0) then
                teti(j)=-tetp
             else
@@ -533,7 +533,7 @@
             enddo
 
             rop(j)=zro
-            roerr=dabs(ron(j)-ro(i,j))
+            roerr=ABS(ron(j)-ro(i,j))
 
             if(roerr.gt.erro) then
                erro=roerr
@@ -542,8 +542,8 @@
             endif
 
             roplt(i,j)=ron(j)-ro(i,j)
-            r(i,j)=rop(j)*dcos(teta(j))+rm
-            z(i,j)=rop(j)*dsin(teta(j))+zm
+            r(i,j)=rop(j)*COS(teta(j))+rm
+            z(i,j)=rop(j)*SIN(teta(j))+zm
          enddo
       enddo
 
@@ -553,15 +553,15 @@
       endif
       do i=2,iplas1
          do j=2,nt1
-            ro(i,j)=dsqrt((r(i,j)-rm)**2+(z(i,j)-zm)**2)
+            ro(i,j)=SQRT((r(i,j)-rm)**2+(z(i,j)-zm)**2)
             ronor(i,j)=ro(i,j)/rob(j)
          enddo
       enddo
 
       do j=2,nt1
          ro(iplas,j)=rob(j)
-         r(iplas,j)=rob(j)*dcos(teta(j))+rm
-         z(iplas,j)=rob(j)*dsin(teta(j))+zm
+         r(iplas,j)=rob(j)*COS(teta(j))+rm
+         z(iplas,j)=rob(j)*SIN(teta(j))+zm
          ro(1,j)=0.d0
          r(1,j)=rm
          z(1,j)=zm
@@ -643,7 +643,7 @@
       rm=rma
       zm=zma
       psim=psima
-      erro=dsqrt((rmold-rm)**2+(zmold-zm)**2)
+      erro=SQRT((rmold-rm)**2+(zmold-zm)**2)
 
       if(kpr.eq.1) then
          write(*,*) 'erro mag.axis',erro
@@ -655,7 +655,7 @@
          do j=1,nt
 	    psnn=psin(i,j)
             psin(i,j)=(psi(i,j)-psip)/(psim-psip)
-            delpsn=dabs(psin(i,j)-psnn)
+            delpsn=ABS(psin(i,j)-psnn)
             if(delpsn.gt.errpsi) then
                ierm=i
                jerm=j
@@ -676,9 +676,9 @@
       do j=1,nt
          drx=r(iplas,j)-rm
          dzx=z(iplas,j)-zm
-         robj=dsqrt(drx**2+dzx**2)
+         robj=SQRT(drx**2+dzx**2)
          rob(j)=robj
-         tetp=dacos(drx/robj)
+         tetp=ACOS(drx/robj)
          if(dzx.lt.0.d0) then
             teta(j)=-tetp
          else
@@ -705,12 +705,12 @@
 
       do j=1,nt
          ttj=teta(j)
-         ro2j=(ps0-psim)/( 0.5d0*dp(3)*dcos(ttj)**2  +
-     &                           dp(4)*dcos(ttj)*dsin(ttj) +
-     &                     0.5d0*dp(5)*dsin(ttj)**2 )
-         rop(j)=dsqrt(ro2j)
-         r(i,j)=rm+rop(j)*dcos(teta(j))
-         z(i,j)=zm+rop(j)*dsin(teta(j))
+         ro2j=(ps0-psim)/( 0.5d0*dp(3)*COS(ttj)**2  +
+     &                           dp(4)*COS(ttj)*SIN(ttj) +
+     &                     0.5d0*dp(5)*SIN(ttj)**2 )
+         rop(j)=SQRT(ro2j)
+         r(i,j)=rm+rop(j)*COS(teta(j))
+         z(i,j)=zm+rop(j)*SIN(teta(j))
       enddo
 
 ! grid moving along rais
@@ -731,12 +731,12 @@
             ron(j)=zro
          enddo
          do j=1,nt
-            rnj=rmold+ron(j)*dcos(tetn(j))
-            znj=zmold+ron(j)*dsin(tetn(j))
+            rnj=rmold+ron(j)*COS(tetn(j))
+            znj=zmold+ron(j)*SIN(tetn(j))
             drx=rnj-rm
             dzx=znj-zm
-            roi(j)=dsqrt(drx**2+dzx**2)
-            tetp=dacos(drx/roi(j))
+            roi(j)=SQRT(drx**2+dzx**2)
+            tetp=ACOS(drx/roi(j))
             if(dzx.lt.0.d0) then
                teti(j)=-tetp
             else
@@ -774,15 +774,15 @@
 	       endif
             enddo
             rop(j)=zro
-            roerr=dabs(ron(j)-ro(i,j))
+            roerr=ABS(ron(j)-ro(i,j))
             if(roerr.gt.erro) then
                erro=roerr
                ierm=i
                jerm=j
             endif
             roplt(i,j)=ron(j)-ro(i,j)
-            r(i,j)=rop(j)*dcos(teta(j))+rm
-            z(i,j)=rop(j)*dsin(teta(j))+zm
+            r(i,j)=rop(j)*COS(teta(j))+rm
+            z(i,j)=rop(j)*SIN(teta(j))+zm
          enddo
       enddo
 
@@ -792,14 +792,14 @@
       endif
       do i=2,iplas1
          do j=2,nt1
-            ro(i,j)=dsqrt((r(i,j)-rm)**2+(z(i,j)-zm)**2)
+            ro(i,j)=SQRT((r(i,j)-rm)**2+(z(i,j)-zm)**2)
             ronor(i,j)=ro(i,j)/rob(j)
          enddo
       enddo
       do j=2,nt1
          ro(iplas,j)=rob(j)
-         r(iplas,j)=rob(j)*dcos(teta(j))+rm
-         z(iplas,j)=rob(j)*dsin(teta(j))+zm
+         r(iplas,j)=rob(j)*COS(teta(j))+rm
+         z(iplas,j)=rob(j)*SIN(teta(j))+zm
          ro(1,j)=0.d0
          r(1,j)=rm
          z(1,j)=zm
@@ -830,7 +830,7 @@
       end subroutine regrid0
 
 !----------------------------------------------------------------
-      subroutine grid_1(igdf, nstep)
+      subroutine grid_1
 
       use bnd_modul, only: nbtab, rbtab, zbtab
       use sp_parameters, only: twopi
@@ -841,8 +841,6 @@
       implicit none
 
       integer, parameter :: nbtabp=1000
-
-      integer, intent(in) :: igdf, nstep
 
       integer :: i, j, ib, nbsh, nbn
       real*8 :: rm0, zm0, rc0, zc0, asp0, el_up, el_lw, tr_up, tr_lw,
@@ -891,8 +889,8 @@
          drx=rbtab(ib)-rm
          dzx=zbtab(ib)-zm
 
-         robn(ib)=dsqrt(drx**2+dzx**2)
-         tetp=dacos(drx/robn(ib))
+         robn(ib)=SQRT(drx**2+dzx**2)
+         tetp=ACOS(drx/robn(ib))
          if(dzx.lt.0.d0) then
             tetbn(ib)=-tetp
          else
@@ -935,8 +933,8 @@
       do j=1,Nt
          tetp=teta(j)
          ro(1,j)=0.d0
-         r(iplas,j)=rm+ro(iplas,j)*dcos(tetp)
-         z(iplas,j)=zm+ro(iplas,j)*dsin(tetp)
+         r(iplas,j)=rm+ro(iplas,j)*COS(tetp)
+         z(iplas,j)=zm+ro(iplas,j)*SIN(tetp)
       enddo
 
       do i=2,iplas1
@@ -947,8 +945,8 @@
 
       do i=1,iplas1
          do j=2,nt1
-	    r(i,j)=rm+ro(i,j)*dcos(teta(j))
-	    z(i,j)=zm+ro(i,j)*dsin(teta(j))
+	    r(i,j)=rm+ro(i,j)*COS(teta(j))
+	    z(i,j)=zm+ro(i,j)*SIN(teta(j))
             psin(i,j)=psia(i)
          enddo
       enddo
@@ -982,13 +980,11 @@
       end
 
 !----------------------------------------------------------------
-      subroutine grid_p0(igdf, nstep)
+      subroutine grid_p0
 
       use compol, only: erru, nt, psi, iplas
 
       implicit none
-
-      integer, intent(in) :: igdf, nstep
 
       integer :: j
 
@@ -1001,13 +997,11 @@
       end subroutine grid_p0
 
 !----------------------------------------------------------------
-      subroutine grid_p1(igdf, nstep)
+      subroutine grid_p1
 
       use compol, only: nt, iplas, psi
 
       implicit none
-
-      integer, intent(in) :: igdf, nstep
 
       integer :: j
 
@@ -1024,7 +1018,7 @@
       implicit none
       real*8, intent(in) :: r0, aa, tr, tet
 
-      frbon = r0 + (r0/aa)*dcos(tet + tr*dsin(tet))
+      frbon = r0 + (r0/aa)*COS(tet + tr*SIN(tet))
 
       return
       end function frbon
@@ -1035,7 +1029,7 @@
       implicit none
       real*8, intent(in) :: r0, z0, aa, el, tet
       
-      fzbon = z0 + (r0/aa)*el*dsin(tet)
+      fzbon = z0 + (r0/aa)*el*SIN(tet)
 
       return
       end function fzbon
@@ -1098,13 +1092,13 @@
          teta(nt)=teta(2)+twopi
          do j=1,nt
             tet=teta(j)
-            tri=0.5d0*(tr_up+tr_lw+(tr_up-tr_lw)*dsin(tet))
-            ell=0.5d0*(el_up+el_lw+(el_up-el_lw)*dsin(tet))
+            tri=0.5d0*(tr_up+tr_lw+(tr_up-tr_lw)*SIN(tet))
+            ell=0.5d0*(el_up+el_lw+(el_up-el_lw)*SIN(tet))
             rrr=frbon(rc0,asp0,tri,tet)
             r(iplas,j)=rrr
             zzz=fzbon(rc0,zc0,asp0,ell,tet)
             z(iplas,j)=zzz
-            roxx=dsqrt((r(iplas,j)-rm)**2+(z(iplas,j)-zm)**2)
+            roxx=SQRT((r(iplas,j)-rm)**2+(z(iplas,j)-zm)**2)
             ro(iplas,j)=roxx
             ro(1,j)=0.d0
          enddo
@@ -1126,8 +1120,8 @@
       do ib=1,nbtab
          drx=rbtab(ib)-rm
          dzx=zbtab(ib)-zm
-         robn(ib)=dsqrt(drx**2+dzx**2)
-         tetp=dacos(drx/robn(ib))
+         robn(ib)=SQRT(drx**2+dzx**2)
+         tetp=ACOS(drx/robn(ib))
          if(dzx.lt.0.d0) then
             tetbn(ib)=-tetp
          else
@@ -1168,19 +1162,19 @@
 
       do j=2,Nt1
          tetp=teta(j)
-         r(iplas,j)=rm+ro(iplas,j)*dcos(tetp)
-         z(iplas,j)=zm+ro(iplas,j)*dsin(tetp)
+         r(iplas,j)=rm+ro(iplas,j)*COS(tetp)
+         z(iplas,j)=zm+ro(iplas,j)*SIN(tetp)
       enddo
       do i=2,iplas1
          do j=2,nt
-            ro(i,j)=ro(iplas,j)*dsqrt(1.d0-psia(i))
+            ro(i,j)=ro(iplas,j)*SQRT(1.d0-psia(i))
          enddo
       enddo
 
       do i=1,iplas1
          do j=2,nt1
-            r(i,j)=rm+ro(i,j)*dcos(teta(j))
-            z(i,j)=zm+ro(i,j)*dsin(teta(j))
+            r(i,j)=rm+ro(i,j)*COS(teta(j))
+            z(i,j)=zm+ro(i,j)*SIN(teta(j))
             psin(i,j)=psia(i)
          enddo
       enddo
@@ -1231,7 +1225,7 @@
      &   nxb, ig, icell, jcell, imax, imax1, jmax, jmax1, jw
       real*8 :: ux0, ux1, ux2, up, um, xm, ym, xx0, yx0, xx1, yx1, 
      &   xx2, yx2, xx10, yx10, xx20, yx20, xm0, ym0, psi_bon,
-     &   ropl, romn, tetpl, tetmn, drx, dzx, tetp, deltet
+     &   ropl, romn, tetpl, tetmn, drx, dzx, tetp
       real*8, dimension(nip) :: x, dx, dxi, x12
       real*8, dimension(njp) :: y, dy, dyj
       real*8, dimension(nip, njp) :: u, ue, un, ui, g, ut
@@ -1337,14 +1331,8 @@
       do ig=1,nxb
          drx=rxb(ig)-xm
          dzx=zxb(ig)-ym
-         tetp=datan(dzx/drx)
-         if(ig.ne.1) then
-            if(drx.lt.0.d0) tetp=tetp+pi
-            deltet=tetp-tetxb(ig-1)
-            if(deltet.lt.0.d0) tetp=tetp+twopi
-        endif
-        tetxb(ig)=tetp
-        roxb(ig)=dsqrt(drx**2+dzx**2)
+         tetxb(ig)=ATAN2(dzx, drx)
+         roxb(ig)=SQRT(drx**2+dzx**2)
       enddo
 
       do j=1,Ntet
@@ -1464,18 +1452,18 @@
          ur0=up+u0*(um-up)
          do j=1,nt
             ttj=teta(j)
-            ro2j=(ur0-um)/( 0.5d0*dp(3)*dcos(ttj)**2 +
-     &                            dp(4)*dcos(ttj)*dsin(ttj) +
-     &                      0.5d0*dp(5)*dsin(ttj)**2 )
-            ron(j)=dsqrt(ro2j)
+            ro2j=(ur0-um)/( 0.5d0*dp(3)*COS(ttj)**2 +
+     &                            dp(4)*COS(ttj)*SIN(ttj) +
+     &                      0.5d0*dp(5)*SIN(ttj)**2 )
+            ron(j)=SQRT(ro2j)
             ronm(j)=ron(j)    
-            r(i,j)=rm+ron(j)*dcos(teta(j))
-            z(i,j)=zm+ron(j)*dsin(teta(j))
+            r(i,j)=rm+ron(j)*COS(teta(j))
+            z(i,j)=zm+ron(j)*SIN(teta(j))
             ro(i,j)=ron(j)
             psin(i,j)=u0
          enddo
 	 ibeg=i+1
-	 if( ron(2) .GT. dmax1(stpx,stpy) ) EXIT
+	 if( ron(2) .GT. MAX(stpx,stpy) ) EXIT
       enddo
 
       do i=iplas,ibeg,-1
@@ -1487,8 +1475,8 @@
             endif
          enddo
          do j=1,nt
-            r(i,j)=rm+ron(j)*dcos(teta(j))
-            z(i,j)=zm+ron(j)*dsin(teta(j))
+            r(i,j)=rm+ron(j)*COS(teta(j))
+            z(i,j)=zm+ron(j)*SIN(teta(j))
             ro(i,j)=ron(j)
             psin(i,j)=u0
          enddo
@@ -1523,7 +1511,7 @@
       end subroutine grid_b
 
 !----------------------------------------------------------------
-      subroutine grid_b_ef(igdf, nstep)
+      subroutine grid_b_ef
 
       use numerical_tools, only: reinterp_back_quad
       use sp_parameters, only: nip, njp, twopi
@@ -1535,8 +1523,6 @@
 
       integer, parameter :: nshp=10, nbtabp=1000, nb4=nbtabp+4, 
      &   nb6=nb4*6
-
-      integer, intent(in) :: igdf, nstep
 
       integer :: i, j, k, imax, jmax,
      &   ix1, ix2, jx1, jx2, j1, j2
@@ -1590,13 +1576,13 @@
 
 ! first find boundary
       i=iplas
-      xstepp=0.1*dsqrt((x(2)-x(1))**2.+(y(2)-y(1))**2.)
+      xstepp=0.1*SQRT((x(2)-x(1))**2.+(y(2)-y(1))**2.)
 
       do j=1,nt
          do k=1,nip*njp
             ronzz=xstepp*k
-            dumx=rm+ronzz*dcos(teta(j))
-            dumy=zm+ronzz*dsin(teta(j))
+            dumx=rm+ronzz*COS(teta(j))
+            dumy=zm+ronzz*SIN(teta(j))
             j1=((dumx-x(1))/(x(2)-x(1)))+1	
             j2=((dumy-y(1))/(y(2)-y(1)))+1	
             uuuu(1)=utemp(j1-1,j2-1)
@@ -1631,8 +1617,8 @@
 
          do i=2,iplas-1
             rggr(i)=ro(iplas,j)*(i-1.)/(iplas-1.)
-            dumx=rm+rggr(i)*dcos(teta(j))
-            dumy=zm+rggr(i)*dsin(teta(j))
+            dumx=rm+rggr(i)*COS(teta(j))
+            dumy=zm+rggr(i)*SIN(teta(j))
             j1=((dumx-x(1))/(x(2)-x(1)))+1	
             j2=((dumy-y(1))/(y(2)-y(1)))+1	
 
@@ -1680,8 +1666,8 @@
          u0=psia(i)
          ur0=up_t+u0*(um_t-up_t)
          do j=1,nt
-            r(i,j)=rm+ro(i,j)*dcos(teta(j))
-            z(i,j)=zm+ro(i,j)*dsin(teta(j))
+            r(i,j)=rm+ro(i,j)*COS(teta(j))
+            z(i,j)=zm+ro(i,j)*SIN(teta(j))
             psin(i,j)=u0
          enddo
       enddo
@@ -1786,7 +1772,7 @@ Cquadratic inerpolation
       end subroutine biquadratic_interp_spidef
 
 !----------------------------------------------------------------
-      subroutine grid_b1_ef(igdf, nstep)
+      subroutine grid_b1
 
       use sp_parameters, only: nip, njp, ntp, twopi
       use compol, only: iplas, rm, zm, r, z,
@@ -1794,95 +1780,6 @@ Cquadratic inerpolation
      & psia, psim, psip, psin, psi
 
       implicit none
-
-      integer, intent(in) :: igdf, nstep
-
-      integer :: i, j
-      real*8 :: ux0, ux1, ux2, up, um, xm, ym, 
-     &          xx0, yx0, xx1, yx1, xx2, yx2, 
-     &          xx10, yx10, xx20, yx20, xm0, ym0, 
-     &          psi_bon, u0, dtet
-      real*8, dimension(ntp) :: ron
-      real*8, dimension(nip, njp) :: u, ue, un, ui, g
-
-      common /compot/ u, ue, un, ui, g,
-     &                ux0, ux1, ux2, up, um, xm, ym,
-     &                xx0, yx0, xx1, yx1, xx2, yx2, 
-     &                xx10, yx10, xx20, yx20, xm0, ym0,
-     &                psi_bon
-
-      rm=xm    !
-      zm=ym    !  position of magn. axis
-
-      psip=0.d0
-
-      dtet=twopi/(nt-2)
-      teta(1)=-dtet
-
-      do j=2,nt
-         teta(j)=teta(j-1)+dtet
-      enddo
-
-      teta(1)=teta(nt1)-twopi
-      teta(nt)=teta(2)+twopi
-
-      psia(1)=1.d0
-      u0=0.d0
-
-      call loopL_b(teta,nt,ron,u0)
-
-      do j=1,nt
-         ronor(iplas,j)=1.d0
-      enddo				  
-
-      do j=1,nt 
-         do i=1,iplas
-            ro(i,j)=ronor(i,j)*ron(j)
-            r(i,j)=rm+ro(i,j)*dcos(teta(j))
-            z(i,j)=zm+ro(i,j)*dsin(teta(j))
-            psin(i,j)=psia(i)
-         enddo				  
-      enddo				  
-
-      do j=1,nt
-         r(1,j)=rm
-         z(1,j)=zm
-         ro(1,j)=0.d0
-         ronor(1,j)=0.d0
-         psin(1,j)=1.d0
-      enddo
-
-      do i=1,nr
-         r(i,1)=r(i,nt1)
-         z(i,1)=z(i,nt1)
-         ro(i,1)=ro(i,nt1)
-         ronor(i,1)=ronor(i,nt1)
-         r(i,nt)=r(i,2)
-         z(i,nt)=z(i,2)
-         ro(i,nt)=ro(i,2)
-         ronor(i,nt)=ronor(i,2)
-      enddo
-
-      do i=1,nr
-         do j=1,nt
-            psi(i,j)=psip+psin(i,j)*(psim-psip)
-         enddo
-      enddo
-
-      return
-      end subroutine grid_b1_ef
-
-!----------------------------------------------------------------
-      subroutine grid_b1(igdf, nstep)
-
-      use sp_parameters, only: nip, njp, ntp, twopi
-      use compol, only: iplas, rm, zm, r, z,
-     & nr, nt, nt1, ro, ronor, teta,
-     & psia, psim, psip, psin, psi
-
-      implicit none
-
-      integer, intent(in) :: igdf, nstep
 
       integer :: i, j, imax, jmax, ix1, jx1, ix2, jx2
       real*8 :: ux0, ux1, ux2, up, um, xm, ym, 
@@ -1926,8 +1823,8 @@ Cquadratic inerpolation
       do j=1,nt 
          do i=1,iplas
             ro(i,j)=ronor(i,j)*ron(j)
-            r(i,j)=rm+ro(i,j)*dcos(teta(j))
-            z(i,j)=zm+ro(i,j)*dsin(teta(j))
+            r(i,j)=rm+ro(i,j)*COS(teta(j))
+            z(i,j)=zm+ro(i,j)*SIN(teta(j))
             psin(i,j)=psia(i)
          enddo				  
       enddo				  
@@ -1963,6 +1860,7 @@ Cquadratic inerpolation
 !----------------------------------------------------------------
       subroutine arc_x_bnd(nteta)
 
+      use sp_parameters, only: pi
       use bnd_modul, only: nbtab, rbtab, zbtab
       use keys, only: kpr
 
@@ -1980,8 +1878,8 @@ Cquadratic inerpolation
       real*8, dimension(nsz) :: w1, w2, w3
 
       do ib=2,nbtab
-         dr=dabs(rbtab(ib)-rbtab(1))
-         dz=dabs(zbtab(ib)-zbtab(1))
+         dr=ABS(rbtab(ib)-rbtab(1))
+         dz=ABS(zbtab(ib)-zbtab(1))
          if(dr.lt.1.d-6 .AND. dz.lt.1.d-6) then
             nbnd=ib-1
             goto 1947
@@ -2026,14 +1924,14 @@ Cquadratic inerpolation
       j=1
       cmin=((ukw(j)-ukw(m-1))*(ukw(j+1)-ukw(j))  +
      &      (vkw(j)-vkw(m-1))*(vkw(j+1)-vkw(j))) /
-     &      dsqrt(((ukw(j)-ukw(m-1))**2+(vkw(j)-vkw(m-1))**2) *
+     &      SQRT(((ukw(j)-ukw(m-1))**2+(vkw(j)-vkw(m-1))**2) *
      &            ((ukw(j+1)-ukw(j))**2+(vkw(j+1)-vkw(j))**2))
       jvmin=1
 
       do j=2,m-1
          ccur=((ukw(j)-ukw(j-1))*(ukw(j+1)-ukw(j))  +
      &         (vkw(j)-vkw(j-1))*(vkw(j+1)-vkw(j))) /
-     &         dsqrt(((ukw(j)-ukw(j-1))**2+(vkw(j)-vkw(j-1))**2) *
+     &         SQRT(((ukw(j)-ukw(j-1))**2+(vkw(j)-vkw(j-1))**2) *
      &               ((ukw(j+1)-ukw(j))**2+(vkw(j+1)-vkw(j))**2))
 ! if(clock.lt.0.d0) ccur=-ccur
          if(ccur.lt.cmin) then
@@ -2057,10 +1955,10 @@ Cquadratic inerpolation
          write(*,*) ' bound points ',m
          write(*,*) ' bound start point ',uk1(1),vk1(1)
          write(*,*) ' min angle ',
-     &      (1.d0-dacos(cmin)/(4.d0*datan(1.d0)))*180.d0,' degree'
+     &      (1.d0-ACOS(cmin)/pi)*180.d0,' degree'
       endif
 
-      if((1.d0-dacos(cmin)/(4.d0*datan(1.d0)))*180.d0.lt.100.d0) then
+      if((1.d0-ACOS(cmin)/pi)*180.d0.lt.100.d0) then
          uk1(2)=0.5d0*(uk1(1)+uk1(3))
          uk1(m-1)=0.5d0*(uk1(m)+uk1(m-2))
          vk1(2)=0.5d0*(vk1(1)+vk1(3))
@@ -2079,13 +1977,13 @@ Cquadratic inerpolation
       j=2
       cmin=((ukw(j)-ukw(j-1))*(ukw(j+1)-ukw(j))  +
      &      (vkw(j)-vkw(j-1))*(vkw(j+1)-vkw(j))) /
-     &       dsqrt(((ukw(j)-ukw(j-1))**2+(vkw(j)-vkw(j-1))**2) *
+     &       SQRT(((ukw(j)-ukw(j-1))**2+(vkw(j)-vkw(j-1))**2) *
      &             ((ukw(j+1)-ukw(j))**2+(vkw(j+1)-vkw(j))**2))
       jvmin2=2
       do j=2,m-1
          ccur=((ukw(j)-ukw(j-1))*(ukw(j+1)-ukw(j))  +
      &         (vkw(j)-vkw(j-1))*(vkw(j+1)-vkw(j))) /
-     &        dsqrt(((ukw(j)-ukw(j-1))**2+(vkw(j)-vkw(j-1))**2) *
+     &        SQRT(((ukw(j)-ukw(j-1))**2+(vkw(j)-vkw(j-1))**2) *
      &              ((ukw(j+1)-ukw(j))**2+(vkw(j+1)-vkw(j))**2))
 ! if(clock.lt.0.d0) ccur=-ccur
          if(ccur.lt.cmin) then
@@ -2094,14 +1992,14 @@ Cquadratic inerpolation
          endif
       enddo
 ! check the x-point angle
-      if((1.d0-dacos(cmin)/(4.d0*datan(1.d0)))*180.d0.lt.100.d0) then
+      if((1.d0-ACOS(cmin)/pi)*180.d0.lt.100.d0) then
          uk1(jvmin2+1)=0.5d0*(uk1(jvmin2)+uk1(jvmin2+2))
          uk1(jvmin2-1)=0.5d0*(uk1(jvmin2)+uk1(jvmin2-2))
          vk1(jvmin2+1)=0.5d0*(vk1(jvmin2)+vk1(jvmin2+2))
          vk1(jvmin2-1)=0.5d0*(vk1(jvmin2)+vk1(jvmin2-2))
          if(kpr.eq.1) then
             write(*,*) ' min angle ',
-     &         (1.d0-dacos(cmin)/(4.d0*datan(1.d0)))*180.d0,' degree'
+     &         (1.d0-ACOS(cmin)/pi)*180.d0,' degree'
             write(*,*) ' linear interpolated near the second x-point '
          endif
 
@@ -2109,7 +2007,7 @@ Cquadratic inerpolation
          x2len=0.d0
          tolen=0.d0
          do j=2,m
-            culen=dsqrt((uk1(j)-uk1(j-1))**2+(vk1(j)-vk1(j-1))**2)
+            culen=SQRT((uk1(j)-uk1(j-1))**2+(vk1(j)-vk1(j-1))**2)
             tolen=tolen+culen
             if(j.le.jvmin2) then
                x2len=x2len+culen
@@ -2141,7 +2039,7 @@ Cquadratic inerpolation
            call SPLNA1(NTZ,M1X ,T1N,VK1,M1X,T1,NSZ,W1,W2,W3)
            ABO=0.d0
            do J=1,M1X
-              ABO=DMAX1(ABO,DABS(T1N(J)-T1(J)))
+              ABO=MAX(ABO,ABS(T1N(J)-T1(J)))
            enddo
            if (ABO.LE.EPSBO) EXIT
         enddo
@@ -2171,7 +2069,7 @@ Cquadratic inerpolation
            call SPLNA1(NTZ,M2X ,T1N,VK1(m1x),M2X,T1,NSZ,W1,W2,W3)
            ABO=0.d0
            do J=1,M2X
-              ABO=DMAX1(ABO,DABS(T1N(J)-T1(J)))
+              ABO=MAX(ABO,ABS(T1N(J)-T1(J)))
            enddo
            if (ABO.LE.EPSBO) EXIT
         enddo
@@ -2205,7 +2103,7 @@ Cquadratic inerpolation
             call SPLNA1(NTZ,M11 ,T1N,VK1,M11,T1,NSZ,W1,W2,W3)
             ABO=0.d0
             do J=1,M11
-              ABO=DMAX1(ABO,DABS(T1N(J)-T1(J)))
+              ABO=MAX(ABO,ABS(T1N(J)-T1(J)))
             enddo
             if (ABO.LE.EPSBO) EXIT
          enddo
@@ -2244,7 +2142,7 @@ Cquadratic inerpolation
 ! A.L. computation
       AW(1)=0.d0
       do J=2,M
-         AWJ=DSQRT( (US(J)-US(J-1))**2+(VS(J)-VS(J-1))**2 )
+         AWJ=SQRT( (US(J)-US(J-1))**2+(VS(J)-VS(J-1))**2 )
          AW(J)=AW(J-1)+AWJ
       enddo
 

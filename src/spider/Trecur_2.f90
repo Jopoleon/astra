@@ -237,20 +237,20 @@ endif
 
 AWCR  = AWC * pi/180.
 AHCR  = AHC * pi/180.
-R0    = RC - 0.5*( WC + HC * DCOS(AHCR)/DSIN(AHCR) )
-Z0    = ZC - 0.5*( HC + WC * DSIN(AWCR)/DCOS(AWCR) )
-WSIZE = WC / DCOS(AWCR)
-HSIZE = HC / DSIN(AHCR)
+R0    = RC - 0.5*( WC + HC * COS(AHCR)/SIN(AHCR) )
+Z0    = ZC - 0.5*( HC + WC * SIN(AWCR)/COS(AWCR) )
+WSIZE = WC / COS(AWCR)
+HSIZE = HC / SIN(AHCR)
 WR    = WC
-WZ    = WC * DSIN(AWCR) / DCOS(AWCR)
-HR    = HC * DCOS(AHCR) / DSIN(AHCR)
+WZ    = WC * SIN(AWCR) / COS(AWCR)
+HR    = HC * COS(AHCR) / SIN(AHCR)
 HZ    = HC
 
 !***************************************
 !   CALCULATION  NDIVW, NDIVH, NDIVRE, PS
 
-SW    = DSQRT( NDIVA*WSIZE/HSIZE )
-SH    = DSQRT( NDIVA*HSIZE/WSIZE )
+SW    = SQRT( NDIVA*WSIZE/HSIZE )
+SH    = SQRT( NDIVA*HSIZE/WSIZE )
 SW    = SW + 0.5
 SH    = SH + 0.5
 NDIVW = IDINT(SW)

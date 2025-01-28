@@ -132,7 +132,7 @@
       end subroutine rdrec
 
 !---------------------------------------------------------------------
-      subroutine wr_step(numwr, time, istep)
+      subroutine wr_step(numwr, istep)
 
       use iopath, only: path
       use tim, only: dtim, ctim
@@ -143,7 +143,6 @@
       implicit none
 
       integer, intent(in) :: numwr, istep
-      real*8, intent(in) :: time
       integer :: i, j
       character(len=40) :: str, dummy
       character(len=80) :: fname

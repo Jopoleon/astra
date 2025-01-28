@@ -98,8 +98,8 @@
 
       simag=simag*i_sign
       sibry=sibry*i_sign
-      bcentr=dabs(bcentr)
-      current=dabs(current)
+      bcentr=ABS(bcentr)
+      current=ABS(current)
       do i=1,nw
          fpol(i)=fpol(i)*i_sign
          ffprim(i)=ffprim(i)*i_sign
@@ -127,7 +127,7 @@
       nutab=nw
 
       do i=1,nw
-         pstab(i)= dfloat(i-1)/dfloat(nw-1)
+         pstab(i)= FLOAT(i-1)/FLOAT(nw-1)
          pptab(i)= pprime(i)*amu0*1.d-6
          fptab(i)= ffprim(i)         
       enddo

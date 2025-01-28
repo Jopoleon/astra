@@ -214,7 +214,7 @@
          rm=rrmm
          zm=zzmm
          um=uumm
-         errm=dsqrt( (rm-rmold)**2+(zm-zmold)**2 )
+         errm=SQRT( (rm-rmold)**2+(zm-zmold)**2 )
 
          if(iter.lt.iterbf) then
             clr=0.d0
@@ -239,7 +239,7 @@
             enddo
          enddo
 
-         delc = dabs(delcr)+dabs(delcz)
+         delc = ABS(delcr)+ABS(delcz)
          if(delc.lt.1.d-9) EXIT
 
       enddo
@@ -258,14 +258,14 @@
          zx2=zx20
       endif
 
-      call xpoint(ux1,rx1,zx1,ix1,jx1,dp1,1,kodex1)
+      call xpoint(ux1,rx1,zx1,ix1,jx1,dp1,kodex1)
       if(kodex1.gt.0) then
          rx1=rx10
          zx1=zx10
       endif
       if(kpr.eq.1)write(*,*) 'xpoint1',kodex1
 
-      call xpoint(ux2,rx2,zx2,ix2,jx2,dp2,2,kodex2)
+      call xpoint(ux2,rx2,zx2,ix2,jx2,dp2,kodex2)
       if(kodex2.gt.0) then
          rx2=rx20
          zx2=zx20
@@ -312,9 +312,9 @@
       endif
 
       if(uxold.ge.ux0) ux0=(1.d0-sigm)*uxold+sigm*ux0
-      zvmax=dmax1(zx1,zx2)
+      zvmax=MAX(zx1,zx2)
       zvmin=dmin1(zx1,zx2)
-      zver=dabs(zm-zx0)
+      zver=ABS(zm-zx0)
 
 ! definition up- poloidal flux function value on plasma boundary.
 
@@ -333,7 +333,7 @@
          zx0= zx1
          ux0= ux1
          upp=um - alp*(um-ux0)
-         up=dmax1(psi_bon,upp)
+         up=MAX(psi_bon,upp)
          alpnew=(um-up)/(um-ux0)
          kodex2=1
       elseif(nctrli.lt.0 ) then
@@ -400,7 +400,7 @@
             numlim=nulim2
          endif
 
-         up=dmax1(ups,ublmax)
+         up=MAX(ups,ublmax)
          if(kodxp.eq.0) alpnew=(um-up)/(um-ux0)
 
       endif
@@ -421,8 +421,8 @@
          do j=1,nj
             unold=un(i,j)
             un(i,j)=(u(i,j)-up)/(um-up)
-            delun=dabs(un(i,j)-unold)
-            erru=dmax1(delun,erru)
+            delun=ABS(un(i,j)-unold)
+            erru=MAX(delun,erru)
          enddo
       enddo
 
@@ -767,7 +767,7 @@
       end subroutine right0
 
 !----------------------------------------------------------------
-      subroutine xpoint(ux, rx, zx, ix, jx, dp, numxp, kodex)
+      subroutine xpoint(ux, rx, zx, ix, jx, dp, kodex)
 
       use comblc, only: ni1, nj1, rmin, rmax, zmin, zmax, r, z, u, dr
 
@@ -775,7 +775,6 @@
 
       integer, parameter :: nshp=10
 
-      integer, intent(in) :: numxp
       integer, intent(out) :: kodex
       real*8, intent(out), dimension(5) :: dp
       integer, intent(inout) :: ix, jx
@@ -831,7 +830,7 @@
             rr=r(icx+k)
             do l=0,1
                zz=z(jcx+l)
-               dlx=dsqrt( (rr-rx)**2+(zz-zx)**2 )
+               dlx=SQRT( (rr-rx)**2+(zz-zx)**2 )
                if(dlx.lt.sdmin) then
                   sdmin=dlx
                   ix=icx+k
@@ -885,7 +884,7 @@
          rr=r(ix+k)
          do l=-1,1
             zz=z(jx+l)
-            dlx=dsqrt( (rr-rx)**2+(zz-zx)**2 )
+            dlx=SQRT( (rr-rx)**2+(zz-zx)**2 )
             if(dlx.lt.sdmin) then
                sdmin=dlx
                ixp=ix+k
@@ -909,9 +908,9 @@
 
       if(ix.ne.ix00 .OR. jx.ne.jx00) then
 
-         dold=dsqrt( (rx-r(ix00))**2 + (zx-z(jx00))**2 )
-         dnew=dsqrt( (rx-r(ix))**2 + (zx-z(jx))**2 )
-         deld01=dabs(dold-dnew)
+         dold=SQRT( (rx-r(ix00))**2 + (zx-z(jx00))**2 )
+         dnew=SQRT( (rx-r(ix))**2 + (zx-z(jx))**2 )
+         deld01=ABS(dold-dnew)
 
          if(deld01.lt.0.001d0*dr(ix)) then
             ix=ix00
@@ -1158,10 +1157,10 @@
          cc=-1.d0/cc
       else
 
-         cdpls = -Dxy/Dyy + dsqrt(disc)
-         cdmns = -Dxy/Dyy - dsqrt(disc)
-         ang1 = 0.5d0*(datan(cdpls)+datan(cdmns))
-         ang2 =-0.5d0*(datan(1.d0/cdpls)+datan(1.d0/cdmns))
+         cdpls = -Dxy/Dyy + SQRT(disc)
+         cdmns = -Dxy/Dyy - SQRT(disc)
+         ang1 = 0.5d0*(ATAN(cdpls)+ATAN(cdmns))
+         ang2 =-0.5d0*(ATAN(1.d0/cdpls)+ATAN(1.d0/cdmns))
 
 ! calculation D2u/Dl2(direction ang1)
          c1=dtan(ang1)

@@ -76,7 +76,7 @@ endif
 Rrect = equil_in%eqgeometry%rectgrid%r2d
 Zrect = equil_in%eqgeometry%rectgrid%z2d
 
-call get_eq(equil_out, psi_boundary, press0, btor)
+call get_eq(equil_out, psi_boundary, press0)
 call put_eq(equil_out, params)
 
 return
@@ -548,7 +548,7 @@ return
 end subroutine pres_d_psi
 
 !-------------------------------------------------------------
-subroutine get_eq(equil_out, psi_boundary, press0, btor)
+subroutine get_eq(equil_out, psi_boundary, press0)
 
 use imas_ids, only: type_equilibrium
 use sp_parameters, only: TWOPI
@@ -559,7 +559,7 @@ use compol, only: iplas, nt1, r0ax, b0ax, r, z, teta, ro, &
 
 implicit none
 
-real*8, intent(in) :: psi_boundary, press0, btor
+real*8, intent(in) :: psi_boundary, press0
 type(type_equilibrium), intent(out) :: equil_out
 
 integer :: i, j

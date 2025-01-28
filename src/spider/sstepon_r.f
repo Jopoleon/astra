@@ -145,8 +145,8 @@
      &   alw0, alw1, alw2, psi_bnd, platok, psi0_bnd, psdel, sgmcur,
      &   erro, betpol, pspl_av, psex_av, dpsdt,
      &   ereve, psi_eav, psi_eav_n
-      real*8, dimension(nclim) :: RC, ZC, PC, PSIP, VC, HC,
-     &   RC1, RC2, RC3, RC4, ZC1, ZC2, ZC3, ZC4
+      real*8, dimension(nclim) :: PC, PSIP, VC, HC,
+     &   RC, RC1, RC2, ZC, ZC1, ZC2
       real*8, dimension(NILIM) :: wecon
       real*8, dimension(njlim) :: VOLK, VOLKP1, PJK, PJKP1, PJKP, PJKD,
      &   PSK, PSKP1, PSKP, PSKM1
@@ -234,8 +234,7 @@
 
 !-----------------------------------------
 ! INPUT OF POSITIONS OF "PF_PROBE" POINTS:
-         call PROPNT(NOUT, NTER, NINFW, NGRA1,
-     &               NPROb, RPROb, ZPROb, FIPROb)
+         call PROPNT(NPROb, RPROb, ZPROb, FIPROb)
 
 !----------------------------------------
 ! INPUT OF POSITIONS OF "FL_LOOP" POINTS:
@@ -248,24 +247,21 @@
 
          call CONDUC(NC, NCEQUI, NCPFC, NFW, NBP, NVV,
      &               RC, ZC, PC, VC, HC, NTYPE,
-     &               RC1, ZC1, RC2, ZC2, RC3, ZC3, RC4, ZC4,
+     &               RC1, ZC1, RC2, ZC2,
      &               RES, VOLK, VOLKP1,
-     &               NECON, WECON,
-     &               NOUT, NTER, NINFW, ngra1)
+     &               NECON, WECON, NINFW)
 
 !-----------------------------------------------------
 ! DEFINITION INDUCT. AND  SELFINDUCT. MATRIX
 ! FOR "EDDY" CONDUCTORS:  "PPIND" from COMMON /PPIDPS/
 
-         call L_MATR(NOUT, NTER, NC, NCPFC,
-     &               NTYPE, RC, ZC, VC, HC,
-     &               NECON,WECON)
+         call L_MATR(NC, NCPFC, NTYPE, RC, ZC, VC, HC, NECON, WECON)
 
 !---------------------------------------------------
 ! Initial condition (currents) for circuit equations
 
          do L=1,NCEQUI
-	    if (L.LE.NEQUI) then
+            if (L.LE.NEQUI) then
                PJK(L)  = PFCEQW(L)
                PJKP(L) = PJK(L)
             else
@@ -384,7 +380,7 @@
 
       psi0_bnd=pspl_av+psex_av
       call put_psib0(psi0_bnd)
-      call wr_step(numwr, time, istep)
+      call wr_step(numwr, istep)
 
       return
 
@@ -439,10 +435,10 @@
                pjk(3)=pjk(2)
             endif
          endif
-         call EVSLV(NLES, NREG, TSTEP, TSTEP, SIGM,
+         call EVSLV(NLES, NREG, TSTEP, SIGM,
      &              NCEQUI, VOLK, VOLKP1, RES,
      &              PSK, PSKP1, PJK, PJKP1, PJKP,
-     &              NOUT, NTER, KEYPRI, EREVE, dteqz)
+     &              EREVE, dteqz)
 
          if (ipsmk.ge.1) then
             if (cmnd_dioh2s.eq.0) then
@@ -486,10 +482,10 @@
                pjk(3)=pjk(2)
             endif
          endif
-         call EVSLV(NLES, NREG, TSTEPR, TSTEP, SIGM,
+         call EVSLV(NLES, NREG, TSTEP, SIGM,
      &              NCEQUI, VOLK, VOLKP1, RES,
      &              PSKM1, PSK, PJK, PJKP1, PJKP,
-     &              NOUT, NTER, KEYPRI, EREVE, dteqz)
+     &              EREVE, dteqz)
 
          if (ipsmk.ge.1) then
             if (cmnd_dioh2s.eq.0) then
@@ -548,10 +544,10 @@
             endif
          endif
 
-         call EVSLV(NLES, NREG, TSTEP, TSTEP, SIGM,
-     &                 NCEQUI, VOLK,  VOLKP1, RES,
-     &                 PSK, PSKP1, PJK, PJKP1, PJKP,
-     &                 NOUT, NTER, KEYPRI, EREVE, dteqz)
+         call EVSLV(NLES, NREG, TSTEP, SIGM,
+     &              NCEQUI, VOLK,  VOLKP1, RES,
+     &              PSK, PSKP1, PJK, PJKP1, PJKP,
+     &              EREVE, dteqz)
 
          if (ipsmk.ge.1) then
             if (cmnd_dioh2s.eq.0) then
@@ -837,10 +833,10 @@
             endif
 	 endif
 
-         call EVSLV(NLES, NREG, TSTEP, TSTEP, SIGM,
+         call EVSLV(NLES, NREG, TSTEP, SIGM,
      &              NCEQUI, VOLK, VOLKP1, RES,
      &              PSK, PSKP1, PJK, PJKP1, PJKP,
-     &              NOUT, NTER, KEYPRI, EREVE, dteqz)
+     &              EREVE, dteqz)
 
 	 if (ipsmk.ge.1) then
             if (cmnd_dioh2s.eq.0) then
@@ -909,10 +905,10 @@
             endif
 	 endif
 
-         call EVSLV(NLES, NREG, TSTEPR, TSTEP, SIGM,
+         call EVSLV(NLES, NREG, TSTEP, SIGM,
      &              NCEQUI, VOLK, VOLKP1, RES,
      &              PSK, PSKP1, PJK, PJKP1, PJKP,
-     &              NOUT, NTER, KEYPRI, EREVE, dteqz)
+     &              EREVE, dteqz)
 
          if (ipsmk.ge.1) then
             if (cmnd_dioh2s.eq.0) then
@@ -966,10 +962,10 @@
             endif
 	 endif
 
-         call EVSLV(NLES, NREG, TSTEP, TSTEP, SIGM,
+         call EVSLV(NLES, NREG, TSTEP, SIGM,
      &              NCEQUI, VOLK, VOLKP1, RES,
      &              PSK, PSKP1, PJK, PJKP1, PJKP,
-     &              NOUT, NTER, KEYPRI, EREVE ,tstep)
+     &              EREVE, tstep)
 
          SGMCUR = 0.25D0
 

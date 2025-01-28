@@ -4,9 +4,9 @@
       use sp_parameters, only: neqp, amu0
       use keys, only: kstep, key_plc, key_0st, kastr, key_prs, kpr
       use compol, only: tok, tokp, tokpp, tokff, tokww, right, ngav,
-     & iplas, neqpla, erru, fvac, f, psia, psim, 
-     &     nr, nt, nt1, cur, psin, r, rm, dpdpsi, dfdpsi, dwdpsi, cnor,
-     & sq1, sq2, sq3, sq4
+     &    iplas, neqpla, erru, fvac, f, psia, psim, 
+     &    nt, nt1, cur, psin, r, rm, dpdpsi, dfdpsi, dwdpsi, cnor,
+     &    sq1, sq2, sq3, sq4
 
       implicit none
 
@@ -61,7 +61,7 @@
          tokpp=curp*sqcen*r0
          tokww=curw*sqcen*r0**3
 
-         il=numlin(1,1,nr,nt)
+         il=numlin(1,1,nt)
 
          right(il)=curcen*sqcen
 
@@ -91,7 +91,7 @@
                tokpp=tokpp+curp*sqk*r0
                tokww=tokww+curw*sqk*r0**3
 
-               il=numlin(i,j,nr,nt)
+               il=numlin(i,j,nt)
                right(il)=cur(i,j)*sqk
             enddo
 
@@ -157,7 +157,7 @@
          enddo
 
          tokp=curcen*sqcen
-         il=numlin(1,1,nr,nt)
+         il=numlin(1,1,nt)
          right(il)=curcen*sqcen
          tok_pl=0.d0
 
@@ -186,7 +186,7 @@
 
                cur(i,j)=r0*curp+curf/r0+curw*r0**3
                tokp=tokp+cur(i,j)*sqk
-               il=numlin(i,j,nr,nt)
+               il=numlin(i,j,nt)
                right(il)=cur(i,j)*sqk
             enddo
          enddo

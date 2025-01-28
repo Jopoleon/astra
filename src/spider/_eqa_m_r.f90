@@ -99,21 +99,21 @@ do
 
 ! accuracy test parameters
 
-    cab = dabs(clr) + dabs(clz)
+    cab = ABS(clr) + ABS(clz)
 
     if (ngav/10*10 == ngav) then
         errpsm = 0.d0
         errfpv = 0.d0
     elseif (ngav == 1) then
-        errpsm = dabs((psiax - psim)/psipla)
-        errpsb = dabs((psip - psibon)/psipla)
+        errpsm = ABS((psiax - psim)/psipla)
+        errpsb = ABS((psip - psibon)/psipla)
         fvv = sqrt(f(iplas)**2 + fpv)
         errfpv = 0.d0
     elseif (ngav == 2) then
-        errpsm = dabs((psiax - psim)/psipla)
-        errpsb = dabs((psip - psibon)/psipla)
+        errpsm = ABS((psiax - psim)/psipla)
+        errpsb = ABS((psip - psibon)/psipla)
         fvv = sqrt(f(iplas)**2 + fpv)
-        errfpv = dabs((fvac - fvv)/(f(1) - f(iplas)))
+        errfpv = ABS((fvac - fvv)/(f(1) - f(iplas)))
     endif
 
     if (erro < epsro .OR. itin > itrmax) then
@@ -507,7 +507,7 @@ erru = erro
 if (ngav == 0) then
     errpsm = 0.d0
 elseif (ngav == 1) then
-    errpsm = dabs((psiax - psim)/psipla)
+    errpsm = ABS((psiax - psim)/psipla)
 endif
 
 call flux_r(psitok, ncequi)

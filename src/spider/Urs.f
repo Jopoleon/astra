@@ -265,7 +265,7 @@
 
       psm = 1.d0-psi + epss
 
-      zpp = dabs( 1.d0 -(dabs(psm))**alf1p ) + epss
+      zpp = ABS( 1.d0 -(ABS(psm))**alf1p ) + epss
       funpp  = alf0p*( zpp**alf2p )
 
       return
@@ -295,7 +295,7 @@
 
       psm = 1.d0- psi + epss
 
-      zzfp = dabs( 1.d0 - psm**bet1f ) + epss
+      zzfp = ABS( 1.d0 - psm**bet1f ) + epss
       funfp   = bet0f*( zzfp**bet2f )
 
       return
@@ -445,7 +445,7 @@
 
       psm = 1.d0 - psi + epss
 
-      zwp = dabs( 1.d0 -(dabs(psm))**alw1p ) + epss
+      zwp = ABS( 1.d0 -(ABS(psm))**alw1p ) + epss
       wp  = alw0p*( zwp**alw2p )
 
       funwp = wp

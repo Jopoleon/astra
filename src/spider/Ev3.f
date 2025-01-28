@@ -1,6 +1,4 @@
-      subroutine L_MATR( NOUT,  NTER, NC, NCPFC, 
-     &                   NTYPE, RC,   ZC, VC, HC,
-     &                   NECON, WECON )
+      subroutine L_MATR(NC, NCPFC, NTYPE, RC, ZC, VC, HC, NECON, WECON)
 ! DEFINITION MUTUALS INDUCT. AND  SELFINDUCT. MATRIX
 ! FOR "EDDY" CONDUCTORS:  PPIND
 
@@ -11,7 +9,7 @@
 
       implicit none
 
-      integer, intent(in) :: NOUT, NTER, NC, NCPFC
+      integer, intent(in) :: NC, NCPFC
       integer, intent(in), dimension(NILIM) :: NECON
       integer, intent(in), dimension(NCLIM) :: NTYPE
       real*8, intent(in), dimension(NCLIM) :: RC, ZC, VC, HC
@@ -82,15 +80,13 @@
       end subroutine rd_ppind
 
 !----------------------------------------------------------------
-      subroutine PROPNT( NOUT, NTER, NINFW, NGRA1,
-     &                   NPRO, RPRO, ZPRO,  FIPRO )
+      subroutine PROPNT(NPRO, RPRO, ZPRO, FIPRO)
 !--- INPUT OF POSITIONS OF "PF_PROBE" POINTS:
 
       use iopath, only: path
 
       implicit none
 
-      integer, intent(in) :: NOUT, NTER, NINFW, NGRA1
       integer, intent(out) :: NPRO
       real*8, intent(out), dimension(*) :: RPRO, ZPRO, FIPRO
 
@@ -144,14 +140,13 @@
       end subroutine rd_prob
 
 !-------------------------------------------------------------------
-      subroutine LOOPNT(NOUT, NTER, NINFW, NGRA1, NLOO, RLOO, ZLOO)
+      subroutine LOOPNT(NINFW, NGRA1, NLOO, RLOO, ZLOO)
 !--- INPUT OF POSITIONS OF "FL_LOOP" POINTS:
 
       use iopath, only: path
 
       implicit none
 
-      integer, intent(in) :: NOUT, NTER
       integer, intent(out) :: NLOO, NINFW, NGRA1
       real*8, intent(out), dimension(*) :: RLOO, ZLOO
 
@@ -206,13 +201,13 @@
       end subroutine rd_loop
 
 !----------------------------------------------------------------
-      subroutine PASCUR( NOUT, NTER, NEQUI, NFW, NBP, NVV,
-     &               PJK, fwcurr, bpcurr, vvcurr )
+      subroutine PASCUR(NEQUI, NFW, NBP, NVV, PJK, 
+     &                  fwcurr, bpcurr, vvcurr )
 ! TOROIDAL CURRENTS OF PASSIVE CONDUCTOR STRUCTURES
 
       implicit none
 
-      integer, intent(in) :: NOUT, NTER, NEQUI, NFW, NBP, NVV
+      integer, intent(in) :: NEQUI, NFW, NBP, NVV
       real*8, intent(in), dimension(*) :: PJK
       real*8, intent(out) :: fwcurr, bpcurr, vvcurr
 

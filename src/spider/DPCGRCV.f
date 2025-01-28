@@ -26,7 +26,7 @@
          do i=1, N
             RSNORM = RSNORM + R(i)*R(i)
          enddo
-         RSNORM = DSQRT(RSNORM)
+         RSNORM = SQRT(RSNORM)
          IDO = 1
          ITER = 0
       else if(IDO == 1 .AND. ITER == 0) then
@@ -37,7 +37,7 @@
          do i = 1, N
             ERROR = ERROR + R(i)*R(i)
          enddo
-         ERROR = DSQRT(ERROR)/RSNORM
+         ERROR = SQRT(ERROR)/RSNORM
          if(ERROR <= RELERR) then
             IDO = 3
             return
@@ -70,7 +70,7 @@
          do i = 1, N
             ERROR = ERROR + R(i)*R(i)
          enddo
-         ERROR = DSQRT(ERROR)/RSNORM
+         ERROR = SQRT(ERROR)/RSNORM
          if(ERROR <= RELERR .OR. ITER >= ITMAX) then
             IDO = 3
             return

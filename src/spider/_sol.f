@@ -44,7 +44,7 @@
 
       do i=1, Nr1
           do j=2, Nt1
-              ieq = numlin(i, j, nr, nt)
+              ieq = numlin(i, j, nt)
               wdm(i, j) = zw(ieq)
          enddo
       enddo
@@ -62,7 +62,7 @@
 
       use sp_parameters, only: neqp, nspp
       use compol_add, only: g, psii
-      use compol, only: nr, nr1, nt, nt1, neq, ia, ja, daop, aop0,
+      use compol, only: nr1, nt, nt1, neq, ia, ja, daop, aop0,
      &    right
 
       implicit none
@@ -89,14 +89,14 @@
       if (isol == 0) then
           do i=1, Nr1
               do j=2, Nt1
-                  ieq = numlin(i, j, nr, nt)
+                  ieq = numlin(i, j, nt)
                   zw(ieq) = g(i, j)
               enddo
           enddo
       else if (isol == 1) then
           do i=1, Nr1
               do j=2, Nt1
-                  ieq = numlin(i, j, nr, nt)
+                  ieq = numlin(i, j, nt)
                   zw(ieq) = psii(i, j)
               enddo
           enddo
@@ -152,7 +152,7 @@
 
       do i=1, iplas-1
           do j=2, Nt1
-              ieq = numlin(i, j, nr, nt)
+              ieq = numlin(i, j, nt)
               psie(i, j) = zw(ieq)
          enddo
       enddo
@@ -170,7 +170,7 @@
 
       use sp_parameters, only: neqp, nspp
       use compol_add, only: psie
-      use compol, only: nr, nr1, nt, nt1, neqpla, right, ia, ja,
+      use compol, only: nr1, nt, nt1, neqpla, right, ia, ja,
      &    dapp, app0
 
       implicit none
@@ -191,7 +191,7 @@
 
       do i=1, Nr1
           do j=2, Nt1
-              ieq = numlin(i, j, nr, nt)
+              ieq = numlin(i, j, nt)
               zw(ieq) = psie(i, j)
           enddo
       enddo

@@ -17,15 +17,15 @@
 
       integer :: i, j, l, ncequi, i_bsh, ik, iq, ncpfc, ngrid, nvv, 
      &   nbp, nfw, nc, nloop, n_ctrl, ngav1, ngra1, nprob, nursb,
-     &   nout, nter, isymm, ninfw, ninf
+     &   isymm, ninfw, ninf
       integer, dimension(nclim) :: ntype
       integer, dimension(nilim) :: necon
       real*8 :: alp_b, psi_bnd, psi0_bnd, platok, ereve0,
-     &    erps, e_psi, pscout, tokout, zli3, betpol, ftok, psicen,
+     &    erps, e_psi, pscout, tokout, betpol, ftok, psicen,
      &    alw0, alw1, alw2 
 
       real*8, dimension(nclim) :: pc, vc, hc, ccurx,
-     &    rc, rc1, rc2, rc3, rc4, zc, zc1, zc2, zc3, zc4
+     &    rc, rc1, rc2, zc, zc1, zc2
       real*8, dimension(nilim) :: wecon
       real*8, dimension(njlim) :: volk, volkp1, pjk, pjkp1, pjkp, pjkd,
      &    psk, pskp1, pskp, pskm1
@@ -89,31 +89,26 @@
 
 !-----------------------------------------
 ! INPUT OF POSITIONS OF "PF_PROBE" POINTS:
-      call PROPNT(NOUT, NTER, NINFW, NGRA1,
-     &            NPROb, RPROb, ZPROb, FIPROb)
+      call PROPNT(NPROb, RPROb, ZPROb, FIPROb)
 
 !----------------------------------------
 ! INPUT OF POSITIONS OF "FL_LOOP" POINTS:
-      call LOOPNT(NOUT, NTER, NINFW, NGRA1,
-     &            NLOOp, RLOOp, ZLOOp)
+      call LOOPNT(NINFW, NGRA1, NLOOp, RLOOp, ZLOOp)
 
 !-----------------------------------------------------
 ! INPUT PARAMETERS OF PFC SYSTEM AND PASSIV CONDUCTORS
 
       call CONDUC(NC, NCEQUI, NCPFC, NFW, NBP, NVV,
-     &            RC,ZC, PC, VC,HC, NTYPE,
-     &            RC1,ZC1,  RC2,ZC2,  RC3,ZC3,  RC4,ZC4,
+     &            RC, ZC, PC, VC, HC, NTYPE,
+     &            RC1, ZC1, RC2, ZC2,
      &            RES, VOLK, VOLKP1,
-     &            NECON, WECON,
-     &            NOUT, NTER, NINFW, ngra1 )
+     &            NECON, WECON, NINFW)
 
 !-----------------------------------------------------
 ! DEFINITION INDUCT. AND  SELFINDUCT. MATRIX
 ! FOR "EDDY" CONDUCTORS:  "PPIND" from COMMON /PPIDPS/
 
-      call L_MATR(NOUT,  NTER, NC, NCPFC,
-     &            NTYPE, RC,   ZC, VC, HC,
-     &            NECON,WECON )
+      call L_MATR(NC, NCPFC, NTYPE, RC, ZC, VC, HC, NECON, WECON)
 
       do L=1,NCEQUI
          if ( L.LE.NEQUI ) then
@@ -145,10 +140,7 @@
       call wrcoil(nc, ncpfc, rc, zc, pc, necon, wecon)
       ngrid=1
 
-      call auto(rc, zc, pc, nc, nstep, ngrid, 
-     &          rc1, zc1,  rc2, zc2, 
-     &          rc3, zc3,  rc4, zc4, 
-     &          ntype, necon, wecon)
+      call auto(rc, zc, nc, rc1, zc1, rc2, zc2, ntype, necon, wecon)
 
  2005 continue
 
@@ -216,15 +208,13 @@
       nstep=0
       ngrid=1
 
-      call eq_0(pjk, psk, ncequi, nstep, ngrid,
+      call eq_0(pjk, ncequi, nstep, ngrid,
      &          alf0, alf1, alf2, bet0, bet1, bet2,
-     &          betplx, ngav1,
      &          ftok, tokout, psicen, nursb,
      &          psi_bnd, alp_b, rax, zax, n_ctrl, b0, r0)
       call rdexf(ncequi)
-      call eq_ax(pjk, psk, ncequi, nstep, ngrid,
-     &           alf0, alf1, alf2, bet0, bet1, bet2,
-     &           betpol,  betplx, zli3,
+      call eq_ax(pjk, psk, ncequi, nstep, alf0,
+     &           betpol,  betplx,
      &           ngav1,
      &           ftok, tokout, psicen, pscout,
      &           EREVE0, ERPS,
@@ -258,9 +248,8 @@
             pjk(ik)=PFCEQW(ik)
          enddo
 
-         call eq_ax(pjk, psk, ncequi, nstep, ngrid,
-     &              alf0, alf1, alf2, bet0, bet1, bet2,
-     &              betpol, betplx, zli3,
+         call eq_ax(pjk, psk, ncequi, nstep, alf0,
+     &              betpol, betplx,
      &              ngav1,
      &              ftok, tokout, psicen, pscout,
      &              EREVE0, ERPS,
@@ -348,14 +337,14 @@
 
       integer :: i, j, l, ncequi, i_bsh, ik, iq, ncpfc, ngrid, nvv, 
      &   nbp, nfw, nc, nloop, n_ctrl, ngav1, ngra1, nprob, nursb,
-     &   nout, nter, isymm, ninfw, ninf
+     &   isymm, ninfw, ninf
       integer, dimension(nclim) :: ntype
       integer, dimension(nilim) :: necon
       real*8 :: alp_b, psi_bnd, psi0_bnd, platok, ereve0,
-     &   erps, e_psi, pscout, tokout, zli3, betpol, ftok, psicen,
+     &   erps, e_psi, pscout, tokout, betpol, ftok, psicen,
      &   alw0, alw1, alw2 
       real*8, dimension(nclim) :: pc, vc, hc, ccurx,
-     &   rc, rc1, rc2, rc3, rc4, zc, zc1, zc2, zc3, zc4
+     &   rc, rc1, rc2, zc, zc1, zc2
       real*8, dimension(nilim) :: wecon
       real*8, dimension(njlim) :: volk, volkp1, pjk, pjkp1, pjkp, pjkd,
      &   psk, pskp1, pskp, pskm1
@@ -417,30 +406,25 @@
 
 !-----------------------------------------
 ! INPUT OF POSITIONS OF "PF_PROBE" POINTS:
-      call PROPNT(NOUT, NTER, NINFW, NGRA1,
-     &            NPROb, RPROb, ZPROb, FIPROb)
+      call PROPNT(NPROb, RPROb, ZPROb, FIPROb)
 
 !----------------------------------------
 ! INPUT OF POSITIONS OF "FL_LOOP" POINTS:
-      call LOOPNT(NOUT, NTER, NINFW, NGRA1,
-     &            NLOOp, RLOOp, ZLOOp )
+      call LOOPNT(NINFW, NGRA1, NLOOp, RLOOp, ZLOOp)
 
 !-----------------------------------------------------
 ! INPUT PARAMETERS OF PFC SYSTEM AND PASSIV CONDUCTORS
 !
       call CONDUC(NC, NCEQUI, NCPFC, NFW, NBP, NVV,
      &            RC, ZC, PC, VC,HC, NTYPE,
-     &            RC1, ZC1, RC2, ZC2, RC3, ZC3, RC4, ZC4,
+     &            RC1, ZC1, RC2, ZC2,
      &            RES, VOLK, VOLKP1,
-     &            NECON, WECON,
-     &            NOUT, NTER, NINFW, ngra1 )
+     &            NECON, WECON, NINFW)
 
 !-----------------------------------------------------
 ! DEFINITION INDUCT. AND  SELFINDUCT. MATRIX
 ! FOR "EDDY" CONDUCTORS:  "PPIND" from COMMON /PPIDPS/
-      call L_MATR(NOUT, NTER, NC, NCPFC,
-     &            NTYPE, RC, ZC, VC, HC,
-     &            NECON, WECON )
+      call L_MATR(NC, NCPFC, NTYPE, RC, ZC, VC, HC, NECON, WECON)
 
       write(*,*) '**'
       do L=1,NCEQUI
@@ -475,10 +459,7 @@
 
       ngrid=1
 
-      call auto(rc,zc,pc,nc,nstep,ngrid,
-     &          rc1,zc1, rc2,zc2,
-     &          rc3,zc3, rc4,zc4,
-     &          ntype, necon, wecon )
+      call auto(rc, zc, nc, rc1, zc1, rc2, zc2, ntype, necon, wecon)
 
  2005   continue
 
@@ -545,15 +526,13 @@
       nstep=0
       ngrid=1
 
-      call eq_0(pjk, psk, ncequi, nstep, ngrid,
+      call eq_0(pjk, ncequi, nstep, ngrid,
      &          alf0, alf1, alf2, bet0, bet1, bet2,
-     &          betplx, ngav1,
      &          ftok, tokout, psicen, nursb, 
      &          psi_bnd, alp_b, rax, zax, n_ctrl, b0, r0)
       call rdexf(ncequi)
-      call eq_ax(pjk, psk, ncequi, nstep,ngrid,
-     &           alf0, alf1, alf2, bet0, bet1, bet2,
-     &           betpol,  betplx, zli3,
+      call eq_ax(pjk, psk, ncequi, nstep, alf0,
+     &           betpol,  betplx,
      &           ngav1,
      &           ftok,tokout,psicen,pscout,
      &           EREVE0, ERPS,
@@ -587,9 +566,8 @@
             pjk(ik)=PFCEQW(ik)
          enddo
 
-         call eq_ax(pjk, psk, ncequi, nstep,ngrid,
-     &              alf0, alf1, alf2, bet0, bet1, bet2,
-     &              betpol,  betplx, zli3,
+         call eq_ax(pjk, psk, ncequi, nstep, alf0,
+     &              betpol,  betplx,
      &              ngav1,
      &              ftok,tokout,psicen,pscout,
      &              EREVE0, ERPS,
@@ -681,7 +659,7 @@
      &   isymm, ninf, nequiold, nbpold
       integer, dimension(nilim) :: necon
       real*8 :: alp_b, psi_bnd, psi0_bnd, platok, ereve0,
-     &   erps, e_psi, pscout, tokout, zli3, betpol, ftok, psicen,
+     &   erps, e_psi, pscout, tokout, betpol, ftok, psicen,
      &   alw0, alw1, alw2 
       real*8, dimension(nclim) :: pc, ccurx, rc, zc
       real*8, dimension(nilim) :: wecon
@@ -773,9 +751,8 @@
       nstep=0
       ngrid=1
 
-      call eq_0(pjk, psk, ncequi, nstep, ngrid,
+      call eq_0(pjk, ncequi, nstep, ngrid,
      &          alf0, alf1, alf2, bet0, bet1, bet2,
-     &          betplx, ngav1,
      &          ftok, tokout, psicen, nursb, 
      &          psi_bnd, alp_b, rax, zax, n_ctrl, b0, r0)
 
@@ -783,9 +760,8 @@
       call rdexf(ncequi)
       nequi=ncequi
       write(*,*) nequi, ncequi
-      call eq_ax(pjk, psk, ncequi, nstep,ngrid,
-     &           alf0, alf1, alf2, bet0, bet1, bet2,
-     &           betpol,  betplx, zli3,
+      call eq_ax(pjk, psk, ncequi, nstep, alf0,
+     &           betpol, betplx,
      &           ngav1,
      &           ftok,tokout,psicen,pscout,
      &           EREVE0, ERPS,
@@ -822,9 +798,8 @@
 
          write(*,*) 'iter', nequi,pjk(1:ncequi)
 
-         call eq_ax(pjk, psk, ncequi, nstep,ngrid,
-     &              alf0, alf1, alf2, bet0, bet1, bet2,
-     &              betpol,  betplx, zli3,
+         call eq_ax(pjk, psk, ncequi, nstep, alf0,
+     &              betpol, betplx,
      &              ngav1,
      &              ftok,tokout,psicen,pscout,
      &              EREVE0, ERPS,

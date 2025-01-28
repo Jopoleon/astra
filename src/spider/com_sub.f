@@ -16,13 +16,13 @@
             psia(i)=(iplas-i)/(iplas-1.d0)
          enddo
          do i=1,iplas1
-	    dpsda(i)=-1.d0
+            dpsda(i)=-1.d0
          enddo
       elseif(igdf.eq.1) then
-	 do i=1,iplas
+          do i=1,iplas
             psia(i)=1.d0-((i-1)/(iplas-1.d0))**2
          enddo
-	 do i=1,iplas1
+         do i=1,iplas1
             dpsda(i)=(1-2*i)/(iplas-1.d0)
          enddo
       elseif(igdf.eq.2) then
@@ -31,7 +31,7 @@
             znam=q(i-1)*(iplas-1)**2
             psia(i)=psia(i-1)+(2*i-3)/znam
          enddo
-	 psnor=psia(iplas)
+         psnor=psia(iplas)
          do i=1,iplas
             psia(i)=1.d0-psia(i)/psnor
          enddo
@@ -102,8 +102,8 @@
       Rma = Xs(1) + ( dpm(2)*dpm(4) - dpm(1)*dpm(5) )/DET
       Zma = Ys(1) + ( dpm(1)*dpm(4) - dpm(2)*dpm(3) )/DET
 
-      erroma=dsqrt((rma-rm0)**2+(zma-zm0)**2)
-      erroma=erroma/(dabs(r(2,2)-rm0))
+      erroma=SQRT((rma-rm0)**2+(zma-zm0)**2)
+      erroma=erroma/(ABS(r(2,2)-rm0))
 
       psima = fun(1) + dpm(1)*(rma-rm0) + dpm(2)*(zma-zm0) +
      &           0.5d0*dpm(3)*(rma-rm0)*(rma-rm0)  +
@@ -332,7 +332,7 @@
       do i=1,iplas-1
          flfi_m=flfi_m-q(i)*(psia(i+1)-psia(i))*psim
       enddo
-	             
+             
       return
       end subroutine get_flfi
 
@@ -516,7 +516,7 @@
       Dzz=dp(5)
 
       tg2a=2.d0*drz/(drr-dzz)
-      cos2a=1.d0/dsqrt(1.d0+tg2a**2)
+      cos2a=1.d0/SQRT(1.d0+tg2a**2)
       sin2a=cos2a*tg2a
 
       Dxx=0.5d0*(Drr+Dzz)+0.5d0*cos2a*(Drr-Dzz)+sin2a*Drz
@@ -529,12 +529,12 @@
       dpsi=(psia(iplas)-psia(iplas-1))
       ps14=-0.25d0*dpsi
       ffp=dfdpsi(iplas)
-      f(iplas-1)=dsqrt(fvac**2-ffp*(psim-psip)*dpsi)
+      f(iplas-1)=SQRT(fvac**2-ffp*(psim-psip)*dpsi)
 
       do i=iplas-2,1,-1
          dpsi=0.5d0*(psia(i+2)-psia(i))*(psim-psip)
          ffp=dfdpsi(i+1)
-         f(i)=dsqrt(f(i+1)**2-2.d0*ffp*dpsi)
+         f(i)=SQRT(f(i+1)**2-2.d0*ffp*dpsi)
       enddo
 
       f(iplas)=fvac
@@ -757,11 +757,11 @@
       B2_av_m=(3.d0*B2_av(1) - B2_av(2))/2.0d0 
 
       do i=1,iplas
-         xa=dfloat(i-1)/dfloat(iplas-1)	  	  
+         xa=FLOAT(i-1)/FLOAT(iplas-1)
          if(kastr.eq.1) then
-            sigma(i) =dabs( fun_sig(xa,i)*dtim /amu0)  
+            sigma(i) =ABS( fun_sig(i)*dtim /amu0)  
          else
-            sigma(i) =dabs( fun_sig_a(xa,i)*dtim/amu0 ) 
+            sigma(i) =ABS( fun_sig_a(xa)*dtim/amu0 ) 
          endif
       enddo
 
@@ -774,7 +774,7 @@
       enddo
 
       i=1
-	   
+
       Fm=(3.d0*F(1)-F(2))/2.0d0
       EBm=dpsidt(1)*Fm/rm**2/dtim
       EB(1)= EBm
@@ -797,7 +797,7 @@
          EB_c(i)= Dpsdt05*(flx_fi(i+1)-flx_fi(i))
      &           -Dfidt05*(psia(i+1)-psia(i))*psim
          EB_c(i)=-0.5d0*(EB(i)+EB(i+1))
-         Epar_c(i)=EB_c(i)/dsqrt(B2_av(i))
+         Epar_c(i)=EB_c(i)/SQRT(B2_av(i))
       enddo
 
       do i=1,iplas
@@ -808,9 +808,9 @@
       end subroutine cur_avg
 
 !----------------------------------------------------------------
-      function numlin(i, j, nr, nt)
+      function numlin(i, j, nt)
 
-      integer, intent(in) :: i, j, nr, nt
+      integer, intent(in) :: i, j, nt
 
       integer :: jj
 
@@ -840,7 +840,7 @@
 ! JA(IM) -- number of matrix column for element a(im)
 
       use sp_parameters, only: nrp, ntp
-      use compol, only: ia, ja, a, nt, nt1, nt2, nr, iplas, neqpla,
+      use compol, only: ia, ja, a, nt, nt1, nt2, iplas, neqpla,
      & itin, nitbeg, nitdel, app0, dapp 
 
       implicit none
@@ -863,7 +863,7 @@
 
       do j=2,nt1
          im=im+1
-         ja(im)=numlin(2,j,nr,nt)
+         ja(im)=numlin(2,j,nt)
          a(im)=a12(1,j)+a24(1,j)+a34(1,j-1)+a13(1,j-1)
          a(1)=a(1)-a(im)
       enddo
@@ -888,49 +888,49 @@
 !2!cof. to (i-1,j)
             im=im+1
             a(im)=a2
-            ja(im)=numlin(i-1,j,nr,nt)
+            ja(im)=numlin(i-1,j,nt)
 
 !3!cof. to (i-1,j+1)
             im=im+1
             a(im)=a3
-            ja(im)=numlin(i-1,j+1,nr,nt)
+            ja(im)=numlin(i-1,j+1,nt)
 
 !1!cof. to (i-1,j-1)
             im=im+1
             a(im)=a1
-            ja(im)=numlin(i-1,j-1,nr,nt)
+            ja(im)=numlin(i-1,j-1,nt)
 
 !5!cof. to (i,j)
             im=im+1
             a(im)=a5
-            ja(im)=numlin(i,j,nr,nt)
+            ja(im)=numlin(i,j,nt)
 
 !6!cof. to (i,j+1)
             im=im+1
             a(im)=a6
-            ja(im)=numlin(i,j+1,nr,nt)
+            ja(im)=numlin(i,j+1,nt)
 
 !4!cof. to (i,j-1)
             im=im+1
             a(im)=a4
-            ja(im)=numlin(i,j-1,nr,nt)
+            ja(im)=numlin(i,j-1,nt)
 
             if(i.ne.iplas-1) then
 
 !8!cof. to (i+1,j)
                im=im+1
                a(im)=a8
-               ja(im)=numlin(i+1,j,nr,nt)
+               ja(im)=numlin(i+1,j,nt)
 
 !9!cof. to (i+1,j+1)
                im=im+1
                a(im)=a9
-               ja(im)=numlin(i+1,j+1,nr,nt)
+               ja(im)=numlin(i+1,j+1,nt)
 
 !7!cof. to (i+1,j-1)
                im=im+1
                a(im)=a7
-               ja(im)=numlin(i+1,j-1,nr,nt)
+               ja(im)=numlin(i+1,j-1,nt)
 
             endif
 
@@ -939,37 +939,37 @@
 !1!cof. to central point
             im=im+1
             a(im)=a1+a2+a3
-            ja(im)=numlin(1,j,nr,nt)
+            ja(im)=numlin(1,j,nt)
 
 !5!cof. to (2,j)
             im=im+1
             a(im)=a5
-            ja(im)=numlin(2,j,nr,nt)
+            ja(im)=numlin(2,j,nt)
 
 !6!cof. to (2,j+1)
             im=im+1
             a(im)=a6
-            ja(im)=numlin(2,j+1,nr,nt)
+            ja(im)=numlin(2,j+1,nt)
 
 !4!cof. to (2,j-1)
             im=im+1
             a(im)=a4
-            ja(im)=numlin(2,j-1,nr,nt)
+            ja(im)=numlin(2,j-1,nt)
 
 !8!cof. to (3,j)
             im=im+1
             a(im)=a8
-            ja(im)=numlin(3,j,nr,nt)
+            ja(im)=numlin(3,j,nt)
 
 !9!cof. to (3,j+1)
             im=im+1
             a(im)=a9
-            ja(im)=numlin(3,j+1,nr,nt)
+            ja(im)=numlin(3,j+1,nt)
 
 !7!cof. to (3,j-1)
             im=im+1
             a(im)=a7
-            ja(im)=numlin(3,j-1,nr,nt)
+            ja(im)=numlin(3,j-1,nt)
 
          endif
 
@@ -992,49 +992,49 @@
 !1!cof. to (i-1,j-1)
                im=im+1
                a(im)=a1
-               ja(im)=numlin(i-1,j-1,nr,nt)
+               ja(im)=numlin(i-1,j-1,nt)
 
 !2!cof. to (i-1,j)
                im=im+1
                a(im)=a2
-               ja(im)=numlin(i-1,j,nr,nt)
+               ja(im)=numlin(i-1,j,nt)
 
 !3!cof. to (i-1,j+1)
                im=im+1
                a(im)=a3
-               ja(im)=numlin(i-1,j+1,nr,nt)
+               ja(im)=numlin(i-1,j+1,nt)
 
 !3!cof. to (i,j-1)
                im=im+1
                a(im)=a4
-               ja(im)=numlin(i,j-1,nr,nt)
+               ja(im)=numlin(i,j-1,nt)
 
 !5!cof. to (i,j)
                im=im+1
                a(im)=a5
-               ja(im)=numlin(i,j,nr,nt)
+               ja(im)=numlin(i,j,nt)
 
 !6!cof. to (i,j+1)
                im=im+1
                a(im)=a6
-               ja(im)=numlin(i,j+1,nr,nt)
+               ja(im)=numlin(i,j+1,nt)
 
                if(i.ne.iplas-1) then
 
 !7!cof. to (i+1,j-1)
                   im=im+1
                   a(im)=a7
-                  ja(im)=numlin(i+1,j-1,nr,nt)
+                  ja(im)=numlin(i+1,j-1,nt)
 
 !8!cof. to (i+1,j)
                   im=im+1
                   a(im)=a8
-                  ja(im)=numlin(i+1,j,nr,nt)
+                  ja(im)=numlin(i+1,j,nt)
 
 !9!cof. to (i+1,j+1)
                   im=im+1
                   a(im)=a9
-                  ja(im)=numlin(i+1,j+1,nr,nt)
+                  ja(im)=numlin(i+1,j+1,nt)
 
                endif
 
@@ -1043,37 +1043,37 @@
 !1!cof. to central point
                im=im+1
                a(im)=a1+a2+a3
-               ja(im)=numlin(1,j,nr,nt)
+               ja(im)=numlin(1,j,nt)
 
 !2!cof. to (2,j-1)
                im=im+1
                a(im)=a4
-               ja(im)=numlin(2,j-1,nr,nt)
+               ja(im)=numlin(2,j-1,nt)
 
 !3!cof. to (2,j)
                im=im+1
                a(im)=a5
-               ja(im)=numlin(2,j,nr,nt)
+               ja(im)=numlin(2,j,nt)
 
 !4!cof. to (2,j+1)
                im=im+1
                a(im)=a6
-               ja(im)=numlin(2,j+1,nr,nt)
+               ja(im)=numlin(2,j+1,nt)
 
 !5!cof. to (3,j-1)
                im=im+1
                a(im)=a7
-               ja(im)=numlin(3,j-1,nr,nt)
+               ja(im)=numlin(3,j-1,nt)
 
 !6!cof. to (3,j)
                im=im+1
                a(im)=a8
-               ja(im)=numlin(3,j,nr,nt)
+               ja(im)=numlin(3,j,nt)
 
 !7!cof. to (3,j+1)
                im=im+1
                a(im)=a9
-               ja(im)=numlin(3,j+1,nr,nt)
+               ja(im)=numlin(3,j+1,nt)
 
             endif
 
@@ -1099,49 +1099,49 @@
 !3!cof. to (i-1,j+1)
             im=im+1
             a(im)=a3
-            ja(im)=numlin(i-1,j+1,nr,nt)
+            ja(im)=numlin(i-1,j+1,nt)
 
 !1!cof. to (i-1,j-1)
             im=im+1
             a(im)=a1
-            ja(im)=numlin(i-1,j-1,nr,nt)
+            ja(im)=numlin(i-1,j-1,nt)
 
 !2!cof. to (i-1,j)
             im=im+1
             a(im)=a2
-            ja(im)=numlin(i-1,j,nr,nt)
+            ja(im)=numlin(i-1,j,nt)
 
 !6!cof. to (i,j+1)
             im=im+1
             a(im)=a6
-            ja(im)=numlin(i,j+1,nr,nt)
+            ja(im)=numlin(i,j+1,nt)
 
 !4!cof. to (i,j-1)
             im=im+1
             a(im)=a4
-            ja(im)=numlin(i,j-1,nr,nt)
+            ja(im)=numlin(i,j-1,nt)
 
 !5!cof. to (i,j)
             im=im+1
             a(im)=a5
-            ja(im)=numlin(i,j,nr,nt)
+            ja(im)=numlin(i,j,nt)
 
             if(i.ne.iplas-1) then
 
 !9!cof. to (i+1,j+1)
                im=im+1
                a(im)=a9
-               ja(im)=numlin(i+1,j+1,nr,nt)
+               ja(im)=numlin(i+1,j+1,nt)
 
 !7!cof. to (i+1,j-1)
                im=im+1
                a(im)=a7
-               ja(im)=numlin(i+1,j-1,nr,nt)
+               ja(im)=numlin(i+1,j-1,nt)
 
 !8!cof. to (i+1,j)
                im=im+1
                a(im)=a8
-               ja(im)=numlin(i+1,j,nr,nt)
+               ja(im)=numlin(i+1,j,nt)
 
             endif
 
@@ -1150,37 +1150,37 @@
 !1!cof. to central point
             im=im+1
             a(im)=a1+a2+a3
-            ja(im)=numlin(1,j,nr,nt)
+            ja(im)=numlin(1,j,nt)
 
 !6!cof. to (2,j+1)
             im=im+1
             a(im)=a6
-            ja(im)=numlin(2,j+1,nr,nt)
+            ja(im)=numlin(2,j+1,nt)
 
 !4!cof. to (2,j-1)
             im=im+1
             a(im)=a4
-            ja(im)=numlin(2,j-1,nr,nt)
+            ja(im)=numlin(2,j-1,nt)
 
 !5!cof. to (2,j)
             im=im+1
             a(im)=a5
-            ja(im)=numlin(2,j,nr,nt)
+            ja(im)=numlin(2,j,nt)
 
 !9!cof. to (3,j+1)
             im=im+1
             a(im)=a9
-            ja(im)=numlin(3,j+1,nr,nt)
+            ja(im)=numlin(3,j+1,nt)
 
 !7!cof. to (3,j-1)
             im=im+1
             a(im)=a7
-            ja(im)=numlin(3,j-1,nr,nt)
+            ja(im)=numlin(3,j-1,nt)
 
 !8!cof. to (3,j)
             im=im+1
             a(im)=a8
-            ja(im)=numlin(3,j,nr,nt)
+            ja(im)=numlin(3,j,nt)
 
          endif
 

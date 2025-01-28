@@ -1,9 +1,8 @@
-      subroutine DIFFER( AOLD, ANEW, N, ERRLOC, ERRVEC,
-     &                   ABSMAX, ABSMIN, NOUT, NTER )
+      subroutine DIFFER(AOLD, ANEW, N, ERRLOC, ERRVEC, ABSMAX, ABSMIN)
 
       implicit none
 
-      integer, intent(in) :: N, NOUT, NTER
+      integer, intent(in) :: N
       real*8, intent(in), dimension(*) :: AOLD, ANEW
       real*8, intent(out) :: ERRLOC, ERRVEC, ABSMAX, ABSMIN
 
@@ -11,18 +10,18 @@
       real*8 :: ABSA, ABSD, ABSR, S1, S2
 
       ERRLOC = 0.D0
-      ABSMAX = dabs( ANEW(1) )
-      ABSMIN = dabs( ANEW(1) )
+      ABSMAX = ABS( ANEW(1) )
+      ABSMIN = ABS( ANEW(1) )
 
       do I=1,N
-         ABSA = dabs( ANEW(I) )
+         ABSA = ABS( ANEW(I) )
          if( ABSA.LT.ABSMIN ) ABSMIN = ABSA
          if( ABSA.GT.ABSMAX ) ABSMAX = ABSA
-         ABSD = dabs( ANEW(I) - AOLD(I) )
+         ABSD = ABS( ANEW(I) - AOLD(I) )
          if( ABSA.GT.1.0D-12 ) then
             ABSR = ABSD / ABSA
             if( ABSR.GT.ERRLOC )  ERRLOC = ABSR
-	 endif
+         endif
       enddo
 
       S1 = 0.D0
@@ -31,8 +30,8 @@
          S1 = S1 + ( ANEW(L) - AOLD(L) )**2
          S2 = S2 +   ANEW(L)**2
       enddo
-      S1 = dsqrt(S1)
-      S2 = dsqrt(S2)
+      S1 = SQRT(S1)
+      S2 = SQRT(S2)
 
       if( S2 .GT. 1.0D-12 ) then
          ERRVEC = S1 / S2
@@ -69,7 +68,7 @@
 
       if( NTYPE .EQ. 1 ) then
 
-      VCL=dsqrt(HC**2+VC**2)
+      VCL=SQRT(HC**2+VC**2)
 
 !--- FROM A.KAVIN
 !
@@ -285,12 +284,11 @@
 !***********************************************************************
 !--- INPUT PARAMETERS OF PFC SYSTEM AND PASSIV CONDUCTORS
 
-       subroutine CONDUC( NC, NCEQUI, NCPFC, NFW, NBP, NVV,
-     &                    RC, ZC, PC, VC, HC, NTYPE,
-     &                    RC1, ZC1, RC2, ZC2, RC3, ZC3, RC4, ZC4,
-     &                    RES, VOLK, VOLKP1,
-     &                    NECON, WECON,
-     &                    NOUT, NTER, NINFW, ngra1 )
+       subroutine CONDUC(NC, NCEQUI, NCPFC, NFW, NBP, NVV,
+     &                   RC, ZC, PC, VC, HC, NTYPE,
+     &                   RC1, ZC1, RC2, ZC2,
+     &                   RES, VOLK, VOLKP1,
+     &                   NECON, WECON, NINFW)
 
       use sp_parameters, only: njlim, nplim, npfc0, twopi, nclim
       use iopath, only: path
@@ -298,12 +296,12 @@
 
       implicit none
 
-      integer, intent(in) :: NFW, NBP, NVV, ngra1
-      integer, intent(out) :: NC, NCEQUI, NCPFC, NOUT, NTER, NINFW
+      integer, intent(in) :: NFW, NBP, NVV
+      integer, intent(out) :: NC, NCEQUI, NCPFC, NINFW
       integer, intent(out), dimension(*) :: NTYPE, NECON
       real*8, dimension(nclim) :: VC, HC
-      real*8, intent(out), dimension(*) :: PC, RC, RC1, RC2, RC3, RC4,
-     &   ZC, ZC1, ZC2, ZC3, ZC4, VOLK, VOLKP1, WECON
+      real*8, intent(out), dimension(*) :: PC, RC, RC1, RC2,
+     &   ZC, ZC1, ZC2, VOLK, VOLKP1, WECON
       real*8, intent(out), dimension(njlim, njlim) :: RES
 
       integer :: i, j, l, nsegbp, nsegvv, nsegfw
@@ -345,11 +343,11 @@
 
 !--- INPUT OF PASSIVE CONDUCTORS PARAMETERS
 
-      call TREFW( NOUT, NTER, NINFW, NSEGFW,
-     &            KDFW, RP1FW, ZP1FW, RP2FW, ZP2FW, RFWSEG, CFWSEG,
-     &            NFW,  NTYFW,
-     &            RFW,  ZFW,  DFW,   HFW,  RESFW, CURFW,
-     &            RFW1, ZFW1, RFW2,  ZFW2 )
+      call TREFW(NINFW, NSEGFW,
+     &           KDFW, RP1FW, ZP1FW, RP2FW, ZP2FW, RFWSEG, CFWSEG,
+     &           NFW,  NTYFW,
+     &           RFW,  ZFW,  DFW,   HFW,  RESFW, CURFW,
+     &           RFW1, ZFW1, RFW2,  ZFW2 )
 
       if( NFW.NE.0 )  then
          do I=1,NFW
@@ -371,11 +369,11 @@
          NCEQUI = NCEQUI + NFW
       endif
 
-      call TREBP( NOUT, NTER, NINFW, NSEGBP,
-     &            KDBP, RP1BP, ZP1BP, RP2BP, ZP2BP, RBPSEG, CBPSEG,
-     &            NBP,  NTYBP,
-     &            RBP,  ZBP,  DBP,   HBP,  RESBP,  CURBP,
-     &            RBP1, ZBP1, RBP2,  ZBP2 )
+      call TREBP(NINFW, NSEGBP,
+     &           KDBP, RP1BP, ZP1BP, RP2BP, ZP2BP, RBPSEG, CBPSEG,
+     &           NBP,  NTYBP,
+     &           RBP,  ZBP,  DBP,   HBP,  RESBP,  CURBP,
+     &           RBP1, ZBP1, RBP2,  ZBP2 )
 
       if( NBP.NE.0 )  then
          do I=1,NBP
@@ -397,11 +395,11 @@
          NCEQUI = NCEQUI + NBP
       endif
 
-      call TREVV( NOUT, NTER, NINFW, NSEGVV,
-     &            KDVV, RP1VV, ZP1VV, RP2VV, ZP2VV, RVVSEG, CVVSEG,
-     &            NVV,  NTYVV,
-     &            RVV,  ZVV,  DVV,   HVV,  RESVV, CURVV,
-     &            RVV1, ZVV1, RVV2,  ZVV2 )
+      call TREVV(NINFW, NSEGVV,
+     &           KDVV, RP1VV, ZP1VV, RP2VV, ZP2VV, RVVSEG, CVVSEG,
+     &           NVV,  NTYVV,
+     &           RVV,  ZVV,  DVV,   HVV,  RESVV, CURVV,
+     &           RVV1, ZVV1, RVV2,  ZVV2 )
 
       if( NVV.NE.0 )  then
          do I=1,NVV

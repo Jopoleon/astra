@@ -39,8 +39,7 @@
      &   rx0, zx0, rmax0, zmax0, rm, zm, rxpold, zxpold, rxppr, zxppr,
      &   raxpr, zaxpr, rmaold, zmaold
       real*8, dimension(nilim) :: wecon
-      real*8, dimension(nclim) :: PC, PSIP, VC, HC, RC, RC1, RC2,
-     &   RC3, RC4, ZC, ZC1, ZC2, ZC3, ZC4
+      real*8, dimension(nclim) :: PC, VC, HC, RC, RC1, RC2, ZC, ZC1, ZC2
       real*8, dimension(njlim) :: volk, volkp1, pjk, pjkp1, pjkp, 
      &   pjkd, psk, pskp1, pskp, pskm1
       real*8, dimension(njlim, njlim) :: res
@@ -143,33 +142,31 @@
 !-----------------------------------------
 ! INPUT OF POSITIONS OF "PF_PROBE" POINTS:
 
-      call PROPNT(NOUT, NTER, NINFW, NGRA1, NPRO, RPROb, ZPROb, FIPROb)
+      call PROPNT(NPRO, RPROb, ZPROb, FIPROb)
 
 !----------------------------------------
 ! INPUT OF POSITIONS OF "FL_LOOP" POINTS:
-      call LOOPNT(NOUT, NTER, NINFW, NGRA1, NLOOp, RLOOp, ZLOOp)
+      call LOOPNT(NINFW, NGRA1, NLOOp, RLOOp, ZLOOp)
 
 !-----------------------------------------------------
 ! INPUT PARAMETERS OF PFC SYSTEM AND PASSIV CONDUCTORS
       call CONDUC(NC, NCEQUI, NCPFC, NFW, NBP, NVV, 
      &            RC, ZC, PC, VC, HC, NTYPE, 
-     &            RC1, ZC1, RC2, ZC2, RC3, ZC3, RC4, ZC4, 
+     &            RC1, ZC1, RC2, ZC2,
      &            RES, VOLK, VOLKP1, 
-     &            NECON, WECON, 
-     &            NOUT, NTER, NINFW, ngra1)
+     &            NECON, WECON, NINFW)
 
 !----------------------------------------------------
 ! DEFINITION INDUCT. AND  SELFINDUCT. MATRIX
 ! FOR "EDDY" CONDUCTORS:  "PPIND" from COMMON /PPIDPS/
 
-      call L_MATR(NOUT, NTER, NC, NCPFC, NTYPE, RC,  ZC, VC, HC, 
-     &            NECON, WECON)
+      call L_MATR(NC, NCPFC, NTYPE, RC,  ZC, VC, HC, NECON, WECON)
 
 !---------------------------------------------------
 ! Initial condition (currents) for circuit equations
 
       do L=1, NCEQUI
-	 if ( L.LE.NEQUI ) then
+         if ( L.LE.NEQUI ) then
             PJK(L)  = PFCEQW(L)
             PJKP(L) = PJK(L)
          else
@@ -210,9 +207,7 @@
       call wrcoil(nc, ncpfc, rc, zc, pc, necon, wecon)
       ngrid=1
 
-      call auto(rc, zc, pc, nc, nstep, ngrid, 
-     &          rc1, zc1, rc2, zc2, rc3, zc3, rc4, zc4, 
-     &          ntype, necon, wecon )
+      call auto(rc, zc, nc, rc1, zc1, rc2, zc2, ntype, necon, wecon)
 
  2005 continue
 
@@ -283,19 +278,17 @@
       ngav1=0
       ftok=tokf
 
-      call eq_0(pjk, psip, ncequi, kstep, ngrid, 
+      call eq_0(pjk, ncequi, kstep, ngrid, 
      &          alf0, alf1, alf2, bet0, bet1, bet2, 
-     &          betplx, ngav1, 
      &          ftok, tokout, psiax, nursb, 
      &          psi_bnd, alp_b, rax, zax, n_ctrl, b0, r0 )
 
       call rdexf(ncequi)
 
       call eq(pjk, psk, ncequi, kstep, ngrid, 
-     &        alf0, alf1, alf2, bet0, bet1, bet2, 
-     &        betpol, betplx, ngav1, 
+     &        alf0, betpol, betplx, ngav1, 
      &        tokout, psiout, 
-     &        nursb, psi_bnd, alp_b, rax, zax )
+     &        nursb, alp_b, rax, zax )
 
       do L=1, NCEQUI
          PSKP1(L) = PSK(L)
@@ -448,7 +441,7 @@
             enddo
             NREG = 0
             NLES = 0
-            call EVSLV(NLES,  NREG, TSTEP, TSTEP, SIGM, 
+            call EVSLV(NLES, NREG, TSTEP, SIGM, 
      &                 NCEQUI, VOLK, VOLKP1, RES, 
      &                 PSK,   PSKP1, PJK,   PJKP1, PJKP, 
      &                 NOUT,  NTER, KEYPRI, EREVE, tstep )
@@ -461,19 +454,18 @@
             enddo
             NREG = 0
             NLES = 1
-            call EVSLV(NLES,  NREG, TSTEPR, TSTEP, SIGM, 
+            call EVSLV(NLES, NREG, TSTEP, SIGM, 
      &                 NCEQUI, VOLK, VOLKP1, RES, 
-     &                 PSKM1, PSK, PJK,   PJKP1, PJKP, 
-     &                 NOUT,  NTER, KEYPRI, EREVE , tstep)
+     &                 PSKM1, PSK, PJK, PJKP1, PJKP, 
+     &                 EREVE, tstep)
 
          endif
 
-	 if (eq_cmd.eq.1.and.ipsmk.ge.1) then
+         if (eq_cmd.eq.1.and.ipsmk.ge.1) then
             PSKM1 = PSK
             PSK   = PSKP1
-            call EQ_AX(pjkp1, PSkp1, NCequi,  KSTEP, NGRID, 
-     &                 ALF0, ALF1, ALF2, BET0, BET1, BET2, 
-     &                 BETPOL,  BETPLX,  ZLI3, 
+            call EQ_AX(pjkp1, PSkp1, NCequi,  KSTEP, ALF0,
+     &                 BETPOL, BETPLX,
      &                 NGAV1, 
      &                 FTOK, TOKOUT, PSIAX, PSIOUT, 
      &                 ENELS, ERPS, 
@@ -481,7 +473,7 @@
 
             call eq_par(z0cen, alp, alpnew, qcen, nctrl, numlim, up, 
      &                  rm, zm, rx0, zx0)
-	 endif
+         endif
 
 !---------------------
 ! Start tieration loop
@@ -494,21 +486,20 @@
             enddo
             NREG = 0
             NLES = 2
-            call EVSLV(NLES,  NREG, TSTEP, TSTEP, SIGM, 
+            call EVSLV(NLES, NREG, TSTEP, SIGM, 
      &                 NCEQUI, VOLK, VOLKP1, RES, 
-     &                 PSK,   PSKP1, PJK,   PJKP1, PJKP, 
-     &                 NOUT,  NTER, KEYPRI, EREVE , tstep)
+     &                 PSK, PSKP1, PJK, PJKP1, PJKP, 
+     &                 EREVE, tstep)
             call DIFFER(PJKP, PJKP1, NCEQUI, ERRCU1, ERRCU2, 
-     &                  CURMAX, CURMIN, NOUT, NTER)
+     &                  CURMAX, CURMIN)
             SGMCUR = 0.75D0
             do L=1, NCEQUI
                PJKP1(L) = SGMCUR*PJKP1(L) + (1.0D0 - SGMCUR)*PJKP(L)
             enddo
 
             if (kpr.ge.-1) then !efable for skip fsim
-            call EQ_AX(pjkp1, PSkp1, NCequi, KSTEP, NGRID, 
-     &                 ALF0, ALF1, ALF2, BET0, BET1, BET2, 
-     &                 BETPOL, BETPLX, ZLI3, 
+            call EQ_AX(pjkp1, PSkp1, NCequi, KSTEP, ALF0,
+     &                 BETPOL, BETPLX,
      &                 NGAV1,
      &                 FTOK, TOKOUT, PSIAX, PSIOUT, 
      &                 ENELS, ERPS, 
@@ -536,8 +527,8 @@
             close(1)
          endif
 
-         diftok=dabs(platok-ztok)/(dabs(platok-ztok_n)+1.d-8)
-         difpsi=dabs(psax-zpsim)/(dabs(psax-zpsim_n)+1.d-8)
+         diftok=ABS(platok-ztok)/(ABS(platok-ztok_n)+1.d-8)
+         difpsi=ABS(psax-zpsim)/(ABS(psax-zpsim_n)+1.d-8)
 
          if ((diftok.lt.5.0d-3 .AnD. it_dmf.gt.0) .OR. keyctr.eq.0) then
             call eqb(alf0, alf1, alf2, bet0, bet1, bet2, alw0, alw1,
@@ -612,8 +603,7 @@
      &   raxpr, zaxpr, rmaold, zmaold,
      &   cmnd_dioh2s, cmnd_dioh2u
       real*8, dimension(nilim) :: wecon
-      real*8, dimension(nclim) :: PC, PSIP, VC, HC, RC, RC1, RC2,
-     &   RC3, RC4, ZC, ZC1, ZC2, ZC3, ZC4
+      real*8, dimension(nclim) :: PC, VC, HC, RC, RC1, RC2, ZC, ZC1, ZC2
       real*8, dimension(njlim) :: volk, volkp1, pjk, pjkp1, pjkp, 
      &   pjkd, psk, pskp1, pskp, pskm1
       real*8, dimension(njlim, njlim) :: res
@@ -643,7 +633,7 @@
       tstep = dt
 
       if (j_calll.eq.0) then
-         dt_nowww=tstep		
+         dt_nowww=tstep
          j_calll=1
       endif
 
@@ -728,30 +718,26 @@
 
 !-----------------------------------------
 ! INPUT OF POSITIONS OF "PF_PROBE" POINTS:
-      call PROPNT(NOUT, NTER, NINFW, NGRA1,
-     &            NPRO, RPROb, ZPROb, FIPROb)
+      call PROPNT(NPRO, RPROb, ZPROb, FIPROb)
 
 !----------------------------------------
 ! INPUT OF POSITIONS OF "FL_LOOP" POINTS:
-      call LOOPNT(NOUT, NTER, NINFW, NGRA1, 
-     &            NLOOp, RLOOp, ZLOOp)
+      call LOOPNT(NINFW, NGRA1, NLOOp, RLOOp, ZLOOp)
 
 !-----------------------------------------------------
 ! INPUT PARAMETERS OF PFC SYSTEM AND PASSIV CONDUCTORS
 
       call CONDUC(NC, NCEQUI, NCPFC, NFW, NBP, NVV, 
      &            RC, ZC, PC, VC, HC, NTYPE, 
-     &            RC1, ZC1, RC2, ZC2, RC3, ZC3, RC4, ZC4, 
+     &            RC1, ZC1, RC2, ZC2,
      &            RES, VOLK, VOLKP1, 
-     &            NECON, WECON, 
-     &            NOUT, NTER, NINFW, ngra1)
+     &            NECON, WECON, NINFW)
 
 !-----------------------------------------------------
 ! DEFINITION INDUCT. AND  SELFINDUCT. MATRIX
 ! FOR "EDDY" CONDUCTORS:  "PPIND" from COMMON /PPIDPS/
 
-      call L_MATR(NOUT, NTER, NC, NCPFC, NTYPE, RC,  ZC, VC, HC,
-     &            NECON, WECON )
+      call L_MATR(NC, NCPFC, NTYPE, RC, ZC, VC, HC, NECON, WECON)
 
 !---------------------------------------------------
 ! Initial condition (currents) for circuit equations
@@ -788,9 +774,7 @@
 
       ngrid=1
 
-      call auto(rc, zc, pc, nc, nstep, ngrid, 
-     &          rc1, zc1, rc2, zc2, rc3, zc3, rc4, zc4, 
-     &          ntype, necon, wecon )
+      call auto(rc, zc, nc, rc1, zc1, rc2, zc2, ntype, necon, wecon)
 
  2005 continue
 
@@ -861,17 +845,15 @@
       ngav1=0
       ftok=tokf
 
-      call eq_0(pjk, psip, ncequi, kstep, ngrid, 
+      call eq_0(pjk, ncequi, kstep, ngrid, 
      &          alf0, alf1, alf2, bet0, bet1, bet2, 
-     &          betplx, ngav1, 
      &          ftok, tokout, psiax, nursb, 
      &          psi_bnd, alp_b, rax, zax, n_ctrl, b0, r0)
       call rdexf(ncequi)
       call eq(pjk, psk, ncequi, kstep, ngrid, 
-     &        alf0, alf1, alf2, bet0, bet1, bet2, 
-     &        betpol, betplx, ngav1, 
+     &        alf0, betpol, betplx, ngav1, 
      &        tokout, psiout, 
-     &        nursb, psi_bnd, alp_b, rax, zax)
+     &        nursb, alp_b, rax, zax)
 
       do L=1, NCEQUI
          PSKP1(L) = PSK(L)
@@ -990,8 +972,8 @@
 
       if (res_trigts06.eq.1) then
          volkp1(1)=volkp1(1)-resres_oh6*pjkp(1)
-      	 volkp1(2)=volkp1(2)-resres_oh6*pjkp(1)
-      	 volkp1(3)=volkp1(3)-resres_oh6*pjkp(1)
+         volkp1(2)=volkp1(2)-resres_oh6*pjkp(1)
+         volkp1(3)=volkp1(3)-resres_oh6*pjkp(1)
       endif
 
       call get_flfi(flx_fi)
@@ -1023,51 +1005,50 @@
 !Efable this block below is to keep dioh2u and dioh2s to zero for some time
             if (ipsmk.ge.1) then
                if (cmnd_dioh2s.eq.0) then
-      	          pjkp1(2)=pjkp1(1)	
-      	          pjkp(2)=pjkp(1)	
-      	          pjk(2)=pjk(1)
-      	          pjkp1(3)=pjkp1(1)	
-      	          pjkp(3)=pjkp(1)	
-      	          pjk(3)=pjk(1)	
+                  pjkp1(2)=pjkp1(1)
+                  pjkp(2)=pjkp(1)
+                  pjk(2)=pjk(1)
+                  pjkp1(3)=pjkp1(1)
+                  pjkp(3)=pjkp(1)
+                  pjk(3)=pjk(1)
                endif
                if (cmnd_dioh2u.eq.0) then
-      	          pjkp1(3)=pjkp1(2)	
-      	          pjkp(3)=pjkp(2)	
-      	          pjk(3)=pjk(2)	
+                  pjkp1(3)=pjkp1(2)
+                  pjkp(3)=pjkp(2)
+                  pjk(3)=pjk(2)
                endif
             endif
 !Efable dioh block end
 
             if (ipsmk.ge.1) then
-      	       PSKM1= PSK    
-      	       PSK   = PSKP1
+               PSKM1= PSK    
+               PSK   = PSKP1
             endif
             do L=1, NCEQUI
                PSKP1(L) = PSK(L)
             enddo
             NREG = 0
             NLES = 0
-            call EVSLV(NLES,  NREG, TSTEP, TSTEP, SIGM, 
+            call EVSLV(NLES, NREG, TSTEP, SIGM, 
      &                 NCEQUI, VOLK, VOLKP1, RES, 
-     &                 PSK,   PSKP1, PJK,   PJKP1, PJKP, 
-     &                 NOUT,  NTER, KEYPRI, EREVE, dteqz)
+     &                 PSK, PSKP1, PJK, PJKP1, PJKP, 
+     &                 EREVE, dteqz)
 
 !Efable this block below is to keep dioh2u and dioh2s to zero for some time
             if (ipsmk.ge.1) then
                if (cmnd_dioh2s.eq.0) then
-      	          pjkp1(2)=pjkp1(1)	
-      	          pjkp(2)=pjkp(1)	
-      	          pjk(2)=pjk(1)	
-
-      	          pjkp1(3)=pjkp1(1)	
-      	          pjkp(3)=pjkp(1)	
-      	          pjk(3)=pjk(1)	
+                  pjkp1(2)=pjkp1(1)
+                  pjkp(2)=pjkp(1)
+                  pjk(2)=pjk(1)
+                  pjkp1(3)=pjkp1(1)
+                  pjkp(3)=pjkp(1)
+                  pjk(3)=pjk(1)
                endif
 
                if (cmnd_dioh2u.eq.0) then
-      	          pjkp1(3)=pjkp1(2)	
-      	          pjkp(3)=pjkp(2)	
-      	          pjk(3)=pjk(2)	
+                  pjkp1(3)=pjkp1(2)
+                  pjkp(3)=pjkp(2)
+                  pjk(3)=pjk(2)
                endif
             endif
 !Efable dioh block end
@@ -1077,14 +1058,9 @@
          if (eq_cmd.eq.1.and.ipsmk.ge.1.and.kpr.eq.-2) then
             PSKM1 = PSK
             PSK   = PSKP1
-            call EQ_AX0(pjk, PSkp1, NCequi, KSTEP, NGRID, 
-     &                  ALF0, ALF1, ALF2, BET0, BET1, BET2, 
-     &                  BETPLX, 
-     &                  NGAV1, 
-     &                  FTOK, PSIAX, 
-     &                  ENELS,
-     &                  psi_bnd)
-      	    if (ispid_contour.eq.0) then
+            call EQ_AX0(pjk, NCequi, KSTEP, NGAV1, 
+     &                  FTOK, PSIAX, psi_bnd)
+            if (ispid_contour.eq.0) then
                call eqb(alf0, alf1, alf2, 
      &             bet0, bet1, bet2, alw0, alw1, alw2, 
      &             betplx, i_betp, 
@@ -1094,15 +1070,11 @@
             else
                call eqb_contour(alf0, alf1, alf2, 
      &             bet0, bet1, bet2, alw0, alw1, alw2, 
-     &             betplx, i_betp, 
      &             keyctr, kstep, platok, rax, zax, b0, r0, psax, igdf, 
-     &             n_tht, n_psi, epsro, nurs, i_eqdsk, i_bsh, 
-     &             psi_bnd, psi0_bnd)
+     &             n_tht, n_psi, i_bsh, psi_bnd, psi0_bnd)
             endif
-            call EQ_AX2( pjk, PSkp1, NCequi,  KSTEP, NGRID, 
-     &         ALF0, ALF1, ALF2, BET0, BET1, BET2, 
-     &         BETPOL, BETPLX,
-     &         NGAV1, 
+            call EQ_AX2(PSkp1, NCequi, KSTEP,
+     &         ALF0, BETPOL, BETPLX, NGAV1, 
      &         FTOK, TOKOUT, PSIAX, PSIOUT, 
      &         ENELS, ERPS, 
      &         psi_bnd, alp_b, rax, zax, 0)
@@ -1113,9 +1085,8 @@
          if (eq_cmd.eq.1.and.ipsmk.ge.1.and.kpr.ge.-1) then
             PSKM1 = PSK
             PSK   = PSKP1
-            call EQ_AX(pjk, PSkp1, NCequi,  KSTEP, NGRID, 
-     &                 ALF0, ALF1, ALF2, BET0, BET1, BET2, 
-     &                 BETPOL,  BETPLX,  ZLI3, 
+            call EQ_AX(pjk, PSkp1, NCequi,  KSTEP, ALF0,
+     &                 BETPOL,  BETPLX,
      &                 NGAV1, 
      &                 FTOK, TOKOUT, PSIAX, PSIOUT, 
      &                 ENELS, ERPS, 
@@ -1125,9 +1096,8 @@
      &                  rm, zm, rx0, zx0)
          endif
          if (ipsmk.lt.1) then
-            call EQ_AX(pjk, PSkp1, NCequi,  KSTEP, NGRID, 
-     &                 ALF0, ALF1, ALF2, BET0, BET1, BET2, 
-     &                 BETPOL,  BETPLX,  ZLI3, 
+            call EQ_AX(pjk, PSkp1, NCequi,  KSTEP, ALF0,
+     &                 BETPOL,  BETPLX,
      &                 NGAV1, 
      &                 FTOK, TOKOUT, PSIAX, PSIOUT, 
      &                 ENELS, ERPS, 
@@ -1159,40 +1129,40 @@
 !Efable this block below is to keep dioh2u and dioh2s to zero for some time
             if (ipsmk.ge.1) then
                if (cmnd_dioh2s.eq.0) then
-      	          pjkp1(2)=pjkp1(1)
-      	          pjkp(2)=pjkp(1)
-      	          pjk(2)=pjk(1)
+                  pjkp1(2)=pjkp1(1)
+                  pjkp(2)=pjkp(1)
+                  pjk(2)=pjk(1)
                   pjkp1(3)=pjkp1(1)
-     	          pjkp(3)=pjkp(1)
+                  pjkp(3)=pjkp(1)
                   pjk(3)=pjk(1)
                endif
                if (cmnd_dioh2u.eq.0) then
-      	          pjkp1(3)=pjkp1(2)	
-      	          pjkp(3)=pjkp(2)	
-      	          pjk(3)=pjk(2)	
+                  pjkp1(3)=pjkp1(2)
+                  pjkp(3)=pjkp(2)
+                  pjk(3)=pjk(2)
                endif
             endif
 !Efable dioh block end
 
-            call EVSLV(NLES, NREG, TSTEPR, TSTEP, SIGM, 
+            call EVSLV(NLES, NREG, TSTEP, SIGM, 
      &                 NCEQUI, VOLK, VOLKP1, RES, 
      &                 PSK, PSKP1, PJK, PJKP1, PJKP, 
-     &                 NOUT, NTER, KEYPRI, EREVE, dteqz)
+     &                 EREVE, dteqz)
 
 !Efable this block below is to keep dioh2u and dioh2s to zero for some time
             if (ipsmk.ge.1) then
                if (cmnd_dioh2s.eq.0) then
-      	          pjkp1(2)=pjkp1(1)
-      	          pjkp(2)=pjkp(1)
-      	          pjk(2)=pjk(1)
-      	          pjkp1(3)=pjkp1(1)	
-      	          pjkp(3)=pjkp(1)	
-      	          pjk(3)=pjk(1)	
+                  pjkp1(2)=pjkp1(1)
+                  pjkp(2)=pjkp(1)
+                  pjk(2)=pjk(1)
+                  pjkp1(3)=pjkp1(1)
+                  pjkp(3)=pjkp(1)
+                  pjk(3)=pjk(1)
                endif
                if (cmnd_dioh2u.eq.0) then
-                  pjkp1(3)=pjkp1(2)	
-      	          pjkp(3)=pjkp(2)	
-                  pjk(3)=pjk(2)	
+                  pjkp1(3)=pjkp1(2)
+                  pjkp(3)=pjkp(2)
+                  pjk(3)=pjk(2)
                endif
             endif
 !Efable dioh block end
@@ -1217,29 +1187,29 @@
 !Efable this block below is to keep dioh2u and dioh2s to zero for some time
             if (ipsmk.ge.1) then
                if (cmnd_dioh2s.eq.0) then
-      	          pjkp1(2)=pjkp1(1)	
-      	          pjkp(2)=pjkp(1)	
-      	          pjk(2)=pjk(1)	
-      	          pjkp1(3)=pjkp1(1)	
-      	          pjkp(3)=pjkp(1)	
-      	          pjk(3)=pjk(1)	
+                  pjkp1(2)=pjkp1(1)
+                  pjkp(2)=pjkp(1)
+                  pjk(2)=pjk(1)
+                  pjkp1(3)=pjkp1(1)
+                  pjkp(3)=pjkp(1)
+                  pjk(3)=pjk(1)
                endif
 
                if (cmnd_dioh2u.eq.0) then
-                  pjkp1(3)=pjkp1(2)	
-                  pjkp(3)=pjkp(2)	
-      	          pjk(3)=pjk(2)	
+                  pjkp1(3)=pjkp1(2)
+                  pjkp(3)=pjkp(2)
+                  pjk(3)=pjk(2)
                endif
             endif
 !Efable dioh block end
 
-            call EVSLV(NLES, NREG, TSTEP, TSTEP, SIGM, 
+            call EVSLV(NLES, NREG, TSTEP, SIGM, 
      &                 NCEQUI, VOLK, VOLKP1, RES, 
      &                 PSK, PSKP1, PJK, PJKP1, PJKP, 
-     &                 NOUT, NTER, KEYPRI, EREVE, dteqz)
+     &                 EREVE, dteqz)
 
             call DIFFER(PJKP, PJKP1, NCEQUI, ERRCU1, ERRCU2, 
-     &                  CURMAX, CURMIN, NOUT, NTER)
+     &                  CURMAX, CURMIN)
 
             SGMCUR = 0.25D0
 
@@ -1250,17 +1220,17 @@
 !Efable this block below is to keep dioh2u and dioh2s to zero for some time
             if (ipsmk.ge.1) then
                if (cmnd_dioh2s.eq.0) then
-                  pjkp1(2)=pjkp1(1)	
-      	          pjkp(2)=pjkp(1)	
-      	          pjk(2)=pjk(1)	
-       	          pjkp1(3)=pjkp1(1)	
-      	          pjkp(3)=pjkp(1)	
-      	          pjk(3)=pjk(1)	
+                  pjkp1(2)=pjkp1(1)
+                  pjkp(2)=pjkp(1)
+                  pjk(2)=pjk(1)
+                  pjkp1(3)=pjkp1(1)
+                  pjkp(3)=pjkp(1)
+                  pjk(3)=pjk(1)
                endif
                if (cmnd_dioh2u.eq.0) then
-      	          pjkp1(3)=pjkp1(2)	
-      	          pjkp(3)=pjkp(2)	
-      	          pjk(3)=pjk(2)	
+                  pjkp1(3)=pjkp1(2)
+                  pjkp(3)=pjkp(2)
+                  pjk(3)=pjk(2)
                endif
             endif
 !Efable dioh block end
@@ -1268,9 +1238,8 @@
             if (kpr.ge.-1) then !efable for skip fsim
                if (eq_cmd.eq.1.and.ipsmk.ge.1) then
       
-                  call EQ_AX(pjkp1, PSkp1, NCequi,  KSTEP, NGRID, 
-     &                       ALF0, ALF1, ALF2, BET0, BET1, BET2, 
-     &                       BETPOL, BETPLX, ZLI3, 
+                  call EQ_AX(pjkp1, PSkp1, NCequi,  KSTEP, ALF0,
+     &                       BETPOL, BETPLX,
      &                       NGAV1, 
      &                       FTOK, TOKOUT, PSIAX, PSIOUT, 
      &                       ENELS, ERPS, 
@@ -1282,10 +1251,9 @@
                endif
             endif     
             if (kpr.ge.-1) then !efable for skip fsim
-      	       if (ipsmk.lt.1) then
-                  call EQ_AX(pjkp1, PSkp1, NCequi, KSTEP, NGRID, 
-     &                       ALF0, ALF1, ALF2, BET0, BET1, BET2, 
-     &                       BETPOL, BETPLX, ZLI3, 
+               if (ipsmk.lt.1) then
+                  call EQ_AX(pjkp1, PSkp1, NCequi, KSTEP, ALF0,
+     &                       BETPOL, BETPLX,
      &                       NGAV1, 
      &                       FTOK, TOKOUT, PSIAX, PSIOUT, 
      &                       ENELS, ERPS,
@@ -1319,8 +1287,8 @@
             close(1)
          endif
 
-         diftok=dabs(platok-ztok)/(dabs(platok-ztok_n)+1.d-8)
-         difpsi=dabs(psax-zpsim)/(dabs(psax-zpsim_n)+1.d-8)
+         diftok=ABS(platok-ztok)/(ABS(platok-ztok_n)+1.d-8)
+         difpsi=ABS(psax-zpsim)/(ABS(psax-zpsim_n)+1.d-8)
 
          if ((diftok.lt.5.0d-3 .AnD. it_dmf.gt.0) .OR. keyctr.eq.0) then
             if (ipsmk.lt.1.or.kpr.ge.-1) then
@@ -1454,18 +1422,16 @@
       ngav1=0
       ftok=tokf
 
-      call eq_0(pjk, psip, ncequi, kstep, ngrid, 
+      call eq_0(pjk, ncequi, kstep, ngrid, 
      &          alf0, alf1, alf2, bet0, bet1, bet2, 
-     &          betplx, ngav1, 
      &          ftok, tokout, psiax, nursb, 
      &          psi_bnd, alp_b, rax, zax, n_ctrl, b0, r0)
       call rdexf(ncequi)
 
       call eq(pjk, psip, ncequi, kstep, ngrid, 
-     &        alf0, alf1, alf2, bet0, bet1, bet2, 
-     &        betpol, betplx, ngav1, 
+     &        alf0, betpol, betplx, ngav1, 
      &        tokout, psiout, 
-     &        nursb, psi_bnd, alp_b, rax, zax)
+     &        nursb, alp_b, rax, zax)
 
       call eq_par(z0cen, alp, alpnew, qcen, nctrl, numlim, up, 
      &            rm, zm, rx0, zx0)

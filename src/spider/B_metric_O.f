@@ -17,14 +17,14 @@
 
       do j=1,Nt
          do i=1,iplas1
-            DLr(i,j)=dsqrt( (r(i+1,j)-r(i,j))**2+(z(i+1,j)-z(i,j))**2 )
+            DLr(i,j)=SQRT( (r(i+1,j)-r(i,j))**2+(z(i+1,j)-z(i,j))**2 )
             St(i,j)=DLr(i,j)*(r(i+1,j)+r(i,j))*0.5d0
          enddo
       enddo
 
       do j=1,Nt1
          do i=2,iplas
-            DLt(i,j)=dsqrt( (r(i,j+1)-r(i,j))**2+(z(i,j+1)-z(i,j))**2 )
+            DLt(i,j)=SQRT( (r(i,j+1)-r(i,j))**2+(z(i,j+1)-z(i,j))**2 )
             Sr(i,j)=DLt(i,j)*(r(i,j+1)+r(i,j))*0.5d0
          enddo
       enddo
@@ -76,22 +76,22 @@
             DLm2=dl12*dl23
             cos_2=(dr12*dr23+dz12*dz23)/DLm2
             sin_2=1.d0-cos_2**2
-            vol_2=DLm2*dsqrt(sin_2)*(r1+r2+r4)/12.d0
+            vol_2=DLm2*SQRT(sin_2)*(r1+r2+r4)/12.d0
 
             DLm3=dl34*dl23
             cos_3=(dr34*dr23+dz34*dz23)/DLm3
             sin_3=1.d0-cos_3**2
-            vol_3=DLm3*dsqrt(sin_3)*(r2+r3+r4)/12.d0
+            vol_3=DLm3*SQRT(sin_3)*(r2+r3+r4)/12.d0
 
             if(i.ne.1) then
                DLm4=dl34*dl14
                cos_4=(dr34*dr14+dz34*dz14)/DLm4
                sin_4=1.d0-cos_4**2
-               vol_4=DLm4*dsqrt(sin_4)*(r1+r3+r4)/12.d0
+               vol_4=DLm4*SQRT(sin_4)*(r1+r3+r4)/12.d0
                DLm1=dl12*dl14
                cos_1=(dr12*dr14+dz12*dz14)/DLm1
                sin_1=1.d0-cos_1**2
-               vol_1=DLm1*dsqrt(sin_1)*(r1+r2+r4)/12.d0
+               vol_1=DLm1*SQRT(sin_1)*(r1+r2+r4)/12.d0
             else
                cos_1=0.d0
                sin_1=1.d0
@@ -227,8 +227,8 @@
      &     psim, iter, kstep, fvac, psi_eav, pspl_av, psibon0, cur_mu)
       elseif(ngav.eq.-3 .AND. erru.lt.5.d-3) then
          cur_mu=tok*amu0
- 	 call promat_I(iplas, dfdpsi, dpdpsi, f, flx_fi, psia, q, rm,
-     &     psim, iter, kstep, fvac, psi_eav, pspl_av, psibon0, cur_mu)
+         call promat_I(iplas, dfdpsi, dpdpsi, f, flx_fi, psia, q, rm,
+     &     psim, iter, kstep, fvac, psibon0, cur_mu)
       endif
 
       return
@@ -444,7 +444,7 @@
      &     samn*(psip-psf(i-1))+avrk(i)*delsk(i)*dfdpsi(i) +
      &    delv(i)*dpdpsi(i)+delv3(i)*dwdpsi(i) ) /cappa
 
-         f(i)=dsqrt( f(i-1)**2+dfdpsi(i)*(psip-psf(i-1)) )
+         f(i)=SQRT( f(i-1)**2+dfdpsi(i)*(psip-psf(i-1)) )
          q(i)=-f(i)*avrk(i)/DpsiDs
          write(6,*) 'q(iplas)=',q(i)
       endif
@@ -468,7 +468,7 @@
      &             psia(i-3),psia(i-2),psia(i-1),
      &             dfdpsi(i-3) ,dfdpsi(i-2) ,dfdpsi(i-1)  )
 
-      f(i)=dsqrt(f(i-1)**2+dfdpsi(i)*(psip- psf(i-1)))
+      f(i)=SQRT(f(i-1)**2+dfdpsi(i)*(psip- psf(i-1)))
 
       if(itin.le.2) then
          vrh=1.00d0
@@ -634,8 +634,8 @@
      &          /(avrk(i)*delsk(i))
 
             dfdpsi(i)=zdfdps
-	    deldf=dabs(zdfdps-dfdpsn(i))
-            errdf=dmax1(deldf,errdf)
+	    deldf=ABS(zdfdps-dfdpsn(i))
+            errdf=MAX(deldf,errdf)
             dfdpsn(i)=dfdpsi(i)
             dfdpsi(i)=0.d0
          enddo
@@ -645,10 +645,10 @@
 
          errdf=0.d0
          f2n1=(amu0*tok*Qcapp(iplas-1))**2
-	 f(iplas-1)=dsqrt(f2n1)
+	 f(iplas-1)=SQRT(f2n1)
 
          do i=iplas-1,2,-1
-            f(i-1)=dsqrt( f(i)**2-dfdpsi(i)*(psf(i+1)-psf(i-1)) )
+            f(i-1)=SQRT( f(i)**2-dfdpsi(i)*(psf(i+1)-psf(i-1)) )
          enddo
 
          psf(iplas)=0.d0
@@ -663,8 +663,8 @@
             zff=amn(i)*psf(i-1)+a0(i)*psf(i)+apl(i)*psf(i+1)
             dfdpsi(i)=( zff-dpdpsi(i)*delv(i)-dwdpsi(i)*delv3(i) )
      &             /(avrk(i)*delsk(i))
-            deldf=dabs(dfdpsi(i)-dfdpsn(i))
-            errdf=dmax1(deldf,errdf)
+            deldf=ABS(dfdpsi(i)-dfdpsn(i))
+            errdf=MAX(deldf,errdf)
             dfdpsn(i)=dfdpsi(i)
          enddo
 

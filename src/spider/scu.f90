@@ -63,7 +63,7 @@ enddo
 
 ! THE CREATION THE MATRIX A and RIGHT HAND B:
 
-A(1,1) = dfloat(n)
+A(1,1) = FLOAT(n)
 A(1,2) = s_r
 A(1,3) = s_z
 A(1,4) = s_r2
@@ -370,10 +370,10 @@ enddo
 
 do I=1, N-1
 !...      MAX ROW ELEMENT SEARCH
-    RM = DABS(A(I, I))
+    RM = ABS(A(I, I))
     JM = I
     do J=I, N
-        ABA = DABS(A(I, J))
+        ABA = ABS(A(I, J))
         IF (ABA > RM) THEN
             RM = ABA
             JM = J
@@ -510,7 +510,7 @@ implicit none
 real*8, intent(in) :: t, pscal, pvec, eps
 
 tint = (T - PSCAL)*(0.5d0*DLOG(PVEC**2 + (T - PSCAL)**2 + EPS**2) - 1.d0) + &
-    PVEC*DATAN((T - PSCAL)/(PVEC + EPS))
+    PVEC*ATAN((T - PSCAL)/(PVEC + EPS))
 
 return
 end function tint

@@ -36,7 +36,7 @@
             ALF = 1.D+3
             IFAILF = 1
          endif
-         DET = dsqrt( DET ) * ALF
+         DET = SQRT( DET ) * ALF
          Y  =  -B + DET
          Y2 =  -B - DET
          F  = (X-RCP)**2 + (Y -ZCP)**2
@@ -55,7 +55,7 @@
          A5 = 0.D0
          A6 = -1.D0
          B = (A2*X+A5) / (2.D0*A3)
-         DET = dsqrt( B**2 - (A1*X**2+A4*X+A6)/A3 )
+         DET = SQRT( B**2 - (A1*X**2+A4*X+A6)/A3 )
          Y  =  -B + DET
          Y2 =  -B - DET
          F  = (X-RCP)**2 + (Y -ZCP)**2

@@ -267,8 +267,8 @@ C                     < MARK(VK)
 C
 C-----------------------------------------------------------------------
 
-        INTEGER  IA(*), JA(*),  V(*), L(*),  HEAD(*), LAST(*), NEXT(*),
-     *     MARK(*),  FLAG,  TAG, DMIN, VK,EK, TAIL
+        INTEGER  IA(*), JA(*), V(*), L(*),  HEAD(*), LAST(*), NEXT(*),
+     *     MARK(*), FLAG, TAG, DMIN, VK, TAIL
 
 C----INITIALIZATION
         TAG = 0
@@ -382,10 +382,9 @@ C ** ERROR -- INSUFFICIENT STORAGE
 C***********************************************************************
 C  MDM -- FORM ELEMENT FROM UNELIMINATED NEIGHBORS OF VK
 C***********************************************************************
-        SUBROUTINE  MDM
-     *     (VK,TAIL, V,L, LAST,NEXT, MARK)
-        INTEGER  VK, TAIL,  V(*), L(*),   LAST(*), NEXT(*),   MARK(*),
-     *     TAG, S,LS,VS,ES, B,LB,VB, BLP,BLPMAX
+        SUBROUTINE  MDM(VK,TAIL, V,L, LAST,NEXT, MARK)
+        INTEGER  VK, TAIL, V(*), L(*), LAST(*), NEXT(*), MARK(*),
+     *     TAG, S, LS, VS, B, LB, VB, BLP, BLPMAX
 
 C----INITIALIZE TAG AND LIST OF UNELIMINATED NEIGHBORS
         TAG = MARK(VK)
@@ -527,10 +526,9 @@ C----TERMINATE BOUNDARY LIST
 C***********************************************************************
 C  MDU -- UPDATE DEGREES OF UNELIMINATED VERTICES IN EK
 C***********************************************************************
-        SUBROUTINE  MDU
-     *     (EK,DMIN, V,L, HEAD,LAST,NEXT, MARK)
-        INTEGER  EK, DMIN,  V(*), L(*),  HEAD(*), LAST(*), NEXT(*),
-     *     MARK(*),  TAG, VI,EVI,DVI, S,VS,ES, B,VB, ILP,ILPMAX,
+        SUBROUTINE  MDU(EK,DMIN, V,L, HEAD,LAST,NEXT, MARK)
+        INTEGER  EK, DMIN,  V(*), L(*), HEAD(*), LAST(*), NEXT(*),
+     *     MARK(*), TAG, VI, EVI, DVI, S, VS, B,VB, ILP, ILPMAX,
      *     BLP,BLPMAX
 
 C----INITIALIZE TAG

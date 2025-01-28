@@ -202,7 +202,7 @@
 
       if (kpr > 0) then
           numwr = numwr + 1
-          call wr_step(numwr, time, kstep)
+          call wr_step(numwr, kstep)
       endif
 
       if (machine == 'aug '.or.machine == 'aug_'

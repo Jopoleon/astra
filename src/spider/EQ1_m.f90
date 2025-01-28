@@ -71,7 +71,7 @@ return
 end subroutine extfil
 
 !----------------------------------------------------------------
-subroutine exfmat(rk, zk, tk, nk, rk1, zk1, rk2, zk2, rk3, zk3, rk4, zk4, ntipe, NECON, WECON )
+subroutine exfmat(rk, zk, nk, rk1, zk1, rk2, zk2, ntipe, NECON, WECON )
 
 use sp_parameters, only: nip, njp, pi
 use iopath, only: path
@@ -82,8 +82,7 @@ implicit none
 
 integer, intent(in) :: nk
 integer, intent(in), dimension(*) :: ntipe, NECON
-real*8, intent(in), dimension(*) :: rk, zk, tk, WECON, rk1, zk1, &
-    rk2, zk2, rk3, zk3, rk4, zk4
+real*8, intent(in), dimension(*) :: rk, zk, WECON, rk1, zk1, rk2, zk2
 
 integer :: i, j, iq, ik, ncpfc, nves, ncequi, ibeg, ntip, ncam
 real*8 :: ddx, zaindk, r1, r2, z1, z2, fint, dlong
@@ -159,7 +158,7 @@ return
 end subroutine exfmat
 
 !----------------------------------------------------------------
-subroutine cfr_mat(rk, zk, tk, nk, NECON, WECON)
+subroutine cfr_mat(rk, zk, WECON)
 
 use sp_parameters, only: nip, njp, npfc0, pi
 use iopath, only: path
@@ -168,9 +167,7 @@ use comblc, only: ni, nj, r, z
 
 implicit none
 
-integer, intent(in) :: nk
-integer, intent(in), dimension(*) :: NECON
-real*8, intent(in), dimension(*) :: rk, zk, tk, WECON
+real*8, intent(in), dimension(*) :: rk, zk, WECON
 
 integer :: i, j, k, m, ik, ib, ie, jb, je, kb, ke
 real*8 :: SumFRij, SumFZij, SumFRPijk, SumFZPijk, rkk, zkk, rkm, zkm, dGdr, dGdz
@@ -476,8 +473,8 @@ implicit none
 integer :: i, j
 real*8 :: ddr, ddz
 
-ddr = (rmax - rmin)/dfloat(ni1)
-ddz = (zmax - zmin)/dfloat(nj1)
+ddr = (rmax - rmin)/FLOAT(ni1)
+ddz = (zmax - zmin)/FLOAT(nj1)
 
 r(1) = rmin
 z(1) = zmin
@@ -619,7 +616,7 @@ dr0 = rk - rm
 dz0 = zk - zm
 
 ro0 = sqrt(dr0**2 + dz0**2)
-tetp = dacos(dr0/ro0)
+tetp = ACOS(dr0/ro0)
 if (dz0 < 0.d0) then
     tet0 = twopi - tetp
 else

@@ -18,18 +18,17 @@
 !               ( without DPSIDJ*(CRPKP1 - CRPKP) term )
 !----------------------------------------------------------------
 
-      subroutine EVSLV(NLES, NREG,   TSTEP0, TSTEP,  SIGM,
-     *                 NJ,   VOLK,   VOLKP1, RES,
-     *                 PSPK, PSPKP1, CRPK,   CRPKP1, CRPKP,
-     *                 NOUT, NTER,   KEYPRI, EREVE, tstep2)
+      subroutine EVSLV(NLES, NREG, TSTEP, SIGM, NJ, VOLK, VOLKP1, RES,
+     &                 PSPK, PSPKP1, CRPK, CRPKP1, CRPKP,
+     &                 EREVE, tstep2)
 
       use sp_parameters, only: njlim, nplim, npfc0, nnlim, nsp
       use comevl, only: ppind, dpsidj
 
       implicit none
 
-      integer, intent(in) :: NLES, NREG, NJ, NOUT, NTER, KEYPRI
-      real*8, intent(in) :: tstep0, tstep2, tstep, sigm
+      integer, intent(in) :: NLES, NREG, NJ
+      real*8, intent(in) :: tstep2, tstep, sigm
       real*8, intent(in), dimension(njlim) :: VOLK, VOLKP1, PSPK,
      &    PSPKP1, CRPK, CRPKP1, CRPKP
       real*8, intent(in), dimension(njlim, njlim) :: RES
@@ -130,7 +129,7 @@
           enddo
           BZZ = TSTEP*(1.D0 - SIGM)* VOLK(I) + TSTEP*SIGM*VOLKP1(I) -
      &          RS1 - (PSPKP1(I) - PSPK(I)) * TSTEP / TSTEP2
-          EREVE = max(EREVE,  DABS(BZZ))
+          EREVE = max(EREVE,  ABS(BZZ))
       enddo
 
       if (NESP < 0) then

@@ -45,7 +45,7 @@
           tokff = curf*sqcen/rm
           tokpp = curp*sqcen*rm
 
-          il = numlin(1, 1, nr, nt)
+          il = numlin(1, 1, nt)
           right(il) = curcen*sqcen
 
 ! regular points
@@ -69,7 +69,7 @@
                   tokp  = tokp  + cur(i, j)*sqk
                   tokff = tokff + curf*sqk/r0
                   tokpp = tokpp + curp*sqk*r0
-                  il = numlin(i, j, nr, nt)
+                  il = numlin(i, j, nt)
                   right(il) = cur(i, j)*sqk
               enddo
               dpdpsi(i) = curp
@@ -128,7 +128,7 @@
           enddo
 
           tokp = curcen*sqcen
-          il = numlin(1, 1, nr, nt)
+          il = numlin(1, 1, nt)
           right(il) = curcen*sqcen
 
           do j=1, Nt
@@ -151,7 +151,7 @@
                   curf = dfdpsi(i)
                   cur(i, j) = r0*curp + curf/r0
                   tokp = tokp + cur(i, j)*sqk
-                  il = numlin(i, j, nr, nt)
+                  il = numlin(i, j, nt)
                   right(il) = cur(i, j)*sqk
               enddo
           enddo
@@ -240,7 +240,7 @@
           a7 = a24(i, j-1)
           a8 = a34(i, j-1) + a12(i, j)
           a9 = a13(i, j)
-          il = numlin(i, j, nr, nt)
+          il = numlin(i, j, nt)
           right(il) = (a7*psib(j-1) + a8*psib(j) + a9*psib(j+1))
       enddo
 
@@ -252,7 +252,7 @@
 
       use sp_parameters, only: neqp, nrp, ntp
       use compol_add, only: psie
-      use compol, only: nr, nt, nt1, iplas, right
+      use compol, only: nt, nt1, iplas, right
 
       implicit none
 
@@ -280,7 +280,7 @@
           a7 = a24(i, j-1)
           a8 = a34(i, j-1) + a12(i, j)
           a9 = a13(i, j)
-          il = numlin(i, j, nr, nt)
+          il = numlin(i, j, nt)
           right(il) = -(a7*psib(j-1) + a8*psib(j) + a9*psib(j+1))
       enddo
 
@@ -292,7 +292,7 @@
 
       use sp_parameters, only: nrp, ntp
       use compol_add, only: psii, psie, fpv
-      use compol, only: nr, nt, nt1, iplas, f, fvac, cur, curs, 
+      use compol, only: nt, nt1, iplas, f, fvac, cur, curs, 
      & toksfi, right, dlt, r, sq2, sq3
 
       implicit none
@@ -310,7 +310,7 @@
       toksfi = 0.d0
                      
       do j=2, nt1
-          il = numlin(i, j, nr, nt)
+          il = numlin(i, j, nt)
           a1 = a13(i-1, j-1)
           a2 = a34(i-1, j-1) + a12(i-1, j)
           a3 = a24(i-1, j)

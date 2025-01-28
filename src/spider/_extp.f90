@@ -229,7 +229,7 @@ dr0 = rx - rm
 dz0 = zx - zm
 ro0 = sqrt(dr0**2 + dz0**2)
 
-tetp = dacos(dr0/ro0)
+tetp = ACOS(dr0/ro0)
 if (dz0 < 0.d0) then
     tet0 = twopi - tetp
 else

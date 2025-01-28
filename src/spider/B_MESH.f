@@ -34,7 +34,7 @@
       Dxx=0.5d0*(Drr+Dzz)+0.5d0*cos2a*(Drr-Dzz)+sin2a*Drz
       Dyy=0.5d0*(Drr+Dzz)+0.5d0*cos2a*(Dzz-Drr)-sin2a*Drz
 
-      bfcen=qcen*dsqrt(dxx*dyy)
+      bfcen=qcen*SQRT(dxx*dyy)
 
       fcen=bfcen*rm
       fvac=b0ax*r0ax
@@ -169,16 +169,16 @@
          ur0=up+u0*(um-up)
          do j=1,nt
             ttj=teta(j) 
-            ro2j=(ur0-um)/( 0.5*dp(3)*dcos(ttj)**2 +
-     &                        dp(4)*dcos(ttj)*dsin(ttj) +
-     &                    0.5*dp(5)*dsin(ttj)**2 )
-            ron(j)=dsqrt(ro2j)     
-            rplr(i,j)=rm+ron(j)*dcos(teta(j))
-            zplr(i,j)=zm+ron(j)*dsin(teta(j))
+            ro2j=(ur0-um)/( 0.5*dp(3)*COS(ttj)**2 +
+     &                        dp(4)*COS(ttj)*SIN(ttj) +
+     &                    0.5*dp(5)*SIN(ttj)**2 )
+            ron(j)=SQRT(ro2j)     
+            rplr(i,j)=rm+ron(j)*COS(teta(j))
+            zplr(i,j)=zm+ron(j)*SIN(teta(j))
          enddo
 
 	 ibeg=i+1
-	 if( ron(2) .GT. dmax1(stpx,stpy) ) EXIT
+	 if( ron(2) .GT. MAX(stpx,stpy) ) EXIT
 
       enddo
 
@@ -189,8 +189,8 @@
          call loop95(teta,nt,ron,u0)
 
          do j=1,nt
-            rplr(i,j)=rm+ron(j)*dcos(teta(j))
-            zplr(i,j)=zm+ron(j)*dsin(teta(j))
+            rplr(i,j)=rm+ron(j)*COS(teta(j))
+            zplr(i,j)=zm+ron(j)*SIN(teta(j))
          enddo
 
       enddo
@@ -233,7 +233,7 @@
 
       integer :: i, j, ic, ic1, jc, jc1, ig, ii, jj, icell, jcell,
      &   imax1, jmax1, lin, nxb, ifail
-      real*8 :: drx, dzx , deltet, tetp
+      real*8 :: drx, dzx , tetp
       real*8, dimension(nbndp2) :: rxb, zxb, roxb, tetxb
       real*8, dimension(nip, njp) :: ut
       real*8 RRK(nbndp4), CCK(nbndp4), WRK(nbndp6)
@@ -325,19 +325,10 @@
       nxb=ig
 
       do ig=1,nxb
-
          drx=rxb(ig)-rm
          dzx=zxb(ig)-zm
-         tetp=datan(dzx/drx)
-         if(ig.ne.1) then
-            if(drx.lt.0.) tetp=tetp+pi
-            deltet=tetp-tetxb(ig-1)
-            if(deltet.lt.0.) tetp=tetp+2.*pi
-         endif
-
-         tetxb(ig)=tetp
-         roxb(ig)=dsqrt(drx**2+dzx**2)
-
+         tetxb(ig)=ATAN2(dzx, drx)
+         roxb(ig)=SQRT(drx**2+dzx**2)
       enddo
 
       call E01BAF(Nxb,tetxb,roxb,RRK,CCK,nxb+4,WRK,6*nxb+16,IFAIL)

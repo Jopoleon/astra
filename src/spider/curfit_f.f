@@ -20,7 +20,7 @@
          rr=r(ic+k)
          do l=0,1
             zz=z(jc+l)
-            dlx=dsqrt( (rr-r0)**2+(zz-z0)**2 )
+            dlx=SQRT( (rr-r0)**2+(zz-z0)**2 )
             if(dlx.lt.sdmin) then
                sdmin=dlx
                ik=ic+k

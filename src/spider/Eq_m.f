@@ -1,7 +1,5 @@
-      subroutine auto(rk, zk, tk, nk, nstep, ngrid,
-     &                rk1, zk1, rk2, zk2,
-     &                rk3, zk3, rk4, zk4,
-     &                ntipe, necon, wecon )
+      subroutine auto(rk, zk, nk, rk1, zk1, rk2, zk2,
+     &                ntipe, necon, wecon)
 
       use iopath, only: path
       use comblc, only: nctrl, ni, nj, icont, nblm, rblm, zblm,
@@ -11,10 +9,10 @@
 
       implicit none
 
-      integer, intent(in) :: nk, nstep, ngrid
+      integer, intent(in) :: nk
       integer, intent(in), dimension(*) :: ntipe, necon
-      real*8, intent(in), dimension(*) :: tk, wecon,
-     &   rk, rk1, rk2, rk3, rk4, zk, zk1, zk2, zk3, zk4
+      real*8, intent(in), dimension(*) :: wecon,
+     &   rk, rk1, rk2, zk, zk1, zk2
 
       integer :: i, n_ctrl
       real*8 :: psi_bnd ! Where does the routine get psi_bnd from? git
@@ -79,9 +77,9 @@
       call grid_spid
 
       if(icont.eq.0) then
-         call exfmat(rk, zk, tk, nk, rk1, zk1, rk2, zk2,
-     &               rk3, zk3, rk4, zk4, ntipe, necon, wecon)
-         call cfr_mat(rk, zk, tk, nk, NECON, WECON)
+         call exfmat(rk, zk, nk, rk1, zk1, rk2, zk2, ntipe, 
+     &               necon, wecon)
+         call cfr_mat(rk, zk, WECON)
       endif
 
       return
@@ -131,11 +129,10 @@
       end subroutine noauto
 
 !----------------------------------------------------------------
-      subroutine eq_0( pcequi, psitok, ncequi, nstep, ngrid, 
-     &                 alf0, alf1, alf2, bet0, bet1, bet2, 
-     &                 betplx, ngav1, 
-     &                 ftok, tokout, psicen, nursb, 
-     &                 psi_bnd, alp_b, rax, zax, n_ctrl, b_0, r_0 )
+      subroutine eq_0(pcequi, ncequi, nstep, ngrid, 
+     &                alf0, alf1, alf2, bet0, bet1, bet2, 
+     &                ftok, tokout, psicen, nursb, 
+     &                psi_bnd, alp_b, rax, zax, n_ctrl, b_0, r_0)
 
       use iopath, only: path
       use comblc, only: ni, nj, nnstpp, nctrl, icont, iter, iterbf, 
@@ -144,10 +141,10 @@
 
       implicit none
 
-      integer, intent(in) :: ncequi, nstep, ngrid, ngav1, nursb
+      integer, intent(in) :: ncequi, nstep, ngrid, nursb
       real*8, intent(in) :: alf0, alf1, alf2, bet0, bet1, bet2,
-     &   betplx, ftok, psicen, psi_bnd, rax, zax, b_0, r_0
-      real*8, intent(in), dimension(*) :: pcequi, psitok
+     &    ftok, psicen, psi_bnd, rax, zax, b_0, r_0
+      real*8, intent(in), dimension(*) :: pcequi
       integer, intent(out) :: n_ctrl
       real*8, intent(out) :: tokout, alp_b
 
@@ -249,11 +246,10 @@
       end subroutine eq_0
 
 !----------------------------------------------------------------
-      subroutine eq( pcequi, psicon, ncequi, nstep, ngrid,
-     &               alf0, alf1, alf2, bet0, bet1, bet2,
-     &               betpol, betplx,
-     &               ngav1, tokout, pscout, 
-     &               nursb, psi_bnd, alp_b, rax, zax )
+      subroutine eq(pcequi, psicon, ncequi, nstep, ngrid,
+     &              alf0, betpol, betplx,
+     &              ngav1, tokout, pscout, 
+     &              nursb, alp_b, rax, zax)
 
       use iopath, only: path
       use keys, only: kpr
@@ -267,8 +263,7 @@
       implicit none
 
       integer, intent(in) :: ncequi, nstep, ngav1, nursb
-      real*8, intent(in) :: alf0, alf1, alf2, bet0, bet1, bet2,
-     &   betplx, psi_bnd, rax, zax
+      real*8, intent(in) :: alf0, betplx, rax, zax
       real*8, intent(in) , dimension(*) :: pcequi
       real*8, intent(out), dimension(*) :: psicon
       integer, intent(inout) :: ngrid
@@ -443,7 +438,7 @@
                           
             delrl= (clz0*dcrdz-clr0*dczdz)/det
             delzl= (clr0*dczdr-clz0*dcrdr)/det                      
-            dll=dsqrt(delrl**2 + delzl**2)
+            dll=SQRT(delrl**2 + delzl**2)
             dllim=0.25d0*dr(imax)
                           
             if(dll .gt. dllim) then
@@ -510,7 +505,7 @@
          endif
       endif
 
-      crz=dabs(clr*rm*rm/(um-up))+dabs(clz*(zm-zx0)/(um-up))
+      crz=ABS(clr*rm*rm/(um-up))+ABS(clz*(zm-zx0)/(um-up))
 
       if(erru.le.epsin .AND. crz.lt.epscrz .AND. itl.ge.0
      &   .AND. ich.eq.0) go to 1111
@@ -602,9 +597,8 @@
       end subroutine eq
 
 !----------------------------------------------------------------
-      subroutine eq_ax( pcequi, psicon, ncequi, nstep, ngrid,
-     &                  alf0, alf1, alf2, bet0, bet1, bet2,
-     &                  betpol, betplx, zli3,
+      subroutine eq_ax( pcequi, psicon, ncequi, nstep, alf0,
+     &                  betpol, betplx,
      &                  ngav1,
      &                  ftok, tokout, psicen, pscout,
      &                  EREVE0, ERPS,
@@ -618,12 +612,11 @@
 
       implicit none
 
-      integer, intent(in) :: ncequi, nstep, ngrid, ngav1, isymm
-      real*8, intent(in) :: alf0, alf1, alf2, bet0, bet1, bet2,
-     &   betplx, ftok, psicen, psi_bnd, EREVE0
+      integer, intent(in) :: ncequi, nstep, ngav1, isymm
+      real*8, intent(in) :: alf0, betplx, ftok, psicen, psi_bnd, EREVE0
       real*8, intent(in) , dimension(*) :: pcequi
       real*8, intent(out), dimension(*) :: psicon
-      real*8, intent(out) :: betpol, zli3, tokout, 
+      real*8, intent(out) :: betpol, tokout, 
      &   pscout, alp_b, rax, zax, ERPS
 
       integer :: isol, nwr, il, jl, icelm, jcelm, nursb
@@ -719,14 +712,9 @@
       return
       end subroutine eq_ax
 
-!----------------------------------------------------------------
-      subroutine eq_ax0( pcequi, psicon, ncequi, nstep, ngrid,
-     &                   alf0, alf1, alf2, bet0, bet1, bet2,
-     &                   betplx,
-     &                   ngav1,
-     &                   ftok, psicen,
-     &                   EREVE0,
-     &                   psi_bnd)
+!---------------------------------------------------------------------
+      subroutine eq_ax0(pcequi, ncequi, nstep, ngav1,
+     &                  ftok, psicen, psi_bnd)
 
       use comblc, only: nitl, nitin, icont, iter, iterbf, itin, nrun, 
      &   nnstpp, clr, clz, cnor, erru, qcen, psi_bon, b0ax, r0ax, 
@@ -734,10 +722,9 @@
 
       implicit none
 
-      integer, intent(in) :: ncequi, nstep, ngrid, ngav1
-      real*8, intent(in) :: alf0, alf1, alf2, bet0, bet1, bet2,
-     &   betplx, ftok, psicen, psi_bnd, EREVE0
-      real*8, intent(in), dimension(*) :: pcequi, psicon
+      integer, intent(in) :: ncequi, nstep, ngav1
+      real*8, intent(in) :: ftok, psicen, psi_bnd
+      real*8, intent(in), dimension(*) :: pcequi
 
       integer :: il, jl, icelm, jcelm
       real*8 :: omega, sigma, alf0n
@@ -789,13 +776,11 @@
       end subroutine eq_ax0
 
 !----------------------------------------------------------------
-      subroutine eq_ax2( pcequi, psicon, ncequi, nstep, ngrid,
-     &                   alf0, alf1, alf2, bet0, bet1, bet2,
-     &                   betpol, betplx,
-     &                   ngav1,
-     &                   ftok, tokout, psicen, pscout,
-     &                   EREVE0, ERPS,
-     &                   psi_bnd, alp_b, rax, zax, isymm )
+      subroutine eq_ax2(psicon, ncequi, nstep,
+     &                  alf0, betpol, betplx, ngav1,
+     &                  ftok, tokout, psicen, pscout,
+     &                  EREVE0, ERPS,
+     &                  psi_bnd, alp_b, rax, zax, isymm )
 
       use comblc, only: nitl, nitin, icont, iter, iterbf, itin, nrun, 
      &   nnstpp, alp, alp_b, alpnew, clr, clz, cnor, erru, f_cur, g, 
@@ -804,10 +789,8 @@
 
       implicit none
 
-      integer, intent(in) :: ncequi, nstep, ngrid, ngav1, isymm
-      real*8, intent(in) :: alf0, alf1, alf2, bet0, bet1, bet2,
-     &   betplx, ftok, psicen, psi_bnd, EREVE0
-      real*8, intent(in) , dimension(*) :: pcequi
+      integer, intent(in) :: ncequi, nstep, ngav1, isymm
+      real*8, intent(in) :: alf0, betplx, ftok, psicen, psi_bnd, EREVE0
       real*8, intent(out), dimension(*) :: psicon
       real*8, intent(out) :: betpol, tokout, 
      &   pscout, alp_b, rax, zax, ERPS
@@ -925,7 +908,7 @@
          do l=0,1
             jlp=jc+l
             zj=z(jlp)
-            ddl=dsqrt( (rl-ri)**2 + (zl-zj)**2 )
+            ddl=SQRT( (rl-ri)**2 + (zl-zj)**2 )
             if(ddl.lt.sdmn) then
                sdmn=ddl
                il=ilp
@@ -1095,9 +1078,9 @@
          do j=1,nj
             uold=u(i,j)
             u(i,j)=ui(i,j)+ue(i,j)+clz*z(j)+clr*r(i)*r(i)
-            delu=dabs(u(i,j)-uold)
-            del_um=dabs(um-up)+1.d-9
-            erru=dmax1(delu/del_um,erru)
+            delu=ABS(u(i,j)-uold)
+            del_um=ABS(um-up)+1.d-9
+            erru=MAX(delu/del_um,erru)
          enddo
       enddo
 

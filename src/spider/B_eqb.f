@@ -115,7 +115,7 @@
          elseif(nbsh.eq.-1) then
             call grid_b(igrdf,nstep)
          elseif(nbsh.eq.-2) then
-            call grid_p0(igrdf,nstep)
+            call grid_p0
             call taburs(0,1.d0,nurs)
          endif
 
@@ -128,11 +128,11 @@
 
       else 
          if(nbsh.eq.0.or.nbsh.eq.1) then  
-            call grid_1(igrdf,nstep)
+            call grid_1
          elseif(nbsh.eq.-1) then
-            call grid_b1(igrdf,nstep)
+            call grid_b1
          elseif(nbsh.eq.-2) then
-            call grid_p1(igrdf,nstep)
+            call grid_p1
          endif
 
       endif   !nstep.eq.0
@@ -172,7 +172,7 @@
          call solint(imov)
          call remesh(erro,errpsi,imov)
 
-         errod = 0.5d0*erro/(dabs(z(iplas,2)-zm)+dabs(r(iplas,2)-rm))
+         errod = 0.5d0*erro/(ABS(z(iplas,2)-zm)+ABS(r(iplas,2)-rm))
          erru=erro
          if(errod.lt.epsro) EXIT
          if(itin.ge.NiMax) then 
@@ -237,10 +237,10 @@
       end subroutine eqb
 
 !----------------------------------------------------------------
-      subroutine eqb_contour( alf0, alf1, alf2,  
-     &    bet0, bet1, bet2, alw0, alw1, alw2, betplx, i_betp,
+      subroutine eqb_contour(alf0, alf1, alf2,  
+     &    bet0, bet1, bet2, alw0, alw1, alw2, 
      &    keyctr, nstep, platok, rax, zax, b0cen, r0cen, psax, igdf,
-     &    n_tht, n_psi, epsro, nurs, i_eqdsk, i_bsh, psi_bnd, psi0_bnd)
+     &    n_tht, n_psi, i_bsh, psi_bnd, psi0_bnd)
 
       use sp_parameters, only: nursp
       use keys, only: kstep
@@ -254,11 +254,11 @@
 
       integer, parameter :: nursp4=nursp+4,nursp6=nursp4*6
 
-      integer, intent(in) :: i_betp, keyctr, nstep, igdf, n_tht, n_psi,
-     &   nurs, i_eqdsk, i_bsh
+      integer, intent(in) :: keyctr, nstep, igdf, n_tht, n_psi,
+     &   i_bsh
       real*8, intent(in) :: alf0, alf1, alf2, bet0, bet1, bet2, 
-     &   alw0, alw1, alw2, betplx, b0cen, r0cen,
-     &   epsro, psi_bnd, psi0_bnd
+     &   alw0, alw1, alw2, b0cen, r0cen,
+     &   psi_bnd, psi0_bnd
       real*8, intent(out) :: platok, rax, zax, psax
 
       integer ::i, igrdf, imov, max_max_iterb, nbsh, itrmax, nitmax
@@ -320,7 +320,7 @@
       igrdf = igdf
       if(igdf.eq.2) igrdf=1
 
-      call grid_b_ef(igrdf,nstep)
+      call grid_b_ef
 
       do i=1,iplas
          dpdpsi(i)=tabp(psia(i))
@@ -351,7 +351,6 @@
       call bt_pol(betpol)
       call bt_tot(bettot)
       call wrb
-!      call grid_b_ef2(igrdf,nstep) ! git useless subroutine
 
       return
       end subroutine eqb_contour
@@ -550,7 +549,7 @@
             write(*,*)'presol: errpsi',errpsi
          endif
 
-         errod = 0.5d0*erro/dabs(z(iplas,2)-zm)
+         errod = 0.5d0*erro/ABS(z(iplas,2)-zm)
          if(errpsi.lt.1.d-4 .or. iter.ge.50) EXIT
 
       enddo

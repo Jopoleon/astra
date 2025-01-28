@@ -295,7 +295,7 @@ else
     if (itin > 1) then
         zwgt = 1.0d0
         psipr = zwgt*psip + (1.d0 - zwgt)*psipn
-        psip = dmax1(psip, psipr)
+        psip = MAX(psip, psipr)
     endif
 endif
 
@@ -320,7 +320,7 @@ do i=1, nr
     do j=1, nt
         psnn = psin(i, j)
         psin(i, j) = (psi(i, j) - psip)/(psim - psip)
-        delpsn = dabs(psin(i, j) - psnn)
+        delpsn = ABS(psin(i, j) - psnn)
         if (delpsn > errpsi) then
             ierm = i
             jerm = j
@@ -338,7 +338,7 @@ do j=1, nt
     dzx = z(nr, j) - zm
     robj = SQRT(drx**2 + dzx**2)
     rob(j) = robj
-    tetp = dacos(drx/robj)
+    tetp = ACOS(drx/robj)
     if (dzx < 0.d0) then
         teta(j) = -tetp
     else
@@ -392,7 +392,7 @@ do i=ibeg, iplas
         drx = rnj - rm
         dzx = znj - zm
         roi(j) = SQRT(drx**2 + dzx**2)
-        tetp = dacos(drx/roi(j))
+        tetp = ACOS(drx/roi(j))
         if (dzx < 0.d0) then
             teti(j) = -tetp
         else
@@ -498,8 +498,8 @@ do j=2, nt1
         psia(i) = ( ps1*(ro2 - row) + ps2*(row - ro1) )/(ro2 - ro1)
     enddo
     do i=iplas+1, nr1
-        roerr = dabs(roh(i) - ro(i, j))
-        erro = dmax1(erro, roerr)
+        roerr = ABS(roh(i) - ro(i, j))
+        erro = MAX(erro, roerr)
         ro(i, j) = roh(i)
         r( i, j) = roh(i)*COS(teta(j)) + rm
         z( i, j) = roh(i)*SIN(teta(j)) + zm
@@ -658,7 +658,7 @@ else
     if (itin > 1) then
         zwgt = 1.0d0
         psipr = zwgt*psip + (1.d0 - zwgt)*psipn
-        psip = dmax1(psip, psipr)
+        psip = MAX(psip, psipr)
         alp_pr = (psim - psip)/(psim - psix0)
     endif
 
@@ -682,7 +682,7 @@ do i=1, nr
     do j=1, nt
         psnn = psin(i, j)
         psin(i, j) = (psi(i, j) - psip)/(psim - psip)
-        delpsn = dabs(psin(i, j) - psnn)
+        delpsn = ABS(psin(i, j) - psnn)
         if (delpsn > errpsi) then
             ierm = i
             jerm = j
@@ -706,7 +706,7 @@ do j=1, nt
     dzx = z(nr, j) - zm
     robj = SQRT(drx**2 + dzx**2)
     rob(j) = robj
-    tetp = dacos(drx/robj)
+    tetp = ACOS(drx/robj)
     if (dzx < 0.d0) then
         teta(j) = -tetp
     else
@@ -765,7 +765,7 @@ do i=3, iplas
         drx = rnj - rm
         dzx = znj - zm
         roi(j) = SQRT(drx**2 + dzx**2)
-        tetp = dacos(drx/roi(j))
+        tetp = ACOS(drx/roi(j))
         if (dzx < 0.d0) then
             teti(j) = -tetp
         else
@@ -804,7 +804,7 @@ do i=3, iplas
             endif
         enddo
         rop(j) = zro
-        roerr = dabs(ron(j) - ro(i, j))
+        roerr = ABS(ron(j) - ro(i, j))
         if (roerr > erro) then
             erro = roerr
             ierm = i
@@ -857,8 +857,8 @@ do j=2, nt1
     enddo
 
     do i=iplas+1, nr1
-        roerr = dabs(roh(i) - ro(i, j))
-        erro = dmax1(erro, roerr)
+        roerr = ABS(roh(i) - ro(i, j))
+        erro = MAX(erro, roerr)
         ro(i, j) = roh(i)
         r(i, j) = roh(i)*COS(teta(j)) + rm
         z(i, j) = roh(i)*SIN(teta(j)) + zm
@@ -1132,7 +1132,7 @@ do j=1, nt
             romn = ro(isc-1, j)
             gradpl = -(pspl - ps0)/(ropl - ro0)
             gradmn = -(ps0 - psmn)/(ro0 - romn)
-            grad = dmax1(gradpl, gradmn)
+            grad = MAX(gradpl, gradmn)
         endif
         grad = -(pspl - ps0)/(ropl - ro0)
         zro = ro0 - (zps - ps0)/grad
@@ -1183,8 +1183,8 @@ do j=1, nt
         psia(i) = ( ps1*(ro2 - row) + ps2*(row - ro1) )/(ro2 - ro1)
     enddo
     do i=2, nr1
-        roerr = dabs(ron(i) - ro(i, j))
-        erro = dmax1(erro, roerr)
+        roerr = ABS(ron(i) - ro(i, j))
+        erro = MAX(erro, roerr)
         ro(i, j) = ron(i)
         r(i, j) = ron(i)*COS(teta(j)) + rm
         z(i, j) = ron(i)*SIN(teta(j)) + zm
@@ -1241,7 +1241,7 @@ do j=1, nt
     drx = r(nr, j) - rm
     dzx = z(nr, j) - zm
     rob(j) = SQRT(drx**2 + dzx**2)
-    tetp = dacos(drx/rob(j))
+    tetp = ACOS(drx/rob(j))
     if (dzx < 0.d0) then
         tet0 = twopi - tetp
     else
@@ -1297,7 +1297,7 @@ psidf = 0.d0
 dr0 = rgv - rm
 dz0 = zgv - zm
 ro0 = SQRT(dr0**2 + dz0**2)
-tetp = dacos(dr0/ro0)
+tetp = ACOS(dr0/ro0)
 if (dz0 < 0.d0) then
     tet0 = twopi - tetp
 else

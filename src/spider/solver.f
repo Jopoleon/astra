@@ -178,7 +178,7 @@
       enddo
 
       do k=2, nj-1
-          slam = 4.d0*dsin(0.5d0*(k - 1.d0)*pi/nj1)**2/hy**2
+          slam = 4.d0*SIN(0.5d0*(k - 1.d0)*pi/nj1)**2/hy**2
           do i=2, ni-1
               ap(i-1) = axp(i)
               bp(i-1) = axm(i)
@@ -269,7 +269,7 @@
       enddo
 
       do k=2, nj-1
-          slam = 4.d0*dsin(0.5d0*(k - 1.d0)*pi/nj1)**2/hy**2
+          slam = 4.d0*SIN(0.5d0*(k - 1.d0)*pi/nj1)**2/hy**2
           do i=2, ni-1
               ap(i-1) = axp(i)
               bp(i-1) = axm(i)
@@ -367,7 +367,7 @@
           fmatrixx  = 0.
           ifmatrixx = 0.
           do k=2, nj-1
-              slam = 4.d0*dsin(0.5d0*(k - 1.d0)*pi/nj1)**2/hy**2
+              slam = 4.d0*SIN(0.5d0*(k - 1.d0)*pi/nj1)**2/hy**2
               do i=1, ni-2
                   if (i < ni-2) fmatrixx(i, i+1, k-1) = axp(i+1)
                   if (i > 1) fmatrixx(i, i-1, k-1) = axm(i+1)
@@ -775,8 +775,8 @@
       if (N1 <= 0) return
       do I = 1, N1
           A = float(I)*DA
-          W(I) = DCOS(A)
-          W(N1+I) = DSIN(A)
+          W(I) = COS(A)
+          W(N1+I) = SIN(A)
       enddo
 
       return

@@ -24,7 +24,7 @@
      &   pspl_tst, psi_ext, psiext, psi_bnd, psin, psin1,
      &   bps_bon, cps_bon, dps_bon, av, bv, cv,
      &   a11, a12, a21, a22, c11, c12, c21, c22, h1, h2,
-     &   ds1, dtsig, deltamax, ddivmax, abd, aby, znv, f_wght,
+     &   dtsig, deltamax, ddivmax, abd, aby, znv, f_wght,
      &   dfldt, fn, fn1, rin, rin1, dsn, dsn1,
      &   al22n, al22n1, al22x, al33n, al33n1
       real*8, dimension(512) :: wrk
@@ -84,13 +84,13 @@
             dpsidt(i)=0.d0
             dfidt(i )=0.d0
          endif
-         xa=dsqrt(flx_fi(i)/flx_fi(n))	  	  
+         xa=SQRT(flx_fi(i)/flx_fi(n))	  	  
          if(kastr.eq.1) then
-            sigma(i) =fun_sig(xa,i)  
-            cbut_b(i) =fun_jb(xa,i)  
+            sigma(i) =fun_sig(i)  
+            cbut_b(i) =fun_jb(i)  
          else
-            sigma(i) =fun_sig_a(xa,i)  
-            cbut_b(i) =fun_jb_a(xa,i)  
+            sigma(i) =fun_sig_a(xa)  
+            cbut_b(i) =fun_jb_a(xa)  
          endif
       enddo
 
@@ -106,7 +106,7 @@
       endif	  
 
       do i=1,n
-         wrk(i)=dsqrt(dabs(alfa22(i)))   
+         wrk(i)=SQRT(ABS(alfa22(i)))   
       enddo
 
       do i=1,n-1
@@ -344,14 +344,14 @@
          enddo
          alfa22n=alfa22(n)
          F(N)=fbnd 
-         rI(n)=dsqrt( ri(n-1)**2+alfa22n/alp33k(n)*(F(N)**2-f(n-1)**2)
+         rI(n)=SQRT( ri(n-1)**2+alfa22n/alp33k(n)*(F(N)**2-f(n-1)**2)
      &      +alfa22n*dpdpsi(n)*(psi(n)-psi(n-1))*dvk(n)/dsk(n) )
          dfdpsi(n) =  (f(n)**2-f(n-1)**2)/(psi(n)-psi(n-1))
 
          deltamax = 0.d0
          do k=1,2
             do i=1,n
-               aby = dabs(y(i,k))
+               aby = ABS(y(i,k))
                if (aby.ge.deltamax) deltamax=aby
             enddo
          enddo
@@ -388,7 +388,7 @@
          ddivmax = 0.d0
          do k=1,2
             do i=1,n
-               abd = dabs(zn(i,k))
+               abd = ABS(zn(i,k))
                if (abd.ge.ddivmax) ddivmax=abd
             enddo
          enddo
@@ -447,15 +447,14 @@
       real*8, intent(out) :: psibon0, psi_eav
       real*8, intent(out), dimension(n) :: dfdpsi, f, q
 
-      integer :: i, k, ks, key_boncon, k_step_prev, jumpstep
+      integer :: i, k, ks, k_step_prev, jumpstep
       real*8 :: del_psb, psi_bn1, rm0, ac0n, skcen0, xa, ffprim,
      &   alfa22n, epsel, dt, fbnd, skcen, dpsdt, d2psi, d2fi,
      &   ac0, fk0, rik0, qk0, dri0, df0, psi0n, fi0n, fin, fin1,
-     &   cap_psi, cap_fi, capfi, capsi, pdv, pbb, cbutn,
-     &   pspl_tst, psi_ext, psiext, psi_bnd, psin, psin1,
-     &   bps_bon, cps_bon, dps_bon, av, bv, cv,
+     &   cap_psi, cap_fi, capfi, capsi, pdv, cbutn,
+     &   psi_bnd, psin, psin1,
      &   a11, a12, a21, a22, c11, c12, c21, c22, h1, h2,
-     &   ds1, dtsig, deltamax, ddivmax, abd, aby, znv, f_wght,
+     &   dtsig, deltamax, ddivmax, abd, aby, znv,
      &   dfldt, fn, fn1, rin, rin1, dsn, dsn1,
      &   al22n, al22n1, al22x, al33n, al33n1
       real*8, dimension(512) :: wrk
@@ -513,13 +512,13 @@
             dfidt(i )=0.d0
          endif
 
-         xa=dsqrt(flx_fi(i)/flx_fi(n))	  	  
+         xa=SQRT(flx_fi(i)/flx_fi(n))	  	  
          if(kastr.eq.1) then
-            sigma(i) =fun_sig(xa,i)  
-            cbut_b(i) =fun_jb(xa,i)  
+            sigma(i) =fun_sig(i)  
+            cbut_b(i) =fun_jb(i)  
          else
-            sigma(i) =fun_sig_a(xa,i)  
-            cbut_b(i) =fun_jb_a(xa,i)  
+            sigma(i) =fun_sig_a(xa)  
+            cbut_b(i) =fun_jb_a(xa)  
          endif
 
       enddo
@@ -531,7 +530,7 @@
       endif
 
       do i=1,n
-         wrk(i)=dsqrt(dabs(alfa22(i)))
+         wrk(i)=SQRT(ABS(alfa22(i)))
       enddo
       do i=1,n-1
          fi(i)=fi(n)*(i-1.d0)**2/(n-1.d0)**2
@@ -743,7 +742,7 @@
          deltamax = 0.d0
          do k=1,2
             do i=1,n
-               aby = dabs(y(i,k))
+               aby = ABS(y(i,k))
                if (aby.ge.deltamax) deltamax=aby
             enddo
          enddo
@@ -780,7 +779,7 @@
          ddivmax = 0.d0
          do k=1,2
             do i=1,n
-               abd = dabs(zn(i,k))
+               abd = ABS(zn(i,k))
                if (abd.ge.ddivmax) ddivmax=abd
             enddo
          enddo
@@ -890,16 +889,15 @@
       end subroutine mtrx_prog
 
 !----------------------------------------------------------------
-      real*8 function fun_sig(a, i)
+      real*8 function fun_sig(i)
 
       use sp_parameters, only: amu0
       use sigcd, only: C_sig
-      use tim, only: dtim, ctim
+      use tim, only: dtim
 
       implicit none
 
       integer, intent(in) :: i
-      real*8, intent(in) :: a
 
       fun_sig=-C_sig(i)*amu0/dtim
 
@@ -907,15 +905,15 @@
       end function fun_sig
 
 !----------------------------------------------------------------
-      real*8 function fun_sig_a(a, i)
+      real*8 function fun_sig_a(a)
 
       use sp_parameters, only: pi
       use tim, only: dtim
 
       implicit none
 
-      integer, intent(in) :: i
       real*8, intent(in) :: a
+
       real*8 :: a0, a1, t, t0, t1, fun_sig
 
       a0=0.0d0
@@ -931,7 +929,7 @@
          t=t1
       endif
 
-      fun_sig=-(8.d0*pi/3.d0)*dabs(t)**1.5d0
+      fun_sig=-(8.d0*pi/3.d0)*ABS(t)**1.5d0
       fun_sig_a=fun_sig*(1.d-4/dtim)
 
 !temporary
@@ -941,7 +939,7 @@
       end function fun_sig_a
 
 !----------------------------------------------------------------
-      real*8 function fun_jb(a, i)
+      real*8 function fun_jb(i)
 
       use sp_parameters, only: nrp, amu0
       use sigcd, only: C_bts, c_driv
@@ -949,7 +947,6 @@
       implicit none
 
       integer, intent(in) :: i
-      real*8, intent(in) :: a
 
       fun_jb=(C_bts(i)+C_driv(i))*amu0
 
@@ -957,14 +954,13 @@
       end function fun_jb
 
 !----------------------------------------------------------------
-      real*8 function fun_jb_a(a, i)
+      real*8 function fun_jb_a(a)
 
       use sp_parameters, only: nrp, pi
       use jb, only: Bj_av
 
       implicit none
 
-      integer, intent(in) :: i
       real*8, intent(in) :: a
 
       real*8 :: ampl, a0, w, fun
@@ -980,7 +976,7 @@
 
 !----------------------------------------------------------------
       subroutine promat_j(n, dfdpsi, dpdpsi, f, flx_fi, psia, q, rm,
-     &                    psim, iter, k_step, fvac, psi_eav, pspl_av,
+     &                    psim, iter, k_step, fvac, 
      &                    psibon0, cur_mu)
 ! diffusion & equilibrium both equations solvinq 
 ! Newton metod with linearisation
@@ -991,7 +987,7 @@
       implicit none
 
       integer, intent(in) :: n, iter, k_step
-      real*8, intent(in) :: psim, fvac, psi_eav, pspl_av, psibon0
+      real*8, intent(in) :: psim, fvac, psibon0
       real*8, intent(in), dimension(n) :: dpdpsi, flx_fi, psia
       real*8, intent(out) :: cur_mu
       real*8, intent(out), dimension(n) :: dfdpsi, f, q
@@ -1049,7 +1045,7 @@
             dpsidt(i)=(psi(i)-psi0(i))/dt
             dfidt(i )=0.d0
          endif
-         xa=dfloat(i-1)/dfloat(n-1)
+         xa=FLOAT(i-1)/FLOAT(n-1)
          sigma(i) =1.d0
          cbut_b(i) =BJ_av(i)
       enddo
@@ -1061,7 +1057,7 @@
       endif
 
       do i=1,n
-         wrk(i)=dsqrt(dabs(alfa22(i)))
+         wrk(i)=SQRT(ABS(alfa22(i)))
       enddo
       do i=1,n-1
          fi(i)=fi(n)*(i-1.d0)**2/(n-1.d0)**2
@@ -1268,7 +1264,7 @@
          deltamax = 0.d0
          do k=1,2
             do i=1,n
-               aby = dabs(y(i,k))
+               aby = ABS(y(i,k))
                if (aby.ge.deltamax) deltamax=aby
             enddo
          enddo
@@ -1304,14 +1300,14 @@
          ddivmax = 0.d0
          do k=1,2
             do i=1,n
-               abd = dabs(zn(i,k))
+               abd = ABS(zn(i,k))
                if (abd.ge.ddivmax) ddivmax=abd
             enddo
          enddo
 
          if (deltamax.le.epsel) EXIT
 
-         rI(n) = dsqrt(ri(n-1)**2 + alfa22(n)/alp33k(n) * 
+         rI(n) = SQRT(ri(n-1)**2 + alfa22(n)/alp33k(n) * 
      &           (F(N)**2 - f(n-1)**2) + alfa22n*dpdpsi(n) *
      &           (psi(n)-psi(n-1))*dvk(n)/dsk(n) )
 
