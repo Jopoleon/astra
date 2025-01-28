@@ -740,7 +740,7 @@ contains
         enddo
     else if (x_type == 2) then ! First interpolate shifted variable to zero
         call polyfitcc(x_in(1: 3), y_in(1: 3), P)
-        ys_out(1) = P(3)*x_in(1)
+        ys_out(1) = 0.5*P(3)*x_in(1)
         do j=2, nagrid
             ys_out(j) = ys_out(j-1) + y_in(j-1)*(x_in(j) - x_in(j-1))
         enddo

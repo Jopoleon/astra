@@ -138,7 +138,6 @@ do j=1, NA1
     mv2 =\
 '''YM1 = MV(j)*j
 YM2 = YM1*G22(j)
-CV(j)=(YM2-YM)*G33(j)*IPOL(j)**3/YC/RHO(j)
 if (j < NA) then
 YDF = YFV*YM1
 elseif (j == NA) then
@@ -146,10 +145,8 @@ YDF = GP2*HRO*BTOR*YM1*HRO
 endif
 if (j <= NA) then
 FV(j+1) = FV(j) + YDF
-else
-CV(NA1) = CV(NA)
 endif
-YM = YM2'
+YM = YM2
 enddo ! j (radial loop)
 '''
 
@@ -247,7 +244,7 @@ YM1 = YM/G22(J)
 MU(J) = YM1/J
 FP(J+1) = FP(J) + YF*YM1
 enddo
-MU(NA1) = MU(NA-2)
+call EXTRAP(SXHO(1:NA), MU(1:NA), SXHO(NA1), NA, MU(NA1), 2, NA)
 YU = GP2*RTOR
 YJ_CU = (FP(NA1) - FP(NA))/HRO * IPOL(NA1) * G22(NA)/(0.4*GP*RTOR)
 YJ_CU = IPL/YJ_CU
@@ -463,7 +460,7 @@ YWQ(j) = 0.
 YWG11(j) = 1.
 YWNB(j) = 1./RHO(j)
 YWWB(j) = 1./RHO(j)
-YVR(j) = CC(j)*.4*GP*RHO(j)/IPOL(j)**2.0
+YVR(j) = CC(j)*0.4*GP*RHO(j)/IPOL(j)**2
 YWM(j) = 1./YVR(j)
 YWD(j) = -(VR(j)/(GP2*RHO(j)*CC(j))) * (CUBS(j) + CD(j))
 enddo
@@ -798,7 +795,6 @@ YM = 0.
 do j=1, NA1
 YM1 = MV(j)*j
 YM2 = YM1*G22(j)
-CV(j) = (YM2 - YM)*G33(j)*IPOL(j)**3/YC/RHO(j)
 if (j < NA) then
 YDF = YFV*YM1
 elseif(j <= NA) then
@@ -806,8 +802,6 @@ YDF = GP2*HRO*BTOR*YM1*HRO
 endif
 if (j <= NA) then
 FV(j+1) = FV(j) + YDF
-else
-CV(NA1) = CV(NA)
 endif
 YM = YM2
 enddo

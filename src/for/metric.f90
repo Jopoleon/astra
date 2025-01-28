@@ -1679,8 +1679,9 @@ subroutine CUOFP
 !  MU(1:NA1) - (1/rho)dF/d(rho)      rotational transform
 !---------------------------------------------------------------------
 
-use status_inc, only: FP, MU, CU, IPOL, G22, G33
+use status_inc, only: XRHO, FP, MU, CU, IPOL, G22, G33, SXHO
 use const_inc, only: GP, RTOR, HRO, BTOR, NA, NA1
+use numerical_tools, only: extrap
 
 implicit none
 
@@ -1699,7 +1700,8 @@ do J=1, NA
     CU(j) = (YAJ - YCJ)/HRO
     CU(j) = CU(j)/(j - 0.5)
 enddo
-MU(NA1) = MU(NA)
+call EXTRAP(XRHO(1:NA), CU(1:NA), XRHO(NA1), NA, CU(NA1), 2, NA)
+call EXTRAP(SXHO(1:NA), MU(1:NA), SXHO(NA1), NA, MU(NA1), 2, NA)
 YCJ = 1.25/(GP**2 * RTOR)
 YAJ = 0.5/(GP*BTOR)
 do J=1, NA1

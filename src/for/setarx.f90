@@ -189,6 +189,7 @@ var_loop: do jtarr=1, NTARR
         CASE(12)
             NP1 = NA1
             XA(: NP1) = RHO(: NP1)/ROC
+            XA = XA / XA(NP1)    ! renormalize in case rho(NP1) is not equal to ROC (can happen if equilibrium is not consistent and/or not calculated at every time step)
             do N11=n_grid, 1, -1
                 if (x_grid(N11) <= dxr) EXIT
             enddo

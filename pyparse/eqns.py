@@ -140,9 +140,10 @@ def cuasn(parse, bc='CU', neq=1):
     cuas_txt = const_text.CUAS.header
  
     if 'MV' in parse.var_defined:
-        cuas_txt += const_text.CUAS.mv1
-        cuas_txt += pa.apptmp('MV', parse)
-        cuas_txt += const_text.CUAS.mv2
+         logger.warning('MV is not used to define FV')
+#        cuas_txt += const_text.CUAS.mv1
+#        cuas_txt += pa.apptmp('MV', parse)
+#        cuas_txt += const_text.CUAS.mv2
     else:
         cuas_txt += 'FV(1: NA1) = 0.\n'
 
@@ -189,9 +190,10 @@ def cuas_uloop(parse, neq=1):
     cuasu_txt = const_text.CUAS.header
  
     if 'MV' in parse.var_defined:
-        cuasu_txt += const_text.CUAS.mv1
-        cuasu_txt += pa.apptmp('MV', parse)
-        cuasu_txt += const_text.CUAS.mv2
+         logger.warning('MV is not used to define FV')
+#        cuasu_txt += const_text.CUAS.mv1
+#        cuasu_txt += pa.apptmp('MV', parse)
+#        cuasu_txt += const_text.CUAS.mv2
     else:
         cuasu_txt += 'FV(1: NA1) = 0.\n'
 
@@ -212,15 +214,12 @@ def cuas_uloop(parse, neq=1):
     if 'MV' in parse.var_defined:
         cuasu_txt += \
 '''FP(NA1) = FP(NA)*(IPL + FPO(NA1)*FP(NA1)) + YDF
-CV(NA1) = CV(NA) + YWD(NA1) + ((CV(NA) + YWD(NA1)) - (CV(NA-1) + YWD(NA)))
 '''
     else:
         cuasu_txt += 'FP(NA1) = FP(NA)*(IPL + FPO(NA1)*FP(NA1))\n'
 
     cuasu_txt += const_text.CUAS.uloop_3
 
-    if 'MV' in parse.var_defined:
-        cuasu_txt += 'CU(1: NA1) = CU(1: NA1) - CV(1: NA1)\n'
     if neq == 0:
         cuasu_txt += const_text.CUAS.beta
     cuasu_txt += 'enddo ! JCALL\n'
@@ -474,7 +473,8 @@ def cueqn(parse):
 
     cueq_txt = const_text.CUEQN.header
     if 'MV' in parse.var_defined:
-        cueq_txt += const_text.CUEQN.mv
+         logger,warning('MV is not used to define FV')
+#        cueq_txt += const_text.CUEQN.mv
 
     for coeff in ('DC', 'HC', 'XC', 'CD', 'CC'):
         cueq_txt += pa.apptmp(coeff, parse)
@@ -504,9 +504,6 @@ def cueqn(parse):
         cueq_txt += 'PSIFB = PSIEXT - PSPLEX*dfpdrbm12\n'
 
     cueq_txt += 'do J=1, NA1\n'
-
-    if 'MV' in parse.var_defined:
-        cueq_txt += 'CU(J) = CU(J) - CV(j)\n'
 
     cueq_txt += \
 '''UPL(J) = (FP(J) - FPO(J))/TAU - YQDCMF(J)

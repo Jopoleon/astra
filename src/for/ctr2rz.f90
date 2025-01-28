@@ -111,7 +111,6 @@ Rrect = Rgrid - X(1, 1)
 Zrect = Zgrid - Y(1, 1)
 
 ! Biquadratic interpolation
-write(6, *) 'Biquadratic interpolation'
 
 do jr=1, Nrrect
     Rpos = Rrect(jr)
@@ -205,7 +204,6 @@ Rrect = Rgrid - X(1, 1)
 Zrect = Zgrid - Y(1, 1)
 
 ! Biquadratic interpolation
-write(6, *) 'Biquadratic interpolation'
 do jr=1, Nrrect
     Rpos = Rrect(jr)
     rdist = (Rctr - Rpos)**2
@@ -257,6 +255,7 @@ SUBROUTINE ctr2rz
 ! 2D interpolation of Psi, Fdia from contours(rho, theta) to Cartesian R, z 2D-grid
   
 use parameters_a2equil, only: equil_now
+use const_inc, only: IFBEY
 
 implicit none
 
@@ -285,7 +284,6 @@ Rctr = equil_now%coord_sys%position%r(2:, :n_the-1) - Rmag
 Zctr = equil_now%coord_sys%position%z(2:, :n_the-1) - Zmag
 
 ! Biquadratic interpolation
-write(6, *) 'Biquadratic interpolation'
 do jr=1, nr_rect
     Rpos = equil_now%eqgeometry%rectgrid%r2d(jr) - Rmag
     rdist = (Rctr - Rpos)**2
@@ -324,10 +322,10 @@ do jr=1, nr_rect
         if ( (irho == n_rho-1) .and. (norm > norm3(3)) ) then
 !            f2d(jr, jz) = 2.*pf3(3) - pf3(2)
          !linear extrapolation (for Rabbit, such that orbits outside of the last closed flux surface can be calculated.)
-            CALL lin_int(norm, norm3(2:3), pf3(2:3), equil_now%eqgeometry%rectgrid%psirz2d(jr, jz))
+            if (IFBEY == 0) CALL lin_int(norm, norm3(2:3), pf3(2:3), equil_now%eqgeometry%rectgrid%psirz2d(jr, jz))
             CALL lin_int(norm, norm3(2:3), rb3(2:3), equil_now%eqgeometry%rectgrid%fdia2d(jr, jz))
         else
-            CALL quad_int(norm, norm3, pf3, equil_now%eqgeometry%rectgrid%psirz2d(jr, jz))
+            if (IFBEY == 0) CALL quad_int(norm, norm3, pf3, equil_now%eqgeometry%rectgrid%psirz2d(jr, jz))
             CALL quad_int(norm, norm3, rb3, equil_now%eqgeometry%rectgrid%fdia2d(jr, jz))
         endif
     enddo
