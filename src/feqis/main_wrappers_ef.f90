@@ -1312,8 +1312,6 @@ do i=1, nteta + 1
 enddo
 dteta = teta(2) - teta(1)
 
-dx = sqrt(dr**2 + dz**2)
-
 ! Find boundary
 j = jaxis
 do i=iaxis, nr2
@@ -1330,7 +1328,7 @@ zbnd(1) = Zrect(j)
 teta_fbe(1) = pol_angle(rax, zax, rbnd(1), zbnd(1))
 
 theta_loop: do i=2, nteta
-    dx = sqrt(dr**2 + dz**2)
+    dx = sqrt((dr*cos(teta(i)))**2 + (dz*sin(teta(i)))**2)
     x1 = sqrt((rbnd(i-1) - rax)**2 + (zbnd(i-1) - zax)**2)
     teta_fbe(i) = teta_fbe(i-1) + dteta
 
@@ -1419,8 +1417,8 @@ teta (1:nteta) = teta_fbe(1:nteta)
 rbndp(1:nteta) = rbnd(1:nteta)
 zbndp(1:nteta) = zbnd(1:nteta)
 teta (nteta + 1) = teta(nteta) + dteta
-rbndp(nteta + 1) = rbnd(nteta) !shouldnt this be rbnd(1) ???
-zbndp(nteta + 1) = zbnd(nteta)
+rbndp(nteta + 1) = rbnd(1) 
+zbndp(nteta + 1) = zbnd(1)
 
 raxp = rax
 zaxp = zax
