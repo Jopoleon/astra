@@ -64,7 +64,7 @@
 
 &physics
    jumpcor = 2
-   table_path   = '$ASTRA_EXT/rabbit/tables_highRes'
+   table_path   = 'rabbit/tables_highRes'
    limiter_file = 'rabbit/limiters/limiter_aug.dat'
    Rlim = 2.20 !AUG defaults, overridden if limiter_file exists
    zlim = 0.20

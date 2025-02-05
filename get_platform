@@ -46,6 +46,9 @@ then
 elif [[ $node = "rat2"* ]]
 then
     platform=rat2
+elif [[ $node = "puhti"* ]]
+then
+    platform=puhti
 else
     platform=mypc
 fi

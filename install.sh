@@ -78,8 +78,6 @@ fi
 
 source $AWD/platform/env.$platform                     # get platform dependent $ASTRA_EXT
 echo $ASTRA_EXT
-sed -i "s#\$ASTRA_EXT#$ASTRA_EXT#g" exp/nml/aug34954   # insert path to RABBIT's tables and limiter file
-sed -i "s#\$ASTRA_EXT#$ASTRA_EXT#g" exp/nml/AUG33040_2500
 
 chmod 744 $AWD/exe/Build
 chmod 744 $AWD/exe/as_exe
