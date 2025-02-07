@@ -17,7 +17,6 @@ double precision :: error_temp
 double precision, dimension(300) :: cur_temp
 
 if (j_init == -818) then !!!refit mode 818, special case
-    write(*, *) 'special refit time dependent mode'
     call psi_external_calc
     call solve_gse2d_fbe_full_feqis(0)
     return
@@ -26,7 +25,6 @@ endif
 ! time stepping
 ! at iteration 0, dpsidt = 0
 if (j_init == 0 .or. no_circuit_eq == 1) then
-    write(*, *) 'init full system'
 ! First do full equilibrium solution at time t=0
     call psi_external_calc
     call solve_gse2d_fbe_full_feqis(0)
@@ -35,7 +33,6 @@ if (j_init == 0 .or. no_circuit_eq == 1) then
     enddo
     psi_cur_old(1:nconduc) = psiplasmatoconduc(1:nconduc)
 
-    write(*, *) 'init done'
     call circuit_eq_advance_feqis(0)
     j_init = -1
     return
@@ -73,10 +70,6 @@ do j_iter=1, max_iter
             j_init = -1
         endif
         return
-    endif
-
-    if (j_iter >= max_iter) then
-        write(*, *) 'circuit equations not converging, max number of iterations override... going on', error_temp
     endif
 
 enddo
@@ -276,8 +269,6 @@ CASE(101) ! refit_mode=101: only vertical stab (doesn't work well)
 
     enddo
 
-    write(*, *) 'total iterations passed!'
-
 CASE(1) ! refit eddy currents using fourier method for axis stability. doesnt respect boundary. fixed given active currents
     call restab_axis_with_fourier_wall
 
@@ -340,7 +331,6 @@ double precision, dimension(nr2, nz2) :: g
 
 !first, initialized initial guess coming from prescribed boundary current density: jrhoteta
 if (j_init == 0) then
-    write(*, *) 'Re-interp density'
     call interp_j_fromrhotorz
 ! Rescale current density
     curr = SUM(jrz(1:nr2, 1:nz2)) *dr*dz
@@ -351,7 +341,6 @@ if (j_init == 0) then
     jaxis = closest_index(zax, Zrect(1), dz)
     rax = Rrect(iaxis)
     zax = Zrect(jaxis)
-    write(*, *) raxp, zaxp, rax, zax
 endif
 
 g = 0.

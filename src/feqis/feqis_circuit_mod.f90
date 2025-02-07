@@ -754,7 +754,6 @@ contains
 
         temp_err = abs(Ffunc - Ffunc_old)
         Ffunc_old = Ffunc
-        write(*,*) 'iteration ',j_iter, curnow(1:nconduc),rax,zax,temp_err, Ffunc,sum(abs(Fderiv(1:nconduc)))
         if (temp_err <= err_find_psistab) EXIT
 
     enddo
@@ -768,9 +767,6 @@ contains
     call find_new_axis_part1
     call find_psi_boundary
     call new_jrz_feqis  ! calculate new right hand side
-
-    write(*, *) curconduc(1:nconduc), rax, zax
-    write(*, *) 'full fonfit eddy currents converged', temp_err, err_find_psistab
 
     return
     end subroutine restab_F_function_full_fonfit
@@ -966,7 +962,6 @@ contains
 
         temp_err = abs(Ffunc - Ffunc_old)
         Ffunc_old = Ffunc
-        write(*, *) 'iteration ', j_iter, curnow(1:nconduc), rax, zax, temp_err, Ffunc, sum(abs(Fderiv(1:nconduc)))
         if (temp_err <= err_find_psistab) EXIT
 
     enddo
@@ -980,9 +975,6 @@ contains
     call find_new_axis_part1
     call find_psi_boundary
     call new_jrz_feqis  ! calculate new right hand side
-
-    write(*, *) curconduc(1:nconduc), rax, zax
-    write(*, *) 'full fonfit eddy currents converged', temp_err, err_find_psistab
 
     return
     end subroutine restab_F_function_full_fonfit_xpoints
@@ -1066,8 +1058,6 @@ contains
 
     deltapsiext = -(0.5*sum(V_loop)*(delta_t(2) - delta_t(1)) + 0.5*sum(L_ext)*(ip_ev(2) - ip_ev(1)))
 
-    write(*, *) 'deltapsi', deltapsiext, rax_ev, zax_ev, j_ev(30, 30, :)
-
     psicorr   = 0.
     Ffunc_old = 1.e6
     Fderiv = 0.
@@ -1130,7 +1120,6 @@ contains
 
 ! Calculate inverse
     invmatrix = inv_matrix(matrix, 2*nactive+1)
-    write(*, *) 'invmatrix', invmatrix(10, 10)
 
     do j_iter=1, 300000 !iterations to find currents
         if (j_iter > 150) stop
@@ -1179,8 +1168,6 @@ contains
            enddo
        enddo !end time loop
 
-       write(*, *) 'psi ext', psi_ext_ev, lambda
-
 ! add lambda contributions
        Ffunc = sum(Ffunc_ev) + lambda*(deltapsiext - (psi_ext_ev(2) - psi_ext_ev(1)))
        do i=1, nactive
@@ -1191,8 +1178,6 @@ contains
        enddo
        Fderiv(2*nactive+1)=deltapsiext-(psi_ext_ev(2)-psi_ext_ev(1)) ! dF/dlambda
 
-       write(*, *) 'fderiv', fderiv
-
 ! Calculate new currents
        do i=1, n_evol*nactive+1
            result_vector(i) = result_vector(i) - sum(invmatrix(i, 1:n_evol*nactive+1)*Fderiv)
@@ -1200,9 +1185,6 @@ contains
        curdiff(:, 1) = result_vector(1:nactive)
        curdiff(:, 2) = result_vector(nactive+1:n_evol*nactive)
        lambda = result_vector(n_evol*nactive+1)
-
-       write(*, *) 'result_vector', result_vector
-       write(*, *) 'stop jere in fonfit times'
 
 ! Update plasma current density field
        do jt=1,n_evol
@@ -1249,14 +1231,9 @@ contains
 
        temp_err = sum(abs(Fderiv)) !error
        Ffunc_old = Ffunc
-       write(*, *) 'iteration ', j_iter, temp_err, sum(abs(Fderiv(1: 2*nactive))), rax, zax
        if (temp_err <= err_find_psistab) EXIT
     enddo
 
-    write(*, *) ''
-    write(*, *) 'full fonfit active currents converged',temp_err,err_find_psistab
-    write(*, *) ''
-    write(*, *) 'closing program but saving data in output_timefit.dat'
     open(32, file='dat/output_timefit.dat')
         write(32,*) 't1 currents: ', i_totev(1: nactive, 1)
         write(32,*) 't2 currents: ', i_totev(1: nactive, 2)
@@ -1346,7 +1323,6 @@ contains
     enddo
 
     deltapsiext = -(0.5*sum(V_loop)*(delta_t(2) - delta_t(1)) + 0.5*sum(L_ext) * (ip_ev(2) - ip_ev(1)))
-    write(*, *) 'deltapsi', deltapsiext, rax_ev, zax_ev, j_ev(30, 30, :)
 
     psicorr   = 0.
     Ffunc_old = 1.e6
@@ -1412,7 +1388,6 @@ contains
 
 ! Calculate inverse
     invmatrix = inv_matrix(matrix, 2*nactive+1)
-    write(*, *) 'invmatrix', invmatrix(10, 10)
 
     do j_iter=1, 300000 ! iterations to find currents
         if (j_iter > 150) stop
@@ -1459,8 +1434,6 @@ contains
             enddo
         enddo !end time loop
 
-        write(*, *) 'psi ext', psi_ext_ev, lambda
-
 ! Add lambda contributions
         Ffunc = sum(Ffunc_ev) + lambda*(deltapsiext - (psi_ext_ev(2) - psi_ext_ev(1)))
         do i=1, nactive
@@ -1470,7 +1443,6 @@ contains
             Fderiv(nactive+i) = Fderiv(nactive+i) - lambda*G_00c(i, 2)
         enddo
         Fderiv(2*nactive+1) = deltapsiext - (psi_ext_ev(2) - psi_ext_ev(1)) ! dF/dlambda
-        write(*, *) 'fderiv', fderiv
 
 ! Calculate new currents
         do i=1, n_evol*nactive+1
@@ -1479,8 +1451,6 @@ contains
         curdiff(:, 1) = result_vector(1: nactive)
         curdiff(:, 2) = result_vector(nactive+1: n_evol*nactive)
         lambda = result_vector(n_evol*nactive+1)
-        write(*, *) 'result_vector', result_vector
-        write(*, *) 'stop jere in fonfit times'
 ! Apply limits
         do jt=1, n_evol
             do i=1, nactive
@@ -1535,14 +1505,9 @@ contains
 
         temp_err = sum(abs(Fderiv)) !error
         Ffunc_old = Ffunc
-        write(*, *) 'iteration ', j_iter, temp_err, sum(abs(Fderiv(1: 2*nactive))), rax, zax
         if (temp_err <= err_find_psistab) EXIT
     enddo
 
-    write(*, *) ''
-    write(*, *) 'full fonfit active currents converged', temp_err, err_find_psistab
-    write(*, *) ''
-    write(*, *) 'closing program but saving data in output_timefit.dat'
     open(32, file='dat/output_timefit.dat')
         write(32, *) 't1 currents: ', i_totev(1: nactive, 1)
         write(32, *) 't2 currents: ', i_totev(1: nactive, 2)
@@ -1605,8 +1570,6 @@ contains
     save j_time
 
     deltapsiext = tau_gseq_feqis*(vloop_avg+L_ext*dIp_dt)   ! jump in psiext
-    write(*, *) 'deltapsi', deltapsiext, tau_gseq_feqis, vloop_avg, L_ext, dIp_dt, &
-    curconduc(1:nactive), j_time
 
     r_norm_ref = 0.5*(rmin + rmax)
     psicorr   = 0.
@@ -1687,8 +1650,6 @@ contains
     matrix    = 0.
     invmatrix = 0.
     lambda = 0.
-
-    write(*, *) 'psiext', psiextrz(30,30), rax, zax, jrz(30, 30)
 
     do j=1, nactive
         do k=1, nteta_temp
@@ -1824,7 +1785,6 @@ contains
 
         psibext = sum(G_00c2*curnow)
 
-        write(*,*) 'loop', deltapsiext/GPI2, psibext, psibexto, psibext - psibexto, -deltapsiext/GPI2
         if (j_time > 0) Ffunc = Ffunc + lambda*(psibext - psibexto + deltapsiext/GPI2)
 
 ! Calculate F derivative
@@ -1868,8 +1828,6 @@ contains
         if (j_time > 0) Fderiv(1:nactive) = Fderiv(1:nactive) + lambda*G_00c2(1:nactive)
         if (j_time > 0) Fderiv(nactive+1) = (psibext-psibexto+deltapsiext/GPI2)
 
-        write(*, *) 'fderiv', fderiv
-
 ! Calculate new currents
 
         do i=1, nactive
@@ -1882,12 +1840,10 @@ contains
         lambda = lambda - sum(invmatrix(nactive+1, 1:nactive+1)*Fderiv(1:nactive+1))
 
 ! cut new currents to limits due to current
-        write(*, *) 'result vector', curnow(1:nactive), lambda
         do i=1, nactive
             curnow(i) = min(curnow(i), current_limit_feqis(i, 1))
             curnow(i) = max(curnow(i), current_limit_feqis(i, 2))
         enddo
-        write(*, *) 'result vector', curnow(1:nactive), lambda
 ! cut new currents to limits due to voltage if jtime> 0
         if (j_time > 0) then 
             do i=1, nactive
@@ -1898,8 +1854,6 @@ contains
 
         curdiff = curnow - curref
 
-        write(*, *) 'result vector', curnow(1:nactive), lambda
-! pause
 ! Construct correction
         call compound_psi
         do j=1, nz2
@@ -1918,7 +1872,6 @@ contains
 
         temp_err = sum(abs(Fderiv))
         Ffunc_old = Ffunc
-        write(*,*) 'iteration ',j_iter, curnow(1:nactive),rax,zax,temp_err,sum(abs(Fderiv(1:nactive)))
 
         if (j_iter > 15000) EXIT
         if (temp_err <= err_find_psistab) EXIT
@@ -1928,10 +1881,6 @@ contains
     do i=1, nactive
         curconduc(i) = curnow(i)
     enddo
-
-    write(*, *) ' '
-    write(*, *) curconduc(1:nconduc)
-    write(*, *) 'full fonfit active currents converged', temp_err, err_find_psistab
 
     write(file_time,'(1A, I0)') 'dat/file_fit_currents_output_', j_time
 
@@ -1945,7 +1894,6 @@ contains
 
     call estimate_boundary_to_pbe(rbndtemp, zbndtemp, nteta)
 
-    write(*, *) 'Saving new currents in ', file_time
     open(32, file = file_time)
     write(32, *) nactive, curconduc(1:nactive)*1e3, -GPI2*psibext, rax, zax, &
         tau_gseq_feqis, vloop_avg, L_ext*dIp_dt, &
@@ -2071,13 +2019,9 @@ contains
     curref(1:nactive) = curnow(1:nactive)
     curdiff = 0.
 
- write(*,*) 'initial currents',curnow(1:nactive)
-
 ! calculate the matrix F_li of the F function, including the green function terms
     matrix    = 0.
     invmatrix = 0.
-
-    write(*, *) 'psiext', psiextrz(30,30), rax, zax, jrz(30, 30)
 
     do j=1, nactive
         do k=1, nteta_temp
@@ -2236,8 +2180,6 @@ contains
             endif
         enddo
 
-        write(*, *) 'fderiv', fderiv
-
 ! Calculate new currents
 
         do i=1, nactive
@@ -2245,18 +2187,10 @@ contains
         enddo
 
 ! cut new currents to limits due to current
-        write(*, *) 'result vector', curnow(1:nactive)
-        do i=1, nactive
-!            curnow(i) = min(curnow(i), current_limit_feqis(i, 1))
-!            curnow(i) = max(curnow(i), current_limit_feqis(i, 2))
-        enddo
-        write(*, *) 'result vector', curnow(1:nactive)
 ! cut new currents to limits due to voltage if jtime> 0
 
         curdiff = curnow - curref
 
-        write(*, *) 'result vector', curnow(1:nactive)
-! pause
 ! Construct correction
         call compound_psi
         do j=1, nz2
@@ -2275,7 +2209,6 @@ contains
 
         temp_err = sum(abs(Fderiv))
         Ffunc_old = Ffunc
-        write(*,*) 'iteration ',j_iter, curnow(1:nactive),rax,zax,temp_err,sum(abs(Fderiv(1:nactive)))
 
         if (j_iter > 15000) EXIT
         if (temp_err <= err_find_psistab) EXIT
@@ -2285,10 +2218,6 @@ contains
     do i=1, nactive
         curconduc(i) = curnow(i)
     enddo
-
-    write(*, *) ' '
-    write(*, *) curconduc(1:nconduc)
-    write(*, *) 'full fonfit active currents converged', temp_err, err_find_psistab
 
     write(file_time,'(1A)') 'dat/file_fit_currents_output_fixed_time'
 
@@ -2302,7 +2231,6 @@ contains
 
     call estimate_boundary_to_pbe(rbndtemp, zbndtemp, nteta)
 
-    write(*, *) 'Saving new currents in ', file_time
     open(32, file = file_time)
     write(32, *) nactive, curconduc(1:nactive)*1e3, -GPI2*psibext, rax, zax, &
         tau_gseq_feqis, vloop_avg, L_ext*dIp_dt, &
@@ -2413,8 +2341,6 @@ contains
     matrix    = 0.
     invmatrix = 0.
 
-    write(*,*) 'psiext',psiextrz(30,30),rax,zax,jrz(30,30)
-
     do j=1, nactive
         do k=1, nteta
             G_00(j, k) = interp2d_psi(rbref(k), zbref(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
@@ -2488,15 +2414,12 @@ contains
                 sigma_axis*(x2*G_00r(i) + x3*G_00z(i)) )
         enddo
 
-        write(*, *) 'fderiv', fderiv
-
 ! Calculate new currents
 
         do i=1, nactive
             curnow(i) = curnow(i) - sum(invmatrix(i, 1:nactive)*Fderiv)
         enddo
         curdiff = curnow - curref
-        write(*,*) 'result vector',curdiff(1:nactive)
 
 ! Construct correction
         call compound_psi
@@ -2516,7 +2439,6 @@ contains
 
         temp_err = sum(abs(Fderiv))
         Ffunc_old = Ffunc
-        write(*,*) 'iteration ', j_iter, curnow(1:nactive), rax, zax, temp_err, sum(abs(Fderiv(1:nactive)))
 
         if (temp_err <= err_find_psistab) EXIT
 
@@ -2531,10 +2453,6 @@ contains
     call find_new_axis_part1
     call find_psi_boundary
     call new_jrz_feqis  ! calculate new right hand side
-
-    write(*, *) ' '
-    write(*, *) curconduc(1:nconduc), rax, zax
-    write(*, *) 'full fonfit active currents converged', temp_err, err_find_psistab
 
     return
     end subroutine restab_F_function_full_currents
@@ -2594,8 +2512,6 @@ contains
 ! calculate the matrix F_li of the F function, including the green function terms
     matrix    = 0.
     invmatrix = 0.
-
-    write(*,*) 'psiext',psiextrz(30,30),rax,zax,jrz(30,30)
 
     do j=1, nactive
         do k=1, nteta
@@ -2674,8 +2590,6 @@ contains
             curnow(i) = curnow(i) - sum(invmatrix(i, 1:nactive)*Fderiv)
         enddo
         curdiff = curnow - curref
-        write(*, *) 'result vector', curdiff(1:nactive)
-
 ! cut new currents to limits
         do i=1, nactive
             curdiff(i) = min(curdiff(i), current_limit_feqis(i, 1))
@@ -2700,7 +2614,6 @@ contains
 
         temp_err = sum(abs(Fderiv))
         Ffunc_old = Ffunc
-        write(*,*) 'iteration ', j_iter, curnow(1:nactive), rax, zax, temp_err, sum(abs(Fderiv(1:nactive)))
 
         if (temp_err <= err_find_psistab) EXIT
 
@@ -2715,10 +2628,6 @@ contains
     call find_new_axis_part1
     call find_psi_boundary
     call new_jrz_feqis  ! calculate new right hand side
-
-    write(*, *) ' '
-    write(*, *) curconduc(1:nconduc), rax, zax
-    write(*, *) 'full fonfit active currents converged', temp_err, err_find_psistab
 
     return
     end subroutine restab_F_function_full_currents_limits
@@ -2779,8 +2688,6 @@ contains
 ! calculate the matrix F_li of the F function, including the green function terms
     matrix    = 0.
     invmatrix = 0.
-
-    write(*, *) 'psiext', psiextrz(30, 30), rax, zax, jrz(30, 30)
 
     do j=1, nactive
         do k=1, nteta
@@ -2860,7 +2767,6 @@ contains
             curnow(i) = curnow(i) - sum(invmatrix(i, 1:nactive)*Fderiv)
         enddo
         curdiff = curnow - curref
-        write(*, *) 'result vector', curdiff(1:nactive)
 
 ! Construct correction
         call compound_psi
@@ -2880,7 +2786,6 @@ contains
 
         temp_err = sum(abs(Fderiv))
         Ffunc_old = Ffunc
-        write(*, *) 'iteration ', j_iter, curnow(1:nactive), rax, zax, temp_err, sum(abs(Fderiv(1:nactive)))
 
         if (temp_err <= err_find_psistab) EXIT
 
@@ -2895,10 +2800,6 @@ contains
     call find_new_axis_part1
     call find_psi_boundary
     call new_jrz_feqis  ! calculate new right hand side
-
-    write(*, *) ' '
-    write(*, *) curconduc(1:nconduc), rax, zax
-    write(*, *) 'full fonfit active currents converged', temp_err, err_find_psistab
 
     return
     end subroutine restab_F_function_full_currents_forces
@@ -3018,8 +2919,6 @@ contains
     call find_psi_boundary
     call new_jrz_feqis  ! calculate new right hand side
 
-    write(*, *) curconduc(1:nconduc), rax, zax
-
     stop
     return
     end subroutine restab_boundary_with_fourier_wall
@@ -3043,7 +2942,6 @@ contains
     double precision, dimension(nr2, nz2) :: g
 
 !first, initialized initial guess coming from prescribed boundary current density: jrhoteta
-    write(*, *) 'reinterp curr, restab'
     call interp_j_fromrhotorz
 
 ! Rescale current density
@@ -3159,8 +3057,6 @@ contains
     call find_new_axis_part1
     call find_psi_boundary
     call new_jrz_feqis  ! calculate new right hand side
-
-    write(*, *) 'Code restab-axis with Fourier wall converged'
 
     return
     end subroutine restab_axis_with_fourier_wall
