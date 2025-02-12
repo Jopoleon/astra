@@ -49,6 +49,9 @@ then
 elif [[ $node = "puhti"* ]]
 then
     platform=puhti
+elif [[ $node = "fc-deb"* ]]
+then
+    platform=w7x
 else
     platform=mypc
 fi

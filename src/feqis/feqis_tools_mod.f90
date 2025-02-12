@@ -505,6 +505,16 @@ contains
     end function floor_index
 
 !---------------------------------------------------------------------
+    integer function ceil_index(x_in, xmin, dx)
+
+    double precision, intent(in) :: x_in, xmin, dx
+
+    ceil_index = ceiling((x_in - xmin)/dx + 1.) ! ceil(1.8) = 2
+
+    return
+    end function ceil_index
+
+!---------------------------------------------------------------------
     double precision function interp2d_psi(r_in, z_in, Rgrid, Zgrid, psi_in)
 ! ->psi at r_in, z_in
 

@@ -3317,8 +3317,8 @@ contains
     if (n_of_xpoints == 0) i_county = 0 !reset to full search if there are no x points!
 
     if (n_of_xpoints >= 1) then
-        x_point_save(1:n_of_xpoints, 1) = r_xpoint(1:n_of_xpoints)
-        x_point_save(1:n_of_xpoints, 2) = z_xpoint(1:n_of_xpoints)
+        x_point_save(1:min(20,n_of_xpoints), 1) = r_xpoint(1:min(20,n_of_xpoints))
+        x_point_save(1:min(20,n_of_xpoints), 2) = z_xpoint(1:min(20,n_of_xpoints))
     endif
 
     call find_closest_xpoints(rx_add, zx_add, i9, n_adding)
