@@ -1740,26 +1740,24 @@ FTO = GP*BTOR*ROC**2
 do j=1, NRD
     if (RHO(j) >= ROWALL) EXIT
 ENDDO
-NB1 = j
+NB1 = min(NRD,j)
 
 AMETR(NA1) = ABC
-
-NAB = NA1
-ROB = RHO(NAB)
+ROB = RHO(NA1)
 
 if ( 2.*abs(AB - ABC) < AMETR(NA1) - AMETR(NA) ) then
     AB = ABC
     return
 endif
 
-NAB = NA1/ABC*AB
+NAB = min(nrd,nint(NA1/ABC*AB))
 ROB = RHO(NAB)
 AMETR(NAB) = AB
 
 if (NA1 + 1 > NB1 .or. NA1 == NAB) return
 
 YDA = (AB - ABC)/(NAB - NA1)
-
+!the values outside NA1 need to be controlled if NAB is not equal to NA1/ABC*AB
 if (NA1 < NB1) then
     do j=NA1+1, NB1
         AMETR(j) = ABC + YDA*(j - NA1)
@@ -1767,6 +1765,8 @@ if (NA1 < NB1) then
     enddo
     if (NAB < NB1) NAB = NAB + 1
 endif
+! the values at NAB maybe wrong, do not use them!
+NAB=min(NRD,NAB)
 ROB = RHO(NAB)
 AMETR(NAB) = AB
 

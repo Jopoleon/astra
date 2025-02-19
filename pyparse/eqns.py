@@ -111,12 +111,12 @@ def bnd_init(var, var_defined, parse):
             logger.warning('Assuming %s(ND1: NA1)=%s(ND1: NA1)', var, varx)
             bnd_txt += '%s(ND1: NA1) = %s(ND1: NA1)\n' %(var, varx)
         bnd_txt += '%sO(ND1: NA1) = %s(ND1: NA1)\n' %(var, var)
-        bnd_txt += 'YWC(4) = 1.\n'
+        bnd_txt += 'bctype = 1\n'
     elif bnd_count == 1:
         if varb_list[0] in var_defined: # NEB
             bnd_txt += '%s(ND1) = %s' %(var, pa.LINE2FOR(parse.right_hand_d[varb_list[0]], parse) )
             bnd_txt += '%sO(ND1: NA1) = %s(ND1: NA1)\n' %(var, var)
-            bnd_txt += 'YWC(4) = 1.\n'
+            bnd_txt += 'bctype = 1\n'
             if var not in var_defined: # Linear extrapolation towards rho=1
                 logger.warning('BC defined, but no external condition for %s', var)
                 logger.warning('Assuming linear interpolation between rhoBC and separatrix')
@@ -127,8 +127,8 @@ def bnd_init(var, var_defined, parse):
                 bnd_txt += '%s(ND1) = %s' %(flux, pa.LINE2FOR(parse.right_hand_d[varb_list[1]], parse) )
             else:
                 bnd_txt += '%s(ND1) = %s(ND1)*(%s)\n' %(flux, var, pa.LINE2FOR(parse.right_hand_d[varb_list[2]], parse).strip() )
-            bnd_txt += 'YWC(2) = %s(ND1)\n' %flux
-            bnd_txt += 'YWC(4) = -1.\n'
+            bnd_txt += 'bc_values(1) = %s(ND1)\n' %flux
+            bnd_txt += 'bctype = 2\n'
     else:
         raise ValueError('Too many boundary conditions defined for %s in the equ file', var)
 
@@ -580,7 +580,7 @@ def fjeqn(parse, jeq):
         fj_txt += const_text.FJEQN.eqn
         fj_txt += 'NA1%d = ND1\n' %jeq
         fj_txt += \
-'call RUNEQ_EF(YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), F%dO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), SFF%d(1: NA1),SF%d(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, YWC(1:7), F%d(1: NA1), QF%d(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1))\n' %(jeq, jeq, jeq, jeq, jeq)
+'call RUNEQ_EF(YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), F%dO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), SFF%d(1: NA1),SF%d(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, F%d(1: NA1), QF%d(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1))\n' %(jeq, jeq, jeq, jeq, jeq)
 
     if sff in var_defined:
         fj_txt += '%sTOT(NA1) = %sTOT(NA1) + %s(NA1)*%s(NA1)\n' %(sf, sf, sff, key)

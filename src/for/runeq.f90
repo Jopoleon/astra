@@ -1,7 +1,7 @@
 !---------------------------------------------------------------------
 subroutine RUNEQ_EF(GN, HN, GO, HO, YO, N, W, V, M, G11, A, B, R, S, P, &
     rbdot, bbdot, Ngridb, Ngrid, dx, dt, roc, &
-    x, imethod, C, y, Q, adcmp_term, adcmpf, mphit)
+    x, imethod, bctype, bc_values, y, Q, adcmp_term, adcmpf, mphit)
 !---------------------------------------------------------------------
 !
 ! WARNING: at the moment Qb is explicit, no option for QNNB, QETB, QITB is given at the moment!
@@ -14,11 +14,11 @@ subroutine RUNEQ_EF(GN, HN, GO, HO, YO, N, W, V, M, G11, A, B, R, S, P, &
 !   while A, B, R, G11 are on shifted grid
 !      dx, dt, x (main grid, 1:Ngrid), should be RHO, imethod
 !      C: boundary conditions on y or on Q  
-!  C(4) < 0 if (yb isn't set) .and. (QB is set)
-!   then C(2)=QB, otherwise, if C(4)>0, use yb = y(Ngrid)
-!   In the case C(4) < 0, solves up to Ngrid
-!   In the case C(4) > 0, solves up to Ngrid-1 and uses Ngrid as b.c.
-!   If C(4) = 2, then do mixed b.c., where C(5)*y(b)+C(6)*y(b-1) = C(7)
+!  bctype=2,3 if (yb isn't set) .and. (QB is set)
+!   then C(2)=QB, otherwise, if bctype=1,4, use yb = y(Ngrid)
+!   In the case bctype=2,3, solves up to Ngrid
+!   In the case bctype=1,4, solves up to Ngrid-1 and uses Ngrid as b.c.
+!   If bctype = 3, then do mixed b.c., where C(5)*y(b)+C(6)*y(b-1) = C(7)
 !
 !  Outputs: y(1:Ngrid), Q(1:Ngrid).  
 !
@@ -73,15 +73,15 @@ use numerical_tools, only: extrap, deriv, grid2grid
 implicit none
 
 integer, parameter :: idiagnostic=0
-integer, intent(in) :: Ngrid, imethod, Ngridb
+integer, intent(in) :: Ngrid, imethod, Ngridb, bctype
 double precision, intent(in), dimension(Ngrid) :: GN, HN, GO, HO, &
    YO, V, G11, B, R, S, P, mphit, x, M, N, W
 double precision, intent(out)  , dimension(Ngrid) :: y, Q, adcmp_term
 double precision, intent(inout), dimension(Ngrid) :: A
 
-integer :: NgridS, bctype, eximp, j
-double precision :: adcmpf, exrbdot, dx, dt, C(7), theta, bbdot, &
-   rbdot, ybound, Qbound, roc, Mbound(3)
+integer :: NgridS, eximp, j
+double precision :: adcmpf, exrbdot, dx, dt, theta, bbdot, &
+   rbdot, ybound, Qbound, roc, Mbound(3), bc_values(5)
 double precision, dimension(Ngrid) :: x_b, G, H, NN, NO, dum1, &
     Rsource, Rsource2, Sdot_1, Sdot_2, rbgxhat, &
     Pdot_1, Pdot_2, VNx_Wtilde, Hx_Mtilde, Vtilde, Mtilde, Vtilde1, &
@@ -198,33 +198,27 @@ do j=1, Ngrid
 enddo
 
 !Check boundary condition, note that Qbound = Qbound/G11(b) since G11 is absorbed in Vtilde
-Mbound=0.
-if (C(4) == 1.) then
+Mbound = 0.
+SELECT CASE(bctype)
+CASE(1)
     ybound = y(Ngridb)
     NgridS = Ngridb - 1
     Qbound = 0.0
-    bctype = 1
-endif 
-if (C(4) == -1.) then
+CASE(2)
     ybound = 0.0
     NgridS = Ngridb
-    Qbound = C(2)/G11(Ngridb)
-    bctype = 2
-endif
-if (C(4) == -2.) then
+    Qbound = bc_values(1)/G11(Ngridb)
+CASE(3)
     ybound = 0.0
     NgridS = Ngridb
-    Qbound = C(3)/G11(Ngridb)
-    bctype = 4
-endif
-if (C(4) == 2.) then
+    Mbound(1) = bc_values(3)
+    Mbound(2) = bc_values(4)
+    Mbound(3) = bc_values(5)
+CASE(4)
     ybound = 0.0
     NgridS = Ngridb
-    Mbound(1) = C(5)
-    Mbound(2) = C(6)
-    Mbound(3) = C(7)
-    bctype = 3
-endif 
+    Qbound = bc_values(2)/G11(Ngridb)
+END SELECT
  
 !Define cd, or power law
 SELECT CASE(imethod)
@@ -691,7 +685,7 @@ end function GETPEI
 subroutine RUNEQTIMP_EF(GN, H1N, H2N, GO, H1O, H2O, & 
     Y1O, Y2O, N1, N2, W1, W2, V, M, G11, A1, A2, B1, B2, R1, R2, &
     S1, S2, P1, P2, T12, T21, rbdot, bbdot, Ngridb, Ngrid, dx, dt, &
-    roc, x, imethod, C1, C2, y1, y2, Q1, Q2, adcmpf)
+    roc, x, imethod, bctype, bcvalue, y1, y2, Q1, Q2, adcmpf)
 !---------------------------------------------------------------------
 ! WARNING: at the moment Qb is explicit, no option for QNNB, QETB, QITB is given at the moment!
 !
@@ -701,10 +695,10 @@ subroutine RUNEQTIMP_EF(GN, H1N, H2N, GO, H1O, H2O, &
 !      dx, dt, x (main grid, 1:Ngrid), should be RHO, imethod
 !      C: boundary conditions on y or on Q  
 !  C(1) = HRO
-!  C(4) < 0 if (yb isn't set) .and. (QB is set)
-!   then C(2)=QB, otherwise, if C(4)>0, use yb = y(Ngrid)
-!   In the case C(4) < 0, solves up to Ngrid
-!   In the case C(4) > 0, solves up to Ngrid-1 and uses Ngrid as b.c.
+!  bc_flag < 0 if (yb isn't set) .and. (QB is set)
+!   then C(2)=QB, otherwise, if bc_flag>0, use yb = y(Ngrid)
+!   In the case bc_flag < 0, solves up to Ngrid
+!   In the case bc_flag > 0, solves up to Ngrid-1 and uses Ngrid as b.c.
 !
 !  Outputs: y(1:Ngrid), Q(1:Ngrid).  
 !
@@ -756,17 +750,16 @@ use numerical_tools, only: deriv, extrap, grid2grid
 
 implicit none
 
-integer, intent(in) :: Ngrid, imethod, Ngridb
+integer, intent(in) :: Ngrid, imethod, Ngridb, bctype(2)
 double precision, intent(in) :: rbdot, bbdot, dx, dt, roc, adcmpf
 double precision, intent(in), dimension(Ngrid) :: GN, H1N, H2N, GO, &
     H1O, H2O, Y1O, Y2O, N1, N2, W1, W2, V, M, G11, B1, B2, &
-    R1, R2, S1, S2, P1, P2, x, C1, C2
+    R1, R2, S1, S2, P1, P2, x, bcvalue(2)
 double precision, intent(out)  , dimension(Ngrid) :: T12, T21, Q1, Q2
 double precision, intent(inout), dimension(Ngrid) :: A1, A2, y1, y2
 
-integer j, NgridS(2), bctype(2), eximp
-double precision exrbdot, theta, GETPEI, &
-    ybound1, Qbound1, ybound2, Qbound2
+integer :: j, NgridS(2), eximp
+double precision :: exrbdot, theta, ybound1, Qbound1, ybound2, Qbound2
 double precision, dimension(Ngrid) :: x_b, & 
     B1_new, S1_new, P1_new, B2_new, S2_new, P2_new, &
     Vtilde, Mtilde, Vtilde1, Gtilde, Htilde1, Htilde2, &
@@ -776,7 +769,7 @@ double precision, dimension(Ngrid) :: x_b, &
     xi1, fxi1, gxi1, xi2, fxi2, gxi2, &
     Sdot_11, Sdot_12, Sdot_21, Sdot_22, &
     Pdot_11, Pdot_12, Pdot_21, Pdot_22
-external GETPEI
+double precision, external :: GETPEI
 
 if (adcmpf >= 0.) exrbdot = 0.0
 if (adcmpf <  0.) exrbdot = 1.0
@@ -914,30 +907,24 @@ do j=1, Ngrid
 enddo
 
 !Check boundary condition, note that Qbound = Qbound/G11(b) since G11 is absorbed in Vtilde
-if (C1(4) > 0) then
+if (bctype(1) == 1) then
     ybound1 = y1(Ngridb)
     NgridS(1) = Ngridb - 1
     Qbound1 = 0.0
-    bctype(1) = 1
-endif 
-if (C1(4) < 0) then
+else if (bctype(1) == 2) then
     ybound1 = 0.0
     NgridS(1) = Ngridb
-    Qbound1 = C1(2)/G11(Ngridb)
-    bctype(1) = 2
+    Qbound1 = bcvalue(1)/G11(Ngridb)
 endif
 
-if (C2(4) > 0) then
+if (bctype(2) == 1) then
     ybound2 = y2(Ngridb)
     NgridS(2) = Ngridb - 1
     Qbound2 = 0.0
-    bctype(2) = 1
-endif
-if (C2(4) < 0) then
+else if (bctype(2) == 2) then
     ybound2 = 0.0
     NgridS(2) = Ngridb
-    Qbound2 = C2(2)/G11(Ngridb)
-    bctype(2) = 2
+    Qbound2 = bcvalue(2)/G11(Ngridb)
 endif 
       
 !Define cd, or power law
@@ -1025,8 +1012,7 @@ enddo
 if (bctype(1) == 1) then
     call EXTRAP(x(1: NgridS(1)), Q1(1: NgridS(1)), x(Ngridb), & 
         NgridS(1), Q1(Ngridb), 1, NgridS(1))
-endif
-if (bctype(1) == 2) then
+else if (bctype(1) == 2) then
 !Restore G11 in Qbound
     Q1(Ngridb) = Qbound1*G11(Ngridb)
 endif
@@ -1034,8 +1020,7 @@ endif
 if (bctype(2) == 1) then
     call EXTRAP(x(1: NgridS(2)), Q2(1: NgridS(2)), x(Ngridb), & 
         NgridS(2), Q2(Ngridb), 1, NgridS(2))
-endif
-if (bctype(2) == 2) then
+else if (bctype(2) == 2) then
 !Restore G11 in Qbound
     Q2(Ngridb) = Qbound2*G11(Ngridb)
 endif

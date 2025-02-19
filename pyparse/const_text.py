@@ -191,7 +191,7 @@ imethod = nint(INUME3)
 RABDOT = (abs(ADCMPF))*RBDOT
 BABDOT = (abs(ADCMPF))*BBDOT
 
-call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RABDOT, BABDOT, NA1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, YWC(1:7), FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), ADCMPF,MPHIT(1: NA1) )
+call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RABDOT, BABDOT, NA1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), ADCMPF,MPHIT(1: NA1) )
 
 dfpdrbm12 = -YWQ(NA)/G22(NA)
 
@@ -347,34 +347,32 @@ class CUEQ:
     ipl = \
 """
 ! Prescribed plasma current
-YWC(2) = 0.0
-YWC(3) = 0.0
-YWC(4) = 2.
-YWC(5) = 1.
-YWC(6) = -1.
-YWC(7) = 1./G22(NA)*IPL*RTOR/IPOL(NA1)
-YWC(7) = HRO*0.4*GP*YWC(7)
+bctype = 3
+bc_values(1) = 0.0
+bc_values(2) = 0.0
+bc_values(3) = 1.
+bc_values(4) = -1.
+bc_values(5) = HRO*0.4*GP/G22(NA)*IPL*RTOR/IPOL(NA1)
 bc_type_for_fp = 1
 if (ITFBP /= 0.0 .and. ITFBE < TIME) then
 if (ibcpsi_fb >= 0) then
 if (ITFBP < 0.0 .and. ibcpsi_fb >= 2.) then
-YWC(2) = 0.0
-YWC(3) = 0.0
-YWC(4) = 2.
-YWC(5) = HRO + PSPLEX*ROC
-YWC(6) = -PSPLEX*ROC
-YWC(7) = PSIEXT*HRO
+bctype = 3
+bc_values(1) = 0.0
+bc_values(2) = 0.0
+bc_values(3) = HRO + PSPLEX*ROC
+bc_values(4) = -PSPLEX*ROC
+bc_values(5) = PSIEXT*HRO
 bc_type_for_fp = 3
 endif
 endif
 if (ibcpsi_fb <= 1) then
-YWC(2) = 0.0
-YWC(3) = 0.0
-YWC(4) = 2.
-YWC(5) = 1.
-YWC(6) = -1.
-YWC(7) = 1./G22(NA)*IPL*RTOR/IPOL(NA1)
-YWC(7) = HRO*0.4*GP*YWC(7)
+bctype = 3
+bc_values(1) = 0.0
+bc_values(2) = 0.0
+bc_values(3) = 1.
+bc_values(4) = -1.
+bc_values(5) = HRO*0.4*GP/G22(NA)*IPL*RTOR/IPOL(NA1)
 bc_type_for_fp = 1
 endif
 endif
@@ -384,26 +382,26 @@ endif
 """
 ! Prescribed loop voltage:
 FP(NA1) = FPO(NA1) + TAU*UEXT
-YWC(2) = 0.0
-YWC(3) = 0.0
-YWC(4) = 1.
+bctype = 1
+bc_values(1) = 0.0
+bc_values(2) = 0.0
 bc_type_for_fp = 2
 if (ITFBP /= 0.0 .and. ITFBE < TIME) then
 if (ibcpsi_fb > 0) then
 if (ITFBP < 0.0 .and. ibcpsi_fb >= 2.) then
-YWC(2) = 0.0
-YWC(3) = 0.0
-YWC(4) = 2.
-YWC(5) = HRO + PSPLEX*ROC
-YWC(6) = -PSPLEX*ROC
-YWC(7) = PSIEXT*HRO
+bctype = 3
+bc_values(1) = 0.0
+bc_values(2) = 0.0
+bc_values(3) = HRO + PSPLEX*ROC
+bc_values(4) = -PSPLEX*ROC
+bc_values(5) = PSIEXT*HRO
 bc_type_for_fp = 3
 endif
 endif
 if (ibcpsi_fb <= 1) then
-YWC(2) = 0.0
-YWC(3) = 0.0
-YWC(4) = 1.
+bctype = 1
+bc_values(1) = 0.0
+bc_values(2) = 0.0
 bc_type_for_fp = 2
 endif
 endif
@@ -418,29 +416,29 @@ PSPLEX = LEXT/ROC*5.*IPOL(NA1)*G22(NA)/GP2/RTOR
 endif
 PSPLEX = LEXT/ROC*5.*IPOL(NA1)*G22(NA)/GP2/RTOR
 PSIEXT = PSIEXT + TAU*UEXT
-YWC(2) = 0.0
-YWC(3) = 0.0
-YWC(4) = 2.
-YWC(5) = HRO + PSPLEX*ROC
-YWC(6) = -PSPLEX*ROC
-YWC(7) = PSIEXT*HRO
+bctype = 3
+bc_values(1) = 0.0
+bc_values(2) = 0.0
+bc_values(3) = HRO + PSPLEX*ROC
+bc_values(4) = -PSPLEX*ROC
+bc_values(5) = PSIEXT*HRO
 bc_type_for_fp = 3
 if (ITFBP /= 0.0 .and. ITFBE < TIME) then
 if (ibcpsi_fb > 0) then
 if (ITFBP < 0.0 .and. ibcpsi_fb >= 2.) then
-YWC(2) = 0.0
-YWC(3) = 0.0
-YWC(4) = 2.
-YWC(5) = HRO + PSPLEX*ROC
-YWC(6) = -PSPLEX*ROC
-YWC(7) = PSIEXT*HRO
+bctype = 3
+bc_values(1) = 0.0
+bc_values(2) = 0.0
+bc_values(3) = HRO + PSPLEX*ROC
+bc_values(4) = -PSPLEX*ROC
+bc_values(5) = PSIEXT*HRO
 bc_type_for_fp = 3
 endif
 endif
 if (ibcpsi_fb <= 1) then
-YWC(2) = 0.0
-YWC(3) = 0.0
-YWC(4) = 1.
+bctype = 1
+bc_values(1) = 0.0
+bc_values(2) = 0.0
 bc_type_for_fp = 2
 endif
 endif
@@ -468,7 +466,7 @@ imethod = nint(INUME3)
 RABDOT = (abs(ADCMPF))*RBDOT
 BABDOT = (abs(ADCMPF))*BBDOT
 
-call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RABDOT, BABDOT, NA1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, YWC(1:7), FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), ADCMPF, MPHIT(1: NA1) )
+call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RABDOT, BABDOT, NA1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), ADCMPF, MPHIT(1: NA1) )
 
 dfpdrbm12 = -YWQ(NA)/G22(NA)
 
@@ -497,7 +495,7 @@ imethod = nint(INUME2)
 RABDOT = abs(ADCMPF)*RBDOT
 BABDOT = abs(ADCMPF)*BBDOT
 
-call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), TEO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1)/625, YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), 625*PET(1: NA1), 625*PETOT(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, YWC(1:7), TE(1: NA1), QE(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1) )
+call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), TEO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1)/625, YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), 625*PET(1: NA1), 625*PETOT(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, TE(1: NA1), QE(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1) )
 
 do j=1, NA1
 te(j) = max(te(j), 0.001)
@@ -537,7 +535,7 @@ imethod = nint(INUME2)
 RABDOT = abs(ADCMPF)*RBDOT
 BABDOT = abs(ADCMPF)*BBDOT
 
-call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), TIO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1)/625, YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), 625*PIT(1: NA1), 625*PITOT(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, YWC(1:7), TI(1: NA1), QI(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1) )
+call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), TIO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1)/625, YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), 625*PIT(1: NA1), 625*PITOT(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, TI(1: NA1), QI(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1) )
 
 do j=1, NA1
 ti(j) = max(ti(j), 0.001)
@@ -575,7 +573,7 @@ imethod = nint(INUME1)
 RABDOT = abs(ADCMPF)*RBDOT
 BABDOT = abs(ADCMPF)*BBDOT
 
-call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), NEO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), SNN(1: NA1), SN(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, YWC(1: 7), NE(1: NA1), QN(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1) )
+call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), NEO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), SNN(1: NA1), SN(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, NE(1: NA1), QN(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1) )
 do J=1, NA
 QN(J) = QN(J) + SLAT(J)*GNX(J)
 GN(J) = QN(J)/SLAT(J)
@@ -628,7 +626,7 @@ imethod = nint(INUME4)
 RABDOT = (abs(ADCMPF))*RBDOT
 BABDOT = (abs(ADCMPF))*BBDOT
 
-call RUNEQ_EF(YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), UPARO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWD(1: NA1), TTRQ(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, YWC(1:7), UPAR(1: NA1), QU(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1))
+call RUNEQ_EF(YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), UPARO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWD(1: NA1), TTRQ(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, UPAR(1: NA1), QU(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1))
 
 MPHIT = 0.
 NA1U = ND1
@@ -644,7 +642,7 @@ QU(NA1) = QU(NA)
     uparo = \
 '''UPARO(ND1: NA1) = UPAR(ND1: NA1)
 QU(4)  = 1.
-YWC(4) = 1.
+bctype = 1
 '''
 
 
@@ -674,7 +672,7 @@ BABDOT = (abs(ADCMPF))*BBDOT
 
     runeq = \
 '''NA1I = ND1
-call RUNEQTIMP_EF(YWGN(1:NA1), 3./2.*NE(1:NA1), 3./2.*NI(1:NA1), YWGO(1:NA1), 3./2.*NEO(1:NA1), 3./2.*NIO(1:NA1), TEO(1:NA1), TIO(1:NA1), YWN1B(1:NA1), YWN2B(1:NA1), YWW1B(1:NA1), YWW2B(1:NA1), YVR(1:NA1), YWM(1:NA1), G11(1:NA1)/625, YWA1(1:NA1), YWA2(1:NA1), YWB1(1:NA1), YWB2(1:NA1), YWR(1:NA1), YWR(1:NA1), 625*PET(1:NA1), 625*PIT(1:NA1), 625*PETOT(1:NA1), 625*PITOT(1:NA1), 0.0*YWR(1:NA1), 0.0*YWR(1:NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1:NA1), imethod, YWC1(1:NA1), YWC2(1:NA1), TE(1:NA1), TI(1:NA1), QE(1:NA1), QI(1:NA1), ADCMPF)
+call RUNEQTIMP_EF(YWGN(1:NA1), 3./2.*NE(1:NA1), 3./2.*NI(1:NA1), YWGO(1:NA1), 3./2.*NEO(1:NA1), 3./2.*NIO(1:NA1), TEO(1:NA1), TIO(1:NA1), YWN1B(1:NA1), YWN2B(1:NA1), YWW1B(1:NA1), YWW2B(1:NA1), YVR(1:NA1), YWM(1:NA1), G11(1:NA1)/625, YWA1(1:NA1), YWA2(1:NA1), YWB1(1:NA1), YWB2(1:NA1), YWR(1:NA1), YWR(1:NA1), 625*PET(1:NA1), 625*PIT(1:NA1), 625*PETOT(1:NA1), 625*PITOT(1:NA1), 0.0*YWR(1:NA1), 0.0*YWR(1:NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1:NA1), imethod, bc_type_imp, bc_value_imp, TE(1:NA1), TI(1:NA1), QE(1:NA1), QI(1:NA1), ADCMPF)
 if (ND1 < NA1) then
 do j=ND1+1, NA1
 QE(j) = QE(ND1)
@@ -688,13 +686,13 @@ PITOT=PI+PIT*TI
     teold = \
 '''TEO(ND1: NA1) = TE(ND1: NA1)
 QE(4)   = 1.
-YWC1(4) = 1.
+bc_type_imp(1) = 1
 '''
 
     tiold = \
 '''TIO(ND1: NA1) = TI(ND1: NA1)
 QI(4)   = 1.
-YWC2(4) = 1.
+bc_type_imp(2) = 1
 '''
 
 
@@ -809,13 +807,12 @@ enddo
 
     prescribed_ipl = \
 '''! Prescribed plasma current:
-YWC(2) = 0.0
-YWC(3) = 0.0
-YWC(4) = 2.
-YWC(5) = 1.
-YWC(6) = -1.
-YWC(7) = 1./G22(NA)*IPL*RTOR/IPOL(NA1)
-YWC(7) = HRO*0.4*GP*YWC(7)
+bctype = 3
+bc_values(1) = 0.0
+bc_values(2) = 0.0
+bc_values(3) = 1.
+bc_values(4) = -1.
+bc_values(5) = HRO*0.4*GP/G22(NA)*IPL*RTOR/IPOL(NA1)
 bc_type_for_fp=1
 ! For psifb
 ! when using the free boundary circuit equations with free current,
@@ -824,22 +821,22 @@ if (ITFBP /= 0.0 .and. ITFBE < TIME) then
 if (ibcpsi_fb > 0) then
 !case implicit
 if (ITFBP < 0.0 .and. ibcpsi_fb >= 2.) then
-YWC(2) = 0.0
-YWC(3) = 0.0
-YWC(4) = 2.
-YWC(5) = HRO + PSPLEX*ROC
-YWC(6) = -PSPLEX*ROC
-YWC(7) =  PSIEXT*HRO
+bctype = 3
+bc_values(1) = 0.0
+bc_values(2) = 0.0
+bc_values(3) = HRO + PSPLEX*ROC
+bc_values(4) = -PSPLEX*ROC
+bc_values(5) =  PSIEXT*HRO
 bc_type_for_fp = 3
 endif
 endif
 if (ibcpsi_fb <= 1) then
-YWC(2) = 0.0
-YWC(3) = 0.0
-YWC(4) = 2.
-YWC(5) = 1.
-YWC(6) = -1.
-YWC(7) = HRO*0.4*GP/G22(NA)*IPL*RTOR/IPOL(NA1)
+bctype = 3
+bc_values(1) = 0.0
+bc_values(2) = 0.0
+bc_values(3) = 1.
+bc_values(4) = -1.
+bc_values(5) = HRO*0.4*GP/G22(NA)*IPL*RTOR/IPOL(NA1)
 bc_type_for_fp = 1
 endif
 endif
@@ -848,9 +845,9 @@ endif
     prescribed_uloop = \
 '''! Prescribed loop voltage:
 FP(NA1) = FPO(NA1) + TAU*UEXT
-YWC(2) = 0.0
-YWC(3) = 0.0
-YWC(4) = 1.
+bctype = 1
+bc_values(1) = 0.0
+bc_values(2) = 0.0
 bc_type_for_fp = 2
 !For psifb
 ! when using the free boundary circuit equations with free current,
@@ -859,19 +856,19 @@ if (ITFBP /= 0.0 .and. ITFBE < TIME) then
 if (ibcpsi_fb > 0) then
 !case implicit
 if (ITFBP < 0.0 .and. ibcpsi_fb >= 2.) then
-YWC(2) = 0.0
-YWC(3) = 0.0
-YWC(4) = 2.
-YWC(5) = HRO + PSPLEX*ROC
-YWC(6) = -PSPLEX*ROC
-YWC(7) =  PSIEXT*HRO
+bc_type = 3
+bc_values(1) = 0.0
+bc_values(2) = 0.0
+bc_values(3) = HRO + PSPLEX*ROC
+bc_values(4) = -PSPLEX*ROC
+bc_values(5) =  PSIEXT*HRO
 bc_type_for_fp = 3
 endif
 endif
 if (ibcpsi_fb <=  1) then
-YWC(2) = 0.0
-YWC(3) = 0.0
-YWC(4) = 1.
+bctype = 1
+bc_values(1) = 0.0
+bc_values(2) = 0.0
 bc_type_for_fp = 2
 endif
 endif
@@ -885,12 +882,12 @@ PSPLEX = LEXT/ROC*5.*IPOL(NA1)*G22(NA)/GP2/RTOR
 endif
 PSPLEX = LEXT/ROC*5.*IPOL(NA1)*G22(NA)/GP2/RTOR
 PSIEXT = PSIEXT + TAU*UEXT
-YWC(2) = 0.0
-YWC(3) = 0.0
-YWC(4) = 2.
-YWC(5) = HRO + PSPLEX*ROC
-YWC(6) =  -PSPLEX*ROC
-YWC(7) = PSIEXT*HRO
+bctype = 3
+bc_values(1) = 0.0
+bc_values(2) = 0.0
+bc_values(3) = HRO + PSPLEX*ROC
+bc_values(4) =  -PSPLEX*ROC
+bc_values(5) = PSIEXT*HRO
 bc_type_for_fp = 3
 !For psifb
 ! when using the free boundary circuit equations with free current,
@@ -899,19 +896,19 @@ if (ITFBP /= 0.0 .and. ITFBE < TIME) then
 if (ibcpsi_fb > 0) then
 ! case implicit
 if (ITFBP < 0.0 .and. ibcpsi_fb >= 2.) then
-YWC(2) = 0.0
-YWC(3) = 0.0
-YWC(4) = 2.
-YWC(5) = HRO + PSPLEX*ROC
-YWC(6) = -PSPLEX*ROC
-YWC(7) = PSIEXT*HRO
+bc_type = 3
+bc_values(1) = 0.0
+bc_values(2) = 0.0
+bc_values(3) = HRO + PSPLEX*ROC
+bc_values(4) = -PSPLEX*ROC
+bc_values(5) = PSIEXT*HRO
 bc_type_for_fp = 3
 endif
 endif
 if (ibcpsi_fb <= 1) then
-YWC(2) = 0.0
-YWC(3) = 0.0
-YWC(4) = 1.
+bc_type = 1
+bc_values(1) = 0.0
+bc_values(2) = 0.0
 bc_type_for_fp = 2
 endif
 endif
@@ -939,7 +936,7 @@ imethod = nint(INUME3)
 RABDOT = (abs(ADCMPF))*RBDOT
 BABDOT = (abs(ADCMPF))*BBDOT
 
-call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RABDOT, BABDOT, NA1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, YWC(1: 7), FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), ADCMPF, MPHIT(1: NA1) )
+call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RABDOT, BABDOT, NA1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), ADCMPF, MPHIT(1: NA1) )
 
 dfpdrbm12 = -YWQ(NA)/G22(NA)
 YWR(1) = MU(NA1)*GP2*ROC**2 * BTOR*BABDOT
@@ -985,19 +982,10 @@ implicit none
 include 'tmp/declar.fml'
 include 'tmp/declar.fnc'
 
+integer :: IFSUB
+double precision :: YB, YC, YU
+double precision, dimension(NRD) :: YWA
 character(len=64), intent(in) :: LISTSB(NSBMX)
-
-integer :: J1, IFIPC, IFSUB, JDETV, ND, ND1, &
-    imethod, jcall, IFSTEP
-
-double precision :: dfpdrbm12, YHRO, YB, YC, YJ_CU, &
-    YM, YMCD, YIOH, YICD, YM1, YU, RABDOT, BABDOT
-
-double precision, dimension(NRD) :: YWA, YWB, YWC, YWD, &
-    YWGN, YWHN, YWGO, YWHO, YWR, YWH, YVR, YWM,&
-    YWA1, YWA2, YWB1, YWB2, YWAA, YWNB, YWWB, YWN1B, YWW1B,&
-    YWN2B, YWW2B, YWC1, YWC2, YWS, YQDCM, YQDCMF,&
-    YWQ, YWG11, YWgradF, YWgradb2, MPHIT
 '''
 
     tail = \
@@ -1036,10 +1024,10 @@ integer, intent(in) :: ibcpsi_fb
 integer, intent(out) :: bc_type_for_fp
 double precision, intent(out) :: dfpdrbm12
 
-integer :: IFSUB, imethod, ND, ND1, NODE, JCALL
+integer :: IFSUB, imethod, ND, ND1, NODE, JCALL, bctype, bc_type_imp(2)
 
-double precision :: RABDOT, BABDOT, YHRO, YM1, YM2, YB, YC, YJ_CU, YM, YU, YIOH, YICD, YMCD
-
+double precision :: RABDOT, BABDOT, YHRO, YM1, YM2, YB, YC, YJ_CU, YM, YU, YIOH, YICD, YMCD, bc_value_imp(2)
+double precision, dimension(5) :: bc_values
 double precision, dimension(NRD) :: YWA, YWB, YWC, YWD, YWGN, &
     YWHN, YWGO, YWHO, YWR, YWH, YVR, YWM, YWA1, YWA2, YWB1, YWB2, &
     YWAA, YWNB, YWWB, YWN1B, YWW1B, YWN2B, YWW2B, & 
