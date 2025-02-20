@@ -1029,8 +1029,8 @@ subroutine flux_surf_geom(geom_type, ntheta_in, rmin_out, theta_out, R_out, Z_ou
   !
   !============================================================================================!
 
-  use const_inc,     only: NA1, RTOR
-  use status_inc,    only: AMETR, SHIF, SHIV
+  use const_inc, only: NA1, RTOR, time, tau, tstart
+  use status_inc, only: AMETR, SHIF, SHIV
   use parameters_a2equil, only: equil_now
 
   implicit none
@@ -1081,7 +1081,7 @@ subroutine flux_surf_geom(geom_type, ntheta_in, rmin_out, theta_out, R_out, Z_ou
 
   ! initial poloidal coordinate
   do j=1, nthe_surf
-     th0(j) = atan2(equil_now%coord_sys%position%z(nrho_surf,j)-SHIV(NA1), equil_now%coord_sys%position%r(nrho_surf,j)-(RTOR+SHIF(NA1)))
+     th0(j) = atan2(equil_now%coord_sys%position%z(nrho_surf, j) - SHIV(NA1), equil_now%coord_sys%position%r(nrho_surf,j)-(RTOR+SHIF(NA1)))
   enddo
 
   ! find location where th0 is closest to -pi
@@ -1089,15 +1089,15 @@ subroutine flux_surf_geom(geom_type, ntheta_in, rmin_out, theta_out, R_out, Z_ou
 
   ! roll coordinates over this 
   th1(1:nthe_surf-idxmpi+1) = th0(idxmpi:)
-  th1(nthe_surf-idxmpi+2:) = th0(:nthe_surf-(idxmpi-1))
+  th1(nthe_surf-idxmpi+2:)  = th0(1:idxmpi-1)
 
   ! now that th1 is correct, roll R_1, Z_1
-  R_1(:,1:nthe_surf-idxmpi+1) = equil_now%coord_sys%position%r(:,idxmpi:)
-  R_1(:,nthe_surf-idxmpi+2:)  = equil_now%coord_sys%position%r(:,:nthe_surf-(idxmpi-1))
-
-  Z_1(:,1:nthe_surf-idxmpi+1) = equil_now%coord_sys%position%z(:,idxmpi:)
-  Z_1(:,nthe_surf-idxmpi+2:)  = equil_now%coord_sys%position%z(:,:nthe_surf-(idxmpi-1))
-
+  if (time-tstart > tau) then
+    R_1(:, 1:nthe_surf-idxmpi+1) = equil_now%coord_sys%position%r(:, idxmpi:)
+    R_1(:, nthe_surf-idxmpi+2:)  = equil_now%coord_sys%position%r(:, 1:idxmpi-1)
+    Z_1(:, 1:nthe_surf-idxmpi+1) = equil_now%coord_sys%position%z(:, idxmpi:)
+    Z_1(:, nthe_surf-idxmpi+2:)  = equil_now%coord_sys%position%z(:, 1:idxmpi-1)
+  endif
   ! finish the poloidal turn:
   th2(2:nthe_surf+1) = th1
   th2(1) = -pi
