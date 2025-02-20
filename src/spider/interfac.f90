@@ -775,14 +775,14 @@ real*8 :: CWK(4)
 real*8, allocatable, dimension(:) :: fvavs, rhowr, rhowrh, RRK, CCK, WRK
 
 iplas = size(equil_out%coord_sys%position%r, 1)
-nt1   = size(equil_out%coord_sys%position%r, 2) + 1
+nt1   = size(equil_out%coord_sys%position%r, 2)
 
 allocate(fvavs(iplas+1), rhowr(iplas), rhowrh(iplas+1))
 
 do i=1, iplas-1
     dvoli = 0
     fvavi = 0
-    do j=1, nt1-1
+    do j=1, nt1
         r1 = equil_out%coord_sys%position%r(i, j)
         r2 = equil_out%coord_sys%position%r(i+1, j)
         if (j < nt1) then
