@@ -639,13 +639,13 @@ do jrho=1, nrho_plot
     jrho_loc = NA1*jrho/nrho_plot - 1
     jrho_loc = min(max(1, NA1), jrho_loc)
     do jthe=1, n_theta
-        YFI = GP2*(jthe - 1)/64.
+        YFI = GP2*(jthe - 1)/float(n_theta-1)
         YZ = SHIV(jrho_loc) + AMETR(jrho_loc)*ELON(jrho_loc)*sin(YFI)
         YR = RTOR + SHIF(jrho_loc) + AMETR(jrho_loc)*(cos(YFI) + 0.5*TRIA(jrho_loc)*(cos(2.*YFI) - 1.))
         xplot(jthe) = YR*meter2pixel
         yplot(jthe) = pixel_ymid - YZ*meter2pixel
     enddo
-    call update_curve(nrho_plot, nrho_plot, Magenta, 0, xplot_old(:, jrho), &
+    call update_curve(n_theta, n_theta, Magenta, 0, xplot_old(:, jrho), &
         yplot_old(:, jrho), xplot, yplot)
 ! Save picture:
     xplot_old(:, jrho) = xplot(:)
