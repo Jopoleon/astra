@@ -31,7 +31,8 @@ ZEF = 1.+ZEF1;
 ! Sources
 
 ! ECH: TORBEAM, NBI: RABBIT
-TORBEAM_RABBIT>:.05:::;
+TORBA>:.05:::;
+RABBIT>:.05:::;
 
 ! ICRF
 

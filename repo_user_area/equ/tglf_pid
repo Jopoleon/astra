@@ -50,7 +50,8 @@ ENCL=CNEUT2; ! between 2 and 10 eV (now it's 5 eV = 0.005 keV)
 NEUT>::::; ! calculates neutral density NN and temperature TN
 
 ! ECH: TORBEAM, NBI: RABBIT
-TORBEAM_RABBIT>:.05:::;
+TORBA>:.05:::;
+RABBIT>:.05:::;
 
 ! Radiation
 

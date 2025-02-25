@@ -49,7 +49,8 @@ NNWM=1.d-5; !Warm neutrals
 NEUT:.05:::;
 
 ! ECH: TORBEAM, NBI: RABBIT
-TORBEAM_RABBIT>:.05:::;
+TORBA>:.05:::;
+RABBIT>:.05:::;
 
 ! Radiation
 
