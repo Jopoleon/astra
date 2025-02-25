@@ -983,7 +983,7 @@ include 'tmp/declar.fml'
 include 'tmp/declar.fnc'
 
 integer :: IFSUB
-double precision :: YB, YC, YU
+double precision :: YB, YC, YU, YJ_CU, YM, YMCD, YIOH, YICD, YM1
 double precision, dimension(NRD) :: YWA
 character(len=64), intent(in) :: LISTSB(NSBMX)
 '''
