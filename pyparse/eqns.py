@@ -473,8 +473,9 @@ def cueqn(parse):
 
     cueq_txt = const_text.CUEQN.header
     if 'MV' in parse.var_defined:
-         logger,warning('MV is not used to define FV')
-#        cueq_txt += const_text.CUEQN.mv
+         logger.warning('MV is not used to define FV')
+         cueq_txt += pa.apptmp('MV', parse)
+         cueq_txt += const_text.CUEQN.mv
 
     for coeff in ('DC', 'HC', 'XC', 'CD', 'CC'):
         cueq_txt += pa.apptmp(coeff, parse)

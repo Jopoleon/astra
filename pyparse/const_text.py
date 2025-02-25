@@ -787,22 +787,7 @@ do J=1, NA1
 '''
 
     mv = \
-'''YFV = GP2*HRO**2 * BTOR
-FV(1) = 0.
-YM = 0.
-do j=1, NA1
-YM1 = MV(j)*j
-YM2 = YM1*G22(j)
-if (j < NA) then
-YDF = YFV*YM1
-elseif(j <= NA) then
-YDF = GP2*HRO*BTOR*YM1*HRO
-endif
-if (j <= NA) then
-FV(j+1) = FV(j) + YDF
-endif
-YM = YM2
-enddo
+'''
 '''
 
     prescribed_ipl = \
