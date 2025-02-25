@@ -704,7 +704,7 @@ contains
 
     integer :: i
     double precision, dimension(nc) :: B
-    double precision, dimension(200, 200) :: invmatrix
+    double precision, dimension(500, 500) :: invmatrix
     double precision, dimension(nc, nc) :: matrix
 
     save invmatrix
@@ -712,11 +712,11 @@ contains
 ! Equation is im*(i1 - i0)/tau + rm*i1 = v - dpc
 
     do i=1, nc
-        b(i) = v(i) - dpc(i) + sum(im(i, 1:nc)*i0(1:nc))/tau
+        b(i) = tau*(v(i) - dpc(i)) + sum(im(i, 1:nc)*i0(1:nc))
     enddo
 
     if (invertcommand == 1) then
-        matrix(1:nc, 1:nc) = im(1:nc, 1:nc)/tau + rm(1:nc, 1:nc)
+        matrix(1:nc, 1:nc) = im(1:nc, 1:nc) + tau*rm(1:nc, 1:nc)
         invmatrix(1:nc, 1:nc) = inv_matrix(matrix, nc)
     endif
 

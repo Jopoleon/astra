@@ -467,6 +467,11 @@ DRODA(NA1) = 1.5*DRODA(NA) - 0.5*DRODA(NA-1)
 
 ! Compute new minor radius => better just take from data?
 call INTEGR(RHO(1: NA1), 1, 1./DRODA(1: NA1), AMETR(1: NA1), NA1)
+ABC   = AMETR(NA1)
+ELONG = ELON(NA1)
+TRIAN = TRIA(NA1)
+SHIFT = SHIF(NA1)
+UPDWN = SHIV(NA1)
 
 do J=1, NA1
     if (j == 1) then
@@ -508,12 +513,6 @@ if (NA1 < NAB) then
     call new_grid ! The RHO-grid and NA, NA1 are updated
     VOLUME = VOLUM(NA1)
 endif
-
-ABC   = AMETR(NA1)
-ELONG = ELON(NA1)
-TRIAN = TRIA(NA1)
-SHIFT = SHIF(NA1)
-UPDWN = SHIV(NA1)
 
 return
 end subroutine set_external_metric
@@ -592,6 +591,11 @@ DRODA(NA1) = 1.5*DRODA(NA) - 0.5*DRODA(NA-1)
 
 ! Compute new minor radius
 call INTEGR(RHO(1: NA1), 1, 1./DRODA(1: NA1), AMETR(1: NA1), NA1)
+ABC   = AMETR(NA1)
+ELONG = ELON(NA1)
+TRIAN = TRIA(NA1)
+SHIFT = SHIF(NA1)
+UPDWN = SHIV(NA1)
 
 do J=1, NA1
     if (j == 1) then
@@ -633,12 +637,6 @@ if (NA1 < NAB) then
     call new_grid ! The RHO-grid and NA, NA1 are updated
     VOLUME = VOLUM(NA1)
 endif
-
-ABC   = AMETR(NA1)
-ELONG = ELON(NA1)
-TRIAN = TRIA(NA1)
-SHIFT = SHIF(NA1)
-UPDWN = SHIV(NA1)
 
 return
 end subroutine set_external_metric_2
@@ -1164,7 +1162,7 @@ do j=1, NA1
     EQFF(J)  = yeqff(J)    ! due to adiabatic compression done in the code
 enddo
 
-if (NBNT > 0 .or. TIME > ITFBE .or. use_ext_bnd == 1) then
+if (NBNT > 0 .or. TIME >= ITFBE .or. use_ext_bnd == 1) then
     UPDWN = yupdwn
     ABC   = yametr(NA1) 
     ELONG = ELON(NA1)
@@ -1182,7 +1180,7 @@ endif
 
 ! Deallocate equil_out%metric_coefs%g1 & co
 
-call new_grid ! The RHO-grid and NA, NA1, HRO are updated
+call new_grid ! The RHO-grid and NA, NA1, HRO are updated, also AMETR(NA1) = ABC is done there, be careful what was done before!
 
 VOLUM(NA1) = yvolum(NA1)
 

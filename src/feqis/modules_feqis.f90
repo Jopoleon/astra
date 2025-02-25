@@ -1,11 +1,11 @@
 module feqis_dimensions
 
-integer, parameter :: i_dim1=300 !coil stuff
-integer, parameter :: i_dim2=300 !plasma grids
-integer, parameter :: i_dim3=300
-integer, parameter :: i_dim4=300
-integer, parameter :: i_dim5=5200
-integer, parameter :: nrho2d=3999
+integer, parameter :: i_dim1=500 !coil stuff
+integer, parameter :: i_dim2=500 !plasma grids
+integer, parameter :: i_dim3=500
+integer, parameter :: i_dim4=500
+integer, parameter :: i_dim5=6200
+integer, parameter :: nrho2d=5999
 
 end module feqis_dimensions
 

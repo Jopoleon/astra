@@ -430,9 +430,9 @@ implicit none
 integer, intent(in) :: j_init
 
 integer :: i, ic, j, k, iii, jjj, invertcommand, i_equivalence, i_cnew, firstcall
-integer, dimension(200) :: rem_coils
+integer, dimension(500) :: rem_coils
 double precision, dimension(i_dim1) :: dpctemp, vtemp, curotemp, curtemp
-double precision, dimension(200, 200) :: restemp, indtemp
+double precision, dimension(500, 500) :: restemp, indtemp
 
 data firstcall/0/
 save restemp, indtemp, rem_coils, i_cnew, firstcall
