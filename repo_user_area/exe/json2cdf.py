@@ -20,6 +20,9 @@ awd = os.getenv('AWD')
 if awd is None:
     awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
+dtyp = '>f8' #np.float64
+
+
 def json_concat(expequ):
 
     loc = '%s/ncdf_out/%s' %(awd, expequ)
@@ -55,49 +58,50 @@ def json_concat(expequ):
             json_d = json.load(fjson)
             astra_d = json_d['astra']
             equil_d = json_d['equil']
-        nx   = astra_d['NEX']['ndim']
-        n_eq = equil_d['rho_tor']['ndim']
-        n_th = equil_d['teta2d']['ndim']
-        nR   = equil_d['r2d']['ndim']
-        nZ   = equil_d['z2d']['ndim']
 
         for key, val in astra_d.items():
             dat = val['data']
+            if 'dims' in val.keys():
+                if np.prod(val['dims']) == 0:
+                    continue
             if key not in ('XRHO', ):
                 if j_json == 1:
                     if type(dat) == type([]): # list
                         if len(dat) > 0:
-                            ds_astra[key] = dat
+                            ds_astra[key] = [dat]
                         else: # array, all zeros
-                            ds_astra[key] = val['ndim']*[0.]
+                            ds_astra[key] = [np.zeros(val['dims'])]
                     else: # scalar
                         ds_astra[key] = [dat]
                 else:
                     if type(dat) == type([]): # list
                         if len(dat) > 0:
-                            ds_astra[key] += dat
-                        else: # array, all zeros
-                            ds_astra[key] += val['ndim']*[0.]
+                            ds_astra[key].append(dat)
+                        else: # all zeros
+                            ds_astra[key].append(np.zeros(val['dims']))
                     else: # scalar
                         ds_astra[key].append(dat)
 
         for key, val in equil_d.items():
             dat = val['data']
+            if 'dims' in val.keys():
+                if np.prod(val['dims']) == 0:
+                    continue
             if key not in ('rho_tor', 'teta2d'):
                 if j_json == 1:
                     if type(dat) == type([]): # list
                         if len(dat) > 0:
-                            ds_equil[key] = dat
+                            ds_equil[key] = [dat]
                         else: # array, all zeros
-                            ds_equil[key] = val['ndim']*[0.]
+                            ds_equil[key] = [np.zeros(val['dims'])]
                     else: # scalar
                         ds_equil[key] = [dat]
                 else:
                     if type(dat) == type([]): # list
                         if len(dat) > 0:
-                            ds_equil[key] += dat
-                        else: # array, all zeros
-                            ds_equil[key] += val['ndim']*[0.]
+                            ds_equil[key].append(dat)
+                        else: # all zeros
+                            ds_equil[key].append(np.zeros(val['dims']))
                     else: # scalar
                         ds_equil[key].append(dat)
                         
@@ -105,29 +109,31 @@ def json_concat(expequ):
         j_json += 1
 
     nt = j_json - 1
+    nx   = astra_d['XRHO']['dims'][0]
+    n_eq = equil_d['rho_tor']['dims'][0]
+    n_th = equil_d['teta2d']['dims'][0]
+    nR   = equil_d['r2d']['dims'][0]
+    nZ   = equil_d['z2d']['dims'][0]
     logger.debug('nt=%d, nrho=%d, nr_eq=%d, nthe_eq=%d' %(nt, nx, n_eq, n_th))
-    
-    dtyp = '>f8' #np.float64
+
     for key, val in ds_astra.items():
         ds_astra[key] = np.array(val, dtype=dtyp)
-        if len(val) == nt:
+        darr = ds_astra[key]
+        if darr.shape == (nt, ):
             astra_d[key]['dimensions'] = ['TIME']
-        elif len(val) == nt*nx:
-            ds_astra[key] = ds_astra[key].reshape((nt, nx))
+        elif darr.shape == (nt, nx):
             astra_d[key]['dimensions'] = ['TIME', 'XRHO']
 
     for key, val in ds_equil.items():
         ds_equil[key] = np.array(val, dtype=dtyp)
-        if len(val) == nt:
+        darr = ds_equil[key]
+        if darr.shape == (nt, ):
             equil_d[key]['dimensions'] = ['TIME']
-        elif len(val) == nt*n_eq:
-            ds_equil[key] = ds_equil[key].reshape((nt, n_eq))
+        elif darr.shape == (nt, n_eq):
             equil_d[key]['dimensions'] = ['TIME', 'RHO_SURF']
-        elif len(val) == nt*n_th*n_eq:
-            ds_equil[key] = np.transpose(ds_equil[key].reshape((nt, n_th, n_eq)), (0, 2, 1) )
+        elif darr.shape == (nt, n_eq, n_th):
             equil_d[key]['dimensions'] = ['TIME', 'RHO_SURF', 'THETA']
-        elif len(val) == nt*nR*nZ:
-            ds_equil[key] = np.transpose(ds_equil[key].reshape((nt, nZ, nR)), (0, 2, 1) )
+        elif darr.shape(nt, nR, nZ):
             equil_d[key]['dimensions'] = ['TIME', 'R', 'Z']
 
     f = netcdf_file(cdf_out, 'w', mmap=False)

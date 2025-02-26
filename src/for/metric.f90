@@ -1,7 +1,7 @@
 subroutine METRIC
 
 use outcmn_inc, only: cpuTime_tra, cpuTime_equ
-use status_inc, only: VRO, VR, SHIF, AMETR, ELON, TRIA
+use status_inc, only: VRO, VR, SHIF, AMETR, ELON, TRIA, XRHO
 use const_inc, only: IPART, FTO, FTN, ROC, GP, GP2, &
     BTOR, ROCO, RTOR, SHIFT, &
     ABC, ELONG, TRIAN, UPDWN, NA1, NB1, MEQUIL, NEQUIL, &
@@ -96,12 +96,47 @@ if (LEQ(5) < 3) then
     if (.not. associated(equil_now%coord_sys%position%r)) then
         allocate(equil_now%coord_sys%position%r(NA1, nthe_surf))
         allocate(equil_now%coord_sys%position%z(NA1, nthe_surf))
+        allocate(equil_now%coord_sys%position%rmin(NA1, nthe_surf))
+        allocate(equil_now%coord_sys%position%psirz(NA1, nthe_surf))
+        allocate(equil_now%coord_sys%position%teta2d(nthe_surf))
     endif
-    do jthe = 1, nthe_surf
+    if (.not. associated(equil_now%profiles_1d%rho_tor)) then
+        allocate(equil_now%profiles_1d%areat  (NA1))
+        allocate(equil_now%profiles_1d%bdb0   (NA1))
+        allocate(equil_now%profiles_1d%bmaxt  (NA1))
+        allocate(equil_now%profiles_1d%bmint  (NA1))
+        allocate(equil_now%profiles_1d%dpsidv (NA1))
+        allocate(equil_now%profiles_1d%elongation(NA1))
+        allocate(equil_now%profiles_1d%ffprime(NA1))
+        allocate(equil_now%profiles_1d%fofb   (NA1))
+        allocate(equil_now%profiles_1d%g1     (NA1))
+        allocate(equil_now%profiles_1d%g2     (NA1))
+        allocate(equil_now%profiles_1d%ggradro(NA1))
+        allocate(equil_now%profiles_1d%gm1    (NA1))
+        allocate(equil_now%profiles_1d%gm4    (NA1))
+        allocate(equil_now%profiles_1d%gm41   (NA1))
+        allocate(equil_now%profiles_1d%gm5    (NA1))
+        allocate(equil_now%profiles_1d%perim  (NA1))
+        allocate(equil_now%profiles_1d%phi    (NA1))
+        allocate(equil_now%profiles_1d%pprime (NA1))
+        allocate(equil_now%profiles_1d%pressure(NA1))
+        allocate(equil_now%profiles_1d%psi    (NA1))
+        allocate(equil_now%profiles_1d%q      (NA1))
+        allocate(equil_now%profiles_1d%r_inboard (NA1))
+        allocate(equil_now%profiles_1d%r_outboard(NA1))
+        allocate(equil_now%profiles_1d%rho_tor(NA1))
+        allocate(equil_now%profiles_1d%shif   (NA1))
+        allocate(equil_now%profiles_1d%surface(NA1))
+        allocate(equil_now%profiles_1d%volume (NA1))
+    endif
+! Fill array values
+    equil_now%profiles_1d%rho_tor = XRHO(1:NA1)
+    do jthe=1, nthe_surf
         theta = GP2/DBLE(nthe_surf-1)*(jthe - 1)
         equil_now%coord_sys%position%r(:, jthe) = RTOR + SHIF(1:NA1) + AMETR(1:NA1) * &
               ( COS(theta) + 0.5*TRIA(1:NA1) * (COS(2.*theta) - 1.))
         equil_now%coord_sys%position%z(:, jthe) = UPDWN + AMETR(1:NA1)*ELON(1:NA1)*SIN(theta)
+        equil_now%coord_sys%position%teta2d(jthe) = theta
     enddo
      
 endif

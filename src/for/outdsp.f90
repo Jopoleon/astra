@@ -458,7 +458,7 @@ CASE(8)
 
     SELECT CASE(LEQ(5))
     CASE(:1)
-        call DRAW3M
+        call DRAWSPFLUX
     CASE(3)
         call bnd_draw(JIFNEW, IYO, TIME)
         call DRAWSPFLUX
@@ -467,7 +467,7 @@ CASE(8)
             SHIF = 0.0
             ELON = 1.0
             TRIA = 0.0 
-            call DRAW3M
+            call DRAWSPFLUX
         else
             call bnd_draw(JIFNEW, IYO, TIME)
             call DRAWSPFLUX
@@ -540,6 +540,7 @@ end subroutine outdsp
 !---------------------------------------------------------------------
 subroutine bnd_draw(ifnew, IYO, time_in)
 
+! Scatter plot of the LCFS
 ! IFNEW  =  0 Re-draw (erase) the previous curves
 ! IFNEW =/= 0 New curves only
 ! IFNEW < 0 Don't mark resonances q=m/n
@@ -613,47 +614,6 @@ endif
 
 return
 end subroutine bnd_draw
-
-!---------------------------------------------------------------------
-subroutine DRAW3M
-!---------------------------------------------------------------------
-! Update plot of magnetic surfaces
-
-use outcmn_inc, only: Magenta, Pink, EraseColor, Red, &
-    pixel_ymid, meter2pixel
-
-use const_inc, only: GP2, NA1, RTOR
-use status_inc, only: AMETR, SHIF, SHIV, ELON, TRIA
-
-implicit none
-
-integer, parameter :: n_theta=64, nrho_plot=10
-integer :: jrho, jthe, jrho_loc
-double precision :: YR, YZ, YFI
-double precision, dimension(n_theta) :: xplot, yplot
-double precision, dimension(n_theta, nrho_plot) :: xplot_old, yplot_old
-
-save xplot_old, yplot_old
-
-do jrho=1, nrho_plot
-    jrho_loc = NA1*jrho/nrho_plot - 1
-    jrho_loc = min(max(1, NA1), jrho_loc)
-    do jthe=1, n_theta
-        YFI = GP2*(jthe - 1)/float(n_theta-1)
-        YZ = SHIV(jrho_loc) + AMETR(jrho_loc)*ELON(jrho_loc)*sin(YFI)
-        YR = RTOR + SHIF(jrho_loc) + AMETR(jrho_loc)*(cos(YFI) + 0.5*TRIA(jrho_loc)*(cos(2.*YFI) - 1.))
-        xplot(jthe) = YR*meter2pixel
-        yplot(jthe) = pixel_ymid - YZ*meter2pixel
-    enddo
-    call update_curve(n_theta, n_theta, Magenta, 0, xplot_old(:, jrho), &
-        yplot_old(:, jrho), xplot, yplot)
-! Save picture:
-    xplot_old(:, jrho) = xplot(:)
-    yplot_old(:, jrho) = yplot(:)
-enddo
-
-return
-end subroutine DRAW3M
 
 !---------------------------------------------------------------------
 subroutine plot_wall
