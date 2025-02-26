@@ -133,7 +133,7 @@ def json_concat(expequ):
             equil_d[key]['dimensions'] = ['TIME', 'RHO_SURF']
         elif darr.shape == (nt, n_eq, n_th):
             equil_d[key]['dimensions'] = ['TIME', 'RHO_SURF', 'THETA']
-        elif darr.shape(nt, nR, nZ):
+        elif darr.shape == (nt, nR, nZ):
             equil_d[key]['dimensions'] = ['TIME', 'R', 'Z']
 
     f = netcdf_file(cdf_out, 'w', mmap=False)
