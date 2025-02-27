@@ -42,7 +42,7 @@ call set_plot(plot_mode)
 j = XOUT + 0.49
 
 call taskmenu(j) ! Task menu
-call textbf(0, astra_gui%Height-int(104*resizeGraph), RUNID, 80) ! Task ID
+call textbf(0, astra_gui%Height - int(104*resizeGraph), RUNID, 80) ! Task ID
 
 CHORDN = LINEAV()
 call up_label(CHORDN, 1./MU(NA))
@@ -457,22 +457,18 @@ CASE(8)
 !     NBND == 0 otherwise
 
     SELECT CASE(LEQ(5))
-    CASE(:1)
-        call DRAWSPFLUX
     CASE(3)
-        call bnd_draw(JIFNEW, IYO, TIME)
-        call DRAWSPFLUX
+        call plot_lcfs(JIFNEW, IYO, TIME)
     CASE(4: 5)
         if (MEQUIL == 0) then
             SHIF = 0.0
             ELON = 1.0
             TRIA = 0.0 
-            call DRAWSPFLUX
         else
-            call bnd_draw(JIFNEW, IYO, TIME)
-            call DRAWSPFLUX
+            call plot_lcfs(JIFNEW, IYO, TIME)
         endif
     END SELECT
+    call plot_flux_surfaces
 
 ! Plot dots of R, z if an exp profile is input as function of R, z (GRIDTYPE 18-20)
     jcol = -1
@@ -538,7 +534,7 @@ return
 end subroutine outdsp
 
 !---------------------------------------------------------------------
-subroutine bnd_draw(ifnew, IYO, time_in)
+subroutine plot_lcfs(ifnew, IYO, time_in)
 
 ! Scatter plot of the LCFS
 ! IFNEW  =  0 Re-draw (erase) the previous curves
@@ -613,7 +609,7 @@ else               ! interpolate linearly
 endif
 
 return
-end subroutine bnd_draw
+end subroutine plot_lcfs
 
 !---------------------------------------------------------------------
 subroutine plot_wall
@@ -722,7 +718,7 @@ return
 end function ABSC
 
 !---------------------------------------------------------------------
-subroutine DRAWSPFLUX
+subroutine plot_flux_surfaces
 !---------------------------------------------------------------------
 ! Redraw magnetic surfaces:
 
@@ -733,32 +729,30 @@ use parameters_a2equil, only: equil_now
 implicit none
 
 integer, parameter :: n_surf=556, nrho_plot=12
-integer :: jrho, jr, nskip, jrho_loc, n_theta, n_theta1, n_rho_surf
-double precision, dimension(n_surf) :: xplot, yplot, xplotold, yplotold
+integer :: jrho, jr, nskip, n_theta, n_theta1, n_rho_surf
+double precision, dimension(n_surf) :: xplot, yplot
 double precision, dimension(nrho_plot+1, n_surf) :: xplot_old, yplot_old
 
 save xplot_old, yplot_old
 
 n_rho_surf = NINT(NEQUIL)
-n_theta = NINT(MEQUIL)
+n_theta    = NINT(MEQUIL)
 n_theta1 = n_theta + 1
 nskip = 1 + n_rho_surf/nrho_plot
 
 jr = 1
 do jrho=1, n_rho_surf + nskip - 1, nskip
-    jrho_loc = min(jrho, n_rho_surf)
-    xplot(1: n_theta) = meter2pixel*equil_now%coord_sys%position%r(jrho_loc, 1: n_theta)
-    xplot(n_theta1)   = meter2pixel*equil_now%coord_sys%position%r(jrho_loc, 1)  ! Close polygon
-    yplot(1: n_theta) = pixel_ymid - meter2pixel*equil_now%coord_sys%position%z(jrho_loc, 1:n_theta)
-    yplot(n_theta1)   = pixel_ymid - meter2pixel*equil_now%coord_sys%position%z(jrho_loc, 1)
-    xplotold(1:n_theta1) = xplot_old(jr, 1:n_theta1)
-    yplotold(1:n_theta1) = yplot_old(jr, 1:n_theta1)
-    call update_curve(n_theta1, n_theta1, Magenta, 0, xplotold(1:n_theta1), &
-         yplotold(1:n_theta1), xplot(1:n_theta1), yplot(1:n_theta1))
+    if (jrho > n_rho_surf) EXIT
+    xplot(1: n_theta) = meter2pixel*equil_now%coord_sys%position%r(jrho, 1: n_theta)
+    xplot(n_theta1)   = meter2pixel*equil_now%coord_sys%position%r(jrho, 1)  ! Close polygon
+    yplot(1: n_theta) = pixel_ymid - meter2pixel*equil_now%coord_sys%position%z(jrho, 1:n_theta)
+    yplot(n_theta1)   = pixel_ymid - meter2pixel*equil_now%coord_sys%position%z(jrho, 1)
+    call update_curve(n_theta1, n_theta1, Magenta, 0, xplot_old(jr, 1:n_theta1), &
+         yplot_old(jr, 1:n_theta1), xplot(1:n_theta1), yplot(1:n_theta1))
     xplot_old(jr, 1:n_theta1) = xplot(1:n_theta1)
     yplot_old(jr, 1:n_theta1) = yplot(1:n_theta1)
     jr = jr + 1
 enddo
 
 return
-end subroutine DRAWSPFLUX
+end subroutine plot_flux_surfaces
