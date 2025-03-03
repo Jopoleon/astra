@@ -24,6 +24,7 @@ TORBEAM_VERSION=unstable
 QLK_VERSION=unstable
 QLKNN_VERSION=unstable
 GA_VERSION=unstable
+STRAHL_VERSION=unstable
 
 #--------------------
 # ASTRA install paths
@@ -37,6 +38,7 @@ QLK_INSTALL=$ASTRA_EXT/qualikiz/$QLK_VERSION
 QLKNN_INSTALL=$ASTRA_EXT/qlk_nn/$QLKNN_VERSION
 TGLF_INSTALL=$ASTRA_EXT/tglf/$GA_VERSION
 NEO_INSTALL=$ASTRA_EXT/neo/$GA_VERSION
+STRAHL_INSTALL=$ASTRA_EXT/strahl/$STRAHL_VERSION
 
 # To restore at the script end
 PATH_OLD=$PATH
@@ -278,6 +280,40 @@ EOT
     echo $GACODE_HASH | cat > $TGLF_INSTALL/hash
     echo $GACODE_HASH | cat > $NEO_INSTALL/hash
     echo Installed GACODE in $GACODE_ROOT
+fi
+
+#-------
+# STRAHL
+#-------
+read -p "Install STRAHL (y/n) " STRAHL_FLAG
+if [ "$STRAHL_FLAG" = "y" ]
+then
+    STRAHL_HOME=$SOFT_ROOT/strahl
+    cd $SOFT_ROOT
+    rm -rf strahl
+    git clone git@gitlab.mpcdf.mpg.de:rld/strahl.git
+    cd $STRAHL_HOME
+    STRAHL_HASH=`git rev-parse HEAD`
+    rm source/compile/machine
+    cat << EOT > source/compile/machine
+F90C=ifort
+#the compiler flags
+FFLAGS=-u -m64 -O
+NCDFLIB=$SOFT_ROOT/netCDF/fortran/.libs/libnetcdff.a $SOFT_ROOT/netCDF/liblib/.libs/libnetcdf.a
+F90FLAGS=-m64 -O -fPIC
+#the flags for the shared library
+SHAREDFLAGS=-G -fPIC -B symbolic -zdefs
+LIB=-lc -lm
+BIN=.
+EOT
+    cd $STRAHL_HOME/source/strahl
+    make
+    make result_to_astra
+    mkdir -p $STRAHL_INSTALL/bin
+    cp strahl $STRAHL_INSTALL/bin/
+    cp result_to_astra $STRAHL_INSTALL/bin/
+    echo $STRAHL_HASH | cat > $STRAHL_INSTALL/hash
+    echo Installed STRAHL in $STRAHL_HOME
 fi
 
 #------
