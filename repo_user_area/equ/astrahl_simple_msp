@@ -6,6 +6,8 @@
 ! run e.g. with exp/AUG33040_2500
 !
 !----------------- General parameters ----------------------!
+NEQUIL = 91.;
+MEQUIL = 90.;
 
 ! Time step definition
 TAUMIN = 0.01;           ! minimum time step
