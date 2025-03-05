@@ -33,50 +33,48 @@ then
     read -p "Do you have a working installation for RABBIT ? y/n " RABBIT
     read -p "Do you have a working installation for TORBEAM? y/n " TORBEAM
     read -p "Do you want QualiKiZ? y/n " QLK
+    read -p "Do you want QualiKiZ NN? y/n " QLKNN
     read -p "Do you want NEO? y/n " NEO
+    read -p "Do you want TGLF? y/n " TGLF
 # RABBIT, TORBEAM
     if [ "$RABBIT" = "n" ]
     then
 	rm $AWD/sbr/rabbit.f90
-	rm $AWD/sbr/a2rabbit.f90
-	rm $AWD/sbr/torbeam_rabbit.f90
 	sed -i "s#export\ RABBIT_LIB#\#export\ RABBIT_LIB#g" $AWD/exe/astra_rc
-	if [ "$TORBEAM" = "n" ]
-	then
-            rm $AWD/sbr/torba.f90
-            rm $AWD/sbr/a2torbeam.f90
-            sed -i "s#TORBEAM_RABBIT#\!TORBEAM_RABBIT#g" $AWD/equ/fluxes
-            sed -i "s#export\ TORB_LIB#\#export\ TORB_LIB#g" $AWD/exe/astra_rc
-	else
-            sed -i "s#TORBEAM_RABBIT#TORBA#g" $AWD/equ/fluxes
-	fi
-    else
-	if [ "$TORBEAM" = "n" ]
-	then
-            rm $AWD/sbr/torba.f90
-            rm $AWD/sbr/a2torbeam.f90
-            rm $AWD/sbr/torbeam_rabbit.f90
-            sed -i "s#TORBEAM_RABBIT#RABBIT#g" $AWD/equ/fluxes
-	fi
+	sed -i "s#RABBIT#\!RABBIT#g" $AWD/equ/fluxes
     fi
-# NEO, QUALIKIZ (needing MPI)
+
+    if [ "$TORBEAM" = "n" ]
+    then
+        rm $AWD/sbr/torba.f90
+	sed -i "s#export\ TORB_LIB#\#export\ TORB_LIB#g" $AWD/exe/astra_rc
+	sed -i "s#TORBA#\!TORBA#g" $AWD/equ/fluxes
+    fi
+
+    if [ "$QLKNN" = "n" ]
+    then
+        rm $AWD/sbr/qlknn_serial.f90
+	sed -i "s#export\ QLKNN_LIB#\#export\ QLKNN_LIB#g" $AWD/exe/astra_rc
+    fi
+
+# NEO, QUALIKIZ, TGLF (needing MPI)
     if [ "$QLK" = "n" ]
     then
-	if [ "$NEO" = "n" ]
-	then
-	    sed -i "s#\$(XPR)\/qlki\ \$(XPR)\/neo#\ #g" $AWD/exe/Makexpr
-	else
-	    sed -i "s#\$(XPR)\/qlki\ \$(XPR)\/neo#\$(XPR)\/neo#g" $AWD/exe/Makexpr
-	fi
-    else
-	if [ "$NEO" = "n" ]
-	then
-	    sed -i "s#\$(XPR)\/qlki\ \$(XPR)\/neo#\$(XPR)\/qlki#g" $AWD/exe/Makexpr
-	fi
-    fi    
+	sed -i -e '/all: directories/ s/\$(XPR)\/qlki//g' $AWD/exe/Makexpr
+    fi
+    if [ "$NEO" = "n" ]
+    then
+	sed -i -e '/all: directories/ s/\$(XPR)\/neo//g' $AWD/exe/Makexpr
+    fi
+    if [ "$TGLF" = "n" ]
+    then
+	sed -i -e '/all: directories/ s/\$(XPR)\/tglfi//g' $AWD/exe/Makexpr
+	rm $AWD/sbr/tglf_serial.f90
+    fi
 fi
 
-source $AWD/platform/env.$platform                     # get platform dependent $ASTRA_EXT
+# get platform dependent $ASTRA_EXT
+source $AWD/platform/env.$platform
 echo $ASTRA_EXT
 
 chmod 744 $AWD/exe/Build
