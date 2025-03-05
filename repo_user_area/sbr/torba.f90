@@ -18,8 +18,8 @@ implicit none
 logical, parameter :: dump_flag=.FALSE.
 integer, parameter :: n_gy_max=30, maxint=50, maxflt=50, &
      mmax=150, nmax=150, prdim = 2*mmax+2*nmax, ndat=100000, &
-     npnt=5000, Nrrect=64, Nzrect=64, ianexp=2, &
-     maxvol=100, n_interp=150
+     npnt=5000, Nrrect=64, Nzrect=64, ianexp=2, maxdim = 1+mmax+nmax+4*mmax*nmax, &
+     maxvol=100, n_interp=150, neq_block=Nrrect*Nzrect
 
 double precision, intent(in) :: power_MW_in
 
@@ -30,7 +30,7 @@ integer :: ncdroutine, lfd, nprofvw=25
 integer :: n_Rrect, n_Zrect, nrho_surf, nthe_surf, eqdim
 integer, dimension(maxint) :: intinbeam
 integer, dimension(n_gy_max) :: nmod
-integer :: noout, iend, kend, icnt, ibgout, neq_block
+integer :: noout, iend, kend, icnt, ibgout
 integer :: extrap_coef_cPoints , extrap_coef_cFreq
 
 double precision :: xrtol, xatol, xstep, xtbeg, xtend, xpw0, xrmaj,  &
@@ -41,7 +41,7 @@ double precision :: rhoresult(0: 19)
 double precision, dimension(n_gy_max) :: power_gyro, freq_n, &
     xryyb, xrzzb, xwyyb, xwzzb, theta_n, phi_n, theta_t, phi_t, RR_n, ZZ_n
 double precision :: floatinbeam(maxflt)
-double precision, dimension(:), allocatable :: eqdata
+double precision, dimension(maxdim) :: eqdata
 double precision :: prdata(prdim)
 double precision :: volprofw(2*maxvol)
 double precision, dimension(6*ndat) :: t1data, t1tdata
@@ -87,9 +87,7 @@ if (.not. allocated(psi_rect)) then
     allocate(B_T(n_Rrect))
 endif
 if (.not. allocated(Rrect)) allocate(Rrect(n_Rrect), Zrect(n_Zrect), ggg(n_Rrect))
-neq_block = n_Rrect*n_Zrect
 eqdim = 1 + Nrrect + Nzrect + 4*Nrrect*Nzrect
-if (.not. allocated(eqdata)) allocate(eqdata(eqdim))
 
 ! Read geometry and settings
 

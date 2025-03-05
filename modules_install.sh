@@ -52,7 +52,8 @@ mkdir -p $SOFT_ROOT
 # CMAKE
 #------
 
-read -p "Install CMAKE (y/n) " CMAKE_FLAG
+#read -p "Install CMAKE (y/n) " CMAKE_FLAG
+CMAKE_FLAG=n
 if [ "$CMAKE_FLAG" = "y" ]
 then
     cd $SOFT_ROOT
@@ -67,7 +68,8 @@ fi
 # json-fortran
 #-------------
 
-read -p "Install JSON (y/n) " JSON_FLAG
+#read -p "Install JSON (y/n) " JSON_FLAG
+JSON_FLAG=n
 if [ "$JSON_FLAG" = "y" ]
 then
     cd $SOFT_ROOT
@@ -94,7 +96,8 @@ fi
 # NetCDF
 #-------
 
-read -p "Install NetCDF (y/n) " NETCDF_FLAG
+#read -p "Install NetCDF (y/n) " NETCDF_FLAG
+NETCDF_FLAG=n
 if [ "$NETCDF_FLAG" = "y" ]
 then
     cd $SOFT_ROOT
@@ -111,7 +114,8 @@ fi
 # RABBIT
 #-------
 
-read -p "Install RABBIT (y/n) " RABBIT_FLAG
+#read -p "Install RABBIT (y/n) " RABBIT_FLAG
+RABBIT_FLAG=n
 if [ "$RABBIT_FLAG" = "y" ]
 then
     cd $SOFT_ROOT
@@ -139,7 +143,8 @@ fi
 # TORBEAM
 #--------
 
-read -p "Install TORBEAM (y/n) " TORBEAM_FLAG
+#read -p "Install TORBEAM (y/n) " TORBEAM_FLAG
+TORBEAM_FLAG=y
 if [ "$TORBEAM_FLAG" = "y" ]
 then
     cd $SOFT_ROOT
@@ -162,7 +167,8 @@ fi
 # QuaLiKiz
 #---------
 
-read -p "Install QuaLiKiz (y/n) " QLK_FLAG
+#read -p "Install QuaLiKiz (y/n) " QLK_FLAG
+QLK_FLAG=n
 if [ "$QLK_FLAG" = "y" ]
 then
     cd $SOFT_ROOT
@@ -191,7 +197,8 @@ fi
 # QuaLiKiz-NN
 #------------
 
-read -p "Install QuaLiKiz NN (y/n) " QLKNN_FLAG
+#read -p "Install QuaLiKiz NN (y/n) " QLKNN_FLAG
+QLKNN_GLAF=n
 if [ "$QLKNN_FLAG" = "y" ]
 then
     cd $SOFT_ROOT
@@ -230,7 +237,8 @@ fi
 # GACODE
 #-------
 
-read -p "Install TGLF/NEO (y/n) " GA_FLAG
+#read -p "Install TGLF/NEO (y/n) " GA_FLAG
+GA_FLAG=n
 if [ "$GA_FLAG" = "y" ]
 then
     cd $SOFT_ROOT
@@ -285,7 +293,9 @@ fi
 #-------
 # STRAHL
 #-------
-read -p "Install STRAHL (y/n) " STRAHL_FLAG
+
+#read -p "Install STRAHL (y/n) " STRAHL_FLAG
+STRAHL_FLAG=n
 if [ "$STRAHL_FLAG" = "y" ]
 then
     STRAHL_HOME=$SOFT_ROOT/strahl
@@ -320,7 +330,8 @@ fi
 # ASTRA
 #------
 
-read -p "Install ASTRA (y/n) " ASTRA_FLAG
+#read -p "Install ASTRA (y/n) " ASTRA_FLAG
+ASTRA_FLAG=n
 if [ "$ASTRA_FLAG" = "y" ]
 then
     cd $AWD
