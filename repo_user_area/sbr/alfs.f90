@@ -1,46 +1,41 @@
-subroutine alfs(rhot_ped_top, a_lfs, dt_tetop, avdte)
+SUBROUTINE alfs(a_lfs, dt_tetop, avdte)
 
 use parameter_inc, only: NRD
-use numerical_tools, only: qinterp
-use const_inc, only: NA1, RTOR, ROC
-use status_inc, only: AMETR, TE
+use const_inc, only: NA1, ROC, CDWM2
+use status_inc, only: TE, AMETR
 use parameters_a2equil, only: equil_now
 
 implicit none
 
-double precision, intent(in) :: rhot_ped_top
-double precision, intent(out) :: avdte
-double precision, intent(out), dimension(NRD) :: a_lfs, dt_tetop
+double precision, intent(out) :: a_lfs(NRD), dt_tetop(NRD), avdte
+integer :: j, i, Nx, Nt, n1, n2
+double precision :: te_top, Rmag, Zmag
+double precision, dimension(556) :: a_lfs_eq, ametr_eq
+double precision, external :: RADIAL, GRAD
 
-integer :: jrho, neq, meq, n1, n2
-integer, dimension(2) :: dims
-double precision :: te_top, rmag, zmag
-double precision, allocatable, dimension(:) :: a_lfs_eq, ametr_eq
-double precision, external :: GRAD, RADIAL, RFA, AFX
+nx = SIZE(equil_now%coord_sys%position%r, 1)
+nt = SIZE(equil_now%coord_sys%position%r, 2)
 
-dims = SHAPE(equil_now%coord_sys%position%r)
-neq = dims(1)
-meq = dims(2)
-allocate(a_lfs_eq(neq), ametr_eq(neq))
+Rmag = equil_now%coord_sys%position%r(1, 1)
+Zmag = equil_now%coord_sys%position%z(1, 1)
+i = MINLOC(abs(equil_now%coord_sys%position%z(nx, 1:nt-1) - Zmag) + &
+    abs(equil_now%coord_sys%position%r(nx, 1:nt-1) - MAXVAL(equil_now%coord_sys%position%r(nx, 1:nt-1), 1)), 1)
+j = MINLOC(abs(equil_now%coord_sys%position%z(nx, 1:nt-1) - Zmag) + &
+    abs(equil_now%coord_sys%position%r(nx, 1:nt-1) - MINVAL(equil_now%coord_sys%position%r(nx, 1:nt-1), 1)), 1)
 
-rmag = equil_now%coord_sys%position%r(1, 1)
-zmag = equil_now%coord_sys%position%z(1, 1)
+a_lfs_eq(1:nx) = equil_now%coord_sys%position%r(1:nx, i) - Rmag
+AMETR_eq(1:nx) = 0.5*(equil_now%coord_sys%position%r(1:nx, i) - equil_now%coord_sys%position%r(1:nx, j))
 
-a_lfs_eq(1:neq) = equil_now%profiles_1d%r_outboard(1:neq) - rmag
-ametr_eq(1:neq) = 0.5*(equil_now%profiles_1d%r_outboard(1:neq) - equil_now%profiles_1d%r_inboard(1:neq))
-call qinterp(ametr_eq(1:neq), a_lfs_eq(1:neq), neq, AMETR(1:NA1), a_lfs(1:NA1), NA1)
+call qinterp(ametr_eq(1:nx), a_lfs_eq(1:nx), nx, AMETR(1:NA1), a_lfs(1:NA1), NA1)
 
-! ratio of average pedestal electron temperature gradient to electron temperature at pedestal top
-te_top = 10.d1*RADIAL(TE, ROC*rhot_ped_top)
-do jrho=1, NA1
-    dt_tetop(jrho) = -GRAD(TE, jrho)/GRAD(a_lfs, jrho)/te_top
+te_top = 100.*RADIAL(TE, ROC*CDWM2)
+do j=1, NA1
+   dt_tetop(J) = -GRAD(TE, J)/GRAD(a_lfs, J)/te_top
 enddo
 
-n1 = nint(rhot_ped_top*NA1) + 1
+n1 = nint(CDWM2*NA1) + 1
 n2 = nint(0.999*NA1) - 1
-avdte = SUM(dt_tetop(n1:n2))/float(n2 -n1 + 1)
+avdte = SUM(dt_tetop(n1: n2))/dble(n2 + 1 - n1)
 
-deallocate(a_lfs_eq, ametr_eq)
-
-return
-end subroutine alfs
+RETURN
+END SUBROUTINE alfs

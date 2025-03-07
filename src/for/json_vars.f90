@@ -78,8 +78,7 @@ contains
     use const_inc
     use status_inc
     use outcmn_inc, only: AWD, exp_file, equ_file
-
-    logical, parameter :: verbose=.True.
+    use debugger, only: debug
 
     integer :: j, jrho, ios, j_call=1, nrho_surf, nthe_surf, nR, nZ
     character(len=120) :: json_out
@@ -94,7 +93,7 @@ contains
     nR = SIZE(equil_now%eqgeometry%rectgrid%r2d)
     nZ = SIZE(equil_now%eqgeometry%rectgrid%z2d)
 
-    if (verbose) write(*, '(A, 3i)') 'Starting a2json', j_call, nrho_surf, nthe_surf
+    if (debug > 0) write(*, '(A, 3i)') 'Starting a2json', j_call, nrho_surf, nthe_surf
 
     write(json_out, '(5A, i0, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), TRIM(equ_file), '-', j_call, '.json'
 
@@ -474,7 +473,7 @@ contains
 
 ! 1 d profiles
     jid = 0
-    if (verbose) write(*, *) 'Writing equilibrium entries to json file'
+    if (debug > 0) write(*, *) 'Writing equilibrium entries to json file'
     call write_array((/nrho_surf/), equil_now%profiles_1d%areat  , equil_profPtr)
     call write_array((/nrho_surf/), equil_now%profiles_1d%bdb0   , equil_profPtr)
     call write_array((/nrho_surf/), equil_now%profiles_1d%bmaxt  , equil_profPtr)
@@ -503,7 +502,7 @@ contains
     call write_array((/nrho_surf/), equil_now%profiles_1d%surface, equil_profPtr)
     call write_array((/nrho_surf/), equil_now%profiles_1d%volume , equil_profPtr)
 
-    if (verbose) write(*, *) 'Writing mag.surf quantities'
+    if (debug > 0) write(*, *) 'Writing mag.surf quantities'
     jid = 0
     call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%r, equil_coordPtr)
     call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%rmin, equil_coordPtr)
@@ -512,7 +511,7 @@ contains
     call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%z, equil_coordPtr)
 
     jid = 0
-    if (verbose) write(*, *) 'Writing equil cartesian quantities'
+    if (debug > 0) write(*, *) 'Writing equil cartesian quantities'
     call write_array((/nR, nZ/), equil_now%eqgeometry%rectgrid%psirz2d, equil_rectPtr)
     call write_array((/nR, nZ/), equil_now%eqgeometry%rectgrid%fdia2d , equil_rectPtr)
     call write_array((/nR/), equil_now%eqgeometry%rectgrid%r2d, equil_rectPtr)
@@ -528,7 +527,7 @@ contains
 
     j_call = j_call + 1
 
-    write(*, '(A)') '   Written file ' // json_out
+    write(*, '(A)') '   Written file ' // TRIM(json_out)
 
     return
     end subroutine write_json

@@ -8,7 +8,7 @@ Clone:
 Install (after clone or pull):
 ```
   cd a8
-  chmod 744 install.sh
+  chmod u+x install.sh
   ./install.sh
 ```
 
@@ -20,9 +20,7 @@ Compile or execute:
 
 Supported platforms:
   IPP tok
-  IPP ldaug
-  IPP lddsk
-  IPP cs-ld-prod
+  IPP hz-ld-prod
   IPP-cz
   gateway
   iter-sdcc
@@ -30,7 +28,9 @@ Supported platforms:
   GA-omega
   Perlmutter
   mit.edu
+  puhti (VTT)
   rat2 (Padua)
+  freia (ukaea)
 
 The supported platforms are automatically recognised. If not, execute
 ```
