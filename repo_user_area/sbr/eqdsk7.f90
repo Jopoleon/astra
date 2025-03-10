@@ -86,7 +86,12 @@ call qinterp(psin_eq, fprime_eq, nrho_surf, psin_rect, fprime_rect, n_Rrect)
 call qinterp(psin_eq,      q_eq, nrho_surf, psin_rect,      q_rect, n_Rrect)
 
 ! EQDSk file output
-write(f_eqdsk, '(4A, f5.3, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), TRIM(equ_file), TIME, '.eqdsk'
+if (TIME < 10.) then
+    write(f_eqdsk, '(5A, f5.3, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), TRIM(equ_file), '0', TIME, '.eqdsk'
+else
+    write(f_eqdsk, '(4A, f6.3, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), TRIM(equ_file), TIME, '.eqdsk'
+endif
+ 
 write(*, *) 'Storing '//TRIM(f_eqdsk), '   nR =', n_Rrect
 
 open(eqdsk_unit, file=TRIM(f_eqdsk))
