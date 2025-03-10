@@ -11,7 +11,7 @@ logger.setLevel(logging.INFO)
 class EQU_PARSER:
 
 
-    def __init__(self, f_equ):
+    def __init__(self, f_equ=None):
 
 #---------
 # FML, FNC
@@ -75,7 +75,8 @@ class EQU_PARSER:
 #----------------------#
 # Pre-parsing equ file #
 #----------------------#
-
+        if f_equ is None:
+            return
         fequ_lin = equ_prepare(f_equ)
 
         equ_lines = []

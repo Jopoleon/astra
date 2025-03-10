@@ -2,12 +2,10 @@ import os, argparse
 from parse_as import LINE2FOR
 from equ_parser import EQU_PARSER
 
-awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
+def test_parse(statement):
 
-def test_parse(statement, f_equ='%s/equ/fluxes' %awd):
-
-    parse = EQU_PARSER(f_equ)
+    parse = EQU_PARSER()
     l2f = LINE2FOR(statement, parse)
     print('')
     print(l2f)
