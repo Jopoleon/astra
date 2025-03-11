@@ -394,10 +394,7 @@ def parse_pieces(pieces, parse):
         var2 = pieces[jpos]
         var = format_number(var2).upper().strip()
         jbra, block_left, block_right = functionArgs(pieces[jpos+1:])
-        if (jpos < n_pieces-2 and pieces[jpos+2] == 'AFX'):
-            out = 'RADIAL(%s, RFA(%s))' %(var, block_left)
-            jpos += jbra + 1
-        elif var in ('VINT', 'IINT', 'LININT'):
+        if var in ('VINT', 'IINT', 'LININT'):
             var3 = pieces[jpos+2]
             tmp3 = var3[:-1]
             if var3[-1] == 'B':
@@ -410,22 +407,31 @@ def parse_pieces(pieces, parse):
                 if block_left in parse.profiles:
                     out = '%s(%s, %s*ROC)'  %(var, block_left, block_right)
             jpos += jbra
-        elif var in ('RFVAL', 'RFVEX', 'RFVIN', 'AFVAL', 'AFVEX', 'AFVIN', 'ATX',
-                     'ASTEP', 'RSTEP', 'XSTEP', 'GRAD', 'GRADS', 'RADIAL', 'ATR',
+        elif var in ('RFVAL', 'RFVEX', 'RFVIN', 'AFVAL', 'AFVEX', 'AFVIN', 'AFX', 'ATX',
+                     'ASTEP', 'RSTEP', 'XSTEP', 'GRAD', 'GRADS', 'RADIAL', 'AFR', 'ATR',
                      'V_95_POS', 'RFMAX', 'RFMIN', 'FRMAX', 'FRMIN'):
             out = '%s(%s' %(var, block_left)
             if var in ('RFVAL', 'RFVEX', 'RFVIN', 'AFVAL', 'AFVEX', 'AFVIN', 'ATX', 'ASTEP', 'RSTEP', 'XSTEP', 'GRAD', 'GRADS', 'RADIAL', 'ATR'):
                 out += ',%s' %block_right
             out += ')'
             jpos += jbra
-        elif var in parse.profiles + parse.fnc_list: # Profiles(), fnc()
+        elif var in parse.profiles: # Profiles(), fnc()
             if jbra is None:
                 if jpos < n_pieces-1 and pieces[jpos+1] == '(':
                     out = var
                 else:
                     out = indiciseVar(var, parse)
             else:
-                out = '%s((%s)*ROC)' %(var, block_left)
+                out = 'RADIAL(%s, RFA(%s))' %(var, block_left)
+                jpos += jbra + 1
+        elif var in parse.fnc_list:
+            if jbra is None:
+                if jpos < n_pieces-1 and pieces[jpos+1] == '(':
+                    out = var
+                else:
+                    out = indiciseVar(var, parse)
+            else:
+                out = '%sR(%s)' %(var, block_left)
                 jpos += jbra
         else: # Numbers, constants
             if '.' not in var2: # Keep int array labels integer
