@@ -173,6 +173,7 @@ enddo
 
 return
 end SUBROUTINE ctr2rz_b
+
 !----------------------------------------------------------
 SUBROUTINE ctr2rz_fun3(n_rho, n_the, f1d, X, Y, Nrrect, Nzrect, Rgrid, Zgrid, f2d)
 
@@ -218,7 +219,7 @@ Zrect = Zgrid - Zgeo
 ! Biquadratic interpolation
 do jz=1, Nzrect
     do jr=1, Nrrect
-  
+
 ! grid point under investigation
         Rpos = Rrect(jr)
         Zpos = Zrect(jz)
@@ -246,16 +247,14 @@ do jz=1, Nzrect
                     y3(1) = rdist(jwhere, jmin-1)
                     y3(2) = rdist(jwhere, jmin)
                     y3(3) = rdist(jwhere, 2)		
-                endif
-                if (jmin == 1) then
+                else if (jmin == 1) then
                     x3(1) = thet(n_the) - GP2
                     x3(2) = thet(1)
                     x3(3) = thet(2)
                     y3(1) = rdist(jwhere, n_the)
                     y3(2) = rdist(jwhere, 1)
                     y3(3) = rdist(jwhere, 2)		
-                endif
-                if (jmin > 1 .and. jmin < n_the+1) then
+                else
                     x3(1) = thet(jmin-1)
                     x3(2) = thet(jmin)
                     x3(3) = thet(jmin+1)
@@ -293,16 +292,14 @@ do jz=1, Nzrect
                     y3(1) = rdist(jwhere, jmin-1)
                     y3(2) = rdist(jwhere, jmin)
                     y3(3) = rdist(jwhere, 2)		
-                endif
-                if (jmin == 1) then
+                else if (jmin == 1) then
                     x3(1) = thet(n_the) - GP2
                     x3(2) = thet(1)
                     x3(3) = thet(2)		
                     y3(1) = rdist(jwhere, n_the)
                     y3(2) = rdist(jwhere, 1)
                     y3(3) = rdist(jwhere, 2)		
-                endif	 
-                if (jmin > 1 .and. jmin < n_the+1) then
+                else
                     x3(1) = thet(jmin-1)
                     x3(2) = thet(jmin)
                     x3(3) = thet(jmin+1)		
