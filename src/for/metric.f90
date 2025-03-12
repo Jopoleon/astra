@@ -1,18 +1,20 @@
 subroutine METRIC
 
 use outcmn_inc, only: cpuTime_tra, cpuTime_equ
-use status_inc, only: VRO, VR, SHIF, AMETR, ELON, TRIA, XRHO
+use status_inc, only: VRO, VR, SHIF, AMETR, ELON, TRIA, XRHO, FP, IPOL
 use const_inc, only: IPART, FTO, FTN, ROC, GP, GP2, &
     BTOR, ROCO, RTOR, SHIFT, &
     ABC, ELONG, TRIAN, UPDWN, NA1, NB1, MEQUIL, NEQUIL, &
     LEQ, IPEQL, TIME, TSTART, TIMEQL, DTEQL, BTN
 use debugger, only: markloc, astra_stop
 use parameters_a2equil, only: equil_now
+use numerical_tools, only: qinterp
 
 implicit none
 
-integer :: jexit, NDTEQUILMY, equil_solver, jthe, nthe_surf
+integer :: i, jexit, NDTEQUILMY, equil_solver, jthe, nrho_surf, nthe_surf
 double precision :: ROC3A, theta
+double precision, allocatable, dimension(:) :: prof_as, prof_eq
 character(len=120) :: err_msg
 
 call markloc('METRIC')
@@ -91,54 +93,69 @@ CASE(4: 5)  ! SPIDER, FEQIS
 END SELECT
 
 if (LEQ(5) < 3) then
+    nrho_surf = abs(nint(NEQUIL))
     nthe_surf = abs(nint(MEQUIL))
+    if (nrho_surf == 0) nrho_surf = NA1 + 1
     if (nthe_surf == 0) nthe_surf = 41
     if (.not. associated(equil_now%coord_sys%position%r)) then
-        allocate(equil_now%coord_sys%position%r(NA1, nthe_surf))
-        allocate(equil_now%coord_sys%position%z(NA1, nthe_surf))
-        allocate(equil_now%coord_sys%position%rmin(NA1, nthe_surf))
-        allocate(equil_now%coord_sys%position%psirz(NA1, nthe_surf))
+        allocate(equil_now%coord_sys%position%r(nrho_surf, nthe_surf))
+        allocate(equil_now%coord_sys%position%z(nrho_surf, nthe_surf))
+        allocate(equil_now%coord_sys%position%rmin(nrho_surf, nthe_surf))
+        allocate(equil_now%coord_sys%position%psirz(nrho_surf, nthe_surf))
         allocate(equil_now%coord_sys%position%teta2d(nthe_surf))
     endif
     if (.not. associated(equil_now%profiles_1d%rho_tor)) then
-        allocate(equil_now%profiles_1d%areat  (NA1))
-        allocate(equil_now%profiles_1d%bdb0   (NA1))
-        allocate(equil_now%profiles_1d%bmaxt  (NA1))
-        allocate(equil_now%profiles_1d%bmint  (NA1))
-        allocate(equil_now%profiles_1d%dpsidv (NA1))
-        allocate(equil_now%profiles_1d%elongation(NA1))
-        allocate(equil_now%profiles_1d%ffprime(NA1))
-        allocate(equil_now%profiles_1d%fofb   (NA1))
-        allocate(equil_now%profiles_1d%g1     (NA1))
-        allocate(equil_now%profiles_1d%g2     (NA1))
-        allocate(equil_now%profiles_1d%ggradro(NA1))
-        allocate(equil_now%profiles_1d%gm1    (NA1))
-        allocate(equil_now%profiles_1d%gm4    (NA1))
-        allocate(equil_now%profiles_1d%gm41   (NA1))
-        allocate(equil_now%profiles_1d%gm5    (NA1))
-        allocate(equil_now%profiles_1d%perim  (NA1))
-        allocate(equil_now%profiles_1d%phi    (NA1))
-        allocate(equil_now%profiles_1d%pprime (NA1))
-        allocate(equil_now%profiles_1d%pressure(NA1))
-        allocate(equil_now%profiles_1d%psi    (NA1))
-        allocate(equil_now%profiles_1d%q      (NA1))
-        allocate(equil_now%profiles_1d%r_inboard (NA1))
-        allocate(equil_now%profiles_1d%r_outboard(NA1))
-        allocate(equil_now%profiles_1d%rho_tor(NA1))
-        allocate(equil_now%profiles_1d%shif   (NA1))
-        allocate(equil_now%profiles_1d%surface(NA1))
-        allocate(equil_now%profiles_1d%volume (NA1))
+        allocate(equil_now%profiles_1d%areat  (nrho_surf))
+        allocate(equil_now%profiles_1d%bdb0   (nrho_surf))
+        allocate(equil_now%profiles_1d%bmaxt  (nrho_surf))
+        allocate(equil_now%profiles_1d%bmint  (nrho_surf))
+        allocate(equil_now%profiles_1d%dpsidv (nrho_surf))
+        allocate(equil_now%profiles_1d%F_dia  (nrho_surf))
+        allocate(equil_now%profiles_1d%ffprime(nrho_surf))
+        allocate(equil_now%profiles_1d%fofb   (nrho_surf))
+        allocate(equil_now%profiles_1d%g1     (nrho_surf))
+        allocate(equil_now%profiles_1d%g2     (nrho_surf))
+        allocate(equil_now%profiles_1d%ggradro(nrho_surf))
+        allocate(equil_now%profiles_1d%gm1    (nrho_surf))
+        allocate(equil_now%profiles_1d%gm4    (nrho_surf))
+        allocate(equil_now%profiles_1d%gm41   (nrho_surf))
+        allocate(equil_now%profiles_1d%gm5    (nrho_surf))
+        allocate(equil_now%profiles_1d%perim  (nrho_surf))
+        allocate(equil_now%profiles_1d%phi    (nrho_surf))
+        allocate(equil_now%profiles_1d%pprime (nrho_surf))
+        allocate(equil_now%profiles_1d%pressure(nrho_surf))
+        allocate(equil_now%profiles_1d%psi    (nrho_surf))
+        allocate(equil_now%profiles_1d%q      (nrho_surf))
+        allocate(equil_now%profiles_1d%rho_tor(nrho_surf))
+        allocate(equil_now%profiles_1d%shif   (nrho_surf))
+        allocate(equil_now%profiles_1d%surface(nrho_surf))
+        allocate(equil_now%profiles_1d%volume (nrho_surf))
+        allocate(equil_now%profiles_1d%elongation(nrho_surf))
+        allocate(equil_now%profiles_1d%r_inboard (nrho_surf))
+        allocate(equil_now%profiles_1d%r_outboard(nrho_surf))
+    endif
+    if (.not. allocated(prof_as)) then
+        allocate(prof_as(NA1))
+        allocate(prof_eq(nrho_surf))
     endif
 ! Fill array values
-    equil_now%profiles_1d%rho_tor = XRHO(1:NA1)
+    equil_now%profiles_1d%rho_tor =  (/ ((i - 1.d0)/(nrho_surf - 1.d0), i=1, nrho_surf) /)
+    prof_as = FP(1: NA1)
+    call qinterp(XRHO(1:NA1), prof_as, NA1, equil_now%profiles_1d%rho_tor, prof_eq, nrho_surf)
+    equil_now%profiles_1d%psi = prof_eq   
+    prof_as = IPOL(1: NA1)*RTOR*BTOR
+    call qinterp(XRHO(1:NA1), prof_as, NA1, equil_now%profiles_1d%rho_tor, prof_eq, nrho_surf)
+    equil_now%profiles_1d%F_dia = prof_eq
     do jthe=1, nthe_surf
-        theta = GP2/DBLE(nthe_surf-1)*(jthe - 1)
-        equil_now%coord_sys%position%r(:, jthe) = RTOR + SHIF(1:NA1) + AMETR(1:NA1) * &
-              ( COS(theta) + 0.5*TRIA(1:NA1) * (COS(2.*theta) - 1.))
-        equil_now%coord_sys%position%z(:, jthe) = UPDWN + AMETR(1:NA1)*ELON(1:NA1)*SIN(theta)
+        theta = GP2*DBLE(jthe - 1)/DBLE(nthe_surf - 1)
+        prof_as = RTOR + SHIF(1:NA1) + AMETR(1:NA1) *  ( COS(theta) + 0.5*TRIA(1:NA1) * (COS(2.*theta) - 1.))
+        call qinterp(XRHO(1:NA1), prof_as, NA1, equil_now%profiles_1d%rho_tor, prof_eq, nrho_surf)
+        equil_now%coord_sys%position%r(:, jthe) = prof_eq
+        prof_as = UPDWN + AMETR(1:NA1)*ELON(1:NA1)*SIN(theta)
+        call qinterp(XRHO(1:NA1), prof_as, NA1, equil_now%profiles_1d%rho_tor, prof_eq, nrho_surf)
+        equil_now%coord_sys%position%z(:, jthe) = prof_eq
         equil_now%coord_sys%position%teta2d(jthe) = theta
     enddo
-     
 endif
 
 call ADDTIME(cpuTime_tra)

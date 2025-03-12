@@ -40,11 +40,10 @@ double precision, dimension(3, nnb_max) :: start_pos, unit_vec, width_poly
 double precision, allocatable, dimension(:, :) :: PSI_rect
 double precision, allocatable, dimension(:) :: Rrect, zrect
 double precision :: psi_sep, psi_axis, rmag, zmag
-double precision :: R_max, R_min, z_max, z_min, dr, dz, drho_eq
+double precision :: R_max, R_min, z_max, z_min, dr, dz
 double precision :: part_mix(nspc, nnb_max), dt_in, output_timing 
 double precision :: tim_prev=-1.d0, dumba1, dumba2
 
-double precision, dimension(:), allocatable :: pf_eq, rho_eq
 double precision, dimension(NA1) :: rho_interp_plasma, rho_interp_eq, &
    ti_interp, te_interp, ne_interp, omg_interp, zef_interp,  &
    iota, area, vol, ffp, psi_n
@@ -73,15 +72,11 @@ ldim = NA1    !Rabbit input 1D EQ grid size
 
 nrho_surf = SIZE(equil_now%coord_sys%position%r, 1)
 nthe_surf = SIZE(equil_now%coord_sys%position%r, 2)
-allocate(pf_eq(nrho_surf), rho_eq(nrho_surf))
 
 psi_axis = PSIAX/GP2
 psi_sep  = PSIBO/GP2
 rmag = equil_now%coord_sys%position%r(1, 1)
 zmag = equil_now%coord_sys%position%z(1, 1)
-
-drho_eq = 1./(nrho_surf - 1.d0)
-rho_eq = (/ (drho_eq*(i - 1.d0), i=1, nrho_surf) /)
 
 if (.not. allocated(aplasma)) then
     allocate(aplasma(0))
@@ -230,15 +225,13 @@ vol(1) = 0.d0
 psi_n(1) = 0.d0
 area = vol/(GP2*RTOR)
 
-call qinterp(XRHO(1: NA1), FP(1: NA1), NA1, rho_eq, pf_eq, nrho_surf)
-
 !------------
 ! RABBIT call
 !------------
 
 write(6, *) 'Call rabbit_lib_step'
 
-call ctr2rz_fun(nrho_surf, nthe_surf, pf_eq(1: nrho_surf)/GP2, &
+call ctr2rz_fun(nrho_surf, nthe_surf, equil_now%profiles_1d%psi/GP2, &
     equil_now%coord_sys%position%r, &
     equil_now%coord_sys%position%z, &
     n_Rrect, n_Zrect, Rrect, zrect, PSI_rect)
