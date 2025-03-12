@@ -173,6 +173,159 @@ enddo
 
 return
 end SUBROUTINE ctr2rz_b
+!----------------------------------------------------------
+SUBROUTINE ctr2rz_fun3(n_rho, n_the, f1d, X, Y, Nrrect, Nzrect, Rgrid, Zgrid, f2d)
+
+use const_inc, only: GP2
+
+implicit none
+
+integer, intent(in) :: n_rho, n_the, Nrrect, Nzrect
+double precision, intent(in) :: Rgrid(Nrrect), Zgrid(Nzrect)
+double precision, intent(in), dimension(n_rho) :: f1d
+double precision, intent(in), dimension(n_rho, n_the) :: X, Y
+
+double precision, intent(out), dimension(Nrrect, Nzrect) :: f2d
+
+integer :: jr, jz, jmin, imin, jstart, jend, jwhere, jscale, jcount
+double precision :: norm, tht, Rpos, Zpos, Rgeo, Zgeo
+double precision, dimension(Nrrect) :: Rrect
+double precision, dimension(Nzrect) :: Zrect
+double precision, dimension(n_rho, n_the+1) :: Rctr, Zctr, rdist
+double precision, dimension(n_the+1) :: thet
+double precision, dimension(3) :: x3, y3, yout
+
+f2d = 1.e8
+
+Rgeo = X(1, 1)
+Zgeo = Y(1, 1)
+
+Rctr(:, 1:n_the) = X - Rgeo 
+Zctr(:, 1:n_the) = Y - Zgeo 
+Rctr(:, n_the+1) = Rctr(:, 1)
+Zctr(:, n_the+1) = Zctr(:, 1)
+
+rdist = sqrt(Rctr**2 + Zctr**2)
+thet = atan2(Zctr(2, :), Rctr(2, :))
+do jz=1, n_the+1 
+    if (thet(jz) < 0.) thet(jz) = thet(jz) + GP2
+enddo
+thet(n_the+1) = thet(1) + GP2
+
+Rrect = Rgrid - Rgeo
+Zrect = Zgrid - Zgeo
+
+! Biquadratic interpolation
+do jz=1, Nzrect
+    do jr=1, Nrrect
+  
+! grid point under investigation
+        Rpos = Rrect(jr)
+        Zpos = Zrect(jz)
+        norm = SQRT(Rpos**2 + Zpos**2)
+        tht  = ATAN2(Zpos, Rpos)
+        if (tht < 0.) tht = tht + GP2
+        jmin = minloc(abs(tht - thet), 1)            ! nearest polar point theta
+        imin = minloc(abs(norm - rdist(:, jmin)), 1) ! nearest polar point radius
+        if (imin < n_rho) then ! internal points
+            jstart = -1
+            jend = 1
+            jscale = 3
+            if (imin == 1) then
+                jstart = 0
+                jend = 2
+                jscale = 3
+            endif
+            jcount = 0
+            do jwhere=imin+jstart, imin+jend
+                jcount = jcount + 1
+                if (jmin == n_the+1) then
+                    x3(1) = thet(jmin-1)
+                    x3(2) = thet(jmin)
+                    x3(3) = thet(2) + GP2
+                    y3(1) = rdist(jwhere, jmin-1)
+                    y3(2) = rdist(jwhere, jmin)
+                    y3(3) = rdist(jwhere, 2)		
+                endif
+                if (jmin == 1) then
+                    x3(1) = thet(n_the) - GP2
+                    x3(2) = thet(1)
+                    x3(3) = thet(2)
+                    y3(1) = rdist(jwhere, n_the)
+                    y3(2) = rdist(jwhere, 1)
+                    y3(3) = rdist(jwhere, 2)		
+                endif
+                if (jmin > 1 .and. jmin < n_the+1) then
+                    x3(1) = thet(jmin-1)
+                    x3(2) = thet(jmin)
+                    x3(3) = thet(jmin+1)
+                    y3(1) = rdist(jwhere, jmin-1)
+                    y3(2) = rdist(jwhere, jmin)
+                    y3(3) = rdist(jwhere, jmin+1)
+                endif
+                call quad_int(tht, x3(1:3), y3(1:3), yout(jcount)) !rdist a tht, imin
+            enddo
+            if (imin == 1) then
+                x3(1) = yout(1)
+                y3(1) = f1d(imin)
+                x3(2) = yout(2)
+                y3(2) = f1d(imin+1)
+                x3(3) = yout(3)
+                y3(3) = f1d(imin+2)
+                call quad_int(norm, x3(1:3), y3(1:3), f2d(jr, jz))
+            else
+                x3(1) = yout(1)
+                y3(1) = f1d(imin-1)
+                x3(2) = yout(2)
+                y3(2) = f1d(imin)
+                x3(3) = yout(3)
+                y3(3) = f1d(imin+1)
+                call quad_int(norm, x3(1:3), y3(1:3), f2d(jr, jz))
+            endif
+        else ! boundary and external points
+            jcount = 0
+            do jwhere=imin-2, imin
+                jcount = jcount + 1
+                if (jmin == n_the+1) then
+                    x3(1) = thet(jmin-1)
+                    x3(2) = thet(jmin)
+                    x3(3) = thet(2) + GP2		
+                    y3(1) = rdist(jwhere, jmin-1)
+                    y3(2) = rdist(jwhere, jmin)
+                    y3(3) = rdist(jwhere, 2)		
+                endif
+                if (jmin == 1) then
+                    x3(1) = thet(n_the) - GP2
+                    x3(2) = thet(1)
+                    x3(3) = thet(2)		
+                    y3(1) = rdist(jwhere, n_the)
+                    y3(2) = rdist(jwhere, 1)
+                    y3(3) = rdist(jwhere, 2)		
+                endif	 
+                if (jmin > 1 .and. jmin < n_the+1) then
+                    x3(1) = thet(jmin-1)
+                    x3(2) = thet(jmin)
+                    x3(3) = thet(jmin+1)		
+                    y3(1) = rdist(jwhere, jmin-1)
+                    y3(2) = rdist(jwhere, jmin)
+                    y3(3) = rdist(jwhere, jmin+1)		
+                endif	 
+                call quad_int(tht, x3(1:3), y3(1:3), yout(jcount))
+            enddo
+            x3(1) = yout(1)
+            y3(1) = f1d(imin-2)
+            x3(2) = yout(2)
+            y3(2) = f1d(imin-1)
+            x3(3) = yout(3)
+            y3(3) = f1d(imin)
+            call lin_int(norm, x3(2:3), y3(2:3), f2d(jr, jz))
+        endif
+    enddo
+enddo
+
+return
+end SUBROUTINE ctr2rz_fun3
+
 
 !----------------------------------------------------------
 SUBROUTINE ctr2rz_fun(n_rho, n_the, f1d, X, Y, Nrrect, Nzrect, Rgrid, Zgrid, f2d)
@@ -194,6 +347,8 @@ double precision, dimension(Nzrect) :: Zrect
 double precision, dimension(n_the-1) :: Rctr1, Zctr1
 double precision, dimension(n_rho-1, n_the-1) :: Rctr, Zctr, rdist, zdist
 double precision, dimension(3) :: norm3, f3
+
+f2d = 1.e8
 
 ! Use reference arounf Rmag, Zmag
 DO jrho = 1, n_rho-1
