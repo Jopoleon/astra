@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-import os, logging, argparse, traceback
-from json2cdf import json_concat
+import os, sys, logging, argparse, traceback
 import greenMatrices
 
 fmt = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s: %(message)s', '%H:%M:%S')
@@ -36,6 +35,9 @@ def parse_alog():
 
 
 if __name__ == '__main__':
+
+    sys.path.append(awd)
+    import postProcess.json2cdf as j2nc
 
     greenMatrices.main()
     alog_d = parse_alog()
@@ -108,7 +110,7 @@ if __name__ == '__main__':
     os.system(cmd)
 
     try:
-        json_concat(expequ)
+        j2nc.json_concat(expequ)
     except:
 #        logger.debug(traceback.format_exc())
         pass
