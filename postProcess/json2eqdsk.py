@@ -38,7 +38,7 @@ def scatter_to_rectangular(r, z, data, Rmesh, Zmesh, fill=np.nan):
     return interp_data
 
 
-def json2eqdsk(f_json, nR=257, nZ=257, cocos_out=7):
+def json2eqdsk(f_json, nR=129, nZ=257, cocos_out=7):
 
     with open(f_json, 'r') as fjson:
         json_d = json.load(fjson)
@@ -66,8 +66,8 @@ def json2eqdsk(f_json, nR=257, nZ=257, cocos_out=7):
     Rmax = np.max(rsurf[-1, :]) + 0.03
     Zmin = np.min(zsurf[-1, :]) - 0.03
     Zmax = np.max(zsurf[-1, :]) + 0.03
-    r_rect = np.linspace(Rmin, Rmax, nR)
-    z_rect = np.linspace(Zmin, Zmax, nZ)
+    geq['Rgrid'] = np.linspace(Rmin, Rmax, nR)
+    geq['Zgrid'] = np.linspace(Zmin, Zmax, nZ)
 
     geq['RDIM'] = Rmax - Rmin
     geq['ZDIM'] = Zmax - Zmin
@@ -99,9 +99,9 @@ def json2eqdsk(f_json, nR=257, nZ=257, cocos_out=7):
     geq['QPSI']   = np.interp(psin_rect, psin, q)
     
 # Psi(rho, theta) -> Psi(R, Z)
-    X, Y = np.meshgrid(r_rect, z_rect)
-    pf_in = np.repeat(psi, n_the).T
-    geq['PSIRZ'] = scatter_to_rectangular(rsurf.flat, zsurf.flat, pf_in, X, Y, fill=psi[-1])
+    X, Y = np.meshgrid(geq['Rgrid'], geq['Zgrid'])
+    pf_in = np.repeat(psi, n_the)
+    geq['PSIRZ'] = scatter_to_rectangular(rsurf.flat, zsurf.flat, pf_in.flat, X, Y).T
     
     return geq
 
@@ -109,10 +109,11 @@ def json2eqdsk(f_json, nR=257, nZ=257, cocos_out=7):
 if __name__ == '__main__':
 
     import eqdsk
+    import matplotlib.pylab as plt
 
     parser = argparse.ArgumentParser(description='Concatenate json files to 1 NetCDF along time')
     parser.add_argument('-e', '--expequ', help='<exp><equ>', required=True)
-    parser.add_argument('-tid', '--t_id', help='time ID', required=False, default=1)
+    parser.add_argument('-t', '--t_id', help='time ID', required=False, default=1)
     args = parser.parse_args()
 
     f_json = '%s/ncdf_out/%s-%s.json' %(awd, args.expequ, args.t_id)
@@ -121,3 +122,5 @@ if __name__ == '__main__':
     f_eqdsk = '%s/ncdf_out/%s-%s.eqdsk' %(awd, args.expequ, args.t_id)
     eqd = eqdsk.EQDSK()
     eqd.write(f_eqdsk, geq=geq)
+    eqd.plot()
+    plt.show()
