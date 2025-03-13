@@ -652,7 +652,7 @@ do i=1, iplas
 enddo
 call cell2node(f, wrk, rho_p, iplas)
 do i=1, iplas
-    equil_out%profiles_1d%F_dia(i) = -wrk(i)
+    equil_out%profiles_1d%F_dia(i) = wrk(i)
 enddo
 
 deallocate(wrk)

@@ -480,6 +480,7 @@ contains
     call write_array((/nrho_surf/), equil_now%profiles_1d%bmint  , equil_profPtr)
     call write_array((/nrho_surf/), equil_now%profiles_1d%dpsidv , equil_profPtr)
     call write_array((/nrho_surf/), equil_now%profiles_1d%elongation, equil_profPtr)
+    call write_array((/nrho_surf/), equil_now%profiles_1d%f_dia  , equil_profPtr)
     call write_array((/nrho_surf/), equil_now%profiles_1d%ffprime, equil_profPtr)
     call write_array((/nrho_surf/), equil_now%profiles_1d%fofb   , equil_profPtr)
     call write_array((/nrho_surf/), equil_now%profiles_1d%g1     , equil_profPtr)

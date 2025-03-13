@@ -1002,6 +1002,7 @@
     "bmint": {"units": "T", "desc": "BMINT"},
     "dpsidv": {"units": "Wb/m^3", "desc": "Volume derivative of Psi"},
     "elongation": {"desc": "ELON"},
+    "f_dia": {"desc": "F from EQUIL"},
     "ffprime": {"desc": "FFPRIME from EQUIL"},
     "fofb": {"desc": "FOFB"},
     "g1": {"desc": "G11_ASTRA = g1/VRS"},
