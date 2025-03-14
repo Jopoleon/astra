@@ -255,23 +255,23 @@ return
 end subroutine OLDNEW
 
 !---------------------------------------------------------------------
-subroutine SMOOTH(ALFA, NO, FO, XO, N, FN, XN)
+subroutine SMOOTH(ALFA, n_in, y_in, x_in, n_out, y_out, x_out)
 !---------------------------------------------------------------------
 !  Subroutine minimizes the value of functional
 !  INTEGRAL(alfa*P(x)*(dU/dx)**2+(U-F)**2)*dx, 
-!  where FO(NO) is a function, given on the grid XOld(NOld)
+!  where y_in(n_in) is a function, given on the grid x_in(n_in)
 ! P(x) is equal to unit now
-! ALFA=alfa<<0.01*XO(NO)**2 is regularizator
-! NO - number of old grid points
+! ALFA=alfa<<0.01*x_in(n_in)**2 is regularizator
+! n_in - number of old grid points
 ! N=<NRD - number of new grid points
-! 0<=XO(NO) - old grid |     both grids are arbitrary
-! 0<=XN(N)  - new grid |     but XO(NO)=XN(N)
-! FO(NO) - origin function, given on the grid XO(NO)
-! FN(N) - smoothed function on grid XN(N)
-!  The result is function FN(XN), given on the new grid
+! 0<=x_in(n_in) - old grid |     both grids are arbitrary
+! 0<=x_out(N)  - new grid |     but x_in(n_in)=x_out(N)
+! y_in(n_in) - origin function, given on the grid x_in(n_in)
+! y_out(N) - smoothed function on grid x_out(N)
+!  The result is function y_out(x_out), given on the new grid
 ! with additional conditions:
-! dFN/dx(x=0)=0 - cylindrical case and
-! FN(XN(N))=FO(XO(NO))
+! dy_out/dx(x=0)=0 - cylindrical case and
+! y_out(x_out(N))=y_in(x_in(n_in))
 !---------------------------------------------------------------------
 
 use parameter_inc, only: NRD
@@ -279,186 +279,186 @@ use debugger, only: astra_stop
 
 implicit none
 
-integer, intent(in) :: NO, N
-double precision, intent(in) :: ALFA, XO(*), FO(*), XN(*)
-double precision, intent(out) :: FN(*)
+integer, intent(in) :: n_in, n_out
+double precision, intent(in) :: ALFA, x_in(*), y_in(*), x_out(*)
+double precision, intent(out) :: y_out(*)
 
 integer :: I, J
-double precision :: YF, YX, YP, YQ, YD, FJ, P(NRD)
+double precision :: YF, YX, YP, YQ, YD, FJ, P(NRD), dx
 character(len=132) :: err_msg
 
-if (N > NRD .or. NO <= 0) then
-    write(err_msg, '(A, 1X, i, 1X, i)') ' >>> SMOOTH: array is out of limits', NRD, NO
+if (n_out > NRD .or. n_in <= 0) then
+    write(err_msg, '(A, 1X, i, 1X, i)') ' >>> SMOOTH: array is out of limits', NRD, n_out
     call err_catch_a
     call astra_stop(err_msg)
 endif
-if (NO == 1) then
-    do j=1, N
-        FN(j) = FO(1)
+if (n_in == 1) then
+    do j=1, n_out
+        y_out(j) = y_in(1)
     enddo
     return
 endif
-if (NO == 2) then
-    do j=1, N
-        FN(j) = (FO(2)*(XN(j) - XO(1)) - FO(1)*(XN(j) - XO(2)))/(XO(2) - XO(1))
+if (n_in == 2) then
+    do j=1, n_out
+        y_out(j) = (y_in(2)*(x_out(j) - x_in(1)) - y_in(1)*(x_out(j) - x_in(2)))/(x_in(2) - x_in(1))
     enddo
     return
 endif
-if (N < 2) then
+if (n_out < 2) then
     call err_catch_a
     call astra_stop(' >>> SMOOTH: no output grid is provided')
 endif
-if (abs(XO(NO) - XN(N)) > XN(N)/N) then
+if (abs(x_in(n_in) - x_out(n_out)) > x_out(n_out)/n_out) then
     write(*, *) '>>> SMOOTH: grids are not aligned'
-    write(*, '(1A23, I4, F8.4)') '     Old grid size/edge', NO, XO(NO)
-    write(*, '(1A23, I4, F8.4)') '     New grid size/edge', N, XN(N)
+    write(*, '(1A23, I4, F8.4)') '     Old grid size/edge', n_in , x_in(n_in)
+    write(*, '(1A23, I4, F8.4)') '     New grid size/edge', n_out, x_out(n_out)
     call err_catch_a
     call astra_stop
 endif
-do j=2, N
-    YP = XN(j) - XN(j-1)
-    if (YP <= 0.d0) then
+do j=2, n_out
+    dx = x_out(j) - x_out(j-1)
+    if (dx <= 0.) then
         write(*, *)'>>> SMOOTH: new grid is not increasing monotonically'
-        write(*, '(A, I4, A, F8.4)')'Node ', j-1, '   Value', XN(j-1)
-        write(*, '(A, I4, A, F8.4)')'Node ', j  , '   Value', XN(j)
+        write(*, '(A, I4, A, F8.4)')'Node ', j-1, '   Value', x_out(j-1)
+        write(*, '(A, I4, A, F8.4)')'Node ', j  , '   Value', x_out(j)
         call err_catch_a
         call astra_stop
     endif
-    P(j) = ALFA/YP/XO(NO)**2
+    P(j) = ALFA/dx/x_in(n_in)**2
 enddo
 P(1)  = 0.
-FN(1) = 0.
-I = 1
-YF = (FO(2) - FO(1))/(XO(2) - XO(1))
-YX = 2./(XN(2) + XN(1))
+y_out(1) = 0.
+i = 1
+YF = (y_in(2) - y_in(1))/(x_in(2) - x_in(1))
+YX = 2./(x_out(2) + x_out(1))
 YP = 0.
 YQ = 0.
-do j=1, N-1
-    if (XO(I) <= XN(j)) then
+do j=1, n_out-1
+    if (x_in(i) <= x_out(j)) then
         do
-            I = I + 1
-            if (I > NO) I = NO
-            if (I == NO .or. XO(I) >= XN(j)) EXIT
+            i = i + 1
+            i = min(i, n_in)
+            if (i == n_in .or. x_in(i) >= x_out(j)) EXIT
         enddo
-        YF = (FO(I) - FO(I-1))/(XO(I) - XO(I-1))
+        YF = (y_in(i) - y_in(i-1))/(x_in(i) - x_in(i-1))
     endif
-    FJ = FO(I) + YF*(XN(j) - XO(I))
+    FJ = y_in(i) + YF*(x_out(j) - x_in(i))
     YD = 1. + YX*(YP + P(j+1))
     P(j) = YX*P(j+1)/YD
-    FN(j) = (FJ + YX*YQ)/YD
-    if (j /= N-1) then
-        YX = 2./(XN(j+2) - XN(j))
+    y_out(j) = (FJ + YX*YQ)/YD
+    if (j /= n_out-1) then
+        YX = 2./(x_out(j+2) - x_out(j))
         YP = (1. - P(j))*P(j+1)
-        YQ = FN(j)*P(j+1)
+        YQ = y_out(j)*P(j+1)
     endif
 enddo
 
-FN(N) = FO(NO)
-do j=N-1, 1, -1
-    FN(j) = P(j)*FN(j+1) + FN(j)
+y_out(n_out) = y_in(n_in)
+do j=n_out-1, 1, -1
+    y_out(j) = P(j)*y_out(j+1) + y_out(j)
 enddo
 
 return
 end subroutine SMOOTH
 
 !---------------------------------------------------------------------
-subroutine SMAP(ALFA, NO, XO, N, XN, F)
-! Similar to SMOOTH but the same array, F, is used for input and output
+subroutine SMAP(ALFA, n_in, x_in, n_out, x_out, y_out)
+! Similar to SMOOTH but the same array, y_out, is used for input and output
 
 use parameter_inc, only: NRD
 
 implicit none
 
-integer, intent(in) :: NO, N
-double precision, intent(in) :: ALFA, XO(*), XN(*)
-double precision, intent(inout) :: F(*)
+integer, intent(in) :: n_in, n_out
+double precision, intent(in) :: ALFA, x_in(*), x_out(*)
+double precision, intent(inout) :: y_out(*)
 
 integer :: J
 double precision :: P(NRD)
 
-call SMOOTH(ALFA, NO, F, XO, N, P, XN)
-do j=1, N
-    F(j) = P(j)
+call SMOOTH(ALFA, n_in, y_out, x_in, n_out, P, x_out)
+do j=1, n_out
+    y_out(j) = P(j)
 enddo
 
 return
 end subroutine SMAP
 
 !---------------------------------------------------------------------
-subroutine TRANSF(NO, FO, XO, N, FN, XN)
+subroutine TRANSF(n_in, y_in, x_in, n_out, y_out, x_out)
 !---------------------------------------------------------------------
-!  The subroutine transmits a function FO(1:NO)
-!  from an arbitrary grid XO(1:NO) to a functon F(1:N)
-!  on an another arbitrary grid XN(1:N) by the method
+!  The subroutine transmits a function y_in(1:n_in)
+!  from an arbitrary grid x_in(1:n_in) to a functon y_out(1:n_out)
+!  on an another arbitrary grid x_out(1:n_out) by the method
 !  of quadratic interpolation.
-! Input: NO, FO(1:NO), XO(1:NO), N, XN(1:N)
-! Output: FN(1:N)
+! Input: n_in, y_in(1:n_in), x_in(1:n_in), n_out, x_out(1:n_out)
+! Output: y_out(1:n_out)
 !---------------------------------------------------------------------
-!       Note: [XO(NO)-XO(1)]*[XN(N)-XN(1)] must be > 0
+!       Note: [x_in(n_in)-x_in(1)]*[x_out(n_out)-x_out(1)] must be > 0
 !---------------------------------------------------------------------
 
 implicit none
 
-integer, intent(in) :: NO, N
-double precision, intent(in) , dimension(*) :: XO, FO, XN
-double precision, intent(out), dimension(*) :: FN
+integer, intent(in) :: n_in, n_out
+double precision, intent(in) , dimension(*) :: x_in, y_in, x_out
+double precision, intent(out), dimension(*) :: y_out
 
 integer :: I, J
 double precision :: YF1, YF2, YF3
 
 I = 1
-YF1 = FO(1)/((XO(1) - XO(2))*(XO(1) - XO(3)))
-YF2 = FO(2)/((XO(2) - XO(1))*(XO(2) - XO(3)))
-YF3 = FO(3)/((XO(3) - XO(1))*(XO(3) - XO(2)))
-do j=1, N
-    if(2.*XN(j) > XO(I+1) + XO(I+2)) then
+YF1 = y_in(1)/((x_in(1) - x_in(2))*(x_in(1) - x_in(3)))
+YF2 = y_in(2)/((x_in(2) - x_in(1))*(x_in(2) - x_in(3)))
+YF3 = y_in(3)/((x_in(3) - x_in(1))*(x_in(3) - x_in(2)))
+do j=1, n_out
+    if(2.*x_out(j) > x_in(I+1) + x_in(I+2)) then
         do
             I = I + 1
-            I = min(I, NO - 2)
-            if (2.*XN(j) <= XO(I+1) + XO(I+2) .or. I >= NO-2) EXIT
+            I = min(I, n_in - 2)
+            if (2.*x_out(j) <= x_in(I+1) + x_in(I+2) .or. I >= n_in-2) EXIT
         enddo
-        YF1 = FO(I  )/((XO(I  ) - XO(I+1))*(XO(I  ) - XO(I+2)))
-        YF2 = FO(I+1)/((XO(I+1) - XO(I  ))*(XO(I+1) - XO(I+2)))
-        YF3 = FO(I+2)/((XO(I+2) - XO(I  ))*(XO(I+2) - XO(I+1)))
+        YF1 = y_in(I  )/((x_in(I  ) - x_in(I+1))*(x_in(I  ) - x_in(I+2)))
+        YF2 = y_in(I+1)/((x_in(I+1) - x_in(I  ))*(x_in(I+1) - x_in(I+2)))
+        YF3 = y_in(I+2)/((x_in(I+2) - x_in(I  ))*(x_in(I+2) - x_in(I+1)))
     endif
-    FN(j) = YF1*(XN(j) - XO(I+1))*(XN(j) - XO(I+2)) + &
-            YF2*(XN(j) - XO(I  ))*(XN(j) - XO(I+2)) + &
-            YF3*(XN(j) - XO(I  ))*(XN(j) - XO(I+1))
+    y_out(j) = YF1*(x_out(j) - x_in(I+1))*(x_out(j) - x_in(I+2)) + &
+            YF2*(x_out(j) - x_in(I  ))*(x_out(j) - x_in(I+2)) + &
+            YF3*(x_out(j) - x_in(I  ))*(x_out(j) - x_in(I+1))
 enddo
 
 return
 end subroutine TRANSF
 
 !---------------------------------------------------------------------
-subroutine QMAP(NO, XO, N, XN, F)
-! Similar to TRANSF but uses the same array, F, for input and output.
+subroutine QMAP(n_in, x_in, n_out, x_out, y_out)
+! Similar to TRANSF but uses the same array, y_out, for input and output.
 
 use parameter_inc, only: NRD
 
 implicit none
 
-integer, intent(in) :: NO, N
-double precision, intent(in), dimension(*) :: XO, XN
-double precision, intent(inout), dimension(*) :: F
+integer, intent(in) :: n_in, n_out
+double precision, intent(in), dimension(*) :: x_in, x_out
+double precision, intent(inout), dimension(*) :: y_out
 
 integer :: j
 double precision :: FN(NRD)
 
-call TRANSF(NO, F, XO, N, FN, XN)
+call TRANSF(n_in, y_out, x_in, n_out, FN, x_out)
 
-do j=1, N
-    F(j) = FN(j)
+do j=1, n_out
+    y_out(j) = FN(j)
 enddo
 
 return
 end subroutine QMAP
 
 !---------------------------------------------------------------------
-subroutine CHEBFT(NIN, FIN, XIN, NCHCF, CHEBCF)
+subroutine CHEBFT(n_in, y_in, x_in, NCHCF, CHEBCF)
 !---------------------------------------------------------------------
 ! The subroutine returns NCHCF coefficients of a Chebyshev
-! polynomial fit to the function FIN(1:NIN) given as a
-! function of any "radial" variable on the grid XIN(1:NIN)
+! polynomial fit to the function y_in(1:n_in) given as a
+! function of any "radial" variable on the grid x_in(1:n_in)
 ! Example:
 ! call CHEBFT(NA1,TE,FP,5,CHOUT)
 ! out = PFITN(FP,CHOUT,5)
@@ -471,8 +471,8 @@ implicit none
 integer, parameter :: NMAX=10
 double precision, parameter :: PI=3.141592654
 
-integer, intent(in) :: NIN, NCHCF
-double precision, intent(in) , dimension(NIN)   :: FIN, XIN
+integer, intent(in) :: n_in, NCHCF
+double precision, intent(in) , dimension(n_in)  :: y_in, x_in
 double precision, intent(out), dimension(NCHCF) :: CHEBCF
 
 integer :: K, J
@@ -483,8 +483,8 @@ call markloc('CHEBFT')
 
 if (NCHCF > NMAX) call astra_stop('>>> Chebyshev fit error: too high power')
 
-YA = max(XIN(1), XIN(NIN))
-YB = min(XIN(1), XIN(NIN))
+YA = max(x_in(1), x_in(n_in))
+YB = min(x_in(1), x_in(n_in))
 PIOVN = PI/NCHCF
 
 ! The following two lines require that at the boundary
@@ -498,7 +498,7 @@ do K=1,NCHCF
     YC(K) = BPA + BMA*COS(PIOVN*(K - 0.5))
 enddo
 
-call TRANSF(NIN, FIN, XIN, NCHCF, YF, YC)
+call TRANSF(n_in, y_in, x_in, NCHCF, YF, YC)
 
 FAC = 2./NCHCF
 do J=1, NCHCF
@@ -567,7 +567,7 @@ return
 end subroutine CHEBPC
 
 !---------------------------------------------------------------------
-double precision function PFITN(x, cp, N)
+double precision function PFITN(x, cp, n_order)
 !---------------------------------------------------------------------
 ! Nth order Polynomial FIT to a function f(a)
 ! CP are the N polynomial coefficients given
@@ -576,13 +576,13 @@ double precision function PFITN(x, cp, N)
 
 implicit none
 
-integer, intent(in) :: N
-double precision, intent(in) :: x, cp(N)
+integer, intent(in) :: n_order
+double precision, intent(in) :: x, cp(n_order)
 
 integer :: j
 
-PFITN = CP(N)
-do j=N-1, 1, -1
+PFITN = CP(n_order)
+do j=n_order-1, 1, -1
     PFITN = PFITN*x + CP(j)
 enddo
 

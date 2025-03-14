@@ -33,7 +33,7 @@ def scatter_to_rectangular(r, z, data, Rmesh, Zmesh, fill=np.nan):
 
     cache = scipy.spatial.Delaunay(np.vstack((r, z)).T)
     interpolant = scipy.interpolate.CloughTocher2DInterpolator(cache, data, fill_value=fill)
-    interp_data = np.reshape(interpolant(np.vstack((Rmesh.flat, Zmesh.flat)).T), Rmesh.shape)
+    interp_data = np.reshape(interpolant(np.vstack((Rmesh.flat, Zmesh.flat)).T), Rmesh.shape).T
 
     return interp_data
 
@@ -101,7 +101,7 @@ def json2eqdsk(f_json, nR=129, nZ=257, cocos_out=7):
 # Psi(rho, theta) -> Psi(R, Z)
     X, Y = np.meshgrid(geq['Rgrid'], geq['Zgrid'])
     pf_in = np.repeat(psi, n_the)
-    geq['PSIRZ'] = scatter_to_rectangular(rsurf.flat, zsurf.flat, pf_in.flat, X, Y).T
+    geq['PSIRZ'] = scatter_to_rectangular(rsurf.flat, zsurf.flat, pf_in.flat, X, Y)
     
     return geq
 

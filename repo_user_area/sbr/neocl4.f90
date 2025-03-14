@@ -378,6 +378,9 @@ do j=1, NA
         CASE(5)
             label = 'ERROR:NCLASS-inversion of flow matrix failed'
             call WRITE_LINE(nout, label, 0, 0)
+        CASE(6)
+            label = 'ERROR:NCLASS-Trapped fraction not between 0 and 1'
+            call WRITE_LINE(nout, label, 0, 0)
         END SELECT
         return
     endif
