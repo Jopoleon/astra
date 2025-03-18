@@ -1,4 +1,4 @@
-! CNSA [1/mkOM*m]: Neoclassical Conductivity Sauter, Angioni, Lin-Liu
+! CNSA [MA/V/M]: Neoclassical Conductivity Sauter, Angioni, Lin-Liu
 !    sigma_neo = sigma_spitzer*
 !                (1-(1+0.36/Z)*fteff+0.59/Z*fteff^2-0.23/Z*fteff^3
 !    fteff = ft/(1+(0.55-0.1*ft)*sqrt(nuestar)+0.45*(1-ft)*nuestar/Z^1.5)

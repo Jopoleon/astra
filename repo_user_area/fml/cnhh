@@ -1,4 +1,4 @@
-! CNHH [1/mkOM*m]: Conductivity Neoclassical Hinton-Hazeltine
+! CNHH [MA/V/m]: Conductivity Neoclassical Hinton-Hazeltine
 ! CNHH=CCSP*(1-SQRT(eps)*K33)
 !   Rev. Mod. Phys. v.48, part 1 (1976) 297.
 !   (Yushmanov 28-APR-87)

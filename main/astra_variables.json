@@ -635,7 +635,7 @@
     "BDB02" : {"desc": "<B^2/B0^2> (for Neoclassical)"},
     "BMAXT" : {"units": "T", "desc": "Maximum B field on the surface"},
     "BMINT" : {"units": "T", "desc": "Minimum B field on the surface"},
-    "CC"    : {"units": "MA/m^2", "desc": "Current conductivity"},
+    "CC"    : {"units": "MA/(V*m)", "desc": "Current conductivity"},
     "CD"    : {"units": "MA/m^2", "desc": "Driven current density"},
     "CE"    : {"units": "MA/m^2", "desc": "Bootstrap from gtad Te"},
     "CI"    : {"units": "MA/m^2", "desc": "Bootstrap from gtad Ti"},

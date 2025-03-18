@@ -1,4 +1,4 @@
-! CNHR [1/mkOM*m]: Conductivity Neoclassical Hirshman
+! CNHR [MA/V/m]: Conductivity Neoclassical Hirshman
 ! C=CCSP*(1-fT/(1 + s Ve*))(1 - CR fT/(1 + s Ve*))
 !  CR=.56/ZZ*(3.-ZZ)/(3.+ZZ); s=.58+.2*ZZ
 !  S.P.Hirshman, R.J.Hawryluk, B.Birge
