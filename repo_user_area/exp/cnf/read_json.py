@@ -1,35 +1,50 @@
 import json
 import numpy as np
 import matplotlib.pylab as plt
-import matplotlib.patches as patches
 
 
-def parallPlot(ax, r, z, dr, dz, angle_h, angle):
-    angle_h = np.radians(angle_h)
+def parallPlot(r, z, dr, dz, angle):
+
     angle   = np.radians(angle)
-    x = [r-0.5*dr-0.5*dz*np.cos(angle), r+0.5*dr-0.5*dz*np.cos(angle), r+0.5*dr+0.5*dz*np.cos(angle), r-0.5*dr+0.5*dz*np.cos(angle)]
-    y = [z-0.5*dz, z-0.5*dz, z+0.5*dz, z+0.5*dz]
-    ax.add_patch(patches.Polygon(xy=list(zip(x,y)), fill=False))
+    dr_2 = 0.5*dr
+    dz_2 = 0.5*dz
+    dz_angle = dz_2/np.tan(angle)
 
-f_json = 'aug_description_in.json'
-#f_json = 'iter_description_in.json'
-#f_json = 'jet_description_in.json'
+    x1 = r - dr_2 - dz_angle
+    x2 = r + dr_2 - dz_angle
+    x3 = r + dr_2 + dz_angle
+    x4 = r - dr_2 + dz_angle
+    x = [x1, x2, x3, x4, x1]
+    y1 = z - dz_2
+    y2 = z + dz_2
+    y = [y1, y1, y2, y2, y1]
+    plt.plot(x, y, color='darkgrey')
 
-with open(f_json) as fjson:
-    in_d = json.load(fjson)
 
-fig = plt.figure(1, (14, 9))
-ax = fig.add_subplot(1, 1, 1, aspect='equal')
-jbeg = 0
-print(len(in_d['Rvessel']))
+if __name__ == '__main__':
+    
+    f_json = 'aug_description_in.json'
+#    f_json = 'iter_description_in.json'
+#    f_json = 'jet_description_in.json'
 
-if 'R_coil' in in_d.keys():
-    n_coils = len(in_d['R_coil'])
-    for jcoil in range(n_coils):
-        parallPlot(ax, in_d['R_coil'][jcoil], in_d['Z_coil'][jcoil], in_d['dR_coil'][jcoil], in_d['dZ_coil'][jcoil], in_d['angh_coil'][jcoil], in_d['ang_coil'][jcoil])
+    with open(f_json) as fjson:
+        in_d = json.load(fjson)
 
-for jlen in in_d['contour_len']:
-    ax.plot(in_d['Rvessel'][jbeg: jbeg+jlen], in_d['Zvessel'][jbeg: jbeg+jlen])
-    jbeg += jlen
+    plt.figure(1, (9, 10))
+    plt.subplot(1, 1, 1, aspect='equal')
+    jbeg = 0
 
-plt.show()
+    for jcoil, jlen in enumerate(in_d['contour_len']):
+        if in_d['contour_color'][jcoil] > 0:
+            plt.plot(in_d['Rvessel'][jbeg: jbeg+jlen], in_d['Zvessel'][jbeg: jbeg+jlen], 'b-')
+        jbeg += jlen
+
+    if 'R_coil' in in_d.keys():
+        n_coils = len(in_d['R_coil'])
+        for jcoil in range(n_coils):
+            plt.plot(in_d['R_coil'][jcoil], in_d['Z_coil'][jcoil], 'go')
+            parallPlot(in_d['R_coil'][jcoil], in_d['Z_coil'][jcoil], in_d['dR_coil'][jcoil], in_d['dZ_coil'][jcoil], in_d['ang_coil'][jcoil])
+
+    plt.xlabel('R [m]')
+    plt.ylabel('z [m]')
+    plt.show()
