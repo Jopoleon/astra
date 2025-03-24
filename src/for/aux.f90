@@ -327,7 +327,7 @@ do j=2, n_out
     P(j) = ALFA/dx/x_in(n_in)**2
 enddo
 P(1)  = 0.
-y_out(1) = 0.
+y_out(1) = y_in(1) ! git 0.
 i = 1
 YF = (y_in(2) - y_in(1))/(x_in(2) - x_in(1))
 YX = 2./(x_out(2) + x_out(1))
