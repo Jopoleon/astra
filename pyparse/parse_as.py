@@ -58,9 +58,9 @@ def write_fortran(f_out, text, fortran='f90'):
                     indent += indent_step
                 if lin_old.split()[0].strip() == 'do':
                     indent += indent_step
-                if lin_old == 'else':
+                if lin_old[:4] == 'else':
                     indent += indent_step
-            if lin_now in ('else', 'endif', 'enddo'):
+            if lin_now[:4] == 'else' or lin_now in ('endif', 'enddo'):
                 indent -= indent_step
             indent_str = indent*' '
             indented_line = indent_str + line
@@ -82,8 +82,9 @@ def add_line_break(line_in, llen=68, line_break='\n'):
         line_out = line_in
     else:
         pieces = rec_split(line_in, syms='+ |- |* |/|(|)|,')
-        line_out = ''
-        leng_line = 0
+        n_left_blanks = len(line_in) - len(line_in.lstrip())
+        line_out  = n_left_blanks*' '
+        leng_line = n_left_blanks
         for piece in pieces:
             leng_line += len(piece)
             if leng_line <= llen:

@@ -478,6 +478,7 @@ class TEEQN:
 
     eqn = \
 """
+if (TIME >= tbeg_eq .and. TIME <= tend_eq) then
 QE(1) = HRO
 do j=1, NA1
 YWH(j) = 1.
@@ -494,13 +495,19 @@ enddo
 imethod = nint(INUME2)
 RABDOT = abs(ADCMPF)*RBDOT
 BABDOT = abs(ADCMPF)*BBDOT
-
 call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), TEO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1)/625, YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), 625*PET(1: NA1), 625*PETOT(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, TE(1: NA1), QE(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1) )
-
 do j=1, NA1
 te(j) = max(te(j), 0.001)
 enddo
 NA1E = ND1
+else
+TE(1: NA1) = TEO(1: NA1)
+do j=1, NA
+QE(J) = -G11(J)*(YWA(J)*(TE(J+1) - TE(J))/HRO + 0.5*YWB(J)*(TE(J+1) + TE(J)))*0.0016
+enddo
+QE(NA1) = QE(NA)
+NA1E = NA1
+endif
 PETOT=PE+PET*TE
 """
 
@@ -518,6 +525,7 @@ class TIEQN:
 
     eqn = \
 """
+if (TIME >= tbeg_eq .and. TIME <= tend_eq) then
 QI(1)  = HRO
 do j=1, NA1
 YWH(j) = 1.
@@ -534,13 +542,19 @@ enddo
 imethod = nint(INUME2)
 RABDOT = abs(ADCMPF)*RBDOT
 BABDOT = abs(ADCMPF)*BBDOT
-
 call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), TIO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1)/625, YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), 625*PIT(1: NA1), 625*PITOT(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, TI(1: NA1), QI(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1) )
-
 do j=1, NA1
 ti(j) = max(ti(j), 0.001)
 enddo
 NA1I = ND1
+else
+TI(1: NA1) = TIO(1: NA1)
+do J=1, NA
+QI(J) = -G11(J)*(YWA(J)*(TI(J+1) - TI(J))/HRO + 0.5*YWB(J)*(TI(J+1) + TI(J)))*0.0016
+enddo
+QI(NA1) = QI(NA)
+NA1I = NA1
+endif
 PITOT=PI+PIT*TI
 """
 
@@ -558,6 +572,7 @@ class NEEQN:
 
     eqn = \
 """
+if (TIME >= tbeg_eq .and. TIME <= tend_eq) then
 do j=1, NA1
 YWHN(j) = 1.
 YWHO(j) = 1.
@@ -572,13 +587,21 @@ enddo
 imethod = nint(INUME1)
 RABDOT = abs(ADCMPF)*RBDOT
 BABDOT = abs(ADCMPF)*BBDOT
-
 call RUNEQ_EF( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), NEO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), SNN(1: NA1), SN(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, NE(1: NA1), QN(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1) )
 do J=1, NA
 QN(J) = QN(J) + SLAT(J)*GNX(J)
 GN(J) = QN(J)/SLAT(J)
 enddo
 NA1N = ND1
+else
+NE(1: NA1) = NEO(1: NA1)
+do J=1, NA
+QN(J) = G11(J)*(-YWA(J)*(NE(J+1) - NE(J))/HRO - 0.5*YWB(J)*(NE(J+1)+NE(J))) + SLAT(J)*GNX(J)
+GN(J) = QN(J)/SLAT(J)
+enddo
+QN(NA1) = QN(NA)
+NA1N = NA1
+endif
 """
 
     assigned = \
@@ -625,7 +648,6 @@ enddo
 imethod = nint(INUME4)
 RABDOT = (abs(ADCMPF))*RBDOT
 BABDOT = (abs(ADCMPF))*BBDOT
-
 call RUNEQ_EF(YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), UPARO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWD(1: NA1), TTRQ(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, UPAR(1: NA1), QU(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1))
 
 MPHIT = 0.

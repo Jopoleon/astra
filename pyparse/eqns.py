@@ -54,22 +54,31 @@ def pre_eqn(parse, key, assign_type=None):
 def rhoBC(assign_type):
 
     rho_val = None
+    tbeg = -1.e12
+    tend = 1.e12
     if '[' in assign_type:
         tmp = assign_type.split('[')[1].split(']')[0]
-        if ',' in tmp:
-            tmp2 = tmp.split(',')
-            jprof = int(tmp2[0])
+        pieces = tmp.split(',')
+        n_commas = len(pieces) - 1
+        if n_commas == 0:
+            rho_val = 'RFA(%s)' %pieces[0]
+        else:
+            jprof = int(tmp[0])
             if jprof == 1:
-                rho_val = 'RFAN(%s)' %tmp2[1]
+                rho_val = 'RFAN(%s)' %pieces[1]
             elif jprof == 2:
-                rho_val = '%s*ROC' %tmp2[1]
+                rho_val = '%s*ROC' %pieces[1]
             else:
                 logger.error('First argument in ...:EQ[ , ] can be only either 1 or 2')
                 logger.error('Please amend your equ file')
                 sys.exit()
-        else:
-            rho_val = 'RFA(%s)' %tmp
-    return rho_val
+            if n_commas == 2:
+                tbeg = float(pieces[2])
+            elif n_commas == 3:
+                tbeg = float(pieces[2])
+                tend = float(pieces[3])
+
+    return rho_val, tbeg, tend
 
 
 def linInterp2sep(var):
@@ -89,16 +98,32 @@ def bnd_init(var, var_defined, parse):
 
     assign_type = parse.assign_d[var]
     bnd_txt = ''
-    rho_bnd = rhoBC(assign_type)
+    rho_bnd, tbeg, tend = rhoBC(assign_type)
     if rho_bnd is None:
         bnd_txt += 'ND1 = NA1\n'
     else:
         l2f = pa.LINE2FOR(rho_bnd, parse)
+        bnd_txt += 'tbeg_eq = %12.4e\n' %tbeg
+        bnd_txt += 'tend_eq = %12.4e\n' %tend
+        bnd_txt += 'if (TIME >= tbeg_eq .and. TIME <= tend_eq) then\n'
         bnd_txt += 'ND1 = NODE(%s)\n' %l2f.strip()
-    if var in var_defined:
-        bnd_txt += 'do j=ND1, NA1\n'
-        bnd_txt += pa.apptmp(var, parse)
-        bnd_txt += 'enddo\n'
+        if var in var_defined:
+            bnd_txt += 'do j=ND1, NA1\n'
+            bnd_txt += pa.apptmp(var, parse)
+            bnd_txt += 'enddo\n'
+        bnd_txt += 'else if (TIME < tbeg_eq) then\n'
+        bnd_txt += 'ND1 = 1\n'
+        if var in var_defined:
+            bnd_txt += 'do j=ND1, NA1\n'
+            bnd_txt += pa.apptmp(var, parse)
+            bnd_txt += 'enddo\n'
+        bnd_txt += 'else if (TIME > tend_eq) then\n'
+        bnd_txt += 'ND1 = 1\n'
+        if var in var_defined:
+            bnd_txt += 'do j=ND1, NA1\n'
+            bnd_txt += '%s(j) = %sO(j)\n' %(var, var)
+            bnd_txt += 'enddo\n'
+        bnd_txt += 'endif\n'
     if var == 'UPAR':
         varx = 'VTORX'
     else:
