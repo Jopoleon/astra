@@ -3557,7 +3557,6 @@ contains
 !--------------------------------------------------------------------
     subroutine new_jrz_feqis ! calculate new right hand side given new boundary!
 
-    use rcurr_zcurr_2def, only: R_curr_2d, Z_curr_2D
     use feqis_tools, only: fill_in_current, floor_index
 
     integer :: i, j, i1, i2, j1, quadrant, ipluz, jpluz, &
@@ -3750,9 +3749,6 @@ contains
             t3 = t3 + jrz(i, j)*darea
         enddo
     enddo
-
-    R_curr_2D =  sqrt(t1/t3)
-    Z_curr_2D =  t2/t3
 
     return
     end subroutine new_jrz_feqis

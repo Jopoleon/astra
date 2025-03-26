@@ -7,7 +7,8 @@ subroutine build_2dgrid(nrho, ntheta, psin_grid, &
     G2, G3, areat, perim, volum, G1, GRADRO, &
     BMAXT, BMINT, BDB02, BDB0, B0DB2, FOFB, &
     slat, li3, betapol, psplex, bpcell, bcell, r_out, r_in, &
-    elon, tria_u, tria_l, shif, g41, q_out, shiv, square, li_aug, betapol_iter, dl_dt)
+    elon, tria_u, tria_l, shif, g41, q_out, shiv, square, li_aug, betapol_iter, dl_dt, &
+    wkin, bpkin)
 
 use pi_vars, only: GPI, GPI2
 use numerical_tools, only: qinterp, extrapolate, polyfitcc
@@ -22,7 +23,7 @@ double precision, intent(in), dimension(ntheta) :: thetap_i
 double precision, intent(in), dimension(nrho) :: psin_grid, ipol, pressure, q_new
 double precision, intent(in), dimension(nrho, ntheta) :: PSI, jrho2, darea2, yy2, dl_dt
 
-double precision, intent(out) :: li3, betapol, psplex, li_aug, betapol_iter
+double precision, intent(out) :: li3, betapol, psplex, li_aug, betapol_iter, wkin, bpkin
 double precision, intent(out), dimension(nrho) :: G1, G2, G3, &
     volum, areat, perim, slat, &
     FOFB, GRADRO, BMAXT, BMINT, BDB02, BDB0, B0DB2
@@ -182,6 +183,8 @@ do jrho=1, nrho-1
 enddo
 betapol = 0.4*GPI2*1.e-6*sum(onez*dva)/sum(B_pola**2 * dV2da)
 betapol_iter = 4.*1.e-6*sum(onez*dva)/(0.4*GPI*dumba1*iplasma**2.)
+wkin = sum(onez*dva)  !int(pressure dV)
+bpkin = sum(B_pola**2 * dV2da)/(0.4*GPI2*1.e-6) ! int(Bp**2/(2mu0)dV)
 
 slat = 0.
 do jrho=2, nrho

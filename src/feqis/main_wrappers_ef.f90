@@ -996,6 +996,7 @@ use feqis_circuit, only: nr, nrho, nteta, raxp, zaxp, rbndp, zbndp, rho, teta, &
     ffprime, pprime, pressure, ipol, &
     Rgeom0, Btor0, Rpol, Zpol, Rpul, Zpul, jrhoteta, li3, li_aug, betapol, iplasma, &
     betapol_iter
+use global_params_feqis, only: wkin, bpkin
 use transport2fbe, only: raxis_astra, zaxis_astra, psi0_astra, psib_astra, &
     solve_fix
 use metric_coefficients_pbe, only: lambda2d, R_curr_0d, Z_curr_0d, dator, fsa_kernel
@@ -1157,7 +1158,8 @@ call build_2dgrid(nrho, nteta, psibez(1:nrho), &
     li3, betapol, psplex, &
     bpcell2dbez(1:nrho, 1:nteta), bcell2dbez(1:nrho, 1:nteta), &
     routbez(1:nrho), rinbez(1:nrho), kbez(1:nrho), triaubez(1:nrho), trialbez(1:nrho), shifbez(1:nrho), &
-    gm41bez(1:nrho), qbez(1:nrho), shivbez(1:nrho), squarebez(1:nrho), li_aug, betapol_iter, dl_dt)
+    gm41bez(1:nrho), qbez(1:nrho), shivbez(1:nrho), squarebez(1:nrho), li_aug, betapol_iter, dl_dt, &
+    wkin, bpkin)
 
 phibez(1:nrho) = 0.
 rbp2_b2bez(1:nrho) = 0.

@@ -19,13 +19,6 @@ double precision :: err_circ_plasma_iter, err_find_oxpoints, &
 end module errors_params
 
 !---------------------------------------------------------------------
-module rcurr_zcurr_2def
-
-double precision :: R_curr_2D, Z_curr_2D
-
-end module rcurr_zcurr_2def
-
-!---------------------------------------------------------------------
 module ferromagstructure
 
 integer, parameter, private :: DP=kind(1.0D0)
@@ -59,6 +52,13 @@ type type_ferromag
 endtype
 
 end module ferromagstructure
+
+!---------------------------------------------------------------------
+module global_params_feqis
+
+double precision :: wkin, bpkin
+
+end module global_params_feqis
 
 !---------------------------------------------------------------------
 module transfer_functions

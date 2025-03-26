@@ -12,7 +12,7 @@ subroutine A_EQUIL( &
 use imas_ids, only: type_equilibrium
 use parameters_a2equil, only: type_parameters, fix_adapgrid, GP, GP2, s_fazt
 use const_inc, only : rtor,shift, updwn
-use feqis_circuit, only: psib_ext_feqis, get_zccurb_feqis, find_demo_gaps_feqis
+use feqis_circuit, only: psib_ext_feqis
 
 use outcmn_inc, only: MACHINE, nml_file
 
