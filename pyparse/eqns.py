@@ -773,7 +773,7 @@ def tetieqn(parse):
     if 'TE' not in var_defined:
         logger.warning('Initial condition for TE is not defined\nTE=TEX(TSTART) will be used')
 
-    teti += bnd_init('TE', var_defined, parse).replace('YWC', 'YWC1')
+    teti += bnd_init('TE', var_defined, parse).replace('YWC', 'YWC1').replace('bctype', 'bc_type_imp(1)')
 
     if 'DVE' in var_defined:
         teti += 'YWD(ND1) = 1.\n'
@@ -879,7 +879,7 @@ def tetieqn(parse):
         logger.warning('Initial condition for TI is not defined')
         logger.warning('Using TI=TIX(TSTART)')
 
-    teti += bnd_init('TI', var_defined, parse).replace('YWC', 'YWC2')
+    teti += bnd_init('TI', var_defined, parse).replace('YWC', 'YWC2').replace('bctype', 'bc_type_imp(2)')
 
     if 'DVI' in var_defined:
         teti += 'YWD(ND1) = 1.\n'
