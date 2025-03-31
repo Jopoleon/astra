@@ -3,13 +3,18 @@ subroutine feqis_main(nucoils, ucoils, parameters_equil, ifplasma, &
 
 use imas_ids, only: type_equilibrium  
 use parameters_a2equil, only: type_parameters
-use feqis_circuit, only: nrho, nteta, nr2, nz2, nr1, nz1, &
+use feqis_circuit, only: psi_cur_old, psiplasmatoconduc, &
+    ucoils, voltage,  &
+    psi_mutual_effect_conductors_simple
+use fbe_core, only: nr2, nz2, nr1, nz1, &
     Rmin, Rmax, Zmin, Zmax, Rrect, Zrect, &
-    psi_cur_old, psiplasmatoconduc, psirz, psiextrz, &
-    psplex, psibndp, psiaxisp, &
-    ucoils, voltage, iplasma, &
-    psi_external_calc, psi_mutual_effect_conductors_simple
-use transport2fbe, only: refit_mode, simple_plasma_model_breakdown
+    psirz, psiextrz, &
+    psi_external_calc, nbnd, i_plasmatype, &
+    r_xpoint, z_xpoint, n_of_xpoints, active_x_point
+use pbe_core, only: nrho, nteta, psibndp, psiaxisp
+use global_params, only: psplex, iplasma
+use transport2fbe, only: refit_mode, simple_plasma_model_breakdown, &
+    plasma_config, x_point_save
 
 implicit none
 
@@ -29,6 +34,8 @@ save j_call, j_init, j_vacplas
 call feqis_init(equil_in, parameters_equil, j_init, ifplasma)
 
 nrplasma = nrho
+nbnd = nteta ! for fbe
+
 if (j_call == 0) then
     nr2 = SIZE(equil_in%eqgeometry%rectgrid%r2d)
     if (nr2 > 0) then
@@ -145,6 +152,14 @@ if (parameters_equil%k_fixfree == 1 .and. refit_mode /= 818) then !any other mod
             call fix_boundary_feqis(1)
         endif
         j_vacplas = 1
+! below 2 diagnostics for configuration and xpoints
+        plasma_config = i_plasmatype ! assign configuration of plasma to external variables
+        if (n_of_xpoints >= 1) then
+            x_point_save(1:min(20, n_of_xpoints), 1) = r_xpoint(1:min(20, n_of_xpoints))
+            x_point_save(1:min(20, n_of_xpoints), 2) = z_xpoint(1:min(20, n_of_xpoints))
+            x_point_save(20, 1) = r_xpoint(active_x_point)
+            x_point_save(20, 2) = z_xpoint(active_x_point)
+        endif
     endif
 else if (parameters_equil%k_fixfree == 0 .and. refit_mode /= 818) then !any other mode than 818
     call fix_boundary_feqis(j_init)
@@ -165,6 +180,14 @@ if (refit_mode == 818) then  ! run prescribed boundary but with coil currents fi
     call equil_assignments(equil_out)
     j_call = 1
     j_init = 1
+! below 2 diagnostics for configuration and xpoints
+    plasma_config = i_plasmatype ! assign configuration of plasma to external variables
+    if (n_of_xpoints >= 1) then
+        x_point_save(1:min(20,n_of_xpoints), 1) = r_xpoint(1:min(20,n_of_xpoints))
+        x_point_save(1:min(20,n_of_xpoints), 2) = z_xpoint(1:min(20,n_of_xpoints))
+        x_point_save(20, 1) = r_xpoint(active_x_point)
+        x_point_save(20, 2) = z_xpoint(active_x_point)
+    endif
     return
 endif
 

@@ -1,15 +1,3 @@
-module feqis_dimensions
-
-integer, parameter :: i_dim1=500 !coil stuff
-integer, parameter :: i_dim2=500 !plasma grids
-integer, parameter :: i_dim3=500
-integer, parameter :: i_dim4=500
-integer, parameter :: i_dim5=6200
-integer, parameter :: nrho2d=5999
-
-end module feqis_dimensions
-
-!---------------------------------------------------------------------
 module errors_params
 
 double precision :: err_circ_plasma_iter, err_find_oxpoints, &
@@ -54,16 +42,15 @@ endtype
 end module ferromagstructure
 
 !---------------------------------------------------------------------
-module global_params_feqis
+module global_params
 
-double precision :: wkin, bpkin
+double precision :: iplasma, btor0, rgeom0, psplex, li3, li_aug, betapol, betapol_iter, &
+ wkin, bpkin
 
-end module global_params_feqis
+end module global_params
 
 !---------------------------------------------------------------------
 module transfer_functions
-
-use feqis_dimensions, only: i_dim2
 
 double precision, dimension(:), allocatable :: dpsidvbez, psibez, &
     g2bez, g2ibez, gm1bez, routbez, rinbez, vbez, g1bez, gm41bez, &
@@ -106,41 +93,4 @@ implicit none
 integer, parameter :: dp=selected_real_kind(15, 300)
 double precision, dimension(:, :), allocatable :: sintable, costable
 
-contains
- 
-  ! In place Cooley-Tukey FFT
-    recursive subroutine fft_eff(x)
-
-    complex(kind=dp), dimension(:), intent(inout)  :: x
-    complex(kind=dp) :: t
-    integer :: N, i
-    complex(kind=dp), dimension(:), allocatable :: even, odd
- 
-    N = size(x)
- 
-    if (N < 2) return
- 
-    allocate(odd((N+1)/2))
-    allocate(even(N/2))
-
-! divide
-    odd  = x(1:N:2)
-    even = x(2:N:2)
- 
-! conquer
-    call fft_eff(odd)
-    call fft_eff(even)
- 
-! combine
-    do i=1, N/2
-        t = exp(cmplx(0.0, -GPI2*(i - 1.)/(N + 0.)))*even(i)
-        x(i)     = odd(i) + t
-        x(i+N/2) = odd(i) - t
-    enddo
- 
-    deallocate(odd)
-    deallocate(even)
- 
-    end subroutine fft_eff
- 
 end module fft_mod_eff

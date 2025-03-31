@@ -1,8 +1,10 @@
 subroutine full_system_advance_feqis(j_init, no_circuit_eq)
 
 use errors_params, only: err_epsilon, err_circ_plasma_iter
-use feqis_circuit, only: nr2, nz2, nconduc, iplasma, psi_cur_old, &
-    psiplasmatoconduc, curconduc, jrz, area_eff, psi_external_calc
+use feqis_circuit, only: psi_cur_old, &
+    psiplasmatoconduc
+use fbe_core, only: nr2, nz2, nconduc, curconduc, jrz, area_eff, psi_external_calc
+use global_params, only: iplasma
 use transport2fbe, only: fast_mode, execute_plasma
 use parameters_a2equil, only: max_iter
 use green_matrix, only: greeni
@@ -81,17 +83,20 @@ end subroutine full_system_advance_feqis
 subroutine solve_gse2d_fbe_full_feqis(j_init)
 
 use errors_params, only: err_find_psistab
-use feqis_circuit, only: nr, nz, nr2, nz2, psiextrz, redo_bnd, &
-    Rrect, Zrect, dr, dz, dr_factor_init, dz_factor_init, rax, zax, raxp, zaxp, &
-    trax, tzax, iaxis, jaxis, psistabr, psistabz, &
-    restab_axis_with_fourier_wall, restab_boundary_with_fourier_wall, & !doesnt work well
+use fbe_core, only: nr, nz, nr2, nz2, psiextrz, redo_bnd, &
+    Rrect, Zrect, dr, dz, dr_factor_init, dz_factor_init, rax, zax, &
+    trax, tzax, iaxis, jaxis, psistabr, psistabz, jrz, solve_fbe_static_iterations_curgiven
+use pbe_core, only: raxp, zaxp
+use feqis_circuit, only: restab_axis_with_fourier_wall, restab_boundary_with_fourier_wall, & !doesnt work well
     restab_F_function_full_fonfit, restab_F_function_full_fonfit_xpoints, restab_F_function_full_currents, &
     restab_2_timepoints_evolution, restab_F_function_full_currents_forces, &
     restab_F_function_full_currents_limits,restab_2_timepoints_evolution_limits, &
     restab_j_timepoints_evolution_limits_xpoints_boundariz, & 
-    restab_1_timepoint_limits_xpoints_boundariz
+    restab_1_timepoint_limits_xpoints_boundariz, interp_j_fromrhotorz
 use transport2fbe, only: refit_mode, n_of_newton_iterations, use_isoflux
 use feqis_tools, only: closest_index
+use global_params, only: iplasma
+
 
 implicit none
 
@@ -100,7 +105,7 @@ integer, intent(in) :: j_init
 integer :: j_iter, j_iter2, j_cyclo, jeppa
 double precision :: temp_err, raxold, zaxold, temp_err2, raxoldo, zaxoldo, &
     raxtmp, zaxtmp, det, psistab1o, psistab2o, psro, pszo, dist1, dist2, &
-    cibapr, cibazr, rleft, rright, zup, zdown, dcrdr, dcrdz, dczdr, dczdz
+    cibapr, cibazr, rleft, rright, zup, zdown, dcrdr, dcrdz, dczdr, dczdz, curr
 
 ! First, initialized initial guess coming from prescribed boundary current density: jrhoteta
 
@@ -111,163 +116,20 @@ CASE(-1) ! 1 turn only, linearized solution
 
 CASE(0) ! full static convergent solution with given currents
 ! Start iterations to find self-consistent solution
-    iaxis = closest_index(raxp, Rrect(1), dr)
-    jaxis = closest_index(zaxp, Zrect(1), dz)
-    rax = Rrect(iaxis)
-    zax = Zrect(jaxis)
-    raxold = rax
-    zaxold = zax
-    raxoldo = rax
-    zaxoldo = zax
-    psistabR = 0.
-    psistabZ = 0.
-    psistab1o = 0.
-    psistab2o = 0.
-    temp_err = 100.
-    temp_err2 = 100.
-    rleft = raxold
-    rright = raxold
-    zup = zaxold
-    zdown = zaxold
-! outer cycle, calculate new axis
-    j_cyclo = 0
-    jeppa = 1
-    dist1 = dr*dr_factor_init
-    dist2 = dz*dz_factor_init
-
-    do j_iter2=1, 10000000
-
-        SELECT CASE(j_cyclo)
-        CASE(1)
-            raxold = raxoldo + dist1
-            zaxold = zaxoldo
-            psistab1o = psistabr
-            psistab2o = psistabz
-
-        CASE(2)
-            raxold = raxoldo
-            zaxold = zaxoldo + dist2
-            dcrdr = (psistabr - psistab1o)/dist1
-            dczdr = (psistabz - psistab2o)/dist1
-
-        CASE(3) ! inverse of (dcrdr dcrdz  ; dczdr dczdz ) = ( dczdz -dcrdz ; -dczdr dcrdr)
-            dcrdz = (psistabr - psistab1o)/dist2
-            dczdz = (psistabz - psistab2o)/dist2
-            det = (dcrdr*dczdz - dcrdz*dczdr)
-            cibapr = ( dczdz*psistab1o - dcrdz*psistab2o)/det
-            cibazr = (-dczdr*psistab1o + dcrdr*psistab2o)/det
-            raxold = raxoldo - cibapr
-            zaxold = zaxoldo - cibazr
-            raxoldo = raxold
-            zaxoldo = zaxold
-        END SELECT
-
-! Inner cycle, calculate psi1 and psi2
-
-        psro = 1000.
-        pszo = 1000.
-        redo_bnd = 1
-
-        do j_iter=1, 10000
-            raxtmp = trax
-            zaxtmp = tzax
-            call solve_gse2d_fbe_full_feqis_1turn(j_iter - 1 + j_iter2 - 1, 1, raxold, zaxold)
-            temp_err = (abs(psro - psistabr) + abs(pszo - psistabz))
-            if (temp_err <= err_find_psistab) EXIT
-            psro = psistabr
-            pszo = psistabz
-        enddo
-
-        if (j_iter >= 10000) then
-            write(*, *) 'total iterations passed, stopping!'
-            stop
-        endif
-
-        if (j_cyclo == 3) then
-            temp_err2 = abs(psistabr) + abs(psistabZ)
-            j_cyclo = 1
-            if (nint((0. + j_iter2)/3.) >= n_of_newton_iterations) EXIT
-        else
-            j_cyclo = j_cyclo + 1
-        endif
-
-        if (j_iter2 >= 400000) EXIT
-        if (temp_err2 <= err_find_psistab) EXIT
-
-    enddo
-
-CASE(101) ! refit_mode=101: only vertical stab (doesn't work well)
-!start iterations to find self-consistent solution
-    iaxis = closest_index(raxp, Rrect(1), dr)
-    jaxis = closest_index(zaxp, Zrect(1), dz)
-    rax = Rrect(iaxis)
-    zax = Zrect(jaxis)
-    raxold    = rax
-    zaxold    = zax
-    raxoldo   = rax
-    zaxoldo   = zax
-    psistabR  = 0.
-    psistabZ  = 0.
-    psistab1o = 0.
-    psistab2o = 0.
-    temp_err  = 100.
-    temp_err2 = 100.
-    rleft  = raxold
-    rright = raxold
-    zup    = zaxold
-    zdown  = zaxold
-! outer cycle, calculate new axis
-    j_cyclo = 0
-    jeppa   = 1
-    dist1 = dr
-    dist2 = dz
-
-    do j_iter2=1, 300
-        if (j_iter2 > 250) stop
-
-        if (j_cyclo == 1) then
-            zaxold = zaxoldo + dist2
-            psistab2o = psistabz
-        endif
-        if (j_cyclo == 2) then      ! inverse of (dcrdr dcrdz  ; dczdr dczdz ) = ( dczdz - dcrdz ; -dczdr dcrdr)
-            dczdz = (psistabz - psistab2o)/dist2
-            cibazr = psistab2o/dczdz
-            zaxold  = zaxoldo - cibazr
-            zaxoldo = zaxold
-        endif
-
-! Inner cycle, calculate psi1 and psi2
-        psro = 1000.
-        pszo = 1000.
-        redo_bnd = 1
-
-        do j_iter=1, 10000
-            raxtmp = trax
-            zaxtmp = tzax
-            call solve_gse2d_fbe_full_feqis_1turn(j_iter - 1 + j_iter2 - 1, 1, -1.d6, zaxold)
-            temp_err = (abs(pszo - psistabz))
-            if (temp_err <= err_find_psistab) EXIT
-            psro = psistabr
-            pszo = psistabz
-        enddo
-
-        if (j_iter >= 10000) then
-            write(*, *) 'total iterations passed!'
-            stop
-        endif
-
-        if (j_cyclo == 2) then
-            temp_err2 = abs(psistabZ)
-            j_cyclo = 1
-            if (nint((0. + j_iter2)/2.) >= n_of_newton_iterations) EXIT
-        else
-            j_cyclo = j_cyclo + 1
-        endif
-
-        if (j_iter2 >= 400000) EXIT
-        if (temp_err2 <= err_find_psistab) EXIT
-
-    enddo
+! first, initialized initial guess coming from prescribed boundary current density: jrhoteta
+    if (j_init == 0) then
+        call interp_j_fromrhotorz
+! Rescale current density
+        curr = SUM(jrz(1:nr2, 1:nz2)) *dr*dz
+        jrz = jrz/curr*iplasma
+        rax = raxp
+        zax = zaxp
+        iaxis = closest_index(rax, Rrect(1), dr)
+        jaxis = closest_index(zax, Zrect(1), dz)
+        rax = Rrect(iaxis)
+        zax = Zrect(jaxis)
+    endif
+    call solve_fbe_static_iterations_curgiven(j_init, raxp, zaxp, n_of_newton_iterations)
 
 CASE(1) ! refit eddy currents using fourier method for axis stability. doesnt respect boundary. fixed given active currents
     call restab_axis_with_fourier_wall
@@ -310,12 +172,14 @@ end subroutine solve_gse2d_fbe_full_feqis
 !--------------------------------------------------------------------
 subroutine solve_gse2d_fbe_full_feqis_1turn(j_init, j_stab, raxold, zaxold)
 
-use feqis_circuit, only : nr2, nz2, iaxis, jaxis, &
-    Rrect, Zrect, dr, dz, rax, zax, raxp, zaxp, &
-    iplasma, jrz, psirz, psiextrz, psiplasrz, psistabr, psistabz, &
-    nine_point_coeffs_only, boundary, interp_j_fromrhotorz, &
+use fbe_core, only : nr2, nz2, iaxis, jaxis, &
+    Rrect, Zrect, dr, dz, rax, zax, &
+    jrz, psirz, psiextrz, psiplasrz, psistabr, psistabz, &
     find_new_axis_part1, find_psi_boundary, new_jrz_feqis, &
-    compound_psi
+    compound_psi, solve_fbe_instantaneous
+use feqis_circuit, only : interp_j_fromrhotorz
+use global_params, only: iplasma
+use pbe_core, only : raxp, zaxp
 
 use feqis_tools, only: closest_index
 
@@ -343,48 +207,7 @@ if (j_init == 0) then
     zax = Zrect(jaxis)
 endif
 
-g = 0.
-call solve_gs2d(g) !jrz as right hand side
-g = boundary(g)   ! gbound = integral (Green*dg/dn) over the boundary
-call solve_gs2d(g) ! again jrz as right hand side
-psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
-
-if (j_stab == 1) then
-    psistabr = 0.
-    psistabz = 0.
-    delr = 0.
-    delz = 0.
-    call compound_psi
-    call find_new_axis_part1
-    call nine_point_coeffs_only(raxold, zaxold, c, zum1, zum2)
-
-! dpsidr
-    zum1 = (raxold - zum1)/dr
-    zum2 = (zaxold - zum2)/dz
-    dum1 = 2.*c(2)*(zum1*zum2**2 + 2.*c(2)*zum1*zum2) +  &
-              c(3)*zum2**2 + c(4)*zum2 + 2*c(5)*zum1 + c(7)
-
-! dpsidz
-   dum2 = 2.*c(1)*zum1**2*zum2 + c(2)*zum1**2 +  &
-          2.*c(3)*zum1*zum2    + c(4)*zum1 + 2.*c(6)*zum2 + c(8)
-
-    psistabr = -1./(2.*raxold)*dum1/dr
-    psistabz = -dum2/dz
-
-    call compound_psi
-    do i=1, nr2
-        do j=1, nz2
-            psirz(i, j) = psirz(i, j) + psistabr*Rrect(i)**2 + psistabz*Zrect(j) ! Total flux
-        enddo
-    enddo
-    call find_new_axis_part1
-else
-    call compound_psi ! Total flux
-endif
-
-call find_new_axis_part1
-call find_psi_boundary
-call new_jrz_feqis
+call solve_fbe_instantaneous(j_init, j_stab, raxold, zaxold)
 
 return
 end subroutine solve_gse2d_fbe_full_feqis_1turn
@@ -393,7 +216,8 @@ end subroutine solve_gse2d_fbe_full_feqis_1turn
 subroutine FEQISUPDATE(coilzzz, nccc)
 
 use pi_vars, only: GPI2
-use feqis_circuit, only: nconduc, cur_con_old, curconduc, &
+use fbe_core, only: nconduc, curconduc
+use feqis_circuit, only: cur_con_old, &
     psi_cur_old, psiplasmatoconduc
 use transport2fbe, only: fast_mode
 
@@ -416,8 +240,8 @@ end subroutine FEQISUPDATE
 subroutine circuit_eq_advance_feqis(j_init)
 
 use pi_vars, only: GPI, GPI2
-use feqis_circuit, only: nconduc, i_dim1, tau_new, &
-    tau_old, cur_con_old, curconduc, voltage, &
+use fbe_core, only: nconduc, curconduc
+use feqis_circuit, only: tau_new, tau_old, cur_con_old, voltage, &
     dpc, psiplasmatoconduc, resconduc, indconduc, psi_cur_old
 use feqis_tools, only: solve_circuit_equations
 use transport2fbe, only: tau_circuit_feqis, tau_gseq_feqis, activate_coil_feqis, &
@@ -431,7 +255,7 @@ integer, intent(in) :: j_init
 
 integer :: i, ic, j, k, iii, jjj, invertcommand, i_equivalence, i_cnew, firstcall
 integer, dimension(500) :: rem_coils
-double precision, dimension(i_dim1) :: dpctemp, vtemp, curotemp, curtemp
+double precision, dimension(500) :: dpctemp, vtemp, curotemp, curtemp
 double precision, dimension(500, 500) :: restemp, indtemp
 
 data firstcall/0/
@@ -610,14 +434,18 @@ use parameters_a2equil, only: type_parameters, max_iter, &
     err_find_biquad_in, err_epsilon_in, err_gaptolez_in, err_fix_boundary_in, &
     err_find_oxpoints_derivs_in
 use imas_ids, only: type_equilibrium
-use feqis_circuit, only: nrho, nrho2d, nteta, use_limiter_yesno, &
-    dr_factor_init, dz_factor_init, &
-    rexp, zexp, raxp, zaxp, rbnd, zbnd, rbndp, zbndp, &
-    teta, dteta, tetaexp, &
-    iplasma, Rgeom0, Btor0, omega_pl, &
+use pbe_core, only: nrho, nteta, raxp, zaxp, rbndp, zbndp, &
+    teta, dteta, tetaexp, raxp, zaxp, &
     pressure, ipol, pprime, ffprime, &
-    psia_2d, ffp_2d, ppp_2d, ncoils, &
-    psistabr, psistabz, psigrid, psigrida, psibnd
+    psigrid, psigrida, rexp, zexp
+use fbe_core, only: nrho2d, use_limiter, &
+    dr_factor_init, dz_factor_init, &
+    rbnd, zbnd, &
+    omega_pl, &
+    psia_2d, ffp_2d, ppp_2d, &
+    psistabr, psistabz, psibnd
+use feqis_circuit, only: ncoils
+use global_params, only: iplasma, Rgeom0, Btor0
 use transport2fbe, only: dr_factor_init_astra, dz_factor_init_astra, &
     tau_circuit_feqis, tau_gseq_feqis, activate_coil_feqis, current_limit_feqis, &
     raxis_astra, zaxis_astra, psi0_astra, psib_astra, use_limiter_astra, &
@@ -671,7 +499,7 @@ if (j_call == 0) then
     raxp = raxis_astra
     zaxp = zaxis_astra
     psibnd = -1.e6
-    use_limiter_yesno = use_limiter_astra
+    use_limiter = use_limiter_astra
     allocate(teta(nteta+1))
     allocate(pressure(nrho))
     allocate(pprime(nrho))
@@ -766,16 +594,22 @@ subroutine equil_feqis_init_circ
 
 use pi_vars, only: GPI
 use fft_mod_eff, only: sintable, costable
-use feqis_circuit, only: nr, nr1, nr2, nz, nz1, nz2, &
-    nactive, npassive, ncoils, nconduc, nlimiter, nblocks, ngbnd, &
-    lim_minr, lim_maxr, lim_minz, lim_maxz, &
-    rmin, rmax, zmin, zmax, Rrect, Zrect, dr, dz, rcomp, zcomp, r_cond, z_cond, &
+use feqis_circuit, only: nactive, npassive, ncoils, nblocks, &
+    r_cond, z_cond, &
     rcoil, zcoil, drcoil, dzcoil, anglecoil, anglehcoil, mequivalence, &
-    limiterr, limiterz, alpsep, curconduc, resconduc, indconduc, &
-    zlimpotential, green_bnd_f, nferromag, psiplasmatoconduc, &
+    resconduc, indconduc, psiplasmatoconduc, &
     voltage, voltage_old, cur_con_old, &
+    psi_cur_old, dpc, nferromag
+use fbe_core, only: nr, nr1, nr2, nz, nz1, nz2, &
+    nconduc, nlimiter, ngbnd, &
+    lim_minr, lim_maxr, lim_minz, lim_maxz, &
+    rmin, rmax, zmin, zmax, Rrect, Zrect, dr, dz, rcomp, zcomp, &
+    limiterr, limiterz, alpsep, curconduc, &
+    zlimpotential, green_bnd_f, &
     jrz, psirz, psiextrz, psiplasrz, u_n, omega_pl, area_eff, &
-    psi_cur_old, dpc, psiferro, compound_psi
+    psiferro, compound_psi
+use feqis_circuit, only: nferromag, psiplasmatoconduc, &
+    voltage, voltage_old, cur_con_old, psi_cur_old, dpc
 use ferromagstructure, only: type_ferromag
 
 use green_matrix, only: greeni, dgreenirj, dgreenizj, dgreenirpl, dgreenizpl
@@ -990,13 +824,13 @@ end subroutine equil_feqis_init_circ
 !--------------------------------------------------------------------
 subroutine fix_boundary_feqis(j_init)
 
-use feqis_circuit, only: nr, nrho, nteta, raxp, zaxp, rbndp, zbndp, rho, teta, &
-    psiaxisp, psirhoteta, psigrida, psplex, psibndp, &
+use pbe_core, only: nrho, nteta, raxp, zaxp, rbndp, zbndp, rho, teta, &
+    psiaxisp, psirhoteta, psigrida, psibndp, &
     psia_1d, ffp_1d, ppp_1d, &
     ffprime, pprime, pressure, ipol, &
-    Rgeom0, Btor0, Rpol, Zpol, Rpul, Zpul, jrhoteta, li3, li_aug, betapol, iplasma, &
-    betapol_iter
-use global_params_feqis, only: wkin, bpkin
+    Rpol, Zpol, Rpul, Zpul, jrhoteta
+use global_params, only: Rgeom0, Btor0, li3, li_aug, betapol, iplasma, &
+    betapol_iter, wkin, bpkin, psplex
 use transport2fbe, only: raxis_astra, zaxis_astra, psi0_astra, psib_astra, &
     solve_fix
 use metric_coefficients_pbe, only: lambda2d, R_curr_0d, Z_curr_0d, dator, fsa_kernel
@@ -1089,7 +923,7 @@ if (j_init == 0) then
     psibndp = psib_astra
     do jr=1, Nrho
         do jt=1, Nteta
-            lambda2d(jr, jt) = (jr - 1)/(Nr - 1.)
+            lambda2d(jr, jt) = (jr - 1)/(Nrho - 1.)
         enddo
     enddo
     do jt=1, Nteta
@@ -1198,9 +1032,12 @@ subroutine equil_assignments(equil_out)
 
 use pi_vars, only: GPI, GPI2
 use imas_ids, only: type_equilibrium
-use feqis_circuit, only: nr2, nz2, nrho, nteta, &
-    psplex, psiaxis, psibnd, psirhoteta, psirz, &
-    Rrect, Zrect, betapol, li3, li_aug, iplasma, betapol_iter
+use fbe_core, only: nr2, nz2, psirz, &
+    Rrect, Zrect, psiaxis, psibnd
+use pbe_core, only: nrho, nteta, &
+    psiaxisp, psibndp, psirhoteta
+use global_params, only: betapol, li3, li_aug, iplasma, betapol_iter, & 
+    wkin, bpkin, psplex
 use transfer_functions, only: rpbez, zpbez, t2dbez, &
     rinbez, routbez, rmin2dbez, vbez, areatbez, perimbez, surfbez, &
     kbez, shifbez, triaubez, trialbez, qbez, phibez, &
@@ -1216,13 +1053,15 @@ integer :: i
 type(type_equilibrium), intent(inout) :: equil_out
 
 equil_out%global_param%psplex   = psplex
-equil_out%global_param%psibound = -GPI2*psibnd
-equil_out%global_param%psiaxis  = -GPI2*psiaxis
+equil_out%global_param%psibound = -GPI2*psibndp
+equil_out%global_param%psiaxis  = -GPI2*psiaxisp
 equil_out%global_param%li3      = li3
 equil_out%global_param%li_aug   = li_aug
 equil_out%global_param%betpol   = betapol
 equil_out%global_param%betpol_iter   = betapol_iter
 equil_out%global_param%i_plasma = iplasma*1.e6
+equil_out%global_param%wkin   = wkin ! volume integral of pressure
+equil_out%global_param%bpkin   = bpkin ! volume integral of Bp**2/(2mu0)
 
 equil_out%coord_sys%position%teta2d(1:nteta) = t2dbez(1:nteta)
 equil_out%coord_sys%position%psirz(1:nrho, 1:nteta) = psirhoteta (1:nrho, 1:nteta)/GPI2
@@ -1286,17 +1125,20 @@ end subroutine equil_assignments
 subroutine convert_boundary_to_pbe
 
 use pi_vars, only: GPI2
-use feqis_circuit, only: nr, nr2, nz, nteta, nbnd, i_dim5, iaxis, jaxis, &
-    teta, dteta, raus, rinner, zbot, ztop, &
-    Rrect, Zrect, dr, dz, rax, zax, raxp, zaxp, rbnd, zbnd, rbndp, zbndp, &
-    psiaxis, psibnd, psiaxisp, psibndp, psirz
+use fbe_core, only: nr, nr2, nz, nbnd, iaxis, jaxis, &
+    raus, rinner, zbot, ztop, &
+    Rrect, Zrect, dr, dz, rax, zax, rbnd, zbnd, &
+    psiaxis, psibnd, psirz
+use pbe_core, only: nteta, teta, dteta, &
+    raxp, zaxp, rbndp, zbndp, &
+    psiaxisp, psibndp
 use feqis_tools, only: pol_angle, interp2d_psi
 
 implicit none
 
 integer :: i, j, k, j4
 double precision :: x1, x2, t1, t2, t3, z1, z2, z3, x11, dx
-double precision, dimension(i_dim5) :: teta_fbe
+double precision, dimension(500) :: teta_fbe
 
 do i=1, nteta + 1
     teta(i) = GPI2*(i - 1.)/(nteta + 0.)
@@ -1402,8 +1244,6 @@ theta_loop: do i=2, nteta
 
 enddo theta_loop
 
-nbnd = nteta
-
 teta (1:nteta) = teta_fbe(1:nteta)
 rbndp(1:nteta) = rbnd(1:nteta)
 zbndp(1:nteta) = zbnd(1:nteta)
@@ -1423,10 +1263,11 @@ end subroutine convert_boundary_to_pbe
 subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
 
 use pi_vars, only: GPI2
-use feqis_circuit, only: nr, nr2, nz, i_dim5, iaxis, jaxis, &
-    teta, dteta, raus, rinner, zbot, ztop, &
+use fbe_core, only: nr, nr2, nz, iaxis, jaxis, &
+    raus, rinner, zbot, ztop, &
     Rrect, Zrect, dr, dz, rax, zax,  &
     psiaxis, psibnd, psirz
+use pbe_core, only: teta, dteta
 use feqis_tools, only: pol_angle, interp2d_psi
 
 implicit none
@@ -1436,7 +1277,7 @@ double precision, intent(OUT), dimension(ntetaz) :: rbnd, zbnd
 
 integer :: i, j, k, j4, nteta
 double precision :: x1, x2, t1, t2, t3, z1, z2, z3, x11, dx
-double precision, dimension(i_dim5) :: teta_fbe
+double precision, dimension(500) :: teta_fbe
 
 nteta = ntetaz
 rbnd = 0.
@@ -1551,94 +1392,13 @@ enddo theta_loop
 return
 end subroutine estimate_boundary_to_pbe
 
-!--------------------------------------------------------------------
-subroutine solve_gs2d(g)
-
-use pi_vars, only: mu0
-use feqis_circuit, only: nr, nr1, nr2, nz, nz1, nz2, i_dim2, &
-    Rrect, dr, dz, rcomp, jrz
-use fft_mod_eff, only: costable
-use feqis_tools, only: discrete_sine_transform, solve_tridiag_fbe
-
-double precision, intent(inout), dimension(nr2, nz2) :: g
-
-integer :: i, j, k, j_init
-double precision :: x1, x2, r1m_1, r2m_1
-double precision, dimension(1000) :: A, B, C, z_fourier
-double precision, dimension(500, 500) :: gt, rhs, wrhs
-
-data j_init/0/
-save A, B, C, j_init, z_fourier
-
-do j=1, nz2
-    do i=1, nr2
-        rhs(i, j) = -mu0*Rrect(i)*jrz(i, j)
-    enddo
-enddo
-
-r1m_1 = Rrect(  2)/dr**2/((Rrect(  1) + Rrect(  2))/2.)
-r2m_1 = Rrect(nr1)/dr**2/((Rrect(nr1) + Rrect(nr2))/2.)
-
-rhs(2:nr1,   2) = rhs(2:nr1,   2) - g(2:nr1,   1)/dz**2
-rhs(2:nr1, nz1) = rhs(2:nr1, nz1) - g(2:nr1, nz2)/dz**2
-
-rhs(  2, 2:nz1) = rhs(  2, 2:nz1) - g(  1, 2:nz1)*r1m_1
-rhs(nr1, 2:nz1) = rhs(nr1, 2:nz1) - g(nr2, 2:nz1)*r2m_1
-
-do i=2, nr1
-    wrhs(i, 2:nz1) = discrete_sine_transform(nz, rhs(i, 2:nz1))
-enddo
-
-! Create inverse matrix for gs2d
-if (j_init == 0) then
-    A = 0.
-    B = 0.
-    C = 0.
-    do i=2, nr-1
-        x1 = 0.5*(rcomp(  i) + rcomp(i-1))
-        x2 = 0.5*(rcomp(i+1) + rcomp(i  ))
-        B(i) = -rcomp(i)/dr**2*(1./x2 + 1./x1)
-        A(i) =  rcomp(i)/x2/dr**2
-        C(i) =  rcomp(i)/x1/dr**2
-    enddo
-    i = 1
-    x1 = 0.5*(rcomp(  i) + Rrect(1))
-    x2 = 0.5*(rcomp(i+1) + rcomp(i))
-    B(i) = -rcomp(i)/dr**2 * (1./x2 + 1./x1)
-    A(i) =  rcomp(i)/x2/dr**2
-    i = nr
-    x1 = 0.5*(rcomp(i)   + rcomp(i-1))
-    x2 = 0.5*(Rrect(nr2) + rcomp(i)  )
-    B(i) = -rcomp(i)/dr**2 * (1./x2 + 1./x1)
-    C(i) =  rcomp(i)/x1/dr**2
-    j_init = 1
-    do k=2, nz1
-        z_fourier(k) = 2./dz**2 * (costable(1, k-1) - 1.)
-    enddo
-endif
-
-gt = 0.
-!solve matrix
-do k=2, nz1
-    gt(2:nr1, k) = solve_tridiag_fbe(C(1:nr), B(1:nr) + z_fourier(k), A(1:nr), wrhs(2:nr1, k), nr)
-enddo
-
-!invert fourier from gt(1:nr, 1:kfourier) to g(2:nr1, 2:nz1)
-!  gt(i, k)=sum(invMM_gs2d(i-1, 1:nr, k-1)*wrhs(2:nr1, k))
-
-do i=2, nr1
-    gt(i, 2:nz1) = discrete_sine_transform(nz, gt(i, 2:nz1))
-enddo
-g(2:nr1, 2:nz1) = 2./(nz + 1)*gt(2:nr1, 2:nz1)
-
-return
-end subroutine solve_gs2d
 
 !---------------------------------------------------------------------
 subroutine coil_forces_feqis(ncoilz, force_R, force_Z, plasma_state)
 ! this one is only between coils and coils
-use feqis_circuit, only: nblocks, npassive, jrz, nr2, nz2, area_eff, &
-    curconduc, mequivalence
+use feqis_circuit, only: nblocks, npassive, mequivalence
+use fbe_core, only: jrz, nr2, nz2, area_eff, &
+    curconduc
 use green_matrix, only: dgreenirpl, dgreenizpl, dgreenirj, dgreenizj
 
 integer, intent(in) :: ncoilz, plasma_state
@@ -1680,8 +1440,9 @@ subroutine all_forces_feqis(ncoilz, force_R, force_Z, plasma_state, plasma_force
 
 !this one is between everything , including plasma. ncoilz = nblocks (active subcoils and passive leemnets)
 
-use feqis_circuit, only: nblocks, npassive, jrz, nr2, nz2, area_eff, &
-    curconduc, mequivalence
+use feqis_circuit, only: nblocks, npassive, mequivalence
+use fbe_core, only: jrz, nr2, nz2, area_eff, &
+    curconduc
 use green_matrix, only: dgreenirpl, dgreenizpl, dgreenirj, dgreenizj
 
 integer, intent(in) :: ncoilz, plasma_state
@@ -1726,8 +1487,8 @@ subroutine all_forces_feqis_components(ncoilz, force_R, force_Z, force_tot, plas
 
 !this one is between everything , including plasma. ncoilz = nblocks-npassive (active subcoils only)
 
-use feqis_circuit, only: nblocks, npassive, jrz, nr2, nz2, area_eff, &
-    curconduc, mequivalence
+use feqis_circuit, only: nblocks, npassive, mequivalence
+use fbe_core, only: jrz, nr2, nz2, area_eff, curconduc
 use green_matrix, only: dgreenirpl, dgreenizpl, dgreenirj, dgreenizj
 
 integer, intent(in) :: ncoilz, plasma_state
