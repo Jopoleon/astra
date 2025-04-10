@@ -313,7 +313,7 @@ if (p_i > 0.d0) then
     SCUBM(1: NA1) = SCUBM(1: NA1)*tq_i/VINT(SCUBM, ROC)
     CUBM(1: NA1)  = CUBM( 1: NA1)*i_cd/IINT(CUBM, ROC)
     PBLON(1: NA1) = PBLON(1: NA1)*sum(pfi_par *dvol)/VINT(PBLON, ROC)
-    PBPER(1: NA1) = PBPER(1: NA1)*sum(pfi_perp*dvol)/VINT(PBLON, ROC)
+    PBPER(1: NA1) = PBPER(1: NA1)*sum(pfi_perp*dvol)/VINT(PBPER, ROC)
 endif
 
 write(6, *) 'Done RABBIT'
