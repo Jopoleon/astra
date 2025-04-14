@@ -6,8 +6,8 @@ use fbe_core, only: nr, nr1, nr2, nz, nz1, nz2, nbnd, nlimiter, &
     iaxis, jaxis, r_xpoint, z_xpoint, limiterR, limiterZ, &
     jrz, curconduc, psia_2d, ffp_2d, ppp_2d, &
     psiextrz, psiplasrz, psirz, psiaxis, psibnd, psistabR, psistabZ, psiferro, &
-    find_new_axis, find_psi_boundary, new_jrz, &
-    compound_psi, psi_external_calc, get_psiplasrz
+    get_psiplasrz, find_new_axis, find_psi_boundary, new_jrz, &
+    compound_psi, psi_external_calc
 use pbe_core, only: raxp, zaxp, rbndp, zbndp, rpol, zpol, nteta, nrho, &
     rho, jrhoteta, teta, pprime, ffprime, psigrida, psirhoteta
 use global_params, only: iplasma
@@ -125,6 +125,7 @@ contains
     subroutine psi_mutual_effect_conductors(psi_to_conductors)
 
     use green_function, only: greeni
+    use fbe_core, only: dr, dz  
 
     double precision, intent(out) :: psi_to_conductors(nconduc)
     integer :: i
@@ -370,7 +371,6 @@ contains
     double precision, dimension(nconduc) :: G_00c, G_00r, G_00z, &
         Fderiv, curref, curnow, curdiff
     double precision, dimension(nteta) :: psicorr
-    double precision, dimension(nr2, nz2) :: g
     double precision, dimension(nconduc, nteta) :: G_00
     double precision, dimension(nconduc, nconduc) :: matrix, invmatrix
 
@@ -536,7 +536,6 @@ contains
     double precision, dimension(n_xpoint_fit) :: dummyx
 
     double precision, dimension(nteta) :: psicorr
-    double precision, dimension(nr2, nz2) :: g
     double precision, dimension(nconduc, nteta) :: G_00
     double precision, dimension(nconduc, nconduc) :: matrix, invmatrix
 
@@ -652,8 +651,6 @@ contains
             Ffunc = Ffunc +  sigma_xpoint*(x2**2 + x3**2)
         enddo
 
-
-
 ! Calculate F derivative
         do i=1, nconduc
             Fderiv(i) = 2.*(sigma_coils(i)*curdiff(i) + sigma_B*sum((psicorr - x1)*(G_00(i, 1:nteta) - G_00c(i))))
@@ -740,7 +737,6 @@ contains
     double precision, dimension(:), allocatable :: raxref_ev, zaxref_ev, &
         ffunc_ev, result_vector, Fderiv
     double precision, dimension(nrho, n_evol) :: psia_ev,pprim_ev,ffprim_ev
-    double precision, dimension(nr2, nz2) :: g
     double precision, dimension(nactive, n_evol) :: i_totev
     double precision, dimension(1000, n_evol) :: rxp_ev, zxp_ev
     double precision, dimension(:, :), allocatable :: rbref_ev, zbref_ev, G_00c, G_00r, G_00z, &
@@ -863,7 +859,7 @@ contains
         if (j_iter > 150) stop
         do jt=1, n_evol
             jrz = j_ev(:, :, jt)   ! assign previous current density
-            psiplasrz = get_psiplasrz() ! solution for pure plasma
+            psiplasrz = get_psiplasrz()
             psi_ev(:, :, jt) = psiplasrz
 ! Construct correction
 !  call compound_psi
@@ -1003,7 +999,6 @@ contains
          ffunc_ev, result_vector, Fderiv
     double precision, dimension(nrho, n_evol) :: psia_ev,pprim_ev,ffprim_ev
     double precision, dimension(1000, n_evol) :: rxp_ev, zxp_ev
-    double precision, dimension(nr2, nz2) :: g
     double precision, dimension(nactive, n_evol) :: i_totev
     double precision, dimension(:, :), allocatable :: rbref_ev, zbref_ev, &
         G_00c, G_00r, G_00z, curref, curnow, curdiff, matrix, invmatrix
@@ -1127,7 +1122,7 @@ contains
         if (j_iter > 150) stop
         do jt=1, n_evol
             jrz = j_ev(:, :, jt)    ! assign previous current density
-            psiplasrz = get_psiplasrz()      ! solution for pure plasma
+            psiplasrz = get_psiplasrz()
             psi_ev(:, :, jt) = psiplasrz
 ! Construct correction
             do j=1, nz2
@@ -1284,7 +1279,6 @@ contains
     double precision, dimension(nteta) :: psicorr, rbref, zbref
     double precision, dimension(nactive+1) :: result_vector, Fderiv
     double precision, dimension(nactive, nteta) :: G_00, G_002
-    double precision, dimension(nr2, nz2) :: g
     double precision, dimension(nactive) :: G_00c, G_00c2, G_00r, G_00z, curref, curnow, curdiff
     double precision, dimension(nactive+1,nactive+1) :: matrix, invmatrix
     double precision, dimension(:, :), allocatable :: G_00xr, G_00xz
@@ -1665,7 +1659,6 @@ contains
     double precision, dimension(nteta) :: psicorr, rbref, zbref
     double precision, dimension(nactive) :: result_vector, Fderiv
     double precision, dimension(nactive, nteta) :: G_00
-    double precision, dimension(nr2, nz2) :: g
     double precision, dimension(nactive) :: G_00c, G_00r, G_00z, curref, curnow, curdiff
     double precision, dimension(nactive,nactive) :: matrix, invmatrix
     double precision, dimension(:, :), allocatable :: G_00xr, G_00xz
@@ -2018,7 +2011,6 @@ contains
     double precision, dimension(nactive) :: G_00c, G_00r, G_00z, &
         Fderiv, curref, curnow, curdiff
     double precision, dimension(nteta) :: psicorr
-    double precision, dimension(nr2, nz2) :: g
     double precision, dimension(nactive, nteta) :: G_00
     double precision, dimension(nactive, nactive) :: matrix, invmatrix
 
@@ -2184,7 +2176,6 @@ contains
     double precision, dimension(nactive) :: G_00c, G_00r, G_00z, &
         Fderiv, curref, curnow, curdiff
     double precision, dimension(nteta) :: psicorr
-    double precision, dimension(nr2, nz2) :: g
     double precision, dimension(nactive, nteta) :: G_00
     double precision, dimension(nactive, nactive) :: matrix, invmatrix
 
@@ -2355,7 +2346,6 @@ contains
     double precision, dimension(nactive) :: G_00c, G_00r, G_00z, &
         Fderiv, curref, curnow, curdiff
     double precision, dimension(nteta) :: psicorr
-    double precision, dimension(nr2, nz2) :: g
     double precision, dimension(nactive, nteta) :: G_00
     double precision, dimension(nactive, nactive) :: matrix, invmatrix
 
@@ -2517,7 +2507,6 @@ contains
     double precision, dimension(nteta) :: psicorr
     double precision, dimension(n_fourier_restab_boundary) :: S_00, C_00
     double precision, dimension(4*nteta*n_fourier_restab_boundary) :: work
-    double precision, dimension(nr2, nz2) :: g
     double precision, dimension(nteta, n_fourier_restab_boundary) :: G_00c, G_00s
     double precision, dimension(nteta, 2*n_fourier_restab_boundary) :: matrix
 
@@ -2801,20 +2790,6 @@ contains
     return
     end subroutine estimate_tau_VDE_feqis
 
-!-------------------------------------------------------------------
-!    subroutine compound_psi   ! to think about ferromags...
-
-!    !    psirz = psiplasrz + psiextrz
-
-!    if (nferromag >= 1) then
-!        psiferro = 0.
-!        call ferro_mag_create
-!        psirz = psirz + psiferro
-!    endif
-
-!    return
-!    end subroutine compound_psi
-  
 !-------------------------------------------------------------------
     subroutine ferro_mag_create
 

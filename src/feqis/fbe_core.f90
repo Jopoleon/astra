@@ -13,13 +13,10 @@ double precision :: lim_maxR, lim_minR, lim_maxZ, lim_minZ
 integer :: nr, nz, nr2, nz2, nr1, nz1, nbnd
 integer, dimension(:, :), allocatable :: zlimpotential
 
-double precision :: rmin, rmax, zmin, zmax, dr, dz, dteta, &
-    zbot, ztop, raus, rinner
-double precision, dimension(:), allocatable :: Rrect, Zrect, rcomp, zcomp
-double precision, dimension(:, :), allocatable :: u_n, &
-    psirz, psiextrz, psiplasrz, psiferro
-
-double precision, dimension(nrho2d) :: psia_2d, ffp_2d, ppp_2d
+double precision :: rmin, rmax, zmin, zmax, dr, dz, zbot, ztop, raus, rinner
+double precision, dimension(:), allocatable :: Rrect, Zrect
+double precision, dimension(:, :), allocatable :: psi_n, psirz, psiextrz, psiplasrz, psiferro
+double precision, dimension(nrho2d) :: ffp_2d, ppp_2d, psia_2d
 
 !conductors
 integer :: nconduc
@@ -32,7 +29,6 @@ integer :: iaxis, jaxis, n_of_xpoints, active_x_point
 double precision :: psibnd, psiaxis, rax, zax, &
     alpsep, psistabR, psistabZ, dr_factor_init, dz_factor_init
 double precision, dimension(max_xpoints) :: r_xpoint, z_xpoint
-double precision :: deriv_x(5, max_xpoints)
 double precision, dimension(:), allocatable :: green_bnd_f
 
 ! plasma parameters
@@ -162,35 +158,34 @@ contains
     end subroutine nine_point_regression
 
 !---------------------------------------------------------------------
-    subroutine nine_point_coeffs_only(r_in, z_in, c, rax_out, zax_out)
+    subroutine nine_point_coeffs_only(r_in, z_in, coeff, r_out, z_out)
 
     use feqis_tools, only: closest_index, A_inv
 
     integer, parameter :: ndim=9
     double precision, intent(in) :: r_in, z_in
-    double precision, intent(out) :: rax_out, zax_out
-    double precision, intent(out), dimension(9) :: c
+    double precision, intent(out) :: r_out, z_out
+    double precision, intent(out), dimension(9) :: coeff
 
-    integer :: iax, jax, i, j, k
-    double precision, dimension(90) :: bub
+    integer :: iloc, jloc, i, j, k
+    double precision, dimension(ndim) :: psi9
 
-    iax = closest_index(r_in, Rrect(1), dr)
-    jax = closest_index(z_in, Zrect(1), dz)
-
-    rax_out = Rrect(iax)
-    zax_out = Zrect(jax)
+    iloc = closest_index(r_in, Rrect(1), dr)
+    jloc = closest_index(z_in, Zrect(1), dz)
+    r_out = Rrect(iloc)
+    z_out = Zrect(jloc)
 
 !find true axis
     k = 0
     do j=-1, 1
         do i=-1, 1
             k = k + 1
-            bub(k) = psirz(iax+i, jax+j)
+            psi9(k) = psirz(iloc+i, jloc+j)
         enddo
     enddo
 
-    do k=1, 9
-        c(k) = sum(A_inv(k, 1:ndim) * bub(1:ndim))
+    do k=1, ndim
+        coeff(k) = sum(A_inv(k, 1:ndim) * psi9(1:ndim))
     enddo
 
     return
@@ -290,7 +285,6 @@ contains
     return
     end subroutine find_closest_xpoints
 
-
 !-----------------------------------------------------------------------------------
     function boundary(green_in) result(green_bnd)
 ! New bc is integral_over_boundary of -Green * dg/dn * dl
@@ -351,28 +345,29 @@ contains
 !this routine checks that going from axis to x point,  the directed gradient of psi never changes sign
 !(otherwise it means the x point is not connected to the plasma
 
-    use feqis_tools, only: interp2d_psi, pol_angle
+    use feqis_tools, only: interp2d_psi
 
     double precision,  intent(in) :: rx, zx, rax, zax, dr, dz
 
     integer :: nsteps, i
-    double precision :: angl, dbl, dd, t1, t2, t3, t4, t5
-    double precision :: z1, z2, psiold, z3
+    double precision :: angl, cos_ang, sin_ang, norm, dgrid, dd, &
+        t1, t2, t3, t4, z1, z2, z3, psiold
 
-    angl = pol_angle(rax, zax, rx, zx)
-
-    dbl = sqrt((rx - rax)**2 + (zx - zax)**2)
-    dd  = sqrt(dr**2 + dz**2)
-    nsteps = nint(dbl/dd)
-    dd = dbl/nsteps !perfect ratio
+    angl = ATAN2(rx - rax, zx - zax)
+    cos_ang = COS(angl)
+    sin_ang = SIN(angl)
+    norm = sqrt((rx - rax)**2 + (zx - zax)**2)
+    dgrid = sqrt(dr**2 + dz**2)
+    nsteps = nint(norm/dgrid)
+    dd = norm/nsteps !perfect ratio
 
     xpoint_axis_connection = 1
     psiold = 0.
     do i=2, nsteps
-        t1 = rax + dd*(i - 1)*cos(angl)
-        t2 = zax + dd*(i - 1)*sin(angl)
-        t3 = rax + dd*i*cos(angl)
-        t4 = zax + dd*i*sin(angl)
+        t1 = rax + dd*(i - 1)*cos_ang
+        t2 = zax + dd*(i - 1)*sin_ang
+        t3 = rax + dd*i*cos_ang
+        t4 = zax + dd*i*sin_ang
         z1 = interp2d_psi(t1, t2, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         z2 = interp2d_psi(t3, t4, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         z3 = (z2 - z1)*psiold
@@ -381,7 +376,7 @@ contains
             xpoint_axis_connection = 0
             EXIT
         endif
-        if (dd*i >= dbl) then
+        if (dd*i >= norm) then
             EXIT
         endif
     enddo
@@ -444,11 +439,9 @@ contains
 
     use pi_vars, only: GPI
     use errors_params, only: err_find_oxpoints_derivs
-    use feqis_tools, only: closest_index, pol_angle, &
-        interp2d_psi
+    use feqis_tools, only: closest_index, pol_angle, interp2d_psi
 
-    integer :: iaold, niter, i, j, k, i1, i4, i5, i9, n_adding, & ! oldpointnum,
-        i_county
+    integer :: iaold, niter, i, j, k, i1, i4, i5, i9, n_adding, i_county
     double precision :: x1, x2, x5, pos_xpointR, pos_xpointZ
     double precision, dimension(8) :: ddipsi
     double precision, dimension(200) :: rx_add, zx_add
@@ -456,7 +449,7 @@ contains
     double precision, dimension(max_xpoints) :: psi_xpoint
 
     data i_county/0/
-    save i_county  !, oldpointnum
+    save i_county
 
     i_plasmatype = 0
 
@@ -549,7 +542,6 @@ contains
 
     endif
 
-!-------------------
     if (i_county == 0) then ! do a full pass to find all X-points
         n_of_xpoints = 0
         do j=2, nz1
@@ -655,9 +647,9 @@ contains
         enddo
         do j=1, nlimiter
             if (limiterr(j) <= rinner) psi_limp(j) = -1.e6
-            if (limiterr(j) >= raus) psi_limp(j) = -1.e6
-            if (limiterz(j) <= zbot) psi_limp(j) = -1.e6
-            if (limiterz(j) >= ztop) psi_limp(j) = -1.e6
+            if (limiterr(j) >= raus  ) psi_limp(j) = -1.e6
+            if (limiterz(j) <= zbot  ) psi_limp(j) = -1.e6
+            if (limiterz(j) >= ztop  ) psi_limp(j) = -1.e6
         enddo
 
 ! Third pass, remove x-points that are non-monotonically connected to the plasma.
@@ -688,7 +680,7 @@ contains
     psibnd = psiaxis + (psibnd - psiaxis)*alpsep
 
 ! Normalized flux
-    u_n(1:nr2, 1:nz2) = (psirz(1:nr2, 1:nz2) - psiaxis)/(psibnd - psiaxis)
+    psi_n(1:nr2, 1:nz2) = (psirz(1:nr2, 1:nz2) - psiaxis)/(psibnd - psiaxis)
 
     return
     end subroutine find_psi_boundary
@@ -701,21 +693,22 @@ contains
 
     integer :: i, j, i1, i2, j1, quadrant, ipluz, jpluz, &
         ilast, totpoints, istart, j_griddo_j, i_griddo_j
-    integer, dimension(nr2*nz2, 2) :: external_griddo_j, internal_griddo
-    double precision :: curr, t1, t2, t3, t4, je1, je2, je3, je4, &
-        z11, z12, z13, z14
+    integer, dimension(nr2*nz2, 2) :: external_griddo_j
+    double precision :: curr, darea, t1, t2, t3, t4, je1, je2, je3, je4, &
+        z11, z12, z13
     double precision, dimension(nr2, nz2) :: iconvex
     double precision, dimension(nr2, nz2) :: dumc
 
-! in entry: rbnd, zbnd, nbnd, psiaxis, psibnd, u_n
+! in entry: rbnd, zbnd, nbnd, psiaxis, psibnd, psi_n
 
     iconvex = 0.
     dumc    = 0.
+    darea = dr*dz
     i_griddo_j = 0
     j_griddo_j = 0
 
     totpoints = 0
-    quad_loop: do quadrant=1, 4
+    do quadrant=1, 4
 ! sweep from axis to exterior and fill in the current
 !start from axis position
 
@@ -755,16 +748,11 @@ contains
                 stop
             endif
 
-            dumc(i, j) = fill_in_current(Rrect(i), nrho2d, ppp_2d, ffp_2d, u_n(i, j))
+            dumc(i, j) = fill_in_current(Rrect(i), nrho2d, ppp_2d, ffp_2d, psi_n(i, j))
             iconvex(i, j) = 1.
             i_griddo_j = i_griddo_j + 1
-            internal_griddo(i_griddo_j, 1) = i
-            internal_griddo(i_griddo_j, 2) = j
-            i1 = i
-            i2 = j
-
-            t1 = t_find_u_n(i1 + ipluz, i2, i1, i2)
-            t2 = t_find_u_n(i1, i2 + jpluz, i1, i2)
+            t1 = (1. - psi_n(i + ipluz, j))/(psi_n(i, j) - psi_n(i + ipluz, j))
+            t2 = (1. - psi_n(i, j + jpluz))/(psi_n(i, j) - psi_n(i, j + jpluz))
             if (t1 < 0 .or. t1 > 1.) t1 = 1.e6
             if (t2 < 0 .or. t2 > 1.) t2 = 1.e6
             if (t2 > 0. .and. t2 <= 1.) then
@@ -786,10 +774,10 @@ contains
 ! Found boundary, go back, check vertically
                 i = istart
                 do
-                    t2 = t_find_u_n(i, j + jpluz, i, j)
+                    t2 = (1. - psi_n(i, j + jpluz))/(psi_n(i, j) - psi_n(i, j + jpluz))
                     if (t2 < 0 .or. t2 > 1.) then
                         j = j + jpluz
-                        CYCLE inner_loop
+                        EXIT
                     endif
 
 ! Found boundary on Z, need to advance 1 more
@@ -800,27 +788,22 @@ contains
 
                     i = i + ipluz
                     istart = i
-                    if (i == ilast) CYCLE quad_loop
+                    if (i == ilast) EXIT inner_loop
                 enddo
-                EXIT inner_loop
             endif
         enddo inner_loop
-    enddo quad_loop
+    enddo
 
 ! Trick at boundary for ciurrent
 
 ! fill current in external griddo
     do i=1, j_griddo_j
-        t1 = 0.
-        t2 = 0.
-        t3 = 0.
-        t4 = 0.
         i1 = external_griddo_j(i, 1)
         i2 = external_griddo_j(i, 2)
-        t1 = t_find_u_n(i1 - 1, i2, i1, i2)
-        t2 = t_find_u_n(i1, i2 + 1, i1, i2)
-        t3 = t_find_u_n(i1 + 1, i2, i1, i2)
-        t4 = t_find_u_n(i1, i2 - 1, i1, i2)
+        t1 = (1. - psi_n(i1-1, i2))/(psi_n(i1, i2) - psi_n(i1-1, i2))
+        t2 = (1. - psi_n(i1, i2+1))/(psi_n(i1, i2) - psi_n(i1, i2+1))
+        t3 = (1. - psi_n(i1+1, i2))/(psi_n(i1, i2) - psi_n(i1+1, i2))
+        t4 = (1. - psi_n(i1, i2-1))/(psi_n(i1, i2) - psi_n(i1, i2-1))
         if (t1 < 0 .or. t1 > 1.) t1 = 0.
         if (t2 < 0 .or. t2 > 1.) t2 = 0.
         if (t3 < 0 .or. t3 > 1.) t3 = 0.
@@ -832,12 +815,11 @@ contains
         je4 = 0.
         z11 = Rrect(i1-1)*(1 - t1) + Rrect(i1)*t1
         z12 = Rrect(i1)
-        z13 = Rrect(i1 + 1)*(1 - t3) + Rrect(i1)*t3
-        z14 = Rrect(i1)
-        if (t1 > 0.) je1 = fill_in_current(z11, nrho2d, ppp_2d, ffp_2d, 1.d0)
-        if (t2 > 0.) je2 = fill_in_current(z12, nrho2d, ppp_2d, ffp_2d, 1.d0)
-        if (t3 > 0.) je3 = fill_in_current(z13, nrho2d, ppp_2d, ffp_2d, 1.d0)
-        if (t4 > 0.) je4 = fill_in_current(z14, nrho2d, ppp_2d, ffp_2d, 1.d0)
+        z13 = Rrect(i1+1)*(1 - t3) + Rrect(i1)*t3
+        if (t1 > 0.) je1 = ppp_2d(nrho2d)*z11 + ffp_2d(nrho2d)/z11
+        if (t2 > 0.) je2 = ppp_2d(nrho2d)*z12 + ffp_2d(nrho2d)/z12
+        if (t3 > 0.) je3 = ppp_2d(nrho2d)*z13 + ffp_2d(nrho2d)/z13
+        if (t4 > 0.) je4 = ppp_2d(nrho2d)*z12 + ffp_2d(nrho2d)/z12
 
 ! defining S1 = dR - d1, S2 = dZ - d2, S3 = dZ - d3, S4 = dR - d4
 ! Jvacuum = C*Jb
@@ -855,8 +837,7 @@ contains
              t2*t4*(je4 + je2)/2. +  &
              t3*t4*(je3 + je4)/2.)
 
-        iconvex(i1, i2) = t1 + t2 + t3 + t4 -  &
-            (t1*t2 + t1*t3 + t1*t4 + t2*t3 + t2*t4 + t3*t4)
+        iconvex(i1, i2) = t1 + t2 + t3 + t4 - (t1*t2 + t1*t3 + t1*t4 + t2*t3 + t2*t4 + t3*t4)
 
     enddo
 
@@ -869,7 +850,7 @@ contains
 
 !uncomment below for consistent current
 !jrz(1:nr2, 1:nz2)=dumc(1:nr2, 1:nz2)
-    curr = sum(jrz)*dr*dz
+    curr = sum(jrz)*darea
     jrz = jrz/curr*iplasma
 
     if (isnan(curr)) then
@@ -879,16 +860,6 @@ contains
 
     return
     end subroutine new_jrz
-
-!---------------------------------------------------------------------
-    double precision function t_find_u_n(i1, j1, i2, j2)
-
-    integer, intent(in) :: i1, i2, j1, j2
-
-    t_find_u_n = (1. - u_n(i1, j1))/(u_n(i2, j2) - u_n(i1, j1))
-
-    return
-    end function t_find_u_n
 
 !--------------------------------------------------------------------
     function get_psiplasrz result(psi_plas)
@@ -913,33 +884,28 @@ contains
     double precision, intent(in) :: raxold, zaxold
 
     integer :: i, j
-    double precision :: curr, dum1, dum2, zum1, zum2, delr, delz
-    double precision, dimension(9) :: c
-    double precision, dimension(nr2, nz2) :: g
+    double precision :: dpsi_dr, dpsi_dz, zum1, zum2
+    double precision, dimension(9) :: coeff
 
-    psiplasrz(1:nr2, 1:nz2) = get_psiplasrz()
+    psiplasrz = get_psiplasrz()
 
     if (j_stab == 1) then
         psistabr = 0.
         psistabz = 0.
-        delr = 0.
-        delz = 0.
         call compound_psi
         call find_new_axis
-        call nine_point_coeffs_only(raxold, zaxold, c, zum1, zum2)
+        call nine_point_coeffs_only(raxold, zaxold, coeff, zum1, zum2)
 
-! dpsidr
         zum1 = (raxold - zum1)/dr
         zum2 = (zaxold - zum2)/dz
-        dum1 = 2.*c(2)*(zum1*zum2**2 + 2.*c(2)*zum1*zum2) +  &
-            c(3)*zum2**2 + c(4)*zum2 + 2*c(5)*zum1 + c(7)
+        dpsi_dr = 2.*coeff(2)*(zum1*zum2**2 + 2.*coeff(2)*zum1*zum2) +  &
+            coeff(3)*zum2**2 + coeff(4)*zum2 + 2*coeff(5)*zum1 + coeff(7)
 
-! dpsidz
-       dum2 = 2.*c(1)*zum1**2*zum2 + c(2)*zum1**2 +  &
-           2.*c(3)*zum1*zum2    + c(4)*zum1 + 2.*c(6)*zum2 + c(8)
+        dpsi_dz = 2.*coeff(1)*zum1**2*zum2 + coeff(2)*zum1**2 +  &
+            2.*coeff(3)*zum1*zum2 + coeff(4)*zum1 + 2.*coeff(6)*zum2 + coeff(8)
 
-        psistabr = -1./(2.*raxold)*dum1/dr
-        psistabz = -dum2/dz
+        psistabr = -1./(2.*raxold)*dpsi_dr/dr
+        psistabz = -dpsi_dz/dz
 
         call compound_psi
         do i=1, nr2
@@ -947,7 +913,6 @@ contains
                 psirz(i, j) = psirz(i, j) + psistabr*Rrect(i)**2 + psistabz*Zrect(j) ! Total flux
             enddo
         enddo
-        call find_new_axis
     else
         call compound_psi ! Total flux
     endif
@@ -968,10 +933,10 @@ contains
     double precision, intent(in):: raxp, zaxp
     integer, intent(in):: n_of_newton_iterations
 
-    integer :: j_iter, j_iter2, j_cyclo, jeppa
+    integer :: j_iter, j_iter2, j_cyclo
     double precision :: temp_err, raxold, zaxold, temp_err2, raxoldo, zaxoldo, &
         det, psistab1o, psistab2o, psro, pszo, dist1, dist2, &
-        cibapr, cibazr, rleft, rright, zup, zdown, dcrdr, dcrdz, dczdr, dczdz
+        cibapr, cibazr, dcrdr, dcrdz, dczdr, dczdz
 
 ! Start iterations to find self-consistent solution
     iaxis = closest_index(raxp, Rrect(1), dr)
@@ -988,17 +953,12 @@ contains
     psistab2o = 0.
     temp_err = 100.
     temp_err2 = 100.
-    rleft = raxold
-    rright = raxold
-    zup = zaxold
-    zdown = zaxold
 ! outer cycle, calculate new axis
     j_cyclo = 0
-    jeppa = 1
     dist1 = dr*dr_factor_init
     dist2 = dz*dz_factor_init
 
-    do j_iter2=1, 10000000
+    do j_iter2=1, 400000
 
         SELECT CASE(j_cyclo)
         CASE(1)
@@ -1050,10 +1010,7 @@ contains
         else
             j_cyclo = j_cyclo + 1
         endif
-
-        if (j_iter2 >= 400000) EXIT
         if (temp_err2 <= err_find_psistab) EXIT
-
     enddo
 
     return

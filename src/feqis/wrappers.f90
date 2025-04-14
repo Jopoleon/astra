@@ -1,9 +1,8 @@
 subroutine full_system_advance_feqis(j_init, no_circuit_eq)
 
 use errors_params, only: err_epsilon, err_circ_plasma_iter
-use feqis_circuit, only: psi_cur_old, &
-    psiplasmatoconduc
-use fbe_core, only: nr2, nz2, nconduc, curconduc, jrz, dr, dz, psi_external_calc
+use feqis_circuit, only: psi_cur_old, psiplasmatoconduc
+use fbe_core, only: nr2, nz2, nconduc, curconduc, jrz, psi_external_calc, dr, dz
 use global_params, only: iplasma
 use transport2fbe, only: fast_mode, execute_plasma
 use parameters_a2equil, only: max_iter
@@ -434,7 +433,7 @@ use parameters_a2equil, only: type_parameters, max_iter, &
     err_find_oxpoints_derivs_in
 use imas_ids, only: type_equilibrium
 use pbe_core, only: nrho, nteta, raxp, zaxp, rbndp, zbndp, &
-    teta, dteta, tetaexp, raxp, zaxp, &
+    teta, tetaexp, raxp, zaxp, &
     pressure, ipol, pprime, ffprime, &
     psigrid, psigrida, rexp, zexp
 use fbe_core, only: nrho2d, use_limiter, &
@@ -513,7 +512,6 @@ if (j_call == 0) then
 endif
 
 if (ifplasma == 1) then
-    dteta = GPI2/(nteta + 1.)
     do i=1, nteta + 1
         teta(i) = GPI2*(i - 1.)/(nteta + 0.)
     enddo
@@ -600,11 +598,10 @@ use feqis_circuit, only: nactive, npassive, ncoils, nblocks, &
 use fbe_core, only: nr, nr1, nr2, nz, nz1, nz2, &
     nconduc, nlimiter, &
     lim_minr, lim_maxr, lim_minz, lim_maxz, &
-    rmin, rmax, zmin, zmax, Rrect, Zrect, dr, dz, rcomp, zcomp, &
+    rmin, rmax, zmin, zmax, Rrect, Zrect, dr, dz, &
     limiterr, limiterz, alpsep, curconduc, &
     zlimpotential, green_bnd_f, &
-    jrz, psirz, psiextrz, psiplasrz, u_n, &
-    psiferro
+    jrz, psirz, psiextrz, psiplasrz, psi_n, psiferro
 use feqis_circuit, only: nferromag, psiplasmatoconduc, &
     voltage, voltage_old, cur_con_old, psi_cur_old, dpc
 use ferromagstructure, only: type_ferromag
@@ -637,16 +634,12 @@ if (allocated(Rrect)) deallocate(Rrect)
 if (allocated(Zrect)) deallocate(Zrect)
 allocate(Rrect(nr2))
 allocate(Zrect(nz2))
-allocate(rcomp(nr))
-allocate(zcomp(nz))
 do i=1, nr2
     Rrect(i) = rmin + (i - 1.)*(rmax - rmin)/nr1     ! computational domain is r(2:nr + 1), boundaries are r(1) and r(nr + 2)
 enddo
 do i=1, nz2
     Zrect(i) = zmin + (i - 1.)*(zmax - zmin)/nz1
 enddo
-rcomp(1:nr) = Rrect(2:nr1)
-zcomp(1:nz) = Zrect(2:nz1)
 dr = Rrect(2) - Rrect(1)
 dz = Zrect(2) - Zrect(1)
 
@@ -801,7 +794,7 @@ psiextrz = 0.
 allocate(psiplasrz(nr2, nz2))
 psiplasrz = 0.
 allocate(psiferro(nr2, nz2))
-allocate(u_n(nr2, nz2))
+allocate(psi_n(nr2, nz2))
 allocate(psi_cur_old(nconduc))
 allocate(dpc(nconduc))
 allocate(voltage_limits_active_coils(nactive, 2))
@@ -1124,15 +1117,14 @@ use fbe_core, only: nr, nr2, nz, nbnd, iaxis, jaxis, &
     raus, rinner, zbot, ztop, &
     Rrect, Zrect, dr, dz, rax, zax, rbnd, zbnd, &
     psiaxis, psibnd, psirz
-use pbe_core, only: nteta, teta, dteta, &
-    raxp, zaxp, rbndp, zbndp, &
+use pbe_core, only: nteta, teta, raxp, zaxp, rbndp, zbndp, &
     psiaxisp, psibndp
 use feqis_tools, only: pol_angle, interp2d_psi
 
 implicit none
 
 integer :: i, j, k, j4
-double precision :: x1, x2, t1, t2, t3, z1, z2, z3, x11, dx
+double precision :: x1, x2, t1, t2, t3, z1, z2, z3, x11, dx, dteta
 double precision, dimension(500) :: teta_fbe
 
 do i=1, nteta + 1
@@ -1262,7 +1254,7 @@ use fbe_core, only: nr, nr2, nz, iaxis, jaxis, &
     raus, rinner, zbot, ztop, &
     Rrect, Zrect, dr, dz, rax, zax,  &
     psiaxis, psibnd, psirz
-use pbe_core, only: teta, dteta
+use pbe_core, only: teta
 use feqis_tools, only: pol_angle, interp2d_psi
 
 implicit none
@@ -1271,7 +1263,7 @@ integer, intent(IN) :: ntetaz
 double precision, intent(OUT), dimension(ntetaz) :: rbnd, zbnd
 
 integer :: i, j, k, j4, nteta
-double precision :: x1, x2, t1, t2, t3, z1, z2, z3, x11, dx
+double precision :: x1, x2, t1, t2, t3, z1, z2, z3, x11, dx, dteta
 double precision, dimension(500) :: teta_fbe
 
 nteta = ntetaz
