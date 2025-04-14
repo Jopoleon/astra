@@ -1,8 +1,9 @@
 subroutine EQDSK(coco_number)
 
-use const_inc, only: RTOR, BTOR, IPL, TIME, TSTART, SGNBT, SGNIP
+use const_inc, only: RTOR, BTOR, IPL, TIME, TSTART, SGNBT, SGNIP, NA1
 use parameters_a2equil, only: equil_now, GP2
 use outcmn_inc, only: awd, exp_file, equ_file
+use status_inc, only: MU, FP_NORM
 
 implicit none
 
@@ -56,7 +57,7 @@ call qinterp(psin_eq, equil_now%profiles_1d%pressure, nrho_surf, psin_rect,   pr
 call qinterp(psin_eq, equil_now%profiles_1d%F_dia   , nrho_surf, psin_rect,   fdia_rect, nrRect)
 call qinterp(psin_eq, equil_now%profiles_1d%pprime  , nrho_surf, psin_rect, pprime_rect, nrRect)
 call qinterp(psin_eq, equil_now%profiles_1d%ffprime , nrho_surf, psin_rect, fprime_rect, nrRect)
-call qinterp(psin_eq, equil_now%profiles_1d%q       , nrho_surf, psin_rect,      q_rect, nrRect)
+call qinterp(FP_NORM(1:na1), 1./MU(1:NA1), NA1, psin_rect, q_rect, nrRect)
 
 ! EQDSk file output
 if (TIME < 10.) then
