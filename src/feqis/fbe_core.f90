@@ -2,7 +2,7 @@ module fbe_core
 
 implicit none
 
-integer, parameter :: nrho2d=5999
+integer, parameter :: nrho2d=251
 integer :: use_limiter
 
 integer :: nlimiter
@@ -13,7 +13,7 @@ double precision :: lim_maxR, lim_minR, lim_maxZ, lim_minZ
 integer :: nr, nz, nr2, nz2, nr1, nz1, nbnd
 integer, dimension(:, :), allocatable :: zlimpotential
 
-double precision :: rmin, rmax, zmin, zmax, dr, dz, zbot, ztop, raus, rinner
+double precision :: dr, dz, zbot, ztop, raus, rinner
 double precision, dimension(:), allocatable :: Rrect, Zrect
 double precision, dimension(:, :), allocatable :: psi_n, psirz, psiextrz, psiplasrz, psiferro
 double precision, dimension(nrho2d) :: ffp_2d, ppp_2d, psia_2d

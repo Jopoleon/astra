@@ -1,7 +1,7 @@
 module feqis_circuit
 
 use fbe_core, only: nr, nr1, nr2, nz, nz1, nz2, nbnd, nlimiter, &
-    nconduc, n_of_xpoints, nrho2d, rmin, rmax, zmin, zmax, &
+    nconduc, n_of_xpoints, nrho2d, &
     Rrect, Zrect, dr, dz, Rbnd, Zbnd, rax, zax, &
     iaxis, jaxis, r_xpoint, z_xpoint, limiterR, limiterZ, &
     jrz, curconduc, psia_2d, ffp_2d, ppp_2d, &
@@ -145,8 +145,8 @@ contains
     double precision, intent(out) :: psi_to_conductors(nconduc)
     integer :: i, j, k
     
-    i = nint((raxp-rmin)/dr)+1
-    j = nint((zaxp-zmin)/dz)+1
+    i = nint((raxp - Rrect(1))/dr) + 1
+    j = nint((zaxp - Zrect(1))/dz) + 1
     do k=1, nconduc
         psi_to_conductors(k) = iplasma * greeni(i, j, k)
     enddo
@@ -209,8 +209,8 @@ contains
     rc_cur = 0.
     do j=1, nz2
         do i=1, nr2
-            zc_cur = zc_cur+jrz(i,j)*zrect(j)
-            rc_cur = rc_cur+jrz(i,j)*rrect(i)
+            zc_cur = zc_cur + jrz(i,j)*Zrect(j)
+            rc_cur = rc_cur + jrz(i,j)*Rrect(i)
         enddo
     enddo
     zc_cur = zc_cur/curtotal
@@ -347,8 +347,8 @@ contains
     double precision, intent(OUT) :: psi_target
     integer :: i, j
 
-    i = nint((r_target - rmin)/dr) + 1   
-    j = nint((z_target - zmin)/dz) + 1   
+    i = nint((r_target - Rrect(1))/dr) + 1   
+    j = nint((z_target - Zrect(1))/dz) + 1   
     psi_target = sum(curconduc(1: nconduc)*greeni(i, j, 1: nconduc))
 
     return
@@ -783,9 +783,9 @@ contains
         j_ev(:, :, jt) = jrz/curr*ip_ev(jt)
         psia_ev(:, jt) = (psia_ev(:, jt) - psia_ev(1, jt))/(psia_ev(nrho, jt) - psia_ev(1, jt))
         rax_ev(jt) = raxp
-        iax_ev(jt) = closest_index(rax_ev(jt), rmin, dr)
+        iax_ev(jt) = closest_index(rax_ev(jt), Rrect(1), dr)
         zax_ev(jt) = zaxp
-        jax_ev(jt) = closest_index(zax_ev(jt), zmin, dz)
+        jax_ev(jt) = closest_index(zax_ev(jt), Zrect(1), dz)
         rbref_ev(1: nteta, jt) = rbndp(1: nteta)
         zbref_ev(1: nteta, jt) = zbndp(1: nteta)
     enddo
@@ -1044,9 +1044,9 @@ contains
         j_ev(:, :, jt) = jrz/curr*ip_ev(jt)
         psia_ev(:, jt) = (psia_ev(:, jt) - psia_ev(1, jt))/(psia_ev(nrho, jt) - psia_ev(1, jt))
         rax_ev(jt) = raxp
-        iax_ev(jt) = closest_index(rax_ev(jt), rmin, dr)
+        iax_ev(jt) = closest_index(rax_ev(jt), Rrect(1), dr)
         zax_ev(jt) = zaxp
-        jax_ev(jt) = closest_index(zax_ev(jt), zmin, dz)
+        jax_ev(jt) = closest_index(zax_ev(jt), Zrect(1), dz)
         rbref_ev(1: nteta, jt) = rbndp(1: nteta)
         zbref_ev(1: nteta, jt) = zbndp(1: nteta)
     enddo
@@ -1294,7 +1294,7 @@ contains
 
     deltapsiext = tau_gseq_feqis*(vloop_avg+L_ext*dIp_dt)   ! jump in psiext
 
-    r_norm_ref = 0.5*(rmin + rmax)
+    r_norm_ref = 0.5*(Rrect(1) + Rrect(nr2))
     psicorr   = 0.
     Ffunc_old = 1.e6
 
@@ -1672,7 +1672,7 @@ contains
     data j_time/0/
     save j_time
 
-    r_norm_ref = 0.5*(rmin + rmax)
+    r_norm_ref = 0.5*(Rrect(1) + Rrect(nr2))
     psicorr   = 0.
     Ffunc_old = 1.e6
 

@@ -598,7 +598,7 @@ use feqis_circuit, only: nactive, npassive, ncoils, nblocks, &
 use fbe_core, only: nr, nr1, nr2, nz, nz1, nz2, &
     nconduc, nlimiter, &
     lim_minr, lim_maxr, lim_minz, lim_maxz, &
-    rmin, rmax, zmin, zmax, Rrect, Zrect, dr, dz, &
+    Rrect, Zrect, dr, dz, &
     limiterr, limiterz, alpsep, curconduc, &
     zlimpotential, green_bnd_f, &
     jrz, psirz, psiextrz, psiplasrz, psi_n, psiferro
@@ -616,6 +616,7 @@ implicit none
 type(type_ferromag), dimension(:), allocatable :: ferromag
 integer :: i, j, ii, jj, nferrosub, imagvalues, ngbnd
 integer, dimension(:), allocatable :: n_sames
+double precision :: rmin, rmax, zmin, zmax
 character(len=80) :: fname, dummy
 
 fname = 'exp/cnf/machine_description_out.'//trim(machine)
