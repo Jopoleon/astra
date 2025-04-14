@@ -130,7 +130,7 @@ contains
 !---------------------------------------------------------------------
     subroutine psi_external_calc
 
-    use green_matrix, only: greeni
+    use green_function, only: greeni
 
     integer :: i, j
 
@@ -445,7 +445,7 @@ contains
     end function xpoint_axis_connection
 
 !--------------------------------------------------------------------
-    subroutine find_new_axis_part1
+    subroutine find_new_axis
 
     integer :: j, iax, jax, i1, i2, j1, j2
     double precision :: errtol, tolerr, raxm, zaxm
@@ -528,7 +528,7 @@ contains
     endif
 
     return
-    end subroutine find_new_axis_part1
+    end subroutine find_new_axis
 
 !-------------------------------------------------------------------
     subroutine compound_psi   ! to think about ferromags...
@@ -802,7 +802,7 @@ contains
     end subroutine find_psi_boundary
 
 !--------------------------------------------------------------------
-    subroutine new_jrz_feqis ! calculate new right hand side given new boundary!
+    subroutine new_jrz ! calculate new right hand side given new boundary!
 
     use feqis_tools, only: fill_in_current, floor_index
     use global_params, only: iplasma
@@ -988,7 +988,7 @@ contains
     endif
 
     return
-    end subroutine new_jrz_feqis
+    end subroutine new_jrz
 
 !---------------------------------------------------------------------
     double precision function t_find_u_n(i1, j1, i2, j2)
@@ -1027,7 +1027,7 @@ if (j_stab == 1) then
     delr = 0.
     delz = 0.
     call compound_psi
-    call find_new_axis_part1
+    call find_new_axis
     call nine_point_coeffs_only(raxold, zaxold, c, zum1, zum2)
 
 ! dpsidr
@@ -1049,14 +1049,14 @@ if (j_stab == 1) then
             psirz(i, j) = psirz(i, j) + psistabr*Rrect(i)**2 + psistabz*Zrect(j) ! Total flux
         enddo
     enddo
-    call find_new_axis_part1
+    call find_new_axis
 else
     call compound_psi ! Total flux
 endif
 
-call find_new_axis_part1
+call find_new_axis
 call find_psi_boundary
-call new_jrz_feqis
+call new_jrz
 
 return
 end subroutine solve_fbe_instantaneous

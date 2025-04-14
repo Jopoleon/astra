@@ -1,13 +1,6 @@
-module errors_params
-
-double precision :: err_circ_plasma_iter, err_find_oxpoints, &
-    err_find_oxpoints_derivs, err_find_psistab, err_find_delr, &
-    err_find_biquad, err_epsilon, err_gaptolez, err_fix_boundary
-
-end module errors_params
-
-!---------------------------------------------------------------------
 module ferromagstructure
+
+implicit none
 
 integer, parameter, private :: DP=kind(1.0D0)
 
@@ -42,15 +35,18 @@ endtype
 end module ferromagstructure
 
 !---------------------------------------------------------------------
-module global_params
+module scalars
 
-double precision :: iplasma, btor0, rgeom0, psplex, li3, li_aug, betapol, betapol_iter, &
- wkin, bpkin
+implicit none
 
-end module global_params
+double precision :: psplex, li3, li_aug, betapol, betapol_iter, wkin, bpkin
+
+end module scalars
 
 !---------------------------------------------------------------------
 module transfer_functions
+
+implicit none
 
 double precision, dimension(:), allocatable :: dpsidvbez, psibez, &
     g2bez, g2ibez, gm1bez, routbez, rinbez, vbez, g1bez, gm41bez, &
@@ -68,6 +64,8 @@ end module transfer_functions
 !---------------------------------------------------------------------
 module metric_coefficients_pbe
 
+implicit none
+
 ! metric coefficients in polar coordinates 
 double precision :: R_curr_0D, Z_curr_0D
 double precision, dimension(:, :), allocatable :: lambda2d, dator, fsa_kernel
@@ -77,20 +75,9 @@ end module metric_coefficients_pbe
 !---------------------------------------------------------------------
 module green_matrix
 
-double precision, dimension(:, :, :), allocatable :: greeni, &
-    dgreenirpl, dgreenizpl
+implicit none
+
+double precision, dimension(:, :, :), allocatable :: dgreenirpl, dgreenizpl
 double precision, dimension(:, :), allocatable :: dgreenirj, dgreenizj
 
 end module green_matrix
-
-!---------------------------------------------------------------------
-module fft_mod_eff
-
-use pi_vars, only: GPI2
-
-implicit none
-
-integer, parameter :: dp=selected_real_kind(15, 300)
-double precision, dimension(:, :), allocatable :: sintable, costable
-
-end module fft_mod_eff

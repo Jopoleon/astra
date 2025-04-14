@@ -7,7 +7,7 @@ use fbe_core, only: nr2, nz2, nconduc, curconduc, jrz, area_eff, psi_external_ca
 use global_params, only: iplasma
 use transport2fbe, only: fast_mode, execute_plasma
 use parameters_a2equil, only: max_iter
-use green_matrix, only: greeni
+use green_function, only: greeni
 
 implicit none
 
@@ -175,8 +175,7 @@ subroutine solve_gse2d_fbe_full_feqis_1turn(j_init, j_stab, raxold, zaxold)
 use fbe_core, only : nr2, nz2, iaxis, jaxis, &
     Rrect, Zrect, dr, dz, rax, zax, &
     jrz, psirz, psiextrz, psiplasrz, psistabr, psistabz, &
-    find_new_axis_part1, find_psi_boundary, new_jrz_feqis, &
-    compound_psi, solve_fbe_instantaneous
+    solve_fbe_instantaneous
 use feqis_circuit, only : interp_j_fromrhotorz
 use global_params, only: iplasma
 use pbe_core, only : raxp, zaxp
@@ -611,8 +610,8 @@ use fbe_core, only: nr, nr1, nr2, nz, nz1, nz2, &
 use feqis_circuit, only: nferromag, psiplasmatoconduc, &
     voltage, voltage_old, cur_con_old, psi_cur_old, dpc
 use ferromagstructure, only: type_ferromag
-
-use green_matrix, only: greeni, dgreenirj, dgreenizj, dgreenirpl, dgreenizpl
+use green_function, only: greeni
+use green_matrix, only: dgreenirj, dgreenizj, dgreenirpl, dgreenizpl
 use outcmn_inc, only: machine
 use transport2fbe, only: cur_init, use_isoflux, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
     voltage_limits_active_coils, sigma_isoflux
@@ -829,8 +828,8 @@ use pbe_core, only: nrho, nteta, raxp, zaxp, rbndp, zbndp, rho, teta, &
     psia_1d, ffp_1d, ppp_1d, &
     ffprime, pprime, pressure, ipol, &
     Rpol, Zpol, Rpul, Zpul, jrhoteta
-use global_params, only: Rgeom0, Btor0, li3, li_aug, betapol, iplasma, &
-    betapol_iter, wkin, bpkin, psplex
+use global_params, only: Rgeom0, Btor0, iplasma
+use scalars, only: li3, li_aug, betapol, betapol_iter, wkin, bpkin, psplex
 use transport2fbe, only: raxis_astra, zaxis_astra, psi0_astra, psib_astra, &
     solve_fix
 use metric_coefficients_pbe, only: lambda2d, R_curr_0d, Z_curr_0d, dator, fsa_kernel
@@ -1036,8 +1035,8 @@ use fbe_core, only: nr2, nz2, psirz, &
     Rrect, Zrect, psiaxis, psibnd
 use pbe_core, only: nrho, nteta, &
     psiaxisp, psibndp, psirhoteta
-use global_params, only: betapol, li3, li_aug, iplasma, betapol_iter, & 
-    wkin, bpkin, psplex
+use global_params, only: iplasma
+use scalars, only: betapol, li3, li_aug, betapol_iter, wkin, bpkin, psplex
 use transfer_functions, only: rpbez, zpbez, t2dbez, &
     rinbez, routbez, rmin2dbez, vbez, areatbez, perimbez, surfbez, &
     kbez, shifbez, triaubez, trialbez, qbez, phibez, &

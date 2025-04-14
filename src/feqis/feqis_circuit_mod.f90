@@ -116,7 +116,7 @@ contains
 !---------------------------------------------------------------------
     subroutine psi_mutual_effect_conductors(psi_to_conductors)
 
-    use green_matrix, only: greeni
+    use green_function, only: greeni
 
     implicit none
 
@@ -133,7 +133,7 @@ contains
 !---------------------------------------------------------------------
     subroutine psi_mutual_effect_conductors_simple(psi_to_conductors)
 
-    use green_matrix, only: greeni
+    use green_function, only: greeni
 
     implicit none
 
@@ -336,7 +336,7 @@ contains
 !---------------------------------------------------------------------
     subroutine psi_external_calc_position(r_target, z_target, psi_target)
 
-    use green_matrix, only: greeni
+    use green_function, only: greeni
     
     double precision, intent(IN) :: r_target, z_target
     double precision, intent(OUT) :: psi_target
@@ -355,7 +355,7 @@ contains
 
     use errors_params, only: err_find_psistab
     use transport2fbe, only: sigma_coils, sigma_b, sigma_axis
-    use green_matrix, only: greeni
+    use green_function, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
 
     integer :: i, j, k, j_iter, iax, jax
@@ -492,9 +492,9 @@ contains
             enddo
         enddo
 
-        call find_new_axis_part1
+        call find_new_axis
         call find_psi_boundary
-        call new_jrz_feqis  ! calculate new right hand side
+        call new_jrz  ! calculate new right hand side
 
         temp_err = abs(Ffunc - Ffunc_old)
         Ffunc_old = Ffunc
@@ -508,9 +508,9 @@ contains
 
     call psi_external_calc
     call compound_psi
-    call find_new_axis_part1
+    call find_new_axis
     call find_psi_boundary
-    call new_jrz_feqis  ! calculate new right hand side
+    call new_jrz  ! calculate new right hand side
 
     return
     end subroutine restab_F_function_full_fonfit
@@ -522,7 +522,7 @@ contains
     use errors_params, only: err_find_psistab
     use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_xpoint, &
         r_xpoint_fit, z_xpoint_fit, n_xpoint_fit
-    use green_matrix, only: greeni
+    use green_function, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
 
     integer :: i, j, k, j_iter, iax, jax
@@ -700,9 +700,9 @@ contains
             enddo
         enddo
 
-        call find_new_axis_part1
+        call find_new_axis
         call find_psi_boundary
-        call new_jrz_feqis  ! calculate new right hand side
+        call new_jrz  ! calculate new right hand side
 
         temp_err = abs(Ffunc - Ffunc_old)
         Ffunc_old = Ffunc
@@ -716,9 +716,9 @@ contains
 
     call psi_external_calc
     call compound_psi
-    call find_new_axis_part1
+    call find_new_axis
     call find_psi_boundary
-    call new_jrz_feqis  ! calculate new right hand side
+    call new_jrz  ! calculate new right hand side
 
     return
     end subroutine restab_F_function_full_fonfit_xpoints
@@ -730,7 +730,7 @@ contains
 
     use errors_params, only: err_find_psistab
     use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy
-    use green_matrix, only: greeni
+    use green_function, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
     use pi_vars, only: GPI, GPI2, GPI4, muvac, mu0
     use numerical_tools, only: linterp
@@ -946,7 +946,7 @@ contains
 ! axis block
            iaxis = iax_ev(jt)
            jaxis = jax_ev(jt)
-           call find_new_axis_part1
+           call find_new_axis
            iax_ev(jt) = iaxis
            jax_ev(jt) = jaxis
 
@@ -968,7 +968,7 @@ contains
            call linterp(psia_ev(:, jt), pprim_ev (:, jt), nrho, psia_2d, ppp_2d, nrho2d)
            ffp_2d = -GPI2/mu0*ffp_2d
            ppp_2d = -GPI2*1.e-6*ppp_2d
-           call new_jrz_feqis  ! calculate new right hand side
+           call new_jrz  ! calculate new right hand side
            j_ev(:, :, jt) = jrz
            i_totev(1: nactive, jt) = curdiff(1: nactive, jt)
        enddo
@@ -995,7 +995,7 @@ contains
     use errors_params, only: err_find_psistab
     use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy, &
         current_limit_feqis
-    use green_matrix, only: greeni
+    use green_function, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
     use pi_vars, only: GPI, GPI2, GPI4, muvac, mu0
     use numerical_tools, only: linterp
@@ -1219,7 +1219,7 @@ contains
 ! Axis block
             iaxis = iax_ev(jt)
             jaxis = jax_ev(jt)
-            call find_new_axis_part1
+            call find_new_axis
             iax_ev(jt) = iaxis
             jax_ev(jt) = jaxis
 
@@ -1241,7 +1241,7 @@ contains
             call linterp(psia_ev(:, jt), pprim_ev (:, jt), nrho, psia_2d, ppp_2d, nrho2d)
             ffp_2d = -GPI2/mu0*ffp_2d
             ppp_2d = -GPI2*1.e-6*ppp_2d
-            call new_jrz_feqis  ! calculate new right hand side
+            call new_jrz  ! calculate new right hand side
             j_ev(:, :, jt) = jrz
 
             i_totev(1: nactive, jt) = curdiff(1: nactive, jt)
@@ -1286,7 +1286,7 @@ contains
         dIp_dt, tau_gseq_feqis, time_astra, &
         use_isoflux, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
         voltage_limits_active_coils, sigma_limits, cur_init, sigma_isoflux
-    use green_matrix, only: greeni
+    use green_function, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
     use pi_vars, only: GPI, GPI2, GPI4, muvac, mu0
     use numerical_tools, only: linterp
@@ -1609,9 +1609,9 @@ contains
             enddo
         enddo
 
-        call find_new_axis_part1
+        call find_new_axis
         call find_psi_boundary
-        call new_jrz_feqis  ! calculate new right hand side
+        call new_jrz  ! calculate new right hand side
 
         temp_err = sum(abs(Fderiv))
         Ffunc_old = Ffunc
@@ -1673,7 +1673,7 @@ contains
         dIp_dt, tau_gseq_feqis, time_astra, &
         use_isoflux, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
         voltage_limits_active_coils, sigma_limits, cur_init
-    use green_matrix, only: greeni
+    use green_function, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
     use pi_vars, only: GPI, GPI2, GPI4, muvac, mu0
     use numerical_tools, only: linterp
@@ -1946,9 +1946,9 @@ contains
             enddo
         enddo
 
-        call find_new_axis_part1
+        call find_new_axis
         call find_psi_boundary
-        call new_jrz_feqis  ! calculate new right hand side
+        call new_jrz  ! calculate new right hand side
 
         temp_err = sum(abs(Fderiv))
         Ffunc_old = Ffunc
@@ -2035,7 +2035,7 @@ contains
 
     use errors_params, only: err_find_psistab
     use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy
-    use green_matrix, only: greeni
+    use green_function, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
 
     integer :: i, j, k, j_iter, iax, jax
@@ -2176,9 +2176,9 @@ contains
             enddo
         enddo
 
-        call find_new_axis_part1
+        call find_new_axis
         call find_psi_boundary
-        call new_jrz_feqis  ! calculate new right hand side
+        call new_jrz  ! calculate new right hand side
 
         temp_err = sum(abs(Fderiv))
         Ffunc_old = Ffunc
@@ -2193,9 +2193,9 @@ contains
 
     call psi_external_calc
     call compound_psi
-    call find_new_axis_part1
+    call find_new_axis
     call find_psi_boundary
-    call new_jrz_feqis  ! calculate new right hand side
+    call new_jrz  ! calculate new right hand side
 
     return
     end subroutine restab_F_function_full_currents
@@ -2207,7 +2207,7 @@ contains
     use errors_params, only: err_find_psistab
     use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy, &
       current_limit_feqis
-    use green_matrix, only: greeni
+    use green_function, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
 
     integer :: i, j, k, j_iter, iax, jax
@@ -2351,9 +2351,9 @@ contains
             enddo
         enddo
 
-        call find_new_axis_part1
+        call find_new_axis
         call find_psi_boundary
-        call new_jrz_feqis  ! calculate new right hand side
+        call new_jrz  ! calculate new right hand side
 
         temp_err = sum(abs(Fderiv))
         Ffunc_old = Ffunc
@@ -2368,9 +2368,9 @@ contains
 
     call psi_external_calc
     call compound_psi
-    call find_new_axis_part1
+    call find_new_axis
     call find_psi_boundary
-    call new_jrz_feqis  ! calculate new right hand side
+    call new_jrz  ! calculate new right hand side
 
     return
     end subroutine restab_F_function_full_currents_limits
@@ -2383,7 +2383,7 @@ contains
 
     use errors_params, only: err_find_psistab
     use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy, sigma_forces
-    use green_matrix, only: greeni
+    use green_function, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
 
     integer :: i, j, k, j_iter, iax, jax
@@ -2523,9 +2523,9 @@ contains
             enddo
         enddo
 
-        call find_new_axis_part1
+        call find_new_axis
         call find_psi_boundary
-        call new_jrz_feqis  ! calculate new right hand side
+        call new_jrz  ! calculate new right hand side
 
         temp_err = sum(abs(Fderiv))
         Ffunc_old = Ffunc
@@ -2540,9 +2540,9 @@ contains
 
     call psi_external_calc
     call compound_psi
-    call find_new_axis_part1
+    call find_new_axis
     call find_psi_boundary
-    call new_jrz_feqis  ! calculate new right hand side
+    call new_jrz  ! calculate new right hand side
 
     return
     end subroutine restab_F_function_full_currents_forces
@@ -2552,7 +2552,7 @@ contains
 
     use errors_params, only: err_find_psistab
     use transport2fbe, only: n_fourier_restab_boundary
-    use green_matrix, only: greeni
+    use green_function, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, pol_angle
 
     integer :: i, j, k, j_iter, iax, jax, info
@@ -2640,9 +2640,9 @@ contains
             enddo
         enddo
 
-        call find_new_axis_part1
+        call find_new_axis
         call find_psi_boundary
-        call new_jrz_feqis  ! calculate new right hand side
+        call new_jrz  ! calculate new right hand side
 
         temp_err = abs(psibt0 - psibt1)
         psibt0 = psibt1
@@ -2658,9 +2658,9 @@ contains
 
     call psi_external_calc
     call compound_psi
-    call find_new_axis_part1
+    call find_new_axis
     call find_psi_boundary
-    call new_jrz_feqis  ! calculate new right hand side
+    call new_jrz  ! calculate new right hand side
 
     stop
     return
@@ -2670,7 +2670,7 @@ contains
     subroutine restab_axis_with_fourier_wall
 
     use errors_params, only: err_find_psistab
-    use green_matrix, only: greeni
+    use green_function, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, &
         pol_angle, least_square_biquad
 
@@ -2760,7 +2760,7 @@ contains
         delr = 0.
         delz = 0.
         call compound_psi
-        call find_new_axis_part1
+        call find_new_axis
         dum1 = C_00r*S_00z - C_00z*S_00r
 
         bub(1) = interp2d_psi(raxp + dr, zaxp, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
@@ -2779,9 +2779,9 @@ contains
         psirz(1:nr2, 1:nz2) = psirz(1:nr2, 1:nz2) +  &
             psistabr*C_00(1:nr2, 1:nz2) + psistabz*S_00(1:nr2, 1:nz2) !total flux
 
-        call find_new_axis_part1
+        call find_new_axis
         call find_psi_boundary
-        call new_jrz_feqis  ! calculate new right hand side
+        call new_jrz  ! calculate new right hand side
 
         temp_err = (abs(psistab1o - psistabr) + abs(psistab2o - psistabz))
         psistab1o = psistabr
@@ -2797,9 +2797,9 @@ contains
 
     call psi_external_calc
     call compound_psi
-    call find_new_axis_part1
+    call find_new_axis
     call find_psi_boundary
-    call new_jrz_feqis  ! calculate new right hand side
+    call new_jrz  ! calculate new right hand side
 
     return
     end subroutine restab_axis_with_fourier_wall
@@ -2807,7 +2807,7 @@ contains
 !--------------------------------------------------------------------
     subroutine estimate_tau_VDE_feqis(n_coil_de, n_coil_st, i_coil_de, i_coil_st, tau_LR, tau_VDE, F_stab, F_destab)
 
-    use green_matrix, only: greeni
+    use green_function, only: greeni
     use pi_vars, only: GPI, GPI2, GPI4, muvac
 
     integer, intent(IN) :: n_coil_de, n_coil_st, i_coil_de(n_coil_de), i_coil_st(n_coil_st)

@@ -12,7 +12,8 @@ use fbe_core, only: nr2, nz2, nr1, nz1, &
     psi_external_calc, nbnd, i_plasmatype, &
     r_xpoint, z_xpoint, n_of_xpoints, active_x_point
 use pbe_core, only: nrho, nteta, psibndp, psiaxisp
-use global_params, only: psplex, iplasma
+use global_params, only: iplasma
+use scalars, only: psplex
 use transport2fbe, only: refit_mode, simple_plasma_model_breakdown, &
     plasma_config, x_point_save
 
