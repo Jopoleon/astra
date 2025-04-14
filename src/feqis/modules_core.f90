@@ -31,7 +31,7 @@ module fft_mod_eff
 implicit none
 
 integer, parameter :: dp=selected_real_kind(15, 300)
-double precision, dimension(:, :), allocatable :: costable
+double precision, dimension(:), allocatable :: costable
 double precision, dimension(:, :), allocatable :: sintable
 
 end module fft_mod_eff

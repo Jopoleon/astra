@@ -440,7 +440,6 @@ use pbe_core, only: nrho, nteta, raxp, zaxp, rbndp, zbndp, &
 use fbe_core, only: nrho2d, use_limiter, &
     dr_factor_init, dz_factor_init, &
     rbnd, zbnd, &
-    omega_pl, &
     psia_2d, ffp_2d, ppp_2d, &
     psistabr, psistabz, psibnd
 use feqis_circuit, only: ncoils
@@ -492,7 +491,6 @@ if (j_call == 0) then
     Rgeom0 = equil_in%global_param%toroid_field%r0
     max_iter = 1000 !hardwired
 ! teta for polar grid, goes from 0 to 2*pi-dteta, but point nt + 1 is the periodic one
-    omega_pl = 0.
     psi0_astra = equil_in%profiles_1d%psi(1)
     psib_astra = equil_in%profiles_1d%psi(nrho)
     raxp = raxis_astra
@@ -605,8 +603,8 @@ use fbe_core, only: nr, nr1, nr2, nz, nz1, nz2, &
     rmin, rmax, zmin, zmax, Rrect, Zrect, dr, dz, rcomp, zcomp, &
     limiterr, limiterz, alpsep, curconduc, &
     zlimpotential, green_bnd_f, &
-    jrz, psirz, psiextrz, psiplasrz, u_n, omega_pl, area_eff, &
-    psiferro, compound_psi
+    jrz, psirz, psiextrz, psiplasrz, u_n, area_eff, &
+    psiferro
 use feqis_circuit, only: nferromag, psiplasmatoconduc, &
     voltage, voltage_old, cur_con_old, psi_cur_old, dpc
 use ferromagstructure, only: type_ferromag
@@ -654,12 +652,12 @@ dz = Zrect(2) - Zrect(1)
 
 !some allocate
 allocate(sintable(nz, nz))
-allocate(costable(nz, nz))
+allocate(costable(nz))
 
 do i=1, nz
+    costable(i) = cos(i*GPI/(nz + 1))
     do j=1, nz
         sintable(i, j) = sin(i*j*GPI/(nz + 1))
-        costable(i, j) = cos(i*j*GPI/(nz + 1))
     enddo
 enddo
 
@@ -804,7 +802,6 @@ allocate(psiplasrz(nr2, nz2))
 psiplasrz = 0.
 allocate(psiferro(nr2, nz2))
 allocate(u_n(nr2, nz2))
-allocate(omega_pl(nr2, nz2))
 allocate(area_eff(nr2, nz2))
 allocate(psi_cur_old(nconduc))
 allocate(dpc(nconduc))

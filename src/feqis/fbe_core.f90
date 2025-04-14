@@ -19,7 +19,7 @@ double precision :: rmin, rmax, zmin, zmax, dr, dz, dteta, &
 double precision, dimension(:), allocatable :: Rrect, Zrect, rcomp, zcomp
 double precision, dimension(:, :), allocatable :: area_eff
 
-double precision, dimension(:, :), allocatable :: u_n, omega_pl, &
+double precision, dimension(:, :), allocatable :: u_n, &
     psirz, psiextrz, psiplasrz, psiferro
 
 double precision, dimension(nrho2d) :: psia_2d, ffp_2d, ppp_2d
@@ -106,7 +106,7 @@ contains
         C(i) =  rcomp(i)/x1/dr**2
         j_init = 1
         do k=2, nz1
-            z_fourier(k) = 2./dz**2 * (costable(1, k-1) - 1.)
+            z_fourier(k) = 2./dz**2 * (costable(k-1) - 1.)
         enddo
     endif
 
@@ -532,8 +532,6 @@ contains
 
 !-------------------------------------------------------------------
     subroutine compound_psi   ! to think about ferromags...
-
-    implicit none
 
     psirz = psiplasrz + psiextrz
 
@@ -1001,82 +999,78 @@ contains
     end function t_find_u_n
 
 !--------------------------------------------------------------------
-subroutine solve_fbe_instantaneous(j_init, j_stab, raxold, zaxold)
+    subroutine solve_fbe_instantaneous(j_init, j_stab, raxold, zaxold)
 
-use feqis_tools, only: closest_index
+    use feqis_tools, only: closest_index
 
-implicit none
+    integer, intent(in) :: j_init, j_stab
+    double precision, intent(in) :: raxold, zaxold
 
-integer, intent(in) :: j_init, j_stab
-double precision, intent(in) :: raxold, zaxold
+    integer :: i, j
+    double precision :: curr, dum1, dum2, zum1, zum2, delr, delz
+    double precision, dimension(9) :: c
+    double precision, dimension(nr2, nz2) :: g
 
-integer :: i, j
-double precision :: curr, dum1, dum2, zum1, zum2, delr, delz
-double precision, dimension(9) :: c
-double precision, dimension(nr2, nz2) :: g
+    g = 0.
+    call solve_gs2d(g) !jrz as right hand side
+    g = boundary(g)   ! gbound = integral (Green*dg/dn) over the boundary
+    call solve_gs2d(g) ! again jrz as right hand side
+    psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
 
-g = 0.
-call solve_gs2d(g) !jrz as right hand side
-g = boundary(g)   ! gbound = integral (Green*dg/dn) over the boundary
-call solve_gs2d(g) ! again jrz as right hand side
-psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
-
-if (j_stab == 1) then
-    psistabr = 0.
-    psistabz = 0.
-    delr = 0.
-    delz = 0.
-    call compound_psi
-    call find_new_axis
-    call nine_point_coeffs_only(raxold, zaxold, c, zum1, zum2)
+    if (j_stab == 1) then
+        psistabr = 0.
+        psistabz = 0.
+        delr = 0.
+        delz = 0.
+        call compound_psi
+        call find_new_axis
+        call nine_point_coeffs_only(raxold, zaxold, c, zum1, zum2)
 
 ! dpsidr
-    zum1 = (raxold - zum1)/dr
-    zum2 = (zaxold - zum2)/dz
-    dum1 = 2.*c(2)*(zum1*zum2**2 + 2.*c(2)*zum1*zum2) +  &
-              c(3)*zum2**2 + c(4)*zum2 + 2*c(5)*zum1 + c(7)
+        zum1 = (raxold - zum1)/dr
+        zum2 = (zaxold - zum2)/dz
+        dum1 = 2.*c(2)*(zum1*zum2**2 + 2.*c(2)*zum1*zum2) +  &
+            c(3)*zum2**2 + c(4)*zum2 + 2*c(5)*zum1 + c(7)
 
 ! dpsidz
-   dum2 = 2.*c(1)*zum1**2*zum2 + c(2)*zum1**2 +  &
-          2.*c(3)*zum1*zum2    + c(4)*zum1 + 2.*c(6)*zum2 + c(8)
+       dum2 = 2.*c(1)*zum1**2*zum2 + c(2)*zum1**2 +  &
+           2.*c(3)*zum1*zum2    + c(4)*zum1 + 2.*c(6)*zum2 + c(8)
 
-    psistabr = -1./(2.*raxold)*dum1/dr
-    psistabz = -dum2/dz
+        psistabr = -1./(2.*raxold)*dum1/dr
+        psistabz = -dum2/dz
 
-    call compound_psi
-    do i=1, nr2
-        do j=1, nz2
-            psirz(i, j) = psirz(i, j) + psistabr*Rrect(i)**2 + psistabz*Zrect(j) ! Total flux
+        call compound_psi
+        do i=1, nr2
+            do j=1, nz2
+                psirz(i, j) = psirz(i, j) + psistabr*Rrect(i)**2 + psistabz*Zrect(j) ! Total flux
+            enddo
         enddo
-    enddo
+        call find_new_axis
+    else
+        call compound_psi ! Total flux
+    endif
+
     call find_new_axis
-else
-    call compound_psi ! Total flux
-endif
+    call find_psi_boundary
+    call new_jrz
 
-call find_new_axis
-call find_psi_boundary
-call new_jrz
-
-return
-end subroutine solve_fbe_instantaneous
+    return
+    end subroutine solve_fbe_instantaneous
 
 !--------------------------------------------------------------------
-subroutine solve_fbe_static_iterations_curgiven(j_init, raxp, zaxp, n_of_newton_iterations)
+    subroutine solve_fbe_static_iterations_curgiven(j_init, raxp, zaxp, n_of_newton_iterations)
 
-use feqis_tools, only: closest_index
-use errors_params, only: err_find_psistab
+    use feqis_tools, only: closest_index
+    use errors_params, only: err_find_psistab
 
-implicit none
+    double precision, intent(in):: raxp, zaxp
+    integer, intent(in):: j_init
+    integer, intent(in):: n_of_newton_iterations
 
-double precision, intent(in):: raxp, zaxp
-integer, intent(in):: j_init
-integer, intent(in):: n_of_newton_iterations
-
-integer :: j_iter, j_iter2, j_cyclo, jeppa
-double precision :: temp_err, raxold, zaxold, temp_err2, raxoldo, zaxoldo, &
-    raxtmp, zaxtmp, det, psistab1o, psistab2o, psro, pszo, dist1, dist2, &
-    cibapr, cibazr, rleft, rright, zup, zdown, dcrdr, dcrdz, dczdr, dczdz
+    integer :: j_iter, j_iter2, j_cyclo, jeppa
+    double precision :: temp_err, raxold, zaxold, temp_err2, raxoldo, zaxoldo, &
+        raxtmp, zaxtmp, det, psistab1o, psistab2o, psro, pszo, dist1, dist2, &
+        cibapr, cibazr, rleft, rright, zup, zdown, dcrdr, dcrdz, dczdr, dczdz
 
 ! Start iterations to find self-consistent solution
     iaxis = closest_index(raxp, Rrect(1), dr)
@@ -1164,6 +1158,7 @@ double precision :: temp_err, raxold, zaxold, temp_err2, raxoldo, zaxoldo, &
 
     enddo
 
-end subroutine solve_fbe_static_iterations_curgiven
+    return
+    end subroutine solve_fbe_static_iterations_curgiven
 
 end module fbe_core

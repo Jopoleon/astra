@@ -6,8 +6,7 @@ use parameters_a2equil, only: type_parameters
 use feqis_circuit, only: psi_cur_old, psiplasmatoconduc, &
     ucoils, voltage,  &
     psi_mutual_effect_conductors_simple
-use fbe_core, only: nr2, nz2, nr1, nz1, &
-    Rmin, Rmax, Zmin, Zmax, Rrect, Zrect, &
+use fbe_core, only: nr2, nz2, nr1, nz1, Rrect, Zrect, &
     psirz, psiextrz, &
     psi_external_calc, nbnd, i_plasmatype, &
     r_xpoint, z_xpoint, n_of_xpoints, active_x_point

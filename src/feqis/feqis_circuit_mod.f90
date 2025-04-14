@@ -1,8 +1,16 @@
 module feqis_circuit
 
-use fbe_core
-use pbe_core
-use global_params
+use fbe_core, only: nr, nr1, nr2, nz, nz1, nz2, nbnd, nlimiter, &
+    nconduc, n_of_xpoints, nrho2d, area_eff, rmin, rmax, zmin, zmax, &
+    Rrect, Zrect, dr, dz, Rbnd, Zbnd, rax, zax, &
+    iaxis, jaxis, r_xpoint, z_xpoint, limiterR, limiterZ, &
+    jrz, curconduc, psia_2d, ffp_2d, ppp_2d, &
+    psiextrz, psiplasrz, psirz, psiaxis, psibnd, psistabR, psistabZ, psiferro, &
+    find_new_axis, find_psi_boundary, new_jrz, &
+    compound_psi, psi_external_calc, boundary, solve_gs2d
+use pbe_core, only: raxp, zaxp, rbndp, zbndp, rpol, zpol, nteta, nrho, &
+    rho, jrhoteta, teta, pprime, ffprime, psigrida, psirhoteta
+use global_params, only: iplasma
 
 implicit none
 
@@ -118,8 +126,6 @@ contains
 
     use green_function, only: greeni
 
-    implicit none
-
     double precision, intent(out) :: psi_to_conductors(nconduc)
     integer :: i
 
@@ -134,8 +140,6 @@ contains
     subroutine psi_mutual_effect_conductors_simple(psi_to_conductors)
 
     use green_function, only: greeni
-
-    implicit none
 
     double precision, intent(out) :: psi_to_conductors(nconduc)
     integer :: i, j, k
@@ -2002,8 +2006,6 @@ contains
 
     use metric_coefficients_pbe, only: dator
 
-    implicit none
-
     integer, parameter :: unit=32
     character(*), intent(in) :: filename
 
@@ -2858,9 +2860,7 @@ contains
 !-------------------------------------------------------------------
 !    subroutine compound_psi   ! to think about ferromags...
 
-!    implicit none
-
-!    psirz = psiplasrz + psiextrz
+!    !    psirz = psiplasrz + psiextrz
 
 !    if (nferromag >= 1) then
 !        psiferro = 0.
@@ -2878,8 +2878,6 @@ contains
     use feqis_tools, only: interp2d_psi, green_function, inv_matrix
     use numerical_tools, only: qinterp
     use pi_vars, only: GPI, GPI2, GPI4, muvac
-
-    implicit none
 
     integer :: i, j, ii, jj, iii, jjj, iferro, nval
     double precision :: x1, x2, x3, x4, d
