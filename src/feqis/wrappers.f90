@@ -83,9 +83,9 @@ end subroutine full_system_advance_feqis
 subroutine solve_gse2d_fbe_full_feqis(j_init)
 
 use errors_params, only: err_find_psistab
-use fbe_core, only: nr, nz, nr2, nz2, psiextrz, redo_bnd, &
+use fbe_core, only: nr, nz, nr2, nz2, psiextrz, &
     Rrect, Zrect, dr, dz, dr_factor_init, dz_factor_init, rax, zax, &
-    trax, tzax, iaxis, jaxis, psistabr, psistabz, jrz, solve_fbe_static_iterations_curgiven
+    iaxis, jaxis, psistabr, psistabz, jrz, solve_fbe_static_iterations_curgiven
 use pbe_core, only: raxp, zaxp
 use feqis_circuit, only: restab_axis_with_fourier_wall, restab_boundary_with_fourier_wall, & !doesnt work well
     restab_F_function_full_fonfit, restab_F_function_full_fonfit_xpoints, restab_F_function_full_currents, &
@@ -598,7 +598,7 @@ use feqis_circuit, only: nactive, npassive, ncoils, nblocks, &
     voltage, voltage_old, cur_con_old, &
     psi_cur_old, dpc, nferromag
 use fbe_core, only: nr, nr1, nr2, nz, nz1, nz2, &
-    nconduc, nlimiter, ngbnd, &
+    nconduc, nlimiter, &
     lim_minr, lim_maxr, lim_minz, lim_maxz, &
     rmin, rmax, zmin, zmax, Rrect, Zrect, dr, dz, rcomp, zcomp, &
     limiterr, limiterz, alpsep, curconduc, &
@@ -617,7 +617,7 @@ use transport2fbe, only: cur_init, use_isoflux, n_isoflux, r_isoflux, z_isoflux,
 implicit none
 
 type(type_ferromag), dimension(:), allocatable :: ferromag
-integer :: i, j, ii, jj, nferrosub, imagvalues
+integer :: i, j, ii, jj, nferrosub, imagvalues, ngbnd
 integer, dimension(:), allocatable :: n_sames
 character(len=80) :: fname, dummy
 
