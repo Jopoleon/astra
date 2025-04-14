@@ -47,18 +47,19 @@ double precision, dimension(:), allocatable :: rbnd, zbnd
 contains
 
 !--------------------------------------------------------------------
-    subroutine solve_gs2d(g)
+    function solve_gs2d(greenBnd_in) result(green_out)
 
     use pi_vars, only: mu0
     use fft_mod_eff, only: costable
     use feqis_tools, only: discrete_sine_transform, solve_tridiag_fbe
 
-    double precision, intent(inout), dimension(nr2, nz2) :: g
+    double precision, intent(in), dimension(2*nr+2*nz) :: greenBnd_in
+    double precision, dimension(nr2, nz2) :: green_out
 
     integer :: i, j, k, j_init
     double precision :: x1, x2, r1m_1, r2m_1
-    double precision, dimension(1000) :: A, B, C, z_fourier
-    double precision, dimension(500, 500) :: gt, rhs, wrhs
+    double precision, dimension(500) :: A, B, C, z_fourier
+    double precision, dimension(nr2, nz2) :: gt1, gt2, rhs, wrhs
 
     data j_init/0/
     save A, B, C, j_init, z_fourier
@@ -72,11 +73,14 @@ contains
     r1m_1 = Rrect(  2)/dr**2/((Rrect(  1) + Rrect(  2))/2.)
     r2m_1 = Rrect(nr1)/dr**2/((Rrect(nr1) + Rrect(nr2))/2.)
 
-    rhs(2:nr1,   2) = rhs(2:nr1,   2) - g(2:nr1,   1)/dz**2
-    rhs(2:nr1, nz1) = rhs(2:nr1, nz1) - g(2:nr1, nz2)/dz**2
-
-    rhs(  2, 2:nz1) = rhs(  2, 2:nz1) - g(  1, 2:nz1)*r1m_1
-    rhs(nr1, 2:nz1) = rhs(nr1, 2:nz1) - g(nr2, 2:nz1)*r2m_1
+    green_out(2:nr1,   1) = greenBnd_in(1:nr)
+    green_out(nr2, 2:nz1) = greenBnd_in(nr+1: nr+nz)
+    green_out(2:nr1, nz2) = greenBnd_in(nr+nz+1: 2*nr+nz)
+    green_out(  1, 2:nz1) = greenBnd_in(2*nr+nz+1: 2*nr+2*nz)
+    rhs(2:nr1,   2) = rhs(2:nr1,   2) - green_out(2:nr1,   1)/dz**2
+    rhs(2:nr1, nz1) = rhs(2:nr1, nz1) - green_out(2:nr1, nz2)/dz**2
+    rhs(  2, 2:nz1) = rhs(  2, 2:nz1) - green_out(  1, 2:nz1)*r1m_1
+    rhs(nr1, 2:nz1) = rhs(nr1, 2:nz1) - green_out(nr2, 2:nz1)*r2m_1
 
     do i=2, nr1
         wrhs(i, 2:nz1) = discrete_sine_transform(nz, rhs(i, 2:nz1))
@@ -87,45 +91,34 @@ contains
         A = 0.
         B = 0.
         C = 0.
-        do i=2, nr-1
-            x1 = 0.5*(rcomp(  i) + rcomp(i-1))
-            x2 = 0.5*(rcomp(i+1) + rcomp(i  ))
-            B(i) = -rcomp(i)/dr**2*(1./x2 + 1./x1)
-            A(i) =  rcomp(i)/x2/dr**2
-            C(i) =  rcomp(i)/x1/dr**2
+        do i=1, nr
+            x1 = 0.5*(Rrect(i+1) + Rrect(i  ))
+            x2 = 0.5*(Rrect(i+2) + Rrect(i+1))
+            B(i) = -Rrect(i+1)/dr**2*(1./x2 + 1./x1)
+            A(i) =  Rrect(i+1)/x2/dr**2
+            C(i) =  Rrect(i+1)/x1/dr**2
         enddo
-        i = 1
-        x1 = 0.5*(rcomp(  i) + Rrect(1))
-        x2 = 0.5*(rcomp(i+1) + rcomp(i))
-        B(i) = -rcomp(i)/dr**2 * (1./x2 + 1./x1)
-        A(i) =  rcomp(i)/x2/dr**2
-        i = nr
-        x1 = 0.5*(rcomp(i)   + rcomp(i-1))
-        x2 = 0.5*(Rrect(nr2) + rcomp(i)  )
-        B(i) = -rcomp(i)/dr**2 * (1./x2 + 1./x1)
-        C(i) =  rcomp(i)/x1/dr**2
+        A(nr) = 0.
+        C(1)  = 0.
         j_init = 1
         do k=2, nz1
             z_fourier(k) = 2./dz**2 * (costable(k-1) - 1.)
         enddo
     endif
-
-    gt = 0.
+    gt1 = 0.
 ! Solve matrix
     do k=2, nz1
-        gt(2:nr1, k) = solve_tridiag_fbe(C(1:nr), B(1:nr) + z_fourier(k), A(1:nr), wrhs(2:nr1, k), nr)
+        gt1(2:nr1, k) = solve_tridiag_fbe(C(1:nr), B(1:nr) + z_fourier(k), A(1:nr), wrhs(2:nr1, k), nr)
     enddo
 
 ! Invert fourier from gt(1:nr, 1:kfourier) to g(2:nr1, 2:nz1)
-!  gt(i, k)=sum(invMM_gs2d(i-1, 1:nr, k-1)*wrhs(2:nr1, k))
-
     do i=2, nr1
-        gt(i, 2:nz1) = discrete_sine_transform(nz, gt(i, 2:nz1))
+        gt2(i, 2:nz1) = discrete_sine_transform(nz, gt1(i, 2:nz1))
     enddo
-    g(2:nr1, 2:nz1) = 2./(nz + 1)*gt(2:nr1, 2:nz1)
+    green_out(2:nr1, 2:nz1) = 2./(nz + 1)*gt2(2:nr1, 2:nz1)
 
     return
-    end subroutine solve_gs2d
+    end function solve_gs2d
 
 !---------------------------------------------------------------------
     subroutine psi_external_calc
@@ -310,92 +303,57 @@ contains
     return
     end subroutine find_closest_xpoints
 
+
 !-----------------------------------------------------------------------------------
-    function boundary(green_in) result(green_out)
+    function boundary(green_in) result(green_bnd)
 ! New bc is integral_over_boundary of -Green * dg/dn * dl
 
-    use pi_vars, only: GPI
-
     double precision, intent(in), dimension(nr2, nz2) :: green_in
-    double precision, dimension(nr2, nz2) :: green_out
 
-    integer :: i, jcounty
-    double precision, dimension(nr2+nz2, 4) :: integr
+    integer :: j, jcount_in
+    double precision, dimension(2*nr+2*nz) :: green_bnd
 
-    integr = 0.
-    jcounty = 0
-
-! lower side
-    do i=2, nr1
-        integr(i, 1) = bgint(green_in, jcounty)
+    jcount_in = 0
+! lower, right, upper, left
+    do j=1, 2*nr+2*nz
+        green_bnd(j) = bgint(green_in, jcount_in)
+        jcount_in = jcount_in + 2*nr + 2*nz
     enddo
-
-! right side
-    do i=2, nz1
-        integr(i, 2) = bgint(green_in, jcounty)
-    enddo
-
-! upper side
-    do i=2, nr1
-        integr(i, 3) = bgint(green_in, jcounty)
-    enddo
-
-! left side
-    do i=2, nz1
-        integr(i, 4) = bgint(green_in, jcounty)
-    enddo
-
-    green_out(2:nr1,   1) = integr(2:nr1, 1)/GPI
-    green_out(nr2, 2:nz1) = integr(2:nz1, 2)/GPI
-    green_out(2:nr1, nz2) = integr(2:nr1, 3)/GPI
-    green_out(  1, 2:nz1) = integr(2:nz1, 4)/GPI
 
     return
     end function boundary
 
 !-----------------------------------------------------------------------------------
-    double precision function bgint(green_in, jcounty)
+    double precision function bgint(green_in, jcount_in)
 ! Integral_over_boundary of -Green * dg/dn * dl
 
+    use pi_vars, only: GPI
+
     double precision, intent(in), dimension(nr2, nz2) :: green_in
-    integer, intent(inout) :: jcounty
+    integer, intent(in)  :: jcount_in
 
-    integer :: j
-    double precision :: dgdn(1000), greenf
+    integer :: j, jcount
+    double precision, dimension(2*nr+2*nz) :: dgdn
 
-    bgint = 0.
-
-! lower side
+    jcount = jcount_in
     do j=2, nr1
-        jcounty = jcounty + 1
-        greenf  = green_bnd_f(jcounty)
-        dgdn(j) = -green_in(j, 2)/dz*greenf*dr/Rrect(j)
+        jcount = jcount + 1
+        dgdn(jcount-jcount_in) = green_in(j, 2) * green_bnd_f(jcount) * dr/dz * 1./Rrect(j)
     enddo
-    bgint = bgint - sum(dgdn(2:nr1))
-
-!right side
     do j=2, nz1
-        jcounty = jcounty + 1
-        greenf  = green_bnd_f(jcounty)
-        dgdn(j) = -green_in(nr1, j)/dr*greenf*dz/(Rrect(nr2) + Rrect(nr1))*2.
+        jcount = jcount + 1
+        dgdn(jcount-jcount_in) = green_in(nr1, j) * green_bnd_f(jcount) * dz/dr * 2./(Rrect(nr2) + Rrect(nr1))
     enddo
-    bgint = bgint - sum(dgdn(2:nz1))
-
-! upper side
     do j=2, nr1
-        jcounty = jcounty + 1
-        greenf  = green_bnd_f(jcounty)
-        dgdn(j) = -green_in(j, nz1)/dz*greenf*dr/Rrect(j)
+        jcount = jcount + 1
+        dgdn(jcount-jcount_in) = green_in(j, nz1) * green_bnd_f(jcount) * dr/dz * 1./Rrect(j)
     enddo
-    bgint = bgint - sum(dgdn(2:nr1))
-
-!left side
     do j=2, nz1
-        jcounty = jcounty + 1
-        greenf  = green_bnd_f(jcounty)
-        dgdn(j) = -green_in(2, j)/dr*greenf*dz/(Rrect(1) + Rrect(2))*2.
+        jcount = jcount + 1
+        dgdn(jcount-jcount_in) = green_in(2, j) * green_bnd_f(jcount) * dz/dr * 2./(Rrect(1) + Rrect(2))
     enddo
-    bgint = bgint - sum(dgdn(2:nz1))
+
+    bgint = sum(dgdn)/GPI
 
     return
     end function bgint
@@ -999,11 +957,25 @@ contains
     end function t_find_u_n
 
 !--------------------------------------------------------------------
-    subroutine solve_fbe_instantaneous(j_init, j_stab, raxold, zaxold)
+    function get_psiplasrz result(psi_plas)
+
+    double precision, dimension(nr2, nz2) :: green, psi_plas
+    double precision, dimension(2*nr + 2*nz) :: greenBnd
+
+    greenBnd = 0.
+    green = solve_gs2d(greenBnd)    ! jrz as right hand side
+    greenBnd = boundary(green)      ! gbound = integral (Green*dg/dn) over the boundary
+    psi_plas = solve_gs2d(greenBnd) ! again jrz as right hand side
+
+    return
+    end function get_psiplasrz
+
+!--------------------------------------------------------------------
+    subroutine solve_fbe_instantaneous(j_stab, raxold, zaxold)
 
     use feqis_tools, only: closest_index
 
-    integer, intent(in) :: j_init, j_stab
+    integer, intent(in) :: j_stab
     double precision, intent(in) :: raxold, zaxold
 
     integer :: i, j
@@ -1011,11 +983,7 @@ contains
     double precision, dimension(9) :: c
     double precision, dimension(nr2, nz2) :: g
 
-    g = 0.
-    call solve_gs2d(g) !jrz as right hand side
-    g = boundary(g)   ! gbound = integral (Green*dg/dn) over the boundary
-    call solve_gs2d(g) ! again jrz as right hand side
-    psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
+    psiplasrz(1:nr2, 1:nz2) = get_psiplasrz()
 
     if (j_stab == 1) then
         psistabr = 0.
@@ -1058,13 +1026,12 @@ contains
     end subroutine solve_fbe_instantaneous
 
 !--------------------------------------------------------------------
-    subroutine solve_fbe_static_iterations_curgiven(j_init, raxp, zaxp, n_of_newton_iterations)
+    subroutine solve_fbe_static_iterations_curgiven(raxp, zaxp, n_of_newton_iterations)
 
     use feqis_tools, only: closest_index
     use errors_params, only: err_find_psistab
 
     double precision, intent(in):: raxp, zaxp
-    integer, intent(in):: j_init
     integer, intent(in):: n_of_newton_iterations
 
     integer :: j_iter, j_iter2, j_cyclo, jeppa
@@ -1133,7 +1100,7 @@ contains
         do j_iter=1, 10000
             raxtmp = trax
             zaxtmp = tzax
-            call solve_fbe_instantaneous(j_iter - 1 + j_iter2 - 1, 1, raxold, zaxold)
+            call solve_fbe_instantaneous(1, raxold, zaxold)
             temp_err = (abs(psro - psistabr) + abs(pszo - psistabz))
             if (temp_err <= err_find_psistab) EXIT
             psro = psistabr

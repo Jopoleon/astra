@@ -7,7 +7,7 @@ use fbe_core, only: nr, nr1, nr2, nz, nz1, nz2, nbnd, nlimiter, &
     jrz, curconduc, psia_2d, ffp_2d, ppp_2d, &
     psiextrz, psiplasrz, psirz, psiaxis, psibnd, psistabR, psistabZ, psiferro, &
     find_new_axis, find_psi_boundary, new_jrz, &
-    compound_psi, psi_external_calc, boundary, solve_gs2d
+    compound_psi, psi_external_calc, get_psiplasrz
 use pbe_core, only: raxp, zaxp, rbndp, zbndp, rpol, zpol, nteta, nrho, &
     rho, jrhoteta, teta, pprime, ffprime, psigrida, psirhoteta
 use global_params, only: iplasma
@@ -435,12 +435,7 @@ contains
 
     do j_iter=1, 300000 !iterations to find currents
         if (j_iter > 150) stop
-        g = 0.
-        call solve_gs2d(g) !jrz as right hand side
-        g = boundary(g)  ! gbound = integral (Green*dg/dn) over the boundary
-
-        call solve_gs2d(g) ! again jrz as right hand side
-        psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
+        psiplasrz = get_psiplasrz()
 
 ! Construct correction
         call compound_psi
@@ -616,12 +611,7 @@ contains
 
     do j_iter=1, 300000 !iterations to find currents
         if (j_iter > 150) stop
-        g = 0.
-        call solve_gs2d(g) !jrz as right hand side
-        g = boundary(g)  ! gbound = integral (Green*dg/dn) over the boundary
-
-        call solve_gs2d(g) ! again jrz as right hand side
-        psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
+        psiplasrz = get_psiplasrz()
 
 ! Construct correction
         call compound_psi
@@ -873,12 +863,8 @@ contains
         if (j_iter > 150) stop
         do jt=1, n_evol
             jrz = j_ev(:, :, jt)   ! assign previous current density
-            g = 0.
-            call solve_gs2d(g) ! jrz as right hand side
-            g = boundary(g)    ! gbound = integral (Green*dg/dn) over the boundary
-            call solve_gs2d(g) ! again jrz as right hand side
-            psiplasrz = g ! solution for pure plasma
-            psi_ev(:, :, jt) = g
+            psiplasrz = get_psiplasrz() ! solution for pure plasma
+            psi_ev(:, :, jt) = psiplasrz
 ! Construct correction
 !  call compound_psi
             do j=1, nz2
@@ -1141,12 +1127,8 @@ contains
         if (j_iter > 150) stop
         do jt=1, n_evol
             jrz = j_ev(:, :, jt)    ! assign previous current density
-            g = 0.
-            call solve_gs2d(g) ! jrz as right hand side
-            g = boundary(g)    ! gbound = integral (Green*dg/dn) over the boundary
-            call solve_gs2d(g) ! again jrz as right hand side
-            psiplasrz = g      ! solution for pure plasma
-            psi_ev(:, :, jt) = g
+            psiplasrz = get_psiplasrz()      ! solution for pure plasma
+            psi_ev(:, :, jt) = psiplasrz
 ! Construct correction
             do j=1, nz2
                 do i=1, nr2
@@ -1467,13 +1449,7 @@ contains
 
 ! Iteration to find currents
     do j_iter=1, 300000
-        g = 0.
-        call solve_gs2d(g) !jrz as right hand side
-        g = boundary(g)  ! gbound = integral (Green*dg/dn) over the boundary
-
-        call solve_gs2d(g) ! again jrz as right hand side
-        psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
-
+        psiplasrz = get_psiplasrz()
 ! Construct correction
         call compound_psi
         do j=1, nz2
@@ -1826,13 +1802,7 @@ contains
 
 ! Iteration to find currents
     do j_iter=1, 300000
-        g = 0.
-        call solve_gs2d(g) !jrz as right hand side
-        g = boundary(g)  ! gbound = integral (Green*dg/dn) over the boundary
-
-        call solve_gs2d(g) ! again jrz as right hand side
-        psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
-
+        psiplasrz = get_psiplasrz()
 ! Construct correction
         call compound_psi
         do j=1, nz2
@@ -2114,13 +2084,7 @@ contains
 ! Iteration to find currents
     do j_iter=1, 300000 
         if (j_iter > 150) stop
-        g = 0.
-        call solve_gs2d(g) ! jrz as right hand side
-        g = boundary(g)    ! gbound = integral (Green*dg/dn) over the boundary
-
-        call solve_gs2d(g) ! again jrz as right hand side
-        psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
-
+        psiplasrz = get_psiplasrz()
 ! Construct correction
         call compound_psi
         do j=1, nz2
@@ -2285,12 +2249,7 @@ contains
 ! Iteration to find currents
     do j_iter=1, 300000
         if (j_iter > 150) stop
-        g = 0.
-        call solve_gs2d(g) ! jrz as right hand side
-        g = boundary(g)    ! gbound = integral (Green*dg/dn) over the boundary
-        call solve_gs2d(g) ! again jrz as right hand side
-        psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
-
+        psiplasrz = get_psiplasrz()
 ! Construct correction
         call compound_psi
         do j=1, nz2
@@ -2461,13 +2420,7 @@ contains
 ! Iteration to find currents
     do j_iter=1, 300000
         if (j_iter > 150) stop
-        g = 0.
-        call solve_gs2d(g) !jrz as right hand side
-        g = boundary(g)  ! gbound = integral (Green*dg/dn) over the boundary
-
-        call solve_gs2d(g) ! again jrz as right hand side
-        psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
-
+        psiplasrz = get_psiplasrz()
 ! Construct correction
         call compound_psi
         do j=1, nz2
@@ -2609,11 +2562,7 @@ contains
     psibt1 = 1000.
 
     do j_iter=1, 30
-        g = 0.
-        call solve_gs2d(g) !jrz as right hand side
-        g = boundary(g)   ! gbound = integral (Green*dg/dn) over the boundary
-        call solve_gs2d(g) ! again jrz as right hand side
-        psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
+        psiplasrz = get_psiplasrz()
         call compound_psi
         do j=1, nteta
             psicorr(j) = interp2d_psi(rbndp(j), zbndp(j), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
@@ -2751,12 +2700,7 @@ contains
     psistab2o = 1000.
 
     do j_iter=1, 30000
-        g = 0.
-        call solve_gs2d(g) ! jrz as right hand side
-        g = boundary(g)   ! gbound = integral (Green*dg/dn) over the boundary
-        call solve_gs2d(g) ! again jrz as right hand side
-
-        psiplasrz(1:nr2, 1:nz2) = g(1:nr2, 1:nz2)
+        psiplasrz = get_psiplasrz()
         psistabr = 0.
         psistabz = 0.
         delr = 0.

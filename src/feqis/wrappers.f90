@@ -129,7 +129,7 @@ CASE(0) ! full static convergent solution with given currents
         rax = Rrect(iaxis)
         zax = Zrect(jaxis)
     endif
-    call solve_fbe_static_iterations_curgiven(j_init, raxp, zaxp, n_of_newton_iterations)
+    call solve_fbe_static_iterations_curgiven(raxp, zaxp, n_of_newton_iterations)
 
 CASE(1) ! refit eddy currents using fourier method for axis stability. doesnt respect boundary. fixed given active currents
     call restab_axis_with_fourier_wall
@@ -206,7 +206,7 @@ if (j_init == 0) then
     zax = Zrect(jaxis)
 endif
 
-call solve_fbe_instantaneous(j_init, j_stab, raxold, zaxold)
+call solve_fbe_instantaneous(j_stab, raxold, zaxold)
 
 return
 end subroutine solve_gse2d_fbe_full_feqis_1turn
