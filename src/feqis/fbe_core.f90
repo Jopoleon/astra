@@ -17,8 +17,6 @@ integer, dimension(:, :), allocatable :: zlimpotential
 double precision :: rmin, rmax, zmin, zmax, dr, dz, dteta, &
     zbot, ztop, raus, rinner
 double precision, dimension(:), allocatable :: Rrect, Zrect, rcomp, zcomp
-double precision, dimension(:, :), allocatable :: area_eff
-
 double precision, dimension(:, :), allocatable :: u_n, &
     psirz, psiextrz, psiplasrz, psiferro
 
@@ -766,7 +764,7 @@ contains
     integer :: i, j, i1, i2, j1, quadrant, ipluz, jpluz, &
         ilast, totpoints, istart, j_griddo_j, i_griddo_j
     integer, dimension(nr2*nz2, 2) :: external_griddo_j, internal_griddo
-    double precision :: curr, darea, t1, t2, t3, t4, je1, je2, je3, je4, &
+    double precision :: curr, t1, t2, t3, t4, je1, je2, je3, je4, &
         z11, z12, z13, z14
     double precision, dimension(nr2, nz2) :: iconvex
     double precision, dimension(nr2, nz2) :: dumc
@@ -775,8 +773,6 @@ contains
 
     iconvex = 0.
     dumc    = 0.
-    area_eff = dr*dz
-    darea = dr*dz
     i_griddo_j = 0
     j_griddo_j = 0
 
@@ -935,7 +931,7 @@ contains
 
 !uncomment below for consistent current
 !jrz(1:nr2, 1:nz2)=dumc(1:nr2, 1:nz2)
-    curr = sum(jrz)*darea
+    curr = sum(jrz)*dr*dz
     jrz = jrz/curr*iplasma
 
     if (isnan(curr)) then

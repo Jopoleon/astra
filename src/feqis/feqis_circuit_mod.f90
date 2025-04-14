@@ -1,7 +1,7 @@
 module feqis_circuit
 
 use fbe_core, only: nr, nr1, nr2, nz, nz1, nz2, nbnd, nlimiter, &
-    nconduc, n_of_xpoints, nrho2d, area_eff, rmin, rmax, zmin, zmax, &
+    nconduc, n_of_xpoints, nrho2d, rmin, rmax, zmin, zmax, &
     Rrect, Zrect, dr, dz, Rbnd, Zbnd, rax, zax, &
     iaxis, jaxis, r_xpoint, z_xpoint, limiterR, limiterZ, &
     jrz, curconduc, psia_2d, ffp_2d, ppp_2d, &
@@ -130,7 +130,7 @@ contains
     integer :: i
 
     do i=1, nconduc
-        psi_to_conductors(i) = sum(jrz(1: nr2, 1: nz2) * area_eff(1: nr2, 1: nz2) * greeni(1: nr2, 1: nz2, i))
+        psi_to_conductors(i) = sum(jrz(1: nr2, 1: nz2) * dr * dz * greeni(1: nr2, 1: nz2, i))
     enddo
 
     return
@@ -1989,7 +1989,7 @@ contains
         if (allocated(Rrect)) then
             write(unit, *) nr2, nz2, Rrect, Zrect !grid
             write(unit, *) psiextrz, psiplasrz, psirz !psivacuum, psiplasma, psitotal maps [radiants]
-            write(unit, *) jrz, area_eff !current densiy, area elements
+            write(unit, *) jrz !current densiy, area elements
             write(unit, *) nconduc, r_cond, z_cond !conductors positions
             write(unit, *) curconduc, voltage, psiplasmatoconduc !currents, voltages, psiplasma mutual induct
             write(unit, *) nlimiter, limiterr, limiterz !limiter

@@ -3,7 +3,7 @@ subroutine full_system_advance_feqis(j_init, no_circuit_eq)
 use errors_params, only: err_epsilon, err_circ_plasma_iter
 use feqis_circuit, only: psi_cur_old, &
     psiplasmatoconduc
-use fbe_core, only: nr2, nz2, nconduc, curconduc, jrz, area_eff, psi_external_calc
+use fbe_core, only: nr2, nz2, nconduc, curconduc, jrz, dr, dz, psi_external_calc
 use global_params, only: iplasma
 use transport2fbe, only: fast_mode, execute_plasma
 use parameters_a2equil, only: max_iter
@@ -31,7 +31,7 @@ if (j_init == 0 .or. no_circuit_eq == 1) then
     call psi_external_calc
     call solve_gse2d_fbe_full_feqis(0)
     do i=1, nconduc
-        psiplasmatoconduc(i) = sum(jrz(1: nr2, 1: nz2) * area_eff(1: nr2, 1: nz2) * greeni(1: nr2, 1: nz2, i))
+        psiplasmatoconduc(i) = sum(jrz(1: nr2, 1: nz2) * dr * dz * greeni(1: nr2, 1: nz2, i))
     enddo
     psi_cur_old(1:nconduc) = psiplasmatoconduc(1:nconduc)
 
@@ -45,7 +45,7 @@ if (fast_mode == 1 .and. execute_plasma == 1) then
     call psi_external_calc
     call solve_gse2d_fbe_full_feqis_1turn(1, 0, 0.d0, 0.d0)
     do i=1, nconduc
-        psiplasmatoconduc(i) = sum(jrz(1: nr2, 1: nz2) * area_eff(1: nr2, 1: nz2) * greeni(1: nr2, 1: nz2, i))
+        psiplasmatoconduc(i) = sum(jrz(1: nr2, 1: nz2) * dr * dz * greeni(1: nr2, 1: nz2, i))
     enddo
 endif
 
@@ -57,7 +57,7 @@ do j_iter=1, max_iter
         call psi_external_calc
         call solve_gse2d_fbe_full_feqis_1turn(1, 0, 0.d0, 0.d0)
         do i=1, nconduc
-            psiplasmatoconduc(i) = sum(jrz(1: nr2, 1: nz2) * area_eff(1: nr2, 1: nz2) * greeni(1: nr2, 1: nz2, i))
+            psiplasmatoconduc(i) = sum(jrz(1: nr2, 1: nz2) * dr * dz * greeni(1: nr2, 1: nz2, i))
         enddo
     endif
 
@@ -603,7 +603,7 @@ use fbe_core, only: nr, nr1, nr2, nz, nz1, nz2, &
     rmin, rmax, zmin, zmax, Rrect, Zrect, dr, dz, rcomp, zcomp, &
     limiterr, limiterz, alpsep, curconduc, &
     zlimpotential, green_bnd_f, &
-    jrz, psirz, psiextrz, psiplasrz, u_n, area_eff, &
+    jrz, psirz, psiextrz, psiplasrz, u_n, &
     psiferro
 use feqis_circuit, only: nferromag, psiplasmatoconduc, &
     voltage, voltage_old, cur_con_old, psi_cur_old, dpc
@@ -802,7 +802,6 @@ allocate(psiplasrz(nr2, nz2))
 psiplasrz = 0.
 allocate(psiferro(nr2, nz2))
 allocate(u_n(nr2, nz2))
-allocate(area_eff(nr2, nz2))
 allocate(psi_cur_old(nconduc))
 allocate(dpc(nconduc))
 allocate(voltage_limits_active_coils(nactive, 2))
@@ -1393,8 +1392,7 @@ end subroutine estimate_boundary_to_pbe
 subroutine coil_forces_feqis(ncoilz, force_R, force_Z, plasma_state)
 ! this one is only between coils and coils
 use feqis_circuit, only: nblocks, npassive, mequivalence
-use fbe_core, only: jrz, nr2, nz2, area_eff, &
-    curconduc
+use fbe_core, only: jrz, nr2, nz2, dr, dz, curconduc
 use green_matrix, only: dgreenirpl, dgreenizpl, dgreenirj, dgreenizj
 
 integer, intent(in) :: ncoilz, plasma_state
@@ -1409,9 +1407,9 @@ nblock_a = nblocks - npassive
 
 if (plasma_state == 1) then !not sure about the plasma response...
     do i=1, nblock_a
-        x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreeniRpl(1:nr2, 1:nz2, i))
+        x1 =  sum(jrz(1:nr2, 1:nz2) * dr * dz * dgreeniRpl(1:nr2, 1:nz2, i))
         force_R(i) = force_R(i) + curconduc(mequivalence(i)) * x1
-        x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreeniZpl(1:nr2, 1:nz2, i))
+        x1 =  sum(jrz(1:nr2, 1:nz2) * dr * dz * dgreeniZpl(1:nr2, 1:nz2, i))
         force_Z(i) = force_Z(i) + curconduc(mequivalence(i)) * x1
     enddo
 endif
@@ -1437,8 +1435,7 @@ subroutine all_forces_feqis(ncoilz, force_R, force_Z, plasma_state, plasma_force
 !this one is between everything , including plasma. ncoilz = nblocks (active subcoils and passive leemnets)
 
 use feqis_circuit, only: nblocks, npassive, mequivalence
-use fbe_core, only: jrz, nr2, nz2, area_eff, &
-    curconduc
+use fbe_core, only: jrz, nr2, nz2, dr, dz, curconduc
 use green_matrix, only: dgreenirpl, dgreenizpl, dgreenirj, dgreenizj
 
 integer, intent(in) :: ncoilz, plasma_state
@@ -1454,9 +1451,9 @@ nblock_a = nblocks - npassive
 
 if (plasma_state == 1) then !not sure about the plasma response...
     do i=1, nblocks
-        x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreeniRpl(1:nr2, 1:nz2, i))
+        x1 =  sum(jrz(1:nr2, 1:nz2) * dr * dz * dgreeniRpl(1:nr2, 1:nz2, i))
         force_R(i) = force_R(i) + curconduc(mequivalence(i)) * x1
-        x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreeniZpl(1:nr2, 1:nz2, i))
+        x1 =  sum(jrz(1:nr2, 1:nz2) * dr * dz * dgreeniZpl(1:nr2, 1:nz2, i))
         force_Z(i) = force_Z(i) + curconduc(mequivalence(i)) * x1
     enddo
 endif
@@ -1484,7 +1481,7 @@ subroutine all_forces_feqis_components(ncoilz, force_R, force_Z, force_tot, plas
 !this one is between everything , including plasma. ncoilz = nblocks-npassive (active subcoils only)
 
 use feqis_circuit, only: nblocks, npassive, mequivalence
-use fbe_core, only: jrz, nr2, nz2, area_eff, curconduc
+use fbe_core, only: jrz, nr2, nz2, dr, dz, curconduc
 use green_matrix, only: dgreenirpl, dgreenizpl, dgreenirj, dgreenizj
 
 integer, intent(in) :: ncoilz, plasma_state
@@ -1506,9 +1503,9 @@ endif
 
 if (plasma_state == 1) then !not sure about the plasma response...
     do i=1, nblock_a
-        x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreeniRpl(1:nr2, 1:nz2, i))
+        x1 =  sum(jrz(1:nr2, 1:nz2) * dr * dz * dgreeniRpl(1:nr2, 1:nz2, i))
         force_R(i) = force_R(i) + curconduc(mequivalence(i)) * x1
-        x1 =  sum(jrz(1:nr2, 1:nz2) * area_eff(1:nr2, 1:nz2) * dgreeniZpl(1:nr2, 1:nz2, i))
+        x1 =  sum(jrz(1:nr2, 1:nz2) * dr * dz * dgreeniZpl(1:nr2, 1:nz2, i))
         force_Z(i) = force_Z(i) + curconduc(mequivalence(i)) * x1
         plasma_contrib_R(i) = force_R(i)
         plasma_contrib_Z(i) = force_Z(i)

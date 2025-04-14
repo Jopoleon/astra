@@ -15,7 +15,7 @@ FFLAGS	= -O2 -g -traceback -I. -I$(MOD_FOR) -I$(MOD_DIR) $(CHECKALLCOMP)
 # FEQIS objs
 
 FEQ_MODOBJ = \
-$(OBJ_DIR)/pi_vars.o \
+$(OBJ_DIR)/modules_core.o \
 $(OBJ_DIR)/modules_feqis.o \
 $(OBJ_DIR)/feqis_tools.o \
 $(OBJ_DIR)/fbe_core.o \
