@@ -58,7 +58,7 @@ contains
         enddo
     enddo
 
-! Step 2: prepare L and U matrices 
+! Step 2: prepare L and U matrices
 ! L matrix is a matrix of the elimination coefficient
 ! + the diagonal elements are 1.0
     do i=1, ndim
@@ -97,7 +97,7 @@ contains
         enddo
         b(k) = 0.0
     enddo
-    
+
     return
     end function inv_matrix
 
@@ -115,36 +115,29 @@ contains
     complex(kind=dp) :: d(2*(ndim+1))
 
     imethod1 = 1
-    f_out = f_in
     if (imethod1 == 1) then
-        z = 0.
+        f_out = 0.
         do i=1, ndim
             do j=1, ndim
-                z(i) = z(i) + f_out(j)*sintable(i, j)
+                f_out(i) = f_out(i) + f_in(j)*sintable(i, j)
             enddo
         enddo
-        f_out = z
-        return
-    else if (imethod1 == 2) then 
-! fast sine transform 
-! this problem is equivalent to DST-I with N = n+1 
-
+    else if (imethod1 == 2) then
+! fast sine transform
+! this problem is equivalent to DST-I with N = n+1
         k = 2*(ndim+1)
-        z = f_out
+        z = f_in
         d(1) = cmplx(0., 0.)
         do i=1, ndim
             d(i+1)   = cmplx( z(i), 0)
             d(k-i+1) = cmplx(-z(i), 0)
         enddo
         d(k-ndim) = cmplx(0., 0.)
-
-!        call fft_eff(d)
-
         d(1: k-1) = d(2: k)
         do i=1, ndim
-            z(i) = 0.5*aimag(d(i) - d(k-i))
+            f_out(i) = 0.25*aimag(d(i) - d(k-i))
         enddo
-        f_out = z/2.
+        f_out = f_out/2.
     endif
 
     return
@@ -156,10 +149,10 @@ contains
     integer, intent(in) :: n
     double precision, intent(in), dimension(n) :: r, z, u
     double precision, dimension(8) :: derivs
-    
+
     integer :: k
     double precision :: det, det_r, det_z, rax, zax, uax
-    double precision, dimension(6) :: B, cc
+    double precision, dimension(6) :: B, coeff
     double precision, dimension(21) :: sums
     double precision, dimension(6, 6) :: A, Ainv
 
@@ -240,25 +233,25 @@ contains
     Ainv  = inv_matrix(A, 6)
 
     do k=1, 6
-        cc(k) = -2*sum(Ainv(k, 1: 6)*B(1: 6))
+        coeff(k) = -2*sum(Ainv(k, 1: 6)*B(1: 6))
     enddo
 
 !  magnetic axis
 
-    det   =  4.d0*cc(1)*cc(2) - cc(3)**2
-    det_r = -2.d0*cc(2)*cc(4) + cc(3)*cc(5)
-    det_z = -2.d0*cc(1)*cc(5) + cc(3)*cc(4)
+    det   =  4.d0*coeff(1)*coeff(2) - coeff(3)**2
+    det_r = -2.d0*coeff(2)*coeff(4) + coeff(3)*coeff(5)
+    det_z = -2.d0*coeff(1)*coeff(5) + coeff(3)*coeff(4)
 
     rax = det_r/det
     zax = det_z/det
 
-    uax = cc(1)*rax**2 + cc(2)*zax**2 + cc(3)*rax*zax + cc(4)*rax + cc(5)*zax + cc(6)
+    uax = coeff(1)*rax**2 + coeff(2)*zax**2 + coeff(3)*rax*zax + coeff(4)*rax + coeff(5)*zax + coeff(6)
 
-    derivs(1) = cc(4)
-    derivs(2) = cc(5)
-    derivs(3) = 2.*cc(1)
-    derivs(4) = 2.*cc(2)
-    derivs(5) = cc(3) 
+    derivs(1) = coeff(4)
+    derivs(2) = coeff(5)
+    derivs(3) = 2.*coeff(1)
+    derivs(4) = 2.*coeff(2)
+    derivs(5) = coeff(3)
 
     return
     end function least_square_biquad
@@ -268,61 +261,48 @@ contains
 
     use errors_params, only: err_find_biquad
 
+    integer, parameter :: n_iter=100000
+
     integer, intent(in) :: ndim
     double precision, intent(in) :: dr, dz, rx_in, zx_in
     double precision, intent(in), dimension(ndim) :: u
     double precision, intent(out) :: rax, zax, uax
     double precision, intent(out), dimension(8) :: derivs
 
-    integer :: k, niter, j_success
-    double precision :: s_r, s_z, s_r2, s_z2, det
-    double precision :: A(2, 2), B(2), c(9)
+    integer :: k, jiter, j_success
+    double precision :: det
+    double precision :: A(2, 2), B(2), coeff(9)
 
 ! Find coefficients
     do k=1, 9
-        c(k) = sum(A_inv(k, 1:ndim) * u(1:ndim))
+        coeff(k) = sum(A_inv(k, 1:ndim) * u(1:ndim))
     enddo
 
     rax = 0.
     zax = 0.
 
-!now find axis
-    niter = 0
-    s_r = 100000.
-    s_z = 100000.
-
-    do
-        niter = niter + 1
-        s_r2 = 2*C(1)*rax*zax**2 + 2*C(2)*rax*zax +   C(3)*zax**2  + C(4)*zax + 2*C(5)*rax + C(7)
-        s_z2 = 2*C(1)*rax**2*zax +   C(2)*rax**2  + 2*C(3)*zax*rax + C(4)*rax + 2*C(6)*zax + C(8)
-        A(1, 1) = 2*C(1)*zax**2  + 2*C(2)*zax + 2*C(5)
-        A(1, 2) = 4*C(1)*rax*zax + 2*C(2)*rax + 2*C(3)*zax + C(4)
-        A(2, 2) = 2*C(1)*rax**2  + 2*C(3)*rax + 2*c(6)
-        A(2, 1) = 4*C(1)*rax*zax + 2*C(2)*rax + 2*C(3)*zax + C(4)
-        B(1) = s_r2
-        B(2) = s_z2
-        det = (A(1, 1)*A(2, 2)) - (A(1, 2)*A(2, 1))
-        s_r2 = 1/det*(A(2, 2)*B(1) - A(1, 2)*B(2))
-        s_z2 = 1/det*(A(1, 1)*B(2) - A(2, 1)*B(1))
-        rax = rax - s_r2
-        zax = zax - s_z2
-
-        s_r2 = s_r
-        s_z2 = s_z
-        s_r = 2*C(1)*rax*zax**2 + 2*C(2)*rax*zax +   C(3)*zax**2  + C(4)*zax + 2*C(5)*rax + C(7)
-        s_z = 2*C(1)*rax**2*zax + C(2)*rax**2    + 2*C(3)*zax*rax + C(4)*rax + 2*C(6)*zax + C(8)
-
-        if (abs(s_r) < err_find_biquad .and. abs(s_z) < err_find_biquad) then
+! now find axis
+    do jiter=1, n_iter
+        A(1, 1) = 2*coeff(1)*zax**2  + 2*coeff(2)*zax + 2*coeff(5)
+        A(1, 2) = 4*coeff(1)*rax*zax + 2*coeff(2)*rax + 2*coeff(3)*zax + coeff(4)
+        A(2, 2) = 2*coeff(1)*rax**2  + 2*coeff(3)*rax + 2*coeff(6)
+        A(2, 1) = A(1, 2)
+        B(1) = 2*coeff(1)*rax*zax**2 + 2*coeff(2)*rax*zax +   coeff(3)*zax**2  + coeff(4)*zax + 2*coeff(5)*rax + coeff(7)
+        B(2) = 2*coeff(1)*rax**2*zax +   coeff(2)*rax**2  + 2*coeff(3)*zax*rax + coeff(4)*rax + 2*coeff(6)*zax + coeff(8)
+        if (abs(B(1)) < err_find_biquad .and. abs(B(2)) < err_find_biquad) then
             j_success = 1
             EXIT
         endif
-        if (abs(rax) > 1. .or. abs(zax) > 1 .or. niter > 100000) then
+        det = (A(1, 1)*A(2, 2)) - (A(1, 2)*A(2, 1))
+        rax = rax - 1/det*(A(2, 2)*B(1) - A(1, 2)*B(2))
+        zax = zax - 1/det*(A(1, 1)*B(2) - A(2, 1)*B(1))
+        if (abs(rax) > 1. .or. abs(zax) > 1) then
             j_success = 0
             EXIT
         endif
     enddo
 
-    if (j_success == 0) then
+    if (j_success == 0 .or. jiter >= n_iter) then
         rax    =  1.e6
         zax    =  1.e6
         uax    = -1.e6
@@ -332,21 +312,21 @@ contains
 
 ! magnetic axis
 
-    uax = c(1)*rax**2 * zax**2 + & 
-          c(2)*rax**2 * zax    + &
-          c(3)*rax    * zax**2 + &
-          c(4)*rax    * zax    + &
-          c(5)*rax**2 + &
-          c(6)*zax**2 + &
-          c(7)*rax    + &
-          c(8)*zax    + &
-          c(9)
+    uax = coeff(1)*rax**2 * zax**2 + &
+          coeff(2)*rax**2 * zax    + &
+          coeff(3)*rax    * zax**2 + &
+          coeff(4)*rax    * zax    + &
+          coeff(5)*rax**2 + &
+          coeff(6)*zax**2 + &
+          coeff(7)*rax    + &
+          coeff(8)*zax    + &
+          coeff(9)
 
-    derivs(1) = 1/dr*(2*C(1)*rax*zax**2 + 2*C(2)*rax*zax +   C(3)*zax**2  + C(4)*zax + 2*C(5)*rax + C(7))
-    derivs(2) = 1/dz*(2*C(1)*rax**2*zax +   C(2)*rax**2  + 2*C(3)*zax*rax + C(4)*rax + 2*C(6)*zax + C(8))
-    derivs(3) = 1/dr**2*(2.*c(1)*zax**2 + 2*c(2)*zax + 2*c(5))
-    derivs(4) = 1/dz**2*(2.*c(1)*rax**2 + 2*c(3)*rax + 2*c(6))
-    derivs(5) = 1/dr/dz*(4*c(1)*rax*zax + 2*c(2)*rax + 2*c(3)*zax + c(4)) 
+    derivs(1) = 1/dr*(2*coeff(1)*rax*zax**2 + 2*coeff(2)*rax*zax +   coeff(3)*zax**2  + coeff(4)*zax + 2*coeff(5)*rax + coeff(7))
+    derivs(2) = 1/dz*(2*coeff(1)*rax**2*zax +   coeff(2)*rax**2  + 2*coeff(3)*zax*rax + coeff(4)*rax + 2*coeff(6)*zax + coeff(8))
+    derivs(3) = 1/dr**2*(2.*coeff(1)*zax**2 + 2*coeff(2)*zax + 2*coeff(5))
+    derivs(4) = 1/dz**2*(2.*coeff(1)*rax**2 + 2*coeff(3)*rax + 2*coeff(6))
+    derivs(5) = 1/dr/dz*(4*coeff(1)*rax*zax + 2*coeff(2)*rax + 2*coeff(3)*zax + coeff(4))
 
     rax = rax*dr + rx_in
     zax = zax*dz + zx_in
@@ -364,9 +344,9 @@ contains
     double precision, intent(out), dimension(ndim-1) :: derivs
 
     integer :: k
-    double precision :: s_r2, s_z2, det
+    double precision :: det
     double precision :: A(2, 2), B(2)
-    double precision :: c(9)
+    double precision :: coeff(9)
 
 ! Transform
     rax = 0.
@@ -374,40 +354,36 @@ contains
 
 ! Find coefficients
     do k=1, ndim
-        c(k) = sum(A_inv(k, 1:ndim)*u(1:ndim))
+        coeff(k) = sum(A_inv(k, 1:ndim)*u(1:ndim))
     enddo
 
 ! Now find axis
-    s_r2 = 2.*C(1)*rax*zax**2 + 2.*C(2)*rax*zax +    C(3)*zax**2  + C(4)*zax + 2.*C(5)*rax + C(7)
-    s_z2 = 2.*C(1)*rax**2*zax +    C(2)*rax**2  + 2.*C(3)*zax*rax + C(4)*rax + 2.*C(6)*zax + C(8)
-    A(1, 1) = 2.*C(1)*zax**2  + 2.*C(2)*zax + 2.*C(5)
-    A(1, 2) = 4.*C(1)*rax*zax + 2.*C(2)*rax + 2.*C(3)*zax + C(4)
-    A(2, 2) = 2.*C(1)*rax**2  + 2.*C(3)*rax + 2.*c(6)
+    A(1, 1) = 2.*coeff(1)*zax**2  + 2.*coeff(2)*zax + 2.*coeff(5)
+    A(1, 2) = 4.*coeff(1)*rax*zax + 2.*coeff(2)*rax + 2.*coeff(3)*zax + coeff(4)
+    A(2, 2) = 2.*coeff(1)*rax**2  + 2.*coeff(3)*rax + 2.*coeff(6)
     A(2, 1) = A(1, 2)
-    B(1) = s_r2
-    B(2) = s_z2
+    B(1) = 2.*coeff(1)*rax*zax**2 + 2.*coeff(2)*rax*zax +    coeff(3)*zax**2  + coeff(4)*zax + 2.*coeff(5)*rax + coeff(7)
+    B(2) = 2.*coeff(1)*rax**2*zax +    coeff(2)*rax**2  + 2.*coeff(3)*zax*rax + coeff(4)*rax + 2.*coeff(6)*zax + coeff(8)
     det = (A(1, 1)*A(2, 2)) - (A(1, 2)*A(2, 1))
-    s_r2 = 1./det*(A(2, 2)*B(1) - A(1, 2)*B(2))
-    s_z2 = 1./det*(A(1, 1)*B(2) - A(2, 1)*B(1))
-    rax = rax - s_r2
-    zax = zax - s_z2
+    rax = rax - 1./det*(A(2, 2)*B(1) - A(1, 2)*B(2))
+    zax = zax - 1./det*(A(1, 1)*B(2) - A(2, 1)*B(1))
 
-    uax = c(1)*rax**2 * zax**2 + & 
-          c(2)*rax**2 * zax + &
-          c(3)*rax * zax**2 + &
-          c(4)*rax * zax + &
-          c(5)*rax**2 + &
-          c(6)*zax**2 + &
-          c(7)*rax    + &
-          c(8)*zax + &
-          c(9)
+    uax = coeff(1)*rax**2 * zax**2 + &
+          coeff(2)*rax**2 * zax + &
+          coeff(3)*rax * zax**2 + &
+          coeff(4)*rax * zax + &
+          coeff(5)*rax**2 + &
+          coeff(6)*zax**2 + &
+          coeff(7)*rax    + &
+          coeff(8)*zax + &
+          coeff(9)
 
-    derivs(1) = 1./dr*(2.*C(1)*rax*zax**2 + 2.*C(2)*rax*zax +    C(3)*zax**2  + C(4)*zax + 2.*C(5)*rax + C(7))
-    derivs(2) = 1./dz*(2.*C(1)*rax**2*zax +    C(2)*rax**2  + 2.*C(3)*zax*rax + C(4)*rax + 2.*C(6)*zax + C(8))
-    derivs(3) = 1./dr**2*(2.*c(1)*zax**2  + 2.*c(2)*zax + 2.*c(5))
-    derivs(4) = 1./dz**2*(2.*c(1)*rax**2  + 2.*c(3)*rax + 2.*c(6))
-    derivs(5) = 1./dr/dz*(4.*c(1)*rax*zax + 2.*c(2)*rax + 2.*c(3)*zax + c(4)) 
-     
+    derivs(1) = 1./dr*(2.*coeff(1)*rax*zax**2 + 2.*coeff(2)*rax*zax +    coeff(3)*zax**2  + coeff(4)*zax + 2.*coeff(5)*rax + coeff(7))
+    derivs(2) = 1./dz*(2.*coeff(1)*rax**2*zax +    coeff(2)*rax**2  + 2.*coeff(3)*zax*rax + coeff(4)*rax + 2.*coeff(6)*zax + coeff(8))
+    derivs(3) = 1./dr**2*(2.*coeff(1)*zax**2  + 2.*coeff(2)*zax + 2.*coeff(5))
+    derivs(4) = 1./dz**2*(2.*coeff(1)*rax**2  + 2.*coeff(3)*rax + 2.*coeff(6))
+    derivs(5) = 1./dr/dz*(4.*coeff(1)*rax*zax + 2.*coeff(2)*rax + 2.*coeff(3)*zax + coeff(4))
+
     rax = rax*dr + rx_in
     zax = zax*dz + zx_in
 
@@ -433,16 +409,6 @@ contains
 
     return
     end function floor_index
-
-!---------------------------------------------------------------------
-    integer function ceil_index(x_in, xmin, dx)
-
-    double precision, intent(in) :: x_in, xmin, dx
-
-    ceil_index = ceiling((x_in - xmin)/dx + 1.) ! ceil(1.8) = 2
-
-    return
-    end function ceil_index
 
 !---------------------------------------------------------------------
     double precision function interp2d_psi(r_in, z_in, Rgrid, Zgrid, psi_in)
@@ -487,8 +453,8 @@ contains
 
     bilinear_interp = &
          1./((x2 - x1)*(y2 - y1)) * ( &
-         f11*(x2 - x )*(y2 - y ) + & 
-         f21*(x  - x1)*(y2 - y ) + & 
+         f11*(x2 - x )*(y2 - y ) + &
+         f21*(x  - x1)*(y2 - y ) + &
          f12*(x2 - x )*(y  - y1) + &
          f22*(x  - x1)*(y  - y1) )
 
@@ -514,10 +480,10 @@ contains
     ellK_green = ((( 0.01451196212D0*X + 0.03742563713D0)*X + 0.03590092383D0)*X + 0.09666344259D0)*X + 1.38629436112D0 - &
                 (((( 0.00441787012D0*X + 0.03328355346D0)*X + 0.06880248576D0)*X + 0.12498593597D0)*X + 0.5D0)*DL
 
-    return 
+    return
     end function ellK_green
 
-!----------------------------------------------------------------------------------- 
+!-----------------------------------------------------------------------------------
     double precision function green_function(r1, z1, r2, z2)
 
     double precision, intent(in) :: r1, z1, r2, z2
@@ -589,7 +555,7 @@ contains
     f_out(Ngrid) = beta(Ngrid)
     do k=1, Ngrid-1
         j = Ngrid - k
-        f_out(j) = beta(j) - alpha(j)*f_out(j + 1)
+        f_out(j) = beta(j) - alpha(j)*f_out(j+1)
     enddo
 
     return
