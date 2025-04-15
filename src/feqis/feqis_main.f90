@@ -92,7 +92,7 @@ if (ifplasma == 1) then
     allocate(equil_out%profiles_1d%gm41(nrplasma))
     allocate(equil_out%profiles_1d%rbp_b2(nrplasma))
     allocate(equil_out%profiles_1d%bplfs(nrplasma))
-    allocate(equil_out%profiles_1d%rho_tor(nrplasma) )
+    allocate(equil_out%profiles_1d%rho_tor_norm(nrplasma) )
     allocate(equil_out%profiles_1d%jparallel(nrplasma) )
     allocate(equil_out%profiles_1d%sigmapar%value(nrplasma) )
     allocate(equil_out%profiles_1d%jni%value(nrplasma) )

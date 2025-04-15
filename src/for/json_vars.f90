@@ -88,7 +88,7 @@ contains
 
     save j_call
 
-    nrho_surf = SIZE(equil_now%profiles_1d%rho_tor)
+    nrho_surf = SIZE(equil_now%profiles_1d%rho_tor_norm)
     nthe_surf = SIZE(equil_now%coord_sys%position%teta2d)
     nR = SIZE(equil_now%eqgeometry%rectgrid%r2d)
     nZ = SIZE(equil_now%eqgeometry%rectgrid%z2d)
@@ -498,7 +498,7 @@ contains
     call write_array((/nrho_surf/), equil_now%profiles_1d%q      , equil_profPtr)
     call write_array((/nrho_surf/), equil_now%profiles_1d%r_inboard , equil_profPtr)
     call write_array((/nrho_surf/), equil_now%profiles_1d%r_outboard, equil_profPtr)
-    call write_array((/nrho_surf/), equil_now%profiles_1d%rho_tor, equil_profPtr)
+    call write_array((/nrho_surf/), equil_now%profiles_1d%rho_tor_norm, equil_profPtr)
     call write_array((/nrho_surf/), equil_now%profiles_1d%shif   , equil_profPtr)
     call write_array((/nrho_surf/), equil_now%profiles_1d%surface, equil_profPtr)
     call write_array((/nrho_surf/), equil_now%profiles_1d%volume , equil_profPtr)

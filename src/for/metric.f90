@@ -104,7 +104,7 @@ if (LEQ(5) < 3) then
         allocate(equil_now%coord_sys%position%psirz(nrho_surf, nthe_surf))
         allocate(equil_now%coord_sys%position%teta2d(nthe_surf))
     endif
-    if (.not. associated(equil_now%profiles_1d%rho_tor)) then
+    if (.not. associated(equil_now%profiles_1d%rho_tor_norm)) then
         allocate(equil_now%profiles_1d%areat  (nrho_surf))
         allocate(equil_now%profiles_1d%bdb0   (nrho_surf))
         allocate(equil_now%profiles_1d%bmaxt  (nrho_surf))
@@ -126,7 +126,7 @@ if (LEQ(5) < 3) then
         allocate(equil_now%profiles_1d%pressure(nrho_surf))
         allocate(equil_now%profiles_1d%psi    (nrho_surf))
         allocate(equil_now%profiles_1d%q      (nrho_surf))
-        allocate(equil_now%profiles_1d%rho_tor(nrho_surf))
+        allocate(equil_now%profiles_1d%rho_tor_norm(nrho_surf))
         allocate(equil_now%profiles_1d%shif   (nrho_surf))
         allocate(equil_now%profiles_1d%surface(nrho_surf))
         allocate(equil_now%profiles_1d%volume (nrho_surf))
@@ -139,20 +139,20 @@ if (LEQ(5) < 3) then
         allocate(prof_eq(nrho_surf))
     endif
 ! Fill array values
-    equil_now%profiles_1d%rho_tor =  (/ ((i - 1.d0)/(nrho_surf - 1.d0), i=1, nrho_surf) /)
+    equil_now%profiles_1d%rho_tor_norm =  (/ ((i - 1.d0)/(nrho_surf - 1.d0), i=1, nrho_surf) /)
     prof_as = FP(1: NA1)
-    call qinterp(XRHO(1:NA1), prof_as, NA1, equil_now%profiles_1d%rho_tor, prof_eq, nrho_surf)
+    call qinterp(XRHO(1:NA1), prof_as, NA1, equil_now%profiles_1d%rho_tor_norm, prof_eq, nrho_surf)
     equil_now%profiles_1d%psi = prof_eq   
     prof_as = IPOL(1: NA1)*RTOR*BTOR
-    call qinterp(XRHO(1:NA1), prof_as, NA1, equil_now%profiles_1d%rho_tor, prof_eq, nrho_surf)
+    call qinterp(XRHO(1:NA1), prof_as, NA1, equil_now%profiles_1d%rho_tor_norm, prof_eq, nrho_surf)
     equil_now%profiles_1d%F_dia = prof_eq
     do jthe=1, nthe_surf
         theta = GP2*DBLE(jthe - 1)/DBLE(nthe_surf - 1)
         prof_as = RTOR + SHIF(1:NA1) + AMETR(1:NA1) *  ( COS(theta) + 0.5*TRIA(1:NA1) * (COS(2.*theta) - 1.))
-        call qinterp(XRHO(1:NA1), prof_as, NA1, equil_now%profiles_1d%rho_tor, prof_eq, nrho_surf)
+        call qinterp(XRHO(1:NA1), prof_as, NA1, equil_now%profiles_1d%rho_tor_norm, prof_eq, nrho_surf)
         equil_now%coord_sys%position%r(:, jthe) = prof_eq
         prof_as = UPDWN + AMETR(1:NA1)*ELON(1:NA1)*SIN(theta)
-        call qinterp(XRHO(1:NA1), prof_as, NA1, equil_now%profiles_1d%rho_tor, prof_eq, nrho_surf)
+        call qinterp(XRHO(1:NA1), prof_as, NA1, equil_now%profiles_1d%rho_tor_norm, prof_eq, nrho_surf)
         equil_now%coord_sys%position%z(:, jthe) = prof_eq
         equil_now%coord_sys%position%teta2d(jthe) = theta
     enddo

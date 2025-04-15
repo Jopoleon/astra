@@ -9,7 +9,8 @@ type type_coreprofile  !    Structure for core plasma profile; Time-dependent
 endtype type_coreprofile
 
 type type_profiles_1d
-    real(DP),pointer :: rho_tor(:) => null()     ! /profiles_1d/rho_tor - Toroidal flux coordinate [m], to be used by the ETS and in many CPOs (coreprof, ...). Defined as sqrt(phi/pi/B0), where B0 = equil
+    real(DP),pointer :: rho_tor_norm(:) => null()     ! /profiles_1d/rho_tor - Normalised toroidal flux coordinate
+    real(DP),pointer :: rho_tor(:) => null()     ! /profiles_1d/rho_tor - Toroidal flux coordinate [m]. Defined as sqrt(phi/pi/B0), where B0 = equil
     real(DP),pointer :: phi(:) => null()     ! /profiles_1d/phi - toroidal flux [Wb]; Time-dependent; Vector (npsi)
     real(DP),pointer :: psi(:) => null()     ! /profiles_1d/psi - Poloidal flux [Wb], without 1/2pi and such that Bp=|grad psi| /R/2/pi. Time-dependent; Vector (npsi)
     real(DP),pointer :: pressure(:) => null()     ! /profiles_1d/pressure - pressure profile as a function of the poloidal flux [Pa]; Time-dependent; Vector (npsi)

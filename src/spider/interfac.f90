@@ -629,6 +629,7 @@ deallocate(wrk)
 
 if (.not. associated(equil_out%profiles_1d%rho_tor)) then
     allocate( equil_out%profiles_1d%rho_tor(iplas) )
+    allocate( equil_out%profiles_1d%rho_tor_norm(iplas) )
     allocate( equil_out%profiles_1d%jparallel(iplas) )
     allocate( equil_out%profiles_1d%sigmapar%value(iplas) )
     allocate( equil_out%profiles_1d%jni%value(iplas) )
@@ -636,6 +637,7 @@ if (.not. associated(equil_out%profiles_1d%rho_tor)) then
 endif
 do i=1, iplas
     equil_out%profiles_1d%rho_tor(i) = sqrt(flx_fi(i)/(0.5*TWOPI*b0ax))
+    equil_out%profiles_1d%rho_tor_norm(i) = sqrt((flx_fi(i) - flx_fi(1))/(flx_fi(iplas) - flx_fi(1)))
     equil_out%profiles_1d%jparallel(i) = BJ_av(i)/b0ax/(0.2d0*TWOPI)
     equil_out%profiles_1d%sigmapar%value(i) = C_sig(i)
     equil_out%profiles_1d%jni%value(i) = C_bts(i)/b0ax

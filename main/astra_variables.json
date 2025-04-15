@@ -1020,7 +1020,7 @@
     "q": {"desc": "Safety factor from EQUIL"},
     "r_inboard" : {"units": "m", "desc": "AMETR is 0.5*(r_outboard - r_inboard)"},
     "r_outboard": {"units": "m", "desc": "Outboard R"},
-    "rho_tor": {"desc": "rho_tor in output from EQUIL"},
+    "rho_tor_norm": {"desc": "Normalised rho_tor in output from EQUIL"},
     "shif": {"units": "m", "desc": "SHIF"},
     "surface": {"units": "m^2", "desc": "SLAT"},
     "volume": {"units": "m^3", "desc": "VOLUM in ASTRA is  = volume but interpolated on XRHO ofc"}
