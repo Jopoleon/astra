@@ -2498,7 +2498,7 @@ contains
     use errors_params, only: err_find_psistab
     use transport2fbe, only: n_fourier_restab_boundary
     use green_function, only: greeni
-    use feqis_tools, only: closest_index, interp2d_psi, pol_angle
+    use feqis_tools, only: closest_index, interp2d_psi
 
     integer :: i, j, k, j_iter, iax, jax, info
     double precision :: temp_err, curr, f_correction, x1, psibt0, psibt1
@@ -2529,7 +2529,7 @@ contains
 
 ! Evaluate coils' quantities
     do i=1, npassive
-        anglr(i) = pol_angle(rax, zax, r_cond(nactive + i), z_cond(nactive + i))
+        anglr(i) = ATAN2(z_cond(nactive + i) - zax, r_cond(nactive + i) - rax)
 ! Find true axis
         do j=1, nteta
             bub(2) = interp2d_psi(rbndp(j), zbndp(j), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, nactive + i))
@@ -2611,8 +2611,7 @@ contains
 
     use errors_params, only: err_find_psistab
     use green_function, only: greeni
-    use feqis_tools, only: closest_index, interp2d_psi, &
-        pol_angle, least_square_biquad
+    use feqis_tools, only: closest_index, interp2d_psi, least_square_biquad
 
     integer :: i, j, j_iter, iax, jax
     double precision :: curr, dum1, dum2, zum1, psistab1o, psistab2o, delr, delz, &
@@ -2640,7 +2639,7 @@ contains
 
 ! Evaluate coils' quantities
     do i=1, npassive
-        anglr(i) = pol_angle(rax, zax, r_cond(nactive + i), z_cond(nactive + i))
+        anglr(i) = ATAN2(z_cond(nactive + i) - zax, r_cond(nactive + i) - rax)
 ! Find true axis
         xub(1) = Rrect(iax-1)
         xub(2) = Rrect(iax)

@@ -230,22 +230,11 @@ contains
     A(6, 6) = 4*sums(6)
 
 !find coefficients
-    Ainv  = inv_matrix(A, 6)
+    Ainv = inv_matrix(A, 6)
 
     do k=1, 6
         coeff(k) = -2*sum(Ainv(k, 1: 6)*B(1: 6))
     enddo
-
-!  magnetic axis
-
-    det   =  4.d0*coeff(1)*coeff(2) - coeff(3)**2
-    det_r = -2.d0*coeff(2)*coeff(4) + coeff(3)*coeff(5)
-    det_z = -2.d0*coeff(1)*coeff(5) + coeff(3)*coeff(4)
-
-    rax = det_r/det
-    zax = det_z/det
-
-    uax = coeff(1)*rax**2 + coeff(2)*zax**2 + coeff(3)*rax*zax + coeff(4)*rax + coeff(5)*zax + coeff(6)
 
     derivs(1) = coeff(4)
     derivs(2) = coeff(5)
@@ -257,135 +246,142 @@ contains
     end function least_square_biquad
 
 !---------------------------------------------------------------------
-    subroutine exact_biquad(rx_in, zx_in, u, ndim, rax, zax, uax, derivs, dr, dz)
+    subroutine expand_coeffs(coeff, r_in, z_in, u_out, deriv_out)
+
+    double precision, intent(in) :: r_in, z_in
+    double precision, intent(in), dimension(9) :: coeff
+    double precision, intent(out) :: u_out
+    double precision, intent(out), dimension(5) :: deriv_out
+
+    u_out = coeff(1)*r_in**2 * z_in**2 + &
+            coeff(2)*r_in**2 * z_in    + &
+            coeff(3)*r_in    * z_in**2 + &
+            coeff(4)*r_in    * z_in    + &
+            coeff(5)*r_in**2 + &
+            coeff(6)*z_in**2 + &
+            coeff(7)*r_in    + &
+            coeff(8)*z_in    + &
+            coeff(9)
+
+    deriv_out(1) = 2*coeff(1)*r_in*z_in**2 + 2*coeff(2)*r_in*z_in + coeff(3)*z_in**2   + coeff(4)*z_in + 2*coeff(5)*r_in + coeff(7)
+    deriv_out(2) = 2*coeff(1)*r_in**2*z_in +   coeff(2)*r_in**2 + 2*coeff(3)*z_in*r_in + coeff(4)*r_in + 2*coeff(6)*z_in + coeff(8)
+    deriv_out(3) = 2.*coeff(1)*z_in**2 + 2*coeff(2)*z_in + 2*coeff(5)
+    deriv_out(4) = 2.*coeff(1)*r_in**2 + 2*coeff(3)*r_in + 2*coeff(6)
+    deriv_out(5) = 4*coeff(1)*r_in*z_in + 2*coeff(2)*r_in + 2*coeff(3)*z_in + coeff(4)
+
+    return
+    end subroutine expand_coeffs
+
+
+!---------------------------------------------------------------------
+    subroutine exact_biquad(r_in, z_in, u_in, r_out, z_out, u_out, derivs, dr, dz)
 
     use errors_params, only: err_find_biquad
 
     integer, parameter :: n_iter=100000
 
-    integer, intent(in) :: ndim
-    double precision, intent(in) :: dr, dz, rx_in, zx_in
-    double precision, intent(in), dimension(ndim) :: u
-    double precision, intent(out) :: rax, zax, uax
-    double precision, intent(out), dimension(8) :: derivs
+    double precision, intent(in) :: dr, dz, r_in, z_in
+    double precision, intent(in), dimension(9) :: u_in
+    double precision, intent(out) :: r_out, z_out, u_out
+    double precision, intent(out), dimension(5) :: derivs
 
     integer :: k, jiter, j_success
-    double precision :: det
-    double precision :: A(2, 2), B(2), coeff(9)
+    double precision :: det, u_loc
+    double precision :: A(2, 2), B(2), coeff(9), d_dpsi(5)
 
 ! Find coefficients
     do k=1, 9
-        coeff(k) = sum(A_inv(k, 1:ndim) * u(1:ndim))
+        coeff(k) = sum(A_inv(k, :) * u_in)
     enddo
 
-    rax = 0.
-    zax = 0.
+    r_out = 0.
+    z_out = 0.
 
 ! now find axis
     do jiter=1, n_iter
-        A(1, 1) = 2*coeff(1)*zax**2  + 2*coeff(2)*zax + 2*coeff(5)
-        A(1, 2) = 4*coeff(1)*rax*zax + 2*coeff(2)*rax + 2*coeff(3)*zax + coeff(4)
-        A(2, 2) = 2*coeff(1)*rax**2  + 2*coeff(3)*rax + 2*coeff(6)
+        call expand_coeffs(coeff, r_out, z_out, u_loc, d_dpsi)
+        A(1, 1) = d_dpsi(3)
+        A(1, 2) = d_dpsi(5)
+        A(2, 2) = d_dpsi(4)
         A(2, 1) = A(1, 2)
-        B(1) = 2*coeff(1)*rax*zax**2 + 2*coeff(2)*rax*zax +   coeff(3)*zax**2  + coeff(4)*zax + 2*coeff(5)*rax + coeff(7)
-        B(2) = 2*coeff(1)*rax**2*zax +   coeff(2)*rax**2  + 2*coeff(3)*zax*rax + coeff(4)*rax + 2*coeff(6)*zax + coeff(8)
+        B(1) = d_dpsi(1)
+        B(2) = d_dpsi(2)
         if (abs(B(1)) < err_find_biquad .and. abs(B(2)) < err_find_biquad) then
             j_success = 1
             EXIT
         endif
         det = (A(1, 1)*A(2, 2)) - (A(1, 2)*A(2, 1))
-        rax = rax - 1/det*(A(2, 2)*B(1) - A(1, 2)*B(2))
-        zax = zax - 1/det*(A(1, 1)*B(2) - A(2, 1)*B(1))
-        if (abs(rax) > 1. .or. abs(zax) > 1) then
+        r_out = r_out - 1/det*(A(2, 2)*B(1) - A(1, 2)*B(2))
+        z_out = z_out - 1/det*(A(1, 1)*B(2) - A(2, 1)*B(1))
+        if (abs(r_out) > 1. .or. abs(z_out) > 1) then
             j_success = 0
             EXIT
         endif
     enddo
 
     if (j_success == 0 .or. jiter >= n_iter) then
-        rax    =  1.e6
-        zax    =  1.e6
-        uax    = -1.e6
+        r_out  =  1.e6
+        z_out  =  1.e6
+        u_out  = -1.e6
         derivs =  1.e6
         return
     endif
 
 ! magnetic axis
 
-    uax = coeff(1)*rax**2 * zax**2 + &
-          coeff(2)*rax**2 * zax    + &
-          coeff(3)*rax    * zax**2 + &
-          coeff(4)*rax    * zax    + &
-          coeff(5)*rax**2 + &
-          coeff(6)*zax**2 + &
-          coeff(7)*rax    + &
-          coeff(8)*zax    + &
-          coeff(9)
-
-    derivs(1) = 1/dr*(2*coeff(1)*rax*zax**2 + 2*coeff(2)*rax*zax +   coeff(3)*zax**2  + coeff(4)*zax + 2*coeff(5)*rax + coeff(7))
-    derivs(2) = 1/dz*(2*coeff(1)*rax**2*zax +   coeff(2)*rax**2  + 2*coeff(3)*zax*rax + coeff(4)*rax + 2*coeff(6)*zax + coeff(8))
-    derivs(3) = 1/dr**2*(2.*coeff(1)*zax**2 + 2*coeff(2)*zax + 2*coeff(5))
-    derivs(4) = 1/dz**2*(2.*coeff(1)*rax**2 + 2*coeff(3)*rax + 2*coeff(6))
-    derivs(5) = 1/dr/dz*(4*coeff(1)*rax*zax + 2*coeff(2)*rax + 2*coeff(3)*zax + coeff(4))
-
-    rax = rax*dr + rx_in
-    zax = zax*dz + zx_in
+    call expand_coeffs(coeff, r_out, z_out, u_out, derivs)
+    derivs(1) = derivs(1)/dr
+    derivs(2) = derivs(2)/dz
+    derivs(3) = derivs(3)/dr**2
+    derivs(4) = derivs(4)/dz**2
+    derivs(5) = derivs(4)/(dr*dz)
+    r_out = r_out*dr + r_in
+    z_out = z_out*dz + z_in
 
     return
     end subroutine exact_biquad
 
 !---------------------------------------------------------------------
-    subroutine exact_biquad_regress(rx_in, zx_in, u, ndim, rax, zax, uax, derivs, dr, dz)
+    subroutine exact_biquad_regress(r_in, z_in, u_in, r_out, z_out, u_out, derivs, dr, dz)
 
-    integer, intent(in) :: ndim
-    double precision, intent(in) :: dr, dz, rx_in, zx_in
-    double precision, intent(in), dimension(ndim) :: u
-    double precision, intent(out) :: rax, zax, uax
-    double precision, intent(out), dimension(ndim-1) :: derivs
+    double precision, intent(in) :: dr, dz, r_in, z_in
+    double precision, intent(in), dimension(9) :: u_in
+    double precision, intent(out) :: r_out, z_out, u_out
+    double precision, intent(out), dimension(5) :: derivs
 
     integer :: k
-    double precision :: det
-    double precision :: A(2, 2), B(2)
-    double precision :: coeff(9)
+    double precision :: det, u_loc
+    double precision :: A(2, 2), B(2), coeff(9), d_dpsi(5)
 
 ! Transform
-    rax = 0.
-    zax = 0.
+    r_out = 0.
+    z_out = 0.
 
 ! Find coefficients
-    do k=1, ndim
-        coeff(k) = sum(A_inv(k, 1:ndim)*u(1:ndim))
+    do k=1, 9
+        coeff(k) = sum(A_inv(k, :)*u_in)
     enddo
 
 ! Now find axis
-    A(1, 1) = 2.*coeff(1)*zax**2  + 2.*coeff(2)*zax + 2.*coeff(5)
-    A(1, 2) = 4.*coeff(1)*rax*zax + 2.*coeff(2)*rax + 2.*coeff(3)*zax + coeff(4)
-    A(2, 2) = 2.*coeff(1)*rax**2  + 2.*coeff(3)*rax + 2.*coeff(6)
+    call expand_coeffs(coeff, r_out, z_out, u_loc, d_dpsi)
+    A(1, 1) = d_dpsi(3)
+    A(1, 2) = d_dpsi(5)
+    A(2, 2) = d_dpsi(4)
     A(2, 1) = A(1, 2)
-    B(1) = 2.*coeff(1)*rax*zax**2 + 2.*coeff(2)*rax*zax +    coeff(3)*zax**2  + coeff(4)*zax + 2.*coeff(5)*rax + coeff(7)
-    B(2) = 2.*coeff(1)*rax**2*zax +    coeff(2)*rax**2  + 2.*coeff(3)*zax*rax + coeff(4)*rax + 2.*coeff(6)*zax + coeff(8)
+    B(1) = d_dpsi(1)
+    B(2) = d_dpsi(2)
     det = (A(1, 1)*A(2, 2)) - (A(1, 2)*A(2, 1))
-    rax = rax - 1./det*(A(2, 2)*B(1) - A(1, 2)*B(2))
-    zax = zax - 1./det*(A(1, 1)*B(2) - A(2, 1)*B(1))
+    r_out = r_out - 1./det*(A(2, 2)*B(1) - A(1, 2)*B(2))
+    z_out = z_out - 1./det*(A(1, 1)*B(2) - A(2, 1)*B(1))
 
-    uax = coeff(1)*rax**2 * zax**2 + &
-          coeff(2)*rax**2 * zax + &
-          coeff(3)*rax * zax**2 + &
-          coeff(4)*rax * zax + &
-          coeff(5)*rax**2 + &
-          coeff(6)*zax**2 + &
-          coeff(7)*rax    + &
-          coeff(8)*zax + &
-          coeff(9)
-
-    derivs(1) = 1./dr*(2.*coeff(1)*rax*zax**2 + 2.*coeff(2)*rax*zax +    coeff(3)*zax**2  + coeff(4)*zax + 2.*coeff(5)*rax + coeff(7))
-    derivs(2) = 1./dz*(2.*coeff(1)*rax**2*zax +    coeff(2)*rax**2  + 2.*coeff(3)*zax*rax + coeff(4)*rax + 2.*coeff(6)*zax + coeff(8))
-    derivs(3) = 1./dr**2*(2.*coeff(1)*zax**2  + 2.*coeff(2)*zax + 2.*coeff(5))
-    derivs(4) = 1./dz**2*(2.*coeff(1)*rax**2  + 2.*coeff(3)*rax + 2.*coeff(6))
-    derivs(5) = 1./dr/dz*(4.*coeff(1)*rax*zax + 2.*coeff(2)*rax + 2.*coeff(3)*zax + coeff(4))
-
-    rax = rax*dr + rx_in
-    zax = zax*dz + zx_in
+    call expand_coeffs(coeff, r_out, z_out, u_out, derivs)
+    derivs(1) = derivs(1)/dr
+    derivs(2) = derivs(2)/dz
+    derivs(3) = derivs(3)/dr**2
+    derivs(4) = derivs(4)/dz**2
+    derivs(5) = derivs(4)/(dr*dz)
+    r_out = r_out*dr + r_in
+    z_out = z_out*dz + z_in
 
     return
     end subroutine exact_biquad_regress

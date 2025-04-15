@@ -132,14 +132,13 @@ contains
 
     use feqis_tools, only: closest_index, exact_biquad
 
-    integer, parameter :: ndim=9
     integer, intent(in) :: i_in, j_in
     double precision, intent(out) :: r_out, z_out, psi_loc
-    double precision, intent(out), dimension(ndim-1) :: ddpsi
+    double precision, intent(out), dimension(5) :: ddpsi
 
     integer :: i, j, k
     double precision :: r_loc, z_loc
-    double precision, dimension(ndim) :: psi9
+    double precision, dimension(9) :: psi9
 
     r_loc = Rrect(i_in)
     z_loc = Zrect(j_in)
@@ -152,7 +151,7 @@ contains
         enddo
     enddo
 
-    call exact_biquad(r_loc, z_loc, psi9(1:ndim), ndim, r_out, z_out, psi_loc, ddpsi, dr, dz)
+    call exact_biquad(r_loc, z_loc, psi9, r_out, z_out, psi_loc, ddpsi, dr, dz)
 
     return
     end subroutine nine_point_regression
@@ -162,13 +161,12 @@ contains
 
     use feqis_tools, only: closest_index, A_inv
 
-    integer, parameter :: ndim=9
     double precision, intent(in) :: r_in, z_in
     double precision, intent(out) :: r_out, z_out
     double precision, intent(out), dimension(9) :: coeff
 
     integer :: iloc, jloc, i, j, k
-    double precision, dimension(ndim) :: psi9
+    double precision, dimension(9) :: psi9
 
     iloc = closest_index(r_in, Rrect(1), dr)
     jloc = closest_index(z_in, Zrect(1), dz)
@@ -184,8 +182,8 @@ contains
         enddo
     enddo
 
-    do k=1, ndim
-        coeff(k) = sum(A_inv(k, 1:ndim) * psi9(1:ndim))
+    do k=1, 9
+        coeff(k) = sum(A_inv(k, :) * psi9)
     enddo
 
     return
@@ -196,13 +194,12 @@ contains
 
     use feqis_tools, only: interp2d_psi, exact_biquad_regress
 
-    integer, parameter :: ndim=9
     double precision, intent(in) :: r_in, z_in
     double precision, intent(out) :: psi_loc
     double precision, intent(out) :: r_out, z_out
-    double precision, intent(out), dimension(ndim-1) :: ddpsi
+    double precision, intent(out), dimension(5) :: ddpsi
 
-    double precision, dimension(ndim) :: psi9
+    double precision, dimension(9) :: psi9
 
     psi9(1) = interp2d_psi(r_in - dr, z_in - dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
     psi9(2) = interp2d_psi(r_in     , z_in - dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
@@ -214,7 +211,7 @@ contains
     psi9(8) = interp2d_psi(r_in     , z_in + dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
     psi9(9) = interp2d_psi(r_in + dr, z_in + dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
 
-    call exact_biquad_regress(r_in, z_in, psi9(1:ndim), ndim, r_out, z_out, psi_loc, ddpsi, dr, dz)
+    call exact_biquad_regress(r_in, z_in, psi9, r_out, z_out, psi_loc, ddpsi, dr, dz)
 
     return
     end subroutine nine_point_regression_follow
@@ -230,7 +227,7 @@ contains
     integer :: i, jinc, nx
     integer, dimension(250) :: jcycl
     double precision :: bx0, bx1, x1, posxR, posxZ
-    double precision, dimension(8) :: ddipsi
+    double precision, dimension(5) :: ddipsi
 
     bx1 = sqrt(dr**2 + dz**2)
     rx = 1000.
@@ -388,7 +385,7 @@ contains
     subroutine find_new_axis
 
     integer :: j, iax, jax, i_old, j_old, ijmax(2)
-    double precision, dimension(8) :: derivpsi
+    double precision, dimension(5) :: derivpsi
 
 ! 1) find new magnetic axis
 
@@ -443,7 +440,7 @@ contains
 
     integer :: iaold, niter, i, j, k, i1, i4, i5, i9, n_adding, i_county
     double precision :: x1, x2, x5, pos_xpointR, pos_xpointZ
-    double precision, dimension(8) :: ddipsi
+    double precision, dimension(5) :: ddipsi
     double precision, dimension(200) :: rx_add, zx_add
     double precision, dimension(500) :: psi_limp
     double precision, dimension(max_xpoints) :: psi_xpoint
@@ -895,15 +892,12 @@ contains
         call compound_psi
         call find_new_axis
         call nine_point_coeffs_only(raxold, zaxold, coeff, zum1, zum2)
-
         zum1 = (raxold - zum1)/dr
         zum2 = (zaxold - zum2)/dz
-        dpsi_dr = 2.*coeff(2)*(zum1*zum2**2 + 2.*coeff(2)*zum1*zum2) +  &
+        dpsi_dr = 2.*coeff(1)*zum1*zum2**2 + 2.*coeff(2)*zum1*zum2 + &
             coeff(3)*zum2**2 + coeff(4)*zum2 + 2*coeff(5)*zum1 + coeff(7)
-
         dpsi_dz = 2.*coeff(1)*zum1**2*zum2 + coeff(2)*zum1**2 +  &
             2.*coeff(3)*zum1*zum2 + coeff(4)*zum1 + 2.*coeff(6)*zum2 + coeff(8)
-
         psistabr = -1./(2.*raxold)*dpsi_dr/dr
         psistabz = -dpsi_dz/dz
 
