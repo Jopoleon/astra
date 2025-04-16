@@ -148,7 +148,7 @@ contains
 
     integer, intent(in) :: n
     double precision, intent(in), dimension(n) :: r, z, u
-    double precision, dimension(8) :: derivs
+    double precision, dimension(5) :: derivs
 
     integer :: k
     double precision :: det, det_r, det_z, rax, zax, uax
@@ -272,7 +272,6 @@ contains
     return
     end subroutine expand_coeffs
 
-
 !---------------------------------------------------------------------
     subroutine exact_biquad(r_in, z_in, u_in, r_out, z_out, u_out, derivs, dr, dz)
 
@@ -285,58 +284,40 @@ contains
     double precision, intent(out) :: r_out, z_out, u_out
     double precision, intent(out), dimension(5) :: derivs
 
-    integer :: k, jiter, j_success
-    double precision :: det, u_loc
-    double precision :: A(2, 2), B(2), coeff(9), d_dpsi(5)
+    integer :: k, jiter
+    double precision :: hessian, r_loc, z_loc
+    double precision :: coeff(9), d_dpsi(5)
 
 ! Find coefficients
     do k=1, 9
         coeff(k) = sum(A_inv(k, :) * u_in)
     enddo
 
-    r_out = 0.
-    z_out = 0.
-
-! now find axis
+    r_loc = 0.
+    z_loc = 0.
     do jiter=1, n_iter
-        call expand_coeffs(coeff, r_out, z_out, u_loc, d_dpsi)
-        A(1, 1) = d_dpsi(3)
-        A(1, 2) = d_dpsi(5)
-        A(2, 2) = d_dpsi(4)
-        A(2, 1) = A(1, 2)
-        B(1) = d_dpsi(1)
-        B(2) = d_dpsi(2)
-        if (abs(B(1)) < err_find_biquad .and. abs(B(2)) < err_find_biquad) then
-            j_success = 1
-            EXIT
+        call expand_coeffs(coeff, r_loc, z_loc, u_out, d_dpsi)
+        if (abs(d_dpsi(1)) < err_find_biquad .and. abs(d_dpsi(2)) < err_find_biquad) then ! Convergence
+            derivs(1) = d_dpsi(1)/dr
+            derivs(2) = d_dpsi(2)/dz
+            derivs(3) = d_dpsi(3)/dr**2
+            derivs(4) = d_dpsi(4)/dz**2
+            derivs(5) = d_dpsi(5)/(dr*dz)
+            r_out = r_loc*dr + r_in
+            z_out = z_loc*dz + z_in
+            return
         endif
-        det = (A(1, 1)*A(2, 2)) - (A(1, 2)*A(2, 1))
-        r_out = r_out - 1/det*(A(2, 2)*B(1) - A(1, 2)*B(2))
-        z_out = z_out - 1/det*(A(1, 1)*B(2) - A(2, 1)*B(1))
-        if (abs(r_out) > 1. .or. abs(z_out) > 1) then
-            j_success = 0
+        hessian = d_dpsi(3)*d_dpsi(4) - d_dpsi(5)**2
+        r_loc = r_loc - 1/hessian*(d_dpsi(4)*d_dpsi(1) - d_dpsi(5)*d_dpsi(2))
+        z_loc = z_loc - 1/hessian*(d_dpsi(3)*d_dpsi(2) - d_dpsi(5)*d_dpsi(1))
+        if (abs(r_loc) > 1. .or. abs(z_loc) > 1) then
             EXIT
         endif
     enddo
-
-    if (j_success == 0 .or. jiter >= n_iter) then
-        r_out  =  1.e6
-        z_out  =  1.e6
-        u_out  = -1.e6
-        derivs =  1.e6
-        return
-    endif
-
-! magnetic axis
-
-    call expand_coeffs(coeff, r_out, z_out, u_out, derivs)
-    derivs(1) = derivs(1)/dr
-    derivs(2) = derivs(2)/dz
-    derivs(3) = derivs(3)/dr**2
-    derivs(4) = derivs(4)/dz**2
-    derivs(5) = derivs(4)/(dr*dz)
-    r_out = r_out*dr + r_in
-    z_out = z_out*dz + z_in
+    r_out  =  1.e6
+    z_out  =  1.e6
+    u_out  = -1.e6
+    derivs =  1.e6
 
     return
     end subroutine exact_biquad
@@ -350,38 +331,28 @@ contains
     double precision, intent(out), dimension(5) :: derivs
 
     integer :: k
-    double precision :: det, u_loc
-    double precision :: A(2, 2), B(2), coeff(9), d_dpsi(5)
+    double precision :: hessian, r_loc, z_loc
+    double precision :: coeff(9), d_dpsi(5)
 
-! Transform
-    r_out = 0.
-    z_out = 0.
-
-! Find coefficients
     do k=1, 9
         coeff(k) = sum(A_inv(k, :)*u_in)
     enddo
 
-! Now find axis
-    call expand_coeffs(coeff, r_out, z_out, u_loc, d_dpsi)
-    A(1, 1) = d_dpsi(3)
-    A(1, 2) = d_dpsi(5)
-    A(2, 2) = d_dpsi(4)
-    A(2, 1) = A(1, 2)
-    B(1) = d_dpsi(1)
-    B(2) = d_dpsi(2)
-    det = (A(1, 1)*A(2, 2)) - (A(1, 2)*A(2, 1))
-    r_out = r_out - 1./det*(A(2, 2)*B(1) - A(1, 2)*B(2))
-    z_out = z_out - 1./det*(A(1, 1)*B(2) - A(2, 1)*B(1))
+    r_loc = 0.
+    z_loc = 0.
+    call expand_coeffs(coeff, r_loc, z_loc, u_out, d_dpsi)
+    hessian = d_dpsi(3)*d_dpsi(4) - d_dpsi(5)**2
+    r_loc = r_loc - (d_dpsi(4)*d_dpsi(1) - d_dpsi(5)*d_dpsi(2))/hessian
+    z_loc = z_loc - (d_dpsi(3)*d_dpsi(2) - d_dpsi(5)*d_dpsi(1))/hessian
 
-    call expand_coeffs(coeff, r_out, z_out, u_out, derivs)
-    derivs(1) = derivs(1)/dr
-    derivs(2) = derivs(2)/dz
-    derivs(3) = derivs(3)/dr**2
-    derivs(4) = derivs(4)/dz**2
-    derivs(5) = derivs(4)/(dr*dz)
-    r_out = r_out*dr + r_in
-    z_out = z_out*dz + z_in
+    call expand_coeffs(coeff, r_loc, z_loc, u_out, d_dpsi)
+    derivs(1) = d_dpsi(1)/dr
+    derivs(2) = d_dpsi(2)/dz
+    derivs(3) = d_dpsi(3)/dr**2
+    derivs(4) = d_dpsi(4)/dz**2
+    derivs(5) = d_dpsi(5)/(dr*dz)
+    r_out = r_loc*dr + r_in
+    z_out = z_loc*dz + z_in
 
     return
     end subroutine exact_biquad_regress

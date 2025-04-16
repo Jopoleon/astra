@@ -2617,7 +2617,7 @@ contains
     double precision :: curr, dum1, dum2, zum1, psistab1o, psistab2o, delr, delz, &
         S_00r, C_00r, S_00z, C_00z, temp_err
     double precision, dimension(6) :: ccc
-    double precision, dimension(8) :: ddipsi
+    double precision, dimension(5) :: ddipsi
     double precision, dimension(9) :: bub, xub, yub
     double precision, dimension(npassive) :: anglr, g0_r, g0_z
     double precision, dimension(258, 258) :: C_00, S_00

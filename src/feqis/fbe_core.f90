@@ -96,6 +96,7 @@ contains
             z_fourier(k) = 2./dz**2 * (costable(k-1) - 1.)
         enddo
     endif
+     
     gt1 = 0.
 ! Solve matrix
     do k=2, nz1
@@ -314,18 +315,18 @@ contains
     double precision, dimension(2*nr+2*nz) :: dgdn
 
     jcount = jcount_in
-    do j=2, nr1
+    do j=2, nr1 ! bottom
         jcount = jcount + 1
         dgdn(jcount-jcount_in) = green_in(j, 2) * green_bnd_f(jcount) * dr/dz * 1./Rrect(j)
-    enddo
+    enddo      ! right
     do j=2, nz1
         jcount = jcount + 1
         dgdn(jcount-jcount_in) = green_in(nr1, j) * green_bnd_f(jcount) * dz/dr * 2./(Rrect(nr2) + Rrect(nr1))
-    enddo
+    enddo      ! top
     do j=2, nr1
         jcount = jcount + 1
         dgdn(jcount-jcount_in) = green_in(j, nz1) * green_bnd_f(jcount) * dr/dz * 1./Rrect(j)
-    enddo
+    enddo      ! left
     do j=2, nz1
         jcount = jcount + 1
         dgdn(jcount-jcount_in) = green_in(2, j) * green_bnd_f(jcount) * dz/dr * 2./(Rrect(1) + Rrect(2))
@@ -337,23 +338,23 @@ contains
     end function bgint
 
 !---------------------------------------------------------------------
-    integer function xpoint_axis_connection(rx, zx, rax, zax, dr, dz)
+    integer function xpoint_axis_connection(rx, zx, r0_in, z0_in, dr, dz)
 
 !this routine checks that going from axis to x point,  the directed gradient of psi never changes sign
 !(otherwise it means the x point is not connected to the plasma
 
     use feqis_tools, only: interp2d_psi
 
-    double precision,  intent(in) :: rx, zx, rax, zax, dr, dz
+    double precision,  intent(in) :: rx, zx, r0_in, z0_in, dr, dz
 
     integer :: nsteps, i
     double precision :: angl, cos_ang, sin_ang, norm, dgrid, dd, &
         t1, t2, t3, t4, z1, z2, z3, psiold
 
-    angl = ATAN2(rx - rax, zx - zax)
+    angl = ATAN2(rx - r0_in, zx - z0_in)
     cos_ang = COS(angl)
     sin_ang = SIN(angl)
-    norm = sqrt((rx - rax)**2 + (zx - zax)**2)
+    norm = sqrt((rx - r0_in)**2 + (zx - z0_in)**2)
     dgrid = sqrt(dr**2 + dz**2)
     nsteps = nint(norm/dgrid)
     dd = norm/nsteps !perfect ratio
@@ -361,10 +362,10 @@ contains
     xpoint_axis_connection = 1
     psiold = 0.
     do i=2, nsteps
-        t1 = rax + dd*(i - 1)*cos_ang
-        t2 = zax + dd*(i - 1)*sin_ang
-        t3 = rax + dd*i*cos_ang
-        t4 = zax + dd*i*sin_ang
+        t1 = r0_in + dd*(i - 1)*cos_ang
+        t2 = z0_in + dd*(i - 1)*sin_ang
+        t3 = r0_in + dd*i*cos_ang
+        t4 = z0_in + dd*i*sin_ang
         z1 = interp2d_psi(t1, t2, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         z2 = interp2d_psi(t3, t4, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         z3 = (z2 - z1)*psiold
@@ -570,13 +571,12 @@ contains
         i = i + 1
         if (i > n_of_xpoints) EXIT xpoints_loop
         if (r_xpoint(i) >= 1.e5) then
-            if (n_of_xpoints == 1) then
-                n_of_xpoints = 0
+            n_of_xpoints = n_of_xpoints - 1
+            if (n_of_xpoints == 0) then
                 EXIT xpoints_loop
             endif
-            r_xpoint(i:n_of_xpoints-1) = r_xpoint(i+1:n_of_xpoints)
-            z_xpoint(i:n_of_xpoints-1) = z_xpoint(i+1:n_of_xpoints)
-            n_of_xpoints = n_of_xpoints - 1
+            r_xpoint(i:n_of_xpoints) = r_xpoint(i+1:n_of_xpoints+1)
+            z_xpoint(i:n_of_xpoints) = z_xpoint(i+1:n_of_xpoints+1)
             i = i - 1
             CYCLE xpoints_loop
         endif
@@ -587,9 +587,9 @@ contains
 
                 r_xpoint(k) = 0.5*(r_xpoint(i) + r_xpoint(k))
                 z_xpoint(k) = 0.5*(z_xpoint(i) + z_xpoint(k))
-                r_xpoint(i:n_of_xpoints-1) = r_xpoint(i+1:n_of_xpoints)
-                z_xpoint(i:n_of_xpoints-1) = z_xpoint(i+1:n_of_xpoints)
                 n_of_xpoints = n_of_xpoints - 1
+                r_xpoint(i:n_of_xpoints) = r_xpoint(i+1:n_of_xpoints+1)
+                z_xpoint(i:n_of_xpoints) = z_xpoint(i+1:n_of_xpoints+1)
                 i = i - 1
                 CYCLE xpoints_loop
             endif
