@@ -87,7 +87,7 @@ def json_concat(expequ):
             if 'dims' in val.keys():
                 if np.prod(val['dims']) == 0:
                     continue
-            if key not in ('rho_tor', 'teta2d'):
+            if key not in ('rho_tor_norm', 'teta2d'):
                 if j_json == 1:
                     if type(dat) == type([]): # list
                         if len(dat) > 0:
@@ -110,7 +110,7 @@ def json_concat(expequ):
 
     nt = j_json - 1
     nx   = astra_d['XRHO']['dims'][0]
-    n_eq = equil_d['rho_tor']['dims'][0]
+    n_eq = equil_d['rho_tor_norm']['dims'][0]
     n_th = equil_d['teta2d']['dims'][0]
     nR   = equil_d['r2d']['dims'][0]
     nZ   = equil_d['z2d']['dims'][0]
@@ -156,9 +156,9 @@ def json_concat(expequ):
     time.long_name = 'Time'
 
     rho_surf = f.createVariable('RHO_SURF', dtyp, ('RHO_SURF', ))
-    rho_surf.data = np.array(equil_d['rho_tor']['data'], dtype=dtyp)
+    rho_surf.data = np.array(equil_d['rho_tor_norm']['data'], dtype=dtyp)
     rho_surf.units = '-'
-    rho_surf.long_name = equil_d['rho_tor']['long_name']
+    rho_surf.long_name = equil_d['rho_tor_norm']['long_name']
 
     theta = f.createVariable('THETA', dtyp, ('THETA', ))
     theta.data = np.array(equil_d['teta2d']['data'], dtype=dtyp)
