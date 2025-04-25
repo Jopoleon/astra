@@ -35,6 +35,19 @@ double precision, dimension(:), allocatable :: green_bnd_f
 double precision, dimension(:, :), allocatable :: jrz
 double precision, dimension(:), allocatable :: rbnd, zbnd
 
+! reshape does transpose by default, order=(/2, 1/) restores the natural ordering
+
+double precision, dimension(9, 9), parameter :: A_inv = reshape( (/ &
+     0.25, -0.5,  0.25, -0.5,  1., -0.5,  0.25, -0.5, 0.25, &
+    -0.25,  0.5, -0.25,  0. ,  0.,  0. ,  0.25, -0.5, 0.25, &
+    -0.25,  0. ,  0.25,  0.5,  0., -0.5, -0.25,  0. , 0.25, &
+     0.25,  0. , -0.25,  0. ,  0.,  0. , -0.25,  0. , 0.25, &
+     0.  ,  0. ,  0.  ,  0.5, -1.,  0.5,  0.  ,  0. , 0.  , &
+     0.  ,  0.5,  0.  ,  0. , -1.,  0. ,  0.  ,  0.5, 0.  , &
+     0.  ,  0. ,  0.  , -0.5,  0.,  0.5,  0.  ,  0. , 0.  , &
+     0.  , -0.5,  0.  ,  0. ,  0.,  0. ,  0.  ,  0.5, 0.  , &
+     0.  ,  0. ,  0.  ,  0. ,  1.,  0. ,  0.  ,  0. , 0.  /), (/9, 9/), order=(/2, 1/) )
+
 contains
 
 !--------------------------------------------------------------------
@@ -130,19 +143,12 @@ contains
     end subroutine psi_external_calc
 
 !---------------------------------------------------------------------
-    subroutine nine_point_regression(i_in, j_in, r_out, z_out, psi_loc, hessian)
-
-    use feqis_tools, only: closest_index, exact_biquad
+    function getCoeffs(i_in, j_in) result(coeff)
 
     integer, intent(in) :: i_in, j_in
-    double precision, intent(out) :: r_out, z_out, psi_loc, hessian
 
     integer :: i, j, k
-    double precision :: r_loc, z_loc
-    double precision, dimension(9) :: psi9
-
-    r_loc = Rrect(i_in)
-    z_loc = Zrect(j_in)
+    double precision, dimension(9) :: psi9, coeff
 
     k = 0
     do j=-1, 1
@@ -151,44 +157,31 @@ contains
             psi9(k) = psirz(i_in+i, j_in+j)
         enddo
     enddo
-
-    call exact_biquad(r_loc, z_loc, psi9, r_out, z_out, psi_loc, hessian, dr, dz)
-
-    return
-    end subroutine nine_point_regression
-
-!---------------------------------------------------------------------
-    subroutine nine_point_coeffs_only(r_in, z_in, coeff, r_out, z_out)
-
-    use feqis_tools, only: closest_index, A_inv
-
-    double precision, intent(in) :: r_in, z_in
-    double precision, intent(out) :: r_out, z_out
-    double precision, intent(out), dimension(9) :: coeff
-
-    integer :: iloc, jloc, i, j, k
-    double precision, dimension(9) :: psi9
-
-    iloc = closest_index(r_in, Rrect(1), dr)
-    jloc = closest_index(z_in, Zrect(1), dz)
-    r_out = Rrect(iloc)
-    z_out = Zrect(jloc)
-
-!find true axis
-    k = 0
-    do j=-1, 1
-        do i=-1, 1
-            k = k + 1
-            psi9(k) = psirz(iloc+i, jloc+j)
-        enddo
-    enddo
-
     do k=1, 9
         coeff(k) = sum(A_inv(k, :) * psi9)
     enddo
-
+      
     return
-    end subroutine nine_point_coeffs_only
+    end function getCoeffs
+
+!---------------------------------------------------------------------
+    subroutine nine_point_regression(i_in, j_in, r_out, z_out, psi_loc, hessian)
+
+    use feqis_tools, only: exact_biquad
+
+    integer, intent(in) :: i_in, j_in
+    double precision, intent(out) :: r_out, z_out, psi_loc, hessian
+
+    double precision :: dr_out, dz_out
+    double precision, dimension(9) :: coeff
+
+    coeff = getCoeffs(i_in, j_in)
+    call exact_biquad(coeff, dr_out, dz_out, psi_loc, hessian, dr, dz)
+    r_out = Rrect(i_in) + dr_out
+    z_out = Zrect(j_in) + dz_out
+    
+    return
+    end subroutine nine_point_regression
 
 !---------------------------------------------------------------------
     subroutine nine_point_regression_follow(r_in, z_in, r_out, z_out, dpsi, psi_loc)
@@ -200,7 +193,9 @@ contains
     double precision, intent(out) :: r_out, z_out
     double precision, intent(out), dimension(5) :: dpsi
 
-    double precision, dimension(9) :: psi9
+    integer :: k
+    double precision :: dr_out, dz_out
+    double precision, dimension(9) :: psi9, coeff
 
     psi9(1) = interp2d_psi(r_in - dr, z_in - dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
     psi9(2) = interp2d_psi(r_in     , z_in - dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
@@ -211,8 +206,13 @@ contains
     psi9(7) = interp2d_psi(r_in - dr, z_in + dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
     psi9(8) = interp2d_psi(r_in     , z_in + dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
     psi9(9) = interp2d_psi(r_in + dr, z_in + dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
-
-    call exact_biquad_regress(r_in, z_in, psi9, r_out, z_out, psi_loc, dpsi, dr, dz)
+    
+    do k=1, 9
+        coeff(k) = sum(A_inv(k, :) * psi9)
+    enddo
+    call exact_biquad_regress(coeff, dr_out, dz_out, psi_loc, dpsi, dr, dz)
+    r_out = r_in + dr_out
+    z_out = z_in + dz_out
 
     return
     end subroutine nine_point_regression_follow
@@ -440,10 +440,8 @@ contains
 
     call nine_point_regression(i_in, j_in, pos_xpointR, pos_xpointZ, x1, hessian)
 
-    if ((pos_xpointR >= Rrect(i_in) - dr) .and.  &
-        (pos_xpointR <= Rrect(i_in) + dr) .and.  &
-        (pos_xpointZ >= Zrect(j_in) - dz) .and.  &
-        (pos_xpointZ <= Zrect(j_in) + dz) .and.  &
+    if ((pos_xpointR >= Rrect(i_in) - dr) .and. (pos_xpointR <= Rrect(i_in) + dr) .and.  &
+        (pos_xpointZ >= Zrect(j_in) - dz) .and. (pos_xpointZ <= Zrect(j_in) + dz) .and.  &
         (hessian <= 0.)) then
         if (abs(pos_xpointR - rax) > 2.*dr .or. abs(pos_xpointZ - zax) > 2.*dz) then
             n_of_xpoints = min(max_xpoints, n_of_xpoints + 1)
@@ -858,13 +856,14 @@ contains
 !--------------------------------------------------------------------
     subroutine solve_fbe_instantaneous(j_stab, raxold, zaxold)
 
-    use feqis_tools, only: closest_index
+    use feqis_tools, only: closest_index, expandCoeffs
 
     integer, intent(in) :: j_stab
     double precision, intent(in) :: raxold, zaxold
 
-    integer :: i, j
-    double precision :: dpsi_dr, dpsi_dz, zum1, zum2
+    integer :: i, j, iloc, jloc
+    double precision :: u_loc, zum1, zum2
+    double precision, dimension(5) :: dpsi
     double precision, dimension(9) :: coeff
 
     psiplasrz = get_psiplasrz()
@@ -874,16 +873,14 @@ contains
         psistabz = 0.
         call compound_psi
         call find_new_axis
-        call nine_point_coeffs_only(raxold, zaxold, coeff, zum1, zum2)
-        zum1 = (raxold - zum1)/dr
-        zum2 = (zaxold - zum2)/dz
-        dpsi_dr = 2.*coeff(1)*zum1*zum2**2 + 2.*coeff(2)*zum1*zum2 + &
-            coeff(3)*zum2**2 + coeff(4)*zum2 + 2*coeff(5)*zum1 + coeff(7)
-        dpsi_dz = 2.*coeff(1)*zum1**2*zum2 + coeff(2)*zum1**2 +  &
-            2.*coeff(3)*zum1*zum2 + coeff(4)*zum1 + 2.*coeff(6)*zum2 + coeff(8)
-        psistabr = -1./(2.*raxold)*dpsi_dr/dr
-        psistabz = -dpsi_dz/dz
-
+        iloc = closest_index(raxold, Rrect(1), dr)
+        jloc = closest_index(zaxold, Zrect(1), dz)
+        coeff = getCoeffs(iloc, jloc)
+        zum1 = (raxold - Rrect(iloc))/dr
+        zum2 = (zaxold - Zrect(jloc))/dz
+        call expandCoeffs(coeff, zum1, zum2, u_loc, dpsi)
+        psistabr = -dpsi(1)/(2.*raxold*dr)
+        psistabz = -dpsi(2)/dz
         call compound_psi
         do i=1, nr2
             do j=1, nz2
@@ -943,13 +940,11 @@ contains
             zaxold = zaxoldo
             psistab1o = psistabr
             psistab2o = psistabz
-
         CASE(2)
             raxold = raxoldo
             zaxold = zaxoldo + dist2
             dcrdr = (psistabr - psistab1o)/dist1
             dczdr = (psistabz - psistab2o)/dist1
-
         CASE(3) ! inverse of (dcrdr dcrdz  ; dczdr dczdz ) = ( dczdz -dcrdz ; -dczdr dcrdr)
             dcrdz = (psistabr - psistab1o)/dist2
             dczdz = (psistabz - psistab2o)/dist2

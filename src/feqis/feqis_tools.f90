@@ -2,19 +2,6 @@ module feqis_tools
 
 implicit none
 
-! reshape does transpose!
-
-double precision, dimension(9, 9), parameter :: A_inv = reshape( (/ &
-     0.25, -0.25, -0.25,  0.25,  0.00,  0.00,  0.00,  0.00,  0.00, &
-    -0.50,  0.50,  0.00,  0.00,  0.00,  0.50,  0.00, -0.50,  0.00, &
-     0.25, -0.25,  0.25, -0.25,  0.00,  0.00,  0.00,  0.00,  0.00, &
-    -0.50,  0.00,  0.50,  0.00,  0.50,  0.00, -0.50,  0.00,  0.00, &
-     1.00,  0.00,  0.00,  0.00, -1.00, -1.00,  0.00,  0.00,  1.00, &
-    -0.50,  0.00, -0.50,  0.00,  0.50,  0.00,  0.50,  0.00,  0.00, &
-     0.25,  0.25, -0.25, -0.25,  0.00,  0.00,  0.00,  0.00,  0.00, &
-    -0.50, -0.50,  0.00,  0.00,  0.00,  0.50,  0.00,  0.50,  0.00, &
-     0.25,  0.25,  0.25,  0.25,  0.00,  0.00,  0.00,  0.00,  0.00 /), (/9, 9/) )
-
 contains
 
 !---------------------------------------------------------------------
@@ -315,34 +302,28 @@ contains
     end subroutine transformRZ
     
 !---------------------------------------------------------------------
-    subroutine exact_biquad(r_in, z_in, u_in, r_out, z_out, u_out, hessian, dr, dz)
+    subroutine exact_biquad(coeff, dr_out, dz_out, u_out, hessian, dr, dz)
 
     use errors_params, only: err_find_biquad
 
     integer, parameter :: n_iter=100000
 
-    double precision, intent(in) :: dr, dz, r_in, z_in
-    double precision, intent(in), dimension(9) :: u_in
-    double precision, intent(out) :: r_out, z_out, u_out
+    double precision, intent(in) :: dr, dz
+    double precision, intent(in), dimension(9) :: coeff
+    double precision, intent(out) :: dr_out, dz_out, u_out
     double precision, intent(out) :: hessian
 
-    integer :: k, jiter
+    integer :: jiter
     double precision :: r_loc, z_loc
     double precision, dimension(5) :: d_dpsi, derivs
-    double precision, dimension(9) :: coeff
-
-! Find coefficients
-    do k=1, 9
-        coeff(k) = sum(A_inv(k, :) * u_in)
-    enddo
 
     r_loc = 0.
     z_loc = 0.
     do jiter=1, n_iter
         call expandCoeffs(coeff, r_loc, z_loc, u_out, d_dpsi)
         if (abs(d_dpsi(1)) < err_find_biquad .and. abs(d_dpsi(2)) < err_find_biquad) then ! Convergence
-            r_out = r_loc*dr + r_in
-            z_out = z_loc*dz + z_in
+            dr_out = r_loc*dr
+            dz_out = z_loc*dz
             derivs = getDerivs(d_dpsi, dr, dz)
             hessian = getHessian(derivs)
             return
@@ -352,8 +333,8 @@ contains
             EXIT
         endif
     enddo
-    r_out   =  1.e6
-    z_out   =  1.e6
+    dr_out  =  1.e6
+    dz_out  =  1.e6
     u_out   = -1.e6
     hessian =  1.e6
 
@@ -361,20 +342,15 @@ contains
     end subroutine exact_biquad
 
 !---------------------------------------------------------------------
-    subroutine exact_biquad_regress(r_in, z_in, u_in, r_out, z_out, u_out, derivs, dr, dz)
+    subroutine exact_biquad_regress(coeff, dr_out, dz_out, u_out, derivs, dr, dz)
 
-    double precision, intent(in) :: dr, dz, r_in, z_in
-    double precision, intent(in), dimension(9) :: u_in
-    double precision, intent(out) :: r_out, z_out, u_out
+    double precision, intent(in) :: dr, dz
+    double precision, intent(in), dimension(9) :: coeff
+    double precision, intent(out) :: dr_out, dz_out, u_out
     double precision, intent(out), dimension(5) :: derivs
 
-    integer :: k
     double precision :: hessian, r_loc, z_loc
-    double precision :: coeff(9), d_dpsi(5)
-
-    do k=1, 9
-        coeff(k) = sum(A_inv(k, :)*u_in)
-    enddo
+    double precision :: d_dpsi(5)
 
     r_loc = 0.
     z_loc = 0.
@@ -382,8 +358,8 @@ contains
     call transformRZ(r_loc, z_loc, d_dpsi, r_loc, z_loc)
     call expandCoeffs(coeff, r_loc, z_loc, u_out, d_dpsi)
     derivs = getDerivs(d_dpsi, dr, dz)
-    r_out = r_loc*dr + r_in
-    z_out = z_loc*dz + z_in
+    dr_out = r_loc*dr
+    dz_out = z_loc*dz
 
     return
     end subroutine exact_biquad_regress
