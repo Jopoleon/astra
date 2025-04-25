@@ -64,6 +64,7 @@ contains
     r1m_1 = Rrect(  2)/dr**2/((Rrect(  1) + Rrect(  2))/2.)
     r2m_1 = Rrect(nr1)/dr**2/((Rrect(nr1) + Rrect(nr2))/2.)
 
+    green_out = 0.
     green_out(2:nr1,   1) = greenBnd_in(1:nr)
     green_out(nr2, 2:nz1) = greenBnd_in(nr+1: nr+nz)
     green_out(2:nr1, nz2) = greenBnd_in(nr+nz+1: 2*nr+nz)
@@ -129,13 +130,12 @@ contains
     end subroutine psi_external_calc
 
 !---------------------------------------------------------------------
-    subroutine nine_point_regression(i_in, j_in, r_out, z_out, ddpsi, psi_loc)
+    subroutine nine_point_regression(i_in, j_in, r_out, z_out, psi_loc, hessian)
 
     use feqis_tools, only: closest_index, exact_biquad
 
     integer, intent(in) :: i_in, j_in
-    double precision, intent(out) :: r_out, z_out, psi_loc
-    double precision, intent(out), dimension(5) :: ddpsi
+    double precision, intent(out) :: r_out, z_out, psi_loc, hessian
 
     integer :: i, j, k
     double precision :: r_loc, z_loc
@@ -152,7 +152,7 @@ contains
         enddo
     enddo
 
-    call exact_biquad(r_loc, z_loc, psi9, r_out, z_out, psi_loc, ddpsi, dr, dz)
+    call exact_biquad(r_loc, z_loc, psi9, r_out, z_out, psi_loc, hessian, dr, dz)
 
     return
     end subroutine nine_point_regression
@@ -191,14 +191,14 @@ contains
     end subroutine nine_point_coeffs_only
 
 !---------------------------------------------------------------------
-    subroutine nine_point_regression_follow(r_in, z_in, r_out, z_out, ddpsi, psi_loc)
+    subroutine nine_point_regression_follow(r_in, z_in, r_out, z_out, dpsi, psi_loc)
 
     use feqis_tools, only: interp2d_psi, exact_biquad_regress
 
     double precision, intent(in) :: r_in, z_in
     double precision, intent(out) :: psi_loc
     double precision, intent(out) :: r_out, z_out
-    double precision, intent(out), dimension(5) :: ddpsi
+    double precision, intent(out), dimension(5) :: dpsi
 
     double precision, dimension(9) :: psi9
 
@@ -212,7 +212,7 @@ contains
     psi9(8) = interp2d_psi(r_in     , z_in + dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
     psi9(9) = interp2d_psi(r_in + dr, z_in + dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
 
-    call exact_biquad_regress(r_in, z_in, psi9, r_out, z_out, psi_loc, ddpsi, dr, dz)
+    call exact_biquad_regress(r_in, z_in, psi9, r_out, z_out, psi_loc, dpsi, dr, dz)
 
     return
     end subroutine nine_point_regression_follow
@@ -228,7 +228,7 @@ contains
     integer :: i, jinc, nx
     integer, dimension(250) :: jcycl
     double precision :: bx0, bx1, x1, posxR, posxZ
-    double precision, dimension(5) :: ddipsi
+    double precision, dimension(5) :: dpsi
 
     bx1 = sqrt(dr**2 + dz**2)
     rx = 1000.
@@ -244,7 +244,7 @@ contains
 
     do i=1, nbnd !cycle over boundary points
 !around each boundary point,  do a 3-layer X-point search (25 point search x boundary point)
-        call nine_point_regression_follow(rbnd(i), zbnd(i), posxR, posxZ, ddipsi, x1)
+        call nine_point_regression_follow(rbnd(i), zbnd(i), posxR, posxZ, dpsi, x1)
         if (.not. isnan(x1)) then
             if (posxR <= lim_maxR .and. posxR >= lim_minR .and. posxZ >= lim_minZ .and. posxZ <= lim_maxZ) then
                 jinc = jinc + 1
@@ -258,7 +258,7 @@ contains
         return
     endif
 
-    call nine_point_regression_follow(rbnd(jcycl(1)), zbnd(jcycl(1)), rx(1), zx(1), ddipsi, x1)
+    call nine_point_regression_follow(rbnd(jcycl(1)), zbnd(jcycl(1)), rx(1), zx(1), dpsi, x1)
     n_add = 1
 
     if (jinc == 1) then
@@ -268,7 +268,7 @@ contains
     if (jinc >= 2) then
 !remove double counts
         do i=2, jinc
-            call nine_point_regression_follow(rbnd(jcycl(i)), zbnd(jcycl(i)), posxR, posxZ, ddipsi, x1)
+            call nine_point_regression_follow(rbnd(jcycl(i)), zbnd(jcycl(i)), posxR, posxZ, dpsi, x1)
             bx0 = sqrt((rx(i-1) - posxR)**2 + (zx(i-1) - posxZ)**2)
             if (bx0 > bx1) then
                 n_add = n_add + 1
@@ -386,7 +386,7 @@ contains
     subroutine find_new_axis
 
     integer :: j, iax, jax, i_old, j_old, ijmax(2)
-    double precision, dimension(5) :: derivpsi
+    double precision :: hessian
 
 ! 1) find new magnetic axis
 
@@ -404,14 +404,14 @@ contains
     enddo
     iaxis = iax
     jaxis = jax
-    call nine_point_regression(iax, jax, rax, zax, derivpsi, psiaxis)
+    call nine_point_regression(iax, jax, rax, zax, psiaxis, hessian)
 
     if (isnan(rax)) then
         write(*, *) 'rax is nan in fbe find axis'
         stop
     endif
     if (rax < 0.1 .or. rax > 100) then
-        write(*, *) 'rax is out of boundaries in fbe find axis', rax, zax, derivpsi, psiaxis
+        write(*, *) 'rax is out of boundaries in fbe find axis', rax, zax, psiaxis, hessian
         stop
     endif
 
@@ -431,6 +431,29 @@ contains
 
     return
     end subroutine compound_psi
+  
+!--------------------------------------------------------------------
+    subroutine add_xpoint(i_in, j_in)
+
+    integer, intent(in) :: i_in, j_in
+    double precision :: pos_xpointR, pos_xpointZ, x1, hessian
+
+    call nine_point_regression(i_in, j_in, pos_xpointR, pos_xpointZ, x1, hessian)
+
+    if ((pos_xpointR >= Rrect(i_in) - dr) .and.  &
+        (pos_xpointR <= Rrect(i_in) + dr) .and.  &
+        (pos_xpointZ >= Zrect(j_in) - dz) .and.  &
+        (pos_xpointZ <= Zrect(j_in) + dz) .and.  &
+        (hessian <= 0.)) then
+        if (abs(pos_xpointR - rax) > 2.*dr .or. abs(pos_xpointZ - zax) > 2.*dz) then
+            n_of_xpoints = min(max_xpoints, n_of_xpoints + 1)
+            r_xpoint(n_of_xpoints) = pos_xpointR
+            z_xpoint(n_of_xpoints) = pos_xpointZ
+        endif
+    endif
+
+    return
+    end subroutine add_xpoint
 
 !--------------------------------------------------------------------
     subroutine find_psi_boundary
@@ -439,19 +462,20 @@ contains
     use errors_params, only: err_find_oxpoints_derivs
     use feqis_tools, only: closest_index, pol_angle, interp2d_psi
 
-    integer :: iaold, niter, i, j, k, i1, i4, i5, i9, n_adding, i_county
+    logical :: from_scratch
+    integer :: niter, i, j, k, i1, i4, i5, i9, n_adding
     double precision :: x1, x2, x5, pos_xpointR, pos_xpointZ
-    double precision, dimension(5) :: ddipsi
+    double precision, dimension(5) :: dpsi
     double precision, dimension(200) :: rx_add, zx_add
     double precision, dimension(500) :: psi_limp
     double precision, dimension(max_xpoints) :: psi_xpoint
 
-    data i_county/0/
-    save i_county
+    data from_scratch/.TRUE./
+    save from_scratch
 
     i_plasmatype = 0
 
-    if (n_of_xpoints == 0) i_county = 0 !reset to full search if there are no x points!
+    if (n_of_xpoints == 0) from_scratch = .TRUE. !reset to full search if there are no x points!
 
     call find_closest_xpoints(rx_add, zx_add, i9, n_adding)
     if (i9 == 0) then
@@ -460,16 +484,22 @@ contains
         n_of_xpoints = n_of_xpoints + n_adding
     endif
 
-    if (i_county == 1) then
-!go through old x-points and see where they end up
+    if (from_scratch) then ! do a full pass to find all X-points
+        n_of_xpoints = 0
+        do j=2, nz1
+            do i=2, nr1
+                call add_xpoint(i, j)
+            enddo
+        enddo
+    else
+! go through old x-points and see where they end up
         if (n_of_xpoints >= 1) then
-            iaold = n_of_xpoints
-            do i=1, iaold
+           do i=1, n_of_xpoints           
                 do niter=1, 101
-                    call nine_point_regression_follow(r_xpoint(i), z_xpoint(i), pos_xpointR, pos_xpointZ, ddipsi, x1)
+                    call nine_point_regression_follow(r_xpoint(i), z_xpoint(i), pos_xpointR, pos_xpointZ, dpsi, x1)
                     r_xpoint(i) = pos_xpointR
                     z_xpoint(i) = pos_xpointZ
-                    if ( (abs(ddipsi(1)) + abs(ddipsi(2))) <= err_find_oxpoints_derivs) then
+                    if ( (abs(dpsi(1)) + abs(dpsi(2))) <= err_find_oxpoints_derivs) then
 ! Check if point outside of domain
                         if ((pos_xpointR > Rrect(nr2) - dr) .or. (pos_xpointR < Rrect(1) + dr) .or.  &
                             (pos_xpointZ > Zrect(nz2) - dz) .or. (pos_xpointZ < Zrect(1) + dz)) then
@@ -506,63 +536,16 @@ contains
 ! Scan the boundary to find new x-points
         do j=2, nz1, nz1-2
             do i=2, nr1
-                call nine_point_regression(i, j, pos_xpointR, pos_xpointZ, ddipsi, x1)
-                x5 = (ddipsi(5)**2 - ddipsi(3)*ddipsi(4))
-                if ((pos_xpointR >= Rrect(i) - dr) .and.  &
-                    (pos_xpointR <= Rrect(i) + dr) .and.  &
-                    (pos_xpointZ >= Zrect(j) - dz) .and.  &
-                    (pos_xpointZ <= Zrect(j) + dz) .and.  &
-                    (x5 >= 0.)) then
-
-                    n_of_xpoints = min(max_xpoints, n_of_xpoints + 1)
-                    r_xpoint(n_of_xpoints) = pos_xpointR
-                    z_xpoint(n_of_xpoints) = pos_xpointZ
-                endif
+                call add_xpoint(i, j)
             enddo
         enddo
-
         do i=2, nr1, nr1-2
             do j=2, nz1
-                call nine_point_regression(i, j, pos_xpointR, pos_xpointZ, ddipsi, x1)
-                x5 = (ddipsi(5)**2 - ddipsi(3)*ddipsi(4))
-                if ((pos_xpointR >= Rrect(i) - dr) .and.  &
-                    (pos_xpointR <= Rrect(i) + dr) .and.  &
-                    (pos_xpointZ >= Zrect(j) - dz) .and.  &
-                    (pos_xpointZ <= Zrect(j) + dz) .and.  &
-                    (x5 >= 0.)) then
-
-                    n_of_xpoints = min(max_xpoints, n_of_xpoints + 1)
-                    r_xpoint(n_of_xpoints) = pos_xpointR
-                    z_xpoint(n_of_xpoints) = pos_xpointZ
-                endif
+                call add_xpoint(i, j)
             enddo
         enddo
-
     endif
-
-    if (i_county == 0) then ! do a full pass to find all X-points
-        n_of_xpoints = 0
-        do j=2, nz1
-            do i=2, nr1
-                call nine_point_regression(i, j, pos_xpointR, pos_xpointZ, ddipsi, x1)
-                x5 = (ddipsi(5)**2 - ddipsi(3)*ddipsi(4))
-
-                if ((pos_xpointR >= Rrect(i) - dr) .and.  &
-                    (pos_xpointR <= Rrect(i) + dr) .and.  &
-                    (pos_xpointZ >= Zrect(j) - dz) .and.  &
-                    (pos_xpointZ <= Zrect(j) + dz) .and.  &
-                    (x5 >= 0.)) then
-
-                    if (abs(pos_xpointR - rax) > 2.*dr .or. abs(pos_xpointZ - zax) > 2.*dz) then
-                        n_of_xpoints = min(max_xpoints, n_of_xpoints + 1)
-                        r_xpoint(n_of_xpoints) = pos_xpointR
-                        z_xpoint(n_of_xpoints) = pos_xpointZ
-                    endif
-                endif
-            enddo
-        enddo
-        i_county = 1
-    endif
+    from_scratch = .FALSE.
 
 ! Remove disappeared x-points and double counts
 

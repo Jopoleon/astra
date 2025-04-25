@@ -246,7 +246,7 @@ contains
     end function least_square_biquad
 
 !---------------------------------------------------------------------
-    subroutine expand_coeffs(coeff, r_in, z_in, u_out, deriv_out)
+    subroutine expandCoeffs(coeff, r_in, z_in, u_out, deriv_out)
 
     double precision, intent(in) :: r_in, z_in
     double precision, intent(in), dimension(9) :: coeff
@@ -270,10 +270,52 @@ contains
     deriv_out(5) = 4*coeff(1)*r_in*z_in + 2*coeff(2)*r_in + 2*coeff(3)*z_in + coeff(4)
 
     return
-    end subroutine expand_coeffs
+    end subroutine expandCoeffs
 
 !---------------------------------------------------------------------
-    subroutine exact_biquad(r_in, z_in, u_in, r_out, z_out, u_out, derivs, dr, dz)
+    double precision function getHessian(derivs)
+
+    double precision, intent(in), dimension(5) :: derivs
+    getHessian = derivs(3)*derivs(4) - derivs(5)**2
+
+    return
+    end function getHessian
+
+!---------------------------------------------------------------------
+    function getDerivs(derivs_in, dr, dz) result(derivs_out)
+
+    double precision, intent(in) :: dr, dz
+    double precision, dimension(5), intent(in) :: derivs_in
+
+    double precision, dimension(5) :: derivs_out
+
+    derivs_out(1) = derivs_in(1)/dr
+    derivs_out(2) = derivs_in(2)/dz
+    derivs_out(3) = derivs_in(3)/dr**2
+    derivs_out(4) = derivs_in(4)/dz**2
+    derivs_out(5) = derivs_in(5)/(dr*dz)
+    
+    return
+    end function getDerivs
+
+!---------------------------------------------------------------------
+    subroutine transformRZ(r_in, z_in, deriv_in, r_out, z_out)
+
+    double precision, intent(in) :: r_in, z_in
+    double precision, intent(in), dimension(5) :: deriv_in
+    double precision, intent(out) :: r_out, z_out
+
+    double precision :: hessian
+
+    hessian = getHessian(deriv_in)
+    r_out = r_in - (deriv_in(4)*deriv_in(1) - deriv_in(5)*deriv_in(2))/hessian
+    z_out = z_in - (deriv_in(3)*deriv_in(2) - deriv_in(5)*deriv_in(1))/hessian
+
+    return
+    end subroutine transformRZ
+    
+!---------------------------------------------------------------------
+    subroutine exact_biquad(r_in, z_in, u_in, r_out, z_out, u_out, hessian, dr, dz)
 
     use errors_params, only: err_find_biquad
 
@@ -282,11 +324,12 @@ contains
     double precision, intent(in) :: dr, dz, r_in, z_in
     double precision, intent(in), dimension(9) :: u_in
     double precision, intent(out) :: r_out, z_out, u_out
-    double precision, intent(out), dimension(5) :: derivs
+    double precision, intent(out) :: hessian
 
     integer :: k, jiter
-    double precision :: hessian, r_loc, z_loc
-    double precision :: coeff(9), d_dpsi(5)
+    double precision :: r_loc, z_loc
+    double precision, dimension(5) :: d_dpsi, derivs
+    double precision, dimension(9) :: coeff
 
 ! Find coefficients
     do k=1, 9
@@ -296,28 +339,23 @@ contains
     r_loc = 0.
     z_loc = 0.
     do jiter=1, n_iter
-        call expand_coeffs(coeff, r_loc, z_loc, u_out, d_dpsi)
+        call expandCoeffs(coeff, r_loc, z_loc, u_out, d_dpsi)
         if (abs(d_dpsi(1)) < err_find_biquad .and. abs(d_dpsi(2)) < err_find_biquad) then ! Convergence
-            derivs(1) = d_dpsi(1)/dr
-            derivs(2) = d_dpsi(2)/dz
-            derivs(3) = d_dpsi(3)/dr**2
-            derivs(4) = d_dpsi(4)/dz**2
-            derivs(5) = d_dpsi(5)/(dr*dz)
             r_out = r_loc*dr + r_in
             z_out = z_loc*dz + z_in
+            derivs = getDerivs(d_dpsi, dr, dz)
+            hessian = getHessian(derivs)
             return
         endif
-        hessian = d_dpsi(3)*d_dpsi(4) - d_dpsi(5)**2
-        r_loc = r_loc - 1/hessian*(d_dpsi(4)*d_dpsi(1) - d_dpsi(5)*d_dpsi(2))
-        z_loc = z_loc - 1/hessian*(d_dpsi(3)*d_dpsi(2) - d_dpsi(5)*d_dpsi(1))
+        call transformRZ(r_loc, z_loc, d_dpsi, r_loc, z_loc)
         if (abs(r_loc) > 1. .or. abs(z_loc) > 1) then
             EXIT
         endif
     enddo
-    r_out  =  1.e6
-    z_out  =  1.e6
-    u_out  = -1.e6
-    derivs =  1.e6
+    r_out   =  1.e6
+    z_out   =  1.e6
+    u_out   = -1.e6
+    hessian =  1.e6
 
     return
     end subroutine exact_biquad
@@ -340,17 +378,10 @@ contains
 
     r_loc = 0.
     z_loc = 0.
-    call expand_coeffs(coeff, r_loc, z_loc, u_out, d_dpsi)
-    hessian = d_dpsi(3)*d_dpsi(4) - d_dpsi(5)**2
-    r_loc = r_loc - (d_dpsi(4)*d_dpsi(1) - d_dpsi(5)*d_dpsi(2))/hessian
-    z_loc = z_loc - (d_dpsi(3)*d_dpsi(2) - d_dpsi(5)*d_dpsi(1))/hessian
-
-    call expand_coeffs(coeff, r_loc, z_loc, u_out, d_dpsi)
-    derivs(1) = d_dpsi(1)/dr
-    derivs(2) = d_dpsi(2)/dz
-    derivs(3) = d_dpsi(3)/dr**2
-    derivs(4) = d_dpsi(4)/dz**2
-    derivs(5) = d_dpsi(5)/(dr*dz)
+    call expandCoeffs(coeff, r_loc, z_loc, u_out, d_dpsi)
+    call transformRZ(r_loc, z_loc, d_dpsi, r_loc, z_loc)
+    call expandCoeffs(coeff, r_loc, z_loc, u_out, d_dpsi)
+    derivs = getDerivs(d_dpsi, dr, dz)
     r_out = r_loc*dr + r_in
     z_out = z_loc*dz + z_in
 
