@@ -103,11 +103,8 @@ contains
 
     imethod1 = 1
     if (imethod1 == 1) then
-        f_out = 0.
         do i=1, ndim
-            do j=1, ndim
-                f_out(i) = f_out(i) + f_in(j)*sintable(i, j)
-            enddo
+            f_out(i) = SUM(f_in(1:ndim)*sintable(i, 1:ndim))
         enddo
     else if (imethod1 == 2) then
 ! fast sine transform
@@ -510,15 +507,15 @@ contains
     double precision, dimension(Ngrid) :: f_out
 
     integer :: j, k
+    double precision :: den
     double precision, dimension(Ngrid) :: alpha, beta
 
     alpha(1) = C(1)/B(1)
     beta (1) = R(1)/B(1)
-    do j=2, Ngrid-1
-        alpha(j) = C(j)/(B(j) - A(j)*alpha(j-1))
-    enddo
     do j=2, Ngrid
-        beta(j) = (R(j) - A(j)*beta(j-1))/(B(j) - A(j)*alpha(j-1))
+        den = B(j) - A(j)*alpha(j-1)
+        alpha(j) = C(j)/den
+        beta(j) = (R(j) - A(j)*beta(j-1))/den
     enddo
 
 ! Note that boundary value is assumed to be on the main last grid point, so 1 - dx/2. This has to be

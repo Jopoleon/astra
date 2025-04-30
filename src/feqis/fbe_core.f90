@@ -103,8 +103,6 @@ contains
             A(i) =  Rrect(i+1)/x2/dr**2
             C(i) =  Rrect(i+1)/x1/dr**2
         enddo
-        A(nr) = 0.
-        C(1)  = 0.
         j_init = 1
         do k=2, nz1
             z_fourier(k) = 2./dz**2 * (costable(k-1) - 1.)
@@ -670,7 +668,7 @@ contains
     use global_params, only: iplasma
 
     integer :: i, j, i1, i2, j1, quadrant, ipluz, jpluz, &
-        ilast, totpoints, istart, j_griddo_j, i_griddo_j
+        ilast, totpoints, istart, j_griddo_j
     integer, dimension(nr2*nz2, 2) :: external_griddo_j
     double precision :: curr, darea, t1, t2, t3, t4, je1, je2, je3, je4, &
         z11, z12, z13
@@ -682,7 +680,6 @@ contains
     iconvex = 0.
     dumc    = 0.
     darea = dr*dz
-    i_griddo_j = 0
     j_griddo_j = 0
 
     totpoints = 0
@@ -728,7 +725,6 @@ contains
 
             dumc(i, j) = fill_in_current(Rrect(i), nrho2d, ppp_2d, ffp_2d, psi_n(i, j))
             iconvex(i, j) = 1.
-            i_griddo_j = i_griddo_j + 1
             t1 = (1. - psi_n(i + ipluz, j))/(psi_n(i, j) - psi_n(i + ipluz, j))
             t2 = (1. - psi_n(i, j + jpluz))/(psi_n(i, j) - psi_n(i, j + jpluz))
             if (t1 < 0 .or. t1 > 1.) t1 = 1.e6
@@ -737,7 +733,6 @@ contains
                 j_griddo_j = j_griddo_j + 1
                 external_griddo_j(j_griddo_j, 1) = i
                 external_griddo_j(j_griddo_j, 2) = j + jpluz
-                iconvex(i, j + jpluz) = 1.
             endif
 
             if (t1 > 1.e5) then
@@ -748,7 +743,6 @@ contains
                 j_griddo_j = j_griddo_j + 1
                 external_griddo_j(j_griddo_j, 1) = ilast
                 external_griddo_j(j_griddo_j, 2) = j
-                iconvex(ilast, j) = 1.
 ! Found boundary, go back, check vertically
                 i = istart
                 do
@@ -762,7 +756,6 @@ contains
                     j_griddo_j = j_griddo_j + 1
                     external_griddo_j(j_griddo_j, 1) = i
                     external_griddo_j(j_griddo_j, 2) = j + jpluz
-                    iconvex(i, j + jpluz) = 1.
 
                     i = i + ipluz
                     istart = i
@@ -771,8 +764,6 @@ contains
             endif
         enddo inner_loop
     enddo
-
-! Trick at boundary for ciurrent
 
 ! fill current in external griddo
     do i=1, j_griddo_j
@@ -807,13 +798,13 @@ contains
 ! if 4 points: C = 1 - (S1*S2 + S1*S3 + S3*S4 + S4*S2)/(4*dR*dZ)
 ! t_j = d_j /(dR or dZ depending on direction)
 
-        dumc(i1, i2) = t1*je1 + t2*je2 + t3*je3 + t4*je4 -  &
-            (t1*t2*(je1 + je2)/2. +  &
-             t1*t3*(je1 + je3)/2. +  &
-             t1*t4*(je1 + je4)/2. +  &
-             t2*t3*(je3 + je2)/2. +  &
-             t2*t4*(je4 + je2)/2. +  &
-             t3*t4*(je3 + je4)/2.)
+        dumc(i1, i2) = t1*je1 + t2*je2 + t3*je3 + t4*je4 - 0.5* &
+            (t1*t2*(je1 + je2) +  &
+             t1*t3*(je1 + je3) +  &
+             t1*t4*(je1 + je4) +  &
+             t2*t3*(je3 + je2) +  &
+             t2*t4*(je4 + je2) +  &
+             t3*t4*(je3 + je4) )
 
         iconvex(i1, i2) = t1 + t2 + t3 + t4 - (t1*t2 + t1*t3 + t1*t4 + t2*t3 + t2*t4 + t3*t4)
 
@@ -867,30 +858,22 @@ contains
     double precision, dimension(9) :: coeff
 
     psiplasrz = get_psiplasrz()
-
+    call compound_psi
     if (j_stab == 1) then
-        psistabr = 0.
-        psistabz = 0.
-        call compound_psi
-        call find_new_axis
         iloc = closest_index(raxold, Rrect(1), dr)
         jloc = closest_index(zaxold, Zrect(1), dz)
-        coeff = getCoeffs(iloc, jloc)
         zum1 = (raxold - Rrect(iloc))/dr
         zum2 = (zaxold - Zrect(jloc))/dz
+        coeff = getCoeffs(iloc, jloc)
         call expandCoeffs(coeff, zum1, zum2, u_loc, dpsi)
         psistabr = -dpsi(1)/(2.*raxold*dr)
         psistabz = -dpsi(2)/dz
-        call compound_psi
         do i=1, nr2
             do j=1, nz2
-                psirz(i, j) = psirz(i, j) + psistabr*Rrect(i)**2 + psistabz*Zrect(j) ! Total flux
+                psirz(i, j) = psirz(i, j) + psistabr*Rrect(i)**2 + psistabz*Zrect(j)
             enddo
         enddo
-    else
-        call compound_psi ! Total flux
     endif
-
     call find_new_axis
     call find_psi_boundary
     call new_jrz
