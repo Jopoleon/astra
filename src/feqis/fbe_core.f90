@@ -28,7 +28,7 @@ integer :: i_plasmatype !(0-limited, 1-single null, 2-double null)
 integer :: iaxis, jaxis, n_of_xpoints, active_x_point
 double precision :: psibnd, psiaxis, rax, zax, &
     alpsep, psistabR, psistabZ, dr_factor_init, dz_factor_init
-double precision, dimension(max_xpoints) :: r_xpoint, z_xpoint
+double precision, dimension(max_xpoints) :: r_xpoint, z_xpoint, psi_xpoint
 double precision, dimension(:), allocatable :: green_bnd_f
 
 ! plasma parameters
@@ -464,7 +464,6 @@ contains
     double precision, dimension(5) :: dpsi
     double precision, dimension(200) :: rx_add, zx_add
     double precision, dimension(500) :: psi_limp
-    double precision, dimension(max_xpoints) :: psi_xpoint
 
     data from_scratch/.TRUE./
     save from_scratch
@@ -670,7 +669,7 @@ contains
     integer :: i, j, i1, i2, j1, quadrant, ipluz, jpluz, &
         ilast, totpoints, istart, j_griddo_j
     integer, dimension(nr2*nz2, 2) :: external_griddo_j
-    double precision :: curr, darea, t1, t2, t3, t4, je1, je2, je3, je4, &
+    double precision :: curr, t1, t2, t3, t4, je1, je2, je3, je4, &
         z11, z12, z13
     double precision, dimension(nr2, nz2) :: iconvex
     double precision, dimension(nr2, nz2) :: dumc
@@ -679,16 +678,15 @@ contains
 
     iconvex = 0.
     dumc    = 0.
-    darea = dr*dz
     j_griddo_j = 0
+
+    i1 = floor_index(rax, Rrect(1), dr)
+    j1 = floor_index(zax, Zrect(1), dz)
 
     totpoints = 0
     do quadrant=1, 4
 ! sweep from axis to exterior and fill in the current
 !start from axis position
-
-        i1 = floor_index(rax, Rrect(1), dr)
-        j1 = floor_index(zax, Zrect(1), dz)
 
         SELECT CASE(quadrant)
         CASE(1)
@@ -727,15 +725,13 @@ contains
             iconvex(i, j) = 1.
             t1 = (1. - psi_n(i + ipluz, j))/(psi_n(i, j) - psi_n(i + ipluz, j))
             t2 = (1. - psi_n(i, j + jpluz))/(psi_n(i, j) - psi_n(i, j + jpluz))
-            if (t1 < 0 .or. t1 > 1.) t1 = 1.e6
-            if (t2 < 0 .or. t2 > 1.) t2 = 1.e6
             if (t2 > 0. .and. t2 <= 1.) then
                 j_griddo_j = j_griddo_j + 1
                 external_griddo_j(j_griddo_j, 1) = i
                 external_griddo_j(j_griddo_j, 2) = j + jpluz
             endif
 
-            if (t1 > 1.e5) then
+            if (t1 < 0 .or. t1 > 1.) then
 ! Move horizontally to the right
                 i = i + ipluz
             else
@@ -777,18 +773,13 @@ contains
         if (t2 < 0 .or. t2 > 1.) t2 = 0.
         if (t3 < 0 .or. t3 > 1.) t3 = 0.
         if (t4 < 0 .or. t4 > 1.) t4 = 0.
-
-        je1 = 0.
-        je2 = 0.
-        je3 = 0.
-        je4 = 0.
-        z11 = Rrect(i1-1)*(1 - t1) + Rrect(i1)*t1
+        z11 = Rrect(i1-1) + t1*dr
         z12 = Rrect(i1)
-        z13 = Rrect(i1+1)*(1 - t3) + Rrect(i1)*t3
-        if (t1 > 0.) je1 = ppp_2d(nrho2d)*z11 + ffp_2d(nrho2d)/z11
-        if (t2 > 0.) je2 = ppp_2d(nrho2d)*z12 + ffp_2d(nrho2d)/z12
-        if (t3 > 0.) je3 = ppp_2d(nrho2d)*z13 + ffp_2d(nrho2d)/z13
-        if (t4 > 0.) je4 = ppp_2d(nrho2d)*z12 + ffp_2d(nrho2d)/z12
+        z13 = Rrect(i1+1) - t3*dr
+        je1 = ppp_2d(nrho2d)*z11 + ffp_2d(nrho2d)/z11
+        je2 = ppp_2d(nrho2d)*z12 + ffp_2d(nrho2d)/z12
+        je3 = ppp_2d(nrho2d)*z13 + ffp_2d(nrho2d)/z13
+        je4 = je2
 
 ! defining S1 = dR - d1, S2 = dZ - d2, S3 = dZ - d3, S4 = dR - d4
 ! Jvacuum = C*Jb
@@ -819,7 +810,7 @@ contains
 
 !uncomment below for consistent current
 !jrz(1:nr2, 1:nz2)=dumc(1:nr2, 1:nz2)
-    curr = sum(jrz)*darea
+    curr = sum(jrz)*dr*dz
     jrz = jrz/curr*iplasma
 
     if (isnan(curr)) then
@@ -947,7 +938,7 @@ contains
 
         do j_iter=1, 10000
             call solve_fbe_instantaneous(1, raxold, zaxold)
-            temp_err = (abs(psro - psistabr) + abs(pszo - psistabz))
+            temp_err = abs(psro - psistabr) + abs(pszo - psistabz)
             if (temp_err <= err_find_psistab) EXIT
             psro = psistabr
             pszo = psistabz
