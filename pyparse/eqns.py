@@ -166,9 +166,6 @@ def cuasn(parse, bc='CU', neq=1):
  
     if 'MV' in parse.var_defined:
          logger.warning('MV is not used to define FV')
-#        cuas_txt += const_text.CUAS.mv1
-#        cuas_txt += pa.apptmp('MV', parse)
-#        cuas_txt += const_text.CUAS.mv2
     else:
         cuas_txt += 'FV(1: NA1) = 0.\n'
 
@@ -216,9 +213,6 @@ def cuas_uloop(parse, neq=1):
  
     if 'MV' in parse.var_defined:
          logger.warning('MV is not used to define FV')
-#        cuasu_txt += const_text.CUAS.mv1
-#        cuasu_txt += pa.apptmp('MV', parse)
-#        cuasu_txt += const_text.CUAS.mv2
     else:
         cuasu_txt += 'FV(1: NA1) = 0.\n'
 
@@ -513,9 +507,11 @@ def cueqn(parse):
     else:
         cueq_txt += 'YWD(J) = CUBS(J)\n'
 
-    cueq_txt += 'YWD(J) = YWD(J)*YD/(IPOL(J)**3*G33(J))\n'
-    cueq_txt += 'YWB(J) = 0.4*GP*CC(J)*YC/IPOL(J)**2\n'
-    cueq_txt += 'enddo\n'
+    cueq_txt += '''
+YWD(J) = YWD(J)*YD/(IPOL(J)**3*G33(J))
+YWB(J) = 0.4*GP*CC(J)*YC/IPOL(J)**2
+enddo
+'''
 
     if 'UEXT' not in parse.var_defined and 'LEXT' not in parse.var_defined and 'IPL' in parse.var_defined:
         cueq_txt += const_text.CUEQN.prescribed_ipl
@@ -529,10 +525,9 @@ def cueqn(parse):
     if 'LEXT' in parse.var_defined:
         cueq_txt += 'PSIFB = PSIEXT - PSPLEX*dfpdrbm12\n'
 
-    cueq_txt += 'do J=1, NA1\n'
-
     cueq_txt += \
-'''UPL(J) = (FP(J) - FPO(J))/TAU - YQDCMF(J)
+'''do J=1, NA1
+UPL(J) = (FP(J) - FPO(J))/TAU - YQDCMF(J)
 ! this is dpsi/dt_rho. to get dpsi/dt_x full
 !(so boundary values is dpsi/dt_x=1), one needs to add yqdcmf. Or simply compute it as dFP(NA1)/dt.
 !If ADCMPF = 0, the second term is zero (not recommended)
@@ -748,9 +743,7 @@ def tetieqn(parse):
         txt += '+ GN2E*CN(J)'
     teti += txt + '\n'
     teti += 'YWD(J) = YWD(J)*(NE(J+1) + NE(J))*0.5 + GN2E*GNX(J)*SLAT(J)/G11(J)\n'
-
     teti += 'enddo\n'
-
     teti += 'do J=1, NA1\n'
     if 'PET' not in var_defined:
         teti += 'PET(J) = 0.\n'

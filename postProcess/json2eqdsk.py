@@ -17,7 +17,7 @@ awd = os.getenv('AWD')
 if awd is None:
     awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
-
+flt = np.float32
 coco_dpsi_sign = [1, 1, -1, -1, 1, 1, -1, -1]
 
 
@@ -78,12 +78,12 @@ def json2eqdsk(f_json, nR=129, nZ=257, cocos_out=7):
     geq['NH'] = nZ
     
 # 1d profiles
-    f_dia   = np.array(json_d['equil']['f_dia']['data']   , dtype=np.float32)
-    ffprime = np.array(json_d['equil']['ffprime']['data'] , dtype=np.float32)
-    pprime  = np.array(json_d['equil']['pprime']['data']  , dtype=np.float32)
-    pres    = np.array(json_d['equil']['pressure']['data'], dtype=np.float32)
-    psi     = np.array(json_d['equil']['psi']['data']     , dtype=np.float32)
-    q       = np.array(json_d['equil']['q']['data']       , dtype=np.float32)
+    f_dia   = np.array(json_d['equil']['f_dia']['data']   , dtype=flt)
+    ffprime = np.array(json_d['equil']['ffprime']['data'] , dtype=flt)
+    pprime  = np.array(json_d['equil']['pprime']['data']  , dtype=flt)
+    pres    = np.array(json_d['equil']['pressure']['data'], dtype=flt)
+    psi     = np.array(json_d['equil']['psi']['data']     , dtype=flt)
+    q       = np.array(json_d['equil']['q']['data']       , dtype=flt)
 
     geq['SIMAG'] = ip_sgn*dpsi_sign*psi[0]
     geq['SIBRY'] = ip_sgn*dpsi_sign*psi[-1]

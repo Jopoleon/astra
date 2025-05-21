@@ -4,7 +4,6 @@ awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 
 def IncludedFML(fml_in):
-
     fml_out = []
     for formula in fml_in:
         ffml = '%s/fml/%s' %(awd, formula.lower())
@@ -23,13 +22,11 @@ class FML:
 
 
     def __init__(self, pieces, fml_list):
-
         self.allFML(pieces, fml_list)
         self.textBlock()
 
 
     def allFML(self, pieces, fml_list):
-
         self.fml_all = []
         fmls = [var.lower() for var in pieces if var.upper() in fml_list]
         self.rec_fml(fmls)
@@ -41,7 +38,6 @@ class FML:
 
 
     def rec_fml(self, fml_in):
-
         fmll = IncludedFML(fml_in)
         if fmll:
             self.fml_all += fmll
@@ -49,7 +45,6 @@ class FML:
 
 
     def textBlock(self):
-
         self.txt = ''
         for formula in self.fml_unique:
             ffml = '%s/fml/%s' %(awd, formula)

@@ -167,10 +167,12 @@ end subroutine POSTEP'''
         self.detvar  = const_text.DETVAR.header
         self.detvar += detv_time
         self.detvar += detv_sbr
-        self.detvar += '! **** Radial profile computation\n'
-        self.detvar += 'call markloc("detvar.tmp (profiles)")\n'
-        self.detvar += 'do jdetv = 1, NA1\n'
-        self.detvar += 'J = jdetv\n'
+        self.detvar += '''
+! **** Radial profile computation
+call markloc("detvar.tmp (profiles)")
+do jdetv = 1, NA1
+J = jdetv
+'''
         self.detvar += detv_rad
         self.detvar += 'enddo\n'
         self.detvar += const_text.DETVAR.rad_tail
@@ -196,9 +198,11 @@ end subroutine DETVAR_init
 #----------
 # model.txt
 
-        self.mtxt  = ' =====   Variables definition   =====\n'
-        self.mtxt += ' =====   Radial profiles output   =====\n'
-        self.mtxt += '  #  Scale  Name  Output expression\n'
+        self.mtxt  = '''
+ =====   Variables definition   =====
+ =====   Radial profiles output   =====
+  #  Scale  Name  Output expression
+'''
         for jvar, var in enumerate(parse.asnamer):
             if var:
                 out = var + '(r)'

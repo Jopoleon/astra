@@ -5,49 +5,33 @@ logger = logging.getLogger('as_parse.parse_as')
 #logger.setLevel(logging.DEBUG)
 logger.setLevel(logging.INFO)
 
-
 def doublise(sarg):
-
     if '.' in sarg:
-        if 'd' not in sarg and 'D' not in sarg and 'e' not in sarg and 'E' not in sarg:
-            c = sarg.split('.')[0]
-            sarg = sarg + 'd0'
-        elif 'e' in sarg:
-            sarg = sarg.replace('e', 'D')
-        elif 'E' in sarg:
-            sarg = sarg.replace('E', 'D')
-
+        if not any(x in sarg for x in 'dDeE'):
+            sarg += 'd0'
+        else:
+            sarg = sarg.replace('e', 'D').replace('E', 'D')
     return sarg
 
-
 def apptmp(lbl, parse):
-
     txt = ''
     var = lbl.split('|', 1)[0]
     if lbl in parse.right_hand_d.keys():
         line = '%s = %s\n' %(var, parse.right_hand_d[lbl])
         txt += LINE2FOR(line, parse)
-
     return txt
 
-
-def write_fortran(f_out, text, fortran='f90'):
+def write_fortran(f_out, text):
     '''Writing FORTRAN tmp files'''
 
     indent_step = 4
-    if fortran == 'f77':
-        indent0 = 6
-        line_break = '\n     &' + indent_step*' '
-        llen = 68
-    else:
-        indent0 = 0
-        line_break  = ' &\n' + indent_step*' '
-        llen = 110 #90
+    line_break  = ' &\n' + indent_step*' '
+    lineMaxlen = 110
 
     lines = text.split('\n')
 
 # Add proper indentation and line-breaking
-    indent = indent0
+    indent = 0
     with open(f_out, 'w') as f:
         lin_old = ''
         for line in lines:
@@ -67,18 +51,17 @@ def write_fortran(f_out, text, fortran='f90'):
             if lin_strip:
                 if lin_strip[0] == '!':
                    indented_line = line
-
-            line_out = add_line_break(indented_line, llen=llen, line_break=line_break)
+            line_out = add_line_break(indented_line, lineMaxlen=lineMaxlen, line_break=line_break)
             lin_old = lin_now
             f.write(line_out)
             f.write('\n')
     logger.info('Written file %s' %f_out)
 
 
-def add_line_break(line_in, llen=68, line_break='\n'):
+def add_line_break(line_in, lineMaxlen=68, line_break='\n'):
     '''Splitting lines to be usable FORTRAN code'''
 
-    if len(line_in) <= llen:
+    if len(line_in) <= lineMaxlen:
         line_out = line_in
     else:
         pieces = rec_split(line_in, syms='+ |- |* |/|(|)|,')
@@ -87,7 +70,7 @@ def add_line_break(line_in, llen=68, line_break='\n'):
         leng_line = n_left_blanks
         for piece in pieces:
             leng_line += len(piece)
-            if leng_line <= llen:
+            if leng_line <= lineMaxlen:
                 line_out += piece
             else:
                 line_out += line_break + piece
@@ -97,13 +80,15 @@ def add_line_break(line_in, llen=68, line_break='\n'):
 
 def rec_split(line_in, syms='+|-|*|/|(|)|,|='):
     '''Regex split with several delimiters'''
-
     line_in = line_in.upper()
-    syms2 = '('
-    for sym in syms.split('|')[:-1]:
-        syms2 += '\\' + sym + '|'
-    syms2 += '\\' + syms.split('|')[-1] + ')'
-    pieces = re.split(syms2, line_in)
+# Split the delimiter string into individual symbols
+    symbols = syms.split('|')
+# Escape each symbol to handle special regex characters
+    escaped_symbols = [re.escape(sym.strip()) for sym in symbols]
+    pattern = '(' + '|'.join(escaped_symbols) + ')'
+# Split the input line using the compiled pattern
+    pieces = re.split(pattern, line_in)
+# Strip whitespace and filter out empty strings
     return [x.strip() for x in pieces if x.strip()]
 
 
@@ -385,7 +370,7 @@ def ParseBracket(pieces_in, parse):
 
 
 def parse_pieces(pieces, parse):
-    '''Fortranise a block [func, '(', ...')'" into a string'''
+    '''Fortranise a block [func, '(', ..., ')'] into a string'''
 
     line_out = ''
     n_pieces = len(pieces)
