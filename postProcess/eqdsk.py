@@ -332,7 +332,7 @@ if __name__ == '__main__':
 
     feqdsk = '/shares/departments/AUG/users/git/python/maingui/28053_1.2003s.eqdsk'
 #    feqdsk = '23076W01.eqdsk'
-    feqdsk = '/shares/departments/AUG/users/git/a8//ncdf_out/aug34954test2.730.eqdsk'
+#    feqdsk = '/shares/departments/AUG/users/git/a8//ncdf_out/aug34954test2.730.eqdsk'
     eq = EQDSK()
     eq.read(feqdsk)
     eq.plot()
