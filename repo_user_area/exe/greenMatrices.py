@@ -2,7 +2,8 @@
 
 import os, logging, argparse, json
 import numpy as np
-import green_functions as gf
+from scipy.special import ellipk, ellipe
+from scipy.constants import mu_0
 
 
 fmt = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s: %(message)s', '%H:%M:%S')
@@ -12,8 +13,8 @@ if len(logger.handlers) == 0:
     hnd.setFormatter(fmt)
     logger.addHandler(hnd)
 
-#logger.setLevel(logging.DEBUG)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.INFO)
 
 loc_dir = os.path.dirname(os.path.realpath(__file__))
 awd = os.path.dirname(loc_dir)
@@ -21,8 +22,6 @@ grIOdir = '%s/exp/cnf' %awd
 
 gr_flt = np.float64
 gr_int = np.int32
-empty_fltarr = np.array([], dtype=gr_flt)
-empty_intarr = np.array([], dtype=gr_int)
 expfmt = '%15.8e'
 
 
@@ -32,6 +31,90 @@ def truncate(arr, ncols=3):
     arr_flat = arr.ravel()
     block = arr_flat[:ncols*nrows].reshape((nrows, ncols))
     return block, arr_flat[ncols*nrows:]
+
+def greenFunction(Rloc, Zloc, Rcoil, Zcoil):
+    sum_sq = (Rloc + Rcoil)**2 + (Zloc - Zcoil)**2
+    k_sq = np.clip(4.*Rloc*Rcoil/sum_sq, 0.0, 1.0)
+    pre_fac = np.sqrt(sum_sq)*0.25             # Consistent with ASTRA matrices
+    K = ellipk(k_sq)
+    E = ellipe(k_sq)
+    return pre_fac*((2. - k_sq)*K - 2.*E)
+
+def GreensBr_2piR(Rloc, Zloc, Rcoil, Zcoil, eps=1e-10):
+    z_zo_sq = (Zcoil - Zloc)**2
+    Rsq = Rcoil**2 + Rloc**2 
+    Rprod = 2*Rcoil*Rloc
+    sum_sq = Rsq + Rprod + z_zo_sq
+    rsum4 = np.minimum(2.*Rprod/sum_sq, 1)
+# 1/R is omitted because there's "* PFRzw(ki, 1)" in the fortran call
+# 2.*pi is omitted because there's a "TWOPI" in the fortran call
+    DS = np.maximum(Rsq - Rprod + z_zo_sq, eps)
+    return mu_0/np.sqrt(sum_sq)*(Zloc - Zcoil) *(-ellipk(rsum4) + (Rsq + z_zo_sq)/DS * ellipe(rsum4))
+
+def greenBoundary(Rgrid, Zgrid):
+    nr2 = len(Rgrid) - 2
+    nz2 = len(Zgrid) - 2
+    dr = (Rgrid[-2] - Rgrid[0])/nr2
+    dz = (Zgrid[-2] - Zgrid[0])/nz2
+    llp = 2*(nr2 + nz2)
+    der = np.concatenate((
+        np.full(nr2, dr, dtype=gr_flt), np.full(nz2, dz, dtype=gr_flt),
+        np.full(nr2, dr, dtype=gr_flt), np.full(nz2, dz, dtype=gr_flt)
+    ))
+
+    r_up = r_down = Rgrid[1:-1]
+    r_left  = np.full(nz2, Rgrid[ 0], dtype=gr_flt)
+    r_right = np.full(nz2, Rgrid[-1], dtype=gr_flt)
+    z_down  = np.full(nr2, Zgrid[ 0], dtype=gr_flt)
+    z_up    = np.full(nr2, Zgrid[-1], dtype=gr_flt)
+    z_left = z_right = Zgrid[1:-1]
+    rbnd = np.concatenate((r_down, r_right, r_up, r_left))
+    zbnd = np.concatenate((z_down, z_right, z_up, z_left))
+
+    gfm = np.zeros((llp, llp), dtype=gr_flt)
+    for j in range(llp-1):
+        gfm[j, j+1:] = greenFunction(rbnd[j], zbnd[j], rbnd[j+1:], zbnd[j+1:])
+    gfm += np.triu(gfm, 1).T # symmetrise matrix
+
+    tt = der/(rbnd*4)
+    diag_values = -tt*(np.log(tt) - 2.*np.log(2.) + 1.) * 2 * rbnd**2/der
+    np.fill_diagonal(gfm, diag_values)
+    return gfm
+
+def identity(R, dr, dz, ntype):
+# below replicates what is done in SPIDER (A. A. Ivanov and S. Yu. Medvedev, KIAM Preprint Nr 39, 2009 Moscow)
+    (ind1, ) = np.where(ntype == 1)
+    (ind2, ) = np.where(ntype == 2)
+    gfi = np.zeros_like(R)
+    if len(ind2) > 0:
+        gfi[ind2] = R[ind2]*(np.log(8.*R[ind2]/(0.2236*(dr[ind2] + dz[ind2]))) - 2.)/2. # From A. Kavin,  used in SPIDER (A. A. Ivanov and S. Yu. Medvedev, KIAM Preprint Nr 39, 2009 Moscow),  self inductance of a rectangular coil in toroidal direction
+    if len(ind1) > 0:
+        dl  = np.hypot(dr, dz)
+        for i in (-1, 0, 1):
+            for j in (-1, 0, 1):
+                if i == j:
+                    gfi[ind1] += (R[ind1] + dr[ind1]*i/3.) * (np.log( 8.*(R[ind1] + dr[ind1]*i/3.)/(dl[ind1]/3.) ) - 0.5)/2.
+                else:
+                    gfi[ind1] += greenFunction(R[ind1] + dr[ind1]*i/3., dz[ind1]*i/3., R[ind1] + dr[ind1]*j/3., dz[ind1]*j/3.)
+                
+        gfi[ind1] /= 9.
+    return gfi
+
+def nonIdentity(R1loc, Z1loc, R2, Z2, dr1, dz1, dr2, dz2, ntype1, ntype2):
+    (ind1, ) = np.where(ntype2 == 1)
+    (ind2, ) = np.where(ntype2 == 2)
+    ntype2range = {1: (-1, 0, 1), 2: (0,)}
+    irange = ntype2range[ntype1]
+    gf = np.zeros_like(R2)
+    for i in irange:
+        if len(ind1) > 0:
+            for j in (-1, 0, 1):
+                gf[ind1] += greenFunction(R1loc + dr1*i/3., Z1loc + dz1*i/3., R2[ind1] + dr2[ind1]*j/3., Z2[ind1] + dz2[ind1]*j/3.)
+        if len(ind2) > 0:
+            gf[ind2] += greenFunction(R1loc + dr1*i/3., Z1loc + dz1*i/3., R2[ind2], Z2[ind2])
+    if len(ind1) > 0:
+        gf[ind1] /= 3.
+    return gf/float(len(irange))
 
 
 class GREEN_MATRICES:
@@ -75,17 +158,15 @@ class GREEN_MATRICES:
         numeqcump   = np.zeros(self.nActive, dtype=gr_int)
         self.R_cond = np.zeros(self.nActive, dtype=gr_flt)
         self.Z_cond = np.zeros_like(self.R_cond)
-        for jcoil in range(nCoils):
-            jequiv = self.m_equiv[jcoil] - 1
-            self.R_cond[jequiv] += self.R_coil[jcoil]
-            self.Z_cond[jequiv] += self.Z_coil[jcoil]
-            numeqcump[jequiv] += 1
-        self.R_cond /= numeqcump
-        self.Z_cond /= numeqcump
+        for jequiv1 in range(1, self.nActive+1):
+            mask = self.m_equiv == jequiv1
+            if np.any(mask):
+                self.R_cond[jequiv1 - 1] = np.mean(self.R_coil[mask])
+                self.Z_cond[jequiv1 - 1] = np.mean(self.Z_coil[mask])
 
 # Coil resistivity
 
-        self.resConduc_diag = empty_fltarr
+        resConduc_diag = []
 
 # Limiter geometry
 
@@ -101,9 +182,10 @@ class GREEN_MATRICES:
         self.limRZ = (self.Rgrid[ilim_maxR], self.Rgrid[ilim_minR], self.Zgrid[ilim_maxZ], self.Zgrid[ilim_minZ])
         self.zLimPotential = np.zeros((self.nR, self.nZ), dtype=gr_int)
         self.zLimPotential[ilim_minR: ilim_maxR, ilim_minZ: ilim_maxZ] = 1
+        self.Rg, self.Zg = np.meshgrid(self.Rgrid, self.Zgrid)
 
 # Blanket
-        nConduc = self.nActive
+        self.nConduc = self.nActive
         if hasattr(self, 'x1'):
             x7 = self.x3 - self.x1
             x8 = self.x4 - self.x2
@@ -119,8 +201,8 @@ class GREEN_MATRICES:
             self.R_cond = np.append(self.R_cond[:self.nActive], self.R_blan)
             self.Z_cond = np.append(self.Z_cond[:self.nActive], self.Z_blan)
             if self.res_blan > 0:
-               self.resConduc_diag = np.append(self.resConduc_diag, self.res_blan*self.R_blan/area_blan*ssfw)
-            nConduc += n_blanket
+                resConduc_diag.extend(self.res_blan*self.R_blan/area_blan*ssfw)
+            self.nConduc += n_blanket
 
 # Blanketpc
 
@@ -128,25 +210,27 @@ class GREEN_MATRICES:
             self.R_cond = np.append(self.R_cond, self.R_blan_pc)
             self.Z_cond = np.append(self.Z_cond, self.Z_blan_pc)
             if self.res_blan < 0:
-                self.resConduc_diag = np.append(self.resConduc_diag, self.res_blan_pc)
-            nConduc += len(self.R_blan_pc)
+                resConduc_diag.extend(self.res_blan_pc)
+            self.nConduc += len(self.R_blan_pc)
+
+        self.resConduc_diag = np.array(resConduc_diag, dtype=gr_flt)
 
 # Ferromagnet stuff
 
         if hasattr(self, 'r0ferro'):
             self.angleferro = np.radians(self.angleferro)
         
-        logger.debug('nactive, ncoils, nconduc %d %d %d', self.nActive, nCoils, nConduc)
+        logger.debug('nactive, ncoils, nconduc %d %d %d', self.nActive, nCoils, self.nConduc)
 
 
-    def calcGreenf(self):
+    def setCoilProperties(self):
 
 #------
 # Coils
 
-        logger.info('Calculating Green functions')
-        nBlocks = 0
-        nConduc = 0
+        logger.info('Setting coil properties')
+        self.nBlocks = 0
+        self.nConduc = 0
         nCoils = len(self.R_coil)
 
         identcoil = np.ones(nCoils, dtype=bool)
@@ -176,23 +260,25 @@ class GREEN_MATRICES:
         equivtmp   = []
 
         for icoil in range(nCoils):
-            nBlocks += 1
             if identcoil[icoil]:
-                nConduc += 1
+                self.nConduc += 1
                 (ind, ) = np.where(self.m_equiv[icoil+1: nCoils] == self.m_equiv[icoil])
                 ind += icoil + 1   # correct array index
                 indk = np.append(icoil, ind)
                 identcoil[ind] = 0
                 for j in indk:
                     indij = indi[j]*indj[j]
-                    dRce  += indij*[dr_cs[j]] #list(dr_cs[j] + flt0_ij)
-                    dZce  += indij*[dz_ss[j]]
-                    tatmp += indij*[self.m_turns[j]/float(indij)]
-                    equivforce += indij*[j + 1]
-                    equivtmp   += indij*[nConduc]
+                    dRce.extend(indij*[dr_cs[j]]) #list(dr_cs[j] + flt0_ij)
+                    dZce.extend(indij*[dz_ss[j]])
+                    tatmp.extend(indij*[self.m_turns[j]/float(indij)])
+                    equivforce.extend(indij*[j])
+                    equivtmp.extend(indij*[self.nConduc-1])
+                    r_array = r1[j] + dr_cs[j] * np.arange(indi[j])
+                    z_array = z1[j] + dr_ss[j] * np.arange(indi[j])
                     for jj in range(indj[j]):
-                        Rce += list(r1[j] + dr_cs[j]*np.arange(indi[j]) + jj*dz_cs[j])
-                        Zce += list(z1[j] + dr_ss[j]*np.arange(indi[j]) + jj*dz_ss[j])
+                        Rce.extend(r_array + jj*dz_cs[j])
+                        Zce.extend(z_array + jj*dz_ss[j])
+        self.nBlocks += nCoils
         nctype = len(Rce)*[2]
 
 #--------
@@ -203,126 +289,132 @@ class GREEN_MATRICES:
             n_elem_blanket_pc = 9 # sub element of a blanket element, hardwired to 9 for now
             ind_pc = np.round(np.sqrt(n_elem_blanket_pc + 1.e-6)).astype(gr_int)
             dx = np.sqrt(self.area_blan_pc)/ind_pc
-            dx_area = dx**2/self.area_blan_pc
             ind_pc2 = ind_pc**2
-            nctype += ind_pc2*n_blanket_pc*[2]
+            dx_area = 1./ind_pc2
+            nctype.extend(ind_pc2*n_blanket_pc*[2])
             for j in range(n_blanket_pc):
-                nConduc += 1
-                nBlocks += 1
-                equivtmp   += ind_pc2*[nConduc]
-                equivforce += ind_pc2*[nBlocks]
-                dRce  += ind_pc2*[dx[j]]
-                dZce  += ind_pc2*[dx[j]]
-                tatmp += ind_pc2*[dx_area[j]]
+                self.nConduc += 1
+                self.nBlocks += 1
+                equivtmp.extend(ind_pc2*[self.nConduc-1])
+                equivforce.extend(ind_pc2*[self.nBlocks-1])
+                dRce.extend(ind_pc2*[dx[j]])
+                dZce.extend(ind_pc2*[dx[j]])
+                tatmp.extend(ind_pc2*[dx_area[j]])
                 for jjj in range(ind_pc):
-                    Zce += ind_pc*[self.Z_blan_pc[j] + jjj*dx[j]]
-                    Rce += list(self.R_blan_pc[j] + np.arange(ind_pc)*dx[j])
+                    Zce.extend(ind_pc*[self.Z_blan_pc[j] + jjj*dx[j]])
+                    Rce.extend(self.R_blan_pc[j] + np.arange(ind_pc)*dx[j])
 
         if hasattr(self, 'R_blan'):
             n_blanket = len(self.R_blan)
-            Rce  += list(self.R_blan)
-            Zce  += list(self.Z_blan)
-            dRce += list(self.dhoriz)
-            dZce += list(self.dvert)
-            nctype     += n_blanket*[1]
-            tatmp      += n_blanket*[1.]
-            equivtmp   += list(nConduc + np.arange(n_blanket) + 1)
-            equivforce += list(nBlocks + np.arange(n_blanket) + 1)
-            nConduc += n_blanket
-            nBlocks += n_blanket
+            Rce.extend(self.R_blan)
+            Zce.extend(self.Z_blan)
+            dRce.extend(self.dhoriz)
+            dZce.extend(self.dvert)
+            nctype.extend(n_blanket*[1])
+            tatmp.extend(n_blanket*[1.])
+            equivtmp.extend(  self.nConduc + np.arange(n_blanket))
+            equivforce.extend(self.nBlocks + np.arange(n_blanket))
+            self.nConduc += n_blanket
+            self.nBlocks      += n_blanket
 
-        ielem = len(tatmp)
-        Rce   = np.array(  Rce, dtype=gr_flt)
-        Zce   = np.array(  Zce, dtype=gr_flt)
-        dRce  = np.array( dRce, dtype=gr_flt)
-        dZce  = np.array( dZce, dtype=gr_flt)
-        tatmp = np.array(tatmp, dtype=gr_flt)
-        equivforce = np.array(equivforce, dtype=gr_int)
-        equivtmp   = np.array(  equivtmp, dtype=gr_int)
-        nctype     = np.array(    nctype, dtype=gr_int)
+        self.Rce   = np.array(  Rce, dtype=gr_flt)
+        self.Zce   = np.array(  Zce, dtype=gr_flt)
+        self.dRce  = np.array( dRce, dtype=gr_flt)
+        self.dZce  = np.array( dZce, dtype=gr_flt)
+        self.tatmp = np.array(tatmp, dtype=gr_flt)
+        self.equivforce = np.array(equivforce, dtype=gr_int)
+        self.equivtmp   = np.array(  equivtmp, dtype=gr_int)
+        self.nctype     = np.array(    nctype, dtype=gr_int)
 
-#-----------------
-# Self inductances
+
+    def calcGreenMatrices(self):
+
+        self.selfInductances()
+        self.gridInductances()
+        self.interBlockForces()
+        self.greenBnd = greenBoundary(self.Rgrid, self.Zgrid)
+        self.ferromagnets()
+
+
+    def selfInductances(self):
 
         logger.debug('self induct')
-        gf_diag = gf.identity(Rce, dRce, dZce, nctype)
+        gf_diag = identity(self.Rce, self.dRce, self.dZce, self.nctype)
+        ielem = len(self.tatmp)
 
-        self.indConduc = np.zeros((nConduc, nConduc))
+        self.indConduc = np.zeros((self.nConduc, self.nConduc))
         for i in range(ielem):
-            iii = equivtmp[i] - 1
-            self.indConduc[iii, iii] += gf_diag[i]*tatmp[i]**2
-            gf_ta = tatmp*gf.nonIdentity(Rce[i], Zce[i], Rce, Zce, dRce[i], dZce[i], dRce, dZce, nctype[i], nctype)
+            iii = self.equivtmp[i]
+            self.indConduc[iii, iii] += gf_diag[i]*self.tatmp[i]**2
+            gf_ta = self.tatmp*nonIdentity(self.Rce[i], self.Zce[i], self.Rce, self.Zce, self.dRce[i], self.dZce[i], self.dRce, self.dZce, self.nctype[i], self.nctype)
             for j in range(ielem):
                 if j != i:
-                    jjj = equivtmp[j] - 1
-                    self.indConduc[iii, jjj] += gf_ta[j]*tatmp[i]
+                    jjj = self.equivtmp[j]
+                    self.indConduc[iii, jjj] += gf_ta[j]*self.tatmp[i]
         self.indConduc *= 0.8*np.pi
 
-#-----------------
-# Grid inductances
 
-        logger.debug('grid induct')
+    def gridInductances(self):
+
+        logger.info('Grid inductances')
         nR = len(self.Rgrid)
         nZ = len(self.Zgrid)
-        dr = (self.Rgrid[-1] - self.Rgrid[0])/float(nR - 1)
-        dz = (self.Zgrid[-1] - self.Zgrid[0])/float(nZ - 1)
-
-        ntype2range = {1: (-1, 0, 1), 2: (0,)}
-        Rg, Zg = np.meshgrid(self.Rgrid, self.Zgrid)
-
-        self.greeni = np.zeros((nR, nZ, nConduc))
-        for i in range(ielem):
-            iii = equivtmp[i] - 1
-            irange = ntype2range[nctype[i]]
-            gf_off = np.zeros_like(Rg)
-            for iloc in irange: #nctype2=2
-                gf_off += gf.greenFunction(Rce[i] + dRce[i]*iloc/3.,
-                                           Zce[i] + dZce[i]*iloc/3.,
-                                           Rg.T, Zg.T)
-            self.greeni[:, :, iii] += gf_off*tatmp[i]
-            self.greeni[:, :, iii] /= len(irange)
+        self.greeni = np.zeros((nR, nZ, self.nConduc), dtype=gr_flt)
+        offsets = np.array([-1, 0, 1], dtype=gr_flt) / 3.
+        for i, nctyp in enumerate(self.nctype):
+            iii = self.equivtmp[i]
+            R0, Z0 = self.Rce[i], self.Zce[i]
+            dR, dZ = self.dRce[i], self.dZce[i]
+            scale  = self.tatmp[i]
+            if nctyp == 1:
+                Rlocs = R0 + dR * offsets
+                Zlocs = Z0 + dZ * offsets
+                gf_off = sum(greenFunction(Rloc, Zloc, self.Rg.T, self.Zg.T) for Rloc, Zloc in zip(Rlocs, Zlocs))
+                self.greeni[:, :, iii] += (gf_off / 3.) * scale
+            elif nctyp == 2:
+                gf_off = greenFunction(self.Rce[i], self.Zce[i], self.Rg.T, self.Zg.T)
+                self.greeni[:, :, iii] += gf_off * scale
         self.greeni *= 0.4
 
-#-------------------
-# Inter-block forces
 
-        logger.debug('forces')
-        self.dGreeniRpl = np.zeros((nR, nZ, nBlocks), dtype=gr_flt)
+    def interBlockForces(self):
+
+        logger.debug('forces %d', self.nBlocks)
+        nR = len(self.Rgrid)
+        nZ = len(self.Zgrid)
+        self.dGreeniRpl = np.zeros((nR, nZ, self.nBlocks), dtype=gr_flt)
         self.dGreeniZpl = np.zeros_like(self.dGreeniRpl)
-        self.dGreeniRj  = np.zeros((nBlocks, nBlocks), dtype=gr_flt)
+        self.dGreeniRj  = np.zeros((self.nBlocks, self.nBlocks), dtype=gr_flt)
         self.dGreeniZj  = np.zeros_like(self.dGreeniRj)
+        dr = (self.Rgrid[-1] - self.Rgrid[0])/float(nR - 1)
+        dz = (self.Zgrid[-1] - self.Zgrid[0])/float(nZ - 1)
+        ielem = len(self.tatmp)
 
         for i in range(ielem):
-            iii = equivforce[i] - 1
-            prefac_r = -0.8*np.pi*tatmp[i]/dr
-            prefac_z = -0.8*np.pi*tatmp[i]/dz
-            g_r1 = gf.greenFunction(Rce[i] + dr/2., Zce[i], Rce, Zce)
-            g_r2 = gf.greenFunction(Rce[i] - dr/2., Zce[i], Rce, Zce)
-            g_z1 = gf.greenFunction(Rce[i], Zce[i] + dz/2., Rce, Zce)
-            g_z2 = gf.greenFunction(Rce[i], Zce[i] - dz/2., Rce, Zce)
-            tar21 = tatmp*(g_r1 - g_r2)
-            taz21 = tatmp*(g_z1 - g_z2)
+            iii = self.equivforce[i]
+            prefac_r = -0.8*np.pi*self.tatmp[i]/dr
+            prefac_z = -0.8*np.pi*self.tatmp[i]/dz
+            g_r1 = greenFunction(self.Rce[i] + dr/2., self.Zce[i], self.Rce, self.Zce)
+            g_r2 = greenFunction(self.Rce[i] - dr/2., self.Zce[i], self.Rce, self.Zce)
+            g_z1 = greenFunction(self.Rce[i], self.Zce[i] + dz/2., self.Rce, self.Zce)
+            g_z2 = greenFunction(self.Rce[i], self.Zce[i] - dz/2., self.Rce, self.Zce)
+            tar21 = self.tatmp*(g_r1 - g_r2)
+            taz21 = self.tatmp*(g_z1 - g_z2)
             for j in range(ielem):
-                jjj = equivforce[j] - 1
+                jjj = self.equivforce[j]
                 if jjj != iii:
                     self.dGreeniRj[iii, jjj] += prefac_r*tar21[j]
                     self.dGreeniZj[iii, jjj] += prefac_z*taz21[j]
 
-            gr1 = gf.greenFunction(Rce[i] + dr/2., Zce[i], Rg, Zg)
-            gr2 = gf.greenFunction(Rce[i] - dr/2., Zce[i], Rg, Zg)
-            gz1 = gf.greenFunction(Rce[i], Zce[i] + dz/2., Rg, Zg)
-            gz2 = gf.greenFunction(Rce[i], Zce[i] - dz/2., Rg, Zg)
+            gr1 = greenFunction(self.Rce[i] + dr/2., self.Zce[i], self.Rg, self.Zg)
+            gr2 = greenFunction(self.Rce[i] - dr/2., self.Zce[i], self.Rg, self.Zg)
+            gz1 = greenFunction(self.Rce[i], self.Zce[i] + dz/2., self.Rg, self.Zg)
+            gz2 = greenFunction(self.Rce[i], self.Zce[i] - dz/2., self.Rg, self.Zg)
             self.dGreeniRpl[:, :, iii] += prefac_r*(gr1 - gr2)
             self.dGreeniZpl[:, :, iii] += prefac_z*(gz1 - gz2)
 
-#---------
-# Boundary
-
-        logger.debug('boundary')
-        self.greenBnd = gf.greenBoundary(self.Rgrid, self.Zgrid)
-
-#--------------
-# Ferromagnets
+                        
+    def ferromagnets(self):
 
         if hasattr(self, 'Lferro'):
             x1 = self.Lferro/self.Rcurvferro
@@ -429,15 +521,12 @@ def write_green(f_in, f_out):
     gm = GREEN_MATRICES()
     gm.fromMachineInput(f_in)
     if hasattr(gm, 'Rmin'):
-        gm.calcGreenf()
+        gm.setCoilProperties()
+        gm.calcGreenMatrices()
         gm.dumpMachineDescr(f_out=f_out)
 
     
 def main():
-
-#    parser = argparse.ArgumentParser(description='Write Green matrices for FEQIS')
-#    parser.add_argument('-t', '--tok', help='tokamak name', required=False, default='aug')
-#    args = parser.parse_args()
 
     for f_in in os.listdir(grIOdir):
         if os.path.splitext(f_in)[1] == '.json':
@@ -466,6 +555,7 @@ def main():
                         write_green(f_machineIn, f_machineOut)
                 else:
                     write_green(f_machineIn, f_machineOut)
+
 
 if __name__ == '__main__':
     main()
