@@ -539,7 +539,6 @@ def main():
                     t_out = os.stat(f_machineOut).st_mtime
                     t_in  = os.stat(f_machineIn).st_mtime
                     t_py1 = os.stat('%s/greenMatrices.py' %loc_dir).st_mtime
-                    t_py2 = os.stat('%s/green_functions.py' %loc_dir).st_mtime
                     fsize = os.path.getsize(f_machineOut)
                     if fsize == 0:
                         logger.info('File %s exists, but it has zero size. Removing', f_machineOut)
@@ -549,9 +548,6 @@ def main():
                         write_green(f_machineIn, f_machineOut)
                     elif t_py1 > t_out:
                         logger.info('exe/greenMatrifces.py newer than output file %s', f_machineOut)
-                        write_green(f_machineIn, f_machineOut)
-                    elif t_py2 > t_out:
-                        logger.info('exe/green_functions.py newer than output file %s', f_machineOut)
                         write_green(f_machineIn, f_machineOut)
                 else:
                     write_green(f_machineIn, f_machineOut)
