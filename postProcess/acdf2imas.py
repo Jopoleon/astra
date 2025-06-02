@@ -93,7 +93,13 @@ def fill_core_profiles(cv):
         cp1d[jt].ion[0].z_ion = np.float64(np.around(cv['ZMAIN'][jt, 0]))
         cp1d[jt].ion[0].density         = nd + e19m3_to_m3*cv['NIBM'][jt, :]
         cp1d[jt].ion[0].density_thermal = nd
+        cp1d[jt].ion[0].density_fast    = e19m3_to_m3*cv['NIBM'][jt, :]
         cp1d[jt].ion[0].temperature     = ti
+        cp1d[jt].ion[0].pressure_fast_perpendicular = cv['PBPER'][jt, :]
+        cp1d[jt].ion[0].pressure_fast_parallel      = cv['PBLON'][jt, :]
+        cp1d[jt].ion[0].element.resize(1)
+        cp1d[jt].ion[0].element[0].a   = np.mean(cv['AMAIN'][jt, :])
+        cp1d[jt].ion[0].element[0].z_n = np.mean(np.around(cv['ZMAIN'][jt, :]))
         jimp = 1
         for jion in range(n_ions_max):
             if jion > 0:
