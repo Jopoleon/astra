@@ -22,28 +22,27 @@ grIOdir = '%s/exp/cnf' %awd
 
 gr_flt = np.float64
 gr_int = np.int32
-expfmt = '%15.8e'
 
-def format_numpy_json(data, indent=0, indent_step=2, floatfmt="%.6e"):
+def format_numpy_json(data, indent=0, indent_step=2, fmt="%.6e"):
     pad = ' ' * indent
     next_pad = ' ' * (indent + indent_step)
     if isinstance(data, dict):
         items = []
         for i, (k, v) in enumerate(data.items()):
-            formatted = format_numpy_json(v, indent + indent_step, indent_step, floatfmt)
+            formatted = format_numpy_json(v, indent + indent_step, indent_step, fmt)
             items.append(f'{next_pad}"{k}": {formatted}')
         return "{\n" + ",\n".join(items) + f"\n{pad}}}"
     elif isinstance(data, (list, tuple, np.ndarray)):
         arr = np.array(data)
         if arr.ndim == 1:
-            items = [floatfmt % x if isinstance(x, float) else str(x) for x in arr]
+            items = [fmt % x if isinstance(x, float) else str(x) for x in arr]
             return "[" + ", ".join(items) + "]"
         else:
-            blocks = [format_numpy_json(sub, indent + indent_step, indent_step, floatfmt)
+            blocks = [format_numpy_json(sub, indent + indent_step, indent_step, fmt)
                       for sub in arr]
             return "[\n" + ",\n".join(next_pad + block for block in blocks) + f"\n{pad}]"
     elif isinstance(data, float):
-        return floatfmt % data
+        return fmt % data
     else:
         return str(data)
 
@@ -464,22 +463,17 @@ class GREEN_MATRICES:
     def dumpMachineJson(self, f_out='aug_description_full.json'):
 
         logger.debug('Dumping %s', f_out)
-        nR, nZ, nBlocks = self.dGreeniRpl.shape
-        nLimiter = len(self.Rlim)
-        nCoils   = len(self.R_coil)
         nConduc  = self.indConduc.shape[0]
-        nPassive = nConduc - self.nActive
-        data = { 'alpsep': self.alpsep,
-            'Rmin': self.Rgrid[0], 'Rmax': self.Rgrid[-1],
-            'Zmin': self.Zgrid[0], 'Zmax': self.Zgrid[-1] }
-        for lbl in (
+        data = { 'Rmin': self.Rgrid[0], 'Rmax': self.Rgrid[-1],
+                 'Zmin': self.Zgrid[0], 'Zmax': self.Zgrid[-1] }
+        for lbl in ( 'alpsep',
             'R_coil', 'Z_coil', 'dR_coil', 'dZ_coil', 'angh_coil', 'ang_coil', 'm_equiv',
-            'Rlim', 'Zlim', 'resConduc_diag',
-            'indConduc', 'resConduc', 'zLimPotential', 'greenBnd',
-            'greeni', 'dGreeniRj', 'dGreeniZj', 'dGreeniRpl', 'dGreeniZpl'):
+            'Rlim', 'Zlim', 'resConduc', 'resConduc_diag',
+            'indConduc', 'zLimPotential', 'greenBnd', 'greeni',
+            'dGreeniRj', 'dGreeniZj', 'dGreeniRpl', 'dGreeniZpl'):
             data[lbl] = getattr(self, lbl)
-        data['R_cond'] = self.R_cond[self.nActive: nPassive+self.nActive]
-        data['Z_cond'] = self.Z_cond[self.nActive: nPassive+self.nActive]
+        data['R_cond'] = self.R_cond[self.nActive: nConduc]
+        data['Z_cond'] = self.Z_cond[self.nActive: nConduc]
         data['lim_maxR'], data['lim_minR'], data['lim_maxZ'], data['lim_minZ'] = self.limRZ
         with open(f_out, 'w') as f:
             f.write(format_numpy_json(data))
