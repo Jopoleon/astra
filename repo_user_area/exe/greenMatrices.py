@@ -466,6 +466,7 @@ class GREEN_MATRICES:
         nConduc  = self.indConduc.shape[0]
         data = { 'Rmin': self.Rgrid[0], 'Rmax': self.Rgrid[-1],
                  'Zmin': self.Zgrid[0], 'Zmax': self.Zgrid[-1] }
+        data['lim_maxR'], data['lim_minR'], data['lim_maxZ'], data['lim_minZ'] = self.limRZ
         for lbl in ( 'alpsep',
             'R_coil', 'Z_coil', 'dR_coil', 'dZ_coil', 'angh_coil', 'ang_coil', 'm_equiv',
             'Rlim', 'Zlim', 'resConduc', 'resConduc_diag',
@@ -474,7 +475,6 @@ class GREEN_MATRICES:
             data[lbl] = getattr(self, lbl)
         data['R_cond'] = self.R_cond[self.nActive: nConduc]
         data['Z_cond'] = self.Z_cond[self.nActive: nConduc]
-        data['lim_maxR'], data['lim_minR'], data['lim_maxZ'], data['lim_minZ'] = self.limRZ
         with open(f_out, 'w') as f:
             f.write(format_numpy_json(data))
         logger.info('Stored machine file %s', f_out)

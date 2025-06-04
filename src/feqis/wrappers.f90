@@ -620,41 +620,41 @@ integer :: i, j, ii, jj, n_perim
 integer, dimension(:), allocatable :: n_sames
 double precision :: rmin, rmax, zmin, zmax
 character(len=120) :: fjson
-type(json_file) :: config
+type(json_file) :: green_json
 double precision, allocatable, dimension(:) :: vector_flt, resconduc_diag, rcond_passive, zcond_passive
 integer, allocatable, dimension(:) :: vector_int
 character(len=10) :: istr, jstr, ijstr
 
 fjson = 'exp/cnf/' // trim(machine) // '_description_full.json'
-call config%initialize()
-call config%load(filename=fjson)
-call config%get('Rmin', Rmin, found)
-call config%get('Rmax', Rmax, found)
-call config%get('Zmin', Zmin, found)
-call config%get('Zmax', Zmax, found)
-call config%get('alpsep', alpsep, found)
-call config%get('R_coil', rcoil, found)
-call config%get('Z_coil', zcoil, found)
-call config%get('dR_coil', drcoil, found)
-call config%get('dZ_coil', dzcoil, found)
-call config%get('ang_coil', anglecoil, found)
-call config%get('angh_coil', anglehcoil, found)
-call config%get('m_equiv', mequivalence, found)
-call config%get('lim_maxR', lim_maxR, found)
-call config%get('lim_minR', lim_minR, found)
-call config%get('lim_maxZ', lim_maxZ, found)
-call config%get('lim_minZ', lim_minZ, found)
-call config%get('Rlim', limiterr, found)
-call config%get('Zlim', limiterz, found)
-call config%get('resConduc_diag', resconduc_diag, found)
-call config%get('R_cond', rcond_passive, found)
-call config%get('Z_cond', zcond_passive, found)
+call green_json%initialize()
+call green_json%load(filename=fjson)
+call green_json%get('Rmin', Rmin, found)
+call green_json%get('Rmax', Rmax, found)
+call green_json%get('Zmin', Zmin, found)
+call green_json%get('Zmax', Zmax, found)
+call green_json%get('alpsep', alpsep, found)
+call green_json%get('R_coil', rcoil, found)
+call green_json%get('Z_coil', zcoil, found)
+call green_json%get('dR_coil', drcoil, found)
+call green_json%get('dZ_coil', dzcoil, found)
+call green_json%get('ang_coil', anglecoil, found)
+call green_json%get('angh_coil', anglehcoil, found)
+call green_json%get('m_equiv', mequivalence, found)
+call green_json%get('lim_maxR', lim_maxR, found)
+call green_json%get('lim_minR', lim_minR, found)
+call green_json%get('lim_maxZ', lim_maxZ, found)
+call green_json%get('lim_minZ', lim_minZ, found)
+call green_json%get('Rlim', limiterr, found)
+call green_json%get('Zlim', limiterz, found)
+call green_json%get('resConduc_diag', resconduc_diag, found)
+call green_json%get('R_cond', rcond_passive, found)
+call green_json%get('Z_cond', zcond_passive, found)
 
-call config%info('resConduc', found=found, n_children=nactive)
-call config%info('indConduc', found=found, n_children=nconduc)
-call config%info('zLimPotential'   , found=found, n_children=nr2)
-call config%info('zLimPotential(1)', found=found, n_children=nz2)
-call config%info('dGreeniRj(1)', found=found, n_children=nblocks)
+call green_json%info('resConduc', found=found, n_children=nactive)
+call green_json%info('indConduc', found=found, n_children=nconduc)
+call green_json%info('zLimPotential'   , found=found, n_children=nr2)
+call green_json%info('zLimPotential(1)', found=found, n_children=nz2)
+call green_json%info('dGreeniRj(1)', found=found, n_children=nblocks)
 
 nr1 = nr2 - 1
 nz1 = nz2 - 1
@@ -703,7 +703,7 @@ endif
 resconduc = 0.d0
 do i=1, nactive
     write(istr, '(I10)') i
-    call config%get('resConduc(' // trim(istr) // ')', vector_flt, found)
+    call green_json%get('resConduc(' // trim(istr) // ')', vector_flt, found)
     resconduc(i, 1:nactive) = vector_flt
 enddo
 do i=nactive+1, nconduc
@@ -711,38 +711,38 @@ do i=nactive+1, nconduc
 enddo
 do i=1, nconduc
     write(istr, '(I10)') i
-    call config%get('indConduc(' // trim(istr) // ')', vector_flt, found)
+    call green_json%get('indConduc(' // trim(istr) // ')', vector_flt, found)
     indconduc(i, :) = vector_flt
 enddo
 do i=1, n_perim
     write(istr, '(I10)') i
-    call config%get('greenBnd(' // trim(istr) // ')', vector_flt, found)
+    call green_json%get('greenBnd(' // trim(istr) // ')', vector_flt, found)
     green_bnd_f(i, :) = vector_flt
 enddo
 do i=1, nblocks
     write(istr, '(I10)') i
-    call config%get('dGreeniRj(' // trim(istr) // ')', vector_flt, found)
+    call green_json%get('dGreeniRj(' // trim(istr) // ')', vector_flt, found)
     dgreenirj(i, :) = vector_flt
-    call config%get('dGreeniZj(' // trim(istr) // ')', vector_flt, found)
+    call green_json%get('dGreeniZj(' // trim(istr) // ')', vector_flt, found)
     dgreenizj(i, :) = vector_flt
 enddo
 do i=1, nr2
     write(istr, '(I10)') i
-    call config%get('zLimPotential(' // trim(istr) // ')', vector_int, found)
+    call green_json%get('zLimPotential(' // trim(istr) // ')', vector_int, found)
     zlimpotential(i, :) = vector_int
     do j=1, nz2
         write(jstr, '(I10)') j
         ijstr = trim(adjustl(istr)) // ')(' // trim(adjustl(jstr)) // ')'
-        call config%get('greeni(' // trim(ijstr), vector_flt, found)
+        call green_json%get('greeni(' // trim(ijstr), vector_flt, found)
         greeni(i, j, :) = vector_flt
-        call config%get('dGreeniRpl(' // trim(ijstr), vector_flt, found)
+        call green_json%get('dGreeniRpl(' // trim(ijstr), vector_flt, found)
         dgreenirpl(i, j, :) = vector_flt
-        call config%get('dGreeniZpl(' // trim(ijstr), vector_flt, found)
+        call green_json%get('dGreeniZpl(' // trim(ijstr), vector_flt, found)
         dgreenizpl(i, j, :) = vector_flt
     enddo
 enddo
 
-call config%destroy()
+call green_json%destroy()
 
 allocate(n_sames(nactive))
 r_cond = 0.
