@@ -24,6 +24,28 @@ gr_flt = np.float64
 gr_int = np.int32
 expfmt = '%15.8e'
 
+def format_numpy_json(data, indent=0, indent_step=2, floatfmt="%.6e"):
+    pad = ' ' * indent
+    next_pad = ' ' * (indent + indent_step)
+    if isinstance(data, dict):
+        items = []
+        for i, (k, v) in enumerate(data.items()):
+            formatted = format_numpy_json(v, indent + indent_step, indent_step, floatfmt)
+            items.append(f'{next_pad}"{k}": {formatted}')
+        return "{\n" + ",\n".join(items) + f"\n{pad}}}"
+    elif isinstance(data, (list, tuple, np.ndarray)):
+        arr = np.array(data)
+        if arr.ndim == 1:
+            items = [floatfmt % x if isinstance(x, float) else str(x) for x in arr]
+            return "[" + ", ".join(items) + "]"
+        else:
+            blocks = [format_numpy_json(sub, indent + indent_step, indent_step, floatfmt)
+                      for sub in arr]
+            return "[\n" + ",\n".join(next_pad + block for block in blocks) + f"\n{pad}]"
+    elif isinstance(data, float):
+        return floatfmt % data
+    else:
+        return str(data)
 
 def truncate(arr, ncols=3):
     nx = np.prod(arr.shape)
@@ -315,7 +337,7 @@ class GREEN_MATRICES:
             equivtmp.extend(  self.nConduc + np.arange(n_blanket))
             equivforce.extend(self.nBlocks + np.arange(n_blanket))
             self.nConduc += n_blanket
-            self.nBlocks      += n_blanket
+            self.nBlocks += n_blanket
 
         self.Rce   = np.array(  Rce, dtype=gr_flt)
         self.Zce   = np.array(  Zce, dtype=gr_flt)
@@ -446,6 +468,32 @@ class GREEN_MATRICES:
                 self.mferro_ferro[:, :, i] = y3/y1
 
 
+    def dumpMachineJson(self, f_out='%s/aug_description_full.json' %grIOdir):
+
+        logger.debug('Dumping %s', f_out)
+        nR, nZ, nBlocks = self.dGreeniRpl.shape
+        nLimiter = len(self.Rlim)
+        nCoils   = len(self.R_coil)
+        nConduc  = self.indConduc.shape[0]
+        nPassive = nConduc - self.nActive
+        data = {
+            'alpsep': self.alpsep,
+            'Rmin': self.Rgrid[0], 'Rmax': self.Rgrid[-1], 'Zmin': self.Zgrid[0], 'Zmax': self.Zgrid[-1] }
+        for lbl in (
+            'R_coil', 'Z_coil', 'dR_coil', 'dZ_coil', 'angh_coil', 'ang_coil', 'm_equiv',
+            'Rlim', 'Zlim', 'resConduc_diag',
+            'indConduc', 'resConduc', 'zLimPotential',
+            'greeni', 'dGreeniRj', 'dGreeniZj', 'dGreeniRpl', 'dGreeniZpl'):
+            data[lbl] = getattr(self, lbl) #.ravel()
+        data['R_cond'] = self.R_cond[self.nActive: nPassive+self.nActive]
+        data['Z_cond'] = self.Z_cond[self.nActive: nPassive+self.nActive]
+        data['lim_maxR'], data['lim_minR'], data['lim_maxZ'], data['lim_minZ'] = self.limRZ
+        data['greenBnd'] = self.greenBnd.ravel()
+        with open(f_out, 'w') as f:
+            f.write(format_numpy_json(data))
+        logger.info('Stored machine file %s', f_out)
+
+
     def dumpMachineDescr(self, f_out='machine_description_out.aug'):
 
         logger.debug('Dumping %s', f_out)
@@ -490,11 +538,12 @@ class GREEN_MATRICES:
                     np.savetxt(f, tail , fmt=expfmt)
 
             f.write('%d\n' %nBlocks)
-            for jb in range(nBlocks):
-                np.savetxt(f, np.c_[self.dGreeniRj[:, jb], self.dGreeniZj[:, jb]], fmt=expfmt)
-            for jb in range(nBlocks):
-                for jz in range(nZ):
-                    np.savetxt(f, np.c_[self.dGreeniRpl[:, jz, jb], self.dGreeniZpl[:, jz, jb]], fmt=expfmt)
+            dGreeniRZj = np.c_[self.dGreeniRj.T.reshape(-1), self.dGreeniZj.T.reshape(-1)]
+            np.savetxt(f, dGreeniRZj, fmt=expfmt)
+            dGreeniRZpl = np.c_[
+                self.dGreeniRpl.transpose(2, 1, 0).reshape(-1),
+                self.dGreeniZpl.transpose(2, 1, 0).reshape(-1) ]
+            np.savetxt(f, dGreeniRZpl, fmt=expfmt)
 
             np.savetxt(f, self.zLimPotential.ravel(), fmt='%1d')
 
@@ -523,7 +572,8 @@ def write_green(f_in, f_out):
     if hasattr(gm, 'Rmin'):
         gm.setCoilProperties()
         gm.calcGreenMatrices()
-        gm.dumpMachineDescr(f_out=f_out)
+#        gm.dumpMachineDescr(f_out=f_out)
+        gm.dumpMachineJson()
 
     
 def main():

@@ -19,16 +19,16 @@ e19m3_to_m3  = 1e19
 keV_to_eV    = 1e3
 
 
-def ACDF2IMAS(args, write_ids=True):
+def ACDF2IMAS(args, write_ids=True, db='aug'):
 
     logger.info('Creating IDS structure')
 
     if args.ids_backend == 'HDF5':
-        db = imas.DBEntry(imas.imasdef.HDF5_BACKEND   , 'aug', args.shot, args.ids_run, os.getenv('IMASDB'), '3')
+        db = imas.DBEntry(imas.imasdef.HDF5_BACKEND   , db, args.shot, args.ids_run, os.getenv('IMASDB'), '3')
     elif args.ids_backend == 'MDS+':
-        db = imas.DBEntry(imas.imasdef.MDSPLUS_BACKEND, 'aug', args.shot, args.ids_run, os.getenv('IMASDB'), '3')
+        db = imas.DBEntry(imas.imasdef.MDSPLUS_BACKEND, db, args.shot, args.ids_run, os.getenv('IMASDB'), '3')
     elif args.ids_backend == 'ASCII':
-        db = imas.DBEntry(imas.imasdef.ASCII_BACKEND  , 'aug', args.shot, args.ids_run, os.getenv('IMASDB'), '3')
+        db = imas.DBEntry(imas.imasdef.ASCII_BACKEND  , db, args.shot, args.ids_run, os.getenv('IMASDB'), '3')
     status, _ = db.create()
 
     cv = netcdf_file(args.fcdf, 'r', mmap=False).variables
@@ -147,6 +147,7 @@ def fill_equilibrium(cv):
         for imas_lbl, sf_lbl in prof_map.items():
             eqt[itim].profiles_1d.__dict__[imas_lbl] = \
                 np.array(cv[sf_lbl][itim])
+        eqt[itim].profiles_1d.phi = cv['RHO_SURF'].data**2 * np.pi * cv['BTOR'][itim]*cv['ROC'][itim]
 
 # global quantities
 # this all assumes standard AUG shotfile writing starting from separatrix and moving towards axis
@@ -166,10 +167,11 @@ def fill_equilibrium(cv):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='CDF to IMAS conversion')
-    parser.add_argument('-f', '--fcdf', help='ASTRA NetCDF output (full path)', required=False, default='aug34954fluxes.CDF')
-    parser.add_argument('-i', '--ids_backend', help='IDS backend: HDF5, MDSPLUS or ASCII', required=False, default='HDF5')
-    parser.add_argument('-s', '--shot'   , type=int, help='Shot number', required=False, default=34954)
-    parser.add_argument('-r', '--ids_run', type=int, help='IDS run'    , required=False, default=6)
+    parser.add_argument('-f' , '--fcdf', help='ASTRA NetCDF output (full path)', required=False, default='aug34954fluxes.CDF')
+    parser.add_argument('-i' , '--ids_backend', help='IDS backend: HDF5, MDSPLUS or ASCII', required=False, default='HDF5')
+    parser.add_argument('-s' , '--shot', type=int, help='Shot number', required=False, default=34954)
+    parser.add_argument('-r' , '--ids_run', type=int, help='IDS run', required=False, default=6)
+    parser.add_argument('-db', '--database', help='IDS DataBase', required=False, default='aug')
     args = parser.parse_args()
 
     ACDF2IMAS(args)

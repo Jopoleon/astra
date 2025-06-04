@@ -59,7 +59,7 @@ clean:
 # Rules
 
 $(OBJ_DIR)%.o : $(SRC_DIR)%.f90
-	$(FC) $(FFLAGS) -I. -I$(MOD_DIR) -I$(MOD_FOR) -c $< -o $@
+	$(FC) $(FFLAGS) -I. -I$(MOD_DIR) -I$(MOD_FOR) -I$(JSON_INC) -c $< -o $@
 
 $(LIB): $(FEQ_MODOBJ) $(FEQ_LIBOBJ)
 	ar -u -rv $(LIB) $(FEQ_MODOBJ) $(FEQ_LIBOBJ)

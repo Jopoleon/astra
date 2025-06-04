@@ -610,23 +610,126 @@ use green_matrix, only: dgreenirj, dgreenizj, dgreenirpl, dgreenizpl
 use outcmn_inc, only: machine
 use transport2fbe, only: cur_init, use_isoflux, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
     voltage_limits_active_coils, sigma_isoflux
+use json_module, only : json_file
 
 implicit none
 
 type(type_ferromag), dimension(:), allocatable :: ferromag
-integer :: i, j, ii, jj, nferrosub, imagvalues, ngbnd
+logical :: found
+integer :: i, j, ii, jj, nferrosub, imagvalues
 integer, dimension(:), allocatable :: n_sames
 double precision :: rmin, rmax, zmin, zmax
-character(len=80) :: fname, dummy
+character(len=120) :: fjson
+type(json_file) :: config
+double precision, allocatable, dimension(:) :: vector_flt, resconduc_diag, rcond_passive, zcond_passive
+integer, allocatable, dimension(:) :: vector_int
+character(len=10) :: istr, jstr, ijstr
 
-fname = 'exp/cnf/machine_description_out.'//trim(machine)
-open(32, file=TRIM(fname))
-read(32, *) nr2, nz2
-read(32, *) rmin
-read(32, *) rmax
-read(32, *) zmin
-read(32, *) zmax
-read(32, *) alpsep
+fjson = 'exp/cnf/' // trim(machine) // '_description_full.json'
+call config%initialize()
+call config%load(filename=fjson)
+call config%get('Rmin', Rmin, found)
+call config%get('Rmax', Rmax, found)
+call config%get('Zmin', Zmin, found)
+call config%get('Zmax', Zmax, found)
+call config%get('alpsep', alpsep, found)
+call config%get('R_coil', rcoil, found)
+call config%get('Z_coil', zcoil, found)
+call config%get('dR_coil', drcoil, found)
+call config%get('dZ_coil', dzcoil, found)
+call config%get('ang_coil', anglecoil, found)
+call config%get('angh_coil', anglehcoil, found)
+call config%get('m_equiv', mequivalence, found)
+call config%get('lim_maxR', lim_maxR, found)
+call config%get('lim_minR', lim_minR, found)
+call config%get('lim_maxZ', lim_maxZ, found)
+call config%get('lim_minZ', lim_minZ, found)
+call config%get('greenBnd', green_bnd_f, found)
+call config%get('Rlim', limiterr, found)
+call config%get('Zlim', limiterz, found)
+call config%get('resConduc_diag', resconduc_diag, found)
+call config%get('R_cond', rcond_passive, found)
+call config%get('Z_cond', zcond_passive, found)
+
+call config%info('resConduc', found=found, n_children=nactive)
+call config%info('indConduc', found=found, n_children=nconduc)
+call config%info('zLimPotential'   , found=found, n_children=nr2)
+call config%info('zLimPotential(1)', found=found, n_children=nz2)
+call config%info('dGreeniRj(1)', found=found, n_children=nblocks)
+
+allocate(r_cond(nconduc), z_cond(nconduc))
+allocate(resconduc(nconduc, nconduc))
+allocate(indconduc(nconduc, nconduc), dgreenirj(nblocks, nblocks), dgreenizj(nblocks, nblocks))
+allocate(zlimpotential(nr2, nz2))
+allocate(greeni(nr2, nz2, nconduc))
+allocate(dgreenirpl(nr2, nz2, nblocks), dgreenizpl(nr2, nz2, nblocks))
+allocate(curconduc(nconduc))
+allocate(voltage(nconduc))
+allocate(voltage_old(nconduc))
+allocate(cur_con_old(nconduc))
+allocate(psiplasmatoconduc(nconduc))
+
+ncoils = SIZE(rcoil)
+nlimiter = SIZE(limiterr)
+npassive = nconduc - nactive
+
+resconduc = 0.d0
+do i=1, nactive
+    write(istr, '(I10)') i
+    call config%get('resConduc(' // trim(istr) // ')', vector_flt, found)
+    resconduc(i, 1:nactive) = vector_flt
+enddo
+do i=nactive+1, nconduc
+    resconduc(i, i) = resconduc_diag(i-nactive)
+enddo
+do i=1, nconduc
+    write(istr, '(I10)') i
+    call config%get('indConduc(' // trim(istr) // ')', vector_flt, found)
+    indconduc(i, :) = vector_flt
+enddo
+do i=1, nblocks
+    write(istr, '(I10)') i
+    call config%get('dGreeniRj(' // trim(istr) // ')', vector_flt, found)
+    dgreenirj(i, :) = vector_flt
+    call config%get('dGreeniZj(' // trim(istr) // ')', vector_flt, found)
+    dgreenizj(i, :) = vector_flt
+enddo
+do i=1, nr2
+    write(istr, '(I10)') i
+    call config%get('zLimPotential(' // trim(istr) // ')', vector_int, found)
+    zlimpotential(i, :) = vector_int
+    do j=1, nz2
+        write(jstr, '(I10)') j
+        ijstr = trim(adjustl(istr)) // ')(' // trim(adjustl(jstr)) // ')'
+        call config%get('greeni(' // trim(ijstr), vector_flt, found)
+        greeni(i, j, :) = vector_flt
+        call config%get('dGreeniRpl(' // trim(ijstr), vector_flt, found)
+        dgreenirpl(i, j, :) = vector_flt
+        call config%get('dGreeniZpl(' // trim(ijstr), vector_flt, found)
+        dgreenizpl(i, j, :) = vector_flt
+    enddo
+enddo
+
+call config%destroy()
+
+allocate(n_sames(nactive))
+r_cond = 0.
+z_cond = 0.
+n_sames = 0
+do i=1, ncoils
+    r_cond(mequivalence(i)) = r_cond(mequivalence(i)) + rcoil(i)
+    z_cond(mequivalence(i)) = z_cond(mequivalence(i)) + zcoil(i)
+    n_sames(mequivalence(i)) = n_sames(mequivalence(i)) + 1
+enddo
+do i=1, nactive
+    r_cond(i) = r_cond(i)/(0.+n_sames(i))
+    z_cond(i) = z_cond(i)/(0.+n_sames(i))
+enddo
+deallocate(n_sames)
+do i=1, npassive
+    r_cond(nactive+i) = rcond_passive(i)
+    z_cond(nactive+i) = zcond_passive(i)
+enddo
 nr1 = nr2 - 1
 nz1 = nz2 - 1
 nr  = nr1 - 1
@@ -654,134 +757,6 @@ do i=1, nz
         sintable(i, j) = sin(i*j*GPI/(nz + 1))
     enddo
 enddo
-
-! Load everything from file
-read(32, *) nactive, npassive
-read(32, *) ncoils
-allocate(rcoil(ncoils))
-allocate(zcoil(ncoils))
-allocate(drcoil(ncoils))
-allocate(dzcoil(ncoils))
-allocate(anglehcoil(ncoils))
-allocate(anglecoil(ncoils))
-allocate(mequivalence(ncoils))
-do i=1, ncoils
-    read(32, *) rcoil(i), zcoil(i), drcoil(i), dzcoil(i), anglehcoil(i), anglecoil(i), mequivalence(i)
-enddo
-read(32, *) nlimiter
-allocate(limiterr(nlimiter))
-allocate(limiterz(nlimiter))
-do i=1, nlimiter
-    read(32, *) limiterr(i), limiterz(i)
-enddo
-read(32, *) lim_maxR
-read(32, *) lim_minR
-read(32, *) lim_maxZ
-read(32, *) lim_minZ
-allocate(r_cond(nactive+npassive))
-allocate(z_cond(nactive+npassive))
-allocate(n_sames(nactive))
-r_cond = 0.
-z_cond = 0.
-n_sames = 0
-do i=1, ncoils
-    r_cond(mequivalence(i)) = r_cond(mequivalence(i)) + rcoil(i)
-    z_cond(mequivalence(i)) = z_cond(mequivalence(i)) + zcoil(i)
-    n_sames(mequivalence(i)) = n_sames(mequivalence(i)) + 1
-enddo
-do i=1, nactive
-    r_cond(i) = r_cond(i)/(0.+n_sames(i))
-    z_cond(i) = z_cond(i)/(0.+n_sames(i))
-enddo
-deallocate(n_sames)
-do i=1, npassive
-    read(32, *) r_cond(nactive+i), z_cond(nactive+i)
-enddo
-read(32, *) nconduc
-allocate(curconduc(nconduc))
-allocate(voltage(nconduc))
-allocate(voltage_old(nconduc))
-allocate(cur_con_old(nconduc))
-allocate(indconduc(nconduc, nconduc))
-allocate(resconduc(nconduc, nconduc))
-allocate(psiplasmatoconduc(nconduc))
-do i=1, nconduc
-    read(32, *) indconduc(i, 1:nconduc)
-enddo
-read(32, *) nactive, nconduc
-resconduc = 0.d0
-do i=1, nactive
-    read(32, *) (resconduc(i, j), j=1, nactive)
-enddo
-do i=nactive+1, nconduc
-    read(32, *) resconduc(i, i)
-enddo
-allocate(greeni(nr2, nz2, nconduc))
-do i=1, nconduc
-    do j=1, nr2
-        read(32, *) greeni(j, 1:nz2, i)
-    enddo
-enddo
-read(32, *) nblocks
-allocate(dgreenirj(nblocks, nblocks))
-allocate(dgreenizj(nblocks, nblocks))
-allocate(dgreenirpl(nr2, nz2, nblocks))
-allocate(dgreenizpl(nr2, nz2, nblocks))
-do j=1, nblocks
-    do i=1, nblocks
-        read(32, *) dgreenirj(i, j), dgreenizj(i, j)
-    enddo
-enddo
-do ii=1, nblocks
-    do j=1, nz2
-        do i=1, nr2
-            read(32, *) dgreenirpl(i, j, ii), dgreenizpl(i, j, ii)
-        enddo
-    enddo
-enddo
-allocate(zlimpotential(nr2, nz2))
-do jj=1, nz2
-    do ii=1, nr2
-        read(32, *) zlimpotential(ii, jj)
-    enddo
-enddo
-read(32, *) ngbnd
-allocate(green_bnd_f(ngbnd))
-read(32, *) green_bnd_f(1:ngbnd)
-
-read(32, *) nferromag
-if (nferromag >= 1) then
-    allocate(ferromag(nferromag))
-    do i=1, nferromag
-        read(32,*) nferrosub, imagvalues, ferromag(i)%position%sigma_surface 
-        ferromag(i)%position%npoints   = nferrosub
-        ferromag(i)%mhrelation%nvalues = imagvalues
-        allocate(ferromag(i)%position%r(nferrosub))
-        allocate(ferromag(i)%position%z(nferrosub))
-        allocate(ferromag(i)%position%tanangl(nferrosub))
-        allocate(ferromag(i)%position%length(nferrosub))
-        allocate(ferromag(i)%position%magnetizationchi(nferrosub))
-        allocate(ferromag(i)%position%Btangfield(nferrosub))
-        allocate(ferromag(i)%position%current(nferrosub))
-        allocate(ferromag(i)%mhrelation%chi(imagvalues))
-        allocate(ferromag(i)%mhrelation%h(imagvalues))
-        allocate(ferromag(i)%mutual_matrix%Mij(nferrosub, nferrosub))
-        do j=1, imagvalues
-            read(32, *) ferromag(i)%mhrelation%chi(j), ferromag(i)%mhrelation%h(j)
-        enddo
-        do j=1, nferrosub
-           read(32, *) ferromag(i)%position%r(j), ferromag(i)%position%z(j), &
-               ferromag(i)%position%tanangl(j), ferromag(i)%position%length(j)
-        enddo
-        do jj=1, nferrosub
-            do ii=1, nferrosub
-                read(32, *) ferromag(i)%mutual_matrix%Mij(ii, jj)
-            enddo
-        enddo
-    enddo
-endif
-
-close(32)
 
 ! assign initial currents from astra
 curconduc(1:nconduc) = cur_init(1:nconduc)
