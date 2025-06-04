@@ -661,6 +661,10 @@ nz1 = nz2 - 1
 nr  = nr1 - 1
 nz  = nz1 - 1
 n_perim = 2*nr + 2*nz
+ncoils = SIZE(rcoil)
+nlimiter = SIZE(limiterr)
+npassive = nconduc - nactive
+
 allocate(r_cond(nconduc), z_cond(nconduc))
 allocate(resconduc(nconduc, nconduc))
 allocate(indconduc(nconduc, nconduc), dgreenirj(nblocks, nblocks), dgreenizj(nblocks, nblocks))
@@ -673,10 +677,28 @@ allocate(voltage(nconduc))
 allocate(voltage_old(nconduc))
 allocate(cur_con_old(nconduc))
 allocate(psiplasmatoconduc(nconduc))
-
-ncoils = SIZE(rcoil)
-nlimiter = SIZE(limiterr)
-npassive = nconduc - nactive
+allocate(sintable(nz, nz))
+allocate(costable(nz))
+if (allocated(Rrect)) deallocate(Rrect)
+if (allocated(Zrect)) deallocate(Zrect)
+allocate(Rrect(nr2))
+allocate(Zrect(nz2))
+allocate(jrz(nr2, nz2))
+if (allocated(psirz)) deallocate(psirz)
+allocate(psirz(nr2, nz2))
+allocate(psiextrz(nr2, nz2))
+allocate(psiplasrz(nr2, nz2))
+allocate(psiferro(nr2, nz2))
+allocate(psi_n(nr2, nz2))
+allocate(psi_cur_old(nconduc))
+allocate(dpc(nconduc))
+allocate(voltage_limits_active_coils(nactive, 2))
+if (n_isoflux > 0 .and. not(allocated(r_isoflux))) then
+    allocate(r_isoflux(n_isoflux))
+    allocate(z_isoflux(n_isoflux))
+    allocate(which_x_point(n_isoflux))
+    allocate(sigma_isoflux(n_isoflux))
+endif
 
 resconduc = 0.d0
 do i=1, nactive
@@ -697,7 +719,6 @@ do i=1, n_perim
     call config%get('greenBnd(' // trim(istr) // ')', vector_flt, found)
     green_bnd_f(i, :) = vector_flt
 enddo
-
 do i=1, nblocks
     write(istr, '(I10)') i
     call config%get('dGreeniRj(' // trim(istr) // ')', vector_flt, found)
@@ -741,22 +762,14 @@ do i=1, npassive
     r_cond(nactive+i) = rcond_passive(i)
     z_cond(nactive+i) = zcond_passive(i)
 enddo
-if (allocated(Rrect)) deallocate(Rrect)
-if (allocated(Zrect)) deallocate(Zrect)
-allocate(Rrect(nr2))
-allocate(Zrect(nz2))
 do i=1, nr2
-    Rrect(i) = rmin + (i - 1.)*(rmax - rmin)/nr1     ! computational domain is r(2:nr + 1), boundaries are r(1) and r(nr + 2)
+    Rrect(i) = rmin + (i - 1.)*(rmax - rmin)/nr1
 enddo
 do i=1, nz2
     Zrect(i) = zmin + (i - 1.)*(zmax - zmin)/nz1
 enddo
 dr = Rrect(2) - Rrect(1)
 dz = Zrect(2) - Zrect(1)
-
-!some allocate
-allocate(sintable(nz, nz))
-allocate(costable(nz))
 
 do i=1, nz
     costable(i) = cos(i*GPI/(nz + 1))
@@ -768,26 +781,9 @@ enddo
 ! assign initial currents from astra
 curconduc(1:nconduc) = cur_init(1:nconduc)
 
-allocate(jrz(nr2, nz2))
-if (allocated(psirz)) deallocate(psirz)
-allocate(psirz(nr2, nz2))
 psirz = 0.
-allocate(psiextrz(nr2, nz2))
 psiextrz = 0.
-allocate(psiplasrz(nr2, nz2))
 psiplasrz = 0.
-allocate(psiferro(nr2, nz2))
-allocate(psi_n(nr2, nz2))
-allocate(psi_cur_old(nconduc))
-allocate(dpc(nconduc))
-allocate(voltage_limits_active_coils(nactive, 2))
-
-if (n_isoflux > 0 .and. not(allocated(r_isoflux))) then
-    allocate(r_isoflux(n_isoflux))
-    allocate(z_isoflux(n_isoflux))
-    allocate(which_x_point(n_isoflux))
-    allocate(sigma_isoflux(n_isoflux))
-endif
 
 return
 end subroutine equil_feqis_init_circ

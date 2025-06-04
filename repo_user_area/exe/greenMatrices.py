@@ -47,13 +47,6 @@ def format_numpy_json(data, indent=0, indent_step=2, floatfmt="%.6e"):
     else:
         return str(data)
 
-def truncate(arr, ncols=3):
-    nx = np.prod(arr.shape)
-    nrows = nx//ncols
-    arr_flat = arr.ravel()
-    block = arr_flat[:ncols*nrows].reshape((nrows, ncols))
-    return block, arr_flat[ncols*nrows:]
-
 def greenFunction(Rloc, Zloc, Rcoil, Zcoil):
     sum_sq = (Rloc + Rcoil)**2 + (Zloc - Zcoil)**2
     k_sq = np.clip(4.*Rloc*Rcoil/sum_sq, 0.0, 1.0)
@@ -468,7 +461,7 @@ class GREEN_MATRICES:
                 self.mferro_ferro[:, :, i] = y3/y1
 
 
-    def dumpMachineJson(self, f_out='%s/aug_description_full.json' %grIOdir):
+    def dumpMachineJson(self, f_out='aug_description_full.json'):
 
         logger.debug('Dumping %s', f_out)
         nR, nZ, nBlocks = self.dGreeniRpl.shape
@@ -476,15 +469,15 @@ class GREEN_MATRICES:
         nCoils   = len(self.R_coil)
         nConduc  = self.indConduc.shape[0]
         nPassive = nConduc - self.nActive
-        data = {
-            'alpsep': self.alpsep,
-            'Rmin': self.Rgrid[0], 'Rmax': self.Rgrid[-1], 'Zmin': self.Zgrid[0], 'Zmax': self.Zgrid[-1] }
+        data = { 'alpsep': self.alpsep,
+            'Rmin': self.Rgrid[0], 'Rmax': self.Rgrid[-1],
+            'Zmin': self.Zgrid[0], 'Zmax': self.Zgrid[-1] }
         for lbl in (
             'R_coil', 'Z_coil', 'dR_coil', 'dZ_coil', 'angh_coil', 'ang_coil', 'm_equiv',
             'Rlim', 'Zlim', 'resConduc_diag',
             'indConduc', 'resConduc', 'zLimPotential', 'greenBnd',
             'greeni', 'dGreeniRj', 'dGreeniZj', 'dGreeniRpl', 'dGreeniZpl'):
-            data[lbl] = getattr(self, lbl) #.ravel()
+            data[lbl] = getattr(self, lbl)
         data['R_cond'] = self.R_cond[self.nActive: nPassive+self.nActive]
         data['Z_cond'] = self.Z_cond[self.nActive: nPassive+self.nActive]
         data['lim_maxR'], data['lim_minR'], data['lim_maxZ'], data['lim_minZ'] = self.limRZ
@@ -499,7 +492,7 @@ def write_green(f_in, f_out):
     if hasattr(gm, 'Rmin'):
         gm.setCoilProperties()
         gm.calcGreenMatrices()
-        gm.dumpMachineJson()
+        gm.dumpMachineJson(f_out=f_out)
 
     
 def main():
@@ -508,7 +501,7 @@ def main():
         if os.path.splitext(f_in)[1] == '.json':
             tok = f_in.split('_')[0]
             f_machineIn  = '%s/%s_description_in.json'  %(grIOdir, tok)
-            f_machineOut = '%s/machine_description_out.%s' %(grIOdir, tok)
+            f_machineOut = '%s/%s_description_full.json' %(grIOdir, tok)
 
             if os.path.isfile(f_machineIn):
                 if os.path.isfile(f_machineOut):
