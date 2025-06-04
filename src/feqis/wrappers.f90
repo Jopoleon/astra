@@ -594,7 +594,7 @@ use feqis_circuit, only: nactive, npassive, ncoils, nblocks, &
     rcoil, zcoil, drcoil, dzcoil, anglecoil, anglehcoil, mequivalence, &
     resconduc, indconduc, psiplasmatoconduc, &
     voltage, voltage_old, cur_con_old, &
-    psi_cur_old, dpc, nferromag
+    psi_cur_old, dpc
 use fbe_core, only: nr, nr1, nr2, nz, nz1, nz2, &
     nconduc, nlimiter, &
     lim_minr, lim_maxr, lim_minz, lim_maxz, &
@@ -602,7 +602,7 @@ use fbe_core, only: nr, nr1, nr2, nz, nz1, nz2, &
     limiterr, limiterz, alpsep, curconduc, &
     zlimpotential, green_bnd_f, &
     jrz, psirz, psiextrz, psiplasrz, psi_n, psiferro
-use feqis_circuit, only: nferromag, psiplasmatoconduc, &
+use feqis_circuit, only: psiplasmatoconduc, &
     voltage, voltage_old, cur_con_old, psi_cur_old, dpc
 use ferromagstructure, only: type_ferromag
 use green_function, only: greeni
@@ -616,7 +616,7 @@ implicit none
 
 type(type_ferromag), dimension(:), allocatable :: ferromag
 logical :: found
-integer :: i, j, ii, jj, nferrosub, imagvalues
+integer :: i, j, ii, jj, n_perim
 integer, dimension(:), allocatable :: n_sames
 double precision :: rmin, rmax, zmin, zmax
 character(len=120) :: fjson
@@ -644,7 +644,6 @@ call config%get('lim_maxR', lim_maxR, found)
 call config%get('lim_minR', lim_minR, found)
 call config%get('lim_maxZ', lim_maxZ, found)
 call config%get('lim_minZ', lim_minZ, found)
-call config%get('greenBnd', green_bnd_f, found)
 call config%get('Rlim', limiterr, found)
 call config%get('Zlim', limiterz, found)
 call config%get('resConduc_diag', resconduc_diag, found)
@@ -657,10 +656,16 @@ call config%info('zLimPotential'   , found=found, n_children=nr2)
 call config%info('zLimPotential(1)', found=found, n_children=nz2)
 call config%info('dGreeniRj(1)', found=found, n_children=nblocks)
 
+nr1 = nr2 - 1
+nz1 = nz2 - 1
+nr  = nr1 - 1
+nz  = nz1 - 1
+n_perim = 2*nr + 2*nz
 allocate(r_cond(nconduc), z_cond(nconduc))
 allocate(resconduc(nconduc, nconduc))
 allocate(indconduc(nconduc, nconduc), dgreenirj(nblocks, nblocks), dgreenizj(nblocks, nblocks))
 allocate(zlimpotential(nr2, nz2))
+allocate(green_bnd_f(n_perim, n_perim))
 allocate(greeni(nr2, nz2, nconduc))
 allocate(dgreenirpl(nr2, nz2, nblocks), dgreenizpl(nr2, nz2, nblocks))
 allocate(curconduc(nconduc))
@@ -687,6 +692,12 @@ do i=1, nconduc
     call config%get('indConduc(' // trim(istr) // ')', vector_flt, found)
     indconduc(i, :) = vector_flt
 enddo
+do i=1, n_perim
+    write(istr, '(I10)') i
+    call config%get('greenBnd(' // trim(istr) // ')', vector_flt, found)
+    green_bnd_f(i, :) = vector_flt
+enddo
+
 do i=1, nblocks
     write(istr, '(I10)') i
     call config%get('dGreeniRj(' // trim(istr) // ')', vector_flt, found)
@@ -730,10 +741,6 @@ do i=1, npassive
     r_cond(nactive+i) = rcond_passive(i)
     z_cond(nactive+i) = zcond_passive(i)
 enddo
-nr1 = nr2 - 1
-nz1 = nz2 - 1
-nr  = nr1 - 1
-nz  = nz1 - 1
 if (allocated(Rrect)) deallocate(Rrect)
 if (allocated(Zrect)) deallocate(Zrect)
 allocate(Rrect(nr2))

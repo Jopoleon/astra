@@ -482,88 +482,15 @@ class GREEN_MATRICES:
         for lbl in (
             'R_coil', 'Z_coil', 'dR_coil', 'dZ_coil', 'angh_coil', 'ang_coil', 'm_equiv',
             'Rlim', 'Zlim', 'resConduc_diag',
-            'indConduc', 'resConduc', 'zLimPotential',
+            'indConduc', 'resConduc', 'zLimPotential', 'greenBnd',
             'greeni', 'dGreeniRj', 'dGreeniZj', 'dGreeniRpl', 'dGreeniZpl'):
             data[lbl] = getattr(self, lbl) #.ravel()
         data['R_cond'] = self.R_cond[self.nActive: nPassive+self.nActive]
         data['Z_cond'] = self.Z_cond[self.nActive: nPassive+self.nActive]
         data['lim_maxR'], data['lim_minR'], data['lim_maxZ'], data['lim_minZ'] = self.limRZ
-        data['greenBnd'] = self.greenBnd.ravel()
         with open(f_out, 'w') as f:
             f.write(format_numpy_json(data))
         logger.info('Stored machine file %s', f_out)
-
-
-    def dumpMachineDescr(self, f_out='machine_description_out.aug'):
-
-        logger.debug('Dumping %s', f_out)
-        nR, nZ, nBlocks = self.dGreeniRpl.shape
-        nLimiter = len(self.Rlim)
-        nCoils   = len(self.R_coil)
-        nConduc  = self.indConduc.shape[0]
-        nPassive = nConduc - self.nActive
-
-        with open(f_out, 'w') as f:
-            f.write('%3d %3d\n' %(nR, nZ))
-            f.write('%11.8f\n' %self.Rgrid [0])
-            f.write('%11.8f\n' %self.Rgrid[-1])
-            f.write('%11.8f\n' %self.Zgrid [0])
-            f.write('%11.8f\n' %self.Zgrid[-1])
-            f.write('%11.8f\n' %self.alpsep)
-            f.write('%d %d\n' %(self.nActive, nPassive))
-
-            f.write('%d\n' %nCoils)
-            np.savetxt(f, np.c_[self.R_coil, self.Z_coil, self.dR_coil, self.dZ_coil, self.angh_coil, self.ang_coil, self.m_equiv], fmt='%15.8e %15.8e %15.8e %15.8e %15.8e %15.8e %d')
-
-            f.write('%d\n' %nLimiter)
-            np.savetxt(f, np.c_[self.Rlim, self.Zlim], fmt='%11.8f %11.8f')
-            f.write(4*'%11.8f\n' %self.limRZ)
-
-            np.savetxt(f, np.c_[self.R_cond[self.nActive: nPassive+self.nActive], self.Z_cond[self.nActive: nPassive+self.nActive]], fmt='%11.8f %11.8f')
-
-            f.write('%d\n' %nConduc)
-            for jcon in range(nConduc):
-                block, tail = truncate(self.indConduc[jcon, :])
-                np.savetxt(f, block, fmt=expfmt)
-                np.savetxt(f, tail , fmt=expfmt)
-
-            f.write('%d %s\n' %(self.nActive, nConduc))
-            np.savetxt(f, self.resConduc, fmt=expfmt)
-            np.savetxt(f, self.resConduc_diag, fmt=expfmt)
-
-            for jcon in range(nConduc):
-                for jr in range(nR):
-                    block, tail = truncate(self.greeni[jr, :, jcon])
-                    np.savetxt(f, block, fmt=expfmt)
-                    np.savetxt(f, tail , fmt=expfmt)
-
-            f.write('%d\n' %nBlocks)
-            dGreeniRZj = np.c_[self.dGreeniRj.T.reshape(-1), self.dGreeniZj.T.reshape(-1)]
-            np.savetxt(f, dGreeniRZj, fmt=expfmt)
-            dGreeniRZpl = np.c_[
-                self.dGreeniRpl.transpose(2, 1, 0).reshape(-1),
-                self.dGreeniZpl.transpose(2, 1, 0).reshape(-1) ]
-            np.savetxt(f, dGreeniRZpl, fmt=expfmt)
-
-            np.savetxt(f, self.zLimPotential.ravel(), fmt='%1d')
-
-            grBnd = self.greenBnd.ravel()
-            nRZ   = len(grBnd)
-            f.write('%d\n' %nRZ)
-            np.savetxt(f, grBnd, fmt=expfmt)
-            if not hasattr(self, 'Lferro'):
-                f.write('-1\n')
-            else:
-                n_ferro_mag = len(self.Lferro)
-                chiValue = self.magValue/self.hValue
-                f.write('%d\n' %n_ferro_mag)
-                for i in range(n_ferro_mag):
-                    f.write('%d %d\n' %(self.nferrosub[i], self.imagValues[i]))
-                    np.savetxt(f, np.c_[chiValue[:, i], hValue[:, i]], fmt=expfmt)
-                    np.savetxt(f, np.c_[self.r_ferro[:, i], self.z_ferro[:, i], self.ang_ferro[:, i], self.len_ferro[:, i]], fmt=expfmt)
-                    np.savetxt(f, self.mferro_ferro[:, :, i], fmt=expfmt)
-
-        logger.info('Stored %s', f_out)
 
 
 def write_green(f_in, f_out):
@@ -572,7 +499,6 @@ def write_green(f_in, f_out):
     if hasattr(gm, 'Rmin'):
         gm.setCoilProperties()
         gm.calcGreenMatrices()
-#        gm.dumpMachineDescr(f_out=f_out)
         gm.dumpMachineJson()
 
     

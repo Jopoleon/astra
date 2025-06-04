@@ -29,7 +29,7 @@ integer :: iaxis, jaxis, n_of_xpoints, active_x_point
 double precision :: psibnd, psiaxis, rax, zax, &
     alpsep, psistabR, psistabZ, dr_factor_init, dz_factor_init
 double precision, dimension(max_xpoints) :: r_xpoint, z_xpoint, psi_xpoint
-double precision, dimension(:), allocatable :: green_bnd_f
+double precision, dimension(:, :), allocatable :: green_bnd_f
 
 ! plasma parameters
 double precision, dimension(:, :), allocatable :: jrz
@@ -287,47 +287,45 @@ contains
 
     double precision, intent(in), dimension(nr2, nz2) :: green_in
 
-    integer :: j, jcount_in
+    integer :: j
     double precision, dimension(2*nr+2*nz) :: green_bnd
 
-    jcount_in = 0
 ! lower, right, upper, left
     do j=1, 2*nr+2*nz
-        green_bnd(j) = bgint(green_in, jcount_in)
-        jcount_in = jcount_in + 2*nr + 2*nz
+        green_bnd(j) = bgint(green_in, j)
     enddo
 
     return
     end function boundary
 
 !-----------------------------------------------------------------------------------
-    double precision function bgint(green_in, jcount_in)
+    double precision function bgint(green_in, j_in)
 ! Integral_over_boundary of -Green * dg/dn * dl
 
     use pi_vars, only: GPI
 
     double precision, intent(in), dimension(nr2, nz2) :: green_in
-    integer, intent(in)  :: jcount_in
+    integer, intent(in)  :: j_in
 
     integer :: j, jcount
     double precision, dimension(2*nr+2*nz) :: dgdn
 
-    jcount = jcount_in
+    jcount = 0
     do j=2, nr1 ! bottom
         jcount = jcount + 1
-        dgdn(jcount-jcount_in) = green_in(j, 2) * green_bnd_f(jcount) * dr/dz * 1./Rrect(j)
+        dgdn(jcount) = green_in(j, 2) * green_bnd_f(j_in, jcount) * dr/dz * 1./Rrect(j)
     enddo      ! right
     do j=2, nz1
         jcount = jcount + 1
-        dgdn(jcount-jcount_in) = green_in(nr1, j) * green_bnd_f(jcount) * dz/dr * 2./(Rrect(nr2) + Rrect(nr1))
+        dgdn(jcount) = green_in(nr1, j) * green_bnd_f(j_in, jcount) * dz/dr * 2./(Rrect(nr2) + Rrect(nr1))
     enddo      ! top
     do j=2, nr1
         jcount = jcount + 1
-        dgdn(jcount-jcount_in) = green_in(j, nz1) * green_bnd_f(jcount) * dr/dz * 1./Rrect(j)
+        dgdn(jcount) = green_in(j, nz1) * green_bnd_f(j_in, jcount) * dr/dz * 1./Rrect(j)
     enddo      ! left
     do j=2, nz1
         jcount = jcount + 1
-        dgdn(jcount-jcount_in) = green_in(2, j) * green_bnd_f(jcount) * dz/dr * 2./(Rrect(1) + Rrect(2))
+        dgdn(jcount) = green_in(2, j) * green_bnd_f(j_in, jcount) * dz/dr * 2./(Rrect(1) + Rrect(2))
     enddo
 
     bgint = sum(dgdn)/GPI
