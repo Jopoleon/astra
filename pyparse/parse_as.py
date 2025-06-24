@@ -1,4 +1,4 @@
-import os, sys, re, logging
+import os, sys, re, logging, traceback
 import config, fml
 
 logger = logging.getLogger('as_parse.parse_as')
@@ -353,10 +353,7 @@ def recParse(pieces_in, parse):
     pieces = pieces_in
     while '(' in pieces:
         pieces = ParseBracket(pieces, parse)
-    try:
-        out_str = parse_pieces(pieces, parse)
-    except:
-        print('Error in line', pieces_in)
+    out_str = parse_pieces(pieces, parse)
     return out_str
 
 
@@ -368,10 +365,7 @@ def ParseBracket(pieces_in, parse):
         jleft -= 2
         jright += 1
     pieces_within = pieces_in[jleft-1: jright+1] # function, '(', ..., ')'
-    try:
-        str_mid = parse_pieces(pieces_within, parse)
-    except:
-        print('Error in line', pieces_in)
+    str_mid = parse_pieces(pieces_within, parse)
     pieces_out = pieces_in[:jleft-1] + [str_mid] + pieces_in[jright+1:]
     return pieces_out
 
@@ -557,7 +551,12 @@ def LINE2FOR(equStatement, parse):
                 pass
 
     pieces = rec_split(tmp)
-    line_out = recParse(pieces, parse)
+    try:
+        line_out = recParse(pieces, parse)
+    except:
+        logger.error('Error in EQU-file line:')
+        logger.error(equStatement)
+        traceback.print_exc()
     line_out = fml_fnc(line_out, parse)
 
 # Reinserting exponential notation, after parsing for operational '+', '-'
