@@ -353,7 +353,11 @@ def recParse(pieces_in, parse):
     pieces = pieces_in
     while '(' in pieces:
         pieces = ParseBracket(pieces, parse)
-    return parse_pieces(pieces, parse)
+    try:
+        out_str = parse_pieces(pieces, parse)
+    except:
+        print('Error in line', pieces_in)
+    return out_str
 
 
 def ParseBracket(pieces_in, parse):
@@ -364,7 +368,10 @@ def ParseBracket(pieces_in, parse):
         jleft -= 2
         jright += 1
     pieces_within = pieces_in[jleft-1: jright+1] # function, '(', ..., ')'
-    str_mid = parse_pieces(pieces_within, parse)
+    try:
+        str_mid = parse_pieces(pieces_within, parse)
+    except:
+        print('Error in line', pieces_in)
     pieces_out = pieces_in[:jleft-1] + [str_mid] + pieces_in[jright+1:]
     return pieces_out
 
