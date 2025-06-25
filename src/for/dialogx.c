@@ -23,6 +23,7 @@ void stcopy(char*, char*, int);
 int num2str(double, char*, int);
 void iroundA(char*, int*, int*, int*);
 
+extern int ifkey_(int *i);
 extern Display *theDisplay;
 extern Window theRootWindow;
 extern Cursor theMenuCursor;
