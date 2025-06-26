@@ -111,10 +111,11 @@ if __name__ == '__main__':
     os.system(cmd)
 # Remove pending IPC processes
     f_ipc = '%s/tmp/%s.ipc' %(awd, expequ)
-    ipcProcs = np.loadtxt(f_ipc, skiprows=7, usecols=1)
-    for proc in ipcProcs:
-        cmd = 'ipcrm -m %d 2>/dev/null' %proc
-        os.system(cmd)
+    if os.path.isfile(f_ipc):
+        ipcProcs = np.loadtxt(f_ipc, skiprows=7, usecols=1)
+        for proc in ipcProcs:
+            cmd = 'ipcrm -m %d 2>/dev/null' %proc
+            os.system(cmd)
     try:
         j2nc.json_concat(expequ)
     except:
