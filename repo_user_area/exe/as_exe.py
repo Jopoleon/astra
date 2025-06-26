@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os, sys, logging, argparse, traceback
+import numpy as np
 import greenMatrices
 
 fmt = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s: %(message)s', '%H:%M:%S')
@@ -99,7 +100,7 @@ if __name__ == '__main__':
         input('-----------------------------------\nFile %s missing!\nASTRA will probably crash.\nPress any key to continue at your own risk\n' %eqlog)
 
     expequ = args.exp + args.equ
-    f_log2 = '%s/tmp/%s.nml' %(awd, expequ) 
+    f_log2 = '%s/tmp/%s.nml' %(awd, expequ)
     with open(f_log2, 'w') as f:
         f.write(alog)
 
@@ -108,7 +109,12 @@ if __name__ == '__main__':
         cmd += ' -W'
     logger.info(cmd)
     os.system(cmd)
-
+# Remove pending IPC processes
+    f_ipc = '%s/tmp/%s.ipc' %(awd, expequ)
+    ipcProcs = np.loadtxt(f_ipc, skiprows=7, usecols=1)
+    for proc in ipcProcs:
+        cmd = 'ipcrm -m %d 2>/dev/null' %proc
+        os.system(cmd)
     try:
         j2nc.json_concat(expequ)
     except:

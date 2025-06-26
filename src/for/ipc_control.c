@@ -729,9 +729,8 @@ void freeshm(){
     return;
 }
 
-/*------- Call as:  write_aipc_(Aproc.OrdNr, Aproc.ShMid, lS), -------*/
-
-void write_aipc (const struct A_proc_info Aproc, char* AWD, int* lS)
+/*---------------------------------------------------------------------*/
+void write_aipc(const struct A_proc_info Aproc, char* AWD, int* lS)
 {
   FILE *A_PDF, *A_LOG;
     char A_IPC[132];
