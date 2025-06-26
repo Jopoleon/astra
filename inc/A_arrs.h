@@ -1,8 +1,5 @@
 static struct A_arrs
 {         /* Common block A_VECTORS */
-  INT_ NC1;
-  int Size;
-  int CheckWord;
   double aimpt[NC1];
   double amain[NC1];
   double ametr[NC1];

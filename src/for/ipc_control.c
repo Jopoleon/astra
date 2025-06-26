@@ -330,17 +330,7 @@ int initipc_(INT_* Ngrid){
     fclose(A_PDF);
 
     AVARS = (struct A_vars *)A_ShmAdr[0];
-    AVARS->c_size[0] = var_size;
-    AVARS->c_size[1] = sizeof(int);
-    AVARS->c_size[2] = sizeof(double);
-    AVARS->c_size[3] = sizeof(key_t);
-    AVARS->c_size[4] = sizeof(pid_t);
-    AVARS->CheckWord = 314159265;
-
     AARRS = (struct A_arrs *)A_ShmAdr[1];
-    AARRS->NC1  = NC1;
-    AARRS->Size = arr_size;
-    AARRS->CheckWord = 314159265;
 }
 
 /*----------------------------------------------------------
