@@ -1,11 +1,11 @@
 /*---------------------------------------------------------------------*/
 #define C_MAIN 0
 /*------------------------------------------------------------------*/
-/* Note! It is expected that the variable C_MAIN is defined in 
+/* Note! It is expected that the variable C_MAIN is defined in
          the C-file where this file __FILE__ is included            */
-/* The file includes functions (double)`swatch' and 
+/* The file includes functions (double)`swatch' and
    the starting part of the function (int)`sbp2shm' that
-   acquires information about AWD, process wd, id, name, key, 
+   acquires information about AWD, process wd, id, name, key,
    ord. number, allocated shared memory ID and semaphore ID.        */
 /*------------------------------------------------------------------*/
 #include <stdio.h>
@@ -33,8 +33,6 @@ union semun {
     struct seminfo *__buf;      /* buffer for IPC_INFO */
 };
 
-#include "A_proc.h"
-
 void a_stop_();
 double swatch (double*);
 double swatch_(double*);
@@ -44,7 +42,6 @@ void *ShmAd0, *ShmAd1, *ShmAdr;
 void qlk_interf_();
 void neo_interf_();
 void tglf_interf_();
-void SP_stamp();
 int read_aipc();
 int write_aipc();
 
@@ -53,10 +50,10 @@ int write_aipc();
 /*
   Returns CPU time [sec] between two successive calls to the argument.
   The  function "times" returns the number of clock ticks that have elapsed
-     since the moment the system was booted. 
+     since the moment the system was booted.
   The  "tms_utime"  field contains the CPU time spent executing instructions
      of the calling process.
-  The  "tms_stime"  field contains the CPU time spent in the system while 
+  The  "tms_stime"  field contains the CPU time spent in the system while
      executing tasks on behalf of the calling process.
 */
 double swatch_(double *secs){
@@ -75,7 +72,7 @@ double swatch_(double *secs){
     run_time = times(&buf) - time0;  /* Set time difference */
     cpu_time = buf.tms_utime + buf.tms_stime;
     *secs += (cpu_time - prev_time)*secs_per_tick;
-    prev_time = cpu_time; 
+    prev_time = cpu_time;
     runsec = run_time*secs_per_tick;
     return runsec;
 }
@@ -154,7 +151,6 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
     AVARS = (struct A_vars *)ShmAd0;
     A_NB1 = AVARS->nb1;
     ShmAd1 = shmat(ShMid1, NULL, 0);
-    SP_stamp(Mama, My, SemID);
     strcpy(AWD, Mama.Path);
     if (strstr(AWD, "bin/") == NULL){
         printf("SBP launch string error\n");
@@ -202,8 +198,8 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
         neo_interf_(
 #endif
            /* input */
-              &(IOQL->is), 
-              &(IOQL->ie), 
+              &(IOQL->is),
+              &(IOQL->ie),
               &(AVARS->na1),
               &(AVARS->na1n),
               &(AVARS->na1e),
@@ -214,24 +210,24 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
               &(AVARS->zmj),
               &(AVARS->aim1),
               &(AVARS->aim2),
-              &(AVARS->aim3), 
-              &(AARRS->ne), 
-              &(AARRS->te), 
-              &(AARRS->ni), 
-              &(AARRS->ndeut), 
-              &(AARRS->ntrit), 
-              &(AARRS->niz1), 
-              &(AARRS->niz2), 
-              &(AARRS->ti), 
-              &(AARRS->zef), 
-              &(AARRS->zim1), 
-              &(AARRS->amain), 
-              &(AARRS->mu), 
-              &(AARRS->rho), 
-              &(AARRS->ametr), 
-              &(AARRS->shif), 
-              &(AARRS->elon), 
-              &(AARRS->tria), 
+              &(AVARS->aim3),
+              &(AARRS->ne),
+              &(AARRS->te),
+              &(AARRS->ni),
+              &(AARRS->ndeut),
+              &(AARRS->ntrit),
+              &(AARRS->niz1),
+              &(AARRS->niz2),
+              &(AARRS->ti),
+              &(AARRS->zef),
+              &(AARRS->zim1),
+              &(AARRS->amain),
+              &(AARRS->mu),
+              &(AARRS->rho),
+              &(AARRS->ametr),
+              &(AARRS->shif),
+              &(AARRS->elon),
+              &(AARRS->tria),
               &(AARRS->er),
               &(AARRS->nibm),
               &(AARRS->g11),
@@ -273,11 +269,11 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
     }
 
     if (errno != EIDRM && errno != EINVAL){
-        printf(">>> %s >>> Unrecognised sem error: errno = %d\n", 
+        printf(">>> %s >>> Unrecognised sem error: errno = %d\n",
             My.Path, errno);
-        printf("EACCES = %d, EFAULT = %d, ERANGE = %d\n", 
+        printf("EACCES = %d, EFAULT = %d, ERANGE = %d\n",
             EACCES, EFAULT, ERANGE);
-        printf("EFBIG=%d, EINTR=%d, EAGAIN=%d, E2BIG=%d\n", 
+        printf("EFBIG=%d, EINTR=%d, EAGAIN=%d, E2BIG=%d\n",
             EFBIG, EINTR, EAGAIN, E2BIG);
      }
     for(i=0; i < My.OrdNr; i++){
@@ -293,4 +289,3 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
 /*--------------------------------------------------*/
 void AstraEvent () { }
 /*--------------------------------------------------*/
- 

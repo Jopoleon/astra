@@ -47,7 +47,7 @@ union semun{
 };
 
 pid_t A_PID = 0;
-INT_  A_NB1 = 0;
+INT_  NC1 = 0;
 #define NC1 A_NB1
 int A_SemID = 0;
 int A_Nsems = 0;       /* the number of semaphores */
