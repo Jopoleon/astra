@@ -36,7 +36,7 @@ union semun {
 void a_stop_();
 double swatch (double*);
 double swatch_(double*);
-extern INT_  A_NB1;
+extern INT_ A_NB1;
 int   SemID ,  ShMid0,  ShMid1;
 void *ShmAd0, *ShmAd1, *ShmAdr;
 void qlk_interf_();
@@ -245,21 +245,21 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
               &(AARRS->nimpt),
               &(AARRS->aimpt),
 /* output */
-              &(*IOQL->chi),
-              &(*IOQL->che),
-              &(*IOQL->dif),
-              &(*IOQL->vin),
-              &(*IOQL->dph),
-              &(*IOQL->dpl),
-              &(*IOQL->dpr),
-              &(*IOQL->xtb),
-              &(*IOQL->egm),
-              &(*IOQL->gam),
-              &(*IOQL->gm1),
-              &(*IOQL->gm2),
-              &(*IOQL->om1),
-              &(*IOQL->om2),
-              &(*IOQL->fr1)
+              &(IOQL->chi),
+              &(IOQL->che),
+              &(IOQL->dif),
+              &(IOQL->vin),
+              &(IOQL->dph),
+              &(IOQL->dpl),
+              &(IOQL->dpr),
+              &(IOQL->xtb),
+              &(IOQL->egm),
+              &(IOQL->gam),
+              &(IOQL->gm1),
+              &(IOQL->gm2),
+              &(IOQL->om1),
+              &(IOQL->om2),
+              &(IOQL->fr1)
           );
 
         swatch(&(My.CPUse));
