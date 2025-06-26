@@ -12,6 +12,7 @@
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include <signal.h>
+#include <ctype.h>
 
 #ifndef INT8
 #define INT_ int
@@ -29,6 +30,7 @@ int read_aipc(INT_*, INT_*, char*);
 void freeshm();
 void to_tra_(INT_*, INT_*, INT_*);
 void ot_tra_(INT_*, INT_*, INT_*, double*, double*);
+void AllocateShmem(int);
 
 char *AWD, *equmod, *DATA;
 char A_ipc_file[132];
@@ -80,13 +82,16 @@ void a_stop_(){
    by the process "tra" and stored in shared memory.
 */
 
-void to_tra_(INT_* IS, INT_* IE, INT_* N){
-
-    int k;
+void to_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N){
 
     struct shmid_ds Myshmid_ds;
-#include "A_proc.h"
-#include "A_ql_IO.h"
+    static struct A_ql_in
+    {
+        struct A_proc_info My; /* General IO information */
+        int Size;         /* Control: Size of the Shmem */
+        int jrho_beg;
+        int jrho_end;
+    } *QL_IN;
     if (A_ShmNum < 0) return;
     if (shmctl(A_ShmID[*N+1], IPC_STAT, &Myshmid_ds) < 0){
         printf(">>> Process # %d: shmctl error >>>\n",*N+1);
@@ -99,26 +104,24 @@ void to_tra_(INT_* IS, INT_* IE, INT_* N){
             A_ShmL[*N+1], Myshmid_ds.shm_segsz);
         exit(1);
     }
-
-    AVARS = (struct A_vars *)A_ShmAdr[0];
-    k = (*AVARS).nrd;
-    IOQL = (struct A_ql_IO *)A_ShmAdr[*N+1];
-    (*IOQL).is = *IS;
-    (*IOQL).ie = *IE;
+    QL_IN = (struct A_ql_in *)A_ShmAdr[*N+1];
+    (*QL_IN).jrho_beg = *jrho_beg;
+    (*QL_IN).jrho_end = *jrho_end;
     return;
 }
 
 /*----------------------------------------------------------------*/
-void ot_tra_(INT_* IS, INT_* IE, INT_* N, double* cpuse, double* YY){
-    int j, i, n_nrd;
-#include "A_proc.h"
+void ot_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N, double* cpuse, double* YY){
 #include "A_ql_IO.h"
+
+    int j, i, n_nrd;
     if (A_ShmNum < 0) return;
     AVARS = (struct A_vars *)A_ShmAdr[0];
+    n_nrd = AVARS->nrd;
+
     IOQL = (struct A_ql_IO *)A_ShmAdr[*N+1];
     *cpuse = (*IOQL).My.CPUse;
-    n_nrd = AVARS->nrd;
-    for (j=*IS-1; j <= *IE-1; j++){
+    for (j=*jrho_beg-1; j <= *jrho_end-1; j++){
         i = 1;
         YY[j+i] = (*IOQL).chi[j];  i += n_nrd; // mem(:,  1)
         YY[j+i] = (*IOQL).che[j];  i += n_nrd; // mem(:,  2)
@@ -136,35 +139,34 @@ void ot_tra_(INT_* IS, INT_* IE, INT_* N, double* cpuse, double* YY){
         YY[j+i] = (*IOQL).om2[j];  i += n_nrd; // mem(:, 14)
         YY[j+i] = (*IOQL).fr1[j];  i += n_nrd; // mem(:, 15)
     }
-    if (*IS == 1){
-       for (j=0; j <= 15*n_nrd; j += n_nrd) YY[j] = 0.;
+    if (*jrho_beg == 1){
+        for (j=0; j <= 15*n_nrd; j += n_nrd) YY[j] = 0.;
     }
     return;
 }
 
 char* parse_nml(char * line_in){
+    if (line_in == NULL) return NULL;
 
-    char * word_out = malloc(90);
-    int j;
-    int i;
-    i = -1;
-    for (j=0; j < strlen(line_in); j++){
-        if (i == -1){
-            if ((line_in[j] == '"') || (line_in[j] == '\'')) {
-                i++;
-            }
-        }
-        else{
-            if ((line_in[j] == '"') || (line_in[j] == '\'') || (line_in[j] == ' ')) {
-                word_out[i] = '\0';
-                break;
-            }
-            else{
-                word_out[i] = line_in[j];
-                i++;
-            }
-        }
+    // Find the opening quote
+    const char *start = strchr(line_in, '"');
+    if (!start) start = strchr(line_in, '\'');
+    if (!start) return NULL;
+
+    start++;  // Move past opening quote
+
+    // Find the end of the quoted word
+    const char *end = start;
+    while (*end && *end != '"' && *end != '\'' && !isspace((unsigned char)*end)) {
+        end++;
     }
+
+    size_t len = end - start;
+    char *word_out = malloc(len + 1);  // +1 for null terminator
+    if (!word_out) return NULL;
+
+    strncpy(word_out, start, len);
+    word_out[len] = '\0';
 
     return word_out;
 }
