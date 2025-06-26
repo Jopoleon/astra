@@ -13,6 +13,7 @@
 #include <sys/shm.h>
 #include <signal.h>
 #include <ctype.h>
+#include <stddef.h>
 
 #ifndef INT8
 #define INT_ int
@@ -112,32 +113,20 @@ void to_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N){
 
 /*----------------------------------------------------------------*/
 void ot_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N, double* cpuse, double* YY){
-#include "A_ql_IO.h"
 
-    int j, i, n_nrd;
+#include "A_ql_io2.h"
+    int j, jarr, n_nrd;
     if (A_ShmNum < 0) return;
     AVARS = (struct A_vars *)A_ShmAdr[0];
     n_nrd = AVARS->nrd;
-
-    IOQL = (struct A_ql_IO *)A_ShmAdr[*N+1];
-    *cpuse = (*IOQL).My.CPUse;
+    size_t offset = offsetof(struct A_ql_io2, QLarrays);
+    ql_io2 = (struct A_ql_io2 *)A_ShmAdr[*N+1];
+    ql_io2->QLarrays = (double *)((char *)ql_io2 + offset);
+    *cpuse = ql_io2->My.CPUse;
     for (j=*jrho_beg-1; j <= *jrho_end-1; j++){
-        i = 1;
-        YY[j+i] = (*IOQL).chi[j];  i += n_nrd; // mem(:,  1)
-        YY[j+i] = (*IOQL).che[j];  i += n_nrd; // mem(:,  2)
-        YY[j+i] = (*IOQL).dif[j];  i += n_nrd; // mem(:,  3)
-        YY[j+i] = (*IOQL).vin[j];  i += n_nrd; // mem(:,  4)
-        YY[j+i] = (*IOQL).dph[j];  i += n_nrd; // mem(:,  5)
-        YY[j+i] = (*IOQL).dpl[j];  i += n_nrd; // mem(:,  6)
-        YY[j+i] = (*IOQL).dpr[j];  i += n_nrd; // mem(:,  7)
-        YY[j+i] = (*IOQL).xtb[j];  i += n_nrd; // mem(:,  8)
-        YY[j+i] = (*IOQL).egm[j];  i += n_nrd; // mem(:,  9)
-        YY[j+i] = (*IOQL).gam[j];  i += n_nrd; // mem(:, 10)
-        YY[j+i] = (*IOQL).gm1[j];  i += n_nrd; // mem(:, 11)
-        YY[j+i] = (*IOQL).gm2[j];  i += n_nrd; // mem(:, 12)
-        YY[j+i] = (*IOQL).om1[j];  i += n_nrd; // mem(:, 13)
-        YY[j+i] = (*IOQL).om2[j];  i += n_nrd; // mem(:, 14)
-        YY[j+i] = (*IOQL).fr1[j];  i += n_nrd; // mem(:, 15)
+        for (jarr=0; jarr<15; jarr++){
+            YY[j+1+jarr*n_nrd] = ql_io2->QLarrays[j+jarr*NC1];
+        }
     }
     if (*jrho_beg == 1){
         for (j=0; j <= 15*n_nrd; j += n_nrd) YY[j] = 0.;
@@ -145,6 +134,7 @@ void ot_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N, double* cpuse, double* YY)
     return;
 }
 
+/*----------------------------------------------------------------*/
 char* parse_nml(char * line_in){
     if (line_in == NULL) return NULL;
 
