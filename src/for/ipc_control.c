@@ -78,7 +78,7 @@ void a_stop_(){
 }
 /*---------------------------------------------------------------------*/
 /* This function is called from Astra -> to_tra
-   "to_tra" fills tra specific data in the dedicated memory segment   
+   "to_tra" fills tra specific data in the dedicated memory segment
    Similarly, Astra -> ot_tra returns the data calculated
    by the process "tra" and stored in shared memory.
 */
@@ -101,7 +101,7 @@ void to_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N){
     else if (Myshmid_ds.shm_segsz != A_ShmL[*N+1]){
         printf(">>> Process No.%d, \"%s\" >>>",*N,&A_ChNa[*N+1][0]);
         printf(" Size of shared memory mismatch\n");
-        printf("    Allocated %d != %ld(found)\n", 
+        printf("    Allocated %d != %ld(found)\n",
             A_ShmL[*N+1], Myshmid_ds.shm_segsz);
         exit(1);
     }
@@ -164,9 +164,9 @@ char* parse_nml(char * line_in){
 /*-----------------------------------------------------
   Check existence of executable files listed in subs
   Reads tmp/astra.log and fills external variables AWD, MOD, DATA
-  *Nsub - total number of files_names/strings in subs, 
-  *Lstr - length of an element of the character ARRAY "subs", 
-          maximum length of the subprocess_name, 
+  *Nsub - total number of files_names/strings in subs,
+  *Lstr - length of an element of the character ARRAY "subs",
+          maximum length of the subprocess_name,
   *subs - character ARRAY, described in a calling Fortran routine as
           character*(*Lstr) ARRAY(max_length)
    each element includes a name of external process to be called
@@ -197,57 +197,61 @@ int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs){
     fclose(A_LOG);
     free(line);
 
-    for(j=0; j < *Nsub; j++){
-        if (strlen(&subs[*Lstr*j]) == 0) goto Error1;
-        strcpy(path, &subs[*Lstr*j]);
+    for (j = 0; j < *Nsub; j++) {
+        char *sub = &subs[*Lstr * j];
 
-        if (strchr(path, '~') != NULL){
-            if ( getenv("HOME") == NULL ) goto Error2;
-            strcpy(stri, getenv("HOME"));
-            strcat(stri, &path[1]);
-            strcpy(path, stri);
-            i = strrchr(path, '/') - &path[0];
-            strcpy(name, &path[i+1]);
-            if (strlen(path) > 62) goto Error3;
-            path[i+1] = '\0';
+        if (strlen(sub) == 0) {
+            fprintf(stderr, " >>> Xroutine call string (#%d) is empty.\n", j + 1);
+            exit(EXIT_FAILURE);
         }
-        else if ( strrchr(path, '/') != NULL ){
-            i = strrchr(path, '/') - &path[0];
-            path[i+1] = '\0';
-            strcpy(name, &subs[*Lstr*j+i+1]);
+
+        strncpy(path, sub, sizeof(path) - 1);
+        path[sizeof(path) - 1] = '\0';
+
+// Expand ~ to $HOME if necessary
+        if (path[0] == '~') {
+            const char *home = getenv("HOME");
+            if (!home) {
+                fprintf(stderr, " >>> Xroutine call string \"%s\" error:\n", sub);
+                fprintf(stderr, " >>> Symbol \"~\" is not allowed.\n");
+                exit(EXIT_FAILURE);
+            }
+
+            snprintf(stri, sizeof(stri), "%s%s", home, path + 1);
+            strncpy(path, stri, sizeof(path) - 1);
+            path[sizeof(path) - 1] = '\0';
         }
-        else{
-            strcpy(name, path);
+
+// Separate name and path
+        char *slash = strrchr(path, '/');
+        if (slash) {
+            strncpy(name, slash + 1, sizeof(name) - 1);
+            name[sizeof(name) - 1] = '\0';
+            *(slash + 1) = '\0'; // Truncate path after last slash
+        } else {
+            strncpy(name, path, sizeof(name) - 1);
+            name[sizeof(name) - 1] = '\0';
             path[0] = '\0';
         }
 
-        strcpy(stri, "test -x "); // Check for xpr/tglfi executable
-        strcat(stri, path);
-        strcat(stri, name);
-
-        if (system(stri) == 0){
-            A_Nsems++;
+        if (strlen(path) > 62) {
+            fprintf(stderr, " >>> Xroutine call string \"%s\" error:\n", sub);
+            fprintf(stderr, " >>> Absolute path is too long.\n");
+            exit(EXIT_FAILURE);
         }
-        else{
-            printf("The executable file \"%s%s\" (#%d) does not exist\n", 
-                path, name, j+1);
+
+// Check if executable exists
+        snprintf(stri, sizeof(stri), "test -x %s%s", path, name);
+        if (system(stri) == 0) {
+            A_Nsems++;
+        } else {
+            fprintf(stderr, "The executable file \"%s%s\" (#%d) does not exist\n", path, name, j + 1);
             exit(j);
         }
     }
+
     A_Nsems++;
     return(A_Nsems);
-
-    Error1:
-    printf(" >>> Xroutine call string (#%d) \"%s\" error\n", j+1, &subs[*Lstr*j]);
-    exit(0);
-    Error2:
-    printf(" >>> Xroutine call string \"%s\" error:\n", &subs[*Lstr*j]);
-    printf(" >>> Symbol \"~\" is not allowed.\n");
-    exit(0);
-    Error3:
-    printf(" >>> Xroutine call string \"%s\" error:\n", &subs[*Lstr*j]);
-    printf(" >>> Absolute path is too long.\n");
-    exit(0);
 }
 
 /*---------------------------------------------------
@@ -255,7 +259,7 @@ int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs){
   Get PID and key for the Astra main process
   Create and initialize a set of A_Nsems semaphores
   Assign NB1 (= *Ngrid) to A_NB1 (alias NC1)
-  Allocate two shared memory segments for Astra datasets 
+  Allocate two shared memory segments for Astra datasets
 */
 int initipc_(INT_* Ngrid){
     int l, var_size, arr_size, is=0, ds, j, *k;
@@ -276,7 +280,7 @@ int initipc_(INT_* Ngrid){
     strcat(ASTRA_task, equmod);
     strcat(ASTRA_task, ".exe");
     my_key = ftok( ASTRA_task, (int)A_PID);    /* Get System V IPC key */
-    printf("ASTRA_task %s\n", ASTRA_task); 
+    printf("ASTRA_task %s\n", ASTRA_task);
     if (my_key == -1){
         printf("ipc_control: not able to create Key from ProcID\n");
         printf("Probably wrong ATASK name parsed from tmp/astra.nml\n");
@@ -308,7 +312,7 @@ int initipc_(INT_* Ngrid){
     }
     fprintf(A_PDF, " Astra task:  \"%s\"\n", ASTRA_task);
     fprintf(A_PDF, " Astra files:  \"%s\",  \"%s\"\n", DATA, equmod);
-    gethostname(hostname, (size_t)32);     
+    gethostname(hostname, (size_t)32);
 
     hold_time=time(NULL);
     fprintf(A_PDF, " Astra@%s started on:  %s", hostname, ctime(&hold_time));
@@ -317,7 +321,7 @@ int initipc_(INT_* Ngrid){
         fclose(A_PDF);
         return(0);
     }
-    fprintf(A_PDF, " Astra(main):  PID = %d,  SemID = %d\n", 
+    fprintf(A_PDF, " Astra(main):  PID = %d,  SemID = %d\n",
     (int)A_PID, A_SemID);
     A_NB1 = *Ngrid;
 
@@ -384,7 +388,10 @@ int inikids_(INT_* Nsub, INT_ *Lstr, char *subs){
     }
 
     for(j=0; j < *Nsub; j++){
-        if (strlen(&subs[*Lstr*j]) == 0) goto Error1;
+       if (strlen(&subs[*Lstr*j]) == 0){
+           printf("Error in input SBP string [%s]\n", &subs[*Lstr*j]);
+           return(j);
+        }
         strcpy(path, &subs[*Lstr*j]);
         if (strchr(path, '~') != NULL ){
             strcpy(stri, getenv("HOME"));
@@ -406,14 +413,14 @@ int inikids_(INT_* Nsub, INT_ *Lstr, char *subs){
         i = strlen(path);
 
         if ( i == 0 ){
-            sprintf(stri, "%s%s %s %d %d %d &", 
+            sprintf(stri, "%s%s %s %d %d %d &",
             "./bin/", name, ASTRA_task, A_PID, (int)my_key, j+1);
             i = system(stri);
         }
         else{
 // Note! chdir() does not recognize ~ as home directory
-            chdir(path); 
-            sprintf(stri, "./%s %s %d %d %d &", 
+            chdir(path);
+            sprintf(stri, "./%s %s %d %d %d &",
             name, ASTRA_task, A_PID, (int)my_key, j+1);
             i = system(stri);
             chdir(AWD);
@@ -428,15 +435,11 @@ int inikids_(INT_* Nsub, INT_ *Lstr, char *subs){
     }
 /* All secondaries all launched and the file A_ipc_file is completed
    Now the data from A_ipc_file have to be retrieved by the main */
-    if (read_aipc(Nsub, Lstr, subs)) goto Error2;
+    if (read_aipc(Nsub, Lstr, subs)){
+        printf("Error in input data interpretation (function read_aipc)\n");
+        exit(j);
+    }
     return(0);
-
-    Error1:
-    printf("Error in input SBP string [%s]\n", &subs[*Lstr*j]);
-    return(j);
-    Error2:
-    printf("Error in input data interpretation (function read_aipc)\n");
-    exit(j);
 }
 
 /*------------------------------------------------------*/
@@ -445,7 +448,7 @@ void WhatSem(){
     if (A_Nsems == 0) return;
     ushort semarray[A_Nsems];
     union semun Mysemun;
-    Mysemun.array = &semarray[0]; 
+    Mysemun.array = &semarray[0];
     semctl(A_SemID, 0, GETALL, Mysemun);
 
     printf(" Semaphore set = {");
@@ -457,7 +460,7 @@ void WhatSem(){
 /*--------------------- Check if ipc is activated --------------------*/
 int ifipc_(){
     if (A_NB1 == 0) return(0);
-    return(1); 
+    return(1);
 }
 
 /*--------------------- Unlock subprocess ----------------------------*/
@@ -470,7 +473,7 @@ int letsbp_(INT_* n){
 
 /*---------------------------------------------------------------------*/
 /* Compare Sem0 value with buf0.sem_op ( == -A_Nsems) and
- wait until all subprocesses increment Sem0 by 1 
+ wait until all subprocesses increment Sem0 by 1
         so that Sem0 reaches value A_Nsems                       ------*/
 int wait4all_(){
     if (A_ShmNum < 0) return(0); /* Do check only after initialization   */
@@ -483,9 +486,9 @@ int wait4all_(){
 
 /*
   Go on if [Sem0value+buf0.sem_op==0], goto Minorloop after timeout
-  Here: buf0 = {(ushort_t) buf0.sem_num = 0 = Const, 
-                -1 <= (short) buf0.sem_op <= Number_of_active_subprocesses, 
-        (short) buf0.sem_flg = SEM_UNDO = Const)} 
+  Here: buf0 = {(ushort_t) buf0.sem_num = 0 = Const,
+                -1 <= (short) buf0.sem_op <= Number_of_active_subprocesses,
+        (short) buf0.sem_flg = SEM_UNDO = Const)}
   Note! Each call increments value of semadj by 1.
   Overflow occurs when the number of successive calls exceeds 32767
 */
@@ -535,7 +538,7 @@ int wait4all_(){
 int read_aipc(INT_* Nsub, INT_ *Lstr, char *subs){
     FILE *A_PDF;
     char stri[132], name[132];
-    int j, i, k, ID, ShmID, kS; 
+    int j, i, k, ID, ShmID, kS;
 
     A_PDF = fopen(A_ipc_file, "r");
     if (!A_PDF){
@@ -559,14 +562,14 @@ int read_aipc(INT_* Nsub, INT_ *Lstr, char *subs){
                 break;      /* SBP name matches the record */
             }
             else{
-                goto Out1;  /* Inconsistency in file A_ipc_file */
+                goto Out;  /* Inconsistency in file A_ipc_file */
             }
         }
         if (A_ShmNum <= A_ShmShift+A_Nsemx){
             A_ShmNum++;
             A_ChID[A_ShmNum] = ID;
-            A_ShmL[A_ShmNum] = kS; 
-            A_ShmID[A_ShmNum] = ShmID;    /* Here (A_ShmNum == Shmem_index) */ 
+            A_ShmL[A_ShmNum] = kS;
+            A_ShmID[A_ShmNum] = ShmID;    /* Here (A_ShmNum == Shmem_index) */
             A_ShmAdr[A_ShmNum] = shmat(ShmID, NULL, 0);
             strcpy(&A_ChNa[A_ShmNum][0], stri);
         }
@@ -579,21 +582,16 @@ int read_aipc(INT_* Nsub, INT_ *Lstr, char *subs){
     fclose(A_PDF);
     if ( A_ShmNum+1-A_ShmShift == *Nsub ) return(0);
 
-    Out1:
-    printf(" >>> File \"%s\" error >>> Missing SBP(%d) name: [%s]\n", 
-    A_ipc_file, i+1-A_ShmShift, name);
-    goto Out;
-    Out2:
-    printf(" >>> File \"%s\" error >>> Incomplete record.\n", A_ipc_file);
-    goto Out;
     Out:
+    printf(" >>> File \"%s\" error >>> Missing SBP(%d) name: [%s]\n",
+    A_ipc_file, i+1-A_ShmShift, name);
     printf("\n  File \"%s\" contents:\n", A_ipc_file);
     printf("\n  File processing:\n");
-    printf("A_Nsems = %d,  A_ShmShift = %d,  A_ShmNum = %d,  Nsub = %d\n", 
+    printf("A_Nsems = %d,  A_ShmShift = %d,  A_ShmNum = %d,  Nsub = %d\n",
     A_Nsems, A_ShmShift, A_ShmNum, *Nsub);
     for (j=A_ShmShift-1; j <= *Nsub; j++){
-        fprintf(stdout, "%12d%12d%12d%12d  %s\n", 
-        j-A_ShmShift+1, A_ChID[j], A_ShmL[j], A_ShmID[j], 
+        fprintf(stdout, "%12d%12d%12d%12d  %s\n",
+        j-A_ShmShift+1, A_ChID[j], A_ShmL[j], A_ShmID[j],
         A_ChNa[j]);
     }
     return(1);
@@ -612,13 +610,13 @@ int setvars_(double* DEVAR, INT_* NA1, INT_* NB1, INT_* NBOUND, INT_* N){
 
     AVARS = (struct A_vars *)A_ShmAdr[0];
     AVARS->ab    = *(DEVAR);
-    AVARS->abc   = *(DEVAR + 1); 
-    AVARS->aim1  = *(DEVAR + 2); 
-    AVARS->aim2  = *(DEVAR + 3); 
-    AVARS->aim3  = *(DEVAR + 4); 
-    AVARS->amj   = *(DEVAR + 5); 
-    AVARS->btor  = *(DEVAR + 7); 
-    AVARS->elong = *(DEVAR + 8); 
+    AVARS->abc   = *(DEVAR + 1);
+    AVARS->aim1  = *(DEVAR + 2);
+    AVARS->aim2  = *(DEVAR + 3);
+    AVARS->aim3  = *(DEVAR + 4);
+    AVARS->amj   = *(DEVAR + 5);
+    AVARS->btor  = *(DEVAR + 7);
+    AVARS->elong = *(DEVAR + 8);
     AVARS->encl  = *(DEVAR + 10);
     AVARS->enwm  = *(DEVAR + 11);
     AVARS->ipl   = *(DEVAR + 18);
@@ -647,47 +645,47 @@ int setarrs_(double* plasma_profs, INT_* NRD){
 #include "A_arrs.h"
     AARRS = (struct A_arrs *)A_ShmAdr[1];
     for (jrho=0; jrho < NC1; jrho++){
-        AARRS->amain[jrho] = *(plasma_profs + jrho); 
-        AARRS->ametr[jrho] = *(plasma_profs + jrho + *NRD); 
-        AARRS->cu[jrho]    = *(plasma_profs + jrho + 2*(*NRD)); 
-        AARRS->elon[jrho]  = *(plasma_profs + jrho + 3*(*NRD)); 
-        AARRS->er[jrho]    = *(plasma_profs + jrho + 4*(*NRD)); 
-        AARRS->fp[jrho]    = *(plasma_profs + jrho + 5*(*NRD)); 
-        AARRS->g11[jrho]   = *(plasma_profs + jrho + 6*(*NRD)); 
-        AARRS->ipol[jrho]  = *(plasma_profs + jrho + 7*(*NRD)); 
-        AARRS->mu[jrho]    = *(plasma_profs + jrho + 8*(*NRD)); 
-        AARRS->nalf[jrho]  = *(plasma_profs + jrho + 9*(*NRD)); 
-        AARRS->ndeut[jrho] = *(plasma_profs + jrho + 10*(*NRD)); 
-        AARRS->ne[jrho]    = *(plasma_profs + jrho + 11*(*NRD)); 
-        AARRS->nhe3[jrho]  = *(plasma_profs + jrho + 12*(*NRD)); 
-        AARRS->nhydr[jrho] = *(plasma_profs + jrho + 13*(*NRD)); 
-        AARRS->ni[jrho]    = *(plasma_profs + jrho + 14*(*NRD)); 
-        AARRS->nibm[jrho]  = *(plasma_profs + jrho + 15*(*NRD)); 
-        AARRS->niz1[jrho]  = *(plasma_profs + jrho + 16*(*NRD)); 
-        AARRS->niz2[jrho]  = *(plasma_profs + jrho + 17*(*NRD)); 
-        AARRS->niz3[jrho]  = *(plasma_profs + jrho + 18*(*NRD)); 
-        AARRS->ntrit[jrho] = *(plasma_profs + jrho + 19*(*NRD)); 
-        AARRS->pblon[jrho] = *(plasma_profs + jrho + 20*(*NRD)); 
-        AARRS->pbper[jrho] = *(plasma_profs + jrho + 21*(*NRD)); 
-        AARRS->pfast[jrho] = *(plasma_profs + jrho + 22*(*NRD)); 
-        AARRS->rho[jrho]   = *(plasma_profs + jrho + 23*(*NRD)); 
-        AARRS->shear[jrho] = *(plasma_profs + jrho + 24*(*NRD)); 
-        AARRS->shif[jrho]  = *(plasma_profs + jrho + 25*(*NRD)); 
-        AARRS->te[jrho]    = *(plasma_profs + jrho + 26*(*NRD)); 
-        AARRS->ti[jrho]    = *(plasma_profs + jrho + 27*(*NRD)); 
-        AARRS->tria[jrho]  = *(plasma_profs + jrho + 28*(*NRD)); 
-        AARRS->upl[jrho]   = *(plasma_profs + jrho + 29*(*NRD)); 
-        AARRS->vpol[jrho]  = *(plasma_profs + jrho + 30*(*NRD)); 
-        AARRS->vrs[jrho]   = *(plasma_profs + jrho + 31*(*NRD)); 
-        AARRS->vtor[jrho]  = *(plasma_profs + jrho + 32*(*NRD)); 
-        AARRS->zef[jrho]   = *(plasma_profs + jrho + 33*(*NRD)); 
-        AARRS->zim1[jrho]  = *(plasma_profs + jrho + 34*(*NRD)); 
-        AARRS->zim2[jrho]  = *(plasma_profs + jrho + 35*(*NRD)); 
-        AARRS->zim3[jrho]  = *(plasma_profs + jrho + 36*(*NRD)); 
-        AARRS->zmain[jrho] = *(plasma_profs + jrho + 37*(*NRD)); 
-        AARRS->zimpt[jrho] = *(plasma_profs + jrho + 38*(*NRD)); 
-        AARRS->nimpt[jrho] = *(plasma_profs + jrho + 39*(*NRD)); 
-        AARRS->aimpt[jrho] = *(plasma_profs + jrho + 40*(*NRD)); 
+        AARRS->amain[jrho] = *(plasma_profs + jrho);
+        AARRS->ametr[jrho] = *(plasma_profs + jrho + *NRD);
+        AARRS->cu[jrho]    = *(plasma_profs + jrho + 2*(*NRD));
+        AARRS->elon[jrho]  = *(plasma_profs + jrho + 3*(*NRD));
+        AARRS->er[jrho]    = *(plasma_profs + jrho + 4*(*NRD));
+        AARRS->fp[jrho]    = *(plasma_profs + jrho + 5*(*NRD));
+        AARRS->g11[jrho]   = *(plasma_profs + jrho + 6*(*NRD));
+        AARRS->ipol[jrho]  = *(plasma_profs + jrho + 7*(*NRD));
+        AARRS->mu[jrho]    = *(plasma_profs + jrho + 8*(*NRD));
+        AARRS->nalf[jrho]  = *(plasma_profs + jrho + 9*(*NRD));
+        AARRS->ndeut[jrho] = *(plasma_profs + jrho + 10*(*NRD));
+        AARRS->ne[jrho]    = *(plasma_profs + jrho + 11*(*NRD));
+        AARRS->nhe3[jrho]  = *(plasma_profs + jrho + 12*(*NRD));
+        AARRS->nhydr[jrho] = *(plasma_profs + jrho + 13*(*NRD));
+        AARRS->ni[jrho]    = *(plasma_profs + jrho + 14*(*NRD));
+        AARRS->nibm[jrho]  = *(plasma_profs + jrho + 15*(*NRD));
+        AARRS->niz1[jrho]  = *(plasma_profs + jrho + 16*(*NRD));
+        AARRS->niz2[jrho]  = *(plasma_profs + jrho + 17*(*NRD));
+        AARRS->niz3[jrho]  = *(plasma_profs + jrho + 18*(*NRD));
+        AARRS->ntrit[jrho] = *(plasma_profs + jrho + 19*(*NRD));
+        AARRS->pblon[jrho] = *(plasma_profs + jrho + 20*(*NRD));
+        AARRS->pbper[jrho] = *(plasma_profs + jrho + 21*(*NRD));
+        AARRS->pfast[jrho] = *(plasma_profs + jrho + 22*(*NRD));
+        AARRS->rho[jrho]   = *(plasma_profs + jrho + 23*(*NRD));
+        AARRS->shear[jrho] = *(plasma_profs + jrho + 24*(*NRD));
+        AARRS->shif[jrho]  = *(plasma_profs + jrho + 25*(*NRD));
+        AARRS->te[jrho]    = *(plasma_profs + jrho + 26*(*NRD));
+        AARRS->ti[jrho]    = *(plasma_profs + jrho + 27*(*NRD));
+        AARRS->tria[jrho]  = *(plasma_profs + jrho + 28*(*NRD));
+        AARRS->upl[jrho]   = *(plasma_profs + jrho + 29*(*NRD));
+        AARRS->vpol[jrho]  = *(plasma_profs + jrho + 30*(*NRD));
+        AARRS->vrs[jrho]   = *(plasma_profs + jrho + 31*(*NRD));
+        AARRS->vtor[jrho]  = *(plasma_profs + jrho + 32*(*NRD));
+        AARRS->zef[jrho]   = *(plasma_profs + jrho + 33*(*NRD));
+        AARRS->zim1[jrho]  = *(plasma_profs + jrho + 34*(*NRD));
+        AARRS->zim2[jrho]  = *(plasma_profs + jrho + 35*(*NRD));
+        AARRS->zim3[jrho]  = *(plasma_profs + jrho + 36*(*NRD));
+        AARRS->zmain[jrho] = *(plasma_profs + jrho + 37*(*NRD));
+        AARRS->zimpt[jrho] = *(plasma_profs + jrho + 38*(*NRD));
+        AARRS->nimpt[jrho] = *(plasma_profs + jrho + 39*(*NRD));
+        AARRS->aimpt[jrho] = *(plasma_profs + jrho + 40*(*NRD));
     }
     return(0);
 }
@@ -724,7 +722,7 @@ void freeshm(){
 void write_aipc (const struct A_proc_info Aproc, char* AWD, int* lS)
 {
     FILE *A_PDF;
-    char A_IPC[132]; 
+    char A_IPC[132];
     char A_logf[132];
 
     char *line;
@@ -764,16 +762,5 @@ void write_aipc (const struct A_proc_info Aproc, char* AWD, int* lS)
     }
     fprintf(A_PDF, "%12d%12d%12d   %s\n", getpid(), Aproc.ShMid, *lS, Aproc.Path);
     fclose(A_PDF);
-    return;
-}
-/*-----------------------------------------------------
-  Communication report
-  Call as:  SP_stamp(Mama, Aproc, SemID);
-*/
-void SP_stamp(const struct A_proc_info Mama, 
-              const struct A_proc_info Aproc, int SemID){
-
-//    printf("#%d \"%s\", \tAproc_PID %d,  SemID %d\n  A_PID %d,  A_Key %d\n", 
-//         Aproc.OrdNr, Aproc.Path, Aproc.Pid, SemID, Mama.Pid, Mama.Key); 
     return;
 }
