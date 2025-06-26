@@ -20,12 +20,11 @@
 #else
 #define INT_ long
 #endif
-#define IPCACTIVE 1
 
 #include "A_vars.h"
 #include "A_proc.h"
 
-void AstraEvent();
+void NoOperation();
 int semtimedop();
 int read_aipc(INT_*, INT_*, char*);
 void freeshm();
@@ -67,9 +66,7 @@ struct sembuf buf0 = {0, 0, ~SEM_UNDO&~IPC_NOWAIT};
 */
 void a_stop_(){
     printf("\nASTRA controlled stop\n");
-#ifdef IPCACTIVE
     freeshm();
-#endif
     int AID = getpid();
     printf("Kill process # %d\n", AID);
     kill(AID, SIGKILL);
@@ -106,14 +103,14 @@ void to_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N){
         exit(1);
     }
     QL_IN = (struct A_ql_in *)A_ShmAdr[*N+1];
-    (*QL_IN).jrho_beg = *jrho_beg;
-    (*QL_IN).jrho_end = *jrho_end;
+    QL_IN->jrho_beg = *jrho_beg;
+    QL_IN->jrho_end = *jrho_end;
     return;
 }
 
 /*----------------------------------------------------------------*/
-void ot_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N, double* cpuse, double* YY){
-
+void ot_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N, double* cpuse, double* mem){
+// Reads the shared memory segment and stores the QL-code output to ASTRA fortran arrays 
 #include "A_ql_io2.h"
     int j, jarr, n_nrd;
     if (A_ShmNum < 0) return;
@@ -125,11 +122,8 @@ void ot_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N, double* cpuse, double* YY)
     *cpuse = ql_io2->My.CPUse;
     for (j=*jrho_beg-1; j <= *jrho_end-1; j++){
         for (jarr=0; jarr<15; jarr++){
-            YY[j+1+jarr*n_nrd] = ql_io2->QLarrays[j+jarr*NC1];
+            mem[j+1+jarr*n_nrd] = ql_io2->QLarrays[j+jarr*NC1];
         }
-    }
-    if (*jrho_beg == 1){
-        for (j=0; j <= 15*n_nrd; j += n_nrd) YY[j] = 0.;
     }
     return;
 }
@@ -138,14 +132,14 @@ void ot_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N, double* cpuse, double* YY)
 char* parse_nml(char * line_in){
     if (line_in == NULL) return NULL;
 
-    // Find the opening quote
+// Find the opening quote
     const char *start = strchr(line_in, '"');
     if (!start) start = strchr(line_in, '\'');
     if (!start) return NULL;
 
-    start++;  // Move past opening quote
+    start++;
 
-    // Find the end of the quoted word
+// Find the end of the quoted word
     const char *end = start;
     while (*end && *end != '"' && *end != '\'' && !isspace((unsigned char)*end)) {
         end++;
@@ -387,52 +381,66 @@ int inikids_(INT_* Nsub, INT_ *Lstr, char *subs){
        return(1);
     }
 
-    for(j=0; j < *Nsub; j++){
-       if (strlen(&subs[*Lstr*j]) == 0){
-           printf("Error in input SBP string [%s]\n", &subs[*Lstr*j]);
-           return(j);
+    for (j = 0; j < *Nsub; j++) {
+        char *sub = &subs[*Lstr * j];
+
+        if (strlen(sub) == 0) {
+            printf("Error in input SBP string [%s]\n", sub);
+            return j;
         }
-        strcpy(path, &subs[*Lstr*j]);
-        if (strchr(path, '~') != NULL ){
-            strcpy(stri, getenv("HOME"));
-            strcat(stri, &path[1]);
-            strcpy(path, stri);
-            i = strrchr(path, '/') - &path[0];
-            strcpy(name, &path[i+1]);
-            path[i+1] = '\0';
+
+        strncpy(path, sub, sizeof(path) - 1);
+        path[sizeof(path) - 1] = '\0';
+
+        const char *home = getenv("HOME");
+        if (path[0] == '~' && home) {
+            snprintf(stri, sizeof(stri), "%s%s", home, path + 1);
+            strncpy(path, stri, sizeof(path) - 1);
+            path[sizeof(path) - 1] = '\0';
         }
-        else if (strrchr(path, '/') != NULL){
-            i = strrchr(path, '/') - &path[0];
-            path[i+1] = '\0';
-            strcpy(name, &subs[*Lstr*j+i+1]);
-        }
-        else{
-            strcpy(name, path);
+
+        char *slash = strrchr(path, '/');
+        if (slash) {
+            strncpy(name, slash + 1, sizeof(name) - 1);
+            name[sizeof(name) - 1] = '\0';
+            *(slash + 1) = '\0'; // Truncate path after last slash
+        } else {
+            strncpy(name, path, sizeof(name) - 1);
+            name[sizeof(name) - 1] = '\0';
             path[0] = '\0';
         }
-        i = strlen(path);
 
-        if ( i == 0 ){
-            sprintf(stri, "%s%s %s %d %d %d &",
-            "./bin/", name, ASTRA_task, A_PID, (int)my_key, j+1);
+        int i;
+        if (strlen(path) == 0) {
+            snprintf(stri, sizeof(stri), "./bin/%s %s %d %d %d &",
+                     name, ASTRA_task, A_PID, (int)my_key, j + 1);
             i = system(stri);
-        }
-        else{
-// Note! chdir() does not recognize ~ as home directory
-            chdir(path);
-            sprintf(stri, "./%s %s %d %d %d &",
-            name, ASTRA_task, A_PID, (int)my_key, j+1);
+        } else {
+            if (chdir(path) != 0) {
+                perror("chdir failed");
+                return j + 1;
+            }
+
+            snprintf(stri, sizeof(stri), "./%s %s %d %d %d &",
+                     name, ASTRA_task, A_PID, (int)my_key, j + 1);
             i = system(stri);
-            chdir(AWD);
+
+            if (chdir(AWD) != 0) {
+                perror("chdir back to AWD failed");
+                return j + 1;
+            }
         }
 
-/* Wait until proc No.(j+1) opens the PRIMARY semaphore (sem_num=0)
-                            incrementing its initial value (0) by 1 */
+// Wait until child increments semaphore 0
         struct sembuf bufj = {0, -1, ~IPC_NOWAIT};
-        semop(A_SemID, &bufj, 1);
+        if (semop(A_SemID, &bufj, 1) == -1) {
+            perror("semop failed");
+            return j + 1;
+        }
 
-        if (i == -1) return(j+1);
+        if (i == -1) return j + 1;
     }
+
 /* All secondaries all launched and the file A_ipc_file is completed
    Now the data from A_ipc_file have to be retrieved by the main */
     if (read_aipc(Nsub, Lstr, subs)){
@@ -440,6 +448,10 @@ int inikids_(INT_* Nsub, INT_ *Lstr, char *subs){
         exit(j);
     }
     return(0);
+}
+
+/*------------------------------------------------------*/
+void NoOperation(){
 }
 
 /*------------------------------------------------------*/
@@ -481,7 +493,7 @@ int wait4all_(){
 
     MinorLoop:{
 /* Here the primary process can do limited actions e.g. analyze keys */
-        (void) AstraEvent();
+        NoOperation();
     }
 
 /*
@@ -721,18 +733,15 @@ void freeshm(){
 
 void write_aipc (const struct A_proc_info Aproc, char* AWD, int* lS)
 {
-    FILE *A_PDF;
+  FILE *A_PDF, *A_LOG;
     char A_IPC[132];
     char A_logf[132];
-
     char *line;
-    size_t len = 0;
+    size_t len=0;
     ssize_t read;
-    int j, i;
 
 /* Check existence of subprocess executable files */
 /* Read tmp/astra.log and store run info */
-    FILE *A_LOG;
 
     strcpy(A_logf, AWD);
     strcat(A_logf, "/tmp/astra.nml");

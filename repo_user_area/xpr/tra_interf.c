@@ -1,8 +1,4 @@
 /*---------------------------------------------------------------------*/
-#define C_MAIN 0
-/*------------------------------------------------------------------*/
-/* Note! It is expected that the variable C_MAIN is defined in
-         the C-file where this file __FILE__ is included            */
 /* The file includes functions (double)`swatch' and
    the starting part of the function (int)`sbp2shm' that
    acquires information about AWD, process wd, id, name, key,
@@ -12,14 +8,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <math.h>
-#include <time.h>
 #include <sys/times.h>
-#include <sys/types.h>
-#include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include <errno.h>
+
 #ifndef INT8
 #define INT_ int
 #else
@@ -81,17 +74,11 @@ double swatch(double *secs){
 }
 
 /*---------------------------------------------------------------------*/
-#if C_MAIN != 0
-int main(argc, argv, envir)   /* C main __FILE__  is used */
-int argc;
-char *argv[], *envir[];
-#else                         /* Fortran main is used */
-   /* Note description of arg2, arg3, arg4 should be compatible with
-      INT_ or int
-   */
+/* Note description of arg2, arg3, arg4 should be compatible with
+    INT_ or int
+*/
 
 int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
-#endif
 {
     int i, lS;
     static union semun Mysemun;
@@ -110,24 +97,6 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
     getcwd(My.Path, (size_t)64);
     strcat(My.Path, "/");
 
-#if C_MAIN != 0
-    strcat(My.Path,argv[0]+2);     /* C main __FILE__  is used */
-    if (strrchr(argv[0],'/') != NULL){
-        sscanf(strrchr(argv[0], '/')+1,"%s",whoami);
-    }
-    else{
-        sscanf(argv[0], "%s", whoami);
-    }
-    sscanf(argv[1], "%s", Mama.Path);
-    ++argv;
-    ++argv;
-    Mama.Pid = (pid_t)atoi(*argv);
-    ++argv;
-    Mama.Key  = (key_t)atoi(*argv);
-    ++argv;
-    My.OrdNr = atoi(*argv);
-    printf("C main: %s\n", My.Path);
-#else            /* Fortran main is used */
     strcat(My.Path, arg0+2);
     if (strrchr(arg0, '/') != NULL){
         sscanf(strrchr(arg0, '/')+1, "%s", whoami); }
@@ -139,7 +108,6 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
     Mama.Key = (key_t)*arg3;
     My.OrdNr = *arg4;
     printf("Fortran main: %s %d %d\n", My.Path, Mama.Pid, Mama.Key);
-#endif
 
 /* Associate My semaphore with the ordinal process number */
     bufN.sem_num = My.OrdNr;
@@ -285,7 +253,3 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
     exit(0);
 
 }
-
-/*--------------------------------------------------*/
-void AstraEvent () { }
-/*--------------------------------------------------*/
