@@ -249,21 +249,21 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
               &(AARRS->nimpt),
               &(AARRS->aimpt),
 /* output */
-              &((*IOQL).chi), 
-              &((*IOQL).che), 
-              &((*IOQL).dif), 
-              &((*IOQL).vin), 
-              &((*IOQL).dph), 
-              &((*IOQL).dpl), 
-              &((*IOQL).dpr), 
-              &((*IOQL).xtb), 
-              &((*IOQL).egm), 
-              &((*IOQL).gam), 
-              &((*IOQL).gm1), 
-              &((*IOQL).gm2), 
-              &((*IOQL).om1), 
-              &((*IOQL).om2), 
-              &((*IOQL).fr1)
+              &(*IOQL->chi),
+              &(*IOQL->che),
+              &(*IOQL->dif),
+              &(*IOQL->vin),
+              &(*IOQL->dph),
+              &(*IOQL->dpl),
+              &(*IOQL->dpr),
+              &(*IOQL->xtb),
+              &(*IOQL->egm),
+              &(*IOQL->gam),
+              &(*IOQL->gm1),
+              &(*IOQL->gm2),
+              &(*IOQL->om1),
+              &(*IOQL->om2),
+              &(*IOQL->fr1)
           );
 
         swatch(&(My.CPUse));
