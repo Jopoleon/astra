@@ -24,7 +24,6 @@
 #include "A_vars.h"
 #include "A_proc.h"
 
-void NoOperation();
 int semtimedop();
 int read_aipc(INT_*, INT_*, char*);
 void freeshm();
@@ -451,10 +450,6 @@ int inikids_(INT_* Nsub, INT_ *Lstr, char *subs){
 }
 
 /*------------------------------------------------------*/
-void NoOperation(){
-}
-
-/*------------------------------------------------------*/
 void WhatSem(){
     int j;
     if (A_Nsems == 0) return;
@@ -491,10 +486,7 @@ int wait4all_(){
     if (A_ShmNum < 0) return(0); /* Do check only after initialization   */
     static struct timespec timeout = {0, 100000000};   /* timeout = .1 sec */
 
-    MinorLoop:{
-/* Here the primary process can do limited actions e.g. analyze keys */
-        NoOperation();
-    }
+    MinorLoop:
 
 /*
   Go on if [Sem0value+buf0.sem_op==0], goto Minorloop after timeout
@@ -740,7 +732,7 @@ void write_aipc(const struct A_proc_info Aproc, char* AWD, int* lS)
     ssize_t read;
 
 /* Check existence of subprocess executable files */
-/* Read tmp/astra.log and store run info */
+/* Read tmp/astra.nml and store run info */
 
     strcpy(A_logf, AWD);
     strcat(A_logf, "/tmp/astra.nml");
