@@ -712,7 +712,7 @@ void freeshm(){
 }
 
 /*---------------------------------------------------------------------*/
-void write_aipc(const struct A_proc_info Aproc, char* AWD, int* lS)
+void write_aipc(const struct A_proc_info Aproc, char* AWD, int qlSize)
 {
   FILE *A_PDF, *A_LOG;
     char A_IPC[132];
@@ -750,7 +750,7 @@ void write_aipc(const struct A_proc_info Aproc, char* AWD, int* lS)
         printf("Cannot open existing Astra IPC file: \"%s\"\n", A_IPC);
         exit(0);
     }
-    fprintf(A_PDF, "%12d%12d%12d   %s\n", getpid(), Aproc.ShMid, *lS, Aproc.Path);
+    fprintf(A_PDF, "%12d%12d%12d   %s\n", getpid(), Aproc.ShMid, qlSize, Aproc.Path);
     fclose(A_PDF);
     return;
 }

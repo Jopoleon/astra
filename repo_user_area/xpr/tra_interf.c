@@ -80,7 +80,7 @@ double swatch(double *secs){
 
 int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
 {
-    int i, lS;
+  int i, qlSize;
     static union semun Mysemun;
 // sembuf members: {sem_num,sem_op,sem_flag};
     static struct sembuf buf0 = {0, 1, IPC_NOWAIT};
@@ -128,16 +128,17 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
         *strstr(AWD, "bin/") = '\0';
     }
     My.Key = ftok( My.Path, (int)My.Pid);
-    lS = sizeof(struct A_ql_IO);
+#include "A_ql_io2.h"
+    qlSize = sizeof(struct A_ql_io2) - sizeof(double) + N_ql*NC1*sizeof(double);
 
 /*------------------------------------
   Create My shared memory segment
 */
-    My.ShMid = shmget(My.Key, lS, 0660|IPC_CREAT);
+    My.ShMid = shmget(My.Key, qlSize, 0660|IPC_CREAT);
 /* Attach My shared memory to the process
    My shared memory segment starts at ShmAdr */
     ShmAdr = shmat(My.ShMid, NULL, 0);
-    write_aipc(My, AWD, &lS);
+    write_aipc(My, AWD, qlSize);
 
     while(1){
 /* Increments the PRIMARY semaphore immediately, i.e. lets it run
@@ -148,8 +149,10 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
         AVARS = (struct A_vars *)ShmAd0;
         AARRS = (struct A_arrs *)ShmAd1;
         IOQL = (struct A_ql_IO *)ShmAdr;
-        IOQL->My = My;
+// Fill IOQL with process information
+	IOQL->My = My;
 
+// Fill IOQL with Fortran-interface output arrays
 /* Call Fortran function */
 #ifdef qlk
         qlk_interf_(
@@ -161,8 +164,8 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
         neo_interf_(
 #endif
            /* input */
-              &(IOQL->is),
-              &(IOQL->ie),
+              &(IOQL->jrho_beg),
+              &(IOQL->jrho_end),
               &(AVARS->na1),
               &(AVARS->na1n),
               &(AVARS->na1e),

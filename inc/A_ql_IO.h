@@ -2,8 +2,8 @@ static struct A_ql_IO
 {
    struct A_proc_info My; /* General IO information */
    int Size;         /* Control: Size of the Shmem */
-   int is;           /* Input:   */
-   int ie;           /* Input:   */
+   int jrho_beg;     /* Input:   */
+   int jrho_end;     /* Input:   */
    double chi[NC1];  /* Output: chi_i  */
    double che[NC1];  /* Output: chi_e  */
    double dif[NC1];  /* Output: diff_i  */
