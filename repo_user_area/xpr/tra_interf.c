@@ -12,6 +12,8 @@
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include <errno.h>
+#include "A_vars.h"
+#include "A_proc.h"
 
 #ifndef INT8
 #define INT_ int
@@ -34,7 +36,7 @@ void *ShmAd0, *ShmAd1, *ShmAdr;
 void qlk_interf_();
 void neo_interf_();
 void tglf_interf_();
-int write_aipc();
+void write_aipc();
 
 #define NC1 A_NB1
 
@@ -85,8 +87,6 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
     static struct sembuf bufN = {1,-1, ~SEM_UNDO&~IPC_NOWAIT};
     static char whoami[32];
     static char AWD[96];
-#include "A_vars.h"
-#include "A_proc.h"
     static struct A_proc_info Mama, My;
 
     swatch(&(My.CPUse));
@@ -114,9 +114,11 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
     ShMid0 = shmget((key_t)(Mama.Key+0), 0, 0660);
     ShMid1 = shmget((key_t)(Mama.Key+1), 0, 0660);
     ShmAd0 = shmat(ShMid0, NULL, 0);
+    ShmAd1 = shmat(ShMid1, NULL, 0);
     AVARS = (struct A_vars *)ShmAd0;
     A_NB1 = AVARS->nb1;
-    ShmAd1 = shmat(ShMid1, NULL, 0);
+#include "A_arrs.h"
+#include "A_ql_IO.h"
     strcpy(AWD, Mama.Path);
     if (strstr(AWD, "bin/") == NULL){
         printf("SBP launch string error\n");
@@ -126,10 +128,6 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
         *strstr(AWD, "bin/") = '\0';
     }
     My.Key = ftok( My.Path, (int)My.Pid);
-
-#include "A_arrs.h"
-#include "A_ql_IO.h"
-
     lS = sizeof(struct A_ql_IO);
 
 /*------------------------------------
@@ -139,8 +137,7 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
 /* Attach My shared memory to the process
    My shared memory segment starts at ShmAdr */
     ShmAdr = shmat(My.ShMid, NULL, 0);
-    i = My.OrdNr;
-    i = write_aipc(My, AWD, &lS);
+    write_aipc(My, AWD, &lS);
 
     while(1){
 /* Increments the PRIMARY semaphore immediately, i.e. lets it run

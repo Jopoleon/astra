@@ -120,7 +120,7 @@ void ot_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N, double* cpuse, double* mem
     ql_io2->QLarrays = (double *)((char *)ql_io2 + offset);
     *cpuse = ql_io2->My.CPUse;
     for (j=*jrho_beg-1; j <= *jrho_end-1; j++){
-        for (jarr=0; jarr<15; jarr++){
+        for (jarr=0; jarr<N_ql; jarr++){
             mem[j+1+jarr*n_nrd] = ql_io2->QLarrays[j+jarr*NC1];
         }
     }
