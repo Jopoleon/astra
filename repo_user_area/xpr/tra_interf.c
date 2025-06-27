@@ -118,7 +118,6 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
     AVARS = (struct A_vars *)ShmAd0;
     A_NA1 = AVARS->na1;
 #include "A_arrs.h"
-#include "A_ql_IO.h"
     strcpy(AWD, Mama.Path);
     if (strstr(AWD, "bin/") == NULL){
         printf("SBP launch string error\n");
@@ -128,8 +127,8 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
         *strstr(AWD, "bin/") = '\0';
     }
     My.Key = ftok( My.Path, (int)My.Pid);
-#include "A_ql_io2.h"
-    qlSize = sizeof(struct A_ql_io2) - sizeof(double) + N_ql*NC1*sizeof(double);
+#include "A_ql_io.h"
+    qlSize = sizeof(struct A_ql_io) - sizeof(double) + N_ql*NC1*sizeof(double);
 
 /*------------------------------------
   Create My shared memory segment
@@ -148,11 +147,11 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
 
         AVARS = (struct A_vars *)ShmAd0;
         AARRS = (struct A_arrs *)ShmAd1;
-        IOQL = (struct A_ql_IO *)ShmAdr;
-// Fill IOQL with process information
-	IOQL->My = My;
+        ql_io = (struct A_ql_io *)ShmAdr;
+// Fill ql_io with process information
+	ql_io->My = My;
 
-// Fill IOQL with Fortran-interface output arrays
+// Fill ql_io with Fortran-interface output arrays
 /* Call Fortran function */
 #ifdef qlk
         qlk_interf_(
@@ -164,8 +163,8 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
         neo_interf_(
 #endif
            /* input */
-	      &(IOQL->jrho_beg),
-              &(IOQL->jrho_end),
+	      &(ql_io->jrho_beg),
+              &(ql_io->jrho_end),
               &(AVARS->na1),
               &(AVARS->na1n),
               &(AVARS->na1e),
@@ -211,21 +210,7 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
               &(AARRS->nimpt),
               &(AARRS->aimpt),
 /* output */
-              &(IOQL->chi),
-              &(IOQL->che),
-              &(IOQL->dif),
-              &(IOQL->vin),
-              &(IOQL->dph),
-              &(IOQL->dpl),
-              &(IOQL->dpr),
-              &(IOQL->xtb),
-              &(IOQL->egm),
-              &(IOQL->gam),
-              &(IOQL->gm1),
-              &(IOQL->gm2),
-              &(IOQL->om1),
-              &(IOQL->om2),
-              &(IOQL->fr1)
+              &(ql_io->QLarrays)
           );
 
         swatch(&(My.CPUse));

@@ -32,7 +32,7 @@ subroutine neo_interf(jr1_in, jr2_in, nrho, NA1N, NA1E, NA1I, &
     VPOL, VRS, VTOR, SHEAR, PBLON, PBPER, PFAST, NIZ3, ZIM2, ZIM3, &
     ZIMPT, NIMPT, AIMPT, &
 ! output
-    CHI, CHE, DIF, VIN, DPH, DPL, DPR, XTB, EGM, GAM, GM1, GM2, OM1, OM2, FR1)
+    mem_out)
 
 !----------------------------------------------------------------------|
 ! WORK(1:NA1,1:13) array is used for output
@@ -63,8 +63,7 @@ double precision, intent(in), dimension(*) :: NE, TE, NI, TI, &
     NIZ2, TRIA, NIBM, G11, VPOL, VRS, VTOR, SHEAR, &
     ZIMPT, NIMPT, AIMPT
 
-double precision, intent(out), dimension(*) :: CHI, CHE, DIF, VIN, &
-    DPH, DPL, DPR, XTB, EGM, GAM, GM1, GM2, OM1, OM2, FR1
+double precision, intent(out), dimension(nrho, 15) :: mem_out
 
 !----------------------------------------------------------------------
 integer :: jr_min, jr_max, jrho, j0, j01, j02, n_radial
@@ -447,23 +446,17 @@ vitti1_m(1:2) = vitti1_m(3)
 j_boot  (1:2) = j_boot  (3)
 elec_pflux_m(1:2) = elec_pflux_m(3)
 
-DIF(1:nrho) = 0.d0       ! D, electron diffusivity, m^2/s
-DPH(1:nrho) = 0.d0       ! D, impurity diffusivity, m^2/s
-DPL(1:nrho) = 0.d0       ! impurity convection
-GM2(1:nrho) = 0.d0
-OM1(1:nrho) = 0.d0
-OM2(1:nrho) = 0.d0
-FR1(1:nrho) = 0.d0
+mem_out = 0.d0
 
 do j=jr_min, jr_max
-    CHI(j) = chii_m(j)/gradrhosq_exp(j) ! \chi_i, m^2/s : starts from work(21,:) 
-    CHE(j) = chie_m(j)/gradrhosq_exp(j) ! \chi_e, m^2/s
-    VIN(j) = elec_pflux_m(j)/anorm/gradrhosq_exp(j)
-    DPR(j) = j_boot(j)    ! bootstrap current
-    XTB(j) = vippd_m(j)   ! main ions poloidal flow
-    EGM(j) = vippi1_m(j)  ! 1st imp poloidal flow
-    GAM(j) = vittd_m(j)   ! main ions toroidal flow
-    GM1(j) = vitti1_m(j)  ! 1st imp toroidal flow
+    mem_out(j,  1) = chii_m(j)/gradrhosq_exp(j) ! \chi_i, m^2/s : starts from work(21,:) 
+    mem_out(j,  2) = chie_m(j)/gradrhosq_exp(j) ! \chi_e, m^2/s
+    mem_out(j,  4) = elec_pflux_m(j)/anorm/gradrhosq_exp(j)
+    mem_out(j,  7) = j_boot(j)    ! bootstrap current
+    mem_out(j,  8) = vippd_m(j)   ! main ions poloidal flow
+    mem_out(j,  9) = vippi1_m(j)  ! 1st imp poloidal flow
+    mem_out(j, 10) = vittd_m(j)   ! main ions toroidal flow
+    mem_out(j, 11) = vitti1_m(j)  ! 1st imp toroidal flow
 enddo
 
 return

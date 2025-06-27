@@ -17,6 +17,7 @@ use outcmn_inc, only: jbeg_arrx, IFDFAX, XAXES, &
     DATAX, NPTM, TOUTX
 use debugger, only: markloc, astra_stop
 use expdat, only: raw_profile_map, DATARR
+use ipc_mod, only: mem_tglf, mem_qlkz, mem_neo
 
 implicit  none
 

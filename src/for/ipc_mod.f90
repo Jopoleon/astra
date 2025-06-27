@@ -4,6 +4,7 @@ use parameter_inc, only: NRD
 
 implicit none
 
-double precision :: mem_tglf(NRD, 25), mem_qlkz(NRD, 25), mem_neo(NRD, 25)
+!double precision, allocatable, dimension(:, :) :: mem_tglf, mem_qlkz, mem_neo
+double precision, dimension(NRD, 25) :: mem_tglf, mem_qlkz, mem_neo
 
 end module ipc_mod

@@ -32,7 +32,7 @@ subroutine tglf_interf(jr1_in, jr2_in, nrho, NA1N, NA1E, NA1I, &
     VPOL, VRS, VTOR, SHEAR, PBLON, PBPER, PFAST, NIZ3, ZIM2, ZIM3, &
     ZIMPT, NIMPT, AIMPT, &
 ! output
-    CHI, CHE, DIF, VIN, DPH, DPL, DPR, XTB, EGM, GAM, GM1, GM2, OM1, OM2, FR1)
+    mem_out)
 
 use tglf_interface, only: nsm, tglf_zs_in, tglf_ns_in, tglf_mass_in, &
     tglf_find_width_in, tglf_iflux_in, tglf_use_bper_in, tglf_use_mhd_rule_in, &
@@ -91,8 +91,7 @@ double precision, intent(in), dimension(*) :: NE, TE, NI, TI, &
     NIZ2, TRIA, NIBM, G11, VPOL, VRS, VTOR, SHEAR, &
     ZIMPT, NIMPT, AIMPT
 
-double precision, intent(out), dimension(*) :: CHI, CHE, DIF, VIN, &
-    DPH, DPL, DPR, XTB, EGM, GAM, GM1, GM2, OM1, OM2, FR1
+double precision, intent(out), dimension(nrho, 15) :: mem_out
 
 !----------------------------------------------------------------------
 
@@ -612,37 +611,27 @@ exchi_m(1:2) = exchi_m(3)
 omega_m(1:2) = omega_m(3)
 gamma_m(1:2) = gamma_m(3)
 
-DIF(1:nrho) = 0.d0       ! D, electron diffusivity, m^2/s
-DPH(1:nrho) = 0.d0       ! 2nd imp convection
-DPL(1:nrho) = 0.d0       ! 1st imp convection
-DPR(1:nrho) = 0.d0       ! tor. stress
-EGM(1:nrho) = 0.d0
-GAM(1:nrho) = 0.d0
-GM1(1:nrho) = 0.d0
-GM2(1:nrho) = 0.d0
-OM1(1:nrho) = 0.d0
-OM2(1:nrho) = 0.d0
-FR1(1:nrho) = 0.d0
+mem_out = 0.d0
 
 do j=jr_min, jr_max
-    CHI(j) = chii_m(j)/gradrhosq_exp(j) ! \chi_i, m^2/s
-    CHE(j) = chie_m(j)/gradrhosq_exp(j) ! \chi_e, m^2/s
-    VIN(j) = elec_pflux_m(j)/AMETR(nrho)/gradrhosq_exp(j) ! D flux
-    DPR(j) = mtori_m(j)
+    mem_out(j, 1) = chii_m(j)/gradrhosq_exp(j) ! \chi_i, m^2/s
+    mem_out(j, 2) = chie_m(j)/gradrhosq_exp(j) ! \chi_e, m^2/s
+    mem_out(j, 4) = elec_pflux_m(j)/AMETR(nrho)/gradrhosq_exp(j) ! D flux
+    mem_out(j, 7) = mtori_m(j)
 !First impurity only, index 2 of ion species
     if (tglf_ns_in >= 3) then
-       DPL(j) = ion_pflux_m(2, j)/AMETR(nrho)/gradrhosq_exp(j)/(ni_m(2, j)/NE(j))  ! 1st imp convection
+        mem_out(j, 6) = ion_pflux_m(2, j)/AMETR(nrho)/gradrhosq_exp(j)/(ni_m(2, j)/NE(j))  ! 1st imp convection
     endif
     if (tglf_ns_in >= 4) then
-       DPH(j) = ion_pflux_m(3, j)/AMETR(nrho)/gradrhosq_exp(j)/(ni_m(3, j)/NE(j))  ! 2nd imp convection
+        mem_out(j, 5) = ion_pflux_m(3, j)/AMETR(nrho)/gradrhosq_exp(j)/(ni_m(3, j)/NE(j))  ! 2nd imp convection
     endif
-    XTB(j) = exchi_m(j)  ! turbulent e-i equipartition in MW/m^3
-    GM1(j) = gamma_m(j)*(cs0/a0_cm)
-    OM1(j) = omega_m(j)*(cs0/a0_cm)
+    mem_out(j,  8) = exchi_m(j)  ! turbulent e-i equipartition in MW/m^3
+    mem_out(j, 11) = gamma_m(j)*(cs0/a0_cm)
+    mem_out(j, 13) = omega_m(j)*(cs0/a0_cm)
 enddo
 
-DPL(1) = 0.d0 !ensure NIZ1 convection equal to zero on axis
-DPH(1) = 0.d0 !ensure NIZ2 convection equal to zero on axis (already 0 otherwise)
+mem_out(1, 6) = 0.d0 !ensure NIZ1 convection equal to zero on axis
+mem_out(1, 5) = 0.d0 !ensure NIZ2 convection equal to zero on axis (already 0 otherwise)
 
 deallocate(gamma)
 deallocate(omega)
