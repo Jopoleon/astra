@@ -30,7 +30,7 @@ union semun {
 
 void a_stop_();
 double swatch (double*);
-extern INT_ A_NB1;
+extern INT_ A_NA1;
 int   SemID ,  ShMid0,  ShMid1;
 void *ShmAd0, *ShmAd1, *ShmAdr;
 void qlk_interf_();
@@ -38,7 +38,7 @@ void neo_interf_();
 void tglf_interf_();
 void write_aipc();
 
-#define NC1 A_NB1
+#define NC1 A_NA1
 
 /*
   Returns CPU time [sec] between two successive calls to the argument.
@@ -116,7 +116,7 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
     ShmAd0 = shmat(ShMid0, NULL, 0);
     ShmAd1 = shmat(ShMid1, NULL, 0);
     AVARS = (struct A_vars *)ShmAd0;
-    A_NB1 = AVARS->nb1;
+    A_NA1 = AVARS->na1;
 #include "A_arrs.h"
 #include "A_ql_IO.h"
     strcpy(AWD, Mama.Path);
@@ -164,7 +164,7 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
         neo_interf_(
 #endif
            /* input */
-              &(IOQL->jrho_beg),
+	      &(IOQL->jrho_beg),
               &(IOQL->jrho_end),
               &(AVARS->na1),
               &(AVARS->na1n),

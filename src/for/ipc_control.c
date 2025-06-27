@@ -45,8 +45,8 @@ union semun{
 };
 
 pid_t A_PID = 0;
-INT_  A_NB1 = 0;
-#define NC1 A_NB1
+INT_  A_NA1 = 0;
+#define NC1 A_NA1
 int A_SemID = 0;
 int A_Nsems = 0;       /* the number of semaphores */
 int A_ShmNum = -1;
@@ -248,10 +248,10 @@ int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs){
 }
 
 /*---------------------------------------------------
-  "call initipc(NB1)" is placed in init.inc
+  "call initipc(NA1)" is placed in init.inc
   Get PID and key for the Astra main process
   Create and initialize a set of A_Nsems semaphores
-  Assign NB1 (= *Ngrid) to A_NB1 (alias NC1)
+  Assign NA1 (= *Ngrid) to A_NA1 (alias NC1)
   Allocate two shared memory segments for Astra datasets
 */
 int initipc_(INT_* Ngrid){
@@ -263,7 +263,7 @@ int initipc_(INT_* Ngrid){
     static union semun Mysemun;
 
     if (A_Nsems == 0) return(0); /* Remove this line if ESC is enabled */
-    if (A_NB1 != 0) return(0); /* Initialize only once */
+    if (A_NA1 != 0) return(0); /* Initialize only once */
 
 /* Collecting data */
     A_PID = getpid();
@@ -316,7 +316,7 @@ int initipc_(INT_* Ngrid){
     }
     fprintf(A_PDF, " Astra(main):  PID = %d,  SemID = %d\n",
     (int)A_PID, A_SemID);
-    A_NB1 = *Ngrid;
+    A_NA1 = *Ngrid;
 
     var_size = sizeof(struct A_vars);
     AllocateShmem(var_size);
@@ -456,7 +456,7 @@ void WhatSem(){
 
 /*--------------------- Check if ipc is activated --------------------*/
 int ifipc_(){
-    if (A_NB1 == 0) return(0);
+    if (A_NA1 == 0) return(0);
     return(1);
 }
 
@@ -631,55 +631,55 @@ int setvars_(double* DEVAR, INT_* NA1, INT_* NB1, INT_* NBOUND, INT_* N){
 }
 
 /*------------- Get ID of ShMem for status.inc --------------*/
-int setarrs_(double* plasma_profs, INT_* NRD){
+int setarrs_(double* plasma_profs, INT_ *n_RD){
     int jrho;
-
+    int NRD = *n_RD;
     if (A_Nsems == 0) return(0);
     if (A_ShmNum < 0) return(0);
 #include "A_arrs.h"
     AARRS = (struct A_arrs *)A_ShmAdr[1];
     for (jrho=0; jrho < NC1; jrho++){
         AARRS->amain[jrho] = *(plasma_profs + jrho);
-        AARRS->ametr[jrho] = *(plasma_profs + jrho + *NRD);
-        AARRS->cu[jrho]    = *(plasma_profs + jrho + 2*(*NRD));
-        AARRS->elon[jrho]  = *(plasma_profs + jrho + 3*(*NRD));
-        AARRS->er[jrho]    = *(plasma_profs + jrho + 4*(*NRD));
-        AARRS->fp[jrho]    = *(plasma_profs + jrho + 5*(*NRD));
-        AARRS->g11[jrho]   = *(plasma_profs + jrho + 6*(*NRD));
-        AARRS->ipol[jrho]  = *(plasma_profs + jrho + 7*(*NRD));
-        AARRS->mu[jrho]    = *(plasma_profs + jrho + 8*(*NRD));
-        AARRS->nalf[jrho]  = *(plasma_profs + jrho + 9*(*NRD));
-        AARRS->ndeut[jrho] = *(plasma_profs + jrho + 10*(*NRD));
-        AARRS->ne[jrho]    = *(plasma_profs + jrho + 11*(*NRD));
-        AARRS->nhe3[jrho]  = *(plasma_profs + jrho + 12*(*NRD));
-        AARRS->nhydr[jrho] = *(plasma_profs + jrho + 13*(*NRD));
-        AARRS->ni[jrho]    = *(plasma_profs + jrho + 14*(*NRD));
-        AARRS->nibm[jrho]  = *(plasma_profs + jrho + 15*(*NRD));
-        AARRS->niz1[jrho]  = *(plasma_profs + jrho + 16*(*NRD));
-        AARRS->niz2[jrho]  = *(plasma_profs + jrho + 17*(*NRD));
-        AARRS->niz3[jrho]  = *(plasma_profs + jrho + 18*(*NRD));
-        AARRS->ntrit[jrho] = *(plasma_profs + jrho + 19*(*NRD));
-        AARRS->pblon[jrho] = *(plasma_profs + jrho + 20*(*NRD));
-        AARRS->pbper[jrho] = *(plasma_profs + jrho + 21*(*NRD));
-        AARRS->pfast[jrho] = *(plasma_profs + jrho + 22*(*NRD));
-        AARRS->rho[jrho]   = *(plasma_profs + jrho + 23*(*NRD));
-        AARRS->shear[jrho] = *(plasma_profs + jrho + 24*(*NRD));
-        AARRS->shif[jrho]  = *(plasma_profs + jrho + 25*(*NRD));
-        AARRS->te[jrho]    = *(plasma_profs + jrho + 26*(*NRD));
-        AARRS->ti[jrho]    = *(plasma_profs + jrho + 27*(*NRD));
-        AARRS->tria[jrho]  = *(plasma_profs + jrho + 28*(*NRD));
-        AARRS->upl[jrho]   = *(plasma_profs + jrho + 29*(*NRD));
-        AARRS->vpol[jrho]  = *(plasma_profs + jrho + 30*(*NRD));
-        AARRS->vrs[jrho]   = *(plasma_profs + jrho + 31*(*NRD));
-        AARRS->vtor[jrho]  = *(plasma_profs + jrho + 32*(*NRD));
-        AARRS->zef[jrho]   = *(plasma_profs + jrho + 33*(*NRD));
-        AARRS->zim1[jrho]  = *(plasma_profs + jrho + 34*(*NRD));
-        AARRS->zim2[jrho]  = *(plasma_profs + jrho + 35*(*NRD));
-        AARRS->zim3[jrho]  = *(plasma_profs + jrho + 36*(*NRD));
-        AARRS->zmain[jrho] = *(plasma_profs + jrho + 37*(*NRD));
-        AARRS->zimpt[jrho] = *(plasma_profs + jrho + 38*(*NRD));
-        AARRS->nimpt[jrho] = *(plasma_profs + jrho + 39*(*NRD));
-        AARRS->aimpt[jrho] = *(plasma_profs + jrho + 40*(*NRD));
+        AARRS->ametr[jrho] = *(plasma_profs + jrho +    NRD);
+        AARRS->cu[jrho]    = *(plasma_profs + jrho +  2*NRD);
+        AARRS->elon[jrho]  = *(plasma_profs + jrho +  3*NRD);
+        AARRS->er[jrho]    = *(plasma_profs + jrho +  4*NRD);
+        AARRS->fp[jrho]    = *(plasma_profs + jrho +  5*NRD);
+        AARRS->g11[jrho]   = *(plasma_profs + jrho +  6*NRD);
+        AARRS->ipol[jrho]  = *(plasma_profs + jrho +  7*NRD);
+        AARRS->mu[jrho]    = *(plasma_profs + jrho +  8*NRD);
+        AARRS->nalf[jrho]  = *(plasma_profs + jrho +  9*NRD);
+        AARRS->ndeut[jrho] = *(plasma_profs + jrho + 10*NRD);
+        AARRS->ne[jrho]    = *(plasma_profs + jrho + 11*NRD);
+        AARRS->nhe3[jrho]  = *(plasma_profs + jrho + 12*NRD);
+        AARRS->nhydr[jrho] = *(plasma_profs + jrho + 13*NRD);
+        AARRS->ni[jrho]    = *(plasma_profs + jrho + 14*NRD);
+        AARRS->nibm[jrho]  = *(plasma_profs + jrho + 15*NRD);
+        AARRS->niz1[jrho]  = *(plasma_profs + jrho + 16*NRD);
+        AARRS->niz2[jrho]  = *(plasma_profs + jrho + 17*NRD);
+        AARRS->niz3[jrho]  = *(plasma_profs + jrho + 18*NRD);
+        AARRS->ntrit[jrho] = *(plasma_profs + jrho + 19*NRD);
+        AARRS->pblon[jrho] = *(plasma_profs + jrho + 20*NRD);
+        AARRS->pbper[jrho] = *(plasma_profs + jrho + 21*NRD);
+        AARRS->pfast[jrho] = *(plasma_profs + jrho + 22*NRD);
+        AARRS->rho[jrho]   = *(plasma_profs + jrho + 23*NRD);
+        AARRS->shear[jrho] = *(plasma_profs + jrho + 24*NRD);
+        AARRS->shif[jrho]  = *(plasma_profs + jrho + 25*NRD);
+        AARRS->te[jrho]    = *(plasma_profs + jrho + 26*NRD);
+        AARRS->ti[jrho]    = *(plasma_profs + jrho + 27*NRD);
+        AARRS->tria[jrho]  = *(plasma_profs + jrho + 28*NRD);
+        AARRS->upl[jrho]   = *(plasma_profs + jrho + 29*NRD);
+        AARRS->vpol[jrho]  = *(plasma_profs + jrho + 30*NRD);
+        AARRS->vrs[jrho]   = *(plasma_profs + jrho + 31*NRD);
+        AARRS->vtor[jrho]  = *(plasma_profs + jrho + 32*NRD);
+        AARRS->zef[jrho]   = *(plasma_profs + jrho + 33*NRD);
+        AARRS->zim1[jrho]  = *(plasma_profs + jrho + 34*NRD);
+        AARRS->zim2[jrho]  = *(plasma_profs + jrho + 35*NRD);
+        AARRS->zim3[jrho]  = *(plasma_profs + jrho + 36*NRD);
+        AARRS->zmain[jrho] = *(plasma_profs + jrho + 37*NRD);
+        AARRS->zimpt[jrho] = *(plasma_profs + jrho + 38*NRD);
+        AARRS->nimpt[jrho] = *(plasma_profs + jrho + 39*NRD);
+        AARRS->aimpt[jrho] = *(plasma_profs + jrho + 40*NRD);
     }
     return(0);
 }
