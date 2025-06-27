@@ -49,6 +49,9 @@ character(len=132) :: err_msg, err_msg_grid
 !--------------------------------------------------------------------
 
 call markloc('SETARX')
+if (.not. allocated(mem_tglf)) then
+    allocate(mem_tglf(NA1, 15), mem_qlkz(NA1, 15), mem_neo(NA1, 15))
+endif
 
 var_loop: do jtarr=1, NTARR
     if (raw_profile_map%arr_index(jtarr) == 0) EXIT

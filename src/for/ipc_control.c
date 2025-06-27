@@ -110,18 +110,18 @@ void to_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N){
 /*----------------------------------------------------------------*/
 void ot_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N, double* cpuse, double* mem){
 // Reads the shared memory segment and stores the QL-code output to ASTRA fortran arrays 
-#include "A_ql_io2.h"
+#include "A_ql_io.h"
     int j, jarr, n_nrd;
     if (A_ShmNum < 0) return;
     AVARS = (struct A_vars *)A_ShmAdr[0];
     n_nrd = AVARS->nrd;
-    size_t offset = offsetof(struct A_ql_io2, QLarrays);
-    ql_io2 = (struct A_ql_io2 *)A_ShmAdr[*N+1];
-    ql_io2->QLarrays = (double *)((char *)ql_io2 + offset);
-    *cpuse = ql_io2->My.CPUse;
+    size_t offset = offsetof(struct A_ql_io, QLarrays);
+    ql_io = (struct A_ql_io *)A_ShmAdr[*N+1];
+    ql_io->QLarrays = (double *)((char *)ql_io + offset);
+    *cpuse = ql_io->My.CPUse;
     for (j=*jrho_beg-1; j <= *jrho_end-1; j++){
         for (jarr=0; jarr<N_ql; jarr++){
-            mem[j+1+jarr*n_nrd] = ql_io2->QLarrays[j+jarr*NC1];
+            mem[j+1+jarr*n_nrd] = ql_io->QLarrays[j+jarr*NC1];
         }
     }
     return;
