@@ -9,7 +9,6 @@
 #include "Astra.h"
 
 INT_ A_NA1;
-#define NC1 A_NA1
 
 int semtimedop();
 int read_aipc(INT_*, INT_*, char*);
@@ -29,7 +28,7 @@ int A_SemID = 0;
 int A_Nsems = 0;       /* the number of semaphores */
 int A_ShmNum = -1;
 #define A_ShmShift 2
-#define A_Nsemx    20
+#define A_Nsemx 20
 char A_ChNa[A_ShmShift+A_Nsemx][132]; /* Child process name (not used) */
 int  A_ChID[A_ShmShift+A_Nsemx] = {0, 0, 0};        /* Child process ID */
 int  A_ShmL[A_ShmShift+A_Nsemx]; /* Child Shmem segment length */

@@ -1,7 +1,6 @@
 #include "Astra.h"
 
 extern INT_ A_NA1;
-#define NC1 A_NA1
 
 void a_stop_();
 double swatch (double*);

@@ -12,6 +12,7 @@ typedef int32_t INT_;
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 #define N_QL 15
+#define NC1 A_NA1
 #endif
 
 static struct A_proc_info
