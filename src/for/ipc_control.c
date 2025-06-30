@@ -1,28 +1,15 @@
 #include <unistd.h>
 #include <time.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/times.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
-#include <sys/sem.h>
-#include <sys/shm.h>
 #include <signal.h>
 #include <ctype.h>
 #include <stddef.h>
+#include "Astra.h"
 
-#ifndef INT8
-#define INT_ int
-#else
-#define INT_ long
-#endif
-
-#include "A_vars.h"
-#include "A_proc.h"
+INT_ A_NA1;
+#define NC1 A_NA1
 
 int semtimedop();
 int read_aipc(INT_*, INT_*, char*);
@@ -37,16 +24,7 @@ char ASTRA_task[132];
 const char *A_log_file = "./tmp/astra.nml";
 key_t my_key;
 
-union semun{
-    int val;                    /* value for SETVAL */
-    struct semid_ds *buf;       /* buffer for IPC_STAT, IPC_SET */
-    unsigned short int *array;  /* array for GETALL, SETALL */
-    struct seminfo *__buf;      /* buffer for IPC_INFO */
-};
-
 pid_t A_PID = 0;
-INT_  A_NA1 = 0;
-#define NC1 A_NA1
 int A_SemID = 0;
 int A_Nsems = 0;       /* the number of semaphores */
 int A_ShmNum = -1;
@@ -80,15 +58,7 @@ void a_stop_(){
 */
 
 void to_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N){
-
     struct shmid_ds Myshmid_ds;
-    static struct A_ql_in
-    {
-        struct A_proc_info My; /* General IO information */
-        int Size;         /* Control: Size of the Shmem */
-        int jrho_beg;
-        int jrho_end;
-    } *QL_IN;
     if (A_ShmNum < 0) return;
     if (shmctl(A_ShmID[*N+1], IPC_STAT, &Myshmid_ds) < 0){
         printf(">>> Process # %d: shmctl error >>>\n",*N+1);
@@ -101,16 +71,15 @@ void to_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N){
             A_ShmL[*N+1], Myshmid_ds.shm_segsz);
         exit(1);
     }
-    QL_IN = (struct A_ql_in *)A_ShmAdr[*N+1];
-    QL_IN->jrho_beg = *jrho_beg;
-    QL_IN->jrho_end = *jrho_end;
+    ql_io = (struct A_ql_io *)A_ShmAdr[*N+1];
+    ql_io->jrho_beg = *jrho_beg;
+    ql_io->jrho_end = *jrho_end;
     return;
 }
 
 /*----------------------------------------------------------------*/
 void ot_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N, double* cpuse, double* mem){
 // Reads the shared memory segment and stores the QL-code output to ASTRA fortran arrays 
-#include "A_ql_io.h"
     int j, jarr;
     if (A_ShmNum < 0) return;
     size_t offset = offsetof(struct A_ql_io, QLarrays);
@@ -118,7 +87,7 @@ void ot_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N, double* cpuse, double* mem
     ql_io->QLarrays = (double *)((char *)ql_io + offset);
     *cpuse = ql_io->My.CPUse;
     for (j=*jrho_beg-1; j <= *jrho_end-1; j++){
-        for (jarr=0; jarr<N_ql; jarr++){
+        for (jarr=0; jarr<N_QL; jarr++){
             mem[j+1+jarr*NC1] = ql_io->QLarrays[j+jarr*NC1];
         }
     }
@@ -334,7 +303,7 @@ int initipc_(INT_* Ngrid){
 /*----------------------------------------------------------
   Get ShMemIDs for Astra datasets (const.inc) and (status.inc)
 */
-void AllocateShmem (int l){
+void AllocateShmem(int l){
     if (A_ShmNum > A_ShmShift+A_Nsemx){
         printf(">>> ERROR >>> Too many shared memory segments requested\n");
         a_stop_();
@@ -712,8 +681,7 @@ void freeshm(){
 /*---------------------------------------------------------------------*/
 void write_aipc(const struct A_proc_info Aproc, char* AWD, int qlSize)
 {
-  FILE *A_PDF, *A_LOG;
-    char A_IPC[132];
+    FILE *A_PDF, *A_LOG;
     char A_logf[132];
     char *line;
     size_t len=0;
@@ -738,14 +706,14 @@ void write_aipc(const struct A_proc_info Aproc, char* AWD, int qlSize)
     fclose(A_LOG);
     free(line);
 
-    strcpy(A_IPC, AWD);
-    strcat(A_IPC, "tmp/");
-    strcat(A_IPC, DATA);
-    strcat(A_IPC, equmod);
-    strcat(A_IPC, ".ipc");
-    A_PDF = fopen(A_IPC, "a");
+    strcpy(A_ipc_file, AWD);
+    strcat(A_ipc_file, "tmp/");
+    strcat(A_ipc_file, DATA);
+    strcat(A_ipc_file, equmod);
+    strcat(A_ipc_file, ".ipc");
+    A_PDF = fopen(A_ipc_file, "a");
     if (!A_PDF){
-        printf("Cannot open existing Astra IPC file: \"%s\"\n", A_IPC);
+        printf("Cannot open existing Astra IPC file: \"%s\"\n", A_ipc_file);
         exit(0);
     }
     fprintf(A_PDF, "%12d%12d%12d   %s\n", getpid(), Aproc.ShMid, qlSize, Aproc.Path);

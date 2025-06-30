@@ -1,44 +1,16 @@
-/*---------------------------------------------------------------------*/
-/* The file includes functions (double)`swatch' and
-   the starting part of the function (int)`sbp2shm' that
-   acquires information about AWD, process wd, id, name, key,
-   ord. number, allocated shared memory ID and semaphore ID.        */
-/*------------------------------------------------------------------*/
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/times.h>
-#include <sys/sem.h>
-#include <sys/shm.h>
-#include <errno.h>
-#include "A_vars.h"
-#include "A_proc.h"
+#include "Astra.h"
 
-#ifndef INT8
-#define INT_ int
-#else
-#define INT_ long
-#endif
-
-union semun {
-    int val;                    /* value for SETVAL */
-    struct semid_ds *buf;       /* buffer for IPC_STAT, IPC_SET */
-    unsigned short int *array;  /* array for GETALL, SETALL */
-    struct seminfo *__buf;      /* buffer for IPC_INFO */
-};
+extern INT_ A_NA1;
+#define NC1 A_NA1
 
 void a_stop_();
 double swatch (double*);
-extern INT_ A_NA1;
 int   SemID ,  ShMid0,  ShMid1;
 void *ShmAd0, *ShmAd1, *ShmAdr;
 void qlk_interf_();
 void neo_interf_();
 void tglf_interf_();
 void write_aipc();
-
-#define NC1 A_NA1
 
 /*
   Returns CPU time [sec] between two successive calls to the argument.
@@ -74,8 +46,9 @@ double swatch(double *secs){
 }
 
 /*---------------------------------------------------------------------*/
-/* Note description of arg2, arg3, arg4 should be compatible with
-    INT_ or int
+/* acquires information about AWD, process wd, id, name, key,
+   ord. number, allocated shared memory ID and semaphore ID.
+   Note description of arg2, arg3, arg4 should be compatible with INT_ or int
 */
 
 int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
@@ -127,8 +100,7 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
         *strstr(AWD, "bin/") = '\0';
     }
     My.Key = ftok( My.Path, (int)My.Pid);
-#include "A_ql_io.h"
-    qlSize = sizeof(struct A_ql_io) - sizeof(double) + N_ql*NC1*sizeof(double);
+    qlSize = sizeof(struct A_ql_io) - sizeof(double) + N_QL*NC1*sizeof(double);
 
 /*------------------------------------
   Create My shared memory segment
