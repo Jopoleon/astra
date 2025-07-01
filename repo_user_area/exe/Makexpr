@@ -4,6 +4,7 @@ endif
 
 XPR = $(AWD)/xpr
 INC_DIR = $(AWD)/inc
+MOD_FOR = $(AWD)/mod/for
 LIBFOR = $(AWD)/lib/libfor.a
 AENV = $(AWD)/exe/astra_rc
 
@@ -34,15 +35,15 @@ clean:
 
 $(XPR)/tglfi:	$(XPR)/tglf_interf.f90 $(XPR)/qinterp.f90 $(XPR)/tglfinter.o $(LIBFOR) $(TGLF_LIB) $(AENV)
 		$(FC) -o $@ $(XPR)/tglf_interf.f90 $(XPR)/qinterp.f90 $(XPR)/tglfinter.o $(LIBFOR)	\
-		-I$(TGLF_INC) $(TGLF_LIB) $(MKL_LIB) -lpthread -lm
+		-I$(TGLF_INC) -I$(MOD_FOR) $(TGLF_LIB) $(MKL_LIB) -lpthread -lm
 
 $(XPR)/neo:	$(XPR)/neo_interf.f90 $(XPR)/qinterp.f90 $(XPR)/neointer.o $(LIBFOR) $(NEO_LIB) $(AENV)
 		$(MPI_FC) -o $@ $(XPR)/neo_interf.f90 $(XPR)/qinterp.f90 $(XPR)/neointer.o $(LIBFOR)	\
-		-I$(NEO_INC) $(NEO_LIB) $(MKL_LIB) -lpthread -lm
+		-I$(NEO_INC) -I$(MOD_FOR) $(NEO_LIB) $(MKL_LIB) -lpthread -lm
 
 $(XPR)/qlki:	$(XPR)/qlk_interf.f90 $(XPR)/qinterp.f90 $(XPR)/qlkinter.o $(LIBFOR) $(QLK_LIB) $(AENV)
 		$(MPI_FC) -o $@ $(XPR)/qlk_interf.f90 $(XPR)/qinterp.f90 $(XPR)/qlkinter.o $(LIBFOR)	\
-		-I$(QLK_INC) $(QLK_LIB)
+		-I$(QLK_INC) -I$(MOD_FOR) $(QLK_LIB)
 
 $(XPR)/neointer.o:    $(XPR)/tra_interf.c
 		$(CC) -I$(INC_DIR) -o $@ -c $< -Dneo
