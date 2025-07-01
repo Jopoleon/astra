@@ -5,14 +5,6 @@ logger = logging.getLogger('as_parse.parse_as')
 #logger.setLevel(logging.DEBUG)
 logger.setLevel(logging.INFO)
 
-def doublise(sarg):
-    if '.' in sarg:
-        if not any(x in sarg for x in 'dDeE'):
-            sarg += 'd0'
-        else:
-            sarg = sarg.replace('e', 'D').replace('E', 'D')
-    return sarg
-
 def apptmp(lbl, parse):
     txt = ''
     var = lbl.split('|', 1)[0]
@@ -505,13 +497,11 @@ def parse_sbr(line):
             locsbr = 0   # init_converge_step.f90/eqns_inc.f90; call in ASTRA_MAIN, STEPUP
 
     args_str2 = ''
-    if (args_str):
+    if args_str:
         args = args_str.split(',')
         for arg in args[:-1]:
-            sarg = doublise(arg.strip())
-            args_str2 += '%s, ' %sarg
-        args_str2 += doublise(args[-1])
-
+            args_str2 += format_number(arg) + ', '
+        args_str2 += format_number(args[-1])
     sbr_dic['name'] = sbrnam
     sbr_dic['args'] = args_str2
     sbr_dic['tmin'] = tmin
