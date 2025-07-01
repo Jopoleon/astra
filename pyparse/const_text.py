@@ -20,6 +20,7 @@ class SUBPROC:
     header = \
 '''subroutine SUBPROC
 
+use parameter_inc, only: n_ql
 use const_inc
 use outcmn_inc, only: IFSBP, cpuTime_sbr
 use ipc_mod, only: mem_tglf, mem_qlkz, mem_neo

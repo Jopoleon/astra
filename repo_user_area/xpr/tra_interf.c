@@ -50,9 +50,9 @@ double swatch(double *secs){
    Note description of arg2, arg3, arg4 should be compatible with INT_ or int
 */
 
-int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
+int sbp2shm_(char* arg0, char* arg1, int n_ql, int* arg2, int* arg3, int* arg4)
 {
-  int i, qlSize;
+    int i, qlSize;
     static union semun Mysemun;
 // sembuf members: {sem_num,sem_op,sem_flag};
     static struct sembuf buf0 = {0, 1, IPC_NOWAIT};
@@ -99,7 +99,7 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
         *strstr(AWD, "bin/") = '\0';
     }
     My.Key = ftok( My.Path, (int)My.Pid);
-    qlSize = sizeof(struct A_ql_io) - sizeof(double) + N_QL*NC1*sizeof(double);
+    qlSize = sizeof(struct A_ql_io) - sizeof(double) + n_ql*NC1*sizeof(double);
 
 /*------------------------------------
   Create My shared memory segment

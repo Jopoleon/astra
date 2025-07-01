@@ -108,7 +108,7 @@ class CODE_GEN:
                 sbp_d = sbrs_d[line]
                 self.subproc += 'if (IFSBP(%d) /= 0) then\n' %jsbp
 #                self.subproc += 'call ot%s(%s, %d, IFSBP(%d))\n' %(sbp_d['name'].lower()[4:10], sbp_d['args'], jsbp, jsbp)
-                self.subproc += 'call ot_tra(%s, %d, cpuTime_sbr(IFSBP(%d)), %s)\n' %(sbp_d['args'], jsbp, jsbp, mem_d[sbp_d['name']])
+                self.subproc += 'call ot_tra(%s, %d, n_ql, cpuTime_sbr(IFSBP(%d)), %s)\n' %(sbp_d['args'], jsbp, jsbp, mem_d[sbp_d['name']])
                 self.subproc += 'IFSBP(%d) = 0\n' %jsbp
                 self.subproc += 'endif\n'
         self.subproc += \
