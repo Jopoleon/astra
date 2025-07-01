@@ -58,6 +58,8 @@ class CODE_GEN:
             elif locsbr == 1:
                 post_sbr += pa.sbr_header(j_sbr, astr='')
                 post_sbr += pa.write_sbr(sbr_d)
+            if locsbr in (-2, -3):
+                sbp_lines.append(line)
 
             j_arg = 1
             for key in ('dt', 'tmin', 'tmax', 'key'):
@@ -72,26 +74,6 @@ class CODE_GEN:
                         detv_sbr += 'DTEQ(%d,%d) = %s\n' %(j_arg, j_sbr, l2f)
                 j_arg += 1
             j_sbr += 1
-        
-#---------------
-# Code generator
-#---------------
-
-        sbr_txt = ''
-
-        for line in parse.sbr_lines:
-
-# Subroutines
-            sbr_d = sbrs_d[line]
-            if sbr_d['locsbr'] == 0: #sbr
-                a_str = ''
-#                if (sbr_d['name'] in ('MIXINT', 'MIXEXT', 'TSCTRL')):
-#                    a_str = '.and. JIT == JEX'
-                sbr_txt += pa.sbr_header(sbr_d['neq'], astr=a_str)
-                sbr_txt += pa.write_sbr(sbr_d)
-# Subprocess
-            if sbr_d['locsbr'] in (-2, -3):
-                sbp_lines.append(line) 
 
         NSBP = len(sbp_lines)
 
@@ -340,7 +322,7 @@ end subroutine INIVAR'''
 
         inam += 'NSBP = %d\n' %NSBP
         if NSBP > 0:
-            inam += 'call checkexec(NSBP,64,LISTSB)\n'
+            inam += 'call checkexec(NSBP, 64, LISTSB)\n'
 
         self.ininam  = const_text.ININAM.header
         self.ininam += inam
