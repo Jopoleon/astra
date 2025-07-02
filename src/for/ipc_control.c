@@ -9,6 +9,7 @@
 #include "Astra.h"
 
 INT_ A_NA1;
+INT_ NQL;
 
 int semtimedop();
 int read_aipc(INT_*, INT_*, char*);
@@ -220,7 +221,7 @@ int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs){
   Assign NA1 (= *Ngrid) to A_NA1 (alias NC1)
   Allocate two shared memory segments for Astra datasets
 */
-int initipc_(INT_* Ngrid){
+int initipc_(INT_* Ngrid, INT_ *n_ql){
     int l, var_size, arr_size, is=0, ds, j, *k;
     FILE *A_PDF;
     char hostname[132];
@@ -283,6 +284,7 @@ int initipc_(INT_* Ngrid){
     fprintf(A_PDF, " Astra(main):  PID = %d,  SemID = %d\n",
     (int)A_PID, A_SemID);
     A_NA1 = *Ngrid;
+    NQL = *n_ql;
 
     var_size = sizeof(struct A_vars);
     AllocateShmem(var_size);
@@ -559,7 +561,7 @@ int read_aipc(INT_* Nsub, INT_ *Lstr, char *subs){
 
 /*----------- Get ID of ShMem for ASTRA scalars -------------*/
 /* First active only after "initipc", i.e. after "init.inc" */
-int setvars_(double* DEVAR, INT_* NA1, INT_* NB1, INT_* NBOUND, INT_* N){
+int setvars_(double* DEVAR, INT_* NA1, INT_* NB1, INT_* NBOUND, INT_* N, INT_* N_QL){
     int *I, j;
 
     if (A_Nsems == 0){
@@ -587,9 +589,10 @@ int setvars_(double* DEVAR, INT_* NA1, INT_* NB1, INT_* NBOUND, INT_* N){
     AVARS->trian = *(DEVAR + 29);
     AVARS->updwn = *(DEVAR + 32);
     AVARS->zmj   = *(DEVAR + 36);
-    AVARS->na1 = *NA1;
-    AVARS->nb1 = *NB1;
-    AVARS->nrd = *N;
+    AVARS->n_ql = *N_QL;
+    AVARS->na1  = *NA1;
+    AVARS->nb1  = *NB1;
+    AVARS->nrd  = *N;
     AVARS->na1n = *(NBOUND);
     AVARS->na1e = *(NBOUND + 1);
     AVARS->na1i = *(NBOUND + 2);

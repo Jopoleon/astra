@@ -25,7 +25,7 @@ call sbp2shm(eigpath, mampath, mampid, mamkey, eignr)
 end program main
 
 !----------------------------------------------------------------------|
-subroutine neo_interf(jr1_in, jr2_in, nrho, NA1N, NA1E, NA1I, &
+subroutine neo_interf(jr1_in, jr2_in, nql, nrho, NA1N, NA1E, NA1I, &
     BTOR, RTOR, AMJ, ZMJ, AIM1, AIM2, AIM3, &
     NE, TE, NI, NDEUT, NTRIT, NIZ1, NIZ2, TI, ZEF, ZIM1, AMAIN, &
     MU, RHO, AMETR, SHIF, ELON, TRIA, ER, NIBM, G11, &
@@ -53,7 +53,7 @@ double precision, parameter :: &
    mpp  = 1.6726E-27, &       ! proton mass (kg)
    pi   = 3.141592653589793 
 
-integer, intent(in) :: nrho, jr1_in, jr2_in, NA1N, NA1E, NA1I
+integer, intent(in) :: nql, nrho, jr1_in, jr2_in, NA1N, NA1E, NA1I
 
 double precision, intent(in) :: BTOR, RTOR, &
     AMJ, AIM1, AIM2, AIM3, ZMJ
@@ -63,7 +63,7 @@ double precision, intent(in), dimension(*) :: NE, TE, NI, TI, &
     NIZ2, TRIA, NIBM, G11, VPOL, VRS, VTOR, SHEAR, &
     ZIMPT, NIMPT, AIMPT
 
-double precision, intent(out), dimension(nrho, 15) :: mem_out
+double precision, intent(out), dimension(nrho, nql) :: mem_out
 
 !----------------------------------------------------------------------
 integer :: jr_min, jr_max, jrho, j0, j01, j02, n_radial

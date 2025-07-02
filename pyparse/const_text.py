@@ -31,7 +31,7 @@ implicit none
     sbp_init = \
 """! **** Fill shared memory segments
 call markloc("setvars")
-call setvars(DEVAR, NA1, NB1, n_bouncon, NRD)
+call setvars(DEVAR, NA1, NB1, n_bouncon, NRD, n_ql)
 call markloc("setarrs")
 call setarrs(plasma_profs, NRD)
 """
@@ -313,6 +313,7 @@ class DETVAR:
     header = \
 '''subroutine DETVAR
 
+use parameter_inc, only: n_ql
 use const_inc
 use status_inc
 use ipc_mod
@@ -977,7 +978,7 @@ class INIT_CONVERGE_STEP:
     header = \
 '''subroutine init_converge_step(LISTSB)
 
-use parameter_inc, only: NSBMX, NRD
+use parameter_inc, only: NSBMX, NRD, n_ql
 use outcmn_inc
 use const_inc
 use status_inc
@@ -1013,7 +1014,7 @@ class EQNS_INC:
 ! Note that now time step is updated at the end of a full time cycle
 !-------------------------------------------------------------------
 
-use parameter_inc, only: NRD, NSBMX
+use parameter_inc, only: NRD, NSBMX, n_ql
 use const_inc
 use status_inc
 use outcmn_inc

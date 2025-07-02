@@ -1,6 +1,7 @@
 #include "Astra.h"
 
 extern INT_ A_NA1;
+extern INT_ NQL;
 
 void a_stop_();
 double swatch (double*);
@@ -89,6 +90,7 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
     ShmAd1 = shmat(ShMid1, NULL, 0);
     AVARS = (struct A_vars *)ShmAd0;
     A_NA1 = AVARS->na1;
+    NQL   = AVARS->n_ql;
 #include "A_arrs.h"
     strcpy(AWD, Mama.Path);
     if (strstr(AWD, "bin/") == NULL){
@@ -136,6 +138,7 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
            /* input */
 	      &(ql_io->jrho_beg),
               &(ql_io->jrho_end),
+              &(AVARS->n_ql),
               &(AVARS->na1),
               &(AVARS->na1n),
               &(AVARS->na1e),
