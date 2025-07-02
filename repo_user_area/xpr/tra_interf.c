@@ -4,46 +4,13 @@ extern INT_ A_NA1;
 INT_ NQL;
 
 void a_stop_();
-double swatch (double*);
 int   SemID ,  ShMid0,  ShMid1;
 void *ShmAd0, *ShmAd1, *ShmAdr;
+double swatch_();
 void qlk_interf_();
 void neo_interf_();
 void tglf_interf_();
 void write_aipc();
-
-/*
-  Returns CPU time [sec] between two successive calls to the argument.
-  The  function "times" returns the number of clock ticks that have elapsed
-     since the moment the system was booted.
-  The  "tms_utime"  field contains the CPU time spent executing instructions
-     of the calling process.
-  The  "tms_stime"  field contains the CPU time spent in the system while
-     executing tasks on behalf of the calling process.
-*/
-
-double swatch(double *secs){
-    double runsec;
-    clock_t cpu_time, run_time;
-    static clock_t time0=0, prev_time;
-    static double secs_per_tick;
-    struct tms buf;
-    if (time0 == -1){
-        return -1.;
-    }  /* Overflow range of clock_t*/
-    if (time0 == 0){     /* Set time0 at start */
-        secs_per_tick = 1./sysconf(_SC_CLK_TCK);
-        time0 = times(&buf);
-        prev_time = buf.tms_utime + buf.tms_stime;
-        return 0.;
-    }
-    run_time = times(&buf) - time0;  /* Set time difference */
-    cpu_time = buf.tms_utime + buf.tms_stime;
-    *secs += (cpu_time - prev_time)*secs_per_tick;
-    prev_time = cpu_time;
-    runsec = run_time*secs_per_tick;
-    return runsec;
-}
 
 /*---------------------------------------------------------------------*/
 /* acquires information about AWD, process wd, id, name, key,
@@ -53,7 +20,8 @@ double swatch(double *secs){
 
 int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
 {
-  int i, qlSize;
+    int i, qlSize;
+    double watch;
     static union semun Mysemun;
 // sembuf members: {sem_num,sem_op,sem_flag};
     static struct sembuf buf0 = {0, 1, IPC_NOWAIT};
@@ -62,7 +30,7 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
     static char AWD[96];
     static struct A_proc_info Mama, My;
 
-    swatch(&(My.CPUse));
+    swatch_(&(My.CPUse));
 /* Analyze the calling command string. Get own PID and name. */
     My.Pid = getpid();
     getcwd(My.Path, (size_t)64);
@@ -187,7 +155,7 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
               &(ql_io->QLarrays)
           );
 
-        swatch(&(My.CPUse));
+        swatch_(&(My.CPUse));
 /* If SemID exists then lock myself, otherwise, exit */
         Mysemun.val = 0;
         if (semctl(SemID, My.OrdNr, SETVAL, Mysemun) < 0) break;
@@ -205,7 +173,7 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
         printf("     ");
     }
     printf("Process # %d normal exit: ", My.OrdNr);
-    swatch(&(My.CPUse));
+    swatch_(&(My.CPUse));
     printf("CPUse %g\n", My.CPUse);
     exit(0);
 
