@@ -59,7 +59,7 @@ class CODE_GEN:
                 post_sbr += pa.sbr_header(j_sbr, astr='')
                 post_sbr += pa.write_sbr(sbr_d)
             if locsbr in (-2, -3):
-                sbp_lines.append(line)
+                sbp_lines.append(line) 
 
             j_arg = 1
             for key in ('dt', 'tmin', 'tmax', 'key'):
@@ -90,7 +90,7 @@ class CODE_GEN:
                 sbp_d = sbrs_d[line]
                 self.subproc += 'if (IFSBP(%d) /= 0) then\n' %jsbp
 #                self.subproc += 'call ot%s(%s, %d, IFSBP(%d))\n' %(sbp_d['name'].lower()[4:10], sbp_d['args'], jsbp, jsbp)
-                self.subproc += 'call ot_tra(%s, %d, n_ql, cpuTime_sbr(IFSBP(%d)), %s)\n' %(sbp_d['args'], jsbp, jsbp, mem_d[sbp_d['name']])
+                self.subproc += 'call ot_tra(%s, %d, cpuTime_sbr(IFSBP(%d)), %s)\n' %(sbp_d['args'], jsbp, jsbp, mem_d[sbp_d['name']])
                 self.subproc += 'IFSBP(%d) = 0\n' %jsbp
                 self.subproc += 'endif\n'
         self.subproc += \

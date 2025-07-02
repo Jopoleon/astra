@@ -496,12 +496,12 @@ def parse_sbr(line):
         else:
             locsbr = 0   # init_converge_step.f90/eqns_inc.f90; call in ASTRA_MAIN, STEPUP
 
-    args_str2 = ''
     if args_str:
         args = args_str.split(',')
-        for arg in args[:-1]:
-            args_str2 += format_number(arg) + ', '
-        args_str2 += format_number(args[-1])
+        args_str2 = ', '.join(args)
+    else:
+        args_str2 = ''
+
     sbr_dic['name'] = sbrnam
     sbr_dic['args'] = args_str2
     sbr_dic['tmin'] = tmin

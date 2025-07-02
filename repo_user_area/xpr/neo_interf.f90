@@ -1,8 +1,6 @@
 !----------------------------------------------------------------------|
 program main
 
-use parameter_inc, only: n_ql
-
 implicit none
 
 integer :: iargc, mampid, mamkey, eignr
@@ -22,7 +20,7 @@ call getarg(3, STRING)
 read(STRING, *) mamkey
 call getarg(4, STRING)
 read(STRING, *) eignr
-call sbp2shm(eigpath, mampath, n_ql, mampid, mamkey, eignr)
+call sbp2shm(eigpath, mampath, mampid, mamkey, eignr)
 
 end program main
 
