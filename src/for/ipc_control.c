@@ -9,7 +9,7 @@
 #include "Astra.h"
 
 INT_ A_NA1;
-INT_ NQL;
+INT_ N_QL;
 
 int semtimedop();
 int read_aipc(INT_*, INT_*, char*);
@@ -88,7 +88,7 @@ void ot_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N, double* cpuse, double* mem
     *cpuse = ql_io->My.CPUse;
     for (j=*jrho_beg-1; j <= *jrho_end-1; j++){
         for (jarr=0; jarr<N_QL; jarr++){
-            mem[j+1+jarr*NC1] = ql_io->QLarrays[j+jarr*NC1];
+            mem[j+1+jarr*A_NA1] = ql_io->QLarrays[j+jarr*A_NA1];
         }
     }
     return;
@@ -218,7 +218,7 @@ int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs){
   "call initipc(NA1)" is placed in init.inc
   Get PID and key for the Astra main process
   Create and initialize a set of A_Nsems semaphores
-  Assign NA1 (= *Ngrid) to A_NA1 (alias NC1)
+  Assign NA1 (= *Ngrid) to A_NA1
   Allocate two shared memory segments for Astra datasets
 */
 int initipc_(INT_* Ngrid, INT_ *n_ql){
@@ -284,7 +284,7 @@ int initipc_(INT_* Ngrid, INT_ *n_ql){
     fprintf(A_PDF, " Astra(main):  PID = %d,  SemID = %d\n",
     (int)A_PID, A_SemID);
     A_NA1 = *Ngrid;
-    NQL = *n_ql;
+    N_QL = *n_ql;
 
     var_size = sizeof(struct A_vars);
     AllocateShmem(var_size);
@@ -607,7 +607,7 @@ int setarrs_(double* plasma_profs, INT_ *n_RD){
     if (A_ShmNum < 0) return(0);
 #include "A_arrs.h"
     AARRS = (struct A_arrs *)A_ShmAdr[1];
-    for (jrho=0; jrho < NC1; jrho++){
+    for (jrho=0; jrho < A_NA1; jrho++){
         AARRS->amain[jrho] = *(plasma_profs + jrho);
         AARRS->ametr[jrho] = *(plasma_profs + jrho +    NRD);
         AARRS->cu[jrho]    = *(plasma_profs + jrho +  2*NRD);

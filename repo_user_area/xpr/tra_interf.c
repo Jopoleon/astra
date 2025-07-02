@@ -1,7 +1,7 @@
 #include "Astra.h"
 
 extern INT_ A_NA1;
-extern INT_ NQL;
+INT_ NQL;
 
 void a_stop_();
 double swatch (double*);
@@ -101,7 +101,7 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
         *strstr(AWD, "bin/") = '\0';
     }
     My.Key = ftok( My.Path, (int)My.Pid);
-    qlSize = sizeof(struct A_ql_io) - sizeof(double) + N_QL*NC1*sizeof(double);
+    qlSize = sizeof(struct A_ql_io) - sizeof(double) + NQL*A_NA1*sizeof(double);
 
 /*------------------------------------
   Create My shared memory segment

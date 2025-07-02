@@ -9,12 +9,6 @@
 
 typedef int32_t INT_;
 
-#ifndef CONSTANTS_H
-#define CONSTANTS_H
-#define NC1 A_NA1
-#define N_QL NQL
-#endif
-
 static struct A_proc_info
 {
   char   Path[96];      /* Path of a process */
