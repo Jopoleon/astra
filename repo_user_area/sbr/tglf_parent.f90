@@ -257,7 +257,7 @@ prof_in_tg(:, 47) = dni(4, :)
 
 call MPI_Comm_size(MPI_COMM_WORLD, nprocs, ierr)
 
-nworkers = 15  ! A submultiple of nrho_tg!
+nworkers = 60  ! A submultiple of nrho_tg!
 chunk = nrho_tg / nworkers
 
 call MPI_Comm_spawn(worker_exe, MPI_ARGV_NULL, nworkers, MPI_INFO_NULL, 0, MPI_COMM_SELF, intercomm, errcodes, ierr)
@@ -275,17 +275,13 @@ do i=0, nworkers-1
     i2 = (i + 1) * chunk
     call MPI_Send(prof_in_tg(i1:i2, :), chunk * n_inputs, MPI_DOUBLE_PRECISION, i, 0, intercomm, ierr)
 enddo
-print *, 'Sending done'
 
 ! Receive results from each worker
 do i=0, nworkers-1
-    print *,'Receiving i=', i, chunk, n_outputs
     i1 = i * chunk + 1
     i2 = (i + 1) * chunk
     call MPI_Recv(prof_out_tg(i1:i2, :), chunk * n_outputs, MPI_DOUBLE_PRECISION, i, 1, intercomm, status, ierr)
 enddo
-
-write(*, *) 'Out', prof_out_tg(:, 1)
 
 ! Interpolate back to ASTRA radial grid
 
