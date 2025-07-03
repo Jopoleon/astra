@@ -1,4 +1,4 @@
-subroutine tglf_parent
+subroutine tglf_parent(CHI, CHE, VIN, DPH, DPL, DPR, XTB, GM1, OM1)
 
 use mpi
 
@@ -15,11 +15,16 @@ use status_inc, only: NE, TE, NI, TI, &
 
 implicit none
 
-integer, parameter :: n_scalars=10, n_inputs=55, n_outputs=15, nrho_tg=60, nsm=7, nky_in=19
+integer, parameter :: n_scalars=20, n_inputs=55, n_outputs=15, nrho_tg=60, nsm=7, nky_in=19
 double precision, parameter :: c_vpol=1.d0
+double precision, parameter :: &
+   k0 = 1.6022E-12, &    ! erg/ev
+   mp = 1.6726E-24       ! proton mass (g)
+
+double precision, dimension(*), intent(out) :: CHI, CHE, VIN, DPH, DPL, DPR, XTB, GM1, OM1
 
 integer :: ierr, intercomm, errcodes(100), status(MPI_STATUS_SIZE)
-integer :: jr, jrho, jr_r, jr_l, jgamma_max, jspec, kyloop, mom_order
+integer :: jr, jrho, jr_r, jr_l, jgamma_max, jspec
 integer :: sat_rule           ! Saturation rule
 integer :: geom_flag          ! 1: Miller; 2: Fourier; 3: ELITE
 integer :: nmodes_tg          ! number of unstable modes to use in computing fluxes (max=4)
@@ -31,12 +36,9 @@ integer :: i, i1, i2, chunk, nprocs, nworkers, dims(6)
 double precision, dimension(n_scalars) :: scal_in_tg
 double precision, dimension(nrho_tg, n_inputs ) :: prof_in_tg
 double precision, dimension(nrho_tg, n_outputs) :: prof_out_tg
-double precision :: bmod, bpolz, alpha_zf_in, ion_eflux, ion_mflux, xstep, rho_min, rho_max, dstep
+double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, T0, m0, a0_m, a0_cm, cs0
 double precision, dimension(nrho_tg) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
     delong, dtrian, dvper, drhodr, dr, dv_r
-double precision :: Bunit_gauss, Bunit_T, cs0, cs00, rhos0, omega0, rhostar2, lnlamda, taue, cexb
-double precision :: a0_cm, a0_m, T0, N0, m0, rmin_tg, drho_cs, drho_nt, nt_cs
-double precision :: wdia_trap_tg          ! parameter for trapped fraction model
 double precision, dimension(NRD) :: gradrhosq_exp, rmaj_exp, q_exp, &
     vexb_exp, vpar_exp, vper_exp, mtori_m, &
     chie_m, chii_m, elec_pflux_m, exchi_m, ptot_exp, gamma_m, omega_m
@@ -46,16 +48,14 @@ double precision, dimension(nrho_tg) :: mtori, chie, chii, exchi, elec_pflux, rh
 double precision, dimension(nsm) :: mass_in, zs_in
 double precision, dimension(nsm-1, nrho_tg) :: dti, dni, ni_tg, ti_tg, z_tg, ion_pflux
 double precision, dimension(nsm-1, NRD) :: ni_exp, ion_pflux_m
-double precision, dimension(nky_in) :: gamma, omega, kyspectrum, efluxspectrum, &
-    ifluxspectrum, pfluxspectrum
 character(len=256) :: worker_exe
 
 worker_exe = "/shares/departments/AUG/users/git/a8/xpr/tglf.x"
 
 ! Interpolate from ASTRA grid to TGLF grid
 rho_min = RHO(1)
-!rho_max = RHO(NA1)
-rho_max = max(RHO(NA1I), RHO(NA1E), RHO(NA1N))
+rho_max = RHO(NA1)
+!rho_max = max(RHO(NA1I), RHO(NA1E), RHO(NA1N))
 xstep = (rho_max - rho_min)/(nrho_tg - 1.)
 rho_tg = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_tg) /)
 
@@ -190,9 +190,18 @@ enddo
 !--------------------
 ! Populate prof_in_tg
 
+dims(1) = nrho_tg
+dims(2) = n_scalars
+dims(3) = n_inputs
+dims(4) = n_outputs
+dims(5) = ns_in
+dims(6) = nky_in
+
 scal_in_tg(1) = AMJ
 scal_in_tg(2) = BTOR
 scal_in_tg(3) = a0_m
+scal_in_tg(4:  8) = mass_in(1:5)
+scal_in_tg(9: 13) = zs_in(1:5)
 
 prof_in_tg(:,  1) = rho_tg
 prof_in_tg(:,  2) = ametr_tg
@@ -242,7 +251,6 @@ prof_in_tg(:, 45) = dni(2, :)
 prof_in_tg(:, 46) = dni(3, :)
 prof_in_tg(:, 47) = dni(4, :)
 
-
 !--------------
 ! Send MPI jobs
 !--------------
@@ -254,13 +262,6 @@ chunk = nrho_tg / nworkers
 
 call MPI_Comm_spawn(worker_exe, MPI_ARGV_NULL, nworkers, MPI_INFO_NULL, 0, MPI_COMM_SELF, intercomm, errcodes, ierr)
 print *, "MPI workers = ", nworkers, nrho_tg
-
-dims(1) = nrho_tg
-dims(2) = n_scalars
-dims(3) = n_inputs
-dims(4) = n_outputs
-dims(5) = ns_in
-dims(6) = nky_in
 
 ! Send dimensions and data to workers
 do i=0, nworkers-1
@@ -274,15 +275,60 @@ do i=0, nworkers-1
     i2 = (i + 1) * chunk
     call MPI_Send(prof_in_tg(i1:i2, :), chunk * n_inputs, MPI_DOUBLE_PRECISION, i, 0, intercomm, ierr)
 enddo
+print *, 'Sending done'
 
 ! Receive results from each worker
 do i=0, nworkers-1
+    print *,'Receiving i=', i, chunk, n_outputs
     i1 = i * chunk + 1
     i2 = (i + 1) * chunk
     call MPI_Recv(prof_out_tg(i1:i2, :), chunk * n_outputs, MPI_DOUBLE_PRECISION, i, 1, intercomm, status, ierr)
 enddo
 
 write(*, *) 'Out', prof_out_tg(:, 1)
+
+! Interpolate back to ASTRA radial grid
+
+call qinterp(rho_tg, prof_out_tg(:, 1), nrho_tg, RHO(1:NA1), chii_m(1:NA1)      , NA1)
+call qinterp(rho_tg, prof_out_tg(:, 2), nrho_tg, RHO(1:NA1), chie_m(1:NA1)      , NA1)
+call qinterp(rho_tg, prof_out_tg(:, 3), nrho_tg, RHO(1:NA1), mtori_m(1:NA1)     , NA1)
+call qinterp(rho_tg, prof_out_tg(:, 4), nrho_tg, RHO(1:NA1), elec_pflux_m(1:NA1), NA1)
+call qinterp(rho_tg, prof_out_tg(:, 5), nrho_tg, RHO(1:NA1), exchi_m(1:NA1)     , NA1)
+call qinterp(rho_tg, prof_out_tg(:, 6), gamma_max , nrho_tg, RHO(1:NA1), gamma_m(1:NA1)     , NA1)
+call qinterp(rho_tg, prof_out_tg(:, 7), nrho_tg, RHO(1:NA1), omega_m(1:NA1)     , NA1)
+do jspec=1, ns_in-1
+    call qinterp(rho_tg, prof_out_tg(7+jspec, 1:nrho_tg), nrho_tg, RHO(1:NA1), ion_pflux_m(jspec, 1:NA1), NA1)
+enddo
+
+chii_m (1:2) = chii_m (3)
+chie_m (1:2) = chie_m (3)
+mtori_m(1:2) = mtori_m(3)
+elec_pflux_m(1:2) = elec_pflux_m(3)
+exchi_m(1:2) = exchi_m(3)
+omega_m(1:2) = omega_m(3)
+gamma_m(1:2) = gamma_m(3)
+
+m0 = AMJ*mp          ! Ref. mass = D ion mass [g]
+a0_cm = 1.d2*a0_m    ! length scale used by GYRO, m -> cm
+
+do jrho=1, NA1
+    CHI(jrho) = chii_m(jrho)/gradrhosq_exp(jrho) ! \chi_i, m^2/s
+    CHE(jrho) = chie_m(jrho)/gradrhosq_exp(jrho) ! \chi_e, m^2/s
+    VIN(jrho) = elec_pflux_m(jrho)/a0_m/gradrhosq_exp(jrho) ! D flux
+    DPR(jrho) = mtori_m(jrho)
+!First impurity only, index 2 of ion species
+    if (ns_in >= 3) then
+        DPL(jrho) = ion_pflux_m(2, jrho)/a0_m/gradrhosq_exp(jrho)/(ni_exp(2, jrho)/NE(jrho))  ! 1st imp convection
+    endif
+    if (ns_in >= 4) then
+        DPH(jrho) = ion_pflux_m(3, jrho)/a0_m/gradrhosq_exp(jrho)/(ni_exp(3, jrho)/NE(jrho))  ! 2nd imp convection
+    endif
+    XTB(jrho) = exchi_m(jrho) ! turbulent e-i equipartition in MW/m^3
+    T0  = 1E3 *TE(jrho)       ! temperature scale used by GYRO
+    cs0 = SQRT(k0*T0/m0)      ! thermal velocity unit cm/sec
+    GM1(jrho) = gamma_m(jrho)*(cs0/a0_cm)
+    OM1(jrho) = omega_m(jrho)*(cs0/a0_cm)
+enddo
 
 return
 end subroutine tglf_parent

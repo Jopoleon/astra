@@ -10,4 +10,4 @@ MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libm
 
 $(XPR)/tglf.x: $(XPR)/tglf_chunk.f90 $(AENV)
 	$(MPIFC) -o $@ $(XPR)/tglf_chunk.f90	\
-	-I$(TGLF_INC) $(TGLF_LIB)
+	-I$(TGLF_INC) $(TGLF_LIB) $(MKL_LIB)
