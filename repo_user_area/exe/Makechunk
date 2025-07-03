@@ -1,0 +1,13 @@
+ifndef AWD
+$(error setenv/export AWD first)
+endif
+
+XPR = $(AWD)/xpr
+MOD_FOR = $(AWD)/mod/for
+AENV = $(AWD)/exe/astra_rc
+
+MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
+
+$(XPR)/tglf.x: $(XPR)/tglf_chunk.f90 $(AENV)
+	$(MPIFC) -o $@ $(XPR)/tglf_chunk.f90	\
+	-I$(TGLF_INC) $(TGLF_LIB)
