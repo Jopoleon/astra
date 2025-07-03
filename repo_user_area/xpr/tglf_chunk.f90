@@ -55,7 +55,7 @@ double precision, allocatable, dimension(:) :: mtori, chie, chii, exchi, elec_pf
     gamma_max, omega_max, kymax, te_tg, ne_tg, vpar_tg, vper_tg, vexb_tg, &
     ametr_tg, elon_tg, tria_tg, rmaj_tg, ptot_tg, q_tg, zef_tg, pfn_tg, &
     drmin, drmaj, drho, delong, dtrian, dr, dne, dte, dq, dptot, dvpar, dvper, dv_r, drhodr
-double precision, allocatable, dimension(:, :) :: dti, dni, ni_tg, ti_tg, z_tg, ion_pflux
+double precision, allocatable, dimension(:, :) :: dti, dni, ni_tg, ti_tg, zimp_tg, ion_pflux
 double precision, allocatable, dimension(:) :: gamma, omega, kyspectrum, efluxspectrum, &
     ifluxspectrum, pfluxspectrum
 
@@ -65,8 +65,10 @@ call MPI_Comm_size(MPI_COMM_WORLD, nprocs, ierr)
 call MPI_Comm_get_parent(parent, ierr)
 
 if (parent == MPI_COMM_NULL) then
-    print *, "No parent communicator!"
-    call MPI_Abort(MPI_COMM_WORLD, 1, ierr)
+    if (rank == 0) then
+        print *, "No parent communicator!"
+        call MPI_Abort(MPI_COMM_WORLD, 1, ierr)
+    endif
 endif
 
 ! Receive dimensions from parent
@@ -91,7 +93,7 @@ allocate( drmin(chunk), drmaj(chunk), drho(chunk), delong(chunk), dtrian(chunk),
     dr(chunk), dne(chunk), dte(chunk), dq(chunk), dptot(chunk), dvpar(chunk), &
     dvper(chunk), dv_r(chunk), drhodr(chunk) )
 allocate( dti(4, chunk), dni(4, chunk), ni_tg(4, chunk), ti_tg(4, chunk), &
-    z_tg(4, chunk), ion_pflux(4, chunk) )
+    zimp_tg(3, chunk), ion_pflux(4, chunk) )
 allocate( gamma(tglf_nky_in), omega(tglf_nky_in), kyspectrum(tglf_nky_in), efluxspectrum(tglf_nky_in), &
     ifluxspectrum(tglf_nky_in), pfluxspectrum(tglf_nky_in) )
 ! Receive TGLF input scalars and profiles from parent
@@ -119,31 +121,30 @@ ni_tg(1, :) = inputs(:, 19)
 ni_tg(2, :) = inputs(:, 20)
 ni_tg(3, :) = inputs(:, 21)
 ni_tg(4, :) = inputs(:, 22)
-z_tg(1, :)  = inputs(:, 23)
-z_tg(2, :)  = inputs(:, 24)
-z_tg(3, :)  = inputs(:, 25)
-z_tg(4, :)  = inputs(:, 26)
-drmin       = inputs(:, 27)
-drmaj       = inputs(:, 28)
-drho        = inputs(:, 29)
-delong      = inputs(:, 30)
-dtrian      = inputs(:, 31)
-dptot       = inputs(:, 32)
-dte         = inputs(:, 33)
-dne         = inputs(:, 34)
-dq          = inputs(:, 35)
-dvper       = inputs(:, 36)
-dv_r        = inputs(:, 37)
-dr          = inputs(:, 38)
-drhodr      = inputs(:, 39)
-dti(1, :)   = inputs(:, 40)
-dti(2, :)   = inputs(:, 41)
-dti(3, :)   = inputs(:, 42)
-dti(4, :)   = inputs(:, 43)
-dni(1, :)   = inputs(:, 44)
-dni(2, :)   = inputs(:, 45)
-dni(3, :)   = inputs(:, 46)
-dni(4, :)   = inputs(:, 47)
+zimp_tg(1, :) = inputs(:, 23)
+zimp_tg(2, :) = inputs(:, 24)
+zimp_tg(3, :) = inputs(:, 25)
+drmin       = inputs(:, 26)
+drmaj       = inputs(:, 27)
+drho        = inputs(:, 28)
+delong      = inputs(:, 29)
+dtrian      = inputs(:, 30)
+dptot       = inputs(:, 31)
+dte         = inputs(:, 32)
+dne         = inputs(:, 33)
+dq          = inputs(:, 34)
+dvper       = inputs(:, 35)
+dv_r        = inputs(:, 36)
+dr          = inputs(:, 37)
+drhodr      = inputs(:, 38)
+dti(1, :)   = inputs(:, 39)
+dti(2, :)   = inputs(:, 40)
+dti(3, :)   = inputs(:, 41)
+dti(4, :)   = inputs(:, 42)
+dni(1, :)   = inputs(:, 43)
+dni(2, :)   = inputs(:, 44)
+dni(3, :)   = inputs(:, 45)
+dni(4, :)   = inputs(:, 46)
 
 AMJ  = scalars(1)
 BTOR = scalars(2)
@@ -249,9 +250,9 @@ radial_loop: do jr=1, chunk
 
 !thermal impurities
 
-    tglf_zs_in(3) = max(1., z_tg(2, jr))
-    tglf_zs_in(4) = z_tg(3, jr)
-    tglf_zs_in(5) = z_tg(4, jr)
+    tglf_zs_in(3) = max(1., zimp_tg(1, jr))
+    tglf_zs_in(4) = zimp_tg(2, jr)
+    tglf_zs_in(5) = zimp_tg(3, jr)
 
     if (tglf_zs_in(5) >= 1. .and. tglf_ns_in == 3) then
         tglf_zs_in(4) = tglf_zs_in(5)
