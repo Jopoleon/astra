@@ -15,7 +15,7 @@ use status_inc, only: NE, TE, NI, TI, &
 
 implicit none
 
-integer, parameter :: n_scalars=20, n_inputs=55, n_outputs=15, nrho_tg=60, nsm=7, nky_in=19
+integer, parameter :: n_scalars=20, n_inputs=55, n_outputs=15, nrho_tg=80, nsm=7, nky_in=19
 double precision, parameter :: c_vpol=1.d0
 double precision, parameter :: &
    k0 = 1.6022E-12, &    ! erg/ev
@@ -257,7 +257,7 @@ prof_in_tg(:, 47) = dni(4, :)
 
 call MPI_Comm_size(MPI_COMM_WORLD, nprocs, ierr)
 
-nworkers = 60  ! A submultiple of nrho_tg!
+nworkers = 40  ! A submultiple of nrho_tg!
 chunk = nrho_tg / nworkers
 
 call MPI_Comm_spawn(worker_exe, MPI_ARGV_NULL, nworkers, MPI_INFO_NULL, 0, MPI_COMM_SELF, intercomm, errcodes, ierr)
