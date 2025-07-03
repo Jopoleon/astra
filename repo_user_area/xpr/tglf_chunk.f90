@@ -38,9 +38,9 @@ use tglf_pkg, only: get_eigenvalue_spectrum_out, get_ky_spectrum_out, &
 implicit none
 
 integer :: ierr, parent, rank, status(MPI_STATUS_SIZE)
-integer :: chunk, nprocs, nrho_tg, n_inputs, n_outputs, dims(3)
+integer :: chunk, nprocs, nrho_tg, n_inputs, n_outputs, n_scalars, ns_in, nky_in, dims(6)
 integer :: i1, i2
-double precision, allocatable :: input(:,:), output(:,:)
+double precision, allocatable :: input(:,:), output(:,:), scalars(:)
 
 call MPI_Init(ierr)
 call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
@@ -53,14 +53,19 @@ if (parent == MPI_COMM_NULL) then
 endif
 
 ! Receive dimensions from parent
-call MPI_Recv(dims, 3, MPI_INTEGER, 0, 0, parent, status, ierr)
+call MPI_Recv(dims, 6, MPI_INTEGER, 0, 0, parent, status, ierr)
 nrho_tg   = dims(1)
-n_inputs  = dims(2)
-n_outputs = dims(3)
+n_scalars = dims(2)
+n_inputs  = dims(3)
+n_outputs = dims(4)
+ns_in     = dims(5)
+nky_in    = dims(6)
 
 chunk = nrho_tg / nprocs  ! Safe here: we now know nrho_tg
 
-allocate(input(chunk, n_inputs), output(chunk, n_outputs))
+allocate(scalars(n_scalars))
+allocate(input(chunk, n_inputs))
+allocate(output(chunk, n_outputs))
 
 call MPI_Recv(input, chunk * n_inputs, MPI_DOUBLE_PRECISION, 0, 0, parent, status, ierr)
 

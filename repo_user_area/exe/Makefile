@@ -81,7 +81,7 @@ modules:
 
 $(ATASK): $(LIBFOR) $(LIBNBI) $(LIBFEQIS) $(LIBSPIDER) $(LIBSBR) $(LIBFNC) $(AENV) $(EQU) $(FOR_SRC) $(PYFILES) $(FMLS)
 	$(PY_TMP_GEN)
-	$(FC) $(FC_FLAGS) $(ATASK) $(FOR_SRC) $(TMP_SRC) -I$(MOD_DIR)/for -I$(NBI_INC) $(LIB)
+	$(MPIFC) $(FC_FLAGS) $(ATASK) $(FOR_SRC) $(TMP_SRC) -I$(MOD_DIR)/for -I$(NBI_INC) $(LIB)
 
 # User defined sbr and fnc
 
