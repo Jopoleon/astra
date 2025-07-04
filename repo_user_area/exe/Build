@@ -86,20 +86,25 @@ then
 #SBATCH --cpus-per-task=16
 #SBATCH --mem-per-cpu 1GB
 #SBATCH --time=12:00:00
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user ${USER}@ipp.mpg.de
+#SBATCH --mail-type=none
 export OMP_NUM_THREADS=\${SLURM_CPUS_PER_TASK:-1}
 export expfile=${expfile}
 export equfile=${equfile}
 export OMP_PLACES=cores
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+export I_MPI_FABRICS=shm:tpc
+export FI_PROVIDER_PATH=$I_MPI_ROOT/libfabric/lib/prov
 export ASTRA_EXT=${ASTRA_EXT}
+export PATH=${PATH}
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 srun $ATASK
+which mpirun
+fi_info || echo "fi_info not found"
+env | grep -E 'I_MPI|FI_|MPI'
 EOT
 
         echo sbatch $bat
         date
-	export I_MPI_FABRICS=""
+	pwd
 #        sbatch -W $bat # -W: waiting for process to finish before running json2cdf 
         sbatch $WAIT_SLURM $bat
     fi

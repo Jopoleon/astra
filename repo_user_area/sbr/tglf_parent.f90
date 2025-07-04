@@ -46,7 +46,7 @@ double precision, dimension(nsm-2, nrho_tg) :: zimp_tg
 double precision, dimension(nsm-1, NRD) :: ni_exp, ion_pflux_m
 character(len=256) :: worker_exe
 
-worker_exe = "/shares/departments/AUG/users/git/a8/xpr/tglf.x"
+worker_exe = "xpr/tglf.x"
 
 ! Interpolate from ASTRA grid to TGLF grid
 rho_min = RHO(1)
