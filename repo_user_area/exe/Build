@@ -91,11 +91,13 @@ export OMP_NUM_THREADS=\${SLURM_CPUS_PER_TASK:-1}
 export expfile=${expfile}
 export equfile=${equfile}
 export OMP_PLACES=cores
+export I_MPI_ROOT=${I_MPI_ROOT}
 export I_MPI_FABRICS=shm:tpc
-export FI_PROVIDER_PATH=$I_MPI_ROOT/libfabric/lib/prov
+export I_MPI_SPAWN=on
+export FI_PROVIDER_PATH=${I_MPI_ROOT}/libfabric/lib/prov
 export ASTRA_EXT=${ASTRA_EXT}
 export PATH=${PATH}
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${I_MPI_ROOT}/libfabric/lib
 srun $ATASK
 which mpirun
 fi_info || echo "fi_info not found"
