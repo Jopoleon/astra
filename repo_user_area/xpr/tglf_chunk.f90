@@ -73,7 +73,7 @@ if (parent == MPI_COMM_NULL) then
 endif
 
 ! Receive dimensions from parent
-call MPI_Recv(dims, 6, MPI_INTEGER, 0, 0, parent, status, ierr)
+call MPI_Recv(dims, 8, MPI_INTEGER, 0, 0, parent, status, ierr)
 nrho_tg   = dims(1)
 n_scalars = dims(2)
 n_inputs  = dims(3)

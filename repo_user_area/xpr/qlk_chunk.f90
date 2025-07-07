@@ -34,7 +34,7 @@ double precision, parameter :: &
 integer :: simple_mpi_only_in, maxpts_in, maxruns_in, runcounter_in
 integer :: nions, coll_flag_in, rot_flag_in, verbose_in, el_type_in, &
      integration_routine_in, separateflux_in
-integer :: ierr, parent, rank, status(MPI_STATUS_SIZE)
+integer :: ierr, parent, rank, nproc, status(MPI_STATUS_SIZE)
 integer :: chunk, nprocs, nrho_qlk, n_inputs, n_outputs, n_scalars, dims(8)
 integer, dimension(dimx, nspec_max-1) :: ion_type_in
 
@@ -58,8 +58,6 @@ double precision, DIMENSION(:, :, :), ALLOCATABLE :: oldrsol, oldisol, oldrfdsol
 !-----------------------------------------
 LOGICAL :: exist1, exist2, exist3, exist4, exist5 !used for checking for existence of files
 
-!MPI variables:
-INTEGER :: mpi_ierr, nproc, myrank
 INTEGER :: unit_runc=600, unit_rsol=610, unit_isol=620, unit_rfd=630, unit_ifd=640, myunit=700, i_mpic
 integer :: jr_min, jr_max, jrho, j0, j01, j02, n_radial
 integer :: i, j, k, jr, jjgrid(nradial), jion, jrho_beg
@@ -98,12 +96,13 @@ if (parent == MPI_COMM_NULL) then
 endif
 
 ! Receive dimensions from parent
-call MPI_Recv(dims, 6, MPI_INTEGER, 0, 0, parent, status, ierr)
+call MPI_Recv(dims, 8, MPI_INTEGER, 0, 0, parent, status, ierr)
 nrho_qlk   = dims(1)
 n_scalars = dims(2)
 n_inputs  = dims(3)
 n_outputs = dims(4)
 nions  = dims(5) - 1
+jrho_beg = dims(7)
 
 chunk = nrho_qlk / nprocs  ! Safe here: we now know nrho_qlk
 allocate(scalars(n_scalars))
@@ -439,7 +438,7 @@ radial_loop: do jr=1, chunk
     in_regular%rhomin = rhomin !/rhoscale
     in_regular%rhomax = rhomax !/rhoscale
 
-    write(6, *) 'Calling qualikiz', nions, j0, runcounter_in, myrank
+    write(6, *) 'Calling qualikiz', nions, jrho_beg - 1 + jr, runcounter_in, rank
 
     if (runcounter_in == 0) then
         call qualikiz(sizes, in_regular, &

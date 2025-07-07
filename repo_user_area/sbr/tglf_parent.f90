@@ -258,7 +258,9 @@ print *, "MPI workers = ", nworkers, nrho_tg
 
 ! Send dimensions and data to workers
 do i=0, nworkers-1
-    call MPI_Send(dims, 6, MPI_INTEGER, i, 0, intercomm, ierr)
+    i1 = i * chunk + 1
+    dims(7) = i1
+    call MPI_Send(dims, SIZE(dims), MPI_INTEGER, i, 0, intercomm, ierr)
 enddo
 do i=0, nworkers-1
     call MPI_Send(scal_in_tg, n_scalars, MPI_DOUBLE_PRECISION, i, 0, intercomm, ierr)
