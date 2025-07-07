@@ -15,7 +15,7 @@ MPI_FC = $(MPIFC) -qopenmp -r8 -no-prec-div -ip -g
 #-----
 
 .PHONY: all
-all: directories $(XPR)/tglf.x # $(XPR)/qlk.x
+all: directories $(XPR)/tglf.x $(XPR)/qlk.x
 
 .PHONY: directories
 directories:

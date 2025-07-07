@@ -18,7 +18,6 @@ type(qlk_output_meth_0)       :: output_meth_0
 type(qlk_output_meth_0_sep_0) :: output_meth_0_sep_0_SI , output_meth_0_sep_0_GB
 type(qlk_primi_meth_0)        :: primi_meth_0
 
-
 integer, parameter :: ntheta=64, numecoefs=13, numicoefs=7, dimx=1, dimn=16, numsols=3, phys_meth=0, nradial=5, nspec_max=7
 
 double precision, parameter :: &
@@ -33,12 +32,14 @@ double precision, parameter :: &
 !-----------------------------------------
 
 integer :: simple_mpi_only_in, maxpts_in, maxruns_in, runcounter_in
-integer :: nions, coll_flag_in, rot_flag_in, verbose_in, el_type_in, &
+integer :: jr, nions, coll_flag_in, rot_flag_in, verbose_in, el_type_in, &
      integration_routine_in, separateflux_in
 integer :: ierr, parent, rank, status(MPI_STATUS_SIZE)
 integer :: chunk, nprocs, nrho_qlk, n_inputs, n_outputs, n_scalars, dims(6)
 integer, dimension(dimx, nspec_max-1) :: ion_type_in
 
+double precision :: a0_m, T0, N0, m0, rmin_tg, drho_cs, drho_nt, nt_cs
+double precision :: AMJ, RTOR, BTOR
 double precision :: relacc1_in, relacc2_in, absacc1_in, absacc2_in, R0_in, &
     ETGmultin, collmultin, timeout_in, rhomin, rhomax, rhoscale, xstep
 double precision, dimension(dimn) :: kthetarhos_in
@@ -67,19 +68,13 @@ double precision :: bmod, bpolz
 double precision, allocatable, dimension(:) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
     delong, dtrian, dvper, drhodr, dstep, dr, dv_r
 double precision :: Bunit, cs00, rhos00, omega0, rhostar2
-double precision :: T0, m0, drho_cs
 ! Shifted cicle geometry inputs
 double precision :: gamma_e_qlk, mach_fac, ql_fac
-
-double precision, dimension(nrho) :: vexb2, vpar_m, vper_m, &
-    gradrhosq_exp, rmaj_exp, q_exp, &
-    chie_m, chii_m, pfluxi_m, exchi_m, ptot
 
 double precision, allocatable, dimension(:) :: chie, chii, exchi, pfluxi, rho_qlk, &
     te_qlk, ne_qlk, vpar_qlk, vper_qlk, vexb_qlk, &
     ametr_qlk, elon_qlk, tria_qlk, rmaj_qlk, ptot_qlk, q_qlk, zef_qlk, pfn_qlk
-double precision, dimension(nspec_max-1) :: dti, dni
-double precision, dimension(nspec_max-1, nrho) :: ni_m, ti_m
+double precision, allocatable, dimension(:, :) :: dti, dni, ni_qlk, ti_qlk, zimp_qlk
 double precision :: vpar_in, vpar_shear_in, cexb
 double precision, allocatable :: inputs(:, :), output(:, :), scalars(:)
 
@@ -122,9 +117,8 @@ allocate( drmin(chunk), drmaj(chunk), drho(chunk), delong(chunk), dtrian(chunk),
     dr(chunk), dne(chunk), dte(chunk), dq(chunk), dptot(chunk), &
     dvper(chunk), dv_r(chunk), drhodr(chunk) )
 allocate( dti(4, chunk), dni(4, chunk), ni_qlk(4, chunk), ti_qlk(4, chunk), &
-    zimp_qlk(3, chunk), ion_pflux(4, chunk) )
-allocate( gamma(tglf_nky_in), omega(tglf_nky_in), kyspectrum(tglf_nky_in), efluxspectrum(tglf_nky_in), &
-    ifluxspectrum(tglf_nky_in), pfluxspectrum(tglf_nky_in) )
+    zimp_qlk(3, chunk) )
+
 ! Receive TGLF input scalars and profiles from parent
 call MPI_Recv(scalars     , n_scalars, MPI_DOUBLE_PRECISION, 0, 0, parent, status, ierr)
 call MPI_Recv(inputs, chunk * n_inputs, MPI_DOUBLE_PRECISION, 0, 0, parent, status, ierr)
@@ -175,15 +169,15 @@ dni(2, :)   = inputs(:, 44)
 dni(3, :)   = inputs(:, 45)
 dni(4, :)   = inputs(:, 46)
 
-BTOR = scalars(1)
-a0_m = scalars(2)
-AMJ  = scalars(4)
+RTOR = scalars(1)
+BTOR = scalars(2)
+a0_m = scalars(3)
+AMJ  = scalars(5)
 m0 = AMJ*mp          ! Ref. mass = D ion mass [g]
-a0_cm = 1.d2*a0_m    ! length scale used by GYRO, m -> cm
 
 ! Electrons and main ions
-Ai_in(1, 1: 4) = scalars(4:  7)
-Zi_in(1, 1: 4) = scalars(9: 12)
+Ai_in(1, 1: 4) = scalars( 5:  8)
+Zi_in(1, 1: 4) = scalars(10: 13)
 
 if (Zi_in(1, 4) >= 1.) nions = 4
 if (Zi_in(1, 4)  < 1.) nions = 3
@@ -211,10 +205,10 @@ simple_mpi_only_in = 1
 maxpts_in   = 50000000 ! 500000 default
 maxruns_in  = 10
 
-R0_in = RTOR + SHIF(nrho)
+R0_in = rmaj_qlk(nrho_qlk)
 Bo_in(1) = BTOR
-Rmin_in(1) = AMETR(nrho)
-rhoscale = rho(nrho)
+Rmin_in(1) = a0_m
+rhoscale = rho_qlk(nrho_qlk)
 
 radial_loop: do jr=1, chunk
 
@@ -230,9 +224,9 @@ radial_loop: do jr=1, chunk
         ni_qlk(3, :) = ni_qlk(4, :)
         ti_qlk(3, :) = ti_qlk(4, :)
     endif
-    if (Zi_in(4) >= 1. .and. nions == 1) then
-        Zi_in(3) = Zi_in(4)
-        Ai_in(3) = Ai_in(4)
+    if (Zi_in(1, 3) >= 1. .and. nions == 1) then
+        Zi_in(1, 2) = Zi_in(1, 3)
+        Ai_in(1, 2) = Ai_in(1, 3)
         ni_qlk(2, :) = ni_qlk(3, :)
         ti_qlk(2, :) = ti_qlk(3, :)
     endif
@@ -266,23 +260,23 @@ radial_loop: do jr=1, chunk
 
 ! derived units for the plasma
 
-    Bunit = 1E4*BTOR*drhodr(jr)*rho_in(1)/AMETR(j0)  ! Miller geometry magnetic field unit
+    Bunit = 1E4*BTOR*drhodr(jr)*rho_in(1)/ametr_qlk(jr)  ! Miller geometry magnetic field unit
     cs00 = SQRT(e00*T0/(AMJ*mpp))  ! thermal velocity unit m/sec
     omega0 = e0*Bunit/(m0*c0)      ! gyrofrequency unit 1/sec
     rhos00 = cs00/omega0           ! gyroradius unit m
 
-    vpar_shear_in = -rmaj_exp(j0)*dv_r(jr)/(dr(jr)*cs00)  !From m/s to cm/s for vpar
-    vpar_in = vpar_m(j0)/cs00
+    vpar_shear_in = -rmaj_qlk(jr)*dv_r(jr)/(dr(jr)*cs00)  !From m/s to cm/s for vpar
+    vpar_in = vpar_qlk(jr)/cs00
 
 ! local magnetic geometry
 
     rhostar2 = (rhos00/Rmin_in(1))**2
-    drho_cs = drhodr**2 * Rmin_in(1) * rhostar2 * cs00
+    drho_cs = drhodr(jr)**2 * Rmin_in(1) * rhostar2 * cs00
 
 ! 1.e16 comes from cgs to SI for ptot
-    alphax_in(1) = -(0.0040267/BTOR**2) * qx_in(1)**2 * R0_in * dptot/(dr*Rmin_in(1))
-    cexb = AMETR(j0)/qx_in(1)            ! r/(q)
-    gamma_e_qlk = cexb*dvper/(dr*cs00) ! Waltz-Miller definition
+    alphax_in(1) = -(0.0040267/BTOR**2) * qx_in(1)**2 * R0_in * dptot(jr)/(dr(jr)*Rmin_in(1))
+    cexb = ametr_qlk(jr)/qx_in(1)            ! r/(q)
+    gamma_e_qlk = cexb*dvper(jr)/(dr(jr)*cs00) ! Waltz-Miller definition
     mach_fac = sqrt(Tex_in(1)/AMJ)
 
     Machtor_in(1) = vpar_in*mach_fac
@@ -319,18 +313,18 @@ radial_loop: do jr=1, chunk
          ion_type_in(1, 1:nions), Ai_in(1, 1:nions), Zi_in(1, 1:nions), Tix_in(1, 1:nions), ninorm_in(1, 1:nions), Ati_in(1, 1:nions), Ani_in(1, 1:nions), anis_in(1, 1:nions), danisdr_in(1, 1:nions), & !ions
          Machtor_in, Autor_in, Machpar_in, Aupar_in, gammaE_in
 
-    INQUIRE(file="../qualikiz/"//trim(fname1)//"/runcounter.dat", EXIST=exist1)
+    INQUIRE(file="qualikiz/"//trim(fname1)//"/runcounter.dat", EXIST=exist1)
     INQUIRE(file=trim(prim_dir)//'/rsol.dat', EXIST=exist2)
     INQUIRE(file=trim(prim_dir)//'/isol.dat', EXIST=exist3)
     INQUIRE(file=trim(prim_dir)//'/rfdsol.dat', EXIST=exist4)
     INQUIRE(file=trim(prim_dir)//'/ifdsol.dat', EXIST=exist5)
 
     IF ( exist1 .AND. exist2 .AND. exist3 .AND. exist4 .AND. exist5 ) THEN
-        OPEN(unit=700, file="../qualikiz/"//trim(fname1)//"/runcounter.dat", status="old", action="read")
+        OPEN(unit=700, file="qualikiz/"//trim(fname1)//"/runcounter.dat", status="old", action="read")
         READ(700,*) runcounter_in
         CLOSE(700)
     ELSE
-        prim_dir = '../qualikiz/'//trim(fname1)//'/output/primitive'
+        prim_dir = 'qualikiz/'//trim(fname1)//'/output/primitive'
         call system('mkdir -p ' // trim(prim_dir))
         runcounter_in = 0 !First run
     ENDIF
@@ -480,7 +474,7 @@ radial_loop: do jr=1, chunk
     sol_out   = primi_meth_0%sol
     fdsol_out = primi_meth_0%fdsol
 
-    OPEN(unit=700, file="../qualikiz/"//trim(fname1)//"/runcounter.dat", status="replace", action="write") !Replace old runcounter with new runcounter
+    OPEN(unit=700, file="qualikiz/"//trim(fname1)//"/runcounter.dat", status="replace", action="write") !Replace old runcounter with new runcounter
     WRITE(700,*) runcounter_in + 1
     CLOSE(700)
 
@@ -500,7 +494,7 @@ radial_loop: do jr=1, chunk
     WRITE(myunit, fmtn) (((AIMAG(fdsol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
     CLOSE(myunit)
 
-    ql_fac = drhodr**2 * Rmin_in(1) * rhostar2 * cs00
+    ql_fac = drhodr(jr)**2 * Rmin_in(1) * rhostar2 * cs00
 
     IF (ALLOCATED(oldsol_in)) THEN !Call with optional old solution input
         DEALLOCATE( oldsol_in  )
