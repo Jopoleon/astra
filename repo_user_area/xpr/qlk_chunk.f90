@@ -32,10 +32,10 @@ double precision, parameter :: &
 !-----------------------------------------
 
 integer :: simple_mpi_only_in, maxpts_in, maxruns_in, runcounter_in
-integer :: jr, nions, coll_flag_in, rot_flag_in, verbose_in, el_type_in, &
+integer :: nions, coll_flag_in, rot_flag_in, verbose_in, el_type_in, &
      integration_routine_in, separateflux_in
 integer :: ierr, parent, rank, status(MPI_STATUS_SIZE)
-integer :: chunk, nprocs, nrho_qlk, n_inputs, n_outputs, n_scalars, dims(6)
+integer :: chunk, nprocs, nrho_qlk, n_inputs, n_outputs, n_scalars, dims(8)
 integer, dimension(dimx, nspec_max-1) :: ion_type_in
 
 double precision :: a0_m, T0, N0, m0, rmin_tg, drho_cs, drho_nt, nt_cs
@@ -60,9 +60,9 @@ LOGICAL :: exist1, exist2, exist3, exist4, exist5 !used for checking for existen
 
 !MPI variables:
 INTEGER :: mpi_ierr, nproc, myrank
-INTEGER :: myunit=700, i_mpic
+INTEGER :: unit_runc=600, unit_rsol=610, unit_isol=620, unit_rfd=630, unit_ifd=640, myunit=700, i_mpic
 integer :: jr_min, jr_max, jrho, j0, j01, j02, n_radial
-integer :: i, j, k, jradial, jjgrid(nradial), jion
+integer :: i, j, k, jr, jjgrid(nradial), jion, jrho_beg
 
 double precision :: bmod, bpolz
 double precision, allocatable, dimension(:) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
@@ -211,6 +211,8 @@ Rmin_in(1) = a0_m
 rhoscale = rho_qlk(nrho_qlk)
 
 radial_loop: do jr=1, chunk
+   
+    write(fname1, '(A, i0)') 'qlkzin_' , jrho_beg - 1 + jr
 
 !thermal impurities
 
@@ -304,14 +306,6 @@ radial_loop: do jr=1, chunk
         write(6, *) 'Ni/Ne', ninorm_in(1, 1:nions)
         write(6, *) 'check: ', Ati_in(1, 1), gammaE_in, Autor_in, Machtor_in, alphax_in(1), x_in(1)
     endif
- 
-    write(1331, *) 'inputs,total'
-    write(1331, *) dimx, rho_in/rhoscale, dimn, nions, numsols, phys_meth, coll_flag_in, &
-         rot_flag_in, verbose_in, 0,  kthetarhos_in, & !general param
-         'x', x_in, Ro_in, Rmin_in, R0_in, Bo_in, qx_in, smag_in, alphax_in, & !geometry
-         el_type_in, Tex_in, Nex_in, Ate_in, Ane_in, anise_in, danisedr_in, & !electrons
-         ion_type_in(1, 1:nions), Ai_in(1, 1:nions), Zi_in(1, 1:nions), Tix_in(1, 1:nions), ninorm_in(1, 1:nions), Ati_in(1, 1:nions), Ani_in(1, 1:nions), anis_in(1, 1:nions), danisdr_in(1, 1:nions), & !ions
-         Machtor_in, Autor_in, Machpar_in, Aupar_in, gammaE_in
 
     INQUIRE(file="qualikiz/"//trim(fname1)//"/runcounter.dat", EXIST=exist1)
     INQUIRE(file=trim(prim_dir)//'/rsol.dat', EXIST=exist2)
@@ -320,9 +314,9 @@ radial_loop: do jr=1, chunk
     INQUIRE(file=trim(prim_dir)//'/ifdsol.dat', EXIST=exist5)
 
     IF ( exist1 .AND. exist2 .AND. exist3 .AND. exist4 .AND. exist5 ) THEN
-        OPEN(unit=700, file="qualikiz/"//trim(fname1)//"/runcounter.dat", status="old", action="read")
-        READ(700,*) runcounter_in
-        CLOSE(700)
+        OPEN(unit=unit_runc, file="qualikiz/"//trim(fname1)//"/runcounter.dat", status="old", action="read")
+        READ(unit_runc, *) runcounter_in
+        CLOSE(unit_runc)
     ELSE
         prim_dir = 'qualikiz/'//trim(fname1)//'/output/primitive'
         call system('mkdir -p ' // trim(prim_dir))
@@ -345,21 +339,21 @@ radial_loop: do jr=1, chunk
             ALLOCATE( oldsol_in   (dimx, dimn, numsols) )
             ALLOCATE( oldfdsol_in (dimx, dimn, numsols) )
         endif
-        OPEN(unit=myunit, file=trim(prim_dir)//'/rsol.dat', action="read", status="old")
-        READ(myunit,fmtn) (((oldrsol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
-        CLOSE(myunit)
+        OPEN(unit=unit_rsol, file=trim(prim_dir)//'/rsol.dat', action="read", status="old")
+        READ(unit_rsol, fmtn) (((oldrsol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
+        CLOSE(unit_rsol)
 
-        OPEN(unit=myunit, file=trim(prim_dir)//'/isol.dat', action="read", status="old")
-        READ(myunit,fmtn) (((oldisol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
-        CLOSE(myunit)
+        OPEN(unit=unit_isol, file=trim(prim_dir)//'/isol.dat', action="read", status="old")
+        READ(unit_isol, fmtn) (((oldisol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
+        CLOSE(unit_isol)
 
-        OPEN(unit=myunit, file=trim(prim_dir)//'/rfdsol.dat', action="read", status="old")
-        READ(myunit,fmtn) (((oldrfdsol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
-        CLOSE(myunit)
+        OPEN(unit=unit_rfd, file=trim(prim_dir)//'/rfdsol.dat', action="read", status="old")
+        READ(unit_rfd, fmtn) (((oldrfdsol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
+        CLOSE(unit_rfd)
 
-        OPEN(unit=myunit, file=trim(prim_dir)//'/ifdsol.dat', action="read", status="old")
-        READ(myunit,fmtn) (((oldifdsol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
-        CLOSE(myunit)
+        OPEN(unit=unit_ifd, file=trim(prim_dir)//'/ifdsol.dat', action="read", status="old")
+        READ(unit_ifd, fmtn) (((oldifdsol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
+        CLOSE(unit_ifd)
 
         oldsol_in   = CMPLX(oldrsol  , oldisol)
         oldfdsol_in = CMPLX(oldrfdsol, oldifdsol)
@@ -474,25 +468,25 @@ radial_loop: do jr=1, chunk
     sol_out   = primi_meth_0%sol
     fdsol_out = primi_meth_0%fdsol
 
-    OPEN(unit=700, file="qualikiz/"//trim(fname1)//"/runcounter.dat", status="replace", action="write") !Replace old runcounter with new runcounter
-    WRITE(700,*) runcounter_in + 1
-    CLOSE(700)
+    OPEN(unit=unit_runc, file="qualikiz/"//trim(fname1)//"/runcounter.dat", status="replace", action="write") !Replace old runcounter with new runcounter
+    WRITE(unit_runc, *) runcounter_in + 1
+    CLOSE(unit_runc)
 
-    OPEN(unit=myunit, file=trim(prim_dir)//'/rsol.dat', action="write", status="replace")
-    WRITE(myunit, fmtn) (((REAL(sol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
-    CLOSE(myunit)
+    OPEN(unit=unit_rsol, file=trim(prim_dir)//'/rsol.dat', action="write", status="replace")
+    WRITE(unit_rsol, fmtn) (((REAL(sol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
+    CLOSE(unit_rsol)
 
-    OPEN(unit=myunit, file=trim(prim_dir)//'/isol.dat', action="write", status="replace")
-    WRITE(myunit, fmtn) (((AIMAG(sol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
-    CLOSE(myunit)
+    OPEN(unit=unit_isol, file=trim(prim_dir)//'/isol.dat', action="write", status="replace")
+    WRITE(unit_isol, fmtn) (((AIMAG(sol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
+    CLOSE(unit_isol)
 
-    OPEN(unit=myunit, file=trim(prim_dir)//'/rfdsol.dat', action="write", status="replace")
-    WRITE(myunit, fmtn) (((REAL(fdsol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
-    CLOSE(myunit)
+    OPEN(unit=unit_rfd, file=trim(prim_dir)//'/rfdsol.dat', action="write", status="replace")
+    WRITE(unit_rfd, fmtn) (((REAL(fdsol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
+    CLOSE(unit_rfd)
 
-    OPEN(unit=myunit, file=trim(prim_dir)//'/ifdsol.dat', action="write", status="replace")
-    WRITE(myunit, fmtn) (((AIMAG(fdsol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
-    CLOSE(myunit)
+    OPEN(unit=unit_ifd, file=trim(prim_dir)//'/ifdsol.dat', action="write", status="replace")
+    WRITE(unit_ifd, fmtn) (((AIMAG(fdsol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
+    CLOSE(unit_ifd)
 
     ql_fac = drhodr(jr)**2 * Rmin_in(1) * rhostar2 * cs00
 
@@ -503,10 +497,10 @@ radial_loop: do jr=1, chunk
 
 ! Chii
  
-    chii(jradial)   = ql_fac * ief_gb_out(1, 1)/(1e-4 + Rmin_in(1)/R0_in * abs(Ati_in(1, 1)))
-    chie(jradial)   = ql_fac * eef_gb_out(1)/(1e-4 + Rmin_in(1)/R0_in * abs(Ate_in(1)))
-    pfluxi(jradial) = ql_fac * epf_gb_out(1)
-    exchi(jradial)  = cftrans_out(1, 2, 1)
+    chii(jr)   = ql_fac * ief_gb_out(1, 1)/(1e-4 + Rmin_in(1)/R0_in * abs(Ati_in(1, 1)))
+    chie(jr)   = ql_fac * eef_gb_out(1)/(1e-4 + Rmin_in(1)/R0_in * abs(Ate_in(1)))
+    pfluxi(jr) = ql_fac * epf_gb_out(1)
+    exchi(jr)  = cftrans_out(1, 2, 1)
 
 enddo radial_loop
 

@@ -26,7 +26,7 @@ double precision, dimension(*), intent(out) :: CHI, CHE, VIN, DPH, DPL, DPR, XTB
 integer :: ierr, intercomm, errcodes(100), status(MPI_STATUS_SIZE)
 integer :: jr, jrho, jr_r, jr_l, jgamma_max, jspec
 integer :: ns_in              ! Number of species, including electrons
-integer :: i, i1, i2, chunk, nprocs, nworkers, dims(6)
+integer :: i, i1, i2, chunk, nprocs, nworkers, dims(8)
 
 double precision, dimension(n_scalars) :: scal_in_qlk
 double precision, dimension(nrho_qlk, n_inputs ) :: prof_in_qlk
@@ -257,6 +257,8 @@ print *, "MPI workers = ", nworkers, nrho_qlk
 
 ! Send dimensions and data to workers
 do i=0, nworkers-1
+    i1 = i * chunk + 1
+    dims(7) = i1
     call MPI_Send(dims, 6, MPI_INTEGER, i, 0, intercomm, ierr)
 enddo
 do i=0, nworkers-1

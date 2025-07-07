@@ -26,7 +26,7 @@ double precision, dimension(*), intent(out) :: CHI, CHE, VIN, DPH, DPL, DPR, XTB
 integer :: ierr, intercomm, errcodes(100), status(MPI_STATUS_SIZE)
 integer :: jr, jrho, jr_r, jr_l, jgamma_max, jspec
 integer :: ns_in              ! Number of species, including electrons
-integer :: i, i1, i2, chunk, nprocs, nworkers, dims(6)
+integer :: i, i1, i2, chunk, nprocs, nworkers, dims(8)
 
 double precision, dimension(n_scalars) :: scal_in_tg
 double precision, dimension(nrho_tg, n_inputs ) :: prof_in_tg
@@ -191,10 +191,11 @@ dims(4) = n_outputs
 dims(5) = ns_in
 dims(6) = nky_in
 
-scal_in_tg(1) = BTOR
-scal_in_tg(2) = a0_m
-scal_in_tg(3:  7) = mass_in(1:5)
-scal_in_tg(8: 12) = zs_in(1:5)
+scal_in_tg(1) = RTOR
+scal_in_tg(2) = BTOR
+scal_in_tg(3) = a0_m
+scal_in_tg(4:  8) = mass_in(1:5)
+scal_in_tg(9: 13) = zs_in(1:5)
 
 prof_in_tg(:,  1) = rho_tg
 prof_in_tg(:,  2) = ametr_tg

@@ -45,7 +45,7 @@ double precision, parameter :: &
    pi   = 3.141592653589793
 
 integer :: ierr, parent, rank, status(MPI_STATUS_SIZE)
-integer :: chunk, nprocs, nrho_tg, n_inputs, n_outputs, n_scalars, dims(6)
+integer :: chunk, nprocs, nrho_tg, n_inputs, n_outputs, n_scalars, dims(8)
 integer :: i1, i2, sat_rule, jr, jgamma_max, jspec, kyloop
 double precision :: Bunit_gauss, Bunit_T, cs0, cs00, rhos0, omega0, rhostar2, lnlamda, taue, cexb
 double precision :: a0_cm, a0_m, T0, N0, m0, rmin_tg, drho_cs, drho_nt, nt_cs
@@ -147,11 +147,11 @@ dni(2, :)   = inputs(:, 44)
 dni(3, :)   = inputs(:, 45)
 dni(4, :)   = inputs(:, 46)
 
-BTOR = scalars(1)
-a0_m = scalars(2)
-AMJ  = scalars(4)
-tglf_mass_in(1: 5) = scalars(3:  7)/AMJ
-tglf_zs_in(1: 5)   = scalars(8: 12)
+BTOR = scalars(2)
+a0_m = scalars(3)
+AMJ  = scalars(5)
+tglf_mass_in(1: 5) = scalars(4:  8)/AMJ
+tglf_zs_in(1: 5)   = scalars(9: 13)
 m0 = AMJ*mp          ! Ref. mass = D ion mass [g]
 a0_cm = 1.d2*a0_m    ! length scale used by GYRO, m -> cm
 
