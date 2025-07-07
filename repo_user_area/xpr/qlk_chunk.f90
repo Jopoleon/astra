@@ -38,10 +38,10 @@ integer :: ierr, parent, rank, nproc, status(MPI_STATUS_SIZE)
 integer :: chunk, nprocs, nrho_qlk, n_inputs, n_outputs, n_scalars, dims(8)
 integer, dimension(dimx, nspec_max-1) :: ion_type_in
 
-double precision :: a0_m, T0, N0, m0, rmin_tg, drho_cs, drho_nt, nt_cs
+double precision :: a0_m, T0, m0, rmin_tg, drho_cs, drho_nt, nt_cs
 double precision :: AMJ, RTOR, BTOR
 double precision :: relacc1_in, relacc2_in, absacc1_in, absacc2_in, R0_in, &
-    ETGmultin, collmultin, timeout_in, rhomin, rhomax, rhoscale, xstep
+    ETGmultin, collmultin, timeout_in, rhomin, rhomax, rhoscale
 double precision, dimension(dimn) :: kthetarhos_in
 double precision, dimension(dimx) :: x_in, rho_in, Ro_in, Rmin_in, Bo_in, &
     qx_in, smag_in, alphax_in, Tex_in, Nex_in, Ate_in, Ane_in, anise_in, &
@@ -59,10 +59,8 @@ double precision, DIMENSION(:, :, :), ALLOCATABLE :: oldrsol, oldisol, oldrfdsol
 LOGICAL :: exist1, exist2, exist3, exist4, exist5 !used for checking for existence of files
 
 INTEGER :: unit_runc=600, unit_rsol=610, unit_isol=620, unit_rfd=630, unit_ifd=640, myunit=700, i_mpic
-integer :: jr_min, jr_max, jrho, j0, j01, j02, n_radial
-integer :: i, j, k, jr, jjgrid(nradial), jion, jrho_beg
+integer :: i, j, k, jr, jion, jrho_beg
 
-double precision :: bmod, bpolz
 double precision, allocatable, dimension(:) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
     delong, dtrian, dvper, drhodr, dstep, dr, dv_r
 double precision :: Bunit, cs00, rhos00, omega0, rhostar2
@@ -155,18 +153,19 @@ dptot       = inputs(:, 31)
 dte         = inputs(:, 32)
 dne         = inputs(:, 33)
 dq          = inputs(:, 34)
-dvper       = inputs(:, 35)
-dv_r        = inputs(:, 36)
-dr          = inputs(:, 37)
-drhodr      = inputs(:, 38)
-dti(1, :)   = inputs(:, 39)
-dti(2, :)   = inputs(:, 40)
-dti(3, :)   = inputs(:, 41)
-dti(4, :)   = inputs(:, 42)
-dni(1, :)   = inputs(:, 43)
-dni(2, :)   = inputs(:, 44)
-dni(3, :)   = inputs(:, 45)
-dni(4, :)   = inputs(:, 46)
+
+dvper       = inputs(:, 36)
+dv_r        = inputs(:, 37)
+dr          = inputs(:, 38)
+drhodr      = inputs(:, 39)
+dti(1, :)   = inputs(:, 40)
+dti(2, :)   = inputs(:, 41)
+dti(3, :)   = inputs(:, 42)
+dti(4, :)   = inputs(:, 43)
+dni(1, :)   = inputs(:, 44)
+dni(2, :)   = inputs(:, 45)
+dni(3, :)   = inputs(:, 46)
+dni(4, :)   = inputs(:, 47)
 
 RTOR = scalars(1)
 BTOR = scalars(2)
@@ -455,7 +454,6 @@ radial_loop: do jr=1, chunk
             primi_meth_0=primi_meth_0, &
             in_newt=in_newt, runcounterin=runcounter_in)
     endif
-
 
     cftrans_out = output_meth_0%cftrans
     gam_GB_out  = output_meth_0_sep_0_GB%gam

@@ -46,7 +46,7 @@ double precision, parameter :: &
 
 integer :: ierr, parent, rank, status(MPI_STATUS_SIZE)
 integer :: chunk, nprocs, nrho_tg, n_inputs, n_outputs, n_scalars, dims(8)
-integer :: i1, i2, sat_rule, jr, jgamma_max, jspec, kyloop
+integer :: sat_rule, jr, jgamma_max, jspec, kyloop
 double precision :: Bunit_gauss, Bunit_T, cs0, cs00, rhos0, omega0, rhostar2, lnlamda, taue, cexb
 double precision :: a0_cm, a0_m, T0, N0, m0, rmin_tg, drho_cs, drho_nt, nt_cs
 double precision :: AMJ, BTOR
@@ -134,18 +134,19 @@ dptot       = inputs(:, 31)
 dte         = inputs(:, 32)
 dne         = inputs(:, 33)
 dq          = inputs(:, 34)
-dvper       = inputs(:, 35)
-dv_r        = inputs(:, 36)
-dr          = inputs(:, 37)
-drhodr      = inputs(:, 38)
-dti(1, :)   = inputs(:, 39)
-dti(2, :)   = inputs(:, 40)
-dti(3, :)   = inputs(:, 41)
-dti(4, :)   = inputs(:, 42)
-dni(1, :)   = inputs(:, 43)
-dni(2, :)   = inputs(:, 44)
-dni(3, :)   = inputs(:, 45)
-dni(4, :)   = inputs(:, 46)
+
+dvper       = inputs(:, 36)
+dv_r        = inputs(:, 37)
+dr          = inputs(:, 38)
+drhodr      = inputs(:, 39)
+dti(1, :)   = inputs(:, 40)
+dti(2, :)   = inputs(:, 41)
+dti(3, :)   = inputs(:, 42)
+dti(4, :)   = inputs(:, 43)
+dni(1, :)   = inputs(:, 44)
+dni(2, :)   = inputs(:, 45)
+dni(3, :)   = inputs(:, 46)
+dni(4, :)   = inputs(:, 47)
 
 BTOR = scalars(2)
 a0_m = scalars(3)

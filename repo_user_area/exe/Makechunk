@@ -15,7 +15,7 @@ MPI_FC = $(MPIFC) -qopenmp -r8 -no-prec-div -ip -g
 #-----
 
 .PHONY: all
-all: directories $(XPR)/tglf.x $(XPR)/qlk.x
+all: directories $(XPR)/tglf.x $(XPR)/qlk.x $(XPR)/neo.x
 
 .PHONY: directories
 directories:
@@ -25,6 +25,10 @@ directories:
 $(XPR)/tglf.x: $(XPR)/tglf_chunk.f90 $(AENV)
 	$(MPIFC) -o $@ $(XPR)/tglf_chunk.f90	\
 	-I$(TGLF_INC) $(TGLF_LIB) $(MKL_LIB)
+
+$(XPR)/neo.x: $(XPR)/neo_chunk.f90 $(AENV)
+	$(MPIFC) -o $@ $(XPR)/neo_chunk.f90	\
+	-I$(NEO_INC) $(NEO_LIB) $(MKL_LIB)
 
 $(XPR)/qlk.x: $(XPR)/qlk_chunk.f90 $(AENV)
 	$(MPI_FC) -o $@ $(XPR)/qlk_chunk.f90	\

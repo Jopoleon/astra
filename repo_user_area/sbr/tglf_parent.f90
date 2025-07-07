@@ -33,7 +33,7 @@ double precision, dimension(nrho_tg, n_inputs ) :: prof_in_tg
 double precision, dimension(nrho_tg, n_outputs) :: prof_out_tg
 double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, T0, m0, a0_m, a0_cm, cs0
 double precision, dimension(nrho_tg) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
-    delong, dtrian, dvper, drhodr, dr, dv_r
+    delong, dtrian, dvpar, dvper, drhodr, dr, dv_r
 double precision, dimension(NRD) :: gradrhosq_exp, rmaj_exp, q_exp, &
     vexb_exp, vpar_exp, vper_exp, mtori_m, &
     chie_m, chii_m, elec_pflux_m, exchi_m, ptot_exp, gamma_m, omega_m
@@ -231,18 +231,19 @@ prof_in_tg(:, 31) = dptot
 prof_in_tg(:, 32) = dte
 prof_in_tg(:, 33) = dne
 prof_in_tg(:, 34) = dq
-prof_in_tg(:, 35) = dvper
-prof_in_tg(:, 36) = dv_r
-prof_in_tg(:, 37) = dr
-prof_in_tg(:, 38) = drhodr
-prof_in_tg(:, 39) = dti(1, :)
-prof_in_tg(:, 40) = dti(2, :)
-prof_in_tg(:, 41) = dti(3, :)
-prof_in_tg(:, 42) = dti(4, :)
-prof_in_tg(:, 43) = dni(1, :)
-prof_in_tg(:, 44) = dni(2, :)
-prof_in_tg(:, 45) = dni(3, :)
-prof_in_tg(:, 46) = dni(4, :)
+
+prof_in_tg(:, 36) = dvper
+prof_in_tg(:, 37) = dv_r
+prof_in_tg(:, 38) = dr
+prof_in_tg(:, 39) = drhodr
+prof_in_tg(:, 40) = dti(1, :)
+prof_in_tg(:, 41) = dti(2, :)
+prof_in_tg(:, 42) = dti(3, :)
+prof_in_tg(:, 43) = dti(4, :)
+prof_in_tg(:, 44) = dni(1, :)
+prof_in_tg(:, 45) = dni(2, :)
+prof_in_tg(:, 46) = dni(3, :)
+prof_in_tg(:, 47) = dni(4, :)
 
 !--------------
 ! Send MPI jobs
