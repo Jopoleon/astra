@@ -37,8 +37,11 @@ clean:
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f
 	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -c $< -o $@
 
-$(OBJ_DIR)/tglf_parent.o: $(SRC_DIR)/tglf_parent.f90 $(TGLF_LIB)
-	$(MPIFC) $(FC_FLAGS) -I$(MOD_DIR) -I$(TGLF_INC) -c $< -o $@
+$(OBJ_DIR)/tglf_parent.o: $(SRC_DIR)/tglf_parent.f90
+	$(MPIFC) $(FC_FLAGS) -I$(MOD_DIR) -c $< -o $@
+
+$(OBJ_DIR)/qlk_parent.o: $(SRC_DIR)/qlk_parent.f90
+	$(MPIFC) $(FC_FLAGS) -I$(MOD_DIR) -c $< -o $@
 
 $(OBJ_DIR)/tglf_serial.o: $(SRC_DIR)/tglf_serial.f90 $(TGLF_LIB)
 	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -I$(TGLF_INC) -c $< -o $@

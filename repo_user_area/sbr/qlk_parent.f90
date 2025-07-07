@@ -1,4 +1,4 @@
-subroutine tglf_parent(CHI, CHE, VIN, DPH, DPL, DPR, XTB, GM1, OM1)
+subroutine qlk_parent(CHI, CHE, VIN, DPH, DPL, DPR, XTB, GM1, OM1)
 
 use mpi
 
@@ -46,9 +46,9 @@ double precision, dimension(nsm-2, nrho_tg) :: zimp_tg
 double precision, dimension(nsm-1, NRD) :: ni_exp, ion_pflux_m
 character(len=256) :: worker_exe
 
-worker_exe = "xpr/tglf.x"
+worker_exe = "xpr/qlk.x"
 
-! Interpolate from ASTRA grid to TGLF grid
+! Interpolate from ASTRA grid to QuaLiKiZ grid
 rho_min = RHO(1)
 rho_max = RHO(NA1)
 !rho_max = max(RHO(NA1I), RHO(NA1E), RHO(NA1N))
@@ -107,10 +107,10 @@ a0_m = AMETR(NA1)
 
 ! Species cmassses and charges
 mass_in(1) = 5.4447e-4/AMJ
-mass_in(2) = AMJ  ! AMJ is reference mass
-mass_in(3) = AIM1
-mass_in(4) = AIM2
-mass_in(5) = AIM3
+mass_in(2) = AMJ/AMJ  ! AMJ is reference mass
+mass_in(3) = AIM1/AMJ
+mass_in(4) = AIM2/AMJ
+mass_in(5) = AIM3/AMJ
 do jr=1, nrho_tg
     ni_tg(2, jr) = max(1.e-9, ni_tg(2, jr))
     ni_tg(3, jr) = max(1.e-9, ni_tg(3, jr))
@@ -191,10 +191,11 @@ dims(4) = n_outputs
 dims(5) = ns_in
 dims(6) = nky_in
 
-scal_in_tg(1) = BTOR
-scal_in_tg(2) = a0_m
-scal_in_tg(3:  7) = mass_in(1:5)
-scal_in_tg(8: 12) = zs_in(1:5)
+scal_in_tg(1) = AMJ
+scal_in_tg(2) = BTOR
+scal_in_tg(3) = a0_m
+scal_in_tg(4:  8) = mass_in(1:5)
+scal_in_tg(9: 13) = zs_in(1:5)
 
 prof_in_tg(:,  1) = rho_tg
 prof_in_tg(:,  2) = ametr_tg
@@ -319,4 +320,4 @@ do jrho=1, NA1
 enddo
 
 return
-end subroutine tglf_parent
+end subroutine qlk_parent

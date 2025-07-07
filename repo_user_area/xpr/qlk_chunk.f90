@@ -1,63 +1,88 @@
-program tglf_chunk
+program qlk_chunk
 
 use mpi
+USE mod_qualikiz, only: qualikiz
+USE kind, only: qlk_output_meth_0, qlk_output_meth_0_sep_0, &
+    qlk_primi_meth_0, qlk_sizes, qlk_in_regular, qlk_in_newt
+USE mod_make_io, only: zeroout_qlk_in_newt, zeroout_qlk_in_regular, &
+    allocate_qlk_in_regular, allocate_qlk_in_newt
+USE nanfilter
 
-use tglf_interface, only: nsm, tglf_zs_in, tglf_ns_in, tglf_mass_in, &
-    tglf_find_width_in, tglf_iflux_in, tglf_use_bper_in, tglf_use_mhd_rule_in, &
-    tglf_use_bisection_in, tglf_use_inboard_detrapped_in, tglf_new_eikonal_in, &
-    tglf_adiabatic_elec_in, tglf_ibranch_in, tglf_use_bpar_in, tglf_nmodes_in, &
-    tglf_nbasis_max_in, tglf_nbasis_min_in, tglf_nxgrid_in, tglf_nky_in, &
-    tglf_units_in, tglf_path_in, tglf_use_transport_model_in, &
-    tglf_use_ave_ion_grid_in, tglf_sign_Bt_in, tglf_ky_in, tglf_width_in, &
-    tglf_width_min_in, tglf_nwidth_in, tglf_geometry_flag_in, tglf_dump_flag_in, &
-    tglf_test_flag_in, tglf_nn_max_error_in, tglf_write_wavefunction_flag_in, &
-    tglf_theta_trapped_in, tglf_wdia_trapped_in, tglf_park_in, tglf_ghat_in, &
-    tglf_gchat_in, tglf_sign_It_in, tglf_wd_zero_in, tglf_linsker_factor_in, &
-    tglf_gradB_factor_in, tglf_filter_in, tglf_damp_psi_in, tglf_damp_sig_in, &
-    tglf_kx0_loc_in, tglf_alpha_e_in, tglf_alpha_p_in, tglf_alpha_quench_in, &
-    tglf_alpha_zf_in, tglf_xnu_factor_in, tglf_debye_factor_in, &
-    tglf_etg_factor_in, tglf_sat_rule_in, tglf_kygrid_model_in, &
-    tglf_xnu_model_in, tglf_vpar_model_in, tglf_vpar_shear_model_in, &
-    tglf_b_model_sa_in, tglf_ft_model_sa_in, tglf_as_in, tglf_taus_in, &
-    tglf_rlns_in, tglf_rlts_in, tglf_vpar_in, tglf_vpar_shear_in, &
-    tglf_alpha_mach_in, tglf_vexb_shear_in, tglf_vexb_in, tglf_betae_in, &
-    tglf_xnue_in, tglf_zeff_in, tglf_debye_in, tglf_rmin_loc_in, &
-    tglf_rmaj_loc_in, tglf_zmaj_loc_in, tglf_drmindx_loc_in, tglf_drmajdx_loc_in, &
-    tglf_dzmajdx_loc_in, tglf_kappa_loc_in, tglf_s_kappa_loc_in, &
-    tglf_delta_loc_in, tglf_s_delta_loc_in, tglf_zeta_loc_in, tglf_s_zeta_loc_in, &
-    tglf_q_loc_in, tglf_q_prime_loc_in, tglf_p_prime_loc_in, tglf_rmin_sa_in, &
-    tglf_rmaj_sa_in, tglf_q_sa_in, tglf_shat_sa_in, tglf_alpha_sa_in, &
-    tglf_xwell_sa_in, tglf_theta0_sa_in, file_dump_local, &
-    tglf_elec_eflux_out, tglf_ion_eflux_out, tglf_ion_mflux_out, &
-    tglf_elec_pflux_out, tglf_ion_pflux_out, tglf_elec_expwd_out
-use tglf_pkg, only: get_eigenvalue_spectrum_out, get_ky_spectrum_out, &
-     get_flux_spectrum_out
-  
 implicit none
+type(qlk_sizes)      :: sizes
+type(qlk_in_regular) :: in_regular
+type(qlk_in_newt)    :: in_newt
+
+type(qlk_output_meth_0)       :: output_meth_0
+type(qlk_output_meth_0_sep_0) :: output_meth_0_sep_0_SI , output_meth_0_sep_0_GB
+type(qlk_primi_meth_0)        :: primi_meth_0
+
+
+integer, parameter :: ntheta=64, numecoefs=13, numicoefs=7, dimx=1, dimn=16, numsols=3, phys_meth=0, nradial=5, nspec_max=7
 
 double precision, parameter :: &
-   k0   = 1.6022E-12, &       ! erg/ev
-   e0   = 4.8032E-10, &       ! elementary charge (statcoulombs)
-   e00  = 1.6020e-19, &       ! elementary charge (C)
-   c0   = 2.9979E+10, &       ! speed of light (cm/sec)
-   mp   = 1.6726E-24, &       ! proton mass (g)
-   mpp  = 1.6726E-27, &       ! proton mass (kg)
-   pi   = 3.141592653589793
-integer :: ierr, parent, rank, status(MPI_STATUS_SIZE)
-integer :: chunk, nprocs, nrho_tg, n_inputs, n_outputs, n_scalars, dims(6)
-integer :: i1, i2, sat_rule, jr, jgamma_max, jspec, kyloop
-double precision :: Bunit_gauss, Bunit_T, cs0, cs00, rhos0, omega0, rhostar2, lnlamda, taue, cexb
-double precision :: a0_cm, a0_m, T0, N0, m0, rmin_tg, drho_cs, drho_nt, nt_cs
-double precision :: AMJ, BTOR
-double precision :: ion_eflux, ion_mflux
-double precision, allocatable :: inputs(:,:), output(:,:), scalars(:)
-double precision, allocatable, dimension(:) :: mtori, chie, chii, exchi, elec_pflux, rho_tg, &
-    gamma_max, omega_max, kymax, te_tg, ne_tg, vpar_tg, vper_tg, vexb_tg, &
-    ametr_tg, elon_tg, tria_tg, rmaj_tg, ptot_tg, q_tg, zef_tg, pfn_tg, &
-    drmin, drmaj, drho, delong, dtrian, dr, dne, dte, dq, dptot, dvpar, dvper, dv_r, drhodr
-double precision, allocatable, dimension(:, :) :: dti, dni, ni_tg, ti_tg, zimp_tg, ion_pflux
-double precision, allocatable, dimension(:) :: gamma, omega, kyspectrum, efluxspectrum, &
-    ifluxspectrum, pfluxspectrum
+    k0  = 1.6022E-12, &       ! erg/ev
+    e0  = 4.8032E-10, &       ! elementary charge (statcoulombs)
+    e00 = 1.6020e-19, &       ! elementary charge (C)
+    c0  = 2.9979E+10, &       ! speed of light (cm/sec)
+    mp  = 1.6726E-24, &       ! proton mass (g)
+    mpp = 1.6726E-27, &       ! proton mass (kg)
+    pi  = 3.141592653589793 
+
+!-----------------------------------------
+
+integer :: simple_mpi_only_in, maxpts_in, maxruns_in, runcounter_in
+integer :: nions, coll_flag_in, rot_flag_in, verbose_in, el_type_in, &
+    integration_routine_in, separateflux_in
+integer, dimension(dimx, nspec_max-1) :: ion_type_in
+
+double precision :: relacc1_in, relacc2_in, absacc1_in, absacc2_in, R0_in, &
+    ETGmultin, collmultin, timeout_in, rhomin, rhomax, rhoscale, xstep
+double precision, dimension(dimn) :: kthetarhos_in
+double precision, dimension(dimx) :: x_in, rho_in, Ro_in, Rmin_in, Bo_in, &
+    qx_in, smag_in, alphax_in, Tex_in, Nex_in, Ate_in, Ane_in, anise_in, &
+    danisedr_in, Machtor_in, Autor_in, Machpar_in, Aupar_in, gammaE_in, &
+    epf_GB_out, eef_GB_out
+double precision, dimension(dimx, nspec_max-1) :: Tix_in, ninorm_in, &
+    Ati_in, Ani_in, anis_in, danisdr_in, Ai_in, Zi_in, ipf_GB_out, ief_GB_out
+double precision, dimension(dimx, dimn, numsols) :: gam_GB_out, ome_GB_out
+double precision, dimension(dimx, nspec_max - 1, numicoefs) :: cftrans_out
+
+! Old solution for non-reset runs
+double precision, DIMENSION(:, :, :), ALLOCATABLE :: oldrsol, oldisol, oldrfdsol, oldifdsol
+
+!-----------------------------------------
+LOGICAL :: exist1, exist2, exist3, exist4, exist5 !used for checking for existence of files
+
+!MPI variables:
+INTEGER :: mpi_ierr, nproc, myrank
+INTEGER :: myunit=700, i_mpic
+integer :: jr_min, jr_max, jrho, j0, j01, j02, n_radial
+integer :: i, j, k, jradial, jjgrid(nradial), jion
+
+double precision :: bmod, bpolz
+double precision :: drmin, drmaj, drho, dte, dne, dq, dptot, &
+    delong, dtrian, dvper, drhodr, dstep, dr, dv_r
+double precision :: Bunit, cs00, rhos00, omega0, rhostar2
+double precision :: T0, m0, drho_cs
+! Shifted cicle geometry inputs
+double precision :: gamma_e_tg, mach_fac, ql_fac
+
+double precision, dimension(nrho) :: vexb2, vpar_m, vper_m, &
+    gradrhosq_exp, rmaj_exp, q_exp, &
+    chie_m, chii_m, pfluxi_m, exchi_m, ptot
+
+double precision, dimension(nradial) :: chie, chii, exchi, pfluxi, rho_tg
+double precision, dimension(nspec_max-1) :: dti, dni
+double precision, dimension(nspec_max-1, nrho) :: ni_m, ti_m
+double precision :: vpar_in, vpar_shear_in, cexb
+
+COMPLEX(kind=DBL), DIMENSION(:, :, :), ALLOCATABLE :: oldsol_in, oldfdsol_in
+complex(kind=DBL), dimension(dimx, dimn, numsols) :: sol_out, fdsol_out
+
+CHARACTER(len=20) :: fmtn
+character(len=80) :: fname1, prim_dir
+
 
 call MPI_Init(ierr)
 call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
@@ -146,105 +171,19 @@ dni(2, :)   = inputs(:, 44)
 dni(3, :)   = inputs(:, 45)
 dni(4, :)   = inputs(:, 46)
 
-BTOR = scalars(1)
-a0_m = scalars(2)
-AMJ  = scalars(3)
-tglf_mass_in(1: 5) = scalars(3:  7)/AMJ
-tglf_zs_in(1: 5)   = scalars(8: 12)
+AMJ  = scalars(1)
+BTOR = scalars(2)
+a0_m = scalars(3)
 m0 = AMJ*mp          ! Ref. mass = D ion mass [g]
 a0_cm = 1.d2*a0_m    ! length scale used by GYRO, m -> cm
 
-sat_rule = 2
-SELECT CASE(sat_rule)
-CASE(0)
-    tglf_nmodes_in = 2
-    tglf_xnu_model_in = 2
-    tglf_wdia_trapped_in = 0.
-    tglf_alpha_zf_in  = 0.
-CASE(1)
-    tglf_nmodes_in = tglf_ns_in + 2
-    tglf_xnu_model_in = 2
-    tglf_wdia_trapped_in = 0.
-    tglf_alpha_zf_in  = 1.
-CASE(2)
-    tglf_nmodes_in = tglf_ns_in + 2
-    tglf_xnu_model_in = 3
-    tglf_wdia_trapped_in = 1.
-    tglf_alpha_zf_in  = 1.
-END SELECT
+! Electrons and main ions
+Zi_in(1, 1) = ZMJ
 
-!-------------------------
-! General TGLF settings
-
-tglf_find_width_in     = .True.
-tglf_iflux_in          = .True.
-tglf_use_bper_in       = .True.
-tglf_use_bpar_in       = .False.
-tglf_use_mhd_rule_in   = .False.
-tglf_use_bisection_in  = .True.
-tglf_use_inboard_detrapped_in = .False.
-tglf_new_eikonal_in    = .True.
-tglf_adiabatic_elec_in = .False.
-tglf_ibranch_in    = -1
-tglf_nbasis_max_in = 6 ! email Angioni Aug 1st 2023, 4 old default
-tglf_nbasis_min_in = 2
-tglf_nxgrid_in     = 24 ! (24 email Gary, for ELITE), 16 old default
-tglf_units_in   = 'CGYRO'
-tglf_path_in = '../tglf/'
-! Want fluxes from TGLF
-tglf_use_transport_model_in = .true.
-tglf_use_ave_ion_grid_in    = .true. ! Email Angioni Aug 1st 2023
-
-tglf_sign_Bt_in = 1
-tglf_sign_It_in = 1
-
-tglf_ky_in        = 0.3
-tglf_width_in     = 1.65
-tglf_width_min_in = 0.3
-tglf_nwidth_in    = 21
-
-tglf_geometry_flag_in = 1
-tglf_dump_flag_in     = .False.   ! Dumps input file
-tglf_test_flag_in     = 0
-tglf_nn_max_error_in  = 0
-tglf_write_wavefunction_flag_in = 0 ! Writes eigenfunction
-
-tglf_theta_trapped_in  = 0.7
-tglf_park_in           = 1.
-tglf_ghat_in           = 1.
-tglf_gchat_in          = 1.
-tglf_wd_zero_in        = 0.1
-tglf_linsker_factor_in = 0.
-tglf_gradB_factor_in   = 0.
-tglf_filter_in         = 2.
-tglf_damp_psi_in       = 0.
-tglf_damp_sig_in       = 0.
-tglf_kx0_loc_in        = 0.
-
-tglf_alpha_e_in          = 1.
-tglf_alpha_p_in          = 1.
-tglf_alpha_mach_in       = 0.
-tglf_alpha_quench_in     = 0.
-tglf_xnu_factor_in       = 1.
-tglf_debye_factor_in     = 1.
-tglf_etg_factor_in       = 1.25
-tglf_sat_rule_in         = sat_rule
-tglf_kygrid_model_in     = 4
-tglf_vpar_model_in       = 0
-tglf_vpar_shear_model_in = 1
-
-tglf_b_model_sa_in  = 1
-tglf_ft_model_sa_in = 1
-
-! local field averages
-! Initialise to zero for non-calculated species
-
-tglf_as_in   = 0.
-tglf_taus_in = 0.
-tglf_rlns_in = 0.
-tglf_rlts_in = 0.
-tglf_vpar_in = 0.
-tglf_vpar_shear_in = 0.
+Ai_in(1, 1) = AMJ
+Ai_in(1, 2) = AMJ*scalars(6)
+Ai_in(1, 3) = AMJ*scalars(7)
+Ai_in(1, 4) = AMJ*scalars(8)
 
 radial_loop: do jr=1, chunk
 
@@ -416,4 +355,4 @@ enddo
 call MPI_Send(output, chunk * n_outputs, MPI_DOUBLE_PRECISION, 0, 1, parent, ierr)
 call MPI_Finalize(ierr)
 
-end program tglf_chunk
+end program qlk_chunk
