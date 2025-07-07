@@ -15,7 +15,7 @@ use status_inc, only: NE, TE, NI, TI, &
 
 implicit none
 
-integer, parameter :: n_scalars=20, n_inputs=55, n_outputs=15, nrho_tg=80, nsm=7, nky_in=19
+integer, parameter :: n_scalars=20, n_inputs=55, n_outputs=15, nrho_qlk=80, nsm=7, nky_in=19
 double precision, parameter :: c_vpol=1.d0
 double precision, parameter :: &
    k0 = 1.6022E-12, &    ! erg/ev
@@ -28,21 +28,21 @@ integer :: jr, jrho, jr_r, jr_l, jgamma_max, jspec
 integer :: ns_in              ! Number of species, including electrons
 integer :: i, i1, i2, chunk, nprocs, nworkers, dims(6)
 
-double precision, dimension(n_scalars) :: scal_in_tg
-double precision, dimension(nrho_tg, n_inputs ) :: prof_in_tg
-double precision, dimension(nrho_tg, n_outputs) :: prof_out_tg
+double precision, dimension(n_scalars) :: scal_in_qlk
+double precision, dimension(nrho_qlk, n_inputs ) :: prof_in_qlk
+double precision, dimension(nrho_qlk, n_outputs) :: prof_out_qlk
 double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, T0, m0, a0_m, a0_cm, cs0
-double precision, dimension(nrho_tg) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
+double precision, dimension(nrho_qlk) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
     delong, dtrian, dvper, drhodr, dr, dv_r
 double precision, dimension(NRD) :: gradrhosq_exp, rmaj_exp, q_exp, &
     vexb_exp, vpar_exp, vper_exp, mtori_m, &
     chie_m, chii_m, elec_pflux_m, exchi_m, ptot_exp, gamma_m, omega_m
-double precision, dimension(nrho_tg) :: mtori, chie, chii, exchi, elec_pflux, rho_tg, &
-    gamma_max, omega_max, kymax, te_tg, ne_tg, vpar_tg, vper_tg, vexb_tg, &
-    ametr_tg, elon_tg, tria_tg, rmaj_tg, ptot_tg, q_tg, zef_tg, pfn_tg
+double precision, dimension(nrho_qlk) :: mtori, chie, chii, exchi, elec_pflux, rho_qlk, &
+    gamma_max, omega_max, kymax, te_qlk, ne_qlk, vpar_qlk, vper_qlk, vexb_qlk, &
+    ametr_qlk, elon_qlk, tria_qlk, rmaj_qlk, ptot_qlk, q_qlk, zef_qlk, pfn_qlk
 double precision, dimension(nsm) :: mass_in, zs_in
-double precision, dimension(nsm-1, nrho_tg) :: dti, dni, ni_tg, ti_tg, ion_pflux
-double precision, dimension(nsm-2, nrho_tg) :: zimp_tg 
+double precision, dimension(nsm-1, nrho_qlk) :: dti, dni, ni_qlk, ti_qlk, ion_pflux
+double precision, dimension(nsm-2, nrho_qlk) :: zimp_qlk 
 double precision, dimension(nsm-1, NRD) :: ni_exp, ion_pflux_m
 character(len=256) :: worker_exe
 
@@ -52,23 +52,23 @@ worker_exe = "xpr/qlk.x"
 rho_min = RHO(1)
 rho_max = RHO(NA1)
 !rho_max = max(RHO(NA1I), RHO(NA1E), RHO(NA1N))
-xstep = (rho_max - rho_min)/(nrho_tg - 1.)
-rho_tg = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_tg) /)
+xstep = (rho_max - rho_min)/(nrho_qlk - 1.)
+rho_qlk = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_qlk) /)
 
-call qinterp(RHO(1:NA1),     TI(1:NA1), NA1, rho_tg,   ti_tg(1, :), nrho_tg)
-call qinterp(RHO(1:NA1),     TE(1:NA1), NA1, rho_tg,         te_tg, nrho_tg)
-call qinterp(RHO(1:NA1),   ZIM1(1:NA1), NA1, rho_tg, zimp_tg(1, :), nrho_tg)
-call qinterp(RHO(1:NA1),   ZIM2(1:NA1), NA1, rho_tg, zimp_tg(2, :), nrho_tg)
-call qinterp(RHO(1:NA1),   ZIM3(1:NA1), NA1, rho_tg, zimp_tg(3, :), nrho_tg)
-call qinterp(RHO(1:NA1),     NE(1:NA1), NA1, rho_tg,         ne_tg, nrho_tg)
-call qinterp(RHO(1:NA1),    ZEF(1:NA1), NA1, rho_tg,        zef_tg, nrho_tg)
-call qinterp(RHO(1:NA1),  AMETR(1:NA1), NA1, rho_tg,      ametr_tg, nrho_tg)
-call qinterp(RHO(1:NA1),   ELON(1:NA1), NA1, rho_tg,       elon_tg, nrho_tg)
-call qinterp(RHO(1:NA1),   TRIA(1:NA1), NA1, rho_tg,       tria_tg, nrho_tg)
+call qinterp(RHO(1:NA1),     TI(1:NA1), NA1, rho_qlk,   ti_qlk(1, :), nrho_qlk)
+call qinterp(RHO(1:NA1),     TE(1:NA1), NA1, rho_qlk,         te_qlk, nrho_qlk)
+call qinterp(RHO(1:NA1),   ZIM1(1:NA1), NA1, rho_qlk, zimp_qlk(1, :), nrho_qlk)
+call qinterp(RHO(1:NA1),   ZIM2(1:NA1), NA1, rho_qlk, zimp_qlk(2, :), nrho_qlk)
+call qinterp(RHO(1:NA1),   ZIM3(1:NA1), NA1, rho_qlk, zimp_qlk(3, :), nrho_qlk)
+call qinterp(RHO(1:NA1),     NE(1:NA1), NA1, rho_qlk,         ne_qlk, nrho_qlk)
+call qinterp(RHO(1:NA1),    ZEF(1:NA1), NA1, rho_qlk,        zef_qlk, nrho_qlk)
+call qinterp(RHO(1:NA1),  AMETR(1:NA1), NA1, rho_qlk,      ametr_qlk, nrho_qlk)
+call qinterp(RHO(1:NA1),   ELON(1:NA1), NA1, rho_qlk,       elon_qlk, nrho_qlk)
+call qinterp(RHO(1:NA1),   TRIA(1:NA1), NA1, rho_qlk,       tria_qlk, nrho_qlk)
 
-ti_tg(2, :) = ti_tg(1, :)
-ti_tg(3, :) = ti_tg(1, :)
-ti_tg(4, :) = ti_tg(1, :)
+ti_qlk(2, :) = ti_qlk(1, :)
+ti_qlk(3, :) = ti_qlk(1, :)
+ti_qlk(4, :) = ti_qlk(1, :)
 
 do jrho=1, NA1
     if (NDEUT(jrho) >= 0.01*NE(jrho)) then
@@ -90,31 +90,31 @@ do jrho=1, NA1
     vexb_exp(jrho) = -ER(jrho)/bmod ! vexb in m/s (vperp = vexb since the diamagnetic velocity is the curvature drift ac
 enddo
 
-call qinterp(RHO(1:NA1), ni_exp(1, 1:NA1), NA1, rho_tg, ni_tg(1, :), nrho_tg)
-call qinterp(RHO(1:NA1), ni_exp(2, 1:NA1), NA1, rho_tg, ni_tg(2, :), nrho_tg)
-call qinterp(RHO(1:NA1), ni_exp(3, 1:NA1), NA1, rho_tg, ni_tg(3, :), nrho_tg)
-call qinterp(RHO(1:NA1), ni_exp(4, 1:NA1), NA1, rho_tg, ni_tg(4, :), nrho_tg)
-call qinterp(RHO(1:NA1),  rmaj_exp(1:NA1), NA1, rho_tg,  rmaj_tg, nrho_tg)
-call qinterp(RHO(1:NA1),     q_exp(1:NA1), NA1, rho_tg,     q_tg, nrho_tg)
-call qinterp(RHO(1:NA1),  ptot_exp(1:NA1), NA1, rho_tg,  ptot_tg, nrho_tg)
-call qinterp(RHO(1:NA1),  vpar_exp(1:NA1), NA1, rho_tg,  vpar_tg, nrho_tg)
-call qinterp(RHO(1:NA1),  vper_exp(1:NA1), NA1, rho_tg,  vper_tg, nrho_tg)
-call qinterp(RHO(1:NA1),  vexb_exp(1:NA1), NA1, rho_tg,  vexb_tg, nrho_tg)
-call qinterp(RHO(1:NA1),   FP_NORM(1:NA1), NA1, rho_tg,   pfn_tg, nrho_tg)
+call qinterp(RHO(1:NA1), ni_exp(1, 1:NA1), NA1, rho_qlk, ni_qlk(1, :), nrho_qlk)
+call qinterp(RHO(1:NA1), ni_exp(2, 1:NA1), NA1, rho_qlk, ni_qlk(2, :), nrho_qlk)
+call qinterp(RHO(1:NA1), ni_exp(3, 1:NA1), NA1, rho_qlk, ni_qlk(3, :), nrho_qlk)
+call qinterp(RHO(1:NA1), ni_exp(4, 1:NA1), NA1, rho_qlk, ni_qlk(4, :), nrho_qlk)
+call qinterp(RHO(1:NA1),  rmaj_exp(1:NA1), NA1, rho_qlk,  rmaj_qlk, nrho_qlk)
+call qinterp(RHO(1:NA1),     q_exp(1:NA1), NA1, rho_qlk,     q_qlk, nrho_qlk)
+call qinterp(RHO(1:NA1),  ptot_exp(1:NA1), NA1, rho_qlk,  ptot_qlk, nrho_qlk)
+call qinterp(RHO(1:NA1),  vpar_exp(1:NA1), NA1, rho_qlk,  vpar_qlk, nrho_qlk)
+call qinterp(RHO(1:NA1),  vper_exp(1:NA1), NA1, rho_qlk,  vper_qlk, nrho_qlk)
+call qinterp(RHO(1:NA1),  vexb_exp(1:NA1), NA1, rho_qlk,  vexb_qlk, nrho_qlk)
+call qinterp(RHO(1:NA1),   FP_NORM(1:NA1), NA1, rho_qlk,   pfn_qlk, nrho_qlk)
 
 ! Reference length
 a0_m = AMETR(NA1)
 
 ! Species cmassses and charges
-mass_in(1) = 5.4447e-4/AMJ
-mass_in(2) = AMJ/AMJ  ! AMJ is reference mass
-mass_in(3) = AIM1/AMJ
-mass_in(4) = AIM2/AMJ
-mass_in(5) = AIM3/AMJ
-do jr=1, nrho_tg
-    ni_tg(2, jr) = max(1.e-9, ni_tg(2, jr))
-    ni_tg(3, jr) = max(1.e-9, ni_tg(3, jr))
-    ni_tg(4, jr) = max(1.e-9, ni_tg(4, jr))
+mass_in(1) = 5.4447e-4
+mass_in(2) = AMJ  ! AMJ is reference mass
+mass_in(3) = AIM1
+mass_in(4) = AIM2
+mass_in(5) = AIM3
+do jr=1, nrho_qlk
+    ni_qlk(2, jr) = max(1.e-9, ni_qlk(2, jr))
+    ni_qlk(3, jr) = max(1.e-9, ni_qlk(3, jr))
+    ni_qlk(4, jr) = max(1.e-9, ni_qlk(4, jr))
 enddo
 
 elec_pflux_m = 0.
@@ -151,98 +151,97 @@ endif
 !--------------
 ! Differentials
 
-do jr=1, nrho_tg
+do jr=1, nrho_qlk
     jr_r = jr + 1
     jr_l = jr - 1
     if (jr == 1) then
         jr_l = jr
-    else if (jr == nrho_tg) then
+    else if (jr == nrho_qlk) then
         jr_r = jr
     endif
     dstep = 1./dble(jr_r - jr_l)  ! 0.5 in between, 1 at the edges
-    drmin(jr)  = dstep*(ametr_tg(jr_r) - ametr_tg(jr_l))
-    drmaj(jr)  = dstep*( rmaj_tg(jr_r) -  rmaj_tg(jr_l))
-    drho(jr)   = dstep*(  rho_tg(jr_r) -   rho_tg(jr_l))
-    delong(jr) = dstep*( elon_tg(jr_r) -  elon_tg(jr_l))
-    dtrian(jr) = dstep*( tria_tg(jr_r) -  tria_tg(jr_l))
-    dptot(jr)  = dstep*( ptot_tg(jr_r) -  ptot_tg(jr_l)) * 1E3*1E13
-    dte(jr)    = dstep*(te_tg(jr_r) - te_tg(jr_l))
-    dne(jr)    = dstep*(ne_tg(jr_r) - ne_tg(jr_l))
-    dq(jr)     = dstep*(q_tg(jr_r) - q_tg(jr_l))
-    dvper(jr)  = dstep*(vper_tg(jr_r) - vper_tg(jr_l))
+    drmin(jr)  = dstep*(ametr_qlk(jr_r) - ametr_qlk(jr_l))
+    drmaj(jr)  = dstep*( rmaj_qlk(jr_r) -  rmaj_qlk(jr_l))
+    drho(jr)   = dstep*(  rho_qlk(jr_r) -   rho_qlk(jr_l))
+    delong(jr) = dstep*( elon_qlk(jr_r) -  elon_qlk(jr_l))
+    dtrian(jr) = dstep*( tria_qlk(jr_r) -  tria_qlk(jr_l))
+    dptot(jr)  = dstep*( ptot_qlk(jr_r) -  ptot_qlk(jr_l))
+    dte(jr)    = dstep*(te_qlk(jr_r) - te_qlk(jr_l))
+    dne(jr)    = dstep*(ne_qlk(jr_r) - ne_qlk(jr_l))
+    dq(jr)     = dstep*(q_qlk(jr_r) - q_qlk(jr_l))
+    dvper(jr)  = dstep*(vper_qlk(jr_r) - vper_qlk(jr_l))
     do jspec=1, ns_in-1
-        dti(jspec, jr) = dstep*(ti_tg(jspec, jr_r) - ti_tg(jspec, jr_l))
-        dni(jspec, jr) = dstep*(ni_tg(jspec, jr_r) - ni_tg(jspec, jr_l))
+        dti(jspec, jr) = dstep*(ti_qlk(jspec, jr_r) - ti_qlk(jspec, jr_l))
+        dni(jspec, jr) = dstep*(ni_qlk(jspec, jr_r) - ni_qlk(jspec, jr_l))
     enddo
     dv_r(jr) = dstep* &
-        (vpar_tg(jr_r)/(rmaj_tg(jr_r) + ametr_tg(jr_r)) - &
-         vpar_tg(jr_l)/(rmaj_tg(jr_l) + ametr_tg(jr_l)))
+        (vpar_qlk(jr_r)/(rmaj_qlk(jr_r) + ametr_qlk(jr_r)) - &
+         vpar_qlk(jr_l)/(rmaj_qlk(jr_l) + ametr_qlk(jr_l)))
     dr(jr) = drmin(jr)/a0_m    ! gradients w.r.t. minor radius even for s-alpha geometry
     drhodr(jr) = drho(jr)/drmin(jr)
 enddo
 
 !--------------------
-! Populate prof_in_tg
+! Populate prof_in_qlk
 
-dims(1) = nrho_tg
+dims(1) = nrho_qlk
 dims(2) = n_scalars
 dims(3) = n_inputs
 dims(4) = n_outputs
 dims(5) = ns_in
 dims(6) = nky_in
 
-scal_in_tg(1) = AMJ
-scal_in_tg(2) = BTOR
-scal_in_tg(3) = a0_m
-scal_in_tg(4:  8) = mass_in(1:5)
-scal_in_tg(9: 13) = zs_in(1:5)
+scal_in_qlk(1) = BTOR
+scal_in_qlk(2) = a0_m
+scal_in_qlk(3:  7) = mass_in(1:5)
+scal_in_qlk(8: 12) = zs_in(1:5)
 
-prof_in_tg(:,  1) = rho_tg
-prof_in_tg(:,  2) = ametr_tg
-prof_in_tg(:,  3) = rmaj_tg
-prof_in_tg(:,  4) = elon_tg
-prof_in_tg(:,  5) = tria_tg
-prof_in_tg(:,  6) = q_tg
-prof_in_tg(:,  7) = pfn_tg
-prof_in_tg(:,  8) = ptot_tg
-prof_in_tg(:,  9) = ne_tg
-prof_in_tg(:, 10) = te_tg
-prof_in_tg(:, 11) = zef_tg
-prof_in_tg(:, 12) = vpar_tg
-prof_in_tg(:, 13) = vper_tg
-prof_in_tg(:, 14) = vexb_tg
-prof_in_tg(:, 15) = ti_tg(1, :)
-prof_in_tg(:, 16) = ti_tg(2, :)
-prof_in_tg(:, 17) = ti_tg(3, :)
-prof_in_tg(:, 18) = ti_tg(4, :)
-prof_in_tg(:, 19) = ni_tg(1, :)
-prof_in_tg(:, 20) = ni_tg(2, :)
-prof_in_tg(:, 21) = ni_tg(3, :)
-prof_in_tg(:, 22) = ni_tg(4, :)
-prof_in_tg(:, 23) = zimp_tg(1, :)
-prof_in_tg(:, 24) = zimp_tg(2, :)
-prof_in_tg(:, 25) = zimp_tg(3, :)
-prof_in_tg(:, 26) = drmin
-prof_in_tg(:, 27) = drmaj
-prof_in_tg(:, 28) = drho
-prof_in_tg(:, 29) = delong
-prof_in_tg(:, 30) = dtrian
-prof_in_tg(:, 31) = dptot
-prof_in_tg(:, 32) = dte
-prof_in_tg(:, 33) = dne
-prof_in_tg(:, 34) = dq
-prof_in_tg(:, 35) = dvper
-prof_in_tg(:, 36) = dv_r
-prof_in_tg(:, 37) = dr
-prof_in_tg(:, 38) = drhodr
-prof_in_tg(:, 39) = dti(1, :)
-prof_in_tg(:, 40) = dti(2, :)
-prof_in_tg(:, 41) = dti(3, :)
-prof_in_tg(:, 42) = dti(4, :)
-prof_in_tg(:, 43) = dni(1, :)
-prof_in_tg(:, 44) = dni(2, :)
-prof_in_tg(:, 45) = dni(3, :)
-prof_in_tg(:, 46) = dni(4, :)
+prof_in_qlk(:,  1) = rho_qlk
+prof_in_qlk(:,  2) = ametr_qlk
+prof_in_qlk(:,  3) = rmaj_qlk
+prof_in_qlk(:,  4) = elon_qlk
+prof_in_qlk(:,  5) = tria_qlk
+prof_in_qlk(:,  6) = q_qlk
+prof_in_qlk(:,  7) = pfn_qlk
+prof_in_qlk(:,  8) = ptot_qlk
+prof_in_qlk(:,  9) = ne_qlk
+prof_in_qlk(:, 10) = te_qlk
+prof_in_qlk(:, 11) = zef_qlk
+prof_in_qlk(:, 12) = vpar_qlk
+prof_in_qlk(:, 13) = vper_qlk
+prof_in_qlk(:, 14) = vexb_qlk
+prof_in_qlk(:, 15) = ti_qlk(1, :)
+prof_in_qlk(:, 16) = ti_qlk(2, :)
+prof_in_qlk(:, 17) = ti_qlk(3, :)
+prof_in_qlk(:, 18) = ti_qlk(4, :)
+prof_in_qlk(:, 19) = ni_qlk(1, :)
+prof_in_qlk(:, 20) = ni_qlk(2, :)
+prof_in_qlk(:, 21) = ni_qlk(3, :)
+prof_in_qlk(:, 22) = ni_qlk(4, :)
+prof_in_qlk(:, 23) = zimp_qlk(1, :)
+prof_in_qlk(:, 24) = zimp_qlk(2, :)
+prof_in_qlk(:, 25) = zimp_qlk(3, :)
+prof_in_qlk(:, 26) = drmin
+prof_in_qlk(:, 27) = drmaj
+prof_in_qlk(:, 28) = drho
+prof_in_qlk(:, 29) = delong
+prof_in_qlk(:, 30) = dtrian
+prof_in_qlk(:, 31) = dptot
+prof_in_qlk(:, 32) = dte
+prof_in_qlk(:, 33) = dne
+prof_in_qlk(:, 34) = dq
+prof_in_qlk(:, 35) = dvper
+prof_in_qlk(:, 36) = dv_r
+prof_in_qlk(:, 37) = dr
+prof_in_qlk(:, 38) = drhodr
+prof_in_qlk(:, 39) = dti(1, :)
+prof_in_qlk(:, 40) = dti(2, :)
+prof_in_qlk(:, 41) = dti(3, :)
+prof_in_qlk(:, 42) = dti(4, :)
+prof_in_qlk(:, 43) = dni(1, :)
+prof_in_qlk(:, 44) = dni(2, :)
+prof_in_qlk(:, 45) = dni(3, :)
+prof_in_qlk(:, 46) = dni(4, :)
 
 !--------------
 ! Send MPI jobs
@@ -250,43 +249,43 @@ prof_in_tg(:, 46) = dni(4, :)
 
 call MPI_Comm_size(MPI_COMM_WORLD, nprocs, ierr)
 
-nworkers = 40  ! A submultiple of nrho_tg!
-chunk = nrho_tg / nworkers
+nworkers = 40  ! A submultiple of nrho_qlk!
+chunk = nrho_qlk / nworkers
 
 call MPI_Comm_spawn(worker_exe, MPI_ARGV_NULL, nworkers, MPI_INFO_NULL, 0, MPI_COMM_SELF, intercomm, errcodes, ierr)
-print *, "MPI workers = ", nworkers, nrho_tg
+print *, "MPI workers = ", nworkers, nrho_qlk
 
 ! Send dimensions and data to workers
 do i=0, nworkers-1
     call MPI_Send(dims, 6, MPI_INTEGER, i, 0, intercomm, ierr)
 enddo
 do i=0, nworkers-1
-    call MPI_Send(scal_in_tg, n_scalars, MPI_DOUBLE_PRECISION, i, 0, intercomm, ierr)
+    call MPI_Send(scal_in_qlk, n_scalars, MPI_DOUBLE_PRECISION, i, 0, intercomm, ierr)
 enddo
 do i=0, nworkers-1
     i1 = i * chunk + 1
     i2 = (i + 1) * chunk
-    call MPI_Send(prof_in_tg(i1:i2, :), chunk * n_inputs, MPI_DOUBLE_PRECISION, i, 0, intercomm, ierr)
+    call MPI_Send(prof_in_qlk(i1:i2, :), chunk * n_inputs, MPI_DOUBLE_PRECISION, i, 0, intercomm, ierr)
 enddo
 
 ! Receive results from each worker
 do i=0, nworkers-1
     i1 = i * chunk + 1
     i2 = (i + 1) * chunk
-    call MPI_Recv(prof_out_tg(i1:i2, :), chunk * n_outputs, MPI_DOUBLE_PRECISION, i, 1, intercomm, status, ierr)
+    call MPI_Recv(prof_out_qlk(i1:i2, :), chunk * n_outputs, MPI_DOUBLE_PRECISION, i, 1, intercomm, status, ierr)
 enddo
 
 ! Interpolate back to ASTRA radial grid
 
-call qinterp(rho_tg, prof_out_tg(:, 1), nrho_tg, RHO(1:NA1), chii_m(1:NA1)      , NA1)
-call qinterp(rho_tg, prof_out_tg(:, 2), nrho_tg, RHO(1:NA1), chie_m(1:NA1)      , NA1)
-call qinterp(rho_tg, prof_out_tg(:, 3), nrho_tg, RHO(1:NA1), mtori_m(1:NA1)     , NA1)
-call qinterp(rho_tg, prof_out_tg(:, 4), nrho_tg, RHO(1:NA1), elec_pflux_m(1:NA1), NA1)
-call qinterp(rho_tg, prof_out_tg(:, 5), nrho_tg, RHO(1:NA1), exchi_m(1:NA1)     , NA1)
-call qinterp(rho_tg, prof_out_tg(:, 6), gamma_max , nrho_tg, RHO(1:NA1), gamma_m(1:NA1)     , NA1)
-call qinterp(rho_tg, prof_out_tg(:, 7), nrho_tg, RHO(1:NA1), omega_m(1:NA1)     , NA1)
+call qinterp(rho_qlk, prof_out_qlk(:, 1), nrho_qlk, RHO(1:NA1), chii_m(1:NA1)      , NA1)
+call qinterp(rho_qlk, prof_out_qlk(:, 2), nrho_qlk, RHO(1:NA1), chie_m(1:NA1)      , NA1)
+call qinterp(rho_qlk, prof_out_qlk(:, 3), nrho_qlk, RHO(1:NA1), mtori_m(1:NA1)     , NA1)
+call qinterp(rho_qlk, prof_out_qlk(:, 4), nrho_qlk, RHO(1:NA1), elec_pflux_m(1:NA1), NA1)
+call qinterp(rho_qlk, prof_out_qlk(:, 5), nrho_qlk, RHO(1:NA1), exchi_m(1:NA1)     , NA1)
+call qinterp(rho_qlk, prof_out_qlk(:, 6), gamma_max , nrho_qlk, RHO(1:NA1), gamma_m(1:NA1)     , NA1)
+call qinterp(rho_qlk, prof_out_qlk(:, 7), nrho_qlk, RHO(1:NA1), omega_m(1:NA1)     , NA1)
 do jspec=1, ns_in-1
-    call qinterp(rho_tg, prof_out_tg(7+jspec, 1:nrho_tg), nrho_tg, RHO(1:NA1), ion_pflux_m(jspec, 1:NA1), NA1)
+    call qinterp(rho_qlk, prof_out_qlk(7+jspec, 1:nrho_qlk), nrho_qlk, RHO(1:NA1), ion_pflux_m(jspec, 1:NA1), NA1)
 enddo
 
 chii_m (1:2) = chii_m (3)

@@ -9,6 +9,7 @@ USE mod_make_io, only: zeroout_qlk_in_newt, zeroout_qlk_in_regular, &
 USE nanfilter
 
 implicit none
+
 type(qlk_sizes)      :: sizes
 type(qlk_in_regular) :: in_regular
 type(qlk_in_newt)    :: in_newt
@@ -27,13 +28,15 @@ double precision, parameter :: &
     c0  = 2.9979E+10, &       ! speed of light (cm/sec)
     mp  = 1.6726E-24, &       ! proton mass (g)
     mpp = 1.6726E-27, &       ! proton mass (kg)
-    pi  = 3.141592653589793 
+    pi  = 3.141592653589793
 
 !-----------------------------------------
 
 integer :: simple_mpi_only_in, maxpts_in, maxruns_in, runcounter_in
 integer :: nions, coll_flag_in, rot_flag_in, verbose_in, el_type_in, &
-    integration_routine_in, separateflux_in
+     integration_routine_in, separateflux_in
+integer :: ierr, parent, rank, status(MPI_STATUS_SIZE)
+integer :: chunk, nprocs, nrho_qlk, n_inputs, n_outputs, n_scalars, dims(6)
 integer, dimension(dimx, nspec_max-1) :: ion_type_in
 
 double precision :: relacc1_in, relacc2_in, absacc1_in, absacc2_in, R0_in, &
@@ -61,21 +64,24 @@ integer :: jr_min, jr_max, jrho, j0, j01, j02, n_radial
 integer :: i, j, k, jradial, jjgrid(nradial), jion
 
 double precision :: bmod, bpolz
-double precision :: drmin, drmaj, drho, dte, dne, dq, dptot, &
+double precision, allocatable, dimension(:) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
     delong, dtrian, dvper, drhodr, dstep, dr, dv_r
 double precision :: Bunit, cs00, rhos00, omega0, rhostar2
 double precision :: T0, m0, drho_cs
 ! Shifted cicle geometry inputs
-double precision :: gamma_e_tg, mach_fac, ql_fac
+double precision :: gamma_e_qlk, mach_fac, ql_fac
 
 double precision, dimension(nrho) :: vexb2, vpar_m, vper_m, &
     gradrhosq_exp, rmaj_exp, q_exp, &
     chie_m, chii_m, pfluxi_m, exchi_m, ptot
 
-double precision, dimension(nradial) :: chie, chii, exchi, pfluxi, rho_tg
+double precision, allocatable, dimension(:) :: chie, chii, exchi, pfluxi, rho_qlk, &
+    te_qlk, ne_qlk, vpar_qlk, vper_qlk, vexb_qlk, &
+    ametr_qlk, elon_qlk, tria_qlk, rmaj_qlk, ptot_qlk, q_qlk, zef_qlk, pfn_qlk
 double precision, dimension(nspec_max-1) :: dti, dni
 double precision, dimension(nspec_max-1, nrho) :: ni_m, ti_m
 double precision :: vpar_in, vpar_shear_in, cexb
+double precision, allocatable :: inputs(:, :), output(:, :), scalars(:)
 
 COMPLEX(kind=DBL), DIMENSION(:, :, :), ALLOCATABLE :: oldsol_in, oldfdsol_in
 complex(kind=DBL), dimension(dimx, dimn, numsols) :: sol_out, fdsol_out
@@ -98,57 +104,55 @@ endif
 
 ! Receive dimensions from parent
 call MPI_Recv(dims, 6, MPI_INTEGER, 0, 0, parent, status, ierr)
-nrho_tg   = dims(1)
+nrho_qlk   = dims(1)
 n_scalars = dims(2)
 n_inputs  = dims(3)
 n_outputs = dims(4)
-tglf_ns_in  = dims(5)
-tglf_nky_in = dims(6)
+nions  = dims(5) - 1
 
-chunk = nrho_tg / nprocs  ! Safe here: we now know nrho_tg
+chunk = nrho_qlk / nprocs  ! Safe here: we now know nrho_qlk
 allocate(scalars(n_scalars))
 allocate(inputs(chunk, n_inputs))
 allocate(output(chunk, n_outputs))
-allocate( mtori(chunk), chie(chunk), chii(chunk), exchi(chunk), elec_pflux(chunk), &
-    rho_tg(chunk), gamma_max(chunk), omega_max(chunk), kymax(chunk), &
-    te_tg(chunk), ne_tg(chunk), vpar_tg(chunk), vper_tg(chunk), vexb_tg(chunk), &
-    ametr_tg(chunk), elon_tg(chunk), tria_tg(chunk), rmaj_tg(chunk), &
-    ptot_tg(chunk), q_tg(chunk), zef_tg(chunk), pfn_tg(chunk) )
+allocate( chie(chunk), chii(chunk), exchi(chunk), pfluxi(chunk), rho_qlk(chunk), &
+    te_qlk(chunk), ne_qlk(chunk), vpar_qlk(chunk), vper_qlk(chunk), vexb_qlk(chunk), &
+    ametr_qlk(chunk), elon_qlk(chunk), tria_qlk(chunk), rmaj_qlk(chunk), &
+    ptot_qlk(chunk), q_qlk(chunk), zef_qlk(chunk), pfn_qlk(chunk) )
 allocate( drmin(chunk), drmaj(chunk), drho(chunk), delong(chunk), dtrian(chunk), &
-    dr(chunk), dne(chunk), dte(chunk), dq(chunk), dptot(chunk), dvpar(chunk), &
+    dr(chunk), dne(chunk), dte(chunk), dq(chunk), dptot(chunk), &
     dvper(chunk), dv_r(chunk), drhodr(chunk) )
-allocate( dti(4, chunk), dni(4, chunk), ni_tg(4, chunk), ti_tg(4, chunk), &
-    zimp_tg(3, chunk), ion_pflux(4, chunk) )
+allocate( dti(4, chunk), dni(4, chunk), ni_qlk(4, chunk), ti_qlk(4, chunk), &
+    zimp_qlk(3, chunk), ion_pflux(4, chunk) )
 allocate( gamma(tglf_nky_in), omega(tglf_nky_in), kyspectrum(tglf_nky_in), efluxspectrum(tglf_nky_in), &
     ifluxspectrum(tglf_nky_in), pfluxspectrum(tglf_nky_in) )
 ! Receive TGLF input scalars and profiles from parent
 call MPI_Recv(scalars     , n_scalars, MPI_DOUBLE_PRECISION, 0, 0, parent, status, ierr)
 call MPI_Recv(inputs, chunk * n_inputs, MPI_DOUBLE_PRECISION, 0, 0, parent, status, ierr)
-rho_tg      = inputs(:,  1)
-ametr_tg    = inputs(:,  2)
-rmaj_tg     = inputs(:,  3)
-elon_tg     = inputs(:,  4)
-tria_tg     = inputs(:,  5)
-q_tg        = inputs(:,  6)
-pfn_tg      = inputs(:,  7)
-ptot_tg     = inputs(:,  8)
-ne_tg       = inputs(:,  9)
-te_tg       = inputs(:, 10)
-zef_tg      = inputs(:, 11)
-vpar_tg     = inputs(:, 12)
-vper_tg     = inputs(:, 13)
-vexb_tg     = inputs(:, 14)
-ti_tg(1, :) = inputs(:, 15)
-ti_tg(2, :) = inputs(:, 16)
-ti_tg(3, :) = inputs(:, 17)
-ti_tg(4, :) = inputs(:, 18)
-ni_tg(1, :) = inputs(:, 19)
-ni_tg(2, :) = inputs(:, 20)
-ni_tg(3, :) = inputs(:, 21)
-ni_tg(4, :) = inputs(:, 22)
-zimp_tg(1, :) = inputs(:, 23)
-zimp_tg(2, :) = inputs(:, 24)
-zimp_tg(3, :) = inputs(:, 25)
+rho_qlk      = inputs(:,  1)
+ametr_qlk    = inputs(:,  2)
+rmaj_qlk     = inputs(:,  3)
+elon_qlk     = inputs(:,  4)
+tria_qlk     = inputs(:,  5)
+q_qlk        = inputs(:,  6)
+pfn_qlk      = inputs(:,  7)
+ptot_qlk     = inputs(:,  8)
+ne_qlk       = inputs(:,  9)
+te_qlk       = inputs(:, 10)
+zef_qlk      = inputs(:, 11)
+vpar_qlk     = inputs(:, 12)
+vper_qlk     = inputs(:, 13)
+vexb_qlk     = inputs(:, 14)
+ti_qlk(1, :) = inputs(:, 15)
+ti_qlk(2, :) = inputs(:, 16)
+ti_qlk(3, :) = inputs(:, 17)
+ti_qlk(4, :) = inputs(:, 18)
+ni_qlk(1, :) = inputs(:, 19)
+ni_qlk(2, :) = inputs(:, 20)
+ni_qlk(3, :) = inputs(:, 21)
+ni_qlk(4, :) = inputs(:, 22)
+zimp_qlk(1, :) = inputs(:, 23)
+zimp_qlk(2, :) = inputs(:, 24)
+zimp_qlk(3, :) = inputs(:, 25)
 drmin       = inputs(:, 26)
 drmaj       = inputs(:, 27)
 drho        = inputs(:, 28)
@@ -171,186 +175,352 @@ dni(2, :)   = inputs(:, 44)
 dni(3, :)   = inputs(:, 45)
 dni(4, :)   = inputs(:, 46)
 
-AMJ  = scalars(1)
-BTOR = scalars(2)
-a0_m = scalars(3)
+BTOR = scalars(1)
+a0_m = scalars(2)
+AMJ  = scalars(4)
 m0 = AMJ*mp          ! Ref. mass = D ion mass [g]
 a0_cm = 1.d2*a0_m    ! length scale used by GYRO, m -> cm
 
 ! Electrons and main ions
-Zi_in(1, 1) = ZMJ
+Ai_in(1, 1: 4) = scalars(4:  7)
+Zi_in(1, 1: 4) = scalars(9: 12)
 
-Ai_in(1, 1) = AMJ
-Ai_in(1, 2) = AMJ*scalars(6)
-Ai_in(1, 3) = AMJ*scalars(7)
-Ai_in(1, 4) = AMJ*scalars(8)
+if (Zi_in(1, 4) >= 1.) nions = 4
+if (Zi_in(1, 4)  < 1.) nions = 3
+if (Zi_in(1, 3)  < 1.) nions = 2
+if (Zi_in(1, 4) >= 1. .and. nions == 2) then 
+    nions = 3
+endif
+if (Zi_in(1, 2) < 1.) nions = 1
+if (Zi_in(1, 3) >= 1. .and. nions == 1) then 
+    nions = 2
+endif
+
+vpar_in = 0.
+vpar_shear_in = 0.
+
+kthetarhos_in(1:8) = (/0.1, 0.175, 0.25, 0.325, 0.4, 0.5, 0.7, 1.0/)
+if (dimn == 16) then
+    kthetarhos_in(9:16) = (/1.8,   3.0,  9.0,  15.0, 21.0, 27.0, 36.0, 45.0/)
+endif
+
+coll_flag_in = 1
+el_type_in   = 1
+separateflux_in    = 0
+simple_mpi_only_in = 1
+maxpts_in   = 50000000 ! 500000 default
+maxruns_in  = 10
+
+R0_in = RTOR + SHIF(nrho)
+Bo_in(1) = BTOR
+Rmin_in(1) = AMETR(nrho)
+rhoscale = rho(nrho)
 
 radial_loop: do jr=1, chunk
 
 !thermal impurities
 
-    tglf_zs_in(3) = max(1., zimp_tg(1, jr))
-    tglf_zs_in(4) = zimp_tg(2, jr)
-    tglf_zs_in(5) = zimp_tg(3, jr)
+    Zi_in(1, 2) = max(1., zimp_qlk(1, jr))
+    Zi_in(1, 3) = zimp_qlk(2, jr)
+    Zi_in(1, 4) = zimp_qlk(3, jr)
 
-    if (tglf_zs_in(5) >= 1. .and. tglf_ns_in == 3) then
-        tglf_zs_in(4) = tglf_zs_in(5)
-        tglf_mass_in(4) = tglf_mass_in(5)
-        ni_tg(3, :) = ni_tg(4, :)
-        ti_tg(3, :) = ti_tg(4, :)
+    if (Zi_in(1, 4) >= 1. .and. nions == 2) then
+        Zi_in(1, 3) = Zi_in(1, 4)
+        Ai_in(1, 3) = Ai_in(1, 4)
+        ni_qlk(3, :) = ni_qlk(4, :)
+        ti_qlk(3, :) = ti_qlk(4, :)
     endif
-    if (tglf_zs_in(4) >= 1. .and. tglf_ns_in == 2) then
-        tglf_zs_in(3) = tglf_zs_in(4)
-        tglf_mass_in(3) = tglf_mass_in(4)
-        ni_tg(2, :) = ni_tg(3, :)
-        ti_tg(2, :) = ti_tg(3, :)
+    if (Zi_in(4) >= 1. .and. nions == 1) then
+        Zi_in(3) = Zi_in(4)
+        Ai_in(3) = Ai_in(4)
+        ni_qlk(2, :) = ni_qlk(3, :)
+        ti_qlk(2, :) = ti_qlk(3, :)
     endif
 
-!    tglf_ns_in = 3
+    Ai_in(1, nions + 1:) = 0.
+    Zi_in(1, nions + 1:) = 0.
+    Ati_in(1, nions + 1:) = 0.
+    Ani_in(1, nions + 1:) = 0.
 
-    tglf_mass_in(tglf_ns_in + 1:) = 0.
-    tglf_zs_in  (tglf_ns_in + 1:) = 0.
-
-    tglf_as_in(1)   = 1. ! ne is ref
-    tglf_taus_in(1) = 1. ! Te is ref
-
-! Log derivatives
-    tglf_rlns_in(1) = -dne(jr)/(dr(jr)*ne_tg(jr))
-    tglf_rlts_in(1) = -dte(jr)/(dr(jr)*te_tg(jr))
-
-    do jspec=2, tglf_ns_in
-        tglf_as_in(jspec)   = ni_tg(jspec-1, jr)/ne_tg(jr)
-        tglf_taus_in(jspec) = ti_tg(jspec-1, jr)/te_tg(jr)
-        tglf_rlns_in(jspec) = -dni(jspec-1, jr)/(dr(jr)*ni_tg(jspec-1, jr))
-        tglf_rlts_in(jspec) = -dti(jspec-1, jr)/(dr(jr)*ti_tg(jspec-1, jr))
+! local field averages
+    Nex_in(1) = ne_qlk(jr)
+    Tex_in(1) = te_qlk(jr)
+    Ate_in(1) = -dte(jr)*R0_in/(drmin(jr)*Tex_in(1))
+    Ane_in(1) = -dne(jr)*R0_in/(drmin(jr)*Nex_in(1))
+    anise_in(1) = 1.0
+    danisedr_in(1) = 0.0
+    do jion=1, nions  ! deut, impurities
+        ninorm_in(1, jion) = ni_qlk(jion, jr)/Nex_in(1)
+        Tix_in(1, jion) = ti_qlk(jion, jr)
+        Ati_in(1, jion) = -dti(jion, jr)*R0_in/(drmin(jr)*ti_qlk(jion, jr))
+        Ani_in(1, jion) = -dni(jion, jr)*R0_in/(drmin(jr)*ni_qlk(jion, jr))
+        ion_type_in(1, jion) = 1
+        anis_in    (1, jion) = 1.
+        danisdr_in (1, jion) = 0.
     enddo
+
 ! Restore quasi-neutrality via main ions
-
-    tglf_as_in(2)   = -1./tglf_zs_in(2)*(SUM(tglf_as_in*tglf_zs_in) - tglf_as_in(2)*tglf_zs_in(2))
-    tglf_rlns_in(2) = -1./(tglf_as_in(2)*tglf_zs_in(2))*(SUM(tglf_rlns_in*tglf_as_in*tglf_zs_in) - tglf_rlns_in(2)*tglf_as_in(2)*tglf_zs_in(2))
-
-! GYRO conventions
-
-    N0  = 1E13*ne_tg(jr)   ! density scale used by GYRO [1/cm**3]
-    T0  = 1E3 *te_tg(jr)   ! temperature scale used by GYRO
-    Bunit_T = BTOR*drhodr(jr)*rho_tg(jr)/ametr_tg(jr)  ! Miller geometry magnetic field unit [gauss]
-    Bunit_gauss = 1.d4*Bunit_T 
+    ninorm_in(1, 1) = (1 - SUM(ninorm_in(1, 2:nions)*Zi_in(1, 2:nions)))/Zi_in(1, 1)
+    Ani_in(1, 1) = (Ane_in(1) - SUM(ninorm_in(1, 2: nions)*Ani_in(1, 2: nions)* &
+               Zi_in(1, 2: nions)))/(ninorm_in(1, 1)*Zi_in(1, 1))
 
 ! derived units for the plasma
 
-    cs0 = SQRT(k0*T0/m0)          ! thermal velocity unit cm/sec
-    cs00 = SQRT(e00*T0/(AMJ*mpp)) ! thermal velocity unit m/sec
-    omega0 = e0*Bunit_gauss/(m0*c0)     ! gyrofrequency unit 1/sec
-    rhos0 = cs0/omega0            ! gyroradius unit cm
-    lnlamda = 24.0 -0.5*LOG(tglf_as_in(1)*N0) + LOG(tglf_taus_in(1)*T0)
-    taue = 3.44E5 * (tglf_taus_in(1)*T0)**1.5 / (tglf_as_in(1)*N0*lnlamda)  !  sec
+    Bunit = 1E4*BTOR*drhodr(jr)*rho_in(1)/AMETR(j0)  ! Miller geometry magnetic field unit
+    cs00 = SQRT(e00*T0/(AMJ*mpp))  ! thermal velocity unit m/sec
+    omega0 = e0*Bunit/(m0*c0)      ! gyrofrequency unit 1/sec
+    rhos00 = cs00/omega0           ! gyroradius unit m
 
-    rmin_tg = ametr_tg(jr)/a0_m
-    cexb = ametr_tg(jr)/q_tg(jr)
-
-    tglf_vpar_shear_in(2) = -1E2*rmaj_tg(jr)*dv_r(jr)/(dr(jr)*cs0)  !From m/s to cm/s for vpar
-    tglf_vpar_shear_in(1) = tglf_vpar_shear_in(2)
-
-    tglf_vpar_in(2) = 1E2*vpar_tg(jr)/cs0
-    tglf_vpar_in(1) = tglf_vpar_in(2)
-
-    if (tglf_ns_in >= 3) then
-        tglf_vpar_shear_in(3: tglf_ns_in) = tglf_vpar_shear_in(2)
-        tglf_vpar_in      (3: tglf_ns_in) = tglf_vpar_in(2)
-    endif
+    vpar_shear_in = -rmaj_exp(j0)*dv_r(jr)/(dr(jr)*cs00)  !From m/s to cm/s for vpar
+    vpar_in = vpar_m(j0)/cs00
 
 ! local magnetic geometry
 
-    rhostar2 = (rhos0/a0_cm)**2
-    drho_cs = drhodr(jr)**2*a0_m*rhostar2*cs00
-    drho_nt = drhodr(jr)*a0_m*rhostar2*N0*e00*T0/(1.e13*mpp)
-    nt_cs = 0.001602*N0/1.e13*T0/1.e3*cs00/a0_m*rhostar2
+    rhostar2 = (rhos00/Rmin_in(1))**2
+    drho_cs = drhodr**2 * Rmin_in(1) * rhostar2 * cs00
 
-! Share variables with tglf_run via module tglf_interface
+! 1.e16 comes from cgs to SI for ptot
+    alphax_in(1) = -(0.0040267/BTOR**2) * qx_in(1)**2 * R0_in * dptot/(dr*Rmin_in(1))
+    cexb = AMETR(j0)/qx_in(1)            ! r/(q)
+    gamma_e_qlk = cexb*dvper/(dr*cs00) ! Waltz-Miller definition
+    mach_fac = sqrt(Tex_in(1)/AMJ)
 
-    tglf_vexb_shear_in = -1E2*cexb*dvper(jr)/(dr(jr)*cs0) ! Waltz-Miller definition     !From m/s to cm/s for vexb  -dVexb/dr
+    Machtor_in(1) = vpar_in*mach_fac
+    Machpar_in(1) = vpar_in*mach_fac
+    Autor_in(1)  = vpar_shear_in*R0_in/Rmin_in(1)*mach_fac
+    Aupar_in(1)  = vpar_shear_in*R0_in/Rmin_in(1)*mach_fac
+    gammaE_in(1) = gamma_e_qlk  *R0_in/Rmin_in(1)*mach_fac
 
-! Initialise
+    absacc2_in = 0.
+    absacc1_in = 0.
+    relacc1_in = 1.e-3
+    relacc2_in = 0.02
+    timeout_in = 20.
+    ETGmultin  = 1.
+    collmultin = 1.  ! git / Originally: 1. ; 0.1 suggested by Jon
+    rot_flag_in = 0  ! git / Originally: 2; 0 suggested by Pierre
+    integration_routine_in = 1 ! 0 for NAG routines, 1 for Cubature
 
-    tglf_vexb_in  = 1E2*vexb_tg(jr)/cs0
-    tglf_betae_in = 8.0*pi*k0*N0*T0/Bunit_gauss**2
-    tglf_xnue_in  = 0.75*SQRT(pi)*a0_cm/(taue*cs0)
-    tglf_zeff_in  = zef_tg(jr)
-    tglf_debye_in = SQRT(k0*T0/(4.0*pi*N0*e0**2))/rhos0
-
-    tglf_rmin_loc_in    = rmin_tg
-    tglf_rmaj_loc_in    = rmaj_tg(jr)/a0_m
-    tglf_zmaj_loc_in    = 0.
-    tglf_drmindx_loc_in = 1.
-    tglf_drmajdx_loc_in = drmaj(jr)/(dr(jr)*a0_m)
-    tglf_dzmajdx_loc_in = 0.
-    tglf_kappa_loc_in   = elon_tg(jr)
-    tglf_s_kappa_loc_in = ametr_tg(jr)*delong(jr)/(drmin(jr)*elon_tg(jr))
-    tglf_delta_loc_in   = tria_tg(jr)
-    tglf_s_delta_loc_in = ametr_tg(jr)*dtrian(jr)/drmin(jr)
-    tglf_zeta_loc_in    = 0.
-    tglf_s_zeta_loc_in  = 0.
-    tglf_q_loc_in       = q_tg(jr)
-    tglf_q_prime_loc_in = (q_tg(jr)/rmin_tg)*dq(jr)/dr(jr)
-    tglf_p_prime_loc_in = (k0/Bunit_gauss**2)*(q_tg(jr)/rmin_tg)*dptot(jr)/dr(jr)
-
-    tglf_rmin_sa_in     = rmin_tg
-    tglf_rmaj_sa_in     = rmaj_tg(jr)/a0_m
-    tglf_q_sa_in        = q_tg(jr)
-    tglf_shat_sa_in     = (ametr_tg(jr)/q_tg(jr))*dq(jr)/drmin(jr)
-    tglf_alpha_sa_in    = -(8.0*pi*k0/Bunit_gauss**2)*q_tg(jr)**2 * rmaj_tg(jr)*dptot(jr)/drmin(jr)
-    tglf_xwell_sa_in    = 0.
-    tglf_theta0_sa_in   = 0.
-
-! Settings
-    if (tglf_dump_flag_in) then
-        write(file_dump_local, '(A11, I0)') 'input.tglf_', jr
+    if (verbose_in > 0) then
+        write(6, *) 'aNe', Ane_in
+        write(6, *) 'aNi', Ani_in(1, 1:nions)
+        write(6, *) 'ate', Ate_in
+        write(6, *) 'ati', Ati_in(1, 1:nions)
+        write(6, *) 'Ai', Ai_in(1, 1:nions)
+        write(6, *) 'Ni/Ne', ninorm_in(1, 1:nions)
+        write(6, *) 'check: ', Ati_in(1, 1), gammaE_in, Autor_in, Machtor_in, alphax_in(1), x_in(1)
     endif
-! -----------------------
-    call tglf_run
-! -----------------------
+ 
+    write(1331, *) 'inputs,total'
+    write(1331, *) dimx, rho_in/rhoscale, dimn, nions, numsols, phys_meth, coll_flag_in, &
+         rot_flag_in, verbose_in, 0,  kthetarhos_in, & !general param
+         'x', x_in, Ro_in, Rmin_in, R0_in, Bo_in, qx_in, smag_in, alphax_in, & !geometry
+         el_type_in, Tex_in, Nex_in, Ate_in, Ane_in, anise_in, danisedr_in, & !electrons
+         ion_type_in(1, 1:nions), Ai_in(1, 1:nions), Zi_in(1, 1:nions), Tix_in(1, 1:nions), ninorm_in(1, 1:nions), Ati_in(1, 1:nions), Ani_in(1, 1:nions), anis_in(1, 1:nions), danisdr_in(1, 1:nions), & !ions
+         Machtor_in, Autor_in, Machpar_in, Aupar_in, gammaE_in
 
-! Transport coefficients
+    INQUIRE(file="../qualikiz/"//trim(fname1)//"/runcounter.dat", EXIST=exist1)
+    INQUIRE(file=trim(prim_dir)//'/rsol.dat', EXIST=exist2)
+    INQUIRE(file=trim(prim_dir)//'/isol.dat', EXIST=exist3)
+    INQUIRE(file=trim(prim_dir)//'/rfdsol.dat', EXIST=exist4)
+    INQUIRE(file=trim(prim_dir)//'/ifdsol.dat', EXIST=exist5)
 
-    ion_eflux = SUM(tglf_ion_eflux_out(1: tglf_ns_in-1))
-    ion_eflux = ion_eflux/(tglf_taus_in(2) * 1e13*ni_tg(1, jr)/N0)
-    ion_mflux = SUM(tglf_ion_mflux_out(1: tglf_ns_in-1))
-    chii (jr) = ion_eflux          /(1e-4 + abs(tglf_rlts_in(2))) *drho_cs
-    chie (jr) = tglf_elec_eflux_out/(1e-4 + abs(tglf_rlts_in(1))) *drho_cs
-    mtori(jr) = ion_mflux*drho_nt
-    elec_pflux(jr) = tglf_elec_pflux_out/drhodr(jr) *drho_cs         ! particle flux
-    do jspec=1, tglf_ns_in-1
-        ion_pflux(jspec, jr) = tglf_ion_pflux_out(jspec)/drhodr(jr) *drho_cs  !ion particle flux
-    enddo
-    exchi(jr) = tglf_elec_expwd_out * nt_cs                ! Equipartition
-    do kyloop=1, tglf_nky_in
-        gamma(kyloop) = get_eigenvalue_spectrum_out(1, kyloop, 1)
-        omega(kyloop) = get_eigenvalue_spectrum_out(2, kyloop, 1)
-        kyspectrum(kyloop) = get_ky_spectrum_out(kyloop)
-        efluxspectrum(kyloop) = get_flux_spectrum_out(2, 1, 1, kyloop, 1)
-        ifluxspectrum(kyloop) = get_flux_spectrum_out(2, 2, 1, kyloop, 1)
-        pfluxspectrum(kyloop) = get_flux_spectrum_out(1, 1, 1, kyloop, 1)
-    enddo
+    IF ( exist1 .AND. exist2 .AND. exist3 .AND. exist4 .AND. exist5 ) THEN
+        OPEN(unit=700, file="../qualikiz/"//trim(fname1)//"/runcounter.dat", status="old", action="read")
+        READ(700,*) runcounter_in
+        CLOSE(700)
+    ELSE
+        prim_dir = '../qualikiz/'//trim(fname1)//'/output/primitive'
+        call system('mkdir -p ' // trim(prim_dir))
+        runcounter_in = 0 !First run
+    ENDIF
 
-    jgamma_max = maxloc(efluxspectrum(1:tglf_nky_in), 1)
-    gamma_max(jr) = gamma(jgamma_max)
-    omega_max(jr) = omega(jgamma_max)
-    kymax(jr) = kyspectrum(jgamma_max)
+    IF (runcounter_in >= maxruns_in) THEN !Reset if we're at our maximum number of runs
+        runcounter_in = 0
+    ENDIF
+!    runcounter_in = 0 ! GIT force calculation from scratch
+
+    IF (runcounter_in == 0) THEN !load old rsol and isol if we're not doing a reset run
+        write(6, *) 'Qualikiz from scratch'
+    ELSE
+        ALLOCATE( oldrsol  (dimx, dimn, numsols) )
+        ALLOCATE( oldisol  (dimx, dimn, numsols) )
+        ALLOCATE( oldrfdsol(dimx, dimn, numsols) )
+        ALLOCATE( oldifdsol(dimx, dimn, numsols) )
+        if (.not. ALLOCATED(oldsol_in)) then
+            ALLOCATE( oldsol_in   (dimx, dimn, numsols) )
+            ALLOCATE( oldfdsol_in (dimx, dimn, numsols) )
+        endif
+        OPEN(unit=myunit, file=trim(prim_dir)//'/rsol.dat', action="read", status="old")
+        READ(myunit,fmtn) (((oldrsol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
+        CLOSE(myunit)
+
+        OPEN(unit=myunit, file=trim(prim_dir)//'/isol.dat', action="read", status="old")
+        READ(myunit,fmtn) (((oldisol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
+        CLOSE(myunit)
+
+        OPEN(unit=myunit, file=trim(prim_dir)//'/rfdsol.dat', action="read", status="old")
+        READ(myunit,fmtn) (((oldrfdsol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
+        CLOSE(myunit)
+
+        OPEN(unit=myunit, file=trim(prim_dir)//'/ifdsol.dat', action="read", status="old")
+        READ(myunit,fmtn) (((oldifdsol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
+        CLOSE(myunit)
+
+        oldsol_in   = CMPLX(oldrsol  , oldisol)
+        oldfdsol_in = CMPLX(oldrfdsol, oldifdsol)
+
+        DEALLOCATE( oldrsol )
+        DEALLOCATE( oldisol )
+        DEALLOCATE( oldrfdsol )
+        DEALLOCATE( oldifdsol )
+        write(6, *) 'Call qualikiz from old solution'
+    ENDIF
+
+    sizes%dimn = dimn
+    sizes%dimx = dimx
+    sizes%nions = nions
+    sizes%numsols = numsols
+
+! Prepare and clean input structures
+  ! Read input and initialize all arrays
+
+    if (.not. ALLOCATED(in_regular%Ane)) then
+        CALL allocate_qlk_in_regular(dimx, dimn, nions, in_regular)
+        CALL allocate_qlk_in_newt(dimx, dimn, numsols, in_newt)
+        CALL zeroout_qlk_in_regular(in_regular)
+        CALL zeroout_qlk_in_newt(in_newt)
+    endif
+
+    in_regular%Ane(:) = Ane_in(1:dimx)
+    in_regular%Ate(:) = Ate_in(1:dimx)
+    in_regular%Aupar(:) = Aupar_in(1:dimx)
+    in_regular%Autor(:) = Autor_in(1:dimx)
+    in_regular%Machpar(:) = Machpar_in(1:dimx)
+    in_regular%Machtor(:) = Machtor_in(1:dimx)
+    in_regular%x(:) = x_in(1:dimx)
+    in_regular%Bo(:) = Bo_in(1:dimx)
+    in_regular%gammaE(:) = gammaE_in(1:dimx)
+    in_regular%ne(:) = Nex_in(1:dimx)
+    in_regular%q(:) = qx_in(1:dimx)
+    in_regular%Ro(:) = Ro_in(1:dimx)
+    in_regular%Rmin(:) = Rmin_in(1:dimx)
+    in_regular%smag(:) = smag_in(1:dimx)
+    in_regular%Te(:) = Tex_in(1:dimx)
+    in_regular%alpha(:) = alphax_in(1:dimx)
+    in_regular%rho(:) = rho_in(1:dimx)/rhoscale
+
+    in_regular%anise(:) = anise_in(1:dimx)
+    in_regular%danisedr(:) = danisedr_in(1:dimx)
+
+    in_regular%kthetarhos(:) = kthetarhos_in(1:dimn)
+
+    in_regular%Ai(:,:) = Ai_in(1:dimx, 1:nions)
+    in_regular%Ani(:,:) = Ani_in(1:dimx, 1:nions)
+    in_regular%Ati(:,:) = Ati_in(1:dimx, 1:nions)
+    in_regular%Zi(:,:) = Zi_in(1:dimx, 1:nions)
+    in_regular%normni(:,:) = ninorm_in(1:dimx, 1:nions)
+    in_regular%Ti(:,:) = Tix_in(1:dimx, 1:nions)
+
+    in_regular%anis(:,:) = anis_in(1:dimx, 1:nions)
+    in_regular%danisdr(:,:) = danisdr_in(1:dimx, 1:nions)
+    in_regular%ion_type(:,:) = ion_type_in(1:dimx, 1:nions)
+
+    in_regular%el_type = el_type_in
+    in_regular%coll_flag = coll_flag_in
+    in_regular%maxpts = maxpts_in
+    in_regular%maxruns = maxruns_in
+    in_regular%separateflux = separateflux_in
+    in_regular%phys_meth = phys_meth
+    in_regular%verbose = verbose_in
+    in_regular%integration_routine = integration_routine_in
+    in_regular%simple_mpi_only = simple_mpi_only_in
+    in_regular%write_primi = 0
+    in_regular%rot_flag = rot_flag_in
+
+!    in_regular%R0 = R0_in
+    in_regular%relacc1 = relacc1_in
+    in_regular%relacc2 = relacc2_in
+    in_regular%absacc2 = absacc2_in
+    in_regular%absacc1 = absacc1_in
+    in_regular%collmult = collmultin
+    in_regular%ETGmult = ETGmultin
+    in_regular%timeout = timeout_in
+    rhomin = 0.
+    rhomax = 1.
+    in_regular%rhomin = rhomin !/rhoscale
+    in_regular%rhomax = rhomax !/rhoscale
+
+    write(6, *) 'Calling qualikiz', nions, j0, runcounter_in, myrank
+
+    if (runcounter_in == 0) then
+        call qualikiz(sizes, in_regular, &
+            output_meth_0, &
+            output_meth_0_sep_0_SI, output_meth_0_sep_0_GB, &
+            primi_meth_0=primi_meth_0, &
+            runcounterin=runcounter_in)
+    else
+        in_newt%oldsol = oldsol_in
+        in_newt%oldfdsol = oldfdsol_in
+        call qualikiz(sizes, in_regular, &
+            output_meth_0, &
+            output_meth_0_sep_0_SI, output_meth_0_sep_0_GB, &
+            primi_meth_0=primi_meth_0, &
+            in_newt=in_newt, runcounterin=runcounter_in)
+    endif
+
+
+    cftrans_out = output_meth_0%cftrans
+    gam_GB_out  = output_meth_0_sep_0_GB%gam
+    ome_GB_out  = output_meth_0_sep_0_GB%ome
+    epf_GB_out  = output_meth_0_sep_0_GB%pfe
+    eef_GB_out  = output_meth_0_sep_0_GB%efe
+    ipf_GB_out  = output_meth_0_sep_0_GB%pfi
+    ief_GB_out  = output_meth_0_sep_0_GB%efi
+    sol_out   = primi_meth_0%sol
+    fdsol_out = primi_meth_0%fdsol
+
+    OPEN(unit=700, file="../qualikiz/"//trim(fname1)//"/runcounter.dat", status="replace", action="write") !Replace old runcounter with new runcounter
+    WRITE(700,*) runcounter_in + 1
+    CLOSE(700)
+
+    OPEN(unit=myunit, file=trim(prim_dir)//'/rsol.dat', action="write", status="replace")
+    WRITE(myunit, fmtn) (((REAL(sol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
+    CLOSE(myunit)
+
+    OPEN(unit=myunit, file=trim(prim_dir)//'/isol.dat', action="write", status="replace")
+    WRITE(myunit, fmtn) (((AIMAG(sol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
+    CLOSE(myunit)
+
+    OPEN(unit=myunit, file=trim(prim_dir)//'/rfdsol.dat', action="write", status="replace")
+    WRITE(myunit, fmtn) (((REAL(fdsol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
+    CLOSE(myunit)
+
+    OPEN(unit=myunit, file=trim(prim_dir)//'/ifdsol.dat', action="write", status="replace")
+    WRITE(myunit, fmtn) (((AIMAG(fdsol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
+    CLOSE(myunit)
+
+    ql_fac = drhodr**2 * Rmin_in(1) * rhostar2 * cs00
+
+    IF (ALLOCATED(oldsol_in)) THEN !Call with optional old solution input
+        DEALLOCATE( oldsol_in  )
+        DEALLOCATE( oldfdsol_in )
+    endif
+
+! Chii
+ 
+    chii(jradial)   = ql_fac * ief_gb_out(1, 1)/(1e-4 + Rmin_in(1)/R0_in * abs(Ati_in(1, 1)))
+    chie(jradial)   = ql_fac * eef_gb_out(1)/(1e-4 + Rmin_in(1)/R0_in * abs(Ate_in(1)))
+    pfluxi(jradial) = ql_fac * epf_gb_out(1)
+    exchi(jradial)  = cftrans_out(1, 2, 1)
 
 enddo radial_loop
 
 ! Simulated TGLF computation:
 output(:, 1) = chii
 output(:, 2) = chie
-output(:, 3) = mtori
-output(:, 4) = elec_pflux
+output(:, 4) = pfluxi
 output(:, 5) = exchi
-output(:, 6) = gamma_max
-output(:, 7) = omega_max
-do jspec=1, tglf_ns_in-1
-    output(:, 7+jspec) = ion_pflux(jspec, :)
-enddo
-
 
 call MPI_Send(output, chunk * n_outputs, MPI_DOUBLE_PRECISION, 0, 1, parent, ierr)
 call MPI_Finalize(ierr)

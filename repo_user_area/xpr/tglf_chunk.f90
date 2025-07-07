@@ -43,6 +43,7 @@ double precision, parameter :: &
    mp   = 1.6726E-24, &       ! proton mass (g)
    mpp  = 1.6726E-27, &       ! proton mass (kg)
    pi   = 3.141592653589793
+
 integer :: ierr, parent, rank, status(MPI_STATUS_SIZE)
 integer :: chunk, nprocs, nrho_tg, n_inputs, n_outputs, n_scalars, dims(6)
 integer :: i1, i2, sat_rule, jr, jgamma_max, jspec, kyloop
@@ -50,7 +51,7 @@ double precision :: Bunit_gauss, Bunit_T, cs0, cs00, rhos0, omega0, rhostar2, ln
 double precision :: a0_cm, a0_m, T0, N0, m0, rmin_tg, drho_cs, drho_nt, nt_cs
 double precision :: AMJ, BTOR
 double precision :: ion_eflux, ion_mflux
-double precision, allocatable :: inputs(:,:), output(:,:), scalars(:)
+double precision, allocatable :: inputs(:, :), output(:, :), scalars(:)
 double precision, allocatable, dimension(:) :: mtori, chie, chii, exchi, elec_pflux, rho_tg, &
     gamma_max, omega_max, kymax, te_tg, ne_tg, vpar_tg, vper_tg, vexb_tg, &
     ametr_tg, elon_tg, tria_tg, rmaj_tg, ptot_tg, q_tg, zef_tg, pfn_tg, &
