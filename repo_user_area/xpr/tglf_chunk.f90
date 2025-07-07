@@ -148,7 +148,7 @@ dni(4, :)   = inputs(:, 46)
 
 BTOR = scalars(1)
 a0_m = scalars(2)
-AMJ  = scalars(3)
+AMJ  = scalars(4)
 tglf_mass_in(1: 5) = scalars(3:  7)/AMJ
 tglf_zs_in(1: 5)   = scalars(8: 12)
 m0 = AMJ*mp          ! Ref. mass = D ion mass [g]

@@ -106,8 +106,8 @@ call qinterp(RHO(1:NA1),   FP_NORM(1:NA1), NA1, rho_tg,   pfn_tg, nrho_tg)
 a0_m = AMETR(NA1)
 
 ! Species cmassses and charges
-mass_in(1) = 5.4447e-4/AMJ
-mass_in(2) = AMJ  ! AMJ is reference mass
+mass_in(1) = 5.4447e-4
+mass_in(2) = AMJ
 mass_in(3) = AIM1
 mass_in(4) = AIM2
 mass_in(5) = AIM3
