@@ -29,6 +29,7 @@ double precision, allocatable, dimension(:) :: chie, chii, elec_pflux, rho_neo, 
 double precision, allocatable, dimension(:, :) :: dti, dni, ni_neo, ti_neo, zimp_neo
 double precision, allocatable, dimension(:) :: pflux_i_neo, eflux_i_neo, vpflux_neo, vtflux_neo
 double precision, allocatable, dimension (:, :):: energy_flux, particle_flux
+character(len=80) :: path_in
 
 call MPI_Init(ierr)
 call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
@@ -50,6 +51,10 @@ n_inputs  = dims(3)
 n_outputs = dims(4)
 nsm       = dims(5)
 
+if (rank == 0) then
+    write(*, *) 'Input DIMS', dims
+endif
+
 chunk = nrho_neo / nprocs  ! Safe here: we now know nrho_neo
 allocate(scalars(n_scalars))
 allocate(inputs(chunk, n_inputs))
@@ -60,8 +65,10 @@ allocate( chie(chunk), chii(chunk), elec_pflux(chunk), &
     vippd(chunk), vittd(chunk), vippi1(chunk), vitti1(chunk), jbs(chunk), &
     drmin(chunk), drmaj(chunk), drho(chunk), delong(chunk), dtrian(chunk), dr(chunk), &
     dne(chunk), dte(chunk), dq(chunk), dvpar(chunk), drhodr(chunk) )
-allocate( pflux_i_neo(nsm), eflux_i_neo(nsm), vpflux_neo(nsm), vtflux_neo(nsm) )
+allocate( pflux_i_neo(nsm-1), eflux_i_neo(nsm-1), vpflux_neo(nsm), vtflux_neo(nsm) )
 allocate( energy_flux(nsm, 2), particle_flux(nsm, 2) )
+allocate(ti_neo(nsm-1, chunk), ni_neo(nsm-1, chunk), zimp_neo(nsm-2, chunk))
+
 ! Receive TGLF input scalars and profiles from parent
 call MPI_Recv(scalars     , n_scalars, MPI_DOUBLE_PRECISION, 0, 0, parent, status, ierr)
 call MPI_Recv(inputs, chunk * n_inputs, MPI_DOUBLE_PRECISION, 0, 0, parent, status, ierr)
@@ -161,8 +168,10 @@ neo_n_species_in = n_ions + 1
 
 radial_loop: do jr=1, chunk
 
-!thermal impurities
+    path_in='./'
+    call neo_init_serial(path_in)
 
+!thermal impurities
     neo_z_in(3) = max(1., zimp_neo(1, jr))
     neo_z_in(4) = zimp_neo(2, jr)
     neo_z_in(5) = zimp_neo(3, jr)
@@ -321,6 +330,7 @@ enddo radial_loop
 ! Simulated TGLF computation:
 output(:, 1) = chii
 output(:, 2) = chie
+output(:, 3) = jbs
 output(:, 4) = elec_pflux
 output(:, 5) = vippd
 output(:, 6) = vittd
