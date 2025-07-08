@@ -21,6 +21,7 @@ all: directories $(XPR)/tglf.x $(XPR)/qlk.x $(XPR)/neo.x
 directories:
 	@mkdir -p $(AWD)/tglf
 	@mkdir -p $(AWD)/qualikiz
+	@mkdir -p $(AWD)/qualikiz_mpi
 	@mkdir -p $(AWD)/neo
 
 $(XPR)/tglf.x: $(XPR)/tglf_chunk.f90 $(AENV)

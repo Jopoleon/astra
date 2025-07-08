@@ -247,17 +247,14 @@ do i=0, nworkers-1
     dims(7) = i1
     call MPI_Send(dims, SIZE(dims), MPI_INTEGER, i, 0, intercomm, ierr)
 enddo
-print *, "Debug 1"
 do i=0, nworkers-1
     call MPI_Send(scal_in_m, n_scalars, MPI_DOUBLE_PRECISION, i, 0, intercomm, ierr)
 enddo
-print *, "Debug 2"
 do i=0, nworkers-1
     i1 = i * chunk + 1
     i2 = (i + 1) * chunk
     call MPI_Send(prof_in_m(i1:i2, :), chunk * n_inputs, MPI_DOUBLE_PRECISION, i, 0, intercomm, ierr)
 enddo
-print *, "Debug 3"
 
 ! Receive results from each worker
 do i=0, nworkers-1
@@ -265,7 +262,6 @@ do i=0, nworkers-1
     i2 = (i + 1) * chunk
     call MPI_Recv(prof_out_m(i1:i2, :), chunk * n_outputs, MPI_DOUBLE_PRECISION, i, 1, intercomm, status, ierr)
 enddo
-print *, "Debug 4"
 
 ! Interpolate back to ASTRA radial grid
 
@@ -277,8 +273,6 @@ call qinterp(rho_m, prof_out_m(:, 4), nrho_m, rho_m(1:NA1),      vittd_m(1:NA1),
 call qinterp(rho_m, prof_out_m(:, 5), nrho_m, rho_m(1:NA1),     vippi1_m(1:NA1), NA1)
 call qinterp(rho_m, prof_out_m(:, 6), nrho_m, rho_m(1:NA1),     vitti1_m(1:NA1), NA1)
 call qinterp(rho_m, prof_out_m(:, 7), nrho_m, rho_m(1:NA1),       j_boot(1:NA1), NA1)
-
-write(*, *) 'Done NEO parent'
 
 return
 end subroutine neo_parent

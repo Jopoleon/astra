@@ -18,7 +18,7 @@ type(qlk_output_meth_0)       :: output_meth_0
 type(qlk_output_meth_0_sep_0) :: output_meth_0_sep_0_SI , output_meth_0_sep_0_GB
 type(qlk_primi_meth_0)        :: primi_meth_0
 
-integer, parameter :: ntheta=64, numecoefs=13, numicoefs=7, dimx=1, dimn=16, numsols=3, phys_meth=0, nradial=5, nspec_max=7
+integer, parameter :: ntheta=64, numecoefs=13, numicoefs=7, dimx=1, dimn=16, numsols=3, phys_meth=0, nspec_max=7
 
 double precision, parameter :: &
     k0  = 1.6022E-12, &       ! erg/ev
@@ -58,7 +58,7 @@ double precision, DIMENSION(:, :, :), ALLOCATABLE :: oldrsol, oldisol, oldrfdsol
 !-----------------------------------------
 LOGICAL :: exist1, exist2, exist3, exist4, exist5 !used for checking for existence of files
 
-INTEGER :: unit_runc=600, unit_rsol=610, unit_isol=620, unit_rfd=630, unit_ifd=640, myunit=700, i_mpic
+integer, parameter :: unit_runc=600, unit_rsol=610, unit_isol=620, unit_rfd=630, unit_ifd=640, myunit=700, unit_input=500
 integer :: i, j, k, jr, jion, jrho_beg
 
 double precision, allocatable, dimension(:) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
@@ -68,8 +68,7 @@ double precision :: Bunit, cs00, rhos00, omega0, rhostar2
 double precision :: gamma_e_qlk, mach_fac, ql_fac
 
 double precision, allocatable, dimension(:) :: chie, chii, exchi, pfluxi, rho_qlk, &
-    te_qlk, ne_qlk, vpar_qlk, vper_qlk, vexb_qlk, &
-    ametr_qlk, rmaj_qlk, q_qlk
+    te_qlk, ne_qlk, vpar_qlk, vper_qlk, ametr_qlk, rmaj_qlk, q_qlk
 double precision, allocatable, dimension(:, :) :: dti, dni, ni_qlk, ti_qlk, zimp_qlk
 double precision :: vpar_in, vpar_shear_in, cexb
 double precision, allocatable :: inputs(:, :), output(:, :), scalars(:)
@@ -108,7 +107,7 @@ allocate(scalars(n_scalars))
 allocate(inputs(chunk, n_inputs))
 allocate(output(chunk, n_outputs))
 allocate( chie(chunk), chii(chunk), exchi(chunk), pfluxi(chunk), rho_qlk(chunk), &
-    te_qlk(chunk), ne_qlk(chunk), vpar_qlk(chunk), vper_qlk(chunk), vexb_qlk(chunk), &
+    te_qlk(chunk), ne_qlk(chunk), vpar_qlk(chunk), vper_qlk(chunk), &
     ametr_qlk(chunk), rmaj_qlk(chunk), q_qlk(chunk) )
 allocate( drmin(chunk), drmaj(chunk), drho(chunk), &
     dr(chunk), dne(chunk), dte(chunk), dq(chunk), dptot(chunk), &
@@ -127,9 +126,10 @@ q_qlk        = inputs(:,  6)
 
 ne_qlk       = inputs(:,  9)
 te_qlk       = inputs(:, 10)
+
 vpar_qlk     = inputs(:, 12)
 vper_qlk     = inputs(:, 13)
-vexb_qlk     = inputs(:, 14)
+
 ti_qlk(1, :) = inputs(:, 15)
 ti_qlk(2, :) = inputs(:, 16)
 ti_qlk(3, :) = inputs(:, 17)
@@ -312,18 +312,18 @@ radial_loop: do jr=1, chunk
         print*, 'check: ', m0, Ati_in(1, 1), gammaE_in, Autor_in, Machtor_in, alphax_in(1)
     endif
 
-    INQUIRE(file="qualikiz/"//trim(fname1)//"/runcounter.dat", EXIST=exist1)
+    INQUIRE(file="qualikiz_mpi/"//trim(fname1)//"/runcounter.dat", EXIST=exist1)
     INQUIRE(file=trim(prim_dir)//'/rsol.dat', EXIST=exist2)
     INQUIRE(file=trim(prim_dir)//'/isol.dat', EXIST=exist3)
     INQUIRE(file=trim(prim_dir)//'/rfdsol.dat', EXIST=exist4)
     INQUIRE(file=trim(prim_dir)//'/ifdsol.dat', EXIST=exist5)
 
     IF ( exist1 .AND. exist2 .AND. exist3 .AND. exist4 .AND. exist5 ) THEN
-        OPEN(unit=unit_runc, file="qualikiz/"//trim(fname1)//"/runcounter.dat", status="old", action="read")
+        OPEN(unit=unit_runc, file="qualikiz_mpi/"//trim(fname1)//"/runcounter.dat", status="old", action="read")
         READ(unit_runc, *) runcounter_in
         CLOSE(unit_runc)
     ELSE
-        prim_dir = 'qualikiz/'//trim(fname1)//'/output/primitive'
+        prim_dir = 'qualikiz_mpi/'//trim(fname1)//'/output/primitive'
         call system('mkdir -p ' // trim(prim_dir))
         runcounter_in = 0 !First run
     ENDIF
@@ -444,6 +444,19 @@ radial_loop: do jr=1, chunk
     in_regular%rhomin = rhomin !/rhoscale
     in_regular%rhomax = rhomax !/rhoscale
 
+    OPEN(unit=unit_input, file="qualikiz_mpi/"//trim(fname1)//"/input.dat", status="replace", action="write")
+    WRITE(unit_input, '(6(e14.6))') dq(jr), rmaj_qlk(jr), dv_r(jr), dr(jr), cs00
+    WRITE(unit_input, '(6(e14.6))') Ane_in(1), Ate_in(1), Aupar_in(1), Autor_in(1), Machpar_in(1), Machtor_in(1)
+    WRITE(unit_input, '(6(e14.6))') x_in(1), Bo_in(1), gammaE_in(1), Nex_in(1), qx_in(1), Ro_in(1)
+    WRITE(unit_input, '(6(e14.6))') Rmin_in(1), smag_in(1), Tex_in(1), alphax_in(1), rho_in(1)/rhoscale, anise_in(1)
+    WRITE(unit_input, '(6(e14.6))') Ai_in(1, 1:nions)
+    WRITE(unit_input, '(6(e14.6))') Ani_in(1, 1:nions)
+    WRITE(unit_input, '(6(e14.6))') Ati_in(1, 1:nions)
+    WRITE(unit_input, '(6(e14.6))') Zi_in(1, 1:nions)
+    WRITE(unit_input, '(6(e14.6))') ninorm_in(1, 1:nions)
+    WRITE(unit_input, '(6(e14.6))') Tix_in(1, 1:nions)
+    CLOSE(unit_input)
+
     print*, 'Calling qualikiz', nions, jrho_beg - 1 + jr, runcounter_in, rank, dptot(jr)
 
     if (runcounter_in == 0) then
@@ -472,7 +485,7 @@ radial_loop: do jr=1, chunk
     sol_out   = primi_meth_0%sol
     fdsol_out = primi_meth_0%fdsol
 
-    OPEN(unit=unit_runc, file="qualikiz/"//trim(fname1)//"/runcounter.dat", status="replace", action="write") !Replace old runcounter with new runcounter
+    OPEN(unit=unit_runc, file="qualikiz_mpi/"//trim(fname1)//"/runcounter.dat", status="replace", action="write") !Replace old runcounter with new runcounter
     WRITE(unit_runc, *) runcounter_in + 1
     CLOSE(unit_runc)
 

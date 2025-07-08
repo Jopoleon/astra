@@ -1,17 +1,12 @@
-subroutine qlk_parent(CHI, CHE, VIN, DPH, DPL, DPR, XTB, GM1, OM1)
+subroutine qlk_parent(CHI, CHE)
 
 use mpi
 
 use parameter_inc, only: NRD
-use const_inc, only: BTOR, RTOR, GP, GP2, ABC, &
-    AMJ, AIM1, AIM2, AIM3, ZMJ, PSIAX, PSIBO, &
-    NA1, NA1N, NA1E, NA1I
-use status_inc, only: NE, TE, NI, TI, &
-    ZEF, ZIM1, ZIM2, ZIM3, PBLON, PBPER, &
-    PFAST, NIZ3, AMAIN, ER, MU, FP_NORM, &
-    RHO, AMETR, SHIF, ELON, &
-    NDEUT, NIZ1, NTRIT, NIZ2, NHE3, &
-    TRIA, VTOR, NIBM, G11, VPOL, VRS, SHEAR
+use const_inc, only: BTOR, RTOR, AMJ, AIM1, AIM2, AIM3, ZMJ, NA1
+use status_inc, only: NE, TE, NI, TI, ZIM1, ZIM2, ZIM3, PBLON, PBPER, &
+    PFAST, NIZ3, AMAIN, ER, MU, FP_NORM, RHO, AMETR, SHIF, &
+    NDEUT, NIZ1, NIZ2, VTOR, NIBM, G11, VPOL, VRS, SHEAR
 
 implicit none
 
@@ -21,7 +16,7 @@ double precision, parameter :: &
    k0 = 1.6022E-12, &    ! erg/ev
    mp = 1.6726E-24       ! proton mass (g)
 
-double precision, dimension(*), intent(out) :: CHI, CHE, VIN, DPH, DPL, DPR, XTB, GM1, OM1
+double precision, dimension(*), intent(out) :: CHI, CHE
 
 integer :: ierr, intercomm, errcodes(100), status(MPI_STATUS_SIZE)
 integer :: jr, jrho, jr_r, jr_l, jgamma_max, jspec
@@ -31,15 +26,15 @@ integer :: i, i1, i2, chunk, nprocs, nworkers, dims(8)
 double precision, dimension(n_scalars) :: scal_in_m
 double precision, dimension(nrho_m, n_inputs ) :: prof_in_m
 double precision, dimension(nrho_m, n_outputs) :: prof_out_m
-double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, T0, m0, a0_m, a0_cm, cs0
+double precision :: bpolz, xstep, rho_min, rho_max, dstep, a0_m
 double precision, dimension(nrho_m) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
-    delong, dtrian, dvper, drhodr, dr, dv_r
+    dvper, drhodr, dr, dv_r
 double precision, dimension(NRD) :: gradrhosq_exp, rmaj_exp, q_exp, &
-    vexb_exp, vpar_exp, vper_exp, mtori_m, &
+    vpar_exp, vper_exp, &
     chie_m, chii_m, elec_pflux_m, exchi_m, ptot_exp, gamma_m, omega_m
-double precision, dimension(nrho_m) :: mtori, chie, chii, exchi, elec_pflux, rho_m, &
-    gamma_max, omega_max, kymax, te_m, ne_m, vpar_m, vper_m, vexb_m, &
-    ametr_m, elon_m, tria_m, rmaj_m, ptot_m, q_m, zef_m, pfn_m
+double precision, dimension(nrho_m) :: chie, chii, exchi, elec_pflux, rho_m, &
+    gamma_max, omega_max, kymax, te_m, ne_m, vpar_m, vper_m, &
+    ametr_m, rmaj_m, ptot_m, q_m
 double precision, dimension(nsm) :: mass_in, zs_in
 double precision, dimension(nsm-1, nrho_m) :: dti, dni, ni_m, ti_m, ion_pflux
 double precision, dimension(nsm-2, nrho_m) :: zimp_m 
@@ -61,10 +56,7 @@ call qinterp(RHO(1:NA1),   ZIM1(1:NA1), NA1, rho_m, zimp_m(1, :), nrho_m)
 call qinterp(RHO(1:NA1),   ZIM2(1:NA1), NA1, rho_m, zimp_m(2, :), nrho_m)
 call qinterp(RHO(1:NA1),   ZIM3(1:NA1), NA1, rho_m, zimp_m(3, :), nrho_m)
 call qinterp(RHO(1:NA1),     NE(1:NA1), NA1, rho_m,         ne_m, nrho_m)
-call qinterp(RHO(1:NA1),    ZEF(1:NA1), NA1, rho_m,        zef_m, nrho_m)
 call qinterp(RHO(1:NA1),  AMETR(1:NA1), NA1, rho_m,      ametr_m, nrho_m)
-call qinterp(RHO(1:NA1),   ELON(1:NA1), NA1, rho_m,       elon_m, nrho_m)
-call qinterp(RHO(1:NA1),   TRIA(1:NA1), NA1, rho_m,       tria_m, nrho_m)
 
 ti_m(2, :) = ti_m(1, :)
 ti_m(3, :) = ti_m(1, :)
@@ -83,11 +75,9 @@ do jrho=1, NA1
     q_exp(jrho)    = 1./MU(jrho)
     ptot_exp(jrho) = NE(jrho)*TE(jrho) + ni_exp(1, jrho)*TI(jrho) + ni_exp(2, jrho)*TI(jrho) + pfast(jrho) + 0.5*(pblon(jrho) + pbper(jrho))
     bpolz = BTOR*AMETR(jrho)*MU(jrho)/RTOR
-    bmod = sqrt(BTOR**2 + bpolz**2)
     gradrhosq_exp(jrho) = G11(jrho)/VRS(jrho)
     vper_exp(jrho) = ER(jrho)/(RTOR*bpolz) ! vexb in m/s --> Omega_E
-    vpar_exp(jrho) = VTOR(jrho) * BTOR/bmod + c_vpol* VPOL(jrho) * bpolz/bmod
-    vexb_exp(jrho) = -ER(jrho)/bmod ! vexb in m/s (vperp = vexb since the diamagnetic velocity is the curvature drift ac
+    vpar_exp(jrho) = ER(jrho)/(RTOR*bpolz)*(RTOR+SHIF(jrho) + AMETR(jrho))
 enddo
 
 call qinterp(RHO(1:NA1), ni_exp(1, 1:NA1), NA1, rho_m, ni_m(1, :), nrho_m)
@@ -99,8 +89,6 @@ call qinterp(RHO(1:NA1),     q_exp(1:NA1), NA1, rho_m,     q_m, nrho_m)
 call qinterp(RHO(1:NA1),  ptot_exp(1:NA1), NA1, rho_m,  ptot_m, nrho_m)
 call qinterp(RHO(1:NA1),  vpar_exp(1:NA1), NA1, rho_m,  vpar_m, nrho_m)
 call qinterp(RHO(1:NA1),  vper_exp(1:NA1), NA1, rho_m,  vper_m, nrho_m)
-call qinterp(RHO(1:NA1),  vexb_exp(1:NA1), NA1, rho_m,  vexb_m, nrho_m)
-call qinterp(RHO(1:NA1),   FP_NORM(1:NA1), NA1, rho_m,   pfn_m, nrho_m)
 
 ! Reference length
 a0_m = AMETR(NA1)
@@ -121,7 +109,6 @@ elec_pflux_m = 0.
 ion_pflux_m  = 0.
 chie_m  = 0.
 chii_m  = 0.
-mtori_m = 0.
 exchi_m = 0.
 
 ! Number of species
@@ -163,8 +150,6 @@ do jr=1, nrho_m
     drmin(jr)  = dstep*(ametr_m(jr_r) - ametr_m(jr_l))
     drmaj(jr)  = dstep*( rmaj_m(jr_r) -  rmaj_m(jr_l))
     drho(jr)   = dstep*(  rho_m(jr_r) -   rho_m(jr_l))
-    delong(jr) = dstep*( elon_m(jr_r) -  elon_m(jr_l))
-    dtrian(jr) = dstep*( tria_m(jr_r) -  tria_m(jr_l))
     dptot(jr)  = dstep*( ptot_m(jr_r) -  ptot_m(jr_l))
     dte(jr)    = dstep*(te_m(jr_r) - te_m(jr_l))
     dne(jr)    = dstep*(ne_m(jr_r) - ne_m(jr_l))
@@ -201,17 +186,15 @@ scal_in_m(15) = RHO(NA1)
 prof_in_m(:,  1) = rho_m
 prof_in_m(:,  2) = ametr_m
 prof_in_m(:,  3) = rmaj_m
-prof_in_m(:,  4) = elon_m
-prof_in_m(:,  5) = tria_m
+
 prof_in_m(:,  6) = q_m
-prof_in_m(:,  7) = pfn_m
-prof_in_m(:,  8) = ptot_m
+
 prof_in_m(:,  9) = ne_m
 prof_in_m(:, 10) = te_m
-prof_in_m(:, 11) = zef_m
+
 prof_in_m(:, 12) = vpar_m
 prof_in_m(:, 13) = vper_m
-prof_in_m(:, 14) = vexb_m
+
 prof_in_m(:, 15) = ti_m(1, :)
 prof_in_m(:, 16) = ti_m(2, :)
 prof_in_m(:, 17) = ti_m(3, :)
@@ -226,8 +209,7 @@ prof_in_m(:, 25) = zimp_m(3, :)
 prof_in_m(:, 26) = drmin
 prof_in_m(:, 27) = drmaj
 prof_in_m(:, 28) = drho
-prof_in_m(:, 29) = delong
-prof_in_m(:, 30) = dtrian
+
 prof_in_m(:, 31) = dptot
 prof_in_m(:, 32) = dte
 prof_in_m(:, 33) = dne
@@ -286,40 +268,17 @@ call qinterp(rho_m, prof_out_m(:, 1), nrho_m, RHO(1:NA1), chii_m(1:NA1)      , N
 call qinterp(rho_m, prof_out_m(:, 2), nrho_m, RHO(1:NA1), chie_m(1:NA1)      , NA1)
 call qinterp(rho_m, prof_out_m(:, 4), nrho_m, RHO(1:NA1), elec_pflux_m(1:NA1), NA1)
 call qinterp(rho_m, prof_out_m(:, 5), nrho_m, RHO(1:NA1), exchi_m(1:NA1)     , NA1)
-call qinterp(rho_m, prof_out_m(:, 6), nrho_m, RHO(1:NA1), gamma_m(1:NA1)     , NA1)
-call qinterp(rho_m, prof_out_m(:, 7), nrho_m, RHO(1:NA1), omega_m(1:NA1)     , NA1)
-do jspec=1, ns_in-1
-    call qinterp(rho_m, prof_out_m(7+jspec, 1:nrho_m), nrho_m, RHO(1:NA1), ion_pflux_m(jspec, 1:NA1), NA1)
-enddo
 
 chii_m (1:2) = chii_m (3)
 chie_m (1:2) = chie_m (3)
-mtori_m(1:2) = mtori_m(3)
 elec_pflux_m(1:2) = elec_pflux_m(3)
 exchi_m(1:2) = exchi_m(3)
-omega_m(1:2) = omega_m(3)
-gamma_m(1:2) = gamma_m(3)
-
-m0 = AMJ*mp          ! Ref. mass = D ion mass [g]
-a0_cm = 1.d2*a0_m    ! length scale used by GYRO, m -> cm
 
 do jrho=1, NA1
     CHI(jrho) = chii_m(jrho)/gradrhosq_exp(jrho) ! \chi_i, m^2/s
     CHE(jrho) = chie_m(jrho)/gradrhosq_exp(jrho) ! \chi_e, m^2/s
-    VIN(jrho) = elec_pflux_m(jrho)/a0_m/gradrhosq_exp(jrho) ! D flux
-    DPR(jrho) = mtori_m(jrho)
-!First impurity only, index 2 of ion species
-    if (ns_in >= 3) then
-        DPL(jrho) = ion_pflux_m(2, jrho)/a0_m/gradrhosq_exp(jrho)/(ni_exp(2, jrho)/NE(jrho))  ! 1st imp convection
-    endif
-    if (ns_in >= 4) then
-        DPH(jrho) = ion_pflux_m(3, jrho)/a0_m/gradrhosq_exp(jrho)/(ni_exp(3, jrho)/NE(jrho))  ! 2nd imp convection
-    endif
-    XTB(jrho) = exchi_m(jrho) ! turbulent e-i equipartition in MW/m^3
-    T0  = 1E3 *TE(jrho)       ! temperature scale used by GYRO
-    cs0 = SQRT(k0*T0/m0)      ! thermal velocity unit cm/sec
-    GM1(jrho) = gamma_m(jrho)*(cs0/a0_cm)
-    OM1(jrho) = omega_m(jrho)*(cs0/a0_cm)
+!    VIN(jrho) = elec_pflux_m(jrho)/a0_m/gradrhosq_exp(jrho) ! D flux
+!    XTB(jrho) = exchi_m(jrho) ! turbulent e-i equipartition in MW/m^3
 enddo
 
 return
