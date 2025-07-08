@@ -169,7 +169,7 @@ neo_n_species_in = n_ions + 1
 
 radial_loop: do jr=1, chunk
 
-    path_in='./'
+    path_in='./neo/'
     call neo_init_serial(path_in)
 
 !thermal impurities
@@ -266,7 +266,7 @@ radial_loop: do jr=1, chunk
     drhodr_sq = drhodr(jr)**2
 ! derived units for the plasma
 
-    SELECT CASE (neo_sim_model_in) 
+    SELECT CASE (neo_sim_model_in)
 
     CASE(1) ! analytic
         print*, 'run neo analytic', n_ions
