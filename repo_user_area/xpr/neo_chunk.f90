@@ -20,7 +20,7 @@ double precision :: anorm, mnorm, tnorm, nnorm, vnorm, T0, drho_cs, drho_nt, nt_
     pflux_e_neo, eflux_e_neo, jboots, tgyro_neo_gv_flag, &
     Gamma_neo_GB, Q_neo_GB, Pi_neo_GB, Jpar_GB
 double precision :: AMJ, BTOR
-double precision :: ion_eflux, ion_mflux,  drhodr_sq
+double precision :: ion_eflux, drhodr_sq
 double precision, allocatable :: inputs(:, :), output(:, :), scalars(:)
 double precision, allocatable, dimension(:) :: chie, chii, elec_pflux, rho_neo, &
     ametr_neo, rmaj_neo, elon_neo, tria_neo, q_neo, ne_neo, te_neo, zef_neo, vpar_neo, &
@@ -123,6 +123,7 @@ neo_mass_in(1: 5) = scalars(4:  8)/AMJ
 neo_z_in(1: 5)    = scalars(9: 13)
 mnorm = AMJ*mpp
 
+tgyro_neo_gv_flag = 0.
 epar0_in = 0.
 
 ! Number of species
@@ -226,8 +227,8 @@ radial_loop: do jr=1, chunk
 !---------
   
 ! Electrons
-    lnlamda = 24.0 -0.5*LOG(nnorm*1.e13)+LOG(T0)       
-    taue = (3.44E5)*((T0)**1.5)/(nnorm*1e13*lnlamda)  !  sec
+    lnlamda = 24.0 - 0.5*LOG(nnorm*1.e13) + LOG(T0)       
+    taue = 3.44E5*(T0**1.5)/(nnorm*1e13*lnlamda)  !  sec
     xnuei = 0.75*SQRT(pi)/taue             ! 1/sec 
     neo_nu_1_in = xnuei*anorm/cs0          ! normalized electron-ion collision 
 
@@ -268,7 +269,7 @@ radial_loop: do jr=1, chunk
     SELECT CASE (neo_sim_model_in) 
 
     CASE(1) ! analytic
-        write(*,*) 'run neo analytic'
+        print*, 'run neo analytic', n_ions
         call neo_run
         pflux_i_neo(1) = neo_pflux_thHH_out *Gamma_neo_GB
         eflux_i_neo(1) = neo_eflux_thCHi_out*Q_neo_GB
@@ -278,10 +279,10 @@ radial_loop: do jr=1, chunk
         write(*,*) 'end neo analytic', pflux_i_neo(1), eflux_i_neo(1), pflux_e_neo, eflux_e_neo, jboots
 
     CASE(2) ! kinetic calculation
-        write(*,*) 'run neo DKE', n_ions
+        print*, 'run neo DKE', n_ions
         call neo_run
 
-        pflux_e_neo = (neo_pflux_dke_out(1) + tgyro_neo_gv_flag*neo_pflux_gv_out(1)) * Gamma_neo_GB
+        pflux_e_neo = (neo_pflux_dke_out(1)    + tgyro_neo_gv_flag*neo_pflux_gv_out(1)) *Gamma_neo_GB
         eflux_e_neo = (neo_efluxncv_dke_out(1) + tgyro_neo_gv_flag*neo_efluxncv_gv_out(1)) * Q_neo_GB
 
         do i_ion=1, n_ions
@@ -294,7 +295,7 @@ radial_loop: do jr=1, chunk
         enddo
 
         jboots = neo_jpar_dke_out*Jpar_GB
-        write(*, '(A, 2e11.4)') 'end neo DKE', drhodr_sq *pflux_e_neo, drhodr_sq *eflux_e_neo
+        write(*, '(A, 2e11.4)') 'end neo DKE', pflux_e_neo, eflux_e_neo
 
     END SELECT
 
@@ -304,8 +305,8 @@ radial_loop: do jr=1, chunk
     particle_flux(1, 2) = drhodr_sq * neo_pflux_gv_out(2)*Gamma_neo_GB
     energy_flux  (1, 2) = drhodr_sq * neo_efluxncv_gv_out(2)*Q_neo_GB
     do i_ion=1,n_ions
-        particle_flux(i_ion+1, 1) = drhodr_sq * pflux_i_neo(i_ion) !impurity particle flux
-        energy_flux  (i_ion+1, 1) = drhodr_sq * eflux_i_neo(i_ion)   !impurity energy flux
+        particle_flux(i_ion+1, 1) = drhodr_sq * pflux_i_neo(i_ion) ! impurity particle flux
+        energy_flux  (i_ion+1, 1) = drhodr_sq * eflux_i_neo(i_ion) ! impurity energy flux
         particle_flux(i_ion+1, 2) = drhodr_sq * neo_pflux_gv_out(i_ion+1)*Gamma_neo_GB
         energy_flux  (i_ion+1, 2) = drhodr_sq * neo_efluxncv_gv_out(i_ion+1)*Q_neo_GB
     enddo
