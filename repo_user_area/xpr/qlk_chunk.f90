@@ -62,14 +62,14 @@ INTEGER :: unit_runc=600, unit_rsol=610, unit_isol=620, unit_rfd=630, unit_ifd=6
 integer :: i, j, k, jr, jion, jrho_beg
 
 double precision, allocatable, dimension(:) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
-    delong, dtrian, dvper, drhodr, dstep, dr, dv_r
+    dvper, drhodr, dstep, dr, dv_r
 double precision :: Bunit, cs00, rhos00, omega0, rhostar2
 ! Shifted cicle geometry inputs
 double precision :: gamma_e_qlk, mach_fac, ql_fac
 
 double precision, allocatable, dimension(:) :: chie, chii, exchi, pfluxi, rho_qlk, &
     te_qlk, ne_qlk, vpar_qlk, vper_qlk, vexb_qlk, &
-    ametr_qlk, elon_qlk, tria_qlk, rmaj_qlk, ptot_qlk, q_qlk, zef_qlk, pfn_qlk
+    ametr_qlk, rmaj_qlk, q_qlk
 double precision, allocatable, dimension(:, :) :: dti, dni, ni_qlk, ti_qlk, zimp_qlk
 double precision :: vpar_in, vpar_shear_in, cexb
 double precision, allocatable :: inputs(:, :), output(:, :), scalars(:)
@@ -80,6 +80,7 @@ complex(kind=DBL), dimension(dimx, dimn, numsols) :: sol_out, fdsol_out
 CHARACTER(len=20) :: fmtn
 character(len=80) :: fname1, prim_dir
 
+verbose_in = 1
 
 call MPI_Init(ierr)
 call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
@@ -95,7 +96,7 @@ endif
 
 ! Receive dimensions from parent
 call MPI_Recv(dims, 8, MPI_INTEGER, 0, 0, parent, status, ierr)
-nrho_qlk   = dims(1)
+nrho_qlk  = dims(1)
 n_scalars = dims(2)
 n_inputs  = dims(3)
 n_outputs = dims(4)
@@ -108,9 +109,8 @@ allocate(inputs(chunk, n_inputs))
 allocate(output(chunk, n_outputs))
 allocate( chie(chunk), chii(chunk), exchi(chunk), pfluxi(chunk), rho_qlk(chunk), &
     te_qlk(chunk), ne_qlk(chunk), vpar_qlk(chunk), vper_qlk(chunk), vexb_qlk(chunk), &
-    ametr_qlk(chunk), elon_qlk(chunk), tria_qlk(chunk), rmaj_qlk(chunk), &
-    ptot_qlk(chunk), q_qlk(chunk), zef_qlk(chunk), pfn_qlk(chunk) )
-allocate( drmin(chunk), drmaj(chunk), drho(chunk), delong(chunk), dtrian(chunk), &
+    ametr_qlk(chunk), rmaj_qlk(chunk), q_qlk(chunk) )
+allocate( drmin(chunk), drmaj(chunk), drho(chunk), &
     dr(chunk), dne(chunk), dte(chunk), dq(chunk), dptot(chunk), &
     dvper(chunk), dv_r(chunk), drhodr(chunk) )
 allocate( dti(4, chunk), dni(4, chunk), ni_qlk(4, chunk), ti_qlk(4, chunk), &
@@ -122,14 +122,11 @@ call MPI_Recv(inputs, chunk * n_inputs, MPI_DOUBLE_PRECISION, 0, 0, parent, stat
 rho_qlk      = inputs(:,  1)
 ametr_qlk    = inputs(:,  2)
 rmaj_qlk     = inputs(:,  3)
-elon_qlk     = inputs(:,  4)
-tria_qlk     = inputs(:,  5)
+
 q_qlk        = inputs(:,  6)
-pfn_qlk      = inputs(:,  7)
-ptot_qlk     = inputs(:,  8)
+
 ne_qlk       = inputs(:,  9)
 te_qlk       = inputs(:, 10)
-zef_qlk      = inputs(:, 11)
 vpar_qlk     = inputs(:, 12)
 vper_qlk     = inputs(:, 13)
 vexb_qlk     = inputs(:, 14)
@@ -147,8 +144,7 @@ zimp_qlk(3, :) = inputs(:, 25)
 drmin       = inputs(:, 26)
 drmaj       = inputs(:, 27)
 drho        = inputs(:, 28)
-delong      = inputs(:, 29)
-dtrian      = inputs(:, 30)
+
 dptot       = inputs(:, 31)
 dte         = inputs(:, 32)
 dne         = inputs(:, 33)
@@ -171,14 +167,19 @@ RTOR = scalars(1)
 BTOR = scalars(2)
 a0_m = scalars(3)
 AMJ  = scalars(5)
+R0_in = scalars(14)
+rhoscale = scalars(15)
 m0 = AMJ*mp          ! Ref. mass = D ion mass [g]
 
 ! Electrons and main ions
 Ai_in(1, 1: 4) = scalars( 5:  8)
 Zi_in(1, 1: 4) = scalars(10: 13)
 
-if (Zi_in(1, 4) >= 1.) nions = 4
-if (Zi_in(1, 4)  < 1.) nions = 3
+if (Zi_in(1, 4) >= 1.) then
+    nions = 4
+else
+    nions = 3
+endif
 if (Zi_in(1, 3)  < 1.) nions = 2
 if (Zi_in(1, 4) >= 1. .and. nions == 2) then 
     nions = 3
@@ -200,17 +201,22 @@ coll_flag_in = 1
 el_type_in   = 1
 separateflux_in    = 0
 simple_mpi_only_in = 1
-maxpts_in   = 50000000 ! 500000 default
-maxruns_in  = 10
+maxpts_in  = 50000000 ! 500000 default
+maxruns_in = 10
 
-R0_in = rmaj_qlk(nrho_qlk)
 Bo_in(1) = BTOR
 Rmin_in(1) = a0_m
-rhoscale = rho_qlk(nrho_qlk)
+WRITE(fmtn, '(A, I0, A)') '(', dimn, 'G15.7)'
 
 radial_loop: do jr=1, chunk
    
     write(fname1, '(A, i0)') 'qlkzin_' , jrho_beg - 1 + jr
+    qx_in(1)  = q_qlk(jr)
+    rho_in(1) = rho_qlk(jr)
+    x_in(1)   = ametr_qlk(jr)/Rmin_in(1)
+    Ro_in(1)  = rmaj_qlk(jr)
+    T0 = 1E3*te_qlk(jr)   ! temperature scale used by GYRO
+    smag_in(1) = (x_in(1)/qx_in(1))*dq(jr)/dr(jr)        ! r/q dq/dr 
 
 !thermal impurities
 
@@ -296,13 +302,14 @@ radial_loop: do jr=1, chunk
     integration_routine_in = 1 ! 0 for NAG routines, 1 for Cubature
 
     if (verbose_in > 0) then
-        write(6, *) 'aNe', Ane_in
-        write(6, *) 'aNi', Ani_in(1, 1:nions)
-        write(6, *) 'ate', Ate_in
-        write(6, *) 'ati', Ati_in(1, 1:nions)
-        write(6, *) 'Ai', Ai_in(1, 1:nions)
-        write(6, *) 'Ni/Ne', ninorm_in(1, 1:nions)
-        write(6, *) 'check: ', Ati_in(1, 1), gammaE_in, Autor_in, Machtor_in, alphax_in(1), x_in(1)
+        print*, 'aNe', Ane_in
+        print*, 'aNi', Ani_in(1, 1:nions)
+        print*, 'ate', Ate_in
+        print*, 'ati', Ati_in(1, 1:nions)
+        print*, 'Ai', Ai_in(1, 1:nions)
+        print*, 'Ni/Ne', ninorm_in(1, 1:nions)
+        print*, 'rhos', R0_in, Ro_in(1), x_in(1), Rmin_in(1)
+        print*, 'check: ', m0, Ati_in(1, 1), gammaE_in, Autor_in, Machtor_in, alphax_in(1)
     endif
 
     INQUIRE(file="qualikiz/"//trim(fname1)//"/runcounter.dat", EXIST=exist1)
@@ -327,7 +334,7 @@ radial_loop: do jr=1, chunk
 !    runcounter_in = 0 ! GIT force calculation from scratch
 
     IF (runcounter_in == 0) THEN !load old rsol and isol if we're not doing a reset run
-        write(6, *) 'Qualikiz from scratch'
+        print *,'Qualikiz from scratch'
     ELSE
         ALLOCATE( oldrsol  (dimx, dimn, numsols) )
         ALLOCATE( oldisol  (dimx, dimn, numsols) )
@@ -360,7 +367,7 @@ radial_loop: do jr=1, chunk
         DEALLOCATE( oldisol )
         DEALLOCATE( oldrfdsol )
         DEALLOCATE( oldifdsol )
-        write(6, *) 'Call qualikiz from old solution'
+        print *, 'Call qualikiz from old solution'
     ENDIF
 
     sizes%dimn = dimn
@@ -437,7 +444,7 @@ radial_loop: do jr=1, chunk
     in_regular%rhomin = rhomin !/rhoscale
     in_regular%rhomax = rhomax !/rhoscale
 
-    write(6, *) 'Calling qualikiz', nions, jrho_beg - 1 + jr, runcounter_in, rank
+    print*, 'Calling qualikiz', nions, jrho_beg - 1 + jr, runcounter_in, rank, dptot(jr)
 
     if (runcounter_in == 0) then
         call qualikiz(sizes, in_regular, &

@@ -15,7 +15,7 @@ use status_inc, only: NE, TE, NI, TI, &
 
 implicit none
 
-integer, parameter :: n_scalars=20, n_inputs=55, n_outputs=15, nrho_m=80, nsm=7, nky_in=19
+integer, parameter :: n_scalars=20, n_inputs=55, n_outputs=15, nrho_m=80, nsm=7
 double precision, parameter :: c_vpol=1.d0
 double precision, parameter :: &
    k0 = 1.6022E-12, &    ! erg/ev
@@ -189,12 +189,14 @@ dims(2) = n_scalars
 dims(3) = n_inputs
 dims(4) = n_outputs
 dims(5) = ns_in
-dims(6) = nky_in
 
-scal_in_m(1) = BTOR
-scal_in_m(2) = a0_m
-scal_in_m(3:  7) = mass_in(1:5)
-scal_in_m(8: 12) = zs_in(1:5)
+scal_in_m(1) = RTOR
+scal_in_m(2) = BTOR
+scal_in_m(3) = a0_m
+scal_in_m(4:  8) = mass_in(1:5)
+scal_in_m(9: 13) = zs_in(1:5)
+scal_in_m(14) = rmaj_exp(NA1)
+scal_in_m(15) = RHO(NA1)
 
 prof_in_m(:,  1) = rho_m
 prof_in_m(:,  2) = ametr_m
@@ -282,10 +284,9 @@ enddo
 
 call qinterp(rho_m, prof_out_m(:, 1), nrho_m, RHO(1:NA1), chii_m(1:NA1)      , NA1)
 call qinterp(rho_m, prof_out_m(:, 2), nrho_m, RHO(1:NA1), chie_m(1:NA1)      , NA1)
-call qinterp(rho_m, prof_out_m(:, 3), nrho_m, RHO(1:NA1), mtori_m(1:NA1)     , NA1)
 call qinterp(rho_m, prof_out_m(:, 4), nrho_m, RHO(1:NA1), elec_pflux_m(1:NA1), NA1)
 call qinterp(rho_m, prof_out_m(:, 5), nrho_m, RHO(1:NA1), exchi_m(1:NA1)     , NA1)
-call qinterp(rho_m, prof_out_m(:, 6), gamma_max , nrho_m, RHO(1:NA1), gamma_m(1:NA1)     , NA1)
+call qinterp(rho_m, prof_out_m(:, 6), nrho_m, RHO(1:NA1), gamma_m(1:NA1)     , NA1)
 call qinterp(rho_m, prof_out_m(:, 7), nrho_m, RHO(1:NA1), omega_m(1:NA1)     , NA1)
 do jspec=1, ns_in-1
     call qinterp(rho_m, prof_out_m(7+jspec, 1:nrho_m), nrho_m, RHO(1:NA1), ion_pflux_m(jspec, 1:NA1), NA1)

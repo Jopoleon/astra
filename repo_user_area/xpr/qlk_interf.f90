@@ -392,13 +392,14 @@ radial_loop: do jradial=1, n_radial
     integration_routine_in = 1 ! 0 for NAG routines, 1 for Cubature
 
     if (verbose_in > 0) then
-        write(6, *) 'aNe', Ane_in
-        write(6, *) 'aNi', Ani_in(1, 1:nions)
-        write(6, *) 'ate', Ate_in
-        write(6, *) 'ati', Ati_in(1, 1:nions)
-        write(6, *) 'Ai', Ai_in(1, 1:nions)
-        write(6, *) 'Ni/Ne', ninorm_in(1, 1:nions)
-        write(6, *) 'check: ', Ati_in(1, 1), gammaE_in, Autor_in, Machtor_in, alphax_in(1), x_in(1)
+        print*, 'aNe', Ane_in
+        print*, 'aNi', Ani_in(1, 1:nions)
+        print*, 'ate', Ate_in
+        print*, 'ati', Ati_in(1, 1:nions)
+        print*, 'Ai', Ai_in(1, 1:nions)
+        print*, 'Ni/Ne', ninorm_in(1, 1:nions)
+        print*, 'rhos', R0_in, Ro_in(1), x_in(1), Rmin_in(1)
+        print*, 'check: ', m0, Ati_in(1, 1), gammaE_in, Autor_in, Machtor_in, alphax_in(1)
     endif
  
     write(1331, *) 'inputs,total'
@@ -558,7 +559,6 @@ radial_loop: do jradial=1, n_radial
             primi_meth_0=primi_meth_0, &
             in_newt=in_newt, runcounterin=runcounter_in)
     endif
-
 
     cftrans_out = output_meth_0%cftrans
     gam_GB_out  = output_meth_0_sep_0_GB%gam
