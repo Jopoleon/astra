@@ -21,13 +21,11 @@ type(qlk_primi_meth_0)        :: primi_meth_0
 integer, parameter :: ntheta=64, numecoefs=13, numicoefs=7, dimx=1, dimn=16, numsols=3, phys_meth=0, nspec_max=7
 
 double precision, parameter :: &
-    k0  = 1.6022E-12, &       ! erg/ev
     e0  = 4.8032E-10, &       ! elementary charge (statcoulombs)
     e00 = 1.6020e-19, &       ! elementary charge (C)
     c0  = 2.9979E+10, &       ! speed of light (cm/sec)
     mp  = 1.6726E-24, &       ! proton mass (g)
-    mpp = 1.6726E-27, &       ! proton mass (kg)
-    pi  = 3.141592653589793
+    mpp = 1.6726E-27          ! proton mass (kg)
 
 !-----------------------------------------
 

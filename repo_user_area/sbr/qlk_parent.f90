@@ -10,7 +10,7 @@ use status_inc, only: NE, TE, NI, TI, ZIM1, ZIM2, ZIM3, PBLON, PBPER, &
 
 implicit none
 
-integer, parameter :: n_scalars=20, n_inputs=55, n_outputs=15, nrho_m=80, nsm=7
+integer, parameter :: n_scalars=20, n_inputs=55, n_outputs=15, nrho_m=80, nspec_max=5
 double precision, parameter :: c_vpol=1.d0
 double precision, parameter :: &
    k0 = 1.6022E-12, &    ! erg/ev
@@ -35,10 +35,10 @@ double precision, dimension(NRD) :: gradrhosq_exp, rmaj_exp, q_exp, &
 double precision, dimension(nrho_m) :: chie, chii, exchi, elec_pflux, rho_m, &
     gamma_max, omega_max, kymax, te_m, ne_m, vpar_m, vper_m, &
     ametr_m, rmaj_m, ptot_m, q_m
-double precision, dimension(nsm) :: mass_in, zs_in
-double precision, dimension(nsm-1, nrho_m) :: dti, dni, ni_m, ti_m, ion_pflux
-double precision, dimension(nsm-2, nrho_m) :: zimp_m 
-double precision, dimension(nsm-1, NRD) :: ni_exp, ion_pflux_m
+double precision, dimension(nspec_max) :: mass_in, zs_in
+double precision, dimension(nspec_max-1, nrho_m) :: dti, dni, ni_m, ti_m, ion_pflux
+double precision, dimension(nspec_max-2, nrho_m) :: zimp_m 
+double precision, dimension(nspec_max-1, NRD) :: ni_exp, ion_pflux_m
 character(len=256) :: worker_exe
 
 worker_exe = "xpr/qlk.x"
@@ -95,7 +95,7 @@ a0_m = AMETR(NA1)
 
 ! Species cmassses and charges
 mass_in(1) = 5.4447e-4
-mass_in(2) = AMJ  ! AMJ is reference mass
+mass_in(2) = AMJ
 mass_in(3) = AIM1
 mass_in(4) = AIM2
 mass_in(5) = AIM3
@@ -112,7 +112,7 @@ chii_m  = 0.
 exchi_m = 0.
 
 ! Number of species
-ns_in = nsm
+ns_in = nspec_max
 
 ! These will be reset locally in the radial loop
 zs_in(1) = -1.
@@ -120,7 +120,6 @@ zs_in(2) = ZMJ
 zs_in(3) = MAXVAL(ZIM1(1:NA1))
 zs_in(4) = MAXVAL(ZIM2(1:NA1))
 zs_in(5) = MAXVAL(ZIM3(1:NA1))
-
 if (zs_in(5) >= 1.) then
     ns_in = 5
 else
