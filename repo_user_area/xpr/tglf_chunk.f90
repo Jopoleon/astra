@@ -35,6 +35,7 @@ use tglf_pkg, only: get_eigenvalue_spectrum_out, get_ky_spectrum_out, &
   
 implicit none
 
+integer, parameter :: nky=19, nspec_max=5
 double precision, parameter :: &
    k0   = 1.6022E-12, &       ! erg/ev
    e0   = 4.8032E-10, &       ! elementary charge (statcoulombs)
@@ -57,7 +58,7 @@ double precision, allocatable, dimension(:) :: mtori, chie, chii, exchi, elec_pf
     ametr_tg, elon_tg, tria_tg, rmaj_tg, ptot_tg, q_tg, zef_tg, pfn_tg, &
     drmin, drmaj, drho, delong, dtrian, dr, dne, dte, dq, dptot, dvpar, dvper, dv_r, drhodr
 double precision, allocatable, dimension(:, :) :: dti, dni, ni_tg, ti_tg, zimp_tg, ion_pflux
-double precision, allocatable, dimension(:) :: gamma, omega, kyspectrum, efluxspectrum, &
+double precision, dimension(nky) :: gamma, omega, kyspectrum, efluxspectrum, &
     ifluxspectrum, pfluxspectrum
 
 call MPI_Init(ierr)
@@ -74,12 +75,11 @@ endif
 
 ! Receive dimensions from parent
 call MPI_Recv(dims, 8, MPI_INTEGER, 0, 0, parent, status, ierr)
-nrho_tg   = dims(1)
-n_scalars = dims(2)
-n_inputs  = dims(3)
-n_outputs = dims(4)
-tglf_ns_in  = dims(5)
-tglf_nky_in = dims(6)
+nrho_tg    = dims(1)
+n_scalars  = dims(2)
+n_inputs   = dims(3)
+n_outputs  = dims(4)
+tglf_ns_in = dims(5)
 
 chunk = nrho_tg / nprocs  ! Safe here: we now know nrho_tg
 allocate(scalars(n_scalars))
@@ -93,13 +93,22 @@ allocate( mtori(chunk), chie(chunk), chii(chunk), exchi(chunk), elec_pflux(chunk
 allocate( drmin(chunk), drmaj(chunk), drho(chunk), delong(chunk), dtrian(chunk), &
     dr(chunk), dne(chunk), dte(chunk), dq(chunk), dptot(chunk), dvpar(chunk), &
     dvper(chunk), dv_r(chunk), drhodr(chunk) )
-allocate( dti(4, chunk), dni(4, chunk), ni_tg(4, chunk), ti_tg(4, chunk), &
-    zimp_tg(3, chunk), ion_pflux(4, chunk) )
-allocate( gamma(tglf_nky_in), omega(tglf_nky_in), kyspectrum(tglf_nky_in), efluxspectrum(tglf_nky_in), &
-    ifluxspectrum(tglf_nky_in), pfluxspectrum(tglf_nky_in) )
+allocate( dti(nspec_max-1, chunk), dni(nspec_max-1, chunk), ni_tg(nspec_max-1, chunk), &
+    ti_tg(nspec_max-1, chunk), zimp_tg(nspec_max-2, chunk), ion_pflux(nspec_max-1, chunk) )
 ! Receive TGLF input scalars and profiles from parent
-call MPI_Recv(scalars     , n_scalars, MPI_DOUBLE_PRECISION, 0, 0, parent, status, ierr)
+call MPI_Recv(scalars,       n_scalars, MPI_DOUBLE_PRECISION, 0, 0, parent, status, ierr)
 call MPI_Recv(inputs, chunk * n_inputs, MPI_DOUBLE_PRECISION, 0, 0, parent, status, ierr)
+
+! Scalars
+BTOR = scalars(2)
+a0_m = scalars(3)
+AMJ  = scalars(5)
+tglf_mass_in(1: 5) = scalars(4:  8)/AMJ
+tglf_zs_in(1: 5)   = scalars(9: 13)
+m0 = AMJ*mp          ! Ref. mass = D ion mass [g]
+a0_cm = 1.d2*a0_m    ! length scale used by GYRO, m -> cm
+
+! Profiles
 rho_tg      = inputs(:,  1)
 ametr_tg    = inputs(:,  2)
 rmaj_tg     = inputs(:,  3)
@@ -148,14 +157,7 @@ dni(2, :)   = inputs(:, 45)
 dni(3, :)   = inputs(:, 46)
 dni(4, :)   = inputs(:, 47)
 
-BTOR = scalars(2)
-a0_m = scalars(3)
-AMJ  = scalars(5)
-tglf_mass_in(1: 5) = scalars(4:  8)/AMJ
-tglf_zs_in(1: 5)   = scalars(9: 13)
-m0 = AMJ*mp          ! Ref. mass = D ion mass [g]
-a0_cm = 1.d2*a0_m    ! length scale used by GYRO, m -> cm
-
+! TGLF settings
 sat_rule = 2
 SELECT CASE(sat_rule)
 CASE(0)
@@ -191,6 +193,7 @@ tglf_ibranch_in    = -1
 tglf_nbasis_max_in = 6 ! email Angioni Aug 1st 2023, 4 old default
 tglf_nbasis_min_in = 2
 tglf_nxgrid_in     = 24 ! (24 email Gary, for ELITE), 16 old default
+tglf_nky_in        = nky
 tglf_units_in   = 'CGYRO'
 tglf_path_in = '../tglf/'
 ! Want fluxes from TGLF

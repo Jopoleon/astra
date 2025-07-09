@@ -1,4 +1,4 @@
-subroutine tglf_parent(CHI, CHE, VIN, DPH, DPL, DPR, XTB, GM1, OM1)
+subroutine tglf_parent(CHI, CHE, VIN, DPH, DPL, DPR, exchi_out, GM1, OM1)
 
 use mpi
 
@@ -15,13 +15,13 @@ use status_inc, only: NE, TE, NI, TI, &
 
 implicit none
 
-integer, parameter :: n_scalars=20, n_inputs=55, n_outputs=15, nrho_m=80, nsm=7, nky_in=19
+integer, parameter :: n_scalars=20, n_inputs=55, n_outputs=15, nrho_m=80, nspec_max=5
 double precision, parameter :: c_vpol=1.d0
 double precision, parameter :: &
    k0 = 1.6022E-12, &    ! erg/ev
    mp = 1.6726E-24       ! proton mass (g)
 
-double precision, dimension(*), intent(out) :: CHI, CHE, VIN, DPH, DPL, DPR, XTB, GM1, OM1
+double precision, dimension(*), intent(out) :: CHI, CHE, VIN, DPH, DPL, DPR, exchi_out, GM1, OM1
 
 integer :: ierr, intercomm, errcodes(100), status(MPI_STATUS_SIZE)
 integer :: jr, jrho, jr_r, jr_l, jgamma_max, jspec
@@ -40,10 +40,10 @@ double precision, dimension(NRD) :: gradrhosq_exp, rmaj_exp, q_exp, &
 double precision, dimension(nrho_m) :: mtori, chie, chii, exchi, elec_pflux, rho_m, &
     gamma_max, omega_max, kymax, te_m, ne_m, vpar_m, vper_m, vexb_m, &
     ametr_m, elon_m, tria_m, rmaj_m, ptot_m, q_m, zef_m, pfn_m
-double precision, dimension(nsm) :: mass_in, zs_in
-double precision, dimension(nsm-1, nrho_m) :: dti, dni, ni_m, ti_m, ion_pflux
-double precision, dimension(nsm-2, nrho_m) :: zimp_m 
-double precision, dimension(nsm-1, NRD) :: ni_exp, ion_pflux_m
+double precision, dimension(nspec_max) :: mass_in, zs_in
+double precision, dimension(nspec_max-1, nrho_m) :: dti, dni, ni_m, ti_m, ion_pflux
+double precision, dimension(nspec_max-2, nrho_m) :: zimp_m 
+double precision, dimension(nspec_max-1, NRD) :: ni_exp, ion_pflux_m
 character(len=256) :: worker_exe
 
 worker_exe = "xpr/tglf.x"
@@ -125,7 +125,7 @@ mtori_m = 0.
 exchi_m = 0.
 
 ! Number of species
-ns_in = nsm
+ns_in = nspec_max
 
 ! These will be reset locally in the radial loop
 zs_in(1) = -1.
@@ -133,7 +133,6 @@ zs_in(2) = ZMJ
 zs_in(3) = MAXVAL(ZIM1(1:NA1))
 zs_in(4) = MAXVAL(ZIM2(1:NA1))
 zs_in(5) = MAXVAL(ZIM3(1:NA1))
-
 if (zs_in(5) >= 1.) then
     ns_in = 5
 else
@@ -189,7 +188,6 @@ dims(2) = n_scalars
 dims(3) = n_inputs
 dims(4) = n_outputs
 dims(5) = ns_in
-dims(6) = nky_in
 
 scal_in_m(1) = RTOR
 scal_in_m(2) = BTOR
@@ -315,7 +313,7 @@ do jrho=1, NA1
     if (ns_in >= 4) then
         DPH(jrho) = ion_pflux_m(3, jrho)/a0_m/gradrhosq_exp(jrho)/(ni_exp(3, jrho)/NE(jrho))  ! 2nd imp convection
     endif
-    XTB(jrho) = exchi_m(jrho) ! turbulent e-i equipartition in MW/m^3
+    exchi_out(jrho) = exchi_m(jrho) ! turbulent e-i equipartition in MW/m^3
     T0  = 1E3 *TE(jrho)       ! temperature scale used by GYRO
     cs0 = SQRT(k0*T0/m0)      ! thermal velocity unit cm/sec
     GM1(jrho) = gamma_m(jrho)*(cs0/a0_cm)
