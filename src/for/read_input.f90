@@ -452,8 +452,8 @@ endif
 if (IFDFVX(KAWALL) < 0 .and. (AWALL < AB .or. AWALL > 1.2*AB)) AWALL = AB
 
 if (ABC > AB) then
-    write(*, *) '>>> Warning: ABC cannot exceed AB. Setting ABC = AB'
-    if (IFDFVX(KABC) < 1) ABC = AB
+    err_msg = '>>> Error: ABC cannot exceed AB. Check your file exp/'//TRIM(exp_file)
+    call astra_stop(TRIM(err_msg))
 endif
 
 if (AWALL > 1.2*AB .or. AWALL > RTOR) then
