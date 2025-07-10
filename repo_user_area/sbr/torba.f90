@@ -8,9 +8,9 @@ subroutine TORBA(power_MW_in)
 use parameter_inc, only: NRD
 use const_inc, only: NA1, RTOR, BTOR, TIME, ROC, SGNIP, SGNBT
 use status_inc, only: TE, NE, FP, XRHO, ZEF, MU, ELON, SHif , IPOL, &
-   AMETR, VOLUM, PEECR, CUECR, rho_pol
+   AMETR, VOLUM, PEECR, CUECR, AREAT, rho_pol, FP_NORM
 use outcmn_inc, only: AWD, nml_file
-use numerical_tools, only: qinterp
+use numerical_tools, only: qinterp, integr
 use parameters_a2equil, only : equil_now, GP2
 
 implicit none
@@ -49,9 +49,10 @@ double precision, dimension(5*ndat) :: t2data
 double precision, dimension(3*npnt) :: t2ndata
 double precision, dimension(NA1) :: ECR, CCD, total_int
 double precision, dimension(npnt) :: ctorb, rtorb, ptorb
-double precision :: Rmin, Rmax, zmin, zmax, dr, dz, drho_interp
+double precision :: Rmin, Rmax, zmin, zmax, dr, dz, drho_eq, drho_interp
 double precision, dimension(:), allocatable :: Rrect, Zrect, ggg, B_t
 double precision, dimension(:, :), allocatable :: PSI_rect, B_Rrect, B_Zrect, B_Trect
+double precision, dimension(:), allocatable :: pf_eq, rho_eq, ffp_eq
 double precision, dimension(:), allocatable :: rho_interp, te_interp, ne_interp
 
 double precision :: ecrh_int, eccd_int, psi_sep, psi_axis
@@ -101,6 +102,7 @@ xrmaj = RTOR*100.
 
 nrho_surf = SIZE(equil_now%coord_sys%position%r, 1)
 nthe_surf = SIZE(equil_now%coord_sys%position%r, 2)
+allocate(pf_eq(nrho_surf), rho_eq(nrho_surf), ffp_eq(nrho_surf))
 
 ! From polar to rectangluar grid
 
@@ -113,9 +115,15 @@ dz = (zmax - zmin)/(n_Zrect - 1.d0)
 Rrect = (/ (Rmin + dr*(i - 1.d0), i=1, n_Rrect) /)
 zrect = (/ (zmin + dz*(i - 1.d0), i=1, n_Zrect) /)
 
+drho_eq = 1./(nrho_surf - 1.d0)
+rho_eq = (/ (drho_eq*(i - 1.d0), i=1, nrho_surf) /)
+
+call qinterp(XRHO(1:NA1), IPOL(1:NA1)*RTOR*BTOR, NA1, rho_eq, ffp_eq, nrho_surf)
+call qinterp(XRHO(1:NA1), FP  (1:NA1)          , NA1, rho_eq, pf_eq , nrho_surf)
+
 write(6, *) 'TORBEAM surf dims:', nthe_surf, nrho_surf
 eqdata = 0.d0
-call ctr2rz_b(nrho_surf, nthe_surf, equil_now%profiles_1d%psi, equil_now%profiles_1d%F_dia, &
+call ctr2rz_b(nrho_surf, nthe_surf, pf_eq, ffp_eq, &
     equil_now%coord_sys%position%r, equil_now%coord_sys%position%z, n_Rrect, n_Zrect, Rrect, zrect,  &
     PSI_rect, B_Rrect, B_Zrect, B_Trect)
 eqdata(1) = FP(NA1)
@@ -281,9 +289,9 @@ if (dump_flag) then
 
     fort_name = 'tb_magn_t' // TRIM(time_str) // 's.dat'
     open(62, file=TRIM(fort_name))
-    write(62, '(e13.5)') equil_now%profiles_1d%rho_tor
-    write(62, '(e13.5)') equil_now%profiles_1d%F_dia
-    write(62, '(e13.5)') equil_now%profiles_1d%psi
+    write(62, '(e13.5)') rho_eq
+    write(62, '(e13.5)') ffp_eq
+    write(62, '(e13.5)') pf_eq
     close(62)
 endif 
 
