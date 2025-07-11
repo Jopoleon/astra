@@ -26,7 +26,7 @@ double precision, dimension(*), intent(out) :: CHI, CHE, VIN, DPH, DPL, DPR, exc
 integer :: ierr, intercomm, errcodes(100), status(MPI_STATUS_SIZE)
 integer :: jr, jrho, jr_r, jr_l, jgamma_max, jspec
 integer :: ns_in              ! Number of species, including electrons
-integer :: i, i1, i2, chunk, nprocs, nworkers, dims(8)
+integer :: i, i1, i2, chunk, nworkers, dims(8)
 
 double precision, dimension(n_scalars) :: scal_in_m
 double precision, dimension(nrho_m, n_inputs ) :: prof_in_m
@@ -247,12 +247,11 @@ prof_in_m(:, 47) = dni(4, :)
 ! Send MPI jobs
 !--------------
 
-call MPI_Comm_size(MPI_COMM_WORLD, nprocs, ierr)
-
 nworkers = 40  ! A submultiple of nrho_m!
 chunk = nrho_m / nworkers
 
 call MPI_Comm_spawn(worker_exe, MPI_ARGV_NULL, nworkers, MPI_INFO_NULL, 0, MPI_COMM_SELF, intercomm, errcodes, ierr)
+call MPI_Barrier(intercomm, ierr)
 print *, "MPI workers = ", nworkers, nrho_m
 
 ! Send dimensions and data to workers
@@ -269,6 +268,7 @@ do i=0, nworkers-1
     i2 = (i + 1) * chunk
     call MPI_Send(prof_in_m(i1:i2, :), chunk * n_inputs, MPI_DOUBLE_PRECISION, i, 0, intercomm, ierr)
 enddo
+call MPI_Barrier(intercomm, ierr)  ! Optional: ensure child finished before next step
 
 ! Receive results from each worker
 do i=0, nworkers-1
@@ -276,6 +276,7 @@ do i=0, nworkers-1
     i2 = (i + 1) * chunk
     call MPI_Recv(prof_out_m(i1:i2, :), chunk * n_outputs, MPI_DOUBLE_PRECISION, i, 1, intercomm, status, ierr)
 enddo
+call MPI_Barrier(intercomm, ierr)  ! Optional: ensure child finished before next step
 
 ! Interpolate back to ASTRA radial grid
 

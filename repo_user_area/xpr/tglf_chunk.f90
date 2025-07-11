@@ -65,6 +65,7 @@ call MPI_Init(ierr)
 call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
 call MPI_Comm_size(MPI_COMM_WORLD, nprocs, ierr)
 call MPI_Comm_get_parent(parent, ierr)
+call MPI_Barrier(parent, ierr)
 
 if (parent == MPI_COMM_NULL) then
     if (rank == 0) then
@@ -84,6 +85,11 @@ tglf_ns_in = dims(5)
 chunk = nrho_tg / nprocs  ! Safe here: we now know nrho_tg
 allocate(scalars(n_scalars))
 allocate(inputs(chunk, n_inputs))
+! Receive TGLF input scalars and profiles from parent
+call MPI_Recv(scalars,       n_scalars, MPI_DOUBLE_PRECISION, 0, 0, parent, status, ierr)
+call MPI_Recv(inputs, chunk * n_inputs, MPI_DOUBLE_PRECISION, 0, 0, parent, status, ierr)
+call MPI_Barrier(parent, ierr)
+
 allocate(output(chunk, n_outputs))
 allocate( mtori(chunk), chie(chunk), chii(chunk), exchi(chunk), elec_pflux(chunk), &
     rho_tg(chunk), gamma_max(chunk), omega_max(chunk), kymax(chunk), &
@@ -95,9 +101,6 @@ allocate( drmin(chunk), drmaj(chunk), drho(chunk), delong(chunk), dtrian(chunk),
     dvper(chunk), dv_r(chunk), drhodr(chunk) )
 allocate( dti(nspec_max-1, chunk), dni(nspec_max-1, chunk), ni_tg(nspec_max-1, chunk), &
     ti_tg(nspec_max-1, chunk), zimp_tg(nspec_max-2, chunk), ion_pflux(nspec_max-1, chunk) )
-! Receive TGLF input scalars and profiles from parent
-call MPI_Recv(scalars,       n_scalars, MPI_DOUBLE_PRECISION, 0, 0, parent, status, ierr)
-call MPI_Recv(inputs, chunk * n_inputs, MPI_DOUBLE_PRECISION, 0, 0, parent, status, ierr)
 
 ! Scalars
 BTOR = scalars(2)
@@ -419,6 +422,7 @@ enddo
 
 
 call MPI_Send(output, chunk * n_outputs, MPI_DOUBLE_PRECISION, 0, 1, parent, ierr)
+call MPI_Barrier(parent, ierr)
 call MPI_Finalize(ierr)
 
 end program tglf_chunk
