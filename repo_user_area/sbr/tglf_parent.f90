@@ -15,7 +15,7 @@ use status_inc, only: NE, TE, NI, TI, &
 
 implicit none
 
-integer, parameter :: n_scalars=20, n_inputs=55, n_outputs=15, nrho_m=80, nspec_max=5
+integer, parameter :: n_scalars=13, n_inputs=55, n_outputs=15, n_dims=8, nrho_m=80, nspec_max=5
 double precision, parameter :: c_vpol=1.d0
 double precision, parameter :: &
    k0 = 1.6022E-12, &    ! erg/ev
@@ -26,10 +26,9 @@ double precision, dimension(*), intent(out) :: CHI, CHE, VIN, DPH, DPL, DPR, exc
 integer :: ierr, info, intercomm, errcodes(100), status(MPI_STATUS_SIZE)
 integer :: jr, jrho, jr_r, jr_l, jgamma_max, jspec
 integer :: ns_in              ! Number of species, including electrons
-integer :: i, i1, i2, chunk, nworkers, dims(8)
+integer :: i, j, k, i1, i2, chunk, nworkers, dims(n_dims)
 
 double precision, dimension(n_scalars) :: scal_in_m
-double precision, dimension(nrho_m, n_inputs ) :: prof_in_m
 double precision, dimension(nrho_m, n_outputs) :: prof_out_m
 double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, T0, m0, a0_m, a0_cm, cs0
 double precision, dimension(nrho_m) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
@@ -44,6 +43,7 @@ double precision, dimension(nspec_max) :: mass_in, zs_in
 double precision, dimension(nspec_max-1, nrho_m) :: dti, dni, ni_m, ti_m, ion_pflux
 double precision, dimension(nspec_max-2, nrho_m) :: zimp_m 
 double precision, dimension(nspec_max-1, NRD) :: ni_exp, ion_pflux_m
+double precision, allocatable, dimension(:) :: send_buffer, recv_buffer
 character(len=256) :: worker_exe
 
 worker_exe = "xpr/tglf.x"
@@ -195,60 +195,13 @@ scal_in_m(3) = a0_m
 scal_in_m(4:  8) = mass_in(1:5)
 scal_in_m(9: 13) = zs_in(1:5)
 
-prof_in_m(:,  1) = rho_m
-prof_in_m(:,  2) = ametr_m
-prof_in_m(:,  3) = rmaj_m
-prof_in_m(:,  4) = elon_m
-prof_in_m(:,  5) = tria_m
-prof_in_m(:,  6) = q_m
-prof_in_m(:,  7) = pfn_m
-prof_in_m(:,  8) = ptot_m
-prof_in_m(:,  9) = ne_m
-prof_in_m(:, 10) = te_m
-prof_in_m(:, 11) = zef_m
-prof_in_m(:, 12) = vpar_m
-prof_in_m(:, 13) = vper_m
-prof_in_m(:, 14) = vexb_m
-prof_in_m(:, 15) = ti_m(1, :)
-prof_in_m(:, 16) = ti_m(2, :)
-prof_in_m(:, 17) = ti_m(3, :)
-prof_in_m(:, 18) = ti_m(4, :)
-prof_in_m(:, 19) = ni_m(1, :)
-prof_in_m(:, 20) = ni_m(2, :)
-prof_in_m(:, 21) = ni_m(3, :)
-prof_in_m(:, 22) = ni_m(4, :)
-prof_in_m(:, 23) = zimp_m(1, :)
-prof_in_m(:, 24) = zimp_m(2, :)
-prof_in_m(:, 25) = zimp_m(3, :)
-prof_in_m(:, 26) = drmin
-prof_in_m(:, 27) = drmaj
-prof_in_m(:, 28) = drho
-prof_in_m(:, 29) = delong
-prof_in_m(:, 30) = dtrian
-prof_in_m(:, 31) = dptot
-prof_in_m(:, 32) = dte
-prof_in_m(:, 33) = dne
-prof_in_m(:, 34) = dq
-
-prof_in_m(:, 36) = dvper
-prof_in_m(:, 37) = dv_r
-prof_in_m(:, 38) = dr
-prof_in_m(:, 39) = drhodr
-prof_in_m(:, 40) = dti(1, :)
-prof_in_m(:, 41) = dti(2, :)
-prof_in_m(:, 42) = dti(3, :)
-prof_in_m(:, 43) = dti(4, :)
-prof_in_m(:, 44) = dni(1, :)
-prof_in_m(:, 45) = dni(2, :)
-prof_in_m(:, 46) = dni(3, :)
-prof_in_m(:, 47) = dni(4, :)
-
 !--------------
 ! Send MPI jobs
 !--------------
 
 nworkers = 40  ! A submultiple of nrho_m!
 chunk = nrho_m / nworkers
+allocate(send_buffer(chunk*n_inputs), recv_buffer(chunk*n_outputs))
 
 call MPI_Info_create(info, ierr)
 call MPI_Info_set(info, "host", "localhost", ierr)
@@ -263,9 +216,53 @@ do i=0, nworkers-1
     i2 = (i + 1) * chunk
     dims(7) = i1
     dims(8) = i2
-    call MPI_Send(dims, SIZE(dims), MPI_INTEGER, i, 0, intercomm, ierr)
+
+    k = 0
+    send_buffer(k+1:k+chunk) = rho_m(i1:i2);           k = k + chunk
+    send_buffer(k+1:k+chunk) = ametr_m(i1:i2);         k = k + chunk
+    send_buffer(k+1:k+chunk) = rmaj_m(i1:i2);          k = k + chunk
+    send_buffer(k+1:k+chunk) = elon_m(i1:i2);          k = k + chunk
+    send_buffer(k+1:k+chunk) = tria_m(i1:i2);          k = k + chunk
+    send_buffer(k+1:k+chunk) = q_m(i1:i2);             k = k + chunk
+    send_buffer(k+1:k+chunk) = pfn_m(i1:i2);           k = k + chunk
+    send_buffer(k+1:k+chunk) = ptot_m(i1:i2);          k = k + chunk
+    send_buffer(k+1:k+chunk) = ne_m(i1:i2);            k = k + chunk
+    send_buffer(k+1:k+chunk) = te_m(i1:i2);            k = k + chunk
+    send_buffer(k+1:k+chunk) = zef_m(i1:i2);           k = k + chunk
+    send_buffer(k+1:k+chunk) = vpar_m(i1:i2);          k = k + chunk
+    send_buffer(k+1:k+chunk) = vper_m(i1:i2);          k = k + chunk
+    send_buffer(k+1:k+chunk) = vexb_m(i1:i2);          k = k + chunk
+    do j=1, 4
+        send_buffer(k+1:k+chunk) = ti_m(j, i1:i2);     k = k + chunk
+    enddo
+    do j=1, 4
+        send_buffer(k+1:k+chunk) = ni_m(j, i1:i2);     k = k + chunk
+    enddo
+    do j=1, 3
+        send_buffer(k+1:k+chunk) = zimp_m(j, i1:i2);   k = k + chunk
+    enddo
+    send_buffer(k+1:k+chunk) = drmin(i1:i2);           k = k + chunk
+    send_buffer(k+1:k+chunk) = drmaj(i1:i2);           k = k + chunk
+    send_buffer(k+1:k+chunk) = drho(i1:i2);            k = k + chunk
+    send_buffer(k+1:k+chunk) = delong(i1:i2);          k = k + chunk
+    send_buffer(k+1:k+chunk) = dtrian(i1:i2);          k = k + chunk
+    send_buffer(k+1:k+chunk) = dptot(i1:i2);           k = k + chunk
+    send_buffer(k+1:k+chunk) = dte(i1:i2);             k = k + chunk
+    send_buffer(k+1:k+chunk) = dne(i1:i2);             k = k + chunk
+    send_buffer(k+1:k+chunk) = dq(i1:i2);              k = k + chunk
+    send_buffer(k+1:k+chunk) = dvper(i1:i2);           k = k + chunk
+    send_buffer(k+1:k+chunk) = dv_r(i1:i2);            k = k + chunk
+    send_buffer(k+1:k+chunk) = dr(i1:i2);              k = k + chunk
+    send_buffer(k+1:k+chunk) = drhodr(i1:i2);          k = k + chunk
+    do j=1, 4
+        send_buffer(k+1:k+chunk) = dti(j, i1:i2);      k = k + chunk
+    enddo
+    do j=1, 4
+        send_buffer(k+1:k+chunk) = dni(j, i1:i2);      k = k + chunk
+    enddo
+    call MPI_Send(dims, n_dims, MPI_INTEGER, i, 0, intercomm, ierr)
     call MPI_Send(scal_in_m, n_scalars, MPI_DOUBLE_PRECISION, i, 0, intercomm, ierr)
-    call MPI_Send(prof_in_m(i1:i2, :), chunk * n_inputs, MPI_DOUBLE_PRECISION, i, 0, intercomm, ierr)
+    call MPI_Send(send_buffer, chunk * n_inputs, MPI_DOUBLE_PRECISION, i, 0, intercomm, ierr)
 enddo
 call MPI_Barrier(intercomm, ierr)  ! Optional: ensure child finished before next step
 
@@ -273,7 +270,8 @@ call MPI_Barrier(intercomm, ierr)  ! Optional: ensure child finished before next
 do i=0, nworkers-1
     i1 = i * chunk + 1
     i2 = (i + 1) * chunk
-    call MPI_Recv(prof_out_m(i1:i2, :), chunk * n_outputs, MPI_DOUBLE_PRECISION, i, 1, intercomm, status, ierr)
+    call MPI_Recv(recv_buffer, chunk * n_outputs, MPI_DOUBLE_PRECISION, i, 1, intercomm, status, ierr)
+    prof_out_m(i1:i2, :)= reshape(recv_buffer, [chunk, n_outputs])
 enddo
 call MPI_Barrier(intercomm, ierr)  ! Optional: ensure child finished before next step
 

@@ -35,7 +35,7 @@ use tglf_pkg, only: get_eigenvalue_spectrum_out, get_ky_spectrum_out, &
   
 implicit none
 
-integer, parameter :: nky=19, nspec_max=5
+integer, parameter :: nky=19, nspec_max=5, n_dims=8
 double precision, parameter :: &
    k0   = 1.6022E-12, &       ! erg/ev
    e0   = 4.8032E-10, &       ! elementary charge (statcoulombs)
@@ -45,14 +45,14 @@ double precision, parameter :: &
    mpp  = 1.6726E-27, &       ! proton mass (kg)
    pi   = 3.141592653589793
 
-integer :: ierr, parent, rank, status(MPI_STATUS_SIZE)
-integer :: chunk, nprocs, nrho_tg, n_inputs, n_outputs, n_scalars, dims(8)
+integer :: ierr, parent, rank, status(MPI_STATUS_SIZE), i1, i2, j, k
+integer :: chunk, nprocs, nrho_tg, n_inputs, n_outputs, n_scalars, dims(n_dims)
 integer :: sat_rule, jr, jgamma_max, jspec, kyloop
 double precision :: Bunit_gauss, Bunit_T, cs0, cs00, rhos0, omega0, rhostar2, lnlamda, taue, cexb
 double precision :: a0_cm, a0_m, T0, N0, m0, rmin_tg, drho_cs, drho_nt, nt_cs
 double precision :: AMJ, BTOR
 double precision :: ion_eflux, ion_mflux
-double precision, allocatable :: inputs(:, :), output(:, :), scalars(:)
+double precision, allocatable, dimension(:) :: inputs, output, scalars
 double precision, allocatable, dimension(:) :: mtori, chie, chii, exchi, elec_pflux, rho_tg, &
     gamma_max, omega_max, kymax, te_tg, ne_tg, vpar_tg, vper_tg, vexb_tg, &
     ametr_tg, elon_tg, tria_tg, rmaj_tg, ptot_tg, q_tg, zef_tg, pfn_tg, &
@@ -75,22 +75,21 @@ if (parent == MPI_COMM_NULL) then
 endif
 
 ! Receive dimensions from parent
-call MPI_Recv(dims, 8, MPI_INTEGER, 0, 0, parent, status, ierr)
-nrho_tg    = dims(1)
-n_scalars  = dims(2)
-n_inputs   = dims(3)
-n_outputs  = dims(4)
-tglf_ns_in = dims(5)
-
-chunk = nrho_tg / nprocs  ! Safe here: we now know nrho_tg
+call MPI_Recv(dims, n_dims, MPI_INTEGER, 0, 0, parent, status, ierr)
+n_scalars = dims(2)
+n_inputs  = dims(3)
+n_outputs = dims(4)
+i1 = dims(7)
+i2 = dims(8)
+chunk = i2 + 1 - i1
 allocate(scalars(n_scalars))
-allocate(inputs(chunk, n_inputs))
+allocate(inputs(chunk*n_inputs))
 ! Receive TGLF input scalars and profiles from parent
 call MPI_Recv(scalars,       n_scalars, MPI_DOUBLE_PRECISION, 0, 0, parent, status, ierr)
 call MPI_Recv(inputs, chunk * n_inputs, MPI_DOUBLE_PRECISION, 0, 0, parent, status, ierr)
 call MPI_Barrier(parent, ierr)
 
-allocate(output(chunk, n_outputs))
+allocate(output(chunk*n_outputs))
 allocate( mtori(chunk), chie(chunk), chii(chunk), exchi(chunk), elec_pflux(chunk), &
     rho_tg(chunk), gamma_max(chunk), omega_max(chunk), kymax(chunk), &
     te_tg(chunk), ne_tg(chunk), vpar_tg(chunk), vper_tg(chunk), vexb_tg(chunk), &
@@ -102,6 +101,8 @@ allocate( drmin(chunk), drmaj(chunk), drho(chunk), delong(chunk), dtrian(chunk),
 allocate( dti(nspec_max-1, chunk), dni(nspec_max-1, chunk), ni_tg(nspec_max-1, chunk), &
     ti_tg(nspec_max-1, chunk), zimp_tg(nspec_max-2, chunk), ion_pflux(nspec_max-1, chunk) )
 
+tglf_ns_in = dims(5)
+
 ! Scalars
 BTOR = scalars(2)
 a0_m = scalars(3)
@@ -112,53 +113,49 @@ m0 = AMJ*mp          ! Ref. mass = D ion mass [g]
 a0_cm = 1.d2*a0_m    ! length scale used by GYRO, m -> cm
 
 ! Profiles
-rho_tg      = inputs(:,  1)
-ametr_tg    = inputs(:,  2)
-rmaj_tg     = inputs(:,  3)
-elon_tg     = inputs(:,  4)
-tria_tg     = inputs(:,  5)
-q_tg        = inputs(:,  6)
-pfn_tg      = inputs(:,  7)
-ptot_tg     = inputs(:,  8)
-ne_tg       = inputs(:,  9)
-te_tg       = inputs(:, 10)
-zef_tg      = inputs(:, 11)
-vpar_tg     = inputs(:, 12)
-vper_tg     = inputs(:, 13)
-vexb_tg     = inputs(:, 14)
-ti_tg(1, :) = inputs(:, 15)
-ti_tg(2, :) = inputs(:, 16)
-ti_tg(3, :) = inputs(:, 17)
-ti_tg(4, :) = inputs(:, 18)
-ni_tg(1, :) = inputs(:, 19)
-ni_tg(2, :) = inputs(:, 20)
-ni_tg(3, :) = inputs(:, 21)
-ni_tg(4, :) = inputs(:, 22)
-zimp_tg(1, :) = inputs(:, 23)
-zimp_tg(2, :) = inputs(:, 24)
-zimp_tg(3, :) = inputs(:, 25)
-drmin       = inputs(:, 26)
-drmaj       = inputs(:, 27)
-drho        = inputs(:, 28)
-delong      = inputs(:, 29)
-dtrian      = inputs(:, 30)
-dptot       = inputs(:, 31)
-dte         = inputs(:, 32)
-dne         = inputs(:, 33)
-dq          = inputs(:, 34)
-
-dvper       = inputs(:, 36)
-dv_r        = inputs(:, 37)
-dr          = inputs(:, 38)
-drhodr      = inputs(:, 39)
-dti(1, :)   = inputs(:, 40)
-dti(2, :)   = inputs(:, 41)
-dti(3, :)   = inputs(:, 42)
-dti(4, :)   = inputs(:, 43)
-dni(1, :)   = inputs(:, 44)
-dni(2, :)   = inputs(:, 45)
-dni(3, :)   = inputs(:, 46)
-dni(4, :)   = inputs(:, 47)
+k = 0
+rho_tg      = inputs(k+1:k+chunk);       k = k + chunk
+ametr_tg    = inputs(k+1:k+chunk);       k = k + chunk
+rmaj_tg     = inputs(k+1:k+chunk);       k = k + chunk
+elon_tg     = inputs(k+1:k+chunk);       k = k + chunk
+tria_tg     = inputs(k+1:k+chunk);       k = k + chunk
+q_tg        = inputs(k+1:k+chunk);       k = k + chunk
+pfn_tg      = inputs(k+1:k+chunk);       k = k + chunk
+ptot_tg     = inputs(k+1:k+chunk);       k = k + chunk
+ne_tg       = inputs(k+1:k+chunk);       k = k + chunk
+te_tg       = inputs(k+1:k+chunk);       k = k + chunk
+zef_tg      = inputs(k+1:k+chunk);       k = k + chunk
+vpar_tg     = inputs(k+1:k+chunk);       k = k + chunk
+vper_tg     = inputs(k+1:k+chunk);       k = k + chunk
+vexb_tg     = inputs(k+1:k+chunk);       k = k + chunk
+do j=1, 4
+    ti_tg(j, :) = inputs(k+1:k+chunk);   k = k + chunk
+enddo
+do j=1, 4
+    ni_tg(j, :) = inputs(k+1:k+chunk);   k = k + chunk
+enddo
+do j=1, 3
+    zimp_tg(j, :) = inputs(k+1:k+chunk); k = k + chunk
+enddo
+drmin    = inputs(k+1:k+chunk);          k = k + chunk
+drmaj    = inputs(k+1:k+chunk);          k = k + chunk
+drho     = inputs(k+1:k+chunk);          k = k + chunk
+delong   = inputs(k+1:k+chunk);          k = k + chunk
+dtrian   = inputs(k+1:k+chunk);          k = k + chunk
+dptot    = inputs(k+1:k+chunk);          k = k + chunk
+dte      = inputs(k+1:k+chunk);          k = k + chunk
+dne      = inputs(k+1:k+chunk);          k = k + chunk
+dq       = inputs(k+1:k+chunk);          k = k + chunk
+dvper    = inputs(k+1:k+chunk);          k = k + chunk
+dv_r     = inputs(k+1:k+chunk);          k = k + chunk
+dr       = inputs(k+1:k+chunk);          k = k + chunk
+drhodr   = inputs(k+1:k+chunk);          k = k + chunk
+do j=1, 4
+    dti(j, :) = inputs(k+1:k+chunk);     k = k + chunk
+enddo
+do j=1, 4
+    dni(j, :) = inputs(k+1:k+chunk);     k = k + chunk
+enddo
 
 ! TGLF settings
 sat_rule = 2
@@ -409,15 +406,15 @@ radial_loop: do jr=1, chunk
 enddo radial_loop
 
 ! Simulated TGLF computation:
-output(:, 1) = chii
-output(:, 2) = chie
-output(:, 3) = mtori
-output(:, 4) = elec_pflux
-output(:, 5) = exchi
-output(:, 6) = gamma_max
-output(:, 7) = omega_max
+output(        1:   chunk) = chii
+output(  chunk+1: 2*chunk) = chie
+output(2*chunk+1: 3*chunk) = mtori
+output(3*chunk+1: 4*chunk) = elec_pflux
+output(4*chunk+1: 5*chunk) = exchi
+output(5*chunk+1: 6*chunk) = gamma_max
+output(6*chunk+1: 7*chunk) = omega_max
 do jspec=1, tglf_ns_in-1
-    output(:, 7+jspec) = ion_pflux(jspec, :)
+    output((6+jspec)*chunk+1: (7+jspec)*chunk) = ion_pflux(jspec, :)
 enddo
 
 call MPI_Send(output, chunk * n_outputs, MPI_DOUBLE_PRECISION, 0, 1, parent, ierr)
