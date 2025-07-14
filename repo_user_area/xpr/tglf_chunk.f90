@@ -46,7 +46,7 @@ double precision, parameter :: &
    pi   = 3.141592653589793
 
 integer :: ierr, parent, rank, status(MPI_STATUS_SIZE), i1, i2, j, k
-integer :: chunk, nprocs, nrho_tg, n_inputs, n_outputs, n_scalars, dims(n_dims)
+integer :: chunk, nprocs, n_inputs, n_outputs, n_scalars, dims(n_dims)
 integer :: sat_rule, jr, jgamma_max, jspec, kyloop
 double precision :: Bunit_gauss, Bunit_T, cs0, cs00, rhos0, omega0, rhostar2, lnlamda, taue, cexb
 double precision :: a0_cm, a0_m, T0, N0, m0, rmin_tg, drho_cs, drho_nt, nt_cs
@@ -65,7 +65,6 @@ call MPI_Init(ierr)
 call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
 call MPI_Comm_size(MPI_COMM_WORLD, nprocs, ierr)
 call MPI_Comm_get_parent(parent, ierr)
-call MPI_Barrier(parent, ierr)
 
 if (parent == MPI_COMM_NULL) then
     if (rank == 0) then
@@ -75,7 +74,8 @@ if (parent == MPI_COMM_NULL) then
 endif
 
 ! Receive dimensions from parent
-call MPI_Recv(dims, n_dims, MPI_INTEGER, 0, 0, parent, status, ierr)
+dims = 0
+call MPI_Recv(dims, n_dims, MPI_INTEGER, 0, 100+rank, parent, status, ierr)
 n_scalars = dims(2)
 n_inputs  = dims(3)
 n_outputs = dims(4)
@@ -84,9 +84,12 @@ i2 = dims(8)
 chunk = i2 + 1 - i1
 allocate(scalars(n_scalars))
 allocate(inputs(chunk*n_inputs))
+scalars = 0.d0
+inputs = 0.d0
+
 ! Receive TGLF input scalars and profiles from parent
-call MPI_Recv(scalars,       n_scalars, MPI_DOUBLE_PRECISION, 0, 0, parent, status, ierr)
-call MPI_Recv(inputs, chunk * n_inputs, MPI_DOUBLE_PRECISION, 0, 0, parent, status, ierr)
+call MPI_Recv(scalars,       n_scalars, MPI_DOUBLE_PRECISION, 0, 101+rank, parent, status, ierr)
+call MPI_Recv(inputs, chunk * n_inputs, MPI_DOUBLE_PRECISION, 0, 102+rank, parent, status, ierr)
 call MPI_Barrier(parent, ierr)
 
 allocate(output(chunk*n_outputs))
@@ -102,6 +105,17 @@ allocate( dti(nspec_max-1, chunk), dni(nspec_max-1, chunk), ni_tg(nspec_max-1, c
     ti_tg(nspec_max-1, chunk), zimp_tg(nspec_max-2, chunk), ion_pflux(nspec_max-1, chunk) )
 
 tglf_ns_in = dims(5)
+
+! Initialise to zero for non-calculated species
+
+tglf_zs_in   = 0.
+tglf_as_in   = 0.
+tglf_mass_in = 0.
+tglf_taus_in = 0.
+tglf_rlns_in = 0.
+tglf_rlts_in = 0.
+tglf_vpar_in = 0.
+tglf_vpar_shear_in = 0.
 
 ! Scalars
 BTOR = scalars(2)
@@ -195,7 +209,7 @@ tglf_nbasis_min_in = 2
 tglf_nxgrid_in     = 24 ! (24 email Gary, for ELITE), 16 old default
 tglf_nky_in        = nky
 tglf_units_in   = 'CGYRO'
-tglf_path_in = '../tglf/'
+tglf_path_in = 'tglf/'
 ! Want fluxes from TGLF
 tglf_use_transport_model_in = .true.
 tglf_use_ave_ion_grid_in    = .true. ! Email Angioni Aug 1st 2023
@@ -240,16 +254,6 @@ tglf_vpar_shear_model_in = 1
 
 tglf_b_model_sa_in  = 1
 tglf_ft_model_sa_in = 1
-
-! local field averages
-! Initialise to zero for non-calculated species
-
-tglf_as_in   = 0.
-tglf_taus_in = 0.
-tglf_rlns_in = 0.
-tglf_rlts_in = 0.
-tglf_vpar_in = 0.
-tglf_vpar_shear_in = 0.
 
 radial_loop: do jr=1, chunk
 
@@ -370,7 +374,7 @@ radial_loop: do jr=1, chunk
 
 ! Settings
     if (tglf_dump_flag_in) then
-        write(file_dump_local, '(A11, I0)') 'input.tglf_', jr
+        write(file_dump_local, '(A11, I0)') 'input.tglf_', jr + i1 
     endif
 ! -----------------------
     call tglf_run
@@ -406,6 +410,7 @@ radial_loop: do jr=1, chunk
 enddo radial_loop
 
 ! Simulated TGLF computation:
+output = 0.d0
 output(        1:   chunk) = chii
 output(  chunk+1: 2*chunk) = chie
 output(2*chunk+1: 3*chunk) = mtori
@@ -417,7 +422,7 @@ do jspec=1, tglf_ns_in-1
     output((6+jspec)*chunk+1: (7+jspec)*chunk) = ion_pflux(jspec, :)
 enddo
 
-call MPI_Send(output, chunk * n_outputs, MPI_DOUBLE_PRECISION, 0, 1, parent, ierr)
+call MPI_Send(output, chunk * n_outputs, MPI_DOUBLE_PRECISION, 0, 103+rank, parent, ierr)
 call MPI_Barrier(parent, ierr)
 call MPI_Finalize(ierr)
 

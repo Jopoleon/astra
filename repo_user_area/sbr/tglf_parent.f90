@@ -199,23 +199,25 @@ scal_in_m(9: 13) = zs_in(1:5)
 ! Send MPI jobs
 !--------------
 
-nworkers = 40  ! A submultiple of nrho_m!
+nworkers = 80  ! A submultiple of nrho_m!
 chunk = nrho_m / nworkers
+print *, "MPI workers = ", nworkers, nrho_m, chunk*n_inputs
 allocate(send_buffer(chunk*n_inputs), recv_buffer(chunk*n_outputs))
 
 call MPI_Info_create(info, ierr)
 call MPI_Info_set(info, "host", "localhost", ierr)
 call MPI_Info_set(info, "oversubscribe", "false", ierr)
 call MPI_Comm_spawn(worker_exe, MPI_ARGV_NULL, nworkers, MPI_INFO_NULL, 0, MPI_COMM_SELF, intercomm, errcodes, ierr)
-call MPI_Barrier(intercomm, ierr)
-print *, "MPI workers = ", nworkers, nrho_m
 
 ! Send dimensions and data to workers
 do i=0, nworkers-1
+    send_buffer = 0.d0
     i1 = i * chunk + 1
     i2 = (i + 1) * chunk
     dims(7) = i1
     dims(8) = i2
+    call MPI_Send(dims, n_dims, MPI_INTEGER, i, 100 + i, intercomm, ierr)
+    call MPI_Send(scal_in_m, n_scalars, MPI_DOUBLE_PRECISION, i, 101 + i, intercomm, ierr)
 
     k = 0
     send_buffer(k+1:k+chunk) = rho_m(i1:i2);           k = k + chunk
@@ -260,17 +262,16 @@ do i=0, nworkers-1
     do j=1, 4
         send_buffer(k+1:k+chunk) = dni(j, i1:i2);      k = k + chunk
     enddo
-    call MPI_Send(dims, n_dims, MPI_INTEGER, i, 0, intercomm, ierr)
-    call MPI_Send(scal_in_m, n_scalars, MPI_DOUBLE_PRECISION, i, 0, intercomm, ierr)
-    call MPI_Send(send_buffer, chunk * n_inputs, MPI_DOUBLE_PRECISION, i, 0, intercomm, ierr)
+    call MPI_Send(send_buffer, chunk * n_inputs, MPI_DOUBLE_PRECISION, i, 102+i, intercomm, ierr)
 enddo
 call MPI_Barrier(intercomm, ierr)  ! Optional: ensure child finished before next step
 
 ! Receive results from each worker
 do i=0, nworkers-1
+    recv_buffer = 0.d0
     i1 = i * chunk + 1
     i2 = (i + 1) * chunk
-    call MPI_Recv(recv_buffer, chunk * n_outputs, MPI_DOUBLE_PRECISION, i, 1, intercomm, status, ierr)
+    call MPI_Recv(recv_buffer, chunk * n_outputs, MPI_DOUBLE_PRECISION, i, 103+i, intercomm, status, ierr)
     prof_out_m(i1:i2, :)= reshape(recv_buffer, [chunk, n_outputs])
 enddo
 call MPI_Barrier(intercomm, ierr)  ! Optional: ensure child finished before next step
