@@ -242,8 +242,8 @@ read -p "Install TGLF/NEO (y/n) " GA_FLAG
 if [ "$GA_FLAG" = "y" ]
 then
     cd $SOFT_ROOT
-    rm -rf gacode
-    git clone git@github.com:gafusion/gacode.git
+#    rm -rf gacode
+#    git clone git@github.com:gafusion/gacode.git
     export GACODE_ROOT=$SOFT_ROOT/gacode
     export GACODE_PLATFORM=MYLOC
     cd $GACODE_ROOT
@@ -254,7 +254,7 @@ IDENTITY="IPP linux cluster"
 CORES_PER_NODE=16
 NUMAS_PER_NODE=1
 
-FC  = ${MPIFC} -module ${GACODE_ROOT}/modules
+FC  = ${FC} -module ${GACODE_ROOT}/modules
 F77 = ${FC}
 FOMP   =-qopenmp
 FMATH  =-real-size 64
@@ -267,8 +267,8 @@ EOT
 
     cd $GACODE_ROOT/tglf
     make
-    cd $GACODE_ROOT/neo
-    make
+#    cd $GACODE_ROOT/neo
+#    make
 
     mkdir -p $TGLF_INSTALL/lib
     mkdir -p $TGLF_INSTALL/inc

@@ -420,7 +420,6 @@ do jspec=1, tglf_ns_in-1
     output(:, 7+jspec) = ion_pflux(jspec, :)
 enddo
 
-
 call MPI_Send(output, chunk * n_outputs, MPI_DOUBLE_PRECISION, 0, 1, parent, ierr)
 call MPI_Barrier(parent, ierr)
 call MPI_Finalize(ierr)
