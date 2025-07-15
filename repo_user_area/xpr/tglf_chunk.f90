@@ -77,10 +77,11 @@ endif
 ! Receive dimensions from parent
 dims = 0
 call MPI_Recv(dims, n_dims, MPI_INTEGER, 0, 100+rank, parent, status, ierr)
-n_scalars = dims(2)
-n_inputs  = dims(3)
-n_outputs = dims(4)
-nspec_max = dims(6)
+n_scalars  = dims(2)
+n_inputs   = dims(3)
+n_outputs  = dims(4)
+tglf_ns_in = dims(5)
+nspec_max  = dims(6)
 i1 = dims(7)
 i2 = dims(8)
 chunk = i2 + 1 - i1
@@ -106,8 +107,6 @@ allocate( drmin(chunk), drmaj(chunk), drho(chunk), delong(chunk), dtrian(chunk),
 allocate( dti(nspec_max-1, chunk), dni(nspec_max-1, chunk), ni(nspec_max-1, chunk), &
     ti(nspec_max-1, chunk), zi(nspec_max-1, chunk), ion_pflux(nspec_max-1, chunk) )
 
-tglf_ns_in = dims(5)
-
 ! Initialise to zero for non-calculated species
 
 tglf_zs_in   = 0.
@@ -124,7 +123,6 @@ BTOR = scalars(2)
 a0_m = scalars(3)
 AMJ  = scalars(5)
 tglf_mass_in(1: 5) = scalars(4:  8)/AMJ
-tglf_zs_in(1: 5)   = scalars(9: 13)
 m0 = AMJ*mp          ! Ref. mass = D ion mass [g]
 a0_cm = 1.d2*a0_m    ! length scale used by GYRO, m -> cm
 
@@ -260,6 +258,9 @@ tglf_vpar_shear_model_in = 1
 
 tglf_b_model_sa_in  = 1
 tglf_ft_model_sa_in = 1
+
+tglf_zs_in(1) = -1
+tglf_zs_in(2) = zi(1, 1)
 
 radial_loop: do jr=1, chunk
 

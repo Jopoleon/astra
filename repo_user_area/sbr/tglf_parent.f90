@@ -1,4 +1,4 @@
-subroutine tglf_parent(CHI, CHE, VIN, DPH, DPL, DPR, exchi_out, GM1, OM1)
+subroutine tglf_parent(chi_i, chi_e, elec_pflux, vimp1, vimp2, mom_flux, exchi_out, gamma1, omega1)
 
 use mpi
 
@@ -15,13 +15,13 @@ use status_inc, only: NE, TE, NI, TI, &
 
 implicit none
 
-integer, parameter :: n_scalars=13, n_inputs=47, n_outputs=15, n_dims=8, nrho_m=80, nspec_max=5
+integer, parameter :: n_scalars=10, n_inputs=47, n_outputs=15, n_dims=8, nrho_m=80, nspec_max=5
 double precision, parameter :: c_vpol=1.d0
 double precision, parameter :: &
    k0 = 1.6022E-12, &    ! erg/ev
    mp = 1.6726E-24       ! proton mass (g)
 
-double precision, dimension(*), intent(out) :: CHI, CHE, VIN, DPH, DPL, DPR, exchi_out, GM1, OM1
+double precision, dimension(*), intent(out) :: chi_i, chi_e, elec_pflux, vimp2, vimp1, mom_flux, exchi_out, gamma1, omega1
 
 integer :: ierr, info, intercomm, errcodes(100), status(MPI_STATUS_SIZE)
 integer :: jr, jrho, jr_r, jr_l, jgamma_max, jspec
@@ -36,10 +36,11 @@ double precision, dimension(nrho_m) :: drmin, drmaj, drho, dte, dne, dq, dptot, 
 double precision, dimension(NRD) :: gradrhosq_exp, rmaj_exp, q_exp, &
     vexb_exp, vpar_exp, vper_exp, mtori_m, &
     chie_m, chii_m, elec_pflux_m, exchi_m, ptot_exp, gamma_m, omega_m
-double precision, dimension(nrho_m) :: mtori, chie, chii, exchi, elec_pflux, rho_m, &
+double precision, dimension(nrho_m) :: mtori, chie, chii, exchi, rho_m, &
     gamma_max, omega_max, kymax, te_m, ne_m, vpar_m, vper_m, vexb_m, &
     ametr_m, elon_m, tria_m, rmaj_m, ptot_m, q_m, zef_m, pfn_m
-double precision, dimension(nspec_max) :: mass_in, zs_in
+double precision, dimension(nspec_max) :: mass_in
+double precision, dimension(nspec_max-2) :: zimp_max
 double precision, dimension(nspec_max-1, nrho_m) :: dti, dni, ni_m, ti_m, zi_m, ion_pflux
 double precision, dimension(nspec_max-1, NRD) :: ni_exp, ion_pflux_m
 double precision, allocatable, dimension(:, :) :: send_buffer
@@ -89,13 +90,13 @@ call qinterp(RHO(1:NA1), ni_exp(1, 1:NA1), NA1, rho_m, ni_m(1, :), nrho_m)
 call qinterp(RHO(1:NA1), ni_exp(2, 1:NA1), NA1, rho_m, ni_m(2, :), nrho_m)
 call qinterp(RHO(1:NA1), ni_exp(3, 1:NA1), NA1, rho_m, ni_m(3, :), nrho_m)
 call qinterp(RHO(1:NA1), ni_exp(4, 1:NA1), NA1, rho_m, ni_m(4, :), nrho_m)
-call qinterp(RHO(1:NA1),  rmaj_exp(1:NA1), NA1, rho_m,  rmaj_m, nrho_m)
-call qinterp(RHO(1:NA1),     q_exp(1:NA1), NA1, rho_m,     q_m, nrho_m)
-call qinterp(RHO(1:NA1),  ptot_exp(1:NA1), NA1, rho_m,  ptot_m, nrho_m)
-call qinterp(RHO(1:NA1),  vpar_exp(1:NA1), NA1, rho_m,  vpar_m, nrho_m)
-call qinterp(RHO(1:NA1),  vper_exp(1:NA1), NA1, rho_m,  vper_m, nrho_m)
-call qinterp(RHO(1:NA1),  vexb_exp(1:NA1), NA1, rho_m,  vexb_m, nrho_m)
-call qinterp(RHO(1:NA1),   FP_NORM(1:NA1), NA1, rho_m,   pfn_m, nrho_m)
+call qinterp(RHO(1:NA1),  rmaj_exp(1:NA1), NA1, rho_m,     rmaj_m, nrho_m)
+call qinterp(RHO(1:NA1),     q_exp(1:NA1), NA1, rho_m,        q_m, nrho_m)
+call qinterp(RHO(1:NA1),  ptot_exp(1:NA1), NA1, rho_m,     ptot_m, nrho_m)
+call qinterp(RHO(1:NA1),  vpar_exp(1:NA1), NA1, rho_m,     vpar_m, nrho_m)
+call qinterp(RHO(1:NA1),  vper_exp(1:NA1), NA1, rho_m,     vper_m, nrho_m)
+call qinterp(RHO(1:NA1),  vexb_exp(1:NA1), NA1, rho_m,     vexb_m, nrho_m)
+call qinterp(RHO(1:NA1),   FP_NORM(1:NA1), NA1, rho_m,      pfn_m, nrho_m)
 
 ! Reference length
 a0_m = AMETR(NA1)
@@ -123,22 +124,20 @@ exchi_m = 0.
 ns_in = nspec_max
 
 ! These will be reset locally in the radial loop
-zs_in(1) = -1.
-zs_in(2) = ZMJ
-zs_in(3) = MAXVAL(ZIM1(1:NA1))
-zs_in(4) = MAXVAL(ZIM2(1:NA1))
-zs_in(5) = MAXVAL(ZIM3(1:NA1))
-if (zs_in(5) >= 1.) then
+zimp_max(1) = MAXVAL(ZIM1(1:NA1))
+zimp_max(2) = MAXVAL(ZIM2(1:NA1))
+zimp_max(3) = MAXVAL(ZIM3(1:NA1))
+if (zimp_max(3) >= 1.) then
     ns_in = 5
 else
     ns_in = 4
 endif
-if (zs_in(4) < 1.) ns_in = 3
-if (zs_in(5) >= 1. .and. ns_in == 3) then
+if (zimp_max(2) < 1.) ns_in = 3
+if (zimp_max(3) >= 1. .and. ns_in == 3) then
     ns_in = 4
 endif
-if (zs_in(3) < 1.) ns_in = 2
-if (zs_in(4) >= 1. .and. ns_in == 2) then
+if (zimp_max(1) < 1.) ns_in = 2
+if (zimp_max(2) >= 1. .and. ns_in == 2) then
     ns_in = 3
 endif
 
@@ -194,7 +193,6 @@ scal_in_m(1) = RTOR
 scal_in_m(2) = BTOR
 scal_in_m(3) = a0_m
 scal_in_m(4:  8) = mass_in(1:5)
-scal_in_m(9: 13) = zs_in(1:5)
 
 !--------------
 ! Send MPI jobs
@@ -292,30 +290,22 @@ do jspec=1, nspec_max-1
     call qinterp(rho_m, prof_out_m(7+jspec, :), nrho_m, RHO(1:NA1), ion_pflux_m(jspec, 1:NA1), NA1)
 enddo
 
-chii_m (1:2) = chii_m (3)
-chie_m (1:2) = chie_m (3)
-mtori_m(1:2) = mtori_m(3)
-elec_pflux_m(1:2) = elec_pflux_m(3)
-exchi_m(1:2) = exchi_m(3)
-omega_m(1:2) = omega_m(3)
-gamma_m(1:2) = gamma_m(3)
-
 m0 = AMJ*mp          ! Ref. mass = D ion mass [g]
 a0_cm = 1.d2*a0_m    ! length scale used by GYRO, m -> cm
 
 do jrho=1, NA1
-    CHI(jrho) = chii_m(jrho)/gradrhosq_exp(jrho) ! \chi_i, m^2/s
-    CHE(jrho) = chie_m(jrho)/gradrhosq_exp(jrho) ! \chi_e, m^2/s
-    VIN(jrho) = elec_pflux_m(jrho)/a0_m/gradrhosq_exp(jrho) ! D flux
-    DPR(jrho) = mtori_m(jrho)
+    chi_i(jrho) = chii_m(jrho)/gradrhosq_exp(jrho) ! \chi_i, m^2/s
+    chi_e(jrho) = chie_m(jrho)/gradrhosq_exp(jrho) ! \chi_e, m^2/s
+    elec_pflux(jrho) = elec_pflux_m(jrho)/a0_m/gradrhosq_exp(jrho) ! D flux
+    mom_flux(jrho) = mtori_m(jrho)
 !First impurity only, index 2 of ion species
-    DPL(jrho) = ion_pflux_m(2, jrho)/a0_m/gradrhosq_exp(jrho)/(ni_exp(2, jrho)/NE(jrho))  ! 1st imp convection
-    DPH(jrho) = ion_pflux_m(3, jrho)/a0_m/gradrhosq_exp(jrho)/(ni_exp(3, jrho)/NE(jrho))  ! 2nd imp convection
+    vimp1(jrho) = ion_pflux_m(2, jrho)/a0_m/gradrhosq_exp(jrho)/(ni_exp(2, jrho)/NE(jrho))  ! 1st imp convection
+    vimp2(jrho) = ion_pflux_m(3, jrho)/a0_m/gradrhosq_exp(jrho)/(ni_exp(3, jrho)/NE(jrho))  ! 2nd imp convection
     exchi_out(jrho) = exchi_m(jrho) ! turbulent e-i equipartition in MW/m^3
     T0  = 1E3 *TE(jrho)       ! temperature scale used by GYRO
     cs0 = SQRT(k0*T0/m0)      ! thermal velocity unit cm/sec
-    GM1(jrho) = gamma_m(jrho)*(cs0/a0_cm)
-    OM1(jrho) = omega_m(jrho)*(cs0/a0_cm)
+    gamma1(jrho) = gamma_m(jrho)*(cs0/a0_cm)
+    omega1(jrho) = omega_m(jrho)*(cs0/a0_cm)
 enddo
 
 return
