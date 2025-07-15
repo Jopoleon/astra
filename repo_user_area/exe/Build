@@ -79,10 +79,10 @@ then
         cat << EOT > $bat
 #!/bin/sh
 #SBATCH -J astra_${USER}
-#SBATCH --partition=p.tok.openmp
-#SBATCH --qos=p.tok.openmp.48h
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
+#SBATCH --partition=p.tok
+#SBATCH --qos=p.tok.48h
+#SBATCH --nodes=4
+#SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=16
 #SBATCH --mem-per-cpu 1GB
 #SBATCH --time=12:00:00
@@ -94,14 +94,13 @@ export OMP_PLACES=cores
 export I_MPI_ROOT=${I_MPI_ROOT}
 export I_MPI_FABRICS=shm:tpc
 export I_MPI_SPAWN=on
+#export PMI_DEBUG=1
+#export I_MPI_DEBUG=5
 export FI_PROVIDER_PATH=${I_MPI_ROOT}/libfabric/lib/prov
 export ASTRA_EXT=${ASTRA_EXT}
 export PATH=${PATH}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${I_MPI_ROOT}/libfabric/lib
-srun $ATASK
-which mpirun
-fi_info || echo "fi_info not found"
-env | grep -E 'I_MPI|FI_|MPI'
+$ATASK
 EOT
 
         echo sbatch $bat
