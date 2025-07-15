@@ -52,12 +52,13 @@ double precision :: Bunit_gauss, Bunit_T, cs0, cs00, rhos0, omega0, rhostar2, ln
 double precision :: a0_cm, a0_m, T0, N0, m0, rmin, drho_cs, drho_nt, nt_cs
 double precision :: AMJ, BTOR
 double precision :: ion_eflux, ion_mflux
-double precision, allocatable, dimension(:) :: inputs, output, scalars
+double precision, allocatable, dimension(:) :: scalars
+double precision, allocatable, dimension(:, :) :: inputs, outputs
 double precision, allocatable, dimension(:) :: mtori, chie, chii, exchi, elec_pflux, rho, &
     gamma_max, omega_max, kymax, te, ne, vpar, vper, vexb, &
     ametr, elon, tria, rmaj, ptot, q, zef, pfn, &
     drmin, drmaj, drho, delong, dtrian, dr, dne, dte, dq, dptot, dvpar, dvper, dv_r, drhodr
-double precision, allocatable, dimension(:, :) :: dti, dni, ni, ti, zimp, ion_pflux
+double precision, allocatable, dimension(:, :) :: dti, dni, ni, ti, zi, ion_pflux
 double precision, dimension(nky) :: gamma, omega, kyspectrum, efluxspectrum, &
     ifluxspectrum, pfluxspectrum
 
@@ -83,7 +84,7 @@ i1 = dims(7)
 i2 = dims(8)
 chunk = i2 + 1 - i1
 allocate(scalars(n_scalars))
-allocate(inputs(chunk*n_inputs))
+allocate(inputs(n_inputs, chunk))
 scalars = 0.d0
 inputs = 0.d0
 
@@ -92,7 +93,7 @@ call MPI_Recv(scalars,       n_scalars, MPI_DOUBLE_PRECISION, 0, 101+rank, paren
 call MPI_Recv(inputs, chunk * n_inputs, MPI_DOUBLE_PRECISION, 0, 102+rank, parent, status, ierr)
 call MPI_Barrier(parent, ierr)
 
-allocate(output(chunk*n_outputs))
+allocate(outputs(n_outputs, chunk))
 allocate( mtori(chunk), chie(chunk), chii(chunk), exchi(chunk), elec_pflux(chunk), &
     rho(chunk), gamma_max(chunk), omega_max(chunk), kymax(chunk), &
     te(chunk), ne(chunk), vpar(chunk), vper(chunk), vexb(chunk), &
@@ -102,7 +103,7 @@ allocate( drmin(chunk), drmaj(chunk), drho(chunk), delong(chunk), dtrian(chunk),
     dr(chunk), dne(chunk), dte(chunk), dq(chunk), dptot(chunk), dvpar(chunk), &
     dvper(chunk), dv_r(chunk), drhodr(chunk) )
 allocate( dti(nspec_max-1, chunk), dni(nspec_max-1, chunk), ni(nspec_max-1, chunk), &
-    ti(nspec_max-1, chunk), zimp(nspec_max-2, chunk), ion_pflux(nspec_max-1, chunk) )
+    ti(nspec_max-1, chunk), zi(nspec_max-1, chunk), ion_pflux(nspec_max-1, chunk) )
 
 tglf_ns_in = dims(5)
 
@@ -128,42 +129,53 @@ a0_cm = 1.d2*a0_m    ! length scale used by GYRO, m -> cm
 
 ! Profiles
 k = 0
-rho    = inputs(k+1:k+chunk);   k = k + chunk
-ametr  = inputs(k+1:k+chunk);   k = k + chunk
-rmaj   = inputs(k+1:k+chunk);   k = k + chunk
-elon   = inputs(k+1:k+chunk);   k = k + chunk
-tria   = inputs(k+1:k+chunk);   k = k + chunk
-q      = inputs(k+1:k+chunk);   k = k + chunk
-pfn    = inputs(k+1:k+chunk);   k = k + chunk
-ptot   = inputs(k+1:k+chunk);   k = k + chunk
-ne     = inputs(k+1:k+chunk);   k = k + chunk
-te     = inputs(k+1:k+chunk);   k = k + chunk
-zef    = inputs(k+1:k+chunk);   k = k + chunk
-vpar   = inputs(k+1:k+chunk);   k = k + chunk
-vper   = inputs(k+1:k+chunk);   k = k + chunk
-vexb   = inputs(k+1:k+chunk);   k = k + chunk
-drmin  = inputs(k+1:k+chunk);   k = k + chunk
-drmaj  = inputs(k+1:k+chunk);   k = k + chunk
-drho   = inputs(k+1:k+chunk);   k = k + chunk
-delong = inputs(k+1:k+chunk);   k = k + chunk
-dtrian = inputs(k+1:k+chunk);   k = k + chunk
-dptot  = inputs(k+1:k+chunk);   k = k + chunk
-dte    = inputs(k+1:k+chunk);   k = k + chunk
-dne    = inputs(k+1:k+chunk);   k = k + chunk
-dq     = inputs(k+1:k+chunk);   k = k + chunk
-dvper  = inputs(k+1:k+chunk);   k = k + chunk
-dv_r   = inputs(k+1:k+chunk);   k = k + chunk
-dr     = inputs(k+1:k+chunk);   k = k + chunk
-drhodr = inputs(k+1:k+chunk);   k = k + chunk
-do j=1, 4
-    ti(j, :)  = inputs(k+1:k+chunk);    k = k + chunk
-    ni(j, :)  = inputs(k+1:k+chunk);    k = k + chunk
-    dti(j, :) = inputs(k+1:k+chunk);    k = k + chunk
-    dni(j, :) = inputs(k+1:k+chunk);    k = k + chunk
-enddo
-do j=1, 3
-    zimp(j, :) = inputs(k+1:k+chunk); k = k + chunk
-enddo
+rho    = inputs( 1, :)
+ametr  = inputs( 2, :)
+rmaj   = inputs( 3, :)
+elon   = inputs( 4, :)
+tria   = inputs( 5, :)
+q      = inputs( 6, :)
+pfn    = inputs( 7, :)
+ptot   = inputs( 8, :)
+ne     = inputs( 9, :)
+te     = inputs(10, :)
+zef    = inputs(11, :)
+vpar   = inputs(12, :)
+vper   = inputs(13, :)
+vexb   = inputs(14, :)
+drmin  = inputs(15, :)
+drmaj  = inputs(16, :)
+drho   = inputs(17, :)
+delong = inputs(18, :)
+dtrian = inputs(19, :)
+dptot  = inputs(20, :)
+dte    = inputs(21, :)
+dne    = inputs(22, :)
+dq     = inputs(23, :)
+dvper  = inputs(24, :)
+dv_r   = inputs(25, :)
+dr     = inputs(26, :)
+drhodr = inputs(27, :)
+ti( 1, :) = inputs(28, :)
+ti( 2, :) = inputs(29, :)
+ti( 3, :) = inputs(30, :)
+ti( 4, :) = inputs(31, :)
+ni( 1, :) = inputs(32, :)
+ni( 2, :) = inputs(33, :)
+ni( 3, :) = inputs(34, :)
+ni( 4, :) = inputs(35, :)
+zi( 1, :) = inputs(36, :)
+zi( 2, :) = inputs(37, :)
+zi( 3, :) = inputs(38, :)
+zi( 4, :) = inputs(39, :)
+dti(1, :) = inputs(40, :)
+dti(2, :) = inputs(41, :)
+dti(3, :) = inputs(42, :)
+dti(4, :) = inputs(43, :)
+dni(1, :) = inputs(44, :)
+dni(2, :) = inputs(45, :)
+dni(3, :) = inputs(46, :)
+dni(4, :) = inputs(47, :)
 
 ! TGLF settings
 sat_rule = 2
@@ -253,9 +265,9 @@ radial_loop: do jr=1, chunk
 
 !thermal impurities
 
-    tglf_zs_in(3) = max(1., zimp(1, jr))
-    tglf_zs_in(4) = zimp(2, jr)
-    tglf_zs_in(5) = zimp(3, jr)
+    tglf_zs_in(3) = max(1., zi(2, jr))
+    tglf_zs_in(4) = zi(3, jr)
+    tglf_zs_in(5) = zi(4, jr)
 
     if (tglf_zs_in(5) >= 1. .and. tglf_ns_in == 3) then
         tglf_zs_in(4) = tglf_zs_in(5)
@@ -404,19 +416,19 @@ radial_loop: do jr=1, chunk
 enddo radial_loop
 
 ! Simulated TGLF computation:
-output = 0.d0
-output(        1:   chunk) = chii
-output(  chunk+1: 2*chunk) = chie
-output(2*chunk+1: 3*chunk) = mtori
-output(3*chunk+1: 4*chunk) = elec_pflux
-output(4*chunk+1: 5*chunk) = exchi
-output(5*chunk+1: 6*chunk) = gamma_max
-output(6*chunk+1: 7*chunk) = omega_max
-do jspec=1, tglf_ns_in-1
-    output((6+jspec)*chunk+1: (7+jspec)*chunk) = ion_pflux(jspec, :)
+outputs = 0.d0
+outputs(1, :) = chii
+outputs(2, :) = chie
+outputs(3, :) = mtori
+outputs(4, :) = elec_pflux
+outputs(5, :) = exchi
+outputs(6, :) = gamma_max
+outputs(7, :) = omega_max
+do jspec=1, nspec_max-1
+    outputs(7+jspec, :) = ion_pflux(jspec, :)
 enddo
 
-call MPI_Send(output, chunk * n_outputs, MPI_DOUBLE_PRECISION, 0, 103+rank, parent, ierr)
+call MPI_Send(outputs, chunk * n_outputs, MPI_DOUBLE_PRECISION, 0, 103+rank, parent, ierr)
 call MPI_Barrier(parent, ierr)
 call MPI_Finalize(ierr)
 
