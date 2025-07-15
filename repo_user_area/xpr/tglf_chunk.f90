@@ -49,15 +49,15 @@ integer :: ierr, parent, rank, status(MPI_STATUS_SIZE), i1, i2, j, k
 integer :: chunk, nprocs, n_inputs, n_outputs, n_scalars, dims(n_dims)
 integer :: sat_rule, jr, jgamma_max, jspec, kyloop
 double precision :: Bunit_gauss, Bunit_T, cs0, cs00, rhos0, omega0, rhostar2, lnlamda, taue, cexb
-double precision :: a0_cm, a0_m, T0, N0, m0, rmin_tg, drho_cs, drho_nt, nt_cs
+double precision :: a0_cm, a0_m, T0, N0, m0, rmin, drho_cs, drho_nt, nt_cs
 double precision :: AMJ, BTOR
 double precision :: ion_eflux, ion_mflux
 double precision, allocatable, dimension(:) :: inputs, output, scalars
-double precision, allocatable, dimension(:) :: mtori, chie, chii, exchi, elec_pflux, rho_tg, &
-    gamma_max, omega_max, kymax, te_tg, ne_tg, vpar_tg, vper_tg, vexb_tg, &
-    ametr_tg, elon_tg, tria_tg, rmaj_tg, ptot_tg, q_tg, zef_tg, pfn_tg, &
+double precision, allocatable, dimension(:) :: mtori, chie, chii, exchi, elec_pflux, rho, &
+    gamma_max, omega_max, kymax, te, ne, vpar, vper, vexb, &
+    ametr, elon, tria, rmaj, ptot, q, zef, pfn, &
     drmin, drmaj, drho, delong, dtrian, dr, dne, dte, dq, dptot, dvpar, dvper, dv_r, drhodr
-double precision, allocatable, dimension(:, :) :: dti, dni, ni_tg, ti_tg, zimp_tg, ion_pflux
+double precision, allocatable, dimension(:, :) :: dti, dni, ni, ti, zimp, ion_pflux
 double precision, dimension(nky) :: gamma, omega, kyspectrum, efluxspectrum, &
     ifluxspectrum, pfluxspectrum
 
@@ -94,15 +94,15 @@ call MPI_Barrier(parent, ierr)
 
 allocate(output(chunk*n_outputs))
 allocate( mtori(chunk), chie(chunk), chii(chunk), exchi(chunk), elec_pflux(chunk), &
-    rho_tg(chunk), gamma_max(chunk), omega_max(chunk), kymax(chunk), &
-    te_tg(chunk), ne_tg(chunk), vpar_tg(chunk), vper_tg(chunk), vexb_tg(chunk), &
-    ametr_tg(chunk), elon_tg(chunk), tria_tg(chunk), rmaj_tg(chunk), &
-    ptot_tg(chunk), q_tg(chunk), zef_tg(chunk), pfn_tg(chunk) )
+    rho(chunk), gamma_max(chunk), omega_max(chunk), kymax(chunk), &
+    te(chunk), ne(chunk), vpar(chunk), vper(chunk), vexb(chunk), &
+    ametr(chunk), elon(chunk), tria(chunk), rmaj(chunk), &
+    ptot(chunk), q(chunk), zef(chunk), pfn(chunk) )
 allocate( drmin(chunk), drmaj(chunk), drho(chunk), delong(chunk), dtrian(chunk), &
     dr(chunk), dne(chunk), dte(chunk), dq(chunk), dptot(chunk), dvpar(chunk), &
     dvper(chunk), dv_r(chunk), drhodr(chunk) )
-allocate( dti(nspec_max-1, chunk), dni(nspec_max-1, chunk), ni_tg(nspec_max-1, chunk), &
-    ti_tg(nspec_max-1, chunk), zimp_tg(nspec_max-2, chunk), ion_pflux(nspec_max-1, chunk) )
+allocate( dti(nspec_max-1, chunk), dni(nspec_max-1, chunk), ni(nspec_max-1, chunk), &
+    ti(nspec_max-1, chunk), zimp(nspec_max-2, chunk), ion_pflux(nspec_max-1, chunk) )
 
 tglf_ns_in = dims(5)
 
@@ -128,47 +128,41 @@ a0_cm = 1.d2*a0_m    ! length scale used by GYRO, m -> cm
 
 ! Profiles
 k = 0
-rho_tg      = inputs(k+1:k+chunk);       k = k + chunk
-ametr_tg    = inputs(k+1:k+chunk);       k = k + chunk
-rmaj_tg     = inputs(k+1:k+chunk);       k = k + chunk
-elon_tg     = inputs(k+1:k+chunk);       k = k + chunk
-tria_tg     = inputs(k+1:k+chunk);       k = k + chunk
-q_tg        = inputs(k+1:k+chunk);       k = k + chunk
-pfn_tg      = inputs(k+1:k+chunk);       k = k + chunk
-ptot_tg     = inputs(k+1:k+chunk);       k = k + chunk
-ne_tg       = inputs(k+1:k+chunk);       k = k + chunk
-te_tg       = inputs(k+1:k+chunk);       k = k + chunk
-zef_tg      = inputs(k+1:k+chunk);       k = k + chunk
-vpar_tg     = inputs(k+1:k+chunk);       k = k + chunk
-vper_tg     = inputs(k+1:k+chunk);       k = k + chunk
-vexb_tg     = inputs(k+1:k+chunk);       k = k + chunk
+rho    = inputs(k+1:k+chunk);   k = k + chunk
+ametr  = inputs(k+1:k+chunk);   k = k + chunk
+rmaj   = inputs(k+1:k+chunk);   k = k + chunk
+elon   = inputs(k+1:k+chunk);   k = k + chunk
+tria   = inputs(k+1:k+chunk);   k = k + chunk
+q      = inputs(k+1:k+chunk);   k = k + chunk
+pfn    = inputs(k+1:k+chunk);   k = k + chunk
+ptot   = inputs(k+1:k+chunk);   k = k + chunk
+ne     = inputs(k+1:k+chunk);   k = k + chunk
+te     = inputs(k+1:k+chunk);   k = k + chunk
+zef    = inputs(k+1:k+chunk);   k = k + chunk
+vpar   = inputs(k+1:k+chunk);   k = k + chunk
+vper   = inputs(k+1:k+chunk);   k = k + chunk
+vexb   = inputs(k+1:k+chunk);   k = k + chunk
+drmin  = inputs(k+1:k+chunk);   k = k + chunk
+drmaj  = inputs(k+1:k+chunk);   k = k + chunk
+drho   = inputs(k+1:k+chunk);   k = k + chunk
+delong = inputs(k+1:k+chunk);   k = k + chunk
+dtrian = inputs(k+1:k+chunk);   k = k + chunk
+dptot  = inputs(k+1:k+chunk);   k = k + chunk
+dte    = inputs(k+1:k+chunk);   k = k + chunk
+dne    = inputs(k+1:k+chunk);   k = k + chunk
+dq     = inputs(k+1:k+chunk);   k = k + chunk
+dvper  = inputs(k+1:k+chunk);   k = k + chunk
+dv_r   = inputs(k+1:k+chunk);   k = k + chunk
+dr     = inputs(k+1:k+chunk);   k = k + chunk
+drhodr = inputs(k+1:k+chunk);   k = k + chunk
 do j=1, 4
-    ti_tg(j, :) = inputs(k+1:k+chunk);   k = k + chunk
-enddo
-do j=1, 4
-    ni_tg(j, :) = inputs(k+1:k+chunk);   k = k + chunk
+    ti(j, :)  = inputs(k+1:k+chunk);    k = k + chunk
+    ni(j, :)  = inputs(k+1:k+chunk);    k = k + chunk
+    dti(j, :) = inputs(k+1:k+chunk);    k = k + chunk
+    dni(j, :) = inputs(k+1:k+chunk);    k = k + chunk
 enddo
 do j=1, 3
-    zimp_tg(j, :) = inputs(k+1:k+chunk); k = k + chunk
-enddo
-drmin    = inputs(k+1:k+chunk);          k = k + chunk
-drmaj    = inputs(k+1:k+chunk);          k = k + chunk
-drho     = inputs(k+1:k+chunk);          k = k + chunk
-delong   = inputs(k+1:k+chunk);          k = k + chunk
-dtrian   = inputs(k+1:k+chunk);          k = k + chunk
-dptot    = inputs(k+1:k+chunk);          k = k + chunk
-dte      = inputs(k+1:k+chunk);          k = k + chunk
-dne      = inputs(k+1:k+chunk);          k = k + chunk
-dq       = inputs(k+1:k+chunk);          k = k + chunk
-dvper    = inputs(k+1:k+chunk);          k = k + chunk
-dv_r     = inputs(k+1:k+chunk);          k = k + chunk
-dr       = inputs(k+1:k+chunk);          k = k + chunk
-drhodr   = inputs(k+1:k+chunk);          k = k + chunk
-do j=1, 4
-    dti(j, :) = inputs(k+1:k+chunk);     k = k + chunk
-enddo
-do j=1, 4
-    dni(j, :) = inputs(k+1:k+chunk);     k = k + chunk
+    zimp(j, :) = inputs(k+1:k+chunk); k = k + chunk
 enddo
 
 ! TGLF settings
@@ -259,21 +253,21 @@ radial_loop: do jr=1, chunk
 
 !thermal impurities
 
-    tglf_zs_in(3) = max(1., zimp_tg(1, jr))
-    tglf_zs_in(4) = zimp_tg(2, jr)
-    tglf_zs_in(5) = zimp_tg(3, jr)
+    tglf_zs_in(3) = max(1., zimp(1, jr))
+    tglf_zs_in(4) = zimp(2, jr)
+    tglf_zs_in(5) = zimp(3, jr)
 
     if (tglf_zs_in(5) >= 1. .and. tglf_ns_in == 3) then
         tglf_zs_in(4) = tglf_zs_in(5)
         tglf_mass_in(4) = tglf_mass_in(5)
-        ni_tg(3, :) = ni_tg(4, :)
-        ti_tg(3, :) = ti_tg(4, :)
+        ni(3, :) = ni(4, :)
+        ti(3, :) = ti(4, :)
     endif
     if (tglf_zs_in(4) >= 1. .and. tglf_ns_in == 2) then
         tglf_zs_in(3) = tglf_zs_in(4)
         tglf_mass_in(3) = tglf_mass_in(4)
-        ni_tg(2, :) = ni_tg(3, :)
-        ti_tg(2, :) = ti_tg(3, :)
+        ni(2, :) = ni(3, :)
+        ti(2, :) = ti(3, :)
     endif
 
 !    tglf_ns_in = 3
@@ -285,14 +279,14 @@ radial_loop: do jr=1, chunk
     tglf_taus_in(1) = 1. ! Te is ref
 
 ! Log derivatives
-    tglf_rlns_in(1) = -dne(jr)/(dr(jr)*ne_tg(jr))
-    tglf_rlts_in(1) = -dte(jr)/(dr(jr)*te_tg(jr))
+    tglf_rlns_in(1) = -dne(jr)/(dr(jr)*ne(jr))
+    tglf_rlts_in(1) = -dte(jr)/(dr(jr)*te(jr))
 
     do jspec=2, tglf_ns_in
-        tglf_as_in(jspec)   = ni_tg(jspec-1, jr)/ne_tg(jr)
-        tglf_taus_in(jspec) = ti_tg(jspec-1, jr)/te_tg(jr)
-        tglf_rlns_in(jspec) = -dni(jspec-1, jr)/(dr(jr)*ni_tg(jspec-1, jr))
-        tglf_rlts_in(jspec) = -dti(jspec-1, jr)/(dr(jr)*ti_tg(jspec-1, jr))
+        tglf_as_in(jspec)   = ni(jspec-1, jr)/ne(jr)
+        tglf_taus_in(jspec) = ti(jspec-1, jr)/te(jr)
+        tglf_rlns_in(jspec) = -dni(jspec-1, jr)/(dr(jr)*ni(jspec-1, jr))
+        tglf_rlts_in(jspec) = -dti(jspec-1, jr)/(dr(jr)*ti(jspec-1, jr))
     enddo
 ! Restore quasi-neutrality via main ions
 
@@ -301,9 +295,9 @@ radial_loop: do jr=1, chunk
 
 ! GYRO conventions
 
-    N0  = 1E13*ne_tg(jr)   ! density scale used by GYRO [1/cm**3]
-    T0  = 1E3 *te_tg(jr)   ! temperature scale used by GYRO
-    Bunit_T = BTOR*drhodr(jr)*rho_tg(jr)/ametr_tg(jr)  ! Miller geometry magnetic field unit [gauss]
+    N0  = 1E13*ne(jr)   ! density scale used by GYRO [1/cm**3]
+    T0  = 1E3 *te(jr)   ! temperature scale used by GYRO
+    Bunit_T = BTOR*drhodr(jr)*rho(jr)/ametr(jr)  ! Miller geometry magnetic field unit [gauss]
     Bunit_gauss = 1.d4*Bunit_T 
 
 ! derived units for the plasma
@@ -315,13 +309,13 @@ radial_loop: do jr=1, chunk
     lnlamda = 24.0 -0.5*LOG(tglf_as_in(1)*N0) + LOG(tglf_taus_in(1)*T0)
     taue = 3.44E5 * (tglf_taus_in(1)*T0)**1.5 / (tglf_as_in(1)*N0*lnlamda)  !  sec
 
-    rmin_tg = ametr_tg(jr)/a0_m
-    cexb = ametr_tg(jr)/q_tg(jr)
+    rmin = ametr(jr)/a0_m
+    cexb = ametr(jr)/q(jr)
 
-    tglf_vpar_shear_in(2) = -1E2*rmaj_tg(jr)*dv_r(jr)/(dr(jr)*cs0)  !From m/s to cm/s for vpar
+    tglf_vpar_shear_in(2) = -1E2*rmaj(jr)*dv_r(jr)/(dr(jr)*cs0)  !From m/s to cm/s for vpar
     tglf_vpar_shear_in(1) = tglf_vpar_shear_in(2)
 
-    tglf_vpar_in(2) = 1E2*vpar_tg(jr)/cs0
+    tglf_vpar_in(2) = 1E2*vpar(jr)/cs0
     tglf_vpar_in(1) = tglf_vpar_in(2)
 
     if (tglf_ns_in >= 3) then
@@ -342,33 +336,33 @@ radial_loop: do jr=1, chunk
 
 ! Initialise
 
-    tglf_vexb_in  = 1E2*vexb_tg(jr)/cs0
+    tglf_vexb_in  = 1E2*vexb(jr)/cs0
     tglf_betae_in = 8.0*pi*k0*N0*T0/Bunit_gauss**2
     tglf_xnue_in  = 0.75*SQRT(pi)*a0_cm/(taue*cs0)
-    tglf_zeff_in  = zef_tg(jr)
+    tglf_zeff_in  = zef(jr)
     tglf_debye_in = SQRT(k0*T0/(4.0*pi*N0*e0**2))/rhos0
 
-    tglf_rmin_loc_in    = rmin_tg
-    tglf_rmaj_loc_in    = rmaj_tg(jr)/a0_m
+    tglf_rmin_loc_in    = rmin
+    tglf_rmaj_loc_in    = rmaj(jr)/a0_m
     tglf_zmaj_loc_in    = 0.
     tglf_drmindx_loc_in = 1.
     tglf_drmajdx_loc_in = drmaj(jr)/(dr(jr)*a0_m)
     tglf_dzmajdx_loc_in = 0.
-    tglf_kappa_loc_in   = elon_tg(jr)
-    tglf_s_kappa_loc_in = ametr_tg(jr)*delong(jr)/(drmin(jr)*elon_tg(jr))
-    tglf_delta_loc_in   = tria_tg(jr)
-    tglf_s_delta_loc_in = ametr_tg(jr)*dtrian(jr)/drmin(jr)
+    tglf_kappa_loc_in   = elon(jr)
+    tglf_s_kappa_loc_in = ametr(jr)*delong(jr)/(drmin(jr)*elon(jr))
+    tglf_delta_loc_in   = tria(jr)
+    tglf_s_delta_loc_in = ametr(jr)*dtrian(jr)/drmin(jr)
     tglf_zeta_loc_in    = 0.
     tglf_s_zeta_loc_in  = 0.
-    tglf_q_loc_in       = q_tg(jr)
-    tglf_q_prime_loc_in = (q_tg(jr)/rmin_tg)*dq(jr)/dr(jr)
-    tglf_p_prime_loc_in = (k0/Bunit_gauss**2)*(q_tg(jr)/rmin_tg)*dptot(jr)/dr(jr)
+    tglf_q_loc_in       = q(jr)
+    tglf_q_prime_loc_in = (q(jr)/rmin)*dq(jr)/dr(jr)
+    tglf_p_prime_loc_in = (k0/Bunit_gauss**2)*(q(jr)/rmin)*dptot(jr)/dr(jr)
 
-    tglf_rmin_sa_in     = rmin_tg
-    tglf_rmaj_sa_in     = rmaj_tg(jr)/a0_m
-    tglf_q_sa_in        = q_tg(jr)
-    tglf_shat_sa_in     = (ametr_tg(jr)/q_tg(jr))*dq(jr)/drmin(jr)
-    tglf_alpha_sa_in    = -(8.0*pi*k0/Bunit_gauss**2)*q_tg(jr)**2 * rmaj_tg(jr)*dptot(jr)/drmin(jr)
+    tglf_rmin_sa_in     = rmin
+    tglf_rmaj_sa_in     = rmaj(jr)/a0_m
+    tglf_q_sa_in        = q(jr)
+    tglf_shat_sa_in     = (ametr(jr)/q(jr))*dq(jr)/drmin(jr)
+    tglf_alpha_sa_in    = -(8.0*pi*k0/Bunit_gauss**2)*q(jr)**2 * rmaj(jr)*dptot(jr)/drmin(jr)
     tglf_xwell_sa_in    = 0.
     tglf_theta0_sa_in   = 0.
 
@@ -383,7 +377,7 @@ radial_loop: do jr=1, chunk
 ! Transport coefficients
 
     ion_eflux = SUM(tglf_ion_eflux_out(1: tglf_ns_in-1))
-    ion_eflux = ion_eflux/(tglf_taus_in(2) * 1e13*ni_tg(1, jr)/N0)
+    ion_eflux = ion_eflux/(tglf_taus_in(2) * 1e13*ni(1, jr)/N0)
     ion_mflux = SUM(tglf_ion_mflux_out(1: tglf_ns_in-1))
     chii (jr) = ion_eflux          /(1e-4 + abs(tglf_rlts_in(2))) *drho_cs
     chie (jr) = tglf_elec_eflux_out/(1e-4 + abs(tglf_rlts_in(1))) *drho_cs

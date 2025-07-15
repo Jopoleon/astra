@@ -4,23 +4,17 @@
 
 double precision FUNCTION VOLR(YR)
 
+use const_inc, only: HRO
 use status_inc, only: VR
 
 implicit none
 
 double precision, intent(in) :: YR
-integer :: J, JK
-double precision :: YV, YDR
+integer :: JK
+double precision :: YDR
 
 call yrjkdr(YR, JK, YDR)
-
-YV = 0.
-DO J=1, JK
-   YV = YV + VR(J)
-enddo
-YV = YV - YDR
-
-VOLR = YV
+VOLR = SUM(VR(1:JK))*HRO - YDR*VR(JK)
 
 return
 end function VOLR

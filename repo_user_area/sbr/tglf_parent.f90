@@ -220,47 +220,41 @@ do i=0, nworkers-1
     call MPI_Send(scal_in_m, n_scalars, MPI_DOUBLE_PRECISION, i, 101 + i, intercomm, ierr)
 
     k = 0
-    send_buffer(k+1:k+chunk) = rho_m(i1:i2);           k = k + chunk
-    send_buffer(k+1:k+chunk) = ametr_m(i1:i2);         k = k + chunk
-    send_buffer(k+1:k+chunk) = rmaj_m(i1:i2);          k = k + chunk
-    send_buffer(k+1:k+chunk) = elon_m(i1:i2);          k = k + chunk
-    send_buffer(k+1:k+chunk) = tria_m(i1:i2);          k = k + chunk
-    send_buffer(k+1:k+chunk) = q_m(i1:i2);             k = k + chunk
-    send_buffer(k+1:k+chunk) = pfn_m(i1:i2);           k = k + chunk
-    send_buffer(k+1:k+chunk) = ptot_m(i1:i2);          k = k + chunk
-    send_buffer(k+1:k+chunk) = ne_m(i1:i2);            k = k + chunk
-    send_buffer(k+1:k+chunk) = te_m(i1:i2);            k = k + chunk
-    send_buffer(k+1:k+chunk) = zef_m(i1:i2);           k = k + chunk
-    send_buffer(k+1:k+chunk) = vpar_m(i1:i2);          k = k + chunk
-    send_buffer(k+1:k+chunk) = vper_m(i1:i2);          k = k + chunk
-    send_buffer(k+1:k+chunk) = vexb_m(i1:i2);          k = k + chunk
+    send_buffer(k+1:k+chunk) = rho_m(i1:i2);     k = k + chunk
+    send_buffer(k+1:k+chunk) = ametr_m(i1:i2);   k = k + chunk
+    send_buffer(k+1:k+chunk) = rmaj_m(i1:i2);    k = k + chunk
+    send_buffer(k+1:k+chunk) = elon_m(i1:i2);    k = k + chunk
+    send_buffer(k+1:k+chunk) = tria_m(i1:i2);    k = k + chunk
+    send_buffer(k+1:k+chunk) = q_m(i1:i2);       k = k + chunk
+    send_buffer(k+1:k+chunk) = pfn_m(i1:i2);     k = k + chunk
+    send_buffer(k+1:k+chunk) = ptot_m(i1:i2);    k = k + chunk
+    send_buffer(k+1:k+chunk) = ne_m(i1:i2);      k = k + chunk
+    send_buffer(k+1:k+chunk) = te_m(i1:i2);      k = k + chunk
+    send_buffer(k+1:k+chunk) = zef_m(i1:i2);     k = k + chunk
+    send_buffer(k+1:k+chunk) = vpar_m(i1:i2);    k = k + chunk
+    send_buffer(k+1:k+chunk) = vper_m(i1:i2);    k = k + chunk
+    send_buffer(k+1:k+chunk) = vexb_m(i1:i2);    k = k + chunk
+    send_buffer(k+1:k+chunk) = drmin(i1:i2);     k = k + chunk
+    send_buffer(k+1:k+chunk) = drmaj(i1:i2);     k = k + chunk
+    send_buffer(k+1:k+chunk) = drho(i1:i2);      k = k + chunk
+    send_buffer(k+1:k+chunk) = delong(i1:i2);    k = k + chunk
+    send_buffer(k+1:k+chunk) = dtrian(i1:i2);    k = k + chunk
+    send_buffer(k+1:k+chunk) = dptot(i1:i2);     k = k + chunk
+    send_buffer(k+1:k+chunk) = dte(i1:i2);       k = k + chunk
+    send_buffer(k+1:k+chunk) = dne(i1:i2);       k = k + chunk
+    send_buffer(k+1:k+chunk) = dq(i1:i2);        k = k + chunk
+    send_buffer(k+1:k+chunk) = dvper(i1:i2);     k = k + chunk
+    send_buffer(k+1:k+chunk) = dv_r(i1:i2);      k = k + chunk
+    send_buffer(k+1:k+chunk) = dr(i1:i2);        k = k + chunk
+    send_buffer(k+1:k+chunk) = drhodr(i1:i2);    k = k + chunk
     do j=1, 4
-        send_buffer(k+1:k+chunk) = ti_m(j, i1:i2);     k = k + chunk
-    enddo
-    do j=1, 4
-        send_buffer(k+1:k+chunk) = ni_m(j, i1:i2);     k = k + chunk
+        send_buffer(k+1:k+chunk) = ti_m(j, i1:i2);    k = k + chunk
+        send_buffer(k+1:k+chunk) = ni_m(j, i1:i2);    k = k + chunk
+        send_buffer(k+1:k+chunk) =  dti(j, i1:i2);    k = k + chunk
+        send_buffer(k+1:k+chunk) =  dni(j, i1:i2);    k = k + chunk
     enddo
     do j=1, 3
         send_buffer(k+1:k+chunk) = zimp_m(j, i1:i2);   k = k + chunk
-    enddo
-    send_buffer(k+1:k+chunk) = drmin(i1:i2);           k = k + chunk
-    send_buffer(k+1:k+chunk) = drmaj(i1:i2);           k = k + chunk
-    send_buffer(k+1:k+chunk) = drho(i1:i2);            k = k + chunk
-    send_buffer(k+1:k+chunk) = delong(i1:i2);          k = k + chunk
-    send_buffer(k+1:k+chunk) = dtrian(i1:i2);          k = k + chunk
-    send_buffer(k+1:k+chunk) = dptot(i1:i2);           k = k + chunk
-    send_buffer(k+1:k+chunk) = dte(i1:i2);             k = k + chunk
-    send_buffer(k+1:k+chunk) = dne(i1:i2);             k = k + chunk
-    send_buffer(k+1:k+chunk) = dq(i1:i2);              k = k + chunk
-    send_buffer(k+1:k+chunk) = dvper(i1:i2);           k = k + chunk
-    send_buffer(k+1:k+chunk) = dv_r(i1:i2);            k = k + chunk
-    send_buffer(k+1:k+chunk) = dr(i1:i2);              k = k + chunk
-    send_buffer(k+1:k+chunk) = drhodr(i1:i2);          k = k + chunk
-    do j=1, 4
-        send_buffer(k+1:k+chunk) = dti(j, i1:i2);      k = k + chunk
-    enddo
-    do j=1, 4
-        send_buffer(k+1:k+chunk) = dni(j, i1:i2);      k = k + chunk
     enddo
     call MPI_Send(send_buffer, chunk * n_inputs, MPI_DOUBLE_PRECISION, i, 102+i, intercomm, ierr)
 enddo
