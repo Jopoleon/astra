@@ -35,7 +35,7 @@ use tglf_pkg, only: get_eigenvalue_spectrum_out, get_ky_spectrum_out, &
   
 implicit none
 
-integer, parameter :: nky=19, nspec_max=5, n_dims=8
+integer, parameter :: nky=19, n_dims=8
 double precision, parameter :: &
    k0   = 1.6022E-12, &       ! erg/ev
    e0   = 4.8032E-10, &       ! elementary charge (statcoulombs)
@@ -45,7 +45,7 @@ double precision, parameter :: &
    mpp  = 1.6726E-27, &       ! proton mass (kg)
    pi   = 3.141592653589793
 
-integer :: ierr, parent, rank, status(MPI_STATUS_SIZE), i1, i2, j, k
+integer :: ierr, parent, rank, status(MPI_STATUS_SIZE), i1, i2, j, nspec_max
 integer :: chunk, nprocs, n_inputs, n_outputs, n_scalars, dims(n_dims)
 integer :: sat_rule, jr, jgamma_max, jspec, kyloop
 double precision :: Bunit_gauss, Bunit_T, cs0, cs00, rhos0, omega0, rhostar2, lnlamda, taue, cexb
@@ -80,6 +80,7 @@ call MPI_Recv(dims, n_dims, MPI_INTEGER, 0, 100+rank, parent, status, ierr)
 n_scalars = dims(2)
 n_inputs  = dims(3)
 n_outputs = dims(4)
+nspec_max = dims(6)
 i1 = dims(7)
 i2 = dims(8)
 chunk = i2 + 1 - i1
@@ -128,7 +129,6 @@ m0 = AMJ*mp          ! Ref. mass = D ion mass [g]
 a0_cm = 1.d2*a0_m    ! length scale used by GYRO, m -> cm
 
 ! Profiles
-k = 0
 rho    = inputs( 1, :)
 ametr  = inputs( 2, :)
 rmaj   = inputs( 3, :)

@@ -15,7 +15,7 @@ use status_inc, only: NE, TE, NI, TI, &
 
 implicit none
 
-integer, parameter :: n_scalars=13, n_inputs=55, n_outputs=15, n_dims=8, nrho_m=80, nspec_max=5
+integer, parameter :: n_scalars=13, n_inputs=47, n_outputs=15, n_dims=8, nrho_m=80, nspec_max=5
 double precision, parameter :: c_vpol=1.d0
 double precision, parameter :: &
    k0 = 1.6022E-12, &    ! erg/ev
@@ -26,7 +26,7 @@ double precision, dimension(*), intent(out) :: CHI, CHE, VIN, DPH, DPL, DPR, exc
 integer :: ierr, info, intercomm, errcodes(100), status(MPI_STATUS_SIZE)
 integer :: jr, jrho, jr_r, jr_l, jgamma_max, jspec
 integer :: ns_in              ! Number of species, including electrons
-integer :: i, j, k, i1, i2, chunk, nworkers, dims(n_dims)
+integer :: i, j, i1, i2, chunk, nworkers, dims(n_dims)
 
 double precision, dimension(n_scalars) :: scal_in_m
 double precision, dimension(n_outputs, nrho_m) :: prof_out_m
@@ -169,7 +169,7 @@ do jr=1, nrho_m
     dne(jr)    = dstep*(ne_m(jr_r) - ne_m(jr_l))
     dq(jr)     = dstep*(q_m(jr_r) - q_m(jr_l))
     dvper(jr)  = dstep*(vper_m(jr_r) - vper_m(jr_l))
-    do jspec=1, ns_in-1
+    do jspec=1, nspec_max-1
         dti(jspec, jr) = dstep*(ti_m(jspec, jr_r) - ti_m(jspec, jr_l))
         dni(jspec, jr) = dstep*(ni_m(jspec, jr_r) - ni_m(jspec, jr_l))
     enddo
@@ -188,6 +188,7 @@ dims(2) = n_scalars
 dims(3) = n_inputs
 dims(4) = n_outputs
 dims(5) = ns_in
+dims(6) = nspec_max
 
 scal_in_m(1) = RTOR
 scal_in_m(2) = BTOR
@@ -308,12 +309,8 @@ do jrho=1, NA1
     VIN(jrho) = elec_pflux_m(jrho)/a0_m/gradrhosq_exp(jrho) ! D flux
     DPR(jrho) = mtori_m(jrho)
 !First impurity only, index 2 of ion species
-    if (ns_in >= 3) then
-        DPL(jrho) = ion_pflux_m(2, jrho)/a0_m/gradrhosq_exp(jrho)/(ni_exp(2, jrho)/NE(jrho))  ! 1st imp convection
-    endif
-    if (ns_in >= 4) then
-        DPH(jrho) = ion_pflux_m(3, jrho)/a0_m/gradrhosq_exp(jrho)/(ni_exp(3, jrho)/NE(jrho))  ! 2nd imp convection
-    endif
+    DPL(jrho) = ion_pflux_m(2, jrho)/a0_m/gradrhosq_exp(jrho)/(ni_exp(2, jrho)/NE(jrho))  ! 1st imp convection
+    DPH(jrho) = ion_pflux_m(3, jrho)/a0_m/gradrhosq_exp(jrho)/(ni_exp(3, jrho)/NE(jrho))  ! 2nd imp convection
     exchi_out(jrho) = exchi_m(jrho) ! turbulent e-i equipartition in MW/m^3
     T0  = 1E3 *TE(jrho)       ! temperature scale used by GYRO
     cs0 = SQRT(k0*T0/m0)      ! thermal velocity unit cm/sec
