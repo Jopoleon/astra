@@ -1,4 +1,4 @@
-subroutine tglf_parent(chi_i, chi_e, e_pflux, vimp1, vimp2, mom_flux, exchi_as, gamma_as, omega_as)
+subroutine tglf_parent(chi_i, chi_e, e_pflux, vimp1, vimp2, i_mflux_as, exchi_as, gamma_as, omega_as)
 
 use mpi
 
@@ -15,11 +15,11 @@ use status_inc, only: NE, TE, NI, TI, &
 
 implicit none
 
-integer, parameter :: n_scalars=10, n_inputs=46, n_outputs=15, n_dims=8, nrho_m=80, nspec_max=5
+integer, parameter :: n_scalars=10, n_inputs=40, n_outputs=15, n_dims=8, nrho_m=80, nspec_max=5
 double precision, parameter :: c_vpol=1.d0
 
 double precision, dimension(NRD), intent(out) :: chi_i, chi_e, e_pflux, vimp2, vimp1, &
-     mom_flux, exchi_as, gamma_as, omega_as
+     i_mflux_as, exchi_as, gamma_as, omega_as
 
 integer :: ierr, info, intercomm, errcodes(100), status(MPI_STATUS_SIZE)
 integer :: jr, jrho, jr_r, jr_l, jgamma_max, jspec
@@ -29,16 +29,16 @@ integer :: i, j, i1, i2, chunk, nworkers, dims(n_dims)
 double precision, dimension(n_scalars) :: scal_in_m
 double precision, dimension(n_outputs, nrho_m) :: prof_out_m
 double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, a0_m, gradrhosq_inv
-double precision, dimension(nrho_m) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
-    delong, dtrian, dvpar, dvper, drhodr, dr, dv_r
+double precision, dimension(nrho_m) :: drmin, drmaj, drho, dti, dte, dne, dq, &
+    dptot, delong, dtrian, dvpar, dvper, drhodr, dr, dv_r
 double precision, dimension(NRD) :: rmaj_as, q_as, ni_main_as, &
-    vexb_as, vpar_as, vper_as, mtori_as, chie_as, chii_as, e_pflux_as, ptot_as
-double precision, dimension(nrho_m) :: rho_m, &
-    gamma_max, omega_max, kymax, te_m, ne_m, vpar_m, vper_m, vexb_m, &
+    vexb_as, vpar_as, vper_as, chie_as, chii_as, e_pflux_as, ptot_as
+double precision, dimension(nrho_m) :: rho_m, gamma_max, omega_max, kymax, &
+    ti_m, te_m, ne_m, vpar_m, vper_m, vexb_m, &
     ametr_m, elon_m, tria_m, rmaj_m, ptot_m, q_m, zef_m, pfn_m
 double precision, dimension(nspec_max) :: mass_in
 double precision, dimension(nspec_max-2) :: zimp_max
-double precision, dimension(nspec_max-1, nrho_m) :: dti, dni, ni_m, ti_m, i_pflux
+double precision, dimension(nspec_max-1, nrho_m) :: dni, ni_m, i_pflux
 double precision, dimension(nspec_max-2, nrho_m) :: zimp_m 
 double precision, dimension(nspec_max-1, NRD) :: i_pflux_as
 double precision, allocatable, dimension(:, :) :: send_buffer
@@ -53,13 +53,13 @@ rho_max = RHO(NA1)
 xstep = (rho_max - rho_min)/(nrho_m - 1.)
 rho_m = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_m) /)
 
-call qinterp(RHO(1:NA1),   TI(1:NA1), NA1, rho_m,   ti_m(1, :), nrho_m)
 call qinterp(RHO(1:NA1), ZIM1(1:NA1), NA1, rho_m, zimp_m(1, :), nrho_m)
 call qinterp(RHO(1:NA1), ZIM2(1:NA1), NA1, rho_m, zimp_m(2, :), nrho_m)
 call qinterp(RHO(1:NA1), ZIM3(1:NA1), NA1, rho_m, zimp_m(3, :), nrho_m)
 call qinterp(RHO(1:NA1), NIZ1(1:NA1), NA1, rho_m,   ni_m(2, :), nrho_m)
 call qinterp(RHO(1:NA1), NIZ2(1:NA1), NA1, rho_m,   ni_m(3, :), nrho_m)
 call qinterp(RHO(1:NA1), NIZ3(1:NA1), NA1, rho_m,   ni_m(4, :), nrho_m)
+call qinterp(RHO(1:NA1),      TI(1:NA1), NA1, rho_m,    ti_m, nrho_m)
 call qinterp(RHO(1:NA1),      TE(1:NA1), NA1, rho_m,    te_m, nrho_m)
 call qinterp(RHO(1:NA1),      NE(1:NA1), NA1, rho_m,    ne_m, nrho_m)
 call qinterp(RHO(1:NA1),     ZEF(1:NA1), NA1, rho_m,   zef_m, nrho_m)
@@ -96,6 +96,7 @@ call qinterp(RHO(1:NA1),    vexb_as(1:NA1), NA1, rho_m,     vexb_m, nrho_m)
 a0_m = AMETR(NA1)
 
 ! Species cmassses and charges
+mass_in = 0.d0
 mass_in(1) = 5.4447e-4
 mass_in(2) = AMJ
 mass_in(3) = AIM1
@@ -106,13 +107,6 @@ do jr=1, nrho_m
     ni_m(3, jr) = max(1.e-9, ni_m(3, jr))
     ni_m(4, jr) = max(1.e-9, ni_m(4, jr))
 enddo
-
-e_pflux_as = 0.
-i_pflux_as = 0.
-chie_as  = 0.
-chii_as  = 0.
-mtori_as = 0.
-exchi_as = 0.
 
 ! Number of species
 ns_in = nspec_max
@@ -135,10 +129,6 @@ if (zimp_max(2) >= 1. .and. ns_in == 2) then
     ns_in = 3
 endif
 
-ti_m(2, :) = ti_m(1, :)
-ti_m(3, :) = ti_m(1, :)
-ti_m(4, :) = ti_m(1, :)
-
 !--------------
 ! Differentials
 
@@ -157,12 +147,12 @@ do jr=1, nrho_m
     delong(jr) = dstep*( elon_m(jr_r) -  elon_m(jr_l))
     dtrian(jr) = dstep*( tria_m(jr_r) -  tria_m(jr_l))
     dptot(jr)  = dstep*( ptot_m(jr_r) -  ptot_m(jr_l)) * 1E3*1E13
+    dti(jr)    = dstep*(ti_m(jr_r) - ti_m(jr_l))
     dte(jr)    = dstep*(te_m(jr_r) - te_m(jr_l))
     dne(jr)    = dstep*(ne_m(jr_r) - ne_m(jr_l))
     dq(jr)     = dstep*(q_m(jr_r) - q_m(jr_l))
     dvper(jr)  = dstep*(vper_m(jr_r) - vper_m(jr_l))
     do jspec=1, nspec_max-1
-        dti(jspec, jr) = dstep*(ti_m(jspec, jr_r) - ti_m(jspec, jr_l))
         dni(jspec, jr) = dstep*(ni_m(jspec, jr_r) - ni_m(jspec, jr_l))
     enddo
     dv_r(jr) = dstep* &
@@ -185,8 +175,8 @@ dims(6) = nspec_max
 scal_in_m(1) = RTOR
 scal_in_m(2) = BTOR
 scal_in_m(3) = a0_m
-scal_in_m(4:  8) = mass_in(1:5)
-scal_in_m(9) = ZMJ
+scal_in_m(4) = ZMJ
+scal_in_m(5: 4+nspec_max) = mass_in(1: nspec_max)
 
 !--------------
 ! Send MPI jobs
@@ -220,44 +210,38 @@ do i=0, nworkers-1
     send_buffer( 6, :) = q_m(i1:i2) 
     send_buffer( 7, :) = pfn_m(i1:i2)
     send_buffer( 8, :) = ptot_m(i1:i2)
-    send_buffer( 9, :) = ne_m(i1:i2) 
+    send_buffer( 9, :) = ti_m(i1:i2)
     send_buffer(10, :) = te_m(i1:i2) 
-    send_buffer(11, :) = zef_m(i1:i2)
-    send_buffer(12, :) = vpar_m(i1:i2)
-    send_buffer(13, :) = vper_m(i1:i2)
-    send_buffer(14, :) = vexb_m(i1:i2)
-    send_buffer(15, :) = drmin(i1:i2)
-    send_buffer(16, :) = drmaj(i1:i2)
-    send_buffer(17, :) = drho(i1:i2) 
-    send_buffer(18, :) = delong(i1:i2)
-    send_buffer(19, :) = dtrian(i1:i2)
-    send_buffer(20, :) = dptot(i1:i2)
-    send_buffer(21, :) = dte(i1:i2)
-    send_buffer(22, :) = dne(i1:i2)
-    send_buffer(23, :) = dq(i1:i2)
-    send_buffer(24, :) = dvper(i1:i2)
-    send_buffer(25, :) = dv_r(i1:i2)
-    send_buffer(26, :) = dr(i1:i2)
-    send_buffer(27, :) = drhodr(i1:i2)
-    send_buffer(28, :) = ti_m(1, i1:i2)
-    send_buffer(29, :) = ti_m(2, i1:i2)
-    send_buffer(30, :) = ti_m(3, i1:i2)
-    send_buffer(31, :) = ti_m(4, i1:i2)
-    send_buffer(32, :) = ni_m(1, i1:i2)
-    send_buffer(33, :) = ni_m(2, i1:i2)
-    send_buffer(34, :) = ni_m(3, i1:i2)
-    send_buffer(35, :) = ni_m(4, i1:i2)
-    send_buffer(36, :) = zimp_m(1, i1:i2)
-    send_buffer(37, :) = zimp_m(2, i1:i2)
-    send_buffer(38, :) = zimp_m(3, i1:i2)
-    send_buffer(39, :) = dti(1, i1:i2)
-    send_buffer(40, :) = dti(2, i1:i2)
-    send_buffer(41, :) = dti(3, i1:i2)
-    send_buffer(42, :) = dti(4, i1:i2)
-    send_buffer(43, :) = dni(1, i1:i2)
-    send_buffer(44, :) = dni(2, i1:i2)
-    send_buffer(45, :) = dni(3, i1:i2)
-    send_buffer(46, :) = dni(4, i1:i2)
+    send_buffer(11, :) = ne_m(i1:i2) 
+    send_buffer(12, :) = zef_m(i1:i2)
+    send_buffer(13, :) = vpar_m(i1:i2)
+    send_buffer(14, :) = vper_m(i1:i2)
+    send_buffer(15, :) = vexb_m(i1:i2)
+    send_buffer(16, :) = drmin(i1:i2)
+    send_buffer(17, :) = drmaj(i1:i2)
+    send_buffer(18, :) = drho(i1:i2) 
+    send_buffer(19, :) = delong(i1:i2)
+    send_buffer(20, :) = dtrian(i1:i2)
+    send_buffer(21, :) = dptot(i1:i2)
+    send_buffer(22, :) = dti(i1:i2)
+    send_buffer(23, :) = dte(i1:i2)
+    send_buffer(24, :) = dne(i1:i2)
+    send_buffer(25, :) = dq(i1:i2)
+    send_buffer(26, :) = dvper(i1:i2)
+    send_buffer(27, :) = dv_r(i1:i2)
+    send_buffer(28, :) = dr(i1:i2)
+    send_buffer(29, :) = drhodr(i1:i2)
+    send_buffer(30, :) = ni_m(1, i1:i2)
+    send_buffer(31, :) = ni_m(2, i1:i2)
+    send_buffer(32, :) = ni_m(3, i1:i2)
+    send_buffer(33, :) = ni_m(4, i1:i2)
+    send_buffer(34, :) = zimp_m(1, i1:i2)
+    send_buffer(35, :) = zimp_m(2, i1:i2)
+    send_buffer(36, :) = zimp_m(3, i1:i2)
+    send_buffer(37, :) = dni(1, i1:i2)
+    send_buffer(38, :) = dni(2, i1:i2)
+    send_buffer(39, :) = dni(3, i1:i2)
+    send_buffer(40, :) = dni(4, i1:i2)
     call MPI_Send(send_buffer, chunk * n_inputs, MPI_DOUBLE_PRECISION, i, 102+i, intercomm, ierr)
 enddo
 
@@ -270,14 +254,21 @@ enddo
 call MPI_Barrier(intercomm, ierr)  ! Optional: ensure child finished before next step
 
 ! Interpolate back to ASTRA radial grid
-
-call qinterp(rho_m, prof_out_m(1, :), nrho_m, RHO(1:NA1), chii_as(1:NA1)   , NA1)
-call qinterp(rho_m, prof_out_m(2, :), nrho_m, RHO(1:NA1), chie_as(1:NA1)   , NA1)
-call qinterp(rho_m, prof_out_m(3, :), nrho_m, RHO(1:NA1), mtori_as(1:NA1)  , NA1)
+e_pflux_as = 0.
+i_pflux_as = 0.
+i_mflux_as = 0.
+chie_as  = 0.
+chii_as  = 0.
+exchi_as = 0.
+gamma_as = 0.
+omega_as = 0.
+call qinterp(rho_m, prof_out_m(1, :), nrho_m, RHO(1:NA1),    chii_as(1:NA1), NA1)
+call qinterp(rho_m, prof_out_m(2, :), nrho_m, RHO(1:NA1),    chie_as(1:NA1), NA1)
+call qinterp(rho_m, prof_out_m(3, :), nrho_m, RHO(1:NA1), i_mflux_as(1:NA1), NA1)
 call qinterp(rho_m, prof_out_m(4, :), nrho_m, RHO(1:NA1), e_pflux_as(1:NA1), NA1)
-call qinterp(rho_m, prof_out_m(5, :), nrho_m, RHO(1:NA1), exchi_as(1:NA1)  , NA1)
-call qinterp(rho_m, prof_out_m(6, :), nrho_m, RHO(1:NA1), gamma_as(1:NA1)  , NA1)
-call qinterp(rho_m, prof_out_m(7, :), nrho_m, RHO(1:NA1), omega_as(1:NA1)  , NA1)
+call qinterp(rho_m, prof_out_m(5, :), nrho_m, RHO(1:NA1),   exchi_as(1:NA1), NA1)
+call qinterp(rho_m, prof_out_m(6, :), nrho_m, RHO(1:NA1),   gamma_as(1:NA1), NA1)
+call qinterp(rho_m, prof_out_m(7, :), nrho_m, RHO(1:NA1),   omega_as(1:NA1), NA1)
 do jspec=1, nspec_max-1
     call qinterp(rho_m, prof_out_m(7+jspec, :), nrho_m, RHO(1:NA1), i_pflux_as(jspec, 1:NA1), NA1)
 enddo
@@ -287,7 +278,6 @@ do jrho=1, NA1
     chi_i(jrho) = chii_as(jrho)*gradrhosq_inv ! \chi_i, m^2/s
     chi_e(jrho) = chie_as(jrho)*gradrhosq_inv ! \chi_e, m^2/s
     e_pflux(jrho) = e_pflux_as(jrho)*gradrhosq_inv/a0_m ! D flux
-    mom_flux(jrho) = mtori_as(jrho)
     vimp1(jrho) = i_pflux_as(2, jrho)*gradrhosq_inv/a0_m/(NIZ1(jrho)/NE(jrho))  ! 1st imp convection
     vimp2(jrho) = i_pflux_as(3, jrho)*gradrhosq_inv/a0_m/(NIZ2(jrho)/NE(jrho))  ! 2nd imp convection
 enddo

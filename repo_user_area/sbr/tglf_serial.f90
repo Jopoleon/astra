@@ -1,4 +1,4 @@
-subroutine tglf_serial(chi_i, chi_e, e_pflux, vimp1, vimp2, mom_flux, exchi_as, gamma_as, omega_as)
+subroutine tglf_serial(chi_i, chi_e, e_pflux, vimp1, vimp2, i_mflux_as, exchi_as, gamma_as, omega_as)
 
 use tglf_interface, only: nsm, tglf_zs_in, tglf_ns_in, tglf_mass_in, &
     tglf_find_width_in, tglf_iflux_in, tglf_use_bper_in, tglf_use_mhd_rule_in, &
@@ -63,11 +63,11 @@ double precision, parameter :: c_vpol=1.d0
 ! In A_vars & A_arrs:
 
 double precision, dimension(NRD), intent(out) :: chi_i, chi_e, e_pflux, vimp2, vimp1, &
-    mom_flux, exchi_as, gamma_as, omega_as
+    i_mflux_as, exchi_as, gamma_as, omega_as
 
 !----------------------------------------------------------------------
 
-integer :: jr, jrho, jr_r, jr_l, jgamma_max, jspec, kyloop, mom_order
+integer :: jr, jrho, jr_r, jr_l, jgamma_max, jion, kyloop, mom_order
 integer :: sat_rule           ! Saturation rule
 integer :: geom_flag          ! 1: Miller; 2: Fourier; 3: ELITE
 integer :: nmodes_tg          ! number of unstable modes to use in computing fluxes (max=4)
@@ -76,7 +76,7 @@ integer :: xnu_model_tg       ! select version of trapped-passing 2
 integer :: jthe, jthe_rev, nrho_equ, nthe_equ ! for ELITE geometry
 
 double precision :: bmod, bpolz, alpha_zf_in, ion_eflux, ion_mflux, xstep, rho_min, rho_max
-double precision :: dtheta_elite, drmin, drmaj, drho, dte, dne, dq, dptot, &
+double precision :: dtheta_elite, drmin, drmaj, drho, dti, dte, dne, dq, dptot, &
         delong, dtrian, dvper, drhodr, dstep, dr, dv_r
 double precision :: Bunit_gauss, Bunit_T, cs0, cs00, rhos0, omega0, rhostar2, lnlamda, taue, cexb
 double precision :: a0_cm, a0_m, T0, N0, m0, rmin_m, drho_cs, drho_nt, nt_cs, gradrhosq_inv
@@ -85,12 +85,12 @@ double precision :: wdia_trap_tg          ! parameter for trapped fraction model
 double precision, dimension(NRD) :: rmaj_as, q_as, ni_main_as, &
     vexb_as, vpar_as, vper_as, mtori_as, chie_as, chii_as, e_pflux_as, ptot_as
 double precision, dimension(nrho_m) :: mtori, chie, chii, exchi, epflux, rho_m, &
-    gamma_max, omega_max, kymax, te_m, ne_m, vpar_m, vper_m, vexb_m, &
+    gamma_max, omega_max, kymax, ti_m, te_m, ne_m, vpar_m, vper_m, vexb_m, &
     ametr_m, elon_m, tria_m, rmaj_m, ptot_m, q_m, zef_m, pfn_m
 double precision, dimension(nthe_elite) :: theta_elite, RR_elite, ZZ_elite, Bp_elite
-double precision, allocatable, dimension(:) :: gamma, omega, kyspectrum, efluxspectrum, ifluxspectrum, pfluxspectrum
-double precision, dimension(nsm-1) :: dti, dni
-double precision, dimension(nsm-1, nrho_m) :: ni_m, ti_m, i_pflux
+double precision, allocatable, dimension(:) :: gamma, omega, kyspectrum, efluxspectrum
+double precision, dimension(nsm-1) :: dni
+double precision, dimension(nsm-1, nrho_m) :: ni_m, i_pflux
 double precision, dimension(nsm-2, nrho_m) :: zimp_m
 double precision, dimension(nsm-1, NRD) :: ni_as, i_pflux_as
 ! ELITE
@@ -109,13 +109,13 @@ rho_max = max(RHO(NA1I), RHO(NA1E), RHO(NA1N))
 xstep = (rho_max - rho_min)/(nrho_m - 1.)
 rho_m = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_m) /)
 
-call qinterp(RHO(1:NA1),   TI(1:NA1), NA1, rho_m,   ti_m(1, :), nrho_m)
 call qinterp(RHO(1:NA1), ZIM1(1:NA1), NA1, rho_m, zimp_m(1, :), nrho_m)
 call qinterp(RHO(1:NA1), ZIM2(1:NA1), NA1, rho_m, zimp_m(2, :), nrho_m)
 call qinterp(RHO(1:NA1), ZIM3(1:NA1), NA1, rho_m, zimp_m(3, :), nrho_m)
 call qinterp(RHO(1:NA1), NIZ1(1:NA1), NA1, rho_m,   ni_m(2, :), nrho_m)
 call qinterp(RHO(1:NA1), NIZ2(1:NA1), NA1, rho_m,   ni_m(3, :), nrho_m)
 call qinterp(RHO(1:NA1), NIZ3(1:NA1), NA1, rho_m,   ni_m(4, :), nrho_m)
+call qinterp(RHO(1:NA1),      TI(1:NA1), NA1, rho_m,    ti_m, nrho_m)
 call qinterp(RHO(1:NA1),      TE(1:NA1), NA1, rho_m,    te_m, nrho_m)
 call qinterp(RHO(1:NA1),      NE(1:NA1), NA1, rho_m,    ne_m, nrho_m)
 call qinterp(RHO(1:NA1),     ZEF(1:NA1), NA1, rho_m,   zef_m, nrho_m)
@@ -196,10 +196,6 @@ if (tglf_zs_in(3) < 1.) tglf_ns_in = 2
 if (tglf_zs_in(4) >= 1. .and. tglf_ns_in == 2) then
     tglf_ns_in = 3
 endif
-
-ti_m(2, :) = ti_m(1, :)
-ti_m(3, :) = ti_m(1, :)
-ti_m(4, :) = ti_m(1, :)
 
 kygrid_model_tg = 4 !1 Email Angioni Aug 1st 2023
 
@@ -340,8 +336,6 @@ allocate(gamma(tglf_nky_in))
 allocate(omega(tglf_nky_in))
 allocate(kyspectrum(tglf_nky_in))
 allocate(efluxspectrum(tglf_nky_in))
-allocate(ifluxspectrum(tglf_nky_in))
-allocate(pfluxspectrum(tglf_nky_in))
 
 radial_loop: do jr=1, nrho_m
 
@@ -355,13 +349,11 @@ radial_loop: do jr=1, nrho_m
         tglf_zs_in(4) = tglf_zs_in(5)
         tglf_mass_in(4) = tglf_mass_in(5)
         ni_m(3, :) = ni_m(4, :)
-        ti_m(3, :) = ti_m(4, :)
     endif
     if (tglf_zs_in(4) >= 1. .and. tglf_ns_in == 2) then
         tglf_zs_in(3) = tglf_zs_in(4)
         tglf_mass_in(3) = tglf_mass_in(4)
         ni_m(2, :) = ni_m(3, :)
-        ti_m(2, :) = ti_m(3, :)
     endif
 
 !    tglf_ns_in = 3
@@ -390,9 +382,9 @@ radial_loop: do jr=1, nrho_m
     dne = dstep*(ne_m(jr_r) - ne_m(jr_l))
     dq    = dstep*(q_m(jr_r) - q_m(jr_l))
     dvper = dstep*(vper_m(jr_r) - vper_m(jr_l))
-    do jspec=1, tglf_ns_in-1
-        dti(jspec) = dstep*(ti_m(jspec, jr_r) - ti_m(jspec, jr_l))
-        dni(jspec) = dstep*(ni_m(jspec, jr_r) - ni_m(jspec, jr_l))
+    dti = dstep*(ti_m(jr_r) - ti_m(jr_l))
+    do jion=1, tglf_ns_in-1
+        dni(jion) = dstep*(ni_m(jion, jr_r) - ni_m(jion, jr_l))
     enddo
     dv_r = dstep* &
         (vpar_m(jr_r)/(rmaj_m(jr_r) + ametr_m(jr_r)) - &
@@ -409,11 +401,11 @@ radial_loop: do jr=1, nrho_m
     tglf_rlns_in(1) = -dne/(dr*ne_m(jr))
     tglf_rlts_in(1) = -dte/(dr*te_m(jr))
 
-    do jspec=2, tglf_ns_in
-        tglf_as_in(jspec)   = ni_m(jspec-1, jr)/ne_m(jr)
-        tglf_taus_in(jspec) = ti_m(jspec-1, jr)/te_m(jr)
-        tglf_rlns_in(jspec) = -dni(jspec-1)/(dr*ni_m(jspec-1, jr))
-        tglf_rlts_in(jspec) = -dti(jspec-1)/(dr*ti_m(jspec-1, jr))
+    do jion=1, tglf_ns_in-1
+        tglf_as_in(jion+1)   = ni_m(jion, jr)/ne_m(jr)
+        tglf_taus_in(jion+1) = ti_m(jr)/te_m(jr)
+        tglf_rlns_in(jion+1) = -dni(jion)/(dr*ni_m(jion, jr))
+        tglf_rlts_in(jion+1) = -dti/(dr*ti_m(jr))
     enddo
 ! Restore quasi-neutrality via main ions
 
@@ -538,8 +530,8 @@ radial_loop: do jr=1, nrho_m
     chie (jr) = tglf_elec_eflux_out/(1e-4 + abs(tglf_rlts_in(1))) *drho_cs
     mtori(jr) = ion_mflux*drho_nt
     epflux(jr) = tglf_elec_pflux_out/drhodr *drho_cs         ! particle flux
-    do jspec=1, tglf_ns_in-1
-        i_pflux(jspec, jr) = tglf_ion_pflux_out(jspec)/drhodr *drho_cs  !ion particle flux
+    do jion=1, tglf_ns_in-1
+        i_pflux(jion, jr) = tglf_ion_pflux_out(jion)/drhodr *drho_cs  !ion particle flux
     enddo
     exchi(jr) = tglf_elec_expwd_out * nt_cs                ! Equipartition
     do kyloop=1, tglf_nky_in
@@ -547,28 +539,24 @@ radial_loop: do jr=1, nrho_m
         omega(kyloop) = get_eigenvalue_spectrum_out(2, kyloop, 1)
         kyspectrum(kyloop) = get_ky_spectrum_out(kyloop)
         efluxspectrum(kyloop) = get_flux_spectrum_out(2, 1, 1, kyloop, 1)
-        ifluxspectrum(kyloop) = get_flux_spectrum_out(2, 2, 1, kyloop, 1)
-        pfluxspectrum(kyloop) = get_flux_spectrum_out(1, 1, 1, kyloop, 1)
     enddo
-
     jgamma_max = maxloc(efluxspectrum(1:tglf_nky_in), 1)
     gamma_max(jr) = gamma(jgamma_max)*(cs0/a0_cm)
     omega_max(jr) = omega(jgamma_max)*(cs0/a0_cm)
     kymax(jr) = kyspectrum(jgamma_max)
-
 enddo radial_loop
 
 ! Interpolate back to ASTRA radial grid
 
 call qinterp(rho_m, chii     , nrho_m, RHO(1:NA1), chii_as(1:NA1)   , NA1)
 call qinterp(rho_m, chie     , nrho_m, RHO(1:NA1), chie_as(1:NA1)   , NA1)
-call qinterp(rho_m, mtori    , nrho_m, RHO(1:NA1), mtori_as(1:NA1)  , NA1)
+call qinterp(rho_m, mtori    , nrho_m, RHO(1:NA1), i_mflux_as(1:NA1), NA1)
 call qinterp(rho_m, e_pflux  , nrho_m, RHO(1:NA1), e_pflux_as(1:NA1), NA1)
-call qinterp(rho_m, exchi    , nrho_m, RHO(1:NA1), exchi_as(1:NA1)   , NA1)
-call qinterp(rho_m, gamma_max, nrho_m, RHO(1:NA1), gamma_as(1:NA1)   , NA1)
-call qinterp(rho_m, omega_max, nrho_m, RHO(1:NA1), omega_as(1:NA1)   , NA1)
-do jspec=1, tglf_ns_in-1
-    call qinterp(rho_m, i_pflux(jspec, 1:nrho_m), nrho_m, RHO(1:NA1), i_pflux_as(jspec, 1:NA1), NA1)
+call qinterp(rho_m, exchi    , nrho_m, RHO(1:NA1), exchi_as(1:NA1)  , NA1)
+call qinterp(rho_m, gamma_max, nrho_m, RHO(1:NA1), gamma_as(1:NA1)  , NA1)
+call qinterp(rho_m, omega_max, nrho_m, RHO(1:NA1), omega_as(1:NA1)  , NA1)
+do jion=1, tglf_ns_in-1
+    call qinterp(rho_m, i_pflux(jion, 1:nrho_m), nrho_m, RHO(1:NA1), i_pflux_as(jion, 1:NA1), NA1)
 enddo
 
 do jrho=1, NA1
@@ -576,7 +564,6 @@ do jrho=1, NA1
     chi_i(jrho) = chii_as(jrho)*gradrhosq_inv ! \chi_i, m^2/s
     chi_e(jrho) = chie_as(jrho)*gradrhosq_inv ! \chi_e, m^2/s
     e_pflux(jrho) = e_pflux_as(jrho)*gradrhosq_inv/a0_m ! D flux
-    mom_flux(jrho) = mtori_as(jrho)
     vimp1(jrho) = i_pflux_as(2, jrho)*gradrhosq_inv/a0_m/(NIZ1(jrho)/NE(jrho))  ! 1st imp convection
     vimp2(jrho) = i_pflux_as(3, jrho)*gradrhosq_inv/a0_m/(NIZ2(jrho)/NE(jrho))  ! 2nd imp convection
 enddo
