@@ -536,13 +536,13 @@ enddo radial_loop
 
 ! Interpolate back to ASTRA radial grid
 
-call qinterp(rho_m, chii     , nrho_m, RHO(1:NA1), chii_as(1:NA1)   , NA1)
-call qinterp(rho_m, chie     , nrho_m, RHO(1:NA1), chie_as(1:NA1)   , NA1)
+call qinterp(rho_m, chii     , nrho_m, RHO(1:NA1),    chii_as(1:NA1), NA1)
+call qinterp(rho_m, chie     , nrho_m, RHO(1:NA1),    chie_as(1:NA1), NA1)
 call qinterp(rho_m, mtori    , nrho_m, RHO(1:NA1), i_mflux_as(1:NA1), NA1)
 call qinterp(rho_m, e_pflux  , nrho_m, RHO(1:NA1), e_pflux_as(1:NA1), NA1)
-call qinterp(rho_m, exchi    , nrho_m, RHO(1:NA1), exchi_as(1:NA1)  , NA1)
-call qinterp(rho_m, gamma_max, nrho_m, RHO(1:NA1), gamma_as(1:NA1)  , NA1)
-call qinterp(rho_m, omega_max, nrho_m, RHO(1:NA1), omega_as(1:NA1)  , NA1)
+call qinterp(rho_m, exchi    , nrho_m, RHO(1:NA1),   exchi_as(1:NA1), NA1)
+call qinterp(rho_m, gamma_max, nrho_m, RHO(1:NA1),   gamma_as(1:NA1), NA1)
+call qinterp(rho_m, omega_max, nrho_m, RHO(1:NA1),   omega_as(1:NA1), NA1)
 do jion=1, tglf_ns_in-1
     call qinterp(rho_m, i_pflux(jion, 1:nrho_m), nrho_m, RHO(1:NA1), i_pflux_as(jion, 1:NA1), NA1)
 enddo

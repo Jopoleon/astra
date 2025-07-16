@@ -17,7 +17,7 @@ double precision, dimension(NRD), intent(out) :: chi_i, chi_e, e_pflux, vimp2, v
      i_mflux_as, exchi_as, gamma_as, omega_as
 
 integer :: ierr, info, intercomm, errcodes(100), status(MPI_STATUS_SIZE)
-integer :: jr, jrho, jr_r, jr_l, jgamma_max, jspec
+integer :: jr, jrho, jr_r, jr_l, jgamma_max, jion
 integer :: ns_in              ! Number of species, including electrons
 integer :: i, i1, i2, chunk, nworkers, dims(n_dims)
 
@@ -146,8 +146,8 @@ do jr=1, nrho_m
     dne(jr)    = dstep*(ne_m(jr_r) - ne_m(jr_l))
     dq(jr)     = dstep*(q_m(jr_r) - q_m(jr_l))
     dvper(jr)  = dstep*(vper_m(jr_r) - vper_m(jr_l))
-    do jspec=1, nspec_max-1
-        dni(jspec, jr) = dstep*(ni_m(jspec, jr_r) - ni_m(jspec, jr_l))
+    do jion=1, nspec_max-1
+        dni(jion, jr) = dstep*(ni_m(jion, jr_r) - ni_m(jion, jr_l))
     enddo
     dv_r(jr) = dstep* &
         (vpar_m(jr_r)/(rmaj_m(jr_r) + ametr_m(jr_r)) - &
@@ -260,8 +260,8 @@ call qinterp(rho_m, prof_out_m(4, :), nrho_m, RHO(1:NA1), e_pflux_as(1:NA1), NA1
 call qinterp(rho_m, prof_out_m(5, :), nrho_m, RHO(1:NA1),   exchi_as(1:NA1), NA1)
 call qinterp(rho_m, prof_out_m(6, :), nrho_m, RHO(1:NA1),   gamma_as(1:NA1), NA1)
 call qinterp(rho_m, prof_out_m(7, :), nrho_m, RHO(1:NA1),   omega_as(1:NA1), NA1)
-do jspec=1, nspec_max-1
-    call qinterp(rho_m, prof_out_m(7+jspec, :), nrho_m, RHO(1:NA1), i_pflux_as(jspec, 1:NA1), NA1)
+do jion=1, nspec_max-1
+    call qinterp(rho_m, prof_out_m(7+jion, :), nrho_m, RHO(1:NA1), i_pflux_as(jion, 1:NA1), NA1)
 enddo
 
 do jrho=1, NA1
