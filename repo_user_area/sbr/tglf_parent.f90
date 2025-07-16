@@ -15,7 +15,7 @@ use status_inc, only: NE, TE, NI, TI, &
 
 implicit none
 
-integer, parameter :: n_scalars=10, n_inputs=47, n_outputs=15, n_dims=8, nrho_m=80, nspec_max=5
+integer, parameter :: n_scalars=10, n_inputs=46, n_outputs=15, n_dims=8, nrho_m=80, nspec_max=5
 double precision, parameter :: c_vpol=1.d0
 
 double precision, dimension(NRD), intent(out) :: chi_i, chi_e, e_pflux, vimp2, vimp1, &
@@ -38,7 +38,8 @@ double precision, dimension(nrho_m) :: rho_m, &
     ametr_m, elon_m, tria_m, rmaj_m, ptot_m, q_m, zef_m, pfn_m
 double precision, dimension(nspec_max) :: mass_in
 double precision, dimension(nspec_max-2) :: zimp_max
-double precision, dimension(nspec_max-1, nrho_m) :: dti, dni, ni_m, ti_m, zi_m, i_pflux
+double precision, dimension(nspec_max-1, nrho_m) :: dti, dni, ni_m, ti_m, i_pflux
+double precision, dimension(nspec_max-2, nrho_m) :: zimp_m 
 double precision, dimension(nspec_max-1, NRD) :: i_pflux_as
 double precision, allocatable, dimension(:, :) :: send_buffer
 character(len=256) :: worker_exe
@@ -52,20 +53,20 @@ rho_max = RHO(NA1)
 xstep = (rho_max - rho_min)/(nrho_m - 1.)
 rho_m = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_m) /)
 
-call qinterp(RHO(1:NA1),      TI(1:NA1), NA1, rho_m, ti_m(1, :), nrho_m)
-call qinterp(RHO(1:NA1),      TE(1:NA1), NA1, rho_m,       te_m, nrho_m)
-call qinterp(RHO(1:NA1),    ZIM1(1:NA1), NA1, rho_m, zi_m(2, :), nrho_m)
-call qinterp(RHO(1:NA1),    ZIM2(1:NA1), NA1, rho_m, zi_m(3, :), nrho_m)
-call qinterp(RHO(1:NA1),    ZIM3(1:NA1), NA1, rho_m, zi_m(4, :), nrho_m)
-call qinterp(RHO(1:NA1),    NIZ1(1:NA1), NA1, rho_m, ni_m(2, :), nrho_m)
-call qinterp(RHO(1:NA1),    NIZ2(1:NA1), NA1, rho_m, ni_m(3, :), nrho_m)
-call qinterp(RHO(1:NA1),    NIZ3(1:NA1), NA1, rho_m, ni_m(4, :), nrho_m)
-call qinterp(RHO(1:NA1),      NE(1:NA1), NA1, rho_m,       ne_m, nrho_m)
-call qinterp(RHO(1:NA1),     ZEF(1:NA1), NA1, rho_m,      zef_m, nrho_m)
-call qinterp(RHO(1:NA1),   AMETR(1:NA1), NA1, rho_m,    ametr_m, nrho_m)
-call qinterp(RHO(1:NA1),    ELON(1:NA1), NA1, rho_m,     elon_m, nrho_m)
-call qinterp(RHO(1:NA1),    TRIA(1:NA1), NA1, rho_m,     tria_m, nrho_m)
-call qinterp(RHO(1:NA1), FP_NORM(1:NA1), NA1, rho_m,      pfn_m, nrho_m)
+call qinterp(RHO(1:NA1),   TI(1:NA1), NA1, rho_m,   ti_m(1, :), nrho_m)
+call qinterp(RHO(1:NA1), ZIM1(1:NA1), NA1, rho_m, zimp_m(1, :), nrho_m)
+call qinterp(RHO(1:NA1), ZIM2(1:NA1), NA1, rho_m, zimp_m(2, :), nrho_m)
+call qinterp(RHO(1:NA1), ZIM3(1:NA1), NA1, rho_m, zimp_m(3, :), nrho_m)
+call qinterp(RHO(1:NA1), NIZ1(1:NA1), NA1, rho_m,   ni_m(2, :), nrho_m)
+call qinterp(RHO(1:NA1), NIZ2(1:NA1), NA1, rho_m,   ni_m(3, :), nrho_m)
+call qinterp(RHO(1:NA1), NIZ3(1:NA1), NA1, rho_m,   ni_m(4, :), nrho_m)
+call qinterp(RHO(1:NA1),      TE(1:NA1), NA1, rho_m,    te_m, nrho_m)
+call qinterp(RHO(1:NA1),      NE(1:NA1), NA1, rho_m,    ne_m, nrho_m)
+call qinterp(RHO(1:NA1),     ZEF(1:NA1), NA1, rho_m,   zef_m, nrho_m)
+call qinterp(RHO(1:NA1),   AMETR(1:NA1), NA1, rho_m, ametr_m, nrho_m)
+call qinterp(RHO(1:NA1),    ELON(1:NA1), NA1, rho_m,  elon_m, nrho_m)
+call qinterp(RHO(1:NA1),    TRIA(1:NA1), NA1, rho_m,  tria_m, nrho_m)
+call qinterp(RHO(1:NA1), FP_NORM(1:NA1), NA1, rho_m,   pfn_m, nrho_m)
 
 do jrho=1, NA1
     if (NDEUT(jrho) >= 0.01*NE(jrho)) then
@@ -137,7 +138,6 @@ endif
 ti_m(2, :) = ti_m(1, :)
 ti_m(3, :) = ti_m(1, :)
 ti_m(4, :) = ti_m(1, :)
-zi_m(1, :) = ZMJ
 
 !--------------
 ! Differentials
@@ -186,6 +186,7 @@ scal_in_m(1) = RTOR
 scal_in_m(2) = BTOR
 scal_in_m(3) = a0_m
 scal_in_m(4:  8) = mass_in(1:5)
+scal_in_m(9) = ZMJ
 
 !--------------
 ! Send MPI jobs
@@ -246,18 +247,17 @@ do i=0, nworkers-1
     send_buffer(33, :) = ni_m(2, i1:i2)
     send_buffer(34, :) = ni_m(3, i1:i2)
     send_buffer(35, :) = ni_m(4, i1:i2)
-    send_buffer(36, :) = zi_m(1, i1:i2)
-    send_buffer(37, :) = zi_m(2, i1:i2)
-    send_buffer(38, :) = zi_m(3, i1:i2)
-    send_buffer(39, :) = zi_m(4, i1:i2)
-    send_buffer(40, :) = dti(1, i1:i2)
-    send_buffer(41, :) = dti(2, i1:i2)
-    send_buffer(42, :) = dti(3, i1:i2)
-    send_buffer(43, :) = dti(4, i1:i2)
-    send_buffer(44, :) = dni(1, i1:i2)
-    send_buffer(45, :) = dni(2, i1:i2)
-    send_buffer(46, :) = dni(3, i1:i2)
-    send_buffer(47, :) = dni(4, i1:i2)
+    send_buffer(36, :) = zimp_m(1, i1:i2)
+    send_buffer(37, :) = zimp_m(2, i1:i2)
+    send_buffer(38, :) = zimp_m(3, i1:i2)
+    send_buffer(39, :) = dti(1, i1:i2)
+    send_buffer(40, :) = dti(2, i1:i2)
+    send_buffer(41, :) = dti(3, i1:i2)
+    send_buffer(42, :) = dti(4, i1:i2)
+    send_buffer(43, :) = dni(1, i1:i2)
+    send_buffer(44, :) = dni(2, i1:i2)
+    send_buffer(45, :) = dni(3, i1:i2)
+    send_buffer(46, :) = dni(4, i1:i2)
     call MPI_Send(send_buffer, chunk * n_inputs, MPI_DOUBLE_PRECISION, i, 102+i, intercomm, ierr)
 enddo
 

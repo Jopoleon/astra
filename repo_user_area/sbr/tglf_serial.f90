@@ -90,7 +90,8 @@ double precision, dimension(nrho_m) :: mtori, chie, chii, exchi, epflux, rho_m, 
 double precision, dimension(nthe_elite) :: theta_elite, RR_elite, ZZ_elite, Bp_elite
 double precision, allocatable, dimension(:) :: gamma, omega, kyspectrum, efluxspectrum, ifluxspectrum, pfluxspectrum
 double precision, dimension(nsm-1) :: dti, dni
-double precision, dimension(nsm-1, nrho_m) :: ni_m, ti_m, zi_m, i_pflux
+double precision, dimension(nsm-1, nrho_m) :: ni_m, ti_m, i_pflux
+double precision, dimension(nsm-2, nrho_m) :: zimp_m
 double precision, dimension(nsm-1, NRD) :: ni_as, i_pflux_as
 ! ELITE
 double precision, allocatable, dimension(:) :: theta_equ, pfn_equ
@@ -108,24 +109,20 @@ rho_max = max(RHO(NA1I), RHO(NA1E), RHO(NA1N))
 xstep = (rho_max - rho_min)/(nrho_m - 1.)
 rho_m = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_m) /)
 
-call qinterp(RHO(1:NA1),      TI(1:NA1), NA1, rho_m, ti_m(1, :), nrho_m)
-call qinterp(RHO(1:NA1),      TE(1:NA1), NA1, rho_m,       te_m, nrho_m)
-call qinterp(RHO(1:NA1),    ZIM1(1:NA1), NA1, rho_m, zi_m(2, :), nrho_m)
-call qinterp(RHO(1:NA1),    ZIM2(1:NA1), NA1, rho_m, zi_m(3, :), nrho_m)
-call qinterp(RHO(1:NA1),    ZIM3(1:NA1), NA1, rho_m, zi_m(4, :), nrho_m)
-call qinterp(RHO(1:NA1),    NIZ1(1:NA1), NA1, rho_m, ni_m(2, :), nrho_m)
-call qinterp(RHO(1:NA1),    NIZ2(1:NA1), NA1, rho_m, ni_m(3, :), nrho_m)
-call qinterp(RHO(1:NA1),    NIZ3(1:NA1), NA1, rho_m, ni_m(4, :), nrho_m)
-call qinterp(RHO(1:NA1),      NE(1:NA1), NA1, rho_m,       ne_m, nrho_m)
-call qinterp(RHO(1:NA1),     ZEF(1:NA1), NA1, rho_m,      zef_m, nrho_m)
-call qinterp(RHO(1:NA1),   AMETR(1:NA1), NA1, rho_m,    ametr_m, nrho_m)
-call qinterp(RHO(1:NA1),    ELON(1:NA1), NA1, rho_m,     elon_m, nrho_m)
-call qinterp(RHO(1:NA1),    TRIA(1:NA1), NA1, rho_m,     tria_m, nrho_m)
-call qinterp(RHO(1:NA1), FP_NORM(1:NA1), NA1, rho_m,      pfn_m, nrho_m)
-
-ti_m(2, :) = ti_m(1, :)
-ti_m(3, :) = ti_m(1, :)
-ti_m(4, :) = ti_m(1, :)
+call qinterp(RHO(1:NA1),   TI(1:NA1), NA1, rho_m,   ti_m(1, :), nrho_m)
+call qinterp(RHO(1:NA1), ZIM1(1:NA1), NA1, rho_m, zimp_m(1, :), nrho_m)
+call qinterp(RHO(1:NA1), ZIM2(1:NA1), NA1, rho_m, zimp_m(2, :), nrho_m)
+call qinterp(RHO(1:NA1), ZIM3(1:NA1), NA1, rho_m, zimp_m(3, :), nrho_m)
+call qinterp(RHO(1:NA1), NIZ1(1:NA1), NA1, rho_m,   ni_m(2, :), nrho_m)
+call qinterp(RHO(1:NA1), NIZ2(1:NA1), NA1, rho_m,   ni_m(3, :), nrho_m)
+call qinterp(RHO(1:NA1), NIZ3(1:NA1), NA1, rho_m,   ni_m(4, :), nrho_m)
+call qinterp(RHO(1:NA1),      TE(1:NA1), NA1, rho_m,    te_m, nrho_m)
+call qinterp(RHO(1:NA1),      NE(1:NA1), NA1, rho_m,    ne_m, nrho_m)
+call qinterp(RHO(1:NA1),     ZEF(1:NA1), NA1, rho_m,   zef_m, nrho_m)
+call qinterp(RHO(1:NA1),   AMETR(1:NA1), NA1, rho_m, ametr_m, nrho_m)
+call qinterp(RHO(1:NA1),    ELON(1:NA1), NA1, rho_m,  elon_m, nrho_m)
+call qinterp(RHO(1:NA1),    TRIA(1:NA1), NA1, rho_m,  tria_m, nrho_m)
+call qinterp(RHO(1:NA1), FP_NORM(1:NA1), NA1, rho_m,   pfn_m, nrho_m)
 
 do jrho=1, NA1
     if (NDEUT(jrho) >= 0.01*NE(jrho)) then
@@ -180,6 +177,7 @@ exchi_as = 0.
 ! Number of species
 
 tglf_ns_in = nsm
+
 ! These will be reset locally in the radial loop
 tglf_zs_in(3) = MAXVAL(ZIM1(1:NA1))
 tglf_zs_in(4) = MAXVAL(ZIM2(1:NA1))
@@ -198,6 +196,10 @@ if (tglf_zs_in(3) < 1.) tglf_ns_in = 2
 if (tglf_zs_in(4) >= 1. .and. tglf_ns_in == 2) then
     tglf_ns_in = 3
 endif
+
+ti_m(2, :) = ti_m(1, :)
+ti_m(3, :) = ti_m(1, :)
+ti_m(4, :) = ti_m(1, :)
 
 kygrid_model_tg = 4 !1 Email Angioni Aug 1st 2023
 
@@ -345,9 +347,9 @@ radial_loop: do jr=1, nrho_m
 
 !thermal impurities
 
-    tglf_zs_in(3) = max(1., zi_m(2, jr))
-    tglf_zs_in(4) = zi_m(3, jr)
-    tglf_zs_in(5) = zi_m(4, jr)
+    tglf_zs_in(3) = max(1., zimp_m(1, jr))
+    tglf_zs_in(4) = zimp_m(2, jr)
+    tglf_zs_in(5) = zimp_m(3, jr)
 
     if (tglf_zs_in(5) >= 1. .and. tglf_ns_in == 3) then
         tglf_zs_in(4) = tglf_zs_in(5)

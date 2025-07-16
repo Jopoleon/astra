@@ -50,7 +50,7 @@ integer :: chunk, nprocs, n_inputs, n_outputs, n_scalars, dims(n_dims)
 integer :: sat_rule, jr, jgamma_max, jspec, kyloop
 double precision :: Bunit_gauss, Bunit_T, cs0, cs00, rhos0, omega0, rhostar2, lnlamda, taue, cexb
 double precision :: a0_cm, a0_m, T0, N0, m0, rmin, drho_cs, drho_nt, nt_cs
-double precision :: AMJ, BTOR
+double precision :: Amain, Btor, Zmain
 double precision :: ion_eflux, ion_mflux
 double precision, allocatable, dimension(:) :: scalars
 double precision, allocatable, dimension(:, :) :: inputs, outputs
@@ -58,7 +58,7 @@ double precision, allocatable, dimension(:) :: mtori, chie, chii, exchi, elec_pf
     gamma_max, omega_max, kymax, te, ne, vpar, vper, vexb, &
     ametr, elon, tria, rmaj, ptot, q, zef, pfn, &
     drmin, drmaj, drho, delong, dtrian, dr, dne, dte, dq, dptot, dvpar, dvper, dv_r, drhodr
-double precision, allocatable, dimension(:, :) :: dti, dni, ni, ti, zi, ion_pflux
+double precision, allocatable, dimension(:, :) :: dti, dni, ni, ti, zimp, ion_pflux
 double precision, dimension(nky) :: gamma, omega, kyspectrum, efluxspectrum, &
     ifluxspectrum, pfluxspectrum
 
@@ -104,7 +104,7 @@ allocate( drmin(chunk), drmaj(chunk), drho(chunk), delong(chunk), dtrian(chunk),
     dr(chunk), dne(chunk), dte(chunk), dq(chunk), dptot(chunk), dvpar(chunk), &
     dvper(chunk), dv_r(chunk), drhodr(chunk) )
 allocate( dti(nspec_max-1, chunk), dni(nspec_max-1, chunk), ni(nspec_max-1, chunk), &
-    ti(nspec_max-1, chunk), zi(nspec_max-1, chunk), ion_pflux(nspec_max-1, chunk) )
+    ti(nspec_max-1, chunk), zimp(nspec_max-2, chunk), ion_pflux(nspec_max-1, chunk) )
 
 ! Initialise to zero for non-calculated species
 
@@ -118,11 +118,13 @@ tglf_vpar_in = 0.
 tglf_vpar_shear_in = 0.
 
 ! Scalars
-BTOR = scalars(2)
-a0_m = scalars(3)
-AMJ  = scalars(5)
-tglf_mass_in(1: 5) = scalars(4:  8)/AMJ
-m0 = AMJ*mp          ! Ref. mass = D ion mass [g]
+Btor  = scalars(2)
+a0_m  = scalars(3)
+Amain = scalars(5)
+Zmain = scalars(9)
+tglf_mass_in(1: 5) = scalars(4:  8)/Amain
+
+m0 = Amain*mp          ! Ref. mass = D ion mass [g]
 a0_cm = 1.d2*a0_m    ! length scale used by GYRO, m -> cm
 
 ! Profiles
@@ -161,18 +163,17 @@ ni( 1, :) = inputs(32, :)
 ni( 2, :) = inputs(33, :)
 ni( 3, :) = inputs(34, :)
 ni( 4, :) = inputs(35, :)
-zi( 1, :) = inputs(36, :)
-zi( 2, :) = inputs(37, :)
-zi( 3, :) = inputs(38, :)
-zi( 4, :) = inputs(39, :)
-dti(1, :) = inputs(40, :)
-dti(2, :) = inputs(41, :)
-dti(3, :) = inputs(42, :)
-dti(4, :) = inputs(43, :)
-dni(1, :) = inputs(44, :)
-dni(2, :) = inputs(45, :)
-dni(3, :) = inputs(46, :)
-dni(4, :) = inputs(47, :)
+zimp(1,:) = inputs(36, :)
+zimp(2,:) = inputs(37, :)
+zimp(3,:) = inputs(38, :)
+dti(1, :) = inputs(39, :)
+dti(2, :) = inputs(40, :)
+dti(3, :) = inputs(41, :)
+dti(4, :) = inputs(42, :)
+dni(1, :) = inputs(43, :)
+dni(2, :) = inputs(44, :)
+dni(3, :) = inputs(45, :)
+dni(4, :) = inputs(46, :)
 
 ! TGLF settings
 sat_rule = 2
@@ -259,15 +260,15 @@ tglf_b_model_sa_in  = 1
 tglf_ft_model_sa_in = 1
 
 tglf_zs_in(1) = -1
-tglf_zs_in(2) = zi(1, 1)
+tglf_zs_in(2) = Zmain
 
 radial_loop: do jr=1, chunk
 
 !thermal impurities
 
-    tglf_zs_in(3) = max(1., zi(2, jr))
-    tglf_zs_in(4) = zi(3, jr)
-    tglf_zs_in(5) = zi(4, jr)
+    tglf_zs_in(3) = max(1., zimp(1, jr))
+    tglf_zs_in(4) = zimp(2, jr)
+    tglf_zs_in(5) = zimp(3, jr)
 
     if (tglf_zs_in(5) >= 1. .and. tglf_ns_in == 3) then
         tglf_zs_in(4) = tglf_zs_in(5)
@@ -309,13 +310,13 @@ radial_loop: do jr=1, chunk
 
     N0  = 1E13*ne(jr)   ! density scale used by GYRO [1/cm**3]
     T0  = 1E3 *te(jr)   ! temperature scale used by GYRO
-    Bunit_T = BTOR*drhodr(jr)*rho(jr)/ametr(jr)  ! Miller geometry magnetic field unit [gauss]
+    Bunit_T = Btor*drhodr(jr)*rho(jr)/ametr(jr)  ! Miller geometry magnetic field unit [gauss]
     Bunit_gauss = 1.d4*Bunit_T 
 
 ! derived units for the plasma
 
     cs0 = SQRT(k0*T0/m0)          ! thermal velocity unit cm/sec
-    cs00 = SQRT(e00*T0/(AMJ*mpp)) ! thermal velocity unit m/sec
+    cs00 = SQRT(e00*T0/(Amain*mpp)) ! thermal velocity unit m/sec
     omega0 = e0*Bunit_gauss/(m0*c0)     ! gyrofrequency unit 1/sec
     rhos0 = cs0/omega0            ! gyroradius unit cm
     lnlamda = 24.0 -0.5*LOG(tglf_as_in(1)*N0) + LOG(tglf_taus_in(1)*T0)
