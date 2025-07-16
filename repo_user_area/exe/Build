@@ -81,8 +81,8 @@ then
 #SBATCH -J astra_${USER}
 #SBATCH --partition=p.tok
 #SBATCH --qos=p.tok.48h
-#SBATCH --nodes=4
-#SBATCH --ntasks-per-node=4
+#SBATCH --nodes=6
+#SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem-per-cpu 1GB
 #SBATCH --time=12:00:00
@@ -92,7 +92,7 @@ export expfile=${expfile}
 export equfile=${equfile}
 export OMP_PLACES=cores
 export I_MPI_ROOT=${I_MPI_ROOT}
-export I_MPI_FABRICS=shm:tpc
+export I_MPI_FABRICS=shm:ofi
 export I_MPI_SPAWN=on
 #export PMI_DEBUG=1
 #export I_MPI_DEBUG=5
