@@ -34,15 +34,10 @@ use tglf_pkg, only: get_eigenvalue_spectrum_out, get_ky_spectrum_out, &
      get_flux_spectrum_out
 
 use parameter_inc, only: NRD
-use const_inc, only: BTOR, RTOR, GP, GP2, ABC, &
-    AMJ, AIM1, AIM2, AIM3, ZMJ, PSIAX, PSIBO, &
-    NA1, NA1N, NA1E, NA1I
-use status_inc, only: NE, TE, NI, TI, &
-    ZEF, ZIM1, ZIM2, ZIM3, PBLON, PBPER, &
-    PFAST, NIZ3, AMAIN, ER, MU, FP_NORM, &
-    RHO, AMETR, SHIF, ELON, &
-    NDEUT, NIZ1, NTRIT, NIZ2, NHE3, &
-    TRIA, VTOR, NIBM, G11, VPOL, VRS, SHEAR
+use const_inc, only: BTOR, RTOR, GP2, AMJ, AIM1, AIM2, AIM3, ZMJ, NA1
+use status_inc, only: NE, TE, NI, TI, ZEF, PBLON, PBPER, PFAST, &
+    ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3, ER, MU, FP_NORM, &
+    RHO, AMETR, SHIF, ELON, NDEUT, TRIA, VTOR, G11, VPOL, VRS
 use parameters_a2equil, only: equil_now
 
 implicit none
@@ -104,8 +99,7 @@ write(*, '(6A)') time_loc(1:2), ':', time_loc(3:4), ':', time_loc(5:6), ' BEGIN 
 
 ! Interpolate from ASTRA grid to TGLF grid
 rho_min = RHO(1)
-!rho_max = RHO(NA1)
-rho_max = max(RHO(NA1I), RHO(NA1E), RHO(NA1N))
+rho_max = RHO(NA1)
 xstep = (rho_max - rho_min)/(nrho_m - 1.)
 rho_m = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_m) /)
 
@@ -211,12 +205,6 @@ if (geom_flag == 3) then
     allocate(RR_tg(nrho_m, nthe_equ), ZZ_tg(nrho_m, nthe_equ), Bp_tg(nrho_m, nthe_equ))
 
 ! Interpolation on TGLF rho-grid
-    rho_min = RHO(1)
-    rho_max = max(RHO(NA1I), RHO(NA1E), RHO(NA1N))
-    xstep = (rho_max - rho_min)/(nrho_m - 1.)
-    rho_m = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_m) /)
-
-    call qinterp(RHO(1:NA1), FP_NORM(1:NA1), NA1, rho_m, pfn_m, nrho_m)
 
     pfn_equ = (equil_now%profiles_1d%psi - equil_now%profiles_1d%psi(1))/(equil_now%profiles_1d%psi(nrho_equ) - equil_now%profiles_1d%psi(1))
 

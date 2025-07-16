@@ -3,15 +3,10 @@ subroutine tglf_parent(chi_i, chi_e, e_pflux, vimp1, vimp2, i_mflux_as, exchi_as
 use mpi
 
 use parameter_inc, only: NRD
-use const_inc, only: BTOR, RTOR, GP, GP2, ABC, &
-    AMJ, AIM1, AIM2, AIM3, ZMJ, PSIAX, PSIBO, &
-    NA1, NA1N, NA1E, NA1I
-use status_inc, only: NE, TE, NI, TI, &
-    ZEF, ZIM1, ZIM2, ZIM3, PBLON, PBPER, &
-    PFAST, NIZ3, AMAIN, ER, MU, FP_NORM, &
-    RHO, AMETR, SHIF, ELON, &
-    NDEUT, NIZ1, NTRIT, NIZ2, NHE3, &
-    TRIA, VTOR, NIBM, G11, VPOL, VRS, SHEAR
+use const_inc, only: BTOR, RTOR, AMJ, AIM1, AIM2, AIM3, ZMJ, NA1
+use status_inc, only: NE, TE, NI, TI, ZEF, PBLON, PBPER, PFAST, &
+    ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3, ER, MU, FP_NORM, &
+    RHO, AMETR, SHIF, ELON, NDEUT, TRIA, VTOR, G11, VPOL, VRS
 
 implicit none
 
@@ -24,7 +19,7 @@ double precision, dimension(NRD), intent(out) :: chi_i, chi_e, e_pflux, vimp2, v
 integer :: ierr, info, intercomm, errcodes(100), status(MPI_STATUS_SIZE)
 integer :: jr, jrho, jr_r, jr_l, jgamma_max, jspec
 integer :: ns_in              ! Number of species, including electrons
-integer :: i, j, i1, i2, chunk, nworkers, dims(n_dims)
+integer :: i, i1, i2, chunk, nworkers, dims(n_dims)
 
 double precision, dimension(n_scalars) :: scal_in_m
 double precision, dimension(n_outputs, nrho_m) :: prof_out_m
@@ -49,7 +44,6 @@ worker_exe = "xpr/tglf.x"
 ! Interpolate from ASTRA grid to TGLF grid
 rho_min = RHO(1)
 rho_max = RHO(NA1)
-!rho_max = max(RHO(NA1I), RHO(NA1E), RHO(NA1N))
 xstep = (rho_max - rho_min)/(nrho_m - 1.)
 rho_m = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_m) /)
 
@@ -161,9 +155,6 @@ do jr=1, nrho_m
     dr(jr) = drmin(jr)/a0_m    ! gradients w.r.t. minor radius even for s-alpha geometry
     drhodr(jr) = drho(jr)/drmin(jr)
 enddo
-
-!--------------------
-! Populate prof_in_m
 
 dims(1) = nrho_m
 dims(2) = n_scalars
