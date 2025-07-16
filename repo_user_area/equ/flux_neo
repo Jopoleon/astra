@@ -121,9 +121,9 @@ MU=1./(CAR2X + 0.0001);
 
 	Profile output
 
-Tex\TE\\TEX;	pinb\PIBM\-3;	Pecr\PEECR;	neoi\CAR17\5;
+Tex\TE\\TEX;	pinb\PIBM\-3;	Pecr\PEECR;	neoi\CAR17\1;
 dens\NE\\NEX;	j\CU;		Pohm\POH\-1;	Sne\SNEBM; 
-Tix\TI\\TIX; 	penb\PEBM\-3; 	Jecr\CUECR;	neoe\CAR18\5;
+Tix\TI\\TIX; 	penb\PEBM\-3; 	Jecr\CUECR;	neoe\CAR18\1;
 Zeff\ZEF;	q\1./MU\\CAR2X;	Prad\PRAD\-1;	sneu\SNNEU;
 
 j\CU\-15;	Upl\UPL\-28;	Qi\QITOT\-13;   nuis\NUIS;
