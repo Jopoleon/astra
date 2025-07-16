@@ -93,7 +93,6 @@ inputs = 0.d0
 ! Receive TGLF input scalars and profiles from parent
 call MPI_Recv(scalars,       n_scalars, MPI_DOUBLE_PRECISION, 0, 101+rank, parent, status, ierr)
 call MPI_Recv(inputs, chunk * n_inputs, MPI_DOUBLE_PRECISION, 0, 102+rank, parent, status, ierr)
-call MPI_Barrier(parent, ierr)
 
 allocate(outputs(n_outputs, chunk))
 allocate( mtori(chunk), chie(chunk), chii(chunk), exchi(chunk), elec_pflux(chunk), &

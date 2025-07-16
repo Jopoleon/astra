@@ -260,7 +260,6 @@ do i=0, nworkers-1
     send_buffer(47, :) = dni(4, i1:i2)
     call MPI_Send(send_buffer, chunk * n_inputs, MPI_DOUBLE_PRECISION, i, 102+i, intercomm, ierr)
 enddo
-call MPI_Barrier(intercomm, ierr)  ! Optional: ensure child finished before next step
 
 ! Receive results from each worker
 do i=0, nworkers-1
