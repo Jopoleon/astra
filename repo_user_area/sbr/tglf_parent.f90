@@ -1,4 +1,4 @@
-subroutine tglf_parent(chi_i, chi_e, elec_pflux, vimp1, vimp2, mom_flux, exchi_out, gamma1, omega1)
+subroutine tglf_parent(chi_i, chi_e, e_pflux, vimp1, vimp2, mom_flux, exchi_as, gamma_as, omega_as)
 
 use mpi
 
@@ -17,11 +17,9 @@ implicit none
 
 integer, parameter :: n_scalars=10, n_inputs=47, n_outputs=15, n_dims=8, nrho_m=80, nspec_max=5
 double precision, parameter :: c_vpol=1.d0
-double precision, parameter :: &
-   k0 = 1.6022E-12, &    ! erg/ev
-   mp = 1.6726E-24       ! proton mass (g)
 
-double precision, dimension(*), intent(out) :: chi_i, chi_e, elec_pflux, vimp2, vimp1, mom_flux, exchi_out, gamma1, omega1
+double precision, dimension(NRD), intent(out) :: chi_i, chi_e, e_pflux, vimp2, vimp1, &
+     mom_flux, exchi_as, gamma_as, omega_as
 
 integer :: ierr, info, intercomm, errcodes(100), status(MPI_STATUS_SIZE)
 integer :: jr, jrho, jr_r, jr_l, jgamma_max, jspec
@@ -30,19 +28,18 @@ integer :: i, j, i1, i2, chunk, nworkers, dims(n_dims)
 
 double precision, dimension(n_scalars) :: scal_in_m
 double precision, dimension(n_outputs, nrho_m) :: prof_out_m
-double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, T0, m0, a0_m, a0_cm, cs0
+double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, a0_m, gradrhosq_inv
 double precision, dimension(nrho_m) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
     delong, dtrian, dvpar, dvper, drhodr, dr, dv_r
-double precision, dimension(NRD) :: gradrhosq_exp, rmaj_exp, q_exp, &
-    vexb_exp, vpar_exp, vper_exp, mtori_m, &
-    chie_m, chii_m, elec_pflux_m, exchi_m, ptot_exp, gamma_m, omega_m
-double precision, dimension(nrho_m) :: mtori, chie, chii, exchi, rho_m, &
+double precision, dimension(NRD) :: rmaj_as, q_as, ni_main_as, &
+    vexb_as, vpar_as, vper_as, mtori_as, chie_as, chii_as, e_pflux_as, ptot_as
+double precision, dimension(nrho_m) :: rho_m, &
     gamma_max, omega_max, kymax, te_m, ne_m, vpar_m, vper_m, vexb_m, &
     ametr_m, elon_m, tria_m, rmaj_m, ptot_m, q_m, zef_m, pfn_m
 double precision, dimension(nspec_max) :: mass_in
 double precision, dimension(nspec_max-2) :: zimp_max
-double precision, dimension(nspec_max-1, nrho_m) :: dti, dni, ni_m, ti_m, zi_m, ion_pflux
-double precision, dimension(nspec_max-1, NRD) :: ni_exp, ion_pflux_m
+double precision, dimension(nspec_max-1, nrho_m) :: dti, dni, ni_m, ti_m, zi_m, i_pflux
+double precision, dimension(nspec_max-1, NRD) :: i_pflux_as
 double precision, allocatable, dimension(:, :) :: send_buffer
 character(len=256) :: worker_exe
 
@@ -55,48 +52,44 @@ rho_max = RHO(NA1)
 xstep = (rho_max - rho_min)/(nrho_m - 1.)
 rho_m = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_m) /)
 
-call qinterp(RHO(1:NA1),     TI(1:NA1), NA1, rho_m, ti_m(1, :), nrho_m)
-call qinterp(RHO(1:NA1),     TE(1:NA1), NA1, rho_m,       te_m, nrho_m)
-call qinterp(RHO(1:NA1),   ZIM1(1:NA1), NA1, rho_m, zi_m(2, :), nrho_m)
-call qinterp(RHO(1:NA1),   ZIM2(1:NA1), NA1, rho_m, zi_m(3, :), nrho_m)
-call qinterp(RHO(1:NA1),   ZIM3(1:NA1), NA1, rho_m, zi_m(4, :), nrho_m)
-call qinterp(RHO(1:NA1),     NE(1:NA1), NA1, rho_m,       ne_m, nrho_m)
-call qinterp(RHO(1:NA1),    ZEF(1:NA1), NA1, rho_m,      zef_m, nrho_m)
-call qinterp(RHO(1:NA1),  AMETR(1:NA1), NA1, rho_m,    ametr_m, nrho_m)
-call qinterp(RHO(1:NA1),   ELON(1:NA1), NA1, rho_m,     elon_m, nrho_m)
-call qinterp(RHO(1:NA1),   TRIA(1:NA1), NA1, rho_m,     tria_m, nrho_m)
+call qinterp(RHO(1:NA1),      TI(1:NA1), NA1, rho_m, ti_m(1, :), nrho_m)
+call qinterp(RHO(1:NA1),      TE(1:NA1), NA1, rho_m,       te_m, nrho_m)
+call qinterp(RHO(1:NA1),    ZIM1(1:NA1), NA1, rho_m, zi_m(2, :), nrho_m)
+call qinterp(RHO(1:NA1),    ZIM2(1:NA1), NA1, rho_m, zi_m(3, :), nrho_m)
+call qinterp(RHO(1:NA1),    ZIM3(1:NA1), NA1, rho_m, zi_m(4, :), nrho_m)
+call qinterp(RHO(1:NA1),    NIZ1(1:NA1), NA1, rho_m, ni_m(2, :), nrho_m)
+call qinterp(RHO(1:NA1),    NIZ2(1:NA1), NA1, rho_m, ni_m(3, :), nrho_m)
+call qinterp(RHO(1:NA1),    NIZ3(1:NA1), NA1, rho_m, ni_m(4, :), nrho_m)
+call qinterp(RHO(1:NA1),      NE(1:NA1), NA1, rho_m,       ne_m, nrho_m)
+call qinterp(RHO(1:NA1),     ZEF(1:NA1), NA1, rho_m,      zef_m, nrho_m)
+call qinterp(RHO(1:NA1),   AMETR(1:NA1), NA1, rho_m,    ametr_m, nrho_m)
+call qinterp(RHO(1:NA1),    ELON(1:NA1), NA1, rho_m,     elon_m, nrho_m)
+call qinterp(RHO(1:NA1),    TRIA(1:NA1), NA1, rho_m,     tria_m, nrho_m)
+call qinterp(RHO(1:NA1), FP_NORM(1:NA1), NA1, rho_m,      pfn_m, nrho_m)
 
 do jrho=1, NA1
     if (NDEUT(jrho) >= 0.01*NE(jrho)) then
-        ni_exp(1, jrho) = NDEUT(jrho)
+        ni_main_as(jrho) = NDEUT(jrho)
     else ! likely: NDEUT not defined in equ file, hence zero
-        ni_exp(1, jrho) = NI(jrho)
+        ni_main_as(jrho) = NI(jrho)
     endif
-    ni_exp(2, jrho) = NIZ1(jrho)
-    ni_exp(3, jrho) = NIZ2(jrho)
-    ni_exp(4, jrho) = NIZ3(jrho)
-    rmaj_exp(jrho) = RTOR + SHIF(jrho)
-    q_exp(jrho)    = 1./MU(jrho)
-    ptot_exp(jrho) = NE(jrho)*TE(jrho) + ni_exp(1, jrho)*TI(jrho) + ni_exp(2, jrho)*TI(jrho) + pfast(jrho) + 0.5*(pblon(jrho) + pbper(jrho))
+    rmaj_as(jrho) = RTOR + SHIF(jrho)
+    q_as(jrho)    = 1./MU(jrho)
+    ptot_as(jrho) = NE(jrho)*TE(jrho) + ni_main_as(jrho)*TI(jrho) + NIZ1(jrho)*TI(jrho) + pfast(jrho) + 0.5*(pblon(jrho) + pbper(jrho))
     bpolz = BTOR*AMETR(jrho)*MU(jrho)/RTOR
     bmod = sqrt(BTOR**2 + bpolz**2)
-    gradrhosq_exp(jrho) = G11(jrho)/VRS(jrho)
-    vper_exp(jrho) = ER(jrho)/(RTOR*bpolz) ! vexb in m/s --> Omega_E
-    vpar_exp(jrho) = VTOR(jrho) * BTOR/bmod + c_vpol* VPOL(jrho) * bpolz/bmod
-    vexb_exp(jrho) = -ER(jrho)/bmod ! vexb in m/s (vperp = vexb since the diamagnetic velocity is the curvature drift ac
+    vper_as(jrho) = ER(jrho)/(RTOR*bpolz) ! vexb in m/s --> Omega_E
+    vpar_as(jrho) = VTOR(jrho) * BTOR/bmod + c_vpol* VPOL(jrho) * bpolz/bmod
+    vexb_as(jrho) = -ER(jrho)/bmod ! vexb in m/s (vperp = vexb since the diamagnetic velocity is the curvature drift ac
 enddo
 
-call qinterp(RHO(1:NA1), ni_exp(1, 1:NA1), NA1, rho_m, ni_m(1, :), nrho_m)
-call qinterp(RHO(1:NA1), ni_exp(2, 1:NA1), NA1, rho_m, ni_m(2, :), nrho_m)
-call qinterp(RHO(1:NA1), ni_exp(3, 1:NA1), NA1, rho_m, ni_m(3, :), nrho_m)
-call qinterp(RHO(1:NA1), ni_exp(4, 1:NA1), NA1, rho_m, ni_m(4, :), nrho_m)
-call qinterp(RHO(1:NA1),  rmaj_exp(1:NA1), NA1, rho_m,     rmaj_m, nrho_m)
-call qinterp(RHO(1:NA1),     q_exp(1:NA1), NA1, rho_m,        q_m, nrho_m)
-call qinterp(RHO(1:NA1),  ptot_exp(1:NA1), NA1, rho_m,     ptot_m, nrho_m)
-call qinterp(RHO(1:NA1),  vpar_exp(1:NA1), NA1, rho_m,     vpar_m, nrho_m)
-call qinterp(RHO(1:NA1),  vper_exp(1:NA1), NA1, rho_m,     vper_m, nrho_m)
-call qinterp(RHO(1:NA1),  vexb_exp(1:NA1), NA1, rho_m,     vexb_m, nrho_m)
-call qinterp(RHO(1:NA1),   FP_NORM(1:NA1), NA1, rho_m,      pfn_m, nrho_m)
+call qinterp(RHO(1:NA1), ni_main_as(1:NA1), NA1, rho_m, ni_m(1, :), nrho_m)
+call qinterp(RHO(1:NA1),    rmaj_as(1:NA1), NA1, rho_m,     rmaj_m, nrho_m)
+call qinterp(RHO(1:NA1),       q_as(1:NA1), NA1, rho_m,        q_m, nrho_m)
+call qinterp(RHO(1:NA1),    ptot_as(1:NA1), NA1, rho_m,     ptot_m, nrho_m)
+call qinterp(RHO(1:NA1),    vpar_as(1:NA1), NA1, rho_m,     vpar_m, nrho_m)
+call qinterp(RHO(1:NA1),    vper_as(1:NA1), NA1, rho_m,     vper_m, nrho_m)
+call qinterp(RHO(1:NA1),    vexb_as(1:NA1), NA1, rho_m,     vexb_m, nrho_m)
 
 ! Reference length
 a0_m = AMETR(NA1)
@@ -113,12 +106,12 @@ do jr=1, nrho_m
     ni_m(4, jr) = max(1.e-9, ni_m(4, jr))
 enddo
 
-elec_pflux_m = 0.
-ion_pflux_m  = 0.
-chie_m  = 0.
-chii_m  = 0.
-mtori_m = 0.
-exchi_m = 0.
+e_pflux_as = 0.
+i_pflux_as = 0.
+chie_as  = 0.
+chii_as  = 0.
+mtori_as = 0.
+exchi_as = 0.
 
 ! Number of species
 ns_in = nspec_max
@@ -279,33 +272,25 @@ call MPI_Barrier(intercomm, ierr)  ! Optional: ensure child finished before next
 
 ! Interpolate back to ASTRA radial grid
 
-call qinterp(rho_m, prof_out_m(1, :), nrho_m, RHO(1:NA1), chii_m(1:NA1)      , NA1)
-call qinterp(rho_m, prof_out_m(2, :), nrho_m, RHO(1:NA1), chie_m(1:NA1)      , NA1)
-call qinterp(rho_m, prof_out_m(3, :), nrho_m, RHO(1:NA1), mtori_m(1:NA1)     , NA1)
-call qinterp(rho_m, prof_out_m(4, :), nrho_m, RHO(1:NA1), elec_pflux_m(1:NA1), NA1)
-call qinterp(rho_m, prof_out_m(5, :), nrho_m, RHO(1:NA1), exchi_m(1:NA1)     , NA1)
-call qinterp(rho_m, prof_out_m(6, :), nrho_m, RHO(1:NA1), gamma_m(1:NA1)     , NA1)
-call qinterp(rho_m, prof_out_m(7, :), nrho_m, RHO(1:NA1), omega_m(1:NA1)     , NA1)
+call qinterp(rho_m, prof_out_m(1, :), nrho_m, RHO(1:NA1), chii_as(1:NA1)   , NA1)
+call qinterp(rho_m, prof_out_m(2, :), nrho_m, RHO(1:NA1), chie_as(1:NA1)   , NA1)
+call qinterp(rho_m, prof_out_m(3, :), nrho_m, RHO(1:NA1), mtori_as(1:NA1)  , NA1)
+call qinterp(rho_m, prof_out_m(4, :), nrho_m, RHO(1:NA1), e_pflux_as(1:NA1), NA1)
+call qinterp(rho_m, prof_out_m(5, :), nrho_m, RHO(1:NA1), exchi_as(1:NA1)  , NA1)
+call qinterp(rho_m, prof_out_m(6, :), nrho_m, RHO(1:NA1), gamma_as(1:NA1)  , NA1)
+call qinterp(rho_m, prof_out_m(7, :), nrho_m, RHO(1:NA1), omega_as(1:NA1)  , NA1)
 do jspec=1, nspec_max-1
-    call qinterp(rho_m, prof_out_m(7+jspec, :), nrho_m, RHO(1:NA1), ion_pflux_m(jspec, 1:NA1), NA1)
+    call qinterp(rho_m, prof_out_m(7+jspec, :), nrho_m, RHO(1:NA1), i_pflux_as(jspec, 1:NA1), NA1)
 enddo
 
-m0 = AMJ*mp          ! Ref. mass = D ion mass [g]
-a0_cm = 1.d2*a0_m    ! length scale used by GYRO, m -> cm
-
 do jrho=1, NA1
-    chi_i(jrho) = chii_m(jrho)/gradrhosq_exp(jrho) ! \chi_i, m^2/s
-    chi_e(jrho) = chie_m(jrho)/gradrhosq_exp(jrho) ! \chi_e, m^2/s
-    elec_pflux(jrho) = elec_pflux_m(jrho)/a0_m/gradrhosq_exp(jrho) ! D flux
-    mom_flux(jrho) = mtori_m(jrho)
-!First impurity only, index 2 of ion species
-    vimp1(jrho) = ion_pflux_m(2, jrho)/a0_m/gradrhosq_exp(jrho)/(ni_exp(2, jrho)/NE(jrho))  ! 1st imp convection
-    vimp2(jrho) = ion_pflux_m(3, jrho)/a0_m/gradrhosq_exp(jrho)/(ni_exp(3, jrho)/NE(jrho))  ! 2nd imp convection
-    exchi_out(jrho) = exchi_m(jrho) ! turbulent e-i equipartition in MW/m^3
-    T0  = 1E3 *TE(jrho)       ! temperature scale used by GYRO
-    cs0 = SQRT(k0*T0/m0)      ! thermal velocity unit cm/sec
-    gamma1(jrho) = gamma_m(jrho)*(cs0/a0_cm)
-    omega1(jrho) = omega_m(jrho)*(cs0/a0_cm)
+    gradrhosq_inv = VRS(jrho)/G11(jrho)
+    chi_i(jrho) = chii_as(jrho)*gradrhosq_inv ! \chi_i, m^2/s
+    chi_e(jrho) = chie_as(jrho)*gradrhosq_inv ! \chi_e, m^2/s
+    e_pflux(jrho) = e_pflux_as(jrho)*gradrhosq_inv/a0_m ! D flux
+    mom_flux(jrho) = mtori_as(jrho)
+    vimp1(jrho) = i_pflux_as(2, jrho)*gradrhosq_inv/a0_m/(NIZ1(jrho)/NE(jrho))  ! 1st imp convection
+    vimp2(jrho) = i_pflux_as(3, jrho)*gradrhosq_inv/a0_m/(NIZ2(jrho)/NE(jrho))  ! 2nd imp convection
 enddo
 
 return

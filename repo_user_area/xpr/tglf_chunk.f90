@@ -410,8 +410,8 @@ radial_loop: do jr=1, chunk
     enddo
 
     jgamma_max = maxloc(efluxspectrum(1:tglf_nky_in), 1)
-    gamma_max(jr) = gamma(jgamma_max)
-    omega_max(jr) = omega(jgamma_max)
+    gamma_max(jr) = gamma(jgamma_max)*(cs0/a0_cm)
+    omega_max(jr) = omega(jgamma_max)*(cs0/a0_cm)
     kymax(jr) = kyspectrum(jgamma_max)
 
 enddo radial_loop
