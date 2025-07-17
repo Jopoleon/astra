@@ -135,7 +135,7 @@ character(len=80) :: fname1, prim_dir
 save i_mpic
 data i_mpic /0/
 
-verbose_in = 1
+verbose_in = 0
 
 if (i_mpic == 0) then
     CALL mpi_init(mpi_ierr)
