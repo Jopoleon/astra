@@ -231,7 +231,7 @@ area = vol/(GP2*RTOR)
 
 write(6, *) 'Call rabbit_lib_step'
 
-call ctr2rz_fun(nrho_surf, nthe_surf, equil_now%profiles_1d%psi/GP2, &
+call ctr2rz_fun3(nrho_surf, nthe_surf, equil_now%profiles_1d%psi/GP2, &
     equil_now%coord_sys%position%r, &
     equil_now%coord_sys%position%z, &
     n_Rrect, n_Zrect, Rrect, zrect, PSI_rect)
