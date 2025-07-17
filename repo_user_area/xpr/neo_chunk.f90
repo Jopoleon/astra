@@ -5,28 +5,27 @@ use neo_interface
 
 implicit none
 
+integer, parameter :: n_dims=8
 double precision, parameter :: &
-   k0   = 1.6022E-12, &       ! erg/ev
    e00  = 1.6020e-19, &       ! elementary charge (C)
-   c0   = 2.9979E+10, &       ! speed of light (cm/sec)
    mpp  = 1.6726E-27, &       ! proton mass (kg)
    pi   = 3.141592653589793
 
 integer :: ierr, parent, rank, status(MPI_STATUS_SIZE)
-integer :: chunk, nprocs, nrho_neo, n_inputs, n_outputs, n_scalars, dims(8)
-integer :: jr, i_ion, nsm, n_ions
-double precision :: Bunit, cs0, cs00, rhos0, omega0, rhostar2, lnlamda, taue, cexb, xnuei
-double precision :: anorm, mnorm, tnorm, nnorm, vnorm, T0, drho_cs, drho_nt, nt_cs, &
+integer :: chunk, nprocs, n_inputs, n_outputs, n_scalars, dims(n_dims)
+integer :: jr, i_ion, nsm, n_ions, i1, i2
+double precision :: Bunit, cs0, rhos0, omega0, lnlamda, taue, xnuei
+double precision :: anorm, mnorm, tnorm, nnorm, vnorm, T0, nt_cs, &
     pflux_e_neo, eflux_e_neo, jboots, tgyro_neo_gv_flag, &
     Gamma_neo_GB, Q_neo_GB, Pi_neo_GB, Jpar_GB
 double precision :: AMJ, BTOR
 double precision :: ion_eflux, drhodr_sq
 double precision, allocatable :: inputs(:, :), output(:, :), scalars(:)
 double precision, allocatable, dimension(:) :: chie, chii, elec_pflux, rho_neo, &
-    ametr_neo, rmaj_neo, elon_neo, tria_neo, q_neo, ne_neo, te_neo, zef_neo, vpar_neo, &
+    ametr_neo, rmaj_neo, elon_neo, tria_neo, q_neo, ne_neo, te_neo, ti_neo, vpar_neo, &
     vippd, vittd, vippi1, vitti1, jbs, epar0_in, &
-    drmin, drmaj, drho, delong, dtrian, dr, dne, dte, dq, dvpar, drhodr
-double precision, allocatable, dimension(:, :) :: dti, dni, ni_neo, ti_neo, zimp_neo
+    drmin, drmaj, delong, dtrian, dr, dne, dte, dti, dq, dvpar, drhodr
+double precision, allocatable, dimension(:, :) :: ni_neo, zimp_neo, dni
 double precision, allocatable, dimension(:) :: pflux_i_neo, eflux_i_neo, vpflux_neo, vtflux_neo
 double precision, allocatable, dimension (:, :):: energy_flux, particle_flux
 character(len=80) :: path_in
@@ -44,30 +43,26 @@ if (parent == MPI_COMM_NULL) then
 endif
 
 ! Receive dimensions from parent
-call MPI_Recv(dims, 8, MPI_INTEGER, 0, 0, parent, status, ierr)
-nrho_neo  = dims(1)
-n_scalars = dims(2)
-n_inputs  = dims(3)
-n_outputs = dims(4)
-nsm       = dims(5)
-
-if (rank == 0) then
-    write(*, *) 'Input DIMS', dims
-endif
-
-chunk = nrho_neo / nprocs  ! Safe here: we now know nrho_neo
+call MPI_Recv(dims, n_dims, MPI_INTEGER, 0, 0, parent, status, ierr)
+n_scalars = dims(1)
+n_inputs  = dims(2)
+n_outputs = dims(3)
+nsm       = dims(4)
+i1 = dims(5)
+i2 = dims(6)
+chunk = i2 + 1 - i1
 allocate(scalars(n_scalars))
 allocate(inputs(chunk, n_inputs))
 allocate(output(chunk, n_outputs))
 allocate( chie(chunk), chii(chunk), elec_pflux(chunk), &
     rho_neo(chunk), ametr_neo(chunk), rmaj_neo(chunk), elon_neo(chunk), tria_neo(chunk), &
-    q_neo(chunk), ne_neo(chunk), te_neo(chunk), zef_neo(chunk), vpar_neo(chunk), &
+    q_neo(chunk), ne_neo(chunk), te_neo(chunk), ti_neo(chunk),vpar_neo(chunk), &
     vippd(chunk), vittd(chunk), vippi1(chunk), vitti1(chunk), jbs(chunk), &
-    drmin(chunk), drmaj(chunk), drho(chunk), delong(chunk), dtrian(chunk), dr(chunk), &
-    dne(chunk), dte(chunk), dq(chunk), dvpar(chunk), drhodr(chunk) )
+    drmin(chunk), drmaj(chunk), delong(chunk), dtrian(chunk), dr(chunk), &
+    dne(chunk), dte(chunk), dti(chunk), dq(chunk), dvpar(chunk), drhodr(chunk) )
 allocate( pflux_i_neo(nsm-1), eflux_i_neo(nsm-1), vpflux_neo(nsm), vtflux_neo(nsm) )
 allocate( energy_flux(nsm, 2), particle_flux(nsm, 2) )
-allocate(ti_neo(nsm-1, chunk), ni_neo(nsm-1, chunk), zimp_neo(nsm-2, chunk))
+allocate( ni_neo(nsm-1, chunk), dni(nsm-1, chunk), zimp_neo(nsm-2, chunk))
 
 ! Receive TGLF input scalars and profiles from parent
 call MPI_Recv(scalars     , n_scalars, MPI_DOUBLE_PRECISION, 0, 0, parent, status, ierr)
@@ -78,43 +73,32 @@ rmaj_neo     = inputs(:,  3)
 elon_neo     = inputs(:,  4)
 tria_neo     = inputs(:,  5)
 q_neo        = inputs(:,  6)
-
+ti_neo       = inputs(:,  7)
+te_neo       = inputs(:,  8)
 ne_neo       = inputs(:,  9)
-te_neo       = inputs(:, 10)
-zef_neo      = inputs(:, 11)
-vpar_neo     = inputs(:, 12)
-
-ti_neo(1, :) = inputs(:, 15)
-ti_neo(2, :) = inputs(:, 16)
-ti_neo(3, :) = inputs(:, 17)
-ti_neo(4, :) = inputs(:, 18)
-ni_neo(1, :) = inputs(:, 19)
-ni_neo(2, :) = inputs(:, 20)
-ni_neo(3, :) = inputs(:, 21)
-ni_neo(4, :) = inputs(:, 22)
-zimp_neo(1, :) = inputs(:, 23)
-zimp_neo(2, :) = inputs(:, 24)
-zimp_neo(3, :) = inputs(:, 25)
-drmin       = inputs(:, 26)
-drmaj       = inputs(:, 27)
-drho        = inputs(:, 28)
-delong      = inputs(:, 29)
-dtrian      = inputs(:, 30)
-dte         = inputs(:, 32)
-dne         = inputs(:, 33)
-dq          = inputs(:, 34)
-dvpar       = inputs(:, 35)
-
-dr          = inputs(:, 38)
-drhodr      = inputs(:, 39)
-dti(1, :)   = inputs(:, 40)
-dti(2, :)   = inputs(:, 41)
-dti(3, :)   = inputs(:, 42)
-dti(4, :)   = inputs(:, 43)
-dni(1, :)   = inputs(:, 44)
-dni(2, :)   = inputs(:, 45)
-dni(3, :)   = inputs(:, 46)
-dni(4, :)   = inputs(:, 47)
+vpar_neo     = inputs(:, 10)
+ni_neo(1, :) = inputs(:, 11)
+ni_neo(2, :) = inputs(:, 12)
+ni_neo(3, :) = inputs(:, 13)
+ni_neo(4, :) = inputs(:, 14)
+zimp_neo(1, :) = inputs(:, 15)
+zimp_neo(2, :) = inputs(:, 16)
+zimp_neo(3, :) = inputs(:, 17)
+drmin       = inputs(:, 18)
+drmaj       = inputs(:, 19)
+delong      = inputs(:, 20)
+dtrian      = inputs(:, 21)
+dti         = inputs(:, 22)
+dte         = inputs(:, 23)
+dne         = inputs(:, 24)
+dq          = inputs(:, 25)
+dvpar       = inputs(:, 26)
+dr          = inputs(:, 27)
+drhodr      = inputs(:, 28)
+dni(1, :)   = inputs(:, 29)
+dni(2, :)   = inputs(:, 30)
+dni(3, :)   = inputs(:, 31)
+dni(4, :)   = inputs(:, 32)
 
 BTOR  = scalars(2)
 anorm = scalars(3)
@@ -181,13 +165,11 @@ radial_loop: do jr=1, chunk
         neo_z_in(4) = neo_z_in(5)
         neo_mass_in(4) = neo_mass_in(5)
         ni_neo(3, :) = ni_neo(4, :)
-        ti_neo(3, :) = ti_neo(4, :)
     endif
     if (neo_z_in(4) >= 1. .and. n_ions == 1) then
         neo_z_in(3) = neo_z_in(4)
         neo_mass_in(3) = neo_mass_in(4)
         ni_neo(2, :) = ni_neo(3, :)
-        ti_neo(2, :) = ti_neo(3, :)
     endif
 
     neo_mass_in(n_ions+2:) = 0.
@@ -198,7 +180,7 @@ radial_loop: do jr=1, chunk
     tnorm = te_neo(jr)
     nnorm = ne_neo(jr)
     vnorm = sqrt(e00*1.e3*tnorm/mnorm)
-    T0 = tnorm*1.e3
+    T0  = tnorm*1.e3
     cs0 = vnorm       ! thermal velocity unit m/sec
 
 ! Log derivatives
@@ -209,9 +191,9 @@ radial_loop: do jr=1, chunk
 
     do i_ion=1, n_ions
         neo_dens_in(i_ion+1) = ni_neo(i_ion, jr)/ne_neo(jr)
-        neo_temp_in(i_ion+1) = ti_neo(i_ion, jr)/te_neo(jr)
+        neo_temp_in(i_ion+1) = ti_neo(jr)/te_neo(jr)
         neo_dlnndr_in(i_ion+1) = -dni(i_ion, jr)/(dr(jr)*ni_neo(i_ion, jr))
-        neo_dlntdr_in(i_ion+1) = -dti(i_ion, jr)/(dr(jr)*ti_neo(i_ion, jr))
+        neo_dlntdr_in(i_ion+1) = -dti(jr)/(dr(jr)*ti_neo(jr))
     enddo
 
     Bunit = BTOR*drhodr(jr)*rho_neo(jr)/ametr_neo(jr)
