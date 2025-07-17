@@ -310,7 +310,7 @@ if (p_i > 0.d0) then
     PEBM(1: NA1)  = PEBM( 1: NA1)*p_e/VINT(PEBM, ROC)
     NIBM(1: NA1)  = NIBM( 1: NA1)*nfi/VINT(NIBM, ROC)
     if (src > 0.d0) SNEBM(1: NA1) = SNEBM(1: NA1)*src/VINT(SNEBM, ROC)
-    SCUBM(1: NA1) = SCUBM(1: NA1)*tq_i/VINT(SCUBM, ROC)
+    SCUBM(1: NA1) = SCUBM(1: NA1)*tq_i/VINT(SCUBM, ROC)/RTOR
     CUBM(1: NA1)  = CUBM( 1: NA1)*i_cd/IINT(CUBM, ROC)
     PBLON(1: NA1) = PBLON(1: NA1)*sum(pfi_par *dvol)/VINT(PBLON, ROC)
     PBPER(1: NA1) = PBPER(1: NA1)*sum(pfi_perp*dvol)/VINT(PBPER, ROC)

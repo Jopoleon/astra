@@ -53,7 +53,7 @@ if (.not. allocated(mem_tglf)) then
     allocate(mem_tglf(NA1, n_ql), mem_qlkz(NA1, n_ql), mem_neo(NA1, n_ql))
     mem_tglf = 0.d0
     mem_qlkz = 0.d0
-    mem_neo = 0.d0
+    mem_neo  = 0.d0
 endif
 
 var_loop: do jtarr=1, NTARR

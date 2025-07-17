@@ -16,7 +16,7 @@ implicit none
 ! Find self-consistent initial configuration
 !-------------------------------------------
 
-integer :: j, jj, IM, ios, XSC0, XSC, jt1, jt2, jt3, jt_req, jkey, jt_out=0
+integer :: j, jj, IM, ios, XSC0, XSC, jt1, jt2, jt3, jt_req, jkey, ierr, jt_out=0
 character(len=64) :: LISTSB(NSBMX)
 character(len=132) :: STRI
 integer, external :: IFKEY, IFTREQ
@@ -82,6 +82,7 @@ endif
 ! Time step loop
 !---------------
 
+call MPI_Init(ierr)
 do while (TIME - TEND + 1.E-8 < DPOUT + TAU)
     if ((TIME - TSTART + 1.E-8)/DPOUT >= jt_out) then
         call write_json
@@ -89,6 +90,7 @@ do while (TIME - TEND + 1.E-8 < DPOUT + TAU)
     endif
     call STEPUP
 enddo
+call MPI_Finalize(ierr)
 
 call CPU_usage('>>> ASTRA normal exit >>>' // char(0))
 call astra_stop

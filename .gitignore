@@ -22,7 +22,9 @@ pyparse/iondens_ass.py
 /strahl
 /tmp
 /udb
+/neo
 /qualikiz
+/qualikiz_mpi
 /tglf
 /.res
 /bin

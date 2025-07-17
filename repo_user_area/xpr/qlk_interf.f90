@@ -70,13 +70,11 @@ type(qlk_primi_meth_0)        :: primi_meth_0
 integer, parameter :: ntheta=64, numecoefs=13, numicoefs=7, dimx=1, dimn=16, numsols=3, phys_meth=0, nradial=5, nspec_max=7
 
 double precision, parameter :: &
-    k0  = 1.6022E-12, &       ! erg/ev
     e0  = 4.8032E-10, &       ! elementary charge (statcoulombs)
     e00 = 1.6020e-19, &       ! elementary charge (C)
     c0  = 2.9979E+10, &       ! speed of light (cm/sec)
     mp  = 1.6726E-24, &       ! proton mass (g)
-    mpp = 1.6726E-27, &       ! proton mass (kg)
-    pi  = 3.141592653589793 
+    mpp = 1.6726E-27          ! proton mass (kg)
 
 !-----------------------------------------
 
@@ -105,11 +103,11 @@ LOGICAL :: exist1, exist2, exist3, exist4, exist5 !used for checking for existen
 
 !MPI variables:
 INTEGER :: mpi_ierr, nproc, myrank
-INTEGER :: myunit=700, i_mpic
+INTEGER :: myunit=700, i_mpic, unit_input=500
 integer :: jr_min, jr_max, jrho, j0, j01, j02, n_radial
 integer :: i, j, k, jradial, jjgrid(nradial), jion
 
-double precision :: bmod, bpolz
+double precision :: bpolz
 double precision :: drmin, drmaj, drho, dte, dne, dq, dptot, &
     delong, dtrian, dvper, drhodr, dstep, dr, dv_r
 double precision :: Bunit, cs00, rhos00, omega0, rhostar2
@@ -117,7 +115,7 @@ double precision :: T0, m0, drho_cs
 ! Shifted cicle geometry inputs
 double precision :: gamma_e_tg, mach_fac, ql_fac
 
-double precision, dimension(nrho) :: vexb2, vpar_m, vper_m, &
+double precision, dimension(nrho) :: vpar_m, vper_m, &
     gradrhosq_exp, rmaj_exp, q_exp, &
     chie_m, chii_m, pfluxi_m, exchi_m, ptot
 
@@ -137,7 +135,7 @@ character(len=80) :: fname1, prim_dir
 save i_mpic
 data i_mpic /0/
 
-verbose_in = 0
+verbose_in = 1
 
 if (i_mpic == 0) then
     CALL mpi_init(mpi_ierr)
@@ -195,12 +193,9 @@ do jrho=1, nrho
     q_exp(jrho)    = 1./MU(jrho)
     ptot(jrho) = NE(jrho)*TE(jrho) + ni_m(1, jrho)*ti_m(1, jrho) + ni_m(2, jrho)*ti_m(2, jrho) + pfast(jrho) + 0.5*(pblon(jrho) + pbper(jrho))
     bpolz = BTOR*AMETR(jrho)*MU(jrho)/RTOR
-    bmod = sqrt(BTOR**2 + bpolz**2)
     gradrhosq_exp(jrho) = G11(jrho)/VRS(jrho)
-
     vper_m(jrho) = ER(jrho)/(RTOR*bpolz) ! vexb in m/s --> Omega_E    
     vpar_m(jrho) = ER(jrho)/(RTOR*bpolz)*(RTOR+SHIF(jrho)+AMETR(jrho))  !--> R*Omega_E , no neoclassical terms
-    vexb2(jrho)  = -ER(jrho)/bmod ! vexb in m/s (vperp = vexb since the diamagnetic velocity is the curvature drift actually
 
 enddo
 
@@ -392,22 +387,15 @@ radial_loop: do jradial=1, n_radial
     integration_routine_in = 1 ! 0 for NAG routines, 1 for Cubature
 
     if (verbose_in > 0) then
-        write(6, *) 'aNe', Ane_in
-        write(6, *) 'aNi', Ani_in(1, 1:nions)
-        write(6, *) 'ate', Ate_in
-        write(6, *) 'ati', Ati_in(1, 1:nions)
-        write(6, *) 'Ai', Ai_in(1, 1:nions)
-        write(6, *) 'Ni/Ne', ninorm_in(1, 1:nions)
-        write(6, *) 'check: ', Ati_in(1, 1), gammaE_in, Autor_in, Machtor_in, alphax_in(1), x_in(1)
+        print*, 'aNe', Ane_in
+        print*, 'aNi', Ani_in(1, 1:nions)
+        print*, 'ate', Ate_in
+        print*, 'ati', Ati_in(1, 1:nions)
+        print*, 'Ai', Ai_in(1, 1:nions)
+        print*, 'Ni/Ne', ninorm_in(1, 1:nions)
+        print*, 'rhos', R0_in, Ro_in(1), x_in(1), Rmin_in(1)
+        print*, 'check: ', m0, Ati_in(1, 1), gammaE_in, Autor_in, Machtor_in, alphax_in(1)
     endif
- 
-    write(1331, *) 'inputs,total'
-    write(1331, *) dimx, rho_in/rhoscale, dimn, nions, numsols, phys_meth, coll_flag_in, &
-         rot_flag_in, verbose_in, 0,  kthetarhos_in, & !general param
-         'x', x_in, Ro_in, Rmin_in, R0_in, Bo_in, qx_in, smag_in, alphax_in, & !geometry
-         el_type_in, Tex_in, Nex_in, Ate_in, Ane_in, anise_in, danisedr_in, & !electrons
-         ion_type_in(1, 1:nions), Ai_in(1, 1:nions), Zi_in(1, 1:nions), Tix_in(1, 1:nions), ninorm_in(1, 1:nions), Ati_in(1, 1:nions), Ani_in(1, 1:nions), anis_in(1, 1:nions), danisdr_in(1, 1:nions), & !ions
-         Machtor_in, Autor_in, Machpar_in, Aupar_in, gammaE_in
 
     INQUIRE(file="../qualikiz/"//trim(fname1)//"/runcounter.dat", EXIST=exist1)
     INQUIRE(file=trim(prim_dir)//'/rsol.dat', EXIST=exist2)
@@ -541,6 +529,19 @@ radial_loop: do jradial=1, n_radial
     in_regular%rhomin = rhomin !/rhoscale
     in_regular%rhomax = rhomax !/rhoscale
 
+    OPEN(unit=unit_input, file="../qualikiz/"//trim(fname1)//"/input.dat", status="replace", action="write")
+    WRITE(unit_input, '(6(e14.6))') dq, rmaj_exp(j0), dv_r, dr, cs00
+    WRITE(unit_input, '(6(e14.6))') Ane_in(1), Ate_in(1), Aupar_in(1), Autor_in(1), Machpar_in(1), Machtor_in(1)
+    WRITE(unit_input, '(6(e14.6))') x_in(1), Bo_in(1), gammaE_in(1), Nex_in(1), qx_in(1), Ro_in(1)
+    WRITE(unit_input, '(6(e14.6))') Rmin_in(1), smag_in(1), Tex_in(1), alphax_in(1), rho_in(1)/rhoscale, anise_in(1)
+    WRITE(unit_input, '(6(e14.6))') Ai_in(1, 1:nions)
+    WRITE(unit_input, '(6(e14.6))') Ani_in(1, 1:nions)
+    WRITE(unit_input, '(6(e14.6))') Ati_in(1, 1:nions)
+    WRITE(unit_input, '(6(e14.6))') Zi_in(1, 1:nions)
+    WRITE(unit_input, '(6(e14.6))') ninorm_in(1, 1:nions)
+    WRITE(unit_input, '(6(e14.6))') Tix_in(1, 1:nions)
+    CLOSE(unit_input)
+
     write(6, *) 'Calling qualikiz', nions, j0, runcounter_in, myrank
 
     if (runcounter_in == 0) then
@@ -558,7 +559,6 @@ radial_loop: do jradial=1, n_radial
             primi_meth_0=primi_meth_0, &
             in_newt=in_newt, runcounterin=runcounter_in)
     endif
-
 
     cftrans_out = output_meth_0%cftrans
     gam_GB_out  = output_meth_0_sep_0_GB%gam

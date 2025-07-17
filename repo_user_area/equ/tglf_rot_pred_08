@@ -155,7 +155,7 @@ UPAR = VTORX;
 UPAR:EQ[2, CF16];
 
 VTOR = UPAR;
-TTRQ = SCUBM*5.977e7; !rtor depends on RABBIT output.
+TTRQ = RTOR*SCUBM*5.977e7; !rtor depends on RABBIT output.
 
 !----------------
 ! Profile output
