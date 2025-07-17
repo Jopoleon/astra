@@ -12,7 +12,7 @@ double precision, parameter :: &
    pi   = 3.141592653589793
 
 integer :: ierr, parent, rank, status(MPI_STATUS_SIZE)
-integer :: chunk, nprocs, n_inputs, n_outputs, n_scalars, dims(n_dims)
+integer :: chunk, n_inputs, n_outputs, n_scalars, dims(n_dims)
 integer :: jr, i_ion, nsm, n_ions, i1, i2
 double precision :: Bunit, cs0, rhos0, omega0, lnlamda, taue, xnuei
 double precision :: anorm, mnorm, tnorm, nnorm, vnorm, T0, nt_cs, &
@@ -32,7 +32,6 @@ character(len=80) :: path_in
 
 call MPI_Init(ierr)
 call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
-call MPI_Comm_size(MPI_COMM_WORLD, nprocs, ierr)
 call MPI_Comm_get_parent(parent, ierr)
 
 if (parent == MPI_COMM_NULL) then
@@ -111,26 +110,7 @@ tgyro_neo_gv_flag = 0.
 epar0_in = 0.
 
 ! Number of species
-
 n_ions = nsm - 1
-! These will be reset locally in the radial loop
-neo_z_in(3) = MAXVAL(zimp_neo(1, :))
-neo_z_in(4) = MAXVAL(zimp_neo(2, :))
-neo_z_in(5) = MAXVAL(zimp_neo(3, :))
-
-if (neo_z_in(5) >= 1.) n_ions = 4
-if (neo_z_in(5) <  1.) n_ions = 3
-if (neo_z_in(4) <  1.) n_ions = 2
-if (neo_z_in(5) >= 1. .and. n_ions == 2) then 
-    n_ions = 3
-endif
-if (neo_z_in(3) <  1.) n_ions = 1
-if (neo_z_in(4) >= 1. .and. n_ions == 1) then 
-    n_ions = 2
-endif
-
-! local field averages
-! Initialise to zero for non-calculated species
 
 neo_dens_in   = 0.
 neo_temp_in   = 0.
@@ -241,10 +221,10 @@ radial_loop: do jr=1, chunk
     Pi_neo_GB    = anorm*vnorm
     Jpar_GB      = e00*vnorm*nnorm*1.e19*Bunit/BTOR/1.e6
 
-    pflux_i_neo(:) = 0.0
-    pflux_e_neo    = 0.0
-    eflux_i_neo(:) = 0.0
-    eflux_e_neo    = 0.0
+    pflux_i_neo = 0.0
+    pflux_e_neo = 0.0
+    eflux_i_neo = 0.0
+    eflux_e_neo = 0.0
     drhodr_sq = drhodr(jr)**2
 ! derived units for the plasma
 

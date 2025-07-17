@@ -46,7 +46,7 @@ double precision, parameter :: &
    pi   = 3.141592653589793
 
 integer :: ierr, parent, rank, status(MPI_STATUS_SIZE), i1, i2, j, nspec_max
-integer :: chunk, nprocs, n_inputs, n_outputs, n_scalars, dims(n_dims)
+integer :: chunk, n_inputs, n_outputs, n_scalars, dims(n_dims)
 integer :: sat_rule, jr, jgamma_max, jion, kyloop
 double precision :: Bunit_gauss, Bunit_T, cs0, cs00, rhos0, omega0, rhostar2, lnlamda, taue, cexb
 double precision :: a0_cm, a0_m, T0, N0, m0, rmin, drho_cs, drho_nt, nt_cs
@@ -63,7 +63,6 @@ double precision, dimension(nky) :: gamma, omega, kyspectrum, efluxspectrum
 
 call MPI_Init(ierr)
 call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
-call MPI_Comm_size(MPI_COMM_WORLD, nprocs, ierr)
 call MPI_Comm_get_parent(parent, ierr)
 
 if (parent == MPI_COMM_NULL) then

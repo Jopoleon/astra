@@ -16,7 +16,7 @@ double precision, parameter :: c_vpol=1.d0
 double precision, dimension(NRD), intent(out) :: chii_m, chie_m
 
 integer :: ierr, intercomm, errcodes(100), status(MPI_STATUS_SIZE)
-integer :: jr, jrho, jr_r, jr_l, jspec
+integer :: jr, jrho, jr_r, jr_l, jion
 integer :: ns_in              ! Number of species, including electrons
 integer :: i, i1, i2, chunk, nprocs, nworkers, dims(8)
 
@@ -139,8 +139,8 @@ do jr=1, nrho_m
     dne(jr)    = dstep*(ne_m(jr_r) - ne_m(jr_l))
     dq(jr)     = dstep*(q_m(jr_r) - q_m(jr_l))
     dvpar(jr)  = dstep*(vpar_m(jr_r) - vpar_m(jr_l))
-    do jspec=1, ns_in-1
-        dni(jspec, jr) = dstep*(ni_m(jspec, jr_r) - ni_m(jspec, jr_l))
+    do jion=1, ns_in-1
+        dni(jion, jr) = dstep*(ni_m(jion, jr_r) - ni_m(jion, jr_l))
     enddo
     dr(jr) = drmin(jr)/a0_m    ! gradients w.r.t. minor radius even for s-alpha geometry
     drhodr(jr) = drho/drmin(jr)
