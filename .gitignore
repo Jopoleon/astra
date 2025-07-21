@@ -28,6 +28,7 @@ pyparse/iondens_ass.py
 /tglf
 /.res
 /bin
+/src/tmp
 user
 profiles.dat
 *_backup

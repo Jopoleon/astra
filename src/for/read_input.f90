@@ -14,9 +14,17 @@ subroutine read_input
 ! jbeg_arrx(jx)  - pointer to a position in the array raw_profile_map%time
 !----------------------------------------------------------------------|
 
-use parameter_inc, only: NTVAR, NBDMAX, NBDTMAX
-use const_inc
-use status_inc
+use parameter_inc, only: NTVAR, NBDMAX, NBDTMAX, NRD
+use const_inc, only: NITREQ, NA, NA1, NB1, NAB, NUF, NBND, NCNB, n_bouncon, &
+    TIME, TSTART, TEND, TPAUSE, TINIT, TSCALE, TIMEQL, DTEQL, &
+    DEVAR, CONSTF, DELOUT, XFLAG, XLINE1, XLINE2, ARXUSE, &
+    AB, ABC, AWAll, ROC, ROCO, ROB, ROWALL,  HRO, HROX, RTOR, &
+    ELONG, ELONM, TRIAN, TRICH, SHIFT, VOLUME, &
+    GP, GP2, BTOR, BTN, FTO, FTN, IPL, IPLN, FLXDR, PSIAX, PSIBO
+use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
+    G11, G22, VR, VRO, VRS, VOLUM, &
+    FP, FPO, FP_NORM, rho_pol, NE, NEO, TE, TEO, UPAR, UPARO, MRHO, &
+    AMAIN, UPS0, UPS0O
 use outcmn_inc, only: AWD, exp_file, nml_file, equ_file, rev_file, &
     TASK, machine, cpuTime_tra, resizeGraph, &
     TASKID, VERSION, AVERS, ARLEAS, AEDIT, COLTAB, IFDFVX, IFDFAX, jbeg_arrx, &
@@ -42,7 +50,7 @@ integer, parameter :: MPEX=101, MSIGEX=1, MTEX=50, MSIG=1, MEXT=MPEX*MTEX
 
 logical :: exilog, file_existence, found
 
-integer :: jarr, INTYPE, jtype, SYSTEM, jbdry, ntim, ntim1, IVAR
+integer :: jarr, INTYPE, jtype, jbdry, ntim, ntim1, IVAR
 integer, allocatable, dimension(:) :: int_json
 integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
 integer :: KAB, KABC, KAWALL, KRTOR, KELONM, KTRICH
@@ -217,10 +225,6 @@ else  ! Read log file
     close(171)
 
 endif
-
-!----------------------------------------------------------------------|
-! Skipping EX-file reading for now
-!----------------------------------------------------------------------|
 
 !----------------------------------------------------------------------|
 ! Read experimental file
@@ -867,8 +871,6 @@ if (NBNT > 0) then
 !calculate ABC
     ABC = (maxval(bnd_rz(1: nbnd)) - minval(bnd_rz(1: nbnd)))/2.
 !calculate elong
-    YB  = (maxval(bnd_rz(1: nbnd))        + minval(bnd_rz(1: nbnd)       ))/2. !Rgeo
-    YB1 = (maxval(bnd_rz(NBND+1: 2*nbnd)) + minval(bnd_rz(nbnd+1: 2*nbnd)))/2. !Zgeo
     ELONG = (maxval(bnd_rz(NBND+1: 2*nbnd)) - minval(bnd_rz(nbnd+1: 2*nbnd)))/(2.*ABC)
     ELONG = max(ELONG, 1.d0)
     deallocate(bnd_rz)
@@ -973,17 +975,6 @@ do j=1, n_profx
         endif
     endif
 enddo
-
-if (.not. IFDEFX('TEX   ') ) then
-    j = system('grep HEXP= ./tmp/*.tmp | grep TEX > /dev/null')
-    if (j == 0) write(*,*) '>>> Warning >>> X-array "TEX" is used but not defined'
-endif
-if (.not. IFDEFX('TIX   ') ) then
-    j = system('grep XEXP= ./tmp/*.tmp | grep TIX > /dev/null')
-    if (j == 0) write(*,*) '>>> Warning >>> X-array "TIX" is used but XEXP not defined'
-    j = system('grep SVCXX ./tmp/*.tmp | grep TIX > /dev/null')
-    if (j == 0) write(*,*) '>>> Warning >>> X-array "TIX" is used but not defined'
-endif
 
 DELOUT(13) = NA1
 DELOUT(14) = NUF
