@@ -31,7 +31,7 @@ integer*4 :: COLTAB(64) ! i*4 needed for compatibility with C
 integer, dimension(plot_modes) :: active_tab, curves_per_frame
 double precision, dimension(NRW)   :: GRAL, GRAP, OSHIFT, OSHIFR, SCALET, SCALER
 double precision, dimension(NARRX) :: TOUTX
-double precision, dimension(NCNBM) :: CCOIL, CCOILO, VCOIL
+double precision, dimension(NCNBM) :: CCOIL, VCOIL
 double precision, dimension((NCNBM+1)*NCNBTM) :: CCOILX, VCOILX
 double precision, dimension(NRDX, NARRX) :: XAXES, DATAX
 double precision, dimension(NRD, NRW) :: ROUT

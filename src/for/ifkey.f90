@@ -33,7 +33,7 @@ integer function IFKEY(IFKL)
 
 use parameter_inc, only: NRD, NRW
 use status_inc, only: MU, AMETR, SHIF, ELON, TRIA, EQFF, EQPF, FP, RHO
-use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, XLINE1, &
+use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, exp_header, &
    NA, NB1, NA1, NAB, NUF, LEQ, NBND, TIME, TAU, TINIT, TSCALE, &
    TSTART, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
    BTOR, IPL, CONSTF, DEVAR, DELOUT, XFLAG
@@ -234,7 +234,7 @@ if (TPOUT + DPOUT < TSTART .or. (IFKL /= 256 .and. TIME + 0.5*TAU >= TPOUT + DPO
         HOUR   = time_arr(5)
         MINUTE = time_arr(6)
 
-        write(3) exp_file, equ_file, VERSION, XLINE1, &
+        write(3) exp_file, equ_file, VERSION, exp_header, &
             YEAR, MONTH, DAY, HOUR, MINUTE, n_const, n_var, &
             NROUT, (NAMER(J), J=1, NROUT), (SCALER(J), J=1, NROUT), &
             NTOUT, (NAMET(J), J=1, NTOUT), (SCALET(J), J=1, NTOUT), &

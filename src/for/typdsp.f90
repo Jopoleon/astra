@@ -21,7 +21,7 @@ end subroutine ERASXY
 subroutine writeData(CHORDN)
 
 use parameter_inc, only: NRW
-use const_inc, only: XOUT, NAB, NA, NA1, XLINE1, RTOR, ABC, BTOR, IPL, TIME, TAU, CONSTF
+use const_inc, only: XOUT, NAB, NA, NA1, exp_header, RTOR, ABC, BTOR, IPL, TIME, TAU, CONSTF
 use status_inc, only: MU, AMETR, RHO, FP
 use outcmn_inc, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, WarningColor, ROUT, &
      AWD, RUNID, equ_file, exp_file
@@ -68,7 +68,7 @@ if (ios /= 0) then
 endif
 
 ! Creating UPSTRI
-STRI = XLINE1(1:16)
+STRI = exp_header(1:16)
 STRI(17:) = STRMN
 STRI(20: 23) = fmt4(RTOR)
 STRI(27: 30) = fmt4(ABC)
@@ -929,7 +929,7 @@ end subroutine down_label
 subroutine up_label(YN, YQ)
 
 use outcmn_inc, only: astra_gui, active_tab, MOD10, Black, Blue, null_ch
-use const_inc, only: RTOR, BTOR, IPL, ABC, XLINE1
+use const_inc, only: RTOR, BTOR, IPL, ABC, exp_header
 use dbl2char, only: fmt40
 
 implicit none
@@ -949,7 +949,7 @@ STRMN(32: 35) = fmt40(YQ)
 STRMN(39: 42) = fmt40(YN)
 
 call setColor(Black)
-call textvm(0, 2, XLINE1(1: 15) // STRMN(1: 42), 56)
+call textvm(0, 2, exp_header(1: 15) // STRMN(1: 42), 56)
 call setColor(Blue)
 write(CHR, '(1I2)') active_tab(MOD10) + 1
 call textvm(astra_gui%width - 2*astra_gui%dxlet, astra_gui%dylet + 1, CHR, 2) ! Screen No.

@@ -1,7 +1,7 @@
 program astra
 
 use parameter_inc, only: NSBMX, NRD
-use outcmn_inc, only: astra_gui, astra_gui_ref, VCOIL, CCOIL, CCOILO, outcmn_init, TASK
+use outcmn_inc, only: astra_gui, astra_gui_ref, outcmn_init, TASK
 use const_inc, only: IPART, const_init, &
     TIME, TSTART, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT
 use status_inc, only: status_init, defarr

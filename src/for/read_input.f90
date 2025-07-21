@@ -17,7 +17,7 @@ subroutine read_input
 use parameter_inc, only: NTVAR, NBDMAX, NBDTMAX, NRD
 use const_inc, only: NITREQ, NA, NA1, NB1, NAB, NUF, NBND, NCNB, n_bouncon, &
     TIME, TSTART, TEND, TPAUSE, TINIT, TSCALE, TIMEQL, DTEQL, &
-    DEVAR, CONSTF, DELOUT, XFLAG, XLINE1, XLINE2, ARXUSE, &
+    DEVAR, CONSTF, DELOUT, XFLAG, exp_header, ARXUSE, &
     AB, ABC, AWAll, ROC, ROCO, ROB, ROWALL,  HRO, HROX, RTOR, &
     ELONG, ELONM, TRIAN, TRICH, SHIFT, VOLUME, &
     GP, GP2, BTOR, BTN, FTO, FTN, IPL, IPLN, FLXDR, PSIAX, PSIBO
@@ -46,9 +46,7 @@ use json_vars, only: read_metadata, internNames, constNames, varNames, profxName
 
 implicit none
 
-integer, parameter :: MPEX=101, MSIGEX=1, MTEX=50, MSIG=1, MEXT=MPEX*MTEX
-
-logical :: exilog, file_existence, found
+logical :: exilog, file_existence
 
 integer :: jarr, INTYPE, jtype, jbdry, ntim, ntim1, IVAR
 integer, allocatable, dimension(:) :: int_json
@@ -237,10 +235,8 @@ err_msg_exp = '>>> Data file "' // TRIM(exp_file) // '" error:\n    '
 open(201, FILE=TRIM(file_in), iostat=ios)
 if (ios /= 0) call astra_stop('>>> read_input: No such experimental variant "' // TRIM(exp_file) // '"')
 
-read(201, '(A132)', iostat=ios) XLINE1
+read(201, '(A132/)', iostat=ios) exp_header
 if (ios /= 0) call astra_stop(err_msg_exp // 'in header')
-
-read(201, '(A132)') XLINE2
 
 !----------------------------------------------------------------------|
 ! Read simple variable loop (between the labels "5" and "10"):

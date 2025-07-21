@@ -102,7 +102,7 @@ double precision :: &
 integer :: NA, NA1, NAB, NB1, NUF, NNCX, KEY, NBND, NCNB, &
     XFLAG, NSTEPS, ITREQ, IPART, LEQ(NEQNS), NITOT
 integer :: ARXUSE(NARRX)
-character(len=132) :: XLINE1, XLINE2
+character(len=132) :: exp_header
 
 integer, pointer :: NA1N, NA1E, NA1I, NA1U, &
      NA10, NA11, NA12, NA13, NA14, NA15, NA16, NA17, NA18, NA19
@@ -757,8 +757,7 @@ LEQ = -1
 CONSTF(1 :16) = 1.
 CONSTF(17:32) = 0.
 CONSTF(33:NCONST) = 1.
-XLINE1(:) = ' '
-XLINE2(:) = ' '
+exp_header(:) = ' '
 
 end subroutine const_init
 
