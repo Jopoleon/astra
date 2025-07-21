@@ -140,6 +140,8 @@ NA17 => n_bouncon(12)
 NA18 => n_bouncon(13)
 NA19 => n_bouncon(14)
 
+n_bouncon = 0
+
 ! Former COMMON A_OUTPUT, removed TEQ
 allocate(DTEQ(4, NSBMX))
 

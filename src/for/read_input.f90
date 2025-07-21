@@ -931,7 +931,6 @@ enddo
 
 call INTEGR(RHO, 1, VR, VOLUM, NA1)
 
-n_bouncon = 0
 n_bouncon(1) = NA1
 
 PSIBO = FP(NA1)
