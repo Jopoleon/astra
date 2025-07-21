@@ -43,7 +43,7 @@ class EQU_PARSER:
 # Lists of arrays, constants, variables
 #--------------------------------------
 
-        f_json = '%s/main/astra_variables.json' %config.awd
+        f_json = '%s/astra_variables.json' %config.awd
         with open(f_json, 'r') as fjson:
             json_d = json.load(fjson)
         json_keys = {key: list(val.keys()) for key, val in json_d.items()}

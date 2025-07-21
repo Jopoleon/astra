@@ -2,10 +2,6 @@ ifndef AWD
 $(error setenv/export AWD first)
 endif
 
-ifndef WORKFLOW
-WORKFLOW = $(FOR_DIR)/stepup.f90
-endif
-
 LIB_DIR = $(AWD)/lib
 TSK_DIR = $(AWD)/bin
 FOR_DIR = $(AWD)/src/for
@@ -22,6 +18,10 @@ LIBFOR = $(LIB_DIR)/libfor.a
 LIBNBI = $(LIB_DIR)/libnbi.a
 LIBFEQIS  = $(LIB_DIR)/libfeqis.a
 LIBSPIDER = $(LIB_DIR)/libspider.a 
+
+ifndef WORKFLOW
+WORKFLOW = $(FOR_DIR)/stepup.f90
+endif
 
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
 LIB = -lnbi -lsbr -lnbi -L/usr/lib64 -lX11 $(QLKNN_LIB) $(TGLF_LIB) $(TORB_LIB) $(RABBIT_LIB) -lfor -lfnc -lfeqis -lspider $(JSON_LIB) -L$(LIB_DIR) $(MKL_LIB) -lrt
@@ -58,6 +58,7 @@ all: directories modules $(ATASK)
 .PHONY: directories
 directories:
 	@mkdir -p $(TSK_DIR)
+	@mkdir -p $(TMP_DIR)
 	@mkdir -p $(LIB_DIR)
 	@mkdir -p $(AWD)/.res
 	@mkdir -p $(AWD)/ncdf_out
