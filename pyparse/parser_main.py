@@ -46,4 +46,4 @@ if __name__ == '__main__':
         sys.exit()
 
     txt = astra_parser(f_equ)
-    write_tmp(txt, dir_out='./tmp')
+    write_tmp(txt, dir_out='./src/tmp')

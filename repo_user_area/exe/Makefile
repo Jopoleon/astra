@@ -8,10 +8,10 @@ endif
 
 LIB_DIR = $(AWD)/lib
 TSK_DIR = $(AWD)/bin
-FOR_DIR = $(AWD)/main
+FOR_DIR = $(AWD)/src/for
 MOD_DIR = $(AWD)/mod
 OBJ_DIR = $(AWD)/obj
-TMP_DIR = $(AWD)/tmp
+TMP_DIR = $(AWD)/src/tmp
 XPR_DIR = $(AWD)/xpr
 NBI_INC = $(AWD)/mod/nbi
 ATASK = $(TSK_DIR)/$(MODEL).exe

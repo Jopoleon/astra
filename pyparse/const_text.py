@@ -280,8 +280,8 @@ use json_vars, only: profxNames
 
 implicit none
 
-include 'tmp/declar.fml'
-include 'tmp/declar.fnc'
+include 'src/tmp/declar.fml'
+include 'src/tmp/declar.fnc'
 
 integer :: j1
 
@@ -325,8 +325,8 @@ use debugger, only: markloc
 
 implicit none
 
-include 'tmp/declar.fml'
-include 'tmp/declar.fnc'
+include 'src/tmp/declar.fml'
+include 'src/tmp/declar.fnc'
 
 integer :: jdetv, ifsub
 integer, external :: ifipc
@@ -739,8 +739,8 @@ implicit none
 
 integer irado
 
-include 'tmp/declar.fml'
-include 'tmp/declar.fnc'
+include 'src/tmp/declar.fml'
+include 'src/tmp/declar.fnc'
 
 call markloc('radout.tmp')
 do irado=1, NAB
@@ -773,8 +773,8 @@ use debugger, only: markloc, debug
 
 implicit none
 
-include 'tmp/declar.fml'
-include 'tmp/declar.fnc'
+include 'src/tmp/declar.fml'
+include 'src/tmp/declar.fnc'
 
 call markloc('timout.tmp')
 """
@@ -988,8 +988,8 @@ use numerical_tools, only: extrap
 
 implicit none
 
-include 'tmp/declar.fml'
-include 'tmp/declar.fnc'
+include 'src/tmp/declar.fml'
+include 'src/tmp/declar.fnc'
 
 integer :: IFSUB
 double precision :: YB, YC, YU, YJ_CU, YM, YMCD, YIOH, YICD, YM1
@@ -1026,8 +1026,8 @@ use numerical_tools, only: extrap
 
 implicit none
 
-include 'tmp/declar.fml'
-include 'tmp/declar.fnc'
+include 'src/tmp/declar.fml'
+include 'src/tmp/declar.fnc'
 
 integer, intent(in) :: ibcpsi_fb
 integer, intent(out) :: bc_type_for_fp

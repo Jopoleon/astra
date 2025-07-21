@@ -50,7 +50,7 @@ contains
 
     character(len=120) :: file_in
 
-    file_in = 'main/astra_variables.json'
+    file_in = 'astra_variables.json'
     call astra_vars%initialize()
     call astra_vars%load(filename=file_in)
 
