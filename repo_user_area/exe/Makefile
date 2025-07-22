@@ -12,10 +12,10 @@ XPR_DIR = $(AWD)/xpr
 NBI_INC = $(AWD)/mod/nbi
 ATASK = $(TSK_DIR)/$(MODEL).exe
 EQU  = $(AWD)/equ/$(MODEL)
-LIBSBR = $(LIB_DIR)/libsbr.a
-LIBFNC = $(LIB_DIR)/libfnc.a
-LIBFOR = $(LIB_DIR)/libfor.a
-LIBNBI = $(LIB_DIR)/libnbi.a
+LIBSBR    = $(LIB_DIR)/libsbr.a
+LIBFNC    = $(LIB_DIR)/libfnc.a
+LIBFOR    = $(LIB_DIR)/libfor.a
+LIBNBI    = $(LIB_DIR)/libnbi.a
 LIBFEQIS  = $(LIB_DIR)/libfeqis.a
 LIBSPIDER = $(LIB_DIR)/libspider.a 
 

@@ -196,7 +196,7 @@ CASE(1: 3)  ! Profiles
 ! Translate curve into pixel
         jxout = 0
         do j=1, NP1
-            YX = ABSC(AMETR(j)) 
+            YX = ABSC(AMETR(j))
             if (YX >= YL .and. YX <= YR) then
                 jxout = jxout + 1
                 if (jxout == 1 .and. j > 1) then ! left edge interpolation

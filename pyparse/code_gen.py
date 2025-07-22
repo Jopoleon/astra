@@ -318,7 +318,6 @@ end subroutine INIVAR'''
             if sbr_d['locsbr'] in (-2, -3):
                 inam += 'LISTSB(%d)="%s"//char(0)\n' %(j_ipc, sbr_d['name'].lower())
                 j_ipc += 1
-            inam += 'SIGNSB(%2d) = %d\n' %(j_sbr, sbr_d['locsbr'])
 
         inam += 'NSBP = %d\n' %NSBP
         if NSBP > 0:
