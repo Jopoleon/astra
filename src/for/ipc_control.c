@@ -17,7 +17,6 @@ void freeshm();
 void to_tra_(INT_*, INT_*, INT_*);
 void ot_tra_(INT_*, INT_*, INT_*, double*, double*);
 void AllocateShmem(int);
-double swatch_(double*);
 
 char *AWD, *equmod, *DATA;
 char A_ipc_file[132];

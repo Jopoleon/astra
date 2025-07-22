@@ -1186,6 +1186,7 @@ jh = js/3600
 jm = (js - 3600*jh)/60
 t1 = tim - 60*jm - 3600*jh
 js = t1
+
 if (time >= 0.) then
     write(nch, '(2A, I4.2, 2(A1, I2.2), F8.1, A1)') TRIM(string), &
         tab_ch, jh, ':', jm, ':', js, 100.*tim/time, '%'
@@ -1201,7 +1202,7 @@ end subroutine writeTime
 subroutine CPU_usage(str_in)
 
 use parameter_inc, only: NSDELOUT
-use outcmn_inc, only: cpuTime_tot, cpuTime_tra, cpuTime_equ, cpuTime_sbr, NSBR, DTNAME, IFSBX
+use outcmn_inc, only: cpu_start, cpuTime_equ, cpuTime_tra, cpuTime_sbr, NSBR, DTNAME, IFSBX, wall_start
 use const_inc, only: NSTEPS, TIME, TSTART
 use debugger, only: markloc
 
@@ -1211,19 +1212,16 @@ integer, parameter :: nch=6
 
 character(len=*), intent(in) :: str_in
 
-integer :: j, j1, j2
-double precision :: Y
-double precision, external :: swatch
+integer :: j, j1, j2, wall_now, rate
+double precision :: Y, cpu_now, cpuTime_tot
+real :: wall_tot
 
 call markloc('CPU_usage')
-Y = 0.
 write(nch, '(A)') TRIM(str_in)
-call writeTime(nch, '  >>> Astra run time  ' // char(0), swatch(Y), -1.d0)
+call SYSTEM_CLOCK(wall_now, rate)
+wall_tot = real(wall_now - wall_start) / real(rate)
+call writeTime(nch, '  >>> Astra wall time  ', wall_tot, -1.)
 
-cpuTime_tot = cpuTime_tra + cpuTime_equ
-do j=1, NSBR
-    cpuTime_tot = cpuTime_tot + cpuTime_sbr(j)
-enddo
 write(nch, '(A, I8)')    "    Total time steps  ", NSTEPS
 if (NSTEPS == 0) return
 Y = (TIME - TSTART)/NSTEPS
@@ -1233,15 +1231,9 @@ if (Y < 1.d-1) then
 else
     write(nch, '(A, F6.3, A)')"    Average time step   ", Y, " sec"
 endif
-write(nch, '(A, F6.3, A)')"    CPU per time step   ", cpuTime_tot/NSTEPS, " sec"
-Y = cpuTime_tot/(TIME - TSTART)
-if (Y < 60.) then
-    write(nch, '(A, F6.3, A)')"    CPU per 1 sec       ", Y, " sec"
-else
-    call writeTime(nch, '    CPU per 1 sec ' // char(0), Y, -1.d0)
-endif
+call CPU_TIME(cpu_now)
+cpuTime_tot = cpu_now - cpu_start
 call writeTime(nch, '    Total CPU time' // char(0), cpuTime_tot, cpuTime_tot)
-call writeTime(nch, '    Transport core' // char(0), cpuTime_tra, cpuTime_tot)
 call writeTime(nch, '    Equilibrium   ' // char(0), cpuTime_equ, cpuTime_tot)
 j2 = 1
 do j1=1, NSBR
@@ -1413,7 +1405,7 @@ subroutine ADDTIME(anyTime)
 
 implicit none
 
-double precision, intent(in) :: anyTime
+double precision, intent(inout) :: anyTime
 
 double precision :: cpuTime
 double precision, external :: swatch

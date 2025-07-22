@@ -1,6 +1,6 @@
 subroutine METRIC
 
-use outcmn_inc, only: cpuTime_tra, cpuTime_equ
+use outcmn_inc, only: cpuTime_equ
 use status_inc, only: VRO, VR, SHIF, AMETR, ELON, TRIA, XRHO, FP, IPOL
 use const_inc, only: IPART, FTO, FTN, ROC, GP, GP2, &
     BTOR, ROCO, RTOR, SHIFT, &
@@ -14,12 +14,11 @@ implicit none
 
 integer :: i, jexit, NDTEQUILMY, equil_solver, jthe, nrho_surf, nthe_surf
 double precision :: ROC3A, theta
+real :: t_cpu1, t_cpu2
 double precision, allocatable, dimension(:) :: prof_as, prof_eq
 character(len=120) :: err_msg
 
 call markloc('METRIC')
-
-call ADDTIME(cpuTime_tra)
 
 if (IPART == 1) then ! do only at initiation
     FTN = FTO
@@ -30,6 +29,8 @@ if (IPART == 1) then ! do only at initiation
 endif
 
 LEQ(5) = nint(IPEQL)
+
+call CPU_TIME(t_cpu1)
 
 SELECT CASE(LEQ(5))
 
@@ -62,7 +63,6 @@ CASE(1)  ! EMEQ
             err_msg = 'Equilibrium problem at the initial iterations'
             if (IPART == 1) call astra_stop(err_msg)
         endif
-        call ADDTIME(cpuTime_equ)
         TIMEQL = TIME
     endif
 
@@ -71,7 +71,6 @@ CASE(3)  ! equil iterations
     if (TIME >  TSTART) NDTEQUILMY = 1
     if (TIME-TIMEQL >= NDTEQUILMY*DTEQL) then
         call RHSEQ
-        call ADDTIME(cpuTime_equ)
         TIMEQL = TIME
     endif
 
@@ -86,11 +85,12 @@ CASE(4: 5)  ! SPIDER, FEQIS
     if (TIME-TIMEQL >= NDTEQUILMY*DTEQL) then
         call RHSEQ2    ! Define p', FF', j_tor=CUTOR, but using the gssolver definitions
         call A2GSSOLVER(equil_solver)
-        call ADDTIME(cpuTime_equ)
         TIMEQL = TIME
     endif
 
 END SELECT
+call CPU_TIME(t_cpu2)
+cpuTime_equ = cpuTime_equ + t_cpu2 - t_cpu1
 
 if (LEQ(5) < 3) then
     nrho_surf = abs(nint(NEQUIL))
@@ -157,8 +157,6 @@ if (LEQ(5) < 3) then
         equil_now%coord_sys%position%teta2d(jthe) = theta
     enddo
 endif
-
-call ADDTIME(cpuTime_tra)
 
 return
 end subroutine METRIC

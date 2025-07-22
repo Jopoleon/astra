@@ -26,7 +26,7 @@ use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
     FP, FPO, FP_NORM, rho_pol, NE, NEO, TE, TEO, UPAR, UPARO, MRHO, &
     AMAIN, UPS0, UPS0O
 use outcmn_inc, only: AWD, exp_file, nml_file, equ_file, rev_file, &
-    TASK, machine, cpuTime_tra, resizeGraph, &
+    TASK, machine, resizeGraph, &
     TASKID, VERSION, AVERS, ARLEAS, AEDIT, IFDFVX, IFDFAX, jbeg_arrx, &
     NBFILE, &
     NGR, NBNT, NCNBT, NRDX, NTARR, NRW, &
@@ -72,9 +72,6 @@ debug, tbeg_nml, tend_nml, tpause_nml, flightsim, resize, workflow
 ! Fortran tests
 
 call markloc('read_input')
-
-call ADDTIME(cpuTime_tra)  ! Initialize timer
-
 call getarg(0, STRI)
 j = min(len(TASKID), LEN_TRIM(STRI))
 TASKID = STRI(1: j)
