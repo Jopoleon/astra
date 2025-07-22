@@ -27,7 +27,7 @@ use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
     AMAIN, UPS0, UPS0O
 use outcmn_inc, only: AWD, exp_file, nml_file, equ_file, rev_file, &
     TASK, machine, cpuTime_tra, resizeGraph, &
-    TASKID, VERSION, AVERS, ARLEAS, AEDIT, COLTAB, IFDFVX, IFDFAX, jbeg_arrx, &
+    TASKID, VERSION, AVERS, ARLEAS, AEDIT, IFDFVX, IFDFAX, jbeg_arrx, &
     NBFILE, &
     NGR, NBNT, NCNBT, NRDX, NTARR, NRW, &
     CCOILX, VCOILX, GRAP, TIM7
@@ -217,9 +217,6 @@ else  ! Read log file
     NUF   = DELOUT(14)
     NBND  = DELOUT(19)
     XFLAG = DELOUT(20)
-! Replace equivalence
-
-    read(171, *, iostat=ios) (COLTAB(j), j=1, n_color)
     close(171)
 
 endif

@@ -39,7 +39,7 @@ use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, exp_header, &
    BTOR, IPL, CONSTF, DEVAR, DELOUT, XFLAG
 use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     Black, Blue, Magenta, WarningColor, &
-    active_tab, curves_per_frame, coltab, null_ch, &
+    active_tab, curves_per_frame, null_ch, &
     MOD10, LTOUT, NARRX, IPOUT, MODEY, &
     NWINDX, NWIND1, NWIND3, NWIND4, NWIND7, &
     NROUT, NTOUT, NXOUT, NSBR, NGR, NST, &
@@ -536,8 +536,6 @@ do while(.True.)
            do J=1, 22   ! Don't save TPAUSE and TEND
                write(1, '(1A6, 1A2, 1P, 8E11.3)') internNames(J), ' =', DELOUT(J)
            enddo
-           write(1, *) 'Color table (description: forlib/Astra2XW.c)', 32
-           write(1, '(4(2I4, 3X))')(COLTAB(j), j=1, 64)
            close (1)
            write(*, *) "Default start file is modified"
        endif

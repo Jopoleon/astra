@@ -27,7 +27,6 @@ integer :: &
     NDTNAM, NTOUT, NROUT, NSBR, NSBP, &
     NBNT, NCNBT, LTOUT, IPOUT, MOD10, NGR, NXOUT, IFDFVX(NCONST)
 integer :: MODEY, IDX, IDT, KPRI, NST, AVERS, ARLEAS, AEDIT
-integer*4 :: COLTAB(64) ! i*4 needed for compatibility with C
 integer, dimension(plot_modes) :: active_tab, curves_per_frame
 double precision, dimension(NRW)   :: GRAL, GRAP, OSHIFT, OSHIFR, SCALET, SCALER
 double precision, dimension(NARRX) :: TOUTX
