@@ -31,6 +31,7 @@ implicit none
 
     sbp_init = \
 """! **** Fill shared memory segments
+call SYSTEM_CLOCK(t_wall1, rate)
 call markloc("setvars")
 call setvars(DEVAR, NA1, NB1, n_bouncon, NRD, n_ql)
 call markloc("setarrs")
@@ -321,7 +322,7 @@ use ipc_mod
 use nclass_mod
 use strahl_mod
 use outcmn_inc
-use cpu_usage, only: wallTime_sbr, cpuTime_sbr
+use cpu_usage, only: wallTime_sbr, cpuTime_sbr, wallTime_xpr
 use json_vars, only: profxNames
 use debugger, only: markloc
 

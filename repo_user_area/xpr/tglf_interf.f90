@@ -1,5 +1,6 @@
 !----------------------------------------------------------------------|
 program main
+! Called only once, setting the shared memory segments, then it's just an exchange with the c/f90 subroutines
 
 implicit none
 
@@ -20,6 +21,7 @@ call getarg(3, STRING)
 read(STRING, *) mamkey
 call getarg(4, STRING)
 read(STRING, *) eignr
+
 call sbp2shm(eigpath, mampath, mampid, mamkey, eignr)
 
 end program main

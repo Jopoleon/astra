@@ -1,14 +1,14 @@
 module cpu_usage
 
 use parameter_inc, only: NSDELOUT, NSBMX
-use outcmn_inc, only: NSBR, sbr_name, DTNAME, IFSBX
+use outcmn_inc, only: NSBR, sbr_name, IFSBX
 use const_inc, only: NSTEPS, TIME, TSTART
 use debugger, only: markloc
 
 implicit none
 
 double precision :: cpu_start, cpuTime_equ=0., cpuTime_sbr(NSBMX)=0.
-integer :: wall_start, wallTime_equ=0, wallTime_sbr(NSBMX)=0
+integer :: wall_start, wallTime_equ=0, wallTime_sbr(NSBMX)=0, wallTime_xpr=0
 
 contains
 
@@ -19,7 +19,7 @@ contains
 
   character(len=*), intent(in) :: str_in
 
-  integer :: j, j1, j2, wall_now, rate
+  integer :: j, j2, wall_now, rate
   double precision :: time_step, cpu_now, cpuTime_tot
   real :: wall_tot
 
@@ -42,14 +42,14 @@ contains
   call formatTime(nch, 'Total CPU time', cpuTime_tot, cpuTime_tot)
   call formatTime(nch, 'Equilibrium', dble(wallTime_equ)/dble(rate), wall_tot)
   j2 = 1
-  do j1=1, NSBR
-      if (j1 == IFSBX(j2)) then
-          call formatTime(nch, 'Xroutine ' // DTNAME(NSDELOUT+4*j1)(1: j), cpuTime_sbr(j1), cpuTime_tot)
+  do j=1, NSBR
+      if (j == IFSBX(j2)) then
           j2 = j2 + 1
       else
-          call formatTime(nch, 'Subroutine ' // sbr_name(j1), dble(wallTime_sbr(j1))/dble(rate), wall_tot)
+          call formatTime(nch, 'Subroutine ' // sbr_name(j), dble(wallTime_sbr(j))/dble(rate), wall_tot)
       endif
   enddo
+  call formatTime(nch, 'SubProc ' // sbr_name(IFSBX(1)), dble(wallTime_xpr)/dble(rate), wall_tot)
   write(nch, *)
 
   return

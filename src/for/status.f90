@@ -600,7 +600,7 @@ contains
         NSDELOUT, TIME, TAU, TSTART, WTE, WTI, WNE
     use debugger, only: markloc, astra_stop
 
-    integer :: j, js
+    integer :: j
     double precision :: YV, YF, YMU, YN, YNE, YNI, YTE, YTI, YZF
     character(len=2) :: str
     character(len=132) :: err_msg
@@ -669,10 +669,6 @@ contains
 ! Determine arrays beyond ABC
         YF = GP2*BTOR
         YMU = (MU(NA1) - MV(NA1))*ROC**2
-        js = 1
-        do j=1, NSBR
-            if (DTNAME(NSDELOUT+4*j) == 'NEUTAB') js = 3
-        enddo
 
         do j=NA1+1, NB1
             FPO(j)   = FPO(NA1)
@@ -767,10 +763,9 @@ contains
             UPS0O(j) = UPS0O(NA1)
             UPS1O(j) = UPS1O(NA1)
 
-            if (js == 1) then
-                NN(j) = NN(NA1)
-                TN(j) = TN(NA1)
-            endif
+            NN(j) = NN(NA1)
+            TN(j) = TN(NA1)
+
             NIZ1(j)  = NIZ1(NA1)
             NIZ2(j)  = NIZ2(NA1)
             NIZ3(j)  = NIZ3(NA1)
@@ -802,10 +797,6 @@ contains
             VPOL(j)  = VPOL(NA1)
             NMAIN(j) = NMAIN(NA1)
 
-            if (js == 3 .and. j > NAB) then
-                NN(j) = NN(NAB)
-                TN(j) = TN(NAB)
-            endif
             YN = exp((ABC - AMETR(j))/WNE)
             NE(j)    = NE(NA1)*YN
             NI(j)    = NI(NA1)*YN
