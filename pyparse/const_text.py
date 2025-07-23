@@ -23,7 +23,7 @@ class SUBPROC:
 use parameter_inc, only: n_ql
 use const_inc
 use outcmn_inc, only: IFSBP
-use cpu_usage, only: cpuTime_sbr
+use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use ipc_mod, only: mem_tglf, mem_qlkz, mem_neo
 
 implicit none
@@ -48,12 +48,12 @@ use status_inc
 use ipc_mod
 use nclass_mod
 use strahl_mod
-use cpu_usage, only: cpuTime_sbr
+use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use debugger, only: markloc
 
 implicit none
 
-integer :: IFSUB
+integer :: IFSUB, t_wall1, t_wall2, rate
 double precision :: t_cpu1, t_cpu2
 """
 
@@ -981,7 +981,7 @@ class INIT_CONVERGE_STEP:
 
 use parameter_inc, only: NSBMX, NRD, n_ql
 use outcmn_inc
-use cpu_usage, only: cpuTime_sbr
+use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use const_inc
 use status_inc
 use nclass_mod
@@ -993,7 +993,7 @@ implicit none
 include 'src/tmp/declar.fml'
 include 'src/tmp/declar.fnc'
 
-integer :: IFSUB
+integer :: IFSUB, t_wall1, t_wall2, rate
 double precision :: YB, YC, YU, YJ_CU, YM, YMCD, YIOH, YICD, YM1, t_cpu1, t_cpu2
 double precision, dimension(NRD) :: YWA
 character(len=64), intent(in) :: LISTSB(NSBMX)
@@ -1020,7 +1020,7 @@ use parameter_inc, only: NRD, NSBMX, n_ql
 use const_inc
 use status_inc
 use outcmn_inc
-use cpu_usage, only: cpuTime_sbr
+use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use nclass_mod
 use strahl_mod
 use plasma_state
@@ -1036,7 +1036,7 @@ integer, intent(in) :: ibcpsi_fb
 integer, intent(out) :: bc_type_for_fp
 double precision, intent(out) :: dfpdrbm12
 
-integer :: IFSUB, imethod, ND, ND1, NODE, JCALL, bctype, bc_type_imp(2)
+integer :: IFSUB, imethod, ND, ND1, NODE, JCALL, bctype, bc_type_imp(2), t_wall1, t_wall2, rate
 
 double precision :: RABDOT, BABDOT, YHRO, YM1, YM2, YB, YC, YJ_CU, YM, YU, YIOH, YICD, YMCD, bc_value_imp(2), t_cpu1, t_cpu2
 double precision, dimension(5) :: bc_values

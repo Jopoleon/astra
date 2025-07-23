@@ -1,6 +1,6 @@
 subroutine METRIC
 
-use cpu_usage, only: cpuTime_equ
+use cpu_usage, only: wallTime_equ, cpuTime_equ
 use status_inc, only: VRO, VR, SHIF, AMETR, ELON, TRIA, XRHO, FP, IPOL
 use const_inc, only: IPART, FTO, FTN, ROC, GP, GP2, &
     BTOR, ROCO, RTOR, SHIFT, &
@@ -13,6 +13,7 @@ use numerical_tools, only: qinterp
 implicit none
 
 integer :: i, jexit, NDTEQUILMY, equil_solver, jthe, nrho_surf, nthe_surf
+integer :: t_wall1, t_wall2, rate
 double precision :: ROC3A, theta
 real :: t_cpu1, t_cpu2
 double precision, allocatable, dimension(:) :: prof_as, prof_eq
@@ -31,6 +32,7 @@ endif
 LEQ(5) = nint(IPEQL)
 
 call CPU_TIME(t_cpu1)
+call SYSTEM_CLOCK(t_wall1, rate)
 
 SELECT CASE(LEQ(5))
 
@@ -90,7 +92,9 @@ CASE(4: 5)  ! SPIDER, FEQIS
 
 END SELECT
 call CPU_TIME(t_cpu2)
+call SYSTEM_CLOCK(t_wall2, rate)
 cpuTime_equ = cpuTime_equ + t_cpu2 - t_cpu1
+wallTime_equ = wallTime_equ + t_wall2 - t_wall1
 
 if (LEQ(5) < 3) then
     nrho_surf = abs(nint(NEQUIL))

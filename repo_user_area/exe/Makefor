@@ -17,7 +17,6 @@ LIB = $(LIB_DIR)/$(LIBNAM)
 FC_FLAGS = -r8 -no-prec-div -ip -fPIC -O0 $(CHECKALLCOMP)
 
 MODOBJS = \
-$(OBJ_DIR)/cpu_usage.o \
 $(OBJ_DIR)/imas_ids.o \
 $(OBJ_DIR)/astra_modules.o \
 $(OBJ_DIR)/debugger.o \
@@ -25,6 +24,7 @@ $(OBJ_DIR)/outcmn.o \
 $(OBJ_DIR)/const.o \
 $(OBJ_DIR)/machine_config.o \
 $(OBJ_DIR)/status.o \
+$(OBJ_DIR)/cpu_usage.o \
 $(OBJ_DIR)/parameters_a2equil.o \
 $(OBJ_DIR)/json_vars.o \
 $(OBJ_DIR)/transport2fbe.o \

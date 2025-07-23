@@ -8,7 +8,7 @@ use debugger, only: markloc
 implicit none
 
 double precision :: cpu_start, cpuTime_equ=0., cpuTime_sbr(NSBMX)=0.
-integer :: wall_start
+integer :: wall_start, wallTime_equ=0, wallTime_sbr(NSBMX)=0
 
 contains
 
@@ -29,25 +29,25 @@ contains
   wall_tot = real(wall_now - wall_start) / real(rate)
   call formatTime(nch, '>>> Astra wall time', wall_tot, -1.)
 
-  write(nch, '(A, I8)')    "    Total time steps  ", NSTEPS
+  write(nch, '(4X, A, I8)') 'Total time steps  ', NSTEPS
   if (NSTEPS == 0) return
   time_step = (TIME - TSTART)/NSTEPS
   if (time_step < 1.d-1) then
-      write(nch, '(A, F6.3, A)')"    Average time step   ", 1.d3*time_step, " msec"
+      write(nch, '(4X, A, F6.3, A)') 'Average time step   ', 1.d3*time_step, ' msec'
   else
-      write(nch, '(A, F6.3, A)')"    Average time step   ", time_step, " sec"
+      write(nch, '(4X, A, F6.3, A)') 'Average time step   ', time_step, ' sec'
   endif
   call CPU_TIME(cpu_now)
   cpuTime_tot = cpu_now - cpu_start
   call formatTime(nch, 'Total CPU time', cpuTime_tot, cpuTime_tot)
-  call formatTime(nch, 'Equilibrium', cpuTime_equ, cpuTime_tot)
+  call formatTime(nch, 'Equilibrium', dble(wallTime_equ)/dble(rate), wall_tot)
   j2 = 1
   do j1=1, NSBR
       if (j1 == IFSBX(j2)) then
           call formatTime(nch, 'Xroutine ' // DTNAME(NSDELOUT+4*j1)(1: j), cpuTime_sbr(j1), cpuTime_tot)
           j2 = j2 + 1
       else
-          call formatTime(nch, 'Subroutine ' // sbr_name(j1), cpuTime_sbr(j1), cpuTime_tot)
+          call formatTime(nch, 'Subroutine ' // sbr_name(j1), dble(wallTime_sbr(j1))/dble(rate), wall_tot)
       endif
   enddo
   write(nch, *)
@@ -63,7 +63,7 @@ contains
   double precision, intent(in) :: tim, time
 
   integer :: jh, jm, js
-  double precision :: t1
+  double precision :: ts
   character(len=30) :: padded
 
   call markloc('formatTime')
@@ -71,8 +71,8 @@ contains
   js = tim
   jh = js/3600
   jm = (js - 3600*jh)/60
-  t1 = tim - 60*jm - 3600*jh
-  js = t1
+  ts = tim - 60*jm - 3600*jh
+  js = ts
 
   padded = ADJUSTL(string_in)
   if (time >= 0.) then
