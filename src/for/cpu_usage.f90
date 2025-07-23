@@ -49,7 +49,9 @@ contains
           call formatTime(nch, 'Subroutine ' // sbr_name(j), dble(wallTime_sbr(j))/dble(rate), wall_tot)
       endif
   enddo
-  call formatTime(nch, 'SubProc ' // sbr_name(IFSBX(1)), dble(wallTime_xpr)/dble(rate), wall_tot)
+  if (wallTime_xpr > 0) then
+      call formatTime(nch, 'SubProc ' // sbr_name(IFSBX(1)), dble(wallTime_xpr)/dble(rate), wall_tot)
+  endif
   write(nch, *)
 
   return

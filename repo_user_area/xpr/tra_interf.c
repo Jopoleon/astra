@@ -30,7 +30,6 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
     static char AWD[96];
     static struct A_proc_info Mama, My;
 
-    swatch_(&(My.CPUse));
 /* Analyze the calling command string. Get own PID and name. */
     My.Pid = getpid();
     getcwd(My.Path, (size_t)64);
@@ -155,7 +154,6 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
               &(ql_io->QLarrays)
           );
 
-        swatch_(&(My.CPUse));
 /* If SemID exists then lock myself, otherwise, exit */
         Mysemun.val = 0;
         if (semctl(SemID, My.OrdNr, SETVAL, Mysemun) < 0) break;
@@ -173,8 +171,6 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
         printf("     ");
     }
     printf("Process # %d normal exit: ", My.OrdNr);
-    swatch_(&(My.CPUse));
-    printf("CPUse %g\n", My.CPUse);
     exit(0);
 
 }
