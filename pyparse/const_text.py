@@ -101,7 +101,7 @@ implicit none
 
 integer :: j
 
-call markloc("setvar.tmp")
+call markloc("setvar")
 
 do j=1, NA1
 ZEF(J)= max(1.d0, ZEFX(J))
@@ -321,6 +321,7 @@ use ipc_mod
 use nclass_mod
 use strahl_mod
 use outcmn_inc
+use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use json_vars, only: profxNames
 use debugger, only: markloc
 
@@ -330,9 +331,11 @@ include 'src/tmp/declar.fml'
 include 'src/tmp/declar.fnc'
 
 integer :: jdetv, ifsub
+integer :: t_wall1, t_wall2, rate
+double precision :: t_cpu1, t_cpu2
 integer, external :: ifipc
 
-call markloc("detvar.tmp (time signals)")
+call markloc("detvar (time signals)")
 '''
 
     rad_tail  = \
@@ -743,7 +746,7 @@ integer irado
 include 'src/tmp/declar.fml'
 include 'src/tmp/declar.fnc'
 
-call markloc('radout.tmp')
+call markloc('radout')
 do irado=1, NAB
 J = irado
 """
@@ -777,7 +780,7 @@ implicit none
 include 'src/tmp/declar.fml'
 include 'src/tmp/declar.fnc'
 
-call markloc('timout.tmp')
+call markloc('timout')
 """
 
 class FJEQN:
