@@ -100,9 +100,6 @@ if __name__ == '__main__':
         input('-----------------------------------\nFile %s missing!\nASTRA will probably crash.\nPress any key to continue at your own risk\n' %eqlog)
 
     expequ = args.exp + args.equ
-    f_log2 = '%s/tmp/%s.nml' %(awd, expequ)
-    with open(f_log2, 'w') as f:
-        f.write(alog)
 
     cmd = '%s/exe/Build' %awd
     if args.batch and args.waitslurm:
