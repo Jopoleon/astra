@@ -40,6 +40,7 @@ character(len=4), dimension(NRW) :: NAMET, NAMER
 character(len=4) :: TASK, machine
 character(len=6), dimension(NRW) :: NAMEX
 character(len=6) :: DTNAME(NSDELOUT+4*NSBMX), NAM7(4)
+character(len=20) :: sbr_name(NSBMX)
 character(132) :: nml_file, exp_file, equ_file, rev_file, TASKID, NBFILE, VERSION, RUNID, AWD
 type(astra_xwindow) :: astra_gui_ref, astra_gui
 type(plot_frame) :: plot_area_ref, plot_area

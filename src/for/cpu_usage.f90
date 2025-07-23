@@ -1,7 +1,7 @@
 module cpu_usage
 
 use parameter_inc, only: NSDELOUT, NSBMX
-use outcmn_inc, only: NSBR, DTNAME, IFSBX, tab_ch
+use outcmn_inc, only: NSBR, sbr_name, DTNAME, IFSBX, tab_ch
 use const_inc, only: NSTEPS, TIME, TSTART
 use debugger, only: markloc
 
@@ -40,18 +40,18 @@ contains
   endif
   call CPU_TIME(cpu_now)
   cpuTime_tot = cpu_now - cpu_start
-  call formatTime(nch, '    Total CPU time' // char(0), cpuTime_tot, cpuTime_tot)
-  call formatTime(nch, '    Equilibrium   ' // char(0), cpuTime_equ, cpuTime_tot)
+  call formatTime(nch, '    Total CPU time    ' // char(0), cpuTime_tot, cpuTime_tot)
+  call formatTime(nch, '    Equilibrium       ' // char(0), cpuTime_equ, cpuTime_tot)
   j2 = 1
   do j1=1, NSBR
-      j = min(6, LEN_TRIM(DTNAME(NSDELOUT+4*j1)))
       if (j1 == IFSBX(j2)) then
+          j = min(6, LEN_TRIM(DTNAME(NSDELOUT+4*j1)))
           call formatTime(nch, '    Xroutine   "' // &
               DTNAME(NSDELOUT+4*j1)(1: j) // '"', cpuTime_sbr(j1), cpuTime_tot)
           j2 = j2 + 1
       else
-          call formatTime(nch, '    Subroutine "' // &
-              DTNAME(NSDELOUT+4*j1)(1: j) // '"', cpuTime_sbr(j1), cpuTime_tot)
+          call formatTime(nch, '    Subroutine ' // &
+              ADJUSTL(sbr_name(j1)), cpuTime_sbr(j1), cpuTime_tot)
       endif
   enddo
   write(nch, *)
@@ -82,7 +82,7 @@ contains
           tab_ch, jh, ':', jm, ':', js, 100.*tim/time, '%'
   else
       write(nch, '(2A, I4.2, 2(A1, I2.2))') TRIM(string), &
-         tab_ch, jh, ':', jm, ':', js
+          tab_ch, jh, ':', jm, ':', js
   endif
 
   return

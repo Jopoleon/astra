@@ -309,6 +309,7 @@ end subroutine INIVAR'''
             sbrnam = sbrs_d[line]['name']
             if sbrnam[:3] == 'XPR':
                 sbrnam = sbrnam[4:10].lower()
+            inam += 'sbr_name(%2d) = "%s"\n' %(j_sbr, sbrnam)
             inam += 'DTNAME(%2d*4+NSDELOUT) = "%s"//char(0)\n' %(j_sbr, sbrnam[:6])
         n_par = 0
         j_ipc = 1
