@@ -27,8 +27,10 @@ contains
   write(nch, '(A)') TRIM(str_in)
   call SYSTEM_CLOCK(wall_now, rate)
   wall_tot = real(wall_now - wall_start) / real(rate)
-  call formatTime(nch, '>>> Astra wall time', wall_tot, -1.)
+  call CPU_TIME(cpu_now)
+  cpuTime_tot = cpu_now - cpu_start
 
+  call formatTime(nch, 'Total CPU time',   cpuTime_tot, -1.d0)
   write(nch, '(4X, A, I8)') 'Total time steps  ', NSTEPS
   if (NSTEPS == 0) return
   time_step = (TIME - TSTART)/NSTEPS
@@ -37,9 +39,7 @@ contains
   else
       write(nch, '(4X, A, F6.3, A)') 'Average time step   ', time_step, ' sec'
   endif
-  call CPU_TIME(cpu_now)
-  cpuTime_tot = cpu_now - cpu_start
-  call formatTime(nch, 'Total CPU time', cpuTime_tot, cpuTime_tot)
+  call formatTime(nch, '>>> Astra wall time', wall_tot, -1.d0)
   call formatTime(nch, 'Equilibrium', dble(wallTime_equ)/dble(rate), wall_tot)
   j2 = 1
   do j=1, NSBR
