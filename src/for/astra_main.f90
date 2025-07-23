@@ -1,7 +1,8 @@
 program astra
 
 use parameter_inc, only: NSBMX, NRD
-use outcmn_inc, only: astra_gui, astra_gui_ref, outcmn_init, TASK, cpu_start, wall_start
+use outcmn_inc, only: astra_gui, astra_gui_ref, outcmn_init, TASK
+use cpu_usage, only: cpu_start, wall_start, cpu_report
 use const_inc, only: IPART, const_init, &
     TIME, TSTART, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT
 use status_inc, only: status_init, defarr
@@ -94,7 +95,7 @@ do while (TIME - TEND + 1.E-8 < DPOUT + TAU)
 enddo
 call MPI_Finalize(ierr)
 
-call CPU_usage('>>> ASTRA normal exit >>>' // char(0))
+call CPU_report('>>> ASTRA normal exit >>>' // char(0))
 call astra_stop
 
 end program astra

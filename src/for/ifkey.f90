@@ -55,6 +55,7 @@ use dbl2char, only: fmt6
 use char_manip, only: str_in_list
 use debugger, only: markloc, debug, astra_stop
 use json_vars, only: internNames, constNames, varNames, n_const, n_var
+use cpu_usage, only: cpu_report
 
 implicit none
 
@@ -312,7 +313,7 @@ do while(.True.)
                 if (KEY == 0) return
                 if (KIBM == 1 .and. (KEY == 99 .or. KEY == 67)) then ! <Ctrl>+C
                     if (TASK(4:4) /= 'B') call Close_Screen
-                    call CPU_usage('>>> ASTRA <Ctrl>+C exit >>>' // char(0))
+                    call cpu_report('>>> ASTRA <Ctrl>+C exit >>>' // char(0))
                     call astra_stop
                 endif
 
@@ -387,7 +388,7 @@ do while(.True.)
         endif
 
     CASE(37) ! '%'
-        call CPU_usage(char(0))
+        call cpu_report(char(0))
 
     CASE(46) ! '.'
         MARK = MARK + 1
@@ -396,7 +397,7 @@ do while(.True.)
 
     CASE(47) ! '/'
         if (TASK(4:4) /= 'B') call Close_Screen
-        call CPU_usage('>>> ASTRA / or "Quit" button exit >>>' // char(0))
+        call cpu_report('>>> ASTRA / or "Quit" button exit >>>' // char(0))
         call astra_stop
 
     CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
@@ -767,7 +768,7 @@ do while(.True.)
         endif
         if (KEY == 47) then ! <Alt>+/
             if (TASK(4:4) /= 'B') call Close_Screen
-            call CPU_usage('>>> ASTRA <Alt>+/ exit >>>' // char(0))
+            call cpu_report('>>> ASTRA <Alt>+/ exit >>>' // char(0))
             call astra_stop
         endif
         if (KIBM == 2 .and. (KEY >= 32 .and. KEY <= 126) ) then
@@ -809,7 +810,7 @@ enddo
 
 if (TASK(4:4) /= 'B') call Close_Screen
 
-call CPU_usage('>>> ASTRA exit: reached END time >>>' // char(0))
+call cpu_report('>>> ASTRA exit: reached END time >>>' // char(0))
 call astra_stop
 
 return
@@ -1165,94 +1166,6 @@ return
 end subroutine SMODE5
 
 !---------------------------------------------------------------------
-subroutine writeTime(nch, string, tim, time)
-
-use outcmn_inc, only: tab_ch
-use debugger, only: markloc
-
-implicit none
-
-integer, intent(in) :: nch
-character(len=*), intent(in) :: string
-double precision, intent(in) :: tim, time
-
-integer :: jh, jm, js
-double precision :: t1
-
-call markloc('writeTime')
-
-js = tim
-jh = js/3600
-jm = (js - 3600*jh)/60
-t1 = tim - 60*jm - 3600*jh
-js = t1
-
-if (time >= 0.) then
-    write(nch, '(2A, I4.2, 2(A1, I2.2), F8.1, A1)') TRIM(string), &
-        tab_ch, jh, ':', jm, ':', js, 100.*tim/time, '%'
-else
-    write(nch, '(2A, I4.2, 2(A1, I2.2))') TRIM(string), &
-       tab_ch, jh, ':', jm, ':', js
-endif
-
-return
-end subroutine writeTime
-
-!---------------------------------------------------------------------
-subroutine CPU_usage(str_in)
-
-use parameter_inc, only: NSDELOUT
-use outcmn_inc, only: cpu_start, cpuTime_equ, cpuTime_tra, cpuTime_sbr, NSBR, DTNAME, IFSBX, wall_start
-use const_inc, only: NSTEPS, TIME, TSTART
-use debugger, only: markloc
-
-implicit none
-
-integer, parameter :: nch=6
-
-character(len=*), intent(in) :: str_in
-
-integer :: j, j1, j2, wall_now, rate
-double precision :: Y, cpu_now, cpuTime_tot
-real :: wall_tot
-
-call markloc('CPU_usage')
-write(nch, '(A)') TRIM(str_in)
-call SYSTEM_CLOCK(wall_now, rate)
-wall_tot = real(wall_now - wall_start) / real(rate)
-call writeTime(nch, '  >>> Astra wall time  ', wall_tot, -1.)
-
-write(nch, '(A, I8)')    "    Total time steps  ", NSTEPS
-if (NSTEPS == 0) return
-Y = (TIME - TSTART)/NSTEPS
-if (Y < 1.d-1) then
-    Y = 1.d3*Y
-    write(nch, '(A, F6.3, A)')"    Average time step   ", Y, " msec"
-else
-    write(nch, '(A, F6.3, A)')"    Average time step   ", Y, " sec"
-endif
-call CPU_TIME(cpu_now)
-cpuTime_tot = cpu_now - cpu_start
-call writeTime(nch, '    Total CPU time' // char(0), cpuTime_tot, cpuTime_tot)
-call writeTime(nch, '    Equilibrium   ' // char(0), cpuTime_equ, cpuTime_tot)
-j2 = 1
-do j1=1, NSBR
-    j = min(6, LEN_TRIM(DTNAME(NSDELOUT+4*j1)))
-    if (j1 == IFSBX(j2)) then
-        call writeTime(nch, '    Xroutine   "' // &
-            DTNAME(NSDELOUT+4*j1)(1: j) // '"', cpuTime_sbr(j1), cpuTime_tot)
-        j2 = j2 + 1
-    else
-        call writeTime(nch, '    Subroutine "' // &
-            DTNAME(NSDELOUT+4*j1)(1: j) // '"', cpuTime_sbr(j1), cpuTime_tot)
-    endif
-enddo
-write(nch, *)
-
-return
-end subroutine CPU_usage
-
-!---------------------------------------------------------------------
 subroutine ADDMOD(NCHW, NCHM, NCHL)
 ! Write model & model.log records in the header of a post-view file
 !   Both are preceded by one line 32*"^" 
@@ -1399,21 +1312,6 @@ LINEAV = 0.5*(LINEAV + (ABC - AMETR(NA))*(NE(NA1) + NE(NA)))/ABC
 
 return
 end function lineav
-
-!---------------------------------------------------------------------
-subroutine ADDTIME(anyTime)
-
-implicit none
-
-double precision, intent(inout) :: anyTime
-
-double precision :: cpuTime
-double precision, external :: swatch
-
-cpuTime = swatch(anyTime)
-
-return
-end subroutine ADDTIME
 
 !---------------------------------------------------------------------
 subroutine menutable(arr_size, array_in, var_names, id)

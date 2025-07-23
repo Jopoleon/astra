@@ -1,6 +1,6 @@
 subroutine METRIC
 
-use outcmn_inc, only: cpuTime_equ
+use cpu_usage, only: cpuTime_equ
 use status_inc, only: VRO, VR, SHIF, AMETR, ELON, TRIA, XRHO, FP, IPOL
 use const_inc, only: IPART, FTO, FTN, ROC, GP, GP2, &
     BTOR, ROCO, RTOR, SHIFT, &
