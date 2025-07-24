@@ -23,7 +23,6 @@ $(OBJ_DIR)/debugger.o \
 $(OBJ_DIR)/const.o \
 $(OBJ_DIR)/io_mod.o \
 $(OBJ_DIR)/outcmn.o \
-$(OBJ_DIR)/const.o \
 $(OBJ_DIR)/machine_config.o \
 $(OBJ_DIR)/status.o \
 $(OBJ_DIR)/cpu_usage.o \

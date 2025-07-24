@@ -77,7 +77,6 @@ if __name__ == '__main__':
     alog += 'AWD       = "%s/"\n'   %awd
     alog += 'exp_file  = "%s"\n'    %args.exp
     alog += 'equ_file  = "%s"\n'    %args.equ
-    alog += 'rev_file  = profiles.dat\n'
     alog += 'tbeg_nml  = %8.4f\n'   %args.tbeg
     alog += 'tend_nml  = %8.4f\n'   %args.tend
     alog += 'TASK      = "%s"\n'    %rtype
