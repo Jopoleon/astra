@@ -74,7 +74,7 @@ use const_inc, only: XOUT, NAB, NA1, NA1E, ABC, TINIT, TSCALE, RTOR, &
 use io_mod, only: IFDFAX, NPTM, XAXES, DATAX, equ_file, TOUTX
 use outcmn_inc, only: astra_gui, plot_area, &
     curves_per_frame, active_tab, MOD10, NWIND1, NWIND3, NWINDX, &
-    KPRI, ICVMX, NTIMES, NRW, &
+    KPRI, nplots_max, NTIMES, NRW, &
     NROUT, ROUT, OSHIFR, NAMER, SCALER, &
     NTOUT, OSHIFT, NAMET, SCALET, &
     NXOUT, NAMEX, LTOUT, &
@@ -109,8 +109,8 @@ double precision ,dimension(2) :: xbar, xbar_old, ybar, x8bar, y8bar
 double precision, dimension(16) :: xq1_old, xte_old
 double precision, dimension(NRD) :: xplot, yplot
 double precision, dimension(NTIMES) :: xtrace, ytrace, xtrace_old
-double precision, dimension(NRD, ICVMX) :: xold, yold
-double precision, dimension(NTIMES, ICVMX) :: ytrace_old
+double precision, dimension(NRD, nplots_max) :: xold, yold
+double precision, dimension(NTIMES, nplots_max) :: ytrace_old
 double precision, external :: AFVAL
 character(len=80) :: STRI
 character(len=5 ) :: XF4
@@ -228,7 +228,7 @@ CASE(1: 3)  ! Profiles
         endif
         STYL = (jcol - 1)*MARK
         j_curve = j_curve + 1
-        if (j_curve <= ICVMX) then
+        if (j_curve <= nplots_max) then
             call update_curve(jxout, IWN(JW), jcol, STYL, xold(1:, j_curve), yold(1:, j_curve), xplot, yplot)
             xold(1: jxout, j_curve) = xplot(1: jxout)
             yold(1: jxout, j_curve) = yplot(1: jxout)
@@ -377,10 +377,10 @@ CASE(6)  ! Time traces
     ! right_label_position=JDX*JDMX=23*5*5=575 (see typdsp.f)
     do J=1, LTOUT-1
         r_out = (TT_out(J) - TINIT)*575/abs(TSCALE)
-        IYO(J, ICVMX+1) = 6*astra_gui%dxlet + r_out
+        IYO(J, nplots_max+1) = 6*astra_gui%dxlet + r_out
         xtrace(J) = 6*astra_gui%dxlet + r_out
         if (r_out < 0)  LTOUT1 = J + 1
-        if (IYO(J, ICVMX+1) <= plot_area%width - 1) LTOUT2 = J - 1
+        if (IYO(J, nplots_max+1) <= plot_area%width - 1) LTOUT2 = J - 1
     enddo
     LTOUT2 = LTOUT2 - LTOUT1 + 1
     if (LTOUT2 < 3) then ! No plot for small time
@@ -405,7 +405,7 @@ CASE(6)  ! Time traces
             r_out = min(r_out, 7.d0)
             JDSP  = 10*(plot_area%canvas_height*r_out + IYMN + (n_canvas - j_canv)*plot_area%canvas_height)
             JDSP  = max(JDSP, 10*IYMN)
-            IYO(J, ICVMX+2) = JY - min(JDSP, 10*IYMX)
+            IYO(J, nplots_max+2) = JY - min(JDSP, 10*IYMX)
             ytrace(J) = dble(plot_area%height) - min(max(plot_area%canvas_height*r_out + ymin + (n_canvas - j_canv)*plot_area%canvas_height, ymin), ymax)
         enddo
 
@@ -418,7 +418,7 @@ CASE(6)  ! Time traces
         STYL = jcol*MARK
         jcol  = jcol  + 1
         j_curve = j_curve + 1
-        if (j_curve <= ICVMX) then
+        if (j_curve <= nplots_max) then
             call setColor(White)
             call plot_curve(LTOUT2, STYL, xtrace_old(1:LTOUT2), ytrace_old(1:LTOUT2, j_curve))
             call setColor(jcol)

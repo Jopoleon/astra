@@ -20,7 +20,7 @@ endtype plot_frame
 ! Colors, array AstraColorNum in Astra2XW.c
 integer, parameter :: White=0, Black=1, Red=2, Blue=3, Green=5, &
      WarningColor=30, EraseColor=31, Magenta=14, Pink=13, &
-     ICVMX=32, NRW=128, NTIMES=1024
+     nplots_max=32, NRW=128, NTIMES=1024
 character(len=132) :: rev_file='tmp/profile.dat'
 integer, dimension(NRW)   :: MARKT, MARKR, NWIND1, NWIND3, NWIND4, NWIND7, NWINDX, IP1, IP2, IP30, IP31
 integer :: NDTNAM, NTOUT, NROUT, NSBP, LTOUT, IPOUT, MOD10, NXOUT

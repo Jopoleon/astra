@@ -44,7 +44,7 @@ use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     NROUT, NTOUT, NXOUT, NST, NDTNAM, NRW, &
     NAMER, NAMET, NAMEX, SCALER, SCALET, ROUT, OSHIFR, OSHIFT, &
     rev_file, DTNAME, runid, VERSION, AVERS, ARLEAS, AEDIT, &
-    GRAP, GRAL, TIM7, NAM7, KPRI, ICVMX, &
+    GRAP, GRAL, TIM7, NAM7, KPRI, nplots_max, &
     NTIMES, TTOUT, TOUT
 use io_mod, only: NSBR, NGR, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
 use expdat, only: raw_profile_map, DATARR
@@ -68,7 +68,7 @@ integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
     MODEX, IX, IY, NU1, j2, J1, ios, &
     YEAR, MONTH, DAY, HOUR, MINUTE, time_arr(8)
 ! plot_arr dimension: 4*NRD(Mode 5, 8) 320(7) 2*NTIMES(Mode 6) 2*NRD(Modes 1-4)
-integer :: ITO(NTIMES, ICVMX+2)
+integer :: ITO(NTIMES, nplots_max+2)
 double precision :: DEVARO(NCONST), LINEAV, CHORDN, ABD, ALFA, TIMEB, TROUT, TPOUT=0.d0
 double precision, dimension(1) :: rescale_array
 double precision, dimension(NTIMES) :: PRMARK, TIMOD4
@@ -820,13 +820,13 @@ use parameter_inc, only: NRD
 use const_inc, only: NA
 use status_inc, only: MU
 use io_mod, only: TASK
-use outcmn_inc, only: MOD10, ICVMX, NTIMES, TTOUT, TOUT
+use outcmn_inc, only: MOD10, nplots_max, NTIMES, TTOUT, TOUT
 use debugger, only: markloc, debug
 
 implicit none
 
 integer, intent(in) :: MARK
-integer, intent(inout) :: ITO(NTIMES, ICVMX+2)
+integer, intent(inout) :: ITO(NTIMES, nplots_max+2)
 double precision, intent(in), dimension(NTIMES) :: PRMARK
 character(len=6) , intent(in) :: NAMEP(NTIMES)
 
@@ -860,7 +860,7 @@ subroutine refresh_plot(IFKL, MARK, PRMARK, PSNAME)
 use parameter_inc, only: NRD
 use io_mod, only: TASK
 use outcmn_inc, only: astra_gui, KPRI, MOD10, MODEY, RUNID, &
-    WarningColor, ICVMX, resizeGraph, NTIMES, TOUT, TTOUT
+    WarningColor, nplots_max, resizeGraph, NTIMES, TOUT, TTOUT
 use const_inc, only: XOUT, TIME, TAU, NA
 use status_inc, only: MU
 use debugger, only: markloc, debug
@@ -874,7 +874,7 @@ double precision, intent(in), dimension(NTIMES) :: PRMARK
 character(len=*) :: PSNAME
 
 integer :: plot_mode, NST, j
-integer :: ITO(NTIMES, ICVMX+2)
+integer :: ITO(NTIMES, nplots_max+2)
 double precision :: CHORDN, lineav
 character(len=6) :: NAMEP(NTIMES)
 character(len=132) :: STRI
@@ -930,7 +930,7 @@ subroutine SMODE5(MARK, PRMARK, NAMEP)
 
 use parameter_inc, only: NRD
 use io_mod, only:  NGR
-use outcmn_inc, only: astra_gui, plot_area, NROUT, ICVMX, SCALER, &
+use outcmn_inc, only: astra_gui, plot_area, NROUT, nplots_max, SCALER, &
     ROUT, rev_file, NXOUT, NAMER, NWIND4, active_tab, OSHIFR, &
     MOD10, GRAL, GRAP, MODEY, KPRI, NTIMES, NRW, Black, Red
 use const_inc, only: AB, NAB
