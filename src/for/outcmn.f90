@@ -1,6 +1,6 @@
 module outcmn_inc
 
-use parameter_inc, only: NRD, NRW, NSBMX, NSDELOUT, plot_modes
+use parameter_inc, only: NRD, NSBMX, NSDELOUT, plot_modes
 use char_manip, only: null_ch
 use io_mod, only: resize
 use const_inc, only: AB
@@ -19,7 +19,8 @@ endtype plot_frame
 
 ! Colors, array AstraColorNum in Astra2XW.c
 integer, parameter :: White=0, Black=1, Red=2, Blue=3, Green=5, &
-     WarningColor=30, EraseColor=31, Magenta=14, Pink=13, ICVMX=32
+     WarningColor=30, EraseColor=31, Magenta=14, Pink=13, &
+     ICVMX=32, NRW=128, NTIMES=1024
 character(len=132) :: rev_file='tmp/profile.dat'
 integer, dimension(NRW)   :: MARKT, MARKR, NWIND1, NWIND3, NWIND4, NWIND7, NWINDX, IP1, IP2, IP30, IP31
 integer :: NDTNAM, NTOUT, NROUT, NSBP, LTOUT, IPOUT, MOD10, NXOUT
@@ -28,6 +29,7 @@ integer, dimension(plot_modes) :: active_tab, curves_per_frame
 double precision, dimension(NRW)   :: GRAL, GRAP, OSHIFT, OSHIFR, SCALET, SCALER
 double precision, dimension(NRD, NRW) :: ROUT
 double precision :: TIM7(4), scale_bnd, pixel_ymid, meter2pixel, resizeGraph
+double precision :: TTOUT(NTIMES), TOUT(NTIMES, NRW)
 
 character(len=4), dimension(NRW) :: NAMET, NAMER
 character(len=6), dimension(NRW) :: NAMEX
@@ -201,18 +203,3 @@ contains
     end subroutine outcmn_init
 
 end module outcmn_inc
-
-!--------------------------------
-module timeoutput_inc
-
-use parameter_inc, only: NRW
-
-implicit none
-
-integer, parameter :: NTIMES=1024
-
-! TOUT   - Time variables output array
-! TTOUT  - time-coordinate array for time output [s] TTOUT(1:LTOUT<=NTIMES)
-double precision :: TTOUT(NTIMES), TOUT(NTIMES, NRW)
-
-end module timeoutput_inc

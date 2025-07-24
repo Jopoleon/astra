@@ -27,14 +27,13 @@ use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
     AMAIN, UPS0, UPS0O
 use io_mod, only: exp_file, equ_file, machine, NBfile, CCOILX, VCOILX, &
     IFDFVX, IFDFAX, jbeg_arrx, NGR, NBNT, NCNBT
-use outcmn_inc, only: TIM7
+use outcmn_inc, only: TIM7, TTOUT
 
 use expdat, only: raw_scalar, raw_profile_map, DATARR, BNDR, BNDZ, BNDTIM
 use char_manip, only: to_upper, str_in_list, clean_string
 use debugger, only: markloc, debug, astra_stop
 use parse_utils, only: IFDEFX, path_split, split2array2, &
     ufheader, ufrd, parse_u_line, inquire_fname, assign_val, read_arrx
-use timeoutput_inc, only: NTIMES, TTOUT
 use numerical_tools, only: EXTRAP, INTEGR
 use plasma_state, only: plasma_up
 use json_vars, only: read_metadata, internNames, constNames, varNames, profxNames, &

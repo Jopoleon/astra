@@ -31,7 +31,7 @@ integer function IFKEY(IFKL)
 ! 12,13 - for equ/model.log file (once on entry)
 ! 3 - for post-viewer file (first on entry, then periodically)
 
-use parameter_inc, only: NRD, NRW, NARRX, NCONST, NSDELOUT
+use parameter_inc, only: NRD, NARRX, NCONST, NSDELOUT
 use status_inc, only: MU, AMETR, SHIF, ELON, TRIA, EQFF, EQPF, FP, RHO
 use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, exp_header, &
    NA, NB1, NA1, NAB, NUF, LEQ, NBND, TIME, TAU, TINIT, TSCALE, &
@@ -41,13 +41,13 @@ use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     Black, Blue, Magenta, WarningColor, &
     active_tab, curves_per_frame, MOD10, LTOUT, IPOUT, MODEY, &
     NWINDX, NWIND1, NWIND3, NWIND4, NWIND7, &
-    NROUT, NTOUT, NXOUT, NST, NDTNAM, &
+    NROUT, NTOUT, NXOUT, NST, NDTNAM, NRW, &
     NAMER, NAMET, NAMEX, SCALER, SCALET, ROUT, OSHIFR, OSHIFT, &
     rev_file, DTNAME, runid, VERSION, AVERS, ARLEAS, AEDIT, &
-    GRAP, GRAL, TIM7, NAM7, KPRI, ICVMX
+    GRAP, GRAL, TIM7, NAM7, KPRI, ICVMX, &
+    NTIMES, TTOUT, TOUT
 use io_mod, only: NSBR, NGR, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
 use expdat, only: raw_profile_map, DATARR
-use timeoutput_inc, only: NTIMES, TTOUT, TOUT
 use dbl2char, only: fmt6
 use char_manip, only: str_in_list, null_ch, beep_ch
 use debugger, only: markloc, debug, astra_stop
@@ -820,8 +820,7 @@ use parameter_inc, only: NRD
 use const_inc, only: NA
 use status_inc, only: MU
 use io_mod, only: TASK
-use outcmn_inc, only: MOD10, ICVMX
-use timeoutput_inc, only: NTIMES, TTOUT, TOUT
+use outcmn_inc, only: MOD10, ICVMX, NTIMES, TTOUT, TOUT
 use debugger, only: markloc, debug
 
 implicit none
@@ -861,8 +860,7 @@ subroutine refresh_plot(IFKL, MARK, PRMARK, PSNAME)
 use parameter_inc, only: NRD
 use io_mod, only: TASK
 use outcmn_inc, only: astra_gui, KPRI, MOD10, MODEY, RUNID, &
-    WarningColor, ICVMX, resizeGraph
-use timeoutput_inc, only: NTIMES, TOUT, TTOUT
+    WarningColor, ICVMX, resizeGraph, NTIMES, TOUT, TTOUT
 use const_inc, only: XOUT, TIME, TAU, NA
 use status_inc, only: MU
 use debugger, only: markloc, debug
@@ -930,16 +928,15 @@ end subroutine refresh_plot
 !---------------------------------------------------------------------
 subroutine SMODE5(MARK, PRMARK, NAMEP)
 
-use parameter_inc, only: NRD, NRW
+use parameter_inc, only: NRD
 use io_mod, only:  NGR
 use outcmn_inc, only: astra_gui, plot_area, NROUT, ICVMX, SCALER, &
     ROUT, rev_file, NXOUT, NAMER, NWIND4, active_tab, OSHIFR, &
-    MOD10, GRAL, GRAP, MODEY, KPRI, Black, Red
+    MOD10, GRAL, GRAP, MODEY, KPRI, NTIMES, NRW, Black, Red
 use const_inc, only: AB, NAB
 use dbl2char, only: fmt4
 use char_manip, only: len_trim_tab
 use debugger, only: markloc, debug
-use timeoutput_inc, only: NTIMES
 
 implicit none
 
@@ -1325,7 +1322,7 @@ character(len=6), intent(in), dimension(arr_size) :: var_names
 
 integer :: nameLength, editable=1
 character(len=70), dimension(10), parameter :: titles = (/ &
-    'Variable control', 'Constant control', 'Times & Grids', 'Scale control', &
+    'Variable control', 'Constant control', 'Times & Grids', 'Sequence control', &
     'Time interval', 'Mark times:  < 0 - skip,  0 - dim,  > 0 - color #', &
     'Equilibrium control', '1D_Ufile', '2D_Ufile', 'NBI const for beam No' /)
 

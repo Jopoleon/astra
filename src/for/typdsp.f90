@@ -20,13 +20,12 @@ end subroutine ERASXY
 !---------------------------------------------------------------------
 subroutine writeData(CHORDN)
 
-use parameter_inc, only: NRW
 use const_inc, only: XOUT, NAB, NA, NA1, exp_header, RTOR, ABC, BTOR, IPL, TIME, TAU, CONSTF
 use status_inc, only: MU, AMETR, RHO, FP
 use io_mod, only: AWD, equ_file, exp_file
-use outcmn_inc, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, WarningColor, ROUT, RUNID
+use outcmn_inc, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, &
+    WarningColor, ROUT, RUNID, NRW, NTIMES, TTOUT, TOUT
 use dbl2char, only: fmt4, fmt_xf
-use timeoutput_inc, only: NTIMES, TTOUT, TOUT
 use json_vars, only: n_const
 
 implicit none
@@ -261,11 +260,10 @@ end subroutine writeData
 !---------------------------------------------------------------------
 subroutine TYPDSP
 
-use parameter_inc, only: NRW
 use const_inc, only: XOUT, NAB, NA1
-use outcmn_inc, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, ROUT
+use outcmn_inc, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, ROUT, &
+    NRW, NTIMES, TTOUT, TOUT
 use dbl2char, only: fmt_xf
-use timeoutput_inc, only: NTIMES, TTOUT, TOUT
 
 implicit none
 
@@ -386,16 +384,14 @@ subroutine PUTXY(IX, IY)
 
 ! Prints x, y coordinates on GUI in "Step" mode
 
-use parameter_inc, only: NRW
 use outcmn_inc, only: astra_gui, plot_area, MOD10, &
-    scale_bnd, resizeGraph, &
-    IDT, IDX, MODEY, LTOUT, NTOUT, active_tab, &
+    scale_bnd, resizeGraph,  NTIMES, TOUT, TTOUT, &
+    IDT, IDX, MODEY, LTOUT, NRW, NTOUT, active_tab, &
     NWIND3, NAMET, White, Red, Blue
 use status_inc, only: AMETR, SHIF, ELON, TRIA, FP, RHO
 use const_inc, only: TIME, TINIT, TSCALE, NA, NA1, NAB, XOUT, AB, ABC, ROC, HRO
 use dbl2char, only: fmt5
 use numerical_tools, only: QUADIN
-use timeoutput_inc, only: NTIMES, TOUT, TTOUT
 
 implicit none
 
@@ -845,11 +841,9 @@ subroutine down_label(jt_in, TOUT)
 ! if mod10 != 6 or call from run then jt = LTOUT
 !---------------------------------------------------------------------
 
-use parameter_inc, only: NRW
-use outcmn_inc, only: astra_gui, plot_area, LTOUT, MOD10, NTOUT, &
+use outcmn_inc, only: astra_gui, plot_area, LTOUT, MOD10, NTOUT, NRW, NTIMES, &
     NWIND3, active_tab, NAMET, Black, Blue, curves_per_frame, resizeGraph
 use dbl2char, only: fmt_xf
-use timeoutput_inc, only: NTIMES
 
 implicit none
 

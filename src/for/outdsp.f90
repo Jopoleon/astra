@@ -67,14 +67,14 @@ subroutine OUTDSP(MARK, JIFNEW, IYO, TT_out, t_out)
 ! JIFNEW = 1 New curves only
 !---------------------------------------------------------------------
 
-use parameter_inc, only: NRD, NRDX, NRW, NARRX
+use parameter_inc, only: NRD, NRDX, NARRX
 use status_inc, only: AMETR, MU, SHIF, ELON, TRIA
 use const_inc, only: XOUT, NAB, NA1, NA1E, ABC, TINIT, TSCALE, RTOR, &
     MEQUIL, LEQ, TIME
 use io_mod, only: IFDFAX, NPTM, XAXES, DATAX, equ_file, TOUTX
 use outcmn_inc, only: astra_gui, plot_area, &
     curves_per_frame, active_tab, MOD10, NWIND1, NWIND3, NWINDX, &
-    KPRI, ICVMX, &
+    KPRI, ICVMX, NTIMES, NRW, &
     NROUT, ROUT, OSHIFR, NAMER, SCALER, &
     NTOUT, OSHIFT, NAMET, SCALET, &
     NXOUT, NAMEX, LTOUT, &
@@ -84,7 +84,6 @@ use expdat, only: raw_profile_map, DATARR
 use dbl2char, only: fmt_xf
 use char_manip, only: len_trim_tab, str_in_list
 use debugger, only: markloc, debug, astra_stop
-use timeoutput_inc, only: NTIMES
 use json_vars, only: profxNames
 
 implicit none

@@ -3,7 +3,7 @@ module parameter_inc
 implicit none
 save
 
-integer, parameter :: NRD=801, NRW=128, NCONST=256, NARRX=101, NSBMX=60, &
+integer, parameter :: NRD=801, NCONST=256, NARRX=101, NSBMX=60, &
     NSDELOUT=39, NCNBM=60, NCNBTM=25000, NRDX=500, NTVAR=250000, &
     NTARR=250000, NEQNS=19, NBDMAX=256, NBDTMAX=1500, plot_modes=9, n_ql=15
 
