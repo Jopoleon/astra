@@ -12,7 +12,7 @@ cd $AWD
 # Prompt overwriting option
 for DIR in $(ls repo_user_area)
 do
-    if [ ! -d "$DIR" ] || [ "$SAFE" != "-safe" ] || [ "$DIR" = "equ" ] || [ "$DIR" = "exp" ] || [ "$DIR" = "pyparse" ] || [ "$DIR" = "strahl" ] || [ "$DIR" = "tmp" ] || [ "$DIR" = "udb" ]
+    if [ ! -d "$DIR" ] || [ "$SAFE" != "-safe" ] || [ "$DIR" = "equ" ] || [ "$DIR" = "exp" ] || [ "$DIR" = "pyparse" ] || [ "$DIR" = "udb" ]
     then
         cp -r repo_user_area/$DIR .
     else
@@ -76,6 +76,8 @@ fi
 # get platform dependent $ASTRA_EXT
 source $AWD/platform/env.$platform
 echo $ASTRA_EXT
+
+mkdir -p $AWD/tmp
 
 chmod 744 $AWD/exe/Build
 chmod 744 $AWD/exe/as_exe

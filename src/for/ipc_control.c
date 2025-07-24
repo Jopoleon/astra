@@ -122,7 +122,7 @@ char* parse_nml(char * line_in){
 
 /*-----------------------------------------------------
   Check existence of executable files listed in subs
-  Reads tmp/astra.log and fills external variables AWD, MOD, DATA
+  Reads tmp/astra.nml and fills external variables AWD, equmod, DATA
   *Nsub - total number of files_names/strings in subs,
   *Lstr - length of an element of the character ARRAY "subs",
           maximum length of the subprocess_name,
