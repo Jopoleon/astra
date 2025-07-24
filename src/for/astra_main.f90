@@ -1,5 +1,6 @@
 program astra
 
+use char_manip, only: null_ch
 use parameter_inc, only: NSBMX, NRD
 use outcmn_inc, only: astra_gui, astra_gui_ref, outcmn_init
 use io_mod, only: TASK, io_init
@@ -97,7 +98,7 @@ do while (TIME - TEND + 1.E-8 < DPOUT + TAU)
 enddo
 call MPI_Finalize(ierr)
 
-call CPU_report('>>> ASTRA normal exit >>>' // char(0))
+call CPU_report('>>> ASTRA normal exit >>>' // null_ch)
 call astra_stop
 
 end program astra

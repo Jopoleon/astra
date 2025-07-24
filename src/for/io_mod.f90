@@ -6,8 +6,6 @@ use const_inc, only: TSTART, TEND, TPAUSE
 
 implicit none
 
-character(len=1), parameter :: null_ch=char(0), tab_ch=char(9), esc_ch=char(13), backslash=char(92)
-
 integer, dimension(NSBMX) :: IFSBX, IFSBP
 integer, dimension(NARRX) :: IFDFAX=-1, jbeg_arrx, NPTM
 integer, dimension(NCONST) :: IFDFVX=-1
@@ -49,12 +47,14 @@ contains
     if (tend_nml   /= -1.) TEND   = tend_nml
     if (tpause_nml /= -1.) TPAUSE = tpause_nml
 
-!define namelist file nml_file
+! Define namelist file nml_file
     nml_file = 'exp/nml/' // trim(exp_file)
     INQUIRE(FILE=trim(nml_file), EXIST=nml_exists)
     if (.not. nml_exists) then
         nml_file = 'exp/nml/' // trim(machine)
     endif
+
+    return
     end subroutine io_init
 
 end module io_mod

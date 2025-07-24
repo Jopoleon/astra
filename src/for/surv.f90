@@ -460,9 +460,8 @@ end subroutine ASKINT
 subroutine ASTWIN(NB, IBOX, NAME, yscale, yshift, MOD10, YMODE)
 
 use parameter_inc, only: NRW
-use io_mod, only: null_ch
 use outcmn_inc, only: IP1, IP2, IP30, IP31
-use char_manip, only: to_upper
+use char_manip, only: to_upper, null_ch
 
 implicit none
 
@@ -621,7 +620,7 @@ subroutine ASXWIN(NB, IBOX, NAME, yscale, yshift, r_min, r_max, MOD10, YMODE)
 
 use parameter_inc, only: NRW
 use const_inc, only: AB
-use io_mod, only: null_ch
+use char_manip, only: null_ch
 use outcmn_inc, only: IP1, IP2, IP30, IP31
 
 implicit none

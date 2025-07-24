@@ -1,8 +1,8 @@
 module outcmn_inc
 
 use parameter_inc, only: NRD, NRW, NSBMX, NSDELOUT, plot_modes
-!use io_mod, only: resize
-use io_mod
+use char_manip, only: null_ch
+use io_mod, only: resize
 use const_inc, only: AB
 
 implicit none
@@ -10,7 +10,7 @@ implicit none
 type astra_xwindow
     integer :: Width, Height, Xpos, Ypos, dxlet, dylet, LineWidth, yMessage
     double precision :: resizeGraph
-    character(len=128) :: title='Per aspera ad ASTRA'//char(0)
+    character(len=128) :: title='Per aspera ad ASTRA' // null_ch
 endtype astra_xwindow
 
 type plot_frame
@@ -32,7 +32,7 @@ double precision :: TIM7(4), scale_bnd, pixel_ymid, meter2pixel, resizeGraph
 character(len=4), dimension(NRW) :: NAMET, NAMER
 character(len=6), dimension(NRW) :: NAMEX
 character(len=6) :: DTNAME(NSDELOUT+4*NSBMX), NAM7(4)
-character(132) :: TASKID, VERSION, RUNID
+character(132) :: VERSION, RUNID
 type(astra_xwindow) :: astra_gui_ref, astra_gui
 type(plot_frame) :: plot_area_ref, plot_area
 
@@ -182,7 +182,7 @@ else
         read(131,'(A)') STRI
     enddo
     j = index(STRI, 'Version')
-    VERSION = STRI(j: j+30)//char(0)
+    VERSION = STRI(j: j+30) // null_ch
     close(131)
     j0 = index(VERSION, '.')
     if (j0 == 0) then

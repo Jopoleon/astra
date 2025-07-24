@@ -1,6 +1,5 @@
 subroutine initMainWindow
 
-use io_mod,  only: null_ch
 use outcmn_inc, only: astra_gui_ref, astra_gui, plot_area_ref, plot_area, &
     RUNID, NST, MOD10, MODEY, NTOUT, resizeGraph
 use const_inc, only: XOUT, NA

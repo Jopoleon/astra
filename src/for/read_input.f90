@@ -25,10 +25,9 @@ use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
     G11, G22, VR, VRO, VRS, VOLUM, &
     FP, FPO, FP_NORM, rho_pol, NE, NEO, TE, TEO, UPAR, UPARO, MRHO, &
     AMAIN, UPS0, UPS0O
-use io_mod, only: exp_file, nml_file, equ_file, nbfile, TASk, machine, &
-    CCOILX, VCOILX, IFDFVX, IFDFAX, jbeg_arrx, NGR, NBNT, NCNBT
-use outcmn_inc, only: rev_file, resizeGraph, TASKID, NRW, TIM7
-use machine_config, only: config, config_read
+use io_mod, only: exp_file, equ_file, machine, NBfile, CCOILX, VCOILX, &
+    IFDFVX, IFDFAX, jbeg_arrx, NGR, NBNT, NCNBT
+use outcmn_inc, only: TIM7
 
 use expdat, only: raw_scalar, raw_profile_map, DATARR, BNDR, BNDZ, BNDTIM
 use char_manip, only: to_upper, str_in_list, clean_string
@@ -40,11 +39,11 @@ use numerical_tools, only: EXTRAP, INTEGR
 use plasma_state, only: plasma_up
 use json_vars, only: read_metadata, internNames, constNames, varNames, profxNames, &
     n_intern, n_const, n_var, n_profx
+use machine_config, only: config_read
 
 implicit none
 
-logical :: exilog, file_existence
-
+logical :: exilog
 integer :: jarr, INTYPE, jtype, jbdry, ntim, ntim1, IVAR
 integer, allocatable, dimension(:) :: int_json
 integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
@@ -64,9 +63,6 @@ character(len=132) :: strarray(20), STRI, lin_upper, dir_path, fname, &
 ! Fortran tests
 
 call markloc('read_input')
-call getarg(0, STRI)
-j = min(len(TASKID), LEN_TRIM(STRI))
-TASKID = STRI(1: j)
 
 !----------------------------------------------------------------------|
 ! Initialisation with default values
@@ -101,21 +97,17 @@ enddo
 
 TIME = TSTART  ! Here TSTART=0
 
-!define namelist file nml_file
-nml_file = 'exp/nml/' // trim(exp_file)
-INQUIRE(FILE=trim(nml_file), EXIST=file_existence)
-if (.not. file_existence) then
-   nml_file = 'exp/nml/' // trim(machine)
-endif
 
-!----------------------------------------------------------------------|
+!----------------------------------------------------------------------
 ! Read machine configuration, if available (need "machine" variable defined)
-
 call config_read()
 
-!----------------------------------------------------------------------|
+! Look for NBfile
+call inquire_fname('nbi', TRIM(exp_file), TRIM(machine), NBFILE)
+
+!----------------------------------------------------------------------
 ! Read file equ/log/<model>
-!----------------------------------------------------------------------|
+!----------------------------------------------------------------------
 
 jj = LEN_TRIM(equ_file)
 if (jj == 0) call astra_stop('>>> read_input: Error, empty model file name')
@@ -131,35 +123,24 @@ endif
 inquire(file=TRIM(file_in), exist=EXILOG)
 
 if (.not. EXILOG)  then ! Missing log file
-
-    inquire(file=TRIM(equ_file)//'.log', exist=EXILOG)
-    if ( EXILOG )  then
-        write(*, *) '>>> Warning: File "' // TRIM(equ_file) // '.log," has been found'
-        write(*, *) '             Most probably it should be moved to "log/' // TRIM(file_in) // '"'
-    else
-        write(*, *) '>>> Warning: file "' // TRIM(file_in) // '" missing'
-        write(*, *) 'Press any key to continue at your own risk'
-        pause
-    endif
-
+    write(*, *) '>>> Warning: file "' // TRIM(file_in) // '" missing'
+    write(*, *) 'Press any key to continue at your own risk'
+    pause
 else  ! Read log file
-
     nvar = 37
     call assign_val(file_in, nvar    ,    varNames(1: nvar    ), DEVAR (1: nvar)    , n_color)
     call assign_val(file_in, n_const ,  constNames(1: n_const ), CONSTF(1: n_const ), n_color)
     call assign_val(file_in, n_intern, internNames(1: n_intern), DELOUT(1: n_intern), n_color)
-
     NA1   = DELOUT(13)
     NUF   = DELOUT(14)
     NBND  = DELOUT(19)
     XFLAG = DELOUT(20)
     close(171)
-
 endif
 
-!----------------------------------------------------------------------|
+!----------------------------------------------------------------------
 ! Read experimental file
-!----------------------------------------------------------------------|
+!----------------------------------------------------------------------
 
 file_in='exp/' // TRIM(exp_file)
 
@@ -171,7 +152,7 @@ if (ios /= 0) call astra_stop('>>> read_input: No such experimental variant "' /
 read(201, '(A132/)', iostat=ios) exp_header
 if (ios /= 0) call astra_stop(err_msg_exp // 'in header')
 
-!----------------------------------------------------------------------|
+!----------------------------------------------------------------------
 ! Read simple variable loop (between the labels "5" and "10"):
 
 VNAMO = ' '
@@ -337,19 +318,14 @@ enddo parse_exp_1d
 
 close(201)
 
-!----------------------------------------------------------------------|
+!----------------------------------------------------------------------
 ! Start Astra standard assignments
-! GIT allocate all profiles here!!
 
 if (NA1 > NRD) then
     write(err_msg, '(2A, i)') '>>> FATAL ERROR: The radial grid size out of range.\n', &
         '                 Parameter "NA1" cannot exceed', NRD
     call astra_stop(err_msg)
 endif
-
-!----------------------------------------------------------------------|
-! Uncomment the next line to set the "WAIT" mode at the start
-! TASK='WAIT'
 
 TIME = TSTART
 if (YTP > -1.d8) TPAUSE = YTP
@@ -394,10 +370,7 @@ IFDFVX(KRTOR)  = 4
 IFDFVX(KTRICH) = 4
 IFDFVX(KAWALL) = 4
 
-
-!----------------------------------------------------------------------|
-! Skipping for now: JAMS through Ex-files
-!----------------------------------------------------------------------|
+!----------------------------------------------------------------------
 ! Start reading radial profiles:  Radial grid: jbdry 
 !    Option for different input grids can be added
 
@@ -912,8 +885,6 @@ TIM7(1) = TINIT
 if (TIME > TINIT + 1.025*abs(TSCALE)) TINIT = TSTART
 TIM7(3) = abs(TSCALE)/8.
 
-call inquire_fname('nbi', TRIM(exp_file), TRIM(machine), NBFILE)
-
 return
 
 906 continue
@@ -1062,7 +1033,7 @@ character(len=6) function VARNAM(str_in, ierr)
 ! Eventual trailing 'X' is removed
 ! Otherwise, VARNAM is returned.
 
-use io_mod, only: esc_ch, tab_ch
+use char_manip, only: esc_ch, tab_ch
 
 implicit none
 

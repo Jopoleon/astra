@@ -45,11 +45,11 @@ use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     NAMER, NAMET, NAMEX, SCALER, SCALET, ROUT, OSHIFR, OSHIFT, &
     rev_file, DTNAME, runid, VERSION, AVERS, ARLEAS, AEDIT, &
     GRAP, GRAL, TIM7, NAM7, KPRI, ICVMX
-use io_mod, only: null_ch, NSBR, NGR, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
+use io_mod, only: NSBR, NGR, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
 use expdat, only: raw_profile_map, DATARR
 use timeoutput_inc, only: NTIMES, TTOUT, TPOUT, TOUT
 use dbl2char, only: fmt6
-use char_manip, only: str_in_list
+use char_manip, only: str_in_list, null_ch, beep_ch
 use debugger, only: markloc, debug, astra_stop
 use json_vars, only: internNames, constNames, varNames, n_const, n_var
 use cpu_usage, only: cpu_report
@@ -310,7 +310,7 @@ do while(.True.)
                 if (KEY == 0) return
                 if (KIBM == 1 .and. (KEY == 99 .or. KEY == 67)) then ! <Ctrl>+C
                     if (TASK(4:4) /= 'B') call Close_Screen
-                    call cpu_report('>>> ASTRA <Ctrl>+C exit >>>' // char(0))
+                    call cpu_report('>>> ASTRA <Ctrl>+C exit >>>' // null_ch)
                     call astra_stop
                 endif
 
@@ -385,7 +385,7 @@ do while(.True.)
         endif
 
     CASE(37) ! '%'
-        call cpu_report(char(0))
+        call cpu_report(null_ch)
 
     CASE(46) ! '.'
         MARK = MARK + 1
@@ -394,7 +394,7 @@ do while(.True.)
 
     CASE(47) ! '/'
         if (TASK(4:4) /= 'B') call Close_Screen
-        call cpu_report('>>> ASTRA / or "Quit" button exit >>>' // char(0))
+        call cpu_report('>>> ASTRA / or "Quit" button exit >>>' // null_ch)
         call astra_stop
 
     CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
@@ -496,7 +496,7 @@ do while(.True.)
         enddo
         if (KEY == 71) INT4 = n_portrait
         if (KEY == 81) INT4 = n_landscape
-        call PSOPEN(TRIM(PSNAME) // char(0), INT4, IRET)
+        call PSOPEN(TRIM(PSNAME) // null_ch, INT4, IRET)
 
         if (IRET == 0) then
             if (KEY == 71) KPRI = 1
@@ -550,9 +550,9 @@ do while(.True.)
         if (ios /= 0) then
             write(*, *) '>>> IFKEY: "', TRIM(CNSFIL), '" file error'
             if (KEY == 27)  then
-                write(*, '(/2A)') 'Use key "/" for exit', char(7) ! Beep
+                write(*, '(/2A)') 'Use key "/" for exit', beep_ch ! Beep
             elseif (KEY /= 0 .and. KIBM == 0) then
-                write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, char(7)
+                write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, beep_ch
             endif
             KEY = 0
             CYCLE
@@ -758,14 +758,14 @@ do while(.True.)
     if (KIBM == 2) then !-------- <Alt> pressed'
         if (KEY == 77 .or. KEY == 109) then
              if (KIBM == 0) then
-                 write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, char(7)
+                 write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, beep_ch
              endif
              KEY = 0
              CYCLE
         endif
         if (KEY == 47) then ! <Alt>+/
             if (TASK(4:4) /= 'B') call Close_Screen
-            call cpu_report('>>> ASTRA <Alt>+/ exit >>>' // char(0))
+            call cpu_report('>>> ASTRA <Alt>+/ exit >>>' // null_ch)
             call astra_stop
         endif
         if (KIBM == 2 .and. (KEY >= 32 .and. KEY <= 126) ) then
@@ -795,9 +795,9 @@ do while(.True.)
     endif
 
     if (KEY == 27)  then
-        write(*, '(/2A)') 'Use key "/" for exit', char(7) ! Beep
+        write(*, '(/2A)') 'Use key "/" for exit', beep_ch ! Beep
     elseif (KEY /= 0 .and. KIBM == 0) then
-        write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, char(7)
+        write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, beep_ch
     endif
     KEY = 0
 
@@ -807,7 +807,7 @@ enddo
 
 if (TASK(4:4) /= 'B') call Close_Screen
 
-call cpu_report('>>> ASTRA exit: reached END time >>>' // char(0))
+call cpu_report('>>> ASTRA exit: reached END time >>>' // null_ch)
 call astra_stop
 
 return
@@ -819,7 +819,7 @@ subroutine graph_output(MARK, PRMARK, NAMEP, ITO)
 use parameter_inc, only: NRD
 use const_inc, only: NA
 use status_inc, only: MU
-use io_mod, only: TASK, null_ch
+use io_mod, only: TASK
 use outcmn_inc, only: MOD10, ICVMX
 use timeoutput_inc, only: NTIMES, TTOUT, TOUT
 use debugger, only: markloc, debug
@@ -859,7 +859,7 @@ subroutine refresh_plot(IFKL, MARK, PRMARK, PSNAME)
 ! Corresponds to block from statement 201
 
 use parameter_inc, only: NRD
-use io_mod, only: TASK, null_ch  
+use io_mod, only: TASK
 use outcmn_inc, only: astra_gui, KPRI, MOD10, MODEY, RUNID, &
     WarningColor, ICVMX, resizeGraph
 use timeoutput_inc, only: NTIMES, TOUT, TTOUT
@@ -931,7 +931,7 @@ end subroutine refresh_plot
 subroutine SMODE5(MARK, PRMARK, NAMEP)
 
 use parameter_inc, only: NRD, NRW
-use io_mod, only:  NGR, null_ch
+use io_mod, only:  NGR
 use outcmn_inc, only: astra_gui, plot_area, NROUT, ICVMX, SCALER, &
     ROUT, rev_file, NXOUT, NAMER, NWIND4, active_tab, OSHIFR, &
     MOD10, GRAL, GRAP, MODEY, KPRI, Black, Red
@@ -1175,8 +1175,7 @@ subroutine ADDMOD(NCHW, NCHM, NCHL)
 ! Unit NCHL (model.log) must be open if nonzero
 ! Note:   1) NCHL =/= NCHM; 2) Empty lines are skipped.
 
-use io_mod, only: null_ch
-use char_manip, only: len_trim_tab
+use char_manip, only: len_trim_tab, null_ch
 use debugger, only: markloc
 
 implicit none
@@ -1316,7 +1315,7 @@ end function lineav
 !---------------------------------------------------------------------
 subroutine menutable(arr_size, array_in, var_names, id)
 
-use io_mod, only: null_ch
+use char_manip, only: null_ch
 
 implicit none
 

@@ -928,8 +928,7 @@ end subroutine down_label
 ! Upper string of the Astra graphic window
 subroutine up_label(YN, YQ)
 
-use io_mod, only: null_ch
-use outcmn_inc, only: astra_gui, active_tab, MOD10, Black, Blue, null_ch
+use outcmn_inc, only: astra_gui, active_tab, MOD10, Black, Blue
 use const_inc, only: RTOR, BTOR, IPL, ABC, exp_header
 use dbl2char, only: fmt40
 
@@ -988,7 +987,7 @@ subroutine const2ps
 ! Appending the list of constants to a PS file
 
 use const_inc, only: CONSTF, DEVAR
-use io_mod, only: null_ch
+use char_manip, only: null_ch
 use outcmn_inc, only: resizeGraph
 use dbl2char, only: fmt_xf
 use json_vars, only: n_const, n_var, varNames
