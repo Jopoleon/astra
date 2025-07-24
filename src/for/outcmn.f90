@@ -38,41 +38,41 @@ type(plot_frame) :: plot_area_ref, plot_area
 
 contains
 
-subroutine outcmn_init
+    subroutine outcmn_init
 
-integer :: i, j, ios, j0, j1
-character(len=132) :: STRI
+    integer :: i, j, ios, j0, j1
+    character(len=132) :: STRI
 
 ! Constants
 
-pixel_ymid  = 0.
-meter2pixel = 0.
-resizeGraph = resize
+    pixel_ymid  = 0.
+    meter2pixel = 0.
+    resizeGraph = resize
 
-VERSION = repeat(' ', 32)
+    VERSION = repeat(' ', 32)
 
-IDT = 5
+    IDT = 5
 
 ! Screen parameters: default (-resize 1)
 
-astra_gui_ref%Width  = 660
-astra_gui_ref%Height = 550
-astra_gui_ref%Xpos   = 470
-astra_gui_ref%Ypos   = 10
-astra_gui_ref%dxlet  = 8
-astra_gui_ref%dylet  = 13
-astra_gui_ref%LineWidth = 1
-astra_gui_ref%yMessage  = 426
-astra_gui_ref%resizeGraph = 1.d0
+    astra_gui_ref%Width  = 660
+    astra_gui_ref%Height = 550
+    astra_gui_ref%Xpos   = 470
+    astra_gui_ref%Ypos   = 10
+    astra_gui_ref%dxlet  = 8
+    astra_gui_ref%dylet  = 13
+    astra_gui_ref%LineWidth = 1
+    astra_gui_ref%yMessage  = 426
+    astra_gui_ref%resizeGraph = 1.d0
 
-plot_area_ref%width  = 640
-plot_area_ref%height = 350
-plot_area_ref%nx_canvas = 0
-plot_area_ref%ny_canvas = 0
-plot_area_ref%xmin = 0
-plot_area_ref%xmax = 0
-plot_area_ref%ymin = 0
-plot_area_ref%ymax = 0
+    plot_area_ref%width  = 640
+    plot_area_ref%height = 350
+    plot_area_ref%nx_canvas = 0
+    plot_area_ref%ny_canvas = 0
+    plot_area_ref%xmin = 0
+    plot_area_ref%xmax = 0
+    plot_area_ref%ymin = 0
+    plot_area_ref%ymax = 0
 
 ! Astra colors: 
 !   #0 - background, ##1-7 - plots 1-7
@@ -83,123 +83,122 @@ plot_area_ref%ymax = 0
 !   #12 - warning messages, axis upper marks in View
 !   #13 -> #15 -reserved (black)
 
-MARKT  = 0
-MARKR  = 0
-MODEY  = 1
-LTOUT  = 1
-IPOUT  = 1
-active_tab = 0
-OSHIFT = 0.
-OSHIFR = 0.
-GRAL   = 0.
-GRAP   = AB
+    MARKT  = 0
+    MARKR  = 0
+    MODEY  = 1
+    LTOUT  = 1
+    IPOUT  = 1
+    active_tab = 0
+    OSHIFT = 0.
+    OSHIFR = 0.
+    GRAL   = 0.
+    GRAP   = AB
 
-NAM7 = (/ 'Tmin', 'Tmax', 'Tmark', 'Style' /)
-TIM7 = (/ 0, 9999, 9999, 1 /)
+    NAM7 = (/ 'Tmin', 'Tmax', 'Tmark', 'Style' /)
+    TIM7 = (/ 0, 9999, 9999, 1 /)
 
 ! Output windows
 
-NWIND1 = (/ (j, j=1, NRW) /)
-NWIND3 = (/ (j, j=1, NRW) /)
-NWIND7 = (/ (j, j=1, NRW) /)
-do j=1, 4
-    NWIND4(j) = 4*j-3
-    NWIND4(j+4)  = NWIND4(j) + 2
-    NWIND4(j+8)  = NWIND4(j) + 1
-    NWIND4(j+12) = NWIND4(j) + 3
-enddo
-do j=17, NRW
-    NWIND4(j) = NWIND4(j-16) + 16
-enddo
-curves_per_frame = (/ 16, 8, 8, 2, 2, 8, 4, 0, 0 /)
+    NWIND1 = (/ (j, j=1, NRW) /)
+    NWIND3 = (/ (j, j=1, NRW) /)
+    NWIND7 = (/ (j, j=1, NRW) /)
+    do j=1, 4
+        NWIND4(j) = 4*j-3
+        NWIND4(j+4)  = NWIND4(j) + 2
+        NWIND4(j+8)  = NWIND4(j) + 1
+        NWIND4(j+12) = NWIND4(j) + 3
+    enddo
+    do j=17, NRW
+        NWIND4(j) = NWIND4(j-16) + 16
+    enddo
+    curves_per_frame = (/ 16, 8, 8, 2, 2, 8, 4, 0, 0 /)
 
-IP1 = (/ &
-  1,   3,   5,   7,   9,  11,  13,  15,   2,   4,   6,  8,   10,  12,  14,  16, &
- 17,  19,  21,  23,  25,  27,  29,  31,  18,  20,  22, 24,   26,  28,  30,  32, &
- 33,  35,  37,  39,  41,  43,  45,  47,  34,  36,  38, 40,   42,  44,  46,  48, &
- 49,  51,  53,  55,  57,  59,  61,  63,  50,  52,  54, 56,   58,  60,  62,  64, &
- 65,  67,  69,  71,  73,  75,  77,  79,  66,  68,  70, 72,   74,  76,  78,  80, &
- 81,  83,  85,  87,  89,  91,  93,  95,  82,  84,  86, 88,   90,  92,  94,  96, &
- 97,  99, 101, 103, 105, 107, 109, 111,  98, 100, 102, 104, 106, 108, 110, 112, &
-113, 115, 117, 119, 121, 123, 125, 127, 114, 116, 118, 120, 122, 124, 126, 128 /)
+    IP1 = (/ &
+      1,   3,   5,   7,   9,  11,  13,  15,   2,   4,   6,  8,   10,  12,  14,  16, &
+     17,  19,  21,  23,  25,  27,  29,  31,  18,  20,  22, 24,   26,  28,  30,  32, &
+     33,  35,  37,  39,  41,  43,  45,  47,  34,  36,  38, 40,   42,  44,  46,  48, &
+     49,  51,  53,  55,  57,  59,  61,  63,  50,  52,  54, 56,   58,  60,  62,  64, &
+     65,  67,  69,  71,  73,  75,  77,  79,  66,  68,  70, 72,   74,  76,  78,  80, &
+     81,  83,  85,  87,  89,  91,  93,  95,  82,  84,  86, 88,   90,  92,  94,  96, &
+     97,  99, 101, 103, 105, 107, 109, 111,  98, 100, 102, 104, 106, 108, 110, 112, &
+    113, 115, 117, 119, 121, 123, 125, 127, 114, 116, 118, 120, 122, 124, 126, 128 /)
 
-IP2 = (/ &
-  1,   2,   9,  10,   3,   4,  11,  12,   5,   6,  13,  14,   7,   8,  15,  16, &
- 17,  18,  25,  26,  19,  20,  27,  28,  21,  22,  29,  30,  23,  24,  31,  32, &
- 33,  34,  41,  42,  35,  36,  43,  44,  37,  38,  45,  46,  39,  40,  47,  48, &
- 49,  50,  57,  58,  51,  52,  59,  60,  53,  54,  61,  62,  55,  56,  63,  64, &
- 65,  66,  73,  74,  67,  68,  75,  76,  69,  70,  77,  78,  71,  72,  79,  80, &
- 81,  82,  89,  90,  83,  84,  91,  92,  85,  86,  93,  94,  87,  88,  95,  96, &
- 97,  98, 105, 106,  99, 100, 107, 108, 101, 102, 109, 110, 103, 104, 111, 112, &
-113, 114, 121, 122, 115, 116, 123, 124, 117, 118, 125, 126, 119, 120, 127, 128/)
+    IP2 = (/ &
+      1,   2,   9,  10,   3,   4,  11,  12,   5,   6,  13,  14,   7,   8,  15,  16, &
+     17,  18,  25,  26,  19,  20,  27,  28,  21,  22,  29,  30,  23,  24,  31,  32, &
+     33,  34,  41,  42,  35,  36,  43,  44,  37,  38,  45,  46,  39,  40,  47,  48, &
+     49,  50,  57,  58,  51,  52,  59,  60,  53,  54,  61,  62,  55,  56,  63,  64, &
+     65,  66,  73,  74,  67,  68,  75,  76,  69,  70,  77,  78,  71,  72,  79,  80, &
+     81,  82,  89,  90,  83,  84,  91,  92,  85,  86,  93,  94,  87,  88,  95,  96, &
+     97,  98, 105, 106,  99, 100, 107, 108, 101, 102, 109, 110, 103, 104, 111, 112, &
+    113, 114, 121, 122, 115, 116, 123, 124, 117, 118, 125, 126, 119, 120, 127, 128/)
 
-IP30 = (/ &
-  1,   3,   5,   7,   2,   4,   6,   8,   9,  11,  13,  15,  10,  12,  14,  16, &
- 17,  18,  21,  22,  25,  26,  29,  30,  19,  20,  23,  24,  27,  28,  31,  32, &
- 33,  34,  37,  38,  41,  42,  45,  46,  35,  36,  39,  40,  43,  44,  47,  48, &
- 49,  50,  53,  54,  57,  58,  61,  62,  51,  52,  55,  56,  59,  60,  63,  64, &
- 65,  66,  69,  70,  73,  74,  77,  78,  67,  68,  71,  72,  75,  76,  79,  80, &
- 81,  82,  85,  86,  89,  90,  93,  94,  83,  84,  87,  88,  91,  92,  95,  96, &
- 97,  98, 101, 102, 105, 106, 109, 110,  99, 100, 103, 104, 107, 108, 111, 112, &
-113, 114, 117, 118, 115, 116, 119, 120, 121, 122, 125, 126, 123, 124, 127, 128 /)
+    IP30 = (/ &
+      1,   3,   5,   7,   2,   4,   6,   8,   9,  11,  13,  15,  10,  12,  14,  16, &
+     17,  18,  21,  22,  25,  26,  29,  30,  19,  20,  23,  24,  27,  28,  31,  32, &
+     33,  34,  37,  38,  41,  42,  45,  46,  35,  36,  39,  40,  43,  44,  47,  48, &
+     49,  50,  53,  54,  57,  58,  61,  62,  51,  52,  55,  56,  59,  60,  63,  64, &
+     65,  66,  69,  70,  73,  74,  77,  78,  67,  68,  71,  72,  75,  76,  79,  80, &
+     81,  82,  85,  86,  89,  90,  93,  94,  83,  84,  87,  88,  91,  92,  95,  96, &
+     97,  98, 101, 102, 105, 106, 109, 110,  99, 100, 103, 104, 107, 108, 111, 112, &
+    113, 114, 117, 118, 115, 116, 119, 120, 121, 122, 125, 126, 123, 124, 127, 128 /)
 
-IP31 = (/ &
-  1,   2,   5,   6,   3,   4,   7,   8,   9,  10,  13,  14,  11,  12,  15,  16, &
- 17,  18,  21,  22,  19,  20,  23,  24,  25,  26,  29,  30,  27,  28,  31,  32, &
- 33,  34,  37,  38,  35,  36,  39,  40,  41,  42,  45,  46,  43,  44,  47,  48, &
- 49,  50,  53,  54,  51,  52,  55,  56,  57,  58,  61,  62,  59,  60,  63,  64, &
- 65,  66,  69,  70,  67,  68,  71,  72,  73,  74,  77,  78,  75,  76,  79,  80, &
- 81,  82,  85,  86,  83,  84,  87,  88,  89,  90,  93,  94,  91,  92,  95,  96, &
- 97,  98, 101, 102, 105, 106, 109, 110,  99, 100, 103, 104, 107, 108, 111, 112, &
-113, 114, 117, 118, 115, 116, 119, 120, 121, 122, 125, 126, 123, 124, 127, 128 /)
+    IP31 = (/ &
+      1,   2,   5,   6,   3,   4,   7,   8,   9,  10,  13,  14,  11,  12,  15,  16, &
+     17,  18,  21,  22,  19,  20,  23,  24,  25,  26,  29,  30,  27,  28,  31,  32, &
+     33,  34,  37,  38,  35,  36,  39,  40,  41,  42,  45,  46,  43,  44,  47,  48, &
+     49,  50,  53,  54,  51,  52,  55,  56,  57,  58,  61,  62,  59,  60,  63,  64, &
+     65,  66,  69,  70,  67,  68,  71,  72,  73,  74,  77,  78,  75,  76,  79,  80, &
+     81,  82,  85,  86,  83,  84,  87,  88,  89,  90,  93,  94,  91,  92,  95,  96, &
+     97,  98, 101, 102, 105, 106, 109, 110,  99, 100, 103, 104, 107, 108, 111, 112, &
+    113, 114, 117, 118, 115, 116, 119, 120, 121, 122, 125, 126, 123, 124, 127, 128 /)
 
-DTNAME(1: NSDELOUT) = (/ &
-    'dRout ', 'dTout ', 'dPout ', 'Time  ', 'TAUmin', 'TAUmax', &
-    'TAUinc', 'DELvar', 'Iterex', 'NiTrEq', 'Tinit ', 'Tscale', &
-    'NA1   ', 'NUF   ', 'Xaxis ', 'Xdeflt', 'NB2EQL', 'NEQUIL', &
-    'NBND  ', 'Xflag ', 'DTeql ', 'MEQUIL', 'Tpause', 'Tend  ', &
-    'Inume1', 'Inume2', 'Inume3', 'Inume4', 'Iprot ', 'Itfbe ', &
-    'Itfbp ', 'Icircq', 'Ipctrl', 'Adcmpf', 'Flxdr ', 'Sgnip ', &
-    'Sgnbt ', 'Ifbeg ', 'Ipeql ' /)
-do j=1, 30
-    i = (j-1)*4 + NSDELOUT
-    write(DTNAME(i+1), '(A, i0)') 'DTeq', j
-    write(DTNAME(i+2), '(A, i0)') 'BEeq', j
-    write(DTNAME(i+3), '(A, i0)') 'ENeq', j
-    write(DTNAME(i+4), '(A, i0)') ' Keq', j
-enddo
+    DTNAME(1: NSDELOUT) = (/ &
+        'dRout ', 'dTout ', 'dPout ', 'Time  ', 'TAUmin', 'TAUmax', &
+        'TAUinc', 'DELvar', 'Iterex', 'NiTrEq', 'Tinit ', 'Tscale', &
+        'NA1   ', 'NUF   ', 'Xaxis ', 'Xdeflt', 'NB2EQL', 'NEQUIL', &
+        'NBND  ', 'Xflag ', 'DTeql ', 'MEQUIL', 'Tpause', 'Tend  ', &
+        'Inume1', 'Inume2', 'Inume3', 'Inume4', 'Iprot ', 'Itfbe ', &
+        'Itfbp ', 'Icircq', 'Ipctrl', 'Adcmpf', 'Flxdr ', 'Sgnip ', &
+        'Sgnbt ', 'Ifbeg ', 'Ipeql ' /)
+    do j=1, 30
+        i = (j-1)*4 + NSDELOUT
+        write(DTNAME(i+1), '(A, i0)') 'DTeq', j
+        write(DTNAME(i+2), '(A, i0)') 'BEeq', j
+        write(DTNAME(i+3), '(A, i0)') 'ENeq', j
+        write(DTNAME(i+4), '(A, i0)') ' Keq', j
+    enddo
 
 !----------------------------------------------------------------------|
 ! Parse file "exe/version"
 !----------------------------------------------------------------------|
 
-open(131, FILE='exe/version', iostat=ios)
-
-if (ios /= 0) then
-    write(*,*)'>>> Warning: Unknown version'
-else
-    do j=1,5
-        read(131,'(A)') STRI
-    enddo
-    j = index(STRI, 'Version')
-    VERSION = STRI(j: j+30) // null_ch
-    close(131)
-    j0 = index(VERSION, '.')
-    if (j0 == 0) then
+    open(131, FILE='exe/version', iostat=ios)
+    if (ios /= 0) then
         write(*,*)'>>> Warning: Unknown version'
     else
-        read(VERSION(j0-1: j0-1), *) AVERS 
-        read(VERSION(j0+1: j0+1), *) ARLEAS 
-        j1 = INDEX(VERSION(j0+1:), '.')
-        if (j1 == 0) then
-            AEDIT = 0
+        do j=1,5
+            read(131,'(A)') STRI
+        enddo
+        j = index(STRI, 'Version')
+        VERSION = STRI(j: j+30) // null_ch
+        close(131)
+        j0 = index(VERSION, '.')
+        if (j0 == 0) then
+            write(*,*)'>>> Warning: Unknown version'
         else
-            read(VERSION(j0+j1+1: j0+j1+1), *) AEDIT
+            read(VERSION(j0-1: j0-1), *) AVERS 
+            read(VERSION(j0+1: j0+1), *) ARLEAS 
+            j1 = INDEX(VERSION(j0+1:), '.')
+            if (j1 == 0) then
+                AEDIT = 0
+            else
+                read(VERSION(j0+j1+1: j0+j1+1), *) AEDIT
+            endif
         endif
     endif
-endif
 
-end subroutine outcmn_init
+    end subroutine outcmn_init
 
 end module outcmn_inc
 
@@ -214,7 +213,6 @@ integer, parameter :: NTIMES=1024
 
 ! TOUT   - Time variables output array
 ! TTOUT  - time-coordinate array for time output [s] TTOUT(1:LTOUT<=NTIMES)
-double precision :: TTOUT(NTIMES), TOUT(NTIMES, NRW), TPOUT
+double precision :: TTOUT(NTIMES), TOUT(NTIMES, NRW)
 
 end module timeoutput_inc
-

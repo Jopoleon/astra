@@ -47,7 +47,7 @@ use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     GRAP, GRAL, TIM7, NAM7, KPRI, ICVMX
 use io_mod, only: NSBR, NGR, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
 use expdat, only: raw_profile_map, DATARR
-use timeoutput_inc, only: NTIMES, TTOUT, TPOUT, TOUT
+use timeoutput_inc, only: NTIMES, TTOUT, TOUT
 use dbl2char, only: fmt6
 use char_manip, only: str_in_list, null_ch, beep_ch
 use debugger, only: markloc, debug, astra_stop
@@ -69,7 +69,7 @@ integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
     YEAR, MONTH, DAY, HOUR, MINUTE, time_arr(8)
 ! plot_arr dimension: 4*NRD(Mode 5, 8) 320(7) 2*NTIMES(Mode 6) 2*NRD(Modes 1-4)
 integer :: ITO(NTIMES, ICVMX+2)
-double precision :: DEVARO(NCONST), LINEAV, CHORDN, ABD, ALFA, TIMEB, TROUT
+double precision :: DEVARO(NCONST), LINEAV, CHORDN, ABD, ALFA, TIMEB, TROUT, TPOUT=0.d0
 double precision, dimension(1) :: rescale_array
 double precision, dimension(NTIMES) :: PRMARK, TIMOD4
 double precision, dimension(NRD) :: YWA, YWB, YWC

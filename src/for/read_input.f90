@@ -16,7 +16,7 @@ subroutine read_input
 
 use parameter_inc, only: NTVAR, NBDMAX, NBDTMAX, NRD, NRDX, NTARR
 use const_inc, only: NITREQ, NA, NA1, NB1, NAB, NUF, NBND, NCNB, n_bouncon, &
-    TIME, TSTART, TEND, TPAUSE, TINIT, TSCALE, TIMEQL, DTEQL, &
+    TIME, TSTART, TEND, TPAUSE, TAUMIN, TAUPRP, TINIT, TSCALE, TIMEQL, DTEQL, &
     DEVAR, CONSTF, DELOUT, XFLAG, exp_header, ARXUSE, &
     AB, ABC, AWAll, ROC, ROCO, ROB, ROWALL,  HRO, HROX, RTOR, &
     ELONG, ELONM, TRIAN, TRICH, SHIFT, VOLUME, &
@@ -43,7 +43,7 @@ use machine_config, only: config_read
 
 implicit none
 
-logical :: exilog
+logical :: log_exists
 integer :: jarr, INTYPE, jtype, jbdry, ntim, ntim1, IVAR
 integer, allocatable, dimension(:) :: int_json
 integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
@@ -120,23 +120,21 @@ else ! equ/<subdir>/log/<model>
     file_in = 'equ/'//TRIM(dir_path)//'log/'//TRIM(fname)
 endif
 
-inquire(file=TRIM(file_in), exist=EXILOG)
+inquire(file=TRIM(file_in), exist=LOG_EXISTS)
 
-if (.not. EXILOG)  then ! Missing log file
-    write(*, *) '>>> Warning: file "' // TRIM(file_in) // '" missing'
-    write(*, *) 'Press any key to continue at your own risk'
-    pause
-else  ! Read log file
-    nvar = 37
-    call assign_val(file_in, nvar    ,    varNames(1: nvar    ), DEVAR (1: nvar)    , n_color)
-    call assign_val(file_in, n_const ,  constNames(1: n_const ), CONSTF(1: n_const ), n_color)
-    call assign_val(file_in, n_intern, internNames(1: n_intern), DELOUT(1: n_intern), n_color)
-    NA1   = DELOUT(13)
-    NUF   = DELOUT(14)
-    NBND  = DELOUT(19)
-    XFLAG = DELOUT(20)
-    close(171)
+if (.not. LOG_EXISTS)  then ! Missing log file
+    call astra_stop('>>> Error: file "' // TRIM(file_in) // '" missing')
 endif
+! Read log file
+nvar = 37
+call assign_val(file_in, nvar    ,    varNames(1: nvar    ), DEVAR (1: nvar)    , n_color)
+call assign_val(file_in, n_const ,  constNames(1: n_const ), CONSTF(1: n_const ), n_color)
+call assign_val(file_in, n_intern, internNames(1: n_intern), DELOUT(1: n_intern), n_color)
+NA1   = DELOUT(13)
+NUF   = DELOUT(14)
+NBND  = DELOUT(19)
+XFLAG = DELOUT(20)
+close(171)
 
 !----------------------------------------------------------------------
 ! Read experimental file
@@ -331,23 +329,6 @@ TIME = TSTART
 if (YTP > -1.d8) TPAUSE = YTP
 
 call INTVAR
-
-if (.not. EXILOG) then
-! Determine ABC & AB if not defined by "exp" file
-    if (IFDFVX(KABC) < 0 .and. IFDFVX(KAB) < 0) then
-        write(*, *) '>>> The minor radius AB is not defined in "exp/' // TRIM(exp_file) // '"'
-        write(*, *) '  This can cause equilibrium convergence problem'
-    endif
-    if (IFDFVX(KAB) > 0) write(*, *) '>>> Warning: AB cannot depend on time'
-
-    if (IFDFVX(KABC) >= 0 .and. IFDFVX(KAB) <  0) AB = ABC
-    if (IFDFVX(KABC) <  0 .and. IFDFVX(KAB) >= 0) then
-        ABC = AB
-        IFDFVX(KABC) = 0
-    endif
-! Determine AWALL if not defined by an "exp" file
-    if (IFDFVX(KAWALL) < 0) AWALL = AB
-endif
 
 if (AWALL < AB) then
      if (IFDFVX(KAWALL) >= 0) write(*, *) '>>> Warning: AWALL < AB.  Setting AWALL = AB'
@@ -774,7 +755,7 @@ endif
 
 !assign variables here for initialization:
 
-VOLUME = GP2*GP*RTOR*AB*AB*ELONG
+VOLUME = GP2*GP*RTOR*AB**2 * ELONG
 
 ROC  = ROC3A(RTOR, SHIFT, ABC, ELONG, TRIAN)
 ROCO = ROC
@@ -876,11 +857,10 @@ DELOUT(14) = NUF
 DELOUT(19) = NBND
 DELOUT(20) = XFLAG
 TIMEQL = TIME - DTEQL - 1.d-7
+TAUPRP = TAUMIN
 
 ! Define TAU, TAUMIN, TAUMAX, TSCALE, DROUT, DTOUT, DPOUT
 TTOUT(1) = -1.d10
-call set_timescale(NTIMES)  ! Set time scale (mode 6)
-
 TIM7(1) = TINIT
 if (TIME > TINIT + 1.025*abs(TSCALE)) TINIT = TSTART
 TIM7(3) = abs(TSCALE)/8.
@@ -891,80 +871,6 @@ return
 call astra_stop(err_format)
 
 end subroutine read_input
-
-!---------------------------------------------------------------------
-subroutine set_timescale(n_times)
-! Define time scales (former SETTSC)
-
-use io_mod, only: equ_file
-use const_inc, only: TAUPRP, TAUMIN, TAUMAX, TAU, TSCALE, &
-        VOLUME, DTOUT, DROUT, DPOUT
-
-implicit none
-
-integer, intent(in) :: n_times
-
-logical :: EXILOG
-integer :: j
-double precision, dimension(8) :: YS
-
-inquire(file='equ/log/' // TRIM(equ_file), exist=EXILOG)
-
-if ( EXILOG ) then ! Always the case (equ/log exists)
-    TAUPRP = TAUMIN
-else
-    TAUMAX = 0.01*VOLUME
-    YS(1) = 0.00000010
-    YS(2) = 0.00000015
-    YS(3) = 0.00000020
-    YS(4) = 0.00000025
-    YS(5) = 0.00000030
-    YS(6) = 0.00000040
-    YS(7) = 0.00000050
-    YS(8) = 0.00000075
-    do while (1.1*TAUMAX > YS(8))
-        YS(1: 8) = 10.*YS(1: 8)
-    enddo
-    do J=1, 8
-        if (1.1*TAUMAX <= YS(J)) EXIT
-    enddo
-
-    TSCALE = 0.1*n_times*YS(J)
-
-! 115=(right_label_position)/IDT=575/5
-    do while (TSCALE*115./n_times > YS(8))
-        YS(1: 8) = 10.*YS(1: 8)
-    enddo
-    do J = 1, 8
-        if (TSCALE*115./n_times <= YS(J)) EXIT
-    enddo
-
-    TSCALE = YS(J)
-    TAUMAX = 0.01*VOLUME
-    YS(1) = 0.00000010
-    YS(2) = 0.00000015
-    YS(3) = 0.00000020
-    YS(4) = 0.00000025
-    YS(5) = 0.00000050
-    YS(6) = 0.00000075
-
-    do while (1.1*TAUMAX > YS(6))
-        YS(1: 6) = 10.*YS(1: 6)
-    enddo
-    do J=1, 6
-        if (1.1*TAUMAX <= YS(J)) EXIT
-    enddo
-
-    TAUMAX = YS(J)
-    TAUMIN = 0.001*TAUMAX
-    TAU    = TAUMIN
-    TAUPRP = TAUMIN
-    DTOUT  = 0.01*TAUMAX
-    DROUT  = 0.02*TAUMAX
-    DPOUT  = 0.2*TAUMAX
-endif
-
-end subroutine set_timescale
 
 !---------------------------------------------------------------------
 subroutine READF6(LINE, F6, IERR)
