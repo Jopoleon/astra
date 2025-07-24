@@ -41,13 +41,13 @@ IPART = 1   ! Mark initial iteration section
 
 call io_init
 call read_input
-call outcmn_init
 
 !--------------------
 ! ASTRA graphic frame
 !--------------------
 
 if (TASK(1: 3) /= 'BGD') then
+    call outcmn_init
     call initMainWindow
 endif
 

@@ -68,6 +68,7 @@ fi
 
 ATASK=$AWD/bin/$equ_file.exe
 
+#if [ "$TASK" = 'BGDs' ] # for testing only
 if [ "$TASK" = 'BGD' ]
 then
     if ! command -v sbatch &> /dev/null
