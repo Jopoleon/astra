@@ -32,7 +32,6 @@ contains
     namelist / astra_log / equ_file, exp_file, task, machine, &
         debug, tbeg_nml, tend_nml, tpause_nml, resize, flightsim
 
-    print*, 'exp file', exp_file
     tbeg_nml   = -1.
     tend_nml   = -1.
     tpause_nml = -1.
