@@ -27,7 +27,6 @@ use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
     AMAIN, UPS0, UPS0O
 use io_mod, only: exp_file, equ_file, machine, NBfile, CCOILX, VCOILX, &
     IFDFVX, IFDFAX, jbeg_arrx, NGR, NBNT, NCNBT
-use outcmn_inc, only: TIM7, TTOUT
 
 use expdat, only: raw_scalar, raw_profile_map, DATARR, BNDR, BNDZ, BNDTIM
 use char_manip, only: to_upper, str_in_list, clean_string
@@ -857,12 +856,7 @@ DELOUT(19) = NBND
 DELOUT(20) = XFLAG
 TIMEQL = TIME - DTEQL - 1.d-7
 TAUPRP = TAUMIN
-
-! Define TAU, TAUMIN, TAUMAX, TSCALE, DROUT, DTOUT, DPOUT
-TTOUT(1) = -1.d10
-TIM7(1) = TINIT
 if (TIME > TINIT + 1.025*abs(TSCALE)) TINIT = TSTART
-TIM7(3) = abs(TSCALE)/8.
 
 return
 

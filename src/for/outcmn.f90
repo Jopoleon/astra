@@ -3,7 +3,7 @@ module outcmn_inc
 use parameter_inc, only: NRD, NSBMX, NSDELOUT, plot_modes
 use char_manip, only: null_ch
 use io_mod, only: resize
-use const_inc, only: AB
+use const_inc, only: AB, TINIT, TSCALE
 
 implicit none
 
@@ -44,6 +44,10 @@ contains
 
     integer :: i, j, ios, j0, j1
     character(len=132) :: STRI
+
+    TTOUT(1) = -1.d10
+    TIM7(1) = TINIT
+    TIM7(3) = abs(TSCALE)/8.
 
 ! Constants
 
