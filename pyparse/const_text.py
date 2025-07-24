@@ -65,7 +65,7 @@ class ININAM:
 """subroutine ININAM(LISTSB)
 
 use parameter_inc, only: NSBMX, NRD
-use io_mod, only: sbr_name, IFSBP, IFSBX, NSBR
+use io_mod, only: sbr_name, IFSBP, IFSBX, NSBR, awd, equ_file, exp_file
 use outcmn_inc
 use const_inc
 use status_inc

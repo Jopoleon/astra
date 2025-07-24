@@ -91,7 +91,7 @@ eqdim = 1 + Nrrect + Nzrect + 4*Nrrect*Nzrect
 
 ! Read geometry and settings
 
-as_nml = TRIM(awd) // TRIM(nml_file)
+as_nml = TRIM(awd) // '/' // TRIM(nml_file)
 write(*, *) 'Reading namelist ', TRIM(as_nml)
 
 open(57, FILE=TRIM(as_nml), delim='apostrophe')
@@ -262,13 +262,13 @@ floatinbeam(35) = ZEF(1)
 if (TRIM(pecr_file) == 'None') then
     power_gyro(1) = power_MW_in
 else
-    pecr_file2  = TRIM(awd) // TRIM(pecr_file)
+    pecr_file2  = TRIM(awd) // '/' // TRIM(pecr_file)
     call uf2dr(pecr_file2, TIME, power_gyro(1:n_gyro))
     power_gyro(1:n_gyro) = 1d-6*power_gyro(1:n_gyro)
 endif
 
-theta_file2 = TRIM(awd) // TRIM(theta_file)
-phi_file2   = TRIM(awd) // TRIM(phi_file)
+theta_file2 = TRIM(awd) // '/' // TRIM(theta_file)
+phi_file2   = TRIM(awd) // '/' // TRIM(phi_file)
 
 call uf2dr(theta_file2, TIME, theta_t(1:n_gyro))
 call uf2dr(phi_file2, TIME, phi_t(1:n_gyro))

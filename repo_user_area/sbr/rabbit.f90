@@ -110,7 +110,7 @@ if (.not. allocated(psi_rect)) allocate(psi_rect(n_Rrect, n_Zrect))
 if (.not. allocated(Rrect)) allocate(Rrect(n_Rrect), Zrect(n_Zrect))
 
 if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---       
-    as_nml = TRIM(AWD) // TRIM(nml_file)
+    as_nml = TRIM(AWD) // '/' // TRIM(nml_file)
 
     ios = 0
     write(6, *) 'Parsing namelist ' // TRIM(as_nml)
@@ -200,7 +200,7 @@ endif
 if (TRIM(pinj_file) == 'None') then
     pinj(1) = 1.d6*power_MW_in
 else
-    pinj_file2 = TRIM(awd) // TRIM(pinj_file)
+    pinj_file2 = TRIM(awd) // '/' // TRIM(pinj_file)
     call uf2dr(pinj_file2, TIME, pinj(1:n_nbi))
 endif
 

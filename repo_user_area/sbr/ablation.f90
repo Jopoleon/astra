@@ -27,7 +27,7 @@ NAMELIST / pellet / rho_abl_file, time_abl_file, mass
 
 ! Read pellet data
 
-as_nml = TRIM(awd) // TRIM(nml_file)
+as_nml = TRIM(awd) // '/' // TRIM(nml_file)
 write(*, *) 'Reading namelist ', TRIM(as_nml)
 
 open(57, FILE=TRIM(as_nml), delim='apostrophe')

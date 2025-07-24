@@ -82,7 +82,6 @@ if __name__ == '__main__':
         dev_name = 'aug'
 
     alog  = '&astra_log\n\n'
-    alog += 'AWD       = "%s/"\n'   %awd
     alog += 'exp_file  = "%s"\n'    %args.exp
     alog += 'equ_file  = "%s"\n'    %args.equ
     alog += 'tbeg_nml  = %8.4f\n'   %args.tbeg

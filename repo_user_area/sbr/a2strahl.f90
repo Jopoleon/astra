@@ -101,7 +101,7 @@ NAMELIST / strahl_par /  tau_strahl, rho_coord, ne_decayl, te_decayl, ti_decayl,
 
 !--------------------------------------------------------------------------
 
-as_nml = TRIM(awd) // TRIM(nml_file)
+as_nml = TRIM(awd) // '/' // TRIM(nml_file)
 write(*, *) 'Reading namelist ', TRIM(as_nml)
 
 open(nch_r1, FILE=TRIM(as_nml), delim='apostrophe')
@@ -139,7 +139,7 @@ print *, "Species: ", (elements_touse(isp), isp=1, nimp_touse)
 diffname1_s = ''
 
 shotn = nint(shot_in)
-strahl_dir = TRIM(awd) // 'strahl/'
+strahl_dir = TRIM(awd) // '/strahl/'
 
 call chdir(TRIM(strahl_dir))      ! cdir
 call system('mkdir -p result')

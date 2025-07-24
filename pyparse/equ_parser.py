@@ -13,6 +13,8 @@ class EQU_PARSER:
 
     def __init__(self, f_equ=None):
 
+        self.f_equ = f_equ
+
 #---------
 # FML, FNC
 #---------

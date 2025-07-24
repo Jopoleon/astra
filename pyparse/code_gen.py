@@ -14,6 +14,8 @@ logger.setLevel(logging.INFO)
 
 mem_d = {'XPR/TGLFI': 'mem_tglf(1, 1)', 'XPR/QLKI': 'mem_qlkz(1, 1)', 'XPR/NEO': 'mem_neo(1, 1)'}
 
+awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
 
 class CODE_GEN:
 
@@ -278,8 +280,8 @@ end subroutine INIVAR'''
 #-----------
 # ininam.f90
 
-        inam  = ''
-
+        inam  = 'AWD = "%s"\n' %awd
+        inam += 'equ_file = "%s"\n' %os.path.basename(parse.f_equ)
         if parse.arxuse:
             for j, arx in enumerate(parse.arxuse):
                 inam += 'ARXUSE(%d) = %d\n' %(j+1, arx)

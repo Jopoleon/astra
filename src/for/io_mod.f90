@@ -18,7 +18,7 @@ double precision, dimension(NRDX, NARRX) :: XAXES, DATAX
 
 character(len=4) :: machine, TASK
 character(len=20), dimension(NSBMX) :: sbr_name
-character(132) :: nml_file, exp_file, equ_file, NBFILE='***', AWD
+character(132) :: AWD, nml_file, equ_file, exp_file, NBFILE='***'
 
 contains
 
@@ -29,9 +29,10 @@ contains
     character(len=132) :: log_file
     double precision :: tbeg_nml, tend_nml, tpause_nml
 
-    namelist / astra_log / AWD, exp_file, equ_file, task, machine, &
+    namelist / astra_log / equ_file, exp_file, task, machine, &
         debug, tbeg_nml, tend_nml, tpause_nml, resize, flightsim
 
+    print*, 'exp file', exp_file
     tbeg_nml   = -1.
     tend_nml   = -1.
     tpause_nml = -1.
