@@ -116,7 +116,7 @@ else
     echo
     for mod_name in tglfi qlkzi qlki neo
     do
-        PID=$(ps aux | grep $mod_name | grep 'R+' | awk '{print $2}')
+        PID=$(ps aux | grep $mod_name | grep 'R+' | grep $USER | awk '{print $2}')
         if [ ! -z "$PID" ];
         then
             for p_id in $PID
