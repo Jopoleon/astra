@@ -20,6 +20,8 @@ MODOBJS = \
 $(OBJ_DIR)/imas_ids.o \
 $(OBJ_DIR)/astra_modules.o \
 $(OBJ_DIR)/debugger.o \
+$(OBJ_DIR)/const.o \
+$(OBJ_DIR)/io_mod.o \
 $(OBJ_DIR)/outcmn.o \
 $(OBJ_DIR)/const.o \
 $(OBJ_DIR)/machine_config.o \

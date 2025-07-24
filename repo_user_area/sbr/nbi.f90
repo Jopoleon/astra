@@ -35,7 +35,7 @@ subroutine NBI
 
 use const_inc
 use status_inc
-use outcmn_inc, only: NBFILE
+use io_mod, only: NBFILE
 
 implicit none
 

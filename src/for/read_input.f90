@@ -114,7 +114,7 @@ endif
 call config_read()
 
 !----------------------------------------------------------------------|
-! Read file equ/log/<model>, checking existence of obsolete equ/<model>.log 
+! Read file equ/log/<model>
 !----------------------------------------------------------------------|
 
 jj = LEN_TRIM(equ_file)
