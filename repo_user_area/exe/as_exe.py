@@ -108,7 +108,7 @@ if __name__ == '__main__':
 
     expequ = args.exp + args.equ
 
-    cmd = '%s/exe/Build %s %s' %(awd, args.equ, args.exp)
+    cmd = '%s/exe/Build %s %s %s' %(awd, args.equ, args.exp, rtype)
     if args.batch and args.waitslurm:
         cmd += ' -W'
     logger.info(cmd)

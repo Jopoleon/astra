@@ -2,8 +2,9 @@
 
 equ_file=$1
 exp_file=$2
-if [[ $# > 2 ]]; then
-    WAIT_SLURM=$3
+TASK=$3
+if [[ $# > 3 ]]; then
+    WAIT_SLURM=$4
 else
     WAIT_SLURM=""
 fi
@@ -75,8 +76,6 @@ then
 #SBATCH --time=12:00:00
 #SBATCH --mail-type=none
 export OMP_NUM_THREADS=\${SLURM_CPUS_PER_TASK:-1}
-export expfile=${expfile}
-export equfile=${equfile}
 export OMP_PLACES=cores
 export I_MPI_ROOT=${I_MPI_ROOT}
 export I_MPI_FABRICS=shm:ofi

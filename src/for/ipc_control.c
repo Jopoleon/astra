@@ -18,7 +18,8 @@ void to_tra_(INT_*, INT_*, INT_*);
 void ot_tra_(INT_*, INT_*, INT_*, double*);
 void AllocateShmem(int);
 
-char *AWD, *equmod, *DATA;
+char AWD[132];
+char *equmod, *DATA;
 char A_ipc_file[132];
 char ASTRA_task[132];
 const char *A_log_file = "./tmp/astra.nml";
@@ -35,7 +36,10 @@ int  A_ChID[A_ShmShift+A_Nsemx] = {0, 0, 0};        /* Child process ID */
 int  A_ShmL[A_ShmShift+A_Nsemx]; /* Child Shmem segment length */
 int  A_ShmID[A_ShmShift+A_Nsemx] = {0, 0};
 void *A_ShmAdr[A_ShmShift+A_Nsemx];
-            /* {sem_num, sem_op, sem_flag}; */
+char *getcwd(char *buf, size_t size);
+
+/* {sem_num, sem_op, sem_flag}; */
+
 struct sembuf buf0 = {0, 0, ~SEM_UNDO&~IPC_NOWAIT};
 
 /*-------------------------------
@@ -146,9 +150,12 @@ int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs){
         printf("Cannot open Astra log file: \"%s\"\n", A_log_file);
         exit(0);
     }
-
+    if (getcwd(AWD, sizeof(AWD)) != NULL) {
+        printf("Current working dir: %s\n", AWD);
+    } else {
+        fprintf(stderr, "getcwd() error\n");
+    }
     while ((read = getline(&line, &len, A_LOG)) != -1) {
-        if (strstr(line, "AWD"     ) != NULL) AWD    = parse_nml(line);
         if (strstr(line, "equ_file") != NULL) equmod = parse_nml(line);
         if (strstr(line, "exp_file") != NULL) DATA   = parse_nml(line);
     }
@@ -235,7 +242,7 @@ int initipc_(INT_* Ngrid, INT_ *n_ql){
     A_PID = getpid();
 /* Define the absolute path name of Astra executable ASTRA_task */
     strcpy(ASTRA_task, AWD);
-    strcat(ASTRA_task, "bin/");
+    strcat(ASTRA_task, "/bin/");
     strcat(ASTRA_task, equmod);
     strcat(ASTRA_task, ".exe");
     my_key = ftok( ASTRA_task, (int)A_PID);    /* Get System V IPC key */
@@ -680,7 +687,7 @@ void freeshm(){
 }
 
 /*---------------------------------------------------------------------*/
-void write_aipc(const struct A_proc_info Aproc, char* AWD, int qlSize)
+void write_aipc(const struct A_proc_info Aproc, char* AWdir, int qlSize)
 {
     FILE *A_PDF, *A_LOG;
     char A_logf[132];
@@ -688,10 +695,10 @@ void write_aipc(const struct A_proc_info Aproc, char* AWD, int qlSize)
     size_t len=0;
     ssize_t read;
 
-/* Check existence of subprocess executable files */
-/* Read tmp/astra.nml and store run info */
+// Check existence of subprocess executable files 
+// Read tmp/astra.nml and store run info
 
-    strcpy(A_logf, AWD);
+    strcpy(A_logf, AWdir);
     strcat(A_logf, "/tmp/astra.nml");
     A_LOG = fopen(A_logf, "r");
     if (!A_LOG){
@@ -707,7 +714,7 @@ void write_aipc(const struct A_proc_info Aproc, char* AWD, int qlSize)
     fclose(A_LOG);
     free(line);
 
-    strcpy(A_ipc_file, AWD);
+    strcpy(A_ipc_file, AWdir);
     strcat(A_ipc_file, "tmp/");
     strcat(A_ipc_file, DATA);
     strcat(A_ipc_file, equmod);
