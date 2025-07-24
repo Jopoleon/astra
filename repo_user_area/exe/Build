@@ -1,7 +1,9 @@
 #!/bin/bash
 
-if [[ $# > 0 ]]; then
-    WAIT_SLURM=$1
+equ_file=$1
+exp_file=$2
+if [[ $# > 2 ]]; then
+    WAIT_SLURM=$3
 else
     WAIT_SLURM=""
 fi
@@ -13,24 +15,8 @@ cd $AWD
 
 platform=`$AWD/get_platform`
 
-# Get variables from log file
-
-ALOG=$AWD/tmp/astra.nml
-while IFS='=' read var val
-do
-    var=`echo $var | xargs` #xargs for trimming
-    val=`echo $val | xargs`
-    if [[ $val ]]
-    then
-        declare "$var=$val"
-    fi
-done < $ALOG
-
 source $AWD/platform/env.$platform
 source $AWD/exe/astra_rc
-
-export expfile="${exp_file}"
-export equfile="${equ_file}"
 
 export CHECKALLCOMP=" "
 #export CHECKALLCOMP="-check all -traceback"
