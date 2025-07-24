@@ -1,7 +1,8 @@
 program astra
 
 use parameter_inc, only: NSBMX, NRD
-use outcmn_inc, only: astra_gui, astra_gui_ref, outcmn_init, TASK
+use outcmn_inc, only: astra_gui, astra_gui_ref, outcmn_init
+use io_mod, only: TASK, io_init
 use cpu_usage, only: cpu_start, wall_start, cpu_report
 use const_inc, only: IPART, const_init, &
     TIME, TSTART, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT
@@ -28,7 +29,6 @@ save jt_out
 
 call CPU_TIME(cpu_start)
 call SYSTEM_CLOCK(wall_start, rate)
-call outcmn_init
 call const_init
 call status_init
 use_ext_bnd = 0
@@ -38,7 +38,9 @@ debug = 0 ! Initialise to: no debugging
 call ininam(LISTSB)
 IPART = 1   ! Mark initial iteration section
 
+call io_init
 call read_input
+call outcmn_init
 
 !--------------------
 ! ASTRA graphic frame

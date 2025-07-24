@@ -460,7 +460,8 @@ end subroutine ASKINT
 subroutine ASTWIN(NB, IBOX, NAME, yscale, yshift, MOD10, YMODE)
 
 use parameter_inc, only: NRW
-use outcmn_inc, only: IP1, IP2, IP30, IP31, null_ch
+use io_mod, only: null_ch
+use outcmn_inc, only: IP1, IP2, IP30, IP31
 use char_manip, only: to_upper
 
 implicit none
@@ -620,7 +621,8 @@ subroutine ASXWIN(NB, IBOX, NAME, yscale, yshift, r_min, r_max, MOD10, YMODE)
 
 use parameter_inc, only: NRW
 use const_inc, only: AB
-use outcmn_inc, only: IP1, IP2, IP30, IP31, null_ch
+use io_mod, only: null_ch
+use outcmn_inc, only: IP1, IP2, IP30, IP31
 
 implicit none
 
@@ -799,7 +801,8 @@ subroutine get_runid
 ! date and time when those are not defined (calling from INIT)
 !---------------------------------------------------------------------
 
-use outcmn_inc, only: RUNID, equ_file, exp_file, VERSION
+use io_mod, only: equ_file, exp_file
+use outcmn_inc, only: RUNID, VERSION
 
 implicit none
 

@@ -8,9 +8,9 @@ contains
 !------------------------------------------------------------
     logical function IFDEFX(XARNAM)
 ! Name exists in profxNames, and the array is defined
-    
+
     use parameter_inc, only: NARRX
-    use outcmn_inc, only: IFDFAX
+    use io_mod, only: IFDFAX
     use char_manip, only: str_in_list
     use json_vars, only: profxNames
 
@@ -32,7 +32,7 @@ contains
 ! Name exists in profxNames, and the array is defined
 
     use parameter_inc, only: NARRX
-    use outcmn_inc, only: IFDFAX
+    use io_mod, only: IFDFAX
     use char_manip, only: str_in_list
     use json_vars, only: profxNames
 
@@ -176,7 +176,7 @@ contains
 ! note any facing space/blank in substrings will be removed
 
     use char_manip, only: clean_string
-    use outcmn_inc, only: null_ch, tab_ch
+    use io_mod, only: null_ch, tab_ch
 
     integer, parameter :: nwords_max=20
     character(len=*), intent(in) :: str_in
@@ -225,7 +225,7 @@ contains
 !------------------------------------------------------------
     subroutine read_arrx(nunit, nt_io, ntim, nrho, stri_in, var_out)
 
-    use outcmn_inc, only: exp_file, NCNBM, NCNBTM
+    use io_mod, only: exp_file, NCNBM, NCNBTM
     use debugger, only: markloc, astra_stop
 
     integer, intent(in) :: nunit, ntim

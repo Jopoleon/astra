@@ -1,7 +1,9 @@
 module outcmn_inc
 
-use parameter_inc, only: NRD, NRDX, NRW, NTARR, NARRX, NSBMX, NCNBM, NCNBTM, &
-    NCONST, NSDELOUT, plot_modes
+use parameter_inc, only: NRD, NRW, NSBMX, NSDELOUT, plot_modes
+!use io_mod, only: resize
+use io_mod
+use const_inc, only: AB
 
 implicit none
 
@@ -18,30 +20,19 @@ endtype plot_frame
 ! Colors, array AstraColorNum in Astra2XW.c
 integer, parameter :: White=0, Black=1, Red=2, Blue=3, Green=5, &
      WarningColor=30, EraseColor=31, Magenta=14, Pink=13, ICVMX=32
-character(len=1), parameter :: null_ch=char(0), tab_ch=char(9), esc_ch=char(13), backslash=char(92)
-
+character(len=132) :: rev_file='tmp/profile.dat'
 integer, dimension(NRW)   :: MARKT, MARKR, NWIND1, NWIND3, NWIND4, NWIND7, NWINDX, IP1, IP2, IP30, IP31
-integer, dimension(NARRX) :: IFDFAX, jbeg_arrx, NPTM
-integer, dimension(NSBMX) :: IFSBX, IFSBP
-integer :: &
-    NDTNAM, NTOUT, NROUT, NSBR, NSBP, &
-    NBNT, NCNBT, LTOUT, IPOUT, MOD10, NGR, NXOUT, IFDFVX(NCONST)
+integer :: NDTNAM, NTOUT, NROUT, NSBP, LTOUT, IPOUT, MOD10, NXOUT
 integer :: MODEY, IDX, IDT, KPRI, NST, AVERS, ARLEAS, AEDIT
 integer, dimension(plot_modes) :: active_tab, curves_per_frame
 double precision, dimension(NRW)   :: GRAL, GRAP, OSHIFT, OSHIFR, SCALET, SCALER
-double precision, dimension(NARRX) :: TOUTX
-double precision, dimension(NCNBM) :: CCOIL, VCOIL
-double precision, dimension((NCNBM+1)*NCNBTM) :: CCOILX, VCOILX
-double precision, dimension(NRDX, NARRX) :: XAXES, DATAX
 double precision, dimension(NRD, NRW) :: ROUT
 double precision :: TIM7(4), scale_bnd, pixel_ymid, meter2pixel, resizeGraph
 
 character(len=4), dimension(NRW) :: NAMET, NAMER
-character(len=4) :: TASK, machine
 character(len=6), dimension(NRW) :: NAMEX
 character(len=6) :: DTNAME(NSDELOUT+4*NSBMX), NAM7(4)
-character(len=20) :: sbr_name(NSBMX)
-character(132) :: nml_file, exp_file, equ_file, rev_file, TASKID, NBFILE, VERSION, RUNID, AWD
+character(132) :: TASKID, VERSION, RUNID
 type(astra_xwindow) :: astra_gui_ref, astra_gui
 type(plot_frame) :: plot_area_ref, plot_area
 
@@ -49,16 +40,16 @@ contains
 
 subroutine outcmn_init
 
-integer :: i, j
+integer :: i, j, ios, j0, j1
+character(len=132) :: STRI
 
 ! Constants
 
 pixel_ymid  = 0.
 meter2pixel = 0.
-resizeGraph = 1.
+resizeGraph = resize
 
 VERSION = repeat(' ', 32)
-NBFILE = '***'
 
 IDT = 5
 
@@ -92,39 +83,19 @@ plot_area_ref%ymax = 0
 !   #12 - warning messages, axis upper marks in View
 !   #13 -> #15 -reserved (black)
 
-NWINDX = 0
 MARKT  = 0
 MARKR  = 0
 MODEY  = 1
 LTOUT  = 1
 IPOUT  = 1
-
-! Boundary
-
-NBNT = 0
-
 active_tab = 0
-
-! Coils
-NCNBT = 0
-
 OSHIFT = 0.
 OSHIFR = 0.
 GRAL   = 0.
+GRAP   = AB
 
-NAMEX(:) = '      '
 NAM7 = (/ 'Tmin', 'Tmax', 'Tmark', 'Style' /)
-
-IFDFVX = -1
-IFDFAX = -1
 TIM7 = (/ 0, 9999, 9999, 1 /)
-
-! Coils
-
-VCOILX = 0.
-CCOILX = 0.
-VCOIL  = 0.
-CCOIL  = 0.
 
 ! Output windows
 
@@ -198,6 +169,52 @@ do j=1, 30
     write(DTNAME(i+4), '(A, i0)') ' Keq', j
 enddo
 
+!----------------------------------------------------------------------|
+! Parse file "exe/version"
+!----------------------------------------------------------------------|
+
+open(131, FILE='exe/version', iostat=ios)
+
+if (ios /= 0) then
+    write(*,*)'>>> Warning: Unknown version'
+else
+    do j=1,5
+        read(131,'(A)') STRI
+    enddo
+    j = index(STRI, 'Version')
+    VERSION = STRI(j: j+30)//char(0)
+    close(131)
+    j0 = index(VERSION, '.')
+    if (j0 == 0) then
+        write(*,*)'>>> Warning: Unknown version'
+    else
+        read(VERSION(j0-1: j0-1), *) AVERS 
+        read(VERSION(j0+1: j0+1), *) ARLEAS 
+        j1 = INDEX(VERSION(j0+1:), '.')
+        if (j1 == 0) then
+            AEDIT = 0
+        else
+            read(VERSION(j0+j1+1: j0+j1+1), *) AEDIT
+        endif
+    endif
+endif
+
 end subroutine outcmn_init
 
 end module outcmn_inc
+
+!--------------------------------
+module timeoutput_inc
+
+use parameter_inc, only: NRW
+
+implicit none
+
+integer, parameter :: NTIMES=1024
+
+! TOUT   - Time variables output array
+! TTOUT  - time-coordinate array for time output [s] TTOUT(1:LTOUT<=NTIMES)
+double precision :: TTOUT(NTIMES), TOUT(NTIMES, NRW), TPOUT
+
+end module timeoutput_inc
+

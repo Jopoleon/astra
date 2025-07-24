@@ -9,7 +9,7 @@ use parameter_inc, only: NRD
 use const_inc, only: NA1, RTOR, BTOR, TIME, ROC, SGNIP, SGNBT
 use status_inc, only: TE, NE, FP, XRHO, ZEF, MU, ELON, SHif , IPOL, &
    AMETR, VOLUM, PEECR, CUECR, AREAT, rho_pol, FP_NORM
-use outcmn_inc, only: AWD, nml_file
+use io_mod, only: AWD, nml_file
 use numerical_tools, only: qinterp, integr
 use parameters_a2equil, only : equil_now, GP2
 

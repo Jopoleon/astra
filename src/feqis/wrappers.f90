@@ -607,7 +607,7 @@ use feqis_circuit, only: psiplasmatoconduc, &
 use ferromagstructure, only: type_ferromag
 use green_function, only: greeni
 use green_matrix, only: dgreenirj, dgreenizj, dgreenirpl, dgreenizpl
-use outcmn_inc, only: machine
+use io_mod, only: machine
 use transport2fbe, only: cur_init, use_isoflux, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
     voltage_limits_active_coils, sigma_isoflux
 use json_module, only : json_file

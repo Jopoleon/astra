@@ -5,7 +5,7 @@ use mod_rabbit_lib, only: do_dump, rabbit_lib_init, rabbit_lib_set_dump_dir, &
     rabbit_lib_get_dv_darea, rabbit_lib_get_wfi
 use rabbit_variables, only: fusion_power, neutron_power
 
-use outcmn_inc, only: AWD, nml_file
+use io_mod, only: AWD, nml_file
 use const_inc, only: GP2, AIM1, TIME, TAU, QNBI, ROC, &
    RTOR, BTOR, NA1, PSIAX, PSIBO
 use status_inc, only: FP, FP_NORM, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &

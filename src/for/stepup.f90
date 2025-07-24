@@ -10,7 +10,7 @@ use const_inc, only: IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
     TAU, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, ATREQ, LEQ, & 
     PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, ADCMPF, RBDOT, BBDOT
 use status_inc, only: TE, TI, NE, NI, NIO, FP, defarr
-use outcmn_inc, only: CCOIL, VCOIL, MACHINE, TASK
+use io_mod, only: CCOIL, VCOIL, MACHINE, TASK
 use plasma_state, only: plasma_up
 use debugger, only: markloc, flightsim, astra_stop
 

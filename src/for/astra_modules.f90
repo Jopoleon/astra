@@ -10,21 +10,6 @@ integer, parameter :: NRD=801, NRW=128, NCONST=256, NARRX=101, NSBMX=60, &
 end module parameter_inc
 
 !--------------------------------
-module timeoutput_inc
-
-use parameter_inc, only: NRW
-
-implicit none
-
-integer, parameter :: NTIMES=1024
-
-! TOUT   - Time variables output array
-! TTOUT  - time-coordinate array for time output [s] TTOUT(1:LTOUT<=NTIMES)
-double precision :: TTOUT(NTIMES), TOUT(NTIMES, NRW), TPOUT
-
-end module timeoutput_inc
-
-!--------------------------------
 module expdat
 
 use parameter_inc, only: NTVAR, NTARR, NRDX, NBDMAX, NBDTMAX

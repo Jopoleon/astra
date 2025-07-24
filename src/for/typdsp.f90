@@ -23,8 +23,8 @@ subroutine writeData(CHORDN)
 use parameter_inc, only: NRW
 use const_inc, only: XOUT, NAB, NA, NA1, exp_header, RTOR, ABC, BTOR, IPL, TIME, TAU, CONSTF
 use status_inc, only: MU, AMETR, RHO, FP
-use outcmn_inc, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, WarningColor, ROUT, &
-     AWD, RUNID, equ_file, exp_file
+use io_mod, only: AWD, equ_file, exp_file
+use outcmn_inc, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, WarningColor, ROUT, RUNID
 use dbl2char, only: fmt4, fmt_xf
 use timeoutput_inc, only: NTIMES, TTOUT, TOUT
 use json_vars, only: n_const
@@ -928,6 +928,7 @@ end subroutine down_label
 ! Upper string of the Astra graphic window
 subroutine up_label(YN, YQ)
 
+use io_mod, only: null_ch
 use outcmn_inc, only: astra_gui, active_tab, MOD10, Black, Blue, null_ch
 use const_inc, only: RTOR, BTOR, IPL, ABC, exp_header
 use dbl2char, only: fmt40
@@ -987,7 +988,8 @@ subroutine const2ps
 ! Appending the list of constants to a PS file
 
 use const_inc, only: CONSTF, DEVAR
-use outcmn_inc, only: null_ch, resizeGraph
+use io_mod, only: null_ch
+use outcmn_inc, only: resizeGraph
 use dbl2char, only: fmt_xf
 use json_vars, only: n_const, n_var, varNames
 
@@ -1151,7 +1153,8 @@ subroutine UF2DWA(DEVID, UFNAME, SIGNAM, JN, NRP, NASC, PROCOD, &
 !---------------------------------------------------------------------
 
 use parameter_inc, only: NRD
-use outcmn_inc, only: IPOUT, rev_file, NXOUT, NGR, NROUT, RUNID
+use io_mod, only: NGR
+use outcmn_inc, only: IPOUT, rev_file, NXOUT, NROUT, RUNID
 
 implicit none
 

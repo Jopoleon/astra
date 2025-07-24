@@ -77,7 +77,7 @@ contains
     use parameter_inc
     use const_inc
     use status_inc
-    use outcmn_inc, only: AWD, exp_file, equ_file
+    use io_mod, only: AWD, exp_file, equ_file
     use debugger, only: debug
 
     integer :: j, jrho, ios, j_call=1, nrho_surf, nthe_surf, nR, nZ

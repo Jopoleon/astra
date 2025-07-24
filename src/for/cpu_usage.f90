@@ -1,7 +1,7 @@
 module cpu_usage
 
 use parameter_inc, only: NSDELOUT, NSBMX
-use outcmn_inc, only: NSBR, sbr_name, IFSBX
+use io_mod, only: NSBR, sbr_name, IFSBX
 use const_inc, only: NSTEPS, TIME, TSTART
 use debugger, only: markloc
 

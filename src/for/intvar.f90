@@ -20,7 +20,7 @@ subroutine INTVAR
 !-----------------------------------------------------------------------
 
 use parameter_inc, only: NTVAR
-use outcmn_inc, only: IFDFVX
+use io_mod, only: IFDFVX
 use const_inc, only: DEVARX, DEVAR, TIME
 use expdat, only: raw_scalar
 use debugger, only: markloc

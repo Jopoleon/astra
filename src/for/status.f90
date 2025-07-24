@@ -595,7 +595,8 @@ contains
 ! 3) Define upsilons for momentum transport equation
 !---------------------------------------------------------------------
 
-    use outcmn_inc, only: exp_file, NSBR, DTNAME
+    use io_mod, only: exp_file, NSBR
+    use outcmn_inc, only: DTNAME
     use const_inc, only: GP2, RTOR, BTOR, HRO, ROC, ABC, NA1, NB1, NAB, &
         NSDELOUT, TIME, TAU, TSTART, WTE, WTI, WNE
     use debugger, only: markloc, astra_stop

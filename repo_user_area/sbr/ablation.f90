@@ -6,7 +6,7 @@ subroutine ABLATION(trace, pel_prof)
 
 use parameter_inc, only: NRD
 use const_inc, only: TIME, NA1
-use outcmn_inc, only: AWD, nml_file
+use io_mod, only: AWD, nml_file
 use parse_utils, only: ufheader, ufrd
 use status_inc, only: XRHO
 

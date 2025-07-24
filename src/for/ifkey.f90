@@ -31,7 +31,7 @@ integer function IFKEY(IFKL)
 ! 12,13 - for equ/model.log file (once on entry)
 ! 3 - for post-viewer file (first on entry, then periodically)
 
-use parameter_inc, only: NRD, NRW
+use parameter_inc, only: NRD, NRW, NARRX, NCONST, NSDELOUT
 use status_inc, only: MU, AMETR, SHIF, ELON, TRIA, EQFF, EQPF, FP, RHO
 use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, exp_header, &
    NA, NB1, NA1, NAB, NUF, LEQ, NBND, TIME, TAU, TINIT, TSCALE, &
@@ -39,16 +39,13 @@ use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, exp_header, &
    BTOR, IPL, CONSTF, DEVAR, DELOUT, XFLAG
 use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     Black, Blue, Magenta, WarningColor, &
-    active_tab, curves_per_frame, null_ch, &
-    MOD10, LTOUT, NARRX, IPOUT, MODEY, &
+    active_tab, curves_per_frame, MOD10, LTOUT, IPOUT, MODEY, &
     NWINDX, NWIND1, NWIND3, NWIND4, NWIND7, &
-    NROUT, NTOUT, NXOUT, NSBR, NGR, NST, &
+    NROUT, NTOUT, NXOUT, NST, NDTNAM, &
     NAMER, NAMET, NAMEX, SCALER, SCALET, ROUT, OSHIFR, OSHIFT, &
-    rev_file, equ_file, exp_file, &
-    DTNAME, &
-    runid, TASK, VERSION, AVERS, ARLEAS, AEDIT, &
-    NCONST, NDTNAM, NSDELOUT, &
-    jbeg_arrx, GRAP, GRAL, IFDFVX, TIM7, NAM7, KPRI, ICVMX
+    rev_file, DTNAME, runid, VERSION, AVERS, ARLEAS, AEDIT, &
+    GRAP, GRAL, TIM7, NAM7, KPRI, ICVMX
+use io_mod, only: null_ch, NSBR, NGR, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
 use expdat, only: raw_profile_map, DATARR
 use timeoutput_inc, only: NTIMES, TTOUT, TPOUT, TOUT
 use dbl2char, only: fmt6
@@ -822,7 +819,8 @@ subroutine graph_output(MARK, PRMARK, NAMEP, ITO)
 use parameter_inc, only: NRD
 use const_inc, only: NA
 use status_inc, only: MU
-use outcmn_inc, only: TASK, MOD10, null_ch, ICVMX
+use io_mod, only: TASK, null_ch
+use outcmn_inc, only: MOD10, ICVMX
 use timeoutput_inc, only: NTIMES, TTOUT, TOUT
 use debugger, only: markloc, debug
 
@@ -861,8 +859,9 @@ subroutine refresh_plot(IFKL, MARK, PRMARK, PSNAME)
 ! Corresponds to block from statement 201
 
 use parameter_inc, only: NRD
-use outcmn_inc, only: astra_gui, KPRI, MOD10, MODEY, TASK, RUNID, &
-    WarningColor, null_ch, ICVMX, resizeGraph
+use io_mod, only: TASK, null_ch  
+use outcmn_inc, only: astra_gui, KPRI, MOD10, MODEY, RUNID, &
+    WarningColor, ICVMX, resizeGraph
 use timeoutput_inc, only: NTIMES, TOUT, TTOUT
 use const_inc, only: XOUT, TIME, TAU, NA
 use status_inc, only: MU
@@ -932,9 +931,10 @@ end subroutine refresh_plot
 subroutine SMODE5(MARK, PRMARK, NAMEP)
 
 use parameter_inc, only: NRD, NRW
+use io_mod, only:  NGR, null_ch
 use outcmn_inc, only: astra_gui, plot_area, NROUT, ICVMX, SCALER, &
-    ROUT, rev_file, NXOUT, NGR, NAMER, NWIND4, active_tab, OSHIFR, &
-    MOD10, GRAL, GRAP, MODEY, KPRI, null_ch, Black, Red
+    ROUT, rev_file, NXOUT, NAMER, NWIND4, active_tab, OSHIFR, &
+    MOD10, GRAL, GRAP, MODEY, KPRI, Black, Red
 use const_inc, only: AB, NAB
 use dbl2char, only: fmt4
 use char_manip, only: len_trim_tab
@@ -1175,7 +1175,7 @@ subroutine ADDMOD(NCHW, NCHM, NCHL)
 ! Unit NCHL (model.log) must be open if nonzero
 ! Note:   1) NCHL =/= NCHM; 2) Empty lines are skipped.
 
-use outcmn_inc, only: null_ch
+use io_mod, only: null_ch
 use char_manip, only: len_trim_tab
 use debugger, only: markloc
 
@@ -1316,7 +1316,7 @@ end function lineav
 !---------------------------------------------------------------------
 subroutine menutable(arr_size, array_in, var_names, id)
 
-use outcmn_inc, only: null_ch
+use io_mod, only: null_ch
 
 implicit none
 

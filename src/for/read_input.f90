@@ -14,7 +14,7 @@ subroutine read_input
 ! jbeg_arrx(jx)  - pointer to a position in the array raw_profile_map%time
 !----------------------------------------------------------------------|
 
-use parameter_inc, only: NTVAR, NBDMAX, NBDTMAX, NRD
+use parameter_inc, only: NTVAR, NBDMAX, NBDTMAX, NRD, NRDX, NTARR
 use const_inc, only: NITREQ, NA, NA1, NB1, NAB, NUF, NBND, NCNB, n_bouncon, &
     TIME, TSTART, TEND, TPAUSE, TINIT, TSCALE, TIMEQL, DTEQL, &
     DEVAR, CONSTF, DELOUT, XFLAG, exp_header, ARXUSE, &
@@ -25,17 +25,14 @@ use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
     G11, G22, VR, VRO, VRS, VOLUM, &
     FP, FPO, FP_NORM, rho_pol, NE, NEO, TE, TEO, UPAR, UPARO, MRHO, &
     AMAIN, UPS0, UPS0O
-use outcmn_inc, only: AWD, exp_file, nml_file, equ_file, rev_file, &
-    TASK, machine, resizeGraph, &
-    TASKID, VERSION, AVERS, ARLEAS, AEDIT, IFDFVX, IFDFAX, jbeg_arrx, &
-    NBFILE, &
-    NGR, NBNT, NCNBT, NRDX, NTARR, NRW, &
-    CCOILX, VCOILX, GRAP, TIM7
+use io_mod, only: exp_file, nml_file, equ_file, nbfile, TASk, machine, &
+    CCOILX, VCOILX, IFDFVX, IFDFAX, jbeg_arrx, NGR, NBNT, NCNBT
+use outcmn_inc, only: rev_file, resizeGraph, TASKID, NRW, TIM7
 use machine_config, only: config, config_read
 
 use expdat, only: raw_scalar, raw_profile_map, DATARR, BNDR, BNDZ, BNDTIM
 use char_manip, only: to_upper, str_in_list, clean_string
-use debugger, only: markloc, debug, astra_stop, flightsim
+use debugger, only: markloc, debug, astra_stop
 use parse_utils, only: IFDEFX, path_split, split2array2, &
     ufheader, ufrd, parse_u_line, inquire_fname, assign_val, read_arrx
 use timeoutput_inc, only: NTIMES, TTOUT
@@ -55,8 +52,6 @@ integer :: KAB, KABC, KAWALL, KRTOR, KELONM, KTRICH
 integer :: nvar, n_color, n_words, i_filter_glob
 integer :: nt_u, nx_u, ios, ndim_u, jvar, jrt, jt, jthe
 
-double precision :: resize
-double precision :: tbeg_nml, tend_nml, tpause_nml
 double precision, allocatable :: t_u(:), x_u(:), var_u(:), bnd_rz(:)
 double precision :: XBDRY, YB, YB1, YXB, YXB1, ALFA, ALFA_GLOB, &
     VRDATA, FACTOR, TIMEVR, VRERR, ROC3A, YTP=-1.d9
@@ -64,9 +59,6 @@ character(len=6) :: VNAM, VNAMO, VNAMU, VNAMX, VTIM, VDAT, VERR, VARNAM, ARRNAM,
 character(len=31) :: rholbl
 character(len=132) :: strarray(20), STRI, lin_upper, dir_path, fname, &
     err_msg, err_format, err_msg_exp, file_in, uname, uvar, workflow
-
-namelist / astra_log / AWD, exp_file, equ_file, rev_file, TASK, machine, &
-debug, tbeg_nml, tend_nml, tpause_nml, flightsim, resize, workflow
 
 !----------------------------------------------------------------------|
 ! Fortran tests
@@ -79,43 +71,10 @@ TASKID = STRI(1: j)
 !----------------------------------------------------------------------|
 ! Initialisation with default values
 
-tbeg_nml   = -1.
-tend_nml   = -1.
-tpause_nml = -1.
 NITREQ = 1. ! Initialization: g95 does not like it in blockdata
 i_filter_glob = 0 ! if i_filter_glob = 1, a global filter is set
 
 plasma_up = 1  ! plasma is up by default, can be set to 0 for breakdown by the user in a user-defined sbr called with "<"
-
-!----------------------------------------------------------------------|
-! Parse file ".exe/version"
-!----------------------------------------------------------------------|
-
-open(131, FILE='exe/version', iostat=ios)
-
-if (ios /= 0) then
-    write(*,*)'>>> Warning: Unknown version'
-else
-    do j=1,5
-        read(131,'(A)') STRI
-    enddo
-    j = index(STRI, 'Version')
-    VERSION = STRI(j: j+30)//char(0)
-    close(131)
-    j0 = index(VERSION, '.')
-    if (j0 == 0) then
-        write(*,*)'>>> Warning: Unknown version'
-    else
-        read(VERSION(j0-1: j0-1), *) AVERS 
-        read(VERSION(j0+1: j0+1), *) ARLEAS 
-        j1 = INDEX(VERSION(j0+1:), '.')
-        if (j1 == 0) then
-            AEDIT = 0
-        else
-            read(VERSION(j0+j1+1: j0+j1+1), *) AEDIT
-        endif
-    endif
-endif
 
 !----------------------------------------------------------------------|
 ! Read tables to set global scalars varNames, constNames, internNames
@@ -142,32 +101,12 @@ enddo
 
 TIME = TSTART  ! Here TSTART=0
 
-!----------------------------------------------------------------------|
-! Read file 'tmp/<exp><equ>.nml'
-!----------------------------------------------------------------------|
-
-call GETENV('expfile', exp_file)
-call GETENV('equfile', equ_file)
-
-file_in = 'tmp/' // TRIM(exp_file) // TRIM(equ_file) // '.nml'
-
-OPEN(161, FILE=TRIM(file_in), delim='apostrophe')
-READ(161, nml=astra_log, iostat=ios)
-CLOSE(161)
-
-resizeGraph = resize
-
 !define namelist file nml_file
 nml_file = 'exp/nml/' // trim(exp_file)
 INQUIRE(FILE=trim(nml_file), EXIST=file_existence)
 if (.not. file_existence) then
    nml_file = 'exp/nml/' // trim(machine)
 endif
-
-call path_split(rev_file, dir_path, fname, jpos)
-if (LEN_TRIM(fname) == 0) fname = 'profil.dat'
-! Disallowing user-defined subdirs for Review file
-rev_file = '.res/' // TRIM(fname)
 
 !----------------------------------------------------------------------|
 ! Read machine configuration, if available (need "machine" variable defined)
@@ -407,11 +346,6 @@ if (NA1 > NRD) then
         '                 Parameter "NA1" cannot exceed', NRD
     call astra_stop(err_msg)
 endif
-
-! Override TPAUSE, TSTART & TEND: command line (astra.nml) has priority
-if (tbeg_nml   /= -1.) TSTART = tbeg_nml
-if (tend_nml   /= -1.) TEND   = tend_nml
-if (tpause_nml /= -1.) YTP    = tpause_nml
 
 !----------------------------------------------------------------------|
 ! Uncomment the next line to set the "WAIT" mode at the start
@@ -852,7 +786,6 @@ if (NBNT > 0) then
         if (BNDTIM(jt) <= TSTART) j = jt
     enddo
     jt=j
-		
     allocate(bnd_rz(2*NBND))
     do jthe=1, NBND
         bnd_rz(jthe)      = BNDR((jthe-1)*NBNT + jt)
@@ -975,8 +908,6 @@ TIMEQL = TIME - DTEQL - 1.d-7
 TTOUT(1) = -1.d10
 call set_timescale(NTIMES)  ! Set time scale (mode 6)
 
-GRAP(1:NRW) = AB
-
 TIM7(1) = TINIT
 if (TIME > TINIT + 1.025*abs(TSCALE)) TINIT = TSTART
 TIM7(3) = abs(TSCALE)/8.
@@ -994,7 +925,7 @@ end subroutine read_input
 subroutine set_timescale(n_times)
 ! Define time scales (former SETTSC)
 
-use outcmn_inc, only: equ_file
+use io_mod, only: equ_file
 use const_inc, only: TAUPRP, TAUMIN, TAUMAX, TAU, TSCALE, &
         VOLUME, DTOUT, DROUT, DPOUT
 
@@ -1131,7 +1062,7 @@ character(len=6) function VARNAM(str_in, ierr)
 ! Eventual trailing 'X' is removed
 ! Otherwise, VARNAM is returned.
 
-use outcmn_inc, only: esc_ch, tab_ch
+use io_mod, only: esc_ch, tab_ch
 
 implicit none
 

@@ -22,7 +22,7 @@ class SUBPROC:
 
 use parameter_inc, only: n_ql
 use const_inc
-use outcmn_inc, only: IFSBP
+use io_mod, only: IFSBP
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use ipc_mod, only: mem_tglf, mem_qlkz, mem_neo
 
@@ -65,6 +65,7 @@ class ININAM:
 """subroutine ININAM(LISTSB)
 
 use parameter_inc, only: NSBMX, NRD
+use io_mod, only: sbr_name, IFSBP, IFSBX, NSBR
 use outcmn_inc
 use const_inc
 use status_inc
@@ -274,6 +275,7 @@ class INIVAR:
 '''subroutine INIVAR
 
 use outcmn_inc
+use io_mod, only: IFDFAX
 use const_inc
 use nclass_mod
 use status_inc
@@ -321,7 +323,7 @@ use status_inc
 use ipc_mod
 use nclass_mod
 use strahl_mod
-use outcmn_inc
+use io_mod
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr, wallTime_xpr
 use json_vars, only: profxNames
 use debugger, only: markloc

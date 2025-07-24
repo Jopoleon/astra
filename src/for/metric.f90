@@ -1041,7 +1041,7 @@ end subroutine A2EMEQ
 subroutine A2GSSOLVER(equil_solver)
 
 use parameter_inc, only: NRD
-use outcmn_inc, only: CCOIL, VCOIL, NBNT
+use io_mod, only: CCOIL, VCOIL, NBNT
 use const_inc, only: NEQUIL, MEQUIL, NBND, IPART, IPCTRL, TAU, NA, NA1, NAB, NCNB, &
     RTOR, BTOR, IPL, GP, GP2, HRO, ROC, ABC, &
     VOLUME, SHIFT, ELONG, UPDWN, TRIAN, &
@@ -1291,7 +1291,7 @@ subroutine BNDRY(RPB, ZPB)
 !  call BNDRY(RZPB, RZPB(NBND+1))
 !---------------------------------------------------------------------
 
-use outcmn_inc, only: NBNT
+use io_mod, only: NBNT
 use expdat, only: BNDTIM, BNDR, BNDZ
 use const_inc, only: NBND, GP2, TIME, RTOR, SHIFT, ABC, TRIAN, UPDWN, ELONG
 use ext_bnd, only: ext_bnd_in, use_ext_bnd
@@ -1507,7 +1507,7 @@ subroutine GETCOILS(yvcoil, yccoil)
 
 ! Get the coil currents from the exp data at the present time slice
 
-use outcmn_inc, only: CCOIL, VCOIL, NCNBT, CCOILX, VCOILX
+use io_mod, only: CCOIL, VCOIL, NCNBT, CCOILX, VCOILX
 use const_inc, only: TIME, NCNB, ITFBE
 
 implicit none

@@ -44,7 +44,7 @@ subroutine A2STRAHL(tau_start, zneocl, dzneocl, dimpsol, shot_in)
 use parameter_inc, only: NRD
 use const_inc, only: TIME, TSTART, TAUPRP, NA1, PSIAX, GP, GP2, RTOR, NA, HRO, IPART
 use status_inc, only: FP, UPL, VOLUM, SHIF, NE, TE, TI, AMAIN, ZMAIN!, work_strahl
-use outcmn_inc, only: machine, awd, nml_file
+use io_mod, only: machine, awd, nml_file
 use strahl_mod, only: profiles_file_write_strahl, grid_write_strahl, &
     zeff_strahl, prad_tot_strahl, nmain_strahl, prad_main_strahl, &
     prad_strahl, nimp_strahl, zavg_strahl, nesrc_strahl, &

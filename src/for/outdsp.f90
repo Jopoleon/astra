@@ -1,7 +1,8 @@
 subroutine initMainWindow
 
+use io_mod,  only: null_ch
 use outcmn_inc, only: astra_gui_ref, astra_gui, plot_area_ref, plot_area, &
-    RUNID, NST, MOD10, MODEY, NTOUT, resizeGraph, null_ch
+    RUNID, NST, MOD10, MODEY, NTOUT, resizeGraph
 use const_inc, only: XOUT, NA
 use status_inc, only: MU
 
@@ -67,19 +68,19 @@ subroutine OUTDSP(MARK, JIFNEW, IYO, TT_out, t_out)
 ! JIFNEW = 1 New curves only
 !---------------------------------------------------------------------
 
-use parameter_inc, only: NRD, NRDX, NRW
+use parameter_inc, only: NRD, NRDX, NRW, NARRX
 use status_inc, only: AMETR, MU, SHIF, ELON, TRIA
 use const_inc, only: XOUT, NAB, NA1, NA1E, ABC, TINIT, TSCALE, RTOR, &
     MEQUIL, LEQ, TIME
+use io_mod, only: IFDFAX, NPTM, XAXES, DATAX, equ_file, TOUTX
 use outcmn_inc, only: astra_gui, plot_area, &
     curves_per_frame, active_tab, MOD10, NWIND1, NWIND3, NWINDX, &
-    IFDFAX, KPRI, NPTM, ICVMX, &
+    KPRI, ICVMX, &
     NROUT, ROUT, OSHIFR, NAMER, SCALER, &
     NTOUT, OSHIFT, NAMET, SCALET, &
-    NXOUT, NAMEX, NARRX, DATAX, TOUTX, LTOUT, &
-    XAXES, GRAL, GRAP, pixel_ymid, meter2pixel, &
-    Black, WarningColor, EraseColor, Red, Blue, Green, White, &
-    equ_file
+    NXOUT, NAMEX, LTOUT, &
+    GRAL, GRAP, pixel_ymid, meter2pixel, &
+    Black, WarningColor, EraseColor, Red, Blue, Green, White
 use expdat, only: raw_profile_map, DATARR
 use dbl2char, only: fmt_xf
 use char_manip, only: len_trim_tab, str_in_list
@@ -542,7 +543,8 @@ subroutine plot_lcfs(ifnew, IYO, time_in)
 ! IFNEW < 0 Don't mark resonances q=m/n
 ! IFNEW > 10 Call from Review. (JIFNEW-10) is used to control erasing
 
-use outcmn_inc, only: Red, EraseColor, NBNT, pixel_ymid, meter2pixel
+use io_mod, only: NBNT
+use outcmn_inc, only: Red, EraseColor, pixel_ymid, meter2pixel
 use expdat, only: BNDTIM, BNDR, BNDZ
 use const_inc, only: NBND
 
