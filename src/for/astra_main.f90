@@ -32,15 +32,13 @@ call CPU_TIME(cpu_start)
 call SYSTEM_CLOCK(wall_start, rate)
 call const_init
 call status_init
-use_ext_bnd = 0
-
-debug = 0 ! Initialise to: no debugging
 
 call ininam(LISTSB)
-IPART = 1   ! Mark initial iteration section
-
 call io_init
 call read_input
+
+use_ext_bnd = 0
+IPART = 1   ! Mark initial iteration section
 
 !--------------------
 ! ASTRA graphic frame

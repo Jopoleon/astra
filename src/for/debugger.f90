@@ -2,7 +2,7 @@ module debugger
 
 implicit none
 
-integer :: debug, flightsim
+integer :: debug=0, flightsim=0
 character(len=132) :: last_mark, sec_last_mark
 
 contains

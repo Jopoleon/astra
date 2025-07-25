@@ -41,7 +41,7 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
     else{
         sscanf(arg0, "%s", whoami);
     }
-    sscanf(arg1, "%s", Mama.Path);
+    sscanf(arg1, "%s", Mama.Path); // AWD
     Mama.Pid = (pid_t)*arg2;
     Mama.Key = (key_t)*arg3;
     My.OrdNr = *arg4;

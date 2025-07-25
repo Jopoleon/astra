@@ -23,7 +23,7 @@ integer, parameter :: White=0, Black=1, Red=2, Blue=3, Green=5, &
      nplots_max=32, NRW=128, NTIMES=1024
 character(len=132) :: rev_file='tmp/profile.dat'
 integer, dimension(NRW)   :: MARKT, MARKR, NWIND1, NWIND3, NWIND4, NWIND7, NWINDX, IP1, IP2, IP30, IP31
-integer :: NDTNAM, NTOUT, NROUT, NSBP, LTOUT, IPOUT, MOD10, NXOUT
+integer :: NDTNAM, NTOUT, NROUT, LTOUT, IPOUT, MOD10, NXOUT
 integer :: MODEY, IDX, IDT, KPRI, NST, AVERS, ARLEAS, AEDIT
 integer, dimension(plot_modes) :: active_tab, curves_per_frame
 double precision, dimension(NRW)   :: GRAL, GRAP, OSHIFT, OSHIFR, SCALET, SCALER

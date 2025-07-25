@@ -65,7 +65,7 @@ class ININAM:
 """subroutine ININAM(LISTSB)
 
 use parameter_inc, only: NSBMX, NRD
-use io_mod, only: sbr_name, IFSBP, IFSBX, NSBR, awd, equ_file, exp_file
+use io_mod, only: sbr_name, IFSBP, IFSBX, NSBR, NSBP, awd, equ_file, exp_file
 use outcmn_inc
 use const_inc
 use status_inc
@@ -274,7 +274,6 @@ class INIVAR:
     header = \
 '''subroutine INIVAR
 
-use outcmn_inc
 use io_mod, only: IFDFAX
 use const_inc
 use nclass_mod
@@ -985,7 +984,7 @@ class INIT_CONVERGE_STEP:
 '''subroutine init_converge_step(LISTSB)
 
 use parameter_inc, only: NSBMX, NRD, n_ql
-use outcmn_inc
+use io_mod, only: equ_file, exp_file, NSBP
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use const_inc
 use status_inc
@@ -1024,7 +1023,6 @@ class EQNS_INC:
 use parameter_inc, only: NRD, NSBMX, n_ql
 use const_inc
 use status_inc
-use outcmn_inc
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use nclass_mod
 use strahl_mod

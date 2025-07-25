@@ -19,7 +19,7 @@ void ot_tra_(INT_*, INT_*, INT_*, double*);
 void AllocateShmem(int);
 
 char AWD[132];
-char *equmod, *DATA;
+char *A_equ_file, *A_exp_file;
 char A_ipc_file[132];
 char ASTRA_task[132];
 const char *A_log_file = "./tmp/astra.nml";
@@ -126,7 +126,7 @@ char* parse_nml(char * line_in){
 
 /*-----------------------------------------------------
   Check existence of executable files listed in subs
-  Reads tmp/astra.nml and fills external variables AWD, equmod, DATA
+  Reads tmp/astra.nml and fills external variables AWD, A_equ_file, A_exp_file
   *Nsub - total number of files_names/strings in subs,
   *Lstr - length of an element of the character ARRAY "subs",
           maximum length of the subprocess_name,
@@ -156,8 +156,8 @@ int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs){
         fprintf(stderr, "getcwd() error\n");
     }
     while ((read = getline(&line, &len, A_LOG)) != -1) {
-        if (strstr(line, "equ_file") != NULL) equmod = parse_nml(line);
-        if (strstr(line, "exp_file") != NULL) DATA   = parse_nml(line);
+        if (strstr(line, "equ_file") != NULL) A_equ_file = parse_nml(line);
+        if (strstr(line, "exp_file") != NULL) A_exp_file   = parse_nml(line);
     }
 
     fclose(A_LOG);
@@ -243,7 +243,7 @@ int initipc_(INT_* Ngrid, INT_ *n_ql){
 /* Define the absolute path name of Astra executable ASTRA_task */
     strcpy(ASTRA_task, AWD);
     strcat(ASTRA_task, "/bin/");
-    strcat(ASTRA_task, equmod);
+    strcat(ASTRA_task, A_equ_file);
     strcat(ASTRA_task, ".exe");
     my_key = ftok( ASTRA_task, (int)A_PID);    /* Get System V IPC key */
     printf("ASTRA_task %s\n", ASTRA_task);
@@ -268,8 +268,8 @@ int initipc_(INT_* Ngrid, INT_ *n_ql){
 */
     strcpy(A_ipc_file, AWD);
     strcat(A_ipc_file, "/tmp/");
-    strcat(A_ipc_file, DATA);
-    strcat(A_ipc_file, equmod);
+    strcat(A_ipc_file, A_exp_file);
+    strcat(A_ipc_file, A_equ_file);
     strcat(A_ipc_file, ".ipc");
     A_PDF = fopen(A_ipc_file, "w");
     if (!A_PDF){
@@ -277,7 +277,7 @@ int initipc_(INT_* Ngrid, INT_ *n_ql){
         exit(0);
     }
     fprintf(A_PDF, " Astra task:  \"%s\"\n", ASTRA_task);
-    fprintf(A_PDF, " Astra files:  \"%s\",  \"%s\"\n", DATA, equmod);
+    fprintf(A_PDF, " Astra files:  \"%s\",  \"%s\"\n", A_exp_file, A_equ_file);
     gethostname(hostname, (size_t)32);
 
     hold_time=time(NULL);
@@ -707,8 +707,8 @@ void write_aipc(const struct A_proc_info Aproc, char* AWdir, int qlSize)
     }
 
     while ((read = getline(&line, &len, A_LOG)) != -1) {
-        if (strstr(line, "equ_file") != NULL) equmod = parse_nml(line);
-        if (strstr(line, "exp_file") != NULL) DATA = parse_nml(line);
+        if (strstr(line, "equ_file") != NULL) A_equ_file = parse_nml(line);
+        if (strstr(line, "exp_file") != NULL) A_exp_file = parse_nml(line);
     }
 
     fclose(A_LOG);
@@ -716,8 +716,8 @@ void write_aipc(const struct A_proc_info Aproc, char* AWdir, int qlSize)
 
     strcpy(A_ipc_file, AWdir);
     strcat(A_ipc_file, "tmp/");
-    strcat(A_ipc_file, DATA);
-    strcat(A_ipc_file, equmod);
+    strcat(A_ipc_file, A_exp_file);
+    strcat(A_ipc_file, A_equ_file);
     strcat(A_ipc_file, ".ipc");
     A_PDF = fopen(A_ipc_file, "a");
     if (!A_PDF){
