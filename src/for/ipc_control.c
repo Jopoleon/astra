@@ -352,34 +352,17 @@ int inikids_(INT_* Nsub, INT_ *Lstr, char *subs){
        return(1);
     }
 
-    for (j = 0; j < *Nsub; j++) {
+    for (j=0; j<*Nsub; j++) {
         char *sub = &subs[*Lstr * j];
-
-        if (strlen(sub) == 0) {
-            printf("Error in input SBP string [%s]\n", sub);
-            return j;
-        }
 
         strncpy(path, sub, sizeof(path) - 1);
         path[sizeof(path) - 1] = '\0';
 
-        const char *home = getenv("HOME");
-        if (path[0] == '~' && home) {
-            snprintf(stri, sizeof(stri), "%s%s", home, path + 1);
-            strncpy(path, stri, sizeof(path) - 1);
-            path[sizeof(path) - 1] = '\0';
-        }
-
-        char *slash = strrchr(path, '/');
-        if (slash) {
-            strncpy(name, slash + 1, sizeof(name) - 1);
-            name[sizeof(name) - 1] = '\0';
-            *(slash + 1) = '\0'; // Truncate path after last slash
-        } else {
-            strncpy(name, path, sizeof(name) - 1);
-            name[sizeof(name) - 1] = '\0';
-            path[0] = '\0';
-        }
+// Split "path" (xpr/tglfi) with respect to '/' into path, name
+        char *slash = strrchr(path, '/');    // position of '/' in "path"
+        strncpy(name, slash + 1, sizeof(name) - 1);
+        name[sizeof(name) - 1] = '\0';
+        *(slash + 1) = '\0';   // Truncate "path" after last slash
 
         int i;
         if (strlen(path) == 0) {
@@ -391,7 +374,7 @@ int inikids_(INT_* Nsub, INT_ *Lstr, char *subs){
                 perror("chdir failed");
                 return j + 1;
             }
-
+// Sending main (e.g. "tglfi"), only once per subprocess
             snprintf(stri, sizeof(stri), "./%s %s %d %d %d &",
                      name, ASTRA_task, A_PID, (int)my_key, j + 1);
             i = system(stri);
