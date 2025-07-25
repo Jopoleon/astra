@@ -19,7 +19,8 @@ void ot_tra_(INT_*, INT_*, INT_*, double*);
 void AllocateShmem(int);
 
 char AWD[132];
-char *A_equ_file, *A_exp_file;
+char A_equ_file[132];
+char *A_exp_file;
 char A_ipc_file[132];
 char ASTRA_task[132];
 const char *A_log_file = "./tmp/astra.nml";
@@ -41,6 +42,12 @@ char *getcwd(char *buf, size_t size);
 /* {sem_num, sem_op, sem_flag}; */
 
 struct sembuf buf0 = {0, 0, ~SEM_UNDO&~IPC_NOWAIT};
+
+void trim_right(char *str) {
+    int i = strlen(str) - 1;
+    while (i >= 0 && (str[i] == ' ' || str[i] == '\n' || str[i] == '\r' || str[i] == '\t'))
+        str[i--] = '\0';
+}
 
 /*-------------------------------
   Kill ASTRA, free memory
@@ -135,7 +142,7 @@ char* parse_nml(char * line_in){
    each element includes a name of external process to be called
 */
 
-int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs){
+int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs, char* equ_file){
     char stri[132], name[132], path[132];
     char *line;
     size_t len = 0;
@@ -156,12 +163,13 @@ int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs){
         fprintf(stderr, "getcwd() error\n");
     }
     while ((read = getline(&line, &len, A_LOG)) != -1) {
-        if (strstr(line, "equ_file") != NULL) A_equ_file = parse_nml(line);
-        if (strstr(line, "exp_file") != NULL) A_exp_file   = parse_nml(line);
+        if (strstr(line, "exp_file") != NULL) A_exp_file = parse_nml(line);
     }
-
     fclose(A_LOG);
     free(line);
+
+    snprintf(A_equ_file, sizeof(A_equ_file), "%s", equ_file);
+    trim_right(A_equ_file);
 
     for (j = 0; j < *Nsub; j++) {
         char *sub = &subs[*Lstr * j];
@@ -691,7 +699,7 @@ void write_aipc(const struct A_proc_info Aproc, char* AWdir, int qlSize)
 {
     FILE *A_PDF, *A_LOG;
     char A_logf[132];
-    char *line;
+    char *line, *equ_file;
     size_t len=0;
     ssize_t read;
 
@@ -707,7 +715,7 @@ void write_aipc(const struct A_proc_info Aproc, char* AWdir, int qlSize)
     }
 
     while ((read = getline(&line, &len, A_LOG)) != -1) {
-        if (strstr(line, "equ_file") != NULL) A_equ_file = parse_nml(line);
+        if (strstr(line, "equ_file") != NULL) equ_file = parse_nml(line);
         if (strstr(line, "exp_file") != NULL) A_exp_file = parse_nml(line);
     }
 
@@ -717,7 +725,7 @@ void write_aipc(const struct A_proc_info Aproc, char* AWdir, int qlSize)
     strcpy(A_ipc_file, AWdir);
     strcat(A_ipc_file, "tmp/");
     strcat(A_ipc_file, A_exp_file);
-    strcat(A_ipc_file, A_equ_file);
+    strcat(A_ipc_file, equ_file);
     strcat(A_ipc_file, ".ipc");
     A_PDF = fopen(A_ipc_file, "a");
     if (!A_PDF){

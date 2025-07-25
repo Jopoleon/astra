@@ -325,7 +325,7 @@ end subroutine INIVAR'''
 
         inam += 'NSBP = %d\n' %NSBP
         if NSBP > 0:
-            inam += 'call checkexec(NSBP, 64, LISTSB)\n'
+            inam += 'call checkexec(NSBP, 64, LISTSB, equ_file)\n'
 
         self.ininam  = const_text.ININAM.header
         self.ininam += inam
