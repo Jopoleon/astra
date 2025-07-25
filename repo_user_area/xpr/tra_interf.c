@@ -18,7 +18,7 @@ void write_aipc();
    Note description of arg2, arg3, arg4 should be compatible with INT_ or int
 */
 
-int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
+int sbp2shm_(char* arg0, char* arg1, char* arg2, char* arg3, int* arg4, int* arg5, int* arg6)
 {
     int i, qlSize;
     double watch;
@@ -27,7 +27,7 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
     static struct sembuf buf0 = {0, 1, IPC_NOWAIT};
     static struct sembuf bufN = {1,-1, ~SEM_UNDO&~IPC_NOWAIT};
     static char whoami[32];
-    static char AWD[96];
+    static char AWD[132], equfile[132], expfile[132];
     static struct A_proc_info Mama, My;
 
 /* Analyze the calling command string. Get own PID and name. */
@@ -42,9 +42,11 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
         sscanf(arg0, "%s", whoami);
     }
     sscanf(arg1, "%s", Mama.Path); // AWD
-    Mama.Pid = (pid_t)*arg2;
-    Mama.Key = (key_t)*arg3;
-    My.OrdNr = *arg4;
+    sscanf(arg2, "%s", equfile);
+    sscanf(arg3, "%s", expfile);
+    Mama.Pid = (pid_t)*arg4;
+    Mama.Key = (key_t)*arg5;
+    My.OrdNr = *arg6;
     printf("Fortran main: %s %d %d\n", My.Path, Mama.Pid, Mama.Key);
 
 /* Associate My semaphore with the ordinal process number */
@@ -77,7 +79,7 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
 /* Attach My shared memory to the process
    My shared memory segment starts at ShmAdr */
     ShmAdr = shmat(My.ShMid, NULL, 0);
-    write_aipc(My, AWD, qlSize);
+    write_aipc(My, AWD, equfile, expfile, qlSize);
 
     while(1){
 /* Increments the PRIMARY semaphore immediately, i.e. lets it run

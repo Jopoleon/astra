@@ -365,24 +365,18 @@ int inikids_(INT_* Nsub, INT_ *Lstr, char *subs){
         *(slash + 1) = '\0';   // Truncate "path" after last slash
 
         int i;
-        if (strlen(path) == 0) {
-            snprintf(stri, sizeof(stri), "./bin/%s %s %d %d %d &",
-                     name, ASTRA_task, A_PID, (int)my_key, j + 1);
-            i = system(stri);
-        } else {
-            if (chdir(path) != 0) {
-                perror("chdir failed");
-                return j + 1;
-            }
+        if (chdir(path) != 0) {
+            perror("chdir failed");
+            return j + 1;
+        }
 // Sending main (e.g. "tglfi"), only once per subprocess
-            snprintf(stri, sizeof(stri), "./%s %s %d %d %d &",
-                     name, ASTRA_task, A_PID, (int)my_key, j + 1);
-            i = system(stri);
+        snprintf(stri, sizeof(stri), "./%s %s  %s %s %d %d %d &",
+                 name, ASTRA_task, A_equ_file, A_exp_file, A_PID, (int)my_key, j + 1);
+        i = system(stri);
 
-            if (chdir(AWD) != 0) {
-                perror("chdir back to AWD failed");
-                return j + 1;
-            }
+        if (chdir(AWD) != 0) {
+            perror("chdir back to AWD failed");
+            return j + 1;
         }
 
 // Wait until child increments semaphore 0
@@ -678,37 +672,15 @@ void freeshm(){
 }
 
 /*---------------------------------------------------------------------*/
-void write_aipc(const struct A_proc_info Aproc, char* AWdir, int qlSize)
+void write_aipc(const struct A_proc_info Aproc, char* AWdir, char* equfile, char *expfile, int qlSize)
 {
     FILE *A_PDF, *A_LOG;
-    char A_logf[132];
-    char *line, *equ_file;
-    size_t len=0;
-    ssize_t read;
-
-// Check existence of subprocess executable files 
-// Read tmp/astra.nml and store run info
-
-    strcpy(A_logf, AWdir);
-    strcat(A_logf, "/tmp/astra.nml");
-    A_LOG = fopen(A_logf, "r");
-    if (!A_LOG){
-        printf("Cannot open Astra log file: \"%s\"\n", A_log_file);
-        exit(0);
-    }
-
-    while ((read = getline(&line, &len, A_LOG)) != -1) {
-        if (strstr(line, "equ_file") != NULL) equ_file = parse_nml(line);
-        if (strstr(line, "exp_file") != NULL) A_exp_file = parse_nml(line);
-    }
-
-    fclose(A_LOG);
-    free(line);
+    char *equ_file;
 
     strcpy(A_ipc_file, AWdir);
     strcat(A_ipc_file, "tmp/");
-    strcat(A_ipc_file, A_exp_file);
-    strcat(A_ipc_file, equ_file);
+    strcat(A_ipc_file, expfile);
+    strcat(A_ipc_file, equfile);
     strcat(A_ipc_file, ".ipc");
     A_PDF = fopen(A_ipc_file, "a");
     if (!A_PDF){
