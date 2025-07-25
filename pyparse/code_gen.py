@@ -281,7 +281,6 @@ end subroutine INIVAR'''
 # ininam.f90
 
         inam  = 'AWD = "%s"\n' %awd
-        inam += 'equ_file = "%s"\n' %os.path.basename(parse.f_equ)
         if parse.arxuse:
             for j, arx in enumerate(parse.arxuse):
                 inam += 'ARXUSE(%d) = %d\n' %(j+1, arx)
@@ -324,8 +323,6 @@ end subroutine INIVAR'''
                 j_ipc += 1
 
         inam += 'NSBP = %d\n' %NSBP
-        if NSBP > 0:
-            inam += 'call checkexec(NSBP, 64, LISTSB, equ_file)\n'
 
         self.ininam  = const_text.ININAM.header
         self.ininam += inam

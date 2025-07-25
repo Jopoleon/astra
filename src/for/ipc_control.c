@@ -20,10 +20,9 @@ void AllocateShmem(int);
 
 char AWD[132];
 char A_equ_file[132];
-char *A_exp_file;
+char A_exp_file[132];
 char A_ipc_file[132];
 char ASTRA_task[132];
-const char *A_log_file = "./tmp/astra.nml";
 key_t my_key;
 
 pid_t A_PID = 0;
@@ -104,79 +103,6 @@ void ot_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N, double* mem){
     return;
 }
 
-/*----------------------------------------------------------------*/
-char* parse_nml(char * line_in){
-    if (line_in == NULL) return NULL;
-
-// Find the opening quote
-    const char *start = strchr(line_in, '"');
-    if (!start) start = strchr(line_in, '\'');
-    if (!start) return NULL;
-
-    start++;
-
-// Find the end of the quoted word
-    const char *end = start;
-    while (*end && *end != '"' && *end != '\'' && !isspace((unsigned char)*end)) {
-        end++;
-    }
-
-    size_t len = end - start;
-    char *word_out = malloc(len + 1);  // +1 for null terminator
-    if (!word_out) return NULL;
-
-    strncpy(word_out, start, len);
-    word_out[len] = '\0';
-
-    return word_out;
-}
-
-/*-----------------------------------------------------
-  Check existence of executable files listed in subs
-  Reads tmp/astra.nml and fills external variables AWD, A_equ_file, A_exp_file
-  *Nsub - total number of files_names/strings in subs,
-  *Lstr - length of an element of the character ARRAY "subs",
-          maximum length of the subprocess_name,
-  *subs - character ARRAY, described in a calling Fortran routine as
-          character*(*Lstr) ARRAY(max_length)
-   each element includes a name of external process to be called
-*/
-
-int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs, char* equ_file){
-    char stri[132], name[132], path[132];
-    char *line;
-    size_t len = 0;
-    ssize_t read;
-    int j;
-    if (A_Nsems != 0) return(A_Nsems); // Do check only once
-
-    snprintf(A_equ_file, sizeof(A_equ_file), "%s", equ_file);
-    trim_right(A_equ_file);
-
-    // Check existence of subprocess executable files
-// Read tmp/astra.log and store run info
-    FILE *A_LOG;
-    A_LOG = fopen(A_log_file, "r");
-    if (!A_LOG){
-        printf("Cannot open Astra log file: \"%s\"\n", A_log_file);
-        exit(0);
-    }
-    if (getcwd(AWD, sizeof(AWD)) != NULL) {
-        printf("Current working dir: %s\n", AWD);
-    } else {
-        fprintf(stderr, "getcwd() error\n");
-    }
-    while ((read = getline(&line, &len, A_LOG)) != -1) {
-        if (strstr(line, "exp_file") != NULL) A_exp_file = parse_nml(line);
-    }
-    fclose(A_LOG);
-    free(line);
-
-    A_Nsems = *Nsub + 1;
-    printf("a_nsems=%d\n", A_Nsems);
-    return(A_Nsems);
-}
-
 /*---------------------------------------------------
   "call initipc(NA1)" is placed in init.inc
   Get PID and key for the Astra main process
@@ -184,7 +110,7 @@ int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs, char* equ_file){
   Assign NA1 (= *Ngrid) to A_NA1
   Allocate two shared memory segments for Astra datasets
 */
-int initipc_(INT_* Ngrid, INT_ *n_ql){
+int initipc_(INT_* Ngrid, INT_ *n_ql, INT_* Nsub, char* equ_file, char* exp_file){
     int l, var_size, arr_size, is=0, ds, j, *k;
     FILE *A_PDF;
     char hostname[132];
@@ -192,8 +118,14 @@ int initipc_(INT_* Ngrid, INT_ *n_ql){
     time_t hold_time;
     static union semun Mysemun;
 
-    if (A_Nsems == 0) return(0); /* Remove this line if ESC is enabled */
+    A_Nsems = *Nsub + 1;
     if (A_NA1 != 0) return(0); /* Initialize only once */
+    
+    getcwd(AWD, sizeof(AWD));
+    snprintf(A_equ_file, sizeof(A_equ_file), "%s", equ_file);
+    snprintf(A_exp_file, sizeof(A_exp_file), "%s", exp_file);
+    trim_right(A_equ_file);
+    trim_right(A_exp_file);
 
 /* Collecting data */
     A_PID = getpid();
@@ -623,7 +555,7 @@ void freeshm(){
 /*---------------------------------------------------------------------*/
 void write_aipc(const struct A_proc_info Aproc, char* AWdir, char* equfile, char *expfile, int qlSize)
 {
-    FILE *A_PDF, *A_LOG;
+    FILE *A_PDF;
     char *equ_file;
 
     strcpy(A_ipc_file, AWdir);
