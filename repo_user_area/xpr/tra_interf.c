@@ -176,3 +176,25 @@ int sbp2shm_(char* arg0, char* arg1, char* arg2, char* arg3, int* arg4, int* arg
     exit(0);
 
 }
+
+/*---------------------------------------------------------------------*/
+void write_aipc(const struct A_proc_info Aproc, char* AWdir, char* equfile, char *expfile, int qlSize)
+{
+    FILE *A_PDF;
+    char *equ_file;
+    char A_ipc_file[132];
+
+    strcpy(A_ipc_file, AWdir);
+    strcat(A_ipc_file, "tmp/");
+    strcat(A_ipc_file, expfile);
+    strcat(A_ipc_file, equfile);
+    strcat(A_ipc_file, ".ipc");
+    A_PDF = fopen(A_ipc_file, "a");
+    if (!A_PDF){
+        printf("Cannot open existing Astra IPC file: \"%s\"\n", A_ipc_file);
+        exit(0);
+    }
+    fprintf(A_PDF, "%12d%12d%12d   %s\n", getpid(), Aproc.ShMid, qlSize, Aproc.Path);
+    fclose(A_PDF);
+    return;
+}

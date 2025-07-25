@@ -370,7 +370,7 @@ int read_aipc(INT_* Nsub, INT_ *Lstr, char *subs){
     FILE *A_PDF;
     char stri[132], name[132];
     int j, i, k, ID, ShmID, kS;
-
+    
     A_PDF = fopen(A_ipc_file, "r");
     if (!A_PDF){
         printf("Cannot open Astra IPC file: \"%s\"\n", A_ipc_file);
@@ -430,7 +430,7 @@ int read_aipc(INT_* Nsub, INT_ *Lstr, char *subs){
 
 /*----------- Get ID of ShMem for ASTRA scalars -------------*/
 /* First active only after "initipc", i.e. after "init.inc" */
-int setvars_(double* DEVAR, INT_* NA1, INT_* NB1, INT_* NBOUND, INT_* N, INT_* N_QL){
+int setvars_(double* DEVAR, INT_* NA1, INT_* NB1, INT_* NBOUND, INT_* N, INT_* NQL){
     int *I, j;
 
     if (A_Nsems == 0){
@@ -458,7 +458,7 @@ int setvars_(double* DEVAR, INT_* NA1, INT_* NB1, INT_* NBOUND, INT_* N, INT_* N
     AVARS->trian = *(DEVAR + 29);
     AVARS->updwn = *(DEVAR + 32);
     AVARS->zmj   = *(DEVAR + 36);
-    AVARS->n_ql = *N_QL;
+    AVARS->n_ql = *NQL;
     AVARS->na1  = *NA1;
     AVARS->nb1  = *NB1;
     AVARS->nrd  = *N;
@@ -546,26 +546,5 @@ void freeshm(){
             }
         }
     }
-    return;
-}
-
-/*---------------------------------------------------------------------*/
-void write_aipc(const struct A_proc_info Aproc, char* AWdir, char* equfile, char *expfile, int qlSize)
-{
-    FILE *A_PDF;
-    char *equ_file;
-
-    strcpy(A_ipc_file, AWdir);
-    strcat(A_ipc_file, "tmp/");
-    strcat(A_ipc_file, expfile);
-    strcat(A_ipc_file, equfile);
-    strcat(A_ipc_file, ".ipc");
-    A_PDF = fopen(A_ipc_file, "a");
-    if (!A_PDF){
-        printf("Cannot open existing Astra IPC file: \"%s\"\n", A_ipc_file);
-        exit(0);
-    }
-    fprintf(A_PDF, "%12d%12d%12d   %s\n", getpid(), Aproc.ShMid, qlSize, Aproc.Path);
-    fclose(A_PDF);
     return;
 }
