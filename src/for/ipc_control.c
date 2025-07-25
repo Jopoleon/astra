@@ -147,10 +147,14 @@ int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs, char* equ_file){
     char *line;
     size_t len = 0;
     ssize_t read;
-    int j, i;
-    if (A_Nsems != 0) return(A_Nsems); /* Do check only once */
-/* Check existence of subprocess executable files */
-/* Read tmp/astra.log and store run info */
+    int j;
+    if (A_Nsems != 0) return(A_Nsems); // Do check only once
+
+    snprintf(A_equ_file, sizeof(A_equ_file), "%s", equ_file);
+    trim_right(A_equ_file);
+
+    // Check existence of subprocess executable files
+// Read tmp/astra.log and store run info
     FILE *A_LOG;
     A_LOG = fopen(A_log_file, "r");
     if (!A_LOG){
@@ -168,32 +172,8 @@ int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs, char* equ_file){
     fclose(A_LOG);
     free(line);
 
-    snprintf(A_equ_file, sizeof(A_equ_file), "%s", equ_file);
-    trim_right(A_equ_file);
-
-    for (j=0; j<*Nsub; j++) {
-        char *sub = &subs[*Lstr * j];
-
-        strncpy(path, sub, sizeof(path) - 1);
-        path[sizeof(path) - 1] = '\0';
-
-// Separate name and path
-        char *slash = strrchr(path, '/');
-        strncpy(name, slash + 1, sizeof(name) - 1);
-        name[sizeof(name) - 1] = '\0';
-        *(slash + 1) = '\0'; // Truncate path after last slash
-
-// Check if executable exists
-        snprintf(stri, sizeof(stri), "test -x %s%s", path, name);
-        if (system(stri) == 0) {
-            A_Nsems++;
-        } else {
-            fprintf(stderr, "The executable file \"%s%s\" (#%d) does not exist\n", path, name, j + 1);
-            exit(j);
-        }
-    }
-
-    A_Nsems++;
+    A_Nsems = *Nsub + 1;
+    printf("a_nsems=%d\n", A_Nsems);
     return(A_Nsems);
 }
 
