@@ -171,48 +171,17 @@ int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs, char* equ_file){
     snprintf(A_equ_file, sizeof(A_equ_file), "%s", equ_file);
     trim_right(A_equ_file);
 
-    for (j = 0; j < *Nsub; j++) {
+    for (j=0; j<*Nsub; j++) {
         char *sub = &subs[*Lstr * j];
-
-        if (strlen(sub) == 0) {
-            fprintf(stderr, " >>> Xroutine call string (#%d) is empty.\n", j + 1);
-            exit(EXIT_FAILURE);
-        }
 
         strncpy(path, sub, sizeof(path) - 1);
         path[sizeof(path) - 1] = '\0';
 
-// Expand ~ to $HOME if necessary
-        if (path[0] == '~') {
-            const char *home = getenv("HOME");
-            if (!home) {
-                fprintf(stderr, " >>> Xroutine call string \"%s\" error:\n", sub);
-                fprintf(stderr, " >>> Symbol \"~\" is not allowed.\n");
-                exit(EXIT_FAILURE);
-            }
-
-            snprintf(stri, sizeof(stri), "%s%s", home, path + 1);
-            strncpy(path, stri, sizeof(path) - 1);
-            path[sizeof(path) - 1] = '\0';
-        }
-
 // Separate name and path
         char *slash = strrchr(path, '/');
-        if (slash) {
-            strncpy(name, slash + 1, sizeof(name) - 1);
-            name[sizeof(name) - 1] = '\0';
-            *(slash + 1) = '\0'; // Truncate path after last slash
-        } else {
-            strncpy(name, path, sizeof(name) - 1);
-            name[sizeof(name) - 1] = '\0';
-            path[0] = '\0';
-        }
-
-        if (strlen(path) > 62) {
-            fprintf(stderr, " >>> Xroutine call string \"%s\" error:\n", sub);
-            fprintf(stderr, " >>> Absolute path is too long.\n");
-            exit(EXIT_FAILURE);
-        }
+        strncpy(name, slash + 1, sizeof(name) - 1);
+        name[sizeof(name) - 1] = '\0';
+        *(slash + 1) = '\0'; // Truncate path after last slash
 
 // Check if executable exists
         snprintf(stri, sizeof(stri), "test -x %s%s", path, name);
