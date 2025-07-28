@@ -6,7 +6,6 @@ INT_ NQL;
 void a_stop_();
 int   SemID ,  ShMid0,  ShMid1;
 void *ShmAd0, *ShmAd1, *ShmAdr;
-double swatch_();
 void qlk_interf_();
 void neo_interf_();
 void tglf_interf_();
@@ -21,7 +20,6 @@ void write_aipc();
 int sbp2shm_(char* arg0, char* arg1, char* arg2, char* arg3, int* arg4, int* arg5, int* arg6)
 {
     int i, qlSize;
-    double watch;
     static union semun Mysemun;
 // sembuf members: {sem_num,sem_op,sem_flag};
     static struct sembuf buf0 = {0, 1, IPC_NOWAIT};
