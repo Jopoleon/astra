@@ -1,7 +1,7 @@
 #include "Astra.h"
 
-extern INT_ A_NA1;
-INT_ NQL;
+extern int A_NA1;
+int NQL;
 
 void a_stop_();
 int   SemID ,  ShMid0,  ShMid1;
@@ -14,7 +14,7 @@ void write_aipc();
 /*---------------------------------------------------------------------*/
 /* acquires information about AWD, process wd, id, name, key,
    ord. number, allocated shared memory ID and semaphore ID.
-   Note description of arg2, arg3, arg4 should be compatible with INT_ or int
+   Note description of arg2, arg3, arg4 should be compatible with int
 */
 
 int sbp2shm_(char* arg0, char* arg1, char* arg2, char* arg3, int* arg4, int* arg5, int* arg6)

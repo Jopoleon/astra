@@ -8,14 +8,14 @@
 #include <stddef.h>
 #include "Astra.h"
 
-INT_ A_NA1;
-INT_ N_QL;
+int A_NA1;
+int N_QL;
 
 int semtimedop();
-int read_aipc(INT_*, INT_*, char*);
+int read_aipc(int*, int*, char*);
 void freeshm();
-void to_tra_(INT_*, INT_*, INT_*);
-void ot_tra_(INT_*, INT_*, INT_*, double*);
+void to_tra_(int*, int*, int*);
+void ot_tra_(int*, int*, int*, double*);
 void AllocateShmem(int);
 
 char AWD[128];
@@ -67,7 +67,7 @@ void a_stop_(){
    by the process "tra" and stored in shared memory.
 */
 
-void to_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N){
+void to_tra_(int* jrho_beg, int* jrho_end, int* N){
     struct shmid_ds Myshmid_ds;
     if (A_ShmNum < 0) return;
     if (shmctl(A_ShmID[*N+1], IPC_STAT, &Myshmid_ds) < 0){
@@ -88,7 +88,7 @@ void to_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N){
 }
 
 /*----------------------------------------------------------------*/
-void ot_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N, double* mem){
+void ot_tra_(int* jrho_beg, int* jrho_end, int* N, double* mem){
 // Reads the shared memory segment and stores the QL-code output to ASTRA fortran arrays 
     int j, jarr;
     if (A_ShmNum < 0) return;
@@ -110,7 +110,7 @@ void ot_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N, double* mem){
   Assign NA1 (= *Ngrid) to A_NA1
   Allocate two shared memory segments for Astra datasets
 */
-int initipc_(INT_* Ngrid, INT_ *n_ql, INT_* Nsub, char* equ_file, char* exp_file){
+int initipc_(int* Ngrid, int *n_ql, int* Nsub, char* equ_file, char* exp_file){
     int l, var_size, arr_size, is=0, ds, j, *k;
     FILE *A_PDF;
     char hostname[128];
@@ -223,7 +223,7 @@ void AllocateShmem(int l){
     (4) increment primary semaphore
     (5) wait until the primary opens track
 */
-int inikids_(INT_* Nsub, INT_ *Lstr, char *subs){
+int inikids_(int* Nsub, int *Lstr, char *subs){
     if (A_ChID[A_ShmShift] != 0) return(0); /* Initialize only once */
     char stri[400], name[32], path[32];
     int j, i;
@@ -298,7 +298,7 @@ int ifipc_(){
 }
 
 /*--------------------- Unlock subprocess ----------------------------*/
-int letsbp_(INT_* n){
+int letsbp_(int* n){
     auto struct sembuf bufN = {*n, 1, IPC_NOWAIT};
     --buf0.sem_op;   /* Each call decrements Sem0 value by 1 */
 /* Increment semval # sem_num=*n, Open subprocess */
@@ -366,7 +366,7 @@ int wait4all_(){
     (1) fill arrays ofChild_process_IDs, Child_shmem_lengths/IDs,
     (2) attach child process shmem segments to the main process memory
 */
-int read_aipc(INT_* Nsub, INT_ *Lstr, char *subs){
+int read_aipc(int* Nsub, int *Lstr, char *subs){
     FILE *A_PDF;
     char stri[128], name[128];
     int j, i, k, ID, ShmID, kS;
@@ -430,7 +430,7 @@ int read_aipc(INT_* Nsub, INT_ *Lstr, char *subs){
 
 /*----------- Get ID of ShMem for ASTRA scalars -------------*/
 /* First active only after "initipc", i.e. after "init.inc" */
-int setvars_(double* DEVAR, INT_* NA1, INT_* NB1, INT_* NBOUND, INT_* N, INT_* NQL){
+int setvars_(double* DEVAR, int* NA1, int* NB1, int* NBOUND, int* N, int* NQL){
     int *I, j;
 
     if (A_Nsems == 0){
@@ -469,7 +469,7 @@ int setvars_(double* DEVAR, INT_* NA1, INT_* NB1, INT_* NBOUND, INT_* N, INT_* N
 }
 
 /*------------- Get ID of ShMem for status.inc --------------*/
-int setarrs_(double* plasma_profs, INT_ *n_RD){
+int setarrs_(double* plasma_profs, int *n_RD){
     int jrho;
     int NRD = *n_RD;
     if (A_Nsems == 0) return(0);
