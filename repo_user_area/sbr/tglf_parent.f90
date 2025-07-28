@@ -38,6 +38,8 @@ double precision, dimension(nspec_max-2, nrho_m) :: zimp_m
 double precision, dimension(nspec_max-1, NRD) :: i_pflux_as
 double precision, allocatable, dimension(:, :) :: send_buffer
 character(len=256) :: worker_exe
+character(len=1), dimension(1) :: args
+args(1) = ''
 
 worker_exe = "xpr/tglf.x"
 
@@ -181,7 +183,7 @@ allocate(send_buffer(n_inputs, chunk))
 call MPI_Info_create(info, ierr)
 call MPI_Info_set(info, "host", "localhost", ierr)
 call MPI_Info_set(info, "oversubscribe", "false", ierr)
-call MPI_Comm_spawn(worker_exe, MPI_ARGV_NULL, nworkers, MPI_INFO_NULL, 0, MPI_COMM_SELF, intercomm, errcodes, ierr)
+call MPI_Comm_spawn(TRIM(worker_exe), args, nworkers, MPI_INFO_NULL, 0, MPI_COMM_SELF, intercomm, errcodes, ierr)
 
 ! Send dimensions and data to workers
 do i=0, nworkers-1

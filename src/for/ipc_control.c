@@ -18,11 +18,11 @@ void to_tra_(INT_*, INT_*, INT_*);
 void ot_tra_(INT_*, INT_*, INT_*, double*);
 void AllocateShmem(int);
 
-char AWD[132];
-char A_equ_file[132];
-char A_exp_file[132];
-char A_ipc_file[132];
-char ASTRA_task[132];
+char AWD[128];
+char A_equ_file[32];
+char A_exp_file[32];
+char A_ipc_file[128];
+char ASTRA_task[128];
 key_t my_key;
 
 pid_t A_PID = 0;
@@ -31,7 +31,7 @@ int A_Nsems = 0;       /* the number of semaphores */
 int A_ShmNum = -1;
 #define A_ShmShift 2
 #define A_Nsemx 20
-char A_ChNa[A_ShmShift+A_Nsemx][132]; /* Child process name (not used) */
+char A_ChNa[A_ShmShift+A_Nsemx][128]; /* Child process name (not used) */
 int  A_ChID[A_ShmShift+A_Nsemx] = {0, 0, 0};        /* Child process ID */
 int  A_ShmL[A_ShmShift+A_Nsemx]; /* Child Shmem segment length */
 int  A_ShmID[A_ShmShift+A_Nsemx] = {0, 0};
@@ -113,7 +113,7 @@ void ot_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N, double* mem){
 int initipc_(INT_* Ngrid, INT_ *n_ql, INT_* Nsub, char* equ_file, char* exp_file){
     int l, var_size, arr_size, is=0, ds, j, *k;
     FILE *A_PDF;
-    char hostname[132];
+    char hostname[128];
     size_t namlen;
     time_t hold_time;
     static union semun Mysemun;
@@ -225,7 +225,7 @@ void AllocateShmem(int l){
 */
 int inikids_(INT_* Nsub, INT_ *Lstr, char *subs){
     if (A_ChID[A_ShmShift] != 0) return(0); /* Initialize only once */
-    char stri[132], name[132], path[132];
+    char stri[400], name[32], path[32];
     int j, i;
 
     if (A_Nsems <= *Nsub){
@@ -368,7 +368,7 @@ int wait4all_(){
 */
 int read_aipc(INT_* Nsub, INT_ *Lstr, char *subs){
     FILE *A_PDF;
-    char stri[132], name[132];
+    char stri[128], name[128];
     int j, i, k, ID, ShmID, kS;
     
     A_PDF = fopen(A_ipc_file, "r");
@@ -377,7 +377,7 @@ int read_aipc(INT_* Nsub, INT_ *Lstr, char *subs){
         exit(0);
     }
     for (j=0; j < 5+A_ShmShift; j++){
-        fgets(stri, 132, A_PDF); /* Skip lines */
+        fgets(stri, 128, A_PDF); /* Skip lines */
     }
     i = A_ShmShift;
     while (EOF != fscanf(A_PDF, "%12d%12d%12d%s", &ID, &ShmID, &kS, stri) ){
