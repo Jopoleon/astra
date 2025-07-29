@@ -28,7 +28,7 @@ LIB = -lnbi -lsbr -lnbi -L/usr/lib64 -lX11 $(QLKNN_LIB) $(TGLF_LIB) $(TORB_LIB) 
 
 AENV = $(AWD)/exe/astra_rc
 
-FC_FLAGS = $(CHECKALLCOMP) -qopenmp -g -traceback -o   
+FC_FLAGS = $(CHECKALLCOMP) -qopenmp -o   
 
 FOR_SRC = \
 $(FOR_DIR)/astra_main.f90 \
