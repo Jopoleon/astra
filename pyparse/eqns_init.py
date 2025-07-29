@@ -38,7 +38,7 @@ def eqns_init(parse):
         init_txt += str_out
     if NSBP > 0:
         init_txt += 'call markloc("initipc")\n'
-        init_txt += 'call initipc(NA1, n_ql)\n'
+        init_txt += 'call initipc(NA1, n_ql, NSBP, equ_file, exp_file)\n'
         eqns_txt += const_text.SUBPROC.sbp_init
         init_txt += const_text.SUBPROC.sbp_init
         init_txt += 'call markloc("inikids")\n'

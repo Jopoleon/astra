@@ -1,29 +1,34 @@
 !----------------------------------------------------------------------|
 program main
+! Called only once, setting the shared memory segments, then it's just an exchange with the c/f90 subroutines
 
 implicit none
 
 integer :: iargc, mampid, mamkey, eignr
-character*132 :: STRING, eigpath, mampath
+character(len=132) :: arg_string, eigpath, mampath, equfile, expfile
 
-if (iargc() /= 4) then
-    write(6, '(A)') "Error"
+if (iargc() /= 6) then
+    write(6, '(A)') "Error #args in QLK main (xpr/qlk_interf.f90)"
     call a_stop
 endif
-call getarg(0, STRING)
-eigpath = STRING(1:len_trim(STRING))//char(0)
-call getarg(1, STRING)
-mampath = STRING(1:len_trim(STRING))//char(0)
-call getarg(2, STRING)
-read(STRING, *) mampid
-call getarg(3, STRING)
-read(STRING, *) mamkey
-call getarg(4, STRING)
-read(STRING, *) eignr
-call sbp2shm(eigpath, mampath, mampid, mamkey, eignr)
+call getarg(0, arg_string)
+eigpath = TRIM(arg_string) // char(0)
+call getarg(1, arg_string)
+mampath = TRIM(arg_string) // char(0)
+call getarg(2, arg_string)
+equfile = TRIM(arg_string) // char(0)
+call getarg(3, arg_string)
+expfile = TRIM(arg_string) // char(0)
+call getarg(4, arg_string)
+read(arg_string, *) mampid
+call getarg(5, arg_string)
+read(arg_string, *) mamkey
+call getarg(6, arg_string)
+read(arg_string, *) eignr
+
+call sbp2shm(eigpath, mampath, equfile, expfile, mampid, mamkey, eignr)
 
 end program main
-
 
 !----------------------------------------------------------------------|
 subroutine qlk_interf(jr1_in, jr2_in, nql, nrho, NA1N, NA1E, NA1I, &

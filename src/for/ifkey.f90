@@ -31,30 +31,28 @@ integer function IFKEY(IFKL)
 ! 12,13 - for equ/model.log file (once on entry)
 ! 3 - for post-viewer file (first on entry, then periodically)
 
-use parameter_inc, only: NRD, NRW
+use parameter_inc, only: NRD, NARRX, NCONST, NSDELOUT
 use status_inc, only: MU, AMETR, SHIF, ELON, TRIA, EQFF, EQPF, FP, RHO
-use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, XLINE1, &
+use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, exp_header, &
    NA, NB1, NA1, NAB, NUF, LEQ, NBND, TIME, TAU, TINIT, TSCALE, &
    TSTART, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
    BTOR, IPL, CONSTF, DEVAR, DELOUT, XFLAG
 use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     Black, Blue, Magenta, WarningColor, &
-    active_tab, curves_per_frame, coltab, null_ch, &
-    MOD10, LTOUT, NARRX, IPOUT, MODEY, &
+    active_tab, curves_per_frame, MOD10, LTOUT, IPOUT, MODEY, &
     NWINDX, NWIND1, NWIND3, NWIND4, NWIND7, &
-    NROUT, NTOUT, NXOUT, NSBR, NGR, NST, &
+    NROUT, NTOUT, NXOUT, NST, NDTNAM, NRW, &
     NAMER, NAMET, NAMEX, SCALER, SCALET, ROUT, OSHIFR, OSHIFT, &
-    rev_file, equ_file, exp_file, &
-    DTNAME, &
-    runid, TASK, VERSION, AVERS, ARLEAS, AEDIT, &
-    NCONST, NDTNAM, NSDELOUT, &
-    jbeg_arrx, GRAP, GRAL, IFDFVX, TIM7, NAM7, KPRI, ICVMX
+    rev_file, DTNAME, runid, VERSION, AVERS, ARLEAS, AEDIT, &
+    GRAP, GRAL, TIM7, NAM7, KPRI, nplots_max, &
+    NTIMES, TTOUT, TOUT
+use io_mod, only: NSBR, NGR, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
 use expdat, only: raw_profile_map, DATARR
-use timeoutput_inc, only: NTIMES, TTOUT, TPOUT, TOUT
 use dbl2char, only: fmt6
-use char_manip, only: str_in_list
+use char_manip, only: str_in_list, null_ch, beep_ch
 use debugger, only: markloc, debug, astra_stop
 use json_vars, only: internNames, constNames, varNames, n_const, n_var
+use cpu_usage, only: cpu_report
 
 implicit none
 
@@ -70,8 +68,8 @@ integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
     MODEX, IX, IY, NU1, j2, J1, ios, &
     YEAR, MONTH, DAY, HOUR, MINUTE, time_arr(8)
 ! plot_arr dimension: 4*NRD(Mode 5, 8) 320(7) 2*NTIMES(Mode 6) 2*NRD(Modes 1-4)
-integer :: ITO(NTIMES, ICVMX+2)
-double precision :: DEVARO(NCONST), LINEAV, CHORDN, ABD, ALFA, TIMEB, TROUT
+integer :: ITO(NTIMES, nplots_max+2)
+double precision :: DEVARO(NCONST), LINEAV, CHORDN, ABD, ALFA, TIMEB, TROUT, TPOUT=0.d0
 double precision, dimension(1) :: rescale_array
 double precision, dimension(NTIMES) :: PRMARK, TIMOD4
 double precision, dimension(NRD) :: YWA, YWB, YWC
@@ -234,7 +232,7 @@ if (TPOUT + DPOUT < TSTART .or. (IFKL /= 256 .and. TIME + 0.5*TAU >= TPOUT + DPO
         HOUR   = time_arr(5)
         MINUTE = time_arr(6)
 
-        write(3) exp_file, equ_file, VERSION, XLINE1, &
+        write(3) exp_file, equ_file, VERSION, exp_header, &
             YEAR, MONTH, DAY, HOUR, MINUTE, n_const, n_var, &
             NROUT, (NAMER(J), J=1, NROUT), (SCALER(J), J=1, NROUT), &
             NTOUT, (NAMET(J), J=1, NTOUT), (SCALET(J), J=1, NTOUT), &
@@ -312,7 +310,7 @@ do while(.True.)
                 if (KEY == 0) return
                 if (KIBM == 1 .and. (KEY == 99 .or. KEY == 67)) then ! <Ctrl>+C
                     if (TASK(4:4) /= 'B') call Close_Screen
-                    call CPU_usage('>>> ASTRA <Ctrl>+C exit >>>' // char(0))
+                    call cpu_report('>>> ASTRA <Ctrl>+C exit >>>' // null_ch)
                     call astra_stop
                 endif
 
@@ -387,7 +385,7 @@ do while(.True.)
         endif
 
     CASE(37) ! '%'
-        call CPU_usage(char(0))
+        call cpu_report(null_ch)
 
     CASE(46) ! '.'
         MARK = MARK + 1
@@ -396,7 +394,7 @@ do while(.True.)
 
     CASE(47) ! '/'
         if (TASK(4:4) /= 'B') call Close_Screen
-        call CPU_usage('>>> ASTRA / or "Quit" button exit >>>' // char(0))
+        call cpu_report('>>> ASTRA / or "Quit" button exit >>>' // null_ch)
         call astra_stop
 
     CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
@@ -498,7 +496,7 @@ do while(.True.)
         enddo
         if (KEY == 71) INT4 = n_portrait
         if (KEY == 81) INT4 = n_landscape
-        call PSOPEN(TRIM(PSNAME) // char(0), INT4, IRET)
+        call PSOPEN(TRIM(PSNAME) // null_ch, INT4, IRET)
 
         if (IRET == 0) then
             if (KEY == 71) KPRI = 1
@@ -536,8 +534,6 @@ do while(.True.)
            do J=1, 22   ! Don't save TPAUSE and TEND
                write(1, '(1A6, 1A2, 1P, 8E11.3)') internNames(J), ' =', DELOUT(J)
            enddo
-           write(1, *) 'Color table (description: forlib/Astra2XW.c)', 32
-           write(1, '(4(2I4, 3X))')(COLTAB(j), j=1, 64)
            close (1)
            write(*, *) "Default start file is modified"
        endif
@@ -554,9 +550,9 @@ do while(.True.)
         if (ios /= 0) then
             write(*, *) '>>> IFKEY: "', TRIM(CNSFIL), '" file error'
             if (KEY == 27)  then
-                write(*, '(/2A)') 'Use key "/" for exit', char(7) ! Beep
+                write(*, '(/2A)') 'Use key "/" for exit', beep_ch ! Beep
             elseif (KEY /= 0 .and. KIBM == 0) then
-                write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, char(7)
+                write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, beep_ch
             endif
             KEY = 0
             CYCLE
@@ -762,14 +758,14 @@ do while(.True.)
     if (KIBM == 2) then !-------- <Alt> pressed'
         if (KEY == 77 .or. KEY == 109) then
              if (KIBM == 0) then
-                 write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, char(7)
+                 write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, beep_ch
              endif
              KEY = 0
              CYCLE
         endif
         if (KEY == 47) then ! <Alt>+/
             if (TASK(4:4) /= 'B') call Close_Screen
-            call CPU_usage('>>> ASTRA <Alt>+/ exit >>>' // char(0))
+            call cpu_report('>>> ASTRA <Alt>+/ exit >>>' // null_ch)
             call astra_stop
         endif
         if (KIBM == 2 .and. (KEY >= 32 .and. KEY <= 126) ) then
@@ -799,9 +795,9 @@ do while(.True.)
     endif
 
     if (KEY == 27)  then
-        write(*, '(/2A)') 'Use key "/" for exit', char(7) ! Beep
+        write(*, '(/2A)') 'Use key "/" for exit', beep_ch ! Beep
     elseif (KEY /= 0 .and. KIBM == 0) then
-        write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, char(7)
+        write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, beep_ch
     endif
     KEY = 0
 
@@ -811,7 +807,7 @@ enddo
 
 if (TASK(4:4) /= 'B') call Close_Screen
 
-call CPU_usage('>>> ASTRA exit: reached END time >>>' // char(0))
+call cpu_report('>>> ASTRA exit: reached END time >>>' // null_ch)
 call astra_stop
 
 return
@@ -823,14 +819,14 @@ subroutine graph_output(MARK, PRMARK, NAMEP, ITO)
 use parameter_inc, only: NRD
 use const_inc, only: NA
 use status_inc, only: MU
-use outcmn_inc, only: TASK, MOD10, null_ch, ICVMX
-use timeoutput_inc, only: NTIMES, TTOUT, TOUT
+use io_mod, only: TASK
+use outcmn_inc, only: MOD10, nplots_max, NTIMES, TTOUT, TOUT
 use debugger, only: markloc, debug
 
 implicit none
 
 integer, intent(in) :: MARK
-integer, intent(inout) :: ITO(NTIMES, ICVMX+2)
+integer, intent(inout) :: ITO(NTIMES, nplots_max+2)
 double precision, intent(in), dimension(NTIMES) :: PRMARK
 character(len=6) , intent(in) :: NAMEP(NTIMES)
 
@@ -862,9 +858,9 @@ subroutine refresh_plot(IFKL, MARK, PRMARK, PSNAME)
 ! Corresponds to block from statement 201
 
 use parameter_inc, only: NRD
-use outcmn_inc, only: astra_gui, KPRI, MOD10, MODEY, TASK, RUNID, &
-    WarningColor, null_ch, ICVMX, resizeGraph
-use timeoutput_inc, only: NTIMES, TOUT, TTOUT
+use io_mod, only: TASK
+use outcmn_inc, only: astra_gui, KPRI, MOD10, MODEY, RUNID, &
+    WarningColor, nplots_max, resizeGraph, NTIMES, TOUT, TTOUT
 use const_inc, only: XOUT, TIME, TAU, NA
 use status_inc, only: MU
 use debugger, only: markloc, debug
@@ -878,7 +874,7 @@ double precision, intent(in), dimension(NTIMES) :: PRMARK
 character(len=*) :: PSNAME
 
 integer :: plot_mode, NST, j
-integer :: ITO(NTIMES, ICVMX+2)
+integer :: ITO(NTIMES, nplots_max+2)
 double precision :: CHORDN, lineav
 character(len=6) :: NAMEP(NTIMES)
 character(len=132) :: STRI
@@ -932,15 +928,15 @@ end subroutine refresh_plot
 !---------------------------------------------------------------------
 subroutine SMODE5(MARK, PRMARK, NAMEP)
 
-use parameter_inc, only: NRD, NRW
-use outcmn_inc, only: astra_gui, plot_area, NROUT, ICVMX, SCALER, &
-    ROUT, rev_file, NXOUT, NGR, NAMER, NWIND4, active_tab, OSHIFR, &
-    MOD10, GRAL, GRAP, MODEY, KPRI, null_ch, Black, Red
+use parameter_inc, only: NRD
+use io_mod, only:  NGR
+use outcmn_inc, only: astra_gui, plot_area, NROUT, nplots_max, SCALER, &
+    ROUT, rev_file, NXOUT, NAMER, NWIND4, active_tab, OSHIFR, &
+    MOD10, GRAL, GRAP, MODEY, KPRI, NTIMES, NRW, Black, Red
 use const_inc, only: AB, NAB
 use dbl2char, only: fmt4
 use char_manip, only: len_trim_tab
 use debugger, only: markloc, debug
-use timeoutput_inc, only: NTIMES
 
 implicit none
 
@@ -1167,102 +1163,6 @@ return
 end subroutine SMODE5
 
 !---------------------------------------------------------------------
-subroutine writeTime(nch, string, tim, time)
-
-use outcmn_inc, only: tab_ch
-use debugger, only: markloc
-
-implicit none
-
-integer, intent(in) :: nch
-character(len=*), intent(in) :: string
-double precision, intent(in) :: tim, time
-
-integer :: jh, jm, js
-double precision :: t1
-
-call markloc('writeTime')
-
-js = tim
-jh = js/3600
-jm = (js - 3600*jh)/60
-t1 = tim - 60*jm - 3600*jh
-js = t1
-if (time >= 0.) then
-    write(nch, '(2A, I4.2, 2(A1, I2.2), F8.1, A1)') TRIM(string), &
-        tab_ch, jh, ':', jm, ':', js, 100.*tim/time, '%'
-else
-    write(nch, '(2A, I4.2, 2(A1, I2.2))') TRIM(string), &
-       tab_ch, jh, ':', jm, ':', js
-endif
-
-return
-end subroutine writeTime
-
-!---------------------------------------------------------------------
-subroutine CPU_usage(str_in)
-
-use parameter_inc, only: NSDELOUT
-use outcmn_inc, only: cpuTime_tot, cpuTime_tra, cpuTime_equ, cpuTime_sbr, NSBR, DTNAME, IFSBX
-use const_inc, only: NSTEPS, TIME, TSTART
-use debugger, only: markloc
-
-implicit none
-
-integer, parameter :: nch=6
-
-character(len=*), intent(in) :: str_in
-
-integer :: j, j1, j2
-double precision :: Y
-double precision, external :: swatch
-
-call markloc('CPU_usage')
-Y = 0.
-write(nch, '(A)') TRIM(str_in)
-call writeTime(nch, '  >>> Astra run time  ' // char(0), swatch(Y), -1.d0)
-
-cpuTime_tot = cpuTime_tra + cpuTime_equ
-do j=1, NSBR
-    cpuTime_tot = cpuTime_tot + cpuTime_sbr(j)
-enddo
-write(nch, '(A, I8)')    "    Total time steps  ", NSTEPS
-if (NSTEPS == 0) return
-Y = (TIME - TSTART)/NSTEPS
-if (Y < 1.d-1) then
-    Y = 1.d3*Y
-    write(nch, '(A, F6.3, A)')"    Average time step   ", Y, " msec"
-else
-    write(nch, '(A, F6.3, A)')"    Average time step   ", Y, " sec"
-endif
-write(nch, '(A, F6.3, A)')"    CPU per time step   ", cpuTime_tot/NSTEPS, " sec"
-Y = cpuTime_tot/(TIME - TSTART)
-if (Y < 60.) then
-    write(nch, '(A, F6.3, A)')"    CPU per 1 sec       ", Y, " sec"
-else
-    call writeTime(nch, '    CPU per 1 sec ' // char(0), Y, -1.d0)
-endif
-call writeTime(nch, '    Total CPU time' // char(0), cpuTime_tot, cpuTime_tot)
-call writeTime(nch, '    Transport core' // char(0), cpuTime_tra, cpuTime_tot)
-call writeTime(nch, '    Equilibrium   ' // char(0), cpuTime_equ, cpuTime_tot)
-j2 = 1
-do j1=1, NSBR
-    j = min(6, LEN_TRIM(DTNAME(NSDELOUT+4*j1)))
-    if (j1 == IFSBX(j2)) then
-        call writeTime(nch, '    Xroutine   "' // &
-            DTNAME(NSDELOUT+4*j1)(1: j) // '"', cpuTime_sbr(j1), cpuTime_tot)
-        j2 = j2 + 1
-    else
-        call writeTime(nch, '    Subroutine "' // &
-            DTNAME(NSDELOUT+4*j1)(1: j) // '"', cpuTime_sbr(j1), cpuTime_tot)
-    endif
-enddo
-write(nch, *)
-
-return
-end subroutine CPU_usage
-
-!---------------------------------------------------------------------
 subroutine ADDMOD(NCHW, NCHM, NCHL)
 ! Write model & model.log records in the header of a post-view file
 !   Both are preceded by one line 32*"^" 
@@ -1272,8 +1172,7 @@ subroutine ADDMOD(NCHW, NCHM, NCHL)
 ! Unit NCHL (model.log) must be open if nonzero
 ! Note:   1) NCHL =/= NCHM; 2) Empty lines are skipped.
 
-use outcmn_inc, only: null_ch
-use char_manip, only: len_trim_tab
+use char_manip, only: len_trim_tab, null_ch
 use debugger, only: markloc
 
 implicit none
@@ -1411,24 +1310,9 @@ return
 end function lineav
 
 !---------------------------------------------------------------------
-subroutine ADDTIME(anyTime)
-
-implicit none
-
-double precision, intent(in) :: anyTime
-
-double precision :: cpuTime
-double precision, external :: swatch
-
-cpuTime = swatch(anyTime)
-
-return
-end subroutine ADDTIME
-
-!---------------------------------------------------------------------
 subroutine menutable(arr_size, array_in, var_names, id)
 
-use outcmn_inc, only: null_ch
+use char_manip, only: null_ch
 
 implicit none
 
@@ -1438,7 +1322,7 @@ character(len=6), intent(in), dimension(arr_size) :: var_names
 
 integer :: nameLength, editable=1
 character(len=70), dimension(10), parameter :: titles = (/ &
-    'Variable control', 'Constant control', 'Times & Grids', 'Scale control', &
+    'Variable control', 'Constant control', 'Times & Grids', 'Sequence control', &
     'Time interval', 'Mark times:  < 0 - skip,  0 - dim,  > 0 - color #', &
     'Equilibrium control', '1D_Ufile', '2D_Ufile', 'NBI const for beam No' /)
 

@@ -434,16 +434,14 @@ end subroutine STREAD
 !---------------------------------------------------------------------
 subroutine ASKINT(NV, NVAR, NAME)
 
-use parameter_inc, only: NRW
-
 implicit none
 
 integer, intent(in) :: NV
-integer, intent(inout) :: NVAR(*)
-character(len=4), intent(in) :: NAME(*)
+integer, intent(inout) :: NVAR(NV)
+character(len=4), intent(in) :: NAME(NV)
 
 integer :: J
-double precision :: VAR(NRW)
+double precision :: VAR(NV)
 
 do J=1, NV
     VAR(J) = NVAR(J)
@@ -459,9 +457,8 @@ end subroutine ASKINT
 !---------------------------------------------------------------------
 subroutine ASTWIN(NB, IBOX, NAME, yscale, yshift, MOD10, YMODE)
 
-use parameter_inc, only: NRW
-use outcmn_inc, only: IP1, IP2, IP30, IP31, null_ch
-use char_manip, only: to_upper
+use outcmn_inc, only: IP1, IP2, IP30, IP31, NRW
+use char_manip, only: to_upper, null_ch
 
 implicit none
 
@@ -499,7 +496,7 @@ KEY = 'Y'
 
 ask_key: do while(KEY == 'Y')
 
-    do j = 1, NRW
+    do j=1, NRW
         write(rows(j)(1:80), '(79X, 1A1)') null_ch
     enddo
 
@@ -618,9 +615,9 @@ end subroutine ASTWIN
 !---------------------------------------------------------------------
 subroutine ASXWIN(NB, IBOX, NAME, yscale, yshift, r_min, r_max, MOD10, YMODE)
 
-use parameter_inc, only: NRW
 use const_inc, only: AB
-use outcmn_inc, only: IP1, IP2, IP30, IP31, null_ch
+use char_manip, only: null_ch
+use outcmn_inc, only: IP1, IP2, IP30, IP31, NRW
 
 implicit none
 
@@ -799,7 +796,8 @@ subroutine get_runid
 ! date and time when those are not defined (calling from INIT)
 !---------------------------------------------------------------------
 
-use outcmn_inc, only: RUNID, equ_file, exp_file, VERSION
+use io_mod, only: equ_file, exp_file
+use outcmn_inc, only: RUNID, VERSION
 
 implicit none
 

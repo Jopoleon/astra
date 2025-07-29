@@ -32,13 +32,12 @@ def json_concat(expequ):
     j_json = 1
     f_json = '%s-%d.json' %(loc, j_json)
 
-# Don't store anything if 1st json is older than tmp/astra.nml
-    f_log2 = '%s/tmp/%s.nml' %(awd, expequ)
-
-    if os.stat(f_json).st_mtime < os.stat(f_log2).st_mtime:
-        logger.warning('json files older then %s' %f_log2)
-        logger.warning('No 2D NetCDF file written')
-        return
+# Don't store a new CDF if the current one is newer than 1st json
+    if os.path.isfile(cdf_out):
+        if os.stat(f_json).st_mtime < os.stat(cdf_out).st_mtime:
+            logger.warning('json files older then %s' %cdf_out)
+            logger.warning('No 2D NetCDF file written')
+            return
 
     logger.info('Started json2cdf')
     ds_astra = {}

@@ -1,7 +1,7 @@
 subroutine initMainWindow
 
 use outcmn_inc, only: astra_gui_ref, astra_gui, plot_area_ref, plot_area, &
-    RUNID, NST, MOD10, MODEY, NTOUT, resizeGraph, null_ch
+    RUNID, NST, MOD10, MODEY, NTOUT, resizeGraph
 use const_inc, only: XOUT, NA
 use status_inc, only: MU
 
@@ -67,24 +67,23 @@ subroutine OUTDSP(MARK, JIFNEW, IYO, TT_out, t_out)
 ! JIFNEW = 1 New curves only
 !---------------------------------------------------------------------
 
-use parameter_inc, only: NRD, NRDX, NRW
+use parameter_inc, only: NRD, NRDX, NARRX
 use status_inc, only: AMETR, MU, SHIF, ELON, TRIA
 use const_inc, only: XOUT, NAB, NA1, NA1E, ABC, TINIT, TSCALE, RTOR, &
     MEQUIL, LEQ, TIME
+use io_mod, only: IFDFAX, NPTM, XAXES, DATAX, equ_file, TOUTX
 use outcmn_inc, only: astra_gui, plot_area, &
     curves_per_frame, active_tab, MOD10, NWIND1, NWIND3, NWINDX, &
-    IFDFAX, KPRI, NPTM, ICVMX, &
+    KPRI, nplots_max, NTIMES, NRW, &
     NROUT, ROUT, OSHIFR, NAMER, SCALER, &
     NTOUT, OSHIFT, NAMET, SCALET, &
-    NXOUT, NAMEX, NARRX, DATAX, TOUTX, LTOUT, &
-    XAXES, GRAL, GRAP, pixel_ymid, meter2pixel, &
-    Black, WarningColor, EraseColor, Red, Blue, Green, White, &
-    equ_file
+    NXOUT, NAMEX, LTOUT, &
+    GRAL, GRAP, pixel_ymid, meter2pixel, &
+    Black, WarningColor, EraseColor, Red, Blue, Green, White
 use expdat, only: raw_profile_map, DATARR
 use dbl2char, only: fmt_xf
 use char_manip, only: len_trim_tab, str_in_list
 use debugger, only: markloc, debug, astra_stop
-use timeoutput_inc, only: NTIMES
 use json_vars, only: profxNames
 
 implicit none
@@ -99,19 +98,19 @@ integer :: PTM(2), PTMO(2, NRDX, NRW), &
     IWN(16), fshift, &
     IST, text_posx, text_posy, JS, MODEX, &
     IYM0, LTOUT1, LTOUT2, STYL, x_shift, y_shift, jx_canv, jy_canv, JY, jxout, &
-    JW, j_curve, j_canv, &
+    jplot_in_tab, j_curve, j_canv, &
     IYMN, IYMX, JDSP, NPTMO(NRW), jlx(8), &
     NP1, j, half_wid, &
     j1, jj, jsco, jn, jpnt, jsc, jarr, jtyp, n_canvas, &
     jplot_in_canv, jcol, jsym, jprof, jtrace
 double precision :: SC(NRW), YX, r_out, YA, YL, YR, &
-     YZ, ABSC, ymin, ymax, px_rmag, yq1, xq1, xte, te_bc
+     YZ, abscissa, ymin, ymax, px_rmag, yq1, xq1, xte, te_bc
 double precision ,dimension(2) :: xbar, xbar_old, ybar, x8bar, y8bar
 double precision, dimension(16) :: xq1_old, xte_old
 double precision, dimension(NRD) :: xplot, yplot
 double precision, dimension(NTIMES) :: xtrace, ytrace, xtrace_old
-double precision, dimension(NRD, ICVMX) :: xold, yold
-double precision, dimension(NTIMES, ICVMX) :: ytrace_old
+double precision, dimension(NRD, nplots_max) :: xold, yold
+double precision, dimension(NTIMES, nplots_max) :: ytrace_old
 double precision, external :: AFVAL
 character(len=80) :: STRI
 character(len=5 ) :: XF4
@@ -178,25 +177,25 @@ CASE(1: 3)  ! Profiles
 
     j_curve = 0
     plot_prof: do jprof=1, NROUT
-        JW = NWIND1(jprof) - curves_per_frame(MOD10)*active_tab(MOD10) ! 1-16 for mode '1'
-        if (NAMER(jprof) == '    ') JW = 0
-        if (JW <= 0 .or. JW > curves_per_frame(MOD10)) CYCLE plot_prof
-        j_canv = MOD(JW - 1, n_canvas) + 1        ! 1-8 for mode '1'
+        jplot_in_tab = NWIND1(jprof) - curves_per_frame(MOD10)*active_tab(MOD10) ! 1-16 for mode '1'
+        if (NAMER(jprof) == '    ') jplot_in_tab = 0
+        if (jplot_in_tab <= 0 .or. jplot_in_tab > curves_per_frame(MOD10)) CYCLE plot_prof
+        j_canv = MOD(jplot_in_tab - 1, n_canvas) + 1        ! 1-8 for mode '1'
         jx_canv = MOD(j_canv - 1, plot_area%nx_canvas)      ! 0-3 for mode '1'
         jy_canv = (j_canv - 1)/plot_area%nx_canvas          ! 0-1
-        jplot_in_canv = (JW - 1)/n_canvas
+        jplot_in_canv = (jplot_in_tab - 1)/n_canvas
         jcol = jplot_in_canv + 2
         y_shift = plot_area%canvas_height * (plot_area%ny_canvas - 1 - jy_canv)
         x_shift = plot_area%canvas_width*jx_canv
 
-        YL = max(0.d0, ABSC(GRAL(jprof)))
-        YR = ABSC(GRAP(jprof))
+        YL = max(0.d0, abscissa(GRAL(jprof)))
+        YR = abscissa(GRAP(jprof))
         if (YL >= YR) YL = 0.d0
 
 ! Translate curve into pixel
         jxout = 0
         do j=1, NP1
-            YX = ABSC(AMETR(j)) 
+            YX = abscissa(AMETR(j))
             if (YX >= YL .and. YX <= YR) then
                 jxout = jxout + 1
                 if (jxout == 1 .and. j > 1) then ! left edge interpolation
@@ -229,12 +228,12 @@ CASE(1: 3)  ! Profiles
         endif
         STYL = (jcol - 1)*MARK
         j_curve = j_curve + 1
-        if (j_curve <= ICVMX) then
-            call update_curve(jxout, IWN(JW), jcol, STYL, xold(1:, j_curve), yold(1:, j_curve), xplot, yplot)
+        if (j_curve <= nplots_max) then
+            call update_curve(jxout, IWN(jplot_in_tab), jcol, STYL, xold(1:, j_curve), yold(1:, j_curve), xplot, yplot)
             xold(1: jxout, j_curve) = xplot(1: jxout)
             yold(1: jxout, j_curve) = yplot(1: jxout)
         endif
-        IWN(JW) = jxout
+        IWN(jplot_in_tab) = jxout
         do J=1, NP1
             ROUT(j, jprof) = ROUT(j, jprof) - OSHIFR(jprof)
         enddo
@@ -271,12 +270,12 @@ CASE(1: 3)  ! Profiles
 
         jsc = NWINDX(jxout)
         if (abs(SC(jsc)) < 1.1E-7) call SCAL(1, SC(jsc), SCALER(jsc), DATAX(1, jn), jpnt, NRDX)
-        JW = NWIND1(jsc) - curves_per_frame(MOD10)*active_tab(MOD10)
-        if (JW <= 0 .or. JW > curves_per_frame(MOD10)) CYCLE plot_profx
-        j_canv = MOD(JW - 1, n_canvas) + 1        ! 1-8 for mode '1'
+        jplot_in_tab = NWIND1(jsc) - curves_per_frame(MOD10)*active_tab(MOD10)
+        if (jplot_in_tab <= 0 .or. jplot_in_tab > curves_per_frame(MOD10)) CYCLE plot_profx
+        j_canv = MOD(jplot_in_tab - 1, n_canvas) + 1        ! 1-8 for mode '1'
         jx_canv = MOD(j_canv - 1, plot_area%nx_canvas)      ! 0-3 for mode '1'
         jy_canv = (j_canv - 1)/plot_area%nx_canvas          ! 0-1
-        jcol = (JW - 1)/n_canvas + 2
+        jcol = (jplot_in_tab - 1)/n_canvas + 2
         y_shift = plot_area%canvas_height * (plot_area%ny_canvas - 1 - jy_canv)
         x_shift = plot_area%canvas_width*jx_canv
 
@@ -299,14 +298,14 @@ CASE(1: 3)  ! Profiles
             j = len_trim_tab(STRI)
             call pscom(STRI, j)
         endif
-        YL = max(0.d0, ABSC(GRAL(jsc)))
-        YR = ABSC(GRAP(jsc)) 
+        YL = max(0.d0, abscissa(GRAL(jsc)))
+        YR = abscissa(GRAP(jsc)) 
         if (YL >= YR) YL = 0.d0
         j1 = 0
         do j=1, jpnt
             YX = XAXES(j, jn)
             if (MODEX >= 1 .and. YX > ABC) CYCLE
-            YA = ABSC(YX)
+            YA = abscissa(YX)
             if (YA > 1. .or. YA < YL .or. YA > YR) CYCLE
             j1 = j1 + 1
             PTM(1) = x_shift + plot_area%width/plot_area%nx_canvas*(YA-YL)/(YR-YL)
@@ -333,7 +332,7 @@ CASE(1: 3)  ! Profiles
         call textvm(text_posx, text_posy, XF4, 5) ! Text (time) -> plot legend
         PTM(1) = text_posx + astra_gui%dxlet + 37 ! 12 is fixed, as the font size does not scale
         PTM(2) = text_posy - 0.3*astra_gui%dylet
-        jcol = (JW - 1)/n_canvas + 2
+        jcol = (jplot_in_tab - 1)/n_canvas + 2
         call NMARK(PTM, jsym) ! Marker symbol -> plot legend
 
         jsco = jsc
@@ -341,8 +340,8 @@ CASE(1: 3)  ! Profiles
     enddo plot_profx
 
 ! Erase/put q=1 radius, BC for Te
-    yq1   = ABSC(AFVAL(MU, 1.0))
-    te_bc = ABSC(AMETR(max(NA1E, 1)))
+    yq1   = abscissa(AFVAL(MU, 1.0))
+    te_bc = abscissa(AMETR(max(NA1E, 1)))
     ymax = dble(IYM0) - 0.8*plot_area%canvas_height
     do j_canv=1, plot_area%nx_canvas
         xq1 = plot_area%canvas_width*(j_canv -1 + YQ1)
@@ -378,10 +377,10 @@ CASE(6)  ! Time traces
     ! right_label_position=JDX*JDMX=23*5*5=575 (see typdsp.f)
     do J=1, LTOUT-1
         r_out = (TT_out(J) - TINIT)*575/abs(TSCALE)
-        IYO(J, ICVMX+1) = 6*astra_gui%dxlet + r_out
+        IYO(J, nplots_max+1) = 6*astra_gui%dxlet + r_out
         xtrace(J) = 6*astra_gui%dxlet + r_out
         if (r_out < 0)  LTOUT1 = J + 1
-        if (IYO(J, ICVMX+1) <= plot_area%width - 1) LTOUT2 = J - 1
+        if (IYO(J, nplots_max+1) <= plot_area%width - 1) LTOUT2 = J - 1
     enddo
     LTOUT2 = LTOUT2 - LTOUT1 + 1
     if (LTOUT2 < 3) then ! No plot for small time
@@ -396,17 +395,17 @@ CASE(6)  ! Time traces
 
     j_curve = 0
     plot_traces: do jtrace=1, min(NRW, NTOUT)
-        JW = NWIND3(jtrace) - curves_per_frame(MOD10)*active_tab(MOD10)
+        jplot_in_tab = NWIND3(jtrace) - curves_per_frame(MOD10)*active_tab(MOD10)
         if (NAMET(jtrace) == '    ') CYCLE plot_traces
-        if (JW <= 0 .or. JW > curves_per_frame(MOD10)) CYCLE plot_traces
-        jplot_in_canv = (JW - 1)/n_canvas       ! <-> color
-        j_canv = MOD(JW - 1, n_canvas) + 1      ! 1-8 for mode '1'
+        if (jplot_in_tab <= 0 .or. jplot_in_tab > curves_per_frame(MOD10)) CYCLE plot_traces
+        jplot_in_canv = (jplot_in_tab - 1)/n_canvas       ! <-> color
+        j_canv = MOD(jplot_in_tab - 1, n_canvas) + 1      ! 1-8 for mode '1'
         do J=1, LTOUT
             r_out = max(t_out(J, jtrace)/SC(jtrace), -7.d0)
             r_out = min(r_out, 7.d0)
             JDSP  = 10*(plot_area%canvas_height*r_out + IYMN + (n_canvas - j_canv)*plot_area%canvas_height)
             JDSP  = max(JDSP, 10*IYMN)
-            IYO(J, ICVMX+2) = JY - min(JDSP, 10*IYMX)
+            IYO(J, nplots_max+2) = JY - min(JDSP, 10*IYMX)
             ytrace(J) = dble(plot_area%height) - min(max(plot_area%canvas_height*r_out + ymin + (n_canvas - j_canv)*plot_area%canvas_height, ymin), ymax)
         enddo
 
@@ -419,7 +418,7 @@ CASE(6)  ! Time traces
         STYL = jcol*MARK
         jcol  = jcol  + 1
         j_curve = j_curve + 1
-        if (j_curve <= ICVMX) then
+        if (j_curve <= nplots_max) then
             call setColor(White)
             call plot_curve(LTOUT2, STYL, xtrace_old(1:LTOUT2), ytrace_old(1:LTOUT2, j_curve))
             call setColor(jcol)
@@ -542,7 +541,8 @@ subroutine plot_lcfs(ifnew, IYO, time_in)
 ! IFNEW < 0 Don't mark resonances q=m/n
 ! IFNEW > 10 Call from Review. (JIFNEW-10) is used to control erasing
 
-use outcmn_inc, only: Red, EraseColor, NBNT, pixel_ymid, meter2pixel
+use io_mod, only: NBNT
+use outcmn_inc, only: Red, EraseColor, pixel_ymid, meter2pixel
 use expdat, only: BNDTIM, BNDR, BNDZ
 use const_inc, only: NBND
 
@@ -668,7 +668,7 @@ return
 end subroutine plot_wall
 
 !---------------------------------------------------------------------
-double precision function ABSC(YIN)
+double precision function abscissa(YIN)
 !---------------------------------------------------------------------
 ! Input: MODEX, YIN, FP
 ! Output: Value a=YIN mapped to the current abscissa
@@ -702,20 +702,20 @@ CASE DEFAULT ! Unknown option
 END SELECT
 
 if (MOD10 == 3 .or. MODEX == 3) then
-    ABSC = QUADIN(NA1, AMETR, FP_NORM, YIN)
+    abscissa = QUADIN(NA1, AMETR, FP_NORM, YIN)
     return
 endif
 
 if (MODEX == 0 .or. MODEX == 1) then
-    ABSC = min(1.d0, max(0.d0, YIN/YAB))
+    abscissa = min(1.d0, max(0.d0, YIN/YAB))
 elseif (MODEX == 2) then
-    ABSC = RFA(YIN)/YAB
+    abscissa = RFA(YIN)/YAB
 else
     write(*, *) "MODEX is neither 0, nor 1, nor 2, it cannot be"
 endif
 
 return
-end function ABSC
+end function abscissa
 
 !---------------------------------------------------------------------
 subroutine plot_flux_surfaces

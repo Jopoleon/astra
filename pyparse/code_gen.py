@@ -7,12 +7,14 @@ logger = logging.getLogger('as_parse.code_gen')
 logger.setLevel(logging.INFO)
 
 # Input:
-#    tmp/model.tmp, main/astra_variables.json, ls fml/, ls fnc/
+#    tmp/model.tmp, astra_variables.json, ls fml/, ls fnc/
 #
 # Output:
-#    tmp/*.f90, declar.fml, declar.fnc
+#    src/tmp/*.f90, declar.fml, declar.fnc
 
 mem_d = {'XPR/TGLFI': 'mem_tglf(1, 1)', 'XPR/QLKI': 'mem_qlkz(1, 1)', 'XPR/NEO': 'mem_neo(1, 1)'}
+
+awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 
 class CODE_GEN:
@@ -68,10 +70,10 @@ class CODE_GEN:
                     try:
                         fval = float(val)
                         sval = pa.format_number(fval)
-                        setv_sbr += 'DTEQ(%d,%d) = %s\n' %(j_arg, j_sbr, sval)
+                        setv_sbr += 'DTEQ(%d, %d) = %s\n' %(j_arg, j_sbr, sval)
                     except:
                         l2f = pa.LINE2FOR(val, parse)
-                        detv_sbr += 'DTEQ(%d,%d) = %s\n' %(j_arg, j_sbr, l2f)
+                        detv_sbr += 'DTEQ(%d, %d) = %s\n' %(j_arg, j_sbr, l2f)
                 j_arg += 1
             j_sbr += 1
 
@@ -89,8 +91,7 @@ class CODE_GEN:
                 jsbp = jlin + 1
                 sbp_d = sbrs_d[line]
                 self.subproc += 'if (IFSBP(%d) /= 0) then\n' %jsbp
-#                self.subproc += 'call ot%s(%s, %d, IFSBP(%d))\n' %(sbp_d['name'].lower()[4:10], sbp_d['args'], jsbp, jsbp)
-                self.subproc += 'call ot_tra(%s, %d, cpuTime_sbr(IFSBP(%d)), %s)\n' %(sbp_d['args'], jsbp, jsbp, mem_d[sbp_d['name']])
+                self.subproc += 'call ot_tra(%s, %d, %s)\n' %(sbp_d['args'], jsbp, mem_d[sbp_d['name']])
                 self.subproc += 'IFSBP(%d) = 0\n' %jsbp
                 self.subproc += 'endif\n'
         self.subproc += \
@@ -151,7 +152,7 @@ end subroutine POSTEP'''
         self.detvar += detv_sbr
         self.detvar += '''
 ! **** Radial profile computation
-call markloc("detvar.tmp (profiles)")
+call markloc("detvar (profiles)")
 do jdetv = 1, NA1
 J = jdetv
 '''
@@ -164,7 +165,9 @@ J = jdetv
                 self.detvar += const_text.SUBPROC.sbp_init
             self.detvar += detv_sbp
             self.detvar += 'call SUBPROC\n'
-
+            self.detvar += 'call SYSTEM_CLOCK(t_wall2, rate)\n'
+            self.detvar += 'print*, "XPR wall time", dble(t_wall2 - t_wall1)/dble(rate)\n'
+            self.detvar += 'wallTime_xpr = wallTime_xpr + t_wall2 - t_wall1\n'
         self.detvar += \
 '''
 return
@@ -204,7 +207,7 @@ end subroutine DETVAR_init
                 self.mtxt += '%3d  %6s %6s%s\n' %(jvar, parse.scalet[jvar].ljust(6), parse.namet[jvar].ljust(6), out)
 
 #-----------
-# inivar.tmp
+# inivar
 
         inivar = ''
 
@@ -277,8 +280,7 @@ end subroutine INIVAR'''
 #-----------
 # ininam.f90
 
-        inam  = ''
-
+        inam  = 'AWD = "%s"\n' %awd
         if parse.arxuse:
             for j, arx in enumerate(parse.arxuse):
                 inam += 'ARXUSE(%d) = %d\n' %(j+1, arx)
@@ -287,7 +289,7 @@ end subroutine INIVAR'''
         inam += const_text.ININAM.sb
         for jlin, line in enumerate(sbp_lines):
             inam += 'IFSBX(%d) = %d\n' %(jlin + 1, sbrs_d[line]['neq'])
-        inam += 'call markloc("ininam.tmp")\n'
+        inam += 'call markloc("ininam")\n'
         inam += 'NSBR  = %d\n' %len(parse.sbr_lines)
         inam += 'NTOUT = %d\n' %len(parse.namet)
         inam += 'NROUT = %d\n' %len(parse.namer)
@@ -309,7 +311,8 @@ end subroutine INIVAR'''
             sbrnam = sbrs_d[line]['name']
             if sbrnam[:3] == 'XPR':
                 sbrnam = sbrnam[4:10].lower()
-            inam += 'DTNAME(%2d*4+NSDELOUT) = "%s"//char(0)\n' %(j_sbr, sbrnam[:6])
+            inam += 'sbr_name(%d) = "%s"\n' %(j_sbr, sbrnam)
+            inam += 'DTNAME(%d*4+NSDELOUT) = "%s"//char(0)\n' %(j_sbr, sbrnam[:6])
         n_par = 0
         j_ipc = 1
         for line in parse.sbr_lines:
@@ -318,11 +321,8 @@ end subroutine INIVAR'''
             if sbr_d['locsbr'] in (-2, -3):
                 inam += 'LISTSB(%d)="%s"//char(0)\n' %(j_ipc, sbr_d['name'].lower())
                 j_ipc += 1
-            inam += 'SIGNSB(%2d) = %d\n' %(j_sbr, sbr_d['locsbr'])
 
         inam += 'NSBP = %d\n' %NSBP
-        if NSBP > 0:
-            inam += 'call checkexec(NSBP, 64, LISTSB)\n'
 
         self.ininam  = const_text.ININAM.header
         self.ininam += inam
@@ -350,7 +350,6 @@ end subroutine setvar'''
 
 #--------------
 # astra_out.f90
-#   former tmp/radout.tmp, tmp/timout.tmp
  
         self.astra_out  = const_text.RADOUT.header
         for jsgr, name in enumerate(parse.asnamer):

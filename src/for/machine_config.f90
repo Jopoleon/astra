@@ -1,7 +1,7 @@
 module machine_config
 
   use json_module, only : json_file
-  use outcmn_inc, only: machine
+  use io_mod, only: machine
   
   implicit none
 

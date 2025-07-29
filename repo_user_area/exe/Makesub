@@ -10,7 +10,7 @@ MOD_FEQ = $(AWD)/mod/feqis
 LIB_DIR = $(AWD)/lib
 LIB = $(LIB_DIR)/lib$(sub).a
 
-FC_FLAGS = -r8 -no-prec-div -ip -O0 -w -qopenmp $(CHECKALLCOMP)
+FC_FLAGS = -r8 -no-prec-div -O0 -w -qopenmp -traceback $(CHECKALLCOMP)
 
 SRCF90 := $(wildcard $(SRC_DIR)/*.f90)
 SRCF   := $(wildcard $(SRC_DIR)/*.f)

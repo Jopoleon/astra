@@ -3,26 +3,11 @@ module parameter_inc
 implicit none
 save
 
-integer, parameter :: NRD=801, NRW=128, NCONST=256, NARRX=101, NSBMX=60, &
+integer, parameter :: NRD=801, NCONST=256, NARRX=101, NSBMX=60, &
     NSDELOUT=39, NCNBM=60, NCNBTM=25000, NRDX=500, NTVAR=250000, &
     NTARR=250000, NEQNS=19, NBDMAX=256, NBDTMAX=1500, plot_modes=9, n_ql=15
 
 end module parameter_inc
-
-!--------------------------------
-module timeoutput_inc
-
-use parameter_inc, only: NRW
-
-implicit none
-
-integer, parameter :: NTIMES=1024
-
-! TOUT   - Time variables output array
-! TTOUT  - time-coordinate array for time output [s] TTOUT(1:LTOUT<=NTIMES)
-double precision :: TTOUT(NTIMES), TOUT(NTIMES, NRW), TPOUT
-
-end module timeoutput_inc
 
 !--------------------------------
 module expdat

@@ -299,13 +299,17 @@ def write_sbr(sbr_dic):
 
     out_txt += 'if (IFSUB == 1) then\n'
     out_txt += 'TEQ(%d) = TIME\n' %j_sbr
-    out_txt += 'call ADDTIME(cpuTime_tra)\n'
     out_txt += 'call markloc("subroutine %s")\n' %sbrnam
+    out_txt += 'call CPU_TIME(t_cpu1)\n'
+    out_txt += 'call SYSTEM_CLOCK(t_wall1, rate)\n'
     if sbrnam == 'STRAHL':
         out_txt += 'call STRAHL(DTEQ(1, %d), %50s\n' %(j_sbr,'')
     else:
         out_txt += 'call %s(%s)\n' %(sbrnam, sbr_dic['args'])
-    out_txt += 'call ADDTIME(cpuTime_sbr(%d))\n' %j_sbr
+    out_txt += 'call SYSTEM_CLOCK(t_wall2, rate)\n'
+    out_txt += 'call CPU_TIME(t_cpu2)\n'
+    out_txt += 'wallTime_sbr(%d) = wallTime_sbr(%d) + t_wall2 - t_wall1\n' %(j_sbr, j_sbr)
+    out_txt += 'cpuTime_sbr(%d) = cpuTime_sbr(%d) + t_cpu2 - t_cpu1\n' %(j_sbr, j_sbr)
     out_txt += 'endif\n'
 
     return out_txt
@@ -321,7 +325,6 @@ def write_xpr(sbr_dic, j_ipc):
     out_txt += 'if (IFSUB == 1) then\n'
     out_txt += 'TEQ(%d) = TIME\n' %j_sbr
     out_txt += 'IFSBP(%d) = %d\n' %(j_ipc, j_sbr)
-    out_txt += 'call ADDTIME(cpuTime_tra)\n'
     sbr_nam = sbrnam.lower().replace('xpr/', '')
     out_txt += 'call markloc("subroutine %s")\n' %sbr_nam
     out_txt += 'call to_tra(%s, %d)\n' %(sbr_dic['args'], j_ipc)

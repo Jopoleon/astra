@@ -14,7 +14,7 @@ use parameters_a2equil, only: type_parameters, fix_adapgrid, GP, GP2, s_fazt
 use const_inc, only : rtor,shift, updwn
 use feqis_circuit, only: psib_ext_feqis
 
-use outcmn_inc, only: MACHINE, nml_file
+use io_mod, only: MACHINE, nml_file
 
 implicit none
 
@@ -210,7 +210,7 @@ subroutine A_equil_2(ncoils, ifbey, time_a, tau_step, vcoils, eq_solver, iplas_v
 
 use imas_ids, only: type_equilibrium
 use parameters_a2equil, only: type_parameters
-use outcmn_inc, only: MACHINE
+use io_mod, only: MACHINE
 
 implicit none
 

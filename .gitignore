@@ -19,7 +19,6 @@ pyparse/iondens_ass.py
 /sbr
 /xpr
 /ipc
-/strahl
 /tmp
 /udb
 /neo
@@ -28,6 +27,7 @@ pyparse/iondens_ass.py
 /tglf
 /.res
 /bin
+/src/tmp
 user
 profiles.dat
 *_backup

@@ -2,7 +2,7 @@ subroutine EQDSK(coco_number)
 
 use const_inc, only: RTOR, BTOR, IPL, TIME, TSTART, SGNBT, SGNIP, NA1
 use parameters_a2equil, only: equil_now, GP2
-use outcmn_inc, only: awd, exp_file, equ_file
+use io_mod, only: awd, exp_file, equ_file
 use status_inc, only: MU, FP_NORM
 
 implicit none

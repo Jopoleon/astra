@@ -1,7 +1,10 @@
 #!/bin/bash
 
-if [[ $# > 0 ]]; then
-    WAIT_SLURM=$1
+equ_file=$1
+exp_file=$2
+TASK=$3
+if [[ $# > 3 ]]; then
+    WAIT_SLURM=$4
 else
     WAIT_SLURM=""
 fi
@@ -13,24 +16,8 @@ cd $AWD
 
 platform=`$AWD/get_platform`
 
-# Get variables from log file
-
-ALOG=$AWD/tmp/astra.nml
-while IFS='=' read var val
-do
-    var=`echo $var | xargs` #xargs for trimming
-    val=`echo $val | xargs`
-    if [[ $val ]]
-    then
-        declare "$var=$val"
-    fi
-done < $ALOG
-
 source $AWD/platform/env.$platform
 source $AWD/exe/astra_rc
-
-export expfile="${exp_file}"
-export equfile="${equ_file}"
 
 export CHECKALLCOMP=" "
 #export CHECKALLCOMP="-check all -traceback"
@@ -38,7 +25,7 @@ export CHECKALLCOMP=" "
 ulimit -s 100000
 
 echo Compile main ASTRA executable $equ_file $AWD 
-make -f exe/Makefile MODEL=$equ_file WORKFLOW=$AWD/main/stepup.f90
+make -f exe/Makefile MODEL=$equ_file WORKFLOW=$AWD/src/for/stepup.f90
 status=$?
 if [ $status -ne 0 ]
 then
@@ -68,6 +55,7 @@ fi
 
 ATASK=$AWD/bin/$equ_file.exe
 
+#if [ "$TASK" = 'BGDs' ] # for testing only
 if [ "$TASK" = 'BGD' ]
 then
     if ! command -v sbatch &> /dev/null
@@ -88,8 +76,6 @@ then
 #SBATCH --time=12:00:00
 #SBATCH --mail-type=none
 export OMP_NUM_THREADS=\${SLURM_CPUS_PER_TASK:-1}
-export expfile=${expfile}
-export equfile=${equfile}
 export OMP_PLACES=cores
 export I_MPI_ROOT=${I_MPI_ROOT}
 export I_MPI_FABRICS=shm:ofi
@@ -116,7 +102,7 @@ else
     echo
     for mod_name in tglfi qlkzi qlki neo
     do
-        PID=$(ps aux | grep $mod_name | grep 'R+' | awk '{print $2}')
+        PID=$(ps aux | grep $mod_name | grep 'R+' | grep $USER | awk '{print $2}')
         if [ ! -z "$PID" ];
         then
             for p_id in $PID

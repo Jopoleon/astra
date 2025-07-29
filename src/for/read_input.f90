@@ -14,43 +14,41 @@ subroutine read_input
 ! jbeg_arrx(jx)  - pointer to a position in the array raw_profile_map%time
 !----------------------------------------------------------------------|
 
-use parameter_inc, only: NTVAR, NBDMAX, NBDTMAX
-use const_inc
-use status_inc
-use outcmn_inc, only: AWD, exp_file, nml_file, equ_file, rev_file, &
-    TASK, machine, cpuTime_tra, resizeGraph, &
-    TASKID, VERSION, AVERS, ARLEAS, AEDIT, COLTAB, IFDFVX, IFDFAX, jbeg_arrx, &
-    NBFILE, &
-    NGR, NBNT, NCNBT, NRDX, NTARR, NRW, &
-    CCOILX, VCOILX, GRAP, TIM7
-use machine_config, only: config, config_read
+use parameter_inc, only: NTVAR, NBDMAX, NBDTMAX, NRD, NRDX, NTARR
+use const_inc, only: NITREQ, NA, NA1, NB1, NAB, NUF, NBND, NCNB, n_bouncon, &
+    TIME, TSTART, TEND, TPAUSE, TAUMIN, TAUPRP, TINIT, TSCALE, TIMEQL, DTEQL, &
+    DEVAR, CONSTF, DELOUT, XFLAG, exp_header, ARXUSE, &
+    AB, ABC, AWAll, ROC, ROCO, ROB, ROWALL,  HRO, HROX, RTOR, &
+    ELONG, ELONM, TRIAN, TRICH, SHIFT, VOLUME, &
+    GP, GP2, BTOR, BTN, FTO, FTN, IPL, IPLN, FLXDR, PSIAX, PSIBO
+use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
+    G11, G22, VR, VRO, VRS, VOLUM, &
+    FP, FPO, FP_NORM, rho_pol, NE, NEO, TE, TEO, UPAR, UPARO, MRHO, &
+    AMAIN, UPS0, UPS0O
+use io_mod, only: exp_file, equ_file, machine, NBfile, CCOILX, VCOILX, &
+    IFDFVX, IFDFAX, jbeg_arrx, NGR, NBNT, NCNBT
 
 use expdat, only: raw_scalar, raw_profile_map, DATARR, BNDR, BNDZ, BNDTIM
 use char_manip, only: to_upper, str_in_list, clean_string
-use debugger, only: markloc, debug, astra_stop, flightsim
+use debugger, only: markloc, debug, astra_stop
 use parse_utils, only: IFDEFX, path_split, split2array2, &
     ufheader, ufrd, parse_u_line, inquire_fname, assign_val, read_arrx
-use timeoutput_inc, only: NTIMES, TTOUT
 use numerical_tools, only: EXTRAP, INTEGR
 use plasma_state, only: plasma_up
 use json_vars, only: read_metadata, internNames, constNames, varNames, profxNames, &
     n_intern, n_const, n_var, n_profx
+use machine_config, only: config_read
 
 implicit none
 
-integer, parameter :: MPEX=101, MSIGEX=1, MTEX=50, MSIG=1, MEXT=MPEX*MTEX
-
-logical :: exilog, file_existence, found
-
-integer :: jarr, INTYPE, jtype, SYSTEM, jbdry, ntim, ntim1, IVAR
+logical :: log_exists
+integer :: jarr, INTYPE, jtype, jbdry, ntim, ntim1, IVAR
 integer, allocatable, dimension(:) :: int_json
 integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
 integer :: KAB, KABC, KAWALL, KRTOR, KELONM, KTRICH
 integer :: nvar, n_color, n_words, i_filter_glob
 integer :: nt_u, nx_u, ios, ndim_u, jvar, jrt, jt, jthe
 
-double precision :: resize
-double precision :: tbeg_nml, tend_nml, tpause_nml
 double precision, allocatable :: t_u(:), x_u(:), var_u(:), bnd_rz(:)
 double precision :: XBDRY, YB, YB1, YXB, YXB1, ALFA, ALFA_GLOB, &
     VRDATA, FACTOR, TIMEVR, VRERR, ROC3A, YTP=-1.d9
@@ -59,60 +57,18 @@ character(len=31) :: rholbl
 character(len=132) :: strarray(20), STRI, lin_upper, dir_path, fname, &
     err_msg, err_format, err_msg_exp, file_in, uname, uvar, workflow
 
-namelist / astra_log / AWD, exp_file, equ_file, rev_file, TASK, machine, &
-debug, tbeg_nml, tend_nml, tpause_nml, flightsim, resize, workflow
-
 !----------------------------------------------------------------------|
 ! Fortran tests
 
 call markloc('read_input')
 
-call ADDTIME(cpuTime_tra)  ! Initialize timer
-
-call getarg(0, STRI)
-j = min(len(TASKID), LEN_TRIM(STRI))
-TASKID = STRI(1: j)
-
 !----------------------------------------------------------------------|
 ! Initialisation with default values
 
-tbeg_nml   = -1.
-tend_nml   = -1.
-tpause_nml = -1.
 NITREQ = 1. ! Initialization: g95 does not like it in blockdata
 i_filter_glob = 0 ! if i_filter_glob = 1, a global filter is set
 
 plasma_up = 1  ! plasma is up by default, can be set to 0 for breakdown by the user in a user-defined sbr called with "<"
-
-!----------------------------------------------------------------------|
-! Parse file ".exe/version"
-!----------------------------------------------------------------------|
-
-open(131, FILE='exe/version', iostat=ios)
-
-if (ios /= 0) then
-    write(*,*)'>>> Warning: Unknown version'
-else
-    do j=1,5
-        read(131,'(A)') STRI
-    enddo
-    j = index(STRI, 'Version')
-    VERSION = STRI(j: j+30)//char(0)
-    close(131)
-    j0 = index(VERSION, '.')
-    if (j0 == 0) then
-        write(*,*)'>>> Warning: Unknown version'
-    else
-        read(VERSION(j0-1: j0-1), *) AVERS 
-        read(VERSION(j0+1: j0+1), *) ARLEAS 
-        j1 = INDEX(VERSION(j0+1:), '.')
-        if (j1 == 0) then
-            AEDIT = 0
-        else
-            read(VERSION(j0+j1+1: j0+j1+1), *) AEDIT
-        endif
-    endif
-endif
 
 !----------------------------------------------------------------------|
 ! Read tables to set global scalars varNames, constNames, internNames
@@ -139,41 +95,17 @@ enddo
 
 TIME = TSTART  ! Here TSTART=0
 
-!----------------------------------------------------------------------|
-! Read file 'tmp/<exp><equ>.nml'
-!----------------------------------------------------------------------|
 
-call GETENV('expfile', exp_file)
-call GETENV('equfile', equ_file)
-
-file_in = 'tmp/' // TRIM(exp_file) // TRIM(equ_file) // '.nml'
-
-OPEN(161, FILE=TRIM(file_in), delim='apostrophe')
-READ(161, nml=astra_log, iostat=ios)
-CLOSE(161)
-
-resizeGraph = resize
-
-!define namelist file nml_file
-nml_file = 'exp/nml/' // trim(exp_file)
-INQUIRE(FILE=trim(nml_file), EXIST=file_existence)
-if (.not. file_existence) then
-   nml_file = 'exp/nml/' // trim(machine)
-endif
-
-call path_split(rev_file, dir_path, fname, jpos)
-if (LEN_TRIM(fname) == 0) fname = 'profil.dat'
-! Disallowing user-defined subdirs for Review file
-rev_file = '.res/' // TRIM(fname)
-
-!----------------------------------------------------------------------|
+!----------------------------------------------------------------------
 ! Read machine configuration, if available (need "machine" variable defined)
-
 call config_read()
 
-!----------------------------------------------------------------------|
-! Read file equ/log/<model>, checking existence of obsolete equ/<model>.log 
-!----------------------------------------------------------------------|
+! Look for NBfile
+call inquire_fname('nbi', TRIM(exp_file), TRIM(machine), NBFILE)
+
+!----------------------------------------------------------------------
+! Read file equ/log/<model>
+!----------------------------------------------------------------------
 
 jj = LEN_TRIM(equ_file)
 if (jj == 0) call astra_stop('>>> read_input: Error, empty model file name')
@@ -186,45 +118,25 @@ else ! equ/<subdir>/log/<model>
     file_in = 'equ/'//TRIM(dir_path)//'log/'//TRIM(fname)
 endif
 
-inquire(file=TRIM(file_in), exist=EXILOG)
+inquire(file=TRIM(file_in), exist=LOG_EXISTS)
 
-if (.not. EXILOG)  then ! Missing log file
-
-    inquire(file=TRIM(equ_file)//'.log', exist=EXILOG)
-    if ( EXILOG )  then
-        write(*, *) '>>> Warning: File "' // TRIM(equ_file) // '.log," has been found'
-        write(*, *) '             Most probably it should be moved to "log/' // TRIM(file_in) // '"'
-    else
-        write(*, *) '>>> Warning: file "' // TRIM(file_in) // '" missing'
-        write(*, *) 'Press any key to continue at your own risk'
-        pause
-    endif
-
-else  ! Read log file
-
-    nvar = 37
-    call assign_val(file_in, nvar    ,    varNames(1: nvar    ), DEVAR (1: nvar)    , n_color)
-    call assign_val(file_in, n_const ,  constNames(1: n_const ), CONSTF(1: n_const ), n_color)
-    call assign_val(file_in, n_intern, internNames(1: n_intern), DELOUT(1: n_intern), n_color)
-
-    NA1   = DELOUT(13)
-    NUF   = DELOUT(14)
-    NBND  = DELOUT(19)
-    XFLAG = DELOUT(20)
-! Replace equivalence
-
-    read(171, *, iostat=ios) (COLTAB(j), j=1, n_color)
-    close(171)
-
+if (.not. LOG_EXISTS)  then ! Missing log file
+    call astra_stop('>>> Error: file "' // TRIM(file_in) // '" missing')
 endif
+! Read log file
+nvar = 37
+call assign_val(file_in, nvar    ,    varNames(1: nvar    ), DEVAR (1: nvar)    , n_color)
+call assign_val(file_in, n_const ,  constNames(1: n_const ), CONSTF(1: n_const ), n_color)
+call assign_val(file_in, n_intern, internNames(1: n_intern), DELOUT(1: n_intern), n_color)
+NA1   = DELOUT(13)
+NUF   = DELOUT(14)
+NBND  = DELOUT(19)
+XFLAG = DELOUT(20)
+close(171)
 
-!----------------------------------------------------------------------|
-! Skipping EX-file reading for now
-!----------------------------------------------------------------------|
-
-!----------------------------------------------------------------------|
+!----------------------------------------------------------------------
 ! Read experimental file
-!----------------------------------------------------------------------|
+!----------------------------------------------------------------------
 
 file_in='exp/' // TRIM(exp_file)
 
@@ -233,12 +145,10 @@ err_msg_exp = '>>> Data file "' // TRIM(exp_file) // '" error:\n    '
 open(201, FILE=TRIM(file_in), iostat=ios)
 if (ios /= 0) call astra_stop('>>> read_input: No such experimental variant "' // TRIM(exp_file) // '"')
 
-read(201, '(A132)', iostat=ios) XLINE1
+read(201, '(A132/)', iostat=ios) exp_header
 if (ios /= 0) call astra_stop(err_msg_exp // 'in header')
 
-read(201, '(A132)') XLINE2
-
-!----------------------------------------------------------------------|
+!----------------------------------------------------------------------
 ! Read simple variable loop (between the labels "5" and "10"):
 
 VNAMO = ' '
@@ -404,9 +314,8 @@ enddo parse_exp_1d
 
 close(201)
 
-!----------------------------------------------------------------------|
+!----------------------------------------------------------------------
 ! Start Astra standard assignments
-! GIT allocate all profiles here!!
 
 if (NA1 > NRD) then
     write(err_msg, '(2A, i)') '>>> FATAL ERROR: The radial grid size out of range.\n', &
@@ -414,36 +323,10 @@ if (NA1 > NRD) then
     call astra_stop(err_msg)
 endif
 
-! Override TPAUSE, TSTART & TEND: command line (astra.nml) has priority
-if (tbeg_nml   /= -1.) TSTART = tbeg_nml
-if (tend_nml   /= -1.) TEND   = tend_nml
-if (tpause_nml /= -1.) YTP    = tpause_nml
-
-!----------------------------------------------------------------------|
-! Uncomment the next line to set the "WAIT" mode at the start
-! TASK='WAIT'
-
 TIME = TSTART
 if (YTP > -1.d8) TPAUSE = YTP
 
 call INTVAR
-
-if (.not. EXILOG) then
-! Determine ABC & AB if not defined by "exp" file
-    if (IFDFVX(KABC) < 0 .and. IFDFVX(KAB) < 0) then
-        write(*, *) '>>> The minor radius AB is not defined in "exp/' // TRIM(exp_file) // '"'
-        write(*, *) '  This can cause equilibrium convergence problem'
-    endif
-    if (IFDFVX(KAB) > 0) write(*, *) '>>> Warning: AB cannot depend on time'
-
-    if (IFDFVX(KABC) >= 0 .and. IFDFVX(KAB) <  0) AB = ABC
-    if (IFDFVX(KABC) <  0 .and. IFDFVX(KAB) >= 0) then
-        ABC = AB
-        IFDFVX(KABC) = 0
-    endif
-! Determine AWALL if not defined by an "exp" file
-    if (IFDFVX(KAWALL) < 0) AWALL = AB
-endif
 
 if (AWALL < AB) then
      if (IFDFVX(KAWALL) >= 0) write(*, *) '>>> Warning: AWALL < AB.  Setting AWALL = AB'
@@ -466,10 +349,7 @@ IFDFVX(KRTOR)  = 4
 IFDFVX(KTRICH) = 4
 IFDFVX(KAWALL) = 4
 
-
-!----------------------------------------------------------------------|
-! Skipping for now: JAMS through Ex-files
-!----------------------------------------------------------------------|
+!----------------------------------------------------------------------
 ! Start reading radial profiles:  Radial grid: jbdry 
 !    Option for different input grids can be added
 
@@ -858,7 +738,6 @@ if (NBNT > 0) then
         if (BNDTIM(jt) <= TSTART) j = jt
     enddo
     jt=j
-		
     allocate(bnd_rz(2*NBND))
     do jthe=1, NBND
         bnd_rz(jthe)      = BNDR((jthe-1)*NBNT + jt)
@@ -867,8 +746,6 @@ if (NBNT > 0) then
 !calculate ABC
     ABC = (maxval(bnd_rz(1: nbnd)) - minval(bnd_rz(1: nbnd)))/2.
 !calculate elong
-    YB  = (maxval(bnd_rz(1: nbnd))        + minval(bnd_rz(1: nbnd)       ))/2. !Rgeo
-    YB1 = (maxval(bnd_rz(NBND+1: 2*nbnd)) + minval(bnd_rz(nbnd+1: 2*nbnd)))/2. !Zgeo
     ELONG = (maxval(bnd_rz(NBND+1: 2*nbnd)) - minval(bnd_rz(nbnd+1: 2*nbnd)))/(2.*ABC)
     ELONG = max(ELONG, 1.d0)
     deallocate(bnd_rz)
@@ -876,7 +753,7 @@ endif
 
 !assign variables here for initialization:
 
-VOLUME = GP2*GP*RTOR*AB*AB*ELONG
+VOLUME = GP2*GP*RTOR*AB**2 * ELONG
 
 ROC  = ROC3A(RTOR, SHIFT, ABC, ELONG, TRIAN)
 ROCO = ROC
@@ -933,7 +810,6 @@ enddo
 
 call INTEGR(RHO, 1, VR, VOLUM, NA1)
 
-n_bouncon = 0
 n_bouncon(1) = NA1
 
 PSIBO = FP(NA1)
@@ -974,34 +850,13 @@ do j=1, n_profx
     endif
 enddo
 
-if (.not. IFDEFX('TEX   ') ) then
-    j = system('grep HEXP= ./tmp/*.tmp | grep TEX > /dev/null')
-    if (j == 0) write(*,*) '>>> Warning >>> X-array "TEX" is used but not defined'
-endif
-if (.not. IFDEFX('TIX   ') ) then
-    j = system('grep XEXP= ./tmp/*.tmp | grep TIX > /dev/null')
-    if (j == 0) write(*,*) '>>> Warning >>> X-array "TIX" is used but XEXP not defined'
-    j = system('grep SVCXX ./tmp/*.tmp | grep TIX > /dev/null')
-    if (j == 0) write(*,*) '>>> Warning >>> X-array "TIX" is used but not defined'
-endif
-
 DELOUT(13) = NA1
 DELOUT(14) = NUF
 DELOUT(19) = NBND
 DELOUT(20) = XFLAG
 TIMEQL = TIME - DTEQL - 1.d-7
-
-! Define TAU, TAUMIN, TAUMAX, TSCALE, DROUT, DTOUT, DPOUT
-TTOUT(1) = -1.d10
-call set_timescale(NTIMES)  ! Set time scale (mode 6)
-
-GRAP(1:NRW) = AB
-
-TIM7(1) = TINIT
+TAUPRP = TAUMIN
 if (TIME > TINIT + 1.025*abs(TSCALE)) TINIT = TSTART
-TIM7(3) = abs(TSCALE)/8.
-
-call inquire_fname('nbi', TRIM(exp_file), TRIM(machine), NBFILE)
 
 return
 
@@ -1009,80 +864,6 @@ return
 call astra_stop(err_format)
 
 end subroutine read_input
-
-!---------------------------------------------------------------------
-subroutine set_timescale(n_times)
-! Define time scales (former SETTSC)
-
-use outcmn_inc, only: equ_file
-use const_inc, only: TAUPRP, TAUMIN, TAUMAX, TAU, TSCALE, &
-        VOLUME, DTOUT, DROUT, DPOUT
-
-implicit none
-
-integer, intent(in) :: n_times
-
-logical :: EXILOG
-integer :: j
-double precision, dimension(8) :: YS
-
-inquire(file='equ/log/' // TRIM(equ_file), exist=EXILOG)
-
-if ( EXILOG ) then ! Always the case (equ/log exists)
-    TAUPRP = TAUMIN
-else
-    TAUMAX = 0.01*VOLUME
-    YS(1) = 0.00000010
-    YS(2) = 0.00000015
-    YS(3) = 0.00000020
-    YS(4) = 0.00000025
-    YS(5) = 0.00000030
-    YS(6) = 0.00000040
-    YS(7) = 0.00000050
-    YS(8) = 0.00000075
-    do while (1.1*TAUMAX > YS(8))
-        YS(1: 8) = 10.*YS(1: 8)
-    enddo
-    do J=1, 8
-        if (1.1*TAUMAX <= YS(J)) EXIT
-    enddo
-
-    TSCALE = 0.1*n_times*YS(J)
-
-! 115=(right_label_position)/IDT=575/5
-    do while (TSCALE*115./n_times > YS(8))
-        YS(1: 8) = 10.*YS(1: 8)
-    enddo
-    do J = 1, 8
-        if (TSCALE*115./n_times <= YS(J)) EXIT
-    enddo
-
-    TSCALE = YS(J)
-    TAUMAX = 0.01*VOLUME
-    YS(1) = 0.00000010
-    YS(2) = 0.00000015
-    YS(3) = 0.00000020
-    YS(4) = 0.00000025
-    YS(5) = 0.00000050
-    YS(6) = 0.00000075
-
-    do while (1.1*TAUMAX > YS(6))
-        YS(1: 6) = 10.*YS(1: 6)
-    enddo
-    do J=1, 6
-        if (1.1*TAUMAX <= YS(J)) EXIT
-    enddo
-
-    TAUMAX = YS(J)
-    TAUMIN = 0.001*TAUMAX
-    TAU    = TAUMIN
-    TAUPRP = TAUMIN
-    DTOUT  = 0.01*TAUMAX
-    DROUT  = 0.02*TAUMAX
-    DPOUT  = 0.2*TAUMAX
-endif
-
-end subroutine set_timescale
 
 !---------------------------------------------------------------------
 subroutine READF6(LINE, F6, IERR)
@@ -1151,7 +932,7 @@ character(len=6) function VARNAM(str_in, ierr)
 ! Eventual trailing 'X' is removed
 ! Otherwise, VARNAM is returned.
 
-use outcmn_inc, only: esc_ch, tab_ch
+use char_manip, only: esc_ch, tab_ch
 
 implicit none
 

@@ -12,7 +12,7 @@ LIB = $(LIB_DIR)/$(LIBNAM)
 
 # Compilers
 
-FC_FLAGS = -r8 -no-prec-div -ip -O0 
+FC_FLAGS = -r8 -no-prec-div -O0 -traceback
 
 # Make Commands
 .PHONY: all

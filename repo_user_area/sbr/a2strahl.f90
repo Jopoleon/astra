@@ -44,7 +44,7 @@ subroutine A2STRAHL(tau_start, zneocl, dzneocl, dimpsol, shot_in)
 use parameter_inc, only: NRD
 use const_inc, only: TIME, TSTART, TAUPRP, NA1, PSIAX, GP, GP2, RTOR, NA, HRO, IPART
 use status_inc, only: FP, UPL, VOLUM, SHIF, NE, TE, TI, AMAIN, ZMAIN!, work_strahl
-use outcmn_inc, only: machine, awd, nml_file
+use io_mod, only: machine, awd, nml_file
 use strahl_mod, only: profiles_file_write_strahl, grid_write_strahl, &
     zeff_strahl, prad_tot_strahl, nmain_strahl, prad_main_strahl, &
     prad_strahl, nimp_strahl, zavg_strahl, nesrc_strahl, &
@@ -101,7 +101,7 @@ NAMELIST / strahl_par /  tau_strahl, rho_coord, ne_decayl, te_decayl, ti_decayl,
 
 !--------------------------------------------------------------------------
 
-as_nml = TRIM(awd) // TRIM(nml_file)
+as_nml = TRIM(awd) // '/' // TRIM(nml_file)
 write(*, *) 'Reading namelist ', TRIM(as_nml)
 
 open(nch_r1, FILE=TRIM(as_nml), delim='apostrophe')
@@ -139,7 +139,7 @@ print *, "Species: ", (elements_touse(isp), isp=1, nimp_touse)
 diffname1_s = ''
 
 shotn = nint(shot_in)
-strahl_dir = TRIM(awd) // 'strahl/'
+strahl_dir = TRIM(awd) // '/strahl/'
 
 call chdir(TRIM(strahl_dir))      ! cdir
 call system('mkdir -p result')

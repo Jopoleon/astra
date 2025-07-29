@@ -22,7 +22,8 @@ class SUBPROC:
 
 use parameter_inc, only: n_ql
 use const_inc
-use outcmn_inc, only: IFSBP, cpuTime_sbr
+use io_mod, only: IFSBP
+use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use ipc_mod, only: mem_tglf, mem_qlkz, mem_neo
 
 implicit none
@@ -30,6 +31,7 @@ implicit none
 
     sbp_init = \
 """! **** Fill shared memory segments
+call SYSTEM_CLOCK(t_wall1, rate)
 call markloc("setvars")
 call setvars(DEVAR, NA1, NB1, n_bouncon, NRD, n_ql)
 call markloc("setarrs")
@@ -47,13 +49,13 @@ use status_inc
 use ipc_mod
 use nclass_mod
 use strahl_mod
-use outcmn_inc, only: cpuTime_tra, cpuTime_sbr
+use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use debugger, only: markloc
 
 implicit none
 
-integer :: IFSUB
-
+integer :: IFSUB, t_wall1, t_wall2, rate
+double precision :: t_cpu1, t_cpu2
 """
 
 
@@ -63,6 +65,7 @@ class ININAM:
 """subroutine ININAM(LISTSB)
 
 use parameter_inc, only: NSBMX, NRD
+use io_mod, only: sbr_name, IFSBP, IFSBX, NSBR, NSBP, awd
 use outcmn_inc
 use const_inc
 use status_inc
@@ -100,7 +103,7 @@ implicit none
 
 integer :: j
 
-call markloc("setvar.tmp")
+call markloc("setvar")
 
 do j=1, NA1
 ZEF(J)= max(1.d0, ZEFX(J))
@@ -271,7 +274,7 @@ class INIVAR:
     header = \
 '''subroutine INIVAR
 
-use outcmn_inc
+use io_mod, only: IFDFAX
 use const_inc
 use nclass_mod
 use status_inc
@@ -280,8 +283,8 @@ use json_vars, only: profxNames
 
 implicit none
 
-include 'tmp/declar.fml'
-include 'tmp/declar.fnc'
+include 'src/tmp/declar.fml'
+include 'src/tmp/declar.fnc'
 
 integer :: j1
 
@@ -319,19 +322,22 @@ use status_inc
 use ipc_mod
 use nclass_mod
 use strahl_mod
-use outcmn_inc
+use io_mod
+use cpu_usage, only: wallTime_sbr, cpuTime_sbr, wallTime_xpr
 use json_vars, only: profxNames
 use debugger, only: markloc
 
 implicit none
 
-include 'tmp/declar.fml'
-include 'tmp/declar.fnc'
+include 'src/tmp/declar.fml'
+include 'src/tmp/declar.fnc'
 
 integer :: jdetv, ifsub
+integer :: t_wall1, t_wall2, rate
+double precision :: t_cpu1, t_cpu2
 integer, external :: ifipc
 
-call markloc("detvar.tmp (time signals)")
+call markloc("detvar (time signals)")
 '''
 
     rad_tail  = \
@@ -739,10 +745,10 @@ implicit none
 
 integer irado
 
-include 'tmp/declar.fml'
-include 'tmp/declar.fnc'
+include 'src/tmp/declar.fml'
+include 'src/tmp/declar.fnc'
 
-call markloc('radout.tmp')
+call markloc('radout')
 do irado=1, NAB
 J = irado
 """
@@ -768,15 +774,14 @@ use parameter_inc
 use const_inc
 use status_inc
 use outcmn_inc
-use timeoutput_inc
 use debugger, only: markloc, debug
 
 implicit none
 
-include 'tmp/declar.fml'
-include 'tmp/declar.fnc'
+include 'src/tmp/declar.fml'
+include 'src/tmp/declar.fnc'
 
-call markloc('timout.tmp')
+call markloc('timout')
 """
 
 class FJEQN:
@@ -979,7 +984,8 @@ class INIT_CONVERGE_STEP:
 '''subroutine init_converge_step(LISTSB)
 
 use parameter_inc, only: NSBMX, NRD, n_ql
-use outcmn_inc
+use io_mod, only: equ_file, exp_file, NSBP
+use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use const_inc
 use status_inc
 use nclass_mod
@@ -988,11 +994,11 @@ use numerical_tools, only: extrap
 
 implicit none
 
-include 'tmp/declar.fml'
-include 'tmp/declar.fnc'
+include 'src/tmp/declar.fml'
+include 'src/tmp/declar.fnc'
 
-integer :: IFSUB
-double precision :: YB, YC, YU, YJ_CU, YM, YMCD, YIOH, YICD, YM1
+integer :: IFSUB, t_wall1, t_wall2, rate
+double precision :: YB, YC, YU, YJ_CU, YM, YMCD, YIOH, YICD, YM1, t_cpu1, t_cpu2
 double precision, dimension(NRD) :: YWA
 character(len=64), intent(in) :: LISTSB(NSBMX)
 '''
@@ -1017,7 +1023,7 @@ class EQNS_INC:
 use parameter_inc, only: NRD, NSBMX, n_ql
 use const_inc
 use status_inc
-use outcmn_inc
+use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use nclass_mod
 use strahl_mod
 use plasma_state
@@ -1026,16 +1032,16 @@ use numerical_tools, only: extrap
 
 implicit none
 
-include 'tmp/declar.fml'
-include 'tmp/declar.fnc'
+include 'src/tmp/declar.fml'
+include 'src/tmp/declar.fnc'
 
 integer, intent(in) :: ibcpsi_fb
 integer, intent(out) :: bc_type_for_fp
 double precision, intent(out) :: dfpdrbm12
 
-integer :: IFSUB, imethod, ND, ND1, NODE, JCALL, bctype, bc_type_imp(2)
+integer :: IFSUB, imethod, ND, ND1, NODE, JCALL, bctype, bc_type_imp(2), t_wall1, t_wall2, rate
 
-double precision :: RABDOT, BABDOT, YHRO, YM1, YM2, YB, YC, YJ_CU, YM, YU, YIOH, YICD, YMCD, bc_value_imp(2)
+double precision :: RABDOT, BABDOT, YHRO, YM1, YM2, YB, YC, YJ_CU, YM, YU, YIOH, YICD, YMCD, bc_value_imp(2), t_cpu1, t_cpu2
 double precision, dimension(5) :: bc_values
 double precision, dimension(NRD) :: YWA, YWB, YWC, YWD, YWGN, &
     YWHN, YWGO, YWHO, YWR, YWH, YVR, YWM, YWA1, YWA2, YWB1, YWB2, &

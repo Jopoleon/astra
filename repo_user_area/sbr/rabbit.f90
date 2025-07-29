@@ -5,7 +5,7 @@ use mod_rabbit_lib, only: do_dump, rabbit_lib_init, rabbit_lib_set_dump_dir, &
     rabbit_lib_get_dv_darea, rabbit_lib_get_wfi
 use rabbit_variables, only: fusion_power, neutron_power
 
-use outcmn_inc, only: AWD, nml_file
+use io_mod, only: AWD, nml_file
 use const_inc, only: GP2, AIM1, TIME, TAU, QNBI, ROC, &
    RTOR, BTOR, NA1, PSIAX, PSIBO
 use status_inc, only: FP, FP_NORM, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
@@ -38,8 +38,8 @@ double precision, dimension(nnb_max) :: a_beam, z_beam, pinj,  &
 double precision, dimension(3, nnb_max) :: start_pos, unit_vec, width_poly
 
 double precision, allocatable, dimension(:, :) :: PSI_rect
-double precision, allocatable, dimension(:) :: Rrect, zrect
-double precision :: psi_sep, psi_axis, rmag, zmag
+double precision, allocatable, dimension(:) :: Rrect, zrect, rho_eq, pf_eq
+double precision :: psi_sep, psi_axis, rmag, zmag, drho_eq
 double precision :: R_max, R_min, z_max, z_min, dr, dz
 double precision :: part_mix(nspc, nnb_max), dt_in, output_timing 
 double precision :: tim_prev=-1.d0, dumba1, dumba2
@@ -72,11 +72,15 @@ ldim = NA1    !Rabbit input 1D EQ grid size
 
 nrho_surf = SIZE(equil_now%coord_sys%position%r, 1)
 nthe_surf = SIZE(equil_now%coord_sys%position%r, 2)
+allocate(pf_eq(nrho_surf), rho_eq(nrho_surf))
 
 psi_axis = PSIAX/GP2
 psi_sep  = PSIBO/GP2
 rmag = equil_now%coord_sys%position%r(1, 1)
 zmag = equil_now%coord_sys%position%z(1, 1)
+
+drho_eq = 1./(nrho_surf - 1.d0)
+rho_eq = (/ (drho_eq*(i - 1.d0), i=1, nrho_surf) /)
 
 if (.not. allocated(aplasma)) then
     allocate(aplasma(0))
@@ -110,7 +114,7 @@ if (.not. allocated(psi_rect)) allocate(psi_rect(n_Rrect, n_Zrect))
 if (.not. allocated(Rrect)) allocate(Rrect(n_Rrect), Zrect(n_Zrect))
 
 if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---       
-    as_nml = TRIM(AWD) // TRIM(nml_file)
+    as_nml = TRIM(AWD) // '/' // TRIM(nml_file)
 
     ios = 0
     write(6, *) 'Parsing namelist ' // TRIM(as_nml)
@@ -200,7 +204,7 @@ endif
 if (TRIM(pinj_file) == 'None') then
     pinj(1) = 1.d6*power_MW_in
 else
-    pinj_file2 = TRIM(awd) // TRIM(pinj_file)
+    pinj_file2 = TRIM(awd) // '/' // TRIM(pinj_file)
     call uf2dr(pinj_file2, TIME, pinj(1:n_nbi))
 endif
 
@@ -225,13 +229,15 @@ vol(1) = 0.d0
 psi_n(1) = 0.d0
 area = vol/(GP2*RTOR)
 
+call qinterp(XRHO(1: NA1), FP(1: NA1), NA1, rho_eq, pf_eq, nrho_surf)
+
 !------------
 ! RABBIT call
 !------------
 
 write(6, *) 'Call rabbit_lib_step'
 
-call ctr2rz_fun(nrho_surf, nthe_surf, equil_now%profiles_1d%psi/GP2, &
+call ctr2rz_fun(nrho_surf, nthe_surf, pf_eq/GP2, &
     equil_now%coord_sys%position%r, &
     equil_now%coord_sys%position%z, &
     n_Rrect, n_Zrect, Rrect, zrect, PSI_rect)

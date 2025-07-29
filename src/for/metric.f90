@@ -1,6 +1,6 @@
 subroutine METRIC
 
-use outcmn_inc, only: cpuTime_tra, cpuTime_equ
+use cpu_usage, only: wallTime_equ, cpuTime_equ
 use status_inc, only: VRO, VR, SHIF, AMETR, ELON, TRIA, XRHO, FP, IPOL
 use const_inc, only: IPART, FTO, FTN, ROC, GP, GP2, &
     BTOR, ROCO, RTOR, SHIFT, &
@@ -13,13 +13,13 @@ use numerical_tools, only: qinterp
 implicit none
 
 integer :: i, jexit, NDTEQUILMY, equil_solver, jthe, nrho_surf, nthe_surf
+integer :: t_wall1, t_wall2, rate
 double precision :: ROC3A, theta
+real :: t_cpu1, t_cpu2
 double precision, allocatable, dimension(:) :: prof_as, prof_eq
 character(len=120) :: err_msg
 
 call markloc('METRIC')
-
-call ADDTIME(cpuTime_tra)
 
 if (IPART == 1) then ! do only at initiation
     FTN = FTO
@@ -30,6 +30,9 @@ if (IPART == 1) then ! do only at initiation
 endif
 
 LEQ(5) = nint(IPEQL)
+
+call CPU_TIME(t_cpu1)
+call SYSTEM_CLOCK(t_wall1, rate)
 
 SELECT CASE(LEQ(5))
 
@@ -62,7 +65,6 @@ CASE(1)  ! EMEQ
             err_msg = 'Equilibrium problem at the initial iterations'
             if (IPART == 1) call astra_stop(err_msg)
         endif
-        call ADDTIME(cpuTime_equ)
         TIMEQL = TIME
     endif
 
@@ -71,7 +73,6 @@ CASE(3)  ! equil iterations
     if (TIME >  TSTART) NDTEQUILMY = 1
     if (TIME-TIMEQL >= NDTEQUILMY*DTEQL) then
         call RHSEQ
-        call ADDTIME(cpuTime_equ)
         TIMEQL = TIME
     endif
 
@@ -86,11 +87,14 @@ CASE(4: 5)  ! SPIDER, FEQIS
     if (TIME-TIMEQL >= NDTEQUILMY*DTEQL) then
         call RHSEQ2    ! Define p', FF', j_tor=CUTOR, but using the gssolver definitions
         call A2GSSOLVER(equil_solver)
-        call ADDTIME(cpuTime_equ)
         TIMEQL = TIME
     endif
 
 END SELECT
+call CPU_TIME(t_cpu2)
+call SYSTEM_CLOCK(t_wall2, rate)
+cpuTime_equ = cpuTime_equ + t_cpu2 - t_cpu1
+wallTime_equ = wallTime_equ + t_wall2 - t_wall1
 
 if (LEQ(5) < 3) then
     nrho_surf = abs(nint(NEQUIL))
@@ -157,8 +161,6 @@ if (LEQ(5) < 3) then
         equil_now%coord_sys%position%teta2d(jthe) = theta
     enddo
 endif
-
-call ADDTIME(cpuTime_tra)
 
 return
 end subroutine METRIC
@@ -1039,7 +1041,7 @@ end subroutine A2EMEQ
 subroutine A2GSSOLVER(equil_solver)
 
 use parameter_inc, only: NRD
-use outcmn_inc, only: CCOIL, VCOIL, NBNT
+use io_mod, only: CCOIL, VCOIL, NBNT
 use const_inc, only: NEQUIL, MEQUIL, NBND, IPART, IPCTRL, TAU, NA, NA1, NAB, NCNB, &
     RTOR, BTOR, IPL, GP, GP2, HRO, ROC, ABC, &
     VOLUME, SHIFT, ELONG, UPDWN, TRIAN, &
@@ -1289,7 +1291,7 @@ subroutine BNDRY(RPB, ZPB)
 !  call BNDRY(RZPB, RZPB(NBND+1))
 !---------------------------------------------------------------------
 
-use outcmn_inc, only: NBNT
+use io_mod, only: NBNT
 use expdat, only: BNDTIM, BNDR, BNDZ
 use const_inc, only: NBND, GP2, TIME, RTOR, SHIFT, ABC, TRIAN, UPDWN, ELONG
 use ext_bnd, only: ext_bnd_in, use_ext_bnd
@@ -1505,7 +1507,7 @@ subroutine GETCOILS(yvcoil, yccoil)
 
 ! Get the coil currents from the exp data at the present time slice
 
-use outcmn_inc, only: CCOIL, VCOIL, NCNBT, CCOILX, VCOILX
+use io_mod, only: CCOIL, VCOIL, NCNBT, CCOILX, VCOILX
 use const_inc, only: TIME, NCNB, ITFBE
 
 implicit none

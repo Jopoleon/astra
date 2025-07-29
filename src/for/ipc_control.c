@@ -8,21 +8,21 @@
 #include <stddef.h>
 #include "Astra.h"
 
-INT_ A_NA1;
-INT_ N_QL;
+int A_NA1;
+int N_QL;
 
 int semtimedop();
-int read_aipc(INT_*, INT_*, char*);
+int read_aipc(int*, int*, char*);
 void freeshm();
-void to_tra_(INT_*, INT_*, INT_*);
-void ot_tra_(INT_*, INT_*, INT_*, double*, double*);
+void to_tra_(int*, int*, int*);
+void ot_tra_(int*, int*, int*, double*);
 void AllocateShmem(int);
-double swatch_(double*);
 
-char *AWD, *equmod, *DATA;
-char A_ipc_file[132];
-char ASTRA_task[132];
-const char *A_log_file = "./tmp/astra.nml";
+char AWD[128];
+char A_equ_file[32];
+char A_exp_file[32];
+char A_ipc_file[128];
+char ASTRA_task[128];
 key_t my_key;
 
 pid_t A_PID = 0;
@@ -31,13 +31,22 @@ int A_Nsems = 0;       /* the number of semaphores */
 int A_ShmNum = -1;
 #define A_ShmShift 2
 #define A_Nsemx 20
-char A_ChNa[A_ShmShift+A_Nsemx][132]; /* Child process name (not used) */
+char A_ChNa[A_ShmShift+A_Nsemx][128]; /* Child process name (not used) */
 int  A_ChID[A_ShmShift+A_Nsemx] = {0, 0, 0};        /* Child process ID */
 int  A_ShmL[A_ShmShift+A_Nsemx]; /* Child Shmem segment length */
 int  A_ShmID[A_ShmShift+A_Nsemx] = {0, 0};
 void *A_ShmAdr[A_ShmShift+A_Nsemx];
-            /* {sem_num, sem_op, sem_flag}; */
+char *getcwd(char *buf, size_t size);
+
+/* {sem_num, sem_op, sem_flag}; */
+
 struct sembuf buf0 = {0, 0, ~SEM_UNDO&~IPC_NOWAIT};
+
+void trim_right(char *str) {
+    int i = strlen(str) - 1;
+    while (i >= 0 && (str[i] == ' ' || str[i] == '\n' || str[i] == '\r' || str[i] == '\t'))
+        str[i--] = '\0';
+}
 
 /*-------------------------------
   Kill ASTRA, free memory
@@ -58,7 +67,7 @@ void a_stop_(){
    by the process "tra" and stored in shared memory.
 */
 
-void to_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N){
+void to_tra_(int* jrho_beg, int* jrho_end, int* N){
     struct shmid_ds Myshmid_ds;
     if (A_ShmNum < 0) return;
     if (shmctl(A_ShmID[*N+1], IPC_STAT, &Myshmid_ds) < 0){
@@ -79,140 +88,19 @@ void to_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N){
 }
 
 /*----------------------------------------------------------------*/
-void ot_tra_(INT_* jrho_beg, INT_* jrho_end, INT_* N, double* cpuse, double* mem){
+void ot_tra_(int* jrho_beg, int* jrho_end, int* N, double* mem){
 // Reads the shared memory segment and stores the QL-code output to ASTRA fortran arrays 
     int j, jarr;
     if (A_ShmNum < 0) return;
     size_t offset = offsetof(struct A_ql_io, QLarrays);
     ql_io = (struct A_ql_io *)A_ShmAdr[*N+1];
     ql_io->QLarrays = (double *)((char *)ql_io + offset);
-    *cpuse = ql_io->My.CPUse;
     for (j=*jrho_beg-1; j <= *jrho_end-1; j++){
         for (jarr=0; jarr<N_QL; jarr++){
             mem[j+1+jarr*A_NA1] = ql_io->QLarrays[j+jarr*A_NA1];
         }
     }
     return;
-}
-
-/*----------------------------------------------------------------*/
-char* parse_nml(char * line_in){
-    if (line_in == NULL) return NULL;
-
-// Find the opening quote
-    const char *start = strchr(line_in, '"');
-    if (!start) start = strchr(line_in, '\'');
-    if (!start) return NULL;
-
-    start++;
-
-// Find the end of the quoted word
-    const char *end = start;
-    while (*end && *end != '"' && *end != '\'' && !isspace((unsigned char)*end)) {
-        end++;
-    }
-
-    size_t len = end - start;
-    char *word_out = malloc(len + 1);  // +1 for null terminator
-    if (!word_out) return NULL;
-
-    strncpy(word_out, start, len);
-    word_out[len] = '\0';
-
-    return word_out;
-}
-
-/*-----------------------------------------------------
-  Check existence of executable files listed in subs
-  Reads tmp/astra.log and fills external variables AWD, MOD, DATA
-  *Nsub - total number of files_names/strings in subs,
-  *Lstr - length of an element of the character ARRAY "subs",
-          maximum length of the subprocess_name,
-  *subs - character ARRAY, described in a calling Fortran routine as
-          character*(*Lstr) ARRAY(max_length)
-   each element includes a name of external process to be called
-*/
-
-int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs){
-    char stri[132], name[132], path[132];
-    char *line;
-    size_t len = 0;
-    ssize_t read;
-    int j, i;
-    if (A_Nsems != 0) return(A_Nsems); /* Do check only once */
-/* Check existence of subprocess executable files */
-/* Read tmp/astra.log and store run info */
-    FILE *A_LOG;
-    A_LOG = fopen(A_log_file, "r");
-    if (!A_LOG){
-        printf("Cannot open Astra log file: \"%s\"\n", A_log_file);
-        exit(0);
-    }
-
-    while ((read = getline(&line, &len, A_LOG)) != -1) {
-        if (strstr(line, "AWD"     ) != NULL) AWD    = parse_nml(line);
-        if (strstr(line, "equ_file") != NULL) equmod = parse_nml(line);
-        if (strstr(line, "exp_file") != NULL) DATA   = parse_nml(line);
-    }
-
-    fclose(A_LOG);
-    free(line);
-
-    for (j = 0; j < *Nsub; j++) {
-        char *sub = &subs[*Lstr * j];
-
-        if (strlen(sub) == 0) {
-            fprintf(stderr, " >>> Xroutine call string (#%d) is empty.\n", j + 1);
-            exit(EXIT_FAILURE);
-        }
-
-        strncpy(path, sub, sizeof(path) - 1);
-        path[sizeof(path) - 1] = '\0';
-
-// Expand ~ to $HOME if necessary
-        if (path[0] == '~') {
-            const char *home = getenv("HOME");
-            if (!home) {
-                fprintf(stderr, " >>> Xroutine call string \"%s\" error:\n", sub);
-                fprintf(stderr, " >>> Symbol \"~\" is not allowed.\n");
-                exit(EXIT_FAILURE);
-            }
-
-            snprintf(stri, sizeof(stri), "%s%s", home, path + 1);
-            strncpy(path, stri, sizeof(path) - 1);
-            path[sizeof(path) - 1] = '\0';
-        }
-
-// Separate name and path
-        char *slash = strrchr(path, '/');
-        if (slash) {
-            strncpy(name, slash + 1, sizeof(name) - 1);
-            name[sizeof(name) - 1] = '\0';
-            *(slash + 1) = '\0'; // Truncate path after last slash
-        } else {
-            strncpy(name, path, sizeof(name) - 1);
-            name[sizeof(name) - 1] = '\0';
-            path[0] = '\0';
-        }
-
-        if (strlen(path) > 62) {
-            fprintf(stderr, " >>> Xroutine call string \"%s\" error:\n", sub);
-            fprintf(stderr, " >>> Absolute path is too long.\n");
-            exit(EXIT_FAILURE);
-        }
-
-// Check if executable exists
-        snprintf(stri, sizeof(stri), "test -x %s%s", path, name);
-        if (system(stri) == 0) {
-            A_Nsems++;
-        } else {
-            fprintf(stderr, "The executable file \"%s%s\" (#%d) does not exist\n", path, name, j + 1);
-            exit(j);
-        }
-    }
-
-    A_Nsems++;
-    return(A_Nsems);
 }
 
 /*---------------------------------------------------
@@ -222,23 +110,29 @@ int checkexec_(INT_* Nsub, INT_ *Lstr, char *subs){
   Assign NA1 (= *Ngrid) to A_NA1
   Allocate two shared memory segments for Astra datasets
 */
-int initipc_(INT_* Ngrid, INT_ *n_ql){
+int initipc_(int* Ngrid, int *n_ql, int* Nsub, char* equ_file, char* exp_file){
     int l, var_size, arr_size, is=0, ds, j, *k;
     FILE *A_PDF;
-    char hostname[132];
+    char hostname[128];
     size_t namlen;
     time_t hold_time;
     static union semun Mysemun;
 
-    if (A_Nsems == 0) return(0); /* Remove this line if ESC is enabled */
+    A_Nsems = *Nsub + 1;
     if (A_NA1 != 0) return(0); /* Initialize only once */
+    
+    getcwd(AWD, sizeof(AWD));
+    snprintf(A_equ_file, sizeof(A_equ_file), "%s", equ_file);
+    snprintf(A_exp_file, sizeof(A_exp_file), "%s", exp_file);
+    trim_right(A_equ_file);
+    trim_right(A_exp_file);
 
 /* Collecting data */
     A_PID = getpid();
 /* Define the absolute path name of Astra executable ASTRA_task */
     strcpy(ASTRA_task, AWD);
-    strcat(ASTRA_task, "bin/");
-    strcat(ASTRA_task, equmod);
+    strcat(ASTRA_task, "/bin/");
+    strcat(ASTRA_task, A_equ_file);
     strcat(ASTRA_task, ".exe");
     my_key = ftok( ASTRA_task, (int)A_PID);    /* Get System V IPC key */
     printf("ASTRA_task %s\n", ASTRA_task);
@@ -263,8 +157,8 @@ int initipc_(INT_* Ngrid, INT_ *n_ql){
 */
     strcpy(A_ipc_file, AWD);
     strcat(A_ipc_file, "/tmp/");
-    strcat(A_ipc_file, DATA);
-    strcat(A_ipc_file, equmod);
+    strcat(A_ipc_file, A_exp_file);
+    strcat(A_ipc_file, A_equ_file);
     strcat(A_ipc_file, ".ipc");
     A_PDF = fopen(A_ipc_file, "w");
     if (!A_PDF){
@@ -272,7 +166,7 @@ int initipc_(INT_* Ngrid, INT_ *n_ql){
         exit(0);
     }
     fprintf(A_PDF, " Astra task:  \"%s\"\n", ASTRA_task);
-    fprintf(A_PDF, " Astra files:  \"%s\",  \"%s\"\n", DATA, equmod);
+    fprintf(A_PDF, " Astra files:  \"%s\",  \"%s\"\n", A_exp_file, A_equ_file);
     gethostname(hostname, (size_t)32);
 
     hold_time=time(NULL);
@@ -329,9 +223,9 @@ void AllocateShmem(int l){
     (4) increment primary semaphore
     (5) wait until the primary opens track
 */
-int inikids_(INT_* Nsub, INT_ *Lstr, char *subs){
+int inikids_(int* Nsub, int *Lstr, char *subs){
     if (A_ChID[A_ShmShift] != 0) return(0); /* Initialize only once */
-    char stri[132], name[132], path[132];
+    char stri[400], name[32], path[32];
     int j, i;
 
     if (A_Nsems <= *Nsub){
@@ -339,54 +233,28 @@ int inikids_(INT_* Nsub, INT_ *Lstr, char *subs){
        return(1);
     }
 
-    for (j = 0; j < *Nsub; j++) {
+    for (j=0; j<*Nsub; j++) {
         char *sub = &subs[*Lstr * j];
-
-        if (strlen(sub) == 0) {
-            printf("Error in input SBP string [%s]\n", sub);
-            return j;
-        }
-
         strncpy(path, sub, sizeof(path) - 1);
-        path[sizeof(path) - 1] = '\0';
 
-        const char *home = getenv("HOME");
-        if (path[0] == '~' && home) {
-            snprintf(stri, sizeof(stri), "%s%s", home, path + 1);
-            strncpy(path, stri, sizeof(path) - 1);
-            path[sizeof(path) - 1] = '\0';
+// Split "path" (xpr/tglfi) with respect to '/' into path, name
+        char *slash = strrchr(path, '/');    // position of '/' in "path"
+        strncpy(name, slash + 1, sizeof(name) - 1);
+        name[sizeof(name) - 1] = '\0';
+        *(slash + 1) = '\0';   // Truncate "path" after last slash
+
+        if (chdir(path) != 0) {
+            perror("chdir failed");
+            return j + 1;
         }
+// Sending main (e.g. "tglfi"), only once per subprocess
+        snprintf(stri, sizeof(stri), "./%s %s  %s %s %d %d %d &",
+            name, ASTRA_task, A_equ_file, A_exp_file, A_PID, (int)my_key, j + 1);
+        i = system(stri);
 
-        char *slash = strrchr(path, '/');
-        if (slash) {
-            strncpy(name, slash + 1, sizeof(name) - 1);
-            name[sizeof(name) - 1] = '\0';
-            *(slash + 1) = '\0'; // Truncate path after last slash
-        } else {
-            strncpy(name, path, sizeof(name) - 1);
-            name[sizeof(name) - 1] = '\0';
-            path[0] = '\0';
-        }
-
-        int i;
-        if (strlen(path) == 0) {
-            snprintf(stri, sizeof(stri), "./bin/%s %s %d %d %d &",
-                     name, ASTRA_task, A_PID, (int)my_key, j + 1);
-            i = system(stri);
-        } else {
-            if (chdir(path) != 0) {
-                perror("chdir failed");
-                return j + 1;
-            }
-
-            snprintf(stri, sizeof(stri), "./%s %s %d %d %d &",
-                     name, ASTRA_task, A_PID, (int)my_key, j + 1);
-            i = system(stri);
-
-            if (chdir(AWD) != 0) {
-                perror("chdir back to AWD failed");
-                return j + 1;
-            }
+        if (chdir(AWD) != 0) {
+            perror("chdir back to AWD failed");
+            return j + 1;
         }
 
 // Wait until child increments semaphore 0
@@ -430,7 +298,7 @@ int ifipc_(){
 }
 
 /*--------------------- Unlock subprocess ----------------------------*/
-int letsbp_(INT_* n){
+int letsbp_(int* n){
     auto struct sembuf bufN = {*n, 1, IPC_NOWAIT};
     --buf0.sem_op;   /* Each call decrements Sem0 value by 1 */
 /* Increment semval # sem_num=*n, Open subprocess */
@@ -498,18 +366,18 @@ int wait4all_(){
     (1) fill arrays ofChild_process_IDs, Child_shmem_lengths/IDs,
     (2) attach child process shmem segments to the main process memory
 */
-int read_aipc(INT_* Nsub, INT_ *Lstr, char *subs){
+int read_aipc(int* Nsub, int *Lstr, char *subs){
     FILE *A_PDF;
-    char stri[132], name[132];
+    char stri[128], name[128];
     int j, i, k, ID, ShmID, kS;
-
+    
     A_PDF = fopen(A_ipc_file, "r");
     if (!A_PDF){
         printf("Cannot open Astra IPC file: \"%s\"\n", A_ipc_file);
         exit(0);
     }
     for (j=0; j < 5+A_ShmShift; j++){
-        fgets(stri, 132, A_PDF); /* Skip lines */
+        fgets(stri, 128, A_PDF); /* Skip lines */
     }
     i = A_ShmShift;
     while (EOF != fscanf(A_PDF, "%12d%12d%12d%s", &ID, &ShmID, &kS, stri) ){
@@ -562,7 +430,7 @@ int read_aipc(INT_* Nsub, INT_ *Lstr, char *subs){
 
 /*----------- Get ID of ShMem for ASTRA scalars -------------*/
 /* First active only after "initipc", i.e. after "init.inc" */
-int setvars_(double* DEVAR, INT_* NA1, INT_* NB1, INT_* NBOUND, INT_* N, INT_* N_QL){
+int setvars_(double* DEVAR, int* NA1, int* NB1, int* NBOUND, int* N, int* NQL){
     int *I, j;
 
     if (A_Nsems == 0){
@@ -590,7 +458,7 @@ int setvars_(double* DEVAR, INT_* NA1, INT_* NB1, INT_* NBOUND, INT_* N, INT_* N
     AVARS->trian = *(DEVAR + 29);
     AVARS->updwn = *(DEVAR + 32);
     AVARS->zmj   = *(DEVAR + 36);
-    AVARS->n_ql = *N_QL;
+    AVARS->n_ql = *NQL;
     AVARS->na1  = *NA1;
     AVARS->nb1  = *NB1;
     AVARS->nrd  = *N;
@@ -601,7 +469,7 @@ int setvars_(double* DEVAR, INT_* NA1, INT_* NB1, INT_* NBOUND, INT_* N, INT_* N
 }
 
 /*------------- Get ID of ShMem for status.inc --------------*/
-int setarrs_(double* plasma_profs, INT_ *n_RD){
+int setarrs_(double* plasma_profs, int *n_RD){
     int jrho;
     int NRD = *n_RD;
     if (A_Nsems == 0) return(0);
@@ -679,79 +547,4 @@ void freeshm(){
         }
     }
     return;
-}
-
-/*---------------------------------------------------------------------*/
-void write_aipc(const struct A_proc_info Aproc, char* AWD, int qlSize)
-{
-    FILE *A_PDF, *A_LOG;
-    char A_logf[132];
-    char *line;
-    size_t len=0;
-    ssize_t read;
-
-/* Check existence of subprocess executable files */
-/* Read tmp/astra.nml and store run info */
-
-    strcpy(A_logf, AWD);
-    strcat(A_logf, "/tmp/astra.nml");
-    A_LOG = fopen(A_logf, "r");
-    if (!A_LOG){
-        printf("Cannot open Astra log file: \"%s\"\n", A_log_file);
-        exit(0);
-    }
-
-    while ((read = getline(&line, &len, A_LOG)) != -1) {
-        if (strstr(line, "equ_file") != NULL) equmod = parse_nml(line);
-        if (strstr(line, "exp_file") != NULL) DATA = parse_nml(line);
-    }
-
-    fclose(A_LOG);
-    free(line);
-
-    strcpy(A_ipc_file, AWD);
-    strcat(A_ipc_file, "tmp/");
-    strcat(A_ipc_file, DATA);
-    strcat(A_ipc_file, equmod);
-    strcat(A_ipc_file, ".ipc");
-    A_PDF = fopen(A_ipc_file, "a");
-    if (!A_PDF){
-        printf("Cannot open existing Astra IPC file: \"%s\"\n", A_ipc_file);
-        exit(0);
-    }
-    fprintf(A_PDF, "%12d%12d%12d   %s\n", getpid(), Aproc.ShMid, qlSize, Aproc.Path);
-    fclose(A_PDF);
-    return;
-}
-
-/*---------------------------------------------------------------------*/
-double swatch_(double *secs){
-/* The function returns the total CPU time [sec] spent by the calling process.
-      It adds the CPU time spent between two successive calls to the argument.
-   The  function "times" returns the number of clock ticks that have elapsed
-      since the moment the system was booted. 
-   The  "tms_utime"  field contains the CPU time spent executing instructions
-      of the calling process.
-   The  "tms_stime"  field contains the CPU time spent in the system while 
-      executing tasks on behalf of the calling process.               */
-    double runsec;
-    clock_t cpu_time, run_time;
-    static clock_t time0=0, prev_time;
-    static double secs_per_tick;
-    struct tms buf;
-    if (time0 == -1){
-        return -1.;
-    }  // Overflow range of clock_t
-    if (time0 == 0){     // Set time0 at start
-        secs_per_tick = 1./sysconf(_SC_CLK_TCK);
-        time0 = times(&buf);
-        prev_time = buf.tms_utime + buf.tms_stime;
-        return 0.;
-    }
-    run_time = times(&buf) - time0;  // Set time difference
-    cpu_time = buf.tms_utime + buf.tms_stime;
-    *secs += (cpu_time - prev_time)*secs_per_tick;
-    prev_time = cpu_time; 
-    runsec = run_time*secs_per_tick;
-    return runsec;
 }

@@ -1,12 +1,11 @@
 #include "Astra.h"
 
-extern INT_ A_NA1;
-INT_ NQL;
+extern int A_NA1;
+int NQL;
 
 void a_stop_();
 int   SemID ,  ShMid0,  ShMid1;
 void *ShmAd0, *ShmAd1, *ShmAdr;
-double swatch_();
 void qlk_interf_();
 void neo_interf_();
 void tglf_interf_();
@@ -15,22 +14,20 @@ void write_aipc();
 /*---------------------------------------------------------------------*/
 /* acquires information about AWD, process wd, id, name, key,
    ord. number, allocated shared memory ID and semaphore ID.
-   Note description of arg2, arg3, arg4 should be compatible with INT_ or int
+   Note description of arg2, arg3, arg4 should be compatible with int
 */
 
-int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
+int sbp2shm_(char* arg0, char* arg1, char* arg2, char* arg3, int* arg4, int* arg5, int* arg6)
 {
     int i, qlSize;
-    double watch;
     static union semun Mysemun;
 // sembuf members: {sem_num,sem_op,sem_flag};
     static struct sembuf buf0 = {0, 1, IPC_NOWAIT};
     static struct sembuf bufN = {1,-1, ~SEM_UNDO&~IPC_NOWAIT};
     static char whoami[32];
-    static char AWD[96];
+    static char AWD[132], equfile[132], expfile[132];
     static struct A_proc_info Mama, My;
 
-    swatch_(&(My.CPUse));
 /* Analyze the calling command string. Get own PID and name. */
     My.Pid = getpid();
     getcwd(My.Path, (size_t)64);
@@ -42,10 +39,12 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
     else{
         sscanf(arg0, "%s", whoami);
     }
-    sscanf(arg1, "%s", Mama.Path);
-    Mama.Pid = (pid_t)*arg2;
-    Mama.Key = (key_t)*arg3;
-    My.OrdNr = *arg4;
+    sscanf(arg1, "%s", Mama.Path); // AWD
+    sscanf(arg2, "%s", equfile);
+    sscanf(arg3, "%s", expfile);
+    Mama.Pid = (pid_t)*arg4;
+    Mama.Key = (key_t)*arg5;
+    My.OrdNr = *arg6;
     printf("Fortran main: %s %d %d\n", My.Path, Mama.Pid, Mama.Key);
 
 /* Associate My semaphore with the ordinal process number */
@@ -78,7 +77,7 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
 /* Attach My shared memory to the process
    My shared memory segment starts at ShmAdr */
     ShmAdr = shmat(My.ShMid, NULL, 0);
-    write_aipc(My, AWD, qlSize);
+    write_aipc(My, AWD, equfile, expfile, qlSize);
 
     while(1){
 /* Increments the PRIMARY semaphore immediately, i.e. lets it run
@@ -155,7 +154,6 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
               &(ql_io->QLarrays)
           );
 
-        swatch_(&(My.CPUse));
 /* If SemID exists then lock myself, otherwise, exit */
         Mysemun.val = 0;
         if (semctl(SemID, My.OrdNr, SETVAL, Mysemun) < 0) break;
@@ -173,8 +171,28 @@ int sbp2shm_(char* arg0, char* arg1, int* arg2, int* arg3, int* arg4)
         printf("     ");
     }
     printf("Process # %d normal exit: ", My.OrdNr);
-    swatch_(&(My.CPUse));
-    printf("CPUse %g\n", My.CPUse);
     exit(0);
 
+}
+
+/*---------------------------------------------------------------------*/
+void write_aipc(const struct A_proc_info Aproc, char* AWdir, char* equfile, char *expfile, int qlSize)
+{
+    FILE *A_PDF;
+    char *equ_file;
+    char A_ipc_file[132];
+
+    strcpy(A_ipc_file, AWdir);
+    strcat(A_ipc_file, "tmp/");
+    strcat(A_ipc_file, expfile);
+    strcat(A_ipc_file, equfile);
+    strcat(A_ipc_file, ".ipc");
+    A_PDF = fopen(A_ipc_file, "a");
+    if (!A_PDF){
+        printf("Cannot open existing Astra IPC file: \"%s\"\n", A_ipc_file);
+        exit(0);
+    }
+    fprintf(A_PDF, "%12d%12d%12d   %s\n", getpid(), Aproc.ShMid, qlSize, Aproc.Path);
+    fclose(A_PDF);
+    return;
 }

@@ -1,6 +1,7 @@
 module parse_utils
-    use machine_config, only: config
-  
+
+use char_manip, only: clean_string, split_string, str_in_list, to_upper, to_lower
+
 implicit none
 
 contains
@@ -8,10 +9,9 @@ contains
 !------------------------------------------------------------
     logical function IFDEFX(XARNAM)
 ! Name exists in profxNames, and the array is defined
-    
+
     use parameter_inc, only: NARRX
-    use outcmn_inc, only: IFDFAX
-    use char_manip, only: str_in_list
+    use io_mod, only: IFDFAX
     use json_vars, only: profxNames
 
     character(len=6), intent(in) :: XARNAM
@@ -32,8 +32,7 @@ contains
 ! Name exists in profxNames, and the array is defined
 
     use parameter_inc, only: NARRX
-    use outcmn_inc, only: IFDFAX
-    use char_manip, only: str_in_list
+    use io_mod, only: IFDFAX
     use json_vars, only: profxNames
 
     character(len=6), intent(in) :: XARNAM
@@ -97,7 +96,6 @@ contains
 !------------------------------------------------------------
     subroutine path_split(str_path_in, dir_path, fname, jpos)
 
-    use char_manip, only: clean_string
     character(len=*), intent(in)  :: str_path_in
     integer, intent(out) :: jpos
 !character(len=len(str_path_in)), intent(out) :: dir_path, fname
@@ -132,8 +130,6 @@ contains
 ! splitstring splits a string to an array of
 ! substrings based on a selected delimiter
 ! note any facing space/blank in substrings will be removed
-
-    use char_manip, only: clean_string
 
     character(len=*), intent(in) :: str_in
     character, intent(in) :: delim
@@ -175,8 +171,7 @@ contains
 ! substrings based on a selected delimiter
 ! note any facing space/blank in substrings will be removed
 
-    use char_manip, only: clean_string
-    use outcmn_inc, only: null_ch, tab_ch
+    use char_manip, only: null_ch, tab_ch
 
     integer, parameter :: nwords_max=20
     character(len=*), intent(in) :: str_in
@@ -225,7 +220,7 @@ contains
 !------------------------------------------------------------
     subroutine read_arrx(nunit, nt_io, ntim, nrho, stri_in, var_out)
 
-    use outcmn_inc, only: exp_file, NCNBM, NCNBTM
+    use io_mod, only: exp_file, NCNBM, NCNBTM
     use debugger, only: markloc, astra_stop
 
     integer, intent(in) :: nunit, ntim
@@ -279,7 +274,6 @@ contains
 !------------------------------------------------------------
     subroutine parse_u_line(str_in, var_name, uname, factor)
 
-    use char_manip, only: to_upper
     use debugger, only: markloc, astra_stop
 
     character(len=*), intent(in) :: str_in
@@ -326,7 +320,6 @@ end subroutine parse_u_line
 !------------------------------------------------------------
     subroutine ufheader(uname, n_dim, nt, nx, lbl2)
 
-    use char_manip, only: to_upper
     use debugger, only: markloc, astra_stop
 
     integer, intent(out) :: nt, nx, n_dim
@@ -507,8 +500,6 @@ end subroutine parse_u_line
 
 !------------------------------------------------------------
     subroutine inquire_fname(ftype, fdefault, dev_name, fname)
-
-    use char_manip, only: to_lower
 
     character(len=3), intent(in) :: ftype
     character(len=*), intent(in) :: dev_name, fdefault

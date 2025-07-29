@@ -13,7 +13,7 @@ use parameter_inc, only: NRD, NRDX, NTARR, n_ql
 use const_inc, only: TIME, BTOR, GP, AB, ABC, ROC, VOLUME, NA1, NAB, PSIAX
 use status_inc, only: AMETR, RHO, FP, VOLUM, EXT, rho_pol
 use numerical_tools, only: qinterp, sortab
-use outcmn_inc, only: jbeg_arrx, IFDFAX, XAXES, &
+use io_mod, only: jbeg_arrx, IFDFAX, XAXES, &
     DATAX, NPTM, TOUTX
 use debugger, only: markloc, astra_stop
 use expdat, only: raw_profile_map, DATARR

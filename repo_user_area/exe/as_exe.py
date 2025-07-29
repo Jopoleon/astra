@@ -43,14 +43,22 @@ if __name__ == '__main__':
     greenMatrices.main()
     alog_d = parse_alog()
     parser = argparse.ArgumentParser(description='Write settings & run ASTRA')
-    parser.add_argument('-m', '--equ', help='Model file', required=False, default=alog_d['equ_file'])
-    parser.add_argument('-v', '--exp', help='Exp file', required=False, default=alog_d['exp_file'])
-    parser.add_argument('-s', '--tbeg', type=float, help='Initial time', required=False, default=alog_d['tbeg_nml'])
-    parser.add_argument('-e', '--tend', type=float, help='End time', required=False, default=alog_d['tend_nml'])
-    parser.add_argument('-dev', '--DeviceName', help='Machine short name', required=False, default=alog_d['machine'])
-    parser.add_argument('-batch', action='store_true', help='Run batch job', required=False)
+    if alog_d is None:
+        parser.add_argument('-m', '--equ', help='Model file', required=True)
+        parser.add_argument('-v', '--exp', help='Exp file', required=True)
+        parser.add_argument('-s', '--tbeg', type=float, help='Initial time', required=False, default=0.1)
+        parser.add_argument('-e', '--tend', type=float, help='End time'    , required=False, default=10.)
+        parser.add_argument('-dev', '--DeviceName', help='Machine short name', required=False, default='aug')
+        parser.add_argument('-resize', '--resize', type=float, help='Resize factor for ASTRA frame', required=False, default=1.)
+    else:
+        parser.add_argument('-m', '--equ', help='Model file', required=False, default=alog_d['equ_file'])
+        parser.add_argument('-v', '--exp', help='Exp file'  , required=False, default=alog_d['exp_file'])
+        parser.add_argument('-s', '--tbeg', type=float, help='Initial time'  , required=False, default=alog_d['tbeg_nml'])
+        parser.add_argument('-e', '--tend', type=float, help='End time'      , required=False, default=alog_d['tend_nml'])
+        parser.add_argument('-dev', '--DeviceName', help='Machine short name', required=False, default=alog_d['machine'])
+        parser.add_argument('-resize', '--resize', type=float, help='Resize factor for ASTRA frame', required=False, default=alog_d['resize'])
+    parser.add_argument('-batch', action='store_true', help='Run batch job'  , required=False)
     parser.add_argument('-tpause', '--tpause', type=float, help='Pause @time', required=False)
-    parser.add_argument('-resize', '--resize', type=float, help='Resize factor for ASTRA frame', required=False)
     parser.add_argument('-debug', action='store_true', help='Debug', required=False)
     parser.add_argument('-fs', action='store_true', help='Flight simulator', required=False)
     parser.add_argument('-W', '--waitslurm', action='store_true', help='Hold on SLURM job', required=False, default=False)
@@ -74,10 +82,8 @@ if __name__ == '__main__':
         dev_name = 'aug'
 
     alog  = '&astra_log\n\n'
-    alog += 'AWD       = "%s/"\n'   %awd
     alog += 'exp_file  = "%s"\n'    %args.exp
     alog += 'equ_file  = "%s"\n'    %args.equ
-    alog += 'rev_file  = profiles.dat\n'
     alog += 'tbeg_nml  = %8.4f\n'   %args.tbeg
     alog += 'tend_nml  = %8.4f\n'   %args.tend
     alog += 'TASK      = "%s"\n'    %rtype
@@ -100,11 +106,8 @@ if __name__ == '__main__':
         input('-----------------------------------\nFile %s missing!\nASTRA will probably crash.\nPress any key to continue at your own risk\n' %eqlog)
 
     expequ = args.exp + args.equ
-    f_log2 = '%s/tmp/%s.nml' %(awd, expequ)
-    with open(f_log2, 'w') as f:
-        f.write(alog)
 
-    cmd = '%s/exe/Build' %awd
+    cmd = '%s/exe/Build %s %s %s' %(awd, args.equ, args.exp, rtype)
     if args.batch and args.waitslurm:
         cmd += ' -W'
     logger.info(cmd)
