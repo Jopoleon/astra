@@ -11,7 +11,7 @@ MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libm
 #-----
 
 # Qualikiz
-MPI_FC = $(MPIFC) -qopenmp -r8 -no-prec-div
+MPI_FC = $(MPIFC) -qopenmp -r8 -no-prec-div -traceback $(CHECKALLCOMP)
 #-----
 
 .PHONY: all

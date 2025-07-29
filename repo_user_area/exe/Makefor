@@ -14,7 +14,7 @@ LIB = $(LIB_DIR)/$(LIBNAM)
 
 # Compilers
 
-FC_FLAGS = -r8 -no-prec-div -fPIC -O0 $(CHECKALLCOMP)
+FC_FLAGS = -r8 -no-prec-div -fPIC -O0 -traceback $(CHECKALLCOMP)
 
 MODOBJS = \
 $(OBJ_DIR)/char_manip.o \
