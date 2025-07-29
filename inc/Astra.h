@@ -6,6 +6,7 @@
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include <errno.h>
+#include <stdint.h>
 
 typedef int32_t INT_;
 

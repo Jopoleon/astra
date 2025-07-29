@@ -17,13 +17,9 @@ and interfaces for FORTRAN calls
 #include <X11/keysymdef.h>
 #include <X11/cursorfont.h>
 #include <sys/times.h>
+#include <stdint.h>
 
-/* For g95 compiler use the line: "#define INT_ long" */
-#ifndef INT8
-#define INT_ int
-#else
-#define INT_ long
-#endif
+typedef int32_t INT_;
 
 void initvm_(INT_*, INT_*, INT_*, INT_*, INT_*, char*, INT_*);
 void redraw_();

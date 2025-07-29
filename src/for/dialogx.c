@@ -3,12 +3,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <X11/Xutil.h>
+#include <stdint.h>
 
-#ifndef INT8
-#define INT_ int
-#else
-#define INT_ long
-#endif
+typedef int32_t INT_;
 
 void taskmenu_(INT_*);
 void xaxis(INT_*);
