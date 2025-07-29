@@ -17,6 +17,7 @@ FC_SERIAL=$FC
 # Packages versions
 #------------------
 
+INTEL_VERSION=2025.02
 CMAKE_VERSION=cmake-3.30.3-linux-x86_64
 JSON_VERSION=9.0.2
 RABBIT_VERSION=unstable
@@ -47,6 +48,24 @@ export PATH=$SOFT_ROOT/$CMAKE_VERSION/bin:$PATH
 export FFLAGS="-qopenmp"
 CMAKE=$SOFT_ROOT/$CMAKE_VERSION/bin/cmake
 mkdir -p $SOFT_ROOT
+
+#------------------
+# Intel + MKL + MPI
+#------------------
+
+read -p "Install INTEL (y/n) " INTEL_FLAG
+
+if [ "$INTEL_FLAG" = "y" ]
+then
+    cd $SOFT_ROOT
+    INTEL_HOME=$SOFT_ROOT/intel/$INTEL_VERSION/oneapi
+    mkdir -p $INTEL_HOME
+    cd $INTEL_HOME
+    wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/e974de81-57b7-4ac1-b039-0512f8df974e/intel-oneapi-hpc-toolkit-2025.2.0.575_offline.sh # 2GB
+    chmod 744 intel-oneapi-hpc-toolkit-2025.2.0.575_offline.sh
+    ./intel-oneapi-hpc-toolkit-2025.2.0.575_offline.sh -a -s --eula accept --install-dir $INTEL_HOME
+    echo Installed intel in $INTEL_HOME
+fi
 
 #------
 # CMAKE
