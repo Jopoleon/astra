@@ -60,7 +60,6 @@ directories:
 	@mkdir -p $(TSK_DIR)
 	@mkdir -p $(TMP_DIR)
 	@mkdir -p $(LIB_DIR)
-	@mkdir -p $(AWD)/.res
 	@mkdir -p $(AWD)/ncdf_out
 	@mkdir -p $(AWD)/dat
 
