@@ -10,7 +10,7 @@ use status_inc, only: NE, TE, NI, TI, ZEF, PBLON, PBPER, PFAST, &
 
 implicit none
 
-integer, parameter :: n_scalars=10, n_inputs=40, n_outputs=15, n_dims=8, nrho_m=80, nspec_max=5
+integer, parameter :: n_scalars=10, n_inputs=40, n_outputs=15, n_dims=8, nrho_m=80, nworkers=40, nspec_max=5
 double precision, parameter :: c_vpol=1.d0
 
 double precision, dimension(NRD), intent(out) :: chi_i, chi_e, e_pflux, vimp2, vimp1, &
@@ -19,7 +19,7 @@ double precision, dimension(NRD), intent(out) :: chi_i, chi_e, e_pflux, vimp2, v
 integer :: ierr, info, intercomm, errcodes(100), status(MPI_STATUS_SIZE)
 integer :: jr, jrho, jr_r, jr_l, jgamma_max, jion
 integer :: ns_in              ! Number of species, including electrons
-integer :: i, i1, i2, chunk, nworkers, dims(n_dims)
+integer :: i, i1, i2, chunk, dims(n_dims)
 
 double precision, dimension(n_scalars) :: scal_in_m
 double precision, dimension(n_outputs, nrho_m) :: prof_out_m
@@ -175,7 +175,6 @@ scal_in_m(5: 4+nspec_max) = mass_in(1: nspec_max)
 ! Send MPI jobs
 !--------------
 
-nworkers = 40  ! A submultiple of nrho_m!
 chunk = nrho_m / nworkers
 print *, "MPI workers = ", nworkers, nrho_m, chunk*n_inputs
 allocate(send_buffer(n_inputs, chunk))
@@ -192,8 +191,8 @@ do i=0, nworkers-1
     i2 = (i + 1) * chunk
     dims(7) = i1
     dims(8) = i2
-    call MPI_Send(dims, n_dims, MPI_INTEGER, i, 100 + i, intercomm, ierr)
-    call MPI_Send(scal_in_m, n_scalars, MPI_DOUBLE_PRECISION, i, 101 + i, intercomm, ierr)
+    call MPI_Send(dims, n_dims, MPI_INTEGER, i, 101 + i, intercomm, ierr)
+    call MPI_Send(scal_in_m, n_scalars, MPI_DOUBLE_PRECISION, i, 201 + i, intercomm, ierr)
 
     send_buffer( 1, :) = rho_m(i1:i2)
     send_buffer( 2, :) = ametr_m(i1:i2)
@@ -235,14 +234,14 @@ do i=0, nworkers-1
     send_buffer(38, :) = dni(2, i1:i2)
     send_buffer(39, :) = dni(3, i1:i2)
     send_buffer(40, :) = dni(4, i1:i2)
-    call MPI_Send(send_buffer, chunk * n_inputs, MPI_DOUBLE_PRECISION, i, 102+i, intercomm, ierr)
+    call MPI_Send(send_buffer, chunk * n_inputs, MPI_DOUBLE_PRECISION, i, 301+i, intercomm, ierr)
 enddo
 
 ! Receive results from each worker
 do i=0, nworkers-1
     i1 = i * chunk + 1
     i2 = (i + 1) * chunk
-    call MPI_Recv(prof_out_m(:, i1:i2), chunk * n_outputs, MPI_DOUBLE_PRECISION, i, 103+i, intercomm, status, ierr)
+    call MPI_Recv(prof_out_m(:, i1:i2), chunk * n_outputs, MPI_DOUBLE_PRECISION, i, 401+i, intercomm, status, ierr)
 enddo
 call MPI_Barrier(intercomm, ierr)  ! Optional: ensure child finished before next step
 
