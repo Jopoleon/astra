@@ -74,7 +74,7 @@ endif
 
 ! Receive dimensions from parent
 dims = 0
-call MPI_Recv(dims, n_dims, MPI_INTEGER, 0, 100+rank, parent, status, ierr)
+call MPI_Recv(dims, n_dims, MPI_INTEGER, 0, 101+rank, parent, status, ierr)
 n_scalars  = dims(2)
 n_inputs   = dims(3)
 n_outputs  = dims(4)
@@ -89,8 +89,8 @@ scalars = 0.d0
 inputs = 0.d0
 
 ! Receive TGLF input scalars and profiles from parent
-call MPI_Recv(scalars,       n_scalars, MPI_DOUBLE_PRECISION, 0, 101+rank, parent, status, ierr)
-call MPI_Recv(inputs, chunk * n_inputs, MPI_DOUBLE_PRECISION, 0, 102+rank, parent, status, ierr)
+call MPI_Recv(scalars,       n_scalars, MPI_DOUBLE_PRECISION, 0, 201+rank, parent, status, ierr)
+call MPI_Recv(inputs, chunk * n_inputs, MPI_DOUBLE_PRECISION, 0, 301+rank, parent, status, ierr)
 
 allocate(outputs(n_outputs, chunk))
 allocate( mtori(chunk), chie(chunk), chii(chunk), exchi(chunk), elec_pflux(chunk), &
@@ -416,7 +416,7 @@ do jion=1, tglf_ns_in-1
     outputs(7+jion, :) = ion_pflux(jion, :)
 enddo
 
-call MPI_Send(outputs, chunk * n_outputs, MPI_DOUBLE_PRECISION, 0, 103+rank, parent, ierr)
+call MPI_Send(outputs, chunk * n_outputs, MPI_DOUBLE_PRECISION, 0, 401+rank, parent, ierr)
 call MPI_Barrier(parent, ierr)
 call MPI_Finalize(ierr)
 
