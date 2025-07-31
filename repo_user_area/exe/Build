@@ -14,9 +14,22 @@ export AWD=`cd $rootdir/.. && pwd`    # ensure absolute path
 
 cd $AWD
 
+# Get platform-dependent compiler paths
 platform=`$AWD/get_platform`
-
 source $AWD/platform/env.$platform
+if [[ ! -v MPI_BIN ]]
+then
+    MPI_BIN=$I_MPI_ROOT/bin
+fi
+if [[ ":$PATH:" != *":$COMP_BIN:"* ]]
+then
+    export PATH=${COMP_BIN}:${PATH}
+fi
+if [[ ":$PATH:" != *":$MPI_BIN:"* ]]
+then
+    export PATH=${MPI_BIN}:${PATH}
+fi
+
 source $AWD/exe/astra_rc
 
 export CHECKALLCOMP=" "
@@ -67,8 +80,7 @@ then
         cat << EOT > $bat
 #!/bin/sh
 #SBATCH -J astra_${USER}
-#SBATCH --partition=p.tok
-#SBATCH --qos=p.tok.48h
+#SBATCH --partition=${SL_QUEUE}
 #SBATCH --nodes=6
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=16
