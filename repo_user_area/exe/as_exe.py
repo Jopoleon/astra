@@ -101,10 +101,6 @@ if __name__ == '__main__':
 
     logger.debug(alog)
 
-    eqlog = '%s/equ/log/%s' %(awd, args.equ)
-    if not os.path.isfile(eqlog):
-        input('-----------------------------------\nFile %s missing!\nASTRA will probably crash.\nPress any key to continue at your own risk\n' %eqlog)
-
     expequ = args.exp + args.equ
 
     cmd = '%s/exe/Build %s %s %s' %(awd, args.equ, args.exp, rtype)
