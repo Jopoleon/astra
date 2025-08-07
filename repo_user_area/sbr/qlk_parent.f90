@@ -1,4 +1,4 @@
-subroutine qlk_parent(CHI, CHE)
+subroutine qlk_parent(CHI, CHE, VIN)
 
 use mpi
 
@@ -16,7 +16,7 @@ double precision, parameter :: &
    k0 = 1.6022E-12, &    ! erg/ev
    mp = 1.6726E-24       ! proton mass (g)
 
-double precision, dimension(*), intent(out) :: CHI, CHE
+double precision, dimension(*), intent(out) :: CHI, CHE, VIN
 
 integer :: ierr, intercomm, errcodes(100), status(MPI_STATUS_SIZE)
 integer :: jr, jrho, jr_r, jr_l, jgamma_max, jspec
@@ -276,7 +276,7 @@ exchi_m(1:2) = exchi_m(3)
 do jrho=1, NA1
     CHI(jrho) = chii_m(jrho)/gradrhosq_exp(jrho) ! \chi_i, m^2/s
     CHE(jrho) = chie_m(jrho)/gradrhosq_exp(jrho) ! \chi_e, m^2/s
-!    VIN(jrho) = elec_pflux_m(jrho)/a0_m/gradrhosq_exp(jrho) ! D flux
+    VIN(jrho) = elec_pflux_m(jrho)/a0_m/gradrhosq_exp(jrho) ! D flux
 !    XTB(jrho) = exchi_m(jrho) ! turbulent e-i equipartition in MW/m^3
 enddo
 

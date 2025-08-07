@@ -111,8 +111,15 @@ if __name__ == '__main__':
 # Remove pending IPC processes
     f_ipc = '%s/tmp/%s.ipc' %(awd, expequ)
     if os.path.isfile(f_ipc):
-        ipcProcs = np.loadtxt(f_ipc, skiprows=7, usecols=1)
-        for proc in ipcProcs:
+        with open(f_ipc) as f:
+            lines = f.readlines()
+        ipcProc1 = int(lines[4].split()[2])
+        ipcProc2 = int(lines[5].split()[2])
+        PIDs, ipcProcs = np.loadtxt(f_ipc, skiprows=7, usecols=(0, 1), unpack=True, dtype=np.int32)
+        for pid in PIDs:
+            cmd = 'kill -9 %s' %pid
+            os.system(cmd)
+        for proc in np.append(ipcProcs, [ipcProc1, ipcProc2]):
             cmd = 'ipcrm -m %d 2>/dev/null' %proc
             os.system(cmd)
     try:

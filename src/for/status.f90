@@ -1,6 +1,7 @@
 module status_inc
  
 use parameter_inc, only: NRD, NARRX
+use const_inc, only: NA1, NB1
 
 implicit none
 
@@ -26,14 +27,12 @@ double precision, dimension(NRD) :: &
     EQFF, EQPF, SLAT, FV, MV, XRHO, rho_pol, FP_NORM, &
     SXHO, SRHO, G22E, G33E, AREAT, PERIM
 
-double precision, dimension(:), pointer :: &
+double precision, dimension(NRD) :: &
     AMAIN, AMETR, CU, ELON, ER, FP, G11, IPOL, MU, &
     NALF, NDEUT, NE, NHE3, NHYDR, NI, NIBM, NIZ1, NIZ2, NIZ3, NTRIT, &
     PBLON, PBPER, PFAST, RHO, SHEAR, SHIF, TE, TI, TRIA, UPL, VPOL, VRS, VTOR, &
     ZEF, ZIM1, ZIM2, ZIM3, ZMAIN, ZIMPT, NIMPT, AIMPT
 !zimpt, nimpt, aimpt --> average charge, total density, average mass of impurities
-
-double precision, dimension(NRD*41), target :: plasma_profs
 
 double precision, dimension(NRD) :: &
     NN, TN, PRAD, PBOL1, PBOL2, PBOL3, PSXR1, &
@@ -111,48 +110,6 @@ contains
     integer :: j
 
 ! Defaults, rather fall-back than initial values
-
-    AMAIN => plasma_profs(         1:    NRD)
-    AMETR => plasma_profs(   NRD + 1:  2*NRD)
-    CU    => plasma_profs( 2*NRD + 1:  3*NRD)
-    ELON  => plasma_profs( 3*NRD + 1:  4*NRD)
-    ER    => plasma_profs( 4*NRD + 1:  5*NRD)
-    FP    => plasma_profs( 5*NRD + 1:  6*NRD)
-    G11   => plasma_profs( 6*NRD + 1:  7*NRD)
-    IPOL  => plasma_profs( 7*NRD + 1:  8*NRD)
-    MU    => plasma_profs( 8*NRD + 1:  9*NRD)
-    NALF  => plasma_profs( 9*NRD + 1: 10*NRD)
-    NDEUT => plasma_profs(10*NRD + 1: 11*NRD)
-    NE    => plasma_profs(11*NRD + 1: 12*NRD)
-    NHE3  => plasma_profs(12*NRD + 1: 13*NRD)
-    NHYDR => plasma_profs(13*NRD + 1: 14*NRD)
-    NI    => plasma_profs(14*NRD + 1: 15*NRD)
-    NIBM  => plasma_profs(15*NRD + 1: 16*NRD)
-    NIZ1  => plasma_profs(16*NRD + 1: 17*NRD)
-    NIZ2  => plasma_profs(17*NRD + 1: 18*NRD)
-    NIZ3  => plasma_profs(18*NRD + 1: 19*NRD)
-    NTRIT => plasma_profs(19*NRD + 1: 20*NRD)
-    PBLON => plasma_profs(20*NRD + 1: 21*NRD)
-    PBPER => plasma_profs(21*NRD + 1: 22*NRD)
-    PFAST => plasma_profs(22*NRD + 1: 23*NRD)
-    RHO   => plasma_profs(23*NRD + 1: 24*NRD)
-    SHEAR => plasma_profs(24*NRD + 1: 25*NRD)
-    SHIF  => plasma_profs(25*NRD + 1: 26*NRD)
-    TE    => plasma_profs(26*NRD + 1: 27*NRD)
-    TI    => plasma_profs(27*NRD + 1: 28*NRD)
-    TRIA  => plasma_profs(28*NRD + 1: 29*NRD)
-    UPL   => plasma_profs(29*NRD + 1: 30*NRD)
-    VPOL  => plasma_profs(30*NRD + 1: 31*NRD)
-    VRS   => plasma_profs(31*NRD + 1: 32*NRD)
-    VTOR  => plasma_profs(32*NRD + 1: 33*NRD)
-    ZEF   => plasma_profs(33*NRD + 1: 34*NRD)
-    ZIM1  => plasma_profs(34*NRD + 1: 35*NRD)
-    ZIM2  => plasma_profs(35*NRD + 1: 36*NRD)
-    ZIM3  => plasma_profs(36*NRD + 1: 37*NRD)
-    ZMAIN => plasma_profs(37*NRD + 1: 38*NRD)
-    ZIMPT => plasma_profs(38*NRD + 1: 39*NRD)
-    NIMPT => plasma_profs(39*NRD + 1: 40*NRD)
-    AIMPT => plasma_profs(40*NRD + 1: 41*NRD)
 
 ! Geometry/equilibrium
 

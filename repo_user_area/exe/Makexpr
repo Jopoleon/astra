@@ -15,6 +15,8 @@ MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libm
 
 # Qualikiz
 MPI_FC = $(MPIFC) -qopenmp -r8 -no-prec-div -traceback
+MPI_CC = mpiicx -qopenmp
+
 #-----
 
 .PHONY: all
@@ -33,23 +35,39 @@ clean:
 	rm -f $(XPR)/neo
 
 
-$(XPR)/tglfi:	$(XPR)/tglf_interf.f90 $(XPR)/qinterp.f90 $(XPR)/tglfinter.o $(LIBFOR) $(TGLF_LIB) $(AENV)
-		$(FC) -o $@ $(XPR)/tglf_interf.f90 $(XPR)/qinterp.f90 $(XPR)/tglfinter.o $(LIBFOR)	\
-		-I$(TGLF_INC) -I$(MOD_FOR) $(TGLF_LIB) $(MKL_LIB) -lpthread -lm
+$(XPR)/tglfi:	$(XPR)/tglfinter.o $(XPR)/tglf_interf.o $(XPR)/qinterp.o $(LIBFOR) $(TGLF_LIB) $(AENV)
+	icx -o $@ $(XPR)/tglfinter.o $(XPR)/tglf_interf.o $(XPR)/qinterp.o $(LIBFOR)	\
+	$(TGLF_LIB) $(MKL_LIB) -lpthread -lm -L$(COMP_LIBDIR) -lifcoremt -lifport -lifcore
 
-$(XPR)/neo:	$(XPR)/neo_interf.f90 $(XPR)/qinterp.f90 $(XPR)/neointer.o $(LIBFOR) $(NEO_LIB) $(AENV)
-		$(MPI_FC) -o $@ $(XPR)/neo_interf.f90 $(XPR)/qinterp.f90 $(XPR)/neointer.o $(LIBFOR)	\
-		-I$(NEO_INC) -I$(MOD_FOR) $(NEO_LIB) $(MKL_LIB) -lpthread -lm
+$(XPR)/neo:	$(XPR)/neointer.o $(XPR)/neo_interf.o $(XPR)/qinterp.o $(LIBFOR) $(NEO_LIB) $(AENV)
+	$(MPI_CC) -o $@ $(XPR)/neointer.o $(XPR)/neo_interf.o $(XPR)/qinterp.o $(LIBFOR)	\
+	$(NEO_LIB) $(MKL_LIB) -lpthread -lm -L$(COMP_LIBDIR) -lifcoremt -lifport -lifcore
 
-$(XPR)/qlki:	$(XPR)/qlk_interf.f90 $(XPR)/qinterp.f90 $(XPR)/qlkinter.o $(LIBFOR) $(QLK_LIB) $(AENV)
-		$(MPI_FC) -o $@ $(XPR)/qlk_interf.f90 $(XPR)/qinterp.f90 $(XPR)/qlkinter.o $(LIBFOR)	\
-		-I$(QLK_INC) -I$(MOD_FOR) $(QLK_LIB)
+$(XPR)/qlki:	$(XPR)/qlkinter.o $(XPR)/qlk_interf.o $(XPR)/qinterp.o $(LIBFOR) $(QLK_LIB) $(AENV)
+	$(MPI_CC) -o $@ $(XPR)/qlkinter.o $(XPR)/qlk_interf.o $(XPR)/qinterp.o $(LIBFOR)	\
+	$(QLK_LIB) $(MKL_LIB) -lpthread -lm -L$(COMP_LIBDIR) -lifcoremt -lifport -lifcore
 
-$(XPR)/neointer.o:    $(XPR)/tra_interf.c
-		$(CC) -I$(INC_DIR) -o $@ -c $< -Dneo
+# c wrapper
 
 $(XPR)/tglfinter.o:   $(XPR)/tra_interf.c
-		$(CC) -I$(INC_DIR) -o $@ -c $< -Dtglf
+	$(CC) -I$(INC_DIR) -o $@ -c $< -Dtglf
+
+$(XPR)/neointer.o:    $(XPR)/tra_interf.c
+	$(CC) -I$(INC_DIR) -o $@ -c $< -Dneo
 
 $(XPR)/qlkinter.o:    $(XPR)/tra_interf.c
-		$(CC) -I$(INC_DIR) -o $@ -c $< -Dqlk
+	$(CC) -I$(INC_DIR) -o $@ -c $< -Dqlk
+
+# Fortran
+
+$(XPR)/qinterp.o:    $(XPR)/qinterp.f90
+	$(FC) -o $@ -c $< -Dneo
+
+$(XPR)/tglf_interf.o:    $(XPR)/tglf_interf.f90
+	$(FC) -I$(TGLF_INC) -o $@ -c $<
+
+$(XPR)/neo_interf.o:    $(XPR)/neo_interf.f90
+	$(MPI_FC) -I$(NEO_INC) -o $@ -c $<
+
+$(XPR)/qlk_interf.o:    $(XPR)/qlk_interf.f90
+	$(MPI_FC) -I$(QLK_INC) -o $@ -c $<

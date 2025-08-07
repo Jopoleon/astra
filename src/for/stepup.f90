@@ -62,7 +62,6 @@ if (ITFBE > 0.) then
     endif
 endif
 
-!include 'tmp/detvar.tmp' ! GIT 
 call detvar
 ! Subroutines with the "<" symbol are put here
 ! here it computes the new NI also. These are run with tau_old

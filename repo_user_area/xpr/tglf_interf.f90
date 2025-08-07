@@ -1,42 +1,6 @@
-!----------------------------------------------------------------------|
-program main
-! Called only once, setting the shared memory segments, then it's just an exchange with the c/f90 subroutines
-
-implicit none
-
-integer :: iargc, mampid, mamkey, eignr
-character(len=132) :: arg_string, eigpath, mampath, equfile, expfile
-
-if (iargc() /= 6) then
-    write(6, '(A)') "Error #args in TGLF main (xpr/tglf_interf.f90)"
-    call a_stop
-endif
-call getarg(0, arg_string)
-eigpath = TRIM(arg_string) // char(0)
-call getarg(1, arg_string)
-mampath = TRIM(arg_string) // char(0)
-call getarg(2, arg_string)
-equfile = TRIM(arg_string) // char(0)
-call getarg(3, arg_string)
-expfile = TRIM(arg_string) // char(0)
-call getarg(4, arg_string)
-read(arg_string, *) mampid
-call getarg(5, arg_string)
-read(arg_string, *) mamkey
-call getarg(6, arg_string)
-read(arg_string, *) eignr
-
-call sbp2shm(eigpath, mampath, equfile, expfile, mampid, mamkey, eignr)
-
-end program main
-
-!----------------------------------------------------------------------|
-subroutine tglf_interf(jr1_in, jr2_in, nql, nrho, NA1N, NA1E, NA1I, &
+subroutine tglf_interf(jr1_in, jr2_in, n_sbp_arr_in, n_sbp_arr_out, nrho, NA1N, NA1E, NA1I, &
     BTOR, RTOR, AMJ, ZMJ, AIM1, AIM2, AIM3, &
-    NE, TE, NI, NDEUT, NTRIT, NIZ1, NIZ2, TI, ZEF, ZIM1, AMAIN, &
-    MU, RHO, AMETR, SHIF, ELON, TRIA, ER, NIBM, G11, &
-    VPOL, VRS, VTOR, SHEAR, PBLON, PBPER, PFAST, NIZ3, ZIM2, ZIM3, &
-    ZIMPT, NIMPT, AIMPT, &
+    mem_in, &
 ! output
     mem_out)
 
@@ -88,20 +52,15 @@ double precision, parameter :: &
    pi   = 3.141592653589793 
 double precision, parameter :: c_vpol=1.d0
 
-integer, intent(in) :: nql, nrho, jr1_in, jr2_in, NA1N, NA1E, NA1I
+integer, intent(in) :: n_sbp_arr_in, n_sbp_arr_out, nrho, jr1_in, jr2_in, NA1N, NA1E, NA1I
 
 double precision, intent(in) :: BTOR, RTOR, AMJ, AIM1, AIM2, AIM3, ZMJ
-double precision, intent(in), dimension(*) :: NE, TE, NI, TI, &
-    ZEF, ZIM1, ZIM2, ZIM3, PBLON, PBPER, PFAST, NIZ3, AMAIN, &
-    ER, MU, RHO, AMETR, SHIF, ELON, NDEUT, NIZ1, NTRIT, &
-    NIZ2, TRIA, NIBM, G11, VPOL, VRS, VTOR, SHEAR, &
-    ZIMPT, NIMPT, AIMPT
-
-double precision, intent(out), dimension(nrho, nql) :: mem_out
+double precision, intent(in), dimension(nrho, n_sbp_arr_in) :: mem_in
+double precision, intent(out), dimension(jr2_in + 1 - jr1_in, n_sbp_arr_out) :: mem_out
 
 !----------------------------------------------------------------------
 
-integer :: i_ion, n, ios
+integer :: ios
 integer :: jr_min, jr_max, jrho, j0, j01, j02, jgamma_max, n_radial, jthe, nthe_equ, nrho_as
 integer :: j, jradial, jjgrid(nradial), jspec, kyloop
 integer :: sat_rule           ! Saturation rule
@@ -119,7 +78,10 @@ double precision :: wdia_trap_tg          ! parameter for trapped fraction model
 
 double precision, dimension(nrho) :: gradrhosq_exp, rmaj_exp, q_exp, &
     rho_m, vexb2, vpar_m, vper_m, mtori_m, &
-    chie_m, chii_m, elec_pflux_m, exchi_m, ptot, gamma_m, omega_m
+    chie_m, chii_m, elec_pflux_m, exchi_m, ptot, gamma_m, omega_m, &
+    NE, TE, NI, NDEUT, NTRIT, NIZ1, NIZ2, TI, ZEF, ZIM1, AMAIN, MU, RHO, &
+    AMETR, SHIF, ELON, TRIA, ER, NIBM, G11, VPOL, VRS, VTOR, SHEAR, PBLON, PBPER, &
+    PFAST, NIZ3, ZIM2, ZIM3, ZIMPT, NIMPT, AIMPT
 double precision, dimension(nradial) :: mtori, chie, chii, exchi, elec_pflux, rho_tg, &
     gamma_max, omega_max, kymax
 double precision, dimension(nsm-1, nrho) :: ion_pflux_m
@@ -132,6 +94,44 @@ double precision, dimension(nthe_elite) :: theta_elite, RR_elite, ZZ_elite, Bp_e
 double precision, allocatable, dimension(:) :: theta_equ
 double precision, allocatable, dimension(:, :) :: RR_as, ZZ_as, Bp_as
 character(len=120) :: f_elite
+
+!-----------------
+! Get input arrays
+!-----------------
+
+NE    = mem_in(1:nrho,  1)
+TE    = mem_in(1:nrho,  2)
+NI    = mem_in(1:nrho,  3)
+NDEUT = mem_in(1:nrho,  4)
+NTRIT = mem_in(1:nrho,  5)
+NIZ1  = mem_in(1:nrho,  6)
+NIZ2  = mem_in(1:nrho,  7)
+TI    = mem_in(1:nrho,  8)
+ZEF   = mem_in(1:nrho,  9)
+ZIM1  = mem_in(1:nrho, 10)
+AMAIN = mem_in(1:nrho, 11)
+MU    = mem_in(1:nrho, 12)
+RHO   = mem_in(1:nrho, 13)
+AMETR = mem_in(1:nrho, 14)
+SHIF  = mem_in(1:nrho, 15)
+ELON  = mem_in(1:nrho, 16)
+TRIA  = mem_in(1:nrho, 17)
+ER    = mem_in(1:nrho, 18)
+NIBM  = mem_in(1:nrho, 19)
+G11   = mem_in(1:nrho, 20)
+VPOL  = mem_in(1:nrho, 21)
+VRS   = mem_in(1:nrho, 22)
+VTOR  = mem_in(1:nrho, 23)
+SHEAR = mem_in(1:nrho, 24)
+PBLON = mem_in(1:nrho, 25)
+PBPER = mem_in(1:nrho, 26)
+PFAST = mem_in(1:nrho, 27)
+NIZ3  = mem_in(1:nrho, 28)
+ZIM2  = mem_in(1:nrho, 29)
+ZIM3  = mem_in(1:nrho, 30)
+ZIMPT = mem_in(1:nrho, 31)
+NIMPT = mem_in(1:nrho, 32)
+AIMPT = mem_in(1:nrho, 33)
 
 !-----------------
 ! Radial subdomain
@@ -616,9 +616,9 @@ elec_pflux_m(1:2) = elec_pflux_m(3)
 exchi_m(1:2) = exchi_m(3)
 omega_m(1:2) = omega_m(3)
 gamma_m(1:2) = gamma_m(3)
+ion_pflux_m(2:3, 1) = 0.d0 ! Set impurity convection to zero on-axis
 
 mem_out = 0.d0
-
 do j=jr_min, jr_max
     mem_out(j, 1) = chii_m(j)/gradrhosq_exp(j) ! \chi_i, m^2/s
     mem_out(j, 2) = chie_m(j)/gradrhosq_exp(j) ! \chi_e, m^2/s
@@ -635,9 +635,6 @@ do j=jr_min, jr_max
     mem_out(j, 11) = gamma_m(j)*(cs0/a0_cm)
     mem_out(j, 13) = omega_m(j)*(cs0/a0_cm)
 enddo
-
-mem_out(1, 6) = 0.d0 !ensure NIZ1 convection equal to zero on axis
-mem_out(1, 5) = 0.d0 !ensure NIZ2 convection equal to zero on axis (already 0 otherwise)
 
 deallocate(gamma)
 deallocate(omega)

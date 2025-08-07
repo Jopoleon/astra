@@ -91,7 +91,7 @@ class CODE_GEN:
                 jsbp = jlin + 1
                 sbp_d = sbrs_d[line]
                 self.subproc += 'if (IFSBP(%d) /= 0) then\n' %jsbp
-                self.subproc += 'call ot_tra(%s, %d, %s)\n' %(sbp_d['args'], jsbp, mem_d[sbp_d['name']])
+                self.subproc += 'call sbp2astra(%s, %d, %s)\n' %(sbp_d['args'], jsbp, mem_d[sbp_d['name']])
                 self.subproc += 'IFSBP(%d) = 0\n' %jsbp
                 self.subproc += 'endif\n'
         self.subproc += \
@@ -162,7 +162,7 @@ J = jdetv
         self.detvar_init = self.detvar.replace('subroutine DETVAR', 'SUBROUTINE DETVAR_INIT')
         if j_ipc > 1:
             if NSBP > 0:
-                self.detvar += const_text.SUBPROC.sbp_init
+                self.detvar += const_text.SUBPROC.sbp_input
             self.detvar += detv_sbp
             self.detvar += 'call SUBPROC\n'
             self.detvar += 'call SYSTEM_CLOCK(t_wall2, rate)\n'
@@ -313,14 +313,6 @@ end subroutine INIVAR'''
                 sbrnam = sbrnam[4:10].lower()
             inam += 'sbr_name(%d) = "%s"\n' %(j_sbr, sbrnam)
             inam += 'DTNAME(%d*4+NSDELOUT) = "%s"//char(0)\n' %(j_sbr, sbrnam[:6])
-        n_par = 0
-        j_ipc = 1
-        for line in parse.sbr_lines:
-            sbr_d = sbrs_d[line]
-            j_sbr = sbr_d['neq']
-            if sbr_d['locsbr'] in (-2, -3):
-                inam += 'LISTSB(%d)="%s"//char(0)\n' %(j_ipc, sbr_d['name'].lower())
-                j_ipc += 1
 
         inam += 'NSBP = %d\n' %NSBP
 
@@ -330,6 +322,30 @@ end subroutine INIVAR'''
 '''
 return
 end subroutine ininam'''
+
+#-----------
+# init_sbp.f90
+
+        self.init_sbp = const_text.INIT_SBP.header
+
+        j_ipc = 1
+        for line in parse.sbr_lines:
+            sbr_d = sbrs_d[line]
+            j_sbr = sbr_d['neq']
+            if sbr_d['locsbr'] in (-2, -3):
+                self.init_sbp += 'SBP_NAMES(%d)="%s"//char(0)\n' %(j_ipc, sbr_d['name'].lower())
+                jbeg, jend = sbr_d['args'].split(',')
+                self.init_sbp += 'SBP_JBEG(%d)=%s\n' %(j_ipc, jbeg.strip())
+                self.init_sbp += 'SBP_JEND(%d)=%s\n' %(j_ipc, jend.strip())
+                j_ipc += 1
+        self.init_sbp += 'call markloc("initialise_ipc")\n'
+        self.init_sbp += 'call initialise_ipc(NA1, n_sbp_arr_in, n_sbp_arr_out, NSBP, equ_file, exp_file)\n'
+        self.init_sbp += 'call markloc("send_ipc_jobs")\n'
+        self.init_sbp += 'call send_ipc_jobs(NSBP, 64, SBP_NAMES, SBP_JBEG, SBP_JEND)\n'
+        self.init_sbp += \
+'''
+return
+end subroutine init_sbp'''
 
 #-----------
 # setvar.f90

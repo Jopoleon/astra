@@ -67,8 +67,8 @@ PI=PIBM+PEICL+PIDT;
 
 ! NEO call
 CF16=0.97;  ! Boundary
-CF12=0.06; ! Frequency of calls
-CRAD3=CF16*NA1/16. + 0.001;
+CF12=0.02; ! Frequency of calls
+CRAD3=(CF16*(NA1+1.))/16.;
 xpr/neo( int(CRAD3*0)+1 ,int(CRAD3*1 ) )&<:CF12:::;
 xpr/neo( int(CRAD3*1)+1 ,int(CRAD3*2 ) )&<:CF12:::;
 xpr/neo( int(CRAD3*2)+1 ,int(CRAD3*3 ) )&<:CF12:::;

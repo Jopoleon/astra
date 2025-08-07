@@ -20,22 +20,21 @@ class SUBPROC:
     header = \
 '''subroutine SUBPROC
 
-use parameter_inc, only: n_ql
 use const_inc
 use io_mod, only: IFSBP
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
-use ipc_mod, only: mem_tglf, mem_qlkz, mem_neo
+use ipc_mod, only: mem_tglf, mem_qlkz, mem_neo, n_sbp_arr_out
 
 implicit none
 '''
 
-    sbp_init = \
+    sbp_input = \
 """! **** Fill shared memory segments
 call SYSTEM_CLOCK(t_wall1, rate)
 call markloc("setvars")
-call setvars(DEVAR, NA1, NB1, n_bouncon, NRD, n_ql)
-call markloc("setarrs")
-call setarrs(plasma_profs, NRD)
+call setvars(DEVAR, n_bouncon)
+call markloc("set_sbp_input_arrays")
+call set_sbp_input_arrays
 """
 
 
@@ -62,7 +61,7 @@ double precision :: t_cpu1, t_cpu2
 class ININAM:
     
     header = \
-"""subroutine ININAM(LISTSB)
+"""subroutine ININAM
 
 use parameter_inc, only: NSBMX, NRD
 use io_mod, only: sbr_name, IFSBP, IFSBX, NSBR, NSBP, awd
@@ -74,8 +73,6 @@ use json_vars, only: profxNames
 
 implicit none
 
-character(len=64), dimension(NSBMX), intent(out) :: LISTSB
-
 integer :: j
 
 call markloc("xar_usage")
@@ -84,11 +81,36 @@ call markloc("xar_usage")
     sb = \
 """do j=1, NSBMX
 IFSBP(j) = 0
-LISTSB(j) = char(0)
 IFSBX(j) = 0
 enddo
 """
 
+class INIT_SBP:
+    
+    header = \
+"""subroutine init_sbp(SBP_NAMES, SBP_JBEG, SBP_JEND)
+
+use parameter_inc, only: NSBMX, NRD
+use io_mod, only: equ_file, exp_file, NSBP
+use ipc_mod, only: n_sbp_arr_in, n_sbp_arr_out
+use const_inc
+use debugger, only: markloc
+
+implicit none
+
+integer, dimension(NSBMX), intent(out) :: SBP_JBEG, SBP_JEND
+character(len=64), dimension(NSBMX), intent(out) :: SBP_NAMES
+
+integer :: j, t_wall1, t_wall2, rate
+
+call markloc("init_sbp")
+
+SBP_JBEG = 0
+SBP_JEND = 0
+do j=1, NSBMX
+SBP_NAMES(j) = char(0)
+enddo
+"""
 
 class SETVAR:
 
@@ -316,7 +338,6 @@ class DETVAR:
     header = \
 '''subroutine DETVAR
 
-use parameter_inc, only: n_ql
 use const_inc
 use status_inc
 use ipc_mod
@@ -335,7 +356,6 @@ include 'src/tmp/declar.fnc'
 integer :: jdetv, ifsub
 integer :: t_wall1, t_wall2, rate
 double precision :: t_cpu1, t_cpu2
-integer, external :: ifipc
 
 call markloc("detvar (time signals)")
 '''
@@ -981,9 +1001,9 @@ call markloc("init done")
 class INIT_CONVERGE_STEP:
 
     header = \
-'''subroutine init_converge_step(LISTSB)
+'''subroutine init_converge_step
 
-use parameter_inc, only: NSBMX, NRD, n_ql
+use parameter_inc, only: NRD
 use io_mod, only: equ_file, exp_file, NSBP
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use const_inc
@@ -1000,7 +1020,6 @@ include 'src/tmp/declar.fnc'
 integer :: IFSUB, t_wall1, t_wall2, rate
 double precision :: YB, YC, YU, YJ_CU, YM, YMCD, YIOH, YICD, YM1, t_cpu1, t_cpu2
 double precision, dimension(NRD) :: YWA
-character(len=64), intent(in) :: LISTSB(NSBMX)
 '''
 
     tail = \
@@ -1020,7 +1039,7 @@ class EQNS_INC:
 ! Note that now time step is updated at the end of a full time cycle
 !-------------------------------------------------------------------
 
-use parameter_inc, only: NRD, NSBMX, n_ql
+use parameter_inc, only: NRD, NSBMX
 use const_inc
 use status_inc
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr

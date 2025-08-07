@@ -77,7 +77,7 @@ complex(kind=DBL), dimension(dimx, dimn, numsols) :: sol_out, fdsol_out
 CHARACTER(len=20) :: fmtn
 character(len=80) :: fname1, prim_dir
 
-verbose_in = 1
+verbose_in = 0
 
 call MPI_Init(ierr)
 call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)

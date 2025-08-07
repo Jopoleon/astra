@@ -17,18 +17,6 @@ cd $AWD
 # Get platform-dependent compiler paths
 platform=`$AWD/get_platform`
 source $AWD/platform/env.$platform
-if [[ ! -v MPI_BIN ]]
-then
-    MPI_BIN=$I_MPI_ROOT/bin
-fi
-if [[ ":$PATH:" != *":$COMP_BIN:"* ]]
-then
-    export PATH=${COMP_BIN}:${PATH}
-fi
-if [[ ":$PATH:" != *":$MPI_BIN:"* ]]
-then
-    export PATH=${MPI_BIN}:${PATH}
-fi
 
 source $AWD/exe/astra_rc
 
@@ -92,6 +80,8 @@ export OMP_PLACES=cores
 export I_MPI_ROOT=${I_MPI_ROOT}
 export I_MPI_FABRICS=shm:ofi
 export I_MPI_SPAWN=on
+#export PMI_DEBUG=1
+#export I_MPI_DEBUG=5
 export FI_PROVIDER_PATH=${I_MPI_ROOT}/libfabric/lib/prov
 export ASTRA_EXT=${ASTRA_EXT}
 export PATH=${PATH}
@@ -109,16 +99,4 @@ else
     echo Running $ATASK
     $ATASK
     echo ASTRA normal exit
-    echo
-    for mod_name in tglfi qlkzi qlki neo
-    do
-        PID=$(ps aux | grep $mod_name | grep 'R+' | grep $USER | awk '{print $2}')
-        if [ ! -z "$PID" ];
-        then
-            for p_id in $PID
-            do
-                kill -9 $p_id
-            done
-        fi
-    done
 fi

@@ -1,45 +1,9 @@
-!----------------------------------------------------------------------|
-program main
-! Called only once, setting the shared memory segments, then it's just an exchange with the c/f90 subroutines
-
-implicit none
-
-integer :: iargc, mampid, mamkey, eignr
-character(len=132) :: arg_string, eigpath, mampath, equfile, expfile
-
-if (iargc() /= 6) then
-    write(6, '(A)') "Error #args in QLK main (xpr/qlk_interf.f90)"
-    call a_stop
-endif
-call getarg(0, arg_string)
-eigpath = TRIM(arg_string) // char(0)
-call getarg(1, arg_string)
-mampath = TRIM(arg_string) // char(0)
-call getarg(2, arg_string)
-equfile = TRIM(arg_string) // char(0)
-call getarg(3, arg_string)
-expfile = TRIM(arg_string) // char(0)
-call getarg(4, arg_string)
-read(arg_string, *) mampid
-call getarg(5, arg_string)
-read(arg_string, *) mamkey
-call getarg(6, arg_string)
-read(arg_string, *) eignr
-
-call sbp2shm(eigpath, mampath, equfile, expfile, mampid, mamkey, eignr)
-
-end program main
-
-!----------------------------------------------------------------------|
-subroutine qlk_interf(jr1_in, jr2_in, nql, nrho, NA1N, NA1E, NA1I, &
+subroutine qlk_interf(jr1_in, jr2_in, n_sbp_arr_in, n_sbp_arr_out, nrho, NA1N, NA1E, NA1I, &
     BTOR, RTOR, AMJ, ZMJ, AIM1, AIM2, AIM3, &
-    NE, TE, NI, NDEUT, NTRIT, NIZ1, NIZ2, TI, ZEF, ZIM1, AMAIN, &
-    MU, RHO, AMETR, SHIF, ELON, TRIA, ER, NIBM, G11, &
-    VPOL, VRS, VTOR, SHEAR, PBLON, PBPER, PFAST, NIZ3, ZIM2, ZIM3, &
-    ZIMPT, NIMPT, AIMPT, &
+    mem_in, &
 ! output
     mem_out)
- 
+
 USE mod_qualikiz, only: qualikiz
 USE kind, only: qlk_output_meth_0, qlk_output_meth_0_sep_0, &
     qlk_primi_meth_0, qlk_sizes, qlk_in_regular, qlk_in_newt
@@ -50,17 +14,11 @@ USE nanfilter
 
 implicit none
 
-integer, intent(in) :: nql, nrho, jr1_in, jr2_in, NA1N, NA1E, NA1I
+integer, intent(in) :: n_sbp_arr_in, n_sbp_arr_out, nrho, jr1_in, jr2_in, NA1N, NA1E, NA1I
 
-double precision, intent(in) :: BTOR, RTOR, &
-    AMJ, AIM1, AIM2, AIM3, ZMJ
-double precision, intent(in), dimension(*) :: NE, TE, NI, TI, &
-    ZEF, ZIM1, ZIM2, ZIM3, PBLON, PBPER, PFAST, NIZ3, AMAIN, &
-    ER, MU, RHO, AMETR, SHIF, ELON, NDEUT, NIZ1, NTRIT, &
-    NIZ2, TRIA, NIBM, G11, VPOL, VRS, VTOR, SHEAR, &
-    ZIMPT, NIMPT, AIMPT
-
-double precision, intent(out), dimension(nrho, nql) :: mem_out
+double precision, intent(in) :: BTOR, RTOR, AMJ, AIM1, AIM2, AIM3, ZMJ
+double precision, intent(in), dimension(nrho, n_sbp_arr_in) :: mem_in
+double precision, intent(out), dimension(jr2_in + 1 - jr1_in, n_sbp_arr_out) :: mem_out
 
 !--------------------------------
 type(qlk_sizes)      :: sizes
@@ -90,6 +48,10 @@ integer, dimension(dimx, nspec_max-1) :: ion_type_in
 
 double precision :: relacc1_in, relacc2_in, absacc1_in, absacc2_in, R0_in, &
     ETGmultin, collmultin, timeout_in, rhomin, rhomax, rhoscale, xstep
+double precision, dimension(nrho) :: &
+    NE, TE, NI, NDEUT, NTRIT, NIZ1, NIZ2, TI, ZEF, ZIM1, AMAIN, MU, RHO, &
+    AMETR, SHIF, ELON, TRIA, ER, NIBM, G11, VPOL, VRS, VTOR, SHEAR, PBLON, PBPER, &
+    PFAST, NIZ3, ZIM2, ZIM3, ZIMPT, NIMPT, AIMPT
 double precision, dimension(dimn) :: kthetarhos_in
 double precision, dimension(dimx) :: x_in, rho_in, Ro_in, Rmin_in, Bo_in, &
     qx_in, smag_in, alphax_in, Tex_in, Nex_in, Ate_in, Ane_in, anise_in, &
@@ -153,6 +115,44 @@ if (i_mpic == 0) then
 endif
 
 nions = nspec_max - 1
+
+!-----------------
+! Get input arrays
+!-----------------
+
+NE    = mem_in(1:nrho,  1)
+TE    = mem_in(1:nrho,  2)
+NI    = mem_in(1:nrho,  3)
+NDEUT = mem_in(1:nrho,  4)
+NTRIT = mem_in(1:nrho,  5)
+NIZ1  = mem_in(1:nrho,  6)
+NIZ2  = mem_in(1:nrho,  7)
+TI    = mem_in(1:nrho,  8)
+ZEF   = mem_in(1:nrho,  9)
+ZIM1  = mem_in(1:nrho, 10)
+AMAIN = mem_in(1:nrho, 11)
+MU    = mem_in(1:nrho, 12)
+RHO   = mem_in(1:nrho, 13)
+AMETR = mem_in(1:nrho, 14)
+SHIF  = mem_in(1:nrho, 15)
+ELON  = mem_in(1:nrho, 16)
+TRIA  = mem_in(1:nrho, 17)
+ER    = mem_in(1:nrho, 18)
+NIBM  = mem_in(1:nrho, 19)
+G11   = mem_in(1:nrho, 20)
+VPOL  = mem_in(1:nrho, 21)
+VRS   = mem_in(1:nrho, 22)
+VTOR  = mem_in(1:nrho, 23)
+SHEAR = mem_in(1:nrho, 24)
+PBLON = mem_in(1:nrho, 25)
+PBPER = mem_in(1:nrho, 26)
+PFAST = mem_in(1:nrho, 27)
+NIZ3  = mem_in(1:nrho, 28)
+ZIM2  = mem_in(1:nrho, 29)
+ZIM3  = mem_in(1:nrho, 30)
+ZIMPT = mem_in(1:nrho, 31)
+NIMPT = mem_in(1:nrho, 32)
+AIMPT = mem_in(1:nrho, 33)
 
 !-----------------
 ! Radial subdomain

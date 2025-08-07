@@ -9,7 +9,7 @@ subroutine SETARX(ICALL)
 !  EXT(NRD, NARRX) - (description in src/for/status.f90)
 !--------------------------------------------------------------------
 
-use parameter_inc, only: NRD, NRDX, NTARR, n_ql
+use parameter_inc, only: NRD, NRDX, NTARR
 use const_inc, only: TIME, BTOR, GP, AB, ABC, ROC, VOLUME, NA1, NAB, PSIAX
 use status_inc, only: AMETR, RHO, FP, VOLUM, EXT, rho_pol
 use numerical_tools, only: qinterp, sortab
@@ -17,7 +17,7 @@ use io_mod, only: jbeg_arrx, IFDFAX, XAXES, &
     DATAX, NPTM, TOUTX
 use debugger, only: markloc, astra_stop
 use expdat, only: raw_profile_map, DATARR
-use ipc_mod, only: mem_tglf, mem_qlkz, mem_neo
+use ipc_mod, only: mem_tglf, mem_qlkz, mem_neo, n_sbp_arr_out
 
 implicit  none
 
@@ -50,7 +50,7 @@ character(len=132) :: err_msg, err_msg_grid
 
 call markloc('SETARX')
 if (.not. allocated(mem_tglf)) then
-    allocate(mem_tglf(NA1, n_ql), mem_qlkz(NA1, n_ql), mem_neo(NA1, n_ql))
+    allocate(mem_tglf(NA1, n_sbp_arr_out), mem_qlkz(NA1, n_sbp_arr_out), mem_neo(NA1, n_sbp_arr_out))
     mem_tglf = 0.d0
     mem_qlkz = 0.d0
     mem_neo  = 0.d0

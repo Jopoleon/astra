@@ -1516,6 +1516,7 @@ Input:	title	- Title of the table
 Called only from src/nbi/nbinj.f
 Just a placeholder, if needed use the abstract "menubox"
 */
+  return 0;
 }
 
 /**********************************************************************/

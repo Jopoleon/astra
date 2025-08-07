@@ -1,83 +1,78 @@
 #include "Astra.h"
 
-extern int A_NA1;
-int NQL;
-
-void a_stop_();
-int   SemID ,  ShMid0,  ShMid1;
-void *ShmAd0, *ShmAd1, *ShmAdr;
-void qlk_interf_();
-void neo_interf_();
-void tglf_interf_();
-void write_aipc();
+void qlk_interf_(int*, int*, int*, int*, int*, int*, int*, int*,
+		 double*, double*, double*, double*, double*, double*, double*,
+		 double*, double*);
+void neo_interf_(int*, int*, int*, int*, int*, int*, int*, int*,
+		 double*, double*, double*, double*, double*, double*, double*,
+		 double*, double*);
+void tglf_interf_(int*, int*, int*, int*, int*, int*, int*, int*,
+		 double*, double*, double*, double*, double*, double*, double*,
+		 double*, double*);
 
 /*---------------------------------------------------------------------*/
 /* acquires information about AWD, process wd, id, name, key,
    ord. number, allocated shared memory ID and semaphore ID.
-   Note description of arg2, arg3, arg4 should be compatible with int
 */
 
-int sbp2shm_(char* arg0, char* arg1, char* arg2, char* arg3, int* arg4, int* arg5, int* arg6)
-{
-    int i, qlSize;
+int main(int argc, char *argv[]) {
+
+    extern int A_NA1;
+    void *ShmAd0, *ShmAd1, *ShmAdr;
+    int i, qlSize, N_ARR_IN, N_ARR_OUT, jrho_beg, jrho_end;
+    int SemID, ShmId0, ShmId1;
+    int ProcOrdNr, ProcShmId;
+    key_t Key_in, ProcKey;
+    pid_t ProcPid;
+    char ProcPath[128];
     static union semun Mysemun;
 // sembuf members: {sem_num,sem_op,sem_flag};
     static struct sembuf buf0 = {0, 1, IPC_NOWAIT};
     static struct sembuf bufN = {1,-1, ~SEM_UNDO&~IPC_NOWAIT};
-    static char whoami[32];
-    static char AWD[132], equfile[132], expfile[132];
-    static struct A_proc_info Mama, My;
+    static char A_ipc_file[128];
+    FILE *A_IPC;
 
 /* Analyze the calling command string. Get own PID and name. */
-    My.Pid = getpid();
-    getcwd(My.Path, (size_t)64);
-    strcat(My.Path, "/");
+    ProcPid = getpid();
+    strcpy(ProcPath, argv[0]);
 
-    strcat(My.Path, arg0+2);
-    if (strrchr(arg0, '/') != NULL){
-        sscanf(strrchr(arg0, '/')+1, "%s", whoami); }
-    else{
-        sscanf(arg0, "%s", whoami);
-    }
-    sscanf(arg1, "%s", Mama.Path); // AWD
-    sscanf(arg2, "%s", equfile);
-    sscanf(arg3, "%s", expfile);
-    Mama.Pid = (pid_t)*arg4;
-    Mama.Key = (key_t)*arg5;
-    My.OrdNr = *arg6;
-    printf("Fortran main: %s %d %d\n", My.Path, Mama.Pid, Mama.Key);
+    sscanf(argv[1], "%s", A_ipc_file);
+    Key_in = (key_t)atoi(argv[2]);
+    ProcOrdNr = atoi(argv[3]);
+    jrho_beg  = atoi(argv[4]);
+    jrho_end  = atoi(argv[5]);
+    A_NA1     = atoi(argv[6]);
+    N_ARR_IN  = atoi(argv[7]);
+    N_ARR_OUT = atoi(argv[8]);
+    printf("Fortran main: %s %d %3d %3d %d %d %d\n", ProcPath, ProcPid, jrho_beg, jrho_end, A_NA1, N_ARR_IN, N_ARR_OUT);
 
 /* Associate My semaphore with the ordinal process number */
-    bufN.sem_num = My.OrdNr;
+    bufN.sem_num = ProcOrdNr;
 /* Get semaphore and shmem IDs. */
-    SemID  = semget(Mama.Key, 0, 0660);
-    ShMid0 = shmget((key_t)(Mama.Key+0), 0, 0660);
-    ShMid1 = shmget((key_t)(Mama.Key+1), 0, 0660);
-    ShmAd0 = shmat(ShMid0, NULL, 0);
-    ShmAd1 = shmat(ShMid1, NULL, 0);
-    AVARS = (struct A_vars *)ShmAd0;
-    A_NA1 = AVARS->na1;
-    NQL   = AVARS->n_ql;
-#include "A_arrs.h"
-    strcpy(AWD, Mama.Path);
-    if (strstr(AWD, "bin/") == NULL){
-        printf("SBP launch string error\n");
-        a_stop_();
-    }
-    else{
-        *strstr(AWD, "bin/") = '\0';
-    }
-    My.Key = ftok( My.Path, (int)My.Pid);
-    qlSize = sizeof(struct A_ql_io) - sizeof(double) + NQL*A_NA1*sizeof(double);
+    SemID  = semget(Key_in, 0, 0660);
+    ShmId0 = shmget((key_t)(Key_in+0), 0, 0660);
+    ShmId1 = shmget((key_t)(Key_in+1), 0, 0660);
+    ShmAd0 = shmat(ShmId0, NULL, 0);
+    ShmAd1 = shmat(ShmId1, NULL, 0);
+    ProcKey = ftok( ProcPath, (int)ProcPid);
+    qlSize = (jrho_end + 1 - jrho_beg)*N_ARR_OUT*sizeof(double);
 
 /*------------------------------------
   Create My shared memory segment
 */
-    My.ShMid = shmget(My.Key, qlSize, 0660|IPC_CREAT);
+    ProcShmId = shmget(ProcKey, qlSize, 0660|IPC_CREAT);
 /* Attach My shared memory to the process
    My shared memory segment starts at ShmAdr */
-    ShmAdr = shmat(My.ShMid, NULL, 0);
-    write_aipc(My, AWD, equfile, expfile, qlSize);
+    ShmAdr = shmat(ProcShmId, NULL, 0);
+
+// Append process info to A_ipc_file
+    A_IPC = fopen(A_ipc_file, "a");
+    if (!A_IPC){
+        printf("Cannot open existing Astra IPC file: \"%s\"\n", A_ipc_file);
+        exit(0);
+    }
+    fprintf(A_IPC, "%12d%12d%12d   %s\n", ProcPid, ProcShmId, qlSize, ProcPath);
+    fclose(A_IPC);
 
     while(1){
 /* Increments the PRIMARY semaphore immediately, i.e. lets it run
@@ -86,12 +81,9 @@ int sbp2shm_(char* arg0, char* arg1, char* arg2, char* arg3, int* arg4, int* arg
         if (semop(SemID, &bufN, 1) < 0) break;
 
         AVARS = (struct A_vars *)ShmAd0;
-        AARRS = (struct A_arrs *)ShmAd1;
-        ql_io = (struct A_ql_io *)ShmAdr;
-// Fill ql_io with process information
-	ql_io->My = My;
+	double* sbp_in = (double *)((char *)ShmAd1);
+        double* sbp_out = (double *)((char *)ShmAdr); // IPC subprocess output
 
-// Fill ql_io with Fortran-interface output arrays
 /* Call Fortran function */
 #ifdef qlk
         qlk_interf_(
@@ -103,96 +95,31 @@ int sbp2shm_(char* arg0, char* arg1, char* arg2, char* arg3, int* arg4, int* arg
         neo_interf_(
 #endif
            /* input */
-	      &(ql_io->jrho_beg),
-              &(ql_io->jrho_end),
-              &(AVARS->n_ql),
-              &(AVARS->na1),
-              &(AVARS->na1n),
-              &(AVARS->na1e),
-              &(AVARS->na1i),
-              &(AVARS->btor),
-              &(AVARS->rtor),
-              &(AVARS->amj),
-              &(AVARS->zmj),
-              &(AVARS->aim1),
-              &(AVARS->aim2),
-              &(AVARS->aim3),
-              &(AARRS->ne),
-              &(AARRS->te),
-              &(AARRS->ni),
-              &(AARRS->ndeut),
-              &(AARRS->ntrit),
-              &(AARRS->niz1),
-              &(AARRS->niz2),
-              &(AARRS->ti),
-              &(AARRS->zef),
-              &(AARRS->zim1),
-              &(AARRS->amain),
-              &(AARRS->mu),
-              &(AARRS->rho),
-              &(AARRS->ametr),
-              &(AARRS->shif),
-              &(AARRS->elon),
-              &(AARRS->tria),
-              &(AARRS->er),
-              &(AARRS->nibm),
-              &(AARRS->g11),
-              &(AARRS->vpol),
-              &(AARRS->vrs),
-              &(AARRS->vtor),
-              &(AARRS->shear),
-              &(AARRS->pblon),
-              &(AARRS->pbper),
-              &(AARRS->pfast),
-              &(AARRS->niz3),
-              &(AARRS->zim2),
-              &(AARRS->zim3),
-              &(AARRS->zimpt),
-              &(AARRS->nimpt),
-              &(AARRS->aimpt),
+            &jrho_beg,
+            &jrho_end,
+            &N_ARR_IN,
+            &N_ARR_OUT,
+            &A_NA1,
+            &(AVARS->na1n),
+            &(AVARS->na1e),
+            &(AVARS->na1i),
+            &(AVARS->btor),
+            &(AVARS->rtor),
+            &(AVARS->amj),
+            &(AVARS->zmj),
+            &(AVARS->aim1),
+            &(AVARS->aim2),
+            &(AVARS->aim3),
+	    sbp_in,
 /* output */
-              &(ql_io->QLarrays)
+            sbp_out
           );
 
 /* If SemID exists then lock myself, otherwise, exit */
         Mysemun.val = 0;
-        if (semctl(SemID, My.OrdNr, SETVAL, Mysemun) < 0) break;
+        if (semctl(SemID, ProcOrdNr, SETVAL, Mysemun) < 0) break;
     }
 
-    if (errno != EIDRM && errno != EINVAL){
-        printf(">>> %s >>> Unrecognised sem error: errno = %d\n",
-            My.Path, errno);
-        printf("EACCES = %d, EFAULT = %d, ERANGE = %d\n",
-            EACCES, EFAULT, ERANGE);
-        printf("EFBIG=%d, EINTR=%d, EAGAIN=%d, E2BIG=%d\n",
-            EFBIG, EINTR, EAGAIN, E2BIG);
-     }
-    for(i=0; i < My.OrdNr; i++){
-        printf("     ");
-    }
-    printf("Process # %d normal exit: ", My.OrdNr);
+    printf("Process # %d normal exit:\n", ProcOrdNr);
     exit(0);
-
-}
-
-/*---------------------------------------------------------------------*/
-void write_aipc(const struct A_proc_info Aproc, char* AWdir, char* equfile, char *expfile, int qlSize)
-{
-    FILE *A_PDF;
-    char *equ_file;
-    char A_ipc_file[132];
-
-    strcpy(A_ipc_file, AWdir);
-    strcat(A_ipc_file, "tmp/");
-    strcat(A_ipc_file, expfile);
-    strcat(A_ipc_file, equfile);
-    strcat(A_ipc_file, ".ipc");
-    A_PDF = fopen(A_ipc_file, "a");
-    if (!A_PDF){
-        printf("Cannot open existing Astra IPC file: \"%s\"\n", A_ipc_file);
-        exit(0);
-    }
-    fprintf(A_PDF, "%12d%12d%12d   %s\n", getpid(), Aproc.ShMid, qlSize, Aproc.Path);
-    fclose(A_PDF);
-    return;
 }

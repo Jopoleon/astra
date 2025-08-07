@@ -35,14 +35,8 @@ def eqns_init(parse):
     if NSBP == 0 and NSBR == 0:
         str_out = '! **** No external subroutines'
         eqns_txt += str_out
-        init_txt += str_out
     if NSBP > 0:
-        init_txt += 'call markloc("initipc")\n'
-        init_txt += 'call initipc(NA1, n_ql, NSBP, equ_file, exp_file)\n'
-        eqns_txt += const_text.SUBPROC.sbp_init
-        init_txt += const_text.SUBPROC.sbp_init
-        init_txt += 'call markloc("inikids")\n'
-        init_txt += 'call inikids(NSBP, 64, LISTSB)\n'
+        eqns_txt += const_text.SUBPROC.sbp_input
     eqns_txt += 'call markloc("eqns")\n'
     init_txt += 'call markloc("init")\n'
     str_out = 'NITOT = NITOT + 1\n'

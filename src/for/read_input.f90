@@ -45,7 +45,7 @@ logical :: log_exists
 integer :: jarr, INTYPE, jtype, jbdry, ntim, ntim1, IVAR
 integer, allocatable, dimension(:) :: int_json
 integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
-integer :: KAB, KABC, KAWALL, KRTOR, KELONM, KTRICH
+integer :: KAB, KAWALL, KRTOR, KELONM, KTRICH
 integer :: nvar, n_color, n_words, i_filter_glob
 integer :: nt_u, nx_u, ios, ndim_u, jvar, jrt, jt, jthe
 
@@ -80,8 +80,6 @@ do j=1, n_var
     SELECT CASE (varNames(j))
     CASE('AB    ')
         KAB    = j
-    CASE('ABC   ')
-        KABC   = j
     CASE('AWALL ')
         KAWALL = j
     CASE('RTOR  ')
