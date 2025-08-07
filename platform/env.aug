@@ -3,7 +3,7 @@
 PKG=/shares/software/aug-dv/moduledata/Intel/oneapi
 export I_MPI_ROOT=${PKG}/mpi/2021.9.0
 export I_MPI_FABRICS=shm:ofi
-export I_MPI_DEBUG=5
+export I_MPI_DEBUG=0
 export I_MPI_LINK=opt
 export RDMAV_FORK_SAFE=1
 export FI_PROVIDER_PATH=$I_MPI_ROOT/libfabric/lib/prov # necessary
