@@ -5,6 +5,15 @@ FP_NORM(1:NA1) = (FP(1:NA1) - PSIAX)/(PSIBO - PSIAX)
 rho_pol(1:NA1) = SQRT(FP_NORM(1: NA1))
 '''
 
+astra2shm = \
+"""! **** Fill shared memory segments
+call SYSTEM_CLOCK(t_wall1, rate)
+call markloc("setvars")
+call setvars(DEVAR, n_bouncon)
+call markloc("set_sbp_input_arrays")
+call set_sbp_input_arrays
+"""
+
 
 class FNC:
 
@@ -15,27 +24,17 @@ external IINT
 """
 
 
-class SUBPROC:
+class SHM2ASTRA:
 
     header = \
-'''subroutine SUBPROC
+'''subroutine SHM2ASTRA
 
 use const_inc
 use io_mod, only: IFSBP
-use cpu_usage, only: wallTime_sbr, cpuTime_sbr
-use ipc_mod, only: mem_tglf, mem_qlkz, mem_neo, n_sbp_arr_out
+use ipc_mod, only: mem_tglf, mem_qlkz, mem_neo
 
 implicit none
 '''
-
-    sbp_input = \
-"""! **** Fill shared memory segments
-call SYSTEM_CLOCK(t_wall1, rate)
-call markloc("setvars")
-call setvars(DEVAR, n_bouncon)
-call markloc("set_sbp_input_arrays")
-call set_sbp_input_arrays
-"""
 
 
 class POSTEP:

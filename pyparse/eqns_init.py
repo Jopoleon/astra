@@ -36,7 +36,7 @@ def eqns_init(parse):
         str_out = '! **** No external subroutines'
         eqns_txt += str_out
     if NSBP > 0:
-        eqns_txt += const_text.SUBPROC.sbp_input
+        eqns_txt += const_text.astra2shm
     eqns_txt += 'call markloc("eqns")\n'
     init_txt += 'call markloc("init")\n'
     str_out = 'NITOT = NITOT + 1\n'
@@ -64,7 +64,7 @@ def eqns_init(parse):
 # Subprocesses
 
     if NSBP > 0:
-        statement = '\ncall SUBPROC\n\n'
+        statement = '\ncall SHM2ASTRA\n\n'
         init_txt += statement
         eqns_txt += statement
 

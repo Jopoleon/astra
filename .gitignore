@@ -32,3 +32,5 @@ user
 profiles.dat
 *_backup
 regressions/*.log
+lastruntime.qlk
+out.neo.*

@@ -80,24 +80,24 @@ class CODE_GEN:
         NSBP = len(sbp_lines)
 
 #------------
-# subproc.f90
+# shm2astra.f90
 
-        self.subproc = const_text.SUBPROC.header
+        self.shm2astra = const_text.SHM2ASTRA.header
         if NSBP > 0:
-            self.subproc += '! **** Synchronisation point\n'
-            self.subproc += 'call wait4all\n'
-            self.subproc += '! **** Collect data from ShMem\n'
+            self.shm2astra += '! **** Synchronisation point\n'
+            self.shm2astra += 'call wait4all\n'
+            self.shm2astra += '! **** Collect data from ShMem\n'
             for jlin, line in enumerate(sbp_lines):
                 jsbp = jlin + 1
                 sbp_d = sbrs_d[line]
-                self.subproc += 'if (IFSBP(%d) /= 0) then\n' %jsbp
-                self.subproc += 'call sbp2astra(%s, %d, %s)\n' %(sbp_d['args'], jsbp, mem_d[sbp_d['name']])
-                self.subproc += 'IFSBP(%d) = 0\n' %jsbp
-                self.subproc += 'endif\n'
-        self.subproc += \
+                self.shm2astra += 'if (IFSBP(%d) /= 0) then\n' %jsbp
+                self.shm2astra += 'call sbp2astra(%s, %d, %s)\n' %(sbp_d['args'], jsbp, mem_d[sbp_d['name']])
+                self.shm2astra += 'IFSBP(%d) = 0\n' %jsbp
+                self.shm2astra += 'endif\n'
+        self.shm2astra += \
 '''
 return
-end subroutine SUBPROC
+end subroutine SHM2ASTRA
 '''
 
 #-----------
@@ -162,9 +162,9 @@ J = jdetv
         self.detvar_init = self.detvar.replace('subroutine DETVAR', 'SUBROUTINE DETVAR_INIT')
         if j_ipc > 1:
             if NSBP > 0:
-                self.detvar += const_text.SUBPROC.sbp_input
+                self.detvar += const_text.astra2shm
             self.detvar += detv_sbp
-            self.detvar += 'call SUBPROC\n'
+            self.detvar += 'call SHM2ASTRA\n'
             self.detvar += 'call SYSTEM_CLOCK(t_wall2, rate)\n'
             self.detvar += 'print*, "XPR wall time", dble(t_wall2 - t_wall1)/dble(rate)\n'
             self.detvar += 'wallTime_xpr = wallTime_xpr + t_wall2 - t_wall1\n'
