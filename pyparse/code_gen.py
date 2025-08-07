@@ -46,8 +46,6 @@ class CODE_GEN:
             sbrs_d[line] = sbr_d
             locsbr = sbr_d['locsbr']
             a_str = ''
-#            if (sbr_d['name'] in ('MIXINT', 'MIXEXT', 'TSCTRL')) or (locsbr == 1):
-#                a_str = '.and. JIT == JEX'
             if locsbr == -1:
                 detv_sbr += pa.sbr_header(j_sbr, astr=a_str)
                 detv_sbr += pa.write_sbr(sbr_d)
@@ -84,21 +82,21 @@ class CODE_GEN:
 
         self.shm2astra = const_text.SHM2ASTRA.header
         if NSBP > 0:
-            self.shm2astra += '! **** Synchronisation point\n'
-            self.shm2astra += 'call wait4all\n'
-            self.shm2astra += '! **** Collect data from ShMem\n'
+            self.shm2astra += \
+'''
+! **** Synchronisation point
+call wait4all
+! **** Collect data from ShMem
+'''
             for jlin, line in enumerate(sbp_lines):
                 jsbp = jlin + 1
                 sbp_d = sbrs_d[line]
-                self.shm2astra += 'if (IFSBP(%d) /= 0) then\n' %jsbp
-                self.shm2astra += 'call sbp2astra(%s, %d, %s)\n' %(sbp_d['args'], jsbp, mem_d[sbp_d['name']])
-                self.shm2astra += 'IFSBP(%d) = 0\n' %jsbp
-                self.shm2astra += 'endif\n'
+                self.shm2astra += 'if (IFSBP(%d) /= 0) call sbp2astra(%s, %d, %s)\n' %(jsbp, sbp_d['args'], jsbp, mem_d[sbp_d['name']])
+            self.shm2astra += 'IFSBP = 0\n'
         self.shm2astra += \
 '''
 return
-end subroutine SHM2ASTRA
-'''
+end subroutine SHM2ASTRA'''
 
 #-----------
 # declar.fnc
@@ -164,21 +162,21 @@ J = jdetv
             if NSBP > 0:
                 self.detvar += const_text.astra2shm
             self.detvar += detv_sbp
-            self.detvar += 'call SHM2ASTRA\n'
-            self.detvar += 'call SYSTEM_CLOCK(t_wall2, rate)\n'
-            self.detvar += 'print*, "XPR wall time", dble(t_wall2 - t_wall1)/dble(rate)\n'
-            self.detvar += 'wallTime_xpr = wallTime_xpr + t_wall2 - t_wall1\n'
+            self.detvar += \
+'''call SHM2ASTRA
+call SYSTEM_CLOCK(t_wall2, rate)
+print*, "XPR wall time", dble(t_wall2 - t_wall1)/dble(rate)
+wallTime_xpr = wallTime_xpr + t_wall2 - t_wall1
+'''
         self.detvar += \
 '''
 return
-end subroutine DETVAR
-'''
+end subroutine DETVAR'''
 
         self.detvar_init += \
 '''
 return
-end subroutine DETVAR_init
-'''
+end subroutine DETVAR_init'''
 
 #----------
 # model.txt
@@ -338,12 +336,12 @@ end subroutine ininam'''
                 self.init_sbp += 'SBP_JBEG(%d)=%s\n' %(j_ipc, jbeg.strip())
                 self.init_sbp += 'SBP_JEND(%d)=%s\n' %(j_ipc, jend.strip())
                 j_ipc += 1
-        self.init_sbp += 'call markloc("initialise_ipc")\n'
-        self.init_sbp += 'call initialise_ipc(NA1, n_sbp_arr_in, n_sbp_arr_out, NSBP, equ_file, exp_file)\n'
-        self.init_sbp += 'call markloc("send_ipc_jobs")\n'
-        self.init_sbp += 'call send_ipc_jobs(NSBP, 64, SBP_NAMES, SBP_JBEG, SBP_JEND)\n'
         self.init_sbp += \
-'''
+'''call markloc("initialise_ipc")
+call initialise_ipc(NA1, n_sbp_arr_in, n_sbp_arr_out, NSBP, equ_file, exp_file)
+call markloc("send_ipc_jobs")
+call send_ipc_jobs(NSBP, 64, SBP_NAMES, SBP_JBEG, SBP_JEND)
+
 return
 end subroutine init_sbp'''
 
@@ -383,10 +381,10 @@ end subroutine setvar'''
                 self.astra_out +=  pa.LINE2FOR('TOUT(LTOUT, %d) = %s' %(jsig+1, name), parse)
             else:
                 self.astra_out += 'TOUT(LTOUT, %d) = 0.d0\n' %(jsig+1)
-        self.astra_out +=  """
+        self.astra_out += \
+'''
 return
-end subroutine TIMOUT
-"""
+end subroutine TIMOUT'''
 
 #--------------------------------
 # eqns_inc.f90, init_converge_step.f90
