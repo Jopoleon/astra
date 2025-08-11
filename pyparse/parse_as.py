@@ -315,23 +315,6 @@ def write_sbr(sbr_dic):
     return out_txt
 
 
-def write_xpr(sbr_dic, j_ipc):
-
-    out_txt = ''
-    j_sbr  = sbr_dic['neq']
-    sbrnam = sbr_dic['name']
-
-    out_txt += 'if (IFSUB == 1) then\n'
-    out_txt += 'TEQ(%d) = TIME\n' %j_sbr
-    out_txt += 'IFSBP(%d) = %d\n' %(j_ipc, j_sbr)
-    sbr_nam = sbrnam.lower().replace('xpr/', '')
-    out_txt += 'call markloc("subroutine %s")\n' %sbr_nam
-    out_txt += 'call unlock_sbp(%d)\n' %j_ipc
-    out_txt += 'endif\n'
-
-    return out_txt
-
-
 def getInnermostBracket(pieces):
     '''Localises first ")" occurrence and previous "("'''
 

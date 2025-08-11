@@ -295,7 +295,7 @@ radial_loop: do jradial=1, n_radial
 ! neo model parameters
     neo_sim_model_in = 2  ! type of NEO calculation: 1 analytic, 2 kinetic
     neo_equilibrium_model_in = 2
-    neo_silent_flag_in = 0 ! DUmp file for stand-alone
+    neo_silent_flag_in = 1 ! If 0, dump file for stand-alone
     neo_test_flag_in = 0
 
 ! Resolution 

@@ -10,7 +10,6 @@ def eqns_init(parse):
     eqns_txt = ''
     init_txt = ''
 
-    sbp_lines = []
     sbr_txt = ''
     j_sbr = 1
 
@@ -25,18 +24,12 @@ def eqns_init(parse):
 #                a_str = '.and. JIT == JEX'
             sbr_txt += sbr_header(sbr_d['neq'], astr=a_str)
             sbr_txt += write_sbr(sbr_d)
-# Subprocess
-        if sbr_d['locsbr'] in (-2, -3):
-            sbp_lines.append(line)
         j_sbr += 1
 
-    NSBP = len(sbp_lines)
     NSBR = len(parse.sbr_lines)
-    if NSBP == 0 and NSBR == 0:
+    if NSBR == 0:
         str_out = '! **** No external subroutines'
         eqns_txt += str_out
-    if NSBP > 0:
-        eqns_txt += const_text.astra2shm
     eqns_txt += 'call markloc("eqns")\n'
     init_txt += 'call markloc("init")\n'
     str_out = 'NITOT = NITOT + 1\n'
@@ -60,13 +53,6 @@ def eqns_init(parse):
 
     init_txt += sbr_txt
     eqns_txt += sbr_txt
-
-# Subprocesses
-
-    if NSBP > 0:
-        statement = '\ncall SHM2ASTRA\n\n'
-        init_txt += statement
-        eqns_txt += statement
 
 # Equations
 

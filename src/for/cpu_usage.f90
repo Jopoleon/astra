@@ -8,7 +8,7 @@ use debugger, only: markloc
 implicit none
 
 double precision :: cpu_start, cpuTime_equ=0., cpuTime_sbr(NSBMX)=0.
-integer :: wall_start, wallTime_equ=0, wallTime_sbr(NSBMX)=0, wallTime_xpr=0
+integer :: wall_start, wallTime_equ=0, wallTime_sbr(NSBMX)=0
 
 contains
 
@@ -49,9 +49,6 @@ contains
           call formatTime(nch, 'Subroutine ' // sbr_name(j), dble(wallTime_sbr(j))/dble(rate), wall_tot)
       endif
   enddo
-  if (wallTime_xpr > 0) then
-      call formatTime(nch, 'SubProc ' // sbr_name(IFSBX(1)), dble(wallTime_xpr)/dble(rate), wall_tot)
-  endif
   write(nch, *)
 
   return

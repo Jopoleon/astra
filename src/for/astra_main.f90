@@ -3,7 +3,7 @@ program astra
 use char_manip, only: null_ch
 use parameter_inc, only: NSBMX, NRD
 use outcmn_inc, only: astra_gui, astra_gui_ref, outcmn_init
-use io_mod, only: TASK, io_init, NSBP
+use io_mod, only: TASK, io_init
 use cpu_usage, only: cpu_start, wall_start, cpu_report
 use const_inc, only: IPART, const_init, &
     TIME, TSTART, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT
@@ -20,10 +20,8 @@ implicit none
 !-------------------------------------------
 
 integer :: j, jj, IM, ios, XSC0, XSC, jt1, jt2, jt3, jt_req, jkey, ierr, jt_out=0, rate
-character(len=64) :: SBP_NAMES(NSBMX)
 character(len=132) :: STRI
 integer, external :: IFKEY, IFTREQ
-integer, dimension(NSBMX) :: sbp_jbeg, sbp_jend
 
 save jt_out
 
@@ -56,10 +54,7 @@ call SETVAR
 call DETVAR_INIT
 call EQGUESS
 call INIVAR
-if (NSBP > 0) then
-    call init_sbp(SBP_NAMES, SBP_JBEG, SBP_JEND) ! needs to be after detvar_init, so that CRAD3 is defined
-endif
- 
+
 call transport2fbe_init
 
 jt_req = 0

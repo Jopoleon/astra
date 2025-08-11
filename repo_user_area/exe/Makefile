@@ -41,9 +41,7 @@ $(TMP_DIR)/setvar.f90 \
 $(TMP_DIR)/detvar_init.f90 \
 $(TMP_DIR)/detvar.f90 \
 $(TMP_DIR)/postep.f90 \
-$(TMP_DIR)/shm2astra.f90 \
 $(TMP_DIR)/ininam.f90 \
-$(TMP_DIR)/init_sbp.f90 \
 $(TMP_DIR)/init_converge_step.f90 \
 $(TMP_DIR)/eqns_inc.f90
 

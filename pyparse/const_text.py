@@ -5,15 +5,6 @@ FP_NORM(1:NA1) = (FP(1:NA1) - PSIAX)/(PSIBO - PSIAX)
 rho_pol(1:NA1) = SQRT(FP_NORM(1: NA1))
 '''
 
-astra2shm = \
-"""! **** Fill shared memory segments
-call SYSTEM_CLOCK(t_wall1, rate)
-call markloc("setvars")
-call setvars(DEVAR, n_bouncon)
-call markloc("set_sbp_input_arrays")
-call set_sbp_input_arrays
-"""
-
 
 class FNC:
 
@@ -22,19 +13,6 @@ class FNC:
 double precision :: VINT, IINT, LININT, GRAD, GRADS, FRMAX, FRMIN, RFMIN, RFMAX, RFVAL, AFVAL, RFVEX, AFVEX, RFVIN, AFVIN, RFA, RFAN, XFA, XFAN, AFR, AFX, RECR, ATR, ATX, TIMINT, TIMDER, TIMAVG, GAUSS, RADIAL, RADINT, ASTEP, RSTEP, XSTEP, STEP, CUT, FTBOX, FXBOX, FABOX, FIXVAL, FTAV, FTMIN, FTMAX, FRAMP, FJUMP
 external IINT
 """
-
-
-class SHM2ASTRA:
-
-    header = \
-'''subroutine SHM2ASTRA
-
-use const_inc
-use io_mod, only: IFSBP
-use ipc_mod, only: mem_tglf, mem_qlkz, mem_neo
-
-implicit none
-'''
 
 
 class POSTEP:
@@ -63,7 +41,7 @@ class ININAM:
 """subroutine ININAM
 
 use parameter_inc, only: NSBMX, NRD
-use io_mod, only: sbr_name, IFSBP, IFSBX, NSBR, NSBP, awd
+use io_mod, only: sbr_name, IFSBX, NSBR, awd
 use outcmn_inc
 use const_inc
 use status_inc
@@ -79,35 +57,7 @@ call markloc("xar_usage")
 
     sb = \
 """do j=1, NSBMX
-IFSBP(j) = 0
 IFSBX(j) = 0
-enddo
-"""
-
-class INIT_SBP:
-    
-    header = \
-"""subroutine init_sbp(SBP_NAMES, SBP_JBEG, SBP_JEND)
-
-use parameter_inc, only: NSBMX, NRD
-use io_mod, only: equ_file, exp_file, NSBP
-use ipc_mod, only: n_sbp_arr_in, n_sbp_arr_out
-use const_inc
-use debugger, only: markloc
-
-implicit none
-
-integer, dimension(NSBMX), intent(out) :: SBP_JBEG, SBP_JEND
-character(len=64), dimension(NSBMX), intent(out) :: SBP_NAMES
-
-integer :: j, t_wall1, t_wall2, rate
-
-call markloc("init_sbp")
-
-SBP_JBEG = 0
-SBP_JEND = 0
-do j=1, NSBMX
-SBP_NAMES(j) = char(0)
 enddo
 """
 
@@ -343,7 +293,7 @@ use ipc_mod
 use nclass_mod
 use strahl_mod
 use io_mod
-use cpu_usage, only: wallTime_sbr, cpuTime_sbr, wallTime_xpr
+use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use json_vars, only: profxNames
 use debugger, only: markloc
 
@@ -1003,7 +953,7 @@ class INIT_CONVERGE_STEP:
 '''subroutine init_converge_step
 
 use parameter_inc, only: NRD
-use io_mod, only: equ_file, exp_file, NSBP
+use io_mod, only: equ_file, exp_file
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use const_inc
 use status_inc

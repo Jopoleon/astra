@@ -11,9 +11,8 @@ key_t my_key;
 
 int A_SemID = 0;
 int A_Nsems = 0;        // #semaphores
+void **A_ShmAdr = NULL;
 
-#define A_Nsemx 20      // max #semaphores
-void *A_ShmAdr[A_Nsemx];
 void *A_ShmAdr_avars;
 void *A_ShmAdr_aarrs;
 
@@ -58,6 +57,7 @@ int initialise_ipc_(int* Ngrid, int *n_sbp_arr_in, int *n_sbp_arr_out, int* Nsub
     static union semun Mysemun;
 
     A_Nsems = *Nsub + 1;
+    A_ShmAdr = malloc(A_Nsems * sizeof(*A_ShmAdr));
     getcwd(AWD, sizeof(AWD));
     snprintf(A_equ_file, sizeof(A_equ_file), "%s", equ_file);
     snprintf(A_exp_file, sizeof(A_exp_file), "%s", exp_file);
@@ -257,11 +257,6 @@ int read_aipc(int* Nsub){
     int A_ShmLen[A_Nsems];          // Child Shmem segment length
     int A_ShmID[A_Nsems];           // Child Shmem ID
     int A_ChildID[A_Nsems]; // Child process ID
-
-    if (A_Nsems > A_Nsemx){
-        fprintf(stderr, ">>> ERROR >>> Too many shmem segments\n");
-	exit(2);
-    }
 
     A_IPC = fopen(A_ipc_file, "r");
     if (!A_IPC){

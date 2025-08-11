@@ -12,8 +12,6 @@ logger.setLevel(logging.INFO)
 # Output:
 #    src/tmp/*.f90, declar.fml, declar.fnc
 
-mem_d = {'XPR/TGLFI': 'mem_tglf(1, 1)', 'XPR/QLKI': 'mem_qlkz(1, 1)', 'XPR/NEO': 'mem_neo(1, 1)'}
-
 awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 
@@ -33,11 +31,8 @@ class CODE_GEN:
         setv_sbr = ''
         detv_sbr = ''
         post_sbr = ''
-        detv_sbp = ''
         j_sbr = 1
-        j_ipc = 1
         sbrs_d = {}
-        sbp_lines = []
 
         for line in parse.sbr_lines:
 
@@ -51,15 +46,9 @@ class CODE_GEN:
                 detv_sbr += pa.write_sbr(sbr_d)
             elif locsbr in (0, -2, -3):
                 eqns_lin.append(line)
-                if locsbr == -3:
-                    detv_sbp += pa.sbr_header(j_sbr, astr=a_str, label='subprocess')
-                    detv_sbp += pa.write_xpr(sbr_d, j_ipc)     
-                    j_ipc += 1
             elif locsbr == 1:
                 post_sbr += pa.sbr_header(j_sbr, astr='')
                 post_sbr += pa.write_sbr(sbr_d)
-            if locsbr in (-2, -3):
-                sbp_lines.append(line) 
 
             j_arg = 1
             for key in ('dt', 'tmin', 'tmax', 'key'):
@@ -74,29 +63,6 @@ class CODE_GEN:
                         detv_sbr += 'DTEQ(%d, %d) = %s\n' %(j_arg, j_sbr, l2f)
                 j_arg += 1
             j_sbr += 1
-
-        NSBP = len(sbp_lines)
-
-#------------
-# shm2astra.f90
-
-        self.shm2astra = const_text.SHM2ASTRA.header
-        if NSBP > 0:
-            self.shm2astra += \
-'''
-! **** Synchronisation point
-call wait4all
-! **** Collect data from ShMem
-'''
-            for jlin, line in enumerate(sbp_lines):
-                jsbp = jlin + 1
-                sbp_d = sbrs_d[line]
-                self.shm2astra += 'if (IFSBP(%d) /= 0) call sbp2astra(%s, %d, %s)\n' %(jsbp, sbp_d['args'], jsbp, mem_d[sbp_d['name']])
-            self.shm2astra += 'IFSBP = 0\n'
-        self.shm2astra += \
-'''
-return
-end subroutine SHM2ASTRA'''
 
 #-----------
 # declar.fnc
@@ -158,16 +124,7 @@ J = jdetv
         self.detvar += 'enddo\n'
         self.detvar += const_text.DETVAR.rad_tail
         self.detvar_init = self.detvar.replace('subroutine DETVAR', 'SUBROUTINE DETVAR_INIT')
-        if j_ipc > 1:
-            if NSBP > 0:
-                self.detvar += const_text.astra2shm
-            self.detvar += detv_sbp
-            self.detvar += \
-'''call SHM2ASTRA
-call SYSTEM_CLOCK(t_wall2, rate)
-print*, "XPR wall time", dble(t_wall2 - t_wall1)/dble(rate)
-wallTime_xpr = wallTime_xpr + t_wall2 - t_wall1
-'''
+
         self.detvar += \
 '''
 return
@@ -285,8 +242,6 @@ end subroutine INIVAR'''
         for jlbl, lbl in enumerate(config.eqn_list):
             inam += 'LEQ(%d) = %d\n' %(jlbl+1, parse.leq_d[lbl])
         inam += const_text.ININAM.sb
-        for jlin, line in enumerate(sbp_lines):
-            inam += 'IFSBX(%d) = %d\n' %(jlin + 1, sbrs_d[line]['neq'])
         inam += 'call markloc("ininam")\n'
         inam += 'NSBR  = %d\n' %len(parse.sbr_lines)
         inam += 'NTOUT = %d\n' %len(parse.namet)
@@ -307,12 +262,8 @@ end subroutine INIVAR'''
         for line in parse.sbr_lines:
             j_sbr  = sbrs_d[line]['neq']
             sbrnam = sbrs_d[line]['name']
-            if sbrnam[:3] == 'XPR':
-                sbrnam = sbrnam[4:10].lower()
             inam += 'sbr_name(%d) = "%s"\n' %(j_sbr, sbrnam)
             inam += 'DTNAME(%d*4+NSDELOUT) = "%s"//char(0)\n' %(j_sbr, sbrnam[:6])
-
-        inam += 'NSBP = %d\n' %NSBP
 
         self.ininam  = const_text.ININAM.header
         self.ininam += inam
@@ -320,30 +271,6 @@ end subroutine INIVAR'''
 '''
 return
 end subroutine ininam'''
-
-#-----------
-# init_sbp.f90
-
-        self.init_sbp = const_text.INIT_SBP.header
-
-        j_ipc = 1
-        for line in parse.sbr_lines:
-            sbr_d = sbrs_d[line]
-            j_sbr = sbr_d['neq']
-            if sbr_d['locsbr'] in (-2, -3):
-                self.init_sbp += 'SBP_NAMES(%d)="%s"//char(0)\n' %(j_ipc, sbr_d['name'].lower())
-                jbeg, jend = sbr_d['args'].split(',')
-                self.init_sbp += 'SBP_JBEG(%d)=%s\n' %(j_ipc, jbeg.strip())
-                self.init_sbp += 'SBP_JEND(%d)=%s\n' %(j_ipc, jend.strip())
-                j_ipc += 1
-        self.init_sbp += \
-'''call markloc("initialise_ipc")
-call initialise_ipc(NA1, n_sbp_arr_in, n_sbp_arr_out, NSBP, equ_file, exp_file)
-call markloc("send_ipc_jobs")
-call send_ipc_jobs(NSBP, 64, SBP_NAMES, SBP_JBEG, SBP_JEND)
-
-return
-end subroutine init_sbp'''
 
 #-----------
 # setvar.f90
