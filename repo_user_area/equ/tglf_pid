@@ -68,27 +68,7 @@ CAR11=CUBM;
 
 
 !TGLF call
-! physics
-CF16=1.0;  ! Boundary
-CF12=0.02;  ! Frequency of calls
-CRAD3=CF16*NA1/16. + 0.001;
-a2tglf_elite<:CF12:::;
-xpr/tglfi( int(CRAD3*0)+1 ,int(CRAD3*1 ) )&<:CF12:::;
-xpr/tglfi( int(CRAD3*1)+1 ,int(CRAD3*2 ) )&<:CF12:::;
-xpr/tglfi( int(CRAD3*2)+1 ,int(CRAD3*3 ) )&<:CF12:::;
-xpr/tglfi( int(CRAD3*3)+1 ,int(CRAD3*4 ) )&<:CF12:::;
-xpr/tglfi( int(CRAD3*4)+1 ,int(CRAD3*5 ) )&<:CF12:::;
-xpr/tglfi( int(CRAD3*5)+1 ,int(CRAD3*6 ) )&<:CF12:::;
-xpr/tglfi( int(CRAD3*6)+1 ,int(CRAD3*7 ) )&<:CF12:::;
-xpr/tglfi( int(CRAD3*7)+1 ,int(CRAD3*8 ) )&<:CF12:::;
-xpr/tglfi( int(CRAD3*8)+1 ,int(CRAD3*9 ) )&<:CF12:::;
-xpr/tglfi( int(CRAD3*9)+1 ,int(CRAD3*10) )&<:CF12:::;
-xpr/tglfi( int(CRAD3*10)+1,int(CRAD3*11) )&<:CF12:::;
-xpr/tglfi( int(CRAD3*11)+1,int(CRAD3*12) )&<:CF12:::;
-xpr/tglfi( int(CRAD3*12)+1,int(CRAD3*13) )&<:CF12:::;
-xpr/tglfi( int(CRAD3*13)+1,int(CRAD3*14) )&<:CF12:::;
-xpr/tglfi( int(CRAD3*14)+1,int(CRAD3*15) )&<:CF12:::;
-xpr/tglfi( int(CRAD3*15)+1,int(CRAD3*16) + 1 )&<:CF12:::;
+tglf_ipc(31, 1.d0):0.02:::;
 
 CAR17 = "mem_tglf(j,1)"; ! chi_i
 CAR18 = "mem_tglf(j,2)"; ! chi_e
