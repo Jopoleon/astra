@@ -44,7 +44,7 @@ class CODE_GEN:
             if locsbr == -1:
                 detv_sbr += pa.sbr_header(j_sbr, astr=a_str)
                 detv_sbr += pa.write_sbr(sbr_d)
-            elif locsbr in (0, -2, -3):
+            elif locsbr == 0:
                 eqns_lin.append(line)
             elif locsbr == 1:
                 post_sbr += pa.sbr_header(j_sbr, astr='')

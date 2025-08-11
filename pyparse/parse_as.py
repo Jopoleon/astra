@@ -437,8 +437,6 @@ def parse_sbr(line):
 
 # LOCSBR:
 #   -4 Default value (the sbr is never used in the model)
-#   -3 SB_P, tag "<" (detvar.tmp)
-#   -2 SB_P, no tag  (init.inc & eqns.inc)
 #   -1 SBR, tag "<"  (detvar.tmp)
 #    0 SBR, no tag   (init.inc & eqns.inc)
 #    1 SBR, tag ">"  (postep.inc)
@@ -467,18 +465,12 @@ def parse_sbr(line):
         tmin = 0.
         tmax = 1000.
         key = ''
-    if '&' in line: # SubProcess
-        if '<' in line:
-            locsbr = -3
-        else:
-            locsbr = -2
-    else:           # subroutine
-        if '<' in line:
-            locsbr = -1  # detvar.f90; call in ASTRA_MAIN, STEPUP before equil
-        elif '>' in line or sbrnam.upper() in ('MIXINT', 'MIXEXT', 'TSCTRL'):
-            locsbr = 1   # postep.f90; call in STEPUP
-        else:
-            locsbr = 0   # init_converge_step.f90/eqns_inc.f90; call in ASTRA_MAIN, STEPUP
+    if '<' in line:
+        locsbr = -1  # detvar.f90; call in ASTRA_MAIN, STEPUP before equil
+    elif '>' in line or sbrnam.upper() in ('MIXINT', 'MIXEXT', 'TSCTRL'):
+        locsbr = 1   # postep.f90; call in STEPUP
+    else:
+        locsbr = 0   # init_converge_step.f90/eqns_inc.f90; call in ASTRA_MAIN, STEPUP
 
     if args_str:
         args = args_str.split(',')
