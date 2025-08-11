@@ -55,6 +55,9 @@ then
 elif [[ $node = "fc-deb"* ]]
 then
     platform=hgw
+elif [[ $node = "feynman" ]]
+then
+    platform=columbia
 else
     platform=mypc
 fi
