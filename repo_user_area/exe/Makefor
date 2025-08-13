@@ -52,7 +52,6 @@ $(OBJ_DIR)/intvar.o \
 $(OBJ_DIR)/metric.o \
 $(OBJ_DIR)/outdsp.o \
 $(OBJ_DIR)/runeq.o \
-$(OBJ_DIR)/set_sbp_input_arrays.o \
 $(OBJ_DIR)/setarx.o \
 $(OBJ_DIR)/stdfun.o \
 $(OBJ_DIR)/surv.o \

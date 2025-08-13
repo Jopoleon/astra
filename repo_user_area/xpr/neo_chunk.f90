@@ -1,8 +1,18 @@
 program neo_chunk
 
 use mpi
-use neo_interface
-
+use neo_interface, only: neo_mass_in, neo_z_in, neo_dens_in, neo_temp_in, &
+    neo_dlnndr_in, neo_dlntdr_in, neo_sim_model_in, neo_equilibrium_model_in, &
+    neo_silent_flag_in, neo_test_flag_in, neo_n_energy_in, neo_n_xi_in, &
+    neo_n_theta_in, neo_ipccw_in, neo_btccw_in, neo_n_species_in, &
+    neo_epar0_in, neo_rho_star_in, neo_nu_1_in, neo_q_in, neo_shear_in, &
+    neo_rmin_over_a_in, neo_rmaj_over_a_in, neo_rmin_over_a_2_in, &
+    neo_shift_in, neo_kappa_in, neo_s_kappa_in, neo_delta_in, neo_s_delta_in, &
+    neo_rotation_model_in, neo_omega_rot_in, neo_omega_rot_deriv_in, &
+    neo_pflux_thHH_out, neo_eflux_thCHi_out, neo_eflux_thHHe_out, &
+    neo_jpar_thS_out, neo_pflux_dke_out, neo_pflux_dke_out, neo_efluxncv_dke_out, &
+    neo_vpol_dke_out, neo_vtor_dke_out, neo_jpar_dke_out, &
+    neo_pflux_gv_out, neo_efluxncv_gv_out
 implicit none
 
 integer, parameter :: n_dims=8
@@ -131,6 +141,8 @@ neo_ipccw_in = -1
 neo_btccw_in = -1
 neo_n_species_in = n_ions + 1
 
+if (i1 == 1) print*, 'Run NEO', n_ions
+
 radial_loop: do jr=1, chunk
 
     path_in='./neo/'
@@ -231,7 +243,6 @@ radial_loop: do jr=1, chunk
     SELECT CASE (neo_sim_model_in)
 
     CASE(1) ! analytic
-        print*, 'run neo analytic', n_ions
         call neo_run
         pflux_i_neo(1) = neo_pflux_thHH_out *Gamma_neo_GB
         eflux_i_neo(1) = neo_eflux_thCHi_out*Q_neo_GB
@@ -241,7 +252,6 @@ radial_loop: do jr=1, chunk
         write(*,*) 'end neo analytic', pflux_i_neo(1), eflux_i_neo(1), pflux_e_neo, eflux_e_neo, jboots
 
     CASE(2) ! kinetic calculation
-        print*, 'run neo DKE', n_ions
         call neo_run
 
         pflux_e_neo = (neo_pflux_dke_out(1)    + tgyro_neo_gv_flag*neo_pflux_gv_out(1)) *Gamma_neo_GB
@@ -257,7 +267,7 @@ radial_loop: do jr=1, chunk
         enddo
 
         jboots = neo_jpar_dke_out*Jpar_GB
-        write(*, '(A, 2e11.4)') 'end neo DKE', pflux_e_neo, eflux_e_neo
+        write(*, '(A, 2e11.4)') 'neo DKE', pflux_e_neo, eflux_e_neo
 
     END SELECT
 

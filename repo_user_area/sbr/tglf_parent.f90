@@ -1,33 +1,33 @@
-subroutine tglf_parent(chi_i, chi_e, e_pflux, vimp1, vimp2, i_mflux_as, exchi_as, gamma_as, omega_as)
+subroutine tglf_parent
 
 use mpi
 
 use parameter_inc, only: NRD
-use const_inc, only: BTOR, RTOR, AMJ, AIM1, AIM2, AIM3, ZMJ, NA1
+use ipc_mod, only: mem_tglf, n_sbp_arr_out
+use const_inc, only: NA1, BTOR, RTOR, AMJ, AIM1, AIM2, AIM3, ZMJ
 use status_inc, only: NE, TE, NI, TI, ZEF, PBLON, PBPER, PFAST, &
     ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3, ER, MU, FP_NORM, &
     RHO, AMETR, SHIF, ELON, NDEUT, TRIA, VTOR, G11, VPOL, VRS
 
 implicit none
 
-integer, parameter :: n_scalars=10, n_inputs=40, n_outputs=15, n_dims=8, nrho_m=80, nworkers=40, nspec_max=5
+integer, parameter :: n_inputs=40, nrho_m=80, nworkers=40, nspec_max=5
+integer, parameter :: n_scalars=10, n_dims=8
 double precision, parameter :: c_vpol=1.d0
 
-double precision, dimension(NRD), intent(out) :: chi_i, chi_e, e_pflux, vimp2, vimp1, &
-     i_mflux_as, exchi_as, gamma_as, omega_as
-
-integer :: ierr, info, intercomm, errcodes(100), status(MPI_STATUS_SIZE)
-integer :: jr, jrho, jr_r, jr_l, jgamma_max, jion
+integer :: i, jr, jrho, jr_r, jr_l, jgamma_max, jion, nchunk
 integer :: ns_in              ! Number of species, including electrons
-integer :: i, i1, i2, chunk, dims(n_dims)
+integer :: t_wall1, t_wall2, rate
+integer :: i1, i2, dims(n_dims)
+integer :: ierr, info, intercomm, errcodes(100), status(MPI_STATUS_SIZE)
 
 double precision, dimension(n_scalars) :: scal_in_m
-double precision, dimension(n_outputs, nrho_m) :: prof_out_m
+double precision, dimension(n_sbp_arr_out, nrho_m) :: prof_out_m
 double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, a0_m, gradrhosq_inv
 double precision, dimension(nrho_m) :: drmin, drmaj, drho, dti, dte, dne, dq, &
     dptot, delong, dtrian, dvpar, dvper, drhodr, dr, dv_r
 double precision, dimension(NRD) :: rmaj_as, q_as, ni_main_as, &
-    vexb_as, vpar_as, vper_as, chie_as, chii_as, e_pflux_as, ptot_as
+    vexb_as, vpar_as, vper_as, chie_as, chii_as, e_pflux_as, i_mflux_as, ptot_as
 double precision, dimension(nrho_m) :: rho_m, gamma_max, omega_max, kymax, &
     ti_m, te_m, ne_m, vpar_m, vper_m, vexb_m, &
     ametr_m, elon_m, tria_m, rmaj_m, ptot_m, q_m, zef_m, pfn_m
@@ -37,11 +37,9 @@ double precision, dimension(nspec_max-1, nrho_m) :: dni, ni_m, i_pflux
 double precision, dimension(nspec_max-2, nrho_m) :: zimp_m 
 double precision, dimension(nspec_max-1, NRD) :: i_pflux_as
 double precision, allocatable, dimension(:, :) :: send_buffer
-character(len=256) :: worker_exe
-character(len=1), dimension(1) :: args
-args(1) = ''
+character(len=256) :: worker_exe="xpr/tglf.x"
 
-worker_exe = "xpr/tglf.x"
+call SYSTEM_CLOCK(t_wall1, rate)
 
 ! Interpolate from ASTRA grid to TGLF grid
 rho_min = RHO(1)
@@ -158,10 +156,14 @@ do jr=1, nrho_m
     drhodr(jr) = drho(jr)/drmin(jr)
 enddo
 
+!--------------------
+! MPI parallelisation
+!--------------------
+
 dims(1) = nrho_m
 dims(2) = n_scalars
 dims(3) = n_inputs
-dims(4) = n_outputs
+dims(4) = n_sbp_arr_out
 dims(5) = ns_in
 dims(6) = nspec_max
 
@@ -171,24 +173,19 @@ scal_in_m(3) = a0_m
 scal_in_m(4) = ZMJ
 scal_in_m(5: 4+nspec_max) = mass_in(1: nspec_max)
 
-!--------------
-! Send MPI jobs
-!--------------
-
-chunk = nrho_m / nworkers
-print *, "MPI workers = ", nworkers, nrho_m, chunk*n_inputs
-allocate(send_buffer(n_inputs, chunk))
+nchunk = nrho_m / nworkers
+allocate(send_buffer(n_inputs, nchunk))
 
 call MPI_Info_create(info, ierr)
 call MPI_Info_set(info, "host", "localhost", ierr)
 call MPI_Info_set(info, "oversubscribe", "false", ierr)
-call MPI_Comm_spawn(TRIM(worker_exe), args, nworkers, MPI_INFO_NULL, 0, MPI_COMM_SELF, intercomm, errcodes, ierr)
+call MPI_Comm_spawn(TRIM(worker_exe), MPI_ARGV_NULL, nworkers, MPI_INFO_NULL, 0, MPI_COMM_SELF, intercomm, errcodes, ierr)
 
 ! Send dimensions and data to workers
 do i=0, nworkers-1
     send_buffer = 0.d0
-    i1 = i * chunk + 1
-    i2 = (i + 1) * chunk
+    i1 = i * nchunk + 1
+    i2 = (i + 1) * nchunk
     dims(7) = i1
     dims(8) = i2
     call MPI_Send(dims, n_dims, MPI_INTEGER, i, 101 + i, intercomm, ierr)
@@ -234,14 +231,14 @@ do i=0, nworkers-1
     send_buffer(38, :) = dni(2, i1:i2)
     send_buffer(39, :) = dni(3, i1:i2)
     send_buffer(40, :) = dni(4, i1:i2)
-    call MPI_Send(send_buffer, chunk * n_inputs, MPI_DOUBLE_PRECISION, i, 301+i, intercomm, ierr)
+    call MPI_Send(send_buffer, nchunk * n_inputs, MPI_DOUBLE_PRECISION, i, 301+i, intercomm, ierr)
 enddo
 
 ! Receive results from each worker
 do i=0, nworkers-1
-    i1 = i * chunk + 1
-    i2 = (i + 1) * chunk
-    call MPI_Recv(prof_out_m(:, i1:i2), chunk * n_outputs, MPI_DOUBLE_PRECISION, i, 401+i, intercomm, status, ierr)
+    i1 = i * nchunk + 1
+    i2 = (i + 1) * nchunk
+    call MPI_Recv(prof_out_m(:, i1:i2), nchunk * n_sbp_arr_out, MPI_DOUBLE_PRECISION, i, 401+i, intercomm, status, ierr)
 enddo
 call MPI_Barrier(intercomm, ierr)  ! Optional: ensure child finished before next step
 
@@ -249,30 +246,31 @@ call MPI_Barrier(intercomm, ierr)  ! Optional: ensure child finished before next
 e_pflux_as = 0.
 i_pflux_as = 0.
 i_mflux_as = 0.
-chie_as  = 0.
-chii_as  = 0.
-exchi_as = 0.
-gamma_as = 0.
-omega_as = 0.
-call qinterp(rho_m, prof_out_m(1, :), nrho_m, RHO(1:NA1),    chii_as(1:NA1), NA1)
-call qinterp(rho_m, prof_out_m(2, :), nrho_m, RHO(1:NA1),    chie_as(1:NA1), NA1)
-call qinterp(rho_m, prof_out_m(3, :), nrho_m, RHO(1:NA1), i_mflux_as(1:NA1), NA1)
-call qinterp(rho_m, prof_out_m(4, :), nrho_m, RHO(1:NA1), e_pflux_as(1:NA1), NA1)
-call qinterp(rho_m, prof_out_m(5, :), nrho_m, RHO(1:NA1),   exchi_as(1:NA1), NA1)
-call qinterp(rho_m, prof_out_m(6, :), nrho_m, RHO(1:NA1),   gamma_as(1:NA1), NA1)
-call qinterp(rho_m, prof_out_m(7, :), nrho_m, RHO(1:NA1),   omega_as(1:NA1), NA1)
+chie_as = 0.
+chii_as = 0.
+
+call qinterp(rho_m, prof_out_m(1, :), nrho_m, RHO(1:NA1),      chii_as(1:NA1), NA1) ! chi_i
+call qinterp(rho_m, prof_out_m(2, :), nrho_m, RHO(1:NA1),      chie_as(1:NA1), NA1) !chi_e
+call qinterp(rho_m, prof_out_m(3, :), nrho_m, RHO(1:NA1),   i_mflux_as(1:NA1), NA1)
+call qinterp(rho_m, prof_out_m(4, :), nrho_m, RHO(1:NA1),   e_pflux_as(1:NA1), NA1) ! Electron flux
+call qinterp(rho_m, prof_out_m(5, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1,  8), NA1) ! Turb. equip.
+call qinterp(rho_m, prof_out_m(6, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1, 11), NA1) ! gamma
+call qinterp(rho_m, prof_out_m(7, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1, 12), NA1) ! omega
 do jion=1, nspec_max-1
     call qinterp(rho_m, prof_out_m(7+jion, :), nrho_m, RHO(1:NA1), i_pflux_as(jion, 1:NA1), NA1)
 enddo
 
 do jrho=1, NA1
     gradrhosq_inv = VRS(jrho)/G11(jrho)
-    chi_i(jrho) = chii_as(jrho)*gradrhosq_inv ! \chi_i, m^2/s
-    chi_e(jrho) = chie_as(jrho)*gradrhosq_inv ! \chi_e, m^2/s
-    e_pflux(jrho) = e_pflux_as(jrho)*gradrhosq_inv/a0_m ! D flux
-    vimp1(jrho) = i_pflux_as(2, jrho)*gradrhosq_inv/a0_m/(NIZ1(jrho)/NE(jrho))  ! 1st imp convection
-    vimp2(jrho) = i_pflux_as(3, jrho)*gradrhosq_inv/a0_m/(NIZ2(jrho)/NE(jrho))  ! 2nd imp convection
+    mem_tglf(jrho, 1) = chii_as(jrho)*gradrhosq_inv ! \chi_i, m^2/s
+    mem_tglf(jrho, 2) = chie_as(jrho)*gradrhosq_inv ! \chi_e, m^2/s
+    mem_tglf(jrho, 4) = e_pflux_as(jrho)*gradrhosq_inv/a0_m ! e flux
+    mem_tglf(jrho, 13) = i_pflux_as(2, jrho)*gradrhosq_inv/a0_m/(NIZ1(jrho)/NE(jrho))  ! 1st imp convection
+    mem_tglf(jrho, 14) = i_pflux_as(3, jrho)*gradrhosq_inv/a0_m/(NIZ2(jrho)/NE(jrho))  ! 2nd imp convection
 enddo
+
+call SYSTEM_CLOCK(t_wall2, rate)
+print*, "XPR wall time", dble(t_wall2 - t_wall1)/dble(rate)
 
 return
 end subroutine tglf_parent

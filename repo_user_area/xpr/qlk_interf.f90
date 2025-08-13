@@ -1,8 +1,8 @@
-subroutine qlk_interf(jr1_in, jr2_in, n_sbp_arr_in, n_sbp_arr_out, nrho, NA1N, NA1E, NA1I, &
-    BTOR, RTOR, AMJ, ZMJ, AIM1, AIM2, AIM3, &
-    mem_in, &
+subroutine qlk_interf(jr1_in, jr2_in, n_inputs, n_outputs, nrho, &
+    nspec_max, ns_in, BTOR, RTOR, ABC, AMJ, ZMJ, AIM1, AIM2, AIM3, &
+    inputs, &
 ! output
-    mem_out)
+    outputs)
 
 USE mod_qualikiz, only: qualikiz
 USE kind, only: qlk_output_meth_0, qlk_output_meth_0_sep_0, &
@@ -14,13 +14,6 @@ USE nanfilter
 
 implicit none
 
-integer, intent(in) :: n_sbp_arr_in, n_sbp_arr_out, nrho, jr1_in, jr2_in, NA1N, NA1E, NA1I
-
-double precision, intent(in) :: BTOR, RTOR, AMJ, AIM1, AIM2, AIM3, ZMJ
-double precision, intent(in), dimension(nrho, n_sbp_arr_in) :: mem_in
-double precision, intent(out), dimension(jr2_in + 1 - jr1_in, n_sbp_arr_out) :: mem_out
-
-!--------------------------------
 type(qlk_sizes)      :: sizes
 type(qlk_in_regular) :: in_regular
 type(qlk_in_newt)    :: in_newt
@@ -29,8 +22,7 @@ type(qlk_output_meth_0)       :: output_meth_0
 type(qlk_output_meth_0_sep_0) :: output_meth_0_sep_0_SI , output_meth_0_sep_0_GB
 type(qlk_primi_meth_0)        :: primi_meth_0
 
-
-integer, parameter :: ntheta=64, numecoefs=13, numicoefs=7, dimx=1, dimn=16, numsols=3, phys_meth=0, nradial=5, nspec_max=7
+integer, parameter :: ntheta=64, numecoefs=13, numicoefs=7, dimx=1, dimn=16, numsols=3, phys_meth=0
 
 double precision, parameter :: &
     e0  = 4.8032E-10, &       ! elementary charge (statcoulombs)
@@ -39,19 +31,22 @@ double precision, parameter :: &
     mp  = 1.6726E-24, &       ! proton mass (g)
     mpp = 1.6726E-27          ! proton mass (kg)
 
+integer, intent(in) :: jr1_in, jr2_in, n_inputs, n_outputs, nrho, nspec_max, ns_in
+double precision, intent(in) :: BTOR, RTOR, ABC, AMJ, AIM1, AIM2, AIM3, ZMJ
+double precision, intent(in), dimension(n_inputs, nrho) :: inputs
+double precision, intent(out), dimension(jr2_in + 1 - jr1_in, n_outputs) :: outputs
+
 !-----------------------------------------
 
 integer :: simple_mpi_only_in, maxpts_in, maxruns_in, runcounter_in
 integer :: nions, coll_flag_in, rot_flag_in, verbose_in, el_type_in, &
-    integration_routine_in, separateflux_in
+     integration_routine_in, separateflux_in
+integer :: chunk, mpi_ierr, nproc, myrank, i_mpic
 integer, dimension(dimx, nspec_max-1) :: ion_type_in
 
+double precision :: a0_m, T0, m0, rmin_tg, drho_cs, drho_nt, nt_cs
 double precision :: relacc1_in, relacc2_in, absacc1_in, absacc2_in, R0_in, &
-    ETGmultin, collmultin, timeout_in, rhomin, rhomax, rhoscale, xstep
-double precision, dimension(nrho) :: &
-    NE, TE, NI, NDEUT, NTRIT, NIZ1, NIZ2, TI, ZEF, ZIM1, AMAIN, MU, RHO, &
-    AMETR, SHIF, ELON, TRIA, ER, NIBM, G11, VPOL, VRS, VTOR, SHEAR, PBLON, PBPER, &
-    PFAST, NIZ3, ZIM2, ZIM3, ZIMPT, NIMPT, AIMPT
+    ETGmultin, collmultin, timeout_in, rhomin, rhomax, rhoscale
 double precision, dimension(dimn) :: kthetarhos_in
 double precision, dimension(dimx) :: x_in, rho_in, Ro_in, Rmin_in, Bo_in, &
     qx_in, smag_in, alphax_in, Tex_in, Nex_in, Ate_in, Ane_in, anise_in, &
@@ -68,27 +63,18 @@ double precision, DIMENSION(:, :, :), ALLOCATABLE :: oldrsol, oldisol, oldrfdsol
 !-----------------------------------------
 LOGICAL :: exist1, exist2, exist3, exist4, exist5 !used for checking for existence of files
 
-!MPI variables:
-INTEGER :: mpi_ierr, nproc, myrank
-INTEGER :: myunit=700, i_mpic, unit_input=500
-integer :: jr_min, jr_max, jrho, j0, j01, j02, n_radial
-integer :: i, j, k, jradial, jjgrid(nradial), jion
+integer, parameter :: unit_runc=600, unit_rsol=610, unit_isol=620, unit_rfd=630, unit_ifd=640, myunit=700, unit_input=500
+integer :: i, j, k, jr, jion
 
-double precision :: bpolz
-double precision :: drmin, drmaj, drho, dte, dne, dq, dptot, &
-    delong, dtrian, dvper, drhodr, dstep, dr, dv_r
+double precision, allocatable, dimension(:) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
+    dvper, drhodr, dstep, dr, dv_r
 double precision :: Bunit, cs00, rhos00, omega0, rhostar2
-double precision :: T0, m0, drho_cs
 ! Shifted cicle geometry inputs
-double precision :: gamma_e_tg, mach_fac, ql_fac
+double precision :: gamma_e, mach_fac, ql_fac
 
-double precision, dimension(nrho) :: vpar_m, vper_m, &
-    gradrhosq_exp, rmaj_exp, q_exp, &
-    chie_m, chii_m, pfluxi_m, exchi_m, ptot
-
-double precision, dimension(nradial) :: chie, chii, exchi, pfluxi, rho_tg
-double precision, dimension(nspec_max-1) :: dti, dni
-double precision, dimension(nspec_max-1, nrho) :: ni_m, ti_m
+double precision, allocatable, dimension(:) :: chie, chii, exchi, pfluxi, rho, &
+    te, ne, vpar, vper, ametr, rmaj, q_saf
+double precision, allocatable, dimension(:, :) :: dti, dni, ni, ti, zimp
 double precision :: vpar_in, vpar_shear_in, cexb
 
 COMPLEX(kind=DBL), DIMENSION(:, :, :), ALLOCATABLE :: oldsol_in, oldfdsol_in
@@ -114,120 +100,72 @@ if (i_mpic == 0) then
     i_mpic = 1
 endif
 
-nions = nspec_max - 1
+verbose_in = 0
 
-!-----------------
-! Get input arrays
-!-----------------
+nions = ns_in - 1
 
-NE    = mem_in(1:nrho,  1)
-TE    = mem_in(1:nrho,  2)
-NI    = mem_in(1:nrho,  3)
-NDEUT = mem_in(1:nrho,  4)
-NTRIT = mem_in(1:nrho,  5)
-NIZ1  = mem_in(1:nrho,  6)
-NIZ2  = mem_in(1:nrho,  7)
-TI    = mem_in(1:nrho,  8)
-ZEF   = mem_in(1:nrho,  9)
-ZIM1  = mem_in(1:nrho, 10)
-AMAIN = mem_in(1:nrho, 11)
-MU    = mem_in(1:nrho, 12)
-RHO   = mem_in(1:nrho, 13)
-AMETR = mem_in(1:nrho, 14)
-SHIF  = mem_in(1:nrho, 15)
-ELON  = mem_in(1:nrho, 16)
-TRIA  = mem_in(1:nrho, 17)
-ER    = mem_in(1:nrho, 18)
-NIBM  = mem_in(1:nrho, 19)
-G11   = mem_in(1:nrho, 20)
-VPOL  = mem_in(1:nrho, 21)
-VRS   = mem_in(1:nrho, 22)
-VTOR  = mem_in(1:nrho, 23)
-SHEAR = mem_in(1:nrho, 24)
-PBLON = mem_in(1:nrho, 25)
-PBPER = mem_in(1:nrho, 26)
-PFAST = mem_in(1:nrho, 27)
-NIZ3  = mem_in(1:nrho, 28)
-ZIM2  = mem_in(1:nrho, 29)
-ZIM3  = mem_in(1:nrho, 30)
-ZIMPT = mem_in(1:nrho, 31)
-NIMPT = mem_in(1:nrho, 32)
-AIMPT = mem_in(1:nrho, 33)
+chunk = jr2_in + 1 - jr1_in
 
-!-----------------
-! Radial subdomain
-!-----------------
+allocate( chie(chunk), chii(chunk), exchi(chunk), pfluxi(chunk), rho(chunk), &
+    te(chunk), ne(chunk), vpar(chunk), vper(chunk), &
+    ametr(chunk), rmaj(chunk), q_saf(chunk) )
+allocate( drmin(chunk), drmaj(chunk), drho(chunk), &
+    dr(chunk), dne(chunk), dte(chunk), dq(chunk), dptot(chunk), &
+    dvper(chunk), dv_r(chunk), drhodr(chunk) )
+allocate( dti(4, chunk), dni(4, chunk), ni(4, chunk), ti(4, chunk), &
+    zimp(3, chunk) )
 
-jr_min = max(1, jr1_in)
-jr_max = min(nrho, jr2_in)
-if (jr_min > jr_max) then
-    write(*, *) 'Error! jr_min > jr_max', jr_max
-    return
-endif
+! Receive TGLF input scalars and profiles from parent
+rho      = inputs( 1, jr1_in:jr2_in)
+ametr    = inputs( 2, jr1_in:jr2_in)
+rmaj     = inputs( 3, jr1_in:jr2_in)
+q_saf    = inputs( 4, jr1_in:jr2_in)
+ne       = inputs( 5, jr1_in:jr2_in)
+te       = inputs( 6, jr1_in:jr2_in)
+vpar     = inputs( 7, jr1_in:jr2_in)
+vper     = inputs( 8, jr1_in:jr2_in)
+ti(1, :) = inputs( 9, jr1_in:jr2_in)
+ti(2, :) = inputs(10, jr1_in:jr2_in)
+ti(3, :) = inputs(11, jr1_in:jr2_in)
+ti(4, :) = inputs(12, jr1_in:jr2_in)
+ni(1, :) = inputs(13, jr1_in:jr2_in)
+ni(2, :) = inputs(14, jr1_in:jr2_in)
+ni(3, :) = inputs(15, jr1_in:jr2_in)
+ni(4, :) = inputs(16, jr1_in:jr2_in)
+zimp(1, :) = inputs(17, jr1_in:jr2_in)
+zimp(2, :) = inputs(18, jr1_in:jr2_in)
+zimp(3, :) = inputs(19, jr1_in:jr2_in)
+drmin      = inputs(20, jr1_in:jr2_in)
+drmaj      = inputs(21, jr1_in:jr2_in)
+drho       = inputs(22, jr1_in:jr2_in)
+dptot      = inputs(23, jr1_in:jr2_in)
+dte        = inputs(24, jr1_in:jr2_in)
+dne        = inputs(25, jr1_in:jr2_in)
+dq         = inputs(26, jr1_in:jr2_in)
+dvper      = inputs(27, jr1_in:jr2_in)
+dv_r       = inputs(28, jr1_in:jr2_in)
+dr         = inputs(29, jr1_in:jr2_in)
+drhodr     = inputs(30, jr1_in:jr2_in)
+dti(1, :)  = inputs(31, jr1_in:jr2_in)
+dti(2, :)  = inputs(32, jr1_in:jr2_in)
+dti(3, :)  = inputs(33, jr1_in:jr2_in)
+dti(4, :)  = inputs(34, jr1_in:jr2_in)
+dni(1, :)  = inputs(35, jr1_in:jr2_in)
+dni(2, :)  = inputs(36, jr1_in:jr2_in)
+dni(3, :)  = inputs(37, jr1_in:jr2_in)
+dni(4, :)  = inputs(38, jr1_in:jr2_in)
 
-xstep = float(jr_max - jr_min)/(nradial - 1.)
-if (xstep <= 1.) then
-    do jradial=1, nradial
-        jjgrid(jradial) = jr_min + jradial - 1
-        if (jjgrid(jradial) == jr_max) EXIT
-    enddo
-    n_radial = jradial
-else
-    n_radial = nradial
-    do jradial = 1, n_radial-1
-        jjgrid(jradial) = jr_min + nint((jradial-1)*xstep)
-    enddo
-    jjgrid(n_radial) = jr_max
-endif
+a0_m = ABC
+R0_in    = inputs(3, nrho) ! nrho has to be NA1?
+rhoscale = inputs(1, nrho) ! ??
+m0 = AMJ*mp          ! Ref. mass = D ion mass [g]
 
 ! Electrons and main ions
-Zi_in(1, 1) = ZMJ
-
 Ai_in(1, 1) = AMJ
 Ai_in(1, 2) = AIM1
 Ai_in(1, 3) = AIM2
 Ai_in(1, 4) = AIM3
-
-do jrho=1, nrho
-    ti_m(1:4, jrho) = TI(jrho)
-    ni_m(1, jrho) = NDEUT(jrho)
-    ni_m(2, jrho) = max(1.e-9, NIZ1(jrho))
-    ni_m(3, jrho) = max(1.e-9, NIZ2(jrho))
-    ni_m(4, jrho) = max(1.e-9, NIZ3(jrho))
-    rmaj_exp(jrho) = RTOR + SHIF(jrho)
-    q_exp(jrho)    = 1./MU(jrho)
-    ptot(jrho) = NE(jrho)*TE(jrho) + ni_m(1, jrho)*ti_m(1, jrho) + ni_m(2, jrho)*ti_m(2, jrho) + pfast(jrho) + 0.5*(pblon(jrho) + pbper(jrho))
-    bpolz = BTOR*AMETR(jrho)*MU(jrho)/RTOR
-    gradrhosq_exp(jrho) = G11(jrho)/VRS(jrho)
-    vper_m(jrho) = ER(jrho)/(RTOR*bpolz) ! vexb in m/s --> Omega_E    
-    vpar_m(jrho) = ER(jrho)/(RTOR*bpolz)*(RTOR+SHIF(jrho)+AMETR(jrho))  !--> R*Omega_E , no neoclassical terms
-
-enddo
-
-! GYRO conventions
-
-m0 = AMJ*mp                ! Ref. mass = D ion mass [g]
-
-pfluxi_m  = 0.0
-chie_m  = 0.0
-chii_m  = 0.0
-exchi_m = 0.0
-
-! These will be reset locally in the radial loop
-Zi_in(1, 2) = MAXVAL(ZIM1(1:nrho))
-Zi_in(1, 3) = MAXVAL(ZIM2(1:nrho))
-Zi_in(1, 4) = MAXVAL(ZIM3(1:nrho))
-
-if (Zi_in(1, 4) >= 1.) nions = 4
-if (Zi_in(1, 4) < 1.) nions = 3
-if (Zi_in(1, 3) < 1.) nions = 2
-if (Zi_in(1, 4) >= 1. .and. nions == 2) then 
-    nions = 3
-endif
-if (Zi_in(1, 2) < 1.) nions = 1
-if (Zi_in(1, 3) >= 1. .and. nions == 1) then 
-    nions = 2
-endif
+Zi_in(1, 1) = ZMJ
 
 vpar_in = 0.
 vpar_shear_in = 0.
@@ -241,45 +179,40 @@ coll_flag_in = 1
 el_type_in   = 1
 separateflux_in    = 0
 simple_mpi_only_in = 1
-maxpts_in   = 50000000 ! 500000 default
-maxruns_in  = 10
+maxpts_in  = 50000000 ! 500000 default
+maxruns_in = 10
 
-R0_in = RTOR + SHIF(nrho)
 Bo_in(1) = BTOR
-Rmin_in(1) = AMETR(nrho)
-rhoscale = rho(nrho)
-
+Rmin_in(1) = a0_m
 WRITE(fmtn, '(A, I0, A)') '(', dimn, 'G15.7)'
 
-radial_loop: do jradial=1, n_radial
+radial_loop: do jr=1, chunk
    
-    j0 = jjgrid(jradial)
-    write(fname1, '(A, i0)') 'qlkzin_' , j0
-    qx_in(1) = q_exp(j0)
-    rho_in(1) = RHO(j0)
-    x_in(1) = AMETR(j0)/Rmin_in(1)
-    rho_tg(jradial) = rho_in(1)
-
-    Ro_in(1) = RTOR + SHIF(j0)
-    T0  = 1E3 *te(j0)   ! temperature scale used by GYRO
+    write(fname1, '(A, i0)') 'qlkzin_' , jr1_in - 1 + jr
+    qx_in(1)  = q_saf(jr)
+    rho_in(1) = rho(jr)
+    x_in(1)   = ametr(jr)/Rmin_in(1)
+    Ro_in(1)  = rmaj(jr)
+    T0 = 1E3*te(jr)   ! temperature scale used by GYRO
+    smag_in(1) = (x_in(1)/qx_in(1))*dq(jr)/dr(jr)        ! r/q dq/dr 
 
 !thermal impurities
 
-    Zi_in(1, 2) = max(1., ZIM1(j0))
-    Zi_in(1, 3) = ZIM2(j0)
-    Zi_in(1, 4) = ZIM3(j0)
+    Zi_in(1, 2) = max(1., zimp(1, jr))
+    Zi_in(1, 3) = zimp(2, jr)
+    Zi_in(1, 4) = zimp(3, jr)
 
-    if (Zi_in(1, 4) >= 1. .and. nions == 2) then 
+    if (Zi_in(1, 4) >= 1. .and. nions == 2) then
         Zi_in(1, 3) = Zi_in(1, 4)
         Ai_in(1, 3) = Ai_in(1, 4)
-        ni_m(3, :) = ni_m(4, :)
-        ti_m(3, :) = ti_m(4, :)
+        ni(3, :) = ni(4, :)
+        ti(3, :) = ti(4, :)
     endif
-    if (Zi_in(1, 3) >= 1. .and. nions == 1) then 
+    if (Zi_in(1, 3) >= 1. .and. nions == 1) then
         Zi_in(1, 2) = Zi_in(1, 3)
         Ai_in(1, 2) = Ai_in(1, 3)
-        ni_m(2, :) = ni_m(3, :)
-        ti_m(2, :) = ti_m(3, :)
+        ni(2, :) = ni(3, :)
+        ti(2, :) = ti(3, :)
     endif
 
     Ai_in(1, nions + 1:) = 0.
@@ -287,63 +220,18 @@ radial_loop: do jradial=1, n_radial
     Ati_in(1, nions + 1:) = 0.
     Ani_in(1, nions + 1:) = 0.
 
-! Differentials
-
-    j01 = j0+1
-    j02 = j0-1
-    if (j0 == 1) then
-        j02 = j0
-    else if (j0 == nrho) then
-        j01 = j0
-    endif
-    dstep = 1./float(j01 - j02)
-
-    drmin  = dstep*(AMETR(j01) - AMETR(j02))
-    drmaj  = dstep*(rmaj_exp(j01) - rmaj_exp(j02))
-    drho   = dstep*(rho(j01) - rho(j02))
-    delong = dstep*(ELON(j01) - ELON(j02))
-    dtrian = dstep*(TRIA(j01) - TRIA(j02))
-    dptot  = dstep*(ptot(j01) - ptot(j02))
-    if (j0 == NA1E .and. NA1E /= nrho) then
-        dte = 0.5*dstep*(TE(j0) - TE(j02)) ! Left derivative
-    else
-        dte = dstep*(TE(j01) - TE(j02))
-    endif
-    if (j0 == NA1N .and. NA1N /= nrho) then
-        dne = 0.5*dstep*(NE(j0) - NE(j02)) ! Left derivative
-    else
-        dne = dstep*(NE(j01) - NE(j02))
-    endif
-    dq    = dstep*(q_exp(j01) - q_exp(j02))
-    dvper = dstep*(vper_m(j01) - vper_m(j02))
-    do jion=1, nions
-        if (j0 == NA1I .and. NA1I /= nrho) then
-            dti(jion) = 0.5*dstep*(ti_m(jion, j0) - ti_m(jion, j02))
-            dni(jion) = 0.5*dstep*(ni_m(jion, j0) - ni_m(jion, j02))
-        else
-            dti(jion) = dstep*(ti_m(jion, j01) - ti_m(jion, j02))
-            dni(jion) = dstep*(ni_m(jion, j01) - ni_m(jion, j02))
-        endif
-    enddo
-    dv_r = dstep* &
-        (vpar_m(j01)/(rmaj_exp(j01) + AMETR(j01)) - &
-         vpar_m(j02)/(rmaj_exp(j02) + AMETR(j02)))
-    dr = drmin/Rmin_in(1)    ! gradients w.r.t. minor radius even for s-alpha geometry
-    drhodr = drho/drmin
-    smag_in(1) = (x_in(1)/qx_in(1))*dq/dr        ! r/q dq/dr 
-
 ! local field averages
-    Nex_in(1) = NE(j0)
-    Tex_in(1) = TE(j0)
-    Ate_in(1) = -dte*R0_in/(drmin*Tex_in(1))
-    Ane_in(1) = -dne*R0_in/(drmin*Nex_in(1))
+    Nex_in(1) = ne(jr)
+    Tex_in(1) = te(jr)
+    Ate_in(1) = -dte(jr)*R0_in/(drmin(jr)*Tex_in(1))
+    Ane_in(1) = -dne(jr)*R0_in/(drmin(jr)*Nex_in(1))
     anise_in(1) = 1.0
     danisedr_in(1) = 0.0
     do jion=1, nions  ! deut, impurities
-        ninorm_in(1, jion) = ni_m(jion, j0)/Nex_in(1)
-        Tix_in(1, jion) = ti_m(jion, j0)
-        Ati_in(1, jion) = -dti(jion)*R0_in/(drmin*ti_m(jion, j0))
-        Ani_in(1, jion) = -dni(jion)*R0_in/(drmin*ni_m(jion, j0))
+        ninorm_in(1, jion) = ni(jion, jr)/Nex_in(1)
+        Tix_in(1, jion) = ti(jion, jr)
+        Ati_in(1, jion) = -dti(jion, jr)*R0_in/(drmin(jr)*ti(jion, jr))
+        Ani_in(1, jion) = -dni(jion, jr)*R0_in/(drmin(jr)*ni(jion, jr))
         ion_type_in(1, jion) = 1
         anis_in    (1, jion) = 1.
         danisdr_in (1, jion) = 0.
@@ -356,30 +244,30 @@ radial_loop: do jradial=1, n_radial
 
 ! derived units for the plasma
 
-    Bunit = 1E4*BTOR*drhodr*rho_in(1)/AMETR(j0)  ! Miller geometry magnetic field unit
+    Bunit = 1E4*BTOR*drhodr(jr)*rho_in(1)/ametr(jr)  ! Miller geometry magnetic field unit
     cs00 = SQRT(e00*T0/(AMJ*mpp))  ! thermal velocity unit m/sec
     omega0 = e0*Bunit/(m0*c0)      ! gyrofrequency unit 1/sec
     rhos00 = cs00/omega0           ! gyroradius unit m
 
-    vpar_shear_in = -rmaj_exp(j0)*dv_r/(dr*cs00)  !From m/s to cm/s for vpar
-    vpar_in = vpar_m(j0)/cs00
+    vpar_shear_in = -rmaj(jr)*dv_r(jr)/(dr(jr)*cs00)  !From m/s to cm/s for vpar
+    vpar_in = vpar(jr)/cs00
 
 ! local magnetic geometry
 
     rhostar2 = (rhos00/Rmin_in(1))**2
-    drho_cs = drhodr**2 * Rmin_in(1) * rhostar2 * cs00
+    drho_cs = drhodr(jr)**2 * Rmin_in(1) * rhostar2 * cs00
 
 ! 1.e16 comes from cgs to SI for ptot
-    alphax_in(1) = -(0.0040267/BTOR**2) * qx_in(1)**2 * R0_in * dptot/(dr*Rmin_in(1))
-    cexb = AMETR(j0)/qx_in(1)            ! r/(q)
-    gamma_e_tg = cexb*dvper/(dr*cs00) ! Waltz-Miller definition
+    alphax_in(1) = -(0.0040267/BTOR**2) * qx_in(1)**2 * R0_in * dptot(jr)/(dr(jr)*Rmin_in(1))
+    cexb = ametr(jr)/qx_in(1)            ! r/(q)
+    gamma_e = cexb*dvper(jr)/(dr(jr)*cs00) ! Waltz-Miller definition
     mach_fac = sqrt(Tex_in(1)/AMJ)
 
     Machtor_in(1) = vpar_in*mach_fac
     Machpar_in(1) = vpar_in*mach_fac
     Autor_in(1)  = vpar_shear_in*R0_in/Rmin_in(1)*mach_fac
     Aupar_in(1)  = vpar_shear_in*R0_in/Rmin_in(1)*mach_fac
-    gammaE_in(1) = gamma_e_tg   *R0_in/Rmin_in(1)*mach_fac
+    gammaE_in(1) = gamma_e*R0_in/Rmin_in(1)*mach_fac
 
     absacc2_in = 0.
     absacc1_in = 0.
@@ -402,18 +290,18 @@ radial_loop: do jradial=1, n_radial
         print*, 'check: ', m0, Ati_in(1, 1), gammaE_in, Autor_in, Machtor_in, alphax_in(1)
     endif
 
-    INQUIRE(file="../qualikiz/"//trim(fname1)//"/runcounter.dat", EXIST=exist1)
+    INQUIRE(file="qualikiz/"//trim(fname1)//"/runcounter.dat", EXIST=exist1)
     INQUIRE(file=trim(prim_dir)//'/rsol.dat', EXIST=exist2)
     INQUIRE(file=trim(prim_dir)//'/isol.dat', EXIST=exist3)
     INQUIRE(file=trim(prim_dir)//'/rfdsol.dat', EXIST=exist4)
     INQUIRE(file=trim(prim_dir)//'/ifdsol.dat', EXIST=exist5)
 
     IF ( exist1 .AND. exist2 .AND. exist3 .AND. exist4 .AND. exist5 ) THEN
-        OPEN(unit=700, file="../qualikiz/"//trim(fname1)//"/runcounter.dat", status="old", action="read")
-        READ(700,*) runcounter_in
-        CLOSE(700)
+        OPEN(unit=unit_runc, file="qualikiz/"//trim(fname1)//"/runcounter.dat", status="old", action="read")
+        READ(unit_runc, *) runcounter_in
+        CLOSE(unit_runc)
     ELSE
-        prim_dir = '../qualikiz/'//trim(fname1)//'/output/primitive'
+        prim_dir = 'qualikiz/'//trim(fname1)//'/output/primitive'
         call system('mkdir -p ' // trim(prim_dir))
         runcounter_in = 0 !First run
     ENDIF
@@ -424,7 +312,7 @@ radial_loop: do jradial=1, n_radial
 !    runcounter_in = 0 ! GIT force calculation from scratch
 
     IF (runcounter_in == 0) THEN !load old rsol and isol if we're not doing a reset run
-        write(6, *) 'Qualikiz from scratch'
+        print *,'Qualikiz from scratch'
     ELSE
         ALLOCATE( oldrsol  (dimx, dimn, numsols) )
         ALLOCATE( oldisol  (dimx, dimn, numsols) )
@@ -434,21 +322,21 @@ radial_loop: do jradial=1, n_radial
             ALLOCATE( oldsol_in   (dimx, dimn, numsols) )
             ALLOCATE( oldfdsol_in (dimx, dimn, numsols) )
         endif
-        OPEN(unit=myunit, file=trim(prim_dir)//'/rsol.dat', action="read", status="old")
-        READ(myunit,fmtn) (((oldrsol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
-        CLOSE(myunit)
+        OPEN(unit=unit_rsol, file=trim(prim_dir)//'/rsol.dat', action="read", status="old")
+        READ(unit_rsol, fmtn) (((oldrsol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
+        CLOSE(unit_rsol)
 
-        OPEN(unit=myunit, file=trim(prim_dir)//'/isol.dat', action="read", status="old")
-        READ(myunit,fmtn) (((oldisol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
-        CLOSE(myunit)
+        OPEN(unit=unit_isol, file=trim(prim_dir)//'/isol.dat', action="read", status="old")
+        READ(unit_isol, fmtn) (((oldisol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
+        CLOSE(unit_isol)
 
-        OPEN(unit=myunit, file=trim(prim_dir)//'/rfdsol.dat', action="read", status="old")
-        READ(myunit,fmtn) (((oldrfdsol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
-        CLOSE(myunit)
+        OPEN(unit=unit_rfd, file=trim(prim_dir)//'/rfdsol.dat', action="read", status="old")
+        READ(unit_rfd, fmtn) (((oldrfdsol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
+        CLOSE(unit_rfd)
 
-        OPEN(unit=myunit, file=trim(prim_dir)//'/ifdsol.dat', action="read", status="old")
-        READ(myunit,fmtn) (((oldifdsol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
-        CLOSE(myunit)
+        OPEN(unit=unit_ifd, file=trim(prim_dir)//'/ifdsol.dat', action="read", status="old")
+        READ(unit_ifd, fmtn) (((oldifdsol(i, j, k), j=1, dimn), i=1, dimx), k=1, numsols)
+        CLOSE(unit_ifd)
 
         oldsol_in   = CMPLX(oldrsol  , oldisol)
         oldfdsol_in = CMPLX(oldrfdsol, oldifdsol)
@@ -457,7 +345,7 @@ radial_loop: do jradial=1, n_radial
         DEALLOCATE( oldisol )
         DEALLOCATE( oldrfdsol )
         DEALLOCATE( oldifdsol )
-        write(6, *) 'Call qualikiz from old solution'
+        print *, 'Call qualikiz from old solution'
     ENDIF
 
     sizes%dimn = dimn
@@ -534,8 +422,8 @@ radial_loop: do jradial=1, n_radial
     in_regular%rhomin = rhomin !/rhoscale
     in_regular%rhomax = rhomax !/rhoscale
 
-    OPEN(unit=unit_input, file="../qualikiz/"//trim(fname1)//"/input.dat", status="replace", action="write")
-    WRITE(unit_input, '(6(e14.6))') dq, rmaj_exp(j0), dv_r, dr, cs00
+    OPEN(unit=unit_input, file="qualikiz/"//trim(fname1)//"/input.dat", status="replace", action="write")
+    WRITE(unit_input, '(6(e14.6))') dq(jr), rmaj(jr), dv_r(jr), dr(jr), cs00
     WRITE(unit_input, '(6(e14.6))') Ane_in(1), Ate_in(1), Aupar_in(1), Autor_in(1), Machpar_in(1), Machtor_in(1)
     WRITE(unit_input, '(6(e14.6))') x_in(1), Bo_in(1), gammaE_in(1), Nex_in(1), qx_in(1), Ro_in(1)
     WRITE(unit_input, '(6(e14.6))') Rmin_in(1), smag_in(1), Tex_in(1), alphax_in(1), rho_in(1)/rhoscale, anise_in(1)
@@ -547,7 +435,7 @@ radial_loop: do jradial=1, n_radial
     WRITE(unit_input, '(6(e14.6))') Tix_in(1, 1:nions)
     CLOSE(unit_input)
 
-    write(6, *) 'Calling qualikiz', nions, j0, runcounter_in, myrank
+    print*, 'Calling qualikiz', nions, jr1_in - 1 + jr, runcounter_in, dptot(jr)
 
     if (runcounter_in == 0) then
         call qualikiz(sizes, in_regular, &
@@ -575,27 +463,27 @@ radial_loop: do jradial=1, n_radial
     sol_out   = primi_meth_0%sol
     fdsol_out = primi_meth_0%fdsol
 
-    OPEN(unit=700, file="../qualikiz/"//trim(fname1)//"/runcounter.dat", status="replace", action="write") !Replace old runcounter with new runcounter
-    WRITE(700,*) runcounter_in + 1
-    CLOSE(700)
+    OPEN(unit=unit_runc, file="qualikiz/"//trim(fname1)//"/runcounter.dat", status="replace", action="write") !Replace old runcounter with new runcounter
+    WRITE(unit_runc, *) runcounter_in + 1
+    CLOSE(unit_runc)
 
-    OPEN(unit=myunit, file=trim(prim_dir)//'/rsol.dat', action="write", status="replace")
-    WRITE(myunit, fmtn) (((REAL(sol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
-    CLOSE(myunit)
+    OPEN(unit=unit_rsol, file=trim(prim_dir)//'/rsol.dat', action="write", status="replace")
+    WRITE(unit_rsol, fmtn) (((REAL(sol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
+    CLOSE(unit_rsol)
 
-    OPEN(unit=myunit, file=trim(prim_dir)//'/isol.dat', action="write", status="replace")
-    WRITE(myunit, fmtn) (((AIMAG(sol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
-    CLOSE(myunit)
+    OPEN(unit=unit_isol, file=trim(prim_dir)//'/isol.dat', action="write", status="replace")
+    WRITE(unit_isol, fmtn) (((AIMAG(sol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
+    CLOSE(unit_isol)
 
-    OPEN(unit=myunit, file=trim(prim_dir)//'/rfdsol.dat', action="write", status="replace")
-    WRITE(myunit, fmtn) (((REAL(fdsol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
-    CLOSE(myunit)
+    OPEN(unit=unit_rfd, file=trim(prim_dir)//'/rfdsol.dat', action="write", status="replace")
+    WRITE(unit_rfd, fmtn) (((REAL(fdsol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
+    CLOSE(unit_rfd)
 
-    OPEN(unit=myunit, file=trim(prim_dir)//'/ifdsol.dat', action="write", status="replace")
-    WRITE(myunit, fmtn) (((AIMAG(fdsol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
-    CLOSE(myunit)
+    OPEN(unit=unit_ifd, file=trim(prim_dir)//'/ifdsol.dat', action="write", status="replace")
+    WRITE(unit_ifd, fmtn) (((AIMAG(fdsol_out(i, j, k)), j=1, dimn), i=1, dimx), k=1, numsols)
+    CLOSE(unit_ifd)
 
-    ql_fac = drhodr**2 * Rmin_in(1) * rhostar2 * cs00
+    ql_fac = drhodr(jr)**2 * Rmin_in(1) * rhostar2 * cs00
 
     IF (ALLOCATED(oldsol_in)) THEN !Call with optional old solution input
         DEALLOCATE( oldsol_in  )
@@ -604,31 +492,17 @@ radial_loop: do jradial=1, n_radial
 
 ! Chii
  
-    chii(jradial)   = ql_fac * ief_gb_out(1, 1)/(1e-4 + Rmin_in(1)/R0_in * abs(Ati_in(1, 1)))
-    chie(jradial)   = ql_fac * eef_gb_out(1)/(1e-4 + Rmin_in(1)/R0_in * abs(Ate_in(1)))
-    pfluxi(jradial) = ql_fac * epf_gb_out(1)
-    exchi(jradial)  = cftrans_out(1, 2, 1)
+    chii(jr)   = ql_fac * ief_gb_out(1, 1)/(1e-4 + Rmin_in(1)/R0_in * abs(Ati_in(1, 1)))
+    chie(jr)   = ql_fac * eef_gb_out(1)/(1e-4 + Rmin_in(1)/R0_in * abs(Ate_in(1)))
+    pfluxi(jr) = ql_fac * epf_gb_out(1)
+    exchi(jr)  = cftrans_out(1, 2, 1)
 
 enddo radial_loop
 
-call qinterp(rho_tg, chii  , n_radial, RHO(jr_min:jr_max), chii_m(jr_min:jr_max)  , jr_max-jr_min+1)
-call qinterp(rho_tg, chie  , n_radial, RHO(jr_min:jr_max), chie_m(jr_min:jr_max)  , jr_max-jr_min+1)
-call qinterp(rho_tg, pfluxi, n_radial, RHO(jr_min:jr_max), pfluxi_m(jr_min:jr_max), jr_max-jr_min+1)
-call qinterp(rho_tg, exchi , n_radial, RHO(jr_min:jr_max), exchi_m(jr_min:jr_max) , jr_max -jr_min+1)
+! Simulated TGLF computation:
+outputs(:, 1) = chii
+outputs(:, 2) = chie
+outputs(:, 4) = pfluxi
+outputs(:, 5) = exchi
 
-chii_m  (1:2) = chii_m(3)
-chie_m  (1:2) = chie_m(3)
-pfluxi_m(1:2) = pfluxi_m(3)
-exchi_m (1:2) = exchi_m(3)
-
-mem_out = 0.d0
-
-do j=jr_min, jr_max
-    mem_out(j, 1) = chii_m(j)/gradrhosq_exp(j) ! \chi_i, m^2/s : starts from work(21,:) 
-    mem_out(j, 2) = chie_m(j)/gradrhosq_exp(j) ! \chi_e, m^2/s
-    mem_out(j, 4) = pfluxi_m(j)/AMETR(nrho)/gradrhosq_exp(j) ! D flux
-    mem_out(j, 8) = exchi_m(j)  ! turbulent e-i equipartition in MW/m^3
-enddo   ! End of main loop
-
-return
-END subroutine qlk_interf
+end subroutine qlk_interf

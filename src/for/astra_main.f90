@@ -29,6 +29,8 @@ save jt_out
 
 call CPU_TIME(cpu_start)
 call SYSTEM_CLOCK(wall_start, rate)
+call MPI_Init(ierr)
+
 call const_init
 call status_init
 
@@ -85,7 +87,6 @@ endif
 ! Time step loop
 !---------------
 
-call MPI_Init(ierr)
 do while (TIME - TEND + 1.E-8 < DPOUT + TAU)
     if ((TIME - TSTART + 1.E-8)/DPOUT >= jt_out) then
         call write_json

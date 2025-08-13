@@ -1,13 +1,13 @@
 #include "Astra.h"
 
-void qlk_interf_(int*, int*, int*, int*, int*, int*, int*, int*,
-		 double*, double*, double*, double*, double*, double*, double*,
+void qlk_interf_(int*, int*, int*, int*, int*, int*, int*,
+		 double*, double*, double*, double*, double*, double*, double*, double*,
 		 double*, double*);
-void neo_interf_(int*, int*, int*, int*, int*, int*, int*, int*,
-		 double*, double*, double*, double*, double*, double*, double*,
+void neo_interf_(int*, int*, int*, int*, int*, int*, int*,
+		 double*, double*, double*, double*, double*, double*, double*, double*,
 		 double*, double*);
-void tglf_interf_(int*, int*, int*, int*, int*, int*, int*, int*,
-		 double*, double*, double*, double*, double*, double*, double*,
+void tglf_interf_(int*, int*, int*, int*, int*, int*, int*,
+		 double*, double*, double*, double*, double*, double*, double*, double*,
 		 double*, double*);
 
 /*---------------------------------------------------------------------*/
@@ -17,7 +17,7 @@ void tglf_interf_(int*, int*, int*, int*, int*, int*, int*, int*,
 
 int main(int argc, char *argv[]) {
 
-    extern int A_NA1;
+    extern int N_RHO;
     void *ShmAd0, *ShmAd1, *ShmAdr;
     int i, qlSize, N_ARR_IN, N_ARR_OUT, jrho_beg, jrho_end;
     int SemID, ShmId0, ShmId1;
@@ -41,10 +41,10 @@ int main(int argc, char *argv[]) {
     ProcOrdNr = atoi(argv[3]);
     jrho_beg  = atoi(argv[4]);
     jrho_end  = atoi(argv[5]);
-    A_NA1     = atoi(argv[6]);
+    N_RHO     = atoi(argv[6]);
     N_ARR_IN  = atoi(argv[7]);
     N_ARR_OUT = atoi(argv[8]);
-    printf("Fortran main: %s %d %3d %3d %d %d %d\n", ProcPath, ProcPid, jrho_beg, jrho_end, A_NA1, N_ARR_IN, N_ARR_OUT);
+    printf("Fortran main: %s %d %3d %3d %d %d %d\n", ProcPath, ProcPid, jrho_beg, jrho_end, N_RHO, N_ARR_IN, N_ARR_OUT);
 
 /* Associate My semaphore with the ordinal process number */
     bufN.sem_num = ProcOrdNr;
@@ -99,12 +99,12 @@ int main(int argc, char *argv[]) {
             &jrho_end,
             &N_ARR_IN,
             &N_ARR_OUT,
-            &A_NA1,
-            &(AVARS->na1n),
-            &(AVARS->na1e),
-            &(AVARS->na1i),
+            &N_RHO,
+            &(AVARS->nspec_max),
+            &(AVARS->nspec),
             &(AVARS->btor),
             &(AVARS->rtor),
+            &(AVARS->abc),
             &(AVARS->amj),
             &(AVARS->zmj),
             &(AVARS->aim1),

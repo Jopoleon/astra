@@ -1,4 +1,4 @@
-subroutine neo_parent(chii_m, chie_m)
+subroutine neo_parent
 
 use mpi
 
@@ -7,18 +7,18 @@ use const_inc, only: BTOR, RTOR, AMJ, AIM1, AIM2, AIM3, ZMJ, NA1
 use status_inc, only: NE, TE, NI, TI, ER, MU, FP_NORM, &
     ZIM1, ZIM2, ZIM3, NDEUT, NIZ1, NIZ2, NIZ3, &
     RHO, AMETR, SHIF, ELON, TRIA, VTOR, VPOL
+use ipc_mod, only: mem_neo
 
 implicit none
 
 integer, parameter :: n_dims=8, n_scalars=20, n_inputs=32, n_outputs=8, nrho_m=80, nsm=7
 double precision, parameter :: c_vpol=1.d0
 
-double precision, dimension(NRD), intent(out) :: chii_m, chie_m
-
 integer :: ierr, intercomm, errcodes(100), status(MPI_STATUS_SIZE)
-integer :: jr, jrho, jr_r, jr_l, jion
+integer :: jr, jrho, jr_r, jr_l, jion, jout
 integer :: ns_in              ! Number of species, including electrons
 integer :: i, i1, i2, chunk, nprocs, nworkers, dims(8)
+integer :: t_wall1, t_wall2, rate
 
 double precision, dimension(n_scalars) :: scal_in_m
 double precision, dimension(nrho_m, n_inputs ) :: prof_in_m
@@ -26,14 +26,15 @@ double precision, dimension(nrho_m, n_outputs) :: prof_out_m
 double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, T0, m0, a0_m, a0_cm, cs0, drho
 double precision, dimension(nrho_m) :: drmin, drmaj, dti, dte, dne, dq, &
     delong, dtrian, dvpar, drhodr, dr
-double precision, dimension(NRD) :: rmaj_as, q_as, ni_main_as, vpar_as, &
-    vippd_m, vittd_m, vippi1_m, vitti1_m, j_boot, elec_pflux_m
+double precision, dimension(NRD) :: rmaj_as, q_as, ni_main_as, vpar_as
 double precision, dimension(nrho_m) :: rho_m,  ti_m, te_m, ne_m, vpar_m, &
     ametr_m, elon_m, tria_m, rmaj_m, q_m
 double precision, dimension(nsm) :: mass_in, zs_in
 double precision, dimension(nsm-1, nrho_m) :: dni, ni_m
 double precision, dimension(nsm-2, nrho_m) :: zimp_m 
 character(len=256) :: worker_exe
+
+call SYSTEM_CLOCK(t_wall1, rate)
 
 worker_exe = "xpr/neo.x"
 
@@ -88,10 +89,6 @@ do jr=1, nrho_m
     ni_m(3, jr) = max(1.e-9, ni_m(3, jr))
     ni_m(4, jr) = max(1.e-9, ni_m(4, jr))
 enddo
-
-elec_pflux_m = 0.
-chie_m  = 0.
-chii_m  = 0.
 
 ! Number of species
 ns_in = nsm
@@ -232,14 +229,12 @@ enddo
 
 ! Interpolate back to ASTRA radial grid
 
-call qinterp(rho_m, prof_out_m(:, 1), nrho_m, rho_m(1:NA1),       chii_m(1:NA1), NA1)
-call qinterp(rho_m, prof_out_m(:, 2), nrho_m, rho_m(1:NA1),       chie_m(1:NA1), NA1)
-call qinterp(rho_m, prof_out_m(:, 4), nrho_m, rho_m(1:NA1), elec_pflux_m(1:NA1), NA1)
-call qinterp(rho_m, prof_out_m(:, 3), nrho_m, rho_m(1:NA1),      vippd_m(1:NA1), NA1)
-call qinterp(rho_m, prof_out_m(:, 4), nrho_m, rho_m(1:NA1),      vittd_m(1:NA1), NA1)
-call qinterp(rho_m, prof_out_m(:, 5), nrho_m, rho_m(1:NA1),     vippi1_m(1:NA1), NA1)
-call qinterp(rho_m, prof_out_m(:, 6), nrho_m, rho_m(1:NA1),     vitti1_m(1:NA1), NA1)
-call qinterp(rho_m, prof_out_m(:, 7), nrho_m, rho_m(1:NA1),       j_boot(1:NA1), NA1)
+do jout=1, 7
+    call qinterp(rho_m, prof_out_m(:, jout), nrho_m, rho_m(1:NA1), mem_neo(1:NA1, jout), NA1)
+enddo
+
+call SYSTEM_CLOCK(t_wall2, rate)
+print*, "XPR wall time", dble(t_wall2 - t_wall1)/dble(rate)
 
 return
 end subroutine neo_parent

@@ -67,7 +67,10 @@ PI=PIBM+PEICL+PIDT;
 
 ! NEO call
 
-neo_parent(CAR17, CAR18)>::::;
+neo_parent>::::;
+CAR17 = "mem_neo(j, 1)"; ! chi_i
+CAR18 = "mem_neo(j, 2)"; ! chi_e
+CAR20 = "mem_neo(j, 4)"; ! Particle flux
 
 CAR1 = QETOT;
 CAR2 = QITOT;

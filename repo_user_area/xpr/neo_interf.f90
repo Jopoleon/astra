@@ -1,346 +1,202 @@
-subroutine neo_interf(jr1_in, jr2_in, n_sbp_arr_in, n_sbp_arr_out, nrho, NA1N, NA1E, NA1I, &
-    BTOR, RTOR, AMJ, ZMJ, AIM1, AIM2, AIM3, &
-    mem_in, &
+subroutine neo_interf(jr1_in, jr2_in, n_inputs, n_outputs, nrho, &
+    nspec_max, ns_in, BTOR, RTOR, ABC, AMJ, ZMJ, AIM1, AIM2, AIM3, &
+    inputs, &
 ! output
-    mem_out)
+    outputs)
 
-use neo_interface
+use neo_interface, only: neo_mass_in, neo_z_in, neo_dens_in, neo_temp_in, &
+    neo_dlnndr_in, neo_dlntdr_in, neo_sim_model_in, neo_equilibrium_model_in, &
+    neo_silent_flag_in, neo_test_flag_in, neo_n_energy_in, neo_n_xi_in, &
+    neo_n_theta_in, neo_ipccw_in, neo_btccw_in, neo_n_species_in, &
+    neo_epar0_in, neo_rho_star_in, neo_nu_1_in, neo_q_in, neo_shear_in, &
+    neo_rmin_over_a_in, neo_rmaj_over_a_in, neo_rmin_over_a_2_in, &
+    neo_shift_in, neo_kappa_in, neo_s_kappa_in, neo_delta_in, neo_s_delta_in, &
+    neo_rotation_model_in, neo_omega_rot_in, neo_omega_rot_deriv_in, &
+    neo_pflux_thHH_out, neo_eflux_thCHi_out, neo_eflux_thHHe_out, &
+    neo_jpar_thS_out, neo_pflux_dke_out, neo_pflux_dke_out, neo_efluxncv_dke_out, &
+    neo_vpol_dke_out, neo_vtor_dke_out, neo_jpar_dke_out, &
+    neo_pflux_gv_out, neo_efluxncv_gv_out
 
 implicit none
 
 logical, parameter :: verbose=.False.
-integer, parameter :: jpd=700, nradial=5, nsm=11
+integer, parameter :: jpd=700, nradial=5
 
 double precision, parameter :: &
-   k0   = 1.6022E-12, &       ! erg/ev
    e00  = 1.6020e-19, &       ! elementary charge (C)
-   c0   = 2.9979E+10, &       ! speed of light (cm/sec)
    mpp  = 1.6726E-27, &       ! proton mass (kg)
-   pi   = 3.141592653589793 
+   pi   = 3.141592653589793
 
-integer, intent(in) :: n_sbp_arr_in, n_sbp_arr_out, nrho, jr1_in, jr2_in, NA1N, NA1E, NA1I
+integer, intent(in) :: n_inputs, n_outputs, nrho, jr1_in, jr2_in, nspec_max, ns_in
 
-double precision, intent(in) :: BTOR, RTOR, AMJ, AIM1, AIM2, AIM3, ZMJ
-double precision, intent(in), dimension(nrho, n_sbp_arr_in) :: mem_in
-double precision, intent(out), dimension(jr2_in + 1 - jr1_in, n_sbp_arr_out) :: mem_out
+double precision, intent(in) :: BTOR, RTOR, ABC, AMJ, AIM1, AIM2, AIM3, ZMJ
+double precision, intent(in), dimension(n_inputs, nrho) :: inputs
+double precision, intent(out), dimension(jr2_in + 1 - jr1_in, n_outputs) :: outputs
 
 !----------------------------------------------------------------------
-integer :: jr_min, jr_max, jrho, j0, j01, j02, n_radial
-integer :: j, jradial, jjgrid(nradial), jspec
-integer :: i_ion, n_ions
-double precision :: bmod, bpolz, ion_eflux
-double precision :: drmin, drmaj, drho, dte, dne, dq, &
-        delong, dtrian, dvpar, dvper, drhodr, dstep, dr, xstep
+integer :: i_ion, n_ions, j, jr, jspec, chunk
+double precision :: ion_eflux, drhodr_sq
 double precision :: Bunit, cs0, rhos0, omega0, lnlamda, taue, xnuei
 double precision :: T0, anorm, mnorm, tnorm, nnorm, vnorm, &
-   pflux_e_neo, eflux_e_neo, jboots, tgyro_neo_gv_flag, &
-   Gamma_neo_GB, Q_neo_GB, Pi_neo_GB, Jpar_GB
+   pflux_e, eflux_e, jboots, tgyro_gv_flag, &
+   Gamma_GB, Q_GB, Pi_GB, Jpar_GB
 
-double precision, dimension(nrho) :: rho_m, vexb2, vpar_m, vper_m, &
-    gradrhosq_exp, epar0_in, rmaj_exp, q_exp, &
-    chie_m, chii_m, vippd_m, vittd_m, vippi1_m, vitti1_m, j_boot, elec_pflux_m, &
-    NE, TE, NI, NDEUT, NTRIT, NIZ1, NIZ2, TI, ZEF, ZIM1, AMAIN, MU, RHO, &
-    AMETR, SHIF, ELON, TRIA, ER, NIBM, G11, VPOL, VRS, VTOR, SHEAR, PBLON, PBPER, &
-    PFAST, NIZ3, ZIM2, ZIM3, ZIMPT, NIMPT, AIMPT
-double precision, dimension(nradial) :: chie, chii, elec_pflux, rho_tg, &
-   vippd, vittd, vippi1, vitti1, jbs
-double precision, dimension(nsm-1) :: dti, dni, pflux_i_neo, eflux_i_neo, vpflux_neo, vtflux_neo
-double precision, dimension(nsm-1, nrho) :: ni_m, ti_m
-double precision, dimension(nsm, 2) :: energy_flux, particle_flux
-
+double precision, dimension(jr2_in+1-jr1_in) :: chie, chii, elec_pflux, rho, &
+    ametr, rmaj, elon, tria, q, ne, te, ti, vpar, &
+    vippd, vittd, vippi1, vitti1, jbs, epar0_in, &
+    drmin, drmaj, delong, dtrian, dr, dne, dte, dti, dq, dvpar, drhodr
+double precision, dimension(ns_in, jr2_in+1-jr1_in) :: ni, zimp, dni
+double precision, dimension(ns_in) :: pflux_i, eflux_i, vpflux, vtflux
+double precision, dimension(ns_in, 2):: energy_flux, particle_flux
 character(len=80) :: path_in
+
+chunk = jr2_in + 1 - jr1_in
 
 !-----------------
 ! Get input arrays
 !-----------------
+rho   = inputs( 1, jr1_in:jr2_in)
+ametr = inputs( 2, jr1_in:jr2_in)
+rmaj  = inputs( 3, jr1_in:jr2_in)
+elon  = inputs( 4, jr1_in:jr2_in)
+tria  = inputs( 5, jr1_in:jr2_in)
+q     = inputs( 6, jr1_in:jr2_in)
+ti    = inputs( 7, jr1_in:jr2_in)
+te    = inputs( 8, jr1_in:jr2_in)
+ne    = inputs( 9, jr1_in:jr2_in)
+vpar  = inputs(10, jr1_in:jr2_in)
+ni(1, :)   = inputs(11, jr1_in:jr2_in)
+ni(2, :)   = inputs(12, jr1_in:jr2_in)
+ni(3, :)   = inputs(13, jr1_in:jr2_in)
+ni(4, :)   = inputs(14, jr1_in:jr2_in)
+zimp(1, :) = inputs(15, jr1_in:jr2_in)
+zimp(2, :) = inputs(16, jr1_in:jr2_in)
+zimp(3, :) = inputs(17, jr1_in:jr2_in)
+drmin  = inputs(18, jr1_in:jr2_in)
+drmaj  = inputs(19, jr1_in:jr2_in)
+delong = inputs(20, jr1_in:jr2_in)
+dtrian = inputs(21, jr1_in:jr2_in)
+dti    = inputs(22, jr1_in:jr2_in)
+dte    = inputs(23, jr1_in:jr2_in)
+dne    = inputs(24, jr1_in:jr2_in)
+dq     = inputs(25, jr1_in:jr2_in)
+dvpar  = inputs(26, jr1_in:jr2_in)
+dr     = inputs(27, jr1_in:jr2_in)
+drhodr = inputs(28, jr1_in:jr2_in)
+dni(1, :) = inputs(29, jr1_in:jr2_in)
+dni(2, :) = inputs(30, jr1_in:jr2_in)
+dni(3, :) = inputs(31, jr1_in:jr2_in)
+dni(4, :) = inputs(32, jr1_in:jr2_in)
 
-NE    = mem_in(1:nrho,  1)
-TE    = mem_in(1:nrho,  2)
-NI    = mem_in(1:nrho,  3)
-NDEUT = mem_in(1:nrho,  4)
-NTRIT = mem_in(1:nrho,  5)
-NIZ1  = mem_in(1:nrho,  6)
-NIZ2  = mem_in(1:nrho,  7)
-TI    = mem_in(1:nrho,  8)
-ZEF   = mem_in(1:nrho,  9)
-ZIM1  = mem_in(1:nrho, 10)
-AMAIN = mem_in(1:nrho, 11)
-MU    = mem_in(1:nrho, 12)
-RHO   = mem_in(1:nrho, 13)
-AMETR = mem_in(1:nrho, 14)
-SHIF  = mem_in(1:nrho, 15)
-ELON  = mem_in(1:nrho, 16)
-TRIA  = mem_in(1:nrho, 17)
-ER    = mem_in(1:nrho, 18)
-NIBM  = mem_in(1:nrho, 19)
-G11   = mem_in(1:nrho, 20)
-VPOL  = mem_in(1:nrho, 21)
-VRS   = mem_in(1:nrho, 22)
-VTOR  = mem_in(1:nrho, 23)
-SHEAR = mem_in(1:nrho, 24)
-PBLON = mem_in(1:nrho, 25)
-PBPER = mem_in(1:nrho, 26)
-PFAST = mem_in(1:nrho, 27)
-NIZ3  = mem_in(1:nrho, 28)
-ZIM2  = mem_in(1:nrho, 29)
-ZIM3  = mem_in(1:nrho, 30)
-ZIMPT = mem_in(1:nrho, 31)
-NIMPT = mem_in(1:nrho, 32)
-AIMPT = mem_in(1:nrho, 33)
-
-!-----------------
-! Radial subdomain
-!-----------------
-
-jr_min = max(1, jr1_in)
-jr_max = min(nrho, jr2_in)
-if (jr_min > jr_max) then
-    write(*, *) 'Error! jr_min > jr_max', jr_max
-    return
-endif
-
-xstep = float(jr_max - jr_min)/(nradial - 1.)
-if (xstep <= 1.) then
-    do jradial=1, nradial
-        jjgrid(jradial) = jr_min + jradial - 1
-        if (jjgrid(jradial) == jr_max) EXIT
-    enddo
-    n_radial = jradial
-else
-    n_radial = nradial
-    do jradial = 1, n_radial-1
-        jjgrid(jradial) = jr_min + nint((jradial-1)*xstep)
-    enddo
-    jjgrid(n_radial) = jr_max
-endif
-
-!-----------------
-! Flags and inputs
-
-tgyro_neo_gv_flag = 0.
-
-!Main ions
+anorm = ABC
+neo_mass_in(1) = 5.4447e-4
+neo_mass_in(2) = AMJ
+neo_mass_in(3) = AIM1
+neo_mass_in(4) = AIM2
+neo_mass_in(5) = AIM3
+neo_mass_in = neo_mass_in/AMJ
 neo_z_in(1) = -1.
 neo_z_in(2) = ZMJ
 
-neo_mass_in(1) = 5.4447e-4/AMJ
-neo_mass_in(2) = AMJ/AMJ  ! AMJ is reference mass
-neo_mass_in(3) = AIM1/AMJ
-neo_mass_in(4) = AIM2/AMJ
-neo_mass_in(5) = AIM3/AMJ
+mnorm = AMJ*mpp
 
-do jrho=1, nrho
-    rho_m(jrho) = RHO(jrho)
-    ti_m(1:4, jrho) = TI(jrho)
-    if (NDEUT(jrho) >= 0.01*NE(jrho)) then
-        ni_m(1, jrho) = NDEUT(jrho)
-    else ! likely: NDEUT not defined in equ file, hence zero
-        ni_m(1, jrho) = NI(jrho)
-    endif
-    ni_m(2, jrho) = max(1.e-9, NIZ1(jrho))
-    ni_m(3, jrho) = max(1.e-9, NIZ2(jrho))
-    ni_m(4, jrho) = max(1.e-9, NIZ3(jrho))
-    rmaj_exp(jrho) = RTOR + SHIF(jrho)
-    q_exp(jrho)    = 1./MU(jrho)
-    bpolz = BTOR*AMETR(jrho)*MU(jrho)/RTOR
-    bmod = sqrt(BTOR**2 + bpolz**2)
-    gradrhosq_exp(jrho) = G11(jrho)/VRS(jrho)
-    epar0_in(jrho) = 0 !NIZ3(jrho)*AMETR(nrho)/(TE(jrho)*1.e3) !NIZ3 is supposed to be Epar*e*a/T
-
-    vper_m(jrho) = ER(jrho)/(RTOR*bpolz) ! vexb in m/s --> Omega_E    
-    vpar_m(jrho) = ER(jrho)/(RTOR*bpolz)*(RTOR+SHIF(jrho)+AMETR(jrho))  !--> R*Omega_E , no neoclassical terms
-    vexb2(jrho)  = -ER(jrho)/bmod ! vexb in m/s (vperp = vexb since the diamagnetic velocity is the curvature drift actually
-
-enddo
-
-elec_pflux_m  = 0.0
-chie_m   = 0.0
-chii_m   = 0.0
-vippd_m  = 0.0
-vittd_m  = 0.0
-vippi1_m = 0.0
-vitti1_m = 0.0
+tgyro_gv_flag = 0.
+epar0_in = 0.
 
 ! Number of species
-
-n_ions = nsm - 1
-! These will be reset locally in the radial loop
-neo_z_in(3) = MAXVAL(ZIM1(1:nrho))
-neo_z_in(4) = MAXVAL(ZIM2(1:nrho))
-neo_z_in(5) = MAXVAL(ZIM3(1:nrho))
-
-if (neo_z_in(5) .ge. 1.) n_ions = 4
-if (neo_z_in(5) .lt. 1.) n_ions = 3
-if (neo_z_in(4) .lt. 1.) n_ions = 2
-if (neo_z_in(5) .ge. 1. .and. n_ions .eq. 2) then 
-    n_ions = 3
-endif
-if (neo_z_in(3) .lt. 1.) n_ions = 1
-if (neo_z_in(4) .ge. 1. .and. n_ions .eq. 1) then 
-    n_ions = 2
-endif
-
-! local field averages
-! Initialise to zero for non-calculated species
+n_ions = ns_in - 1
 
 neo_dens_in   = 0.
 neo_temp_in   = 0.
 neo_dlnndr_in = 0.
 neo_dlntdr_in = 0.
 
-radial_loop: do jradial=1, n_radial
+! neo model parameters
+neo_sim_model_in = 2  ! type of NEO calculation: 1 analytic, 2 kinetic
+neo_equilibrium_model_in = 2
+neo_silent_flag_in = 0 ! DUmp file for stand-alone
+neo_test_flag_in = 0
 
-    path_in='./'
-    call neo_init_serial(path_in)
+! Resolution 
+neo_n_energy_in = 5  ! number of energy points
+neo_n_xi_in     = 17 ! number of xi points
+neo_n_theta_in  = 29 ! number of theta points
+neo_ipccw_in = -1
+neo_btccw_in = -1
+neo_n_species_in = n_ions + 1
 
-    j0 = jjgrid(jradial)
+if (jr1_in == 1) print*, 'Run NEO', n_ions
+
+radial_loop: do jr=1, chunk
 
 !thermal impurities
 
-    neo_z_in(3) = max(1., ZIM1(j0))
-    neo_z_in(4) = ZIM2(j0)
-    neo_z_in(5) = ZIM3(j0)
+    neo_z_in(3) = max(1., zimp(1, jr))
+    neo_z_in(4) = zimp(2, jr)
+    neo_z_in(5) = zimp(3, jr)
 
-    if (neo_z_in(5) .ge. 1. .and. n_ions .eq. 2) then 
+    if (neo_z_in(5) >= 1. .and. ns_in == 3) then
         neo_z_in(4) = neo_z_in(5)
-        neo_mass_in(4) = neo_mass_in(4)
-        ni_m(3, :) = ni_m(4, :)
-        ti_m(3, :) = ti_m(4, :)
+        neo_mass_in(4) = neo_mass_in(5)
+        ni(3, :) = ni(4, :)
     endif
-    if (neo_z_in(4) .ge. 1. .and. n_ions .eq. 1) then 
+    if (neo_z_in(4) >= 1. .and. ns_in == 2) then
         neo_z_in(3) = neo_z_in(4)
         neo_mass_in(3) = neo_mass_in(4)
-        ni_m(2, :) = ni_m(3, :)
-        ti_m(2, :) = ti_m(3, :)
+        ni(2, :) = ni(3, :)
     endif
-
-!    n_ions = 2 ! git brute force
 
     neo_mass_in(n_ions+2:) = 0.
     neo_z_in   (n_ions+2:) = 0.
 
-! Selected grid for TGLF computation
-
-    rho_tg(jradial) = rho_m(j0)
+    path_in = 'neo/'
+    call neo_init_serial(path_in)
 
 ! Ref variables for normalisation
 
-    anorm = AMETR(nrho)
-    tnorm = TE(j0) 
-    nnorm = NE(j0)
-    mnorm = AMJ*mpp
+    tnorm = te(jr)
+    nnorm = ne(jr)
     vnorm = sqrt(e00*1.e3*tnorm/mnorm)
-    T0 = tnorm*1.e3
+    T0  = tnorm*1.e3
     cs0 = vnorm       ! thermal velocity unit m/sec
 
-    if (verbose) then
-       write(*, '(A, 5e11.4)') 'Norm', anorm, tnorm, nnorm, mnorm, vnorm
-    endif
-
-! Differentials
-
-    j01 = j0+1
-    j02 = j0-1
-    if (j0 == 1) then
-        j02 = j0
-    else if (j0 == nrho) then
-        j01 = j0
-    endif
-    dstep = 1./float(j01 - j02)
-
-    drmin  = dstep*(AMETR(j01) - AMETR(j02))
-    drmaj  = dstep*(rmaj_exp(j01) - rmaj_exp(j02))
-    drho   = dstep*(rho(j01) - rho(j02))
-    delong = dstep*(ELON(j01) - ELON(j02))
-    dtrian = dstep*(TRIA(j01) - TRIA(j02))
-    if (j0 == NA1E .and. NA1E /= nrho) then
-        dte = 0.5*dstep*(TE(j0) - TE(j02)) ! Left derivative
-    else
-        dte = dstep*(TE(j01) - TE(j02))
-    endif
-    if (j0 == NA1N .and. NA1N /= nrho) then
-        dne = 0.5*dstep*(NE(j0) - NE(j02)) ! Left derivative
-    else
-        dne = dstep*(NE(j01) - NE(j02))
-    endif
-    dq    = dstep*(q_exp(j01) - q_exp(j02))
-    dvpar = dstep*(vpar_m(j01) - vpar_m(j02))
-    dvper = dstep*(vper_m(j01) - vper_m(j02))
-    do jspec=1, n_ions
-       if (j0 == NA1I .and. NA1I /= nrho) then
-            dti(jspec) = 0.5*dstep*(ti_m(jspec, j0) - ti_m(jspec, j02))
-            dni(jspec) = 0.5*dstep*(ni_m(jspec, j0) - ni_m(jspec, j02))
-        else
-            dti(jspec) = dstep*(ti_m(jspec, j01) - ti_m(jspec, j02))
-            dni(jspec) = dstep*(ni_m(jspec, j01) - ni_m(jspec, j02))
-        endif
-    enddo
-    dr = drmin/anorm    ! gradients w.r.t. minor radius even for s-alpha geometry
-    drhodr = drho/drmin
-
-! Log derivatives
     neo_dens_in(1) = 1.
     neo_temp_in(1) = 1.
-    neo_dlnndr_in(1) = -dne/(dr*NE(j0))
-    neo_dlntdr_in(1) = -dte/(dr*TE(j0))
+    neo_dlnndr_in(1) = -dne(jr)/(dr(jr)*ne(jr))
+    neo_dlntdr_in(1) = -dte(jr)/(dr(jr)*te(jr))
 
     do i_ion=1, n_ions
-        neo_dens_in(i_ion+1) = ni_m(i_ion, j0)/NE(j0)
-        neo_temp_in(i_ion+1) = ti_m(i_ion, j0)/TE(j0)
-        neo_dlnndr_in(i_ion+1) = -dni(i_ion)/(dr*ni_m(i_ion, j0))
-        neo_dlntdr_in(i_ion+1) = -dti(i_ion)/(dr*ti_m(i_ion, j0))
+        neo_dens_in(i_ion+1) = ni(i_ion, jr)/ne(jr)
+        neo_temp_in(i_ion+1) = ti(jr)/te(jr)
+        neo_dlnndr_in(i_ion+1) = -dni(i_ion, jr)/(dr(jr)*ni(i_ion, jr))
+        neo_dlntdr_in(i_ion+1) = -dti(jr)/(dr(jr)*ti(jr))
     enddo
-! Restore quasi-neutrality via main ions?
 
-! neo model parameters
-    neo_sim_model_in = 2  ! type of NEO calculation: 1 analytic, 2 kinetic
-    neo_equilibrium_model_in = 2
-    neo_silent_flag_in = 1 ! If 0, dump file for stand-alone
-    neo_test_flag_in = 0
-
-! Resolution 
-    neo_n_energy_in = 5  ! number of energy points
-    neo_n_xi_in     = 17 ! number of xi points
-    neo_n_theta_in  = 29 ! number of theta points
-    neo_ipccw_in = -1
-    neo_btccw_in = -1
-    neo_n_species_in = n_ions + 1
-
-    Bunit = BTOR*drhodr*rho(j0)/AMETR(j0)
+    Bunit = BTOR*drhodr(jr)*rho(jr)/ametr(jr)
 ! Miller geometry magnetic field unit
     omega0 = e00*Bunit/mnorm    ! gyrofrequency unit 1/sec
     rhos0 = cs0/omega0      ! gyroradius unit cm
 
-    neo_epar0_in = epar0_in(j0)*BTOR/Bunit
-    neo_rho_star_in  = rhos0/anorm
+    neo_epar0_in = epar0_in(jr)*BTOR/Bunit
+    neo_rho_star_in = rhos0/anorm
 
-!---------
-! Species
-!---------
-  
-! Electrons
-    lnlamda = 24.0 -0.5*LOG(nnorm*1.e13)+LOG(T0)       
-    taue = (3.44E5)*((T0)**1.5)/(nnorm*1e13*lnlamda)  !  sec
+! Collisionalities
+    
+    lnlamda = 24.0 - 0.5*LOG(nnorm*1.e13) + LOG(T0)       
+    taue = 3.44E5*(T0**1.5)/(nnorm*1e13*lnlamda)  !  sec
     xnuei = 0.75*SQRT(pi)/taue             ! 1/sec 
     neo_nu_1_in = xnuei*anorm/cs0          ! normalized electron-ion collision 
 
 ! Geometry
-    neo_rmin_over_a_in = AMETR(j0)/anorm
-    neo_rmaj_over_a_in = rmaj_exp(j0)/anorm
-    neo_q_in           = q_exp(j0)
-    neo_shear_in       = AMETR(j0)*dq/(drmin*q_exp(j0))
-    neo_shift_in       = drmaj/drmin
-    neo_kappa_in       = ELON(j0)
-    neo_s_kappa_in     = AMETR(j0)*delong/(drmin*ELON(j0))
-
-    neo_delta_in       = TRIA(j0)
-    neo_s_delta_in     = AMETR(j0)*dtrian/drmin
-
-    if (verbose) then
-       write(*, '(A, 8f8.4, e11.4)') 'GEO', neo_rmin_over_a_in, neo_rmaj_over_a_in, neo_q_in, &
-          neo_shear_in, neo_shift_in, neo_kappa_in, neo_s_kappa_in, &
-          neo_delta_in,  neo_s_delta_in
-    endif
+    neo_rmin_over_a_in = ametr(jr)/anorm
+    neo_rmaj_over_a_in = rmaj(jr)/anorm
+    neo_q_in           = q(jr)
+    neo_shear_in       = ametr(jr)*dq(jr)/(drmin(jr)*q(jr))
+    neo_shift_in       = drmaj(jr)/drmin(jr)
+    neo_kappa_in       = elon(jr)
+    neo_s_kappa_in     = ametr(jr)*delong(jr)/(drmin(jr)*elon(jr))
+    neo_delta_in       = tria(jr)
+    neo_s_delta_in     = ametr(jr)*dtrian(jr)/drmin(jr)
 
 ! Rotation is always *on* in NEO.
 ! COORDINATES: The signs of all rotation-related quantities below are 
@@ -349,114 +205,90 @@ radial_loop: do jradial=1, n_radial
 ! no rotation at the moment
 
     neo_rotation_model_in = 2
-    neo_omega_rot_in       =  anorm*vpar_m(j0)/(rmaj_exp(j0) * cs0)
-    neo_omega_rot_deriv_in = -anorm*dvpar/(drmaj*cs0)
+    neo_omega_rot_in       =  anorm*vpar(jr)/(rmaj(jr) * cs0)
+    neo_omega_rot_deriv_in = -anorm*dvpar(jr)/(drmaj(jr)*cs0)
     neo_rmin_over_a_2_in = neo_rmin_over_a_in ! used only for global runs
 
-    Gamma_neo_GB = anorm*vnorm
-    Q_neo_GB     = anorm*vnorm
-    Pi_neo_GB    = anorm*vnorm
+    Gamma_GB = anorm*vnorm
+    Q_GB     = anorm*vnorm
+    Pi_GB    = anorm*vnorm
     Jpar_GB      = e00*vnorm*nnorm*1.e19*Bunit/BTOR/1.e6
 
-    pflux_i_neo(:) = 0.0
-    pflux_e_neo    = 0.0
-    eflux_i_neo(:) = 0.0
-    eflux_e_neo    = 0.0
-
+    pflux_i = 0.0
+    pflux_e = 0.0
+    eflux_i = 0.0
+    eflux_e = 0.0
+    drhodr_sq = drhodr(jr)**2
 ! derived units for the plasma
 
-    SELECT CASE (neo_sim_model_in) 
+    SELECT CASE (neo_sim_model_in)
 
     CASE(1) ! analytic
-        write(*,*) 'run neo analytic'
         call neo_run
-        pflux_i_neo(1) = neo_pflux_thHH_out *Gamma_neo_GB
-        eflux_i_neo(1) = neo_eflux_thCHi_out*Q_neo_GB
-        pflux_e_neo    = neo_pflux_thHH_out *Gamma_neo_GB 
-        eflux_e_neo    = neo_eflux_thHHe_out*Q_neo_GB
+        pflux_i(1) = neo_pflux_thHH_out *Gamma_GB
+        eflux_i(1) = neo_eflux_thCHi_out*Q_GB
+        pflux_e    = neo_pflux_thHH_out *Gamma_GB 
+        eflux_e    = neo_eflux_thHHe_out*Q_GB
         jboots = neo_jpar_thS_out*Jpar_GB
-        write(*,*) 'end neo analytic', pflux_i_neo(1), eflux_i_neo(1), pflux_e_neo, eflux_e_neo, jboots
+        print*, 'neo analytic', pflux_i(1), eflux_i(1)
 
     CASE(2) ! kinetic calculation
-        write(*,*) 'run neo DKE', n_ions
         call neo_run
 
-        pflux_e_neo = (neo_pflux_dke_out(1) + tgyro_neo_gv_flag*neo_pflux_gv_out(1)) * Gamma_neo_GB
-        eflux_e_neo = (neo_efluxncv_dke_out(1) + tgyro_neo_gv_flag*neo_efluxncv_gv_out(1)) * Q_neo_GB
+        pflux_e = (neo_pflux_dke_out(1)    + tgyro_gv_flag*neo_pflux_gv_out(1)) *Gamma_GB
+        eflux_e = (neo_efluxncv_dke_out(1) + tgyro_gv_flag*neo_efluxncv_gv_out(1)) * Q_GB
 
         do i_ion=1, n_ions
-            pflux_i_neo(i_ion) = (neo_pflux_dke_out(i_ion+1) + &
-                tgyro_neo_gv_flag*neo_pflux_gv_out(i_ion+1))*Gamma_neo_GB/neo_dens_in(i_ion)
-            eflux_i_neo(i_ion) = (neo_efluxncv_dke_out(i_ion+1) + &
-                tgyro_neo_gv_flag*neo_efluxncv_gv_out(i_ion+1))*Q_neo_GB
-            vpflux_neo(i_ion) = neo_vpol_dke_out(i_ion+1)*vnorm  !poloidal flow on outboard mid-plane of main ions
-            vtflux_neo(i_ion) = neo_vtor_dke_out(i_ion+1)*vnorm  !toroidal flow on outboard mid-plane of main ions
+            pflux_i(i_ion) = (neo_pflux_dke_out(i_ion+1) + &
+                tgyro_gv_flag*neo_pflux_gv_out(i_ion+1))*Gamma_GB/neo_dens_in(i_ion)
+            eflux_i(i_ion) = (neo_efluxncv_dke_out(i_ion+1) + &
+                tgyro_gv_flag*neo_efluxncv_gv_out(i_ion+1))*Q_GB
+            vpflux(i_ion) = neo_vpol_dke_out(i_ion+1)*vnorm  !poloidal flow on outboard mid-plane of main ions
+            vtflux(i_ion) = neo_vtor_dke_out(i_ion+1)*vnorm  !toroidal flow on outboard mid-plane of main ions
         enddo
 
         jboots = neo_jpar_dke_out*Jpar_GB
-        write(*, '(A, 2e11.4)') 'end neo DKE', drhodr**2 *pflux_e_neo, drhodr**2 *eflux_e_neo
+        write(*, '(A, 2e11.4)') 'neo DKE', pflux_e, eflux_e
 
     END SELECT
 
-    particle_flux(1, 1) = drhodr**2 *pflux_e_neo
-    energy_flux  (1, 1) = drhodr**2 *eflux_e_neo
+    particle_flux(1, 1) = drhodr_sq * pflux_e
+    energy_flux  (1, 1) = drhodr_sq * eflux_e
 ! saves gv on 2nd index
-    particle_flux(1, 2) = drhodr**2 *neo_pflux_gv_out(2)*Gamma_neo_GB
-    energy_flux  (1, 2) = drhodr**2 *neo_efluxncv_gv_out(2)*Q_neo_GB
+    particle_flux(1, 2) = drhodr_sq * neo_pflux_gv_out(2)*Gamma_GB
+    energy_flux  (1, 2) = drhodr_sq * neo_efluxncv_gv_out(2)*Q_GB
     do i_ion=1,n_ions
-        particle_flux(i_ion+1, 1) = drhodr**2 *pflux_i_neo(i_ion) !impurity particle flux
-        energy_flux  (i_ion+1, 1) = drhodr**2 *eflux_i_neo(i_ion)   !impurity energy flux
-        particle_flux(i_ion+1, 2) = drhodr**2 *neo_pflux_gv_out(i_ion+1)*Gamma_neo_GB
-        energy_flux  (i_ion+1, 2) = drhodr**2 *neo_efluxncv_gv_out(i_ion+1)*Q_neo_GB
+        particle_flux(i_ion+1, 1) = drhodr_sq * pflux_i(i_ion) ! impurity particle flux
+        energy_flux  (i_ion+1, 1) = drhodr_sq * eflux_i(i_ion) ! impurity energy flux
+        particle_flux(i_ion+1, 2) = drhodr_sq * neo_pflux_gv_out(i_ion+1)*Gamma_GB
+        energy_flux  (i_ion+1, 2) = drhodr_sq * neo_efluxncv_gv_out(i_ion+1)*Q_GB
     enddo
 
-    jbs(jradial) = jboots
+    jbs(jr) = jboots
 
 ! END call_ganeo
 
 ! Transport coefficients
 
     ion_eflux = SUM(energy_flux(2: n_ions+1, 1))
-    chii(jradial) = ion_eflux        /(1e-4 + abs(neo_dlntdr_in(2)))
-    chie(jradial) = energy_flux(1, 1)/(1e-4 + abs(neo_dlntdr_in(1)))
-    elec_pflux(jradial) = particle_flux(1, 1)/drhodr         ! particle flux
-    vippd(jradial)  = vpflux_neo(1)
-    vittd(jradial)  = vtflux_neo(1)
-    vippi1(jradial) = vpflux_neo(2)
-    vitti1(jradial) = vtflux_neo(2)
+    chii(jr) = ion_eflux        /(1e-4 + abs(neo_dlntdr_in(2)))
+    chie(jr) = energy_flux(1, 1)/(1e-4 + abs(neo_dlntdr_in(1)))
+    elec_pflux(jr) = particle_flux(1, 1)/drhodr(jr)         ! particle flux
+    vippd(jr)  = vpflux(1)
+    vittd(jr)  = vtflux(1)
+    vippi1(jr) = vpflux(2)
+    vitti1(jr) = vtflux(2)
 
 enddo radial_loop
 
-call qinterp(rho_tg, chii  , nradial, rho_m(jr_min:jr_max), chii_m  (jr_min:jr_max), jr_max-jr_min+1)
-call qinterp(rho_tg, chie  , nradial, rho_m(jr_min:jr_max), chie_m  (jr_min:jr_max), jr_max-jr_min+1)
-call qinterp(rho_tg, vippd , nradial, rho_m(jr_min:jr_max), vippd_m (jr_min:jr_max), jr_max-jr_min+1)
-call qinterp(rho_tg, vittd , nradial, rho_m(jr_min:jr_max), vittd_m (jr_min:jr_max), jr_max-jr_min+1)
-call qinterp(rho_tg, vippi1, nradial, rho_m(jr_min:jr_max), vippi1_m(jr_min:jr_max), jr_max-jr_min+1)
-call qinterp(rho_tg, vitti1, nradial, rho_m(jr_min:jr_max), vitti1_m(jr_min:jr_max), jr_max-jr_min+1)
-call qinterp(rho_tg, jbs   , nradial, rho_m(jr_min:jr_max), j_boot  (jr_min:jr_max), jr_max-jr_min+1)
-call qinterp(rho_tg, elec_pflux, nradial, rho_m(jr_min:jr_max), elec_pflux_m(jr_min:jr_max), jr_max-jr_min+1)
+! Simulated NEO computation:
+outputs(:, 1) = chii
+outputs(:, 2) = chie
+outputs(:, 3) = jbs
+outputs(:, 4) = elec_pflux
+outputs(:, 5) = vippd
+outputs(:, 6) = vittd
+outputs(:, 7) = vippi1
+outputs(:, 8) = vitti1
 
-chii_m  (1:2) = chii_m  (3)
-chie_m  (1:2) = chie_m  (3)
-vippd_m (1:2) = vippd_m (3)
-vittd_m (1:2) = vittd_m (3)
-vippi1_m(1:2) = vippi1_m(3)
-vitti1_m(1:2) = vitti1_m(3)
-j_boot  (1:2) = j_boot  (3)
-elec_pflux_m(1:2) = elec_pflux_m(3)
-
-mem_out = 0.d0
-
-do j=jr_min, jr_max
-    mem_out(j,  1) = chii_m(j)/gradrhosq_exp(j) ! \chi_i, m^2/s : starts from work(21,:) 
-    mem_out(j,  2) = chie_m(j)/gradrhosq_exp(j) ! \chi_e, m^2/s
-    mem_out(j,  4) = elec_pflux_m(j)/anorm/gradrhosq_exp(j)
-    mem_out(j,  7) = j_boot(j)    ! bootstrap current
-    mem_out(j,  8) = vippd_m(j)   ! main ions poloidal flow
-    mem_out(j,  9) = vippi1_m(j)  ! 1st imp poloidal flow
-    mem_out(j, 10) = vittd_m(j)   ! main ions toroidal flow
-    mem_out(j, 11) = vitti1_m(j)  ! 1st imp toroidal flow
-enddo
-
-return
-END subroutine neo_interf
+end subroutine neo_interf

@@ -69,6 +69,7 @@ integer :: nmodes_tg          ! number of unstable modes to use in computing flu
 integer :: kygrid_model_tg    ! select version of ky-grid to use 1
 integer :: xnu_model_tg       ! select version of trapped-passing 2
 integer :: jthe, jthe_rev, nrho_equ, nthe_equ ! for ELITE geometry
+integer :: t_wall1, t_wall2, rate
 
 double precision :: bmod, bpolz, alpha_zf_in, ion_eflux, ion_mflux, xstep, rho_min, rho_max
 double precision :: dtheta_elite, drmin, drmaj, drho, dti, dte, dne, dq, dptot, &
@@ -91,11 +92,9 @@ double precision, dimension(nsm-1, NRD) :: ni_as, i_pflux_as
 ! ELITE
 double precision, allocatable, dimension(:) :: theta_equ, pfn_equ
 double precision, allocatable, dimension(:, :) :: RR_tg, ZZ_tg, Bp_tg
-character(len=10) :: time_loc
 character(len=120) :: f_elite
 
-call DATE_AND_TIME(TIME=time_loc)
-write(*, '(6A)') time_loc(1:2), ':', time_loc(3:4), ':', time_loc(5:6), ' BEGIN tglf_serial.f90'
+call SYSTEM_CLOCK(t_wall1, rate)
 
 ! Interpolate from ASTRA grid to TGLF grid
 rho_min = RHO(1)
@@ -556,8 +555,8 @@ do jrho=1, NA1
     vimp2(jrho) = i_pflux_as(3, jrho)*gradrhosq_inv/a0_m/(NIZ2(jrho)/NE(jrho))  ! 2nd imp convection
 enddo
 
-call DATE_AND_TIME(TIME=time_loc)
-write(*, '(6A)') time_loc(1:2), ':', time_loc(3:4), ':', time_loc(5:6), ' END tglf_serial.f90'
+call SYSTEM_CLOCK(t_wall2, rate)
+print*, "TGLF_serial wall time", dble(t_wall2 - t_wall1)/dble(rate)
 
 return
 END subroutine tglf_serial

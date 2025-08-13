@@ -29,10 +29,13 @@ use tglf_interface, only: nsm, tglf_zs_in, tglf_ns_in, tglf_mass_in, &
     tglf_rmaj_sa_in, tglf_q_sa_in, tglf_shat_sa_in, tglf_alpha_sa_in, &
     tglf_xwell_sa_in, tglf_theta0_sa_in, file_dump_local, &
     tglf_elec_eflux_out, tglf_ion_eflux_out, tglf_ion_mflux_out, &
-    tglf_elec_pflux_out, tglf_ion_pflux_out, tglf_elec_expwd_out
+    tglf_elec_pflux_out, tglf_ion_pflux_out, tglf_elec_expwd_out, &
+    tglf_q_elite_in, tglf_q_prime_elite_in, tglf_p_prime_elite_in, &
+    tglf_n_ELITE_in, tglf_R_ELITE_in, tglf_Z_ELITE_in, tglf_Bp_ELITE_in
+
 use tglf_pkg, only: get_eigenvalue_spectrum_out, get_ky_spectrum_out, &
      get_flux_spectrum_out
-  
+
 implicit none
 
 integer, parameter :: nky=19, n_dims=8
@@ -45,8 +48,8 @@ double precision, parameter :: &
    mpp  = 1.6726E-27, &       ! proton mass (kg)
    pi   = 3.141592653589793
 
-integer :: ierr, parent, rank, status(MPI_STATUS_SIZE), i1, i2, j, nspec_max
-integer :: chunk, n_inputs, n_outputs, n_scalars, dims(n_dims)
+integer :: ierr, chunk, parent, rank, status(MPI_STATUS_SIZE), jr1, jr2, nspec_max, ns_in
+integer :: n_inputs, n_outputs, n_scalars, dims(n_dims)
 integer :: sat_rule, jr, jgamma_max, jion, kyloop
 double precision :: Bunit_gauss, Bunit_T, cs0, cs00, rhos0, omega0, rhostar2, lnlamda, taue, cexb
 double precision :: a0_cm, a0_m, T0, N0, m0, rmin, drho_cs, drho_nt, nt_cs
@@ -75,14 +78,14 @@ endif
 ! Receive dimensions from parent
 dims = 0
 call MPI_Recv(dims, n_dims, MPI_INTEGER, 0, 101+rank, parent, status, ierr)
-n_scalars  = dims(2)
-n_inputs   = dims(3)
-n_outputs  = dims(4)
-tglf_ns_in = dims(5)
-nspec_max  = dims(6)
-i1 = dims(7)
-i2 = dims(8)
-chunk = i2 + 1 - i1
+n_scalars = dims(2)
+n_inputs  = dims(3)
+n_outputs = dims(4)
+ns_in     = dims(5)
+nspec_max = dims(6)
+jr1 = dims(7)
+jr2 = dims(8)
+chunk = jr2 + 1 - jr1
 allocate(scalars(n_scalars))
 allocate(inputs(n_inputs, chunk))
 scalars = 0.d0
@@ -114,6 +117,7 @@ tglf_rlns_in = 0.
 tglf_rlts_in = 0.
 tglf_vpar_in = 0.
 tglf_vpar_shear_in = 0.
+tglf_ns_in = ns_in
 
 ! Scalars
 Btor  = scalars(2)
@@ -170,6 +174,11 @@ dni(4, :) = inputs(40, :)
 
 ! TGLF settings
 sat_rule = 2
+
+if (jr1 == 1) then
+    write(6, '(A, 4i4)') 'Call TGLF...', jr1, jr2, sat_rule, tglf_ns_in
+endif
+
 SELECT CASE(sat_rule)
 CASE(0)
     tglf_nmodes_in = 2
@@ -372,7 +381,7 @@ radial_loop: do jr=1, chunk
 
 ! Settings
     if (tglf_dump_flag_in) then
-        write(file_dump_local, '(A11, I0)') 'input.tglf_', jr + i1 
+        write(file_dump_local, '(A11, I0)') 'input.tglf_', jr + jr1
     endif
 ! -----------------------
     call tglf_run
@@ -403,7 +412,7 @@ radial_loop: do jr=1, chunk
     kymax(jr) = kyspectrum(jgamma_max)
 enddo radial_loop
 
-! Simulated TGLF computation:
+! Send back TGLF output
 outputs = 0.d0
 outputs(1, :) = chii
 outputs(2, :) = chie
