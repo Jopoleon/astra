@@ -15,16 +15,17 @@
 
 static struct A_vars
 {
+  int nspec;
+  int nspec_max;
   double aim1;
   double aim2;
   double aim3;
   double amj;
   double btor;
   double rtor;
+  double abc;
   double zmj;
-  int na1n;
-  int na1e;
-  int na1i;
+  double shift;
 } *AVARS;
 
 union semun{
