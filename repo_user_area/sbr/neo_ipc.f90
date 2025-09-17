@@ -3,7 +3,7 @@ subroutine neo_ipc
 use io_mod, only: equ_file, exp_file
 use ipc_mod, only: mem_neo, n_sbp_arr_out
 use parameter_inc, only: NRD
-use const_inc, only: BTOR, RTOR, AMJ, AIM1, AIM2, AIM3, ZMJ, NA1, DEVAR
+use const_inc, only: NA1, BTOR, RTOR, ABC, AMJ, AIM1, AIM2, AIM3, ZMJ
 use status_inc, only: NE, TE, NI, TI, ER, MU, FP_NORM, &
     ZIM1, ZIM2, ZIM3, NDEUT, NIZ1, NIZ2, NIZ3, &
     RHO, AMETR, SHIF, ELON, TRIA, VTOR, VPOL
@@ -11,7 +11,7 @@ use debugger, only: markloc
 
 implicit none
 
-integer, parameter :: n_inputs=32, nrho_m=80, nworkers=40, nspec_max=7
+integer, parameter :: n_dims=5, n_scalars=8, n_inputs=32, nrho_m=80, nworkers=40, nspec_max=7
 double precision, parameter :: c_vpol=1.d0
 
 logical :: first_call=.True.
@@ -19,9 +19,12 @@ integer :: jr, jrho, jr_r, jr_l, jion
 integer :: ns_in              ! Number of species, including electrons
 integer :: i, j, nchunk, jout
 integer :: t_wall1, t_wall2, rate, nrho_step
+integer, dimension(n_dims) :: dims_in
+
 double precision, dimension(n_inputs, nrho_m) :: send_buffer
 double precision, dimension(n_sbp_arr_out, nrho_m) :: prof_out_m
 double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, T0, m0, a0_m, a0_cm, cs0, drho
+double precision, dimension(n_scalars) :: scal_in
 double precision, dimension(NRD) :: rmaj_as, q_as, ni_main_as, vpar_as, &
     vippd_m, vittd_m, vippi1_m, vitti1_m, j_boot, elec_pflux_m, chii_m, chie_m
 
@@ -35,14 +38,11 @@ character(len=64), dimension(nworkers) :: SBP_NAMES
 
 call SYSTEM_CLOCK(t_wall1, rate)
 
-nchunk = nrho_m / nworkers
-
 ! Interpolate from ASTRA grid to TGLF grid
 rho_min = RHO(1)
 rho_max = RHO(NA1)
 xstep = (rho_max - rho_min)/(nrho_m - 1.)
 rho_m = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_m) /)
-SBP_NAMES = "xpr/neo"//char(0)
 
 call qinterp(RHO(1:NA1),  ZIM1(1:NA1), NA1, rho_m, zimp_m(1, :), nrho_m)
 call qinterp(RHO(1:NA1),  ZIM2(1:NA1), NA1, rho_m, zimp_m(2, :), nrho_m)
@@ -148,7 +148,25 @@ do jr=1, nrho_m
 enddo
 
 !--------------------
-! Populate prof_in_m
+! IPC parallelisation
+!--------------------
+
+nchunk = nrho_m / nworkers
+
+dims_in(1) = nchunk
+dims_in(2) = n_inputs
+dims_in(3) = n_sbp_arr_out
+dims_in(4) = nrho_m
+dims_in(5) = ns_in
+
+scal_in(1) = BTOR
+scal_in(2) = RTOR
+scal_in(3) = ABC
+scal_in(4) = AMJ
+scal_in(5) = AIM1
+scal_in(6) = AIM2
+scal_in(7) = AIM3
+scal_in(8) = ZMJ
 
 send_buffer = 0.d0
 send_buffer( 1, :) = rho_m
@@ -184,27 +202,21 @@ send_buffer(30, :) = dni(2, :)
 send_buffer(31, :) = dni(3, :)
 send_buffer(32, :) = dni(4, :)
 
-!--------------
-! Send IPC jobs
-!--------------
-
+SBP_NAMES = "xpr/neo"//char(0)
 if (first_call) then
-    call markloc("initialise_ipc")
-    call initialise_ipc(nrho_m, n_inputs, n_sbp_arr_out, nworkers, equ_file, exp_file)
-    call markloc("send_ipc_jobs")
+    call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_sbp_arr_out, nworkers, equ_file, exp_file)
+    call fill_dim2shm(dims_in)
     call send_ipc_jobs(nworkers, nchunk, 64, SBP_NAMES)
     first_call = .False.
 endif
 
 ! **** Fill shared memory segments
-call markloc("setvars")
-call setvars(DEVAR, nspec_max, ns_in)
-call markloc("set_sbp_input_arrays")
+call fill_var2shm(scal_in)
 call fill_arr2shm(send_buffer)
 
 ! **** Free each semaphore
-do j=1, nworkers
-    call unlock_sbp(j)
+do i=1, nworkers
+    call unlock_sbp(i)
 enddo
 
 ! **** Synchronisation point
@@ -212,7 +224,7 @@ call wait4all
 
 ! **** Collect data from ShMem
 do i=1, nworkers
-    call sbp2astra(i, nchunk, prof_out_m(1, 1))
+    call sbp2astra(i, prof_out_m(1, 1))
 enddo
 
 ! Interpolate back to ASTRA radial grid

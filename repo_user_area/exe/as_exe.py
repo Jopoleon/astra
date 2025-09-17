@@ -115,11 +115,12 @@ if __name__ == '__main__':
             lines = f.readlines()
         ipcProc1 = int(lines[4].split()[2])
         ipcProc2 = int(lines[5].split()[2])
-        PIDs, ipcProcs = np.loadtxt(f_ipc, skiprows=7, usecols=(0, 1), unpack=True, dtype=np.int32)
+        ipcProc3 = int(lines[6].split()[2])
+        PIDs, ipcProcs = np.loadtxt(f_ipc, skiprows=8, usecols=(0, 1), unpack=True, dtype=np.int32)
         for pid in PIDs:
             cmd = 'kill -9 %s' %pid
             os.system(cmd)
-        for proc in np.append(ipcProcs, [ipcProc1, ipcProc2]):
+        for proc in np.append(ipcProcs, [ipcProc1, ipcProc2, ipcProc3]):
             cmd = 'ipcrm -m %d 2>/dev/null' %proc
             os.system(cmd)
     try:

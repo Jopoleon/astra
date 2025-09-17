@@ -1,8 +1,4 @@
-subroutine qlk_interf(jr1_in, jr2_in, n_inputs, n_outputs, nrho, &
-    nspec_max, ns_in, BTOR, RTOR, ABC, AMJ, ZMJ, AIM1, AIM2, AIM3, &
-    inputs, &
-! output
-    outputs)
+subroutine qlk_interf(jproc, dims_in, scalars_in, profiles_in, outputs)
 
 USE mod_qualikiz, only: qualikiz
 USE kind, only: qlk_output_meth_0, qlk_output_meth_0_sep_0, &
@@ -22,7 +18,7 @@ type(qlk_output_meth_0)       :: output_meth_0
 type(qlk_output_meth_0_sep_0) :: output_meth_0_sep_0_SI , output_meth_0_sep_0_GB
 type(qlk_primi_meth_0)        :: primi_meth_0
 
-integer, parameter :: ntheta=64, numecoefs=13, numicoefs=7, dimx=1, dimn=16, numsols=3, phys_meth=0
+integer, parameter :: ntheta=64, numecoefs=13, numicoefs=7, dimx=1, dimn=16, numsols=3, phys_meth=0, nspec_max=7
 
 double precision, parameter :: &
     e0  = 4.8032E-10, &       ! elementary charge (statcoulombs)
@@ -31,17 +27,18 @@ double precision, parameter :: &
     mp  = 1.6726E-24, &       ! proton mass (g)
     mpp = 1.6726E-27          ! proton mass (kg)
 
-integer, intent(in) :: jr1_in, jr2_in, n_inputs, n_outputs, nrho, nspec_max, ns_in
-double precision, intent(in) :: BTOR, RTOR, ABC, AMJ, AIM1, AIM2, AIM3, ZMJ
-double precision, intent(in), dimension(n_inputs, nrho) :: inputs
-double precision, intent(out), dimension(jr2_in + 1 - jr1_in, n_outputs) :: outputs
+integer, intent(in) :: jproc, dims_in(*)
+double precision, intent(in) :: scalars_in(*)
+double precision, intent(in), dimension(dims_in(2), dims_in(4)) :: profiles_in
+double precision, intent(out), dimension(dims_in(1), dims_in(3)) :: outputs
 
 !-----------------------------------------
 
+integer :: jr1, jr2, n_inputs, n_outputs, nrho, ns_in, chunk
 integer :: simple_mpi_only_in, maxpts_in, maxruns_in, runcounter_in
 integer :: nions, coll_flag_in, rot_flag_in, verbose_in, el_type_in, &
      integration_routine_in, separateflux_in
-integer :: chunk, mpi_ierr, nproc, myrank, i_mpic
+integer :: mpi_ierr, nproc, myrank, i_mpic
 integer, dimension(dimx, nspec_max-1) :: ion_type_in
 
 double precision :: a0_m, T0, m0, rmin_tg, drho_cs, drho_nt, nt_cs
@@ -68,6 +65,7 @@ integer :: i, j, k, jr, jion
 
 double precision, allocatable, dimension(:) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
     dvper, drhodr, dstep, dr, dv_r
+double precision :: BTOR, RTOR, ABC, AMJ, AIM1, AIM2, AIM3, ZMJ
 double precision :: Bunit, cs00, rhos00, omega0, rhostar2
 ! Shifted cicle geometry inputs
 double precision :: gamma_e, mach_fac, ql_fac
@@ -102,9 +100,25 @@ endif
 
 verbose_in = 0
 
-nions = ns_in - 1
+chunk     = dims_in(1)
+n_inputs  = dims_in(2)
+n_outputs = dims_in(3)
+nrho      = dims_in(4)
+ns_in     = dims_in(5)
 
-chunk = jr2_in + 1 - jr1_in
+jr1 = (jproc - 1)*chunk + 1
+jr2 = jproc*chunk
+
+BTOR = scalars_in(1)
+RTOR = scalars_in(2)
+ABC  = scalars_in(3)
+AMJ  = scalars_in(4)
+AIM1 = scalars_in(5)
+AIM2 = scalars_in(6)
+AIM3 = scalars_in(7)
+ZMJ  = scalars_in(8)
+
+nions = ns_in - 1
 
 allocate( chie(chunk), chii(chunk), exchi(chunk), pfluxi(chunk), rho(chunk), &
     te(chunk), ne(chunk), vpar(chunk), vper(chunk), &
@@ -116,48 +130,48 @@ allocate( dti(4, chunk), dni(4, chunk), ni(4, chunk), ti(4, chunk), &
     zimp(3, chunk) )
 
 ! Receive TGLF input scalars and profiles from parent
-rho      = inputs( 1, jr1_in:jr2_in)
-ametr    = inputs( 2, jr1_in:jr2_in)
-rmaj     = inputs( 3, jr1_in:jr2_in)
-q_saf    = inputs( 4, jr1_in:jr2_in)
-ne       = inputs( 5, jr1_in:jr2_in)
-te       = inputs( 6, jr1_in:jr2_in)
-vpar     = inputs( 7, jr1_in:jr2_in)
-vper     = inputs( 8, jr1_in:jr2_in)
-ti(1, :) = inputs( 9, jr1_in:jr2_in)
-ti(2, :) = inputs(10, jr1_in:jr2_in)
-ti(3, :) = inputs(11, jr1_in:jr2_in)
-ti(4, :) = inputs(12, jr1_in:jr2_in)
-ni(1, :) = inputs(13, jr1_in:jr2_in)
-ni(2, :) = inputs(14, jr1_in:jr2_in)
-ni(3, :) = inputs(15, jr1_in:jr2_in)
-ni(4, :) = inputs(16, jr1_in:jr2_in)
-zimp(1, :) = inputs(17, jr1_in:jr2_in)
-zimp(2, :) = inputs(18, jr1_in:jr2_in)
-zimp(3, :) = inputs(19, jr1_in:jr2_in)
-drmin      = inputs(20, jr1_in:jr2_in)
-drmaj      = inputs(21, jr1_in:jr2_in)
-drho       = inputs(22, jr1_in:jr2_in)
-dptot      = inputs(23, jr1_in:jr2_in)
-dte        = inputs(24, jr1_in:jr2_in)
-dne        = inputs(25, jr1_in:jr2_in)
-dq         = inputs(26, jr1_in:jr2_in)
-dvper      = inputs(27, jr1_in:jr2_in)
-dv_r       = inputs(28, jr1_in:jr2_in)
-dr         = inputs(29, jr1_in:jr2_in)
-drhodr     = inputs(30, jr1_in:jr2_in)
-dti(1, :)  = inputs(31, jr1_in:jr2_in)
-dti(2, :)  = inputs(32, jr1_in:jr2_in)
-dti(3, :)  = inputs(33, jr1_in:jr2_in)
-dti(4, :)  = inputs(34, jr1_in:jr2_in)
-dni(1, :)  = inputs(35, jr1_in:jr2_in)
-dni(2, :)  = inputs(36, jr1_in:jr2_in)
-dni(3, :)  = inputs(37, jr1_in:jr2_in)
-dni(4, :)  = inputs(38, jr1_in:jr2_in)
+rho      = profiles_in( 1, jr1:jr2)
+ametr    = profiles_in( 2, jr1:jr2)
+rmaj     = profiles_in( 3, jr1:jr2)
+q_saf    = profiles_in( 4, jr1:jr2)
+ne       = profiles_in( 5, jr1:jr2)
+te       = profiles_in( 6, jr1:jr2)
+vpar     = profiles_in( 7, jr1:jr2)
+vper     = profiles_in( 8, jr1:jr2)
+ti(1, :) = profiles_in( 9, jr1:jr2)
+ti(2, :) = profiles_in(10, jr1:jr2)
+ti(3, :) = profiles_in(11, jr1:jr2)
+ti(4, :) = profiles_in(12, jr1:jr2)
+ni(1, :) = profiles_in(13, jr1:jr2)
+ni(2, :) = profiles_in(14, jr1:jr2)
+ni(3, :) = profiles_in(15, jr1:jr2)
+ni(4, :) = profiles_in(16, jr1:jr2)
+zimp(1, :) = profiles_in(17, jr1:jr2)
+zimp(2, :) = profiles_in(18, jr1:jr2)
+zimp(3, :) = profiles_in(19, jr1:jr2)
+drmin      = profiles_in(20, jr1:jr2)
+drmaj      = profiles_in(21, jr1:jr2)
+drho       = profiles_in(22, jr1:jr2)
+dptot      = profiles_in(23, jr1:jr2)
+dte        = profiles_in(24, jr1:jr2)
+dne        = profiles_in(25, jr1:jr2)
+dq         = profiles_in(26, jr1:jr2)
+dvper      = profiles_in(27, jr1:jr2)
+dv_r       = profiles_in(28, jr1:jr2)
+dr         = profiles_in(29, jr1:jr2)
+drhodr     = profiles_in(30, jr1:jr2)
+dti(1, :)  = profiles_in(31, jr1:jr2)
+dti(2, :)  = profiles_in(32, jr1:jr2)
+dti(3, :)  = profiles_in(33, jr1:jr2)
+dti(4, :)  = profiles_in(34, jr1:jr2)
+dni(1, :)  = profiles_in(35, jr1:jr2)
+dni(2, :)  = profiles_in(36, jr1:jr2)
+dni(3, :)  = profiles_in(37, jr1:jr2)
+dni(4, :)  = profiles_in(38, jr1:jr2)
 
 a0_m = ABC
-R0_in    = inputs(3, nrho) ! nrho has to be NA1?
-rhoscale = inputs(1, nrho) ! ??
+R0_in    = profiles_in(3, nrho) ! nrho has to be NA1?
+rhoscale = profiles_in(1, nrho) ! ??
 m0 = AMJ*mp          ! Ref. mass = D ion mass [g]
 
 ! Electrons and main ions
@@ -188,7 +202,7 @@ WRITE(fmtn, '(A, I0, A)') '(', dimn, 'G15.7)'
 
 radial_loop: do jr=1, chunk
    
-    write(fname1, '(A, i0)') 'qlkzin_' , jr1_in - 1 + jr
+    write(fname1, '(A, i0)') 'qlkzin_' , jr1 - 1 + jr
     qx_in(1)  = q_saf(jr)
     rho_in(1) = rho(jr)
     x_in(1)   = ametr(jr)/Rmin_in(1)
@@ -435,7 +449,7 @@ radial_loop: do jr=1, chunk
     WRITE(unit_input, '(6(e14.6))') Tix_in(1, 1:nions)
     CLOSE(unit_input)
 
-    print*, 'Calling qualikiz', nions, jr1_in - 1 + jr, runcounter_in, dptot(jr)
+    print*, 'Calling qualikiz', nions, jr1 - 1 + jr, runcounter_in, dptot(jr)
 
     if (runcounter_in == 0) then
         call qualikiz(sizes, in_regular, &

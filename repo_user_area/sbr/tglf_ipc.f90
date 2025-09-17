@@ -3,23 +3,28 @@ subroutine tglf_ipc
 use parameter_inc, only: NRD
 use io_mod, only: equ_file, exp_file
 use ipc_mod, only: mem_tglf, n_sbp_arr_out
-use const_inc, only: NA1, BTOR, RTOR, AMJ, AIM1, AIM2, AIM3, DEVAR
+use const_inc, only: NA1, GP2, BTOR, RTOR, ABC, AMJ, AIM1, AIM2, AIM3, ZMJ
 use status_inc, only: NE, TE, NI, TI, ZEF, PBLON, PBPER, PFAST, &
     ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3, ER, MU, FP_NORM, &
     RHO, AMETR, SHIF, ELON, NDEUT, TRIA, VTOR, G11, VPOL, VRS
+use parameters_a2equil, only: equil_now
 
 implicit none
 
-integer, parameter :: n_inputs=40, nrho_m=80, nworkers=40, nspec_max=5
+logical, parameter :: debug_elite=.false.
+integer, parameter :: n_dims=7, n_scalars=8, n_inputs=40, nrho_m=80, nworkers=40, nspec_max=5, nthe_elite=400, mpol=6
 double precision, parameter :: c_vpol=1.d0
 
 logical :: first_call=.True.
 integer :: i, jr, jrho, jr_r, jr_l, jgamma_max, jion, nchunk
-integer :: ns_in              ! Number of species, including electrons
+integer :: ns_in, geom_flag=1              ! Number of species, including electrons
+integer :: jthe, jthe_rev, nrho_equ, nthe_equ ! for ELITE geometry
 integer :: t_wall1, t_wall2, rate
+integer, dimension(n_dims) :: dims_in
 
 double precision, dimension(n_sbp_arr_out, nrho_m) :: prof_out_m
-double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, a0_m, gradrhosq_inv
+double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, a0_m, gradrhosq_inv, dtheta_elite
+double precision, dimension(n_scalars) :: scal_in
 double precision, dimension(nrho_m) :: drmin, drmaj, drho, dti, dte, dne, dq, &
     dptot, delong, dtrian, dvpar, dvper, drhodr, dr, dv_r
 double precision, dimension(NRD) :: rmaj_as, q_as, ni_main_as, &
@@ -34,6 +39,11 @@ double precision, dimension(nspec_max-2, nrho_m) :: zimp_m
 double precision, dimension(nspec_max-1, NRD) :: i_pflux_as
 double precision, dimension(n_inputs, nrho_m) :: send_buffer
 character(len=64), dimension(nworkers) :: SBP_NAMES
+! ELITE
+double precision, allocatable, dimension(:) :: theta_equ, pfn_equ
+double precision, allocatable, dimension(:, :) :: RR_tg, ZZ_tg, Bp_tg
+double precision, dimension(nthe_elite) :: theta_elite, RR_elite, ZZ_elite, Bp_elite
+character(len=120) :: f_elite
 
 call SYSTEM_CLOCK(t_wall1, rate)
 
@@ -152,9 +162,57 @@ do jr=1, nrho_m
     drhodr(jr) = drho(jr)/drmin(jr)
 enddo
 
+!------
+! ELITE
+!------
+
+if (geom_flag == 3) then
+    nrho_equ = SIZE(equil_now%coord_sys%position%r, dim=1)
+    nthe_equ = SIZE(equil_now%coord_sys%position%r, dim=2)
+    allocate(pfn_equ(nrho_equ))
+    allocate(theta_equ(nthe_equ))
+    allocate(RR_tg(nrho_m, nthe_equ), ZZ_tg(nrho_m, nthe_equ), Bp_tg(nrho_m, nthe_equ))
+
+! Interpolation on TGLF rho-grid
+
+    pfn_equ = (equil_now%profiles_1d%psi - equil_now%profiles_1d%psi(1))/(equil_now%profiles_1d%psi(nrho_equ) - equil_now%profiles_1d%psi(1))
+
+! Interpolation on TGLF rho-grid
+    do jthe=1, nthe_equ
+        call qinterp(pfn_equ, equil_now%coord_sys%position%r(:, jthe), nrho_equ, pfn_m, RR_tg(:, jthe), nrho_m)
+        call qinterp(pfn_equ, equil_now%coord_sys%position%z(:, jthe), nrho_equ, pfn_m, Zz_tg(:, jthe), nrho_m)
+        call qinterp(pfn_equ, equil_now%coord_sys%bpcell    (:, jthe), nrho_equ, pfn_m, Bp_tg(:, jthe), nrho_m)
+    enddo
+
+    deallocate(pfn_equ)
+
+    theta_equ = equil_now%coord_sys%position%teta2d
+    dtheta_elite = GP2/dble(nthe_elite - 1)
+    theta_elite = (/ ((jthe - 1.)*dtheta_elite, jthe=1, nthe_elite) /)
+endif
+
 !--------------------
 ! IPC parallelisation
 !--------------------
+
+nchunk = nrho_m / nworkers
+
+dims_in(1) = nchunk
+dims_in(2) = n_inputs
+dims_in(3) = n_sbp_arr_out
+dims_in(4) = nrho_m
+dims_in(5) = nspec_max
+dims_in(6) = ns_in
+dims_in(7) = geom_flag
+
+scal_in(1) = BTOR
+scal_in(2) = RTOR
+scal_in(3) = ABC
+scal_in(4) = AMJ
+scal_in(5) = AIM1
+scal_in(6) = AIM2
+scal_in(7) = AIM3
+scal_in(8) = ZMJ
 
 send_buffer = 0.d0
 send_buffer( 1, :) = rho_m
@@ -198,16 +256,16 @@ send_buffer(38, :) = dni(2, :)
 send_buffer(39, :) = dni(3, :)
 send_buffer(40, :) = dni(4, :)
 
-nchunk = nrho_m / nworkers
 SBP_NAMES = "xpr/tglfi"//char(0)
 if (first_call) then
-    call initialise_ipc(nrho_m, n_inputs, n_sbp_arr_out, nworkers, equ_file, exp_file)
+    call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_sbp_arr_out, nworkers, equ_file, exp_file)
+    call fill_dim2shm(dims_in)
     call send_ipc_jobs(nworkers, nchunk, 64, SBP_NAMES)
     first_call = .False.
 endif
 
 ! **** Fill shared memory segments
-call setvars(DEVAR, nspec_max, ns_in)
+call fill_var2shm(scal_in)
 call fill_arr2shm(send_buffer)
 
 ! **** Free each semaphore
@@ -220,7 +278,7 @@ call wait4all
 
 ! **** Collect data from ShMem
 do i=1, nworkers
-    call sbp2astra(i, nchunk, prof_out_m(1, 1))
+    call sbp2astra(i, prof_out_m(1, 1))
 enddo
 
 ! Interpolate back to ASTRA radial grid

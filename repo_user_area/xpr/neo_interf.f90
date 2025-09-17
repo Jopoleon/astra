@@ -1,8 +1,4 @@
-subroutine neo_interf(jr1_in, jr2_in, n_inputs, n_outputs, nrho, &
-    nspec_max, ns_in, BTOR, RTOR, ABC, AMJ, ZMJ, AIM1, AIM2, AIM3, &
-    inputs, &
-! output
-    outputs)
+subroutine neo_interf(jproc, dims_in, scalars_in, profiles_in, outputs)
 
 use neo_interface, only: neo_mass_in, neo_z_in, neo_dens_in, neo_temp_in, &
     neo_dlnndr_in, neo_dlntdr_in, neo_sim_model_in, neo_equilibrium_model_in, &
@@ -27,66 +23,83 @@ double precision, parameter :: &
    mpp  = 1.6726E-27, &       ! proton mass (kg)
    pi   = 3.141592653589793
 
-integer, intent(in) :: n_inputs, n_outputs, nrho, jr1_in, jr2_in, nspec_max, ns_in
-
-double precision, intent(in) :: BTOR, RTOR, ABC, AMJ, AIM1, AIM2, AIM3, ZMJ
-double precision, intent(in), dimension(n_inputs, nrho) :: inputs
-double precision, intent(out), dimension(jr2_in + 1 - jr1_in, n_outputs) :: outputs
+integer, intent(in) :: jproc, dims_in(*)
+double precision, intent(in) :: scalars_in(*)
+double precision, intent(in), dimension(dims_in(2), dims_in(4)) :: profiles_in
+double precision, intent(out), dimension(dims_in(1), dims_in(3)) :: outputs
 
 !----------------------------------------------------------------------
-integer :: i_ion, n_ions, j, jr, jspec, chunk
+integer :: jr1, jr2, n_inputs, n_outputs, nrho, ns_in, chunk
+integer :: i_ion, n_ions, j, jr, jspec
+double precision :: BTOR, RTOR, ABC, AMJ, AIM1, AIM2, AIM3, ZMJ
 double precision :: ion_eflux, drhodr_sq
 double precision :: Bunit, cs0, rhos0, omega0, lnlamda, taue, xnuei
 double precision :: T0, anorm, mnorm, tnorm, nnorm, vnorm, &
    pflux_e, eflux_e, jboots, tgyro_gv_flag, &
    Gamma_GB, Q_GB, Pi_GB, Jpar_GB
 
-double precision, dimension(jr2_in+1-jr1_in) :: chie, chii, elec_pflux, rho, &
+double precision, dimension(dims_in(1)) :: chie, chii, elec_pflux, rho, &
     ametr, rmaj, elon, tria, q, ne, te, ti, vpar, &
     vippd, vittd, vippi1, vitti1, jbs, epar0_in, &
     drmin, drmaj, delong, dtrian, dr, dne, dte, dti, dq, dvpar, drhodr
-double precision, dimension(ns_in, jr2_in+1-jr1_in) :: ni, zimp, dni
-double precision, dimension(ns_in) :: pflux_i, eflux_i, vpflux, vtflux
-double precision, dimension(ns_in, 2):: energy_flux, particle_flux
+double precision, dimension(dims_in(5), dims_in(1)) :: ni, zimp, dni
+double precision, dimension(dims_in(5)) :: pflux_i, eflux_i, vpflux, vtflux
+double precision, dimension(dims_in(5), 2):: energy_flux, particle_flux
 character(len=80) :: path_in
 
-chunk = jr2_in + 1 - jr1_in
+chunk     = dims_in(1)
+n_inputs  = dims_in(2)
+n_outputs = dims_in(3)
+nrho      = dims_in(4)
+ns_in     = dims_in(5)
+
+jr1 = (jproc - 1)*chunk + 1
+jr2 = jproc*chunk
+
+BTOR = scalars_in(1)
+RTOR = scalars_in(2)
+ABC  = scalars_in(3)
+AMJ  = scalars_in(4)
+AIM1 = scalars_in(5)
+AIM2 = scalars_in(6)
+AIM3 = scalars_in(7)
+ZMJ  = scalars_in(8)
 
 !-----------------
 ! Get input arrays
 !-----------------
-rho   = inputs( 1, jr1_in:jr2_in)
-ametr = inputs( 2, jr1_in:jr2_in)
-rmaj  = inputs( 3, jr1_in:jr2_in)
-elon  = inputs( 4, jr1_in:jr2_in)
-tria  = inputs( 5, jr1_in:jr2_in)
-q     = inputs( 6, jr1_in:jr2_in)
-ti    = inputs( 7, jr1_in:jr2_in)
-te    = inputs( 8, jr1_in:jr2_in)
-ne    = inputs( 9, jr1_in:jr2_in)
-vpar  = inputs(10, jr1_in:jr2_in)
-ni(1, :)   = inputs(11, jr1_in:jr2_in)
-ni(2, :)   = inputs(12, jr1_in:jr2_in)
-ni(3, :)   = inputs(13, jr1_in:jr2_in)
-ni(4, :)   = inputs(14, jr1_in:jr2_in)
-zimp(1, :) = inputs(15, jr1_in:jr2_in)
-zimp(2, :) = inputs(16, jr1_in:jr2_in)
-zimp(3, :) = inputs(17, jr1_in:jr2_in)
-drmin  = inputs(18, jr1_in:jr2_in)
-drmaj  = inputs(19, jr1_in:jr2_in)
-delong = inputs(20, jr1_in:jr2_in)
-dtrian = inputs(21, jr1_in:jr2_in)
-dti    = inputs(22, jr1_in:jr2_in)
-dte    = inputs(23, jr1_in:jr2_in)
-dne    = inputs(24, jr1_in:jr2_in)
-dq     = inputs(25, jr1_in:jr2_in)
-dvpar  = inputs(26, jr1_in:jr2_in)
-dr     = inputs(27, jr1_in:jr2_in)
-drhodr = inputs(28, jr1_in:jr2_in)
-dni(1, :) = inputs(29, jr1_in:jr2_in)
-dni(2, :) = inputs(30, jr1_in:jr2_in)
-dni(3, :) = inputs(31, jr1_in:jr2_in)
-dni(4, :) = inputs(32, jr1_in:jr2_in)
+rho   = profiles_in( 1, jr1:jr2)
+ametr = profiles_in( 2, jr1:jr2)
+rmaj  = profiles_in( 3, jr1:jr2)
+elon  = profiles_in( 4, jr1:jr2)
+tria  = profiles_in( 5, jr1:jr2)
+q     = profiles_in( 6, jr1:jr2)
+ti    = profiles_in( 7, jr1:jr2)
+te    = profiles_in( 8, jr1:jr2)
+ne    = profiles_in( 9, jr1:jr2)
+vpar  = profiles_in(10, jr1:jr2)
+ni(1, :)   = profiles_in(11, jr1:jr2)
+ni(2, :)   = profiles_in(12, jr1:jr2)
+ni(3, :)   = profiles_in(13, jr1:jr2)
+ni(4, :)   = profiles_in(14, jr1:jr2)
+zimp(1, :) = profiles_in(15, jr1:jr2)
+zimp(2, :) = profiles_in(16, jr1:jr2)
+zimp(3, :) = profiles_in(17, jr1:jr2)
+drmin  = profiles_in(18, jr1:jr2)
+drmaj  = profiles_in(19, jr1:jr2)
+delong = profiles_in(20, jr1:jr2)
+dtrian = profiles_in(21, jr1:jr2)
+dti    = profiles_in(22, jr1:jr2)
+dte    = profiles_in(23, jr1:jr2)
+dne    = profiles_in(24, jr1:jr2)
+dq     = profiles_in(25, jr1:jr2)
+dvpar  = profiles_in(26, jr1:jr2)
+dr     = profiles_in(27, jr1:jr2)
+drhodr = profiles_in(28, jr1:jr2)
+dni(1, :) = profiles_in(29, jr1:jr2)
+dni(2, :) = profiles_in(30, jr1:jr2)
+dni(3, :) = profiles_in(31, jr1:jr2)
+dni(4, :) = profiles_in(32, jr1:jr2)
 
 anorm = ABC
 neo_mass_in(1) = 5.4447e-4
@@ -125,7 +138,7 @@ neo_ipccw_in = -1
 neo_btccw_in = -1
 neo_n_species_in = n_ions + 1
 
-if (jr1_in == 1) print*, 'Run NEO', n_ions
+if (jr1 == 1) print*, 'Run NEO', n_ions
 
 radial_loop: do jr=1, chunk
 

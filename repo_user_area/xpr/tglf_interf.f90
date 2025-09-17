@@ -1,8 +1,4 @@
-subroutine tglf_interf(jr1, jr2, n_inputs, n_outputs, nrho, &
-    nspec_max, ns_in, BTOR, RTOR, ABC, AMJ, ZMJ, AIM1, AIM2, AIM3, &
-    inputs, &
-! output
-    outputs)
+subroutine tglf_interf(jproc, dims_in, scalars_in, profiles_in, outputs)
 
 use tglf_interface, only: nsm, tglf_zs_in, tglf_ns_in, tglf_mass_in, &
     tglf_find_width_in, tglf_iflux_in, tglf_use_bper_in, tglf_use_mhd_rule_in, &
@@ -50,13 +46,14 @@ double precision, parameter :: &
    mpp  = 1.6726E-27, &       ! proton mass (kg)
    pi   = 3.141592653589793
 
-integer, intent(in) :: jr1, jr2, n_inputs, n_outputs, nrho, nspec_max, ns_in
-double precision, intent(in) :: BTOR, RTOR, ABC, AMJ, AIM1, AIM2, AIM3, ZMJ
-double precision, intent(in), dimension(n_inputs, nrho) :: inputs
-double precision, intent(out), dimension(jr2 + 1 - jr1, n_outputs) :: outputs
+integer, intent(in) :: jproc, dims_in(*)
+double precision, intent(in) :: scalars_in(*)
+double precision, intent(in), dimension(dims_in(2), dims_in(4)) :: profiles_in
+double precision, intent(out), dimension(dims_in(1), dims_in(3)) :: outputs
 
-integer :: chunk
+integer :: jr1, jr2, n_inputs, n_outputs, nrho, nspec_max, ns_in, geom_flag, chunk
 integer :: sat_rule, jr, jgamma_max, jion, kyloop
+double precision :: BTOR, RTOR, ABC, AMJ, AIM1, AIM2, AIM3, ZMJ
 double precision :: Bunit_gauss, Bunit_T, cs0, cs00, rhos0, omega0, rhostar2, lnlamda, taue, cexb
 double precision :: a0_cm, a0_m, T0, N0, m0, rmin, drho_cs, drho_nt, nt_cs
 double precision :: Amain, Zmain
@@ -68,7 +65,25 @@ double precision, allocatable, dimension(:) :: mtori, chie, chii, exchi, elec_pf
 double precision, allocatable, dimension(:, :) :: dni, ni, zimp, ion_pflux
 double precision, dimension(nky) :: gamma, omega, kyspectrum, efluxspectrum
 
-chunk = jr2 + 1 - jr1
+chunk     = dims_in(1)
+n_inputs  = dims_in(2)
+n_outputs = dims_in(3)
+nrho      = dims_in(4)
+nspec_max = dims_in(5)
+ns_in     = dims_in(6)
+geom_flag = dims_in(7)
+
+jr1 = (jproc - 1)*chunk + 1
+jr2 = jproc*chunk
+
+BTOR = scalars_in(1)
+RTOR = scalars_in(2)
+ABC  = scalars_in(3)
+AMJ  = scalars_in(4)
+AIM1 = scalars_in(5)
+AIM2 = scalars_in(6)
+AIM3 = scalars_in(7)
+ZMJ  = scalars_in(8)
 
 allocate( mtori(chunk), chie(chunk), chii(chunk), exchi(chunk), elec_pflux(chunk), &
     rho(chunk), gamma_max(chunk), omega_max(chunk), kymax(chunk), &
@@ -109,52 +124,52 @@ m0 = Amain*mp          ! Ref. mass = D ion mass [g]
 a0_cm = 1.d2*a0_m    ! length scale used by GYRO, m -> cm
 
 ! Profiles
-rho    = inputs( 1, jr1:jr2)
-ametr  = inputs( 2, jr1:jr2)
-rmaj   = inputs( 3, jr1:jr2)
-elon   = inputs( 4, jr1:jr2)
-tria   = inputs( 5, jr1:jr2)
-q      = inputs( 6, jr1:jr2)
-pfn    = inputs( 7, jr1:jr2)
-ptot   = inputs( 8, jr1:jr2)
-ti     = inputs( 9, jr1:jr2)
-te     = inputs(10, jr1:jr2)
-ne     = inputs(11, jr1:jr2)
-zef    = inputs(12, jr1:jr2)
-vpar   = inputs(13, jr1:jr2)
-vper   = inputs(14, jr1:jr2)
-vexb   = inputs(15, jr1:jr2)
-drmin  = inputs(16, jr1:jr2)
-drmaj  = inputs(17, jr1:jr2)
-drho   = inputs(18, jr1:jr2)
-delong = inputs(19, jr1:jr2)
-dtrian = inputs(20, jr1:jr2)
-dptot  = inputs(21, jr1:jr2)
-dti    = inputs(22, jr1:jr2)
-dte    = inputs(23, jr1:jr2)
-dne    = inputs(24, jr1:jr2)
-dq     = inputs(25, jr1:jr2)
-dvper  = inputs(26, jr1:jr2)
-dv_r   = inputs(27, jr1:jr2)
-dr     = inputs(28, jr1:jr2)
-drhodr = inputs(29, jr1:jr2)
-ni( 1, :) = inputs(30, jr1:jr2)
-ni( 2, :) = inputs(31, jr1:jr2)
-ni( 3, :) = inputs(32, jr1:jr2)
-ni( 4, :) = inputs(33, jr1:jr2)
-zimp(1,:) = inputs(34, jr1:jr2)
-zimp(2,:) = inputs(35, jr1:jr2)
-zimp(3,:) = inputs(36, jr1:jr2)
-dni(1, :) = inputs(37, jr1:jr2)
-dni(2, :) = inputs(38, jr1:jr2)
-dni(3, :) = inputs(39, jr1:jr2)
-dni(4, :) = inputs(40, jr1:jr2)
+rho    = profiles_in( 1, jr1:jr2)
+ametr  = profiles_in( 2, jr1:jr2)
+rmaj   = profiles_in( 3, jr1:jr2)
+elon   = profiles_in( 4, jr1:jr2)
+tria   = profiles_in( 5, jr1:jr2)
+q      = profiles_in( 6, jr1:jr2)
+pfn    = profiles_in( 7, jr1:jr2)
+ptot   = profiles_in( 8, jr1:jr2)
+ti     = profiles_in( 9, jr1:jr2)
+te     = profiles_in(10, jr1:jr2)
+ne     = profiles_in(11, jr1:jr2)
+zef    = profiles_in(12, jr1:jr2)
+vpar   = profiles_in(13, jr1:jr2)
+vper   = profiles_in(14, jr1:jr2)
+vexb   = profiles_in(15, jr1:jr2)
+drmin  = profiles_in(16, jr1:jr2)
+drmaj  = profiles_in(17, jr1:jr2)
+drho   = profiles_in(18, jr1:jr2)
+delong = profiles_in(19, jr1:jr2)
+dtrian = profiles_in(20, jr1:jr2)
+dptot  = profiles_in(21, jr1:jr2)
+dti    = profiles_in(22, jr1:jr2)
+dte    = profiles_in(23, jr1:jr2)
+dne    = profiles_in(24, jr1:jr2)
+dq     = profiles_in(25, jr1:jr2)
+dvper  = profiles_in(26, jr1:jr2)
+dv_r   = profiles_in(27, jr1:jr2)
+dr     = profiles_in(28, jr1:jr2)
+drhodr = profiles_in(29, jr1:jr2)
+ni( 1, :) = profiles_in(30, jr1:jr2)
+ni( 2, :) = profiles_in(31, jr1:jr2)
+ni( 3, :) = profiles_in(32, jr1:jr2)
+ni( 4, :) = profiles_in(33, jr1:jr2)
+zimp(1,:) = profiles_in(34, jr1:jr2)
+zimp(2,:) = profiles_in(35, jr1:jr2)
+zimp(3,:) = profiles_in(36, jr1:jr2)
+dni(1, :) = profiles_in(37, jr1:jr2)
+dni(2, :) = profiles_in(38, jr1:jr2)
+dni(3, :) = profiles_in(39, jr1:jr2)
+dni(4, :) = profiles_in(40, jr1:jr2)
 
 ! TGLF settings
 sat_rule = 2
 
 if (jr1 == 1) then
-    write(6, '(A, 4i4)') 'Call TGLF...', jr1, jr2, sat_rule, tglf_ns_in
+    write(6, '(A, 4i4, 4f8.4)') 'Call TGLF...', jr1, jr2, sat_rule, tglf_ns_in, BTOR, RTOR, ABC, ZMJ
 endif
 
 SELECT CASE(sat_rule)
@@ -206,7 +221,7 @@ tglf_width_in     = 1.65
 tglf_width_min_in = 0.3
 tglf_nwidth_in    = 21
 
-tglf_geometry_flag_in = 1
+tglf_geometry_flag_in = geom_flag
 tglf_dump_flag_in     = .False.   ! Dumps input file
 tglf_test_flag_in     = 0
 tglf_nn_max_error_in  = 0
