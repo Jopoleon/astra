@@ -32,14 +32,14 @@ void trim_right(char *str) {
   Reads the shared memory segment and stores the subprocess' output to an ASTRA fortran array
 */
 void sbp2astra_(int* jsbp, double* mem){
-    int j, jproc, jarr, n_chunk, n_shm;
+    int j, jproc, jarr;
     jproc = *jsbp - 1;
 
-    double* sbp_out = (double *)((char *)A_ShmAdr[jproc]);
+    double* prof_out = (double *)((char *)A_ShmAdr[jproc]);
 
     for (jarr=0; jarr<N_ARR_OUT; jarr++){
         for (j=0; j<N_CHUNK; j++){
-            mem[jarr + (j + jproc*N_CHUNK) * N_ARR_OUT] = sbp_out[j + jarr*N_CHUNK];
+            mem[jarr + (j + jproc*N_CHUNK) * N_ARR_OUT] = prof_out[j + jarr*N_CHUNK];
         }
     }
     

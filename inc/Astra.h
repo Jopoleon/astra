@@ -13,21 +13,6 @@
 #include <sys/shm.h>
 #include <errno.h>
 
-static struct A_vars
-{
-  int nspec;
-  int nspec_max;
-  double aim1;
-  double aim2;
-  double aim3;
-  double amj;
-  double btor;
-  double rtor;
-  double abc;
-  double zmj;
-  double shift;
-} *AVARS;
-
 union semun{
     int val;                    /* value for SETVAL */
     struct semid_ds *buf;       /* buffer for IPC_STAT, IPC_SET */

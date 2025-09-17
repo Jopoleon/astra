@@ -11,9 +11,8 @@ void tglf_interf_(int*, int*, double*, double*, double*);
 
 int main(int argc, char *argv[]) {
 
-    extern int N_RHO;
     void *ShmAd0, *ShmAd1, *ShmAd2, *ShmAdr;
-    int qlSize, N_ARR_OUT, J_PROC, N_CHUNK;
+    int outSize, N_ARR_OUT, J_PROC, N_CHUNK;
     int SemID, ShmId0, ShmId1, ShmId2;
     int ProcShmId;
     key_t Key_in, ProcKey;
@@ -48,12 +47,12 @@ int main(int argc, char *argv[]) {
     ShmAd1 = shmat(ShmId1, NULL, 0);
     ShmAd2 = shmat(ShmId2, NULL, 0);
     ProcKey = ftok( ProcPath, (int)ProcPid);
-    qlSize = N_CHUNK*N_ARR_OUT*sizeof(double);
+    outSize = N_CHUNK*N_ARR_OUT*sizeof(double);
 
 /*------------------------------------
   Create My shared memory segment
 */
-    ProcShmId = shmget(ProcKey, qlSize, 0660|IPC_CREAT);
+    ProcShmId = shmget(ProcKey, outSize, 0660|IPC_CREAT);
 /* Attach My shared memory to the process
    My shared memory segment starts at ShmAdr */
     ShmAdr = shmat(ProcShmId, NULL, 0);
@@ -64,7 +63,7 @@ int main(int argc, char *argv[]) {
         printf("Cannot open existing Astra IPC file: \"%s\"\n", A_ipc_file);
         exit(0);
     }
-    fprintf(A_IPC, "%12d%12d%12d   %s\n", ProcPid, ProcShmId, qlSize, ProcPath);
+    fprintf(A_IPC, "%12d%12d%12d   %s\n", ProcPid, ProcShmId, outSize, ProcPath);
     fclose(A_IPC);
 
     int* dim_in = (int *)((char *)ShmAd0); // constant at all time steps
@@ -74,9 +73,9 @@ int main(int argc, char *argv[]) {
    and proceeds to the next line or exits if semop fails */
         if (semop(SemID, &buf0, 1) < 0) break;
         if (semop(SemID, &bufN, 1) < 0) break;
-        double* scal_in = (double *)((char *)ShmAd1);
-	double* sbp_in  = (double *)((char *)ShmAd2);
-        double* sbp_out = (double *)((char *)ShmAdr); // IPC subprocess output
+        double* scal_in  = (double *)((char *)ShmAd1);
+	double* prof_in  = (double *)((char *)ShmAd2);
+        double* prof_out = (double *)((char *)ShmAdr); // IPC subprocess output
 
 /* Call Fortran function */
 #ifdef qlk
@@ -88,14 +87,9 @@ int main(int argc, char *argv[]) {
 #ifdef neo
         neo_interf_(
 #endif
-           /* input */
-            &J_PROC,
-            dim_in,
-	    scal_in,
-	    sbp_in,
-/* output */
-            sbp_out
-          );
+       	    &J_PROC, dim_in, scal_in, prof_in, // input
+            prof_out // output
+        );
 
 /* If SemID exists then lock myself, otherwise, exit */
         Mysemun.val = 0;
