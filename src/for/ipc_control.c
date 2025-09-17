@@ -298,7 +298,7 @@ int fill_dim2shm_(int* dims_in){
 
     int* dims_input = (int *)((char *)A_ShmAdr_adims);
     memcpy(dims_input, dims_in, N_DIMS * sizeof(int));
-   
+
     return 0;
 }
 
@@ -312,11 +312,11 @@ int fill_var2shm_(double* scal_in){
 }
 
 /*------------- Fill subprocess input arrays from ASTRA --------------*/
-int fill_arr2shm_(double* sbp_in){
+int fill_arr2shm_(double* prof_in){
 
-    double* sbp_input = (double *)((char *)A_ShmAdr_aarrs);
+    double* prof_input = (double *)((char *)A_ShmAdr_aarrs);
     size_t num_elements = N_RHO * N_ARR_IN;
-    memcpy(sbp_input, sbp_in, num_elements * sizeof(double));
+    memcpy(prof_input, prof_in, num_elements * sizeof(double));
 
     return 0;
 }
