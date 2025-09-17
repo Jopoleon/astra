@@ -21,7 +21,7 @@ integer :: i, j, nchunk, jout
 integer :: t_wall1, t_wall2, rate, nrho_step
 integer, dimension(n_dims) :: dims_in
 
-double precision, dimension(n_inputs, nrho_m) :: send_buffer
+double precision, dimension(n_inputs, nrho_m) :: prof_in
 double precision, dimension(n_sbp_arr_out, nrho_m) :: prof_out_m
 double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, T0, m0, a0_m, a0_cm, cs0, drho
 double precision, dimension(n_scalars) :: scal_in
@@ -168,39 +168,39 @@ scal_in(6) = AIM2
 scal_in(7) = AIM3
 scal_in(8) = ZMJ
 
-send_buffer = 0.d0
-send_buffer( 1, :) = rho_m
-send_buffer( 2, :) = ametr_m
-send_buffer( 3, :) = rmaj_m
-send_buffer( 4, :) = elon_m
-send_buffer( 5, :) = tria_m
-send_buffer( 6, :) = q_m
-send_buffer( 7, :) = ti_m
-send_buffer( 8, :) = te_m
-send_buffer( 9, :) = ne_m
-send_buffer(10, :) = vpar_m
-send_buffer(11, :) = ni_m(1, :)
-send_buffer(12, :) = ni_m(2, :)
-send_buffer(13, :) = ni_m(3, :)
-send_buffer(14, :) = ni_m(4, :)
-send_buffer(15, :) = zimp_m(1, :)
-send_buffer(16, :) = zimp_m(2, :)
-send_buffer(17, :) = zimp_m(3, :)
-send_buffer(18, :) = drmin
-send_buffer(19, :) = drmaj
-send_buffer(20, :) = delong
-send_buffer(21, :) = dtrian
-send_buffer(22, :) = dti
-send_buffer(23, :) = dte
-send_buffer(24, :) = dne
-send_buffer(25, :) = dq
-send_buffer(26, :) = dvpar
-send_buffer(27, :) = dr
-send_buffer(28, :) = drhodr
-send_buffer(29, :) = dni(1, :)
-send_buffer(30, :) = dni(2, :)
-send_buffer(31, :) = dni(3, :)
-send_buffer(32, :) = dni(4, :)
+prof_in = 0.d0
+prof_in( 1, :) = rho_m
+prof_in( 2, :) = ametr_m
+prof_in( 3, :) = rmaj_m
+prof_in( 4, :) = elon_m
+prof_in( 5, :) = tria_m
+prof_in( 6, :) = q_m
+prof_in( 7, :) = ti_m
+prof_in( 8, :) = te_m
+prof_in( 9, :) = ne_m
+prof_in(10, :) = vpar_m
+prof_in(11, :) = ni_m(1, :)
+prof_in(12, :) = ni_m(2, :)
+prof_in(13, :) = ni_m(3, :)
+prof_in(14, :) = ni_m(4, :)
+prof_in(15, :) = zimp_m(1, :)
+prof_in(16, :) = zimp_m(2, :)
+prof_in(17, :) = zimp_m(3, :)
+prof_in(18, :) = drmin
+prof_in(19, :) = drmaj
+prof_in(20, :) = delong
+prof_in(21, :) = dtrian
+prof_in(22, :) = dti
+prof_in(23, :) = dte
+prof_in(24, :) = dne
+prof_in(25, :) = dq
+prof_in(26, :) = dvpar
+prof_in(27, :) = dr
+prof_in(28, :) = drhodr
+prof_in(29, :) = dni(1, :)
+prof_in(30, :) = dni(2, :)
+prof_in(31, :) = dni(3, :)
+prof_in(32, :) = dni(4, :)
 
 SBP_NAMES = "xpr/neo"//char(0)
 if (first_call) then
@@ -212,7 +212,7 @@ endif
 
 ! **** Fill shared memory segments
 call fill_var2shm(scal_in)
-call fill_arr2shm(send_buffer)
+call fill_arr2shm(prof_in)
 
 ! **** Free each semaphore
 do i=1, nworkers

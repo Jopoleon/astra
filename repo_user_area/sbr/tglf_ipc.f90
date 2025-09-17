@@ -37,7 +37,7 @@ double precision, dimension(nspec_max-2) :: zimp_max
 double precision, dimension(nspec_max-1, nrho_m) :: dni, ni_m, i_pflux
 double precision, dimension(nspec_max-2, nrho_m) :: zimp_m 
 double precision, dimension(nspec_max-1, NRD) :: i_pflux_as
-double precision, dimension(n_inputs, nrho_m) :: send_buffer
+double precision, dimension(n_inputs, nrho_m) :: prof_in
 character(len=64), dimension(nworkers) :: SBP_NAMES
 ! ELITE
 double precision, allocatable, dimension(:) :: theta_equ, pfn_equ
@@ -214,47 +214,47 @@ scal_in(6) = AIM2
 scal_in(7) = AIM3
 scal_in(8) = ZMJ
 
-send_buffer = 0.d0
-send_buffer( 1, :) = rho_m
-send_buffer( 2, :) = ametr_m
-send_buffer( 3, :) = rmaj_m
-send_buffer( 4, :) = elon_m
-send_buffer( 5, :) = tria_m
-send_buffer( 6, :) = q_m 
-send_buffer( 7, :) = pfn_m
-send_buffer( 8, :) = ptot_m
-send_buffer( 9, :) = ti_m
-send_buffer(10, :) = te_m 
-send_buffer(11, :) = ne_m 
-send_buffer(12, :) = zef_m
-send_buffer(13, :) = vpar_m
-send_buffer(14, :) = vper_m
-send_buffer(15, :) = vexb_m
-send_buffer(16, :) = drmin
-send_buffer(17, :) = drmaj
-send_buffer(18, :) = drho 
-send_buffer(19, :) = delong
-send_buffer(20, :) = dtrian
-send_buffer(21, :) = dptot
-send_buffer(22, :) = dti
-send_buffer(23, :) = dte
-send_buffer(24, :) = dne
-send_buffer(25, :) = dq
-send_buffer(26, :) = dvper
-send_buffer(27, :) = dv_r
-send_buffer(28, :) = dr
-send_buffer(29, :) = drhodr
-send_buffer(30, :) = ni_m(1, :)
-send_buffer(31, :) = ni_m(2, :)
-send_buffer(32, :) = ni_m(3, :)
-send_buffer(33, :) = ni_m(4, :)
-send_buffer(34, :) = zimp_m(1, :)
-send_buffer(35, :) = zimp_m(2, :)
-send_buffer(36, :) = zimp_m(3, :)
-send_buffer(37, :) = dni(1, :)
-send_buffer(38, :) = dni(2, :)
-send_buffer(39, :) = dni(3, :)
-send_buffer(40, :) = dni(4, :)
+prof_in = 0.d0
+prof_in( 1, :) = rho_m
+prof_in( 2, :) = ametr_m
+prof_in( 3, :) = rmaj_m
+prof_in( 4, :) = elon_m
+prof_in( 5, :) = tria_m
+prof_in( 6, :) = q_m 
+prof_in( 7, :) = pfn_m
+prof_in( 8, :) = ptot_m
+prof_in( 9, :) = ti_m
+prof_in(10, :) = te_m 
+prof_in(11, :) = ne_m 
+prof_in(12, :) = zef_m
+prof_in(13, :) = vpar_m
+prof_in(14, :) = vper_m
+prof_in(15, :) = vexb_m
+prof_in(16, :) = drmin
+prof_in(17, :) = drmaj
+prof_in(18, :) = drho 
+prof_in(19, :) = delong
+prof_in(20, :) = dtrian
+prof_in(21, :) = dptot
+prof_in(22, :) = dti
+prof_in(23, :) = dte
+prof_in(24, :) = dne
+prof_in(25, :) = dq
+prof_in(26, :) = dvper
+prof_in(27, :) = dv_r
+prof_in(28, :) = dr
+prof_in(29, :) = drhodr
+prof_in(30, :) = ni_m(1, :)
+prof_in(31, :) = ni_m(2, :)
+prof_in(32, :) = ni_m(3, :)
+prof_in(33, :) = ni_m(4, :)
+prof_in(34, :) = zimp_m(1, :)
+prof_in(35, :) = zimp_m(2, :)
+prof_in(36, :) = zimp_m(3, :)
+prof_in(37, :) = dni(1, :)
+prof_in(38, :) = dni(2, :)
+prof_in(39, :) = dni(3, :)
+prof_in(40, :) = dni(4, :)
 
 SBP_NAMES = "xpr/tglfi"//char(0)
 if (first_call) then
@@ -266,7 +266,7 @@ endif
 
 ! **** Fill shared memory segments
 call fill_var2shm(scal_in)
-call fill_arr2shm(send_buffer)
+call fill_arr2shm(prof_in)
 
 ! **** Free each semaphore
 do i=1, nworkers

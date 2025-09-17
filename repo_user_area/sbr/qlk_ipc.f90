@@ -20,7 +20,7 @@ integer :: ns_in              ! Number of species, including electrons
 integer :: t_wall1, t_wall2, rate
 integer, dimension(n_dims) :: dims_in
 
-double precision, dimension(n_inputs, nrho_m) :: send_buffer
+double precision, dimension(n_inputs, nrho_m) :: prof_in
 double precision, dimension(n_sbp_arr_out, nrho_m) :: prof_out_m
 double precision :: bpolz, xstep, rho_min, rho_max, dstep, a0_m
 double precision, dimension(n_scalars) :: scal_in
@@ -188,44 +188,44 @@ scal_in(6) = AIM2
 scal_in(7) = AIM3
 scal_in(8) = ZMJ
 
-send_buffer( 1, :) = rho_m
-send_buffer( 2, :) = ametr_m
-send_buffer( 3, :) = rmaj_m
-send_buffer( 4, :) = q_m
-send_buffer( 5, :) = ne_m
-send_buffer( 6, :) = te_m
-send_buffer( 7, :) = vpar_m
-send_buffer( 8, :) = vper_m
-send_buffer( 9, :) = ti_m(1, :)
-send_buffer(10, :) = ti_m(2, :)
-send_buffer(11, :) = ti_m(3, :)
-send_buffer(12, :) = ti_m(4, :)
-send_buffer(13, :) = ni_m(1, :)
-send_buffer(14, :) = ni_m(2, :)
-send_buffer(15, :) = ni_m(3, :)
-send_buffer(16, :) = ni_m(4, :)
-send_buffer(17, :) = zimp_m(1, :)
-send_buffer(18, :) = zimp_m(2, :)
-send_buffer(19, :) = zimp_m(3, :)
-send_buffer(20, :) = drmin
-send_buffer(21, :) = drmaj
-send_buffer(22, :) = drho
-send_buffer(23, :) = dptot
-send_buffer(24, :) = dte
-send_buffer(25, :) = dne
-send_buffer(26, :) = dq
-send_buffer(27, :) = dvper
-send_buffer(28, :) = dv_r
-send_buffer(29, :) = dr
-send_buffer(30, :) = drhodr
-send_buffer(31, :) = dti(1, :)
-send_buffer(32, :) = dti(2, :)
-send_buffer(33, :) = dti(3, :)
-send_buffer(34, :) = dti(4, :)
-send_buffer(35, :) = dni(1, :)
-send_buffer(36, :) = dni(2, :)
-send_buffer(37, :) = dni(3, :)
-send_buffer(38, :) = dni(4, :)
+prof_in( 1, :) = rho_m
+prof_in( 2, :) = ametr_m
+prof_in( 3, :) = rmaj_m
+prof_in( 4, :) = q_m
+prof_in( 5, :) = ne_m
+prof_in( 6, :) = te_m
+prof_in( 7, :) = vpar_m
+prof_in( 8, :) = vper_m
+prof_in( 9, :) = ti_m(1, :)
+prof_in(10, :) = ti_m(2, :)
+prof_in(11, :) = ti_m(3, :)
+prof_in(12, :) = ti_m(4, :)
+prof_in(13, :) = ni_m(1, :)
+prof_in(14, :) = ni_m(2, :)
+prof_in(15, :) = ni_m(3, :)
+prof_in(16, :) = ni_m(4, :)
+prof_in(17, :) = zimp_m(1, :)
+prof_in(18, :) = zimp_m(2, :)
+prof_in(19, :) = zimp_m(3, :)
+prof_in(20, :) = drmin
+prof_in(21, :) = drmaj
+prof_in(22, :) = drho
+prof_in(23, :) = dptot
+prof_in(24, :) = dte
+prof_in(25, :) = dne
+prof_in(26, :) = dq
+prof_in(27, :) = dvper
+prof_in(28, :) = dv_r
+prof_in(29, :) = dr
+prof_in(30, :) = drhodr
+prof_in(31, :) = dti(1, :)
+prof_in(32, :) = dti(2, :)
+prof_in(33, :) = dti(3, :)
+prof_in(34, :) = dti(4, :)
+prof_in(35, :) = dni(1, :)
+prof_in(36, :) = dni(2, :)
+prof_in(37, :) = dni(3, :)
+prof_in(38, :) = dni(4, :)
 
 if (first_call) then
     call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_sbp_arr_out, nworkers, equ_file, exp_file)
@@ -236,7 +236,7 @@ endif
 
 ! **** Fill shared memory segments
 call fill_var2shm(scal_in)
-call fill_arr2shm(send_buffer)
+call fill_arr2shm(prof_in)
 
 ! **** Free each semaphore
 do j=1, nworkers
