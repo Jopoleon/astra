@@ -21,7 +21,7 @@ integer :: t_wall1, t_wall2, rate
 integer, dimension(n_dims) :: dims_in
 
 double precision, dimension(n_inputs, nrho_m) :: prof_in
-double precision, dimension(n_sbp_arr_out, nrho_m) :: prof_out_m
+double precision, dimension(n_sbp_arr_out, nrho_m) :: prof_out
 double precision :: bpolz, xstep, rho_min, rho_max, dstep, a0_m
 double precision, dimension(n_scalars) :: scal_in
 double precision, dimension(nrho_m) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
@@ -248,15 +248,15 @@ call wait4all
 
 ! **** Collect data from ShMem
 do i=1, nworkers
-    call sbp2astra(i, prof_out_m(1, 1))
+    call sbp2astra(i, prof_out(1, 1))
 enddo
 
 ! Interpolate back to ASTRA radial grid
 
-call qinterp(rho_m, prof_out_m(1, :), nrho_m, RHO(1:NA1), chii_m(1:NA1)      , NA1)
-call qinterp(rho_m, prof_out_m(2, :), nrho_m, RHO(1:NA1), chie_m(1:NA1)      , NA1)
-call qinterp(rho_m, prof_out_m(4, :), nrho_m, RHO(1:NA1), elec_pflux_m(1:NA1), NA1)
-call qinterp(rho_m, prof_out_m(5, :), nrho_m, RHO(1:NA1), exchi_m(1:NA1)     , NA1)
+call qinterp(rho_m, prof_out(1, :), nrho_m, RHO(1:NA1), chii_m(1:NA1)      , NA1)
+call qinterp(rho_m, prof_out(2, :), nrho_m, RHO(1:NA1), chie_m(1:NA1)      , NA1)
+call qinterp(rho_m, prof_out(4, :), nrho_m, RHO(1:NA1), elec_pflux_m(1:NA1), NA1)
+call qinterp(rho_m, prof_out(5, :), nrho_m, RHO(1:NA1), exchi_m(1:NA1)     , NA1)
 
 chii_m (1:2) = chii_m (3)
 chie_m (1:2) = chie_m (3)

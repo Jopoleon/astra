@@ -1,4 +1,4 @@
-subroutine tglf_interf(jproc, dims_in, scalars_in, profiles_in, outputs)
+subroutine tglf_interf(jproc, dims_in, scal_in, prof_in, prof_out)
 
 use tglf_interface, only: nsm, tglf_zs_in, tglf_ns_in, tglf_mass_in, &
     tglf_find_width_in, tglf_iflux_in, tglf_use_bper_in, tglf_use_mhd_rule_in, &
@@ -47,9 +47,9 @@ double precision, parameter :: &
    pi   = 3.141592653589793
 
 integer, intent(in) :: jproc, dims_in(*)
-double precision, intent(in) :: scalars_in(*)
-double precision, intent(in), dimension(dims_in(2), dims_in(4)) :: profiles_in
-double precision, intent(out), dimension(dims_in(1), dims_in(3)) :: outputs
+double precision, intent(in) :: scal_in(*)
+double precision, intent(in), dimension(dims_in(2), dims_in(4)) :: prof_in
+double precision, intent(out), dimension(dims_in(1), dims_in(3)) :: prof_out
 
 integer :: jr1, jr2, n_inputs, n_outputs, nrho, nspec_max, ns_in, geom_flag, chunk
 integer :: sat_rule, jr, jgamma_max, jion, kyloop
@@ -76,14 +76,14 @@ geom_flag = dims_in(7)
 jr1 = (jproc - 1)*chunk + 1
 jr2 = jproc*chunk
 
-BTOR = scalars_in(1)
-RTOR = scalars_in(2)
-ABC  = scalars_in(3)
-AMJ  = scalars_in(4)
-AIM1 = scalars_in(5)
-AIM2 = scalars_in(6)
-AIM3 = scalars_in(7)
-ZMJ  = scalars_in(8)
+BTOR = scal_in(1)
+RTOR = scal_in(2)
+ABC  = scal_in(3)
+AMJ  = scal_in(4)
+AIM1 = scal_in(5)
+AIM2 = scal_in(6)
+AIM3 = scal_in(7)
+ZMJ  = scal_in(8)
 
 allocate( mtori(chunk), chie(chunk), chii(chunk), exchi(chunk), elec_pflux(chunk), &
     rho(chunk), gamma_max(chunk), omega_max(chunk), kymax(chunk), &
@@ -124,46 +124,46 @@ m0 = Amain*mp          ! Ref. mass = D ion mass [g]
 a0_cm = 1.d2*a0_m    ! length scale used by GYRO, m -> cm
 
 ! Profiles
-rho    = profiles_in( 1, jr1:jr2)
-ametr  = profiles_in( 2, jr1:jr2)
-rmaj   = profiles_in( 3, jr1:jr2)
-elon   = profiles_in( 4, jr1:jr2)
-tria   = profiles_in( 5, jr1:jr2)
-q      = profiles_in( 6, jr1:jr2)
-pfn    = profiles_in( 7, jr1:jr2)
-ptot   = profiles_in( 8, jr1:jr2)
-ti     = profiles_in( 9, jr1:jr2)
-te     = profiles_in(10, jr1:jr2)
-ne     = profiles_in(11, jr1:jr2)
-zef    = profiles_in(12, jr1:jr2)
-vpar   = profiles_in(13, jr1:jr2)
-vper   = profiles_in(14, jr1:jr2)
-vexb   = profiles_in(15, jr1:jr2)
-drmin  = profiles_in(16, jr1:jr2)
-drmaj  = profiles_in(17, jr1:jr2)
-drho   = profiles_in(18, jr1:jr2)
-delong = profiles_in(19, jr1:jr2)
-dtrian = profiles_in(20, jr1:jr2)
-dptot  = profiles_in(21, jr1:jr2)
-dti    = profiles_in(22, jr1:jr2)
-dte    = profiles_in(23, jr1:jr2)
-dne    = profiles_in(24, jr1:jr2)
-dq     = profiles_in(25, jr1:jr2)
-dvper  = profiles_in(26, jr1:jr2)
-dv_r   = profiles_in(27, jr1:jr2)
-dr     = profiles_in(28, jr1:jr2)
-drhodr = profiles_in(29, jr1:jr2)
-ni( 1, :) = profiles_in(30, jr1:jr2)
-ni( 2, :) = profiles_in(31, jr1:jr2)
-ni( 3, :) = profiles_in(32, jr1:jr2)
-ni( 4, :) = profiles_in(33, jr1:jr2)
-zimp(1,:) = profiles_in(34, jr1:jr2)
-zimp(2,:) = profiles_in(35, jr1:jr2)
-zimp(3,:) = profiles_in(36, jr1:jr2)
-dni(1, :) = profiles_in(37, jr1:jr2)
-dni(2, :) = profiles_in(38, jr1:jr2)
-dni(3, :) = profiles_in(39, jr1:jr2)
-dni(4, :) = profiles_in(40, jr1:jr2)
+rho    = prof_in( 1, jr1:jr2)
+ametr  = prof_in( 2, jr1:jr2)
+rmaj   = prof_in( 3, jr1:jr2)
+elon   = prof_in( 4, jr1:jr2)
+tria   = prof_in( 5, jr1:jr2)
+q      = prof_in( 6, jr1:jr2)
+pfn    = prof_in( 7, jr1:jr2)
+ptot   = prof_in( 8, jr1:jr2)
+ti     = prof_in( 9, jr1:jr2)
+te     = prof_in(10, jr1:jr2)
+ne     = prof_in(11, jr1:jr2)
+zef    = prof_in(12, jr1:jr2)
+vpar   = prof_in(13, jr1:jr2)
+vper   = prof_in(14, jr1:jr2)
+vexb   = prof_in(15, jr1:jr2)
+drmin  = prof_in(16, jr1:jr2)
+drmaj  = prof_in(17, jr1:jr2)
+drho   = prof_in(18, jr1:jr2)
+delong = prof_in(19, jr1:jr2)
+dtrian = prof_in(20, jr1:jr2)
+dptot  = prof_in(21, jr1:jr2)
+dti    = prof_in(22, jr1:jr2)
+dte    = prof_in(23, jr1:jr2)
+dne    = prof_in(24, jr1:jr2)
+dq     = prof_in(25, jr1:jr2)
+dvper  = prof_in(26, jr1:jr2)
+dv_r   = prof_in(27, jr1:jr2)
+dr     = prof_in(28, jr1:jr2)
+drhodr = prof_in(29, jr1:jr2)
+ni( 1, :) = prof_in(30, jr1:jr2)
+ni( 2, :) = prof_in(31, jr1:jr2)
+ni( 3, :) = prof_in(32, jr1:jr2)
+ni( 4, :) = prof_in(33, jr1:jr2)
+zimp(1,:) = prof_in(34, jr1:jr2)
+zimp(2,:) = prof_in(35, jr1:jr2)
+zimp(3,:) = prof_in(36, jr1:jr2)
+dni(1, :) = prof_in(37, jr1:jr2)
+dni(2, :) = prof_in(38, jr1:jr2)
+dni(3, :) = prof_in(39, jr1:jr2)
+dni(4, :) = prof_in(40, jr1:jr2)
 
 ! TGLF settings
 sat_rule = 2
@@ -406,16 +406,16 @@ radial_loop: do jr=1, chunk
 enddo radial_loop
 
 ! Send back TGLF output
-outputs = 0.d0
-outputs(:, 1) = chii
-outputs(:, 2) = chie
-outputs(:, 3) = mtori
-outputs(:, 4) = elec_pflux
-outputs(:, 5) = exchi
-outputs(:, 6) = gamma_max
-outputs(:, 7) = omega_max
+prof_out = 0.d0
+prof_out(:, 1) = chii
+prof_out(:, 2) = chie
+prof_out(:, 3) = mtori
+prof_out(:, 4) = elec_pflux
+prof_out(:, 5) = exchi
+prof_out(:, 6) = gamma_max
+prof_out(:, 7) = omega_max
 do jion=1, tglf_ns_in-1
-    outputs(:, 7+jion) = ion_pflux(jion, :)
+    prof_out(:, 7+jion) = ion_pflux(jion, :)
 enddo
 
 return

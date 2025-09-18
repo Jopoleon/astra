@@ -22,7 +22,7 @@ integer :: t_wall1, t_wall2, rate, nrho_step
 integer, dimension(n_dims) :: dims_in
 
 double precision, dimension(n_inputs, nrho_m) :: prof_in
-double precision, dimension(n_sbp_arr_out, nrho_m) :: prof_out_m
+double precision, dimension(n_sbp_arr_out, nrho_m) :: prof_out
 double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, T0, m0, a0_m, a0_cm, cs0, drho
 double precision, dimension(n_scalars) :: scal_in
 double precision, dimension(NRD) :: rmaj_as, q_as, ni_main_as, vpar_as, &
@@ -224,13 +224,13 @@ call wait4all
 
 ! **** Collect data from ShMem
 do i=1, nworkers
-    call sbp2astra(i, prof_out_m(1, 1))
+    call sbp2astra(i, prof_out(1, 1))
 enddo
 
 ! Interpolate back to ASTRA radial grid
 
 do jout=1, 7
-    call qinterp(rho_m, prof_out_m(jout, :), nrho_m, rho_m(1:NA1), mem_neo(1:NA1, jout), NA1)
+    call qinterp(rho_m, prof_out(jout, :), nrho_m, rho_m(1:NA1), mem_neo(1:NA1, jout), NA1)
 enddo
 
 call SYSTEM_CLOCK(t_wall2, rate)

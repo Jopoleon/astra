@@ -1,4 +1,4 @@
-subroutine qlk_interf(jproc, dims_in, scalars_in, profiles_in, outputs)
+subroutine qlk_interf(jproc, dims_in, scal_in, prof_in, prof_out)
 
 USE mod_qualikiz, only: qualikiz
 USE kind, only: qlk_output_meth_0, qlk_output_meth_0_sep_0, &
@@ -28,9 +28,9 @@ double precision, parameter :: &
     mpp = 1.6726E-27          ! proton mass (kg)
 
 integer, intent(in) :: jproc, dims_in(*)
-double precision, intent(in) :: scalars_in(*)
-double precision, intent(in), dimension(dims_in(2), dims_in(4)) :: profiles_in
-double precision, intent(out), dimension(dims_in(1), dims_in(3)) :: outputs
+double precision, intent(in) :: scal_in(*)
+double precision, intent(in), dimension(dims_in(2), dims_in(4)) :: prof_in
+double precision, intent(out), dimension(dims_in(1), dims_in(3)) :: prof_out
 
 !-----------------------------------------
 
@@ -109,14 +109,14 @@ ns_in     = dims_in(5)
 jr1 = (jproc - 1)*chunk + 1
 jr2 = jproc*chunk
 
-BTOR = scalars_in(1)
-RTOR = scalars_in(2)
-ABC  = scalars_in(3)
-AMJ  = scalars_in(4)
-AIM1 = scalars_in(5)
-AIM2 = scalars_in(6)
-AIM3 = scalars_in(7)
-ZMJ  = scalars_in(8)
+BTOR = scal_in(1)
+RTOR = scal_in(2)
+ABC  = scal_in(3)
+AMJ  = scal_in(4)
+AIM1 = scal_in(5)
+AIM2 = scal_in(6)
+AIM3 = scal_in(7)
+ZMJ  = scal_in(8)
 
 nions = ns_in - 1
 
@@ -130,48 +130,48 @@ allocate( dti(4, chunk), dni(4, chunk), ni(4, chunk), ti(4, chunk), &
     zimp(3, chunk) )
 
 ! Receive TGLF input scalars and profiles from parent
-rho      = profiles_in( 1, jr1:jr2)
-ametr    = profiles_in( 2, jr1:jr2)
-rmaj     = profiles_in( 3, jr1:jr2)
-q_saf    = profiles_in( 4, jr1:jr2)
-ne       = profiles_in( 5, jr1:jr2)
-te       = profiles_in( 6, jr1:jr2)
-vpar     = profiles_in( 7, jr1:jr2)
-vper     = profiles_in( 8, jr1:jr2)
-ti(1, :) = profiles_in( 9, jr1:jr2)
-ti(2, :) = profiles_in(10, jr1:jr2)
-ti(3, :) = profiles_in(11, jr1:jr2)
-ti(4, :) = profiles_in(12, jr1:jr2)
-ni(1, :) = profiles_in(13, jr1:jr2)
-ni(2, :) = profiles_in(14, jr1:jr2)
-ni(3, :) = profiles_in(15, jr1:jr2)
-ni(4, :) = profiles_in(16, jr1:jr2)
-zimp(1, :) = profiles_in(17, jr1:jr2)
-zimp(2, :) = profiles_in(18, jr1:jr2)
-zimp(3, :) = profiles_in(19, jr1:jr2)
-drmin      = profiles_in(20, jr1:jr2)
-drmaj      = profiles_in(21, jr1:jr2)
-drho       = profiles_in(22, jr1:jr2)
-dptot      = profiles_in(23, jr1:jr2)
-dte        = profiles_in(24, jr1:jr2)
-dne        = profiles_in(25, jr1:jr2)
-dq         = profiles_in(26, jr1:jr2)
-dvper      = profiles_in(27, jr1:jr2)
-dv_r       = profiles_in(28, jr1:jr2)
-dr         = profiles_in(29, jr1:jr2)
-drhodr     = profiles_in(30, jr1:jr2)
-dti(1, :)  = profiles_in(31, jr1:jr2)
-dti(2, :)  = profiles_in(32, jr1:jr2)
-dti(3, :)  = profiles_in(33, jr1:jr2)
-dti(4, :)  = profiles_in(34, jr1:jr2)
-dni(1, :)  = profiles_in(35, jr1:jr2)
-dni(2, :)  = profiles_in(36, jr1:jr2)
-dni(3, :)  = profiles_in(37, jr1:jr2)
-dni(4, :)  = profiles_in(38, jr1:jr2)
+rho      = prof_in( 1, jr1:jr2)
+ametr    = prof_in( 2, jr1:jr2)
+rmaj     = prof_in( 3, jr1:jr2)
+q_saf    = prof_in( 4, jr1:jr2)
+ne       = prof_in( 5, jr1:jr2)
+te       = prof_in( 6, jr1:jr2)
+vpar     = prof_in( 7, jr1:jr2)
+vper     = prof_in( 8, jr1:jr2)
+ti(1, :) = prof_in( 9, jr1:jr2)
+ti(2, :) = prof_in(10, jr1:jr2)
+ti(3, :) = prof_in(11, jr1:jr2)
+ti(4, :) = prof_in(12, jr1:jr2)
+ni(1, :) = prof_in(13, jr1:jr2)
+ni(2, :) = prof_in(14, jr1:jr2)
+ni(3, :) = prof_in(15, jr1:jr2)
+ni(4, :) = prof_in(16, jr1:jr2)
+zimp(1, :) = prof_in(17, jr1:jr2)
+zimp(2, :) = prof_in(18, jr1:jr2)
+zimp(3, :) = prof_in(19, jr1:jr2)
+drmin      = prof_in(20, jr1:jr2)
+drmaj      = prof_in(21, jr1:jr2)
+drho       = prof_in(22, jr1:jr2)
+dptot      = prof_in(23, jr1:jr2)
+dte        = prof_in(24, jr1:jr2)
+dne        = prof_in(25, jr1:jr2)
+dq         = prof_in(26, jr1:jr2)
+dvper      = prof_in(27, jr1:jr2)
+dv_r       = prof_in(28, jr1:jr2)
+dr         = prof_in(29, jr1:jr2)
+drhodr     = prof_in(30, jr1:jr2)
+dti(1, :)  = prof_in(31, jr1:jr2)
+dti(2, :)  = prof_in(32, jr1:jr2)
+dti(3, :)  = prof_in(33, jr1:jr2)
+dti(4, :)  = prof_in(34, jr1:jr2)
+dni(1, :)  = prof_in(35, jr1:jr2)
+dni(2, :)  = prof_in(36, jr1:jr2)
+dni(3, :)  = prof_in(37, jr1:jr2)
+dni(4, :)  = prof_in(38, jr1:jr2)
 
 a0_m = ABC
-R0_in    = profiles_in(3, nrho) ! nrho has to be NA1?
-rhoscale = profiles_in(1, nrho) ! ??
+R0_in    = prof_in(3, nrho) ! nrho has to be NA1?
+rhoscale = prof_in(1, nrho) ! ??
 m0 = AMJ*mp          ! Ref. mass = D ion mass [g]
 
 ! Electrons and main ions
@@ -514,9 +514,9 @@ radial_loop: do jr=1, chunk
 enddo radial_loop
 
 ! Simulated TGLF computation:
-outputs(:, 1) = chii
-outputs(:, 2) = chie
-outputs(:, 4) = pfluxi
-outputs(:, 5) = exchi
+prof_out(:, 1) = chii
+prof_out(:, 2) = chie
+prof_out(:, 4) = pfluxi
+prof_out(:, 5) = exchi
 
 end subroutine qlk_interf

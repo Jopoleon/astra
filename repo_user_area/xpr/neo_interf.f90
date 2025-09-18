@@ -1,4 +1,4 @@
-subroutine neo_interf(jproc, dims_in, scalars_in, profiles_in, outputs)
+subroutine neo_interf(jproc, dims_in, scal_in, prof_in, prof_out)
 
 use neo_interface, only: neo_mass_in, neo_z_in, neo_dens_in, neo_temp_in, &
     neo_dlnndr_in, neo_dlntdr_in, neo_sim_model_in, neo_equilibrium_model_in, &
@@ -24,9 +24,9 @@ double precision, parameter :: &
    pi   = 3.141592653589793
 
 integer, intent(in) :: jproc, dims_in(*)
-double precision, intent(in) :: scalars_in(*)
-double precision, intent(in), dimension(dims_in(2), dims_in(4)) :: profiles_in
-double precision, intent(out), dimension(dims_in(1), dims_in(3)) :: outputs
+double precision, intent(in) :: scal_in(*)
+double precision, intent(in), dimension(dims_in(2), dims_in(4)) :: prof_in
+double precision, intent(out), dimension(dims_in(1), dims_in(3)) :: prof_out
 
 !----------------------------------------------------------------------
 integer :: jr1, jr2, n_inputs, n_outputs, nrho, ns_in, chunk
@@ -56,50 +56,50 @@ ns_in     = dims_in(5)
 jr1 = (jproc - 1)*chunk + 1
 jr2 = jproc*chunk
 
-BTOR = scalars_in(1)
-RTOR = scalars_in(2)
-ABC  = scalars_in(3)
-AMJ  = scalars_in(4)
-AIM1 = scalars_in(5)
-AIM2 = scalars_in(6)
-AIM3 = scalars_in(7)
-ZMJ  = scalars_in(8)
+BTOR = scal_in(1)
+RTOR = scal_in(2)
+ABC  = scal_in(3)
+AMJ  = scal_in(4)
+AIM1 = scal_in(5)
+AIM2 = scal_in(6)
+AIM3 = scal_in(7)
+ZMJ  = scal_in(8)
 
 !-----------------
 ! Get input arrays
 !-----------------
-rho   = profiles_in( 1, jr1:jr2)
-ametr = profiles_in( 2, jr1:jr2)
-rmaj  = profiles_in( 3, jr1:jr2)
-elon  = profiles_in( 4, jr1:jr2)
-tria  = profiles_in( 5, jr1:jr2)
-q     = profiles_in( 6, jr1:jr2)
-ti    = profiles_in( 7, jr1:jr2)
-te    = profiles_in( 8, jr1:jr2)
-ne    = profiles_in( 9, jr1:jr2)
-vpar  = profiles_in(10, jr1:jr2)
-ni(1, :)   = profiles_in(11, jr1:jr2)
-ni(2, :)   = profiles_in(12, jr1:jr2)
-ni(3, :)   = profiles_in(13, jr1:jr2)
-ni(4, :)   = profiles_in(14, jr1:jr2)
-zimp(1, :) = profiles_in(15, jr1:jr2)
-zimp(2, :) = profiles_in(16, jr1:jr2)
-zimp(3, :) = profiles_in(17, jr1:jr2)
-drmin  = profiles_in(18, jr1:jr2)
-drmaj  = profiles_in(19, jr1:jr2)
-delong = profiles_in(20, jr1:jr2)
-dtrian = profiles_in(21, jr1:jr2)
-dti    = profiles_in(22, jr1:jr2)
-dte    = profiles_in(23, jr1:jr2)
-dne    = profiles_in(24, jr1:jr2)
-dq     = profiles_in(25, jr1:jr2)
-dvpar  = profiles_in(26, jr1:jr2)
-dr     = profiles_in(27, jr1:jr2)
-drhodr = profiles_in(28, jr1:jr2)
-dni(1, :) = profiles_in(29, jr1:jr2)
-dni(2, :) = profiles_in(30, jr1:jr2)
-dni(3, :) = profiles_in(31, jr1:jr2)
-dni(4, :) = profiles_in(32, jr1:jr2)
+rho   = prof_in( 1, jr1:jr2)
+ametr = prof_in( 2, jr1:jr2)
+rmaj  = prof_in( 3, jr1:jr2)
+elon  = prof_in( 4, jr1:jr2)
+tria  = prof_in( 5, jr1:jr2)
+q     = prof_in( 6, jr1:jr2)
+ti    = prof_in( 7, jr1:jr2)
+te    = prof_in( 8, jr1:jr2)
+ne    = prof_in( 9, jr1:jr2)
+vpar  = prof_in(10, jr1:jr2)
+ni(1, :)   = prof_in(11, jr1:jr2)
+ni(2, :)   = prof_in(12, jr1:jr2)
+ni(3, :)   = prof_in(13, jr1:jr2)
+ni(4, :)   = prof_in(14, jr1:jr2)
+zimp(1, :) = prof_in(15, jr1:jr2)
+zimp(2, :) = prof_in(16, jr1:jr2)
+zimp(3, :) = prof_in(17, jr1:jr2)
+drmin  = prof_in(18, jr1:jr2)
+drmaj  = prof_in(19, jr1:jr2)
+delong = prof_in(20, jr1:jr2)
+dtrian = prof_in(21, jr1:jr2)
+dti    = prof_in(22, jr1:jr2)
+dte    = prof_in(23, jr1:jr2)
+dne    = prof_in(24, jr1:jr2)
+dq     = prof_in(25, jr1:jr2)
+dvpar  = prof_in(26, jr1:jr2)
+dr     = prof_in(27, jr1:jr2)
+drhodr = prof_in(28, jr1:jr2)
+dni(1, :) = prof_in(29, jr1:jr2)
+dni(2, :) = prof_in(30, jr1:jr2)
+dni(3, :) = prof_in(31, jr1:jr2)
+dni(4, :) = prof_in(32, jr1:jr2)
 
 anorm = ABC
 neo_mass_in(1) = 5.4447e-4
@@ -295,13 +295,13 @@ radial_loop: do jr=1, chunk
 enddo radial_loop
 
 ! Simulated NEO computation:
-outputs(:, 1) = chii
-outputs(:, 2) = chie
-outputs(:, 3) = jbs
-outputs(:, 4) = elec_pflux
-outputs(:, 5) = vippd
-outputs(:, 6) = vittd
-outputs(:, 7) = vippi1
-outputs(:, 8) = vitti1
+prof_out(:, 1) = chii
+prof_out(:, 2) = chie
+prof_out(:, 3) = jbs
+prof_out(:, 4) = elec_pflux
+prof_out(:, 5) = vippd
+prof_out(:, 6) = vittd
+prof_out(:, 7) = vippi1
+prof_out(:, 8) = vitti1
 
 end subroutine neo_interf

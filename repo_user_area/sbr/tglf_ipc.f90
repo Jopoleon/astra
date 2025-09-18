@@ -22,7 +22,7 @@ integer :: jthe, jthe_rev, nrho_equ, nthe_equ ! for ELITE geometry
 integer :: t_wall1, t_wall2, rate
 integer, dimension(n_dims) :: dims_in
 
-double precision, dimension(n_sbp_arr_out, nrho_m) :: prof_out_m
+double precision, dimension(n_sbp_arr_out, nrho_m) :: prof_out
 double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, a0_m, gradrhosq_inv, dtheta_elite
 double precision, dimension(n_scalars) :: scal_in
 double precision, dimension(nrho_m) :: drmin, drmaj, drho, dti, dte, dne, dq, &
@@ -278,7 +278,7 @@ call wait4all
 
 ! **** Collect data from ShMem
 do i=1, nworkers
-    call sbp2astra(i, prof_out_m(1, 1))
+    call sbp2astra(i, prof_out(1, 1))
 enddo
 
 ! Interpolate back to ASTRA radial grid
@@ -288,15 +288,15 @@ i_mflux_as = 0.
 chie_as = 0.
 chii_as = 0.
 
-call qinterp(rho_m, prof_out_m(1, :), nrho_m, RHO(1:NA1),      chii_as(1:NA1), NA1) ! chi_i
-call qinterp(rho_m, prof_out_m(2, :), nrho_m, RHO(1:NA1),      chie_as(1:NA1), NA1) !chi_e
-call qinterp(rho_m, prof_out_m(3, :), nrho_m, RHO(1:NA1),   i_mflux_as(1:NA1), NA1)
-call qinterp(rho_m, prof_out_m(4, :), nrho_m, RHO(1:NA1),   e_pflux_as(1:NA1), NA1) ! Electron flux
-call qinterp(rho_m, prof_out_m(5, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1,  8), NA1) ! Turb. equip.
-call qinterp(rho_m, prof_out_m(6, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1, 11), NA1) ! gamma
-call qinterp(rho_m, prof_out_m(7, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1, 12), NA1) ! omega
+call qinterp(rho_m, prof_out(1, :), nrho_m, RHO(1:NA1),      chii_as(1:NA1), NA1) ! chi_i
+call qinterp(rho_m, prof_out(2, :), nrho_m, RHO(1:NA1),      chie_as(1:NA1), NA1) !chi_e
+call qinterp(rho_m, prof_out(3, :), nrho_m, RHO(1:NA1),   i_mflux_as(1:NA1), NA1)
+call qinterp(rho_m, prof_out(4, :), nrho_m, RHO(1:NA1),   e_pflux_as(1:NA1), NA1) ! Electron flux
+call qinterp(rho_m, prof_out(5, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1,  8), NA1) ! Turb. equip.
+call qinterp(rho_m, prof_out(6, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1, 11), NA1) ! gamma
+call qinterp(rho_m, prof_out(7, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1, 12), NA1) ! omega
 do jion=1, nspec_max-1
-    call qinterp(rho_m, prof_out_m(7+jion, :), nrho_m, RHO(1:NA1), i_pflux_as(jion, 1:NA1), NA1)
+    call qinterp(rho_m, prof_out(7+jion, :), nrho_m, RHO(1:NA1), i_pflux_as(jion, 1:NA1), NA1)
 enddo
 
 do jrho=1, NA1
