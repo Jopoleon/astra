@@ -72,7 +72,7 @@ double precision :: gamma_e, mach_fac, ql_fac
 
 double precision, allocatable, dimension(:) :: chie, chii, exchi, pfluxi, rho, &
     te, ne, vpar, vper, ametr, rmaj, q_saf
-double precision, allocatable, dimension(:, :) :: dti, dni, ni, ti, zimp
+double precision, allocatable, dimension(:, :) :: dti, dni, ni, ti, zi
 double precision :: vpar_in, vpar_shear_in, cexb
 
 COMPLEX(kind=DBL), DIMENSION(:, :, :), ALLOCATABLE :: oldsol_in, oldfdsol_in
@@ -126,8 +126,7 @@ allocate( chie(chunk), chii(chunk), exchi(chunk), pfluxi(chunk), rho(chunk), &
 allocate( drmin(chunk), drmaj(chunk), drho(chunk), &
     dr(chunk), dne(chunk), dte(chunk), dq(chunk), dptot(chunk), &
     dvper(chunk), dv_r(chunk), drhodr(chunk) )
-allocate( dti(4, chunk), dni(4, chunk), ni(4, chunk), ti(4, chunk), &
-    zimp(3, chunk) )
+allocate( dti(4, chunk), dni(4, chunk), ni(4, chunk), ti(4, chunk), zi(4, chunk) )
 
 ! Receive TGLF input scalars and profiles from parent
 rho      = prof_in( 1, jr1:jr2)
@@ -146,28 +145,29 @@ ni(1, :) = prof_in(13, jr1:jr2)
 ni(2, :) = prof_in(14, jr1:jr2)
 ni(3, :) = prof_in(15, jr1:jr2)
 ni(4, :) = prof_in(16, jr1:jr2)
-zimp(1, :) = prof_in(17, jr1:jr2)
-zimp(2, :) = prof_in(18, jr1:jr2)
-zimp(3, :) = prof_in(19, jr1:jr2)
-drmin      = prof_in(20, jr1:jr2)
-drmaj      = prof_in(21, jr1:jr2)
-drho       = prof_in(22, jr1:jr2)
-dptot      = prof_in(23, jr1:jr2)
-dte        = prof_in(24, jr1:jr2)
-dne        = prof_in(25, jr1:jr2)
-dq         = prof_in(26, jr1:jr2)
-dvper      = prof_in(27, jr1:jr2)
-dv_r       = prof_in(28, jr1:jr2)
-dr         = prof_in(29, jr1:jr2)
-drhodr     = prof_in(30, jr1:jr2)
-dti(1, :)  = prof_in(31, jr1:jr2)
-dti(2, :)  = prof_in(32, jr1:jr2)
-dti(3, :)  = prof_in(33, jr1:jr2)
-dti(4, :)  = prof_in(34, jr1:jr2)
-dni(1, :)  = prof_in(35, jr1:jr2)
-dni(2, :)  = prof_in(36, jr1:jr2)
-dni(3, :)  = prof_in(37, jr1:jr2)
-dni(4, :)  = prof_in(38, jr1:jr2)
+zi(1, :) = prof_in(17, jr1:jr2)
+zi(2, :) = prof_in(18, jr1:jr2)
+zi(3, :) = prof_in(19, jr1:jr2)
+zi(4, :) = prof_in(20, jr1:jr2)
+drmin      = prof_in(21, jr1:jr2)
+drmaj      = prof_in(22, jr1:jr2)
+drho       = prof_in(23, jr1:jr2)
+dptot      = prof_in(24, jr1:jr2)
+dte        = prof_in(25, jr1:jr2)
+dne        = prof_in(26, jr1:jr2)
+dq         = prof_in(27, jr1:jr2)
+dvper      = prof_in(28, jr1:jr2)
+dv_r       = prof_in(29, jr1:jr2)
+dr         = prof_in(30, jr1:jr2)
+drhodr     = prof_in(31, jr1:jr2)
+dti(1, :)  = prof_in(32, jr1:jr2)
+dti(2, :)  = prof_in(33, jr1:jr2)
+dti(3, :)  = prof_in(34, jr1:jr2)
+dti(4, :)  = prof_in(35, jr1:jr2)
+dni(1, :)  = prof_in(36, jr1:jr2)
+dni(2, :)  = prof_in(37, jr1:jr2)
+dni(3, :)  = prof_in(38, jr1:jr2)
+dni(4, :)  = prof_in(39, jr1:jr2)
 
 a0_m = ABC
 R0_in    = prof_in(3, nrho) ! nrho has to be NA1?
@@ -212,9 +212,9 @@ radial_loop: do jr=1, chunk
 
 !thermal impurities
 
-    Zi_in(1, 2) = max(1., zimp(1, jr))
-    Zi_in(1, 3) = zimp(2, jr)
-    Zi_in(1, 4) = zimp(3, jr)
+    Zi_in(1, 2) = max(1., zi(2, jr))
+    Zi_in(1, 3) = zi(3, jr)
+    Zi_in(1, 4) = zi(4, jr)
 
     if (Zi_in(1, 4) >= 1. .and. nions == 2) then
         Zi_in(1, 3) = Zi_in(1, 4)

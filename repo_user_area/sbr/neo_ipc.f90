@@ -11,7 +11,7 @@ use debugger, only: markloc
 
 implicit none
 
-integer, parameter :: n_dims=5, n_scalars=8, n_inputs=32, nrho_m=80, nworkers=40, nspec_max=7
+integer, parameter :: n_dims=5, n_scalars=8, n_inputs=33, nrho_m=80, nworkers=40, nspec_max=7
 double precision, parameter :: c_vpol=1.d0
 
 logical :: first_call=.True.
@@ -33,7 +33,7 @@ double precision, dimension(nrho_m) :: rho_m,  ti_m, te_m, ne_m, vpar_m, &
     drmin, drmaj, dti, dte, dne, dq, delong, dtrian, dvpar, drhodr, dr
 double precision, dimension(nspec_max) :: mass_in, zs_in
 double precision, dimension(nspec_max-1, nrho_m) :: dni, ni_m
-double precision, dimension(nspec_max-2, nrho_m) :: zimp_m 
+double precision, dimension(nspec_max-1, nrho_m) :: zi_m 
 character(len=64), dimension(nworkers) :: SBP_NAMES
 
 call SYSTEM_CLOCK(t_wall1, rate)
@@ -44,18 +44,19 @@ rho_max = RHO(NA1)
 xstep = (rho_max - rho_min)/(nrho_m - 1.)
 rho_m = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_m) /)
 
-call qinterp(RHO(1:NA1),  ZIM1(1:NA1), NA1, rho_m, zimp_m(1, :), nrho_m)
-call qinterp(RHO(1:NA1),  ZIM2(1:NA1), NA1, rho_m, zimp_m(2, :), nrho_m)
-call qinterp(RHO(1:NA1),  ZIM3(1:NA1), NA1, rho_m, zimp_m(3, :), nrho_m)
-call qinterp(RHO(1:NA1),  NIZ1(1:NA1), NA1, rho_m,   ni_m(2, :), nrho_m)
-call qinterp(RHO(1:NA1),  NIZ2(1:NA1), NA1, rho_m,   ni_m(3, :), nrho_m)
-call qinterp(RHO(1:NA1),  NIZ3(1:NA1), NA1, rho_m,   ni_m(4, :), nrho_m)
-call qinterp(RHO(1:NA1),    TI(1:NA1), NA1, rho_m,         ti_m, nrho_m)
-call qinterp(RHO(1:NA1),    TE(1:NA1), NA1, rho_m,         te_m, nrho_m)
-call qinterp(RHO(1:NA1),    NE(1:NA1), NA1, rho_m,         ne_m, nrho_m)
-call qinterp(RHO(1:NA1), AMETR(1:NA1), NA1, rho_m,      ametr_m, nrho_m)
-call qinterp(RHO(1:NA1),  ELON(1:NA1), NA1, rho_m,       elon_m, nrho_m)
-call qinterp(RHO(1:NA1),  TRIA(1:NA1), NA1, rho_m,       tria_m, nrho_m)
+zi_m(1, :) = ZMJ
+call qinterp(RHO(1:NA1),  ZIM1(1:NA1), NA1, rho_m, zi_m(2, :), nrho_m)
+call qinterp(RHO(1:NA1),  ZIM2(1:NA1), NA1, rho_m, zi_m(3, :), nrho_m)
+call qinterp(RHO(1:NA1),  ZIM3(1:NA1), NA1, rho_m, zi_m(4, :), nrho_m)
+call qinterp(RHO(1:NA1),  NIZ1(1:NA1), NA1, rho_m, ni_m(2, :), nrho_m)
+call qinterp(RHO(1:NA1),  NIZ2(1:NA1), NA1, rho_m, ni_m(3, :), nrho_m)
+call qinterp(RHO(1:NA1),  NIZ3(1:NA1), NA1, rho_m, ni_m(4, :), nrho_m)
+call qinterp(RHO(1:NA1),    TI(1:NA1), NA1, rho_m,       ti_m, nrho_m)
+call qinterp(RHO(1:NA1),    TE(1:NA1), NA1, rho_m,       te_m, nrho_m)
+call qinterp(RHO(1:NA1),    NE(1:NA1), NA1, rho_m,       ne_m, nrho_m)
+call qinterp(RHO(1:NA1), AMETR(1:NA1), NA1, rho_m,    ametr_m, nrho_m)
+call qinterp(RHO(1:NA1),  ELON(1:NA1), NA1, rho_m,     elon_m, nrho_m)
+call qinterp(RHO(1:NA1),  TRIA(1:NA1), NA1, rho_m,     tria_m, nrho_m)
 
 do jrho=1, NA1
     if (NDEUT(jrho) >= 0.01*NE(jrho)) then
@@ -183,24 +184,25 @@ prof_in(11, :) = ni_m(1, :)
 prof_in(12, :) = ni_m(2, :)
 prof_in(13, :) = ni_m(3, :)
 prof_in(14, :) = ni_m(4, :)
-prof_in(15, :) = zimp_m(1, :)
-prof_in(16, :) = zimp_m(2, :)
-prof_in(17, :) = zimp_m(3, :)
-prof_in(18, :) = drmin
-prof_in(19, :) = drmaj
-prof_in(20, :) = delong
-prof_in(21, :) = dtrian
-prof_in(22, :) = dti
-prof_in(23, :) = dte
-prof_in(24, :) = dne
-prof_in(25, :) = dq
-prof_in(26, :) = dvpar
-prof_in(27, :) = dr
-prof_in(28, :) = drhodr
-prof_in(29, :) = dni(1, :)
-prof_in(30, :) = dni(2, :)
-prof_in(31, :) = dni(3, :)
-prof_in(32, :) = dni(4, :)
+prof_in(15, :) = zi_m(1, :)
+prof_in(16, :) = zi_m(2, :)
+prof_in(17, :) = zi_m(3, :)
+prof_in(18, :) = zi_m(4, :)
+prof_in(19, :) = drmin
+prof_in(20, :) = drmaj
+prof_in(21, :) = delong
+prof_in(22, :) = dtrian
+prof_in(23, :) = dti
+prof_in(24, :) = dte
+prof_in(25, :) = dne
+prof_in(26, :) = dq
+prof_in(27, :) = dvpar
+prof_in(28, :) = dr
+prof_in(29, :) = drhodr
+prof_in(30, :) = dni(1, :)
+prof_in(31, :) = dni(2, :)
+prof_in(32, :) = dni(3, :)
+prof_in(33, :) = dni(4, :)
 
 SBP_NAMES = "xpr/neo"//char(0)
 if (first_call) then

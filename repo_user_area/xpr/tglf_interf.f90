@@ -62,7 +62,7 @@ double precision, allocatable, dimension(:) :: mtori, chie, chii, exchi, elec_pf
     gamma_max, omega_max, kymax, ti, te, ne, vpar, vper, vexb, &
     ametr, elon, tria, rmaj, ptot, q, zef, pfn, drmin, drmaj, drho, delong, dtrian, dr, &
     dti, dte, dne, dq, dptot, dvpar, dvper, dv_r, drhodr
-double precision, allocatable, dimension(:, :) :: dni, ni, zimp, ion_pflux
+double precision, allocatable, dimension(:, :) :: dni, ni, zi, ion_pflux
 double precision, dimension(nky) :: gamma, omega, kyspectrum, efluxspectrum
 
 chunk     = dims_in(1)
@@ -94,7 +94,7 @@ allocate( drmin(chunk), drmaj(chunk), drho(chunk), delong(chunk), dtrian(chunk),
     dr(chunk), dti(chunk), dte(chunk), dne(chunk), dq(chunk), dptot(chunk), dvpar(chunk), &
     dvper(chunk), dv_r(chunk), drhodr(chunk) )
 allocate( dni(nspec_max-1, chunk), ni(nspec_max-1, chunk), &
-    zimp(nspec_max-2, chunk), ion_pflux(nspec_max-1, chunk) )
+    zi(nspec_max-1, chunk), ion_pflux(nspec_max-1, chunk) )
 
 ! Initialise to zero for non-calculated species
 
@@ -157,13 +157,14 @@ ni( 1, :) = prof_in(30, jr1:jr2)
 ni( 2, :) = prof_in(31, jr1:jr2)
 ni( 3, :) = prof_in(32, jr1:jr2)
 ni( 4, :) = prof_in(33, jr1:jr2)
-zimp(1,:) = prof_in(34, jr1:jr2)
-zimp(2,:) = prof_in(35, jr1:jr2)
-zimp(3,:) = prof_in(36, jr1:jr2)
-dni(1, :) = prof_in(37, jr1:jr2)
-dni(2, :) = prof_in(38, jr1:jr2)
-dni(3, :) = prof_in(39, jr1:jr2)
-dni(4, :) = prof_in(40, jr1:jr2)
+zi(1,:) = prof_in(34, jr1:jr2)
+zi(2,:) = prof_in(35, jr1:jr2)
+zi(3,:) = prof_in(36, jr1:jr2)
+zi(4,:) = prof_in(37, jr1:jr2)
+dni(1, :) = prof_in(38, jr1:jr2)
+dni(2, :) = prof_in(39, jr1:jr2)
+dni(3, :) = prof_in(40, jr1:jr2)
+dni(4, :) = prof_in(41, jr1:jr2)
 
 ! TGLF settings
 sat_rule = 2
@@ -261,9 +262,9 @@ radial_loop: do jr=1, chunk
 
 !thermal impurities
 
-    tglf_zs_in(3) = max(1., zimp(1, jr))
-    tglf_zs_in(4) = zimp(2, jr)
-    tglf_zs_in(5) = zimp(3, jr)
+    tglf_zs_in(3) = max(1., zi(2, jr))
+    tglf_zs_in(4) = zi(3, jr)
+    tglf_zs_in(5) = zi(4, jr)
 
     if (tglf_zs_in(5) >= 1. .and. tglf_ns_in == 3) then
         tglf_zs_in(4) = tglf_zs_in(5)

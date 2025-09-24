@@ -6,13 +6,13 @@ use ipc_mod, only: mem_tglf, n_sbp_arr_out
 use const_inc, only: NA1, GP2, BTOR, RTOR, ABC, AMJ, AIM1, AIM2, AIM3, ZMJ
 use status_inc, only: NE, TE, NI, TI, ZEF, PBLON, PBPER, PFAST, &
     ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3, ER, MU, FP_NORM, &
-    RHO, AMETR, SHIF, ELON, NDEUT, TRIA, VTOR, G11, VPOL, VRS
+    RHO, AMETR, SHIF, ELON, NDEUT, NTRIT, TRIA, VTOR, G11, VPOL, VRS
 use parameters_a2equil, only: equil_now
 
 implicit none
 
 logical, parameter :: debug_elite=.false.
-integer, parameter :: n_dims=7, n_scalars=8, n_inputs=40, nrho_m=80, nworkers=40, nspec_max=5, nthe_elite=400, mpol=6
+integer, parameter :: n_dims=7, n_scalars=8, n_inputs=41, nrho_m=80, nworkers=40, nspec_max=5, nthe_elite=400, mpol=6
 double precision, parameter :: c_vpol=1.d0
 
 logical :: first_call=.True.
@@ -33,9 +33,9 @@ double precision, dimension(nrho_m) :: rho_m, gamma_max, omega_max, kymax, &
     ti_m, te_m, ne_m, vpar_m, vper_m, vexb_m, &
     ametr_m, elon_m, tria_m, rmaj_m, ptot_m, q_m, zef_m, pfn_m
 double precision, dimension(nspec_max) :: mass_in
-double precision, dimension(nspec_max-2) :: zimp_max
+double precision, dimension(nspec_max-1) :: zi_max
 double precision, dimension(nspec_max-1, nrho_m) :: dni, ni_m, i_pflux
-double precision, dimension(nspec_max-2, nrho_m) :: zimp_m 
+double precision, dimension(nspec_max-1, nrho_m) :: zi_m 
 double precision, dimension(nspec_max-1, NRD) :: i_pflux_as
 double precision, dimension(n_inputs, nrho_m) :: prof_in
 character(len=64), dimension(nworkers) :: SBP_NAMES
@@ -53,12 +53,13 @@ rho_max = RHO(NA1)
 xstep = (rho_max - rho_min)/(nrho_m - 1.)
 rho_m = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_m) /)
 
-call qinterp(RHO(1:NA1), ZIM1(1:NA1), NA1, rho_m, zimp_m(1, :), nrho_m)
-call qinterp(RHO(1:NA1), ZIM2(1:NA1), NA1, rho_m, zimp_m(2, :), nrho_m)
-call qinterp(RHO(1:NA1), ZIM3(1:NA1), NA1, rho_m, zimp_m(3, :), nrho_m)
-call qinterp(RHO(1:NA1), NIZ1(1:NA1), NA1, rho_m,   ni_m(2, :), nrho_m)
-call qinterp(RHO(1:NA1), NIZ2(1:NA1), NA1, rho_m,   ni_m(3, :), nrho_m)
-call qinterp(RHO(1:NA1), NIZ3(1:NA1), NA1, rho_m,   ni_m(4, :), nrho_m)
+zi_m(1, :) = ZMJ
+call qinterp(RHO(1:NA1), ZIM1(1:NA1), NA1, rho_m, zi_m(2, :), nrho_m)
+call qinterp(RHO(1:NA1), ZIM2(1:NA1), NA1, rho_m, zi_m(3, :), nrho_m)
+call qinterp(RHO(1:NA1), ZIM3(1:NA1), NA1, rho_m, zi_m(4, :), nrho_m)
+call qinterp(RHO(1:NA1), NIZ1(1:NA1), NA1, rho_m, ni_m(2, :), nrho_m)
+call qinterp(RHO(1:NA1), NIZ2(1:NA1), NA1, rho_m, ni_m(3, :), nrho_m)
+call qinterp(RHO(1:NA1), NIZ3(1:NA1), NA1, rho_m, ni_m(4, :), nrho_m)
 call qinterp(RHO(1:NA1),      TI(1:NA1), NA1, rho_m,    ti_m, nrho_m)
 call qinterp(RHO(1:NA1),      TE(1:NA1), NA1, rho_m,    te_m, nrho_m)
 call qinterp(RHO(1:NA1),      NE(1:NA1), NA1, rho_m,    ne_m, nrho_m)
@@ -112,20 +113,21 @@ enddo
 ns_in = nspec_max
 
 ! These will be reset locally in the radial loop
-zimp_max(1) = MAXVAL(ZIM1(1:NA1))
-zimp_max(2) = MAXVAL(ZIM2(1:NA1))
-zimp_max(3) = MAXVAL(ZIM3(1:NA1))
-if (zimp_max(3) >= 1.) then
+zi_max(1) = ZMJ
+zi_max(2) = MAXVAL(ZIM1(1:NA1))
+zi_max(3) = MAXVAL(ZIM2(1:NA1))
+zi_max(4) = MAXVAL(ZIM3(1:NA1))
+if (zi_max(3) >= 1.) then
     ns_in = 5
 else
     ns_in = 4
 endif
-if (zimp_max(2) < 1.) ns_in = 3
-if (zimp_max(3) >= 1. .and. ns_in == 3) then
+if (zi_max(3) < 1.) ns_in = 3
+if (zi_max(4) >= 1. .and. ns_in == 3) then
     ns_in = 4
 endif
-if (zimp_max(1) < 1.) ns_in = 2
-if (zimp_max(2) >= 1. .and. ns_in == 2) then
+if (zi_max(2) < 1.) ns_in = 2
+if (zi_max(3) >= 1. .and. ns_in == 2) then
     ns_in = 3
 endif
 
@@ -248,13 +250,14 @@ prof_in(30, :) = ni_m(1, :)
 prof_in(31, :) = ni_m(2, :)
 prof_in(32, :) = ni_m(3, :)
 prof_in(33, :) = ni_m(4, :)
-prof_in(34, :) = zimp_m(1, :)
-prof_in(35, :) = zimp_m(2, :)
-prof_in(36, :) = zimp_m(3, :)
-prof_in(37, :) = dni(1, :)
-prof_in(38, :) = dni(2, :)
-prof_in(39, :) = dni(3, :)
-prof_in(40, :) = dni(4, :)
+prof_in(34, :) = zi_m(1, :)
+prof_in(35, :) = zi_m(2, :)
+prof_in(36, :) = zi_m(3, :)
+prof_in(37, :) = zi_m(4, :)
+prof_in(38, :) = dni(1, :)
+prof_in(39, :) = dni(2, :)
+prof_in(40, :) = dni(3, :)
+prof_in(41, :) = dni(4, :)
 
 SBP_NAMES = "xpr/tglfi"//char(0)
 if (first_call) then

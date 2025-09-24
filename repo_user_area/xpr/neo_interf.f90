@@ -42,7 +42,7 @@ double precision, dimension(dims_in(1)) :: chie, chii, elec_pflux, rho, &
     ametr, rmaj, elon, tria, q, ne, te, ti, vpar, &
     vippd, vittd, vippi1, vitti1, jbs, epar0_in, &
     drmin, drmaj, delong, dtrian, dr, dne, dte, dti, dq, dvpar, drhodr
-double precision, dimension(dims_in(5), dims_in(1)) :: ni, zimp, dni
+double precision, dimension(dims_in(5), dims_in(1)) :: ni, zi, dni
 double precision, dimension(dims_in(5)) :: pflux_i, eflux_i, vpflux, vtflux
 double precision, dimension(dims_in(5), 2):: energy_flux, particle_flux
 character(len=80) :: path_in
@@ -78,28 +78,29 @@ ti    = prof_in( 7, jr1:jr2)
 te    = prof_in( 8, jr1:jr2)
 ne    = prof_in( 9, jr1:jr2)
 vpar  = prof_in(10, jr1:jr2)
-ni(1, :)   = prof_in(11, jr1:jr2)
-ni(2, :)   = prof_in(12, jr1:jr2)
-ni(3, :)   = prof_in(13, jr1:jr2)
-ni(4, :)   = prof_in(14, jr1:jr2)
-zimp(1, :) = prof_in(15, jr1:jr2)
-zimp(2, :) = prof_in(16, jr1:jr2)
-zimp(3, :) = prof_in(17, jr1:jr2)
-drmin  = prof_in(18, jr1:jr2)
-drmaj  = prof_in(19, jr1:jr2)
-delong = prof_in(20, jr1:jr2)
-dtrian = prof_in(21, jr1:jr2)
-dti    = prof_in(22, jr1:jr2)
-dte    = prof_in(23, jr1:jr2)
-dne    = prof_in(24, jr1:jr2)
-dq     = prof_in(25, jr1:jr2)
-dvpar  = prof_in(26, jr1:jr2)
-dr     = prof_in(27, jr1:jr2)
-drhodr = prof_in(28, jr1:jr2)
-dni(1, :) = prof_in(29, jr1:jr2)
-dni(2, :) = prof_in(30, jr1:jr2)
-dni(3, :) = prof_in(31, jr1:jr2)
-dni(4, :) = prof_in(32, jr1:jr2)
+ni(1, :) = prof_in(11, jr1:jr2)
+ni(2, :) = prof_in(12, jr1:jr2)
+ni(3, :) = prof_in(13, jr1:jr2)
+ni(4, :) = prof_in(14, jr1:jr2)
+zi(1, :) = prof_in(15, jr1:jr2)
+zi(2, :) = prof_in(16, jr1:jr2)
+zi(3, :) = prof_in(17, jr1:jr2)
+zi(4, :) = prof_in(18, jr1:jr2)
+drmin  = prof_in(19, jr1:jr2)
+drmaj  = prof_in(20, jr1:jr2)
+delong = prof_in(21, jr1:jr2)
+dtrian = prof_in(22, jr1:jr2)
+dti    = prof_in(23, jr1:jr2)
+dte    = prof_in(24, jr1:jr2)
+dne    = prof_in(25, jr1:jr2)
+dq     = prof_in(26, jr1:jr2)
+dvpar  = prof_in(27, jr1:jr2)
+dr     = prof_in(28, jr1:jr2)
+drhodr = prof_in(29, jr1:jr2)
+dni(1, :) = prof_in(30, jr1:jr2)
+dni(2, :) = prof_in(31, jr1:jr2)
+dni(3, :) = prof_in(32, jr1:jr2)
+dni(4, :) = prof_in(33, jr1:jr2)
 
 anorm = ABC
 neo_mass_in(1) = 5.4447e-4
@@ -144,9 +145,9 @@ radial_loop: do jr=1, chunk
 
 !thermal impurities
 
-    neo_z_in(3) = max(1., zimp(1, jr))
-    neo_z_in(4) = zimp(2, jr)
-    neo_z_in(5) = zimp(3, jr)
+    neo_z_in(3) = max(1., zi(2, jr))
+    neo_z_in(4) = zi(3, jr)
+    neo_z_in(5) = zi(4, jr)
 
     if (neo_z_in(5) >= 1. .and. ns_in == 3) then
         neo_z_in(4) = neo_z_in(5)

@@ -11,7 +11,7 @@ use debugger, only: markloc
 
 implicit none
 
-integer, parameter :: n_dims=5, n_scalars=8, n_inputs=38, nrho_m=80, nspec_max=7, nworkers=40
+integer, parameter :: n_dims=5, n_scalars=8, n_inputs=39, nrho_m=80, nspec_max=7, nworkers=40
 
 logical :: first_call=.True.
 integer :: nchunk
@@ -34,7 +34,7 @@ double precision, dimension(nrho_m) :: chie, chii, exchi, elec_pflux, rho_m, &
     ametr_m, rmaj_m, ptot_m, q_m
 double precision, dimension(nspec_max) :: mass_in, zs_in
 double precision, dimension(nspec_max-1, nrho_m) :: dti, dni, ni_m, ti_m, ion_pflux
-double precision, dimension(nspec_max-2, nrho_m) :: zimp_m 
+double precision, dimension(nspec_max-1, nrho_m) :: zi_m 
 double precision, dimension(nspec_max-1, NRD) :: ni_as, ion_pflux_m
 character(len=64), dimension(nworkers) :: SBP_NAMES
 
@@ -50,13 +50,14 @@ xstep = (rho_max - rho_min)/(nrho_m - 1.)
 rho_m = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_m) /)
 SBP_NAMES = "xpr/qlki"//char(0)
 
-call qinterp(RHO(1:NA1),     TI(1:NA1), NA1, rho_m,   ti_m(1, :), nrho_m)
-call qinterp(RHO(1:NA1),     TE(1:NA1), NA1, rho_m,         te_m, nrho_m)
-call qinterp(RHO(1:NA1),   ZIM1(1:NA1), NA1, rho_m, zimp_m(1, :), nrho_m)
-call qinterp(RHO(1:NA1),   ZIM2(1:NA1), NA1, rho_m, zimp_m(2, :), nrho_m)
-call qinterp(RHO(1:NA1),   ZIM3(1:NA1), NA1, rho_m, zimp_m(3, :), nrho_m)
-call qinterp(RHO(1:NA1),     NE(1:NA1), NA1, rho_m,         ne_m, nrho_m)
-call qinterp(RHO(1:NA1),  AMETR(1:NA1), NA1, rho_m,      ametr_m, nrho_m)
+zi_m(1, :) = ZMJ
+call qinterp(RHO(1:NA1),     TI(1:NA1), NA1, rho_m, ti_m(1, :), nrho_m)
+call qinterp(RHO(1:NA1),     TE(1:NA1), NA1, rho_m,       te_m, nrho_m)
+call qinterp(RHO(1:NA1),   ZIM1(1:NA1), NA1, rho_m, zi_m(2, :), nrho_m)
+call qinterp(RHO(1:NA1),   ZIM2(1:NA1), NA1, rho_m, zi_m(3, :), nrho_m)
+call qinterp(RHO(1:NA1),   ZIM3(1:NA1), NA1, rho_m, zi_m(4, :), nrho_m)
+call qinterp(RHO(1:NA1),     NE(1:NA1), NA1, rho_m,       ne_m, nrho_m)
+call qinterp(RHO(1:NA1),  AMETR(1:NA1), NA1, rho_m,    ametr_m, nrho_m)
 
 ti_m(2, :) = ti_m(1, :)
 ti_m(3, :) = ti_m(1, :)
@@ -204,28 +205,29 @@ prof_in(13, :) = ni_m(1, :)
 prof_in(14, :) = ni_m(2, :)
 prof_in(15, :) = ni_m(3, :)
 prof_in(16, :) = ni_m(4, :)
-prof_in(17, :) = zimp_m(1, :)
-prof_in(18, :) = zimp_m(2, :)
-prof_in(19, :) = zimp_m(3, :)
-prof_in(20, :) = drmin
-prof_in(21, :) = drmaj
-prof_in(22, :) = drho
-prof_in(23, :) = dptot
-prof_in(24, :) = dte
-prof_in(25, :) = dne
-prof_in(26, :) = dq
-prof_in(27, :) = dvper
-prof_in(28, :) = dv_r
-prof_in(29, :) = dr
-prof_in(30, :) = drhodr
-prof_in(31, :) = dti(1, :)
-prof_in(32, :) = dti(2, :)
-prof_in(33, :) = dti(3, :)
-prof_in(34, :) = dti(4, :)
-prof_in(35, :) = dni(1, :)
-prof_in(36, :) = dni(2, :)
-prof_in(37, :) = dni(3, :)
-prof_in(38, :) = dni(4, :)
+prof_in(17, :) = zi_m(1, :)
+prof_in(18, :) = zi_m(2, :)
+prof_in(19, :) = zi_m(3, :)
+prof_in(20, :) = zi_m(4, :)
+prof_in(21, :) = drmin
+prof_in(22, :) = drmaj
+prof_in(23, :) = drho
+prof_in(24, :) = dptot
+prof_in(25, :) = dte
+prof_in(26, :) = dne
+prof_in(27, :) = dq
+prof_in(28, :) = dvper
+prof_in(29, :) = dv_r
+prof_in(30, :) = dr
+prof_in(31, :) = drhodr
+prof_in(32, :) = dti(1, :)
+prof_in(33, :) = dti(2, :)
+prof_in(34, :) = dti(3, :)
+prof_in(35, :) = dti(4, :)
+prof_in(36, :) = dni(1, :)
+prof_in(37, :) = dni(2, :)
+prof_in(38, :) = dni(3, :)
+prof_in(39, :) = dni(4, :)
 
 if (first_call) then
     call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_sbp_arr_out, nworkers, equ_file, exp_file)
