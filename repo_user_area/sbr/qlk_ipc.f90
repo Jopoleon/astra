@@ -32,7 +32,7 @@ double precision, dimension(NRD) :: gradrhosq_as, rmaj_as, q_as, &
 double precision, dimension(nrho_m) :: chie, chii, exchi, elec_pflux, rho_m, &
     gamma_max, omega_max, kymax, te_m, ne_m, vpar_m, vper_m, &
     ametr_m, rmaj_m, ptot_m, q_m
-double precision, dimension(nspec_max) :: mass_in, zs_in
+double precision, dimension(nspec_max) :: zs_in
 double precision, dimension(nspec_max-1, nrho_m) :: dti, dni, ni_m, ti_m, ion_pflux
 double precision, dimension(nspec_max-1, nrho_m) :: zi_m 
 double precision, dimension(nspec_max-1, NRD) :: ni_as, ion_pflux_m
@@ -94,12 +94,6 @@ call qinterp(RHO(1:NA1),  vper_as(1:NA1), NA1, rho_m,  vper_m, nrho_m)
 ! Reference length
 a0_m = AMETR(NA1)
 
-! Species cmassses and charges
-mass_in(1) = 5.4447e-4
-mass_in(2) = AMJ
-mass_in(3) = AIM1
-mass_in(4) = AIM2
-mass_in(5) = AIM3
 do jr=1, nrho_m
     ni_m(2, jr) = max(1.e-9, ni_m(2, jr))
     ni_m(3, jr) = max(1.e-9, ni_m(3, jr))

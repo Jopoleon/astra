@@ -31,7 +31,7 @@ double precision, dimension(NRD) :: rmaj_as, q_as, ni_main_as, vpar_as, &
 double precision, dimension(nrho_m) :: rho_m,  ti_m, te_m, ne_m, vpar_m, &
     ametr_m, elon_m, tria_m, rmaj_m, q_m, &
     drmin, drmaj, dti, dte, dne, dq, delong, dtrian, dvpar, drhodr, dr
-double precision, dimension(nspec_max) :: mass_in, zs_in
+double precision, dimension(nspec_max) :: zs_in
 double precision, dimension(nspec_max-1, nrho_m) :: dni, ni_m
 double precision, dimension(nspec_max-1, nrho_m) :: zi_m 
 character(len=64), dimension(nworkers) :: SBP_NAMES
@@ -79,12 +79,6 @@ call qinterp(RHO(1:NA1), vpar_as(1:NA1), NA1, rho_m, vpar_m, nrho_m)
 ! Reference length
 a0_m = AMETR(NA1)
 
-! Species cmassses and charges
-mass_in(1) = 5.4447e-4
-mass_in(2) = AMJ
-mass_in(3) = AIM1
-mass_in(4) = AIM2
-mass_in(5) = AIM3
 do jr=1, nrho_m
     ni_m(2, jr) = max(1.e-9, ni_m(2, jr))
     ni_m(3, jr) = max(1.e-9, ni_m(3, jr))
