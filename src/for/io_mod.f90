@@ -18,7 +18,7 @@ double precision, dimension(NRDX, NARRX) :: XAXES, DATAX
 
 character(len=4) :: machine, TASK
 character(len=20), dimension(NSBMX) :: sbr_name
-character(132) :: AWD, nml_file, equ_file, exp_file, NBFILE='***'
+character(132) :: AWD, astra_ext, nml_file, equ_file, exp_file, NBFILE='***'
 
 contains
 
@@ -53,6 +53,8 @@ contains
     if (.not. nml_exists) then
         nml_file = 'exp/nml/' // trim(machine)
     endif
+
+    CALL getenv('ASTRA_EXT', astra_ext)
 
     return
     end subroutine io_init

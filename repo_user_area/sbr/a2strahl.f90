@@ -44,7 +44,7 @@ subroutine A2STRAHL(tau_start, zneocl, dzneocl, dimpsol, shot_in)
 use parameter_inc, only: NRD
 use const_inc, only: TIME, TSTART, TAUPRP, NA1, PSIAX, GP, GP2, RTOR, NA, HRO, IPART
 use status_inc, only: FP, UPL, VOLUM, SHIF, NE, TE, TI, AMAIN, ZMAIN!, work_strahl
-use io_mod, only: machine, awd, nml_file
+use io_mod, only: machine, awd, nml_file, astra_ext
 use strahl_mod, only: profiles_file_write_strahl, grid_write_strahl, &
     zeff_strahl, prad_tot_strahl, nmain_strahl, prad_main_strahl, &
     prad_strahl, nimp_strahl, zavg_strahl, nesrc_strahl, &
@@ -443,8 +443,7 @@ call grid_write_strahl(strahl_dir, nfour_c, RTOR+SHIF(1), &
 
 ! Main STRAHL call
 
-!cmd_cmd = '/shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT/strahl/sep23/bin/strahl a q'
-cmd_cmd = '/tokp/work/software/TOK_2023/software/ASTRA_LIBRARIES_EXT/strahl/sep23/bin/strahl a q'
+cmd_cmd = TRIM(astra_ext) // '/strahl/sep23/bin/strahl a q'
 
 write(*, '(A)') 'Executing', cmd_cmd 
 call system(cmd_cmd)      ! run strahl
@@ -452,8 +451,7 @@ call system(cmd_cmd)      ! run strahl
 cmd_cmd = 'rm -f results.txt'
 call system(cmd_cmd)    ! rm old results, if existing
 
-!cmd_cmd = '/shares/departments/AUG/users/git/ASTRA_LIBRARIES_EXT/strahl/sep23/bin/result_to_astra '//trim(elements_touse(1))//' > ' // TRIM(strahl_dir) // 'results.txt'
-cmd_cmd = '/tokp/work/software/TOK_2023/software/ASTRA_LIBRARIES_EXT/strahl/sep23/bin/result_to_astra '//trim(elements_touse(1))//' > ' // TRIM(strahl_dir) // 'results.txt'
+cmd_cmd = TRIM(astra_ext) // '/strahl/sep23/bin/result_to_astra '// TRIM(elements_touse(1))//' > ' // TRIM(strahl_dir) // 'results.txt'
 
 write(*, '(A)') 'Executing', cmd_cmd 
 call system(cmd_cmd)   ! produce new result file
