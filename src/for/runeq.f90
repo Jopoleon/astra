@@ -1,5 +1,5 @@
 !---------------------------------------------------------------------
-subroutine RUNEQ_EF(GN, HN, GO, HO, YO, N, W, V, M, G11, A, B, R, S, P, &
+subroutine RUNEQ(GN, HN, GO, HO, YO, N, W, V, M, G11, A, B, R, S, P, &
     rbdot, bbdot, Ngridb, Ngrid, dx, dt, roc, &
     x, imethod, bctype, bc_values, y, Q, adcmp_term, adcmpf, mphit)
 !---------------------------------------------------------------------
@@ -62,7 +62,7 @@ subroutine RUNEQ_EF(GN, HN, GO, HO, YO, N, W, V, M, G11, A, B, R, S, P, &
 !      32 - Crank-Nicholson, power law scheme   
 !      33 - Crank-Nicholson, exponential scheme
 !
-!  For doing Te, Ti implicit together use RUNEQTIMP_EF
+!  For doing Te, Ti implicit together use RUNEQTIMP
 !
 !  bctype = 1 -> ybound
 !  bctype = 2 -> Qbound
@@ -105,10 +105,10 @@ enddo
 SELECT CASE(imethod)
 CASE(11: 13)
     theta = 0.
-    eximp = 1.
+    eximp = 1
 CASE(21: 23)
     theta = 1.
-    eximp = 2.
+    eximp = 2
 CASE(31: 33)
     theta = 0.5
     eximp = 2
@@ -282,7 +282,7 @@ if (idiagnostic == 1) then
     write(28, *) P
 endif
 dum1b = GN(1: Ngridb)*theta + GO(1: Ngridb)*(1 - theta)
-call SOLVER_EF(x(1: Ngridb), dx, dt, dum1b, & 
+call SOLVER(x(1: Ngridb), dx, dt, dum1b, & 
     NN(1: Ngridb), NO(1: Ngridb), V(1: Ngridb), & 
     Vtilde(1: Ngridb), A(1: Ngridb), fxi(1: Ngridb), & 
     gxi(1: Ngridb), S_new(1: Ngridb), P_new(1: Ngridb), & 
@@ -306,13 +306,13 @@ CASE(4) ! Restore G11 in Qbound
 END SELECT
 
 return
-end subroutine RUNEQ_EF
+end subroutine RUNEQ
 
 !---------------------------------------------------------------------
-subroutine SOLVER_EF(x, dx, dt, G, NN, NO, V, Vtilde, A, fxi, gxi, S, P, & 
+subroutine SOLVER(x, dx, dt, G, NN, NO, V, Vtilde, A, fxi, gxi, S, P, & 
     Ngrid, NgridS, theta, eximp, YO, ybound, Qbound, bctype, y, Mbound)
 !---------------------------------------------------------------------
-! Build up matrices to be passed ot TRIDIAGS_EF
+! Build up matrices to be passed ot TRIDIAGS
 
 implicit none
 
@@ -540,7 +540,7 @@ if (idiagnostic == 1) then
 endif
 
 ! Main call to tridiagonal solver
-call TRIDIAG1_EF(AA, BB, CC, RR, y, Bstar, Cstar, Rstar, &
+call TRIDIAG1(AA, BB, CC, RR, y, Bstar, Cstar, Rstar, &
     Ngrid, Ngrids, bcbound, f_bound, eximp)
 
 !Diagnostics
@@ -549,10 +549,10 @@ if (idiagnostic == 1) then
 endif
 
 return
-end subroutine SOLVER_EF
+end subroutine SOLVER
 
 !---------------------------------------------------------------------
-subroutine TRIDIAG1_EF(A, B, C, R, f, Bstar, Cstar, Rstar, &
+subroutine TRIDIAG1(A, B, C, R, f, Bstar, Cstar, Rstar, &
     Ngrid, NgridS, bcbound, f_bound, eximp)
 !---------------------------------------------------------------------
 ! Provides solution of the system:
@@ -640,7 +640,7 @@ if (eximp == 2) then
 endif
 
 return
-end subroutine TRIDIAG1_EF
+end subroutine TRIDIAG1
 
 !---------------------------------------------------------------------
 double precision function GETPEI(j)
@@ -682,7 +682,7 @@ return
 end function GETPEI
 
 !---------------------------------------------------------------------
-subroutine RUNEQTIMP_EF(GN, H1N, H2N, GO, H1O, H2O, & 
+subroutine RUNEQTIMP(GN, H1N, H2N, GO, H1O, H2O, & 
     Y1O, Y2O, N1, N2, W1, W2, V, M, G11, A1, A2, B1, B2, R1, R2, &
     S1, S2, P1, P2, T12, T21, rbdot, bbdot, Ngridb, Ngrid, dx, dt, &
     roc, x, imethod, bctype, bcvalue, y1, y2, Q1, Q2, adcmpf)
@@ -728,7 +728,7 @@ subroutine RUNEQTIMP_EF(GN, H1N, H2N, GO, H1O, H2O, &
 !
 ! and P1 = P1 + bdot/W1*d/dx (V*M*N1*x*y1)+(rdot-bdot)*x/G*d/dx (G*H1*y1)         for explicit
 !
-! basically we do as in RUNEQ_EF but y = [y1 y2] and so on (bigger matrix)
+! basically we do as in RUNEQ but y = [y1 y2] and so on (bigger matrix)
 !
 !  y is the quantity and Qj = -G11*(Aj*dyj/dx + Bj*yj) + G11*Rj
 !
@@ -989,7 +989,7 @@ CASE(13, 23, 33)
 
 END SELECT
 
-call SOLVERIMP_EF(dx, dt, &
+call SOLVERIMP(dx, dt, &
     GN(1: Ngridb)*theta + GO(1: Ngridb)*(1 - theta), & 
     N1N(1: Ngridb), N1O(1: Ngridb), N2N(1: Ngridb), & 
     N2O(1: Ngridb), V(1: Ngridb), Vtilde(1: Ngridb), & 
@@ -1026,15 +1026,15 @@ else if (bctype(2) == 2) then
 endif
 
 return
-end subroutine RUNEQTIMP_EF
+end subroutine RUNEQTIMP
 
 !---------------------------------------------------------------------
-subroutine SOLVERIMP_EF(dx, dt, G, N1N, N1O, N2N, N2O, V, Vtilde, & 
+subroutine SOLVERIMP(dx, dt, G, N1N, N1O, N2N, N2O, V, Vtilde, & 
     A1, A2, fxi1, fxi2, gxi1, gxi2, S1, S2, P1, P2, T12, T21, &
     Ngrid, NgridS, theta, eximp, Y1O, Y2O, ybound1, Qbound1, &
     ybound2, Qbound2, bctype, y1, y2)
 !---------------------------------------------------------------------
-! Build up matrices to be passed ot TRIDIAG2_EF
+! Build up matrices to be passed ot TRIDIAG2
 
 implicit none
 
@@ -1187,14 +1187,14 @@ f_bound2 = ybound2
 bcbound = bctype
 
 ! Main call to tridiagonal solver
-call TRIDIAG2_EF(AA1, BB1, CC1, RR1, y1, TT1, Ngrid, bcbound, &
+call TRIDIAG2(AA1, BB1, CC1, RR1, y1, TT1, Ngrid, bcbound, &
     f_bound1, eximp, AA2, BB2, CC2, RR2, TT2, y2, f_bound2)
 
 return
-end subroutine SOLVERIMP_EF
+end subroutine SOLVERIMP
 
 !---------------------------------------------------------------------
-subroutine TRIDIAG2_EF(A1, B1, C1, R1, f1, T1, Ngrid, bcbound, &
+subroutine TRIDIAG2(A1, B1, C1, R1, f1, T1, Ngrid, bcbound, &
     f_bound1, eximp, A2, B2, C2, R2, T2, f2, f_bound2)
 !---------------------------------------------------------------------
 ! Inputs: A(1:Ngrid), B(1:Ngrid), C(1:Ngrid), R(1:Ngrid)
@@ -1280,4 +1280,4 @@ if (eximp == 2) then
 endif
 
 return
-end subroutine TRIDIAG2_EF
+end subroutine TRIDIAG2

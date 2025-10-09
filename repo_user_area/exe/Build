@@ -36,7 +36,6 @@ fi
 
 echo Compile IPC programs
 make -f exe/Makexpr
-make -f exe/Makechunk
 status=$?
 if [ $status -ne 0 ]
 then

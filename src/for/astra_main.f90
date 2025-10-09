@@ -29,7 +29,6 @@ save jt_out
 
 call CPU_TIME(cpu_start)
 call SYSTEM_CLOCK(wall_start, rate)
-call MPI_Init(ierr)
 
 call const_init
 call status_init
@@ -94,7 +93,6 @@ do while (TIME - TEND + 1.E-8 < DPOUT + TAU)
     endif
     call STEPUP
 enddo
-call MPI_Finalize(ierr)
 
 call CPU_report('>>> ASTRA normal exit >>>' // null_ch)
 call astra_stop
