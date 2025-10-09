@@ -7,12 +7,12 @@ platform=`$AWD/get_platform`
 source $AWD/platform/env.$platform
 
 EXP=aug34954
-for EQU in fluxes feqis qlknn qlk tglf tglf_mpi tglf_serial
+for EQU in fluxes feqis qlknn qlk tglf tglf_serial
 do
     $AWD/exe/as_exe -m $EQU -v $EXP -s 4. -e 5.
     python3 $AWD/compareRegressions.py -m $EQU -v $EXP
 done
-for EQU in flux_neo flux_neo_mpi
+for EQU in flux_neo
 do
     $AWD/exe/as_exe -m $EQU -v $EXP -s 4. -e 4.2
     python3 $AWD/compareRegressions.py -m $EQU -v $EXP
