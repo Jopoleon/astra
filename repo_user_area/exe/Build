@@ -76,15 +76,9 @@ then
 #SBATCH --mail-type=none
 export OMP_NUM_THREADS=\${SLURM_CPUS_PER_TASK:-1}
 export OMP_PLACES=cores
-export I_MPI_ROOT=${I_MPI_ROOT}
-export I_MPI_FABRICS=shm:ofi
-export I_MPI_SPAWN=on
-#export PMI_DEBUG=1
-#export I_MPI_DEBUG=5
-export FI_PROVIDER_PATH=${I_MPI_ROOT}/libfabric/lib/prov
 export ASTRA_EXT=${ASTRA_EXT}
 export PATH=${PATH}
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${I_MPI_ROOT}/libfabric/lib
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 $ATASK
 EOT
 
