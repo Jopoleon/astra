@@ -530,8 +530,7 @@ enddo
 UPL(J) = (FP(J) - FPO(J))/TAU - YQDCMF(J)
 ! this is dpsi/dt_rho. to get dpsi/dt_x full
 !(so boundary values is dpsi/dt_x=1), one needs to add yqdcmf. Or simply compute it as dFP(NA1)/dt.
-!If ADCMPF = 0, the second term is zero (not recommended)
-ULON(J) = IPOL(J)*G33(J)*(UPL(J) - GP2*ROC**2 * BTOR*BABDOT*MU(J)) !this is correct, also 
+ULON(J) = IPOL(J)*G33(J)*(UPL(J) - GP2*ROC**2 * BTOR*BBDOT*MU(J)) !this is correct, also 
 !goes into Ohmic power. Ohmic power is not computed with dPsi/dt_x, but dPsi/dt_phi (ULON)
 !UPL(J) = UPL(J) + YWR(1) !this is not correct
 enddo
@@ -601,7 +600,7 @@ def fjeqn(parse, jeq):
         fj_txt += const_text.FJEQN.eqn
         fj_txt += 'NA1%d = ND1\n' %jeq
         fj_txt += \
-'call RUNEQ_EF(YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), F%dO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), SFF%d(1: NA1),SF%d(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, F%d(1: NA1), QF%d(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1))\n' %(jeq, jeq, jeq, jeq, jeq)
+'call RUNEQ(YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), F%dO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), SFF%d(1: NA1),SF%d(1: NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, F%d(1: NA1), QF%d(1: NA1), YQDCM(1: NA1), MPHIT(1: NA1))\n' %(jeq, jeq, jeq, jeq, jeq)
 
     if sff in var_defined:
         fj_txt += '%sTOT(NA1) = %sTOT(NA1) + %s(NA1)*%s(NA1)\n' %(sf, sf, sff, key)

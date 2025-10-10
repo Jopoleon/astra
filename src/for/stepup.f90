@@ -8,7 +8,7 @@ use parameter_inc, only: NRD
 use const_inc, only: IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
     IPCTRL, NCNB, ICIRCQ, ITFBP, ITREQ, UPDWN, FTN, FTO, BTN, BTOR, HRO, ROC, NA1, &
     TAU, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, ATREQ, LEQ, & 
-    PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, ADCMPF, RBDOT, BBDOT
+    PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, RBDOT, BBDOT
 use status_inc, only: TE, TI, NE, NI, NIO, FP, defarr
 use io_mod, only: CCOIL, VCOIL, MACHINE, TASK
 use plasma_state, only: plasma_up
@@ -130,11 +130,6 @@ time_step_accuracy: do
             RBDOT = (FTO  - FTN)/(FTO  + FTN)/TAU     !New rbdot for adiabatic compression
             BBDOT = (BTOR - BTN)/(BTOR + BTN)/TAU     !New bbdot for adiabatic compression
 
-            if (nint(ADCMPF) == 2) then
-                RBDOT = 0.   !no adiabatic compression whatsoever
-                BBDOT = 0.   !no adiabatic compression whatsoever
-            endif
-
 ! here it should go the correction after 1st free boundary call since geometry changes abruptly
             if (IFBEY == 1.) then
                 RBDOT = 0.   !also set compression to zero to avoid jumps
@@ -248,11 +243,6 @@ if (IFBEY >= 1.) then         ! is doing free boundary
         endif
     endif
 endif
-
-!adiabatic compression, not more useful... OBSOLETE
-!if (nint(ADCMPF) == 0 .and. icurradj == 0) then
-!    call ADCMP(bc_type_for_fp, dfpdrbm12)  ! Do AdComp once per time step, since if 
-!endif
 
 TIME = TIME + TAU
 TAUPRP = tau

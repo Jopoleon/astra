@@ -163,10 +163,8 @@ YWM(j) = 1./YVR(j)
 YWD(j) = -(VR(j)/(GP2*RHO(j)*CC(j))) *(CUBS(j)+CD(j))
 enddo
 imethod = nint(INUME3)
-RABDOT = (abs(ADCMPF))*RBDOT
-BABDOT = (abs(ADCMPF))*BBDOT
 
-call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RABDOT, BABDOT, NA1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), ADCMPF,MPHIT(1: NA1) )
+call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RBDOT, BBDOT, NA1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), MPHIT(1: NA1) )
 
 dfpdrbm12 = -YWQ(NA)/G22(NA)
 
@@ -440,14 +438,12 @@ YWM(j) = 1./YVR(j)
 YWD(j) = -(VR(j)/(GP2*RHO(j)*CC(j))) * (CUBS(j) + CD(j))
 enddo
 imethod = nint(INUME3)
-RABDOT = (abs(ADCMPF))*RBDOT
-BABDOT = (abs(ADCMPF))*BBDOT
 
-call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RABDOT, BABDOT, NA1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), ADCMPF, MPHIT(1: NA1) )
+call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RBDOT, BBDOT, NA1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), MPHIT(1: NA1) )
 
 dfpdrbm12 = -YWQ(NA)/G22(NA)
 
-YWR(1) = MU(NA1)*GP2*ROC**2 * BTOR*BABDOT
+YWR(1) = MU(NA1)*GP2*ROC**2 * BTOR*BBDOT
 """
 
 
@@ -470,9 +466,8 @@ YWWB(j) = VR(j)**(5./3.)
 YWNB(j) = 3./2.*NE(j)*YWWB(j)/YVR(j)/YWM(j)
 enddo
 imethod = nint(INUME2)
-RABDOT = abs(ADCMPF)*RBDOT
-BABDOT = abs(ADCMPF)*BBDOT
-call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), TEO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1)/625, YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), 625*PET(1: NA1), 625*PETOT(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, TE(1: NA1), QE(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1) )
+
+call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), TEO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1)/625, YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), 625*PET(1: NA1), 625*PETOT(1: NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, TE(1: NA1), QE(1: NA1), YQDCM(1: NA1), MPHIT(1: NA1) )
 do j=1, NA1
 te(j) = max(te(j), 0.001)
 enddo
@@ -517,9 +512,8 @@ YWWB(j) = VR(j)**(5./3.)
 YWNB(j) = 3./2.*NI(j)*YWWB(j)/YVR(j)/YWM(j)
 enddo
 imethod = nint(INUME2)
-RABDOT = abs(ADCMPF)*RBDOT
-BABDOT = abs(ADCMPF)*BBDOT
-call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), TIO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1)/625, YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), 625*PIT(1: NA1), 625*PITOT(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, TI(1: NA1), QI(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1) )
+
+call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), TIO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1)/625, YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), 625*PIT(1: NA1), 625*PITOT(1: NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, TI(1: NA1), QI(1: NA1), YQDCM(1: NA1), MPHIT(1: NA1) )
 do j=1, NA1
 ti(j) = max(ti(j), 0.001)
 enddo
@@ -562,9 +556,8 @@ YWNB(j) = VR(j)
 YWWB(j) = VR(j)
 enddo
 imethod = nint(INUME1)
-RABDOT = abs(ADCMPF)*RBDOT
-BABDOT = abs(ADCMPF)*BBDOT
-call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), NEO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), SNN(1: NA1), SN(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, NE(1: NA1), QN(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1) )
+
+call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), NEO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), G11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), SNN(1: NA1), SN(1: NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, NE(1: NA1), QN(1: NA1), YQDCM(1: NA1), MPHIT(1: NA1) )
 do J=1, NA
 QN(J) = QN(J) + SLAT(J)*GNX(J)
 GN(J) = QN(J)/SLAT(J)
@@ -623,9 +616,8 @@ YWR(J) = YWR(J) + RTOR/IPOL(J)*XUPAR(J)*DLNEOD(J) - RTOR/IPOL(J)*(CNPAR(J) + XUP
 endif
 enddo
 imethod = nint(INUME4)
-RABDOT = (abs(ADCMPF))*RBDOT
-BABDOT = (abs(ADCMPF))*BBDOT
-call RUNEQ(YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), UPARO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWD(1: NA1), TTRQ(1: NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, UPAR(1: NA1), QU(1: NA1), YQDCM(1: NA1), ADCMPF, MPHIT(1: NA1))
+
+call RUNEQ(YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), UPARO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWD(1: NA1), TTRQ(1: NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, UPAR(1: NA1), QU(1: NA1), YQDCM(1: NA1), MPHIT(1: NA1))
 
 MPHIT = 0.
 NA1U = ND1
@@ -665,13 +657,11 @@ YWW2B(j) = VR(j)**(5./3.)
 YWN2B(j) = 3./2.*NI(j)*YWW2B(j)/YVR(j)/YWM(j)
 enddo
 imethod = nint(INUME2)
-RABDOT = (abs(ADCMPF))*RBDOT
-BABDOT = (abs(ADCMPF))*BBDOT
 '''
 
     runeq = \
 '''NA1I = ND1
-call RUNEQTIMP(YWGN(1:NA1), 3./2.*NE(1:NA1), 3./2.*NI(1:NA1), YWGO(1:NA1), 3./2.*NEO(1:NA1), 3./2.*NIO(1:NA1), TEO(1:NA1), TIO(1:NA1), YWN1B(1:NA1), YWN2B(1:NA1), YWW1B(1:NA1), YWW2B(1:NA1), YVR(1:NA1), YWM(1:NA1), G11(1:NA1)/625, YWA1(1:NA1), YWA2(1:NA1), YWB1(1:NA1), YWB2(1:NA1), YWR(1:NA1), YWR(1:NA1), 625*PET(1:NA1), 625*PIT(1:NA1), 625*PETOT(1:NA1), 625*PITOT(1:NA1), 0.0*YWR(1:NA1), 0.0*YWR(1:NA1), RABDOT, BABDOT, ND1, NA1, HRO, TAU, ROC, RHO(1:NA1), imethod, bc_type_imp, bc_value_imp, TE(1:NA1), TI(1:NA1), QE(1:NA1), QI(1:NA1), ADCMPF)
+call RUNEQTIMP(YWGN(1:NA1), 3./2.*NE(1:NA1), 3./2.*NI(1:NA1), YWGO(1:NA1), 3./2.*NEO(1:NA1), 3./2.*NIO(1:NA1), TEO(1:NA1), TIO(1:NA1), YWN1B(1:NA1), YWN2B(1:NA1), YWW1B(1:NA1), YWW2B(1:NA1), YVR(1:NA1), YWM(1:NA1), G11(1:NA1)/625, YWA1(1:NA1), YWA2(1:NA1), YWB1(1:NA1), YWB2(1:NA1), YWR(1:NA1), YWR(1:NA1), 625*PET(1:NA1), 625*PIT(1:NA1), 625*PETOT(1:NA1), 625*PITOT(1:NA1), 0.0*YWR(1:NA1), 0.0*YWR(1:NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, ROC, RHO(1:NA1), imethod, bc_type_imp, bc_value_imp, TE(1:NA1), TI(1:NA1), QE(1:NA1), QI(1:NA1))
 if (ND1 < NA1) then
 do j=ND1+1, NA1
 QE(j) = QE(ND1)
@@ -769,8 +759,6 @@ YWNB(j) = VR(j)
 YWWB(j) = VR(j)
 enddo
 imethod = nint(INUME1)
-RABDOT = (abs(ADCMPF))*RBDOT
-BABDOT = (abs(ADCMPF))*BBDOT
 '''
 
 class CUEQN:
@@ -916,13 +904,11 @@ YWM(j) = 1./YVR(j)
 YWD(j) = -(VR(j)/(GP2*RHO(j)*CC(j))) * (CUBS(j) + CD(j))
 enddo
 imethod = nint(INUME3)
-RABDOT = (abs(ADCMPF))*RBDOT
-BABDOT = (abs(ADCMPF))*BBDOT
 
-call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RABDOT, BABDOT, NA1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), ADCMPF, MPHIT(1: NA1) )
+call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), YWM(1: NA1), YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RBDOT, BBDOT, NA1, NA1, HRO, TAU, ROC, RHO(1: NA1), imethod, bctype, bc_values, FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), MPHIT(1: NA1) )
 
 dfpdrbm12 = -YWQ(NA)/G22(NA)
-YWR(1) = MU(NA1)*GP2*ROC**2 * BTOR*BABDOT
+YWR(1) = MU(NA1)*GP2*ROC**2 * BTOR*BBDOT
 '''
 
 class INIT:
@@ -1009,7 +995,7 @@ double precision, intent(out) :: dfpdrbm12
 
 integer :: IFSUB, imethod, ND, ND1, NODE, JCALL, bctype, bc_type_imp(2), t_wall1, t_wall2, rate
 
-double precision :: RABDOT, BABDOT, YHRO, YM1, YM2, YB, YC, YJ_CU, YM, YU, YIOH, YICD, YMCD, bc_value_imp(2), t_cpu1, t_cpu2
+double precision :: YHRO, YM1, YM2, YB, YC, YJ_CU, YM, YU, YIOH, YICD, YMCD, bc_value_imp(2), t_cpu1, t_cpu2
 double precision, dimension(5) :: bc_values
 double precision, dimension(NRD) :: YWA, YWB, YWC, YWD, YWGN, &
     YWHN, YWGO, YWHO, YWR, YWH, YVR, YWM, YWA1, YWA2, YWB1, YWB2, &

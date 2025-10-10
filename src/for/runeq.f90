@@ -1,7 +1,7 @@
 !---------------------------------------------------------------------
 subroutine RUNEQ(GN, HN, GO, HO, YO, N, W, V, M, G11, A, B, R, S, P, &
     rbdot, bbdot, Ngridb, Ngrid, dx, dt, roc, &
-    x, imethod, bctype, bc_values, y, Q, adcmp_term, adcmpf, mphit)
+    x, imethod, bctype, bc_values, y, Q, adcmp_term, mphit)
 !---------------------------------------------------------------------
 !
 ! WARNING: at the moment Qb is explicit, no option for QNNB, QETB, QITB is given at the moment!
@@ -48,7 +48,7 @@ subroutine RUNEQ(GN, HN, GO, HO, YO, N, W, V, M, G11, A, B, R, S, P, &
 !
 !  y is the quantity and Q = -G11*(A*dy/dx + B*y) + G11*R
 !
-! Note that if adcmp_use = 1, then rbdot here is not used, but it is done in ADCMP 
+
 ! as a second step
 !
 !  imethod can be:
@@ -74,22 +74,19 @@ implicit none
 
 integer, parameter :: idiagnostic=0
 integer, intent(in) :: Ngrid, imethod, Ngridb, bctype
+double precision, intent(in) :: rbdot, bbdot, bc_values(5)
 double precision, intent(in), dimension(Ngrid) :: GN, HN, GO, HO, &
    YO, V, G11, B, R, S, P, mphit, x, M, N, W
 double precision, intent(out)  , dimension(Ngrid) :: y, Q, adcmp_term
 double precision, intent(inout), dimension(Ngrid) :: A
 
 integer :: NgridS, eximp, j
-double precision :: adcmpf, exrbdot, dx, dt, theta, bbdot, &
-   rbdot, ybound, Qbound, roc, Mbound(3), bc_values(5)
+double precision :: dx, dt, theta, ybound, Qbound, roc, Mbound(3)
 double precision, dimension(Ngrid) :: x_b, G, H, NN, NO, dum1, &
     Rsource, Rsource2, Sdot_1, Sdot_2, rbgxhat, &
     Pdot_1, Pdot_2, VNx_Wtilde, Hx_Mtilde, Vtilde, Mtilde, Vtilde1, &
     Gtilde, Htilde, B_new, S_new, P_new, ydummy, ydummy2, xi, fxi, gxi
 double precision, dimension(Ngridb) :: dum1b
-
-if (adcmpf >= 0) exrbdot = 0.0
-if (adcmpf < 0 ) exrbdot = 1.0
 
 do j=1, Ngrid
     G(j) = 0.5*(GO(j) + GN(j))
@@ -145,40 +142,25 @@ Sdot_1 = 0.
 Sdot_2 = 0.
 Pdot_1 = 0.
 Pdot_2 = 0.
-if (exrbdot == 1.) then
-! So S = S - bdot*M*N*x*d/dx(V/W) - (rdot-bdot)/V*G*H*d/dx (x*V/G)  for implicit
-    call DERIV(x, x_b, 1, V/W, ydummy, 1, Ngrid, 1)
-    call GRID2GRID(2, x_b, ydummy, Sdot_1, Ngrid, 0)
-    Sdot_1 = Sdot_1*M*N*x
 
-    call DERIV(x, x_b, 1, x*V/G, ydummy, 1, Ngrid, 1)
-    call GRID2GRID(2, x_b, ydummy, Sdot_2, Ngrid, 0)
-    Sdot_2 = Sdot_2*G*H/V
-endif
-
-if (exrbdot == 0.) then
-! and P = P + bdot/W*d/dx (V*M*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)         for explicit
-
-    if (sum(mphit) == 0.) then
-        dum1 = V*M*N*x*YO
-        call DERIV(x, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
-        call GRID2GRID(2, x_b, ydummy, Pdot_1, Ngrid, 0)
-        Pdot_1 = Pdot_1/W
-        dum1 = G*H*YO
-        call DERIV(x, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
-        call GRID2GRID(2, x_b, ydummy, Pdot_2, Ngrid, 0)
-        Pdot_2 = Pdot_2*x/G
-    else
-        dum1 = V*M*N*x*mphit
-        call DERIV(x, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
-        call GRID2GRID(2, x_b, ydummy, Pdot_1, Ngrid, 0)
-        Pdot_1 = Pdot_1/W
-        dum1 = G*H*mphit
-        call DERIV(x, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
-        call GRID2GRID(2, x_b, ydummy, Pdot_2, Ngrid, 0)
-        Pdot_2 = Pdot_2*x/G
-    endif
-
+if (sum(mphit) == 0.) then
+    dum1 = V*M*N*x*YO
+    call DERIV(x, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
+    call GRID2GRID(2, x_b, ydummy, Pdot_1, Ngrid, 0)
+    Pdot_1 = Pdot_1/W
+    dum1 = G*H*YO
+    call DERIV(x, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
+    call GRID2GRID(2, x_b, ydummy, Pdot_2, Ngrid, 0)
+    Pdot_2 = Pdot_2*x/G
+else
+    dum1 = V*M*N*x*mphit
+    call DERIV(x, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
+    call GRID2GRID(2, x_b, ydummy, Pdot_1, Ngrid, 0)
+    Pdot_1 = Pdot_1/W
+    dum1 = G*H*mphit
+    call DERIV(x, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
+    call GRID2GRID(2, x_b, ydummy, Pdot_2, Ngrid, 0)
+    Pdot_2 = Pdot_2*x/G
 endif
 
 call DERIV (x, x_b, 1, YO, ydummy, 1, Ngrid, 1)
@@ -189,12 +171,12 @@ do j=1, Ngrid
     NO(j) = GO(j)*HO(j)
     Vtilde(j) = Vtilde(j)*G11(j)
 ! So B = B + 1/G11*(bdot*V/W*N*x+(rdot-bdot)*H/M*x)      for implicit
-    B_new(j) = B(j) + exrbdot/G11(j)*(bbdot*VNx_Wtilde(j) + (rbdot - bbdot)*Hx_Mtilde(j))
+    B_new(j) = B(j)
 ! So S = S - bdot*M*N*x*d/dx(V/W) - (rdot-bdot)/V*G*H*d/dx (x*V/G)      for implicit
-    S_new(j) = S(j) - exrbdot*(bbdot*Sdot_1(j) + (rbdot - bbdot)*Sdot_2(j))
+    S_new(j) = S(j)
 ! and P = P + bdot/W*d/dx (V*M*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)      for explicit
-    P_new(j) = P_new(j) + (1. - exrbdot)*(bbdot*Pdot_1(j) + (rbdot - bbdot)*Pdot_2(j))
-    adcmp_term(j)= (1. - exrbdot)*(bbdot*Pdot_1(j) + (rbdot - bbdot)*Pdot_2(j))   !only for FP
+    P_new(j) = P_new(j) + bbdot*Pdot_1(j) + (rbdot - bbdot)*Pdot_2(j)
+    adcmp_term(j)= bbdot*Pdot_1(j) + (rbdot - bbdot)*Pdot_2(j)   !only for FP
 enddo
 
 !Check boundary condition, note that Qbound = Qbound/G11(b) since G11 is absorbed in Vtilde
@@ -685,7 +667,7 @@ end function GETPEI
 subroutine RUNEQTIMP(GN, H1N, H2N, GO, H1O, H2O, & 
     Y1O, Y2O, N1, N2, W1, W2, V, M, G11, A1, A2, B1, B2, R1, R2, &
     S1, S2, P1, P2, T12, T21, rbdot, bbdot, Ngridb, Ngrid, dx, dt, &
-    roc, x, imethod, bctype, bcvalue, y1, y2, Q1, Q2, adcmpf)
+    roc, x, imethod, bctype, bcvalue, y1, y2, Q1, Q2)
 !---------------------------------------------------------------------
 ! WARNING: at the moment Qb is explicit, no option for QNNB, QETB, QITB is given at the moment!
 !
@@ -751,7 +733,7 @@ use numerical_tools, only: deriv, extrap, grid2grid
 implicit none
 
 integer, intent(in) :: Ngrid, imethod, Ngridb, bctype(2)
-double precision, intent(in) :: rbdot, bbdot, dx, dt, roc, adcmpf
+double precision, intent(in) :: rbdot, bbdot, dx, dt, roc
 double precision, intent(in), dimension(Ngrid) :: GN, H1N, H2N, GO, &
     H1O, H2O, Y1O, Y2O, N1, N2, W1, W2, V, M, G11, B1, B2, &
     R1, R2, S1, S2, P1, P2, x, bcvalue(2)
@@ -759,7 +741,7 @@ double precision, intent(out)  , dimension(Ngrid) :: T12, T21, Q1, Q2
 double precision, intent(inout), dimension(Ngrid) :: A1, A2, y1, y2
 
 integer :: j, NgridS(2), eximp
-double precision :: exrbdot, theta, ybound1, Qbound1, ybound2, Qbound2
+double precision :: theta, ybound1, Qbound1, ybound2, Qbound2
 double precision, dimension(Ngrid) :: x_b, & 
     B1_new, S1_new, P1_new, B2_new, S2_new, P2_new, &
     Vtilde, Mtilde, Vtilde1, Gtilde, Htilde1, Htilde2, &
@@ -770,9 +752,6 @@ double precision, dimension(Ngrid) :: x_b, &
     Sdot_11, Sdot_12, Sdot_21, Sdot_22, &
     Pdot_11, Pdot_12, Pdot_21, Pdot_22
 double precision, external :: GETPEI
-
-if (adcmpf >= 0.) exrbdot = 0.0
-if (adcmpf <  0.) exrbdot = 1.0
 
 do j=1, Ngrid
     if (A1(j) <= 0.0) A1(j) = 1.E-16
@@ -839,46 +818,21 @@ Sdot_22 = 0.
 Pdot_12 = 0.
 Pdot_22 = 0.
 
-if (exrbdot == 1.) then
-! So S = S - bdot*M*N*x*d/dx(V/W) - (rdot-bdot)/V*G*H*d/dx (x*V/G)      for implicit
-    call DERIV(x, x_b, 1, V/W1, ydummy, 1, Ngrid, 1)
-    call GRID2GRID(2, x_b, ydummy, Sdot_11, Ngrid, 0)
-    Sdot_11 = Sdot_11*M*N1*x
+call DERIV(x, x_b, 1, V*M*N1*x*Y1O, ydummy, 1, Ngrid, 1)
+call GRID2GRID(2, x_b, ydummy, Pdot_11, Ngrid, 0)
+Pdot_11 = Pdot_11/W1
 
-    call DERIV(x, x_b, 1, V/W2, ydummy, 1, Ngrid, 1)
-    call GRID2GRID(2, x_b, ydummy, Sdot_12, Ngrid, 0)
-    Sdot_12 = Sdot_12*M*N2*x
+call DERIV(x, x_b, 1, V*M*N2*x*Y2O, ydummy, 1, Ngrid, 1)
+call GRID2GRID(2, x_b, ydummy, Pdot_12, Ngrid, 0)
+Pdot_12 = Pdot_12/W2
 
-    call DERIV(x, x_b, 1, x*V/GN, ydummy, 1, Ngrid, 1)
-    call GRID2GRID(2, x_b, ydummy, Sdot_21, Ngrid, 0)
-    Sdot_21 = Sdot_21*GN*H1N/V
+call DERIV(x, x_b, 1, GN*H1N*Y1O, ydummy, 1, Ngrid, 1)
+call GRID2GRID(2, x_b, ydummy, Pdot_21, Ngrid, 0)
+Pdot_21 = Pdot_21*x/GN
 
-    call DERIV(x, x_b, 1, x*V/GN, ydummy, 1, Ngrid, 1)
-    call GRID2GRID(2, x_b, ydummy, Sdot_22, Ngrid, 0)
-    Sdot_22 = Sdot_22*GN*H2N/V
-
-endif
-
-if (exrbdot == 0.) then
-! and P = P + bdot/W*d/dx (V*M*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)         for explicit
-
-    call DERIV(x, x_b, 1, V*M*N1*x*Y1O, ydummy, 1, Ngrid, 1)
-    call GRID2GRID(2, x_b, ydummy, Pdot_11, Ngrid, 0)
-    Pdot_11 = Pdot_11/W1
-
-    call DERIV(x, x_b, 1, V*M*N2*x*Y2O, ydummy, 1, Ngrid, 1)
-    call GRID2GRID(2, x_b, ydummy, Pdot_12, Ngrid, 0)
-    Pdot_12 = Pdot_12/W2
-
-    call DERIV(x, x_b, 1, GN*H1N*Y1O, ydummy, 1, Ngrid, 1)
-    call GRID2GRID(2, x_b, ydummy, Pdot_21, Ngrid, 0)
-    Pdot_21 = Pdot_21*x/GN
-
-    call DERIV(x, x_b, 1, GN*H2N*Y2O, ydummy, 1, Ngrid, 1)
-    call GRID2GRID(2, x_b, ydummy, Pdot_22, Ngrid, 0)
-    Pdot_22 = Pdot_22*x/GN
-
-endif
+call DERIV(x, x_b, 1, GN*H2N*Y2O, ydummy, 1, Ngrid, 1)
+call GRID2GRID(2, x_b, ydummy, Pdot_22, Ngrid, 0)
+Pdot_22 = Pdot_22*x/GN
 
 do j=1, Ngrid
     N1N(j) = GN(j)*H1N(j)
@@ -887,23 +841,17 @@ do j=1, Ngrid
     N2O(j) = GO(j)*H2O(j)
     Vtilde(j) = Vtilde(j)*G11(j)
 ! B = B + 1/G11*(bdot*V/W*N*x+(rdot-bdot)*H/M*x)   for implicit
-    B1_new(j) = B1(j) + exrbdot/G11(j) * &
-        ( bbdot*VNx_Wtilde1(j) + (rbdot - bbdot)*Hx_Mtilde1(j) )
+    B1_new(j) = B1(j)
 ! S = S - bdot*M*N*x*d/dx(V/W) - (rdot-bdot)/V*G*H*d/dx (x*V/G)  for implicit
-    S1_new(j) = S1_new(j) - exrbdot * &
-        ( bbdot*Sdot_11(j) + (rbdot - bbdot)*Sdot_21(j) )
+    S1_new(j) = S1_new(j)
 ! P = P + bdot/W*d/dx (V*M*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)   for explicit
-    P1_new(j) = P1_new(j) + (1. - exrbdot) * &
-        ( bbdot*Pdot_11(j) + (rbdot - bbdot)*Pdot_21(j) )
+    P1_new(j) = P1_new(j) + bbdot*Pdot_11(j) + (rbdot - bbdot)*Pdot_21(j)
 ! B = B + 1/G11*(bdot*V/W*N*x+(rdot-bdot)*H/M*x)      for implicit
-    B2_new(j) = B2(j) + exrbdot/G11(j) * & 
-        ( bbdot*VNx_Wtilde2(j) + (rbdot - bbdot)*Hx_Mtilde2(j) )
+    B2_new(j) = B2(j)
 ! S = S - bdot*M*N*x*d/dx(V/W) - (rdot-bdot)/V*G*H*d/dx (x*V/G)  for implicit
-    S2_new(j) = S2_new(j) - exrbdot * & 
-        ( bbdot*Sdot_12(j) + (rbdot - bbdot)*Sdot_22(j) )
+    S2_new(j) = S2_new(j)
 ! P = P + bdot/W*d/dx (V*M*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)   for explicit
-    P2_new(j) = P2_new(j) + (1. - exrbdot) * &
-        ( bbdot*Pdot_12(j) + (rbdot - bbdot)*Pdot_22(j) )
+    P2_new(j) = P2_new(j) + bbdot*Pdot_12(j) + (rbdot - bbdot)*Pdot_22(j)
 enddo
 
 !Check boundary condition, note that Qbound = Qbound/G11(b) since G11 is absorbed in Vtilde
