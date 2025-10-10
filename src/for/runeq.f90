@@ -72,7 +72,6 @@ use numerical_tools, only: extrap, deriv, grid2grid
 
 implicit none
 
-integer, parameter :: idiagnostic=0
 integer, intent(in) :: Ngrid, imethod, Ngridb, bctype
 double precision, intent(in) :: rbdot, bbdot, bc_values(5)
 double precision, intent(in), dimension(Ngrid) :: GN, HN, GO, HO, &
@@ -83,7 +82,7 @@ double precision, intent(inout), dimension(Ngrid) :: A
 integer :: NgridS, eximp, j
 double precision :: dx, dt, theta, ybound, Qbound, roc, Mbound(3)
 double precision, dimension(Ngrid) :: x_b, G, H, NN, NO, dum1, &
-    Rsource, Rsource2, Sdot_1, Sdot_2, rbgxhat, &
+    Rsource, Rsource2, rbgxhat, &
     Pdot_1, Pdot_2, VNx_Wtilde, Hx_Mtilde, Vtilde, Mtilde, Vtilde1, &
     Gtilde, Htilde, B_new, S_new, P_new, ydummy, ydummy2, xi, fxi, gxi
 double precision, dimension(Ngridb) :: dum1b
@@ -126,7 +125,7 @@ call GRID2GRID(1, x, dum1,     Gtilde, Ngrid, 1)
 dum1 = HN*theta + HO*(1-theta)
 call GRID2GRID(1, x, dum1,     Htilde, Ngrid, 1)
 
-!Compute source: Rsource = - 1/V d/dx (V*M*G11*R), Rsource is on main grid
+! Compute source: Rsource = - 1/V d/dx (V*M*G11*R), Rsource is on main grid
 do j=1, Ngrid
     Rsource(j) = Vtilde(j)*G11(j)*R(j)
     Rsource2(j) = 0.
@@ -137,9 +136,7 @@ do j=1, Ngrid
     P_new(j) = P(j) + Rsource2(j)
 enddo
 
-!Compute additionals
-Sdot_1 = 0.
-Sdot_2 = 0.
+! Compute additionals
 Pdot_1 = 0.
 Pdot_2 = 0.
 
@@ -249,20 +246,6 @@ END SELECT
 !
 !    1/G d/dt (N*y) + 1/V d/dx (Vtilde*(-A/dx*(fxi, gxi, ntilde))) = S*y + P 
 
-!Diagnostics
-if (idiagnostic == 1) then
-    write(28, *) Ngrid, Ngridb, rbdot
-    write(28, *) x
-    write(28, *) Vtilde
-    write(28, *) V
-    write(28, *) M
-    write(28, *) G11
-    write(28, *) R
-    write(28, *) B
-    write(28, *) rbgxhat
-    write(28, *) S
-    write(28, *) P
-endif
 dum1b = GN(1: Ngridb)*theta + GO(1: Ngridb)*(1 - theta)
 call SOLVER(x(1: Ngridb), dx, dt, dum1b, & 
     NN(1: Ngridb), NO(1: Ngridb), V(1: Ngridb), & 
@@ -298,7 +281,6 @@ subroutine SOLVER(x, dx, dt, G, NN, NO, V, Vtilde, A, fxi, gxi, S, P, &
 
 implicit none
 
-integer, parameter :: idiagnostic=0
 integer, intent(in) :: Ngrid, NgridS, bctype, eximp
 double precision, intent(in) :: dx, dt, theta, ybound, Qbound, Mbound(3)
 
@@ -495,40 +477,8 @@ endif ! Implicit
 f_bound = ybound
 bcbound = bctype
 
-!Diagnostics
-if (idiagnostic == 1) then
-    write(28, *) Ngrid, bcbound, f_bound, eximp, Ngrids, theta
-    write(28, *) ybound, Qbound
-    write(28, *) dx, dt
-    write(28, *) x
-    write(28, *) G
-    write(28, *) NN
-    write(28, *) NO
-    write(28, *) YO
-    write(28, *) V
-    write(28, *) A
-    write(28, *) Vtilde
-    write(28, *) S
-    write(28, *) P
-    write(28, *) fxi
-    write(28, *) gxi
-    write(28, *) AA
-    write(28, *) BB
-    write(28, *) CC
-    write(28, *) RR
-    write(28, *) Bstar
-    write(28, *) Cstar
-    write(28, *) Rstar
-endif
-
 ! Main call to tridiagonal solver
-call TRIDIAG1(AA, BB, CC, RR, y, Bstar, Cstar, Rstar, &
-    Ngrid, Ngrids, bcbound, f_bound, eximp)
-
-!Diagnostics
-if (idiagnostic == 1) then
-    write(28, *) y(1:Ngrid)
-endif
+call TRIDIAG1(AA, BB, CC, RR, y, Bstar, Cstar, Rstar, Ngrid, Ngrids, bcbound, f_bound, eximp)
 
 return
 end subroutine SOLVER
@@ -749,7 +699,6 @@ double precision, dimension(Ngrid) :: x_b, &
     Rsource1, Rsource2, Rsource3, Rsource4, &
     N1N, N1O, N2N, N2O, ydummy, &
     xi1, fxi1, gxi1, xi2, fxi2, gxi2, &
-    Sdot_11, Sdot_12, Sdot_21, Sdot_22, &
     Pdot_11, Pdot_12, Pdot_21, Pdot_22
 double precision, external :: GETPEI
 
@@ -785,7 +734,7 @@ call GRID2GRID(1, x, GN *theta + GO *(1 - theta), Gtilde , Ngrid, 1)
 call GRID2GRID(1, x, H1N*theta + H1O*(1 - theta), Htilde1, Ngrid, 1)
 call GRID2GRID(1, x, H2N*theta + H2O*(1 - theta), Htilde2, Ngrid, 1)
  
-!Compute source: Rsource = - 1/V d/dx (V*M*G11*R), Rsource is on main grid
+! Compute source: Rsource = - 1/V d/dx (V*M*G11*R), Rsource is on main grid
 do j=1, Ngrid
     Rsource1(j) = Vtilde(j)*G11(j)*R1(j)
     Rsource3(j) = 0.
@@ -808,13 +757,9 @@ do j=1, Ngrid
     S2_new(j) = S2(j)-T21(j)
 enddo
 
-!Compute additionals
-Sdot_11 = 0.
-Sdot_21 = 0.
+! Compute additionals
 Pdot_11 = 0.
 Pdot_21 = 0.
-Sdot_12 = 0.
-Sdot_22 = 0.
 Pdot_12 = 0.
 Pdot_22 = 0.
 
