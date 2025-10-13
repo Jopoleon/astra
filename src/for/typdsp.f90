@@ -51,7 +51,7 @@ MODEX = XOUT + 0.49
 NP1 = NAB
 if (MODEX >= 1 .and. MODEX <= 3 .or. MOD10 == 3) NP1 = NA1
 
-dat_dir = TRIM(AWD) // 'dat/'
+dat_dir = TRIM(AWD) // '/dat/'
 call system('mkdir -p ' // TRIM(dat_dir))
 FNAME = TRIM(dat_dir) // TRIM(exp_file) // '.' // TRIM(equ_file)
 call set_filename(FNAME)
