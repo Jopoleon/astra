@@ -1,7 +1,7 @@
 !---------------------------------------------------------------------
-subroutine RUNEQ(GN, HN, GO, HO, YO, N, W, V, M, G11, A_in, B, R, S, P, &
+subroutine RUNEQ(GN, HN, GO, HO, YO, N, W, V, M, G11, A_in, B_in, R_in, S_in, P_in, &
     rbdot, bbdot, Ngridb, Ngrid, dx, dt, &
-    x, imethod, bctype, bc_values, y, Q, adcmp_term, mphit)
+    x, imethod, bctype, bc_values, y_out, Q_out, adcmp_term, mphit)
 !---------------------------------------------------------------------
 !
 ! WARNING: at the moment Qb is explicit, no option for QNNB, QETB, QITB is given at the moment!
@@ -75,14 +75,13 @@ implicit none
 integer, intent(in) :: Ngrid, imethod, Ngridb, bctype
 double precision, intent(in) :: rbdot, bbdot, bc_values(5)
 double precision, intent(in), dimension(Ngrid) :: GN, HN, GO, HO, &
-   YO, V, G11, A_in, B, R, S, P, mphit, x, M, N, W
-double precision, intent(out)  , dimension(Ngrid) :: y, Q, adcmp_term
+   YO, V, G11, A_in, B_in, R_in, S_in, P_in, mphit, x, M, N, W
+double precision, intent(out)  , dimension(Ngrid) :: y_out, Q_out, adcmp_term
 
 integer :: NgridS, eximp, j
 double precision :: dx, dt, theta, ybound, Qbound, Mbound(3)
 double precision, dimension(Ngrid) :: x_b, G, H, A, NN, NO, dum1, &
-    Rsource, Rsource2, Pdot_1, Pdot_2, Vtilde, &
-    B_new, S_new, P_new, ydummy, xi, fxi, gxi
+    Rsource, Rsource2, Pdot_1, Pdot_2, Vtilde, P_new, ydummy, xi, fxi, gxi
 double precision, dimension(Ngridb) :: dum1b
 
 do j=1, Ngrid
@@ -115,13 +114,13 @@ call GRID2GRID(1, x, dum1, Vtilde, Ngrid, 1)
 
 ! Compute source: Rsource = - 1/V d/dx (V*M*G11*R), Rsource is on main grid
 do j=1, Ngrid
-    Rsource(j) = Vtilde(j)*G11(j)*R(j)
+    Rsource(j) = Vtilde(j)*G11(j)*R_in(j)
     Rsource2(j) = 0.
 enddo
 call DERIV(x_b, x, 2, Rsource, Rsource2, 1, Ngrid, 0)
 do j=1, Ngrid
     Rsource2(j) = -Rsource2(j)/V(j)
-    P_new(j) = P(j) + Rsource2(j)
+    P_new(j) = P_in(j) + Rsource2(j)
 enddo
 
 ! Compute additionals
@@ -154,10 +153,6 @@ do j=1, Ngrid
     NN(j) = GN(j)*HN(j)
     NO(j) = GO(j)*HO(j)
     Vtilde(j) = Vtilde(j)*G11(j)
-! So B = B + 1/G11*(bdot*V/W*N*x+(rdot-bdot)*H/M*x)      for implicit
-    B_new(j) = B(j)
-! So S = S - bdot*M*N*x*d/dx(V/W) - (rdot-bdot)/V*G*H*d/dx (x*V/G)      for implicit
-    S_new(j) = S(j)
 ! and P = P + bdot/W*d/dx (V*M*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)      for explicit
     P_new(j) = P_new(j) + bbdot*Pdot_1(j) + (rbdot - bbdot)*Pdot_2(j)
     adcmp_term(j) = bbdot*Pdot_1(j) + (rbdot - bbdot)*Pdot_2(j)   !only for FP
@@ -167,7 +162,7 @@ enddo
 Mbound = 0.
 SELECT CASE(bctype)
 CASE(1)
-    ybound = y(Ngridb)
+    ybound = y_out(Ngridb)
     NgridS = Ngridb - 1
     Qbound = 0.0
 CASE(2)
@@ -190,32 +185,32 @@ END SELECT
 SELECT CASE(imethod)
 CASE(11, 21, 31)
     do j=1, Ngrid
-        xi(j) = dx*B_new(j)/A(j)
+        xi(j) = dx*B_in(j)/A(j)
         fxi(j) = 1. + 0.5*xi(j)
         gxi(j) = 1. - 0.5*xi(j)
     enddo
 
 CASE(12, 22, 32)
     do j=1, Ngrid
-        xi(j) = dx*B_new(j)/A(j)
+        xi(j) = dx*B_in(j)/A(j)
         if (xi(j) < -10.) then
             fxi(j) = 0
         endif
         if (xi(j) >= -10. .and. xi(j) < 0) then
-            fxi(j) = (1. + 0.1*xi(j))**5.0
+            fxi(j) = (1. + 0.1*xi(j))**5
         endif
         if (xi(j) >= 0. .and. xi(j) <= 10) then
-            fxi(j) = (1.-0.1*xi(j))**5.0 + xi(j)
+            fxi(j) = (1. - 0.1*xi(j))**5 + xi(j)
         endif
         if (xi(j) > 10.) then
             fxi(j) = xi(j)
         endif
-        gxi(j) = fxi(j)-xi(j)
+        gxi(j) = fxi(j) - xi(j)
     enddo
 
 CASE(13, 23, 33)
     do j=1, Ngrid
-        xi(j) = dx*B_new(j)/A(j)
+        xi(j) = dx*B_in(j)/A(j)
         if (xi(j) > 0. .or. xi(j) < 0.) then
             fxi(j) = xi(j)/(1. - exp(-xi(j)))
             gxi(j) = fxi(j) - xi(j)
@@ -236,24 +231,24 @@ dum1b = GN(1: Ngridb)*theta + GO(1: Ngridb)*(1 - theta)
 call SOLVER(x(1: Ngridb), dx, dt, dum1b, & 
     NN(1: Ngridb), NO(1: Ngridb), V(1: Ngridb), & 
     Vtilde(1: Ngridb), A(1: Ngridb), fxi(1: Ngridb), & 
-    gxi(1: Ngridb), S_new(1: Ngridb), P_new(1: Ngridb), & 
+    gxi(1: Ngridb), S_in(1: Ngridb), P_new(1: Ngridb), & 
     Ngridb, NgridS, theta, eximp, YO(1: Ngridb), & 
-    ybound, Qbound, bctype, y(1: Ngridb), Mbound)
+    ybound, Qbound, bctype, y_out(1: Ngridb), Mbound)
 
 ! Compute flux from solution, flux is on shifted grid
 do j=1, Ngridb-1
-    Q(j) = G11(j)*(-A(j)/dx*(fxi(j)*y(j+1) - gxi(j)*y(j)) + R(j))
+    Q_out(j) = G11(j)*(-A(j)/dx*(fxi(j)*y_out(j+1) - gxi(j)*y_out(j)) + R_in(j))
 enddo
 
 SELECT CASE(bctype)
 CASE(1)
-    call EXTRAP(x(1: NgridS), Q(1: NgridS), x(Ngridb), NgridS, Q(Ngridb), 2, NgridS)
+    call EXTRAP(x(1: NgridS), Q_out(1: NgridS), x(Ngridb), NgridS, Q_out(Ngridb), 2, NgridS)
 CASE(2) ! Restore G11 in Qbound
-    Q(Ngridb) = Qbound*G11(Ngridb)
+    Q_out(Ngridb) = Qbound*G11(Ngridb)
 CASE(3)
-    call EXTRAP(x(1: NgridS-1), Q(1: NgridS-1), x(Ngridb), NgridS-1, Q(Ngridb), 2, NgridS-1)
+    call EXTRAP(x(1: NgridS-1), Q_out(1: NgridS-1), x(Ngridb), NgridS-1, Q_out(Ngridb), 2, NgridS-1)
 CASE(4) ! Restore G11 in Qbound
-    Q(Ngridb) = Qbound*G11(Ngridb)*y(Ngridb)
+    Q_out(Ngridb) = Qbound*G11(Ngridb)*y_out(Ngridb)
 END SELECT
 
 return
@@ -275,16 +270,17 @@ double precision, intent(in), dimension(Ngrid) :: YO, V, A, &
 double precision, intent(out), dimension(Ngrid) :: y
 
 integer :: j, bcbound
-double precision :: Cstar, Rstar, Bstar, f_bound
+double precision :: Cstar, Rstar, Bstar, f_bound, dt_dx2
 double precision, dimension(Ngrid) :: AA, BB, CC, RR
 
+dt_dx2 = dt/dx**2
 if (eximp == 1) then
     j = 1
     AA(j) = 0.0
     BB(j) = NN(j)
     CC(j) = 0.0
     RR(j) = NO(j)*YO(j) + G(j)*P(j)*dt + dt*G(j)*S(j)*YO(j) + &
-        dt/dx**2 * (G(j)/V(j)*Vtilde(j) * &
+        dt_dx2 * (G(j)/V(j)*Vtilde(j) * &
         (A(j)*(fxi(j)*YO(j+1) - gxi(j)*YO(j))))
 
     do j=2, NgridS-1
@@ -292,7 +288,7 @@ if (eximp == 1) then
         BB(j) = NN(j)
         CC(j) = 0.0
         RR(j) = NO(j)*YO(j) + G(j)*P(j)*dt + dt*G(j)*S(j)*YO(j) + &
-            dt/dx**2.0*G(j)/V(j)*(Vtilde(j) * &
+            dt_dx2 * G(j)/V(j)*(Vtilde(j) * &
             (A(j)*(fxi(j)*YO(j+1) - gxi(j)*YO(j))) - &
         Vtilde(j-1)*(A(j-1)*(fxi(j-1)*YO(j) - gxi(j-1)*YO(j-1))))
     enddo
@@ -304,7 +300,7 @@ if (eximp == 1) then
         BB(j) = NN(j)
         CC(j) = 0.0
         RR(j) = NO(j)*YO(j) + G(j)*P(j)*dt + dt*G(j)*S(j)*YO(j) + &
-            dt/dx**2.0*G(j)/V(j)*(Vtilde(j)* &
+            dt_dx2 * G(j)/V(j)*(Vtilde(j)* &
             (A(j)*(fxi(j)*ybound - gxi(j)*YO(j))) - &
             Vtilde(j-1)*(A(j-1)*(fxi(j-1)*YO(j) - gxi(j-1)*YO(j-1))))
         Bstar = 0.0
@@ -317,7 +313,7 @@ if (eximp == 1) then
         BB(j) = NN(j)
         CC(j) = 0.0
         RR(j) = NO(j)*YO(j) + G(j)*P(j)*dt + dt*G(j)*S(j)*YO(j) + &
-            dt/dx**2.0*G(j)/V(j)*(-Vtilde(j)*Qbound*dx - &
+            dt_dx2 * G(j)/V(j)*(-Vtilde(j)*Qbound*dx - &
             Vtilde(j-1)*(A(j-1)*(fxi(j-1)*YO(j) - gxi(j-1)*YO(j-1))))
         Bstar = 0.0
         Cstar = 0.0
@@ -336,10 +332,10 @@ if (eximp == 1) then
     CASE(4)
         j = Ngrids
         AA(j) = 0.0
-        BB(j) = NN(j)-dt/dx**2.0*G(j)/V(j)*(-Vtilde(j)*Qbound*dx)
+        BB(j) = NN(j) - dt_dx2 * G(j)/V(j)*(-Vtilde(j)*Qbound*dx)
         CC(j) = 0.0
         RR(j) = NO(j)*YO(j) + G(j)*P(j)*dt + dt*G(j)*S(j)*YO(j) + &
-            dt/dx**2.0*G(j)/V(j)*(-Vtilde(j)*0.*Qbound*dx - &
+            dt_dx2 * G(j)/V(j)*(-Vtilde(j)*0.*Qbound*dx - &
             Vtilde(j-1)*(A(j-1)*(fxi(j-1)*YO(j) - gxi(j-1)*YO(j-1))))
         Bstar = 0.0
         Cstar = 0.0
@@ -352,31 +348,31 @@ endif
 !This is for implicit below
 if (eximp == 2) then
     j = 1
-    AA(j) = -dt/dx**2.0*G(j)/V(j)*Vtilde(j) *A(j)*fxi(j)
+    AA(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j) *A(j)*fxi(j)
     AA(j) = theta*AA(j)
 
     BB(j) = NN(j)
-    BB(j) = BB(j) + theta* (-dt*G(j)*S(j) - dt/dx**2.0 * &
+    BB(j) = BB(j) + theta* (-dt*G(j)*S(j) - dt_dx2 * &
         (G(j)/V(j)*Vtilde(j) * (A(j)*(-gxi(j)))))
     CC(j) = 0.0
     CC(j) = theta*CC(j)
     RR(j) = NO(j)*YO(j) + G(j)*P(j)*dt + (1 - theta)* &
-        (dt*G(j)*S(j)*YO(j) + dt/dx**2.0* &
+        (dt*G(j)*S(j)*YO(j) + dt_dx2 *  &
         (G(j)/V(j)*Vtilde(j) * (A(j)*(fxi(j)*YO(j+1)-gxi(j)*YO(j)))))
 
     do j=2, NgridS - 1
-        AA(j) = -dt/dx**2.0*G(j)/V(j)*Vtilde(j)*A(j)*fxi(j)
+        AA(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j)*A(j)*fxi(j)
         AA(j) = theta*AA(j)
         BB(j) = NN(j)
         BB(j) = BB(j) + theta* (-dt*G(j)*S(j) - &
-            dt/dx**2.0*G(j)/V(j) * &
+            dt_dx2 * G(j)/V(j) * &
             (Vtilde(j)  *(A(j)  *(-gxi(j))) - &
              Vtilde(j-1)*(A(j-1)*(fxi(j-1)))) )
-        CC(j) = -dt/dx**2.0*G(j)/V(j)*Vtilde(j-1) * A(j-1)*gxi(j-1)  
+        CC(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j-1) * A(j-1)*gxi(j-1)  
         CC(j) = theta*CC(j)      
 
         RR(j) = NO(j)*YO(j) + G(j)*P(j)*dt + (1 - theta)* &
-            (dt*G(j)*S(j)*YO(j) + dt/dx**2.0* &
+            (dt*G(j)*S(j)*YO(j) + dt_dx2 *  &
             G(j)/V(j)*(Vtilde(j) *(A(j)*(fxi(j)*YO(j+1) - gxi(j)*YO(j))) - &
             Vtilde(j-1)*(A(j-1)*(fxi(j-1)*YO(j) - gxi(j-1)*YO(j-1)))))
     enddo
@@ -384,21 +380,21 @@ if (eximp == 2) then
     SELECT CASE(bctype)
     CASE(1)
         j = Ngrids
-        AA(j) = -dt/dx**2.0*G(j)/V(j)*Vtilde(j) *A(j)*fxi(j)
+        AA(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j) *A(j)*fxi(j)
         AA(j) = theta*AA(j)
 
         BB(j) = NN(j)
-        BB(j) = BB(j) + theta*(-dt*G(j)*S(j) - dt/dx**2.0*G(j)/V(j)* &
+        BB(j) = BB(j) + theta*(-dt*G(j)*S(j) - dt_dx2 * G(j)/V(j)* &
             (Vtilde(j)  *(A(j)  *(-gxi(j))) - &
              Vtilde(j-1)*(A(j-1)*(fxi(j-1)))) )
 
-        CC(j) = -dt/dx**2.0*G(j)/V(j)*Vtilde(j-1) * A(j-1)*gxi(j-1)  
+        CC(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j-1) * A(j-1)*gxi(j-1)  
         CC(j) = theta*CC(j)
 
-        RR(j) = NO(j)*YO(j) + G(j)*P(j)*dt + (1-theta)* &
+        RR(j) = NO(j)*YO(j) + G(j)*P(j)*dt + (1. - theta)* &
             (dt*G(j)*S(j)*YO(j) + &
-             dt/dx**2.0*G(j)/V(j)* &
-            (Vtilde(j)  *(A(j)  *(fxi(j)*YO(j+1) - gxi(j)*YO(j))) - &
+             dt_dx2 * G(j)/V(j)* &
+            (Vtilde(j)  *(A(j)  *(fxi(j)*YO(j+1) - gxi(j)  *YO(j))) - &
              Vtilde(j-1)*(A(j-1)*(fxi(j-1)*YO(j) - gxi(j-1)*YO(j-1)))))
         Bstar = 0.0
         Cstar = 0.0
@@ -410,16 +406,16 @@ if (eximp == 2) then
         AA(j) = theta*AA(j)
 
         BB(j) = NN(j)
-        BB(j) = BB(j) + theta* ( -dt*G(j)*S(j) - dt/dx**2.0*G(j)/V(j)* &
+        BB(j) = BB(j) + theta* ( -dt*G(j)*S(j) - dt_dx2 * G(j)/V(j)* &
             (-Vtilde(j-1)*(A(j-1)*(fxi(j-1)))) )
 
-        CC(j) = -dt/dx**2.0*G(j)/V(j)*Vtilde(j-1) * A(j-1)*gxi(j-1)
+        CC(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j-1) * A(j-1)*gxi(j-1)
         CC(j) = theta*CC(j)
 
-        RR(j) = NO(j)*YO(j)+G(j)*P(j)*dt+(1-theta)* &
-            (dt*G(j)*S(j)*YO(j) + dt/dx**2.0*G(j)/V(j)*(- &
+        RR(j) = NO(j)*YO(j)+G(j)*P(j)*dt + (1. - theta)* &
+            (dt*G(j)*S(j)*YO(j) + dt_dx2 * G(j)/V(j)*(- &
              Vtilde(j-1)*(A(j-1)*(fxi(j-1)*YO(j) - gxi(j-1)*YO(j-1))))) + &
-             dt/dx**2.0*G(j)/V(j)*(-Vtilde(j)*Qbound*dx)
+             dt_dx2 * G(j)/V(j)*(-Vtilde(j)*Qbound*dx)
         Bstar = BB(j)
         Cstar = CC(j)
         Rstar = RR(j)
@@ -440,17 +436,17 @@ if (eximp == 2) then
         AA(j) = theta*AA(j)
 
         BB(j) = NN(j)
-        BB(j) = BB(j) + theta* (-dt*G(j)*S(j) - dt/dx**2.0*G(j)/V(j)* &
+        BB(j) = BB(j) + theta* (-dt*G(j)*S(j) - dt_dx2 * G(j)/V(j)* &
             ( -Vtilde(j-1)*(A(j-1)*(fxi(j-1)))) ) - &
-            theta*( dt/dx**2.0*G(j)/V(j)*(-Vtilde(j)*Qbound*dx))
+            theta*( dt_dx2 * G(j)/V(j)*(-Vtilde(j)*Qbound*dx))
 
-        CC(j) = -dt/dx**2.0*G(j)/V(j)*Vtilde(j-1) * A(j-1)*gxi(j-1)
+        CC(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j-1) * A(j-1)*gxi(j-1)
         CC(j) = theta*CC(j)
 
-        RR(j) = NO(j)*YO(j) + G(j)*P(j)*dt + (1 - theta)* &
-            (dt*G(j)*S(j)*YO(j) + dt/dx**2.0*G(j)/V(j)* &
+        RR(j) = NO(j)*YO(j) + G(j)*P(j)*dt + (1. - theta)* &
+            (dt*G(j)*S(j)*YO(j) + dt_dx2 * G(j)/V(j)* &
             (-Vtilde(j-1)*(A(j-1)*(fxi(j-1)*YO(j) - gxi(j-1)*YO(j-1))))) + &
-             dt/dx**2.0 * G(j)/V(j) * (-0.*Vtilde(j)*Qbound*dx)
+             dt_dx2 * G(j)/V(j) * (-0.*Vtilde(j)*Qbound*dx)
         Bstar = BB(j)
         Cstar = CC(j)
         Rstar = RR(j)
@@ -544,7 +540,7 @@ if (eximp == 2) then
         enddo
     CASE(3)
         f(j) = (Rstar + Cstar*beta(j-1)/alpha(j-1))/(Bstar + Cstar/alpha(j-1))
-        do k=1, Ngrid - 1
+        do k=1, Ngrid-1
             j = Ngrid - 1 - k + 1
             f(j) = (f(j+1) - beta(j))/alpha(j)
         enddo
@@ -913,7 +909,7 @@ double precision, intent(in), dimension(Ngrid) :: G, &
 double precision, intent(out), dimension(Ngrid) :: y1, y2
 
 integer :: j, bcbound(2)
-double precision :: f_bound1, f_bound2
+double precision :: f_bound1, f_bound2, dt_dx2
 double precision, dimension(Ngrid) :: &
     AA1, BB1, CC1, RR1, TT1, &
     AA2, BB2, CC2, RR2, TT2
@@ -923,48 +919,49 @@ double precision, dimension(Ngrid) :: &
 
 ! implicit
 j = 1
-AA1(j) = -dt/dx**2.0 * G(j)/V(j)*Vtilde(j) * A1(j)*fxi1(j) * theta
+dt_dx2 = dt/dx**2
+AA1(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j) * A1(j)*fxi1(j) * theta
 
-BB1(j) = N1N(j) + theta * ( -dt*G(j)*S1(j) - dt/dx**2.0 * G(j)/V(j) * &
+BB1(j) = N1N(j) + theta * ( -dt*G(j)*S1(j) - dt_dx2 * G(j)/V(j) * &
     Vtilde(j) * (A1(j)*(-gxi1(j))) )
 TT1(j) = theta*(-dt*G(j)*T12(j))
 CC1(j) = 0.0      
 RR1(j) = N1O(j)*Y1O(j) + G(j)*P1(j)*dt + (1 - theta) * &
-    ( dt*G(j)*S1(j)*Y1O(j) + dt/dx**2.0 * G(j)/V(j) * &
+    ( dt*G(j)*S1(j)*Y1O(j) + dt_dx2 * G(j)/V(j) * &
     Vtilde(j) * (A1(j)*(fxi1(j)*Y1O(j+1) - gxi1(j)*Y1O(j))) )
 
-AA2(j) = -dt/dx**2.0 * G(j)/V(j)*Vtilde(j) * A2(j)*fxi2(j) * theta
-BB2(j) = N2N(j) + theta * ( -dt*G(j)*S2(j) - dt/dx**2.0 * G(j)/V(j) * &
+AA2(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j) * A2(j)*fxi2(j) * theta
+BB2(j) = N2N(j) + theta * ( -dt*G(j)*S2(j) - dt_dx2 * G(j)/V(j) * &
     Vtilde(j) * (A2(j)*(-gxi2(j))) )
 TT2(j) = theta*(-dt*G(j)*T21(j))
 CC2(j) = 0.0      
 RR2(j) = N2O(j)*Y2O(j) + G(j)*P2(j)*dt + (1 - theta)* &
-    ( dt*G(j)*S2(j)*Y2O(j) + dt/dx**2.0 * G(j)/V(j) * &
+    ( dt*G(j)*S2(j)*Y2O(j) + dt_dx2 * G(j)/V(j) * &
     Vtilde(j) *(A2(j)*(fxi2(j)*Y2O(j+1) - gxi2(j)*Y2O(j))) )
 
 do j=2, NgridS(1)-1
 
-    AA1(j) = -dt/dx**2.0*G(j)/V(j)*Vtilde(j) * A1(j)*fxi1(j) * theta
-    BB1(j) = N1N(j) + theta * (  -dt*G(j)*S1(j) - dt/dx**2.0 * G(j)/V(j) * &
+    AA1(j) = -dt/dx**2 * G(j)/V(j)*Vtilde(j) * A1(j)*fxi1(j) * theta
+    BB1(j) = N1N(j) + theta * (  -dt*G(j)*S1(j) - dt_dx2 * G(j)/V(j) * &
         ( Vtilde(j)  *(A1(j)  *(-gxi1(j))) &
          -Vtilde(j-1)*(A1(j-1)*(fxi1(j-1))) )  )
     TT1(j) = theta*(-dt*G(j)*T12(j))
-    CC1(j) = -dt/dx**2.0 * G(j)/V(j)*Vtilde(j-1)*A1(j-1)*gxi1(j-1) * theta
+    CC1(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j-1)*A1(j-1)*gxi1(j-1) * theta
     RR1(j) = N1O(j)*Y1O(j) + G(j)*P1(j)*dt + (1 - theta) * &
-        (  dt*G(j)*S1(j)*Y1O(j) + dt/dx**2.0 * G(j)/V(j) * &
+        (  dt*G(j)*S1(j)*Y1O(j) + dt_dx2 * G(j)/V(j) * &
         (Vtilde(j)  *(A1(j)  *(fxi1(j)*Y1O(j+1) - gxi1(j)  *Y1O(j))) - &
         Vtilde(j-1)*(A1(j-1)*(fxi1(j-1)*Y1O(j) - gxi1(j-1)*Y1O(j-1))))  )
 enddo
 
 do j=2, NgridS(2)-1
-    AA2(j) = -dt/dx**2.0*G(j)/V(j)*Vtilde(j) *A2(j)*fxi2(j) * theta
-    BB2(j) = N2N(j) + theta * ( -dt*G(j)*S2(j) - dt/dx**2.0 * G(j)/V(j) * &
+    AA2(j) = -dt/dx**2 * G(j)/V(j)*Vtilde(j) *A2(j)*fxi2(j) * theta
+    BB2(j) = N2N(j) + theta * ( -dt*G(j)*S2(j) - dt_dx2 * G(j)/V(j) * &
         (Vtilde(j)  *(A2(j)  *(-gxi2(j))) &
         -Vtilde(j-1)*(A2(j-1)*(fxi2(j-1)))) )
     TT2(j) = theta*(-dt*G(j)*T21(j))
-    CC2(j) = -dt/dx**2.0*G(j)/V(j)*Vtilde(j-1) *A2(j-1)*gxi2(j-1) * theta
+    CC2(j) = -dt/dx**2 * G(j)/V(j)*Vtilde(j-1) *A2(j-1)*gxi2(j-1) * theta
     RR2(j) = N2O(j)*Y2O(j) + G(j)*P2(j)*dt + (1 - theta) * &
-        (  dt*G(j)*S2(j)*Y2O(j) + dt/dx**2.0 * G(j)/V(j) * &
+        (  dt*G(j)*S2(j)*Y2O(j) + dt_dx2 * G(j)/V(j) * &
         (Vtilde(j)  *(A2(j)  *(fxi2(j)*Y2O(j+1) - gxi2(j)  *Y2O(j))) - &
          Vtilde(j-1)*(A2(j-1)*(fxi2(j-1)*Y2O(j) - gxi2(j-1)*Y2O(j-1))))  )
 enddo
@@ -972,14 +969,14 @@ enddo
 ! bc type 1 (yb)
 if (bctype(1) == 1) then
     j = Ngrids(1)
-    AA1(j) = -dt/dx**2.0*G(j)/V(j)*Vtilde(j) *A1(j)*fxi1(j) * theta
-    BB1(j) = N1N(j) + theta * ( -dt*G(j)*S1(j) - dt/dx**2.0 * G(j)/V(j) * &
+    AA1(j) = -dt/dx**2 * G(j)/V(j)*Vtilde(j) *A1(j)*fxi1(j) * theta
+    BB1(j) = N1N(j) + theta * ( -dt*G(j)*S1(j) - dt_dx2 * G(j)/V(j) * &
         (Vtilde(j)  *(A1(j)  *(-gxi1(j))) - &
          Vtilde(j-1)*(A1(j-1)*(fxi1(j-1)))) )
     TT1(j) = theta*(-dt*G(j)*T12(j))
-    CC1(j) = -dt/dx**2.0 * G(j)/V(j)*Vtilde(j-1) * A1(j-1)*gxi1(j-1) * theta
+    CC1(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j-1) * A1(j-1)*gxi1(j-1) * theta
     RR1(j) = N1O(j)*Y1O(j) + G(j)*P1(j)*dt + (1 - theta)* &
-        (  dt*G(j)*S1(j)*Y1O(j) + dt/dx**2.0 * G(j)/V(j) * &
+        (  dt*G(j)*S1(j)*Y1O(j) + dt_dx2 * G(j)/V(j) * &
         (Vtilde(j)  *(A1(j)  *(fxi1(j)*Y1O(j+1) - gxi1(j)  *Y1O(j))) - &
          Vtilde(j-1)*(A1(j-1)*(fxi1(j-1)*Y1O(j) - gxi1(j-1)*Y1O(j-1))))  )
 endif
@@ -988,28 +985,28 @@ endif
 if (bctype(1) == 2) then
     j = Ngrids(1)
     AA1(j) = 0.0      
-    BB1(j) = N1N(j) + theta * ( -dt*G(j)*S1(j) - dt/dx**2.0 * G(j)/V(j) * &
+    BB1(j) = N1N(j) + theta * ( -dt*G(j)*S1(j) - dt_dx2 * G(j)/V(j) * &
         (Vtilde(j)  *(A1(j)  *(-0.0*gxi1(j))) - &
          Vtilde(j-1)*(A1(j-1)*(fxi1(j-1)))) )
     TT1(j) = theta*(-dt*G(j)*T12(j))
-    CC1(j) = -dt/dx**2.0*G(j)/V(j)*Vtilde(j-1) * A1(j-1)*gxi1(j-1) * theta
+    CC1(j) = -dt/dx**2 * G(j)/V(j)*Vtilde(j-1) * A1(j-1)*gxi1(j-1) * theta
     RR1(j) = N1O(j)*Y1O(j) + G(j)*P1(j)*dt + (1 - theta)* &
-        (  dt*G(j)*S1(j)*Y1O(j) + dt/dx**2.0 * G(j)/V(j) * &
+        (  dt*G(j)*S1(j)*Y1O(j) + dt_dx2 * G(j)/V(j) * &
         (-Vtilde(j-1)*(A1(j-1)*(fxi1(j-1)*Y1O(j) - gxi1(j-1)*Y1O(j-1))))  ) + &
-        dt/dx**2.0 * G(j)/V(j) * (-Vtilde(j)*Qbound1*dx)
+        dt_dx2 * G(j)/V(j) * (-Vtilde(j)*Qbound1*dx)
 endif
 
 ! bc type 1 (yb)
 if (bctype(2) == 1) then
     j = Ngrids(2)
-    AA2(j) = -dt/dx**2.0 * G(j)/V(j)*Vtilde(j)*A2(j)*fxi2(j) * theta
-    BB2(j) = N2N(j) + theta * ( -dt*G(j)*S2(j) - dt/dx**2.0 * G(j)/V(j) * &
+    AA2(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j)*A2(j)*fxi2(j) * theta
+    BB2(j) = N2N(j) + theta * ( -dt*G(j)*S2(j) - dt_dx2 * G(j)/V(j) * &
         (Vtilde(j)  *(A2(j)  *(-gxi2(j))) - &
          Vtilde(j-1)*(A2(j-1)*(fxi2(j-1)))) )
     TT2(j) = theta*(-dt*G(j)*T21(j))
-    CC2(j) = -dt/dx**2.0 * G(j)/V(j)*Vtilde(j-1)*A2(j-1)*gxi2(j-1) * theta
+    CC2(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j-1)*A2(j-1)*gxi2(j-1) * theta
     RR2(j) = N2O(j)*Y2O(j) + G(j)*P2(j)*dt + (1 - theta) * &
-        (  dt*G(j)*S2(j)*Y2O(j) + dt/dx**2.0 * G(j)/V(j) * &
+        (  dt*G(j)*S2(j)*Y2O(j) + dt_dx2 * G(j)/V(j) * &
         (Vtilde(j)  *(A2(j)  *(fxi2(j)  *Y2O(j+1) - gxi2(j)*Y2O(j))) - &
          Vtilde(j-1)*(A2(j-1)*(fxi2(j-1)*Y2O(j) - gxi2(j-1)*Y2O(j-1))))  )
 endif
@@ -1018,15 +1015,15 @@ endif
 if (bctype(2) == 2) then
     j = Ngrids(2)
     AA2(j) = 0.0
-    BB2(j) = N2N(j) + theta * ( -dt*G(j)*S2(j) - dt/dx**2.0 * G(j)/V(j) * &
+    BB2(j) = N2N(j) + theta * ( -dt*G(j)*S2(j) - dt_dx2 * G(j)/V(j) * &
         (Vtilde(j)  *(A2(j)  *(-0.0*gxi2(j))) - &
          Vtilde(j-1)*(A2(j-1)*(fxi2(j-1))))  )
     TT2(j) = theta*(-dt*G(j)*T21(j))
-    CC2(j) = -dt/dx**2.0 * G(j)/V(j)*Vtilde(j-1)*A2(j-1)*gxi2(j-1) * theta
+    CC2(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j-1)*A2(j-1)*gxi2(j-1) * theta
     RR2(j) = N2O(j)*Y2O(j) + G(j)*P2(j)*dt + (1 - theta)* &
-        (  dt*G(j)*S2(j)*Y2O(j) + dt/dx**2.0 * G(j)/V(j) * &
+        (  dt*G(j)*S2(j)*Y2O(j) + dt_dx2 * G(j)/V(j) * &
         (-Vtilde(j-1)*(A2(j-1)*(fxi2(j-1)*Y2O(j) - gxi2(j-1)*Y2O(j-1))))  ) + &
-        dt/dx**2.0 * G(j)/V(j)*(-Vtilde(j)*Qbound2*dx)
+        dt_dx2 * G(j)/V(j)*(-Vtilde(j)*Qbound2*dx)
 endif
 
 ! Additionals
