@@ -81,7 +81,7 @@ double precision, intent(out)  , dimension(Ngrid) :: y_out, Q_out, adcmp_term
 integer :: NgridS, eximp, j
 double precision :: dx, dt, theta, ybound, Qbound, Mbound(3)
 double precision, dimension(Ngrid) :: x_b, G, H, A, NN, NO, dum1, &
-    Rsource, Rsource2, Pdot_1, Pdot_2, Vtilde, P_new, ydummy, xi, fxi, gxi
+    Rsource, Rsource2, Pdot_1, Pdot_2, Vtilde, P_new, ydummy, ytmp, xi, fxi, gxi
 double precision, dimension(Ngridb) :: dum1b
 
 do j=1, Ngrid
@@ -107,7 +107,7 @@ CASE(31: 33)
     eximp = 2
 END SELECT
    
-! Map V*M, G, H on tildes
+! Map V*M on tildes
 
 dum1 = V*M
 call GRID2GRID(1, x, dum1, Vtilde, Ngrid, 1)
@@ -128,26 +128,18 @@ Pdot_1 = 0.
 Pdot_2 = 0.
 
 if (sum(mphit) == 0.) then
-    dum1 = V*M*N*x*YO
-    call DERIV(x, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
-    call GRID2GRID(2, x_b, ydummy, Pdot_1, Ngrid, 0)
-    Pdot_1 = Pdot_1/W
-    dum1 = G*H*YO
-    call DERIV(x, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
-    call GRID2GRID(2, x_b, ydummy, Pdot_2, Ngrid, 0)
-    Pdot_2 = Pdot_2*x/G
+    ytmp = YO
 else
-    dum1 = V*M*N*x*mphit
-    call DERIV(x, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
-    call GRID2GRID(2, x_b, ydummy, Pdot_1, Ngrid, 0)
-    Pdot_1 = Pdot_1/W
-    dum1 = G*H*mphit
-    call DERIV(x, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
-    call GRID2GRID(2, x_b, ydummy, Pdot_2, Ngrid, 0)
-    Pdot_2 = Pdot_2*x/G
+    ytmp = mphit
 endif
-
-call DERIV (x, x_b, 1, YO, ydummy, 1, Ngrid, 1)
+dum1 = V*M*N*x*ytmp
+call DERIV(x, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
+call GRID2GRID(2, x_b, ydummy, Pdot_1, Ngrid, 0)
+Pdot_1 = Pdot_1/W
+dum1 = G*H*ytmp
+call DERIV(x, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
+call GRID2GRID(2, x_b, ydummy, Pdot_2, Ngrid, 0)
+Pdot_2 = Pdot_2*x/G
 
 do j=1, Ngrid
     NN(j) = GN(j)*HN(j)
@@ -227,7 +219,7 @@ END SELECT
 ! Vtilde = (V*M)_shifted*G11
 ! 1/G d/dt (N*y) + 1/V d/dx (Vtilde*(-A/dx*(fxi, gxi, ntilde))) = S*y + P 
 
-dum1b = GN(1: Ngridb)*theta + GO(1: Ngridb)*(1 - theta)
+dum1b = GN(1: Ngridb)*theta + GO(1: Ngridb)*(1. - theta)
 call SOLVER(x(1: Ngridb), dx, dt, dum1b, & 
     NN(1: Ngridb), NO(1: Ngridb), V(1: Ngridb), & 
     Vtilde(1: Ngridb), A(1: Ngridb), fxi(1: Ngridb), & 
@@ -523,28 +515,13 @@ if (eximp == 2) then
 
     SElECT CASE(bcbound)
     CASE(1)
-!        f(j-1)=(f_bound-beta(j-1))/alpha(j-1)
-! This one should be appropriate with extrapolation... but now go back to real b.c.
-!        f(j-1)=(2./3.*f_bound-beta(j-1))/(alpha(j-1)-1./3.)
         f(j-1) = (f_bound-beta(j-1))/alpha(j-1)
         do k=1, Ngrid-2
             j = Ngrid - 2 - k + 1
             f(j) = (f(j+1) - beta(j))/alpha(j)
         enddo
         f(Ngrid) = f_bound
-    CASE(2)
-        f(j) = (Rstar + Cstar*beta(j-1)/alpha(j-1))/(Bstar + Cstar/alpha(j-1))
-        do k=1, Ngrid-1
-            j = Ngrid - 1 - k + 1
-            f(j) = (f(j+1) - beta(j))/alpha(j)
-        enddo
-    CASE(3)
-        f(j) = (Rstar + Cstar*beta(j-1)/alpha(j-1))/(Bstar + Cstar/alpha(j-1))
-        do k=1, Ngrid-1
-            j = Ngrid - 1 - k + 1
-            f(j) = (f(j+1) - beta(j))/alpha(j)
-        enddo
-    CASE(4)
+    CASE(2:4)
         f(j) = (Rstar + Cstar*beta(j-1)/alpha(j-1))/(Bstar + Cstar/alpha(j-1))
         do k=1, Ngrid-1
             j = Ngrid - 1 - k + 1
@@ -597,9 +574,9 @@ end function GETPEI
 
 !---------------------------------------------------------------------
 subroutine RUNEQTIMP(GN, H1N, H2N, GO, H1O, H2O, & 
-    Y1O, Y2O, N1, N2, W1, W2, V, M, G11, A1, A2, B1, B2, R1, R2, &
-    S1, S2, P1, P2, T12, T21, rbdot, bbdot, Ngridb, Ngrid, dx, dt, &
-    x, imethod, bctype, bcvalue, y1, y2, Q1, Q2)
+    Y1O, Y2O, N1, N2, W1, W2, V, M, G11, A1, A2, B1_in, B2_in, R1, R2, &
+    S1_in, S2_in, P1, P2, T12, T21, rbdot, bbdot, Ngridb, Ngrid, dx, dt, &
+    x, imethod, bctype, bcvalue, y1, y2, Q1_out, Q2_out)
 !---------------------------------------------------------------------
 ! WARNING: at the moment Qb is explicit, no option for QNNB, QETB, QITB is given at the moment!
 !
@@ -667,15 +644,15 @@ implicit none
 integer, intent(in) :: Ngrid, imethod, Ngridb, bctype(2)
 double precision, intent(in) :: rbdot, bbdot, dx, dt
 double precision, intent(in), dimension(Ngrid) :: GN, H1N, H2N, GO, &
-    H1O, H2O, Y1O, Y2O, N1, N2, W1, W2, V, M, G11, B1, B2, &
-    R1, R2, S1, S2, P1, P2, x, bcvalue(2)
-double precision, intent(out)  , dimension(Ngrid) :: T12, T21, Q1, Q2
+    H1O, H2O, Y1O, Y2O, N1, N2, W1, W2, V, M, G11, B1_in, B2_in, &
+    R1, R2, S1_in, S2_in, P1, P2, x, bcvalue(2)
+double precision, intent(out)  , dimension(Ngrid) :: T12, T21, Q1_out, Q2_out
 double precision, intent(inout), dimension(Ngrid) :: A1, A2, y1, y2
 
 integer :: j, NgridS(2)
 double precision :: theta, ybound1, Qbound1, ybound2, Qbound2
 double precision, dimension(Ngrid) :: x_b, & 
-    B1_new, S1_new, P1_new, B2_new, S2_new, P2_new, &
+    S1_new, P1_new, S2_new, P2_new, &
     Vtilde, Rsource1, Rsource2, Rsource3, Rsource4, &
     N1N, N1O, N2N, N2O, ydummy, &
     xi1, fxi1, gxi1, xi2, fxi2, gxi2, &
@@ -722,8 +699,8 @@ do j=1, Ngrid
     Rsource4(j) = -Rsource4(j)/V(j)
     P2_new(j) = P2(j) + Rsource4(j)
     T21(j) = T12(j)
-    S1_new(j) = S1(j)-T12(j)
-    S2_new(j) = S2(j)-T21(j)
+    S1_new(j) = S1_in(j) - T12(j)
+    S2_new(j) = S2_in(j) - T21(j)
 enddo
 
 ! Compute additionals
@@ -754,16 +731,8 @@ do j=1, Ngrid
     N1O(j) = GO(j)*H1O(j)
     N2O(j) = GO(j)*H2O(j)
     Vtilde(j) = Vtilde(j)*G11(j)
-! B = B + 1/G11*(bdot*V/W*N*x+(rdot-bdot)*H/M*x)   for implicit
-    B1_new(j) = B1(j)
-! S = S - bdot*M*N*x*d/dx(V/W) - (rdot-bdot)/V*G*H*d/dx (x*V/G)  for implicit
-    S1_new(j) = S1_new(j)
 ! P = P + bdot/W*d/dx (V*M*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)   for explicit
     P1_new(j) = P1_new(j) + bbdot*Pdot_11(j) + (rbdot - bbdot)*Pdot_21(j)
-! B = B + 1/G11*(bdot*V/W*N*x+(rdot-bdot)*H/M*x)      for implicit
-    B2_new(j) = B2(j)
-! S = S - bdot*M*N*x*d/dx(V/W) - (rdot-bdot)/V*G*H*d/dx (x*V/G)  for implicit
-    S2_new(j) = S2_new(j)
 ! P = P + bdot/W*d/dx (V*M*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)   for explicit
     P2_new(j) = P2_new(j) + bbdot*Pdot_12(j) + (rbdot - bbdot)*Pdot_22(j)
 enddo
@@ -794,17 +763,17 @@ SELECT CASE(imethod)
 
 CASE(11, 21, 31)
     do j=1, Ngrid
-        xi1(j) = dx*B1_new(j)/A1(j)
+        xi1(j) = dx*B1_in(j)/A1(j)
         fxi1(j) = 1. + 0.5*xi1(j)
         gxi1(j) = 1. - 0.5*xi1(j)
-        xi2(j)  = dx*B2_new(j)/A2(j)
+        xi2(j)  = dx*B2_in(j)/A2(j)
         fxi2(j) = 1. + 0.5*xi2(j)
         gxi2(j) = 1. - 0.5*xi2(j)
     enddo
 
 CASE(12, 22, 32)
     do j=1, Ngrid
-        xi1(j) = dx*B1_new(j)/A1(j)
+        xi1(j) = dx*B1_in(j)/A1(j)
         if (xi1(j) < -10.) then
             fxi1(j) = 0
         else if (xi1(j) < 0) then
@@ -816,7 +785,7 @@ CASE(12, 22, 32)
         endif
         gxi1(j) = fxi1(j)-xi1(j)
 
-        xi2(j) = dx*B2_new(j)/A2(j)
+        xi2(j) = dx*B2_in(j)/A2(j)
         if (xi2(j) < -10.) then
             fxi2(j) = 0
         else if (xi2(j) < 0) then
@@ -831,8 +800,8 @@ CASE(12, 22, 32)
 
 CASE(13, 23, 33)
     do j=1, Ngrid
-        xi1(j) = dx*B1_new(j)/A1(j)
-        xi2(j) = dx*B2_new(j)/A2(j)
+        xi1(j) = dx*B1_in(j)/A1(j)
+        xi2(j) = dx*B2_in(j)/A2(j)
         if (xi1(j) == 0.) then
             fxi1(j) = 1.
             gxi1(j) = 1.
@@ -868,23 +837,23 @@ call SOLVERIMP(dx, dt, &
 
 ! Compute flux from solution, flux is on shifted grid
 do j=1, Ngridb-1
-    Q1(j) = G11(j)*(-A1(j)/dx*(fxi1(j)*y1(j+1) - gxi1(j)*y1(j)) + R1(j))
-    Q2(j) = G11(j)*(-A2(j)/dx*(fxi2(j)*y2(j+1) - gxi2(j)*y2(j)) + R2(j))
+    Q1_out(j) = G11(j)*(-A1(j)/dx*(fxi1(j)*y1(j+1) - gxi1(j)*y1(j)) + R1(j))
+    Q2_out(j) = G11(j)*(-A2(j)/dx*(fxi2(j)*y2(j+1) - gxi2(j)*y2(j)) + R2(j))
 enddo
 if (bctype(1) == 1) then
-    call EXTRAP(x(1: NgridS(1)), Q1(1: NgridS(1)), x(Ngridb), & 
-        NgridS(1), Q1(Ngridb), 1, NgridS(1))
+    call EXTRAP(x(1: NgridS(1)), Q1_out(1: NgridS(1)), x(Ngridb), & 
+        NgridS(1), Q1_out(Ngridb), 1, NgridS(1))
 else if (bctype(1) == 2) then
 ! Restore G11 in Qbound
-    Q1(Ngridb) = Qbound1*G11(Ngridb)
+    Q1_out(Ngridb) = Qbound1*G11(Ngridb)
 endif
 
 if (bctype(2) == 1) then
-    call EXTRAP(x(1: NgridS(2)), Q2(1: NgridS(2)), x(Ngridb), & 
-        NgridS(2), Q2(Ngridb), 1, NgridS(2))
+    call EXTRAP(x(1: NgridS(2)), Q2_out(1: NgridS(2)), x(Ngridb), & 
+        NgridS(2), Q2_out(Ngridb), 1, NgridS(2))
 else if (bctype(2) == 2) then
 ! Restore G11 in Qbound
-    Q2(Ngridb) = Qbound2*G11(Ngridb)
+    Q2_out(Ngridb) = Qbound2*G11(Ngridb)
 endif
 
 return
