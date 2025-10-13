@@ -1,6 +1,6 @@
 !---------------------------------------------------------------------
-subroutine RUNEQ(GN, HN, GO, HO, YO, N, W, V, M, G11, A, B, R, S, P, &
-    rbdot, bbdot, Ngridb, Ngrid, dx, dt, roc, &
+subroutine RUNEQ(GN, HN, GO, HO, YO, N, W, V, M, G11, A_in, B, R, S, P, &
+    rbdot, bbdot, Ngridb, Ngrid, dx, dt, &
     x, imethod, bctype, bc_values, y, Q, adcmp_term, mphit)
 !---------------------------------------------------------------------
 !
@@ -75,16 +75,14 @@ implicit none
 integer, intent(in) :: Ngrid, imethod, Ngridb, bctype
 double precision, intent(in) :: rbdot, bbdot, bc_values(5)
 double precision, intent(in), dimension(Ngrid) :: GN, HN, GO, HO, &
-   YO, V, G11, B, R, S, P, mphit, x, M, N, W
+   YO, V, G11, A_in, B, R, S, P, mphit, x, M, N, W
 double precision, intent(out)  , dimension(Ngrid) :: y, Q, adcmp_term
-double precision, intent(inout), dimension(Ngrid) :: A
 
 integer :: NgridS, eximp, j
-double precision :: dx, dt, theta, ybound, Qbound, roc, Mbound(3)
-double precision, dimension(Ngrid) :: x_b, G, H, NN, NO, dum1, &
-    Rsource, Rsource2, rbgxhat, &
-    Pdot_1, Pdot_2, VNx_Wtilde, Hx_Mtilde, Vtilde, Mtilde, Vtilde1, &
-    Gtilde, Htilde, B_new, S_new, P_new, ydummy, ydummy2, xi, fxi, gxi
+double precision :: dx, dt, theta, ybound, Qbound, Mbound(3)
+double precision, dimension(Ngrid) :: x_b, G, H, A, NN, NO, dum1, &
+    Rsource, Rsource2, Pdot_1, Pdot_2, Vtilde, &
+    B_new, S_new, P_new, ydummy, xi, fxi, gxi
 double precision, dimension(Ngridb) :: dum1b
 
 do j=1, Ngrid
@@ -94,10 +92,10 @@ do j=1, Ngrid
 enddo
 
 do j=1, Ngrid
-    if (A(j) <= 0.0) A(j) = 1.E-16
+    A(j) = max(A_in(j), 1.E-16)
 enddo
 
-!Define explicit or implicit
+! Define explicit or implicit; default is imethod=22 (INUME1-4 in const.f90)
 SELECT CASE(imethod)
 CASE(11: 13)
     theta = 0.
@@ -110,20 +108,10 @@ CASE(31: 33)
     eximp = 2
 END SELECT
    
-!Map V*M, G, H on tildes
+! Map V*M, G, H on tildes
 
 dum1 = V*M
-call GRID2GRID(1, x, dum1,     Vtilde, Ngrid, 1)
-dum1 = V*N*x/W
-call GRID2GRID(1, x, dum1, VNx_Wtilde, Ngrid, 1)
-dum1 = H*x/M 
-call GRID2GRID(1, x, dum1,  Hx_Mtilde, Ngrid, 1)
-call GRID2GRID(1, x, V,       Vtilde1, Ngrid, 1)
-call GRID2GRID(1, x, M,        Mtilde, Ngrid, 1)
-dum1 = GN*theta + GO*(1-theta)
-call GRID2GRID(1, x, dum1,     Gtilde, Ngrid, 1)
-dum1 = HN*theta + HO*(1-theta)
-call GRID2GRID(1, x, dum1,     Htilde, Ngrid, 1)
+call GRID2GRID(1, x, dum1, Vtilde, Ngrid, 1)
 
 ! Compute source: Rsource = - 1/V d/dx (V*M*G11*R), Rsource is on main grid
 do j=1, Ngrid
@@ -161,7 +149,6 @@ else
 endif
 
 call DERIV (x, x_b, 1, YO, ydummy, 1, Ngrid, 1)
-call GRID2GRID(2, x_b, ydummy, ydummy2, Ngrid, 0)
 
 do j=1, Ngrid
     NN(j) = GN(j)*HN(j)
@@ -173,10 +160,10 @@ do j=1, Ngrid
     S_new(j) = S(j)
 ! and P = P + bdot/W*d/dx (V*M*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)      for explicit
     P_new(j) = P_new(j) + bbdot*Pdot_1(j) + (rbdot - bbdot)*Pdot_2(j)
-    adcmp_term(j)= bbdot*Pdot_1(j) + (rbdot - bbdot)*Pdot_2(j)   !only for FP
+    adcmp_term(j) = bbdot*Pdot_1(j) + (rbdot - bbdot)*Pdot_2(j)   !only for FP
 enddo
 
-!Check boundary condition, note that Qbound = Qbound/G11(b) since G11 is absorbed in Vtilde
+! Check boundary condition, note that Qbound = Qbound/G11(b) since G11 is absorbed in Vtilde
 Mbound = 0.
 SELECT CASE(bctype)
 CASE(1)
@@ -199,7 +186,7 @@ CASE(4)
     Qbound = bc_values(2)/G11(Ngridb)
 END SELECT
  
-!Define cd, or power law
+! Define cd, or power law
 SELECT CASE(imethod)
 CASE(11, 21, 31)
     do j=1, Ngrid
@@ -240,11 +227,10 @@ CASE(13, 23, 33)
 
 END SELECT
 
-!  Call solver with this equation, note that A and B are on shifted grids
+! Call solver with this equation, note that A and B are on shifted grids
 !
 ! Vtilde = (V*M)_shifted*G11
-!
-!    1/G d/dt (N*y) + 1/V d/dx (Vtilde*(-A/dx*(fxi, gxi, ntilde))) = S*y + P 
+! 1/G d/dt (N*y) + 1/V d/dx (Vtilde*(-A/dx*(fxi, gxi, ntilde))) = S*y + P 
 
 dum1b = GN(1: Ngridb)*theta + GO(1: Ngridb)*(1 - theta)
 call SOLVER(x(1: Ngridb), dx, dt, dum1b, & 
@@ -473,7 +459,7 @@ if (eximp == 2) then
 
 endif ! Implicit
 
-!Additionals
+! Additionals
 f_bound = ybound
 bcbound = bctype
 
@@ -514,7 +500,7 @@ double precision, dimension(Ngrid) :: alpha, beta
 alpha = 0.
 beta  = 0.
 
-!Explicit
+! Explicit
 if (eximp == 1) then
     do j = 1, NgridS
         f(j) = R(j)/B(j)
@@ -542,7 +528,7 @@ if (eximp == 2) then
     SElECT CASE(bcbound)
     CASE(1)
 !        f(j-1)=(f_bound-beta(j-1))/alpha(j-1)
-!THis one should be appropriate with extrapolation... but now go back to real b.c.
+! This one should be appropriate with extrapolation... but now go back to real b.c.
 !        f(j-1)=(2./3.*f_bound-beta(j-1))/(alpha(j-1)-1./3.)
         f(j-1) = (f_bound-beta(j-1))/alpha(j-1)
         do k=1, Ngrid-2
@@ -606,7 +592,7 @@ if (t1 == 0. .and. t2 /= 0.) then
     endif
 endif
 
-!This will reflect equipartition in PETOT and PITOT after equations are solved, for plotting and post-processing.
+! This will reflect equipartition in PETOT and PITOT after equations are solved, for plotting and post-processing.
 PET(J) = PET(J) - GETPEI*t2/TE(J)
 PIT(J) = PIT(J) + GETPEI*t2/TI(J)
 
@@ -617,7 +603,7 @@ end function GETPEI
 subroutine RUNEQTIMP(GN, H1N, H2N, GO, H1O, H2O, & 
     Y1O, Y2O, N1, N2, W1, W2, V, M, G11, A1, A2, B1, B2, R1, R2, &
     S1, S2, P1, P2, T12, T21, rbdot, bbdot, Ngridb, Ngrid, dx, dt, &
-    roc, x, imethod, bctype, bcvalue, y1, y2, Q1, Q2)
+    x, imethod, bctype, bcvalue, y1, y2, Q1, Q2)
 !---------------------------------------------------------------------
 ! WARNING: at the moment Qb is explicit, no option for QNNB, QETB, QITB is given at the moment!
 !
@@ -683,7 +669,7 @@ use numerical_tools, only: deriv, extrap, grid2grid
 implicit none
 
 integer, intent(in) :: Ngrid, imethod, Ngridb, bctype(2)
-double precision, intent(in) :: rbdot, bbdot, dx, dt, roc
+double precision, intent(in) :: rbdot, bbdot, dx, dt
 double precision, intent(in), dimension(Ngrid) :: GN, H1N, H2N, GO, &
     H1O, H2O, Y1O, Y2O, N1, N2, W1, W2, V, M, G11, B1, B2, &
     R1, R2, S1, S2, P1, P2, x, bcvalue(2)
@@ -694,9 +680,7 @@ integer :: j, NgridS(2)
 double precision :: theta, ybound1, Qbound1, ybound2, Qbound2
 double precision, dimension(Ngrid) :: x_b, & 
     B1_new, S1_new, P1_new, B2_new, S2_new, P2_new, &
-    Vtilde, Mtilde, Vtilde1, Gtilde, Htilde1, Htilde2, &
-    VNx_Wtilde1, VNx_Wtilde2, Hx_Mtilde1, Hx_Mtilde2, &
-    Rsource1, Rsource2, Rsource3, Rsource4, &
+    Vtilde, Rsource1, Rsource2, Rsource3, Rsource4, &
     N1N, N1O, N2N, N2O, ydummy, &
     xi1, fxi1, gxi1, xi2, fxi2, gxi2, &
     Pdot_11, Pdot_12, Pdot_21, Pdot_22
@@ -708,7 +692,7 @@ do j=1, Ngrid
     x_b(j) = x(j) + dx/2.
 enddo
 
-!Define explicit or implicit
+! Define explicit or implicit
 SELECT CASE(imethod)
 CASE(21: 23)
     theta = 1
@@ -716,21 +700,12 @@ CASE(31: 33)
     theta = 0.5
 END SELECT
 
-!Map V*M, G, H on tildes
+! Map V*M, G, H on tildes
 ! So B = B + 1/G11*(bdot*V/W*N*x+(rdot-bdot)*H/M*x)                           for implicit
 ! So S = S - bdot*M*N*x*d/dx(V/W) - (rdot-bdot)/V*G*H*d/dx (x*V/G)      for implicit
 ! and P = P + bdot/W*d/dx (V*M*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)         for explicit
 
-call GRID2GRID(1, x, V*M,            Vtilde, Ngrid, 1)
-call GRID2GRID(1, x, V*N1*x/W1, VNx_Wtilde1, Ngrid, 1)
-call GRID2GRID(1, x, V*N2*x/W2, VNx_Wtilde2, Ngrid, 1)
-call GRID2GRID(1, x, H1N*x/M  ,  Hx_Mtilde1, Ngrid, 1)
-call GRID2GRID(1, x, H2N*x/M  ,  Hx_Mtilde2, Ngrid, 1)
-call GRID2GRID(1, x, V,             Vtilde1, Ngrid, 1)
-call GRID2GRID(1, x, M,              Mtilde, Ngrid, 1)
-call GRID2GRID(1, x, GN *theta + GO *(1 - theta), Gtilde , Ngrid, 1)
-call GRID2GRID(1, x, H1N*theta + H1O*(1 - theta), Htilde1, Ngrid, 1)
-call GRID2GRID(1, x, H2N*theta + H2O*(1 - theta), Htilde2, Ngrid, 1)
+call GRID2GRID(1, x, V*M, Vtilde, Ngrid, 1)
  
 ! Compute source: Rsource = - 1/V d/dx (V*M*G11*R), Rsource is on main grid
 do j=1, Ngrid
@@ -797,7 +772,7 @@ do j=1, Ngrid
     P2_new(j) = P2_new(j) + bbdot*Pdot_12(j) + (rbdot - bbdot)*Pdot_22(j)
 enddo
 
-!Check boundary condition, note that Qbound = Qbound/G11(b) since G11 is absorbed in Vtilde
+! Check boundary condition, note that Qbound = Qbound/G11(b) since G11 is absorbed in Vtilde
 if (bctype(1) == 1) then
     ybound1 = y1(Ngridb)
     NgridS(1) = Ngridb - 1
@@ -818,7 +793,7 @@ else if (bctype(2) == 2) then
     Qbound2 = bcvalue(2)/G11(Ngridb)
 endif 
       
-!Define cd, or power law
+! Define cd, or power law
 SELECT CASE(imethod)
 
 CASE(11, 21, 31)
@@ -904,7 +879,7 @@ if (bctype(1) == 1) then
     call EXTRAP(x(1: NgridS(1)), Q1(1: NgridS(1)), x(Ngridb), & 
         NgridS(1), Q1(Ngridb), 1, NgridS(1))
 else if (bctype(1) == 2) then
-!Restore G11 in Qbound
+! Restore G11 in Qbound
     Q1(Ngridb) = Qbound1*G11(Ngridb)
 endif
 
@@ -912,7 +887,7 @@ if (bctype(2) == 1) then
     call EXTRAP(x(1: NgridS(2)), Q2(1: NgridS(2)), x(Ngridb), & 
         NgridS(2), Q2(Ngridb), 1, NgridS(2))
 else if (bctype(2) == 2) then
-!Restore G11 in Qbound
+! Restore G11 in Qbound
     Q2(Ngridb) = Qbound2*G11(Ngridb)
 endif
 
@@ -1054,7 +1029,7 @@ if (bctype(2) == 2) then
         dt/dx**2.0 * G(j)/V(j)*(-Vtilde(j)*Qbound2*dx)
 endif
 
-!Additionals
+! Additionals
 f_bound1 = ybound1
 f_bound2 = ybound2
 bcbound = bctype
