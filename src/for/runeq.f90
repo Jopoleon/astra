@@ -182,25 +182,24 @@ gxi = fxi - xi
 ! 1/G d/dt (N*y) + 1/V d/dx (Vtilde*(-A/dx*(fxi, gxi, ntilde))) = S*y + P 
 
 dum1b = GN(1: Ngridb)*theta + GO(1: Ngridb)*(1. - theta)
-call SOLVER(x(1: Ngridb), dx, dt, dum1b, &
-    NN(1: Ngridb), NO(1: Ngridb), &
+call SOLVER(dx, dt, dum1b, NN(1: Ngridb), NO(1: Ngridb), &
     V(1: Ngridb), Vtilde(1: Ngridb), A(1: Ngridb), &
     fxi(1: Ngridb), gxi(1: Ngridb), &
     Src_y_in(1: Ngridb), Src_new(1: Ngridb), &
     Ngridb, theta, eximp, YO(1: Ngridb), &
-    f_bound, Qbound, bctype, y_out(1: Ngridb), Mbound)
+    f_bound, Qbound, bctype, Mbound, y_out(1: Ngridb))
 
-! Compute flux from solution, flux is on shifted grid
+! Compute flux from solution (flux is on shifted grid)
 do j=1, Ngridb-1
-    Q_out(j) = G11(j)*(-A(j)/dx*(fxi(j)*y_out(j+1) - gxi(j)*y_out(j)) + R_in(j))
+    Q_out(j) = G11(j)*(-A(j)/dx * (fxi(j)*y_out(j+1) - gxi(j)*y_out(j)) + R_in(j))
 enddo
 
 SELECT CASE(bctype)
 CASE(1, 3)
     call EXTRAP(x(1: Ngridb-1), Q_out(1: Ngridb-1), x(Ngridb), Ngridb-1, Q_out(Ngridb), 2, Ngridb-1)
-CASE(2) ! Restore G11 in Qbound
+CASE(2)
     Q_out(Ngridb) = Qbound*G11(Ngridb)
-CASE(4) ! Restore G11 in Qbound
+CASE(4)
     Q_out(Ngridb) = Qbound*G11(Ngridb)*y_out(Ngridb)
 END SELECT
 
@@ -208,8 +207,8 @@ return
 end subroutine RUNEQ
 
 !---------------------------------------------------------------------
-subroutine SOLVER(x, dx, dt, G, NN, NO, V, Vtilde, A, fxi, gxi, Src_y_in, Src_in, & 
-    Ngridb, theta, eximp, YO, f_bound, Qbound, bctype, y_out, Mbound)
+subroutine SOLVER(dx, dt, G, NN, NO, V, Vtilde, A, fxi, gxi, Src_y_in, Src_in, & 
+    Ngridb, theta, eximp, YO, f_bound, Qbound, bctype, Mbound, y_out)
 !---------------------------------------------------------------------
 ! Build up matrices to be passed ot TRIDIAGS
 
@@ -219,7 +218,7 @@ integer, intent(in) :: Ngridb, bctype, eximp
 double precision, intent(in) :: dx, dt, theta, f_bound, Qbound, Mbound(3)
 
 double precision, intent(in), dimension(Ngridb) :: YO, V, A, &
-    Src_y_in, Src_in, x, G, Vtilde, NN, NO, fxi, gxi
+    Src_y_in, Src_in, G, Vtilde, NN, NO, fxi, gxi
 double precision, intent(out), dimension(Ngridb) :: y_out
 
 integer :: j
@@ -227,45 +226,45 @@ double precision :: dt_dx2
 double precision, dimension(Ngridb) :: AA, BB, CC, RR
 
 dt_dx2 = dt/dx**2
-AA = 0.
-BB = 0.
-CC = 0.
-RR = 0.
-if (eximp == 1) then
-    BB(1: Ngridb-1) = NN(1: Ngridb-1)
+
+if (eximp == 1) then ! Explicit scheme
     RR(1) = NO(1)*YO(1) + G(1)*Src_in(1)*dt + dt*G(1)*Src_y_in(1)*YO(1) + &
         dt_dx2 * G(1)/V(1) * Vtilde(1) * ( A(1)*(fxi(1)*YO(2) - gxi(1)*YO(1)) )
+    y_out(1) = RR(1)/NN(1)
     do j=2, Ngridb-1
         RR(j) = NO(j)*YO(j) + G(j)*Src_in(j)*dt + dt*G(j)*Src_y_in(j)*YO(j) + dt_dx2*G(j)/V(j) * ( &
             Vtilde(j)  *A(j)   * (fxi(j)   * YO(j+1) - gxi(j)  * YO(j)) - &
             Vtilde(j-1)*A(j-1) * (fxi(j-1) * YO(j)   - gxi(j-1)* YO(j-1)) )
+        y_out(j) = RR(j)/NN(j)
     enddo
 
     SELECT CASE(bctype)
+    CASE(1)
+        y_out(Ngridb) = f_bound
     CASE(2)
-        BB(Ngridb) = NN(Ngridb)
         RR(Ngridb) = NO(Ngridb)*YO(Ngridb) + G(Ngridb)*Src_in(Ngridb)*dt + dt*G(Ngridb)*Src_y_in(Ngridb)*YO(Ngridb) - &
             dt_dx2*G(Ngridb)/V(Ngridb) * ( Vtilde(Ngridb)*Qbound*dx + &
             Vtilde(Ngridb-1)*A(Ngridb-1) * (fxi(Ngridb-1)*YO(Ngridb) - gxi(Ngridb-1)*YO(Ngridb-1)) )
+        y_out(Ngridb) = RR(Ngridb)/NN(Ngridb)
     CASE(3)
-        BB(Ngridb) = Mbound(1)
-        CC(Ngridb) = Mbound(2)
-        RR(Ngridb) = Mbound(3)
+        y_out(Ngridb) = Mbound(3)/Mbound(1)
     CASE(4)
         BB(Ngridb) = NN(Ngridb) + dt_dx2 * G(Ngridb)/V(Ngridb)*Vtilde(Ngridb)*Qbound*dx
         RR(Ngridb) = NO(Ngridb)*YO(Ngridb) + G(Ngridb)*Src_in(Ngridb)*dt + dt*G(Ngridb)*Src_y_in(Ngridb)*YO(Ngridb) - &
             dt_dx2*G(Ngridb)/V(Ngridb)*Vtilde(Ngridb-1)*A(Ngridb-1) * (fxi(Ngridb-1)*YO(Ngridb) - gxi(Ngridb-1)*YO(Ngridb-1))
+        y_out(Ngridb) = RR(Ngridb)/BB(Ngridb)
     END SELECT
 
-else ! implicit, ASTRA default
+else ! Implicit, ASTRA default
 
+    AA(Ngridb) = 0.
     AA(1: Ngridb-1) = -dt_dx2*theta *G(1: Ngridb-1)/V(1: Ngridb-1)*Vtilde(1: Ngridb-1)*A(1: Ngridb-1)*fxi(1: Ngridb-1)
     BB(1) = NN(1) + theta * (-dt*G(1)*Src_y_in(1) + dt_dx2*G(1)/V(1)*Vtilde(1)*A(1)*gxi(1) )
     CC(1) = 0.0
     RR(1) = NO(1)*YO(1) + G(1)*Src_in(1)*dt + (1. - theta) * &
         ( dt*G(1)*Src_y_in(1)*YO(1) + dt_dx2*G(1)/V(1)*Vtilde(1)*A(1)*(fxi(1)*YO(2) - gxi(1)*YO(1)) )
 
-    do j=2, Ngridb - 1
+    do j=2, Ngridb-1
         BB(j) = NN(j) + theta * (  -dt*G(j)*Src_y_in(j) + dt_dx2*G(j)/V(j) * &
             (Vtilde(j)*A(j)*gxi(j) + Vtilde(j-1)*A(j-1)*fxi(j-1) )  )
         CC(j) = -dt_dx2*theta*G(j)/V(j)*Vtilde(j-1)*A(j-1)*gxi(j-1)
@@ -275,6 +274,10 @@ else ! implicit, ASTRA default
     enddo
 
     SELECT CASE(bctype)
+    CASE(1)
+        BB(Ngridb) = 0.
+        CC(Ngridb) = 0.
+        RR(Ngridb) = 0.
     CASE(2)
         BB(Ngridb) = NN(Ngridb) + theta * ( -dt*G(Ngridb)*Src_y_in(Ngridb) + &
             dt_dx2*G(Ngridb)/V(Ngridb)*Vtilde(Ngridb-1)*A(Ngridb-1)*fxi(Ngridb-1) )
@@ -296,34 +299,28 @@ else ! implicit, ASTRA default
             (  dt*G(Ngridb)*Src_y_in(Ngridb)*YO(Ngridb) - dt_dx2*G(Ngridb)/V(Ngridb) * &
             ( Vtilde(Ngridb-1)*A(Ngridb-1) * (fxi(Ngridb-1)*YO(Ngridb) - gxi(Ngridb-1)*YO(Ngridb-1)) )  )
     END SELECT
+    call TRIDIAG(Ngridb, bctype, f_bound, AA, BB, CC, RR, y_out)
 
-endif ! Implicit
-
-! Main call to tridiagonal solver
-call TRIDIAG1(AA, BB, CC, RR, y_out, Ngridb, bctype, f_bound, eximp)
+endif
 
 return
 end subroutine SOLVER
 
 !---------------------------------------------------------------------
-subroutine TRIDIAG1(A_in, B_in, C_in, R_in, f_out, Ngridb, bctype, f_bound, eximp)
+subroutine TRIDIAG(Ngridb, bctype, f_bound, A_in, B_in, C_in, R_in, f_out)
 !---------------------------------------------------------------------
-! Solves the system:
+! Tridiagonal solver. It solves the system:
 !
 !   Aj fj+1  + Bj fj  + Cj fj-1 = Rj
-!
-!   where j = 1..Ngridb
+!   for j=1, Ngridb
 !
 !   bctype = 1  -> given f_NA1
 !   bctype = 2  -> given Gamma_NA1
 !   bctype = 3  -> mixed b.c.
-!
-!  eximp = 1: explicit (Aj = Cj =0)
-!  eximp = 2: implicit
 
 implicit none
 
-integer, intent(in) :: Ngridb, bctype, eximp
+integer, intent(in) :: Ngridb, bctype
 double precision, intent(in) :: f_bound
 double precision, intent(in) , dimension(Ngridb) :: A_in, B_in, C_in, R_in
 double precision, intent(out), dimension(Ngridb) :: f_out
@@ -331,46 +328,33 @@ double precision, intent(out), dimension(Ngridb) :: f_out
 integer :: j, k
 double precision, dimension(Ngridb-1) :: alpha, beta
 
-! Explicit
-if (eximp == 1) then
-    do j=1, Ngridb-1
-        f_out(j) = R_in(j)/B_in(j)
-    enddo
-    if (bctype == 1) then
-        f_out(Ngridb) = f_bound
-    else
-        f_out(Ngridb) = R_in(Ngridb)/B_in(Ngridb)
-    endif
-else ! Implicit
-    alpha(1) = -B_in(1)/A_in(1)
-    beta(1)  =  R_in(1)/A_in(1)
-    do j=2, Ngridb - 1
-        alpha(j) = -C_in(j)/(A_in(j)*alpha(j-1)) - B_in(j)/A_in(j)
-        beta(j) = R_in(j)/A_in(j) + C_in(j)/A_in(j)*beta(j-1)/alpha(j-1)
-    enddo
+alpha(1) = -B_in(1)/A_in(1)
+beta(1)  =  R_in(1)/A_in(1)
+do j=2, Ngridb - 1
+    alpha(j) = -C_in(j)/(A_in(j)*alpha(j-1)) - B_in(j)/A_in(j)
+    beta(j) = R_in(j)/A_in(j) + C_in(j)/A_in(j)*beta(j-1)/alpha(j-1)
+enddo
 
 ! Note that boundary value is assumed to be on the main last grid point, so 1-dx/2.
 ! This has to be corrected later on... 
 
-    SElECT CASE(bctype)
-    CASE(1)
-        f_out(Ngridb-1) = (f_bound - beta(Ngridb-1))/alpha(Ngridb-1)
-        do k=1, Ngridb-2
-            j = Ngridb - 2 - k + 1
-            f_out(j) = (f_out(j+1) - beta(j))/alpha(j)
-        enddo
-        f_out(Ngridb) = f_bound
-    CASE(2: 4)
-        f_out(Ngridb) = (R_in(Ngridb) + C_in(Ngridb)*beta(Ngridb-1)/alpha(Ngridb-1))/(B_in(Ngridb) + C_in(Ngridb)/alpha(Ngridb-1))
-        do k=1, Ngridb-1
-            j = Ngridb - 1 - k + 1
-            f_out(j) = (f_out(j+1) - beta(j))/alpha(j)
-        enddo
-    END SELECT
+if (bctype == 1) then
+    f_out(Ngridb-1) = (f_bound - beta(Ngridb-1))/alpha(Ngridb-1)
+    do k=1, Ngridb-2
+        j = Ngridb - 2 - k + 1
+        f_out(j) = (f_out(j+1) - beta(j))/alpha(j)
+    enddo
+    f_out(Ngridb) = f_bound
+else
+    f_out(Ngridb) = (R_in(Ngridb) + C_in(Ngridb)*beta(Ngridb-1)/alpha(Ngridb-1))/(B_in(Ngridb) + C_in(Ngridb)/alpha(Ngridb-1))
+    do k=1, Ngridb-1
+        j = Ngridb - 1 - k + 1
+        f_out(j) = (f_out(j+1) - beta(j))/alpha(j)
+    enddo
 endif
 
 return
-end subroutine TRIDIAG1
+end subroutine TRIDIAG
 
 !---------------------------------------------------------------------
 double precision function GETPEI(j)
