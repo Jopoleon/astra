@@ -71,7 +71,7 @@ double precision, intent(in), dimension(Ngrid) :: GN, HN, GO, HO, &
    YO, V, G11, A_in, B_in, R_in, Src_y_in, Src_in, mphit, x, M, N, W
 double precision, intent(out)  , dimension(Ngrid) :: y_out, Q_out, adcmp_term
 
-integer :: NgridS, eximp, j
+integer :: eximp, j
 double precision :: dx, dt, theta, f_bound, Qbound, Mbound(3)
 double precision, dimension(Ngrid) :: x_b, G, H, A, NN, NO, dum1, &
     Rsource, Rsource2, Pdot_1, Pdot_2, Vtilde, Src_new, ydummy, ytmp, xi, fxi, gxi
@@ -126,7 +126,7 @@ Pdot_2 = Pdot_2*x/G
 NN = GN*HN
 NO = GO*HO
 Vtilde = Vtilde*G11
-! P = P + bdot/W*d/dx (V*M*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)    for explicit
+! Src = Src + bdot/W*d/dx (V*M*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)    for explicit
 adcmp_term = bbdot*Pdot_1 + (rbdot - bbdot)*Pdot_2  ! used only for FP
 Src_new = Src_new + adcmp_term
 
@@ -135,19 +135,15 @@ Mbound = 0.
 SELECT CASE(bctype)
 CASE(1)
     f_bound = y_out(Ngridb)
-    NgridS = Ngridb - 1
     Qbound = 0.0
 CASE(2)
     f_bound = 0.0
-    NgridS = Ngridb
     Qbound = bc_values(1)/G11(Ngridb)
 CASE(3)
     f_bound = 0.0
-    NgridS = Ngridb
     Mbound(1: 3) = bc_values(3: 5)
 CASE(4)
     f_bound = 0.0
-    NgridS = Ngridb
     Qbound = bc_values(2)/G11(Ngridb)
 END SELECT
  
@@ -193,7 +189,7 @@ call SOLVER(x(1: Ngridb), dx, dt, dum1b, &
     V(1: Ngridb), Vtilde(1: Ngridb), A(1: Ngridb), &
     fxi(1: Ngridb), gxi(1: Ngridb), &
     Src_y_in(1: Ngridb), Src_new(1: Ngridb), &
-    Ngridb, NgridS, theta, eximp, YO(1: Ngridb), &
+    Ngridb, theta, eximp, YO(1: Ngridb), &
     f_bound, Qbound, bctype, y_out(1: Ngridb), Mbound)
 
 ! Compute flux from solution, flux is on shifted grid
@@ -202,12 +198,10 @@ do j=1, Ngridb-1
 enddo
 
 SELECT CASE(bctype)
-CASE(1)
-    call EXTRAP(x(1: NgridS), Q_out(1: NgridS), x(Ngridb), NgridS, Q_out(Ngridb), 2, NgridS)
+CASE(1, 3)
+    call EXTRAP(x(1: Ngridb-1), Q_out(1: Ngridb-1), x(Ngridb), Ngridb-1, Q_out(Ngridb), 2, Ngridb-1)
 CASE(2) ! Restore G11 in Qbound
     Q_out(Ngridb) = Qbound*G11(Ngridb)
-CASE(3)
-    call EXTRAP(x(1: NgridS-1), Q_out(1: NgridS-1), x(Ngridb), NgridS-1, Q_out(Ngridb), 2, NgridS-1)
 CASE(4) ! Restore G11 in Qbound
     Q_out(Ngridb) = Qbound*G11(Ngridb)*y_out(Ngridb)
 END SELECT
@@ -217,13 +211,13 @@ end subroutine RUNEQ
 
 !---------------------------------------------------------------------
 subroutine SOLVER(x, dx, dt, G, NN, NO, V, Vtilde, A, fxi, gxi, Src_y_in, Src_in, & 
-    Ngridb, NgridS, theta, eximp, YO, f_bound, Qbound, bctype, y_out, Mbound)
+    Ngridb, theta, eximp, YO, f_bound, Qbound, bctype, y_out, Mbound)
 !---------------------------------------------------------------------
 ! Build up matrices to be passed ot TRIDIAGS
 
 implicit none
 
-integer, intent(in) :: Ngridb, NgridS, bctype, eximp
+integer, intent(in) :: Ngridb, bctype, eximp
 double precision, intent(in) :: dx, dt, theta, f_bound, Qbound, Mbound(3)
 
 double precision, intent(in), dimension(Ngridb) :: YO, V, A, &
@@ -235,96 +229,77 @@ double precision :: dt_dx2
 double precision, dimension(Ngridb) :: AA, BB, CC, RR
 
 dt_dx2 = dt/dx**2
-! NgridS is eithe Ngridb-1 (bctype=1) or Ngridb
 AA = 0.
 BB = 0.
 CC = 0.
 RR = 0.
 if (eximp == 1) then
-    BB(1: NgridS) = NN(1: NgridS)
+    BB(1: Ngridb-1) = NN(1: Ngridb-1)
     RR(1) = NO(1)*YO(1) + G(1)*Src_in(1)*dt + dt*G(1)*Src_y_in(1)*YO(1) + &
-        dt_dx2 * (G(1)/V(1)*Vtilde(1) * (A(1)*(fxi(1)*YO(2) - gxi(1)*YO(1))))
-
-    do j=2, NgridS-1
-        RR(j) = NO(j)*YO(j) + G(j)*Src_in(j)*dt + dt*G(j)*Src_y_in(j)*YO(j) + &
-            dt_dx2 * G(j)/V(j)*(Vtilde(j) * &
-            (A(j)*(fxi(j)*YO(j+1) - gxi(j)*YO(j))) - &
-        Vtilde(j-1)*(A(j-1)*(fxi(j-1)*YO(j) - gxi(j-1)*YO(j-1))))
+        dt_dx2 * G(1)/V(1) * Vtilde(1) * ( A(1)*(fxi(1)*YO(2) - gxi(1)*YO(1)) )
+    do j=2, Ngridb-1
+        RR(j) = NO(j)*YO(j) + G(j)*Src_in(j)*dt + dt*G(j)*Src_y_in(j)*YO(j) + dt_dx2 * G(j)/V(j) * ( &
+            Vtilde(j)   * (A(j)   * (fxi(j)   * YO(j+1) - gxi(j)  * YO(j))) - &
+            Vtilde(j-1) * (A(j-1) * (fxi(j-1) * YO(j)   - gxi(j-1)* YO(j-1))) )
     enddo
 
     SELECT CASE(bctype)
-    CASE(1)
-        RR(NgridS) = NO(NgridS)*YO(NgridS) + G(NgridS)*Src_in(NgridS)*dt + dt*G(NgridS)*Src_y_in(NgridS)*YO(NgridS) + &
-            dt_dx2 * G(NgridS)/V(NgridS)*(Vtilde(NgridS)* &
-            (A(NgridS)*(fxi(NgridS)*f_bound - gxi(NgridS)*YO(NgridS))) - &
-            Vtilde(NgridS-1)*(A(NgridS-1)*(fxi(NgridS-1)*YO(NgridS) - gxi(NgridS-1)*YO(NgridS-1))))
     CASE(2)
-        RR(NgridS) = NO(NgridS)*YO(NgridS) + G(NgridS)*Src_in(NgridS)*dt + dt*G(NgridS)*Src_y_in(NgridS)*YO(NgridS) + &
-            dt_dx2 * G(NgridS)/V(NgridS)*(-Vtilde(NgridS)*Qbound*dx - &
-            Vtilde(NgridS-1)*(A(NgridS-1)*(fxi(NgridS-1)*YO(NgridS) - gxi(NgridS-1)*YO(NgridS-1))))
+        BB(Ngridb) = NN(Ngridb)
+        RR(Ngridb) = NO(Ngridb)*YO(Ngridb) + G(Ngridb)*Src_in(Ngridb)*dt + dt*G(Ngridb)*Src_y_in(Ngridb)*YO(Ngridb) + &
+            dt_dx2 * G(Ngridb)/V(Ngridb) * ( -Vtilde(Ngridb)*Qbound*dx - &
+            Vtilde(Ngridb-1) * A(Ngridb-1)*(fxi(Ngridb-1)*YO(Ngridb) - gxi(Ngridb-1)*YO(Ngridb-1)) )
     CASE(3)
-        BB(NgridS) = Mbound(1)
-        CC(NgridS) = Mbound(2)
-        RR(NgridS) = Mbound(3)
+        BB(Ngridb) = Mbound(1)
+        CC(Ngridb) = Mbound(2)
+        RR(Ngridb) = Mbound(3)
     CASE(4)
-        BB(NgridS) = NN(NgridS) - dt_dx2 * G(NgridS)/V(NgridS)*(-Vtilde(NgridS)*Qbound*dx)
-        RR(NgridS) = NO(NgridS)*YO(NgridS) + G(NgridS)*Src_in(NgridS)*dt + dt*G(NgridS)*Src_y_in(NgridS)*YO(NgridS) + &
-            dt_dx2 * G(NgridS)/V(NgridS)*(-Vtilde(NgridS)*0.*Qbound*dx - &
-            Vtilde(NgridS-1)*(A(NgridS-1)*(fxi(NgridS-1)*YO(NgridS) - gxi(NgridS-1)*YO(NgridS-1))))
+        BB(Ngridb) = NN(Ngridb) - dt_dx2 * G(Ngridb)/V(Ngridb)*(-Vtilde(Ngridb)*Qbound*dx)
+        RR(Ngridb) = NO(Ngridb)*YO(Ngridb) + G(Ngridb)*Src_in(Ngridb)*dt + dt*G(Ngridb)*Src_y_in(Ngridb)*YO(Ngridb) + &
+            dt_dx2 * G(Ngridb)/V(Ngridb) * ( -Vtilde(Ngridb-1) * &
+            A(Ngridb-1) * (fxi(Ngridb-1)*YO(Ngridb) - gxi(Ngridb-1)*YO(Ngridb-1)) )
     END SELECT
 
 else ! implicit, ASTRA default
-    
-    AA(1: Ngridb-1) = -dt_dx2 * theta * G(1: Ngridb-1)/V(1: Ngridb-1) * Vtilde(1: Ngridb-1)*A(1: Ngridb-1)*fxi(1: Ngridb-1)
-    BB(1) = NN(1) + theta * (-dt*G(1)*Src_y_in(1) - dt_dx2 * &
-        (G(1)/V(1)*Vtilde(1) * (A(1)*(-gxi(1)))))
-    CC(1) = 0.0
-    RR(1) = NO(1)*YO(1) + G(1)*Src_in(1)*dt + (1. - theta)* &
-        (dt*G(1)*Src_y_in(1)*YO(1) + dt_dx2 *  &
-        (G(1)/V(1)*Vtilde(1) * (A(1)*(fxi(1)*YO(2) - gxi(1)*YO(1)))))
 
-    do j=2, NgridS - 1
-        BB(j) = NN(j) + theta * (-dt*G(j)*Src_y_in(j) - &
-            dt_dx2 * G(j)/V(j) * &
-            (Vtilde(j)  *(A(j)  *(-gxi(j))) - &
-             Vtilde(j-1)*(A(j-1)*(fxi(j-1)))) )
-        CC(j) = -dt_dx2 * theta * G(j)/V(j) * Vtilde(j-1)*A(j-1)*gxi(j-1)
+    AA(1: Ngridb-1) = -dt_dx2 * theta * G(1: Ngridb-1)/V(1: Ngridb-1) * Vtilde(1: Ngridb-1) * A(1: Ngridb-1) * fxi(1: Ngridb-1)
+    BB(1) = NN(1) + theta * (-dt*G(1) * Src_y_in(1) + dt_dx2 * G(1)/V(1) * Vtilde(1) * A(1) * gxi(1) )
+    CC(1) = 0.0
+    RR(1) = NO(1) * YO(1) + G(1) * Src_in(1) * dt + (1. - theta) * &
+        ( dt * G(1) * Src_y_in(1) * YO(1) + dt_dx2 * G(1)/V(1)*Vtilde(1) * A(1) * (fxi(1)*YO(2) - gxi(1)*YO(1)) )
+
+    do j=2, Ngridb - 1
+        BB(j) = NN(j) + theta * (-dt*G(j)*Src_y_in(j) + dt_dx2*G(j)/V(j) * ( &
+             Vtilde(j)   * A(j)   * gxi(j) + &
+             Vtilde(j-1) * A(j-1) * fxi(j-1) ) )
+        CC(j) = -dt_dx2 * theta * G(j)/V(j) * Vtilde(j-1) * A(j-1) * gxi(j-1)
         RR(j) = NO(j)*YO(j) + G(j)*Src_in(j)*dt + (1. - theta)* &
-            (dt*G(j)*Src_y_in(j)*YO(j) + dt_dx2 *  &
-            G(j)/V(j)*(Vtilde(j) *(A(j)*(fxi(j)*YO(j+1) - gxi(j)*YO(j))) - &
-            Vtilde(j-1)*(A(j-1)*(fxi(j-1)*YO(j) - gxi(j-1)*YO(j-1)))))
+            ( dt * G(j) * Src_y_in(j) * YO(j) + dt_dx2 * G(j)/V(j) * ( &
+            Vtilde(j)   * A(j)   * (fxi(j)   * YO(j+1) - gxi(j)   * YO(j)) - &
+            Vtilde(j-1) * A(j-1) * (fxi(j-1) * YO(j)   - gxi(j-1) * YO(j-1))) )
     enddo
 
     SELECT CASE(bctype)
-    CASE(1)
-        BB(NgridS) = NN(NgridS) + theta * (-dt*G(NgridS)*Src_y_in(NgridS) - dt_dx2 * G(NgridS)/V(NgridS) * &
-            (Vtilde(NgridS)  *(A(NgridS)  *(-gxi(NgridS))) - &
-             Vtilde(NgridS-1)*(A(NgridS-1)*(fxi(NgridS-1)))) )
-        CC(NgridS) = -dt_dx2 * theta * G(NgridS)/V(NgridS)*Vtilde(NgridS-1) * A(NgridS-1)*gxi(NgridS-1)  
-        RR(NgridS) = NO(NgridS)*YO(NgridS) + G(NgridS)*Src_in(NgridS)*dt + (1. - theta) * &
-            (dt*G(NgridS)*Src_y_in(NgridS)*YO(NgridS) + dt_dx2 * G(NgridS)/V(NgridS)* &
-            (Vtilde(NgridS)  *(A(NgridS)  *(fxi(NgridS)*YO(NgridS+1) - gxi(NgridS)  *YO(NgridS))) - &
-             Vtilde(NgridS-1)*(A(NgridS-1)*(fxi(NgridS-1)*YO(NgridS) - gxi(NgridS-1)*YO(NgridS-1)))))
     CASE(2)
-        BB(NgridS) = NN(NgridS) + theta * (-dt*G(NgridS)*Src_y_in(NgridS) - dt_dx2 * G(NgridS)/V(NgridS) * &
-            (-Vtilde(NgridS-1)*(A(NgridS-1)*(fxi(NgridS-1)))) )
-        CC(NgridS) = -dt_dx2 * theta * G(NgridS)/V(NgridS)*Vtilde(NgridS-1) * A(NgridS-1)*gxi(NgridS-1)
-        RR(NgridS) = NO(NgridS)*YO(NgridS) + G(NgridS)*Src_in(NgridS)*dt + (1. - theta) * &
-            (dt*G(NgridS)*Src_y_in(NgridS)*YO(NgridS) + dt_dx2 * G(NgridS)/V(NgridS)* &
-            (-Vtilde(NgridS-1)*(A(NgridS-1)*(fxi(NgridS-1)*YO(NgridS) - gxi(NgridS-1)*YO(NgridS-1))))) + &
-             dt_dx2 * G(NgridS)/V(NgridS)*(-Vtilde(NgridS)*Qbound*dx)
+        BB(Ngridb) = NN(Ngridb) + theta * (-dt*G(Ngridb)*Src_y_in(Ngridb) + dt_dx2 * G(Ngridb)/V(Ngridb) * &
+            (Vtilde(Ngridb-1)* A(Ngridb-1 * fxi(Ngridb-1))))
+        CC(Ngridb) = -dt_dx2 * theta * G(Ngridb)/V(Ngridb)*Vtilde(Ngridb-1) * A(Ngridb-1)*gxi(Ngridb-1)
+        RR(Ngridb) = NO(Ngridb)*YO(Ngridb) + G(Ngridb)*Src_in(Ngridb)*dt + (1. - theta) * &
+            (dt*G(Ngridb)*Src_y_in(Ngridb)*YO(Ngridb) - dt_dx2 * G(Ngridb)/V(Ngridb) * &
+            (Vtilde(Ngridb-1) * A(Ngridb-1) * (fxi(Ngridb-1)*YO(Ngridb) - gxi(Ngridb-1)*YO(Ngridb-1)) ) ) + &
+             dt_dx2 * G(Ngridb)/V(Ngridb) * Vtilde(Ngridb) * Qbound*dx
     CASE(3)
-        BB(NgridS) = Mbound(1)
-        CC(NgridS) = Mbound(2)   
-        RR(NgridS) = Mbound(3)
+        BB(Ngridb) = Mbound(1)
+        CC(Ngridb) = Mbound(2)   
+        RR(Ngridb) = Mbound(3)
     CASE(4)
-        BB(NgridS) = NN(NgridS) + theta * (-dt*G(NgridS)*Src_y_in(NgridS) - dt_dx2 * G(NgridS)/V(NgridS) * &
-            ( -Vtilde(NgridS-1)*(A(NgridS-1)*(fxi(NgridS-1)))) ) - &
-            theta*( dt_dx2 * G(NgridS)/V(NgridS)*(-Vtilde(NgridS)*Qbound*dx))
-        CC(NgridS) = -dt_dx2 * theta * G(NgridS)/V(NgridS)*Vtilde(NgridS-1) * A(NgridS-1)*gxi(NgridS-1)
-        RR(NgridS) = NO(NgridS)*YO(NgridS) + G(NgridS)*Src_in(NgridS)*dt + (1. - theta) * &
-            (dt*G(NgridS)*Src_y_in(NgridS)*YO(NgridS) + dt_dx2 * G(NgridS)/V(NgridS)* &
-            (-Vtilde(NgridS-1)*(A(NgridS-1)*(fxi(NgridS-1)*YO(NgridS) - gxi(NgridS-1)*YO(NgridS-1)))))
+        BB(Ngridb) = NN(Ngridb) + theta * (-dt*G(Ngridb)*Src_y_in(Ngridb) + dt_dx2 * G(Ngridb)/V(Ngridb) * &
+            ( Vtilde(Ngridb-1) * A(Ngridb-1) * fxi(Ngridb-1) )  ) + &
+            theta * dt_dx2 * G(Ngridb)/V(Ngridb) * Vtilde(Ngridb) * Qbound * dx
+        CC(Ngridb) = -dt_dx2 * theta * G(Ngridb)/V(Ngridb)*Vtilde(Ngridb-1) * A(Ngridb-1)*gxi(Ngridb-1)
+        RR(Ngridb) = NO(Ngridb)*YO(Ngridb) + G(Ngridb)*Src_in(Ngridb)*dt + (1. - theta) * &
+            (dt*G(Ngridb)*Src_y_in(Ngridb)*YO(Ngridb) - dt_dx2 * G(Ngridb)/V(Ngridb) * &
+            (Vtilde(Ngridb-1) * A(Ngridb-1) * (fxi(Ngridb-1)*YO(Ngridb) - gxi(Ngridb-1)*YO(Ngridb-1)) ) )
     END SELECT
 
 endif ! Implicit
