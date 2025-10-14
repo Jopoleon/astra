@@ -325,7 +325,7 @@ double precision, intent(in) :: f_bound
 double precision, intent(in) , dimension(Ngridb) :: A_in, B_in, C_in, R_in
 double precision, intent(out), dimension(Ngridb) :: f_out
 
-integer :: j, k
+integer :: j
 double precision, dimension(Ngridb-1) :: alpha, beta
 
 alpha(1) = -B_in(1)/A_in(1)
@@ -339,19 +339,13 @@ enddo
 ! This has to be corrected later on... 
 
 if (bctype == 1) then
-    f_out(Ngridb-1) = (f_bound - beta(Ngridb-1))/alpha(Ngridb-1)
-    do k=1, Ngridb-2
-        j = Ngridb - 2 - k + 1
-        f_out(j) = (f_out(j+1) - beta(j))/alpha(j)
-    enddo
     f_out(Ngridb) = f_bound
 else
     f_out(Ngridb) = (R_in(Ngridb) + C_in(Ngridb)*beta(Ngridb-1)/alpha(Ngridb-1))/(B_in(Ngridb) + C_in(Ngridb)/alpha(Ngridb-1))
-    do k=1, Ngridb-1
-        j = Ngridb - 1 - k + 1
-        f_out(j) = (f_out(j+1) - beta(j))/alpha(j)
-    enddo
 endif
+do j=Ngridb-1, 1, -1
+    f_out(j) = (f_out(j+1) - beta(j))/alpha(j)
+enddo
 
 return
 end subroutine TRIDIAG
