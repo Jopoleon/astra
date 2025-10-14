@@ -158,7 +158,7 @@ YWQ(j) = 0.
 YWG11(j) = 1.
 YWNB(j) = 1./RHO(j)
 YWWB(j) = 1./RHO(j)
-YVR(j) = CC(j)*.4*GP*RHO(j)/IPOL(j)**2.0
+YVR(j) = CC(j)*.4*GP*RHO(j)/IPOL(j)**2
 YWM(j) = 1./YVR(j)
 YWD(j) = -(VR(j)/(GP2*RHO(j)*CC(j))) *(CUBS(j)+CD(j))
 enddo
@@ -899,7 +899,7 @@ YWQ(j)  = 0.
 YWG11(j) = 1.
 YWNB(j) = 1./RHO(j)
 YWWB(j) = 1./RHO(j)
-YVR(j) = CC(j)*0.4*GP*RHO(j)/IPOL(j)**2.0
+YVR(j) = CC(j)*0.4*GP*RHO(j)/IPOL(j)**2
 YWM(j) = 1./YVR(j)
 YWD(j) = -(VR(j)/(GP2*RHO(j)*CC(j))) * (CUBS(j) + CD(j))
 enddo

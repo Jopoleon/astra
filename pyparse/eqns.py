@@ -508,7 +508,7 @@ def cueqn(parse):
         cueq_txt += 'YWD(J) = CUBS(J)\n'
 
     cueq_txt += '''
-YWD(J) = YWD(J)*YD/(IPOL(J)**3*G33(J))
+YWD(J) = YWD(J)*YD/(IPOL(J)**3 * G33(J))
 YWB(J) = 0.4*GP*CC(J)*YC/IPOL(J)**2
 enddo
 '''
