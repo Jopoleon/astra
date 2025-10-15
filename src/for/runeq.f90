@@ -60,7 +60,7 @@ double precision, intent(in), dimension(Ngrid) :: GN, HN, GO, HO, &
 double precision, intent(out), dimension(Ngrid) :: y_out, Q_out, adcmp_term
 
 integer :: j
-double precision :: dx, dt, theta, f_bound, Qbound(2), Mbound(3)
+double precision :: dx, dt, theta, bnd_val(3)
 double precision, dimension(Ngrid) :: x_b, G, H, A, NN, NO, dum1, &
     Rsource, Rsource2, Pdot_1, Pdot_2, Vtilde, Src_new, ydummy, ytmp, xi, fxi, gxi
 double precision, dimension(Ngridb) :: dum1b
@@ -112,18 +112,16 @@ adcmp_term = bbdot*Pdot_1 + (rbdot - bbdot)*Pdot_2  ! used only for FP
 Src_new = Src_new + adcmp_term
 
 ! Check boundary condition, note that Qbound = Qbound/G11(b) since G11 is absorbed in Vtilde
-Mbound  = 0.
-f_bound = 0.
-Qbound  = 0.
+bnd_val  = 0.
 SELECT CASE(bctype)
 CASE(1)
-    f_bound = YO(Ngridb)
+    bnd_val(1) = YO(Ngridb)
 CASE(2)
-    Qbound(1) = bc_values(1)/G11(Ngridb)
+    bnd_val(1) = bc_values(1)/G11(Ngridb)
 CASE(3)
-    Mbound(1: 3) = bc_values(3: 5)
+    bnd_val(1: 3) = bc_values(3: 5)
 CASE(4)
-    Qbound(2) = bc_values(2)/G11(Ngridb)
+    bnd_val(2) = bc_values(2)/G11(Ngridb)
 END SELECT
  
 ! Define cd, or power law
@@ -165,10 +163,8 @@ gxi = fxi - xi
 dum1b = GN(1: Ngridb)*theta + GO(1: Ngridb)*(1. - theta)
 call SOLVER(dx, dt, dum1b, NN(1: Ngridb), NO(1: Ngridb), &
     V(1: Ngridb), Vtilde(1: Ngridb), A(1: Ngridb), &
-    fxi(1: Ngridb), gxi(1: Ngridb), &
-    Src_y_in(1: Ngridb), Src_new(1: Ngridb), &
-    Ngridb, theta, YO(1: Ngridb), &
-    f_bound, Qbound, bctype, Mbound, y_out(1: Ngridb))
+    fxi(1: Ngridb), gxi(1: Ngridb), Src_y_in(1: Ngridb), Src_new(1: Ngridb), &
+    Ngridb, theta, YO(1: Ngridb), bctype, bnd_val, y_out(1: Ngridb))
 
 ! Compute flux from solution (flux is on shifted grid)
 do j=1, Ngridb-1
@@ -188,67 +184,63 @@ return
 end subroutine RUNEQ
 
 !---------------------------------------------------------------------
-subroutine SOLVER(dx, dt, G, NN, NO, V, Vtilde, A, fxi, gxi, Src_y_in, Src_in, & 
-    Ngridb, theta, YO, f_bound, Qbound, bctype, Mbound, y_out)
+subroutine SOLVER(dx, dt, G_in, NN, NO, V_in, Vtilde_in, A_in, fxi, gxi, Src_y_in, Src_in, & 
+    Ngridb, theta, YO, bctype, bnd_val, y_out)
 !---------------------------------------------------------------------
 ! Build up matrices to be passed to TRIDIAGS
 
 implicit none
 
 integer, intent(in) :: Ngridb, bctype
-double precision, intent(in) :: dx, dt, theta, f_bound, Qbound(2), Mbound(3)
-
-double precision, intent(in), dimension(Ngridb) :: YO, V, A, &
-    Src_y_in, Src_in, G, Vtilde, NN, NO, fxi, gxi
+double precision, intent(in) :: dx, dt, theta, bnd_val(3)
+double precision, intent(in), dimension(Ngridb) :: YO, V_in, A_in, &
+    Src_y_in, Src_in, G_in, Vtilde_in, NN, NO, fxi, gxi
 double precision, intent(out), dimension(Ngridb) :: y_out
 
 integer :: j
-double precision, dimension(Ngridb) :: AA, BB, CC, RR, g_v, vta, gvva, gsdt, gsydt
+double precision, dimension(Ngridb) :: AA, BB, CC, RR, g_v, vta, gsdt, gsydt
 
-g_v = dt/dx**2 * G/V
-vta = Vtilde*A
-gvva = g_v*vta
-gsdt  = dt*G*Src_in
-gsydt = dt*G*Src_y_in
+g_v = dt/dx**2 * G_in/V_in
+vta = Vtilde_in*A_in
+gsdt  = dt*G_in*Src_in
+gsydt = dt*G_in*Src_y_in
 
 ! Implicit
 
-AA = -theta*gvva*fxi
-BB(1) = NN(1) + theta*(-gsydt(1) + gvva(1)*gxi(1))
-CC(1) = 0.0
-RR(1) = NO(1)*YO(1) + gsdt(1) + (1. - theta) * &
-    ( gsydt(1)*YO(1) + gvva(1)*(fxi(1)*YO(2) - gxi(1)*YO(1)) )
+AA = -theta*g_v*vta*fxi
+AA(Ngridb) = bnd_val(1) ! f_bound in TRIDIAG for BCTYPE=1, unused otherwise
+CC(1) = 0.
+CC(2: Ngridb) = -g_v(2: Ngridb)*vta(1: Ngridb-1)*gxi(1: Ngridb-1)
 
+BB(1) = NN(1) + theta*(-gsydt(1) + g_v(1)*vta(1)*gxi(1))
+RR(1) = NO(1)*YO(1) + gsdt(1) + (1. - theta) * ( gsydt(1)*YO(1) + g_v(1)*vta(1)*(fxi(1)*YO(2) - gxi(1)*YO(1)) )
 do j=2, Ngridb-1
     BB(j) = NN(j) + theta * ( -gsydt(j) + g_v(j)*(vta(j)*gxi(j) + vta(j-1)*fxi(j-1)) )
-    CC(j) = -g_v(j)*vta(j-1)*gxi(j-1)
     RR(j) = NO(j)*YO(j) + gsdt(j) + (1. - theta) * (  gsydt(j)*YO(j) + g_v(j) * &
         ( vta(j) * (fxi(j)*YO(j+1) - gxi(j)*YO(j)) - vta(j-1) * (fxi(j-1)*YO(j) - gxi(j-1)*YO(j-1)) )  )
 enddo
 
-AA(Ngridb) = 0. ! Unused in TRIDIAG
 SELECT CASE(bctype)
-CASE(3) ! *(Ngridb) unused in TRIDIAG for BCTYPE=1
-    BB(Ngridb) = Mbound(1)
-    CC(Ngridb) = Mbound(2)
-    RR(Ngridb) = Mbound(3)
+CASE(3) ! BB,CC,RR(Ngridb) unused in TRIDIAG for BCTYPE=1
+    BB(Ngridb) = bnd_val(1)
+    CC(Ngridb) = bnd_val(2)
+    RR(Ngridb) = bnd_val(3)
 CASE(2, 4)
-    BB(Ngridb) = NN(Ngridb) + theta * ( -gsydt(Ngridb) + &
-        g_v(Ngridb)*vta(Ngridb-1)*fxi(Ngridb-1) ) + &
-        theta*g_v(Ngridb)*Vtilde(Ngridb)*Qbound(2)*dx ! Additional term for BCTYPE=4
-    CC(Ngridb) = -g_v(Ngridb)*vta(Ngridb-1)*gxi(Ngridb-1)
+    BB(Ngridb) = NN(Ngridb) + theta * ( -gsydt(Ngridb) + g_v(Ngridb)*vta(Ngridb-1)*fxi(Ngridb-1) ) + &
+        theta*g_v(Ngridb)*Vtilde_in(Ngridb)*bnd_val(2)*dx ! Additional term for BCTYPE=4
     RR(Ngridb) = NO(Ngridb)*YO(Ngridb) + gsydt(Ngridb) + (1. - theta) * &
         (  gsydt(Ngridb)*YO(Ngridb) - g_v(Ngridb) * &
         (vta(Ngridb-1) * (fxi(Ngridb-1)*YO(Ngridb) - gxi(Ngridb-1)*YO(Ngridb-1)) )  ) + &
-        g_v(Ngridb)*Vtilde(Ngridb)*Qbound(1)*dx ! Additional term for BCTYPE=2
+        g_v(Ngridb)*Vtilde_in(Ngridb)*bnd_val(1)*dx ! Additional term for BCTYPE=2
 END SELECT
-call TRIDIAG(Ngridb, bctype, f_bound, AA, BB, CC, RR, y_out)
+
+call TRIDIAG(Ngridb, bctype, AA, BB, CC, RR, y_out)
 
 return
 end subroutine SOLVER
 
 !---------------------------------------------------------------------
-subroutine TRIDIAG(Ngridb, bctype, f_bound, A_in, B_in, C_in, R_in, y_out)
+subroutine TRIDIAG(Ngridb, bctype, A_in, B_in, C_in, R_in, y_out)
 !---------------------------------------------------------------------
 ! Tridiagonal solver. It solves the system:
 !
@@ -258,7 +250,6 @@ subroutine TRIDIAG(Ngridb, bctype, f_bound, A_in, B_in, C_in, R_in, y_out)
 implicit none
 
 integer, intent(in) :: Ngridb, bctype
-double precision, intent(in) :: f_bound
 double precision, intent(in) , dimension(Ngridb) :: A_in, B_in, C_in, R_in
 double precision, intent(out), dimension(Ngridb) :: y_out
 
@@ -276,7 +267,7 @@ enddo
 ! This has to be corrected later on... 
 
 if (bctype == 1) then
-    y_out(Ngridb) = f_bound
+    y_out(Ngridb) = A_in(Ngridb)
 else
     y_out(Ngridb) = (R_in(Ngridb) + C_in(Ngridb)*beta(Ngridb-1)/alpha(Ngridb-1))/(B_in(Ngridb) + C_in(Ngridb)/alpha(Ngridb-1))
 endif
