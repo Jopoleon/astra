@@ -57,7 +57,7 @@ integer, intent(in) :: Ngrid, imethod, Ngridb, bctype
 double precision, intent(in) :: rbdot, bbdot, bc_values(5)
 double precision, intent(in), dimension(Ngrid) :: GN, HN, GO, HO, &
    YO, V, G11, A_in, B_in, R_in, Src_y_in, Src_in, mphit, x, M, N, W
-double precision, intent(out)  , dimension(Ngrid) :: y_out, Q_out, adcmp_term
+double precision, intent(out), dimension(Ngrid) :: y_out, Q_out, adcmp_term
 
 integer :: j
 double precision :: dx, dt, theta, f_bound, Qbound(2), Mbound(3)
@@ -117,7 +117,7 @@ f_bound = 0.
 Qbound  = 0.
 SELECT CASE(bctype)
 CASE(1)
-    f_bound = y_out(Ngridb)
+    f_bound = YO(Ngridb)
 CASE(2)
     Qbound(1) = bc_values(1)/G11(Ngridb)
 CASE(3)
@@ -203,47 +203,44 @@ double precision, intent(in), dimension(Ngridb) :: YO, V, A, &
 double precision, intent(out), dimension(Ngridb) :: y_out
 
 integer :: j
-double precision :: dt_dx2
-double precision, dimension(Ngridb) :: AA, BB, CC, RR
+double precision, dimension(Ngridb) :: AA, BB, CC, RR, g_v, vta, gvva, gsdt, gsydt
 
-dt_dx2 = dt/dx**2
+g_v = dt/dx**2 * G/V
+vta = Vtilde*A
+gvva = g_v*vta
+gsdt  = dt*G*Src_in
+gsydt = dt*G*Src_y_in
 
 ! Implicit
 
-AA(1: Ngridb-1) = -dt_dx2*theta *G(1: Ngridb-1)/V(1: Ngridb-1)*Vtilde(1: Ngridb-1)*A(1: Ngridb-1)*fxi(1: Ngridb-1)
-BB(1) = NN(1) + theta * (-dt*G(1)*Src_y_in(1) + dt_dx2*G(1)/V(1)*Vtilde(1)*A(1)*gxi(1) )
+AA = -theta*gvva*fxi
+BB(1) = NN(1) + theta*(-gsydt(1) + gvva(1)*gxi(1))
 CC(1) = 0.0
-RR(1) = NO(1)*YO(1) + G(1)*Src_in(1)*dt + (1. - theta) * &
-    ( dt*G(1)*Src_y_in(1)*YO(1) + dt_dx2*G(1)/V(1)*Vtilde(1)*A(1)*(fxi(1)*YO(2) - gxi(1)*YO(1)) )
+RR(1) = NO(1)*YO(1) + gsdt(1) + (1. - theta) * &
+    ( gsydt(1)*YO(1) + gvva(1)*(fxi(1)*YO(2) - gxi(1)*YO(1)) )
 
 do j=2, Ngridb-1
-    BB(j) = NN(j) + theta * (  -dt*G(j)*Src_y_in(j) + dt_dx2*G(j)/V(j) * &
-        (Vtilde(j)*A(j)*gxi(j) + Vtilde(j-1)*A(j-1)*fxi(j-1) )  )
-    CC(j) = -dt_dx2*theta*G(j)/V(j)*Vtilde(j-1)*A(j-1)*gxi(j-1)
-    RR(j) = NO(j)*YO(j) + G(j)*Src_in(j)*dt + (1. - theta) * &
-        (  dt*G(j)*Src_y_in(j)*YO(j) + dt_dx2*G(j)/V(j) * &
-        ( Vtilde(j)*A(j) * (fxi(j)*YO(j+1) - gxi(j)*YO(j)) - Vtilde(j-1)*A(j-1) * (fxi(j-1)*YO(j) - gxi(j-1)*YO(j-1)) )  )
+    BB(j) = NN(j) + theta * ( -gsydt(j) + g_v(j)*(vta(j)*gxi(j) + vta(j-1)*fxi(j-1)) )
+    CC(j) = -g_v(j)*vta(j-1)*gxi(j-1)
+    RR(j) = NO(j)*YO(j) + gsdt(j) + (1. - theta) * (  gsydt(j)*YO(j) + g_v(j) * &
+        ( vta(j) * (fxi(j)*YO(j+1) - gxi(j)*YO(j)) - vta(j-1) * (fxi(j-1)*YO(j) - gxi(j-1)*YO(j-1)) )  )
 enddo
 
-AA(Ngridb) = 0.
+AA(Ngridb) = 0. ! Unused in TRIDIAG
 SELECT CASE(bctype)
-CASE(1)
-    BB(Ngridb) = 0.
-    CC(Ngridb) = 0.
-    RR(Ngridb) = 0.
-CASE(2, 4)
-    BB(Ngridb) = NN(Ngridb) + theta * ( -dt*G(Ngridb)*Src_y_in(Ngridb) + &
-        dt_dx2*G(Ngridb)/V(Ngridb)*Vtilde(Ngridb-1)*A(Ngridb-1)*fxi(Ngridb-1) ) + &
-        theta*dt_dx2*G(Ngridb)/V(Ngridb)*Vtilde(Ngridb)*Qbound(2)*dx ! Additional term for BCTYPE=4
-    CC(Ngridb) = -dt_dx2*theta*G(Ngridb)/V(Ngridb)*Vtilde(Ngridb-1)*A(Ngridb-1)*gxi(Ngridb-1)
-    RR(Ngridb) = NO(Ngridb)*YO(Ngridb) + G(Ngridb)*Src_in(Ngridb)*dt + (1. - theta) * &
-        (dt*G(Ngridb)*Src_y_in(Ngridb)*YO(Ngridb) - dt_dx2*G(Ngridb)/V(Ngridb) * &
-        (Vtilde(Ngridb-1)*A(Ngridb-1) * (fxi(Ngridb-1)*YO(Ngridb) - gxi(Ngridb-1)*YO(Ngridb-1)) ) ) + &
-        dt_dx2*G(Ngridb)/V(Ngridb)*Vtilde(Ngridb)*Qbound(1)*dx ! Additional term for BCTYPE=2
-CASE(3)
+CASE(3) ! *(Ngridb) unused in TRIDIAG for BCTYPE=1
     BB(Ngridb) = Mbound(1)
-    CC(Ngridb) = Mbound(2)   
+    CC(Ngridb) = Mbound(2)
     RR(Ngridb) = Mbound(3)
+CASE(2, 4)
+    BB(Ngridb) = NN(Ngridb) + theta * ( -gsydt(Ngridb) + &
+        g_v(Ngridb)*vta(Ngridb-1)*fxi(Ngridb-1) ) + &
+        theta*g_v(Ngridb)*Vtilde(Ngridb)*Qbound(2)*dx ! Additional term for BCTYPE=4
+    CC(Ngridb) = -g_v(Ngridb)*vta(Ngridb-1)*gxi(Ngridb-1)
+    RR(Ngridb) = NO(Ngridb)*YO(Ngridb) + gsydt(Ngridb) + (1. - theta) * &
+        (  gsydt(Ngridb)*YO(Ngridb) - g_v(Ngridb) * &
+        (vta(Ngridb-1) * (fxi(Ngridb-1)*YO(Ngridb) - gxi(Ngridb-1)*YO(Ngridb-1)) )  ) + &
+        g_v(Ngridb)*Vtilde(Ngridb)*Qbound(1)*dx ! Additional term for BCTYPE=2
 END SELECT
 call TRIDIAG(Ngridb, bctype, f_bound, AA, BB, CC, RR, y_out)
 
@@ -251,23 +248,19 @@ return
 end subroutine SOLVER
 
 !---------------------------------------------------------------------
-subroutine TRIDIAG(Ngridb, bctype, f_bound, A_in, B_in, C_in, R_in, f_out)
+subroutine TRIDIAG(Ngridb, bctype, f_bound, A_in, B_in, C_in, R_in, y_out)
 !---------------------------------------------------------------------
 ! Tridiagonal solver. It solves the system:
 !
 !   Aj fj+1  + Bj fj  + Cj fj-1 = Rj
 !   for j=1, Ngridb
-!
-!   bctype = 1  -> given f_NA1
-!   bctype = 2  -> given Gamma_NA1
-!   bctype = 3  -> mixed b.c.
 
 implicit none
 
 integer, intent(in) :: Ngridb, bctype
 double precision, intent(in) :: f_bound
 double precision, intent(in) , dimension(Ngridb) :: A_in, B_in, C_in, R_in
-double precision, intent(out), dimension(Ngridb) :: f_out
+double precision, intent(out), dimension(Ngridb) :: y_out
 
 integer :: j
 double precision, dimension(Ngridb-1) :: alpha, beta
@@ -283,12 +276,12 @@ enddo
 ! This has to be corrected later on... 
 
 if (bctype == 1) then
-    f_out(Ngridb) = f_bound
+    y_out(Ngridb) = f_bound
 else
-    f_out(Ngridb) = (R_in(Ngridb) + C_in(Ngridb)*beta(Ngridb-1)/alpha(Ngridb-1))/(B_in(Ngridb) + C_in(Ngridb)/alpha(Ngridb-1))
+    y_out(Ngridb) = (R_in(Ngridb) + C_in(Ngridb)*beta(Ngridb-1)/alpha(Ngridb-1))/(B_in(Ngridb) + C_in(Ngridb)/alpha(Ngridb-1))
 endif
 do j=Ngridb-1, 1, -1
-    f_out(j) = (f_out(j+1) - beta(j))/alpha(j)
+    y_out(j) = (y_out(j+1) - beta(j))/alpha(j)
 enddo
 
 return
