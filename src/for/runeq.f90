@@ -1,7 +1,6 @@
 !---------------------------------------------------------------------
-subroutine RUNEQ(GN, HN, GO, HO, YO, N, W, V, M, G11, A_in, B_in, R_in, Src_y_in, Src_in, &
-    rbdot, bbdot, Ngridb, Ngrid, dx, dt, &
-    x, imethod, bctype, bc_values, y_out, Q_out, adcmp_term, mphit)
+subroutine RUNEQ(GN, HN, GO, HO, YO, N_in, W_in, V_in, M_in, G11, A_in, B_in, R_in, Src_y_in, Src_in, &
+    rbdot, bbdot, Ngridb, Ngrid, dx, dt, x_in, imethod, bctype, bc_values, y_out, Q_out, adcmp_term, mphit)
 !---------------------------------------------------------------------
 ! WARNING: at the moment Qb is explicit, no option for QNNB, QETB, QITB is given at the moment!
 !
@@ -11,12 +10,12 @@ subroutine RUNEQ(GN, HN, GO, HO, YO, N, W, V, M, G11, A_in, B_in, R_in, Src_y_in
 !  Inputs: G, V, A, B, R, S, G11, M, P in terms of Ngrid
 !  Note that G, V, M, S, P are on main grid
 !   while A, B, R, G11 are on shifted grid
-!      dx, dt, x (main grid, 1:Ngrid), should be RHO, imethod
-!      C: boundary conditions on y or on Q  
-!  bctype=2,3 if (yb isn't set) .and. (QB is set)
+!      dx, dt, x (main grid, 1:Ngrid), should be RHO
+!
+!  bctype=2,3 if YB isn't set and QB is set
 !   then C(2)=QB, otherwise, if bctype=1,4, use yb = y(Ngrid)
-!   In the case bctype=2,3, solves up to Ngrid
-!   In the case bctype=1,4, solves up to Ngrid-1 and uses Ngrid as b.c.
+!   In the case bctype=2,3, solves up to Ngridb
+!   In the case bctype=1,4, solves up to Ngridb-1 and uses Ngridb as b.c.
 !   If bctype = 3, then do mixed b.c., where C(5)*y(b)+C(6)*y(b-1) = C(7)
 !
 !  Outputs: y(1:Ngrid), Q(1:Ngrid).
@@ -56,21 +55,53 @@ implicit none
 integer, intent(in) :: Ngrid, imethod, Ngridb, bctype
 double precision, intent(in) :: rbdot, bbdot, bc_values(5)
 double precision, intent(in), dimension(Ngrid) :: GN, HN, GO, HO, &
-   YO, V, G11, A_in, B_in, R_in, Src_y_in, Src_in, mphit, x, M, N, W
+   YO, V_in, G11, A_in, B_in, R_in, Src_y_in, Src_in, mphit, x_in, M_in, N_in, W_in
 double precision, intent(out), dimension(Ngrid) :: y_out, Q_out, adcmp_term
 
 integer :: j
-double precision :: dx, dt, theta, bnd_val(3)
-double precision, dimension(Ngrid) :: x_b, G, H, A, NN, NO, dum1, &
-    Rsource, Rsource2, Pdot_1, Pdot_2, Vtilde, Src_new, ydummy, ytmp, xi, fxi, gxi
-double precision, dimension(Ngridb) :: dum1b
+double precision :: dx, dt, theta
+double precision, dimension(Ngrid) :: x_b, G, H, NN, NO, dum1, &
+    Rsource, Rsource2, Pdot_1, Pdot_2, Vtilde, Src_new, ydummy, ytmp
+double precision, dimension(Ngridb) :: Gmix, AA, BB, CC, RR, g_v, vta, gsdt, gsydt, xi, fxi, gxi
 
-do j=1, Ngrid
-    G(j) = 0.5*(GO(j) + GN(j))
-    H(j) = 0.5*(HO(j) + HN(j))
-    x_b(j) = x(j) + 0.5*dx
-    A(j) = max(A_in(j), 1.E-16)
+
+G = 0.5*(GO + GN)
+H = 0.5*(HO + HN)
+x_b = x_in + 0.5*dx
+
+! Vtilde = (V*M)_shifted*G11
+dum1 = V_in*M_in
+call GRID2GRID(1, x_in, dum1, Vtilde, Ngrid, 1)
+Vtilde = Vtilde*G11
+
+! Compute source: Rsource = - 1/V d/dx (V*M*G11*R), Rsource is on main grid
+Rsource = Vtilde*R_in
+call DERIV(x_b, x_in, 2, Rsource, Rsource2, 1, Ngrid, 0)
+
+Pdot_1 = 0.
+Pdot_2 = 0.
+if (sum(mphit) == 0.) then
+    ytmp = YO
+else
+    ytmp = mphit
+endif
+dum1 = V_in*M_in*N_in*x_in*ytmp
+call DERIV(x_in, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
+call GRID2GRID(2, x_b, ydummy, Pdot_1, Ngrid, 0)
+Pdot_1 = Pdot_1/W_in
+dum1 = G*H*ytmp
+call DERIV(x_in, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
+call GRID2GRID(2, x_b, ydummy, Pdot_2, Ngrid, 0)
+Pdot_2 = Pdot_2*x_in/G
+
+adcmp_term = bbdot*Pdot_1 + (rbdot - bbdot)*Pdot_2  ! used only for FP
+Src_new = Src_in - Rsource2/V_in + adcmp_term
+
+! Define cd, or power law
+do j=1, Ngridb
+    xi(j) = dx*B_in(j)/max(A_in(j), 1.E-16)
 enddo
+fxi = 0.
 
 ! Default is imethod=22 (INUME1-4 in const.f90)
 SELECT CASE(imethod)
@@ -80,60 +111,11 @@ CASE(31: 33)
     theta = 0.5
 END SELECT
 
-dum1 = V*M
-call GRID2GRID(1, x, dum1, Vtilde, Ngrid, 1)
-
-! Compute source: Rsource = - 1/V d/dx (V*M*G11*R), Rsource is on main grid
-Rsource = Vtilde*G11*R_in
-call DERIV(x_b, x, 2, Rsource, Rsource2, 1, Ngrid, 0)
-Src_new = Src_in - Rsource2/V
-
-Pdot_1 = 0.
-Pdot_2 = 0.
-if (sum(mphit) == 0.) then
-    ytmp = YO
-else
-    ytmp = mphit
-endif
-dum1 = V*M*N*x*ytmp
-call DERIV(x, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
-call GRID2GRID(2, x_b, ydummy, Pdot_1, Ngrid, 0)
-Pdot_1 = Pdot_1/W
-dum1 = G*H*ytmp
-call DERIV(x, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
-call GRID2GRID(2, x_b, ydummy, Pdot_2, Ngrid, 0)
-Pdot_2 = Pdot_2*x/G
-
-NN = GN*HN
-NO = GO*HO
-Vtilde = Vtilde*G11
-! Src = Src + bdot/W*d/dx (V*M*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)    for explicit
-adcmp_term = bbdot*Pdot_1 + (rbdot - bbdot)*Pdot_2  ! used only for FP
-Src_new = Src_new + adcmp_term
-
-! Check boundary condition, note that Qbound = Qbound/G11(b) since G11 is absorbed in Vtilde
-bnd_val  = 0.
-SELECT CASE(bctype)
-CASE(1)
-    bnd_val(1) = YO(Ngridb)
-CASE(2)
-    bnd_val(1) = bc_values(1)/G11(Ngridb)
-CASE(3)
-    bnd_val(1: 3) = bc_values(3: 5)
-CASE(4)
-    bnd_val(2) = bc_values(2)/G11(Ngridb)
-END SELECT
- 
-! Define cd, or power law
-xi = dx*B_in/A
 SELECT CASE(imethod)
 CASE(21, 31)
     fxi = 1. + 0.5*xi
 CASE(22, 32)
-    do j=1, Ngrid
-        if (xi(j) < -10.) then
-            fxi(j) = 0.
-        endif
+    do j=1, Ngridb
         if (xi(j) >= -10. .and. xi(j) < 0) then
             fxi(j) = (1. + 0.1*xi(j))**5
         endif
@@ -145,7 +127,7 @@ CASE(22, 32)
         endif
     enddo
 CASE(23, 33)
-    do j=1, Ngrid
+    do j=1, Ngridb
         if (xi(j) == 0) then
             fxi(j) = 1.
         else
@@ -155,60 +137,17 @@ CASE(23, 33)
 END SELECT
 gxi = fxi - xi
 
-! Call solver with this equation, note that A and B are on shifted grids
-!
-! Vtilde = (V*M)_shifted*G11
 ! 1/G d/dt (N*y) + 1/V d/dx (Vtilde*(-A/dx*(fxi, gxi, ntilde))) = S*y + P 
 
-dum1b = GN(1: Ngridb)*theta + GO(1: Ngridb)*(1. - theta)
-call SOLVER(dx, dt, dum1b, NN(1: Ngridb), NO(1: Ngridb), &
-    V(1: Ngridb), Vtilde(1: Ngridb), A(1: Ngridb), &
-    fxi(1: Ngridb), gxi(1: Ngridb), Src_y_in(1: Ngridb), Src_new(1: Ngridb), &
-    Ngridb, theta, YO(1: Ngridb), bctype, bnd_val, y_out(1: Ngridb))
-
-! Compute flux from solution (flux is on shifted grid)
-do j=1, Ngridb-1
-    Q_out(j) = G11(j)*(-A(j)/dx * (fxi(j)*y_out(j+1) - gxi(j)*y_out(j)) + R_in(j))
-enddo
-
-SELECT CASE(bctype)
-CASE(1, 3)
-    call EXTRAP(x(1: Ngridb-1), Q_out(1: Ngridb-1), x(Ngridb), Ngridb-1, Q_out(Ngridb), 2, Ngridb-1)
-CASE(2)
-    Q_out(Ngridb) = bc_values(1)
-CASE(4)
-    Q_out(Ngridb) = bc_values(2)*y_out(Ngridb)
-END SELECT
-
-return
-end subroutine RUNEQ
-
-!---------------------------------------------------------------------
-subroutine SOLVER(dx, dt, G_in, NN, NO, V_in, Vtilde_in, A_in, fxi, gxi, Src_y_in, Src_in, & 
-    Ngridb, theta, YO, bctype, bnd_val, y_out)
-!---------------------------------------------------------------------
-! Build up matrices to be passed to TRIDIAGS
-
-implicit none
-
-integer, intent(in) :: Ngridb, bctype
-double precision, intent(in) :: dx, dt, theta, bnd_val(3)
-double precision, intent(in), dimension(Ngridb) :: YO, V_in, A_in, &
-    Src_y_in, Src_in, G_in, Vtilde_in, NN, NO, fxi, gxi
-double precision, intent(out), dimension(Ngridb) :: y_out
-
-integer :: j
-double precision, dimension(Ngridb) :: AA, BB, CC, RR, g_v, vta, gsdt, gsydt
-
-g_v = dt/dx**2 * G_in/V_in
-vta = Vtilde_in*A_in
-gsdt  = dt*G_in*Src_in
-gsydt = dt*G_in*Src_y_in
-
-! Implicit
+NN = GN*HN
+NO = GO*HO
+Gmix = GN(1: Ngridb)*theta + GO(1: Ngridb)*(1. - theta)
+g_v = dt/dx**2 * Gmix/V_in(1: Ngridb)
+vta = Vtilde(1: Ngridb)*A_in(1: Ngridb)
+gsdt  = dt*Gmix*Src_new(1: Ngridb)
+gsydt = dt*Gmix*Src_y_in(1: Ngridb)
 
 AA = -theta*g_v*vta*fxi
-AA(Ngridb) = bnd_val(1) ! f_bound in TRIDIAG for BCTYPE=1, unused otherwise
 CC(1) = 0.
 CC(2: Ngridb) = -g_v(2: Ngridb)*vta(1: Ngridb-1)*gxi(1: Ngridb-1)
 
@@ -221,23 +160,40 @@ do j=2, Ngridb-1
 enddo
 
 SELECT CASE(bctype)
-CASE(3) ! BB,CC,RR(Ngridb) unused in TRIDIAG for BCTYPE=1
-    BB(Ngridb) = bnd_val(1)
-    CC(Ngridb) = bnd_val(2)
-    RR(Ngridb) = bnd_val(3)
+CASE(1)
+    AA(Ngridb) = YO(Ngridb)
+CASE(3)
+    BB(Ngridb) = bc_values(3)
+    CC(Ngridb) = bc_values(4)
+    RR(Ngridb) = bc_values(5)
 CASE(2, 4)
     BB(Ngridb) = NN(Ngridb) + theta * ( -gsydt(Ngridb) + g_v(Ngridb)*vta(Ngridb-1)*fxi(Ngridb-1) ) + &
-        theta*g_v(Ngridb)*Vtilde_in(Ngridb)*bnd_val(2)*dx ! Additional term for BCTYPE=4
+        theta*g_v(Ngridb)*Vtilde(Ngridb)*bc_values(2)/G11(Ngridb)*dx ! Additional term for BCTYPE=4
     RR(Ngridb) = NO(Ngridb)*YO(Ngridb) + gsydt(Ngridb) + (1. - theta) * &
         (  gsydt(Ngridb)*YO(Ngridb) - g_v(Ngridb) * &
         (vta(Ngridb-1) * (fxi(Ngridb-1)*YO(Ngridb) - gxi(Ngridb-1)*YO(Ngridb-1)) )  ) + &
-        g_v(Ngridb)*Vtilde_in(Ngridb)*bnd_val(1)*dx ! Additional term for BCTYPE=2
+        g_v(Ngridb)*Vtilde(Ngridb)*bc_values(1)/G11(Ngridb)*dx ! Additional term for BCTYPE=2
 END SELECT
 
-call TRIDIAG(Ngridb, bctype, AA, BB, CC, RR, y_out)
+! Tridiagonal solver
+call TRIDIAG(Ngridb, bctype, AA, BB, CC, RR, y_out(1: Ngridb))
+
+! Compute flux from solution (flux is on shifted grid)
+do j=1, Ngridb-1
+    Q_out(j) = G11(j)*(-A_in(j)/dx * (fxi(j)*y_out(j+1) - gxi(j)*y_out(j)) + R_in(j))
+enddo
+
+SELECT CASE(bctype)
+CASE(1, 3)
+    call EXTRAP(x_in(1: Ngridb-1), Q_out(1: Ngridb-1), x_in(Ngridb), Ngridb-1, Q_out(Ngridb), 2, Ngridb-1)
+CASE(2)
+    Q_out(Ngridb) = bc_values(1)
+CASE(4)
+    Q_out(Ngridb) = bc_values(2)*y_out(Ngridb)
+END SELECT
 
 return
-end subroutine SOLVER
+end subroutine RUNEQ
 
 !---------------------------------------------------------------------
 subroutine TRIDIAG(Ngridb, bctype, A_in, B_in, C_in, R_in, y_out)
