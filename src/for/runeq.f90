@@ -161,12 +161,12 @@ CASE(3)
     CC(Ngridb) = bc_values(4)
     RR(Ngridb) = bc_values(5)
 CASE(2, 4)
-    BB(Ngridb) = NN(Ngridb) + theta * ( -gsydt(Ngridb) + g_v(Ngridb)*vta(Ngridb-1)*fxi(Ngridb-1) ) + &
-        theta*g_v(Ngridb)*bc_values(2)*unit_coeff*dx ! Additional term for BCTYPE=4
+    BB(Ngridb) = NN(Ngridb) + theta * ( -gsydt(Ngridb) + g_v(Ngridb)*vta(Ngridb-1)*fxi(Ngridb-1) )
+    if (bctype == 4) BB(Ngridb) = BB(Ngridb) + theta*g_v(Ngridb)*bc_values(2)*unit_coeff*dx
     RR(Ngridb) = NO(Ngridb)*YO(Ngridb) + gsydt(Ngridb) + (1. - theta) * &
         (  gsydt(Ngridb)*YO(Ngridb) - g_v(Ngridb) * &
-        (vta(Ngridb-1) * (fxi(Ngridb-1)*YO(Ngridb) - gxi(Ngridb-1)*YO(Ngridb-1)) )  ) + &
-        g_v(Ngridb)*bc_values(1)*unit_coeff*dx ! Additional term for BCTYPE=2
+        (vta(Ngridb-1) * (fxi(Ngridb-1)*YO(Ngridb) - gxi(Ngridb-1)*YO(Ngridb-1)) )  )
+    if (bctype == 2) RR(Ngridb) = RR(Ngridb) + g_v(Ngridb)*bc_values(1)*unit_coeff*dx
 END SELECT
 
 ! Tridiagonal solver
