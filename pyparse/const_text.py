@@ -944,6 +944,7 @@ use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use const_inc
 use status_inc
 use nclass_mod
+use ipc_mod
 use debugger, only: markloc
 use numerical_tools, only: extrap
 
@@ -977,6 +978,7 @@ class EQNS_INC:
 use parameter_inc, only: NRD, NSBMX
 use const_inc
 use status_inc
+use ipc_mod
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use nclass_mod
 use strahl_mod
