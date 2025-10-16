@@ -462,9 +462,8 @@ YWGO(j) = VRO(j)**(5./3.)
 YWHN(j) = 3./2.*NE(j)
 YWHO(j) = 3./2.*NEO(j)
 unit_coeff = 625.
-YWM(j) = unit_coeff/VR(j)
 YWWB(j) = VR(j)**(5./3.)
-YWNB(j) = 3./2.*NE(j)*YWWB(j)/YVR(j)/YWM(j)
+YWNB(j) = 3./2.*NE(j)*YWWB(j)/unit_coeff
 enddo
 imethod = nint(INUME2)
 
@@ -509,9 +508,8 @@ YWGO(j) = VRO(j)**(5./3.)
 YWHN(j) = 3./2.*NI(j)
 YWHO(j) = 3./2.*NIO(j)
 unit_coeff = 625.
-YWM(j) = unit_coeff/VR(j)
 YWWB(j) = VR(j)**(5./3.)
-YWNB(j) = 3./2.*NI(j)*YWWB(j)/YVR(j)/YWM(j)
+YWNB(j) = 3./2.*NI(j)*YWWB(j)/unit_coeff
 enddo
 imethod = nint(INUME2)
 
@@ -650,20 +648,20 @@ do j=1, NA1
 YWH(j) = 1.
 YWGN(j) = VR(j)**(5./3.)
 YWGO(j) = VRO(j)**(5./3.)
-YWM(j) = 625./VR(j)
+unit_coeff = 625.
 YWR(j) = 0.
 YVR(j) = VR(j)
 YWW1B(j) = VR(j)**(5./3.)
-YWN1B(j) = 3./2.*NE(j)*YWW1B(j)/YVR(j)/YWM(j)
+YWN1B(j) = 3./2.*NE(j)*YWW1B(j)/unit_coeff
 YWW2B(j) = VR(j)**(5./3.)
-YWN2B(j) = 3./2.*NI(j)*YWW2B(j)/YVR(j)/YWM(j)
+YWN2B(j) = 3./2.*NI(j)*YWW2B(j)/unit_coeff
 enddo
 imethod = nint(INUME2)
 '''
 
     runeq = \
 '''NA1I = ND1
-call RUNEQTIMP(YWGN(1:NA1), 3./2.*NE(1:NA1), 3./2.*NI(1:NA1), YWGO(1:NA1), 3./2.*NEO(1:NA1), 3./2.*NIO(1:NA1), TEO(1:NA1), TIO(1:NA1), YWN1B(1:NA1), YWN2B(1:NA1), YWW1B(1:NA1), YWW2B(1:NA1), YVR(1:NA1), YWM(1:NA1), G11(1:NA1)/625, YWA1(1:NA1), YWA2(1:NA1), YWB1(1:NA1), YWB2(1:NA1), YWR(1:NA1), YWR(1:NA1), 625*PET(1:NA1), 625*PIT(1:NA1), 625*PETOT(1:NA1), 625*PITOT(1:NA1), 0.0*YWR(1:NA1), 0.0*YWR(1:NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, RHO(1:NA1), imethod, bc_type_imp, bc_value_imp, TE(1:NA1), TI(1:NA1), QE(1:NA1), QI(1:NA1))
+call RUNEQTIMP(YWGN(1:NA1), 3./2.*NE(1:NA1), 3./2.*NI(1:NA1), YWGO(1:NA1), 3./2.*NEO(1:NA1), 3./2.*NIO(1:NA1), TEO(1:NA1), TIO(1:NA1), YWN1B(1:NA1), YWN2B(1:NA1), YWW1B(1:NA1), YWW2B(1:NA1), YVR(1:NA1), unit_coeff, G11(1:NA1)/625, YWA1(1:NA1), YWA2(1:NA1), YWB1(1:NA1), YWB2(1:NA1), YWR(1:NA1), YWR(1:NA1), 625*PET(1:NA1), 625*PIT(1:NA1), 625*PETOT(1:NA1), 625*PITOT(1:NA1), 0.0*YWR(1:NA1), 0.0*YWR(1:NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, RHO(1:NA1), imethod, bc_type_imp, bc_value_imp, TE(1:NA1), TI(1:NA1), QE(1:NA1), QI(1:NA1))
 if (ND1 < NA1) then
 do j=ND1+1, NA1
 QE(j) = QE(ND1)
@@ -1000,7 +998,7 @@ integer :: IFSUB, imethod, ND, ND1, NODE, JCALL, bctype, bc_type_imp(2), t_wall1
 double precision :: YHRO, YM1, YM2, YB, YC, YJ_CU, YM, YU, YIOH, YICD, YMCD, bc_value_imp(2), t_cpu1, t_cpu2, unit_coeff
 double precision, dimension(5) :: bc_values
 double precision, dimension(NRD) :: YWA, YWB, YWC, YWD, YWGN, &
-    YWHN, YWGO, YWHO, YWR, YWH, YVR, YWM, YWA1, YWA2, YWB1, YWB2, &
+    YWHN, YWGO, YWHO, YWR, YWH, YVR, YWA1, YWA2, YWB1, YWB2, &
     YWAA, YWNB, YWWB, YWN1B, YWW1B, YWN2B, YWW2B, & 
     YWC1, YWC2, YWS, YQDCM, MPHIT, YQDCMF, YWQ, YWG11, YWgradF, YWgradb2
 

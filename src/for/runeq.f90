@@ -10,6 +10,7 @@ subroutine RUNEQ(GN, HN, GO, HO, YO, N_in, W_in, V_in, unit_coeff, G11, A_in, B_
 !  Inputs: G, V, Src are on main grid
 !          A, B, R, G11 are on shifted grid
 !      dx, dt, x (main grid, 1:Ngrid), should be RHO
+! R_in is non-zero only in the momentum equation (residual stress)
 !
 !  bctype=2,3 if YB isn't set and QB is set
 !   then C(2)=QB, otherwise, if bctype=1,4, use yb = y(Ngrid)
@@ -24,7 +25,7 @@ subroutine RUNEQ(GN, HN, GO, HO, YO, N_in, W_in, V_in, unit_coeff, G11, A_in, B_
 !
 ! implicit adiabatic compression 
 !
-! 1/G d/dt(G*H*y)+1/V d/dx(V*M*(Q-bdot*(V/W*N-H/M)*x*y-rdot*x*H/M*y)) = 
+! 1/G d/dt(G*H*y)+1/V d/dx(unit_coeff*(Q-bdot*(V/W*N-H/M)*x*y-rdot*x*H/M*y)) = 
 !        (S-bdot*M*N*x*d/dx(V/W)-(rdot-bdot)/V*G*H*d/dx(x*V/G))*y+P
 !
 !  rbdot = phibdot /(2*phib), bdot = Bdot/(2*B)
@@ -60,16 +61,15 @@ double precision, intent(out), dimension(Ngrid) :: y_out, Q_out, adcmp_term
 integer :: j
 double precision :: theta
 double precision, dimension(Ngrid) :: x_b, Gmid, Hmid, NN, NO, dum1, &
-    Rsource, Rsource2, Pdot_1, Pdot_2, Vtilde, Src_new, ydummy, ytmp
+    Rsource, Rsource2, Pdot_1, Pdot_2, Src_new, ydummy, ytmp
 double precision, dimension(Ngridb) :: Gmix, AA, BB, CC, RR, g_v, vta, gsdt, gsydt, xi, fxi, gxi
 
 Gmid = 0.5*(GO + GN)
 Hmid = 0.5*(HO + HN)
 x_b = x_in + 0.5*dx
-Vtilde = unit_coeff*G11
 
-! Compute source: Rsource = - 1/V d/dx (V*M*G11*R), Rsource is on main grid
-Rsource = Vtilde*R_in
+! Compute source: Rsource = - 1/V d/dx (unit_coeff*G11*R), Rsource is on main grid
+Rsource = unit_coeff*G11*R_in
 call DERIV(x_b, x_in, 2, Rsource, Rsource2, 1, Ngrid, 0)
 
 Pdot_1 = 0.
@@ -131,13 +131,13 @@ CASE(23, 33)
 END SELECT
 gxi = fxi - xi
 
-! 1/G d/dt (N*y) + 1/V d/dx (Vtilde*(-A/dx*(fxi, gxi, ntilde))) = S*y + P 
+! 1/G d/dt (N*y) + 1/V d/dx (unit_coeff*G11*(-A/dx*(fxi, gxi, ntilde))) = S*y + P
 
 NN = GN*HN
 NO = GO*HO
 Gmix = GN(1: Ngridb)*theta + GO(1: Ngridb)*(1. - theta)
 g_v = dt/dx**2 * Gmix/V_in(1: Ngridb)
-vta = Vtilde(1: Ngridb)*A_in(1: Ngridb)
+vta = unit_coeff*G11(1: Ngridb)*A_in(1: Ngridb)
 gsdt  = dt*Gmix*Src_new(1: Ngridb)
 gsydt = dt*Gmix*Src_y_in(1: Ngridb)
 
@@ -190,7 +190,7 @@ return
 end subroutine RUNEQ
 
 !---------------------------------------------------------------------
-subroutine TRIDIAG(Ngridb, bctype, A_in, B_in, C_in, R_in, y_out)
+subroutine TRIDIAG(Ngridb, bctype, AA_in, BB_in, CC_in, RR_in, y_out)
 !---------------------------------------------------------------------
 ! Tridiagonal solver. It solves the system:
 !
@@ -200,26 +200,26 @@ subroutine TRIDIAG(Ngridb, bctype, A_in, B_in, C_in, R_in, y_out)
 implicit none
 
 integer, intent(in) :: Ngridb, bctype
-double precision, intent(in) , dimension(Ngridb) :: A_in, B_in, C_in, R_in
+double precision, intent(in) , dimension(Ngridb) :: AA_in, BB_in, CC_in, RR_in
 double precision, intent(out), dimension(Ngridb) :: y_out
 
 integer :: j
 double precision, dimension(Ngridb-1) :: alpha, beta
 
-alpha(1) = -B_in(1)/A_in(1)
-beta(1)  =  R_in(1)/A_in(1)
+alpha(1) = -BB_in(1)/AA_in(1)
+beta(1)  =  RR_in(1)/AA_in(1)
 do j=2, Ngridb-1
-    alpha(j) = -C_in(j)/(A_in(j)*alpha(j-1)) - B_in(j)/A_in(j)
-    beta(j) = R_in(j)/A_in(j) + C_in(j)/A_in(j)*beta(j-1)/alpha(j-1)
+    alpha(j) = -CC_in(j)/(AA_in(j)*alpha(j-1)) - BB_in(j)/AA_in(j)
+    beta(j) = RR_in(j)/AA_in(j) + CC_in(j)/AA_in(j)*beta(j-1)/alpha(j-1)
 enddo
 
 ! Note that boundary value is assumed to be on the main last grid point, so 1-dx/2.
 ! This has to be corrected later on... 
 
 if (bctype == 1) then
-    y_out(Ngridb) = A_in(Ngridb)
+    y_out(Ngridb) = AA_in(Ngridb)
 else
-    y_out(Ngridb) = (R_in(Ngridb) + C_in(Ngridb)*beta(Ngridb-1)/alpha(Ngridb-1))/(B_in(Ngridb) + C_in(Ngridb)/alpha(Ngridb-1))
+    y_out(Ngridb) = (RR_in(Ngridb) + CC_in(Ngridb)*beta(Ngridb-1)/alpha(Ngridb-1))/(BB_in(Ngridb) + CC_in(Ngridb)/alpha(Ngridb-1))
 endif
 do j=Ngridb-1, 1, -1
     y_out(j) = (y_out(j+1) - beta(j))/alpha(j)
@@ -269,14 +269,14 @@ end function GETPEI
 
 !---------------------------------------------------------------------
 subroutine RUNEQTIMP(GN, H1N, H2N, GO, H1O, H2O, & 
-    Y1O, Y2O, N1, N2, W1, W2, V, M, G11, A1_in, A2_in, B1_in, B2_in, R1, R2, &
+    Y1O, Y2O, N1, N2, W1, W2, V, unit_coeff, G11, A1_in, A2_in, B1_in, B2_in, R1, R2, &
     S1_in, S2_in, P1, P2, T12, T21, rbdot, bbdot, Ngridb, Ngrid, dx, dt, &
     x, imethod, bctype, bcvalue, y1, y2, Q1_out, Q2_out)
 !---------------------------------------------------------------------
 ! WARNING: at the moment Qb is explicit, no option for QNNB, QETB, QITB is given at the moment!
 !
-!  Inputs: G, V, A, B, R, S, G11, M, P in terms of Ngrid
-!  Note that G, V, M, S, P are on main grid
+!  Inputs: G, V, A, B, R, S, G11, P in terms of Ngrid
+!  Note that G, V, S, P are on main grid
 !   while A, B, R, G11 are on shifted grid
 !      dx, dt, x (main grid, 1:Ngrid), should be RHO, imethod
 !      C: boundary conditions on y or on Q  
@@ -294,17 +294,17 @@ subroutine RUNEQTIMP(GN, H1N, H2N, GO, H1O, H2O, &
 !
 !  Equations are:
 !
-!    1/G d/dt (G*H1*y1) + 1/V d/dx (V*M*Q1) = S1*y1+P1+T12*y2 + rbdot*xhat*1/G d/dx (Gtilde*Htilde1*y1)
-!    1/G d/dt (G*H2*y2) + 1/V d/dx (V*M*Q2) = S2*y2+P2+T21*y1 + rbdot*xhat*1/G d/dx (Gtilde*Htilde2*y2)
+!    1/G d/dt (G*H1*y1) + 1/V d/dx (unit_coeff*Q1) = S1*y1+P1+T12*y2 + rbdot*xhat*1/G d/dx (Gtilde*Htilde1*y1)
+!    1/G d/dt (G*H2*y2) + 1/V d/dx (unit_coeff*Q2) = S2*y2+P2+T21*y1 + rbdot*xhat*1/G d/dx (Gtilde*Htilde2*y2)
 !
 !explicit adiabatic compression
 !
-! 1/G d/dt(G*H1*y1)+1/V d/dx(V*M*Q1) = S1*y1+P1+T12*y2 + bdot/W1*d/dx (V*M*N1*x*y1)+(rdot-bdot)*x/G*d/dx (G*H1*y1) 
+! 1/G d/dt(G*H1*y1)+1/V d/dx(unit_coeff*Q1) = S1*y1+P1+T12*y2 + bdot/W1*d/dx (unit_coeff*N1*x*y1)+(rdot-bdot)*x/G*d/dx (G*H1*y1) 
 !
 !implicit adiabatic compression 
 !
-! 1/G d/dt(G*H*y)+1/V d/dx(V*M*(Q-bdot*(V/W*N-H/M)*x*y-rdot*x*H/M*y)) = 
-!                                             (S-bdot*M*N*x*d/dx(V/W)-(rdot-bdot)/V*G*H*d/dx(x*V/G))*y+P
+! 1/G d/dt(G*H*y)+1/V d/dx(unit_coeff*(Q-bdot*(V/W*N-H/M)*x*y-rdot*x*H/M*y)) =
+!                (S-bdot*M*N*x*d/dx(V/W)-(rdot-bdot)/V*G*H*d/dx(x*V/G))*y+P
 !
 !  rbdot = phibdot /(2*phib), bdot = Bdot/(2*B)
 !
@@ -312,7 +312,7 @@ subroutine RUNEQTIMP(GN, H1N, H2N, GO, H1O, H2O, &
 !
 ! So B = B + 1/G11*(bdot*V/W*N+(rdot-bdot)*H1/M)*x               for implicit
 !
-! and P1 = P1 + bdot/W1*d/dx (V*M*N1*x*y1)+(rdot-bdot)*x/G*d/dx (G*H1*y1)         for explicit
+! and P1 = P1 + bdot/W1*d/dx (unit_coeff*N1*x*y1)+(rdot-bdot)*x/G*d/dx (G*H1*y1)         for explicit
 !
 ! basically we do as in RUNEQ but y = [y1 y2] and so on (bigger matrix)
 !
@@ -337,9 +337,9 @@ use numerical_tools, only: deriv, extrap, grid2grid
 implicit none
 
 integer, intent(in) :: Ngrid, imethod, Ngridb, bctype(2)
-double precision, intent(in) :: rbdot, bbdot, dx, dt
+double precision, intent(in) :: rbdot, bbdot, dx, dt, unit_coeff
 double precision, intent(in), dimension(Ngrid) :: GN, H1N, H2N, GO, &
-    H1O, H2O, Y1O, Y2O, N1, N2, W1, W2, V, M, G11, &
+    H1O, H2O, Y1O, Y2O, N1, N2, W1, W2, V, G11, &
     A1_in, A2_in, B1_in, B2_in, &
     R1, R2, S1_in, S2_in, P1, P2, x, bcvalue(2)
 double precision, intent(out)  , dimension(Ngrid) :: T12, T21, Q1_out, Q2_out
@@ -366,16 +366,16 @@ CASE(31: 33)
     theta = 0.5
 END SELECT
 
-! Map V*M, G, H on tildes
+! Map unit_coeff, G, H on tildes
 ! So B = B + 1/G11*(bdot*V/W*N*x+(rdot-bdot)*H/M*x)                           for implicit
 ! So S = S - bdot*M*N*x*d/dx(V/W) - (rdot-bdot)/V*G*H*d/dx (x*V/G)      for implicit
-! and P = P + bdot/W*d/dx (V*M*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)         for explicit
+! and P = P + bdot/W*d/dx (unit_coeff*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)         for explicit
 
-call GRID2GRID(1, x, V*M, Vtilde, Ngrid, 1)
- 
-! Compute source: Rsource = - 1/V d/dx (V*M*G11*R), Rsource is on main grid
+Vtilde = unit_coeff*G11
+
+! Compute source: Rsource = - 1/V d/dx (unit_coeff*G11*R), Rsource is on main grid
 do j=1, Ngrid
-    Rsource1(j) = Vtilde(j)*G11(j)*R1(j)
+    Rsource1(j) = Vtilde(j)*R1(j)
     Rsource3(j) = 0.
 enddo
 call DERIV(x_b, x, 2, Rsource1, Rsource3, 1, Ngrid, 0)
@@ -383,7 +383,7 @@ do j=1, Ngrid
     Rsource3(j) = -Rsource3(j)/V(j)
     P1_new(j) = P1(j) + Rsource3(j)
     T12(j) = 625*GETPEI(j)
-    Rsource2(j) = Vtilde(j)*G11(j)*R2(j)
+    Rsource2(j) = Vtilde(j)*R2(j)
     Rsource4(j) = 0.
 enddo
 
@@ -402,11 +402,11 @@ Pdot_21 = 0.
 Pdot_12 = 0.
 Pdot_22 = 0.
 
-call DERIV(x, x_b, 1, V*M*N1*x*Y1O, ydummy, 1, Ngrid, 1)
+call DERIV(x, x_b, 1, unit_coeff*N1*x*Y1O, ydummy, 1, Ngrid, 1)
 call GRID2GRID(2, x_b, ydummy, Pdot_11, Ngrid, 0)
 Pdot_11 = Pdot_11/W1
 
-call DERIV(x, x_b, 1, V*M*N2*x*Y2O, ydummy, 1, Ngrid, 1)
+call DERIV(x, x_b, 1, unit_coeff*N2*x*Y2O, ydummy, 1, Ngrid, 1)
 call GRID2GRID(2, x_b, ydummy, Pdot_12, Ngrid, 0)
 Pdot_12 = Pdot_12/W2
 
@@ -423,10 +423,9 @@ do j=1, Ngrid
     N2N(j) = GN(j)*H2N(j)
     N1O(j) = GO(j)*H1O(j)
     N2O(j) = GO(j)*H2O(j)
-    Vtilde(j) = Vtilde(j)*G11(j)
-! P = P + bdot/W*d/dx (V*M*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)   for explicit
+! P = P + bdot/W*d/dx (unit_coeff*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)   for explicit
     P1_new(j) = P1_new(j) + bbdot*Pdot_11(j) + (rbdot - bbdot)*Pdot_21(j)
-! P = P + bdot/W*d/dx (V*M*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)   for explicit
+! P = P + bdot/W*d/dx (unit_coeff*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)   for explicit
     P2_new(j) = P2_new(j) + bbdot*Pdot_12(j) + (rbdot - bbdot)*Pdot_22(j)
 enddo
 
