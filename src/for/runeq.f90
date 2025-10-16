@@ -1,5 +1,5 @@
 !---------------------------------------------------------------------
-subroutine RUNEQ(GN, HN, GO, HO, YO, N_in, W_in, V_in, M_in, G11, A_in, B_in, R_in, Src_y_in, Src_in, &
+subroutine RUNEQ(GN, HN, GO, HO, YO, N_in, W_in, V_in, unit_coeff, G11, A_in, B_in, R_in, Src_y_in, Src_in, &
     rbdot, bbdot, Ngridb, Ngrid, dx, dt, x_in, imethod, bctype, bc_values, y_out, Q_out, adcmp_term, mphit)
 !---------------------------------------------------------------------
 ! WARNING: at the moment Qb is explicit, no option for QNNB, QETB, QITB is given at the moment!
@@ -7,9 +7,8 @@ subroutine RUNEQ(GN, HN, GO, HO, YO, N_in, W_in, V_in, M_in, G11, A_in, B_in, R_
 ! also, schemes are not appropriate for A = 0, also the Grigori's scheme with additional D and V for
 ! stiff transport is not yet implemented
 !
-!  Inputs: G, V, A, B, R, S, G11, M, P in terms of Ngrid
-!  Note that G, V, M, S, P are on main grid
-!   while A, B, R, G11 are on shifted grid
+!  Inputs: G, V, Src are on main grid
+!          A, B, R, G11 are on shifted grid
 !      dx, dt, x (main grid, 1:Ngrid), should be RHO
 !
 !  bctype=2,3 if YB isn't set and QB is set
@@ -53,26 +52,21 @@ use numerical_tools, only: extrap, deriv, grid2grid
 implicit none
 
 integer, intent(in) :: Ngrid, imethod, Ngridb, bctype
-double precision, intent(in) :: rbdot, bbdot, bc_values(5)
+double precision, intent(in) :: dx, dt, rbdot, bbdot, unit_coeff, bc_values(5)
 double precision, intent(in), dimension(Ngrid) :: GN, HN, GO, HO, &
-   YO, V_in, G11, A_in, B_in, R_in, Src_y_in, Src_in, mphit, x_in, M_in, N_in, W_in
+   YO, V_in, G11, A_in, B_in, R_in, Src_y_in, Src_in, mphit, x_in, N_in, W_in
 double precision, intent(out), dimension(Ngrid) :: y_out, Q_out, adcmp_term
 
 integer :: j
-double precision :: dx, dt, theta
-double precision, dimension(Ngrid) :: x_b, G, H, NN, NO, dum1, &
+double precision :: theta
+double precision, dimension(Ngrid) :: x_b, Gmid, Hmid, NN, NO, dum1, &
     Rsource, Rsource2, Pdot_1, Pdot_2, Vtilde, Src_new, ydummy, ytmp
 double precision, dimension(Ngridb) :: Gmix, AA, BB, CC, RR, g_v, vta, gsdt, gsydt, xi, fxi, gxi
 
-
-G = 0.5*(GO + GN)
-H = 0.5*(HO + HN)
+Gmid = 0.5*(GO + GN)
+Hmid = 0.5*(HO + HN)
 x_b = x_in + 0.5*dx
-
-! Vtilde = (V*M)_shifted*G11
-dum1 = V_in*M_in
-call GRID2GRID(1, x_in, dum1, Vtilde, Ngrid, 1)
-Vtilde = Vtilde*G11
+Vtilde = unit_coeff*G11
 
 ! Compute source: Rsource = - 1/V d/dx (V*M*G11*R), Rsource is on main grid
 Rsource = Vtilde*R_in
@@ -85,14 +79,14 @@ if (sum(mphit) == 0.) then
 else
     ytmp = mphit
 endif
-dum1 = V_in*M_in*N_in*x_in*ytmp
+dum1 = unit_coeff*N_in*x_in*ytmp
 call DERIV(x_in, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
 call GRID2GRID(2, x_b, ydummy, Pdot_1, Ngrid, 0)
 Pdot_1 = Pdot_1/W_in
-dum1 = G*H*ytmp
+dum1 = Gmid*Hmid*ytmp
 call DERIV(x_in, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
 call GRID2GRID(2, x_b, ydummy, Pdot_2, Ngrid, 0)
-Pdot_2 = Pdot_2*x_in/G
+Pdot_2 = Pdot_2*x_in/Gmid
 
 adcmp_term = bbdot*Pdot_1 + (rbdot - bbdot)*Pdot_2  ! used only for FP
 Src_new = Src_in - Rsource2/V_in + adcmp_term
@@ -168,11 +162,11 @@ CASE(3)
     RR(Ngridb) = bc_values(5)
 CASE(2, 4)
     BB(Ngridb) = NN(Ngridb) + theta * ( -gsydt(Ngridb) + g_v(Ngridb)*vta(Ngridb-1)*fxi(Ngridb-1) ) + &
-        theta*g_v(Ngridb)*Vtilde(Ngridb)*bc_values(2)/G11(Ngridb)*dx ! Additional term for BCTYPE=4
+        theta*g_v(Ngridb)*bc_values(2)*unit_coeff*dx ! Additional term for BCTYPE=4
     RR(Ngridb) = NO(Ngridb)*YO(Ngridb) + gsydt(Ngridb) + (1. - theta) * &
         (  gsydt(Ngridb)*YO(Ngridb) - g_v(Ngridb) * &
         (vta(Ngridb-1) * (fxi(Ngridb-1)*YO(Ngridb) - gxi(Ngridb-1)*YO(Ngridb-1)) )  ) + &
-        g_v(Ngridb)*Vtilde(Ngridb)*bc_values(1)/G11(Ngridb)*dx ! Additional term for BCTYPE=2
+        g_v(Ngridb)*bc_values(1)*unit_coeff*dx ! Additional term for BCTYPE=2
 END SELECT
 
 ! Tridiagonal solver
