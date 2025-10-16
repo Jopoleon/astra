@@ -91,12 +91,6 @@ Pdot_2 = Pdot_2*x_in/Gmid
 adcmp_term = bbdot*Pdot_1 + (rbdot - bbdot)*Pdot_2  ! used only for FP
 Src_new = Src_in - Rsource2/V_in + adcmp_term
 
-! Define cd, or power law
-do j=1, Ngridb
-    xi(j) = dx*B_in(j)/max(A_in(j), 1.E-16)
-enddo
-fxi = 0.
-
 ! Default is imethod=22 (INUME1-4 in const.f90)
 SELECT CASE(imethod)
 CASE(21: 23)
@@ -104,6 +98,12 @@ CASE(21: 23)
 CASE(31: 33)
     theta = 0.5
 END SELECT
+
+! Define cd, or power law
+do j=1, Ngridb
+    xi(j) = dx*B_in(j)/max(A_in(j), 1.E-16)
+enddo
+fxi = 0.
 
 SELECT CASE(imethod)
 CASE(21, 31)
@@ -271,7 +271,7 @@ end function GETPEI
 subroutine RUNEQTIMP(GN, H1N, H2N, GO, H1O, H2O, & 
     Y1O, Y2O, N1, N2, W1, W2, V, unit_coeff, G11, A1_in, A2_in, B1_in, B2_in, R1, R2, &
     S1_in, S2_in, P1, P2, T12, T21, rbdot, bbdot, Ngridb, Ngrid, dx, dt, &
-    x, imethod, bctype, bcvalue, y1, y2, Q1_out, Q2_out)
+    x_in, imethod, bctype, bcvalue, y1, y2, Q1_out, Q2_out)
 !---------------------------------------------------------------------
 ! WARNING: at the moment Qb is explicit, no option for QNNB, QETB, QITB is given at the moment!
 !
@@ -341,7 +341,7 @@ double precision, intent(in) :: rbdot, bbdot, dx, dt, unit_coeff
 double precision, intent(in), dimension(Ngrid) :: GN, H1N, H2N, GO, &
     H1O, H2O, Y1O, Y2O, N1, N2, W1, W2, V, G11, &
     A1_in, A2_in, B1_in, B2_in, &
-    R1, R2, S1_in, S2_in, P1, P2, x, bcvalue(2)
+    R1, R2, S1_in, S2_in, P1, P2, x_in, bcvalue(2)
 double precision, intent(out)  , dimension(Ngrid) :: T12, T21, Q1_out, Q2_out
 double precision, intent(inout), dimension(Ngrid) :: y1, y2
 
@@ -349,16 +349,16 @@ integer :: j, NgridS(2)
 double precision :: theta, f_bound1, Qbound1, f_bound2, Qbound2
 double precision, dimension(Ngrid) :: x_b, S1_new, P1_new, S2_new, P2_new, &
     Vtilde, Rsource1, Rsource2, Rsource3, Rsource4, N1N, N1O, N2N, N2O, ydummy, &
-    xi1, fxi1, gxi1, xi2, fxi2, gxi2, A1, A2, Pdot_11, Pdot_12, Pdot_21, Pdot_22
+    Pdot_11, Pdot_12, Pdot_21, Pdot_22
+double precision, dimension(Ngridb) :: A1, A2, xi1, fxi1, gxi1, xi2, fxi2, gxi2
 double precision, external :: GETPEI
 
-do j=1, Ngrid
+x_b = x_in + 0.5*dx
+do j=1, Ngridb
     A1(j) = max(A1_in(j),  1.E-16)
     A2(j) = max(A2_in(j),  1.E-16)
-    x_b(j) = x(j) + 0.5*dx
 enddo
 
-! Define explicit or implicit
 SELECT CASE(imethod)
 CASE(21: 23)
     theta = 1.
@@ -374,27 +374,14 @@ END SELECT
 Vtilde = unit_coeff*G11
 
 ! Compute source: Rsource = - 1/V d/dx (unit_coeff*G11*R), Rsource is on main grid
-do j=1, Ngrid
-    Rsource1(j) = Vtilde(j)*R1(j)
-    Rsource3(j) = 0.
-enddo
-call DERIV(x_b, x, 2, Rsource1, Rsource3, 1, Ngrid, 0)
-do j=1, Ngrid
-    Rsource3(j) = -Rsource3(j)/V(j)
-    P1_new(j) = P1(j) + Rsource3(j)
-    T12(j) = 625*GETPEI(j)
-    Rsource2(j) = Vtilde(j)*R2(j)
-    Rsource4(j) = 0.
-enddo
+Rsource1 = Vtilde*R1
+Rsource2 = Vtilde*R2
+Rsource3 = 0.
+Rsource4 = 0.
 
-call DERIV(x_b, x, 2, Rsource2, Rsource4, 1, Ngrid, 0)
-do j=1, Ngrid
-    Rsource4(j) = -Rsource4(j)/V(j)
-    P2_new(j) = P2(j) + Rsource4(j)
-    T21(j) = T12(j)
-    S1_new(j) = S1_in(j) - T12(j)
-    S2_new(j) = S2_in(j) - T21(j)
-enddo
+call DERIV(x_b, x_in, 2, Rsource1, Rsource3, 1, Ngrid, 0)
+call DERIV(x_b, x_in, 2, Rsource2, Rsource4, 1, Ngrid, 0)
+
 
 ! Compute additionals
 Pdot_11 = 0.
@@ -402,32 +389,38 @@ Pdot_21 = 0.
 Pdot_12 = 0.
 Pdot_22 = 0.
 
-call DERIV(x, x_b, 1, unit_coeff*N1*x*Y1O, ydummy, 1, Ngrid, 1)
+call DERIV(x_in, x_b, 1, unit_coeff*N1*x_in*Y1O, ydummy, 1, Ngrid, 1)
 call GRID2GRID(2, x_b, ydummy, Pdot_11, Ngrid, 0)
 Pdot_11 = Pdot_11/W1
 
-call DERIV(x, x_b, 1, unit_coeff*N2*x*Y2O, ydummy, 1, Ngrid, 1)
+call DERIV(x_in, x_b, 1, unit_coeff*N2*x_in*Y2O, ydummy, 1, Ngrid, 1)
 call GRID2GRID(2, x_b, ydummy, Pdot_12, Ngrid, 0)
 Pdot_12 = Pdot_12/W2
 
-call DERIV(x, x_b, 1, GN*H1N*Y1O, ydummy, 1, Ngrid, 1)
+call DERIV(x_in, x_b, 1, GN*H1N*Y1O, ydummy, 1, Ngrid, 1)
 call GRID2GRID(2, x_b, ydummy, Pdot_21, Ngrid, 0)
-Pdot_21 = Pdot_21*x/GN
+Pdot_21 = Pdot_21*x_in/GN
 
-call DERIV(x, x_b, 1, GN*H2N*Y2O, ydummy, 1, Ngrid, 1)
+call DERIV(x_in, x_b, 1, GN*H2N*Y2O, ydummy, 1, Ngrid, 1)
 call GRID2GRID(2, x_b, ydummy, Pdot_22, Ngrid, 0)
-Pdot_22 = Pdot_22*x/GN
+Pdot_22 = Pdot_22*x_in/GN
+
+N1N = GN*H1N
+N2N = GN*H2N
+N1O = GO*H1O
+N2O = GO*H2O
 
 do j=1, Ngrid
-    N1N(j) = GN(j)*H1N(j)
-    N2N(j) = GN(j)*H2N(j)
-    N1O(j) = GO(j)*H1O(j)
-    N2O(j) = GO(j)*H2O(j)
-! P = P + bdot/W*d/dx (unit_coeff*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)   for explicit
-    P1_new(j) = P1_new(j) + bbdot*Pdot_11(j) + (rbdot - bbdot)*Pdot_21(j)
-! P = P + bdot/W*d/dx (unit_coeff*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)   for explicit
-    P2_new(j) = P2_new(j) + bbdot*Pdot_12(j) + (rbdot - bbdot)*Pdot_22(j)
+    T12(j) = 625.*GETPEI(j)
 enddo
+
+T21 = T12
+S1_new = S1_in - T12
+S2_new = S2_in - T21
+! P = P + bdot/W*d/dx (unit_coeff*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)   for explicit
+P1_new = P1 - Rsource3/V + bbdot*Pdot_11 + (rbdot - bbdot)*Pdot_21
+! P = P + bdot/W*d/dx (unit_coeff*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)   for explicit
+P2_new = P2 - Rsource4/V + bbdot*Pdot_12 + (rbdot - bbdot)*Pdot_22
 
 ! Check boundary condition, note that Qbound = Qbound/G11(b) since G11 is absorbed in Vtilde
 if (bctype(1) == 1) then
@@ -451,33 +444,25 @@ else if (bctype(2) == 2) then
 endif 
       
 ! Define cd, or power law
+xi1 = dx*B1_in(1: Ngridb)/A1
+xi2 = dx*B2_in(1: Ngridb)/A2
+
 SELECT CASE(imethod)
-
 CASE(11, 21, 31)
-    do j=1, Ngrid
-        xi1(j) = dx*B1_in(j)/A1(j)
-        fxi1(j) = 1. + 0.5*xi1(j)
-        gxi1(j) = 1. - 0.5*xi1(j)
-        xi2(j)  = dx*B2_in(j)/A2(j)
-        fxi2(j) = 1. + 0.5*xi2(j)
-        gxi2(j) = 1. - 0.5*xi2(j)
-    enddo
-
+    fxi1 = 1. + 0.5*xi1
+    fxi2 = 1. + 0.5*xi2
 CASE(12, 22, 32)
-    do j=1, Ngrid
-        xi1(j) = dx*B1_in(j)/A1(j)
+    do j=1, Ngridb
         if (xi1(j) < -10.) then
             fxi1(j) = 0
         else if (xi1(j) < 0) then
-            fxi1(j) = (1. + 0.1*xi1(j))**5.0
+            fxi1(j) = (1. + 0.1*xi1(j))**5
         else if (xi1(j) <= 10) then
-            fxi1(j) = (1. - 0.1*xi1(j))**5.0 + xi1(j)
+            fxi1(j) = (1. - 0.1*xi1(j))**5 + xi1(j)
         else
             fxi1(j) = xi1(j)
         endif
-        gxi1(j) = fxi1(j)-xi1(j)
 
-        xi2(j) = dx*B2_in(j)/A2(j)
         if (xi2(j) < -10.) then
             fxi2(j) = 0
         else if (xi2(j) < 0) then
@@ -487,41 +472,30 @@ CASE(12, 22, 32)
         else
             fxi2(j) = xi2(j)
         endif
-        gxi2(j) = fxi2(j) - xi2(j)
     enddo
-
 CASE(13, 23, 33)
-    do j=1, Ngrid
-        xi1(j) = dx*B1_in(j)/A1(j)
-        xi2(j) = dx*B2_in(j)/A2(j)
+    do j=1, Ngridb
         if (xi1(j) == 0.) then
             fxi1(j) = 1.
-            gxi1(j) = 1.
         else
             fxi1(j) = xi1(j)/(1. - exp(-xi1(j)))
-            gxi1(j) = fxi1(j) - xi1(j)
         endif
         if (xi2(j) == 0.) then
             fxi2(j) = 1.
-            gxi2(j) = 1.
         else
             fxi2(j) = xi2(j)/(1. - exp(-xi2(j)))
-            gxi2(j) = fxi2(j) - xi2(j)
         endif
     enddo
-
 END SELECT
+gxi1 = fxi1 - xi1
+gxi2 = fxi2 - xi2
 
 call SOLVERIMP(dx, dt, &
     GN(1: Ngridb)*theta + GO(1: Ngridb)*(1 - theta), & 
     N1N(1: Ngridb), N1O(1: Ngridb), N2N(1: Ngridb), & 
     N2O(1: Ngridb), V(1: Ngridb), Vtilde(1: Ngridb), & 
-    A1(1: Ngridb), A2(1: Ngridb), & 
-    fxi1(1: Ngridb), fxi2(1: Ngridb), gxi1(1: Ngridb), & 
-    gxi2(1: Ngridb), S1_new(1: Ngridb), & 
-    S2_new(1: Ngridb), & 
-    P1_new(1: Ngridb), P2_new(1: Ngridb), & 
-    T12(1: Ngridb), T21(1: Ngridb), & 
+    A1, A2, fxi1, fxi2, gxi1, gxi2, S1_new(1: Ngridb), S2_new(1: Ngridb), & 
+    P1_new(1: Ngridb), P2_new(1: Ngridb), T12(1: Ngridb), T21(1: Ngridb), & 
     Ngridb, NgridS, theta, Y1O(1: Ngridb), & 
     Y2O(1: Ngridb), & 
     f_bound1, Qbound1, f_bound2, Qbound2, & 
@@ -533,7 +507,7 @@ do j=1, Ngridb-1
     Q2_out(j) = G11(j)*(-A2(j)/dx*(fxi2(j)*y2(j+1) - gxi2(j)*y2(j)) + R2(j))
 enddo
 if (bctype(1) == 1) then
-    call EXTRAP(x(1: NgridS(1)), Q1_out(1: NgridS(1)), x(Ngridb), & 
+    call EXTRAP(x_in(1: NgridS(1)), Q1_out(1: NgridS(1)), x_in(Ngridb), & 
         NgridS(1), Q1_out(Ngridb), 1, NgridS(1))
 else if (bctype(1) == 2) then
 ! Restore G11 in Qbound
@@ -541,7 +515,7 @@ else if (bctype(1) == 2) then
 endif
 
 if (bctype(2) == 1) then
-    call EXTRAP(x(1: NgridS(2)), Q2_out(1: NgridS(2)), x(Ngridb), & 
+    call EXTRAP(x_in(1: NgridS(2)), Q2_out(1: NgridS(2)), x_in(Ngridb), & 
         NgridS(2), Q2_out(Ngridb), 1, NgridS(2))
 else if (bctype(2) == 2) then
 ! Restore G11 in Qbound
