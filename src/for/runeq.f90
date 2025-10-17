@@ -287,7 +287,7 @@ double precision, intent(out)  , dimension(Ngrid) :: T12, T21, Q1_out, Q2_out
 double precision, intent(inout), dimension(Ngrid) :: y1, y2
 
 integer :: j
-double precision :: theta, f_bound1, Qbound1, f_bound2, Qbound2
+double precision :: theta, f_bound1, f_bound2
 double precision, dimension(Ngrid) :: x_b, S1_new, P1_new, S2_new, P2_new, &
     Vtilde, Rsource1, Rsource2, Rsource3, Rsource4, N1N, N1O, N2N, N2O, ydummy, &
     Pdot_11, Pdot_12, Pdot_21, Pdot_22
@@ -323,8 +323,6 @@ Rsource4 = 0.
 call DERIV(x_b, x_in, 2, Rsource1, Rsource3, 1, Ngrid, 0)
 call DERIV(x_b, x_in, 2, Rsource2, Rsource4, 1, Ngrid, 0)
 
-
-! Compute additionals
 Pdot_11 = 0.
 Pdot_21 = 0.
 Pdot_12 = 0.
@@ -363,23 +361,9 @@ P1_new = P1 - Rsource3/V + bbdot*Pdot_11 + (rbdot - bbdot)*Pdot_21
 ! P = P + bdot/W*d/dx (unit_coeff*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)   for explicit
 P2_new = P2 - Rsource4/V + bbdot*Pdot_12 + (rbdot - bbdot)*Pdot_22
 
-! Check boundary condition, note that Qbound = Qbound/G11(b) since G11 is absorbed in Vtilde
-if (bctype(1) == 1) then
-    f_bound1 = y1(Ngridb)
-    Qbound1 = 0.0
-else if (bctype(1) == 2) then
-    f_bound1 = 0.0
-    Qbound1 = bcvalue(1)/G11(Ngridb)
-endif
+f_bound1 = y1(Ngridb)
+f_bound2 = y2(Ngridb)
 
-if (bctype(2) == 1) then
-    f_bound2 = y2(Ngridb)
-    Qbound2 = 0.0
-else if (bctype(2) == 2) then
-    f_bound2 = 0.0
-    Qbound2 = bcvalue(2)/G11(Ngridb)
-endif 
-      
 ! Define cd, or power law
 xi1 = dx*B1_in(1: Ngridb)/A1
 xi2 = dx*B2_in(1: Ngridb)/A2
@@ -427,52 +411,37 @@ END SELECT
 gxi1 = fxi1 - xi1
 gxi2 = fxi2 - xi2
 
-call SOLVERIMP(dx, dt, &
+call SOLVER_TETI(dx, dt, &
     GN(1: Ngridb)*theta + GO(1: Ngridb)*(1 - theta), & 
     N1N(1: Ngridb), N1O(1: Ngridb), N2N(1: Ngridb), & 
     N2O(1: Ngridb), V(1: Ngridb), Vtilde(1: Ngridb), & 
     A1, A2, fxi1, fxi2, gxi1, gxi2, S1_new(1: Ngridb), S2_new(1: Ngridb), & 
     P1_new(1: Ngridb), P2_new(1: Ngridb), T12(1: Ngridb), T21(1: Ngridb), & 
     Ngridb, theta, Y1O(1: Ngridb), & 
-    Y2O(1: Ngridb), & 
-    f_bound1, Qbound1, f_bound2, Qbound2, & 
-    bctype, y1(1: Ngridb), y2(1: Ngridb))
+    Y2O(1: Ngridb), f_bound1, f_bound2, y1(1: Ngridb), y2(1: Ngridb))
 
 ! Compute flux from solution, flux is on shifted grid
 do j=1, Ngridb-1
     Q1_out(j) = G11(j)*(-A1(j)/dx*(fxi1(j)*y1(j+1) - gxi1(j)*y1(j)) + R1(j))
     Q2_out(j) = G11(j)*(-A2(j)/dx*(fxi2(j)*y2(j+1) - gxi2(j)*y2(j)) + R2(j))
 enddo
-if (bctype(1) == 1) then
-    call EXTRAP(x_in(1: Ngridb-1), Q1_out(1: Ngridb-1), x_in(Ngridb), Ngridb-1, Q1_out(Ngridb), 1, Ngridb-1)
-else if (bctype(1) == 2) then
-! Restore G11 in Qbound
-    Q1_out(Ngridb) = Qbound1*G11(Ngridb)
-endif
-
-if (bctype(2) == 1) then
-    call EXTRAP(x_in(1: Ngridb-1), Q2_out(1: Ngridb-1), x_in(Ngridb), Ngridb-1, Q2_out(Ngridb), 1, Ngridb-1)
-else if (bctype(2) == 2) then
-! Restore G11 in Qbound
-    Q2_out(Ngridb) = Qbound2*G11(Ngridb)
-endif
+call EXTRAP(x_in(1: Ngridb-1), Q1_out(1: Ngridb-1), x_in(Ngridb), Ngridb-1, Q1_out(Ngridb), 1, Ngridb-1)
+call EXTRAP(x_in(1: Ngridb-1), Q2_out(1: Ngridb-1), x_in(Ngridb), Ngridb-1, Q2_out(Ngridb), 1, Ngridb-1)
 
 return
 end subroutine RUNEQTIMP
 
 !---------------------------------------------------------------------
-subroutine SOLVERIMP(dx, dt, G, N1N, N1O, N2N, N2O, V, Vtilde, & 
+subroutine SOLVER_TETI(dx, dt, G, N1N, N1O, N2N, N2O, V, Vtilde, & 
     A1, A2, fxi1, fxi2, gxi1, gxi2, S1, S2, P1, P2, T12, T21, &
-    Ngridb, theta, Y1O, Y2O, f_bound1, Qbound1, &
-    f_bound2, Qbound2, bctype, y1, y2)
+    Ngridb, theta, Y1O, Y2O, f_bound1, f_bound2, y1, y2)
 !---------------------------------------------------------------------
 ! Build up matrices to be passed ot TRIDIAG2
 
 implicit none
 
-integer, intent(in) :: Ngridb, bctype(2)
-double precision, intent(in) :: dx, dt, theta, f_bound1, f_bound2, &
-    Qbound1, Qbound2
+integer, intent(in) :: Ngridb
+double precision, intent(in) :: dx, dt, theta, f_bound1, f_bound2
 double precision, intent(in), dimension(Ngridb) :: G, &
     N1N, N1O, N2N, N2O, V, Vtilde, A1, A2, fxi1, fxi2, &
     gxi1, gxi2, S1, S2, P1, P2, T12, T21, Y1O, Y2O
@@ -522,37 +491,15 @@ do j=2, Ngridb-1
          Vtilde(j-1)*A2(j-1) * (fxi2(j-1)*Y2O(j) - gxi2(j-1)*Y2O(j-1)))  )
 enddo
 
-! bc type 2 (Qb)
-if (bctype(1) == 2) then
-    j = Ngridb
-    AA1(j) = 0.0      
-    BB1(j) = N1N(j) + theta * ( -dt*G(j)*S1(j) + g_v(j)*Vtilde(j-1)*A1(j-1)*fxi1(j-1) )
-    RR1(j) = N1O(j)*Y1O(j) + G(j)*P1(j)*dt + (1 - theta)* &
-        (  dt*G(j)*S1(j)*Y1O(j) + g_v(j) * &
-        (-Vtilde(j-1)*A1(j-1) * (fxi1(j-1)*Y1O(j) - gxi1(j-1)*Y1O(j-1)))  ) - &
-        g_v(j)*Vtilde(j)*Qbound1*dx
-endif
-
-! bc type 2 (Qb)
-if (bctype(2) == 2) then
-    j = Ngridb
-    AA2(j) = 0.0
-    BB2(j) = N2N(j) + theta * ( -dt*G(j)*S2(j) + g_v(j)*Vtilde(j-1)*A2(j-1)*fxi2(j-1) )
-    RR2(j) = N2O(j)*Y2O(j) + G(j)*P2(j)*dt + (1 - theta)* &
-        (  dt*G(j)*S2(j)*Y2O(j) + g_v(j) * &
-        (-Vtilde(j-1)*A2(j-1) * (fxi2(j-1)*Y2O(j) - gxi2(j-1)*Y2O(j-1)))  ) - &
-        g_v(j)*Vtilde(j)*Qbound2*dx
-endif
-
 ! Main call to tridiagonal solver
-call TRIDIAG2(AA1, BB1, CC1, RR1, y1, TT1, Ngridb, bctype, &
+call TRIDIAG_TETI(AA1, BB1, CC1, RR1, y1, TT1, Ngridb, &
     f_bound1, AA2, BB2, CC2, RR2, TT2, y2, f_bound2)
 
 return
-end subroutine SOLVERIMP
+end subroutine SOLVER_TETI
 
 !---------------------------------------------------------------------
-subroutine TRIDIAG2(A1, B1, C1, R1, f1, T1, Ngridb, bctype, &
+subroutine TRIDIAG_TETI(A1, B1, C1, R1, f1, T1, Ngridb, &
     f_bound1, A2, B2, C2, R2, T2, f2, f_bound2)
 !---------------------------------------------------------------------
 ! Inputs: A(1:Ngridb), B(1:Ngridb), C(1:Ngridb), R(1:Ngridb)
@@ -565,15 +512,12 @@ subroutine TRIDIAG2(A1, B1, C1, R1, f1, T1, Ngridb, bctype, &
 !
 !   where j = 1..Ngridb
 !
-!   bctype = 1  -> given f_NA1
-!   bctype = 2  -> given Gamma_NA1
-!
-!  implicit
+!   given f_NA1
 !---------------------------------------------------------------------
 
 implicit none
 
-integer, intent(in) :: Ngridb, bctype(2)
+integer, intent(in) :: Ngridb
 double precision, intent(in) :: f_bound1, f_bound2
 double precision, intent(in), dimension(Ngridb) :: &
     A1, B1, C1, R1, T1, &
@@ -615,22 +559,20 @@ enddo
 ! Note that boundary value is assumed to be on the main last grid point, so 1-dx/2.
 ! This has to be corrected later on
 
-if (bctype(1) == 1 .and. bctype(2) == 1) then
-    detjm1 = (alpha(Ngridb-1)*gamma(Ngridb-1) - theta(Ngridb-1)*epsilon(Ngridb-1))
-    f1(Ngridb-1) =  gamma(Ngridb-1)/detjm1*(f_bound1 - beta(Ngridb-1)) - &
-             epsilon(Ngridb-1)/detjm1*(f_bound2 - delta(Ngridb-1))
-    f2(Ngridb-1) = -theta(Ngridb-1)/detjm1*(f_bound1 - beta(Ngridb-1)) + &
-               alpha(Ngridb-1)/detjm1*(f_bound2 - delta(Ngridb-1))
-    do j=Ngridb-2, 1, -1
-        detjm1 = (alpha(j)*gamma(j) - theta(j)*epsilon(j))
-        f1(j) =  gamma(j)/detjm1*(f1(j+1) - beta(j)) - &
-               epsilon(j)/detjm1*(f2(j+1) - delta(j))
-        f2(j) = -theta(j)/detjm1*(f1(j+1) - beta(j)) + &
-                 alpha(j)/detjm1*(f2(j+1) - delta(j))
-    enddo
-    f1(Ngridb) = f_bound1
-    f2(Ngridb) = f_bound2
-endif
+detjm1 = (alpha(Ngridb-1)*gamma(Ngridb-1) - theta(Ngridb-1)*epsilon(Ngridb-1))
+f1(Ngridb-1) =  gamma(Ngridb-1)/detjm1*(f_bound1 - beta(Ngridb-1)) - &
+              epsilon(Ngridb-1)/detjm1*(f_bound2 - delta(Ngridb-1))
+f2(Ngridb-1) = -theta(Ngridb-1)/detjm1*(f_bound1 - beta(Ngridb-1)) + &
+                alpha(Ngridb-1)/detjm1*(f_bound2 - delta(Ngridb-1))
+do j=Ngridb-2, 1, -1
+     detjm1 = (alpha(j)*gamma(j) - theta(j)*epsilon(j))
+     f1(j) =  gamma(j)/detjm1*(f1(j+1) - beta(j)) - &
+            epsilon(j)/detjm1*(f2(j+1) - delta(j))
+     f2(j) = -theta(j)/detjm1*(f1(j+1) - beta(j)) + &
+              alpha(j)/detjm1*(f2(j+1) - delta(j))
+enddo
+f1(Ngridb) = f_bound1
+f2(Ngridb) = f_bound2
 
 return
-end subroutine TRIDIAG2
+end subroutine TRIDIAG_TETI
