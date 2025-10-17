@@ -268,21 +268,21 @@ return
 end function GETPEI
 
 !---------------------------------------------------------------------
-subroutine RUNEQTIMP(GN, H1N, H2N, GO, H1O, H2O, & 
+subroutine RUNEQ_TETI(GN, H1N, H2N, GO, H1O, H2O, & 
     Y1O, Y2O, N1, N2, W1, W2, V, unit_coeff, G11, A1_in, A2_in, B1_in, B2_in, R1, R2, &
     S1_in, S2_in, P1, P2, T12, T21, rbdot, bbdot, Ngridb, Ngrid, dx, dt, &
-    x_in, imethod, bctype, bcvalue, y1, y2, Q1_out, Q2_out)
+    x_in, imethod, y1, y2, Q1_out, Q2_out)
 
 use numerical_tools, only: deriv, extrap, grid2grid
 
 implicit none
 
-integer, intent(in) :: Ngrid, imethod, Ngridb, bctype(2)
+integer, intent(in) :: Ngrid, imethod, Ngridb
 double precision, intent(in) :: rbdot, bbdot, dx, dt, unit_coeff
 double precision, intent(in), dimension(Ngrid) :: GN, H1N, H2N, GO, &
     H1O, H2O, Y1O, Y2O, N1, N2, W1, W2, V, G11, &
     A1_in, A2_in, B1_in, B2_in, &
-    R1, R2, S1_in, S2_in, P1, P2, x_in, bcvalue(2)
+    R1, R2, S1_in, S2_in, P1, P2, x_in
 double precision, intent(out)  , dimension(Ngrid) :: T12, T21, Q1_out, Q2_out
 double precision, intent(inout), dimension(Ngrid) :: y1, y2
 
@@ -291,7 +291,8 @@ double precision :: theta, f_bound1, f_bound2
 double precision, dimension(Ngrid) :: x_b, S1_new, P1_new, S2_new, P2_new, &
     Vtilde, Rsource1, Rsource2, Rsource3, Rsource4, N1N, N1O, N2N, N2O, ydummy, &
     Pdot_11, Pdot_12, Pdot_21, Pdot_22
-double precision, dimension(Ngridb) :: A1, A2, xi1, fxi1, gxi1, xi2, fxi2, gxi2
+double precision, dimension(Ngridb) :: A1, A2, xi1, fxi1, gxi1, xi2, fxi2, gxi2, &
+    Gmix, g_v, AA1, BB1, CC1, RR1, TT1, AA2, BB2, CC2, RR2, TT2
 double precision, external :: GETPEI
 
 x_b = x_in + 0.5*dx
@@ -361,8 +362,8 @@ P1_new = P1 - Rsource3/V + bbdot*Pdot_11 + (rbdot - bbdot)*Pdot_21
 ! P = P + bdot/W*d/dx (unit_coeff*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)   for explicit
 P2_new = P2 - Rsource4/V + bbdot*Pdot_12 + (rbdot - bbdot)*Pdot_22
 
-f_bound1 = y1(Ngridb)
-f_bound2 = y2(Ngridb)
+f_bound1 = Y1O(Ngridb)
+f_bound2 = Y2O(Ngridb)
 
 ! Define cd, or power law
 xi1 = dx*B1_in(1: Ngridb)/A1
@@ -411,14 +412,43 @@ END SELECT
 gxi1 = fxi1 - xi1
 gxi2 = fxi2 - xi2
 
-call SOLVER_TETI(dx, dt, &
-    GN(1: Ngridb)*theta + GO(1: Ngridb)*(1 - theta), & 
-    N1N(1: Ngridb), N1O(1: Ngridb), N2N(1: Ngridb), & 
-    N2O(1: Ngridb), V(1: Ngridb), Vtilde(1: Ngridb), & 
-    A1, A2, fxi1, fxi2, gxi1, gxi2, S1_new(1: Ngridb), S2_new(1: Ngridb), & 
-    P1_new(1: Ngridb), P2_new(1: Ngridb), T12(1: Ngridb), T21(1: Ngridb), & 
-    Ngridb, theta, Y1O(1: Ngridb), & 
-    Y2O(1: Ngridb), f_bound1, f_bound2, y1(1: Ngridb), y2(1: Ngridb))
+Gmix = GN(1: Ngridb)*theta + GO(1: Ngridb) * (1. - theta)
+g_v = dt/dx**2 * Gmix/V(1: Ngridb)
+AA1 = -g_v*Vtilde(1: Ngridb)*A1(1: Ngridb)*fxi1*theta
+AA2 = -g_v*Vtilde(1: Ngridb)*A2(1: Ngridb)*fxi2*theta
+TT1 = -theta*dt*Gmix*T12(1: Ngridb)
+TT2 = -theta*dt*Gmix*T21(1: Ngridb)
+CC1(1) = 0.
+CC2(1) = 0.
+CC1(2: Ngridb) = -g_v(2: Ngridb)*Vtilde(1: Ngridb-1)*A1(1: Ngridb-1)*gxi1(1: Ngridb-1)*theta
+CC2(2: Ngridb) = -g_v(2: Ngridb)*Vtilde(1: Ngridb-1)*A2(1: Ngridb-1)*gxi2(1: Ngridb-1)*theta
+
+BB1(1) = N1N(1) + theta * ( -dt*Gmix(1)*S1_new(1) + g_v(1)*Vtilde(1)*A1(1)*gxi1(1) )
+BB2(1) = N2N(1) + theta * ( -dt*Gmix(1)*S2_new(1) + g_v(1)*Vtilde(1)*A2(1)*gxi2(1) )
+
+RR1(1) = N1O(1)*Y1O(1) + Gmix(1)*P1(1)*dt + (1 - theta) * &
+    ( dt*Gmix(1)*S1_new(1)*Y1O(1) + g_v(1)*Vtilde(1)*A1(1) * (fxi1(1)*Y1O(2) - gxi1(1)*Y1O(1)) )
+RR2(1) = N2O(1)*Y2O(1) + Gmix(1)*P2(1)*dt + (1 - theta) * &
+    ( dt*Gmix(1)*S2_new(1)*Y2O(1) + g_v(1)*Vtilde(1)*A2(1) * (fxi2(1)*Y2O(2) - gxi2(1)*Y2O(1)) )
+
+do j=2, Ngridb-1
+    BB1(j) = N1N(j) + theta * (  -dt*Gmix(j)*S1_new(j) + g_v(j) * &
+        ( Vtilde(j)*A1(j)*gxi1(j) + Vtilde(j-1)*A1(j-1)*fxi1(j-1) )  )
+    BB2(j) = N2N(j) + theta * ( -dt*Gmix(j)*S2_new(j) + g_v(j) * &
+        (Vtilde(j)*A2(j)*gxi2(j) + Vtilde(j-1)*A2(j-1)*fxi2(j-1)) )
+    RR1(j) = N1O(j)*Y1O(j) + Gmix(j)*P1(j)*dt + (1 - theta) * &
+        (  dt*Gmix(j)*S1_new(j)*Y1O(j) + g_v(j) * &
+        (Vtilde(j)*A1(j) * (fxi1(j)*Y1O(j+1) - gxi1(j)*Y1O(j)) - &
+        Vtilde(j-1)*A1(j-1) * (fxi1(j-1)*Y1O(j) - gxi1(j-1)*Y1O(j-1)))  )
+    RR2(j) = N2O(j)*Y2O(j) + Gmix(j)*P2(j)*dt + (1 - theta) * &
+        (  dt*Gmix(j)*S2_new(j)*Y2O(j) + g_v(j) * &
+        (Vtilde(j)*A2(j) * (fxi2(j)*Y2O(j+1) - gxi2(j)  *Y2O(j)) - &
+         Vtilde(j-1)*A2(j-1) * (fxi2(j-1)*Y2O(j) - gxi2(j-1)*Y2O(j-1)))  )
+enddo
+
+! Main call to tridiagonal solver
+call TRIDIAG_TETI(AA1, BB1, CC1, RR1, y1, TT1, Ngridb, &
+    f_bound1, AA2, BB2, CC2, RR2, TT2, y2, f_bound2)
 
 ! Compute flux from solution, flux is on shifted grid
 do j=1, Ngridb-1
@@ -429,74 +459,7 @@ call EXTRAP(x_in(1: Ngridb-1), Q1_out(1: Ngridb-1), x_in(Ngridb), Ngridb-1, Q1_o
 call EXTRAP(x_in(1: Ngridb-1), Q2_out(1: Ngridb-1), x_in(Ngridb), Ngridb-1, Q2_out(Ngridb), 1, Ngridb-1)
 
 return
-end subroutine RUNEQTIMP
-
-!---------------------------------------------------------------------
-subroutine SOLVER_TETI(dx, dt, G, N1N, N1O, N2N, N2O, V, Vtilde, & 
-    A1, A2, fxi1, fxi2, gxi1, gxi2, S1, S2, P1, P2, T12, T21, &
-    Ngridb, theta, Y1O, Y2O, f_bound1, f_bound2, y1, y2)
-!---------------------------------------------------------------------
-! Build up matrices to be passed ot TRIDIAG2
-
-implicit none
-
-integer, intent(in) :: Ngridb
-double precision, intent(in) :: dx, dt, theta, f_bound1, f_bound2
-double precision, intent(in), dimension(Ngridb) :: G, &
-    N1N, N1O, N2N, N2O, V, Vtilde, A1, A2, fxi1, fxi2, &
-    gxi1, gxi2, S1, S2, P1, P2, T12, T21, Y1O, Y2O
-double precision, intent(out), dimension(Ngridb) :: y1, y2
-
-integer :: j
-double precision :: dt_dx2
-double precision, dimension(Ngridb) :: g_v, &
-    AA1, BB1, CC1, RR1, TT1, &
-    AA2, BB2, CC2, RR2, TT2
-
-!    1/G d/dt (N1*y1) + 1/V d/dx (Vtilde*(-A1/dx*(fxi1, gxi1, ntilde1))) = S1*y1+P1+T1*y2
-!    1/G d/dt (N2*y2) + 1/V d/dx (Vtilde*(-A2/dx*(fxi2, gxi2, ntilde2))) = S2*y2+P2+T2*y1
-
-dt_dx2 = dt/dx**2
-
-g_v = dt_dx2*G/V
-AA1 = -g_v*Vtilde*A1*fxi1*theta
-AA2 = -g_v*Vtilde*A2*fxi2*theta
-TT1 = -theta*dt*G*T12
-TT2 = -theta*dt*G*T21
-CC1(1) = 0.
-CC2(1) = 0.
-CC1(2: Ngridb) = -g_v(2: Ngridb)*Vtilde(1: Ngridb-1)*A1(1: Ngridb-1)*gxi1(1: Ngridb-1)*theta
-CC2(2: Ngridb) = -g_v(2: Ngridb)*Vtilde(1: Ngridb-1)*A2(1: Ngridb-1)*gxi2(1: Ngridb-1)*theta
-
-BB1(1) = N1N(1) + theta * ( -dt*G(1)*S1(1) + g_v(1)*Vtilde(1)*A1(1)*gxi1(1) )
-BB2(1) = N2N(1) + theta * ( -dt*G(1)*S2(1) + g_v(1)*Vtilde(1)*A2(1)*gxi2(1) )
-
-RR1(1) = N1O(1)*Y1O(1) + G(1)*P1(1)*dt + (1 - theta) * &
-    ( dt*G(1)*S1(1)*Y1O(1) + g_v(1)*Vtilde(1)*A1(1) * (fxi1(1)*Y1O(2) - gxi1(1)*Y1O(1)) )
-RR2(1) = N2O(1)*Y2O(1) + G(1)*P2(1)*dt + (1 - theta) * &
-    ( dt*G(1)*S2(1)*Y2O(1) + g_v(1)*Vtilde(1)*A2(1) * (fxi2(1)*Y2O(2) - gxi2(1)*Y2O(1)) )
-
-do j=2, Ngridb-1
-    BB1(j) = N1N(j) + theta * (  -dt*G(j)*S1(j) + g_v(j) * &
-        ( Vtilde(j)*A1(j)*gxi1(j) + Vtilde(j-1)*A1(j-1)*fxi1(j-1) )  )
-    BB2(j) = N2N(j) + theta * ( -dt*G(j)*S2(j) + g_v(j) * &
-        (Vtilde(j)*A2(j)*gxi2(j) + Vtilde(j-1)*A2(j-1)*fxi2(j-1)) )
-    RR1(j) = N1O(j)*Y1O(j) + G(j)*P1(j)*dt + (1 - theta) * &
-        (  dt*G(j)*S1(j)*Y1O(j) + g_v(j) * &
-        (Vtilde(j)*A1(j) * (fxi1(j)*Y1O(j+1) - gxi1(j)*Y1O(j)) - &
-        Vtilde(j-1)*A1(j-1) * (fxi1(j-1)*Y1O(j) - gxi1(j-1)*Y1O(j-1)))  )
-    RR2(j) = N2O(j)*Y2O(j) + G(j)*P2(j)*dt + (1 - theta) * &
-        (  dt*G(j)*S2(j)*Y2O(j) + g_v(j) * &
-        (Vtilde(j)*A2(j) * (fxi2(j)*Y2O(j+1) - gxi2(j)  *Y2O(j)) - &
-         Vtilde(j-1)*A2(j-1) * (fxi2(j-1)*Y2O(j) - gxi2(j-1)*Y2O(j-1)))  )
-enddo
-
-! Main call to tridiagonal solver
-call TRIDIAG_TETI(AA1, BB1, CC1, RR1, y1, TT1, Ngridb, &
-    f_bound1, AA2, BB2, CC2, RR2, TT2, y2, f_bound2)
-
-return
-end subroutine SOLVER_TETI
+end subroutine RUNEQ_TETI
 
 !---------------------------------------------------------------------
 subroutine TRIDIAG_TETI(A1, B1, C1, R1, f1, T1, Ngridb, &
@@ -529,16 +492,13 @@ double precision :: detjm1, k1, k2, k3, k4, k31, k32
 double precision, dimension(Ngridb-1) :: alpha, beta, gamma, &
     delta, epsilon, theta
 
-! Implicit
+alpha(1)   = -B1(1)/A1(1)
+beta(1)    =  R1(1)/A1(1)
+epsilon(1) = -T1(1)/A1(1)      
+gamma(1)   = -B2(1)/A2(1)
+delta(1)   =  R2(1)/A2(1)
+theta(1)   = -T2(1)/A2(1)
 
-j = 1
-alpha(j)   = -B1(j)/A1(j)
-beta(j)    =  R1(j)/A1(j)
-epsilon(j) = -T1(j)/A1(j)      
-gamma(j)   = -B2(j)/A2(j)
-delta(j)   =  R2(j)/A2(j)
-theta(j)   = -T2(j)/A2(j)
-   
 do j=2, Ngridb-1
     detjm1 = (alpha(j-1)*gamma(j-1) - theta(j-1)*epsilon(j-1))
     k1 = gamma(j-1)/detjm1
