@@ -272,65 +272,6 @@ subroutine RUNEQTIMP(GN, H1N, H2N, GO, H1O, H2O, &
     Y1O, Y2O, N1, N2, W1, W2, V, unit_coeff, G11, A1_in, A2_in, B1_in, B2_in, R1, R2, &
     S1_in, S2_in, P1, P2, T12, T21, rbdot, bbdot, Ngridb, Ngrid, dx, dt, &
     x_in, imethod, bctype, bcvalue, y1, y2, Q1_out, Q2_out)
-!---------------------------------------------------------------------
-! WARNING: at the moment Qb is explicit, no option for QNNB, QETB, QITB is given at the moment!
-!
-!  Inputs: G, V, A, B, R, S, G11, P in terms of Ngrid
-!  Note that G, V, S, P are on main grid
-!   while A, B, R, G11 are on shifted grid
-!      dx, dt, x (main grid, 1:Ngrid), should be RHO, imethod
-!      C: boundary conditions on y or on Q  
-!  C(1) = HRO
-!  bc_flag < 0 if (yb isn't set) .and. (QB is set)
-!   then C(2)=QB, otherwise, if bc_flag>0, use yb = y(Ngrid)
-!   In the case bc_flag < 0, solves up to Ngrid
-!   In the case bc_flag > 0, solves up to Ngrid-1 and uses Ngrid as b.c.
-!
-!  Outputs: y(1:Ngrid), Q(1:Ngrid).  
-!
-!  GN, GO are G at t+dt and at t
-!  HN, HO are H at t+dt and at t
-!  YO  is y at t
-!
-!  Equations are:
-!
-!    1/G d/dt (G*H1*y1) + 1/V d/dx (unit_coeff*Q1) = S1*y1+P1+T12*y2 + rbdot*xhat*1/G d/dx (Gtilde*Htilde1*y1)
-!    1/G d/dt (G*H2*y2) + 1/V d/dx (unit_coeff*Q2) = S2*y2+P2+T21*y1 + rbdot*xhat*1/G d/dx (Gtilde*Htilde2*y2)
-!
-!explicit adiabatic compression
-!
-! 1/G d/dt(G*H1*y1)+1/V d/dx(unit_coeff*Q1) = S1*y1+P1+T12*y2 + bdot/W1*d/dx (unit_coeff*N1*x*y1)+(rdot-bdot)*x/G*d/dx (G*H1*y1) 
-!
-!implicit adiabatic compression 
-!
-! 1/G d/dt(G*H*y)+1/V d/dx(unit_coeff*(Q-bdot*(V/W*N-H/M)*x*y-rdot*x*H/M*y)) =
-!                (S-bdot*M*N*x*d/dx(V/W)-(rdot-bdot)/V*G*H*d/dx(x*V/G))*y+P
-!
-!  rbdot = phibdot /(2*phib), bdot = Bdot/(2*B)
-!
-! So S = S - bdot*M*N*x*d/dx(V/W) - (rdot-bdot)/V*G*H1*d/dx (x*V/G)  for implicit
-!
-! So B = B + 1/G11*(bdot*V/W*N+(rdot-bdot)*H1/M)*x               for implicit
-!
-! and P1 = P1 + bdot/W1*d/dx (unit_coeff*N1*x*y1)+(rdot-bdot)*x/G*d/dx (G*H1*y1)         for explicit
-!
-! basically we do as in RUNEQ but y = [y1 y2] and so on (bigger matrix)
-!
-!  y is the quantity and Qj = -G11*(Aj*dyj/dx + Bj*yj) + G11*Rj
-!
-! Note that Bj -> Bj + rbdot/roc * sx * Htildej/(G11*M)
-!
-! and rbdot*xhat*1/G d/dx (Gtilde*Htildej*yj)  --> rbdot/roc*G*Hj/V*d/dx(sx*Vtilde/Gtilde)*yj
-!
-!
-!  imethod can be: 21 - implicit, centered differencies
-!          22 - implicit, power law scheme   
-!                  31 - Crank-Nicholson, centered differencies
-!          32 - Crank-Nicholson, power law scheme   
-!
-!  bctype = 1 -> f_bound
-!  bctype = 2 -> Qbound
-!---------------------------------------------------------------------
 
 use numerical_tools, only: deriv, extrap, grid2grid
 
@@ -539,89 +480,68 @@ double precision, intent(out), dimension(Ngridb) :: y1, y2
 
 integer :: j
 double precision :: dt_dx2
-double precision, dimension(Ngridb) :: &
+double precision, dimension(Ngridb) :: g_v, &
     AA1, BB1, CC1, RR1, TT1, &
     AA2, BB2, CC2, RR2, TT2
 
 !    1/G d/dt (N1*y1) + 1/V d/dx (Vtilde*(-A1/dx*(fxi1, gxi1, ntilde1))) = S1*y1+P1+T1*y2
 !    1/G d/dt (N2*y2) + 1/V d/dx (Vtilde*(-A2/dx*(fxi2, gxi2, ntilde2))) = S2*y2+P2+T2*y1
 
-! implicit
-j = 1
 dt_dx2 = dt/dx**2
 
-AA1(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j) * A1(j)*fxi1(j) * theta
-BB1(j) = N1N(j) + theta * ( -dt*G(j)*S1(j) - dt_dx2 * G(j)/V(j) * &
-    Vtilde(j) * (A1(j)*(-gxi1(j))) )
-TT1(j) = theta*(-dt*G(j)*T12(j))
-CC1(j) = 0.0      
-RR1(j) = N1O(j)*Y1O(j) + G(j)*P1(j)*dt + (1 - theta) * &
-    ( dt*G(j)*S1(j)*Y1O(j) + dt_dx2 * G(j)/V(j) * &
-    Vtilde(j) * (A1(j)*(fxi1(j)*Y1O(j+1) - gxi1(j)*Y1O(j))) )
+g_v = dt_dx2*G/V
+AA1 = -g_v*Vtilde*A1*fxi1*theta
+AA2 = -g_v*Vtilde*A2*fxi2*theta
+TT1 = -theta*dt*G*T12
+TT2 = -theta*dt*G*T21
+CC1(1) = 0.
+CC2(1) = 0.
+CC1(2: Ngridb) = -g_v(2: Ngridb)*Vtilde(1: Ngridb-1)*A1(1: Ngridb-1)*gxi1(1: Ngridb-1)*theta
+CC2(2: Ngridb) = -g_v(2: Ngridb)*Vtilde(1: Ngridb-1)*A2(1: Ngridb-1)*gxi2(1: Ngridb-1)*theta
 
-AA2(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j) * A2(j)*fxi2(j) * theta
-BB2(j) = N2N(j) + theta * ( -dt*G(j)*S2(j) - dt_dx2 * G(j)/V(j) * &
-    Vtilde(j) * (A2(j)*(-gxi2(j))) )
-TT2(j) = theta*(-dt*G(j)*T21(j))
-CC2(j) = 0.0      
-RR2(j) = N2O(j)*Y2O(j) + G(j)*P2(j)*dt + (1 - theta)* &
-    ( dt*G(j)*S2(j)*Y2O(j) + dt_dx2 * G(j)/V(j) * &
-    Vtilde(j) *(A2(j)*(fxi2(j)*Y2O(j+1) - gxi2(j)*Y2O(j))) )
+BB1(1) = N1N(1) + theta * ( -dt*G(1)*S1(1) + g_v(1)*Vtilde(1)*A1(1)*gxi1(1) )
+BB2(1) = N2N(1) + theta * ( -dt*G(1)*S2(1) + g_v(1)*Vtilde(1)*A2(1)*gxi2(1) )
+
+RR1(1) = N1O(1)*Y1O(1) + G(1)*P1(1)*dt + (1 - theta) * &
+    ( dt*G(1)*S1(1)*Y1O(1) + g_v(1)*Vtilde(1)*A1(1) * (fxi1(1)*Y1O(2) - gxi1(1)*Y1O(1)) )
+RR2(1) = N2O(1)*Y2O(1) + G(1)*P2(1)*dt + (1 - theta) * &
+    ( dt*G(1)*S2(1)*Y2O(1) + g_v(1)*Vtilde(1)*A2(1) * (fxi2(1)*Y2O(2) - gxi2(1)*Y2O(1)) )
 
 do j=2, Ngridb-1
-    AA1(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j) * A1(j)*fxi1(j) * theta
-    BB1(j) = N1N(j) + theta * (  -dt*G(j)*S1(j) - dt_dx2 * G(j)/V(j) * &
-        ( Vtilde(j)  *(A1(j)  *(-gxi1(j))) &
-         -Vtilde(j-1)*(A1(j-1)*(fxi1(j-1))) )  )
-    TT1(j) = theta*(-dt*G(j)*T12(j))
-    CC1(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j-1)*A1(j-1)*gxi1(j-1) * theta
+    BB1(j) = N1N(j) + theta * (  -dt*G(j)*S1(j) + g_v(j) * &
+        ( Vtilde(j)*A1(j)*gxi1(j) + Vtilde(j-1)*A1(j-1)*fxi1(j-1) )  )
+    BB2(j) = N2N(j) + theta * ( -dt*G(j)*S2(j) + g_v(j) * &
+        (Vtilde(j)*A2(j)*gxi2(j) + Vtilde(j-1)*A2(j-1)*fxi2(j-1)) )
     RR1(j) = N1O(j)*Y1O(j) + G(j)*P1(j)*dt + (1 - theta) * &
-        (  dt*G(j)*S1(j)*Y1O(j) + dt_dx2 * G(j)/V(j) * &
-        (Vtilde(j)  *(A1(j)  *(fxi1(j)*Y1O(j+1) - gxi1(j)  *Y1O(j))) - &
-        Vtilde(j-1)*(A1(j-1)*(fxi1(j-1)*Y1O(j) - gxi1(j-1)*Y1O(j-1))))  )
-enddo
-
-do j=2, Ngridb-1
-    AA2(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j) *A2(j)*fxi2(j) * theta
-    BB2(j) = N2N(j) + theta * ( -dt*G(j)*S2(j) - dt_dx2 * G(j)/V(j) * &
-        (Vtilde(j)  *(A2(j)  *(-gxi2(j))) &
-        -Vtilde(j-1)*(A2(j-1)*(fxi2(j-1)))) )
-    TT2(j) = theta*(-dt*G(j)*T21(j))
-    CC2(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j-1) *A2(j-1)*gxi2(j-1) * theta
+        (  dt*G(j)*S1(j)*Y1O(j) + g_v(j) * &
+        (Vtilde(j)*A1(j) * (fxi1(j)*Y1O(j+1) - gxi1(j)*Y1O(j)) - &
+        Vtilde(j-1)*A1(j-1) * (fxi1(j-1)*Y1O(j) - gxi1(j-1)*Y1O(j-1)))  )
     RR2(j) = N2O(j)*Y2O(j) + G(j)*P2(j)*dt + (1 - theta) * &
-        (  dt*G(j)*S2(j)*Y2O(j) + dt_dx2 * G(j)/V(j) * &
-        (Vtilde(j)  *(A2(j)  *(fxi2(j)*Y2O(j+1) - gxi2(j)  *Y2O(j))) - &
-         Vtilde(j-1)*(A2(j-1)*(fxi2(j-1)*Y2O(j) - gxi2(j-1)*Y2O(j-1))))  )
+        (  dt*G(j)*S2(j)*Y2O(j) + g_v(j) * &
+        (Vtilde(j)*A2(j) * (fxi2(j)*Y2O(j+1) - gxi2(j)  *Y2O(j)) - &
+         Vtilde(j-1)*A2(j-1) * (fxi2(j-1)*Y2O(j) - gxi2(j-1)*Y2O(j-1)))  )
 enddo
 
 ! bc type 2 (Qb)
 if (bctype(1) == 2) then
     j = Ngridb
     AA1(j) = 0.0      
-    BB1(j) = N1N(j) + theta * ( -dt*G(j)*S1(j) - dt_dx2 * G(j)/V(j) * &
-        (Vtilde(j)  *(A1(j)  *(-0.0*gxi1(j))) - &
-         Vtilde(j-1)*(A1(j-1)*(fxi1(j-1)))) )
-    TT1(j) = theta*(-dt*G(j)*T12(j))
-    CC1(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j-1) * A1(j-1)*gxi1(j-1) * theta
+    BB1(j) = N1N(j) + theta * ( -dt*G(j)*S1(j) + g_v(j)*Vtilde(j-1)*A1(j-1)*fxi1(j-1) )
     RR1(j) = N1O(j)*Y1O(j) + G(j)*P1(j)*dt + (1 - theta)* &
-        (  dt*G(j)*S1(j)*Y1O(j) + dt_dx2 * G(j)/V(j) * &
-        (-Vtilde(j-1)*(A1(j-1)*(fxi1(j-1)*Y1O(j) - gxi1(j-1)*Y1O(j-1))))  ) + &
-        dt_dx2 * G(j)/V(j) * (-Vtilde(j)*Qbound1*dx)
+        (  dt*G(j)*S1(j)*Y1O(j) + g_v(j) * &
+        (-Vtilde(j-1)*A1(j-1) * (fxi1(j-1)*Y1O(j) - gxi1(j-1)*Y1O(j-1)))  ) - &
+        g_v(j)*Vtilde(j)*Qbound1*dx
 endif
 
 ! bc type 2 (Qb)
 if (bctype(2) == 2) then
     j = Ngridb
     AA2(j) = 0.0
-    BB2(j) = N2N(j) + theta * ( -dt*G(j)*S2(j) - dt_dx2 * G(j)/V(j) * &
-        (Vtilde(j)  *(A2(j)  *(-0.0*gxi2(j))) - &
-         Vtilde(j-1)*(A2(j-1)*(fxi2(j-1))))  )
-    TT2(j) = theta*(-dt*G(j)*T21(j))
-    CC2(j) = -dt_dx2 * G(j)/V(j)*Vtilde(j-1)*A2(j-1)*gxi2(j-1) * theta
+    BB2(j) = N2N(j) + theta * ( -dt*G(j)*S2(j) + g_v(j)*Vtilde(j-1)*A2(j-1)*fxi2(j-1) )
     RR2(j) = N2O(j)*Y2O(j) + G(j)*P2(j)*dt + (1 - theta)* &
-        (  dt*G(j)*S2(j)*Y2O(j) + dt_dx2 * G(j)/V(j) * &
-        (-Vtilde(j-1)*(A2(j-1)*(fxi2(j-1)*Y2O(j) - gxi2(j-1)*Y2O(j-1))))  ) + &
-        dt_dx2 * G(j)/V(j)*(-Vtilde(j)*Qbound2*dx)
+        (  dt*G(j)*S2(j)*Y2O(j) + g_v(j) * &
+        (-Vtilde(j-1)*A2(j-1) * (fxi2(j-1)*Y2O(j) - gxi2(j-1)*Y2O(j-1)))  ) - &
+        g_v(j)*Vtilde(j)*Qbound2*dx
 endif
 
 ! Main call to tridiagonal solver
@@ -660,7 +580,7 @@ double precision, intent(in), dimension(Ngridb) :: &
     A2, B2, C2, R2, T2
 double precision, intent(out), dimension(Ngridb) :: f1, f2
 
-integer :: j, k
+integer :: j
 double precision :: detjm1, k1, k2, k3, k4, k31, k32
 double precision, dimension(Ngridb-1) :: alpha, beta, gamma, &
     delta, epsilon, theta
@@ -694,15 +614,14 @@ enddo
 
 ! Note that boundary value is assumed to be on the main last grid point, so 1-dx/2.
 ! This has to be corrected later on
-j = Ngridb
+
 if (bctype(1) == 1 .and. bctype(2) == 1) then
-    detjm1 = (alpha(j-1)*gamma(j-1) - theta(j-1)*epsilon(j-1))
-    f1(j-1) =  gamma(j-1)/detjm1*(f_bound1 - beta(j-1)) - &
-             epsilon(j-1)/detjm1*(f_bound2 - delta(j-1))
-    f2(j-1) = -theta(j-1)/detjm1*(f_bound1 - beta(j-1)) + &
-               alpha(j-1)/detjm1*(f_bound2 - delta(j-1))
-    do k=1, Ngridb-2
-        j = Ngridb - 2 - k + 1
+    detjm1 = (alpha(Ngridb-1)*gamma(Ngridb-1) - theta(Ngridb-1)*epsilon(Ngridb-1))
+    f1(Ngridb-1) =  gamma(Ngridb-1)/detjm1*(f_bound1 - beta(Ngridb-1)) - &
+             epsilon(Ngridb-1)/detjm1*(f_bound2 - delta(Ngridb-1))
+    f2(Ngridb-1) = -theta(Ngridb-1)/detjm1*(f_bound1 - beta(Ngridb-1)) + &
+               alpha(Ngridb-1)/detjm1*(f_bound2 - delta(Ngridb-1))
+    do j=Ngridb-2, 1, -1
         detjm1 = (alpha(j)*gamma(j) - theta(j)*epsilon(j))
         f1(j) =  gamma(j)/detjm1*(f1(j+1) - beta(j)) - &
                epsilon(j)/detjm1*(f2(j+1) - delta(j))
