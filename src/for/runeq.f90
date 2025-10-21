@@ -48,7 +48,7 @@ subroutine RUNEQ(GN, HN, GO, HO, YO, N_in, W_in, V_in, unit_coeff, G11, A_in, B_
 !  bctype = 3 -> mixed
 !  bctype = 4 -> Q/y BC
 
-use numerical_tools, only: extrap, deriv, grid2grid
+use numerical_tools, only: extrap, deriv, shift2main
 
 implicit none
 
@@ -81,14 +81,14 @@ else
 endif
 dum1 = unit_coeff*N_in*x_in*ytmp
 call DERIV(x_in, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
-call GRID2GRID(2, x_b, ydummy, Pdot_1, Ngrid, 0)
+call SHIFT2MAIN(x_b, ydummy, Pdot_1, Ngrid)
 Pdot_1 = Pdot_1/W_in
 dum1 = Gmid*Hmid*ytmp
 call DERIV(x_in, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
-call GRID2GRID(2, x_b, ydummy, Pdot_2, Ngrid, 0)
+call SHIFT2MAIN(x_b, ydummy, Pdot_2, Ngrid)
 Pdot_2 = Pdot_2*x_in/Gmid
 
-adcmp_term = bbdot*Pdot_1 + (rbdot - bbdot)*Pdot_2  ! used only for FP
+adcmp_term = bbdot*Pdot_1 + (rbdot - bbdot)*Pdot_2  ! output, used only for FP
 Src_new = Src_in - Rsource2/V_in + adcmp_term
 
 ! Default is imethod=22 (INUME1-4 in const.f90)
@@ -179,7 +179,7 @@ enddo
 
 SELECT CASE(bctype)
 CASE(1, 3)
-    call EXTRAP(x_in(1: Ngridb-1), Q_out(1: Ngridb-1), x_in(Ngridb), Ngridb-1, Q_out(Ngridb), 2, Ngridb-1)
+    Q_out(Ngridb) = EXTRAP(x_in(1: Ngridb-1), Q_out(1: Ngridb-1), x_in(Ngridb), Ngridb-1, 2, .false.)
 CASE(2)
     Q_out(Ngridb) = bc_values(1)
 CASE(4)
@@ -273,7 +273,7 @@ subroutine RUNEQ_TETI(GN, H1N, H2N, GO, H1O, H2O, &
     S1_in, S2_in, P1, P2, T12, T21, rbdot, bbdot, Ngridb, Ngrid, dx, dt, &
     x_in, imethod, y1, y2, Q1_out, Q2_out)
 
-use numerical_tools, only: deriv, extrap, grid2grid
+use numerical_tools, only: deriv, extrap, shift2main
 
 implicit none
 
@@ -330,19 +330,19 @@ Pdot_12 = 0.
 Pdot_22 = 0.
 
 call DERIV(x_in, x_b, 1, unit_coeff*N1*x_in*Y1O, ydummy, 1, Ngrid, 1)
-call GRID2GRID(2, x_b, ydummy, Pdot_11, Ngrid, 0)
+call SHIFT2MAIN(x_b, ydummy, Pdot_11, Ngrid)
 Pdot_11 = Pdot_11/W1
 
 call DERIV(x_in, x_b, 1, unit_coeff*N2*x_in*Y2O, ydummy, 1, Ngrid, 1)
-call GRID2GRID(2, x_b, ydummy, Pdot_12, Ngrid, 0)
+call SHIFT2MAIN(x_b, ydummy, Pdot_12, Ngrid)
 Pdot_12 = Pdot_12/W2
 
 call DERIV(x_in, x_b, 1, GN*H1N*Y1O, ydummy, 1, Ngrid, 1)
-call GRID2GRID(2, x_b, ydummy, Pdot_21, Ngrid, 0)
+call SHIFT2MAIN(x_b, ydummy, Pdot_21, Ngrid)
 Pdot_21 = Pdot_21*x_in/GN
 
 call DERIV(x_in, x_b, 1, GN*H2N*Y2O, ydummy, 1, Ngrid, 1)
-call GRID2GRID(2, x_b, ydummy, Pdot_22, Ngrid, 0)
+call SHIFT2MAIN(x_b, ydummy, Pdot_22, Ngrid)
 Pdot_22 = Pdot_22*x_in/GN
 
 N1N = GN*H1N
@@ -455,8 +455,8 @@ do j=1, Ngridb-1
     Q1_out(j) = G11(j)*(-A1(j)/dx*(fxi1(j)*y1(j+1) - gxi1(j)*y1(j)) + R1(j))
     Q2_out(j) = G11(j)*(-A2(j)/dx*(fxi2(j)*y2(j+1) - gxi2(j)*y2(j)) + R2(j))
 enddo
-call EXTRAP(x_in(1: Ngridb-1), Q1_out(1: Ngridb-1), x_in(Ngridb), Ngridb-1, Q1_out(Ngridb), 1, Ngridb-1)
-call EXTRAP(x_in(1: Ngridb-1), Q2_out(1: Ngridb-1), x_in(Ngridb), Ngridb-1, Q2_out(Ngridb), 1, Ngridb-1)
+Q1_out(Ngridb) = EXTRAP(x_in(1: Ngridb-1), Q1_out(1: Ngridb-1), x_in(Ngridb), Ngridb-1, 1, .false.)
+Q2_out(Ngridb) = EXTRAP(x_in(1: Ngridb-1), Q2_out(1: Ngridb-1), x_in(Ngridb), Ngridb-1, 1, .false.)
 
 return
 end subroutine RUNEQ_TETI

@@ -1705,7 +1705,7 @@ do J=1, NA
     CU(j) = (YAJ - YCJ)/(HRO*(j - 0.5))
 enddo
 
-call EXTRAP(XRHO(1:NA), CU(1:NA), XRHO(NA1), NA, CU(NA1), 2, NA)
+CU(NA1) = EXTRAP(XRHO(1:NA), CU(1:NA), XRHO(NA1), NA, 2, .false.)
 YCJ = 1.25/(GP**2 * RTOR)
 do J=1, NA1
     CU(j) = YCJ*CU(j)*G33(J)*IPOL(J)**3
@@ -1752,8 +1752,8 @@ do J=1, NA
     CU(j) = (YAJ - YCJ)/HRO
     CU(j) = CU(j)/(j - 0.5)
 enddo
-call EXTRAP(XRHO(1:NA), CU(1:NA), XRHO(NA1), NA, CU(NA1), 2, NA)
-call EXTRAP(SXHO(1:NA), MU(1:NA), SXHO(NA1), NA, MU(NA1), 2, NA)
+CU(NA1) = EXTRAP(XRHO(1:NA), CU(1:NA), XRHO(NA1), NA, 2, .false.)
+MU(NA1) = EXTRAP(SXHO(1:NA), MU(1:NA), SXHO(NA1), NA, 2, .false.)
 YCJ = 1.25/(GP**2 * RTOR)
 YAJ = 0.5/(GP*BTOR)
 do J=1, NA1

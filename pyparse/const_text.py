@@ -1,5 +1,5 @@
 pol_flux = \
-'''call EXTRAP(XRHO(1:NA1), FP(1:NA1), 0.d0, 1, PSIAX, 1, NA1)
+'''PSIAX = EXTRAP(XRHO(1:NA1), FP(1:NA1), 0.d0, NA1, 1, .true.)
 PSIBO = FP(NA1)
 FP_NORM(1:NA1) = (FP(1:NA1) - PSIAX)/(PSIBO - PSIAX)
 rho_pol(1:NA1) = SQRT(FP_NORM(1: NA1))
@@ -217,7 +217,7 @@ YM1 = YM/G22(J)
 MU(J) = YM1/J
 FP(J+1) = FP(J) + YF*YM1
 enddo
-call EXTRAP(SXHO(1:NA), MU(1:NA), SXHO(NA1), NA, MU(NA1), 2, NA)
+MU(NA1) = EXTRAP(SXHO(1:NA), MU(1:NA), SXHO(NA1), NA, 2, .false.)
 YU = GP2*RTOR
 YJ_CU = (FP(NA1) - FP(NA))/HRO * IPOL(NA1) * G22(NA)/(0.4*GP*RTOR)
 YJ_CU = IPL/YJ_CU
@@ -443,7 +443,6 @@ call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1),
 
 dfpdrbm12 = -YWQ(NA)/G22(NA)
 
-YWR(1) = MU(NA1)*GP2*ROC**2 * BTOR*BBDOT
 """
 
 
@@ -454,7 +453,6 @@ class TEEQN:
 if (TIME >= tbeg_eq .and. TIME <= tend_eq) then
 QE(1) = HRO
 do j=1, NA1
-YWH(j) = 1.
 YWR(j) = 0.
 YVR(j) = VR(j)
 YWGN(j) = VR(j)**(5./3.)
@@ -467,7 +465,7 @@ YWNB(j) = 3./2.*NE(j)*YWWB(j)/unit_coeff
 enddo
 imethod = nint(INUME2)
 
-call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), TEO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), unit_coeff, G11(1: NA1)/625, YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), 625*PET(1: NA1), 625*PETOT(1: NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, RHO(1: NA1), imethod, bctype, bc_values, TE(1: NA1), QE(1: NA1), YQDCM(1: NA1), MPHIT(1: NA1) )
+call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), TEO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), unit_coeff, G11(1: NA1)/unit_coeff, YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), unit_coeff*PET(1: NA1), unit_coeff*PETOT(1: NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, RHO(1: NA1), imethod, bctype, bc_values, TE(1: NA1), QE(1: NA1), YQDCM(1: NA1), MPHIT(1: NA1) )
 do j=1, NA1
 te(j) = max(te(j), 0.001)
 enddo
@@ -500,7 +498,6 @@ class TIEQN:
 if (TIME >= tbeg_eq .and. TIME <= tend_eq) then
 QI(1)  = HRO
 do j=1, NA1
-YWH(j) = 1.
 YWR(j) = 0.
 YVR(j) = VR(j)
 YWGN(j) = VR(j)**(5./3.)
@@ -513,7 +510,7 @@ YWNB(j) = 3./2.*NI(j)*YWWB(j)/unit_coeff
 enddo
 imethod = nint(INUME2)
 
-call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), TIO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), unit_coeff, G11(1: NA1)/625, YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), 625*PIT(1: NA1), 625*PITOT(1: NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, RHO(1: NA1), imethod, bctype, bc_values, TI(1: NA1), QI(1: NA1), YQDCM(1: NA1), MPHIT(1: NA1) )
+call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), TIO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), unit_coeff, G11(1: NA1)/unit_coeff, YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), unit_coeff*PIT(1: NA1), unit_coeff*PITOT(1: NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, RHO(1: NA1), imethod, bctype, bc_values, TI(1: NA1), QI(1: NA1), YQDCM(1: NA1), MPHIT(1: NA1) )
 do j=1, NA1
 ti(j) = max(ti(j), 0.001)
 enddo
@@ -591,7 +588,6 @@ class UPEQN:
 '''QU(1) = HRO
 YWD(ND1) = 0.
 do j=1, NA1
-YWH(j) = 1.
 YWD(j)  = TTRQI(j)
 YWGN(j) = VR(j)
 YWGO(j) = VRO(j)
@@ -612,7 +608,7 @@ TTRQ(j) = TTRQ(j) - ( VR(J)*(UPS1(J) + UPS2(J)) - VRO(J)*(UPS1O(J) + UPS2O(J)) )
 ! contributions to stress tensor
 YWgradF(J)  = 2.*(IPOL(J+1)  - IPOL(J)) /(IPOL(J+1)  + IPOL(J)) /HRO  !d log I / drho
 YWgradb2(J) = 2.*(BDB02(J+1) - BDB02(J))/(BDB02(J+1) + BDB02(J))/HRO  !d log <B**2>/drho
-YWR(J) = YWR(J) + RTOR/IPOL(J)*XUPAR(J)*DLNEOD(J) - RTOR/IPOL(J)*(CNPAR(J) + XUPAR(J)*YWgradF(J))*DLNEO(J) + (XUPAR(J) - XUPAP(J))*RTOR/IPOL(J)*BDB02(J)*BTOR*SGNEOD(J) + RTOR/IPOL(J)*BDB02(J)*BTOR*(XUPAR(J)*YWgradb2(J) - XUPAR(J)*YWgradF(J) + CNPAP(J) - CNPAR(J))*SGNEO(J) + RTOR/IPOL(J)*(CNPAD(J) - CNPAR(J) - XUPAD(J)*YWgradF(J))*DDNEO(J) + RTOR/IPOL(J)*(XUPAR(J) - XUPAD(J))*DDNEOD(J)
+YWR(J) = RTOR/IPOL(J)*XUPAR(J)*DLNEOD(J) - RTOR/IPOL(J)*(CNPAR(J) + XUPAR(J)*YWgradF(J))*DLNEO(J) + (XUPAR(J) - XUPAP(J))*RTOR/IPOL(J)*BDB02(J)*BTOR*SGNEOD(J) + RTOR/IPOL(J)*BDB02(J)*BTOR*(XUPAR(J)*YWgradb2(J) - XUPAR(J)*YWgradF(J) + CNPAP(J) - CNPAR(J))*SGNEO(J) + RTOR/IPOL(J)*(CNPAD(J) - CNPAR(J) - XUPAD(J)*YWgradF(J))*DDNEO(J) + RTOR/IPOL(J)*(XUPAR(J) - XUPAD(J))*DDNEOD(J)
 endif
 enddo
 imethod = nint(INUME4)
@@ -645,7 +641,6 @@ QE(1)  = HRO
 NA1E = ND1
 
 do j=1, NA1
-YWH(j) = 1.
 YWGN(j) = VR(j)**(5./3.)
 YWGO(j) = VRO(j)**(5./3.)
 unit_coeff = 625.
@@ -661,7 +656,7 @@ imethod = nint(INUME2)
 
     runeq = \
 '''NA1I = ND1
-call RUNEQ_TETI(YWGN(1:NA1), 3./2.*NE(1:NA1), 3./2.*NI(1:NA1), YWGO(1:NA1), 3./2.*NEO(1:NA1), 3./2.*NIO(1:NA1), TEO(1:NA1), TIO(1:NA1), YWN1B(1:NA1), YWN2B(1:NA1), YWW1B(1:NA1), YWW2B(1:NA1), YVR(1:NA1), unit_coeff, G11(1:NA1)/625, YWA1(1:NA1), YWA2(1:NA1), YWB1(1:NA1), YWB2(1:NA1), YWR(1:NA1), YWR(1:NA1), 625*PET(1:NA1), 625*PIT(1:NA1), 625*PETOT(1:NA1), 625*PITOT(1:NA1), 0.0*YWR(1:NA1), 0.0*YWR(1:NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, RHO(1:NA1), imethod, TE(1:NA1), TI(1:NA1), QE(1:NA1), QI(1:NA1))
+call RUNEQ_TETI(YWGN(1:NA1), 3./2.*NE(1:NA1), 3./2.*NI(1:NA1), YWGO(1:NA1), 3./2.*NEO(1:NA1), 3./2.*NIO(1:NA1), TEO(1:NA1), TIO(1:NA1), YWN1B(1:NA1), YWN2B(1:NA1), YWW1B(1:NA1), YWW2B(1:NA1), YVR(1:NA1), unit_coeff, G11(1:NA1)/unit_coeff, YWA1(1:NA1), YWA2(1:NA1), YWB1(1:NA1), YWB2(1:NA1), YWR(1:NA1), YWR(1:NA1), unit_coeff*PET(1:NA1), unit_coeff*PIT(1:NA1), unit_coeff*PETOT(1:NA1), unit_coeff*PITOT(1:NA1), 0.0*YWR(1:NA1), 0.0*YWR(1:NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, RHO(1:NA1), imethod, TE(1:NA1), TI(1:NA1), QE(1:NA1), QI(1:NA1))
 if (ND1 < NA1) then
 do j=ND1+1, NA1
 QE(j) = QE(ND1)
@@ -908,7 +903,6 @@ imethod = nint(INUME3)
 call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWNB(1: NA1), YWWB(1: NA1), YVR(1: NA1), unit_coeff, YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RBDOT, BBDOT, NA1, NA1, HRO, TAU, RHO(1: NA1), imethod, bctype, bc_values, FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), MPHIT(1: NA1) )
 
 dfpdrbm12 = -YWQ(NA)/G22(NA)
-YWR(1) = MU(NA1)*GP2*ROC**2 * BTOR*BBDOT
 '''
 
 class INIT:
@@ -1000,7 +994,7 @@ integer :: IFSUB, imethod, ND, ND1, NODE, JCALL, bctype, bc_type_imp(2), t_wall1
 double precision :: YHRO, YM1, YM2, YB, YC, YJ_CU, YM, YU, YIOH, YICD, YMCD, bc_value_imp(2), t_cpu1, t_cpu2, unit_coeff
 double precision, dimension(5) :: bc_values
 double precision, dimension(NRD) :: YWA, YWB, YWC, YWD, YWGN, &
-    YWHN, YWGO, YWHO, YWR, YWH, YVR, YWA1, YWA2, YWB1, YWB2, &
+    YWHN, YWGO, YWHO, YWR, YVR, YWA1, YWA2, YWB1, YWB2, &
     YWAA, YWNB, YWWB, YWN1B, YWW1B, YWN2B, YWW2B, & 
     YWC1, YWC2, YWS, YQDCM, MPHIT, YQDCMF, YWQ, YWG11, YWgradF, YWgradb2
 

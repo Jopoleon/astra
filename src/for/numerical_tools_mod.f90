@@ -28,15 +28,14 @@ contains
         enddo
 
         if (x_out(Nx_out) > x_in(Nx_in)) then
-            call EXTRAP(x_out(1: Nx_out-1), y_out(1: Nx_out-1), x_out(Nx_out), &
-                Nx_out-1, y_out(Nx_out), 2, Nx_out-1)
+            y_out(Nx_out) = EXTRAP(x_out(1: Nx_out-1), y_out(1: Nx_out-1), x_out(Nx_out), Nx_out-1, 2, .false.)
         else
             zspl = x_out(Nx_out)
             y_out(Nx_out) = ispline_nt(zspl, x_in, y_in, b, c, d, Nx_in)
         endif
 
         if (x_out(1) < x_in(1)) then
-            call EXTRAP(x_out(2: Nx_out), y_out(2: Nx_out), x_out(1), 1, y_out(1), 2, Nx_out-1)
+            y_out(1) = EXTRAP(x_out(2: Nx_out), y_out(2: Nx_out), x_out(1), Nx_out-1, 2, .true.)
         else
             zspl = x_out(1)
             y_out(1) = ispline_nt(zspl, x_in, y_in, b, c, d, Nx_in)
@@ -66,7 +65,7 @@ contains
                 y1 = y_in(j-2)
             endif
             x2 = x_in(j-1)
-            x3 = x_in(j) 
+            x3 = x_in(j)
             y2 = y_in(j-1)
             y3 = y_in(j)
             if (j < Nx_in) then
@@ -115,8 +114,7 @@ contains
     enddo
 
     if (x_out(Nx_out) > x_in(Nx_in)) then
-        call EXTRAP(x_out(1: Nx_out-1), y_out(1: Nx_out-1), x_out(Nx_out), &
-            Nx_out-1, y_out(Nx_out), 2, Nx_out-1)
+        y_out(Nx_out) = EXTRAP(x_out(1: Nx_out-1), y_out(1: Nx_out-1), x_out(Nx_out), Nx_out-1, 2, .false.)
     endif
 
     return
@@ -172,8 +170,8 @@ contains
         c(i) = c(i+1) - c(i)
     enddo
 
-! step 2: end conditions 
-    
+! step 2: end conditions
+
     b(1) = -d(1)
     b(n) = -d(n-1)
     c(1) = 0.0
@@ -185,7 +183,7 @@ contains
         c(n) = -c(n)*d(n-1)**2/(x(n) - x(n-3))
     endif
 
-! step 3: forward elimination 
+! step 3: forward elimination
 
     do i=2, n
         h = d(i-1)/b(i-1)
@@ -256,7 +254,7 @@ contains
         if(u < x(k)) then
             j = k
         else
-            i = k 
+            i = k
         endif
     enddo
 
@@ -285,10 +283,10 @@ contains
     double precision, intent(in), dimension(nagrid) :: x_in, y_in
     double precision, intent(out), dimension(nagrid) :: yd_out
 
-    integer :: j, iextrap, j_end, OEXTRAP
+    integer :: j, iextrap, j_end, extrap_order
     double precision :: x1tmp, y1tmp, y2tmp, drho
 
-    OEXTRAP = 1
+    extrap_order = 1
     iextrap = 1
 
     if (iextrap == 1) j_end = 1
@@ -327,8 +325,7 @@ contains
 
 ! Interpolate to last grid point
     j = nagrid
-    call EXTRAP(x_in(1: j-1), yd_out(1: j-1), x_in(j), & 
-        j-1, yd_out(j), OEXTRAP, j-1)    
+    yd_out(j) = EXTRAP(x_in(1: j-1), yd_out(1: j-1), x_in(j), j-1, extrap_order, .false.)
 
     return
     end subroutine DERIV_CDE
@@ -535,12 +532,12 @@ contains
     double precision, intent(out) :: P(3)
     double precision :: y21, y32, x21, x32, h21, h32
 
-    y32 = y(3) - y(2)      
-    y21 = y(2) - y(1)      
-    x32 = x(3) - x(2)      
-    x21 = x(2) - x(1)      
-    h32 = x(3) + x(2)      
-    h21 = x(2) + x(1)      
+    y32 = y(3) - y(2)
+    y21 = y(2) - y(1)
+    x32 = x(3) - x(2)
+    x21 = x(2) - x(1)
+    h32 = x(3) + x(2)
+    h21 = x(2) + x(1)
 
     P(1) = (x21*y32 - x32*y21)/(x21*x32*(h32 - h21))
     P(2) = y21/x21 - P(1)*h21
@@ -550,58 +547,39 @@ contains
     end subroutine polyfitcc
 
 !---------------------------------------------------------------------
-    subroutine EXTRAP(x_in, y_in, x_extrap, j_extrap, y_extrap, ex_order, nagrid)
+    double precision function EXTRAP(x_in, y_in, x_extrap, nagrid, extrap_order, left)
 
 ! Assume that x is of r-type, i.e. interpolation in 0 has zero odd derivatives
 
-    integer, intent(in) :: ex_order, j_extrap, nagrid
+    logical, intent(in) :: left
+    integer, intent(in) :: extrap_order, nagrid
     double precision, intent(in)  :: x_in(nagrid), x_extrap, y_in(nagrid)
-    double precision, intent(out) :: y_extrap
 
-    integer :: k1, k2, k3, jsign
+    integer :: k1, k2
     double precision :: P(3)
-            
-    if (j_extrap == nagrid) jsign = -1
-    if (j_extrap == 1) jsign = 1
-      
-! Constant interpolation
-    if (ex_order == 0) then
-        k1 = j_extrap
-        P(1) = y_in(k1)
-        y_extrap = P(1)
+
+    if (left) then
+        k1 = 1
+    else
+        k1 = nagrid - extrap_order
     endif
 
-    if (ex_order == 1) then ! Linear extrapolation
-        if (jsign < 0) then
-            k1 = j_extrap + jsign
-            k2 = j_extrap
-            call polyfitcc_1(x_in(k1: k2), y_in(k1: k2), P(1: 2))
-            y_extrap = P(1)*x_extrap + P(2)
-        endif
-        if (jsign > 0) then
-            k1 = j_extrap
-            k2 = j_extrap + 1
-            call polyfitcc_1(x_in(k1: k2), y_in(k1: k2), P(1: 2))
-            y_extrap = P(1)*x_extrap + P(2)
-        endif
-    else if (ex_order == 2) then! Quadratic extrapolation
-        if (jsign < 0) then
-            k1 = j_extrap + jsign*2
-            k2 = j_extrap + jsign
-            k3 = j_extrap
-            call polyfitcc(x_in(k1: k3), y_in(k1: k3), P)
-            y_extrap = P(1) * x_extrap**2 + P(2)*x_extrap + P(3)
-        else if (jsign > 0) then
-            k1 = j_extrap
-            k2 = j_extrap + jsign
-            k3 = j_extrap + jsign*2
-            call polyfitcc(x_in(k1: k3), y_in(k1: k3), P)
-            y_extrap = P(1) * x_extrap**2 + P(2)*x_extrap + P(3)
-        endif
-    endif
+    SELECT CASE(extrap_order) ! Return the boundary value
+    CASE(0)
+        P(1) = y_in(k1)
+        extrap = P(1)
+    CASE(1) ! Linear extrapolation
+        k2 = k1 + 1
+        call polyfitcc_1(x_in(k1: k2), y_in(k1: k2), P(1: 2))
+        extrap = P(1)*x_extrap + P(2)
+    CASE(2) ! Quadratic extrapolation
+        k2 = k1 + 2
+        call polyfitcc(x_in(k1: k2), y_in(k1: k2), P)
+        extrap = P(1) * x_extrap**2 + P(2)*x_extrap + P(3)
+    END SELECT
 
     return
-    end subroutine EXTRAP
+    end function EXTRAP
 
 !---------------------------------------------------------------------
     subroutine polyfitcc_1(x, y, P)
@@ -611,8 +589,8 @@ contains
 
     double precision :: y21, x21
 
-    y21 = y(2) - y(1)      
-    x21 = x(2) - x(1)      
+    y21 = y(2) - y(1)
+    x21 = x(2) - x(1)
 
     P(1) = y21/x21
     P(2) = y(1) - x(1)*y21/x21
@@ -637,14 +615,12 @@ contains
     double precision, intent(in) , dimension(nagrid) :: x_in, x_out, y_in
     double precision, intent(out), dimension(nagrid) :: yd_out
 
-    integer :: j, j_end, OEXTRAP
+    integer :: j, j_end
     double precision dx, dy, y0, P(3)
-     
-    OEXTRAP = 1
 
     if (iextrap == 1) j_end=1
     if (iextrap == 0) j_end=0
-  
+
 ! dy/dx
     if (order_d == 1) then
 
@@ -676,7 +652,7 @@ contains
             dx = (x_in(j+1) - x_in(j))**2
             dy = (y_in(j+1) - y_in(j))
             yd_out(j) = dy/dx
-    
+
             do j=2, nagrid - j_end
                 dx = (x_in(j+1) - x_in(j))**2
                 dy = (y_in(j+1) - 2.*y_in(j) + y_in(j-1))
@@ -751,7 +727,7 @@ contains
 
 !---------------------------------------------------------------------
     function EXTRAPOLATE(x_interp, j1, j2, j3, narr, rho, y_in) result(f_out)
-    
+
     integer, intent(in) :: j1, j2, j3, narr
     double precision, intent(in) :: x_interp
     double precision, intent(in), dimension(narr) :: rho, y_in
@@ -768,16 +744,15 @@ contains
     d2fdx = ((f3 - f2)/(x3 - x2) - (f2 - f1)/(x2 - x1))/(x3 - x1)
 
     f_out = f2 + (x_interp - x2)*(dfdx + d2fdx*(x_interp - x2))
-      
+
     return
     end function EXTRAPOLATE
 
 !---------------------------------------------------------------------
-    subroutine GRID2GRID(grid_type, x_input, y_input, y_output, nagrid, iextrap)
+    subroutine GRID2GRID(grid_type, x_input, y_input, y_output, nagrid)
 ! computes quantity on shifted grid from main grid
-! iextrap: 1 if yes interpolate last grid point, 0 do not interpolate last grid point
 
-    integer, intent(in) :: nagrid, iextrap, grid_type
+    integer, intent(in) :: nagrid, grid_type
     double precision, intent(in) , dimension(nagrid) :: x_input, y_input
     double precision, intent(out), dimension(nagrid) :: y_output
 
@@ -822,7 +797,7 @@ contains
 
     integer :: j
     double precision :: y1tmp, P(3)
-  
+
 ! Normalized grid , GRP style
     do j=2, nagrid
         y_output(j) = 0.5*(y_input(j) + y_input(j-1))

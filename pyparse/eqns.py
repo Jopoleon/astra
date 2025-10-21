@@ -532,7 +532,6 @@ UPL(J) = (FP(J) - FPO(J))/TAU - YQDCMF(J)
 !(so boundary values is dpsi/dt_x=1), one needs to add yqdcmf. Or simply compute it as dFP(NA1)/dt.
 ULON(J) = IPOL(J)*G33(J)*(UPL(J) - GP2*ROC**2 * BTOR*BBDOT*MU(J)) !this is correct, also 
 !goes into Ohmic power. Ohmic power is not computed with dPsi/dt_x, but dPsi/dt_phi (ULON)
-!UPL(J) = UPL(J) + YWR(1) !this is not correct
 enddo
 call CUOFP
 '''
