@@ -48,7 +48,7 @@ subroutine RUNEQ(GN, HN, GO, HO, YO, N_in, W_in, V_in, unit_coeff, G11, A_in, B_
 !  bctype = 3 -> mixed
 !  bctype = 4 -> Q/y BC
 
-use numerical_tools, only: extrap, deriv, shift2main
+use numerical_tools, only: extrap, deriv, gradient
 
 implicit none
 
@@ -60,8 +60,8 @@ double precision, intent(out), dimension(Ngrid) :: y_out, Q_out, adcmp_term
 
 integer :: j
 double precision :: theta
-double precision, dimension(Ngrid) :: x_b, Gmid, Hmid, NN, NO, dum1, &
-    Rsource, Rsource2, Pdot_1, Pdot_2, Src_new, ydummy, ytmp
+double precision, dimension(Ngrid) :: x_b, Gmid, Hmid, NN, NO, &
+    Rsource, Rsource2, Pdot_1, Pdot_2, Src_new, ytmp
 double precision, dimension(Ngridb) :: Gmix, AA, BB, CC, RR, g_v, vta, gsdt, gsydt, xi, fxi, gxi
 
 Gmid = 0.5*(GO + GN)
@@ -70,22 +70,17 @@ x_b = x_in + 0.5*dx
 
 ! Compute source: Rsource = - 1/V d/dx (unit_coeff*G11*R), Rsource is on main grid
 Rsource = unit_coeff*G11*R_in
-call DERIV(x_b, x_in, 2, Rsource, Rsource2, 1, Ngrid, 0)
+call DERIV(x_b, x_in(Ngrid), 2, Rsource, Rsource2, 1, Ngrid, 0)
 
-Pdot_1 = 0.
-Pdot_2 = 0.
 if (sum(mphit) == 0.) then
     ytmp = YO
 else
     ytmp = mphit
 endif
-dum1 = unit_coeff*N_in*x_in*ytmp
-call DERIV(x_in, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
-call SHIFT2MAIN(x_b, ydummy, Pdot_1, Ngrid)
+
+call GRADIENT(x_in, unit_coeff*N_in*x_in*ytmp, Pdot_1, Ngrid)
+call GRADIENT(x_in, Gmid*Hmid*ytmp, Pdot_2, Ngrid)
 Pdot_1 = Pdot_1/W_in
-dum1 = Gmid*Hmid*ytmp
-call DERIV(x_in, x_b, 1, dum1, ydummy, 1, Ngrid, 1)
-call SHIFT2MAIN(x_b, ydummy, Pdot_2, Ngrid)
 Pdot_2 = Pdot_2*x_in/Gmid
 
 adcmp_term = bbdot*Pdot_1 + (rbdot - bbdot)*Pdot_2  ! output, used only for FP
@@ -273,7 +268,7 @@ subroutine RUNEQ_TETI(GN, H1N, H2N, GO, H1O, H2O, &
     S1_in, S2_in, P1, P2, T12, T21, rbdot, bbdot, Ngridb, Ngrid, dx, dt, &
     x_in, imethod, y1, y2, Q1_out, Q2_out)
 
-use numerical_tools, only: deriv, extrap, shift2main
+use numerical_tools, only: deriv, extrap, gradient
 
 implicit none
 
@@ -289,7 +284,7 @@ double precision, intent(inout), dimension(Ngrid) :: y1, y2
 integer :: j
 double precision :: theta, f_bound1, f_bound2
 double precision, dimension(Ngrid) :: x_b, S1_new, P1_new, S2_new, P2_new, &
-    Vtilde, Rsource1, Rsource2, Rsource3, Rsource4, N1N, N1O, N2N, N2O, ydummy, &
+    Vtilde, Rsource1, Rsource2, Rsource3, Rsource4, N1N, N1O, N2N, N2O, &
     Pdot_11, Pdot_12, Pdot_21, Pdot_22
 double precision, dimension(Ngridb) :: A1, A2, xi1, fxi1, gxi1, xi2, fxi2, gxi2, &
     Gmix, g_v, AA1, BB1, CC1, RR1, TT1, AA2, BB2, CC2, RR2, TT2
@@ -318,31 +313,17 @@ Vtilde = unit_coeff*G11
 ! Compute source: Rsource = - 1/V d/dx (unit_coeff*G11*R), Rsource is on main grid
 Rsource1 = Vtilde*R1
 Rsource2 = Vtilde*R2
-Rsource3 = 0.
-Rsource4 = 0.
 
-call DERIV(x_b, x_in, 2, Rsource1, Rsource3, 1, Ngrid, 0)
-call DERIV(x_b, x_in, 2, Rsource2, Rsource4, 1, Ngrid, 0)
+call DERIV(x_b, x_in(Ngrid), 2, Rsource1, Rsource3, 1, Ngrid, 0)
+call DERIV(x_b, x_in(Ngrid), 2, Rsource2, Rsource4, 1, Ngrid, 0)
 
-Pdot_11 = 0.
-Pdot_21 = 0.
-Pdot_12 = 0.
-Pdot_22 = 0.
-
-call DERIV(x_in, x_b, 1, unit_coeff*N1*x_in*Y1O, ydummy, 1, Ngrid, 1)
-call SHIFT2MAIN(x_b, ydummy, Pdot_11, Ngrid)
+call GRADIENT(x_in, unit_coeff*N1*x_in*Y1O, Pdot_11, Ngrid)
+call GRADIENT(x_in, unit_coeff*N2*x_in*Y2O, Pdot_12, Ngrid)
+call GRADIENT(x_in, GN*H1N*Y1O, Pdot_21, Ngrid)
+call GRADIENT(x_in, GN*H2N*Y2O, Pdot_22, Ngrid)
 Pdot_11 = Pdot_11/W1
-
-call DERIV(x_in, x_b, 1, unit_coeff*N2*x_in*Y2O, ydummy, 1, Ngrid, 1)
-call SHIFT2MAIN(x_b, ydummy, Pdot_12, Ngrid)
 Pdot_12 = Pdot_12/W2
-
-call DERIV(x_in, x_b, 1, GN*H1N*Y1O, ydummy, 1, Ngrid, 1)
-call SHIFT2MAIN(x_b, ydummy, Pdot_21, Ngrid)
 Pdot_21 = Pdot_21*x_in/GN
-
-call DERIV(x_in, x_b, 1, GN*H2N*Y2O, ydummy, 1, Ngrid, 1)
-call SHIFT2MAIN(x_b, ydummy, Pdot_22, Ngrid)
 Pdot_22 = Pdot_22*x_in/GN
 
 N1N = GN*H1N

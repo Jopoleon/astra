@@ -599,93 +599,80 @@ contains
     end subroutine polyfitcc_1
 
 !---------------------------------------------------------------------
-    subroutine DERIV(x_in, x_out, x_type, y_in, yd_out, order_d, nagrid, iextrap)
+    subroutine DERIV(x_in, x_out_bnd, x_type, y_in, deriv_out, order_d, nagrid, iextrap)
 
 ! DERIV computes first or second derivative over x
 !
 !  x_in: x_variable
 !  x_type for GRP style-grid is: 1 main grid -> shifted grid (deriv), 2 shifted grid -> main grid (deriv)
 !  y_in: y_variable
-!  yd_out: derivative
+!  deriv_out: derivative
 !  order_d: 1st or 2nd derivative
 !  nagrid: number of grid points
 ! iextrap: 1 if yes interpolate last grid point, 0 do not interpolate last grid point
 
     integer, intent(in) :: order_d, x_type, nagrid, iextrap
-    double precision, intent(in) , dimension(nagrid) :: x_in, x_out, y_in
-    double precision, intent(out), dimension(nagrid) :: yd_out
+    double precision, intent(in) :: x_out_bnd
+    double precision, intent(in) , dimension(nagrid) :: x_in, y_in
+    double precision, intent(out), dimension(nagrid) :: deriv_out
 
     integer :: j, j_end
-    double precision dx, dy, y0, P(3)
+    double precision :: dx, dy, P(3)
 
-    if (iextrap == 1) j_end=1
-    if (iextrap == 0) j_end=0
+    if (iextrap == 1) j_end = 1
+    if (iextrap == 0) j_end = 0
 
 ! dy/dx
     if (order_d == 1) then
-
         if (x_type == 1) then
             do j=1, nagrid - j_end
                 dx = x_in(j+1) - x_in(j)
                 dy = y_in(j+1) - y_in(j)
-                yd_out(j) = dy/dx
+                deriv_out(j) = dy/dx
             enddo
-        endif
-
-        if (x_type == 2) then
-            j = 1
+        else
             call polyfitcc(x_in(1: 3), y_in(1: 3), P)
-            y0 = P(3)
             dx = x_in(1)
-            dy = (y_in(1) - y0)
-            yd_out(j) = dy/dx
+            dy = (y_in(1) - P(3))
+            deriv_out(1) = dy/dx
             do j=2, nagrid
                 dx = x_in(j) - x_in(j-1)
                 dy = y_in(j) - y_in(j-1)
-                yd_out(j) = dy/dx
+                deriv_out(j) = dy/dx
             enddo
         endif
-
     else if (order_d == 2) then ! d2y/dx^2
         if (x_type == 1) then
-            j = 1
-            dx = (x_in(j+1) - x_in(j))**2
-            dy = (y_in(j+1) - y_in(j))
-            yd_out(j) = dy/dx
-
-            do j=2, nagrid - j_end
+            dx = (x_in(2) - x_in(1))**2
+            dy = (y_in(2) - y_in(1))
+            deriv_out(1) = dy/dx
+            do j=2, nagrid-j_end
                 dx = (x_in(j+1) - x_in(j))**2
                 dy = (y_in(j+1) - 2.*y_in(j) + y_in(j-1))
-                yd_out(j) = dy/dx
+                deriv_out(j) = dy/dx
             enddo
-        endif
-        if (x_type == 2) then
+        else
 ! First interpolate shifted variable to zero
-            j = 1
             call polyfitcc(x_in(1:3), y_in(1:3), P)
-            y0 = P(3)
-            dx = x_in(j)**2
-            dy = (y_in(j+1) - 2.0*y_in(j) + y0)
-            yd_out(j) = dy/dx
-            do j=2, nagrid - j_end
+            dx = x_in(1)**2
+            dy = (y_in(2) - 2.0*y_in(1) + P(3))
+            deriv_out(1) = dy/dx
+            do j=2, nagrid-j_end
                 dx = (x_in(j+1) - x_in(j))**2
                 dy = (y_in(j+1) - 2.0*y_in(j) + y_in(j-1))
-                yd_out(j) = dy/dx
+                deriv_out(j) = dy/dx
             enddo
         endif
     endif
 
 ! Interpolate to last grid point
-    if (iextrap == 1 .and. order_d == 1) then
-        j = nagrid
-        call polyfitcc(x_in(j-2: j), y_in(j-2: j), P)
-        yd_out(j) = 2.*P(1)*x_out(j) + P(2)
-    endif
-
-    if (iextrap == 1 .and. order_d == 2) then
-        j = nagrid
-        call polyfitcc(x_in(j-2: j), y_in(j-2: j), P)
-        yd_out(j) = 2.*P(1)
+    if (iextrap == 1) then
+        call polyfitcc(x_in(nagrid-2: nagrid), y_in(nagrid-2: nagrid), P)
+        if (order_d == 1) then
+            deriv_out(nagrid) = 2.*P(1)*x_out_bnd + P(2)
+        else if (order_d == 2) then
+            deriv_out(nagrid) = 2.*P(1)
+        endif
     endif
 
     return
@@ -749,27 +736,42 @@ contains
     end function EXTRAPOLATE
 
 !---------------------------------------------------------------------
-    subroutine SHIFT2MAIN(x_input, y_input, y_output, nagrid)
+    subroutine SHIFT2MAIN(x_in, y_in, y_out, nagrid)
 ! computes quantity on main grid from shifted grid
 
     integer, intent(in) :: nagrid
-    double precision, intent(in) , dimension(nagrid) :: x_input, y_input
-    double precision, intent(out), dimension(nagrid) :: y_output
+    double precision, intent(in) , dimension(nagrid) :: x_in, y_in
+    double precision, intent(out), dimension(nagrid) :: y_out
 
     integer :: j
-    double precision :: y1tmp, P(3)
+    double precision :: P(3)
 
 ! Normalized grid , GRP style
     do j=2, nagrid
-        y_output(j) = 0.5*(y_input(j) + y_input(j-1))
+        y_out(j) = 0.5*(y_in(j) + y_in(j-1))
     enddo
 
-    call polyfitcc(x_input(1: 3), y_input(1: 3), P)
-    y1tmp = P(3)
-    y_output(1) = 0.5*(y1tmp + y_input(1))
+    call polyfitcc(x_in(1: 3), y_in(1: 3), P)
+    y_out(1) = 0.5*(P(3) + y_in(1))
 
     return
     end subroutine SHIFT2MAIN
+
+!---------------------------------------------------------------------
+    subroutine GRADIENT(x_in, y_in, y_out, nagrid)
+
+    integer, intent(in) :: nagrid
+    double precision, intent(in) , dimension(nagrid) :: x_in, y_in
+    double precision, intent(out), dimension(nagrid) :: y_out
+
+    double precision, dimension(nagrid) :: x_in_shift, ytmp
+
+    x_in_shift = x_in + 0.5*(x_in(2) - x_in(1)) ! Assuming regular grid x_in
+    call DERIV(x_in, x_in_shift(nagrid), 1, y_in, ytmp, 1, nagrid, 1)
+    call SHIFT2MAIN(x_in_shift, ytmp, y_out, nagrid)
+
+    return
+    end subroutine GRADIENT
 
 !---------------------------------------------------------------------
     subroutine SORTAB(A, B, nlen)
