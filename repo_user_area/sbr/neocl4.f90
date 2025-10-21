@@ -62,7 +62,7 @@ subroutine NEOCL4
 use const_inc, only: GP2, ABC, ROC, BTOR, RTOR, HRO, NA, NA1, &
     AMJ, AIM1, AIM2, AIM3, ZMJ
 use status_inc, only: BDB0, B0DB2, BDB02, BMAXT, FOFB, IPOL, &
-    ULON, ER, VRS, G11, &
+    ULON, ER, VRS, G11, RHO, AMETR, &
     MU, ELON, SHIF, TE, TI, &
     NE, NHYDR, NDEUT, NTRIT, NHE3, NALF, ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3, NMAIN
 use nclass_mod
@@ -77,7 +77,7 @@ double precision :: YGRRdB2(1000), YNGRTHETA(1000), YFM(3, 1000)
 
 double precision :: y_grrho2, grti, y_den, yh
 real, dimension(mx_ms) :: dq_s, vq_s
-real p_eps
+real :: eps_shear_fac
 integer :: k_electron, k_mainion, k_proton, k_deuteron, k_triton, &
     k_he3, k_alpha, k_impZ1, k_impZ2, k_impZ3, narray
 real :: ybbmax, ybbmax2, yftupper, yftlower
@@ -133,7 +133,7 @@ call ZBFAUX(yGRRdB2, yNGRTheta, YFM)
 
 do j=1, NA
 ! Set radially dependent data
-!  p_eps-inverse aspect ratio [-]
+!  eps_shear_fac-geometrical factor
 !  p_grphi-radial electric field Phi' (V/rho)
 !  p_gr2phi-radial electric field gradient Psi'(Phi'/Psi')' (V/rho**2)
 !  p_q-safety factor [-] (-1./MU(j))
@@ -161,7 +161,15 @@ do j=1, NA
     c_potl   = -(RTOR + SHIF(j))/MU(1)
     y_grrho2 = G11(j)/VRS(j)
 
-    p_eps    = HRO*j/ROC*ABC/(RTOR + SHIF(j))
+    if (j == 1) then
+        eps_shear_fac = BTOR*RHO(j)*MU(j)/RTOR/ &
+                ((SHIF(j+1) + AMETR(j+1) - SHIF(j) - AMETR(j))/ &
+                (RHO(j) - RHO(j+1)))
+    else
+        eps_shear_fac = BTOR*RHO(j)*MU(j)/RTOR/ &
+                ((SHIF(j+1) + AMETR(j+1) - SHIF(j-1) - AMETR(j-1))/ &
+                (RHO(j-1) - RHO(j+1)))
+    endif
     p_grphi  = ER(j)
     p_gr2phi = MU(j)*j*(ER(j+1)/MU(j+1)/((j+1)*YH) - ER(j)/MU(j)/(j*YH))
 ! Warning: The NCLASS version 1.2 returns NaN resistivity
@@ -211,7 +219,7 @@ do j=1, NA
 
     ni_nc(j) = 0. !density of all thermal ions
 
-    if (NHYDR(j) > y_den) then
+    if (NHYDR(j) > y_den) then  !
         ni_nc(j) = ni_nc(j) + nhydr(j)
         m_i = m_i + 1
         k_proton = m_i
@@ -378,9 +386,6 @@ do j=1, NA
         CASE(5)
             label = 'ERROR:NCLASS-inversion of flow matrix failed'
             call WRITE_LINE(nout, label, 0, 0)
-        CASE(6)
-            label = 'ERROR:NCLASS-Trapped fraction not between 0 and 1'
-            call WRITE_LINE(nout, label, 0, 0)
         END SELECT
         return
     endif
@@ -424,11 +429,12 @@ do j=1, NA
         bs_pe_nc(j) = -1.e-6*rdum(1)/BTOR
         bs_te_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (electrons)
-        polflow_e_nc(j) = ( utheta_s(1, 1, k_electron) + &
-                            utheta_s(1, 2, k_electron) + &
-                            utheta_s(1, 3, k_electron) ) * &
-                            BTOR/(1.0 + p_eps)/p_fhat
+        polflow_e_nc(j) = eps_shear_fac * ( &
+            utheta_s(1, 1, k_electron) + &
+            utheta_s(1, 2, k_electron) + &
+            utheta_s(1, 3, k_electron) ) 
     endif
+
 !---  Main Ions  ---
     if (k_mainion > 0) then
 ! Total radial particle flux (main ions)
@@ -467,10 +473,10 @@ do j=1, NA
         bs_pi_nc(j) = -1.e-6*rdum(1)/BTOR
         bs_ti_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (main ions)
-        polflow_i_nc(j) = ( utheta_s(1, 1, k_mainion) + &
-                            utheta_s(1, 2, k_mainion) + &
-                            utheta_s(1, 3, k_mainion) ) * &
-                            BTOR/(1.0 + p_eps)/p_fhat
+        polflow_i_nc(j) = eps_shear_fac * ( &
+            utheta_s(1, 1, k_mainion) + &
+            utheta_s(1, 2, k_mainion) + &
+            utheta_s(1, 3, k_mainion) )
     endif
 
 !--- Protons ---
@@ -510,12 +516,12 @@ do j=1, NA
         bs_pp_nc(j) = -1.e-6*rdum(1)/BTOR
         bs_tp_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (protons)
-        polflow_p_nc(j) = ( utheta_s(1, 1, k_proton) +  &
-                            utheta_s(1, 2, k_proton) + &
-                            utheta_s(1, 3, k_proton) ) * &
-                            BTOR/(1.0 + p_eps)/p_fhat
+        polflow_p_nc(j) = eps_shear_fac * ( &
+            utheta_s(1, 1, k_proton) +  &
+            utheta_s(1, 2, k_proton) + &
+            utheta_s(1, 3, k_proton) )
     endif
-
+     
 !--- Deuterons ---
     if (k_deuteron > 0) then
 ! Total radial particle flux (deuterons  )
@@ -554,12 +560,12 @@ do j=1, NA
         bs_pd_nc(j) = -1.e-6*rdum(1)/BTOR
         bs_td_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (deuterons)
-        polflow_d_nc(j) = ( utheta_s(1, 1, k_deuteron) + &
-                            utheta_s(1, 2, k_deuteron) + &
-                            utheta_s(1, 3, k_deuteron)  ) * &
-                            BTOR/(1.0 + p_eps)/p_fhat
+        polflow_d_nc(j) = eps_shear_fac * ( &
+            utheta_s(1, 1, k_deuteron) + &
+            utheta_s(1, 2, k_deuteron) + &
+            utheta_s(1, 3, k_deuteron) )
     endif
-
+     
 !--- Tritons ---
     if (k_triton > 0) then
 ! Total radial particle flux (tritons  )
@@ -573,35 +579,35 @@ do j=1, NA
         cn_t_nc(j) = (vn_s(k_triton) + veb_s(k_triton) + &
                       gfl_s(5, k_triton)/den_iz(im, iza)) / y_grrho2
 ! Radial conduction flux (tritons  )
-       call RARRAY_COPY(5, qfl_s(1, k_triton), 1, rdum, 1)
-       rdum(6) = RARRAY_SUM(5, rdum, 1)
-       qcond_t_nc(j) = rdum(6)*VRS(j)*1.e-6
+        call RARRAY_COPY(5, qfl_s(1, k_triton), 1, rdum, 1)
+        rdum(6) = RARRAY_SUM(5, rdum, 1)
+        qcond_t_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Heat conduction and velocity (tritons  )
 ! Conduction total is sum of components
-       rdum(1) = RARRAY_SUM(5, qfl_s(1, k_triton), 1)
+        rdum(1) = RARRAY_SUM(5, qfl_s(1, k_triton), 1)
 ! Diagonal conductivity plus convective velocity
-       dq_s(k_triton) = chit_ss(k_triton, k_triton) + &
-                        chip_ss(k_triton, k_triton)
-       vq_s(k_triton) = rdum(1)/(den_iz(im, iza)* z_j7kv*temp_i(im)) + &
-                        dq_s(k_triton)*grt_i(im)/temp_i(im)
-       xt_nc(j) = dq_s(k_triton)/y_grrho2
-       ct_nc(j) = vq_s(k_triton)/y_grrho2
+        dq_s(k_triton) = chit_ss(k_triton, k_triton) + &
+                         chip_ss(k_triton, k_triton)
+        vq_s(k_triton) = rdum(1)/(den_iz(im, iza)* z_j7kv*temp_i(im)) + &
+                         dq_s(k_triton)*grt_i(im)/temp_i(im)
+        xt_nc(j) = dq_s(k_triton)/y_grrho2
+        ct_nc(j) = vq_s(k_triton)/y_grrho2
 ! Total radial energy flux (tritons  )
-       do k=1, 5
-           rdum(k) = qfl_s(k, k_triton) + 2.5*gfl_s(k, k_triton)*temp_i(im)*z_j7kv
-       enddo
-       rdum(6) = RARRAY_SUM(5, rdum, 1)
-       qen_t_nc(j) = rdum(6)*VRS(j)*1.e-6
+        do k=1, 5
+            rdum(k) = qfl_s(k, k_triton) + 2.5*gfl_s(k, k_triton)*temp_i(im)*z_j7kv
+        enddo
+        rdum(6) = RARRAY_SUM(5, rdum, 1)
+        qen_t_nc(j) = rdum(6)*VRS(j)*1.e-6
 ! Bootstrap current on p'/p (tritons  )
-       rdum(1) = bsjbp_s(k_triton)
-       rdum(2) = bsjbt_s(k_triton)
-       bs_pt_nc(j) = -1.e-6*rdum(1)/BTOR
-       bs_tt_nc(j) = -1.e-6*rdum(2)/BTOR
+        rdum(1) = bsjbp_s(k_triton)
+        rdum(2) = bsjbt_s(k_triton)
+        bs_pt_nc(j) = -1.e-6*rdum(1)/BTOR
+        bs_tt_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (tritons)
-       polflow_t_nc(j) = ( utheta_s(1, 1, k_triton) + &
-                           utheta_s(1, 2, k_triton) + &
-                           utheta_s(1, 3, k_triton) ) * &
-                           BTOR/(1.0 + p_eps)/p_fhat
+        polflow_t_nc(j) = eps_shear_fac * ( &
+            utheta_s(1, 1, k_triton) + &
+            utheta_s(1, 2, k_triton) + &
+            utheta_s(1, 3, k_triton) )
     endif
 
 !--- He3 Particles ---
@@ -641,11 +647,12 @@ do j=1, NA
         bs_phe3_nc(j) = -1.e-6*rdum(1)/BTOR
         bs_the3_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (He3 particles)
-        polflow_he3_nc(j) = ( utheta_s(1, 1, k_he3) + &
-                              utheta_s(1, 2, k_he3) + &
-                              utheta_s(1, 3, k_he3) ) * &
-                              BTOR/(1.0 + p_eps)/p_fhat
+        polflow_he3_nc(j) = eps_shear_fac * ( &
+            utheta_s(1, 1, k_he3) + &
+            utheta_s(1, 2, k_he3) + &
+            utheta_s(1, 3, k_he3) )
     endif
+
 !--- Alpha Particles ---
     if (k_alpha > 0) then
 ! Total radial particle flux (alpha particles)
@@ -683,11 +690,12 @@ do j=1, NA
         bs_phe4_nc(j) = -1.e-6*rdum(1)/BTOR
         bs_the4_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (alpha particles)
-        polflow_he4_nc(j) = ( utheta_s(1, 1, k_alpha) + &
-                              utheta_s(1, 2, k_alpha) + &
-                              utheta_s(1, 3, k_alpha) ) * &
-                              BTOR/(1.0 + p_eps)/p_fhat
+        polflow_he4_nc(j) = eps_shear_fac * ( &
+            utheta_s(1, 1, k_alpha) + &
+            utheta_s(1, 2, k_alpha) + &
+            utheta_s(1, 3, k_alpha) )
     endif
+
 !--- Impurity Z1 ---
     if (k_impZ1 > 0) then
 ! Total radial particle flux (impZ1 particles)
@@ -725,11 +733,12 @@ do j=1, NA
         bs_pimp1_nc(j) = -1.e-6*rdum(1)/BTOR
         bs_timp1_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (impZ1 particles)
-        polflow_imp1_nc(j) = ( utheta_s(1, 1, k_impZ1) + &
-                               utheta_s(1, 2, k_impZ1) + &
-                               utheta_s(1, 3, k_impZ1)  ) * &
-                               BTOR/(1.0 + p_eps)/p_fhat
+        polflow_imp1_nc(j) = eps_shear_fac * ( &
+            utheta_s(1, 1, k_impZ1) + &
+            utheta_s(1, 2, k_impZ1) + &
+            utheta_s(1, 3, k_impZ1) )
     endif
+
 !--- Impurity Z2 ---
     if (k_impZ2 > 0) then
 ! Total radial particle flux (impZ2 particles)
@@ -767,11 +776,12 @@ do j=1, NA
         bs_pimp2_nc(j) = -1.e-6*rdum(1)/BTOR
         bs_timp2_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (impZ2 particles)
-        polflow_imp2_nc(j) = ( utheta_s(1, 1, k_impZ2) + &
-                               utheta_s(1, 2, k_impZ2) + &
-                               utheta_s(1, 3, k_impZ2) ) * &
-                               BTOR/(1.0 + p_eps)/p_fhat
+        polflow_imp2_nc(j) = eps_shear_fac * ( &
+            utheta_s(1, 1, k_impZ2) + &
+            utheta_s(1, 2, k_impZ2) + &
+            utheta_s(1, 3, k_impZ2) )
     endif
+
 !--- Impurity Z3 ---
     if (k_impZ3 > 0) then
 ! Total radial particle flux (impZ3 particles)
@@ -809,10 +819,10 @@ do j=1, NA
         bs_pimp3_nc(j) = -1.e-6*rdum(1)/BTOR
         bs_timp3_nc(j) = -1.e-6*rdum(2)/BTOR
 ! Poloidal flow velociry on outside midplane (impZ3 particles)
-        polflow_imp3_nc(j) = ( utheta_s(1, 1, k_impZ3) + &
-                               utheta_s(1, 2, k_impZ3) + &
-                               utheta_s(1, 3, k_impZ3) ) * &
-                               BTOR/(1.0 + p_eps)/p_fhat
+        polflow_imp3_nc(j) = eps_shear_fac * ( &
+            utheta_s(1, 1, k_impZ3) + &
+            utheta_s(1, 2, k_impZ3) + &
+            utheta_s(1, 3, k_impZ3) )
     endif
 
 !--- Miscellaneous Parameters ---

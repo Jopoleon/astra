@@ -285,7 +285,7 @@ radial_loop: do jr=1, chunk
 ! Transport coefficients
 
     ion_eflux = SUM(energy_flux(2: n_ions+1, 1))
-    chii(jr) = ion_eflux        /(1e-4 + abs(neo_dlntdr_in(2)))
+    chii(jr) = ion_eflux/(1e-4 + abs(neo_dlntdr_in(2)))/neo_temp_in(2)/SUM(neo_dens_in(2:n_ions+1))
     chie(jr) = energy_flux(1, 1)/(1e-4 + abs(neo_dlntdr_in(1)))
     elec_pflux(jr) = particle_flux(1, 1)/drhodr(jr)         ! particle flux
     vippd(jr)  = vpflux(1)
