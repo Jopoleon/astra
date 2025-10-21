@@ -1,5 +1,5 @@
 !---------------------------------------------------------------------
-subroutine RUNEQ(GN, HN, GO, HO, YO, N_in, W_in, V_in, unit_coeff, G11, A_in, B_in, R_in, Src_y_in, Src_in, &
+subroutine RUNEQ(G_new, H_new, G_old, H_old, y_old, N_in, W_in, V_in, unit_coeff, G11, A_in, B_in, R_in, Src_y_in, Src_in, &
     rbdot, bbdot, Ngridb, Ngrid, dx, dt, x_in, imethod, bctype, bc_values, y_out, Q_out, adcmp_term, mphit)
 !---------------------------------------------------------------------
 ! WARNING: at the moment Qb is explicit, no option for QNNB, QETB, QITB is given at the moment!
@@ -54,26 +54,26 @@ implicit none
 
 integer, intent(in) :: Ngrid, imethod, Ngridb, bctype
 double precision, intent(in) :: dx, dt, rbdot, bbdot, unit_coeff, bc_values(5)
-double precision, intent(in), dimension(Ngrid) :: GN, HN, GO, HO, &
-   YO, V_in, G11, A_in, B_in, R_in, Src_y_in, Src_in, mphit, x_in, N_in, W_in
+double precision, intent(in), dimension(Ngrid) :: G_new, H_new, G_old, H_old, &
+   y_old, V_in, G11, A_in, B_in, R_in, Src_y_in, Src_in, mphit, x_in, N_in, W_in
 double precision, intent(out), dimension(Ngrid) :: y_out, Q_out, adcmp_term
 
 integer :: j
 double precision :: theta
 double precision, dimension(Ngrid) :: x_b, Gmid, Hmid, NN, NO, &
-    Rsource, Rsource2, Pdot_1, Pdot_2, Src_new, ytmp
+    Rsource, Pdot_1, Pdot_2, Src_new, ytmp
 double precision, dimension(Ngridb) :: Gmix, AA, BB, CC, RR, g_v, vta, gsdt, gsydt, xi, fxi, gxi
 
-Gmid = 0.5*(GO + GN)
-Hmid = 0.5*(HO + HN)
+Gmid = 0.5*(G_old + G_new)
+Hmid = 0.5*(H_old + H_new)
 x_b = x_in + 0.5*dx
 
 ! Compute source: Rsource = - 1/V d/dx (unit_coeff*G11*R), Rsource is on main grid
-Rsource = unit_coeff*G11*R_in
-call DERIV(x_b, x_in(Ngrid), 2, Rsource, Rsource2, 1, Ngrid, 0)
+! Note that R_in (residual term) is always 0 except for the momentum equation
+call DERIV(x_b, x_in(Ngrid), 2, unit_coeff*G11*R_in, Rsource, 1, Ngrid, 0)
 
 if (sum(mphit) == 0.) then
-    ytmp = YO
+    ytmp = y_old
 else
     ytmp = mphit
 endif
@@ -83,8 +83,8 @@ call GRADIENT(x_in, Gmid*Hmid*ytmp, Pdot_2, Ngrid)
 Pdot_1 = Pdot_1/W_in
 Pdot_2 = Pdot_2*x_in/Gmid
 
-adcmp_term = bbdot*Pdot_1 + (rbdot - bbdot)*Pdot_2  ! output, used only for FP
-Src_new = Src_in - Rsource2/V_in + adcmp_term
+adcmp_term = bbdot*Pdot_1 + (rbdot - bbdot)*Pdot_2  ! output, used only for FP ans Src_new
+Src_new = Src_in - Rsource/V_in + adcmp_term
 
 ! Default is imethod=22 (INUME1-4 in const.f90)
 SELECT CASE(imethod)
@@ -98,6 +98,78 @@ END SELECT
 do j=1, Ngridb
     xi(j) = dx*B_in(j)/max(A_in(j), 1.E-16)
 enddo
+call calc_fxi(imethod, Ngridb, xi, fxi)
+gxi = fxi - xi
+
+! 1/G d/dt (N*y) + 1/V d/dx (unit_coeff*G11*(-A/dx*(fxi, gxi, ntilde))) = S*y + P
+
+NN = G_new*H_new
+NO = G_old*H_old
+Gmix = G_new(1: Ngridb)*theta + G_old(1: Ngridb)*(1. - theta)
+g_v = dt/dx**2 * Gmix/V_in(1: Ngridb)
+vta = unit_coeff*G11(1: Ngridb)*A_in(1: Ngridb)
+gsdt  = dt*Gmix*Src_new(1: Ngridb)
+gsydt = dt*Gmix*Src_y_in(1: Ngridb)
+
+AA = -theta*g_v*vta*fxi
+CC(1) = 0.
+CC(2: Ngridb) = -g_v(2: Ngridb)*vta(1: Ngridb-1)*gxi(1: Ngridb-1)
+
+BB(1) = NN(1) + theta*(-gsydt(1) + g_v(1)*vta(1)*gxi(1))
+RR(1) = NO(1)*y_old(1) + gsdt(1) + (1. - theta) * ( gsydt(1)*y_old(1) + g_v(1)*vta(1)*(fxi(1)*y_old(2) - gxi(1)*y_old(1)) )
+do j=2, Ngridb-1
+    BB(j) = NN(j) + theta * ( -gsydt(j) + g_v(j)*(vta(j)*gxi(j) + vta(j-1)*fxi(j-1)) )
+    RR(j) = NO(j)*y_old(j) + gsdt(j) + (1. - theta) * (  gsydt(j)*y_old(j) + g_v(j) * &
+        ( vta(j) * (fxi(j)*y_old(j+1) - gxi(j)*y_old(j)) - vta(j-1) * (fxi(j-1)*y_old(j) - gxi(j-1)*y_old(j-1)) )  )
+enddo
+
+SELECT CASE(bctype)
+CASE(1)
+    AA(Ngridb) = y_old(Ngridb)
+CASE(3)
+    BB(Ngridb) = bc_values(3)
+    CC(Ngridb) = bc_values(4)
+    RR(Ngridb) = bc_values(5)
+CASE(2, 4)
+    BB(Ngridb) = NN(Ngridb) + theta * ( -gsydt(Ngridb) + g_v(Ngridb)*vta(Ngridb-1)*fxi(Ngridb-1) )
+    if (bctype == 4) BB(Ngridb) = BB(Ngridb) + theta*g_v(Ngridb)*bc_values(2)*unit_coeff*dx
+    RR(Ngridb) = NO(Ngridb)*y_old(Ngridb) + gsydt(Ngridb) + (1. - theta) * &
+        (  gsydt(Ngridb)*y_old(Ngridb) - g_v(Ngridb) * &
+        (vta(Ngridb-1) * (fxi(Ngridb-1)*y_old(Ngridb) - gxi(Ngridb-1)*y_old(Ngridb-1)) )  )
+    if (bctype == 2) RR(Ngridb) = RR(Ngridb) + g_v(Ngridb)*bc_values(1)*unit_coeff*dx
+END SELECT
+
+! Tridiagonal solver
+call TRIDIAG(Ngridb, bctype, AA, BB, CC, RR, y_out(1: Ngridb))
+
+! Compute flux from solution (flux is on shifted grid)
+do j=1, Ngridb-1
+    Q_out(j) = G11(j)*(-A_in(j)/dx * (fxi(j)*y_out(j+1) - gxi(j)*y_out(j)) + R_in(j))
+enddo
+
+SELECT CASE(bctype)
+CASE(1, 3)
+    Q_out(Ngridb) = EXTRAP(x_in(1: Ngridb-1), Q_out(1: Ngridb-1), x_in(Ngridb), Ngridb-1, 2, .false.)
+CASE(2)
+    Q_out(Ngridb) = bc_values(1)
+CASE(4)
+    Q_out(Ngridb) = bc_values(2)*y_out(Ngridb)
+END SELECT
+
+return
+end subroutine RUNEQ
+
+!---------------------------------------------------------------------
+subroutine calc_fxi(imethod, NgridB, xi, fxi)
+
+implicit none
+
+integer, intent(in) :: imethod, Ngridb
+double precision, intent(in), dimension(Ngridb) :: xi
+double precision, intent(out), dimension(Ngridb) :: fxi
+
+integer :: j
+
 fxi = 0.
 
 SELECT CASE(imethod)
@@ -123,66 +195,10 @@ CASE(23, 33)
             fxi(j) = xi(j)/(1. - exp(-xi(j)))
         endif
     enddo
-END SELECT
-gxi = fxi - xi
-
-! 1/G d/dt (N*y) + 1/V d/dx (unit_coeff*G11*(-A/dx*(fxi, gxi, ntilde))) = S*y + P
-
-NN = GN*HN
-NO = GO*HO
-Gmix = GN(1: Ngridb)*theta + GO(1: Ngridb)*(1. - theta)
-g_v = dt/dx**2 * Gmix/V_in(1: Ngridb)
-vta = unit_coeff*G11(1: Ngridb)*A_in(1: Ngridb)
-gsdt  = dt*Gmix*Src_new(1: Ngridb)
-gsydt = dt*Gmix*Src_y_in(1: Ngridb)
-
-AA = -theta*g_v*vta*fxi
-CC(1) = 0.
-CC(2: Ngridb) = -g_v(2: Ngridb)*vta(1: Ngridb-1)*gxi(1: Ngridb-1)
-
-BB(1) = NN(1) + theta*(-gsydt(1) + g_v(1)*vta(1)*gxi(1))
-RR(1) = NO(1)*YO(1) + gsdt(1) + (1. - theta) * ( gsydt(1)*YO(1) + g_v(1)*vta(1)*(fxi(1)*YO(2) - gxi(1)*YO(1)) )
-do j=2, Ngridb-1
-    BB(j) = NN(j) + theta * ( -gsydt(j) + g_v(j)*(vta(j)*gxi(j) + vta(j-1)*fxi(j-1)) )
-    RR(j) = NO(j)*YO(j) + gsdt(j) + (1. - theta) * (  gsydt(j)*YO(j) + g_v(j) * &
-        ( vta(j) * (fxi(j)*YO(j+1) - gxi(j)*YO(j)) - vta(j-1) * (fxi(j-1)*YO(j) - gxi(j-1)*YO(j-1)) )  )
-enddo
-
-SELECT CASE(bctype)
-CASE(1)
-    AA(Ngridb) = YO(Ngridb)
-CASE(3)
-    BB(Ngridb) = bc_values(3)
-    CC(Ngridb) = bc_values(4)
-    RR(Ngridb) = bc_values(5)
-CASE(2, 4)
-    BB(Ngridb) = NN(Ngridb) + theta * ( -gsydt(Ngridb) + g_v(Ngridb)*vta(Ngridb-1)*fxi(Ngridb-1) )
-    if (bctype == 4) BB(Ngridb) = BB(Ngridb) + theta*g_v(Ngridb)*bc_values(2)*unit_coeff*dx
-    RR(Ngridb) = NO(Ngridb)*YO(Ngridb) + gsydt(Ngridb) + (1. - theta) * &
-        (  gsydt(Ngridb)*YO(Ngridb) - g_v(Ngridb) * &
-        (vta(Ngridb-1) * (fxi(Ngridb-1)*YO(Ngridb) - gxi(Ngridb-1)*YO(Ngridb-1)) )  )
-    if (bctype == 2) RR(Ngridb) = RR(Ngridb) + g_v(Ngridb)*bc_values(1)*unit_coeff*dx
-END SELECT
-
-! Tridiagonal solver
-call TRIDIAG(Ngridb, bctype, AA, BB, CC, RR, y_out(1: Ngridb))
-
-! Compute flux from solution (flux is on shifted grid)
-do j=1, Ngridb-1
-    Q_out(j) = G11(j)*(-A_in(j)/dx * (fxi(j)*y_out(j+1) - gxi(j)*y_out(j)) + R_in(j))
-enddo
-
-SELECT CASE(bctype)
-CASE(1, 3)
-    Q_out(Ngridb) = EXTRAP(x_in(1: Ngridb-1), Q_out(1: Ngridb-1), x_in(Ngridb), Ngridb-1, 2, .false.)
-CASE(2)
-    Q_out(Ngridb) = bc_values(1)
-CASE(4)
-    Q_out(Ngridb) = bc_values(2)*y_out(Ngridb)
-END SELECT
+ END SELECT
 
 return
-end subroutine RUNEQ
+end subroutine calc_fxi
 
 !---------------------------------------------------------------------
 subroutine TRIDIAG(Ngridb, bctype, AA_in, BB_in, CC_in, RR_in, y_out)
@@ -263,9 +279,9 @@ return
 end function GETPEI
 
 !---------------------------------------------------------------------
-subroutine RUNEQ_TETI(GN, H1N, H2N, GO, H1O, H2O, & 
-    Y1O, Y2O, N1, N2, W1, W2, V, unit_coeff, G11, A1_in, A2_in, B1_in, B2_in, R1, R2, &
-    S1_in, S2_in, P1, P2, T12, T21, rbdot, bbdot, Ngridb, Ngrid, dx, dt, &
+subroutine RUNEQ_TETI(G_new, H1_new, H2_new, G_old, H1_old, H2_old, & 
+    Y1_old, Y2_old, N1, N2, W1, W2, V, unit_coeff, G11, A1_in, A2_in, B1_in, B2_in, &
+    S1_in, S2_in, P1, P2, rbdot, bbdot, Ngridb, Ngrid, dx, dt, &
     x_in, imethod, y1, y2, Q1_out, Q2_out)
 
 use numerical_tools, only: deriv, extrap, gradient
@@ -274,18 +290,17 @@ implicit none
 
 integer, intent(in) :: Ngrid, imethod, Ngridb
 double precision, intent(in) :: rbdot, bbdot, dx, dt, unit_coeff
-double precision, intent(in), dimension(Ngrid) :: GN, H1N, H2N, GO, &
-    H1O, H2O, Y1O, Y2O, N1, N2, W1, W2, V, G11, &
-    A1_in, A2_in, B1_in, B2_in, &
-    R1, R2, S1_in, S2_in, P1, P2, x_in
-double precision, intent(out)  , dimension(Ngrid) :: T12, T21, Q1_out, Q2_out
+double precision, intent(in), dimension(Ngrid) :: G_new, H1_new, H2_new, G_old, &
+    H1_old, H2_old, Y1_old, Y2_old, N1, N2, W1, W2, V, G11, &
+    A1_in, A2_in, B1_in, B2_in, S1_in, S2_in, P1, P2, x_in
+double precision, intent(out)  , dimension(Ngrid) :: Q1_out, Q2_out
 double precision, intent(inout), dimension(Ngrid) :: y1, y2
 
 integer :: j
 double precision :: theta, f_bound1, f_bound2
 double precision, dimension(Ngrid) :: x_b, S1_new, P1_new, S2_new, P2_new, &
-    Vtilde, Rsource1, Rsource2, Rsource3, Rsource4, N1N, N1O, N2N, N2O, &
-    Pdot_11, Pdot_12, Pdot_21, Pdot_22
+    Vtilde, Rsource1, Rsource2, N1_new, N1_old, N2_new, N2_old, &
+    Pdot_11, Pdot_12, Pdot_21, Pdot_22, T12
 double precision, dimension(Ngridb) :: A1, A2, xi1, fxi1, gxi1, xi2, fxi2, gxi2, &
     Gmix, g_v, AA1, BB1, CC1, RR1, TT1, AA2, BB2, CC2, RR2, TT2
 double precision, external :: GETPEI
@@ -310,131 +325,81 @@ END SELECT
 
 Vtilde = unit_coeff*G11
 
-! Compute source: Rsource = - 1/V d/dx (unit_coeff*G11*R), Rsource is on main grid
-Rsource1 = Vtilde*R1
-Rsource2 = Vtilde*R2
-
-call DERIV(x_b, x_in(Ngrid), 2, Rsource1, Rsource3, 1, Ngrid, 0)
-call DERIV(x_b, x_in(Ngrid), 2, Rsource2, Rsource4, 1, Ngrid, 0)
-
-call GRADIENT(x_in, unit_coeff*N1*x_in*Y1O, Pdot_11, Ngrid)
-call GRADIENT(x_in, unit_coeff*N2*x_in*Y2O, Pdot_12, Ngrid)
-call GRADIENT(x_in, GN*H1N*Y1O, Pdot_21, Ngrid)
-call GRADIENT(x_in, GN*H2N*Y2O, Pdot_22, Ngrid)
+call GRADIENT(x_in, unit_coeff*N1*x_in*Y1_old, Pdot_11, Ngrid)
+call GRADIENT(x_in, unit_coeff*N2*x_in*Y2_old, Pdot_12, Ngrid)
+call GRADIENT(x_in, G_new*H1_new*Y1_old, Pdot_21, Ngrid)
+call GRADIENT(x_in, G_new*H2_new*Y2_old, Pdot_22, Ngrid)
 Pdot_11 = Pdot_11/W1
 Pdot_12 = Pdot_12/W2
-Pdot_21 = Pdot_21*x_in/GN
-Pdot_22 = Pdot_22*x_in/GN
+Pdot_21 = Pdot_21*x_in/G_new
+Pdot_22 = Pdot_22*x_in/G_new
 
-N1N = GN*H1N
-N2N = GN*H2N
-N1O = GO*H1O
-N2O = GO*H2O
+N1_new = G_new*H1_new
+N2_new = G_new*H2_new
+N1_old = G_old*H1_old
+N2_old = G_old*H2_old
 
 do j=1, Ngrid
     T12(j) = 625.*GETPEI(j)
 enddo
 
-T21 = T12
 S1_new = S1_in - T12
-S2_new = S2_in - T21
-! P = P + bdot/W*d/dx (unit_coeff*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)   for explicit
-P1_new = P1 - Rsource3/V + bbdot*Pdot_11 + (rbdot - bbdot)*Pdot_21
-! P = P + bdot/W*d/dx (unit_coeff*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)   for explicit
-P2_new = P2 - Rsource4/V + bbdot*Pdot_12 + (rbdot - bbdot)*Pdot_22
+S2_new = S2_in - T12
+P1_new = P1 - Rsource1/V + bbdot*Pdot_11 + (rbdot - bbdot)*Pdot_21
+P2_new = P2 - Rsource2/V + bbdot*Pdot_12 + (rbdot - bbdot)*Pdot_22
 
-f_bound1 = Y1O(Ngridb)
-f_bound2 = Y2O(Ngridb)
+f_bound1 = Y1_old(Ngridb)
+f_bound2 = Y2_old(Ngridb)
 
 ! Define cd, or power law
 xi1 = dx*B1_in(1: Ngridb)/A1
 xi2 = dx*B2_in(1: Ngridb)/A2
-
-SELECT CASE(imethod)
-CASE(11, 21, 31)
-    fxi1 = 1. + 0.5*xi1
-    fxi2 = 1. + 0.5*xi2
-CASE(12, 22, 32)
-    do j=1, Ngridb
-        if (xi1(j) < -10.) then
-            fxi1(j) = 0
-        else if (xi1(j) < 0) then
-            fxi1(j) = (1. + 0.1*xi1(j))**5
-        else if (xi1(j) <= 10) then
-            fxi1(j) = (1. - 0.1*xi1(j))**5 + xi1(j)
-        else
-            fxi1(j) = xi1(j)
-        endif
-
-        if (xi2(j) < -10.) then
-            fxi2(j) = 0
-        else if (xi2(j) < 0) then
-            fxi2(j) = (1. + 0.1*xi2(j))**5.0
-        else if (xi2(j) <= 10) then
-            fxi2(j) = (1. - 0.1*xi2(j))**5.0 + xi2(j)
-        else
-            fxi2(j) = xi2(j)
-        endif
-    enddo
-CASE(13, 23, 33)
-    do j=1, Ngridb
-        if (xi1(j) == 0.) then
-            fxi1(j) = 1.
-        else
-            fxi1(j) = xi1(j)/(1. - exp(-xi1(j)))
-        endif
-        if (xi2(j) == 0.) then
-            fxi2(j) = 1.
-        else
-            fxi2(j) = xi2(j)/(1. - exp(-xi2(j)))
-        endif
-    enddo
-END SELECT
+call calc_fxi(imethod, Ngridb, xi1, fxi1)
+call calc_fxi(imethod, Ngridb, xi2, fxi2)
 gxi1 = fxi1 - xi1
 gxi2 = fxi2 - xi2
 
-Gmix = GN(1: Ngridb)*theta + GO(1: Ngridb) * (1. - theta)
+Gmix = G_new(1: Ngridb)*theta + G_old(1: Ngridb) * (1. - theta)
 g_v = dt/dx**2 * Gmix/V(1: Ngridb)
 AA1 = -g_v*Vtilde(1: Ngridb)*A1(1: Ngridb)*fxi1*theta
 AA2 = -g_v*Vtilde(1: Ngridb)*A2(1: Ngridb)*fxi2*theta
 TT1 = -theta*dt*Gmix*T12(1: Ngridb)
-TT2 = -theta*dt*Gmix*T21(1: Ngridb)
 CC1(1) = 0.
 CC2(1) = 0.
 CC1(2: Ngridb) = -g_v(2: Ngridb)*Vtilde(1: Ngridb-1)*A1(1: Ngridb-1)*gxi1(1: Ngridb-1)*theta
 CC2(2: Ngridb) = -g_v(2: Ngridb)*Vtilde(1: Ngridb-1)*A2(1: Ngridb-1)*gxi2(1: Ngridb-1)*theta
 
-BB1(1) = N1N(1) + theta * ( -dt*Gmix(1)*S1_new(1) + g_v(1)*Vtilde(1)*A1(1)*gxi1(1) )
-BB2(1) = N2N(1) + theta * ( -dt*Gmix(1)*S2_new(1) + g_v(1)*Vtilde(1)*A2(1)*gxi2(1) )
+BB1(1) = N1_new(1) + theta * ( -dt*Gmix(1)*S1_new(1) + g_v(1)*Vtilde(1)*A1(1)*gxi1(1) )
+BB2(1) = N2_new(1) + theta * ( -dt*Gmix(1)*S2_new(1) + g_v(1)*Vtilde(1)*A2(1)*gxi2(1) )
 
-RR1(1) = N1O(1)*Y1O(1) + Gmix(1)*P1(1)*dt + (1 - theta) * &
-    ( dt*Gmix(1)*S1_new(1)*Y1O(1) + g_v(1)*Vtilde(1)*A1(1) * (fxi1(1)*Y1O(2) - gxi1(1)*Y1O(1)) )
-RR2(1) = N2O(1)*Y2O(1) + Gmix(1)*P2(1)*dt + (1 - theta) * &
-    ( dt*Gmix(1)*S2_new(1)*Y2O(1) + g_v(1)*Vtilde(1)*A2(1) * (fxi2(1)*Y2O(2) - gxi2(1)*Y2O(1)) )
+RR1(1) = N1_old(1)*Y1_old(1) + Gmix(1)*P1(1)*dt + (1 - theta) * &
+    ( dt*Gmix(1)*S1_new(1)*Y1_old(1) + g_v(1)*Vtilde(1)*A1(1) * (fxi1(1)*Y1_old(2) - gxi1(1)*Y1_old(1)) )
+RR2(1) = N2_old(1)*Y2_old(1) + Gmix(1)*P2(1)*dt + (1 - theta) * &
+    ( dt*Gmix(1)*S2_new(1)*Y2_old(1) + g_v(1)*Vtilde(1)*A2(1) * (fxi2(1)*Y2_old(2) - gxi2(1)*Y2_old(1)) )
 
 do j=2, Ngridb-1
-    BB1(j) = N1N(j) + theta * (  -dt*Gmix(j)*S1_new(j) + g_v(j) * &
+    BB1(j) = N1_new(j) + theta * (  -dt*Gmix(j)*S1_new(j) + g_v(j) * &
         ( Vtilde(j)*A1(j)*gxi1(j) + Vtilde(j-1)*A1(j-1)*fxi1(j-1) )  )
-    BB2(j) = N2N(j) + theta * ( -dt*Gmix(j)*S2_new(j) + g_v(j) * &
+    BB2(j) = N2_new(j) + theta * ( -dt*Gmix(j)*S2_new(j) + g_v(j) * &
         (Vtilde(j)*A2(j)*gxi2(j) + Vtilde(j-1)*A2(j-1)*fxi2(j-1)) )
-    RR1(j) = N1O(j)*Y1O(j) + Gmix(j)*P1(j)*dt + (1 - theta) * &
-        (  dt*Gmix(j)*S1_new(j)*Y1O(j) + g_v(j) * &
-        (Vtilde(j)*A1(j) * (fxi1(j)*Y1O(j+1) - gxi1(j)*Y1O(j)) - &
-        Vtilde(j-1)*A1(j-1) * (fxi1(j-1)*Y1O(j) - gxi1(j-1)*Y1O(j-1)))  )
-    RR2(j) = N2O(j)*Y2O(j) + Gmix(j)*P2(j)*dt + (1 - theta) * &
-        (  dt*Gmix(j)*S2_new(j)*Y2O(j) + g_v(j) * &
-        (Vtilde(j)*A2(j) * (fxi2(j)*Y2O(j+1) - gxi2(j)  *Y2O(j)) - &
-         Vtilde(j-1)*A2(j-1) * (fxi2(j-1)*Y2O(j) - gxi2(j-1)*Y2O(j-1)))  )
+    RR1(j) = N1_old(j)*Y1_old(j) + Gmix(j)*P1(j)*dt + (1 - theta) * &
+        (  dt*Gmix(j)*S1_new(j)*Y1_old(j) + g_v(j) * &
+        (Vtilde(j)*A1(j) * (fxi1(j)*Y1_old(j+1) - gxi1(j)*Y1_old(j)) - &
+        Vtilde(j-1)*A1(j-1) * (fxi1(j-1)*Y1_old(j) - gxi1(j-1)*Y1_old(j-1)))  )
+    RR2(j) = N2_old(j)*Y2_old(j) + Gmix(j)*P2(j)*dt + (1 - theta) * &
+        (  dt*Gmix(j)*S2_new(j)*Y2_old(j) + g_v(j) * &
+        (Vtilde(j)*A2(j) * (fxi2(j)*Y2_old(j+1) - gxi2(j)  *Y2_old(j)) - &
+         Vtilde(j-1)*A2(j-1) * (fxi2(j-1)*Y2_old(j) - gxi2(j-1)*Y2_old(j-1)))  )
 enddo
 
 ! Main call to tridiagonal solver
 call TRIDIAG_TETI(AA1, BB1, CC1, RR1, y1, TT1, Ngridb, &
-    f_bound1, AA2, BB2, CC2, RR2, TT2, y2, f_bound2)
+    f_bound1, AA2, BB2, CC2, RR2, TT1, y2, f_bound2)
 
 ! Compute flux from solution, flux is on shifted grid
 do j=1, Ngridb-1
-    Q1_out(j) = G11(j)*(-A1(j)/dx*(fxi1(j)*y1(j+1) - gxi1(j)*y1(j)) + R1(j))
-    Q2_out(j) = G11(j)*(-A2(j)/dx*(fxi2(j)*y2(j+1) - gxi2(j)*y2(j)) + R2(j))
+    Q1_out(j) = G11(j)*(-A1(j)/dx*(fxi1(j)*y1(j+1) - gxi1(j)*y1(j)))
+    Q2_out(j) = G11(j)*(-A2(j)/dx*(fxi2(j)*y2(j+1) - gxi2(j)*y2(j)))
 enddo
 Q1_out(Ngridb) = EXTRAP(x_in(1: Ngridb-1), Q1_out(1: Ngridb-1), x_in(Ngridb), Ngridb-1, 1, .false.)
 Q2_out(Ngridb) = EXTRAP(x_in(1: Ngridb-1), Q2_out(1: Ngridb-1), x_in(Ngridb), Ngridb-1, 1, .false.)

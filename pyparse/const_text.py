@@ -644,7 +644,6 @@ do j=1, NA1
 YWGN(j) = VR(j)**(5./3.)
 YWGO(j) = VRO(j)**(5./3.)
 unit_coeff = 625.
-YWR(j) = 0.
 YVR(j) = VR(j)
 YWW1B(j) = VR(j)**(5./3.)
 YWN1B(j) = 3./2.*NE(j)*YWW1B(j)/unit_coeff
@@ -656,7 +655,7 @@ imethod = nint(INUME2)
 
     runeq = \
 '''NA1I = ND1
-call RUNEQ_TETI(YWGN(1:NA1), 3./2.*NE(1:NA1), 3./2.*NI(1:NA1), YWGO(1:NA1), 3./2.*NEO(1:NA1), 3./2.*NIO(1:NA1), TEO(1:NA1), TIO(1:NA1), YWN1B(1:NA1), YWN2B(1:NA1), YWW1B(1:NA1), YWW2B(1:NA1), YVR(1:NA1), unit_coeff, G11(1:NA1)/unit_coeff, YWA1(1:NA1), YWA2(1:NA1), YWB1(1:NA1), YWB2(1:NA1), YWR(1:NA1), YWR(1:NA1), unit_coeff*PET(1:NA1), unit_coeff*PIT(1:NA1), unit_coeff*PETOT(1:NA1), unit_coeff*PITOT(1:NA1), 0.0*YWR(1:NA1), 0.0*YWR(1:NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, RHO(1:NA1), imethod, TE(1:NA1), TI(1:NA1), QE(1:NA1), QI(1:NA1))
+call RUNEQ_TETI(YWGN(1:NA1), 3./2.*NE(1:NA1), 3./2.*NI(1:NA1), YWGO(1:NA1), 3./2.*NEO(1:NA1), 3./2.*NIO(1:NA1), TEO(1:NA1), TIO(1:NA1), YWN1B(1:NA1), YWN2B(1:NA1), YWW1B(1:NA1), YWW2B(1:NA1), YVR(1:NA1), unit_coeff, G11(1:NA1)/unit_coeff, YWA1(1:NA1), YWA2(1:NA1), YWB1(1:NA1), YWB2(1:NA1), unit_coeff*PET(1:NA1), unit_coeff*PIT(1:NA1), unit_coeff*PETOT(1:NA1), unit_coeff*PITOT(1:NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, RHO(1:NA1), imethod, TE(1:NA1), TI(1:NA1), QE(1:NA1), QI(1:NA1))
 if (ND1 < NA1) then
 do j=ND1+1, NA1
 QE(j) = QE(ND1)
