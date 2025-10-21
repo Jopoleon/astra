@@ -749,45 +749,6 @@ contains
     end function EXTRAPOLATE
 
 !---------------------------------------------------------------------
-    subroutine GRID2GRID(grid_type, x_input, y_input, y_output, nagrid)
-! computes quantity on shifted grid from main grid
-
-    integer, intent(in) :: nagrid, grid_type
-    double precision, intent(in) , dimension(nagrid) :: x_input, y_input
-    double precision, intent(out), dimension(nagrid) :: y_output
-
-    if (grid_type == 1) then
-        call MAIN2SHIFT(y_input, y_output, nagrid)
-    endif
-
-    if (grid_type == 2) then
-        call SHIFT2MAIN(x_input, y_input, y_output, nagrid)
-    endif
-
-    return
-    end subroutine GRID2GRID
-
-!---------------------------------------------------------------------
-    subroutine MAIN2SHIFT(y_input, y_output, nagrid)
-! computes quantity on shifted grid from main grid
-
-    integer, intent(in) :: nagrid
-    double precision, intent(in) , dimension(nagrid) :: y_input
-    double precision, intent(out), dimension(nagrid) :: y_output
-
-    integer :: j
-
-! Normalized grid, GRP style
-    do j=1, nagrid-1
-        y_output(j) = 0.5*(y_input(j+1) + y_input(j))
-    enddo
-
-    y_output(nagrid) = 0.5*(3.0*y_input(nagrid) - y_input(nagrid-1))
-
-    return
-    end subroutine MAIN2SHIFT
-
-!---------------------------------------------------------------------
     subroutine SHIFT2MAIN(x_input, y_input, y_output, nagrid)
 ! computes quantity on main grid from shifted grid
 
