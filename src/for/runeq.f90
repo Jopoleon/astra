@@ -59,7 +59,7 @@ double precision, intent(in), dimension(Ngrid) :: G_new, H_new, G_old, H_old, &
 double precision, intent(out), dimension(Ngrid) :: y_out, Q_out, adcmp_term
 
 integer :: j
-double precision :: theta
+double precision :: theta, bc_val(3)
 double precision, dimension(Ngrid) :: x_b, Gmid, Hmid, NN, NO, &
     Rsource, Pdot_1, Pdot_2, Src_new, ytmp
 double precision, dimension(Ngridb) :: Gmix, AA, BB, CC, RR, g_v, vta, gsdt, gsydt, xi, fxi, gxi
@@ -125,22 +125,21 @@ enddo
 
 SELECT CASE(bctype)
 CASE(1)
-    AA(Ngridb) = y_old(Ngridb)
+    bc_val(1) = y_old(Ngridb)
 CASE(3)
-    BB(Ngridb) = bc_values(3)
-    CC(Ngridb) = bc_values(4)
-    RR(Ngridb) = bc_values(5)
+    bc_val = bc_values(3: 5)
 CASE(2, 4)
-    BB(Ngridb) = NN(Ngridb) + theta * ( -gsydt(Ngridb) + g_v(Ngridb)*vta(Ngridb-1)*fxi(Ngridb-1) )
-    if (bctype == 4) BB(Ngridb) = BB(Ngridb) + theta*g_v(Ngridb)*bc_values(2)*unit_coeff*dx
-    RR(Ngridb) = NO(Ngridb)*y_old(Ngridb) + gsydt(Ngridb) + (1. - theta) * &
+    bc_val(1) = NN(Ngridb) + theta * ( -gsydt(Ngridb) + g_v(Ngridb)*vta(Ngridb-1)*fxi(Ngridb-1) )
+    if (bctype == 4) bc_val(1) = bc_val(1) + theta*g_v(Ngridb)*bc_values(2)*unit_coeff*dx
+    bc_val(2) = CC(Ngridb)
+    bc_val(3) = NO(Ngridb)*y_old(Ngridb) + gsydt(Ngridb) + (1. - theta) * &
         (  gsydt(Ngridb)*y_old(Ngridb) - g_v(Ngridb) * &
         (vta(Ngridb-1) * (fxi(Ngridb-1)*y_old(Ngridb) - gxi(Ngridb-1)*y_old(Ngridb-1)) )  )
-    if (bctype == 2) RR(Ngridb) = RR(Ngridb) + g_v(Ngridb)*bc_values(1)*unit_coeff*dx
+    if (bctype == 2) bc_val(3) = bc_val(3) + g_v(Ngridb)*bc_values(1)*unit_coeff*dx
 END SELECT
 
 ! Tridiagonal solver
-call TRIDIAG(Ngridb, bctype, AA, BB, CC, RR, y_out(1: Ngridb))
+call TRIDIAG(Ngridb, bctype, bc_val, AA, BB, CC, RR, y_out(1: Ngridb))
 
 ! Compute flux from solution (flux is on shifted grid)
 do j=1, Ngridb-1
@@ -201,7 +200,7 @@ return
 end subroutine calc_fxi
 
 !---------------------------------------------------------------------
-subroutine TRIDIAG(Ngridb, bctype, AA_in, BB_in, CC_in, RR_in, y_out)
+subroutine TRIDIAG(Ngridb, bctype, bc_val, AA_in, BB_in, CC_in, RR_in, y_out)
 !---------------------------------------------------------------------
 ! Tridiagonal solver. It solves the system:
 !
@@ -211,7 +210,8 @@ subroutine TRIDIAG(Ngridb, bctype, AA_in, BB_in, CC_in, RR_in, y_out)
 implicit none
 
 integer, intent(in) :: Ngridb, bctype
-double precision, intent(in) , dimension(Ngridb) :: AA_in, BB_in, CC_in, RR_in
+double precision, intent(in), dimension(3) :: bc_val
+double precision, intent(in), dimension(Ngridb) :: AA_in, BB_in, CC_in, RR_in
 double precision, intent(out), dimension(Ngridb) :: y_out
 
 integer :: j
@@ -228,9 +228,9 @@ enddo
 ! This has to be corrected later on... 
 
 if (bctype == 1) then
-    y_out(Ngridb) = AA_in(Ngridb)
+    y_out(Ngridb) = bc_val(1)
 else
-    y_out(Ngridb) = (RR_in(Ngridb) + CC_in(Ngridb)*beta(Ngridb-1)/alpha(Ngridb-1))/(BB_in(Ngridb) + CC_in(Ngridb)/alpha(Ngridb-1))
+    y_out(Ngridb) = (bc_val(3) + bc_val(2)*beta(Ngridb-1)/alpha(Ngridb-1))/(bc_val(1) + bc_val(2)/alpha(Ngridb-1))
 endif
 do j=Ngridb-1, 1, -1
     y_out(j) = (y_out(j+1) - beta(j))/alpha(j)
@@ -298,10 +298,10 @@ double precision, intent(inout), dimension(Ngrid) :: y1, y2
 
 integer :: j
 double precision :: theta, f_bound1, f_bound2
-double precision, dimension(Ngrid) :: x_b, S1_new, P1_new, S2_new, P2_new, &
-    Vtilde, Rsource1, Rsource2, N1_new, N1_old, N2_new, N2_old, &
-    Pdot_11, Pdot_12, Pdot_21, Pdot_22, T12
-double precision, dimension(Ngridb) :: A1, A2, xi1, fxi1, gxi1, xi2, fxi2, gxi2, &
+double precision, dimension(Ngrid) :: x_b, &
+    Vtilde, N1_new, N1_old, N2_new, N2_old
+double precision, dimension(Ngridb) :: A1, A2, T12, &
+    S1_new, S2_new, xi1, fxi1, gxi1, xi2, fxi2, gxi2, &
     Gmix, g_v, AA1, BB1, CC1, RR1, TT1, AA2, BB2, CC2, RR2, TT2
 double precision, external :: GETPEI
 
@@ -318,35 +318,19 @@ CASE(31: 33)
     theta = 0.5
 END SELECT
 
-! Map unit_coeff, G, H on tildes
-! So B = B + 1/G11*(bdot*V/W*N*x+(rdot-bdot)*H/M*x)                           for implicit
-! So S = S - bdot*M*N*x*d/dx(V/W) - (rdot-bdot)/V*G*H*d/dx (x*V/G)      for implicit
-! and P = P + bdot/W*d/dx (unit_coeff*N*x*y)+(rdot-bdot)*x/G*d/dx (G*H*y)         for explicit
-
 Vtilde = unit_coeff*G11
-
-call GRADIENT(x_in, unit_coeff*N1*x_in*Y1_old, Pdot_11, Ngrid)
-call GRADIENT(x_in, unit_coeff*N2*x_in*Y2_old, Pdot_12, Ngrid)
-call GRADIENT(x_in, G_new*H1_new*Y1_old, Pdot_21, Ngrid)
-call GRADIENT(x_in, G_new*H2_new*Y2_old, Pdot_22, Ngrid)
-Pdot_11 = Pdot_11/W1
-Pdot_12 = Pdot_12/W2
-Pdot_21 = Pdot_21*x_in/G_new
-Pdot_22 = Pdot_22*x_in/G_new
 
 N1_new = G_new*H1_new
 N2_new = G_new*H2_new
 N1_old = G_old*H1_old
 N2_old = G_old*H2_old
 
-do j=1, Ngrid
+do j=1, Ngridb
     T12(j) = 625.*GETPEI(j)
 enddo
 
-S1_new = S1_in - T12
-S2_new = S2_in - T12
-P1_new = P1 - Rsource1/V + bbdot*Pdot_11 + (rbdot - bbdot)*Pdot_21
-P2_new = P2 - Rsource2/V + bbdot*Pdot_12 + (rbdot - bbdot)*Pdot_22
+S1_new = S1_in(1: Ngridb) - T12
+S2_new = S2_in(1: Ngridb) - T12
 
 f_bound1 = Y1_old(Ngridb)
 f_bound2 = Y2_old(Ngridb)
