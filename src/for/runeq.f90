@@ -1,5 +1,5 @@
 !---------------------------------------------------------------------
-subroutine RUNEQ(G_new, H_new, G_old, H_old, y_old, N_in, W_in, V_in, unit_coeff, G11, A_in, B_in, R_in, Src_y_in, Src_in, &
+subroutine RUNEQ(G_new, H_new, G_old, H_old, y_old, W_in, V_in, unit_coeff, G11, A_in, B_in, R_in, Src_y_in, Src_in, &
     rbdot, bbdot, Ngridb, Ngrid, dx, dt, x_in, imethod, bctype, bc_values, y_out, Q_out, adcmp_term, mphit)
 !---------------------------------------------------------------------
 ! WARNING: at the moment Qb is explicit, no option for QNNB, QETB, QITB is given at the moment!
@@ -55,7 +55,7 @@ implicit none
 integer, intent(in) :: Ngrid, imethod, Ngridb, bctype
 double precision, intent(in) :: dx, dt, rbdot, bbdot, unit_coeff, bc_values(5)
 double precision, intent(in), dimension(Ngrid) :: G_new, H_new, G_old, H_old, &
-   y_old, V_in, G11, A_in, B_in, R_in, Src_y_in, Src_in, mphit, x_in, N_in, W_in
+   y_old, V_in, G11, A_in, B_in, R_in, Src_y_in, Src_in, mphit, x_in, W_in
 double precision, intent(out), dimension(Ngrid) :: y_out, Q_out, adcmp_term
 
 integer :: j
@@ -78,7 +78,7 @@ else
     ytmp = mphit
 endif
 
-call GRADIENT(x_in, unit_coeff*N_in*x_in*ytmp, Pdot_1, Ngrid)
+call GRADIENT(x_in, H_new*W_in*x_in*ytmp, Pdot_1, Ngrid) ! H_new*W_in = N_in*unit_coeff, as in pyparse YWNB = YWHN*YWWB/unit_coeff
 call GRADIENT(x_in, Gmid*Hmid*ytmp, Pdot_2, Ngrid)
 Pdot_1 = Pdot_1/W_in
 Pdot_2 = Pdot_2*x_in/Gmid
@@ -280,7 +280,7 @@ end function GETPEI
 
 !---------------------------------------------------------------------
 subroutine RUNEQ_TETI(G_new, H1_new, H2_new, G_old, H1_old, H2_old, & 
-    Y1_old, Y2_old, N1, N2, W1, W2, V, unit_coeff, G11, A1_in, A2_in, B1_in, B2_in, &
+    Y1_old, Y2_old, W1, W2, V, unit_coeff, G11, A1_in, A2_in, B1_in, B2_in, &
     S1_in, S2_in, P1, P2, rbdot, bbdot, Ngridb, Ngrid, dx, dt, &
     x_in, imethod, y1, y2, Q1_out, Q2_out)
 
@@ -291,7 +291,7 @@ implicit none
 integer, intent(in) :: Ngrid, imethod, Ngridb
 double precision, intent(in) :: rbdot, bbdot, dx, dt, unit_coeff
 double precision, intent(in), dimension(Ngrid) :: G_new, H1_new, H2_new, G_old, &
-    H1_old, H2_old, Y1_old, Y2_old, N1, N2, W1, W2, V, G11, &
+    H1_old, H2_old, Y1_old, Y2_old, W1, W2, V, G11, &
     A1_in, A2_in, B1_in, B2_in, S1_in, S2_in, P1, P2, x_in
 double precision, intent(out)  , dimension(Ngrid) :: Q1_out, Q2_out
 double precision, intent(inout), dimension(Ngrid) :: y1, y2
