@@ -11,7 +11,7 @@ use debugger, only: markloc
 
 implicit none
 
-integer, parameter :: n_dims=5, n_scalars=8, n_inputs=39, nrho_m=80, nspec_max=7, nworkers=40
+integer, parameter :: n_dims=5, n_scalars=8, n_inputs=39, nrho_m=64, nspec_max=7, nworkers=64
 
 logical :: first_call=.True.
 integer :: nchunk

@@ -60,7 +60,7 @@ double precision, intent(out), dimension(Ngrid) :: y_out, Q_out, adcmp_term
 
 integer :: j
 double precision :: theta, bc_val(3)
-double precision, dimension(Ngrid) :: x_b, Gmid, Hmid, NN, NO, &
+double precision, dimension(Ngrid) :: x_b, Gmid, Hmid, GH_new, GH_old, &
     Rsource, Pdot_1, Pdot_2, Src_new, ytmp
 double precision, dimension(Ngridb) :: Gmix, AA, BB, CC, RR, g_v, vta, gsdt, gsydt, xi, fxi, gxi
 
@@ -103,8 +103,8 @@ gxi = fxi - xi
 
 ! 1/G d/dt (N*y) + 1/V d/dx (unit_coeff*G11*(-A/dx*(fxi, gxi, ntilde))) = S*y + P
 
-NN = G_new*H_new
-NO = G_old*H_old
+GH_new = G_new*H_new
+GH_old = G_old*H_old
 Gmix = G_new(1: Ngridb)*theta + G_old(1: Ngridb)*(1. - theta)
 g_v = dt/dx**2 * Gmix/V_in(1: Ngridb)
 vta = unit_coeff*G11(1: Ngridb)*A_in(1: Ngridb)
@@ -115,11 +115,11 @@ AA = -theta*g_v*vta*fxi
 CC(1) = 0.
 CC(2: Ngridb) = -g_v(2: Ngridb)*vta(1: Ngridb-1)*gxi(1: Ngridb-1)
 
-BB(1) = NN(1) + theta*(-gsydt(1) + g_v(1)*vta(1)*gxi(1))
-RR(1) = NO(1)*y_old(1) + gsdt(1) + (1. - theta) * ( gsydt(1)*y_old(1) + g_v(1)*vta(1)*(fxi(1)*y_old(2) - gxi(1)*y_old(1)) )
+BB(1) = GH_new(1) + theta*(-gsydt(1) + g_v(1)*vta(1)*gxi(1))
+RR(1) = GH_old(1)*y_old(1) + gsdt(1) + (1. - theta) * ( gsydt(1)*y_old(1) + g_v(1)*vta(1)*(fxi(1)*y_old(2) - gxi(1)*y_old(1)) )
 do j=2, Ngridb-1
-    BB(j) = NN(j) + theta * ( -gsydt(j) + g_v(j)*(vta(j)*gxi(j) + vta(j-1)*fxi(j-1)) )
-    RR(j) = NO(j)*y_old(j) + gsdt(j) + (1. - theta) * (  gsydt(j)*y_old(j) + g_v(j) * &
+    BB(j) = GH_new(j) + theta * ( -gsydt(j) + g_v(j)*(vta(j)*gxi(j) + vta(j-1)*fxi(j-1)) )
+    RR(j) = GH_old(j)*y_old(j) + gsdt(j) + (1. - theta) * (  gsydt(j)*y_old(j) + g_v(j) * &
         ( vta(j) * (fxi(j)*y_old(j+1) - gxi(j)*y_old(j)) - vta(j-1) * (fxi(j-1)*y_old(j) - gxi(j-1)*y_old(j-1)) )  )
 enddo
 
@@ -129,10 +129,10 @@ CASE(1)
 CASE(3)
     bc_val = bc_values(3: 5)
 CASE(2, 4)
-    bc_val(1) = NN(Ngridb) + theta * ( -gsydt(Ngridb) + g_v(Ngridb)*vta(Ngridb-1)*fxi(Ngridb-1) )
+    bc_val(1) = GH_new(Ngridb) + theta * ( -gsydt(Ngridb) + g_v(Ngridb)*vta(Ngridb-1)*fxi(Ngridb-1) )
     if (bctype == 4) bc_val(1) = bc_val(1) + theta*g_v(Ngridb)*bc_values(2)*unit_coeff*dx
     bc_val(2) = CC(Ngridb)
-    bc_val(3) = NO(Ngridb)*y_old(Ngridb) + gsydt(Ngridb) + (1. - theta) * &
+    bc_val(3) = GH_old(Ngridb)*y_old(Ngridb) + gsydt(Ngridb) + (1. - theta) * &
         (  gsydt(Ngridb)*y_old(Ngridb) - g_v(Ngridb) * &
         (vta(Ngridb-1) * (fxi(Ngridb-1)*y_old(Ngridb) - gxi(Ngridb-1)*y_old(Ngridb-1)) )  )
     if (bctype == 2) bc_val(3) = bc_val(3) + g_v(Ngridb)*bc_values(1)*unit_coeff*dx

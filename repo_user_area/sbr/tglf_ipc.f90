@@ -12,7 +12,7 @@ use parameters_a2equil, only: equil_now
 implicit none
 
 logical, parameter :: debug_elite=.false.
-integer, parameter :: n_dims=7, n_scalars=8, n_inputs=41, nrho_m=80, nworkers=40, nspec_max=5, nthe_elite=400, mpol=6
+integer, parameter :: n_dims=7, n_scalars=8, n_inputs=41, nrho_m=64, nworkers=64, nspec_max=5, nthe_elite=400, mpol=6
 double precision, parameter :: c_vpol=1.d0
 
 logical :: first_call=.True.
