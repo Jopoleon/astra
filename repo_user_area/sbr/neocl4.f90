@@ -219,7 +219,7 @@ do j=1, NA
 
     ni_nc(j) = 0. !density of all thermal ions
 
-    if (NHYDR(j) > y_den) then  !
+    if (NHYDR(j) > y_den) then
         ni_nc(j) = ni_nc(j) + nhydr(j)
         m_i = m_i + 1
         k_proton = m_i
@@ -386,6 +386,9 @@ do j=1, NA
         CASE(5)
             label = 'ERROR:NCLASS-inversion of flow matrix failed'
             call WRITE_LINE(nout, label, 0, 0)
+        CASE(6)
+            label = 'ERROR:NCLASS-Trapped fraction not between 0 and 1'
+            call WRITE_LINE(nout, label, 0, 0)
         END SELECT
         return
     endif
@@ -521,7 +524,7 @@ do j=1, NA
             utheta_s(1, 2, k_proton) + &
             utheta_s(1, 3, k_proton) )
     endif
-     
+
 !--- Deuterons ---
     if (k_deuteron > 0) then
 ! Total radial particle flux (deuterons  )
