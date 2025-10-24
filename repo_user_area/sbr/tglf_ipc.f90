@@ -102,7 +102,7 @@ contains
     call qinterp(RHO(1:NA1),    vper_as(1:NA1), NA1, rho_m,     vper_m, nrho_m)
     call qinterp(RHO(1:NA1),    vexb_as(1:NA1), NA1, rho_m,     vexb_m, nrho_m)
 
-    ! Reference length
+! Reference length
     a0_m = AMETR(NA1)
 
     do jr=1, nrho_m
@@ -111,10 +111,10 @@ contains
         ni_m(4, jr) = max(1.e-9, ni_m(4, jr))
     enddo
 
-    ! Number of species
+! Number of species
     ns_in = nspec_max
 
-    ! These will be reset locally in the radial loop
+! These will be reset locally in the radial loop
     zi_max(1) = ZMJ
     zi_max(2) = MAXVAL(ZIM1(1:NA1))
     zi_max(3) = MAXVAL(ZIM2(1:NA1))
@@ -133,8 +133,8 @@ contains
         ns_in = 3
     endif
 
-    !--------------
-    ! Differentials
+!--------------
+! Differentials
 
     do jr=1, nrho_m
         jr_r = jr + 1
@@ -166,9 +166,9 @@ contains
         drhodr(jr) = drho(jr)/drmin(jr)
     enddo
 
-    !------
-    ! ELITE
-    !------
+!------
+! ELITE
+!------
 
     if (geom_flag == 3) then
         nrho_equ = SIZE(equil_now%coord_sys%position%r, dim=1)
@@ -177,11 +177,11 @@ contains
         allocate(theta_equ(nthe_equ))
         allocate(RR_tg(nrho_m, nthe_equ), ZZ_tg(nrho_m, nthe_equ), Bp_tg(nrho_m, nthe_equ))
 
-    ! Interpolation on TGLF rho-grid
+! Interpolation on TGLF rho-grid
 
         pfn_equ = (equil_now%profiles_1d%psi - equil_now%profiles_1d%psi(1))/(equil_now%profiles_1d%psi(nrho_equ) - equil_now%profiles_1d%psi(1))
 
-    ! Interpolation on TGLF rho-grid
+! Interpolation on TGLF rho-grid
         do jthe=1, nthe_equ
             call qinterp(pfn_equ, equil_now%coord_sys%position%r(:, jthe), nrho_equ, pfn_m, RR_tg(:, jthe), nrho_m)
             call qinterp(pfn_equ, equil_now%coord_sys%position%z(:, jthe), nrho_equ, pfn_m, Zz_tg(:, jthe), nrho_m)
@@ -195,9 +195,9 @@ contains
         theta_elite = (/ ((jthe - 1.)*dtheta_elite, jthe=1, nthe_elite) /)
     endif
 
-    !--------------------
-    ! IPC parallelisation
-    !--------------------
+!--------------------
+! IPC parallelisation
+!--------------------
 
     nchunk = nrho_m / nworkers
 
@@ -269,24 +269,24 @@ contains
         first_call = .False.
     endif
 
-    ! **** Fill shared memory segments
+! **** Fill shared memory segments
     call fill_var2shm(scal_in)
     call fill_arr2shm(prof_in)
 
-    ! **** Free each semaphore
+! **** Free each semaphore
     do i=1, nworkers
         call unlock_sbp(i)
     enddo
 
-    ! **** Synchronisation point
+! **** Synchronisation point
     call wait4all
 
-    ! **** Collect data from ShMem
+! **** Collect data from ShMem
     do i=1, nworkers
         call sbp2astra(i, prof_out(1, 1))
     enddo
 
-    ! Interpolate back to ASTRA radial grid
+! Interpolate back to ASTRA radial grid
     e_pflux_as = 0.
     i_pflux_as = 0.
     i_mflux_as = 0.

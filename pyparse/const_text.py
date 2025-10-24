@@ -28,6 +28,8 @@ use strahl_mod
 use a2tglf, only: tglf_ipc
 use a2qlk, only: qlk_ipc
 use a2neo, only: neo_ipc
+use a2rabbit, only: rabbit
+use a2torbeam, only: torba
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use debugger, only: markloc
 
@@ -931,7 +933,6 @@ use nclass_mod
 use ipc_mod
 use a2tglf, only: tglf_ipc
 use a2qlk, only: qlk_ipc
-use a2neo, only: neo_ipc
 use debugger, only: markloc
 use numerical_tools, only: extrap
 
@@ -968,7 +969,6 @@ use status_inc
 use ipc_mod
 use a2tglf, only: tglf_ipc
 use a2qlk, only: qlk_ipc
-use a2neo, only: neo_ipc
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use nclass_mod
 use strahl_mod

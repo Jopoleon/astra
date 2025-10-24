@@ -23,13 +23,18 @@ OBJC   := $(patsubst $(SRC_DIR)%.c, $(OBJ_DIR)%.o, $(SRCC)  )
 
 # Make Commands
 .PHONY: all
-all: directories $(LIB)
+all: directories $(LIB) mvmod
 
 .PHONY: directories
 directories:
 	@mkdir -p $(OBJ_DIR)
 	@mkdir -p $(MOD_DIR)
 	@mkdir -p $(LIB_DIR)
+
+.PHONY: mvmod
+mvmod:
+	rm -f *genmod.*
+	-@mv *.mod $(MOD_DIR)/ 2>/dev/null; true
 
 .PHONY: clean
 clean:
@@ -41,18 +46,6 @@ $(OBJ_DIR)%.o: $(SRC_DIR)%.f
 
 $(OBJ_DIR)/tglf_serial.o: $(SRC_DIR)/tglf_serial.f90 $(TGLF_LIB)
 	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -I$(TGLF_INC) -c $< -o $@
-
-$(OBJ_DIR)/tglf_ipc.o: $(SRC_DIR)/tglf_ipc.f90
-	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -c $< -o $@
-	mv a2tglf.mod $(MOD_DIR)/
-
-$(OBJ_DIR)/qlk_ipc.o: $(SRC_DIR)/qlk_ipc.f90
-	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -c $< -o $@
-	mv a2qlk.mod $(MOD_DIR)/
-
-$(OBJ_DIR)/neo_ipc.o: $(SRC_DIR)/neo_ipc.f90
-	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -c $< -o $@
-	mv a2neo.mod $(MOD_DIR)/
 
 $(OBJ_DIR)/qlknn_serial.o: $(SRC_DIR)/qlknn_serial.f90 $(QLKNN_LIB)
 	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -I$(QLKNN_INC) -c $< -o $@
