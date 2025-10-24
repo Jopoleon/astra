@@ -226,7 +226,7 @@ enddo
 ! Interpolate back to ASTRA radial grid
 
 do jout=1, 7
-    call qinterp(rho_m, prof_out(jout, :), nrho_m, rho_m(1:NA1), mem_neo(1:NA1, jout), NA1)
+    call qinterp(rho_m, prof_out(jout, :), nrho_m, RHO(1:NA1), mem_neo(1:NA1, jout), NA1)
 enddo
 
 call SYSTEM_CLOCK(t_wall2, rate)
