@@ -4,8 +4,9 @@ endif
 
 SRC_DIR = $(AWD)/$(sub)
 OBJ_DIR = $(AWD)/obj/$(sub)
+MOD_DIR = $(AWD)/mod/$(sub)
 INC_DIR = $(AWD)/inc
-MOD_DIR = $(AWD)/mod/for 
+MOD_FOR = $(AWD)/mod/for 
 MOD_FEQ = $(AWD)/mod/feqis 
 LIB_DIR = $(AWD)/lib
 LIB = $(LIB_DIR)/lib$(sub).a
@@ -27,6 +28,7 @@ all: directories $(LIB)
 .PHONY: directories
 directories:
 	@mkdir -p $(OBJ_DIR)
+	@mkdir -p $(MOD_DIR)
 	@mkdir -p $(LIB_DIR)
 
 .PHONY: clean
@@ -35,31 +37,31 @@ clean:
 	rm $(LIB)
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f
-	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -c $< -o $@
-
-$(OBJ_DIR)/tglf_parent.o: $(SRC_DIR)/tglf_parent.f90
-	$(MPIFC) $(FC_FLAGS) -I$(MOD_DIR) -c $< -o $@
-
-$(OBJ_DIR)/qlk_parent.o: $(SRC_DIR)/qlk_parent.f90
-	$(MPIFC) $(FC_FLAGS) -I$(MOD_DIR) -c $< -o $@
-
-$(OBJ_DIR)/neo_parent.o: $(SRC_DIR)/neo_parent.f90
-	$(MPIFC) $(FC_FLAGS) -I$(MOD_DIR) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -c $< -o $@
 
 $(OBJ_DIR)/tglf_serial.o: $(SRC_DIR)/tglf_serial.f90 $(TGLF_LIB)
-	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -I$(TGLF_INC) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -I$(TGLF_INC) -c $< -o $@
+
+$(OBJ_DIR)/tglf_ipc.o: $(SRC_DIR)/tglf_ipc.f90
+	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -c $< -o $@
+	mv a2tglf.mod $(MOD_DIR)/
+
+$(OBJ_DIR)/qlk_ipc.o: $(SRC_DIR)/qlk_ipc.f90
+	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -c $< -o $@
+	mv a2qlk.mod $(MOD_DIR)/
+
+$(OBJ_DIR)/neo_ipc.o: $(SRC_DIR)/neo_ipc.f90
+	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -c $< -o $@
+	mv a2neo.mod $(MOD_DIR)/
 
 $(OBJ_DIR)/qlknn_serial.o: $(SRC_DIR)/qlknn_serial.f90 $(QLKNN_LIB)
-	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -I$(QLKNN_INC) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -I$(QLKNN_INC) -c $< -o $@
 
 $(OBJ_DIR)/rabbit.o: $(SRC_DIR)/rabbit.f90
-	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -I$(RABBIT_INC) -c $< -o $@
-
-$(OBJ_DIR)/a2rabbit.o: $(SRC_DIR)/a2rabbit.f90
-	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -I$(RABBIT_INC) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -I$(RABBIT_INC) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f90
-	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -I$(MOD_FEQ) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -I$(MOD_FEQ) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.c
 	$(CC) -I$(INC_DIR) -c $< -o $@
