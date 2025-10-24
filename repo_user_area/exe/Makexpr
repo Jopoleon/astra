@@ -26,6 +26,7 @@ all: directories $(XPR)/tglfi $(XPR)/qlki $(XPR)/neo
 directories:
 	@mkdir -p $(AWD)/tglf
 	@mkdir -p $(AWD)/qualikiz
+	@mkdir -p $(AWD)/neo
 
 .PHONY: clean
 clean:
