@@ -17,7 +17,6 @@ use io_mod, only: jbeg_arrx, IFDFAX, XAXES, &
     DATAX, NPTM, TOUTX
 use debugger, only: markloc, astra_stop
 use expdat, only: raw_profile_map, DATARR
-use ipc_mod, only: mem_tglf, mem_qlkz, mem_neo, n_sbp_arr_out
 
 implicit  none
 
@@ -49,12 +48,6 @@ character(len=132) :: err_msg, err_msg_grid
 !--------------------------------------------------------------------
 
 call markloc('SETARX')
-if (.not. allocated(mem_tglf)) then
-    allocate(mem_tglf(NA1, n_sbp_arr_out), mem_qlkz(NA1, n_sbp_arr_out), mem_neo(NA1, n_sbp_arr_out))
-    mem_tglf = 0.d0
-    mem_qlkz = 0.d0
-    mem_neo  = 0.d0
-endif
 
 var_loop: do jtarr=1, NTARR
     if (raw_profile_map%arr_index(jtarr) == 0) EXIT

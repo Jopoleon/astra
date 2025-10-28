@@ -86,7 +86,7 @@ return
 end subroutine POSTEP'''
 
 #----------------------------
-# detvar_init.f90, detvar.f90
+# detvar.f90
 
         detv_time = ''
         detv_rad  = ''
@@ -123,17 +123,10 @@ J = jdetv
         self.detvar += detv_rad
         self.detvar += 'enddo\n'
         self.detvar += const_text.DETVAR.rad_tail
-        self.detvar_init = self.detvar.replace('subroutine DETVAR', 'SUBROUTINE DETVAR_INIT')
-
         self.detvar += \
 '''
 return
 end subroutine DETVAR'''
-
-        self.detvar_init += \
-'''
-return
-end subroutine DETVAR_init'''
 
 #----------
 # model.txt

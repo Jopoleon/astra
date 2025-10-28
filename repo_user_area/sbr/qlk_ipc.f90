@@ -2,13 +2,24 @@ module a2qlk
 
 implicit none
 
+integer, parameter :: n_arr_out=15, nrho_m=64, nworkers=64
+double precision, allocatable, dimension(:, :) :: mem_qlkz
+
 contains
+
+    subroutine qlk_alloc
+
+    use const_inc, only: NA1
+
+    if (.not. allocated(mem_qlkz)) allocate(mem_qlkz(NA1, n_arr_out))
+
+    return
+    end subroutine qlk_alloc
 
     subroutine qlk_ipc(rho_norm_max)
 
     use parameter_inc, only: NRD
     use io_mod, only: equ_file, exp_file
-    use ipc_mod, only: mem_qlkz, n_sbp_arr_out
     use const_inc, only: NA1, BTOR, RTOR, ABC, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
     use status_inc, only: NE, TE, NI, TI, ZIM1, ZIM2, ZIM3, PBLON, PBPER, &
         PFAST, NIZ3, AMAIN, ER, MU, FP_NORM, RHO, AMETR, SHIF, &
@@ -27,7 +38,7 @@ contains
     integer, dimension(n_dims) :: dims_in
 
     double precision, dimension(n_inputs, nrho_m) :: prof_in
-    double precision, dimension(n_sbp_arr_out, nrho_m) :: prof_out
+    double precision, dimension(n_arr_out, nrho_m) :: prof_out
     double precision :: bpolz, xstep, rho_min, rho_max, dstep, a0_m
     double precision, dimension(n_scalars) :: scal_in
     double precision, dimension(nrho_m) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
@@ -178,7 +189,7 @@ contains
 
     dims_in(1) = nchunk
     dims_in(2) = n_inputs
-    dims_in(3) = n_sbp_arr_out
+    dims_in(3) = n_arr_out
     dims_in(4) = nrho_m
     dims_in(5) = ns_in
 
@@ -233,7 +244,7 @@ contains
 
     if (first_call) then
         SBP_NAMES = "xpr/qlki"//char(0)
-        call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_sbp_arr_out, nworkers, equ_file, exp_file)
+        call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, nworkers, equ_file, exp_file)
         call fill_dim2shm(dims_in)
         call send_ipc_jobs(nworkers, nchunk, 64, SBP_NAMES)
         first_call = .False.

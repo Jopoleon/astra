@@ -22,10 +22,9 @@ class POSTEP:
 
 use const_inc
 use status_inc
-use ipc_mod
 use nclass_mod
 use strahl_mod
-use a2tglf, only: tglf_ipc
+use a2tglf, only: tglf_ipc, mem_tglf
 use a2qlk, only: qlk_ipc
 use a2neo, only: neo_ipc
 use a2rabbit, only: rabbit
@@ -291,10 +290,12 @@ class DETVAR:
 
 use const_inc
 use status_inc
-use ipc_mod
 use nclass_mod
 use strahl_mod
-use io_mod
+use io_mod, only: IFDFVX
+use a2tglf, only: mem_tglf, tglf_alloc
+use a2qlk, only: mem_qlkz, qlk_alloc
+use a2neo, only: mem_neo, neo_alloc 
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use json_vars, only: profxNames
 use debugger, only: markloc
@@ -309,6 +310,9 @@ integer :: t_wall1, t_wall2, rate
 double precision :: t_cpu1, t_cpu2
 
 call markloc("detvar (time signals)")
+call tglf_alloc
+call qlk_alloc
+call neo_alloc
 '''
 
     rad_tail  = \
@@ -930,8 +934,7 @@ use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use const_inc
 use status_inc
 use nclass_mod
-use ipc_mod
-use a2tglf, only: tglf_ipc
+use a2tglf, only: tglf_ipc, mem_tglf
 use a2qlk, only: qlk_ipc
 use debugger, only: markloc
 use numerical_tools, only: extrap
@@ -966,8 +969,7 @@ class EQNS_INC:
 use parameter_inc, only: NRD, NSBMX
 use const_inc
 use status_inc
-use ipc_mod
-use a2tglf, only: tglf_ipc
+use a2tglf, only: tglf_ipc, mem_tglf
 use a2qlk, only: qlk_ipc
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use nclass_mod

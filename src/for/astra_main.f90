@@ -52,7 +52,7 @@ endif
 call SETARX(1)
 call INIVAR
 call SETVAR
-call DETVAR_INIT
+call DETVAR
 call EQGUESS
 call INIVAR
 
@@ -62,7 +62,7 @@ jt_req = 0
 do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set in IFTREQ (for/defarr.f90)
     if (TASK(1:3) /= 'BGD') jkey = IFKEY(256)
     call INTVAR      ! Set exp scalars
-    call DETVAR_INIT
+    call DETVAR
     call DEFARR
     call SETARX(1)   ! Set X-data w/o time interpolation
     call INIVAR

@@ -2,13 +2,24 @@ module a2tglf
 
 implicit none
 
+integer, parameter :: n_arr_out=15, nrho_m=64, nworkers=64
+double precision, allocatable, dimension(:, :) :: mem_tglf
+
 contains
+
+    subroutine tglf_alloc
+
+    use const_inc, only: NA1
+
+    if (.not. allocated(mem_tglf)) allocate(mem_tglf(NA1, n_arr_out))
+
+    return
+    end subroutine tglf_alloc
   
     subroutine tglf_ipc(rho_norm_max)
 
     use parameter_inc, only: NRD
     use io_mod, only: equ_file, exp_file
-    use ipc_mod, only: mem_tglf, n_sbp_arr_out
     use const_inc, only: NA1, GP2, BTOR, RTOR, ABC, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
     use status_inc, only: NE, TE, NI, TI, ZEF, PBLON, PBPER, PFAST, &
         ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3, ER, MU, FP_NORM, &
@@ -16,7 +27,7 @@ contains
     use parameters_a2equil, only: equil_now
 
     logical, parameter :: debug_elite=.false.
-    integer, parameter :: n_dims=7, n_scalars=8, n_inputs=47, nrho_m=64, nworkers=64, nspec_max=5, nthe_elite=400, mpol=6
+    integer, parameter :: n_dims=7, n_scalars=8, n_inputs=47, nspec_max=5, nthe_elite=400, mpol=6
     double precision, parameter :: c_vpol=1.d0
 
     double precision, intent(in), optional :: rho_norm_max
@@ -28,7 +39,7 @@ contains
     integer :: t_wall1, t_wall2, rate
     integer, dimension(n_dims) :: dims_in
 
-    double precision, dimension(n_sbp_arr_out, nrho_m) :: prof_out
+    double precision, dimension(n_arr_out, nrho_m) :: prof_out
     double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, a0_m, gradrhosq_inv, dtheta_elite
     double precision, dimension(n_scalars) :: scal_in
     double precision, dimension(nrho_m) :: drmin, drmaj, drho, dte, dne, dq, &
@@ -207,7 +218,7 @@ contains
 
     dims_in(1) = nchunk
     dims_in(2) = n_inputs
-    dims_in(3) = n_sbp_arr_out
+    dims_in(3) = n_arr_out
     dims_in(4) = nrho_m
     dims_in(5) = nspec_max
     dims_in(6) = ns_in
@@ -273,7 +284,7 @@ contains
 
     if (first_call) then
         SBP_NAMES = "xpr/tglfi"//char(0)
-        call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_sbp_arr_out, nworkers, equ_file, exp_file)
+        call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, nworkers, equ_file, exp_file)
         call fill_dim2shm(dims_in)
         call send_ipc_jobs(nworkers, nchunk, 64, SBP_NAMES)
         first_call = .False.
