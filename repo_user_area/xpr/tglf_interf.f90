@@ -59,10 +59,10 @@ double precision :: a0_cm, a0_m, T0, N0, m0, rmin, drho_cs, drho_nt, nt_cs
 double precision :: Amain, Zmain
 double precision :: ion_eflux, ion_mflux
 double precision, allocatable, dimension(:) :: mtori, chie, chii, exchi, elec_pflux, rho, &
-    gamma_max, omega_max, kymax, ti, te, ne, vpar, vper, vexb, &
+    gamma_max, omega_max, kymax, te, ne, vpar, vper, vexb, &
     ametr, elon, tria, rmaj, ptot, q, zef, pfn, drmin, drmaj, drho, delong, dtrian, dr, &
-    dti, dte, dne, dq, dptot, dvpar, dvper, dv_r, drhodr
-double precision, allocatable, dimension(:, :) :: dni, ni, zi, ion_pflux
+    dte, dne, dq, dptot, dvpar, dvper, dv_r, drhodr
+double precision, allocatable, dimension(:, :) :: dni, dti, ni, ti, zi, ion_pflux
 double precision, dimension(nky) :: gamma, omega, kyspectrum, efluxspectrum
 
 chunk     = dims_in(1)
@@ -87,13 +87,14 @@ ZMJ  = scal_in(8)
 
 allocate( mtori(chunk), chie(chunk), chii(chunk), exchi(chunk), elec_pflux(chunk), &
     rho(chunk), gamma_max(chunk), omega_max(chunk), kymax(chunk), &
-    ti(chunk), te(chunk), ne(chunk), vpar(chunk), vper(chunk), vexb(chunk), &
+    te(chunk), ne(chunk), vpar(chunk), vper(chunk), vexb(chunk), &
     ametr(chunk), elon(chunk), tria(chunk), rmaj(chunk), &
     ptot(chunk), q(chunk), zef(chunk), pfn(chunk) )
 allocate( drmin(chunk), drmaj(chunk), drho(chunk), delong(chunk), dtrian(chunk), &
-    dr(chunk), dti(chunk), dte(chunk), dne(chunk), dq(chunk), dptot(chunk), dvpar(chunk), &
+    dr(chunk), dte(chunk), dne(chunk), dq(chunk), dptot(chunk), dvpar(chunk), &
     dvper(chunk), dv_r(chunk), drhodr(chunk) )
-allocate( dni(nspec_max-1, chunk), ni(nspec_max-1, chunk), &
+allocate( dni(nspec_max-1, chunk), dti(nspec_max-1, chunk), &
+    ni(nspec_max-1, chunk), ti(nspec_max-1, chunk), &
     zi(nspec_max-1, chunk), ion_pflux(nspec_max-1, chunk) )
 
 ! Initialise to zero for non-calculated species
@@ -132,39 +133,45 @@ tria   = prof_in( 5, jr1:jr2)
 q      = prof_in( 6, jr1:jr2)
 pfn    = prof_in( 7, jr1:jr2)
 ptot   = prof_in( 8, jr1:jr2)
-ti     = prof_in( 9, jr1:jr2)
-te     = prof_in(10, jr1:jr2)
-ne     = prof_in(11, jr1:jr2)
-zef    = prof_in(12, jr1:jr2)
-vpar   = prof_in(13, jr1:jr2)
-vper   = prof_in(14, jr1:jr2)
-vexb   = prof_in(15, jr1:jr2)
-drmin  = prof_in(16, jr1:jr2)
-drmaj  = prof_in(17, jr1:jr2)
-drho   = prof_in(18, jr1:jr2)
-delong = prof_in(19, jr1:jr2)
-dtrian = prof_in(20, jr1:jr2)
-dptot  = prof_in(21, jr1:jr2)
-dti    = prof_in(22, jr1:jr2)
-dte    = prof_in(23, jr1:jr2)
-dne    = prof_in(24, jr1:jr2)
-dq     = prof_in(25, jr1:jr2)
-dvper  = prof_in(26, jr1:jr2)
-dv_r   = prof_in(27, jr1:jr2)
-dr     = prof_in(28, jr1:jr2)
-drhodr = prof_in(29, jr1:jr2)
-ni( 1, :) = prof_in(30, jr1:jr2)
-ni( 2, :) = prof_in(31, jr1:jr2)
-ni( 3, :) = prof_in(32, jr1:jr2)
-ni( 4, :) = prof_in(33, jr1:jr2)
-zi(1,:) = prof_in(34, jr1:jr2)
-zi(2,:) = prof_in(35, jr1:jr2)
-zi(3,:) = prof_in(36, jr1:jr2)
-zi(4,:) = prof_in(37, jr1:jr2)
-dni(1, :) = prof_in(38, jr1:jr2)
-dni(2, :) = prof_in(39, jr1:jr2)
-dni(3, :) = prof_in(40, jr1:jr2)
-dni(4, :) = prof_in(41, jr1:jr2)
+te     = prof_in( 9, jr1:jr2)
+ne     = prof_in(10, jr1:jr2)
+zef    = prof_in(11, jr1:jr2)
+vpar   = prof_in(12, jr1:jr2)
+vper   = prof_in(13, jr1:jr2)
+vexb   = prof_in(14, jr1:jr2)
+drmin  = prof_in(15, jr1:jr2)
+drmaj  = prof_in(16, jr1:jr2)
+drho   = prof_in(17, jr1:jr2)
+delong = prof_in(18, jr1:jr2)
+dtrian = prof_in(19, jr1:jr2)
+dptot  = prof_in(20, jr1:jr2)
+dte    = prof_in(21, jr1:jr2)
+dne    = prof_in(22, jr1:jr2)
+dq     = prof_in(23, jr1:jr2)
+dvper  = prof_in(24, jr1:jr2)
+dv_r   = prof_in(25, jr1:jr2)
+dr     = prof_in(26, jr1:jr2)
+drhodr = prof_in(27, jr1:jr2)
+ni(1, :) = prof_in(28, jr1:jr2)
+ni(2, :) = prof_in(29, jr1:jr2)
+ni(3, :) = prof_in(30, jr1:jr2)
+ni(4, :) = prof_in(31, jr1:jr2)
+ti(1, :) = prof_in(32, jr1:jr2)
+ti(2, :) = prof_in(33, jr1:jr2)
+ti(3, :) = prof_in(34, jr1:jr2)
+ti(4, :) = prof_in(35, jr1:jr2)
+zi(1, :) = prof_in(36, jr1:jr2)
+zi(2, :) = prof_in(37, jr1:jr2)
+zi(3, :) = prof_in(38, jr1:jr2)
+zi(4, :) = prof_in(39, jr1:jr2)
+dni(1, :) = prof_in(40, jr1:jr2)
+dni(2, :) = prof_in(41, jr1:jr2)
+dni(3, :) = prof_in(42, jr1:jr2)
+dni(4, :) = prof_in(43, jr1:jr2)
+dti(1, :) = prof_in(44, jr1:jr2)
+dti(2, :) = prof_in(45, jr1:jr2)
+dti(3, :) = prof_in(46, jr1:jr2)
+dti(4, :) = prof_in(47, jr1:jr2)
 
 ! TGLF settings
 sat_rule = 2
@@ -291,9 +298,9 @@ radial_loop: do jr=1, chunk
 
     do jion=1, tglf_ns_in-1
         tglf_as_in(jion+1)   = ni(jion, jr)/ne(jr)
-        tglf_taus_in(jion+1) = ti(jr)/te(jr)
+        tglf_taus_in(jion+1) = ti(jion, jr)/te(jr)
         tglf_rlns_in(jion+1) = -dni(jion, jr)/(dr(jr)*ni(jion, jr))
-        tglf_rlts_in(jion+1) = -dti(jr)/(dr(jr)*ti(jr))
+        tglf_rlts_in(jion+1) = -dti(jion, jr)/(dr(jr)*ti(jion, jr))
     enddo
 ! Restore quasi-neutrality via main ions
 

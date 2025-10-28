@@ -16,7 +16,7 @@ contains
     use parameters_a2equil, only: equil_now
 
     logical, parameter :: debug_elite=.false.
-    integer, parameter :: n_dims=7, n_scalars=8, n_inputs=41, nrho_m=64, nworkers=64, nspec_max=5, nthe_elite=400, mpol=6
+    integer, parameter :: n_dims=7, n_scalars=8, n_inputs=47, nrho_m=64, nworkers=64, nspec_max=5, nthe_elite=400, mpol=6
     double precision, parameter :: c_vpol=1.d0
 
     double precision, intent(in), optional :: rho_norm_max
@@ -31,15 +31,15 @@ contains
     double precision, dimension(n_sbp_arr_out, nrho_m) :: prof_out
     double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, a0_m, gradrhosq_inv, dtheta_elite
     double precision, dimension(n_scalars) :: scal_in
-    double precision, dimension(nrho_m) :: drmin, drmaj, drho, dti, dte, dne, dq, &
+    double precision, dimension(nrho_m) :: drmin, drmaj, drho, dte, dne, dq, &
         dptot, delong, dtrian, dvpar, dvper, drhodr, dr, dv_r
     double precision, dimension(NRD) :: rmaj_as, q_as, ni_main_as, &
         vexb_as, vpar_as, vper_as, chie_as, chii_as, e_pflux_as, i_mflux_as, ptot_as
     double precision, dimension(nrho_m) :: rho_m, gamma_max, omega_max, kymax, &
-        ti_m, te_m, ne_m, vpar_m, vper_m, vexb_m, &
+        te_m, ne_m, vpar_m, vper_m, vexb_m, &
         ametr_m, elon_m, tria_m, rmaj_m, ptot_m, q_m, zef_m, pfn_m
     double precision, dimension(nspec_max-1) :: zi_max
-    double precision, dimension(nspec_max-1, nrho_m) :: dni, ni_m, i_pflux
+    double precision, dimension(nspec_max-1, nrho_m) :: dti, dni, ni_m, ti_m, i_pflux
     double precision, dimension(nspec_max-1, nrho_m) :: zi_m 
     double precision, dimension(nspec_max-1, NRD) :: i_pflux_as
     double precision, dimension(n_inputs, nrho_m) :: prof_in
@@ -69,7 +69,7 @@ contains
     call qinterp(RHO(1:NA1), NIZ1(1:NA1), NA1, rho_m, ni_m(2, :), nrho_m)
     call qinterp(RHO(1:NA1), NIZ2(1:NA1), NA1, rho_m, ni_m(3, :), nrho_m)
     call qinterp(RHO(1:NA1), NIZ3(1:NA1), NA1, rho_m, ni_m(4, :), nrho_m)
-    call qinterp(RHO(1:NA1),      TI(1:NA1), NA1, rho_m,    ti_m, nrho_m)
+    call qinterp(RHO(1:NA1),   TI(1:NA1), NA1, rho_m, ti_m(1, :), nrho_m)
     call qinterp(RHO(1:NA1),      TE(1:NA1), NA1, rho_m,    te_m, nrho_m)
     call qinterp(RHO(1:NA1),      NE(1:NA1), NA1, rho_m,    ne_m, nrho_m)
     call qinterp(RHO(1:NA1),     ZEF(1:NA1), NA1, rho_m,   zef_m, nrho_m)
@@ -77,6 +77,10 @@ contains
     call qinterp(RHO(1:NA1),    ELON(1:NA1), NA1, rho_m,  elon_m, nrho_m)
     call qinterp(RHO(1:NA1),    TRIA(1:NA1), NA1, rho_m,  tria_m, nrho_m)
     call qinterp(RHO(1:NA1), FP_NORM(1:NA1), NA1, rho_m,   pfn_m, nrho_m)
+
+    ti_m(2, :) = ti_m(1, :)
+    ti_m(3, :) = ti_m(1, :)
+    ti_m(4, :) = ti_m(1, :)
 
     do jrho=1, NA1
         if (NDEUT(jrho) >= 0.01*NE(jrho)) then
@@ -151,13 +155,13 @@ contains
         delong(jr) = dstep*( elon_m(jr_r) -  elon_m(jr_l))
         dtrian(jr) = dstep*( tria_m(jr_r) -  tria_m(jr_l))
         dptot(jr)  = dstep*( ptot_m(jr_r) -  ptot_m(jr_l)) * 1E3*1E13
-        dti(jr)    = dstep*(ti_m(jr_r) - ti_m(jr_l))
         dte(jr)    = dstep*(te_m(jr_r) - te_m(jr_l))
         dne(jr)    = dstep*(ne_m(jr_r) - ne_m(jr_l))
         dq(jr)     = dstep*(q_m(jr_r) - q_m(jr_l))
         dvper(jr)  = dstep*(vper_m(jr_r) - vper_m(jr_l))
         do jion=1, nspec_max-1
             dni(jion, jr) = dstep*(ni_m(jion, jr_r) - ni_m(jion, jr_l))
+            dti(jion, jr) = dstep*(ti_m(jion, jr_r) - ti_m(jion, jr_l))
         enddo
         dv_r(jr) = dstep* &
             (vpar_m(jr_r)/(rmaj_m(jr_r) + ametr_m(jr_r)) - &
@@ -227,39 +231,45 @@ contains
     prof_in( 6, :) = q_m 
     prof_in( 7, :) = pfn_m
     prof_in( 8, :) = ptot_m
-    prof_in( 9, :) = ti_m
-    prof_in(10, :) = te_m 
-    prof_in(11, :) = ne_m 
-    prof_in(12, :) = zef_m
-    prof_in(13, :) = vpar_m
-    prof_in(14, :) = vper_m
-    prof_in(15, :) = vexb_m
-    prof_in(16, :) = drmin
-    prof_in(17, :) = drmaj
-    prof_in(18, :) = drho 
-    prof_in(19, :) = delong
-    prof_in(20, :) = dtrian
-    prof_in(21, :) = dptot
-    prof_in(22, :) = dti
-    prof_in(23, :) = dte
-    prof_in(24, :) = dne
-    prof_in(25, :) = dq
-    prof_in(26, :) = dvper
-    prof_in(27, :) = dv_r
-    prof_in(28, :) = dr
-    prof_in(29, :) = drhodr
-    prof_in(30, :) = ni_m(1, :)
-    prof_in(31, :) = ni_m(2, :)
-    prof_in(32, :) = ni_m(3, :)
-    prof_in(33, :) = ni_m(4, :)
-    prof_in(34, :) = zi_m(1, :)
-    prof_in(35, :) = zi_m(2, :)
-    prof_in(36, :) = zi_m(3, :)
-    prof_in(37, :) = zi_m(4, :)
-    prof_in(38, :) = dni(1, :)
-    prof_in(39, :) = dni(2, :)
-    prof_in(40, :) = dni(3, :)
-    prof_in(41, :) = dni(4, :)
+    prof_in( 9, :) = te_m 
+    prof_in(10, :) = ne_m 
+    prof_in(11, :) = zef_m
+    prof_in(12, :) = vpar_m
+    prof_in(13, :) = vper_m
+    prof_in(14, :) = vexb_m
+    prof_in(15, :) = drmin
+    prof_in(16, :) = drmaj
+    prof_in(17, :) = drho 
+    prof_in(18, :) = delong
+    prof_in(19, :) = dtrian
+    prof_in(20, :) = dptot
+    prof_in(21, :) = dte
+    prof_in(22, :) = dne
+    prof_in(23, :) = dq
+    prof_in(24, :) = dvper
+    prof_in(25, :) = dv_r
+    prof_in(26, :) = dr
+    prof_in(27, :) = drhodr
+    prof_in(28, :) = ni_m(1, :)
+    prof_in(29, :) = ni_m(2, :)
+    prof_in(30, :) = ni_m(3, :)
+    prof_in(31, :) = ni_m(4, :)
+    prof_in(32, :) = ti_m(1, :)
+    prof_in(33, :) = ti_m(2, :)
+    prof_in(34, :) = ti_m(3, :)
+    prof_in(35, :) = ti_m(4, :)
+    prof_in(36, :) = zi_m(1, :)
+    prof_in(37, :) = zi_m(2, :)
+    prof_in(38, :) = zi_m(3, :)
+    prof_in(39, :) = zi_m(4, :)
+    prof_in(40, :) = dni(1, :)
+    prof_in(41, :) = dni(2, :)
+    prof_in(42, :) = dni(3, :)
+    prof_in(43, :) = dni(4, :)
+    prof_in(44, :) = dti(1, :)
+    prof_in(45, :) = dti(2, :)
+    prof_in(46, :) = dti(3, :)
+    prof_in(47, :) = dti(4, :)
 
     if (first_call) then
         SBP_NAMES = "xpr/tglfi"//char(0)
