@@ -33,7 +33,6 @@ $(OBJ_DIR)/transport2fbe.o \
 $(OBJ_DIR)/parse_utils.o \
 $(OBJ_DIR)/dbl2char.o \
 $(OBJ_DIR)/emeq.o \
-$(OBJ_DIR)/strahl_mod.o \
 $(OBJ_DIR)/time_functions.o \
 $(OBJ_DIR)/numerical_tools_mod.o
 
