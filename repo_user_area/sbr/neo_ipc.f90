@@ -11,7 +11,10 @@ contains
 
     use const_inc, only: NA1
 
-    if (.not. allocated(mem_neo)) allocate(mem_neo(NA1, n_arr_out))
+    if (.not. allocated(mem_neo)) then
+        allocate(mem_neo(NA1, n_arr_out))
+        mem_neo = 0.
+    endif
 
     return
     end subroutine neo_alloc

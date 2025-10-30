@@ -11,7 +11,10 @@ contains
 
     use const_inc, only: NA1
 
-    if (.not. allocated(mem_tglf)) allocate(mem_tglf(NA1, n_arr_out))
+    if (.not. allocated(mem_tglf)) then
+        allocate(mem_tglf(NA1, n_arr_out))
+        mem_tglf = 0.
+    endif
 
     return
     end subroutine tglf_alloc

@@ -11,7 +11,10 @@ contains
 
     use const_inc, only: NA1
 
-    if (.not. allocated(mem_qlkz)) allocate(mem_qlkz(NA1, n_arr_out))
+    if (.not. allocated(mem_qlkz)) then
+        allocate(mem_qlkz(NA1, n_arr_out))
+        mem_qlkz = 0.
+    endif
 
     return
     end subroutine qlk_alloc
