@@ -73,11 +73,14 @@ type type_global_param
     real(DP) :: i_plasma=-9.0D40       ! /global_param/i_plasma - total toroidal plasma current [A]; Positive sign means anti-clockwise when viewed from above. Time-dependent; Scalar
     real(DP) :: Zcurr=-9.0D40       ! /global_param/Zcurr - current centroid, time dep, scalar [m]
     real(DP) :: Rcurr=-9.0D40       ! /global_param/Zcurr - current centroid, time dep, scalar [m]
-    real(DP) :: psibound=-9.0D40       ! /global_param/psibound - psi at plasma boundary [Wb]
+    real(DP) :: psibound=-9.0D40       ! /global_param/psibound - psi at plasma boundary alpsep [Wb]
+    real(DP) :: psibound100=-9.0D40       ! /global_param/psibound - psi at plasma boundary 100% [Wb]
     real(DP) :: psiaxis=-9.0D40       ! /global_param/psiaxis - psi at mag axis [Wb]
-    real(DP) :: psplex=-9.0D40       ! /global_param/psplex - integral at plasma boundary [?]
+    real(DP) :: psplex=-9.0D40       ! /global_param/psplex - avg integral at plasma boundary [?]
+    real(DP) :: psiext=-9.0D40       ! /global_param/psiext - avg integral of psi external at plasma boundary [?]
     real(DP) :: Vloop=-9.0D40       ! /global_param/Vloop - loop voltage at plasma boundary [V]
     real(DP) :: li3=-9.0D40       ! /global_param/li3 - l_i defined as in ITER li3: 2 V <Bp^2>_volavg / (Rgeo*(mu0 Ip)^2)
+    real(DP) :: lext=-9.0D40       ! /global_param/lext - l_ext defined as 2 Wb_ext / Ip^2
     real(DP) :: li_aug=-9.0D40       ! /global_param/li_aug - l_i defined as in AUG:  s^2 /(mu0*Ip)^2 * <Bp^2>_volavg = li3 * s^2 R0 / (2V), with s the boundary perimeter.
     real(DP) :: betpol=-9.0D40       ! /global_param/betpol - beta poloidal: Wp/Wm  , with Wp=volint(pressure) and Wm=volint(Bpol^2/(2mu0))
     real(DP) :: betpol_iter=-9.0D40       ! /global_param/betpol - beta poloidal iter definition: 4 Wp / (mu0 Rgeo Ip^2)
@@ -120,7 +123,8 @@ type type_rect_npoints  !    Structure for list of R,Z positions (1D)
     integer :: npointsr=-999999999        ! /npoints - Number of meaningful points in the above vectors at a given time slice. Time-dependent
     integer :: npointsz=-999999999        ! /npoints - Number of meaningful points in the above vectors at a given time slice. Time-dependent
     double precision :: psi_axis=0.       !value of psi on axis
-    double precision :: psi_boundary=0.   !value of psi on plasma boundary
+    double precision :: psi_boundary=0.   !value of psi on plasma boundary, alpsep
+    double precision :: psi_boundary100=0.   !value of psi on plasma boundary 100%
 endtype type_rect_npoints
 
 type type_eqgeometry

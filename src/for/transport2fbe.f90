@@ -26,17 +26,18 @@ integer :: plasma_config      ! 0 if limiter, 1 if xpoint
 integer :: simple_plasma_model_breakdown ! if 0, no plasma feedback to coils in vacuum, if 1 yes
 
 integer :: use_isoflux, n_isoflux         ! 0 does nothing, 1 when mode 818 is used to reconstruct coil currents, the boundary is obtained on the isoflux points r_isoflux and z_isoflux , of length n_isoflux
+integer, parameter :: n_x_point=20    ! number of x points to be saved
 
 double precision :: tau_circuit_feqis, tau_gseq_feqis, time_astra
 double precision :: dr_factor_init_astra, dz_factor_init_astra ! factors of dr and dz for initial iterations
 double precision :: raxis_astra, zaxis_astra, psi0_astra, psib_astra, sigma_B, sigma_axis, & 
-   sigma_xpoint, r_xpoint_fit(20), z_xpoint_fit(20), sigma_energy, sigma_forces, sigma_limits   ! sigma_B multiplies the boundary, sigma_axis the axis, sigma_energy the block (sum sigma_coil coil_cur**2 induc), sigma_forces multiplies the force block: sum_ij force_ij I_i I_j. sigma_xpoint can be up to 5 x points to fit.
+   sigma_xpoint, r_xpoint_fit(n_x_point), z_xpoint_fit(n_x_point), sigma_energy, sigma_forces, sigma_limits   ! sigma_B multiplies the boundary, sigma_axis the axis, sigma_energy the block (sum sigma_coil coil_cur**2 induc), sigma_forces multiplies the force block: sum_ij force_ij I_i I_j. sigma_xpoint can be up to 5 x points to fit.
 integer :: n_xpoint_fit
 integer :: fix_shape_after_fbe_off
 
 double precision :: vloop_avg, L_ext, dIp_dt   ! use tau_gseq_feqis here for refit mode 818
  
-double precision :: x_point_save(20, 2) ! R, Z of xpoints, max 20 x points
+double precision :: x_point_save(n_x_point, 2) ! R, Z of xpoints, max n_x_point x points
 double precision, dimension(ncoil_dim) :: activate_coil_feqis, cur_init, sigma_coils, sigma_coils_ref ! initial currents from astra exp, not from coil.dat, in MA/turn
 double precision, dimension(ncoil_dim) :: new_resistance ! whichever is > 0, it is used as new resistance.
 double precision, dimension(ncoil_dim, 2) :: current_limit_feqis ! 1 is upper, 2 is lower
@@ -66,7 +67,7 @@ contains
     n_of_newton_iterations = 150    ! to find actual mag axis. recommended between 5 - 10 
     n_fourier_restab_boundary = 8 ! nr of fourier modes for boundary restab, default = 5
     psplex_from_fbe = 0    ! put 1 to get psplex fromfree boundary
-    plasma_config = 1      ! 0 if limiter, 1 if xpoint
+    plasma_config = 0      ! 0 if limiter, 1 if xpoint
     simple_plasma_model_breakdown = 0 ! if 0, no plasma feedback to coils in vacuum, if 1 yes
 
     use_isoflux = 0
@@ -94,7 +95,7 @@ contains
     vloop_avg = 0.
     L_ext = 0.
     dIp_dt = 0.
-    x_point_save = 0. ! R, Z of xpoints, max 20 x points
+    x_point_save = 0. ! R, Z of xpoints, max n_x_point x points
 
     activate_coil_feqis = 1
     fix_shape_after_fbe_off = 1 ! if ITFBE is set to -1, uses the last FBE shape as new shape for PBE

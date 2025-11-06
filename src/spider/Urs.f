@@ -317,7 +317,8 @@
       common/comurs/psit, purs, furs, wurs, nurs
 
       if(psi.lt.0.d0) then
-         wp =0.d0
+         wp = 0.d0
+         tabw = 0.d0
          return
       endif
 
@@ -357,7 +358,8 @@
       common/comurs/psit, purs, furs, wurs, nurs
 
       if(psi.lt.0.d0) then
-         pp =0.d0
+         tabp = 0.d0
+         pp = 0.d0
          return
       endif
 
@@ -396,7 +398,8 @@
       common/comurs/psit, purs, furs, wurs, nurs
 
       if(psi.lt.0.d0) then
-         fp =0.d0
+         fp = 0.d0
+         tabf = 0.d0
          return
       endif
 

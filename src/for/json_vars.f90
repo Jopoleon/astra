@@ -48,11 +48,17 @@ contains
 !---------------------------------------------------------------------
     subroutine read_metadata
 
-    character(len=120) :: file_in
-
+    logical :: status_ok
+    character(len=:), allocatable :: error_msg
+    character(len=240) :: file_in
     file_in = 'astra_variables.json'
     call astra_vars%initialize()
-    call astra_vars%load(filename=file_in)
+    call astra_vars%load(filename=trim(file_in))
+    if (astra_vars%failed()) then
+        write(*, *) 'Error: '
+        call astra_vars%check_for_errors(status_ok, error_msg)    
+        write(*, *) 'Error: ', error_msg
+    endif
 
 ! Get sub-dictionaries objects & lists
     call get_subdict('variables'  , n_var    ,     varNames,     varPtr)

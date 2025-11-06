@@ -130,6 +130,7 @@ if (LEQ(5) < 3) then
         allocate(equil_now%profiles_1d%pressure(nrho_surf))
         allocate(equil_now%profiles_1d%psi    (nrho_surf))
         allocate(equil_now%profiles_1d%q      (nrho_surf))
+        allocate(equil_now%profiles_1d%rho_tor(nrho_surf))
         allocate(equil_now%profiles_1d%rho_tor_norm(nrho_surf))
         allocate(equil_now%profiles_1d%shif   (nrho_surf))
         allocate(equil_now%profiles_1d%surface(nrho_surf))
@@ -144,6 +145,7 @@ if (LEQ(5) < 3) then
     endif
 ! Fill array values
     equil_now%profiles_1d%rho_tor_norm =  (/ ((i - 1.d0)/(nrho_surf - 1.d0), i=1, nrho_surf) /)
+    equil_now%profiles_1d%rho_tor = equil_now%profiles_1d%rho_tor_norm*ROC
     prof_as = FP(1: NA1)
     call qinterp(XRHO(1:NA1), prof_as, NA1, equil_now%profiles_1d%rho_tor_norm, prof_eq, nrho_surf)
     equil_now%profiles_1d%psi = prof_eq   

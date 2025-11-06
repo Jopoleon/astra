@@ -201,6 +201,7 @@ endif
 
 !PSPLEX in FEQIS is the Lext already. In SPIDER NOT.
 PSPLEX = equil_out%global_param%psplex
+PSIEXT = -GP2*equil_out%global_param%psiext
 
 return
 end subroutine A_equil
