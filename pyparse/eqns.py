@@ -206,46 +206,6 @@ def cuasn(parse, bc='CU', neq=1):
     return cuas_txt
 
 
-def cuas_uloop(parse, neq=1):
-    '''current adjusted to match prescribed Uloop'''
-
-    cuasu_txt = const_text.CUAS.header
- 
-    if 'MV' in parse.var_defined:
-         logger.warning('MV is not used to define FV')
-    else:
-        cuasu_txt += 'FV(1: NA1) = 0.\n'
-
-    cuasu_txt += const_text.CUAS.uloop_1
-
-    for var in ('DC', 'HC', 'XC', 'CD', 'CC'):
-        cuasu_txt += pa.apptmp(var, parse)
-    
-    cuasu_txt += cubs(parse.var_defined)
-
-    if 'CD' in parse.var_defined:
-        cuasu_txt += 'YWA(J) = CUBS(J) + CD(J)\n'
-    else:
-        cuasu_txt += 'YWA(J) = CUBS(J)\n'
-
-    cuasu_txt += const_text.CUAS.uloop_2
-
-    if 'MV' in parse.var_defined:
-        cuasu_txt += \
-'''FP(NA1) = FP(NA)*(IPL + FPO(NA1)*FP(NA1)) + YDF
-'''
-    else:
-        cuasu_txt += 'FP(NA1) = FP(NA)*(IPL + FPO(NA1)*FP(NA1))\n'
-
-    cuasu_txt += const_text.CUAS.uloop_3
-
-    if neq == 0:
-        cuasu_txt += const_text.CUAS.beta
-    cuasu_txt += 'enddo ! JCALL\n'
-
-    return cuasu_txt
-
-
 def cubs(var_defined):
 
     cubs_line = ''

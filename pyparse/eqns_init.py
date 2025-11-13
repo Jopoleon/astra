@@ -45,8 +45,6 @@ def eqns_init(parse):
         cu_as = eqns.cuasn(parse, bc='CU')
     elif 'MU' in parse.var_defined:
         cu_as = eqns.cuasn(parse, bc='MU')
-    else:
-        cu_as = eqns.cuas_uloop(parse)
     init_txt += cu_as
 
 # Subroutines

@@ -129,59 +129,6 @@ YM = YM2
 enddo ! j (radial loop)
 '''
 
-    uloop_1 = \
-'''do j=1, NA1
-FPO(j) = FV(j) + 0.2*GP*RTOR*IPL*(RHO(j)/ROC)**2
-enddo
-do JCALL=1, 10
-YF = 1.E3
-do j=1, NA1
-'''
-
-    uloop_2 = \
-'''YWB(J) = YF*CC(J)*YB/IPOL(J)**2
-YWD(J) = YWA(J)*YD/(IPOL(J)**3 * G33(J))
-enddo
-FP(NA) = 0.4*GP*HRO*RTOR/(G22(NA)*IPOL(NA1))
-FP(NA1) = (HRO - 0.5*HRO)*ROC*CC(NA1)/RTOR/IPOL(NA1)/TAU
-FP(NA-1) = 1. + FP(NA)*FP(NA1)
-'''
-
-    uloop_3 = \
-'''FP(NA) = -1.
-YWA(1: NA1) = G22(1: NA1)
-do j=1, NA1
-YWGN(j) = 1.
-YWGO(j) = 1.
-YWHN(j) = 1.
-YWHO(j) = 1.
-YWB(j) = 0.
-YWS(j) = 0.
-YWR(j) = 0.
-YWQ(j) = 0.
-YWG11(j) = 1.
-YWWB(j) = 1./RHO(j)
-YVR(j) = CC(j)*.4*GP*RHO(j)/IPOL(j)**2
-unit_coeff = 1.
-YWD(j) = -(VR(j)/(GP2*RHO(j)*CC(j))) *(CUBS(j)+CD(j))
-enddo
-imethod = nint(INUME3)
-
-call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWWB(1: NA1), YVR(1: NA1), unit_coeff, YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RBDOT, BBDOT, NA1, NA1, HRO, TAU, RHO(1: NA1), imethod, bctype, bc_values, FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), MPHIT(1: NA1) )
-
-dfpdrbm12 = -YWQ(NA)/G22(NA)
-
-do J=1, NA1
-UPL(J)  = (FP(J) - FPO(J))/TAU/YF
-ULON(J) = IPOL(J)*G33(J)*UPL(J)
-FP(J)  = FP(J) - (9.*FP(1) - FP(2))/8.
-FPO(J) = FP(J)
-enddo
-UPL(NA1)  = UPL(NA-2)
-ULON(NA1) = ULON(NA)
-call CUOFP
-'''
-
     beta = \
 '''if (BETAJR(0.1*ROC) > 100.) then
 write(*, *) ">>>  ERROR  >>> The initial plasma pressure is too high"
