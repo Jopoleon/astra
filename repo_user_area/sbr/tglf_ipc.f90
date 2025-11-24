@@ -48,7 +48,7 @@ contains
     double precision, dimension(nrho_m) :: drmin, drmaj, drho, dte, dne, dq, &
         dptot, delong, dtrian, dvpar, dvper, drhodr, dr, dv_r
     double precision, dimension(NRD) :: rmaj_as, q_as, ni_main_as, &
-        vexb_as, vpar_as, vper_as, chie_as, chii_as, e_pflux_as, i_mflux_as, ptot_as
+        vexb_as, vpar_as, vper_as, chie_as, chii_as, e_pflux_as, ptot_as
     double precision, dimension(nrho_m) :: rho_m, gamma_max, omega_max, kymax, &
         te_m, ne_m, vpar_m, vper_m, vexb_m, &
         ametr_m, elon_m, tria_m, rmaj_m, ptot_m, q_m, zef_m, pfn_m
@@ -313,14 +313,13 @@ contains
 ! Interpolate back to ASTRA radial grid
     e_pflux_as = 0.
     i_pflux_as = 0.
-    i_mflux_as = 0.
     chie_as = 0.
     chii_as = 0.
 
     call qinterp(rho_m, prof_out(1, :), nrho_m, RHO(1:NA1),      chii_as(1:NA1), NA1) ! chi_i
     call qinterp(rho_m, prof_out(2, :), nrho_m, RHO(1:NA1),      chie_as(1:NA1), NA1) !chi_e
-    call qinterp(rho_m, prof_out(3, :), nrho_m, RHO(1:NA1),   i_mflux_as(1:NA1), NA1)
     call qinterp(rho_m, prof_out(4, :), nrho_m, RHO(1:NA1),   e_pflux_as(1:NA1), NA1) ! Electron flux
+    call qinterp(rho_m, prof_out(3, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1,  7), NA1) ! Mom. flux
     call qinterp(rho_m, prof_out(5, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1,  8), NA1) ! Turb. equip.
     call qinterp(rho_m, prof_out(6, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1, 11), NA1) ! gamma
     call qinterp(rho_m, prof_out(7, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1, 12), NA1) ! omega
