@@ -215,7 +215,7 @@ contains
 
 ! CAR profiles
     jid = 0    
-    do j=1, 64 ! CAR*
+    do j=1, 128 ! CAR*
         call write_array((/NA1/), CAR(1:NA1, j), profPtr)
     enddo
 
