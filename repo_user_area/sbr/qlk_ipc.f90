@@ -23,7 +23,7 @@ contains
 
     use parameter_inc, only: NRD
     use io_mod, only: equ_file, exp_file
-    use const_inc, only: NA1, BTOR, RTOR, ABC, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
+    use const_inc, only: NA1, BTOR, RTOR, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
     use status_inc, only: NE, TE, NI, TI, ZIM1, ZIM2, ZIM3, PBLON, PBPER, &
         PFAST, NIZ3, AMAIN, ER, MU, FP_NORM, RHO, AMETR, SHIF, &
         NDEUT, NIZ1, NIZ2, VTOR, NIBM, G11, VPOL, VRS, SHEAR
@@ -198,7 +198,7 @@ contains
 
     scal_in(1) = BTOR
     scal_in(2) = RTOR
-    scal_in(3) = ABC
+    scal_in(3) = AMETR(NA1)
     scal_in(4) = AMJ
     scal_in(5) = AIM1
     scal_in(6) = AIM2

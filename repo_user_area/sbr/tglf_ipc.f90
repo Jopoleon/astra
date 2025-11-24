@@ -23,7 +23,7 @@ contains
 
     use parameter_inc, only: NRD
     use io_mod, only: equ_file, exp_file
-    use const_inc, only: NA1, GP2, BTOR, RTOR, ABC, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
+    use const_inc, only: NA1, GP2, BTOR, RTOR, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
     use status_inc, only: NE, TE, NI, TI, ZEF, PBLON, PBPER, PFAST, &
         ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3, ER, MU, FP_NORM, &
         RHO, AMETR, SHIF, ELON, NDEUT, NTRIT, TRIA, VTOR, G11, VPOL, VRS
