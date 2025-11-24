@@ -229,7 +229,7 @@ contains
 
     scal_in(1) = BTOR
     scal_in(2) = RTOR
-    scal_in(3) = ABC
+    scal_in(3) = AMETR(NA1)
     scal_in(4) = AMJ
     scal_in(5) = AIM1
     scal_in(6) = AIM2
@@ -335,6 +335,9 @@ contains
         mem_tglf(jrho, 4) = e_pflux_as(jrho)*gradrhosq_inv/a0_m ! e flux
         mem_tglf(jrho, 13) = i_pflux_as(2, jrho)*gradrhosq_inv/a0_m/(NIZ1(jrho)/NE(jrho))  ! 1st imp convection
         mem_tglf(jrho, 14) = i_pflux_as(3, jrho)*gradrhosq_inv/a0_m/(NIZ2(jrho)/NE(jrho))  ! 2nd imp convection
+        if (RHO(jrho) > rho_m(nrho_m)) then
+            mem_tglf(jrho, :) = 0.
+        endif
     enddo
 
     call SYSTEM_CLOCK(t_wall2, rate)
