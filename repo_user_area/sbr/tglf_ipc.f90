@@ -322,7 +322,7 @@ contains
     call qinterp(rho_m, prof_out(3, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1,  7), NA1) ! Mom. flux
     call qinterp(rho_m, prof_out(5, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1,  8), NA1) ! Turb. equip.
     call qinterp(rho_m, prof_out(6, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1, 11), NA1) ! gamma
-    call qinterp(rho_m, prof_out(7, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1, 12), NA1) ! omega
+    call qinterp(rho_m, prof_out(7, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1, 13), NA1) ! omega
     do jion=1, nspec_max-1
         call qinterp(rho_m, prof_out(7+jion, :), nrho_m, RHO(1:NA1), i_pflux_as(jion, 1:NA1), NA1)
     enddo
