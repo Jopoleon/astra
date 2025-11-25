@@ -37,9 +37,9 @@ void sbp2astra_(int* jsbp, double* mem){
 
     double* prof_out = (double *)((char *)A_ShmAdr[jproc]);
 
-    for (jarr=0; jarr<N_ARR_OUT; jarr++){
-        for (j=0; j<N_CHUNK; j++){
-            mem[jarr + (j + jproc*N_CHUNK) * N_ARR_OUT] = prof_out[j + jarr*N_CHUNK];
+    for (j=0; j<N_CHUNK; j++){
+        for (jarr=0; jarr<N_ARR_OUT; jarr++){
+            mem[jarr + (j + jproc*N_CHUNK) * N_ARR_OUT] = prof_out[jarr + j*N_ARR_OUT];
         }
     }
     

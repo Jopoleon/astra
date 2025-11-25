@@ -30,7 +30,7 @@ double precision, parameter :: &
 integer, intent(in) :: jproc, dims_in(*)
 double precision, intent(in) :: scal_in(*)
 double precision, intent(in), dimension(dims_in(2), dims_in(4)) :: prof_in
-double precision, intent(out), dimension(dims_in(1), dims_in(3)) :: prof_out
+double precision, intent(out), dimension(dims_in(3), dims_in(1)) :: prof_out
 
 !-----------------------------------------
 
@@ -514,9 +514,9 @@ radial_loop: do jr=1, chunk
 enddo radial_loop
 
 ! Simulated TGLF computation:
-prof_out(:, 1) = chii
-prof_out(:, 2) = chie
-prof_out(:, 4) = pfluxi
-prof_out(:, 5) = exchi
+prof_out(1, :) = chii
+prof_out(2, :) = chie
+prof_out(4, :) = pfluxi
+prof_out(5, :) = exchi
 
 end subroutine qlk_interf

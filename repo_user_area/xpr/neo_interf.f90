@@ -26,7 +26,7 @@ double precision, parameter :: &
 integer, intent(in) :: jproc, dims_in(*)
 double precision, intent(in) :: scal_in(*)
 double precision, intent(in), dimension(dims_in(2), dims_in(4)) :: prof_in
-double precision, intent(out), dimension(dims_in(1), dims_in(3)) :: prof_out
+double precision, intent(out), dimension(dims_in(3), dims_in(1)) :: prof_out
 
 !----------------------------------------------------------------------
 integer :: jr1, jr2, n_inputs, n_outputs, nrho, ns_in, chunk
@@ -296,13 +296,13 @@ radial_loop: do jr=1, chunk
 enddo radial_loop
 
 ! Simulated NEO computation:
-prof_out(:, 1) = chii
-prof_out(:, 2) = chie
-prof_out(:, 3) = jbs
-prof_out(:, 4) = elec_pflux
-prof_out(:, 5) = vippd
-prof_out(:, 6) = vittd
-prof_out(:, 7) = vippi1
-prof_out(:, 8) = vitti1
+prof_out(1, :) = chii
+prof_out(2, :) = chie
+prof_out(3, :) = jbs
+prof_out(4, :) = elec_pflux
+prof_out(5, :) = vippd
+prof_out(6, :) = vittd
+prof_out(7, :) = vippi1
+prof_out(8, :) = vitti1
 
 end subroutine neo_interf

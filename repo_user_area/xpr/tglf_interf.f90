@@ -49,7 +49,7 @@ double precision, parameter :: &
 integer, intent(in) :: jproc, dims_in(*)
 double precision, intent(in) :: scal_in(*)
 double precision, intent(in), dimension(dims_in(2), dims_in(4)) :: prof_in
-double precision, intent(out), dimension(dims_in(1), dims_in(3)) :: prof_out
+double precision, intent(out), dimension(dims_in(3), dims_in(1)) :: prof_out
 
 integer :: jr1, jr2, n_inputs, n_outputs, nrho, nspec_max, ns_in, geom_flag, chunk
 integer :: sat_rule, jr, jgamma_max, jion, kyloop
@@ -415,15 +415,15 @@ enddo radial_loop
 
 ! Send back TGLF output
 prof_out = 0.d0
-prof_out(:, 1) = chii
-prof_out(:, 2) = chie
-prof_out(:, 3) = mtori
-prof_out(:, 4) = elec_pflux
-prof_out(:, 5) = exchi
-prof_out(:, 6) = gamma_max
-prof_out(:, 7) = omega_max
+prof_out(1, :) = chii
+prof_out(2, :) = chie
+prof_out(3, :) = mtori
+prof_out(4, :) = elec_pflux
+prof_out(5, :) = exchi
+prof_out(6, :) = gamma_max
+prof_out(7, :) = omega_max
 do jion=1, tglf_ns_in-1
-    prof_out(:, 7+jion) = ion_pflux(jion, :)
+    prof_out(7+jion, :) = ion_pflux(jion, :)
 enddo
 
 return
