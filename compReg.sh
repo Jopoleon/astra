@@ -12,7 +12,7 @@ do
     $AWD/exe/as_exe -m $EQU -v $EXP -s 4. -e 5.
     python3 $AWD/compareRegressions.py -m $EQU -v $EXP
 done
-for EQU in flux_neo
+for EQU in flux_neo flux_tglf
 do
     $AWD/exe/as_exe -m $EQU -v $EXP -s 4. -e 4.2
     python3 $AWD/compareRegressions.py -m $EQU -v $EXP
