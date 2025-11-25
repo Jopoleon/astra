@@ -143,7 +143,7 @@ class EQU_PARSER:
                     self.assign_d[key] = val
                     self.eqns_lines.append(line)
                 else:
-                    if key[-1] == '*' and key[:-1] in ('TE', 'TI'):
+                    if key.endswith('*') and key[:-1] in ('TE', 'TI'):
                         self.assign_d[key[:-1]] = 'implicit_%s' %val
                         self.eqns_lines.append(line)
                     else:

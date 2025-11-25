@@ -30,18 +30,18 @@ def write_fortran(f_out, text):
             lin_strip = line.lower().strip()
             lin_now = lin_strip.split('!')[0].strip()
             if lin_old.strip():
-                if lin_old[:2] == 'if' and lin_old[-4:] == 'then':
+                if lin_old.startswith('if') and lin_old.endswith('then'):
                     indent += indent_step
                 if lin_old.split()[0].strip() == 'do':
                     indent += indent_step
-                if lin_old[:4] == 'else':
+                if lin_old.startswith('else'):
                     indent += indent_step
-            if lin_now[:4] == 'else' or lin_now in ('endif', 'enddo'):
+            if lin_now.startswith('else') or lin_now in ('endif', 'enddo'):
                 indent -= indent_step
             indent_str = indent*' '
             indented_line = indent_str + line
             if lin_strip:
-                if lin_strip[0] == '!':
+                if lin_strip.startswith('!'):
                    indented_line = line
             line_out = add_line_break(indented_line, lineMaxlen=lineMaxlen, line_break=line_break)
             lin_old = lin_now
@@ -89,7 +89,7 @@ def functionArgs(pieces):
 
     if not pieces:
         return None, None, None
-    if pieces[0] != '(':
+    if not pieces[0] == '(':
         return None, None, None
     left_right_bracket = -1
     arg1 = ''
@@ -137,15 +137,17 @@ def equ_prepare(f_equ):
         line = line.strip()
         if line == '':
             continue
-        if line[0] == '%':
-            skip_block = not skip_block
-        elif not skip_block:
-            if line[0] != '!': # Skip lines starting with '!'
+        if line.startswith('/*'):
+            skip_block = True
+        if not skip_block:
+            if not line.startswith('!'): # Skip lines starting with '!'
                 newline = line.split('!')[0] #Ignore text after '!' in a line
                 for new_lin in newline.split(';'): # Split ';' into multiple lines
                     equ_lines.append(new_lin.strip())
-            if line[:3] == '@!@':
+            if line.endswith('@!@'):
                 config.checkeqn = True
+        if line.endswith('*/'):
+            skip_block = False
 
     fequ.close()
     return equ_lines
@@ -161,12 +163,12 @@ def indiciseVar(var, parse):
         out = '%sR(RHO(J))' %var
     else:
         tmp1 = var[:-1]
-        if var[-1] == 'B':
+        if var.endswith('B'):
             if tmp1 in parse.profiles:
                 out = '%s(NA1)' %tmp1
             elif tmp1 in parse.fnc_list:
                 out = '%sR(ROC)' %tmp1
-        if var[-1] == 'C':
+        if var.endswith('C'):
             if tmp1 in parse.profiles:
                 out = '%s(1)' %tmp1
             elif tmp1 in parse.fnc_list:
@@ -245,7 +247,7 @@ def write_declar_fml(fml_files):
                 trim = line.replace(' ', '')
                 if trim == '':
                     continue
-                if trim[0] == '!':
+                if trim.startswith('!'):
                     continue
  # some care required for lines with IF statements, that's why the split for ")"
                 line1 = line
@@ -360,7 +362,7 @@ def parse_pieces(pieces, parse):
         if var in ('VINT', 'IINT', 'LININT'):
             var3 = pieces[jpos+2]
             tmp3 = var3[:-1]
-            if var3[-1] == 'B':
+            if var3.endswith('B'):
                 if tmp3 in parse.profiles:
                     out = '%s(%s, ROC)'  %(var, tmp3)
             elif block_right == 'j':
@@ -501,7 +503,7 @@ def LINE2FOR(equStatement, parse):
 # Check: exponential notation or real '-' between variables?
     tmp = equStatement
     for sym in ('E-', 'e-', 'D-', 'd-', 'E+', 'e+', 'D+', 'd+'):
-        if sym[-1] == '-':
+        if sym.endswith('-'):
             repl = '$'
         else:
             repl = '#'
