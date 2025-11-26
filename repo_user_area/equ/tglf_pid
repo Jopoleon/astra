@@ -74,20 +74,14 @@ tglf_ipc(CF16):0.02:::;
 CAR17 = "mem_tglf(j,1)"; ! chi_i
 CAR18 = "mem_tglf(j,2)"; ! chi_e
 CAR20 = "mem_tglf(j,4)"; ! Particle flux
-CAR41 = "mem_tglf(j,7)"; ! toroidal momentum flux
 CAR42 = "mem_tglf(j,8)"; ! turbulent equipartition to be added to PE and subtracted to PI
 CAR43 = "mem_tglf(j,11)"; !gamma
 CAR44 = "mem_tglf(j,13)"; !omega
 
-SMEARR2(CF4, CAR17, CAR21)::::;
-SMEARR2(CF4, CAR18, CAR22)::::;
-SMEARR2(CF5, CAR20, CAR24)::::;
-SMEARR2(CF4, CAR41, CAR45)::::;
-
-XI = min(20., max(0., CAR21)) + HNASI;
-HE = min(20., max(0., CAR22)) + HNGSE;
-DN = HNGSE; ! + CAR23;
-CN = CAR24 -VP*VRAS; !max(-20., min(20.,CAR24));
+XI = min(20., max(0., CAR17)) + HNASI;
+HE = min(20., max(0., CAR18)) + HNGSE;
+DN = HNGSE;
+CN = CAR20 -VP*VRAS;
 
 DVN=CF14;
 DVE=CF14;
