@@ -74,14 +74,17 @@ EOF
 # NEO, QUALIKIZ, TGLF (needing MPI)
     if [ "$QLK" = "n" ]
     then
+	sed -i "s#export\ QLK_LIB#\#export\ QLK_LIB#g" $AWD/exe/astra_rc
 	sed -i -e '/all: directories/ s/\$(XPR)\/qlki//g' $AWD/exe/Makexpr
     fi
     if [ "$NEO" = "n" ]
     then
+	sed -i "s#export\ NEO_LIB#\#export\ NEO_LIB#g" $AWD/exe/astra_rc
 	sed -i -e '/all: directories/ s/\$(XPR)\/neo//g' $AWD/exe/Makexpr
     fi
     if [ "$TGLF" = "n" ]
     then
+	sed -i "s#export\ TGLF_LIB#\#export\ TGLF_LIB#g" $AWD/exe/astra_rc
 	sed -i -e '/all: directories/ s/\$(XPR)\/tglfi//g' $AWD/exe/Makexpr
 	rm $AWD/sbr/tglf_serial.f90
     fi
