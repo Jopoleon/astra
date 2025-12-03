@@ -27,6 +27,7 @@ contains
     use status_inc, only: NE, TE, NI, TI, ER, MU, FP_NORM, &
         ZIM1, ZIM2, ZIM3, NDEUT, NIZ1, NIZ2, NIZ3, &
         RHO, AMETR, SHIF, ELON, TRIA, VTOR, VPOL
+    use numerical_tools, only: qinterp
     use debugger, only: markloc
 
     integer, parameter :: n_dims=5, n_scalars=8, n_inputs=33, nrho_m=64, nworkers=64, nspec_max=7
@@ -58,7 +59,7 @@ contains
 
     call SYSTEM_CLOCK(t_wall1, rate)
 
-    ! Interpolate from ASTRA grid to TGLF grid
+! Interpolate from ASTRA grid to NEO grid
     rho_min = RHO(1)
     if (present(rho_norm_max)) then
         rho_max = rho_norm_max*ROC
@@ -100,7 +101,7 @@ contains
     call qinterp(RHO(1:NA1),    q_as(1:NA1), NA1, rho_m,    q_m, nrho_m)
     call qinterp(RHO(1:NA1), vpar_as(1:NA1), NA1, rho_m, vpar_m, nrho_m)
 
-    ! Reference length
+! Reference length
     a0_m = AMETR(NA1)
 
     do jr=1, nrho_m
@@ -113,10 +114,10 @@ contains
     chie_m  = 0.
     chii_m  = 0.
 
-    ! Number of species
+! Number of species
     ns_in = nspec_max
 
-    ! These will be reset locally in the radial loop
+! These will be reset locally in the radial loop
     zs_in(1) = -1.
     zs_in(2) = ZMJ
     zs_in(3) = MAXVAL(ZIM1(1:NA1))
@@ -137,8 +138,8 @@ contains
         ns_in = 3
     endif
 
-    !--------------
-    ! Differentials
+!--------------
+! Differentials
 
     do jr=1, nrho_m
         jr_r = jr + 1
@@ -166,9 +167,9 @@ contains
         drhodr(jr) = drho/drmin(jr)
     enddo
 
-    !--------------------
-    ! IPC parallelisation
-    !--------------------
+!--------------------
+! IPC parallelisation
+!--------------------
 
     nchunk = nrho_m / nworkers
 
@@ -230,24 +231,24 @@ contains
         first_call = .False.
     endif
 
-    ! **** Fill shared memory segments
+! **** Fill shared memory segments
     call fill_var2shm(scal_in)
     call fill_arr2shm(prof_in)
 
-    ! **** Free each semaphore
+! **** Free each semaphore
     do i=1, nworkers
         call unlock_sbp(i)
     enddo
 
-    ! **** Synchronisation point
+! **** Synchronisation point
     call wait4all
 
-    ! **** Collect data from ShMem
+! **** Collect data from ShMem
     do i=1, nworkers
         call sbp2astra(i, prof_out(1, 1))
     enddo
 
-    ! Interpolate back to ASTRA radial grid
+! Interpolate back to ASTRA radial grid
 
     do jout=1, 7
         call qinterp(rho_m, prof_out(jout, :), nrho_m, RHO(1:NA1), mem_neo(1:NA1, jout), NA1)

@@ -23,6 +23,7 @@ subroutine facit(Z_imp_in, A_imp_in, N_imp_in, rot_mod, Dz_out, Vz_out)
   use parameter_inc, only: NRD
   use const_inc,     only: NA1, BTOR, RTOR, AMJ
   use status_inc,    only: TE, TI, NE, IPOL, MU, SQEPS, AMETR, VTOR, ZEF, ZMAIN, NMAIN, VRS, G11, RHO
+  use numerical_tools, only: qinterp
 
   implicit none
 

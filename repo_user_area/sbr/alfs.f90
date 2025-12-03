@@ -4,6 +4,7 @@ use parameter_inc, only: NRD
 use const_inc, only: NA1, ROC
 use status_inc, only: TE, AMETR
 use parameters_a2equil, only: equil_now
+use numerical_tools, only: qinterp
 
 implicit none
 

@@ -34,3 +34,4 @@ profiles.dat
 regressions/*.log
 lastruntime.qlk
 out.neo.*
+preProcess/memo

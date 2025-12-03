@@ -17,6 +17,7 @@ contains
     use status_inc, only: FP, FP_NORM, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
        XRHO, VOLUM, IPOL, PEBM, PIBM, NIBM, CUBM, SNEBM, SCUBM, NRATE, &
        PBLON, PBPER, MU, VTOR, ZEF, NI, NHYDR, NDEUT, NTRIT
+    use numerical_tools, only: qinterp
     use parameters_a2equil, only : equil_now
 
     integer, parameter :: Nrrect=64, Nzrect=64, nnb_max=30, nspc=3, nrhoout=21, unit_lim=11

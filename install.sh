@@ -12,7 +12,7 @@ cd $AWD
 # Prompt overwriting option
 for DIR in $(ls repo_user_area)
 do
-    if [ ! -d "$DIR" ] || [ "$SAFE" != "-safe" ] || [ "$DIR" = "equ" ] || [ "$DIR" = "exp" ] || [ "$DIR" = "pyparse" ] || [ "$DIR" = "udb" ]
+    if [ ! -d "$DIR" ] || [ "$SAFE" != "-safe" ] || [ "$DIR" = "equ" ] || [ "$DIR" = "exp" ] || [ "$DIR" = "udb" ]
     then
         cp -r repo_user_area/$DIR .
     else

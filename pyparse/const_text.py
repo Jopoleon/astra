@@ -24,7 +24,7 @@ use const_inc
 use status_inc
 use nclass_mod
 use strahl_mod
-use a2tglf, only: tglf_ipc, mem_tglf
+use a2tglf, only: tglf_ipc
 use a2qlk, only: qlk_ipc
 use a2neo, only: neo_ipc
 use a2rabbit, only: rabbit
@@ -881,7 +881,7 @@ use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use const_inc
 use status_inc
 use nclass_mod
-use a2tglf, only: tglf_ipc, mem_tglf
+use a2tglf, only: tglf_ipc
 use a2qlk, only: qlk_ipc
 use debugger, only: markloc
 use numerical_tools, only: extrap
@@ -916,7 +916,7 @@ class EQNS_INC:
 use parameter_inc, only: NRD, NSBMX
 use const_inc
 use status_inc
-use a2tglf, only: tglf_ipc, mem_tglf
+use a2tglf, only: tglf_ipc
 use a2qlk, only: qlk_ipc
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use nclass_mod

@@ -39,6 +39,7 @@ use status_inc, only: NE, TE, NI, TI, ZEF, PBLON, PBPER, PFAST, &
     ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3, ER, MU, FP_NORM, &
     RHO, AMETR, SHIF, ELON, NDEUT, TRIA, VTOR, G11, VPOL, VRS
 use parameters_a2equil, only: equil_now
+use numerical_tools, only: qinterp
 
 implicit none
 

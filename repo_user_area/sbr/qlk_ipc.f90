@@ -27,6 +27,7 @@ contains
     use status_inc, only: NE, TE, NI, TI, ZIM1, ZIM2, ZIM3, PBLON, PBPER, &
         PFAST, NIZ3, AMAIN, ER, MU, FP_NORM, RHO, AMETR, SHIF, &
         NDEUT, NIZ1, NIZ2, VTOR, NIBM, G11, VPOL, VRS, SHEAR
+    use numerical_tools, only: qinterp
     use debugger, only: markloc
 
     integer, parameter :: n_dims=5, n_scalars=8, n_inputs=39, nrho_m=64, nspec_max=7, nworkers=64

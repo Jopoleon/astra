@@ -3,6 +3,7 @@ subroutine a2tglf_elite
 use const_inc, only: IPART, NA1
 use status_inc, only: RHO, FP_NORM
 use parameters_a2equil, only: equil_now
+use numerical_tools, only: qinterp
 
 implicit none
 

@@ -28,6 +28,7 @@ contains
         ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3, ER, MU, FP_NORM, &
         RHO, AMETR, SHIF, ELON, NDEUT, NTRIT, TRIA, VTOR, G11, VPOL, VRS
     use parameters_a2equil, only: equil_now
+    use numerical_tools, only: qinterp
 
     logical, parameter :: debug_elite=.false.
     integer, parameter :: n_dims=7, n_scalars=8, n_inputs=47, nspec_max=5, nthe_elite=400, mpol=6

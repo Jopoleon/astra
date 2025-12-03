@@ -1,4 +1,4 @@
-subroutine qlknn_serial(CHI, CHE, VIN)
+subroutine qlknn_serial(chii, chie, e_pflux)
 
 use parameter_inc, only: NRD
 
@@ -23,10 +23,10 @@ USE, INTRINSIC :: IEEE_ARITHMETIC, only: IEEE_IS_NAN, IEEE_IS_FINITE
 
 implicit none
 
-double precision, intent(out), dimension(NRD) :: CHI, CHE, VIN
+double precision, intent(out), dimension(NRD) :: chii, chie, e_pflux
 !--------------------------------
 
-integer, parameter :: dimx=1, nradial=100, nspec_max=7
+integer, parameter :: dimx=1, nspec_max=7
 
 real, parameter :: &
    e0   = 4.8032E-10,      &    ! elementary charge (statcoulombs)
@@ -60,10 +60,8 @@ double precision :: T0, m0, drho_cs
 double precision :: gamma_e_tg, vpar_tg, mach_fac, ql_fac
 
 double precision, dimension(NRD) :: vexb2, vpar_m, vper_m, &
-    gradrhosq_exp, rmaj_exp, q_exp, &
-    chie_m, chii_m, pfluxi_m, ptot
+    gradrhosq_exp, rmaj_exp, q_exp, ptot
 
-double precision, dimension(nradial) :: chie, chii, pfluxi, rho_tg
 double precision, dimension(nspec_max-1) :: dti, dni
 double precision, dimension(nspec_max-1, NRD) :: ni_m, ti_m
 double precision :: vpar_in, vpar_shear_in, cexb
@@ -98,8 +96,6 @@ qlknn_sets_dir = TRIM(AEXT) // '/qlk_nn/nov24/'
 
 nions = nspec_max - 1
 
-jna = max(NA1E, NA1I, NA1N)
-
 ! Electrons and main ions
 Zi_in(1, 1) = ZMJ
 
@@ -130,10 +126,6 @@ enddo
 ! GYRO conventions
 
 m0 = AMJ*mpp*1000         ! Ref. mass = D ion mass [g]
-
-pfluxi_m  = 0.0
-chie_m  = 0.0
-chii_m  = 0.0
 
 ! These will be reset locally in the radial loop
 Zi_in(1, 2) = MAXVAL(ZIM1(1:NA1))
@@ -175,7 +167,6 @@ radial_loop: do jrho=1, NA1
     qx_in(1) = q_exp(jrho)
     rho_in(1) = RHO(jrho)
     x_in(1) = AMETR(jrho)/Rmin_in(1)
-    rho_tg(jrho) = rho_in(1)
     Ro_in(1) = RTOR + SHIF(jrho)
     T0  = 1E3 *te(jrho)   ! eV
 
@@ -650,40 +641,11 @@ radial_loop: do jrho=1, NA1
 
 ! Chii
 
-    chii(jrho)   = ql_fac * ief_gb_out(1, 1)/(1e-4 + Rmin_in(1)/R0_in * abs(Ati_in(1, 1)))
-    chie(jrho)   = ql_fac * eef_gb_out(1)/(1e-4 + Rmin_in(1)/R0_in * abs(Ate_in(1)))
-    pfluxi(jrho) = ql_fac * epf_gb_out(1)
+    chii(jrho)    = ql_fac * ief_gb_out(1, 1)/(1e-4 + Rmin_in(1)/R0_in * abs(Ati_in(1, 1)))
+    chie(jrho)    = ql_fac * eef_gb_out(1)/(1e-4 + Rmin_in(1)/R0_in * abs(Ate_in(1)))
+    e_pflux(jrho) = ql_fac * epf_gb_out(1)
 
 enddo radial_loop
-
-call qinterp(rho_tg, chii  , nradial, RHO(1:jna), chii_m(1:jna)  , jna)
-call qinterp(rho_tg, chie  , nradial, RHO(1:jna), chie_m(1:jna)  , jna)
-call qinterp(rho_tg, pfluxi, nradial, RHO(1:jna), pfluxi_m(1:jna), jna)
-
-chii_m  (1:2) = chii_m(3)
-chie_m  (1:2) = chie_m(3)
-pfluxi_m(1:2) = pfluxi_m(3)
-
-do j=1, jna
-    CHI(j) = chii_m(j)/gradrhosq_exp(j) ! \chi_i, m^2/s
-    CHE(j) = chie_m(j)/gradrhosq_exp(j) ! \chi_e, m^2/s
-    VIN(j) = pfluxi_m(j)/AMETR(NA1)/gradrhosq_exp(j) ! D flux
-    VIN(j) = min( 20., max(-20., VIN(j)) ) ! D flux
-enddo
-
-do j=jna-2, jna-1
-    CHI(j) = CHI(jna-3)
-    CHE(j) = CHE(jna-3)
-    VIN(j) = VIN(jna-3)
-enddo
-
-if (jna .lt. NA1) then
-    do j=jna-1, NA1
-        CHI(j) = 0.d0
-        CHE(j) = 0.d0
-        VIN(j) = 0.d0
-    enddo
-endif
 
 return
 END subroutine qlknn_serial
