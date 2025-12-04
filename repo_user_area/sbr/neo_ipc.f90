@@ -5,15 +5,19 @@ implicit none
 integer, parameter :: n_arr_out=15, nrho_m=64, nworkers=64
 double precision, allocatable, dimension(:, :) :: mem_neo
 
+type neo_output
+    double precision, allocatable, dimension(:) :: chi_i, chi_e, e_pflux
+endtype neo_output
+type(neo_output) :: neo_out 
+
 contains
 
     subroutine neo_alloc
 
     use const_inc, only: NA1
 
-    if (.not. allocated(mem_neo)) then
-        allocate(mem_neo(NA1, n_arr_out))
-        mem_neo = 0.
+    if (.not. allocated(neo_out%chi_i)) then
+        allocate(neo_out%chi_i(NA1), neo_out%chi_e(NA1), neo_out%e_pflux(NA1))
     endif
 
     return
@@ -97,9 +101,9 @@ contains
     enddo
 
     call qinterp(RHO(1:NA1), ni_main_as(1:NA1), NA1, rho_m, ni_m(1, :), nrho_m)
-    call qinterp(RHO(1:NA1), rmaj_as(1:NA1), NA1, rho_m, rmaj_m, nrho_m)
-    call qinterp(RHO(1:NA1),    q_as(1:NA1), NA1, rho_m,    q_m, nrho_m)
-    call qinterp(RHO(1:NA1), vpar_as(1:NA1), NA1, rho_m, vpar_m, nrho_m)
+    call qinterp(RHO(1:NA1),    rmaj_as(1:NA1), NA1, rho_m,     rmaj_m, nrho_m)
+    call qinterp(RHO(1:NA1),       q_as(1:NA1), NA1, rho_m,        q_m, nrho_m)
+    call qinterp(RHO(1:NA1),    vpar_as(1:NA1), NA1, rho_m,     vpar_m, nrho_m)
 
 ! Reference length
     a0_m = AMETR(NA1)
@@ -250,9 +254,9 @@ contains
 
 ! Interpolate back to ASTRA radial grid
 
-    do jout=1, 7
-        call qinterp(rho_m, prof_out(jout, :), nrho_m, RHO(1:NA1), mem_neo(1:NA1, jout), NA1)
-    enddo
+    call qinterp(rho_m, prof_out(1, :), nrho_m, RHO(1:NA1), neo_out%chi_i  , NA1, extrap_right=0.)
+    call qinterp(rho_m, prof_out(2, :), nrho_m, RHO(1:NA1), neo_out%chi_e  , NA1, extrap_right=0.)
+    call qinterp(rho_m, prof_out(4, :), nrho_m, RHO(1:NA1), neo_out%e_pflux, NA1, extrap_right=0.)
 
     call SYSTEM_CLOCK(t_wall2, rate)
     print*, "XPR wall time", dble(t_wall2 - t_wall1)/dble(rate)

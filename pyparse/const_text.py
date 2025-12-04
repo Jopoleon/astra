@@ -240,9 +240,9 @@ use status_inc
 use nclass_mod
 use strahl_mod
 use io_mod, only: IFDFVX
-use a2tglf, only: mem_tglf, tglf_alloc
-use a2qlk, only: mem_qlkz, qlk_alloc
-use a2neo, only: mem_neo, neo_alloc 
+use a2tglf, only: tglf_alloc, tglf_out
+use a2qlk, only: qlk_alloc, qlk_out
+use a2neo, only: neo_alloc, neo_out 
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use json_vars, only: profxNames
 use debugger, only: markloc
@@ -881,8 +881,8 @@ use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use const_inc
 use status_inc
 use nclass_mod
-use a2tglf, only: tglf_ipc
-use a2qlk, only: qlk_ipc
+use a2tglf, only: tglf_ipc, tglf_out
+use a2qlk, only: qlk_ipc, qlk_out
 use debugger, only: markloc
 use numerical_tools, only: extrap
 
@@ -916,8 +916,8 @@ class EQNS_INC:
 use parameter_inc, only: NRD, NSBMX
 use const_inc
 use status_inc
-use a2tglf, only: tglf_ipc
-use a2qlk, only: qlk_ipc
+use a2tglf, only: tglf_ipc, tglf_out
+use a2qlk, only: qlk_ipc, qlk_out
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use nclass_mod
 use strahl_mod

@@ -3,7 +3,11 @@ module a2qlk
 implicit none
 
 integer, parameter :: n_arr_out=15, nrho_m=64, nworkers=64
-double precision, allocatable, dimension(:, :) :: mem_qlkz
+
+type qlk_output
+    double precision, allocatable, dimension(:) :: chi_i, chi_e, e_pflux, equipart
+endtype qlk_output
+type(qlk_output) :: qlk_out 
 
 contains
 
@@ -11,9 +15,8 @@ contains
 
     use const_inc, only: NA1
 
-    if (.not. allocated(mem_qlkz)) then
-        allocate(mem_qlkz(NA1, n_arr_out))
-        mem_qlkz = 0.
+    if (.not. allocated(qlk_out%chi_i)) then
+        allocate(qlk_out%chi_i(NA1), qlk_out%chi_e(NA1), qlk_out%e_pflux(NA1), qlk_out%equipart(NA1))
     endif
 
     return
@@ -273,10 +276,10 @@ contains
 
     ! Interpolate back to ASTRA radial grid
 
-    call qinterp(rho_m, prof_out(1, :), nrho_m, RHO(1:NA1), chii_m(1:NA1)      , NA1)
-    call qinterp(rho_m, prof_out(2, :), nrho_m, RHO(1:NA1), chie_m(1:NA1)      , NA1)
-    call qinterp(rho_m, prof_out(4, :), nrho_m, RHO(1:NA1), elec_pflux_m(1:NA1), NA1)
-    call qinterp(rho_m, prof_out(5, :), nrho_m, RHO(1:NA1), exchi_m(1:NA1)     , NA1)
+    call qinterp(rho_m, prof_out(1, :), nrho_m, RHO(1:NA1), chii_m(1:NA1)      , NA1, extrap_right=0.)
+    call qinterp(rho_m, prof_out(2, :), nrho_m, RHO(1:NA1), chie_m(1:NA1)      , NA1, extrap_right=0.)
+    call qinterp(rho_m, prof_out(4, :), nrho_m, RHO(1:NA1), elec_pflux_m(1:NA1), NA1, extrap_right=0.)
+    call qinterp(rho_m, prof_out(5, :), nrho_m, RHO(1:NA1), exchi_m(1:NA1)     , NA1, extrap_right=0.)
 
     chii_m (1:2) = chii_m (3)
     chie_m (1:2) = chie_m (3)
@@ -284,10 +287,10 @@ contains
     exchi_m(1:2) = exchi_m(3)
 
     do jrho=1, NA1
-        mem_qlkz(jrho, 1) = chii_m(jrho)/gradrhosq_as(jrho) ! \chi_i, m^2/s
-        mem_qlkz(jrho, 2) = chie_m(jrho)/gradrhosq_as(jrho) ! \chi_e, m^2/s
-        mem_qlkz(jrho, 4) = elec_pflux_m(jrho)/a0_m/gradrhosq_as(jrho) ! D flux
-        mem_qlkz(jrho, 8) = exchi_m(jrho) ! turbulent e-i equipartition in MW/m^3
+        qlk_out%chi_i(jrho)    = chii_m(jrho)/gradrhosq_as(jrho) ! \chi_i, m^2/s
+        qlk_out%chi_e(jrho)    = chie_m(jrho)/gradrhosq_as(jrho) ! \chi_e, m^2/s
+        qlk_out%e_pflux(jrho)  = elec_pflux_m(jrho)/a0_m/gradrhosq_as(jrho) ! D flux
+        qlk_out%equipart(jrho) = exchi_m(jrho) ! turbulent e-i equipartition in MW/m^3
     enddo
 
     call SYSTEM_CLOCK(t_wall2, rate)

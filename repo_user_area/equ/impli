@@ -67,12 +67,12 @@ CAR11=CUBM;
 !TGLF call
 tglf_ipc:0.02:::;
 
-CAR21 = "mem_tglf(j,1)"; ! chi_i
-CAR22 = "mem_tglf(j,2)"; ! chi_e
-CAR24 = "mem_tglf(j,4)"; ! Particle flux
-CAR42 = "mem_tglf(j,8)"; !turbulent equipartition to be added to PE and subtracted to PI
-CAR43 = "mem_tglf(j,11)"; !gamma
-CAR44 = "mem_tglf(j,13)"; !omega
+CAR21 = "tglf_out%chi_i(j)";
+CAR22 = "tglf_out%chi_e(j)";
+CAR24 = "tglf_out%e_pflux(j)";
+CAR42 = "tglf_out%equipart(j)"; ! to be added to PE and subtracted to PI
+CAR43 = "tglf_out%gamma(j)";
+CAR44 = "tglf_out%omega(j)";
 
 XI = min(20., max(0., CAR21)) + HNASI;
 HE = min(20., max(0., CAR22)) + HNGSE;

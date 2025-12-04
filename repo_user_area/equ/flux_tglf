@@ -68,9 +68,9 @@ PI=PIBM+PEICL+PIDT;
 ! NEO call
 TGLF_IPC>:0.02:::;
 
-CAR17 = "mem_tglf(j,1)"; ! chi_i
-CAR18 = "mem_tglf(j,2)"; ! chi_e
-CAR20 = "mem_tglf(j,4)"; ! Particle flux
+CAR17 = "tglf_out%chi_i(j)";
+CAR18 = "tglf_out%chi_e(j)";
+CAR20 = "tglf_out%e_pflux(j)";
 
 CAR1 = QETOT;
 CAR2 = QITOT;

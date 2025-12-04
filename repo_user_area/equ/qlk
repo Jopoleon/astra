@@ -67,10 +67,10 @@ CAR11=CUBM;
 ! QLK call; input: rho_norm_max, e.g. 0.85
 qlk_ipc(CF16):0.02:::;
 
-CAR17 = "mem_qlkz(j,1)"; ! chi_i
-CAR18 = "mem_qlkz(j,2)"; ! chi_e
-CAR20 = "mem_qlkz(j,4)"; ! Particle flux
-CAR42 = "mem_qlkz(j,8)"; !turbulent equipartition to be added to PE and subtracted to PI
+CAR17 = "qlk_out%chi_i(j)";
+CAR18 = "qlk_out%chi_e(j)";
+CAR20 = "qlk_out%e_pflux(j)";
+CAR42 = "qlk_out%equipart(j)"; ! to be added to PE and subtracted from PI
 
 SMEARR2(CF4, CAR17, CAR21)::::;
 SMEARR2(CF4, CAR18, CAR22)::::;

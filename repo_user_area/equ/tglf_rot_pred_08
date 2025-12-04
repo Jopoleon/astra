@@ -67,13 +67,13 @@ CAR11=CUBM;
 !TGLF call
 tglf_ipc:0.02:::;
 
-CAR17 = "mem_tglf(j,1)"; ! chi_i
-CAR18 = "mem_tglf(j,2)"; ! chi_e
-CAR20 = "mem_tglf(j,4)"; ! Particle flux
-CAR41 = "mem_tglf(j,7)"; ! toroidal momentum flux
-CAR42 = "mem_tglf(j,8)"; ! turbulent equipartition to be added to PE and subtracted to PI
-CAR43 = "mem_tglf(j,11)"; !gamma
-CAR44 = "mem_tglf(j,13)"; !omega
+CAR17 = "tglf_out%chi_i(j)";
+CAR18 = "tglf_out%chi_e(j)";
+CAR20 = "tglf_out%e_pflux(j)";
+CAR41 = "tglf_out%mom_flux(j)";
+CAR42 = "tglf_out%equipart(j)"; ! to be added to PE and subtracted to PI
+CAR43 = "tglf_out%gamma(j)";
+CAR44 = "tglf_out%omega(j)";
 
 SMEARR2(CF4, CAR17, CAR21)::::;
 SMEARR2(CF4, CAR18, CAR22)::::;

@@ -2,8 +2,14 @@ module a2tglf
 
 implicit none
 
-integer, parameter :: n_arr_out=15, nrho_m=64, nworkers=64
-double precision, allocatable, dimension(:, :) :: mem_tglf
+integer, parameter :: n_arr_out=15, nrho_m=64, nworkers=64, nspec_max=5
+
+type tglf_output
+    double precision, allocatable, dimension(:) :: chi_i, chi_e, e_pflux, equipart, &
+        mom_flux, gamma, omega
+    double precision, allocatable, dimension(:, :) :: ion_pflux
+endtype tglf_output
+type(tglf_output) :: tglf_out 
 
 contains
 
@@ -11,9 +17,11 @@ contains
 
     use const_inc, only: NA1
 
-    if (.not. allocated(mem_tglf)) then
-        allocate(mem_tglf(NA1, n_arr_out))
-        mem_tglf = 0.
+    if (.not. allocated(tglf_out%chi_i)) then
+        allocate(tglf_out%chi_i(NA1), tglf_out%chi_e(NA1), tglf_out%e_pflux(NA1), &
+             tglf_out%equipart(NA1), tglf_out%mom_flux(NA1), &
+             tglf_out%gamma(NA1), tglf_out%omega(NA1))
+        allocate(tglf_out%ion_pflux(nspec_max-1, NA1))
     endif
 
     return
@@ -31,7 +39,7 @@ contains
     use numerical_tools, only: qinterp
 
     logical, parameter :: debug_elite=.false.
-    integer, parameter :: n_dims=7, n_scalars=8, n_inputs=47, nspec_max=5, nthe_elite=400, mpol=6
+    integer, parameter :: n_dims=7, n_scalars=8, n_inputs=47, nthe_elite=400, mpol=6
     double precision, parameter :: c_vpol=1.d0
 
     double precision, intent(in), optional :: rho_norm_max
@@ -317,27 +325,26 @@ contains
     chie_as = 0.
     chii_as = 0.
 
-    call qinterp(rho_m, prof_out(1, :), nrho_m, RHO(1:NA1),      chii_as(1:NA1), NA1) ! chi_i
-    call qinterp(rho_m, prof_out(2, :), nrho_m, RHO(1:NA1),      chie_as(1:NA1), NA1) !chi_e
-    call qinterp(rho_m, prof_out(4, :), nrho_m, RHO(1:NA1),   e_pflux_as(1:NA1), NA1) ! Electron flux
-    call qinterp(rho_m, prof_out(3, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1,  7), NA1) ! Mom. flux
-    call qinterp(rho_m, prof_out(5, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1,  8), NA1) ! Turb. equip.
-    call qinterp(rho_m, prof_out(6, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1, 11), NA1) ! gamma
-    call qinterp(rho_m, prof_out(7, :), nrho_m, RHO(1:NA1), mem_tglf(1:NA1, 13), NA1) ! omega
+    call qinterp(rho_m, prof_out(1, :), nrho_m, RHO(1:NA1),    chii_as(1:NA1), NA1, extrap_right=0.)
+    call qinterp(rho_m, prof_out(2, :), nrho_m, RHO(1:NA1),    chie_as(1:NA1), NA1, extrap_right=0.)
+    call qinterp(rho_m, prof_out(4, :), nrho_m, RHO(1:NA1), e_pflux_as(1:NA1), NA1, extrap_right=0.)
+    call qinterp(rho_m, prof_out(3, :), nrho_m, RHO(1:NA1), tglf_out%mom_flux, NA1, extrap_right=0.)
+    call qinterp(rho_m, prof_out(5, :), nrho_m, RHO(1:NA1), tglf_out%equipart, NA1, extrap_right=0.)
+    call qinterp(rho_m, prof_out(6, :), nrho_m, RHO(1:NA1),    tglf_out%gamma, NA1, extrap_right=0.)
+    call qinterp(rho_m, prof_out(7, :), nrho_m, RHO(1:NA1),    tglf_out%omega, NA1, extrap_right=0.)
     do jion=1, nspec_max-1
-        call qinterp(rho_m, prof_out(7+jion, :), nrho_m, RHO(1:NA1), i_pflux_as(jion, 1:NA1), NA1)
+        call qinterp(rho_m, prof_out(7+jion, :), nrho_m, RHO(1:NA1), i_pflux_as(jion, 1:NA1), NA1, extrap_right=0.)
     enddo
 
     do jrho=1, NA1
         gradrhosq_inv = VRS(jrho)/G11(jrho)
-        mem_tglf(jrho, 1) = chii_as(jrho)*gradrhosq_inv ! \chi_i, m^2/s
-        mem_tglf(jrho, 2) = chie_as(jrho)*gradrhosq_inv ! \chi_e, m^2/s
-        mem_tglf(jrho, 4) = e_pflux_as(jrho)*gradrhosq_inv/a0_m ! e flux
-        mem_tglf(jrho, 13) = i_pflux_as(2, jrho)*gradrhosq_inv/a0_m/(NIZ1(jrho)/NE(jrho))  ! 1st imp convection
-        mem_tglf(jrho, 14) = i_pflux_as(3, jrho)*gradrhosq_inv/a0_m/(NIZ2(jrho)/NE(jrho))  ! 2nd imp convection
-        if (RHO(jrho) > rho_m(nrho_m)) then
-            mem_tglf(jrho, :) = 0.
-        endif
+        tglf_out%chi_i(jrho)   = chii_as(jrho)*gradrhosq_inv ! m^2/s
+        tglf_out%chi_e(jrho)   = chie_as(jrho)*gradrhosq_inv ! m^2/s
+        tglf_out%e_pflux(jrho) = e_pflux_as(jrho)*gradrhosq_inv/a0_m
+        tglf_out%ion_pflux(1, jrho) = i_pflux_as(1, jrho)*gradrhosq_inv/a0_m/(ni_main_as(jrho)/NE(jrho))  ! main ion particle flux
+        tglf_out%ion_pflux(2, jrho) = i_pflux_as(2, jrho)*gradrhosq_inv/a0_m/(NIZ1(jrho)/NE(jrho))  ! 1st imp particle flux
+        tglf_out%ion_pflux(3, jrho) = i_pflux_as(3, jrho)*gradrhosq_inv/a0_m/(NIZ2(jrho)/NE(jrho))  ! 2nd imp particle flux
+        tglf_out%ion_pflux(4, jrho) = i_pflux_as(4, jrho)*gradrhosq_inv/a0_m/(NIZ3(jrho)/NE(jrho))  ! 2nd imp particle flux
     enddo
 
     call SYSTEM_CLOCK(t_wall2, rate)
