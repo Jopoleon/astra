@@ -127,12 +127,10 @@ def fill_equilibrium(cv):
 
     eq.vacuum_toroidal_field.r0 = cv['RTOR'].data[0]
     eq.vacuum_toroidal_field.b0 = cv['BTOR'].data
-    
-    prof_map = {'psi': 'psi', 'phi': 'phi', \
-        'pressure': 'pressure', 'dpressure_dpsi': 'pprime', \
-        'f_df_dpsi': 'ffprime', 'q': 'q', \
-        'volume': 'volume', 'area': 'areat', \
-        'r_inboard': 'r_inboard', 'r_outboard': 'r_outboard'}
+
+    imas_profs = ['psi', 'phi', 'pressure', 'dpressure_dpsi', 'f_df_dpsi', 'q', \
+                  'volume', 'area', 'r_inboard', 'r_outboard']
+    prof_map = {'dpressure_dpsi': 'pprime', 'f_df_dpsi': 'ffprime', 'area': 'areat'}
 
     eqt = eq.time_slice
     eqt.resize(nt_eq)
@@ -144,7 +142,11 @@ def fill_equilibrium(cv):
         eqt[itim].boundary_separatrix.outline.r = cv['r'][itim, -1, :]
         eqt[itim].boundary_separatrix.outline.z = cv['z'][itim, -1, :]
         eqt[itim].profiles_1d.rho_tor_norm = cv['RHO_SURF'].data
-        for imas_lbl, sf_lbl in prof_map.items():
+        for imas_lbl in imas_profs:
+            if imas_lbl in prof_map:
+                sf_lbl = prof_map[imas_lbl]
+            else:
+                sf_lbl = imas_lbl
             eqt[itim].profiles_1d.__dict__[imas_lbl] = \
                 np.array(cv[sf_lbl][itim])
         eqt[itim].profiles_1d.phi = cv['RHO_SURF'].data**2 * np.pi * cv['BTOR'][itim]*cv['ROC'][itim]
