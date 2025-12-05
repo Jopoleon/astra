@@ -19,30 +19,29 @@ e19m3_to_m3  = 1e19
 keV_to_eV    = 1e3
 
 
-def ACDF2IMAS(args, write_ids=True, db='aug'):
+def ACDF2IMAS(args, db='aug', v_major='3'):
 
     logger.info('Creating IDS structure')
 
     if args.ids_backend == 'HDF5':
-        db = imas.DBEntry(imas.imasdef.HDF5_BACKEND   , db, args.shot, args.ids_run, os.getenv('IMASDB'), '3')
+        db = imas.DBEntry(imas.imasdef.HDF5_BACKEND   , db, args.shot, args.ids_run, os.getenv('IMASDB'), v_major)
     elif args.ids_backend == 'MDS+':
-        db = imas.DBEntry(imas.imasdef.MDSPLUS_BACKEND, db, args.shot, args.ids_run, os.getenv('IMASDB'), '3')
+        db = imas.DBEntry(imas.imasdef.MDSPLUS_BACKEND, db, args.shot, args.ids_run, os.getenv('IMASDB'), v_major)
     elif args.ids_backend == 'ASCII':
-        db = imas.DBEntry(imas.imasdef.ASCII_BACKEND  , db, args.shot, args.ids_run, os.getenv('IMASDB'), '3')
+        db = imas.DBEntry(imas.imasdef.ASCII_BACKEND  , db, args.shot, args.ids_run, os.getenv('IMASDB'), v_major)
     status, _ = db.create()
 
     cv = netcdf_file(args.fcdf, 'r', mmap=False).variables
     cp = fill_core_profiles(cv)
     eq = fill_equilibrium(cv)
 
-    if write_ids:
-        logger.info('Dumping IDS file %s', args.ids_backend)
-        logger.info('in dir %s' %os.getenv('IMASDB'))
-        logger.info('Putting core_profiles')
-        db.put(cp)
-        logger.info('Putting equilibrium')
-        db.put(eq)
-        logger.info('Closed IMAS file')
+    logger.info('Dumping IDS file %s', args.ids_backend)
+    logger.info('in dir %s' %os.getenv('IMASDB'))
+    logger.info('Putting core_profiles')
+    db.put(cp)
+    logger.info('Putting equilibrium')
+    db.put(eq)
+    logger.info('Closed IMAS file')
 
 
 def fill_core_profiles(cv):
@@ -132,7 +131,8 @@ def fill_equilibrium(cv):
     prof_map = {'psi': 'psi', 'phi': 'phi', \
         'pressure': 'pressure', 'dpressure_dpsi': 'pprime', \
         'f_df_dpsi': 'ffprime', 'q': 'q', \
-        'volume': 'volume', 'area': 'areat'}
+        'volume': 'volume', 'area': 'areat', \
+        'r_inboard': 'r_inboard', 'r_outboard': 'r_outboard'}
 
     eqt = eq.time_slice
     eqt.resize(nt_eq)
