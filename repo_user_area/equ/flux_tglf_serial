@@ -66,11 +66,7 @@ PE=POH+PEBM+PEECR-PEICL-PRAD+PEDT;
 PI=PIBM+PEICL+PIDT;
 
 ! NEO call
-TGLF_IPC>:0.1:::;
-
-CAR17 = "tglf_out%chi_i(j)";
-CAR18 = "tglf_out%chi_e(j)";
-CAR20 = "tglf_out%e_pflux(j)";
+tglf_serial(CAR17, CAR18, CAR20, CAR42, CAR31, CAR32, CAR33, CAR34, CAR35)>:0.1:::;
 
 CAR1 = QETOT;
 CAR2 = QITOT;

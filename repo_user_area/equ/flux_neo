@@ -66,7 +66,7 @@ PE=POH+PEBM+PEECR-PEICL-PRAD+PEDT;
 PI=PIBM+PEICL+PIDT;
 
 ! NEO call
-NEO_IPC>:0.02:::;
+NEO_IPC>:0.1:::;
 
 CAR17 = "neo_out%chi_i(j)";
 CAR18 = "neo_out%chi_e(j)";
