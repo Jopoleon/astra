@@ -44,7 +44,7 @@ use numerical_tools, only: qinterp
 implicit none
 
 logical, parameter :: debug_elite=.false.
-integer, parameter :: nrho_m=40, nthe_elite=400, mpol=6
+integer, parameter :: nrho_m=64, nthe_elite=400, mpol=6
 double precision, parameter :: &
    k0   = 1.6022E-12, &       ! erg/ev
    e0   = 4.8032E-10, &       ! elementary charge (statcoulombs)
