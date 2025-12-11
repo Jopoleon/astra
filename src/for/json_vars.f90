@@ -115,7 +115,7 @@ contains
 ! Scalars
     call write_scalar_block(varPtr, DEVAR)
     call write_scalar_block(varxPtr, DEVARX)
-    call write_scalar_block(constPtr, CONSTF)
+    call write_scalar_block(constPtr, constValues)
     call write_scalar_block(internPtr, DELOUT)
 
 ! Sparse scalars

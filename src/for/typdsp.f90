@@ -20,7 +20,7 @@ end subroutine ERASXY
 !---------------------------------------------------------------------
 subroutine writeData(CHORDN)
 
-use const_inc, only: XOUT, NAB, NA, NA1, exp_header, RTOR, ABC, BTOR, IPL, TIME, TAU, CONSTF
+use const_inc, only: XOUT, NAB, NA, NA1, exp_header, RTOR, ABC, BTOR, IPL, TIME, TAU, constValues
 use status_inc, only: MU, AMETR, RHO, FP
 use io_mod, only: AWD, equ_file, exp_file
 use outcmn_inc, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, &
@@ -177,7 +177,7 @@ do JEN=1, 11
     do J=1, 16
         J1 = J1 + 1
         if (J1 > n_const) EXIT
-        CH6 = fmt_xf(CONSTF(J1), 5)
+        CH6 = fmt_xf(constValues(J1), 5)
         JJ = 7*(J - 1) + 1
         STRI(JJ: JJ+5) = CH6
     enddo
@@ -980,7 +980,7 @@ end subroutine TIMEDT
 subroutine const2ps
 ! Appending the list of constants to a PS file
 
-use const_inc, only: CONSTF, DEVAR
+use const_inc, only: constValues, DEVAR
 use char_manip, only: null_ch
 use outcmn_inc, only: resizeGraph
 use dbl2char, only: fmt_xf
@@ -1013,7 +1013,7 @@ ps_loop: do J2=1, 11
     do J=1, 4
         J1 = J1 + 1
         if (J1 > n_const) EXIT ps_loop
-        CH6 = fmt_xf(CONSTF(J1), 5)
+        CH6 = fmt_xf(constValues(J1), 5)
         JJ = 7*(J - 1) + 8
     enddo
 
@@ -1023,7 +1023,7 @@ ps_loop: do J2=1, 11
     do J=5, 8
         J1 = J1 + 1
         if (J1 > n_const) EXIT ps_loop
-        CH6 = fmt_xf(CONSTF(J1), 5)
+        CH6 = fmt_xf(constValues(J1), 5)
         JJ = 7*(J - 1) + 20
     enddo
 
@@ -1224,7 +1224,7 @@ do J2 = 1, IPOUT-1
     read(NCHR, ERR=38, END=39) JNT
     if (JNT /= 0) read(NCHR, ERR=38) TEMPR
     read(NCHR, END=39) YTIME
-!  Skip  CONSTF, DEVAR, LINEAV, ROC
+!  Skip  constValues, DEVAR, LINEAV, ROC
     read(NCHR, END=39) TEMPR
 
     read(NCHR, END=39) JAB, JAB, (JNT, I=1, 10), (TEMPR, I=1, 10)

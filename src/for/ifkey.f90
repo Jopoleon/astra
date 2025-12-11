@@ -36,7 +36,7 @@ use status_inc, only: MU, AMETR, SHIF, ELON, TRIA, EQFF, EQPF, FP, RHO
 use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, exp_header, &
    NA, NB1, NA1, NAB, NUF, LEQ, NBND, TIME, TAU, TINIT, TSCALE, &
    TSTART, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
-   BTOR, IPL, CONSTF, DEVAR, DELOUT, XFLAG
+   BTOR, IPL, constValues, DEVAR, DELOUT, XFLAG
 use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     Black, Blue, Magenta, WarningColor, &
     active_tab, curves_per_frame, MOD10, LTOUT, IPOUT, MODEY, &
@@ -259,7 +259,7 @@ if (TPOUT + DPOUT < TSTART .or. (IFKL /= 256 .and. TIME + 0.5*TAU >= TPOUT + DPO
     endif
     write(3) TIME
 
-    write(3) (CONSTF(J), J=1, n_const), (DEVAR(J), J=1, n_var), ABC, ROC, CHORDN, 1./MU(NA)
+    write(3) (constValues(J), J=1, n_const), (DEVAR(J), J=1, n_var), ABC, ROC, CHORDN, 1./MU(NA)
     write(3) NA1, NAB, (0, j=1, 10), (0.d0, j=1, 10)
 
     if (LEQ(5) /= 5) call RHSEQ !call this only if equil is not active
@@ -449,7 +449,7 @@ do while(.True.)
         call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
 
     CASE(67) ! 'C'
-        call MENUTABLE(n_const, CONSTF, constNames, 2)
+        call MENUTABLE(n_const, constValues, constNames, 2)
 
     CASE(68) ! 'D'
         NDTNAM = NSDELOUT + 4*NSBR
@@ -528,7 +528,7 @@ do while(.True.)
 
            write(1, '(A)')' Constants:'
            do J=1, n_const
-               write(1, '(1A6, 1A2, 1P, 8E11.3)') constNames(J), ' =', CONSTF(J)
+               write(1, '(1A6, 1A2, 1P, 8E11.3)') constNames(J), ' =', constValues(J)
            enddo
            write(1, '(A, I2)') ' Control parameters:', 22
            do J=1, 22   ! Don't save TPAUSE and TEND

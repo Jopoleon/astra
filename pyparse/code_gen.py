@@ -24,6 +24,7 @@ class CODE_GEN:
         eqns_lin = parse.eqns_lines
 
         linapp = False
+
 #------------------------------- 
 # Identifying SuBRoutines, SuBPprocesses
 #------------------------------- 
@@ -73,6 +74,27 @@ class CODE_GEN:
 # declar.fml
 
         self.fml = pa.write_declar_fml(parse.fml_list)
+
+#-----------
+# associate_pointers
+
+        self.associate_pointers = \
+'''subroutine associate_pointers
+use const_inc
+use json_vars, only: n_const
+
+implicit none
+
+allocate(constValues(n_const))
+
+'''
+        for j, const in enumerate(parse.constants):
+            self.associate_pointers += '%s => constValues(%d)\n' %(const, j+1)
+        self.associate_pointers += \
+'''
+return
+end subroutine associate_pointers
+'''
 
 #-----------
 # postep.f90

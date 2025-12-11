@@ -17,7 +17,7 @@ subroutine read_input
 use parameter_inc, only: NTVAR, NBDMAX, NBDTMAX, NRD, NRDX, NTARR
 use const_inc, only: NITREQ, NA, NA1, NB1, NAB, NUF, NBND, NCNB, n_bouncon, &
     TIME, TSTART, TEND, TPAUSE, TAUMIN, TAUPRP, TINIT, TSCALE, TIMEQL, DTEQL, &
-    DEVAR, CONSTF, DELOUT, XFLAG, exp_header, ARXUSE, &
+    DEVAR, constValues, DELOUT, XFLAG, exp_header, ARXUSE, &
     AB, ABC, AWAll, ROC, ROCO, ROB, ROWALL,  HRO, HROX, RTOR, &
     ELONG, ELONM, TRIAN, TRICH, SHIFT, VOLUME, &
     GP, GP2, BTOR, BTN, FTO, FTN, IPL, IPLN, FLXDR, PSIAX, PSIBO
@@ -124,7 +124,7 @@ endif
 ! Read log file
 nvar = 37
 call assign_val(file_in, nvar    ,    varNames(1: nvar    ), DEVAR (1: nvar)    , n_color)
-call assign_val(file_in, n_const ,  constNames(1: n_const ), CONSTF(1: n_const ), n_color)
+call assign_val(file_in, n_const ,  constNames(1: n_const ), constValues(1: n_const ), n_color)
 call assign_val(file_in, n_intern, internNames(1: n_intern), DELOUT(1: n_intern), n_color)
 NA1   = DELOUT(13)
 NUF   = DELOUT(14)

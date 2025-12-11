@@ -291,7 +291,7 @@ end subroutine NMARK
 !---------------------------------------------------------------------
 double precision function GETNUM(FIELD, ERCODE)
 
-use const_inc , only: CONSTF, DEVARX
+use const_inc , only: constValues, DEVARX
 use char_manip, only: str_in_list
 use json_vars, only: constNames, varNames
 
@@ -323,7 +323,7 @@ if (jpos == 0) then
         jnam = str_in_list(ZNUM, constNames)
         if (jnam > 0) then
             ERCODE = 0
-            GETNUM = CONSTF(jnam)
+            GETNUM = constValues(jnam)
         endif
     endif
 else
@@ -356,7 +356,7 @@ subroutine STREAD(NCH, NFIELD, ARRAY, ERCODE)
 !---------------------------------------------------------------------
 ! Reads one record group of the NBINP ("*.nbi") file 
 ! and fills ARRAY(1:NFIELD) with data.
-! Numbers and references to ZRD*, ZRD*X and CONSTF_list
+! Numbers and references to ZRD*, ZRD*X and constValues_list
 ! are allowed as records in the input file.
 ! ERCODE values:
 !   0 - Normal exit
