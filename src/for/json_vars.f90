@@ -20,8 +20,9 @@ type(json_value), pointer :: varPtr, varxPtr, constPtr, &
 contains
 
 !---------------------------------------------------------------------
-    subroutine get_subdict(label, nvars, names_out, jsonOut)
+    subroutine get_subdict(fjson_in, label, nvars, names_out, jsonOut)
 
+    type(json_file), intent(inout) :: fjson_in
     character(len=*), intent(in) :: label
     integer, intent(out) :: nvars  
     character(len=6), intent(out), allocatable, dimension(:) :: names_out
@@ -33,9 +34,9 @@ contains
     type(json_value), pointer :: dictPointer
     type(json_core) :: jCore
 
-    call astra_vars%info(label, n_children=nvars)
+    call fjson_in%info(label, n_children=nvars)
     allocate(names_out(nvars))
-    call astra_vars%get(label, jsonOut, found)
+    call fjson_in%get(label, jsonOut, found)
     do j=1, nvars
         call jCore%get_child(jsonOut, j, dictPointer, found)
         call jCore%info(dictPointer, name=sname)
@@ -61,17 +62,17 @@ contains
     endif
 
 ! Get sub-dictionaries objects & lists
-    call get_subdict('variables'  , n_var    ,     varNames,     varPtr)
-    call get_subdict('variables_x', n_varx   ,    varxNames,    varxPtr)
-    call get_subdict('constants'  , n_const  ,   constNames,   constPtr)
-    call get_subdict('internal'   , n_intern ,  internNames,  internPtr)
-    call get_subdict('intern2'    , n_intern2, intern2Names, intern2Ptr)
-    call get_subdict('profiles'   , n_prof   ,    profNames,    profPtr)
-    call get_subdict('profiles_x' , n_profx  ,   profxNames,   profxPtr)
-    call get_subdict('equil_signals' , n_equil_sig  , equil_sigNames  , equil_sigPtr)
-    call get_subdict('equil_profiles', n_equil_prof , equil_profNames , equil_profPtr)
-    call get_subdict('equil_rect'    , n_equil_rect , equil_rectNames , equil_rectPtr)
-    call get_subdict('equil_coord'   , n_equil_coord, equil_coordNames, equil_coordPtr)
+    call get_subdict(astra_vars, 'variables'  , n_var    ,     varNames,     varPtr)
+    call get_subdict(astra_vars, 'variables_x', n_varx   ,    varxNames,    varxPtr)
+    call get_subdict(astra_vars, 'constants'  , n_const  ,   constNames,   constPtr)
+    call get_subdict(astra_vars, 'internal'   , n_intern ,  internNames,  internPtr)
+    call get_subdict(astra_vars, 'intern2'    , n_intern2, intern2Names, intern2Ptr)
+    call get_subdict(astra_vars, 'profiles'   , n_prof   ,    profNames,    profPtr)
+    call get_subdict(astra_vars, 'profiles_x' , n_profx  ,   profxNames,   profxPtr)
+    call get_subdict(astra_vars, 'equil_signals' , n_equil_sig  , equil_sigNames  , equil_sigPtr)
+    call get_subdict(astra_vars, 'equil_profiles', n_equil_prof , equil_profNames , equil_profPtr)
+    call get_subdict(astra_vars, 'equil_rect'    , n_equil_rect , equil_rectNames , equil_rectPtr)
+    call get_subdict(astra_vars, 'equil_coord'   , n_equil_coord, equil_coordNames, equil_coordPtr)
 
     return
     end subroutine read_metadata
