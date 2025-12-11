@@ -113,8 +113,8 @@ contains
     write(nunit, '(A/)') '"astra": {'
 
 ! Scalars
-    call write_scalar_block(varPtr, DEVAR)
-    call write_scalar_block(varxPtr, DEVARX)
+    call write_scalar_block(varPtr, varValues)
+    call write_scalar_block(varxPtr, varxValues)
     call write_scalar_block(constPtr, constValues)
     call write_scalar_block(internPtr, DELOUT)
 

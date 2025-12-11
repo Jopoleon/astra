@@ -17,7 +17,7 @@ subroutine read_input
 use parameter_inc, only: NTVAR, NBDMAX, NBDTMAX, NRD, NRDX, NTARR
 use const_inc, only: NITREQ, NA, NA1, NB1, NAB, NUF, NBND, NCNB, n_bouncon, &
     TIME, TSTART, TEND, TPAUSE, TAUMIN, TAUPRP, TINIT, TSCALE, TIMEQL, DTEQL, &
-    DEVAR, constValues, DELOUT, XFLAG, exp_header, ARXUSE, &
+    varValues, constValues, DELOUT, XFLAG, exp_header, ARXUSE, &
     AB, ABC, AWAll, ROC, ROCO, ROB, ROWALL,  HRO, HROX, RTOR, &
     ELONG, ELONM, TRIAN, TRICH, SHIFT, VOLUME, &
     GP, GP2, BTOR, BTN, FTO, FTN, IPL, IPLN, FLXDR, PSIAX, PSIBO
@@ -123,7 +123,7 @@ if (.not. LOG_EXISTS)  then ! Missing log file
 endif
 ! Read log file
 nvar = 37
-call assign_val(file_in, nvar    ,    varNames(1: nvar    ), DEVAR (1: nvar)    , n_color)
+call assign_val(file_in, nvar    ,    varNames(1: nvar    ), varValues (1: nvar)    , n_color)
 call assign_val(file_in, n_const ,  constNames(1: n_const ), constValues(1: n_const ), n_color)
 call assign_val(file_in, n_intern, internNames(1: n_intern), DELOUT(1: n_intern), n_color)
 NA1   = DELOUT(13)
@@ -193,7 +193,7 @@ parse_exp_1d: do
         if (ios /= 0) call astra_stop(err_format)
         read(201, *, iostat=ios) (raw_scalar%value(IVAR+jj), jj=1, ntim)
         if (ios /= 0) call astra_stop(err_format)
-        DEVAR(jvar) = factor*raw_scalar%value(IVAR+1)
+        varValues(jvar) = factor*raw_scalar%value(IVAR+1)
         do jj=1, ntim
             IVAR = IVAR + 1
             raw_scalar%var_index(IVAR) = jvar
@@ -262,7 +262,7 @@ parse_exp_1d: do
         if (IERR /= 0) call astra_stop(err_msg)
 
         IFDFVX(jvar) = 0
-        DEVAR(jvar) = factor*VRDATA
+        varValues(jvar) = factor*VRDATA
         if (VNAM == VNAMO) IFDFVX(jvar) = 1
 ! Repeated name
         IVAR = IVAR+1
@@ -289,7 +289,7 @@ parse_exp_1d: do
         allocate(var_u(nt_u*nx_u))
         call ufrd(TRIM(uname), ndim_u, nt_u, nx_u, t_u, x_u, var_u)
 
-        DEVAR(jvar) = factor*var_u(1)
+        varValues(jvar) = factor*var_u(1)
         if (nt_u == 1) then
             IFDFVX(jvar) = 0
         else

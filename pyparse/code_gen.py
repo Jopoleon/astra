@@ -81,15 +81,22 @@ class CODE_GEN:
         self.associate_pointers = \
 '''subroutine associate_pointers
 use const_inc
-use json_vars, only: n_const
+use json_vars, only: n_const, n_var, n_varx
 
 implicit none
 
 allocate(constValues(n_const))
+allocate(varValues(n_var))
+allocate(varxValues(n_varx))
 
 '''
         for j, const in enumerate(parse.constants):
             self.associate_pointers += '%s => constValues(%d)\n' %(const, j+1)
+        for j, var in enumerate(parse.variables):
+            self.associate_pointers += '%s => varValues(%d)\n' %(var, j+1)
+        for j, varx in enumerate(parse.varx):
+            self.associate_pointers += '%s => varxValues(%d)\n' %(varx, j+1)
+
         self.associate_pointers += \
 '''
 return

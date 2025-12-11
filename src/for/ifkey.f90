@@ -36,7 +36,7 @@ use status_inc, only: MU, AMETR, SHIF, ELON, TRIA, EQFF, EQPF, FP, RHO
 use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, exp_header, &
    NA, NB1, NA1, NAB, NUF, LEQ, NBND, TIME, TAU, TINIT, TSCALE, &
    TSTART, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
-   BTOR, IPL, constValues, DEVAR, DELOUT, XFLAG
+   BTOR, IPL, constValues, varValues, DELOUT, XFLAG
 use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     Black, Blue, Magenta, WarningColor, &
     active_tab, curves_per_frame, MOD10, LTOUT, IPOUT, MODEY, &
@@ -69,7 +69,7 @@ integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
     YEAR, MONTH, DAY, HOUR, MINUTE, time_arr(8)
 ! plot_arr dimension: 4*NRD(Mode 5, 8) 320(7) 2*NTIMES(Mode 6) 2*NRD(Modes 1-4)
 integer :: ITO(NTIMES, nplots_max+2)
-double precision :: DEVARO(NCONST), LINEAV, CHORDN, ABD, ALFA, TIMEB, TROUT, TPOUT=0.d0
+double precision :: varValuesO(NCONST), LINEAV, CHORDN, ABD, ALFA, TIMEB, TROUT, TPOUT=0.d0
 double precision, dimension(1) :: rescale_array
 double precision, dimension(NTIMES) :: PRMARK, TIMOD4
 double precision, dimension(NRD) :: YWA, YWB, YWC
@@ -259,7 +259,7 @@ if (TPOUT + DPOUT < TSTART .or. (IFKL /= 256 .and. TIME + 0.5*TAU >= TPOUT + DPO
     endif
     write(3) TIME
 
-    write(3) (constValues(J), J=1, n_const), (DEVAR(J), J=1, n_var), ABC, ROC, CHORDN, 1./MU(NA)
+    write(3) (constValues(J), J=1, n_const), (varValues(J), J=1, n_var), ABC, ROC, CHORDN, 1./MU(NA)
     write(3) NA1, NAB, (0, j=1, 10), (0.d0, j=1, 10)
 
     if (LEQ(5) /= 5) call RHSEQ !call this only if equil is not active
@@ -523,7 +523,7 @@ do while(.True.)
            write(1, *) 'Variables:'
            do J=1, n_var
                if (varNames(J) == 'ZRD1  ') EXIT
-               write(1, '(1A6, 1A2, 1P, 8E11.3)') varNames(J), ' =', DEVAR(J)
+               write(1, '(1A6, 1A2, 1P, 8E11.3)') varNames(J), ' =', varValues(J)
            enddo
 
            write(1, '(A)')' Constants:'
@@ -697,13 +697,13 @@ do while(.True.)
 
     CASE(86) ! 'V'
         do J=1, n_var
-            DEVARO(J) = DEVAR(J)
+            varValuesO(J) = varValues(J)
         enddo
         INT4 = n_var - 96  ! INT4 = n_var - No. of ZRDs
-        call MENUTABLE(INT4, DEVAR, varNames, 1)
+        call MENUTABLE(INT4, varValues, varNames, 1)
         do J=1, n_var
-            if (IFDFVX(J) > 3) DEVAR(J) = DEVARO(J)
-            if (ABS(DEVAR(J)-DEVARO(J)) > 1.d-6*ABS(DEVAR(J))) IFDFVX(J) = 3
+            if (IFDFVX(J) > 3) varValues(J) = varValuesO(J)
+            if (ABS(varValues(J)-varValuesO(J)) > 1.d-6*ABS(varValues(J))) IFDFVX(J) = 3
         enddo
 
     CASE(87) ! 'W'

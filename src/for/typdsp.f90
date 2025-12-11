@@ -980,7 +980,7 @@ end subroutine TIMEDT
 subroutine const2ps
 ! Appending the list of constants to a PS file
 
-use const_inc, only: constValues, DEVAR
+use const_inc, only: constValues, varValues
 use char_manip, only: null_ch
 use outcmn_inc, only: resizeGraph
 use dbl2char, only: fmt_xf
@@ -1040,7 +1040,7 @@ JNY = JNY + 20
 JDUM = n_var - 48
 
 do j=1, JDUM
-    CH6 = fmt_xf(DEVAR(j), 5)
+    CH6 = fmt_xf(varValues(j), 5)
     STRI(j1: j1+19) = varNames(j) // '=' // CH6 // '     '
     j1 = j1+20
     if (j1 > 70 .or. j == JDUM) then
@@ -1224,7 +1224,7 @@ do J2 = 1, IPOUT-1
     read(NCHR, ERR=38, END=39) JNT
     if (JNT /= 0) read(NCHR, ERR=38) TEMPR
     read(NCHR, END=39) YTIME
-!  Skip  constValues, DEVAR, LINEAV, ROC
+!  Skip  constValues, varValues, LINEAV, ROC
     read(NCHR, END=39) TEMPR
 
     read(NCHR, END=39) JAB, JAB, (JNT, I=1, 10), (TEMPR, I=1, 10)

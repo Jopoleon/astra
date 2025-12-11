@@ -291,7 +291,7 @@ end subroutine NMARK
 !---------------------------------------------------------------------
 double precision function GETNUM(FIELD, ERCODE)
 
-use const_inc , only: constValues, DEVARX
+use const_inc , only: constValues, varxValues
 use char_manip, only: str_in_list
 use json_vars, only: constNames, varNames
 
@@ -343,7 +343,7 @@ else
     if (ios /= 0 .or. j1 < 1 .or. j1 > 96) then
         ERCODE = 1
     else
-        GETNUM = DEVARX(ISHIFT + j1)
+        GETNUM = varxValues(ISHIFT + j1)
         ERCODE = 0
     endif
 endif
