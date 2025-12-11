@@ -1,6 +1,5 @@
 subroutine read_input
 !----------------------------------------------------------------------|
-!  NCONST   amount of simple variables readable (initiated)
 !  NTVAR    maximal number of time slices for all variables
 !  IVAR     number of actually defined variables
 !  NTARR    maximal number of time slices for all arrays 

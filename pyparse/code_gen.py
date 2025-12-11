@@ -92,8 +92,10 @@ allocate(varxValues(n_varx))
 '''
         for j, const in enumerate(parse.constants):
             self.associate_pointers += '%s => constValues(%d)\n' %(const, j+1)
+        self.associate_pointers += '\n'
         for j, var in enumerate(parse.variables):
             self.associate_pointers += '%s => varValues(%d)\n' %(var, j+1)
+        self.associate_pointers += '\n'
         for j, varx in enumerate(parse.varx):
             self.associate_pointers += '%s => varxValues(%d)\n' %(varx, j+1)
 

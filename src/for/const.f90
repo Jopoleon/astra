@@ -1,6 +1,6 @@
 module const_inc
  
-use parameter_inc, only: NCONST, NSBMX, NEQNS, NARRX, NSDELOUT
+use parameter_inc, only: NSBMX, NEQNS, NARRX, NSDELOUT
 
 implicit none
 
@@ -40,8 +40,6 @@ double precision, pointer :: &
     ZRD81X, ZRD82X, ZRD83X, ZRD84X, ZRD85X, ZRD86X, ZRD87X, ZRD88X, ZRD89X, ZRD90X, &
     ZRD91X, ZRD92X, ZRD93X, ZRD94X, ZRD95X, ZRD96X
 
-! End constants - 162 entries (must be <=NCONST=256)
-
 double precision, pointer :: &
     CF1,   CF2,   CF3,   CF4,   CF5,   CF6,   CF7,   CF8, &
     CF9,   CF10,  CF11,  CF12,  CF13,  CF14,  CF15,  CF16, &
@@ -65,8 +63,6 @@ double precision, pointer :: &
 
 ! Old list: Versions 5.2 and earlier
 double precision, target, allocatable, dimension(:) :: constValues, varValues, varxValues
-
-! End internal program parameters, 173 entries (must be <=NCONST=256)
 
 double precision :: TEQ(NSBMX)
 !double precision :: DTEQ(4, NSBMX)
