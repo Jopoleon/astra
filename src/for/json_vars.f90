@@ -4,7 +4,6 @@ use json_module, only : json_file, json_core, json_value, json_ck
 
 implicit none
 
-integer :: jid
 integer :: n_var, n_varx, n_const, n_intern, n_intern2, n_prof, &
     n_profx, n_equil_sig, n_equil_prof, n_equil_rect, n_equil_coord
 character(len=6), allocatable, dimension(:) :: varNames, &

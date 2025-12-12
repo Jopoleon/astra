@@ -6,6 +6,7 @@ use json_vars
 implicit none
 
 integer, parameter :: nunit=25
+integer :: jid
 
 contains
 
