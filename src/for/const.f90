@@ -62,10 +62,10 @@ double precision, pointer :: &
     CDhj1, CDhj2, CDhj3, CDhj4, CDhj5, CDhj6, CDhj7, CDhj8, CDhj9
 
 ! Old list: Versions 5.2 and earlier
-double precision, target, allocatable, dimension(:) :: constValues, varValues, varxValues, internValues
+double precision, target, allocatable, dimension(:) :: constValues, varValues, varxValues, internValues, intern2Values
 
 double precision :: TEQ(NSBMX)
-!double precision :: DTEQ(4, NSBMX)
+
 double precision, pointer :: &
     DROUT, DTOUT, DPOUT, TIME, TAUMIN, TAUMAX, TAUINC, DELVAR, &
     ITEREX, NITREQ, TINIT, TSCALE, NB1R, NUFR, XOUT, XINPUT, &
@@ -79,7 +79,7 @@ double precision :: IBKDW ! IBKDW=-1 for breakdown yes
 
 double precision, target :: MESHEQ
 
-double precision :: &
+double precision, pointer :: &
     HRO, HROX, VOLUME, ROB, ROC, ROWALL, FTO, &
     FTN, BTN, PSIFB, RBDOT, ALBPL, &
     TSTART, TAU, TIMEQL, QBEAM, IPLN, ROCO, RON, ROE, ROI, ROU, &
@@ -91,14 +91,13 @@ double precision :: &
     QF0B, QF1B, QF2B, QF3B, QF4B, QF5B, QF6B, QF7B, QF8B, QF9B, &
     QFF0B, QFF1B, QFF2B, QFF3B, QFF4B, QFF5B, QFF6B, QFF7B, QFF8B, QFF9B
 
-
 integer :: NA, NA1, NAB, NB1, NUF, NNCX, KEY, NBND, NCNB, &
     XFLAG, NSTEPS, ITREQ, IPART, LEQ(NEQNS), NITOT
 integer :: ARXUSE(NARRX)
+integer, pointer :: NA1N, NA1E, NA1I, NA1U, &
+    NA10, NA11, NA12, NA13, NA14, NA15, NA16, NA17, NA18, NA19
 character(len=132) :: exp_header
 
-integer, pointer :: NA1N, NA1E, NA1I, NA1U, &
-     NA10, NA11, NA12, NA13, NA14, NA15, NA16, NA17, NA18, NA19
 integer, dimension(14), target :: n_bouncon
 double precision :: tbeg_eq, tend_eq
 
