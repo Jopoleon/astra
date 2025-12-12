@@ -20,8 +20,10 @@ integer function IFSTEP(IFCONV, updwno)
 use const_inc, only: TAUINC, DELVAR, TAU, TAUPRP, TAUMIN, TAUMAX, &
     DTOUT, DPOUT, NA, NB1, LEQ, NSTEPS, ROC, ROCO, &
     FTN, FTO
-use status_inc, only: NEO, NIO, TEO, TIO, FJO, FPO, VRO, UPARO, &
-    NE, NI, TE, TI, FJ, FP, VR, UPAR
+use status_inc, only: NEO, NIO, TEO, TIO, FPO, VRO, UPARO, &
+    NE, NI, TE, TI, FP, VR, UPAR, &
+    F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, &
+    F0O, F1O, F2O, F3O, F4O, F5O, F6O, F7O, F8O, F9O
 use debugger, only: markloc
 
 implicit none
@@ -29,28 +31,108 @@ implicit none
 integer, intent(in) :: IFCONV
 double precision, intent(in) :: updwno
 
-integer :: j, jj
+integer :: j
 double precision :: CTAU, TAUO, YY, TAUN
 
 call markloc('IFSTEP')
 
 CTAU = 1./TAUINC
 
-do j = 1, NA
+do j=1, NA
     if (LEQ(1) > 0) CTAU = MAX(CTAU, ABS(NEO(j)/NE(j) - 1.)/DELVAR)
     if (LEQ(2) > 0) CTAU = MAX(CTAU, ABS(TEO(j)/TE(j) - 1.)/DELVAR)
     if (LEQ(3) > 0) CTAU = MAX(CTAU, ABS(TIO(j)/TI(j) - 1.)/DELVAR)
-    do jj=0, 9
-        if (LEQ(jj+10) > 0) then
-            YY = 0.5*(abs(FJO(j, jj)) + abs(FJ(j, jj)))
-            if (YY < 1.E-6) then  ! Allow zero FJ
-                YY = abs(FJO(j, jj) - FJ(j, jj))
-            else
-                YY = abs(FJO(j, jj) - FJ(j, jj))/YY
-            endif
-            CTAU = MAX(CTAU, YY/DELVAR)
+    if (LEQ(10) > 0) then
+        YY = 0.5*(abs(F0O(j)) + abs(F0(j)))
+        if (YY < 1.E-6) then  ! Allow zero FJ
+            YY = abs(F0O(j) - F0(j))
+        else
+            YY = abs(F0O(j) - F0(j))/YY
         endif
-    enddo
+        CTAU = MAX(CTAU, YY/DELVAR)
+    endif
+    if (LEQ(11) > 0) then
+        YY = 0.5*(abs(F1O(j)) + abs(F1(j)))
+        if (YY < 1.E-6) then
+            YY = abs(F1O(j) - F1(j))
+        else
+            YY = abs(F1O(j) - F1(j))/YY
+        endif
+        CTAU = MAX(CTAU, YY/DELVAR)
+    endif
+    if (LEQ(12) > 0) then
+        YY = 0.5*(abs(F2O(j)) + abs(F2(j)))
+        if (YY < 1.E-6) then
+            YY = abs(F2O(j) - F2(j))
+        else
+            YY = abs(F2O(j) - F2(j))/YY
+        endif
+        CTAU = MAX(CTAU, YY/DELVAR)
+    endif
+    if (LEQ(13) > 0) then
+        YY = 0.5*(abs(F3O(j)) + abs(F3(j)))
+        if (YY < 1.E-6) then
+            YY = abs(F3O(j) - F3(j))
+        else
+            YY = abs(F3O(j) - F3(j))/YY
+        endif
+        CTAU = MAX(CTAU, YY/DELVAR)
+    endif
+    if (LEQ(14) > 0) then
+        YY = 0.5*(abs(F4O(j)) + abs(F4(j)))
+        if (YY < 1.E-6) then
+            YY = abs(F4O(j) - F4(j))
+        else
+            YY = abs(F4O(j) - F4(j))/YY
+        endif
+        CTAU = MAX(CTAU, YY/DELVAR)
+    endif
+    if (LEQ(15) > 0) then
+        YY = 0.5*(abs(F5O(j)) + abs(F5(j)))
+        if (YY < 1.E-6) then
+            YY = abs(F5O(j) - F5(j))
+        else
+            YY = abs(F5O(j) - F5(j))/YY
+        endif
+        CTAU = MAX(CTAU, YY/DELVAR)
+    endif
+    if (LEQ(16) > 0) then
+        YY = 0.5*(abs(F6O(j)) + abs(F6(j)))
+        if (YY < 1.E-6) then
+            YY = abs(F6O(j) - F6(j))
+        else
+            YY = abs(F6O(j) - F6(j))/YY
+        endif
+        CTAU = MAX(CTAU, YY/DELVAR)
+    endif
+    if (LEQ(17) > 0) then
+        YY = 0.5*(abs(F7O(j)) + abs(F7(j)))
+        if (YY < 1.E-6) then
+            YY = abs(F7O(j) - F7(j))
+        else
+            YY = abs(F7O(j) - F7(j))/YY
+        endif
+        CTAU = MAX(CTAU, YY/DELVAR)
+    endif
+    if (LEQ(18) > 0) then
+        YY = 0.5*(abs(F8O(j)) + abs(F8(j)))
+        if (YY < 1.E-6) then
+            YY = abs(F8O(j) - F8(j))
+        else
+            YY = abs(F8O(j) - F8(j))/YY
+        endif
+        CTAU = MAX(CTAU, YY/DELVAR)
+    endif
+    if (LEQ(19) > 0) then
+        YY = 0.5*(abs(F9O(j)) + abs(F9(j)))
+        if (YY < 1.E-6) then
+            YY = abs(F9O(j) - F9(j))
+        else
+            YY = abs(F9O(j) - F9(j))/YY
+        endif
+        CTAU = MAX(CTAU, YY/DELVAR)
+    endif
+
 enddo
 
 TAUO   = TAU
@@ -76,9 +158,16 @@ do j=1, NB1
     FP(j) = FPO(j)
     VR(j) = VRO(j)
     UPAR(j) = UPARO(j)
-    do jj=0, 9
-        FJ(j, jj) = FJO(j, jj)
-    enddo
+    F0(j) = F0O(j)
+    F1(j) = F1O(j)
+    F2(j) = F2O(j)
+    F3(j) = F3O(j)
+    F4(j) = F4O(j)
+    F5(j) = F5O(j)
+    F6(j) = F6O(j)
+    F7(j) = F7O(j)
+    F8(j) = F8O(j)
+    F9(j) = F9O(j)
 enddo
 
 ! Reset ROC
@@ -220,15 +309,17 @@ end function IFTREQ
 !---------------------------------------------------------------------
 subroutine OLDNEW
 
-use status_inc, only: NE, TE, TI, FP, VR, FJO, UPAR, &
-    UPS0, UPS1, UPS2, NEO, TEO, TIO, FPO, VRO, FJ, &
-    UPARO, UPS0O, UPS1O, UPS2O
+use status_inc, only: NE, TE, TI, FP, VR, UPAR, &
+    UPS0, UPS1, UPS2, NEO, TEO, TIO, FPO, VRO, &
+    UPARO, UPS0O, UPS1O, UPS2O, &
+    F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, &
+    F0O, F1O, F2O, F3O, F4O, F5O, F6O, F7O, F8O, F9O
 use const_inc, only: NB1, BTN, FTO, FTN, ROCO, ROC, BTOR, BTN
 use debugger, only: markloc
 
 implicit none
 
-integer :: j, jj
+integer :: j
 
 call markloc('OLDNEW')
 
@@ -242,9 +333,16 @@ do j=1, NB1
     UPS0O(j) = UPS0(j)
     UPS1O(j) = UPS1(j)
     UPS2O(j) = UPS2(j)
-    do jj=0, 9
-        FJO(j, jj) = FJ(j, jj)
-    enddo
+    F0O(j) = F0(j)
+    F1O(j) = F1(j)
+    F2O(j) = F2(j)
+    F3O(j) = F3(j)
+    F4O(j) = F4(j)
+    F5O(j) = F5(j)
+    F6O(j) = F6(j)
+    F7O(j) = F7(j)
+    F8O(j) = F8(j)
+    F9O(j) = F9(j)
 enddo
 
 BTN = BTOR

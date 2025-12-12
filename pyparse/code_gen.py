@@ -92,6 +92,7 @@ allocate(constValues(n_const))
 allocate(varValues(n_var))
 allocate(varxValues(n_varx))
 allocate(internValues(n_intern + 4*NSBMX))
+allocate(profiles(NRD, n_prof))
 allocate(EXT(NRD, n_profx))
 
 '''
@@ -109,6 +110,9 @@ allocate(EXT(NRD, n_profx))
         self.associate_pointers += '\n'
         for j, profx in enumerate(parse.profx):
             self.associate_pointers += '%s => EXT(:, %d)\n' %(profx, j+1)
+        self.associate_pointers += '\n'
+        for j, prof in enumerate(parse.prof):
+            self.associate_pointers += '%s => profiles(:, %d)\n' %(prof, j+1)
 
         self.associate_pointers += \
 '''

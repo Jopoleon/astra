@@ -865,9 +865,16 @@ VRO(j) = VR(j)
 UPS0O(j) = UPS0(j)
 UPS1O(j) = UPS1(j)
 UPS2O(j) = UPS2(j)
-do jj=0, 9
-FJO(j, jj) = FJ(j, jj)
-enddo
+F0O(j) = F0(j)
+F1O(j) = F1(j)
+F2O(j) = F2(j)
+F3O(j) = F3(j)
+F4O(j) = F4(j)
+F5O(j) = F5(j)
+F6O(j) = F6(j)
+F7O(j) = F7(j)
+F8O(j) = F8(j)
+F9O(j) = F9(j)
 enddo
 call markloc("init done")
 '''

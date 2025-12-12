@@ -49,10 +49,10 @@ class EQU_PARSER:
         with open(f_json, 'r') as fjson:
             json_d = json.load(fjson)
         json_keys = {key: list(val.keys()) for key, val in json_d.items()}
-        prof     = json_keys['profiles']
+        self.prof      = json_keys['profiles']
         self.profx     = json_keys['profiles_x']
         prof_ext = json_keys['strahl']
-        self.profiles  = prof + self.profx + prof_ext
+        self.profiles  = self.prof + self.profx + prof_ext
         self.constants = json_keys['constants']
         self.intern1   = json_keys['internal']
         self.intern2   = json_keys['intern2']
