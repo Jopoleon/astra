@@ -50,9 +50,9 @@ class EQU_PARSER:
             json_d = json.load(fjson)
         json_keys = {key: list(val.keys()) for key, val in json_d.items()}
         prof     = json_keys['profiles']
-        profx    = json_keys['profiles_x']
+        self.profx     = json_keys['profiles_x']
         prof_ext = json_keys['strahl']
-        self.profiles  = prof + profx + prof_ext
+        self.profiles  = prof + self.profx + prof_ext
         self.constants = json_keys['constants']
         self.intern1   = json_keys['internal']
         self.intern2   = json_keys['intern2']
@@ -208,7 +208,7 @@ class EQU_PARSER:
                 arname.append(varx)
 
         for lin in equ_lines:
-            for jarr, var in enumerate(profx):
+            for jarr, var in enumerate(self.profx):
                 if var in lin:
                     if var not in arname:
                         arname.append(var)
@@ -217,7 +217,7 @@ class EQU_PARSER:
 # Ordinal number in array list
         self.arxuse = []
         for varx in arname:
-            for jarr, arr in enumerate(profx):
+            for jarr, arr in enumerate(self.profx):
                 if arr == varx:
                     self.arxuse.append(jarr+1)
                     break

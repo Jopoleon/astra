@@ -83,7 +83,8 @@ class CODE_GEN:
 
 use parameter_inc, only: NSBMX
 use const_inc
-use json_vars, only: n_const, n_var, n_varx, n_intern
+use status_inc
+use json_vars, only: n_const, n_var, n_varx, n_intern, n_prof, n_profx
 
 implicit none
 
@@ -91,6 +92,8 @@ allocate(constValues(n_const))
 allocate(varValues(n_var))
 allocate(varxValues(n_varx))
 allocate(internValues(n_intern + 4*NSBMX))
+allocate(EXT(NRD, n_profx))
+
 '''
         for j, const in enumerate(parse.constants):
             self.associate_pointers += '%s => constValues(%d)\n' %(const, j+1)
@@ -103,6 +106,9 @@ allocate(internValues(n_intern + 4*NSBMX))
         self.associate_pointers += '\n'
         for j, inter in enumerate(parse.intern1):
             self.associate_pointers += '%s => internValues(%d)\n' %(inter, j+1)
+        self.associate_pointers += '\n'
+        for j, profx in enumerate(parse.profx):
+            self.associate_pointers += '%s => EXT(:, %d)\n' %(profx, j+1)
 
         self.associate_pointers += \
 '''

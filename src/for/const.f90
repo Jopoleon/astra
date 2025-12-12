@@ -105,10 +105,9 @@ double precision :: tbeg_eq, tend_eq
 contains
 
 !---------------------
-subroutine const_init
+subroutine const_init(nintern)
 
-  use json_vars, only: n_intern
-
+integer, intent(in) :: nintern
 integer :: i, j
 
 NBND = 0
@@ -139,9 +138,9 @@ n_bouncon = 0
 
 ! Former COMMON A_OUTPUT, removed TEQ
 allocate(DTEQ(4, NSBMX))
-DTEQ(1:4, 1:NSBMX) => internValues(n_intern+1: n_intern + 4*NSBMX)
+DTEQ(1:4, 1:NSBMX) => internValues(nintern+1: nintern + 4*NSBMX)
 
-internValues(1: n_intern) = (/ &
+internValues(1: nintern) = (/ &
 !  DROUT,  DTOUT,  DPOUT,   TIME, TAUMIN, TAUMAX, TAUINC, DELVAR,
     0.01,   0.01,   0.01,     0.,  1.e-6,   0.05,    1.1,    0.1, &
 ! ITEREX, NITREQ,  TINIT, TSCALE,    NA1,   NUFR,   XOUT, XINPUT, 
@@ -158,7 +157,7 @@ do j=1, NSBMX
 !   DTEQ(2, j) = -99999.
 !   DTEQ(3, j) = 99999.
 !   DTEQ(4, j) = -1.
-   i = (j-1)*4 + n_intern
+   i = (j-1)*4 + nintern
    internValues(i+1) = 0.
    internValues(i+2) = -99999.
    internValues(i+3) = 99999.

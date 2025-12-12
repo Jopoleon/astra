@@ -11,7 +11,8 @@ use status_inc, only: status_init, defarr
 use debugger, only: debug, astra_stop, markloc
 use ext_bnd, only: use_ext_bnd
 use transport2fbe, only: transport2fbe_init
-use json_vars, only: read_metadata, write_json
+use json_vars, only: read_metadata, n_intern
+use json_write, only: write_json
 
 implicit none
 
@@ -33,7 +34,7 @@ call SYSTEM_CLOCK(wall_start, rate)
 call read_metadata
 call associate_pointers
 
-call const_init
+call const_init(n_intern)
 call status_init
 
 call ininam
