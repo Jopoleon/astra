@@ -14,10 +14,9 @@ contains
     subroutine write_json
 
     use parameters_a2equil, only: equil_now
-    use parameter_inc
-    use const_inc
-    use status_inc
-    use io_mod, only: AWD, exp_file, equ_file
+    use const_inc, only: NA1, varValues, varxValues, constValues, internValues, intern2Values
+    use status_inc, only: profiles, profiles_x
+    use io_mod, only: awd, exp_file, equ_file
     use debugger, only: debug
 
     integer :: j, jrho, ios, j_call=1, nrho_surf, nthe_surf, nR, nZ
@@ -61,7 +60,7 @@ contains
     jid = 0    
 ! Get sub-dictionaries dimensions
     do j=1, n_profx
-        call write_array((/NA1/), EXT(1:NA1, j), profxPtr)
+        call write_array((/NA1/), profiles_x(1:NA1, j), profxPtr)
     enddo
 
 ! CAR profiles

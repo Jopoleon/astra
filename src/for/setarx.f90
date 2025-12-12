@@ -6,12 +6,12 @@ subroutine SETARX(ICALL)
 !  - data array  |  for arrays
 !
 ! Then it is stored for the current time in the arrays
-!  EXT(NRD, NARRX) - (description in src/for/status.f90)
+! profiles_x(NRD, NARRX) - (description in astra_variables.json)
 !--------------------------------------------------------------------
 
 use parameter_inc, only: NRD, NRDX, NTARR
 use const_inc, only: TIME, BTOR, GP, AB, ABC, ROC, VOLUME, NA1, NAB, PSIAX
-use status_inc, only: AMETR, RHO, FP, VOLUM, EXT, rho_pol
+use status_inc, only: AMETR, RHO, FP, VOLUM, profiles_x, rho_pol
 use numerical_tools, only: qinterp, sortab
 use io_mod, only: jbeg_arrx, IFDFAX, XAXES, &
     DATAX, NPTM, TOUTX
@@ -33,7 +33,7 @@ character(len=132) :: err_msg, err_msg_grid
 !  NTARR    maximal number of time slices for all arrays (total)
 !--------------------------------------------------------------------
 ! Input
-! ICALL = 0 - call from REVIEW (no transfer to EXT(, ) is needed)
+! ICALL = 0 - call from REVIEW (no transfer to profiles_x(, ) is needed)
 !  > 0 - call from STEPON
 !  = 1 - time interpolation off
 !  = 2 - time interpolation on
@@ -44,7 +44,7 @@ character(len=132) :: err_msg, err_msg_grid
 ! NPTM(kn)     - number of data points within a<=AB
 ! XAXES(jprof, kn) - "radial" grid for displayed data
 ! DATAX(jprof, kn) - array for displayed data
-! EXT(jprof, kn)   - smoothed curve
+! profiles_x(jprof, kn)   - smoothed curve
 !--------------------------------------------------------------------
 
 call markloc('SETARX')
@@ -97,7 +97,7 @@ var_loop: do jtarr=1, NTARR
 !  (ii) transfer (SMOOTH) from {x_grid(N11), dat_exp(N11)} to {XA, DA} 
 ! (2) XAXES(n_grid, KN) is defined which is as "a" grid for exp-dot plots
 !      DATAX(n_grid, KN) data on this grid
-! (3) EXT(NRD, KN) smoothed input arrays interpolated in time
+! (3) profiles_x(NRD, KN) smoothed input arrays interpolated in time
 
         n_grid   = raw_profile_map%nrho(jt)
         gridtype = raw_profile_map%grid_type(jt)
@@ -322,7 +322,7 @@ var_loop: do jtarr=1, NTARR
 ! namely, the last run determines current XAXES and DATAX
 
         if (jto == jtn) then ! no time dependence
-            EXT(: NRD, KN) = DA(: NRD)
+            profiles_x(: NRD, KN) = DA(: NRD)
             CYCLE var_loop
         endif
 
@@ -334,7 +334,7 @@ var_loop: do jtarr=1, NTARR
         else
             jt = jtn
         endif
-        EXT(: NRD, KN) = DA(: NRD)
+        profiles_x(: NRD, KN) = DA(: NRD)
 
     enddo time_loop
 
@@ -343,11 +343,11 @@ var_loop: do jtarr=1, NTARR
     ydtb = (TIME - raw_profile_map%time(jto))/ydt
     if (jto == jt) then
         do j3=1, NRD
-            EXT(j3, KN) = EXT(j3, KN)*ydtb + DA(j3)*ydta
+            profiles_x(j3, KN) = profiles_x(j3, KN)*ydtb + DA(j3)*ydta
         enddo
     else
         do j3=1, NRD
-            EXT(j3, KN) = EXT(j3, KN)*ydta + DA(j3)*ydtb
+            profiles_x(j3, KN) = profiles_x(j3, KN)*ydta + DA(j3)*ydtb
         enddo
     endif
 

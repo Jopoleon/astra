@@ -68,7 +68,7 @@ double precision, dimension(:), pointer :: &
     ZEFX, VRX, SHX, ELX, TRX, G11X, G22X, G33X, DRODAX, IPOLX, &
     NIX, VPOLX, VTORX, SLATX, SHIVX, SQUAX
 
-double precision, allocatable, dimension(:, :), target :: EXT, profiles
+double precision, allocatable, dimension(:, :), target :: profiles_x, profiles
 
 double precision, dimension(:), pointer :: &
     F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, &
@@ -92,8 +92,8 @@ contains
 ! Defaults, rather fall-back than initial values
 
 ! Multi-dim
-    EXT      = 0.d0
-    profiles = 0.d0
+    profiles_x = 0.d0
+    profiles   = 0.d0
 
 ! Geometry/equilibrium
 
