@@ -16,7 +16,7 @@ subroutine read_input
 use parameter_inc, only: NTVAR, NBDMAX, NBDTMAX, NRD, NRDX, NTARR
 use const_inc, only: NITREQ, NA, NA1, NB1, NAB, NUF, NBND, NCNB, n_bouncon, &
     TIME, TSTART, TEND, TPAUSE, TAUMIN, TAUPRP, TINIT, TSCALE, TIMEQL, DTEQL, &
-    varValues, constValues, DELOUT, XFLAG, exp_header, ARXUSE, &
+    varValues, constValues, internValues, XFLAG, exp_header, ARXUSE, &
     AB, ABC, AWAll, ROC, ROCO, ROB, ROWALL,  HRO, HROX, RTOR, &
     ELONG, ELONM, TRIAN, TRICH, SHIFT, VOLUME, &
     GP, GP2, BTOR, BTN, FTO, FTN, IPL, IPLN, FLXDR, PSIAX, PSIBO
@@ -124,11 +124,11 @@ endif
 nvar = 37
 call assign_val(file_in, nvar    ,    varNames(1: nvar    ), varValues (1: nvar)    , n_color)
 call assign_val(file_in, n_const ,  constNames(1: n_const ), constValues(1: n_const ), n_color)
-call assign_val(file_in, n_intern, internNames(1: n_intern), DELOUT(1: n_intern), n_color)
-NA1   = DELOUT(13)
-NUF   = DELOUT(14)
-NBND  = DELOUT(19)
-XFLAG = DELOUT(20)
+call assign_val(file_in, n_intern, internNames(1: n_intern), internValues(1: n_intern), n_color)
+NA1   = internValues(13)
+NUF   = internValues(14)
+NBND  = internValues(19)
+XFLAG = internValues(20)
 close(171)
 
 !----------------------------------------------------------------------
@@ -847,10 +847,10 @@ do j=1, n_profx
     endif
 enddo
 
-DELOUT(13) = NA1
-DELOUT(14) = NUF
-DELOUT(19) = NBND
-DELOUT(20) = XFLAG
+internValues(13) = NA1
+internValues(14) = NUF
+internValues(19) = NBND
+internValues(20) = XFLAG
 TIMEQL = TIME - DTEQL - 1.d-7
 TAUPRP = TAUMIN
 if (TIME > TINIT + 1.025*abs(TSCALE)) TINIT = TSTART

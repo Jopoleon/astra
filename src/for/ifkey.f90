@@ -31,12 +31,12 @@ integer function IFKEY(IFKL)
 ! 12,13 - for equ/model.log file (once on entry)
 ! 3 - for post-viewer file (first on entry, then periodically)
 
-use parameter_inc, only: NRD, NARRX, NCONST, NSDELOUT
+use parameter_inc, only: NRD, NARRX
 use status_inc, only: MU, AMETR, SHIF, ELON, TRIA, EQFF, EQPF, FP, RHO
 use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, exp_header, &
    NA, NB1, NA1, NAB, NUF, LEQ, NBND, TIME, TAU, TINIT, TSCALE, &
    TSTART, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
-   BTOR, IPL, constValues, varValues, DELOUT, XFLAG
+   BTOR, IPL, constValues, varValues, internValues, XFLAG
 use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     Black, Blue, Magenta, WarningColor, &
     active_tab, curves_per_frame, MOD10, LTOUT, IPOUT, MODEY, &
@@ -51,7 +51,7 @@ use expdat, only: raw_profile_map, DATARR
 use dbl2char, only: fmt6
 use char_manip, only: str_in_list, null_ch, beep_ch
 use debugger, only: markloc, debug, astra_stop
-use json_vars, only: internNames, constNames, varNames, n_const, n_var
+use json_vars, only: internNames, constNames, varNames, n_const, n_var, n_intern
 use cpu_usage, only: cpu_report
 
 implicit none
@@ -69,7 +69,8 @@ integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
     YEAR, MONTH, DAY, HOUR, MINUTE, time_arr(8)
 ! plot_arr dimension: 4*NRD(Mode 5, 8) 320(7) 2*NTIMES(Mode 6) 2*NRD(Modes 1-4)
 integer :: ITO(NTIMES, nplots_max+2)
-double precision :: varValuesO(NCONST), LINEAV, CHORDN, ABD, ALFA, TIMEB, TROUT, TPOUT=0.d0
+double precision :: LINEAV, CHORDN, ABD, ALFA, TIMEB, TROUT, TPOUT=0.d0
+double precision, allocatable :: varValues_old(:) 
 double precision, dimension(1) :: rescale_array
 double precision, dimension(NTIMES) :: PRMARK, TIMOD4
 double precision, dimension(NRD) :: YWA, YWB, YWC
@@ -126,6 +127,8 @@ data (HELP(j), j=21, 28)/ &
 !----------------------------------------------------------------------|
 
 call markloc('IFKEY', debug_lev=2*debug)
+
+allocate(varValues_old(n_const))
 
 CHORDN = lineav()
 
@@ -452,17 +455,17 @@ do while(.True.)
         call MENUTABLE(n_const, constValues, constNames, 2)
 
     CASE(68) ! 'D'
-        NDTNAM = NSDELOUT + 4*NSBR
+        NDTNAM = n_intern + 4*NSBR
         TIMEB = TIME
         MODEX = XOUT + 0.49
-        call MENUTABLE(NDTNAM, DELOUT, DTNAME, 3) ! Only place requiring DELOUT(j>44)
-        if (int(DELOUT(13)) /= NA1) then
+        call MENUTABLE(NDTNAM, internValues, DTNAME, 3) ! Only place requiring internValues(j>44)
+        if (int(internValues(13)) /= NA1) then
             write(*, *)">>> NA1 re-definition ignored"
         endif
-        DELOUT(13) = NA1
-        NUF   = DELOUT(14)
-        NBND  = DELOUT(19)
-        XFLAG = DELOUT(20)
+        internValues(13) = NA1
+        NUF   = internValues(14)
+        NBND  = internValues(19)
+        XFLAG = internValues(20)
         j = XOUT + 0.49
         if (j < 0 .or. j > 3) then
             write(*, *) ">>> Unknown X-axis. Redefinition ignored"
@@ -532,7 +535,7 @@ do while(.True.)
            enddo
            write(1, '(A, I2)') ' Control parameters:', 22
            do J=1, 22   ! Don't save TPAUSE and TEND
-               write(1, '(1A6, 1A2, 1P, 8E11.3)') internNames(J), ' =', DELOUT(J)
+               write(1, '(1A6, 1A2, 1P, 8E11.3)') internNames(J), ' =', internValues(J)
            enddo
            close (1)
            write(*, *) "Default start file is modified"
@@ -697,13 +700,13 @@ do while(.True.)
 
     CASE(86) ! 'V'
         do J=1, n_var
-            varValuesO(J) = varValues(J)
+            varValues_old(J) = varValues(J)
         enddo
         INT4 = n_var - 96  ! INT4 = n_var - No. of ZRDs
         call MENUTABLE(INT4, varValues, varNames, 1)
         do J=1, n_var
-            if (IFDFVX(J) > 3) varValues(J) = varValuesO(J)
-            if (ABS(varValues(J)-varValuesO(J)) > 1.d-6*ABS(varValues(J))) IFDFVX(J) = 3
+            if (IFDFVX(J) > 3) varValues(J) = varValues_old(J)
+            if (ABS(varValues(J)-varValues_old(J)) > 1.d-6*ABS(varValues(J))) IFDFVX(J) = 3
         enddo
 
     CASE(87) ! 'W'

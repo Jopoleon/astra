@@ -80,15 +80,17 @@ class CODE_GEN:
 
         self.associate_pointers = \
 '''subroutine associate_pointers
+
+use parameter_inc, only: NSBMX
 use const_inc
-use json_vars, only: n_const, n_var, n_varx
+use json_vars, only: n_const, n_var, n_varx, n_intern
 
 implicit none
 
 allocate(constValues(n_const))
 allocate(varValues(n_var))
 allocate(varxValues(n_varx))
-
+allocate(internValues(n_intern + 4*NSBMX))
 '''
         for j, const in enumerate(parse.constants):
             self.associate_pointers += '%s => constValues(%d)\n' %(const, j+1)
@@ -98,6 +100,9 @@ allocate(varxValues(n_varx))
         self.associate_pointers += '\n'
         for j, varx in enumerate(parse.varx):
             self.associate_pointers += '%s => varxValues(%d)\n' %(varx, j+1)
+        self.associate_pointers += '\n'
+        for j, inter in enumerate(parse.intern1):
+            self.associate_pointers += '%s => internValues(%d)\n' %(inter, j+1)
 
         self.associate_pointers += \
 '''
@@ -135,7 +140,7 @@ end subroutine POSTEP'''
                     l2f = pa.LINE2FOR(line, parse)
                     detv_time += 'if (IFDFVX(%d) <= 2) %s\n'%(jvar, l2f)
                     break
-            if var in parse.constants + parse.internals:
+            if var in parse.constants + parse.intern1 + parse.intern2:
                 detv_time += pa.apptmp(lbl, parse)
             elif var in parse.profiles:
                 detv_rad += pa.apptmp(lbl, parse)
@@ -287,7 +292,7 @@ end subroutine INIVAR'''
             j_sbr  = sbrs_d[line]['neq']
             sbrnam = sbrs_d[line]['name']
             inam += 'sbr_name(%d) = "%s"\n' %(j_sbr, sbrnam)
-            inam += 'DTNAME(%d*4+NSDELOUT) = "%s"//char(0)\n' %(j_sbr, sbrnam[:6])
+            inam += 'DTNAME(%d*4+n_intern) = "%s"//char(0)\n' %(j_sbr, sbrnam[:6])
 
         self.ininam  = const_text.ININAM.header
         self.ininam += inam

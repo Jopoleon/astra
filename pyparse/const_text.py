@@ -50,13 +50,15 @@ use outcmn_inc
 use const_inc
 use status_inc
 use debugger, only: markloc
-use json_vars, only: profxNames
+use json_vars, only: profxNames, n_intern
 
 implicit none
 
 integer :: j
 
 call markloc("xar_usage")
+
+allocate(DTNAME(n_intern+4*NSBMX))
 """
 
     sb = \

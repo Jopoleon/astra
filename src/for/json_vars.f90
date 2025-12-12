@@ -117,7 +117,7 @@ contains
     call write_scalar_block(varPtr, varValues)
     call write_scalar_block(varxPtr, varxValues)
     call write_scalar_block(constPtr, constValues)
-    call write_scalar_block(internPtr, DELOUT)
+    call write_scalar_block(internPtr, internValues)
 
 ! Sparse scalars
 

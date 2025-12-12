@@ -1,6 +1,6 @@
 module const_inc
  
-use parameter_inc, only: NSBMX, NEQNS, NARRX, NSDELOUT
+use parameter_inc, only: NSBMX, NEQNS, NARRX
 
 implicit none
 
@@ -62,7 +62,7 @@ double precision, pointer :: &
     CDhj1, CDhj2, CDhj3, CDhj4, CDhj5, CDhj6, CDhj7, CDhj8, CDhj9
 
 ! Old list: Versions 5.2 and earlier
-double precision, target, allocatable, dimension(:) :: constValues, varValues, varxValues
+double precision, target, allocatable, dimension(:) :: constValues, varValues, varxValues, internValues
 
 double precision :: TEQ(NSBMX)
 !double precision :: DTEQ(4, NSBMX)
@@ -74,7 +74,6 @@ double precision, pointer :: &
     IPROT, ITFBE, ITFBP, ICIRCQ, IPCTRL, ADCMPF, FLXDR, &
     SGNIP, SGNBT,  IFBEG, IPEQL, &
     DTEQ(:, :)
-double precision, target :: DELOUT(NSDELOUT + 4*NSBMX)
 
 double precision :: IBKDW ! IBKDW=-1 for breakdown yes
 
@@ -108,6 +107,8 @@ contains
 !---------------------
 subroutine const_init
 
+  use json_vars, only: n_intern
+
 integer :: i, j
 
 NBND = 0
@@ -138,55 +139,9 @@ n_bouncon = 0
 
 ! Former COMMON A_OUTPUT, removed TEQ
 allocate(DTEQ(4, NSBMX))
+DTEQ(1:4, 1:NSBMX) => internValues(n_intern+1: n_intern + 4*NSBMX)
 
-DROUT => DELOUT(1)
-DTOUT => DELOUT(2)
-DPOUT => DELOUT(3)
-TIME  => DELOUT(4)
-TAUMIN=> DELOUT(5)
-TAUMAX=> DELOUT(6)
-TAUINC=> DELOUT(7)
-DELVAR=> DELOUT(8)
-
-ITEREX=> DELOUT(9)
-NITREQ=> DELOUT(10)
-TINIT => DELOUT(11)
-TSCALE=> DELOUT(12)
-NB1R  => DELOUT(13)
-NUFR  => DELOUT(14)
-XOUT  => DELOUT(15)
-XINPUT=> DELOUT(16)
-
-NB2EQL=> DELOUT(17)
-NEQUIL=> DELOUT(18)
-NBNDR => DELOUT(19)
-XFLAGR=> DELOUT(20)
-DTEQL => DELOUT(21)
-MEQUIL=> DELOUT(22)
-TPAUSE=> DELOUT(23)
-TEND  => DELOUT(24)
-
-INUME1=> DELOUT(25)
-INUME2=> DELOUT(26)
-INUME3=> DELOUT(27)
-INUME4=> DELOUT(28)
-
-IPROT => DELOUT(29)
-ITFBE => DELOUT(30)
-ITFBP => DELOUT(31)
-ICIRCQ=> DELOUT(32)
-IPCTRL=> DELOUT(33)
-ADCMPF=> DELOUT(34)
-FLXDR => DELOUT(35)
-
-SGNIP => DELOUT(36)
-SGNBT => DELOUT(37)
-IFBEG => DELOUT(38)
-IPEQL => DELOUT(39)
-
-DTEQ(1:4, 1:NSBMX) => DELOUT(NSDELOUT+1: NSDELOUT + 4*NSBMX)
-
-DELOUT(1: NSDELOUT) = (/ &
+internValues(1: n_intern) = (/ &
 !  DROUT,  DTOUT,  DPOUT,   TIME, TAUMIN, TAUMAX, TAUINC, DELVAR,
     0.01,   0.01,   0.01,     0.,  1.e-6,   0.05,    1.1,    0.1, &
 ! ITEREX, NITREQ,  TINIT, TSCALE,    NA1,   NUFR,   XOUT, XINPUT, 
@@ -203,11 +158,11 @@ do j=1, NSBMX
 !   DTEQ(2, j) = -99999.
 !   DTEQ(3, j) = 99999.
 !   DTEQ(4, j) = -1.
-   i = (j-1)*4 + NSDELOUT
-   DELOUT(i+1) = 0.
-   DELOUT(i+2) = -99999.
-   DELOUT(i+3) = 99999.
-   DELOUT(i+4) = -1.
+   i = (j-1)*4 + n_intern
+   internValues(i+1) = 0.
+   internValues(i+2) = -99999.
+   internValues(i+3) = 99999.
+   internValues(i+4) = -1.
 enddo
 
 ! Initialise

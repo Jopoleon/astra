@@ -54,7 +54,8 @@ class EQU_PARSER:
         prof_ext = json_keys['strahl']
         self.profiles  = prof + profx + prof_ext
         self.constants = json_keys['constants']
-        self.internals = json_keys['internal'] + json_keys['intern2']
+        self.intern1   = json_keys['internal']
+        self.intern2   = json_keys['intern2']
         self.variables = json_keys['variables']
         self.varx      = json_keys['variables_x']
 

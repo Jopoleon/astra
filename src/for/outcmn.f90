@@ -1,9 +1,10 @@
 module outcmn_inc
 
-use parameter_inc, only: NRD, NSBMX, NSDELOUT, plot_modes
+use parameter_inc, only: NRD, plot_modes
 use char_manip, only: null_ch
 use io_mod, only: resize
 use const_inc, only: AB, TINIT, TSCALE
+use json_vars, only: n_intern, internNames
 
 implicit none
 
@@ -33,7 +34,8 @@ double precision :: TTOUT(NTIMES), TOUT(NTIMES, NRW)
 
 character(len=4), dimension(NRW) :: NAMET, NAMER
 character(len=6), dimension(NRW) :: NAMEX
-character(len=6) :: DTNAME(NSDELOUT+4*NSBMX), NAM7(4)
+character(len=6), allocatable :: DTNAME(:)
+character(len=6), dimension(4) :: NAM7
 character(132) :: VERSION, RUNID
 type(astra_xwindow) :: astra_gui_ref, astra_gui
 type(plot_frame) :: plot_area_ref, plot_area
@@ -159,16 +161,9 @@ contains
      97,  98, 101, 102, 105, 106, 109, 110,  99, 100, 103, 104, 107, 108, 111, 112, &
     113, 114, 117, 118, 115, 116, 119, 120, 121, 122, 125, 126, 123, 124, 127, 128 /)
 
-    DTNAME(1: NSDELOUT) = (/ &
-        'dRout ', 'dTout ', 'dPout ', 'Time  ', 'TAUmin', 'TAUmax', &
-        'TAUinc', 'DELvar', 'Iterex', 'NiTrEq', 'Tinit ', 'Tscale', &
-        'NA1   ', 'NUF   ', 'Xaxis ', 'Xdeflt', 'NB2EQL', 'NEQUIL', &
-        'NBND  ', 'Xflag ', 'DTeql ', 'MEQUIL', 'Tpause', 'Tend  ', &
-        'Inume1', 'Inume2', 'Inume3', 'Inume4', 'Iprot ', 'Itfbe ', &
-        'Itfbp ', 'Icircq', 'Ipctrl', 'Adcmpf', 'Flxdr ', 'Sgnip ', &
-        'Sgnbt ', 'Ifbeg ', 'Ipeql ' /)
+    DTNAME(1: n_intern) = internNames
     do j=1, 30
-        i = (j-1)*4 + NSDELOUT
+        i = (j-1)*4 + n_intern
         write(DTNAME(i+1), '(A, i0)') 'DTeq', j
         write(DTNAME(i+2), '(A, i0)') 'BEeq', j
         write(DTNAME(i+3), '(A, i0)') 'ENeq', j

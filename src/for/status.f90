@@ -625,7 +625,7 @@ contains
 
     use io_mod, only: exp_file, NSBR
     use const_inc, only: GP2, RTOR, BTOR, HRO, ROC, ABC, NA1, NB1, NAB, &
-        NSDELOUT, TIME, TAU, TSTART, WTE, WTI, WNE
+        TIME, TAU, TSTART, WTE, WTI, WNE
     use debugger, only: markloc, astra_stop
 
     integer :: j
