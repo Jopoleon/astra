@@ -1042,7 +1042,6 @@ end subroutine A2EMEQ
 !---------------------------------------------------------------------
 subroutine A2GSSOLVER(equil_solver)
 
-use parameter_inc, only: NRD
 use io_mod, only: CCOIL, VCOIL, NBNT
 use const_inc, only: NEQUIL, MEQUIL, NBND, IPART, IPCTRL, TAU, NA, NA1, NAB, NCNB, &
     RTOR, BTOR, IPL, GP, GP2, HRO, ROC, ABC, &

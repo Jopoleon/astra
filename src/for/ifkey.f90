@@ -819,7 +819,6 @@ end function ifkey
 !---------------------------------------------------------------------
 subroutine graph_output(MARK, PRMARK, NAMEP, ITO)
 
-use parameter_inc, only: NRD
 use const_inc, only: NA
 use status_inc, only: MU
 use io_mod, only: TASK
@@ -860,7 +859,6 @@ end subroutine graph_output
 subroutine refresh_plot(IFKL, MARK, PRMARK, PSNAME)
 ! Corresponds to block from statement 201
 
-use parameter_inc, only: NRD
 use io_mod, only: TASK
 use outcmn_inc, only: astra_gui, KPRI, MOD10, MODEY, RUNID, &
     WarningColor, nplots_max, resizeGraph, NTIMES, TOUT, TTOUT

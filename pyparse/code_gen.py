@@ -108,6 +108,7 @@ allocate(EXT(NRD, n_profx))
         self.associate_pointers += '\n'
         for j, inter in enumerate(parse.intern1):
             self.associate_pointers += '%s => internValues(%d)\n' %(inter, j+1)
+        self.associate_pointers += '\n'
         for j, inter in enumerate(parse.intern2):
             self.associate_pointers += '%s => intern2Values(%d)\n' %(inter, j+1)
         self.associate_pointers += '\n'

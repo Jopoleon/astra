@@ -1,14 +1,13 @@
 program astra
 
 use char_manip, only: null_ch
-use parameter_inc, only: NSBMX, NRD
 use outcmn_inc, only: astra_gui, astra_gui_ref, outcmn_init
 use io_mod, only: TASK, io_init
 use cpu_usage, only: cpu_start, wall_start, cpu_report
 use const_inc, only: IPART, const_init, &
     TIME, TSTART, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT
 use status_inc, only: status_init, defarr
-use debugger, only: debug, astra_stop, markloc
+use debugger, only: astra_stop, markloc
 use ext_bnd, only: use_ext_bnd
 use transport2fbe, only: transport2fbe_init
 use json_vars, only: read_metadata, n_intern
