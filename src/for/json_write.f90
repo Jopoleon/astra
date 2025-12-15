@@ -20,8 +20,8 @@ contains
     use debugger, only: debug
 
     integer :: j, jrho, ios, j_call=1, nrho_surf, nthe_surf, nR, nZ
-    character(len=120) :: json_out
-    double precision, dimension(200) :: time_traces, equil_traces
+    character(len=180) :: json_out
+    double precision, dimension(20) :: equil_traces
     character(KIND=JSON_CK, len=:), allocatable :: sunit, sdesc, sname
     type(json_core) :: jCore
 
