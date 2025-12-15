@@ -14,7 +14,7 @@ subroutine read_input
 !----------------------------------------------------------------------|
 
 use parameter_inc, only: NTVAR, NBDMAX, NBDTMAX, NRD, NRDX, NTARR
-use const_inc, only: NITREQ, NA, NA1, NB1, NAB, NUF, NBND, NCNB, n_bouncon, &
+use const_inc, only: NITREQ, NA, NA1, NB1, NAB, NUF, NBND, NCNB, &
     TIME, TSTART, TEND, TPAUSE, TAUMIN, TAUPRP, TINIT, TSCALE, TIMEQL, DTEQL, &
     varValues, constValues, internValues, XFLAG, exp_header, ARXUSE, &
     AB, ABC, AWAll, ROC, ROCO, ROB, ROWALL,  HRO, HROX, RTOR, &
