@@ -94,11 +94,10 @@ double precision, pointer :: &
 integer :: NA, NA1, NAB, NB1, NUF, NNCX, KEY, NBND, NCNB, &
     XFLAG, NSTEPS, ITREQ, IPART, LEQ(NEQNS), NITOT
 integer :: ARXUSE(NARRX)
-integer, pointer :: NA1N, NA1E, NA1I, NA1U, &
+integer :: NA1N, NA1E, NA1I, NA1U, &
     NA10, NA11, NA12, NA13, NA14, NA15, NA16, NA17, NA18, NA19
 character(len=132) :: exp_header
 
-integer, dimension(14), target :: n_bouncon
 double precision :: tbeg_eq, tend_eq
 
 contains
@@ -118,22 +117,20 @@ NEQUIL => MESHEQ
 
 ! New block
 
-NA1N => n_bouncon(1)
-NA1E => n_bouncon(2)
-NA1I => n_bouncon(3)
-NA1U => n_bouncon(4)
-NA10 => n_bouncon(5)
-NA11 => n_bouncon(6)
-NA12 => n_bouncon(7)
-NA13 => n_bouncon(8)
-NA14 => n_bouncon(9)
-NA15 => n_bouncon(10)
-NA16 => n_bouncon(11)
-NA17 => n_bouncon(12)
-NA18 => n_bouncon(13)
-NA19 => n_bouncon(14)
-
-n_bouncon = 0
+NA1N = 0
+NA1E = 0
+NA1I = 0
+NA1U = 0
+NA10 = 0
+NA11 = 0
+NA12 = 0
+NA13 = 0
+NA14 = 0
+NA15 = 0
+NA16 = 0 
+NA17 = 0
+NA18 = 0
+NA19 = 0
 
 ! Former COMMON A_OUTPUT, removed TEQ
 allocate(DTEQ(4, NSBMX))

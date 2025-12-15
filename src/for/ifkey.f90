@@ -313,7 +313,7 @@ do while(.True.)
                 if (KEY == 0) return
                 if (KIBM == 1 .and. (KEY == 99 .or. KEY == 67)) then ! <Ctrl>+C
                     if (TASK(4:4) /= 'B') call Close_Screen
-                    call cpu_report('>>> ASTRA <Ctrl>+C exit >>>' // null_ch)
+                    call cpu_report('>>> ASTRA <Ctrl>+C exit >>>')
                     call astra_stop
                 endif
 
@@ -397,7 +397,7 @@ do while(.True.)
 
     CASE(47) ! '/'
         if (TASK(4:4) /= 'B') call Close_Screen
-        call cpu_report('>>> ASTRA / or "Quit" button exit >>>' // null_ch)
+        call cpu_report('>>> ASTRA / or "Quit" button exit >>>')
         call astra_stop
 
     CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
@@ -768,7 +768,7 @@ do while(.True.)
         endif
         if (KEY == 47) then ! <Alt>+/
             if (TASK(4:4) /= 'B') call Close_Screen
-            call cpu_report('>>> ASTRA <Alt>+/ exit >>>' // null_ch)
+            call cpu_report('>>> ASTRA <Alt>+/ exit >>>')
             call astra_stop
         endif
         if (KIBM == 2 .and. (KEY >= 32 .and. KEY <= 126) ) then
@@ -810,7 +810,7 @@ enddo
 
 if (TASK(4:4) /= 'B') call Close_Screen
 
-call cpu_report('>>> ASTRA exit: reached END time >>>' // null_ch)
+call cpu_report('>>> ASTRA exit: reached END time >>>')
 call astra_stop
 
 return

@@ -1,6 +1,5 @@
 program astra
 
-use char_manip, only: null_ch
 use outcmn_inc, only: astra_gui, astra_gui_ref, outcmn_init
 use io_mod, only: TASK, io_init
 use cpu_usage, only: cpu_start, wall_start, cpu_report
@@ -98,7 +97,7 @@ do while (TIME - TEND + 1.E-8 < DPOUT + TAU)
     call STEPUP
 enddo
 
-call CPU_report('>>> ASTRA normal exit >>>' // null_ch)
+call CPU_report('>>> ASTRA normal exit >>>')
 call astra_stop
 
 end program astra
