@@ -39,6 +39,7 @@ clean:
 MODOBJS = $(OBJ_DIR)/nbstatus_inc.o
 
 OBJS = \
+$(OBJ_DIR)/stread.o \
 $(OBJ_DIR)/nbfoa.o \
 $(OBJ_DIR)/NBIBCE.o \
 $(OBJ_DIR)/nbicom.o \

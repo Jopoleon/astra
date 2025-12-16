@@ -202,7 +202,7 @@ integer function IFTREQ(YACC)
 
 use parameter_inc, only: NRD
 use status_inc, only: G11, G22, VR, FP
-use const_inc, only: NITREQ, IPART, ITREQ, ROC, PSIEXT, PSPLEX, NA1, NB1
+use const_inc, only: NITREQ, IPART, ITREQ, ROC, PSIEXT, PSPLEX, NA1
 use debugger, only: markloc
 
 implicit none
@@ -305,12 +305,11 @@ end function IFTREQ
 !---------------------------------------------------------------------
 subroutine OLDNEW
 
-use status_inc, only: NE, TE, TI, FP, VR, UPAR, &
-    UPS0, UPS1, UPS2, NEO, TEO, TIO, FPO, VRO, &
-    UPARO, UPS0O, UPS1O, UPS2O, &
+use status_inc, only: NE, TE, TI, FP, VR, UPAR, UPS0, UPS1, UPS2, &
+    NEO, TEO, TIO, FPO, VRO, UPARO, UPS0O, UPS1O, UPS2O, &
     F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, &
     F0O, F1O, F2O, F3O, F4O, F5O, F6O, F7O, F8O, F9O
-use const_inc, only: NB1, BTN, FTO, FTN, ROCO, ROC, BTOR, BTN
+use const_inc, only: NB1, BTN, FTO, FTN, ROCO, ROC, BTOR
 use debugger, only: markloc
 
 implicit none
