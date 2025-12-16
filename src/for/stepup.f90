@@ -217,7 +217,7 @@ time_step_accuracy: do
     
     tau_old = tau !store old tau before changing it
 
-    if (IFSTEP(jkey, updwno) == 0 .and. IFBEY /= 1) then
+    if (IFSTEP() == 0 .and. IFBEY /= 1) then
 ! Time step accuracy accepted? No(0)
 ! note that here TAU is modified and TIME updated with time_new = TIME+TAU !
         tau_new = tau

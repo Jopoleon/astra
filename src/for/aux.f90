@@ -1,6 +1,5 @@
-integer function IFSTEP(IFCONV, updwno)
+integer function IFSTEP
 
-! IFCONV dummy parameter
 ! Input
 !       LEQ(1)  LEQ(2)  LEQ(3)  LEQ(4)  LEQ(5)  LEQ(6-9)
 !  NE  TE  TI  CU equil    free
@@ -27,9 +26,6 @@ use status_inc, only: NEO, NIO, TEO, TIO, FPO, VRO, UPARO, &
 use debugger, only: markloc
 
 implicit none
-
-integer, intent(in) :: IFCONV
-double precision, intent(in) :: updwno
 
 integer :: j
 double precision :: CTAU, TAUO, YY, TAUN
@@ -144,7 +140,7 @@ TAU = MAX(TAUMIN, TAUN)   ! due to DELVAR & TAUINC
 
 if (TAU >= TAUO) then
     IFSTEP = 1
-    NSTEPS = NSTEPS+1
+    NSTEPS = NSTEPS + 1
     return  ! -> proceed to the next time step
 endif
 
@@ -256,8 +252,8 @@ if (ITREQ /= 0) then ! From 2nd iteration
     do j=1, NA1  ! Analize NA1new vs NA1old
         Y1 = max(Y1, abs(YWA(j)/G11(j) - 1.d0))
         Y2 = max(Y2, abs(YWB(j)/G22(j) - 1.d0))
-        YV = max(YV, abs(YWC(j)/VR(j) - 1.d0))
-        YI = max(YI, abs(YWD(j)/FP(j) - 1.d0))
+        YV = max(YV, abs(YWC(j)/VR(j)  - 1.d0))
+        YI = max(YI, abs(YWD(j)/FP(j)  - 1.d0))
     enddo
     if (Y1 > max(Y2, YV, YR, YI)) then
         YER(ITREQ) = Y1
@@ -296,7 +292,7 @@ ITREQ = ITREQ + 1
 YR   = ROC
 YPSE = PSIEXT
 YPSP = PSPLEX
-do j=1, NB1   ! Store some metric data
+do j=1, NA1   ! Store some metric data
     YWA(j) = G11(j)
     YWB(j) = G22(j)
     YWC(j) = VR(j)
@@ -361,7 +357,7 @@ subroutine SMOOTH(ALFA, n_in, y_in, x_in, n_out, y_out, x_out)
 ! P(x) is equal to unit now
 ! ALFA=alfa<<0.01*x_in(n_in)**2 is regularizator
 ! n_in - number of old grid points
-! N=<NRD - number of new grid points
+! n_out - number of new grid points
 ! 0<=x_in(n_in) - old grid |     both grids are arbitrary
 ! 0<=x_out(N)  - new grid |     but x_in(n_in)=x_out(N)
 ! y_in(n_in) - origin function, given on the grid x_in(n_in)
@@ -372,7 +368,6 @@ subroutine SMOOTH(ALFA, n_in, y_in, x_in, n_out, y_out, x_out)
 ! y_out(x_out(N))=y_in(x_in(n_in))
 !---------------------------------------------------------------------
 
-use parameter_inc, only: NRD
 use debugger, only: astra_stop
 
 implicit none
@@ -382,14 +377,9 @@ double precision, intent(in) :: ALFA, x_in(*), y_in(*), x_out(*)
 double precision, intent(out) :: y_out(*)
 
 integer :: I, J
-double precision :: YF, YX, YP, YQ, YD, FJ, P(NRD), dx
+double precision :: YF, YX, YP, YQ, YD, FJ, P(n_out), dx
 character(len=132) :: err_msg
 
-if (n_out > NRD .or. n_in <= 0) then
-    write(err_msg, '(A, 1X, i, 1X, i)') ' >>> SMOOTH: array is out of limits', NRD, n_out
-    call err_catch_a
-    call astra_stop(err_msg)
-endif
 if (n_in == 1) then
     do j=1, n_out
         y_out(j) = y_in(1)
@@ -463,21 +453,16 @@ end subroutine SMOOTH
 subroutine SMAP(ALFA, n_in, x_in, n_out, x_out, y_out)
 ! Similar to SMOOTH but the same array, y_out, is used for input and output
 
-use parameter_inc, only: NRD
-
 implicit none
 
 integer, intent(in) :: n_in, n_out
 double precision, intent(in) :: ALFA, x_in(*), x_out(*)
 double precision, intent(inout) :: y_out(*)
 
-integer :: J
-double precision :: P(NRD)
+double precision :: P(n_out)
 
 call SMOOTH(ALFA, n_in, y_out, x_in, n_out, P, x_out)
-do j=1, n_out
-    y_out(j) = P(j)
-enddo
+y_out(1: n_out) = P(1: n_out)
 
 return
 end subroutine SMAP
@@ -509,7 +494,7 @@ YF1 = y_in(1)/((x_in(1) - x_in(2))*(x_in(1) - x_in(3)))
 YF2 = y_in(2)/((x_in(2) - x_in(1))*(x_in(2) - x_in(3)))
 YF3 = y_in(3)/((x_in(3) - x_in(1))*(x_in(3) - x_in(2)))
 do j=1, n_out
-    if(2.*x_out(j) > x_in(I+1) + x_in(I+2)) then
+    if (2.*x_out(j) > x_in(I+1) + x_in(I+2)) then
         do
             I = I + 1
             I = min(I, n_in - 2)
@@ -520,8 +505,8 @@ do j=1, n_out
         YF3 = y_in(I+2)/((x_in(I+2) - x_in(I  ))*(x_in(I+2) - x_in(I+1)))
     endif
     y_out(j) = YF1*(x_out(j) - x_in(I+1))*(x_out(j) - x_in(I+2)) + &
-            YF2*(x_out(j) - x_in(I  ))*(x_out(j) - x_in(I+2)) + &
-            YF3*(x_out(j) - x_in(I  ))*(x_out(j) - x_in(I+1))
+               YF2*(x_out(j) - x_in(I  ))*(x_out(j) - x_in(I+2)) + &
+               YF3*(x_out(j) - x_in(I  ))*(x_out(j) - x_in(I+1))
 enddo
 
 return
@@ -531,158 +516,17 @@ end subroutine TRANSF
 subroutine QMAP(n_in, x_in, n_out, x_out, y_out)
 ! Similar to TRANSF but uses the same array, y_out, for input and output.
 
-use parameter_inc, only: NRD
-
 implicit none
 
 integer, intent(in) :: n_in, n_out
 double precision, intent(in), dimension(*) :: x_in, x_out
 double precision, intent(inout), dimension(*) :: y_out
 
-integer :: j
-double precision :: FN(NRD)
+double precision :: FN(n_out)
 
 call TRANSF(n_in, y_out, x_in, n_out, FN, x_out)
 
-do j=1, n_out
-    y_out(j) = FN(j)
-enddo
+y_out(1: n_out) = FN(1: n_out)
 
 return
 end subroutine QMAP
-
-!---------------------------------------------------------------------
-subroutine CHEBFT(n_in, y_in, x_in, NCHCF, CHEBCF)
-!---------------------------------------------------------------------
-! The subroutine returns NCHCF coefficients of a Chebyshev
-! polynomial fit to the function y_in(1:n_in) given as a
-! function of any "radial" variable on the grid x_in(1:n_in)
-! Example:
-! call CHEBFT(NA1,TE,FP,5,CHOUT)
-! out = PFITN(FP,CHOUT,5)
-!-----------------------------------------------------------------------
-
-use debugger, only: markloc, astra_stop
-
-implicit none
-
-integer, parameter :: NMAX=10
-double precision, parameter :: PI=3.141592654
-
-integer, intent(in) :: n_in, NCHCF
-double precision, intent(in) , dimension(n_in)  :: y_in, x_in
-double precision, intent(out), dimension(NCHCF) :: CHEBCF
-
-integer :: K, J
-double precision :: YA, YB, FAC, YD, SUM, PIOVN, BMA, BPA
-double precision, dimension(NMAX) :: YC, YF
-
-call markloc('CHEBFT')
-
-if (NCHCF > NMAX) call astra_stop('>>> Chebyshev fit error: too high power')
-
-YA = max(x_in(1), x_in(n_in))
-YB = min(x_in(1), x_in(n_in))
-PIOVN = PI/NCHCF
-
-! The following two lines require that at the boundary
-!     the fit concides with the original function
-YD = COS(0.5*PIOVN)
-YA = (2.*YA - YB*(1. - YD))/(1. + YD)
-
-BMA = 0.5*(YB - YA)
-BPA = 0.5*(YB + YA)
-do K=1,NCHCF
-    YC(K) = BPA + BMA*COS(PIOVN*(K - 0.5))
-enddo
-
-call TRANSF(n_in, y_in, x_in, NCHCF, YF, YC)
-
-FAC = 2./NCHCF
-do J=1, NCHCF
-    SUM = 0.
-    do K=1, NCHCF
-        SUM = SUM + YF(K)*COS(PIOVN*(K - 0.5)*(J - 1.))
-    enddo
-    YC(J) = FAC*SUM
-enddo
-
-call CHEBPC(YC, CHEBCF, YF, NCHCF)
-
-FAC = 1./BMA
-do J=2, NCHCF
-    CHEBCF(J) = CHEBCF(J)*FAC
-    FAC = FAC/BMA
-enddo
-do J=1, NCHCF-1
-    do K=NCHCF-1, J, -1
-        CHEBCF(K) = CHEBCF(K) - BPA*CHEBCF(K+1)
-    enddo
-enddo
-
-return
-end subroutine CHEBFT
-
-!---------------------------------------------------------------------
-subroutine CHEBPC(C, D, F, N)
-!---------------------------------------------------------------------
-! F(1:N) array for internal use
-!
-!   Input: N number of coefficients
-!  C(1:N) 
-!   Output: D(1:N) array of Chebyshev coefficients
-!---------------------------------------------------------------------
-
-implicit none
-
-integer, intent(in) :: N
-double precision, intent(in) , dimension(N) :: C
-double precision, intent(out), dimension(N) :: D, F
-
-integer :: J, K
-double precision :: SV
-
-D = 0.
-F = 0.
-
-D(1) = C(N)
-do J=N-1, 2, -1
-    do K=N-J+1, 2, -1
-        SV = D(K)
-        D(K) = 2.*D(K-1) - F(K)
-        F(K) = SV
-    enddo
-    SV = D(1)
-    D(1) = -F(1) + C(J)
-    F(1) = SV
-enddo
-do J=N, 2, -1
-    D(J) = D(J-1) - F(J)
-enddo
-D(1) = -F(1) + 0.5*C(1)
-
-return
-end subroutine CHEBPC
-
-!---------------------------------------------------------------------
-double precision function PFITN(x, cp, n_order)
-!---------------------------------------------------------------------
-! Nth order Polynomial FIT to a function f(a)
-! CP are the N polynomial coefficients given
-! PFITN = f(a) = \Sum {CP_j * a^(j-1)} ;   1<=j<=N
-!---------------------------------------------------------------------
-
-implicit none
-
-integer, intent(in) :: n_order
-double precision, intent(in) :: x, cp(n_order)
-
-integer :: j
-
-PFITN = CP(n_order)
-do j=n_order-1, 1, -1
-    PFITN = PFITN*x + CP(j)
-enddo
-
-return
-end function PFITN
