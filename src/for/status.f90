@@ -91,7 +91,6 @@ contains
 
 ! Defaults, rather fall-back than initial values
 
-! Multi-dim
     profiles_x = 0.d0
     profiles   = 0.d0
 
@@ -382,9 +381,9 @@ contains
             NDEUT(j) = NDEUT(NA1)*YN
             NTRIT(j) = NTRIT(NA1)*YN
             NMAIN(j) = NMAIN(NA1)*YN
-            TE(j)    = TE(NA1)*exp((ABC - AMETR(j))/WTE)
-            TI(j)    = TI(NA1)*exp((ABC - AMETR(j))/WTI)
-            UPAR(j) = UPAR(NA1)*exp((ABC-AMETR(j))/WTI)
+            TE(j)     = TE(NA1)*exp((ABC - AMETR(j))/WTE)
+            TI(j)     = TI(NA1)*exp((ABC - AMETR(j))/WTI)
+            UPAR(j) = UPAR(NA1)*exp((ABC - AMETR(j))/WTI)
 ! Efable: should be changed when a SOL equilibrium is implemented
             MV(j) = MV(NA1)
             FV(j) = FV(j-1) + YF*RHO(j)*MV(j)*(RHO(j) - RHO(j-1))

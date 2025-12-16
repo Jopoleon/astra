@@ -77,8 +77,6 @@ double precision, pointer :: &
 
 double precision :: IBKDW ! IBKDW=-1 for breakdown yes
 
-double precision, target :: MESHEQ
-
 double precision, pointer :: &
     HRO, HROX, VOLUME, ROB, ROC, ROWALL, FTO, &
     FTN, BTN, PSIFB, RBDOT, ALBPL, &
@@ -102,150 +100,137 @@ double precision :: tbeg_eq, tend_eq
 
 contains
 
-!---------------------
-subroutine const_init
+!------------------------------------------
+    subroutine const_init
 
-integer :: j
+    integer :: j
 
-NBND = 0
+    constValues   = 0.
+    varValues     = 0.
+    varxValues    = 0.
+    internValues  = 0.
+    intern2Values = 0.
 
-! Coils
-NCNB = 1
+    NCNB = 1
+    NBND = 0
 
-NEQUIL => MESHEQ
+    NA1N = 0
+    NA1E = 0
+    NA1I = 0
+    NA1U = 0
+    NA10 = 0
+    NA11 = 0
+    NA12 = 0
+    NA13 = 0
+    NA14 = 0
+    NA15 = 0
+    NA16 = 0 
+    NA17 = 0
+    NA18 = 0
+    NA19 = 0
 
-! New block
+    DROUT  = 0.01
+    DTOUT  = 0.01
+    DPOUT  = 0.01
+    TIME   = 0.
+    TAUMIN = 1.e-6
+    TAUMAX = 0.05
+    TAUINC = 1.1
+    DELVAR = 0.1
+    ITEREX = 1.
+    NITREQ = 1.
+    TINIT  = 0.
+    TSCALE = 1.
+    NB1R   = 41.
+    NUFR   = 41.
+    XOUT   = 1.
+    XINPUT = 1.
+    NB2EQL = 1.
+    NEQUIL = 0.
+    NBNDR  = 0.
+    XFLAGR = 0.
+    DTEQL  = 0.
+    MEQUIL = 0.
+    TPAUSE = 100.
+    TEND   = 1000.
+    INUME1 = 22.
+    INUME2 = 22.
+    INUME3 = 22.
+    INUME4 = 22.
+    IPROT  = 0.
+    ITFBE  = 1e6
+    ITFBP  = 0.
+    ICIRCQ = 0.
+    IPCTRL = 0.
+    ADCMPF = 1.
+    FLXDR  = 0.
+    SGNIP  = 1.
+    SGNBT  = 1.
+    IFBEG  = 0.
+    IPEQL  = 4.
+    DTEQ(1, :) = 0.
+    DTEQ(2, :) = -99999.
+    DTEQ(3, :) =  99999.
+    DTEQ(4, :) = -1.
 
-NA1N = 0
-NA1E = 0
-NA1I = 0
-NA1U = 0
-NA10 = 0
-NA11 = 0
-NA12 = 0
-NA13 = 0
-NA14 = 0
-NA15 = 0
-NA16 = 0 
-NA17 = 0
-NA18 = 0
-NA19 = 0
-
-DROUT  = 0.01
-DTOUT  = 0.01
-DPOUT  = 0.01
-TIME   = 0.
-TAUMIN = 1.e-6
-TAUMAX = 0.05
-TAUINC = 1.1
-DELVAR = 0.1
-ITEREX = 1.
-NITREQ = 1.
-TINIT  = 0.
-TSCALE = 1.
-NB1R   = 41.
-NUFR   = 41.
-XOUT   = 1.
-XINPUT = 1.
-NB2EQL = 1.
-NEQUIL = 0.
-NBNDR  = 0.
-XFLAGR = 0.
-DTEQL  = 0.
-MEQUIL = 0.
-TPAUSE = 100.
-TEND   = 1000.
-INUME1 = 22.
-INUME2 = 22.
-INUME3 = 22.
-INUME4 = 22.
-IPROT  = 0.
-ITFBE  = 1e6
-ITFBP  = 0.
-ICIRCQ = 0.
-IPCTRL = 0.
-ADCMPF = 1.
-FLXDR  = 0.
-SGNIP  = 1.
-SGNBT  = 1.
-IFBEG  = 0.
-IPEQL  = 4.
-DTEQ(1, :) = 0.
-DTEQ(2, :) = -99999.
-DTEQ(3, :) = 99999.
-DTEQ(4, :) = -1.
-
-! Initialise
-
-ARXUSE = 0
-TAU    = .000001
-TAUPRP = .000001
-
+    ARXUSE = 0
+    TAU    = 0.000001
+    TAUPRP = 0.000001
 
 ! Global variables:
-AB     = .3
-ABC    = .3
-AMJ    = 2.
-AWALL  = .4
-BTOR   = 3.
-ELONG  = 1.
-ELONM  = 1.
-ENCL   = .002
-ENWM   = .02
-IPL    = .3
-RTOR   = 1.5
-ROC    = .3
-ROCO   = .3
-SHIFT  = 0.
-UPDWN  = 0.
-NNCL   = .001
-NNWM   = .0001
-GN2E   = 0.
-GN2I   = 0.
-UEXT   = 0.
-TRIAN  = .0
-TRICH  = .0
-ZMJ    = 1.
-WNE    = .03
-WTE    = .03
-WTI    = .03
-TSTART = 0.
-ITREQ  = 0
-PSIFB  = 0.
-PSIFBO = 0.
-RBDOT  = 0.
-PSIEXT = 0.
-PSPLEX = 0.
-IPLFBE = 0.
-PSIEXO = 0.
-PSPLXO = 0.
-ATREQ  = 1.E-04
-PTREQ  = 1.E-05
-BBDOT  = 0.0
-IFBEY  = 0.
-NB1    = 41
-NA1    = 41
-NNCX   = 200
-NAB    = 41
-NUF    = 41
-NA     = 40
-NITOT  = 0
-NSTEPS = 0
+    AB     = 0.3
+    ABC    = 0.3
+    AMJ    = 2.
+    AWALL  = 0.4
+    BTOR   = 3.
+    ELONG  = 1.
+    ELONM  = 1.
+    ENCL   = 0.002
+    ENWM   = 0.02
+    IPL    = 0.3
+    RTOR   = 1.5
+    ROC    = 0.3
+    ROCO   = 0.3
+    SHIFT  = 0.
+    UPDWN  = 0.
+    NNCL   = 0.001
+    NNWM   = 0.0001
+    GN2E   = 0.
+    GN2I   = 0.
+    UEXT   = 0.
+    TRIAN  = 0.0
+    TRICH  = 0.0
+    ZMJ    = 1.
+    WNE    = 0.03
+    WTE    = 0.03
+    WTI    = 0.03
+    TSTART = 0.
+    ITREQ  = 0
+    PSIFB  = 0.
+    PSIFBO = 0.
+    RBDOT  = 0.
+    PSIEXT = 0.
+    PSPLEX = 0.
+    IPLFBE = 0.
+    PSIEXO = 0.
+    PSPLXO = 0.
+    ATREQ  = 1.E-04
+    PTREQ  = 1.E-05
+    BBDOT  = 0.0
+    IFBEY  = 0.
+    NB1    = 41
+    NA1    = 41
+    NNCX   = 200
+    NAB    = 41
+    NUF    = 41
+    NA     = 40
+    NITOT  = 0
+    NSTEPS = 0
 
-TEQ = -1.e3
+    TEQ = -1.e3
+    LEQ = -1
+    exp_header(:) = ' '
 
-! Input dummy variables:
-varValues (38:85) = 0.d0
-! Assign 48*ZRD*
-varxValues(38:85) = 0.d0
-! Assign 48*ZRD*X
-
-! Constants
-LEQ = -1
-constValues = 1.
-constValues(17:32) = 0.
-exp_header(:) = ' '
-
-end subroutine const_init
+    end subroutine const_init
 
 end module const_inc
