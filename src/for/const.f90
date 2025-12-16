@@ -103,10 +103,9 @@ double precision :: tbeg_eq, tend_eq
 contains
 
 !---------------------
-subroutine const_init(nintern)
+subroutine const_init
 
-integer, intent(in) :: nintern
-integer :: i, j
+integer :: j
 
 NBND = 0
 
@@ -132,33 +131,49 @@ NA17 = 0
 NA18 = 0
 NA19 = 0
 
-! Former COMMON A_OUTPUT, removed TEQ
-allocate(DTEQ(4, NSBMX))
-DTEQ(1:4, 1:NSBMX) => internValues(nintern+1: nintern + 4*NSBMX)
-
-internValues(1: nintern) = (/ &
-!  DROUT,  DTOUT,  DPOUT,   TIME, TAUMIN, TAUMAX, TAUINC, DELVAR,
-    0.01,   0.01,   0.01,     0.,  1.e-6,   0.05,    1.1,    0.1, &
-! ITEREX, NITREQ,  TINIT, TSCALE,    NA1,   NUFR,   XOUT, XINPUT, 
-      1.,     1.,     0.,     1.,    41.,    41.,     1.,     1., &
-! NB2EQL, NEQUIL,  NBNDR, XFLAGR,  DTEQL, MEQUIL, TPAUSE,   TEND,
-      1.,     0.,     0.,     0.,     0.,     0.,   100.,  1000., &
-! INUME1, INUME2, INUME3, INUME4,  IPROT,  ITFBE,  ITFBP, ICIRCQ, 
-     22.,    22.,    22.,    22.,     0.,   1.e6,     0.,     0., &     
-! IPCTRL, ADCMPF,  FLXDR,  SGNIP,  SGNBT,  IFBEG,  IPEQL
-      0.,     1.,     0.,     1.,     1.,     0.,     4. /)
-
-do j=1, NSBMX
-!   DTEQ(1, j) = 0.
-!   DTEQ(2, j) = -99999.
-!   DTEQ(3, j) = 99999.
-!   DTEQ(4, j) = -1.
-   i = (j-1)*4 + nintern
-   internValues(i+1) = 0.
-   internValues(i+2) = -99999.
-   internValues(i+3) = 99999.
-   internValues(i+4) = -1.
-enddo
+DROUT  = 0.01
+DTOUT  = 0.01
+DPOUT  = 0.01
+TIME   = 0.
+TAUMIN = 1.e-6
+TAUMAX = 0.05
+TAUINC = 1.1
+DELVAR = 0.1
+ITEREX = 1.
+NITREQ = 1.
+TINIT  = 0.
+TSCALE = 1.
+NB1R   = 41.
+NUFR   = 41.
+XOUT   = 1.
+XINPUT = 1.
+NB2EQL = 1.
+NEQUIL = 0.
+NBNDR  = 0.
+XFLAGR = 0.
+DTEQL  = 0.
+MEQUIL = 0.
+TPAUSE = 100.
+TEND   = 1000.
+INUME1 = 22.
+INUME2 = 22.
+INUME3 = 22.
+INUME4 = 22.
+IPROT  = 0.
+ITFBE  = 1e6
+ITFBP  = 0.
+ICIRCQ = 0.
+IPCTRL = 0.
+ADCMPF = 1.
+FLXDR  = 0.
+SGNIP  = 1.
+SGNBT  = 1.
+IFBEG  = 0.
+IPEQL  = 4.
+DTEQ(1, :) = 0.
+DTEQ(2, :) = -99999.
+DTEQ(3, :) = 99999.
+DTEQ(4, :) = -1.
 
 ! Initialise
 

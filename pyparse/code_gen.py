@@ -95,6 +95,7 @@ allocate(internValues(n_intern + 4*NSBMX))
 allocate(intern2Values(n_intern2))
 allocate(profiles(NRD, n_prof))
 allocate(profiles_x(NRD, n_profx))
+allocate(DTEQ(4, NSBMX))
 
 '''
         for j, const in enumerate(parse.constants):
@@ -108,7 +109,7 @@ allocate(profiles_x(NRD, n_profx))
         self.associate_pointers += '\n'
         for j, inter in enumerate(parse.intern1):
             self.associate_pointers += '%s => internValues(%d)\n' %(inter, j+1)
-        self.associate_pointers += '\n'
+        self.associate_pointers += 'DTEQ(1:4, 1:NSBMX) => internValues(n_intern+1: n_intern + 4*NSBMX)\n\n'
         for j, inter in enumerate(parse.intern2):
             self.associate_pointers += '%s => intern2Values(%d)\n' %(inter, j+1)
         self.associate_pointers += '\n'
