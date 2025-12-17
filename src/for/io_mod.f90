@@ -1,15 +1,15 @@
 module io_mod
 
-use parameter_inc, only: NRDX, NARRX, NCNBM, NCNBTM, NCONST, NSBMX
+use parameter_inc, only: NRDX, NARRX, NCNBM, NCNBTM, NCONST, n_sbr_max
 use debugger, only: debug, flightsim
 use const_inc, only: TSTART, TEND, TPAUSE
 
 implicit none
 
-integer, dimension(NSBMX) :: IFSBX
+integer, dimension(n_sbr_max) :: IFSBX
 integer, dimension(NARRX) :: IFDFAX=-1, jbeg_arrx, NPTM
 integer, dimension(NCONST) :: IFDFVX=-1
-integer :: NSBR, NBNT=0, NCNBT=0, NGR
+integer :: n_sbr, NBNT=0, NCNBT=0, NGR
 double precision :: resize
 double precision, dimension(NARRX) :: TOUTX
 double precision, dimension(NCNBM) :: CCOIL=0., VCOIL=0.
@@ -17,7 +17,7 @@ double precision, dimension((NCNBM+1)*NCNBTM) :: CCOILX=0., VCOILX=0.
 double precision, dimension(NRDX, NARRX) :: XAXES, DATAX
 
 character(len=4) :: machine, TASK
-character(len=20), dimension(NSBMX) :: sbr_name
+character(len=20), dimension(n_sbr_max) :: sbr_name
 character(132) :: AWD, astra_ext, nml_file, equ_file, exp_file, NBFILE='***'
 
 contains

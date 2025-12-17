@@ -3,7 +3,7 @@ module time_functions
 implicit none
 
 integer, parameter :: nloc=2200
-integer :: f_id = 0
+integer :: f_id=0
   
 contains
 
@@ -29,8 +29,6 @@ contains
     endif
 
     time_loc = TIME
-
-!    write(*, *) TRIM(str_in), TIME, f_id
 
     return
     end subroutine function_id

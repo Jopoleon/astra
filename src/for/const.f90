@@ -1,6 +1,6 @@
 module const_inc
  
-use parameter_inc, only: NSBMX, NEQNS, NARRX
+use parameter_inc, only: n_sbr_max, NEQNS, NARRX
 
 implicit none
 
@@ -64,7 +64,7 @@ double precision, pointer :: &
 ! Old list: Versions 5.2 and earlier
 double precision, target, allocatable, dimension(:) :: constValues, varValues, varxValues, internValues, intern2Values
 
-double precision :: TEQ(NSBMX)
+double precision :: TEQ(n_sbr_max)
 
 double precision, pointer :: &
     DROUT, DTOUT, DPOUT, TIME, TAUMIN, TAUMAX, TAUINC, DELVAR, &

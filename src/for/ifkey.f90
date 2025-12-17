@@ -46,7 +46,7 @@ use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     rev_file, DTNAME, runid, VERSION, AVERS, ARLEAS, AEDIT, &
     GRAP, GRAL, TIM7, NAM7, KPRI, nplots_max, &
     NTIMES, TTOUT, TOUT
-use io_mod, only: NSBR, NGR, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
+use io_mod, only: n_sbr, NGR, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
 use expdat, only: raw_profile_map, DATARR
 use dbl2char, only: fmt6
 use char_manip, only: str_in_list, null_ch, beep_ch
@@ -240,10 +240,10 @@ if (TPOUT + DPOUT < TSTART .or. (IFKL /= 256 .and. TIME + 0.5*TAU >= TPOUT + DPO
             YEAR, MONTH, DAY, HOUR, MINUTE, n_const, n_var, &
             NROUT, (NAMER(J), J=1, NROUT), (SCALER(J), J=1, NROUT), &
             NTOUT, (NAMET(J), J=1, NTOUT), (SCALET(J), J=1, NTOUT), &
-            HRO, NB1, NSBR, NGR, NXOUT, (LEQ(j), j=1, 7)
+            HRO, NB1, n_sbr, NGR, NXOUT, (LEQ(j), j=1, 7)
 ! Note Change the cycle in NEQNS, (LEQ(j), j=1, NEQNS)
 ! Presently LEQ is not used by review.f and need not be stored
-!     . , HRO, NB1, NSBR, NGR, NXOUT
+!     . , HRO, NB1, n_sbr, NGR, NXOUT
         if (NXOUT > 0 .and. NGR > 0) then
 ! Total length: 3*NGR*int+(3*NGR+GDEY(NGR)+NGRIDX(NGR)-1)*real+3*NARRX*int
             write(3) &
@@ -456,7 +456,7 @@ do while(.True.)
         call MENUTABLE(n_const, constValues, constNames, 2)
 
     CASE(68) ! 'D'
-        NDTNAM = n_intern + 4*NSBR
+        NDTNAM = n_intern + 4*n_sbr
         TIMEB = TIME
         MODEX = XOUT + 0.49
         call MENUTABLE(NDTNAM, internValues, DTNAME, 3) ! Only place requiring internValues(j>44)
@@ -480,7 +480,7 @@ do while(.True.)
             TROUT = TIME
             TTOUT(LTOUT-1) = TIME
             TPOUT = TIME
-            do J=1, NSBR
+            do J=1, n_sbr
                 TEQ(J) = TIME
             enddo
         endif
@@ -784,7 +784,7 @@ do while(.True.)
     if (KEY > 90) KEY = KEY - 32
     KEY = KEY - 64
 
-    do j=1, NSBR
+    do j=1, n_sbr
         if (ABS(KEY-DTEQ(4, j)) < 0.1) jj = 1
     enddo
     if (TASK(1:3) == 'DSP' .and. jj == 1) then

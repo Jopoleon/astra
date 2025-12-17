@@ -1,7 +1,4 @@
 module status_inc
- 
-use parameter_inc, only: NRD, NARRX
-use const_inc, only: NA1, NB1
 
 implicit none
 
@@ -87,6 +84,8 @@ contains
 !---------------------------------------------------------------------
     subroutine status_init
 
+    use parameter_inc, only: NRD
+
     integer :: j
 
 ! Defaults, rather fall-back than initial values
@@ -170,8 +169,8 @@ contains
 ! 3) Define upsilons for momentum transport equation
 !---------------------------------------------------------------------
 
-    use io_mod, only: exp_file, NSBR
-    use const_inc, only: GP2, RTOR, BTOR, HRO, ROC, ABC, NA1, NB1, NAB, &
+    use io_mod, only: exp_file
+    use const_inc, only: GP2, RTOR, BTOR, HRO, ROC, ABC, NA1, NB1, &
         TIME, TAU, TSTART, WTE, WTI, WNE
     use debugger, only: markloc, astra_stop
 

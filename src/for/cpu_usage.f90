@@ -1,14 +1,14 @@
 module cpu_usage
 
-use parameter_inc, only: NSBMX
-use io_mod, only: NSBR, sbr_name, IFSBX
+use parameter_inc, only: n_sbr_max
+use io_mod, only: n_sbr, sbr_name, IFSBX
 use const_inc, only: NSTEPS, TIME, TSTART
 use debugger, only: markloc
 
 implicit none
 
-double precision :: cpu_start, cpuTime_equ=0., cpuTime_sbr(NSBMX)=0.
-integer :: wall_start, wallTime_equ=0, wallTime_sbr(NSBMX)=0
+double precision :: cpu_start, cpuTime_equ=0., cpuTime_sbr(n_sbr_max)=0.
+integer :: wall_start, wallTime_equ=0, wallTime_sbr(n_sbr_max)=0
 
 contains
 
@@ -42,7 +42,7 @@ contains
   call formatTime(nch, '>>> Astra wall time', wall_tot, -1.d0)
   call formatTime(nch, 'Equilibrium', dble(wallTime_equ)/dble(rate), wall_tot)
   j2 = 1
-  do j=1, NSBR
+  do j=1, n_sbr
       if (j == IFSBX(j2)) then
           j2 = j2 + 1
       else

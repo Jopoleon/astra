@@ -2,10 +2,8 @@ subroutine INTVAR
 !-----------------------------------------------------------------------
 ! Time evolution of the scalar input data
 ! For the current time, a value is stored in the array
-! varxValues(NCONST) - (description in the file src/for/const.f90)
+! varxValues(NTVAR) - (description in the file astra_variables.json)
 !
-! Input:
-!    IVAR, raw_scalar
 ! Output:
 !    varxValues, varValues
 !
