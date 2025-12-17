@@ -1,3 +1,20 @@
+double precision function dfj(f_old, f_new)
+
+implicit none
+
+double precision, intent(in) :: f_old, f_new
+double precision :: f_mid
+
+f_mid = 0.5*(abs(f_old) + abs(f_new))
+dfj = abs(f_old - f_new)
+if (f_mid >= 1.e-6) then
+    dfj = dfj/f_mid
+endif
+ 
+return
+end function dfj
+
+!---------------------------------------------------------------------
 integer function IFSTEP
 
 ! Input
@@ -29,6 +46,7 @@ implicit none
 
 integer :: j
 double precision :: CTAU, TAUO, YY, TAUN
+double precision, external :: dfj
 
 call markloc('IFSTEP')
 
@@ -39,96 +57,45 @@ do j=1, NA
     if (LEQ(2) > 0) CTAU = MAX(CTAU, ABS(TEO(j)/TE(j) - 1.)/DELVAR)
     if (LEQ(3) > 0) CTAU = MAX(CTAU, ABS(TIO(j)/TI(j) - 1.)/DELVAR)
     if (LEQ(10) > 0) then
-        YY = 0.5*(abs(F0O(j)) + abs(F0(j)))
-        if (YY < 1.E-6) then  ! Allow zero FJ
-            YY = abs(F0O(j) - F0(j))
-        else
-            YY = abs(F0O(j) - F0(j))/YY
-        endif
+        YY = dfj(F0O(j), F0(j))
         CTAU = MAX(CTAU, YY/DELVAR)
     endif
     if (LEQ(11) > 0) then
-        YY = 0.5*(abs(F1O(j)) + abs(F1(j)))
-        if (YY < 1.E-6) then
-            YY = abs(F1O(j) - F1(j))
-        else
-            YY = abs(F1O(j) - F1(j))/YY
-        endif
+        YY = dfj(F1O(j), F1(j))
         CTAU = MAX(CTAU, YY/DELVAR)
     endif
     if (LEQ(12) > 0) then
-        YY = 0.5*(abs(F2O(j)) + abs(F2(j)))
-        if (YY < 1.E-6) then
-            YY = abs(F2O(j) - F2(j))
-        else
-            YY = abs(F2O(j) - F2(j))/YY
-        endif
+        YY = dfj(F2O(j), F2(j))
         CTAU = MAX(CTAU, YY/DELVAR)
     endif
     if (LEQ(13) > 0) then
-        YY = 0.5*(abs(F3O(j)) + abs(F3(j)))
-        if (YY < 1.E-6) then
-            YY = abs(F3O(j) - F3(j))
-        else
-            YY = abs(F3O(j) - F3(j))/YY
-        endif
+        YY = dfj(F3O(j), F3(j))
         CTAU = MAX(CTAU, YY/DELVAR)
     endif
     if (LEQ(14) > 0) then
-        YY = 0.5*(abs(F4O(j)) + abs(F4(j)))
-        if (YY < 1.E-6) then
-            YY = abs(F4O(j) - F4(j))
-        else
-            YY = abs(F4O(j) - F4(j))/YY
-        endif
+        YY = dfj(F4O(j), F4(j))
         CTAU = MAX(CTAU, YY/DELVAR)
     endif
     if (LEQ(15) > 0) then
-        YY = 0.5*(abs(F5O(j)) + abs(F5(j)))
-        if (YY < 1.E-6) then
-            YY = abs(F5O(j) - F5(j))
-        else
-            YY = abs(F5O(j) - F5(j))/YY
-        endif
+        YY = dfj(F5O(j), F5(j))
         CTAU = MAX(CTAU, YY/DELVAR)
     endif
     if (LEQ(16) > 0) then
-        YY = 0.5*(abs(F6O(j)) + abs(F6(j)))
-        if (YY < 1.E-6) then
-            YY = abs(F6O(j) - F6(j))
-        else
-            YY = abs(F6O(j) - F6(j))/YY
-        endif
+        YY = dfj(F6O(j), F6(j))
         CTAU = MAX(CTAU, YY/DELVAR)
     endif
     if (LEQ(17) > 0) then
-        YY = 0.5*(abs(F7O(j)) + abs(F7(j)))
-        if (YY < 1.E-6) then
-            YY = abs(F7O(j) - F7(j))
-        else
-            YY = abs(F7O(j) - F7(j))/YY
-        endif
+        YY = dfj(F7O(j), F7(j))
         CTAU = MAX(CTAU, YY/DELVAR)
     endif
     if (LEQ(18) > 0) then
-        YY = 0.5*(abs(F8O(j)) + abs(F8(j)))
-        if (YY < 1.E-6) then
-            YY = abs(F8O(j) - F8(j))
-        else
-            YY = abs(F8O(j) - F8(j))/YY
-        endif
+        YY = dfj(F8O(j), F8(j))
         CTAU = MAX(CTAU, YY/DELVAR)
     endif
     if (LEQ(19) > 0) then
-        YY = 0.5*(abs(F9O(j)) + abs(F9(j)))
-        if (YY < 1.E-6) then
-            YY = abs(F9O(j) - F9(j))
-        else
-            YY = abs(F9O(j) - F9(j))/YY
-        endif
+        YY = dfj(F9O(j), F9(j))
         CTAU = MAX(CTAU, YY/DELVAR)
     endif
-
 enddo
 
 TAUO   = TAU
