@@ -12,7 +12,7 @@ subroutine SETARX(ICALL)
 use parameter_inc, only: NRD, NRDX, NTARR
 use const_inc, only: TIME, BTOR, GP, AB, ABC, ROC, VOLUME, NA1, NAB, PSIAX
 use status_inc, only: AMETR, RHO, FP, VOLUM, profiles_x, rho_pol
-use numerical_tools, only: qinterp, sortab
+use numerical_tools, only: qinterp, sortab, smooth
 use io_mod, only: jbeg_arrx, IFDFAX, XAXES, &
     DATAX, NPTM, TOUTX
 use debugger, only: markloc, astra_stop
@@ -311,7 +311,7 @@ var_loop: do jtarr=1, NTARR
 
 ! All input data are mapped to the grid XA(1:NP1) in the variable "a"
 
-        call SMOOTH(raw_profile_map%filter(jt), N11, dat_exp(1:N11), x_grid(1:N11), NP1, DA(1:NP1), XA(1:NP1))
+        call SMOOTH(raw_profile_map%filter(jt), x_grid(1:N11), dat_exp(1:N11), N11, XA(1:NP1), DA(1:NP1), NP1)
 
 !     data interpolation
 ! jto - pointer to the previous time

@@ -12,13 +12,14 @@ subroutine SMEARR(ALFA, f_in, f_out)
 
 use const_inc, only: NA1
 use status_inc, only: RHO
+use numerical_tools, only: smooth
 
 implicit none
 
 double precision, intent(in) :: ALFA, f_in(*)
 double precision, intent(out) :: f_out(*)
 
-call SMOOTH(ALFA, NA1, f_in, RHO, NA1, f_out, RHO)
+call SMOOTH(ALFA, RHO, f_in, NA1, RHO, f_out, NA1)
 
 return
 end subroutine SMEARR
@@ -29,6 +30,7 @@ subroutine SMEARRX(ALFA, f_in, f_out)
 use parameter_inc, only: NRD
 use const_inc, only: NA1
 use status_inc, only: XRHO
+use numerical_tools, only: smooth
 
 implicit none
 
@@ -36,7 +38,7 @@ double precision, intent(in) :: ALFA, f_in(NRD)
 double precision, intent(out) :: f_out(NRD)
 
 f_out = 0.
-call SMOOTH(ALFA, NA1, f_in(1:NA1), XRHO(1:NA1), NA1, f_out(1:NA1), XRHO(1:NA1))
+call SMOOTH(ALFA, XRHO(1:NA1), f_in(1:NA1), NA1, XRHO(1:NA1), f_out(1:NA1), NA1)
 
 write(*, '(6e16.8)') f_in(1:NA1)
 write(*, '(6e16.8)') f_out(1:NA1)
@@ -52,6 +54,7 @@ use parameter_inc, only: NRD
 use const_inc, only: NA1, NA1N, NA1E, NA1I, NA1U, NA10, NA11, NA12, NA13, &
     NA14, NA15, NA16, NA17, NA18, NA19
 use status_inc, only: RHO
+use numerical_tools, only: smooth
 
 implicit none
 
@@ -62,7 +65,7 @@ integer :: nrho_max
 nrho_max = maxval((/ NA1N, NA1E, NA1I, NA1U, NA10, NA11, NA12, NA13, NA14, NA15, NA16, NA17, NA18, NA19 /))
 nrho_max = MIN(nrho_max, NA1)
 
-call SMOOTH(ALFA, nrho_max, f_in(1: nrho_max), RHO(1: nrho_max), nrho_max, f_out, RHO(1:nrho_max))
+call SMOOTH(ALFA, RHO(1: nrho_max), f_in(1: nrho_max), nrho_max, RHO(1:nrho_max), f_out, nrho_max)
 
 f_out(nrho_max+1: NA1) = f_in(nrho_max+1: NA1)
 
@@ -76,6 +79,7 @@ use parameter_inc, only: NRD
 use const_inc, only: NA1, NA1N, NA1E, NA1I, NA1U, NA10, NA11, NA12, NA13, &
     NA14, NA15, NA16, NA17, NA18, NA19
 use status_inc, only: RHO
+use numerical_tools, only: smooth
 
 implicit none
 
@@ -88,7 +92,7 @@ nrho_max = MIN(nrho_max, NA1)
 
 f_out(nrho_max+1: NA1) = f_in(nrho_max)
 
-call SMOOTH(ALFA, nrho_max, f_in(1: nrho_max), RHO(1: nrho_max), nrho_max, f_out, RHO(1:nrho_max))
+call SMOOTH(ALFA, RHO(1: nrho_max), f_in(1: nrho_max), nrho_max, RHO(1:nrho_max), f_out, nrho_max)
 
 return
 end subroutine SMEARR3

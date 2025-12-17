@@ -1148,6 +1148,7 @@ subroutine UF2DWA(DEVID, UFNAME, SIGNAM, JN, NRP, NASC, PROCOD, &
 use parameter_inc, only: NRD
 use io_mod, only: NGR
 use outcmn_inc, only: IPOUT, rev_file, NXOUT, NROUT, RUNID
+use numerical_tools, only: smooth
 
 implicit none
 
@@ -1245,7 +1246,7 @@ do J2 = 1, IPOUT-1
                 SIGNAL(J) = DOWN + SCL*(JNT2(J) + 32768)/65535.
             enddo
             ALFA = .0001
-            CALL SMOOTH(ALFA, JAB, SIGNAL, YWA, NRP, YWB, YWC)
+            call SMOOTH(ALFA, YWA, SIGNAL, JAB, YWC, YWB, NRP)
             write(NCHU, '(1X, 1P, 6E13.5)') (YWB(J), J=1, NRP)
         endif
     enddo

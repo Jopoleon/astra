@@ -53,6 +53,7 @@ use char_manip, only: str_in_list, null_ch, beep_ch
 use debugger, only: markloc, debug, astra_stop
 use json_vars, only: internNames, constNames, varNames, n_const, n_var, n_intern
 use cpu_usage, only: cpu_report
+use numerical_tools, only: smooth
 
 implicit none
 
@@ -667,7 +668,7 @@ do while(.True.)
                             do j=1, NUF
                                 YWA(j) = (j - 1.)/(NUF - 1.)
                             enddo
-                            call SMOOTH(ALFA, NU1, ROUT(1, jj), YWC, NUF, YWB, YWA)
+                            call SMOOTH(ALFA, YWC, ROUT(1, jj), NU1, YWA, YWB, NUF)
                             do j=1, NUF
                                 YWA(j) = YWA(j)*ABD
                             enddo

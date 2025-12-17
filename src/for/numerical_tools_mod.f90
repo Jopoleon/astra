@@ -434,6 +434,100 @@ contains
     end subroutine qinterp
 
 !---------------------------------------------------------------------
+    subroutine SMOOTH(ALFA, x_in, y_in, n_in, x_out, y_out, n_out)
+!---------------------------------------------------------------------
+!  Subroutine minimizes the value of functional
+!  INTEGRAL(alfa*P(x)*(dU/dx)**2+(U-F)**2)*dx, 
+!  where y_in(n_in) is a function, given on the grid x_in(n_in)
+! P(x) is equal to unit now
+! ALFA=alfa<<0.01*x_in(n_in)**2 is regularizator
+! n_in - number of old grid points
+! n_out - number of new grid points
+! 0<=x_in(n_in) - old grid |     both grids are arbitrary
+! 0<=x_out(N)  - new grid |     but x_in(n_in)=x_out(N)
+! y_in(n_in) - origin function, given on the grid x_in(n_in)
+! y_out(N) - smoothed function on grid x_out(N)
+!  The result is function y_out(x_out), given on the new grid
+! with additional conditions:
+! dy_out/dx(x=0)=0 - cylindrical case and
+! y_out(x_out(N))=y_in(x_in(n_in))
+!---------------------------------------------------------------------
+
+    integer, intent(in) :: n_in, n_out
+    double precision, intent(in) :: ALFA, x_in(*), y_in(*), x_out(*)
+    double precision, intent(out) :: y_out(*)
+
+    integer :: I, J
+    double precision :: YF, YX, YP, YQ, YD, FJ, P(n_out), dx
+
+    if (n_in == 1) then
+        do j=1, n_out
+            y_out(j) = y_in(1)
+        enddo
+        return
+    endif
+    if (n_in == 2) then
+        do j=1, n_out
+            y_out(j) = (y_in(2)*(x_out(j) - x_in(1)) - y_in(1)*(x_out(j) - x_in(2)))/(x_in(2) - x_in(1))
+        enddo
+        return
+    endif
+    if (n_out < 2) then
+        write(*, *) '>>> SMOOTH: no output grid is provided'
+        pause
+    endif
+    if (abs(x_in(n_in) - x_out(n_out)) > x_out(n_out)/n_out) then
+        write(*, *) '>>> SMOOTH: grids are not aligned'
+        write(*, '(1A23, I4, F8.4)') '     Old grid size/edge', n_in , x_in(n_in)
+        write(*, '(1A23, I4, F8.4)') '     New grid size/edge', n_out, x_out(n_out)
+        pause
+    endif
+    do j=2, n_out
+        dx = x_out(j) - x_out(j-1)
+        if (dx <= 0.) then
+            write(*, *) '>>> SMOOTH: new grid is not increasing monotonically'
+            write(*, '(A, I4, A, F8.4)')'Node ', j-1, '   Value', x_out(j-1)
+            write(*, '(A, I4, A, F8.4)')'Node ', j  , '   Value', x_out(j)
+            pause
+        endif
+        P(j) = ALFA/dx/x_in(n_in)**2
+    enddo
+    P(1)  = 0.
+    y_out(1) = y_in(1) ! git 0.
+    i = 1
+    YF = (y_in(2) - y_in(1))/(x_in(2) - x_in(1))
+    YX = 2./(x_out(2) + x_out(1))
+    YP = 0.
+    YQ = 0.
+    do j=1, n_out-1
+        if (x_in(i) <= x_out(j)) then
+            do
+                i = i + 1
+                i = min(i, n_in)
+                if (i == n_in .or. x_in(i) >= x_out(j)) EXIT
+            enddo
+            YF = (y_in(i) - y_in(i-1))/(x_in(i) - x_in(i-1))
+        endif
+        FJ = y_in(i) + YF*(x_out(j) - x_in(i))
+        YD = 1. + YX*(YP + P(j+1))
+        P(j) = YX*P(j+1)/YD
+        y_out(j) = (FJ + YX*YQ)/YD
+        if (j /= n_out-1) then
+            YX = 2./(x_out(j+2) - x_out(j))
+            YP = (1. - P(j))*P(j+1)
+            YQ = y_out(j)*P(j+1)
+        endif
+    enddo
+
+    y_out(n_out) = y_in(n_in)
+    do j=n_out-1, 1, -1
+        y_out(j) = P(j)*y_out(j+1) + y_out(j)
+    enddo
+
+    return
+    end subroutine SMOOTH
+
+!---------------------------------------------------------------------
     double precision function QUADIN(n_in, x_in, y_in, x_out)
 ! 1-point quadratic interpolation
 

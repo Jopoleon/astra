@@ -793,7 +793,7 @@ use status_inc, only: TE, TI, CU, SHEAR, SHIV, &
      SLAT, VOLUM, SHIF, ELON, TRIA, DRODA, GRADRO, VR, VRS, XRHO, & 
      G11, G22, G33, G41, G42, G43, G44, G45, & 
      BDB0, BDB02, B0DB2, BMAXT, BMINT, FOFB
-use numerical_tools, only: integr
+use numerical_tools, only: integr, qinterp, smooth
 use debugger, only: markloc
 
 implicit none
@@ -802,16 +802,17 @@ double precision, parameter :: ACEQLB=1.d-6
 
 integer, intent(out) :: jexit
 
-integer :: N3EQL, j, jp, jt, jcall
+integer :: NR_EQU, j, jp, jt, jcall
 double precision :: ALFA, Y1, Y2, YDA, GPP4, YRO, YCB, TRIABC, BTOOO
-double precision, dimension(NRD) :: YA, YB, BA, BB, GR, GBD, GL, GSD, &
-    A, B, C, D, BC, BD, XTR, BMODEQ, FOFBEQ, GRDAEQ, &
-    XEQ, B2B0EQ, B0B2EQ, BMAXEQ, BMINEQ
+double precision, dimension(NRD) :: BA, BB, GR, GBD, GL, GSD, &
+    A, B, C, D, BC, BD, XTR, BMOD_EQU, FOFB_EQU, GRDA_EQU, &
+    X_EQU, B2B0_EQU, B0B2_EQU, BMAX_EQU, BMIN_EQU, VR_EQU, VRS_EQU, &
+    G11_EQU, G22_EQU, G33_EQU, IPOL_EQU, DRODA_EQU, GRADRO_EQU
 character(len=80) :: STRI
 
 double precision, external :: IINT
 
-save jcall, N3EQL
+save jcall, NR_EQU
 data jcall/0/
 
 !--------------------------------------------------
@@ -823,13 +824,13 @@ jexit = 0
 
 if (jcall == -1) return
 
-! Define N3EQL as min(NA1, nint(NEQIL), NP)
+! Define NR_EQU as min(NA1, nint(NEQIL), NP)
 if (jcall == 0) then
-    N3EQL = nint(NEQUIL)
-    if (N3EQL > NP) then
+    NR_EQU = nint(NEQUIL)
+    if (NR_EQU > NP) then
         write(*, '(A, I4)') " >>> Warning >>> Maximum size of the equilibrium grid is", NP
         write(*, '(17X, A, I4)') "The grid will be reduced to NP =", NP
-        N3EQL = NP
+        NR_EQU = NP
     endif
 endif
 
@@ -874,21 +875,21 @@ do J=1, NA1
     A(J) = B(J) + YCB*EQFF(J)
 enddo
 
-do J=1, N3EQL
-    XEQ(J) = (j - 1.)/(N3EQL - 1.)
+do J=1, NR_EQU
+    X_EQU(J) = (j - 1.)/(NR_EQU - 1.)
 enddo
 ! From transport grid in "a" to equidistant grid in "a"
 ALFA = 0.001
-call SMOOTH(ALFA, NA1, A, XTR, N3EQL, BA, XEQ)
-call SMOOTH(ALFA, NA1, B, XTR, N3EQL, BB, XEQ)
+call SMOOTH(ALFA, XTR, A, NA1, X_EQU, BA, NR_EQU)
+call SMOOTH(ALFA, XTR, B, NA1, X_EQU, BB, NR_EQU)
 
 call EMEQ( &
 ! Input:
-    BA, BB, RTOR + SHIFT, ABC, ELONG, TRIABC, N3EQL, ACEQLB, &  ! relative accuracy
+    BA, BB, RTOR + SHIFT, ABC, ELONG, TRIABC, NR_EQU, ACEQLB, &  ! relative accuracy
     BTOR*RTOR/(RTOR + SHIFT), IPL, &  ! Total plasma current
 ! output
     GR, GBD, GL, GSD, A, BD, B, BA, BB, BC, C, D, &
-    B2B0EQ, B0B2EQ, BMAXEQ, BMINEQ, BMODEQ, FOFBEQ, GRDAEQ, &
+    B2B0_EQU, B0B2_EQU, BMAX_EQU, BMIN_EQU, BMOD_EQU, FOFB_EQU, GRDA_EQU, &
 ! input
     TIME)
 BTOOO = BTOR*RTOR/(RTOR + SHIFT)
@@ -906,25 +907,20 @@ BTOOO = BTOR*RTOR/(RTOR + SHIFT)
 !  BC  - d\rho/da
 !  C    - (dV/da)/(4\pi^2)
 !  D    - V(a)
-!                    B2B0EQ - <B**2/B0**2>
-!                    B0B2EQ - <B0**2/B**2>
-!                    BMAXEQ - BMAXT
-!                    BMINEQ - BMINT
-!                    BMODEQ - <B/BTOR>
-!                    FOFBEQ - <(BTOR/B)**2*(1.-SQRT(1-B/Bmax)*(1+.5B/Bmax))>
-!                    GRDAEQ - <grad a>
+!                    B2B0_EQU - <B**2/B0**2>
+!                    B0B2_EQU - <B0**2/B**2>
+!                    BMAX_EQU - BMAXT
+!                    BMIN_EQU - BMINT
+!                    BMOD_EQU - <B/BTOR>
+!                    FOFB_EQU - <(BTOR/B)**2*(1.-SQRT(1-B/Bmax)*(1+.5B/Bmax))>
+!                    GRDA_EQU - <grad a>
 !----------------------------------------------------------------------|
 
 call markloc('3-moment solver')
 
-! N3EQL <= 1 can be returned by EQAB3 via EMEQ
-j = 1
-if (N3EQL > 10) then
-!  Now check if GR(N3EQL) is a regular number
-    write(STRI, *) GR(N3EQL)
-    j = index(TRIM(STRI), "NaN") ! Not_a_Number
-    if (j > 0) then !  Equilibrium crash
-        j = 0
+! NR_EQU <= 1 can be returned by EQAB3 via EMEQ
+if (NR_EQU > 10) then
+    if (isnan(GR(NR_EQU))) then
         jexit = 2
         return
     endif
@@ -933,70 +929,64 @@ endif
 !---------------------------------------
 ! Define a new RHO-grid:
 YRO = sqrt(RTOR/(RTOR + SHIFT))
-ROC = YRO*GR(N3EQL)  ! Define a new RHO_edge
+ROC = YRO*GR(NR_EQU)  ! Define a new RHO_edge
 ! FTN = GP*BTN*ROC*ROC
 
 call new_grid ! The RHO-grid and NA, NA1, HRO are updated
 !---------------------------------------
 ! Define a new auxiliary (shifted) grid:
 Y2 = 0.5d0/ROC
-XTR(1: NA1) = SXHO(1: NA1)
 
 GPP4 = GP2*GP2
-do J=1, N3EQL
-    DRODA(J) = YRO*BC(J)
-    XEQ(J)   = GR(J)/GR(N3EQL)
-    G11(J)   = A(J)*DRODA(J)**2
-    G22(J)   = B(J)*DRODA(J)**2
-    G33(J)   = BA(J)*RTOR*RTOR
-    VRS(J)   = GPP4*C(J)/DRODA(J)
-    IPOL(J)  = BB(J)/RTOR/BTOR
-    GRADRO(J)= BD(J)*DRODA(J)
-    VR(J)    = VRS(j)
-    YA(j)    = G33(j)
-    YB(j)    = IPOL(j)
+do J=1, NR_EQU
+    DRODA_EQU(J)  = YRO*BC(J)
+    X_EQU(J)      = GR(J)/GR(NR_EQU)
+    G11_EQU(J)    = A(J)*DRODA_EQU(J)**2
+    G22_EQU(J)    = B(J)*DRODA_EQU(J)**2
+    G33_EQU(J)    = BA(J)*RTOR*RTOR
+    VRS_EQU(J)    = GPP4*C(J)/DRODA_EQU(J)
+    IPOL_EQU(J)   = BB(J)/RTOR/BTOR
+    GRADRO_EQU(J) = BD(J)*DRODA_EQU(J)
+    VR_EQU(J)     = VRS_EQU(j)
 enddo
-call QMAP(      N3EQL, XEQ, NA1, XTR, VRS)
-call SMAP(ALFA, N3EQL, XEQ, NA1, XTR, G11)
-call SMAP(ALFA, N3EQL, XEQ, NA1, XTR, G22)
-call SMAP(ALFA, N3EQL, XEQ, NA1, XTR, YA) ! G33 @ aux. grid
-call SMAP(ALFA, N3EQL, XEQ, NA1, XTR, YB) ! IPOL @ aux. grid
-call SMAP(ALFA, N3EQL, XEQ, NA1, XTR, DRODA)
-call SMAP(ALFA, N3EQL, XEQ, NA1, XTR, GRADRO)
+call qinterp(X_EQU(1:NR_EQU), VRS_EQU(1:NR_EQU), NR_EQU, SXHO(1: NA1), VRS(1: NA1), NA1) 
+call SMOOTH(ALFA, X_EQU,    G11_EQU, NR_EQU, SXHO,    G11, NA1)
+call SMOOTH(ALFA, X_EQU,    G22_EQU, NR_EQU, SXHO,    G22, NA1)
+call SMOOTH(ALFA, X_EQU,    G33_EQU, NR_EQU, SXHO,    G33, NA1)
+call SMOOTH(ALFA, X_EQU,   IPOL_EQU, NR_EQU, SXHO,   IPOL, NA1)
+call SMOOTH(ALFA, X_EQU,  DRODA_EQU, NR_EQU, SXHO,  DRODA, NA1)
+call SMOOTH(ALFA, X_EQU, GRADRO_EQU, NR_EQU, SXHO, GRADRO, NA1)
+
 ! Multiply above quantities by linear in rho factors (i.e. f(0)=0)
 do J=1, NA1
     G11(J) = G11(J)*VRS(j)
-    G22(J) = G22(J)/YA(j)*(RTOR/YB(j))**2
+    G22(J) = G22(J)/G33(j)*(RTOR/IPOL(j))**2
     if (j < NA1) then
-        G22(J) = G22(J)*XTR(j)*ROC
+        G22(J) = G22(J)*SXHO(j)*ROC
     else
         G22(J) = G22(J)*(NA*HRO + 0.5*HRO)
     endif
     SLAT(J) = GRADRO(J)*VRS(J)
 enddo
 
-!-------------------------------------
-! Define the main transport grid:
-XTR(1: NA1) = XRHO(1: NA1) 
-
-! Define VR, G33 and IPOL    on the main transport grid:
-call QMAP  (      N3EQL, XEQ, NA1, XTR, VR)
-call SMAP  (ALFA, N3EQL, XEQ, NA1, XTR, G33)
-call SMAP  (ALFA, N3EQL, XEQ, NA1, XTR, IPOL)
-call SMOOTH(ALFA, N3EQL, GBD, XEQ, NA1, SHIF, XTR)
-call SMOOTH(ALFA, N3EQL, GL , XEQ, NA1, ELON, XTR)
+! Define VR, G33 and IPOL on the main transport grid:
+call qinterp(X_EQU(1:NR_EQU), VR_EQU(1:NR_EQU), NR_EQU, XRHO(1: NA1), VR(1: NA1), NA1) 
+call SMOOTH(ALFA, X_EQU,  G33_EQU, NR_EQU, XRHO(1: NA1),  G33(1: NA1), NA1) 
+call SMOOTH(ALFA, X_EQU, IPOL_EQU, NR_EQU, XRHO(1: NA1), IPOL(1: NA1), NA1) 
+call SMOOTH(ALFA, X_EQU,      GBD, NR_EQU, XRHO(1: NA1), SHIF(1: NA1), NA1)
+call SMOOTH(ALFA, X_EQU,       GL, NR_EQU, XRHO(1: NA1), ELON(1: NA1), NA1)
 
 ! GL -> a
 ! GSD -> \delta^{ASTRA} (dimensionless)
-YDA = ABC/(N3EQL - 1.)
-do j=2, N3EQL
+YDA = ABC/(NR_EQU - 1.)
+do j=2, NR_EQU
     A(j) = YDA*(J - 1.)
     B(J) = GSD(J)/A(J)
 enddo
 A(1) = 0.
 B(1) = 0.
-call TRANSF(N3EQL, B, XEQ, NA1,  TRIA, XTR)
-call TRANSF(N3EQL, A, XEQ, NA1, AMETR, XTR)
+call qinterp(X_EQU(1:NR_EQU), B(1:NR_EQU), NR_EQU, XRHO(1: NA1),  TRIA(1: NA1), NA1)
+call qinterp(X_EQU(1:NR_EQU), A(1:NR_EQU), NR_EQU, XRHO(1: NA1), AMETR(1: NA1), NA1)
 
 do J=1, NA
     SHIF(J) = SHIFT + SHIF(J)
@@ -1011,12 +1001,12 @@ SHEAR(NA1) = SHEAR(NA)
 
 SHIV(1: NAB) = UPDWN
 
-call TRANSF(N3EQL, B2B0EQ, XEQ, NA1, BDB02, XTR)
-call TRANSF(N3EQL, B0B2EQ, XEQ, NA1, B0DB2, XTR)
-call TRANSF(N3EQL, BMAXEQ, XEQ, NA1, BMAXT, XTR)
-call TRANSF(N3EQL, BMINEQ, XEQ, NA1, BMINT, XTR)
-call TRANSF(N3EQL, BMODEQ, XEQ, NA1, BDB0 , XTR)
-call TRANSF(N3EQL, FOFBEQ, XEQ, NA1, FOFB , XTR)
+call qinterp(X_EQU(1:NR_EQU), B2B0_EQU(1:NR_EQU), NR_EQU, XRHO(1: NA1), BDB02(1: NA1), NA1)
+call qinterp(X_EQU(1:NR_EQU), B0B2_EQU(1:NR_EQU), NR_EQU, XRHO(1: NA1), B0DB2(1: NA1), NA1)
+call qinterp(X_EQU(1:NR_EQU), BMAX_EQU(1:NR_EQU), NR_EQU, XRHO(1: NA1), BMAXT(1: NA1), NA1)
+call qinterp(X_EQU(1:NR_EQU), BMIN_EQU(1:NR_EQU), NR_EQU, XRHO(1: NA1), BMINT(1: NA1), NA1)
+call qinterp(X_EQU(1:NR_EQU), BMOD_EQU(1:NR_EQU), NR_EQU, XRHO(1: NA1), BDB0( 1: NA1), NA1)
+call qinterp(X_EQU(1:NR_EQU), FOFB_EQU(1:NR_EQU), NR_EQU, XRHO(1: NA1), FOFB( 1: NA1), NA1)
 
 BDB02 = BDB02*BTOOO**2 / BTOR**2
 BDB0  = BDB0*BTOOO/BTOR
