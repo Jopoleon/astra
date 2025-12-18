@@ -58,7 +58,6 @@ void Put_button(Button, GC);
 void MoveArrow(Window, int, int, int, int);
 void changeGCcolor(GC, INT_*);
 void PutColorName(Window, int, int, int, int);
-void stcopy(char*, char*, int);
 extern int isascii(int); // 0 if the character is not ASCII, nonzero if it is ASCII
 extern int isprint(int); // check if a character passed as the argument is a printable character or not
 extern int isalnum(int); // checks whether a character is alphabet or number
@@ -431,20 +430,7 @@ void Put_button(Button but, GC aGC){
 }
 
 /**********************************************************************/
-void AstraEvent(){
-   INT_ key;
-   if (!Xmode) return;
-   Root_window_event(&key, 1);
-   return;
-}
-
-/**********************************************************************/
 INT_ pollevent_(INT_ *key){
-    return Root_window_event(key, 0);
-}
-
-/**********************************************************************/
-INT_ Root_window_event(INT_ *key, int ii){
 /* Polling for events */
     XEvent theEvent;
     XKeyEvent theKeyEvent;
@@ -459,12 +445,6 @@ INT_ Root_window_event(INT_ *key, int ii){
         (ButtonPressMask | KeyPressMask | EnterWindowMask | StructureNotifyMask |\
         FocusChangeMask | ExposureMask | LeaveWindowMask) );
     count = XEventsQueued(theDisplay, mode);
-    if (ii && count != 0){   /* Call from other processes */
-        XNextEvent(theDisplay, &theEvent);
-        if (theEvent.xany.window == theRootWindow) ProcessRootWindowEvent(&theEvent);
-        XFlush(theDisplay);
-        return 0;
-    }
     if (count == 0){
         XFlush(theDisplay);
         return 0;
@@ -956,7 +936,6 @@ int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
             sscanf(stri, "%8lf", &param);
             *(array+jbox-1) = param;
             num2str(param, value, num_str_len);
-	    //		    printf("num2str 1: %s\n", value);
             spos = -1;
         }
 
