@@ -176,17 +176,17 @@ contains
 
     open(131, FILE='exe/version', iostat=ios)
     if (ios /= 0) then
-        write(*,*)'>>> Warning: Unknown version'
+        write(*, *) '>>> Warning: Unknown version'
     else
         do j=1,5
-            read(131,'(A)') STRI
+            read(131, '(A)') STRI
         enddo
         j = index(STRI, 'Version')
         VERSION = STRI(j: j+30) // null_ch
         close(131)
         j0 = index(VERSION, '.')
         if (j0 == 0) then
-            write(*,*)'>>> Warning: Unknown version'
+            write(*, *) '>>> Warning: Unknown version'
         else
             read(VERSION(j0-1: j0-1), *) AVERS 
             read(VERSION(j0+1: j0+1), *) ARLEAS 

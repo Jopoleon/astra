@@ -34,10 +34,9 @@ integer function IFSTEP
 !---------------------------------------------------------------------
 
 use const_inc, only: TAUINC, DELVAR, TAU, TAUPRP, TAUMIN, TAUMAX, &
-    DTOUT, DPOUT, NA, NB1, LEQ, NSTEPS, ROC, ROCO, &
-    FTN, FTO
-use status_inc, only: NEO, NIO, TEO, TIO, FPO, VRO, UPARO, &
-    NE, NI, TE, TI, FP, VR, UPAR, &
+    DTOUT, DPOUT, NA, NB1, LEQ, NSTEPS, ROC, ROCO, FTN, FTO
+use status_inc, only: NE, NI, TE, TI, FP, VR, UPAR, &
+    NEO, NIO, TEO, TIO, FPO, VRO, UPARO, &
     F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, &
     F0O, F1O, F2O, F3O, F4O, F5O, F6O, F7O, F8O, F9O
 use debugger, only: markloc
@@ -53,56 +52,25 @@ call markloc('IFSTEP')
 CTAU = 1./TAUINC
 
 do j=1, NA
-    if (LEQ(1) > 0) CTAU = MAX(CTAU, ABS(NEO(j)/NE(j) - 1.)/DELVAR)
-    if (LEQ(2) > 0) CTAU = MAX(CTAU, ABS(TEO(j)/TE(j) - 1.)/DELVAR)
-    if (LEQ(3) > 0) CTAU = MAX(CTAU, ABS(TIO(j)/TI(j) - 1.)/DELVAR)
-    if (LEQ(10) > 0) then
-        YY = dfj(F0O(j), F0(j))
-        CTAU = MAX(CTAU, YY/DELVAR)
-    endif
-    if (LEQ(11) > 0) then
-        YY = dfj(F1O(j), F1(j))
-        CTAU = MAX(CTAU, YY/DELVAR)
-    endif
-    if (LEQ(12) > 0) then
-        YY = dfj(F2O(j), F2(j))
-        CTAU = MAX(CTAU, YY/DELVAR)
-    endif
-    if (LEQ(13) > 0) then
-        YY = dfj(F3O(j), F3(j))
-        CTAU = MAX(CTAU, YY/DELVAR)
-    endif
-    if (LEQ(14) > 0) then
-        YY = dfj(F4O(j), F4(j))
-        CTAU = MAX(CTAU, YY/DELVAR)
-    endif
-    if (LEQ(15) > 0) then
-        YY = dfj(F5O(j), F5(j))
-        CTAU = MAX(CTAU, YY/DELVAR)
-    endif
-    if (LEQ(16) > 0) then
-        YY = dfj(F6O(j), F6(j))
-        CTAU = MAX(CTAU, YY/DELVAR)
-    endif
-    if (LEQ(17) > 0) then
-        YY = dfj(F7O(j), F7(j))
-        CTAU = MAX(CTAU, YY/DELVAR)
-    endif
-    if (LEQ(18) > 0) then
-        YY = dfj(F8O(j), F8(j))
-        CTAU = MAX(CTAU, YY/DELVAR)
-    endif
-    if (LEQ(19) > 0) then
-        YY = dfj(F9O(j), F9(j))
-        CTAU = MAX(CTAU, YY/DELVAR)
-    endif
+    if (LEQ(1)  > 0) CTAU = MAX(CTAU, ABS(NEO(j)/NE(j) - 1.)/DELVAR)
+    if (LEQ(2)  > 0) CTAU = MAX(CTAU, ABS(TEO(j)/TE(j) - 1.)/DELVAR)
+    if (LEQ(3)  > 0) CTAU = MAX(CTAU, ABS(TIO(j)/TI(j) - 1.)/DELVAR)
+    if (LEQ(10) > 0) CTAU = MAX(CTAU, dfj(F0O(j), F0(j))/DELVAR)
+    if (LEQ(11) > 0) CTAU = MAX(CTAU, dfj(F1O(j), F1(j))/DELVAR)
+    if (LEQ(12) > 0) CTAU = MAX(CTAU, dfj(F2O(j), F2(j))/DELVAR)
+    if (LEQ(13) > 0) CTAU = MAX(CTAU, dfj(F3O(j), F3(j))/DELVAR)
+    if (LEQ(14) > 0) CTAU = MAX(CTAU, dfj(F4O(j), F4(j))/DELVAR)
+    if (LEQ(15) > 0) CTAU = MAX(CTAU, dfj(F5O(j), F5(j))/DELVAR)
+    if (LEQ(16) > 0) CTAU = MAX(CTAU, dfj(F6O(j), F6(j))/DELVAR)
+    if (LEQ(17) > 0) CTAU = MAX(CTAU, dfj(F7O(j), F7(j))/DELVAR)
+    if (LEQ(18) > 0) CTAU = MAX(CTAU, dfj(F8O(j), F8(j))/DELVAR)
+    if (LEQ(19) > 0) CTAU = MAX(CTAU, dfj(F9O(j), F9(j))/DELVAR)
 enddo
 
 TAUO   = TAU
 TAUPRP = TAUO
 TAUN   = TAU
 TAUN   = MIN(TAUMAX, TAUN/CTAU, DTOUT, DPOUT)
-
 TAU = MAX(TAUMIN, TAUN)   ! due to DELVAR & TAUINC
 
 if (TAU >= TAUO) then
@@ -169,7 +137,7 @@ integer function IFTREQ(YACC)
 
 use parameter_inc, only: NRD
 use status_inc, only: G11, G22, VR, FP
-use const_inc, only: NITREQ, IPART, ITREQ, ROC, PSIEXT, PSPLEX, NA1
+use const_inc, only: NITREQ, IPART, ITREQ, ROC, NA1
 use debugger, only: markloc
 
 implicit none
@@ -178,12 +146,10 @@ integer, parameter :: ITREQMIN=1, ITREQMAX=200
 double precision, intent(in) :: YACC
 
 integer :: j, NTREQ
-
-double precision :: Y1, Y2, YV, YI, YR, YER(ITREQMAX), YPSE, YPSP
+double precision :: Y1, Y2, YV, YI, YR, YER(ITREQMAX)
 double precision, dimension(NRD) :: YWA, YWB, YWC, YWD
 
 save YER, YR, YWA, YWB, YWC, YWD
-save YPSE, YPSP
 
 call markloc('IFTREQ')
 
@@ -194,7 +160,7 @@ IFTREQ = 2
 if (NTREQ == 1) return ! Iterations are off, no check
 
 if (NTREQ > ITREQMAX) then  ! 
-     write(*,'(2A,I5)') " >>> Warning >>> Max number of transport/equilibrium", &
+     write(*, '(2A,I5)') " >>> Warning >>> Max number of transport/equilibrium", &
          " iterations is reduced to ", ITREQMAX
      NTREQ = ITREQMAX
 endif
@@ -209,9 +175,7 @@ if (ITREQ /= 0) then ! From 2nd iteration
     endif
 
 ! Convergence check:  enabled if NTREQ > 1
-    YR   = abs(YR/ROC      - 1.d0)
-    YPSE = abs(YPSE/PSIEXT - 1.d0)
-    YPSP = abs(YPSP/PSPLEX - 1.d0)
+    YR = abs(YR/ROC - 1.d0)
     Y1 = 0.d0
     Y2 = 0.d0
     YV = 0.d0
@@ -249,16 +213,13 @@ if (ITREQ /= 0) then ! From 2nd iteration
     if (ITREQ == NTREQ    ) IFTREQ = 2 ! Go to next t-step anyway
     if (YACC >= YER(ITREQ)) IFTREQ = 1 ! Converged -> next t-step
     if (ITREQ < ITREQMIN  ) IFTREQ = 0 ! force another iteration if below minimum
-
     if (IFTREQ > 0) return ! converged
 
 endif
 
 ITREQ = ITREQ + 1 
 
-YR   = ROC
-YPSE = PSIEXT
-YPSP = PSPLEX
+YR = ROC
 do j=1, NA1   ! Store some metric data
     YWA(j) = G11(j)
     YWB(j) = G22(j)
@@ -307,8 +268,8 @@ do j=1, NB1
     F9O(j) = F9(j)
 enddo
 
-BTN = BTOR
-FTN = FTO
+BTN  = BTOR
+FTN  = FTO
 ROCO = ROC
 
 return

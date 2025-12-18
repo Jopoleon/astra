@@ -1204,9 +1204,9 @@ IY = f_id
 FTAV = 0.
 if (ICALL == 0) then
     FTAV = Y
-    ICALL  = 1
+    ICALL = 1
 else
-    if (YTAV <= .1*TAU) then
+    if (YTAV <= 0.1*TAU) then
         FTAV = Y    ! Return the input value
     else
         FTAV = Y + (y_old(IY) - Y)*EXP(-TAU/YTAV) ! Return a weighted value
@@ -1216,57 +1216,6 @@ y_old(IY) = FTAV    ! Save the previous value
 
 return
 end function FTAV
-
-!---------------------------------------------------------------------
-double precision function FTAV3(Y)
-! Returns the average of the quantity Y over JBASE time steps
-! The argument to FTAV3 can be either an ASTRA variable or ASTRA array
-! 
-!  Examples:
-!  CV2=FTAV3(cv1)
-! Note:
-!      Do not use ...=FTAV3(UPLB)      (UPLB - ASTRA abbreviation)
-!      Use CV1=UPLB; CV2=FTAV3(CV1)
-!reated by Pereverzev 8.08.2007
-
-use const_inc, only: TIME
-
-implicit none
-
-integer, parameter :: JBASE=1000
-double precision, intent(in) :: Y
-
-integer j, JY
-double precision YY(JBASE), YTIME, YAV
-
-save YY, YTIME, YAV, JY
-data JY/0/ YTIME/-1.d37/ YAV/0.d0/
-
-if (JY /= 0)  then
-    FTAV3 = YAV
-    if (YTIME == TIME) return
-endif
-
-if (jy < JBASE) then
-    JY = JY + 1
-    YY(jy) = Y
-    YAV = 0.
-    do j=1, JY
-        YAV = YAV + YY(j)
-    enddo
-    YAV = YAV/JY
-else
-    YAV = YAV + (Y - YY(1))/JY
-    do j=2, JY
-        YY(j-1) = YY(j)
-    enddo
-    YY(jy) = Y
-endif
-FTAV3 = YAV
-YTIME = TIME
-
-return
-end function FTAV3
 
 !---------------------------------------------------------------------
 double precision function FTAV2(Y)
@@ -1410,34 +1359,6 @@ endif
 
 return
 end function FTMAX
-
-!---------------------------------------------------------------------
-double precision function ADTRMC(x, r, y, na1)
-! Adiabatic compression term
-
-implicit none
-
-integer, intent(in) :: na1
-double precision, intent(in) :: x(na1), r
-double precision, intent(out) :: y(na1)
-
-integer :: i
-double precision :: dum1, dum2, z1
-
-do i=2, na1-1
-    dum1 = (y(i+1) - y(i))/(x(i+1) - x(i))
-    dum2 = (y(i) - y(i-1))/(x(i) - x(i-1))
-    z1 = (dum1 + dum2)/2.0
-    y(i) = x(i)*z1*r
-enddo
-i = 1
-dum1 = (y(i+1) - y(i))/(x(i+1) - x(i))
-dum2 = (y(i) - y(i+1))/(2*x(i))
-z1 = (dum1 + dum2)/2.0
-y(i) = x(i)*z1*r
-
-return
-end function ADTRMC
 
 !---------------------------------------------------------------------
 double precision function RZ2A(R_in, Z_in, nx_in)

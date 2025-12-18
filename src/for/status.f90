@@ -399,5 +399,4 @@ contains
     return
     end subroutine DEFARR
 
-
 end module status_inc

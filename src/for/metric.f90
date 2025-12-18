@@ -404,7 +404,7 @@ use status_inc, only: SHIF, ELON, TRIA, SHX, ELX, TRX, &
     BDB0, BDB02, B0DB2, BMINT, BMAXT, FOFB, VOLUM, SHEAR, FP, MU, &
     shiv, squarn, shivx, squax
 use debugger, only: markloc, debug, flightsim
-use parse_utils, only: ifdefx2
+use parse_utils, only: ifdefx
 use numerical_tools, only: integr
 
 implicit none
@@ -422,42 +422,42 @@ endif
 if (flightsim == 0) then
     YNF = RTOR*GP2**2
     do J=1, NA1
-        if (IFDEFX2('SHX   ')) then
+        if (IFDEFX('SHX   ')) then
             SHIF(J) = SHX(j)
         else
             SHIF(J) = SHIFT
         endif
-        if (IFDEFX2('SHIVX ')) then
+        if (IFDEFX('SHIVX ')) then
             SHIV(J) = SHIVX(j)
         else
             SHIV(J) = 0.
         endif
-        if (IFDEFX2('SQUAX ')) then
+        if (IFDEFX('SQUAX ')) then
             SQUARN(J) = SQUAX(j)
         else
             SQUARN(J) = 0.
         endif
-        if (IFDEFX2('ELX   ')) then
+        if (IFDEFX('ELX   ')) then
             ELON(J) = ELX(j)
         else
             ELON(J) = 1.
         endif
-        if (IFDEFX2('TRX   ')) then
+        if (IFDEFX('TRX   ')) then
             TRIA(J) = TRX(j)
         else
             TRIA(J) = 0.
         endif
-        if (IFDEFX2('G33X  ')) then
+        if (IFDEFX('G33X  ')) then
             G33(J) = G33X(j)
         else
             G33(J) = (RTOR/(RTOR + SHIFT))**2
         endif
-        if (IFDEFX2('IPOLX ')) then
+        if (IFDEFX('IPOLX ')) then
             IPOL(J) = IPOLX(j)
         else
             IPOL(J) = 1.
         endif
-        if (IFDEFX2('VRX   ')) then
+        if (IFDEFX('VRX   ')) then
             VR(J) = VRX(j)
         else
             VR(J) = YNF*RHO(j)/(IPOL(j)*G33(j))
@@ -483,22 +483,22 @@ if (flightsim == 0) then
 ! Flux grid: j*h
     do J=1, NA
         VRS(j) = 0.5*(VR(J+1) + VR(j))
-        if (IFDEFX2('SLATX ')) then
+        if (IFDEFX('SLATX ')) then
             SLAT(J) = 0.5*(SLATX(J+1) + SLATX(j))
         else
             SLAT(J) = VRS(j) 
         endif
-        if (IFDEFX2('G11X  ')) then
+        if (IFDEFX('G11X  ')) then
             G11(J) = 0.5*(G11X(j) + G11X(j+1))
         else
             G11(J) = VRS(j) 
         endif
-        if (IFDEFX2('G22X  ')) then
+        if (IFDEFX('G22X  ')) then
             G22(J) = 0.5*(G22X(j) + G22X(j+1))
         else
             G22(J) = RTOR*VRS(j)/(GP2*(RTOR + SHIFT))**2
         endif
-        if (IFDEFX2('DRODAX')) then
+        if (IFDEFX('DRODAX')) then
             DRODA(J) = 0.5*(DRODAX(j) + DRODAX(j+1))
         else
             DRODA(J) = 1.
@@ -603,7 +603,6 @@ use status_inc, only: SHIF, ELON, TRIA, &
     IPOL, VR, VRS, RHO, XRHO, AMETR, SLAT, &
     BDB0, BDB02, B0DB2, BMINT, BMAXT, FOFB, VOLUM, SHEAR, FP, MU, SHIV, SQUARN
 use debugger, only: markloc, debug, flightsim
-use parse_utils, only: ifdefx2
 use numerical_tools, only: integr
 
 implicit none

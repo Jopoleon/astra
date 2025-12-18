@@ -6,7 +6,7 @@ implicit none
 
 contains
 
-!------------------------------------------------------------
+!----------------------------------------------------------
     logical function IFDEFX(XARNAM)
 ! Name exists in profxNames, and the array is defined
 
@@ -17,35 +17,14 @@ contains
     character(len=6), intent(in) :: XARNAM
 
     integer :: j
-    
-    IFDEFX = .false.
+
     j = str_in_list(XARNAM, profxNames)
     if (j > 0) then
-        if (IFDFAX(j) /= -1) IFDEFX = .true. ! True (X-array is defined)
+        if (IFDFAX(j) > 0) IFDEFX = .true. ! True (X-array is defined)
     endif
 
     return
     end function IFDEFX
-
-!----------------------------------------------------------
-    logical function IFDEFX2(XARNAM)
-! Name exists in profxNames, and the array is defined
-
-    use parameter_inc, only: NARRX
-    use io_mod, only: IFDFAX
-    use json_vars, only: profxNames
-
-    character(len=6), intent(in) :: XARNAM
-
-    integer :: j
-
-    j = str_in_list(XARNAM, profxNames)
-    if (j > 0) then
-        if (IFDFAX(j) > 0) IFDEFX2 = .true. ! True (X-array is defined)
-    endif
-
-    return
-    end function IFDEFX2
 
 !--------------------------------------------------
 ! Set variable list from file parsing
@@ -69,9 +48,7 @@ contains
         line_loop: do
             read(171, '(A132)', iostat=ios) STRI
             if (ios < 0) EXIT line_loop  ! End of file encountered
-            if (ios > 0) then
-                call astra_stop('>>> READAT: File "' // TRIM(file_in) // '" reading error')
-            endif
+            if (ios > 0) call astra_stop('>>> READAT: File "' // TRIM(file_in) // '" reading error')
             call split_string(STRI, '=', str_nam, str_val)
             if (LEN_TRIM(str_val) == 0) CYCLE line_loop
             if ( TRIM(arr_in(j)) == str_nam(1: LEN_TRIM(str_nam)) ) then
@@ -168,7 +145,7 @@ contains
 !------------------------------------------------------------
     subroutine split2array2(str_in, strarray, nout)
 ! splitstring splits a string to an array of
-! substrings based on a selected delimiter
+! substrings using blank and/or tab as delimiter
 ! note any facing space/blank in substrings will be removed
 
     use char_manip, only: null_ch, tab_ch
@@ -184,34 +161,34 @@ contains
     strtmp = clean_string(str_in)
 
     do i=1, nwords_max
-       strarray(i) = repeat(' ', len(str_in))
+        strarray(i) = repeat(' ', len(str_in))
     enddo
 
     m = 1
     nout = 0
     do i=1, len(strtmp)
-       jpos_null = index(strtmp(m:), ' ')
-       jpos_tab = index(strtmp(m:), tab_ch)
-       if (jpos_null > 0) then
-          if (jpos_tab > 0) then
-             jpos = min(jpos_null, jpos_tab)
-          else
-             jpos = jpos_null
-          endif
-       else
-          jpos = jpos_tab
-       endif
-       if ( LEN_TRIM(strtmp(m: m+jpos-1)) > 0 ) then
-          nout = nout + 1
-          strarray(nout) = TRIM(ADJUSTL( strtmp(m: m+jpos-2) )) 
-       endif
-       m = m + jpos
+        jpos_null = index(strtmp(m:), ' ')
+        jpos_tab  = index(strtmp(m:), tab_ch)
+        if (jpos_null > 0) then
+            if (jpos_tab > 0) then
+                jpos = min(jpos_null, jpos_tab)
+            else
+                jpos = jpos_null
+            endif
+        else
+            jpos = jpos_tab
+        endif
+        if ( LEN_TRIM(strtmp(m: m+jpos-1)) > 0 ) then
+            nout = nout + 1
+            strarray(nout) = TRIM(ADJUSTL( strtmp(m: m+jpos-2) )) 
+        endif
+        m = m + jpos
     enddo
 
 ! After the last delimiter
     if ( LEN_TRIM(strtmp(m: )) > 0 ) then
-       nout = nout + 1
-       strarray(nout) = TRIM(ADJUSTL( strtmp(m:) )) 
+        nout = nout + 1
+        strarray(nout) = TRIM(ADJUSTL( strtmp(m:) )) 
     endif
 
     return
@@ -288,18 +265,14 @@ contains
     uname = repeat(' ', 40)
     err_msg = 'Error in exp-file line ' // TRIM(str_in)
 
-    str1   = repeat(' ', 132)
+    str1 = repeat(' ', 132)
 
     call split_string(str_in, ' ', var_name, str1)
-    if (LEN_TRIM(var_name) == 0) then
-       call astra_stop(err_msg)
-    endif
+    if (LEN_TRIM(var_name) == 0) call astra_stop(err_msg)
 
     call split2array(str1, ':', strarray, n_words)
 
-    if (to_upper(TRIM(strarray(1))) /= 'U-FILE' ) then
-       return
-    endif
+    if (to_upper(TRIM(strarray(1))) /= 'U-FILE' ) return
 
     if (LEN_TRIM(strarray(2)) > 0) then
         uname = 'udb/' // TRIM(strarray(2))
@@ -340,8 +313,8 @@ end subroutine parse_u_line
     open(11, FILE=TRIM(uname), iostat=ios)
 
     if (ios /= 0) then
-       err_msg = '>>> READAT: U-file "' // TRIM(uname) // '" reading error'
-       call astra_stop(err_msg)
+        err_msg = '>>> READAT: U-file "' // TRIM(uname) // '" reading error'
+        call astra_stop(err_msg)
     endif
 
 ! # shot, device, #dimensions
@@ -448,8 +421,8 @@ end subroutine parse_u_line
     read(11,'(A32)') STRI
 
     if (n_dim <= 0 .or. n_dim > 2) then
-       err_msg = '>>> U-file "' // TRIM(uname) // '" error: wrong dimensionality'
-       call astra_stop(err_msg)
+        err_msg = '>>> U-file "' // TRIM(uname) // '" error: wrong dimensionality'
+        call astra_stop(err_msg)
     endif
 
     read(11, '(A32)') STRI ! Dummy line
@@ -469,9 +442,7 @@ end subroutine parse_u_line
     read(11, '(A32)') STRI
 
 ! 2nd independent variable label: Y-
-    if (n_dim == 2) then
-        read(11, '(A32)') STRI
-    endif
+    if (n_dim == 2) read(11, '(A32)') STRI
 
 ! Dependent variable label
     read(11,'(A32)') STRI
@@ -481,16 +452,12 @@ end subroutine parse_u_line
 
 ! Dimensions
     read(11, *) STRI
-    if (n_dim == 2) then
-        read(11, *) STRI
-    endif
+    if (n_dim == 2) read(11, *) STRI
 
 ! Read grid and data arrays
 
     read(11, *) (t_out(j), j=1, nt)
-    if (n_dim == 2) then
-        read(11, *) (x_out(j) , j=1, nx)
-    endif
+    if (n_dim == 2) read(11, *) (x_out(j) , j=1, nx)
     read(11, '(1X, 6E13.6)') ((arr_out(jj + (j - 1)*nt), jj=1, nt), j=1, nx)
 
     close(11)

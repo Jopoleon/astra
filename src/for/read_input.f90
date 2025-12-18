@@ -19,7 +19,8 @@ use const_inc, only: NITREQ, NA, NA1, NB1, NAB, NUF, NBND, NCNB, &
     varValues, constValues, internValues, XFLAG, exp_header, ARXUSE, &
     AB, ABC, AWAll, ROC, ROCO, ROB, ROWALL,  HRO, HROX, RTOR, &
     ELONG, ELONM, TRIAN, TRICH, SHIFT, VOLUME, &
-    GP, GP2, BTOR, BTN, FTO, FTN, IPL, IPLN, FLXDR, PSIAX, PSIBO
+    GP, GP2, BTOR, BTN, FTO, FTN, IPL, IPLN, FLXDR, PSIAX, PSIBO, &
+    NB1R, NUFR, NBNDR, XFLAGR
 use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
     G11, G22, VR, VRO, VRS, VOLUM, &
     FP, FPO, FP_NORM, rho_pol, NE, NEO, TE, TEO, UPAR, UPARO, MRHO, &
@@ -30,7 +31,7 @@ use io_mod, only: exp_file, equ_file, machine, NBfile, CCOILX, VCOILX, &
 use expdat, only: raw_scalar, raw_profile_map, DATARR, BNDR, BNDZ, BNDTIM
 use char_manip, only: to_upper, str_in_list, clean_string
 use debugger, only: markloc, debug, astra_stop
-use parse_utils, only: IFDEFX, path_split, split2array2, &
+use parse_utils, only: path_split, split2array2, &
     ufheader, ufrd, parse_u_line, inquire_fname, assign_val, read_arrx
 use numerical_tools, only: EXTRAP, INTEGR
 use plasma_state, only: plasma_up
@@ -122,13 +123,13 @@ if (.not. LOG_EXISTS)  then ! Missing log file
 endif
 ! Read log file
 nvar = 37
-call assign_val(file_in, nvar    ,    varNames(1: nvar    ), varValues (1: nvar)    , n_color)
-call assign_val(file_in, n_const ,  constNames(1: n_const ), constValues(1: n_const ), n_color)
+call assign_val(file_in, nvar    ,    varNames(1: nvar)    ,    varValues(1: nvar)    , n_color)
+call assign_val(file_in, n_const ,  constNames(1: n_const) ,  constValues(1: n_const) , n_color)
 call assign_val(file_in, n_intern, internNames(1: n_intern), internValues(1: n_intern), n_color)
-NA1   = internValues(13)
-NUF   = internValues(14)
-NBND  = internValues(19)
-XFLAG = internValues(20)
+NA1   = int(NB1R) 
+NUF   = int(NUFR)
+NBND  = int(NBNDR)
+XFLAG = int(XFLAGR)
 close(171)
 
 !----------------------------------------------------------------------
