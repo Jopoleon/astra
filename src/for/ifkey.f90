@@ -36,8 +36,8 @@ use status_inc, only: MU, AMETR, SHIF, ELON, TRIA, EQFF, EQPF, FP, RHO
 use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, exp_header, &
    NA, NB1, NA1, NAB, NUF, LEQ, TIME, TAU, TINIT, TSCALE, &
    TSTART, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
-   BTOR, IPL, constValues, varValues, internValues, XFLAG, &
-   NB1R, NUFR, NBNDR, XFLAGR
+   BTOR, IPL, constValues, varValues, internValues, &
+   NB1R, NUFR, NBNDR
 use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     Black, Blue, Magenta, WarningColor, &
     active_tab, curves_per_frame, MOD10, LTOUT, IPOUT, MODEY, &
@@ -467,7 +467,6 @@ do while(.True.)
         NB1R = NA1
         NUF   = int(NUFR)
         n_bnd = int(NBNDR)
-        XFLAG = int(XFLAGR)
         j = XOUT + 0.49
         if (j < 0 .or. j > 3) then
             write(*, *) ">>> Unknown X-axis. Redefinition ignored"

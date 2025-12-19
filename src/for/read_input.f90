@@ -16,11 +16,11 @@ subroutine read_input
 use parameter_inc, only: NTVAR, n_bnd_max, nt_bnd_max, NRD, NRDX, NTARR
 use const_inc, only: NITREQ, NA, NA1, NB1, NAB, NUF, &
     TIME, TSTART, TEND, TPAUSE, TAUMIN, TAUPRP, TINIT, TSCALE, TIMEQL, DTEQL, &
-    varValues, constValues, internValues, XFLAG, exp_header, ARXUSE, &
+    varValues, constValues, internValues, exp_header, ARXUSE, &
     AB, ABC, AWAll, ROC, ROCO, ROB, ROWALL,  HRO, HROX, RTOR, &
     ELONG, ELONM, TRIAN, TRICH, SHIFT, VOLUME, &
     GP, GP2, BTOR, BTN, FTO, FTN, IPL, IPLN, FLXDR, PSIAX, PSIBO, &
-    NB1R, NUFR, NBNDR, XFLAGR
+    NB1R, NUFR, NBNDR
 use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
     G11, G22, VR, VRO, VRS, VOLUM, &
     FP, FPO, FP_NORM, rho_pol, NE, NEO, TE, TEO, UPAR, UPARO, MRHO, &
@@ -129,7 +129,6 @@ call assign_val(file_in, n_intern, internNames(1: n_intern), internValues(1: n_i
 NA1   = int(NB1R) 
 NUF   = int(NUFR)
 n_bnd  = int(NBNDR)
-XFLAG = int(XFLAGR)
 close(171)
 
 !----------------------------------------------------------------------
@@ -846,10 +845,9 @@ do j=1, n_profx
     endif
 enddo
 
-internValues(13) = NA1
-internValues(14) = NUF
-internValues(19) = n_bnd
-internValues(20) = XFLAG
+NB1R   = NA1
+NUFR   = NUF
+NBNDR  = n_bnd
 TIMEQL = TIME - DTEQL - 1.d-7
 TAUPRP = TAUMIN
 if (TIME > TINIT + 1.025*abs(TSCALE)) TINIT = TSTART

@@ -456,7 +456,6 @@
     "NB2EQL": {"desc": "[0,1] contribution of beam pressure to equilibrium"},
     "NEQUIL": {"desc": "Eq. solver grid [<= none, 1 freeze eq., >= 42"},
     "NBNDR" : {"desc": "No. of points on the boundary"},
-    "XFLAGR": {"desc": "X"},
     "DTEQL" : {"units": "s", "desc": "Time interval to recalculate equilibrium"},
     "MEQUIL": {"desc": "Poloidal M (for ESC), grid size (for equil)"},
     "TPAUSE": {"units": "s", "desc": "Time to set pause mode"},
