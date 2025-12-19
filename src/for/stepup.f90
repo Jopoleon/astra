@@ -6,11 +6,11 @@ subroutine STEPUP
 
 use parameter_inc, only: NRD
 use const_inc, only: IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
-    IPCTRL, NCNB, ICIRCQ, ITFBP, ITREQ, UPDWN, FTN, FTO, BTN, BTOR, HRO, ROC, NA1, &
+    IPCTRL, ICIRCQ, ITFBP, ITREQ, UPDWN, FTN, FTO, BTN, BTOR, HRO, ROC, NA1, &
     TAU, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, ATREQ, LEQ, & 
     PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, RBDOT, BBDOT
 use status_inc, only: TE, TI, NE, NI, NIO, FP, defarr
-use io_mod, only: CCOIL, VCOIL, MACHINE, TASK
+use io_mod, only: CCOIL, VCOIL, n_coils, MACHINE, TASK
 use plasma_state, only: plasma_up
 use debugger, only: markloc, flightsim, astra_stop
 
@@ -83,7 +83,7 @@ PSIEXO = PSIEXT      ! reset also external flux from fbe and ce, this is for tes
 PSPLXO = PSPLEX      ! reset also green function flux from fbe and ce, this is for test!
 
 !Get target quantities from experiment if prescribed boundary. if free boundary, then uses circuit equations and voilc comes from elsewhere
-call GETCOILS(VCOIL(1:NCNB), CCOIL(1:NCNB))
+call GETCOILS(VCOIL(1:n_coils), CCOIL(1:n_coils))
 
 ! counter for psi bc = -1 
 if (ITFBP == 0.0) ibcpsi_fb = 0
@@ -237,9 +237,9 @@ tau = tau_old !reuse old for postep routines
 if (IFBEY >= 1.) then         ! is doing free boundary
     if (ICIRCQ > 0.) then    ! circuit equations are solved with whatever code
         if (LEQ(5) == 4) then ! SPIDER
-            call SPIDUPDATE(machine, CCOIL(1:NCNB), time, ncnb)    ! Update circuit stuff which has to be outside the iterations of course
+            call SPIDUPDATE(machine, CCOIL(1:n_coils), time, n_coils)    ! Update circuit stuff which has to be outside the iterations of course
         else if (LEQ(5) == 5) then ! FEQIS
-            call FEQISUPDATE(CCOIL(1:NCNB), ncnb)    ! Update circuit stuff which has to be
+            call FEQISUPDATE(CCOIL(1:n_coils), n_coils)    ! Update circuit stuff which has to be
         endif
     endif
 endif

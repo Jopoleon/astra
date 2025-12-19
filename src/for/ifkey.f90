@@ -34,9 +34,10 @@ integer function IFKEY(IFKL)
 use parameter_inc, only: NRD, NARRX
 use status_inc, only: MU, AMETR, SHIF, ELON, TRIA, EQFF, EQPF, FP, RHO
 use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, exp_header, &
-   NA, NB1, NA1, NAB, NUF, LEQ, NBND, TIME, TAU, TINIT, TSCALE, &
+   NA, NB1, NA1, NAB, NUF, LEQ, TIME, TAU, TINIT, TSCALE, &
    TSTART, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
-   BTOR, IPL, constValues, varValues, internValues, XFLAG
+   BTOR, IPL, constValues, varValues, internValues, XFLAG, &
+   NB1R, NUFR, NBNDR, XFLAGR
 use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     Black, Blue, Magenta, WarningColor, &
     active_tab, curves_per_frame, MOD10, LTOUT, IPOUT, MODEY, &
@@ -46,7 +47,7 @@ use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     rev_file, DTNAME, runid, VERSION, AVERS, ARLEAS, AEDIT, &
     GRAP, GRAL, TIM7, NAM7, KPRI, nplots_max, &
     NTIMES, TTOUT, TOUT
-use io_mod, only: n_sbr, NGR, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
+use io_mod, only: n_sbr, n_bnd, NGR, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
 use expdat, only: raw_profile_map, DATARR
 use dbl2char, only: fmt6
 use char_manip, only: str_in_list, null_ch, beep_ch
@@ -460,13 +461,13 @@ do while(.True.)
         TIMEB = TIME
         MODEX = XOUT + 0.49
         call MENUTABLE(NDTNAM, internValues, DTNAME, 3) ! Only place requiring internValues(j>44)
-        if (int(internValues(13)) /= NA1) then
-            write(*, *)">>> NA1 re-definition ignored"
+        if (int(NB1R) /= NA1) then
+            write(*, *) ">>> NA1 re-definition ignored"
         endif
-        internValues(13) = NA1
-        NUF   = internValues(14)
-        NBND  = internValues(19)
-        XFLAG = internValues(20)
+        NB1R = NA1
+        NUF   = int(NUFR)
+        n_bnd = int(NBNDR)
+        XFLAG = int(XFLAGR)
         j = XOUT + 0.49
         if (j < 0 .or. j > 3) then
             write(*, *) ">>> Unknown X-axis. Redefinition ignored"

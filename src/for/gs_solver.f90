@@ -134,7 +134,7 @@ n_theta = nteta
 if (n_theta == 1) n_theta = nbnd
 if (n_theta == 0) n_theta = 1
 
-dum1r = (nbnd+1.e-9)/(n_theta+1.e-9)
+dum1r = (nbnd + 1.e-9)/(n_theta + 1.e-9)
 do i=1, n_theta
     j = nint((i-1)*dum1r) + 1
     Rb(i) = rbnd(j)

@@ -451,9 +451,9 @@ CASE(8)
 ! Plot the complete wall structure (Pixmap # 1)
     call plot_wall
 
-! if (data file includes NAMEXP BND) then (NBND > 0);
-! or (NBND == 8) after calling equil with no boundary points provided;
-!     NBND == 0 otherwise
+! if (data file includes NAMEXP BND) then (n_bnd > 0);
+! or (n_bnd == 8) after calling equil with no boundary points provided;
+!     n_bnd == 0 otherwise
 
     SELECT CASE(LEQ(5))
     CASE(3)
@@ -541,10 +541,9 @@ subroutine plot_lcfs(ifnew, IYO, time_in)
 ! IFNEW < 0 Don't mark resonances q=m/n
 ! IFNEW > 10 Call from Review. (JIFNEW-10) is used to control erasing
 
-use io_mod, only: NBNT
+use io_mod, only: n_bnd, nt_bnd
 use outcmn_inc, only: Red, EraseColor, pixel_ymid, meter2pixel
 use expdat, only: BNDTIM, BNDR, BNDZ
-use const_inc, only: NBND
 
 implicit none
 
@@ -555,11 +554,11 @@ double precision, intent(in) :: time_in
 integer :: j, j1, j2, jj, PTM(2)
 double precision :: YS, YX, YXL, YXR, YZ
 
-j2 = 1 + NBND/32
+j2 = 1 + n_bnd/32
 
 if (IFNEW == 0) then
     call setColor(EraseColor)
-    do j=1, NBND, j2
+    do j=1, n_bnd, j2
         PTM(1) = IYO(1, j)
         PTM(2) = IYO(2, j)
         call NMARK(PTM, 4)
@@ -569,20 +568,20 @@ endif
 ! Boundary points
 call setColor(Red)
 
-if (NBNT <= 1) then
+if (nt_bnd <= 1) then
     jj = 1
-    do j=1, NBND, j2
-        j1 = max(1, NBNT + (j - 1)*jj)
+    do j=1, n_bnd, j2
+        j1 = max(1, nt_bnd + (j - 1)*jj)
         PTM(1) = BNDR(j1)*meter2pixel
         PTM(2) = pixel_ymid - BNDZ(j1)*meter2pixel
         call NMARK(PTM, 4)   !Use (PTM, 4) for *
         IYO(1, j) = PTM(1)
         IYO(2, j) = PTM(2)
     enddo
-else if (time_in <= BNDTIM(1) .or. time_in >= BNDTIM(NBNT)) then ! extrapolate flat
-    jj = NBNT
-    do j=1, NBND, j2
-        j1 = NBNT + (j - 1)*jj
+else if (time_in <= BNDTIM(1) .or. time_in >= BNDTIM(nt_bnd)) then ! extrapolate flat
+    jj = nt_bnd
+    do j=1, n_bnd, j2
+        j1 = nt_bnd + (j - 1)*jj
         PTM(1) = BNDR(j1)*meter2pixel
         PTM(2) = pixel_ymid - BNDZ(j1+jj)*meter2pixel
         call NMARK(PTM, 4)   !Use (PTM, 4) for *
@@ -590,14 +589,14 @@ else if (time_in <= BNDTIM(1) .or. time_in >= BNDTIM(NBNT)) then ! extrapolate f
         IYO(2, j) = PTM(2)
     enddo
 else               ! interpolate linearly
-    do j=1, NBNT   ! Find current time
+    do j=1, nt_bnd   ! Find current time
         if (time_in > BNDTIM(j)) jj = j
     enddo
     YS  = BNDTIM(jj+1) - BNDTIM(jj)
     YXL = (time_in - BNDTIM(jj  ))/YS
     YXR = (time_in - BNDTIM(jj+1))/YS
-    do j=1, NBND, j2 ! Time differentiation
-        j1 = jj + (j - 1)*NBNT
+    do j=1, n_bnd, j2 ! Time differentiation
+        j1 = jj + (j - 1)*nt_bnd
         YX = YXL*BNDR(j1+1) - YXR*BNDR(j1)
         YZ = YXL*BNDZ(j1+1) - YXR*BNDZ(j1)
         PTM(1) = YX*meter2pixel

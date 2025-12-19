@@ -1031,8 +1031,8 @@ end subroutine A2EMEQ
 !---------------------------------------------------------------------
 subroutine A2GSSOLVER(equil_solver)
 
-use io_mod, only: CCOIL, VCOIL, NBNT
-use const_inc, only: NEQUIL, MEQUIL, NBND, IPART, IPCTRL, TAU, NA, NA1, NAB, NCNB, &
+use io_mod, only: CCOIL, VCOIL, n_bnd, nt_bnd, n_coils
+use const_inc, only: NEQUIL, MEQUIL, IPART, IPCTRL, TAU, NA, NA1, NAB, &
     RTOR, BTOR, IPL, GP, GP2, HRO, ROC, ABC, &
     VOLUME, SHIFT, ELONG, UPDWN, TRIAN, &
     INUME3, ITFBP, IPLFBE, IFBEY, ITREQ, ICIRCQ, ITFBE, &
@@ -1059,7 +1059,7 @@ double precision, dimension(NA1) :: yg11, yg22, yg33, yvr, yvrs, yslat, yg41, &
     ygradro, yipol, ydroda, ypres, ybmaxt, ybmint, yfp, &
     ybdb02, ybdb0, yb0db2, yvolum, yametr, yshif, yelon, &
     ytria, yfofb, yeqpf, yeqff, yshiv, ysquare, omega_rot
-double precision, dimension(NCNB) :: yccoil, yvcoil
+double precision, dimension(n_coils) :: yccoil, yvcoil
 double precision, dimension(1000) :: rbnd, zbnd
 
 save j_save_bound, yiplout, iplnew
@@ -1072,18 +1072,18 @@ call markloc('A2GSSOLVER')
 jneql  = abs(nint(NEQUIL))
 jnteta = abs(nint(MEQUIL))
 
-! NBND=51 <-> ABC, ELONG, TRIAN setting for boundary
+! n_bnd=51 <-> ABC, ELONG, TRIAN setting for boundary
 
-if (NBND == 0) NBND = 41 ! "NAMEXP BND" not found
+if (n_bnd == 0) n_bnd = 41 ! "NAMEXP BND" not found
 
 ! provide grid for t=TIME+TAU
 if (j_save_bound == 0 .or. IPART == 1) then
-    call BNDRY(rbnd(1:NBND), zbnd(1:NBND))
+    call BNDRY(rbnd(1:n_bnd), zbnd(1:n_bnd))
 endif
 
-jnbnd = NBND
+jnbnd = n_bnd
 
-do j=1, NCNB
+do j=1, n_coils
     yccoil(j) = CCOIL(j)
     yvcoil(j) = VCOIL(j)
 enddo
@@ -1143,7 +1143,7 @@ if (IFBEY >= 1.) i = 2    !fbe is on
 if (IPART == 1 ) i = 1    !fbe is off
 
 if (ifbey > 0. .and. plasma_up == 0) then
-    call A_EQUIL_2(NCNB, nint(ifbey), time, tau, vcoil(1:ncnb), equil_solver, IPLFBE)
+    call A_EQUIL_2(n_coils, nint(ifbey), time, tau, vcoil(1:n_coils), equil_solver, IPLFBE)
     return
 endif
 
@@ -1154,7 +1154,7 @@ call GS_SOLVER( &
     jneql, jnteta, jnbnd, NA1, &
     rbnd, zbnd, & 
     XRHO(1: NA1), RTOR, BTOR, ROC, yfp, ypres, &
-    VOLUME, NCNB, yccoil, yvcoil, i, IPART, ITREQ, &
+    VOLUME, n_coils, yccoil, yvcoil, i, IPART, ITREQ, &
     nint(INUME3), TAU, nint(ITFBP), nint(ICIRCQ), nint(IPCTRL), nint(IFBEY), &
     TIME, ychipfp, PSIFB, PSIEXT, PSPLEX, &
     omega_rot, j_rotation, TI(1: NA1), NI(1: NA1), MRHO(1: NA1), &
@@ -1206,7 +1206,7 @@ do j=1, NA1
     EQFF(J)  = yeqff(J)    ! due to adiabatic compression done in the code
 enddo
 
-if (NBNT > 0 .or. TIME >= ITFBE .or. use_ext_bnd == 1) then
+if (nt_bnd > 0 .or. TIME >= ITFBE .or. use_ext_bnd == 1) then
     UPDWN = yupdwn
     ABC   = yametr(NA1) 
     ELONG = ELON(NA1)
@@ -1268,22 +1268,22 @@ subroutine BNDRY(RPB, ZPB)
 ! then 
 ! 1) In case of the plasma boundary defined by 3 moments, 
 !     this subroutine writes 8 points on the boundary into arrays BNDR, BNDZ
-!     and into arrays RPB(1:NBND), ZPB(1:NBND)
+!     and into arrays RPB(1:n_bnd), ZPB(1:n_bnd)
 ! 2) If the plasma boundary is defined by a data file then
 !     this subroutine uses the arrays BNDR, BNDZ as an input and
 !     produces output in [time dependent] arrays RPB, ZPB
 !---------------------------------------------------------------------
-! NBND      number of points on the plasma vacuum boundary
-! NBNT      number of times for the plasma boundary evolution
+! n_bnd      number of points on the plasma vacuum boundary
+! nt_bnd      number of times for the plasma boundary evolution
 !  call from ESC:
 !  call BNDRY(RPB, ZPB)
 !  call from equil:
-!  call BNDRY(RZPB, RZPB(NBND+1))
+!  call BNDRY(RZPB, RZPB(n_bnd+1))
 !---------------------------------------------------------------------
 
-use io_mod, only: NBNT
+use io_mod, only: n_bnd, nt_bnd
 use expdat, only: BNDTIM, BNDR, BNDZ
-use const_inc, only: NBND, GP2, TIME, RTOR, SHIFT, ABC, TRIAN, UPDWN, ELONG
+use const_inc, only: GP2, TIME, RTOR, SHIFT, ABC, TRIAN, UPDWN, ELONG
 use ext_bnd, only: ext_bnd_in, use_ext_bnd
 
 implicit none
@@ -1293,22 +1293,22 @@ double precision, intent(out) :: RPB(*), ZPB(*)
 integer :: j, j1, jt
 double precision :: ydt, yd1, yd2, yfi
 
-if (NBNT <= 1) then
+if (nt_bnd <= 1) then
 
-    if (NBNT == 0) then  ! No input group "NAMEXP BND" found
+    if (nt_bnd == 0) then  ! No input group "NAMEXP BND" found
 
-        if (NBND == 0) NBND = 8    ! call from ESC
-        if (NBND /= 8) then
+        if (n_bnd == 0) n_bnd = 8    ! call from ESC
+        if (n_bnd /= 8) then
             if (use_ext_bnd == 1) then
-                do j=1, NBND
+                do j=1, n_bnd
                     ZPB(j) = ext_bnd_in(j, 2)
                     RPB(j) = ext_bnd_in(j, 1)
                     BNDZ(j) = ZPB(j)
                     BNDR(j) = RPB(j)
                 enddo
             else
-                do j=1, NBND
-                    YFI = GP2*(j - 1.)/NBND
+                do j=1, n_bnd
+                    YFI = GP2*(j - 1.)/n_bnd
                     YD1 = sin(YFI)
                     ZPB(j) = UPDWN + ABC*ELONG*YD1
                     RPB(j) = RTOR + SHIFT + ABC*(cos(YFI) - TRIAN*YD1**2)
@@ -1339,7 +1339,7 @@ if (NBNT <= 1) then
         BNDR(8) = RTOR + SHIFT - ABC*(TRIAN*yd1 + yd2)
         BNDZ(8) = UPDWN - ABC*ELONG*ydt
     endif
-    do j=1, NBND
+    do j=1, n_bnd
         RPB(j) = BNDR(j)
         ZPB(j) = BNDZ(j)
     enddo
@@ -1347,40 +1347,40 @@ if (NBNT <= 1) then
 endif
 
 if (TIME <= BNDTIM(1)) then ! Take bnd at time=t1
-    do j=1, NBND
-        RPB(j) = BNDR(1 + (j - 1)*NBNT)
-        ZPB(j) = BNDZ(1 + (j - 1)*NBNT)
+    do j=1, n_bnd
+        RPB(j) = BNDR(1 + (j - 1)*nt_bnd)
+        ZPB(j) = BNDZ(1 + (j - 1)*nt_bnd)
     enddo
     return
 endif
-if (TIME >= BNDTIM(NBNT)) then ! Take bnd at time=t_NBNT
-    do j=1, NBND
-        RPB(j) = BNDR(NBNT + (j - 1)*NBNT)
-        ZPB(j) = BNDZ(NBNT + (j - 1)*NBNT)
+if (TIME >= BNDTIM(nt_bnd)) then ! Take bnd at time=t_nt_bnd
+    do j=1, n_bnd
+        RPB(j) = BNDR(nt_bnd + (j - 1)*nt_bnd)
+        ZPB(j) = BNDZ(nt_bnd + (j - 1)*nt_bnd)
     enddo
     return
 endif
 
-do j=1, NBNT
+do j=1, nt_bnd
     if (TIME > BNDTIM(j)) jt = j
 enddo
-if (jt == NBNT) write(*, *) "OGOGO"
+if (jt == nt_bnd) write(*, *) "OGOGO"
 ydt = BNDTIM(jt+1) - BNDTIM(jt)
 yd1 = (TIME - BNDTIM(jt))/ydt
 yd2 = (TIME - BNDTIM(jt+1))/ydt
-do j=1, NBND
-    j1 = jt + (j - 1)*NBNT
+do j=1, n_bnd
+    j1 = jt + (j - 1)*nt_bnd
     RPB(j) = yd1*BNDR(j1+1) - yd2*bndr(j1)
-    j1 = jt + (j - 1)*NBNT
+    j1 = jt + (j - 1)*nt_bnd
     ZPB(j) = yd1*BNDZ(j1+1) - yd2*bndz(j1)
 enddo
-if (NBND > 12) return
+if (n_bnd > 12) return
 
 !----------------------------------------------------------------------|
 ! The order is essential
 !  Top(1), bottom(2), inward(3), outward(4), ...
 YDT = -1.
-do j=1, NBND
+do j=1, n_bnd
     if (ZPB(j) > YDT) then
         YDT = ZPB(j)
         j1 = j
@@ -1394,7 +1394,7 @@ RPB(j1) = YD1
 ZPB(j1) = YD2
 ! Bottom(2)
 YDT = 1.
-do j=2, NBND
+do j=2, n_bnd
     if (ZPB(j) < YDT) then
         YDT = ZPB(j)
         j1 = j
@@ -1408,7 +1408,7 @@ RPB(j1) = YD1
 ZPB(j1) = YD2
 ! Inward(3)
 YDT = 1000.
-do j=3, NBND
+do j=3, n_bnd
     if (RPB(j) < YDT) then
         YDT = RPB(j)
         j1 = j
@@ -1422,7 +1422,7 @@ RPB(j1) = YD1
 ZPB(j1) = YD2
 ! Outward(4)
 YDT = -1.
-do j=4, NBND
+do j=4, n_bnd
     if (RPB(j) > YDT) then
         YDT = RPB(j)
         j1 = j
@@ -1497,22 +1497,22 @@ subroutine GETCOILS(yvcoil, yccoil)
 
 ! Get the coil currents from the exp data at the present time slice
 
-use io_mod, only: CCOIL, VCOIL, NCNBT, CCOILX, VCOILX
-use const_inc, only: TIME, NCNB, ITFBE
+use io_mod, only: CCOIL, VCOIL, n_coils, nt_coils, CCOILX, VCOILX
+use const_inc, only: TIME, ITFBE
 
 implicit none
 
-double precision, intent(out), dimension(NCNB) :: yvcoil, yccoil
+double precision, intent(out), dimension(n_coils) :: yvcoil, yccoil
 
 if (TIME > ITFBE) then ! if free boundary, solve circuit equations, ccoil comes from there
-    yccoil = CCOIL(1: NCNB)
-    yvcoil = VCOIL(1: NCNB)
+    yccoil = CCOIL(1: n_coils)
+    yvcoil = VCOIL(1: n_coils)
     return
 endif
 
 ! if time <= ITFBE, ccoil and vcoil comes from experimental traces in exp file
-call get_coil(TIME, CCOILX, NCNBT, NCNB, yccoil)
-call get_coil(TIME, VCOILX, NCNBT, NCNB, yvcoil)
+call get_coil(TIME, CCOILX, nt_coils, n_coils, yccoil)
+call get_coil(TIME, VCOILX, nt_coils, n_coils, yvcoil)
 
 return
 end subroutine GETCOILS

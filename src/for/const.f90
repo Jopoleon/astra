@@ -89,7 +89,7 @@ double precision, pointer :: &
     QF0B, QF1B, QF2B, QF3B, QF4B, QF5B, QF6B, QF7B, QF8B, QF9B, &
     QFF0B, QFF1B, QFF2B, QFF3B, QFF4B, QFF5B, QFF6B, QFF7B, QFF8B, QFF9B
 
-integer :: NA, NA1, NAB, NB1, NUF, NNCX, KEY, NBND, NCNB, &
+integer :: NA, NA1, NAB, NB1, NUF, NNCX, KEY, &
     XFLAG, NSTEPS, ITREQ, IPART, LEQ(NEQNS), NITOT
 integer :: ARXUSE(NARRX)
 integer :: NA1N, NA1E, NA1I, NA1U, &
@@ -110,9 +110,6 @@ contains
     varxValues    = 0.
     internValues  = 0.
     intern2Values = 0.
-
-    NCNB = 1
-    NBND = 0
 
     NA1N = 0
     NA1E = 0

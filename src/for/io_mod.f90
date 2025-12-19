@@ -1,6 +1,6 @@
 module io_mod
 
-use parameter_inc, only: NRDX, NARRX, NCNBM, NCNBTM, NCONST, n_sbr_max
+use parameter_inc, only: NRDX, NARRX, n_coils_max, nt_coils_max, NCONST, n_sbr_max
 use debugger, only: debug, flightsim
 use const_inc, only: TSTART, TEND, TPAUSE
 
@@ -9,11 +9,11 @@ implicit none
 integer, dimension(n_sbr_max) :: IFSBX
 integer, dimension(NARRX) :: IFDFAX=-1, jbeg_arrx, NPTM
 integer, dimension(NCONST) :: IFDFVX=-1
-integer :: n_sbr, NBNT=0, NCNBT=0, NGR
+integer :: n_sbr, n_bnd=0, n_coils=1, nt_bnd=0, nt_coils=0, NGR
 double precision :: resize
 double precision, dimension(NARRX) :: TOUTX
-double precision, dimension(NCNBM) :: CCOIL=0., VCOIL=0.
-double precision, dimension((NCNBM+1)*NCNBTM) :: CCOILX=0., VCOILX=0.
+double precision, dimension(n_coils_max) :: CCOIL=0., VCOIL=0.
+double precision, dimension((n_coils_max+1)*nt_coils_max) :: CCOILX=0., VCOILX=0.
 double precision, dimension(NRDX, NARRX) :: XAXES, DATAX
 
 character(len=4) :: machine, TASK

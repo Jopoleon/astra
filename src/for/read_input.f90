@@ -13,8 +13,8 @@ subroutine read_input
 ! jbeg_arrx(jx)  - pointer to a position in the array raw_profile_map%time
 !----------------------------------------------------------------------|
 
-use parameter_inc, only: NTVAR, NBDMAX, NBDTMAX, NRD, NRDX, NTARR
-use const_inc, only: NITREQ, NA, NA1, NB1, NAB, NUF, NBND, NCNB, &
+use parameter_inc, only: NTVAR, n_bnd_max, nt_bnd_max, NRD, NRDX, NTARR
+use const_inc, only: NITREQ, NA, NA1, NB1, NAB, NUF, &
     TIME, TSTART, TEND, TPAUSE, TAUMIN, TAUPRP, TINIT, TSCALE, TIMEQL, DTEQL, &
     varValues, constValues, internValues, XFLAG, exp_header, ARXUSE, &
     AB, ABC, AWAll, ROC, ROCO, ROB, ROWALL,  HRO, HROX, RTOR, &
@@ -26,13 +26,13 @@ use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
     FP, FPO, FP_NORM, rho_pol, NE, NEO, TE, TEO, UPAR, UPARO, MRHO, &
     AMAIN, UPS0, UPS0O
 use io_mod, only: exp_file, equ_file, machine, NBfile, CCOILX, VCOILX, &
-    IFDFVX, IFDFAX, jbeg_arrx, NGR, NBNT, NCNBT
+    IFDFVX, IFDFAX, jbeg_arrx, NGR, n_bnd, n_coils, nt_bnd, nt_coils
 
 use expdat, only: raw_scalar, raw_profile_map, DATARR, BNDR, BNDZ, BNDTIM
 use char_manip, only: to_upper, str_in_list, clean_string
 use debugger, only: markloc, debug, astra_stop
 use parse_utils, only: path_split, split2array2, &
-    ufheader, ufrd, parse_u_line, inquire_fname, assign_val, read_arrx
+    ufheader, ufrd, parse_u_line, inquire_fname, assign_val, read_coilx
 use numerical_tools, only: EXTRAP, INTEGR
 use plasma_state, only: plasma_up
 use json_vars, only: read_metadata, internNames, constNames, varNames, profxNames, &
@@ -128,7 +128,7 @@ call assign_val(file_in, n_const ,  constNames(1: n_const) ,  constValues(1: n_c
 call assign_val(file_in, n_intern, internNames(1: n_intern), internValues(1: n_intern), n_color)
 NA1   = int(NB1R) 
 NUF   = int(NUFR)
-NBND  = int(NBNDR)
+n_bnd  = int(NBNDR)
 XFLAG = int(XFLAGR)
 close(171)
 
@@ -359,7 +359,7 @@ read(201, '(A132)', ERR=906, END=39) STRI
 
 NGR = 0
 jarr = 0
-NBNT = 0
+nt_bnd = 0
 ALFA_GLOB = 0.001
 
 parse_exp_2d: do
@@ -454,35 +454,35 @@ parse_exp_2d: do
     SELECT CASE(VNAMX)
 
     CASE('CCOILX')
-        NCNBT = 0
-! read only if NCNBT==0, i.e. CCOILX was not defined before
-        call read_arrx(201, NCNBT, ntim, NCNB, STRI, CCOILX)
+        nt_coils = 0
+! read only if nt_coils==0, i.e. CCOILX was not defined before
+        call read_coilx(201, nt_coils, ntim, n_coils, STRI, CCOILX)
         VNAMO = VNAM
 
     CASE('VCOILX') !note that both CCOIL and VCOIL need to appear in the exp file with the same number of points and times
-        NCNBT = 0
-        call read_arrx(201, NCNBT, ntim, NCNB, STRI, VCOILX)
+        nt_coils = 0
+        call read_coilx(201, nt_coils, ntim, n_coils, STRI, VCOILX)
         VNAMO = VNAM
 
     CASE ('BNDX  ')
-        if (NBNT /= 0) then
+        if (nt_bnd /= 0) then
             call astra_stop(err_msg_exp // 'Boundary must be defined in a single group')
         endif
         j = INDEX(lin_upper, 'POINTS')
-        if (j /= 0) read(STRI(j+6:),*) NBND
+        if (j /= 0) read(STRI(j+6:),*) n_bnd
         if (j == 0) then
             call astra_stop(err_msg_exp // 'Number of boundary points must be defined')
         endif
 
-        NBNT = max(ntim, 1)
-        write(*, *) 'Reading BND, dims:', nbnd, ntim
+        nt_bnd = max(ntim, 1)
+        write(*, *) 'Reading BND, dims:', n_bnd, ntim
 
-        if (NBND > NBDMAX) then
-            write(err_msg, '(2A, i)') err_msg_exp, 'Boundary data #theta must not exceed ', NBDMAX
+        if (n_bnd > n_bnd_max) then
+            write(err_msg, '(2A, i)') err_msg_exp, 'Boundary data #theta must not exceed ', n_bnd_max
             call astra_stop(err_msg)
         endif
-         if (NBNT > NBDTMAX) then
-            write(err_msg, '(2A, i)') err_msg_exp, 'Boundary data #times must not exceed ', NBDTMAX
+         if (nt_bnd > nt_bnd_max) then
+            write(err_msg, '(2A, i)') err_msg_exp, 'Boundary data #times must not exceed ', nt_bnd_max
             call astra_stop(err_msg)
         endif
 
@@ -493,17 +493,17 @@ parse_exp_2d: do
 ! r_2(t_1) r_2(t_2) r_2(t_3) 
 ! z_2(t_1) z_2(t_2) z_2(t_3)
 
-        read(201, *, iostat=ios) (BNDTIM(j), j=1, NBNT)
-        allocate(bnd_rz(2*NBNT*NBND))
-        read(201, fmt=*, iostat=ios) (bnd_rz(j), j=1, 2*NBNT*NBND)
+        read(201, *, iostat=ios) (BNDTIM(j), j=1, nt_bnd)
+        allocate(bnd_rz(2*nt_bnd*n_bnd))
+        read(201, fmt=*, iostat=ios) (bnd_rz(j), j=1, 2*nt_bnd*n_bnd)
         jrt = 1
-        do jthe=1, NBND
-            do jt=1, NBNT
-                BNDR((jthe-1)*NBNT + jt) = bnd_rz(jrt)
+        do jthe=1, n_bnd
+            do jt=1, nt_bnd
+                BNDR((jthe-1)*nt_bnd + jt) = bnd_rz(jrt)
                 jrt = jrt + 1
             enddo
-            do jt=1, NBNT
-                BNDZ((jthe-1)*NBNT + jt) = bnd_rz(jrt)
+            do jt=1, nt_bnd
+                BNDZ((jthe-1)*nt_bnd + jt) = bnd_rz(jrt)
                 jrt = jrt + 1
             enddo
         enddo
@@ -520,14 +520,14 @@ parse_exp_2d: do
         read(201, '(A)', iostat=ios) STRI ! u-file name in exp-file
         if (ios < 0) EXIT parse_exp_2d
         call ufheader('udb/'//trim(STRI)//'_r', ndim_u, nt_u, nx_u, rholbl)
-        NBND = nx_u
-        NBNT = nt_u
-        if (NBND > NBDMAX) then
-            write(err_msg, '(2A, i)') TRIM(err_msg_exp), 'Boundary data #theta must not exceed ', NBDMAX
+        n_bnd = nx_u
+        nt_bnd = nt_u
+        if (n_bnd > n_bnd_max) then
+            write(err_msg, '(2A, i)') TRIM(err_msg_exp), 'Boundary data #theta must not exceed ', n_bnd_max
             call astra_stop(err_msg)
         endif
-        if (NBNT > NBDTMAX) then
-            write(err_msg, '(2A, i)') TRIM(err_msg_exp), 'Boundary data #times must not exceed ', NBNT
+        if (nt_bnd > nt_bnd_max) then
+            write(err_msg, '(2A, i)') TRIM(err_msg_exp), 'Boundary data #times must not exceed ', nt_bnd
             call astra_stop(err_msg)
         endif
 
@@ -729,22 +729,22 @@ close(201)
 !-----------------------
 
 !if boundary is given, calculates initial geometry from that
-if (NBNT > 0) then
+if (nt_bnd > 0) then
 !find time index of most proximum boundary
     j=1
-    do jt=1,NBNT
+    do jt=1,nt_bnd
         if (BNDTIM(jt) <= TSTART) j = jt
     enddo
     jt=j
-    allocate(bnd_rz(2*NBND))
-    do jthe=1, NBND
-        bnd_rz(jthe)      = BNDR((jthe-1)*NBNT + jt)
-        bnd_rz(NBND+jthe) = BNDZ((jthe-1)*NBNT + jt) 
+    allocate(bnd_rz(2*n_bnd))
+    do jthe=1, n_bnd
+        bnd_rz(jthe)      = BNDR((jthe-1)*nt_bnd + jt)
+        bnd_rz(n_bnd+jthe) = BNDZ((jthe-1)*nt_bnd + jt) 
     enddo
 !calculate ABC
-    ABC = (maxval(bnd_rz(1: nbnd)) - minval(bnd_rz(1: nbnd)))/2.
+    ABC = (maxval(bnd_rz(1: n_bnd)) - minval(bnd_rz(1: n_bnd)))/2.
 !calculate elong
-    ELONG = (maxval(bnd_rz(NBND+1: 2*nbnd)) - minval(bnd_rz(nbnd+1: 2*nbnd)))/(2.*ABC)
+    ELONG = (maxval(bnd_rz(n_bnd+1: 2*n_bnd)) - minval(bnd_rz(n_bnd+1: 2*n_bnd)))/(2.*ABC)
     ELONG = max(ELONG, 1.d0)
     deallocate(bnd_rz)
 endif
@@ -848,7 +848,7 @@ enddo
 
 internValues(13) = NA1
 internValues(14) = NUF
-internValues(19) = NBND
+internValues(19) = n_bnd
 internValues(20) = XFLAG
 TIMEQL = TIME - DTEQL - 1.d-7
 TAUPRP = TAUMIN

@@ -195,9 +195,9 @@ contains
     end subroutine split2array2
 
 !------------------------------------------------------------
-    subroutine read_arrx(nunit, nt_io, ntim, nrho, stri_in, var_out)
+    subroutine read_coilx(nunit, nt_io, ntim, nrho, stri_in, var_out)
 
-    use io_mod, only: exp_file, NCNBM, NCNBTM
+    use io_mod, only: exp_file, n_coils_max, nt_coils_max
     use debugger, only: markloc, astra_stop
 
     integer, intent(in) :: nunit, ntim
@@ -207,14 +207,14 @@ contains
 
     integer :: j, ios
     character(132) :: err_msg
-    double precision, dimension((NCNBM+1)*NCNBTM), intent(out) :: var_out
+    double precision, dimension((n_coils_max+1)*nt_coils_max), intent(out) :: var_out
 
-    call markloc('read_arrx')
+    call markloc('read_coilx')
 
     err_msg =  '>>> Data file "' // TRIM(exp_file) // '" error:\n'
 
     if (nt_io /= 0) then
-        err_msg = TRIM(err_msg) // '    Boundary must be defined in a single group'
+        err_msg = TRIM(err_msg) // '    COILSX must be defined in a single group'
         call astra_stop(err_msg)
     endif
 
@@ -222,31 +222,31 @@ contains
 
     j = INDEX(stri_in, 'POINTS')
     if (j == 0) then
-        err_msg = TRIM(err_msg) // '    Number of boundary points must be defined'
+        err_msg = TRIM(err_msg) // '    Number of COILSX must be defined'
         call astra_stop(err_msg)
     endif
-    if (nrho > NCNBM) then
+    if (nrho > n_coils_max) then
         write(err_msg, '(2A, i)') TRIM(err_msg), &
-           '    Number of boundary points must be NBND <', NCNBM
+           '    Number of coils must be <', n_coils_max
         call astra_stop(err_msg)
     endif
 
     read(stri_in(j+6:), *) nrho
 
-    if ((nrho + 1)*nt_io > (NCNBM + 1)*(NCNBTM - 10)) then
+    if ((nrho + 1)*nt_io > (n_coils_max + 1)*(nt_coils_max - 10)) then
         write(err_msg, '(2A)') TRIM(err_msg), &
-           '    Boundary data length must be NBND*NBNT <'
+           '    COILSX data length must be n_coils_max*nt_coils_max <'
         call astra_stop(err_msg)
     endif
 
     read(nunit, *, iostat=ios)(var_out(j), j=1, (nrho+1)*nt_io)
     if (ios /= 0) then
-        err_msg = TRIM(err_msg) // '    More data items than data values for BND group'
+        err_msg = TRIM(err_msg) // '    Size mismatch in COILSX group'
         call astra_stop(err_msg)
     endif
 
     return
-    end subroutine read_arrx
+    end subroutine read_coilx
 
 !------------------------------------------------------------
     subroutine parse_u_line(str_in, var_name, uname, factor)

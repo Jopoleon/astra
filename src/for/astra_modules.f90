@@ -4,15 +4,15 @@ implicit none
 save
 
 integer, parameter :: NRD=801, NCONST=256, NARRX=101, n_sbr_max=60, &
-    NCNBM=60, NCNBTM=25000, NRDX=500, NTVAR=250000, &
-    NTARR=250000, NEQNS=19, NBDMAX=256, NBDTMAX=1500, plot_modes=9
+    n_coils_max=60, nt_coils_max=25000, NRDX=500, NTVAR=250000, &
+    NTARR=250000, NEQNS=19, n_bnd_max=256, nt_bnd_max=1500, plot_modes=9
 
 end module parameter_inc
 
 !--------------------------------
 module expdat
 
-use parameter_inc, only: NTVAR, NTARR, NRDX, NBDMAX, NBDTMAX
+use parameter_inc, only: NTVAR, NTARR, NRDX, n_bnd_max, nt_bnd_max
 
 implicit none
 
@@ -31,8 +31,8 @@ type(rawScalar) :: raw_scalar
 type(rawProfileMap) :: raw_profile_map
 
 real*4 :: DATARR(NRDX*NTARR)
-double precision, dimension(NBDTMAX) :: BNDTIM
-double precision, dimension(NBDTMAX*NBDMAX) :: BNDR, BNDZ
+double precision, dimension(nt_bnd_max) :: BNDTIM
+double precision, dimension(nt_bnd_max*n_bnd_max) :: BNDR, BNDZ
 
 end module expdat
 
