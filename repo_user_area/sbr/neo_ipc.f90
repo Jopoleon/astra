@@ -30,7 +30,7 @@ contains
     use const_inc, only: NA1, BTOR, RTOR, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
     use status_inc, only: NE, TE, NI, TI, ER, MU, FP_NORM, &
         ZIM1, ZIM2, ZIM3, NDEUT, NIZ1, NIZ2, NIZ3, &
-        RHO, AMETR, SHIF, ELON, TRIA, VTOR, VPOL
+        RHO, AMETR, SHIF, ELON, TRIA, VTOR, VPOL, G11, VRS
     use numerical_tools, only: qinterp
     use debugger, only: markloc
 
@@ -48,12 +48,11 @@ contains
 
     double precision, dimension(n_inputs, nrho_m) :: prof_in
     double precision, dimension(n_arr_out, nrho_m) :: prof_out
-    double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, T0, m0, a0_m, a0_cm, cs0, drho
+    double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, T0, m0, a0_m, gradrhosq_inv, drho
     double precision, dimension(n_scalars) :: scal_in
     double precision, dimension(NRD) :: rmaj_as, q_as, ni_main_as, vpar_as, &
-        vippd_m, vittd_m, vippi1_m, vitti1_m, j_boot, elec_pflux_m, chii_m, chie_m
-
-    double precision, dimension(nrho_m) :: rho_m,  ti_m, te_m, ne_m, vpar_m, &
+        j_boot, e_pflux_as, chii_as, chie_as
+    double precision, dimension(nrho_m) :: rho_m, ti_m, te_m, ne_m, vpar_m, &
         ametr_m, elon_m, tria_m, rmaj_m, q_m, &
         drmin, drmaj, dti, dte, dne, dq, delong, dtrian, dvpar, drhodr, dr
     double precision, dimension(nspec_max) :: zs_in
@@ -114,9 +113,9 @@ contains
         ni_m(4, jr) = max(1.e-9, ni_m(4, jr))
     enddo
 
-    elec_pflux_m = 0.
-    chie_m  = 0.
-    chii_m  = 0.
+    e_pflux_as = 0.
+    chie_as = 0.
+    chii_as = 0.
 
 ! Number of species
     ns_in = nspec_max
@@ -254,10 +253,15 @@ contains
 
 ! Interpolate back to ASTRA radial grid
 
-    call qinterp(rho_m, prof_out(1, :), nrho_m, RHO(1:NA1), neo_out%chi_i  , NA1, extrap_right=0.)
-    call qinterp(rho_m, prof_out(2, :), nrho_m, RHO(1:NA1), neo_out%chi_e  , NA1, extrap_right=0.)
-    call qinterp(rho_m, prof_out(4, :), nrho_m, RHO(1:NA1), neo_out%e_pflux, NA1, extrap_right=0.)
-
+    call qinterp(rho_m, prof_out(1, :), nrho_m, RHO(1:NA1),    chii_as, NA1, extrap_right=0.)
+    call qinterp(rho_m, prof_out(2, :), nrho_m, RHO(1:NA1),    chie_as, NA1, extrap_right=0.)
+    call qinterp(rho_m, prof_out(4, :), nrho_m, RHO(1:NA1), e_pflux_as, NA1, extrap_right=0.)
+    do jrho=1, NA1
+        gradrhosq_inv = VRS(jrho)/G11(jrho)
+        neo_out%chi_i(jrho)   = chii_as(jrho)*gradrhosq_inv ! m^2/s
+        neo_out%chi_e(jrho)   = chie_as(jrho)*gradrhosq_inv ! m^2/s
+        neo_out%e_pflux(jrho) = e_pflux_as(jrho)*gradrhosq_inv/a0_m
+    enddo
     call SYSTEM_CLOCK(t_wall2, rate)
     print*, "XPR wall time", dble(t_wall2 - t_wall1)/dble(rate)
 
