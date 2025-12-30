@@ -23,7 +23,6 @@ subroutine facit(Z_imp_in, A_imp_in, N_imp_in, rot_mod, Dz_out, Vz_out)
   use parameter_inc, only: NRD
   use const_inc,     only: NA1, BTOR, RTOR, AMJ
   use status_inc,    only: TE, TI, NE, IPOL, MU, SQEPS, AMETR, VTOR, ZEF, ZMAIN, NMAIN, VRS, G11, RHO
-  use numerical_tools, only: qinterp
 
   implicit none
 
@@ -1033,6 +1032,7 @@ subroutine flux_surf_geom(geom_type, ntheta_in, rmin_out, theta_out, R_out, Z_ou
   use const_inc, only: NA1, RTOR, time, tau, tstart
   use status_inc, only: AMETR, SHIF, SHIV
   use parameters_a2equil, only: equil_now
+  use numerical_tools, only: qinterp
 
   implicit none
 
