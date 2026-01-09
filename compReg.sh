@@ -5,6 +5,10 @@ AWD=`cd $rootdir && pwd` # ensure absolute path
 
 platform=`$AWD/get_platform`
 source $AWD/platform/env.$platform
+if [[ ":$PATH:" != *":$PYTHON_BIN:"* ]]
+then
+    export PATH=${PYTHON_BIN}:${PATH}
+fi
 
 EXP=aug34954
 for EQU in fluxes feqis flux_tglf flux_tglf_serial flux_neo qlknn qlk tglf
