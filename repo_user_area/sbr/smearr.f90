@@ -64,9 +64,12 @@ integer :: nrho_max
 
 nrho_max = maxval((/ NA1N, NA1E, NA1I, NA1U, NA10, NA11, NA12, NA13, NA14, NA15, NA16, NA17, NA18, NA19 /))
 nrho_max = MIN(nrho_max, NA1)
-
-call SMOOTH(ALFA, RHO(1: nrho_max), f_in(1: nrho_max), nrho_max, RHO(1:nrho_max), f_out, nrho_max)
-
+if (nrho_max == 0) then
+    write(*, *) 'SMEARR2', nrho_max
+    write(*, *) 'No smoothing applied'
+else
+    call SMOOTH(ALFA, RHO(1: nrho_max), f_in(1: nrho_max), nrho_max, RHO(1:nrho_max), f_out, nrho_max)
+endif
 f_out(nrho_max+1: NA1) = f_in(nrho_max+1: NA1)
 
 return
