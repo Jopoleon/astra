@@ -961,9 +961,9 @@ int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
                 strcat (grep_str, "\\\"  main/astra_variables.json");
                 break;
             case 2:        // Constants, usage in equ file (missing)
-                strcpy (grep_str,"grep -i -w ");
+                strcpy (grep_str, "grep -i -w ");
                 strncat(grep_str, var_name, ii);
-                strcat (grep_str, " tmp/model.tmp");
+                strcat (grep_str, " src/tmp/model.tmp");
                 break;
             case 3:        // Time, grid control
                 strcpy (grep_str, "grep -i \\\"");
@@ -973,7 +973,7 @@ int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
             case 4:
                 strcpy (grep_str, "grep -w ");
                 strncat(grep_str, var_name, ii);
-                strcat (grep_str," tmp/model.txt");
+                strcat (grep_str," src/tmp/model.txt");
                 break;
             case 5:
                 printf("Curve presentation\n");
