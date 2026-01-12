@@ -6,7 +6,6 @@ awd = os.path.dirname(os.path.realpath(__file__))
 fmt = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s: %(message)s', '%H:%M:%S')
 logger = logging.getLogger('regression')
 
-
 def compare(fcdf, fcdf_ref, tolerance=1.e-7):
 
     ncnew = netcdf_file(fcdf    , 'r', mmap=False).variables
@@ -23,7 +22,7 @@ def compare(fcdf, fcdf_ref, tolerance=1.e-7):
     for key, arr1 in ncnew.items():
         logger.info(key)
         if key not in ncref.keys():
-            logger.error('Key not in reference nc-file %s', fcdf_ref)
+            logger.error('Key %s not in reference nc-file %s', key, fcdf_ref)
         else:
             arr2 = ncref[key].data
             if arr1.shape != arr2.shape:
@@ -33,10 +32,11 @@ def compare(fcdf, fcdf_ref, tolerance=1.e-7):
                     arr_new = np.atleast_1d(arr1[jt])
                     arr_ref = np.atleast_1d(arr2[jt])
                     nlen = len(arr_new)
-                    diff = np.linalg.norm(arr_new - arr_ref)
-                    if diff > tolerance*nlen:
-                        logger.error('Discrepancy %12.4e at time=%8.4f', diff, time[jt])
-                        break
+                    norm = np.sum(np.abs(arr_new))
+                    if norm > 0:
+                        diff = np.linalg.norm(arr_new - arr_ref)/norm
+                    if diff > tolerance:
+                        logger.error('%s: discrepancy %12.4e at time=%8.4f', key, diff, time[jt])
 
 
 if __name__ == '__main__':
@@ -52,7 +52,7 @@ if __name__ == '__main__':
         hnd = logging.FileHandler(reg_log, mode='w')
         hnd.setFormatter(fmt)
         logger.addHandler(hnd)
-        logger.setLevel(logging.INFO)
+        logger.setLevel(logging.ERROR)
 
     fcdf = '%s%s.CDF' %(args.exp, args.equ)
     fnew = 'ncdf_out/%s'    %fcdf
