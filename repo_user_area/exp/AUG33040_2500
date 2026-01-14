@@ -1,6 +1,6 @@
-aug #33040 Name  Time    Value   Error
-
-|____|--|____|--|____|--|____|----------------
+aug #33040
+ Name ||Time  || Value|| Error
+______||______||______||______
 NA1             91
 RTOR            1.65
 AWALL           0.7              Reserved minor radius in the mid-plane

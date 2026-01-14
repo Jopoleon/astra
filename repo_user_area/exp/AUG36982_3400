@@ -1,6 +1,6 @@
 aug #36982 3.4s
- Name    Time    Value   Error
-|____|--|____|--|____|--|____|-----------
+ Name ||Time  || Value|| Error
+______||______||______||______
 NA1             161
 AWALL           0.700
 ELONM           1.700
