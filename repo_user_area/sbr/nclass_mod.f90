@@ -196,18 +196,18 @@ do j=1, NA
         eps_shear_fac = BTOR*RHO(j)*MU(j)/RTOR/ &
                 ((SHIF(j+1) + AMETR(j+1) - SHIF(j) - AMETR(j))/ &
                 (RHO(j) - RHO(j+1)))
+        p_eb = -ULON(2)*BTOR/(GP2*RTOR)
     else
         eps_shear_fac = BTOR*RHO(j)*MU(j)/RTOR/ &
                 ((SHIF(j+1) + AMETR(j+1) - SHIF(j-1) - AMETR(j-1))/ &
                 (RHO(j-1) - RHO(j+1)))
+        p_eb = -ULON(j)*BTOR/(GP2*RTOR)
     endif
+! Warning: The NCLASS version 1.2 returns NaN resistivity if p_eb = 0.
+    if (abs(p_eb) < 1.d-3) p_eb = sign(0.001, p_eb)
     p_grphi  = ER(j)
     p_gr2phi = MU(j)*j*(ER(j+1)/MU(j+1)/((j+1)*YH) - ER(j)/MU(j)/(j*YH))
-! Warning: The NCLASS version 1.2 returns NaN resistivity
-!          if p_eb = 0.
-!         p_eb     = max(.00001, -ULON(j)*BTOR/(GP2*RTOR))
-    p_eb     = -ULON(j)*BTOR/(GP2*RTOR)
-    if (abs(p_eb) < 1.d-3) p_eb = sign(0.001, p_eb)
+
     p_b2     = BTOR**2*BDB02(j)
     p_bm2    = B0DB2(j)/BTOR**2
     p_fhat   = -IPOL(j)*RTOR/(MU(j)*j*YH)
@@ -876,6 +876,12 @@ do j=1, NA
     if (isnan(dn_imp1_nc(j))) dn_imp1_nc(j) = 0.
     if (isnan(dn_imp2_nc(j))) dn_imp2_nc(j) = 0.
     if (isnan(dn_imp3_nc(j))) dn_imp3_nc(j) = 0.
+    if (isnan(xd_nc(j))) write(*, *) 'Nan in xd_nc', j
+    if (isnan(xe_nc(j))) write(*, *) 'Nan in xe_nc', j
+    if (isnan(dn_e_nc(j))) write(*, *) 'Nan in dn_e_nc', j
+    if (isnan(polflow_d_nc(j))) write(*, *) 'NaN in polflow_d_nc', j
+    if (isnan(jbs_nc(j))) write(*, *) 'NaN in jbs_nc', j
+    if (isnan(cc_nc(j))) write(*, *) 'NaN in cc_nc', j
 
 enddo ! Main radial loop
 
