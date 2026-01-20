@@ -1,5 +1,12 @@
 program astra
 
+! Copyright (C) 2026 Institut fuer Plasmaphysik - Boltzmannstrasse 2, 85748 Garching (Germany)
+!
+! This library is free software; you can redistribute it and/or
+! modify it under the terms of the GNU Lesser General Public
+! License as published by the Free Software Foundation;
+! version 2.1 of the License
+
 use outcmn_inc, only: astra_gui, astra_gui_ref, outcmn_init
 use io_mod, only: TASK, io_init
 use cpu_usage, only: cpu_start, wall_start, cpu_report

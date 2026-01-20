@@ -1,3 +1,5 @@
+! M. Bergmann 20.01.2026
+!
 ! ER_omp calculates the Er profiles usinf outboard midplane (omp) quantities
 ! The profiles should be closer to the experimental profiles and should
 ! be the one used for TGLF/GK simulations
@@ -22,7 +24,7 @@
 subroutine er_omp(er_min, er_sep, wexb_lfs, er_lfs, vdia_lfs, bp_lfs)
 
 use const_inc, only: RTOR, BTOR, NA1, TIME, TSTART, NEQUIL, MEQUIL, AWALL
-use status_inc, only: TI, NMAIN, ZMAIN, VTOR, AMETR, MU, FP_NORM, VPOL
+use status_inc, only: TI, NMAIN, ZMAIN, VTOR, AMETR, MU, rho_pol, VPOL
 use parameters_a2equil, only: equil_now
 use numerical_tools, only: qinterp
 
@@ -67,22 +69,22 @@ rpol_sp(1:neq) = sqrt((psi_sp(1:neq) - psi_sp(1))/(psi_sp(neq) - psi_sp(1))); !r
  !pi_as(1:na1) = TI(1:na1)*NI(1:na1) !ion pressure
 pi_as(1:na1) = TI(1:na1)*NMAIN(1:na1) !ion pressure of main ion species
 
-call qinterp(rpol_sp(1:neq), rmin_sp(1:neq), neq, FP_NORM(1:NA1), rmin_as(1:NA1), NA1) !r
-call qinterp(rpol_sp(1:neq), bp_sp(  1:neq), neq, FP_NORM(1:NA1), bp_as(1:NA1), NA1)  !Bpol
+call qinterp(rpol_sp(1:neq), rmin_sp(1:neq), neq, rho_pol(1:NA1), rmin_as(1:NA1), NA1) !r
+call qinterp(rpol_sp(1:neq), bp_sp(  1:neq), neq, rho_pol(1:NA1), bp_as(1:NA1), NA1)  !Bpol
 
 bp_lfs(1:na1) = bp_as(1:na1)
 
-call qinterp(rpol_sp(1:neq), psi_sp(1:neq), neq, FP_NORM(1:NA1), psi_as(1:NA1), NA1)  !Psi
+call qinterp(rpol_sp(1:neq), psi_sp(1:neq), neq, rho_pol(1:NA1), psi_as(1:NA1), NA1)  !Psi
 
 !diamagnetic term = R*B_pol/qi/ni*grad_Psi(Pi) (V/m)
 do jrho=1,NA1-1
-    rhalf(jrho) = (FP_NORM(jrho) + FP_NORM(jrho+1))/2.0
+    rhalf(jrho) = (rho_pol(jrho) + rho_pol(jrho+1))/2.0
     vdhalf(jrho) = 2.0E3/(NMAIN(jrho+1) + NMAIN(jrho))/ZMAIN(jrho) * &
         (pi_as(jrho+1) - pi_as(jrho))/(psi_as(jrho+1) - psi_as(jrho)) * &
         (bp_as(jrho+1) + bp_as(jrho))/2.0 * (rmaj_as(jrho+1) + rmaj_as(jrho))/2.0 
 enddo
 
-call qinterp(rhalf(1:NA1-1), vdhalf(1:NA1-1), NA1-1, FP_NORM(1:na1), vdia_as(1:na1), na1)
+call qinterp(rhalf(1:NA1-1), vdhalf(1:NA1-1), NA1-1, rho_pol(1:na1), vdia_as(1:na1), na1)
 
 !vdia in m/s
 vdia_lfs(1:na1) = vdia_as(1:na1)/(BTOR*RTOR/rmaj_as(1:na1)) !(m/s)
@@ -93,12 +95,12 @@ er_lfs(1:na1) = vdia_as(1:na1) - VPOL(1:na1)*BTOR*RTOR/rmaj_as(1:na1) + bp_as(1:
 !Impose Er well (Er=er_sep at the separatrix)
 ispan = 0
 do jrho=1, na1
-    if (FP_NORM(jrho) >= er_min) then      
+    if (rho_pol(jrho) >= er_min) then      
         if (ispan == 0)then
             ispan = 1
             er0 = er_lfs(jrho)
         endif
-        er_lfs(jrho) = er0 - (er0 - er_sep)*((FP_NORM(jrho) - er_min)/(1. - er_min))**2
+        er_lfs(jrho) = er0 - (er0 - er_sep)*((rho_pol(jrho) - er_min)/(1. - er_min))**2
     endif
 enddo
 
@@ -109,12 +111,12 @@ wexb_lfs(1:na1) = er_lfs(1:na1)/(bp_as(1:na1)*rmaj_as(1:na1))*BTOR*AMETR(1:na1)*
 
 ispan = 0
 do jrho=NA1, 1,-1 !this is just to avoid zigzags in the inner core
-    if (FP_NORM(jrho) <= 0.3) then
+    if (rho_pol(jrho) <= 0.3) then
         if (ispan == 0)then
             ispan = 1
             er0 = wexb_lfs(jrho)
         endif
-        wexb_lfs(jrho) = er0 - er0*(1. - FP_NORM(jrho)/0.3)**2
+        wexb_lfs(jrho) = er0 - er0*(1. - rho_pol(jrho)/0.3)**2
     endif
 enddo
 
