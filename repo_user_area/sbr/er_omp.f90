@@ -69,7 +69,8 @@ rpol_sp(1:neq) = sqrt((psi_sp(1:neq) - psi_sp(1))/(psi_sp(neq) - psi_sp(1))); !r
  !pi_as(1:na1) = TI(1:na1)*NI(1:na1) !ion pressure
 pi_as(1:na1) = TI(1:na1)*NMAIN(1:na1) !ion pressure of main ion species
 
-call qinterp(rpol_sp(1:neq), rmin_sp(1:neq), neq, rho_pol(1:NA1), rmin_as(1:NA1), NA1) !r
+call qinterp(rpol_sp(1:neq), rmaj_sp(1:neq), neq, rho_pol(1:NA1), rmaj_as(1:NA1), NA1) !r
+call qinterp(rpol_sp(1:neq), rmin_sp(1:neq), neq, rho_pol(1:NA1), rmin_as(1:NA1), NA1) !r (defined but not used in original) 
 call qinterp(rpol_sp(1:neq), bp_sp(  1:neq), neq, rho_pol(1:NA1), bp_as(1:NA1), NA1)  !Bpol
 
 bp_lfs(1:na1) = bp_as(1:na1)
