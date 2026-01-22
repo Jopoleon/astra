@@ -155,7 +155,7 @@ contains
         dstep = 1./dble(jr_r - jr_l)  ! 0.5 in between, 1 at the edges
         drmin(jr)  = dstep*(ametr_m(jr_r) - ametr_m(jr_l))
         drmaj(jr)  = dstep*( rmaj_m(jr_r) -  rmaj_m(jr_l))
-        drho       = dstep*(rho(jr_r) - rho(jr_l))
+        drho       = dstep*(  rho_m(jr_r) -   rho_m(jr_l))
         delong(jr) = dstep*( elon_m(jr_r) -  elon_m(jr_l))
         dtrian(jr) = dstep*( tria_m(jr_r) -  tria_m(jr_l))
         dti(jr)    = dstep*(ti_m(jr_r) - ti_m(jr_l))
