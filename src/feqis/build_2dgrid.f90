@@ -39,7 +39,8 @@ double precision :: drdX, drdY, Mdet, dpsi, dthe, ipol_rmaj, z1, z2, z3, rho_int
     yrzmin, yrzmax, yzmax, yrmin, yrmax, yrr, yzmin, ya
 double precision, dimension(3) :: xxxx1, yyyy1, pppp1
 double precision, dimension(nrho) :: rhot, rhoa, dPSIdV, dVa, daa, dum1, AMETR, ONEZ
-double precision, dimension(ntheta) :: dl_arc, tar1, tar2, theta_special, dl_arc_special
+double precision, dimension(ntheta) :: dl_arc, tar1, tar2, theta_special, dl_arc_special, &
+    rmaj2_sq, gradVa_sq, B_ABSa_sq
 double precision, dimension(nrho, ntheta) :: gradPSIa, gradVa, dV2da, dA2da, &
     B_pola, B_ABSa, B_Ta, dldt_temp
 
@@ -207,38 +208,23 @@ enddo
 
 !Cycle over positions  ! half grid
 do jrho=1, nrho-1
+    rmaj2_sq  =  Rmaj2(jrho, :)**2
+    gradVa_sq = gradVa(jrho, :)**2
+    B_ABSa_sq = B_ABSa(jrho, :)**2
 
-    tar1 = 1./(Rmaj2(jrho, 1: ntheta)**2)
-    G3(jrho) = sum(tar1*fsa_kernel(jrho,: )) ! this is the definition of flux surface average of <f> of f = tar1
-
-    ONEZ(jrho) = sum(fsa_kernel(jrho,: ))
-
-    tar1 = (gradVa(jrho, 1: ntheta)/Rmaj2(jrho, 1: ntheta))**2
-    G2(jrho) = sum(tar1*fsa_kernel(jrho,: ))
-
-    tar1 = gradVa(jrho, 1: ntheta)**2
-    G1(jrho) = sum(tar1*fsa_kernel(jrho,: ))
-
-    tar1 = gradVa(jrho, 1: ntheta)
-    GRADRO(jrho) = sum(tar1*fsa_kernel(jrho,: ))
-
-    tar1 = B_ABSa(jrho, 1: ntheta)**2
-    BDB02(jrho) = sum(tar1*fsa_kernel(jrho,: ))
-
-    tar1 = B_ABSa(jrho, 1: ntheta)
-    BDB0(jrho) = sum(tar1*fsa_kernel(jrho,: ))
-
-    tar1 = 1./(B_ABSa(jrho, 1: ntheta)**2)
-    B0DB2(jrho) = sum(tar1*fsa_kernel(jrho,: ))
-
-    BMAXT(jrho) = maxval(B_ABSa(jrho, : ))
-    BMINT(jrho) = minval(B_ABSa(jrho, : ))
-
-    tar1 = ((btor/B_ABSa(jrho, 1: ntheta))**2) * &
-        ( 1. - (sqrt(1. - (B_ABSa(jrho, 1: ntheta)/BMAXT(jrho)))) * (1. + 0.5*(B_ABSa(jrho, 1: ntheta)/BMAXT(jrho))) )
-    FOFB(jrho) = sum(tar1*fsa_kernel(jrho,: ))
-
-
+    G3(jrho)  = sum(fsa_kernel(jrho, :)/rmaj2_sq) ! this is the definition of flux surface average of <f> of f = tar1
+    G41(jrho) = sum(rmaj2_sq*fsa_kernel(jrho, :))
+    G2(jrho)  = sum(gradVa_sq/rmaj2_sq*fsa_kernel(jrho, :))
+    G1(jrho)  = sum(gradVa_sq*fsa_kernel(jrho,: ))
+    GRADRO(jrho) = sum(gradVa(jrho, :)*fsa_kernel(jrho, :))
+    BDB02(jrho)  = sum(B_ABSa_sq*fsa_kernel(jrho, :))
+    BDB0(jrho)   = sum(B_ABSa(jrho, :)*fsa_kernel(jrho, :))
+    B0DB2(jrho)  = sum(fsa_kernel(jrho, :)/B_ABSa_sq)
+    BMAXT(jrho) = maxval(B_ABSa(jrho, :))
+    BMINT(jrho) = minval(B_ABSa(jrho, :))
+    tar1 = btor**2/B_ABSa_sq * &
+        ( 1. - (sqrt(1. - (B_ABSa(jrho, :)/BMAXT(jrho)))) * (1. + 0.5*(B_ABSa(jrho, :)/BMAXT(jrho))) )
+    FOFB(jrho) = sum(tar1*fsa_kernel(jrho, :))
 enddo
 
 rho_interp = rhoa(nrho)
@@ -246,6 +232,7 @@ rho_interp = rhoa(nrho)
 G1(nrho)     = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, G1)
 G2(nrho)     = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, G2)
 G3(nrho)     = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, G3)
+G41(nrho)    = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, G41)
 GRADRO(nrho) = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, GRADRO)
 FOFB(nrho)   = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, FOFB)
 BMAXT(nrho)  = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, BMAXT)
@@ -260,6 +247,8 @@ call qinterp(rhot(1: nrho-1), g2(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nr
 g2(2: nrho-1) = dum1(2: nrho-1)
 call qinterp(rhot(1: nrho-1), g3(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
 g3(2: nrho-1) = dum1(2: nrho-1)
+call qinterp(rhot(1: nrho-1), g41(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+g41(2: nrho-1) = dum1(2: nrho-1)
 call qinterp(rhot(1: nrho-1), gradro(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
 gradro(2: nrho-1) = dum1(2: nrho-1)
 call qinterp(rhot(1: nrho-1), fofb(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
@@ -276,8 +265,9 @@ call qinterp(rhot(1: nrho-1), b0db2(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2:
 b0db2(2: nrho-1) = dum1(2: nrho-1)
 
 G1(1) = 0.0
-G3(1) = 1./(XX(1, 1)**2)
+G3(1) = 1./XX(1, 1)**2
 G2(1) = 0.0
+G41(1) = XX(1, 1)**2
 GRADRO(1) = 0.0
 ipol_rmaj = IPOL(1)/XX(1, 1)
 BDB02(1) = ipol_rmaj**2
@@ -340,8 +330,6 @@ ELON(1) = ELON(2)
 TRIA_U(1) = 0.d0
 TRIA_L(1) = 0.d0
 SHIF(1) = XX(1, 1) - rtor
-
-G41 = G1 ! to be fixed
 
 return
 end subroutine build_2dgrid

@@ -32,9 +32,15 @@ def compare(fcdf, fcdf_ref, tolerance=1.e-7):
                     arr_new = np.atleast_1d(arr1[jt])
                     arr_ref = np.atleast_1d(arr2[jt])
                     nlen = len(arr_new)
-                    norm = np.sum(np.abs(arr_new))
-                    if norm > 0:
-                        diff = np.linalg.norm(arr_new - arr_ref)/norm
+                    norm_new = np.sum(np.abs(arr_new))
+                    norm_ref = np.sum(np.abs(arr_ref))
+                    if norm_new == 0:
+                        if norm_ref == 0:
+                            diff = 0
+                        else:
+                            diff = np.linalg.norm(arr_new - arr_ref)/norm_ref
+                    else:
+                        diff = np.linalg.norm(arr_new - arr_ref)/norm_new
                     if diff > tolerance:
                         logger.error('%s: discrepancy %12.4e at time=%8.4f', key, diff, time[jt])
 
