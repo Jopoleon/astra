@@ -4,32 +4,24 @@ subroutine STEPUP
 ! Note that now time step is updated at the end of a full time cycle
 !-------------------------------------------------------------------
 
-use parameter_inc, only: NRD
 use const_inc, only: IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
-    IPCTRL, ICIRCQ, ITFBP, ITREQ, UPDWN, FTN, FTO, BTN, BTOR, HRO, ROC, NA1, &
+    IPCTRL, ICIRCQ, ITFBP, ITREQ, FTN, FTO, BTN, BTOR, HRO, ROC, NA1, &
     TAU, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, ATREQ, LEQ, & 
     PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, RBDOT, BBDOT
 use status_inc, only: TE, TI, NE, NI, NIO, FP, defarr
 use io_mod, only: CCOIL, VCOIL, n_coils, MACHINE, TASK
 use plasma_state, only: plasma_up
-use debugger, only: markloc, flightsim, astra_stop
 
 implicit none
 
-integer :: IFKEY, IFSUB, &
-    ibcpsi_fb, jreadd, icurradj, bc_type_for_fp, jkey, &
+integer :: IFKEY, IFSUB, ibcpsi_fb, bc_type_for_fp, jkey, &
     IFTREQ, IFSTEP
-double precision :: updwno, zipctrl, &
-    iplfbeo, Apsibcfac, Bpsibcfac, dfpdrbm12, time_ext, &
-    dt_smlk, Y, tau_old, tau_new
-double precision, dimension(NRD) :: dummycoils
+double precision :: zipctrl, iplfbeo, Apsibcfac, Bpsibcfac, dfpdrbm12, &
+    tau_old, tau_new
 
 data ibcpsi_fb /0/
-data jreadd /0/
 
-save ibcpsi_fb, jreadd  ! counter to use psi as bc stuff
-save dt_smlk
-save time_ext
+save ibcpsi_fb  ! counter to use psi as bc stuff
 save tau_old, tau_new
 
 !Initialize a few variables for toroidal field
@@ -96,8 +88,6 @@ if (IFBEY >= 1.) then
         ibcpsi_fb = 0
     endif
 endif
-
-updwno = updwn          ! for fsim
 
 time_step_accuracy: do
 
@@ -197,13 +187,11 @@ time_step_accuracy: do
             Bpsibcfac = PSIEXT - PSPLEX*ROC*Apsibcfac
             PSIFB = Bpsibcfac
 
-            icurradj = 0
             if (ITFBP < 0.0) then
                 if (IFBEY >= 1.) then
                     if (ibcpsi_fb == 1) then
                         FP = FP - FP(NA1) + PSIFB
                         bc_type_for_fp = 3
-                        icurradj = 1
                     endif
                 endif
             endif
