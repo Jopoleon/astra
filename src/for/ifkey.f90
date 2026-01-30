@@ -48,7 +48,7 @@ use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     GRAP, GRAL, TIM7, NAM7, KPRI, nplots_max, &
     NTIMES, TTOUT, TOUT
 use io_mod, only: n_sbr, n_bnd, NGR, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
-use expdat, only: raw_profile_map, DATARR
+use expdat, only: raw_profiles
 use dbl2char, only: fmt6
 use char_manip, only: str_in_list, null_ch, beep_ch
 use debugger, only: markloc, debug, astra_stop
@@ -248,9 +248,9 @@ if (TPOUT + DPOUT < TSTART .or. (IFKL /= 256 .and. TIME + 0.5*TAU >= TPOUT + DPO
         if (NXOUT > 0 .and. NGR > 0) then
 ! Total length: 3*NGR*int+(3*NGR+GDEY(NGR)+NGRIDX(NGR)-1)*real+3*NARRX*int
             write(3) &
-                (raw_profile_map%arr_index(j), j=1, NGR), (raw_profile_map%nrho(j), j=1, NGR), (raw_profile_map%grid_type(j), j=1, NGR), &
-                (raw_profile_map%time(j), j=1, NGR), (raw_profile_map%jbeg_grid(j), j=1, NGR), (raw_profile_map%jbeg_data(j), j=1, NGR), &
-                (DATARR(j), j=1, raw_profile_map%jbeg_data(NGR) + raw_profile_map%nrho(NGR) - 1), &
+                (raw_profiles%arr_index(j), j=1, NGR), (raw_profiles%nrho(j), j=1, NGR), (raw_profiles%grid_type(j), j=1, NGR), &
+                (raw_profiles%time(j), j=1, NGR), (raw_profiles%jbeg_grid(j), j=1, NGR), (raw_profiles%jbeg_data(j), j=1, NGR), &
+                (raw_profiles%data(j), j=1, raw_profiles%jbeg_data(NGR) + raw_profiles%nrho(NGR) - 1), &
                 (NAMEX(j), j=1, NARRX), (NWINDX(j), j=1, NARRX), &
                 (jbeg_arrx(j), j=1, NARRX)
         endif

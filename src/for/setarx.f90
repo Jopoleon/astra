@@ -16,7 +16,7 @@ use numerical_tools, only: qinterp, sortab, smooth
 use io_mod, only: jbeg_arrx, IFDFAX, XAXES, &
     DATAX, NPTM, TOUTX
 use debugger, only: markloc, astra_stop
-use expdat, only: raw_profile_map, DATARR
+use expdat, only: raw_profiles
 
 implicit  none
 
@@ -37,10 +37,10 @@ character(len=132) :: err_msg, err_msg_grid
 !  > 0 - call from STEPON
 !  = 1 - time interpolation off
 !  = 2 - time interpolation on
-! DATARR(NRDX*NTARR) - data array
+! raw_profiles%data(NRDX*NTARR) - data array
 ! jbeg_arrx(kn)  - pointer to a position in the array TIMEX
 ! Output
-! IFDFAX(kn)   - current pointer to data set in DATARR
+! IFDFAX(kn)   - current pointer to data set in raw_profiles%data
 ! NPTM(kn)     - number of data points within a<=AB
 ! XAXES(jprof, kn) - "radial" grid for displayed data
 ! DATAX(jprof, kn) - array for displayed data
@@ -50,40 +50,40 @@ character(len=132) :: err_msg, err_msg_grid
 call markloc('SETARX')
 
 var_loop: do jtarr=1, NTARR
-    if (raw_profile_map%arr_index(jtarr) == 0) EXIT
+    if (raw_profiles%arr_index(jtarr) == 0) EXIT
     jprof = 0
-    if (raw_profile_map%arr_index(jtarr+1) == 0) then
+    if (raw_profiles%arr_index(jtarr+1) == 0) then
         jprof  = jtarr
         jt_end = jtarr
     else
-        if (raw_profile_map%arr_index(jtarr+1) /= raw_profile_map%arr_index(jtarr)) then ! Label change
+        if (raw_profiles%arr_index(jtarr+1) /= raw_profiles%arr_index(jtarr)) then ! Label change
             jprof = jtarr ! jprof -> group end
-            jt_end = jbeg_arrx(raw_profile_map%arr_index(jtarr+1)) - 1 ! jt_end -> last time
+            jt_end = jbeg_arrx(raw_profiles%arr_index(jtarr+1)) - 1 ! jt_end -> last time
         endif
     endif
     if (jprof == 0) CYCLE var_loop
 
-    KN = raw_profile_map%arr_index(jprof)
-    err_msg = 'Quantity  ' // raw_profile_map%label(jprof) // ' Input times '
+    KN = raw_profiles%arr_index(jprof)
+    err_msg = 'Quantity  ' // raw_profiles%label(jprof) // ' Input times '
     jt_start = jbeg_arrx(KN)
     jto = jt_start
 ! Check whether the input time-array is monotonic
     do j3=jt_start+1, jt_end
-        if (raw_profile_map%time(j3)  < raw_profile_map%time(j3-1)) call astra_stop(err_msg // 'not ascending')
-        if (raw_profile_map%time(j3) == raw_profile_map%time(j3-1)) call astra_stop(err_msg // 'repeated')
-        if (raw_profile_map%time(j3) <= time) jto = j3
+        if (raw_profiles%time(j3)  < raw_profiles%time(j3-1)) call astra_stop(err_msg // 'not ascending')
+        if (raw_profiles%time(j3) == raw_profiles%time(j3-1)) call astra_stop(err_msg // 'repeated')
+        if (raw_profiles%time(j3) <= time) jto = j3
     enddo
 
     IFDFAX(KN) = jto
     jtn = min(jto+1, jt_end)
-    if (TIME <= raw_profile_map%time(jt_start)) jtn = jt_start
+    if (TIME <= raw_profiles%time(jt_start)) jtn = jt_start
     jt  = jtn
-    if (2.*TIME > raw_profile_map%time(jtn) + raw_profile_map%time(jto)) jt  = jto
+    if (2.*TIME > raw_profiles%time(jtn) + raw_profiles%time(jto)) jt  = jto
     jt0 = 0
     if (ICALL <= 1 .and. jto /= jtn) then
 ! only one run needed
         jt = jto
-        if (2.*TIME > raw_profile_map%time(jtn) + raw_profile_map%time(jto)) jt  = jtn
+        if (2.*TIME > raw_profiles%time(jtn) + raw_profiles%time(jto)) jt  = jtn
     endif
 
 ! Time loop
@@ -99,18 +99,18 @@ var_loop: do jtarr=1, NTARR
 !      DATAX(n_grid, KN) data on this grid
 ! (3) profiles_x(NRD, KN) smoothed input arrays interpolated in time
 
-        n_grid   = raw_profile_map%nrho(jt)
-        gridtype = raw_profile_map%grid_type(jt)
+        n_grid   = raw_profiles%nrho(jt)
+        gridtype = raw_profiles%grid_type(jt)
         write(err_msg_grid, '(A, i, A)')  'Option GRIDTYPE=', gridtype, ' not implemented, exiting'
-        jx = raw_profile_map%jbeg_grid(jt)
-        jy = raw_profile_map%jbeg_data(jt)
+        jx = raw_profiles%jbeg_grid(jt)
+        jy = raw_profiles%jbeg_data(jt)
 
         N11 = n_grid
         dxl = 1. - 0.5/n_grid
         dxr = 1. + 0.5/n_grid
 
         do j3=1, n_grid
-            dat_exp(j3) = DATARR(jy + j3 - 1)
+            dat_exp(j3) = raw_profiles%data(jy + j3 - 1)
             DATAX(j3, KN) = dat_exp(j3)
         enddo
         if (gridtype < 10) then
@@ -119,10 +119,10 @@ var_loop: do jtarr=1, NTARR
             enddo
         else if (gridtype < 20) then
             if (gridtype == 18 .or. gridtype == 19) then
-                RORZ = DATARR(jx)
+                RORZ = raw_profiles%data(jx)
                 jx = jx + 1
             endif
-            x_grid(: n_grid) = DATARR(jx: jx + n_grid - 1)
+            x_grid(: n_grid) = raw_profiles%data(jx: jx + n_grid - 1)
             XAXES(: n_grid, KN) = x_grid(: n_grid)
         else if (gridtype > 20) then
             CYCLE var_loop
@@ -290,18 +290,18 @@ var_loop: do jtarr=1, NTARR
 ! Input data are given on {r, z} plane
             NP1 = NAB
             do j3=1, n_grid
-                Y  = DATARR(jx + j3 - 1)
-                Y1 = DATARR(jx + n_grid + j3 - 1)
+                Y  = raw_profiles%data(jx + j3 - 1)
+                Y1 = raw_profiles%data(jx + n_grid + j3 - 1)
                 XAXES(j3, KN) = RZ2A(Y, Y1, NP1)
-                DATAX(j3, KN) = DATARR(jy + j3 - 1)
+                DATAX(j3, KN) = raw_profiles%data(jy + j3 - 1)
                 x_grid(j3) = XAXES(j3, KN)
-                dat_exp(j3) = DATARR(jy + j3 - 1)
+                dat_exp(j3) = raw_profiles%data(jy + j3 - 1)
             enddo
 
         END SELECT
 
         NPTM(KN) = min(n_grid, N11)
-        TOUTX(KN) = raw_profile_map%time(jt)
+        TOUTX(KN) = raw_profiles%time(jt)
         if (ICALL == 0) CYCLE var_loop
 
 ! This is added to avoid too long extrapolation to the magnetic axis
@@ -311,7 +311,7 @@ var_loop: do jtarr=1, NTARR
 
 ! All input data are mapped to the grid XA(1:NP1) in the variable "a"
 
-        call SMOOTH(raw_profile_map%filter(jt), x_grid(1:N11), dat_exp(1:N11), N11, XA(1:NP1), DA(1:NP1), NP1)
+        call SMOOTH(raw_profiles%filter(jt), x_grid(1:N11), dat_exp(1:N11), N11, XA(1:NP1), DA(1:NP1), NP1)
 
 !     data interpolation
 ! jto - pointer to the previous time
@@ -338,9 +338,9 @@ var_loop: do jtarr=1, NTARR
 
     enddo time_loop
 
-    ydt  = (raw_profile_map%time(jtn) - raw_profile_map%time(jto))
-    ydta = (raw_profile_map%time(jtn) - TIME)/ydt
-    ydtb = (TIME - raw_profile_map%time(jto))/ydt
+    ydt  = (raw_profiles%time(jtn) - raw_profiles%time(jto))
+    ydta = (raw_profiles%time(jtn) - TIME)/ydt
+    ydtb = (TIME - raw_profiles%time(jto))/ydt
     if (jto == jt) then
         do j3=1, NRD
             profiles_x(j3, KN) = profiles_x(j3, KN)*ydtb + DA(j3)*ydta

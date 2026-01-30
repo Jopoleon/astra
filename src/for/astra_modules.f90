@@ -16,21 +16,21 @@ use parameter_inc, only: NTVAR, NTARR, NRDX, n_bnd_max, nt_bnd_max
 
 implicit none
 
-type rawScalar
+type rawScalars
     integer, dimension(NTVAR) :: var_index=0
-    double precision, dimension(NTVAR) :: time=0., value=0., error=0.
+    double precision, dimension(NTVAR) :: time=0., data=0., error=0.
     character(len=6), dimension(NTVAR) :: label
-endtype rawScalar
-type rawProfileMap
+endtype rawScalars
+type rawProfiles
     integer, dimension(NTARR) :: arr_index=0, jbeg_grid=0, jbeg_data=0, grid_type=0, nrho=0
     double precision, dimension(NTARR) :: time=0., filter=0.001
     character(len=6), dimension(NTARR) :: label
-endtype rawProfileMap
+    real*4, dimension(NRDX*NTARR) :: data
+endtype rawProfiles
 
-type(rawScalar) :: raw_scalar
-type(rawProfileMap) :: raw_profile_map
+type(rawScalars)  :: raw_scalars
+type(rawProfiles) :: raw_profiles
 
-real*4 :: DATARR(NRDX*NTARR)
 double precision, dimension(nt_bnd_max) :: BNDTIM
 double precision, dimension(nt_bnd_max*n_bnd_max) :: BNDR, BNDZ
 

@@ -80,7 +80,7 @@ use outcmn_inc, only: astra_gui, plot_area, &
     NXOUT, NAMEX, LTOUT, &
     GRAL, GRAP, pixel_ymid, meter2pixel, &
     Black, WarningColor, EraseColor, Red, Blue, Green, White
-use expdat, only: raw_profile_map, DATARR
+use expdat, only: raw_profiles
 use dbl2char, only: fmt_xf
 use char_manip, only: len_trim_tab, str_in_list
 use debugger, only: markloc, debug, astra_stop
@@ -485,12 +485,12 @@ CASE(8)
     
         jarr = IFDFAX(jn)
         if (jarr <= 0)  CYCLE loop8
-        jtyp = raw_profile_map%grid_type(jarr)
+        jtyp = raw_profiles%grid_type(jarr)
         if (jtyp < 18)  CYCLE loop8
-        jpnt = raw_profile_map%nrho(jarr)
+        jpnt = raw_profiles%nrho(jarr)
         if (jpnt <= 0)  CYCLE loop8
         jcol = jcol+1
-        js = raw_profile_map%jbeg_grid(jarr)
+        js = raw_profiles%jbeg_grid(jarr)
 
         if (JIFNEW == 0) then
             call setColor(EraseColor)
@@ -501,14 +501,14 @@ CASE(8)
         call setColor(jcol+2)
         do j=1, jpnt
             if (jtyp == 18)  then
-                YR = DATARR(js)
-                YZ = DATARR(js+j)
+                YR = raw_profiles%data(js)
+                YZ = raw_profiles%data(js+j)
             elseif (jtyp == 19)  then
-                YR = DATARR(js+j)
-                YZ = DATARR(js)
+                YR = raw_profiles%data(js+j)
+                YZ = raw_profiles%data(js)
             elseif (jtyp == 20) then
-                YR = DATARR(js-1+j)
-                YZ = DATARR(jpnt+js-1+j)
+                YR = raw_profiles%data(js-1+j)
+                YZ = raw_profiles%data(jpnt+js-1+j)
             else
                 write(*, *) 'Unknown input-grid type'
             endif

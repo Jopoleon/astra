@@ -8,9 +8,9 @@ subroutine read_input
 !----------------------------------------------------------------------|
 ! The subroutine is called once at the start-up, it reads the "exp" file
 ! and stores the time evolution of all input data in the arrays
-! DATARR(NRDX*NTARR) - data array
-!       Let   1 <= j <= NTARR is an ordinal number of array in DATARR
-! jbeg_arrx(jx)  - pointer to a position in the array raw_profile_map%time
+! raw_profiles%data(NRDX*NTARR) - data array
+!       Let   1 <= j <= NTARR is an ordinal number of array in raw_profiles%data
+! jbeg_arrx(jx)  - pointer to a position in the array raw_profiles%time
 !----------------------------------------------------------------------|
 
 use parameter_inc, only: NTVAR, n_bnd_max, nt_bnd_max, NRD, NRDX, NTARR
@@ -28,7 +28,7 @@ use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
 use io_mod, only: exp_file, equ_file, machine, NBfile, CCOILX, VCOILX, &
     IFDFVX, IFDFAX, jbeg_arrx, NGR, n_bnd, n_coils, nt_bnd, nt_coils
 
-use expdat, only: raw_scalar, raw_profile_map, DATARR, BNDR, BNDZ, BNDTIM
+use expdat, only: raw_scalars, raw_profiles, BNDR, BNDZ, BNDTIM
 use char_manip, only: to_upper, str_in_list, clean_string
 use debugger, only: markloc, debug, astra_stop
 use parse_utils, only: path_split, split2array2, &
@@ -188,17 +188,17 @@ parse_exp_1d: do
             IFDFVX(jvar) = 1
         endif
 ! Read "time" array & function array
-        read(201, *, iostat=ios) (raw_scalar%time(IVAR+jj), jj=1, ntim)
+        read(201, *, iostat=ios) (raw_scalars%time(IVAR+jj), jj=1, ntim)
         if (ios /= 0) call astra_stop(err_format)
-        read(201, *, iostat=ios) (raw_scalar%value(IVAR+jj), jj=1, ntim)
+        read(201, *, iostat=ios) (raw_scalars%data(IVAR+jj), jj=1, ntim)
         if (ios /= 0) call astra_stop(err_format)
-        varValues(jvar) = factor*raw_scalar%value(IVAR+1)
+        varValues(jvar) = factor*raw_scalars%data(IVAR+1)
         do jj=1, ntim
             IVAR = IVAR + 1
-            raw_scalar%var_index(IVAR) = jvar
-            raw_scalar%value(IVAR) = factor*raw_scalar%value(IVAR)
-            raw_scalar%error(IVAR) = 0.
-            raw_scalar%label(IVAR) = VNAM
+            raw_scalars%var_index(IVAR) = jvar
+            raw_scalars%data(IVAR) = factor*raw_scalars%data(IVAR)
+            raw_scalars%error(IVAR) = 0.
+            raw_scalars%label(IVAR) = VNAM
         enddo
         VNAMO = VNAM
         CYCLE parse_exp_1d
@@ -270,11 +270,11 @@ parse_exp_1d: do
             call astra_stop(err_msg)
         endif
 
-        raw_scalar%var_index(IVAR) = jvar
-        raw_scalar%time(IVAR) = TIMEVR
-        raw_scalar%value(IVAR) = factor*VRDATA
-        raw_scalar%error(IVAR) = VRERR
-        raw_scalar%label(IVAR) = VNAM
+        raw_scalars%var_index(IVAR) = jvar
+        raw_scalars%time(IVAR) = TIMEVR
+        raw_scalars%data(IVAR) = factor*VRDATA
+        raw_scalars%error(IVAR) = VRERR
+        raw_scalars%label(IVAR) = VNAM
 
     else  ! ":" found in the input string "STRI", pointer to U-file
 
@@ -296,11 +296,11 @@ parse_exp_1d: do
         endif
         do jj=1, nt_u
             IVAR = IVAR + 1
-            raw_scalar%var_index(IVAR) = jvar
-            raw_scalar%time (IVAR) = t_u(jj)
-            raw_scalar%value(IVAR) = factor*var_u(jj)
-            raw_scalar%error(IVAr) = 0.
-            raw_scalar%label(IVAR) = VNAM
+            raw_scalars%var_index(IVAR) = jvar
+            raw_scalars%time(IVAR) = t_u(jj)
+            raw_scalars%data(IVAR) = factor*var_u(jj)
+            raw_scalars%error(IVAR) = 0.
+            raw_scalars%label(IVAR) = VNAM
         enddo
         deallocate(t_u, x_u, var_u)
     endif
@@ -576,19 +576,19 @@ parse_exp_2d: do
         endif
 
         if (jarr + nx_u  > NRDX*NTARR) call astra_stop('>>> read_input: Buffer size exceeded')
-        call CHECKU(INTYPE, ABC, AB, XBDRY, DATARR(jarr+1), nx_u, jbdry, rholbl, file_in)
+        call CHECKU(INTYPE, ABC, AB, XBDRY, raw_profiles%data(jarr+1), nx_u, jbdry, rholbl, file_in)
 
         do j=1, jbdry
-            DATARR(jarr + j) = x_u(j)
+            raw_profiles%data(jarr + j) = x_u(j)
         enddo
         do j=1, nt_u
-            raw_profile_map%time(NGR+j) = t_u(j)
+            raw_profiles%time(NGR+j) = t_u(j)
         enddo
 
         if (INTYPE == 18 .or. INTYPE == 19) then
-            DATARR(jarr + 2: jarr + jbdry) = DATARR(jarr + 1)
-            if (INTYPE == 18) DATARR(jarr + 1) = RTOR
-            if (INTYPE == 19) DATARR(jarr + 1) = 0.
+            raw_profiles%data(jarr + 2: jarr + jbdry) = raw_profiles%data(jarr + 1)
+            if (INTYPE == 18) raw_profiles%data(jarr + 1) = RTOR
+            if (INTYPE == 19) raw_profiles%data(jarr + 1) = 0.
         endif
 
         jarr = jarr + jbdry
@@ -601,39 +601,39 @@ parse_exp_2d: do
         do jj=1, nt_u
             do j=1, jbdry
                 jrt = jrt + 1
-                DATARR(jrt) = var_u(jj + (j - 1)*nt_u)
+                raw_profiles%data(jrt) = var_u(jj + (j - 1)*nt_u)
             enddo
         enddo
 
         deallocate(t_u, x_u, var_u)
 
         if (INTYPE > 13 .and. INTYPE /= 19) write(*, *) 'Unknown U-file type'
-        YXB = DATARR(jarr)
-        YXB1 = DATARR(jarr-1)
+        YXB = raw_profiles%data(jarr)
+        YXB1 = raw_profiles%data(jarr-1)
         do j=1, nt_u
             NGR = NGR + 1
             if (j == 1) then
-                raw_profile_map%jbeg_grid(NGR) = jarr - jbdry + 1
-                raw_profile_map%jbeg_data(NGR) = jarr + 1
+                raw_profiles%jbeg_grid(NGR) = jarr - jbdry + 1
+                raw_profiles%jbeg_data(NGR) = jarr + 1
             else
-                raw_profile_map%jbeg_grid(NGR) = raw_profile_map%jbeg_grid(NGR-1)
-                raw_profile_map%jbeg_data(NGR) = jarr + 1
+                raw_profiles%jbeg_grid(NGR) = raw_profiles%jbeg_grid(NGR-1)
+                raw_profiles%jbeg_data(NGR) = jarr + 1
             endif
             do j0=1, jbdry
-                DATARR(jarr + j0) = DATARR(jarr + j0)*factor
+                raw_profiles%data(jarr + j0) = raw_profiles%data(jarr + j0)*factor
             enddo
             jarr = jarr + jbdry
             if (jbdry /= nx_u) then
-                YB = DATARR(jarr)
-                YB1 = DATARR(jarr-1)
+                YB = raw_profiles%data(jarr)
+                YB1 = raw_profiles%data(jarr-1)
                 YB = (YB*(XBDRY - YXB1) - YB1*(XBDRY - YXB))/(YXB - YXB1)
-                DATARR(jarr) = YB
+                raw_profiles%data(jarr) = YB
             endif
-            raw_profile_map%arr_index(NGR) = jexar
-            raw_profile_map%label    (NGR) = VNAMX
-            raw_profile_map%nrho     (NGR) = jbdry
-            raw_profile_map%grid_type(NGR) = INTYPE
-            raw_profile_map%filter   (NGR) = ALFA
+            raw_profiles%arr_index(NGR) = jexar
+            raw_profiles%label    (NGR) = VNAMX
+            raw_profiles%nrho     (NGR) = jbdry
+            raw_profiles%grid_type(NGR) = INTYPE
+            raw_profiles%filter   (NGR) = ALFA
         enddo
 
     else ! read exp-block data
@@ -664,49 +664,49 @@ parse_exp_2d: do
             call astra_stop(err_msg)
         endif
 
-        if (ntim > 0) read(201, *, ERR=906) (raw_profile_map%time(NGR+j), j=1, ntim)
+        if (ntim > 0) read(201, *, ERR=906) (raw_profiles%time(NGR+j), j=1, ntim)
 
         do j=1, ntim1
             NGR = NGR + 1
-            raw_profile_map%arr_index(NGR) = jexar
-            raw_profile_map%label    (NGR) = VNAMX
-            raw_profile_map%nrho     (NGR) = jbdry
-            raw_profile_map%grid_type(NGR) = INTYPE
-            raw_profile_map%filter   (NGR) = ALFA
+            raw_profiles%arr_index(NGR) = jexar
+            raw_profiles%label    (NGR) = VNAMX
+            raw_profiles%nrho     (NGR) = jbdry
+            raw_profiles%grid_type(NGR) = INTYPE
+            raw_profiles%filter   (NGR) = ALFA
             if (j == 1) then
                 jbeg_arrx(jexar) = NGR
-                raw_profile_map%jbeg_grid(NGR) = jarr + 1
+                raw_profiles%jbeg_grid(NGR) = jarr + 1
                 if (INTYPE == 18 .or. INTYPE == 19) then
                     jarr = jarr + 1
-                    read(201, *, ERR=906) DATARR(jarr)
+                    read(201, *, ERR=906) raw_profiles%data(jarr)
                 endif
                 do j1=1, jtype
-                    read(201, *, iostat=ios) (DATARR(jarr + jj), jj=1, jbdry)
+                    read(201, *, iostat=ios) (raw_profiles%data(jarr + jj), jj=1, jbdry)
                     if (ios /= 0) then
                         write(err_msg, '(3A, /, A, 1p, 6e12.4)') err_msg_exp, &
                             '".  Format error in group ', TRIM(STRI), 'Last data read: ', &
-                            (DATARR(jarr+jj), jj=1, jbdry)
+                            (raw_profiles%data(jarr+jj), jj=1, jbdry)
                             call astra_stop(err_msg)
                     endif
                     jarr = jarr + jbdry
-                    if (jtype == 2 .and. INTYPE <= 17 .and. j1 == 1) XBDRY = DATARR(jarr)
+                    if (jtype == 2 .and. INTYPE <= 17 .and. j1 == 1) XBDRY = raw_profiles%data(jarr)
                 enddo
-                raw_profile_map%jbeg_data(NGR) = jarr - jbdry + 1
+                raw_profiles%jbeg_data(NGR) = jarr - jbdry + 1
                 do jj=1, jbdry
-                    DATARR(jarr - jbdry + jj) = factor*DATARR(jarr - jbdry + jj)
+                    raw_profiles%data(jarr - jbdry + jj) = factor*raw_profiles%data(jarr - jbdry + jj)
                 enddo
             else
-                raw_profile_map%jbeg_grid(NGR) = raw_profile_map%jbeg_grid(NGR-1)
-                raw_profile_map%jbeg_data(NGR) = jarr + 1
-                read(201, *, iostat=ios) (DATARR(jarr + jj), jj=1, jbdry)
+                raw_profiles%jbeg_grid(NGR) = raw_profiles%jbeg_grid(NGR-1)
+                raw_profiles%jbeg_data(NGR) = jarr + 1
+                read(201, *, iostat=ios) (raw_profiles%data(jarr + jj), jj=1, jbdry)
                 if (ios /= 0) then
                     write(err_msg, '(3A, /, A, 1p, 6e12.4)') err_msg_exp, &
                             '".  Format error in group ', TRIM(STRI), 'Last data read: ', &
-                        (DATARR(jarr+jj), jj=1, jbdry)
+                        (raw_profiles%data(jarr+jj), jj=1, jbdry)
                     call astra_stop(err_msg)
                 endif
                 do jj=1, jbdry
-                    DATARR(jarr + jj) = factor*DATARR(jarr + jj)
+                    raw_profiles%data(jarr + jj) = factor*raw_profiles%data(jarr + jj)
                 enddo
                 jarr = jarr + jbdry
             endif

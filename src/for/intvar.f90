@@ -20,7 +20,7 @@ subroutine INTVAR
 use parameter_inc, only: NTVAR
 use io_mod, only: IFDFVX
 use const_inc, only: varxValues, varValues, TIME
-use expdat, only: raw_scalar
+use expdat, only: raw_scalars
 use debugger, only: markloc
 
 implicit none
@@ -34,20 +34,20 @@ N1 = 0
 N2 = 0
 
 do jtvar=1, NTVAR
-    if (raw_scalar%var_index(jtvar) == 0) EXIT
+    if (raw_scalars%var_index(jtvar) == 0) EXIT
     N2 = N1
-    N1 = raw_scalar%var_index(jtvar)
+    N1 = raw_scalars%var_index(jtvar)
     if (IFDFVX(N1) >= 0) then
-        if (IFDFVX(N1) == 0 .or. N1 /= N2) varxValues(N1) = raw_scalar%value(jtvar)
+        if (IFDFVX(N1) == 0 .or. N1 /= N2) varxValues(N1) = raw_scalars%data(jtvar)
         if (N1 == N2) then
-            if (TIME >= raw_scalar%time(jtvar-1)) then
-                if (TIME < raw_scalar%time(jtvar)) then
-                    YDT = raw_scalar%time(jtvar) - raw_scalar%time(jtvar-1)
-                    YDTR = (raw_scalar%time(jtvar) - TIME)/YDT
-                    YDTL = (TIME - raw_scalar%time(jtvar-1))/YDT
-                    varxValues(N1) = raw_scalar%value(jtvar)*YDTL + raw_scalar%value(jtvar-1)*YDTR
+            if (TIME >= raw_scalars%time(jtvar-1)) then
+                if (TIME < raw_scalars%time(jtvar)) then
+                    YDT = raw_scalars%time(jtvar) - raw_scalars%time(jtvar-1)
+                    YDTR = (raw_scalars%time(jtvar) - TIME)/YDT
+                    YDTL = (TIME - raw_scalars%time(jtvar-1))/YDT
+                    varxValues(N1) = raw_scalars%data(jtvar)*YDTL + raw_scalars%data(jtvar-1)*YDTR
                 else
-                    varxValues(N1) = raw_scalar%value(jtvar)
+                    varxValues(N1) = raw_scalars%data(jtvar)
                 endif
             endif
         endif
