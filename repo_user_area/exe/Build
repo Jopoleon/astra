@@ -25,6 +25,11 @@ export CHECKALLCOMP=" "
 
 ulimit -s 100000
 
+THREADS_PER_CORE=$(lscpu | awk -F: '/Thread\(s\) per core/ {gsub(/ /,"",$2); print $2}')
+NPROC=`nproc`
+export MAX_NWORKERS=$(( NPROC / THREADS_PER_CORE ))
+echo 'Max nworkers' $MAX_NWORKERS
+
 echo Compile main ASTRA executable $equ_file $AWD 
 make -f exe/Makefile MODEL=$equ_file WORKFLOW=$AWD/src/for/stepup.f90
 status=$?

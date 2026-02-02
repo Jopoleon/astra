@@ -2,7 +2,7 @@ module a2tglf
 
 implicit none
 
-integer, parameter :: n_arr_out=15, nrho_m=64, nworkers=64, nspec_max=5
+integer, parameter :: nspec_max=5
 
 type tglf_output
     double precision, allocatable, dimension(:) :: chi_i, chi_e, e_pflux, equipart, &
@@ -13,6 +13,7 @@ type(tglf_output) :: tglf_out
 
 contains
 
+!---------------------------------------------------------------------
     subroutine tglf_alloc
 
     use const_inc, only: NA1
@@ -27,8 +28,10 @@ contains
     return
     end subroutine tglf_alloc
   
+!---------------------------------------------------------------------
     subroutine tglf_ipc(rho_norm_max)
 
+    use omp_lib
     use parameter_inc, only: NRD
     use io_mod, only: equ_file, exp_file
     use const_inc, only: NA1, GP2, BTOR, RTOR, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
@@ -39,7 +42,8 @@ contains
     use numerical_tools, only: qinterp
 
     logical, parameter :: debug_elite=.false.
-    integer, parameter :: n_dims=7, n_scalars=8, n_inputs=47, nthe_elite=400, mpol=6
+    integer, parameter :: n_arr_out=15, nrho_m=64, nworkers=64, &
+        n_dims=7, n_scalars=8, n_inputs=47, nthe_elite=400, mpol=6
     double precision, parameter :: c_vpol=1.d0
 
     double precision, intent(in), optional :: rho_norm_max
@@ -48,7 +52,7 @@ contains
     integer :: i, jr, jrho, jr_r, jr_l, jgamma_max, jion, nchunk
     integer :: ns_in, geom_flag=1              ! Number of species, including electrons
     integer :: jthe, jthe_rev, nrho_equ, nthe_equ ! for ELITE geometry
-    integer :: t_wall1, t_wall2, rate
+    integer :: t_wall1, t_wall2, rate, max_nworkers, stat
     integer, dimension(n_dims) :: dims_in
 
     double precision, dimension(n_arr_out, nrho_m) :: prof_out
@@ -66,7 +70,8 @@ contains
     double precision, dimension(nspec_max-1, nrho_m) :: zi_m 
     double precision, dimension(nspec_max-1, NRD) :: i_pflux_as
     double precision, dimension(n_inputs, nrho_m) :: prof_in
-    character(len=64), dimension(nworkers) :: SBP_NAMES
+    character(len=32) :: str_nworkers
+    character(len=64), dimension(:), allocatable :: SBP_NAMES
 ! ELITE
     double precision, allocatable, dimension(:) :: theta_equ, pfn_equ
     double precision, allocatable, dimension(:, :) :: RR_tg, ZZ_tg, Bp_tg
@@ -74,6 +79,34 @@ contains
     character(len=120) :: f_elite
 
     call SYSTEM_CLOCK(t_wall1, rate)
+
+    if (first_call) then
+        call get_environment_variable("MAX_NWORKERS", str_nworkers, status=stat)
+        if (stat /= 0) then
+! Not set -> use a fallback (e.g., half of logical CPUs)
+            max_nworkers = omp_get_num_procs() / 2
+            print *, "MAX_NWORKERS not set, using fallback:", max_nworkers
+        else ! Convert string to integer safely
+            read(str_nworkers, *) max_nworkers
+            print *, "MAX_NWORKERS from environment:", max_nworkers
+        endif
+        if (nworkers > max_nworkers) then
+            write(*, '(A, i3, A, i3)') '>>> ERROR nworkers=', nworkers, ' exceeds #physical CPUs=', max_nworkers
+            print*, 'Quitting ASTRA'
+            stop
+        endif
+        if (mod(nrho_m, nworkers) /= 0) then
+            write(*, '(A, i3, A, i3)') '>>> ERROR nrho_m=', nrho_m, ' is no multiple of nworkers=', nworkers
+            print*, 'Quitting ASTRA'
+            stop
+        endif
+        if (nrho_m > NA1) then
+            write(*, '(A, i3, A, i3)') '>>> Warning nrho_m=', nrho_m, ' larger than NA1=', NA1
+            print*, 'Possible profile overfit on TGLF grid'
+        endif
+        allocate(SBP_NAMES(nworkers))
+    endif
+
 
 ! Interpolate from ASTRA grid to TGLF grid
     rho_min = RHO(1)
