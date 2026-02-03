@@ -659,7 +659,7 @@ end subroutine set_plot_area
 subroutine set_plot(plot_mode)
 ! Subroutine draw frame for different modes
 
-use const_inc, only: TSCALE, TINIT, ABC
+use const_inc, only: TSCALE, TINIT, AWALL
 use outcmn_inc, only: astra_gui, plot_area, Black, MOD10, KPRI, &
     IDX, IDT, scale_bnd, pixel_ymid, meter2pixel
 use dbl2char, only: fmt_xf
@@ -798,7 +798,7 @@ endif
 
 if (MOD10 == 8) then
 ! horizontal axis labels
-    scale_bnd = nint(20.*ABC)/10.
+    scale_bnd = 1.3*AWALL
     scale_fac = dble(plot_area%height)/350.
     IDX = IDX*scale_fac
     JJ = plot_area%ymin + astra_gui%dylet + 2
