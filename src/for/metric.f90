@@ -183,7 +183,7 @@ use status_inc, only: RHO, XRHO, VR, VRS, AMETR, SHIF, SHIV, &
     BDB0, BDB02, B0DB2, IPOL, MU, &
     FOFB, BMAXT, BMINT, DRODA, GRADRO, VOLUM
 use const_inc, only: VOLUME, GP, GP2, RTOR, BTOR, internValues, &
-    ABC, HRO, ROC, FTO, ROWALL, NA, NA1, NB1, NB1R
+    ABC, HRO, ROC, FTO, ROWALL, NA, NA1, NB1
 use numerical_tools, only: integr
 use debugger, only: markloc, debug
 
@@ -229,7 +229,6 @@ do j=1, NB1
 enddo
 if (NA < NB1) then
     NB1 = NA
-    NB1R = NB1
 endif
 NA = NA1 - 1
 call INTEGR(RHO, 1, VR, VOLUM, NB1)

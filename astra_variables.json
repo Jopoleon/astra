@@ -449,7 +449,6 @@
     "NITREQ": {"desc": "Maximum number of iterations in the int. Tr+Eq loop"},
     "TINIT" : {"units": "s", "desc": "Time axis initial time"},
     "TSCALE": {"units": "s", "desc": "Time axis scale"},
-    "NB1R"  : {"desc": "No. of points of the main transport grid up to the wall boundary, NA1<NB1"},
     "NUFR"  : {"desc": "No. of radial points to be written in a U"},
     "XOUT"  : {"desc": "Output control: X"},
     "XINPUT": {"desc": "Default input mode for a radial variable (C Xdeflt)"},

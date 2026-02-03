@@ -1,20 +1,18 @@
 subroutine SETARX(ICALL)
 !--------------------------------------------------------------------
-! All arrays are mapped to the WHOLE radial grid [1, NB1]
-! This can cause an inconsistency when NA1 varies in time.
 ! The time evolution of the input data is taken from
-!  - data array  |  for arrays
+!  - raw_profiles  |  for arrays
 !
 ! Then it is stored for the current time in the arrays
 ! profiles_x(NRD, NARRX) - (description in astra_variables.json)
+!   
 !--------------------------------------------------------------------
 
 use parameter_inc, only: NRD, NRDX, NTARR
 use const_inc, only: TIME, BTOR, GP, AB, ABC, ROC, VOLUME, NA1, NAB, PSIAX
 use status_inc, only: AMETR, RHO, FP, VOLUM, profiles_x, rho_pol
 use numerical_tools, only: qinterp, sortab, smooth
-use io_mod, only: jbeg_arrx, IFDFAX, XAXES, &
-    DATAX, NPTM, TOUTX
+use io_mod, only: jbeg_arrx, IFDFAX, XAXES, DATAX, NPTM, TOUTX
 use debugger, only: markloc, astra_stop
 use expdat, only: raw_profiles
 
