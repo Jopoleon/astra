@@ -299,7 +299,7 @@ call new_grid
 
 ! Define AMETR, SHIF, ELON, TRIA, SHIV
 
-call SETGEO(0)
+call SETGEO
 
 YDV = 0.
 
@@ -1805,27 +1805,21 @@ return
 end subroutine new_grid
 
 !---------------------------------------------------------------------
-subroutine SETGEO(jst)
-
+subroutine SETGEO
 !---------------------------------------------------------------------
-! Presently the subroutine is called with jst=0 only
-!---------------------------------------------------------------------
-! input:  jst, NB1, HRO, ROC, AB, RHO(j)
-! Output: SHIF(jst:NB1), ELON(jst:NB1), TRIA(jst:NB1), 
-!  AMETR(jst:NB1), DRODA(jst:NB1)
+! input:  NB1, HRO, ROC, AB, RHO(j)
+! Output: SHIF(1:NB1), ELON(1:NB1), TRIA(1:NB1), 
+!  AMETR(1:NB1), DRODA(1:NB1)
 
 use const_inc, only: NB1, AB, ROC, RTOR, SHIFT, UPDWN, ELONG, TRIAN
 use status_inc, only: RHO, SHIF, SHIV, ELON, TRIA, AMETR, DRODA
 
 implicit none
 
-integer, intent(in) :: jst
-
 integer :: j
 double precision :: YDA, YA, YR1, YR2, ROC3A
 
-if (jst + 1 > NB1) return
-do j=jst + 1, NB1
+do j=1, NB1
     YR2 = min(1.d0, (RHO(J)/ROC)**2)
     SHIF(J) = SHIFT
     SHIV(J) = UPDWN
@@ -1835,14 +1829,10 @@ enddo
 YDA = 0.1*AB/NB1
 
 YR1 = 0.
-if (jst == 0) then
-    YA  = 0.
-    YR2 = 0.
-else
-    YA  = AMETR(jst+1)
-    YR2 = RHO  (jst+1)
-endif
-do j=jst+1, NB1
+YA  = 0.
+YR2 = 0.
+
+do j=1, NB1
     do while(YR2 <= RHO(j))
         YR1 = YR2
         YA = YA + YDA
