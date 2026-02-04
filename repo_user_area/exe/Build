@@ -17,23 +17,12 @@ cd $AWD
 # Get platform-dependent compiler paths
 platform=`$AWD/get_platform`
 source $AWD/platform/env.$platform
-
 source $AWD/exe/astra_rc
 
 export CHECKALLCOMP=" "
 #export CHECKALLCOMP="-check all -traceback"
 
 ulimit -s 100000
-
-THREADS_PER_CORE=$(lscpu | awk -F: '/Thread\(s\) per core/ {gsub(/ /,"",$2); print $2}')
-NPROC=`nproc`
-if (( NPROC < THREADS_PER_CORE ));
-then
-    export MAX_NWORKERS=1
-else
-    export MAX_NWORKERS=$(( NPROC / THREADS_PER_CORE ))
-fi
-echo 'Max nworkers' $MAX_NWORKERS
 
 echo Compile main ASTRA executable $equ_file $AWD 
 make -f exe/Makefile MODEL=$equ_file WORKFLOW=$AWD/src/for/stepup.f90
@@ -77,16 +66,8 @@ then
         cat << EOT > $bat
 #!/bin/sh
 #SBATCH -J astra_${USER}
-#SBATCH --partition=${SL_QUEUE}
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=128
-#SBATCH --mem-per-cpu 1GB
-#SBATCH --time=12:00:00
 #SBATCH --mail-type=none
-export OMP_NUM_THREADS=\${SLURM_CPUS_PER_TASK:-1}
-export OMP_PLACES=cores
-export OMP_PROC_BIND=close
+${SL_QUEUE}
 export ASTRA_EXT=${ASTRA_EXT}
 export PATH=${PATH}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
@@ -96,10 +77,18 @@ EOT
         echo sbatch $bat
         date
 	pwd
-#        sbatch -W $bat # -W: waiting for process to finish before running json2cdf 
         sbatch $WAIT_SLURM $bat
     fi
 else
+    THREADS_PER_CORE=$(lscpu | awk -F: '/Thread\(s\) per core/ {gsub(/ /,"",$2); print $2}')
+    NPROC=`nproc`
+    if (( NPROC < THREADS_PER_CORE ));
+    then
+        export MAX_NWORKERS=1
+    else
+        export MAX_NWORKERS=$(( NPROC / THREADS_PER_CORE ))
+    fi
+    echo 'Max nworkers' $MAX_NWORKERS
     echo Running $ATASK
     $ATASK
     echo ASTRA normal exit
