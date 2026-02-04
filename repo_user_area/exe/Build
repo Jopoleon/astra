@@ -27,7 +27,12 @@ ulimit -s 100000
 
 THREADS_PER_CORE=$(lscpu | awk -F: '/Thread\(s\) per core/ {gsub(/ /,"",$2); print $2}')
 NPROC=`nproc`
-export MAX_NWORKERS=$(( NPROC / THREADS_PER_CORE ))
+if (( NPROC < THREADS_PER_CORE ));
+then
+    export MAX_NWORKERS=1
+else
+    export MAX_NWORKERS=$(( NPROC / THREADS_PER_CORE ))
+fi
 echo 'Max nworkers' $MAX_NWORKERS
 
 echo Compile main ASTRA executable $equ_file $AWD 

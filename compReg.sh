@@ -19,7 +19,7 @@ done
 
 EQU=fbe
 EXP=AUG33040_2500
-$AWD/exe/as_exe -m $EQU -v $EXP -s 2.48 -e 3.
+$AWD/exe/as_exe -m $EQU -v $EXP -s 2.48 -e 2.7
 python3 $AWD/compareRegressions.py -m $EQU -v $EXP
 
 EQU=tglf_pid
