@@ -71,14 +71,14 @@ double precision, pointer :: &
     ITEREX, NITREQ, TINIT, TSCALE, NUFR, XOUT, XINPUT, &
     NB2EQL, NEQUIL, NBNDR, DTEQL, MEQUIL, TPAUSE, TEND, &
     INUME1, INUME2, INUME3, INUME4, &
-    IPROT, ITFBE, ITFBP, ICIRCQ, IPCTRL, ADCMPF, FLXDR, &
+    IPROT, ITFBE, ITFBP, ICIRCQ, IPCTRL, ADCMPF, &
     SGNIP, SGNBT,  IFBEG, IPEQL, &
     DTEQ(:, :)
 
 double precision :: IBKDW ! IBKDW=-1 for breakdown yes
 
 double precision, pointer :: &
-    HRO, HROX, VOLUME, ROB, ROC, ROWALL, FTO, &
+    HRO, HROX, VOLUME, ROC, ROWALL, FTO, &
     FTN, BTN, PSIFB, RBDOT, ALBPL, &
     TSTART, TAU, TIMEQL, QBEAM, IPLN, ROCO, RON, ROE, ROI, ROU, &
     RO0, RO1, RO2, RO3, RO4, RO5, RO6, RO7, RO8, RO9, &
@@ -158,7 +158,6 @@ contains
     ICIRCQ = 0.
     IPCTRL = 0.
     ADCMPF = 1.
-    FLXDR  = 0.
     SGNIP  = 1.
     SGNBT  = 1.
     IFBEG  = 0.

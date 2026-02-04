@@ -286,7 +286,7 @@ use debugger, only: markloc, debug
 implicit none
 
 integer :: j, j1
-double precision :: ROC3A, YA, YAS, YES, YDS, YDV, DFPDR, YR1
+double precision :: ROC3A, YA, YAS, YES, YDS, YDV, YR1
 
 call markloc('EQGUESS', debug_lev=3*debug)
 
@@ -322,7 +322,6 @@ do J=1, NB1
     DRODA(J) = (YAS - YDS)/YR1
 enddo
 VOLUM(NA1) = GP*GP2*ABC**2 * ELONG*(RTOR + SHIFT - 0.25*ABC*TRIAN)
-DFPDR = (FP(NA1) - FP(NA) - (FV(NA1) - FV(NA)))/HRO
 
 ! Input:  ROC, HRO, NB1, NA1, NA=NA1-1, AB, ABC, AMETR(NA1)
 call new_grid
@@ -1053,7 +1052,7 @@ integer, parameter :: itfbe_ctrl=0
 integer, intent(in) :: equil_solver
 
 integer :: i, j, jneql, jnteta, jnbnd, j_save_bound, j_rotation
-double precision :: yrocnew, iplnew, ychipfp, dfpdrb12, yiplout, yipl, yupdwn
+double precision :: yrocnew, iplnew, ychipfp, yipl, yupdwn
 double precision, dimension(NA1) :: yg11, yg22, yg33, yvr, yvrs, yslat, yg41, &
     ygradro, yipol, ydroda, ypres, ybmaxt, ybmint, yfp, &
     ybdb02, ybdb0, yb0db2, yvolum, yametr, yshif, yelon, &
@@ -1061,10 +1060,8 @@ double precision, dimension(NA1) :: yg11, yg22, yg33, yvr, yvrs, yslat, yg41, &
 double precision, dimension(n_coils) :: yccoil, yvcoil
 double precision, dimension(1000) :: rbnd, zbnd
 
-save j_save_bound, yiplout, iplnew
-
+save j_save_bound, iplnew
 data j_save_bound/0/
-data yiplout/0./
 
 call markloc('A2GSSOLVER')
 
@@ -1093,8 +1090,6 @@ if (ITFBP /= 0.) IPLFBE = iplnew      ! current for free boundary equilibrium
 if (IPART == 1) then
     iplnew = IPL            ! if in initialization mode, use plasma current
 endif
-
-dfpdrb12 = (FP(NA1) - FP(NA))/HRO
 
 if (plasma_up == 0 .or. plasma_trig == 1) then
     iplnew = IPL
@@ -1167,7 +1162,6 @@ call GS_SOLVER( &
     yfofb, AREAT(1: NA1), PERIM(1: NA1), yshiv, ysquare) 
 
 ROC  = YROCNEW  ! Define a new RHO_edge
-yiplout = yipl  ! new current in case
 
 do j=1, NA1
 
@@ -1763,7 +1757,7 @@ subroutine new_grid
 
 use parameter_inc, only: NRD
 use status_inc, only: RHO, XRHO, SRHO, SXHO, AMETR
-use const_inc, only: HRO, HROX, AB, ABC, ROC, ROB, ROWALL, &
+use const_inc, only: HRO, HROX, AB, ABC, ROC, ROWALL, &
     FTO, BTOR, GP, NA, NA1, NB1, NAB
 
 implicit none
@@ -1784,16 +1778,13 @@ ENDDO
 NB1 = min(NRD,j)
 
 AMETR(NA1) = ABC
-ROB = RHO(NA1)
 
 if ( 2.*abs(AB - ABC) < AMETR(NA1) - AMETR(NA) ) then
     AB = ABC
     return
 endif
 
-NAB = min(nrd,nint(NA1/ABC*AB))
-ROB = RHO(NAB)
-AMETR(NAB) = AB
+NAB = min(NRD, nint(NA1/ABC*AB))
 
 if (NA1 + 1 > NB1 .or. NA1 == NAB) return
 
@@ -1807,8 +1798,7 @@ if (NA1 < NB1) then
     if (NAB < NB1) NAB = NAB + 1
 endif
 ! the values at NAB maybe wrong, do not use them!
-NAB=min(NRD,NAB)
-ROB = RHO(NAB)
+NAB = min(NRD, NAB)
 AMETR(NAB) = AB
 
 return

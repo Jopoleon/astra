@@ -215,14 +215,7 @@ TAU = TAUMIN
 '''
 
     ne  = \
-'''if (NA1N == NB1) then
-j1 = 0
-do j=1, NARRX
-if(profxNames(j) == "NEX   " .and. IFDFAX(j) < 0) j1 = j
-enddo
-if (j1 /= 0) write(*, *) " >>> Warning: NEX is not defined"
-endif
-NE(1: NA1) = NEX(1: NA1)
+'''NE(1: NA1) = NEX(1: NA1)
 '''
 
     ni = \
@@ -644,14 +637,11 @@ use debugger, only: markloc, debug
 
 implicit none
 
-integer irado
-
 include 'src/tmp/declar.fml'
 include 'src/tmp/declar.fnc'
 
 call markloc('radout')
-do irado=1, NAB
-J = irado
+do J=1, NAB
 """
 
 

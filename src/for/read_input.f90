@@ -17,9 +17,9 @@ use parameter_inc, only: NTVAR, n_bnd_max, nt_bnd_max, NRD, NRDX, NTARR
 use const_inc, only: NITREQ, NA, NA1, NB1, NAB, NUF, &
     TIME, TSTART, TEND, TPAUSE, TAUMIN, TAUPRP, TINIT, TSCALE, TIMEQL, DTEQL, &
     varValues, constValues, internValues, exp_header, ARXUSE, &
-    AB, ABC, AWAll, ROC, ROCO, ROB, ROWALL,  HRO, HROX, RTOR, &
+    AB, ABC, AWAll, ROC, ROCO, ROWALL,  HRO, HROX, RTOR, &
     ELONG, ELONM, TRIAN, TRICH, SHIFT, VOLUME, &
-    GP, GP2, BTOR, BTN, FTO, FTN, IPL, IPLN, FLXDR, PSIAX, PSIBO, &
+    GP, GP2, BTOR, BTN, FTO, FTN, IPL, IPLN, PSIAX, PSIBO, &
     NUFR, NBNDR
 use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
     G11, G22, VR, VRO, VRS, VOLUM, &
@@ -768,16 +768,7 @@ else
     ROWALL = ROC3A(RTOR, 0.d0, AWALL, ELONG, TRIAN)
 endif
 
-!Efable
-! basic space steps, these do not change
-! Two versions: HROX = 1/NA1, XRHO(NA1)<1, HROX=1/(NA1-1/2) gives XRHO(NA1) = 1
-! Case with XRHO(NA1)=1-HROX/2, XSHO(NA1) = 1   (fluxes, MU, etc are on LCFS at at last grid point NA1 / NE, TE, and quantities are a bit inside at last grid point NA1)
-
-if (int(FLXDR) == 1) then
-    HROX  = 1.0/(NA1)
-else if (int(FLXDR) == 0) then
-    HROX  = 1.0/(NA1-0.5)
-endif
+HROX  = 1.0/(NA1 - 0.5)
 
 do j=1, NRD
     XRHO(j) = (j - 0.5)*HROX
@@ -821,7 +812,6 @@ if (NA1 < NB1 .and. AB > ABC) then
     enddo
     if (NAB < NB1) NAB = NAB + 1
 endif
-ROB = RHO(NAB)
 
 AMETR(NAB) = AB
 AMETR(NA1) = ABC
