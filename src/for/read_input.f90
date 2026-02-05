@@ -785,7 +785,7 @@ HRO  = HROX*ROC
 NB1 = NA1
 NA  = NA1 - 1
 
-call SETGEO(0)
+call SETGEO
 call NEW_GRID
 
 do J=1, NB1
