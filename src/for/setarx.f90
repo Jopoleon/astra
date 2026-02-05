@@ -31,8 +31,7 @@ character(len=132) :: err_msg, err_msg_grid
 !  NTARR    maximal number of time slices for all arrays (total)
 !--------------------------------------------------------------------
 ! Input
-! ICALL = 0 - call from REVIEW (no transfer to profiles_x(, ) is needed)
-!  > 0 - call from STEPON
+! ICALL
 !  = 1 - time interpolation off
 !  = 2 - time interpolation on
 ! raw_profiles%data(NRDX*NTARR) - data array
@@ -69,22 +68,33 @@ var_loop: do jtarr=1, NTARR
     do j3=jt_start+1, jt_end
         if (raw_profiles%time(j3)  < raw_profiles%time(j3-1)) call astra_stop(err_msg // 'not ascending')
         if (raw_profiles%time(j3) == raw_profiles%time(j3-1)) call astra_stop(err_msg // 'repeated')
-        if (raw_profiles%time(j3) <= time) jto = j3
+        if (raw_profiles%time(j3) <= TIME) jto = j3
     enddo
 
     IFDFAX(KN) = jto
-    jtn = min(jto+1, jt_end)
-    if (TIME <= raw_profiles%time(jt_start)) jtn = jt_start
-    jt  = jtn
-    if (2.*TIME > raw_profiles%time(jtn) + raw_profiles%time(jto)) jt  = jto
-    jt0 = 0
-    if (ICALL <= 1 .and. jto /= jtn) then
-! only one run needed
-        jt = jto
-        if (2.*TIME > raw_profiles%time(jtn) + raw_profiles%time(jto)) jt  = jtn
+
+    if (TIME <= raw_profiles%time(jt_start)) then
+        jtn = jt_start
+    else
+        jtn = min(jto+1, jt_end)
     endif
 
-! Time loop
+    if (2.*TIME > raw_profiles%time(jtn) + raw_profiles%time(jto)) then
+        if (ICALL == 1) then
+            jt = jtn
+        else
+            jt = jto
+        endif
+    else
+        if (ICALL == 1) then
+            jt = jto
+        else
+            jt = jtn
+        endif
+    endif
+
+    jt0 = 0
+
     time_loop: do
 
 !--------------------------------------------------------------------
@@ -300,7 +310,6 @@ var_loop: do jtarr=1, NTARR
 
         NPTM(KN) = min(n_grid, N11)
         TOUTX(KN) = raw_profiles%time(jt)
-        if (ICALL == 0) CYCLE var_loop
 
 ! This is added to avoid too long extrapolation to the magnetic axis
         if ( N11 > 1 ) then
@@ -339,7 +348,7 @@ var_loop: do jtarr=1, NTARR
     ydt  = (raw_profiles%time(jtn) - raw_profiles%time(jto))
     ydta = (raw_profiles%time(jtn) - TIME)/ydt
     ydtb = (TIME - raw_profiles%time(jto))/ydt
-    if (jto == jt) then
+    if (jt == jto) then
         do j3=1, NRD
             profiles_x(j3, KN) = profiles_x(j3, KN)*ydtb + DA(j3)*ydta
         enddo
