@@ -17,6 +17,13 @@ do
     python3 $AWD/compareRegressions.py -m $EQU -v $EXP
 done
 
+EXP=aug34954_t
+for EQU in fluxes
+do
+    $AWD/exe/as_exe -m $EQU -v $EXP -s 4. -e 5.
+    python3 $AWD/compareRegressions.py -m $EQU -v $EXP
+done
+
 EQU=fbe
 EXP=AUG33040_2500
 $AWD/exe/as_exe -m $EQU -v $EXP -s 2.48 -e 2.7
@@ -26,13 +33,6 @@ EQU=tglf_pid
 EXP=AUG36982_3400
 $AWD/exe/as_exe -m $EQU -v $EXP -s 4. -e 6.
 python3 $AWD/compareRegressions.py -m $EQU -v $EXP
-
-EXP=30000_3.4
-for EQU in imep_pw04 imep_pw08
-do
-    $AWD/exe/as_exe -m $EQU -v $EXP -s 4. -e 5.
-    python3 $AWD/compareRegressions.py -m $EQU -v $EXP
-done
 
 # Slow ones
 
