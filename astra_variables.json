@@ -1090,22 +1090,6 @@
     "SQUAX" : {"units": "m^2", "desc": "Xarray for SQUARN"}
 },
 
-"strahl": {
-    "Dz_in_strahl": {"units": "m^2/s", "desc": "Diffusion coefficient input for STRAHL"},
-    "Vz_in_strahl": {"units": "m/s", "desc": "Convective velocity input for STRAHL"},
-    "rrates_in_strahl": {"units": "1/s", "desc": "Edge source of impurities (particles/s) input for STRAHL"},
-    "zeff_strahl": {"desc": "Effective charge profile, STRAHL output"},
-    "prad_tot_strahl": {"units": "MW/m^3", "desc": "Total radiated power density profile, STRAHL output"},
-    "nmain_strahl": {"units": "1e19/m^3", "desc": "Main ion density, STRAHL output"},
-    "prad_main_strahl": {"units": "MW/m^3", "desc": "Bulk plasma radiated power density profile, STRAHL output"},
-    "prad_strahl": {"units": "MW/m^3", "desc": "Radiated power density profile by each impurity species, STRAHL output"},
-    "nimp_strahl": {"units": "1e19/m^3", "desc": "Impurity density profile of each species, STRAHL output"},
-    "zavg_strahl": {"desc": "Average charge profile of each species, STRAHL output"},
-    "nesrc_strahl": {"units": "1e19/m^3/s", "desc": "Electron source due to each species, STRAHL output"},
-    "Dneo_strahl": {"units": "m^2/s", "desc": "Average NEOART diffusion coefficient of each species, STRAHL output"},
-    "Vneo_strahl": {"units": "m/s", "desc": "Average NEOART convective velocity of each species, STRAHL output"}
-},
-
 "equil_signals": {
     "b0": {"units": "T", "desc": "Vacuum toroidal field"},
     "betpol": {"desc": "Beta poloidal"},
