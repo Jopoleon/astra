@@ -71,7 +71,6 @@ integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
 integer :: ITO(NTIMES, nplots_max+2)
 double precision :: LINEAV, CHORDN, ABD, ALFA, TIMEB, TROUT, TPOUT=0.d0
 double precision, allocatable :: varValues_old(:) 
-double precision, dimension(1) :: rescale_array
 double precision, dimension(NTIMES) :: PRMARK, TIMOD4
 double precision, dimension(NRD) :: YWA, YWB, YWC
 character(len=6) :: NAMEP(NTIMES)
@@ -79,7 +78,6 @@ character(len=10), dimension(NRW) :: UNAMES
 character(len=40) :: CNSFIL
 character(len=80) :: HELP(28), STR, STRB
 character(len=132) :: STRI, ps_root, PSNAME
-character(len=7), dimension(1), parameter :: rescale_label = (/ 'Rescale' /)
 integer, external :: plotMode
 
 save ITO, IFLAG, TROUT, MARK, LTOUTO, IDSP
@@ -93,7 +91,7 @@ data PRMARK/NTIMES*0./  TROUT/-99999./ &
 !   A 65  B 66  C 67  D 68  E 69  F 70  G 71  H 72  I 73  J 74
 !   K 75 L 76  M 77  N 78  O 79  P 80  Q 81  R 82  S 83  T 84
 !   U 85  V 86  W 87  X 88  Y 89  Z 90
-data (HELP(j), j=1, 10)/  &
+data (HELP(j), j=1, 24)/  &
       'Esc or / - STOP', &
       '<space>  - Set Pause mode, one-step advance', &
       ' <CR>    - Return to Run mode', &
@@ -103,8 +101,7 @@ data (HELP(j), j=1, 10)/  &
       '  6      - Time evolution of local/global quantities', &
       '  7      - Trace of the discharge in a phase space', &
       '  8      - Magnetic flux surfaces', &
-      '  .      - Curve style'/
-data (HELP(j), j=11, 20)/ &
+      '  .      - Curve style', &
       '  A      - Adjust colors (for a color monitor only)', &
       '  B & N  - Backward & forward screen scan', &
       '  C & V  - Constants & main Variables control', &
@@ -114,12 +111,7 @@ data (HELP(j), j=11, 20)/ &
       '  H & ?  - Show operative keys', &
       '  I      - Save the model constants for the next run', &
       '  L      - Model listing', &
-      '  M      - Mark time slice[s] in the modes 4, 5, 7'/
-data (HELP(j), j=21, 28)/ &
-      '  R      - Refresh screen', &
-      '  S      - New scales', &
-      '  T      - Type numerical values of the current curves', &
-      '  U      - Write U-file; (1D in modes 1-3,6; 2D in modes 4,5)', &
+      '  M      - Edit plot layout', &
       '  W      - Re-arrange windows', &
       "  X      - What's X-axis/grid?", &
       '  Y      - Shift curve up/down', &
@@ -276,7 +268,6 @@ do while(.True.)
         TASK = 'RUN '
         call rcurso
         call ERASXY() ! git (IX, IY)
-        return
 
     CASE(32) ! 'space'
         KEY = 0

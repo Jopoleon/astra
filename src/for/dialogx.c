@@ -373,7 +373,7 @@ void taskmenu_(INT_ *modex){
 
 /**********************************************************************/
 void Menu_Column(int xm, int ym, int nbutt, char *met[], Button butt[]){
-    int i, lenm=10, font_sym_width, font_sym_height, xwid, vert_sep=4, hor_sep=1;
+    int i, lenm=12, font_sym_width, font_sym_height, xwid, vert_sep=4, hor_sep=1;
     double F1sw=7.7, F1sh=13.;      /*font 1 symbol width, height */
 
     font_sym_width  = width_ratio *F1sw + 1;
