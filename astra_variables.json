@@ -449,7 +449,6 @@
     "NITREQ": {"desc": "Maximum number of iterations in the int. Tr+Eq loop"},
     "TINIT" : {"units": "s", "desc": "Time axis initial time"},
     "TSCALE": {"units": "s", "desc": "Time axis scale"},
-    "NUFR"  : {"desc": "No. of radial points to be written in a U"},
     "XOUT"  : {"desc": "Output control: X"},
     "XINPUT": {"desc": "Default input mode for a radial variable (C Xdeflt)"},
     "NB2EQL": {"desc": "[0,1] contribution of beam pressure to equilibrium"},

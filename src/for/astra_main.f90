@@ -81,11 +81,12 @@ do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set 
 
     call INIT_CONVERGE_STEP
     call markloc("init done")
-    
+
     IFBEY = 0. ! no fbe possible here
     call METRIC
     jt_req = IFTREQ(ATREQ)     ! ++ITREQ; Convergence check; 1 - yes
 enddo
+
 if (TASK(1:3) /= 'BGD') then
     STRI(1:16) = ' ' ! Erase iteration number, iterations label top right
     call textvm(astra_gui%width-18*astra_gui_ref%dxlet, 2, STRI(1:16), 16)

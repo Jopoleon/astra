@@ -34,10 +34,9 @@ integer function IFKEY(IFKL)
 use parameter_inc, only: NRD, NARRX
 use status_inc, only: MU, AMETR, SHIF, ELON, TRIA, EQFF, EQPF, FP, RHO
 use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, exp_header, &
-   NA, NB1, NA1, NAB, NUF, LEQ, TIME, TAU, TINIT, TSCALE, &
+   NA, NB1, NA1, NAB, LEQ, TIME, TAU, TINIT, TSCALE, &
    TSTART, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
-   BTOR, IPL, constValues, varValues, internValues, &
-   NUFR, NBNDR
+   BTOR, IPL, constValues, varValues, internValues, NBNDR
 use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     Black, Blue, Magenta, WarningColor, &
     active_tab, curves_per_frame, MOD10, LTOUT, IPOUT, MODEY, &
@@ -267,7 +266,7 @@ do while(.True.)
     CASE(13) ! 'ESC'
         TASK = 'RUN '
         call rcurso
-        call ERASXY() ! git (IX, IY)
+        call ERASXY()
 
     CASE(32) ! 'space'
         KEY = 0
@@ -357,7 +356,6 @@ do while(.True.)
         TIMEB = TIME
         MODEX = XOUT + 0.49
         call MENUTABLE(NDTNAM, internValues, DTNAME, 3) ! Only place requiring internValues(j>44)
-        NUF   = int(NUFR)
         n_bnd = int(NBNDR)
         j = XOUT + 0.49
         if (j < 0 .or. j > 3) then

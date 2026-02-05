@@ -14,13 +14,13 @@ subroutine read_input
 !----------------------------------------------------------------------|
 
 use parameter_inc, only: NTVAR, n_bnd_max, nt_bnd_max, NRD, NRDX, NTARR
-use const_inc, only: NITREQ, NA, NA1, NB1, NAB, NUF, &
+use const_inc, only: NITREQ, NA, NA1, NB1, NAB, &
     TIME, TSTART, TEND, TPAUSE, TAUMIN, TAUPRP, TINIT, TSCALE, TIMEQL, DTEQL, &
     varValues, constValues, internValues, exp_header, ARXUSE, &
     AB, ABC, AWAll, ROC, ROCO, ROWALL,  HRO, HROX, RTOR, &
     ELONG, ELONM, TRIAN, TRICH, SHIFT, VOLUME, &
     GP, GP2, BTOR, BTN, FTO, FTN, IPL, IPLN, PSIAX, PSIBO, &
-    NUFR, NBNDR
+    NBNDR
 use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
     G11, G22, VR, VRO, VRS, VOLUM, &
     FP, FPO, FP_NORM, rho_pol, NE, NEO, TE, TEO, UPAR, UPARO, MRHO, &
@@ -126,7 +126,7 @@ nvar = 37
 call assign_val(file_in, nvar    ,    varNames(1: nvar)    ,    varValues(1: nvar)    , n_color)
 call assign_val(file_in, n_const ,  constNames(1: n_const) ,  constValues(1: n_const) , n_color)
 call assign_val(file_in, n_intern, internNames(1: n_intern), internValues(1: n_intern), n_color)
-NUF   = int(NUFR)
+
 n_bnd  = int(NBNDR)
 close(171)
 
@@ -834,7 +834,6 @@ do j=1, n_profx
     endif
 enddo
 
-NUFR   = NUF
 NBNDR  = n_bnd
 TIMEQL = TIME - DTEQL - 1.d-7
 TAUPRP = TAUMIN

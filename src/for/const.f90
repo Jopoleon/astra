@@ -68,7 +68,7 @@ double precision :: TEQ(n_sbr_max)
 
 double precision, pointer :: &
     DROUT, DTOUT, DPOUT, TIME, TAUMIN, TAUMAX, TAUINC, DELVAR, &
-    ITEREX, NITREQ, TINIT, TSCALE, NUFR, XOUT, XINPUT, &
+    ITEREX, NITREQ, TINIT, TSCALE, XOUT, XINPUT, &
     NB2EQL, NEQUIL, NBNDR, DTEQL, MEQUIL, TPAUSE, TEND, &
     INUME1, INUME2, INUME3, INUME4, &
     IPROT, ITFBE, ITFBP, ICIRCQ, IPCTRL, ADCMPF, &
@@ -89,7 +89,7 @@ double precision, pointer :: &
     QF0B, QF1B, QF2B, QF3B, QF4B, QF5B, QF6B, QF7B, QF8B, QF9B, &
     QFF0B, QFF1B, QFF2B, QFF3B, QFF4B, QFF5B, QFF6B, QFF7B, QFF8B, QFF9B
 
-integer :: NA, NA1, NAB, NB1, NUF, NNCX, KEY, &
+integer :: NA, NA1, NAB, NB1, NNCX, KEY, &
     NSTEPS, ITREQ, IPART, LEQ(NEQNS), NITOT
 integer :: ARXUSE(NARRX)
 integer :: NA1N, NA1E, NA1I, NA1U, &
@@ -138,7 +138,6 @@ contains
     NITREQ = 1.
     TINIT  = 0.
     TSCALE = 1.
-    NUFR   = 41.
     XOUT   = 1.
     XINPUT = 1.
     NB2EQL = 1.
@@ -216,7 +215,6 @@ contains
     NA1    = 41
     NNCX   = 200
     NAB    = 41
-    NUF    = 41
     NA     = 40
     NITOT  = 0
     NSTEPS = 0
