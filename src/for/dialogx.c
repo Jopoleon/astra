@@ -41,7 +41,7 @@ static int iact=-1, ibcursor=-1;
 #define BTxof 0     /*button text horizontal offset */
 #define nbuttons_max 36
 
-int n_buttons=28;  /*main Astra  menu table */
+int n_buttons=24;  /*main Astra  menu table */
 char *MAMT[nbuttons_max];
 char MAMK[nbuttons_max];
 double width_ratio, height_ratio;
@@ -299,18 +299,16 @@ void taskmenu_(INT_ *modex){
     char *BUTEXT[nbuttons_max] = {
         "16*f(a)", "8*f(a)", "8*f(psi)", "2*f(a,t)",
         "2*f(R,t)", "8*f(t)", "Equil", "Layout",
-        "Refresh", "Style", "Next", "Back",
-        "Variables", "Constants", "Grids", "Get X-axis",
-        "Save log", "U-files", "Land PS", "Port PS",
-        "Write data", "Type model", "Type data", "Test",
+        "Get X-axis", "Style", "Next", "Back",
+        "Variables", "Constants", "Grids", "Save log",
+        "Land PS", "Port PS", "Write data", "Type model",
         "Run", "Step", "Quit", "Help"};
     char BUTKEY[nbuttons_max] = {
         '1', '2', '3', '4',
         '5', '6', '8', 'M',
-        'R', '.', 'N', 'B',
-        'V', 'C', 'D', 'X',
-        'I', 'U', 'Q', 'G',
-        'F', 'L', 'T', 'S',
+        'X', '.', 'N', 'B',
+        'V', 'C', 'D', 'I',
+        'Q', 'G', 'F', 'L',
         '\015', '\040', '\057', 'H'};
     char **list_installed_fonts;
     int num_installed_fonts;

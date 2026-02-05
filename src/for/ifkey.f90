@@ -511,22 +511,6 @@ do while(.True.)
         endif
         call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
 
-    CASE(82) ! 'R'
-        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
-
-    CASE(83) ! 'S'
-        rescale_array(1) = resizeGraph
-        call MENUTABLE(1, rescale_array, rescale_label, 4)
-        resizeGraph = rescale_array(1)
-!    call initMainWindow
-
-    CASE(84) ! 'T'
-        call TIMOUT
-        call TYPDSP
-
-    CASE(85) ! 'U'
-        print*, 'U-file writing not available anymore'
-
     CASE(86) ! 'V'
         do J=1, n_var
             varValues_old(J) = varValues(J)
