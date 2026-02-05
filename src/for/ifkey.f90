@@ -545,7 +545,7 @@ do while(.True.)
         call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
 
     CASE(76) ! 'L'
-        CNSFIL = 'tmp/model.txt'
+        CNSFIL = 'src/tmp/model.txt'
         open(1, file=TRIM(CNSFIL), iostat=ios)
         if (ios /= 0) then
             write(*, *) '>>> IFKEY: "', TRIM(CNSFIL), '" file error'
