@@ -19,14 +19,13 @@ use const_inc, only: NITREQ, NA, NA1, NB1, NAB, &
     varValues, constValues, internValues, exp_header, ARXUSE, &
     AB, ABC, AWAll, ROC, ROCO, ROWALL,  HRO, HROX, RTOR, &
     ELONG, ELONM, TRIAN, TRICH, SHIFT, VOLUME, &
-    GP, GP2, BTOR, BTN, FTO, FTN, IPL, IPLN, PSIAX, PSIBO, &
-    NBNDR
+    GP, GP2, BTOR, BTN, FTO, FTN, IPL, IPLN, PSIAX, PSIBO
 use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
     G11, G22, VR, VRO, VRS, VOLUM, &
     FP, FPO, FP_NORM, rho_pol, NE, NEO, TE, TEO, UPAR, UPARO, MRHO, &
     AMAIN, UPS0, UPS0O
 use io_mod, only: exp_file, equ_file, machine, NBfile, CCOILX, VCOILX, &
-    IFDFVX, IFDFAX, jbeg_arrx, NGR, n_bnd, n_coils, nt_bnd, nt_coils
+    IFDFVX, IFDFAX, jbeg_arrx, NGR, n_coils, nt_coils
 
 use expdat, only: raw_scalars, raw_profiles, raw_boundary
 use char_manip, only: to_upper, str_in_list, clean_string
@@ -47,7 +46,7 @@ integer, allocatable, dimension(:) :: int_json
 integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
 integer :: KAB, KAWALL, KRTOR, KELONM, KTRICH
 integer :: nvar, n_color, n_words, i_filter_glob
-integer :: nt_u, nx_u, ios, ndim_u, jvar, jrt, jt, jthe
+integer :: nt_u, nx_u, ios, ndim_u, jvar, jrt, jt, jthe, nbnd
 
 double precision, allocatable :: t_u(:), x_u(:), var_u(:), bnd_rz(:), bnd_r(:), bnd_z(:)
 double precision :: XBDRY, YB, YB1, YXB, YXB1, ALFA, ALFA_GLOB, &
@@ -127,7 +126,6 @@ call assign_val(file_in, nvar    ,    varNames(1: nvar)    ,    varValues(1: nva
 call assign_val(file_in, n_const ,  constNames(1: n_const) ,  constValues(1: n_const) , n_color)
 call assign_val(file_in, n_intern, internNames(1: n_intern), internValues(1: n_intern), n_color)
 
-n_bnd  = int(NBNDR)
 close(171)
 
 !----------------------------------------------------------------------
@@ -357,7 +355,7 @@ read(201, '(A132)', ERR=906, END=39) STRI
 
 NGR = 0
 jarr = 0
-nt_bnd = 0
+raw_boundary%nt = 0
 ALFA_GLOB = 0.001
 
 parse_exp_2d: do
@@ -463,23 +461,23 @@ parse_exp_2d: do
         VNAMO = VNAM
 
     CASE ('BNDX  ')
-        if (nt_bnd /= 0) then
+        if (raw_boundary%nt /= 0) then
             call astra_stop(err_msg_exp // 'Boundary must be defined in a single group')
         endif
         j = INDEX(lin_upper, 'POINTS')
-        if (j /= 0) read(STRI(j+6:),*) n_bnd
+        if (j /= 0) read(STRI(j+6:),*) raw_boundary%n_theta
         if (j == 0) then
             call astra_stop(err_msg_exp // 'Number of boundary points must be defined')
         endif
 
-        nt_bnd = max(ntim, 1)
-        write(*, *) 'Reading BND, dims:', n_bnd, ntim
+        raw_boundary%nt = max(ntim, 1)
+        write(*, *) 'Reading BND, dims:', raw_boundary%n_theta, raw_boundary%nt
 
-        if (n_bnd > n_bnd_max) then
+        if (raw_boundary%n_theta > n_bnd_max) then
             write(err_msg, '(2A, i)') err_msg_exp, 'Boundary data #theta must not exceed ', n_bnd_max
             call astra_stop(err_msg)
         endif
-         if (nt_bnd > nt_bnd_max) then
+         if (raw_boundary%nt > nt_bnd_max) then
             write(err_msg, '(2A, i)') err_msg_exp, 'Boundary data #times must not exceed ', nt_bnd_max
             call astra_stop(err_msg)
         endif
@@ -491,17 +489,18 @@ parse_exp_2d: do
 ! r_2(t_1) r_2(t_2) r_2(t_3) 
 ! z_2(t_1) z_2(t_2) z_2(t_3)
 
-        read(201, *, iostat=ios) (raw_boundary%time(j), j=1, nt_bnd)
-        allocate(bnd_rz(2*nt_bnd*n_bnd))
-        read(201, fmt=*, iostat=ios) (bnd_rz(j), j=1, 2*nt_bnd*n_bnd)
+        read(201, *, iostat=ios) (raw_boundary%time(j), j=1, raw_boundary%nt)
+        nbnd = 2*raw_boundary%nt*raw_boundary%n_theta
+        allocate(bnd_rz(nbnd))
+        read(201, fmt=*, iostat=ios) (bnd_rz(j), j=1, nbnd)
         jrt = 1
-        do jthe=1, n_bnd
-            do jt=1, nt_bnd
-                raw_boundary%R((jthe-1)*nt_bnd + jt) = bnd_rz(jrt)
-                raw_boundary%Z((jthe-1)*nt_bnd + jt) = bnd_rz(jrt+nt_bnd)
+        do jthe=1, raw_boundary%n_theta
+            do jt=1, raw_boundary%nt
+                raw_boundary%R((jthe-1)*raw_boundary%nt + jt) = bnd_rz(jrt)
+                raw_boundary%Z((jthe-1)*raw_boundary%nt + jt) = bnd_rz(jrt+raw_boundary%nt)
                 jrt = jrt + 1
             enddo
-            jrt = jrt + nt_bnd 
+            jrt = jrt + raw_boundary%nt
         enddo
         deallocate(bnd_rz)
 
@@ -516,14 +515,14 @@ parse_exp_2d: do
         read(201, '(A)', iostat=ios) STRI ! u-file name in exp-file
         if (ios < 0) EXIT parse_exp_2d
         call ufheader('udb/'//trim(STRI)//'_r', ndim_u, nt_u, nx_u, rholbl)
-        n_bnd = nx_u
-        nt_bnd = nt_u
-        if (n_bnd > n_bnd_max) then
+        raw_boundary%n_theta = nx_u
+        raw_boundary%nt = nt_u
+        if (raw_boundary%n_theta > n_bnd_max) then
             write(err_msg, '(2A, i)') TRIM(err_msg_exp), 'Boundary data #theta must not exceed ', n_bnd_max
             call astra_stop(err_msg)
         endif
-        if (nt_bnd > nt_bnd_max) then
-            write(err_msg, '(2A, i)') TRIM(err_msg_exp), 'Boundary data #times must not exceed ', nt_bnd
+        if (raw_boundary%nt > nt_bnd_max) then
+            write(err_msg, '(2A, i)') TRIM(err_msg_exp), 'Boundary data #times must not exceed ', nt_bnd_max
             call astra_stop(err_msg)
         endif
 
@@ -725,24 +724,25 @@ close(201)
 !-----------------------
 
 !if boundary is given, calculates initial geometry from that
-if (nt_bnd > 0) then
+if (raw_boundary%nt > 0) then
 !find time index of most proximum boundary
     j=1
-    do jt=1, nt_bnd
+    do jt=1, raw_boundary%nt
         if (raw_boundary%time(jt) <= TSTART) j = jt
     enddo
     jt = j
-    allocate(bnd_rz(2*n_bnd))
-    do jthe=1, n_bnd
-        bnd_rz(jthe)       = raw_boundary%R((jthe-1)*nt_bnd + jt)
-        bnd_rz(n_bnd+jthe) = raw_boundary%Z((jthe-1)*nt_bnd + jt) 
+    allocate(bnd_r(raw_boundary%n_theta), bnd_z(raw_boundary%n_theta))
+    do jthe=1, raw_boundary%n_theta
+        bnd_r(jthe) = raw_boundary%R((jthe-1)*raw_boundary%nt + jt)
+        bnd_z(jthe) = raw_boundary%Z((jthe-1)*raw_boundary%nt + jt) 
     enddo
 !calculate ABC
-    ABC = (maxval(bnd_rz(1: n_bnd)) - minval(bnd_rz(1: n_bnd)))/2.
+    ABC = (maxval(bnd_r) - minval(bnd_r))/2.
 !calculate elong
-    ELONG = (maxval(bnd_rz(n_bnd+1: 2*n_bnd)) - minval(bnd_rz(n_bnd+1: 2*n_bnd)))/(2.*ABC)
+    ELONG = (maxval(bnd_z) - minval(bnd_z))/(2.*ABC)
     ELONG = max(ELONG, 1.d0)
-    deallocate(bnd_rz)
+    deallocate(bnd_r)
+    deallocate(bnd_z)
 endif
 
 !assign variables here for initialization:
@@ -832,7 +832,6 @@ do j=1, n_profx
     endif
 enddo
 
-NBNDR  = n_bnd
 TIMEQL = TIME - DTEQL - 1.d-7
 TAUPRP = TAUMIN
 if (TIME > TINIT + 1.025*abs(TSCALE)) TINIT = TSTART

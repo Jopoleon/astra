@@ -1029,7 +1029,7 @@ end subroutine A2EMEQ
 !---------------------------------------------------------------------
 subroutine A2GSSOLVER(equil_solver)
 
-use io_mod, only: CCOIL, VCOIL, n_bnd, nt_bnd, n_coils
+use io_mod, only: CCOIL, VCOIL, n_coils
 use const_inc, only: NEQUIL, MEQUIL, IPART, IPCTRL, TAU, NA, NA1, NAB, &
     RTOR, BTOR, IPL, GP, GP2, HRO, ROC, ABC, &
     VOLUME, SHIFT, ELONG, UPDWN, TRIAN, &
@@ -1044,6 +1044,7 @@ use status_inc, only: G11, G22, G22E, G33, G33E, G41, G42, G43, G44, G45, &
 use plasma_state, only: plasma_up, plasma_trig
 use debugger, only: markloc
 use ext_bnd, only: use_ext_bnd
+use expdat, only: raw_boundary
 
 implicit none
 
@@ -1068,16 +1069,16 @@ call markloc('A2GSSOLVER')
 jneql  = abs(nint(NEQUIL))
 jnteta = abs(nint(MEQUIL))
 
-! n_bnd=51 <-> ABC, ELONG, TRIAN setting for boundary
-
-if (n_bnd == 0) n_bnd = 41 ! "NAMEXP BND" not found
+if (raw_boundary%n_theta == 0) then
+    jnbnd = 41 ! "NAMEXP BND" not found
+else
+    jnbnd = raw_boundary%n_theta
+endif
 
 ! provide grid for t=TIME+TAU
 if (j_save_bound == 0 .or. IPART == 1) then
-    call BNDRY(rbnd(1:n_bnd), zbnd(1:n_bnd))
+    call BNDRY(rbnd(1: jnbnd), zbnd(1: jnbnd))
 endif
-
-jnbnd = n_bnd
 
 do j=1, n_coils
     yccoil(j) = CCOIL(j)
@@ -1199,7 +1200,7 @@ do j=1, NA1
     EQFF(J)  = yeqff(J)    ! due to adiabatic compression done in the code
 enddo
 
-if (nt_bnd > 0 .or. TIME >= ITFBE .or. use_ext_bnd == 1) then
+if (raw_boundary%nt > 0 .or. TIME >= ITFBE .or. use_ext_bnd == 1) then
     UPDWN = yupdwn
     ABC   = yametr(NA1) 
     ELONG = ELON(NA1)
@@ -1266,15 +1267,12 @@ subroutine BNDRY(RPB, ZPB)
 !     this subroutine uses the arrays BNDR, BNDZ as an input and
 !     produces output in [time dependent] arrays RPB, ZPB
 !---------------------------------------------------------------------
-! n_bnd      number of points on the plasma vacuum boundary
-! nt_bnd      number of times for the plasma boundary evolution
 !  call from ESC:
 !  call BNDRY(RPB, ZPB)
 !  call from equil:
 !  call BNDRY(RZPB, RZPB(n_bnd+1))
 !---------------------------------------------------------------------
 
-use io_mod, only: n_bnd, nt_bnd
 use expdat, only: raw_boundary
 use const_inc, only: GP2, TIME, RTOR, SHIFT, ABC, TRIAN, UPDWN, ELONG
 use ext_bnd, only: ext_bnd_in, use_ext_bnd
@@ -1283,15 +1281,36 @@ implicit none
 
 double precision, intent(out) :: RPB(*), ZPB(*)
 
-integer :: j, j1, jt
+integer :: j, j1, jt, nt_bnd, n_bnd
 double precision :: ydt, yd1, yd2, yfi
 
+nt_bnd = raw_boundary%nt
+n_bnd  = raw_boundary%n_theta
+
 if (nt_bnd <= 1) then
-
     if (nt_bnd == 0) then  ! No input group "NAMEXP BND" found
-
-        if (n_bnd == 0) n_bnd = 8    ! call from ESC
-        if (n_bnd /= 8) then
+        if (n_bnd == 0) then
+            n_bnd = 8       ! call from ESC
+            yd1 = 0.75      ! sin^2(pi/3)
+            yd2 = 0.5       ! cos(pi/3) 
+            ydt = sqrt(yd1) ! sin(pi/3)
+            RPB(1) = RTOR + SHIFT - ABC*TRIAN
+            ZPB(1) = UPDWN + ABC*ELONG
+            RPB(2) = RTOR + SHIFT - ABC*TRIAN
+            ZPB(2) = UPDWN - ABC*ELONG
+            RPB(3) = RTOR + SHIFT - ABC
+            ZPB(3) = UPDWN
+            RPB(4) = RTOR + SHIFT + ABC
+            ZPB(4) = UPDWN
+            RPB(5) = RTOR + SHIFT - ABC*(TRIAN*yd1 + yd2)
+            ZPB(5) = UPDWN + ABC*ELONG*ydt
+            RPB(6) = RTOR + SHIFT - ABC*(TRIAN*yd1 - yd2)
+            ZPB(6) = UPDWN + ABC*ELONG*ydt
+            RPB(7) = RTOR + SHIFT - ABC*(TRIAN*yd1 - yd2)
+            ZPB(7) = UPDWN - ABC*ELONG*ydt
+            RPB(8) = RTOR + SHIFT - ABC*(TRIAN*yd1 + yd2)
+            ZPB(8) = UPDWN - ABC*ELONG*ydt
+        else
             if (use_ext_bnd == 1) then
                 do j=1, n_bnd
                     ZPB(j) = ext_bnd_in(j, 2)
@@ -1305,28 +1324,7 @@ if (nt_bnd <= 1) then
                     RPB(j) = RTOR + SHIFT + ABC*(cos(YFI) - TRIAN*YD1**2)
                 enddo
             endif
-            return
         endif
-
-        yd1 = 0.75      ! sin^2(pi/3)
-        yd2 = 0.5       ! cos(pi/3) 
-        ydt = sqrt(yd1) ! sin(pi/3)
-        RPB(1) = RTOR + SHIFT - ABC*TRIAN
-        ZPB(1) = UPDWN + ABC*ELONG
-        RPB(2) = RTOR + SHIFT - ABC*TRIAN
-        ZPB(2) = UPDWN - ABC*ELONG
-        RPB(3) = RTOR + SHIFT - ABC
-        ZPB(3) = UPDWN
-        RPB(4) = RTOR + SHIFT + ABC
-        ZPB(4) = UPDWN
-        RPB(5) = RTOR + SHIFT - ABC*(TRIAN*yd1 + yd2)
-        ZPB(5) = UPDWN + ABC*ELONG*ydt
-        RPB(6) = RTOR + SHIFT - ABC*(TRIAN*yd1 - yd2)
-        ZPB(6) = UPDWN + ABC*ELONG*ydt
-        RPB(7) = RTOR + SHIFT - ABC*(TRIAN*yd1 - yd2)
-        ZPB(7) = UPDWN - ABC*ELONG*ydt
-        RPB(8) = RTOR + SHIFT - ABC*(TRIAN*yd1 + yd2)
-        ZPB(8) = UPDWN - ABC*ELONG*ydt
     else ! nt_nbd = 1
         do j=1, n_bnd
             RPB(j) = raw_boundary%R(j)

@@ -541,7 +541,6 @@ subroutine plot_lcfs(ifnew, IYO, time_in)
 ! IFNEW < 0 Don't mark resonances q=m/n
 ! IFNEW > 10 Call from Review. (JIFNEW-10) is used to control erasing
 
-use io_mod, only: n_bnd, nt_bnd
 use outcmn_inc, only: Red, EraseColor, pixel_ymid, meter2pixel
 use expdat, only: raw_boundary
 
@@ -554,11 +553,11 @@ double precision, intent(in) :: time_in
 integer :: j, j1, j2, jj, PTM(2)
 double precision :: YS, YX, YXL, YXR, YZ
 
-j2 = 1 + n_bnd/32
+j2 = 1 + raw_boundary%n_theta/32
 
 if (IFNEW == 0) then
     call setColor(EraseColor)
-    do j=1, n_bnd, j2
+    do j=1, raw_boundary%n_theta, j2
         PTM(1) = IYO(1, j)
         PTM(2) = IYO(2, j)
         call NMARK(PTM, 4)
@@ -568,20 +567,20 @@ endif
 ! Boundary points
 call setColor(Red)
 
-if (nt_bnd <= 1) then
+if (raw_boundary%nt <= 1) then
     jj = 1
-    do j=1, n_bnd, j2
-        j1 = max(1, nt_bnd + (j - 1)*jj)
+    do j=1, raw_boundary%n_theta, j2
+        j1 = max(1, raw_boundary%nt + (j - 1)*jj)
         PTM(1) = raw_boundary%R(j1)*meter2pixel
         PTM(2) = pixel_ymid - raw_boundary%Z(j1)*meter2pixel
         call NMARK(PTM, 4)   !Use (PTM, 4) for *
         IYO(1, j) = PTM(1)
         IYO(2, j) = PTM(2)
     enddo
-else if (time_in <= raw_boundary%time(1) .or. time_in >= raw_boundary%time(nt_bnd)) then ! extrapolate flat
-    jj = nt_bnd
-    do j=1, n_bnd, j2
-        j1 = nt_bnd + (j - 1)*jj
+else if (time_in <= raw_boundary%time(1) .or. time_in >= raw_boundary%time(raw_boundary%nt)) then ! extrapolate flat
+    jj = raw_boundary%nt
+    do j=1, raw_boundary%n_theta, j2
+        j1 = raw_boundary%nt + (j - 1)*jj
         PTM(1) = raw_boundary%R(j1)*meter2pixel
         PTM(2) = pixel_ymid - raw_boundary%Z(j1+jj)*meter2pixel
         call NMARK(PTM, 4)   !Use (PTM, 4) for *
@@ -589,14 +588,14 @@ else if (time_in <= raw_boundary%time(1) .or. time_in >= raw_boundary%time(nt_bn
         IYO(2, j) = PTM(2)
     enddo
 else               ! interpolate linearly
-    do j=1, nt_bnd   ! Find current time
+    do j=1, raw_boundary%nt   ! Find current time
         if (time_in > raw_boundary%time(j)) jj = j
     enddo
     YS  = raw_boundary%time(jj+1) - raw_boundary%time(jj)
     YXL = (time_in - raw_boundary%time(jj  ))/YS
     YXR = (time_in - raw_boundary%time(jj+1))/YS
-    do j=1, n_bnd, j2 ! Time differentiation
-        j1 = jj + (j - 1)*nt_bnd
+    do j=1, raw_boundary%n_theta, j2 ! Time differentiation
+        j1 = jj + (j - 1)*raw_boundary%nt
         YX = YXL*raw_boundary%R(j1+1) - YXR*raw_boundary%R(j1)
         YZ = YXL*raw_boundary%Z(j1+1) - YXR*raw_boundary%Z(j1)
         PTM(1) = YX*meter2pixel

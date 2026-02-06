@@ -36,7 +36,7 @@ use status_inc, only: MU, AMETR, SHIF, ELON, TRIA, EQFF, EQPF, FP, RHO
 use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, exp_header, &
    NA, NB1, NA1, NAB, LEQ, TIME, TAU, TINIT, TSCALE, &
    TSTART, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
-   BTOR, IPL, constValues, varValues, internValues, NBNDR
+   BTOR, IPL, constValues, varValues, internValues
 use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     Black, Blue, Magenta, WarningColor, &
     active_tab, curves_per_frame, MOD10, LTOUT, IPOUT, MODEY, &
@@ -46,7 +46,7 @@ use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     DTNAME, runid, VERSION, AVERS, ARLEAS, AEDIT, &
     GRAP, GRAL, TIM7, NAM7, KPRI, nplots_max, &
     NTIMES, TTOUT, TOUT
-use io_mod, only: n_sbr, n_bnd, NGR, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
+use io_mod, only: n_sbr, NGR, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
 use dbl2char, only: fmt6
 use char_manip, only: str_in_list, null_ch, beep_ch
 use debugger, only: markloc, debug, astra_stop
@@ -356,7 +356,6 @@ do while(.True.)
         TIMEB = TIME
         MODEX = XOUT + 0.49
         call MENUTABLE(NDTNAM, internValues, DTNAME, 3) ! Only place requiring internValues(j>44)
-        n_bnd = int(NBNDR)
         j = XOUT + 0.49
         if (j < 0 .or. j > 3) then
             write(*, *) ">>> Unknown X-axis. Redefinition ignored"

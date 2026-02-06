@@ -28,8 +28,9 @@ type rawProfiles
     real*4, dimension(NRDX*NTARR) :: data
 endtype rawProfiles
 type rawBoundary
+    integer :: nt, n_theta
     double precision, dimension(nt_bnd_max) :: time=0.
-    double precision, dimension(nt_bnd_max*n_bnd_max) :: R, Z
+    double precision, dimension(nt_bnd_max*n_bnd_max) :: R=0., Z=0.
 endtype rawBoundary
 
 type(rawScalars)  :: raw_scalars

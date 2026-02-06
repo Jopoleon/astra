@@ -9,7 +9,7 @@ implicit none
 integer, dimension(n_sbr_max) :: IFSBX
 integer, dimension(NARRX) :: IFDFAX=-1, jbeg_arrx, NPTM
 integer, dimension(NCONST) :: IFDFVX=-1
-integer :: n_sbr, n_bnd=0, n_coils=1, nt_bnd=0, nt_coils=0, NGR
+integer :: n_sbr, n_coils=1, nt_coils=0, NGR
 double precision :: resize
 double precision, dimension(NARRX) :: TOUTX
 double precision, dimension(n_coils_max) :: CCOIL=0., VCOIL=0.
