@@ -1,14 +1,45 @@
 module json_write
 
 use json_module, only: json_core, json_value, json_ck
-use json_vars
 
 implicit none
 
-integer, parameter :: nunit=25
+integer, parameter :: nunit=25, nunit_x=35
 integer :: jid
 
 contains
+
+!---------------------------------------------------------------------
+    subroutine write_jsonx
+
+    use io_mod, only: awd, exp_file
+    use exp_data, only: raw_scalars, raw_profiles, raw_boundary
+
+    integer :: ios
+    character(len=180) :: jsonx_out
+    type(json_core) :: jCore
+
+    write(jsonx_out, '(4A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), '_x.json'
+
+    open(nunit_x, file=TRIM(jsonx_out), iostat=ios)
+    write(nunit_x, '(A/)') '{'
+    write(nunit_x, '(A)') '}'
+    close(nunit_x)
+
+    write(*, *) 'NT_ALL', raw_scalars%nt_all
+    write(*, *) raw_scalars%var_index(1: raw_scalars%nt_all)
+    write(*, *) raw_scalars%var_index(raw_scalars%nt_all)
+    write(*, *) raw_scalars%var_index(raw_scalars%nt_all+1)
+    write(*, *) raw_scalars%time(raw_scalars%nt_all)
+    write(*, *) raw_scalars%time(raw_scalars%nt_all+1)
+    write(*, *) raw_scalars%data(raw_scalars%nt_all)
+    write(*, *) raw_scalars%data(raw_scalars%nt_all+1)
+    write(*, *) raw_scalars%label(raw_scalars%nt_all)
+    write(*, *) raw_scalars%label(raw_scalars%nt_all+1)
+    write(*, '(A)') '   Written file ' // TRIM(jsonx_out)
+
+    return
+    end subroutine write_jsonx
 
 !---------------------------------------------------------------------
     subroutine write_json
@@ -18,6 +49,8 @@ contains
     use status_inc, only: profiles, profiles_x
     use io_mod, only: awd, exp_file, equ_file
     use debugger, only: debug
+    use json_vars, only: equil_sigPtr, equil_profPtr, equil_rectPtr, equil_coordPtr, &
+        profPtr, profxPtr, constPtr, internPtr, intern2Ptr, varPtr, varxPtr, n_prof, n_profx
 
     integer :: j, jrho, ios, j_call=1, nrho_surf, nthe_surf, nR, nZ
     character(len=180) :: json_out

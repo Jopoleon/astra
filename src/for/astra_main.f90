@@ -17,7 +17,7 @@ use debugger, only: astra_stop, markloc
 use ext_bnd, only: use_ext_bnd
 use transport2fbe, only: transport2fbe_init
 use json_vars, only: read_metadata
-use json_write, only: write_json
+use json_write, only: write_json, write_jsonx
 use exp_data, only: read_input
 
 implicit none
@@ -46,6 +46,7 @@ call status_init
 call ininam
 call io_init
 call read_input
+call write_jsonx
 
 use_ext_bnd = 0
 IPART = 1   ! Mark initial iteration section

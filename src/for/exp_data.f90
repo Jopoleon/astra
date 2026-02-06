@@ -6,6 +6,7 @@ use parameter_inc, only: NTVAR, NTARR, NRDX, n_bnd_max, nt_bnd_max
 implicit none
 
 type rawScalars
+    integer :: nt_all
     integer, dimension(NTVAR) :: var_index=0
     double precision, dimension(NTVAR) :: time=0., data=0., error=0.
     character(len=6), dimension(NTVAR) :: label
@@ -333,6 +334,8 @@ parse_exp_1d: do
     VNAMO = VNAM
 
 enddo parse_exp_1d
+
+raw_scalars%nt_all = IVAR
 
 close(201)
 
