@@ -30,10 +30,10 @@ contains
     write(nunit_x, '(A/)') '   "scalars": {'
 
     write(nunit_x, '(A)') '        "timeStream": {"unit": "s", "data": ['
-    call prettyArray(nunit_x, raw_scalars%nt_all, raw_scalars%time)
+    call prettyFloatArray(nunit_x, raw_scalars%nt_all, raw_scalars%time)
 
     write(nunit_x, '(A)') '        "dataStream": {"data": ['
-    call prettyArray(nunit_x, raw_scalars%nt_all, raw_scalars%data)
+    call prettyFloatArray(nunit_x, raw_scalars%nt_all, raw_scalars%data)
 
     write(nunit_x, '(A/)', advance='no') '        "labels": {"data": ['
     do i=1, raw_scalars%nt_all-1
@@ -56,15 +56,15 @@ contains
          ' "n_theta": ', raw_boundary%n_theta, ','
 
     write(nunit_x, '(A)') '        "time": {"unit": "s", "data": ['
-    call prettyArray(nunit_x, raw_boundary%nt, raw_boundary%time)
+    call prettyFloatArray(nunit_x, raw_boundary%nt, raw_boundary%time)
 
     ndim = raw_boundary%nt * raw_boundary%n_theta
 
     write(nunit_x, '(A)') '        "R": {"unit": "m", "data": ['
-    call prettyArray(nunit_x, ndim, raw_boundary%R)
+    call prettyFloatArray(nunit_x, ndim, raw_boundary%R)
 
     write(nunit_x, '(A)') '        "Z": {"unit": "m", "data": ['
-    call prettyArray(nunit_x, ndim, raw_boundary%Z, dict_close=.true.)
+    call prettyFloatArray(nunit_x, ndim, raw_boundary%Z, dict_end=.true.)
 
     write(nunit_x, '(A/)') '    }'
 
@@ -81,11 +81,11 @@ contains
     end subroutine write_jsonx
 
 !---------------------------------------------------------------------
-    subroutine prettyArray(n_u, ndim, arr, dict_close)
+    subroutine prettyFloatArray(n_u, ndim, arr, dict_end)
 
     integer, intent(in) :: n_u, ndim
     double precision, intent(in) :: arr(*)
-    logical, intent(in), optional :: dict_close
+    logical, intent(in), optional :: dict_end
 
     integer :: i
 
@@ -94,14 +94,14 @@ contains
         if (MODULO(i, 6) == 0) write(n_u, '(A)') ''
     enddo
     write(n_u, '(es16.8e3, A)') arr(ndim), ']'
-    if (present(dict_close)) then
+    if (present(dict_end)) then
         write(n_u, '(A/)') '        }'
     else
         write(n_u, '(A/)') '        },'
     endif
  
     return
-    end subroutine prettyArray
+    end subroutine prettyFloatArray
 
 !---------------------------------------------------------------------
     subroutine write_json
@@ -163,7 +163,7 @@ contains
     do j=1, n_prof-1
         call write_array((/NA1/), profiles(1:NA1, j), profPtr)
     enddo
-    call write_array((/NA1/), profiles(1:NA1, n_prof), profPtr, dict_close=.true.) ! no comma
+    call write_array((/NA1/), profiles(1:NA1, n_prof), profPtr, dict_end=.true.) ! no comma
 
     write(nunit, '(A/)') '},' ! End of "astra" dictionary
 
@@ -230,7 +230,7 @@ contains
     call write_array((/nR, nZ/), equil_now%eqgeometry%rectgrid%psirz2d, equil_rectPtr)
     call write_array((/nR, nZ/), equil_now%eqgeometry%rectgrid%fdia2d , equil_rectPtr)
     call write_array((/nR/), equil_now%eqgeometry%rectgrid%r2d, equil_rectPtr)
-    call write_array((/nZ/), equil_now%eqgeometry%rectgrid%z2d, equil_rectPtr, dict_close=.true.) ! No comma
+    call write_array((/nZ/), equil_now%eqgeometry%rectgrid%z2d, equil_rectPtr, dict_end=.true.) ! No comma
     write(nunit, '(A)') '}' ! End of "equil" dictionary
 
 !-----------
@@ -292,12 +292,12 @@ contains
     end subroutine ndim_string
 
 !---------------------------------------------------------------
-    subroutine write_array(dims, arr_in, json_in, dict_close)
+    subroutine write_array(dims, arr_in, json_in, dict_end)
 
     integer, intent(in), dimension(:) :: dims
     double precision, intent(in), dimension(*) :: arr_in
     type(json_value), intent(in), pointer :: json_in
-    logical, intent(in), optional :: dict_close
+    logical, intent(in), optional :: dict_end
 
     logical :: found
     integer :: i, j, ndim, ij
@@ -363,7 +363,7 @@ contains
     endif
 
     write(nunit, '(A)') ']}' ! No comma after last array entry
-    if (.not. present(dict_close)) write(nunit, '(A)') ','
+    if (.not. present(dict_end)) write(nunit, '(A)') ','
 
     return
     end subroutine write_array

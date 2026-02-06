@@ -5,7 +5,7 @@ subroutine SETARX(ICALL)
 !
 ! Then it is stored for the current time in the arrays
 ! profiles_x(NRD, NARRX) - (description in astra_variables.json)
-!   
+!
 !--------------------------------------------------------------------
 
 use parameter_inc, only: NRD, NRDX, NTARR
@@ -27,7 +27,7 @@ double precision, dimension(NRDX) :: x_grid, dat_exp
 double precision, dimension(NRD) :: XA, DA
 character(len=132) :: err_msg, err_msg_grid
 !--------------------------------------------------------------------
-!  NARRX    maximal number of arrays readable from a data file 
+!  NARRX    maximal number of arrays readable from a data file
 !  NTARR    maximal number of time slices for all arrays (total)
 !--------------------------------------------------------------------
 ! Input
@@ -100,9 +100,9 @@ var_loop: do jtarr=1, NTARR
 !--------------------------------------------------------------------
 ! The following is done below:
 ! (1) The grid in "a", XA(NP1), and the data DA(NP1) on this grid
-!      are defined by 
+!      are defined by
 !  (i)  mapping the original grid to the "a" grid x_grid(N11)
-!  (ii) transfer (SMOOTH) from {x_grid(N11), dat_exp(N11)} to {XA, DA} 
+!  (ii) transfer (SMOOTH) from {x_grid(N11), dat_exp(N11)} to {XA, DA}
 ! (2) XAXES(n_grid, KN) is defined which is as "a" grid for exp-dot plots
 !      DATAX(n_grid, KN) data on this grid
 ! (3) profiles_x(NRD, KN) smoothed input arrays interpolated in time
@@ -252,7 +252,7 @@ var_loop: do jtarr=1, NTARR
             call qinterp(XA(1: NP1), AMETR(1: NP1), NP1, x_grid(1: n_grid), XAXES(1: n_grid, KN), n_grid)
             x_grid(N11) = 1.
             dat_exp(N11) = DATAX(min(n_grid, N11), KN)
- 
+
         CASE(17)
             call astra_stop(err_msg_grid)
 

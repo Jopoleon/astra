@@ -17,7 +17,6 @@ subroutine INTVAR
 !          eg. (AB, RTOR, ELONM, TRICH or set interactively)
 !-----------------------------------------------------------------------
 
-use parameter_inc, only: NTVAR
 use io_mod, only: IFDFVX
 use const_inc, only: varxValues, varValues, TIME
 use exp_data, only: raw_scalars
@@ -33,7 +32,7 @@ call markloc('INTVAR')
 N1 = 0
 N2 = 0
 
-do jtvar=1, NTVAR
+do jtvar=1, raw_scalars%nt_all
     if (raw_scalars%var_index(jtvar) == 0) EXIT
     N2 = N1
     N1 = raw_scalars%var_index(jtvar)
