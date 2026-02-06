@@ -18,6 +18,7 @@ use ext_bnd, only: use_ext_bnd
 use transport2fbe, only: transport2fbe_init
 use json_vars, only: read_metadata
 use json_write, only: write_json
+use exp_data, only: read_input
 
 implicit none
 

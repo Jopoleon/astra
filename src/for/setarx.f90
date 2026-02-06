@@ -14,7 +14,7 @@ use status_inc, only: AMETR, RHO, FP, VOLUM, profiles_x, rho_pol
 use numerical_tools, only: qinterp, sortab, smooth
 use io_mod, only: jbeg_arrx, IFDFAX, XAXES, DATAX, NPTM, TOUTX
 use debugger, only: markloc, astra_stop
-use expdat, only: raw_profiles
+use exp_data, only: raw_profiles
 
 implicit  none
 

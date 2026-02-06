@@ -1,3 +1,34 @@
+!--------------------------------
+module exp_data
+
+use parameter_inc, only: NTVAR, NTARR, NRDX, n_bnd_max, nt_bnd_max
+
+implicit none
+
+type rawScalars
+    integer, dimension(NTVAR) :: var_index=0
+    double precision, dimension(NTVAR) :: time=0., data=0., error=0.
+    character(len=6), dimension(NTVAR) :: label
+endtype rawScalars
+type rawProfiles
+    integer, dimension(NTARR) :: arr_index=0, jbeg_grid=0, jbeg_data=0, grid_type=0, nrho=0
+    double precision, dimension(NTARR) :: time=0., filter=0.001
+    character(len=6), dimension(NTARR) :: label
+    real*4, dimension(NRDX*NTARR) :: data
+endtype rawProfiles
+type rawBoundary
+    integer :: nt, n_theta
+    double precision, dimension(nt_bnd_max) :: time=0.
+    double precision, dimension(nt_bnd_max*n_bnd_max) :: R=0., Z=0.
+endtype rawBoundary
+
+type(rawScalars)  :: raw_scalars
+type(rawProfiles) :: raw_profiles
+type(rawBoundary) :: raw_boundary
+
+contains
+
+!----------------------------------------------------------------------
 subroutine read_input
 !----------------------------------------------------------------------|
 !  NTVAR    maximal number of time slices for all variables
@@ -27,7 +58,6 @@ use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
 use io_mod, only: exp_file, equ_file, machine, NBfile, CCOILX, VCOILX, &
     IFDFVX, IFDFAX, jbeg_arrx, NGR, n_coils, nt_coils
 
-use expdat, only: raw_scalars, raw_profiles, raw_boundary
 use char_manip, only: to_upper, str_in_list, clean_string
 use debugger, only: markloc, debug, astra_stop
 use parse_utils, only: path_split, split2array2, &
@@ -37,8 +67,6 @@ use plasma_state, only: plasma_up
 use json_vars, only: read_metadata, internNames, constNames, varNames, profxNames, &
     n_intern, n_const, n_var, n_profx
 use machine_config, only: config_read
-
-implicit none
 
 logical :: log_exists
 integer :: jarr, INTYPE, jtype, jbdry, ntim, ntim1, IVAR
@@ -51,7 +79,7 @@ integer :: nt_u, nx_u, ios, ndim_u, jvar, jrt, jt, jthe, nbnd
 double precision, allocatable :: t_u(:), x_u(:), var_u(:), bnd_rz(:), bnd_r(:), bnd_z(:)
 double precision :: XBDRY, YB, YB1, YXB, YXB1, ALFA, ALFA_GLOB, &
     VRDATA, FACTOR, TIMEVR, VRERR, ROC3A, YTP=-1.d9
-character(len=6) :: VNAM, VNAMO, VNAMU, VNAMX, VTIM, VDAT, VERR, VARNAM, ARRNAM, keyword
+character(len=6) :: VNAM, VNAMO, VNAMU, VNAMX, VTIM, VDAT, VERR, keyword
 character(len=31) :: rholbl
 character(len=132) :: strarray(20), STRI, lin_upper, dir_path, fname, &
     err_msg, err_format, err_msg_exp, file_in, uname, uvar, workflow
@@ -847,8 +875,6 @@ end subroutine read_input
 subroutine READF6(LINE, F6, IERR)
 ! Read a number in LINE to 6-positinal field 
 
-implicit none
-
 character(len=6), intent(in) :: LINE
 integer, intent(out) :: IERR
 double precision, intent(out) :: F6
@@ -912,8 +938,6 @@ character(len=6) function VARNAM(str_in, ierr)
 
 use char_manip, only: esc_ch, tab_ch
 
-implicit none
-
 integer, intent(out) :: ierr
 character(len=*), intent(in) :: str_in
 
@@ -957,8 +981,6 @@ character(len=6) function ARRNAM(str_in)
 
 use char_manip, only: clean_string, to_upper
 
-implicit none
-
 character(len=*), intent(in) :: str_in
 
 integer :: nlen
@@ -1000,8 +1022,6 @@ subroutine CHECKU(INTYPE, ABC, AB, XBDRY, YX, jrad, jbdry, STRING, FILENA)
 !----------------------------------------------------------------------|
 
 use char_manip, only: to_upper, clean_string
-
-implicit none
 
 integer, intent(in)  ::  jrad
 integer, intent(out) :: jbdry, INTYPE
@@ -1072,3 +1092,5 @@ endif
 
 return
 end subroutine CHECKU
+
+end module exp_data

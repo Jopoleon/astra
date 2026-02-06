@@ -80,7 +80,7 @@ use outcmn_inc, only: astra_gui, plot_area, &
     NXOUT, NAMEX, LTOUT, &
     GRAL, GRAP, pixel_ymid, meter2pixel, &
     Black, WarningColor, EraseColor, Red, Blue, Green, White
-use expdat, only: raw_profiles
+use exp_data, only: raw_profiles
 use dbl2char, only: fmt_xf
 use char_manip, only: len_trim_tab, str_in_list
 use debugger, only: markloc, debug, astra_stop
@@ -542,7 +542,7 @@ subroutine plot_lcfs(ifnew, IYO, time_in)
 ! IFNEW > 10 Call from Review. (JIFNEW-10) is used to control erasing
 
 use outcmn_inc, only: Red, EraseColor, pixel_ymid, meter2pixel
-use expdat, only: raw_boundary
+use exp_data, only: raw_boundary
 
 implicit none
 

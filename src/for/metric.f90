@@ -1044,7 +1044,7 @@ use status_inc, only: G11, G22, G22E, G33, G33E, G41, G42, G43, G44, G45, &
 use plasma_state, only: plasma_up, plasma_trig
 use debugger, only: markloc
 use ext_bnd, only: use_ext_bnd
-use expdat, only: raw_boundary
+use exp_data, only: raw_boundary
 
 implicit none
 
@@ -1273,7 +1273,7 @@ subroutine BNDRY(RPB, ZPB)
 !  call BNDRY(RZPB, RZPB(n_bnd+1))
 !---------------------------------------------------------------------
 
-use expdat, only: raw_boundary
+use exp_data, only: raw_boundary
 use const_inc, only: GP2, TIME, RTOR, SHIFT, ABC, TRIAN, UPDWN, ELONG
 use ext_bnd, only: ext_bnd_in, use_ext_bnd
 
