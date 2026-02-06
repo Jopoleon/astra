@@ -15,31 +15,93 @@ contains
     use io_mod, only: awd, exp_file
     use exp_data, only: raw_scalars, raw_profiles, raw_boundary
 
-    integer :: ios
+    integer :: ios, i, ndim
     character(len=180) :: jsonx_out
     type(json_core) :: jCore
 
     write(jsonx_out, '(4A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), '_x.json'
 
     open(nunit_x, file=TRIM(jsonx_out), iostat=ios)
+
     write(nunit_x, '(A/)') '{'
+
+! Scalars
+
+    write(nunit_x, '(A/)') '   "scalars": {'
+
+    write(nunit_x, '(A)') '        "timeStream": {"unit": "s", "data": ['
+    call prettyArray(nunit_x, raw_scalars%nt_all, raw_scalars%time)
+
+    write(nunit_x, '(A)') '        "dataStream": {"data": ['
+    call prettyArray(nunit_x, raw_scalars%nt_all, raw_scalars%data)
+
+    write(nunit_x, '(A/)', advance='no') '        "labels": {"data": ['
+    do i=1, raw_scalars%nt_all-1
+        write(nunit_x, '(3A)', advance='no') '"', TRIM(raw_scalars%label(i)), '", '
+        if (MODULO(i, 10) == 0) write(nunit_x, '(A)') '        '
+    enddo
+    write(nunit_x, '(3A)') '"', TRIM(raw_scalars%label(raw_scalars%nt_all)), '"]'
+    write(nunit_x, '(A/)') '        }'
+
+    write(nunit_x, '(A/)') '    },'
+
+! Profiles
+
+    write(nunit_x, '(A)') '   "profiles": {'
+    write(nunit_x, '(A/)') '    },'
+
+! Boundary
+
+    write(nunit_x, '(A, i3, A, i3, A/)') '   "boundary": { "nt": ', raw_boundary%nt, &
+         ' "n_theta": ', raw_boundary%n_theta, ','
+
+    write(nunit_x, '(A)') '        "time": {"unit": "s", "data": ['
+    call prettyArray(nunit_x, raw_boundary%nt, raw_boundary%time)
+
+    ndim = raw_boundary%nt * raw_boundary%n_theta
+
+    write(nunit_x, '(A)') '        "R": {"unit": "m", "data": ['
+    call prettyArray(nunit_x, ndim, raw_boundary%R)
+
+    write(nunit_x, '(A)') '        "Z": {"unit": "m", "data": ['
+    call prettyArray(nunit_x, ndim, raw_boundary%Z, dict_close=.true.)
+
+    write(nunit_x, '(A/)') '    }'
+
+! Closing
+
     write(nunit_x, '(A)') '}'
     close(nunit_x)
 
-    write(*, *) 'NT_ALL', raw_scalars%nt_all
-    write(*, *) raw_scalars%var_index(1: raw_scalars%nt_all)
-    write(*, *) raw_scalars%var_index(raw_scalars%nt_all)
-    write(*, *) raw_scalars%var_index(raw_scalars%nt_all+1)
-    write(*, *) raw_scalars%time(raw_scalars%nt_all)
-    write(*, *) raw_scalars%time(raw_scalars%nt_all+1)
-    write(*, *) raw_scalars%data(raw_scalars%nt_all)
-    write(*, *) raw_scalars%data(raw_scalars%nt_all+1)
-    write(*, *) raw_scalars%label(raw_scalars%nt_all)
-    write(*, *) raw_scalars%label(raw_scalars%nt_all+1)
     write(*, '(A)') '   Written file ' // TRIM(jsonx_out)
+
+11  format(5('"', A, '",'))
 
     return
     end subroutine write_jsonx
+
+!---------------------------------------------------------------------
+    subroutine prettyArray(n_u, ndim, arr, dict_close)
+
+    integer, intent(in) :: n_u, ndim
+    double precision, intent(in) :: arr(*)
+    logical, intent(in), optional :: dict_close
+
+    integer :: i
+
+    do i=1, ndim-1
+        write(n_u, '(es16.8e3, A)', advance='no') arr(i), ','
+        if (MODULO(i, 6) == 0) write(n_u, '(A)') ''
+    enddo
+    write(n_u, '(es16.8e3, A)') arr(ndim), ']'
+    if (present(dict_close)) then
+        write(n_u, '(A/)') '        }'
+    else
+        write(n_u, '(A/)') '        },'
+    endif
+ 
+    return
+    end subroutine prettyArray
 
 !---------------------------------------------------------------------
     subroutine write_json
@@ -101,7 +163,7 @@ contains
     do j=1, n_prof-1
         call write_array((/NA1/), profiles(1:NA1, j), profPtr)
     enddo
-    call write_arr((/NA1/), profiles(1:NA1, n_prof), profPtr) ! no comma
+    call write_array((/NA1/), profiles(1:NA1, n_prof), profPtr, dict_close=.true.) ! no comma
 
     write(nunit, '(A/)') '},' ! End of "astra" dictionary
 
@@ -168,7 +230,7 @@ contains
     call write_array((/nR, nZ/), equil_now%eqgeometry%rectgrid%psirz2d, equil_rectPtr)
     call write_array((/nR, nZ/), equil_now%eqgeometry%rectgrid%fdia2d , equil_rectPtr)
     call write_array((/nR/), equil_now%eqgeometry%rectgrid%r2d, equil_rectPtr)
-    call write_arr((/nZ/), equil_now%eqgeometry%rectgrid%z2d, equil_rectPtr) ! No comma
+    call write_array((/nZ/), equil_now%eqgeometry%rectgrid%z2d, equil_rectPtr, dict_close=.true.) ! No comma
     write(nunit, '(A)') '}' ! End of "equil" dictionary
 
 !-----------
@@ -212,19 +274,6 @@ contains
     end subroutine write_scalar_block
 
 !---------------------------------------------------------------
-    subroutine write_array(dims, arr_in, json_in)
-
-    integer, intent(in), dimension(:) :: dims
-    double precision, intent(in), dimension(*) :: arr_in
-    type(json_value), intent(in), pointer :: json_in
-
-    call write_arr(dims, arr_in, json_in)
-    write(nunit, '(A)') ','
-
-    return
-    end subroutine write_array
-
-!---------------------------------------------------------------
     subroutine ndim_string(dims, ndim, sdim)
 
     integer, intent(in), dimension(:) :: dims
@@ -243,11 +292,12 @@ contains
     end subroutine ndim_string
 
 !---------------------------------------------------------------
-    subroutine write_arr(dims, arr_in, json_in)
+    subroutine write_array(dims, arr_in, json_in, dict_close)
 
     integer, intent(in), dimension(:) :: dims
     double precision, intent(in), dimension(*) :: arr_in
     type(json_value), intent(in), pointer :: json_in
+    logical, intent(in), optional :: dict_close
 
     logical :: found
     integer :: i, j, ndim, ij
@@ -268,7 +318,6 @@ contains
     call jCore%get(dictPointer, 'desc', sdesc, found)
     call jCore%info(dictPointer, name=sname)
     write(nunit, 102, advance="no") sname, TRIM(sdim), sunit, sdesc
-
 
     if (SIZE(dims) == 1) then
         allocate(array(ndim))
@@ -314,8 +363,9 @@ contains
     endif
 
     write(nunit, '(A)') ']}' ! No comma after last array entry
+    if (.not. present(dict_close)) write(nunit, '(A)') ','
 
     return
-    end subroutine write_arr
+    end subroutine write_array
 
 end module json_write

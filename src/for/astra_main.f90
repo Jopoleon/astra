@@ -26,11 +26,10 @@ implicit none
 ! Find self-consistent initial configuration
 !-------------------------------------------
 
-integer :: j, jj, IM, ios, XSC0, XSC, jt1, jt2, jt3, jt_req, jkey, ierr, jt_out=0, rate
+integer :: j, jj, IM, ios, XSC0, XSC, jt1, jt2, jt3, jt_req, jkey, ierr, jt_out, rate
+double precision :: t_stop
 character(len=132) :: STRI
 integer, external :: IFKEY, IFTREQ
-
-save jt_out
 
 !-------------------- Initial settings --------------------------------|
 
@@ -99,7 +98,9 @@ endif
 ! Time step loop
 !---------------
 
-do while (TIME - TEND + 1.E-8 < DPOUT + TAU)
+jt_out = 0
+t_stop = TEND + max(DPOUT, TAU)
+do while (TIME < t_stop)
     if ((TIME - TSTART + 1.E-8)/DPOUT >= jt_out) then
         call write_json
         jt_out = jt_out + 1
