@@ -13,6 +13,7 @@ type rawScalars
     character(len=6), dimension(NTVAR) :: label
 endtype rawScalars
 type rawProfiles
+    integer :: nt_arr, n_groups
     integer, dimension(NTARR) :: arr_index=0, jbeg_grid=0, jbeg_data=0, grid_type=0, nrho=0
     double precision, dimension(NTARR) :: time=0., filter=0.001
     character(len=6), dimension(NTARR) :: label
@@ -867,6 +868,8 @@ contains
     TIMEQL = TIME - DTEQL - 1.d-7
     TAUPRP = TAUMIN
     if (TIME > TINIT + 1.025*abs(TSCALE)) TINIT = TSTART
+
+    raw_profiles%n_groups = NGR
 
     return
 

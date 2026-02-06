@@ -36,18 +36,39 @@ contains
     call prettyFloatArray(nunit_x, raw_scalars%nt_all, raw_scalars%data)
 
     write(nunit_x, '(A/)', advance='no') '        "labels": {"data": ['
-    do i=1, raw_scalars%nt_all-1
-        write(nunit_x, '(3A)', advance='no') '"', TRIM(raw_scalars%label(i)), '", '
-        if (MODULO(i, 10) == 0) write(nunit_x, '(A)') '        '
-    enddo
-    write(nunit_x, '(3A)') '"', TRIM(raw_scalars%label(raw_scalars%nt_all)), '"]'
-    write(nunit_x, '(A/)') '        }'
+    call prettyCharArray(nunit_x, raw_scalars%nt_all, raw_scalars%label, dict_end=.true.)
 
     write(nunit_x, '(A/)') '    },'
 
 ! Profiles
 
-    write(nunit_x, '(A)') '   "profiles": {'
+    write(nunit_x, '(A, i0, A/)') '   "profiles": { "n_group": ', raw_profiles%n_groups, ','
+    ndim = raw_profiles%n_groups
+
+    write(nunit_x, '(A)') '        "label": {"data": ['
+    call prettyCharArray(nunit_x, ndim, raw_profiles%label)
+
+    write(nunit_x, '(A)') '        "arr_index": {"data": ['
+    call prettyIntArray(nunit_x, ndim, raw_profiles%arr_index)
+
+    write(nunit_x, '(A)') '        "jbeg_grid": {"data": ['
+    call prettyIntArray(nunit_x, ndim, raw_profiles%jbeg_grid)
+
+    write(nunit_x, '(A)') '        "jbeg_data": {"data": ['
+    call prettyIntArray(nunit_x, ndim, raw_profiles%jbeg_data)
+
+    write(nunit_x, '(A)') '        "grid_type": {"data": ['
+    call prettyIntArray(nunit_x, ndim, raw_profiles%grid_type)
+
+    write(nunit_x, '(A)') '        "nrho": {"data": ['
+    call prettyIntArray(nunit_x, ndim, raw_profiles%nrho)
+
+    write(nunit_x, '(A)') '        "time": {"data": ['
+    call prettyFloatArray(nunit_x, ndim, raw_profiles%time)
+
+    write(nunit_x, '(A)') '        "filter": {"data": ['
+    call prettyFloatArray(nunit_x, ndim, raw_profiles%filter, dict_end=.true.)
+
     write(nunit_x, '(A/)') '    },'
 
 ! Boundary
@@ -102,6 +123,52 @@ contains
  
     return
     end subroutine prettyFloatArray
+
+!---------------------------------------------------------------------
+    subroutine prettyCharArray(n_u, ndim, arr, dict_end)
+
+    integer, intent(in) :: n_u, ndim
+    character(len=*), intent(in) :: arr(*)
+    logical, intent(in), optional :: dict_end
+
+    integer :: i
+
+    do i=1, ndim-1
+        write(n_u, '(3A)', advance='no') '"', arr(i), '",'
+        if (MODULO(i, 10) == 0) write(n_u, '(A)') ''
+    enddo
+    write(n_u, '(3A)') '"', arr(ndim), '"]'
+    if (present(dict_end)) then
+        write(n_u, '(A/)') '        }'
+    else
+        write(n_u, '(A/)') '        },'
+    endif
+ 
+    return
+    end subroutine prettyCharArray
+
+!---------------------------------------------------------------------
+    subroutine prettyIntArray(n_u, ndim, arr, dict_end)
+
+    integer, intent(in) :: n_u, ndim
+    integer, intent(in) :: arr(*)
+    logical, intent(in), optional :: dict_end
+
+    integer :: i
+
+    do i=1, ndim-1
+        write(n_u, '(i0, A)', advance='no') arr(i), ', '
+        if (MODULO(i, 6) == 0) write(n_u, '(A)') ''
+    enddo
+    write(n_u, '(i0, A)') arr(ndim), ']'
+    if (present(dict_end)) then
+        write(n_u, '(A/)') '        }'
+    else
+        write(n_u, '(A/)') '        },'
+    endif
+ 
+    return
+    end subroutine prettyIntArray
 
 !---------------------------------------------------------------------
     subroutine write_json

@@ -8,7 +8,7 @@ subroutine SETARX(ICALL)
 !
 !--------------------------------------------------------------------
 
-use parameter_inc, only: NRD, NRDX, NTARR
+use parameter_inc, only: NRD, NTARR
 use const_inc, only: TIME, BTOR, GP, AB, ABC, ROC, VOLUME, NA1, NAB, PSIAX
 use status_inc, only: AMETR, RHO, FP, VOLUM, profiles_x, rho_pol
 use numerical_tools, only: qinterp, sortab, smooth
@@ -23,7 +23,7 @@ integer, intent(in) :: ICALL
 integer :: jprof, n_grid, gridtype, jtarr, jt_start, jto, jt_end, kn, j3, &
     jtn, jt, jt0, jx, jy, NP1, N11
 double precision :: RORZ, RZ2A, YDT, YDTA, YDTB, Y, Y1, dxl, dxr
-double precision, dimension(NRDX) :: x_grid, dat_exp
+double precision, dimension(:), allocatable :: x_grid, dat_exp
 double precision, dimension(NRD) :: XA, DA
 character(len=132) :: err_msg, err_msg_grid
 !--------------------------------------------------------------------
@@ -46,7 +46,7 @@ character(len=132) :: err_msg, err_msg_grid
 
 call markloc('SETARX')
 
-var_loop: do jtarr=1, NTARR
+var_loop: do jtarr=1, raw_profiles%n_groups
     if (raw_profiles%arr_index(jtarr) == 0) EXIT
     jprof = 0
     if (raw_profiles%arr_index(jtarr+1) == 0) then
@@ -107,7 +107,13 @@ var_loop: do jtarr=1, NTARR
 !      DATAX(n_grid, KN) data on this grid
 ! (3) profiles_x(NRD, KN) smoothed input arrays interpolated in time
 
-        n_grid   = raw_profiles%nrho(jt)
+        n_grid = raw_profiles%nrho(jt)
+        if (allocated(x_grid)) then
+            deallocate(x_grid)
+            deallocate(dat_exp)
+        endif
+        allocate(x_grid(n_grid+1), dat_exp(n_grid+1))
+
         gridtype = raw_profiles%grid_type(jt)
         write(err_msg_grid, '(A, i, A)')  'Option GRIDTYPE=', gridtype, ' not implemented, exiting'
         jx = raw_profiles%jbeg_grid(jt)
@@ -176,7 +182,7 @@ var_loop: do jtarr=1, NTARR
             do N11=n_grid, 1, -1
                 if (x_grid(N11) <= dxr*AB) EXIT
             enddo
-            if (x_grid(N11)  < dxl*AB) N11 = n_grid + 1
+            if (x_grid(N11) < dxl*AB) N11 = n_grid + 1
             x_grid(: N11-1) = x_grid(: N11-1)/AB
             call qinterp(XA(1: NP1), AMETR(1: NP1), NP1, x_grid(1: n_grid), XAXES(1: n_grid, KN), n_grid)
             x_grid(N11) = 1.
@@ -285,7 +291,7 @@ var_loop: do jtarr=1, NTARR
             do N11=n_grid, 1, -1
                 if (x_grid(N11) <= dxr*AB) EXIT
             enddo
-            if (x_grid(N11)  < dxl*AB) N11 = n_grid+1
+            if (x_grid(N11) < dxl*AB) N11 = n_grid+1
             dat_exp(N11) = dat_exp(min(n_grid, N11))
             x_grid(: N11-1) = x_grid(: N11-1)/AB
             x_grid(N11) = 1.
@@ -342,7 +348,6 @@ var_loop: do jtarr=1, NTARR
             jt = jtn
         endif
         profiles_x(: NRD, KN) = DA(: NRD)
-
     enddo time_loop
 
     ydt  = (raw_profiles%time(jtn) - raw_profiles%time(jto))
@@ -359,6 +364,11 @@ var_loop: do jtarr=1, NTARR
     endif
 
 enddo var_loop
+
+if (allocated(x_grid)) then
+    deallocate(x_grid)
+    deallocate(dat_exp)
+endif
 
 return
 end subroutine SETARX
