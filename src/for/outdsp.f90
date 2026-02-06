@@ -734,6 +734,8 @@ double precision, dimension(nrho_plot+1, n_surf) :: xplot_old, yplot_old
 
 save xplot_old, yplot_old
 
+if (SIZE(equil_now%coord_sys%position%r) == 0) return
+
 n_rho_surf = NINT(NEQUIL)
 n_theta    = NINT(MEQUIL)
 n_theta1 = n_theta + 1
