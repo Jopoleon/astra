@@ -28,7 +28,7 @@ use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
 use io_mod, only: exp_file, equ_file, machine, NBfile, CCOILX, VCOILX, &
     IFDFVX, IFDFAX, jbeg_arrx, NGR, n_bnd, n_coils, nt_bnd, nt_coils
 
-use expdat, only: raw_scalars, raw_profiles, BNDR, BNDZ, BNDTIM
+use expdat, only: raw_scalars, raw_profiles, raw_boundary
 use char_manip, only: to_upper, str_in_list, clean_string
 use debugger, only: markloc, debug, astra_stop
 use parse_utils, only: path_split, split2array2, &
@@ -49,7 +49,7 @@ integer :: KAB, KAWALL, KRTOR, KELONM, KTRICH
 integer :: nvar, n_color, n_words, i_filter_glob
 integer :: nt_u, nx_u, ios, ndim_u, jvar, jrt, jt, jthe
 
-double precision, allocatable :: t_u(:), x_u(:), var_u(:), bnd_rz(:)
+double precision, allocatable :: t_u(:), x_u(:), var_u(:), bnd_rz(:), bnd_r(:), bnd_z(:)
 double precision :: XBDRY, YB, YB1, YXB, YXB1, ALFA, ALFA_GLOB, &
     VRDATA, FACTOR, TIMEVR, VRERR, ROC3A, YTP=-1.d9
 character(len=6) :: VNAM, VNAMO, VNAMU, VNAMX, VTIM, VDAT, VERR, VARNAM, ARRNAM, keyword
@@ -491,19 +491,17 @@ parse_exp_2d: do
 ! r_2(t_1) r_2(t_2) r_2(t_3) 
 ! z_2(t_1) z_2(t_2) z_2(t_3)
 
-        read(201, *, iostat=ios) (BNDTIM(j), j=1, nt_bnd)
+        read(201, *, iostat=ios) (raw_boundary%time(j), j=1, nt_bnd)
         allocate(bnd_rz(2*nt_bnd*n_bnd))
         read(201, fmt=*, iostat=ios) (bnd_rz(j), j=1, 2*nt_bnd*n_bnd)
         jrt = 1
         do jthe=1, n_bnd
             do jt=1, nt_bnd
-                BNDR((jthe-1)*nt_bnd + jt) = bnd_rz(jrt)
+                raw_boundary%R((jthe-1)*nt_bnd + jt) = bnd_rz(jrt)
+                raw_boundary%Z((jthe-1)*nt_bnd + jt) = bnd_rz(jrt+nt_bnd)
                 jrt = jrt + 1
             enddo
-            do jt=1, nt_bnd
-                BNDZ((jthe-1)*nt_bnd + jt) = bnd_rz(jrt)
-                jrt = jrt + 1
-            enddo
+            jrt = jrt + nt_bnd 
         enddo
         deallocate(bnd_rz)
 
@@ -530,8 +528,8 @@ parse_exp_2d: do
         endif
 
         allocate(x_u(nx_u))
-        call ufrd('udb/' // trim(STRI) // '_r', ndim_u, nt_u, nx_u, BNDTIM(1:nt_u), x_u, BNDR(1:nx_u))
-        call ufrd('udb/' // trim(STRI) // '_z', ndim_u, nt_u, nx_u, BNDTIM(1:nt_u), x_u, BNDZ(1:nx_u))
+        call ufrd('udb/' // trim(STRI) // '_r', ndim_u, nt_u, nx_u, raw_boundary%time(1:nt_u), x_u, raw_boundary%R(1:nx_u))
+        call ufrd('udb/' // trim(STRI) // '_z', ndim_u, nt_u, nx_u, raw_boundary%time(1:nt_u), x_u, raw_boundary%Z(1:nx_u))
         deallocate(x_u)
 
         VNAMO = VNAM
@@ -730,14 +728,14 @@ close(201)
 if (nt_bnd > 0) then
 !find time index of most proximum boundary
     j=1
-    do jt=1,nt_bnd
-        if (BNDTIM(jt) <= TSTART) j = jt
+    do jt=1, nt_bnd
+        if (raw_boundary%time(jt) <= TSTART) j = jt
     enddo
-    jt=j
+    jt = j
     allocate(bnd_rz(2*n_bnd))
     do jthe=1, n_bnd
-        bnd_rz(jthe)      = BNDR((jthe-1)*nt_bnd + jt)
-        bnd_rz(n_bnd+jthe) = BNDZ((jthe-1)*nt_bnd + jt) 
+        bnd_rz(jthe)       = raw_boundary%R((jthe-1)*nt_bnd + jt)
+        bnd_rz(n_bnd+jthe) = raw_boundary%Z((jthe-1)*nt_bnd + jt) 
     enddo
 !calculate ABC
     ABC = (maxval(bnd_rz(1: n_bnd)) - minval(bnd_rz(1: n_bnd)))/2.

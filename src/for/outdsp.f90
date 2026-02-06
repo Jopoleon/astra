@@ -543,7 +543,7 @@ subroutine plot_lcfs(ifnew, IYO, time_in)
 
 use io_mod, only: n_bnd, nt_bnd
 use outcmn_inc, only: Red, EraseColor, pixel_ymid, meter2pixel
-use expdat, only: BNDTIM, BNDR, BNDZ
+use expdat, only: raw_boundary
 
 implicit none
 
@@ -572,33 +572,33 @@ if (nt_bnd <= 1) then
     jj = 1
     do j=1, n_bnd, j2
         j1 = max(1, nt_bnd + (j - 1)*jj)
-        PTM(1) = BNDR(j1)*meter2pixel
-        PTM(2) = pixel_ymid - BNDZ(j1)*meter2pixel
+        PTM(1) = raw_boundary%R(j1)*meter2pixel
+        PTM(2) = pixel_ymid - raw_boundary%Z(j1)*meter2pixel
         call NMARK(PTM, 4)   !Use (PTM, 4) for *
         IYO(1, j) = PTM(1)
         IYO(2, j) = PTM(2)
     enddo
-else if (time_in <= BNDTIM(1) .or. time_in >= BNDTIM(nt_bnd)) then ! extrapolate flat
+else if (time_in <= raw_boundary%time(1) .or. time_in >= raw_boundary%time(nt_bnd)) then ! extrapolate flat
     jj = nt_bnd
     do j=1, n_bnd, j2
         j1 = nt_bnd + (j - 1)*jj
-        PTM(1) = BNDR(j1)*meter2pixel
-        PTM(2) = pixel_ymid - BNDZ(j1+jj)*meter2pixel
+        PTM(1) = raw_boundary%R(j1)*meter2pixel
+        PTM(2) = pixel_ymid - raw_boundary%Z(j1+jj)*meter2pixel
         call NMARK(PTM, 4)   !Use (PTM, 4) for *
         IYO(1, j) = PTM(1)
         IYO(2, j) = PTM(2)
     enddo
 else               ! interpolate linearly
     do j=1, nt_bnd   ! Find current time
-        if (time_in > BNDTIM(j)) jj = j
+        if (time_in > raw_boundary%time(j)) jj = j
     enddo
-    YS  = BNDTIM(jj+1) - BNDTIM(jj)
-    YXL = (time_in - BNDTIM(jj  ))/YS
-    YXR = (time_in - BNDTIM(jj+1))/YS
+    YS  = raw_boundary%time(jj+1) - raw_boundary%time(jj)
+    YXL = (time_in - raw_boundary%time(jj  ))/YS
+    YXR = (time_in - raw_boundary%time(jj+1))/YS
     do j=1, n_bnd, j2 ! Time differentiation
         j1 = jj + (j - 1)*nt_bnd
-        YX = YXL*BNDR(j1+1) - YXR*BNDR(j1)
-        YZ = YXL*BNDZ(j1+1) - YXR*BNDZ(j1)
+        YX = YXL*raw_boundary%R(j1+1) - YXR*raw_boundary%R(j1)
+        YZ = YXL*raw_boundary%Z(j1+1) - YXR*raw_boundary%Z(j1)
         PTM(1) = YX*meter2pixel
         PTM(2) = pixel_ymid - YZ*meter2pixel
         call NMARK(PTM, 4)
@@ -733,6 +733,8 @@ double precision, dimension(n_surf) :: xplot, yplot
 double precision, dimension(nrho_plot+1, n_surf) :: xplot_old, yplot_old
 
 save xplot_old, yplot_old
+
+if (SIZE(equil_now%coord_sys%position%r) == 0) return
 
 n_rho_surf = NINT(NEQUIL)
 n_theta    = NINT(MEQUIL)

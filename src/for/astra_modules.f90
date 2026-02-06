@@ -27,12 +27,14 @@ type rawProfiles
     character(len=6), dimension(NTARR) :: label
     real*4, dimension(NRDX*NTARR) :: data
 endtype rawProfiles
+type rawBoundary
+    double precision, dimension(nt_bnd_max) :: time=0.
+    double precision, dimension(nt_bnd_max*n_bnd_max) :: R, Z
+endtype rawBoundary
 
 type(rawScalars)  :: raw_scalars
 type(rawProfiles) :: raw_profiles
-
-double precision, dimension(nt_bnd_max) :: BNDTIM
-double precision, dimension(nt_bnd_max*n_bnd_max) :: BNDR, BNDZ
+type(rawBoundary) :: raw_boundary
 
 end module expdat
 

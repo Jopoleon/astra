@@ -1275,7 +1275,7 @@ subroutine BNDRY(RPB, ZPB)
 !---------------------------------------------------------------------
 
 use io_mod, only: n_bnd, nt_bnd
-use expdat, only: BNDTIM, BNDR, BNDZ
+use expdat, only: raw_boundary
 use const_inc, only: GP2, TIME, RTOR, SHIFT, ABC, TRIAN, UPDWN, ELONG
 use ext_bnd, only: ext_bnd_in, use_ext_bnd
 
@@ -1296,8 +1296,6 @@ if (nt_bnd <= 1) then
                 do j=1, n_bnd
                     ZPB(j) = ext_bnd_in(j, 2)
                     RPB(j) = ext_bnd_in(j, 1)
-                    BNDZ(j) = ZPB(j)
-                    BNDR(j) = RPB(j)
                 enddo
             else
                 do j=1, n_bnd
@@ -1305,67 +1303,66 @@ if (nt_bnd <= 1) then
                     YD1 = sin(YFI)
                     ZPB(j) = UPDWN + ABC*ELONG*YD1
                     RPB(j) = RTOR + SHIFT + ABC*(cos(YFI) - TRIAN*YD1**2)
-                    BNDZ(j) = ZPB(j)
-                    BNDR(j) = RPB(j)
                 enddo
             endif
             return
         endif
 
-        yd1 = 0.75  ! sin^2(pi/3)
-        yd2 = 0.5  ! cos(pi/3) 
-        ydt = sqrt(yd1)  ! sin(pi/3)
-        BNDR(1) = RTOR + SHIFT - ABC*TRIAN
-        BNDZ(1) = UPDWN + ABC*ELONG
-        BNDR(2) = RTOR + SHIFT - ABC*TRIAN
-        BNDZ(2) = UPDWN - ABC*ELONG
-        BNDR(3) = RTOR + SHIFT - ABC
-        BNDZ(3) = UPDWN
-        BNDR(4) = RTOR + SHIFT + ABC
-        BNDZ(4) = UPDWN
-        BNDR(5) = RTOR + SHIFT - ABC*(TRIAN*yd1 + yd2)
-        BNDZ(5) = UPDWN + ABC*ELONG*ydt
-        BNDR(6) = RTOR + SHIFT - ABC*(TRIAN*yd1 - yd2)
-        BNDZ(6) = UPDWN + ABC*ELONG*ydt
-        BNDR(7) = RTOR + SHIFT - ABC*(TRIAN*yd1 - yd2)
-        BNDZ(7) = UPDWN - ABC*ELONG*ydt
-        BNDR(8) = RTOR + SHIFT - ABC*(TRIAN*yd1 + yd2)
-        BNDZ(8) = UPDWN - ABC*ELONG*ydt
-    endif
-    do j=1, n_bnd
-        RPB(j) = BNDR(j)
-        ZPB(j) = BNDZ(j)
-    enddo
+        yd1 = 0.75      ! sin^2(pi/3)
+        yd2 = 0.5       ! cos(pi/3) 
+        ydt = sqrt(yd1) ! sin(pi/3)
+        RPB(1) = RTOR + SHIFT - ABC*TRIAN
+        ZPB(1) = UPDWN + ABC*ELONG
+        RPB(2) = RTOR + SHIFT - ABC*TRIAN
+        ZPB(2) = UPDWN - ABC*ELONG
+        RPB(3) = RTOR + SHIFT - ABC
+        ZPB(3) = UPDWN
+        RPB(4) = RTOR + SHIFT + ABC
+        ZPB(4) = UPDWN
+        RPB(5) = RTOR + SHIFT - ABC*(TRIAN*yd1 + yd2)
+        ZPB(5) = UPDWN + ABC*ELONG*ydt
+        RPB(6) = RTOR + SHIFT - ABC*(TRIAN*yd1 - yd2)
+        ZPB(6) = UPDWN + ABC*ELONG*ydt
+        RPB(7) = RTOR + SHIFT - ABC*(TRIAN*yd1 - yd2)
+        ZPB(7) = UPDWN - ABC*ELONG*ydt
+        RPB(8) = RTOR + SHIFT - ABC*(TRIAN*yd1 + yd2)
+        ZPB(8) = UPDWN - ABC*ELONG*ydt
+    else ! nt_nbd = 1
+        do j=1, n_bnd
+            RPB(j) = raw_boundary%R(j)
+            ZPB(j) = raw_boundary%Z(j)
+        enddo
+    endif 
     return
 endif
 
-if (TIME <= BNDTIM(1)) then ! Take bnd at time=t1
+if (TIME <= raw_boundary%time(1)) then ! Take bnd at time=t1
     do j=1, n_bnd
-        RPB(j) = BNDR(1 + (j - 1)*nt_bnd)
-        ZPB(j) = BNDZ(1 + (j - 1)*nt_bnd)
+        RPB(j) = raw_boundary%R(1 + (j - 1)*nt_bnd)
+        ZPB(j) = raw_boundary%Z(1 + (j - 1)*nt_bnd)
     enddo
     return
 endif
-if (TIME >= BNDTIM(nt_bnd)) then ! Take bnd at time=t_nt_bnd
+if (TIME >= raw_boundary%time(nt_bnd)) then ! Take bnd at time=t_nt_bnd
     do j=1, n_bnd
-        RPB(j) = BNDR(nt_bnd + (j - 1)*nt_bnd)
-        ZPB(j) = BNDZ(nt_bnd + (j - 1)*nt_bnd)
+        RPB(j) = raw_boundary%R(nt_bnd + (j - 1)*nt_bnd)
+        ZPB(j) = raw_boundary%Z(nt_bnd + (j - 1)*nt_bnd)
     enddo
     return
 endif
 
 do j=1, nt_bnd
-    if (TIME > BNDTIM(j)) jt = j
+    if (TIME > raw_boundary%time(j)) jt = j
 enddo
 if (jt == nt_bnd) write(*, *) "OGOGO"
-ydt = BNDTIM(jt+1) - BNDTIM(jt)
-yd1 = (TIME - BNDTIM(jt))/ydt
-yd2 = (TIME - BNDTIM(jt+1))/ydt
+ydt = raw_boundary%time(jt+1) - raw_boundary%time(jt)
+yd1 = (TIME - raw_boundary%time(jt))/ydt
+yd2 = (TIME - raw_boundary%time(jt+1))/ydt
 do j=1, n_bnd
     j1 = jt + (j - 1)*nt_bnd
-    RPB(j) = yd1*BNDR(j1+1) - yd2*bndr(j1)
+    RPB(j) = yd1*raw_boundary%R(j1+1) - yd2*raw_boundary%R(j1)
     j1 = jt + (j - 1)*nt_bnd
-    ZPB(j) = yd1*BNDZ(j1+1) - yd2*bndz(j1)
+    ZPB(j) = yd1*raw_boundary%Z(j1+1) - yd2*raw_boundary%Z(j1)
 enddo
 if (n_bnd > 12) return
 
