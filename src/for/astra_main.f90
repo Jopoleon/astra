@@ -18,7 +18,8 @@ use ext_bnd, only: use_ext_bnd
 use transport2fbe, only: transport2fbe_init
 use json_vars, only: read_metadata
 use json_write, only: write_json, write_jsonx
-use exp_data, only: read_input
+use read_input, only: readInput
+use plasma_state, only: plasma_up
 
 implicit none
 
@@ -44,7 +45,8 @@ call status_init
 
 call ininam
 call io_init
-call read_input
+plasma_up = 1  ! plasma is up by default, can be set to 0 for breakdown by the user in a user-defined sbr called with "<"
+call readInput
 call write_jsonx
 
 use_ext_bnd = 0

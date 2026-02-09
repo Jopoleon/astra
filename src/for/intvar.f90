@@ -19,7 +19,7 @@ subroutine INTVAR
 
 use io_mod, only: IFDFVX
 use const_inc, only: varxValues, varValues, TIME
-use exp_data, only: raw_scalars
+use read_input, only: raw_scalars
 use debugger, only: markloc
 
 implicit none

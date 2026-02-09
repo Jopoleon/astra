@@ -68,7 +68,7 @@ double precision :: TEQ(n_sbr_max)
 
 double precision, pointer :: &
     DROUT, DTOUT, DPOUT, TIME, TAUMIN, TAUMAX, TAUINC, DELVAR, &
-    ITEREX, NITREQ, TINIT, TSCALE, XOUT, XINPUT, &
+    ITEREX, TINIT, TSCALE, XOUT, XINPUT, &
     NB2EQL, NEQUIL, DTEQL, MEQUIL, TPAUSE, TEND, &
     INUME1, INUME2, INUME3, INUME4, &
     IPROT, ITFBE, ITFBP, ICIRCQ, IPCTRL, ADCMPF, &
@@ -135,7 +135,6 @@ contains
     TAUINC = 1.1
     DELVAR = 0.1
     ITEREX = 1.
-    NITREQ = 1.
     TINIT  = 0.
     TSCALE = 1.
     XOUT   = 1.

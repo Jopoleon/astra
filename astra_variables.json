@@ -446,7 +446,6 @@
     "TAUINC": {"desc": "Maximum time step increment (=TAUold/TAUnew)"},
     "DELVAR": {"desc": "Maximum relative change of variables at time step"},
     "ITEREX": {"desc": "Maximum number of iterations in the external loop"},
-    "NITREQ": {"desc": "Maximum number of iterations in the int. Tr+Eq loop"},
     "TINIT" : {"units": "s", "desc": "Time axis initial time"},
     "TSCALE": {"units": "s", "desc": "Time axis scale"},
     "XOUT"  : {"desc": "Output control: X"},

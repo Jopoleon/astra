@@ -1,4 +1,4 @@
-module exp_data
+module read_input
 
 use parameter_inc, only: NTARR, NRDX
 
@@ -32,7 +32,58 @@ type(rawBoundary) :: raw_boundary
 contains
 
 !----------------------------------------------------------------------
-    subroutine read_input
+    subroutine readInput
+
+    use machine_config, only: config_read
+    use io_mod, only: exp_file, equ_file, machine, NBfile
+    use parse_utils, only: path_split, inquire_fname, assign_val
+    use json_vars, only: internNames, constNames, varNames, profxNames, &
+         n_intern, n_const, n_profx
+    use const_inc, only: varValues, constValues, internValues
+    use debugger, only: astra_stop
+
+    logical :: log_exists
+    integer :: jj, jpos, nvar, n_color
+    character(len=132) :: file_in, dir_path, fname
+    
+! Read machine configuration, if available (need "machine" variable defined)
+    call config_read()
+
+! Look for NBfile
+    call inquire_fname('nbi', TRIM(exp_file), TRIM(machine), NBFILE)
+
+! Read file equ/log/<model>
+
+    jj = LEN_TRIM(equ_file)
+    if (jj == 0) call astra_stop('>>> read_equ_log: Error, empty model file name')
+
+    call path_split(equ_file, dir_path, fname, jpos)
+
+    if (jpos == 0) then ! no subdir
+        file_in = 'equ/log/' // TRIM(fname)
+    else ! equ/<subdir>/log/<model>
+        file_in = 'equ/' // TRIM(dir_path) // 'log/' // TRIM(fname)
+    endif
+
+    inquire(file=TRIM(file_in), exist=LOG_EXISTS)
+    if (.not. LOG_EXISTS)  then ! Missing log file
+        call astra_stop('>>> Error: file "' // TRIM(file_in) // '" missing')
+    endif
+
+! Read equ/log file
+    nvar = 37
+    call assign_val(file_in, nvar    ,    varNames(1: nvar)    ,    varValues(1: nvar)    , n_color)
+    call assign_val(file_in, n_const ,  constNames(1: n_const) ,  constValues(1: n_const) , n_color)
+    call assign_val(file_in, n_intern, internNames(1: n_intern), internValues(1: n_intern), n_color)
+
+! Read exp file
+    call read_exp
+
+    return
+    end subroutine readInput
+
+!----------------------------------------------------------------------
+    subroutine read_exp
 !----------------------------------------------------------------------|
 !  NTVAR    maximal number of time slices for all variables
 !  IVAR     number of actually defined variables
@@ -48,9 +99,9 @@ contains
 !----------------------------------------------------------------------|
 
     use parameter_inc, only: NRD, NRDX, NTARR
-    use const_inc, only: NITREQ, NA, NA1, NB1, NAB, &
+    use const_inc, only: NA, NA1, NB1, NAB, &
         TIME, TSTART, TEND, TPAUSE, TAUMIN, TAUPRP, TINIT, TSCALE, TIMEQL, DTEQL, &
-        varValues, constValues, internValues, exp_header, ARXUSE, &
+        varValues, exp_header, ARXUSE, &
         AB, ABC, AWAll, ROC, ROCO, ROWALL,  HRO, HROX, RTOR, &
         ELONG, ELONM, TRIAN, TRICH, SHIFT, VOLUME, &
         GP, GP2, BTOR, BTN, FTO, FTN, IPL, IPLN, PSIAX, PSIBO
@@ -58,25 +109,21 @@ contains
         G11, G22, VR, VRO, VRS, VOLUM, &
         FP, FPO, FP_NORM, rho_pol, NE, NEO, TE, TEO, UPAR, UPARO, MRHO, &
         AMAIN, UPS0, UPS0O
-    use io_mod, only: exp_file, equ_file, machine, NBfile, CCOILX, VCOILX, &
+    use io_mod, only: exp_file, equ_file, CCOILX, VCOILX, &
         IFDFVX, IFDFAX, jbeg_arrx, NGR, n_coils, nt_coils
 
     use char_manip, only: to_upper, str_in_list, clean_string
     use debugger, only: markloc, debug, astra_stop
-    use parse_utils, only: path_split, split2array2, &
-        ufheader, ufrd, parse_u_line, inquire_fname, assign_val, read_coilx
+    use parse_utils, only: split2array2, ufheader, ufrd, parse_u_line, read_coilx
     use numerical_tools, only: EXTRAP, INTEGR
-    use plasma_state, only: plasma_up
-    use json_vars, only: read_metadata, internNames, constNames, varNames, profxNames, &
+    use json_vars, only: internNames, constNames, varNames, profxNames, &
         n_intern, n_const, n_var, n_profx
-    use machine_config, only: config_read
 
-    logical :: log_exists
     integer :: jarr, INTYPE, jtype, jbdry, ntim, ntim1, IVAR
     integer, allocatable, dimension(:) :: int_json
     integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
     integer :: KAB, KAWALL, KRTOR, KELONM, KTRICH
-    integer :: nvar, n_color, n_words, i_filter_glob
+    integer :: nvar, n_words, i_filter_glob
     integer :: nt_u, nx_u, ios, ndim_u, jvar, jrt, jt, jthe, nbnd
 
     double precision, allocatable :: t_u(:), x_u(:), var_u(:), bnd_rz(:), bnd_r(:), bnd_z(:)
@@ -84,80 +131,11 @@ contains
         VRDATA, FACTOR, TIMEVR, VRERR, ROC3A, YTP=-1.d9
     character(len=6) :: VNAM, VNAMO, VNAMU, VNAMX, VTIM, VDAT, VERR, keyword
     character(len=31) :: rholbl
-    character(len=132) :: strarray(20), STRI, lin_upper, dir_path, fname, &
+    character(len=132) :: strarray(20), STRI, lin_upper, &
         err_msg, err_format, err_msg_exp, file_in, uname, uvar, workflow
 
 !----------------------------------------------------------------------|
-! Fortran tests
-
-    call markloc('read_input')
-
-!----------------------------------------------------------------------|
-! Initialisation with default values
-
-    NITREQ = 1. ! Initialization: g95 does not like it in blockdata
-    i_filter_glob = 0 ! if i_filter_glob = 1, a global filter is set
-
-    plasma_up = 1  ! plasma is up by default, can be set to 0 for breakdown by the user in a user-defined sbr called with "<"
-
-!----------------------------------------------------------------------|
-! Read tables to set global scalars varNames, constNames, internNames
-!----------------------------------------------------------------------|
-
-    call read_metadata
-
-    do j=1, n_var
-        SELECT CASE (varNames(j))
-        CASE('AB    ')
-            KAB    = j
-        CASE('AWALL ')
-            KAWALL = j
-        CASE('RTOR  ')
-            KRTOR  = j
-        CASE('ELONM ')
-            KELONM = j
-        CASE('TRICH ')
-            KTRICH = j
-        END SELECT
-    enddo
-
-    TIME = TSTART  ! Here TSTART=0
-
-
-!----------------------------------------------------------------------
-! Read machine configuration, if available (need "machine" variable defined)
-    call config_read()
-
-! Look for NBfile
-    call inquire_fname('nbi', TRIM(exp_file), TRIM(machine), NBFILE)
-
-!----------------------------------------------------------------------
-! Read file equ/log/<model>
-!----------------------------------------------------------------------
-
-    jj = LEN_TRIM(equ_file)
-    if (jj == 0) call astra_stop('>>> read_input: Error, empty model file name')
-
-    call path_split(equ_file, dir_path, fname, jpos)
-
-    if (jpos == 0) then ! no subdir
-        file_in = 'equ/log/'//TRIM(fname)
-    else ! equ/<subdir>/log/<model>
-        file_in = 'equ/'//TRIM(dir_path)//'log/'//TRIM(fname)
-    endif
-
-    inquire(file=TRIM(file_in), exist=LOG_EXISTS)
-
-    if (.not. LOG_EXISTS)  then ! Missing log file
-        call astra_stop('>>> Error: file "' // TRIM(file_in) // '" missing')
-    endif
-! Read log file
-    nvar = 37
-    call assign_val(file_in, nvar    ,    varNames(1: nvar)    ,    varValues(1: nvar)    , n_color)
-    call assign_val(file_in, n_const ,  constNames(1: n_const) ,  constValues(1: n_const) , n_color)
-    call assign_val(file_in, n_intern, internNames(1: n_intern), internValues(1: n_intern), n_color)
-
-    close(171)
+    call markloc('read_exp')
 
 !----------------------------------------------------------------------
 ! Read experimental file
@@ -168,7 +146,7 @@ contains
     err_msg_exp = '>>> Data file "' // TRIM(exp_file) // '" error:\n    '
 
     open(201, FILE=TRIM(file_in), iostat=ios)
-    if (ios /= 0) call astra_stop('>>> read_input: No such experimental variant "' // TRIM(exp_file) // '"')
+    if (ios /= 0) call astra_stop('>>> read_exp: No such experimental variant "' // TRIM(exp_file) // '"')
 
     read(201, '(A132/)', iostat=ios) exp_header
     if (ios /= 0) call astra_stop(err_msg_exp // 'in header')
@@ -179,6 +157,7 @@ contains
     VNAMO = ' '
     VNAMU = ' '
     IVAR = 0
+    i_filter_glob = 0 ! if i_filter_glob = 1, a global filter is set
 
     parse_exp_1d: do
 
@@ -206,7 +185,7 @@ contains
             read(vtim, *) ntim !from NTIMES
             factor = 1.
             if (IVAR + ntim > NTVAR) then
-                write(err_msg, '(A, i)') '>>> read_input: Time dependent variable strings >', NTVAR
+                write(err_msg, '(A, i)') '>>> read_exp: Time dependent variable strings >', NTVAR
                 call astra_stop(err_msg)
             endif
             if (ntim <= 1) then
@@ -280,7 +259,7 @@ contains
                 call astra_stop(err_msg)
             endif
 
-            err_msg = '>>> read_input: File "' // TRIM(file_in) // '" reading error'
+            err_msg = '>>> read_exp: File "' // TRIM(file_in) // '" reading error'
             call READF6(VTIM, TIMEVR, IERR)
             if (IERR /= 0) call astra_stop(err_msg)
             call READF6(VDAT, VRDATA, IERR)
@@ -294,7 +273,7 @@ contains
 ! Repeated name
             IVAR = IVAR+1
             if (IVAR > NTVAR) then
-                write(err_msg, '(A, i)') '>>> read_input: Time dependent variable strings >', NTVAR
+                write(err_msg, '(A, i)') '>>> read_exp: Time dependent variable strings >', NTVAR
                 call astra_stop(err_msg)
             endif
 
@@ -341,50 +320,13 @@ contains
 
     close(201)
 
-!----------------------------------------------------------------------
-! Start Astra standard assignments
-
-    if (NA1 > NRD) then
-        write(err_msg, '(2A, i)') '>>> FATAL ERROR: The radial grid size out of range.\n', &
-            '                 Parameter "NA1" cannot exceed', NRD
-        call astra_stop(err_msg)
-    endif
-
-    TIME = TSTART
-    if (YTP > -1.d8) TPAUSE = YTP
-
-    call INTVAR
-
-    if (AWALL < AB) then
-         if (IFDFVX(KAWALL) >= 0) write(*, *) '>>> Warning: AWALL < AB.  Setting AWALL = AB'
-         AWALL = AB
-    endif
-    if (IFDFVX(KAWALL) < 0 .and. (AWALL < AB .or. AWALL > 1.2*AB)) AWALL = AB
-
-    if (ABC > AB) then
-        err_msg = '>>> Error: ABC cannot exceed AB. Check your file exp/'//TRIM(exp_file)
-        call astra_stop(TRIM(err_msg))
-    endif
-
-    if (AWALL > 1.2*AB .or. AWALL > RTOR) then
-        write(*, *) '>>> Warning: AWALL is set unreasonably large'
-        write(*, *) '    Check settings in data and log files'
-    endif
-    IFDFVX(KAB)    = 4
-    IFDFVX(KELONM) = 4
-    IFDFVX(KRTOR)  = 4
-    IFDFVX(KTRICH) = 4
-    IFDFVX(KAWALL) = 4
-
-!----------------------------------------------------------------------
-! Start reading radial profiles:  Radial grid: jbdry
-!    Option for different input grids can be added
+!-----------------------------
+! Rewind exp file for 2d part
 
     VNAMO = ' '
 
     open(201, FILE=TRIM(file_in), iostat=ios)
-    read(201, '(A132)', ERR=906, END=39) STRI
-    read(201, '(A132)', ERR=906, END=39) STRI
+    read(201, '(/A132)', ERR=906, END=39) STRI
 
     NGR = 0
     jarr = 0
@@ -451,7 +393,7 @@ contains
                     CASE('PROFIL')
                         EXIT
                     CASE DEFAULT
-                        write(*, *) '>>> read_input error unknown key word in string:'
+                        write(*, *) '>>> read_exp error unknown key word in string:'
                         write(*, *) TRIM(STRI)
                         EXIT
                     END SELECT
@@ -600,11 +542,11 @@ contains
 
             if (NGR + nt_u + 1 > NTARR) then
                 write(err_msg, '(A, i)') &
-                    '>>> read_input: Number of time dependent arrays cannot exceed', NTARR
+                    '>>> read_exp: Number of time dependent arrays cannot exceed', NTARR
                 call astra_stop(err_msg)
             endif
 
-            if (jarr + nx_u  > NRDX*NTARR) call astra_stop('>>> read_input: Buffer size exceeded')
+            if (jarr + nx_u  > NRDX*NTARR) call astra_stop('>>> read_exp: Buffer size exceeded')
             call CHECKU(INTYPE, ABC, AB, XBDRY, raw_profiles%data(jarr+1), nx_u, jbdry, rholbl, file_in)
 
             do j=1, jbdry
@@ -623,7 +565,7 @@ contains
             jarr = jarr + jbdry
 
             if (jarr + nx_u + (nt_u - 1)*jbdry > NRDX*NTARR) then
-                call astra_stop('>>> read_input: Buffer size exceeded')
+                call astra_stop('>>> read_exp: Buffer size exceeded')
             endif
 
             jrt = jarr
@@ -684,7 +626,7 @@ contains
                 call astra_stop(err_msg)
             endif
             if (jarr + jtype*jbdry + 1 > NRDX*NTARR) then
-                call astra_stop('>>> read_input: Buffer size exceeded')
+                call astra_stop('>>> read_exp: Buffer size exceeded')
             endif
 
 ! INTYPE unknown
@@ -751,14 +693,66 @@ contains
     39 continue
 
     close(201)
+    raw_profiles%n_groups = NGR
 
 !-----------------------
 ! End reading "exp" file
 !-----------------------
 
-!if boundary is given, calculates initial geometry from that
+!----------------------------------------------------------------------
+! Start Astra standard assignments
+
+    if (NA1 > NRD) then
+        write(err_msg, '(2A, i)') '>>> FATAL ERROR: The radial grid size out of range.\n', &
+            '                 Parameter "NA1" cannot exceed', NRD
+        call astra_stop(err_msg)
+    endif
+
+    TIME = TSTART
+    if (YTP > -1.d8) TPAUSE = YTP
+
+    call INTVAR
+ 
+    do j=1, n_var
+        SELECT CASE (varNames(j))
+        CASE('AB    ')
+            KAB    = j
+        CASE('AWALL ')
+            KAWALL = j
+        CASE('RTOR  ')
+            KRTOR  = j
+        CASE('ELONM ')
+            KELONM = j
+        CASE('TRICH ')
+            KTRICH = j
+        END SELECT
+    enddo
+ 
+    if (AWALL < AB) then
+         if (IFDFVX(KAWALL) >= 0) write(*, *) '>>> Warning: AWALL < AB.  Setting AWALL = AB'
+         AWALL = AB
+    endif
+    if (IFDFVX(KAWALL) < 0 .and. (AWALL < AB .or. AWALL > 1.2*AB)) AWALL = AB
+
+    if (ABC > AB) then
+        err_msg = '>>> Error: ABC cannot exceed AB. Check your file exp/'//TRIM(exp_file)
+        call astra_stop(TRIM(err_msg))
+    endif
+
+    if (AWALL > 1.2*AB .or. AWALL > RTOR) then
+        write(*, *) '>>> Warning: AWALL is set unreasonably large'
+        write(*, *) '    Check settings in data and log files'
+    endif
+
+    IFDFVX(KAB)    = 4
+    IFDFVX(KELONM) = 4
+    IFDFVX(KRTOR)  = 4
+    IFDFVX(KTRICH) = 4
+    IFDFVX(KAWALL) = 4
+
+! If boundary is given, calculates initial geometry from that
     if (raw_boundary%nt > 0) then
-!find time index of most proximum boundary
+! Find time index of most proximum boundary
         j=1
         do jt=1, raw_boundary%nt
             if (raw_boundary%time(jt) <= TSTART) j = jt
@@ -769,9 +763,9 @@ contains
             bnd_r(jthe) = raw_boundary%R((jthe-1)*raw_boundary%nt + jt)
             bnd_z(jthe) = raw_boundary%Z((jthe-1)*raw_boundary%nt + jt)
         enddo
-!calculate ABC
+! Calculate ABC
         ABC = (maxval(bnd_r) - minval(bnd_r))/2.
-!calculate elong
+! Calculate elong
         ELONG = (maxval(bnd_z) - minval(bnd_z))/(2.*ABC)
         ELONG = max(ELONG, 1.d0)
         deallocate(bnd_r)
@@ -869,14 +863,12 @@ contains
     TAUPRP = TAUMIN
     if (TIME > TINIT + 1.025*abs(TSCALE)) TINIT = TSTART
 
-    raw_profiles%n_groups = NGR
-
     return
 
     906 continue
     call astra_stop(err_format)
 
-    end subroutine read_input
+    end subroutine read_exp
 
 !---------------------------------------------------------------------
     subroutine READF6(LINE, F6, IERR)
@@ -1100,4 +1092,4 @@ contains
     return
     end subroutine CHECKU
 
-end module exp_data
+end module read_input

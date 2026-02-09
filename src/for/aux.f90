@@ -115,9 +115,9 @@ end function IFSTEP
 integer function IFTREQ(YACC)
 !---------------------------------------------------------------------
 !    Control parameter:
-! NITREQ == 1 iterations switched off (timing VR(t) downshifted)
+! NTREQ == 1 iterations switched off (timing VR(t) downshifted)
 !       IFTREQ == 2 is returned
-! NITREQ >= 2 iterations switched on  (VR(t) properly included)
+! NTREQ >= 2 iterations switched on  (VR(t) properly included)
 !
 !    Input:
 ! YACC - requested accuracy
@@ -137,7 +137,7 @@ integer function IFTREQ(YACC)
 
 use parameter_inc, only: NRD
 use status_inc, only: G11, G22, VR, FP
-use const_inc, only: NITREQ, IPART, ITREQ, ROC, NA1
+use const_inc, only: IPART, ITREQ, ROC, NA1
 use debugger, only: markloc
 
 implicit none
@@ -153,8 +153,8 @@ save YER, YR, YWA, YWB, YWC, YWD
 
 call markloc('IFTREQ')
 
-NTREQ = nint(NITREQ)
-! Disable NITREQ setting for the initial phase
+NTREQ = 1
+! Disable NTREQ setting for the initial phase
 if (IPART == 1) NTREQ = ITREQMAX
 IFTREQ = 2
 if (NTREQ == 1) return ! Iterations are off, no check

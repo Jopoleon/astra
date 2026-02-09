@@ -31,7 +31,7 @@ $(OBJ_DIR)/status.o \
 $(OBJ_DIR)/cpu_usage.o \
 $(OBJ_DIR)/parameters_a2equil.o \
 $(OBJ_DIR)/parse_utils.o \
-$(OBJ_DIR)/exp_data.o \
+$(OBJ_DIR)/read_input.o \
 $(OBJ_DIR)/json_write.o \
 $(OBJ_DIR)/transport2fbe.o \
 $(OBJ_DIR)/dbl2char.o \

@@ -13,7 +13,7 @@ contains
     subroutine write_jsonx
 
     use io_mod, only: awd, exp_file
-    use exp_data, only: raw_scalars, raw_profiles, raw_boundary
+    use read_input, only: raw_scalars, raw_profiles, raw_boundary
 
     integer :: ios, i, ndim
     character(len=180) :: jsonx_out
@@ -70,6 +70,10 @@ contains
     call prettyFloatArray(nunit_x, ndim, raw_profiles%filter, dict_end=.true.)
 
     write(nunit_x, '(A/)') '    },'
+
+! Check
+    print*, 'Test json_write'
+    print*, raw_profiles%data(ndim+1)
 
 ! Boundary
 
