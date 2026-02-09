@@ -37,8 +37,7 @@ contains
     use machine_config, only: config_read
     use io_mod, only: exp_file, equ_file, machine, NBfile
     use parse_utils, only: path_split, inquire_fname, assign_val
-    use json_vars, only: internNames, constNames, varNames, profxNames, &
-         n_intern, n_const, n_profx
+    use json_vars, only: internNames, constNames, varNames, n_intern, n_const
     use const_inc, only: varValues, constValues, internValues
     use debugger, only: astra_stop
 
@@ -53,7 +52,6 @@ contains
     call inquire_fname('nbi', TRIM(exp_file), TRIM(machine), NBFILE)
 
 ! Read file equ/log/<model>
-
     jj = LEN_TRIM(equ_file)
     if (jj == 0) call astra_stop('>>> read_equ_log: Error, empty model file name')
 
@@ -70,7 +68,6 @@ contains
         call astra_stop('>>> Error: file "' // TRIM(file_in) // '" missing')
     endif
 
-! Read equ/log file
     nvar = 37
     call assign_val(file_in, nvar    ,    varNames(1: nvar)    ,    varValues(1: nvar)    , n_color)
     call assign_val(file_in, n_const ,  constNames(1: n_const) ,  constValues(1: n_const) , n_color)
@@ -78,6 +75,9 @@ contains
 
 ! Read exp file
     call read_exp
+
+! ASTRA default assignments
+    call astra_assignments
 
     return
     end subroutine readInput
@@ -98,48 +98,31 @@ contains
 ! jbeg_arrx(jx)  - pointer to a position in the array raw_profiles%time
 !----------------------------------------------------------------------|
 
-    use parameter_inc, only: NRD, NRDX, NTARR
-    use const_inc, only: NA, NA1, NB1, NAB, &
-        TIME, TSTART, TEND, TPAUSE, TAUMIN, TAUPRP, TINIT, TSCALE, TIMEQL, DTEQL, &
-        varValues, exp_header, ARXUSE, &
-        AB, ABC, AWAll, ROC, ROCO, ROWALL,  HRO, HROX, RTOR, &
-        ELONG, ELONM, TRIAN, TRICH, SHIFT, VOLUME, &
-        GP, GP2, BTOR, BTN, FTO, FTN, IPL, IPLN, PSIAX, PSIBO
-    use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
-        G11, G22, VR, VRO, VRS, VOLUM, &
-        FP, FPO, FP_NORM, rho_pol, NE, NEO, TE, TEO, UPAR, UPARO, MRHO, &
-        AMAIN, UPS0, UPS0O
-    use io_mod, only: exp_file, equ_file, CCOILX, VCOILX, &
-        IFDFVX, IFDFAX, jbeg_arrx, NGR, n_coils, nt_coils
-
-    use char_manip, only: to_upper, str_in_list, clean_string
+    use parameter_inc, only: NRDX, NTARR
+    use const_inc, only: NA1, AB, ABC, RTOR, varValues, exp_header, TSTART, TEND
+    use io_mod, only: exp_file, CCOILX, VCOILX, IFDFVX, IFDFAX, jbeg_arrx, NGR, &
+        n_coils, nt_coils
+    use char_manip, only: to_upper, str_in_list
     use debugger, only: markloc, debug, astra_stop
     use parse_utils, only: split2array2, ufheader, ufrd, parse_u_line, read_coilx
-    use numerical_tools, only: EXTRAP, INTEGR
-    use json_vars, only: internNames, constNames, varNames, profxNames, &
-        n_intern, n_const, n_var, n_profx
+    use json_vars, only: varNames, profxNames
 
     integer :: jarr, INTYPE, jtype, jbdry, ntim, ntim1, IVAR
     integer, allocatable, dimension(:) :: int_json
     integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
-    integer :: KAB, KAWALL, KRTOR, KELONM, KTRICH
-    integer :: nvar, n_words, i_filter_glob
+    integer :: n_words, i_filter_glob
     integer :: nt_u, nx_u, ios, ndim_u, jvar, jrt, jt, jthe, nbnd
 
-    double precision, allocatable :: t_u(:), x_u(:), var_u(:), bnd_rz(:), bnd_r(:), bnd_z(:)
+    double precision, allocatable :: t_u(:), x_u(:), var_u(:), bnd_rz(:)
     double precision :: XBDRY, YB, YB1, YXB, YXB1, ALFA, ALFA_GLOB, &
-        VRDATA, FACTOR, TIMEVR, VRERR, ROC3A, YTP=-1.d9
+        VRDATA, FACTOR, TIMEVR, VRERR
     character(len=6) :: VNAM, VNAMO, VNAMU, VNAMX, VTIM, VDAT, VERR, keyword
     character(len=31) :: rholbl
     character(len=132) :: strarray(20), STRI, lin_upper, &
-        err_msg, err_format, err_msg_exp, file_in, uname, uvar, workflow
+        err_msg, err_format, err_msg_exp, file_in, uname, uvar
 
 !----------------------------------------------------------------------|
     call markloc('read_exp')
-
-!----------------------------------------------------------------------
-! Read experimental file
-!----------------------------------------------------------------------
 
     file_in='exp/' // TRIM(exp_file)
 
@@ -151,14 +134,12 @@ contains
     read(201, '(A132/)', iostat=ios) exp_header
     if (ios /= 0) call astra_stop(err_msg_exp // 'in header')
 
-!----------------------------------------------------------------------
-! Read simple variable loop (between the labels "5" and "10"):
-
     VNAMO = ' '
     VNAMU = ' '
     IVAR = 0
     i_filter_glob = 0 ! if i_filter_glob = 1, a global filter is set
 
+! Parse scalar block
     parse_exp_1d: do
 
         read(201, '(A132)', end=39) STRI
@@ -185,8 +166,8 @@ contains
             read(vtim, *) ntim !from NTIMES
             factor = 1.
             if (IVAR + ntim > NTVAR) then
-                write(err_msg, '(A, i)') '>>> read_exp: Time dependent variable strings >', NTVAR
-                call astra_stop(err_msg)
+                write(err_msg_exp, '(A, i)') '>>> read_exp: Time dependent variable strings >', NTVAR
+                call astra_stop(err_msg_exp)
             endif
             if (ntim <= 1) then
                 ntim = 1
@@ -233,7 +214,6 @@ contains
             if (VNAM == 'NA1   ') NA1 = VRDATA
             if (VNAM == 'TSTART') then
                 TSTART = VRDATA
-                TIME  = TSTART
             endif
             if (VNAM == 'TEND  ') TEND = VRDATA
             CYCLE parse_exp_1d
@@ -695,12 +675,36 @@ contains
     close(201)
     raw_profiles%n_groups = NGR
 
-!-----------------------
-! End reading "exp" file
-!-----------------------
+    return
+
+    906 continue
+    call astra_stop(err_format)
+
+    end subroutine read_exp
 
 !----------------------------------------------------------------------
-! Start Astra standard assignments
+    subroutine astra_assignments
+
+    use parameter_inc, only: NRD
+    use const_inc, only: NA1, NA, NB1, NAB, AB, ABC, AWALL, TIME, TSTART, TPAUSE, &
+         TAUMIN, TAUPRP, VOLUME, IPL, IPLN, HRO, HROX, ROC, ROCO, BTN, FTO, FTN, &
+         GP, GP2, PSIAX, PSIBO, RTOR, BTOR, SHIFT, ROWALL, ELONM, ELONG, TRICH, TRIAN, &
+         ARXUSE, TINIT, TSCALE, TIMEQL, DTEQL
+    use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
+        G11, G22, VR, VRO, VRS, VOLUM, &
+        FP, FPO, FP_NORM, rho_pol, NE, NEO, TE, TEO, UPAR, UPARO, MRHO, &
+        AMAIN, UPS0, UPS0O
+    use json_vars, only: varNames, n_profx, profxNames, n_var
+    use io_mod, only: IFDFVX, IFDFAX, exp_file
+    use numerical_tools, only: EXTRAP, INTEGR
+    use debugger, only: astra_stop
+     
+    integer :: KAB, KAWALL, KRTOR, KELONM, KTRICH
+    integer :: j, jt, jthe
+    double precision :: YTP=-1.d9
+    double precision, dimension(:), allocatable :: bnd_r, bnd_z
+    character(len=132) :: err_msg
+    double precision, external :: ROC3A
 
     if (NA1 > NRD) then
         write(err_msg, '(2A, i)') '>>> FATAL ERROR: The radial grid size out of range.\n', &
@@ -712,9 +716,9 @@ contains
     if (YTP > -1.d8) TPAUSE = YTP
 
     call INTVAR
- 
+
     do j=1, n_var
-        SELECT CASE (varNames(j))
+        SELECT CASE(varNames(j))
         CASE('AB    ')
             KAB    = j
         CASE('AWALL ')
@@ -735,7 +739,7 @@ contains
     if (IFDFVX(KAWALL) < 0 .and. (AWALL < AB .or. AWALL > 1.2*AB)) AWALL = AB
 
     if (ABC > AB) then
-        err_msg = '>>> Error: ABC cannot exceed AB. Check your file exp/'//TRIM(exp_file)
+        err_msg = '>>> Error: ABC cannot exceed AB. Check your file exp/' // TRIM(exp_file)
         call astra_stop(TRIM(err_msg))
     endif
 
@@ -772,7 +776,7 @@ contains
         deallocate(bnd_z)
     endif
 
-!assign variables here for initialization:
+! Assign variables here for initialization:
 
     VOLUME = GP2*GP*RTOR*AB**2 * ELONG
 
@@ -802,8 +806,6 @@ contains
         RHO (j) = XRHO(j)*ROC
         SRHO(j) = SXHO(j)*ROC
     enddo
-
-! real space grids, these are function of ROC
     HRO  = HROX*ROC
 
 ! Compute NB1
@@ -863,12 +865,9 @@ contains
     TAUPRP = TAUMIN
     if (TIME > TINIT + 1.025*abs(TSCALE)) TINIT = TSTART
 
+
     return
-
-    906 continue
-    call astra_stop(err_format)
-
-    end subroutine read_exp
+    end subroutine astra_assignments
 
 !---------------------------------------------------------------------
     subroutine READF6(LINE, F6, IERR)
