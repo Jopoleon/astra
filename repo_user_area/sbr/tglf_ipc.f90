@@ -49,10 +49,11 @@ contains
     double precision, intent(in), optional :: rho_norm_max
 
     logical :: first_call=.True.
-    integer :: i, jr, jrho, jr_r, jr_l, jgamma_max, jion, nchunk, offset
+    integer :: i, jr, jrho, jr_r, jr_l, jgamma_max, jion, nchunk
     integer :: ns_in, geom_flag=1              ! Number of species, including electrons
     integer :: jthe, jthe_rev, nrho_equ, nthe_equ ! for ELITE geometry
-    integer :: t_wall1, t_wall2, rate, max_nworkers, stat
+    integer :: t_wall1, t_wall2, rate, max_nworkers, stat, &
+        semID, shmID_dims, shmID_vars, shmID_arrs
     integer, dimension(n_dims) :: dims_in
 
     double precision, dimension(n_arr_out, nrho_m) :: prof_out
@@ -77,6 +78,8 @@ contains
     double precision, allocatable, dimension(:, :) :: RR_tg, ZZ_tg, Bp_tg
     double precision, dimension(nthe_elite) :: theta_elite, RR_elite, ZZ_elite, Bp_elite
     character(len=128) :: f_elite, ipc_file, astra_task
+
+    save semID, shmID_vars, shmID_arrs
 
     call SYSTEM_CLOCK(t_wall1, rate)
 
@@ -330,24 +333,24 @@ contains
 
     if (first_call) then
         SBP_NAME = "xpr/tglfi"//char(0)
-        offset = 10
         call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, &
-            nchunk, nworkers, offset, SBP_NAME, ipc_file, astra_task)
-        call fill_dim2shm(n_dims, dims_in)
+             nchunk, nworkers, SBP_NAME, ipc_file, astra_task, &
+             semID, shmID_dims, shmID_vars, shmID_arrs)
+        call fill_dim2shm(n_dims, dims_in, shmID_dims)
         first_call = .False.
     endif
 
 ! **** Fill shared memory segments
-    call fill_var2shm(n_scalars, scal_in)
-    call fill_arr2shm(nrho_m, n_inputs, prof_in)
+    call fill_var2shm(n_scalars, scal_in, shmID_vars)
+    call fill_arr2shm(nrho_m, n_inputs, prof_in, shmID_arrs)
 
 ! **** Free each semaphore
     do i=1, nworkers
-        call unlock_sbp(i)
+        call unlock_sbp(i, semID)
     enddo
 
 ! **** Synchronisation point
-    call wait4all
+    call wait4all(semID)
 
 ! **** Collect data from ShMem
     do i=1, nworkers

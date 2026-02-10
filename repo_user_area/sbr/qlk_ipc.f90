@@ -42,10 +42,11 @@ contains
     double precision, intent(in), optional :: rho_norm_max
 
     logical :: first_call=.True.
-    integer :: nchunk, offset
+    integer :: nchunk
     integer :: i, j, jr, jrho, jr_r, jr_l, jgamma_max, jspec
     integer :: ns_in              ! Number of species, including electrons
-    integer :: t_wall1, t_wall2, rate, max_nworkers, stat
+    integer :: t_wall1, t_wall2, rate, max_nworkers, stat, &
+        semID, shmID_dims, shmID_vars, shmID_arrs
     integer, dimension(n_dims) :: dims_in
 
     double precision, dimension(n_inputs, nrho_m) :: prof_in
@@ -67,6 +68,8 @@ contains
     character(len=32) :: str_nworkers
     character(len=64) :: SBP_NAME
     character(len=128) :: ipc_file, astra_task
+
+    save semID, shmID_vars, shmID_arrs
 
     call SYSTEM_CLOCK(t_wall1, rate)
 
@@ -286,24 +289,24 @@ contains
 
     if (first_call) then
         SBP_NAME = "xpr/qlki"//char(0)
-        offset = 10
         call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, &
-            nchunk, nworkers, offset, SBP_NAME, ipc_file, astra_task)
-        call fill_dim2shm(n_dims, dims_in)
+            nchunk, nworkers, SBP_NAME, ipc_file, astra_task, &
+             semID, shmID_dims, shmID_vars, shmID_arrs)
+        call fill_dim2shm(n_dims, dims_in, shmID_dims)
         first_call = .False.
     endif
 
 ! **** Fill shared memory segments
-    call fill_var2shm(n_scalars, scal_in)
-    call fill_arr2shm(nrho_m, n_inputs, prof_in)
+    call fill_var2shm(n_scalars, scal_in, shmID_vars)
+    call fill_arr2shm(nrho_m, n_inputs, prof_in, shmID_arrs)
 
 ! **** Free each semaphore
     do i=1, nworkers
-        call unlock_sbp(i)
+        call unlock_sbp(i, semID)
     enddo
 
 ! **** Synchronisation point
-    call wait4all
+    call wait4all(semID)
 
 ! **** Collect data from ShMem
     do i=1, nworkers
