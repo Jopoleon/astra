@@ -71,7 +71,7 @@ contains
     double precision, dimension(nspec_max-1, NRD) :: i_pflux_as
     double precision, dimension(n_inputs, nrho_m) :: prof_in
     character(len=32) :: str_nworkers
-    character(len=64), dimension(:), allocatable :: SBP_NAMES
+    character(len=64) :: SBP_NAME
 ! ELITE
     double precision, allocatable, dimension(:) :: theta_equ, pfn_equ
     double precision, allocatable, dimension(:, :) :: RR_tg, ZZ_tg, Bp_tg
@@ -107,7 +107,6 @@ contains
             write(*, '(A, i3, A, i3)') '>>> Warning nrho_m=', nrho_m, ' larger than NA1=', NA1
             print*, 'Possible profile overfit on TGLF grid'
         endif
-        allocate(SBP_NAMES(nworkers))
     endif
 
 ! Interpolate from ASTRA grid to TGLF grid
@@ -330,11 +329,11 @@ contains
     prof_in(47, :) = dti(4, :)
 
     if (first_call) then
-        SBP_NAMES = "xpr/tglfi"//char(0)
-        call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, nworkers, ipc_file, astra_task)
+        SBP_NAME = "xpr/tglfi"//char(0)
+        offset = 10
+        call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, &
+            nchunk, nworkers, offset, SBP_NAME, ipc_file, astra_task)
         call fill_dim2shm(n_dims, dims_in)
-        offset = 7
-        call send_ipc_jobs(nworkers, nchunk, n_arr_out, offset, 64, SBP_NAMES, ipc_file)
         first_call = .False.
     endif
 

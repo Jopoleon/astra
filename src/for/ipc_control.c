@@ -2,8 +2,6 @@
 
 int read_aipc(int*, int*, char*);
 
-key_t my_key;
-
 int A_SemID = 0;
 void **A_ShmAdr = NULL;
 void *A_ShmAdr_adims;
@@ -46,13 +44,14 @@ void sbp2astra_(int* jsbp, int *nchunk, int *n_sbp_arr_out, double* mem){
   Assign NA1 (= *Ngrid) to N_RHO
   Allocate two shared memory segments for Astra datasets
 */
-int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, int *n_sbp_arr_out, int* Nsub, char* ipc_file, char* astra_task){
+int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, int *n_sbp_arr_out, int *nchunk, int* Nsub, int* offset, char *subName, char* ipc_file, char* astra_task){
   
-    int N_DIMS, N_SCALARS, N_RHO, N_ARR_IN, N_ARR_OUT, dim_size, var_size, arr_size, j, A_Nsems;
-    int A_ShmID_adims, A_ShmID_avars, A_ShmID_aarrs;
+    int N_DIMS, N_SCALARS, N_RHO, N_ARR_IN, N_ARR_OUT, N_CHUNK, dim_size, var_size, arr_size, A_Nsems;
+    int i, j, A_ShmID_adims, A_ShmID_avars, A_ShmID_aarrs;
+    key_t my_key;
     pid_t A_PID=0;
     FILE *A_IPCw;
-    char hostname[128], A_astra_task[128], A_ipc_file[128];
+    char hostname[128], A_astra_task[128], A_ipc_file[128], A_sub_name[64];
     time_t hold_time;
     static union semun Mysemun;
 
@@ -62,12 +61,15 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
     N_RHO = *Ngrid;
     N_ARR_IN  = *n_sbp_arr_in;
     N_ARR_OUT = *n_sbp_arr_out;
+    N_CHUNK = *nchunk;
 
     A_ShmAdr = malloc(*Nsub * sizeof(*A_ShmAdr));
+    snprintf(A_sub_name, sizeof(A_sub_name), "%s", subName);
     snprintf(A_ipc_file, sizeof(A_ipc_file), "%s", ipc_file);
     snprintf(A_astra_task, sizeof(A_astra_task), "%s", astra_task);
     trim_right(A_ipc_file);
     trim_right(A_astra_task);
+    trim_right(A_sub_name);
 
 // Collecting data
     A_PID = getpid();
@@ -106,40 +108,33 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
         fprintf(stderr, "Cannot open Astra IPC file: \"%s\"\n", A_ipc_file);
         exit(0);
     }
-    fprintf(A_IPCw, " Astra task:  \"%s\"\n", A_astra_task);
+    fprintf(A_IPCw, "Astra task:  \"%s\"\n", A_astra_task);
     gethostname(hostname, (size_t)32);
 
     hold_time = time(NULL);
-    fprintf(A_IPCw, " Astra@%s started on:  %s", hostname, ctime(&hold_time));
-    fprintf(A_IPCw, " Astra(main):  PID = %d,  SemID = %d\n", (int)A_PID, A_SemID);
-    fprintf(A_IPCw, " Astra_inout: ShmID(dims):%12d%12d\n", A_ShmID_adims, dim_size);
-    fprintf(A_IPCw, " Astra_inout: ShmID(vars):%12d%12d\n", A_ShmID_avars, var_size);
-    fprintf(A_IPCw, " Astra_inout: ShmID(arrs):%12d%12d\n", A_ShmID_aarrs, arr_size);
-    fprintf(A_IPCw, "        PID      ShmID\n");
+    fprintf(A_IPCw, "Astra@%s started on:  %s", hostname, ctime(&hold_time));
+    fprintf(A_IPCw, "Astra(main):\n");
+    fprintf(A_IPCw, "  PID   = %d\n", (int)A_PID);
+    fprintf(A_IPCw, "  SemID = %d\n", A_SemID);
+    fprintf(A_IPCw, "  Key   = %d\n", (int)my_key);
+    fprintf(A_IPCw, "Dims, ShmId, size:%12d%12d\n", A_ShmID_adims, dim_size);
+    fprintf(A_IPCw, "Vars: ShmID, size:%12d%12d\n", A_ShmID_avars, var_size);
+    fprintf(A_IPCw, "Arrs: ShmID, size:%12d%12d\n", A_ShmID_aarrs, arr_size);
+    fprintf(A_IPCw, "         PID       ShmID\n");
     fclose(A_IPCw);
-    return 0;
-}
 
 /*---------------------------------------------------------------------
   Set (lock) the primary semaphore to -(Number_of_processes)
   Launch parallel subprocesses
 */
-int send_ipc_jobs_(int* Nsub, int* nchunk, int* n_sbp_arr_out, int *offset, int *stringLen, char *subs, char *ipc_file){
 
-    char jobString[400], path[32], AWD[128], A_ipc_file[128];
-    int j, i, N_CHUNK, N_ARR_OUT;
-
-    snprintf(A_ipc_file, sizeof(A_ipc_file), "%s", ipc_file);
-    trim_right(A_ipc_file);
+    char jobString[400], AWD[128];
 
     getcwd(AWD, sizeof(AWD));
-    N_CHUNK = *nchunk;
-    N_ARR_OUT = *n_sbp_arr_out;
     for (j=0; j<*Nsub; j++) {
-        snprintf(path, sizeof(path), "%s", &subs[*stringLen * j]);
 // Sending main (e.g. "tglfi"), only once per subprocess
         snprintf(jobString, sizeof(jobString), "%s/%s %s %d %d %d %d &",
-		 AWD, path, A_ipc_file, my_key, j + 1, N_CHUNK, N_ARR_OUT);
+		 AWD, A_sub_name, A_ipc_file, my_key, j + 1, N_CHUNK, N_ARR_OUT);
         i = system(jobString);
 
 // Wait until child increments semaphore 0

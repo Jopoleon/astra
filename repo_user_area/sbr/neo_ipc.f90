@@ -29,7 +29,7 @@ contains
 
     use omp_lib
     use parameter_inc, only: NRD
-    use io_mod, only: equ_file, exp_file
+    use io_mod, only: equ_file, exp_file, awd
     use const_inc, only: NA1, BTOR, RTOR, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
     use status_inc, only: NE, TE, NI, TI, ER, MU, FP_NORM, &
         ZIM1, ZIM2, ZIM3, NDEUT, NIZ1, NIZ2, NIZ3, &
@@ -46,7 +46,7 @@ contains
     logical :: first_call=.True.
     integer :: jr, jrho, jr_r, jr_l, jion
     integer :: ns_in              ! Number of species, including electrons
-    integer :: i, j, nchunk, jout
+    integer :: i, j, nchunk, jout, offset
     integer :: t_wall1, t_wall2, rate, max_nworkers, stat
     integer, dimension(n_dims) :: dims_in
 
@@ -63,7 +63,13 @@ contains
     double precision, dimension(nspec_max-1, nrho_m) :: dni, ni_m
     double precision, dimension(nspec_max-1, nrho_m) :: zi_m 
     character(len=32) :: str_nworkers
-    character(len=64), dimension(:), allocatable :: SBP_NAMES
+    character(len=64) :: SBP_NAME
+    character(len=128) :: ipc_file, astra_task
+
+    call SYSTEM_CLOCK(t_wall1, rate)
+
+    ipc_file   = TRIM(awd) // '/tmp/' // TRIM(exp_file) // TRIM(equ_file) // '.ipc'
+    astra_task = TRIM(awd) // '/bin/' // TRIM(equ_file) // '.exe'
 
     if (first_call) then
         call get_environment_variable("MAX_NWORKERS", str_nworkers, status=stat)
@@ -89,10 +95,7 @@ contains
             write(*, '(A, i3, A, i3)') '>>> Warning nrho_m=', nrho_m, ' larger than NA1=', NA1
             print*, 'Possible profile overfit on TGLF grid'
         endif
-        allocate(SBP_NAMES(nworkers))
     endif
-
-    call SYSTEM_CLOCK(t_wall1, rate)
 
 ! Interpolate from ASTRA grid to NEO grid
     rho_min = RHO(1)
@@ -259,16 +262,17 @@ contains
     prof_in(33, :) = dni(4, :)
 
     if (first_call) then
-        SBP_NAMES = "xpr/neo"//char(0)
-        call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, nworkers, equ_file, exp_file)
-        call fill_dim2shm(dims_in)
-        call send_ipc_jobs(nworkers, nchunk, 64, SBP_NAMES)
+        SBP_NAME = "xpr/neo"//char(0)
+        offset = 10
+        call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, &
+            nchunk, nworkers, offset, SBP_NAME, ipc_file, astra_task)
+        call fill_dim2shm(n_dims, dims_in)
         first_call = .False.
     endif
 
 ! **** Fill shared memory segments
-    call fill_var2shm(scal_in)
-    call fill_arr2shm(prof_in)
+    call fill_var2shm(n_scalars, scal_in)
+    call fill_arr2shm(nrho_m, n_inputs, prof_in)
 
 ! **** Free each semaphore
     do i=1, nworkers
@@ -280,7 +284,7 @@ contains
 
 ! **** Collect data from ShMem
     do i=1, nworkers
-        call sbp2astra(i, prof_out(1, 1))
+        call sbp2astra(i, nchunk, n_arr_out, prof_out(1, 1))
     enddo
 
 ! Interpolate back to ASTRA radial grid
