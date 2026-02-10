@@ -12,7 +12,7 @@ void tglf_interf_(int*, int*, double*, double*, double*);
 int main(int argc, char *argv[]) {
 
     void *ShmAd0, *ShmAd1, *ShmAd2, *ShmAdr;
-    int outSize, N_ARR_OUT, J_PROC, N_CHUNK;
+    int j, outSize, N_ARR_OUT, J_PROC, N_CHUNK;
     int SemID, ShmId0, ShmId1, ShmId2;
     int ProcShmId;
     key_t Key_in, ProcKey;
@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
     static struct sembuf buf0 = {0, 1, IPC_NOWAIT};
     static struct sembuf bufN = {1,-1, ~SEM_UNDO&~IPC_NOWAIT};
     static char A_ipc_file[128];
-    FILE *A_IPC;
+    FILE *A_IPCa;
 
 /* Analyze the calling command string. Get own PID and name. */
     ProcPid = getpid();
@@ -31,9 +31,9 @@ int main(int argc, char *argv[]) {
 
     sscanf(argv[1], "%s", A_ipc_file);
     Key_in = (key_t)atoi(argv[2]);
-    J_PROC     = atoi(argv[3]);
-    N_CHUNK    = atoi(argv[4]);
-    N_ARR_OUT  = atoi(argv[5]);
+    J_PROC    = atoi(argv[3]);
+    N_CHUNK   = atoi(argv[4]);
+    N_ARR_OUT = atoi(argv[5]);
     printf("Fortran main: %s %d %3d %3d %d\n", ProcPath, ProcPid, J_PROC, N_CHUNK, N_ARR_OUT);
 
 /* Associate My semaphore with the ordinal process number */
@@ -58,13 +58,13 @@ int main(int argc, char *argv[]) {
     ShmAdr = shmat(ProcShmId, NULL, 0);
 
 // Append process info to A_ipc_file
-    A_IPC = fopen(A_ipc_file, "a");
-    if (!A_IPC){
+    A_IPCa = fopen(A_ipc_file, "a");
+    if (!A_IPCa){
         printf("Cannot open existing Astra IPC file: \"%s\"\n", A_ipc_file);
         exit(0);
     }
-    fprintf(A_IPC, "%12d%12d%12d   %s\n", ProcPid, ProcShmId, outSize, ProcPath);
-    fclose(A_IPC);
+    fprintf(A_IPCa, "%12d%12d\n", ProcPid, ProcShmId);
+    fclose(A_IPCa);
 
     int* dim_in = (int *)((char *)ShmAd0); // constant at all time steps
 

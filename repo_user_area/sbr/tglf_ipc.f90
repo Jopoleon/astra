@@ -33,7 +33,7 @@ contains
 
     use omp_lib
     use parameter_inc, only: NRD
-    use io_mod, only: equ_file, exp_file
+    use io_mod, only: equ_file, exp_file, awd
     use const_inc, only: NA1, GP2, BTOR, RTOR, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
     use status_inc, only: NE, TE, NI, TI, ZEF, PBLON, PBPER, PFAST, &
         ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3, ER, MU, FP_NORM, &
@@ -42,14 +42,14 @@ contains
     use numerical_tools, only: qinterp
 
     logical, parameter :: debug_elite=.false.
-    integer, parameter :: n_arr_out=15, nrho_m=64, nworkers=64, &
+    integer, parameter :: n_arr_out=15, nrho_m=64, nworkers=32, &
         n_dims=7, n_scalars=8, n_inputs=47, nthe_elite=400, mpol=6
     double precision, parameter :: c_vpol=1.d0
 
     double precision, intent(in), optional :: rho_norm_max
 
     logical :: first_call=.True.
-    integer :: i, jr, jrho, jr_r, jr_l, jgamma_max, jion, nchunk
+    integer :: i, jr, jrho, jr_r, jr_l, jgamma_max, jion, nchunk, offset
     integer :: ns_in, geom_flag=1              ! Number of species, including electrons
     integer :: jthe, jthe_rev, nrho_equ, nthe_equ ! for ELITE geometry
     integer :: t_wall1, t_wall2, rate, max_nworkers, stat
@@ -76,9 +76,12 @@ contains
     double precision, allocatable, dimension(:) :: theta_equ, pfn_equ
     double precision, allocatable, dimension(:, :) :: RR_tg, ZZ_tg, Bp_tg
     double precision, dimension(nthe_elite) :: theta_elite, RR_elite, ZZ_elite, Bp_elite
-    character(len=120) :: f_elite
+    character(len=128) :: f_elite, ipc_file, astra_task
 
     call SYSTEM_CLOCK(t_wall1, rate)
+
+    ipc_file   = TRIM(awd) // '/tmp/' // TRIM(exp_file) // TRIM(equ_file) // '.ipc'
+    astra_task = TRIM(awd) // '/bin/' // TRIM(equ_file) // '.exe'
 
     if (first_call) then
         call get_environment_variable("MAX_NWORKERS", str_nworkers, status=stat)
@@ -106,7 +109,6 @@ contains
         endif
         allocate(SBP_NAMES(nworkers))
     endif
-
 
 ! Interpolate from ASTRA grid to TGLF grid
     rho_min = RHO(1)
@@ -329,15 +331,16 @@ contains
 
     if (first_call) then
         SBP_NAMES = "xpr/tglfi"//char(0)
-        call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, nworkers, equ_file, exp_file)
-        call fill_dim2shm(dims_in)
-        call send_ipc_jobs(nworkers, nchunk, 64, SBP_NAMES)
+        call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, nworkers, ipc_file, astra_task)
+        call fill_dim2shm(n_dims, dims_in)
+        offset = 7
+        call send_ipc_jobs(nworkers, nchunk, n_arr_out, offset, 64, SBP_NAMES, ipc_file)
         first_call = .False.
     endif
 
 ! **** Fill shared memory segments
-    call fill_var2shm(scal_in)
-    call fill_arr2shm(prof_in)
+    call fill_var2shm(n_scalars, scal_in)
+    call fill_arr2shm(nrho_m, n_inputs, prof_in)
 
 ! **** Free each semaphore
     do i=1, nworkers
@@ -349,7 +352,7 @@ contains
 
 ! **** Collect data from ShMem
     do i=1, nworkers
-        call sbp2astra(i, prof_out(1, 1))
+        call sbp2astra(i, nchunk, n_arr_out, prof_out(1, 1))
     enddo
 
 ! Interpolate back to ASTRA radial grid
