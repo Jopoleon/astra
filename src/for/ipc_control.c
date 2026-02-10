@@ -124,8 +124,9 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
     getcwd(AWD, sizeof(AWD));
     for (j=0; j<*Nsub; j++) {
 // Sending main (e.g. "tglfi"), only once per subprocess
-        snprintf(jobString, sizeof(jobString), "%s/%s %s %d %d %d %d &",
-		 AWD, sub_name, ipc_file, my_key, j + 1, N_CHUNK, N_ARR_OUT);
+        snprintf(jobString, sizeof(jobString), "%s/%s %s %d %d %d %d %d %d %d&",
+		 AWD, sub_name, ipc_file, my_key, j+1, N_CHUNK, N_ARR_OUT,
+		 *ShmID_dims, *ShmID_vars, *ShmID_arrs);
         i = system(jobString);
 
 /* Wait until child increments semaphore 0 */
@@ -241,8 +242,7 @@ int wait4all_(int *SemID){
 /*----------- Fill subprocess input dims from ASTRA -------------*/
 int fill_dim2shm_(int* Ndims, int* dims_in, int* ShmID_dims){
 
-    void *ShmAdr_dims;
-    ShmAdr_dims = shmat(*ShmID_dims, NULL, 0);
+    void *ShmAdr_dims = shmat(*ShmID_dims, NULL, 0);
     int* dims_input = (int *)((char *)ShmAdr_dims);
     int N_DIMS = *Ndims;
     int dim_size = N_DIMS * sizeof(int);

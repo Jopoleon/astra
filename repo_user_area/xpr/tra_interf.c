@@ -22,31 +22,32 @@ int main(int argc, char *argv[]) {
 // sembuf members: {sem_num,sem_op,sem_flag};
     static struct sembuf buf0 = {0, 1, IPC_NOWAIT};
     static struct sembuf bufN = {1,-1, ~SEM_UNDO&~IPC_NOWAIT};
-    static char A_ipc_file[128];
-    FILE *A_IPCa;
+    static char ipc_file[128];
+    FILE *IPCa;
+    FILE *IPCr;
 
 /* Analyze the calling command string. Get own PID and name. */
     ProcPid = getpid();
     strcpy(ProcPath, argv[0]);
 
-    sscanf(argv[1], "%s", A_ipc_file);
+    sscanf(argv[1], "%s", ipc_file);
     Key_in = (key_t)atoi(argv[2]);
     J_PROC    = atoi(argv[3]);
     N_CHUNK   = atoi(argv[4]);
     N_ARR_OUT = atoi(argv[5]);
+    ShmId0 = atoi(argv[6]);
+    ShmId1 = atoi(argv[7]);
+    ShmId2 = atoi(argv[8]);
     printf("Fortran main: %s %d %3d %3d %d\n", ProcPath, ProcPid, J_PROC, N_CHUNK, N_ARR_OUT);
 
 /* Associate My semaphore with the ordinal process number */
     bufN.sem_num = J_PROC;
 /* Get semaphore and shmem IDs. */
     SemID  = semget(Key_in, 0, 0660);
-    ShmId0 = shmget((key_t)(Key_in+0), 0, 0660);
-    ShmId1 = shmget((key_t)(Key_in+1), 0, 0660);
-    ShmId2 = shmget((key_t)(Key_in+2), 0, 0660);
     ShmAd0 = shmat(ShmId0, NULL, 0);
     ShmAd1 = shmat(ShmId1, NULL, 0);
     ShmAd2 = shmat(ShmId2, NULL, 0);
-    ProcKey = ftok( ProcPath, (int)ProcPid);
+    ProcKey = ftok(ProcPath, (int)ProcPid);
     outSize = N_CHUNK*N_ARR_OUT*sizeof(double);
 
 /*------------------------------------
@@ -57,14 +58,14 @@ int main(int argc, char *argv[]) {
    My shared memory segment starts at ShmAdr */
     ShmAdr = shmat(ProcShmId, NULL, 0);
 
-// Append process info to A_ipc_file
-    A_IPCa = fopen(A_ipc_file, "a");
-    if (!A_IPCa){
-        printf("Cannot open existing Astra IPC file: \"%s\"\n", A_ipc_file);
+// Append process info to ipc_file
+    IPCa = fopen(ipc_file, "a");
+    if (!IPCa){
+        printf("Cannot open existing Astra IPC file: \"%s\"\n", ipc_file);
         exit(0);
     }
-    fprintf(A_IPCa, "%12d%12d\n", ProcPid, ProcShmId);
-    fclose(A_IPCa);
+    fprintf(IPCa, "%12d%12d\n", ProcPid, ProcShmId);
+    fclose(IPCa);
 
     int* dim_in = (int *)((char *)ShmAd0); // constant at all time steps
 
