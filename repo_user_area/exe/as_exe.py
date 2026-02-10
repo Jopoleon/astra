@@ -113,10 +113,10 @@ if __name__ == '__main__':
     if os.path.isfile(f_ipc):
         with open(f_ipc) as f:
             lines = f.readlines()
-        ipcProc1 = int(lines[4].split()[2])
-        ipcProc2 = int(lines[5].split()[2])
-        ipcProc3 = int(lines[6].split()[2])
-        PIDs, ipcProcs = np.loadtxt(f_ipc, skiprows=8, usecols=(0, 1), unpack=True, dtype=np.int32)
+        ipcProc1 = int(lines[6].split(':')[1].split()[0])
+        ipcProc2 = int(lines[7].split(':')[1].split()[0])
+        ipcProc3 = int(lines[8].split(':')[1].split()[0])
+        PIDs, ipcProcs = np.loadtxt(f_ipc, skiprows=10, usecols=(0, 1), unpack=True, dtype=np.int32)
         for pid in PIDs:
             cmd = 'kill -9 %s' %pid
             os.system(cmd)

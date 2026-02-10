@@ -18,9 +18,11 @@ void trim_right(char *str) {
 void sbp2astra_(int* jsbp, int *nchunk, int *n_sbp_arr_out, double* mem){
 
     int j, jproc, jarr, N_CHUNK, N_ARR_OUT;
+
     jproc = *jsbp - 1;
     N_CHUNK = *nchunk;
     N_ARR_OUT = *n_sbp_arr_out;
+
     double* prof_out = (double *)((char *)ShmAdr[jproc]);
 
     for (j=0; j<N_CHUNK; j++){
@@ -57,9 +59,8 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
     N_ARR_OUT = *n_sbp_arr_out;
     N_CHUNK = *nchunk;
 
-    ShmAdr = malloc(*Nsub * sizeof(*ShmAdr));
-    snprintf(sub_name, sizeof(sub_name), "%s", subName);
-    snprintf(ipc_file, sizeof(ipc_file), "%s", ipcFile);
+    snprintf(  sub_name, sizeof(sub_name)  , "%s", subName);
+    snprintf(  ipc_file, sizeof(ipc_file)  , "%s", ipcFile);
     snprintf(astra_task, sizeof(astra_task), "%s", astraTask);
     trim_right(ipc_file);
     trim_right(astra_task);
@@ -127,7 +128,7 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
 		 AWD, sub_name, ipc_file, my_key, j + 1, N_CHUNK, N_ARR_OUT);
         i = system(jobString);
 
-// Wait until child increments semaphore 0
+/* Wait until child increments semaphore 0 */
         struct sembuf bufj = {0, -1, ~IPC_NOWAIT};
         if (semop(*SemID, &bufj, 1) == -1) {
             perror("semop failed");
@@ -137,7 +138,7 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
         if (i == -1) return j + 1;
     }
 
-// Read process Shm addresses and size from ipc_file
+/* Read process Shm addresses and size from ipc_file */
     IPCr = fopen(ipc_file, "r");
     
     if (!IPCr) {
@@ -146,6 +147,7 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
     }
 
     char line[256];
+    ShmAdr = malloc(*Nsub * sizeof(*ShmAdr));
 
     while (fgets(line, sizeof line, IPCr)) {
         char *p = line;
@@ -167,6 +169,7 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
     }
 
     fclose(IPCr);
+
     return 0;
 }
 
