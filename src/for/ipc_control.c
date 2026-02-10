@@ -39,9 +39,9 @@ void sbp2astra_(int* jsbp, int *nchunk, int *n_sbp_arr_out, double* mem){
   Assign NA1 (= *Ngrid) to N_RHO
   Allocate two shared memory segments for Astra datasets
 */
-int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, int *n_sbp_arr_out, int *nchunk, int* Nsub, char *subName, char* ipcFile, char* astraTask, int *SemID, int *ShmID_dims, int *ShmID_vars, int *ShmID_arrs){
+int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, int *n_sbp_arr_out, int* Nsub, char *subName, char* ipcFile, char* astraTask, int *SemID, int *ShmID_dims, int *ShmID_vars, int *ShmID_arrs){
   
-    int N_DIMS, N_SCALARS, N_RHO, N_ARR_IN, N_ARR_OUT, N_CHUNK, dim_size, var_size, arr_size, Nsems;
+    int N_SUB, N_DIMS, N_SCALARS, N_RHO, N_ARR_IN, N_ARR_OUT, N_CHUNK, dim_size, var_size, arr_size, Nsems;
     int i, j, c, ID, ShmID;
     key_t my_key;
     pid_t PID=0;
@@ -51,13 +51,14 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
     time_t hold_time;
     static union semun Mysemun;
 
-    Nsems = *Nsub + 1;
+    N_SUB = *Nsub;
+    Nsems = N_SUB + 1;
     N_DIMS = *Ndims;
     N_SCALARS = *Nscalars;
     N_RHO = *Ngrid;
     N_ARR_IN  = *n_sbp_arr_in;
     N_ARR_OUT = *n_sbp_arr_out;
-    N_CHUNK = *nchunk;
+    N_CHUNK = N_RHO/N_SUB;
 
     snprintf(  sub_name, sizeof(sub_name)  , "%s", subName);
     snprintf(  ipc_file, sizeof(ipc_file)  , "%s", ipcFile);

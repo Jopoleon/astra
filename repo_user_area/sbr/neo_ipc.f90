@@ -37,7 +37,7 @@ contains
     use numerical_tools, only: qinterp
     use debugger, only: markloc
 
-    integer, parameter :: n_arr_out=15, nrho_m=64, nworkers=64, &
+    integer, parameter :: n_arr_out=15, nrho_m=64, nworkers=32, &
          n_dims=5, n_scalars=8, n_inputs=33
     double precision, parameter :: c_vpol=1.d0
 
@@ -71,7 +71,7 @@ contains
 
     call SYSTEM_CLOCK(t_wall1, rate)
 
-    ipc_file   = TRIM(awd) // '/tmp/' // TRIM(exp_file) // TRIM(equ_file) // '.ipc'
+    ipc_file   = TRIM(awd) // '/tmp/' // TRIM(exp_file) // TRIM(equ_file) // '_2.ipc'
     astra_task = TRIM(awd) // '/bin/' // TRIM(equ_file) // '.exe'
 
     if (first_call) then
@@ -98,7 +98,12 @@ contains
             write(*, '(A, i3, A, i3)') '>>> Warning nrho_m=', nrho_m, ' larger than NA1=', NA1
             print*, 'Possible profile overfit on TGLF grid'
         endif
+        SBP_NAME = "xpr/neo"//char(0)
+        call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, nworkers, &
+             SBP_NAME, ipc_file, astra_task, semID, shmID_dims, shmID_vars, shmID_arrs)
     endif
+ 
+    nchunk = nrho_m / nworkers
 
 ! Interpolate from ASTRA grid to NEO grid
     rho_min = RHO(1)
@@ -265,10 +270,6 @@ contains
     prof_in(33, :) = dni(4, :)
 
     if (first_call) then
-        SBP_NAME = "xpr/neo"//char(0)
-        call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, &
-            nchunk, nworkers, SBP_NAME, ipc_file, astra_task, &
-             semID, shmID_dims, shmID_vars, shmID_arrs)
         call fill_dim2shm(n_dims, dims_in, shmID_dims)
         first_call = .False.
     endif

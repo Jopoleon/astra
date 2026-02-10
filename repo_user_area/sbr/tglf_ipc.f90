@@ -110,7 +110,12 @@ contains
             write(*, '(A, i3, A, i3)') '>>> Warning nrho_m=', nrho_m, ' larger than NA1=', NA1
             print*, 'Possible profile overfit on TGLF grid'
         endif
+        SBP_NAME = "xpr/tglfi"//char(0)
+        call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, nworkers, &
+             SBP_NAME, ipc_file, astra_task, semID, shmID_dims, shmID_vars, shmID_arrs)
     endif
+ 
+    nchunk = nrho_m / nworkers
 
 ! Interpolate from ASTRA grid to TGLF grid
     rho_min = RHO(1)
@@ -263,8 +268,6 @@ contains
 ! IPC parallelisation
 !--------------------
 
-    nchunk = nrho_m / nworkers
-
     dims_in(1) = nchunk
     dims_in(2) = n_inputs
     dims_in(3) = n_arr_out
@@ -332,10 +335,6 @@ contains
     prof_in(47, :) = dti(4, :)
 
     if (first_call) then
-        SBP_NAME = "xpr/tglfi"//char(0)
-        call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, &
-             nchunk, nworkers, SBP_NAME, ipc_file, astra_task, &
-             semID, shmID_dims, shmID_vars, shmID_arrs)
         call fill_dim2shm(n_dims, dims_in, shmID_dims)
         first_call = .False.
     endif
