@@ -2,11 +2,9 @@
 
 int read_aipc(int*, int*, char*);
 
-int A_SemID = 0;
-void **A_ShmAdr = NULL;
-void *A_ShmAdr_adims;
-void *A_ShmAdr_avars;
-void *A_ShmAdr_aarrs;
+int SemID = 0;
+int ShmID_adims, ShmID_avars, ShmID_aarrs;
+void **ShmAdr = NULL;
 
 struct sembuf buf0 = {0, 0, ~SEM_UNDO&~IPC_NOWAIT};
 
@@ -28,7 +26,7 @@ void sbp2astra_(int* jsbp, int *nchunk, int *n_sbp_arr_out, double* mem){
     jproc = *jsbp - 1;
     N_CHUNK = *nchunk;
     N_ARR_OUT = *n_sbp_arr_out;
-    double* prof_out = (double *)((char *)A_ShmAdr[jproc]);
+    double* prof_out = (double *)((char *)ShmAdr[jproc]);
 
     for (j=0; j<N_CHUNK; j++){
         for (jarr=0; jarr<N_ARR_OUT; jarr++){
@@ -40,22 +38,22 @@ void sbp2astra_(int* jsbp, int *nchunk, int *n_sbp_arr_out, double* mem){
 
 /*---------------------------------------------------
   Get PID and key for the Astra main process
-  Create and initialize a set of A_Nsems semaphores
+  Create and initialize a set of Nsems semaphores
   Assign NA1 (= *Ngrid) to N_RHO
   Allocate two shared memory segments for Astra datasets
 */
-int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, int *n_sbp_arr_out, int *nchunk, int* Nsub, int* offset, char *subName, char* ipc_file, char* astra_task){
+int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, int *n_sbp_arr_out, int *nchunk, int* Nsub, int* offset, char *subName, char* ipcFile, char* astraTask){
   
-    int N_DIMS, N_SCALARS, N_RHO, N_ARR_IN, N_ARR_OUT, N_CHUNK, dim_size, var_size, arr_size, A_Nsems;
-    int i, j, A_ShmID_adims, A_ShmID_avars, A_ShmID_aarrs;
+    int N_DIMS, N_SCALARS, N_RHO, N_ARR_IN, N_ARR_OUT, N_CHUNK, dim_size, var_size, arr_size, Nsems;
+    int i, j;
     key_t my_key;
-    pid_t A_PID=0;
-    FILE *A_IPCw;
-    char hostname[128], A_astra_task[128], A_ipc_file[128], A_sub_name[64];
+    pid_t PID=0;
+    FILE *IPCw;
+    char hostname[128], astra_task[128], ipc_file[128], sub_name[64];
     time_t hold_time;
     static union semun Mysemun;
 
-    A_Nsems = *Nsub + 1;
+    Nsems = *Nsub + 1;
     N_DIMS = *Ndims;
     N_SCALARS = *Nscalars;
     N_RHO = *Ngrid;
@@ -63,65 +61,62 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
     N_ARR_OUT = *n_sbp_arr_out;
     N_CHUNK = *nchunk;
 
-    A_ShmAdr = malloc(*Nsub * sizeof(*A_ShmAdr));
-    snprintf(A_sub_name, sizeof(A_sub_name), "%s", subName);
-    snprintf(A_ipc_file, sizeof(A_ipc_file), "%s", ipc_file);
-    snprintf(A_astra_task, sizeof(A_astra_task), "%s", astra_task);
-    trim_right(A_ipc_file);
-    trim_right(A_astra_task);
-    trim_right(A_sub_name);
+    ShmAdr = malloc(*Nsub * sizeof(*ShmAdr));
+    snprintf(sub_name, sizeof(sub_name), "%s", subName);
+    snprintf(ipc_file, sizeof(ipc_file), "%s", ipcFile);
+    snprintf(astra_task, sizeof(astra_task), "%s", astraTask);
+    trim_right(ipc_file);
+    trim_right(astra_task);
+    trim_right(sub_name);
 
 // Collecting data
-    A_PID = getpid();
-// Define the absolute path name of Astra executable ASTRA_task
-    my_key = ftok( A_astra_task, (int)A_PID);    // Get System V IPC key
-    printf("ASTRA_task %s %d %d\n", A_astra_task, my_key, (int)A_PID);
+    PID = getpid();
+// Define the absolute path name of Astra executable ASTRtask
+    my_key = ftok( astra_task, (int)PID);    // Get System V IPC key
+    printf("ASTRtask %s %d %d\n", astra_task, my_key, (int)PID);
     if (my_key == -1){
         fprintf(stderr, "ipc_control: not able to create Key from ProcID\n");
         fprintf(stderr, "Probably wrong ATASK name parsed from tmp/astra.nml\n");
-        fprintf(stderr, "ATASK name: %s\n", A_astra_task);
+        fprintf(stderr, "ATASK name: %s\n", astra_task);
         exit(1);
     }
 
-// Create a set of A_Nsems semaphores
-    A_SemID = semget(my_key, A_Nsems, 0660|IPC_CREAT);
-// Initialize all semaphores in the set A_SemID as {0, 0, ...}
+// Create a set of Nsems semaphores
+    SemID = semget(my_key, Nsems, 0660|IPC_CREAT);
+// Initialize all semaphores in the set SemID as {0, 0, ...}
     Mysemun.val = 0;
-    for(j=0; j<A_Nsems; j++){
-        semctl(A_SemID, j, SETVAL, Mysemun);
+    for(j=0; j<Nsems; j++){
+        semctl(SemID, j, SETVAL, Mysemun);
     }
 
     dim_size = N_DIMS*sizeof(int);
     var_size = N_SCALARS*sizeof(double);
     arr_size = N_RHO*N_ARR_IN*sizeof(double);
 // Allocate shared memory segment for AVARS, AARRS
-    A_ShmID_adims = shmget(my_key  , dim_size, 0660|IPC_CREAT|IPC_EXCL);
-    A_ShmID_avars = shmget(my_key+1, var_size, 0660|IPC_CREAT|IPC_EXCL);
-    A_ShmID_aarrs = shmget(my_key+2, arr_size, 0660|IPC_CREAT|IPC_EXCL);
-    A_ShmAdr_adims = shmat(A_ShmID_adims, NULL, 0);
-    A_ShmAdr_avars = shmat(A_ShmID_avars, NULL, 0);
-    A_ShmAdr_aarrs = shmat(A_ShmID_aarrs, NULL, 0);
+    ShmID_adims = shmget(my_key  , dim_size, 0660|IPC_CREAT|IPC_EXCL);
+    ShmID_avars = shmget(my_key+1, var_size, 0660|IPC_CREAT|IPC_EXCL);
+    ShmID_aarrs = shmget(my_key+2, arr_size, 0660|IPC_CREAT|IPC_EXCL);
 
 // Write file tmp/<exp><equ>.ipc
-    A_IPCw = fopen(A_ipc_file, "w");
-    if (!A_IPCw){
-        fprintf(stderr, "Cannot open Astra IPC file: \"%s\"\n", A_ipc_file);
+    IPCw = fopen(ipc_file, "w");
+    if (!IPCw){
+        fprintf(stderr, "Cannot open Astra IPC file: \"%s\"\n", ipc_file);
         exit(0);
     }
-    fprintf(A_IPCw, "Astra task:  \"%s\"\n", A_astra_task);
+    fprintf(IPCw, "Astra task:  \"%s\"\n", astra_task);
     gethostname(hostname, (size_t)32);
 
     hold_time = time(NULL);
-    fprintf(A_IPCw, "Astra@%s started on:  %s", hostname, ctime(&hold_time));
-    fprintf(A_IPCw, "Astra(main):\n");
-    fprintf(A_IPCw, "  PID   = %d\n", (int)A_PID);
-    fprintf(A_IPCw, "  SemID = %d\n", A_SemID);
-    fprintf(A_IPCw, "  Key   = %d\n", (int)my_key);
-    fprintf(A_IPCw, "Dims, ShmId, size:%12d%12d\n", A_ShmID_adims, dim_size);
-    fprintf(A_IPCw, "Vars: ShmID, size:%12d%12d\n", A_ShmID_avars, var_size);
-    fprintf(A_IPCw, "Arrs: ShmID, size:%12d%12d\n", A_ShmID_aarrs, arr_size);
-    fprintf(A_IPCw, "         PID       ShmID\n");
-    fclose(A_IPCw);
+    fprintf(IPCw, "Astra@%s started on:  %s", hostname, ctime(&hold_time));
+    fprintf(IPCw, "Astra(main):\n");
+    fprintf(IPCw, "  PID   = %d\n", (int)PID);
+    fprintf(IPCw, "  SemID = %d\n", SemID);
+    fprintf(IPCw, "  Key   = %d\n", (int)my_key);
+    fprintf(IPCw, "Dims, ShmId, size:%12d%12d\n", ShmID_adims, dim_size);
+    fprintf(IPCw, "Vars: ShmID, size:%12d%12d\n", ShmID_avars, var_size);
+    fprintf(IPCw, "Arrs: ShmID, size:%12d%12d\n", ShmID_aarrs, arr_size);
+    fprintf(IPCw, "         PID       ShmID\n");
+    fclose(IPCw);
 
 /*---------------------------------------------------------------------
   Set (lock) the primary semaphore to -(Number_of_processes)
@@ -134,12 +129,12 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
     for (j=0; j<*Nsub; j++) {
 // Sending main (e.g. "tglfi"), only once per subprocess
         snprintf(jobString, sizeof(jobString), "%s/%s %s %d %d %d %d &",
-		 AWD, A_sub_name, A_ipc_file, my_key, j + 1, N_CHUNK, N_ARR_OUT);
+		 AWD, sub_name, ipc_file, my_key, j + 1, N_CHUNK, N_ARR_OUT);
         i = system(jobString);
 
 // Wait until child increments semaphore 0
         struct sembuf bufj = {0, -1, ~IPC_NOWAIT};
-        if (semop(A_SemID, &bufj, 1) == -1) {
+        if (semop(SemID, &bufj, 1) == -1) {
             perror("semop failed");
             return j + 1;
         }
@@ -147,7 +142,7 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
         if (i == -1) return j + 1;
     }
 
-// Read process Shm addresses and size from A_ipc_file
+// Read process Shm addresses and size from ipc_file
     if (read_aipc(Nsub, offset, ipc_file)){
         fprintf(stderr, "Error in input data interpretation (function read_aipc)\n");
         exit(j);
@@ -160,13 +155,13 @@ void unlock_sbp_(int* jsbp){
     auto struct sembuf bufJ = {*jsbp, 1, IPC_NOWAIT};
     --buf0.sem_op;   // Each call decrements Sem0 value by 1
 // Increment semval # sem_num=*n, Open subprocess 
-    semop(A_SemID, &bufJ, 1);
+    semop(SemID, &bufJ, 1);
 }
 
 /*---------------------------------------------------------------------*/
-/* Compare Sem0 value with buf0.sem_op ( == -A_Nsems) and
+/* Compare Sem0 value with buf0.sem_op ( == -Nsems) and
  wait until all subprocesses increment Sem0 by 1
-        so that Sem0 reaches value A_Nsems
+        so that Sem0 reaches value Nsems
 */
 int wait4all_(){
     static struct timespec timeout = {0, 100000000};   // timeout = .1 sec
@@ -176,7 +171,7 @@ int wait4all_(){
   Overflow occurs when the number of successive calls exceeds 32767
 */
     while(1){
-        if (semtimedop(A_SemID, &buf0, 1, &timeout) == 0) {
+        if (semtimedop(SemID, &buf0, 1, &timeout) == 0) {
             buf0.sem_op = 0;
             return 0;
         }
@@ -225,39 +220,41 @@ int wait4all_(){
     (1) fill arrays of Child_process_IDs, Child_shmem_lengths/IDs,
     (2) attach child process shmem segments to the main process memory
 */
-int read_aipc(int* Nsub, int *offset, char *ipc_file){
+int read_aipc(int* Nsub, int *offset, char *ipcFile){
 
-    char A_ipc_file[128];
-    snprintf(A_ipc_file, sizeof(A_ipc_file), "%s", ipc_file);
-    trim_right(A_ipc_file);
-    FILE *A_IPCr = fopen(A_ipc_file, "r");
+    char ipc_file[128];
+    snprintf(ipc_file, sizeof(ipc_file), "%s", ipcFile);
+    trim_right(ipc_file);
+    FILE *IPCr = fopen(ipc_file, "r");
     int i, j, c, ID, ShmID;
     
-    if (!A_IPCr) {
-        perror(A_ipc_file);
+    if (!IPCr) {
+        perror(ipc_file);
         exit(EXIT_FAILURE);
     }
 
 /* Skip header lines */
     for (j=0; j < *offset; j++) {
-        while ((c = fgetc(A_IPCr)) != '\n' && c != EOF);
+        while ((c = fgetc(IPCr)) != '\n' && c != EOF);
     }
 
 /* Read Proc IDs and assign address */
     i = 0;
     while (i < *Nsub &&
-        fscanf(A_IPCr, "%12d%12d", &ID, &ShmID) == 2) {
-        A_ShmAdr[i] = shmat(ShmID, NULL, 0);
+        fscanf(IPCr, "%12d%12d", &ID, &ShmID) == 2) {
+        ShmAdr[i] = shmat(ShmID, NULL, 0);
 	i++;
     }
-    fclose(A_IPCr);
+    fclose(IPCr);
     return 0;
 }
 
 /*----------- Fill subprocess input dims from ASTRA -------------*/
 int fill_dim2shm_(int* Ndims, int* dims_in){
 
-    int* dims_input = (int *)((char *)A_ShmAdr_adims);
+    void *ShmAdr_adims;
+    ShmAdr_adims = shmat(ShmID_adims, NULL, 0);
+    int* dims_input = (int *)((char *)ShmAdr_adims);
     int N_DIMS = *Ndims;
     int dim_size = N_DIMS * sizeof(int);
     memcpy(dims_input, dims_in, dim_size);
@@ -268,7 +265,8 @@ int fill_dim2shm_(int* Ndims, int* dims_in){
 /*----------- Fill subprocess input scalars from ASTRA -------------*/
 int fill_var2shm_(int* Nscalars, double* scal_in){
 
-    double* scal_input = (double *)((char *)A_ShmAdr_avars);
+    void *ShmAdr_avars = shmat(ShmID_avars, NULL, 0);
+    double* scal_input = (double *)((char *)ShmAdr_avars);
     int N_SCALARS = *Nscalars;
     int var_size = N_SCALARS*sizeof(double);
     memcpy(scal_input, scal_in, var_size);
@@ -279,7 +277,8 @@ int fill_var2shm_(int* Nscalars, double* scal_in){
 /*------------- Fill subprocess input arrays from ASTRA --------------*/
 int fill_arr2shm_(int* Ngrid, int* n_sbp_arr_in, double* prof_in){
 
-    double* prof_input = (double *)((char *)A_ShmAdr_aarrs);
+    void *ShmAdr_aarrs = shmat(ShmID_aarrs, NULL, 0);
+    double* prof_input = (double *)((char *)ShmAdr_aarrs);
     int N_RHO = *Ngrid;
     int N_ARR_IN = *n_sbp_arr_in;
     size_t num_elements = N_RHO * N_ARR_IN;
