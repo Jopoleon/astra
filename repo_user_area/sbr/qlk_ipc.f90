@@ -28,7 +28,7 @@ contains
 
     use omp_lib
     use parameter_inc, only: NRD
-    use io_mod, only: equ_file, exp_file
+    use io_mod, only: equ_file, exp_file, awd
     use const_inc, only: NA1, BTOR, RTOR, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
     use status_inc, only: NE, TE, NI, TI, ZIM1, ZIM2, ZIM3, PBLON, PBPER, &
         PFAST, NIZ3, AMAIN, ER, MU, FP_NORM, RHO, AMETR, SHIF, &
@@ -36,8 +36,8 @@ contains
     use numerical_tools, only: qinterp
     use debugger, only: markloc
 
-    integer, parameter :: n_arr_out=15, nrho_m=64, nworkers=64, n_dims=5, &
-         n_scalars=8, n_inputs=39
+    integer, parameter :: n_arr_out=15, nrho_m=64, nworkers=64, ipcId=2, &
+        n_dims=5, n_scalars=8, n_inputs=39
 
     double precision, intent(in), optional :: rho_norm_max
 
@@ -45,7 +45,8 @@ contains
     integer :: nchunk
     integer :: i, j, jr, jrho, jr_r, jr_l, jgamma_max, jspec
     integer :: ns_in              ! Number of species, including electrons
-    integer :: t_wall1, t_wall2, rate, max_nworkers, stat
+    integer :: t_wall1, t_wall2, rate, max_nworkers, stat, &
+        semID, shmID_dims, shmID_vars, shmID_arrs
     integer, dimension(n_dims) :: dims_in
 
     double precision, dimension(n_inputs, nrho_m) :: prof_in
@@ -65,9 +66,17 @@ contains
     double precision, dimension(nspec_max-1, nrho_m) :: zi_m 
     double precision, dimension(nspec_max-1, NRD) :: ni_as, ion_pflux_m
     character(len=32) :: str_nworkers
-    character(len=64), dimension(:), allocatable :: SBP_NAMES
+    character(len=64) :: SBP_NAME
+    character(len=128) :: ipc_file, astra_task
+
+    save semID, shmID_vars, shmID_arrs
 
     call SYSTEM_CLOCK(t_wall1, rate)
+
+    write(ipc_file, '(5A, i0, 2A)') TRIM(awd), '/tmp/', TRIM(exp_file), &
+        TRIM(equ_file), '-', ipcId, '.ipc', char(0)
+    write(astra_task, '(5A)') TRIM(awd), '/bin/', TRIM(equ_file), &
+        '.exe', char(0)
 
     if (first_call) then
         call get_environment_variable("MAX_NWORKERS", str_nworkers, status=stat)
@@ -93,7 +102,10 @@ contains
             write(*, '(A, i3, A, i3)') '>>> Warning nrho_m=', nrho_m, ' larger than NA1=', NA1
             print*, 'Possible profile overfit on TGLF grid'
         endif
-        allocate(SBP_NAMES(nworkers))
+        SBP_NAME = "xpr/qlki"//char(0)
+        call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, &
+            nworkers, SBP_NAME, ipc_file, astra_task, semID, shmID_dims, &
+            shmID_vars, shmID_arrs, ipcId)
     endif
 
     nchunk = nrho_m / nworkers
@@ -220,11 +232,9 @@ contains
         drhodr(jr) = drho(jr)/drmin(jr)
     enddo
 
-    !--------------------
-    ! IPC parallelisation
-    !--------------------
-
-    nchunk = nrho_m / nworkers
+!--------------------
+! IPC parallelisation
+!--------------------
 
     dims_in(1) = nchunk
     dims_in(2) = n_inputs
@@ -282,28 +292,25 @@ contains
     prof_in(39, :) = dni(4, :)
 
     if (first_call) then
-        SBP_NAMES = "xpr/qlki"//char(0)
-        call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, nworkers, equ_file, exp_file)
-        call fill_dim2shm(dims_in)
-        call send_ipc_jobs(nworkers, nchunk, 64, SBP_NAMES)
+        call fill_dim2shm(n_dims, dims_in, shmID_dims)
         first_call = .False.
     endif
 
-    ! **** Fill shared memory segments
-    call fill_var2shm(scal_in)
-    call fill_arr2shm(prof_in)
+! **** Fill shared memory segments
+    call fill_var2shm(n_scalars, scal_in, shmID_vars)
+    call fill_arr2shm(nrho_m, n_inputs, prof_in, shmID_arrs)
 
-    ! **** Free each semaphore
-    do j=1, nworkers
-        call unlock_sbp(j)
+! **** Free each semaphore
+    do i=1, nworkers
+        call unlock_sbp(i, semID)
     enddo
 
-    ! **** Synchronisation point
-    call wait4all
+! **** Synchronisation point
+    call wait4all(semID)
 
-    ! **** Collect data from ShMem
+! **** Collect data from ShMem
     do i=1, nworkers
-        call sbp2astra(i, prof_out(1, 1))
+        call sbp2astra(i, nchunk, n_arr_out, ipc_file, prof_out(1, 1))
     enddo
 
     ! Interpolate back to ASTRA radial grid

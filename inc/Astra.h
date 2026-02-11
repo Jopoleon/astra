@@ -12,6 +12,7 @@
 #include <time.h>
 #include <sys/shm.h>
 #include <errno.h>
+#include <ctype.h>
 
 union semun{
     int val;                    /* value for SETVAL */
