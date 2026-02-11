@@ -36,8 +36,8 @@ contains
     use numerical_tools, only: qinterp
     use debugger, only: markloc
 
-    integer, parameter :: n_arr_out=15, nrho_m=64, nworkers=64, n_dims=5, &
-         n_scalars=8, n_inputs=39
+    integer, parameter :: n_arr_out=15, nrho_m=64, nworkers=64, ipcId=2, &
+        n_dims=5, n_scalars=8, n_inputs=39
 
     double precision, intent(in), optional :: rho_norm_max
 
@@ -73,8 +73,10 @@ contains
 
     call SYSTEM_CLOCK(t_wall1, rate)
 
-    ipc_file   = TRIM(awd) // '/tmp/' // TRIM(exp_file) // TRIM(equ_file) // '.ipc'
-    astra_task = TRIM(awd) // '/bin/' // TRIM(equ_file) // '.exe'
+    write(ipc_file, '(5A, i0, 2A)') TRIM(awd), '/tmp/', TRIM(exp_file), &
+        TRIM(equ_file), '-', ipcId, '.ipc', char(0)
+    write(astra_task, '(5A)') TRIM(awd), '/bin/', TRIM(equ_file), &
+        '.exe', char(0)
 
     if (first_call) then
         call get_environment_variable("MAX_NWORKERS", str_nworkers, status=stat)
@@ -101,8 +103,9 @@ contains
             print*, 'Possible profile overfit on TGLF grid'
         endif
         SBP_NAME = "xpr/qlki"//char(0)
-        call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, nworkers, &
-            SBP_NAME, ipc_file, astra_task, semID, shmID_dims, shmID_vars, shmID_arrs)
+        call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, &
+            nworkers, SBP_NAME, ipc_file, astra_task, semID, shmID_dims, &
+            shmID_vars, shmID_arrs, ipcId)
     endif
 
     nchunk = nrho_m / nworkers
@@ -307,7 +310,7 @@ contains
 
 ! **** Collect data from ShMem
     do i=1, nworkers
-        call sbp2astra(i, nchunk, n_arr_out, prof_out(1, 1))
+        call sbp2astra(i, nchunk, n_arr_out, ipc_file, prof_out(1, 1))
     enddo
 
     ! Interpolate back to ASTRA radial grid

@@ -1,6 +1,5 @@
 #include "Astra.h"
 
-void **ShmAdr = NULL;
 struct sembuf buf0 = {0, 0, ~SEM_UNDO&~IPC_NOWAIT};
 
 /*---------------------------------------------------
@@ -15,19 +14,48 @@ void trim_right(char *str) {
 /*--------------------------------------------------------------------
   Reads the shared memory segment and stores the subprocess' output to an ASTRA fortran array
 */
-void sbp2astra_(int* jsbp, int *nchunk, int *n_sbp_arr_out, double* mem){
+void sbp2astra_(int* jsbp, int *nchunk, int *n_sbp_arr_out, char* ipcFile, double* mem){
 
-    int j, jproc, jarr, N_CHUNK, N_ARR_OUT;
+    int j, J_PROC, jproc, ID, ShmID, jarr, N_CHUNK, N_ARR_OUT;
+    char ipc_file[128];
+    FILE *IPCr;
+    char line[256];
+ 
+    snprintf(  ipc_file, sizeof(ipc_file)  , "%s", ipcFile);
+    trim_right(ipc_file);
 
-    jproc = *jsbp - 1;
+    J_PROC = *jsbp - 1;
     N_CHUNK = *nchunk;
     N_ARR_OUT = *n_sbp_arr_out;
+    void *ShmAdr = NULL;
 
-    double* prof_out = (double *)((char *)ShmAdr[jproc]);
+    IPCr = fopen(ipc_file, "r");
+    while (fgets(line, sizeof line, IPCr)) {
+        char *p = line;
+
+/* skip leading blanks and tabs */
+        while (*p == ' ' || *p == '\t')
+            p++;
+
+/* skip line if first non-blank is not digit or sign */
+        if (!isdigit((unsigned char)*p) && *p != '+' && *p != '-')
+            continue;
+
+/* parse integers */
+        if (sscanf(p, "%d%d%d", &jproc, &ID, &ShmID) != 3)
+            continue;
+	if (jproc == J_PROC) break;
+
+/* valid data line */
+    }
+    fclose(IPCr);
+    
+    ShmAdr = shmat(ShmID, NULL, 0);
+    double* prof_out = (double *)((char *)ShmAdr);
 
     for (j=0; j<N_CHUNK; j++){
         for (jarr=0; jarr<N_ARR_OUT; jarr++){
-            mem[jarr + (j + jproc*N_CHUNK) * N_ARR_OUT] = prof_out[jarr + j*N_ARR_OUT];
+            mem[jarr + (j + J_PROC*N_CHUNK) * N_ARR_OUT] = prof_out[jarr + j*N_ARR_OUT];
         }
     }
     return;
@@ -39,15 +67,15 @@ void sbp2astra_(int* jsbp, int *nchunk, int *n_sbp_arr_out, double* mem){
   Assign NA1 (= *Ngrid) to N_RHO
   Allocate two shared memory segments for Astra datasets
 */
-int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, int *n_sbp_arr_out, int* Nsub, char *subName, char* ipcFile, char* astraTask, int *SemID, int *ShmID_dims, int *ShmID_vars, int *ShmID_arrs){
-  
+int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, int *n_sbp_arr_out, int* Nsub, char *subName, char* ipcFile, char* astraTask, int *SemID, int *ShmID_dims, int *ShmID_vars, int *ShmID_arrs, int *ipcId){
+
     int N_SUB, N_DIMS, N_SCALARS, N_RHO, N_ARR_IN, N_ARR_OUT, N_CHUNK, dim_size, var_size, arr_size, Nsems;
-    int i, j, c, ID, ShmID;
-    key_t my_key;
+    int i, j, c, J_PROC, ID, ShmID;
+    int ShmID_dummy;
+    key_t my_key, key2;
     pid_t PID=0;
     FILE *IPCw;
-    FILE *IPCr;
-    char hostname[128], astra_task[128], ipc_file[128], sub_name[64];
+    char hostname[128], AWD[128], astra_task[128], ipc_file[128], sub_name[64], jobString[400];
     time_t hold_time;
     static union semun Mysemun;
 
@@ -66,12 +94,15 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
     trim_right(ipc_file);
     trim_right(astra_task);
     trim_right(sub_name);
-
-// Collecting data
+ 
     PID = getpid();
 // Define the absolute path name of Astra executable ASTRtask
     my_key = ftok( astra_task, (int)PID);    // Get System V IPC key
-    printf("ASTRtask %s %d %d\n", astra_task, my_key, (int)PID);
+    dim_size = N_DIMS*sizeof(int);
+    var_size = N_SCALARS*sizeof(double);
+    arr_size = N_RHO*N_ARR_IN*sizeof(double);
+
+// Collecting data
     if (my_key == -1){
         fprintf(stderr, "ipc_control: not able to create Key from ProcID\n");
         fprintf(stderr, "Probably wrong ATASK name parsed from tmp/astra.nml\n");
@@ -79,21 +110,20 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
         exit(1);
     }
 
+    key2 = my_key + (*ipcId)*3;
+    printf("ASTRtask %s %d %d %d\n", astra_task, key2, (int)PID, dim_size);
 // Create a set of Nsems semaphores
-    *SemID = semget(my_key, Nsems, 0660|IPC_CREAT);
+    *SemID = semget(key2, Nsems, 0660|IPC_CREAT);
 // Initialize all semaphores in the set SemID as {0, 0, ...}
     Mysemun.val = 0;
     for(j=0; j<Nsems; j++){
         semctl(*SemID, j, SETVAL, Mysemun);
     }
 
-    dim_size = N_DIMS*sizeof(int);
-    var_size = N_SCALARS*sizeof(double);
-    arr_size = N_RHO*N_ARR_IN*sizeof(double);
 // Allocate shared memory segment for VARS, ARRS
-    *ShmID_dims = shmget(my_key  , dim_size, 0660|IPC_CREAT|IPC_EXCL);
-    *ShmID_vars = shmget(my_key+1, var_size, 0660|IPC_CREAT|IPC_EXCL);
-    *ShmID_arrs = shmget(my_key+2, arr_size, 0660|IPC_CREAT|IPC_EXCL);
+    *ShmID_dims = shmget(key2  , dim_size, 0660|IPC_CREAT|IPC_EXCL);
+    *ShmID_vars = shmget(key2+1, var_size, 0660|IPC_CREAT|IPC_EXCL);
+    *ShmID_arrs = shmget(key2+2, arr_size, 0660|IPC_CREAT|IPC_EXCL);
 
 // Write file tmp/<exp><equ>.ipc
     IPCw = fopen(ipc_file, "w");
@@ -108,7 +138,7 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
     fprintf(IPCw, "Astra(main):\n");
     fprintf(IPCw, "  PID   : %d\n", (int)PID);
     fprintf(IPCw, "  SemID : %d\n", *SemID);
-    fprintf(IPCw, "  Key   : %d\n", (int)my_key);
+    fprintf(IPCw, "  Key   : %d\n", (int)key2);
     fprintf(IPCw, "Dims | ShmId, size:%12d%12d\n", *ShmID_dims, dim_size);
     fprintf(IPCw, "Vars | ShmID, size:%12d%12d\n", *ShmID_vars, var_size);
     fprintf(IPCw, "Arrs | ShmID, size:%12d%12d\n", *ShmID_arrs, arr_size);
@@ -120,13 +150,11 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
   Launch parallel subprocesses
 */
 
-    char jobString[400], AWD[128];
-
     getcwd(AWD, sizeof(AWD));
     for (j=0; j<*Nsub; j++) {
 // Sending main (e.g. "tglfi"), only once per subprocess
         snprintf(jobString, sizeof(jobString), "%s/%s %s %d %d %d %d %d %d %d&",
-		 AWD, sub_name, ipc_file, my_key, j+1, N_CHUNK, N_ARR_OUT,
+		 AWD, sub_name, ipc_file, key2, j+1, N_CHUNK, N_ARR_OUT,
 		 *ShmID_dims, *ShmID_vars, *ShmID_arrs);
         i = system(jobString);
 
@@ -139,38 +167,6 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
 
         if (i == -1) return j + 1;
     }
-
-/* Read process Shm addresses and size from ipc_file */
-    IPCr = fopen(ipc_file, "r");
-    
-    if (!IPCr) {
-        perror(ipc_file);
-        exit(EXIT_FAILURE);
-    }
-
-    char line[256];
-    ShmAdr = malloc(*Nsub * sizeof(*ShmAdr));
-
-    while (fgets(line, sizeof line, IPCr)) {
-        char *p = line;
-
-/* skip leading blanks and tabs */
-        while (*p == ' ' || *p == '\t')
-            p++;
-
-/* skip line if first non-blank is not digit or sign */
-        if (!isdigit((unsigned char)*p) && *p != '+' && *p != '-')
-            continue;
-
-/* parse integers */
-        if (sscanf(p, "%d%d", &ID, &ShmID) != 2)
-            continue;
-
-/* valid data line */
-        ShmAdr[i++] = shmat(ShmID, NULL, 0);
-    }
-
-    fclose(IPCr);
 
     return 0;
 }

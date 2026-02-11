@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
         printf("Cannot open existing Astra IPC file: \"%s\"\n", ipc_file);
         exit(0);
     }
-    fprintf(IPCa, "%12d%12d\n", ProcPid, ProcShmId);
+    fprintf(IPCa, "%10d %10d %10d\n", J_PROC, ProcPid, ProcShmId);
     fclose(IPCa);
 
     int* dim_in = (int *)((char *)ShmAd0); // constant at all time steps
