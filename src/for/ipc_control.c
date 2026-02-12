@@ -158,7 +158,6 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
             perror("semop failed");
             return j + 1;
         }
-
         if (i == -1) return j + 1;
     }
 

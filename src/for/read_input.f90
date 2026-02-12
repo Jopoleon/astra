@@ -364,9 +364,9 @@ contains
                         read(strarray(j+1), *, iostat=ios) ALFA
                         if (ios /= 0) call astra_stop(err_format)
                         if (i_filter_glob == 1) then
-    	         	alfa_glob = alfa
-    			i_filter_glob = 0
-    		    endif
+                            alfa_glob = alfa
+                            i_filter_glob = 0
+                        endif
                     CASE('FACTOR')
                         read(strarray(j+1), *, iostat=ios) factor
                         if (ios /= 0) call astra_stop(err_format)

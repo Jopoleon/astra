@@ -9,9 +9,19 @@ logger = logging.getLogger('exp_parser')
 logger.setLevel(logging.INFO)
 
 
+delimiters = ['POINTS', 'GRIDTYPE', 'FILTER', 'PROFIL', 'END']
+prof_attr_types = {
+    'POINTS': int,
+    'GRIDTYPE': int,
+    'NTIMES': int,
+    'FILTER': float,
+    'FACTOR': float,
+    'NAMEXP': str,
+}
+
+
 def exp_split(exp):
 
-    delimiters = ['POINTS', 'GRIDTYPE', 'FILTER', 'PROFIL', 'END']
     pattern = re.compile(r'\b(?:' + '|'.join(map(re.escape, delimiters)) + r')\b')
 
     match = pattern.search(exp)
@@ -34,6 +44,14 @@ def var_name(str_in):
     return str_out
 
 
+def append_x(str_in):
+
+    if not str_in or str_in[0] in (' ', '\t'): # If 1st character is tab or space, return blank
+        return ''
+    else:
+        return var_name(str_in) + 'X'
+
+
 def parse_u_line(str_in):
 
     var_name, str1 = str_in.split(' ', 1)
@@ -45,13 +63,28 @@ def parse_u_line(str_in):
         factor = float(words[2])
     return path, factor
 
-    
+
+def parse_line2d(line):
+
+    words = line.split()
+    result = {}
+
+    for i, word in enumerate(words[:-1]):   # avoid overflow
+        if word in prof_attr_types:
+            try:
+                result[word] = prof_attr_types[word](words[i + 1])
+            except ValueError:
+                raise ValueError(f"Invalid value for {word}: {words[i+1]}")
+
+    return result
+
+
 class EXP_PARSER:
 
 
     def __init__(self, f_exp=None):
 
-        tim = np.zeros(5)
+        tim = np.zeros(6)
         tim[0] = time.time()
         self.f_exp = f_exp
 
@@ -81,10 +114,13 @@ class EXP_PARSER:
         tim[3] = time.time()
         self.parse_exp1d(exp1d)
         tim[4] = time.time()
+        self.parse_exp2d(exp2d)
+        tim[5] = time.time()
         print('Time analysis', np.diff(tim))
 
 
     def parse_exp1d(self, exp1d):
+# Input is already uppercase
 
         lines = exp1d.splitlines()
         uf_keys = []
@@ -111,7 +147,7 @@ class EXP_PARSER:
                 print(f_in)
                 uf = ufiles.UFILE(fin=f_in)
                 self.scalars[varName]['time'] = uf.X['data']
-                self.scalars[varName]['data'] = uf.f['data']
+                self.scalars[varName]['data'] = factor*uf.f['data']
                 uf_keys.append(varName)
             else: # ASCII block in exp file
                 self.scalars[varName]['time'].append((float(tim) if tim.strip() else 0.))
@@ -120,14 +156,76 @@ class EXP_PARSER:
                 
 
     def parse_exp2d(self, exp2d):
+# Input is already uppercase
 
-        lines = exp1d.splitlines()
+        varxInExp = [append_x(x) for x in re.findall(r'\bNAMEXP\s+(\S+)', exp2d)]
+        print('varx', varxInExp)
+
+        lines = exp2d.splitlines()
+        uf_keys = []
+
+        ngr = -1
+        jarr = 0
+        self.raw_boundary = {'nt': 0}
+        alpha_glob = 0.001
+        i_filter_glob = 0
+        varxName = ''
+
+        for line in lines:
+            line_strip = line.strip()
+            if not line_strip:
+                continue
+            if line_strip.startswith('!') or line_strip.startswith('END'):
+                continue
+
+            if line[:6] == 'FILTER':
+                i_filter_glob = 1
+            print('LINE:', line)
+            line6  = var_name(line[:6])
+            line6x = append_x(line6)
+            if line6x not in self.profx: # A line of the kind "NAMEXP ...  GRIDTYPE ..."
+                attr_d = parse_line2d(line)
+                if 'FILTER' in attr_d:
+                    alpha_glob = attr_d['FILTER']
+                if 'NAMEXP' not in attr_d:
+                    continue
+                else:
+                    varxName_old = varxName
+                varName = attr_d['NAMEXP']
+                varxName = append_x(varName)
+                jexar = (self.profx.index(varxName) if varxName in self.profx else None)
+                if (jexar is not None) and (varxName in varxInExp):
+                    jbeg_arrx[jexar] = ngr + 1
+                print(varxName, jexar)
+                if varxName == 'CCOILX':
+                    varxName_old = varxName
+                    continue
+                elif varxName == 'VCOILX':
+                    varxName_old = varxName
+                    continue
+                elif varxName == 'ENDX':
+                    break
+                elif varxName == 'BNDX':
+                    if self.raw_boundary['nt'] > 0:
+                        logger.error('Boundary must be defined in a single group')
+                        sys.exit(3)
+                    if 'POINTS' in attr_d:
+                        self.raw_boundary['n_theta'] = attr_d['POINTS']
+                    else:
+                        logger.error('Number of boundary points must be defined')
+                        sys.exit(4)
+                    if 'NTIMES' in attr_d:
+                        ntim = attr_d['NTIMES']
+                    else:
+                        ntim = 0
+                    ntim1 = max(ntim, 1)
 
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='astra parser')
-    parser.add_argument('-exp', help='ASTRA exp filepath', required=False, default='%s/exp/aug34954_t' %config.awd)
+#    parser.add_argument('-exp', help='ASTRA exp filepath', required=False, default='%s/exp/aug34954_t' %config.awd)
+    parser.add_argument('-exp', help='ASTRA exp filepath', required=False, default='%s/exp/AUG33040_2500' %config.awd)
 
     args = parser.parse_args()
     txt = EXP_PARSER(f_exp=args.exp)
