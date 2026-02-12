@@ -32,21 +32,16 @@ void sbp2astra_(int* jsbp, int *nchunk, int *n_sbp_arr_out, char* ipcFile, doubl
     IPCr = fopen(ipc_file, "r");
     while (fgets(line, sizeof line, IPCr)) {
         char *p = line;
-
 /* skip leading blanks and tabs */
         while (*p == ' ' || *p == '\t')
             p++;
-
 /* skip line if first non-blank is not digit or sign */
         if (!isdigit((unsigned char)*p) && *p != '+' && *p != '-')
             continue;
-
 /* parse integers */
         if (sscanf(p, "%d%d%d", &jproc, &ID, &ShmID) != 3)
             continue;
 	if (jproc == J_PROC) break;
-
-/* valid data line */
     }
     fclose(IPCr);
     
@@ -70,8 +65,7 @@ void sbp2astra_(int* jsbp, int *nchunk, int *n_sbp_arr_out, char* ipcFile, doubl
 int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, int *n_sbp_arr_out, int* Nsub, char *subName, char* ipcFile, char* astraTask, int *SemID, int *ShmID_dims, int *ShmID_vars, int *ShmID_arrs, int *ipcId){
 
     int N_SUB, N_DIMS, N_SCALARS, N_RHO, N_ARR_IN, N_ARR_OUT, N_CHUNK, dim_size, var_size, arr_size, Nsems;
-    int i, j, c, J_PROC, ID, ShmID;
-    int ShmID_dummy;
+    int i, j, ID, ShmID;
     key_t my_key, key2;
     pid_t PID=0;
     FILE *IPCw;
@@ -236,39 +230,26 @@ int wait4all_(int *SemID){
     return 1;
 }
 
-/*----------- Fill subprocess input dims from ASTRA -------------*/
-int fill_dim2shm_(int* Ndims, int* dims_in, int* ShmID_dims){
+/*----------- Fill shared memory segment with integer array (dims) -------------*/
+int fill_int_shm_(int* Nsize, int* int_in, int* ShmID){
 
-    void *ShmAdr_dims = shmat(*ShmID_dims, NULL, 0);
-    int* dims_input = (int *)((char *)ShmAdr_dims);
-    int N_DIMS = *Ndims;
-    int dim_size = N_DIMS * sizeof(int);
-    memcpy(dims_input, dims_in, dim_size);
-
-    return 0;
-}
-
-/*----------- Fill subprocess input scalars from ASTRA -------------*/
-int fill_var2shm_(int* Nscalars, double* scal_in, int* ShmID_vars){
-
-    void *ShmAdr_vars = shmat(*ShmID_vars, NULL, 0);
-    double* scal_input = (double *)((char *)ShmAdr_vars);
-    int N_SCALARS = *Nscalars;
-    int var_size = N_SCALARS*sizeof(double);
-    memcpy(scal_input, scal_in, var_size);
+    void *ShmAdr = shmat(*ShmID, NULL, 0);
+    int* int_input = (int *)((char *)ShmAdr);
+    int N_SIZE = *Nsize;
+    int buf_size = N_SIZE*sizeof(int);
+    memcpy(int_input, int_in, buf_size);
 
     return 0;
 }
 
-/*------------- Fill subprocess input arrays from ASTRA --------------*/
-int fill_arr2shm_(int* Ngrid, int* n_sbp_arr_in, double* prof_in, int* ShmID_arrs){
+/*----------- Fill shared memory segment with double array (scal, prof) -------------*/
+int fill_dbl_shm_(int* Nsize, double* dbl_in, int* ShmID){
 
-    void *ShmAdr_arrs = shmat(*ShmID_arrs, NULL, 0);
-    double* prof_input = (double *)((char *)ShmAdr_arrs);
-    int N_RHO = *Ngrid;
-    int N_ARR_IN = *n_sbp_arr_in;
-    size_t num_elements = N_RHO * N_ARR_IN;
-    memcpy(prof_input, prof_in, num_elements * sizeof(double));
+    void *ShmAdr = shmat(*ShmID, NULL, 0);
+    double* dbl_input = (double *)((char *)ShmAdr);
+    int N_SIZE = *Nsize;
+    int buf_size = N_SIZE*sizeof(double);
+    memcpy(dbl_input, dbl_in, buf_size);
 
     return 0;
 }

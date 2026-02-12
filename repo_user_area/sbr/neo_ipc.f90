@@ -273,13 +273,13 @@ contains
     prof_in(33, :) = dni(4, :)
 
     if (first_call) then
-        call fill_dim2shm(n_dims, dims_in, shmID_dims)
+        call fill_int_shm(n_dims, dims_in, shmID_dims)
         first_call = .False.
     endif
 
 ! **** Fill shared memory segments
-    call fill_var2shm(n_scalars, scal_in, shmID_vars)
-    call fill_arr2shm(nrho_m, n_inputs, prof_in, shmID_arrs)
+    call fill_dbl_shm(n_scalars, scal_in, shmID_vars)
+    call fill_dbl_shm(nrho_m*n_inputs, prof_in, shmID_arrs)
 
 ! **** Free each semaphore
     do i=1, nworkers
