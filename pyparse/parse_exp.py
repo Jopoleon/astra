@@ -18,13 +18,11 @@ prof_attr_types = {
     'NAMEXP': str,
 }
 delimiters = list(prof_attr_types) + ['PROFILE', 'END']
-
 grid_d = {'MINORRAD': 10, 'MAJORRAD': 19, 'RHO': 12, 'RHO_TOR': 12, 'POLOIDALFLUX': 13}
 
+
 def exp_split(exp):
-
     pattern = re.compile(r'\b(?:' + '|'.join(map(re.escape, delimiters)) + r')\b')
-
     match = pattern.search(exp)
     if match:
         exp1d = exp[:match.start()]
@@ -36,7 +34,6 @@ def exp_split(exp):
 
 
 def var_name(str_in):
-
     if not str_in or str_in[0] in (' ', '\t'): # If 1st character is tab or space, return blank
         return ''
     str_out = str_in.strip()
@@ -46,7 +43,6 @@ def var_name(str_in):
 
 
 def append_x(str_in):
-
     if not str_in or str_in[0] in (' ', '\t'): # If 1st character is tab or space, return blank
         return ''
     else:
@@ -54,7 +50,6 @@ def append_x(str_in):
 
 
 def parse_u_line(str_in):
-
     var_name, str1 = str_in.split(' ', 1)
     words = str1.split(':')
     path = words[1].strip()
@@ -66,10 +61,8 @@ def parse_u_line(str_in):
 
 
 def parse_line2d(line):
-
     words = line.split()
     result = {}
-
     for i, word in enumerate(words[:-1]):   # avoid overflow
         if word in prof_attr_types:
             try:
@@ -82,11 +75,9 @@ def parse_line2d(line):
 
 
 def read_float_block(lines, start_line, end_line):
-
     block_lines = lines[start_line:end_line]   # end exclusive
     block_text = " ".join(block_lines)         # normalize spacing
     values = np.fromstring(block_text, sep=' ')
-
     return values
 
 
@@ -114,6 +105,7 @@ class EXP_PARSER:
         self.scalars  = {}
         self.profiles = {}
         self.boundary = {}
+        self.coils    = {}
 
         tim[1] = time.time()
         with open(f_exp, 'r') as f:
@@ -154,7 +146,6 @@ class EXP_PARSER:
             if 'U-FILE' in line.upper(): # u-file
                 varName, uf_path, factor = parse_u_line(line)
                 f_in = '%s/udb/%s' %(config.awd, uf_path)
-                print(f_in)
                 uf = ufiles.UFILE(fin=f_in)
                 self.scalars[varName]['time'] = uf.X['data']
                 self.scalars[varName]['data'] = factor*uf.f['data']
@@ -169,7 +160,10 @@ class EXP_PARSER:
 # Input is already uppercase
 
         varInExp = [append_x(x) for x in re.findall(r'\bNAMEXP\s+(\S+)', exp2d)]
-        print('varx', varInExp)
+        for var in ('BNDUX', 'BNDX', 'CCOILX', 'VCOILX'):
+            if varInExp.count(var) > 1:
+                logger.error('Variable %s is defined more than once in the exp file', var)
+                sys.exit(3)
 
         lines = exp2d.splitlines()
         n_lines = len(lines)
@@ -178,13 +172,13 @@ class EXP_PARSER:
         line_numbers = [i for i, line in enumerate(lines) if pattern.search(line)]
 
         uf_keys = []
-        self.boundary['nt'] = 0
+        self.boundary['time'] = []
         for lbl in ('label', 'grid_type', 'filter', 'time', 'rho', 'data'): 
              self.profiles[lbl] = []
 
         alpha_glob = 0.001
 
-        for j, jlin in enumerate(line_numbers):
+        for j, jlin in enumerate(line_numbers): # jumping between "string" lines, either exp-ASCII blocks or u-file lines
             line = lines[jlin]
             line_strip = line.strip()
             if not line_strip:
@@ -204,7 +198,6 @@ class EXP_PARSER:
             if 'U-file' in line_strip: # u-file
                 varName, uf_path, factor = parse_u_line(line)
                 f_in = '%s/udb/%s' %(config.awd, uf_path)
-                print(f_in)
                 uf = ufiles.UFILE(fin=f_in)
                 gridtype = grid_d[uf.Y['label'].strip().upper()]
                 varName = append_x(varName)
@@ -227,13 +220,18 @@ class EXP_PARSER:
 
                 varName = attr_d['NAMEXP'] # already with trailing 'X'
                 dataStream = read_float_block(lines, jlin+1, jnext)
-                print(varName, jlin, jnext, dataStream)
-                if varName == 'CCOILX':
-                    continue
-                elif varName == 'VCOILX':
-                    continue
+                if varName in ('CCOILX', 'VCOILX'): # differs from (say) NEX because it has no radial grid
+                    if 'NTIMES' in attr_d:
+                        nt = attr_d['NTIMES']
+                    else:
+                        nt = 1
+                    nrho = attr_d['POINTS']
+                    coil_d = {}
+                    coil_d['time'], coil_d['data'] = np.split(dataStream, [nt])
+                    self.coils[varName.lower()] = coil_d
+
                 elif varName == 'BNDX':
-                    if self.boundary['nt'] > 0:
+                    if self.boundary['time']:
                         logger.error('Boundary must be defined in a single group')
                         sys.exit(3)
                     if 'POINTS' in attr_d:
@@ -245,16 +243,21 @@ class EXP_PARSER:
                         nt = attr_d['NTIMES']
                     else:
                         nt = 1
-                    self.boundary['nt'] = nt
-                    self.boundary['n_theta'] = nthe
                     self.boundary['time'], bnd_rz = np.split(dataStream, [nt])
                     assert bnd_rz.size == 2 * nt * nthe
                     tmp = bnd_rz.reshape(nthe, 2, nt)
                     self.boundary['R'] = tmp[:, 0, :]
                     self.boundary['Z'] = tmp[:, 1, :]
-                    print('BND time', self.boundary['time'], self.boundary['R'][0, :])
                 elif varName == 'BNDUX':
-                    pass
+                    uf_path = lines[jlin+1].strip()
+                    fR_in = '%s/udb/%s_r' %(config.awd, uf_path)
+                    fZ_in = '%s/udb/%s_z' %(config.awd, uf_path)
+                    ufR = ufiles.UFILE(fin=fR_in)
+                    ufZ = ufiles.UFILE(fin=fZ_in)
+                    self.boundary['time'] = ufR.X['data']
+                    self.boundary['R'] = ufR.f['data']
+                    self.boundary['Z'] = ufZ.f['data']
+
                 elif varName in self.profx:
                     if 'NTIMES' in attr_d:
                         nt = attr_d['NTIMES']
@@ -296,4 +299,11 @@ if __name__ == '__main__':
     print(raw.profiles['data'])
     for key, val in raw.profiles.items():
         print(key, len(val))
+    for key, val in raw.boundary.items():
+        print(key, val.shape)
+
+    if 'ccoilx' in raw.coils:
+        print('CCOILX')
+        print(raw.coils['ccoilx']['time'])
+        print(raw.coils['ccoilx']['data'])
     print(args.exp)

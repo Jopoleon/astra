@@ -31,13 +31,24 @@ now = datetime.datetime.now()
 def split_uname(uname):
 
     fbase = os.path.basename(uname)
-    fname, ext = fbase.split('.')
+    fname, ext = os.path.splitext(fbase)
 
+    jbeg = -1
+    jend = 0
     for jpos, letter in enumerate(fname):
-        if letter.isdigit():
+        if jbeg < 0 and letter.isdigit():
+            jbeg = jpos
+        if jbeg >= 0 and not letter.isdigit():
+            jend = jpos
             break
-    pre = fname[:jpos]
-    shot = int(fname[jpos:])
+    if jbeg > 0:
+        pre = fname[:jbeg]
+    else:
+        pre = ''
+    if jend > jbeg:
+        shot = int(fname[jbeg: jend])
+    else:
+        shot = 0
 
     return pre, ext, shot
 

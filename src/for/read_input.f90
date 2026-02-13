@@ -82,6 +82,60 @@ contains
     return
     end subroutine readInput
 
+!------------------------------------------------------------
+    subroutine read_coilx(nunit, nt_io, ntim, nrho, stri_in, var_out)
+
+    use io_mod, only: exp_file, n_coils_max, nt_coils_max
+    use debugger, only: markloc, astra_stop
+
+    integer, intent(in) :: nunit, ntim
+    character(len=*), intent(in) :: stri_in
+    integer, intent(inout) :: nt_io
+    integer, intent(out) :: nrho
+
+    integer :: j, ios
+    character(132) :: err_msg
+    double precision, dimension((n_coils_max+1)*nt_coils_max), intent(out) :: var_out
+
+    call markloc('read_coilx')
+
+    err_msg =  '>>> Data file "' // TRIM(exp_file) // '" error:\n'
+
+    if (nt_io /= 0) then
+        err_msg = TRIM(err_msg) // '    COILSX must be defined in a single group'
+        call astra_stop(err_msg)
+    endif
+
+    nt_io = max(ntim, 1)
+
+    j = INDEX(stri_in, 'POINTS')
+    if (j == 0) then
+        err_msg = TRIM(err_msg) // '    Number of COILSX must be defined'
+        call astra_stop(err_msg)
+    endif
+    if (nrho > n_coils_max) then
+        write(err_msg, '(2A, i)') TRIM(err_msg), &
+           '    Number of coils must be <', n_coils_max
+        call astra_stop(err_msg)
+    endif
+
+    read(stri_in(j+6:), *) nrho
+
+    if ((nrho + 1)*nt_io > (n_coils_max + 1)*(nt_coils_max - 10)) then
+        write(err_msg, '(2A)') TRIM(err_msg), &
+           '    COILSX data length must be n_coils_max*nt_coils_max <'
+        call astra_stop(err_msg)
+    endif
+
+    read(nunit, *, iostat=ios)(var_out(j), j=1, (nrho+1)*nt_io)
+    if (ios /= 0) then
+        err_msg = TRIM(err_msg) // '    Size mismatch in COILSX group'
+        call astra_stop(err_msg)
+    endif
+
+    return
+    end subroutine read_coilx
+
 !----------------------------------------------------------------------
     subroutine read_exp
 !----------------------------------------------------------------------|
@@ -104,7 +158,7 @@ contains
         n_coils, nt_coils
     use char_manip, only: to_upper, str_in_list
     use debugger, only: markloc, debug, astra_stop
-    use parse_utils, only: split2array2, ufheader, ufrd, parse_u_line, read_coilx
+    use parse_utils, only: split2array2
     use json_vars, only: varNames, profxNames
 
     integer :: jarr, INTYPE, jtype, jbdry, ntim, ntim1, IVAR
@@ -1090,5 +1144,224 @@ contains
 
     return
     end subroutine CHECKU
+!------------------------------------------------------------
+    subroutine parse_u_line(str_in, var_name, uname, factor)
+
+    use debugger, only: markloc, astra_stop
+    use char_manip, only: to_upper, split_string
+    use parse_utils, only: split2array 
+
+    character(len=*), intent(in) :: str_in
+    character(len=len(str_in)), intent(out) :: var_name, uname
+    double precision, intent(out) :: factor
+
+    integer :: n_words
+    character(len=132) :: str1, strarray(20), err_msg
+
+    call markloc('parse_u_line')
+
+    uname = repeat(' ', 40)
+    err_msg = 'Error in exp-file line ' // TRIM(str_in)
+
+    str1 = repeat(' ', 132)
+
+    call split_string(str_in, ' ', var_name, str1)
+    if (LEN_TRIM(var_name) == 0) call astra_stop(err_msg)
+
+    call split2array(str1, ':', strarray, n_words)
+
+    if (to_upper(TRIM(strarray(1))) /= 'U-FILE' ) return
+
+    if (LEN_TRIM(strarray(2)) > 0) then
+        uname = 'udb/' // TRIM(strarray(2))
+    else
+        call astra_stop(err_msg // ' no u-file name found')
+    endif
+
+    factor = 1.d0
+    if (n_words == 3) then
+        if (LEN_TRIM(strarray(3)) > 0) then
+            read(strarray(3), *) factor
+        endif
+    endif
+
+    return
+    end subroutine parse_u_line
+
+!------------------------------------------------------------
+    subroutine ufheader(uname, n_dim, nt, nx, lbl2)
+
+    use debugger, only: markloc, astra_stop
+    use char_manip, only: to_upper, split_string
+
+    integer, intent(out) :: nt, nx, n_dim
+    character(len=*), intent(in) :: uname
+    character(len=30), intent(out) :: lbl2
+
+    integer :: ios, j, n_scal, ISHOT
+    character(132) :: err_msg
+    character(32) :: STRI
+    character(30) :: lbl1, lbl3, var1_lbl, unit1
+    character(4) :: sdev
+
+    call markloc('ufheader')
+
+    var1_lbl = repeat(' ', 30)
+    unit1    = repeat(' ', 30)
+
+    open(11, FILE=TRIM(uname), iostat=ios)
+
+    if (ios /= 0) then
+        err_msg = '>>> READAT: U-file "' // TRIM(uname) // '" reading error'
+        call astra_stop(err_msg)
+    endif
+
+! # shot, device, #dimensions
+
+    read(11,'(A32)', ERR=925) STRI
+    read(STRI(3:7)  , '(1I5)', ERR=925) ISHOT
+    read(STRI(8:11) , '(1A4)', ERR=925) sdev
+    read(STRI(13:13), '(1I1)', ERR=925) n_dim
+
+    write(*,*) ishot, sdev, n_dim
+    if (n_dim <= 0 .or. n_dim > 2) then
+        err_msg = '>>> U-file "' // TRIM(uname) // '" error: wrong dimensionality'
+        call astra_stop(err_msg)
+    endif
+
+    read(11, '(A32)', ERR=925) STRI ! Dummy line
+
+! Scalar quantities
+
+    read(11, *, ERR=925) n_scal
+    if (n_scal > 0) then
+        do j=1, n_scal
+            read(11, '(A32)', ERR=925) STRI
+            read(11, '(A32)', ERR=925) STRI
+        enddo
+    endif
+
+! Continue reading 2D U-file
+! 1st independent variable label: X-
+    read(11, '(A32)', ERR=925) STRI
+    STRI = ADJUSTL(STRI)
+    lbl1 = to_upper(STRI(1:30))
+
+    call split_string(TRIM(lbl1), ' ', var1_lbl, unit1)
+    if (var1_lbl(1:4) /= 'TIME') then
+        write(*,*) '>>> U-file "', TRIM(uname), '" 1st independent variable should be time'
+        close(11)
+        return
+    endif
+    if (TRIM(unit1) /= 'SECONDS') then
+        write(*, *) '>>> U-file "', TRIM(uname),'" time unit should be second, not ', TRIM(unit1)
+    endif
+
+! 2nd independent variable label: Y-
+    if (n_dim == 2) then
+        read(11, '(A32)', ERR=925) STRI
+        STRI = ADJUSTL(STRI)
+        lbl2 = to_upper(STRI(1:30))
+    endif
+
+! Dependent variable label
+    read(11,'(A32)', ERR=925) STRI
+    STRI = ADJUSTL(STRI)
+    lbl3 = to_upper(STRI(1:30))
+
+! Dummy, "PROC CODE"
+
+    read(11,'(A32)', ERR=925) STRI
+! Dimensions
+    read(11, *, ERR=925) nt
+    if (n_dim == 2) then
+        read(11, *, ERR=925) nx
+    else
+        nx = 1
+    endif
+
+    close(11)
+
+    return
+
+925 call astra_stop('>>> U-file "' // TRIM(uname) // '" read error')
+
+    end subroutine ufheader
+
+!------------------------------------------------------------
+    subroutine ufrd(uname, n_dim, nt, nx, t_out, x_out, arr_out)
+
+    use debugger, only: markloc, astra_stop
+
+    character(len=*), intent(in) :: uname
+    integer, intent(in) :: nt, nx, n_dim
+    double precision, intent(out) :: t_out(nt), x_out(nx), arr_out(nt*nx)
+
+    integer :: ios, j, jj, n_scal
+    character(132) :: err_msg
+    character(32) :: STRI
+
+    call markloc('ufrd')
+
+    write(*, *) 'Reading u-file ' // TRIM(uname)
+
+    open(11, FILE=TRIM(uname), iostat=ios)
+
+    if (ios /= 0) then
+        err_msg = '>>> READAT: U-file "' // TRIM(uname) // '" reading error'
+        call astra_stop(err_msg)
+    endif
+
+!-------
+! Header
+!-------
+
+! # shot, device, #dimensions
+    read(11,'(A32)') STRI
+
+    if (n_dim <= 0 .or. n_dim > 2) then
+        err_msg = '>>> U-file "' // TRIM(uname) // '" error: wrong dimensionality'
+        call astra_stop(err_msg)
+    endif
+
+    read(11, '(A32)') STRI ! Dummy line
+
+! Scalar quantities
+
+    read(11, *) n_scal
+    if (n_scal > 0) then
+        do j=1, n_scal
+            read(11, '(A32)') STRI
+            read(11, '(A32)') STRI
+        enddo
+    endif
+
+! Continue reading 2D U-file
+! 1st independent variable label: X-
+    read(11, '(A32)') STRI
+
+! 2nd independent variable label: Y-
+    if (n_dim == 2) read(11, '(A32)') STRI
+
+! Dependent variable label
+    read(11,'(A32)') STRI
+
+! Dummy, "PROC CODE"
+    read(11,'(A32)') STRI
+
+! Dimensions
+    read(11, *) STRI
+    if (n_dim == 2) read(11, *) STRI
+
+! Read grid and data arrays
+
+    read(11, *) (t_out(j), j=1, nt)
+    if (n_dim == 2) read(11, *) (x_out(j) , j=1, nx)
+    read(11, '(1X, 6E13.6)') ((arr_out(jj + (j - 1)*nt), jj=1, nt), j=1, nx)
+
+    close(11)
+
+    return
+    end subroutine ufrd
 
 end module read_input

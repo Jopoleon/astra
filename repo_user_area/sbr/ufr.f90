@@ -6,7 +6,7 @@
 
 subroutine UF1DR(ufnam, tim_in, val)
 
-use parse_utils, only: ufheader, ufrd
+use read_input, only: ufheader, ufrd
 
 implicit none
 
@@ -66,7 +66,7 @@ end subroutine UF1DR
 
 subroutine UF2DR(ufnam, tim_in, arr1d)
 
-use parse_utils, only: ufheader, ufrd
+use read_input, only: ufheader, ufrd
 
 implicit none
 
