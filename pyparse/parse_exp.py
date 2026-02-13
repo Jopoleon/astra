@@ -19,6 +19,7 @@ prof_attr_types = {
 }
 delimiters = list(prof_attr_types) + ['PROFILE', 'END']
 
+grid_d = {'MINORRAD': 10, 'MAJORRAD': 19, 'RHO': 12, 'RHO_TOR': 12, 'POLOIDALFLUX': 13}
 
 def exp_split(exp):
 
@@ -61,7 +62,7 @@ def parse_u_line(str_in):
         factor = 1.
     elif len(words) == 3:
         factor = float(words[2])
-    return path, factor
+    return var_name, path, factor
 
 
 def parse_line2d(line):
@@ -135,7 +136,7 @@ class EXP_PARSER:
         uf_keys = []
 
         for line in lines:
-            varName = var_name(line[:6]) # is uppercase
+            varName = var_name(line[:6])
             tim   = line[8: 14]
             data  = line[16: 22]
             error = line[24: 30]
@@ -151,7 +152,7 @@ class EXP_PARSER:
                 logger.error('>>> Error: ambiguous definition of %s', varName)
                 sys.exit(2)
             if 'U-FILE' in line.upper(): # u-file
-                uf_path, factor = parse_u_line(line)
+                varName, uf_path, factor = parse_u_line(line)
                 f_in = '%s/udb/%s' %(config.awd, uf_path)
                 print(f_in)
                 uf = ufiles.UFILE(fin=f_in)
@@ -177,11 +178,8 @@ class EXP_PARSER:
         line_numbers = [i for i, line in enumerate(lines) if pattern.search(line)]
 
         uf_keys = []
-        jbeg_arrx = np.zeros(len(self.profx), dtype=np.float32)
-        ngr = 0
-        jarr = 0
-        self.boundary = {'nt': 0}
-        for lbl in ('arr_index', 'label', 'nrho', 'grid_type', 'filter'): 
+        self.boundary['nt'] = 0
+        for lbl in ('label', 'grid_type', 'filter', 'time', 'rho', 'data'): 
              self.profiles[lbl] = []
 
         alpha_glob = 0.001
@@ -196,13 +194,29 @@ class EXP_PARSER:
             if line_strip.startswith('END'):
                 break
 
+            alpha = alpha_glob
             print('LINE:', line)
             if j < len(line_numbers) - 1:
                 jnext = line_numbers[j+1]
             else:
                 jnext = n_lines
 
-            if 'U-file' not in line_strip: # A line of the kind "NAMEXP ...  GRIDTYPE ...", not u-file
+            if 'U-file' in line_strip: # u-file
+                varName, uf_path, factor = parse_u_line(line)
+                f_in = '%s/udb/%s' %(config.awd, uf_path)
+                print(f_in)
+                uf = ufiles.UFILE(fin=f_in)
+                gridtype = grid_d[uf.Y['label'].strip().upper()]
+                varName = append_x(varName)
+                self.profiles['grid_type'].append(gridtype)
+                self.profiles['label'].append(varName)
+                self.profiles['time'].append(uf.X['data'])
+                self.profiles['rho'].append(uf.Y['data'])
+                self.profiles['data'].append(factor*uf.f['data'])
+                self.profiles['filter'].append(alpha)
+                uf_keys.append(varName)
+                
+            else: # A line of the kind "NAMEXP ...  GRIDTYPE ...", not u-file
                 attr_d = parse_line2d(line)
                 if 'FILTER' in attr_d:
                     alpha = attr_d['FILTER']
@@ -215,10 +229,8 @@ class EXP_PARSER:
                 dataStream = read_float_block(lines, jlin+1, jnext)
                 print(varName, jlin, jnext, dataStream)
                 if varName == 'CCOILX':
-                    varName_old = varName
                     continue
                 elif varName == 'VCOILX':
-                    varName_old = varName
                     continue
                 elif varName == 'BNDX':
                     if self.boundary['nt'] > 0:
@@ -248,18 +260,23 @@ class EXP_PARSER:
                         nt = attr_d['NTIMES']
                     else:
                         nt = 1
-                    jexar = self.profx.index(varName)
-                    jbeg_arrx[jexar] = ngr + 1
-                    for jt in range(nt):
-                        self.profiles['arr_index'].append(jexar)
-                        self.profiles['label'].append(varName)
-                        self.profiles['nrho'].append(attr_d['POINTS'])
-                        self.profiles['grid_type'].append(attr_d['GRIDTYPE'])
-                        if 'FILTER' in attr_d:
-                            self.profiles['filter'].append(attr_d['FILTER'])
-                        else:
-                            self.profiles['filter'].append(alpha_glob)
- 
+                    nrho = attr_d['POINTS']
+                    self.profiles['label'].append(varName)
+                    self.profiles['grid_type'].append([attr_d['GRIDTYPE']])
+                    if 'FILTER' in attr_d:
+                        self.profiles['filter'].append([attr_d['FILTER']])
+                    else:
+                        self.profiles['filter'].append(nt*[alpha_glob])
+                    if attr_d['GRIDTYPE'] < 17:
+                        assert dataStream.size == nt + nrho + nt*nrho
+                        time, rho, data = np.split(dataStream, [nt, nt+nrho])
+                    else:
+                        assert dataStream.size == nt + 2*nrho + nt*nrho
+                        time, rho, data = np.split(dataStream, [nt, nt+2*nrho])
+                    self.profiles['time'].append(time)
+                    self.profiles['rho'].append(rho)
+                    self.profiles['data'].append(data)
+
 
 if __name__ == '__main__':
 
@@ -268,11 +285,15 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    args.exp='%s/exp/30000_3.4' %config.awd
+#    args.exp='%s/exp/30000_3.4' %config.awd
 
-    txt = EXP_PARSER(f_exp=args.exp)
+    raw = EXP_PARSER(f_exp=args.exp)
 
-    print(txt.scalars['NA1'])
-    print(txt.scalars['AMJ'])
-    print(txt.scalars['IPL'])
+    print(raw.scalars['NA1'])
+    print(raw.scalars['AMJ'])
+    print(raw.scalars['IPL'])
+    print(raw.profiles['label'])
+    print(raw.profiles['data'])
+    for key, val in raw.profiles.items():
+        print(key, len(val))
     print(args.exp)
