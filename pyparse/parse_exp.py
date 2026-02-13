@@ -9,7 +9,6 @@ logger = logging.getLogger('exp_parser')
 logger.setLevel(logging.INFO)
 
 
-delimiters = ['POINTS', 'GRIDTYPE', 'FILTER', 'PROFIL', 'END']
 prof_attr_types = {
     'POINTS': int,
     'GRIDTYPE': int,
@@ -18,6 +17,7 @@ prof_attr_types = {
     'FACTOR': float,
     'NAMEXP': str,
 }
+delimiters = list(prof_attr_types) + ['PROFILE', 'END']
 
 
 def exp_split(exp):
@@ -41,7 +41,7 @@ def var_name(str_in):
     str_out = str_in.strip()
     if str_out[-1] == 'X':
         str_out = str_out[:-1]
-    return str_out
+    return str_out.upper()
 
 
 def append_x(str_in):
@@ -75,8 +75,18 @@ def parse_line2d(line):
                 result[word] = prof_attr_types[word](words[i + 1])
             except ValueError:
                 raise ValueError(f"Invalid value for {word}: {words[i+1]}")
-
+    if 'NAMEXP' in result:
+        result['NAMEXP'] = append_x(result['NAMEXP'])
     return result
+
+
+def read_float_block(lines, start_line, end_line):
+
+    block_lines = lines[start_line:end_line]   # end exclusive
+    block_text = " ".join(block_lines)         # normalize spacing
+    values = np.fromstring(block_text, sep=' ')
+
+    return values
 
 
 class EXP_PARSER:
@@ -108,7 +118,6 @@ class EXP_PARSER:
         with open(f_exp, 'r') as f:
             exp = f.read()
         exp = re.sub(r'(?m)^\s*!.*\n?', '', exp) # Removes all lines starting with !
-        exp = exp.upper()
         tim[2] = time.time()
         exp1d, exp2d = exp_split(exp)
         tim[3] = time.time()
@@ -126,7 +135,7 @@ class EXP_PARSER:
         uf_keys = []
 
         for line in lines:
-            varName = var_name(line[:6])
+            varName = var_name(line[:6]) # is uppercase
             tim   = line[8: 14]
             data  = line[16: 22]
             error = line[24: 30]
@@ -141,7 +150,7 @@ class EXP_PARSER:
             if varName in uf_keys: # double variable definition: 2x u-file, or u-file+exp_ascii
                 logger.error('>>> Error: ambiguous definition of %s', varName)
                 sys.exit(2)
-            if 'U-FILE' in line: # u-file
+            if 'U-FILE' in line.upper(): # u-file
                 uf_path, factor = parse_u_line(line)
                 f_in = '%s/udb/%s' %(config.awd, uf_path)
                 print(f_in)
@@ -158,78 +167,112 @@ class EXP_PARSER:
     def parse_exp2d(self, exp2d):
 # Input is already uppercase
 
-        varxInExp = [append_x(x) for x in re.findall(r'\bNAMEXP\s+(\S+)', exp2d)]
-        print('varx', varxInExp)
+        varInExp = [append_x(x) for x in re.findall(r'\bNAMEXP\s+(\S+)', exp2d)]
+        print('varx', varInExp)
 
         lines = exp2d.splitlines()
+        n_lines = len(lines)
+        keywords = delimiters + ['U-file']
+        pattern = re.compile(r'\b(?:' + '|'.join(keywords) + r')\b')
+        line_numbers = [i for i, line in enumerate(lines) if pattern.search(line)]
+
         uf_keys = []
-
-        ngr = -1
+        jbeg_arrx = np.zeros(len(self.profx), dtype=np.float32)
+        ngr = 0
         jarr = 0
-        self.raw_boundary = {'nt': 0}
-        alpha_glob = 0.001
-        i_filter_glob = 0
-        varxName = ''
+        self.boundary = {'nt': 0}
+        for lbl in ('arr_index', 'label', 'nrho', 'grid_type', 'filter'): 
+             self.profiles[lbl] = []
 
-        for line in lines:
+        alpha_glob = 0.001
+
+        for j, jlin in enumerate(line_numbers):
+            line = lines[jlin]
             line_strip = line.strip()
             if not line_strip:
                 continue
-            if line_strip.startswith('!') or line_strip.startswith('END'):
+            if line_strip.startswith('!'):
                 continue
+            if line_strip.startswith('END'):
+                break
 
-            if line[:6] == 'FILTER':
-                i_filter_glob = 1
             print('LINE:', line)
-            line6  = var_name(line[:6])
-            line6x = append_x(line6)
-            if line6x not in self.profx: # A line of the kind "NAMEXP ...  GRIDTYPE ..."
+            if j < len(line_numbers) - 1:
+                jnext = line_numbers[j+1]
+            else:
+                jnext = n_lines
+
+            if 'U-file' not in line_strip: # A line of the kind "NAMEXP ...  GRIDTYPE ...", not u-file
                 attr_d = parse_line2d(line)
                 if 'FILTER' in attr_d:
-                    alpha_glob = attr_d['FILTER']
+                    alpha = attr_d['FILTER']
+                    if line.startswith('FILTER'):
+                        alpha_glob = alpha
                 if 'NAMEXP' not in attr_d:
                     continue
-                else:
-                    varxName_old = varxName
-                varName = attr_d['NAMEXP']
-                varxName = append_x(varName)
-                jexar = (self.profx.index(varxName) if varxName in self.profx else None)
-                if (jexar is not None) and (varxName in varxInExp):
-                    jbeg_arrx[jexar] = ngr + 1
-                print(varxName, jexar)
-                if varxName == 'CCOILX':
-                    varxName_old = varxName
+
+                varName = attr_d['NAMEXP'] # already with trailing 'X'
+                dataStream = read_float_block(lines, jlin+1, jnext)
+                print(varName, jlin, jnext, dataStream)
+                if varName == 'CCOILX':
+                    varName_old = varName
                     continue
-                elif varxName == 'VCOILX':
-                    varxName_old = varxName
+                elif varName == 'VCOILX':
+                    varName_old = varName
                     continue
-                elif varxName == 'ENDX':
-                    break
-                elif varxName == 'BNDX':
-                    if self.raw_boundary['nt'] > 0:
+                elif varName == 'BNDX':
+                    if self.boundary['nt'] > 0:
                         logger.error('Boundary must be defined in a single group')
                         sys.exit(3)
                     if 'POINTS' in attr_d:
-                        self.raw_boundary['n_theta'] = attr_d['POINTS']
+                        nthe = attr_d['POINTS']
                     else:
                         logger.error('Number of boundary points must be defined')
                         sys.exit(4)
                     if 'NTIMES' in attr_d:
-                        ntim = attr_d['NTIMES']
+                        nt = attr_d['NTIMES']
                     else:
-                        ntim = 0
-                    ntim1 = max(ntim, 1)
-
+                        nt = 1
+                    self.boundary['nt'] = nt
+                    self.boundary['n_theta'] = nthe
+                    self.boundary['time'], bnd_rz = np.split(dataStream, [nt])
+                    assert bnd_rz.size == 2 * nt * nthe
+                    tmp = bnd_rz.reshape(nthe, 2, nt)
+                    self.boundary['R'] = tmp[:, 0, :]
+                    self.boundary['Z'] = tmp[:, 1, :]
+                    print('BND time', self.boundary['time'], self.boundary['R'][0, :])
+                elif varName == 'BNDUX':
+                    pass
+                elif varName in self.profx:
+                    if 'NTIMES' in attr_d:
+                        nt = attr_d['NTIMES']
+                    else:
+                        nt = 1
+                    jexar = self.profx.index(varName)
+                    jbeg_arrx[jexar] = ngr + 1
+                    for jt in range(nt):
+                        self.profiles['arr_index'].append(jexar)
+                        self.profiles['label'].append(varName)
+                        self.profiles['nrho'].append(attr_d['POINTS'])
+                        self.profiles['grid_type'].append(attr_d['GRIDTYPE'])
+                        if 'FILTER' in attr_d:
+                            self.profiles['filter'].append(attr_d['FILTER'])
+                        else:
+                            self.profiles['filter'].append(alpha_glob)
+ 
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='astra parser')
-#    parser.add_argument('-exp', help='ASTRA exp filepath', required=False, default='%s/exp/aug34954_t' %config.awd)
-    parser.add_argument('-exp', help='ASTRA exp filepath', required=False, default='%s/exp/AUG33040_2500' %config.awd)
+    parser.add_argument('-exp', help='ASTRA exp filepath', required=False, default='%s/exp/aug34954_t' %config.awd)
 
     args = parser.parse_args()
+
+    args.exp='%s/exp/30000_3.4' %config.awd
+
     txt = EXP_PARSER(f_exp=args.exp)
 
     print(txt.scalars['NA1'])
     print(txt.scalars['AMJ'])
     print(txt.scalars['IPL'])
+    print(args.exp)
