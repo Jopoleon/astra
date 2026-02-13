@@ -2,7 +2,7 @@ module transport2fbe  !these are coupling variables with the equilibrium solver 
 
 use const_inc, only: TAU, TSTART, RTOR, UPDWN, SHIFT, NA1, PSIAX, PSIBO
 use io_mod, only: MACHINE
-use read_input, only: CCOILX, n_coils, nt_coils
+use read_input, only: raw_cCoil, n_coils, nt_coils
 use debugger, only: debug
 
 implicit none
@@ -102,7 +102,7 @@ contains
     fix_shape_after_fbe_off = 1 ! if ITFBE is set to -1, uses the last FBE shape as new shape for PBE
 
     cur_init = 0.
-    cur_init(1: n_coils) = CCOILX(nt_coils+1: nt_coils+n_coils)/1.e3
+    cur_init(1: n_coils) = raw_cCoil%current(1: n_coils)/1.e3
     sigma_coils = 1.
     sigma_coils_ref = 1.
     new_resistance = 0. ! whichever is > 0, it is used as new resistance.

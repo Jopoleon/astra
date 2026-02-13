@@ -7,7 +7,6 @@ implicit none
 integer, parameter :: NTVAR=250000, n_bnd_max=256, nt_bnd_max=1500, nt_coils_max=25000
 
 integer :: n_coils=1, nt_coils=0
-double precision, dimension((n_coils_max+1)*nt_coils_max) :: CCOILX=0., VCOILX=0.
 
 type rawScalars
     integer :: nt_all
@@ -36,7 +35,7 @@ endtype rawCoils
 type(rawScalars)  :: raw_scalars
 type(rawProfiles) :: raw_profiles
 type(rawBoundary) :: raw_boundary
-type(rawCoils) :: raw_cCoil, raw_vertCoil 
+type(rawCoils) :: raw_cCoil, raw_vertCoil
 
 contains
 
@@ -92,7 +91,7 @@ contains
     end subroutine readInput
 
 !------------------------------------------------------------
-    subroutine read_coilx(nunit, nt_io, ntim, ncoil_out, stri_in, var_out, coilx_out)
+    subroutine read_coilx(nunit, nt_io, ntim, ncoil_out, stri_in, coilx_out)
 
     use io_mod, only: exp_file, n_coils_max
     use debugger, only: markloc, astra_stop
@@ -105,7 +104,6 @@ contains
 
     integer :: j, ios
     character(132) :: err_msg
-    double precision, dimension((n_coils_max+1)*nt_coils_max), intent(out) :: var_out
 
     call markloc('read_coilx')
 
@@ -144,13 +142,12 @@ contains
         call astra_stop(err_msg)
     endif
 
-    read(nunit, *, iostat=ios)(var_out(j), j=1, (ncoil_out+1)*nt_io)
+    read(nunit, *, iostat=ios)(coilx_out%time(j), j=1, nt_io)
+    read(nunit, *, iostat=ios)(coilx_out%time(j), j=1, ncoil_out*nt_io)
     if (ios /= 0) then
         err_msg = TRIM(err_msg) // '    Size mismatch in COILSX group'
         call astra_stop(err_msg)
     endif
-    coilx_out%time = var_out(1: nt_io)
-    coilx_out%current = var_out(nt_io+1: nt_io+nt_io*ncoil_out)
 
     return
     end subroutine read_coilx
@@ -479,12 +476,12 @@ contains
         CASE('CCOILX')
             nt_coils = 0
 ! read only if nt_coils==0, i.e. CCOILX was not defined before
-            call read_coilx(201, nt_coils, ntim, n_coils, STRI, CCOILX, raw_cCoil)
+            call read_coilx(201, nt_coils, ntim, n_coils, STRI, raw_cCoil)
             VNAMO = VNAM
 
         CASE('VCOILX') !note that both CCOIL and VCOIL need to appear in the exp file with the same number of points and times
             nt_coils = 0
-            call read_coilx(201, nt_coils, ntim, n_coils, STRI, VCOILX, raw_vertCoil)
+            call read_coilx(201, nt_coils, ntim, n_coils, STRI, raw_vertCoil)
             VNAMO = VNAM
 
         CASE ('BNDX  ')
