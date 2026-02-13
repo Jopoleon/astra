@@ -2,7 +2,7 @@ module transport2fbe  !these are coupling variables with the equilibrium solver 
 
 use const_inc, only: TAU, TSTART, RTOR, UPDWN, SHIFT, NA1, PSIAX, PSIBO
 use io_mod, only: MACHINE
-use read_input, only: raw_cCoil, n_coils, nt_coils
+use read_input, only: raw_cCoil
 use debugger, only: debug
 
 implicit none
@@ -28,6 +28,7 @@ integer :: simple_plasma_model_breakdown ! if 0, no plasma feedback to coils in 
 
 integer :: use_isoflux, n_isoflux         ! 0 does nothing, 1 when mode 818 is used to reconstruct coil currents, the boundary is obtained on the isoflux points r_isoflux and z_isoflux , of length n_isoflux
 integer, parameter :: n_x_point=20    ! number of x points to be saved
+integer :: n_coils
 
 double precision :: tau_circuit_feqis, tau_gseq_feqis, time_astra
 double precision :: dr_factor_init_astra, dz_factor_init_astra ! factors of dr and dz for initial iterations
@@ -102,6 +103,7 @@ contains
     fix_shape_after_fbe_off = 1 ! if ITFBE is set to -1, uses the last FBE shape as new shape for PBE
 
     cur_init = 0.
+    n_coils = raw_cCoil%ncoils
     cur_init(1: n_coils) = raw_cCoil%current(1: n_coils)/1.e3
     sigma_coils = 1.
     sigma_coils_ref = 1.

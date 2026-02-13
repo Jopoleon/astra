@@ -58,15 +58,16 @@ subroutine GETCOILS(yvcoil, yccoil)
 
 use io_mod, only: CCOIL, VCOIL
 use const_inc, only: TIME, ITFBE
-use read_input, only: n_coils, raw_cCoil, raw_vertCoil
+use read_input, only: raw_cCoil, raw_vertCoil
 
 implicit none
 
-double precision, intent(out), dimension(n_coils) :: yvcoil, yccoil
+double precision, intent(out), dimension(raw_cCoil%ncoils) :: yccoil
+double precision, intent(out), dimension(raw_vertCoil%ncoils) :: yvcoil
 
 if (TIME > ITFBE) then ! if free boundary, solve circuit equations, ccoil comes from there
-    yccoil = CCOIL(1: n_coils)
-    yvcoil = VCOIL(1: n_coils)
+    yccoil = CCOIL(1: raw_cCoil%ncoils)
+    yvcoil = VCOIL(1: raw_vertCoil%ncoils)
     return
 endif
 

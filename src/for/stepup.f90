@@ -10,13 +10,13 @@ use const_inc, only: IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
     PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, RBDOT, BBDOT
 use status_inc, only: TE, TI, NE, NI, NIO, FP, defarr
 use io_mod, only: CCOIL, VCOIL, MACHINE, TASK
-use read_input, only: n_coils
+use read_input, only: raw_cCoil
 use plasma_state, only: plasma_up
 
 implicit none
 
 integer :: IFKEY, IFSUB, ibcpsi_fb, bc_type_for_fp, jkey, &
-    IFTREQ, IFSTEP
+    IFTREQ, IFSTEP, n_coils
 double precision :: zipctrl, iplfbeo, Apsibcfac, Bpsibcfac, dfpdrbm12, &
     tau_old, tau_new
 
@@ -28,6 +28,8 @@ save tau_old, tau_new
 !Initialize a few variables for toroidal field
 BTN = BTOR
 FTN = FTO
+
+n_coils = raw_cCoil%ncoils
 
 if (TIME <= TSTART) tau_old = tau
 if (TIME <= TSTART) tau_new = tau

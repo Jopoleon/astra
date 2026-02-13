@@ -1044,7 +1044,7 @@ use status_inc, only: G11, G22, G22E, G33, G33E, G41, G42, G43, G44, G45, &
 use plasma_state, only: plasma_up, plasma_trig
 use debugger, only: markloc
 use ext_bnd, only: use_ext_bnd
-use read_input, only: raw_boundary, n_coils
+use read_input, only: raw_boundary, raw_cCoil
 
 implicit none
 
@@ -1052,13 +1052,13 @@ integer, parameter :: itfbe_ctrl=0
 
 integer, intent(in) :: equil_solver
 
-integer :: i, j, jneql, jnteta, jnbnd, j_save_bound, j_rotation
+integer :: i, j, jneql, jnteta, jnbnd, j_save_bound, j_rotation, n_coils
 double precision :: yrocnew, iplnew, ychipfp, yipl, yupdwn
 double precision, dimension(NA1) :: yg11, yg22, yg33, yvr, yvrs, yslat, yg41, &
     ygradro, yipol, ydroda, ypres, ybmaxt, ybmint, yfp, &
     ybdb02, ybdb0, yb0db2, yvolum, yametr, yshif, yelon, &
     ytria, yfofb, yeqpf, yeqff, yshiv, ysquare, omega_rot
-double precision, dimension(n_coils) :: yccoil, yvcoil
+double precision, dimension(raw_cCoil%ncoils) :: yccoil, yvcoil
 double precision, dimension(1000) :: rbnd, zbnd
 
 save j_save_bound, iplnew
@@ -1068,6 +1068,7 @@ call markloc('A2GSSOLVER')
 
 jneql  = abs(nint(NEQUIL))
 jnteta = abs(nint(MEQUIL))
+n_coils = raw_cCoil%ncoils
 
 if (raw_boundary%n_theta == 0) then
     jnbnd = 41 ! "NAMEXP BND" not found

@@ -6,8 +6,6 @@ implicit none
 
 integer, parameter :: NTVAR=250000, n_bnd_max=256, nt_bnd_max=1500, nt_coils_max=25000
 
-integer :: n_coils=1, nt_coils=0
-
 type rawScalars
     integer :: nt_all
     integer, dimension(NTVAR) :: var_index=0
@@ -27,7 +25,7 @@ type rawBoundary
     double precision, dimension(nt_bnd_max*n_bnd_max) :: R=0., Z=0.
 endtype rawBoundary
 type rawCoils
-    integer :: nt, ncoils
+    integer :: nt=0, ncoils=0
     double precision, dimension(:), allocatable :: time
     double precision, dimension(:), allocatable :: current
 endtype rawCoils
@@ -91,59 +89,56 @@ contains
     end subroutine readInput
 
 !------------------------------------------------------------
-    subroutine read_coilx(nunit, nt_io, ntim, ncoil_out, stri_in, coilx_out)
+    subroutine read_coilx(nunit, stri_in, coilx_out)
 
     use io_mod, only: exp_file, n_coils_max
     use debugger, only: markloc, astra_stop
 
-    integer, intent(in) :: nunit, ntim
+    integer, intent(in) :: nunit
     character(len=*), intent(in) :: stri_in
-    integer, intent(inout) :: nt_io
-    integer, intent(out) :: ncoil_out
     type(rawCoils), intent(out) :: coilx_out
 
-    integer :: j, ios
+    integer :: j, ios, nt, n_coils
     character(132) :: err_msg
 
     call markloc('read_coilx')
 
     err_msg =  '>>> Data file "' // TRIM(exp_file) // '" error:\n'
 
-    if (nt_io /= 0) then
-        err_msg = TRIM(err_msg) // '    COILSX must be defined in a single group'
+    j = INDEX(stri_in, 'NTIMES')
+    if (j == 0) then
+        err_msg = TRIM(err_msg) // '    Number of COILSX must be defined'
         call astra_stop(err_msg)
     endif
-
-    nt_io = max(ntim, 1)
+    read(stri_in(j+6:), *) nt
 
     j = INDEX(stri_in, 'POINTS')
     if (j == 0) then
         err_msg = TRIM(err_msg) // '    Number of COILSX must be defined'
         call astra_stop(err_msg)
     endif
-    if (ncoil_out > n_coils_max) then
+    read(stri_in(j+6:), *) n_coils
+    if (n_coils > n_coils_max) then
         write(err_msg, '(2A, i)') TRIM(err_msg), &
            '    Number of coils must be <', n_coils_max
         call astra_stop(err_msg)
     endif
 
-    read(stri_in(j+6:), *) ncoil_out
-
-    coilx_out%nt = nt_io
-    coilx_out%ncoils = ncoil_out
+    coilx_out%nt = nt
+    coilx_out%ncoils = n_coils
     if (.not. allocated(coilx_out%time)) then
-        allocate(coilx_out%time(nt_io))
-        allocate(coilx_out%current(nt_io*ncoil_out))
+        allocate(coilx_out%time(nt))
+        allocate(coilx_out%current(nt*n_coils))
     endif
 
-    if ((ncoil_out + 1)*nt_io > (n_coils_max + 1)*(nt_coils_max - 10)) then
+    if (n_coils*nt > n_coils_max*nt_coils_max) then
         write(err_msg, '(2A)') TRIM(err_msg), &
            '    COILSX data length must be n_coils_max*nt_coils_max <'
         call astra_stop(err_msg)
     endif
 
-    read(nunit, *, iostat=ios)(coilx_out%time(j), j=1, nt_io)
-    read(nunit, *, iostat=ios)(coilx_out%time(j), j=1, ncoil_out*nt_io)
+    read(nunit, *, iostat=ios)(coilx_out%time(j), j=1, nt)
+    read(nunit, *, iostat=ios)(coilx_out%current(j), j=1, n_coils*nt)
     if (ios /= 0) then
         err_msg = TRIM(err_msg) // '    Size mismatch in COILSX group'
         call astra_stop(err_msg)
@@ -176,7 +171,7 @@ contains
     use parse_utils, only: split2array2
     use json_vars, only: varNames, profxNames
 
-    integer :: jarr, INTYPE, jtype, jbdry, ntim, ntim1, IVAR
+    integer :: jarr, INTYPE, jtype, jbdry, ntim, ntim1, n_coils, IVAR
     integer, allocatable, dimension(:) :: int_json
     integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
     integer :: n_words, i_filter_glob
@@ -474,14 +469,16 @@ contains
         SELECT CASE(VNAMX)
 
         CASE('CCOILX')
-            nt_coils = 0
 ! read only if nt_coils==0, i.e. CCOILX was not defined before
-            call read_coilx(201, nt_coils, ntim, n_coils, STRI, raw_cCoil)
+            if (raw_cCoil%nt == 0) then
+                call read_coilx(201, STRI, raw_cCoil)
+            endif
             VNAMO = VNAM
 
         CASE('VCOILX') !note that both CCOIL and VCOIL need to appear in the exp file with the same number of points and times
-            nt_coils = 0
-            call read_coilx(201, nt_coils, ntim, n_coils, STRI, raw_vertCoil)
+            if (raw_vertCoil%nt == 0) then
+                call read_coilx(201, STRI, raw_vertCoil)
+            endif
             VNAMO = VNAM
 
         CASE ('BNDX  ')
