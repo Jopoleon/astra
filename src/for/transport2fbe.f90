@@ -1,7 +1,8 @@
 module transport2fbe  !these are coupling variables with the equilibrium solver and astra
 
 use const_inc, only: TAU, TSTART, RTOR, UPDWN, SHIFT, NA1, PSIAX, PSIBO
-use io_mod, only: MACHINE, CCOILX, n_coils, nt_coils
+use io_mod, only: MACHINE
+use read_input, only: CCOILX, n_coils, nt_coils
 use debugger, only: debug
 
 implicit none

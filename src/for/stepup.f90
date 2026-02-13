@@ -9,7 +9,8 @@ use const_inc, only: IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
     TAU, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, ATREQ, LEQ, & 
     PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, RBDOT, BBDOT
 use status_inc, only: TE, TI, NE, NI, NIO, FP, defarr
-use io_mod, only: CCOIL, VCOIL, n_coils, MACHINE, TASK
+use io_mod, only: CCOIL, VCOIL, MACHINE, TASK
+use read_input, only: n_coils
 use plasma_state, only: plasma_up
 
 implicit none

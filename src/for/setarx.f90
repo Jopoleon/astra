@@ -1,3 +1,81 @@
+subroutine get_coil(tim_in, coil_arr, nt, n_coil, coil_curr)
+
+! Get the control quantities from the exp data at the present time slice
+
+integer, intent(in) :: nt, n_coil
+double precision, intent(in) :: tim_in
+double precision, intent(in), dimension(*) :: coil_arr
+double precision, intent(out), dimension(n_coil) :: coil_curr
+
+integer :: j, j1, j2, jt
+double precision :: ydt, yd1, yd2
+
+if (nt == 0) then  
+    coil_curr = 0.0
+    return
+endif
+
+! Input order:
+! t_1  t_2  t_3
+! coil currents(t_1)  
+! coil currents(t_2) 
+if (tim_in <= coil_arr(1)) then
+    j1 = nt
+    do j=1, n_coil
+        coil_curr(j) = coil_arr(j1+j)
+    enddo
+    return
+endif
+if (tim_in >= coil_arr(nt)) then
+    j1 = n_coil*(nt - 1) + nt
+    do j=1, n_coil
+        coil_curr(j) = coil_arr(j1+j)
+    enddo
+    return
+endif
+
+do j=1, nt
+    if (coil_arr(j) <= tim_in) jt = j
+enddo
+ydt = coil_arr(jt+1) - coil_arr(jt)
+yd1 = (tim_in - coil_arr(jt))/ydt  ! > 0
+yd2 = (tim_in - coil_arr(jt+1))/ydt  ! < 0
+do j=1, n_coil
+    j1 = n_coil*(jt-1) + nt + j
+    j2 = n_coil*jt + nt + j
+    coil_curr(j) = yd1*coil_arr(j2) - yd2*coil_arr(j1)
+enddo
+
+return
+end subroutine get_coil
+
+!---------------------------------------------------------------------
+subroutine GETCOILS(yvcoil, yccoil)
+
+! Get the coil currents from the exp data at the present time slice
+
+use io_mod, only: CCOIL, VCOIL
+use const_inc, only: TIME, ITFBE
+use read_input, only: n_coils, nt_coils, CCOILX, VCOILX
+
+implicit none
+
+double precision, intent(out), dimension(n_coils) :: yvcoil, yccoil
+
+if (TIME > ITFBE) then ! if free boundary, solve circuit equations, ccoil comes from there
+    yccoil = CCOIL(1: n_coils)
+    yvcoil = VCOIL(1: n_coils)
+    return
+endif
+
+! if time <= ITFBE, ccoil and vcoil comes from experimental traces in exp file
+call get_coil(TIME, CCOILX, nt_coils, n_coils, yccoil)
+call get_coil(TIME, VCOILX, nt_coils, n_coils, yvcoil)
+
+return
+end subroutine GETCOILS
+
+!--------------------------------------------------------------------
 subroutine SETARX(ICALL)
 !--------------------------------------------------------------------
 ! The time evolution of the input data is taken from

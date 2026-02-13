@@ -1,10 +1,13 @@
 module read_input
 
-use parameter_inc, only: NTARR, NRDX
+use parameter_inc, only: NTARR, NRDX, n_coils_max
 
 implicit none
 
-integer, parameter :: NTVAR=250000, n_bnd_max=256, nt_bnd_max=1500
+integer, parameter :: NTVAR=250000, n_bnd_max=256, nt_bnd_max=1500, nt_coils_max=25000
+
+integer :: n_coils=1, nt_coils=0
+double precision, dimension((n_coils_max+1)*nt_coils_max) :: CCOILX=0., VCOILX=0.
 
 type rawScalars
     integer :: nt_all
@@ -24,10 +27,16 @@ type rawBoundary
     double precision, dimension(nt_bnd_max) :: time=0.
     double precision, dimension(nt_bnd_max*n_bnd_max) :: R=0., Z=0.
 endtype rawBoundary
+type rawCoils
+    integer :: nt, ncoils
+    double precision, dimension(:), allocatable :: time
+    double precision, dimension(:), allocatable :: current
+endtype rawCoils
 
 type(rawScalars)  :: raw_scalars
 type(rawProfiles) :: raw_profiles
 type(rawBoundary) :: raw_boundary
+type(rawCoils) :: raw_cCoil, raw_vertCoil 
 
 contains
 
@@ -83,15 +92,16 @@ contains
     end subroutine readInput
 
 !------------------------------------------------------------
-    subroutine read_coilx(nunit, nt_io, ntim, nrho, stri_in, var_out)
+    subroutine read_coilx(nunit, nt_io, ntim, ncoil_out, stri_in, var_out, coilx_out)
 
-    use io_mod, only: exp_file, n_coils_max, nt_coils_max
+    use io_mod, only: exp_file, n_coils_max
     use debugger, only: markloc, astra_stop
 
     integer, intent(in) :: nunit, ntim
     character(len=*), intent(in) :: stri_in
     integer, intent(inout) :: nt_io
-    integer, intent(out) :: nrho
+    integer, intent(out) :: ncoil_out
+    type(rawCoils), intent(out) :: coilx_out
 
     integer :: j, ios
     character(132) :: err_msg
@@ -113,25 +123,34 @@ contains
         err_msg = TRIM(err_msg) // '    Number of COILSX must be defined'
         call astra_stop(err_msg)
     endif
-    if (nrho > n_coils_max) then
+    if (ncoil_out > n_coils_max) then
         write(err_msg, '(2A, i)') TRIM(err_msg), &
            '    Number of coils must be <', n_coils_max
         call astra_stop(err_msg)
     endif
 
-    read(stri_in(j+6:), *) nrho
+    read(stri_in(j+6:), *) ncoil_out
 
-    if ((nrho + 1)*nt_io > (n_coils_max + 1)*(nt_coils_max - 10)) then
+    coilx_out%nt = nt_io
+    coilx_out%ncoils = ncoil_out
+    if (.not. allocated(coilx_out%time)) then
+        allocate(coilx_out%time(nt_io))
+        allocate(coilx_out%current(nt_io*ncoil_out))
+    endif
+
+    if ((ncoil_out + 1)*nt_io > (n_coils_max + 1)*(nt_coils_max - 10)) then
         write(err_msg, '(2A)') TRIM(err_msg), &
            '    COILSX data length must be n_coils_max*nt_coils_max <'
         call astra_stop(err_msg)
     endif
 
-    read(nunit, *, iostat=ios)(var_out(j), j=1, (nrho+1)*nt_io)
+    read(nunit, *, iostat=ios)(var_out(j), j=1, (ncoil_out+1)*nt_io)
     if (ios /= 0) then
         err_msg = TRIM(err_msg) // '    Size mismatch in COILSX group'
         call astra_stop(err_msg)
     endif
+    coilx_out%time = var_out(1: nt_io)
+    coilx_out%current = var_out(nt_io+1: nt_io+nt_io*ncoil_out)
 
     return
     end subroutine read_coilx
@@ -154,8 +173,7 @@ contains
 
     use parameter_inc, only: NRDX, NTARR
     use const_inc, only: NA1, AB, ABC, RTOR, varValues, exp_header, TSTART, TEND
-    use io_mod, only: exp_file, CCOILX, VCOILX, IFDFVX, IFDFAX, jbeg_arrx, NGR, &
-        n_coils, nt_coils
+    use io_mod, only: exp_file, IFDFVX, IFDFAX, jbeg_arrx, NGR
     use char_manip, only: to_upper, str_in_list
     use debugger, only: markloc, debug, astra_stop
     use parse_utils, only: split2array2
@@ -461,12 +479,12 @@ contains
         CASE('CCOILX')
             nt_coils = 0
 ! read only if nt_coils==0, i.e. CCOILX was not defined before
-            call read_coilx(201, nt_coils, ntim, n_coils, STRI, CCOILX)
+            call read_coilx(201, nt_coils, ntim, n_coils, STRI, CCOILX, raw_cCoil)
             VNAMO = VNAM
 
         CASE('VCOILX') !note that both CCOIL and VCOIL need to appear in the exp file with the same number of points and times
             nt_coils = 0
-            call read_coilx(201, nt_coils, ntim, n_coils, STRI, VCOILX)
+            call read_coilx(201, nt_coils, ntim, n_coils, STRI, VCOILX, raw_vertCoil)
             VNAMO = VNAM
 
         CASE ('BNDX  ')

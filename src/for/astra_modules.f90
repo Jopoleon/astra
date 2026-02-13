@@ -4,8 +4,7 @@ implicit none
 save
 
 integer, parameter :: NRD=801, NCONST=256, NARRX=101, n_sbr_max=60, &
-    n_coils_max=60, nt_coils_max=25000, NRDX=500, &
-    NTARR=250000, NEQNS=19, plot_modes=9
+    NRDX=500, NTARR=250000, NEQNS=19, plot_modes=9, n_coils_max=60
 
 end module parameter_inc
 
