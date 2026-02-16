@@ -158,7 +158,7 @@ contains
 !----------------------------------------------------------------------|
 ! The subroutine is called once at the start-up, it reads the "exp" file
 ! and stores the time evolution of all input data in the arrays
-! raw_profiles%data(NRDX*NTARR) - data array
+! raw_profiles%data - data array
 !       Let   1 <= j <= NTARR is an ordinal number of array in raw_profiles%data
 ! jbeg_arrx(jx)  - pointer to a position in the array raw_profiles%time
 !----------------------------------------------------------------------|
@@ -414,7 +414,11 @@ contains
     enddo set_dims_2d
     close(201)
 
-    print*, 'Total length of profilesX data', len_profs_data
+    if (len_profs_data > NTARR) then
+        write(err_msg, '(A, i)') &
+            '>>> read_exp: Size of time dependent profiles data stream cannot exceed', NTARR
+        call astra_stop(err_msg)
+    endif
 
     ios = 0
     VNAMO = ' '
@@ -640,13 +644,6 @@ contains
                 call astra_stop(err_msg)
             endif
 
-            if (NGR + nt_u + 1 > NTARR) then
-                write(err_msg, '(A, i)') &
-                    '>>> read_exp: Number of time dependent arrays cannot exceed', NTARR
-                call astra_stop(err_msg)
-            endif
-
-            if (jarr + nx_u  > NRDX*NTARR) call astra_stop('>>> read_exp: Buffer size exceeded')
             call CHECKU(INTYPE, ABC, AB, XBDRY, raw_profiles%data(jarr+1), nx_u, jbdry, rholbl, ufile_in)
 
             do j=1, jbdry
@@ -663,11 +660,6 @@ contains
             endif
 
             jarr = jarr + jbdry
-
-            if (jarr + nx_u + (nt_u - 1)*jbdry > NRDX*NTARR) then
-                call astra_stop('>>> read_exp: Buffer size exceeded')
-            endif
-
             jrt = jarr
             do jj=1, nt_u
                 do j=1, jbdry
@@ -720,14 +712,6 @@ contains
 
             jtype = 1 + INTYPE/10
             ntim1 = max(ntim, 1)
-            if (NGR + ntim1 > NTARR) then
-                write(err_msg, '(2A, i)') err_msg_exp, &
-                    'Number of time dependent arrays cannot exceed', NTARR
-                call astra_stop(err_msg)
-            endif
-            if (jarr + jtype*jbdry + 1 > NRDX*NTARR) then
-                call astra_stop('>>> read_exp: Buffer size exceeded')
-            endif
 
 ! INTYPE unknown
             if (INTYPE < 0 .or. INTYPE > 20) then

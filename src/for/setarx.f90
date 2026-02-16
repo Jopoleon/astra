@@ -89,7 +89,7 @@ subroutine SETARX(ICALL)
 !
 !--------------------------------------------------------------------
 
-use parameter_inc, only: NRD, NTARR
+use parameter_inc, only: NRD
 use const_inc, only: TIME, BTOR, GP, AB, ABC, ROC, VOLUME, NA1, NAB, PSIAX
 use status_inc, only: AMETR, RHO, FP, VOLUM, profiles_x, rho_pol
 use numerical_tools, only: qinterp, sortab, smooth
@@ -109,13 +109,12 @@ double precision, dimension(NRD) :: XA, DA
 character(len=132) :: err_msg, err_msg_grid
 !--------------------------------------------------------------------
 !  NARRX    maximal number of arrays readable from a data file
-!  NTARR    maximal number of time slices for all arrays (total)
 !--------------------------------------------------------------------
 ! Input
 ! ICALL
 !  = 1 - time interpolation off
 !  = 2 - time interpolation on
-! raw_profiles%data(NRDX*NTARR) - data array
+! raw_profiles%data - data array
 ! jbeg_arrx(kn)  - pointer to a position in the array TIMEX
 ! Output
 ! IFDFAX(kn)   - current pointer to data set in raw_profiles%data
