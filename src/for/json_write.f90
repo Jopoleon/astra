@@ -67,7 +67,10 @@ contains
     call prettyFloatArray(nunit_x, ndim, raw_profiles%time)
 
     write(nunit_x, '(A)') '        "filter": {"data": ['
-    call prettyFloatArray(nunit_x, ndim, raw_profiles%filter, dict_end=.true.)
+    call prettyFloatArray(nunit_x, ndim, raw_profiles%filter)
+
+    write(nunit_x, '(A)') '        "data": {"data": ['
+    call prettyFloatArray(nunit_x, SIZE(raw_profiles%data), raw_profiles%data, dict_end=.true.)
 
     write(nunit_x, '(A/)') '    },'
 

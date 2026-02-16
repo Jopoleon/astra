@@ -367,6 +367,8 @@ contains
 !-----------------------------
 ! Rewind exp file for 2d part
 
+! Setting dimension for raw_profiles%* allocation
+
     open(201, FILE=TRIM(file_exp), iostat=ios)
     read(201, '(/A132)') STRI
     len_profs_data = 0
