@@ -1,6 +1,6 @@
 module outcmn_inc
 
-use parameter_inc, only: NRD, plot_modes
+use parameter_inc, only: NRD
 use char_manip, only: null_ch
 use io_mod, only: resize
 use const_inc, only: AB, TINIT, TSCALE
@@ -21,7 +21,7 @@ endtype plot_frame
 ! Colors, array AstraColorNum in Astra2XW.c
 integer, parameter :: White=0, Black=1, Red=2, Blue=3, Green=5, &
      WarningColor=30, EraseColor=31, Magenta=14, Pink=13, &
-     nplots_max=32, NRW=128, NTIMES=1024
+     nplots_max=32, NRW=128, NTIMES=1024, plot_modes=9
 integer, dimension(NRW) :: MARKT, MARKR, NWIND1, NWIND3, NWIND4, NWIND7, NWINDX, IP1, IP2, IP30, IP31
 integer :: NDTNAM, NTOUT, NROUT, LTOUT, IPOUT, MOD10, NXOUT
 integer :: MODEY, IDX, IDT, KPRI, NST, AVERS, ARLEAS, AEDIT

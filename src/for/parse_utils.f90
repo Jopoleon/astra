@@ -10,7 +10,6 @@ contains
     logical function IFDEFX(XARNAM)
 ! Name exists in profxNames, and the array is defined
 
-    use parameter_inc, only: NARRX
     use io_mod, only: IFDFAX
     use json_vars, only: profxNames
 

@@ -1,10 +1,12 @@
 module io_mod
 
-use parameter_inc, only: NRDX, NARRX, n_coils_max, NCONST, n_sbr_max
+use parameter_inc, only: NRDX, NARRX, n_coils_max, n_sbr_max
 use debugger, only: debug, flightsim
 use const_inc, only: TSTART, TEND, TPAUSE
 
 implicit none
+
+integer, parameter :: NCONST=256
 
 integer, dimension(n_sbr_max) :: IFSBX
 integer, dimension(NARRX) :: IFDFAX=-1, jbeg_arrx, NPTM

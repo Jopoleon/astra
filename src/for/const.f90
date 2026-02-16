@@ -1,9 +1,10 @@
 module const_inc
  
-use parameter_inc, only: n_sbr_max, NEQNS, NARRX
+use parameter_inc, only: n_sbr_max, NARRX
 
 implicit none
 
+integer, parameter :: NEQNS=19
 double precision, parameter :: GP=3.1415926, GP2=6.283185
 
 double precision, pointer :: &

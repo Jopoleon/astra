@@ -1,10 +1,10 @@
 module read_input
 
-use parameter_inc, only: NTARR, NRDX
+use parameter_inc, only: NRDX
 
 implicit none
 
-integer, parameter :: NTVAR=250000, n_bnd_max=256, nt_bnd_max=1500, nt_coils_max=25000
+integer, parameter :: NTVAR=250000, NTARR=250000, n_bnd_max=256, nt_bnd_max=1500, nt_coils_max=25000
 
 type rawScalars
     integer :: nt_all
@@ -154,7 +154,6 @@ contains
 !  IVAR     number of actually defined variables
 !  NTARR    maximal number of time slices for all arrays
 !  NGR     number of actually defined groups
-!  NARRX    maximal number of arrays recognizable from a data file
 !----------------------------------------------------------------------|
 ! The subroutine is called once at the start-up, it reads the "exp" file
 ! and stores the time evolution of all input data in the arrays
@@ -163,7 +162,7 @@ contains
 ! jbeg_arrx(jx)  - pointer to a position in the array raw_profiles%time
 !----------------------------------------------------------------------|
 
-    use parameter_inc, only: NRDX, NTARR
+    use parameter_inc, only: NRDX
     use const_inc, only: NA1, AB, ABC, RTOR, varValues, exp_header, TSTART, TEND
     use io_mod, only: exp_file, IFDFVX, IFDFAX, jbeg_arrx, NGR
     use char_manip, only: to_upper, str_in_list
@@ -171,7 +170,7 @@ contains
     use parse_utils, only: split2array2
     use json_vars, only: varNames, profxNames
 
-    integer :: jarr, INTYPE, jtype, jbdry, ntim, ntim1, n_coils, IVAR
+    integer :: jarr, INTYPE, jtype, nr_exp, ntim, ntim1, n_coils, IVAR
     integer, allocatable, dimension(:) :: int_json
     integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
     integer :: n_words, i_filter_glob, len_profs_data
@@ -397,14 +396,14 @@ contains
                     keyword = strarray(j)(1: 6)
                     SELECT CASE(keyword)
                     CASE('POINTS')
-                        read(strarray(j+1), *, iostat=ios) jbdry
+                        read(strarray(j+1), *, iostat=ios) nr_exp
                         if (ios /= 0) call astra_stop(err_format)
                     CASE('NTIMES')
                         read(strarray(j+1), *, iostat=ios) ntim
                         if (ios /= 0) call astra_stop(err_format)
                     END SELECT
                 enddo 
-                len_profs_data = len_profs_data + ntim*jbdry + 2*jbdry ! Some margin in case GRIDTYPE=18,19,20
+                len_profs_data = len_profs_data + ntim*nr_exp + 2*nr_exp ! Some margin in case GRIDTYPE=18,19,20
             endif
         else       ! ufile
             call parse_u_line(STRI, uvar, ufile_in, factor)
@@ -442,7 +441,7 @@ contains
         INTYPE = -1
         TIMEVR = .0
         ntim = 0
-        jbdry = 0
+        nr_exp = 0
         factor = 1.
         ALFA = ALFA_GLOB
 
@@ -474,7 +473,7 @@ contains
                     keyword = strarray(j)(1: 6)
                     SELECT CASE(keyword)
                     CASE('POINTS')
-                        read(strarray(j+1), *, iostat=ios) jbdry
+                        read(strarray(j+1), *, iostat=ios) nr_exp
                         if (ios /= 0) call astra_stop(err_format)
                     CASE('NAMEXP')      ! New variable, exp-block
                         VNAM = VARNAM(strarray(j+1), ier_tab)
@@ -646,9 +645,9 @@ contains
                 call astra_stop(err_msg)
             endif
 
-            call CHECKU(INTYPE, ABC, AB, XBDRY, raw_profiles%data(jarr+1), nx_u, jbdry, rholbl, ufile_in)
+            call CHECKU(INTYPE, ABC, AB, XBDRY, raw_profiles%data(jarr+1), nx_u, nr_exp, rholbl, ufile_in)
 
-            do j=1, jbdry
+            do j=1, nr_exp
                 raw_profiles%data(jarr + j) = x_u(j)
             enddo
             do j=1, nt_u
@@ -656,15 +655,15 @@ contains
             enddo
 
             if (INTYPE == 18 .or. INTYPE == 19) then
-                raw_profiles%data(jarr + 2: jarr + jbdry) = raw_profiles%data(jarr + 1)
+                raw_profiles%data(jarr + 2: jarr + nr_exp) = raw_profiles%data(jarr + 1)
                 if (INTYPE == 18) raw_profiles%data(jarr + 1) = RTOR
                 if (INTYPE == 19) raw_profiles%data(jarr + 1) = 0.
             endif
 
-            jarr = jarr + jbdry
+            jarr = jarr + nr_exp
             jrt = jarr
             do jj=1, nt_u
-                do j=1, jbdry
+                do j=1, nr_exp
                     jrt = jrt + 1
                     raw_profiles%data(jrt) = var_u(jj + (j - 1)*nt_u)
                 enddo
@@ -678,17 +677,17 @@ contains
             do j=1, nt_u
                 NGR = NGR + 1
                 if (j == 1) then
-                    raw_profiles%jbeg_grid(NGR) = jarr - jbdry + 1
+                    raw_profiles%jbeg_grid(NGR) = jarr - nr_exp + 1
                     raw_profiles%jbeg_data(NGR) = jarr + 1
                 else
                     raw_profiles%jbeg_grid(NGR) = raw_profiles%jbeg_grid(NGR-1)
                     raw_profiles%jbeg_data(NGR) = jarr + 1
                 endif
-                do j0=1, jbdry
+                do j0=1, nr_exp
                     raw_profiles%data(jarr + j0) = raw_profiles%data(jarr + j0)*factor
                 enddo
-                jarr = jarr + jbdry
-                if (jbdry /= nx_u) then
+                jarr = jarr + nr_exp
+                if (nr_exp /= nx_u) then
                     YB = raw_profiles%data(jarr)
                     YB1 = raw_profiles%data(jarr-1)
                     YB = (YB*(XBDRY - YXB1) - YB1*(XBDRY - YXB))/(YXB - YXB1)
@@ -696,18 +695,18 @@ contains
                 endif
                 raw_profiles%arr_index(NGR) = jexar
                 raw_profiles%label    (NGR) = VNAMX
-                raw_profiles%nrho     (NGR) = jbdry
+                raw_profiles%nrho     (NGR) = nr_exp
                 raw_profiles%grid_type(NGR) = INTYPE
                 raw_profiles%filter   (NGR) = ALFA
             enddo
 
         else ! read exp-block data
-            if (jbdry <= 1) then
+            if (nr_exp <= 1) then
                 write(err_msg, '(3A, 8X, A)') err_msg, 'Input quantity: ', TRIM(VNAM), &
                     'Number of grid points must be > 1'
                 call astra_stop(err_msg)
             endif
-            if (jbdry > NRDX) then
+            if (nr_exp > NRDX) then
                 write(err_msg, '(2A, i)') err_msg_exp, 'Number of radial points > ', NRDX
                 call astra_stop(err_msg)
             endif
@@ -727,7 +726,7 @@ contains
                 NGR = NGR + 1
                 raw_profiles%arr_index(NGR) = jexar
                 raw_profiles%label    (NGR) = VNAMX
-                raw_profiles%nrho     (NGR) = jbdry
+                raw_profiles%nrho     (NGR) = nr_exp
                 raw_profiles%grid_type(NGR) = INTYPE
                 raw_profiles%filter   (NGR) = ALFA
                 if (j == 1) then
@@ -738,34 +737,34 @@ contains
                         read(201, *, ERR=906) raw_profiles%data(jarr)
                     endif
                     do j1=1, jtype
-                        read(201, *, iostat=ios) (raw_profiles%data(jarr + jj), jj=1, jbdry)
+                        read(201, *, iostat=ios) (raw_profiles%data(jarr + jj), jj=1, nr_exp)
                         if (ios /= 0) then
                             write(err_msg, '(3A, /, A, 1p, 6e12.4)') err_msg_exp, &
                                 '".  Format error in group ', TRIM(STRI), 'Last data read: ', &
-                                (raw_profiles%data(jarr+jj), jj=1, jbdry)
+                                (raw_profiles%data(jarr+jj), jj=1, nr_exp)
                                 call astra_stop(err_msg)
                         endif
-                        jarr = jarr + jbdry
+                        jarr = jarr + nr_exp
                         if (jtype == 2 .and. INTYPE <= 17 .and. j1 == 1) XBDRY = raw_profiles%data(jarr)
                     enddo
-                    raw_profiles%jbeg_data(NGR) = jarr - jbdry + 1
-                    do jj=1, jbdry
-                        raw_profiles%data(jarr - jbdry + jj) = factor*raw_profiles%data(jarr - jbdry + jj)
+                    raw_profiles%jbeg_data(NGR) = jarr - nr_exp + 1
+                    do jj=1, nr_exp
+                        raw_profiles%data(jarr - nr_exp + jj) = factor*raw_profiles%data(jarr - nr_exp + jj)
                     enddo
                 else
                     raw_profiles%jbeg_grid(NGR) = raw_profiles%jbeg_grid(NGR-1)
                     raw_profiles%jbeg_data(NGR) = jarr + 1
-                    read(201, *, iostat=ios) (raw_profiles%data(jarr + jj), jj=1, jbdry)
+                    read(201, *, iostat=ios) (raw_profiles%data(jarr + jj), jj=1, nr_exp)
                     if (ios /= 0) then
                         write(err_msg, '(3A, /, A, 1p, 6e12.4)') err_msg_exp, &
                                 '".  Format error in group ', TRIM(STRI), 'Last data read: ', &
-                            (raw_profiles%data(jarr+jj), jj=1, jbdry)
+                            (raw_profiles%data(jarr+jj), jj=1, nr_exp)
                         call astra_stop(err_msg)
                     endif
-                    do jj=1, jbdry
+                    do jj=1, nr_exp
                         raw_profiles%data(jarr + jj) = factor*raw_profiles%data(jarr + jj)
                     enddo
-                    jarr = jarr + jbdry
+                    jarr = jarr + nr_exp
                 endif
             enddo
             if (INTYPE == 17) write(*, *) 'X-axis analysis is not implemented GRIDTYPE =', INTYPE
@@ -1106,7 +1105,7 @@ contains
     end function ARRNAM
 
 !---------------------------------------------------------------------
-    subroutine CHECKU(INTYPE, ABC, AB, XBDRY, YX, jrad, jbdry, STRING, FILENA)
+    subroutine CHECKU(INTYPE, ABC, AB, XBDRY, YX, jrad, nr_exp, STRING, FILENA)
 !---------------------------------------------------------------------
 ! Consistency check for grid array YX(1:jrad) and plasma boundary AB/ABC
 ! Input:
@@ -1116,19 +1115,19 @@ contains
 ! jrad - YX array dimensionality
 ! STRING - U-file "Independent variable" description
 ! FILENA - U-file name
-! Analyse array YX and returns proper values for XBDRY and jbdry
+! Analyse array YX and returns proper values for XBDRY and nr_exp
 ! Output:
 ! INTYPE -
 ! XBDRY = ABC or AB depending on INTYPE selected
-! jbdry - is determined from {YX(jbdry) <= ABC} or {YX(jbdry) <= AB}
+! nr_exp - is determined from {YX(nr_exp) <= ABC} or {YX(nr_exp) <= AB}
 !    for {INTYPE = 10} or {INTYPE = 11}, respectively
-!  jbdry = jrad if  if YX(jrad) < ABC <= AB
+!  nr_exp = jrad if  if YX(jrad) < ABC <= AB
 !----------------------------------------------------------------------|
 
     use char_manip, only: to_upper, clean_string
 
     integer, intent(in)  ::  jrad
-    integer, intent(out) :: jbdry, INTYPE
+    integer, intent(out) :: nr_exp, INTYPE
     double precision, intent(in)  :: YX(jrad)
     double precision, intent(in)  :: ABC, AB
     double precision, intent(out) :: XBDRY
@@ -1138,7 +1137,7 @@ contains
     integer :: j
     character(len=12) :: STRAD
 
-    jbdry = 0
+    nr_exp = 0
     XBDRY = YX(jrad)
     STRAD = STRING(21:31)
     STRING = to_upper(clean_string(STRING))
@@ -1169,19 +1168,19 @@ contains
 
     if (INTYPE == 10 .and. abs(XBDRY - AB) > 0.3*AB/jrad)  then
         if (XBDRY < AB) then
-            jbdry = jrad
+            nr_exp = jrad
         else
             do j=jrad, 1, -1
-               if (YX(j) > AB) jbdry = j
+               if (YX(j) > AB) nr_exp = j
             enddo
             XBDRY = AB
         endif
     elseif (INTYPE == 11 .and. abs(XBDRY - ABC) > 0.3*ABC/jrad) then
         if (XBDRY < ABC) then
-            jbdry = jrad
+            nr_exp = jrad
         else
             do j=jrad, 1, -1
-                if (YX(j) > ABC) jbdry = j
+                if (YX(j) > ABC) nr_exp = j
             enddo
             XBDRY = ABC
         endif
@@ -1190,8 +1189,8 @@ contains
         write(*, *)'>>> U-file "', TRIM(FILENA), '"', &
             " Don't know a distance to the major axis.           Set to RTOR"
     endif
-    if (jbdry == 0) then
-        jbdry = jrad
+    if (nr_exp == 0) then
+        nr_exp = jrad
     endif
 
     return

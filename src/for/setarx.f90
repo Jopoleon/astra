@@ -85,8 +85,6 @@ subroutine SETARX(ICALL)
 !  - raw_profiles  |  for arrays
 !
 ! Then it is stored for the current time in the arrays
-! profiles_x(NRD, NARRX) - (description in astra_variables.json)
-!
 !--------------------------------------------------------------------
 
 use parameter_inc, only: NRD
@@ -107,8 +105,6 @@ double precision :: RORZ, RZ2A, YDT, YDTA, YDTB, Y, Y1, dxl, dxr
 double precision, dimension(:), allocatable :: x_grid, dat_exp
 double precision, dimension(NRD) :: XA, DA
 character(len=132) :: err_msg, err_msg_grid
-!--------------------------------------------------------------------
-!  NARRX    maximal number of arrays readable from a data file
 !--------------------------------------------------------------------
 ! Input
 ! ICALL

@@ -31,7 +31,7 @@ integer function IFKEY(IFKL)
 ! 12,13 - for equ/model.log file (once on entry)
 ! 3 - for post-viewer file (first on entry, then periodically)
 
-use parameter_inc, only: NRD, NARRX
+use parameter_inc, only: NRD
 use status_inc, only: MU, AMETR, SHIF, ELON, TRIA, EQFF, EQPF, FP, RHO
 use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, exp_header, &
    NA, NB1, NA1, NAB, LEQ, TIME, TAU, TINIT, TSCALE, &
