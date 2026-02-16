@@ -1,7 +1,5 @@
 module read_input
 
-use parameter_inc, only: NRDX
-
 implicit none
 
 integer, parameter :: NTVAR=250000, NTARR=250000, n_bnd_max=256, nt_bnd_max=1500, nt_coils_max=25000
