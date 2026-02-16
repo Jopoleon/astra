@@ -86,14 +86,14 @@ class EXP_PARSER:
 
     def __init__(self, f_exp=None):
 
-        tim = np.zeros(6)
+        tim = np.zeros(7)
         tim[0] = time.time()
         self.f_exp = f_exp
 
         f_json = '%s/astra_variables.json' %config.awd
         with open(f_json, 'r') as fjson:
             json_d = json.load(fjson)
-        json_keys = {key: list(val.keys()) for key, val in json_d.items()}
+        json_keys = {key: list(val) for key, val in json_d.items()}
         self.prof      = json_keys['profiles']
         self.profx     = json_keys['profiles_x']
         self.constants = json_keys['constants']
@@ -118,6 +118,8 @@ class EXP_PARSER:
         tim[4] = time.time()
         self.parse_exp2d(exp2d)
         tim[5] = time.time()
+        self.write_json()
+        tim[6] = time.time()
         print('Time analysis', np.diff(tim))
 
 
@@ -147,10 +149,11 @@ class EXP_PARSER:
                 varName, uf_path, factor = parse_u_line(line)
                 f_in = '%s/udb/%s' %(config.awd, uf_path)
                 uf = ufiles.UFILE(fin=f_in)
-                self.scalars[varName]['time'] = uf.X['data']
-                self.scalars[varName]['data'] = factor*uf.f['data']
+                self.scalars[varName]['time'] = uf.X['data'].tolist()
+                self.scalars[varName]['data'] = (factor*uf.f['data']).tolist()
+                self.scalars[varName]['error'] = len(self.scalars[varName]['data'])*[0.]
                 uf_keys.append(varName)
-            else: # ASCII block in exp file
+            else: # ASCII blocks in exp file
                 self.scalars[varName]['time'].append((float(tim) if tim.strip() else 0.))
                 self.scalars[varName]['error'].append((float(error) if error.strip() else 0.))
                 self.scalars[varName]['data'].append(float(data))
@@ -203,9 +206,9 @@ class EXP_PARSER:
                 varName = append_x(varName)
                 self.profiles['grid_type'].append(gridtype)
                 self.profiles['label'].append(varName)
-                self.profiles['time'].append(uf.X['data'])
-                self.profiles['rho'].append(uf.Y['data'])
-                self.profiles['data'].append(factor*uf.f['data'])
+                self.profiles['time'].append(uf.X['data'].tolist())
+                self.profiles['rho'].append(uf.Y['data'].tolist())
+                self.profiles['data'].append((factor*uf.f['data']).ravel().tolist())
                 self.profiles['filter'].append(alpha)
                 uf_keys.append(varName)
                 
@@ -225,10 +228,9 @@ class EXP_PARSER:
                         nt = attr_d['NTIMES']
                     else:
                         nt = 1
-                    nrho = attr_d['POINTS']
-                    coil_d = {}
-                    coil_d['time'], coil_d['data'] = np.split(dataStream, [nt])
-                    self.coils[varName.lower()] = coil_d
+                    self.coils[varName.lower()] = {
+                        'time': dataStream[:nt].tolist(),
+                        'data': dataStream[nt:].tolist()}
 
                 elif varName == 'BNDX':
                     if self.boundary['time']:
@@ -243,20 +245,21 @@ class EXP_PARSER:
                         nt = attr_d['NTIMES']
                     else:
                         nt = 1
-                    self.boundary['time'], bnd_rz = np.split(dataStream, [nt])
+                    self.boundary['time'] = dataStream[:nt].tolist()
+                    bnd_rz = dataStream[nt:]
                     assert bnd_rz.size == 2 * nt * nthe
                     tmp = bnd_rz.reshape(nthe, 2, nt)
-                    self.boundary['R'] = tmp[:, 0, :]
-                    self.boundary['Z'] = tmp[:, 1, :]
+                    self.boundary['R'] = tmp[:, 0, :].ravel().tolist()
+                    self.boundary['Z'] = tmp[:, 1, :].ravel().tolist()
                 elif varName == 'BNDUX':
                     uf_path = lines[jlin+1].strip()
                     fR_in = '%s/udb/%s_r' %(config.awd, uf_path)
                     fZ_in = '%s/udb/%s_z' %(config.awd, uf_path)
                     ufR = ufiles.UFILE(fin=fR_in)
                     ufZ = ufiles.UFILE(fin=fZ_in)
-                    self.boundary['time'] = ufR.X['data']
-                    self.boundary['R'] = ufR.f['data']
-                    self.boundary['Z'] = ufZ.f['data']
+                    self.boundary['time'] = ufR.X['data'].tolist()
+                    self.boundary['R'] = ufR.f['data'].ravel().tolist()
+                    self.boundary['Z'] = ufZ.f['data'].ravel().tolist()
 
                 elif varName in self.profx:
                     if 'NTIMES' in attr_d:
@@ -276,11 +279,18 @@ class EXP_PARSER:
                     else:
                         assert dataStream.size == nt + 2*nrho + nt*nrho
                         time, rho, data = np.split(dataStream, [nt, nt+2*nrho])
-                    self.profiles['time'].append(time)
-                    self.profiles['rho'].append(rho)
-                    self.profiles['data'].append(data)
+                    self.profiles['time'].append(time.tolist())
+                    self.profiles['rho'].append(rho.tolist())
+                    self.profiles['data'].append(data.tolist())
 
 
+    def write_json(self):
+
+        data = {"coils": self.coils, "scalars": self.scalars, "boundary": self.boundary, "profiles": self.profiles}
+        with open('data.json', 'w') as f:
+            json.dump(data, f, indent=2)
+
+        
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='astra parser')
@@ -292,18 +302,11 @@ if __name__ == '__main__':
 
     raw = EXP_PARSER(f_exp=args.exp)
 
-    print(raw.scalars['NA1'])
-    print(raw.scalars['AMJ'])
-    print(raw.scalars['IPL'])
-    print(raw.profiles['label'])
-    print(raw.profiles['data'])
-    for key, val in raw.profiles.items():
-        print(key, len(val))
-    for key, val in raw.boundary.items():
-        print(key, val.shape)
-
     if 'ccoilx' in raw.coils:
         print('CCOILX')
         print(raw.coils['ccoilx']['time'])
         print(raw.coils['ccoilx']['data'])
     print(args.exp)
+    print(raw.profiles['label'])
+    n_len = len([x for xs in raw.profiles['data'] for x in xs])
+    print('Size of profiles array', n_len)
