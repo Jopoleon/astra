@@ -1,6 +1,6 @@
 module read_input
 
-use parameter_inc, only: NTARR, NRDX, n_coils_max
+use parameter_inc, only: NTARR, NRDX
 
 implicit none
 
@@ -17,7 +17,7 @@ type rawProfiles
     integer, dimension(NTARR) :: arr_index=0, jbeg_grid=0, jbeg_data=0, grid_type=0, nrho=0
     double precision, dimension(NTARR) :: time=0., filter=0.001
     character(len=6), dimension(NTARR) :: label
-    real*4, dimension(NRDX*NTARR) :: data
+    double precision, dimension(:), allocatable :: data
 endtype rawProfiles
 type rawBoundary
     integer :: nt, n_theta
@@ -174,7 +174,7 @@ contains
     integer :: jarr, INTYPE, jtype, jbdry, ntim, ntim1, n_coils, IVAR
     integer, allocatable, dimension(:) :: int_json
     integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
-    integer :: n_words, i_filter_glob
+    integer :: n_words, i_filter_glob, len_profs_data
     integer :: nt_u, nx_u, ios, ndim_u, jvar, jrt, jt, jthe, nbnd
 
     double precision, allocatable :: t_u(:), x_u(:), var_u(:), bnd_rz(:)
@@ -183,16 +183,16 @@ contains
     character(len=6) :: VNAM, VNAMO, VNAMU, VNAMX, VTIM, VDAT, VERR, keyword
     character(len=31) :: rholbl
     character(len=132) :: strarray(20), STRI, lin_upper, &
-        err_msg, err_format, err_msg_exp, file_in, uname, uvar
+        err_msg, err_format, err_msg_exp, file_exp, ufile_in, uname, uvar
 
 !----------------------------------------------------------------------|
     call markloc('read_exp')
 
-    file_in='exp/' // TRIM(exp_file)
+    file_exp = 'exp/' // TRIM(exp_file)
 
     err_msg_exp = '>>> Data file "' // TRIM(exp_file) // '" error:\n    '
 
-    open(201, FILE=TRIM(file_in), iostat=ios)
+    open(201, FILE=TRIM(file_exp), iostat=ios)
     if (ios /= 0) call astra_stop('>>> read_exp: No such experimental variant "' // TRIM(exp_file) // '"')
 
     read(201, '(A132/)', iostat=ios) exp_header
@@ -303,7 +303,7 @@ contains
                 call astra_stop(err_msg)
             endif
 
-            err_msg = '>>> read_exp: File "' // TRIM(file_in) // '" reading error'
+            err_msg = '>>> read_exp: File "' // TRIM(file_exp) // '" reading error'
             call READF6(VTIM, TIMEVR, IERR)
             if (IERR /= 0) call astra_stop(err_msg)
             call READF6(VDAT, VRDATA, IERR)
@@ -367,15 +367,69 @@ contains
 !-----------------------------
 ! Rewind exp file for 2d part
 
+    open(201, FILE=TRIM(file_exp), iostat=ios)
+    read(201, '(/A132)') STRI
+    len_profs_data = 0
+    set_dims_2d: do
+        read(201, '(A132)', iostat=ios) STRI
+        if (ios < 0) EXIT set_dims_2d
+        if (ios > 0) call astra_stop(err_format)
+        lin_upper = to_upper(STRI)
+        if (LEN_TRIM(lin_upper) == 0) CYCLE set_dims_2d
+        if (lin_upper(1: 1) == '!') CYCLE set_dims_2d
+        if (lin_upper(1: 3) == 'END') EXIT set_dims_2d
+        VNAM = VARNAM(lin_upper(1: 6), ier_tab)
+        if (ier_tab /= 0 .or. vnam == '') CYCLE set_dims_2d    ! Ignore lines starting with a blank
+        VNAMX = ARRNAM(VNAM)
+        jex1 = str_in_list(VNAMX, profxNames) ! Checks if VNAM is in array list
+        if (jex1 == 0) then ! 1d, or ASCII-exp
+            jpos = str_in_list(VNAM, (/'POINTS', 'NAMEXP', 'GRIDTY', 'NTIMES', 'FILTER', 'FACTOR'/) )
+            if (jpos == 0) then ! A 1D variable
+                VNAM = ' '
+                CYCLE set_dims_2d
+            else
+                VNAM = ' '
+                call split2array2(lin_upper, strarray, n_words)
+                ntim = 1
+                do j=1, n_words
+                    keyword = strarray(j)(1: 6)
+                    SELECT CASE(keyword)
+                    CASE('POINTS')
+                        read(strarray(j+1), *, iostat=ios) jbdry
+                        if (ios /= 0) call astra_stop(err_format)
+                    CASE('NTIMES')
+                        read(strarray(j+1), *, iostat=ios) ntim
+                        if (ios /= 0) call astra_stop(err_format)
+                    END SELECT
+                enddo 
+                len_profs_data = len_profs_data + ntim*jbdry + 2*jbdry ! Some margin in case GRIDTYPE=18,19,20
+            endif
+        else       ! ufile
+            call parse_u_line(STRI, uvar, ufile_in, factor)
+            if (LEN_TRIM(ufile_in) > 0) then ! string 'U-FILE' found in this line
+                call ufheader(TRIM(ufile_in), ndim_u, nt_u, nx_u, rholbl)
+            endif
+            len_profs_data = len_profs_data + nt_u*nx_u + nx_u
+        endif
+    enddo set_dims_2d
+    close(201)
+
+    print*, 'Total length of profilesX data', len_profs_data
+
+    ios = 0
     VNAMO = ' '
-
-    open(201, FILE=TRIM(file_in), iostat=ios)
-    read(201, '(/A132)', ERR=906, END=39) STRI
-
     NGR = 0
     jarr = 0
     raw_boundary%nt = 0
     ALFA_GLOB = 0.001
+
+    if (.not. allocated(raw_profiles%data)) allocate(raw_profiles%data(len_profs_data))
+
+!-----------------------------
+! Rewind exp file for 2d part
+
+    open(201, FILE=TRIM(file_exp), iostat=ios)
+    read(201, '(/A132)', ERR=906, END=39) STRI
 
     parse_exp_2d: do
 
@@ -387,6 +441,7 @@ contains
         ALFA = ALFA_GLOB
 
         read(201, '(A132)', iostat=ios) STRI
+        print*, 'check', STRI
         if (ios < 0) EXIT parse_exp_2d
         if (ios > 0) call astra_stop(err_format)
         if (STRI(1:6) == 'FILTER') i_filter_glob = 1
@@ -406,7 +461,6 @@ contains
                 VNAM = ' '
                 CYCLE parse_exp_2d
             else
-
                 VNAM = ' '
                 call split2array2(lin_upper, strarray, n_words)
 
@@ -570,18 +624,18 @@ contains
         endif
 
 ! Check for U-file command string
-        call parse_u_line(STRI, uvar, file_in, factor)
+        call parse_u_line(STRI, uvar, ufile_in, factor)
 
-        if (LEN_TRIM(file_in) > 0) then ! string 'U-FILE' found in this line
+        if (LEN_TRIM(ufile_in) > 0) then ! string 'U-FILE' found in this line
 
-            call ufheader(TRIM(file_in), ndim_u, nt_u, nx_u, rholbl)
+            call ufheader(TRIM(ufile_in), ndim_u, nt_u, nx_u, rholbl)
             allocate(t_u(nt_u))
             allocate(x_u(nx_u))
             allocate(var_u(nt_u*nx_u))
-            call ufrd(TRIM(file_in), ndim_u, nt_u, nx_u, t_u, x_u, var_u)
+            call ufrd(TRIM(ufile_in), ndim_u, nt_u, nx_u, t_u, x_u, var_u)
 
             if (nx_u > NRDX) then
-                write(err_msg, '(3A, i, A, i)') '>>> U-file "', TRIM(file_in), &
+                write(err_msg, '(3A, i, A, i)') '>>> U-file "', TRIM(ufile_in), &
                     '" error: radial grid size ', nx_u, ' is larger than', NRDX
                 call astra_stop(err_msg)
             endif
@@ -593,7 +647,7 @@ contains
             endif
 
             if (jarr + nx_u  > NRDX*NTARR) call astra_stop('>>> read_exp: Buffer size exceeded')
-            call CHECKU(INTYPE, ABC, AB, XBDRY, raw_profiles%data(jarr+1), nx_u, jbdry, rholbl, file_in)
+            call CHECKU(INTYPE, ABC, AB, XBDRY, raw_profiles%data(jarr+1), nx_u, jbdry, rholbl, ufile_in)
 
             do j=1, jbdry
                 raw_profiles%data(jarr + j) = x_u(j)
@@ -1089,7 +1143,7 @@ contains
 
     integer, intent(in)  ::  jrad
     integer, intent(out) :: jbdry, INTYPE
-    real*4 , intent(in)  :: YX(jrad)
+    double precision, intent(in)  :: YX(jrad)
     double precision, intent(in)  :: ABC, AB
     double precision, intent(out) :: XBDRY
     character(len=*), intent(in)   :: FILENA
