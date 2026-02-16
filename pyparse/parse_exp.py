@@ -81,6 +81,14 @@ def read_float_block(lines, start_line, end_line):
     return values
 
 
+def n_times(attr_d):
+    if 'NTIMES' in attr_d:
+        nt = attr_d['NTIMES']
+    else:
+        nt = 1
+    return nt
+
+    
 class EXP_PARSER:
 
 
@@ -130,7 +138,7 @@ class EXP_PARSER:
         uf_keys = []
 
         for line in lines:
-            varName = var_name(line[:6])
+            varName = var_name(line[:6]) # remove trailing 'X', if any
             tim   = line[8: 14]
             data  = line[16: 22]
             error = line[24: 30]
@@ -140,7 +148,7 @@ class EXP_PARSER:
                 if varName in self.scalars:
                     logger.error('>>> Error: faulty exp file %s: no time dependence allowed for variable %s', self.f_exp, varName)
                     sys.exit(1)
-            if varName not in self.scalars:
+            if varName not in self.scalars: # first occurrence
                 self.scalars[varName] = {'time': [], 'data': [], 'error': []}
             if varName in uf_keys: # double variable definition: 2x u-file, or u-file+exp_ascii
                 logger.error('>>> Error: ambiguous definition of %s', varName)
@@ -192,7 +200,6 @@ class EXP_PARSER:
                 break
 
             alpha = alpha_glob
-            print('LINE:', line)
             if j < len(line_numbers) - 1:
                 jnext = line_numbers[j+1]
             else:
@@ -200,6 +207,9 @@ class EXP_PARSER:
 
             if 'U-file' in line_strip: # u-file
                 varName, uf_path, factor = parse_u_line(line)
+                if varName in uf_keys: # double variable definition: 2x u-file, or u-file+exp_ascii
+                    logger.error('>>> Error: var %s defined twice in u-files', varName)
+                    sys.exit(4)
                 f_in = '%s/udb/%s' %(config.awd, uf_path)
                 uf = ufiles.UFILE(fin=f_in)
                 gridtype = grid_d[uf.Y['label'].strip().upper()]
@@ -222,12 +232,13 @@ class EXP_PARSER:
                     continue
 
                 varName = attr_d['NAMEXP'] # already with trailing 'X'
+                if varName in uf_keys: # double variable definition: 2x u-file, or u-file+exp_ascii
+                    logger.error('>>> Error: var %s defined in u-file and ASCII exp', varName)
+                    sys.exit(5)
                 dataStream = read_float_block(lines, jlin+1, jnext)
-                if varName in ('CCOILX', 'VCOILX'): # differs from (say) NEX because it has no radial grid
-                    if 'NTIMES' in attr_d:
-                        nt = attr_d['NTIMES']
-                    else:
-                        nt = 1
+
+                if varName in ('CCOILX', 'VCOILX'): # differs from NEX, TEX, ... because it has no radial grid
+                    nt = n_times(attr_d)
                     self.coils[varName.lower()] = {
                         'time': dataStream[:nt].tolist(),
                         'data': dataStream[nt:].tolist()}
@@ -236,21 +247,13 @@ class EXP_PARSER:
                     if self.boundary['time']:
                         logger.error('Boundary must be defined in a single group')
                         sys.exit(3)
-                    if 'POINTS' in attr_d:
-                        nthe = attr_d['POINTS']
-                    else:
-                        logger.error('Number of boundary points must be defined')
-                        sys.exit(4)
-                    if 'NTIMES' in attr_d:
-                        nt = attr_d['NTIMES']
-                    else:
-                        nt = 1
+                    nthe = attr_d['POINTS'] # Raises error if 'POINTS' not present, as it should
+                    nt = n_times(attr_d)
                     self.boundary['time'] = dataStream[:nt].tolist()
-                    bnd_rz = dataStream[nt:]
-                    assert bnd_rz.size == 2 * nt * nthe
-                    tmp = bnd_rz.reshape(nthe, 2, nt)
-                    self.boundary['R'] = tmp[:, 0, :].ravel().tolist()
-                    self.boundary['Z'] = tmp[:, 1, :].ravel().tolist()
+                    bnd_rz = dataStream[nt:].reshape(nthe, 2, nt)
+                    self.boundary['R'] = bnd_rz[:, 0, :].ravel().tolist()
+                    self.boundary['Z'] = bnd_rz[:, 1, :].ravel().tolist()
+
                 elif varName == 'BNDUX':
                     uf_path = lines[jlin+1].strip()
                     fR_in = '%s/udb/%s_r' %(config.awd, uf_path)
@@ -262,10 +265,7 @@ class EXP_PARSER:
                     self.boundary['Z'] = ufZ.f['data'].ravel().tolist()
 
                 elif varName in self.profx:
-                    if 'NTIMES' in attr_d:
-                        nt = attr_d['NTIMES']
-                    else:
-                        nt = 1
+                    nt = n_times(attr_d)
                     nrho = attr_d['POINTS']
                     self.profiles['label'].append(varName)
                     self.profiles['grid_type'].append([attr_d['GRIDTYPE']])
@@ -274,11 +274,11 @@ class EXP_PARSER:
                     else:
                         self.profiles['filter'].append(nt*[alpha_glob])
                     if attr_d['GRIDTYPE'] < 17:
-                        assert dataStream.size == nt + nrho + nt*nrho
-                        time, rho, data = np.split(dataStream, [nt, nt+nrho])
+                        n_grid = nrho
                     else:
-                        assert dataStream.size == nt + 2*nrho + nt*nrho
-                        time, rho, data = np.split(dataStream, [nt, nt+2*nrho])
+                        n_grid = 2*nrho
+                    assert dataStream.size == nt + n_grid + nt*nrho
+                    time, rho, data = np.split(dataStream, [nt, nt+n_grid])
                     self.profiles['time'].append(time.tolist())
                     self.profiles['rho'].append(rho.tolist())
                     self.profiles['data'].append(data.tolist())
