@@ -2,7 +2,7 @@ module read_input
 
 implicit none
 
-integer, parameter :: NTVAR=250000, NTARR=250000, n_bnd_max=256, nt_bnd_max=1500, nt_coils_max=25000
+integer, parameter :: NTVAR=250000, n_bnd_max=256, nt_bnd_max=1500
 
 type rawScalars
     integer :: nt_all
@@ -12,10 +12,9 @@ type rawScalars
 endtype rawScalars
 type rawProfiles
     integer :: nt_arr, n_groups
-    integer, dimension(NTARR) :: arr_index=0, jbeg_grid=0, jbeg_data=0, grid_type=0, nrho=0
-!    double precision, dimension(:), allocatable :: time, filter
-    double precision, dimension(NTARR) :: time, filter
-    character(len=6), dimension(NTARR) :: label
+    integer, dimension(:), allocatable :: arr_index, jbeg_grid, jbeg_data, grid_type, nrho
+    double precision, dimension(:), allocatable :: time, filter
+    character(len=6), dimension(:), allocatable :: label
     double precision, dimension(:), allocatable :: data
 endtype rawProfiles
 type rawBoundary
@@ -93,6 +92,8 @@ contains
     use io_mod, only: exp_file, n_coils_max
     use debugger, only: markloc, astra_stop
 
+    integer, parameter :: nt_coils_max=25000
+
     integer, intent(in) :: nunit
     character(len=*), intent(in) :: stri_in
     type(rawCoils), intent(out) :: coilx_out
@@ -169,6 +170,7 @@ contains
     use parse_utils, only: split2array2
     use json_vars, only: varNames, profxNames
 
+    integer, parameter :: NTARR=250000
     integer :: jarr, INTYPE, jtype, nr_exp, ntim, ntim1, n_coils, IVAR
     integer, allocatable, dimension(:) :: int_json
     integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
@@ -438,12 +440,23 @@ contains
 
     if (.not. allocated(raw_profiles%data)) then
         allocate(raw_profiles%data(len_profs_data))
-!        allocate(raw_profiles%time(len_profs_time))
-!        allocate(raw_profiles%filter(len_profs_time))
+        allocate(raw_profiles%time(len_profs_time))
+        allocate(raw_profiles%filter(len_profs_time))
+        allocate(raw_profiles%label(len_profs_time))
+        allocate(raw_profiles%arr_index(len_profs_time))
+        allocate(raw_profiles%jbeg_grid(len_profs_time))
+        allocate(raw_profiles%jbeg_data(len_profs_time))
+        allocate(raw_profiles%grid_type(len_profs_time))
+        allocate(raw_profiles%nrho(len_profs_time))
     endif
+
     raw_profiles%time = 0.
     raw_profiles%filter = 0.001
-    print*, 'Raw input data, nt=', len_profs_time, 'Data len', len_profs_data
+    raw_profiles%arr_index = 0
+    raw_profiles%jbeg_grid = 0
+    raw_profiles%jbeg_data = 0
+    raw_profiles%grid_type = 0
+    raw_profiles%nrho = 0
 
 !-----------------------------
 ! Rewind exp file for 2d part
@@ -796,9 +809,8 @@ contains
     39 continue
 
     close(201)
+
     raw_profiles%n_groups = NGR
-    print*, 'nTimes', len_profs_time, raw_profiles%n_groups, len_profs_data
-    pause
 
     return
 

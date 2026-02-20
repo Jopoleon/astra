@@ -43,28 +43,27 @@ contains
 ! Profiles
 
     write(nunit_x, '(A, i0, A/)') '   "profiles": { "n_group": ', raw_profiles%n_groups, ','
-    ndim = raw_profiles%n_groups
+
+    len_profs_time = SIZE(raw_profiles%nrho)
 
     write(nunit_x, '(A)') '        "label": {"data": ['
-    call prettyCharArray(nunit_x, ndim, raw_profiles%label)
+    call prettyCharArray(nunit_x, len_profs_time, raw_profiles%label)
 
     write(nunit_x, '(A)') '        "arr_index": {"data": ['
-    call prettyIntArray(nunit_x, ndim, raw_profiles%arr_index)
+    call prettyIntArray(nunit_x, len_profs_time, raw_profiles%arr_index)
 
     write(nunit_x, '(A)') '        "jbeg_grid": {"data": ['
-    call prettyIntArray(nunit_x, ndim, raw_profiles%jbeg_grid)
+    call prettyIntArray(nunit_x, len_profs_time, raw_profiles%jbeg_grid)
 
     write(nunit_x, '(A)') '        "jbeg_data": {"data": ['
-    call prettyIntArray(nunit_x, ndim, raw_profiles%jbeg_data)
+    call prettyIntArray(nunit_x, len_profs_time, raw_profiles%jbeg_data)
 
     write(nunit_x, '(A)') '        "grid_type": {"data": ['
-    call prettyIntArray(nunit_x, ndim, raw_profiles%grid_type)
+    call prettyIntArray(nunit_x, len_profs_time, raw_profiles%grid_type)
 
     write(nunit_x, '(A)') '        "nrho": {"data": ['
-    call prettyIntArray(nunit_x, ndim, raw_profiles%nrho)
+    call prettyIntArray(nunit_x, len_profs_time, raw_profiles%nrho)
 
-    len_profs_time = raw_profiles%n_groups
-!    len_profs_time = SIZE(raw_profiles%filter)
     write(nunit_x, '(A)') '        "time": {"data": ['
     call prettyFloatArray(nunit_x, len_profs_time, raw_profiles%time)
 
@@ -75,9 +74,6 @@ contains
     call prettyFloatArray(nunit_x, SIZE(raw_profiles%data), raw_profiles%data, dict_end=.true.)
 
     write(nunit_x, '(A/)') '    },'
-
-! Check
-    print*, 'json check:', raw_profiles%n_groups, SIZE(raw_profiles%filter)
 
 ! Boundary
 
