@@ -15,7 +15,7 @@ contains
     use io_mod, only: awd, exp_file
     use read_input, only: raw_scalars, raw_profiles, raw_boundary
 
-    integer :: ios, i, ndim
+    integer :: ios, i, ndim, len_profs_time
     character(len=180) :: jsonx_out
     type(json_core) :: jCore
 
@@ -63,11 +63,13 @@ contains
     write(nunit_x, '(A)') '        "nrho": {"data": ['
     call prettyIntArray(nunit_x, ndim, raw_profiles%nrho)
 
+    len_profs_time = raw_profiles%n_groups
+!    len_profs_time = SIZE(raw_profiles%filter)
     write(nunit_x, '(A)') '        "time": {"data": ['
-    call prettyFloatArray(nunit_x, ndim, raw_profiles%time)
+    call prettyFloatArray(nunit_x, len_profs_time, raw_profiles%time)
 
     write(nunit_x, '(A)') '        "filter": {"data": ['
-    call prettyFloatArray(nunit_x, ndim, raw_profiles%filter)
+    call prettyFloatArray(nunit_x, len_profs_time, raw_profiles%filter)
 
     write(nunit_x, '(A)') '        "data": {"data": ['
     call prettyFloatArray(nunit_x, SIZE(raw_profiles%data), raw_profiles%data, dict_end=.true.)
@@ -75,8 +77,7 @@ contains
     write(nunit_x, '(A/)') '    },'
 
 ! Check
-    print*, 'Test json_write'
-    print*, raw_profiles%data(ndim+1)
+    print*, 'json check:', raw_profiles%n_groups, SIZE(raw_profiles%filter)
 
 ! Boundary
 

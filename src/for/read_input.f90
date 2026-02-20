@@ -13,7 +13,8 @@ endtype rawScalars
 type rawProfiles
     integer :: nt_arr, n_groups
     integer, dimension(NTARR) :: arr_index=0, jbeg_grid=0, jbeg_data=0, grid_type=0, nrho=0
-    double precision, dimension(NTARR) :: time=0., filter=0.001
+!    double precision, dimension(:), allocatable :: time, filter
+    double precision, dimension(NTARR) :: time, filter
     character(len=6), dimension(NTARR) :: label
     double precision, dimension(:), allocatable :: data
 endtype rawProfiles
@@ -171,7 +172,7 @@ contains
     integer :: jarr, INTYPE, jtype, nr_exp, ntim, ntim1, n_coils, IVAR
     integer, allocatable, dimension(:) :: int_json
     integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
-    integer :: n_words, i_filter_glob, len_profs_data
+    integer :: n_words, i_filter_glob, len_profs_data, len_profs_time
     integer :: nt_u, nx_u, ios, ndim_u, jvar, jrt, jt, jthe, nbnd
 
     double precision, allocatable :: t_u(:), x_u(:), var_u(:), bnd_rz(:)
@@ -369,6 +370,7 @@ contains
     open(201, FILE=TRIM(file_exp), iostat=ios)
     read(201, '(/A132)') STRI
     len_profs_data = 0
+    len_profs_time = 0
     set_dims_2d: do
         read(201, '(A132)', iostat=ios) STRI
         if (ios < 0) EXIT set_dims_2d
@@ -396,12 +398,19 @@ contains
                     CASE('POINTS')
                         read(strarray(j+1), *, iostat=ios) nr_exp
                         if (ios /= 0) call astra_stop(err_format)
+                    CASE('NAMEXP')      ! New variable, exp-block
+                        VNAM = VARNAM(strarray(j+1), ier_tab)
                     CASE('NTIMES')
                         read(strarray(j+1), *, iostat=ios) ntim
                         if (ios /= 0) call astra_stop(err_format)
                     END SELECT
-                enddo 
-                len_profs_data = len_profs_data + ntim*nr_exp + 2*nr_exp ! Some margin in case GRIDTYPE=18,19,20
+                enddo
+                VNAMX = ARRNAM(VNAM)
+                jexar = str_in_list(VNAMX, profxNames)
+                if (jexar > 0) then ! only profiles_x
+                    len_profs_data = len_profs_data + ntim*nr_exp + 2*nr_exp ! Some margin in case GRIDTYPE=18,19,20
+                    len_profs_time = len_profs_time + ntim
+                endif
             endif
         else       ! ufile
             call parse_u_line(STRI, uvar, ufile_in, factor)
@@ -409,6 +418,7 @@ contains
                 call ufheader(TRIM(ufile_in), ndim_u, nt_u, nx_u, rholbl)
             endif
             len_profs_data = len_profs_data + nt_u*nx_u + nx_u
+            len_profs_time = len_profs_time + nt_u
         endif
     enddo set_dims_2d
     close(201)
@@ -426,7 +436,14 @@ contains
     raw_boundary%nt = 0
     ALFA_GLOB = 0.001
 
-    if (.not. allocated(raw_profiles%data)) allocate(raw_profiles%data(len_profs_data))
+    if (.not. allocated(raw_profiles%data)) then
+        allocate(raw_profiles%data(len_profs_data))
+!        allocate(raw_profiles%time(len_profs_time))
+!        allocate(raw_profiles%filter(len_profs_time))
+    endif
+    raw_profiles%time = 0.
+    raw_profiles%filter = 0.001
+    print*, 'Raw input data, nt=', len_profs_time, 'Data len', len_profs_data
 
 !-----------------------------
 ! Rewind exp file for 2d part
@@ -444,7 +461,6 @@ contains
         ALFA = ALFA_GLOB
 
         read(201, '(A132)', iostat=ios) STRI
-        print*, 'check', STRI
         if (ios < 0) EXIT parse_exp_2d
         if (ios > 0) call astra_stop(err_format)
         if (STRI(1:6) == 'FILTER') i_filter_glob = 1
@@ -619,10 +635,14 @@ contains
         CASE('ENDX  ')
             EXIT parse_exp_2d
 
+        CASE DEFAULT
+            if (jexar == 0) then
+                write(*, *) 'Array name ' // TRIM(VNAMX) // ' not found, skipping line'
+            endif
+            
         END SELECT
-
+ 
         if (jexar == 0) then
-            write(*, *) 'Array name ' // TRIM(VNAMX) // ' not found, skipping line'
             CYCLE parse_exp_2d
         endif
 
@@ -777,6 +797,8 @@ contains
 
     close(201)
     raw_profiles%n_groups = NGR
+    print*, 'nTimes', len_profs_time, raw_profiles%n_groups, len_profs_data
+    pause
 
     return
 
