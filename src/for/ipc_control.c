@@ -41,7 +41,7 @@ void sbp2astra_(int* jsbp, int *nchunk, int *n_sbp_arr_out, char* ipcFile, doubl
 /* parse integers */
         if (sscanf(p, "%d%d%d", &jproc, &ID, &ShmID) != 3)
             continue;
-	if (jproc == J_PROC) break;
+        if (jproc == *jsbp) break;
     }
     fclose(IPCr);
     
