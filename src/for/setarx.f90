@@ -51,33 +51,6 @@ enddo
 return
 end subroutine get_coil
 
-!---------------------------------------------------------------------
-subroutine GETCOILS(yvcoil, yccoil)
-
-! Get the coil currents from the exp data at the present time slice
-
-use io_mod, only: CCOIL, VCOIL
-use const_inc, only: TIME, ITFBE
-use read_input, only: raw_cCoil, raw_vertCoil
-
-implicit none
-
-double precision, intent(out), dimension(raw_cCoil%ncoils) :: yccoil
-double precision, intent(out), dimension(raw_vertCoil%ncoils) :: yvcoil
-
-if (TIME > ITFBE) then ! if free boundary, solve circuit equations, ccoil comes from there
-    yccoil = CCOIL(1: raw_cCoil%ncoils)
-    yvcoil = VCOIL(1: raw_vertCoil%ncoils)
-    return
-endif
-
-! if time <= ITFBE, ccoil and vcoil comes from experimental traces in exp file
-call get_coil(TIME, raw_cCoil   , yccoil)
-call get_coil(TIME, raw_vertCoil, yvcoil)
-
-return
-end subroutine GETCOILS
-
 !--------------------------------------------------------------------
 subroutine SETARX(ICALL)
 !--------------------------------------------------------------------

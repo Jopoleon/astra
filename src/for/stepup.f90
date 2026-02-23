@@ -10,7 +10,7 @@ use const_inc, only: IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
     PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, RBDOT, BBDOT
 use status_inc, only: TE, TI, NE, NI, NIO, FP, defarr
 use io_mod, only: CCOIL, VCOIL, MACHINE, TASK
-use read_input, only: raw_cCoil
+use read_input, only: raw_cCoil, raw_vCoil
 use plasma_state, only: plasma_up
 
 implicit none
@@ -19,6 +19,8 @@ integer :: IFKEY, IFSUB, ibcpsi_fb, bc_type_for_fp, jkey, &
     IFTREQ, IFSTEP, n_coils
 double precision :: zipctrl, iplfbeo, Apsibcfac, Bpsibcfac, dfpdrbm12, &
     tau_old, tau_new
+double precision, dimension(raw_cCoil%ncoils) :: yccoil
+double precision, dimension(raw_vCoil%ncoils) :: yvcoil
 
 data ibcpsi_fb /0/
 
@@ -31,17 +33,15 @@ FTN = FTO
 
 n_coils = raw_cCoil%ncoils
 
-if (TIME <= TSTART) tau_old = tau
-if (TIME <= TSTART) tau_new = tau
-
-!tau treatment to avoid machine precision errors
-
-tau = tau_old !still using old one up to equations
-
+if (TIME <= TSTART) then
+    tau_old = tau
+    tau_new = tau
+endif
+ 
+! tau treatment to avoid machine precision errors
+tau = tau_old ! still using old one up to equations
 dfpdrbm12 = 0.
-
-!MPHIT=0. ??? astra7
-IPART = 2             ! Mark time evolution section
+IPART = 2     ! Mark time evolution section
 
 ! reset initial condition
 
@@ -77,8 +77,13 @@ BBDOT  = 0.          ! reset boundary adiabatic factor
 PSIEXO = PSIEXT      ! reset also external flux from fbe and ce, this is for test!
 PSPLXO = PSPLEX      ! reset also green function flux from fbe and ce, this is for test!
 
-!Get target quantities from experiment if prescribed boundary. if free boundary, then uses circuit equations and voilc comes from elsewhere
-call GETCOILS(VCOIL(1:n_coils), CCOIL(1:n_coils))
+if (TIME > ITFBE) then ! if free boundary, solve circuit equations, ccoil comes from there
+    yccoil = CCOIL(1: raw_cCoil%ncoils)
+    yvcoil = VCOIL(1: raw_vCoil%ncoils)
+else ! if time <= ITFBE, ccoil and vcoil comes from experimental traces in exp file
+    call get_coil(TIME, raw_cCoil, yccoil)
+    call get_coil(TIME, raw_vCoil, yvcoil)
+endif
 
 ! counter for psi bc = -1 
 if (ITFBP == 0.0) ibcpsi_fb = 0

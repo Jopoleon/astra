@@ -31,7 +31,7 @@ endtype rawCoils
 type(rawScalars)  :: raw_scalars
 type(rawProfiles) :: raw_profiles
 type(rawBoundary) :: raw_boundary
-type(rawCoils) :: raw_cCoil, raw_vertCoil
+type(rawCoils) :: raw_cCoil, raw_vCoil
 
 contains
 
@@ -629,8 +629,8 @@ contains
             VNAMO = VNAM
 
         CASE('VCOILX') !note that both CCOIL and VCOIL need to appear in the exp file with the same number of points and times
-            if (raw_vertCoil%nt == 0) then
-                call read_coilx(n_unit, STRI, raw_vertCoil)
+            if (raw_vCoil%nt == 0) then
+                call read_coilx(n_unit, STRI, raw_vCoil)
             endif
             VNAMO = VNAM
 
