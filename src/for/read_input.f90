@@ -2,13 +2,13 @@ module read_input
 
 implicit none
 
-integer, parameter :: NTVAR=250000, n_bnd_max=256, nt_bnd_max=1500
+integer, parameter :: n_bnd_max=256, nt_bnd_max=1500
 
 type rawScalars
     integer :: nt_all
-    integer, dimension(NTVAR) :: var_index=0
-    double precision, dimension(NTVAR) :: time=0., data=0., error=0.
-    character(len=6), dimension(NTVAR) :: label
+    integer, dimension(:), allocatable :: var_index
+    double precision, dimension(:), allocatable :: time, data, error
+    character(len=6), dimension(:), allocatable :: label
 endtype rawScalars
 type rawProfiles
     integer :: nt_arr, n_groups
@@ -150,16 +150,13 @@ contains
 !----------------------------------------------------------------------
     subroutine read_exp
 !----------------------------------------------------------------------|
-!  NTVAR    maximal number of time slices for all variables
-!  IVAR     number of actually defined variables
-!  NTARR    maximal number of time slices for all arrays
-!  NGR     number of actually defined groups
+! len_data_max   maximal number of time slices for all arrays
+! len_scalars    number of actually defined variables
+! len_profs_time number of actually defined groups
 !----------------------------------------------------------------------|
 ! The subroutine is called once at the start-up, it reads the "exp" file
-! and stores the time evolution of all input data in the arrays
-! raw_profiles%data - data array
-!       Let   1 <= j <= NTARR is an ordinal number of array in raw_profiles%data
-! jbeg_arrx(jx)  - pointer to a position in the array raw_profiles%time
+! and stores the time evolution of all input data in the arrays raw_*%*
+! jbeg_arrx  - pointer to a position in the array raw_profiles%time
 !----------------------------------------------------------------------|
 
     use parameter_inc, only: NRDX
@@ -170,11 +167,13 @@ contains
     use parse_utils, only: split2array2
     use json_vars, only: varNames, profxNames
 
-    integer, parameter :: NTARR=250000
+    integer, parameter :: len_data_max=250000, n_unit=201
+
+    logical :: skip_read=.false.
     integer :: jarr, INTYPE, jtype, nr_exp, ntim, ntim1, n_coils, IVAR
     integer, allocatable, dimension(:) :: int_json
     integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
-    integer :: n_words, i_filter_glob, len_profs_data, len_profs_time
+    integer :: n_words, i_filter_glob, len_profs_data, len_profs_time, len_scalars
     integer :: nt_u, nx_u, ios, ndim_u, jvar, jrt, jt, jthe, nbnd
 
     double precision, allocatable :: t_u(:), x_u(:), var_u(:), bnd_rz(:)
@@ -189,13 +188,176 @@ contains
     call markloc('read_exp')
 
     file_exp = 'exp/' // TRIM(exp_file)
-
     err_msg_exp = '>>> Data file "' // TRIM(exp_file) // '" error:\n    '
 
-    open(201, FILE=TRIM(file_exp), iostat=ios)
-    if (ios /= 0) call astra_stop('>>> read_exp: No such experimental variant "' // TRIM(exp_file) // '"')
+!-----------------------------------------------
+! Setting dimension for raw_scalars%* allocation
 
-    read(201, '(A132/)', iostat=ios) exp_header
+    len_scalars = 0
+    open(n_unit, FILE=TRIM(file_exp), iostat=ios)
+    if (ios /= 0) call astra_stop('>>> read_exp: No such experimental variant "' // TRIM(exp_file) // '"')
+    read(n_unit, '(A132/)', iostat=ios) exp_header
+    if (ios > 0) call astra_stop(err_format)
+
+    set_dims_1d: do
+        read(n_unit, '(A132)', iostat=ios) STRI
+        if (ios > 0) EXIT set_dims_1d
+        err_format  =  err_msg_exp // '".  Format error in group ' // TRIM(STRI)
+        lin_upper = to_upper(STRI)
+        if (lin_upper(1: 1) == '!') CYCLE set_dims_1d
+        if (lin_upper(1: 3) == 'END') EXIT set_dims_1d
+
+        call split2array2(lin_upper, strarray, n_words)
+
+        do j=1, n_words
+            keyword = strarray(j)
+            jpos = str_in_list(keyword, (/'POINTS', 'GRIDTY', 'FILTER', 'PROFIL'/))
+            if (jpos > 0) EXIT set_dims_1d
+        enddo
+
+        if (strarray(1) == 'NAMEXP') then
+            VNAM = strarray(2)
+            VTIM = strarray(4)
+            jvar = str_in_list(VNAM(1:6), varNames)
+            if (jvar == 0) CYCLE set_dims_1d  ! var doesnt exist
+            read(vtim, *) ntim !from NTIMES
+            len_scalars = len_scalars + max(ntim, 1)
+            CYCLE set_dims_1d
+        else
+! Variable name, time, value, error
+            VNAM = VARNAM(lin_upper(1: 6), ier_tab)
+        endif
+
+! A special treatment required for time independent NA1, TSTART, TEND
+        if (VNAM == 'NA1   ' .or. VNAM == 'TSTART' .or. VNAM == 'TEND  ') then
+            CYCLE set_dims_1d
+        endif
+
+        jvar = str_in_list(VNAM, varNames)
+        if (jvar == 0) CYCLE set_dims_1d
+
+        j1 = index(STRI, ':')
+
+        if (j1 == 0) then  ! time-dependent values in exp-file
+            len_scalars = len_scalars + 1
+        else  ! ":" U-file
+            call parse_u_line(STRI, uvar, uname, factor)
+            call ufheader(TRIM(uname), ndim_u, nt_u, nx_u, rholbl)
+            len_scalars = len_scalars + nt_u
+        endif
+    enddo set_dims_1d
+
+    if (len_scalars > len_data_max) then
+        write(err_msg, '(A, i)') &
+            '>>> read_exp: Size of time dependent scalars data stream cannot exceed', len_data_max
+        call astra_stop(err_msg)
+    endif
+
+    if (.not. allocated(raw_scalars%var_index)) then
+        allocate(raw_scalars%var_index(len_scalars))
+        allocate(raw_scalars%time(len_scalars))
+        allocate(raw_scalars%data(len_scalars))
+        allocate(raw_scalars%error(len_scalars))
+        allocate(raw_scalars%label(len_scalars))
+    endif
+    raw_scalars%var_index = 0
+    raw_scalars%time = 0.
+    raw_scalars%data = 0.
+    raw_scalars%error = 0.
+    raw_scalars%label = ' '
+
+!------------------------------------------------
+! Setting dimension for raw_profiles%* allocation
+! No rewinding
+
+    len_profs_data = 0
+    len_profs_time = 0
+    skip_read = .true.
+    set_dims_2d: do
+        if (skip_read) then
+            skip_read = .false.
+        else
+            read(n_unit, '(A132)', iostat=ios) STRI
+            if (ios < 0) EXIT set_dims_2d
+            if (ios > 0) call astra_stop(err_format)
+        endif
+        lin_upper = to_upper(STRI)
+        if (LEN_TRIM(lin_upper) == 0) CYCLE set_dims_2d
+        if (lin_upper(1: 1) == '!') CYCLE set_dims_2d
+        if (lin_upper(1: 3) == 'END') EXIT set_dims_2d
+        VNAM = VARNAM(lin_upper(1: 6), ier_tab)
+        if (ier_tab /= 0 .or. VNAM == '') CYCLE set_dims_2d    ! Ignore lines starting with a blank
+        VNAMX = ARRNAM(VNAM)
+        jex1 = str_in_list(VNAMX, profxNames) ! Checks if VNAM is in array list
+        if (jex1 == 0) then ! ASCII-exp
+                VNAM = ' '
+                call split2array2(lin_upper, strarray, n_words)
+                ntim = 1
+                do j=1, n_words
+                    keyword = strarray(j)(1: 6)
+                    SELECT CASE(keyword)
+                    CASE('POINTS')
+                        read(strarray(j+1), *, iostat=ios) nr_exp
+                        if (ios /= 0) call astra_stop(err_format)
+                    CASE('NAMEXP')      ! New variable, exp-block
+                        VNAM = VARNAM(strarray(j+1), ier_tab)
+                    CASE('NTIMES')
+                        read(strarray(j+1), *, iostat=ios) ntim
+                        if (ios /= 0) call astra_stop(err_format)
+                    END SELECT
+                enddo
+                VNAMX = ARRNAM(VNAM)
+                jexar = str_in_list(VNAMX, profxNames)
+                if (jexar > 0) then ! only profiles_x
+                    len_profs_data = len_profs_data + ntim*nr_exp + 2*nr_exp ! Some margin in case GRIDTYPE=18, 19, 20
+                    len_profs_time = len_profs_time + ntim
+                endif
+        else       ! ufile
+            call parse_u_line(STRI, uvar, ufile_in, factor)
+            if (LEN_TRIM(ufile_in) > 0) then ! string 'U-FILE' found in this line
+                call ufheader(TRIM(ufile_in), ndim_u, nt_u, nx_u, rholbl)
+            endif
+            len_profs_data = len_profs_data + nt_u*nx_u + nx_u
+            len_profs_time = len_profs_time + nt_u
+        endif
+    enddo set_dims_2d
+    close(n_unit)
+
+    if (len_profs_data > len_data_max) then
+        write(err_msg, '(A, i)') &
+            '>>> read_exp: Size of time dependent profiles data stream cannot exceed', len_data_max
+        call astra_stop(err_msg)
+    endif
+
+    if (.not. allocated(raw_profiles%data)) then
+        allocate(raw_profiles%data(len_profs_data))
+        allocate(raw_profiles%time(len_profs_time))
+        allocate(raw_profiles%filter(len_profs_time))
+        allocate(raw_profiles%label(len_profs_time))
+        allocate(raw_profiles%arr_index(len_profs_time))
+        allocate(raw_profiles%jbeg_grid(len_profs_time))
+        allocate(raw_profiles%jbeg_data(len_profs_time))
+        allocate(raw_profiles%grid_type(len_profs_time))
+        allocate(raw_profiles%nrho(len_profs_time))
+    endif
+    raw_profiles%time = 0.
+    raw_profiles%filter = 0.001
+    raw_profiles%arr_index = 0
+    raw_profiles%jbeg_grid = 0
+    raw_profiles%jbeg_data = 0
+    raw_profiles%grid_type = 0
+    raw_profiles%nrho = 0
+
+!    print*, 'exp file array lengths: ', len_scalars, len_profs_time, len_profs_data
+!    pause
+
+!----------------
+! Read 1D data
+! Rewind exp file
+!----------------
+
+    open(n_unit, FILE=TRIM(file_exp), iostat=ios)
+    read(n_unit, '(A132/)', iostat=ios) exp_header
     if (ios /= 0) call astra_stop(err_msg_exp // 'in header')
 
     VNAMO = ' '
@@ -206,11 +368,20 @@ contains
 ! Parse scalar block
     parse_exp_1d: do
 
-        read(201, '(A132)', end=39) STRI
+        read(n_unit, '(A132)', iostat=ios) STRI
+        if (ios < 0) then
+            close(n_unit)
+            raw_profiles%n_groups = NGR
+            return
+        endif
         err_format  =  err_msg_exp // '".  Format error in group ' // TRIM(STRI)
         lin_upper = to_upper(STRI)
         if (lin_upper(1: 1) == '!') CYCLE parse_exp_1d
-        if (lin_upper(1: 3) == 'END') goto 39
+        if (lin_upper(1: 3) == 'END') then
+            close(n_unit)
+            raw_profiles%n_groups = NGR
+            return
+        endif           
 
         call split2array2(lin_upper, strarray, n_words)
 
@@ -229,10 +400,6 @@ contains
             ntim = 0
             read(vtim, *) ntim !from NTIMES
             factor = 1.
-            if (IVAR + ntim > NTVAR) then
-                write(err_msg_exp, '(A, i)') '>>> read_exp: Time dependent variable strings >', NTVAR
-                call astra_stop(err_msg_exp)
-            endif
             if (ntim <= 1) then
                 ntim = 1
                 IFDFVX(jvar) = 0
@@ -240,9 +407,9 @@ contains
                 IFDFVX(jvar) = 1
             endif
 ! Read "time" array & function array
-            read(201, *, iostat=ios) (raw_scalars%time(IVAR+jj), jj=1, ntim)
+            read(n_unit, *, iostat=ios) (raw_scalars%time(IVAR+jj), jj=1, ntim)
             if (ios /= 0) call astra_stop(err_format)
-            read(201, *, iostat=ios) (raw_scalars%data(IVAR+jj), jj=1, ntim)
+            read(n_unit, *, iostat=ios) (raw_scalars%data(IVAR+jj), jj=1, ntim)
             if (ios /= 0) call astra_stop(err_format)
             varValues(jvar) = factor*raw_scalars%data(IVAR+1)
             do jj=1, ntim
@@ -264,7 +431,6 @@ contains
 
 ! A special treatment required for time independent NA1, TSTART, TEND
         if (VNAM == 'NA1   ' .or. VNAM == 'TSTART' .or. VNAM == 'TEND  ') then
-
             err_msg = err_msg_exp // '"' // TRIM(VNAM) // '"'
             if (ier_tab /= 0 ) then
                 call astra_stop(TRIM(err_msg) // ': tabulation not allowed in this type of input')
@@ -272,7 +438,6 @@ contains
             if (VNAMO == VNAM) then
                 call astra_stop(TRIM(err_msg) // ' cannot vary in time')
             endif
-
             call READF6(VDAT, VRDATA, IERR)
             VNAMO = VNAM
             if (VNAM == 'NA1   ') NA1 = VRDATA
@@ -292,7 +457,7 @@ contains
 ! U-file name duplicated:
         if (VNAM == VNAMU) call astra_stop(err_msg_exp // 'ambiguous ' // TRIM(VNAM) // ' definition')
 
-        j1 = index(STRI,':')
+        j1 = index(STRI, ':')
 
         if (j1 == 0) then  ! time-dependent values in exp-file
 
@@ -315,12 +480,7 @@ contains
             varValues(jvar) = factor*VRDATA
             if (VNAM == VNAMO) IFDFVX(jvar) = 1
 ! Repeated name
-            IVAR = IVAR+1
-            if (IVAR > NTVAR) then
-                write(err_msg, '(A, i)') '>>> read_exp: Time dependent variable strings >', NTVAR
-                call astra_stop(err_msg)
-            endif
-
+            IVAR = IVAR + 1
             raw_scalars%var_index(IVAR) = jvar
             raw_scalars%time(IVAR) = TIMEVR
             raw_scalars%data(IVAR) = factor*VRDATA
@@ -362,74 +522,10 @@ contains
 
     raw_scalars%nt_all = IVAR
 
-    close(201)
-
-!-----------------------------
-! Rewind exp file for 2d part
-
-! Setting dimension for raw_profiles%* allocation
-
-    open(201, FILE=TRIM(file_exp), iostat=ios)
-    read(201, '(/A132)') STRI
-    len_profs_data = 0
-    len_profs_time = 0
-    set_dims_2d: do
-        read(201, '(A132)', iostat=ios) STRI
-        if (ios < 0) EXIT set_dims_2d
-        if (ios > 0) call astra_stop(err_format)
-        lin_upper = to_upper(STRI)
-        if (LEN_TRIM(lin_upper) == 0) CYCLE set_dims_2d
-        if (lin_upper(1: 1) == '!') CYCLE set_dims_2d
-        if (lin_upper(1: 3) == 'END') EXIT set_dims_2d
-        VNAM = VARNAM(lin_upper(1: 6), ier_tab)
-        if (ier_tab /= 0 .or. vnam == '') CYCLE set_dims_2d    ! Ignore lines starting with a blank
-        VNAMX = ARRNAM(VNAM)
-        jex1 = str_in_list(VNAMX, profxNames) ! Checks if VNAM is in array list
-        if (jex1 == 0) then ! 1d, or ASCII-exp
-            jpos = str_in_list(VNAM, (/'POINTS', 'NAMEXP', 'GRIDTY', 'NTIMES', 'FILTER', 'FACTOR'/) )
-            if (jpos == 0) then ! A 1D variable
-                VNAM = ' '
-                CYCLE set_dims_2d
-            else
-                VNAM = ' '
-                call split2array2(lin_upper, strarray, n_words)
-                ntim = 1
-                do j=1, n_words
-                    keyword = strarray(j)(1: 6)
-                    SELECT CASE(keyword)
-                    CASE('POINTS')
-                        read(strarray(j+1), *, iostat=ios) nr_exp
-                        if (ios /= 0) call astra_stop(err_format)
-                    CASE('NAMEXP')      ! New variable, exp-block
-                        VNAM = VARNAM(strarray(j+1), ier_tab)
-                    CASE('NTIMES')
-                        read(strarray(j+1), *, iostat=ios) ntim
-                        if (ios /= 0) call astra_stop(err_format)
-                    END SELECT
-                enddo
-                VNAMX = ARRNAM(VNAM)
-                jexar = str_in_list(VNAMX, profxNames)
-                if (jexar > 0) then ! only profiles_x
-                    len_profs_data = len_profs_data + ntim*nr_exp + 2*nr_exp ! Some margin in case GRIDTYPE=18,19,20
-                    len_profs_time = len_profs_time + ntim
-                endif
-            endif
-        else       ! ufile
-            call parse_u_line(STRI, uvar, ufile_in, factor)
-            if (LEN_TRIM(ufile_in) > 0) then ! string 'U-FILE' found in this line
-                call ufheader(TRIM(ufile_in), ndim_u, nt_u, nx_u, rholbl)
-            endif
-            len_profs_data = len_profs_data + nt_u*nx_u + nx_u
-            len_profs_time = len_profs_time + nt_u
-        endif
-    enddo set_dims_2d
-    close(201)
-
-    if (len_profs_data > NTARR) then
-        write(err_msg, '(A, i)') &
-            '>>> read_exp: Size of time dependent profiles data stream cannot exceed', NTARR
-        call astra_stop(err_msg)
-    endif
+!-------------
+! Read 2D data
+! No rewinding    
+!-------------
 
     ios = 0
     VNAMO = ' '
@@ -438,33 +534,15 @@ contains
     raw_boundary%nt = 0
     ALFA_GLOB = 0.001
 
-    if (.not. allocated(raw_profiles%data)) then
-        allocate(raw_profiles%data(len_profs_data))
-        allocate(raw_profiles%time(len_profs_time))
-        allocate(raw_profiles%filter(len_profs_time))
-        allocate(raw_profiles%label(len_profs_time))
-        allocate(raw_profiles%arr_index(len_profs_time))
-        allocate(raw_profiles%jbeg_grid(len_profs_time))
-        allocate(raw_profiles%jbeg_data(len_profs_time))
-        allocate(raw_profiles%grid_type(len_profs_time))
-        allocate(raw_profiles%nrho(len_profs_time))
-    endif
-
-    raw_profiles%time = 0.
-    raw_profiles%filter = 0.001
-    raw_profiles%arr_index = 0
-    raw_profiles%jbeg_grid = 0
-    raw_profiles%jbeg_data = 0
-    raw_profiles%grid_type = 0
-    raw_profiles%nrho = 0
-
-!-----------------------------
-! Rewind exp file for 2d part
-
-    open(201, FILE=TRIM(file_exp), iostat=ios)
-    read(201, '(/A132)', ERR=906, END=39) STRI
-
+    skip_read = .true.
     parse_exp_2d: do
+        if (skip_read) then
+            skip_read = .false.
+        else
+            read(n_unit, '(A132)', iostat=ios) STRI
+            if (ios < 0) EXIT parse_exp_2d
+            if (ios > 0) call astra_stop(err_format)
+        endif
 
         INTYPE = -1
         TIMEVR = .0
@@ -473,69 +551,58 @@ contains
         factor = 1.
         ALFA = ALFA_GLOB
 
-        read(201, '(A132)', iostat=ios) STRI
-        if (ios < 0) EXIT parse_exp_2d
-        if (ios > 0) call astra_stop(err_format)
         if (STRI(1:6) == 'FILTER') i_filter_glob = 1
         lin_upper = to_upper(STRI)
         if (LEN_TRIM(lin_upper) == 0) CYCLE parse_exp_2d
-        if (lin_upper(1: 1) == '!') CYCLE parse_exp_2d
-        if (lin_upper(1: 3) == 'END') EXIT parse_exp_2d
+        if (lin_upper(1: 1) == '!')   CYCLE parse_exp_2d
+        if (lin_upper(1: 3) == 'END')  EXIT parse_exp_2d
 
         VNAM = VARNAM(lin_upper(1: 6), ier_tab)
         if (ier_tab /= 0 .or. vnam == '') CYCLE parse_exp_2d    ! Ignore lines starting with a blank
         VNAMX = ARRNAM(VNAM)
         jex1 = str_in_list(VNAMX, profxNames) ! Checks if VNAM is in array list
 
-        if (jex1 == 0) then ! 1d, or no u-file
-            jpos = str_in_list(VNAM, (/'POINTS', 'NAMEXP', 'GRIDTY', 'NTIMES', 'FILTER', 'FACTOR'/) )
-            if (jpos == 0) then ! A 1D variable
-                VNAM = ' '
+        if (jex1 == 0) then ! exp ASCII
+            VNAM = ' '
+            call split2array2(lin_upper, strarray, n_words)
+
+            do j=1, n_words, 2
+                keyword = strarray(j)(1: 6)
+                SELECT CASE(keyword)
+                CASE('POINTS')
+                    read(strarray(j+1), *, iostat=ios) nr_exp
+                    if (ios /= 0) call astra_stop(err_format)
+                CASE('NAMEXP')      ! New variable, exp-block
+                    VNAM = VARNAM(strarray(j+1), ier_tab)
+                CASE('GRIDTY')
+                    read(strarray(j+1), *, iostat=ios) INTYPE
+                    if (ios /= 0) call astra_stop(err_format)
+                CASE('NTIMES')
+                    read(strarray(j+1), *, iostat=ios) ntim
+                    if (ios /= 0) call astra_stop(err_format)
+                CASE('FILTER')
+                    read(strarray(j+1), *, iostat=ios) ALFA
+                    if (ios /= 0) call astra_stop(err_format)
+                    if (i_filter_glob == 1) then
+                        alfa_glob = alfa
+                        i_filter_glob = 0
+                    endif
+                CASE('FACTOR')
+                    read(strarray(j+1), *, iostat=ios) factor
+                    if (ios /= 0) call astra_stop(err_format)
+                CASE('PROFIL')
+                    EXIT
+                CASE DEFAULT
+                    write(*, *) '>>> read_exp error unknown key word in string:'
+                    write(*, *) TRIM(STRI)
+                    EXIT
+                END SELECT
+            enddo
+
+            if (LEN_TRIM(VNAM) == 0) then
                 CYCLE parse_exp_2d
             else
-                VNAM = ' '
-                call split2array2(lin_upper, strarray, n_words)
-
-                do j=1, n_words, 2
-                    keyword = strarray(j)(1: 6)
-                    SELECT CASE(keyword)
-                    CASE('POINTS')
-                        read(strarray(j+1), *, iostat=ios) nr_exp
-                        if (ios /= 0) call astra_stop(err_format)
-                    CASE('NAMEXP')      ! New variable, exp-block
-                        VNAM = VARNAM(strarray(j+1), ier_tab)
-                    CASE('GRIDTY')
-                        read(strarray(j+1), *, iostat=ios) INTYPE
-                        if (ios /= 0) call astra_stop(err_format)
-                    CASE('NTIMES')
-                        read(strarray(j+1), *, iostat=ios) ntim
-                        if (ios /= 0) call astra_stop(err_format)
-                    CASE('FILTER')
-                        read(strarray(j+1), *, iostat=ios) ALFA
-                        if (ios /= 0) call astra_stop(err_format)
-                        if (i_filter_glob == 1) then
-                            alfa_glob = alfa
-                            i_filter_glob = 0
-                        endif
-                    CASE('FACTOR')
-                        read(strarray(j+1), *, iostat=ios) factor
-                        if (ios /= 0) call astra_stop(err_format)
-                    CASE('PROFIL')
-                        EXIT
-                    CASE DEFAULT
-                        write(*, *) '>>> read_exp error unknown key word in string:'
-                        write(*, *) TRIM(STRI)
-                        EXIT
-                    END SELECT
-                enddo
-
-! If VNAM not there, ignore this line, such as line 'FILTER 0.001'
-! Needed for backward compatibility
-                if (LEN_TRIM(VNAM) == 0) then
-                    CYCLE parse_exp_2d
-                else
-                    VNAMO = VNAM
-                endif
+                VNAMO = VNAM
             endif
         endif
 
@@ -557,13 +624,13 @@ contains
         CASE('CCOILX')
 ! read only if nt_coils==0, i.e. CCOILX was not defined before
             if (raw_cCoil%nt == 0) then
-                call read_coilx(201, STRI, raw_cCoil)
+                call read_coilx(n_unit, STRI, raw_cCoil)
             endif
             VNAMO = VNAM
 
         CASE('VCOILX') !note that both CCOIL and VCOIL need to appear in the exp file with the same number of points and times
             if (raw_vertCoil%nt == 0) then
-                call read_coilx(201, STRI, raw_vertCoil)
+                call read_coilx(n_unit, STRI, raw_vertCoil)
             endif
             VNAMO = VNAM
 
@@ -572,7 +639,7 @@ contains
                 call astra_stop(err_msg_exp // 'Boundary must be defined in a single group')
             endif
             j = INDEX(lin_upper, 'POINTS')
-            if (j /= 0) read(STRI(j+6:),*) raw_boundary%n_theta
+            if (j /= 0) read(STRI(j+6:), *) raw_boundary%n_theta
             if (j == 0) then
                 call astra_stop(err_msg_exp // 'Number of boundary points must be defined')
             endif
@@ -596,10 +663,10 @@ contains
 ! r_2(t_1) r_2(t_2) r_2(t_3)
 ! z_2(t_1) z_2(t_2) z_2(t_3)
 
-            read(201, *, iostat=ios) (raw_boundary%time(j), j=1, raw_boundary%nt)
+            read(n_unit, *, iostat=ios) (raw_boundary%time(j), j=1, raw_boundary%nt)
             nbnd = 2*raw_boundary%nt*raw_boundary%n_theta
             allocate(bnd_rz(nbnd))
-            read(201, fmt=*, iostat=ios) (bnd_rz(j), j=1, nbnd)
+            read(n_unit, fmt=*, iostat=ios) (bnd_rz(j), j=1, nbnd)
             jrt = 1
             do jthe=1, raw_boundary%n_theta
                 do jt=1, raw_boundary%nt
@@ -615,11 +682,10 @@ contains
                 call astra_stop(err_msg_exp // 'More data items than data values for BND group')
             endif
             VNAMO = VNAM
-            CYCLE parse_exp_2d
 
         CASE('BNDUX ')
             write(*, *) 'Reading BND from u file'
-            read(201, '(A)', iostat=ios) STRI ! u-file name in exp-file
+            read(n_unit, '(A)', iostat=ios) STRI ! u-file name in exp-file
             if (ios < 0) EXIT parse_exp_2d
             call ufheader('udb/'//trim(STRI)//'_r', ndim_u, nt_u, nx_u, rholbl)
             raw_boundary%n_theta = nx_u
@@ -640,11 +706,6 @@ contains
 
             VNAMO = VNAM
 
-            CYCLE parse_exp_2d
-
-        CASE('      ')
-            CYCLE parse_exp_2d
-
         CASE('ENDX  ')
             EXIT parse_exp_2d
 
@@ -655,7 +716,7 @@ contains
             
         END SELECT
  
-        if (jexar == 0) then
+        if (jexar == 0) then ! Variable name not in profx list
             CYCLE parse_exp_2d
         endif
 
@@ -751,7 +812,8 @@ contains
                 call astra_stop(err_msg)
             endif
 
-            if (ntim > 0) read(201, *, ERR=906) (raw_profiles%time(NGR+j), j=1, ntim)
+            if (ntim > 0) read(n_unit, *, iostat=ios) (raw_profiles%time(NGR+j), j=1, ntim)
+            if (ios > 0) call astra_stop(err_format)
 
             do j=1, ntim1
                 NGR = NGR + 1
@@ -765,10 +827,11 @@ contains
                     raw_profiles%jbeg_grid(NGR) = jarr + 1
                     if (INTYPE == 18 .or. INTYPE == 19) then
                         jarr = jarr + 1
-                        read(201, *, ERR=906) raw_profiles%data(jarr)
+                        read(n_unit, *, iostat=ios) raw_profiles%data(jarr)
+                        if (ios > 0) call astra_stop(err_format)
                     endif
                     do j1=1, jtype
-                        read(201, *, iostat=ios) (raw_profiles%data(jarr + jj), jj=1, nr_exp)
+                        read(n_unit, *, iostat=ios) (raw_profiles%data(jarr + jj), jj=1, nr_exp)
                         if (ios /= 0) then
                             write(err_msg, '(3A, /, A, 1p, 6e12.4)') err_msg_exp, &
                                 '".  Format error in group ', TRIM(STRI), 'Last data read: ', &
@@ -785,7 +848,7 @@ contains
                 else
                     raw_profiles%jbeg_grid(NGR) = raw_profiles%jbeg_grid(NGR-1)
                     raw_profiles%jbeg_data(NGR) = jarr + 1
-                    read(201, *, iostat=ios) (raw_profiles%data(jarr + jj), jj=1, nr_exp)
+                    read(n_unit, *, iostat=ios) (raw_profiles%data(jarr + jj), jj=1, nr_exp)
                     if (ios /= 0) then
                         write(err_msg, '(3A, /, A, 1p, 6e12.4)') err_msg_exp, &
                                 '".  Format error in group ', TRIM(STRI), 'Last data read: ', &
@@ -806,17 +869,11 @@ contains
 
     enddo parse_exp_2d
 
-    39 continue
-
-    close(201)
+    close(n_unit)
 
     raw_profiles%n_groups = NGR
 
     return
-
-    906 continue
-    call astra_stop(err_format)
-
     end subroutine read_exp
 
 !----------------------------------------------------------------------
@@ -1002,7 +1059,6 @@ contains
     TAUPRP = TAUMIN
     if (TIME > TINIT + 1.025*abs(TSCALE)) TINIT = TSTART
 
-
     return
     end subroutine astra_assignments
 
@@ -1108,10 +1164,10 @@ contains
 !---------------------------------------------------------------------
 ! The subroutine analizes a character*6 "string"
 ! If the 1st position is tab or space the string 6*' ' is returned
-! If tabs are encountered on the end of the "string",
+! If tabs are encountered on the end of the "string", 
 !  they are removed the "string" is appended with spaces
 ! Trailing "X" is added when not present in string*6
-! Finally ARRNAM in the Astra standard is created,
+! Finally ARRNAM in the Astra standard is created, 
 !-----------------------------------------------------------------------
 
     use char_manip, only: clean_string, to_upper
@@ -1301,12 +1357,12 @@ contains
 
 ! # shot, device, #dimensions
 
-    read(11,'(A32)', ERR=925) STRI
+    read(11, '(A32)', ERR=925) STRI
     read(STRI(3:7)  , '(1I5)', ERR=925) ISHOT
     read(STRI(8:11) , '(1A4)', ERR=925) sdev
     read(STRI(13:13), '(1I1)', ERR=925) n_dim
 
-    write(*,*) ishot, sdev, n_dim
+    write(*, *) ishot, sdev, n_dim
     if (n_dim <= 0 .or. n_dim > 2) then
         err_msg = '>>> U-file "' // TRIM(uname) // '" error: wrong dimensionality'
         call astra_stop(err_msg)
@@ -1332,12 +1388,12 @@ contains
 
     call split_string(TRIM(lbl1), ' ', var1_lbl, unit1)
     if (var1_lbl(1:4) /= 'TIME') then
-        write(*,*) '>>> U-file "', TRIM(uname), '" 1st independent variable should be time'
+        write(*, *) '>>> U-file "', TRIM(uname), '" 1st independent variable should be time'
         close(11)
         return
     endif
     if (TRIM(unit1) /= 'SECONDS') then
-        write(*, *) '>>> U-file "', TRIM(uname),'" time unit should be second, not ', TRIM(unit1)
+        write(*, *) '>>> U-file "', TRIM(uname), '" time unit should be second, not ', TRIM(unit1)
     endif
 
 ! 2nd independent variable label: Y-
@@ -1348,13 +1404,13 @@ contains
     endif
 
 ! Dependent variable label
-    read(11,'(A32)', ERR=925) STRI
+    read(11, '(A32)', ERR=925) STRI
     STRI = ADJUSTL(STRI)
     lbl3 = to_upper(STRI(1:30))
 
 ! Dummy, "PROC CODE"
 
-    read(11,'(A32)', ERR=925) STRI
+    read(11, '(A32)', ERR=925) STRI
 ! Dimensions
     read(11, *, ERR=925) nt
     if (n_dim == 2) then
@@ -1400,7 +1456,7 @@ contains
 !-------
 
 ! # shot, device, #dimensions
-    read(11,'(A32)') STRI
+    read(11, '(A32)') STRI
 
     if (n_dim <= 0 .or. n_dim > 2) then
         err_msg = '>>> U-file "' // TRIM(uname) // '" error: wrong dimensionality'
@@ -1427,10 +1483,10 @@ contains
     if (n_dim == 2) read(11, '(A32)') STRI
 
 ! Dependent variable label
-    read(11,'(A32)') STRI
+    read(11, '(A32)') STRI
 
 ! Dummy, "PROC CODE"
-    read(11,'(A32)') STRI
+    read(11, '(A32)') STRI
 
 ! Dimensions
     read(11, *) STRI
