@@ -204,7 +204,7 @@ def fill_core_sources(cv):
         cs_nb[jt].grid.area         = cv['AREAT'][jt, :]
         #Rabbit provides toroidal current, not parallel current
         cs_nb[jt].j_parallel          = MA_to_A*cv['CUBM'][jt, :]
-        cs_nb[jt].momentum_tor        = cv['SCUBM'][jt, :]
+        cs_nb[jt].momentum_tor        = cv['RTOR'][jt]*cv['SCUBM'][jt, :]
         cs_nb[jt].electrons.particles = e19m3_to_m3*cv['SNEBM'][jt, :]
         cs_nb[jt].total_ion_energy    = MW_to_W*cv['PIBM'][jt, :]
         cs_nb[jt].electrons.energy    = MW_to_W*cv['PEBM'][jt, :]
