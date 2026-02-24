@@ -438,7 +438,7 @@ contains
             if (VNAMO == VNAM) then
                 call astra_stop(TRIM(err_msg) // ' cannot vary in time')
             endif
-            call READF6(VDAT, VRDATA, IERR)
+            call str2dbl(VDAT, VRDATA, IERR)
             VNAMO = VNAM
             if (VNAM == 'NA1   ') NA1 = VRDATA
             if (VNAM == 'TSTART') then
@@ -469,11 +469,11 @@ contains
             endif
 
             err_msg = '>>> read_exp: File "' // TRIM(file_exp) // '" reading error'
-            call READF6(VTIM, TIMEVR, IERR)
+            call str2dbl(VTIM, TIMEVR, IERR)
             if (IERR /= 0) call astra_stop(err_msg)
-            call READF6(VDAT, VRDATA, IERR)
+            call str2dbl(VDAT, VRDATA, IERR)
             if (IERR /= 0) call astra_stop(err_msg)
-            call READF6(VERR, VRERR, IERR)
+            call str2dbl(VERR, VRERR, IERR)
             if (IERR /= 0) call astra_stop(err_msg)
 
             IFDFVX(jvar) = 0
@@ -1063,60 +1063,20 @@ contains
     end subroutine astra_assignments
 
 !---------------------------------------------------------------------
-    subroutine READF6(LINE, F6, IERR)
-! Read a number in LINE to 6-positinal field
+    subroutine str2dbl(line, dbl_out, ierr)
 
-    character(len=6), intent(in) :: LINE
-    integer, intent(out) :: IERR
-    double precision, intent(out) :: F6
+    character(len=*), intent(in)  :: line
+    double precision, intent(out) :: dbl_out
+    integer, intent(out)          :: ierr
 
-    integer :: N, JE, JP, JM, J
-    character(len=6) :: STRI
-
-    IERR = 0
-    JE = 0
-    JP = 0
-    JM = 0
-    do J=1, 6
-        if(LINE(J: J) == '-') JM = J
-        if(LINE(J: J) == 'e' .or. LINE(J: J) == 'E') JE = J
-        if(LINE(J: J) == '.') JP = J
-    enddo
-
-    if(JP > 0) then
-        READ(LINE, '(F6.3)', ERR=2) F6
+    if (len_trim(line) == 0) then
+        dbl_out = 0.0d0
+        ierr    = 0
         return
     endif
 
-    if(JE <= 0) then
-        if(JM <= 1) then
-            READ(LINE, '(I6)', ERR=2) N
-            F6 = N
-            return
-        endif
-        STRI = LINE(1: JM-1)
-        READ(STRI, '(I6)', ERR=2) N
-        F6 = N
-        STRI = LINE(JM: 6)
-        READ(STRI, '(I6)', ERR=2) N
-        F6 = F6 * 10.**N
-        return
-    else
-        STRI = LINE(1: JE-1)
-        READ(STRI, '(I6)', ERR=2) N
-        F6 = N
-        STRI = LINE(JE+1: 6)
-        READ(STRI, '(I6)', ERR=2) N
-        F6 = F6 * 10.**N
-    endif
-
-    2 continue
-
-    IERR = 1
-    write(*, *) '>>> READF6: found ERROR in "', LINE, '"'
-
-    return
-    end subroutine READF6
+    read(line, *, iostat=ierr) dbl_out
+    end subroutine str2dbl
 
 !---------------------------------------------------------------------
     character(len=6) function VARNAM(str_in, ierr)
@@ -1148,7 +1108,7 @@ contains
 
     do j=2, 6
         symb = str_in(j: j)
-        if(symb == tab_ch .or. symb == esc_ch) then
+        if (symb == tab_ch .or. symb == esc_ch) then
             ierr = 1
             VARNAM(j: j) = ' '
         endif

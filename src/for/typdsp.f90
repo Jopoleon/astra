@@ -39,7 +39,8 @@ integer :: NCH=0, NP1, MODEX, JBE, JEND, J, JEN, JJ, J1, ios
 double precision :: YQ
 character(len=6) :: CH6
 character(len=118) :: STRI
-character(len=132) :: FNAME, dat_dir
+character(len=132) :: FNAME, dat_dir, file_out
+character(len=:), external :: set_filename
 
 ! NLINSC - maximum line number 
 MODEX = XOUT + 0.49
@@ -54,12 +55,12 @@ if (MODEX >= 1 .and. MODEX <= 3 .or. MOD10 == 3) NP1 = NA1
 dat_dir = TRIM(AWD) // '/dat/'
 call system('mkdir -p ' // TRIM(dat_dir))
 FNAME = TRIM(dat_dir) // TRIM(exp_file) // '.' // TRIM(equ_file)
-call set_filename(FNAME)
+file_out = set_filename(FNAME)
 
 call setColor(WarningColor)
-write(*, *) '>>>  Data are written into the file: ' // TRIM(FNAME)
+write(*, *) '>>>  Data are written into the file: ' // TRIM(file_out)
 
-open(7, file=TRIM(FNAME), iostat=ios)
+open(7, file=TRIM(file_out), iostat=ios)
 
 if (ios /= 0) then
     write(*, *) '>>> TYPDSP: Output file error'
@@ -258,89 +259,6 @@ return
 end subroutine writeData
 
 !---------------------------------------------------------------------
-subroutine TYPDSP
-
-use const_inc, only: XOUT, NAB, NA1
-use outcmn_inc, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, ROUT, &
-    NRW, NTIMES, TTOUT, TOUT
-use dbl2char, only: fmt_xf
-
-implicit none
-
-integer, parameter :: NLINSC=50
-character(len=40), parameter :: STRMN=' R=     a=     B=     I=     q=     <n>='
-character(len=6), dimension(6), parameter :: &
-    CONN = (/ ' CF   ', ' CV   ', ' CH   ', ' CCD  ', ' CBND ', ' CRAD ' /)
-
-integer :: NP1, ITBE, ITEND, ITEN, MODEX, JBE, JEND, J, JEN, JJ, J1
-character(len=118) :: STRI
-
-! NLINSC - maximum line number 
-MODEX = XOUT + 0.49
-! MODEX = 0 [0, AB]  against "a"
-! MODEX = 1 [0, ABC] against "a"
-! MODEX = 2 [0, ROC] against "rho"
-! MODEX = 3 [FP(1), FP(NA1)] against "psi"
-! otherwise Unknown option => MODEX=0
-NP1 = NAB
-if (MODEX >= 1 .and. MODEX <= 3 .or. MOD10 == 3) NP1 = NA1
-
-if (MOD10 <= 5) then
-    JBE  = 1
-    JEND = 16
-    do
-        JEN = MIN(NROUT, JEND)
-        write(STRI, '(16(1X, 1A4))') (NAMER(J), J=JBE, JEN)
-        write(*, '(1X, A)') TRIM(STRI)
-        do J=1, NP1
-            STRI = ' '
-            do JJ=JBE, JEN
-                J1 = 5*(JJ - JBE + 1) - 4
-                STRI(J1: J1+4) = fmt_xf(ROUT(J, JJ), 4)
-            enddo
-            write(*, '(1X, A)') TRIM(STRI)
-        enddo
-        if (JEN == NROUT) return
-        JBE  = JEN + 1
-        JEND = JEN + 16
-    enddo
-endif
-
-if (MOD10 <= 7) then
-    JBE  = 1
-    JEND = 15
-    do
-        JEN = MIN(NTOUT, JEND)
-        ITBE  = 1
-        ITEND = NLINSC
-        do
-            ITEN = MIN(LTOUT-1, ITEND)
-            write(STRI, '(1X, A4, 15(1X, A4))') 'Time', (NAMET(J), J=JBE, JEN)
-            write(*, '(1X, A)') TRIM(STRI)
-
-            do J1=ITBE, ITEN
-                STRI = ' '
-                STRI(1: 5) = fmt_xf(TTOUT(J1), 4)
-                do J=JBE, JEN
-                    JJ = 5*(J - JBE) + 6
-                    STRI(JJ: JJ+4) = fmt_xf(TOUT(J1, J), 4)
-                enddo
-                write(*, '(1X, A)') TRIM(STRI)
-            enddo
-            if (ITEN == LTOUT - 1) EXIT
-            ITBE  = ITEN
-            ITEND = ITEN + NLINSC - 1
-        enddo
-        if (JEN == NTOUT) EXIT
-        JBE  = JEN + 1
-        JEND = JEN + 15
-    enddo
-endif
-
-return
-end subroutine TYPDSP
-
-!---------------------------------------------------------------------
 integer function GETIME(TIME, TIMES, NNOUT)
 ! The function returns
 !  if NNOUT=1  then GETIME=1
@@ -444,7 +362,7 @@ if (MOD10 == 6) then
     do J1=1, NTOUT
         JW = NWIND3(J1) - 8*active_tab(MOD10)
         if (NAMET(J1) == '    ') JW = 0
-        if (JW > 0 .and. JW <= 8) call down_label(j, TOUT) ! for the all modes
+        if (JW > 0 .and. JW <= 8) call down_label(j, TOUT) ! for all plotting modes
     enddo
     call setColor(Red)
     STRI(1 :  5) = 'Time='
@@ -1055,29 +973,26 @@ return
 end subroutine const2ps
 
 !---------------------------------------------------------------------
-subroutine set_filename(FNAME)
-! FNAME - input name (without blanks) is appended with an extension.
-!   The extension is the ordinal number of the file
+function set_filename(fname_in) result(fname_out)
+    implicit none
 
-implicit none
+    character(len=*), intent(in) :: fname_in
+    character(len=:), allocatable :: fname_out
 
-character(len=*), intent(inout) :: FNAME
+    integer :: jext
+    logical :: fileExists
+    character(len=:), allocatable :: filename
+    character(len=16) :: ext   ! long enough for big integers
 
-integer :: jext
-logical :: fileExists
-character(len=4) :: ext
-character(len=140) :: filename
+    fileExists = .true.
+    jext = 0
 
-fileExists = .True.
-jext = 0
+    do while (fileExists)
+        jext = jext + 1
+        write(ext, '(".", i0)') jext
+        filename = trim(fname_in) // trim(ext)
+        inquire(file=filename, exist=fileExists)
+    end do
 
-do while(fileExists)
-    jext = jext + 1
-    write(ext, '(A, i0)') '.', jext
-    filename = TRIM(FNAME) // TRIM(ext)
-    inquire(FILE=TRIM(filename), EXIST=fileExists)
-enddo
-FNAME = TRIM(filename)
-
-return
-end subroutine set_filename
+    fname_out = filename
+end function set_filename

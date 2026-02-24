@@ -14,23 +14,23 @@ module dbl2char
    integer :: J
    character(len=6) :: F6
 
-   if(abs(R1) < 1.e-9) then
+   if (abs(R1) < 1.e-9) then
       fmt4 = ' 0. '
       return
    endif
-   if(R1 < 0) then
+   if (R1 < 0) then
       fmt4 = ' <0 '
       return
    endif
 
    F6 = fmt456(R1, 4)
 
-   if( index(F6(3: 6), '.') > 0 ) then
+   if ( index(F6(3: 6), '.') > 0 ) then
       do J=6, 1, -1
          if (F6(J: J) == '.') then
             fmt4 = F6(3: J-1)
             return
-         else if(F6(J: J) /= '0' ) then
+         else if (F6(J: J) /= '0' ) then
             fmt4 = F6(3: J)
             return
          endif
@@ -39,7 +39,7 @@ module dbl2char
    else ! No '.' in F6(3:6)
 
       fmt4 = F6(3:6)
-      if(fmt4(2: 3) == '0-') then
+      if (fmt4(2: 3) == '0-') then
          read(fmt4(4: 4), *) J
          write(fmt4, '(A1, A2, I0)') fmt4(1: 1), 'e-', J - 1
       endif
@@ -77,7 +77,7 @@ module dbl2char
    character(len=4) :: F4
    character(len=6) :: F6
 
-   if(abs(R1) < 1.e-9) then
+   if (abs(R1) < 1.e-9) then
       fmt5 = ' 0.  '
    else if (R1 < 0) then
       F4 = fmt4(abs(R1))
@@ -105,9 +105,9 @@ module dbl2char
    character(len=4) :: F4
    character(len=6) :: F6
 
-   if(abs(R1) < 1.e-9) then
+   if (abs(R1) < 1.e-9) then
       fmt50 = ' 0.  '
-   else if(R1 < 0) then
+   else if (R1 < 0) then
       F4 = fmt4(abs(R1))
       fmt50 = '-' // F4
    else
@@ -127,11 +127,11 @@ module dbl2char
 
    character(len=5) :: F5
 
-   if(abs(R1) < 1.e-9) then
+   if (abs(R1) < 1.e-9) then
       fmt6 = '    0.'
       return
    endif
-   if(R1 < 0) then
+   if (R1 < 0) then
       F5 = fmt5(abs(R1))
       fmt6 = '-' // F5
    else
@@ -195,11 +195,11 @@ module dbl2char
       fmx_5(1+JM: 6) = F6(1+JM: 6)
    else
       do J=6, 1, -1
-         if(F6(J:J) == '.') then
+         if (F6(J:J) == '.') then
             J1 = J - 1
             EXIT
          endif
-         if(F6(J:J) /= '0') then
+         if (F6(J:J) /= '0') then
             J1 = J
             EXIT
          endif
@@ -266,10 +266,10 @@ module dbl2char
 
    R = ROUNDN(R2, 5 - JM)
 
-   if(R < 1.e-4 * 10.**JM) then
+   if (R < 1.e-4 * 10.**JM) then
       write(T, '(1F25.11)') R
       do J=15, 20+JM
-         if(T(J: J) /= '0') EXIT
+         if (T(J: J) /= '0') EXIT
       enddo
       J = min(J, 20 + JM) ! At the end of the loop it is J=21+JM
       R = ROUNDN(R2, 4 - JM)
@@ -282,11 +282,11 @@ module dbl2char
    endif
    
    R = ROUNDN(R2, 6 - JM)
-   if(R < 1.e6/10.**JM) then
-      if(R >= 1.e5/10.**JM) R = ROUNDN(R2, 7 - JM)
+   if (R < 1.e6/10.**JM) then
+      if (R >= 1.e5/10.**JM) R = ROUNDN(R2, 7 - JM)
       write(T, '(1F25.11)') R
       do J = 8 + JM, 17 - JM
-         if(T(J:J) /= ' ' .and. T(J:J) /= '0') EXIT
+         if (T(J:J) /= ' ' .and. T(J:J) /= '0') EXIT
       enddo
       fmt456(1+JM: 6) = T(J: J+5-JM)
       return
@@ -296,7 +296,7 @@ module dbl2char
    if (R < 1.e13/10.**JM) then
       write(T, '(1F25.11)') R
       do J=1, 11
-         if(T(J:J) /= ' ' .and. T(J:J) /= '0') EXIT
+         if (T(J:J) /= ' ' .and. T(J:J) /= '0') EXIT
       enddo
       fmt456(1+JM: 5) = T(J: J+3-JM) // 'e'
       write(fmt456(6: 6), '(I1)') 10 - J + JM
