@@ -42,7 +42,7 @@ double precision, dimension(dims_in(1)) :: chie, chii, elec_pflux, rho, &
     ametr, rmaj, elon, tria, q, ne, te, ti, vpar, &
     vippd, vittd, vippi1, vitti1, jbs, epar0_in, &
     drmin, drmaj, delong, dtrian, dr, dne, dte, dti, dq, dvpar, drhodr
-double precision, dimension(dims_in(5), dims_in(1)) :: ni, zi, dni
+double precision, dimension(dims_in(5), dims_in(1)) :: ni, zi, dni, ion_pflux
 double precision, dimension(dims_in(5)) :: pflux_i, eflux_i, vpflux, vtflux
 double precision, dimension(dims_in(5), 2):: energy_flux, particle_flux
 character(len=80) :: path_in
@@ -132,14 +132,14 @@ neo_silent_flag_in = 0 ! DUmp file for stand-alone
 neo_test_flag_in = 0
 
 ! Resolution 
-neo_n_energy_in = 5  ! number of energy points
+neo_n_energy_in = 10 ! number of energy points
 neo_n_xi_in     = 17 ! number of xi points
-neo_n_theta_in  = 29 ! number of theta points
+neo_n_theta_in  = 17 ! number of theta points
 neo_ipccw_in = -1
 neo_btccw_in = -1
 neo_n_species_in = n_ions + 1
 
-if (jr1 == 1) print*, 'Run NEO', n_ions
+if (jr1 == 1) print*, 'Run NEO', neo_n_species_in, neo_n_energy_in, neo_n_xi_in, neo_n_theta_in
 
 radial_loop: do jr=1, chunk
 
@@ -220,7 +220,8 @@ radial_loop: do jr=1, chunk
 
     neo_rotation_model_in = 2
     neo_omega_rot_in       =  anorm*vpar(jr)/(rmaj(jr) * cs0)
-    neo_omega_rot_deriv_in = -anorm*dvpar(jr)/(drmaj(jr)*cs0)
+!CA    neo_omega_rot_deriv_in = -anorm*dvpar(jr)/(drmaj(jr)*cs0)
+    neo_omega_rot_deriv_in = anorm**2*dvpar(jr)/(drmin(jr)*cs0)
     neo_rmin_over_a_2_in = neo_rmin_over_a_in ! used only for global runs
 
     Gamma_GB = anorm*vnorm
@@ -254,7 +255,7 @@ radial_loop: do jr=1, chunk
 
         do i_ion=1, n_ions
             pflux_i(i_ion) = (neo_pflux_dke_out(i_ion+1) + &
-                tgyro_gv_flag*neo_pflux_gv_out(i_ion+1))*Gamma_GB/neo_dens_in(i_ion)
+                tgyro_gv_flag*neo_pflux_gv_out(i_ion+1))*Gamma_GB
             eflux_i(i_ion) = (neo_efluxncv_dke_out(i_ion+1) + &
                 tgyro_gv_flag*neo_efluxncv_gv_out(i_ion+1))*Q_GB
             vpflux(i_ion) = neo_vpol_dke_out(i_ion+1)*vnorm  !poloidal flow on outboard mid-plane of main ions
@@ -287,7 +288,10 @@ radial_loop: do jr=1, chunk
     ion_eflux = SUM(energy_flux(2: n_ions+1, 1))
     chii(jr) = ion_eflux/(1e-4 + abs(neo_dlntdr_in(2)))/neo_temp_in(2)/SUM(neo_dens_in(2:n_ions+1))
     chie(jr) = energy_flux(1, 1)/(1e-4 + abs(neo_dlntdr_in(1)))
-    elec_pflux(jr) = particle_flux(1, 1)/drhodr(jr)         ! particle flux
+    elec_pflux(jr) = particle_flux(1, 1)/drhodr(jr)         ! electron particle flux
+    do i_ion=1, n_ions
+        ion_pflux(i_ion,jr) = particle_flux(1+i_ion, 1)/drhodr(jr) ! ion particle flux
+    enddo
     vippd(jr)  = vpflux(1)
     vittd(jr)  = vtflux(1)
     vippi1(jr) = vpflux(2)
@@ -304,5 +308,8 @@ prof_out(5, :) = vippd
 prof_out(6, :) = vittd
 prof_out(7, :) = vippi1
 prof_out(8, :) = vitti1
+do i_ion=1, n_ions
+    prof_out(8+i_ion, :) = ion_pflux(i_ion,:)
+enddo
 
 end subroutine neo_interf

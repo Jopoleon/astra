@@ -7,6 +7,7 @@ double precision, allocatable, dimension(:, :) :: mem_neo
 
 type neo_output
     double precision, allocatable, dimension(:) :: chi_i, chi_e, e_pflux
+    double precision, allocatable, dimension(:, :) :: ion_pflux
 endtype neo_output
 type(neo_output) :: neo_out 
 
@@ -19,6 +20,7 @@ contains
 
     if (.not. allocated(neo_out%chi_i)) then
         allocate(neo_out%chi_i(NA1), neo_out%chi_e(NA1), neo_out%e_pflux(NA1))
+        allocate(neo_out%ion_pflux(nspec_max-1, NA1))
     endif
 
     return
@@ -35,6 +37,7 @@ contains
         ZIM1, ZIM2, ZIM3, NDEUT, NIZ1, NIZ2, NIZ3, &
         RHO, AMETR, SHIF, ELON, TRIA, VTOR, VPOL, G11, VRS
     use numerical_tools, only: qinterp
+    use flux_avg_imp, only: lfs2fsa_impDV
     use debugger, only: markloc
 
     integer, parameter :: n_arr_out=15, nrho_m=64, nworkers=64, ipcId=1, &
@@ -57,6 +60,7 @@ contains
     double precision, dimension(n_scalars) :: scal_in
     double precision, dimension(NRD) :: rmaj_as, q_as, ni_main_as, vpar_as, &
         j_boot, e_pflux_as, chii_as, chie_as
+    double precision, dimension(nspec_max-1, NRD) :: i_pflux_as
     double precision, dimension(nrho_m) :: rho_m, ti_m, te_m, ne_m, vpar_m, &
         ametr_m, elon_m, tria_m, rmaj_m, q_m, &
         drmin, drmaj, dti, dte, dne, dq, delong, dtrian, dvpar, drhodr, dr
@@ -67,6 +71,8 @@ contains
     character(len=64) :: SBP_NAME
     character(len=128) :: ipc_file, astra_task
 
+    double precision, dimension(NRD) :: e0imp1, FVimp1, e0imp2, FVimp2, e0imp3, FVimp3 ! DF
+    
     save semID, shmID_vars, shmID_arrs
 
     call SYSTEM_CLOCK(t_wall1, rate)
@@ -118,13 +124,18 @@ contains
     xstep = (rho_max - rho_min)/(nrho_m - 1.)
     rho_m = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_m) /)
 
+    ! DF: transform FSA density to LFS
+    call lfs2fsa_impDV(2, ZIM1, AIM1, e0imp1, FVimp1)
+    call lfs2fsa_impDV(2, ZIM2, AIM2, e0imp2, FVimp2)
+    call lfs2fsa_impDV(2, ZIM3, AIM3, e0imp3, FVimp3)
+
     zi_m(1, :) = ZMJ
     call qinterp(RHO(1:NA1),  ZIM1(1:NA1), NA1, rho_m, zi_m(2, :), nrho_m)
     call qinterp(RHO(1:NA1),  ZIM2(1:NA1), NA1, rho_m, zi_m(3, :), nrho_m)
     call qinterp(RHO(1:NA1),  ZIM3(1:NA1), NA1, rho_m, zi_m(4, :), nrho_m)
-    call qinterp(RHO(1:NA1),  NIZ1(1:NA1), NA1, rho_m, ni_m(2, :), nrho_m)
-    call qinterp(RHO(1:NA1),  NIZ2(1:NA1), NA1, rho_m, ni_m(3, :), nrho_m)
-    call qinterp(RHO(1:NA1),  NIZ3(1:NA1), NA1, rho_m, ni_m(4, :), nrho_m)
+    call qinterp(RHO(1:NA1),  NIZ1(1:NA1)/e0imp1(1:NA1), NA1, rho_m, ni_m(2, :), nrho_m) ! DF
+    call qinterp(RHO(1:NA1),  NIZ2(1:NA1)/e0imp2(1:NA1), NA1, rho_m, ni_m(3, :), nrho_m) ! DF
+    call qinterp(RHO(1:NA1),  NIZ3(1:NA1)/e0imp3(1:NA1), NA1, rho_m, ni_m(4, :), nrho_m) ! DF
     call qinterp(RHO(1:NA1),    TI(1:NA1), NA1, rho_m,       ti_m, nrho_m)
     call qinterp(RHO(1:NA1),    TE(1:NA1), NA1, rho_m,       te_m, nrho_m)
     call qinterp(RHO(1:NA1),    NE(1:NA1), NA1, rho_m,       ne_m, nrho_m)
@@ -143,6 +154,7 @@ contains
         bpolz = BTOR*AMETR(jrho)*MU(jrho)/RTOR
         bmod = sqrt(BTOR**2 + bpolz**2)
         vpar_as(jrho) = VTOR(jrho) * BTOR/bmod + c_vpol* VPOL(jrho) * bpolz/bmod
+        !LFS VTOR!     vpar_as(jrho) = VTOR(jrho)*rmaj_as(jrho)/(RTOR+SHIF(jrho)+AMETR(jrho))*BTOR/bmod+c_vpol*VPOL(jrho)*bpolz/bmod
     enddo
 
     call qinterp(RHO(1:NA1), ni_main_as(1:NA1), NA1, rho_m, ni_m(1, :), nrho_m)
@@ -208,7 +220,7 @@ contains
         dte(jr)    = dstep*(te_m(jr_r) - te_m(jr_l))
         dne(jr)    = dstep*(ne_m(jr_r) - ne_m(jr_l))
         dq(jr)     = dstep*(q_m(jr_r) - q_m(jr_l))
-        dvpar(jr)  = dstep*(vpar_m(jr_r) - vpar_m(jr_l))
+        dvpar(jr)  = dstep*(vpar_m(jr_r)/rmaj_m(jr_r) - vpar_m(jr_l)/rmaj_m(jr_l))
         do jion=1, ns_in-1
             dni(jion, jr) = dstep*(ni_m(jion, jr_r) - ni_m(jion, jr_l))
         enddo
@@ -299,11 +311,19 @@ contains
     call qinterp(rho_m, prof_out(1, :), nrho_m, RHO(1:NA1),    chii_as, NA1, extrap_right=0.)
     call qinterp(rho_m, prof_out(2, :), nrho_m, RHO(1:NA1),    chie_as, NA1, extrap_right=0.)
     call qinterp(rho_m, prof_out(4, :), nrho_m, RHO(1:NA1), e_pflux_as, NA1, extrap_right=0.)
+    do jion=1, ns_in-1
+        call qinterp(rho_m, prof_out(8+jion, :), nrho_m, RHO(1:NA1), i_pflux_as(jion, 1:NA1), NA1, extrap_right=0.)
+    enddo
+ 
     do jrho=1, NA1
         gradrhosq_inv = VRS(jrho)/G11(jrho)
         neo_out%chi_i(jrho)   = chii_as(jrho)*gradrhosq_inv ! m^2/s
         neo_out%chi_e(jrho)   = chie_as(jrho)*gradrhosq_inv ! m^2/s
         neo_out%e_pflux(jrho) = e_pflux_as(jrho)*gradrhosq_inv/a0_m
+        neo_out%ion_pflux(1, jrho) = i_pflux_as(1, jrho)*gradrhosq_inv/a0_m/(ni_main_as(jrho)/NE(jrho))  ! main ion particle flux
+        neo_out%ion_pflux(2, jrho) = i_pflux_as(2, jrho)*gradrhosq_inv/a0_m/(NIZ1(jrho)/NE(jrho))  ! 1st imp particle flux density (with FSA density)
+        neo_out%ion_pflux(3, jrho) = i_pflux_as(3, jrho)*gradrhosq_inv/a0_m/(NIZ2(jrho)/NE(jrho))  ! 2nd imp particle flux density (with FSA density)
+        neo_out%ion_pflux(4, jrho) = i_pflux_as(4, jrho)*gradrhosq_inv/a0_m/(NIZ3(jrho)/NE(jrho))  ! 3rd imp particle flux density (with FSA density)
     enddo
     call SYSTEM_CLOCK(t_wall2, rate)
     print*, "XPR wall time", dble(t_wall2 - t_wall1)/dble(rate)
