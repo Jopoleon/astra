@@ -30,6 +30,7 @@ $(OBJ_DIR)/machine_config.o \
 $(OBJ_DIR)/status.o \
 $(OBJ_DIR)/cpu_usage.o \
 $(OBJ_DIR)/parameters_a2equil.o \
+$(OBJ_DIR)/flux_avg_imp.o \
 $(OBJ_DIR)/parse_utils.o \
 $(OBJ_DIR)/read_input.o \
 $(OBJ_DIR)/json_write.o \
