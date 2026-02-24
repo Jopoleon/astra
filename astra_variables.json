@@ -866,7 +866,7 @@
     "RUPAR" : {"units": "1/s^2", "desc": "Par"},
     "RUPFR" : {"units": "1/s^2", "desc": "Tor"},
     "RUPYR" : {"units": "1/s^2", "desc": "Perp"},
-    "SCUBM" : {"units": "N/m^3", "desc": "Momentum source density from NBI [kg m/s^2/m^3]"},
+    "SCUBM" : {"units": "N/m^3", "desc": "Momentum source density from NBI [kg m/s^2 1/m^3]"},
     "SD0"   : {"desc": "Artificial source introduced by DVF0"},
     "SD1"   : {"desc": "Artificial source introduced by DVF1"},
     "SD2"   : {"desc": "Artificial source introduced by DVF2"},
