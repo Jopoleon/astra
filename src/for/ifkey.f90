@@ -53,6 +53,7 @@ use debugger, only: markloc, debug, astra_stop
 use json_vars, only: internNames, constNames, varNames, n_const, n_var, n_intern
 use cpu_usage, only: cpu_report
 use numerical_tools, only: smooth
+use graphic_utils, only: asxwin, astwin, askint
 
 implicit none
 

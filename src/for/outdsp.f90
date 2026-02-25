@@ -4,6 +4,7 @@ use outcmn_inc, only: astra_gui_ref, astra_gui, plot_area_ref, plot_area, &
     RUNID, NST, MOD10, MODEY, NTOUT, resizeGraph
 use const_inc, only: XOUT, NA
 use status_inc, only: MU
+use graphic_utils, only: get_runid
 
 implicit none
 
@@ -86,6 +87,7 @@ use char_manip, only: len_trim_tab, str_in_list
 use debugger, only: markloc, debug, astra_stop
 use json_vars, only: profxNames
 use standard_functions, only: AFVAL
+use graphic_utils, only: nmark, cmark, cmarkt, plot_curve, update_curve, scal
 
 implicit none
 
@@ -540,6 +542,7 @@ subroutine plot_lcfs(ifnew, IYO, time_in)
 
 use outcmn_inc, only: Red, EraseColor, pixel_ymid, meter2pixel
 use read_input, only: raw_boundary
+use graphic_utils, only: nmark
 
 implicit none
 
@@ -615,6 +618,7 @@ use const_inc, only: AB, ELONM, RTOR, TRICH, GP2
 use outcmn_inc, only: Blue, White, pixel_ymid, meter2pixel
 use debugger, only: debug
 use machine_config, only: config, json_cfg, cfg_exists
+use graphic_utils, only: plot_curve
 
 implicit none
 
@@ -720,6 +724,7 @@ subroutine plot_flux_surfaces
 use outcmn_inc, only: Magenta, pixel_ymid, meter2pixel
 use const_inc, only: NEQUIL, MEQUIL
 use parameters_a2equil, only: equil_now
+use graphic_utils, only: update_curve
 
 implicit none
 

@@ -29,6 +29,7 @@ $(OBJ_DIR)/dbl2char.o \
 $(OBJ_DIR)/time_functions.o \
 $(OBJ_DIR)/io_mod.o \
 $(OBJ_DIR)/outcmn.o \
+$(OBJ_DIR)/graphic_utils.o \
 $(OBJ_DIR)/machine_config.o \
 $(OBJ_DIR)/status.o \
 $(OBJ_DIR)/auxiliary.o \
@@ -52,7 +53,6 @@ $(OBJ_DIR)/metric.o \
 $(OBJ_DIR)/outdsp.o \
 $(OBJ_DIR)/runeq.o \
 $(OBJ_DIR)/setarx.o \
-$(OBJ_DIR)/graphic_utils.o \
 $(OBJ_DIR)/typdsp.o \
 $(OBJ_DIR)/gs_solver.o \
 $(OBJ_DIR)/a_equil.o \

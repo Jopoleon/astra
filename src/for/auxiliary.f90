@@ -48,7 +48,6 @@ contains
 
     integer :: j
     double precision :: CTAU, TAUO, YY, TAUN
-    double precision, external :: dfj
 
     call markloc('IFSTEP')
 
