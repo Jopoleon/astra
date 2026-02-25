@@ -20,6 +20,7 @@ use json_vars, only: read_metadata
 use json_write, only: write_json, write_jsonx
 use read_input, only: readInput
 use plasma_state, only: plasma_up
+use auxiliary, only: IFTREQ
 
 implicit none
 
@@ -30,7 +31,7 @@ implicit none
 integer :: j, jj, IM, ios, XSC0, XSC, jt1, jt2, jt3, jt_req, jkey, ierr, jt_out, rate
 double precision :: t_stop
 character(len=132) :: STRI
-integer, external :: IFKEY, IFTREQ
+integer, external :: IFKEY
 
 !-------------------- Initial settings --------------------------------|
 

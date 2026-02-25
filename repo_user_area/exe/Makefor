@@ -31,6 +31,7 @@ $(OBJ_DIR)/io_mod.o \
 $(OBJ_DIR)/outcmn.o \
 $(OBJ_DIR)/machine_config.o \
 $(OBJ_DIR)/status.o \
+$(OBJ_DIR)/auxiliary.o \
 $(OBJ_DIR)/standard_functions.o \
 $(OBJ_DIR)/cpu_usage.o \
 $(OBJ_DIR)/parameters_a2equil.o \
@@ -42,7 +43,6 @@ $(OBJ_DIR)/transport2fbe.o
 
 OBJS = \
 $(OBJ_DIR)/Astra2XW.o \
-$(OBJ_DIR)/aux.o \
 $(OBJ_DIR)/dialogx.o \
 $(OBJ_DIR)/err_catch_a.o \
 $(OBJ_DIR)/ifkey.o \

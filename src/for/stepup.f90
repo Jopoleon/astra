@@ -12,11 +12,11 @@ use status_inc, only: TE, TI, NE, NI, NIO, FP, defarr
 use io_mod, only: CCOIL, VCOIL, MACHINE, TASK
 use read_input, only: raw_cCoil, raw_vCoil
 use plasma_state, only: plasma_up
+use auxiliary, only: IFTREQ, IFSTEP, OLDNEW
 
 implicit none
 
-integer :: IFKEY, IFSUB, ibcpsi_fb, bc_type_for_fp, jkey, &
-    IFTREQ, IFSTEP, n_coils
+integer :: IFKEY, IFSUB, ibcpsi_fb, bc_type_for_fp, jkey, n_coils
 double precision :: zipctrl, iplfbeo, Apsibcfac, Bpsibcfac, dfpdrbm12, &
     tau_old, tau_new
 double precision, dimension(raw_cCoil%ncoils) :: yccoil
