@@ -664,9 +664,9 @@ contains
 ! z_2(t_1) z_2(t_2) z_2(t_3)
 
             read(n_unit, *, iostat=ios) (raw_boundary%time(j), j=1, raw_boundary%nt)
-            nbnd = 2*raw_boundary%nt*raw_boundary%n_theta
-            allocate(bnd_rz(nbnd))
-            read(n_unit, fmt=*, iostat=ios) (bnd_rz(j), j=1, nbnd)
+            nbnd = raw_boundary%nt*raw_boundary%n_theta
+            allocate(bnd_rz(2*nbnd))
+            read(n_unit, fmt=*, iostat=ios) (bnd_rz(j), j=1, 2*nbnd)
             jrt = 1
             do jthe=1, raw_boundary%n_theta
                 do jt=1, raw_boundary%nt
@@ -700,8 +700,8 @@ contains
             endif
 
             allocate(x_u(nx_u))
-            call ufrd('udb/' // trim(STRI) // '_r', nscal_u, ndim_u, nt_u, nx_u, raw_boundary%time(1:nt_u), x_u, raw_boundary%R(1:nx_u))
-            call ufrd('udb/' // trim(STRI) // '_z', nscal_u, ndim_u, nt_u, nx_u, raw_boundary%time(1:nt_u), x_u, raw_boundary%Z(1:nx_u))
+            call ufrd('udb/' // trim(STRI) // '_r', nscal_u, ndim_u, nt_u, nx_u, raw_boundary%time(1:nt_u), x_u, raw_boundary%R(1:nx_u*nt_u))
+            call ufrd('udb/' // trim(STRI) // '_z', nscal_u, ndim_u, nt_u, nx_u, raw_boundary%time(1:nt_u), x_u, raw_boundary%Z(1:nx_u*nt_u))
             deallocate(x_u)
 
             VNAMO = VNAM
