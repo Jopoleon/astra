@@ -1358,7 +1358,7 @@ contains
     integer, intent(in) :: nt, nx, n_scal, n_dim
     double precision, intent(out), dimension(:), allocatable :: t_out, x_out, arr_out
 
-    integer :: ios, j, jj, n_header
+    integer :: ios, jx, jt, jlin, n_header
     character(132) :: err_msg
 
     write(*, *) 'Reading u-file ' // TRIM(uname)
@@ -1368,14 +1368,14 @@ contains
 
 ! Skip header
     n_header = 2*n_scal + 5 + 2*n_dim
-    do j=1, n_header
+    do jlin=1, n_header
         read(n_unit, *)
     enddo
 
 ! Read data
-    read(n_unit, *) (t_out(j), j=1, nt)
-    if (n_dim == 2) read(n_unit, *) (x_out(j) , j=1, nx)
-    read(n_unit, '(1X, 6E13.6)') ((arr_out(jj + (j - 1)*nt), jj=1, nt), j=1, nx)
+    read(n_unit, *) (t_out(jt), jt=1, nt)
+    if (n_dim == 2) read(n_unit, *) (x_out(jx) , jx=1, nx)
+    read(n_unit, '(1X, 6E13.6)') ((arr_out(jt + (jx - 1)*nt), jt=1, nt), jx=1, nx)
     close(n_unit)
 
     return
