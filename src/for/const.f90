@@ -92,7 +92,6 @@ double precision, pointer :: &
 
 integer :: NA, NA1, NAB, NB1, NNCX, KEY, &
     NSTEPS, ITREQ, IPART, LEQ(NEQNS), NITOT
-integer :: ARXUSE(NARRX)
 integer :: NA1N, NA1E, NA1I, NA1U, &
     NA10, NA11, NA12, NA13, NA14, NA15, NA16, NA17, NA18, NA19
 character(len=132) :: exp_header
@@ -165,7 +164,6 @@ contains
     DTEQ(3, :) =  99999.
     DTEQ(4, :) = -1.
 
-    ARXUSE = 0
     TAU    = 0.000001
     TAUPRP = 0.000001
 

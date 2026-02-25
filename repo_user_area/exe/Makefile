@@ -12,6 +12,7 @@ XPR_DIR = $(AWD)/xpr
 NBI_INC = $(AWD)/mod/nbi
 ATASK = $(TSK_DIR)/$(MODEL).exe
 EQU  = $(AWD)/equ/$(MODEL)
+EXP  = $(AWD)/exp/$(FEXP)
 LIBSBR    = $(LIB_DIR)/libsbr.a
 LIBFNC    = $(LIB_DIR)/libfnc.a
 LIBFOR    = $(LIB_DIR)/libfor.a
@@ -45,7 +46,7 @@ $(TMP_DIR)/ininam.f90 \
 $(TMP_DIR)/init_converge_step.f90 \
 $(TMP_DIR)/eqns_inc.f90
 
-PY_TMP_GEN = $(AWD)/pyparse/parser_main.py -equ $(EQU)
+PY_TMP_GEN = $(AWD)/pyparse/parser_main.py -equ $(EQU) -exp $(EXP)
 
 FMLS    := $(wildcard $(AWD)/fml/*)
 PYFILES := $(wildcard $(AWD)/pyparse/*.py)

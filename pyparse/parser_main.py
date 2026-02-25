@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import os, sys, logging, argparse
-import equ_parser, code_gen
+import equ_parser, code_gen, exp_parser
 from parse_as import write_fortran
 import config
 
@@ -11,13 +11,16 @@ hnd.setFormatter(fmt)
 logger = logging.getLogger('as_parse')
 logger.addHandler(hnd)
 logger.setLevel(logging.DEBUG)
-logger.setLevel(logging.INFO)
 
 
-def astra_parser(f_equ):
+def astra_parser(f_equ, f_exp):
 
-    parse = equ_parser.EQU_PARSER(f_equ)
-    return code_gen.CODE_GEN(parse)
+    equ = equ_parser.EQU_PARSER(f_equ)
+    exp = exp_parser.EXP_PARSER(f_exp)
+    for var in equ.arname:
+        if var not in exp.profiles['label']:
+            logger.warning('X array %s used in equ, but missing in exp\n', var)
+    return code_gen.CODE_GEN(equ)
 
 
 def write_tmp(txt, dir_out=None):
@@ -38,8 +41,9 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='astra parser')
     parser.add_argument('-equ', help='ASTRA equ filepath', required=True)
+    parser.add_argument('-exp', help='ASTRA exp filepath', required=True)
 
     args = parser.parse_args()
 
-    txt = astra_parser(args.equ)
+    txt = astra_parser(args.equ, args.exp)
     write_tmp(txt, dir_out='./src/tmp')

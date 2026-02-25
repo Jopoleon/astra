@@ -280,9 +280,6 @@ end subroutine INIVAR'''
 # ininam.f90
 
         inam  = 'AWD = "%s"\n' %awd
-        if parse.arxuse:
-            for j, arx in enumerate(parse.arxuse):
-                inam += 'ARXUSE(%d) = %d\n' %(j+1, arx)
         for jlbl, lbl in enumerate(config.eqn_list):
             inam += 'LEQ(%d) = %d\n' %(jlbl+1, parse.leq_d[lbl])
         inam += const_text.ININAM.sb

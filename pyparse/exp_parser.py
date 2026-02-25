@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, sys, re, json, logging, argparse, time
+import os, sys, re, json, logging, argparse
 import config, ufiles
 import numpy as np
 
@@ -94,8 +94,6 @@ class EXP_PARSER:
 
     def __init__(self, f_exp=None):
 
-        tim = np.zeros(7)
-        tim[0] = time.time()
         self.f_exp = f_exp
 
         f_json = '%s/astra_variables.json' %config.awd
@@ -115,20 +113,12 @@ class EXP_PARSER:
         self.boundary = {}
         self.coils    = {}
 
-        tim[1] = time.time()
         with open(f_exp, 'r') as f:
             exp = f.read()
         exp = re.sub(r'(?m)^\s*!.*\n?', '', exp) # Removes all lines starting with !
-        tim[2] = time.time()
         exp1d, exp2d = exp_split(exp)
-        tim[3] = time.time()
         self.parse_exp1d(exp1d)
-        tim[4] = time.time()
         self.parse_exp2d(exp2d)
-        tim[5] = time.time()
-        self.write_json()
-        tim[6] = time.time()
-        print('Time analysis', np.diff(tim))
 
 
     def parse_exp1d(self, exp1d):
@@ -310,3 +300,4 @@ if __name__ == '__main__':
     print(raw.profiles['label'])
     n_len = len([x for xs in raw.profiles['data'] for x in xs])
     print('Size of profiles array', n_len)
+    raw.write_json()

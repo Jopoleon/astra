@@ -862,7 +862,7 @@ contains
     use const_inc, only: NA1, NA, NB1, NAB, AB, ABC, AWALL, TIME, TSTART, TPAUSE, &
          TAUMIN, TAUPRP, VOLUME, IPL, IPLN, HRO, HROX, ROC, ROCO, BTN, FTO, FTN, &
          GP, GP2, PSIAX, PSIBO, RTOR, BTOR, SHIFT, ROWALL, ELONM, ELONG, TRICH, TRIAN, &
-         ARXUSE, TINIT, TSCALE, TIMEQL, DTEQL
+         TINIT, TSCALE, TIMEQL, DTEQL
     use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
         G11, G22, VR, VRO, VRS, VOLUM, &
         FP, FPO, FP_NORM, rho_pol, NE, NEO, TE, TEO, UPAR, UPARO, MRHO, &
@@ -1024,15 +1024,6 @@ contains
     MRHO  = AMAIN*NE
     UPS0  = MRHO*RTOR
     UPS0O = UPS0
-
-    do j=1, n_profx
-        if (ARXUSE(j) /= 0) then
-            if (IFDFAX(ARXUSE(j)) < 0) then
-                write(*, *) '>>> Warning >>> X-array used but not defined: "', &
-                    TRIM(profxNames(ARXUSE(j))), '"', ARXUSE(j), IFDFAX(ARXUSE(j))
-            endif
-        endif
-    enddo
 
     TIMEQL = TIME - DTEQL - 1.d-7
     TAUPRP = TAUMIN

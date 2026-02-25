@@ -42,7 +42,7 @@ character(len=118) :: STRI
 character(len=132) :: FNAME, dat_dir, file_out
 character(len=:), external :: set_filename
 
-! NLINSC - maximum line number 
+! NLINSC - maximum line number
 MODEX = XOUT + 0.49
 ! MODEX = 0 [0, AB]  against "a"
 ! MODEX = 1 [0, ABC] against "a"
@@ -992,7 +992,7 @@ function set_filename(fname_in) result(fname_out)
         write(ext, '(".", i0)') jext
         filename = trim(fname_in) // trim(ext)
         inquire(file=filename, exist=fileExists)
-    end do
+    enddo
 
     fname_out = filename
 end function set_filename
