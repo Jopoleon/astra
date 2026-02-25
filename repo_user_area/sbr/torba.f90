@@ -17,6 +17,7 @@ contains
        AMETR, VOLUM, PEECR, CUECR, AREAT, rho_pol, FP_NORM
     use io_mod, only: AWD, nml_file
     use numerical_tools, only: qinterp, integr
+    use standard_functions, only: VINT, IINT
     use parameters_a2equil, only : equil_now, GP2
 
     logical, parameter :: dump_flag=.FALSE.
@@ -60,7 +61,6 @@ contains
     double precision, dimension(:), allocatable :: rho_interp, te_interp, ne_interp
 
     double precision :: ecrh_int, eccd_int, psi_sep, psi_axis
-    double precision, external :: VINT, IINT
 
     character(len=120) :: fort_name, as_nml, time_str, pecr_file, phi_file, theta_file, &
          pecr_file2, phi_file2, theta_file2

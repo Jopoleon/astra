@@ -5,12 +5,12 @@ double precision FUNCTION NEAVR(YR)
 
 use status_inc, only: NE, VOLUM
 use const_inc, only: HRO
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
 integer :: i
-double precision, external :: VINT
 
 i = int(YR/HRO) + 1
 

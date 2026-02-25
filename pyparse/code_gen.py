@@ -68,7 +68,7 @@ class CODE_GEN:
 #-----------
 # declar.fnc
 
-        self.fnc = const_text.FNC.header + pa.write_declar(parse.fnc_list, ext='R')
+        self.fnc = pa.write_declar(parse.fnc_list, ext='R')
 
 #-----------
 # declar.fml

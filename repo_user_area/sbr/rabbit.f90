@@ -18,6 +18,7 @@ contains
        XRHO, VOLUM, IPOL, PEBM, PIBM, NIBM, CUBM, SNEBM, SCUBM, NRATE, &
        PBLON, PBPER, MU, VTOR, ZEF, NI, NHYDR, NDEUT, NTRIT
     use numerical_tools, only: qinterp
+    use standard_functions, only: VINT, IINT
     use parameters_a2equil, only : equil_now
 
     integer, parameter :: Nrrect=64, Nzrect=64, nnb_max=30, nspc=3, nrhoout=21, unit_lim=11
@@ -59,7 +60,6 @@ contains
 
     character(len=120) :: as_nml, pinj_file, pinj_file2, limiter_file, table_path
 
-    double precision, external :: VINT , IINT
     namelist / rabbit_beam_geo / start_pos, unit_vec, width_poly
     namelist / partmix / part_mix
     namelist / nbi_par / n_nbi, a_beam, z_beam, einj, pinj_file

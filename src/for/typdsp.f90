@@ -310,6 +310,7 @@ use status_inc, only: AMETR, SHIF, ELON, TRIA, FP, RHO
 use const_inc, only: TIME, TINIT, TSCALE, NA, NA1, NAB, XOUT, AB, ABC, ROC, HRO
 use dbl2char, only: fmt5
 use numerical_tools, only: QUADIN
+use standard_functions, only: RZ2A
 
 implicit none
 
@@ -318,7 +319,7 @@ integer, intent(in) :: IX, IY
 
 integer :: JX, JY, JLR, j, j1, JC, JL, MODEX, JW, JN2
 double precision :: DX, DY, YX, YX1, YY, YY1, YA, YA1, YD, YE, YT, &
-    YRHO, YFP, YFPC, RZ2A
+    YRHO, YFP, YFPC
 character(len=80) :: STRI
 integer, external :: GETIME
 

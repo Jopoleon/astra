@@ -2,11 +2,11 @@
 double precision FUNCTION IBSR(YR)
 
 use status_inc, only: CUBS
+use standard_functions, only: IINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision, external :: IINT
 
 IBSR = IINT(CUBS, YR)
 

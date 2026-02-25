@@ -67,6 +67,7 @@ use numerical_tools, only: qinterp, sortab, smooth
 use io_mod, only: jbeg_arrx, IFDFAX, XAXES, DATAX, NPTM, TOUTX
 use debugger, only: markloc, astra_stop
 use read_input, only: raw_profiles
+use standard_functions, only: RZ2A
 
 implicit  none
 
@@ -74,7 +75,7 @@ integer, intent(in) :: ICALL
 
 integer :: jprof, n_grid, gridtype, jtarr, jt_start, jto, jt_end, kn, j3, &
     jtn, jt, jt0, jx, jy, NP1, N11
-double precision :: RORZ, RZ2A, YDT, YDTA, YDTB, Y, Y1, dxl, dxr
+double precision :: RORZ, YDT, YDTA, YDTB, Y, Y1, dxl, dxr
 double precision, dimension(:), allocatable :: x_grid, dat_exp
 double precision, dimension(NRD) :: XA, DA
 character(len=132) :: err_msg, err_msg_grid

@@ -2,11 +2,11 @@
 double precision FUNCTION ITOTR(YR)
 
 use status_inc, only: CU
+use standard_functions, only: IINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision, external :: IINT
 
 ITOTR = IINT(CU, YR)
 

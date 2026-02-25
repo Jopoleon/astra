@@ -85,6 +85,7 @@ use dbl2char, only: fmt_xf
 use char_manip, only: len_trim_tab, str_in_list
 use debugger, only: markloc, debug, astra_stop
 use json_vars, only: profxNames
+use standard_functions, only: AFVAL
 
 implicit none
 
@@ -111,7 +112,6 @@ double precision, dimension(NRD) :: xplot, yplot
 double precision, dimension(NTIMES) :: xtrace, ytrace, xtrace_old
 double precision, dimension(NRD, nplots_max) :: xold, yold
 double precision, dimension(NTIMES, nplots_max) :: ytrace_old
-double precision, external :: AFVAL
 character(len=80) :: STRI
 character(len=5 ) :: XF4
 character(len=6 ) :: CHAR6
@@ -672,6 +672,7 @@ use outcmn_inc, only: MOD10
 use status_inc, only: AMETR, FP_NORM
 use const_inc, only: XOUT, AB, ABC, ROC, NA1
 use numerical_tools, only: QUADIN
+use standard_functions, only: RFA
 
 implicit none
 
@@ -679,7 +680,6 @@ double precision, intent(in) :: YIN
 
 integer :: MODEX
 double precision :: YAB
-double precision, external :: RFA
 
 MODEX = XOUT + 0.49
 

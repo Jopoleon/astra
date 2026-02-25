@@ -93,8 +93,9 @@ def fill_core_profiles(cv):
         cp1d[jt].q = 1./cv['MU'][jt, :]
         cp1d[jt].zeff = cv['ZEF'][jt, :]
         cp1d[jt].t_i_average = ti
-        cp1d[jt].j_total     = MA_to_A*cv['CU'  ][jt, :]
-        cp1d[jt].j_bootstrap = MA_to_A*cv['CUBS'][jt, :]
+        cp1d[jt].j_tor       = MA_to_A*cv['CUTOR'][jt, :]
+        cp1d[jt].j_total     = MA_to_A*cv['CU'   ][jt, :]
+        cp1d[jt].j_bootstrap = MA_to_A*cv['CUBS' ][jt, :]
         
         cp1d[jt].ion.resize(n_ions_used)
         cp1d[jt].ion[0].z_ion = np.float64(np.around(cv['ZMAIN'][jt, 0]))

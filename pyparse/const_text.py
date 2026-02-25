@@ -6,15 +6,6 @@ rho_pol(1:NA1) = SQRT(FP_NORM(1: NA1))
 '''
 
 
-class FNC:
-
-    header  = \
-"""
-double precision :: VINT, IINT, LININT, GRAD, GRADS, FRMAX, FRMIN, RFMIN, RFMAX, RFVAL, AFVAL, RFVEX, AFVEX, RFVIN, AFVIN, RFA, RFAN, XFA, XFAN, AFR, AFX, RECR, ATR, ATX, TIMINT, TIMDER, TIMAVG, GAUSS, RADIAL, RADINT, ASTEP, RSTEP, XSTEP, STEP, CUT, FTBOX, FXBOX, FABOX, FIXVAL, FTAV, FTMIN, FTMAX, FRAMP, FJUMP
-external IINT
-"""
-
-
 class POSTEP:
 
     header = \
@@ -234,6 +225,7 @@ use const_inc
 use status_inc
 use nclass_mod
 use strahl_mod
+use standard_functions
 use io_mod, only: IFDFVX
 use a2tglf, only: tglf_alloc, tglf_out
 use a2qlk, only: qlk_alloc, qlk_out
@@ -633,6 +625,7 @@ use parameter_inc
 use const_inc
 use status_inc
 use outcmn_inc
+use standard_functions
 use debugger, only: markloc, debug
 
 implicit none
@@ -665,6 +658,7 @@ use parameter_inc
 use const_inc
 use status_inc
 use outcmn_inc
+use standard_functions
 use debugger, only: markloc, debug
 
 implicit none
@@ -921,6 +915,7 @@ use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use nclass_mod
 use strahl_mod
 use plasma_state
+use standard_functions
 use debugger, only: markloc
 use numerical_tools, only: extrap
 
@@ -933,7 +928,7 @@ integer, intent(in) :: ibcpsi_fb
 integer, intent(out) :: bc_type_for_fp
 double precision, intent(out) :: dfpdrbm12
 
-integer :: IFSUB, imethod, ND, ND1, NODE, JCALL, bctype, bc_type_imp(2), t_wall1, t_wall2, rate
+integer :: IFSUB, imethod, ND, ND1, JCALL, bctype, bc_type_imp(2), t_wall1, t_wall2, rate
 
 double precision :: YHRO, YM1, YM2, YB, YC, YJ_CU, YM, YU, YIOH, YICD, YMCD, bc_value_imp(2), t_cpu1, t_cpu2, unit_coeff
 double precision, dimension(5) :: bc_values

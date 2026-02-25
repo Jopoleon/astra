@@ -792,6 +792,7 @@ use status_inc, only: TE, TI, CU, SHEAR, SHIV, &
      BDB0, BDB02, B0DB2, BMAXT, BMINT, FOFB
 use numerical_tools, only: integr, qinterp, smooth
 use debugger, only: markloc
+use standard_functions, only: IINT
 
 implicit none
 
@@ -806,8 +807,6 @@ double precision, dimension(NRD) :: BA, BB, GR, GBD, GL, GSD, &
     X_EQU, B2B0_EQU, B0B2_EQU, BMAX_EQU, BMIN_EQU, VR_EQU, VRS_EQU, &
     G11_EQU, G22_EQU, G33_EQU, IPOL_EQU, DRODA_EQU, GRADRO_EQU
 character(len=80) :: STRI
-
-double precision, external :: IINT
 
 save jcall, NR_EQU
 data jcall/0/

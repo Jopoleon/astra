@@ -3,11 +3,11 @@
 double precision FUNCTION QETOTR(YR)
 
 use status_inc, only: PETOT
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT
 
 QETOTR = VINT(PETOT, YR)
 

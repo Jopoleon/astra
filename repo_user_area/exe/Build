@@ -25,7 +25,7 @@ export CHECKALLCOMP=" "
 ulimit -s 100000
 
 echo Compile main ASTRA executable $equ_file $AWD 
-make -f exe/Makefile MODEL=$equ_file WORKFLOW=$AWD/src/for/stepup.f90
+make -f exe/Makefile MODEL=$equ_file FEXP=$exp_file WORKFLOW=$AWD/src/for/stepup.f90
 status=$?
 if [ $status -ne 0 ]
 then
