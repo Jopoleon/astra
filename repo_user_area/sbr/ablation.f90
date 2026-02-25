@@ -19,7 +19,7 @@ double precision, intent(out) :: trace, pel_prof(NRD)
 double precision :: tpel_next=0.d0
 character(len=30) :: rholbl
 character(len=120) :: as_nml, rho_abl_file, time_abl_file
-integer :: ios=0, jt, jr, nt_u, nx_u, ndim_u
+integer :: ios=0, jt, jr, nt_u, nx_u, nscal_u, ndim_u
 double precision :: dt, rho_abl, mass
 double precision, dimension(:), allocatable :: t_u, x_u, var_u
 
@@ -34,11 +34,11 @@ open(57, FILE=TRIM(as_nml), delim='apostrophe')
 read(57, nml=pellet, iostat=ios)
 close(57)
 
-call ufheader(TRIM(rho_abl_file), ndim_u, nt_u, nx_u, rholbl)
+call ufheader(TRIM(rho_abl_file), nscal_u, ndim_u, nt_u, nx_u, rholbl)
 allocate(t_u(nt_u))
 allocate(x_u(nx_u))
 allocate(var_u(nt_u*nx_u))
-call ufrd(TRIM(rho_abl_file), ndim_u, nt_u, nx_u, t_u, x_u, var_u)
+call ufrd(TRIM(rho_abl_file), nscal_u, ndim_u, nt_u, nx_u, t_u, x_u, var_u)
 call uf1dr(time_abl_file, TIME, dt)
 
 dt = dt*10

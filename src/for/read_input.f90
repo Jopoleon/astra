@@ -174,7 +174,7 @@ contains
     integer, allocatable, dimension(:) :: int_json
     integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
     integer :: n_words, i_filter_glob, len_profs_data, len_profs_time, len_scalars
-    integer :: nt_u, nx_u, ios, ndim_u, jvar, jrt, jt, jthe, nbnd
+    integer :: nt_u, nx_u, ios, ndim_u, nscal_u, jvar, jrt, jt, jthe, nbnd
 
     double precision, allocatable :: t_u(:), x_u(:), var_u(:), bnd_rz(:)
     double precision :: XBDRY, YB, YB1, YXB, YXB1, ALFA, ALFA_GLOB, &
@@ -242,7 +242,7 @@ contains
             len_scalars = len_scalars + 1
         else  ! ":" U-file
             call parse_u_line(STRI, uvar, uname, factor)
-            call ufheader(TRIM(uname), ndim_u, nt_u, nx_u, rholbl)
+            call ufheader(TRIM(uname), nscal_u, ndim_u, nt_u, nx_u, rholbl)
             len_scalars = len_scalars + nt_u
         endif
     enddo set_dims_1d
@@ -315,7 +315,7 @@ contains
         else       ! ufile
             call parse_u_line(STRI, uvar, ufile_in, factor)
             if (LEN_TRIM(ufile_in) > 0) then ! string 'U-FILE' found in this line
-                call ufheader(TRIM(ufile_in), ndim_u, nt_u, nx_u, rholbl)
+                call ufheader(TRIM(ufile_in), nscal_u, ndim_u, nt_u, nx_u, rholbl)
             endif
             len_profs_data = len_profs_data + nt_u*nx_u + nx_u
             len_profs_time = len_profs_time + nt_u
@@ -493,11 +493,11 @@ contains
 
             call parse_u_line(STRI, uvar, uname, factor)
             VNAMU = VNAM
-            call ufheader(TRIM(uname), ndim_u, nt_u, nx_u, rholbl)
+            call ufheader(TRIM(uname), nscal_u, ndim_u, nt_u, nx_u, rholbl)
             allocate(t_u(nt_u))
             allocate(x_u(nx_u))
             allocate(var_u(nt_u*nx_u))
-            call ufrd(TRIM(uname), ndim_u, nt_u, nx_u, t_u, x_u, var_u)
+            call ufrd(TRIM(uname), nscal_u, ndim_u, nt_u, nx_u, t_u, x_u, var_u)
 
             varValues(jvar) = factor*var_u(1)
             if (nt_u == 1) then
@@ -687,7 +687,7 @@ contains
             write(*, *) 'Reading BND from u file'
             read(n_unit, '(A)', iostat=ios) STRI ! u-file name in exp-file
             if (ios < 0) EXIT parse_exp_2d
-            call ufheader('udb/'//trim(STRI)//'_r', ndim_u, nt_u, nx_u, rholbl)
+            call ufheader('udb/'//trim(STRI)//'_r', nscal_u, ndim_u, nt_u, nx_u, rholbl)
             raw_boundary%n_theta = nx_u
             raw_boundary%nt = nt_u
             if (raw_boundary%n_theta > n_bnd_max) then
@@ -700,8 +700,8 @@ contains
             endif
 
             allocate(x_u(nx_u))
-            call ufrd('udb/' // trim(STRI) // '_r', ndim_u, nt_u, nx_u, raw_boundary%time(1:nt_u), x_u, raw_boundary%R(1:nx_u))
-            call ufrd('udb/' // trim(STRI) // '_z', ndim_u, nt_u, nx_u, raw_boundary%time(1:nt_u), x_u, raw_boundary%Z(1:nx_u))
+            call ufrd('udb/' // trim(STRI) // '_r', nscal_u, ndim_u, nt_u, nx_u, raw_boundary%time(1:nt_u), x_u, raw_boundary%R(1:nx_u))
+            call ufrd('udb/' // trim(STRI) // '_z', nscal_u, ndim_u, nt_u, nx_u, raw_boundary%time(1:nt_u), x_u, raw_boundary%Z(1:nx_u))
             deallocate(x_u)
 
             VNAMO = VNAM
@@ -725,11 +725,11 @@ contains
 
         if (LEN_TRIM(ufile_in) > 0) then ! string 'U-FILE' found in this line
 
-            call ufheader(TRIM(ufile_in), ndim_u, nt_u, nx_u, rholbl)
+            call ufheader(TRIM(ufile_in), nscal_u, ndim_u, nt_u, nx_u, rholbl)
             allocate(t_u(nt_u))
             allocate(x_u(nx_u))
             allocate(var_u(nt_u*nx_u))
-            call ufrd(TRIM(ufile_in), ndim_u, nt_u, nx_u, t_u, x_u, var_u)
+            call ufrd(TRIM(ufile_in), nscal_u, ndim_u, nt_u, nx_u, t_u, x_u, var_u)
 
             if (nx_u > NRDX) then
                 write(err_msg, '(3A, i, A, i)') '>>> U-file "', TRIM(ufile_in), &
@@ -1243,6 +1243,7 @@ contains
 
     return
     end subroutine CHECKU
+
 !------------------------------------------------------------
     subroutine parse_u_line(str_in, var_name, uname, factor)
 
@@ -1288,68 +1289,54 @@ contains
     end subroutine parse_u_line
 
 !------------------------------------------------------------
-    subroutine ufheader(uname, n_dim, nt, nx, lbl2)
+    subroutine ufheader(uname, n_scal, n_dim, nt, nx, lbl2)
 
     use debugger, only: markloc, astra_stop
     use char_manip, only: to_upper, split_string
 
-    integer, intent(out) :: nt, nx, n_dim
+    integer, parameter :: n_unit=11
+
+    integer, intent(out) :: nt, nx, n_scal, n_dim
     character(len=*), intent(in) :: uname
     character(len=30), intent(out) :: lbl2
 
-    integer :: ios, j, n_scal, ISHOT
+    integer :: ios, j, n_shot
     character(132) :: err_msg
     character(32) :: STRI
     character(30) :: lbl1, lbl3, var1_lbl, unit1
     character(4) :: sdev
 
-    call markloc('ufheader')
-
     var1_lbl = repeat(' ', 30)
     unit1    = repeat(' ', 30)
 
-    open(11, FILE=TRIM(uname), iostat=ios)
-
-    if (ios /= 0) then
-        err_msg = '>>> READAT: U-file "' // TRIM(uname) // '" reading error'
-        call astra_stop(err_msg)
-    endif
+    open(n_unit, FILE=TRIM(uname), iostat=ios)
+    err_msg = '>>> U-file "' // TRIM(uname) // '" opening error'
+    if (ios /= 0) call astra_stop(err_msg)
 
 ! # shot, device, #dimensions
+    read(n_unit, '(i7, A4, 1X, i1)', ERR=925) n_shot, sdev, n_dim
+    err_msg = '>>> U-file "' // TRIM(uname) // '" wrong dims'
+    if (n_dim <= 0 .or. n_dim > 2) call astra_stop(err_msg)
+ 
+    read(n_unit, *) ! Shot date
 
-    read(11, '(A32)', ERR=925) STRI
-    read(STRI(3:7)  , '(1I5)', ERR=925) ISHOT
-    read(STRI(8:11) , '(1A4)', ERR=925) sdev
-    read(STRI(13:13), '(1I1)', ERR=925) n_dim
-
-    write(*, *) ishot, sdev, n_dim
-    if (n_dim <= 0 .or. n_dim > 2) then
-        err_msg = '>>> U-file "' // TRIM(uname) // '" error: wrong dimensionality'
-        call astra_stop(err_msg)
-    endif
-
-    read(11, '(A32)', ERR=925) STRI ! Dummy line
-
-! Scalar quantities
-
-    read(11, *, ERR=925) n_scal
+! Scalar parameters
+    read(n_unit, *, ERR=925) n_scal
     if (n_scal > 0) then
-        do j=1, n_scal
-            read(11, '(A32)', ERR=925) STRI
-            read(11, '(A32)', ERR=925) STRI
+        do j=1, 2*n_scal
+            read(n_unit, *)
         enddo
     endif
 
-! Continue reading 2D U-file
 ! 1st independent variable label: X-
-    read(11, '(A32)', ERR=925) STRI
+    read(n_unit, '(A32)', ERR=925) STRI
     STRI = ADJUSTL(STRI)
     lbl1 = to_upper(STRI(1:30))
 
     call split_string(TRIM(lbl1), ' ', var1_lbl, unit1)
     if (var1_lbl(1:4) /= 'TIME') then
         write(*, *) '>>> U-file "', TRIM(uname), '" 1st independent variable should be time'
-        close(11)
+        close(n_unit)
         return
     endif
     if (TRIM(unit1) /= 'SECONDS') then
@@ -1358,107 +1345,58 @@ contains
 
 ! 2nd independent variable label: Y-
     if (n_dim == 2) then
-        read(11, '(A32)', ERR=925) STRI
+        read(n_unit, '(A32)', ERR=925) STRI
         STRI = ADJUSTL(STRI)
         lbl2 = to_upper(STRI(1:30))
     endif
 
-! Dependent variable label
-    read(11, '(A32)', ERR=925) STRI
+! Function label
+    read(n_unit, '(A32/)', ERR=925) STRI
     STRI = ADJUSTL(STRI)
     lbl3 = to_upper(STRI(1:30))
 
-! Dummy, "PROC CODE"
-
-    read(11, '(A32)', ERR=925) STRI
 ! Dimensions
-    read(11, *, ERR=925) nt
+    read(n_unit, *, ERR=925) nt
     if (n_dim == 2) then
-        read(11, *, ERR=925) nx
+        read(n_unit, *, ERR=925) nx
     else
         nx = 1
     endif
-
-    close(11)
+    close(n_unit)
 
     return
 
-925 call astra_stop('>>> U-file "' // TRIM(uname) // '" read error')
+925 call astra_stop(err_msg)
 
     end subroutine ufheader
 
 !------------------------------------------------------------
-    subroutine ufrd(uname, n_dim, nt, nx, t_out, x_out, arr_out)
+    subroutine ufrd(uname, n_scal, n_dim, nt, nx, t_out, x_out, arr_out)
 
-    use debugger, only: markloc, astra_stop
+    integer, parameter :: n_unit=11
 
     character(len=*), intent(in) :: uname
-    integer, intent(in) :: nt, nx, n_dim
+    integer, intent(in) :: nt, nx, n_scal, n_dim
     double precision, intent(out) :: t_out(nt), x_out(nx), arr_out(nt*nx)
 
-    integer :: ios, j, jj, n_scal
+    integer :: ios, j, jj, n_header
     character(132) :: err_msg
-    character(32) :: STRI
-
-    call markloc('ufrd')
 
     write(*, *) 'Reading u-file ' // TRIM(uname)
 
-    open(11, FILE=TRIM(uname), iostat=ios)
+    open(n_unit, FILE=TRIM(uname), iostat=ios)
 
-    if (ios /= 0) then
-        err_msg = '>>> READAT: U-file "' // TRIM(uname) // '" reading error'
-        call astra_stop(err_msg)
-    endif
+! Skip header
+    n_header = 2*n_scal + 5 + 2*n_dim
+    do j=1, n_header
+        read(n_unit, *)
+    enddo
 
-!-------
-! Header
-!-------
-
-! # shot, device, #dimensions
-    read(11, '(A32)') STRI
-
-    if (n_dim <= 0 .or. n_dim > 2) then
-        err_msg = '>>> U-file "' // TRIM(uname) // '" error: wrong dimensionality'
-        call astra_stop(err_msg)
-    endif
-
-    read(11, '(A32)') STRI ! Dummy line
-
-! Scalar quantities
-
-    read(11, *) n_scal
-    if (n_scal > 0) then
-        do j=1, n_scal
-            read(11, '(A32)') STRI
-            read(11, '(A32)') STRI
-        enddo
-    endif
-
-! Continue reading 2D U-file
-! 1st independent variable label: X-
-    read(11, '(A32)') STRI
-
-! 2nd independent variable label: Y-
-    if (n_dim == 2) read(11, '(A32)') STRI
-
-! Dependent variable label
-    read(11, '(A32)') STRI
-
-! Dummy, "PROC CODE"
-    read(11, '(A32)') STRI
-
-! Dimensions
-    read(11, *) STRI
-    if (n_dim == 2) read(11, *) STRI
-
-! Read grid and data arrays
-
-    read(11, *) (t_out(j), j=1, nt)
-    if (n_dim == 2) read(11, *) (x_out(j) , j=1, nx)
-    read(11, '(1X, 6E13.6)') ((arr_out(jj + (j - 1)*nt), jj=1, nt), j=1, nx)
-
-    close(11)
+! Read data    
+    read(n_unit, *) (t_out(j), j=1, nt)
+    if (n_dim == 2) read(n_unit, *) (x_out(j) , j=1, nx)
+    read(n_unit, '(1X, 6E13.6)') ((arr_out(jj + (j - 1)*nt), jj=1, nt), j=1, nx)
+    close(n_unit)
 
     return
     end subroutine ufrd

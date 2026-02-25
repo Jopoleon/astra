@@ -96,7 +96,7 @@ double precision, intent(inout) :: t_out(NTIMES, NRW)
 
 integer :: PTM(2), PTMO(2, NRDX, NRW), &
     IWN(16), fshift, &
-    IST, text_posx, text_posy, JS, MODEX, &
+    text_posx, text_posy, JS, MODEX, &
     IYM0, LTOUT1, LTOUT2, STYL, x_shift, y_shift, jx_canv, jy_canv, JY, jxout, &
     jplot_in_tab, j_curve, j_canv, &
     IYMN, IYMX, JDSP, NPTMO(NRW), jlx(8), &
@@ -147,9 +147,6 @@ if (MOD10 == 3) then
     NP1 = NA1
 endif
 
-if (MARK ==  0) IST = 1
-if (MARK ==  1) IST = 8
-if (MARK == -1) IST = 15
 IYMN = plot_area%height - plot_area%ymin
 IYM0 = plot_area%ymin - plot_area%canvas_height
 IYMX = plot_area%height - plot_area%ymax

@@ -15,7 +15,7 @@ character(len=120), intent(in) :: ufnam
 double precision, intent(out) :: val
 
 logical :: uf_exists
-integer :: nt_u, nx_u, ndim_u, j, jt, jch, jtprev
+integer :: nt_u, nx_u, nscal_u, ndim_u, j, jt, jch, jtprev
 double precision :: tim1, tim2, tmp1, tmp2
 double precision, dimension(:), allocatable :: t_u, x_u, var_u
 character(len=30) :: rholbl
@@ -27,11 +27,11 @@ if (.not. uf_exists) then
     return
 endif
 
-call ufheader(TRIM(ufnam), ndim_u, nt_u, nx_u, rholbl)
+call ufheader(TRIM(ufnam), nscal_u, ndim_u, nt_u, nx_u, rholbl)
 allocate(t_u(nt_u))
 allocate(x_u(nx_u))
 allocate(var_u(nt_u*nx_u))
-call ufrd(TRIM(ufnam), ndim_u, nt_u, nx_u, t_u, x_u, var_u)
+call ufrd(TRIM(ufnam), nscal_u, ndim_u, nt_u, nx_u, t_u, x_u, var_u)
 
 ! Interpolate between time points
 if (tim_in <= t_u(1)) then
@@ -75,7 +75,7 @@ character(len=120), intent(in) :: ufnam
 double precision, intent(out) :: arr1d(*)
 
 logical :: uf_exists
-integer :: nt_u, nx_u, ndim_u, j, jt, jch, jtprev
+integer :: nt_u, nx_u, nscal_u, ndim_u, j, jt, jch, jtprev
 double precision :: tim1, tim2
 double precision, dimension(:), allocatable :: t_u, x_u, var_u, tmp1, tmp2
 character(len=30) :: rholbl
@@ -87,13 +87,13 @@ if (.not. uf_exists) then
     return
 endif
 
-call ufheader(TRIM(ufnam), ndim_u, nt_u, nx_u, rholbl)
+call ufheader(TRIM(ufnam), nscal_u, ndim_u, nt_u, nx_u, rholbl)
 allocate(t_u(nt_u))
 allocate(x_u(nx_u))
 allocate(tmp1(nx_u))
 allocate(tmp2(nx_u))
 allocate(var_u(nt_u*nx_u))
-call ufrd(TRIM(ufnam), ndim_u, nt_u, nx_u, t_u, x_u, var_u)
+call ufrd(TRIM(ufnam), nscal_u, ndim_u, nt_u, nx_u, t_u, x_u, var_u)
 
 ! Interpolate between time points
 if (tim_in <= t_u(1)) then
