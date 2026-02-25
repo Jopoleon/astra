@@ -35,9 +35,6 @@ read(57, nml=pellet, iostat=ios)
 close(57)
 
 call ufheader(TRIM(rho_abl_file), nscal_u, ndim_u, nt_u, nx_u, rholbl)
-allocate(t_u(nt_u))
-allocate(x_u(nx_u))
-allocate(var_u(nt_u*nx_u))
 call ufrd(TRIM(rho_abl_file), nscal_u, ndim_u, nt_u, nx_u, t_u, x_u, var_u)
 call uf1dr(time_abl_file, TIME, dt)
 
@@ -60,7 +57,6 @@ do jt=1, nt_u
         EXIT
     endif
 enddo
-
 
 return
 end subroutine ablation

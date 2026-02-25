@@ -2,8 +2,6 @@ module read_input
 
 implicit none
 
-integer, parameter :: n_bnd_max=256, nt_bnd_max=1500
-
 type rawScalars
     integer :: nt_all
     integer, dimension(:), allocatable :: var_index
@@ -19,8 +17,7 @@ type rawProfiles
 endtype rawProfiles
 type rawBoundary
     integer :: nt, n_theta
-    double precision, dimension(nt_bnd_max) :: time=0.
-    double precision, dimension(nt_bnd_max*n_bnd_max) :: R=0., Z=0.
+    double precision, dimension(:), allocatable :: time, R, Z
 endtype rawBoundary
 type rawCoils
     integer :: nt=0, ncoils=0
@@ -167,7 +164,7 @@ contains
     use parse_utils, only: split2array2
     use json_vars, only: varNames, profxNames
 
-    integer, parameter :: len_data_max=250000, n_unit=201
+    integer, parameter :: len_data_max=250000, n_unit=201, nbnd_max=400000
 
     logical :: skip_read=.false.
     integer :: jarr, INTYPE, jtype, nr_exp, ntim, ntim1, n_coils, IVAR
@@ -494,9 +491,6 @@ contains
             call parse_u_line(STRI, uvar, uname, factor)
             VNAMU = VNAM
             call ufheader(TRIM(uname), nscal_u, ndim_u, nt_u, nx_u, rholbl)
-            allocate(t_u(nt_u))
-            allocate(x_u(nx_u))
-            allocate(var_u(nt_u*nx_u))
             call ufrd(TRIM(uname), nscal_u, ndim_u, nt_u, nx_u, t_u, x_u, var_u)
 
             varValues(jvar) = factor*var_u(1)
@@ -513,7 +507,6 @@ contains
                 raw_scalars%error(IVAR) = 0.
                 raw_scalars%label(IVAR) = VNAM
             enddo
-            deallocate(t_u, x_u, var_u)
         endif
 
         VNAMO = VNAM
@@ -647,12 +640,9 @@ contains
             raw_boundary%nt = max(ntim, 1)
             write(*, *) 'Reading BND, dims:', raw_boundary%n_theta, raw_boundary%nt
 
-            if (raw_boundary%n_theta > n_bnd_max) then
-                write(err_msg, '(2A, i)') err_msg_exp, 'Boundary data #theta must not exceed ', n_bnd_max
-                call astra_stop(err_msg)
-            endif
-             if (raw_boundary%nt > nt_bnd_max) then
-                write(err_msg, '(2A, i)') err_msg_exp, 'Boundary data #times must not exceed ', nt_bnd_max
+            nbnd = raw_boundary%nt*raw_boundary%n_theta
+            if (nbnd > nbnd_max) then
+                write(err_msg, '(2A, i)') err_msg_exp, 'Boundary data must not exceed ', nbnd_max
                 call astra_stop(err_msg)
             endif
 
@@ -663,8 +653,9 @@ contains
 ! r_2(t_1) r_2(t_2) r_2(t_3)
 ! z_2(t_1) z_2(t_2) z_2(t_3)
 
+            allocate(raw_boundary%time(raw_boundary%nt))
             read(n_unit, *, iostat=ios) (raw_boundary%time(j), j=1, raw_boundary%nt)
-            nbnd = raw_boundary%nt*raw_boundary%n_theta
+            allocate(raw_boundary%R(nbnd), raw_boundary%Z(nbnd))
             allocate(bnd_rz(2*nbnd))
             read(n_unit, fmt=*, iostat=ios) (bnd_rz(j), j=1, 2*nbnd)
             jrt = 1
@@ -690,20 +681,13 @@ contains
             call ufheader('udb/'//trim(STRI)//'_r', nscal_u, ndim_u, nt_u, nx_u, rholbl)
             raw_boundary%n_theta = nx_u
             raw_boundary%nt = nt_u
-            if (raw_boundary%n_theta > n_bnd_max) then
-                write(err_msg, '(2A, i)') TRIM(err_msg_exp), 'Boundary data #theta must not exceed ', n_bnd_max
+            nbnd = nx_u*nt_u
+            if (nbnd > nbnd_max) then
+                write(err_msg, '(2A, i)') TRIM(err_msg_exp), 'Boundary data #theta must not exceed ', nbnd_max
                 call astra_stop(err_msg)
             endif
-            if (raw_boundary%nt > nt_bnd_max) then
-                write(err_msg, '(2A, i)') TRIM(err_msg_exp), 'Boundary data #times must not exceed ', nt_bnd_max
-                call astra_stop(err_msg)
-            endif
-
-            allocate(x_u(nx_u))
-            call ufrd('udb/' // trim(STRI) // '_r', nscal_u, ndim_u, nt_u, nx_u, raw_boundary%time(1:nt_u), x_u, raw_boundary%R(1:nx_u*nt_u))
-            call ufrd('udb/' // trim(STRI) // '_z', nscal_u, ndim_u, nt_u, nx_u, raw_boundary%time(1:nt_u), x_u, raw_boundary%Z(1:nx_u*nt_u))
-            deallocate(x_u)
-
+            call ufrd('udb/' // trim(STRI) // '_r', nscal_u, ndim_u, nt_u, nx_u, raw_boundary%time, x_u, raw_boundary%R)
+            call ufrd('udb/' // trim(STRI) // '_z', nscal_u, ndim_u, nt_u, nx_u, raw_boundary%time, x_u, raw_boundary%Z)
             VNAMO = VNAM
 
         CASE('ENDX  ')
@@ -726,9 +710,6 @@ contains
         if (LEN_TRIM(ufile_in) > 0) then ! string 'U-FILE' found in this line
 
             call ufheader(TRIM(ufile_in), nscal_u, ndim_u, nt_u, nx_u, rholbl)
-            allocate(t_u(nt_u))
-            allocate(x_u(nx_u))
-            allocate(var_u(nt_u*nx_u))
             call ufrd(TRIM(ufile_in), nscal_u, ndim_u, nt_u, nx_u, t_u, x_u, var_u)
 
             if (nx_u > NRDX) then
@@ -760,8 +741,6 @@ contains
                     raw_profiles%data(jrt) = var_u(jj + (j - 1)*nt_u)
                 enddo
             enddo
-
-            deallocate(t_u, x_u, var_u)
 
             if (INTYPE > 13 .and. INTYPE /= 19) write(*, *) 'Unknown U-file type'
             YXB = raw_profiles%data(jarr)
@@ -1377,12 +1356,13 @@ contains
 
     character(len=*), intent(in) :: uname
     integer, intent(in) :: nt, nx, n_scal, n_dim
-    double precision, intent(out) :: t_out(nt), x_out(nx), arr_out(nt*nx)
+    double precision, intent(out), dimension(:), allocatable :: t_out, x_out, arr_out
 
     integer :: ios, j, jj, n_header
     character(132) :: err_msg
 
     write(*, *) 'Reading u-file ' // TRIM(uname)
+    allocate(t_out(nt), x_out(nx), arr_out(nt*nx))
 
     open(n_unit, FILE=TRIM(uname), iostat=ios)
 
@@ -1392,7 +1372,7 @@ contains
         read(n_unit, *)
     enddo
 
-! Read data    
+! Read data
     read(n_unit, *) (t_out(j), j=1, nt)
     if (n_dim == 2) read(n_unit, *) (x_out(j) , j=1, nx)
     read(n_unit, '(1X, 6E13.6)') ((arr_out(jj + (j - 1)*nt), jj=1, nt), j=1, nx)
