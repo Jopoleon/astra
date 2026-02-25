@@ -12,7 +12,7 @@ implicit none
 double precision, intent(in) :: YR
 double precision :: VOLR
 
-TEAVR = VINT(TE, YR)/VOLR
+TEAVR = VINT(TE, YR)/VOLR(YR)
 
 return
 end function TEAVR

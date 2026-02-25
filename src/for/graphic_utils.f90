@@ -569,7 +569,7 @@ module graphic_utils
         enddo
 
         jn = 0
-        do j = 1, NB
+        do j=1, NB
             if (IBOX(j) > 0) then
                 if (JMODE == 1) jw = IP1(IBOX(j))
                 if (JMODE == 2 .or. JMODE == 3) jw = IP2(IBOX(j))
