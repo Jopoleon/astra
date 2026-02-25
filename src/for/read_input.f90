@@ -530,8 +530,8 @@ parse_exp_2d: do
         endif
 
         allocate(x_u(nx_u))
-        call ufrd('udb/' // trim(STRI) // '_r', ndim_u, nt_u, nx_u, BNDTIM(1:nt_u), x_u, BNDR(1:nx_u))
-        call ufrd('udb/' // trim(STRI) // '_z', ndim_u, nt_u, nx_u, BNDTIM(1:nt_u), x_u, BNDZ(1:nx_u))
+        call ufrd('udb/' // trim(STRI) // '_r', ndim_u, nt_u, nx_u, BNDTIM(1:nt_u), x_u, BNDR(1:nx_u*nt_u))
+        call ufrd('udb/' // trim(STRI) // '_z', ndim_u, nt_u, nx_u, BNDTIM(1:nt_u), x_u, BNDZ(1:nx_u*nt_u))
         deallocate(x_u)
 
         VNAMO = VNAM
