@@ -330,10 +330,8 @@ if (MOD10 == 6) then
         if (NAMET(J1) == '    ') JW = 0
         if (JW > 0 .and. JW <= 8) call down_label(j, TOUT) ! for all plotting modes
     enddo
+    STRI(1: 11) = 'Time=' // fmt5(YY1) // 's'
     call setColor(Red)
-    STRI(1 :  5) = 'Time='
-    STRI(6 : 10) = fmt5(YY1)
-    STRI(11: 11) = 's'
     call textvm(astra_gui%dxlet, JN2 - int(2.5*astra_gui%dylet), STRI, 11)
     return
 else if (MOD10 == 8) then
@@ -574,9 +572,9 @@ call setColor(Black)
 call rectvm(0, JN0, JN0, astra_gui%Width-1, astra_gui%Height-1)
 
 if (MOD10 == 6)  then
-    call setColor(Black)
     j = astra_gui%Width - 20*astra_gui%dxlet + 1
     jj = plot_area%height + astra_gui%dylet
+    call setColor(Black)
     call textvm(j, jj, 'time, s', 7)
 endif
 
@@ -586,6 +584,7 @@ if (KPRI >= 1 .and. KPRI <= 2) then
     j = len_trim_tab(COMMENT)
     call pscom(COMMENT, j)
 endif
+
 call setColor(Black)
 
 ! Skipping from a subplot to the next along x-axis
@@ -849,12 +848,12 @@ character(len=2) :: CHR
 character(len=42), external :: upperLabel
 
 call setColor(Black)
-call rectvm(0, 0, 0, astra_gui%Width - 1, astra_gui%Height - 1) ! Outer frame
-call textvm(0, 2, exp_header(1: 16) // upperLabel(YN, YQ), 58)
+call rectvm(0, 0, 0, astra_gui%Width - 1, astra_gui%Height - 1) ! Draw outer frame
+call textvm(0, 2, exp_header(1: 16) // upperLabel(YN, YQ), 58)  ! Type upper label
 
-call setColor(Blue)
 write(CHR, '(1I2)') active_tab(MOD10) + 1
-call textvm(astra_gui%width - 2*astra_gui%dxlet, astra_gui%dylet + 1, CHR, 2) ! Screen No.
+call setColor(Blue)
+call textvm(astra_gui%width - 2*astra_gui%dxlet, astra_gui%dylet + 1, CHR, 2) ! Type screen No.
 
 return
 end subroutine up_label
