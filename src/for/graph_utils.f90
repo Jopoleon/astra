@@ -548,10 +548,10 @@ contains
     character(len=6), intent(in), dimension(arr_size) :: var_names
 
     integer :: nameLength, editable=1
-    character(len=70), dimension(10), parameter :: titles = (/ &
+    character(len=70), dimension(8), parameter :: titles = (/ &
         'Variable control', 'Constant control', 'Times & Grids', 'Sequence control', &
         'Time interval', 'Mark times:  < 0 - skip,  0 - dim,  > 0 - color #', &
-        'Equilibrium control', '2D_Ufile', 'NBI const for beam No' /)
+        'Equilibrium control', 'NBI const for beam No' /)
 
     call menubox(TRIM(titles(id)) // null_ch, arr_size, array_in, var_names, &
         id, editable)
