@@ -1,6 +1,6 @@
 subroutine ERASXY()
 
-use outcmn_inc, only: astra_gui, White
+use graph_utils, only: astra_gui, White
 
 implicit none
 
@@ -23,7 +23,7 @@ subroutine writeData(CHORDN)
 use const_inc, only: XOUT, NAB, NA, NA1, exp_header, RTOR, ABC, BTOR, IPL, TIME, TAU, constValues
 use status_inc, only: MU, AMETR, RHO, FP
 use io_mod, only: AWD, equ_file, exp_file
-use outcmn_inc, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, &
+use graph_utils, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, &
     WarningColor, ROUT, RUNID, NRW, NTIMES, TTOUT, TOUT
 use dbl2char, only: fmt4, fmt_xf
 use json_vars, only: n_const
@@ -302,7 +302,7 @@ subroutine PUTXY(IX, IY)
 
 ! Prints x, y coordinates on GUI in "Step" mode
 
-use outcmn_inc, only: astra_gui, plot_area, MOD10, &
+use graph_utils, only: astra_gui, plot_area, MOD10, &
     scale_bnd, NTIMES, TOUT, TTOUT, &
     IDT, IDX, MODEY, LTOUT, NRW, NTOUT, active_tab, &
     NWIND3, NAMET, White, Red, Blue
@@ -499,7 +499,7 @@ subroutine set_plot_area(plot_mode)
 !  NST - for using in set_plot
 !----------------------------------------------------------------------|
 
-use outcmn_inc, only: astra_gui, plot_area, MOD10, MODEY, NST
+use graph_utils, only: astra_gui, plot_area, MOD10, MODEY, NST
 
 implicit none
 
@@ -579,7 +579,7 @@ subroutine set_plot(plot_mode)
 ! Subroutine draw frame for different modes
 
 use const_inc, only: TSCALE, TINIT, AWALL
-use outcmn_inc, only: astra_gui, plot_area, Black, MOD10, KPRI, &
+use graph_utils, only: astra_gui, plot_area, Black, MOD10, KPRI, &
     IDX, IDT, scale_bnd, pixel_ymid, meter2pixel
 use dbl2char, only: fmt_xf
 use char_manip, only: len_trim_tab
@@ -760,8 +760,8 @@ subroutine down_label(jt_in, TOUT)
 ! if mod10 != 6 or call from run then jt = LTOUT
 !---------------------------------------------------------------------
 
-use outcmn_inc, only: astra_gui, plot_area, LTOUT, MOD10, NTOUT, NRW, NTIMES, &
-    NWIND3, active_tab, NAMET, Black, Blue, curves_per_frame
+use graph_utils, only: astra_gui, plot_area, LTOUT, MOD10, NTOUT, &
+    NRW, NTIMES, NWIND3, active_tab, NAMET, Black, Blue, curves_per_frame
 use dbl2char, only: fmt_xf
 
 implicit none
@@ -841,7 +841,7 @@ end subroutine down_label
 ! Upper string of the Astra graphic window
 subroutine up_label(YN, YQ)
 
-use outcmn_inc, only: astra_gui, active_tab, MOD10, Black, Blue
+use graph_utils, only: astra_gui, active_tab, MOD10, Black, Blue
 use const_inc, only: RTOR, BTOR, IPL, ABC, exp_header
 use dbl2char, only: fmt40
 
@@ -875,7 +875,7 @@ end subroutine up_label
 !---------------------------------------------------------------------
 subroutine TIMEDT(TIME, DT)
 
-use outcmn_inc, only: astra_gui, astra_gui_ref, Black
+use graph_utils, only: astra_gui, astra_gui_ref, Black
 use dbl2char, only: fmt50
 
 implicit none

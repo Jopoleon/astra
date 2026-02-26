@@ -1,8 +1,13 @@
-module graphic_utils
+module graph_utils
 
-use outcmn_inc, only: NRW
- 
+use char_manip, only: null_ch
+use parameter_inc, only: NRD
+
 implicit none
+
+integer, parameter :: White=0, Black=1, Red=2, Blue=3, Green=5, &
+     WarningColor=30, EraseColor=31, Magenta=14, Pink=13, &
+     nplots_max=32, NRW=128, NTIMES=1024, plot_modes=9
 
 integer, dimension(NRW), parameter :: IP1 = (/ &
       1,   3,   5,   7,   9,  11,  13,  15,   2,   4,   6,  8,   10,  12,  14,  16, &
@@ -41,7 +46,225 @@ integer, dimension(NRW), parameter :: IP31 = (/ &
      97,  98, 101, 102, 105, 106, 109, 110,  99, 100, 103, 104, 107, 108, 111, 112, &
     113, 114, 117, 118, 115, 116, 119, 120, 121, 122, 125, 126, 123, 124, 127, 128 /)
 
+type astra_X11_window
+    integer :: Width, Height, Xpos, Ypos, dxlet, dylet, LineWidth, yMessage
+    double precision :: resizeGraph
+    character(len=128) :: title='Per aspera ad ASTRA' // null_ch
+endtype astra_X11_window
+
+type plot_frame
+    integer :: width, height, xmin, xmax, ymin, ymax, nx_canvas, ny_canvas, canvas_height, canvas_width
+endtype plot_frame
+
+! Colors, array AstraColorNum in Astra2XW.c
+integer, dimension(NRW) :: NWIND1, NWIND3, NWIND4, NWIND7, NWINDX
+integer :: NDTNAM, NTOUT, NROUT, LTOUT, IPOUT, MOD10, NXOUT
+integer :: MODEY, IDX, IDT, KPRI, NST, AVERS, ARLEAS, AEDIT
+integer, dimension(plot_modes) :: active_tab, curves_per_frame
+double precision, dimension(NRW)   :: GRAL, GRAP, OSHIFT, OSHIFR, SCALET, SCALER
+double precision, dimension(NRD, NRW) :: ROUT
+double precision :: TIM7(4), scale_bnd, pixel_ymid, meter2pixel
+double precision :: TTOUT(NTIMES), TOUT(NTIMES, NRW)
+
+character(len=4), dimension(NRW) :: NAMET, NAMER
+character(len=6), dimension(NRW) :: NAMEX
+character(len=6), allocatable :: DTNAME(:)
+character(len=6), dimension(4) :: NAM7
+character(132) :: VERSION, RUNID
+type(astra_X11_window) :: astra_gui_ref, astra_gui
+type(plot_frame) :: plot_area_ref, plot_area
+
 contains
+
+!---------------------------------------------------------------------
+    subroutine gui_init
+
+    use io_mod, only: resize
+    use const_inc, only: AB, TINIT, TSCALE, XOUT
+    use json_vars, only: n_intern, internNames
+
+    integer :: i, j, ios, j0, j1, jgrid, jj, plot_mode
+    character(len=132) :: STRI
+    integer, external :: plotMode
+
+    TTOUT(1) = -1.d10
+    TIM7(1) = TINIT
+    TIM7(3) = abs(TSCALE)/8.
+
+! Constants
+
+    pixel_ymid  = 0.
+    meter2pixel = 0.
+
+    VERSION = repeat(' ', 32)
+
+    IDT = 5
+
+! Screen parameters: default (-resize 1)
+
+    astra_gui_ref%Width  = 660
+    astra_gui_ref%Height = 550
+    astra_gui_ref%Xpos   = 470
+    astra_gui_ref%Ypos   = 10
+    astra_gui_ref%dxlet  = 8
+    astra_gui_ref%dylet  = 13
+    astra_gui_ref%LineWidth = 1
+    astra_gui_ref%yMessage  = 426
+    astra_gui_ref%resizeGraph = 1.d0
+
+    plot_area_ref%width  = 640
+    plot_area_ref%height = 350
+    plot_area_ref%nx_canvas = 0
+    plot_area_ref%ny_canvas = 0
+    plot_area_ref%xmin = 0
+    plot_area_ref%xmax = 0
+    plot_area_ref%ymin = 0
+    plot_area_ref%ymax = 0
+
+! Astra colors: 
+!   #0 - background, ##1-7 - plots 1-7
+!   #7 - also color for REPORT (user's output)
+!   #8 - not used
+!   #9 - delete curve, #10 - standard text color (black)
+!   #11 - Black
+!   #12 - warning messages, axis upper marks in View
+!   #13 -> #15 -reserved (black)
+
+    MODEY  = 1
+    LTOUT  = 1
+    IPOUT  = 1
+    active_tab = 0
+    OSHIFT = 0.
+    OSHIFR = 0.
+    GRAL   = 0.
+    GRAP   = AB
+
+    NAM7 = (/ 'Tmin', 'Tmax', 'Tmark', 'Style' /)
+    TIM7 = (/ 0, 9999, 9999, 1 /)
+
+! Output windows
+
+    NWIND1 = (/ (j, j=1, NRW) /)
+    NWIND3 = (/ (j, j=1, NRW) /)
+    NWIND7 = (/ (j, j=1, NRW) /)
+    do j=1, 4
+        NWIND4(j) = 4*j-3
+        NWIND4(j+4)  = NWIND4(j) + 2
+        NWIND4(j+8)  = NWIND4(j) + 1
+        NWIND4(j+12) = NWIND4(j) + 3
+    enddo
+    do j=17, NRW
+        NWIND4(j) = NWIND4(j-16) + 16
+    enddo
+    curves_per_frame = (/ 16, 8, 8, 2, 2, 8, 4, 0, 0 /)
+
+    DTNAME(1: n_intern) = internNames
+    do j=1, 30
+        i = (j-1)*4 + n_intern
+        write(DTNAME(i+1), '(A, i0)') 'DTeq', j
+        write(DTNAME(i+2), '(A, i0)') 'BEeq', j
+        write(DTNAME(i+3), '(A, i0)') 'ENeq', j
+        write(DTNAME(i+4), '(A, i0)') ' Keq', j
+    enddo
+
+!-------------------------
+! Parse file "exe/version"
+
+    open(131, FILE='exe/version', iostat=ios)
+    if (ios /= 0) then
+        write(*, *) '>>> Warning: Unknown version'
+    else
+        do j=1,5
+            read(131, '(A)') STRI
+        enddo
+        j = index(STRI, 'Version')
+        VERSION = STRI(j: j+30) // null_ch
+        close(131)
+        j0 = index(VERSION, '.')
+        if (j0 == 0) then
+            write(*, *) '>>> Warning: Unknown version'
+        else
+            read(VERSION(j0-1: j0-1), *) AVERS 
+            read(VERSION(j0+1: j0+1), *) ARLEAS 
+            j1 = INDEX(VERSION(j0+1:), '.')
+            if (j1 == 0) then
+                AEDIT = 0
+            else
+                read(VERSION(j0+j1+1: j0+j1+1), *) AEDIT
+            endif
+        endif
+    endif
+
+    RUNID = runidLabel()
+    jj = max(0, (15 + NTOUT - 64)/16)
+
+!-----------------
+! Main GUI window
+
+    astra_gui%LineWidth = int(0.85*resize) + astra_gui_ref%LineWidth
+    astra_gui%dxlet    = resize*astra_gui_ref%dxlet
+    astra_gui%dylet    = resize*astra_gui_ref%dylet
+    astra_gui%yMessage = resize*astra_gui_ref%yMessage + 135
+    astra_gui%Width    = resize*astra_gui_ref%width
+    astra_gui%Height   = resize*(astra_gui_ref%Height + 2*jj*resize*(astra_gui_ref%dylet + 2))
+    astra_gui%Xpos  = astra_gui_ref%Xpos
+    astra_gui%Ypos  = astra_gui_ref%Ypos
+    astra_gui%title = astra_gui_ref%title
+    astra_gui%resizeGraph = resize
+
+    plot_area%width  = resize*plot_area_ref%width
+    plot_area%height = resize*plot_area_ref%height
+
+    call initvm(astra_gui%xpos, astra_gui%ypos, astra_gui%Width, astra_gui%Height, &
+        astra_gui%LineWidth, astra_gui%title, LEN(astra_gui%title)) ! Initialise graphic window
+    plot_mode = 1
+    NST = 0
+    MOD10 = 1
+    plot_mode = plotMode(MOD10, MODEY)
+    call set_plot_area(plot_mode)
+    call set_plot(plot_mode)
+
+    jgrid = XOUT + 0.49
+
+    call taskmenu(jgrid) ! Task menu
+    call textbf(0, astra_gui%Height - int(104*astra_gui%resizeGraph), RUNID, 80) ! Task ID
+
+    end subroutine gui_init
+
+!---------------------------------------------------------------------
+    function runidLabel() result(runid_label)
+
+    use io_mod, only: equ_file, exp_file
+
+    character(len=:), allocatable :: runid_label
+
+    integer :: time_arr(8)
+    integer :: year, month, day, hour, minute, j
+    character(len=3)  :: vers
+    character(len=32) :: datetime
+    character(len=256) :: tmp
+
+    call date_and_time(values=time_arr)
+
+    year   = time_arr(1)
+    month  = time_arr(2)
+    day    = time_arr(3)
+    hour   = time_arr(5)
+    minute = time_arr(6)
+
+    write(datetime, "(I2.2,'-',I2.2,'-',I2.2,' ',I2.2,':',I2.2)") &
+        day, month, mod(year,100), hour, minute
+
+    j = index(VERSION, 'Version')
+    vers = VERSION(j+8:j+10)
+
+    tmp = "ASTRA " // vers // " -- " // trim(datetime) // &
+          " -- Model: " // trim(equ_file) // &
+          " -- Data: "  // trim(exp_file)
+
+    runid_label = trim(tmp)
+
+    end function runidLabel
 
 !---------------------------------------------------------------------
     subroutine SCAL(NOUT, SN, SO, OUT, NP, NDIM)
@@ -125,7 +348,6 @@ contains
     subroutine CMARK(xpos_in, ypos_in, prof_yscale, yshift, prof_name, STYL, jplot_parity)
 ! Mark variable/scale in 1 & 2 modes
 
-    use outcmn_inc, only: plot_area
     use dbl2char, only: fmt4
 
     integer, intent(in) :: STYL, xpos_in, ypos_in, jplot_parity
@@ -165,7 +387,6 @@ contains
     subroutine CMARKT(xpos_in, ypos_in, sig_yscale, yshift, sig_name, STYL)
 ! Mark variable/scale in 6th (time) mode
 
-    use outcmn_inc, only: astra_gui
     use dbl2char, only: fmt4
 
     integer, intent(in) :: xpos_in, ypos_in, STYL
@@ -209,8 +430,6 @@ contains
 ! NP  is a number of points to plot
 ! NPO is a number of points to erase
 ! The points of the array YOLD are used for erasing
-
-    use outcmn_inc, only: EraseColor
 
     integer, intent(in) :: STYL, NP, np_old, ICOLOR
     double precision, intent(in), dimension(np) :: xold, yold, xnew, ynew
@@ -343,7 +562,7 @@ contains
 !---------------------------------------------------------------------
     subroutine ASTWIN(NB, IBOX, NAME, yscale, yshift, MOD10, YMODE)
 
-    use char_manip, only: to_upper, null_ch
+    use char_manip, only: to_upper
 
     integer, parameter :: NRW16=NRW+16
 
@@ -496,8 +715,6 @@ contains
 
 !---------------------------------------------------------------------
     subroutine ASXWIN(AB, NB, IBOX, NAME, yscale, yshift, r_min, r_max, MOD10, YMODE)
-
-    use char_manip, only: null_ch
 
     integer, parameter :: NRW16=NRW+16
 
@@ -668,4 +885,4 @@ contains
     return
     end subroutine ASXWIN
 
-end module graphic_utils
+end module graph_utils

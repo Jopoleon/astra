@@ -37,7 +37,7 @@ use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, exp_header, &
    NA, NB1, NA1, NAB, LEQ, TIME, TAU, TINIT, TSCALE, &
    TSTART, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
    BTOR, IPL, constValues, varValues, internValues
-use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, &
+use graph_utils, only: astra_gui, astra_gui_ref, plot_area, &
     Black, Blue, Magenta, WarningColor, &
     active_tab, curves_per_frame, MOD10, LTOUT, IPOUT, MODEY, &
     NWINDX, NWIND1, NWIND3, NWIND4, NWIND7, &
@@ -45,8 +45,7 @@ use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, &
     NAMER, NAMET, NAMEX, SCALER, SCALET, ROUT, OSHIFR, OSHIFT, &
     DTNAME, runid, VERSION, AVERS, ARLEAS, AEDIT, &
     GRAP, GRAL, TIM7, NAM7, KPRI, nplots_max, &
-    NTIMES, TTOUT, TOUT
-use graphic_utils, only: ASTWIN, ASXWIN, ASKINT
+    NTIMES, TTOUT, TOUT, ASTWIN, ASXWIN, ASKINT
 use io_mod, only: n_sbr, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
 use char_manip, only: null_ch, beep_ch
 use debugger, only: markloc, debug, astra_stop
@@ -622,7 +621,7 @@ subroutine graph_output(MARK, PRMARK, NAMEP, ITO)
 use const_inc, only: NA
 use status_inc, only: MU
 use io_mod, only: TASK
-use outcmn_inc, only: MOD10, nplots_max, NTIMES, TTOUT, TOUT
+use graph_utils, only: MOD10, nplots_max, NTIMES, TTOUT, TOUT
 use debugger, only: markloc, debug
 
 implicit none
@@ -660,7 +659,7 @@ subroutine refresh_plot(IFKL, MARK, PRMARK, PSNAME)
 ! Corresponds to block from statement 201
 
 use io_mod, only: TASK
-use outcmn_inc, only: astra_gui, KPRI, MOD10, MODEY, RUNID, &
+use graph_utils, only: astra_gui, KPRI, MOD10, MODEY, RUNID, &
     WarningColor, nplots_max, NTIMES, TOUT, TTOUT
 use const_inc, only: XOUT, TIME, TAU, NA
 use status_inc, only: MU

@@ -7,7 +7,7 @@ program astra
 ! License as published by the Free Software Foundation;
 ! version 2.1 of the License
 
-use outcmn_inc, only: astra_gui, astra_gui_ref, outcmn_init, initMainWindow
+use graph_utils, only: astra_gui, astra_gui_ref, gui_init
 use io_mod, only: TASK, io_init
 use cpu_usage, only: cpu_start, wall_start, cpu_report
 use const_inc, only: IPART, const_init, &
@@ -58,8 +58,7 @@ IPART = 1   ! Mark initial iteration section
 !--------------------
 
 if (TASK(1: 3) /= 'BGD') then
-    call outcmn_init
-    call initMainWindow
+    call gui_init
 endif
 
 call SETARX(1)

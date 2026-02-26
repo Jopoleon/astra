@@ -18,7 +18,14 @@ use status_inc, only: AMETR, MU, SHIF, ELON, TRIA
 use const_inc, only: XOUT, NAB, NA1, NA1E, ABC, TINIT, TSCALE, RTOR, &
     MEQUIL, LEQ, TIME
 use io_mod, only: IFDFAX, NPTM, XAXES, DATAX, equ_file, TOUTX
-use outcmn_inc, only: astra_gui, plot_area, &
+use read_input, only: raw_profiles
+use dbl2char, only: fmt_xf
+use char_manip, only: len_trim_tab, str_in_list
+use debugger, only: markloc, debug, astra_stop
+use json_vars, only: profxNames
+use standard_functions, only: AFVAL
+use graph_utils, only: nmark, cmark, cmarkt, plot_curve, update_curve, &
+    scal, astra_gui, plot_area, &
     curves_per_frame, active_tab, MOD10, NWIND1, NWIND3, NWINDX, &
     KPRI, nplots_max, NTIMES, NRW, &
     NROUT, ROUT, OSHIFR, NAMER, SCALER, &
@@ -26,13 +33,6 @@ use outcmn_inc, only: astra_gui, plot_area, &
     NXOUT, NAMEX, LTOUT, &
     GRAL, GRAP, pixel_ymid, meter2pixel, &
     Black, WarningColor, EraseColor, Red, Blue, Green, White
-use read_input, only: raw_profiles
-use dbl2char, only: fmt_xf
-use char_manip, only: len_trim_tab, str_in_list
-use debugger, only: markloc, debug, astra_stop
-use json_vars, only: profxNames
-use standard_functions, only: AFVAL
-use graphic_utils, only: nmark, cmark, cmarkt, plot_curve, update_curve, scal
 
 implicit none
 
@@ -485,9 +485,8 @@ subroutine plot_lcfs(ifnew, IYO, time_in)
 ! IFNEW < 0 Don't mark resonances q=m/n
 ! IFNEW > 10 Call from Review. (JIFNEW-10) is used to control erasing
 
-use outcmn_inc, only: Red, EraseColor, pixel_ymid, meter2pixel
 use read_input, only: raw_boundary
-use graphic_utils, only: nmark
+use graph_utils, only: nmark, Red, EraseColor, pixel_ymid, meter2pixel
 
 implicit none
 
@@ -560,10 +559,9 @@ subroutine plot_wall
 ! Plot vessel components reading them from json machine file
 
 use const_inc, only: AB, ELONM, RTOR, TRICH, GP2
-use outcmn_inc, only: Blue, White, pixel_ymid, meter2pixel
 use debugger, only: debug
 use machine_config, only: config, json_cfg, cfg_exists
-use graphic_utils, only: plot_curve
+use graph_utils, only: plot_curve, Blue, White, pixel_ymid, meter2pixel
 
 implicit none
 
@@ -617,7 +615,7 @@ double precision function abscissa(YIN)
 ! Input: MODEX, YIN, FP
 ! Output: Value a=YIN mapped to the current abscissa
 
-use outcmn_inc, only: MOD10
+use graph_utils, only: MOD10
 use status_inc, only: AMETR, FP_NORM
 use const_inc, only: XOUT, AB, ABC, ROC, NA1
 use numerical_tools, only: QUADIN
@@ -666,10 +664,9 @@ subroutine plot_flux_surfaces
 !---------------------------------------------------------------------
 ! Redraw magnetic surfaces:
 
-use outcmn_inc, only: Magenta, pixel_ymid, meter2pixel
 use const_inc, only: NEQUIL, MEQUIL
 use parameters_a2equil, only: equil_now
-use graphic_utils, only: update_curve
+use graph_utils, only: update_curve, Magenta, pixel_ymid, meter2pixel
 
 implicit none
 

@@ -37,7 +37,7 @@ class ININAM:
 
 use parameter_inc, only: n_sbr_max, NRD
 use io_mod, only: sbr_name, IFSBX, n_sbr, awd
-use outcmn_inc
+use graph_utils
 use const_inc
 use status_inc
 use debugger, only: markloc
@@ -624,7 +624,7 @@ class RADOUT:
 use parameter_inc
 use const_inc
 use status_inc
-use outcmn_inc
+use graph_utils
 use standard_functions
 use debugger, only: markloc, debug
 
@@ -657,7 +657,7 @@ subroutine TIMOUT
 use parameter_inc
 use const_inc
 use status_inc
-use outcmn_inc
+use graph_utils
 use standard_functions
 use debugger, only: markloc, debug
 

@@ -28,8 +28,7 @@ $(OBJ_DIR)/const.o \
 $(OBJ_DIR)/dbl2char.o \
 $(OBJ_DIR)/time_functions.o \
 $(OBJ_DIR)/io_mod.o \
-$(OBJ_DIR)/outcmn.o \
-$(OBJ_DIR)/graphic_utils.o \
+$(OBJ_DIR)/graph_utils.o \
 $(OBJ_DIR)/machine_config.o \
 $(OBJ_DIR)/status.o \
 $(OBJ_DIR)/auxiliary.o \
