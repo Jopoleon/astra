@@ -1,18 +1,3 @@
-! 10.03.95 G.P.
-! 19.11.20 GIT major f90 cleaning
-!---------------------------------------------------------------------
-integer function IFKEY_(IFKL)
-! IFKEY for calls from c
-
-implicit none
-
-integer, intent(in) :: IFKL
-integer :: IFKEY
-
-IFKEY_ = IFKEY(IFKL)
-
-end function IFKEY_
-
 !---------------------------------------------------------------------
 integer function IFKEY(IFKL)
 !---------------------------------------------------------------------
@@ -51,6 +36,7 @@ use char_manip, only: null_ch, beep_ch
 use debugger, only: markloc, debug, astra_stop
 use json_vars, only: internNames, constNames, varNames, n_const, n_var, n_intern
 use cpu_usage, only: cpu_report
+use auxiliary, only: lineav
 
 implicit none
 
@@ -66,7 +52,7 @@ integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
     YEAR, MONTH, DAY, HOUR, MINUTE, time_arr(8)
 ! plot_arr dimension: 4*NRD(Mode 5, 8) 320(7) 2*NTIMES(Mode 6) 2*NRD(Modes 1-4)
 integer :: ITO(NTIMES, nplots_max+2)
-double precision :: LINEAV, CHORDN, ABD, ALFA, TIMEB, TROUT, TPOUT=0.d0
+double precision :: CHORDN, ABD, ALFA, TIMEB, TROUT, TPOUT=0.d0
 double precision, allocatable :: varValues_old(:) 
 double precision, dimension(NTIMES) :: PRMARK, TIMOD4
 double precision, dimension(NRD) :: YWA, YWB, YWC
@@ -618,6 +604,7 @@ use status_inc, only: MU
 use io_mod, only: TASK
 use graph_utils, only: MOD10, nplots_max, NTIMES, TTOUT, TOUT, show_plots
 use debugger, only: markloc, debug
+use auxiliary, only: lineav
 
 implicit none
 
@@ -625,7 +612,7 @@ integer, intent(in) :: MARK
 integer, intent(inout) :: ITO(NTIMES, nplots_max+2)
 
 integer :: jt
-double precision :: CHORDN, lineav
+double precision :: CHORDN
 
 call markloc('graph_output', debug_lev=2*debug)
 
@@ -658,6 +645,7 @@ use graph_utils, only: astra_gui, KPRI, MOD10, MODEY, RUNID, &
 use const_inc, only: XOUT, TIME, TAU, NA
 use status_inc, only: MU
 use debugger, only: markloc, debug
+use auxiliary, only: lineav
 
 implicit none
 
@@ -666,7 +654,7 @@ character(len=*) :: PSNAME
 
 integer :: plot_mode, j
 integer :: ITO(NTIMES, nplots_max+2)
-double precision :: CHORDN, lineav
+double precision :: CHORDN
 character(len=132) :: STRI
 integer, external :: plotMode
 
@@ -711,28 +699,6 @@ endif
 
 return
 end subroutine refresh_plot
-
-!---------------------------------------------------------------------
-double precision function LINEAV
-
-! LINEAV [10#19/m#3]: Horizontal chord average density (r) [m]
-! Integral {0, r} ( NE ) dl / a
-
-use const_inc, only: NA, ABC, NA1
-use status_inc, only: AMETR, NE
-
-implicit none
-
-integer j
-
-LINEAV = 2.*AMETR(1)*NE(1)
-do j=2, NA
-    LINEAV = LINEAV + (AMETR(j) - AMETR(j-1))*(NE(j) + NE(j-1))
-enddo
-LINEAV = 0.5*(LINEAV + (ABC - AMETR(NA))*(NE(NA1) + NE(NA)))/ABC
-
-return
-end function lineav
 
 !---------------------------------------------------------------------
 subroutine menutable(arr_size, array_in, var_names, id)

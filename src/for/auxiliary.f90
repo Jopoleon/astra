@@ -273,4 +273,24 @@ contains
     return
     end subroutine OLDNEW
 
+!---------------------------------------------------------------------
+    double precision function LINEAV
+
+! LINEAV [10#19/m#3]: Horizontal chord average density (r) [m]
+! Integral {0, r} ( NE ) dl / a
+
+    use const_inc, only: NA, ABC, NA1
+    use status_inc, only: AMETR, NE
+
+    integer :: j
+
+    LINEAV = 2.*AMETR(1)*NE(1)
+    do j=2, NA
+        LINEAV = LINEAV + (AMETR(j) - AMETR(j-1))*(NE(j) + NE(j-1))
+    enddo
+    LINEAV = 0.5*(LINEAV + (ABC - AMETR(NA))*(NE(NA1) + NE(NA)))/ABC
+
+    return
+    end function lineav
+
 end module auxiliary
