@@ -2,17 +2,14 @@ module outcmn_inc
 
 use parameter_inc, only: NRD
 use char_manip, only: null_ch
-use io_mod, only: resize
-use const_inc, only: AB, TINIT, TSCALE
-use json_vars, only: n_intern, internNames
 
 implicit none
 
-type astra_xwindow
+type astra_X11_window
     integer :: Width, Height, Xpos, Ypos, dxlet, dylet, LineWidth, yMessage
     double precision :: resizeGraph
     character(len=128) :: title='Per aspera ad ASTRA' // null_ch
-endtype astra_xwindow
+endtype astra_X11_window
 
 type plot_frame
     integer :: width, height, xmin, xmax, ymin, ymax, nx_canvas, ny_canvas, canvas_height, canvas_width
@@ -28,7 +25,7 @@ integer :: MODEY, IDX, IDT, KPRI, NST, AVERS, ARLEAS, AEDIT
 integer, dimension(plot_modes) :: active_tab, curves_per_frame
 double precision, dimension(NRW)   :: GRAL, GRAP, OSHIFT, OSHIFR, SCALET, SCALER
 double precision, dimension(NRD, NRW) :: ROUT
-double precision :: TIM7(4), scale_bnd, pixel_ymid, meter2pixel, resizeGraph
+double precision :: TIM7(4), scale_bnd, pixel_ymid, meter2pixel
 double precision :: TTOUT(NTIMES), TOUT(NTIMES, NRW)
 
 character(len=4), dimension(NRW) :: NAMET, NAMER
@@ -36,13 +33,16 @@ character(len=6), dimension(NRW) :: NAMEX
 character(len=6), allocatable :: DTNAME(:)
 character(len=6), dimension(4) :: NAM7
 character(132) :: VERSION, RUNID
-type(astra_xwindow) :: astra_gui_ref, astra_gui
+type(astra_X11_window) :: astra_gui_ref, astra_gui
 type(plot_frame) :: plot_area_ref, plot_area
 
 contains
 
 !---------------------------------------------------------------------
     subroutine outcmn_init
+
+    use const_inc, only: AB, TINIT, TSCALE
+    use json_vars, only: n_intern, internNames
 
     integer :: i, j, ios, j0, j1
     character(len=132) :: STRI
@@ -55,7 +55,6 @@ contains
 
     pixel_ymid  = 0.
     meter2pixel = 0.
-    resizeGraph = resize
 
     VERSION = repeat(' ', 32)
 
@@ -236,6 +235,7 @@ contains
     subroutine initMainWindow
 
     use const_inc, only: XOUT
+    use io_mod, only: resize
 
     integer :: jgrid, jj, plot_mode
     integer, external :: plotMode
@@ -244,19 +244,19 @@ contains
     jj = max(0, (15 + NTOUT - 64)/16)
 
 ! Resize
-    astra_gui%LineWidth = int(0.85*resizeGraph) + astra_gui_ref%LineWidth
-    astra_gui%dxlet    = resizeGraph*astra_gui_ref%dxlet
-    astra_gui%dylet    = resizeGraph*astra_gui_ref%dylet
-    astra_gui%yMessage = resizeGraph*astra_gui_ref%yMessage + 135
-    astra_gui%Width    = resizeGraph*astra_gui_ref%width
-    astra_gui%Height   = resizeGraph*(astra_gui_ref%Height + 2*jj*resizeGraph*(astra_gui_ref%dylet + 2))
+    astra_gui%LineWidth = int(0.85*resize) + astra_gui_ref%LineWidth
+    astra_gui%dxlet    = resize*astra_gui_ref%dxlet
+    astra_gui%dylet    = resize*astra_gui_ref%dylet
+    astra_gui%yMessage = resize*astra_gui_ref%yMessage + 135
+    astra_gui%Width    = resize*astra_gui_ref%width
+    astra_gui%Height   = resize*(astra_gui_ref%Height + 2*jj*resize*(astra_gui_ref%dylet + 2))
     astra_gui%Xpos  = astra_gui_ref%Xpos
     astra_gui%Ypos  = astra_gui_ref%Ypos
     astra_gui%title = astra_gui_ref%title
-    astra_gui%resizeGraph = resizeGraph
+    astra_gui%resizeGraph = resize
 
-    plot_area%width  = resizeGraph*plot_area_ref%width
-    plot_area%height = resizeGraph*plot_area_ref%height
+    plot_area%width  = resize*plot_area_ref%width
+    plot_area%height = resize*plot_area_ref%height
 
     call initvm(astra_gui%xpos, astra_gui%ypos, astra_gui%Width, astra_gui%Height, &
         astra_gui%LineWidth, astra_gui%title, LEN(astra_gui%title)) ! Initialise graphic window
@@ -270,7 +270,7 @@ contains
     jgrid = XOUT + 0.49
 
     call taskmenu(jgrid) ! Task menu
-    call textbf(0, astra_gui%Height - int(104*resizeGraph), RUNID, 80) ! Task ID
+    call textbf(0, astra_gui%Height - int(104*astra_gui%resizeGraph), RUNID, 80) ! Task ID
 
     return
     end subroutine initMainWindow

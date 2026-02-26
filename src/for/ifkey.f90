@@ -37,7 +37,7 @@ use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, exp_header, &
    NA, NB1, NA1, NAB, LEQ, TIME, TAU, TINIT, TSCALE, &
    TSTART, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
    BTOR, IPL, constValues, varValues, internValues
-use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
+use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, &
     Black, Blue, Magenta, WarningColor, &
     active_tab, curves_per_frame, MOD10, LTOUT, IPOUT, MODEY, &
     NWINDX, NWIND1, NWIND3, NWIND4, NWIND7, &
@@ -46,14 +46,12 @@ use outcmn_inc, only: astra_gui, astra_gui_ref, plot_area, resizeGraph, &
     DTNAME, runid, VERSION, AVERS, ARLEAS, AEDIT, &
     GRAP, GRAL, TIM7, NAM7, KPRI, nplots_max, &
     NTIMES, TTOUT, TOUT
-use io_mod, only: n_sbr, NGR, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
-use dbl2char, only: fmt6
-use char_manip, only: str_in_list, null_ch, beep_ch
+use graphic_utils, only: ASTWIN, ASXWIN, ASKINT
+use io_mod, only: n_sbr, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
+use char_manip, only: null_ch, beep_ch
 use debugger, only: markloc, debug, astra_stop
 use json_vars, only: internNames, constNames, varNames, n_const, n_var, n_intern
 use cpu_usage, only: cpu_report
-use numerical_tools, only: smooth
-use graphic_utils, only: asxwin, astwin, askint
 
 implicit none
 
@@ -663,7 +661,7 @@ subroutine refresh_plot(IFKL, MARK, PRMARK, PSNAME)
 
 use io_mod, only: TASK
 use outcmn_inc, only: astra_gui, KPRI, MOD10, MODEY, RUNID, &
-    WarningColor, nplots_max, resizeGraph, NTIMES, TOUT, TTOUT
+    WarningColor, nplots_max, NTIMES, TOUT, TTOUT
 use const_inc, only: XOUT, TIME, TAU, NA
 use status_inc, only: MU
 use debugger, only: markloc, debug
@@ -696,7 +694,7 @@ call set_plot(plot_mode)
 
 j = XOUT + 0.49
 call TaskMenu(j)
-call textbf(0, astra_gui%Height - int(104.*resizeGraph), RUNID, 80) ! Task ID
+call textbf(0, astra_gui%Height - int(104.*astra_gui%resizeGraph), RUNID, 80) ! Task ID
 if (IFKL == 256 .and. TASK(1: 3) /= 'DSP') then
     call PSCLOSE
     return

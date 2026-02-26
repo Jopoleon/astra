@@ -238,7 +238,7 @@ module graphic_utils
 !---------------------------------------------------------------------
     subroutine NMARK(POINT, STYL)
 
-    use outcmn_inc, only: resizeGraph
+    use io_mod, only: resize
 
     integer, parameter :: n_symbols=7, sym_points=16
     integer, parameter, dimension(n_symbols) :: sym_size = (/16, 13, 5, 9, 14, 9, 10/)
@@ -273,8 +273,8 @@ module graphic_utils
 
     IST = max(1, min(STYL, 7))
     do J=1, sym_size(IST)
-        xsym(J) = POINT(1) + NINT(resizeGraph*dx(J, IST))
-        ysym(J) = POINT(2) + NINT(resizeGraph*dy(J, IST))
+        xsym(J) = POINT(1) + NINT(resize*dx(J, IST))
+        ysym(J) = POINT(2) + NINT(resize*dy(J, IST))
     enddo
     call drawcurve(0, sym_size(IST), xsym, ysym)
 

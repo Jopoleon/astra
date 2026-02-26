@@ -1050,7 +1050,7 @@ int layoutbox_(char title[], char template[], char array[], INT_ *len,
     INT_ *nrows, INT_ *ngroup, INT_ *add_sep_line)
 
 /*
-Called from ASXWIN and ASTWIN (file src/for/surv.f90) , invoked by key "M" from IFKEY
+Called from ASXWIN and ASTWIN (file src/for/graphic_utils.f90), called by key "M" from IFKEY
 
 Input:
     title        - Title of the table

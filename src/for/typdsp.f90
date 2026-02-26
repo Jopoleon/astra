@@ -303,7 +303,7 @@ subroutine PUTXY(IX, IY)
 ! Prints x, y coordinates on GUI in "Step" mode
 
 use outcmn_inc, only: astra_gui, plot_area, MOD10, &
-    scale_bnd, resizeGraph,  NTIMES, TOUT, TTOUT, &
+    scale_bnd, NTIMES, TOUT, TTOUT, &
     IDT, IDX, MODEY, LTOUT, NRW, NTOUT, active_tab, &
     NWIND3, NAMET, White, Red, Blue
 use status_inc, only: AMETR, SHIF, ELON, TRIA, FP, RHO
@@ -323,7 +323,7 @@ double precision :: DX, DY, YX, YX1, YY, YY1, YA, YA1, YD, YE, YT, &
 character(len=80) :: STRI
 integer, external :: GETIME
 
-JLR = astra_gui%Height - int(125*resizeGraph)
+JLR = astra_gui%Height - int(125*astra_gui%resizeGraph)
 if (MOD10 <= 0) return
 
 STRI = repeat(' ', 80)
@@ -761,7 +761,7 @@ subroutine down_label(jt_in, TOUT)
 !---------------------------------------------------------------------
 
 use outcmn_inc, only: astra_gui, plot_area, LTOUT, MOD10, NTOUT, NRW, NTIMES, &
-    NWIND3, active_tab, NAMET, Black, Blue, curves_per_frame, resizeGraph
+    NWIND3, active_tab, NAMET, Black, Blue, curves_per_frame
 use dbl2char, only: fmt_xf
 
 implicit none
@@ -782,7 +782,7 @@ else
     call setColor(Blue)
 endif
 
-fshift = int(10*resizeGraph)
+fshift = int(10*astra_gui%resizeGraph)
 
 if (MOD10 == 6) then
 
@@ -901,7 +901,7 @@ subroutine const2ps
 
 use const_inc, only: constValues, varValues
 use char_manip, only: null_ch
-use outcmn_inc, only: resizeGraph
+use io_mod, only: resize
 use dbl2char, only: fmt_xf
 use json_vars, only: n_const, n_var, varNames
 
@@ -921,8 +921,8 @@ character(len=80) :: STRI
 
 ! Writing constants
 
-JNY = 540*resizeGraph
-JNX = 10*resizeGraph
+JNY = 540*resize
+JNX = 10*resize
 
 ps_loop: do J2=1, 11
 
