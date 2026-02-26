@@ -259,43 +259,23 @@ return
 end subroutine writeData
 
 !---------------------------------------------------------------------
-integer function GETIME(TIME, TIMES, NNOUT)
-! The function returns
-!  if NNOUT=1  then GETIME=1
-!  otherwise
-!     GETIME = an index of the array TIMES(1:NNOUT) element >= TIME
+integer function TimeIndex(time_in, time_arr, ntim)
+! TimeIndex = 1st index of the array time_arr(1:ntim) element >= time_in
+! Returns 1 if time_arr(1) >= time_in, ntim if time_arr(ntim) < time_in
+! time_arr has to be monotonically increasing  
 
 implicit none
 
-integer, intent(in) :: NNOUT
-double precision, intent(in) :: TIMES(*)
-double precision, intent(inout) :: TIME
+integer, intent(in) :: ntim
+double precision, intent(in) :: time_in, time_arr(*)
 
-integer :: j
+integer :: pos
 
-if (NNOUT <= 1) then
-    GETIME = 1
-    return
-endif
-
-if (TIME <= TIMES(1)) then
-    GETIME = 1
-    TIME = TIMES(1)
-    return
-endif
-
-do j=2, NNOUT
-    if (TIMES(j) >= TIME) then
-        GETIME = j
-        return
-    endif
-enddo
-
-GETIME = NNOUT
-TIME = TIMES(NNOUT)
+pos = findloc(time_arr(1: ntim) >= time_in, .true., dim=1)
+TimeIndex = merge(pos, ntim, pos /= 0)
 
 return
-end function GETIME
+end function TimeIndex
 
 !---------------------------------------------------------------------
 subroutine PUTXY(IX, IY)
@@ -321,7 +301,7 @@ integer :: JX, JY, JLR, j, j1, JC, JL, MODEX, JW, JN2
 double precision :: DX, DY, YX, YX1, YY, YY1, YA, YA1, YD, YE, YT, &
     YRHO, YFP, YFPC
 character(len=80) :: STRI
-integer, external :: GETIME
+integer, external :: TimeIndex
 
 JLR = astra_gui%Height - int(125*astra_gui%resizeGraph)
 if (MOD10 <= 0) return
@@ -359,7 +339,8 @@ if (MOD10 == 6) then
     YY1 = max(TIME, TTOUT(LTOUT-1), TTOUT(LTOUT))
     YY1 = min(YX, YY1)
     YY1 = max(TTOUT(1), YY1)
-    j = GETIME(YX, TTOUT, LTOUT)
+    j = TimeIndex(YX, TTOUT, LTOUT)
+    YX = TTOUT(j)
     do J1=1, NTOUT
         JW = NWIND3(J1) - 8*active_tab(MOD10)
         if (NAMET(J1) == '    ') JW = 0
@@ -837,63 +818,81 @@ endif
 return
 end subroutine down_label
 
+!-----------------------------
+function upperLabel(ne_av, q95) result(upper_label)
+
+use const_inc, only: RTOR, BTOR, IPL, ABC
+use dbl2char, only: fmt40
+
+implicit none
+
+double precision, intent(in) :: ne_av, q95
+character(len=42) :: upper_label
+
+upper_label = ' R=' // fmt40(RTOR) // ' a=' // fmt40(ABC) // ' b=' // fmt40(BTOR) // &
+    ' I=' // fmt40(IPL) // ' q=' // fmt40(q95) // ' n=' // fmt40(ne_av)
+
+return
+end function upperLabel
+
+!-----------------------------
+function timeLabel(time_in, dt_in) result(time_label)
+
+use dbl2char, only: fmt50
+
+implicit none
+
+double precision, intent(in) :: time_in, dt_in
+character(len=19) :: time_label
+
+time_label = 'Time=' // fmt50(time_in) // ' dt=' // fmt50(dt_in)
+
+return
+end function timeLabel
+
 !---------------------------------------------------------------------
 ! Upper string of the Astra graphic window
 subroutine up_label(YN, YQ)
 
+use const_inc, only: exp_header
 use graph_utils, only: astra_gui, active_tab, MOD10, Black, Blue
-use const_inc, only: RTOR, BTOR, IPL, ABC, exp_header
-use dbl2char, only: fmt40
 
 implicit none
 
 double precision, intent(in) :: YN, YQ
 
 character(len=2) :: CHR
-character(len=42) :: STRMN
-
-STRMN(1: 42) = ' R=     a=     B=     I=     q=     n=    '
-
-STRMN( 4:  7) = fmt40(RTOR)
-STRMN(11: 14) = fmt40(ABC)
-STRMN(18: 21) = fmt40(BTOR)
-STRMN(25: 28) = fmt40(IPL)
-STRMN(32: 35) = fmt40(YQ)
-STRMN(39: 42) = fmt40(YN)
+character(len=42), external :: upperLabel
 
 call setColor(Black)
-call textvm(0, 2, exp_header(1: 15) // STRMN(1: 42), 56)
+call rectvm(0, 0, 0, astra_gui%Width - 1, astra_gui%Height - 1) ! Outer frame
+call textvm(0, 2, exp_header(1: 16) // upperLabel(YN, YQ), 58)
+
 call setColor(Blue)
 write(CHR, '(1I2)') active_tab(MOD10) + 1
 call textvm(astra_gui%width - 2*astra_gui%dxlet, astra_gui%dylet + 1, CHR, 2) ! Screen No.
-call setColor(Black)
-call rectvm(0, 0, 0, astra_gui%Width - 1, astra_gui%Height - 1) ! Outer frame
 
 return
 end subroutine up_label
 
 !---------------------------------------------------------------------
-subroutine TIMEDT(TIME, DT)
+subroutine time_label(time_in, dt_in)
 
 use graph_utils, only: astra_gui, astra_gui_ref, Black
 use dbl2char, only: fmt50
 
 implicit none
 
-integer, parameter :: FSHIFT=2, str_len=19
-double precision, intent(in) :: TIME, DT
+integer, parameter :: fshift=2, str_len=19
+double precision, intent(in) :: time_in, dt_in
 
-character(len=str_len) :: STRI
+character(len=str_len), external :: timeLabel
 
-STRI(1 : 5 ) = 'Time='
-STRI(11: 16) = ' dt='
-STRI( 6: 10) = fmt50(TIME)
-STRI(15: 19) = fmt50(DT)
 call setColor(Black)
-call textvm(astra_gui%width - (str_len+3)*astra_gui_ref%dxlet, FSHIFT, STRI, str_len)
+call textvm(astra_gui%width - (str_len+3)*astra_gui_ref%dxlet, fshift, timeLabel(time_in, dt_in), str_len)
 
 return
-end subroutine TIMEDT
+end subroutine time_label
 
 !---------------------------------------------------------------------
 subroutine const2ps

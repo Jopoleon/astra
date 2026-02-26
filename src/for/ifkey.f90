@@ -148,7 +148,7 @@ elseif (IFKL == 256) then
     call graph_output(MARK, PRMARK, NAMEP, ITO)
 endif
 
-if (IFKL /= 256 .and. TASK(4:4) /= 'B') call TIMEDT(TIME, 1000.*TAU)
+if (IFKL /= 256 .and. TASK(4:4) /= 'B') call time_label(TIME, 1000.*TAU)
 
 if (LTOUT > 1) then
     call markloc(str_in='IFKEY (saving time traces)')
@@ -708,7 +708,7 @@ else
 endif
 CHORDN = lineav()
 call up_label(CHORDN, 1./MU(NA))
-if (IFKL /= 256) call TIMEDT(TIME, 1000.*TAU) ! 256 <-> initial iterations
+if (IFKL /= 256) call time_label(TIME, 1000.*TAU) ! 256 <-> initial iterations
 j = 0
 if (MOD10 <= 5 .or. MOD10 == 7) call down_label(j, TOUT)
 if (MOD10 == 6 .and. KPRI == 0) call down_label(j, TOUT)
