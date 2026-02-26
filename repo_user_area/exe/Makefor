@@ -39,13 +39,13 @@ $(OBJ_DIR)/parse_utils.o \
 $(OBJ_DIR)/read_input.o \
 $(OBJ_DIR)/json_write.o \
 $(OBJ_DIR)/graph_utils.o \
-$(OBJ_DIR)/transport2fbe.o
+$(OBJ_DIR)/transport2fbe.o \
+$(OBJ_DIR)/gui_interaction.o
 
 OBJS = \
 $(OBJ_DIR)/Astra2XW.o \
 $(OBJ_DIR)/dialogx.o \
 $(OBJ_DIR)/err_catch_a.o \
-$(OBJ_DIR)/ifkey.o \
 $(OBJ_DIR)/ipc_control.o \
 $(OBJ_DIR)/intvar.o \
 $(OBJ_DIR)/metric.o \

@@ -1,5 +1,10 @@
+module gui_interaction
+
+implicit none
+contains
+
 !---------------------------------------------------------------------
-integer function IFKEY(IFKL)
+integer function IF_KEY(IFKL)
 !---------------------------------------------------------------------
 ! IFKL = 256 call from initial iteration loop,
 !         move to KEY analysis skipping D[PRT]OUT checks,
@@ -30,7 +35,7 @@ use graph_utils, only: astra_gui, astra_gui_ref, plot_area, &
     NAMER, NAMET, NAMEX, SCALER, SCALET, ROUT, OSHIFR, OSHIFT, &
     DTNAME, runid, VERSION, AVERS, ARLEAS, AEDIT, &
     GRAP, GRAL, TIM7, NAM7, KPRI, nplots_max, &
-    NTIMES, TTOUT, TOUT, ASTWIN, ASXWIN, ASKINT
+    NTIMES, TTOUT, TOUT, ASTWIN, ASXWIN, ASKINT, MENUTABLE
 use io_mod, only: n_sbr, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
 use char_manip, only: null_ch, beep_ch
 use debugger, only: markloc, debug, astra_stop
@@ -38,14 +43,11 @@ use json_vars, only: internNames, constNames, varNames, n_const, n_var, n_intern
 use cpu_usage, only: cpu_report
 use auxiliary, only: lineav
 
-implicit none
-
 integer, parameter :: n_portrait=0, n_landscape=1
 integer, intent(in) :: IFKL
-character(len=10), parameter :: DEFUNA='      .tmp'
 
-logical :: MODADD, skip_poll, ps_exists
-integer :: POLLEVENT, WAITEVENT, KIBM, KASCII, jpos, jps
+logical :: skip_poll
+integer :: POLLEVENT, WAITEVENT, KIBM, KASCII
 integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
     IFLAG, INT4, IRET, plot_mode, &
     MODEX, IX, IY, NU1, j2, J1, ios, &
@@ -54,8 +56,7 @@ integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
 integer :: ITO(NTIMES, nplots_max+2)
 double precision :: CHORDN, ABD, ALFA, TIMEB, TROUT, TPOUT=0.d0
 double precision, allocatable :: varValues_old(:) 
-double precision, dimension(NTIMES) :: PRMARK, TIMOD4
-double precision, dimension(NRD) :: YWA, YWB, YWC
+double precision, dimension(NTIMES) :: PRMARK
 character(len=6) :: NAMEP(NTIMES)
 character(len=10), dimension(NRW) :: UNAMES
 character(len=40) :: CNSFIL
@@ -107,8 +108,6 @@ call markloc('IFKEY', debug_lev=2*debug)
 allocate(varValues_old(n_const))
 
 CHORDN = lineav()
-
-IFKEY = 0
 
 if (IFKL == -1) then
 ! This sets "pause" mode each time when IFKEY(-1) is called
@@ -257,7 +256,7 @@ do while(.True.)
         KEY = 0
         if (TASK(1:3) == 'DSP') then
             IFLAG = 1    ! for DSP mode only
-            IFKEY = 0
+            IF_KEY = 0
             skip_poll = .False.
             return
         endif
@@ -568,12 +567,12 @@ do while(.True.)
     enddo
     if (TASK(1:3) == 'DSP' .and. jj == 1) then
         IFLAG = 1     ! for DSP mode only
-        IFKEY = 0
+        IF_KEY = 0
         return
     endif
     if (TASK(1:3) == 'DSP') CYCLE
     if (jj == 1) then
-        IFKEY = 0
+        IF_KEY = 0
         return
     endif
 
@@ -594,7 +593,7 @@ call cpu_report('>>> ASTRA exit: reached END time >>>')
 call astra_stop
 
 return
-end function ifkey
+end function if_key
 
 !---------------------------------------------------------------------
 subroutine graph_output(MARK, ITO)
@@ -605,8 +604,6 @@ use io_mod, only: TASK
 use graph_utils, only: MOD10, nplots_max, NTIMES, TTOUT, TOUT, show_plots
 use debugger, only: markloc, debug
 use auxiliary, only: lineav
-
-implicit none
 
 integer, intent(in) :: MARK
 integer, intent(inout) :: ITO(NTIMES, nplots_max+2)
@@ -646,8 +643,6 @@ use const_inc, only: XOUT, TIME, TAU, NA
 use status_inc, only: MU
 use debugger, only: markloc, debug
 use auxiliary, only: lineav
-
-implicit none
 
 integer, intent(in) :: IFKL, MARK
 character(len=*) :: PSNAME
@@ -700,30 +695,18 @@ endif
 return
 end subroutine refresh_plot
 
-!---------------------------------------------------------------------
-subroutine menutable(arr_size, array_in, var_names, id)
+end module gui_interaction
 
-use char_manip, only: null_ch
+!---------------------------------------------------------------------
+integer function ifkey(key)
+
+use gui_interaction, only: if_key
 
 implicit none
 
-integer, intent(in) :: arr_size, id
-double precision, intent(in), dimension(arr_size) :: array_in
-character(len=6), intent(in), dimension(arr_size) :: var_names
+integer, intent(in) :: key
 
-integer :: nameLength, editable=1
-character(len=70), dimension(10), parameter :: titles = (/ &
-    'Variable control', 'Constant control', 'Times & Grids', 'Sequence control', &
-    'Time interval', 'Mark times:  < 0 - skip,  0 - dim,  > 0 - color #', &
-    'Equilibrium control', '1D_Ufile', '2D_Ufile', 'NBI const for beam No' /)
-
-if (id == 4) then
-    nameLength = 4
-else
-    namelength = 6
-endif
-
-call menubox(TRIM(titles(id)) // null_ch, arr_size, array_in, var_names, nameLength, id, editable)
+ifkey = if_key(key)
 
 return
-end subroutine menutable
+end function ifkey

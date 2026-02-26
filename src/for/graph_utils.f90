@@ -539,6 +539,33 @@ contains
     end subroutine NMARK
 
 !---------------------------------------------------------------------
+    subroutine menutable(arr_size, array_in, var_names, id)
+
+    use char_manip, only: null_ch
+
+    integer, intent(in) :: arr_size, id
+    double precision, intent(in), dimension(arr_size) :: array_in
+    character(len=6), intent(in), dimension(arr_size) :: var_names
+
+    integer :: nameLength, editable=1
+    character(len=70), dimension(10), parameter :: titles = (/ &
+        'Variable control', 'Constant control', 'Times & Grids', 'Sequence control', &
+        'Time interval', 'Mark times:  < 0 - skip,  0 - dim,  > 0 - color #', &
+        'Equilibrium control', '1D_Ufile', '2D_Ufile', 'NBI const for beam No' /)
+
+    if (id == 4) then
+        nameLength = 4
+    else
+        namelength = 6
+    endif
+
+    call menubox(TRIM(titles(id)) // null_ch, arr_size, array_in, var_names, &
+        nameLength, id, editable)
+
+    return
+    end subroutine menutable
+
+!---------------------------------------------------------------------
     subroutine ASKINT(NV, NVAR, NAME)
 
     integer, intent(in) :: NV
