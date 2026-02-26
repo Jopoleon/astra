@@ -41,6 +41,8 @@ character(len=6) :: CH6
 character(len=118) :: STRI
 character(len=132) :: FNAME, dat_dir, file_out
 character(len=:), external :: set_filename
+character(len=42), external :: upperLabel
+character(len=19), external :: timeLabel
 
 ! NLINSC - maximum line number
 MODEX = XOUT + 0.49
@@ -67,22 +69,10 @@ if (ios /= 0) then
     stop
 endif
 
-! Creating UPSTRI
-STRI = exp_header(1:16)
-STRI(17:) = STRMN
-STRI(20: 23) = fmt4(RTOR)
-STRI(27: 30) = fmt4(ABC)
-STRI(34: 37) = fmt4(BTOR)
-STRI(41: 44) = fmt4(IPL)
-! Triangularity corrected MHD q (accoding to ITER guidelines)
-! YQ =ELON(NA)**2
-! YD =TRIA(NA)
-! YQ=(1.+YQ*(1.+YD**2*(2.-1.2*YD)))/(MU(NA)*(1.+YQ))
 YQ = 1./MU(NA)
-STRI(48: 51) = fmt4(YQ)
-STRI(57: 60) = fmt4(CHORDN)
-write(STRI(62: 76), '(A, 1F6.3, A)') 'Time=', TIME, ' dt='
-STRI(77: 80) = fmt4(1000.*TAU)
+STRI = ' '
+STRI(1: 77) = exp_header(1: 16) // upperLabel(CHORDN, YQ) // timeLabel(TIME, 1000.*TAU)
+
 write(7, 104) STRI
 
 if (NCH == 0) then
