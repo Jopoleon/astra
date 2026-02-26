@@ -30,9 +30,6 @@ use json_vars, only: n_const
 
 implicit none
 
-integer, parameter :: NLINSC=50
-character(len=40), parameter :: STRMN=' R=     a=     B=     I=     q=     <n>='
-
 double precision, intent(in) :: CHORDN
 
 integer :: NCH=0, NP1, MODEX, JBE, JEND, J, JEN, JJ, J1, ios
@@ -40,11 +37,10 @@ double precision :: YQ
 character(len=6) :: CH6
 character(len=118) :: STRI
 character(len=132) :: FNAME, dat_dir, file_out
-character(len=:), external :: set_filename
+character(len=128), external :: set_filename
 character(len=42), external :: upperLabel
 character(len=19), external :: timeLabel
 
-! NLINSC - maximum line number
 MODEX = XOUT + 0.49
 ! MODEX = 0 [0, AB]  against "a"
 ! MODEX = 1 [0, ABC] against "a"
@@ -59,7 +55,6 @@ call system('mkdir -p ' // TRIM(dat_dir))
 FNAME = TRIM(dat_dir) // TRIM(exp_file) // '.' // TRIM(equ_file)
 file_out = set_filename(FNAME)
 
-call setColor(WarningColor)
 write(*, *) '>>>  Data are written into the file: ' // TRIM(file_out)
 
 open(7, file=TRIM(file_out), iostat=ios)
@@ -127,7 +122,7 @@ if (NCH == 0) then
                 else
                     STRI(1: 5) = fmt_xf(AMETR(j), 4)
                 endif
-                write(7, 104)STRI
+                write(7, 104) STRI
             enddo
             if (JEN == NROUT) EXIT
             JBE  = JEN + 1
@@ -160,7 +155,7 @@ endif !NCH=0
 
 ! Writing constants
 
-write(7, '(10X, 1A80)') RUNID
+write(7, '(10X, A)') TRIM(RUNID)
 write(7, '(A)') 'Constants'
 J1 = 0
 do JEN=1, 11
@@ -240,10 +235,9 @@ endif
 
 close(7)
 
-101 format(1X, 1A6, 1A111)
-102 format('   Time', 16(3X, 1A4))
-104 format(1X, 1A120)
-408 format(1PE12.3, 64(1PE12.3))
+102 format('   Time', 16(3X, A))
+104 format(X, A)
+408 format(PE12.3, 64(PE12.3))
 
 return
 end subroutine writeData
@@ -967,7 +961,7 @@ function set_filename(fname_in) result(fname_out)
     implicit none
 
     character(len=*), intent(in) :: fname_in
-    character(len=:), allocatable :: fname_out
+    character(len=128) :: fname_out
 
     integer :: jext
     logical :: fileExists
