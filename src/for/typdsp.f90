@@ -52,8 +52,8 @@ if (MODEX >= 1 .and. MODEX <= 3 .or. MOD10 == 3) NP1 = NA1
 
 dat_dir = TRIM(AWD) // '/dat/'
 call system('mkdir -p ' // TRIM(dat_dir))
-FNAME = TRIM(dat_dir) // TRIM(exp_file) // '.' // TRIM(equ_file)
-file_out = set_filename(FNAME)
+FNAME = TRIM(dat_dir) // TRIM(exp_file) // '-' // TRIM(equ_file) // '-'
+file_out = set_filename(FNAME, '.dat')
 
 write(*, *) '>>>  Data are written into the file: ' // TRIM(file_out)
 
@@ -956,10 +956,10 @@ return
 end subroutine const2ps
 
 !---------------------------------------------------------------------
-function set_filename(fname_in) result(fname_out)
+function set_filename(fname_in, ext_in) result(fname_out)
     implicit none
 
-    character(len=*), intent(in) :: fname_in
+    character(len=*), intent(in) :: fname_in, ext_in
     character(len=128) :: fname_out
 
     integer :: jext
@@ -972,9 +972,9 @@ function set_filename(fname_in) result(fname_out)
 
     do while (fileExists)
         jext = jext + 1
-        write(ext, '(".", i0)') jext
+        write(ext, '(i0, A)') jext, ext_in
         filename = trim(fname_in) // trim(ext)
-        inquire(file=filename, exist=fileExists)
+        inquire(file=TRIM(filename), exist=fileExists)
     enddo
 
     fname_out = filename

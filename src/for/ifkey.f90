@@ -76,6 +76,7 @@ character(len=40) :: CNSFIL
 character(len=80) :: HELP(28), STR, STRB
 character(len=132) :: STRI, ps_root, PSNAME
 integer, external :: plotMode
+character(len=128), external :: set_filename
 
 save ITO, IFLAG, TROUT, MARK, LTOUTO, IDSP
 save NAMEP
@@ -378,13 +379,7 @@ do while(.True.)
 
      CASE(71, 81) ! 71:'G'=portrait, 81:'Q'=landscape
         ps_root = 'dat/' // TRIM(exp_file) // '-' // TRIM(equ_file) // '-'
-        ps_exists = .True.
-        jps = 0
-        do while(ps_exists)
-            jps = jps + 1
-            write(PSNAME, '(A, i0, A)') TRIM(ps_root), jps, '.ps'
-            inquire(file=TRIM(PSNAME), exist=ps_exists)
-        enddo
+        PSNAME = set_filename(ps_root, '.ps')
         if (KEY == 71) INT4 = n_portrait
         if (KEY == 81) INT4 = n_landscape
         call PSOPEN(TRIM(PSNAME) // null_ch, INT4, IRET)
