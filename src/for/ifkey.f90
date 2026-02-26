@@ -146,7 +146,7 @@ elseif (IFKL == 256) then
     call setColor(Blue) ! Iteration #
     call textvm(astra_gui%width-17*astra_gui_ref%dxlet, astra_gui_ref%dylet+1, STRI(1:14), 14)
     TROUT = TIME
-    call graph_output(MARK, PRMARK, NAMEP, ITO)
+    call graph_output(MARK, ITO)
 endif
 
 if (IFKL /= 256 .and. TASK(4:4) /= 'B') call time_label(TIME, 1000.*TAU)
@@ -174,13 +174,13 @@ JTOUT = JTOUT + 1
 if (MOD10 <= 3 .or. MOD10 >= 8) then
     if (TIME + .5*TAU >= TROUT + DROUT) then
         TROUT = TIME
-        call graph_output(MARK, PRMARK, NAMEP, ITO)
+        call graph_output(MARK, ITO)
     endif
 endif
 
 ! Time output
 if (MOD10 == 6 .or. MOD10 == 7) then
-    call graph_output(MARK, PRMARK, NAMEP, ITO)
+    call graph_output(MARK, ITO)
 endif
 
 !-------------
@@ -240,7 +240,7 @@ do while(.True.)
 ! One time step and re-drawing is done
                     KEY = 0
                     IFLAG = 0
-                    call graph_output(MARK, PRMARK, NAMEP, ITO)
+                    call graph_output(MARK, ITO)
                 endif
 
                 call PUTXY(IX, IY)
@@ -289,7 +289,7 @@ do while(.True.)
     CASE(46) ! '.'
         MARK = MARK + 1
         if (MARK == 2) MARK = -1
-        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
+        call refresh_plot(IFKL, MARK, PSNAME)
 
     CASE(47) ! '/'
         if (TASK(4:4) /= 'B') call Close_Screen
@@ -322,7 +322,7 @@ do while(.True.)
             call set_plot_area(plot_mode)
             call set_plot(plot_mode)
         endif
-        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
+        call refresh_plot(IFKL, MARK, PSNAME)
 
     CASE(63, 72) ! 'H', '?'
         write(*, *)
@@ -345,7 +345,7 @@ do while(.True.)
                 active_tab(MOD10) = (J - 1)/JJ
             endif
         endif
-        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
+        call refresh_plot(IFKL, MARK, PSNAME)
 
     CASE(67) ! 'C'
         call MENUTABLE(n_const, constValues, constNames, 2)
@@ -363,7 +363,7 @@ do while(.True.)
         endif
         if (j /= MODEX) call xaxis(j)
         if (TIME >= TIMEB) then
-            call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
+            call refresh_plot(IFKL, MARK, PSNAME)
         else
             TROUT = TIME
             TTOUT(LTOUT-1) = TIME
@@ -387,7 +387,7 @@ do while(.True.)
         if (IRET == 0) then
             if (KEY == 71) KPRI = 1
             if (KEY == 81) KPRI = 2
-            call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
+            call refresh_plot(IFKL, MARK, PSNAME)
             if (IFKL == KEY) return
         else
             if (IRET == 1) then
@@ -428,7 +428,7 @@ do while(.True.)
     CASE(74) ! 'J'
         call system("ipcs -s") ! Report active semaphore sets
         call system("ipcs -m") ! Report active shared memory segments
-        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
+        call refresh_plot(IFKL, MARK, PSNAME)
 
     CASE(76) ! 'L'
         CNSFIL = 'src/tmp/model.txt'
@@ -476,7 +476,7 @@ do while(.True.)
             call MENUTABLE(INT4, PRMARK, NAMEP, 6)
         endif
         if (MOD10 <= 7) then
-            call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
+            call refresh_plot(IFKL, MARK, PSNAME)
         endif
 
     CASE(78) ! 'N'
@@ -490,7 +490,7 @@ do while(.True.)
             endif
             if (J <= JJ*active_tab(MOD10)) active_tab(MOD10) = 0
         endif
-        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
+        call refresh_plot(IFKL, MARK, PSNAME)
 
     CASE(86) ! 'V'
         do J=1, n_var
@@ -508,7 +508,7 @@ do while(.True.)
         if (MOD10 == 4 .or. MOD10 == 5) call ASKINT(NROUT, NWIND4, NAMER)
         if (MOD10 == 6) call ASKINT(NTOUT, NWIND3, NAMET)
         if (MOD10 == 7) call ASKINT(NTOUT, NWIND7, NAMET)
-        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
+        call refresh_plot(IFKL, MARK, PSNAME)
 
     CASE(88) ! 'X'
         MODEX = XOUT + 0.49
@@ -540,7 +540,7 @@ do while(.True.)
             write(*, *) 'X-axis:   Unknown option'
         endif
 
-        call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
+        call refresh_plot(IFKL, MARK, PSNAME)
 
     END SELECT
 
@@ -611,7 +611,7 @@ return
 end function ifkey
 
 !---------------------------------------------------------------------
-subroutine graph_output(MARK, PRMARK, NAMEP, ITO)
+subroutine graph_output(MARK, ITO)
 
 use const_inc, only: NA
 use status_inc, only: MU
@@ -623,8 +623,6 @@ implicit none
 
 integer, intent(in) :: MARK
 integer, intent(inout) :: ITO(NTIMES, nplots_max+2)
-double precision, intent(in), dimension(NTIMES) :: PRMARK
-character(len=6) , intent(in) :: NAMEP(NTIMES)
 
 integer :: jt
 double precision :: CHORDN, lineav
@@ -647,10 +645,11 @@ jt = 0
 if (MOD10 <= 7) call down_label(jt, TOUT)
 call redraw
 
+return
 end subroutine graph_output
 
 !---------------------------------------------------------------------
-subroutine refresh_plot(IFKL, MARK, PRMARK, PSNAME)
+subroutine refresh_plot(IFKL, MARK, PSNAME)
 ! Corresponds to block from statement 201
 
 use io_mod, only: TASK
@@ -662,25 +661,18 @@ use debugger, only: markloc, debug
 
 implicit none
 
-integer, parameter :: nn80=80
-
 integer, intent(in) :: IFKL, MARK
-double precision, intent(in), dimension(NTIMES) :: PRMARK
 character(len=*) :: PSNAME
 
-integer :: plot_mode, NST, j
+integer :: plot_mode, j
 integer :: ITO(NTIMES, nplots_max+2)
 double precision :: CHORDN, lineav
-character(len=6) :: NAMEP(NTIMES)
 character(len=132) :: STRI
 integer, external :: plotMode
 
 call markloc('refresh_plot', debug_lev=2*debug)
 
 call erasrw
-
-plot_mode = 1
-NST = 0
 
 plot_mode = plotMode(MOD10, MODEY)
 call set_plot_area(plot_mode)
