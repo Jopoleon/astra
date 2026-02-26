@@ -262,7 +262,6 @@ radial_loop: do jr=1, chunk
         enddo
 
         jboots = neo_jpar_dke_out*Jpar_GB
-        write(*, '(A, 2e11.4)') 'neo DKE', pflux_e, eflux_e
 
     END SELECT
 

@@ -320,7 +320,6 @@ module graphic_utils
     character(len=1) :: KEY
 
     TITLE = "Presentation" // null_ch
-!              ----5----0----5----0----5----0----5----0----5----0----5
     STR = "Name|Box| Scale|Offset||Name|Box| Scale|Offset" // null_ch
 
     jsep = index(STR, '||') + 1
@@ -458,15 +457,15 @@ module graphic_utils
     end subroutine ASTWIN
 
 !---------------------------------------------------------------------
-    subroutine ASXWIN(NB, IBOX, NAME, yscale, yshift, r_min, r_max, MOD10, YMODE)
+    subroutine ASXWIN(AB, NB, IBOX, NAME, yscale, yshift, r_min, r_max, MOD10, YMODE)
 
-    use const_inc, only: AB
     use char_manip, only: null_ch
     use outcmn_inc, only: IP1, IP2, IP30, IP31, NRW
 
     integer, parameter :: NRW16=NRW+16, NRW96=NRW-128
 
     integer, intent(in) :: NB, YMODE, MOD10
+    double precision, intent(in) :: AB
     integer, intent(out) :: IBOX(*)
     double precision, intent(inout), dimension(NB) :: yscale, yshift, r_min, r_max
     character(len=4), intent(out) :: NAME(*)
@@ -631,39 +630,5 @@ module graphic_utils
 
     return
     end subroutine ASXWIN
-
-!---------------------------------------------------------------------
-    subroutine get_runid
-!---------------------------------------------------------------------
-! The subroutine forms string RUNID and additionally returns 
-! date and time when those are not defined (calling from INIT)
-!---------------------------------------------------------------------
-
-    use io_mod, only: equ_file, exp_file
-    use outcmn_inc, only: RUNID, VERSION
-
-    integer :: time_arr(8), YEAR, MONTH, DAY, HOUR, MINUTE
-    integer :: j
-    character(len=3) :: vers
-    character(len=15) :: datetime
-
-    call date_and_time(VALUES=time_arr)
-
-    YEAR   = time_arr(1)
-    MONTH  = time_arr(2)
-    DAY    = time_arr(3)
-    HOUR   = time_arr(5)
-    MINUTE = time_arr(6)
-    write(datetime, "(1I2, 2('-', 1I2.2), 1I3, ':', 1I2.2)") &
-        DAY, MONTH, YEAR-2000, HOUR, MINUTE
-
-    j = index(VERSION, 'Version')
-    vers = version(j+8: j+10)
-
-    RUNID = "ASTRA " // vers // " -- " // datetime // ' -- Model: ' // &
-        TRIM(equ_file) // ' -- Data: ' // TRIM(exp_file)
-
-    return
-    end subroutine get_runid
 
 end module graphic_utils

@@ -472,8 +472,8 @@ do while(.True.)
         close (1)
 
     CASE(77) ! 'M'
-        if (MOD10 == 1 .or. MOD10 == 2 .or. MOD10 == 3) call ASXWIN(NROUT, NWIND1, NAMER, SCALER, &
-            OSHIFR, GRAL, GRAP, MOD10, MODEY)
+        if (MOD10 == 1 .or. MOD10 == 2 .or. MOD10 == 3) call ASXWIN(AB, NROUT, &
+            NWIND1, NAMER, SCALER, OSHIFR, GRAL, GRAP, MOD10, MODEY)
         if (MOD10 == 6) call ASTWIN(NTOUT, NWIND3, NAMET, SCALET, &
             OSHIFT, MOD10, MODEY)
         if (MOD10 == 7) then

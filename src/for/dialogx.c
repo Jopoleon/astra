@@ -361,13 +361,13 @@ void taskmenu_(INT_ *modex){
 
     XSetFont(theDisplay, hghGC, font->fid);
     XDrawString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Graphic mode", 12);
-    Xx += (int)(188*width_ratio);
+    Xx += (int)(220*width_ratio);
     XDrawString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Select", 6);
-    Xx += (int)( 94*width_ratio);
+    Xx += (int)(110*width_ratio);
     XDrawString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Control", 7);
-    Xx += (int)( 94*width_ratio);
+    Xx += (int)(110*width_ratio);
     XDrawString(theDisplay, theRootWindow, hghGC, Xx, Xy, "In/Out", 6);
-    Xx += (int)(188*width_ratio);
+    Xx += (int)(110*width_ratio);
     XDrawString(theDisplay, theRootWindow, hghGC, Xx, Xy, "Status", 6);
 }
 

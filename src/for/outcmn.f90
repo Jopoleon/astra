@@ -41,6 +41,7 @@ type(plot_frame) :: plot_area_ref, plot_area
 
 contains
 
+!---------------------------------------------------------------------
     subroutine outcmn_init
 
     integer :: i, j, ios, j0, j1
@@ -199,5 +200,79 @@ contains
     endif
 
     end subroutine outcmn_init
+
+!---------------------------------------------------------------------
+    subroutine get_runid
+
+! Forms string RUNID and additionally returns date and time
+
+    use io_mod, only: equ_file, exp_file
+
+    integer :: time_arr(8), YEAR, MONTH, DAY, HOUR, MINUTE
+    integer :: j
+    character(len=3) :: vers
+    character(len=15) :: datetime
+
+    call date_and_time(VALUES=time_arr)
+
+    YEAR   = time_arr(1)
+    MONTH  = time_arr(2)
+    DAY    = time_arr(3)
+    HOUR   = time_arr(5)
+    MINUTE = time_arr(6)
+    write(datetime, "(1I2, 2('-', 1I2.2), 1I3, ':', 1I2.2)") &
+        DAY, MONTH, YEAR-2000, HOUR, MINUTE
+
+    j = index(VERSION, 'Version')
+    vers = version(j+8: j+10)
+
+    RUNID = "ASTRA " // vers // " -- " // datetime // ' -- Model: ' // &
+        TRIM(equ_file) // ' -- Data: ' // TRIM(exp_file)
+
+    return
+    end subroutine get_runid
+
+!---------------------------------------------------------------------
+    subroutine initMainWindow
+
+    use const_inc, only: XOUT
+
+    integer :: jgrid, jj, plot_mode
+    integer, external :: plotMode
+
+    call get_runid()
+    jj = max(0, (15 + NTOUT - 64)/16)
+
+! Resize
+    astra_gui%LineWidth = int(0.85*resizeGraph) + astra_gui_ref%LineWidth
+    astra_gui%dxlet    = resizeGraph*astra_gui_ref%dxlet
+    astra_gui%dylet    = resizeGraph*astra_gui_ref%dylet
+    astra_gui%yMessage = resizeGraph*astra_gui_ref%yMessage + 135
+    astra_gui%Width    = resizeGraph*astra_gui_ref%width
+    astra_gui%Height   = resizeGraph*(astra_gui_ref%Height + 2*jj*resizeGraph*(astra_gui_ref%dylet + 2))
+    astra_gui%Xpos  = astra_gui_ref%Xpos
+    astra_gui%Ypos  = astra_gui_ref%Ypos
+    astra_gui%title = astra_gui_ref%title
+    astra_gui%resizeGraph = resizeGraph
+
+    plot_area%width  = resizeGraph*plot_area_ref%width
+    plot_area%height = resizeGraph*plot_area_ref%height
+
+    call initvm(astra_gui%xpos, astra_gui%ypos, astra_gui%Width, astra_gui%Height, &
+        astra_gui%LineWidth, astra_gui%title, LEN(astra_gui%title)) ! Initialise graphic window
+    plot_mode = 1
+    NST = 0
+    MOD10 = 1
+    plot_mode = plotMode(MOD10, MODEY)
+    call set_plot_area(plot_mode)
+    call set_plot(plot_mode)
+
+    jgrid = XOUT + 0.49
+
+    call taskmenu(jgrid) ! Task menu
+    call textbf(0, astra_gui%Height - int(104*resizeGraph), RUNID, 80) ! Task ID
+
+    return
+    end subroutine initMainWindow
 
 end module outcmn_inc
