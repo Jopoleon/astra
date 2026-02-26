@@ -61,7 +61,7 @@ extern int isascii(int); // 0 if the character is not ASCII, nonzero if it is AS
 extern int isprint(int); // check if a character passed as the argument is a printable character or not
 extern int isalnum(int); // checks whether a character is alphabet or number
 int nextevent(INT_*, INT_*, INT_*, Button[], char[]);
-int menubox_(char[], INT_*, double*, char[], INT_*, INT_*, INT_*);
+int menubox_(char[], INT_*, double*, char[], INT_*, INT_*);
 int nbibox_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
 int layoutbox_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
 int FindBoxNum(int, int, int, int, int, int);
@@ -699,7 +699,7 @@ void mvcursor_(INT_ *key, INT_ *ix, INT_ *iy){
 
 /**********************************************************************/
 int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
-	     INT_* nameLength, INT_ *id, INT_ *editable){
+	     INT_ *id, INT_ *editable){
     Window theWindow;
     XEvent theEvent;
     const int num_str_len=6, var_name_len=6, /* length of value and name */
@@ -719,7 +719,6 @@ int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
     char value[10], ovalue[10], stri[10], vsym='=',
         grep_str[128], var_name[10], legend[128];
 
-    name_len = *nameLength;
     lline = var_name_len + num_str_len + 1;
     hbox = hsym + 3;
     wbox = wsym*(lline + 1);
@@ -736,6 +735,12 @@ int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
     else{
         jbox = 1;
         selalb = 1;
+    }
+    if (*id == 4){
+        name_len = 4;
+    }
+    else{
+	name_len = 6;
     }
 
     GetRWgeometry (&XRW, &YRW);

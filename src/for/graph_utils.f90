@@ -551,16 +551,10 @@ contains
     character(len=70), dimension(10), parameter :: titles = (/ &
         'Variable control', 'Constant control', 'Times & Grids', 'Sequence control', &
         'Time interval', 'Mark times:  < 0 - skip,  0 - dim,  > 0 - color #', &
-        'Equilibrium control', '1D_Ufile', '2D_Ufile', 'NBI const for beam No' /)
-
-    if (id == 4) then
-        nameLength = 4
-    else
-        namelength = 6
-    endif
+        'Equilibrium control', '2D_Ufile', 'NBI const for beam No' /)
 
     call menubox(TRIM(titles(id)) // null_ch, arr_size, array_in, var_names, &
-        nameLength, id, editable)
+        id, editable)
 
     return
     end subroutine menutable
