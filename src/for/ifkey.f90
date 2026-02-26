@@ -621,7 +621,7 @@ subroutine graph_output(MARK, PRMARK, NAMEP, ITO)
 use const_inc, only: NA
 use status_inc, only: MU
 use io_mod, only: TASK
-use graph_utils, only: MOD10, nplots_max, NTIMES, TTOUT, TOUT
+use graph_utils, only: MOD10, nplots_max, NTIMES, TTOUT, TOUT, show_plots
 use debugger, only: markloc, debug
 
 implicit none
@@ -644,7 +644,7 @@ call RADOUT
 if (MOD10 == 4 .or. MOD10 == 5) then
     print*, 'Plot modes 4-5 not available'
 else
-    call OUTDSP(MARK, 0, ITO, TTOUT, TOUT)
+    call show_plots(MARK, 0, ITO, TTOUT, TOUT)
 endif
 CHORDN = lineav()
 call up_label(CHORDN, 1./MU(NA))
@@ -660,7 +660,7 @@ subroutine refresh_plot(IFKL, MARK, PRMARK, PSNAME)
 
 use io_mod, only: TASK
 use graph_utils, only: astra_gui, KPRI, MOD10, MODEY, RUNID, &
-    WarningColor, nplots_max, NTIMES, TOUT, TTOUT
+    WarningColor, nplots_max, NTIMES, TOUT, TTOUT, show_plots
 use const_inc, only: XOUT, TIME, TAU, NA
 use status_inc, only: MU
 use debugger, only: markloc, debug
@@ -704,7 +704,7 @@ call TIMOUT
 if (MOD10 == 4 .or. MOD10 == 5) then
     print*, 'Plot mode 4-5 not available anymore'
 else
-    call OUTDSP(MARK, 1, ITO, TTOUT, TOUT)
+    call show_plots(MARK, 1, ITO, TTOUT, TOUT)
 endif
 CHORDN = lineav()
 call up_label(CHORDN, 1./MU(NA))
