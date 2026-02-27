@@ -30,6 +30,7 @@ $(OBJ_DIR)/time_functions.o \
 $(OBJ_DIR)/io_mod.o \
 $(OBJ_DIR)/machine_config.o \
 $(OBJ_DIR)/status.o \
+$(OBJ_DIR)/transport_solver.o \
 $(OBJ_DIR)/auxiliary.o \
 $(OBJ_DIR)/standard_functions.o \
 $(OBJ_DIR)/cpu_usage.o \
@@ -48,9 +49,8 @@ $(OBJ_DIR)/Astra2XW.o \
 $(OBJ_DIR)/dialogx.o \
 $(OBJ_DIR)/ipc_control.o \
 $(OBJ_DIR)/metric.o \
-$(OBJ_DIR)/runeq.o \
 $(OBJ_DIR)/gs_solver.o \
-$(OBJ_DIR)/a_equil.o \
+$(OBJ_DIR)/a2equil.o \
 $(OBJ_DIR)/ctr2rz.o
 
 # Make Commands

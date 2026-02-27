@@ -918,6 +918,7 @@ use plasma_state
 use standard_functions
 use debugger, only: markloc
 use numerical_tools, only: extrap
+use transport_solver
 
 implicit none
 
