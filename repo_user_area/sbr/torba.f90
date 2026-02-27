@@ -19,6 +19,7 @@ contains
     use numerical_tools, only: qinterp, integr
     use standard_functions, only: VINT, IINT
     use parameters_a2equil, only : equil_now, GP2
+    use surface_contours, only: ctr2rz_b
 
     logical, parameter :: dump_flag=.FALSE.
     integer, parameter :: n_gy_max=30, maxint=50, maxflt=50, &

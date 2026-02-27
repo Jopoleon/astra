@@ -35,6 +35,7 @@ $(OBJ_DIR)/auxiliary.o \
 $(OBJ_DIR)/standard_functions.o \
 $(OBJ_DIR)/cpu_usage.o \
 $(OBJ_DIR)/parameters_a2equil.o \
+$(OBJ_DIR)/surface_contours.o \
 $(OBJ_DIR)/flux_avg_imp.o \
 $(OBJ_DIR)/parse_utils.o \
 $(OBJ_DIR)/read_input.o \
@@ -50,8 +51,7 @@ $(OBJ_DIR)/dialogx.o \
 $(OBJ_DIR)/ipc_control.o \
 $(OBJ_DIR)/metric.o \
 $(OBJ_DIR)/gs_solver.o \
-$(OBJ_DIR)/a2equil.o \
-$(OBJ_DIR)/ctr2rz.o
+$(OBJ_DIR)/a2equil.o
 
 # Make Commands
 

@@ -20,6 +20,7 @@ contains
     use numerical_tools, only: qinterp
     use standard_functions, only: VINT, IINT
     use parameters_a2equil, only : equil_now
+    use surface_contours, only: ctr2rz_fun
 
     integer, parameter :: Nrrect=64, Nzrect=64, nnb_max=30, nspc=3, nrhoout=21, unit_lim=11
     double precision, parameter :: ALFA=1.d-5
