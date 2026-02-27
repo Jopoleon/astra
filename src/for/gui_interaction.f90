@@ -1259,7 +1259,6 @@ contains
     subroutine time_label(time_in, dt_in)
 
     use graph_utils, only: astra_gui, astra_gui_ref, Black
-    use dbl2char, only: fmt50
 
     implicit none
 
