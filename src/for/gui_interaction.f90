@@ -105,6 +105,8 @@ contains
 
     call markloc('IF_KEY', debug_lev=2*debug)
 
+    IF_KEY = 0
+
     allocate(varValues_old(n_const))
 
     CHORDN = lineav()
@@ -458,7 +460,6 @@ contains
             endif
             if (MOD10 == 4 .or. MOD10 == 5) then
                 INT4 = -MAX(4, IPOUT-1)
-                call MENUTABLE(INT4, PRMARK, NAMEP, 6)
             endif
             if (MOD10 <= 7) then
                 call refresh_plot(IFKL, MARK, PSNAME)

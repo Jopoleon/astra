@@ -61,7 +61,7 @@ extern int isascii(int); // 0 if the character is not ASCII, nonzero if it is AS
 extern int isprint(int); // check if a character passed as the argument is a printable character or not
 extern int isalnum(int); // checks whether a character is alphabet or number
 int nextevent(INT_*, INT_*, INT_*, Button[], char[]);
-int menubox_(char[], INT_*, double*, char[], INT_*, INT_*);
+int menubox_(INT_*, double*, char[], INT_*, INT_*);
 int nbibox_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
 int layoutbox_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
 int FindBoxNum(int, int, int, int, int, int);
@@ -698,7 +698,7 @@ void mvcursor_(INT_ *key, INT_ *ix, INT_ *iy){
 }
 
 /**********************************************************************/
-int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
+int menubox_(INT_ *arr_size, double *array, char varNames[],
 	     INT_ *id, INT_ *editable){
     Window theWindow;
     XEvent theEvent;
@@ -719,6 +719,9 @@ int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
     char value[10], ovalue[10], stri[10], vsym='=',
         grep_str[128], var_name[10], legend[128];
 
+    const char *titles[] = { "Variable control", "Constant control", "Times and grids",
+      "Sequence control", "Time interval"};
+
     lline = var_name_len + num_str_len + 1;
     hbox = hsym + 3;
     wbox = wsym*(lline + 1);
@@ -728,20 +731,9 @@ int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
     Width = 2*xshif + n_columns*wbox - wsym;
     Height= 2*yshif + ((nparam - 1)/n_columns + 2)*hbox;
     if (*editable == 0) jbox = 0;
-    if (*id == 6){
-        jbox = 0;
-        selalb = -1;
-    }
-    else{
-        jbox = 1;
-        selalb = 1;
-    }
-    if (*id == 4){
-        name_len = 4;
-    }
-    else{
-	name_len = 6;
-    }
+    jbox = 1;
+    selalb = 1;
+    name_len = 6;
 
     GetRWgeometry (&XRW, &YRW);
     UpLeftx = 2;
@@ -750,7 +742,7 @@ int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
     if (i > UpLeftx) UpLeftx = i;
     i = YRW + Height + 30;
     if (i > theHeight) UpLefty = theHeight - Height - 30;
-    theWindow = Open_Window(UpLeftx, UpLefty, Width, Height, 0, title, 0,
+    theWindow = Open_Window(UpLeftx, UpLefty, Width, Height, 0, titles[*id-1], 0,
         RootWindow(theDisplay, theScreen), theMenuCursor);
     XSelectInput (theDisplay, theWindow, POLL_EV_MASK);
     ihelp = 0;
@@ -784,7 +776,6 @@ int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
     LINGCA_ 0, i, Width, i);
     WRITE_ hghGC, xshif, Height-3, "OK",2);
     if (jbox == 0 && *editable == 0) MVPOINTER_ xshif+5, Height-5);
-    if (*id == 6) MVPOINTER_ xshif+Width-50, Height-5);
     i = n_columns*wbox/wsym - 5;
     ind = 50;
     if (i < 50) ind = i;
@@ -803,12 +794,6 @@ int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
     Change_Color(hintGC, 1, 0);
     if (*editable == 0) WRITE_ theGCA, xshif+4*wsym, Height-3,
         "    Information table.   No changes permitted.     ", ind);
-    if (*id == 6){
-        if (selalb ==  0) WRITE_ hintGC, xshif+8+(i-6)*wsym, Height-3,
-	    " (Select all)", 13);
-        if (selalb == -1) WRITE_ hintGC, xshif+8+(i-6)*wsym, Height-3,
-	    "(Unselect 0)", 12);
-    }
     Change_Color(theGCA, 1, 0);
 
     ix = wbox*((jbox - 1)%n_columns) + xshif;
@@ -967,9 +952,6 @@ int menubox_(char title[], INT_ *arr_size, double *array, char varNames[],
                 break;
             case 5:
                 printf("Curve presentation\n");
-                break;
-            case 6:
-                printf("Mark time slices\n");
                 break;
 	    }
             if (*id < 4){
