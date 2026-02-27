@@ -51,7 +51,6 @@ $(OBJ_DIR)/intvar.o \
 $(OBJ_DIR)/metric.o \
 $(OBJ_DIR)/runeq.o \
 $(OBJ_DIR)/setarx.o \
-$(OBJ_DIR)/typdsp.o \
 $(OBJ_DIR)/gs_solver.o \
 $(OBJ_DIR)/a_equil.o \
 $(OBJ_DIR)/ctr2rz.o

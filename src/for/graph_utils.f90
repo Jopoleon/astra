@@ -85,7 +85,6 @@ contains
 
     integer :: i, j, ios, j0, j1, jgrid, jj, plot_mode
     character(len=132) :: STRI
-    integer, external :: plotMode
 
     TTOUT(1) = -1.d10
     TIM7(1) = TINIT
@@ -1574,5 +1573,285 @@ contains
 
     return
     end subroutine plot_flux_surfaces
+
+!---------------------------------------------------------------------
+    integer function plotMode(mod_10, mode_y)
+
+    integer, intent(in) :: mod_10, mode_y
+
+    if (mod_10 <= 1 .or. mod_10 >= 7) then
+        plotMode = mod_10
+    elseif (mod_10 >= 2 .and. mod_10 <= 5) then
+        if (mode_y == 1) then
+            plotMode = 2
+        else
+            plotMode = 3
+        endif
+    else ! mod_10 = 6
+        if (mode_y == 1) then
+            plotMode = 5
+        else if (mode_y == 0) then
+            plotMode = 9
+        else
+            plotMode = 6
+        endif
+    endif
+
+    return
+    end function plotMode
+
+!---------------------------------------------------------------------
+    subroutine set_plot_area(plot_mode)
+    !----------------------------------------------------------------------|
+    ! Input: MODEY
+    ! Output: plot_area%xmin - x_left  of the graphic area
+    !  plot_area%xmax - x_right of the graphic area
+    !  plot_mode - for using in set_plot
+    !  NST - for using in set_plot
+    !----------------------------------------------------------------------|
+
+    integer, intent(in) :: plot_mode
+
+    integer :: n_str_up, n_str_down
+
+! n_str_up, n_str_down - number of text strings up & down
+    SELECT CASE(plot_mode)
+    CASE(1)
+        n_str_up   = 2
+        n_str_down = 5
+        plot_area%xmin = 0
+        plot_area%xmax = plot_area%width
+        plot_area%nx_canvas = 4
+        plot_area%ny_canvas = 2
+    ! modes 2, 3, 4, 5 at y-mode = +1, dummy mode (plot_mode=4 - not used)
+    CASE(2, 4, 7)
+        n_str_up   = 2
+        n_str_down = 5
+        plot_area%xmin = 0
+        plot_area%xmax = plot_area%width
+        plot_area%nx_canvas = 2
+        plot_area%ny_canvas = 1
+    ! modes 2, 3, 4, 5 at y-mode = -1
+    CASE(3)
+        n_str_up   = 2
+        n_str_down = 5
+        plot_area%xmin = 0
+        plot_area%xmax = plot_area%width
+        plot_area%nx_canvas = 2
+        plot_area%ny_canvas = 2
+    ! mode # 6 (time) at y-mode=1 (2 windows)
+    CASE(5)
+        n_str_up   = 1
+        n_str_down = 1
+        plot_area%xmin = 6*astra_gui%dxlet
+        plot_area%xmax = plot_area%width
+        plot_area%nx_canvas = 1
+        plot_area%ny_canvas = 2
+    ! mode # 6 (time) at y-mode=-1 (4 windows)
+    CASE(6)
+        n_str_up   = 1
+        n_str_down = 1
+        plot_area%xmin = 6*astra_gui%dxlet
+        plot_area%xmax = plot_area%width
+        plot_area%nx_canvas = 1
+        plot_area%ny_canvas = 4
+    ! mode 8 (equilibrium)
+    CASE(8)
+        n_str_up   = 1
+        n_str_down = -2
+        plot_area%xmin = 0
+        plot_area%xmax = 0.7*plot_area%width
+        plot_area%nx_canvas = 1
+        plot_area%ny_canvas = 1
+    ! mode # 6 (time) at y-mode=0 (1 window), mode 9 (user's plot)
+    CASE(9)
+        n_str_up   = 1
+        n_str_down = 1
+        plot_area%xmin = 6*astra_gui%dxlet
+        plot_area%xmax = plot_area%width
+        plot_area%nx_canvas = 1
+        plot_area%ny_canvas = 1
+    END SELECT
+
+    plot_area%ymax = n_str_up*astra_gui%dylet + 1
+    plot_area%ymin = plot_area%height - n_str_down*astra_gui%dylet - 1
+    plot_area%canvas_width  = (plot_area%xmax - plot_area%xmin)/plot_area%nx_canvas
+    plot_area%canvas_height = (plot_area%ymin - plot_area%ymax)/plot_area%ny_canvas
+
+    return
+    end subroutine set_plot_area
+
+!---------------------------------------------------------------------
+    subroutine set_plot(plot_mode)
+    ! Subroutine draw frame for different modes
+
+    use const_inc, only: TSCALE, TINIT, AWALL
+    use dbl2char, only: fmt_xf
+    use char_manip, only: len_trim_tab
+
+    integer, parameter :: LENG=3, JN0=0
+    integer, intent(in) :: plot_mode
+
+    integer :: JJ, J, TIMWIN, JX, JY, &
+        XP, XM, YP, YM, JXSCM, LYM
+    double precision :: DY, YY, TIND, scale_fac
+    character(len=5) :: XF4
+    character(len=6) :: CH6
+    character(len=80) :: COMMENT
+
+! IDX, DY  - X & Y distance (in points) between X & Y axis labels
+    ! IDT      - distance (in labels) between longer labels in modes 6&8
+    ! LENG     - label length
+
+    if (plot_mode <= 0) return
+
+    TIMWIN = 0
+    if (plot_mode == 5 .or. plot_mode == 6 .or. plot_mode == 8 .or. plot_mode == 9) TIMWIN = 1
+
+    call setColor(Black)
+    call rectvm(0, JN0, JN0, astra_gui%Width-1, astra_gui%Height-1)
+
+    if (MOD10 == 6)  then
+        j = astra_gui%Width - 20*astra_gui%dxlet + 1
+        jj = plot_area%height + astra_gui%dylet
+        call setColor(Black)
+        call textvm(j, jj, 'time, s', 7)
+    endif
+
+! Vertical lines & Y-labels
+    if (KPRI >= 1 .and. KPRI <= 2) then
+        write(COMMENT, '(A)') "Vertical lines"
+        j = len_trim_tab(COMMENT)
+        call pscom(COMMENT, j)
+    endif
+
+    call setColor(Black)
+
+! Skipping from a subplot to the next along x-axis
+    do JJ=plot_area%xmin, plot_area%xmax, plot_area%canvas_width
+        JX = MIN(plot_area%xmax, JJ)
+        XP = MIN(plot_area%xmax, JX + LENG)
+        XM = MAX(plot_area%xmin, JX - LENG)
+        call drawvm(0, JX, plot_area%ymax, JX, plot_area%ymin)
+    ! Y-line labels
+        if (KPRI >= 1 .and. KPRI <= 2) then
+            write(COMMENT, '(A)') "Y-line labels"
+            j = len_trim_tab(COMMENT)
+            call pscom(COMMENT, j)
+        endif
+        DY = (plot_area%ymin - plot_area%ymax)/20.
+        YY = dble(plot_area%ymin)
+        do
+            JY = YY
+            if (plot_mode /= 8) call drawvm(0, XM, JY, XP, JY)
+            YY = YY - DY
+            if (sign(1.d0, DY)*(YY - dble(plot_area%ymax)) < 0.d0) EXIT
+        enddo
+    enddo
+
+! Horizontal lines
+    if (KPRI >= 1 .and. KPRI <= 2) then
+        write(COMMENT, '(A)') "Horizontal lines"
+        j = len_trim_tab(COMMENT)
+        call pscom(COMMENT, j)
+    endif
+
+    do JY=plot_area%ymin, plot_area%ymax, -plot_area%canvas_height
+        YM = MAX(plot_area%ymax, JY - LENG)
+        if (plot_mode == 4 .or. plot_mode == 5 .or. plot_mode == 6) then
+            YP = JY
+        else
+            YP = MIN(plot_area%ymin, JY + LENG)
+        endif
+        call drawvm(0, plot_area%xmin, JY, plot_area%xmax, JY)
+    ! X-line labels
+        if (KPRI >= 1 .and. KPRI <= 2) then
+            write(COMMENT, '(A)') "X-line labels"
+            j = len_trim_tab(COMMENT)
+            call pscom(COMMENT, j)
+        endif
+        JX = plot_area%xmin
+        IDX = 16
+        JXSCM = plot_area%xmax - IDX
+        if (TIMWIN == 1) then
+            IDX = 23
+            JXSCM = plot_area%xmax
+        endif
+        do J=1, 100
+            JX = JX + IDX
+            if (JX > JXSCM) EXIT
+            if (TIMWIN == 1 .and. J/IDT*IDT == J) then
+                LYM = YM - 2
+            else
+                LYM = YM
+            endif
+            if (LYM > plot_area%ymax + LENG)  call drawvm(0, JX, LYM, JX, YP)
+        enddo
+    enddo
+
+    if (plot_mode == 8) then
+        JY = (plot_area%ymax + plot_area%ymin)/2
+        do j=0, 10
+            jj = JY + IDX*j
+            if (jj < plot_area%ymin) call drawvm(0, XM, JJ, XP, JJ)
+            jj = JY - IDX*j
+            if (jj > plot_area%ymax) call drawvm(0, XM, JJ, XP, JJ)
+        enddo
+    endif
+
+    if (MOD10 == 6) then
+    ! time-axis legend:
+        call setColor(Black)
+        JJ = plot_area%height - astra_gui%dylet + 12
+        do J=0, plot_area%width, IDX
+            JX = (J - IDT)*IDT + plot_area%xmin
+            if (JX > plot_area%width) CYCLE
+    ! (right_label_pos)/(n_labels)=575/IDT=115
+            YY = abs(TSCALE)
+            TIND = TINIT + J*YY/115
+            if ( TINIT + YY > 10.0 .or. (TINIT + YY > 1.0 .and. YY < 0.1) .or. YY < 0.01) then
+                CH6 = fmt_xf(TIND, 5)
+                call textvm(JX - 2, JJ, CH6, 6)
+            else
+                XF4 = fmt_xf(TIND, 4)
+                call textvm(JX, JJ, XF4, 5)
+            endif
+      enddo
+    endif
+
+    if (MOD10 == 8) then
+    ! horizontal axis labels
+        scale_bnd = 1.3*AWALL
+        scale_fac = dble(plot_area%height)/350.
+        IDX = IDX*scale_fac
+        JJ = plot_area%ymin + astra_gui%dylet + 2
+        call setColor(Black)
+        do J=1, 5
+            JX = IDX*IDT*J - 24
+            if (JX > JXSCM) CYCLE
+            YY = J*scale_bnd
+            XF4 = fmt_xf(YY, 4)
+            call textvm(JX, JJ, XF4, 5)
+        enddo
+    ! vertical axis labels
+        do J=-1, 1
+            JX = (plot_area%ymin + plot_area%ymax + astra_gui%dylet)/2 + IDT*IDX*J - 0.5*astra_gui%dylet
+            YY = -J*scale_bnd
+            XF4 = fmt_xf(YY, 4)
+            call textvm(plot_area%xmax + 2, JX, XF4, 5)
+        enddo
+    endif
+
+    if (KPRI >= 1 .and. KPRI <= 2) then
+         write(COMMENT, '(A)') "Frame done"
+         j = len_trim_tab(COMMENT)
+         call pscom(COMMENT, j)
+    endif
+
+    pixel_ymid  = 0.5*(plot_area%ymax + plot_area%ymin)
+    meter2pixel = dble(IDX*IDT)/scale_bnd
+
+    return
+    end subroutine set_plot
 
 end module graph_utils
