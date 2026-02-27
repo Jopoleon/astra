@@ -21,6 +21,7 @@ use json_write, only: write_json, write_jsonx
 use read_input, only: readInput
 use plasma_state, only: plasma_up
 use auxiliary, only: IFTREQ
+use set_x_data, only: set_x_scalars, set_x_arrays, astra_assignments
 
 implicit none
 
@@ -48,6 +49,8 @@ call ininam
 call io_init
 plasma_up = 1  ! plasma is up by default, can be set to 0 for breakdown by the user in a user-defined sbr called with "<"
 call readInput
+call astra_assignments ! ASTRA default assignments
+
 call write_jsonx
 
 use_ext_bnd = 0
@@ -61,7 +64,7 @@ if (TASK(1: 3) /= 'BGD') then
     call gui_init
 endif
 
-call SETARX(1)
+call set_x_arrays(1)
 call INIVAR
 call SETVAR
 call DETVAR
@@ -74,10 +77,10 @@ jt_req = 0
 do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set in IFTREQ (for/defarr.f90)
 
     if (TASK(1:3) /= 'BGD') jkey = IFKEY(256)
-    call INTVAR      ! Set exp scalars
+    call set_x_scalars   ! Set exp scalars
     call DETVAR
     call DEFARR
-    call SETARX(1)   ! Set X-data w/o time interpolation
+    call set_x_arrays(1)   ! Set X-data w/o time interpolation
     call INIVAR
     call markloc("init")
     NITOT = NITOT + 1

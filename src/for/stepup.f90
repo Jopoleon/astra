@@ -13,6 +13,7 @@ use io_mod, only: CCOIL, VCOIL, MACHINE, TASK
 use read_input, only: raw_cCoil, raw_vCoil
 use plasma_state, only: plasma_up
 use auxiliary, only: IFTREQ, IFSTEP, OLDNEW
+use set_x_data, only: set_x_scalars, set_x_arrays, get_coil
 
 implicit none
 
@@ -63,7 +64,7 @@ call detvar
 
 if (plasma_up == 1 .or. ifbey == 0) then
     call OLDNEW           ! Time advance: F(t-tau):=F(t) neo=ne, etc,except ni
-    call INTVAR           ! Set exp scalars, moved here for btor consistency
+    call set_x_scalars    ! Set exp scalars, moved here for btor consistency
 endif
 
 ! Update time at the end of everything
@@ -119,7 +120,7 @@ time_step_accuracy: do
 ! 1 - no iterations, 2 - yes. is 1 by default
 
         if (plasma_up == 0 .or. ifbey == 0) then
-            call SETARX(2)       ! Update exp-data with a new metric
+            call set_x_arrays(2)       ! Update exp-data with a new metric
         endif
 
         call METRIC          ! Equilibrium call, compute IPL from dfpdrb, compute PSIEXT, shape, psplex, and metric coefficients, update ROC, FTN

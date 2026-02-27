@@ -37,6 +37,7 @@ $(OBJ_DIR)/parameters_a2equil.o \
 $(OBJ_DIR)/flux_avg_imp.o \
 $(OBJ_DIR)/parse_utils.o \
 $(OBJ_DIR)/read_input.o \
+$(OBJ_DIR)/set_x_data.o \
 $(OBJ_DIR)/json_write.o \
 $(OBJ_DIR)/graph_utils.o \
 $(OBJ_DIR)/transport2fbe.o \
@@ -46,10 +47,8 @@ OBJS = \
 $(OBJ_DIR)/Astra2XW.o \
 $(OBJ_DIR)/dialogx.o \
 $(OBJ_DIR)/ipc_control.o \
-$(OBJ_DIR)/intvar.o \
 $(OBJ_DIR)/metric.o \
 $(OBJ_DIR)/runeq.o \
-$(OBJ_DIR)/setarx.o \
 $(OBJ_DIR)/gs_solver.o \
 $(OBJ_DIR)/a_equil.o \
 $(OBJ_DIR)/ctr2rz.o

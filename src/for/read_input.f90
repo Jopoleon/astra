@@ -32,7 +32,7 @@ type(rawCoils) :: raw_cCoil, raw_vCoil
 
 contains
 
-!----------------------------------------------------------------------
+!---------------------------------------------------------------------
     subroutine readInput
 
     use machine_config, only: config_read
@@ -77,13 +77,10 @@ contains
 ! Read exp file
     call read_exp
 
-! ASTRA default assignments
-    call astra_assignments
-
     return
     end subroutine readInput
 
-!------------------------------------------------------------
+!---------------------------------------------------------------------
     subroutine read_coilx(nunit, stri_in, coilx_out)
 
     use io_mod, only: exp_file, n_coils_max
@@ -144,17 +141,17 @@ contains
     return
     end subroutine read_coilx
 
-!----------------------------------------------------------------------
+!---------------------------------------------------------------------
     subroutine read_exp
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 ! len_data_max   maximal number of time slices for all arrays
 ! len_scalars    number of actually defined variables
 ! len_profs_time number of actually defined groups
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 ! The subroutine is called once at the start-up, it reads the "exp" file
 ! and stores the time evolution of all input data in the arrays raw_*%*
 ! jbeg_arrx  - pointer to a position in the array raw_profiles%time
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 
     use parameter_inc, only: NRDX
     use const_inc, only: NA1, AB, ABC, RTOR, varValues, exp_header, TSTART, TEND
@@ -181,7 +178,7 @@ contains
     character(len=132) :: strarray(20), STRI, lin_upper, &
         err_msg, err_format, err_msg_exp, file_exp, ufile_in, uname, uvar
 
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
     call markloc('read_exp')
 
     file_exp = 'exp/' // TRIM(exp_file)
@@ -855,183 +852,6 @@ contains
     return
     end subroutine read_exp
 
-!----------------------------------------------------------------------
-    subroutine astra_assignments
-
-    use parameter_inc, only: NRD
-    use const_inc, only: NA1, NA, NB1, NAB, AB, ABC, AWALL, TIME, TSTART, TPAUSE, &
-         TAUMIN, TAUPRP, VOLUME, IPL, IPLN, HRO, HROX, ROC, ROCO, BTN, FTO, FTN, &
-         GP, GP2, PSIAX, PSIBO, RTOR, BTOR, SHIFT, ROWALL, ELONM, ELONG, TRICH, TRIAN, &
-         TINIT, TSCALE, TIMEQL, DTEQL
-    use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
-        G11, G22, VR, VRO, VRS, VOLUM, &
-        FP, FPO, FP_NORM, rho_pol, NE, NEO, TE, TEO, UPAR, UPARO, MRHO, &
-        AMAIN, UPS0, UPS0O
-    use json_vars, only: varNames, n_profx, profxNames, n_var
-    use io_mod, only: IFDFVX, IFDFAX, exp_file
-    use numerical_tools, only: EXTRAP, INTEGR
-    use debugger, only: astra_stop
-     
-    integer :: KAB, KAWALL, KRTOR, KELONM, KTRICH
-    integer :: j, jt, jthe
-    double precision :: YTP=-1.d9
-    double precision, dimension(:), allocatable :: bnd_r, bnd_z
-    character(len=132) :: err_msg
-    double precision, external :: ROC3A
-
-    if (NA1 > NRD) then
-        write(err_msg, '(2A, i)') '>>> FATAL ERROR: The radial grid size out of range.\n', &
-            '                 Parameter "NA1" cannot exceed', NRD
-        call astra_stop(err_msg)
-    endif
-
-    TIME = TSTART
-    if (YTP > -1.d8) TPAUSE = YTP
-
-    call INTVAR
-
-    do j=1, n_var
-        SELECT CASE(varNames(j))
-        CASE('AB    ')
-            KAB    = j
-        CASE('AWALL ')
-            KAWALL = j
-        CASE('RTOR  ')
-            KRTOR  = j
-        CASE('ELONM ')
-            KELONM = j
-        CASE('TRICH ')
-            KTRICH = j
-        END SELECT
-    enddo
- 
-    if (AWALL < AB) then
-         if (IFDFVX(KAWALL) >= 0) write(*, *) '>>> Warning: AWALL < AB.  Setting AWALL = AB'
-         AWALL = AB
-    endif
-    if (IFDFVX(KAWALL) < 0 .and. (AWALL < AB .or. AWALL > 1.2*AB)) AWALL = AB
-
-    if (ABC > AB) then
-        err_msg = '>>> Error: ABC cannot exceed AB. Check your file exp/' // TRIM(exp_file)
-        call astra_stop(TRIM(err_msg))
-    endif
-
-    if (AWALL > 1.2*AB .or. AWALL > RTOR) then
-        write(*, *) '>>> Warning: AWALL is set unreasonably large'
-        write(*, *) '    Check settings in data and log files'
-    endif
-
-    IFDFVX(KAB)    = 4
-    IFDFVX(KELONM) = 4
-    IFDFVX(KRTOR)  = 4
-    IFDFVX(KTRICH) = 4
-    IFDFVX(KAWALL) = 4
-
-! If boundary is given, calculates initial geometry from that
-    if (raw_boundary%nt > 0) then
-! Find time index of most proximum boundary
-        j=1
-        do jt=1, raw_boundary%nt
-            if (raw_boundary%time(jt) <= TSTART) j = jt
-        enddo
-        jt = j
-        allocate(bnd_r(raw_boundary%n_theta), bnd_z(raw_boundary%n_theta))
-        do jthe=1, raw_boundary%n_theta
-            bnd_r(jthe) = raw_boundary%R((jthe-1)*raw_boundary%nt + jt)
-            bnd_z(jthe) = raw_boundary%Z((jthe-1)*raw_boundary%nt + jt)
-        enddo
-! Calculate ABC
-        ABC = (maxval(bnd_r) - minval(bnd_r))/2.
-! Calculate elong
-        ELONG = (maxval(bnd_z) - minval(bnd_z))/(2.*ABC)
-        ELONG = max(ELONG, 1.d0)
-        deallocate(bnd_r)
-        deallocate(bnd_z)
-    endif
-
-! Assign variables here for initialization:
-
-    VOLUME = GP2*GP*RTOR*AB**2 * ELONG
-
-    ROC  = ROC3A(RTOR, SHIFT, ABC, ELONG, TRIAN)
-    ROCO = ROC
-
-! Initialization of magnetic quantities
-    BTN = BTOR
-    FTO = GP*BTOR*ROC**2
-    FTN = GP*BTN*ROC**2
-    IPLN = IPL
-
-    if (AWALL > RTOR+SHIFT) then
-        ROWALL = AWALL*SQRT(max(ELONM, ELONG))
-    elseif (ELONM > ELONG) then
-        ROWALL = ROC3A(RTOR, SHIFT, AWALL, ELONM, TRICH)
-    else
-        ROWALL = ROC3A(RTOR, 0.d0, AWALL, ELONG, TRIAN)
-    endif
-
-    HROX  = 1.0/(NA1 - 0.5)
-
-    do j=1, NRD
-        XRHO(j) = (j - 0.5)*HROX
-        SXHO(j) = j*HROX
-! real space grids, these are function of ROC
-        RHO (j) = XRHO(j)*ROC
-        SRHO(j) = SXHO(j)*ROC
-    enddo
-    HRO  = HROX*ROC
-
-! Compute NB1
-    NB1 = NA1
-    NA  = NA1 - 1
-
-    call SETGEO
-    call NEW_GRID
-
-    do J=1, NB1
-        G22(J) = RHO(J)
-        VR(J)  = (GP2*(RTOR + SHIFT))**2*RHO(J)/RTOR
-        VRS(J) = (GP2*(RTOR + SHIFT))**2*J*HRO/RTOR
-        G11(J) = VRS(J)
-    enddo
-
-    call INTEGR(RHO, 1, VR, VOLUM, NA1)
-
-    PSIBO = FP(NA1)
-    PSIAX = EXTRAP(XRHO(1: NA1), FP(1: NA1), 0.0, NA1, 2, .true.)
-
-    FP_NORM = (FP - PSIAX)/(PSIBO - PSIAX)
-    rho_pol = SQRT(FP_NORM)
-
-    VOLUME = VOLUM(NA1)
-
-    NAB = NA1
-    if (NA1 < NB1 .and. AB > ABC) then
-        do j=NA1+1, NB1
-            if (AMETR(j) < AB) NAB = j
-        enddo
-        if (NAB < NB1) NAB = NAB + 1
-    endif
-
-    AMETR(NAB) = AB
-    AMETR(NA1) = ABC
-
-    NEO   = NE
-    TEO   = TE
-    FPO   = FP
-    UPARO = UPAR
-    VRO   = VR
-    MRHO  = AMAIN*NE
-    UPS0  = MRHO*RTOR
-    UPS0O = UPS0
-
-    TIMEQL = TIME - DTEQL - 1.d-7
-    TAUPRP = TAUMIN
-    if (TIME > TINIT + 1.025*abs(TSCALE)) TINIT = TSTART
-
-    return
-    end subroutine astra_assignments
-
 !---------------------------------------------------------------------
     subroutine str2dbl(line, dbl_out, ierr)
 
@@ -1098,7 +918,7 @@ contains
 !  they are removed the "string" is appended with spaces
 ! Trailing "X" is added when not present in string*6
 ! Finally ARRNAM in the Astra standard is created, 
-!-----------------------------------------------------------------------
+!---------------------------------------------------------------------
 
     use char_manip, only: clean_string, to_upper
 
@@ -1140,7 +960,7 @@ contains
 ! nr_exp - is determined from {YX(nr_exp) <= ABC} or {YX(nr_exp) <= AB}
 !    for {INTYPE = 10} or {INTYPE = 11}, respectively
 !  nr_exp = jrad if  if YX(jrad) < ABC <= AB
-!----------------------------------------------------------------------|
+!---------------------------------------------------------------------
 
     use char_manip, only: to_upper, clean_string
 
@@ -1214,7 +1034,7 @@ contains
     return
     end subroutine CHECKU
 
-!------------------------------------------------------------
+!---------------------------------------------------------------------
     subroutine parse_u_line(str_in, var_name, uname, factor)
 
     use debugger, only: markloc, astra_stop
@@ -1258,7 +1078,7 @@ contains
     return
     end subroutine parse_u_line
 
-!------------------------------------------------------------
+!---------------------------------------------------------------------
     subroutine ufheader(uname, n_scal, n_dim, nt, nx, lbl2)
 
     use debugger, only: markloc, astra_stop
@@ -1340,7 +1160,7 @@ contains
 
     end subroutine ufheader
 
-!------------------------------------------------------------
+!---------------------------------------------------------------------
     subroutine ufrd(uname, n_scal, n_dim, nt, nx, t_out, x_out, arr_out)
 
     integer, parameter :: n_unit=11
