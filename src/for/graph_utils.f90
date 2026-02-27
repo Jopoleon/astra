@@ -347,7 +347,7 @@ contains
     subroutine CMARK(xpos_in, ypos_in, prof_yscale, yshift, prof_name, STYL, jplot_parity)
 ! Mark variable/scale in 1 & 2 modes
 
-    use dbl2char, only: fmt4
+    use dbl2char, only: fmt_smart
 
     integer, intent(in) :: STYL, xpos_in, ypos_in, jplot_parity
     double precision, intent(in) :: prof_yscale, yshift
@@ -359,7 +359,7 @@ contains
     ypos = ypos_in
 
     name_scale_label(:)  = ' '
-    name_scale_label(1: 4) = fmt4(prof_yscale)
+    name_scale_label(1: 4) = fmt_smart(prof_yscale, 4)
     name_scale_label(6: 10) = prof_name
     if (yshift /= 0) then
         if (yshift < 0) then
@@ -367,7 +367,7 @@ contains
         else
             name_scale_label(11: 11) = '+'
         endif
-        name_scale_label(12: 15) = fmt4(abs(yshift))  
+        name_scale_label(12: 15) = fmt_smart(abs(yshift), 4)
     endif
     str_len = LEN_TRIM(name_scale_label)
     str_pixels = 8*str_len
@@ -386,7 +386,7 @@ contains
     subroutine CMARKT(xpos_in, ypos_in, sig_yscale, yshift, sig_name, STYL)
 ! Mark variable/scale in 6th (time) mode
 
-    use dbl2char, only: fmt4
+    use dbl2char, only: fmt_smart
 
     integer, intent(in) :: xpos_in, ypos_in, STYL
     double precision, intent(in) :: sig_yscale, yshift
@@ -401,7 +401,7 @@ contains
     name_shift_label(1: 10) = '          '
     name_shift_label(2: 5)  = sig_name
     if (yshift /= 0) then
-        F4 = fmt4(abs(yshift))
+        F4 = fmt_smart(abs(yshift), 4)
         if (yshift < 0) name_shift_label(6: 10) = '-' // F4
         if (yshift > 0) name_shift_label(6: 10) = '+' // F4
         xpos = xpos_in - astra_gui%dxlet
@@ -413,7 +413,7 @@ contains
     call textvm(xpos, ypos, TRIM(name_shift_label), LEN_TRIM(name_shift_label))   ! type name+yshift
     plot_arr(1) = xpos + 3
     plot_arr(2) = ypos - 5
-    F4 = fmt4(sig_yscale)
+    F4 = fmt_smart(sig_yscale, 4)
     ypos = ypos + 15
     xpos = xpos + astra_gui%dxlet
     call textvm(xpos, ypos, F4, 4)   ! type scale
@@ -922,7 +922,7 @@ contains
         MEQUIL, LEQ, TIME
     use io_mod, only: IFDFAX, NPTM, XAXES, DATAX, equ_file, TOUTX
     use read_input, only: raw_profiles
-    use dbl2char, only: fmt_xf
+    use dbl2char, only: fmt_smart
     use char_manip, only: len_trim_tab, str_in_list
     use debugger, only: markloc, debug, astra_stop
     use json_vars, only: profxNames
@@ -1164,7 +1164,7 @@ contains
             jlx(j_canv) = jlx(j_canv) + 1
             text_posx = x_shift + plot_area%canvas_width - astra_gui%dxlet - 45
             text_posy = (1 + jlx(j_canv))*astra_gui%dylet + FSHIFT + (plot_area%ymin - plot_area%ymax - plot_area%canvas_height)*(jy_canv) + 3
-            XF4 = fmt_xf(TOUTX(jn), 4)
+            XF4 = fmt_smart(TOUTX(jn), 4)
             call textvm(text_posx, text_posy, XF4, 5) ! Text (time) -> plot legend
             PTM(1) = text_posx + astra_gui%dxlet + 37 ! 12 is fixed, as the font size does not scale
             PTM(2) = text_posy - 0.3*astra_gui%dylet
@@ -1686,7 +1686,7 @@ contains
     ! Subroutine draw frame for different modes
 
     use const_inc, only: TSCALE, TINIT, AWALL
-    use dbl2char, only: fmt_xf
+    use dbl2char, only: fmt_smart
     use char_manip, only: len_trim_tab
 
     integer, parameter :: LENG=3, JN0=0
@@ -1810,10 +1810,10 @@ contains
             YY = abs(TSCALE)
             TIND = TINIT + J*YY/115
             if ( TINIT + YY > 10.0 .or. (TINIT + YY > 1.0 .and. YY < 0.1) .or. YY < 0.01) then
-                CH6 = fmt_xf(TIND, 5)
+                CH6 = fmt_smart(TIND, 5)
                 call textvm(JX - 2, JJ, CH6, 6)
             else
-                XF4 = fmt_xf(TIND, 4)
+                XF4 = fmt_smart(TIND, 4)
                 call textvm(JX, JJ, XF4, 5)
             endif
       enddo
@@ -1830,14 +1830,14 @@ contains
             JX = IDX*IDT*J - 24
             if (JX > JXSCM) CYCLE
             YY = J*scale_bnd
-            XF4 = fmt_xf(YY, 4)
+            XF4 = fmt_smart(YY, 4)
             call textvm(JX, JJ, XF4, 5)
         enddo
     ! vertical axis labels
         do J=-1, 1
             JX = (plot_area%ymin + plot_area%ymax + astra_gui%dylet)/2 + IDT*IDX*J - 0.5*astra_gui%dylet
             YY = -J*scale_bnd
-            XF4 = fmt_xf(YY, 4)
+            XF4 = fmt_smart(YY, 4)
             call textvm(plot_area%xmax + 2, JX, XF4, 5)
         enddo
     endif

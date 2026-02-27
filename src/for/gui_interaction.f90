@@ -721,7 +721,7 @@ contains
     use io_mod, only: AWD, equ_file, exp_file
     use graph_utils, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, &
         WarningColor, ROUT, RUNID, NRW, NTIMES, TTOUT, TOUT
-    use dbl2char, only: fmt4, fmt_xf
+    use dbl2char, only: fmt_smart
     use json_vars, only: n_const
 
     double precision, intent(in) :: CHORDN
@@ -770,10 +770,10 @@ contains
                 JEN = MIN0(NTOUT, JEND)
                 write(7, 102) (NAMET(J), J=JBE, JEN)
                 STRI = ' '
-                STRI(1:5) = fmt_xf(TIME, 4)
+                STRI(1:5) = fmt_smart(TIME, 4)
                 do J=JBE, JEN
                     JJ = 7*(J - JBE) + 8
-                    STRI(JJ: JJ+5) = fmt_xf(TOUT(LTOUT, J), 5)
+                    STRI(JJ: JJ+5) = fmt_smart(TOUT(LTOUT, J), 5)
                 enddo
                 write(7, 104) STRI
                 if (JEN == NTOUT) EXIT
@@ -799,19 +799,19 @@ contains
                     STRI = ' '
                     do JJ=JBE, JEN
                         J1 = 7*(JJ - JBE + 1) + 1
-                        STRI(J1: J1+5) = fmt_xf(ROUT(J, JJ), 5)
+                        STRI(J1: J1+5) = fmt_smart(ROUT(J, JJ), 5)
                     enddo
     ! Different options for a radial variable 
                     if (MODEX == 0) then
-                        STRI(1: 5) = fmt_xf(AMETR(j), 4)
+                        STRI(1: 5) = fmt_smart(AMETR(j), 4)
                     elseif (MODEX == 1) then
-                        STRI(1: 5) = fmt_xf(AMETR(j), 4)
+                        STRI(1: 5) = fmt_smart(AMETR(j), 4)
                     elseif (MODEX == 2) then
-                        STRI(1: 5) = fmt_xf(RHO(j), 4)
+                        STRI(1: 5) = fmt_smart(RHO(j), 4)
                     elseif (MODEX == 3 .or. MOD10 == 3) then
-                        STRI(1: 5) = fmt_xf(FP(j), 4)
+                        STRI(1: 5) = fmt_smart(FP(j), 4)
                     else
-                        STRI(1: 5) = fmt_xf(AMETR(j), 4)
+                        STRI(1: 5) = fmt_smart(AMETR(j), 4)
                     endif
                     write(7, 104) STRI
                 enddo
@@ -829,10 +829,10 @@ contains
                 write(7, 102) (NAMET(J), J=JBE, JEN)
                 do J1=1, LTOUT - 1
                     STRI = ' '
-                    STRI(1: 5) = fmt_xf(TTOUT(J1), 4)
+                    STRI(1: 5) = fmt_smart(TTOUT(J1), 4)
                     do J=JBE, JEN
                         JJ = 7*(J - JBE) + 8
-                        STRI(JJ: JJ+5) = fmt_xf(TOUT(J1, J), 5)
+                        STRI(JJ: JJ+5) = fmt_smart(TOUT(J1, J), 5)
                     enddo
                     write(7, 104) STRI
                 enddo
@@ -854,7 +854,7 @@ contains
         do J=1, 16
             J1 = J1 + 1
             if (J1 > n_const) EXIT
-            CH6 = fmt_xf(constValues(J1), 5)
+            CH6 = fmt_smart(constValues(J1), 5)
             JJ = 7*(J - 1) + 1
             STRI(JJ: JJ+5) = CH6
         enddo
@@ -870,10 +870,10 @@ contains
                 JEN = MIN0(NTOUT, JEND)
                 write(7, '(3X, "Time", 16(3X, 1A4))') (NAMET(J), J=JBE, JEN)
                 STRI = ' '
-                STRI(1: 5) = fmt_xf(TIME, 4)
+                STRI(1: 5) = fmt_smart(TIME, 4)
                 do J=JBE, JEN
                     JJ = 7*(J - JBE) + 8
-                    STRI(JJ: JJ+5) = fmt_xf(TOUT(LTOUT, J), 5)
+                    STRI(JJ: JJ+5) = fmt_smart(TOUT(LTOUT, J), 5)
                 enddo
                 write(7, 104) STRI
                 if (JEN == NTOUT) EXIT
@@ -916,7 +916,7 @@ contains
                 write(7, '(8X, "Time", 64(8X, 1A4))') (NAMET(J), J=JBE, JEN)
                 do J1=1, LTOUT-1
                     STRI = ' '
-                    STRI(1: 5) = fmt_xf(TTOUT(J1), 4)
+                    STRI(1: 5) = fmt_smart(TTOUT(J1), 4)
                     write(7, 408) TTOUT(J1), (TOUT(J1, J), J=JBE, min(JEN, JEND))
                 enddo
                 JBE = JBE + 8
@@ -960,7 +960,7 @@ contains
         NWIND3, NAMET, White, Red, Blue
     use status_inc, only: AMETR, SHIF, ELON, TRIA, FP, RHO
     use const_inc, only: TIME, TINIT, TSCALE, NA, NA1, NAB, XOUT, AB, ABC, ROC, HRO
-    use dbl2char, only: fmt5
+    use dbl2char, only: fmt_smart
     use numerical_tools, only: QUADIN
     use standard_functions, only: RZ2A
 
@@ -1017,7 +1017,7 @@ contains
             if (NAMET(J1) == '    ') JW = 0
             if (JW > 0 .and. JW <= 8) call down_label(j, TOUT) ! for all plotting modes
         enddo
-        STRI(1: 11) = 'Time=' // fmt5(YY1) // 's'
+        STRI(1: 11) = 'Time=' // fmt_smart(YY1, 5) // 's'
         call setColor(Red)
         call textvm(astra_gui%dxlet, JN2 - int(2.5*astra_gui%dylet), STRI, 11)
         return
@@ -1031,12 +1031,12 @@ contains
         STRI( 7: 12) = "(r, z)="
         STRI(32: 37) = "(a, S)="
         STRI(38: 50) = '(     ,     )'
-        STRI(39: 43) = fmt5(YA1)
-        STRI(45: 49) = fmt5(YD)
+        STRI(39: 43) = fmt_smart(YA1, 5)
+        STRI(45: 49) = fmt_smart(YD, 5)
         STRI(57: 62) = "(E, T)="
         STRI(63: 75) = '(     ,     )'
-        STRI(64: 68) = fmt5(YE)
-        STRI(70: 74) = fmt5(YT)
+        STRI(64: 68) = fmt_smart(YE, 5)
+        STRI(70: 74) = fmt_smart(YT, 5)
     else
         do j=1, plot_area%nx_canvas
             YX1 = YX1 - DX
@@ -1075,17 +1075,17 @@ contains
             if (YRHO > 0.5*(RHO(NA) + ROC)) j = NA1
 
             STRI(32: 33) = "a="
-            STRI(34: 38) = fmt5(YA)
+            STRI(34: 38) = fmt_smart(YA, 5)
             YRHO = YRHO/ROC
             STRI(39: 49) = 'm,   rho_t='
-            STRI(50: 54) = fmt5(YRHO)
+            STRI(50: 54) = fmt_smart(YRHO, 5)
             if (YFP > YFPC) then
                 YFP = sqrt((YFP - YFPC)/(FP(NA1) - YFPC))
             else
                 YFP = 0.
             endif
             STRI(55: 64) = ",   rho_p="
-            STRI(65: 69) = fmt5(YFP)
+            STRI(65: 69) = fmt_smart(YFP, 5)
             STRI(70: 77) = ",  Node:"
             write(STRI(78: 80), '(1I3)')j
         endif
@@ -1101,8 +1101,8 @@ contains
 
     endif
 
-    STRI(14: 18) = fmt5(YX)
-    STRI(20: 24) = fmt5(YY)
+    STRI(14: 18) = fmt_smart(YX, 5)
+    STRI(20: 24) = fmt_smart(YY, 5)
 
     call setColor(Blue)
     call textvm(JN0, JLR, "               ", 15)
@@ -1124,7 +1124,7 @@ contains
 
     use graph_utils, only: astra_gui, plot_area, LTOUT, MOD10, NTOUT, &
         NRW, NTIMES, NWIND3, active_tab, NAMET, Black, Blue, curves_per_frame
-    use dbl2char, only: fmt_xf
+    use dbl2char, only: fmt_smart
 
     implicit none
 
@@ -1164,7 +1164,7 @@ contains
             if (jj >= 66) JN0 = 5*astra_gui%dxlet
             if (jj == 74) JN0 = -astra_gui%dxlet
     ! curve #, win #, chan #, mode 6, screen #
-            XF7 = fmt_xf(TOUT(jt, j), 6)
+            XF7 = fmt_smart(TOUT(jt, j), 6)
             STRI (jj: jj+6) = XF7
             STRIN(jj: jj+6) = '  ' // NAMET(J) // ' '
             JL = max(JL, jj + 6)
@@ -1179,7 +1179,7 @@ contains
         do
             JEND = MIN(JB + 15, NTOUT)
             do J=JB, JEND
-                XF4 = fmt_xf(TOUT(jt, J), 4)
+                XF4 = fmt_smart(TOUT(jt, J), 4)
                 if (NAMET(J) == ' ') XF4 = '    '
                 JJ = 5*(J - JB + 1) - 4
                 STRI(JJ: JJ+4) = XF4
@@ -1203,15 +1203,16 @@ contains
     function upperLabel(ne_av, q95) result(upper_label)
 
     use const_inc, only: RTOR, BTOR, IPL, ABC
-    use dbl2char, only: fmt40
+    use dbl2char, only: fmt_smart
 
     implicit none
 
     double precision, intent(in) :: ne_av, q95
     character(len=42) :: upper_label
 
-    upper_label = ' R=' // fmt40(RTOR) // ' a=' // fmt40(ABC) // ' b=' // fmt40(BTOR) // &
-        ' I=' // fmt40(IPL) // ' q=' // fmt40(q95) // ' n=' // fmt40(ne_av)
+    upper_label = ' R=' // fmt_smart(RTOR, 4) // ' a=' // fmt_smart(ABC, 4) // ' b=' // &
+        fmt_smart(BTOR, 4) // ' I=' // fmt_smart(IPL, 4) // ' q=' // fmt_smart(q95, 4) // &
+        ' n=' // fmt_smart(ne_av, 4)
 
     return
     end function upperLabel
@@ -1219,14 +1220,14 @@ contains
 !-----------------------------
     function timeLabel(time_in, dt_in) result(time_lbl)
 
-    use dbl2char, only: fmt50
+    use dbl2char, only: fmt_smart
 
     implicit none
 
     double precision, intent(in) :: time_in, dt_in
     character(len=19) :: time_lbl
 
-    time_lbl = 'Time=' // fmt50(time_in) // ' dt=' // fmt50(dt_in)
+    time_lbl = 'Time=' // fmt_smart(time_in, 5) // ' dt=' // fmt_smart(dt_in, 5)
 
     return
     end function timeLabel
@@ -1278,7 +1279,7 @@ contains
     use const_inc, only: constValues, varValues
     use char_manip, only: null_ch
     use io_mod, only: resize
-    use dbl2char, only: fmt_xf
+    use dbl2char, only: fmt_smart
     use json_vars, only: n_const, n_var, varNames
 
     implicit none
@@ -1308,7 +1309,7 @@ contains
         do J=1, 4
             J1 = J1 + 1
             if (J1 > n_const) EXIT ps_loop
-            CH6 = fmt_xf(constValues(J1), 5)
+            CH6 = fmt_smart(constValues(J1), 5)
             JJ = 7*(J - 1) + 8
         enddo
 
@@ -1318,7 +1319,7 @@ contains
         do J=5, 8
             J1 = J1 + 1
             if (J1 > n_const) EXIT ps_loop
-            CH6 = fmt_xf(constValues(J1), 5)
+            CH6 = fmt_smart(constValues(J1), 5)
             JJ = 7*(J - 1) + 20
         enddo
 
@@ -1335,7 +1336,7 @@ contains
     JDUM = n_var - 48
 
     do j=1, JDUM
-        CH6 = fmt_xf(varValues(j), 5)
+        CH6 = fmt_smart(varValues(j), 5)
         STRI(j1: j1+19) = varNames(j) // '=' // CH6 // '     '
         j1 = j1+20
         if (j1 > 70 .or. j == JDUM) then

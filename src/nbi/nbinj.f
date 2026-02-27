@@ -780,7 +780,7 @@ C======================================================================|
 C----------------------------------------------------------------------|
 
         use char_manip, only: to_upper, first_non_blank
-        use dbl2char, only: isnum, fmt6
+        use dbl2char, only: isnum, fmt_smart
 
         implicit none
         integer	 j,j1,jj,i,NBS,NBSMAX,NFIELD,KILLBL,NOBLAN
@@ -864,7 +864,7 @@ C           write(*,'(4(5I3/))')(IFNUM(SFIELD(j),12),j=1,NFIELD)
               if (ISNUM(SFIELD(j), 12))	then
                  read(SFIELD(j),*)YCB
 ! GIT                 call	FMTF6(VALUE,YCB)
-                 VALUE = fmt6(YCB)
+                 VALUE = fmt_smart(YCB, 6)
                  write(*,*)'"nbi.value',VALUE,'"',YCB
               else
                  j1 = first_non_blank(SFIELD(j))
