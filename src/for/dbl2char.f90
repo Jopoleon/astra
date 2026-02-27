@@ -37,14 +37,14 @@ contains
 
 ! Handle very small numbers
     if (abs(x) < 1.0d-12) then
-        write(out,'(A)') adjustl('0.'//repeat('0', width-2))
+        write(out, '(A)') adjustl('0.'//repeat('0', width-2))
         return
     endif
 
 ! Try fixed-point first
     fitted = .false.
     do prec = width-1, 1, -1
-        write(tmp,'(F0.'//trim(adjustl(itoa(prec)))//')') x
+        write(tmp, '(F0.'//trim(adjustl(itoa(prec)))//')') x
 ! Remove leading zero for numbers between -1 and 1
         if (abs(x) < 1.0d0 .and. x /= 0.0d0) then
             if (tmp(1:1) == '0') tmp = tmp(2:)   ! remove leading 0
@@ -62,7 +62,7 @@ contains
         do prec = width-2, 1, -1
             write(tmp, '(E0.'//trim(adjustl(itoa(prec)))//')') x
             if (len_trim(tmp) <= width) then
-                write(out,'(A)') adjustl(TRIM(tmp))
+                write(out, '(A)') adjustl(TRIM(tmp))
                 fitted = .true.
                 exit
             endif
@@ -71,7 +71,7 @@ contains
 
 ! Fallback: truncate if nothing fits
     if (.not. fitted) then
-        write(out,'(A)') tmp(1:width)
+        write(out, '(A)') tmp(1:width)
     endif
 
     end function fmt_smart
@@ -81,7 +81,8 @@ contains
 
     integer, intent(in) :: i
     character(len=3) :: str
-    write(str,'(I0)') i
+    write(str, '(I0)') i
+
     end function itoa
 
 end module dbl2char

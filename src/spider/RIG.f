@@ -107,6 +107,7 @@
      & numlim, psi_bon, nblm, rblm, zblm, iblm, jblm, ipr, 
      & iter, iterbf, ublmax, erru, dr, dri, dz, dzj, curf, 
      & nnstpp, tok, tokn, rmin, rmax, cnor
+      use status_inc, only: error_catch
 
       implicit none
 
@@ -186,7 +187,7 @@
          if(kpr.eq.1)write(*,*) 'iclm jclm     ',icelm,jcelm
          if (isnan(umax)) then
             write(*,*) 'nan umax'
-	 call err_catch_a
+	 call error_catch
          endif
 
 ! definition of Um - poloidal flux function value at magn. axis.

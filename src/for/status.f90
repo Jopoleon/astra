@@ -198,7 +198,7 @@ contains
             if (TIME <= TSTART + TAU/2.) write(*, '(2A,1H"/)') &
                 '               Check if it is defined in the data file "', &
                 TRIM(exp_file)
-            call err_catch_a
+            call error_catch
             call astra_stop
         endif
         VP(j) = ULON(j)/(YV*j*MU(j))
@@ -398,5 +398,20 @@ contains
 
     return
     end subroutine DEFARR
+
+!---------------------------------------------------------------------
+    subroutine error_catch
+
+    use const_inc, only: NA1
+    use debugger, only: astra_stop
+
+    write(*, *) 'TE    Fp    NE    G11 '
+    write(*, *) te(1)  , fp(1)  , ne(1)  , g11(1)
+    write(*, *) te(na1), fp(na1), ne(na1), g11(na1)
+    write(*,*) 'somethings not right, quit run'
+    stop
+
+    return
+    end subroutine error_catch
 
 end module status_inc

@@ -55,22 +55,22 @@ contains
 
     subroutine transport2fbe_init
 
-    use_limiter_astra = 1  ! 1-uses limiter, 0-ignore limiter
+    use_limiter_astra = 1
     refit_mode = 0
     solve_fix = 0
-    execute_plasma = 1     ! if 0 - only circuit equations, if 1 - solve plasma gseq too 
-    nonegcurr = 0          ! nonegcurr = 0 --> no negative current allowed in plasma
-    fast_mode = 0          ! 0 - normale, 1 - domnt do iterationsin fbe gse
-    reconnect_circuits = 0 ! 0-nothing, 1-recompute matrix with new circuits
+    execute_plasma = 1
+    nonegcurr = 0
+    fast_mode = 0
+    reconnect_circuits = 0
     new_equivalence = 0
-    resistance_change = 0  ! if  = 1, changes resistances of coils using new_resistance
-    n_equivalence = 0      ! number of equivalences
-    use_reduce_circuit = 0 ! 0-all coils solved. 1 - some coils not solved
-    n_of_newton_iterations = 150    ! to find actual mag axis. recommended between 5 - 10 
-    n_fourier_restab_boundary = 8 ! nr of fourier modes for boundary restab, default = 5
-    psplex_from_fbe = 0    ! put 1 to get psplex fromfree boundary
-    plasma_config = 0      ! 0 if limiter, 1 if xpoint
-    simple_plasma_model_breakdown = 0 ! if 0, no plasma feedback to coils in vacuum, if 1 yes
+    resistance_change = 0
+    n_equivalence = 0
+    use_reduce_circuit = 0
+    n_of_newton_iterations = 150
+    n_fourier_restab_boundary = 8
+    psplex_from_fbe = 0
+    plasma_config = 0
+    simple_plasma_model_breakdown = 0
 
     use_isoflux = 0
     n_isoflux = 0
@@ -97,24 +97,23 @@ contains
     vloop_avg = 0.
     L_ext = 0.
     dIp_dt = 0.
-    x_point_save = 0. ! R, Z of xpoints, max n_x_point x points
+    x_point_save = 0.
 
     activate_coil_feqis = 1
-    fix_shape_after_fbe_off = 1 ! if ITFBE is set to -1, uses the last FBE shape as new shape for PBE
+    fix_shape_after_fbe_off = 1
 
     cur_init = 0.
     n_coils = raw_cCoil%ncoils
     cur_init(1: n_coils) = raw_cCoil%current(1: n_coils)/1.e3
     sigma_coils = 1.
     sigma_coils_ref = 1.
-    new_resistance = 0. ! whichever is > 0, it is used as new resistance.
-    current_limit_feqis(:, 1) =  1.e6 ! 1 is upper, 2 is lower
-    current_limit_feqis(:, 2) = -1.e6 ! 1 is upper, 2 is lower
-    force_coil = 0 ! where it is 1, forces coil i,i to current of i,j
+    new_resistance = 0.
+    current_limit_feqis(:, 1) =  1.e6
+    current_limit_feqis(:, 2) = -1.e6
+    force_coil = 0
     machine_description = trim(MACHINE(1:4))
 
     return
     end subroutine transport2fbe_init
 
 end module transport2fbe
-    

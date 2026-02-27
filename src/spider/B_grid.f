@@ -344,9 +344,9 @@
       use sp_parameters, only: nrp, ntp, twopi
       use keys, only: kpr
       use compol, only: ngav, rm, zm, r, z, teta, q, errm, 
-     &  iplas, iplas1, nt, nt1, nr,
-     &  ro, ronor,
+     &  iplas, iplas1, nt, nt1, nr, ro, ronor,
      &  psi, psia, psin, psip, psim
+      use status_inc, only: error_catch
 
       implicit none
 
@@ -385,7 +385,7 @@
       endif
       if (isnan(rma)) then
          write(*,*) 'mag axis major radius is NaN'
-         call err_catch_a
+         call error_catch
       endif
       rm=rma
       zm=zma
@@ -598,9 +598,9 @@
       use sp_parameters, only: nrp, ntp, twopi
       use keys, only: kpr
       use compol, only: ngav, rm, zm, r, z, teta, errm, 
-     &  iplas, iplas1, nt, nt1, nr,
-     &  ro, ronor,
-     &  psi, psia, psin, psip, psim
+     & iplas, iplas1, nt, nt1, nr, ro, ronor,
+     & psi, psia, psin, psip, psim
+      use status_inc, only: error_catch
 
       implicit none
 
@@ -638,7 +638,7 @@
       endif
       if (isnan(rma)) then
          write(*,*) 'mag axis major radius is NaN'
-         call err_catch_a
+         call error_catch
       endif
       rm=rma
       zm=zma

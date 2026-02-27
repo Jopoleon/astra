@@ -5,6 +5,7 @@ use comrec, only: xmin, xmax, ymin, ymax
 use keys, only: kpr
 use compol_add, only: ron_max_g
 use compol, only: iplas, nr, nt, nt1, ro, ronor, psia, teta, rm, zm, r, z
+use status_inc, only: error_catch
 
 implicit none
 
@@ -76,7 +77,7 @@ if (rb_max > xmax .or. rb_min < xmin .or. &
         write(*, *) 'egg is larger than rectangular box'
         call f_wrd
         write(*, *) 'STOP'
-        call err_catch_a
+        call error_catch
         stop
     endif
 endif
@@ -552,6 +553,7 @@ use compol_add, only: nctrl, rx0, rx1, rx2, zx0, zx1, zx2, ixp1, ixp2, &
 use compol, only: nr, nr1, nt, nt1, iplas, itin, ngav, &
     r, z, rm, zm, ro, ronor, teta, &
     psi, psia, psim, psin, psip
+use status_inc, only: error_catch
 
 implicit none
 
@@ -594,7 +596,7 @@ if (kpr == 1) then
 endif
 if (isnan(rma)) then
     write(*, *) 'mag axis major radius is NaN'
-    call err_catch_a
+    call error_catch
 endif
 
 rm = rma
@@ -915,6 +917,7 @@ use keys, only: kpr
 use compol_add, only: ron_max_g, rx0, rx1, rx2, zx0, zx1, zx2, ixp1, ixp2, jxp1, jxp2
 use compol, only: nr, nt, nt1, iplas, ro, teta, ronor, r, z, rm, zm, &
     psia, psim, psip
+use status_inc, only: error_catch
 
 implicit none
 
@@ -981,7 +984,7 @@ if (rb_max > xmax .or. rb_min < xmin .or. &
     if (kpr == 1) then
         write(*, *) 'egg is large then rectangular box'
         call f_wrd
-        call err_catch_a
+        call error_catch
     endif
 endif
 
@@ -1013,6 +1016,7 @@ use compol_add, only: rx0, rx1, rx2, zx0, zx1, zx2, ixp1, ixp2, jxp1, jxp2, &
     psix0, psix1, nctrl, alp, alpnew, jrolim, rolim, numlim, nblm, rblm, zblm
 use compol, only: nr, nr1, nt, nt1, iplas, ngav, ro, ronor, teta, r, z, rm, zm, &
     psi, psia, psim, psin, psip
+use status_inc, only: error_catch
 
 implicit none
 
@@ -1147,7 +1151,7 @@ do j=1, nt
             ron(i) = ron(i-1) + 1.d-8
             if (kpr == 1) then
                 write(*, *) 'grid crash i, j', i, j
-                call err_catch_a
+                call error_catch
             endif
         endif
     enddo

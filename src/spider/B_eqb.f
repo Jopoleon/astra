@@ -10,6 +10,7 @@
      & nitbeg, nitdel, iter, itin, tokp, fvac,
      & psia, psiax, psibon, psi_eav, psibon0, psim, psip, psipla,
      &     r0ax, b0ax, tok, dfdpsi, dpdpsi, cnor, erru, r, z, rm, zm
+      use status_inc, only: error_catch
 
       implicit none
 
@@ -179,7 +180,7 @@
             write(*,*) 'SPIDER: MAX NUMBER OF ITERATIONS IS EXCEEDED'
             write(*,*) 'ERROD=',errod
             write(*,*) 'ITER=',itin
-            call err_catch_a !EFable ereror catchin in astra 
+            call error_catch
 	    EXIT
          endif             
 

@@ -2,6 +2,7 @@ subroutine flux_r(psitok, ncequi)
 
 use comrec, only: x, y, zaindk
 use compol, only: nt1, r, z, rm, zm, cur, sq1, sq2, sq3, sq4, iplas
+use status_inc, only: error_catch
 
 implicit none
 
@@ -24,19 +25,19 @@ r0 = rm
 z0 = zm
 if (r0 > 100) then
     write(*, *) 'mag axis major radius is > 100 m'
-    call err_catch_a
+    call error_catch
 endif
 if (abs(z0) > 100)  then
     write(*, *) 'mag axis Z is <> 100 m'
-    call err_catch_a
+    call error_catch
 endif
 if (isnan(r0))  then
     write(*, *) 'mag axis major radius is NaN'
-    call err_catch_a
+    call error_catch
 endif
 if (isnan(z0))  then
     write(*, *) 'mag axis Z is NaN'
-    call err_catch_a
+    call error_catch
 endif
 ic = ((r0 - x(1))/ddx) + 1
 jc = ((z0 - y(1))/ddy) + 1
@@ -65,19 +66,19 @@ do i=2, iplas
         z0 = z(i, j)
         if (r0 > 100) then
             write(*,*) 'mag axis major radius is > 100 m'
-            call err_catch_a
+            call error_catch
         endif
         if (abs(z0) > 100)  then
             write(*,*) 'mag axis Z is <> 100 m'
-            call err_catch_a
+            call error_catch
         endif
         if (isnan(r0))  then
             write(*,*) 'mag axis major radius is NaN'
-            call err_catch_a
+            call error_catch
         endif
         if (isnan(z0))  then
             write(*,*) 'mag axis Z is NaN'
-            call err_catch_a
+            call error_catch
         endif
         ic = ((r0 - x(1))/ddx) + 1
         jc = ((z0 - y(1))/ddy) + 1

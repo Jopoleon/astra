@@ -8,6 +8,7 @@ use compol_add, only: rolim, jrolim, ich, g, psii, clr, clz, &
 use compol, only: nr, nt, iplas, ngav, iter, itin, &
     psi, psiax, psibon, psim, psip, psipla, &
     rm, zm, f, fvac, cnor, ro, tok, tokp
+use status_inc, only: error_catch
 
 implicit none
 
@@ -83,7 +84,7 @@ do
     if (kpr == 1) then
         write(*, *) 'artfil    ', clr, clz
         write(*, *) 'psiax, psim', psiax, psim
-        if (isnan(psi(1, 1))) call err_catch_a
+        if (isnan(psi(1, 1))) call error_catch
     endif
 
     if (ngav == 0 .AND. igdf == 2) then

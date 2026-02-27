@@ -8,7 +8,7 @@ use const_inc, only: IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
     IPCTRL, ICIRCQ, ITFBP, ITREQ, FTN, FTO, BTN, BTOR, HRO, ROC, NA1, &
     TAU, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, ATREQ, LEQ, & 
     PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, RBDOT, BBDOT
-use status_inc, only: TE, TI, NE, NI, NIO, FP, defarr
+use status_inc, only: TE, TI, NE, NI, NIO, FP, defarr, error_catch
 use io_mod, only: CCOIL, VCOIL, MACHINE, TASK
 use read_input, only: raw_cCoil, raw_vCoil
 use plasma_state, only: plasma_up
@@ -137,7 +137,7 @@ time_step_accuracy: do
 
         if (isnan(hro)) then
             write(*, *) 'hro is nan'
-            call err_catch_a
+            call error_catch
         endif
 
         if (plasma_up == 1) then
@@ -147,35 +147,35 @@ time_step_accuracy: do
 ! catching errors: infinite or nan profiles
         if (sum(abs(te(1:na1)))/na1 > 1e8) then
             write(*, *) 'te isinf'
-            call err_catch_a
+            call error_catch
         endif
         if (sum(abs(ti(1:na1)))/na1 > 1e8) then
             write(*, *) 'ti isinf'
-            call err_catch_a
+            call error_catch
         endif
         if (sum(abs(ne(1:na1)))/na1 > 1e8) then
             write(*, *) 'ne isinf'
-            call err_catch_a
+            call error_catch
         endif
         if (sum(abs(fp(1:na1)))/na1 > 1e8)  then
             write(*, *) 'fp isinf'
-            call err_catch_a
+            call error_catch
         endif
         if (isnan(sum(te(1:na1))))  then
             write(*, *) 'te isnan'
-            call err_catch_a
+            call error_catch
         endif
         if (isnan(sum(ti(1:na1))))  then
             write(*, *) 'ti isnan'
-            call err_catch_a
+            call error_catch
         endif
         if (isnan(sum(ne(1:na1))))  then
             write(*, *) 'ne isnan'
-            call err_catch_a
+            call error_catch
         endif
         if (isnan(sum(fp(1:na1))))  then
             write(*, *) 'fp isnan'
-            call err_catch_a
+            call error_catch
         endif
 
         if (TASK(1:3) /= 'BGD') then
