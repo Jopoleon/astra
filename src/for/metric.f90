@@ -1043,7 +1043,10 @@ use status_inc, only: G11, G22, G22E, G33, G33E, G41, G42, G43, G44, G45, &
 use plasma_state, only: plasma_up, plasma_trig
 use debugger, only: markloc
 use ext_bnd, only: use_ext_bnd
+use imas_ids, only: type_equilibrium
+use parameters_a2equil, only: type_parameters
 use read_input, only: raw_boundary, raw_cCoil
+use gs_solver, only: gssolver
 
 implicit none
 
@@ -1059,6 +1062,8 @@ double precision, dimension(NA1) :: yg11, yg22, yg33, yvr, yvrs, yslat, yg41, &
     ytria, yfofb, yeqpf, yeqff, yshiv, ysquare, omega_rot
 double precision, dimension(raw_cCoil%ncoils) :: yccoil, yvcoil
 double precision, dimension(1000) :: rbnd, zbnd
+type(type_equilibrium) :: equil_in, equil_out
+type(type_parameters) :: parameters_equil
 
 save j_save_bound, iplnew
 data j_save_bound/0/
@@ -1138,117 +1143,114 @@ if (IFBEY >= 1.) i = 2    !fbe is on
 if (IPART == 1 ) i = 1    !fbe is off
 
 if (ifbey > 0. .and. plasma_up == 0) then
-    call A_EQUIL_2(n_coils, nint(ifbey), time, tau, vcoil(1:n_coils), equil_solver, IPLFBE)
-    return
-endif
-
-! In COUPLING_SCHEME
-call GS_SOLVER( &
+    equil_in%global_param%i_plasma = IPLFBE*1e6   !itm is in A
+    parameters_equil%dt      = tau
+    parameters_equil%time    = time
+    parameters_equil%kpr     = -2
+    parameters_equil%k_grid  = 1
+    parameters_equil%epsro   = 1.d-9
+    parameters_equil%enels   = 1.d-9
+    parameters_equil%key_plc = 1
+    parameters_equil%key_out   = 0
+    parameters_equil%k_fixfree = 1
+    parameters_equil%key_start = 0    ! controller, refit currents
+    parameters_equil%nstep = max(0, nint(ifbey) - 1)
+    if (equil_solver == 101) then
+        call feqis_main(n_coils, vcoil(1:n_coils), parameters_equil, 0, equil_in, equil_out)
+    endif
+else
+    call GSSOLVER( &
 ! Input:
-    equil_solver, &
-    jneql, jnteta, jnbnd, NA1, &
-    rbnd, zbnd, & 
-    XRHO(1: NA1), RTOR, BTOR, ROC, yfp, ypres, &
-    VOLUME, n_coils, yccoil, yvcoil, i, IPART, ITREQ, &
-    nint(INUME3), TAU, nint(ITFBP), nint(ICIRCQ), nint(IPCTRL), nint(IFBEY), &
-    TIME, ychipfp, PSIFB, PSIEXT, PSPLEX, &
-    omega_rot, j_rotation, TI(1: NA1), NI(1: NA1), MRHO(1: NA1), &
-! Output: 
-    yrocnew, yipl, yg11, yg41, yg22, &
-    yg33, G22E(1: jneql), G33E(1: jneql), &
-    yeqpf, yeqff, yvr, yvrs, &
-    yslat, ygradro, yipol, ybmaxt, ybmint, &
-    ybdb02, ybdb0, yb0db2, ydroda, yvolum, &
-    yametr, yupdwn, yshif, yelon, ytria, &
-    yfofb, AREAT(1: NA1), PERIM(1: NA1), yshiv, ysquare) 
+        equil_solver, jneql, jnteta, jnbnd, NA1, rbnd, zbnd, XRHO(1: NA1), RTOR, BTOR, &
+        ROC, yfp, ypres, VOLUME, n_coils, yccoil, yvcoil, i, IPART, ITREQ, &
+        nint(INUME3), TAU, nint(ITFBP), nint(ICIRCQ), nint(IPCTRL), nint(IFBEY), &
+        TIME, ychipfp, PSIFB, PSIEXT, PSPLEX, &
+        omega_rot, j_rotation, TI(1: NA1), NI(1: NA1), MRHO(1: NA1), &
+! Output:
+        yrocnew, yipl, yg11, yg41, yg22, yg33, G22E(1: jneql), G33E(1: jneql), &
+        yeqpf, yeqff, yvr, yvrs, yslat, ygradro, yipol, ybmaxt, ybmint, &
+        ybdb02, ybdb0, yb0db2, ydroda, yvolum, yametr, yupdwn, yshif, yelon, ytria, &
+        yfofb, AREAT(1: NA1), PERIM(1: NA1), yshiv, ysquare) 
 
-ROC  = YROCNEW  ! Define a new RHO_edge
+    ROC  = YROCNEW  ! Define a new RHO_edge
 
-do j=1, NA1
-
-! Meaningful lines (change evolutuion):
-! Enabling G22 leads to a divergence
-!Efable try removing G22, original has it, now put it back
-    VR(j)    = yvr(j)
-! Auxiliary lines (do not change evolutuion):
-    VRS(j)   = yvrs(j)
-    SLAT(j)  = yslat(j)
-    BMAXT(j) = ybmaxt(j)
-    BMINT(j) = ybmint(j)
-    BDB02(j) = ybdb02(j)
-    BDB0(j)  = ybdb0(j)
-    B0DB2(j) = yb0db2(j)
-    DRODA(j) = ydroda(j)
-    IPOL(j)  = yipol(j)
-    G11(j)   = yg11(j)
-    G22(j)   = yg22(j)
-    G33(j)   = yg33(j)
-    GRADRO(j)= ygradro(j)
-    VOLUM(j) = yvolum(j)
-    AMETR(J) = yametr(J)
-    SHIF(J)  = yshif(J)
-    ELON(J)  = yelon(J)
-    TRIA(J)  = ytria(J)
-    G41(J)   = yg41(J)
-    G42(J)   = GRADRO(J)
-    G43(J)   = GRADRO(J)
-    G44(J)   = G11(J)/VRS(J)
-    G45(J)   = G11(J)/VRS(J)
-    FOFB(J)  = yfofb(J)
-    FP(J)    = yfp(J)      ! due to adiabatic compression done in the code
-    EQPF(J)  = yeqpf(J)    ! due to adiabatic compression done in the code
-    EQFF(J)  = yeqff(J)    ! due to adiabatic compression done in the code
-enddo
-
-if (raw_boundary%nt > 0 .or. TIME >= ITFBE .or. use_ext_bnd == 1) then
-    UPDWN = yupdwn
-    ABC   = yametr(NA1) 
-    ELONG = ELON(NA1)
-    TRIAN = TRIA(NA1)
-    SHIFT = SHIF(NA1)
-endif
-
-if (itfbe_ctrl > 0) then
-    UPDWN = yupdwn
-    ABC   = yametr(NA1) 
-    ELONG = ELON(NA1)
-    TRIAN = TRIA(NA1)
-    SHIFT = SHIF(NA1)
-endif
+    do j=1, NA1
+        VR(j)    = yvr(j)
+        VRS(j)   = yvrs(j)
+        SLAT(j)  = yslat(j)
+        BMAXT(j) = ybmaxt(j)
+        BMINT(j) = ybmint(j)
+        BDB02(j) = ybdb02(j)
+        BDB0(j)  = ybdb0(j)
+        B0DB2(j) = yb0db2(j)
+        DRODA(j) = ydroda(j)
+        IPOL(j)  = yipol(j)
+        G11(j)   = yg11(j)
+        G22(j)   = yg22(j)
+        G33(j)   = yg33(j)
+        GRADRO(j)= ygradro(j)
+        VOLUM(j) = yvolum(j)
+        AMETR(J) = yametr(J)
+        SHIF(J)  = yshif(J)
+        ELON(J)  = yelon(J)
+        TRIA(J)  = ytria(J)
+        G41(J)   = yg41(J)
+        G42(J)   = GRADRO(J)
+        G43(J)   = GRADRO(J)
+        G44(J)   = G11(J)/VRS(J)
+        G45(J)   = G11(J)/VRS(J)
+        FOFB(J)  = yfofb(J)
+        FP(J)    = yfp(J)      ! due to adiabatic compression done in the code
+        EQPF(J)  = yeqpf(J)    ! due to adiabatic compression done in the code
+        EQFF(J)  = yeqff(J)    ! due to adiabatic compression done in the code
+    enddo
+ 
+    if (raw_boundary%nt > 0 .or. TIME >= ITFBE .or. use_ext_bnd == 1) then
+        UPDWN = yupdwn
+        ABC   = yametr(NA1) 
+        ELONG = ELON(NA1)
+        TRIAN = TRIA(NA1)
+        SHIFT = SHIF(NA1)
+    endif
+    if (itfbe_ctrl > 0) then
+        UPDWN = yupdwn
+        ABC   = yametr(NA1) 
+        ELONG = ELON(NA1)
+        TRIAN = TRIA(NA1)
+        SHIFT = SHIF(NA1)
+    endif
 
 ! Deallocate equil_out%metric_coefs%g1 & co
+    call new_grid ! The RHO-grid and NA, NA1, HRO are updated, also AMETR(NA1) = ABC is done there
 
-call new_grid ! The RHO-grid and NA, NA1, HRO are updated, also AMETR(NA1) = ABC is done there, be careful what was done before!
+    VOLUM(NA1) = yvolum(NA1)
+    G22 = G22/VRS*RTOR/(GP2**2)/IPOL
+    G11 = G11/VRS
+    GRADRO = GRADRO/VRS
+    DRODA  = DRODA/VRS
 
-VOLUM(NA1) = yvolum(NA1)
-
-G22 = G22/VRS*RTOR/(GP2**2)/IPOL
-G11 = G11/VRS
-GRADRO = GRADRO/VRS
-DRODA  = DRODA/VRS
-
-if (IPEQL == 5) then  ! FEQIS
-    PSPLEX = PSPLEX/(0.4*GP*RTOR*ROC)*0.5*(G22(NA) + G22(NA1)) ! If LEXT only
-endif
-
-do J=1, NA
-    if (j == 1) then
-        SHEAR(J) = (FP(2) - FP(1))/(2.*MU(1) + 0.333*(MU(1) - MU(2)))
-    else
-        SHEAR(J) = (FP(j+1) - 2.*FP(j) + FP(j-1))/(MU(j+1) + MU(j))
+    if (IPEQL == 5) then  ! FEQIS
+        PSPLEX = PSPLEX/(0.4*GP*RTOR*ROC)*0.5*(G22(NA) + G22(NA1)) ! If LEXT only
     endif
-    SHEAR(J) = 1. - SHEAR(J)/(GP*BTOR*HRO**2)
-enddo
-SHEAR(NA1) = SHEAR(NA)
 
-do J=1, NA1
-    SHIV(J) = yshiv(J) 
-    SQUARN(J) = ysquare(J) 
-enddo
+    do J=1, NA
+        if (j == 1) then
+            SHEAR(J) = (FP(2) - FP(1))/(2.*MU(1) + 0.333*(MU(1) - MU(2)))
+        else
+            SHEAR(J) = (FP(j+1) - 2.*FP(j) + FP(j-1))/(MU(j+1) + MU(j))
+        endif
+        SHEAR(J) = 1. - SHEAR(J)/(GP*BTOR*HRO**2)
+    enddo
+    SHEAR(NA1) = SHEAR(NA)
+    do J=1, NA1
+        SHIV(J) = yshiv(J) 
+        SQUARN(J) = ysquare(J) 
+    enddo
 
-call extrap_fields_flat
+    call extrap_fields_flat
 
-VOLUME = VOLUM(NA1)
+    VOLUME = VOLUM(NA1)
+endif
 
 return
 end subroutine A2GSSOLVER
