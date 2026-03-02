@@ -31,7 +31,6 @@ $(OBJ_DIR)/io_mod.o \
 $(OBJ_DIR)/machine_config.o \
 $(OBJ_DIR)/status.o \
 $(OBJ_DIR)/transport_solver.o \
-$(OBJ_DIR)/auxiliary.o \
 $(OBJ_DIR)/standard_functions.o \
 $(OBJ_DIR)/cpu_usage.o \
 $(OBJ_DIR)/parameters_a2equil.o \
@@ -39,18 +38,19 @@ $(OBJ_DIR)/surface_contours.o \
 $(OBJ_DIR)/flux_avg_imp.o \
 $(OBJ_DIR)/parse_utils.o \
 $(OBJ_DIR)/read_input.o \
-$(OBJ_DIR)/set_x_data.o \
 $(OBJ_DIR)/json_write.o \
 $(OBJ_DIR)/transport2fbe.o \
 $(OBJ_DIR)/gs_solver.o \
+$(OBJ_DIR)/metrics.o \
+$(OBJ_DIR)/auxiliary.o \
+$(OBJ_DIR)/set_x_data.o \
 $(OBJ_DIR)/graph_utils.o \
 $(OBJ_DIR)/gui_interaction.o
 
 OBJS = \
 $(OBJ_DIR)/Astra2XW.o \
 $(OBJ_DIR)/dialogx.o \
-$(OBJ_DIR)/ipc_control.o \
-$(OBJ_DIR)/metric.o
+$(OBJ_DIR)/ipc_control.o
 
 # Make Commands
 

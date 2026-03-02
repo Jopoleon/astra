@@ -878,6 +878,7 @@ use a2tglf, only: tglf_ipc, tglf_out
 use a2qlk, only: qlk_ipc, qlk_out
 use debugger, only: markloc
 use numerical_tools, only: extrap
+use metrics, only: cuofmu
 
 implicit none
 
@@ -919,6 +920,7 @@ use standard_functions
 use debugger, only: markloc
 use numerical_tools, only: extrap
 use transport_solver
+use metrics, only: cuofp
 
 implicit none
 

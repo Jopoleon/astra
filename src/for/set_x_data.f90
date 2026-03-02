@@ -503,13 +503,13 @@ contains
     use numerical_tools, only: EXTRAP, INTEGR
     use debugger, only: astra_stop
     use read_input, only: raw_boundary
+    use metrics, only: setgeo, new_grid, roc3a
  
     integer :: KAB, KAWALL, KRTOR, KELONM, KTRICH
     integer :: j, jt, jthe
     double precision :: YTP=-1.d9
     double precision, dimension(:), allocatable :: bnd_r, bnd_z
     character(len=132) :: err_msg
-    double precision, external :: ROC3A
 
     if (NA1 > NRD) then
         write(err_msg, '(2A, i)') '>>> FATAL ERROR: The radial grid size out of range.\n', &

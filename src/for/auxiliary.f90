@@ -45,6 +45,7 @@ contains
         F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, &
         F0O, F1O, F2O, F3O, F4O, F5O, F6O, F7O, F8O, F9O
     use debugger, only: markloc
+    use metrics, only: CUOFP
 
     integer :: j
     double precision :: CTAU, TAUO, YY, TAUN

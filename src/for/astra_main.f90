@@ -22,6 +22,7 @@ use read_input, only: readInput
 use plasma_state, only: plasma_up
 use auxiliary, only: IFTREQ
 use set_x_data, only: set_x_scalars, set_x_arrays, astra_assignments
+use metrics, only: eqguess, metric
 
 implicit none
 
@@ -68,7 +69,7 @@ call set_x_arrays(1)
 call INIVAR
 call SETVAR
 call DETVAR
-call EQGUESS
+call eqguess
 call INIVAR
 
 call transport2fbe_init
