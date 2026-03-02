@@ -726,7 +726,6 @@ contains
     use imas_ids, only: type_equilibrium
     use parameters_a2equil, only: type_parameters, fix_adapgrid, GP, GP2, s_fazt
     use const_inc, only : rtor,shift, updwn
-    use feqis_circuit, only: psib_ext_feqis
     use io_mod, only: nml_file
 
     integer, intent(in) :: equil_solver, nr_equ, n_theta, iter_step, ncoils, &
@@ -877,37 +876,6 @@ contains
 
 !psifb = psifb_in
     dampfacpsplex = 0.
-
-    if (parameters_equil%k_fixfree == 1) then
-        ipl = 1.e-6*equil_in%global_param%i_plasma
-        if (parameters_equil%k_grid == 0) then
-            if (equil_solver == 101) then
-                PSIEXT = psib_ext_feqis()
-            else
-                call psib_ext(PSIEXT)
-            endif
-        endif
-        if (ipsibcf >= 0) then     ! case with PSI_B and dPSI_B implicit
-            PSIEXT = -GP2*PSIEXT
-            PSPLEX = equil_out%global_param%psplex
-            PSPLEX = ((psplexavg*ipl**psplexavgexp)/tau_step*psplexold + PSPLEX) / &
-                (1. + (psplexavg*ipl**psplexavgexp)/tau_step)
-            psplexold = PSPLEX
-        else
-            if (parameters_equil%k_grid == 0) then
-                if (equil_solver==101) then
-                    PSIEXT = psib_ext_feqis()
-                else
-                    call psib_ext(PSIEXT)
-                endif
-            endif
-            PSIEXT = -GP2*PSIEXT
-            PSPLEX = (dampfacpsplex*PSPLEX + equil_out%global_param%psplex)/(1. + dampfacpsplex)
-            PSPLEX = ((psplexavg*ipl**psplexavgexp)/tau_step*psplexold + PSPLEX) / &
-                (1. + (psplexavg*ipl**psplexavgexp)/tau_step)
-            psplexold = PSPLEX
-        endif
-    endif
 
 ! PSPLEX in FEQIS is the Lext already. In SPIDER NOT.
     PSPLEX = equil_out%global_param%psplex
