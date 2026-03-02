@@ -17,7 +17,7 @@ contains
         roc, fp, pres_in, volume, &
         ncoils, yccoil, yvcoil, iter_step, iter_part, iter_itreq, &
         inume_3, tau_step, ipsibcf, icircq, ipctrl, ifbey, time_a, &
-        psifb_in, psifb, psiext, psplex, &
+        psifb_in, psifb, &
         omega_rot, i_rotation, ion_temp, ion_dens, plasma_mass, &
 ! Output:
         rocnew, ipl, g11, g41, g22, g33, g22e, g33e, eqpf, eqff, &
@@ -49,7 +49,7 @@ contains
     double precision, intent(in), dimension(jna1) :: xrho, pres_in, fp, & 
         omega_rot, ion_temp, ion_dens, plasma_mass
 
-    double precision, intent(out) :: rocnew, updwn, psifb, psiext, psplex
+    double precision, intent(out) :: rocnew, updwn, psifb
     double precision, intent(out), dimension(jna1) :: ametr, vr, vrs, &
        slat, gradro, shif, tria, elon, ipol, bmaxt, bmint, bdb02, &
        bdb0, b0db2, droda, fofb, areat, perim, volum, &
@@ -445,7 +445,7 @@ contains
             ipsibcf, key_no_refits, &
             icircq, ipctrl, iter_itreq, ifbey, inume_3, &
 ! Outputs
-            key_start, PSIEXT, PSPLEX, keyplc, equil_now)
+            key_start, keyplc, equil_now)
         
         !reassign input profiles to output    
         equil_now%profiles_1d%pprime(1:nr_equ)   = eqpf_sp(1:nr_equ)
@@ -721,7 +721,7 @@ contains
         icircq, ipctrl, &
         iter_itreq, ifbey, inume_3, &
 ! Output:
-        key_start, PSIEXT, PSPLEX, keyplc, equil_out)
+        key_start, keyplc, equil_out)
 
     use imas_ids, only: type_equilibrium
     use parameters_a2equil, only: type_parameters, fix_adapgrid, GP, GP2, s_fazt
@@ -735,7 +735,6 @@ contains
     type(type_equilibrium), intent(in) :: equil_in
 
     integer, intent(out) :: key_start, keyplc
-    double precision, intent(out) :: PSIEXT, PSPLEX
     type(type_equilibrium), intent(out) :: equil_out
 
     logical :: file_existence
@@ -744,18 +743,16 @@ contains
         write_coils_diagn, key_plcs, kprs, k_grids, &
         kprs2, fixadapgrid
 
-    double precision :: dampfacpsplex, psplexold, epsros, enelss, k_filessss, ipl
+    double precision :: epsros, enelss, k_filessss, ipl, psplexavg, psplexavgexp
     double precision, dimension(ncoils) :: t_currents, ucoils
-    double precision :: psplexavg, psplexavgexp
     character(len=120) :: fname
 
     type(type_parameters) :: parameters_equil
 
-    data psplexold /2./
     save toric_fourc, toric_file
     save strahl_file, strahl_fourc, write_coils_diagn
     save kprs, k_grids, epsros, enelss, key_plcs, k_filessss
-    save psplexavg, psplexold, kprs2, psplexavgexp
+    save psplexavg, kprs2, psplexavgexp
 
     namelist / spider / kprs, k_grids, epsros, enelss, key_plcs, &
         toric_fourc, toric_file, strahl_file, strahl_fourc, write_coils_diagn, &
@@ -873,13 +870,6 @@ contains
     if (ipsibcf /= 0) parameters_equil%key_psibcf = 1
 
 !output from equil_out structure
-
-!psifb = psifb_in
-    dampfacpsplex = 0.
-
-! PSPLEX in FEQIS is the Lext already. In SPIDER NOT.
-    PSPLEX = equil_out%global_param%psplex
-    PSIEXT = -GP2*equil_out%global_param%psiext
 
     return
     end subroutine A_equil

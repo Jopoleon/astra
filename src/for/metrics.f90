@@ -1153,7 +1153,7 @@ contains
             equil_solver, jneql, jnteta, jnbnd, NA1, rbnd, zbnd, XRHO(1: NA1), RTOR, BTOR, &
             ROC, yfp, ypres, VOLUME, n_coils, yccoil, yvcoil, i, IPART, ITREQ, &
             nint(INUME3), TAU, nint(ITFBP), nint(ICIRCQ), nint(IPCTRL), nint(IFBEY), &
-            TIME, ychipfp, PSIFB, PSIEXT, PSPLEX, &
+            TIME, ychipfp, PSIFB, &
             omega_rot, j_rotation, TI(1: NA1), NI(1: NA1), MRHO(1: NA1), &
 ! Output:
             yrocnew, yipl, yg11, yg41, yg22, yg33, G22E(1: jneql), G33E(1: jneql), &
@@ -1217,6 +1217,8 @@ contains
         G11 = G11/VRS
         GRADRO = GRADRO/VRS
         DRODA  = DRODA/VRS
+        PSPLEX = equil_out%global_param%psplex
+        PSIEXT = -GP2*equil_out%global_param%psiext
 
         if (IPEQL == 5) then  ! FEQIS
             PSPLEX = PSPLEX/(0.4*GP*RTOR*ROC)*0.5*(G22(NA) + G22(NA1)) ! If LEXT only
