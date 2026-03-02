@@ -611,7 +611,7 @@ contains
     integer :: J, JK
     double precision :: YDR
 
-    call yrjkdr(YR, JK, YDR)
+    call jrho_drho(YR, JK, YDR)
     LININT = 0.d0
     do J=2, JK
         LININT = LININT + (AMETR(j) - AMETR(j-1))*(ARR(j) + ARR(j-1))
@@ -640,7 +640,7 @@ contains
     integer :: J, JK
     double precision :: YDR
 
-    call yrjkdr(YR, JK, YDR)
+    call jrho_drho(YR, JK, YDR)
     VINT = 0.
     do J=1, JK
         VINT = VINT + ARR(J)*VR(J)
@@ -667,7 +667,7 @@ contains
     integer J, JK
     double precision :: YDR
 
-    call yrjkdr(YR, JK, YDR)
+    call jrho_drho(YR, JK, YDR)
     VINTO = 0.
     do J=1, JK
         VINTO = VINTO + ARR(J)*VRO(J)
@@ -1304,5 +1304,32 @@ contains
 
     return
     end function RZ2A
+
+!---------------------------------------------------------------------
+    subroutine jrho_drho(YR, JK, YDR)
+
+! Computes index position JK, and volume differential dV/HRO at position JK
+! Input: YR in units of RHO (meters)
+
+    use const_inc, only: HRO, ROC, NA1
+    use status_inc, only: VR
+
+    double precision, intent(in) :: YR
+    integer, intent(out) :: JK
+    double precision, intent(out) :: YDR
+
+    if (YR <= 0.) then
+        JK = 1
+        YDR = 0.
+    else if (YR > ROC) then
+        JK = NA1
+        YDR = VR(JK)
+    else
+        JK = int(YR/HRO) + 1        ! Next (outer) grid point label
+        YDR = (JK - YR/HRO - 0.5)*VR(JK) ! To be subtracted
+    endif
+
+    return
+    end subroutine jrho_drho
 
 end module standard_functions

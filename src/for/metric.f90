@@ -1762,32 +1762,3 @@ enddo
 
 return
 end subroutine SETGEO
-
-!---------------------------------------------------------------------
-subroutine yrjkdr(YR, JK, YDR)
-
-! Computes index position JK, and volume differential dV/HRO at position JK
-! Input: YR in units of RHO (meters)
-
-use const_inc, only: HRO, ROC, NA1
-use status_inc, only: VR
-
-implicit none
-
-double precision, intent(in) :: YR
-integer, intent(out) :: JK
-double precision, intent(out) :: YDR
-
-if(YR <= 0.) then
-    JK = 1
-    YDR = 0.
-else if(YR > ROC) then
-    JK = NA1
-    YDR = VR(JK)
-else
-    JK = int(YR/HRO) + 1        ! Next (outer) grid point label
-    YDR = (JK - YR/HRO - 0.5)*VR(JK) ! To be subtracted
-endif
-
-return
-end subroutine yrjkdr

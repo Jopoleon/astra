@@ -9,6 +9,7 @@ double precision function BETANR(YR)
 
 use const_inc, only: BTOR, IPL, ABC, NA1, HRO, ROC
 use status_inc, only: TE, TI, NE, NI, PBLON, PBPER, PFAST, VR
+use standard_functions, only: jrho_drho
 
 implicit  none
 
@@ -16,7 +17,7 @@ double precision, intent(in) :: YR
 integer :: J, JK
 double precision :: YV, YDR
 
-call yrjkdr(YR, JK, YDR)
+call jrho_drho(YR, JK, YDR)
 
 YV = 0.
 BETANR = 0.

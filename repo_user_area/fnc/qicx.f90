@@ -4,6 +4,7 @@ double precision FUNCTION QICXR(YR)
 
 use const_inc, only: HRO, NNWM, NNCL
 use status_inc, only: VR, TE, TN, TI, NE, NN, NI
+use standard_functions, only: jrho_drho
 
 implicit none
 
@@ -11,7 +12,7 @@ double precision, intent(in) :: YR
 integer :: J, JK
 double precision :: PICX, SVCX, YDR
 
-call yrjkdr(YR, JK, YDR)
+call jrho_drho(YR, JK, YDR)
 
 QICXR = 0.
 DO J=1, JK

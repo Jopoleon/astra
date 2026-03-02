@@ -4,6 +4,7 @@
 double precision function ZNDNR(YR)
 
 use status_inc, only: TE, NE, VR, ZEF
+use standard_functions, only: jrho_drho
 
 implicit none
 
@@ -11,7 +12,7 @@ double precision, intent(in) :: YR
 integer :: J, JK
 double precision :: YQ, YV, YDR
 
-call yrjkdr(YR, JK, YDR)
+call jrho_drho(YR, JK, YDR)
 
 YQ = 0.
 YV = 0.
