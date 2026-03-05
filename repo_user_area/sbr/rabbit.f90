@@ -20,9 +20,9 @@ contains
     use numerical_tools, only: qinterp
     use standard_functions, only: VINT, IINT
     use parameters_a2equil, only : equil_now
-    use surface_contours, only: ctr2rz_fun
+    use surface_contours, only: ctr2rz_b
 
-    integer, parameter :: Nrrect=64, Nzrect=64, nnb_max=30, nspc=3, nrhoout=21, unit_lim=11
+    integer, parameter :: NrRect=64, NzRect=64, nnb_max=30, nspc=3, nrhoout=21, unit_lim=11
     double precision, parameter :: ALFA=1.d-5
 
     double precision, intent(in), optional :: power_MW_in
@@ -113,10 +113,9 @@ contains
     enddo
     species_plasma_ratio = species_plasma_ratio / sum(species_plasma_ratio)
 
-    n_Rrect = Nrrect
-    n_Zrect = Nzrect
+    n_Rrect = NrRect
+    n_Zrect = NzRect
 
-    if (.not. allocated(psi_rect)) allocate(psi_rect(n_Rrect, n_Zrect))
     if (.not. allocated(Rrect)) allocate(Rrect(n_Rrect), Zrect(n_Zrect))
 
     if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---       
@@ -242,10 +241,8 @@ contains
 
     write(6, *) 'Call rabbit_lib_step'
 
-    call ctr2rz_fun(nrho_surf, nthe_surf, pf_eq/GP2, &
-        equil_now%coord_sys%position%r, &
-        equil_now%coord_sys%position%z, &
-        n_Rrect, n_Zrect, Rrect, zrect, PSI_rect)
+    call ctr2rz_b(Rrect, zrect, PSI_rect, pf=pf_eq)
+    PSI_RECT = PSI_RECT/GP2
 
     call rabbit_lib_set_sp_plasma_ratio(species_plasma_ratio, size(species_plasma_ratio))
 

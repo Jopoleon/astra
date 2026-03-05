@@ -24,8 +24,8 @@ contains
     logical, parameter :: dump_flag=.FALSE.
     integer, parameter :: n_gy_max=30, maxint=50, maxflt=50, &
          mmax=150, nmax=150, prdim = 2*mmax+2*nmax, ndat=100000, &
-         npnt=5000, Nrrect=64, Nzrect=64, ianexp=2, maxdim = 1+mmax+nmax+4*mmax*nmax, &
-         maxvol=100, n_interp=150, neq_block=Nrrect*Nzrect
+         npnt=5000, NrRect=64, NzRect=64, ianexp=2, maxdim = 1+mmax+nmax+4*mmax*nmax, &
+         maxvol=100, n_interp=150, neq_block=NrRect*NzRect
 
     double precision, intent(in), optional :: power_MW_in
 
@@ -56,7 +56,7 @@ contains
     double precision, dimension(NA1) :: ECR, CCD, total_int
     double precision, dimension(npnt) :: ctorb, rtorb, ptorb
     double precision :: Rmin, Rmax, zmin, zmax, dr, dz, drho_eq, drho_interp
-    double precision, dimension(:), allocatable :: Rrect, Zrect, ggg, B_t
+    double precision, dimension(:), allocatable :: Rrect, Zrect, B_t
     double precision, dimension(:, :), allocatable :: PSI_rect, B_Rrect, B_Zrect, B_Trect
     double precision, dimension(:), allocatable :: pf_eq, rho_eq, ffp_eq
     double precision, dimension(:), allocatable :: rho_interp, te_interp, ne_interp
@@ -81,18 +81,12 @@ contains
     extrap_coef_cPoints = 3 ! skips 3 steps
     extrap_coef_cFreq   = 6 ! skips 6 steps to make it faster
 
-    n_Rrect = Nrrect
-    n_Zrect = Nzrect
+    n_Rrect = NrRect
+    n_Zrect = NzRect
 
-    if (.not. allocated(psi_rect)) then
-        allocate(psi_rect(n_Rrect, n_Zrect))
-        allocate(B_Rrect (n_Rrect, n_Zrect))
-        allocate(B_Zrect (n_Rrect, n_Zrect))
-        allocate(B_Trect (n_Rrect, n_Zrect))
-        allocate(B_T(n_Rrect))
-    endif
-    if (.not. allocated(Rrect)) allocate(Rrect(n_Rrect), Zrect(n_Zrect), ggg(n_Rrect))
-    eqdim = 1 + Nrrect + Nzrect + 4*Nrrect*Nzrect
+    if (.not. allocated(B_T)) allocate(B_T(n_Rrect))
+    if (.not. allocated(Rrect)) allocate(Rrect(n_Rrect), Zrect(n_Zrect))
+    eqdim = 1 + NrRect + NzRect + 4*NrRect*NzRect
 
 ! Read geometry and settings
 
@@ -128,9 +122,9 @@ contains
 
     write(6, *) 'TORBEAM surf dims:', nthe_surf, nrho_surf
     eqdata = 0.d0
-    call ctr2rz_b(nrho_surf, nthe_surf, pf_eq, ffp_eq, &
-        equil_now%coord_sys%position%r, equil_now%coord_sys%position%z, n_Rrect, n_Zrect, Rrect, zrect,  &
-        PSI_rect, B_Rrect, B_Zrect, B_Trect)
+    call ctr2rz_b(Rrect, zrect, PSI_rect, &
+        pf=pf_eq, fdia=ffp_eq, B_R=B_Rrect, B_Z=B_Zrect, B_T=B_Trect)
+!        B_R=B_Rrect, B_Z=B_Zrect, B_T=B_Trect)
     eqdata(1) = FP(NA1)
 
     write(*, '(A)') 'Acquiring eqdata'

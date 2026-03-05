@@ -79,35 +79,63 @@ contains
     end subroutine interp_norm
 
 !---------------------------------------------------------------------
-    subroutine ctr2rz_b(n_rho, n_the, pf1d, ipol, X, Y, Nrrect, Nzrect, Rgrid, Zgrid, &
-        pfm, B_R, B_Z, B_T)
+    subroutine ctr2rz_b(Rgrid, Zgrid, pfm, fdiam, pf, fdia, B_R, B_Z, B_T)
 
     use const_inc, only: GP2
     use numerical_tools, only: deriv_cde
+    use parameters_a2equil, only: equil_now
 
-    integer, intent(in) :: n_rho, n_the, Nrrect, Nzrect
-    double precision, intent(in) :: Rgrid(Nrrect), Zgrid(Nzrect)
-    double precision, intent(in), dimension(n_rho) :: ipol, pf1d
-    double precision, intent(in), dimension(n_rho, n_the) :: X, Y
+    double precision, intent(in), dimension(:) :: Rgrid, Zgrid
+    double precision, intent(in), optional, dimension(*) :: pf, fdia
+    double precision, intent(out), dimension(:, :), allocatable :: pfm
+    double precision, intent(out), dimension(:, :), allocatable, optional :: &
+         fdiam, B_R, B_Z, B_T
 
-    double precision, intent(out), dimension(Nrrect, Nzrect) :: pfm, B_R, B_Z, B_T
-
+    logical :: b_flag, fd_flag, fd_b_flag
+    integer :: NrRect, NzRect, n_rho, n_the
     integer :: jr, jz, irho, jmin(2), jleft, jrho
-    double precision :: norm, tht, Rpos, Zpos
-    double precision, dimension(Nrrect) :: Rrect, dum_r, pfmr
-    double precision, dimension(Nzrect) :: Zrect, dum_z, pfmz
-    double precision, dimension(Nrrect, Nzrect) :: ipolp
-    double precision, dimension(n_the-1) :: Rctr1, Zctr1
-    double precision, dimension(n_rho-1, n_the-1) :: Rctr, Zctr, rdist, zdist
+    double precision :: norm, tht, Rpos, Zpos, Rmag, Zmag
+    double precision, dimension(:), allocatable :: Rrect, Zrect, &
+        dpf_dr, dpf_dz, Rctr1, Zctr1, pf1d, fdia1d
+    double precision, dimension(:, :), allocatable :: fdia2d, Rctr, Zctr, rdist, zdist
     double precision, dimension(3) :: norm3, pf3, rb3
 
-! Use reference arounf Rmag, Zmag
-    do jrho = 1, n_rho-1
-        Rctr(jrho, 1:n_the-1) = X(jrho+1, 1:n_the-1) - X(1, 1) 
-        Zctr(jrho, 1:n_the-1) = Y(jrho+1, 1:n_the-1) - Y(1, 1) 
-    enddo
-    Rrect = Rgrid - X(1, 1)
-    Zrect = Zgrid - Y(1, 1)
+    b_flag  = (present(B_r))
+    fd_flag = (present(fdiam)) 
+    fd_b_flag = (b_flag .or. fd_flag) 
+
+! Allocate variables
+
+    n_rho = SIZE(equil_now%coord_sys%position%r, 1)
+    n_the = SIZE(equil_now%coord_sys%position%r, 2)
+    NrRect = SIZE(Rgrid)
+    NzRect = SIZE(Zgrid)
+    allocate(Rctr1(n_the-1), Zctr1(n_the-1))
+    allocate(Rctr(n_rho-1, n_the-1), rdist(n_rho-1, n_the-1))
+    allocate(Zctr(n_rho-1, n_the-1), zdist(n_rho-1, n_the-1))
+    allocate(pf1d(n_rho), fdia1d(n_rho))
+    allocate(Rrect(NrRect), dpf_dr(NrRect))
+    allocate(Zrect(NzRect), dpf_dz(NzRect))
+    allocate(pfm(NrRect, NzRect), fdia2d(NrRect, NzRect))
+    if (present(pf)) then
+        pf1d = pf(1: n_rho)
+    else
+        pf1d = equil_now%profiles_1d%psi
+    endif
+    if (present(fdia)) then
+        fdia1d = fdia(1: n_rho)
+    else
+        fdia1d = equil_now%profiles_1d%F_dia
+    endif
+
+! Shift by Rmag, Zmag
+
+    Rmag = equil_now%coord_sys%position%r(1, 1)
+    Zmag = equil_now%coord_sys%position%z(1, 1)
+    Rctr = equil_now%coord_sys%position%r(2:, :n_the-1) - Rmag
+    Zctr = equil_now%coord_sys%position%z(2:, :n_the-1) - Zmag
+    Rrect = Rgrid(1: NrRect) - Rmag
+    Zrect = Zgrid(1: NzRect) - Zmag
 
 ! Biquadratic interpolation
 
@@ -119,7 +147,6 @@ contains
             zdist = (Zctr - Zpos)**2
             tht  = ATAN2(Zpos, Rpos)
             norm = SQRT(Rpos**2 + Zpos**2)
-
             jmin = MINLOC(rdist + zdist)
             irho = jmin(1)
             if (irho == 1) then
@@ -131,44 +158,54 @@ contains
                 Zctr1 = Zctr(2, :)
                 CALL interp_norm(n_the - 1, Rctr1, Zctr1, tht, norm3(3))
                 pf3 = pf1d(1:3)
-                rb3 = ipol(1:3)
+                if (fd_b_flag) rb3 = fdia1d(1:3)
             else
                 if (irho == n_rho-1) then
                     jleft = n_rho - 3
                 else
                     jleft = irho - 1
                 endif
-                do jrho = 1, 3
+                do jrho=1, 3
                     Rctr1 = Rctr(jleft + jrho - 1, :)
                     Zctr1 = Zctr(jleft + jrho - 1, :)
                     CALL interp_norm(n_the - 1, Rctr1, Zctr1, tht, norm3(jrho))
                     pf3(jrho) = pf1d(jleft + jrho)
-                    rb3(jrho) = ipol(jleft + jrho)
+                    if (fd_b_flag) rb3(jrho) = fdia1d(jleft + jrho)
                 enddo
             endif
-! Extrapolate flat
+! Outside sep: linear extrapolation (for Rabbit, such that orbits outside of the last closed flux surface can be calculated.)
             if ( (irho == n_rho-1) .and. (norm > norm3(3)) ) then
-                pfm  (jr, jz) = 2.*pf3(3) - pf3(2)
-                ipolp(jr, jz) = 2.*rb3(3) - rb3(2)
+                CALL lin_int(norm, norm3(2:3), pf3(2:3), pfm(jr, jz))
+                if (fd_b_flag) CALL lin_int(norm, norm3(2:3), rb3(2:3), fdia2d(jr, jz))
             else
                 CALL quad_int(norm, norm3, pf3, pfm(jr, jz))
-                CALL quad_int(norm, norm3, rb3, ipolp(jr, jz))
+                if (fd_b_flag) CALL quad_int(norm, norm3, rb3, fdia2d(jr, jz))
             endif
         enddo
     enddo
 
 ! Magnetic field components
-    do jz=1, Nzrect
-        pfmr = pfm(:, jz)
-        call DERIV_CDE(Rgrid, 3, pfmr, dum_r, Nrrect)
-        B_Z(:, jz) = -dum_r/(GP2*Rgrid)
-        B_T(:, jz) = ipolp(:, jz)/Rgrid
-    enddo
-    do jr=1, Nrrect
-        pfmz = pfm(jr, :)
-        call DERIV_CDE(Zgrid, 3, pfmz, dum_z, Nzrect)
-        B_R(jr, :) = dum_z/(GP2*Rgrid(jr))
-    enddo
+
+    if (b_flag) then
+        allocate(B_R(NrRect, NzRect), B_Z(NrRect, NzRect), B_T(NrRect, NzRect))
+        do jz=1, Nzrect
+            call DERIV_CDE(Rgrid(1: NrRect), 3, pfm(:, jz), dpf_dr, Nrrect)
+            B_Z(:, jz) = -dpf_dr/(GP2*Rgrid(1: NrRect))
+            B_T(:, jz) = fdia2d(:, jz)/Rgrid(1: NrRect)
+        enddo
+        do jr=1, Nrrect
+            call DERIV_CDE(Zgrid(1: NzRect), 3, pfm(jr, :), dpf_dz, Nzrect)
+            B_R(jr, :) = dpf_dz/(GP2*Rgrid(jr))
+        enddo
+    endif
+
+    if (fd_flag) then
+        allocate(fdiam(NrRect, NzRect))
+        fdiam = fdia2d
+    endif
+
+    deallocate(Rctr1, Zctr1, Rctr, Zctr, rdist, zdist, pf1d, fdia1d, fdia2d)
+    deallocate(Rrect, Zrect, dpf_dr, dpf_dz)
 
     return
     end subroutine ctr2rz_b
@@ -185,7 +222,7 @@ contains
 
     double precision, intent(out), dimension(Nrrect, Nzrect) :: f2d
 
-    integer :: jr, jz, jmin, imin, jstart, jend, jwhere, jscale, jcount
+    integer :: jr, jz, jmin, imin, jstart, jend, jwhere, jcount
     double precision :: norm, tht, Rpos, Zpos, Rgeo, Zgeo
     double precision, dimension(Nrrect) :: Rrect
     double precision, dimension(Nzrect) :: Zrect
@@ -198,14 +235,14 @@ contains
     Rgeo = X(1, 1)
     Zgeo = Y(1, 1)
 
-    Rctr(:, 1:n_the) = X - Rgeo 
-    Zctr(:, 1:n_the) = Y - Zgeo 
+    Rctr(:, 1:n_the) = X - Rgeo
+    Zctr(:, 1:n_the) = Y - Zgeo
     Rctr(:, n_the+1) = Rctr(:, 1)
     Zctr(:, n_the+1) = Zctr(:, 1)
 
     rdist = sqrt(Rctr**2 + Zctr**2)
     thet = atan2(Zctr(2, :), Rctr(2, :))
-    do jz=1, n_the+1 
+    do jz=1, n_the+1
         if (thet(jz) < 0.) thet(jz) = thet(jz) + GP2
     enddo
     thet(n_the+1) = thet(1) + GP2
@@ -228,11 +265,9 @@ contains
             if (imin < n_rho) then ! internal points
                 jstart = -1
                 jend = 1
-                jscale = 3
                 if (imin == 1) then
                     jstart = 0
                     jend = 2
-                    jscale = 3
                 endif
                 jcount = 0
                 do jwhere=imin+jstart, imin+jend
@@ -243,41 +278,27 @@ contains
                         x3(3) = thet(2) + GP2
                         y3(1) = rdist(jwhere, jmin-1)
                         y3(2) = rdist(jwhere, jmin)
-                        y3(3) = rdist(jwhere, 2)		
+                        y3(3) = rdist(jwhere, 2)
                     else if (jmin == 1) then
                         x3(1) = thet(n_the) - GP2
                         x3(2) = thet(1)
                         x3(3) = thet(2)
                         y3(1) = rdist(jwhere, n_the)
                         y3(2) = rdist(jwhere, 1)
-                        y3(3) = rdist(jwhere, 2)		
+                        y3(3) = rdist(jwhere, 2)
                     else
-                        x3(1) = thet(jmin-1)
-                        x3(2) = thet(jmin)
-                        x3(3) = thet(jmin+1)
-                        y3(1) = rdist(jwhere, jmin-1)
-                        y3(2) = rdist(jwhere, jmin)
-                        y3(3) = rdist(jwhere, jmin+1)
+                        x3 = thet(jmin-1: jmin+1)
+                        y3 = rdist(jwhere, jmin-1: jmin+1)
                     endif
-                    call quad_int(tht, x3(1:3), y3(1:3), yout(jcount)) !rdist a tht, imin
+                    call quad_int(tht, x3, y3, yout(jcount)) !rdist a tht, imin
                 enddo
+                x3 = yout
                 if (imin == 1) then
-                    x3(1) = yout(1)
-                    y3(1) = f1d(imin)
-                    x3(2) = yout(2)
-                    y3(2) = f1d(imin+1)
-                    x3(3) = yout(3)
-                    y3(3) = f1d(imin+2)
-                    call quad_int(norm, x3(1:3), y3(1:3), f2d(jr, jz))
+                    y3 = f1d(imin: imin+2)
                 else
-                    x3(1) = yout(1)
-                    y3(1) = f1d(imin-1)
-                    x3(2) = yout(2)
-                    y3(2) = f1d(imin)
-                    x3(3) = yout(3)
-                    y3(3) = f1d(imin+1)
-                    call quad_int(norm, x3(1:3), y3(1:3), f2d(jr, jz))
+                    y3 = f1d(imin-1: imin+1)
                 endif
+                call quad_int(norm, x3, y3, f2d(jr, jz))
             else ! boundary and external points
                 jcount = 0
                 do jwhere=imin-2, imin
@@ -285,33 +306,25 @@ contains
                     if (jmin == n_the+1) then
                         x3(1) = thet(jmin-1)
                         x3(2) = thet(jmin)
-                        x3(3) = thet(2) + GP2		
+                        x3(3) = thet(2) + GP2
                         y3(1) = rdist(jwhere, jmin-1)
                         y3(2) = rdist(jwhere, jmin)
-                        y3(3) = rdist(jwhere, 2)		
+                        y3(3) = rdist(jwhere, 2)
                     else if (jmin == 1) then
                         x3(1) = thet(n_the) - GP2
                         x3(2) = thet(1)
-                        x3(3) = thet(2)		
+                        x3(3) = thet(2)
                         y3(1) = rdist(jwhere, n_the)
                         y3(2) = rdist(jwhere, 1)
-                        y3(3) = rdist(jwhere, 2)		
+                        y3(3) = rdist(jwhere, 2)
                     else
-                        x3(1) = thet(jmin-1)
-                        x3(2) = thet(jmin)
-                        x3(3) = thet(jmin+1)		
-                        y3(1) = rdist(jwhere, jmin-1)
-                        y3(2) = rdist(jwhere, jmin)
-                        y3(3) = rdist(jwhere, jmin+1)		
-                    endif	 
-                    call quad_int(tht, x3(1:3), y3(1:3), yout(jcount))
+                        x3 = thet(jmin-1: jmin+1)
+                        y3 = rdist(jwhere, jmin-1: jmin+1)
+                    endif
+                    call quad_int(tht, x3, y3, yout(jcount))
                 enddo
-                x3(1) = yout(1)
-                y3(1) = f1d(imin-2)
-                x3(2) = yout(2)
-                y3(2) = f1d(imin-1)
-                x3(3) = yout(3)
-                y3(3) = f1d(imin)
+                x3 = yout
+                y3(2: 3) = f1d(imin-1: imin)
                 call lin_int(norm, x3(2:3), y3(2:3), f2d(jr, jz))
             endif
         enddo
@@ -321,159 +334,18 @@ contains
     end subroutine ctr2rz_fun3
 
 !---------------------------------------------------------------------
-    subroutine ctr2rz_fun(n_rho, n_the, f1d, X, Y, Nrrect, Nzrect, Rgrid, Zgrid, f2d)
-
-    integer, intent(in) :: n_rho, n_the, Nrrect, Nzrect
-    double precision, intent(in) :: Rgrid(Nrrect), Zgrid(Nzrect)
-    double precision, intent(in), dimension(n_rho) :: f1d
-    double precision, intent(in), dimension(n_rho, n_the) :: X, Y
-
-    double precision, intent(out), dimension(Nrrect, Nzrect) :: f2d
-
-    integer :: jr, jz, irho, jmin(2), jleft, jrho
-
-    double precision :: norm, tht, Rpos, Zpos
-    double precision, dimension(Nrrect) :: Rrect
-    double precision, dimension(Nzrect) :: Zrect
-    double precision, dimension(n_the-1) :: Rctr1, Zctr1
-    double precision, dimension(n_rho-1, n_the-1) :: Rctr, Zctr, rdist, zdist
-    double precision, dimension(3) :: norm3, f3
-
-    f2d = 1.e8
-
-! Use reference arounf Rmag, Zmag
-    DO jrho = 1, n_rho-1
-        Rctr(jrho, 1:n_the-1) = X(jrho+1, 1:n_the-1) - X(1, 1) 
-        Zctr(jrho, 1:n_the-1) = Y(jrho+1, 1:n_the-1) - Y(1, 1) 
-    ENDDO
-    Rrect = Rgrid - X(1, 1)
-    Zrect = Zgrid - Y(1, 1)
-
-! Biquadratic interpolation
-    do jr=1, Nrrect
-        Rpos = Rrect(jr)
-        rdist = (Rctr - Rpos)**2
-        do jz=1, Nzrect
-            Zpos = Zrect(jz)
-            zdist = (Zctr - Zpos)**2
-            tht  = ATAN2(Zpos, Rpos)
-            norm = SQRT(Rpos**2 + Zpos**2)
-
-            jmin = MINLOC(rdist + zdist)
-            irho = jmin(1)
-            if (irho == 1) then
-                norm3(1) = 0.
-                Rctr1 = Rctr(1, :)
-                Zctr1 = Zctr(1, :)
-                CALL interp_norm(n_the - 1, Rctr1, Zctr1, tht, norm3(2))
-                Rctr1 = Rctr(2, :)
-                Zctr1 = Zctr(2, :)
-                CALL interp_norm(n_the - 1, Rctr1, Zctr1, tht, norm3(3))
-                f3 = f1d(1:3)
-            else
-                if (irho == n_rho-1) then
-                    jleft = n_rho - 3
-                else
-                    jleft = irho - 1
-                endif
-                do jrho = 1, 3
-                    Rctr1(:) = Rctr(jleft + jrho - 1, :)
-                    Zctr1(:) = Zctr(jleft + jrho - 1, :)
-                    CALL interp_norm(n_the - 1, Rctr1, Zctr1, tht, norm3(jrho))
-                    f3(jrho) = f1d(jleft + jrho)
-                enddo
-            endif
-            if ( (irho == n_rho-1) .and. (norm > norm3(3)) ) then
-!            f2d(jr, jz) = 2.*f3(3) - f3(2)
-             !linear extrapolation (for Rabbit, such that orbits outside of the last closed flux surface can be calculated.)
-                CALL lin_int(norm, norm3(2:3), f3(2:3), f2d(jr, jz))
-            else
-                CALL quad_int(norm, norm3, f3, f2d(jr, jz))
-            endif
-        enddo
-    enddo
-
-    return
-    end subroutine ctr2rz_fun
-
-!---------------------------------------------------------------------
     subroutine ctr2rz
 ! 2D interpolation of Psi, Fdia from contours(rho, theta) to Cartesian R, z 2D-grid
-      
+
     use parameters_a2equil, only: equil_now
     use const_inc, only: IFBEY
 
-    integer :: jr, jz, irho, jleft, jrho, n_rho, n_the, nr_rect, nz_rect
-    integer, dimension(2) :: jmin
-    double precision :: norm, tht, Rpos, Zpos, Rmag, Zmag
-    double precision, allocatable, dimension(:) :: Rctr1, Zctr1
-    double precision, allocatable, dimension(:, :) :: Rctr, Zctr, rdist, zdist
-    double precision, dimension(3) :: norm3, pf3, rb3
+    double precision, dimension(:, :), allocatable :: pfm, fdiam
 
-! Use reference arounf Rmag, Zmag
-    n_rho = SIZE(equil_now%coord_sys%position%r, 1)
-    n_the = SIZE(equil_now%coord_sys%position%r, 2)
-    nr_rect = SIZE(equil_now%eqgeometry%rectgrid%r2d)
-    nz_rect = SIZE(equil_now%eqgeometry%rectgrid%z2d)
-    if (.not. allocated(Rctr1)) then
-        allocate(Rctr1(n_the-1))
-        allocate(Zctr1(n_the-1))
-        allocate(Rctr(n_rho-1, n_the-1), rdist(n_rho-1, n_the-1), &
-                 Zctr(n_rho-1, n_the-1), zdist(n_rho-1, n_the-1))
-    endif
-     
-    Rmag = equil_now%coord_sys%position%r(1, 1)
-    Zmag = equil_now%coord_sys%position%z(1, 1)
-    Rctr = equil_now%coord_sys%position%r(2:, :n_the-1) - Rmag
-    Zctr = equil_now%coord_sys%position%z(2:, :n_the-1) - Zmag
+    call ctr2rz_b(equil_now%eqgeometry%rectgrid%r2d, equil_now%eqgeometry%rectgrid%z2d, pfm, fdiam=fdiam)
 
-! Biquadratic interpolation
-    do jr=1, nr_rect
-        Rpos = equil_now%eqgeometry%rectgrid%r2d(jr) - Rmag
-        rdist = (Rctr - Rpos)**2
-        do jz=1, nz_rect
-            Zpos = equil_now%eqgeometry%rectgrid%z2d(jz) - Zmag
-            zdist = (Zctr - Zpos)**2
-            tht  = ATAN2(Zpos, Rpos)
-            norm = SQRT(Rpos**2 + Zpos**2)
-
-            jmin = MINLOC(rdist + zdist)
-            irho = jmin(1)
-            if (irho == 1) then
-                norm3(1) = 0.
-                Rctr1 = Rctr(1, :)
-                Zctr1 = Zctr(1, :)
-                CALL interp_norm(n_the - 1, Rctr1, Zctr1, tht, norm3(2))
-                Rctr1 = Rctr(2, :)
-                Zctr1 = Zctr(2, :)
-                CALL interp_norm(n_the - 1, Rctr1, Zctr1, tht, norm3(3))
-                pf3 = equil_now%profiles_1d%psi(1:3)
-                rb3 = equil_now%profiles_1d%F_dia(1:3)
-            else
-                if (irho == n_rho-1) then
-                    jleft = n_rho - 3
-                else
-                    jleft = irho - 1
-                endif
-                do jrho = 1, 3
-                    Rctr1(:) = Rctr(jleft + jrho - 1, :)
-                    Zctr1(:) = Zctr(jleft + jrho - 1, :)
-                    CALL interp_norm(n_the - 1, Rctr1, Zctr1, tht, norm3(jrho))
-                    pf3(jrho) = equil_now%profiles_1d%psi(jleft + jrho)
-                    rb3(jrho) = equil_now%profiles_1d%F_dia(jleft + jrho)
-                enddo
-            endif
-            if ( (irho == n_rho-1) .and. (norm > norm3(3)) ) then
-!            f2d(jr, jz) = 2.*pf3(3) - pf3(2)
-! linear extrapolation (for Rabbit, such that orbits outside of the last closed flux surface can be calculated.)
-                if (IFBEY == 0) CALL lin_int(norm, norm3(2:3), pf3(2:3), equil_now%eqgeometry%rectgrid%psirz2d(jr, jz))
-                CALL lin_int(norm, norm3(2:3), rb3(2:3), equil_now%eqgeometry%rectgrid%fdia2d(jr, jz))
-            else
-                if (IFBEY == 0) CALL quad_int(norm, norm3, pf3, equil_now%eqgeometry%rectgrid%psirz2d(jr, jz))
-                CALL quad_int(norm, norm3, rb3, equil_now%eqgeometry%rectgrid%fdia2d(jr, jz))
-            endif
-        enddo
-    enddo
+    equil_now%eqgeometry%rectgrid%fdia2d = fdiam
+    if (IFBEY == 0) equil_now%eqgeometry%rectgrid%psirz2d = pfm
 
     return
     end subroutine ctr2rz
