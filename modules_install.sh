@@ -20,6 +20,7 @@ FC_SERIAL=$FC
 INTEL_VERSION=2025.02
 CMAKE_VERSION=cmake-3.30.3-linux-x86_64
 JSON_VERSION=9.0.2
+NETCDF_VERSION=mar26
 RABBIT_VERSION=unstable
 TORBEAM_VERSION=unstable
 QLK_VERSION=unstable
@@ -33,6 +34,7 @@ STRAHL_VERSION=unstable
 
 SOFT_ROOT=$HOME/soft
 JSON_INSTALL=$ASTRA_EXT/json/$JSON_VERSION
+NETCDF_INSTALL=$ASTRA_EXT/netcdf/$NETCDF_VERSION
 RABBIT_INSTALL=$ASTRA_EXT/rabbit/$RABBIT_VERSION
 TORBEAM_INSTALL=$ASTRA_EXT/torbeam/$TORBEAM_VERSION
 QLK_INSTALL=$ASTRA_EXT/qualikiz/$QLK_VERSION
@@ -119,15 +121,15 @@ read -p "Install NetCDF (y/n) " NETCDF_FLAG
 
 if [ "$NETCDF_FLAG" = "y" ]
 then
-    cd $SOFT_ROOT
+    cd $NETCDF_INSTALL
     if [[ "$FC" == "ifx" ]]; then
         export CXX=icpx
         export FFLAGS="-O2 -qopenmp"
         export CFLAGS="-O2"
     fi
-    export LD_LIBRARY_PATH="$SOFT_ROOT/lib:$SOFT_ROOT/lib64:$LD_LIBRARY_PATH"
-    export CPPFLAGS="-I$SOFT_ROOT/include"
-    export LDFLAGS="-L$SOFT_ROOT/lib"
+    export LD_LIBRARY_PATH="$NETCDF_INSTALL/lib:$LD_LIBRARY_PATH"
+    export CPPFLAGS="-I$NETCDF_INSTALL/include"
+    export LDFLAGS="-L$NETCDF_INSTALL/lib"
 
     ZLIB_VER=1.3.2
     HDF5_VER=1.14.3
@@ -139,7 +141,7 @@ then
     tar --same-permissions -xf zlib.tar.gz
     cd zlib-$ZLIB_VER
     chmod +x configure
-    ./configure --prefix="$SOFT_ROOT"
+    ./configure --prefix="$NETCDF_INSTALL"
     make -j$NPROC
     make install
     cd ..
@@ -149,7 +151,7 @@ then
     tar --same-permissions -xf hdf5.tar.gz
     cd hdf5-$HDF5_VER
     chmod +x configure
-    ./configure --prefix="$SOFT_ROOT" --enable-hl --with-pthread=yes --with-zlib="$SOFT_ROOT" --enable-shared
+    ./configure --prefix="$NETCDF_INSTALL" --enable-hl --with-pthread=yes --with-zlib="$NETCDF_INSTALL" --enable-shared
     make -j$NPROC
     make install
     cd ..
@@ -159,7 +161,7 @@ then
     tar --same-permissions -xf netcdf-c.tar.gz
     cd netcdf-c-$NETCDFC_VER
     chmod +x configure
-    ./configure --prefix="$SOFT_ROOT" --enable-netcdf-4 --disable-dap
+    ./configure --prefix="$NETCDF_INSTALL" --enable-netcdf-4 --disable-dap
     make -j$NPROC
     make install
     cd ..
@@ -169,14 +171,14 @@ then
     tar -xf netcdf-fortran.tar.gz
     cd netcdf-fortran-$NETCDFF_VER
     chmod +x configure
-    ./configure --prefix="$SOFT_ROOT"
+    ./configure --prefix="$NETCDF_INSTALL"
     make -j$NPROC
     make install
     cd ..
 
     echo "========================"
     echo "Build complete!"
-    echo "Libraries in $SOFT_ROOT/lib"
+    echo "Libraries in $NETCDF_INSTALL/lib"
     echo "========================"
 fi
 
@@ -191,7 +193,7 @@ then
     cd $SOFT_ROOT
     rm -rf rabbit
 
-    export LD_LIBRARY_PATH="$SOFT_ROOT/lib:$SOFT_ROOT/lib64:$LD_LIBRARY_PATH"
+    export LD_LIBRARY_PATH="$NETCDF_INSTALL/lib:$LD_LIBRARY_PATH"
 # git clone https://gitlab.mpcdf.mpg.de/markusw/rabbit
     git clone git@gitlab.mpcdf.mpg.de:markusw/rabbit.git
     RABBIT_HOME=$SOFT_ROOT/rabbit
@@ -199,8 +201,7 @@ then
     RABBIT_HASH=`git rev-parse HEAD`
     mkdir build
     cd build
-    $CMAKE .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_Fortran_COMPILER=$FC -DOpenMP_Fortran_FLAGS=-qopenmp -DNETCDF_HOME=$SOFT_ROOT
-#    $CMAKE .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_Fortran_COMPILER=$FC -DOpenMP_Fortran_FLAGS=-qopenmp -DNETCDF_HOME=$SOFT_ROOT/netCDF
+    $CMAKE .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_Fortran_COMPILER=$FC -DOpenMP_Fortran_FLAGS=-qopenmp -DNETCDF_HOME=$NETCDF_INSTALL
     make
 
     mkdir -p $RABBIT_INSTALL/lib
@@ -209,7 +210,7 @@ then
     cp $RABBIT_HOME/build/modules/*.mod $RABBIT_INSTALL/inc/
     cp $AWD/platform/env.$platform $RABBIT_INSTALL/
     echo $RABBIT_HASH | cat > $RABBIT_INSTALL/hash
-    echo RABBIT built in $RABBIT_HOME installed in $RABBIT_INSTALL
+    echo "RABBIT built in $RABBIT_HOME installed in $RABBIT_INSTALL"
 fi
 
 #--------
