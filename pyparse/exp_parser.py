@@ -300,4 +300,4 @@ if __name__ == '__main__':
     print(raw.profiles['label'])
     n_len = len([x for xs in raw.profiles['data'] for x in xs])
     print('Size of profiles array', n_len)
-    raw.write_json()
+#    raw.write_json()

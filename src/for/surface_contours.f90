@@ -46,33 +46,24 @@ contains
     double precision, dimension(n_the), intent(in) :: r_in, z_in
     double precision, intent(out) :: norm_out
 
-    integer :: jmin(1), jmid
+    integer :: jmin(1), jmid, ind3(3)
     double precision, dimension(3) :: theta3, norm3
     double precision, dimension(n_the) :: theta
 
     theta = ATAN2(z_in, r_in) - th_ref
     jmin = MINLOC(ABS(theta))
     jmid = jmin(1)
-    theta3(2) = theta(jmid)
-    norm3(2) = r_in(jmid)**2 + z_in(jmid)**2
+    ind3 = (/ MOD(jmid-2, n_the) + 1, jmid, MOD(jmid, n_the) + 1 /)
+
+    theta3 = theta(ind3)
     if (jmid == 1) then
-        norm3(1) = r_in(n_the)**2 + z_in(n_the)**2
-        norm3(3) = r_in(2    )**2 + z_in(2    )**2
         theta3(1) = theta(n_the) - GP2
-        theta3(3) = theta(2)
     else if (jmid == n_the) then
-        norm3(1) = r_in(n_the-1)**2 + z_in(n_the-1)**2
-        norm3(3) = r_in(1      )**2 + z_in(1      )**2
-        theta3(1) = theta(n_the-1)
         theta3(3) = theta(1) + GP2
-    else
-        norm3(1) = r_in(jmid-1)**2 + z_in(jmid-1)**2
-        norm3(3) = r_in(jmid+1)**2 + z_in(jmid+1)**2
-        theta3(1) = theta(jmid-1)
-        theta3(3) = theta(jmid+1)
     endif
 
-    norm3 = SQRT(norm3)
+    norm3 = SQRT(r_in(ind3)**2 + z_in(ind3)**2)
+
     CALL quad_int(0., theta3, norm3, norm_out)
 
     return
@@ -335,7 +326,6 @@ contains
 
 !---------------------------------------------------------------------
     subroutine ctr2rz
-! 2D interpolation of Psi, Fdia from contours(rho, theta) to Cartesian R, z 2D-grid
 
     use parameters_a2equil, only: equil_now
     use const_inc, only: IFBEY
