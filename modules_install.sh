@@ -190,6 +190,8 @@ if [ "$RABBIT_FLAG" = "y" ]
 then
     cd $SOFT_ROOT
     rm -rf rabbit
+
+    export LD_LIBRARY_PATH="$SOFT_ROOT/lib:$SOFT_ROOT/lib64:$LD_LIBRARY_PATH"
 # git clone https://gitlab.mpcdf.mpg.de/markusw/rabbit
     git clone git@gitlab.mpcdf.mpg.de:markusw/rabbit.git
     RABBIT_HOME=$SOFT_ROOT/rabbit
