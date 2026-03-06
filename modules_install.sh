@@ -80,7 +80,7 @@ then
     sh $CMAKE_VERSION.sh
     rm $CMAKE_VERSION.sh
     chmod u+x $CMAKE
-    echo Installed cmake in $SOFT_ROOT/$CMAKE_VERSION
+    echo cmake installed in $SOFT_ROOT/$CMAKE_VERSION
 fi
 
 #-------------
@@ -108,7 +108,7 @@ then
     cp $JSON_ROOT/build/*.mod $JSON_INSTALL/inc/
     cp $AWD/platform/env.$platform $JSON_INSTALL/
     rm $SOFT_ROOT/${JSON_VERSION}.tar.gz
-    echo Installed JSON in $JSON_ROOT
+    echo JSON built in $JSON_ROOT installed in $JSON_INSTALL
 fi
 
 #-------
@@ -120,13 +120,64 @@ read -p "Install NetCDF (y/n) " NETCDF_FLAG
 if [ "$NETCDF_FLAG" = "y" ]
 then
     cd $SOFT_ROOT
-    rm -rf netCDF
-    git clone https://github.com/erdc/netCDF.git
-    cd netCDF
-    chmod u+x configure
-    ./configure --with-pic --disable-netcdf-4 --disable-dap
-    make
-    echo Installed NetCDF in $SOFT_ROOT/netCDF
+    if [[ "$FC" == "ifx" ]]; then
+        export CXX=icpx
+        export FFLAGS="-O2 -qopenmp"
+        export CFLAGS="-O2"
+    fi
+    export LD_LIBRARY_PATH="$SOFT_ROOT/lib:$SOFT_ROOT/lib64:$LD_LIBRARY_PATH"
+    export CPPFLAGS="-I$SOFT_ROOT/include"
+    export LDFLAGS="-L$SOFT_ROOT/lib"
+
+    ZLIB_VER=1.3.2
+    HDF5_VER=1.14.3
+    NETCDFC_VER=4.9.2
+    NETCDFF_VER=4.6.1
+
+    echo "==== Building zlib ===="
+    curl -L -o zlib.tar.gz https://zlib.net/zlib-$ZLIB_VER.tar.gz
+    tar --same-permissions -xf zlib.tar.gz
+    cd zlib-$ZLIB_VER
+    chmod +x configure
+    ./configure --prefix="$SOFT_ROOT"
+    make -j$NPROC
+    make install
+    cd ..
+
+    echo "==== Building HDF5 serial ===="
+    curl -L -o hdf5.tar.gz https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.14/hdf5-$HDF5_VER/src/hdf5-$HDF5_VER.tar.gz
+    tar --same-permissions -xf hdf5.tar.gz
+    cd hdf5-$HDF5_VER
+    chmod +x configure
+    ./configure --prefix="$SOFT_ROOT" --enable-hl --with-pthread=yes --with-zlib="$SOFT_ROOT" --enable-shared
+    make -j$NPROC
+    make install
+    cd ..
+
+    echo "==== Building NetCDF-C ===="
+    curl -L -o netcdf-c.tar.gz https://github.com/Unidata/netcdf-c/archive/refs/tags/v$NETCDFC_VER.tar.gz
+    tar --same-permissions -xf netcdf-c.tar.gz
+    cd netcdf-c-$NETCDFC_VER
+    chmod +x configure
+    ./configure --prefix="$SOFT_ROOT" --enable-netcdf-4 --disable-dap
+    make -j$NPROC
+    make install
+    cd ..
+
+    echo "==== Building NetCDF-Fortran ===="
+    curl -L -o netcdf-fortran.tar.gz https://github.com/Unidata/netcdf-fortran/archive/refs/tags/v$NETCDFF_VER.tar.gz
+    tar -xf netcdf-fortran.tar.gz
+    cd netcdf-fortran-$NETCDFF_VER
+    chmod +x configure
+    ./configure --prefix="$SOFT_ROOT"
+    make -j$NPROC
+    make install
+    cd ..
+
+    echo "========================"
+    echo "Build complete!"
+    echo "Libraries in $SOFT_ROOT/lib"
+    echo "========================"
 fi
 
 #-------
@@ -146,7 +197,8 @@ then
     RABBIT_HASH=`git rev-parse HEAD`
     mkdir build
     cd build
-    $CMAKE .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_Fortran_COMPILER=$FC -DOpenMP_Fortran_FLAGS=-qopenmp -DNETCDF_HOME=$SOFT_ROOT/netCDF
+    $CMAKE .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_Fortran_COMPILER=$FC -DOpenMP_Fortran_FLAGS=-qopenmp -DNETCDF_HOME=$SOFT_ROOT
+#    $CMAKE .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_Fortran_COMPILER=$FC -DOpenMP_Fortran_FLAGS=-qopenmp -DNETCDF_HOME=$SOFT_ROOT/netCDF
     make
 
     mkdir -p $RABBIT_INSTALL/lib
@@ -155,7 +207,7 @@ then
     cp $RABBIT_HOME/build/modules/*.mod $RABBIT_INSTALL/inc/
     cp $AWD/platform/env.$platform $RABBIT_INSTALL/
     echo $RABBIT_HASH | cat > $RABBIT_INSTALL/hash
-    echo Installed RABBIT in $RABBIT_HOME
+    echo RABBIT built in $RABBIT_HOME installed in $RABBIT_INSTALL
 fi
 
 #--------
@@ -179,7 +231,7 @@ then
     cp $TORBEAM_HOME/build-generic/lib/libtorbeamB.so $TORBEAM_INSTALL/lib
     cp $AWD/platform/env.$platform $TORBEAM_INSTALL/
     echo $TORBEAM_HASH | cat > $TORBEAM_INSTALL/hash
-    echo Installed TORBEAM in $TORBEAM_HOME
+    echo TORBEAM built in $TORBEAM_HOME installed in $TORBEAM_INSTALL
 fi
 
 #---------
@@ -210,7 +262,7 @@ then
     cp $QLK_HOME/include/intel-release-default/* $QLK_INSTALL/inc/
     cp $AWD/platform/env.$platform $QLK_INSTALL/
     echo $QLK_HASH | cat > $QLK_INSTALL/hash
-    echo Installed qualikiz in $QLK_HOME
+    echo QuaLiKiZ built in $QLK_HOME installed in $QLK_INSTALL
 fi
 #------------
 # QuaLiKiz-NN
@@ -249,7 +301,7 @@ then
     git clone https://gitlab.com/qualikiz-group/qlknn-hornnet-namelists.git
     git clone https://gitlab.com/qualikiz-group/qlknn-fullflux-namelists.git
     echo $QLKNN_HASH | cat > $QLKNN_INSTALL/hash
-    echo Installed qualikiz in $QLKNN_HOME
+    echo QuaLiKiZ-NN built in $QLKNN_HOME installed in $QLKNN_INSTALL
 fi
 
 #-------
@@ -306,7 +358,9 @@ EOT
     cp $AWD/platform/env.$platform $NEO_INSTALL/
     echo $GACODE_HASH | cat > $TGLF_INSTALL/hash
     echo $GACODE_HASH | cat > $NEO_INSTALL/hash
-    echo Installed GACODE in $GACODE_ROOT
+    echo GACODE built in $GACODE_ROOT
+    echo TGLF installed in $TGLF_INSTALL
+    echo NEO installed  in $NEO_INSTALL
 fi
 
 #-------
@@ -342,7 +396,7 @@ EOT
     cp strahl $STRAHL_INSTALL/bin/
     cp result_to_astra $STRAHL_INSTALL/bin/
     echo $STRAHL_HASH | cat > $STRAHL_INSTALL/hash
-    echo Installed STRAHL in $STRAHL_HOME
+    echo STRAHL built in $STRAHL_HOME installed in $STRAHL_INSTALL
 fi
 
 #------
