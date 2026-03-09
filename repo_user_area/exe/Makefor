@@ -88,4 +88,3 @@ $(OBJ_DIR)%.o: $(SRC_DIR)%.c
 
 $(LIB): $(MODOBJS) $(OBJS)
 	ar rv $(LIB) $(MODOBJS) $(OBJS) >/dev/null
-#	ranlib $(LIB)

@@ -1,31 +1,10 @@
-module load intel
-cd astra_rep
+ASTRA builds:
 
---------------------------------------
+mod/
+    feqis/ fnc/ for/ nbi/ sbr/
 
-cd ASTRA
+lib/
+    libfeqis.a libfnc.a libfor.a libnbi.a libsbr.a
 
-We build:
-
-lib/libfor.a (make -f Makefor)
-lib/libnbi.a (make -f Makenbi)
-lib/model   (make -f Makemodel)
-lib/jexfile.o is still precompiled
-
-The fml directory is required to compile "for" (metric.f stepup_new.f) and "nbi" (nbinj.f)
-The tmp directory is required to compile "for"
-
--------------------------------------
-
-cd EQUIL
-
-We build:
-
-SPIDER
-COUPLING_SCHEME
-
-into lib/libspider.a (make -f Makeequil)
-
---------------------------------------
-
-Both ASTRA and EQUIL libraries are used for ASTRA user-compilation
+Other modules like SPIDER, TGLF, QuaLiKiZ, QlkNN, json, NEO are precompiled and shared among users on a given platform, with several versions.
+The user can choose the version in $AWS/exe/astra_rc

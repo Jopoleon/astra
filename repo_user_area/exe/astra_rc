@@ -10,6 +10,10 @@ JSON_HOME=${ASTRA_EXT}/json/9.0.2
 export JSON_LIB=$JSON_HOME/lib/libjsonfortran.a
 export JSON_INC=$JSON_HOME/inc
 
+# SPIDER
+SPIDER_HOME=${ASTRA_EXT}/spider/ifx2025.1
+export SPIDER_LIB=${SPIDER_HOME}/lib/libspider.a
+
 # TORBEAM
 
 IRC_LIB="-L${COMP_LIBDIR} -lirc" # necessary for libtorbeam.so
