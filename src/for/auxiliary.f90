@@ -39,7 +39,7 @@ contains
 !---------------------------------------------------------------------
 
     use const_inc, only: TAUINC, DELVAR, TAU, TAUPRP, TAUMIN, TAUMAX, &
-        DTOUT, DPOUT, NA, NB1, LEQ, NSTEPS, ROC, ROCO, FTN, FTO
+        DPOUT, NA, NB1, LEQ, NSTEPS, ROC, ROCO, FTN, FTO
     use status_inc, only: NE, NI, TE, TI, FP, VR, UPAR, &
         NEO, NIO, TEO, TIO, FPO, VRO, UPARO, &
         F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, &
@@ -73,7 +73,7 @@ contains
     TAUO   = TAU
     TAUPRP = TAUO
     TAUN   = TAU
-    TAUN   = MIN(TAUMAX, TAUN/CTAU, DTOUT, DPOUT)
+    TAUN   = MIN(TAUMAX, TAUN/CTAU, DPOUT)
     TAU = MAX(TAUMIN, TAUN)   ! due to DELVAR & TAUINC
 
     if (TAU >= TAUO) then

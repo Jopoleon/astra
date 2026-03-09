@@ -30,6 +30,7 @@ implicit none
 ! Find self-consistent initial configuration
 !-------------------------------------------
 
+logical :: gui_on
 integer :: j, jj, IM, ios, XSC0, XSC, jt1, jt2, jt3, jt_req, jkey, ierr, jt_out, rate
 double precision :: t_stop
 character(len=132) :: STRI
@@ -61,9 +62,6 @@ IPART = 1   ! Mark initial iteration section
 ! ASTRA graphic frame
 !--------------------
 
-if (TASK(1: 3) /= 'BGD') then
-    call gui_init
-endif
 
 call set_x_arrays(1)
 call INIVAR
@@ -74,10 +72,14 @@ call INIVAR
 
 call transport2fbe_init
 
+gui_on = (TASK(1: 3) /= 'BGD')
+if (gui_on) then
+    call gui_init
+endif
 jt_req = 0
 do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set in IFTREQ (for/defarr.f90)
 
-    if (TASK(1:3) /= 'BGD') jkey = IFKEY(256)
+    if (gui_on) jkey = IFKEY(256)
     call set_x_scalars   ! Set exp scalars
     call DETVAR
     call DEFARR
@@ -94,7 +96,7 @@ do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set 
     jt_req = IFTREQ(ATREQ)     ! ++ITREQ; Convergence check; 1 - yes
 enddo
 
-if (TASK(1:3) /= 'BGD') then
+if (gui_on) then
     STRI(1:16) = ' ' ! Erase iteration number, iterations label top right
     call textvm(astra_gui%width-18*astra_gui_ref%dxlet, 2, STRI(1:16), 16)
     call textvm(astra_gui%width-17*astra_gui_ref%dxlet, astra_gui_ref%dylet + 1, STRI(1:14), 14)

@@ -11,7 +11,7 @@ export JSON_LIB=$JSON_HOME/lib/libjsonfortran.a
 export JSON_INC=$JSON_HOME/inc
 
 # SPIDER
-SPIDER_HOME=${ASTRA_EXT}/spider/ifx2025.1
+SPIDER_HOME=${ASTRA_EXT}/spider/mar26
 export SPIDER_LIB=${SPIDER_HOME}/lib/libspider.a
 
 # TORBEAM

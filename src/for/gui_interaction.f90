@@ -4,6 +4,65 @@ implicit none
 contains
 
 !---------------------------------------------------------------------
+    subroutine kibm2key(KIBM, KEY, return_flag)
+
+    use io_mod, only: TASK, n_sbr
+    use const_inc, only: DTEQ
+    use char_manip, only: beep_ch
+    use debugger, only: astra_stop
+    use cpu_usage, only: cpu_report
+
+    integer, intent(in) :: KIBM ! KIBM in input takes only values 1 (Ctrl) or 2 (Alt)
+    integer, intent(inout) :: KEY
+    integer, intent(out) :: return_flag
+
+    integer :: j, jj
+
+    return_flag = 0
+    if (KIBM == 2) then !-------- <Alt> pressed'
+        if (KEY == 77 .or. KEY == 109) then
+             KEY = 0
+             return
+        endif
+        if (KEY == 47) then ! <Alt>+/
+            if (TASK(4:4) /= 'B') call Close_Screen
+            call cpu_report('>>> ASTRA <Alt>+/ exit >>>')
+            call astra_stop
+        endif
+        if (KEY >= 32 .and. KEY <= 126) then
+            write(*, *) '  "<Alt>+<', char(KEY), '>"  pressed'
+        endif
+    endif
+
+    if (KIBM == 1 .and. (KEY >= 32 .and. KEY <= 126) ) then
+        write(*, *) '  "<Ctrl>+<', char(KEY), '>" pressed'
+    endif
+    jj = 0
+    if (KEY > 90) KEY = KEY - 32
+    KEY = KEY - 64
+
+    do j=1, n_sbr
+        if (ABS(KEY - DTEQ(4, j)) < 0.1) jj = 1
+    enddo
+    if (TASK(1:3) == 'DSP') then
+        if (jj == 1) then
+            return_flag = 1
+        endif
+    else
+        if (jj == 1) then
+            return_flag = 2
+        else
+            if (KEY == 27)  then
+                write(*, '(/2A)') 'Use key "/" for exit', beep_ch ! Beep
+            endif
+            KEY = 0
+        endif
+     endif
+
+     return
+     end subroutine kibm2key
+      
+!---------------------------------------------------------------------
     integer function if_key(IFKL)
 !---------------------------------------------------------------------
 ! IFKL = 256 call from initial iteration loop,
@@ -23,9 +82,9 @@ contains
 
     use parameter_inc, only: NRD
     use status_inc, only: MU, AMETR, SHIF, ELON, TRIA, EQFF, EQPF, FP, RHO
-    use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, exp_header, &
+    use const_inc, only: KEY, ITREQ, DPOUT, exp_header, &
        NA, NB1, NA1, NAB, LEQ, TIME, TAU, TINIT, TSCALE, &
-       TSTART, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
+       TSTART, TPAUSE, TEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
        BTOR, IPL, constValues, varValues, internValues
     use graph_utils, only: astra_gui, astra_gui_ref, plot_area, &
         Black, Blue, Magenta, WarningColor, &
@@ -48,14 +107,14 @@ contains
     integer, intent(in) :: IFKL
 
     logical :: skip_poll
-    integer :: POLLEVENT, WAITEVENT, KIBM, KASCII
+    integer :: POLLEVENT, WAITEVENT, KIBM, KASCII, key_tmp, return_flag
     integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
         IFLAG, INT4, IRET, plot_mode, &
         MODEX, IX, IY, NU1, j2, J1, ios, &
         YEAR, MONTH, DAY, HOUR, MINUTE, time_arr(8)
 ! plot_arr dimension: 4*NRD(Mode 5, 8) 320(7) 2*NTIMES(Mode 6) 2*NRD(Modes 1-4)
     integer :: ITO(NTIMES, nplots_max+2)
-    double precision :: CHORDN, ABD, ALFA, TIMEB, TROUT, TPOUT=0.d0
+    double precision :: CHORDN, ABD, ALFA, TIMEB
     double precision, allocatable :: varValues_old(:) 
     double precision, dimension(NTIMES) :: PRMARK
     character(len=6) :: NAMEP(NTIMES)
@@ -64,10 +123,9 @@ contains
     character(len=80) :: HELP(28), STR, STRB
     character(len=132) :: STRI, ps_root, PSNAME
 
-    save ITO, IFLAG, TROUT, MARK, LTOUTO, IDSP
+    save ITO, IFLAG, MARK, LTOUTO, IDSP
     save NAMEP
-    data PRMARK/NTIMES*0./  TROUT/-99999./ &
-         IFLAG/0/  &
+    data PRMARK/NTIMES*0./  IFLAG/0/  &
          JTOUT/0/ LTOUTO/0/ MARK /0/       IDSP/0/
 
 ! ASCII codes: ^C 3  <Esc>27 <Space>32  % 37  * 42  . 46  / 47  ? 63
@@ -124,58 +182,50 @@ contains
     if (IFKL > 0 .and. IFKL < 256) then
         KEY = IFKL
         skip_poll = .True.
-        goto 1
-    elseif (IFKL == 256) then
-        write(STRI, '(a, i3)') "Iteration #", ITREQ
-        call setColor(Magenta) ! Iterations
-        call textvm(astra_gui%width-18*astra_gui_ref%dxlet, 2, "equil iterations", 16)
-        call setColor(Blue) ! Iteration #
-        call textvm(astra_gui%width-17*astra_gui_ref%dxlet, astra_gui_ref%dylet+1, STRI(1:14), 14)
-        TROUT = TIME
-        call graph_output(MARK, ITO)
-    endif
+    else
+        if (IFKL == 256) then
+            write(STRI, '(a, i3)') "Iteration #", ITREQ
+            call setColor(Magenta) ! Iterations
+            call textvm(astra_gui%width-18*astra_gui_ref%dxlet, 2, "equil iterations", 16)
+            call setColor(Blue) ! Iteration #
+            call textvm(astra_gui%width-17*astra_gui_ref%dxlet, astra_gui_ref%dylet+1, STRI(1:14), 14)
+        else ! IFKL = 0
+            if (TASK(4:4) /= 'B') then
+                call time_label(TIME, 1000.*TAU)
+                call tab_label
+            endif
+        endif
 
-    if (IFKL /= 256 .and. TASK(4:4) /= 'B') call time_label(TIME, 1000.*TAU)
-
-    if (LTOUT > 1) then
-        call markloc(str_in='IF_KEY (saving time traces)')
-        if (LTOUT >= NTIMES) then
-            do J=1, NTIMES-1
-                do JJ=1, NTOUT
-                    TOUT(J, JJ) = TOUT(J+1, JJ)
+        if (LTOUT > 1) then
+            call markloc(str_in='IF_KEY (saving time traces)')
+            if (LTOUT >= NTIMES) then
+                do J=1, NTIMES-1
+                    do JJ=1, NTOUT
+                        TOUT(J, JJ) = TOUT(J+1, JJ)
+                    enddo
+                    TTOUT(J) = TTOUT(J+1)
                 enddo
-                TTOUT(J) = TTOUT(J+1)
-            enddo
-            LTOUT = NTIMES - 1
+                LTOUT = NTIMES - 1
+            endif
         endif
-    endif
 
-    call TIMOUT
-
-    TTOUT(LTOUT) = TIME
-    LTOUT = LTOUT + 1
-    JTOUT = JTOUT + 1
-
-! Radial output
-    if (MOD10 <= 3 .or. MOD10 >= 8) then
-        if (TIME + .5*TAU >= TROUT + DROUT) then
-            TROUT = TIME
-            call graph_output(MARK, ITO)
-        endif
-    endif
+        call TIMOUT
+        TTOUT(LTOUT) = TIME
+        LTOUT = LTOUT + 1
+        JTOUT = JTOUT + 1
 
 ! Time output
-    if (MOD10 == 6 .or. MOD10 == 7) then
-        call graph_output(MARK, ITO)
-    endif
+        if (MOD10 <= 3 .or. MOD10 >= 6) then
+            call graph_output(MARK, ITO)
+        endif
 
+    endif
+ 
 !-------------
 ! Key analysis
 !-------------
 
-     1 continue
-
-    do while(.True.)
+    key1_loop: do while(.True.)
         if (.not. skip_poll) then
             KEY = 0
             if (TASK(4:4) /= 'B') call redraw
@@ -211,7 +261,14 @@ contains
                     else
                         TASK = 'RUN '
                     endif
-                    if (KIBM == 1 .or. KIBM == 2) goto 49
+                    if (KIBM == 1 .or. KIBM == 2) then
+                        call kibm2key(KIBM, KEY, return_flag)
+                        if (return_flag > 0) then
+                            if (return_flag == 1) IFLAG = 1
+                            return
+                        endif
+                        CYCLE
+                    endif
                     if (KEY >= 97 .and. KEY <= 122) KEY = KEY - 32
                 endif
 
@@ -234,7 +291,14 @@ contains
                     KIBM = waitevent(KASCII, ix, iy)
                     KEY  = KASCII
                     if (KEY == 0) CYCLE
-                    if (KEY  < 127 .and. (KIBM == 1 .or. KIBM == 2)) goto 49
+                    if (KEY  < 127 .and. (KIBM == 1 .or. KIBM == 2)) then
+                        call kibm2key(KIBM, KEY, return_flag)
+                        if (return_flag > 0) then
+                            if (return_flag == 1) IFLAG = 1
+                            return
+                        endif
+                        CYCLE
+                    endif
                     if (KIBM < 65000) CYCLE
                     KIBM = KIBM - 65000
                     if (KIBM >= 361 .and. KIBM <= 364) then
@@ -351,9 +415,7 @@ contains
             if (TIME >= TIMEB) then
                 call refresh_plot(IFKL, MARK, PSNAME)
             else
-                TROUT = TIME
                 TTOUT(LTOUT-1) = TIME
-                TPOUT = TIME
                 do J=1, n_sbr
                     TEQ(J) = TIME
                 enddo
@@ -533,57 +595,7 @@ contains
             if (IFKL == KEY) return ! Important in call from c (tglf-like models)
         endif
 
-        CYCLE
-
-    49 continue
-
-        if (KIBM == 2) then !-------- <Alt> pressed'
-            if (KEY == 77 .or. KEY == 109) then
-                 if (KIBM == 0) then
-                     write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, beep_ch
-                 endif
-                 KEY = 0
-                 CYCLE
-            endif
-            if (KEY == 47) then ! <Alt>+/
-                if (TASK(4:4) /= 'B') call Close_Screen
-                call cpu_report('>>> ASTRA <Alt>+/ exit >>>')
-                call astra_stop
-            endif
-            if (KIBM == 2 .and. (KEY >= 32 .and. KEY <= 126) ) then
-                write(*, *) '  "<Alt>+<', char(KEY), '>"  pressed'
-            endif
-        endif
-
-        if (KIBM == 1 .and. (KEY >= 32 .and. KEY <= 126) ) then
-            write(*, *) '  "<Ctrl>+<', char(KEY), '>" pressed'
-        endif
-        jj = 0
-        if (KEY > 90) KEY = KEY - 32
-        KEY = KEY - 64
-
-        do j=1, n_sbr
-            if (ABS(KEY-DTEQ(4, j)) < 0.1) jj = 1
-        enddo
-        if (TASK(1:3) == 'DSP' .and. jj == 1) then
-            IFLAG = 1     ! for DSP mode only
-            IF_KEY = 0
-            return
-        endif
-        if (TASK(1:3) == 'DSP') CYCLE
-        if (jj == 1) then
-            IF_KEY = 0
-            return
-        endif
-
-        if (KEY == 27)  then
-            write(*, '(/2A)') 'Use key "/" for exit', beep_ch ! Beep
-        elseif (KEY /= 0 .and. KIBM == 0) then
-            write(*, *) 'Unrecognized key: "', char(KEY), '"', KEY, beep_ch
-        endif
-        KEY = 0
-
-    enddo
+    enddo key1_loop
 
 ! Exit ASTRA
 
@@ -678,7 +690,10 @@ contains
     endif
     CHORDN = lineav()
     call up_label(CHORDN, 1./MU(NA))
-    if (IFKL /= 256) call time_label(TIME, 1000.*TAU) ! 256 <-> initial iterations
+    if (IFKL /= 256) then
+        call time_label(TIME, 1000.*TAU) ! 256 <-> initial iterations
+        call tab_label
+    endif
     j = 0
     if (MOD10 <= 5 .or. MOD10 == 7) call down_label(j, TOUT)
     if (MOD10 == 6 .and. KPRI == 0) call down_label(j, TOUT)
@@ -964,8 +979,6 @@ contains
     use numerical_tools, only: QUADIN
     use standard_functions, only: RZ2A
 
-    implicit none
-
     integer, parameter :: JN0=0
     integer, intent(in) :: IX, IY
 
@@ -1126,8 +1139,6 @@ contains
         NRW, NTIMES, NWIND3, active_tab, NAMET, Black, Blue, curves_per_frame
     use dbl2char, only: fmt_smart
 
-    implicit none
-
     integer, intent(in) :: jt_in
     double precision, intent(in) :: TOUT(NTIMES, *)
 
@@ -1205,8 +1216,6 @@ contains
     use const_inc, only: RTOR, BTOR, IPL, ABC
     use dbl2char, only: fmt_smart
 
-    implicit none
-
     double precision, intent(in) :: ne_av, q95
     character(len=42) :: upper_label
 
@@ -1222,8 +1231,6 @@ contains
 
     use dbl2char, only: fmt_smart
 
-    implicit none
-
     double precision, intent(in) :: time_in, dt_in
     character(len=19) :: time_lbl
 
@@ -1237,31 +1244,35 @@ contains
 ! Upper string of the Astra graphic window
 
     use const_inc, only: exp_header
-    use graph_utils, only: astra_gui, active_tab, MOD10, Black, Blue
-
-    implicit none
+    use graph_utils, only: astra_gui, Black
 
     double precision, intent(in) :: YN, YQ
-
-    character(len=2) :: CHR
 
     call setColor(Black)
     call rectvm(0, 0, 0, astra_gui%Width - 1, astra_gui%Height - 1) ! Draw outer frame
     call textvm(0, 2, exp_header(1: 16) // upperLabel(YN, YQ), 58)  ! Type upper label
 
-    write(CHR, '(1I2)') active_tab(MOD10) + 1
-    call setColor(Blue)
-    call textvm(astra_gui%width - 2*astra_gui%dxlet, astra_gui%dylet + 1, CHR, 2) ! Type screen No.
-
     return
     end subroutine up_label
+
+!---------------------------------------------------------------------
+    subroutine tab_label
+
+    use graph_utils, only: astra_gui, active_tab, MOD10, Blue
+
+    character(len=5) :: CHR
+
+    write(CHR, '(A3, 1I2)') 'Tab', active_tab(MOD10) + 1
+    call setColor(Blue)
+    call textvm(astra_gui%width - 2*astra_gui%dxlet - 40, astra_gui%dylet - 3, CHR, 5) ! Type #tab in a given plot mode
+
+    return
+    end subroutine tab_label
 
 !---------------------------------------------------------------------
     subroutine time_label(time_in, dt_in)
 
     use graph_utils, only: astra_gui, astra_gui_ref, Black
-
-    implicit none
 
     integer, parameter :: fshift=2, str_len=19
     double precision, intent(in) :: time_in, dt_in
@@ -1281,8 +1292,6 @@ contains
     use io_mod, only: resize
     use dbl2char, only: fmt_smart
     use json_vars, only: n_const, n_var, varNames
-
-    implicit none
 
     character(len=6), dimension(22), parameter :: CONN = (/ &
         'CF1-> ', 'CF5-> ', 'CF9-> ', 'CF13->', &

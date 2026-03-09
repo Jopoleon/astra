@@ -68,7 +68,7 @@ double precision, target, allocatable, dimension(:) :: constValues, varValues, v
 double precision :: TEQ(n_sbr_max)
 
 double precision, pointer :: &
-    DROUT, DTOUT, DPOUT, TIME, TAUMIN, TAUMAX, TAUINC, DELVAR, &
+    DPOUT, TIME, TAUMIN, TAUMAX, TAUINC, DELVAR, &
     ITEREX, TINIT, TSCALE, XOUT, XINPUT, &
     NB2EQL, NEQUIL, DTEQL, MEQUIL, TPAUSE, TEND, &
     INUME1, INUME2, INUME3, INUME4, &
@@ -126,8 +126,6 @@ contains
     NA18 = 0
     NA19 = 0
 
-    DROUT  = 0.01
-    DTOUT  = 0.01
     DPOUT  = 0.01
     TIME   = 0.
     TAUMIN = 1.e-6
@@ -158,7 +156,7 @@ contains
     SGNIP  = 1.
     SGNBT  = 1.
     IFBEG  = 0.
-    IPEQL  = 4.
+    IPEQL  = 4. ! 4- SPIDER, 5- FEQIS
     DTEQ(1, :) = 0.
     DTEQ(2, :) = -99999.
     DTEQ(3, :) =  99999.

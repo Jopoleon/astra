@@ -437,8 +437,6 @@
 },
 
 "internal": {
-    "DROUT" : {"units": "s", "desc": "Radial profiles output interval"},
-    "DTOUT" : {"units": "s", "desc": "Time variables output interval"},
     "DPOUT" : {"units": "s", "desc": "Profiles/time output interval"},
     "TIME"  : {"units": "s", "desc": "Current time, t"},
     "TAUMIN": {"units": "s", "desc": "Minimum time step"},

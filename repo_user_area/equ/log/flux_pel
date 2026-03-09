@@ -200,9 +200,7 @@ CDHJ6  =  1.000E+00
 CDHJ7  =  1.000E+00
 CDHJ8  =  1.000E+00
 CDHJ9  =  1.000E+00
- Control parameters (common block A_OUTPUT):22
-DROUT  =  1.000E-02
-DTOUT  =  1.000E-02
+ Control parameters 
 DPOUT  =  1.000E-02
 TIME   =  4.000E+00
 TAUMIN =  1.000E-04
