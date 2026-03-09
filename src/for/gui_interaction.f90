@@ -1258,13 +1258,13 @@ contains
 !---------------------------------------------------------------------
     subroutine tab_label
 
-    use graph_utils, only: astra_gui, active_tab, MOD10, Blue
+    use graph_utils, only: astra_gui, astra_gui_ref, active_tab, MOD10, Blue
 
     character(len=5) :: CHR
 
     write(CHR, '(A3, 1I2)') 'Tab', active_tab(MOD10) + 1
     call setColor(Blue)
-    call textvm(astra_gui%width - 2*astra_gui%dxlet - 40, astra_gui%dylet - 3, CHR, 5) ! Type #tab in a given plot mode
+    call textvm(astra_gui%width - 2*astra_gui%dxlet - 45, astra_gui_ref%dylet+1, CHR, 5) ! Type #tab in a given plot mode
 
     return
     end subroutine tab_label
