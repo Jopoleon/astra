@@ -53,6 +53,7 @@ void sbp2astra_(int* jsbp, int *nchunk, int *n_sbp_arr_out, char* ipcFile, doubl
             mem[jarr + (j + J_PROC*N_CHUNK) * N_ARR_OUT] = prof_out[jarr + j*N_ARR_OUT];
         }
     }
+    shmdt(ShmAdr);
     return;
 }
 
@@ -238,6 +239,7 @@ int fill_int_shm_(int* Nsize, int* int_in, int* ShmID){
     int buf_size = N_SIZE*sizeof(int);
     memcpy(int_input, int_in, buf_size);
 
+    shmdt(ShmAdr);
     return 0;
 }
 
@@ -250,5 +252,6 @@ int fill_dbl_shm_(int* Nsize, double* dbl_in, int* ShmID){
     int buf_size = N_SIZE*sizeof(double);
     memcpy(dbl_input, dbl_in, buf_size);
 
+    shmdt(ShmAdr);
     return 0;
 }
