@@ -37,7 +37,7 @@ python3 $AWD/compareRegressions.py -m $EQU -v $EXP
 # Slow ones
 
 EXP=aug34954
-for EQU in flux_tglf_serial flux_neo
+for EQU in flux_tglf_serial flux_neo_tglf
 do
     $AWD/exe/as_exe -m $EQU -v $EXP -s 4. -e 5.
     python3 $AWD/compareRegressions.py -m $EQU -v $EXP

@@ -1,0 +1,56 @@
+ifndef AWD
+$(error setenv/export AWD first)
+endif
+
+SRC_DIR = $(AWD)/src/misc
+OBJ_DIR = $(AWD)/obj/misc
+MOD_DIR = $(AWD)/mod/misc
+
+LIB_DIR = $(AWD)/lib
+LIBNAM = libmisc.a
+LIB = $(LIB_DIR)/$(LIBNAM)
+
+# Compilers
+
+FC_FLAGS = -r8 -no-prec-div -traceback -ip -fPIC -O0 $(CHECKALLCOMP)
+
+MODOBJS = \
+$(OBJ_DIR)/imas_ids.o \
+$(OBJ_DIR)/numerical_tools.o \
+$(OBJ_DIR)/dbl2char.o \
+$(OBJ_DIR)/char_manip.o \
+$(OBJ_DIR)/spider_params.o
+
+# Make Commands
+
+.PHONY: modules
+modules: directories $(MODOBJS) mvmod
+
+.PHONY: lib
+lib: $(LIB)
+
+.PHONY: directories
+directories:
+	@mkdir -p $(MOD_DIR)
+	@mkdir -p $(OBJ_DIR)
+	@mkdir -p $(LIB_DIR)
+
+.PHONY: mvmod
+mvmod:
+	rm -f *genmod.*
+	-@mv *.mod $(MOD_DIR)/ 2>/dev/null; true
+
+.PHONY: clean
+clean:
+	rm -f *.mod
+	rm -f $(MOD_DIR)/*.mod
+	rm -rf $(OBJ_DIR)
+	rm -f $(LIB)
+
+# Rules
+
+$(OBJ_DIR)%.o: $(SRC_DIR)%.f90
+	$(FC) $(FC_FLAGS) -I$(MOD_DIR) -c $< -o $@
+
+$(LIB): $(MODOBJS) $(OBJS)
+	ar rv $(LIB) $(MODOBJS) >/dev/null

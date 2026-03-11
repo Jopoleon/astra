@@ -15,6 +15,7 @@ use plasma_state, only: plasma_up
 use auxiliary, only: IFTREQ, IFSTEP, OLDNEW
 use set_x_data, only: set_x_scalars, set_x_arrays, get_coil
 use metrics, only: metric
+use feqis_solvers, only: feqisupdate
 
 implicit none
 

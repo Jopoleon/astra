@@ -11,7 +11,7 @@ integer, parameter :: NCONST=256
 integer, dimension(n_sbr_max) :: IFSBX
 integer, dimension(NARRX) :: IFDFAX=-1, jbeg_arrx, NPTM
 integer, dimension(NCONST) :: IFDFVX=-1
-integer :: n_sbr, NGR
+integer :: n_sbr, NGR, restart
 double precision :: resize
 double precision, dimension(NARRX) :: TOUTX
 double precision, dimension(n_coils_max) :: CCOIL=0., VCOIL=0.
@@ -31,7 +31,7 @@ contains
     double precision :: tbeg_nml, tend_nml, tpause_nml
 
     namelist / astra_log / equ_file, exp_file, task, machine, &
-        debug, tbeg_nml, tend_nml, tpause_nml, resize, flightsim
+        debug, tbeg_nml, tend_nml, tpause_nml, resize, restart, flightsim
 
     tbeg_nml   = -1.
     tend_nml   = -1.

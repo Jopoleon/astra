@@ -2,6 +2,9 @@ module feqis_tools
 
 implicit none
 
+double precision, dimension(:), allocatable :: costable
+double precision, dimension(:, :), allocatable :: sintable
+
 contains
 
 !---------------------------------------------------------------------
@@ -91,7 +94,7 @@ contains
 !---------------------------------------------------------------------
     function discrete_sine_transform(ndim, f_in) result(f_out)
 
-    use fft_mod_eff, only: dp, sintable
+    integer, parameter :: dp=selected_real_kind(15, 300)
 
     integer, intent(in) :: ndim
     double precision,  intent(in), dimension(ndim) :: f_in

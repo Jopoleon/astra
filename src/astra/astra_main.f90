@@ -8,17 +8,18 @@ program astra
 ! version 2.1 of the License
 
 use graph_utils, only: astra_gui, astra_gui_ref, gui_init
-use io_mod, only: TASK, io_init
+use io_mod, only: TASK, io_init, MACHINE, awd, restart
 use cpu_usage, only: cpu_start, wall_start, cpu_report
-use const_inc, only: IPART, const_init, &
-    TIME, TSTART, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT
+use const_inc, only: IPART, const_init, RTOR, UPDWN, SHIFT, PSIAX, PSIBO, &
+    TIME, TINIT, TSTART, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT, CF1, &
+    constValues, varValues, varxValues, internValues, intern2Values
 use status_inc, only: status_init, defarr
 use debugger, only: astra_stop, markloc
 use ext_bnd, only: use_ext_bnd
 use transport2fbe, only: transport2fbe_init
-use json_vars, only: read_metadata
-use json_write, only: write_json, write_jsonx
-use read_input, only: readInput
+use json_vars, only: read_metadata, n_intern
+use json_rw, only: write_json, write_jsonx, read_json
+use read_input, only: readInput, raw_cCoil
 use plasma_state, only: plasma_up
 use auxiliary, only: IFTREQ
 use set_x_data, only: set_x_scalars, set_x_arrays, astra_assignments
@@ -33,7 +34,8 @@ implicit none
 logical :: gui_on
 integer :: j, jj, IM, ios, XSC0, XSC, jt1, jt2, jt3, jt_req, jkey, ierr, jt_out, rate
 double precision :: t_stop
-character(len=132) :: STRI
+double precision, dimension(:), allocatable :: internVal
+character(len=132) :: STRI, fjson
 integer, external :: IFKEY
 
 !-------------------- Initial settings --------------------------------|
@@ -62,7 +64,6 @@ IPART = 1   ! Mark initial iteration section
 ! ASTRA graphic frame
 !--------------------
 
-
 call set_x_arrays(1)
 call INIVAR
 call SETVAR
@@ -70,7 +71,21 @@ call DETVAR
 call eqguess
 call INIVAR
 
-call transport2fbe_init
+call transport2fbe_init(TAU, TSTART, RTOR, UPDWN, SHIFT, PSIAX, PSIBO, MACHINE, &
+    raw_cCoil%ncoils, raw_cCoil%current)
+
+if (restart > 0) then
+    print*, 'astra_main1, CF1=', CF1
+    write(fjson, '(2A, i0, A)') TRIM(awd), '/ncdf_out/aug34954fluxes-', restart, '.json'
+    call read_json(TRIM(fjson), "constants", constValues)
+    call read_json(TRIM(fjson), "variables", varValues)
+    call read_json(TRIM(fjson), "variables_x", varxValues)
+    call read_json(TRIM(fjson), "internal", internVal)
+    call read_json(TRIM(fjson), "intern2", intern2Values)
+    internValues(1: n_intern) = internVal(1: n_intern)
+    write(*, '(A, 5f8.4)') 'astra_main2, CF1=', CF1, TIME, internValues(2), TINIT, internValues(8)
+    pause
+endif
 
 gui_on = (TASK(1: 3) /= 'BGD')
 if (gui_on) then

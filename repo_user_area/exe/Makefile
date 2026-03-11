@@ -4,7 +4,7 @@ endif
 
 LIB_DIR = $(AWD)/lib
 TSK_DIR = $(AWD)/bin
-FOR_DIR = $(AWD)/src/for
+ASTRA_DIR = $(AWD)/src/astra
 MOD_DIR = $(AWD)/mod
 OBJ_DIR = $(AWD)/obj
 TMP_DIR = $(AWD)/src/tmp
@@ -15,23 +15,24 @@ EQU  = $(AWD)/equ/$(MODEL)
 EXP  = $(AWD)/exp/$(FEXP)
 LIBSBR    = $(LIB_DIR)/libsbr.a
 LIBFNC    = $(LIB_DIR)/libfnc.a
-LIBFOR    = $(LIB_DIR)/libfor.a
+LIBASTRA  = $(LIB_DIR)/libastra.a
+LIBMISC  = $(LIB_DIR)/libmisc.a
 LIBNBI    = $(LIB_DIR)/libnbi.a
 LIBFEQIS  = $(LIB_DIR)/libfeqis.a
 
 ifndef WORKFLOW
-WORKFLOW = $(FOR_DIR)/stepup.f90
+WORKFLOW = $(ASTRA_DIR)/stepup.f90
 endif
 
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
-LIB = -lnbi -lsbr -lnbi -L/usr/lib64 -lX11 $(QLKNN_LIB) $(TGLF_LIB) $(TORB_LIB) $(RABBIT_LIB) $(SPIDER_LIB) -lfor -lfnc -lfeqis $(JSON_LIB) -L$(LIB_DIR) $(MKL_LIB) -lrt
+LIB = -lnbi -lsbr -lnbi -L/usr/lib64 -lX11 $(QLKNN_LIB) $(TGLF_LIB) $(TORB_LIB) $(RABBIT_LIB) $(SPIDER_LIB) -lastra -lfnc -lfeqis -lmisc $(JSON_LIB) -L$(LIB_DIR) $(MKL_LIB) -lrt
 
 AENV = $(AWD)/exe/astra_rc
 
 FC_FLAGS = $(CHECKALLCOMP) -qopenmp -traceback -o   
 
-FOR_SRC = \
-$(FOR_DIR)/astra_main.f90 \
+ASTRA_SRC = \
+$(ASTRA_DIR)/astra_main.f90 \
 $(WORKFLOW)
 
 TMP_SRC = \
@@ -73,14 +74,15 @@ clean:
 
 .PHONY: modules
 modules:
-	make -f $(AWD)/exe/Makefor modules
+	make -f $(AWD)/exe/Makemisc modules
+	make -f $(AWD)/exe/Makeastra modules
 	make -f $(AWD)/exe/Makefeqis modules
 
 # Linking, create ASTRA executable
 
-$(ATASK): $(LIBFOR) $(LIBNBI) $(LIBFEQIS) $(SPIDER_LIB) $(LIBSBR) $(LIBFNC) $(AENV) $(EQU) $(FOR_SRC) $(PYFILES) $(FMLS)
+$(ATASK): $(LIBASTRA) $(LIBMISC) $(LIBNBI) $(LIBFEQIS) $(SPIDER_LIB) $(LIBSBR) $(LIBFNC) $(AENV) $(EQU) $(ASTRA_SRC) $(PYFILES) $(FMLS)
 	$(PY_TMP_GEN)
-	$(FC) $(FC_FLAGS) $(ATASK) $(FOR_SRC) $(TMP_SRC) -I$(MOD_DIR)/for -I$(MOD_DIR)/sbr -I$(NBI_INC) $(LIB)
+	$(FC) $(FC_FLAGS) $(ATASK) $(ASTRA_SRC) $(TMP_SRC) -I$(MOD_DIR)/astra -I$(MOD_DIR)/misc -I$(MOD_DIR)/sbr -I$(MOD_DIR)/feqis -I$(NBI_INC) $(LIB)
 
 # User defined sbr and fnc
 
@@ -92,8 +94,11 @@ $(LIBFNC): $(AWD)/fnc/*.f90
 
 # Libs
 
-$(LIBFOR): $(AWD)/src/for/*
-	make -f $(AWD)/exe/Makefor lib
+$(LIBMISC): $(AWD)/src/misc/*
+	make -f $(AWD)/exe/Makemisc lib
+
+$(LIBASTRA): $(AWD)/src/astra/*
+	make -f $(AWD)/exe/Makeastra lib
 
 $(LIBNBI): $(AWD)/src/nbi/*
 	cd $(AWD)/src; make -f $(AWD)/exe/Makenbi

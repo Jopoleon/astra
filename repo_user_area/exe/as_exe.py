@@ -60,6 +60,7 @@ if __name__ == '__main__':
     parser.add_argument('-batch', action='store_true', help='Run batch job'  , required=False)
     parser.add_argument('-tpause', '--tpause', type=float, help='Pause @time', required=False)
     parser.add_argument('-debug', action='store_true', help='Debug', required=False)
+    parser.add_argument('-re', '--restart', type=int, help='Restart', required=False, default=0)
     parser.add_argument('-fs', action='store_true', help='Flight simulator', required=False)
     parser.add_argument('-W', '--waitslurm', action='store_true', help='Hold on SLURM job', required=False, default=False)
 
@@ -82,15 +83,16 @@ if __name__ == '__main__':
         dev_name = 'aug'
 
     alog  = '&astra_log\n\n'
-    alog += 'exp_file  = "%s"\n'    %args.exp
-    alog += 'equ_file  = "%s"\n'    %args.equ
-    alog += 'tbeg_nml  = %8.4f\n'   %args.tbeg
-    alog += 'tend_nml  = %8.4f\n'   %args.tend
-    alog += 'TASK      = "%s"\n'    %rtype
-    alog += 'machine   = "%s"\n'    %dev_name
-    alog += 'debug     = %d\n'      %int(args.debug)
-    alog += 'flightsim = %d\n'      %int(args.fs)
-    alog += 'resize    = %8.4f\n'   %resize
+    alog += 'exp_file  = "%s"\n'   %args.exp
+    alog += 'equ_file  = "%s"\n'   %args.equ
+    alog += 'tbeg_nml  = %8.4f\n'  %args.tbeg
+    alog += 'tend_nml  = %8.4f\n'  %args.tend
+    alog += 'TASK      = "%s"\n'   %rtype
+    alog += 'machine   = "%s"\n'   %dev_name
+    alog += 'debug     = %d\n'     %int(args.debug)
+    alog += 'flightsim = %d\n'     %int(args.fs)
+    alog += 'resize    = %8.4f\n'  %resize
+    alog += 'restart   = %d\n'     %args.restart
     if args.tpause is not None:
         alog += 'tpause_nml = %8.4f\n' %args.tpause
     alog += '\n/\n'

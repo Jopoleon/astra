@@ -159,5 +159,4 @@ contains
 
     end subroutine split_string
 
-
 end module char_manip

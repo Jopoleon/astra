@@ -1,4 +1,4 @@
-module feqis_circuit
+module circuit
 
 use fbe_core, only: nr, nr1, nr2, nz, nz1, nz2, nbnd, nlimiter, &
     nconduc, n_of_xpoints, nrho2d, &
@@ -10,7 +10,7 @@ use fbe_core, only: nr, nr1, nr2, nz, nz1, nz2, nbnd, nlimiter, &
     compound_psi, psi_external_calc
 use pbe_core, only: raxp, zaxp, rbndp, zbndp, rpol, zpol, nteta, nrho, &
     rho, jrhoteta, teta, pprime, ffprime, psigrida, psirhoteta
-use global_params, only: iplasma
+use scalars, only: iplasma
 
 implicit none
 
@@ -155,7 +155,7 @@ contains
     end subroutine psi_mutual_effect_conductors_simple
 
 !---------------------------------------------------------------------
-    subroutine get_zccurb_feqis(rc_cur, zc_cur, z2c_cur, rgeoc, zgeoc, ahorc)
+    subroutine get_zccurb(rc_cur, zc_cur, z2c_cur, rgeoc, zgeoc, ahorc)
 
     use metric_coefficients_pbe, only: R_curr_0D, Z_curr_0D, dator
 
@@ -194,10 +194,182 @@ contains
     ahorc = 2.*sqrt(ahorc2)
 
     return
-    end subroutine get_zccurb_feqis
+    end subroutine get_zccurb
 
 !---------------------------------------------------------------------
-    subroutine get_zccurfbe_feqis(rc_cur, zc_cur)
+subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
+
+    use pi_vars, only: GPI2
+    use fbe_core, only: nr, nr2, nz, iaxis, jaxis, &
+        raus, rinner, zbot, ztop, &
+        Rrect, Zrect, dr, dz, rax, zax,  &
+        psiaxis, psibnd, psirz
+    use pbe_core, only: teta
+    use feqis_tools, only: pol_angle, interp2d_psi
+
+    integer, intent(IN) :: ntetaz
+    double precision, intent(OUT), dimension(ntetaz) :: rbnd, zbnd
+
+    integer :: i, j, k, j4, nteta
+    double precision :: x1, x2, t1, t2, t3, z1, z2, z3, x11, dx, dteta
+    double precision, dimension(500) :: teta_fbe
+
+    nteta = ntetaz
+    rbnd = 0.
+    zbnd = 0.
+
+    do i=1, nteta + 1
+        teta(i) = GPI2*(i - 1.)/(nteta + 0.)
+    enddo
+    dteta = teta(2) - teta(1)
+
+    dx = sqrt(dr**2 + dz**2)
+
+! Find boundary
+    j = jaxis
+    do i=iaxis, nr2
+        if (psirz(i, j) >= psibnd) k = i
+        if (psirz(i, j) <= psibnd) EXIT
+    enddo
+
+    if (psirz(k, j) == psibnd) then
+        rbnd(1) = Rrect(k)
+    else
+        rbnd(1) = Rrect(k) - (psirz(k, j) - psibnd)/(psirz(k, j) - psirz(k-1, j))*dr
+    endif
+    zbnd(1) = Zrect(j)
+    teta_fbe(1) = pol_angle(rax, zax, rbnd(1), zbnd(1))
+
+    theta_loop: do i=2, nteta
+        dx = sqrt(dr**2 + dz**2)
+        x1 = sqrt((rbnd(i-1) - rax)**2 + (zbnd(i-1) - zax)**2)
+        teta_fbe(i) = teta_fbe(i-1) + dteta
+
+        t1 = rax + x1*cos(teta_fbe(i))
+        t2 = zax + x1*sin(teta_fbe(i))
+
+        if (t1 >= raus) then
+            x1 = (raus - rax)/cos(teta_fbe(i))
+        endif
+        if (t1 <= rinner) then
+            x1 = (rinner - rax)/cos(teta_fbe(i))
+        endif
+        if (t2 >= ztop) then
+            x1 = (ztop - zax)/sin(teta_fbe(i))
+        endif
+        if (t2 <= zbot) then
+            x1 = (zbot - zax)/sin(teta_fbe(i))
+        endif
+        t1 = rax + x1*cos(teta_fbe(i))
+        t2 = zax + x1*sin(teta_fbe(i))
+        t3 = interp2d_psi(t1, t2, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+
+        if (t3 == psibnd) then
+            rbnd(i) = t1
+            zbnd(i) = t2
+        elseif (t3 < psibnd) then
+            do
+                z1 = rax + (x1 - dx)*cos(teta_fbe(i))
+                z2 = zax + (x1 - dx)*sin(teta_fbe(i))
+                z3 = interp2d_psi(z1, z2, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+                if (z3 < psibnd) then
+                    dx = 1.1*dx
+                else
+                    EXIT
+                endif
+            enddo
+            x11 = x1 - (t3 - psibnd)/(t3 - z3)*dx
+            rbnd(i) = rax + x11*cos(teta_fbe(i))
+            zbnd(i) = zax + x11*sin(teta_fbe(i))
+        else
+            do
+                j4 = 0
+                x2 = x1 + dx
+                z1 = rax + x2*cos(teta_fbe(i))
+                z2 = zax + x2*sin(teta_fbe(i))
+                if (z1 >= raus) then
+                    x2 = (raus - rax)/cos(teta_fbe(i))
+                    j4 = 1
+                endif
+                if (z1 <= rinner) then
+                    x2 = (rinner - rax)/cos(teta_fbe(i))
+                    j4 = 1
+                endif
+                if (z2 >= ztop) then
+                    x2 = (ztop - zax)/sin(teta_fbe(i))
+                    j4 = 1
+                endif
+                if (z2 <= zbot) then
+                    x2 = (zbot - zax)/sin(teta_fbe(i))
+                    j4 = 1
+                endif
+                z1 = rax + x2*cos(teta_fbe(i))
+                z2 = zax + x2*sin(teta_fbe(i))
+                z3 = interp2d_psi(z1, z2, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
+                if (z3 > psibnd) then
+                    if (j4 == 1) then
+                        rbnd(i) = z1
+                        zbnd(i) = z2
+                        CYCLE theta_loop
+                    endif
+                    dx = dx*1.1
+                else
+                    EXIT
+                endif
+            enddo
+            x11 = x1 + (t3 - psibnd)/(t3 - z3)*dx
+            rbnd(i) = rax + x11*cos(teta_fbe(i))
+            zbnd(i) = zax + x11*sin(teta_fbe(i))
+       endif
+
+    enddo theta_loop
+
+    return
+    end subroutine estimate_boundary_to_pbe
+
+!---------------------------------------------------------------------
+    subroutine coil_forces(ncoilz, force_R, force_Z, plasma_state)
+! this one is only between coils and coils
+
+    use fbe_core, only: jrz, nr2, nz2, dr, dz, curconduc
+    use green_matrix, only: dgreenirpl, dgreenizpl, dgreenirj, dgreenizj
+
+    integer, intent(in) :: ncoilz, plasma_state
+    double precision, intent(out), dimension(ncoilz) :: force_R, force_Z
+
+    integer :: i, j, k, nblock_a
+    double precision :: x1
+
+    force_R = 0.
+    force_Z = 0.
+    nblock_a = nblocks - npassive
+
+    if (plasma_state == 1) then !not sure about the plasma response...
+        do i=1, nblock_a
+            x1 =  sum(jrz(1:nr2, 1:nz2) * dr * dz * dgreeniRpl(1:nr2, 1:nz2, i))
+            force_R(i) = force_R(i) + curconduc(mequivalence(i)) * x1
+            x1 =  sum(jrz(1:nr2, 1:nz2) * dr * dz * dgreeniZpl(1:nr2, 1:nz2, i))
+            force_Z(i) = force_Z(i) + curconduc(mequivalence(i)) * x1
+        enddo
+    endif
+
+!block-to-block
+    do i=1, nblock_a
+        do j=1, nblock_a
+            if (i /= j) then
+                force_R(i) = force_R(i) + curconduc(mequivalence(j)) * curconduc(mequivalence(i)) * dgreeniRj(i, j)
+                force_Z(i) = force_Z(i) + curconduc(mequivalence(j)) * curconduc(mequivalence(i)) * dgreeniZj(i, j)
+            endif
+        enddo
+    enddo
+
+! force_R and force_Z are F_R and F_Z components in [N] for each block , does not include forces from the passive elements or on the passive elements.
+
+    return
+    end subroutine coil_forces
+
+!---------------------------------------------------------------------
+    subroutine get_zccurfbe(rc_cur, zc_cur)
 
     double precision, intent(out) :: rc_cur, zc_cur
 
@@ -217,10 +389,10 @@ contains
     rc_cur = rc_cur/curtotal
 
     return
-    end subroutine get_zccurfbe_feqis
+    end subroutine get_zccurfbe
 
 !---------------------------------------------------------------------
-    double precision function psib_ext_feqis
+    double precision function psib_ext
 ! Returns external flux on plasma boundary
 
     use feqis_tools, only: interp2d_psi
@@ -245,10 +417,10 @@ contains
     psiext_out = psiext_out + 0.5*(psiext1 + psiext2)*dlt
     dllt = dllt + dlt
 
-    psib_ext_feqis = psiext_out/dllt
+    psib_ext = psiext_out/dllt
 
     return
-    end function psib_ext_feqis
+    end function psib_ext
 
 !---------------------------------------------------------------------
     double precision function find_l_gap(psibnd, l_ref_in, gapmin, gapmax, geom)
@@ -303,7 +475,7 @@ contains
     end function find_l_gap
 
 !---------------------------------------------------------------------
-    function find_demo_gaps_feqis(ngaps, demo_gaps) result(geom1d)
+    function find_demo_gaps(ngaps, demo_gaps) result(geom1d)
 
     integer, intent(in) :: ngaps
     double precision, intent(in) :: demo_gaps(ngaps, 4)
@@ -336,7 +508,7 @@ contains
     enddo
 
     return
-    end function find_demo_gaps_feqis
+    end function find_demo_gaps
 
 !---------------------------------------------------------------------
     subroutine psi_external_calc_position(r_target, z_target, psi_target)
@@ -980,7 +1152,7 @@ contains
 
     use errors_params, only: err_find_psistab
     use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy, &
-        current_limit_feqis
+        current_limit
     use green_function, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
     use pi_vars, only: GPI, GPI2, GPI4, muvac, mu0
@@ -1179,8 +1351,8 @@ contains
 ! Apply limits
         do jt=1, n_evol
             do i=1, nactive
-                curdiff(i, jt) = min(curdiff(i, jt), current_limit_feqis(i, 1))
-                curdiff(i, jt) = max(curdiff(i, jt), current_limit_feqis(i, 2))
+                curdiff(i, jt) = min(curdiff(i, jt), current_limit(i, 1))
+                curdiff(i, jt) = max(curdiff(i, jt), current_limit(i, 2))
             enddo
         enddo
 
@@ -1248,7 +1420,7 @@ contains
 
 ! Finds active currents from scratch including evolution from time point j-1 to point j
 
-! to calculate forces using this mode, call: call coil_forces_feqis(ncoil_blocks, force_R, force_Z, 0)   !the 0 at the end means no plasma contribution. also eddy currents are ignored.
+! to calculate forces using this mode, call: call coil_forces(ncoil_blocks, force_R, force_Z, 0)   !the 0 at the end means no plasma contribution. also eddy currents are ignored.
 
 ! The cost function should be:
 
@@ -1262,9 +1434,9 @@ contains
 
     use errors_params, only: err_find_psistab
     use transport2fbe, only: sigma_coils, sigma_coils_ref, sigma_b, sigma_axis, sigma_energy, &
-        current_limit_feqis, sigma_xpoint, r_xpoint_fit, z_xpoint_fit, &
+        current_limit, sigma_xpoint, r_xpoint_fit, z_xpoint_fit, &
         n_xpoint_fit, vloop_avg, L_ext, &
-        dIp_dt, tau_gseq_feqis, time_astra, &
+        dIp_dt, tau_gseq, time_astra, &
         use_isoflux, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
         voltage_limits_active_coils, sigma_limits, cur_init, sigma_isoflux
     use green_function, only: greeni
@@ -1292,7 +1464,7 @@ contains
     data j_time/0/
     save j_time
 
-    deltapsiext = tau_gseq_feqis*(vloop_avg+L_ext*dIp_dt)   ! jump in psiext
+    deltapsiext = tau_gseq*(vloop_avg+L_ext*dIp_dt)   ! jump in psiext
 
     r_norm_ref = 0.5*(Rrect(1) + Rrect(nr2))
     psicorr   = 0.
@@ -1365,8 +1537,8 @@ contains
 
 ! Calculate additional current limits
     do i=1, nactive
-         currents_limits_adds(i, 1) = curref(i) + tau_gseq_feqis*(voltage_limits_active_coils(i, 1) - resconduc(i, i)*curref(i))/indconduc(i, i)
-         currents_limits_adds(i, 2) = curref(i) + tau_gseq_feqis*(voltage_limits_active_coils(i, 2) - resconduc(i,i)*curref(i))/indconduc(i, i)
+         currents_limits_adds(i, 1) = curref(i) + tau_gseq*(voltage_limits_active_coils(i, 1) - resconduc(i, i)*curref(i))/indconduc(i, i)
+         currents_limits_adds(i, 2) = curref(i) + tau_gseq*(voltage_limits_active_coils(i, 2) - resconduc(i,i)*curref(i))/indconduc(i, i)
     enddo
 
 ! calculate the matrix F_li of the F function, including the green function terms
@@ -1558,8 +1730,8 @@ contains
 
 ! cut new currents to limits due to current
         do i=1, nactive
-            curnow(i) = min(curnow(i), current_limit_feqis(i, 1))
-            curnow(i) = max(curnow(i), current_limit_feqis(i, 2))
+            curnow(i) = min(curnow(i), current_limit(i, 1))
+            curnow(i) = max(curnow(i), current_limit(i, 2))
         enddo
 ! cut new currents to limits due to voltage if jtime> 0
         if (j_time > 0) then 
@@ -1605,7 +1777,7 @@ contains
     if (file_exists) call execute_command_line('rm '//trim(file_time), wait=.true.)
 
 ! Evaluate forces
-    call coil_forces_feqis(nblocks - npassive, force_R, force_Z, 1)
+    call coil_forces(nblocks - npassive, force_R, force_Z, 1)
 
     call psi_mutual_effect_conductors(psiplasmatoconduc)
 
@@ -1613,11 +1785,11 @@ contains
 
     open(32, file = file_time)
     write(32, *) nactive, curconduc(1:nactive)*1e3, -GPI2*psibext, rax, zax, &
-        tau_gseq_feqis, vloop_avg, L_ext*dIp_dt, &
+        tau_gseq, vloop_avg, L_ext*dIp_dt, &
         nr2, nz2, psirz(1:nr2, 1:nz2), nblocks - npassive, force_R, force_Z, &
         psibnd, psiaxis, indconduc(1:nactive, 1:nactive), resconduc(1:nactive, 1:nactive), &
         nlimiter, limiterR(1:nlimiter), limiterZ(1:nlimiter), Rrect(1), Rrect(nr2), Zrect(1), Zrect(nz2), nteta_temp, &
-        rbref(1:nteta_temp), zbref(1:nteta_temp), time_astra, tau_gseq_feqis, GPI2*psiplasmatoconduc(1:nactive), &  !saved in kA
+        rbref(1:nteta_temp), zbref(1:nteta_temp), time_astra, tau_gseq, GPI2*psiplasmatoconduc(1:nactive), &  !saved in kA
         nteta, rbndtemp(1:nteta), zbndtemp(1:nteta), rbndp(1:nteta), zbndp(1:nteta)
     close(32)
 
@@ -1642,9 +1814,9 @@ contains
 
     use errors_params, only: err_find_psistab
     use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy, &
-        current_limit_feqis, sigma_xpoint, r_xpoint_fit, z_xpoint_fit, &
+        current_limit, sigma_xpoint, r_xpoint_fit, z_xpoint_fit, &
         n_xpoint_fit, vloop_avg, L_ext, &
-        dIp_dt, tau_gseq_feqis, time_astra, &
+        dIp_dt, tau_gseq, time_astra, &
         use_isoflux, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
         voltage_limits_active_coils, sigma_limits, cur_init
     use green_function, only: greeni
@@ -1935,7 +2107,7 @@ contains
     if (file_exists) call execute_command_line('rm '//trim(file_time), wait=.true.)
 
 ! Evaluate forces
-    call coil_forces_feqis(nblocks - npassive, force_R, force_Z, 1)
+    call coil_forces(nblocks - npassive, force_R, force_Z, 1)
 
     call psi_mutual_effect_conductors(psiplasmatoconduc)
 
@@ -1943,11 +2115,11 @@ contains
 
     open(32, file = file_time)
     write(32, *) nactive, curconduc(1:nactive)*1e3, -GPI2*psibext, rax, zax, &
-        tau_gseq_feqis, vloop_avg, L_ext*dIp_dt, &
+        tau_gseq, vloop_avg, L_ext*dIp_dt, &
         nr2, nz2, psirz(1:nr2, 1:nz2), nblocks - npassive, force_R, force_Z, &
         psibnd, psiaxis, indconduc(1:nactive, 1:nactive), resconduc(1:nactive, 1:nactive), &
         nlimiter, limiterR(1:nlimiter), limiterZ(1:nlimiter), Rrect(1), Rrect(nr2), Zrect(1), Zrect(nz2), nteta_temp, &
-        rbref(1:nteta_temp), zbref(1:nteta_temp), time_astra, tau_gseq_feqis, GPI2*psiplasmatoconduc(1:nactive), &  !saved in kA
+        rbref(1:nteta_temp), zbref(1:nteta_temp), time_astra, tau_gseq, GPI2*psiplasmatoconduc(1:nactive), &  !saved in kA
         nteta, rbndtemp(1:nteta), zbndtemp(1:nteta)
     close(32)
 
@@ -1965,7 +2137,7 @@ contains
     end subroutine restab_1_timepoint_limits_xpoints_boundariz
   
 !--------------------------------------------------------------------
-    subroutine diagnose_feqis(filename)  !call it in sbr/assign_geom.f90 in astra for example, it has access to this module.
+    subroutine diagnose(filename)  !call it in sbr/assign_geom.f90 in astra for example, it has access to this module.
 
     use metric_coefficients_pbe, only: dator
 
@@ -1992,7 +2164,7 @@ contains
     close(unit)
 
     return
-    end subroutine diagnose_feqis
+    end subroutine diagnose
   
 !--------------------------------------------------------------------
     subroutine restab_F_function_full_currents
@@ -2164,7 +2336,7 @@ contains
 
     use errors_params, only: err_find_psistab
     use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy, &
-      current_limit_feqis
+      current_limit
     use green_function, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
 
@@ -2287,8 +2459,8 @@ contains
         curdiff = curnow - curref
 ! cut new currents to limits
         do i=1, nactive
-            curdiff(i) = min(curdiff(i), current_limit_feqis(i, 1))
-            curdiff(i) = max(curdiff(i), current_limit_feqis(i, 2))
+            curdiff(i) = min(curdiff(i), current_limit(i, 1))
+            curdiff(i) = max(curdiff(i), current_limit(i, 2))
         enddo
 
 ! Construct correction
@@ -2739,7 +2911,7 @@ contains
     end subroutine restab_axis_with_fourier_wall
 
 !--------------------------------------------------------------------
-    subroutine estimate_tau_VDE_feqis(n_coil_de, n_coil_st, i_coil_de, i_coil_st, tau_LR, tau_VDE, F_stab, F_destab)
+    subroutine estimate_tau_VDE(n_coil_de, n_coil_st, i_coil_de, i_coil_st, tau_LR, tau_VDE, F_stab, F_destab)
 
     use green_function, only: greeni
     use pi_vars, only: GPI, GPI2, GPI4, muvac
@@ -2787,7 +2959,7 @@ contains
     tau_VDE = tau_LR * (f_ratio - 1.)
 
     return
-    end subroutine estimate_tau_VDE_feqis
+    end subroutine estimate_tau_VDE
 
 !-------------------------------------------------------------------
     subroutine ferro_mag_create
@@ -2883,5 +3055,4 @@ contains
     return
     end subroutine interp_j_fromrhotorz
 
-
-end module feqis_circuit
+end module circuit

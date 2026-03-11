@@ -1019,7 +1019,7 @@ contains
 !---------------------------------------------------------------------
     subroutine A2GSSOLVER(equil_solver)
 
-    use io_mod, only: CCOIL, VCOIL
+    use io_mod, only: CCOIL, VCOIL, machine
     use const_inc, only: NEQUIL, MEQUIL, IPART, IPCTRL, TAU, NA, NA1, NAB, &
         RTOR, BTOR, IPL, GP, GP2, HRO, ROC, ABC, &
         VOLUME, SHIFT, ELONG, UPDWN, TRIAN, &
@@ -1035,7 +1035,7 @@ contains
     use debugger, only: markloc
     use ext_bnd, only: use_ext_bnd
     use imas_ids, only: type_equilibrium
-    use parameters_a2equil, only: type_parameters
+    use spider_params, only: type_parameters
     use read_input, only: raw_boundary, raw_cCoil
     use gs_solver, only: gssolver
 
@@ -1145,7 +1145,7 @@ contains
         parameters_equil%key_start = 0    ! controller, refit currents
         parameters_equil%nstep = max(0, nint(ifbey) - 1)
         if (equil_solver == 101) then
-            call feqis_main(n_coils, vcoil(1:n_coils), parameters_equil, 0, equil_in, equil_out)
+            call feqis_main(n_coils, vcoil(1:n_coils), parameters_equil%neql, parameters_equil%k_fixfree, parameters_equil%no_circuit_eq, 0, machine, equil_in, equil_out)
         endif
     else
         call GSSOLVER( &

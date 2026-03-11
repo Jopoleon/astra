@@ -1,13 +1,49 @@
-module json_write
+module json_rw
 
-use json_module, only: json_core, json_value, json_ck
+use json_module, only: json_file, json_core, json_value, json_ck
 
 implicit none
 
-integer, parameter :: nunit=25, nunit_x=35
+integer, parameter :: nunit=25
 integer :: jid
 
 contains
+
+!---------------------------------------------------------------------
+    subroutine read_json(json_in, label, values)
+
+    character(len=240), intent(in) :: json_in
+    character(len=*), intent(in) :: label
+    double precision, intent(out), allocatable, dimension(:) :: values
+
+    logical :: status_ok, found
+    integer :: j, ios, nvars
+    double precision :: val
+    character(len=:), allocatable :: error_msg
+    type(json_file) :: fjson_in
+    type(json_value), pointer :: jsonOut, dictPointer
+    type(json_core) :: jCore    
+
+    call fjson_in%initialize()
+    call fjson_in%load(filename=trim(json_in))
+    if (fjson_in%failed()) then
+        print*, 'Error: '
+        call fjson_in%check_for_errors(status_ok, error_msg)    
+        write(*, *) 'Error: ', error_msg
+        return
+    endif
+    write(*, '(4A)') 'Reading ', TRIM(label), ' from file ', TRIM(json_in)
+    call fjson_in%info(TRIM(label), n_children=nvars)
+    allocate(values(nvars))
+    call fjson_in%get(TRIM(label), jsonOut, found)
+    do j=1, nvars
+        call jCore%get_child(jsonOut, j, dictPointer, found)
+        call jCore%get(dictPointer, "data", val)
+        values(j) = val
+    enddo
+
+    return
+    end subroutine read_json
 
 !---------------------------------------------------------------------
     subroutine write_jsonx
@@ -15,6 +51,7 @@ contains
     use io_mod, only: awd, exp_file
     use read_input, only: raw_scalars, raw_profiles, raw_boundary
 
+    integer, parameter :: nunit_x=35
     integer :: ios, i, ndim, len_profs_time
     character(len=180) :: jsonx_out
     type(json_core) :: jCore
@@ -208,15 +245,13 @@ contains
 !------
 ! ASTRA
 !------
-    
-    write(nunit, '(A/)') '"astra": {'
 
 ! Scalars
-    call write_scalar_block(varPtr, varValues)
-    call write_scalar_block(varxPtr, varxValues)
-    call write_scalar_block(constPtr, constValues)
-    call write_scalar_block(internPtr, internValues)
-    call write_scalar_block(intern2Ptr, intern2Values)
+    call write_scalar_block(varPtr, varValues, label="variables")
+    call write_scalar_block(varxPtr, varxValues, label="variables_x")
+    call write_scalar_block(constPtr, constValues, label="constants")
+    call write_scalar_block(internPtr, internValues, label="internal")
+    call write_scalar_block(intern2Ptr, intern2Values, label="intern2")
 
 !-----------
 ! Profiles
@@ -225,23 +260,25 @@ contains
 ! Exp profiles
     jid = 0    
 ! Get sub-dictionaries dimensions
-    do j=1, n_profx
+    write(nunit, '(A/)') '"profiles_x": {'
+    do j=1, n_profx-1
         call write_array((/NA1/), profiles_x(1:NA1, j), profxPtr)
     enddo
+    call write_array((/NA1/), profiles_x(1:NA1, n_profx), profxPtr, dict_end=.true.)
+    write(nunit, '(A/)') '},' ! End of "profiles_x" dictionary
 
 ! CAR profiles
     jid = 0    
+    write(nunit, '(A/)') '"profiles": {'
     do j=1, n_prof-1
         call write_array((/NA1/), profiles(1:NA1, j), profPtr)
     enddo
     call write_array((/NA1/), profiles(1:NA1, n_prof), profPtr, dict_end=.true.) ! no comma
-
-    write(nunit, '(A/)') '},' ! End of "astra" dictionary
+    write(nunit, '(A/)') '},' ! End of "profiles" dictionary
 
 !------------
 ! Equilibrium
 !------------
-
     write(nunit, '(A/)') '"equil": {'
 
 ! Scalars
@@ -255,6 +292,7 @@ contains
     equil_traces(7) = equil_now%global_param%toroid_field%r0
     equil_traces(8) = equil_now%global_param%Vloop
     call write_scalar_block(equil_sigPtr, equil_traces(1: 8))
+    write(nunit, '(A)') ','
 
 ! 1 d profiles
     jid = 0
@@ -308,7 +346,7 @@ contains
 ! Close json
 !-----------
 
-    write(nunit, '(A)') '}'
+    write(nunit, '(A)') '}' ! End of "equil" dictionary
     close(nunit)
 
     j_call = j_call + 1
@@ -319,28 +357,61 @@ contains
     end subroutine write_json
 
 !---------------------------------------------------------------
-    subroutine write_scalar_block(json_in, scalar_list)
+    subroutine write_scalar_block(json_in, scalar_list, label, indent)
 
     double precision, intent(in), dimension(*) :: scalar_list
+    character(len=*), intent(in), optional :: label
     type(json_value), intent(in), pointer :: json_in
+    integer, intent(in), optional :: indent
 
     logical :: found
-    integer :: nvars, j
+    integer :: nvars, j, n_indent
     character(KIND=JSON_CK, len=:), allocatable :: sunit, sdesc, sname
     type(json_value), pointer :: dictPointer
     type(json_core) :: jCore
+    character(len=40) :: space
 
-101 format('    "', A, '": {"units": "', A, '", "long_name": "', A, '", "data": ', es16.8e3, '},')
+101 format(A, '"', A, '": {"units": "', A, '", "long_name": "', A, '", "data": ', es16.8e3, '},')
+102 format(A, '"', A, '": {"units": "', A, '", "long_name": "', A, '", "data": ', es16.8e3, '}')
+201 format(   '"', A, '": {')
+202 format(A, '"', A, '": {')
 
+    space = ' '
+    if (present(indent)) then
+        n_indent = indent
+    else
+        n_indent = 0
+    endif
     call jCore%info(json_in, n_children=nvars)
+
+    if (present(label)) then
+        if (n_indent == 0) then
+            write(nunit, 201) TRIM(label)
+        else
+            write(nunit, 202) space(1:n_indent), TRIM(label)
+        endif
+    endif
+
     do j=1, nvars
         call jCore%get_child(json_in, j, dictPointer, found)
         call jCore%info(dictPointer, name=sname)
         call jCore%get(dictPointer, 'units', sunit, found)
         call jCore%get(dictPointer, 'desc' , sdesc, found)
-        write(nunit, 101) sname, sunit, sdesc, scalar_list(j)
+        if (j == nvars) then
+            write(nunit, 102) space(1:n_indent+4), sname, sunit, sdesc, scalar_list(j)
+        else
+            write(nunit, 101) space(1:n_indent+4), sname, sunit, sdesc, scalar_list(j)
+        endif
     enddo
-    
+ 
+    if (present(label)) then
+        if (n_indent == 0) then
+            write(nunit, '(A)') '},'
+        else
+            write(nunit, '(A, A)') space(1: n_indent), '},'
+        endif
+    endif
+
     return
     end subroutine write_scalar_block
 
@@ -439,4 +510,4 @@ contains
     return
     end subroutine write_array
 
-end module json_write
+end module json_rw

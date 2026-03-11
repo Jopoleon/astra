@@ -724,9 +724,10 @@ contains
         key_start, keyplc, equil_out)
 
     use imas_ids, only: type_equilibrium
-    use parameters_a2equil, only: type_parameters, fix_adapgrid, GP, GP2, s_fazt
+    use spider_params, only: type_parameters
+    use parameters_a2equil, only: fix_adapgrid, GP, GP2, s_fazt
     use const_inc, only : rtor,shift, updwn
-    use io_mod, only: nml_file
+    use io_mod, only: nml_file, machine
 
     integer, intent(in) :: equil_solver, nr_equ, n_theta, iter_step, ncoils, &
         ipsibcf, key_no_refits, icircq, ipctrl, iter_itreq, ifbey, inume_3
@@ -863,7 +864,7 @@ contains
     endif
 
     if (equil_solver == 101) then
-        call feqis_main(ncoils, ucoils, parameters_equil, 1, equil_in, equil_out)
+        call feqis_main(ncoils, ucoils, parameters_equil%neql, parameters_equil%k_fixfree, parameters_equil%no_circuit_eq, 1, machine, equil_in, equil_out)
     else
         call spider_run(ncoils, ucoils, equil_in, equil_out, parameters_equil)
     endif

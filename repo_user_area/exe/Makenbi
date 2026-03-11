@@ -4,7 +4,8 @@ endif
 
 SRC_DIR = $(AWD)/src/nbi
 OBJ_DIR = $(AWD)/obj/nbi
-MOD_FOR = $(AWD)/mod/for
+MOD_ASTRA = $(AWD)/mod/astra
+MOD_MISC = $(AWD)/mod/misc
 MOD_DIR = $(AWD)/mod/nbi
 LIB_DIR = $(AWD)/lib
 LIBNAM = libnbi.a
@@ -51,14 +52,14 @@ $(OBJ_DIR)/nbtrag.o \
 $(OBJ_DIR)/nbuser.o
 
 $(OBJ_DIR)/nbstatus_inc.o: $(SRC_DIR)/nbstatus_inc.f90
-	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -c $< -o $@
 	mv nbstatus_inc.mod $(MOD_DIR)/
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f
-	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -I$(MOD_DIR) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(MOD_DIR) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f90
-	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -I$(MOD_DIR) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(MOD_DIR) -c $< -o $@
 
 $(LIB): $(MODOBJS) $(OBJS)
 	ar rv $(LIB) $(MODOBJS) $(OBJS) >/dev/null

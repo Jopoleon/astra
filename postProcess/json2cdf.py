@@ -55,31 +55,42 @@ def json_concat(expequ):
         logger.debug(f_json)
         with open(f_json, 'r') as fjson:
             json_d = json.load(fjson)
-            astra_d = json_d['astra']
-            equil_d = json_d['equil']
+            const_d   = json_d['constants']
+            var_d     = json_d['variables']
+            varx_d    = json_d['variables_x']
+            intern_d  = json_d['internal']
+            intern2_d = json_d['intern2']
+            prof_d    = json_d['profiles']
+            profx_d   = json_d['profiles_x']
+            equil_d   = json_d['equil']
 
-        for key, val in astra_d.items():
-            dat = val['data']
-            if 'dims' in val.keys():
-                if np.prod(val['dims']) == 0:
-                    continue
-            if key not in ('XRHO', ):
+        for dic in const_d, var_d, varx_d, intern_d, intern2_d:
+            for key, val in dic.items():
+                dat = val['data']
                 if j_json == 1:
-                    if type(dat) == type([]): # list
-                        if len(dat) > 0:
-                            ds_astra[key] = [dat]
-                        else: # array, all zeros
-                            ds_astra[key] = [np.zeros(val['dims'])]
-                    else: # scalar
-                        ds_astra[key] = [dat]
+                    ds_astra[key] = {}
+                    ds_astra[key]['units'] = val['units']
+                    ds_astra[key]['long_name'] = val['long_name']
+                    ds_astra[key]['data'] = [dat]
                 else:
-                    if type(dat) == type([]): # list
-                        if len(dat) > 0:
-                            ds_astra[key].append(dat)
-                        else: # all zeros
-                            ds_astra[key].append(np.zeros(val['dims']))
-                    else: # scalar
-                        ds_astra[key].append(dat)
+                    ds_astra[key]['data'].append(dat)
+
+        for dic in prof_d, profx_d:
+            for key, val in dic.items():
+                dat = val['data']
+                if j_json == 1:
+                    ds_astra[key] = {}
+                    ds_astra[key]['units'] = val['units']
+                    ds_astra[key]['long_name'] = val['long_name']
+                    if len(dat) > 0:
+                        ds_astra[key]['data'] = [dat]
+                    else: # array, all zeros
+                        ds_astra[key]['data'] = [np.zeros(val['dims'])]
+                else: # 
+                    if len(dat) > 0:
+                        ds_astra[key]['data'].append(dat)
+                    else: # all zeros
+                        ds_astra[key]['data'].append(np.zeros(val['dims']))
 
         for key, val in equil_d.items():
             dat = val['data']
@@ -108,7 +119,7 @@ def json_concat(expequ):
         j_json += 1
 
     nt = j_json - 1
-    nx   = astra_d['XRHO']['dims'][0]
+    nx   = prof_d['XRHO']['dims'][0]
     n_eq = equil_d['rho_tor_norm']['dims'][0]
     n_th = equil_d['teta2d']['dims'][0]
     nR   = equil_d['r2d']['dims'][0]
@@ -116,12 +127,12 @@ def json_concat(expequ):
     logger.debug('nt=%d, nrho=%d, nr_eq=%d, nthe_eq=%d' %(nt, nx, n_eq, n_th))
 
     for key, val in ds_astra.items():
-        ds_astra[key] = np.array(val, dtype=dtyp)
-        darr = ds_astra[key]
+        val['data'] = np.array(val['data'], dtype=dtyp)
+        darr = val['data']
         if darr.shape == (nt, ):
-            astra_d[key]['dimensions'] = ['TIME']
+            val['dimensions'] = ['TIME']
         elif darr.shape == (nt, nx):
-            astra_d[key]['dimensions'] = ['TIME', 'XRHO']
+            val['dimensions'] = ['TIME', 'XRHO']
 
     for key, val in ds_equil.items():
         ds_equil[key] = np.array(val, dtype=dtyp)
@@ -145,12 +156,12 @@ def json_concat(expequ):
     f.createDimension('Z', nZ)
 
     rho = f.createVariable('XRHO', dtyp, ('XRHO', ))
-    rho.data  = np.array(astra_d['XRHO']['data'], dtype=dtyp)
-    rho.units = astra_d['XRHO']['units']
-    rho.long_name = astra_d['XRHO']['long_name']
+    rho.data  = np.array(prof_d['XRHO']['data'], dtype=dtyp)
+    rho.units = prof_d['XRHO']['units']
+    rho.long_name = prof_d['XRHO']['long_name']
 
     time = f.createVariable('TIME', dtyp, ('TIME', ))
-    time.data = ds_astra['TIME'].astype(dtyp)
+    time.data = ds_astra['TIME']['data'].astype(dtyp)
     time.units = 's'
     time.long_name = 'Time'
 
@@ -176,10 +187,10 @@ def json_concat(expequ):
 
     for key, val in ds_astra.items():
         if key != 'TIME':
-            tmp = f.createVariable(key, dtyp, astra_d[key]['dimensions'])
-            tmp[:] = val
-            tmp.units = astra_d[key]['units']
-            tmp.long_name = astra_d[key]['long_name']
+            tmp = f.createVariable(key, dtyp, ds_astra[key]['dimensions'])
+            tmp[:] = val['data']
+            tmp.units = ds_astra[key]['units']
+            tmp.long_name = ds_astra[key]['long_name']
 
     for key, val in ds_equil.items():
         if key != 'TIME':

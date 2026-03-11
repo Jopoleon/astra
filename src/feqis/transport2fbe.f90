@@ -1,15 +1,10 @@
 module transport2fbe  !these are coupling variables with the equilibrium solver and astra
 
-use const_inc, only: TAU, TSTART, RTOR, UPDWN, SHIFT, NA1, PSIAX, PSIBO
-use io_mod, only: MACHINE
-use read_input, only: raw_cCoil
-use debugger, only: debug
-
 implicit none
 
 integer, parameter :: ncoil_dim=300
 
-integer :: use_limiter_astra  ! 1-uses limiter, 0-ignore limiter
+integer :: use_limiter        ! 1-uses limiter, 0-ignore limiter
 integer :: refit_mode         ! if -1 - 1 pass only , 0 - self-consistent solution, if 1 - stab axis using passive wall currents fourier modes cos and sin, if 2 - same as 1 but uses boundary points using 5 fourier modes, 3-uses full currents fit using analytic F function and fit file efonfit.dat
 integer :: solve_fix          ! if 0 - solve full fix boundary problem, if 1 - 1 iteration only , 2 - only contouring
 integer :: execute_plasma     ! if 0 - only circuit equations, if 1 - solve plasma gseq too 
@@ -30,19 +25,19 @@ integer :: use_isoflux, n_isoflux         ! 0 does nothing, 1 when mode 818 is u
 integer, parameter :: n_x_point=20    ! number of x points to be saved
 integer :: n_coils
 
-double precision :: tau_circuit_feqis, tau_gseq_feqis, time_astra
-double precision :: dr_factor_init_astra, dz_factor_init_astra ! factors of dr and dz for initial iterations
+double precision :: tau_circuit, tau_gseq, time_astra
+double precision :: dr_factor_init, dz_factor_init ! factors of dr and dz for initial iterations
 double precision :: raxis_astra, zaxis_astra, psi0_astra, psib_astra, sigma_B, sigma_axis, & 
    sigma_xpoint, r_xpoint_fit(n_x_point), z_xpoint_fit(n_x_point), sigma_energy, sigma_forces, sigma_limits   ! sigma_B multiplies the boundary, sigma_axis the axis, sigma_energy the block (sum sigma_coil coil_cur**2 induc), sigma_forces multiplies the force block: sum_ij force_ij I_i I_j. sigma_xpoint can be up to 5 x points to fit.
 integer :: n_xpoint_fit
 integer :: fix_shape_after_fbe_off
 
-double precision :: vloop_avg, L_ext, dIp_dt   ! use tau_gseq_feqis here for refit mode 818
+double precision :: vloop_avg, L_ext, dIp_dt   ! use tau_gseq here for refit mode 818
  
 double precision :: x_point_save(n_x_point, 2) ! R, Z of xpoints, max n_x_point x points
-double precision, dimension(ncoil_dim) :: activate_coil_feqis, cur_init, sigma_coils, sigma_coils_ref ! initial currents from astra exp, not from coil.dat, in MA/turn
+double precision, dimension(ncoil_dim) :: activate_coil, cur_init, sigma_coils, sigma_coils_ref ! initial currents from astra exp, not from coil.dat, in MA/turn
 double precision, dimension(ncoil_dim) :: new_resistance ! whichever is > 0, it is used as new resistance.
-double precision, dimension(ncoil_dim, 2) :: current_limit_feqis ! 1 is upper, 2 is lower
+double precision, dimension(ncoil_dim, 2) :: current_limit ! 1 is upper, 2 is lower
 double precision, dimension(ncoil_dim, ncoil_dim) :: force_coil ! where it is 1, forces coil i,i to current of i,j
 character(len=80) :: machine_description ! name of device, in astra it's called MACHINE
 
@@ -53,9 +48,14 @@ double precision, dimension(:,:), allocatable :: voltage_limits_active_coils
 
 contains
 
-    subroutine transport2fbe_init
+    subroutine transport2fbe_init(tau_in, tstart_in, R_in, updown_in, shift_in, psi0_in, psib_in, machine_name, ncoils, coil_currents)
 
-    use_limiter_astra = 1
+    integer, intent(in) :: ncoils
+    double precision, intent(in) :: tau_in, tstart_in, R_in, updown_in, shift_in, psi0_in, psib_in
+    double precision, intent(in), dimension(ncoils) :: coil_currents
+    character(len=4), intent(in) :: machine_name
+
+    use_limiter = 1
     refit_mode = 0
     solve_fix = 0
     execute_plasma = 1
@@ -75,16 +75,16 @@ contains
     use_isoflux = 0
     n_isoflux = 0
 
-    tau_circuit_feqis = TAU
-    tau_gseq_feqis = TAU
-    time_astra = TSTART
+    tau_circuit = tau_in
+    tau_gseq = tau_in
+    time_astra = tstart_in
 
-    dr_factor_init_astra = 1.
-    dz_factor_init_astra = 1.
-    raxis_astra = RTOR + SHIFT
-    zaxis_astra = UPDWN
-    psi0_astra = PSIAX
-    psib_astra = PSIBO
+    dr_factor_init = 1.
+    dz_factor_init = 1.
+    raxis_astra = R_in + shift_in
+    zaxis_astra = updown_in
+    psi0_astra = psi0_in
+    psib_astra = psib_in
     sigma_B = 1.
     sigma_axis = 1.
     sigma_xpoint = 1.
@@ -99,19 +99,19 @@ contains
     dIp_dt = 0.
     x_point_save = 0.
 
-    activate_coil_feqis = 1
+    activate_coil = 1
     fix_shape_after_fbe_off = 1
 
     cur_init = 0.
-    n_coils = raw_cCoil%ncoils
-    cur_init(1: n_coils) = raw_cCoil%current(1: n_coils)/1.e3
+    n_coils = ncoils
+    cur_init(1: n_coils) = coil_currents/1.e3
     sigma_coils = 1.
     sigma_coils_ref = 1.
     new_resistance = 0.
-    current_limit_feqis(:, 1) =  1.e6
-    current_limit_feqis(:, 2) = -1.e6
+    current_limit(:, 1) =  1.e6
+    current_limit(:, 2) = -1.e6
     force_coil = 0
-    machine_description = trim(MACHINE(1:4))
+    machine_description = trim(machine_name(1:4))
 
     return
     end subroutine transport2fbe_init

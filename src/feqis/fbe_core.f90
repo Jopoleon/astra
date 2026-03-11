@@ -27,7 +27,7 @@ integer, parameter :: max_xpoints=500
 integer :: i_plasmatype !(0-limited, 1-single null, 2-double null)
 integer :: iaxis, jaxis, n_of_xpoints, active_x_point
 double precision :: psibnd, psiaxis, rax, zax, &
-    alpsep, psistabR, psistabZ, dr_factor_init, dz_factor_init
+    alpsep, psistabR, psistabZ
 double precision, dimension(max_xpoints) :: r_xpoint, z_xpoint, psi_xpoint
 double precision, dimension(:, :), allocatable :: green_bnd_f
 
@@ -54,8 +54,7 @@ contains
     function solve_gs2d(greenBnd_in) result(green_out)
 
     use pi_vars, only: mu0
-    use fft_mod_eff, only: costable
-    use feqis_tools, only: discrete_sine_transform, solve_tridiag_fbe
+    use feqis_tools, only: discrete_sine_transform, solve_tridiag_fbe, costable
 
     double precision, intent(in), dimension(2*nr+2*nz) :: greenBnd_in
     double precision, dimension(nr2, nz2) :: green_out
@@ -455,6 +454,7 @@ contains
     use pi_vars, only: GPI
     use errors_params, only: err_find_oxpoints_derivs
     use feqis_tools, only: closest_index, pol_angle, interp2d_psi
+    use transport2fbe, only: use_limiter
 
     logical :: from_scratch
     integer :: niter, i, j, k, i1, i4, i5, i9, n_adding
@@ -662,7 +662,7 @@ contains
     subroutine new_jrz ! calculate new right hand side given new boundary!
 
     use feqis_tools, only: fill_in_current, floor_index
-    use global_params, only: iplasma
+    use scalars, only: iplasma
 
     integer :: i, j, i1, i2, j1, quadrant, ipluz, jpluz, &
         ilast, totpoints, istart, j_griddo_j
@@ -875,6 +875,7 @@ contains
 
     use feqis_tools, only: closest_index
     use errors_params, only: err_find_psistab
+    use transport2fbe, only: dr_factor_init, dz_factor_init
 
     double precision, intent(in):: raxp, zaxp
     integer, intent(in):: n_of_newton_iterations

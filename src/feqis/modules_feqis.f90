@@ -39,7 +39,8 @@ module scalars
 
 implicit none
 
-double precision :: psplex, li3, li_aug, betapol, betapol_iter, wkin, bpkin
+double precision :: psplex, li3, li_aug, betapol, betapol_iter, &
+    wkin, bpkin, iplasma, btor0, rgeom0
 
 end module scalars
 
