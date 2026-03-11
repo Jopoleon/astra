@@ -46,11 +46,11 @@ def json2eqdsk(f_json, nR=129, nZ=257, cocos_out=7):
     geq = {}
     geq['CASE2'] = 'ASTRA'
     
-    ip_sgn = json_d['astra']['SGNIP']['data']
-    bt_sgn = json_d['astra']['SGNBT']['data']
+    ip_sgn = json_d['internal']['SGNIP']['data']
+    bt_sgn = json_d['internal']['SGNBT']['data']
     dpsi_sign = coco_dpsi_sign[cocos_out-1]
-    geq['CURRENT'] = 1e6*json_d['astra']['IPL']['data']
-    geq['BCENTR'] = json_d['astra']['BTOR']['data']
+    geq['CURRENT'] = 1e6*json_d['variables']['IPL']['data']
+    geq['BCENTR'] = json_d['variables']['BTOR']['data']
     
 # Contours
     rsurf = np.array(json_d['equil']['r']['data'], dtype=np.float32)
@@ -71,7 +71,7 @@ def json2eqdsk(f_json, nR=129, nZ=257, cocos_out=7):
 
     geq['RDIM'] = Rmax - Rmin
     geq['ZDIM'] = Zmax - Zmin
-    geq['RCENTR'] = json_d['astra']['RTOR']['data']
+    geq['RCENTR'] = json_d['variables']['RTOR']['data']
     geq['RLEFT'] = Rmin
     geq['ZMID'] = 0.5*(Zmax + Zmin)
     geq['NW'] = nR
