@@ -10,206 +10,98 @@ integer :: jid
 contains
 
 !---------------------------------------------------------------------
-    subroutine read_json(json_in, label, values)
+    subroutine json_load(json_in, fjson_out)
 
-    character(len=240), intent(in) :: json_in
-    character(len=*), intent(in) :: label
-    double precision, intent(out), allocatable, dimension(:) :: values
+    character(len=*), intent(in) :: json_in
+    type(json_file), intent(out) :: fjson_out
 
-    logical :: status_ok, found
-    integer :: j, ios, nvars
-    double precision :: val
+    logical :: status_ok
     character(len=:), allocatable :: error_msg
-    type(json_file) :: fjson_in
-    type(json_value), pointer :: jsonOut, dictPointer
-    type(json_core) :: jCore    
 
-    call fjson_in%initialize()
-    call fjson_in%load(filename=trim(json_in))
-    if (fjson_in%failed()) then
+    call fjson_out%initialize()
+    call fjson_out%load(filename=trim(json_in))
+
+    if (fjson_out%failed()) then
         print*, 'Error: '
-        call fjson_in%check_for_errors(status_ok, error_msg)    
+        call fjson_out%check_for_errors(status_ok, error_msg)    
         write(*, *) 'Error: ', error_msg
         return
     endif
-    write(*, '(4A)') 'Reading ', TRIM(label), ' from file ', TRIM(json_in)
+
+    end subroutine json_load
+
+!---------------------------------------------------------------------
+    subroutine read_scalar_block(fjson_in, label, values)
+
+    type(json_file), intent(inout) :: fjson_in
+    character(len=*), intent(in) :: label
+    double precision, intent(out), allocatable, dimension(:) :: values
+
+    logical :: found
+    integer :: j, nvars
+    double precision :: val
+    type(json_value), pointer :: jsonOut, dictPointer
+    type(json_core) :: jCore    
+
+    write(*, '(2A)') 'Reading ', TRIM(label)
+
     call fjson_in%info(TRIM(label), n_children=nvars)
     allocate(values(nvars))
+
     call fjson_in%get(TRIM(label), jsonOut, found)
     do j=1, nvars
         call jCore%get_child(jsonOut, j, dictPointer, found)
-        call jCore%get(dictPointer, "data", val)
+        call jCore%get(dictPointer, val)
         values(j) = val
     enddo
 
     return
-    end subroutine read_json
+    end subroutine read_scalar_block
 
 !---------------------------------------------------------------------
-    subroutine write_jsonx
+    subroutine read_array_block(fjson_in, label, profs)
 
-    use io_mod, only: awd, exp_file
-    use read_input, only: raw_scalars, raw_profiles, raw_boundary
+    type(json_file), intent(inout) :: fjson_in
+    character(len=*), intent(in) :: label
+    double precision, intent(out), allocatable :: profs(:, :)
 
-    integer, parameter :: nunit_x=35
-    integer :: ios, i, ndim, len_profs_time
-    character(len=180) :: jsonx_out
+    logical :: found
+    integer :: j, k, nvars, npts
+    double precision :: val
+    character(len=:), allocatable :: error_msg
+
+    type(json_value), pointer :: jsonOut
+    type(json_value), pointer :: arrPointer
+    type(json_value), pointer :: valPointer
     type(json_core) :: jCore
 
-    write(jsonx_out, '(4A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), '_x.json'
+    write(*, '(2A)') 'Reading ', trim(label)
 
-    open(nunit_x, file=TRIM(jsonx_out), iostat=ios)
+! get "profiles"
+    call fjson_in%get(trim(label), jsonOut, found)
 
-    write(nunit_x, '(A/)') '{'
+! number of arrays (arr1, arr2, ...)
+    call jCore%info(jsonOut, n_children=nvars)
 
-! Scalars
+! get first array to get length
+    call jCore%get_child(jsonOut, 1, arrPointer, found)
+    call jCore%info(arrPointer, n_children=npts)
 
-    write(nunit_x, '(A/)') '   "scalars": {'
+    print*, 'DIMS', npts, nvars
+    allocate(profs(npts, nvars))
 
-    write(nunit_x, '(A)') '        "timeStream": {"unit": "s", "data": ['
-    call prettyFloatArray(nunit_x, raw_scalars%nt_all, raw_scalars%time)
-
-    write(nunit_x, '(A)') '        "dataStream": {"data": ['
-    call prettyFloatArray(nunit_x, raw_scalars%nt_all, raw_scalars%data)
-
-    write(nunit_x, '(A/)', advance='no') '        "labels": {"data": ['
-    call prettyCharArray(nunit_x, raw_scalars%nt_all, raw_scalars%label, dict_end=.true.)
-
-    write(nunit_x, '(A/)') '    },'
-
-! Profiles
-
-    write(nunit_x, '(A, i0, A/)') '   "profiles": { "n_group": ', raw_profiles%n_groups, ','
-
-    len_profs_time = SIZE(raw_profiles%nrho)
-
-    write(nunit_x, '(A)') '        "label": {"data": ['
-    call prettyCharArray(nunit_x, len_profs_time, raw_profiles%label)
-
-    write(nunit_x, '(A)') '        "arr_index": {"data": ['
-    call prettyIntArray(nunit_x, len_profs_time, raw_profiles%arr_index)
-
-    write(nunit_x, '(A)') '        "jbeg_grid": {"data": ['
-    call prettyIntArray(nunit_x, len_profs_time, raw_profiles%jbeg_grid)
-
-    write(nunit_x, '(A)') '        "jbeg_data": {"data": ['
-    call prettyIntArray(nunit_x, len_profs_time, raw_profiles%jbeg_data)
-
-    write(nunit_x, '(A)') '        "grid_type": {"data": ['
-    call prettyIntArray(nunit_x, len_profs_time, raw_profiles%grid_type)
-
-    write(nunit_x, '(A)') '        "nrho": {"data": ['
-    call prettyIntArray(nunit_x, len_profs_time, raw_profiles%nrho)
-
-    write(nunit_x, '(A)') '        "time": {"data": ['
-    call prettyFloatArray(nunit_x, len_profs_time, raw_profiles%time)
-
-    write(nunit_x, '(A)') '        "filter": {"data": ['
-    call prettyFloatArray(nunit_x, len_profs_time, raw_profiles%filter)
-
-    write(nunit_x, '(A)') '        "data": {"data": ['
-    call prettyFloatArray(nunit_x, SIZE(raw_profiles%data), raw_profiles%data, dict_end=.true.)
-
-    write(nunit_x, '(A/)') '    },'
-
-! Boundary
-
-    write(nunit_x, '(A, i3, A, i3, A/)') '   "boundary": { "nt": ', raw_boundary%nt, &
-         ' "n_theta": ', raw_boundary%n_theta, ','
-
-    write(nunit_x, '(A)') '        "time": {"unit": "s", "data": ['
-    call prettyFloatArray(nunit_x, raw_boundary%nt, raw_boundary%time)
-
-    ndim = raw_boundary%nt * raw_boundary%n_theta
-
-    write(nunit_x, '(A)') '        "R": {"unit": "m", "data": ['
-    call prettyFloatArray(nunit_x, ndim, raw_boundary%R)
-
-    write(nunit_x, '(A)') '        "Z": {"unit": "m", "data": ['
-    call prettyFloatArray(nunit_x, ndim, raw_boundary%Z, dict_end=.true.)
-
-    write(nunit_x, '(A/)') '    }'
-
-! Closing
-
-    write(nunit_x, '(A)') '}'
-    close(nunit_x)
-
-    write(*, '(A)') '   Written file ' // TRIM(jsonx_out)
-
-11  format(5('"', A, '",'))
-
-    return
-    end subroutine write_jsonx
-
-!---------------------------------------------------------------------
-    subroutine prettyFloatArray(n_u, ndim, arr, dict_end)
-
-    integer, intent(in) :: n_u, ndim
-    double precision, intent(in) :: arr(*)
-    logical, intent(in), optional :: dict_end
-
-    integer :: i
-
-    do i=1, ndim-1
-        write(n_u, '(es16.8e3, A)', advance='no') arr(i), ','
-        if (MODULO(i, 6) == 0) write(n_u, '(A)') ''
+! read values
+    do j=1, nvars
+        call jCore%get_child(jsonOut, j, arrPointer, found)
+        do k=1, npts
+            call jCore%get_child(arrPointer, k, valPointer, found)
+            call jCore%get(valPointer, val)
+            profs(k, j) = val
+        enddo
     enddo
-    write(n_u, '(es16.8e3, A)') arr(ndim), ']'
-    if (present(dict_end)) then
-        write(n_u, '(A/)') '        }'
-    else
-        write(n_u, '(A/)') '        },'
-    endif
- 
+
     return
-    end subroutine prettyFloatArray
-
-!---------------------------------------------------------------------
-    subroutine prettyCharArray(n_u, ndim, arr, dict_end)
-
-    integer, intent(in) :: n_u, ndim
-    character(len=*), intent(in) :: arr(*)
-    logical, intent(in), optional :: dict_end
-
-    integer :: i
-
-    do i=1, ndim-1
-        write(n_u, '(3A)', advance='no') '"', arr(i), '",'
-        if (MODULO(i, 10) == 0) write(n_u, '(A)') ''
-    enddo
-    write(n_u, '(3A)') '"', arr(ndim), '"]'
-    if (present(dict_end)) then
-        write(n_u, '(A/)') '        }'
-    else
-        write(n_u, '(A/)') '        },'
-    endif
- 
-    return
-    end subroutine prettyCharArray
-
-!---------------------------------------------------------------------
-    subroutine prettyIntArray(n_u, ndim, arr, dict_end)
-
-    integer, intent(in) :: n_u, ndim
-    integer, intent(in) :: arr(*)
-    logical, intent(in), optional :: dict_end
-
-    integer :: i
-
-    do i=1, ndim-1
-        write(n_u, '(i0, A)', advance='no') arr(i), ', '
-        if (MODULO(i, 6) == 0) write(n_u, '(A)') ''
-    enddo
-    write(n_u, '(i0, A)') arr(ndim), ']'
-    if (present(dict_end)) then
-        write(n_u, '(A/)') '        }'
-    else
-        write(n_u, '(A/)') '        },'
-    endif
- 
-    return
-    end subroutine prettyIntArray
+    end subroutine read_array_block
 
 !---------------------------------------------------------------------
     subroutine write_json
@@ -279,7 +171,6 @@ contains
 !------------
 ! Equilibrium
 !------------
-    write(nunit, '(A/)') '"equil": {'
 
 ! Scalars
 
@@ -291,12 +182,12 @@ contains
     equil_traces(6) = equil_now%global_param%psiaxis
     equil_traces(7) = equil_now%global_param%toroid_field%r0
     equil_traces(8) = equil_now%global_param%Vloop
-    call write_scalar_block(equil_sigPtr, equil_traces(1: 8))
-    write(nunit, '(A)') ','
+    call write_scalar_block(equil_sigPtr, equil_traces(1: 8), label='equil_signals')
 
 ! 1 d profiles
     jid = 0
     if (debug > 0) write(*, *) 'Writing equilibrium entries to json file'
+    write(nunit, '(A/)') '"equil_profiles": {'
     call write_array((/nrho_surf/), equil_now%profiles_1d%areat  , equil_profPtr)
     call write_array((/nrho_surf/), equil_now%profiles_1d%bdb0   , equil_profPtr)
     call write_array((/nrho_surf/), equil_now%profiles_1d%bmaxt  , equil_profPtr)
@@ -324,23 +215,27 @@ contains
     call write_array((/nrho_surf/), equil_now%profiles_1d%rho_tor_norm, equil_profPtr)
     call write_array((/nrho_surf/), equil_now%profiles_1d%shif   , equil_profPtr)
     call write_array((/nrho_surf/), equil_now%profiles_1d%surface, equil_profPtr)
-    call write_array((/nrho_surf/), equil_now%profiles_1d%volume , equil_profPtr)
+    call write_array((/nrho_surf/), equil_now%profiles_1d%volume , equil_profPtr, dict_end=.true.)
+    write(nunit, '(A/)') '},' ! End of "equil_profiles" dictionary
 
     if (debug > 0) write(*, *) 'Writing mag.surf quantities'
     jid = 0
+    write(nunit, '(A/)') '"equil_coord": {'
     call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%r, equil_coordPtr)
     call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%rmin, equil_coordPtr)
     call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%psirz, equil_coordPtr)
     call write_array((/nthe_surf/), equil_now%coord_sys%position%teta2d, equil_coordPtr)
-    call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%z, equil_coordPtr)
+    call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%z, equil_coordPtr, dict_end=.true.)
+    write(nunit, '(A/)') '},' ! End of "equil_coord" dictionary
 
     jid = 0
     if (debug > 0) write(*, *) 'Writing equil cartesian quantities'
+    write(nunit, '(A/)') '"equil_rect": {'
     call write_array((/nR, nZ/), equil_now%eqgeometry%rectgrid%psirz2d, equil_rectPtr)
     call write_array((/nR, nZ/), equil_now%eqgeometry%rectgrid%fdia2d , equil_rectPtr)
     call write_array((/nR/), equil_now%eqgeometry%rectgrid%r2d, equil_rectPtr)
     call write_array((/nZ/), equil_now%eqgeometry%rectgrid%z2d, equil_rectPtr, dict_end=.true.) ! No comma
-    write(nunit, '(A)') '}' ! End of "equil" dictionary
+    write(nunit, '(A)') '}' ! End of "equil_rect" dictionary
 
 !-----------
 ! Close json
@@ -366,13 +261,13 @@ contains
 
     logical :: found
     integer :: nvars, j, n_indent
-    character(KIND=JSON_CK, len=:), allocatable :: sunit, sdesc, sname
+    character(KIND=JSON_CK, len=:), allocatable :: sname
     type(json_value), pointer :: dictPointer
     type(json_core) :: jCore
     character(len=40) :: space
 
-101 format(A, '"', A, '": {"units": "', A, '", "long_name": "', A, '", "data": ', es16.8e3, '},')
-102 format(A, '"', A, '": {"units": "', A, '", "long_name": "', A, '", "data": ', es16.8e3, '}')
+101 format(A, '"', A, '": ', es16.8e3, ',')
+102 format(A, '"', A, '": ', es16.8e3, '')
 201 format(   '"', A, '": {')
 202 format(A, '"', A, '": {')
 
@@ -395,12 +290,10 @@ contains
     do j=1, nvars
         call jCore%get_child(json_in, j, dictPointer, found)
         call jCore%info(dictPointer, name=sname)
-        call jCore%get(dictPointer, 'units', sunit, found)
-        call jCore%get(dictPointer, 'desc' , sdesc, found)
         if (j == nvars) then
-            write(nunit, 102) space(1:n_indent+4), sname, sunit, sdesc, scalar_list(j)
+            write(nunit, 102) space(1:n_indent+4), sname, scalar_list(j)
         else
-            write(nunit, 101) space(1:n_indent+4), sname, sunit, sdesc, scalar_list(j)
+            write(nunit, 101) space(1:n_indent+4), sname, scalar_list(j)
         endif
     enddo
  
@@ -415,25 +308,29 @@ contains
     return
     end subroutine write_scalar_block
 
-!---------------------------------------------------------------
-    subroutine ndim_string(dims, ndim, sdim)
+!---------------------------------------------------------------------
+    subroutine prettyFloat(n_u, arr_in, fmt, n_columns)
 
-    integer, intent(in), dimension(:) :: dims
-    integer, intent(out) :: ndim  
-    character(len=120), intent(out) :: sdim
+    integer, intent(in) :: n_u, n_columns
+    character(len=*), intent(in) :: fmt
+    double precision, intent(in), dimension(:) :: arr_in
 
-    if (SIZE(dims) == 1) then
-        write(sdim, '(A,i0,A)') '[', dims(1), ']'
-        ndim = dims(1)
-    else if (SIZE(dims) == 2) then
-        write(sdim, '(A,i0,A,i0,A)') '[', dims(1), ', ', dims(2), ']'
-        ndim = dims(1)*dims(2)
-    endif
-     
+    integer :: ndim, i
+    character(len=120) :: fmt1, fmt2
+
+    ndim = SIZE(arr_in)
+    fmt1 = '(' // TRIM(fmt) // ')'
+    fmt2 = '(' // TRIM(fmt) // ', ", ")'
+    do i=1, ndim-1
+        write(n_u, TRIM(fmt2), advance='no') arr_in(i)
+        if (MODULO(i, n_columns) == 0) write(nunit, *)
+    enddo
+    write(n_u, TRIM(fmt1), advance='no') arr_in(ndim)
+
     return
-    end subroutine ndim_string
+    end subroutine prettyFloat
 
-!---------------------------------------------------------------
+!---------------------------------------------------------------------
     subroutine write_array(dims, arr_in, json_in, dict_end)
 
     integer, intent(in), dimension(:) :: dims
@@ -442,28 +339,25 @@ contains
     logical, intent(in), optional :: dict_end
 
     logical :: found
-    integer :: i, j, ndim, ij
+    integer :: i, j, ij, n_columns, n_remain
     double precision :: abs_val
     double precision, dimension(:), allocatable :: array
     double precision, dimension(:, :), allocatable :: array2
-    character(KIND=JSON_CK, len=:), allocatable :: sunit, sdesc, sname
-    character(len=120) :: sdim
+    character(KIND=JSON_CK, len=:), allocatable :: sname
+    character(len=120) :: fmt
     type(json_value), pointer :: dictPointer
     type(json_core) :: jCore
 
-102 format('    "', A, '": {"dims": ', A, ', "units": "', A, '", "long_name": "', A, '", "data": [')
+102 format('    "', A, '": [')
 
-    call ndim_string(dims, ndim, sdim)
     jid = jid + 1
     call jCore%get_child(json_in, jid, dictPointer, found)
-    call jCore%get(dictPointer, 'units', sunit, found)
-    call jCore%get(dictPointer, 'desc', sdesc, found)
     call jCore%info(dictPointer, name=sname)
-    write(nunit, 102, advance="no") sname, TRIM(sdim), sunit, sdesc
+    write(nunit, 102, advance="no") sname
 
     if (SIZE(dims) == 1) then
-        allocate(array(ndim))
-        do i=1, ndim
+        allocate(array(dims(1)))
+        do i=1, dims(1)
             abs_val = ABS(arr_in(i))
             if (abs_val < 1e-20 .or. abs_val > 1e20) then
                 array(i) = 0.
@@ -471,12 +365,16 @@ contains
                 array(i) = arr_in(i)
             endif
         enddo
+        write(nunit, *)
         if (MAXVAL(ABS(array)) > 0.) then
-            write(nunit, *)
-            write(nunit, '(5(es16.8e3, ","))') (array(i), i=1, ndim-1)
-            write(nunit, '(es16.8e3)', advance='no') array(ndim) ! No comma after last array entry
+            n_columns = 6
+            fmt = 'es16.8e3'
+        else
+            n_columns = 12
+            fmt = 'f3.1'
         endif
- 
+        call prettyFloat(nunit, array, fmt, n_columns)
+
     else if (SIZE(dims) == 2) then
         allocate(array2(dims(1), dims(2)))
         do i=1, dims(1)
@@ -491,21 +389,28 @@ contains
             enddo
         enddo
         if (MAXVAL(ABS(array2)) > 0.) then
-            do i=1, dims(1)
-                write(nunit, '(A)') '['
-                write(nunit, '(5(es16.8e3, ","))') (array2(i, j), j=1, dims(2)-1)
-                write(nunit, '(es16.8e3)', advance='no') array2(i, dims(2)) ! No comma after last array entry
-                if (i == dims(1)) then
-                    write(nunit, '(A)') ']'
-                else
-                    write(nunit, '(A)') '],'
-                endif
-            enddo
+            n_columns = 6
+            fmt = 'es16.8e3'
+        else
+            n_columns = 12
+            fmt = 'f3.1'
         endif
+        do i=1, dims(1)
+            write(nunit, '(A)') '['
+            call prettyFloat(nunit, array2(i, :), fmt, n_columns)
+            if (i == dims(1)) then
+                write(nunit, '(A)') ']'
+            else
+                write(nunit, '(A)') '],'
+            endif
+        enddo
     endif
 
-    write(nunit, '(A)') ']}' ! No comma after last array entry
-    if (.not. present(dict_end)) write(nunit, '(A)') ','
+    if (present(dict_end)) then
+        write(nunit, '(A)') ']' ! No comma after last array entry
+    else
+        write(nunit, '(A)') '],'
+    endif
 
     return
     end subroutine write_array

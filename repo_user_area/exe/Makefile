@@ -82,7 +82,7 @@ modules:
 
 $(ATASK): $(LIBASTRA) $(LIBMISC) $(LIBNBI) $(LIBFEQIS) $(SPIDER_LIB) $(LIBSBR) $(LIBFNC) $(AENV) $(EQU) $(ASTRA_SRC) $(PYFILES) $(FMLS)
 	$(PY_TMP_GEN)
-	$(FC) $(FC_FLAGS) $(ATASK) $(ASTRA_SRC) $(TMP_SRC) -I$(MOD_DIR)/astra -I$(MOD_DIR)/misc -I$(MOD_DIR)/sbr -I$(MOD_DIR)/feqis -I$(NBI_INC) $(LIB)
+	$(FC) $(FC_FLAGS) $(ATASK) $(ASTRA_SRC) $(TMP_SRC) -I$(JSON_INC) -I$(MOD_DIR)/astra -I$(MOD_DIR)/misc -I$(MOD_DIR)/sbr -I$(MOD_DIR)/feqis -I$(NBI_INC) $(LIB)
 
 # User defined sbr and fnc
 
