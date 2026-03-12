@@ -3,5 +3,11 @@
 !   psi'/B0*(E_r/psi')' = | rho/B0*(E_r/rho)' + s*E_r/B0/rho |
 !      
 
-ROTSH = (ER(j+1)/(j+1) - ER(j)/j)/HRO**2
+if (j == 1) then
+    ROTSH = (ER(j+1)/(j+1) - ER(j)/j)/HRO**2
+else if (j == NA1) then
+    ROTSH = (ER(j)/j - ER(j-1)/(j-1))/HRO**2
+else
+    ROTSH = 0.5*(ER(j+1)/(j+1) - ER(j-1)/(j-1))/HRO**2
+endif
 ROTSH = abs(SHEAR(j)*ER(j)/(j*HRO) + j*HRO*ROTSH)/BTOR
