@@ -89,10 +89,10 @@ contains
 
     first_non_blank = 0
     do j=1, LEN_TRIM(str_in)
-        if (str_in(j: j) == null_ch .or. str_in(j: j) == esc_ch) return
+        if (str_in(j: j) == null_ch .or. str_in(j: j) == esc_ch) EXIT
         if (str_in(j: j) /= ' '    .and. str_in(j: j) /= tab_ch) then
             first_non_blank = j !9<->tab
-            return
+            EXIT
         endif
     enddo
     end function first_non_blank
@@ -106,7 +106,7 @@ contains
 
     len_trim_tab = 0
     do j=1, LEN_TRIM(str_in)
-        if (str_in(j: j) == null_ch .or. str_in(j: j) == esc_ch) return
+        if (str_in(j: j) == null_ch .or. str_in(j: j) == esc_ch) EXIT
         if (str_in(j: j) /= ' '    .and. str_in(j: j) /= tab_ch) len_trim_tab = j !9<->tab
     enddo
     end function len_trim_tab

@@ -21,7 +21,6 @@ contains
         if (FP_NORM(j) <= 0.95) N_95_POS = j
     enddo
 
-    return
     end function N_95_POS
 
 !---------------------------------------------------------------------
@@ -48,7 +47,6 @@ contains
 
     V_95_POS = (y1*(r2 - 0.95) + y2*(0.95 - r1))/(r2 -r1)
 
-    return
     end function V_95_POS
 
 !---------------------------------------------------------------------
@@ -63,7 +61,6 @@ contains
 
     RFA = QUADIN(NA1, AMETR, RHO, YA)
 
-    return
     end function RFA
 
 !---------------------------------------------------------------------
@@ -76,7 +73,6 @@ contains
 
     RFAN = RFA(YAN*ABC)
 
-    return
     end function RFAN
 
 !---------------------------------------------------------------------
@@ -89,7 +85,6 @@ contains
 
     XFA = RFA(YA)/ROC
 
-    return
     end function XFA
 
 !---------------------------------------------------------------------
@@ -102,7 +97,6 @@ contains
 
     XFAN = XFA(YAN*ABC)
 
-    return
     end function XFAN
 
 !---------------------------------------------------------------------
@@ -117,7 +111,6 @@ contains
 
     AFR = QUADIN(NA1, RHO, AMETR, YR)
 
-    return
     end function AFR
 
 !---------------------------------------------------------------------
@@ -130,7 +123,6 @@ contains
 
     AFX = AFR(YX*ROC)
 
-    return
     end function AFX
 
 !---------------------------------------------------------------------
@@ -143,7 +135,6 @@ contains
 
     FRMAX = MAXVAL(YA(1:NA1))
 
-    return
     end function FRMAX
 
 !---------------------------------------------------------------------
@@ -156,7 +147,6 @@ contains
 
     FRMIN = MINVAL(YA(1:NA1))
 
-    return
     end function FRMIN
 
 !---------------------------------------------------------------------
@@ -183,7 +173,6 @@ contains
     jmax = MAXLOC(YA(1:NA1), 1)
     RFMAX = RHO(jmax)
 
-    return
     end function RFMAX
 
 !---------------------------------------------------------------------
@@ -201,7 +190,6 @@ contains
     jmin = MINLOC(YA(1:NA1), 1)
     RFMIN = RHO(jmin)
 
-    return
     end function RFMIN
 
 !---------------------------------------------------------------------
@@ -239,7 +227,6 @@ contains
         YA1 = YA2
     enddo
 
-    return
     end function RFVAL
 
 !---------------------------------------------------------------------
@@ -275,7 +262,6 @@ contains
         YA1 = YA2
     enddo
 
-    return
     end function AFVAL
 
 !---------------------------------------------------------------------
@@ -290,7 +276,6 @@ contains
 
     RFVEX = RFVAL(YA, YVAL)
 
-    return
     end function RFVEX
 
 !---------------------------------------------------------------------
@@ -305,7 +290,6 @@ contains
 
     AFVEX = AFVAL(YA, YVAL)
 
-    return
     end function AFVEX
 
 !---------------------------------------------------------------------
@@ -341,7 +325,6 @@ contains
     enddo
     YA1 = YA2
 
-    return
     end function RFVIN
 
 !---------------------------------------------------------------------
@@ -378,7 +361,6 @@ contains
     enddo
     YA1 = YA2
 
-    return
     end function AFVIN
 
 !---------------------------------------------------------------------
@@ -410,7 +392,6 @@ contains
     YA = RZ2A(YR, YZ, NA1)
     RECR = QUADIN(NA1, AMETR, RHO, YA)
 
-    return
     end function RECR
 
 !---------------------------------------------------------------------
@@ -453,7 +434,6 @@ contains
         GAUSS = exp(-((RHO(j)/ROC - YX)/YW)**2)/YPOW
     endif
 
-    return
     end function GAUSS
 
 !---------------------------------------------------------------------
@@ -477,7 +457,6 @@ contains
         ASTEP = 1.
     endif
 
-    return
     end function ASTEP
 
 !---------------------------------------------------------------------
@@ -500,7 +479,6 @@ contains
         RSTEP = 1.
     endif
 
-    return
     end function RSTEP
 
 !---------------------------------------------------------------------
@@ -525,7 +503,6 @@ contains
         XSTEP = 1.
     endif
 
-    return
     end function XSTEP
 
 !---------------------------------------------------------------------
@@ -545,7 +522,6 @@ contains
         STEP = 1.
     endif
 
-    return
     end function STEP
 
 !---------------------------------------------------------------------
@@ -568,7 +544,6 @@ contains
         GRAD = (Y(NA1) - Y(NA))/HRO
     endif
 
-    return
     end function GRAD
 
 !---------------------------------------------------------------------
@@ -591,7 +566,6 @@ contains
         GRADS = (Y(NA1) - Y(NA))/(ROC - NA*HRO)
     endif
 
-    return
     end function GRADS
 
 !---------------------------------------------------------------------
@@ -620,7 +594,6 @@ contains
 
 ! Line average: divide by 2*ABC
 
-    return
     end function LININT
 
 !---------------------------------------------------------------------
@@ -647,7 +620,6 @@ contains
     enddo
     VINT = HRO*(VINT - ARR(JK)*YDR)
 
-    return
     end function VINT
 
 !---------------------------------------------------------------------
@@ -674,7 +646,6 @@ contains
     enddo
     VINTO = HRO*(VINTO - ARR(JK)*YDR)
 
-    return
     end function VINTO
 
 !---------------------------------------------------------------------
@@ -713,7 +684,6 @@ contains
     endif
     IINT = GP2*IPOL(JK)*(HRO*IINT + YDR*YA)
 
-    return
     end function IINT
 
 !---------------------------------------------------------------------
@@ -733,7 +703,6 @@ contains
     endif
     NODE = min(NA1, NODE)
 
-    return
     end function NODE
 
 !---------------------------------------------------------------------
@@ -752,7 +721,6 @@ contains
     call qinterp(RHO(1:NA1), ARR(1:NA1), NA1, rad_in, rad_out, 1)
     RADIAL = rad_out(1)
 
-    return
     end function RADIAL
 
 !---------------------------------------------------------------------
@@ -778,7 +746,6 @@ contains
         RADINT = (YDR*ARR(JK+1) + (HRO - YDR)*ARR(JK))/HRO
     endif
 
-    return
     end function RADINT
 
 !---------------------------------------------------------------------
@@ -789,7 +756,6 @@ contains
 
     ATR = RADIAL(ARR, YR)
 
-    return
     end function ATR
 
 !---------------------------------------------------------------------
@@ -803,7 +769,6 @@ contains
 
     ATX = RADIAL(ARR, YR*ROC)
 
-    return
     end function ATX
 
 !---------------------------------------------------------------------
@@ -817,7 +782,6 @@ contains
 
     CUT = max(-X, min(X, Y))
 
-    return
     end function CUT
 
 !---------------------------------------------------------------------
@@ -844,7 +808,6 @@ contains
         FRAMP = (TIME - T1)/(T2 - T1)
     endif
 
-    return
     end function FRAMP
 
 !---------------------------------------------------------------------
@@ -864,7 +827,6 @@ contains
         FJUMP = 1.
     endif
 
-    return
     end function FJUMP
 
 !---------------------------------------------------------------------
@@ -888,7 +850,6 @@ contains
         FTBOX = 1.
     endif
 
-    return
     end function FTBOX
 
 !---------------------------------------------------------------------
@@ -912,7 +873,6 @@ contains
         FXBOX = 1.
     endif
 
-    return
     end function FXBOX
 
 !---------------------------------------------------------------------
@@ -949,7 +909,6 @@ contains
     y_old(IY) = Y
     YT(IY) = TIME
 
-    return
     end function TIMDER
 
 !---------------------------------------------------------------------
@@ -986,7 +945,6 @@ contains
     endif
     YT(IY) = TIME
 
-    return
     end function TIMINT
 
 !---------------------------------------------------------------------
@@ -1038,7 +996,6 @@ contains
     endif
     YT(IY) = TIME
 
-    return
     end function TIMAVG
 
 !---------------------------------------------------------------------
@@ -1067,7 +1024,6 @@ contains
     if (TIME <= YTIME) y_old(IY) = Y
     FIXVAL = y_old(IY)
 
-    return
     end function FIXVAL
 
 !---------------------------------------------------------------------
@@ -1121,7 +1077,6 @@ contains
     endif
     y_old(IY) = FTAV! Save the previous value
 
-    return
     end function FTAV
 
 !---------------------------------------------------------------------
@@ -1173,7 +1128,6 @@ contains
     FTAV2 = YAV
     YTIME = TIME
 
-    return
     end function FTAV2
 
 !---------------------------------------------------------------------
@@ -1216,7 +1170,6 @@ contains
         y_old(IY) = Y
     endif
 
-    return
     end function FTMIN
 
 !---------------------------------------------------------------------
@@ -1258,7 +1211,6 @@ contains
         y_old(IY) = Y
     endif
 
-    return
     end function FTMAX
 
 !---------------------------------------------------------------------
@@ -1302,7 +1254,6 @@ contains
     enddo
     RZ2A = min(YA, AB)
 
-    return
     end function RZ2A
 
 !---------------------------------------------------------------------
@@ -1329,7 +1280,6 @@ contains
         YDR = (JK - YR/HRO - 0.5)*VR(JK) ! To be subtracted
     endif
 
-    return
     end subroutine jrho_drho
 
 end module standard_functions

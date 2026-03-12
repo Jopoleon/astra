@@ -496,7 +496,6 @@ DO I=2, NA1
    WD2SD3(I) = (FU3I - FU3J)/WSCI1(J) - WD2SD3(J)
 enddo
 
-return
 end subroutine EQAB3
 
 !----------------------------------------------------------------------|
@@ -557,8 +556,7 @@ do I = 1, NA1
    WSCI7(J) = C0*(AAJ*CI + 4.*CII*AAI)
 enddo
 
-RETURN
-END subroutine EQGB3
+end subroutine EQGB3
 
 !----------------------------------------------------------------------|
 subroutine EQK3(NA, NT)
@@ -804,8 +802,7 @@ do I=1, NA1
    WSU3(I) = S*(UX30 - 3.*UX12)
 enddo
 
-RETURN
-END subroutine EQLVU3
+end subroutine EQLVU3
 
 !----------------------------------------------------------------------|
 subroutine EQC1(NA, WBR0, WBR00, WBA, WBB, WSA, WSP, WSJP, WDBA, WDBB)

@@ -22,7 +22,6 @@ contains
         if (IFDFAX(j) > 0) IFDEFX = .true. ! True (X-array is defined)
     endif
 
-    return
     end function IFDEFX
 
 !--------------------------------------------------
@@ -66,8 +65,7 @@ contains
         endif
     endif
 
-    return
-    END SUBROUTINE assign_val
+    end subroutine assign_val
 
 !------------------------------------------------------------
     subroutine path_split(str_path_in, dir_path, fname, jpos)
@@ -98,7 +96,6 @@ contains
         fname = TRIM(str_path)
     endif
 
-    return
     end subroutine path_split
 
 !------------------------------------------------------------
@@ -138,7 +135,6 @@ contains
         strarray(nout) = TRIM(ADJUSTL( strtmp(m:) )) 
     endif
 
-    return
     end subroutine split2array
 
 !------------------------------------------------------------
@@ -190,7 +186,6 @@ contains
         strarray(nout) = TRIM(ADJUSTL( strtmp(m:) )) 
     endif
 
-    return
     end subroutine split2array2
 
 !------------------------------------------------------------
@@ -212,7 +207,6 @@ contains
         if ( .not. EXI ) fname = '***'
     endif
 
-    return
     end subroutine inquire_fname
 
 end module parse_utils

@@ -25,6 +25,7 @@ use plasma_state, only: plasma_up
 use auxiliary, only: IFTREQ
 use set_x_data, only: set_x_scalars, set_x_arrays, astra_assignments
 use metrics, only: eqguess, metric
+use gui_interaction, only: if_key
 
 implicit none
 
@@ -39,7 +40,6 @@ double precision, dimension(:), allocatable :: internVal
 double precision, dimension(:, :), allocatable :: profs, profs_x
 character(len=132) :: STRI, f_json
 type(json_file) :: fjson
-integer, external :: IFKEY
 
 !-------------------- Initial settings --------------------------------|
 
@@ -99,7 +99,7 @@ endif
 jt_req = 0
 do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set in IFTREQ (for/defarr.f90)
 
-    if (gui_on) jkey = IFKEY(256)
+    if (gui_on) jkey = if_key(256)
     call set_x_scalars   ! Set exp scalars
     call DETVAR
     call DEFARR

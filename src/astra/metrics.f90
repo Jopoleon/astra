@@ -169,7 +169,6 @@ contains
         enddo
     endif
 
-    return
     end subroutine METRIC
 
 !---------------------------------------------------------------------
@@ -257,7 +256,6 @@ contains
         FOFB(j)  = FOFB(NA1)
     enddo
 
-    return
     end subroutine extrap_fields_flat
 
 !---------------------------------------------------------------------
@@ -387,7 +385,6 @@ contains
 
     VOLUME = VOLUM(NA1)
 
-    return
     end subroutine EQGUESS
 
 !---------------------------------------------------------------------
@@ -567,7 +564,6 @@ contains
         VOLUME = VOLUM(NA1)
     endif
 
-    return
     end subroutine set_external_metric
 
 !---------------------------------------------------------------------
@@ -583,7 +579,6 @@ contains
         g22(1:na1), droda(1:na1), shiv(1:na1), squarn(1:na1)
     close(32)
 
-    return
     end subroutine extmetric_input
 
 !---------------------------------------------------------------------
@@ -686,7 +681,6 @@ contains
         VOLUME = VOLUM(NA1)
     endif
 
-    return
     end subroutine set_external_metric_2
 
 !---------------------------------------------------------------------
@@ -748,7 +742,6 @@ contains
         ROC3A = 2.*sqrt(Rmaj*a_min*elongation*Y1)
     endif
 
-    return
     end function ROC3A
 
 !---------------------------------------------------------------------
@@ -1013,7 +1006,6 @@ contains
         G45(J) = G11(J)/VRS(J)
     enddo
 
-    return
     end subroutine A2EMEQ
 
 !---------------------------------------------------------------------
@@ -1243,7 +1235,6 @@ contains
         VOLUME = VOLUM(NA1)
     endif
 
-    return
     end subroutine A2GSSOLVER
 
 !---------------------------------------------------------------------
@@ -1414,7 +1405,6 @@ contains
     RPB(j1) = YD1
     ZPB(j1) = YD2
 
-    return
     end subroutine BNDRY
 
 !---------------------------------------------------------------------
@@ -1478,7 +1468,6 @@ contains
         enddo
     endif
 
-    return
     end subroutine RHSEQ
 
 !---------------------------------------------------------------------
@@ -1544,12 +1533,10 @@ contains
         enddo
     endif
 
-    return
     end subroutine RHSEQ2
 
 !---------------------------------------------------------------------
     subroutine CUOFMU
-
 !---------------------------------------------------------------------
 ! Compute CU(rho) and FP(rho) from MU(rho)
 !---------------------------------------------------------------------
@@ -1595,12 +1582,10 @@ contains
         CU(j) = YCJ*CU(j)*G33(J)*IPOL(J)**3
     enddo
 
-    return
     end subroutine CUOFMU
 
 !---------------------------------------------------------------------
     subroutine CUOFP
-
 !---------------------------------------------------------------------
 ! Compute CU(rho) and MU(rho) from FP(rho)
 !---------------------------------------------------------------------
@@ -1643,12 +1628,10 @@ contains
         MU(J) = YAJ*MU(j)
     enddo
 
-    return
     end subroutine CUOFP
 
 !---------------------------------------------------------------------
     subroutine new_grid
-
 !---------------------------------------------------------------------
 ! Input:  XRHO, SXHO, HROX, ROC, NA1, AB, ABC, AMETR(NA1)
 ! Output: NB1, RHO, SRHO, HRO, AMETR(j>NA1)
@@ -1698,7 +1681,6 @@ contains
     NAB = min(NRD, NAB)
     AMETR(NAB) = AB
 
-    return
     end subroutine new_grid
 
 !---------------------------------------------------------------------
@@ -1737,7 +1719,6 @@ contains
         AMETR(j) = YA - YDA + (RHO(j) - YR1)*DRODA(j)
     enddo
 
-    return
     end subroutine SETGEO
 
 end module metrics

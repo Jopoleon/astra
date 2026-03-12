@@ -41,7 +41,6 @@ contains
         names_out(j) = sname
     enddo
 
-    return
     end subroutine get_subdict
   
 !---------------------------------------------------------------------
@@ -72,7 +71,6 @@ contains
     call get_subdict(astra_vars, 'equil_rect'    , n_equil_rect , equil_rectNames , equil_rectPtr)
     call get_subdict(astra_vars, 'equil_coord'   , n_equil_coord, equil_coordNames, equil_coordPtr)
 
-    return
     end subroutine read_metadata
 
 end module json_vars

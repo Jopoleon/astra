@@ -118,7 +118,6 @@ contains
     curinterp = (jj1(1)*d2*d3*d4 + jj1(2)*d1*d3*d4 + jj1(3)*d1*d2*d4 + jj1(4)*d1*d2*d3) / &
         (d1*d2*d3 + d1*d3*d4 + d2*d3*d4 + d1*d2*d4)
 
-    return
     end function curinterp
 
 !---------------------------------------------------------------------
@@ -134,7 +133,6 @@ contains
         psi_to_conductors(i) = sum(jrz(1: nr2, 1: nz2) * dr * dz * greeni(1: nr2, 1: nz2, i))
     enddo
 
-    return
     end subroutine psi_mutual_effect_conductors
 
 !---------------------------------------------------------------------
@@ -151,7 +149,6 @@ contains
         psi_to_conductors(k) = iplasma * greeni(i, j, k)
     enddo
 
-    return
     end subroutine psi_mutual_effect_conductors_simple
 
 !---------------------------------------------------------------------
@@ -193,7 +190,6 @@ contains
     ahorc2 = ahorc2/perimz
     ahorc = 2.*sqrt(ahorc2)
 
-    return
     end subroutine get_zccurb
 
 !---------------------------------------------------------------------
@@ -324,7 +320,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
 
     enddo theta_loop
 
-    return
     end subroutine estimate_boundary_to_pbe
 
 !---------------------------------------------------------------------
@@ -365,7 +360,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
 
 ! force_R and force_Z are F_R and F_Z components in [N] for each block , does not include forces from the passive elements or on the passive elements.
 
-    return
     end subroutine coil_forces
 
 !---------------------------------------------------------------------
@@ -388,7 +382,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
     zc_cur = zc_cur/curtotal
     rc_cur = rc_cur/curtotal
 
-    return
     end subroutine get_zccurfbe
 
 !---------------------------------------------------------------------
@@ -419,7 +412,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
 
     psib_ext = psiext_out/dllt
 
-    return
     end function psib_ext
 
 !---------------------------------------------------------------------
@@ -471,7 +463,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
         dur2 = dur2 + l_ref
     enddo
 
-    return
     end function find_l_gap
 
 !---------------------------------------------------------------------
@@ -507,7 +498,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
         endif
     enddo
 
-    return
     end function find_demo_gaps
 
 !---------------------------------------------------------------------
@@ -523,7 +513,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
     j = nint((z_target - Zrect(1))/dz) + 1   
     psi_target = sum(curconduc(1: nconduc)*greeni(i, j, 1: nconduc))
 
-    return
     end subroutine psi_external_calc_position
 
 !--------------------------------------------------------------------
@@ -683,7 +672,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
     call find_psi_boundary
     call new_jrz  ! calculate new right hand side
 
-    return
     end subroutine restab_F_function_full_fonfit
 
 !--------------------------------------------------------------------
@@ -774,7 +762,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
                 2.*sigma_B*sum((G_00(i, 1:nteta) - G_00c(i))*(G_00(j, 1:nteta) - G_00c(j))) +  &
                 2.*sigma_axis*(G_00r(i)*G_00r(j) + G_00z(i)*G_00z(j)) + &
                 2.*sigma_xpoint*sum(dummyx)
-       enddo
+        enddo
     enddo
 
 ! Calculate inverse
@@ -883,7 +871,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
     call find_psi_boundary
     call new_jrz  ! calculate new right hand side
 
-    return
     end subroutine restab_F_function_full_fonfit_xpoints
 
 !--------------------------------------------------------------------
@@ -1142,7 +1129,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
     close(32)
     pause
 
-    return
     end subroutine restab_2_timepoints_evolution
 
 !--------------------------------------------------------------------
@@ -1412,7 +1398,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
 
     pause
 
-    return
     end subroutine restab_2_timepoints_evolution_limits
 
 !--------------------------------------------------------------------
@@ -1804,7 +1789,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
     if (allocated(gridpoint_tipe)) deallocate(gridpoint_tipe)
     deallocate(rbndtemp, zbndtemp)
 
-    return
     end subroutine restab_j_timepoints_evolution_limits_xpoints_boundariz
   
 !--------------------------------------------------------------------
@@ -2133,7 +2117,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
     deallocate(rbndtemp, zbndtemp)
     write(*,*) 'stopping'
     stop
-    return
+
     end subroutine restab_1_timepoint_limits_xpoints_boundariz
   
 !--------------------------------------------------------------------
@@ -2163,7 +2147,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
         endif
     close(unit)
 
-    return
     end subroutine diagnose
   
 !--------------------------------------------------------------------
@@ -2327,7 +2310,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
     call find_psi_boundary
     call new_jrz  ! calculate new right hand side
 
-    return
     end subroutine restab_F_function_full_currents
 
 !--------------------------------------------------------------------
@@ -2496,7 +2478,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
     call find_psi_boundary
     call new_jrz  ! calculate new right hand side
 
-    return
     end subroutine restab_F_function_full_currents_limits
 
 !--------------------------------------------------------------------
@@ -2661,7 +2642,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
     call find_psi_boundary
     call new_jrz  ! calculate new right hand side
 
-    return
     end subroutine restab_F_function_full_currents_forces
 
 !--------------------------------------------------------------------
@@ -2775,7 +2755,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
     call new_jrz  ! calculate new right hand side
 
     stop
-    return
     end subroutine restab_boundary_with_fourier_wall
 
 !--------------------------------------------------------------------
@@ -2907,7 +2886,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
     call find_psi_boundary
     call new_jrz  ! calculate new right hand side
 
-    return
     end subroutine restab_axis_with_fourier_wall
 
 !--------------------------------------------------------------------
@@ -2958,7 +2936,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
     f_ratio = F_stab / F_destab     
     tau_VDE = tau_LR * (f_ratio - 1.)
 
-    return
     end subroutine estimate_tau_VDE
 
 !-------------------------------------------------------------------
@@ -3033,7 +3010,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
        enddo
     enddo
 
-    return
     end subroutine ferro_mag_create
 
 !---------------------------------------------------------------------
@@ -3052,7 +3028,6 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
         enddo
     enddo
 
-    return
     end subroutine interp_j_fromrhotorz
 
 end module circuit

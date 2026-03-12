@@ -159,7 +159,6 @@ contains
         Q_out(Ngridb) = bc_values(2)*y_out(Ngridb)
     END SELECT
 
-    return
     end subroutine RUNEQ
 
 !---------------------------------------------------------------------
@@ -198,7 +197,6 @@ contains
         enddo
      END SELECT
 
-    return
     end subroutine calc_fxi
 
 !---------------------------------------------------------------------
@@ -236,7 +234,6 @@ contains
         y_out(j) = (y_out(j+1) - beta(j))/alpha(j)
     enddo
 
-    return
     end subroutine TRIDIAG
 
 !---------------------------------------------------------------------
@@ -273,7 +270,6 @@ contains
     PET(J) = PET(J) - GETPEI*t2/TE(J)
     PIT(J) = PIT(J) + GETPEI*t2/TI(J)
 
-    return
     end function GETPEI
 
 !---------------------------------------------------------------------
@@ -383,7 +379,6 @@ contains
     Q1_out(Ngridb) = EXTRAP(x_in(1: Ngridb-1), Q1_out(1: Ngridb-1), x_in(Ngridb), Ngridb-1, 1, .false.)
     Q2_out(Ngridb) = EXTRAP(x_in(1: Ngridb-1), Q2_out(1: Ngridb-1), x_in(Ngridb), Ngridb-1, 1, .false.)
 
-    return
     end subroutine RUNEQ_TETI
 
 !---------------------------------------------------------------------
@@ -457,7 +452,6 @@ contains
     f1(Ngridb) = f_bound1
     f2(Ngridb) = f_bound2
 
-    return
     end subroutine TRIDIAG_TETI
 
 end module transport_solver

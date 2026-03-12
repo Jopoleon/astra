@@ -16,10 +16,11 @@ use auxiliary, only: IFTREQ, IFSTEP, OLDNEW
 use set_x_data, only: set_x_scalars, set_x_arrays, get_coil
 use metrics, only: metric
 use feqis_solvers, only: feqisupdate
+use gui_interaction, only: if_key
 
 implicit none
 
-integer :: IFKEY, IFSUB, ibcpsi_fb, bc_type_for_fp, jkey, n_coils
+integer :: IFSUB, ibcpsi_fb, bc_type_for_fp, jkey, n_coils
 double precision :: zipctrl, iplfbeo, Apsibcfac, Bpsibcfac, dfpdrbm12, &
     tau_old, tau_new
 double precision, dimension(raw_cCoil%ncoils) :: yccoil
@@ -182,7 +183,7 @@ time_step_accuracy: do
         endif
 
         if (TASK(1:3) /= 'BGD') then
-            jkey = IFKEY(0)                 ! Enables ITREQ iteration control 
+            jkey = if_key(0)                 ! Enables ITREQ iteration control 
         endif
         jkey = IFTREQ(ATREQ)            ! ++ITREQ; Tr-Eq loop converged?  
 
@@ -258,5 +259,4 @@ endif
 ! note that in postep if one wants to modify tau, like in tsctrl, better to do it in tauprp
 ! call TSCTRL at the end of all other subroutines
 
-return
 end subroutine STEPUP

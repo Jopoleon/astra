@@ -42,7 +42,6 @@ contains
         endif
     endif
 
-    return
     end subroutine reinterp_back
 
 !---------------------------------------------------------------------
@@ -117,7 +116,6 @@ contains
         y_out(Nx_out) = EXTRAP(x_out(1: Nx_out-1), y_out(1: Nx_out-1), x_out(Nx_out), Nx_out-1, 2, .false.)
     endif
 
-    return
     end subroutine reinterp_back_quad
 
 !---------------------------------------------------------------------
@@ -210,7 +208,6 @@ contains
     c(n) = 3.0*c(n)
     d(n) = d(n-1)
 
-    return
     end subroutine spline_numerict
 
 !---------------------------------------------------------------------
@@ -263,7 +260,6 @@ contains
     dx = u - x(i)
     f_out = y(i) + dx*(b(i) + dx*(c(i) + dx*d(i)))
 
-    return
     end function ispline_nt
 
 !---------------------------------------------------------------------
@@ -327,7 +323,6 @@ contains
     j = nagrid
     yd_out(j) = EXTRAP(x_in(1: j-1), yd_out(1: j-1), x_in(j), j-1, extrap_order, .false.)
 
-    return
     end subroutine DERIV_CDE
 
 !---------------------------------------------------------------------
@@ -373,7 +368,6 @@ contains
         enddo
     enddo
 
-    return
     end subroutine linterp
 
 !---------------------------------------------------------------------
@@ -430,7 +424,6 @@ contains
         endif 
     enddo
 
-    return
     end subroutine qinterp
 
 !---------------------------------------------------------------------
@@ -524,7 +517,6 @@ contains
         y_out(j) = P(j)*y_out(j+1) + y_out(j)
     enddo
 
-    return
     end subroutine SMOOTH
 
 !---------------------------------------------------------------------
@@ -577,7 +569,6 @@ contains
         QUADIN = YF1*YDX2*YDX3 + YF2*YDX1*YDX3 - YF3*YDX1*YDX2
     endif
 
-    return
     end function QUADIN
 
 !---------------------------------------------------------------------
@@ -597,7 +588,6 @@ contains
         sy(i) = sy(i-1) + y1tmp*drho
     enddo
 
-    return
     end subroutine integrcc
 
 !---------------------------------------------------------------------
@@ -621,7 +611,6 @@ contains
 
     dy(nx) = 2.*P(1)*x(nx) + P(2)
 
-    return
     end subroutine derivcc
 
 !---------------------------------------------------------------------
@@ -642,7 +631,6 @@ contains
     P(2) = y21/x21 - P(1)*h21
     P(3) = y(3) - P(1)*x(3)**2 - P(2)*x(3)
 
-    return
     end subroutine polyfitcc
 
 !---------------------------------------------------------------------
@@ -677,7 +665,6 @@ contains
         extrap = P(1) * x_extrap**2 + P(2)*x_extrap + P(3)
     END SELECT
 
-    return
     end function EXTRAP
 
 !---------------------------------------------------------------------
@@ -694,7 +681,6 @@ contains
     P(1) = y21/x21
     P(2) = y(1) - x(1)*y21/x21
 
-    return
     end subroutine polyfitcc_1
 
 !---------------------------------------------------------------------
@@ -774,7 +760,6 @@ contains
         endif
     endif
 
-    return
     end subroutine DERIV
 
 !---------------------------------------------------------------------
@@ -808,7 +793,6 @@ contains
         enddo
     endif
 
-    return
     end subroutine INTEGR
 
 !---------------------------------------------------------------------
@@ -831,7 +815,6 @@ contains
 
     f_out = f2 + (x_interp - x2)*(dfdx + d2fdx*(x_interp - x2))
 
-    return
     end function EXTRAPOLATE
 
 !---------------------------------------------------------------------
@@ -853,7 +836,6 @@ contains
     call polyfitcc(x_in(1: 3), y_in(1: 3), P)
     y_out(1) = 0.5*(P(3) + y_in(1))
 
-    return
     end subroutine SHIFT2MAIN
 
 !---------------------------------------------------------------------
@@ -869,7 +851,6 @@ contains
     call DERIV(x_in, x_in_shift(nagrid), 1, y_in, ytmp, 1, nagrid, 1)
     call SHIFT2MAIN(x_in_shift, ytmp, y_out, nagrid)
 
-    return
     end subroutine GRADIENT
 
 !---------------------------------------------------------------------
@@ -905,7 +886,6 @@ contains
         endif
     enddo
 
-    return
     end subroutine SORTAB
 
 end module numerical_tools

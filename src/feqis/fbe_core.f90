@@ -120,7 +120,6 @@ contains
     enddo
     green_out(2:nr1, 2:nz1) = 2./(nz + 1)*gt2(2:nr1, 2:nz1)
 
-    return
     end function solve_gs2d
 
 !---------------------------------------------------------------------
@@ -136,7 +135,6 @@ contains
         enddo
     enddo
 
-    return
     end subroutine psi_external_calc
 
 !---------------------------------------------------------------------
@@ -158,7 +156,6 @@ contains
         coeff(k) = sum(A_inv(k, :) * psi9)
     enddo
       
-    return
     end function getCoeffs
 
 !---------------------------------------------------------------------
@@ -177,7 +174,6 @@ contains
     r_out = Rrect(i_in) + dr_out
     z_out = Zrect(j_in) + dz_out
     
-    return
     end subroutine nine_point_regression
 
 !---------------------------------------------------------------------
@@ -211,7 +207,6 @@ contains
     r_out = r_in + dr_out
     z_out = z_in + dz_out
 
-    return
     end subroutine nine_point_regression_follow
 
 !---------------------------------------------------------------------
@@ -277,7 +272,6 @@ contains
 
     if (n_add == 0) ierr=1
 
-    return
     end subroutine find_closest_xpoints
 
 !-----------------------------------------------------------------------------------
@@ -294,7 +288,6 @@ contains
         green_bnd(j) = bgint(green_in, j)
     enddo
 
-    return
     end function boundary
 
 !-----------------------------------------------------------------------------------
@@ -329,7 +322,6 @@ contains
 
     bgint = sum(dgdn)/GPI
 
-    return
     end function bgint
 
 !---------------------------------------------------------------------
@@ -374,7 +366,6 @@ contains
         endif
     enddo
 
-    return
     end function xpoint_axis_connection
 
 !--------------------------------------------------------------------
@@ -410,7 +401,6 @@ contains
         stop
     endif
 
-    return
     end subroutine find_new_axis
 
 !-------------------------------------------------------------------
@@ -424,7 +414,6 @@ contains
 !        psirz = psirz + psiferro
 !    endif
 
-    return
     end subroutine compound_psi
   
 !--------------------------------------------------------------------
@@ -445,7 +434,6 @@ contains
         endif
     endif
 
-    return
     end subroutine add_xpoint
 
 !--------------------------------------------------------------------
@@ -655,7 +643,6 @@ contains
 ! Normalized flux
     psi_n(1:nr2, 1:nz2) = (psirz(1:nr2, 1:nz2) - psiaxis)/(psibnd - psiaxis)
 
-    return
     end subroutine find_psi_boundary
 
 !--------------------------------------------------------------------
@@ -816,7 +803,6 @@ contains
         stop
     endif
 
-    return
     end subroutine new_jrz
 
 !--------------------------------------------------------------------
@@ -830,7 +816,6 @@ contains
     greenBnd = boundary(green)      ! gbound = integral (Green*dg/dn) over the boundary
     psi_plas = solve_gs2d(greenBnd) ! again jrz as right hand side
 
-    return
     end function get_psiplasrz
 
 !--------------------------------------------------------------------
@@ -867,7 +852,6 @@ contains
     call find_psi_boundary
     call new_jrz
 
-    return
     end subroutine solve_fbe_instantaneous
 
 !--------------------------------------------------------------------
@@ -958,7 +942,6 @@ contains
         if (temp_err2 <= err_find_psistab) EXIT
     enddo
 
-    return
     end subroutine solve_fbe_static_iterations_curgiven
 
 end module fbe_core

@@ -121,7 +121,6 @@ allocate(DTEQ(4, n_sbr_max))
 
         self.associate_pointers += \
 '''
-return
 end subroutine associate_pointers
 '''
 
@@ -133,7 +132,6 @@ end subroutine associate_pointers
         self.postep += \
 '''call markloc("tmp/postep.inc")
 
-return
 end subroutine POSTEP'''
 
 #----------------------------
@@ -176,7 +174,6 @@ J = jdetv
         self.detvar += const_text.DETVAR.rad_tail
         self.detvar += \
 '''
-return
 end subroutine DETVAR'''
 
 #----------
@@ -273,7 +270,6 @@ end subroutine DETVAR'''
         self.inivar += inivar
         self.inivar += \
 '''
-return
 end subroutine INIVAR'''
 
 #-----------
@@ -310,7 +306,6 @@ end subroutine INIVAR'''
         self.ininam += inam
         self.ininam += \
 '''
-return
 end subroutine ininam'''
 
 #-----------
@@ -327,7 +322,6 @@ end subroutine ininam'''
         self.setvar += setv_sbr
         self.setvar += \
 '''
-return
 end subroutine setvar'''
 
 #--------------
@@ -351,7 +345,6 @@ end subroutine setvar'''
                 self.astra_out += 'TOUT(LTOUT, %d) = 0.d0\n' %(jsig+1)
         self.astra_out += \
 '''
-return
 end subroutine TIMOUT'''
 
 #--------------------------------
@@ -361,8 +354,8 @@ end subroutine TIMOUT'''
 
         self.init_converge_step  = const_text.INIT_CONVERGE_STEP.header
         self.init_converge_step += init_tmp
-        self.init_converge_step += const_text.INIT_CONVERGE_STEP.tail
+        self.init_converge_step += '\nend subroutine init_converge_step\n'
 
         self.eqns_inc  = const_text.EQNS_INC.header
         self.eqns_inc += eqns_tmp
-        self.eqns_inc += const_text.EQNS_INC.tail
+        self.eqns_inc += '\nend subroutine EQNS_INC\n'

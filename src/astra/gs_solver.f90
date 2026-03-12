@@ -708,7 +708,6 @@ contains
     g22e = GG2
     g33e = GG3/R0**2
 
-    return
     end subroutine gssolver
 
 !---------------------------------------------------------------------
@@ -872,7 +871,6 @@ contains
 
 !output from equil_out structure
 
-    return
     end subroutine A_equil
 
 end module GS_SOLVER

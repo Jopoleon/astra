@@ -20,12 +20,12 @@ contains
 
     call fjson_out%initialize()
     call fjson_out%load(filename=trim(json_in))
+    write(*, '(2A)') 'Opening json file ', TRIM(json_in)
 
     if (fjson_out%failed()) then
         print*, 'Error: '
         call fjson_out%check_for_errors(status_ok, error_msg)    
         write(*, *) 'Error: ', error_msg
-        return
     endif
 
     end subroutine json_load
@@ -40,22 +40,21 @@ contains
     logical :: found
     integer :: j, nvars
     double precision :: val
-    type(json_value), pointer :: jsonOut, dictPointer
+    type(json_value), pointer :: jsonBlock, dictPointer
     type(json_core) :: jCore    
 
-    write(*, '(2A)') 'Reading ', TRIM(label)
+    write(*, '(2A)') 'Reading json block ', TRIM(label)
 
     call fjson_in%info(TRIM(label), n_children=nvars)
     allocate(values(nvars))
 
-    call fjson_in%get(TRIM(label), jsonOut, found)
+    call fjson_in%get(TRIM(label), jsonBlock, found)
     do j=1, nvars
-        call jCore%get_child(jsonOut, j, dictPointer, found)
+        call jCore%get_child(jsonBlock, j, dictPointer, found)
         call jCore%get(dictPointer, val)
         values(j) = val
     enddo
 
-    return
     end subroutine read_scalar_block
 
 !---------------------------------------------------------------------
@@ -70,29 +69,28 @@ contains
     double precision :: val
     character(len=:), allocatable :: error_msg
 
-    type(json_value), pointer :: jsonOut
+    type(json_value), pointer :: jsonBlock
     type(json_value), pointer :: arrPointer
     type(json_value), pointer :: valPointer
     type(json_core) :: jCore
 
-    write(*, '(2A)') 'Reading ', trim(label)
+    write(*, '(2A)') 'Reading json block ', trim(label)
 
 ! get "profiles"
-    call fjson_in%get(trim(label), jsonOut, found)
+    call fjson_in%get(trim(label), jsonBlock, found)
 
 ! number of arrays (arr1, arr2, ...)
-    call jCore%info(jsonOut, n_children=nvars)
+    call jCore%info(jsonBlock, n_children=nvars)
 
 ! get first array to get length
-    call jCore%get_child(jsonOut, 1, arrPointer, found)
+    call jCore%get_child(jsonBlock, 1, arrPointer, found)
     call jCore%info(arrPointer, n_children=npts)
 
-    print*, 'DIMS', npts, nvars
     allocate(profs(npts, nvars))
 
 ! read values
     do j=1, nvars
-        call jCore%get_child(jsonOut, j, arrPointer, found)
+        call jCore%get_child(jsonBlock, j, arrPointer, found)
         do k=1, npts
             call jCore%get_child(arrPointer, k, valPointer, found)
             call jCore%get(valPointer, val)
@@ -100,7 +98,6 @@ contains
         enddo
     enddo
 
-    return
     end subroutine read_array_block
 
 !---------------------------------------------------------------------
@@ -156,7 +153,7 @@ contains
     do j=1, n_profx-1
         call write_array((/NA1/), profiles_x(1:NA1, j), profxPtr)
     enddo
-    call write_array((/NA1/), profiles_x(1:NA1, n_profx), profxPtr, dict_end=.true.)
+    call write_array((/NA1/), profiles_x(1:NA1, n_profx), profxPtr, last_array=.true.)
     write(nunit, '(A/)') '},' ! End of "profiles_x" dictionary
 
 ! CAR profiles
@@ -165,7 +162,7 @@ contains
     do j=1, n_prof-1
         call write_array((/NA1/), profiles(1:NA1, j), profPtr)
     enddo
-    call write_array((/NA1/), profiles(1:NA1, n_prof), profPtr, dict_end=.true.) ! no comma
+    call write_array((/NA1/), profiles(1:NA1, n_prof), profPtr, last_array=.true.) ! no comma
     write(nunit, '(A/)') '},' ! End of "profiles" dictionary
 
 !------------
@@ -215,7 +212,7 @@ contains
     call write_array((/nrho_surf/), equil_now%profiles_1d%rho_tor_norm, equil_profPtr)
     call write_array((/nrho_surf/), equil_now%profiles_1d%shif   , equil_profPtr)
     call write_array((/nrho_surf/), equil_now%profiles_1d%surface, equil_profPtr)
-    call write_array((/nrho_surf/), equil_now%profiles_1d%volume , equil_profPtr, dict_end=.true.)
+    call write_array((/nrho_surf/), equil_now%profiles_1d%volume , equil_profPtr, last_array=.true.)
     write(nunit, '(A/)') '},' ! End of "equil_profiles" dictionary
 
     if (debug > 0) write(*, *) 'Writing mag.surf quantities'
@@ -225,7 +222,7 @@ contains
     call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%rmin, equil_coordPtr)
     call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%psirz, equil_coordPtr)
     call write_array((/nthe_surf/), equil_now%coord_sys%position%teta2d, equil_coordPtr)
-    call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%z, equil_coordPtr, dict_end=.true.)
+    call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%z, equil_coordPtr, last_array=.true.)
     write(nunit, '(A/)') '},' ! End of "equil_coord" dictionary
 
     jid = 0
@@ -234,7 +231,7 @@ contains
     call write_array((/nR, nZ/), equil_now%eqgeometry%rectgrid%psirz2d, equil_rectPtr)
     call write_array((/nR, nZ/), equil_now%eqgeometry%rectgrid%fdia2d , equil_rectPtr)
     call write_array((/nR/), equil_now%eqgeometry%rectgrid%r2d, equil_rectPtr)
-    call write_array((/nZ/), equil_now%eqgeometry%rectgrid%z2d, equil_rectPtr, dict_end=.true.) ! No comma
+    call write_array((/nZ/), equil_now%eqgeometry%rectgrid%z2d, equil_rectPtr, last_array=.true.) ! No comma
     write(nunit, '(A)') '}' ! End of "equil_rect" dictionary
 
 !-----------
@@ -248,64 +245,41 @@ contains
 
     write(*, '(A)') '   Written file ' // TRIM(json_out)
 
-    return
     end subroutine write_json
 
 !---------------------------------------------------------------
-    subroutine write_scalar_block(json_in, scalar_list, label, indent)
+    subroutine write_scalar_block(json_in, scalar_list, label)
 
     double precision, intent(in), dimension(*) :: scalar_list
     character(len=*), intent(in), optional :: label
     type(json_value), intent(in), pointer :: json_in
-    integer, intent(in), optional :: indent
 
     logical :: found
-    integer :: nvars, j, n_indent
+    integer :: nvars, j
     character(KIND=JSON_CK, len=:), allocatable :: sname
     type(json_value), pointer :: dictPointer
     type(json_core) :: jCore
-    character(len=40) :: space
 
-101 format(A, '"', A, '": ', es16.8e3, ',')
-102 format(A, '"', A, '": ', es16.8e3, '')
+101 format('    "', A, '": ', es16.8e3, ',')
+102 format('    "', A, '": ', es16.8e3, '')
 201 format(   '"', A, '": {')
-202 format(A, '"', A, '": {')
 
-    space = ' '
-    if (present(indent)) then
-        n_indent = indent
-    else
-        n_indent = 0
-    endif
     call jCore%info(json_in, n_children=nvars)
 
-    if (present(label)) then
-        if (n_indent == 0) then
-            write(nunit, 201) TRIM(label)
-        else
-            write(nunit, 202) space(1:n_indent), TRIM(label)
-        endif
-    endif
+    if (present(label)) write(nunit, 201) TRIM(label)
 
     do j=1, nvars
         call jCore%get_child(json_in, j, dictPointer, found)
         call jCore%info(dictPointer, name=sname)
-        if (j == nvars) then
-            write(nunit, 102) space(1:n_indent+4), sname, scalar_list(j)
+        if (j < nvars) then
+            write(nunit, 101) sname, scalar_list(j)
         else
-            write(nunit, 101) space(1:n_indent+4), sname, scalar_list(j)
+            write(nunit, 102) sname, scalar_list(j)
         endif
     enddo
  
-    if (present(label)) then
-        if (n_indent == 0) then
-            write(nunit, '(A)') '},'
-        else
-            write(nunit, '(A, A)') space(1: n_indent), '},'
-        endif
-    endif
+    if (present(label)) write(nunit, '(A)') '},'
 
-    return
     end subroutine write_scalar_block
 
 !---------------------------------------------------------------------
@@ -327,16 +301,15 @@ contains
     enddo
     write(n_u, TRIM(fmt1), advance='no') arr_in(ndim)
 
-    return
     end subroutine prettyFloat
 
 !---------------------------------------------------------------------
-    subroutine write_array(dims, arr_in, json_in, dict_end)
+    subroutine write_array(dims, arr_in, json_in, last_array)
 
     integer, intent(in), dimension(:) :: dims
     double precision, intent(in), dimension(*) :: arr_in
     type(json_value), intent(in), pointer :: json_in
-    logical, intent(in), optional :: dict_end
+    logical, intent(in), optional :: last_array
 
     logical :: found
     integer :: i, j, ij, n_columns, n_remain
@@ -406,13 +379,12 @@ contains
         enddo
     endif
 
-    if (present(dict_end)) then
-        write(nunit, '(A)') ']' ! No comma after last array entry
+    if (present(last_array)) then
+        write(nunit, '(A)') ']' ! No comma after last array of the block
     else
         write(nunit, '(A)') '],'
     endif
 
-    return
     end subroutine write_array
 
 end module json_rw

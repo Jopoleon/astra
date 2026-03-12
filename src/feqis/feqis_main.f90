@@ -199,5 +199,4 @@ if (ifplasma == 1) then
     call equil_assignments(equil_out)
 endif
 
-return
 end subroutine feqis_main

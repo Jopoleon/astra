@@ -23,7 +23,9 @@ contains
 
 !---------------------------------------------------------------------
     subroutine config_close
+
     call config%destroy()
+
     end subroutine config_close
 
 end module machine_config

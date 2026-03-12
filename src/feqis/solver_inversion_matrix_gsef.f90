@@ -185,5 +185,4 @@ do jthe=1, ntheta
 enddo
 PSI(nrho, :) = PSIb
 
-return
 end subroutine solver_inversion_matrix_gsef

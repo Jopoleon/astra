@@ -311,7 +311,6 @@ contains
         endif
     enddo var_loop
 
-    return
     end subroutine SCAL
 
 !---------------------------------------------------------------------
@@ -379,7 +378,6 @@ contains
         call NMARK(POINT, STYL)
     endif
 
-    return
     end subroutine CMARK
 
 !---------------------------------------------------------------------
@@ -419,7 +417,6 @@ contains
     call textvm(xpos, ypos, F4, 4)   ! type scale
     if (STYL > 0) call NMARK(plot_arr, STYL)
 
-    return
     end subroutine CMARKT
 
 !---------------------------------------------------------------------
@@ -444,7 +441,6 @@ contains
     call setColor(ICOLOR)
     call plot_curve(NP, STYL, xnew, ynew)
 
-    return
     end subroutine update_curve
 
 !---------------------------------------------------------------------
@@ -489,7 +485,6 @@ contains
 
     call drawcurve(0, NP, xplot(1:NP), yplot(1:np))
 
-    return
     end subroutine plot_curve
 
 !---------------------------------------------------------------------
@@ -550,7 +545,6 @@ contains
 
     call menubox(arr_size, array_in, var_names, id, editable)
 
-    return
     end subroutine menutable
 
 !---------------------------------------------------------------------
@@ -571,7 +565,6 @@ contains
         NVAR(J) = VAR(J)
     enddo
 
-    return
     end subroutine ASKINT
 
 !---------------------------------------------------------------------
@@ -725,7 +718,6 @@ contains
 
     enddo ask_key
 
-    return
     end subroutine ASTWIN
 
 !---------------------------------------------------------------------
@@ -897,7 +889,6 @@ contains
         read(*, '(:, A1)') YKEY
     enddo
 
-    return
     end subroutine ASXWIN
 
 !---------------------------------------------------------------------
@@ -1361,7 +1352,6 @@ contains
 
     END SELECT
 
-    return
     end subroutine show_plots
 
 !---------------------------------------------------------------------
@@ -1435,7 +1425,6 @@ contains
         enddo
     endif
 
-    return
     end subroutine plot_lcfs
 
 !---------------------------------------------------------------------
@@ -1487,7 +1476,6 @@ contains
         write(*, *) '>>> plot_wall: problems opening file ' // TRIM(json_cfg)
     endif
 
-    return
     end subroutine plot_wall
 
 !---------------------------------------------------------------------
@@ -1533,7 +1521,6 @@ contains
         write(*, *) "MODEX is neither 0, nor 1, nor 2, it cannot be"
     endif
 
-    return
     end function abscissa
 
 !---------------------------------------------------------------------
@@ -1571,7 +1558,6 @@ contains
         jr = jr + 1
     enddo
 
-    return
     end subroutine plot_flux_surfaces
 
 !---------------------------------------------------------------------
@@ -1597,7 +1583,6 @@ contains
         endif
     endif
 
-    return
     end function plotMode
 
 !---------------------------------------------------------------------
@@ -1678,7 +1663,6 @@ contains
     plot_area%canvas_width  = (plot_area%xmax - plot_area%xmin)/plot_area%nx_canvas
     plot_area%canvas_height = (plot_area%ymin - plot_area%ymax)/plot_area%ny_canvas
 
-    return
     end subroutine set_plot_area
 
 !---------------------------------------------------------------------
@@ -1851,7 +1835,6 @@ contains
     pixel_ymid  = 0.5*(plot_area%ymax + plot_area%ymin)
     meter2pixel = dble(IDX*IDT)/scale_bnd
 
-    return
     end subroutine set_plot
 
 end module graph_utils

@@ -17,7 +17,6 @@ contains
     pol_angle = ATAN2(z - z0, r - r0)
     if (pol_angle < 0) pol_angle = pol_angle + GPI2
 
-    return
     end function pol_angle
 
 !---------------------------------------------------------------------
@@ -88,7 +87,6 @@ contains
         b(k) = 0.0
     enddo
 
-    return
     end function inv_matrix
 
 !---------------------------------------------------------------------
@@ -127,7 +125,6 @@ contains
         f_out = f_out/2.
     endif
 
-    return
     end function discrete_sine_transform
 
 !---------------------------------------------------------------------
@@ -229,7 +226,6 @@ contains
     derivs(4) = 2.*coeff(2)
     derivs(5) = coeff(3)
 
-    return
     end function least_square_biquad
 
 !---------------------------------------------------------------------
@@ -256,7 +252,6 @@ contains
     deriv_out(4) = 2.*coeff(1)*r_in**2 + 2*coeff(3)*r_in + 2*coeff(6)
     deriv_out(5) = 4*coeff(1)*r_in*z_in + 2*coeff(2)*r_in + 2*coeff(3)*z_in + coeff(4)
 
-    return
     end subroutine expandCoeffs
 
 !---------------------------------------------------------------------
@@ -265,7 +260,6 @@ contains
     double precision, intent(in), dimension(5) :: derivs
     getHessian = derivs(3)*derivs(4) - derivs(5)**2
 
-    return
     end function getHessian
 
 !---------------------------------------------------------------------
@@ -282,7 +276,6 @@ contains
     derivs_out(4) = derivs_in(4)/dz**2
     derivs_out(5) = derivs_in(5)/(dr*dz)
     
-    return
     end function getDerivs
 
 !---------------------------------------------------------------------
@@ -298,7 +291,6 @@ contains
     r_out = r_in - (deriv_in(4)*deriv_in(1) - deriv_in(5)*deriv_in(2))/hessian
     z_out = z_in - (deriv_in(3)*deriv_in(2) - deriv_in(5)*deriv_in(1))/hessian
 
-    return
     end subroutine transformRZ
     
 !---------------------------------------------------------------------
@@ -338,7 +330,6 @@ contains
     u_out   = -1.e6
     hessian =  1.e6
 
-    return
     end subroutine exact_biquad
 
 !---------------------------------------------------------------------
@@ -361,7 +352,6 @@ contains
     dr_out = r_loc*dr
     dz_out = z_loc*dz
 
-    return
     end subroutine exact_biquad_regress
 
 !---------------------------------------------------------------------
@@ -371,7 +361,6 @@ contains
 
     closest_index = nint((x_in - xmin)/dx + 1.) ! nint(1.8) = 2
 
-    return
     end function closest_index
 
 !---------------------------------------------------------------------
@@ -381,7 +370,6 @@ contains
 
     floor_index = floor((x_in - xmin)/dx + 1.) ! floor(1.8) = 1
 
-    return
     end function floor_index
 
 !---------------------------------------------------------------------
@@ -416,7 +404,6 @@ contains
 
     interp2d_psi = bilinear_interp(r1, r2, z1, z2, r_in, z_in, psi1, psi2, psi3, psi4)
 
-    return
     end function interp2d_psi
 
 !---------------------------------------------------------------------
@@ -432,7 +419,6 @@ contains
          f12*(x2 - x )*(y  - y1) + &
          f22*(x  - x1)*(y  - y1) )
 
-    return
     end function bilinear_interp
 
 !---------------------------------------------------------------------
@@ -443,7 +429,6 @@ contains
     ellE_green = (((0.01736506451D0 *X + 0.04757383546D0)*X + 0.06260601220D0)*X + 0.44325141463D0)*X + 1.0D0 - &
                  (((0.00526449639D0 *X + 0.04069697526D0)*X + 0.09200180037D0)*X + 0.24998368310D0)*X*DL
 
-    return
     end function ellE_green
 
 !---------------------------------------------------------------------
@@ -454,7 +439,6 @@ contains
     ellK_green = ((( 0.01451196212D0*X + 0.03742563713D0)*X + 0.03590092383D0)*X + 0.09666344259D0)*X + 1.38629436112D0 - &
                 (((( 0.00441787012D0*X + 0.03328355346D0)*X + 0.06880248576D0)*X + 0.12498593597D0)*X + 0.5D0)*DL
 
-    return
     end function ellK_green
 
 !-----------------------------------------------------------------------------------
@@ -475,7 +459,6 @@ contains
 
     green_function = ( (1.D0 - K**2/2.)*ELCK - ELCE )*( SQRT(r1*r2)/K )
 
-    return
     end function green_function
 
 !-----------------------------------------------------------------------------------
@@ -491,7 +474,6 @@ contains
         green_function_includingsamepoint = green_function(r1, z1, r2, z2)
     endif
 
-    return
     end function green_function_includingsamepoint
 
 !--------------------------------------------------------------------
@@ -532,7 +514,6 @@ contains
         f_out(j) = beta(j) - alpha(j)*f_out(j+1)
     enddo
 
-    return
     end function solve_tridiag_fbe
 
 !--------------------------------------------------------------------
@@ -560,7 +541,6 @@ contains
              (ffp_2d(k + 1)*(zeta - k) + ffp_2d(k)*(k + 1. - zeta))/r0   )
     endif
 
-    return
     end function fill_in_current
 
 !--------------------------------------------------------------------
@@ -594,8 +574,6 @@ contains
         cur_conduc(i) = sum(invmatrix(i, 1:nc)*b(1:nc))
     enddo
 
-    return
     end function solve_circuit_equations
-
 
 end module feqis_tools

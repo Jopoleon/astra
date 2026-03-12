@@ -331,5 +331,4 @@ TRIA_U(1) = 0.d0
 TRIA_L(1) = 0.d0
 SHIF(1) = XX(1, 1) - rtor
 
-return
 end subroutine build_2dgrid

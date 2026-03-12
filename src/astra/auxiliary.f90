@@ -16,7 +16,6 @@ contains
         dfj = dfj/f_mid
     endif
  
-    return
     end function dfj
 
 !---------------------------------------------------------------------
@@ -111,7 +110,6 @@ contains
     call CUOFP  ! Restore CU & MU, to be checked after VR is done EFable
     IFSTEP = 0
 
-    return
     end function IFSTEP
 
 !---------------------------------------------------------------------
@@ -228,7 +226,6 @@ contains
         YWD(j) = FP(j)
     enddo
 
-    return
     end function IFTREQ
 
 !---------------------------------------------------------------------
@@ -271,7 +268,6 @@ contains
     FTN  = FTO
     ROCO = ROC
 
-    return
     end subroutine OLDNEW
 
 !---------------------------------------------------------------------
@@ -291,7 +287,6 @@ contains
     enddo
     LINEAV = 0.5*(LINEAV + (ABC - AMETR(NA))*(NE(NA1) + NE(NA)))/ABC
 
-    return
     end function lineav
 
 end module auxiliary

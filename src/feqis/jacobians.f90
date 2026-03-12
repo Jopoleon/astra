@@ -218,5 +218,4 @@ dArc_rmt1(1, :) = 0.
 dArc_tm1 (1, :) = 0.   ! i, j-1/2
 dArc_tmr1(1, :) = 0.   ! i, j-1/2
 
-return
 end subroutine jacobians

@@ -204,5 +204,4 @@ thetap_i_out = thetap_i(1: ntheta)
 epprim_out = epprimp
 efprim_out = effprimp
 
-return
 end subroutine PHI_EQ_2d_PBE

@@ -57,7 +57,6 @@ contains
 
     CALL getenv('ASTRA_EXT', astra_ext)
 
-    return
     end subroutine io_init
 
 end module io_mod

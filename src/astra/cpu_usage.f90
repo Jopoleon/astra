@@ -51,7 +51,6 @@ contains
   enddo
   write(nch, *)
 
-  return
   end subroutine CPU_report
 
 !---------------------------------------------------------------------
@@ -82,7 +81,6 @@ contains
           jh, ':', jm, ':', js
   endif
 
-  return
   end subroutine formatTime
 
 endmodule cpu_usage

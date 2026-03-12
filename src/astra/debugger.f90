@@ -38,10 +38,9 @@ contains
     sec_last_mark = TRIM(last_mark)
     last_mark = TRIM(str_in)
 
-    return
     end subroutine markloc
 
-!----------------------------
+!---------------------------------------------------------------------
     subroutine astra_stop(str_in)
 
     character(len=*), optional, intent(in) :: str_in

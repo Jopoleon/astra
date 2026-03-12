@@ -55,7 +55,6 @@ contains
         coil_curr(j) = yd1*raw_coil%current(j2) - yd2*raw_coil%current(j1)
     enddo
 
-    return
     end subroutine get_coil
 
 !--------------------------------------------------------------------
@@ -425,7 +424,6 @@ contains
         deallocate(dat_exp)
     endif
 
-    return
     end subroutine set_x_arrays
 
 !-----------------------------------------------------------------------
@@ -483,7 +481,6 @@ contains
         endif
     enddo
 
-    return
     end subroutine set_x_scalars
 
 !----------------------------------------------------------------------
@@ -661,7 +658,6 @@ contains
     TAUPRP = TAUMIN
     if (TIME > TINIT + 1.025*abs(TSCALE)) TINIT = TSTART
 
-    return
     end subroutine astra_assignments
 
 end module set_x_data

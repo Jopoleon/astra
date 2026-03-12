@@ -77,7 +77,6 @@ contains
 ! Read exp file
     call read_exp
 
-    return
     end subroutine readInput
 
 !---------------------------------------------------------------------
@@ -138,7 +137,6 @@ contains
         call astra_stop(err_msg)
     endif
 
-    return
     end subroutine read_coilx
 
 !---------------------------------------------------------------------
@@ -849,7 +847,6 @@ contains
 
     raw_profiles%n_groups = NGR
 
-    return
     end subroutine read_exp
 
 !---------------------------------------------------------------------
@@ -866,6 +863,7 @@ contains
     endif
 
     read(line, *, iostat=ierr) dbl_out
+
     end subroutine str2dbl
 
 !---------------------------------------------------------------------
@@ -906,7 +904,6 @@ contains
 
     if (VARNAM(nlen: nlen) == 'X') VARNAM(nlen: nlen) = ' '
 
-    return
     end function VARNAM
 
 !---------------------------------------------------------------------
@@ -939,7 +936,6 @@ contains
         ARRNAM(nlen+1: nlen+1) = 'X'
     endif
 
-    return
     end function ARRNAM
 
 !---------------------------------------------------------------------
@@ -1031,7 +1027,6 @@ contains
         nr_exp = jrad
     endif
 
-    return
     end subroutine CHECKU
 
 !---------------------------------------------------------------------
@@ -1075,7 +1070,6 @@ contains
         endif
     endif
 
-    return
     end subroutine parse_u_line
 
 !---------------------------------------------------------------------
@@ -1189,7 +1183,6 @@ contains
     read(n_unit, '(1X, 6E13.6)') ((arr_out(jt + (jx - 1)*nt), jt=1, nt), jx=1, nx)
     close(n_unit)
 
-    return
     end subroutine ufrd
 
 end module read_input

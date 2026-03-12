@@ -25,12 +25,10 @@ contains
     if (f_id > NLOC) then
         write(*, *) 'Too many time functions calls', f_id
         write(*, *) 'Calling from' // trim(str_in)
-        return
+    else
+        time_loc = TIME
     endif
 
-    time_loc = TIME
-
-    return
     end subroutine function_id
 
 end module time_functions

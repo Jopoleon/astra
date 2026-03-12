@@ -113,7 +113,6 @@ contains
     force_coil = 0
     machine_description = trim(machine_name(1:4))
 
-    return
     end subroutine transport2fbe_init
 
 end module transport2fbe

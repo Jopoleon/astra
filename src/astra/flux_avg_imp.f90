@@ -4,10 +4,9 @@ implicit none
 
 contains
 
-!-----------------------------------------------------------------------------------
+!---------------------------------------------------------------------
     subroutine lfs2fsa_impDV(geom_type, Zimp_in, Aimp_in, e0imp_out, FVimp_out)
-    
-!-----------------------------------------------------------------------------------
+!---------------------------------------------------------------------
 ! Calculate the terms that transform the low field side (LFS) diffusive and convective
 ! transport coefficients of an impurity species into flux surface averaged (FSA) coefficients
 ! following the appendix of Angioni 2014 Nucl. Fusion 54 083028
@@ -24,7 +23,7 @@ contains
 ! ---------
 ! - e0imp_out -> transformation coefficient of the diffusion [-]
 ! - FVimp_out -> transformation coefficient of the convection [1/m]
-!-----------------------------------------------------------------------------------
+!---------------------------------------------------------------------
 
     use parameter_inc, only: NRD
     use const_inc, only: NA1, RTOR, ZMJ, AMJ
@@ -79,12 +78,11 @@ contains
     e0imp_out(1: NA1) = e0imp(1: NA1)
     FVimp_out(1: NA1) = FVimp(1: NA1)
   
-    return
     end subroutine lfs2fsa_impDV
 
-!-----------------------------------------------------------------------------------
+!---------------------------------------------------------------------
     subroutine flux_surf_avg(nth, thetay, AF, JJ, Aavg)
-!-----------------------------------------------------------------------------------
+!---------------------------------------------------------------------
 ! Flux surface average of a function AF
 !
 ! * INPUTS
@@ -121,12 +119,11 @@ contains
         Aavg = sum(AF)/nth
     endif
 
-    return
     end subroutine flux_surf_avg
 
-!-----------------------------------------------------------------------------------
+!---------------------------------------------------------------------
     subroutine flux_surf_geom(geom_type, ntheta_in, rmin_out, theta_out, R_out, Z_out, Jacobian_out, R_LFS_out)
-!-----------------------------------------------------------------------------------
+!---------------------------------------------------------------------
 ! Calculate flux surface contours R(r,theta), Z(r,theta) and interpolate them to minor
 ! radius and poloidal grids. The poloidal grid goes from -pi to pi, with theta = 0 at the LFS
 ! The Jacobian of (R,Z) -> (r,theta) and the low field side major radius are also calculated
@@ -146,7 +143,7 @@ contains
 ! - Z_out --------> vertical coordinate [m]
 ! - Jacobian_out -> jacobian [m]
 ! - R_LFS_out ----> low field side major radius [m]
-!-----------------------------------------------------------------------------------
+!---------------------------------------------------------------------
 
     use const_inc, only: NA1, RTOR, time, tau, tstart
     use status_inc, only: AMETR, SHIF, SHIV
@@ -298,7 +295,6 @@ contains
 
     deallocate(pf_eq, rho_eq, rmin_equ, th0, th1, R_1, Z_1, th2, R_2, Z_2, R_3, Z_3)
 
-    return
     end subroutine flux_surf_geom
 
 end module flux_avg_imp

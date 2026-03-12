@@ -644,7 +644,6 @@ class TIMOUT:
 """
 enddo
 
-return
 end subroutine RADOUT
 
 !------------------------------------------------------------
@@ -890,14 +889,6 @@ double precision :: YB, YC, YU, YJ_CU, YM, YMCD, YIOH, YICD, YM1, t_cpu1, t_cpu2
 double precision, dimension(NRD) :: YWA
 '''
 
-    tail = \
-'''
-
-return
-end subroutine init_converge_step
-'''
-
-
 class EQNS_INC:
 
     header = \
@@ -941,10 +932,4 @@ double precision, dimension(NRD) :: YWA, YWB, YWC, YWD, YWGN, &
     YWC1, YWC2, YWS, YQDCM, MPHIT, YQDCMF, YWQ, YWG11, YWgradF, YWgradb2
 
 MPHIT = 0.
-'''
-
-    tail = \
-'''
-return
-end subroutine EQNS_INC
 '''

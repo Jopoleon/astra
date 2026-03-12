@@ -59,7 +59,6 @@ contains
         endif
      endif
 
-     return
      end subroutine kibm2key
       
 !---------------------------------------------------------------------
@@ -604,7 +603,6 @@ contains
     call cpu_report('>>> ASTRA exit: reached END time >>>')
     call astra_stop
 
-    return
     end function if_key
 
 !---------------------------------------------------------------------
@@ -641,7 +639,6 @@ contains
     if (MOD10 <= 7) call down_label(jt, TOUT)
     call redraw
 
-    return
     end subroutine graph_output
 
 !---------------------------------------------------------------------
@@ -707,7 +704,6 @@ contains
         KPRI = 0
     endif
 
-    return
     end subroutine refresh_plot
   
 !---------------------------------------------------------------------
@@ -945,7 +941,6 @@ contains
     104 format(X, A)
     408 format(PE12.3, 64(PE12.3))
 
-    return
     end subroutine writeData
 
 !---------------------------------------------------------------------
@@ -962,7 +957,6 @@ contains
     pos = findloc(time_arr(1: ntim) >= time_in, .true., dim=1)
     TimeIndex = merge(pos, ntim, pos /= 0)
 
-    return
     end function TimeIndex
 
 !---------------------------------------------------------------------
@@ -1121,9 +1115,7 @@ contains
     call textvm(JN0, JLR, "               ", 15)
     call textvm(astra_gui%Width - 83*astra_gui%dxlet, JLR, STRI(1: 80), 80)
 
-    return
     end subroutine putxy
-
     
 !---------------------------------------------------------------------
     subroutine down_label(jt_in, TOUT)
@@ -1207,7 +1199,6 @@ contains
         enddo
     endif
 
-    return
     end subroutine down_label
 
 !-----------------------------
@@ -1223,7 +1214,6 @@ contains
         fmt_smart(BTOR, 4) // ' I=' // fmt_smart(IPL, 4) // ' q=' // fmt_smart(q95, 4) // &
         ' n=' // fmt_smart(ne_av, 4)
 
-    return
     end function upperLabel
 
 !-----------------------------
@@ -1236,7 +1226,6 @@ contains
 
     time_lbl = 'Time=' // fmt_smart(time_in, 5) // ' dt=' // fmt_smart(dt_in, 5)
 
-    return
     end function timeLabel
 
 !---------------------------------------------------------------------
@@ -1252,7 +1241,6 @@ contains
     call rectvm(0, 0, 0, astra_gui%Width - 1, astra_gui%Height - 1) ! Draw outer frame
     call textvm(0, 2, exp_header(1: 16) // upperLabel(YN, YQ), 58)  ! Type upper label
 
-    return
     end subroutine up_label
 
 !---------------------------------------------------------------------
@@ -1266,7 +1254,6 @@ contains
     call setColor(Blue)
     call textvm(astra_gui%width - 2*astra_gui%dxlet - 45, astra_gui_ref%dylet+1, CHR, 5) ! Type #tab in a given plot mode
 
-    return
     end subroutine tab_label
 
 !---------------------------------------------------------------------
@@ -1280,7 +1267,6 @@ contains
     call setColor(Black)
     call textvm(astra_gui%width - (str_len+3)*astra_gui_ref%dxlet, fshift, timeLabel(time_in, dt_in), str_len)
 
-    return
     end subroutine time_label
 
 !---------------------------------------------------------------------
@@ -1356,7 +1342,6 @@ contains
         endif
     enddo
 
-    return
     end subroutine const2ps
 
 !---------------------------------------------------------------------
@@ -1397,5 +1382,4 @@ integer, intent(in) :: key
 
 ifkey = if_key(key)
 
-return
 end function ifkey
