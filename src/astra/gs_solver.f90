@@ -15,7 +15,7 @@ contains
         rbnd, zbnd, &
         xrho, rtor, btor, &
         roc, fp, pres_in, volume, &
-        ncoils, yccoil, yvcoil, iter_step, iter_part, iter_itreq, &
+        ncoils, yvcoil, iter_step, iter_part, iter_itreq, &
         inume_3, tau_step, ipsibcf, icircq, ipctrl, ifbey, time_a, &
         psifb_in, psifb, &
         omega_rot, i_rotation, ion_temp, ion_dens, plasma_mass, &
@@ -44,7 +44,7 @@ contains
         iter_itreq, inume_3, ifbey, i_rotation
 
     double precision, intent(in) :: tau_step, psifb_in, rtor, btor, roc, time_a
-    double precision, intent(in), dimension(ncoils) :: yccoil, yvcoil
+    double precision, intent(in), dimension(ncoils) :: yvcoil
     double precision, intent(in), dimension(nbtabp) :: rbnd, zbnd
     double precision, intent(in), dimension(jna1) :: xrho, pres_in, fp, & 
         omega_rot, ion_temp, ion_dens, plasma_mass
@@ -441,7 +441,7 @@ contains
 ! Inputs
             equil_in, equil_solver, &
             nr_equ, n_theta, iter_step, &
-            ncoils, yccoil, yvcoil, tau_step, time_a, &
+            ncoils, yvcoil, tau_step, time_a, &
             ipsibcf, key_no_refits, &
             icircq, ipctrl, iter_itreq, ifbey, inume_3, &
 ! Outputs
@@ -715,7 +715,7 @@ contains
 ! Input
         equil_in, equil_solver, &
         nr_equ, n_theta, iter_step, &
-        ncoils, ccoils, vcoils, tau_step, time_a, &
+        ncoils, yvcoils, tau_step, time_a, &
         ipsibcf, key_no_refits, &
         icircq, ipctrl, &
         iter_itreq, ifbey, inume_3, &
@@ -731,7 +731,7 @@ contains
     integer, intent(in) :: equil_solver, nr_equ, n_theta, iter_step, ncoils, &
         ipsibcf, key_no_refits, icircq, ipctrl, iter_itreq, ifbey, inume_3
     double precision, intent(in) :: tau_step, time_a
-    double precision, intent(in), dimension(ncoils) :: ccoils, vcoils
+    double precision, intent(in), dimension(ncoils) :: yvcoils
     type(type_equilibrium), intent(in) :: equil_in
 
     integer, intent(out) :: key_start, keyplc
@@ -833,16 +833,6 @@ contains
         if (nstep >= 1) parameters_equil%key_start = 0 !fbe with circuit equations, no refit
     endif
 
-!Coil currents
-    if (ncoils > 0) then
-        if (parameters_equil%k_fixfree == 1) then
-            SELECT CASE(ipctrl)
-            CASE(-5, -3, -2)
-!            call coil2spider(ccoils, ncoils, parameters_equil)   !Write coil currents from CCOIL in astra to   coil.dat file only for fbe without controller (otherwise CCOIL is reserved for target coil currents and coil.dat is written elsewhere)
-            END SELECT
-        endif
-    endif
-
 !use refits currents in coil.dat, only for nitreq >1
     if (key_no_refits == 1) then
         if (key_start == 1 .and. iter_itreq > 0) then
@@ -858,7 +848,7 @@ contains
     endif
 
     if (parameters_equil%k_fixfree == 1) then
-        ucoils(1:ncoils)  = vcoils(1:ncoils)
+        ucoils(1:ncoils)  = yvcoils(1:ncoils)
         parameters_equil%nstep = nstep
     endif
 

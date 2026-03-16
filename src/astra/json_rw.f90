@@ -31,9 +31,9 @@ contains
     end subroutine json_load
 
 !---------------------------------------------------------------------
-    subroutine read_scalar_block(fjson_in, label, values)
+    subroutine read_scalar_block(fjson, label, values)
 
-    type(json_file), intent(inout) :: fjson_in
+    type(json_file), intent(inout) :: fjson
     character(len=*), intent(in) :: label
     double precision, intent(out), allocatable, dimension(:) :: values
 
@@ -45,10 +45,10 @@ contains
 
     write(*, '(2A)') 'Reading json block ', TRIM(label)
 
-    call fjson_in%info(TRIM(label), n_children=nvars)
+    call fjson%info(TRIM(label), n_children=nvars)
     allocate(values(nvars))
 
-    call fjson_in%get(TRIM(label), jsonBlock, found)
+    call fjson%get(TRIM(label), jsonBlock, found)
     do j=1, nvars
         call jCore%get_child(jsonBlock, j, dictPointer, found)
         call jCore%get(dictPointer, val)
@@ -58,9 +58,9 @@ contains
     end subroutine read_scalar_block
 
 !---------------------------------------------------------------------
-    subroutine read_array_block(fjson_in, label, profs)
+    subroutine read_array_block(fjson, label, profs)
 
-    type(json_file), intent(inout) :: fjson_in
+    type(json_file), intent(inout) :: fjson
     character(len=*), intent(in) :: label
     double precision, intent(out), allocatable :: profs(:, :)
 
@@ -69,15 +69,13 @@ contains
     double precision :: val
     character(len=:), allocatable :: error_msg
 
-    type(json_value), pointer :: jsonBlock
-    type(json_value), pointer :: arrPointer
-    type(json_value), pointer :: valPointer
+    type(json_value), pointer :: jsonBlock, arrPointer, valPointer
     type(json_core) :: jCore
 
     write(*, '(2A)') 'Reading json block ', trim(label)
 
 ! get "profiles"
-    call fjson_in%get(trim(label), jsonBlock, found)
+    call fjson%get(trim(label), jsonBlock, found)
 
 ! number of arrays (arr1, arr2, ...)
     call jCore%info(jsonBlock, n_children=nvars)
@@ -99,6 +97,245 @@ contains
     enddo
 
     end subroutine read_array_block
+
+!---------------------------------------------------------------------
+    subroutine read_array_1d(fjson, parent, name, arr1d)
+
+    type(json_file), intent(inout) :: fjson
+
+    character(len=*), intent(in) :: parent
+    character(len=*), intent(in) :: name
+    double precision, allocatable, intent(out) :: arr1d(:)
+
+    logical :: found
+    integer :: n, i
+    double precision :: val
+    type(json_value), pointer :: parentPtr, arrPtr, valPtr
+    type(json_core) :: jCore
+
+! get parent object
+    call fjson%get(trim(parent), parentPtr, found)
+    if (.not. found) then
+        print *, "Parent not found:", parent
+        stop
+    endif
+
+! get array inside parent
+    call jCore%get(parentPtr, trim(name), arrPtr, found)
+    if (.not. found) then
+        print *, "Array not found:", name
+        stop
+    endif
+
+! get length
+    call jCore%info(arrPtr, n_children=n)
+    allocate(arr1d(n))
+
+! read values
+    do i=1, n
+        call jCore%get_child(arrPtr, i, valPtr, found)
+        call jCore%get(valPtr, val)
+        arr1d(i) = val
+    enddo
+
+    end subroutine read_array_1d
+    
+!---------------------------------------------------------------------
+    subroutine read_array_2d(fjson, parent, name, arr2d)
+
+    type(json_file), intent(inout) :: fjson
+    character(len=*), intent(in) :: parent
+    character(len=*), intent(in) :: name
+
+    double precision, allocatable, intent(out) :: arr2d(:, :)
+
+    type(json_core) :: jCore
+    type(json_value), pointer :: parentPtr, arrPtr, rowPtr, valPtr
+
+    logical :: found
+    integer :: nrows, ncols, i, j
+    double precision :: val
+
+! -------------------------
+! get parent object
+! -------------------------
+    call fjson%get(trim(parent), parentPtr, found)
+    if (.not. found) then
+        print *, "Parent not found:", parent
+        stop
+    endif
+
+! -------------------------
+! get array inside parent
+! -------------------------
+    call jCore%get(parentPtr, trim(name), arrPtr, found)
+    if (.not. found) then
+        print *, "Array not found:", name
+        stop
+    endif
+
+! -------------------------
+! number of rows
+! -------------------------
+    call jCore%info(arrPtr, n_children=nrows)
+    if (nrows <= 0) then
+        print *, "Empty array:", name
+        stop
+    endif
+
+! -------------------------
+! get first row to get ncols
+! -------------------------
+    call jCore%get_child(arrPtr, 1, rowPtr, found)
+    call jCore%info(rowPtr, n_children=ncols)
+
+    allocate(arr2d(nrows, ncols))
+
+! -------------------------
+! read values
+! -------------------------
+    do i=1, nrows
+        call jCore%get_child(arrPtr, i, rowPtr, found)
+        do j=1, ncols
+            call jCore%get_child(rowPtr, j, valPtr, found)
+            call jCore%get(valPtr, val)
+            arr2d(i, j) = val
+        enddo
+    enddo
+
+end subroutine read_array_2d
+
+!---------------------------------------------------------------------
+    subroutine read_equil(fjson)
+
+    use parameters_a2equil, only: equil_now
+
+    type(json_file), intent(inout) :: fjson
+
+    integer :: nrho_eq, nthe_eq, nr_eq, nz_eq
+    double precision, allocatable, dimension(:) :: equil_traces, &
+        r2d, z2d, teta2d
+    double precision, allocatable, dimension(:, :) :: equil_profiles, &
+        psirz2d, fdia2d, r, z, rmin, psirz
+
+! equil_scalars
+    call read_scalar_block(fjson, "equil_signals", equil_traces)
+
+    equil_now%global_param%toroid_field%b0 = equil_traces(1)
+    equil_now%global_param%betpol          = equil_traces(2)
+    equil_now%global_param%i_plasma        = equil_traces(3)
+    equil_now%global_param%li3             = equil_traces(4)
+    equil_now%global_param%psibound        = equil_traces(5)
+    equil_now%global_param%psiaxis         = equil_traces(6)
+    equil_now%global_param%toroid_field%r0 = equil_traces(7)
+    equil_now%global_param%Vloop           = equil_traces(8)
+
+! equil_profiles
+    call read_array_block(fjson, "equil_profiles", equil_profiles)
+    nrho_eq = SIZE(equil_profiles, 1)
+
+    allocate(equil_now%profiles_1d%areat     (nrho_eq))
+    allocate(equil_now%profiles_1d%bdb0      (nrho_eq))
+    allocate(equil_now%profiles_1d%bmaxt     (nrho_eq))
+    allocate(equil_now%profiles_1d%bmint     (nrho_eq))
+    allocate(equil_now%profiles_1d%dpsidv    (nrho_eq))
+    allocate(equil_now%profiles_1d%elongation(nrho_eq))
+    allocate(equil_now%profiles_1d%f_dia     (nrho_eq))
+    allocate(equil_now%profiles_1d%ffprime   (nrho_eq))
+    allocate(equil_now%profiles_1d%fofb      (nrho_eq))
+    allocate(equil_now%profiles_1d%g1        (nrho_eq))
+    allocate(equil_now%profiles_1d%g2        (nrho_eq))
+    allocate(equil_now%profiles_1d%ggradro   (nrho_eq))
+    allocate(equil_now%profiles_1d%gm1       (nrho_eq))
+    allocate(equil_now%profiles_1d%gm4       (nrho_eq))
+    allocate(equil_now%profiles_1d%gm41      (nrho_eq))
+    allocate(equil_now%profiles_1d%gm5       (nrho_eq))
+    allocate(equil_now%profiles_1d%perim     (nrho_eq))
+    allocate(equil_now%profiles_1d%phi       (nrho_eq))
+    allocate(equil_now%profiles_1d%pprime    (nrho_eq))
+    allocate(equil_now%profiles_1d%pressure  (nrho_eq))
+    allocate(equil_now%profiles_1d%psi       (nrho_eq))
+    allocate(equil_now%profiles_1d%q         (nrho_eq))
+    allocate(equil_now%profiles_1d%r_inboard (nrho_eq))
+    allocate(equil_now%profiles_1d%r_outboard(nrho_eq))
+    allocate(equil_now%profiles_1d%rho_tor_norm(nrho_eq))
+    allocate(equil_now%profiles_1d%shif      (nrho_eq))
+    allocate(equil_now%profiles_1d%surface   (nrho_eq))
+    allocate(equil_now%profiles_1d%volume    (nrho_eq))
+
+    equil_now%profiles_1d%areat      = equil_profiles(:, 1)
+    equil_now%profiles_1d%bdb0       = equil_profiles(:, 2)
+    equil_now%profiles_1d%bmaxt      = equil_profiles(:, 3)
+    equil_now%profiles_1d%bmint      = equil_profiles(:, 4)
+    equil_now%profiles_1d%dpsidv     = equil_profiles(:, 5)
+    equil_now%profiles_1d%elongation = equil_profiles(:, 6)
+    equil_now%profiles_1d%f_dia      = equil_profiles(:, 7)
+    equil_now%profiles_1d%ffprime    = equil_profiles(:, 8)
+    equil_now%profiles_1d%fofb       = equil_profiles(:, 9)
+    equil_now%profiles_1d%g1         = equil_profiles(:, 10)
+    equil_now%profiles_1d%g2         = equil_profiles(:, 11)
+    equil_now%profiles_1d%ggradro    = equil_profiles(:, 12)
+    equil_now%profiles_1d%gm1        = equil_profiles(:, 13)
+    equil_now%profiles_1d%gm4        = equil_profiles(:, 14)
+    equil_now%profiles_1d%gm41       = equil_profiles(:, 15)
+    equil_now%profiles_1d%gm5        = equil_profiles(:, 16)
+    equil_now%profiles_1d%perim      = equil_profiles(:, 17)
+    equil_now%profiles_1d%phi        = equil_profiles(:, 18)
+    equil_now%profiles_1d%pprime     = equil_profiles(:, 19)
+    equil_now%profiles_1d%pressure   = equil_profiles(:, 20)
+    equil_now%profiles_1d%psi        = equil_profiles(:, 21)
+    equil_now%profiles_1d%q          = equil_profiles(:, 22)
+    equil_now%profiles_1d%r_inboard  = equil_profiles(:, 23)
+    equil_now%profiles_1d%r_outboard = equil_profiles(:, 24)
+    equil_now%profiles_1d%rho_tor_norm = equil_profiles(:, 25)
+    equil_now%profiles_1d%shif       = equil_profiles(:, 26)
+    equil_now%profiles_1d%surface    = equil_profiles(:, 27)
+    equil_now%profiles_1d%volume     = equil_profiles(:, 28)
+
+! equil_rect
+    call read_array_1d(fjson, "equil_rect", "r2d", r2d)
+    call read_array_1d(fjson, "equil_rect", "z2d", z2d)
+    call read_array_2d(fjson, "equil_rect", "psirz2d", psirz2d)
+    call read_array_2d(fjson, "equil_rect", "fdia2d", fdia2d)
+
+    nr_eq = SIZE(r2d)
+    nz_eq = SIZE(z2d)
+
+    allocate(equil_now%eqgeometry%rectgrid%r2d(nr_eq))
+    allocate(equil_now%eqgeometry%rectgrid%z2d(nz_eq))
+    allocate(equil_now%eqgeometry%rectgrid%psirz2d(nr_eq, nz_eq))
+    allocate(equil_now%eqgeometry%rectgrid%fdia2d(nr_eq, nz_eq))
+
+    equil_now%eqgeometry%rectgrid%r2d = r2d
+    equil_now%eqgeometry%rectgrid%z2d = z2d
+    equil_now%eqgeometry%rectgrid%psirz2d = psirz2d
+    equil_now%eqgeometry%rectgrid%fdia2d  = fdia2d
+
+! equil_coord
+    call read_array_1d(fjson, "equil_coord", "teta2d", teta2d)
+    call read_array_2d(fjson, "equil_coord", "r", r)
+    call read_array_2d(fjson, "equil_coord", "z", z)
+    call read_array_2d(fjson, "equil_coord", "rmin", rmin)
+    call read_array_2d(fjson, "equil_coord", "psirz", psirz)
+
+    nthe_eq = SIZE(teta2d)
+
+    allocate(equil_now%coord_sys%position%teta2d(nthe_eq))
+    allocate(equil_now%coord_sys%position%r(nrho_eq, nthe_eq))
+    allocate(equil_now%coord_sys%position%z(nrho_eq, nthe_eq))
+    allocate(equil_now%coord_sys%position%rmin(nrho_eq, nthe_eq))
+    allocate(equil_now%coord_sys%position%psirz(nrho_eq, nthe_eq))
+
+    equil_now%coord_sys%position%teta2d = teta2d
+    equil_now%coord_sys%position%r = r
+    equil_now%coord_sys%position%z = z
+    equil_now%coord_sys%position%rmin  = rmin
+    equil_now%coord_sys%position%psirz = psirz
+
+    print*, nrho_eq, nthe_eq, equil_now%coord_sys%position%psirz(1, 1:10)
+    pause
+
+    end subroutine read_equil
 
 !---------------------------------------------------------------------
     subroutine write_json
@@ -283,7 +520,7 @@ contains
     end subroutine write_scalar_block
 
 !---------------------------------------------------------------------
-    subroutine prettyFloat(n_u, arr_in, fmt, n_columns)
+    subroutine prettyFloatArray(n_u, arr_in, fmt, n_columns)
 
     integer, intent(in) :: n_u, n_columns
     character(len=*), intent(in) :: fmt
@@ -301,7 +538,7 @@ contains
     enddo
     write(n_u, TRIM(fmt1), advance='no') arr_in(ndim)
 
-    end subroutine prettyFloat
+    end subroutine prettyFloatArray
 
 !---------------------------------------------------------------------
     subroutine write_array(dims, arr_in, json_in, last_array)
@@ -346,7 +583,7 @@ contains
             n_columns = 12
             fmt = 'f3.1'
         endif
-        call prettyFloat(nunit, array, fmt, n_columns)
+        call prettyFloatArray(nunit, array, fmt, n_columns)
 
     else if (SIZE(dims) == 2) then
         allocate(array2(dims(1), dims(2)))
@@ -370,7 +607,7 @@ contains
         endif
         do i=1, dims(1)
             write(nunit, '(A)') '['
-            call prettyFloat(nunit, array2(i, :), fmt, n_columns)
+            call prettyFloatArray(nunit, array2(i, :), fmt, n_columns)
             if (i == dims(1)) then
                 write(nunit, '(A)') ']'
             else

@@ -9,12 +9,12 @@ use const_inc, only: IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
     TAU, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, ATREQ, LEQ, & 
     PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, RBDOT, BBDOT
 use status_inc, only: TE, TI, NE, NI, NIO, FP, defarr, error_catch
-use io_mod, only: CCOIL, VCOIL, MACHINE, TASK
+use io_mod, only: MACHINE, TASK
 use read_input, only: raw_cCoil, raw_vCoil
 use plasma_state, only: plasma_up
 use auxiliary, only: IFTREQ, IFSTEP, OLDNEW
 use set_x_data, only: set_x_scalars, set_x_arrays, get_coil
-use metrics, only: metric
+use metrics, only: CCOIL, VCOIL, metric
 use feqis_solvers, only: feqisupdate
 use gui_interaction, only: if_key
 
@@ -239,7 +239,7 @@ if (IFBEY >= 1.) then         ! is doing free boundary
         if (LEQ(5) == 4) then ! SPIDER
             call SPIDUPDATE(machine, CCOIL(1:n_coils), time, n_coils)    ! Update circuit stuff which has to be outside the iterations of course
         else if (LEQ(5) == 5) then ! FEQIS
-            call FEQISUPDATE(CCOIL(1:n_coils), n_coils)    ! Update circuit stuff which has to be
+            call FEQISUPDATE(CCOIL, n_coils)    ! Update circuit stuff which has to be
         endif
     endif
 endif

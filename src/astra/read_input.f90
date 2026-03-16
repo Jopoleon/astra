@@ -82,7 +82,7 @@ contains
 !---------------------------------------------------------------------
     subroutine read_coilx(nunit, stri_in, coilx_out)
 
-    use io_mod, only: exp_file, n_coils_max
+    use io_mod, only: exp_file
     use debugger, only: markloc, astra_stop
 
     integer, parameter :: nt_coils_max=25000
@@ -111,11 +111,6 @@ contains
         call astra_stop(err_msg)
     endif
     read(stri_in(j+6:), *) n_coils
-    if (n_coils > n_coils_max) then
-        write(err_msg, '(2A, i)') TRIM(err_msg), &
-           '    Number of coils must be <', n_coils_max
-        call astra_stop(err_msg)
-    endif
 
     coilx_out%nt = nt
     coilx_out%ncoils = n_coils
@@ -124,9 +119,9 @@ contains
         allocate(coilx_out%current(nt*n_coils))
     endif
 
-    if (n_coils*nt > n_coils_max*nt_coils_max) then
+    if (n_coils*nt > nt_coils_max) then
         write(err_msg, '(2A)') TRIM(err_msg), &
-           '    COILSX data length must be n_coils_max*nt_coils_max <'
+           '    COILSX data length must be < nt_coils_max'
         call astra_stop(err_msg)
     endif
 

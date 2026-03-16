@@ -2,7 +2,7 @@ module parameter_inc
  
 implicit none
 
-integer, parameter :: NRD=801, NARRX=101, n_sbr_max=60, NRDX=500, n_coils_max=60
+integer, parameter :: NRD=801, NARRX=101, NRDX=500
 
 end module parameter_inc
 

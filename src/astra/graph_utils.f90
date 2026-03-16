@@ -79,7 +79,7 @@ contains
 !---------------------------------------------------------------------
     subroutine gui_init
 
-    use io_mod, only: resize
+    use io_mod, only: resize, n_sbr
     use const_inc, only: AB, TINIT, TSCALE, XOUT
     use json_vars, only: n_intern, internNames
 
@@ -158,7 +158,7 @@ contains
     curves_per_frame = (/ 16, 8, 8, 2, 2, 8, 4, 0, 0 /)
 
     DTNAME(1: n_intern) = internNames
-    do j=1, 30
+    do j=1, n_sbr
         i = (j-1)*4 + n_intern
         write(DTNAME(i+1), '(A, i0)') 'DTeq', j
         write(DTNAME(i+2), '(A, i0)') 'BEeq', j

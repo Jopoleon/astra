@@ -81,21 +81,27 @@ class CODE_GEN:
         self.associate_pointers = \
 '''subroutine associate_pointers
 
-use parameter_inc, only: NRD, n_sbr_max
+use parameter_inc, only: NRD
+use io_mod, only: n_sbr, sbr_name
 use const_inc
 use status_inc
 use json_vars, only: n_const, n_var, n_varx, n_intern, n_intern2, n_prof, n_profx
 
 implicit none
 
-allocate(constValues(n_const))
+'''
+        self.associate_pointers += 'n_sbr = %d\n' %len(parse.sbr_lines)
+        self.associate_pointers += \
+'''allocate(constValues(n_const))
 allocate(varValues(n_var))
 allocate(varxValues(n_varx))
-allocate(internValues(n_intern + 4*n_sbr_max))
+allocate(internValues(n_intern + 4*n_sbr))
 allocate(intern2Values(n_intern2))
 allocate(profiles(NRD, n_prof))
 allocate(profiles_x(NRD, n_profx))
-allocate(DTEQ(4, n_sbr_max))
+allocate(DTEQ(4, n_sbr))
+allocate(sbr_name(n_sbr))
+allocate(TEQ(n_sbr))
 
 '''
         for j, const in enumerate(parse.constants):
@@ -109,7 +115,7 @@ allocate(DTEQ(4, n_sbr_max))
         self.associate_pointers += '\n'
         for j, inter in enumerate(parse.intern1):
             self.associate_pointers += '%s => internValues(%d)\n' %(inter, j+1)
-        self.associate_pointers += 'DTEQ(1:4, 1:n_sbr_max) => internValues(n_intern+1: n_intern + 4*n_sbr_max)\n\n'
+        self.associate_pointers += 'DTEQ(1:4, 1:n_sbr) => internValues(n_intern+1: n_intern + 4*n_sbr)\n\n'
         for j, inter in enumerate(parse.intern2):
             self.associate_pointers += '%s => intern2Values(%d)\n' %(inter, j+1)
         self.associate_pointers += '\n'
@@ -278,9 +284,7 @@ end subroutine INIVAR'''
         inam  = 'AWD = "%s"\n' %awd
         for jlbl, lbl in enumerate(config.eqn_list):
             inam += 'LEQ(%d) = %d\n' %(jlbl+1, parse.leq_d[lbl])
-        inam += const_text.ININAM.sb
         inam += 'call markloc("ininam")\n'
-        inam += 'n_sbr = %d\n' %len(parse.sbr_lines)
         inam += 'NTOUT = %d\n' %len(parse.namet)
         inam += 'NROUT = %d\n' %len(parse.namer)
         inam += 'NXOUT = %d\n' %len(parse.namex)

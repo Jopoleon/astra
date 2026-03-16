@@ -35,8 +35,8 @@ class ININAM:
     header = \
 """subroutine ININAM
 
-use parameter_inc, only: n_sbr_max, NRD
-use io_mod, only: sbr_name, IFSBX, n_sbr, awd
+use parameter_inc, only: NRD
+use io_mod, only: sbr_name, n_sbr, awd
 use graph_utils
 use const_inc
 use status_inc
@@ -49,13 +49,7 @@ integer :: j
 
 call markloc("xar_usage")
 
-allocate(DTNAME(n_intern+4*n_sbr_max))
-"""
-
-    sb = \
-"""do j=1, n_sbr_max
-IFSBX(j) = 0
-enddo
+allocate(DTNAME(n_intern+4*n_sbr))
 """
 
 class SETVAR:
@@ -898,7 +892,7 @@ class EQNS_INC:
 ! Note that now time step is updated at the end of a full time cycle
 !-------------------------------------------------------------------
 
-use parameter_inc, only: NRD, n_sbr_max
+use parameter_inc, only: NRD
 use const_inc
 use status_inc
 use a2tglf, only: tglf_ipc, tglf_out

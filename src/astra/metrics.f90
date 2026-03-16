@@ -2,6 +2,8 @@ module metrics
 
 implicit none
 
+double precision, dimension(:), allocatable :: CCOIL, VCOIL
+
 contains
 
 !---------------------------------------------------------------------
@@ -1011,7 +1013,7 @@ contains
 !---------------------------------------------------------------------
     subroutine A2GSSOLVER(equil_solver)
 
-    use io_mod, only: CCOIL, VCOIL, machine
+    use io_mod, only: machine
     use const_inc, only: NEQUIL, MEQUIL, IPART, IPCTRL, TAU, NA, NA1, NAB, &
         RTOR, BTOR, IPL, GP, GP2, HRO, ROC, ABC, &
         VOLUME, SHIFT, ELONG, UPDWN, TRIAN, &
@@ -1143,7 +1145,7 @@ contains
         call GSSOLVER( &
 ! Input:
             equil_solver, jneql, jnteta, jnbnd, NA1, rbnd, zbnd, XRHO(1: NA1), RTOR, BTOR, &
-            ROC, yfp, ypres, VOLUME, n_coils, yccoil, yvcoil, i, IPART, ITREQ, &
+            ROC, yfp, ypres, VOLUME, n_coils, yvcoil, i, IPART, ITREQ, &
             nint(INUME3), TAU, nint(ITFBP), nint(ICIRCQ), nint(IPCTRL), nint(IFBEY), &
             TIME, ychipfp, PSIFB, &
             omega_rot, j_rotation, TI(1: NA1), NI(1: NA1), MRHO(1: NA1), &

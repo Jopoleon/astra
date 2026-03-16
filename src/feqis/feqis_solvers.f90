@@ -205,22 +205,21 @@ contains
     end subroutine solve_gse2d_fbe_full_1turn
 
 !---------------------------------------------------------------------
-    subroutine FEQISUPDATE(coilzzz, nccc)
+    subroutine FEQISUPDATE(ccoil_out, ncoil)
 
     use pi_vars, only: GPI2
     use fbe_core, only: nconduc, curconduc
-    use circuit, only: cur_con_old, &
-        psi_cur_old, psiplasmatoconduc
+    use circuit, only: cur_con_old, psi_cur_old, psiplasmatoconduc
     use transport2fbe, only: fast_mode
 
-    integer, intent(in) :: nccc
-    double precision, dimension(nccc) :: coilzzz
+    integer, intent(in) :: ncoil
+    double precision, intent(out) :: ccoil_out(ncoil)
 
-    coilzzz(1:nccc) = curconduc(1:nccc)*1.e3
-    cur_con_old(1:nconduc) = curconduc(1:nconduc)
+    ccoil_out = 1.e3*curconduc(1: ncoil)
+    cur_con_old(1: nconduc) = curconduc(1: nconduc)
 
     if (fast_mode == 0) then
-        psi_cur_old(1:nconduc) = psiplasmatoconduc(1:nconduc)
+        psi_cur_old(1: nconduc) = psiplasmatoconduc(1: nconduc)
     endif
 
     return

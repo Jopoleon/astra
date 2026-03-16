@@ -10,7 +10,7 @@ program astra
 use json_module, only: json_file
 use graph_utils, only: astra_gui, astra_gui_ref, gui_init
 use io_mod, only: TASK, io_init, MACHINE, awd, restart
-use cpu_usage, only: cpu_start, wall_start, cpu_report
+use cpu_usage, only: cpu_init, cpu_start, wall_start, cpu_report
 use const_inc, only: IPART, const_init, RTOR, UPDWN, SHIFT, PSIAX, PSIBO, &
     TIME, TINIT, TSTART, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT, NA1, &
     constValues, varValues, varxValues, internValues, intern2Values
@@ -19,12 +19,13 @@ use debugger, only: astra_stop, markloc
 use ext_bnd, only: use_ext_bnd
 use transport2fbe, only: transport2fbe_init
 use json_vars, only: read_metadata, n_intern
-use json_rw, only: json_load, write_json, read_scalar_block, read_array_block
+use json_rw, only: json_load, write_json, &
+    read_scalar_block, read_array_block, read_equil
 use read_input, only: readInput, raw_cCoil
 use plasma_state, only: plasma_up
 use auxiliary, only: IFTREQ
 use set_x_data, only: set_x_scalars, set_x_arrays, astra_assignments
-use metrics, only: eqguess, metric
+use metrics, only: eqguess, metric, CCOIL, VCOIL
 use gui_interaction, only: if_key
 
 implicit none
@@ -49,6 +50,7 @@ call SYSTEM_CLOCK(wall_start, rate)
 call read_metadata
 call associate_pointers
 
+call cpu_init
 call const_init
 call status_init
 
@@ -60,6 +62,10 @@ call astra_assignments ! ASTRA default assignments
 
 use_ext_bnd = 0
 IPART = 1   ! Mark initial iteration section
+
+allocate(CCOIL(raw_cCoil%ncoils), VCOIL(raw_cCoil%ncoils))
+CCOIL = 0.
+VCOIL = 0.
 
 !--------------------
 ! ASTRA graphic frame
@@ -74,6 +80,11 @@ call INIVAR
 
 call transport2fbe_init(TAU, TSTART, RTOR, UPDWN, SHIFT, PSIAX, PSIBO, MACHINE, &
     raw_cCoil%ncoils, raw_cCoil%current)
+
+gui_on = (TASK(1: 3) /= 'BGD')
+if (gui_on) then
+    call gui_init
+endif
 
 if (restart > 0) then
     print*, 'astra_main1, TIME=', TIME
@@ -90,36 +101,31 @@ if (restart > 0) then
     call read_array_block(fjson, "profiles_x", profs_x)
     profiles(  1:NA1, :) = profs
     profiles_x(1:NA1, :) = profs_x
-endif
-
-gui_on = (TASK(1: 3) /= 'BGD')
-if (gui_on) then
-    call gui_init
-endif
-jt_req = 0
-do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set in IFTREQ (for/defarr.f90)
-
-    if (gui_on) jkey = if_key(256)
-    call set_x_scalars   ! Set exp scalars
-    call DETVAR
-    call DEFARR
-    call set_x_arrays(1)   ! Set X-data w/o time interpolation
-    call INIVAR
-    call markloc("init")
-    NITOT = NITOT + 1
-
-    call INIT_CONVERGE_STEP
-    call markloc("init done")
-
-    IFBEY = 0. ! no fbe possible here
-    call METRIC
-    jt_req = IFTREQ(ATREQ)     ! ++ITREQ; Convergence check; 1 - yes
-enddo
-
-if (gui_on) then
-    STRI(1:16) = ' ' ! Erase iteration number, iterations label top right
-    call textvm(astra_gui%width-18*astra_gui_ref%dxlet, 2, STRI(1:16), 16)
-    call textvm(astra_gui%width-17*astra_gui_ref%dxlet, astra_gui_ref%dylet + 1, STRI(1:14), 14)
+    call read_equil(fjson)
+    call fjson%destroy()
+else ! Iterations for initial convergence
+    jt_req = 0
+    do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set in IFTREQ (status:defarr)
+        if (gui_on) jkey = if_key(256)
+        call set_x_scalars    ! Set exp scalars
+        call DETVAR
+        call DEFARR
+        call set_x_arrays(1)  ! Set X-data w/o time interpolation
+        call INIVAR
+        call markloc("init")
+        NITOT = NITOT + 1
+        call INIT_CONVERGE_STEP
+        call markloc("init done")
+        IFBEY = 0. ! no fbe possible here
+        call METRIC
+        jt_req = IFTREQ(ATREQ)     ! ++ITREQ; Convergence check; 1 - yes
+    enddo
+ 
+    if (gui_on) then
+        STRI(1:16) = ' ' ! Erase iteration number, iterations label top right
+        call textvm(astra_gui%width-18*astra_gui_ref%dxlet, 2, STRI(1:16), 16)
+        call textvm(astra_gui%width-17*astra_gui_ref%dxlet, astra_gui_ref%dylet + 1, STRI(1:14), 14)
+    endif
 endif
 
 !---------------
@@ -133,7 +139,7 @@ do while (TIME < t_stop)
         call write_json
         jt_out = jt_out + 1
     endif
-    call STEPUP
+    call STEPUP ! Time-dependent evolution
 enddo
 
 call CPU_report('>>> ASTRA normal exit >>>')
