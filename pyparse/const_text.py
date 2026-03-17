@@ -87,7 +87,7 @@ class CUAS:
     header = \
 '''! **** Current profile adjustment
 call markloc("CU adjustment")
-YB = 0.4*GP
+YB = mu0
 YC = YB*RTOR/BTOR
 YD = -0.8*GP**2 * RTOR
 YA = 2./(HRO**2 * YD)
@@ -131,7 +131,7 @@ do j=1, NA1
 
     cu1 = \
 '''YF = GP2*HRO**2 * BTOR
-YC = 0.4*GP*RTOR/BTOR
+YC = mu0*RTOR/BTOR
 YM = 0.
 YMCD = 0.
 do J=1, NA1
@@ -155,7 +155,7 @@ FP(J+1) = FP(J) + YF*YM1
 enddo
 MU(NA1) = EXTRAP(SXHO(1:NA), MU(1:NA), SXHO(NA1), NA, 2, .false.)
 YU = GP2*RTOR
-YJ_CU = (FP(NA1) - FP(NA))/HRO * IPOL(NA1) * G22(NA)/(0.4*GP*RTOR)
+YJ_CU = (FP(NA1) - FP(NA))/HRO * IPOL(NA1) * G22(NA)/(mu0*RTOR)
 YJ_CU = IPL/YJ_CU
 do j=1, NA1
 CU(J) = YJ_CU*CU(J)
@@ -262,7 +262,7 @@ bc_values(1) = 0.0
 bc_values(2) = 0.0
 bc_values(3) = 1.
 bc_values(4) = -1.
-bc_values(5) = HRO*0.4*GP/G22(NA)*IPL*RTOR/IPOL(NA1)
+bc_values(5) = HRO*mu0/G22(NA)*IPL*RTOR/IPOL(NA1)
 bc_type_for_fp = 1
 if (ITFBP /= 0.0 .and. ITFBE < TIME) then
 if (ibcpsi_fb >= 0) then
@@ -282,7 +282,7 @@ bc_values(1) = 0.0
 bc_values(2) = 0.0
 bc_values(3) = 1.
 bc_values(4) = -1.
-bc_values(5) = HRO*0.4*GP/G22(NA)*IPL*RTOR/IPOL(NA1)
+bc_values(5) = HRO*mu0/G22(NA)*IPL*RTOR/IPOL(NA1)
 bc_type_for_fp = 1
 endif
 endif
@@ -367,7 +367,7 @@ YWR(j) = 0.
 YWQ(j) = 0.
 YWG11(j) = 1.
 YWWB(j) = 1./RHO(j)
-YVR(j) = CC(j)*0.4*GP*RHO(j)/IPOL(j)**2
+YVR(j) = CC(j)*mu0*RHO(j)/IPOL(j)**2
 unit_coeff = 1.
 YWD(j) = -(VR(j)/(GP2*RHO(j)*CC(j))) * (CUBS(j) + CD(j))
 enddo
@@ -614,7 +614,7 @@ class RADOUT:
 ! Radial profile plotting
 !------------------------------------------------------------
 
-use pi_const, only: GP, GP2
+use pi_const, only: GP, GP2, mu0
 use scalars
 use status
 use graph_utils
@@ -646,7 +646,7 @@ subroutine TIMOUT
 ! Time traces plotting
 !------------------------------------------------------------
 
-use pi_const, only: GP, GP2
+use pi_const, only: GP, GP2, mu0
 use scalars
 use status
 use graph_utils
@@ -683,7 +683,7 @@ class CUEQN:
     header = \
 '''! **** Current equation
 call markloc("Current equation")
-YC =  0.4*GP*RTOR/BTOR
+YC =  mu0*RTOR/BTOR
 YD = -0.8*GP**2 * RTOR
 YA = 2./(HRO**2 * YD)
 do J=1, NA1
@@ -700,7 +700,7 @@ bc_values(1) = 0.0
 bc_values(2) = 0.0
 bc_values(3) = 1.
 bc_values(4) = -1.
-bc_values(5) = HRO*0.4*GP/G22(NA)*IPL*RTOR/IPOL(NA1)
+bc_values(5) = HRO*mu0/G22(NA)*IPL*RTOR/IPOL(NA1)
 bc_type_for_fp=1
 ! For psifb
 ! when using the free boundary circuit equations with free current,
@@ -724,7 +724,7 @@ bc_values(1) = 0.0
 bc_values(2) = 0.0
 bc_values(3) = 1.
 bc_values(4) = -1.
-bc_values(5) = HRO*0.4*GP/G22(NA)*IPL*RTOR/IPOL(NA1)
+bc_values(5) = HRO*mu0/G22(NA)*IPL*RTOR/IPOL(NA1)
 bc_type_for_fp = 1
 endif
 endif
@@ -815,7 +815,7 @@ YWR(j)  = 0.
 YWQ(j)  = 0.
 YWG11(j) = 1.
 YWWB(j) = 1./RHO(j)
-YVR(j) = CC(j)*0.4*GP*RHO(j)/IPOL(j)**2
+YVR(j) = CC(j)*mu0*RHO(j)/IPOL(j)**2
 unit_coeff = 1.
 YWD(j) = -(VR(j)/(GP2*RHO(j)*CC(j))) * (CUBS(j) + CD(j))
 enddo
@@ -860,7 +860,7 @@ class INIT_CONVERGE_STEP:
     header = \
 '''subroutine init_converge_step
 
-use pi_const, only: GP, GP2
+use pi_const, only: GP, GP2, mu0
 use read_input, only: equ_file, exp_file
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use scalars
@@ -891,7 +891,7 @@ class EQNS_INC:
 ! Note that now time step is updated at the end of a full time cycle
 !-------------------------------------------------------------------
 
-use pi_const, only: GP, GP2
+use pi_const, only: GP, GP2, mu0
 use scalars
 use status
 use a2tglf, only: tglf_ipc, tglf_out
