@@ -4,7 +4,7 @@ implicit none
 
 integer, allocatable, dimension(:) :: IFDFAX, jbeg_arrx, NPTM, IFDFVX
 integer :: n_sbr, restart, nr_x_max
-double precision :: resize
+double precision :: resize, tend_nml
 double precision, allocatable :: TOUTX(:)
 double precision, allocatable, dimension(:, :) :: XAXES, DATAX
 
@@ -23,7 +23,7 @@ contains
     logical :: nml_exists
     integer :: ios
     character(len=132) :: log_file
-    double precision :: tbeg_nml, tend_nml, tpause_nml
+    double precision :: tbeg_nml, tpause_nml
 
     allocate(TOUTX(n_profx))
     allocate(XAXES(nr_x_max, n_profx), DATAX(nr_x_max, n_profx))

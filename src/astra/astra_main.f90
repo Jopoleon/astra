@@ -9,7 +9,8 @@ program astra
 
 use json_module, only: json_file
 use graph_utils, only: astra_gui, astra_gui_ref, gui_init
-use io_mod, only: TASK, io_init, MACHINE, awd, restart, exp_file, equ_file
+use io_mod, only: TASK, io_init, MACHINE, awd, restart, tend_nml, &
+    exp_file, equ_file
 use cpu_usage, only: cpu_init, cpu_start, wall_start, cpu_report
 use scalars, only: IPART, const_init, RTOR, UPDWN, SHIFT, PSIAX, PSIBO, &
     TIME, TINIT, TSTART, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT, NA1, &
@@ -100,6 +101,7 @@ if (restart > 0) then
     profiles_x(1:NA1, :) = profs_x
     call read_equil(fjson)
     call fjson%destroy()
+    tend = tend_nml
 else ! Iterations for initial convergence
     jt_req = 0
     do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set in IFTREQ (status:defarr)
