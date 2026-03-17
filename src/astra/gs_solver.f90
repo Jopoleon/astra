@@ -34,7 +34,7 @@ contains
         murelax2, ydiff, ydiff2, max_iter, miter_ext, interp_routine, &
         interp_method_rect, epsf_tol, epss_tol, epsv_tol, epsg_tol, &
         key_no_startz, key_no_refits, equil_now
-    use io_mod, only: nml_file
+    use read_input, only: nml_file
     use machine_config, only: json_cfg, config, cfg_exists
 
     integer, parameter :: nbtabp=1000
@@ -727,7 +727,7 @@ contains
     use pi_const, only: GP, GP2
     use parameters_a2equil, only: fix_adapgrid, s_fazt
     use scalars, only : rtor,shift, updwn
-    use io_mod, only: nml_file, machine
+    use read_input, only: nml_file, machine
 
     integer, intent(in) :: equil_solver, nr_equ, n_theta, iter_step, ncoils, &
         ipsibcf, key_no_refits, icircq, ipctrl, iter_itreq, ifbey, inume_3

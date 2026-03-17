@@ -70,9 +70,9 @@ contains
     use scalars, only: TIME, BTOR, AB, ABC, ROC, VOLUME, NA1, NAB, PSIAX
     use status, only: NRD, AMETR, RHO, FP, VOLUM, profiles_x, rho_pol
     use numerical_tools, only: qinterp, sortab, smooth
-    use io_mod, only: jbeg_arrx, IFDFAX, XAXES, DATAX, NPTM, TOUTX
     use debugger, only: markloc, astra_stop
-    use read_input, only: raw_profiles
+    use read_input, only: raw_profiles, jbeg_arrx, IFDFAX, &
+        XAXES, DATAX, NPTM, TOUTX
     use standard_functions, only: RZ2A
 
     integer, intent(in) :: ICALL
@@ -446,9 +446,8 @@ contains
 !          eg. (AB, RTOR, ELONM, TRICH or set interactively)
 !-----------------------------------------------------------------------
 
-    use io_mod, only: IFDFVX
     use scalars, only: varxValues, varValues, TIME
-    use read_input, only: raw_scalars
+    use read_input, only: raw_scalars, IFDFVX
     use debugger, only: markloc
 
     integer :: jtvar, N1, N2
@@ -496,10 +495,9 @@ contains
         FP, FPO, FP_NORM, rho_pol, NE, NEO, TE, TEO, UPAR, UPARO, MRHO, &
         AMAIN, UPS0, UPS0O
     use json_vars, only: varNames, n_profx, profxNames, n_var
-    use io_mod, only: IFDFVX, IFDFAX, exp_file
     use numerical_tools, only: EXTRAP, INTEGR
     use debugger, only: astra_stop
-    use read_input, only: raw_boundary
+    use read_input, only: raw_boundary, exp_file, IFDFVX, IFDFAX
     use metrics, only: setgeo, new_grid, roc3a
  
     integer :: KAB, KAWALL, KRTOR, KELONM, KTRICH

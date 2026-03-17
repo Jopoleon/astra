@@ -170,7 +170,7 @@ contains
 !---------------------------------------------------------------------
 
     use pi_const, only: GP2
-    use io_mod, only: exp_file
+    use read_input, only: exp_file
     use scalars, only: RTOR, BTOR, HRO, ROC, ABC, NA1, NB1, &
         TIME, TAU, TSTART, WTE, WTI, WNE
     use debugger, only: markloc, astra_stop

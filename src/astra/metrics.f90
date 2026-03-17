@@ -394,6 +394,25 @@ contains
 
     end subroutine EQGUESS
 
+!----------------------------------------------------------
+    logical function IFDEFX(XARNAM)
+! Name exists in profxNames, and the array is defined
+
+    use read_input, only: IFDFAX
+    use json_vars, only: profxNames
+    use parse_utils, only: str_in_list
+
+    character(len=6), intent(in) :: XARNAM
+
+    integer :: j
+
+    j = str_in_list(XARNAM, profxNames)
+    if (j > 0) then
+        if (IFDFAX(j) > 0) IFDEFX = .true. ! True (X-array is defined)
+    endif
+
+    end function IFDEFX
+
 !---------------------------------------------------------------------
     subroutine set_external_metric
 
@@ -408,7 +427,6 @@ contains
         BDB0, BDB02, B0DB2, BMINT, BMAXT, FOFB, VOLUM, SHEAR, FP, MU, &
         shiv, squarn, shivx, squax
     use debugger, only: markloc, debug, flightsim
-    use parse_utils, only: ifdefx
     use numerical_tools, only: integr
 
     integer :: j
@@ -1020,7 +1038,7 @@ contains
     subroutine A2GSSOLVER(equil_solver)
 
     use pi_const, only: GP, GP2, GP2_sq
-    use io_mod, only: machine
+    use read_input, only: machine
     use scalars, only: NEQUIL, MEQUIL, IPART, IPCTRL, TAU, NA, NA1, NAB, &
         RTOR, BTOR, IPL, HRO, ROC, ABC, &
         VOLUME, SHIFT, ELONG, UPDWN, TRIAN, &

@@ -21,11 +21,12 @@ FC_FLAGS = -r8 -no-prec-div -traceback -ip -fPIC -O0 $(CHECKALLCOMP)
 MODOBJS = \
 $(OBJ_DIR)/json_vars.o \
 $(OBJ_DIR)/debugger.o \
+$(OBJ_DIR)/machine_config.o \
+$(OBJ_DIR)/parse_utils.o \
 $(OBJ_DIR)/emeq.o \
 $(OBJ_DIR)/scalars.o \
+$(OBJ_DIR)/read_input.o \
 $(OBJ_DIR)/time_functions.o \
-$(OBJ_DIR)/io_mod.o \
-$(OBJ_DIR)/machine_config.o \
 $(OBJ_DIR)/status.o \
 $(OBJ_DIR)/transport_solver.o \
 $(OBJ_DIR)/standard_functions.o \
@@ -33,8 +34,6 @@ $(OBJ_DIR)/cpu_usage.o \
 $(OBJ_DIR)/parameters_a2equil.o \
 $(OBJ_DIR)/surface_contours.o \
 $(OBJ_DIR)/flux_avg_imp.o \
-$(OBJ_DIR)/parse_utils.o \
-$(OBJ_DIR)/read_input.o \
 $(OBJ_DIR)/json_rw.o \
 $(OBJ_DIR)/gs_solver.o \
 $(OBJ_DIR)/metrics.o \

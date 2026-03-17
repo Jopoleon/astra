@@ -9,8 +9,7 @@ use scalars, only: IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
     TAU, TAU_NEW, TAU_OLD, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, ATREQ, LEQ, & 
     PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, RBDOT, BBDOT
 use status, only: TE, TI, NE, NI, NIO, FP, defarr, error_catch
-use io_mod, only: MACHINE, TASK
-use read_input, only: raw_cCoil, raw_vCoil
+use read_input, only: raw_cCoil, raw_vCoil, MACHINE, TASK
 use auxiliary, only: IFTREQ, IFSTEP, OLDNEW
 use set_x_data, only: set_x_scalars, set_x_arrays, get_coil
 use metrics, only: CCOIL, VCOIL, plasma_up ,metric

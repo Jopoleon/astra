@@ -1,8 +1,7 @@
 module machine_config
 
 use json_module, only : json_file
-use io_mod, only: machine
-  
+
 implicit none
 
 type(json_file) :: config
@@ -12,9 +11,11 @@ logical :: cfg_exists
 contains
 
 !---------------------------------------------------------------------
-    subroutine config_read
+    subroutine config_read(machine_name)
 
-    json_cfg = 'exp/cnf/' // trim(machine) // '_description_in.json'
+    character(len=*), intent(in) ::  machine_name
+
+    json_cfg = 'exp/cnf/' // trim(machine_name) // '_description_in.json'
     call config%initialize(compact_reals=.true.)
     call config%load(filename=json_cfg)
     INQUIRE(FILE=TRIM(json_cfg), EXIST=cfg_exists)

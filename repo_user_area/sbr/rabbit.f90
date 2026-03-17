@@ -12,7 +12,7 @@ contains
     use rabbit_variables, only: fusion_power, neutron_power
 
     use pi_const, only: GP2
-    use io_mod, only: AWD, nml_file
+    use read_input, only: AWD, nml_file
     use scalars, only: AIM1, TIME, TAU, QNBI, ROC, &
        RTOR, BTOR, NA1, PSIAX, PSIBO
     use status, only: FP, FP_NORM, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &

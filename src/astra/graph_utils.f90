@@ -79,7 +79,7 @@ contains
 !---------------------------------------------------------------------
     subroutine gui_init
 
-    use io_mod, only: resize, n_sbr
+    use read_input, only: resize, n_sbr
     use scalars, only: AB, TINIT, TSCALE, XOUT
     use json_vars, only: n_intern, internNames
 
@@ -233,7 +233,7 @@ contains
 !---------------------------------------------------------------------
     function runidLabel() result(runid_label)
 
-    use io_mod, only: equ_file, exp_file
+    use read_input, only: equ_file, exp_file
 
     character(len=:), allocatable :: runid_label
 
@@ -490,7 +490,7 @@ contains
 !---------------------------------------------------------------------
     subroutine NMARK(POINT, STYL)
 
-    use io_mod, only: resize
+    use read_input, only: resize
 
     integer, parameter :: n_symbols=7, sym_points=16
     integer, parameter, dimension(n_symbols) :: sym_size = (/16, 13, 5, 9, 14, 9, 10/)
@@ -910,8 +910,8 @@ contains
     use status, only: AMETR, MU, SHIF, ELON, TRIA
     use scalars, only: XOUT, NAB, NA1, NA1E, ABC, TINIT, TSCALE, RTOR, &
         MEQUIL, LEQ, TIME
-    use io_mod, only: IFDFAX, NPTM, XAXES, DATAX, equ_file, TOUTX, nr_x_max
-    use read_input, only: raw_profiles
+    use read_input, only: raw_profiles, equ_file, nr_x_max, &
+        IFDFAX, NPTM, XAXES, DATAX, TOUTX
     use dbl2char, only: fmt_smart
     use char_manip, only: len_trim_tab, str_in_list
     use debugger, only: markloc, debug, astra_stop

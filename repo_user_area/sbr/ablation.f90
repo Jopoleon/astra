@@ -5,8 +5,7 @@ subroutine ABLATION(trace, pel_prof)
 !----------------------------------------------------------------------|
 
 use scalars, only: TIME, NA1
-use io_mod, only: AWD, nml_file
-use read_input, only: ufheader, ufrd
+use read_input, only: ufheader, ufrd, AWD, nml_file
 use status, only: NRD, XRHO
 
 implicit none

@@ -15,7 +15,7 @@ contains
     use scalars, only: NA1, RTOR, BTOR, TIME, ROC, SGNIP, SGNBT
     use status, only: TE, NE, FP, XRHO, ZEF, MU, ELON, SHIF, IPOL, &
        AMETR, VOLUM, PEECR, CUECR, AREAT, rho_pol, FP_NORM
-    use io_mod, only: AWD, nml_file
+    use read_input, only: AWD, nml_file
     use numerical_tools, only: qinterp, integr
     use standard_functions, only: VINT, IINT
     use parameters_a2equil, only : equil_now

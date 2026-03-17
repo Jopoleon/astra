@@ -2,6 +2,15 @@ module read_input
 
 implicit none
 
+integer :: n_sbr, restart, nr_x_max
+integer, allocatable, dimension(:) :: IFDFAX, jbeg_arrx, NPTM, IFDFVX
+double precision :: resize, tend_nml
+double precision, allocatable :: TOUTX(:)
+double precision, allocatable, dimension(:, :) :: XAXES, DATAX
+character(len=4) :: machine, TASK
+character(132) :: AWD, astra_ext, nml_file, equ_file, exp_file, NBFILE='***'
+character(len=20), allocatable :: sbr_name(:)
+
 type rawScalars
     integer :: nt_all
     integer, dimension(:), allocatable :: var_index
@@ -36,18 +45,30 @@ contains
     subroutine readInput
 
     use machine_config, only: config_read
-    use io_mod, only: exp_file, equ_file, machine, NBfile
     use parse_utils, only: path_split, inquire_fname, assign_val
-    use json_vars, only: internNames, constNames, varNames, n_intern, n_const
+    use json_vars, only: internNames, constNames, varNames, &
+        n_intern, n_const, n_profx, n_var
     use scalars, only: varValues, constValues, internValues
     use debugger, only: astra_stop
 
     logical :: log_exists
     integer :: jj, jpos, nvar, n_color
     character(len=132) :: file_in, dir_path, fname
+
+! Few allocations + initialisations
     
+    allocate(TOUTX(n_profx))
+    allocate(XAXES(nr_x_max, n_profx), DATAX(nr_x_max, n_profx))
+    allocate(IFDFAX(n_profx), jbeg_arrx(n_profx), NPTM(n_profx))
+    allocate(IFDFVX(n_var))
+    IFDFAX = -1
+    IFDFVX = -1
+
+! Read run info from tmp/astra.nml
+    call read_nml
+
 ! Read machine configuration, if available (need "machine" variable defined)
-    call config_read()
+    call config_read(TRIM(machine))
 
 ! Look for NBfile
     call inquire_fname('nbi', TRIM(exp_file), TRIM(machine), NBFILE)
@@ -80,9 +101,48 @@ contains
     end subroutine readInput
 
 !---------------------------------------------------------------------
+    subroutine read_nml
+
+    use debugger, only: debug, flightsim
+    use scalars, only: TSTART, TEND, TPAUSE
+
+    logical :: nml_exists
+    integer :: ios
+    character(len=132) :: log_file
+    double precision :: tbeg_nml, tpause_nml
+
+    namelist / astra_log / equ_file, exp_file, task, machine, &
+        debug, tbeg_nml, tend_nml, tpause_nml, resize, restart, flightsim
+
+    tbeg_nml   = -1.
+    tend_nml   = -1.
+    tpause_nml = -1.
+    resize = 1.
+
+    log_file = 'tmp/astra.nml'
+    OPEN(161, FILE=TRIM(log_file), delim='apostrophe')
+    READ(161, nml=astra_log, iostat=ios)
+    CLOSE(161)
+
+! Override TPAUSE, TSTART & TEND: command line (astra.nml) has priority
+    if (tbeg_nml   /= -1.) TSTART = tbeg_nml
+    if (tend_nml   /= -1.) TEND   = tend_nml
+    if (tpause_nml /= -1.) TPAUSE = tpause_nml
+
+! Define namelist file nml_file
+    nml_file = 'exp/nml/' // trim(exp_file)
+    INQUIRE(FILE=trim(nml_file), EXIST=nml_exists)
+    if (.not. nml_exists) then
+        nml_file = 'exp/nml/' // trim(machine)
+    endif
+
+    CALL getenv('ASTRA_EXT', astra_ext)
+          
+    end subroutine read_nml
+
+!---------------------------------------------------------------------
     subroutine read_coilx(nunit, stri_in, coilx_out)
 
-    use io_mod, only: exp_file
     use debugger, only: markloc, astra_stop
 
     integer, parameter :: nt_coils_max=25000
@@ -147,7 +207,6 @@ contains
 !---------------------------------------------------------------------
 
     use scalars, only: NA1, AB, ABC, RTOR, varValues, exp_header, TSTART, TEND
-    use io_mod, only: exp_file, IFDFVX, IFDFAX, jbeg_arrx
     use char_manip, only: to_upper, str_in_list
     use debugger, only: markloc, debug, astra_stop
     use parse_utils, only: split2array2

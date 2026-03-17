@@ -6,24 +6,6 @@ implicit none
 
 contains
 
-!----------------------------------------------------------
-    logical function IFDEFX(XARNAM)
-! Name exists in profxNames, and the array is defined
-
-    use io_mod, only: IFDFAX
-    use json_vars, only: profxNames
-
-    character(len=6), intent(in) :: XARNAM
-
-    integer :: j
-
-    j = str_in_list(XARNAM, profxNames)
-    if (j > 0) then
-        if (IFDFAX(j) > 0) IFDEFX = .true. ! True (X-array is defined)
-    endif
-
-    end function IFDEFX
-
 !--------------------------------------------------
 ! Set variable list from file parsing
     SUBROUTINE assign_val(file_in, narr, arr_in, arr_out, n_dim_next)

@@ -81,7 +81,7 @@ class CODE_GEN:
         self.associate_pointers = \
 '''subroutine associate_pointers
 
-use io_mod, only: n_sbr, sbr_name, nr_x_max
+use read_input, only: n_sbr, sbr_name, nr_x_max
 use scalars
 use status
 use json_vars, only: n_const, n_var, n_varx, n_intern, n_intern2, n_prof, n_profx

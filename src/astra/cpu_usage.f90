@@ -1,6 +1,6 @@
 module cpu_usage
 
-use io_mod, only: n_sbr, sbr_name
+use read_input, only: n_sbr, sbr_name
 use scalars, only: NSTEPS, TIME, TSTART
 use debugger, only: markloc
 

@@ -6,7 +6,7 @@ contains
 !---------------------------------------------------------------------
     subroutine kibm2key(KIBM, KEY, return_flag)
 
-    use io_mod, only: TASK, n_sbr
+    use read_input, only: TASK, n_sbr
     use scalars, only: DTEQ
     use char_manip, only: beep_ch
     use debugger, only: astra_stop
@@ -94,7 +94,7 @@ contains
         GRAP, GRAL, TIM7, NAM7, KPRI, nplots_max, &
         NTIMES, TTOUT, TOUT, ASTWIN, ASXWIN, ASKINT, MENUTABLE, &
         set_plot_area, set_plot, plotMode
-    use io_mod, only: n_sbr, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
+    use read_input, only: n_sbr, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
     use char_manip, only: null_ch, beep_ch
     use debugger, only: markloc, debug, astra_stop
     use json_vars, only: internNames, constNames, varNames, n_const, n_var, n_intern
@@ -609,7 +609,7 @@ contains
 
     use scalars, only: NA
     use status, only: MU
-    use io_mod, only: TASK
+    use read_input, only: TASK
     use graph_utils, only: MOD10, nplots_max, NTIMES, TTOUT, TOUT, show_plots
     use debugger, only: markloc, debug
     use auxiliary, only: lineav
@@ -644,7 +644,7 @@ contains
     subroutine refresh_plot(IFKL, MARK, PSNAME)
 ! Corresponds to block from statement 201
 
-    use io_mod, only: TASK
+    use read_input, only: TASK
     use graph_utils, only: astra_gui, KPRI, MOD10, MODEY, RUNID, &
         WarningColor, nplots_max, NTIMES, TOUT, TTOUT, show_plots, &
         set_plot_area, set_plot, plotMode
@@ -728,7 +728,7 @@ contains
 
     use scalars, only: XOUT, NAB, NA, NA1, exp_header, RTOR, ABC, BTOR, IPL, TIME, TAU, constValues
     use status, only: MU, AMETR, RHO, FP
-    use io_mod, only: AWD, equ_file, exp_file
+    use read_input, only: AWD, equ_file, exp_file
     use graph_utils, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, &
         WarningColor, ROUT, RUNID, NRW, NTIMES, TTOUT, TOUT
     use dbl2char, only: fmt_smart
@@ -1274,7 +1274,7 @@ contains
 
     use scalars, only: constValues, varValues
     use char_manip, only: null_ch
-    use io_mod, only: resize
+    use read_input, only: resize
     use dbl2char, only: fmt_smart
     use json_vars, only: n_const, n_var, varNames
 

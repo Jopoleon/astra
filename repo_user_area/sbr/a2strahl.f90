@@ -60,7 +60,7 @@ subroutine A2STRAHL(tau_start, zneocl, dzneocl, dimpsol, shot_in)
 use pi_const, only: GP, GP2
 use scalars, only: TIME, TSTART, TAUPRP, NA1, PSIAX, RTOR, NA, HRO, IPART
 use status, only: FP, UPL, VOLUM, SHIF, NE, TE, TI, AMAIN, ZMAIN
-use io_mod, only: machine, awd, nml_file, astra_ext
+use read_input, only: machine, awd, nml_file, astra_ext
 use numerical_tools, only: qinterp
 
 implicit none

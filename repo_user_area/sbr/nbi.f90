@@ -35,7 +35,7 @@ subroutine NBI
 
 use scalars
 use status
-use io_mod, only: NBFILE
+use read_input, only: NBFILE
 
 implicit none
 

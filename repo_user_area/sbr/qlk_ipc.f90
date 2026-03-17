@@ -26,7 +26,7 @@ contains
     subroutine qlk_ipc(rho_norm_max)
 
     use omp_lib
-    use io_mod, only: equ_file, exp_file, awd
+    use read_input, only: equ_file, exp_file, awd
     use scalars, only: NA1, BTOR, RTOR, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
     use status, only: NE, TE, NI, TI, ZIM1, ZIM2, ZIM3, PBLON, PBPER, &
         PFAST, NIZ3, AMAIN, ER, MU, FP_NORM, RHO, AMETR, SHIF, &

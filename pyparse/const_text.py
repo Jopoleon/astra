@@ -35,7 +35,7 @@ class ININAM:
     header = \
 """subroutine ININAM
 
-use io_mod, only: sbr_name, n_sbr, awd
+use read_input, only: sbr_name, n_sbr, awd
 use graph_utils
 use scalars
 use status
@@ -179,7 +179,7 @@ class INIVAR:
     header = \
 '''subroutine INIVAR
 
-use io_mod, only: IFDFAX
+use read_input, only: IFDFAX
 use scalars
 use nclass_mod
 use status
@@ -219,7 +219,7 @@ use status
 use nclass_mod
 use strahl_mod
 use standard_functions
-use io_mod, only: IFDFVX
+use read_input, only: IFDFVX
 use a2tglf, only: tglf_alloc, tglf_out
 use a2qlk, only: qlk_alloc, qlk_out
 use a2neo, only: neo_alloc, neo_out 
@@ -861,7 +861,7 @@ class INIT_CONVERGE_STEP:
 '''subroutine init_converge_step
 
 use pi_const, only: GP, GP2
-use io_mod, only: equ_file, exp_file
+use read_input, only: equ_file, exp_file
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use scalars
 use status

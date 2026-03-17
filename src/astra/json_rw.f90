@@ -343,7 +343,7 @@ end subroutine read_array_2d
     use parameters_a2equil, only: equil_now
     use scalars, only: NA1, varValues, varxValues, constValues, internValues, intern2Values
     use status, only: profiles, profiles_x
-    use io_mod, only: awd, exp_file, equ_file, restart
+    use read_input, only: awd, exp_file, equ_file, restart
     use debugger, only: debug
     use json_vars, only: equil_sigPtr, equil_profPtr, equil_rectPtr, equil_coordPtr, &
         profPtr, profxPtr, constPtr, internPtr, intern2Ptr, varPtr, varxPtr, n_prof, n_profx

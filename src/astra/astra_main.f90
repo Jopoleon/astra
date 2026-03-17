@@ -9,8 +9,6 @@ program astra
 
 use json_module, only: json_file
 use graph_utils, only: astra_gui, astra_gui_ref, gui_init
-use io_mod, only: TASK, io_init, MACHINE, awd, restart, tend_nml, &
-    exp_file, equ_file
 use cpu_usage, only: cpu_init, cpu_start, wall_start, cpu_report
 use scalars, only: IPART, const_init, RTOR, UPDWN, SHIFT, PSIAX, PSIBO, &
     TIME, TINIT, TSTART, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT, NA1, &
@@ -21,7 +19,8 @@ use transport2fbe, only: transport2fbe_init
 use json_vars, only: read_metadata, n_intern
 use json_rw, only: json_load, write_json, &
     read_scalar_block, read_array_block, read_equil
-use read_input, only: readInput, raw_cCoil
+use read_input, only: readInput, raw_cCoil, TASK, MACHINE, awd, &
+    restart, tend_nml, exp_file, equ_file
 use auxiliary, only: IFTREQ
 use set_x_data, only: set_x_scalars, set_x_arrays, astra_assignments
 use metrics, only: eqguess, metric, CCOIL, VCOIL
@@ -54,7 +53,6 @@ call const_init
 call status_init
 
 call ininam
-call io_init
 call readInput
 call astra_assignments ! ASTRA default assignments
 
