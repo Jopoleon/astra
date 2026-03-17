@@ -16,7 +16,7 @@ contains
 !---------------------------------------------------------------------
     subroutine tglf_alloc
 
-    use const_inc, only: NA1
+    use scalars, only: NA1
 
     if (.not. allocated(tglf_out%chi_i)) then
         allocate(tglf_out%chi_i(NA1), tglf_out%chi_e(NA1), tglf_out%e_pflux(NA1), &
@@ -25,17 +25,16 @@ contains
         allocate(tglf_out%ion_pflux(nspec_max-1, NA1))
     endif
 
-    return
     end subroutine tglf_alloc
   
 !---------------------------------------------------------------------
     subroutine tglf_ipc(rho_norm_max)
 
     use omp_lib
-    use parameter_inc, only: NRD
+    use pi_const, only: GP2  
     use io_mod, only: equ_file, exp_file, awd
-    use const_inc, only: NA1, GP2, BTOR, RTOR, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
-    use status_inc, only: NE, TE, NI, TI, ZEF, PBLON, PBPER, PFAST, &
+    use scalars, only: NA1, BTOR, RTOR, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
+    use status, only: NE, TE, NI, TI, ZEF, PBLON, PBPER, PFAST, &
         ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3, ER, MU, FP_NORM, &
         RHO, AMETR, SHIF, ELON, NDEUT, NTRIT, TRIA, VTOR, G11, VPOL, VRS
     use parameters_a2equil, only: equil_now
@@ -61,7 +60,7 @@ contains
     double precision, dimension(n_scalars) :: scal_in
     double precision, dimension(nrho_m) :: drmin, drmaj, drho, dte, dne, dq, &
         dptot, delong, dtrian, dvpar, dvper, drhodr, dr, dv_r
-    double precision, dimension(NRD) :: rmaj_as, q_as, ni_main_as, &
+    double precision, dimension(NA1) :: rmaj_as, q_as, ni_main_as, &
         vexb_as, vpar_as, vper_as, chie_as, chii_as, e_pflux_as, ptot_as
     double precision, dimension(nrho_m) :: rho_m, gamma_max, omega_max, kymax, &
         te_m, ne_m, vpar_m, vper_m, vexb_m, &
@@ -69,7 +68,7 @@ contains
     double precision, dimension(nspec_max-1) :: zi_max
     double precision, dimension(nspec_max-1, nrho_m) :: dti, dni, ni_m, ti_m, i_pflux
     double precision, dimension(nspec_max-1, nrho_m) :: zi_m 
-    double precision, dimension(nspec_max-1, NRD) :: i_pflux_as
+    double precision, dimension(nspec_max-1, NA1) :: i_pflux_as
     double precision, dimension(n_inputs, nrho_m) :: prof_in
     character(len=32) :: str_nworkers
     character(len=64) :: SBP_NAME
@@ -262,7 +261,7 @@ contains
 
         deallocate(pfn_equ)
 
-        theta_equ = equil_now%coord_sys%position%teta2d
+        theta_equ = equil_now%coord_sys%position%theta2d
         dtheta_elite = GP2/dble(nthe_elite - 1)
         theta_elite = (/ ((jthe - 1.)*dtheta_elite, jthe=1, nthe_elite) /)
     endif
@@ -390,7 +389,6 @@ contains
     call SYSTEM_CLOCK(t_wall2, rate)
     print*, "XPR wall time", dble(t_wall2 - t_wall1)/dble(rate)
 
-    return
     end subroutine tglf_ipc
 
 end module a2tglf

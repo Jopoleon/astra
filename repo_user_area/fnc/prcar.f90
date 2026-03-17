@@ -5,8 +5,8 @@
 ! Usage:  PE=...+PRCAR*NE*NIZ1
 double precision FUNCTION PRCARR(YR)
 
-use const_inc, only: HRO, NA1
-use status_inc, only: TE
+use scalars, only: HRO, NA1
+use status, only: TE
 
 implicit none
 

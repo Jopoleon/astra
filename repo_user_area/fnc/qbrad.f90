@@ -2,8 +2,8 @@
 !   (Yushmanov 11-JAN-89)
 double precision FUNCTION QBRADR(YR)
 
-use const_inc, only: HRO
-use status_inc, only: VR, NE, TE, ZEF
+use scalars, only: HRO
+use status, only: VR, NE, TE, ZEF
 use standard_functions, only: jrho_drho
 
 implicit none

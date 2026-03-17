@@ -33,9 +33,9 @@ use tglf_interface, only: nsm, tglf_zs_in, tglf_ns_in, tglf_mass_in, &
 use tglf_pkg, only: get_eigenvalue_spectrum_out, get_ky_spectrum_out, &
      get_flux_spectrum_out
 
-use parameter_inc, only: NRD
-use const_inc, only: BTOR, RTOR, GP2, AMJ, AIM1, AIM2, AIM3, ZMJ, NA1
-use status_inc, only: NE, TE, NI, TI, ZEF, PBLON, PBPER, PFAST, &
+use pi_const, only: GP2
+use scalars, only: BTOR, RTOR, AMJ, AIM1, AIM2, AIM3, ZMJ, NA1
+use status, only: NRD, NE, TE, NI, TI, ZEF, PBLON, PBPER, PFAST, &
     ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3, ER, MU, FP_NORM, &
     RHO, AMETR, SHIF, ELON, NDEUT, TRIA, VTOR, G11, VPOL, VRS
 use parameters_a2equil, only: equil_now
@@ -79,7 +79,7 @@ double precision :: Bunit_gauss, Bunit_T, cs0, cs00, rhos0, omega0, rhostar2, ln
 double precision :: a0_cm, a0_m, T0, N0, m0, rmin_m, drho_cs, drho_nt, nt_cs, gradrhosq_inv
 double precision :: wdia_trap_tg          ! parameter for trapped fraction model
 
-double precision, dimension(NRD) :: rmaj_as, q_as, ni_main_as, &
+double precision, dimension(NA1) :: rmaj_as, q_as, ni_main_as, &
     vexb_as, vpar_as, vper_as, mtori_as, chie_as, chii_as, e_pflux_as, ptot_as
 double precision, dimension(nrho_m) :: mtori, chie, chii, exchi, epflux, rho_m, &
     gamma_max, omega_max, kymax, ti_m, te_m, ne_m, vpar_m, vper_m, vexb_m, &
@@ -89,7 +89,7 @@ double precision, allocatable, dimension(:) :: gamma, omega, kyspectrum, efluxsp
 double precision, dimension(nsm-1) :: dni
 double precision, dimension(nsm-1, nrho_m) :: ni_m, i_pflux
 double precision, dimension(nsm-2, nrho_m) :: zimp_m
-double precision, dimension(nsm-1, NRD) :: ni_as, i_pflux_as
+double precision, dimension(nsm-1, NA1) :: ni_as, i_pflux_as
 ! ELITE
 double precision, allocatable, dimension(:) :: theta_equ, pfn_equ
 double precision, allocatable, dimension(:, :) :: RR_tg, ZZ_tg, Bp_tg
@@ -217,7 +217,7 @@ if (geom_flag == 3) then
 
     deallocate(pfn_equ)
 
-    theta_equ = equil_now%coord_sys%position%teta2d
+    theta_equ = equil_now%coord_sys%position%theta2d
     dtheta_elite = GP2/dble(nthe_elite-1)
     theta_elite = (/ ((jthe - 1.)*dtheta_elite, jthe=1, nthe_elite) /)
 endif
@@ -559,5 +559,4 @@ enddo
 call SYSTEM_CLOCK(t_wall2, rate)
 print*, "TGLF_serial wall time", dble(t_wall2 - t_wall1)/dble(rate)
 
-return
 END subroutine tglf_serial

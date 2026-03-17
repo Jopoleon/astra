@@ -4,8 +4,8 @@
 
 double precision function NECHR(r_in)
 
-use const_inc, only: HRO, NA, NA1
-use status_inc, only: NE
+use scalars, only: HRO, NA, NA1
+use status, only: NE
 
 implicit none
 
@@ -16,7 +16,7 @@ double precision :: YR, YXO, YX, YDEL
 YX = 0.
 YXO = 0.
 NECHR = 0.
-if(r_in >= HRO*NA) then
+if (r_in >= HRO*NA) then
     NECHR = 0.
     return
 endif
@@ -31,7 +31,7 @@ enddo
 ! Initial value of the integral
 YXO = 0.
 jbeg = J - 1
-IF(jbeg == 1) then
+if (jbeg == 1) then
     NECHR = (YX - YXO)*2.*NE(1)
 else
     YR = HRO*(jbeg - 0.5)
@@ -50,5 +50,4 @@ enddo
 
 NECHR = NECHR*0.5/(HRO*NA1)
 
-return
 end function NECHR

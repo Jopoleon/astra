@@ -2,8 +2,8 @@
 !           (Yushmanov 11-JAN-89)
 double precision FUNCTION QDTR(YR)
 
-use status_inc, only: VR, TI, NDEUT, NTRIT
-use const_inc, only: HRO
+use status, only: VR, TI, NDEUT, NTRIT
+use scalars, only: HRO
 
 implicit none
 
@@ -23,5 +23,4 @@ do J=1, JK
 enddo
 QDTR = HRO*(QDTR - PDT*HRO)
 
-return
 end function QDTR

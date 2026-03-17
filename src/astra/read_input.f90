@@ -39,7 +39,7 @@ contains
     use io_mod, only: exp_file, equ_file, machine, NBfile
     use parse_utils, only: path_split, inquire_fname, assign_val
     use json_vars, only: internNames, constNames, varNames, n_intern, n_const
-    use const_inc, only: varValues, constValues, internValues
+    use scalars, only: varValues, constValues, internValues
     use debugger, only: astra_stop
 
     logical :: log_exists
@@ -146,9 +146,8 @@ contains
 ! jbeg_arrx  - pointer to a position in the array raw_profiles%time
 !---------------------------------------------------------------------
 
-    use parameter_inc, only: NRDX
-    use const_inc, only: NA1, AB, ABC, RTOR, varValues, exp_header, TSTART, TEND
-    use io_mod, only: exp_file, IFDFVX, IFDFAX, jbeg_arrx, NGR
+    use scalars, only: NA1, AB, ABC, RTOR, varValues, exp_header, TSTART, TEND
+    use io_mod, only: exp_file, IFDFVX, IFDFAX, jbeg_arrx
     use char_manip, only: to_upper, str_in_list
     use debugger, only: markloc, debug, astra_stop
     use parse_utils, only: split2array2
@@ -157,7 +156,7 @@ contains
     integer, parameter :: len_data_max=250000, n_unit=201, nbnd_max=400000
 
     logical :: skip_read=.false.
-    integer :: jarr, INTYPE, jtype, nr_exp, ntim, ntim1, n_coils, IVAR
+    integer :: jarr, INTYPE, jtype, nr_exp, ntim, ntim1, n_coils, IVAR, NGR
     integer, allocatable, dimension(:) :: int_json
     integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
     integer :: n_words, i_filter_glob, len_profs_data, len_profs_time, len_scalars
@@ -702,12 +701,6 @@ contains
             call ufheader(TRIM(ufile_in), nscal_u, ndim_u, nt_u, nx_u, rholbl)
             call ufrd(TRIM(ufile_in), nscal_u, ndim_u, nt_u, nx_u, t_u, x_u, var_u)
 
-            if (nx_u > NRDX) then
-                write(err_msg, '(3A, i, A, i)') '>>> U-file "', TRIM(ufile_in), &
-                    '" error: radial grid size ', nx_u, ' is larger than', NRDX
-                call astra_stop(err_msg)
-            endif
-
             call CHECKU(INTYPE, ABC, AB, XBDRY, raw_profiles%data(jarr+1), nx_u, nr_exp, rholbl, ufile_in)
 
             do j=1, nr_exp
@@ -765,10 +758,6 @@ contains
             if (nr_exp <= 1) then
                 write(err_msg, '(3A, 8X, A)') err_msg, 'Input quantity: ', TRIM(VNAM), &
                     'Number of grid points must be > 1'
-                call astra_stop(err_msg)
-            endif
-            if (nr_exp > NRDX) then
-                write(err_msg, '(2A, i)') err_msg_exp, 'Number of radial points > ', NRDX
                 call astra_stop(err_msg)
             endif
 

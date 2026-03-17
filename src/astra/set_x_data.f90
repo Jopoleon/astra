@@ -66,9 +66,9 @@ contains
 ! Then it is stored for the current time in the arrays
 !--------------------------------------------------------------------
 
-    use parameter_inc, only: NRD
-    use const_inc, only: TIME, BTOR, GP, AB, ABC, ROC, VOLUME, NA1, NAB, PSIAX
-    use status_inc, only: AMETR, RHO, FP, VOLUM, profiles_x, rho_pol
+    use pi_const, only: GP
+    use scalars, only: TIME, BTOR, AB, ABC, ROC, VOLUME, NA1, NAB, PSIAX
+    use status, only: NRD, AMETR, RHO, FP, VOLUM, profiles_x, rho_pol
     use numerical_tools, only: qinterp, sortab, smooth
     use io_mod, only: jbeg_arrx, IFDFAX, XAXES, DATAX, NPTM, TOUTX
     use debugger, only: markloc, astra_stop
@@ -98,7 +98,7 @@ contains
 ! profiles_x(jprof, kn)   - smoothed curve
 !--------------------------------------------------------------------
 
-    call markloc('SETARX')
+    call markloc('set_x_arrays')
 
     var_loop: do jtarr=1, raw_profiles%n_groups
         if (raw_profiles%arr_index(jtarr) == 0) EXIT
@@ -447,14 +447,14 @@ contains
 !-----------------------------------------------------------------------
 
     use io_mod, only: IFDFVX
-    use const_inc, only: varxValues, varValues, TIME
+    use scalars, only: varxValues, varValues, TIME
     use read_input, only: raw_scalars
     use debugger, only: markloc
 
     integer :: jtvar, N1, N2
     double precision :: ydt, ydtr, ydtl
 
-    call markloc('INTVAR')
+    call markloc('set_x_scalars')
 
     N1 = 0
     N2 = 0
@@ -486,12 +486,12 @@ contains
 !----------------------------------------------------------------------
     subroutine astra_assignments
 
-    use parameter_inc, only: NRD
-    use const_inc, only: NA1, NA, NB1, NAB, AB, ABC, AWALL, TIME, TSTART, TPAUSE, &
+    use pi_const, only: GP, GP2
+    use scalars, only: NA1, NA, NB1, NAB, AB, ABC, AWALL, TIME, TSTART, TPAUSE, &
          TAUMIN, TAUPRP, VOLUME, IPL, IPLN, HRO, HROX, ROC, ROCO, BTN, FTO, FTN, &
-         GP, GP2, PSIAX, PSIBO, RTOR, BTOR, SHIFT, ROWALL, ELONM, ELONG, TRICH, TRIAN, &
+         PSIAX, PSIBO, RTOR, BTOR, SHIFT, ROWALL, ELONM, ELONG, TRICH, TRIAN, &
          TINIT, TSCALE, TIMEQL, DTEQL
-    use status_inc, only: XRHO, SXHO, RHO, SRHO, AMETR, &
+    use status, only: NRD, XRHO, SXHO, RHO, SRHO, AMETR, &
         G11, G22, VR, VRO, VRS, VOLUM, &
         FP, FPO, FP_NORM, rho_pol, NE, NEO, TE, TEO, UPAR, UPARO, MRHO, &
         AMAIN, UPS0, UPS0O

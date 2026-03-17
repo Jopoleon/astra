@@ -2,8 +2,9 @@
 !   (Pereverzev 12-FEB-90)
 double precision FUNCTION QOHR(YR)
 
-use const_inc, only: RTOR, GP2, NA1
-use status_inc, only: ULON, IPOL, CC, G33
+use pi_const, only: GP2
+use scalars, only: RTOR, NA1
+use status, only: ULON, IPOL, CC, G33
 use standard_functions, only: VINT
 
 implicit none

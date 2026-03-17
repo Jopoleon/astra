@@ -2,12 +2,12 @@
 
 double precision FUNCTION QUTOTR(YR)
 
-use status_inc, only: TTRQ
+use status, only: TTRQ
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT
 
 QUTOTR = VINT(TTRQ, YR)
 

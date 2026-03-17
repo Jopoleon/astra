@@ -2,7 +2,7 @@
 !   (Yushmanov 11-JAN-89)
 double precision FUNCTION QRADR(YR)
 
-use status_inc, only: PRAD
+use status, only: PRAD
 use standard_functions, only: VINT
 
 implicit none

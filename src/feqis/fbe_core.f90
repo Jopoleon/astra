@@ -53,7 +53,7 @@ contains
 !--------------------------------------------------------------------
     function solve_gs2d(greenBnd_in) result(green_out)
 
-    use pi_vars, only: mu0
+    use pi_const, only: mu0
     use feqis_tools, only: discrete_sine_transform, solve_tridiag_fbe, costable
 
     double precision, intent(in), dimension(2*nr+2*nz) :: greenBnd_in
@@ -294,7 +294,7 @@ contains
     double precision function bgint(green_in, j_in)
 ! Integral_over_boundary of -Green * dg/dn * dl
 
-    use pi_vars, only: GPI
+    use pi_const, only: GP
 
     double precision, intent(in), dimension(nr2, nz2) :: green_in
     integer, intent(in)  :: j_in
@@ -320,7 +320,7 @@ contains
         dgdn(jcount) = green_in(2, j) * green_bnd_f(j_in, jcount) * dz/dr * 2./(Rrect(1) + Rrect(2))
     enddo
 
-    bgint = sum(dgdn)/GPI
+    bgint = sum(dgdn)/GP
 
     end function bgint
 
@@ -439,7 +439,7 @@ contains
 !--------------------------------------------------------------------
     subroutine find_psi_boundary
 
-    use pi_vars, only: GPI
+    use pi_const, only: GP
     use errors_params, only: err_find_oxpoints_derivs
     use feqis_tools, only: closest_index, pol_angle, interp2d_psi
     use transport2fbe, only: use_limiter
@@ -600,10 +600,10 @@ contains
         do i=1, n_of_xpoints
             if (psi_xpoint(i) > -1.e5) then
                 x1 = pol_angle(rax, zax, r_xpoint(i), z_xpoint(i))
-                if ((r_xpoint(i) > rax) .and. (x1 >= 7./4.*GPI .or.  x1 <= GPI/4.   )) raus   = min(raus, r_xpoint(i))
-                if ((z_xpoint(i) > zax) .and. (x1 >=   GPI/4.  .and. x1 <= 3./4.*GPI)) ztop   = min(ztop, z_xpoint(i))
-                if ((r_xpoint(i) < rax) .and. (x1 >= 3./4.*GPI .and. x1 <= 5./4.*GPI)) rinner = max(rinner, r_xpoint(i))
-                if ((z_xpoint(i) < zax) .and. (x1 >= 5./4.*GPI .and. x1 <= 7./4.*GPI)) zbot   = max(zbot, z_xpoint(i))
+                if ((r_xpoint(i) > rax) .and. (x1 >= 7./4.*GP .or.  x1 <= GP/4.   )) raus   = min(raus, r_xpoint(i))
+                if ((z_xpoint(i) > zax) .and. (x1 >=   GP/4.  .and. x1 <= 3./4.*GP)) ztop   = min(ztop, z_xpoint(i))
+                if ((r_xpoint(i) < rax) .and. (x1 >= 3./4.*GP .and. x1 <= 5./4.*GP)) rinner = max(rinner, r_xpoint(i))
+                if ((z_xpoint(i) < zax) .and. (x1 >= 5./4.*GP .and. x1 <= 7./4.*GP)) zbot   = max(zbot, z_xpoint(i))
             endif
         enddo
         do j=1, nlimiter
@@ -649,7 +649,7 @@ contains
     subroutine new_jrz ! calculate new right hand side given new boundary!
 
     use feqis_tools, only: fill_in_current, floor_index
-    use scalars, only: iplasma
+    use feqis_scalars, only: iplasma
 
     integer :: i, j, i1, i2, j1, quadrant, ipluz, jpluz, &
         ilast, totpoints, istart, j_griddo_j

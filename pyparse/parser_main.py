@@ -20,7 +20,13 @@ def astra_parser(f_equ, f_exp):
     for var in equ.arname:
         if var not in exp.profiles['label']:
             logger.warning('X array %s used in equ, but missing in exp\n', var)
-    return code_gen.CODE_GEN(equ)
+# Sanity check for x-input array size
+    for jvar, var in enumerate(exp.profiles['label']):
+        if len(exp.profiles['rho']) > 500:
+            logger.warning('X array %s has nrho > 500', var)
+    nr_x_max = max([len(x) for x in exp.profiles['rho']])
+    print("NRX_MAX", nr_x_max)
+    return code_gen.CODE_GEN(equ, nr_x_max)
 
 
 def write_tmp(txt, dir_out=None):

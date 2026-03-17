@@ -2,12 +2,12 @@
 !   (Pereverzev 9-OCT-07)
 double precision FUNCTION QD0R(YR)
 
-use status_inc, only: SD0
+use status, only: SD0
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT
 
 QD0R = VINT(SD0, YR)
 

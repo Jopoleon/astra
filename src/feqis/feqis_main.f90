@@ -8,8 +8,8 @@ use fbe_core, only: nr2, nz2, nr1, nz1, Rrect, Zrect, &
     psirz, psiextrz, &
     psi_external_calc, nbnd, i_plasmatype, &
     r_xpoint, z_xpoint, n_of_xpoints, active_x_point
-use pbe_core, only: nrho, nteta, psibndp, psiaxisp
-use scalars, only: psplex, iplasma
+use pbe_core, only: nrho, ntheta, psibndp, psiaxisp
+use feqis_scalars, only: psplex, iplasma
 use transport2fbe, only: refit_mode, simple_plasma_model_breakdown, &
     plasma_config, x_point_save
 use feqis_solvers, only: feqis_init, equil_init_circ, fix_boundary, &
@@ -34,7 +34,7 @@ save j_call, j_init, j_vacplas
 call feqis_init(equil_in, neql, k_fixfree, j_init, ifplasma)
 
 nrplasma = nrho
-nbnd = nteta ! for fbe
+nbnd = ntheta ! for fbe
 
 if (j_call == 0) then
     nr2 = SIZE(equil_in%eqgeometry%rectgrid%r2d)
@@ -60,24 +60,24 @@ if (j_call == 0) then
 endif
 
 if (ifplasma == 1) then
-    allocate(equil_out%eqgeometry%boundary%r(nteta))
-    allocate(equil_out%eqgeometry%boundary%z(nteta))
+    allocate(equil_out%eqgeometry%boundary%r(ntheta))
+    allocate(equil_out%eqgeometry%boundary%z(ntheta))
     allocate(equil_out%eqgeometry%rectgrid%r2d(nr2))
     allocate(equil_out%eqgeometry%rectgrid%z2d(nz2))
     allocate(equil_out%eqgeometry%rectgrid%psirz2d(nr2, nz2))
     allocate(equil_out%eqgeometry%rectgrid%fdia2d(nr2, nz2))
 
-    allocate(equil_out%coord_sys%position%r(nrplasma, nteta))
-    allocate(equil_out%coord_sys%position%z(nrplasma, nteta))    
-    allocate(equil_out%coord_sys%position%teta2d(nteta))    
-    allocate(equil_out%coord_sys%position%rmin(nrplasma, nteta))    
-    allocate(equil_out%coord_sys%position%psirz(nrplasma, nteta))    
-    allocate(equil_out%coord_sys%gradvcell(nrplasma, nteta))
-    allocate(equil_out%coord_sys%bpcell(nrplasma, nteta))
-    allocate(equil_out%coord_sys%bcell(nrplasma, nteta))
-    allocate(equil_out%coord_sys%rcell(nrplasma, nteta))
-    allocate(equil_out%coord_sys%darea(nrplasma, nteta))
-    allocate(equil_out%coord_sys%jphi(nrplasma, nteta))
+    allocate(equil_out%coord_sys%position%r(nrplasma, ntheta))
+    allocate(equil_out%coord_sys%position%z(nrplasma, ntheta))    
+    allocate(equil_out%coord_sys%position%theta2d(ntheta))    
+    allocate(equil_out%coord_sys%position%rmin(nrplasma, ntheta))    
+    allocate(equil_out%coord_sys%position%psirz(nrplasma, ntheta))    
+    allocate(equil_out%coord_sys%gradvcell(nrplasma, ntheta))
+    allocate(equil_out%coord_sys%bpcell(nrplasma, ntheta))
+    allocate(equil_out%coord_sys%bcell(nrplasma, ntheta))
+    allocate(equil_out%coord_sys%rcell(nrplasma, ntheta))
+    allocate(equil_out%coord_sys%darea(nrplasma, ntheta))
+    allocate(equil_out%coord_sys%jphi(nrplasma, ntheta))
     
     allocate(equil_out%profiles_1d%psi(nrplasma))
     allocate(equil_out%profiles_1d%pressure(nrplasma))

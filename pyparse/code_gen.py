@@ -18,7 +18,7 @@ awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 class CODE_GEN:
 
 
-    def __init__(self, parse):
+    def __init__(self, parse, nr_x_max):
 
 
         eqns_lin = parse.eqns_lines
@@ -81,16 +81,16 @@ class CODE_GEN:
         self.associate_pointers = \
 '''subroutine associate_pointers
 
-use parameter_inc, only: NRD
-use io_mod, only: n_sbr, sbr_name
-use const_inc
-use status_inc
+use io_mod, only: n_sbr, sbr_name, nr_x_max
+use scalars
+use status
 use json_vars, only: n_const, n_var, n_varx, n_intern, n_intern2, n_prof, n_profx
 
 implicit none
 
 '''
         self.associate_pointers += 'n_sbr = %d\n' %len(parse.sbr_lines)
+        self.associate_pointers += 'nr_x_max = %d\n' %nr_x_max
         self.associate_pointers += \
 '''allocate(constValues(n_const))
 allocate(varValues(n_var))
@@ -269,8 +269,6 @@ end subroutine DETVAR'''
             if parse.assign_d['CU'] == 'AS':
                 inivar += 'CU(J) = CC(J)\n'
         inivar += 'enddo\n'
-
-        self.iniv = inivar
 
         self.inivar  = const_text.INIVAR.header
         self.inivar += inivar

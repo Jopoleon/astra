@@ -242,9 +242,9 @@ contains
 ! Implicit scheme !
 !------------------
 
-    use status_inc, only: PEIQI, NE, NI, TE, TI, ZMAIN, AMAIN, NMAIN, & 
+    use status, only: PEIQI, NE, NI, TE, TI, ZMAIN, AMAIN, NMAIN, & 
         NIZ1, NIZ2, NIZ3, ZIM1, ZIM2, ZIM3, PET, PIT
-    use const_inc, only: IPROT, AIM1, AIM2, AIM3
+    use scalars, only: IPROT, AIM1, AIM2, AIM3
 
     integer, intent(in) :: j
     double precision :: COULG, SUZPEI, t1, t2

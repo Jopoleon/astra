@@ -9,8 +9,8 @@ contains
 ! Returns the radial integer index of the psi_95 position, at the left
 ! i in input is a dummy integer, so call it as N_95_POS(0)
 
-    use const_inc, only: NA1
-    use status_inc, only: FP_NORM
+    use scalars, only: NA1
+    use status, only: FP_NORM
 
     integer, intent(in) :: i
 
@@ -27,8 +27,8 @@ contains
     double precision function V_95_POS(Yin)
 ! Returns the value of array Y(na1) at the 0.95 psi position
 
-    use const_inc, only: NA1, PSIAX
-    use status_inc, only: FP
+    use scalars, only: NA1, PSIAX
+    use status, only: FP
 
     double precision, intent(in), dimension(NA1) :: Yin
 
@@ -53,8 +53,8 @@ contains
     double precision function RFA(YA)
 ! rho=f(a) "rho" at a given radius "a"
 
-    use const_inc, only: NA1
-    use status_inc, only: AMETR, RHO
+    use scalars, only: NA1
+    use status, only: AMETR, RHO
     use numerical_tools, only: QUADIN
 
     double precision, intent(in) :: YA
@@ -67,7 +67,7 @@ contains
     double precision function RFAN(YAN)
 ! rho=f(r/a) "rho" at a given radius "r/a"
 
-    use const_inc, only: ABC
+    use scalars, only: ABC
 
     double precision, intent(in) :: YAN
 
@@ -79,7 +79,7 @@ contains
     double precision function XFA(YA)
 ! x=f(a) "x"=rho/roc at a given radius "a"
 
-    use const_inc, only: ROC
+    use scalars, only: ROC
 
     double precision, intent(in) :: YA
 
@@ -91,7 +91,7 @@ contains
     double precision function XFAN(YAN)
 ! rho=f(a) "rho" at a given radius "a"
 
-    use const_inc, only: ABC
+    use scalars, only: ABC
 
     double precision, intent(in) :: YAN
 
@@ -103,8 +103,8 @@ contains
     double precision function AFR(YR)
 ! a=f(rho) "a" at a given radius "rho"
 
-    use const_inc, only: NA1
-    use status_inc, only: RHO, AMETR
+    use scalars, only: NA1
+    use status, only: RHO, AMETR
     use numerical_tools, only: QUADIN
 
     double precision, intent(in) :: YR
@@ -117,7 +117,7 @@ contains
     double precision function AFX(YX)
 ! a=f(rho/roc) "a" at a given radius "x"=rho/roc
 
-    use const_inc, only: ROC
+    use scalars, only: ROC
 
     double precision, intent(in) :: YX
 
@@ -129,7 +129,7 @@ contains
     double precision function FRMAX(YA)
 ! Usage: CF1=FRMAX(TE); qmax_1/FRMAX(MU);
 
-    use const_inc, only: NA1
+    use scalars, only: NA1
 
     double precision, intent(in) :: YA(*)
 
@@ -141,7 +141,7 @@ contains
     double precision function FRMIN(YA)
 ! Usage: CF1=FRMIN(TE); qmin_1/FRMIN(MU);
 
-    use const_inc, only: NA1
+    use scalars, only: NA1
 
     double precision, intent(in) :: YA(*)
 
@@ -164,8 +164,8 @@ contains
 !
 ! Using in FORTRAN: RFMAX(TE) or RFMAX(TE(1))
 
-    use const_inc, only: NA1
-    use status_inc, only: RHO
+    use scalars, only: NA1
+    use status, only: RHO
 
     double precision, intent(in) :: YA(*)
     integer :: jmax
@@ -181,8 +181,8 @@ contains
 !   (Pereverzev 17-JUL-97)
 ! Usage: CF1=RFMIN(CAR1); rmnH_RFMIN(HE);
 
-    use const_inc, only: NA1
-    use status_inc, only: RHO
+    use scalars, only: NA1
+    use status, only: RHO
 
     double precision, intent(in) :: YA(*)
     integer :: jmin
@@ -202,8 +202,8 @@ contains
 !      (2) rq2_RFVAL(MU,.5)/ROC; ! ------------------------ MU=0.5
 !      (3) RFVAL(AMETR,a0)  ! Recalculates "a0" in "rho"
 
-    use const_inc, only: NA1
-    use status_inc, only: RHO
+    use scalars, only: NA1
+    use status, only: RHO
 
     double precision, intent(in) :: YVAL, YA(*)
     integer :: j
@@ -237,8 +237,8 @@ contains
 ! Usage: CAR1=NUES; ...=AFVAL(CAR1,.1);
 !  aq2_AFVAL(MU,.5)/ROC;
 
-    use const_inc, only: NA1
-    use status_inc, only: AMETR
+    use scalars, only: NA1
+    use status, only: AMETR
 
     double precision, intent(in) :: YVAL, YA(*)
     integer :: j
@@ -300,8 +300,8 @@ contains
 ! Usage: CAR1=NUES; ...=RFVIN(CAR1,.1);
 !  rq2_RFVIN(MU,.5)/ROC;
 
-    use const_inc, only: NA1
-    use status_inc, only: RHO
+    use scalars, only: NA1
+    use status, only: RHO
 
     double precision, intent(in) :: YVAL, YA(*)
     integer j
@@ -335,8 +335,8 @@ contains
 ! Usage: CAR1=NUES; ...=AFVIN(CAR1,.1);
 !  rq2_AFVIN(MU,.5)/ROC;
 
-    use const_inc, only: NA1
-    use status_inc, only: AMETR
+    use scalars, only: NA1
+    use status, only: AMETR
 
     double precision, intent(in) :: YVAL, YA(*)
 
@@ -378,8 +378,8 @@ contains
 !    Optional output: a_res, shift, elongation, triangularity
 ! Example: CF3=RECR(0.,2)/ROC; PEECR=QECR*GAUSS(CF3,0.1);
 
-    use const_inc, only: NA1, RTOR, BTOR, FECR
-    use status_inc, only: AMETR, RHO
+    use scalars, only: NA1, RTOR, BTOR, FECR
+    use status, only: AMETR, RHO
     use numerical_tools, only: QUADIN
 
     integer, intent(in) :: N
@@ -406,8 +406,8 @@ contains
 !      (Pereverzev 01-AUG-96)
 !    Does not work for multiple calls, due to save?
 
-    use const_inc, only: NA1, ROC, HRO
-    use status_inc, only: RHO, VR
+    use scalars, only: NA1, ROC, HRO
+    use status, only: RHO, VR
 
     integer, intent(in) :: j
     double precision, intent(in) :: YX, YW
@@ -446,7 +446,7 @@ contains
 ! CV1=XQMINB; HE=HE*ASTEP(CV1);
 !      (Pereverzev 01-AUG-96)
 
-    use status_inc, only: AMETR
+    use status, only: AMETR
 
     integer, intent(in) :: j
     double precision, intent(in) :: YA
@@ -468,7 +468,7 @@ contains
 ! PE=RSTEP(.1)-RSTEP(0.2); Step\RSTEP(.1);
 !      (Pereverzev 01-AUG-96)
 
-    use status_inc, only: RHO
+    use status, only: RHO
 
     integer, intent(in) :: j
     double precision, intent(in) :: YR
@@ -491,8 +491,8 @@ contains
 ! CV1=XQMINB; HE=HE*XSTEP(CV1);
 !      (Pereverzev 01-AUG-96)
 
-    use const_inc, only: ROC
-    use status_inc, only: RHO
+    use scalars, only: ROC
+    use status, only: RHO
 
     integer, intent(in) :: j
     double precision, intent(in) :: YX
@@ -533,7 +533,7 @@ contains
 !    out_GRAD(CAR3B) !Gradient CAR3 dCAR3/dRo at the boundary
 !    out_GRAD(CAR3C) !Gradient CAR3 dCAR3/dRo at the center
 
-    use const_inc, only: HRO, NA, NA1
+    use scalars, only: HRO, NA, NA1
 
     integer, intent(in) :: j
     double precision, intent(in) :: Y(*)
@@ -555,7 +555,7 @@ contains
 !    out_GRADS(CAR3B) !Gradient CAR3 dCAR3/dRo at the boundary
 !    out_GRADS(CAR3C) !Gradient CAR3 dCAR3/dRo at the center
 
-    use const_inc, only: HRO, ROC, NA, NA1
+    use scalars, only: HRO, ROC, NA, NA1
 
     integer, intent(in) :: j
     double precision, intent(in) :: Y(*)
@@ -578,8 +578,8 @@ contains
 !    out_Linint(CAR3B)!Total line integral of CAR3 (0,ROC)
 !   (Yushmanov 26-DEC-90)
 
-    use const_inc, only: HRO
-    use status_inc, only: AMETR
+    use scalars, only: HRO
+    use status, only: AMETR
 
     double precision, intent(in) :: YR, ARR(*)
     integer :: J, JK
@@ -606,8 +606,8 @@ contains
 !    out_Vint(CAR3B)!Total volume integral of CAR3 (0,ROC)
 !   (Yushmanov 26-DEC-90)
 
-    use const_inc, only: HRO
-    use status_inc, only: VR
+    use scalars, only: HRO
+    use status, only: VR
 
     double precision, intent(in) :: YR, ARR(*)
     integer :: J, JK
@@ -632,8 +632,8 @@ contains
 !    out_Vint(CAR3B)!Total volume integral of CAR3 (0,ROC)
 !   (Yushmanov 26-DEC-90)
 
-    use const_inc, only: HRO
-    use status_inc, only: VRO
+    use scalars, only: HRO
+    use status, only: VRO
 
     double precision, intent(in) :: YR, ARR(*)
     integer J, JK
@@ -659,8 +659,9 @@ contains
 !    out_Iint(CUB)  !Total toroidal current =Iint(CU,ROC); (=IPL)
 !   (Pereverzev 23-OCT-99)
 
-    use const_inc, only: HRO, NA, GP2
-    use status_inc, only: RHO, IPOL, G33
+    use pi_const, only: GP2
+    use scalars, only: HRO, NA
+    use status, only: RHO, IPOL, G33
 
     double precision, intent(in) :: YR, ARR(*)
 
@@ -690,7 +691,7 @@ contains
     integer function NODE(YR)
 ! Radial node number nearest to YR (radius larger than YR)
 
-    use const_inc, only: ROC, HRO, NA1
+    use scalars, only: ROC, HRO, NA1
 
     double precision, intent(in) :: YR
 
@@ -710,8 +711,8 @@ contains
 ! Interpolation of ARR to the radial position R
 !   It is assumed that the array ARR(j) is given on the grid RHO(j)
 
-    use const_inc, only: NA1
-    use status_inc, only: RHO
+    use scalars, only: NA1
+    use status, only: RHO
     use numerical_tools, only: qinterp
 
     double precision, intent(in) :: YR, ARR(*)
@@ -728,7 +729,7 @@ contains
 ! Interpolation of ARR to the radial position R
 !   It is assumed that the array ARR(j) is given at points j*HRO
 
-    use const_inc, only: NA1, HRO
+    use scalars, only: NA1, HRO
 
     double precision, intent(in) :: YR, ARR(*)
     integer :: JK
@@ -763,7 +764,7 @@ contains
 ! Interpolation of ARR to the radial position R
 !   It is assumed that the array ARR(j) is given on the grid RHO(j)
 
-    use const_inc, only: ROC
+    use scalars, only: ROC
 
     double precision, intent(in) :: YR, ARR(*)
 
@@ -791,7 +792,7 @@ contains
 ! IPL=.1+.2*framp(0.21,0.27)
 !   (Yushmanov 26-DEC-90)
 
-    use const_inc, only: TIME
+    use scalars, only: TIME
 
     double precision, intent(in) :: T1, T2
 
@@ -817,7 +818,7 @@ contains
 ! IPL=.1+.2*fjump(.21d0)
 !   (Yushmanov 26-DEC-90)
 
-    use const_inc, only: TIME
+    use scalars, only: TIME
 
     double precision, intent(in) :: T1
 
@@ -840,7 +841,7 @@ contains
 !       CAR3=FBOX(
 !   (Pereverzev 26-JAN-06)
 
-    use const_inc, only: TIME
+    use scalars, only: TIME
 
     double precision, intent(in) :: T1, T2
 
@@ -861,8 +862,8 @@ contains
 !        CAR3=FXBOX(5.d-1,7.d-1)
 !     (Pereverzev 26-JAN-06)
 
-    use const_inc, only: ROC
-    use status_inc, only: RHO
+    use scalars, only: ROC
+    use status, only: RHO
 
     integer, intent(in) :: j
     double precision, intent(in) :: X1,X2
@@ -885,7 +886,7 @@ contains
 !   (Yushmanov 13-FEB-91)
 ! Changed by Pereverzev 15.10.98
 
-    use const_inc, only: TIME
+    use scalars, only: TIME
     use time_functions, only: f_id, function_id, nloc
 
     double precision, intent(in) :: Y
@@ -922,7 +923,7 @@ contains
 !   (Yushmanov 13-FEB-91)
 ! Changed by Pereverzev 15.10.98
 
-    use const_inc, only: TIME
+    use scalars, only: TIME
     use time_functions, only: f_id, function_id, nloc
 
     double precision, intent(in) :: Y
@@ -962,7 +963,7 @@ contains
 !   YI(IY) - integral of Y
 !   YT(IY) - time of the previous calling
 
-    use const_inc, only: TIME
+    use scalars, only: TIME
     use time_functions, only: f_id, function_id, nloc
 
     double precision, intent(in) :: Y, YTINT
@@ -1006,7 +1007,7 @@ contains
 ! This output produces an increment of l_i(t) with respect to t=1sec
 !   (Pereverzev 15-OCT-98)
 
-    use const_inc, only: TIME
+    use scalars, only: TIME
     use time_functions, only: f_id, function_id, nloc
 
     double precision, intent(in) :: Y, YTIME
@@ -1050,7 +1051,7 @@ contains
 ! G.W. Pacher (18/01/1994)
 ! Changed by Pereverzev 15.10.98
 
-    use const_inc, only: TAU, TIME
+    use scalars, only: TAU, TIME
     use time_functions, only: f_id, function_id, nloc
 
     double precision, intent(in) :: Y, YTAV
@@ -1094,7 +1095,7 @@ contains
 !      Use CV1=UPLB; CV2=FTAV2(CV1)
 !reated by Pereverzev 8.08.2007
 
-    use const_inc, only: TIME
+    use scalars, only: TIME
 
     integer, parameter :: JBASE=100
     double precision, intent(in) :: Y
@@ -1223,8 +1224,8 @@ contains
 ! and del(j), elo(j), tri(j) are given as arrays[1:N] 
 !      on the grid A=AMETR(j)
 
-    use const_inc, only: RTOR, AB
-    use status_inc, only: AMETR, SHIF, SHIV, ELON, TRIA
+    use scalars, only: RTOR, AB
+    use status, only: AMETR, SHIF, SHIV, ELON, TRIA
     use numerical_tools, only: QUADIN
 
     integer, intent(in) :: nx_in
@@ -1262,8 +1263,8 @@ contains
 ! Computes index position JK, and volume differential dV/HRO at position JK
 ! Input: YR in units of RHO (meters)
 
-    use const_inc, only: HRO, ROC, NA1
-    use status_inc, only: VR
+    use scalars, only: HRO, ROC, NA1
+    use status, only: VR
 
     double precision, intent(in) :: YR
     integer, intent(out) :: JK

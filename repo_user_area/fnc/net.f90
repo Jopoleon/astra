@@ -3,12 +3,12 @@
 !   (Pereverzev 16-OCT-09)
 double precision FUNCTION NETR(YR)
 
-use status_inc, only: NE
+use status, only: NE
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT
 
 NETR = VINT(NE, YR)
 

@@ -3,11 +3,12 @@
 !    (Polevoy 28.09.89)
 double precision function TINDNR(YR)
 
-use status_inc, only: NE, TI
+use status, only: NE, TI
+use standard_functions, only: VINT
+
 implicit none
 
 double precision, intent(in) :: YR
-double precision VINT
 
 TINDNR = VINT(TI*NE, YR)/VINT(NE, YR)
 

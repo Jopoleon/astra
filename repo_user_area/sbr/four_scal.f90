@@ -76,5 +76,4 @@ enddo
 YTOLD = tim
 jtimeold = jtime
 
-return
-END
+end subroutine four_scal

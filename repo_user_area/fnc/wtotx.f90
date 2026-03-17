@@ -2,12 +2,12 @@
 !   (Yushmanov 11-JAN-89)
 double precision FUNCTION WTOTXR(YR)
 
-use status_inc, only: NEX, TEX, NI, TIX
+use status, only: NEX, TEX, NI, TIX
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision VINT
 
 WTOTXR = VINT(NEX*TEX, YR) + VINT(NI*TIX, YR)
 WTOTXR = 0.0024*WTOTXR

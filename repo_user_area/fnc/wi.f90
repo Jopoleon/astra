@@ -2,12 +2,12 @@
 !   (Yushmanov 11-JAN-89)
 double precision FUNCTION WIR(YR)
 
-use status_inc, only: NI, TI
+use status, only: NI, TI
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision VINT
 
 WIR = VINT(NI*TI, YR)
 WIR = 0.0024*WIR

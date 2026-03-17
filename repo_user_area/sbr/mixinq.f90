@@ -66,10 +66,9 @@ subroutine MIXINQ(OPTION, RECOND)
 ! Options 30, 31, 32 include (10+20), (11+21), (12+22).
 !-----------------------------------------------------------------------
 
-use parameter_inc, only: NRD
-use const_inc, only: BTOR, RTOR, HRO, ROC, GP, GP2, NA1, NB1, &
+use scalars, only: BTOR, RTOR, HRO, ROC, GP, GP2, NA1, NB1, &
     TIME, TSTART, TAU, TAUMIN, CMHD1, CMHD2, CMHD3, CMHD4, LEQ
-use status_inc, only: TE, TI, NE, NI, VR, FP, CU, MU, IPOL, G22, G33, CAR1, CAR2
+use status, only: NRD, TE, TI, NE, NI, VR, FP, CU, MU, IPOL, G22, G33, CAR1, CAR2
 
 implicit none
 
@@ -351,5 +350,4 @@ YT = max(1.d-4,(TIME-TMIX)/5.)
 TAU = TAUMIN
 TMIX = TIME
 
-return
 end subroutine mixinq

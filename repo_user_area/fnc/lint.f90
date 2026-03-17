@@ -9,8 +9,8 @@
 
 double precision function LINTR(YRO)
 
-use const_inc, only: NA, HRO, ROC
-use status_inc, only: IPOL, G22, MU
+use scalars, only: NA, HRO, ROC
+use status, only: IPOL, G22, MU
 
 implicit none
 
@@ -39,5 +39,4 @@ enddo
 LINTR = LINTR + (YK**2 - JK**2)*(YK**2 + JK**2)*MU(JK+1)**2 * IPOL(JK+1)*G22(JK+1)/YR
 LINTR = 0.5*LINTR*HRO*(YR/(YK**2 * MU(JK+1)*IPOL(JK+1)*G22(JK+1)))**2
 
-return
 end function LINTR

@@ -16,8 +16,10 @@
 
 double precision function LI3R(YRO)
 
-use const_inc, only: ROC, HRO, BTOR, NA, GP
-use status_inc, only: IPOL, G22, CU, VR, MU
+use pi_const, only: GP
+use scalars, only: ROC, HRO, BTOR, NA
+use status, only: IPOL, G22, CU, VR, MU
+
 implicit none
 
 double precision, intent(in) :: YRO
@@ -45,7 +47,6 @@ do J=1, JK
    YIPL = YIPL + 0.5*(CU(j)*VR(j) + CU(j+1)*VR(j+1))/IPOL(j)**2
 enddo
 
-LI3R = 2.*HRO*YWBP*(5*GP*BTOR/IPOL(JK+1)/YIPL)**2
+LI3R = 2.*HRO*YWBP*(5.*GP*BTOR/IPOL(JK+1)/YIPL)**2
 
-return
 end function LI3R

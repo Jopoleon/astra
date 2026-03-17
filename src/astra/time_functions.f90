@@ -10,7 +10,7 @@ contains
 !---------------------------------------------------------------------
     subroutine function_id(str_in)
 
-    use const_inc, only: TIME, TSTART
+    use scalars, only: TIME, TSTART
 
     character(len=*), intent(in) :: str_in
     double precision :: time_loc

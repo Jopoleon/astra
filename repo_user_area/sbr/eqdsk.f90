@@ -1,9 +1,10 @@
 subroutine EQDSK(coco_number)
 
-use const_inc, only: RTOR, BTOR, IPL, TIME, TSTART, SGNBT, SGNIP, NA1
-use parameters_a2equil, only: equil_now, GP2
+use pi_const, only: GP2
+use scalars, only: RTOR, BTOR, IPL, TIME, TSTART, SGNBT, SGNIP, NA1
+use parameters_a2equil, only: equil_now
 use io_mod, only: awd, exp_file, equ_file
-use status_inc, only: MU, FP_NORM
+use status, only: MU, FP_NORM
 use numerical_tools, only: qinterp
 use surface_contours, only: ctr2rz_fun3
 
@@ -93,5 +94,4 @@ close(eqdsk_unit)
 
 deallocate(psin_eq)
 
-return
 end subroutine EQDSK

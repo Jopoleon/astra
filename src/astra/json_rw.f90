@@ -214,7 +214,7 @@ end subroutine read_array_2d
 
     integer :: nrho_eq, nthe_eq, nr_eq, nz_eq
     double precision, allocatable, dimension(:) :: equil_traces, &
-        r2d, z2d, teta2d
+        r2d, z2d, theta2d
     double precision, allocatable, dimension(:, :) :: equil_profiles, &
         psirz2d, fdia2d, r, z, rmin, psirz
 
@@ -312,21 +312,21 @@ end subroutine read_array_2d
     equil_now%eqgeometry%rectgrid%fdia2d  = fdia2d
 
 ! equil_coord
-    call read_array_1d(fjson, "equil_coord", "teta2d", teta2d)
+    call read_array_1d(fjson, "equil_coord", "theta2d", theta2d)
     call read_array_2d(fjson, "equil_coord", "r", r)
     call read_array_2d(fjson, "equil_coord", "z", z)
     call read_array_2d(fjson, "equil_coord", "rmin", rmin)
     call read_array_2d(fjson, "equil_coord", "psirz", psirz)
 
-    nthe_eq = SIZE(teta2d)
+    nthe_eq = SIZE(theta2d)
 
-    allocate(equil_now%coord_sys%position%teta2d(nthe_eq))
+    allocate(equil_now%coord_sys%position%theta2d(nthe_eq))
     allocate(equil_now%coord_sys%position%r(nrho_eq, nthe_eq))
     allocate(equil_now%coord_sys%position%z(nrho_eq, nthe_eq))
     allocate(equil_now%coord_sys%position%rmin(nrho_eq, nthe_eq))
     allocate(equil_now%coord_sys%position%psirz(nrho_eq, nthe_eq))
 
-    equil_now%coord_sys%position%teta2d = teta2d
+    equil_now%coord_sys%position%theta2d = theta2d
     equil_now%coord_sys%position%r = r
     equil_now%coord_sys%position%z = z
     equil_now%coord_sys%position%rmin  = rmin
@@ -341,14 +341,14 @@ end subroutine read_array_2d
     subroutine write_json
 
     use parameters_a2equil, only: equil_now
-    use const_inc, only: NA1, varValues, varxValues, constValues, internValues, intern2Values
-    use status_inc, only: profiles, profiles_x
-    use io_mod, only: awd, exp_file, equ_file
+    use scalars, only: NA1, varValues, varxValues, constValues, internValues, intern2Values
+    use status, only: profiles, profiles_x
+    use io_mod, only: awd, exp_file, equ_file, restart
     use debugger, only: debug
     use json_vars, only: equil_sigPtr, equil_profPtr, equil_rectPtr, equil_coordPtr, &
         profPtr, profxPtr, constPtr, internPtr, intern2Ptr, varPtr, varxPtr, n_prof, n_profx
 
-    integer :: j, jrho, ios, j_call=1, nrho_surf, nthe_surf, nR, nZ
+    integer :: j, jrho, ios, j_call=1, j_out, nrho_surf, nthe_surf, nR, nZ
     character(len=180) :: json_out
     double precision, dimension(20) :: equil_traces
     character(KIND=JSON_CK, len=:), allocatable :: sunit, sdesc, sname
@@ -357,13 +357,14 @@ end subroutine read_array_2d
     save j_call
 
     nrho_surf = SIZE(equil_now%profiles_1d%rho_tor_norm)
-    nthe_surf = SIZE(equil_now%coord_sys%position%teta2d)
+    nthe_surf = SIZE(equil_now%coord_sys%position%theta2d)
     nR = SIZE(equil_now%eqgeometry%rectgrid%r2d)
     nZ = SIZE(equil_now%eqgeometry%rectgrid%z2d)
 
-    if (debug > 0) write(*, '(A, 3i)') 'Starting a2json', j_call, nrho_surf, nthe_surf
+    j_out = j_call + restart
+    if (debug > 0) write(*, '(A, 3i)') 'Starting a2json', j_out, nrho_surf, nthe_surf
 
-    write(json_out, '(5A, i0, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), TRIM(equ_file), '-', j_call, '.json'
+    write(json_out, '(5A, i0, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), TRIM(equ_file), '-', j_out, '.json'
 
     open(nunit, file=TRIM(json_out), iostat=ios)
     write(nunit, '(A/)') '{'
@@ -458,7 +459,7 @@ end subroutine read_array_2d
     call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%r, equil_coordPtr)
     call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%rmin, equil_coordPtr)
     call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%psirz, equil_coordPtr)
-    call write_array((/nthe_surf/), equil_now%coord_sys%position%teta2d, equil_coordPtr)
+    call write_array((/nthe_surf/), equil_now%coord_sys%position%theta2d, equil_coordPtr)
     call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%z, equil_coordPtr, last_array=.true.)
     write(nunit, '(A/)') '},' ! End of "equil_coord" dictionary
 

@@ -1,7 +1,7 @@
 module cpu_usage
 
 use io_mod, only: n_sbr, sbr_name
-use const_inc, only: NSTEPS, TIME, TSTART
+use scalars, only: NSTEPS, TIME, TSTART
 use debugger, only: markloc
 
 implicit none

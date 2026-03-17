@@ -39,7 +39,7 @@ contains
 !---------------------------------------------------------------------
     subroutine interp_norm(n_the, r_in, z_in, th_ref, norm_out)
 
-    use const_inc, only: GP2
+    use pi_const, only: GP2
 
     integer, intent(in) :: n_the
     double precision, intent(in) :: th_ref
@@ -72,7 +72,7 @@ contains
 !---------------------------------------------------------------------
     subroutine ctr2rz_b(Rgrid, Zgrid, pfm, fdiam, pf, fdia, B_R, B_Z, B_T)
 
-    use const_inc, only: GP2
+    use pi_const, only: GP2
     use numerical_tools, only: deriv_cde
     use parameters_a2equil, only: equil_now
 
@@ -204,7 +204,7 @@ contains
 !---------------------------------------------------------------------
     subroutine ctr2rz_fun3(n_rho, n_the, f1d, X, Y, Nrrect, Nzrect, Rgrid, Zgrid, f2d)
 
-    use const_inc, only: GP2
+    use pi_const, only: GP2
 
     integer, intent(in) :: n_rho, n_the, Nrrect, Nzrect
     double precision, intent(in) :: Rgrid(Nrrect), Zgrid(Nzrect)
@@ -328,7 +328,7 @@ contains
     subroutine ctr2rz
 
     use parameters_a2equil, only: equil_now
-    use const_inc, only: IFBEY
+    use scalars, only: IFBEY
 
     double precision, dimension(:, :), allocatable :: pfm, fdiam
 

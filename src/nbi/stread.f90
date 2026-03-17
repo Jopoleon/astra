@@ -1,7 +1,7 @@
 !---------------------------------------------------------------------
 double precision function GETNUM(FIELD, ERCODE)
 
-use const_inc , only: constValues, varxValues
+use scalars , only: constValues, varxValues
 use char_manip, only: str_in_list
 use json_vars, only: constNames, varNames
 

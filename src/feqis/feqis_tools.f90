@@ -10,12 +10,12 @@ contains
 !---------------------------------------------------------------------
     double precision function pol_angle(r0, z0, r, z)
 
-    use pi_vars, only: GPI2
+    use pi_const, only: GP2
 
     double precision, intent(in) :: r0, z0, r, z
 
     pol_angle = ATAN2(z - z0, r - r0)
-    if (pol_angle < 0) pol_angle = pol_angle + GPI2
+    if (pol_angle < 0) pol_angle = pol_angle + GP2
 
     end function pol_angle
 

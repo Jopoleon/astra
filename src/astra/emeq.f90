@@ -111,21 +111,22 @@ subroutine EMEQ &
 ! \delta' = WDSD3(I)*WSA(I)
 
 use debugger, only: markloc, debug
+use pi_const, only: GP, GP2_sq
 
 integer NA1, NAOLD, NA, NT, NT1, I, I1, J, K, NITER
 double precision BR00, SA0, GL0, GD30, ACC, B0T, PLCUR, &
    TIME, A, AA, C, CC, S, SS, SR, SX, SX1, T, Y, Y1, &
    SDT, SDT0, DRDA, DZDA, DRDT, DZDT, DMETR, DA2, DGR2, FI, FJ, &
-   D0, CGP, GP, GP2, GR2, GLOLD, G3DOLD, AOLD, G22A2, SKGGG, &
+   D0, GR2, GLOLD, G3DOLD, AOLD, G22A2, SKGGG, &
    SQG, YLIN, YVOL, YMIN, YMAX
 double precision, dimension(NA1) :: BA, BB, GR, GBD, GL, &
    GSD, GRA, SQGRA, GRAR, AVR2, AI0, dgrda, avsqg, Vol, GR2AUX, &
    B2B0EQ, B0B2EQ, BMAXEQ, BMINEQ, BMODEQ, FOFBEQ, GRDAEQ
 
-save AOLD, GLOLD, G3DOLD, NAOLD, cgp, NITER
+save AOLD, GLOLD, G3DOLD, NAOLD, NITER
 
 data AOLD/0.d0/ GLOLD/0.d0/ G3DOLD/0.d0/ NAOLD/1/
-data cgp/3.14159265359d0/ NITER/60/
+data NITER/60/
 
 ! Initialise
 
@@ -173,7 +174,7 @@ GR(1) = 0.
 Vol(1) = 0.
 GR2 = 0.
 fi = 0.
-s = 4.*cgp*cgp
+s = GP2_sq
 do I=1, NA1
    Vol(i) = s*WSAA(i)*(WBR0*wsl0(i) + WSAA(i)*wsl1(i))
    j = i - 1
@@ -205,8 +206,6 @@ do I=1, NA1
 enddo
 !MR extra quantities
 GR2AUX(1) = 0.
-GP = 3.1415926
-GP2 = 2.*GP
 NT1 = NT + 1
 SDT0 = 1./NT
 YLIN = 0.
@@ -326,7 +325,7 @@ do I=1, NA1
    endif
 enddo
 
-YLIN = YLIN*WBBS0*WBBS0*A*2./(.4*cgp*PLCUR)**2/BR00
+YLIN = YLIN*WBBS0*WBBS0*A*2./(0.4*GP*PLCUR)**2/BR00
 
 END subroutine EMEQ
 
@@ -570,17 +569,17 @@ subroutine EQK3(NA, NT)
 !   
 !----------------------------------------------------------------------|
 
+use pi_const, only: GP
+
 integer, intent(in) :: NA, NT
 
 integer :: NA1, NT1, I, K
-double precision :: CGP, A, AA, ASPA, EE, SC1, SC2, T, DEN, DA1, DA2, &
+double precision :: A, AA, ASPA, EE, SC1, SC2, T, DEN, DA1, DA2, &
    RA, RI, XR, G22A2, R0RD, XRXR, SF2, SF20, SF21, SF3, SF30, SF31, &
    SK10, SK11, SK13, SK0, SK01, SK2, SR, SX, SXX, SX1, SXX1, &
    SZZ, S, SS, SY1, C, CC, &
    BM1, BM2, BMI, BN, BN0, BN1, BN2, BN12, SDT, SDT0
 
-save CGP
-data CGP/3.14159265359d0/
 NA1 = NA + 1
 NT1 = NT + 1
 SDT0 = 1./NT
@@ -614,7 +613,7 @@ rho_loop: do I = 1, NA1
    SQG22R(I) = 0.
 !------------------------------------------
    do K=1, NT1
-      T = SDT0*CGP*(K - 1)
+      T = SDT0*GP*(K - 1)
       SDT = SDT0
       IF(K .EQ. 1 .OR. K .EQ. NT1) SDT = SDT0*0.5
 !--------------------------------------
@@ -850,7 +849,7 @@ end subroutine EQC1
 !----------------------------------------------------------------------|
 subroutine EQPPAB(NA)
 !----------------------------------------------------------------------|
-! gm0  = 0.4*cgp
+! gm0  = 0.4*gp
 ! WSA(I)  = a[m], WSAA(I)  = a**2
 ! WBR00  = (RTOR + SHIFT)  = R[m]
 ! WBR0  = R0[m]
@@ -858,9 +857,9 @@ subroutine EQPPAB(NA)
 ! WBBS0  = Bs[T],
 ! WBF(I) = 0.2*F/R0[MA/m], WBFF(I)  = WBF(I)**2
 ! WSJ(I) = gm0*<j>[MA/m**2], WSJP(I)  = <jB>/B
-! WSJSL(I)  = j(r,gt = cgp), WSJSR(I)  = j(r,gt = 0)
+! WSJSL(I)  = j(r,gt = gp), WSJSR(I)  = j(r,gt = 0)
 ! WSP(I)  = gm0*p[MJ/m**3]
-! WGP(I)  = gP[VS]/(2*cgp*R0)
+! WGP(I)  = gP[VS]/(2*gp*R0)
 ! WDSQRQ(I) = aq'/q
 !   WGPINT, WGPRES, WSLI are defined but not used (not present in commons
 !----------------------------------------------------------------------|
@@ -898,7 +897,8 @@ subroutine EQPPAB(NA)
 !   WSV3
 !----------------------------------------------------------------------|
 
-double precision, parameter :: CGP=3.14159265359d0
+use pi_const, only: GP, GP2
+
 integer, intent(in) :: NA
 
 integer :: NA1, I, J
@@ -991,11 +991,11 @@ do I=2, NA1
    GBD = GBD + GBDJ*WSCJ3(J) + GBDI*WSCI3(J)
 enddo
 
-WGPINT = -2.*CGP*WBR0*WGP(NA1)
+WGPINT = -GP2*WBR0*WGP(NA1)
 
 ! inernal iductance
 WSLI = 2.*WBR0/(WBR00*WBJ0**2)*(WSLI - WGP(NA1)*WBJ0)
-WGPRES = CGP*WBR00*WSLI*WBJ0
+WGPRES = GP*WBR00*WSLI*WBJ0
 
 ! beta j
 WGBJ = 4.*GB/(WBJ0**2)

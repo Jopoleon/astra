@@ -33,8 +33,9 @@
 !======================================================================|
 double precision function BETAJR(YR)
 
-use const_inc, only: ROC, HRO, GP2, NA1, BTOR, RTOR, NA
-use status_inc, only: VR, ELON, TE, TI, NE, NI, PBLON, PBPER, PFAST, MU, &
+use pi_const, only: GP2
+use scalars, only: ROC, HRO, NA1, BTOR, RTOR, NA
+use status, only: VR, ELON, TE, TI, NE, NI, PBLON, PBPER, PFAST, MU, &
    G22, IPOL, AMETR
 
 implicit  none
@@ -43,16 +44,15 @@ integer J, JR
 double precision YR, YB, YP, YP1
 !----------------------------------------------------------------------|
 JR = YR/HRO+0.5
-if (JR < 2) JR=2
-if (JR > NA) JR=NA
+JR = max(JR, 2)
+JR = min(JR, NA)
 YB = 0.
 YP = NE(1)*TE(1)+NI(1)*TI(1) + 0.5*(PBLON(1) + PBPER(1)) + PFAST(1)
-do J=1,JR
-   YP1 = NE(J+1)*TE(J+1) + NI(J+1)*TI(J+1) + 0.5*(PBLON(j+1) + PBPER(j+1)) + PFAST(j+1)
-   YB = YB+(YP-YP1)*ELON(J)*AMETR(J)**2
-   YP = YP1
+do J=1, JR
+    YP1 = NE(J+1)*TE(J+1) + NI(J+1)*TI(J+1) + 0.5*(PBLON(j+1) + PBPER(j+1)) + PFAST(j+1)
+    YB = YB+(YP-YP1)*ELON(J)*AMETR(J)**2
+    YP = YP1
 enddo
-BETAJR = 6.4E-4*GP2*YB*(RTOR/(G22(JR)*IPOL(JR)*BTOR*JR*HRO*MU(JR)))**2
+BETAJR = 6.4E-4 * GP2*YB*(RTOR/(G22(JR)*IPOL(JR)*BTOR*JR*HRO*MU(JR)))**2
 
-return
 end function betajr

@@ -2,8 +2,8 @@
 !   (Yushmanov 11-JAN-89)
 double precision FUNCTION QEICLR(YR)
 
-use const_inc, only: HRO
-use status_inc, only: VR, TE, TI, NE, NI, AMAIN, ZMAIN
+use scalars, only: HRO
+use status, only: VR, TE, TI, NE, NI, AMAIN, ZMAIN
 use standard_functions, only: jrho_drho
 
 implicit none

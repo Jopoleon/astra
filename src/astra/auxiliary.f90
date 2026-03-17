@@ -37,9 +37,9 @@ contains
 !  0 - time step will be repeated
 !---------------------------------------------------------------------
 
-    use const_inc, only: TAUINC, DELVAR, TAU, TAUPRP, TAUMIN, TAUMAX, &
+    use scalars, only: TAUINC, DELVAR, TAU, TAUPRP, TAUMIN, TAUMAX, &
         DPOUT, NA, NB1, LEQ, NSTEPS, ROC, ROCO, FTN, FTO
-    use status_inc, only: NE, NI, TE, TI, FP, VR, UPAR, &
+    use status, only: NE, NI, TE, TI, FP, VR, UPAR, &
         NEO, NIO, TEO, TIO, FPO, VRO, UPARO, &
         F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, &
         F0O, F1O, F2O, F3O, F4O, F5O, F6O, F7O, F8O, F9O
@@ -136,9 +136,8 @@ contains
 ! IFTREQ == 2 - No convergence and maximum iteration number is achieved
 !---------------------------------------------------------------------
 
-    use parameter_inc, only: NRD
-    use status_inc, only: G11, G22, VR, FP
-    use const_inc, only: IPART, ITREQ, ROC, NA1
+    use status, only: G11, G22, VR, FP, NRD
+    use scalars, only: IPART, ITREQ, ROC, NA1
     use debugger, only: markloc
 
     integer, parameter :: ITREQMIN=1, ITREQMAX=200
@@ -231,11 +230,11 @@ contains
 !---------------------------------------------------------------------
     subroutine OLDNEW
 
-    use status_inc, only: NE, TE, TI, FP, VR, UPAR, UPS0, UPS1, UPS2, &
+    use status, only: NE, TE, TI, FP, VR, UPAR, UPS0, UPS1, UPS2, &
         NEO, TEO, TIO, FPO, VRO, UPARO, UPS0O, UPS1O, UPS2O, &
         F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, &
         F0O, F1O, F2O, F3O, F4O, F5O, F6O, F7O, F8O, F9O
-    use const_inc, only: NB1, BTN, FTO, FTN, ROCO, ROC, BTOR
+    use scalars, only: NB1, BTN, FTO, FTN, ROCO, ROC, BTOR
     use debugger, only: markloc
 
     integer :: j
@@ -276,8 +275,8 @@ contains
 ! LINEAV [10#19/m#3]: Horizontal chord average density (r) [m]
 ! Integral {0, r} ( NE ) dl / a
 
-    use const_inc, only: NA, ABC, NA1
-    use status_inc, only: AMETR, NE
+    use scalars, only: NA, ABC, NA1
+    use status, only: AMETR, NE
 
     integer :: j
 

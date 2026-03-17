@@ -3,13 +3,14 @@
 !   (Yushmanov 11-MAY-87)
 double precision function TAUPR(YR)
 
-use const_inc, only: TAU
-use status_inc, only: SNTOT, NE, NEO
+use scalars, only: TAU
+use status, only: SNTOT, NE, NEO
+use standard_functions, only: VINT, VINTO
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT, VINTO, YQ, YW, YWO
+double precision :: YQ, YW, YWO
 
 YQ  = VINT(SNTOT, YR)
 YW  = VINT(NE, YR)

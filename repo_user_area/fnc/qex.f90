@@ -2,12 +2,12 @@
 !   (Yushmanov 11-JAN-89)
 double precision FUNCTION QEXR(YR)
 
-use status_inc, only: PEX
+use status, only: PEX
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT
 
 QEXR = VINT(PEX, YR)
 

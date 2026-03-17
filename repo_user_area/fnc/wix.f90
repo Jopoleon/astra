@@ -2,12 +2,12 @@
 !   (Yushmanov 11-JAN-89)
 double precision FUNCTION WIXR(YR)
 
-use status_inc, only: NI, TIX
+use status, only: NI, TIX
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision VINT
 
 WIXR = VINT(NI*TIX, YR)
 WIXR = 0.0024*WIXR

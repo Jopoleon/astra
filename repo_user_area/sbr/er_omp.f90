@@ -23,8 +23,8 @@
 
 subroutine er_omp(er_min, er_sep, wexb_lfs, er_lfs, vdia_lfs, bp_lfs)
 
-use const_inc, only: RTOR, BTOR, NA1, TIME, TSTART, NEQUIL, MEQUIL, AWALL
-use status_inc, only: TI, NMAIN, ZMAIN, VTOR, AMETR, MU, rho_pol, VPOL
+use scalars, only: RTOR, BTOR, NA1, TIME, TSTART, NEQUIL, MEQUIL, AWALL
+use status, only: TI, NMAIN, ZMAIN, VTOR, AMETR, MU, rho_pol, VPOL
 use parameters_a2equil, only: equil_now
 use numerical_tools, only: qinterp
 
@@ -128,5 +128,4 @@ deallocate(psi_sp)
 deallocate(rpol_sp)
 deallocate(zispan)
 
-return
 end subroutine er_omp

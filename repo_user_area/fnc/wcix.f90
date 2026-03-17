@@ -3,15 +3,15 @@
 !   (Pereverzev 26-MAR-00)
 double precision function WCIXR(YR)
 
-use parameter_inc, only: NRD
-use const_inc, only: NA1
-use status_inc, only: NIX, TIX
+use scalars, only: NA1
+use status, only: NIX, TIX
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-integer  J
-double precision :: VINT, YY(NRD)
+integer :: j
+double precision, dimension(NA1) :: YY
 
 do j=1, NA1
    YY(j) = NIX(J)*TIX(J) - NIX(NA1)*TIX(NA1)

@@ -4,11 +4,10 @@ subroutine ABLATION(trace, pel_prof)
 ! Pellet ablation routine
 !----------------------------------------------------------------------|
 
-use parameter_inc, only: NRD
-use const_inc, only: TIME, NA1
+use scalars, only: TIME, NA1
 use io_mod, only: AWD, nml_file
 use read_input, only: ufheader, ufrd
-use status_inc, only: XRHO
+use status, only: NRD, XRHO
 
 implicit none
 
@@ -58,5 +57,4 @@ do jt=1, nt_u
     endif
 enddo
 
-return
 end subroutine ablation

@@ -204,7 +204,7 @@ def undef_inivar(var, short, defl='', varx2='', varx3=''):
     if varx3 == '':
         varx3 = varx + '(J)'
     inivar  = 'j1 = 1\n'
-    inivar += 'do j=1, NARRX\n'
+    inivar += 'do j=1, n_profx\n'
     inivar += 'if (profxNames(j) == "%s" .and. IFDFAX(j) < 0) j1 = j\n' %varx2.ljust(6)
     inivar += 'enddo\n'
     inivar += 'if (NA1%s == NA1 .and. j1 /= 0 .and. ITREQ == 0) then\n' %short

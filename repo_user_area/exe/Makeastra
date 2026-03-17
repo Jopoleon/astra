@@ -19,11 +19,10 @@ LIB = $(LIB_DIR)/$(LIBNAM)
 FC_FLAGS = -r8 -no-prec-div -traceback -ip -fPIC -O0 $(CHECKALLCOMP)
 
 MODOBJS = \
-$(OBJ_DIR)/astra_modules.o \
 $(OBJ_DIR)/json_vars.o \
 $(OBJ_DIR)/debugger.o \
 $(OBJ_DIR)/emeq.o \
-$(OBJ_DIR)/const.o \
+$(OBJ_DIR)/scalars.o \
 $(OBJ_DIR)/time_functions.o \
 $(OBJ_DIR)/io_mod.o \
 $(OBJ_DIR)/machine_config.o \

@@ -9,7 +9,7 @@ contains
 ! Input:
         equil_solver, &
         nr_equ, &  ! radial grid
-        nteta, &   ! poloidal grid
+        ntheta, &   ! poloidal grid
         nbnd, &    ! # boundary points
         jna1, &    ! radial grid for input (dimension of all arrays below)
         rbnd, zbnd, &
@@ -27,8 +27,8 @@ contains
     use imas_ids, only: type_equilibrium
     use numerical_tools, only: reinterp_back, reinterp_back_quad, qinterp, &
         derivcc, integrcc
-    use parameters_a2equil, only: GP, GP2, GP4, muvac, &
-        time_fix_eqpff, fix_eqpf_eqff, &
+    use pi_const, only: GP, GP2, GP2_sq, muvac
+    use parameters_a2equil, only: time_fix_eqpff, fix_eqpf_eqff, &
         cheb_degree, spidat_yes, iter_one_only_fbe, advanced_methods, &
         i3method, diagnostic_gsef, do_adcmp, urelax, urelax2, &
         murelax2, ydiff, ydiff2, max_iter, miter_ext, interp_routine, &
@@ -39,7 +39,7 @@ contains
 
     integer, parameter :: nbtabp=1000
 
-    integer, intent(in) :: equil_solver, nteta, nr_equ, jna1, nbnd, ncoils, &
+    integer, intent(in) :: equil_solver, ntheta, nr_equ, jna1, nbnd, ncoils, &
         iter_step, iter_part, ipsibcf, icircq, ipctrl, &
         iter_itreq, inume_3, ifbey, i_rotation
 
@@ -133,7 +133,7 @@ contains
         endif
     endif
 
-    n_theta = nteta
+    n_theta = ntheta
     if (n_theta == 1) n_theta = nbnd
     if (n_theta == 0) n_theta = 1
 
@@ -298,8 +298,8 @@ contains
             call derivcc(nr_equ, PSI, PHI, qqsg, 2)
             qg3s = qqsg/G3m
 
-            AAs = G2f/qg3s**2 + (GP4**2)*G3m
-            Bm = -GP4*muvac*pprimx/AAs
+            AAs = G2f/qg3s**2 + (GP2_sq**2)*G3m
+            Bm = -GP2_sq*muvac*pprimx/AAs
             dum3 = G2f/qg3s
 
             call derivcc(nr_equ, xrho_sp, dum3, dum2, 1)
@@ -322,7 +322,7 @@ contains
             dum2 = G2f/qg3s
             call derivcc(nr_equ, PSI, dum2, dum3, 2)
             betahat = (dum3/qg3s)/AAs
-            Chat = -GP4*muvac*pprimp/AAs
+            Chat = -GP2_sq*muvac*pprimp/AAs
 
             y = sqrt(2.*zfunc)
             H = y/qg3s
@@ -364,7 +364,7 @@ contains
 
 !Update
 !Rescale on current
-        IPL = 1.E-06*1./(GP4*muvac)*dPSIdV(nr_equ)*G2f(nr_equ)
+        IPL = 1.E-06*1./(GP2_sq*muvac)*dPSIdV(nr_equ)*G2f(nr_equ)
         H = H/IPL*IPLX
         dPSIdV = H
 
@@ -396,10 +396,10 @@ contains
             endif
         endif
 
-        ffprimp = GP4*yprimp
+        ffprimp = GP2_sq*yprimp
 ! Skipping g2 preconditioner for now, and for some reasons...
 
-        IPL = 1.E-06*1./(GP4*muvac)*dPSIdV(nr_equ)*G2f(nr_equ)
+        IPL = 1.E-06*1./(GP2_sq*muvac)*dPSIdV(nr_equ)*G2f(nr_equ)
 
         PSIn_grid = sqrt((PSI - PSI(1))/(PSI(nr_equ) - PSI(1)))
 
@@ -515,8 +515,8 @@ contains
                         hin1 = hin2
                         hin2 = Htild2*hin1
                         Hcorr2 = Htild2 + urelax2*hin2  ! new H
-                        hin2(nr_equ)   = 1.E-06*1./(GP4*muvac) *G2corr2(nr_equ)*Hcorr2(nr_equ)
-                        hin2(nr_equ-1) = 1.E-06*1./(GP4*muvac) *G2tild2(nr_equ)*Htild2(nr_equ)
+                        hin2(nr_equ)   = 1.E-06*1./(GP2_sq*muvac) *G2corr2(nr_equ)*Hcorr2(nr_equ)
+                        hin2(nr_equ-1) = 1.E-06*1./(GP2_sq*muvac) *G2tild2(nr_equ)*Htild2(nr_equ)
                         G2corr2 = G2corr2*hin2(nr_equ-1)/hin2(nr_equ)
                         errght = 2.*abs(G2tild2(nr_equ-5) - G2tild1(nr_equ-5)) &
                                       /(G2tild1(nr_equ-5) + G2tild1(nr_equ-5))
@@ -546,8 +546,8 @@ contains
                     hin2 = G2tild2*hin1
                     G2corr2 = G2tild2 + urelax2*hin2   ! new G2
                     Hcorr2 = Htild2 ! new H
-                    hin2(nr_equ)   = 1.E-06*1./(GP4*muvac) *G2corr2(nr_equ)*Hcorr2(nr_equ)
-                    hin2(nr_equ-1) = 1.E-06*1./(GP4*muvac) *G2tild2(nr_equ)*Htild2(nr_equ)
+                    hin2(nr_equ)   = 1.E-06*1./(GP2_sq*muvac) *G2corr2(nr_equ)*Hcorr2(nr_equ)
+                    hin2(nr_equ-1) = 1.E-06*1./(GP2_sq*muvac) *G2tild2(nr_equ)*Htild2(nr_equ)
                     G2corr2 = G2corr2*hin2(nr_equ-1)/hin2(nr_equ)
                     G2tild1 = G2tild2
                     G2tild2 = 0.5*(G2tild2 + G2corr2)
@@ -724,8 +724,9 @@ contains
 
     use imas_ids, only: type_equilibrium
     use spider_params, only: type_parameters
-    use parameters_a2equil, only: fix_adapgrid, GP, GP2, s_fazt
-    use const_inc, only : rtor,shift, updwn
+    use pi_const, only: GP, GP2
+    use parameters_a2equil, only: fix_adapgrid, s_fazt
+    use scalars, only : rtor,shift, updwn
     use io_mod, only: nml_file, machine
 
     integer, intent(in) :: equil_solver, nr_equ, n_theta, iter_step, ncoils, &
@@ -768,7 +769,7 @@ contains
     parameters_equil%dt    = tau_step
     parameters_equil%time  = time_a
     parameters_equil%neql  = nr_equ
-    parameters_equil%nteta = n_theta + 2
+    parameters_equil%ntheta = n_theta + 2
 
 !defaults
     if (nstep == 0) then

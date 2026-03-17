@@ -3,18 +3,18 @@
 !   (Pereverzev 26-MAR-00)
 double precision function WCIR(YR)
 
-use parameter_inc, only: NRD
-use const_inc, only: NA1
-use status_inc, only: NI, TI
+use scalars, only: NA1
+use status, only: NI, TI
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-integer  J
-double precision :: VINT, YY(NRD)
+integer :: j
+double precision, dimension(NA1) :: YY
 
 do j=1, NA1
-   YY(j) = NI(J)*TI(J) - NI(NA1)*TI(NA1)
+    YY(j) = NI(J)*TI(J) - NI(NA1)*TI(NA1)
 enddo
 WCIR = 0.0024*VINT(YY, YR)
 

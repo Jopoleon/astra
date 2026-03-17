@@ -23,7 +23,7 @@ c	ITRAP 	= 0/1 for banana/passing orbits
 c	YCOS(JJN) = <v.B>/vB (x(JJN))
 c==================================================================
 
-        use parameter_inc, only: NRD
+        use status, only: NRD
 
 	implicit none
 

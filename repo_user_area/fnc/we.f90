@@ -2,12 +2,12 @@
 !   (Yushmanov 11-JAN-89)
 double precision FUNCTION WER(YR)
 
-use status_inc, only: NE, TE
+use status, only: NE, TE
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision VINT
 
 WER = VINT(NE*TE, YR)
 WER = 0.0024*WER

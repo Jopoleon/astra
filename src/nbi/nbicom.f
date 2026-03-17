@@ -9,7 +9,8 @@ C============================================================ 10-DEC-07
 C       Extension to the rare mesh N1 
 C============================================================ Polevoy
 
-        use parameter_inc, only: NRD
+        use status, only: NRD
+
 	implicit none
 
         include 'nbi/nbicom.inc'
@@ -195,9 +196,10 @@ C  ASBA[10#19 prtcl/s]*Dcos(JT)
 C  YQSHth [MW] shine through power in the file dat\shth.dat
 C============================================================ Polevoy
 
-        use parameter_inc, only: NRD
+        use status, only: NRD
 
 	implicit none
+
 	double precision YAQBP(*),AR(*),DRL(3),YS(3),YCU(3),YCT2(3)
         double precision	PLEJ2(51),CONTR,YRIPLR,YDEDJ,YVE(3)
 
@@ -484,7 +486,7 @@ C	exit:	PBEAM,SCUBM,SNEBM,SNNBM		for MAIN
 C	SCUBM	Toroidal pulse [kg*m/s2/m3]	05-AUG-96
 c======================================================================
 
-        use parameter_inc, only: NRD
+        use status, only: NRD
         use nbstatus_inc
 
 	implicit none
@@ -1045,7 +1047,7 @@ C   RMB(9)    m/m_p
 C   ZB(9)     
 C   ISPE(9)   number of ion species in the EXTARR
 C   EXTARR	! One of arrays for (p,d,t,He3) is spoiled !
-        use parameter_inc, only: NRD
+        use status, only: NRD
 
 	implicit none
 

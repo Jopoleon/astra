@@ -1,6 +1,8 @@
-module status_inc
+module status
 
 implicit none
+
+integer, parameter :: NRD=801
 
 double precision, dimension(:), pointer :: &
     TEO, TIO, NEO, UPAR, UPARO, &
@@ -83,8 +85,6 @@ contains
 
 !---------------------------------------------------------------------
     subroutine status_init
-
-    use parameter_inc, only: NRD
 
     integer :: j
 
@@ -169,8 +169,9 @@ contains
 ! 3) Define upsilons for momentum transport equation
 !---------------------------------------------------------------------
 
+    use pi_const, only: GP2
     use io_mod, only: exp_file
-    use const_inc, only: GP2, RTOR, BTOR, HRO, ROC, ABC, NA1, NB1, &
+    use scalars, only: RTOR, BTOR, HRO, ROC, ABC, NA1, NB1, &
         TIME, TAU, TSTART, WTE, WTI, WNE
     use debugger, only: markloc, astra_stop
 
@@ -402,7 +403,7 @@ contains
 !---------------------------------------------------------------------
     subroutine error_catch
 
-    use const_inc, only: NA1
+    use scalars, only: NA1
     use debugger, only: astra_stop
 
     write(*, *) 'TE    Fp    NE    G11 '
@@ -414,4 +415,4 @@ contains
     return
     end subroutine error_catch
 
-end module status_inc
+end module status

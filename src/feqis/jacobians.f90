@@ -7,7 +7,7 @@ subroutine jacobians(nrho, ntheta, Rb, Zb, X0, Y0, lambda2d_in, lambda2dp_in, &
     ddr, ddr_i, dtp, dtm, dt_i, X, Y, &
     thetap, thetap_i, lambda2d, lambda2dp, jcbn2, r_min, y2, gradr2, dl_dt)
 
-use pi_vars, only: GPI2
+use pi_const, only: GP2
 use numerical_tools, only: linterp
 
 implicit none
@@ -45,23 +45,23 @@ double precision, dimension(nrho, ntheta) :: &
 do jthe=1, ntheta
     dXb0(jthe) = sqrt((rb(jthe) - X0)**2 + (zb(jthe) - Y0)**2)
     thetap(jthe) = ATAN2(zb(jthe) - Y0, rb(jthe) - X0)
-    if (thetap(jthe) < 0) thetap(jthe) = thetap(jthe) + GPI2
+    if (thetap(jthe) < 0) thetap(jthe) = thetap(jthe) + GP2
 enddo
 if (thetap(1) > thetap(ntheta)) then ! shift some entries
     do k=1, ntheta-1
         if (thetap(k+1) < thetap(k)) then
-            thetap(1: k) = thetap(1: k) - GPI2
+            thetap(1: k) = thetap(1: k) - GP2
             EXIT
         endif
     enddo
 endif
-thetap(ntheta+1) = thetap(1) + GPI2
+thetap(ntheta+1) = thetap(1) + GP2
 
 ! Now find the intermediate theta grid
 do jthe=1, ntheta
     thetap_i(jthe) = 0.5*(thetap(jthe) + thetap(jthe+1))
 enddo
-thetap_i(ntheta+1) = thetap_i(1) + GPI2
+thetap_i(ntheta+1) = thetap_i(1) + GP2
 
 ! Compute differentials
 

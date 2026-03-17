@@ -5,8 +5,8 @@
 !
 double precision FUNCTION XQMINR(YR)
 
-use const_inc, only: ABC, NA1
-use status_inc, only: AMETR, MU
+use scalars, only: ABC, NA1
+use status, only: AMETR, MU
 
 implicit none
 
@@ -21,5 +21,4 @@ do J=1, NA1
    if (j /= 1) XQMINR = AMETR(j)/ABC
 enddo
 
-return
 end function XQMINR

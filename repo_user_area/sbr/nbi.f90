@@ -33,8 +33,8 @@ subroutine NBI
 !  SCUBM, SNEBM, SNNBM, NNBM1, 2, 3 for MAIN
 !----------------------------------------------------------------------|
 
-use const_inc
-use status_inc
+use scalars
+use status
 use io_mod, only: NBFILE
 
 implicit none
@@ -80,7 +80,6 @@ call nbstatus(JINOUT, NB1, NA1, NE, NHYDR, NDEUT, NTRIT, NHE3, &
     PBEAM, SNEBM, SNNBM, CUFI, CUBM, SCUBM, &
     SNIBM1, SNIBM2, SNIBM3, NNBM1, NNBM2, NNBM3)
 
-return
 end subroutine nbi
 
 !======================================================================|

@@ -5,12 +5,12 @@
 ! Input: ELON, TRIA, SHEAR, MU, SQEPS
 double precision function ALIMR(YR)
 
-use status_inc, only: ELON, SQEPS, SHEAR, TRIA, MU
+use status, only: ELON, SQEPS, SHEAR, TRIA, MU
 
 implicit none
 
-double precision YEL,YE2,YEPS,YF2,YEK,YALF,YSHR,YF1,YR
-integer  j,node
+double precision :: YEL, YE2, YEPS, YF2, YEK, YALF, YSHR, YF1, YR
+integer :: j, node
 
 j = node(YR)
 YEL = ELON(J)
@@ -33,5 +33,4 @@ YEPS = ((1.17988 + 5.03449*TRIA(J)**2)/1.17988)**2
 YEPS  = YEPS/1.216
 ALIMR = YEPS*YALF*2. ! Factor 2 due to GWP
 
-return
 end function alimr

@@ -8,7 +8,7 @@ C  ASBA[10#19 prtcl/s]*Dcos(JT)
 C  YQSHth [MW] shine through power in the file dat\shth.dat
 C============================================================ Polevoy
 
-        use parameter_inc, only: NRD
+        use status, only: NRD
 
 	implicit none
 	double precision YAQBP(*),AR(*),DRL(3),YS(3),YCU(3),YCT2(3)

@@ -12,7 +12,7 @@ c output:
 c	JNL,JNR	= minimum/maximum surface index of the orbit
 C	ILOSS		= 0/1 if particle is kept/lost
 
-	use parameter_inc, only: NRD
+	use status, only: NRD
 
 	implicit none
 

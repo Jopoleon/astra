@@ -2,6 +2,8 @@ module metrics
 
 implicit none
 
+logical :: use_ext_bnd=.false.
+logical :: plasma_up=.true.  ! plasma is up by default, can be set to False for breakdown by the user in a user-defined sbr called with "<"
 double precision, dimension(:), allocatable :: CCOIL, VCOIL
 
 contains
@@ -9,9 +11,10 @@ contains
 !---------------------------------------------------------------------
     subroutine METRIC
 
+    use pi_const, only: GP, GP2
     use cpu_usage, only: wallTime_equ, cpuTime_equ
-    use status_inc, only: VRO, VR, SHIF, AMETR, ELON, TRIA, XRHO, FP, IPOL
-    use const_inc, only: IPART, FTO, FTN, ROC, GP, GP2, &
+    use status, only: VRO, VR, SHIF, AMETR, ELON, TRIA, XRHO, FP, IPOL
+    use scalars, only: IPART, FTO, FTN, ROC, &
         BTOR, ROCO, RTOR, SHIFT, &
         ABC, ELONG, TRIAN, UPDWN, NA1, NB1, MEQUIL, NEQUIL, &
         LEQ, IPEQL, TIME, TSTART, TIMEQL, DTEQL, BTN
@@ -113,7 +116,7 @@ contains
             allocate(equil_now%coord_sys%position%z(nrho_surf, nthe_surf))
             allocate(equil_now%coord_sys%position%rmin(nrho_surf, nthe_surf))
             allocate(equil_now%coord_sys%position%psirz(nrho_surf, nthe_surf))
-            allocate(equil_now%coord_sys%position%teta2d(nthe_surf))
+            allocate(equil_now%coord_sys%position%theta2d(nthe_surf))
         endif
         if (.not. associated(equil_now%profiles_1d%rho_tor_norm)) then
             allocate(equil_now%profiles_1d%areat  (nrho_surf))
@@ -167,7 +170,7 @@ contains
             prof_as = UPDWN + AMETR(1:NA1)*ELON(1:NA1)*SIN(theta)
             call qinterp(XRHO(1:NA1), prof_as, NA1, equil_now%profiles_1d%rho_tor_norm, prof_eq, nrho_surf)
             equil_now%coord_sys%position%z(:, jthe) = prof_eq
-            equil_now%coord_sys%position%teta2d(jthe) = theta
+            equil_now%coord_sys%position%theta2d(jthe) = theta
         enddo
     endif
 
@@ -184,11 +187,12 @@ contains
 !  BDB02, B0DB2, BDB0, FOFB, BMAXT, BMINT, DRODA, GRADRO
 !---------------------------------------------------------------------
 
-    use status_inc, only: RHO, XRHO, VR, VRS, AMETR, SHIF, SHIV, &
+    use pi_const, only: GP, GP2, GP2_sq
+    use status, only: RHO, XRHO, VR, VRS, AMETR, SHIF, SHIV, &
         ELON, TRIA, SLAT, G11, G22, G33, G41, G42, G43, G44, G45, &
         BDB0, BDB02, B0DB2, IPOL, MU, &
         FOFB, BMAXT, BMINT, DRODA, GRADRO, VOLUM
-    use const_inc, only: VOLUME, GP, GP2, RTOR, BTOR, internValues, &
+    use scalars, only: VOLUME, RTOR, BTOR, internValues, &
         ABC, HRO, ROC, FTO, ROWALL, NA, NA1, NB1
     use numerical_tools, only: integr
     use debugger, only: markloc, debug
@@ -206,8 +210,8 @@ contains
         RHO(J) = XRHO(J)*ROC
         if (RHO(j) <= ROWALL) NA = j
         G22(J)   = J*HRO
-        VR(J)    = GP2**2 * RTOR*RHO(J)
-        VRS(j)   = GP2**2 * RTOR*G22(J)
+        VR(J)    = GP2_sq * RTOR*RHO(J)
+        VRS(j)   = GP2_sq * RTOR*G22(J)
         AMETR(J) = RHO(J)
         SHIF(J)  = 0.
         SHIV(J)  = 0.
@@ -243,8 +247,8 @@ contains
 !---------------------------------------------------------------------
     subroutine extrap_fields_flat
 
-    use const_inc, only: NA1, NAB
-    use status_inc, only: SHEAR, BDB02, B0DB2, BMAXT, BMINT, BDB0, FOFB
+    use scalars, only: NA1, NAB
+    use status, only: SHEAR, BDB02, B0DB2, BMAXT, BMINT, BDB0, FOFB
 
     integer :: j
 
@@ -277,9 +281,10 @@ contains
 !     NA1, NA=NA1-1, NAB, RHO(NA1)=ROC, AMETR(j>NA1)
 !---------------------------------------------------------------------
 
-    use const_inc, only: ROC, RTOR, SHIFT, ABC, ELONG, TRIAN, &
-        FTO, GP, GP2, BTOR, NA, NA1, NB1, NAB, HRO, VOLUME
-    use status_inc, only: RHO, VR, VRS, AMETR, SHIF, &
+    use pi_const, only: GP, GP2, GP2_sq
+    use scalars, only: ROC, RTOR, SHIFT, ABC, ELONG, TRIAN, &
+        FTO, BTOR, NA, NA1, NB1, NAB, HRO, VOLUME
+    use status, only: RHO, VR, VRS, AMETR, SHIF, &
         ELON, TRIA, SLAT, G11, G22, G33, G41, G42, G43, G44, G45, &
         BDB0, BDB02, B0DB2, IPOL, MU, FP, FV, SHEAR, &
         FOFB, BMAXT, BMINT, DRODA, GRADRO, VOLUM
@@ -344,7 +349,7 @@ contains
         if (j < NB1) VRS(j) = 0.5*(VR(J + 1) + VR(j))
         SLAT(J) = VRS(J)*DRODA(J)  
         G11(J)  = VRS(J)*DRODA(J)**2
-        G22(J)  = G11(J)/GP2**2/(RTOR + SHIF(J))
+        G22(J)  = G11(J)/GP2_sq/(RTOR + SHIF(J))
         G41(J)  = 1.0
         G42(J)  = GRADRO(J)
         G43(J)  = GRADRO(J)
@@ -394,9 +399,10 @@ contains
 
 ! Set external metric  (Pereverzev 10.02.2005)
 
-    use const_inc, only: RTOR, BTOR, ABC, ROC, HRO, HROX, &
-        SHIFT, ELONG, TRIAN, VOLUME, GP, GP2, NA, NA1, NAB, updwn, ipart
-    use status_inc, only: SHIF, ELON, TRIA, SHX, ELX, TRX, &
+    use pi_const, only: GP, GP2, GP2_sq
+    use scalars, only: RTOR, BTOR, ABC, ROC, HRO, HROX, &
+        SHIFT, ELONG, TRIAN, VOLUME, NA, NA1, NAB, updwn, ipart
+    use status, only: SHIF, ELON, TRIA, SHX, ELX, TRX, &
         G11, G22, G33, G11X, G22X, G33X, GRADRO, DRODA, DRODAX, &
         IPOL, IPOLX, VR, VRS, VRX, RHO, XRHO, AMETR, SLAT, SLATX, &
         BDB0, BDB02, B0DB2, BMINT, BMAXT, FOFB, VOLUM, SHEAR, FP, MU, &
@@ -416,7 +422,7 @@ contains
     endif
 
     if (flightsim == 0) then
-        YNF = RTOR*GP2**2
+        YNF = RTOR*GP2_sq
         do J=1, NA1
             if (IFDEFX('SHX   ')) then
                 SHIF(J) = SHX(j)
@@ -463,7 +469,7 @@ contains
 
 ! Compute new ROC
 
-    ROC = VR(NA1)/GP2**2 * G33(NA1)/RTOR
+    ROC = VR(NA1)/GP2_sq * G33(NA1)/RTOR
     RHO(1: NA1) = XRHO(1: NA1)*ROC
 
     if (debug > 0) then
@@ -571,8 +577,8 @@ contains
 !---------------------------------------------------------------------
     subroutine extmetric_input
 
-    use const_inc, only: NA1
-    use status_inc, only: SHIF, ELON, TRIA, G33, IPOL, VR, SLAT, G11, G22, &
+    use scalars, only: NA1
+    use status, only: SHIF, ELON, TRIA, G33, IPOL, VR, SLAT, G11, G22, &
         DRODA, SHIV, SQUARN
 
     open(32, file='input_metric.dat')
@@ -588,9 +594,10 @@ contains
 
 ! Set external metric
 
-    use const_inc, only: RTOR, BTOR, ABC, ROC, HRO, HROX, &
-        SHIFT, ELONG, TRIAN, VOLUME, GP, GP2, NA, NA1, NAB, updwn
-    use status_inc, only: SHIF, ELON, TRIA, &
+    use pi_const, only: GP, GP2_sq
+    use scalars, only: RTOR, BTOR, ABC, ROC, HRO, HROX, &
+        SHIFT, ELONG, TRIAN, VOLUME, NA, NA1, NAB, updwn
+    use status, only: SHIF, ELON, TRIA, &
         G11, G22, G33, GRADRO, DRODA, &
         IPOL, VR, VRS, RHO, XRHO, AMETR, SLAT, &
         BDB0, BDB02, B0DB2, BMINT, BMAXT, FOFB, VOLUM, SHEAR, FP, MU, SHIV, SQUARN
@@ -606,11 +613,11 @@ contains
         call extmetric_input
     endif
 
-    YNF = RTOR*GP2**2
+    YNF = RTOR*GP2_sq
 
 ! Compute new roc
 
-    ROC = VR(NA1)/GP2**2 * G33(NA1)/RTOR
+    ROC = VR(NA1)/GP2_sq * G33(NA1)/RTOR
     RHO(1: NA1) = XRHO(1: NA1)*ROC
 
     if (debug > 0) then
@@ -768,12 +775,12 @@ contains
 ! For (NEQUIL = 1 ) metric is frozen (can be used interactively)
 !---------------------------------------------------------------------
 
-    use parameter_inc, only: NRD
+    use pi_const, only: GP, GP2_sq
     use emeq_mod, only: NP, emeq
-    use const_inc, only: HRO, ABC, ROC, RTOR, BTOR, IPL, & 
+    use scalars, only: HRO, ABC, ROC, RTOR, BTOR, IPL, & 
          TIME, ELONG, TRIAN, SHIFT, UPDWN, VOLUME, & 
-         NA1, NA, NAB, NEQUIL, GP, GP2
-    use status_inc, only: TE, TI, CU, SHEAR, SHIV, & 
+         NA1, NA, NAB, NEQUIL
+    use status, only: NRD, TE, TI, CU, SHEAR, SHIV, & 
          RHO, AMETR, EQPF, EQFF, IPOL, MU, FP, SXHO, & 
          SLAT, VOLUM, SHIF, ELON, TRIA, DRODA, GRADRO, VR, VRS, XRHO, & 
          G11, G22, G33, G41, G42, G43, G44, G45, & 
@@ -787,7 +794,7 @@ contains
     integer, intent(out) :: jexit
 
     integer :: NR_EQU, j, jp, jt, jcall
-    double precision :: ALFA, Y1, Y2, YDA, GPP4, YRO, YCB, TRIABC, BTOOO
+    double precision :: ALFA, Y1, Y2, YDA, YRO, YCB, TRIABC, BTOOO
     double precision, dimension(NRD) :: BA, BB, GR, GBD, GL, GSD, &
         A, B, C, D, BC, BD, XTR, BMOD_EQU, FOFB_EQU, GRDA_EQU, &
         X_EQU, B2B0_EQU, B0B2_EQU, BMAX_EQU, BMIN_EQU, VR_EQU, VRS_EQU, &
@@ -919,14 +926,13 @@ contains
 ! Define a new auxiliary (shifted) grid:
     Y2 = 0.5d0/ROC
 
-    GPP4 = GP2*GP2
     do J=1, NR_EQU
         DRODA_EQU(J)  = YRO*BC(J)
         X_EQU(J)      = GR(J)/GR(NR_EQU)
         G11_EQU(J)    = A(J)*DRODA_EQU(J)**2
         G22_EQU(J)    = B(J)*DRODA_EQU(J)**2
         G33_EQU(J)    = BA(J)*RTOR*RTOR
-        VRS_EQU(J)    = GPP4*C(J)/DRODA_EQU(J)
+        VRS_EQU(J)    = GP2_sq*C(J)/DRODA_EQU(J)
         IPOL_EQU(J)   = BB(J)/RTOR/BTOR
         GRADRO_EQU(J) = BD(J)*DRODA_EQU(J)
         VR_EQU(J)     = VRS_EQU(j)
@@ -1013,21 +1019,20 @@ contains
 !---------------------------------------------------------------------
     subroutine A2GSSOLVER(equil_solver)
 
+    use pi_const, only: GP, GP2, GP2_sq
     use io_mod, only: machine
-    use const_inc, only: NEQUIL, MEQUIL, IPART, IPCTRL, TAU, NA, NA1, NAB, &
-        RTOR, BTOR, IPL, GP, GP2, HRO, ROC, ABC, &
+    use scalars, only: NEQUIL, MEQUIL, IPART, IPCTRL, TAU, NA, NA1, NAB, &
+        RTOR, BTOR, IPL, HRO, ROC, ABC, &
         VOLUME, SHIFT, ELONG, UPDWN, TRIAN, &
         INUME3, ITFBP, IPLFBE, IFBEY, ITREQ, ICIRCQ, ITFBE, &
         NB2EQL, TIME, LEQ, PSIFB, PSPLEX, PSIEXT, IPEQL, IPROT
-    use status_inc, only: G11, G22, G22E, G33, G33E, G41, G42, G43, G44, G45, &
+    use status, only: G11, G22, G22E, G33, G33E, G41, G42, G43, G44, G45, &
         FP, IPOL, MU, SHEAR, &
         AMETR, VR, VRS, SLAT, GRADRO, DRODA, &
         NE, TE, NI, TI, MRHO, PBLON, PBPER, PFAST, EQPF, EQFF, &
         BMAXT, BMINT, BDB02, BDB0, B0DB2, FOFB, &
         VOLUM, SHIF, ELON, TRIA, XRHO, AREAT, PERIM, SHIV, SQUARN, VTOR
-    use plasma_state, only: plasma_up, plasma_trig
     use debugger, only: markloc
-    use ext_bnd, only: use_ext_bnd
     use imas_ids, only: type_equilibrium
     use spider_params, only: type_parameters
     use read_input, only: raw_boundary, raw_cCoil
@@ -1037,7 +1042,7 @@ contains
 
     integer, intent(in) :: equil_solver
 
-    integer :: i, j, jneql, jnteta, jnbnd, j_save_bound, j_rotation, n_coils
+    integer :: i, j, jneql, jntheta, jnbnd, j_save_bound, j_rotation, n_coils
     double precision :: yrocnew, iplnew, ychipfp, yipl, yupdwn
     double precision, dimension(NA1) :: yg11, yg22, yg33, yvr, yvrs, yslat, yg41, &
         ygradro, yipol, ydroda, ypres, ybmaxt, ybmint, yfp, &
@@ -1054,7 +1059,7 @@ contains
     call markloc('A2GSSOLVER')
 
     jneql  = abs(nint(NEQUIL))
-    jnteta = abs(nint(MEQUIL))
+    jntheta = abs(nint(MEQUIL))
     n_coils = raw_cCoil%ncoils
 
     if (raw_boundary%n_theta == 0) then
@@ -1080,7 +1085,7 @@ contains
         iplnew = IPL            ! if in initialization mode, use plasma current
     endif
 
-    if (plasma_up == 0 .or. plasma_trig == 1) then
+    if (.not. plasma_up) then
         iplnew = IPL
         IPLFBE = IPL
     endif
@@ -1102,7 +1107,7 @@ contains
 
 !Efable Reput values since now they are used for ff' computation
         yg11(j)    = G11(j)*VRS(j)                                    !g11 = <(grad(V)^2)> 
-        yg22(j)    = G22(j)*(GP2**2)*IPOL(j)/RTOR*VRS(j)    !g22 = <(grad(V)/R)^2>
+        yg22(j)    = G22(j)*GP2_sq*IPOL(j)/RTOR*VRS(j)    !g22 = <(grad(V)/R)^2>
         yg33(j)    = G33(j)/(RTOR**2)                             !g33 = <1/R^2>
         yvr(j)     = VR(j)
         yvrs(j)    = VRS(j)
@@ -1125,7 +1130,7 @@ contains
     if (IFBEY >= 1.) i = 2    !fbe is on
     if (IPART == 1 ) i = 1    !fbe is off
 
-    if (ifbey > 0. .and. plasma_up == 0) then
+    if (ifbey > 0. .and. .not. plasma_up) then
         equil_in%global_param%i_plasma = IPLFBE*1e6   !itm is in A
         parameters_equil%dt      = tau
         parameters_equil%time    = time
@@ -1144,7 +1149,7 @@ contains
     else
         call GSSOLVER( &
 ! Input:
-            equil_solver, jneql, jnteta, jnbnd, NA1, rbnd, zbnd, XRHO(1: NA1), RTOR, BTOR, &
+            equil_solver, jneql, jntheta, jnbnd, NA1, rbnd, zbnd, XRHO(1: NA1), RTOR, BTOR, &
             ROC, yfp, ypres, VOLUME, n_coils, yvcoil, i, IPART, ITREQ, &
             nint(INUME3), TAU, nint(ITFBP), nint(ICIRCQ), nint(IPCTRL), nint(IFBEY), &
             TIME, ychipfp, PSIFB, &
@@ -1188,7 +1193,7 @@ contains
             EQFF(J)  = yeqff(J)    ! due to adiabatic compression done in the code
         enddo
      
-        if (raw_boundary%nt > 0 .or. TIME >= ITFBE .or. use_ext_bnd == 1) then
+        if (raw_boundary%nt > 0 .or. TIME >= ITFBE .or. use_ext_bnd) then
             UPDWN = yupdwn
             ABC   = yametr(NA1) 
             ELONG = ELON(NA1)
@@ -1207,7 +1212,7 @@ contains
         call new_grid ! The RHO-grid and NA, NA1, HRO are updated, also AMETR(NA1) = ABC is done there
 
         VOLUM(NA1) = yvolum(NA1)
-        G22 = G22/VRS*RTOR/(GP2**2)/IPOL
+        G22 = G22/VRS*RTOR/GP2_sq/IPOL
         G11 = G11/VRS
         GRADRO = GRADRO/VRS
         DRODA  = DRODA/VRS
@@ -1259,14 +1264,15 @@ contains
 !  call BNDRY(RZPB, RZPB(n_bnd+1))
 !---------------------------------------------------------------------
 
+    use pi_const, only: GP2
     use read_input, only: raw_boundary
-    use const_inc, only: GP2, TIME, RTOR, SHIFT, ABC, TRIAN, UPDWN, ELONG
-    use ext_bnd, only: ext_bnd_in, use_ext_bnd
+    use scalars, only: TIME, RTOR, SHIFT, ABC, TRIAN, UPDWN, ELONG
 
     double precision, intent(out) :: RPB(*), ZPB(*)
 
     integer :: j, j1, jt, nt_bnd, n_bnd
     double precision :: ydt, yd1, yd2, yfi
+    double precision, dimension(:, :), allocatable :: ext_bnd_in ! 50 , 2 boundary values R,Z
 
     nt_bnd = raw_boundary%nt
     n_bnd  = raw_boundary%n_theta
@@ -1295,7 +1301,8 @@ contains
                 RPB(8) = RTOR + SHIFT - ABC*(TRIAN*yd1 + yd2)
                 ZPB(8) = UPDWN - ABC*ELONG*ydt
             else
-                if (use_ext_bnd == 1) then
+                if (use_ext_bnd) then
+                    if (.not. allocated(ext_bnd_in)) allocate(ext_bnd_in(n_bnd, 2))
                     do j=1, n_bnd
                         ZPB(j) = ext_bnd_in(j, 2)
                         RPB(j) = ext_bnd_in(j, 1)
@@ -1430,8 +1437,8 @@ contains
 !    R_0*<\vec j\cdot\nabla\zeta> = EQPF+EQFF*<R_0^2/r^2>
 !---------------------------------------------------------------------
 
-    use const_inc, only: INUME3, RTOR, BTOR, HRO, NA, NA1, NB2EQL
-    use status_inc, only: EQPF, EQFF, NE, TE, NI, TI, PBLON, PBPER, PFAST, &
+    use scalars, only: INUME3, RTOR, BTOR, HRO, NA, NA1, NB2EQL
+    use status, only: EQPF, EQFF, NE, TE, NI, TI, PBLON, PBPER, PFAST, &
         RHO, AMETR, CU, CUTOR, G22, G33, MU, IPOL
     use debugger, only: markloc, debug
 
@@ -1493,8 +1500,9 @@ contains
 !    R_0*<\vec j\cdot\nabla\zeta> = EQPF+EQFF*<R_0^2/r^2>
 !---------------------------------------------------------------------
 
-    use const_inc, only: INUME3, RTOR, BTOR, HRO, NA, NA1, NB2EQL, GP2
-    use status_inc, only: EQPF, EQFF, NE, TE, NI, TI, PBLON, PBPER, PFAST, &
+    use pi_const, only: GP2
+    use scalars, only: INUME3, RTOR, BTOR, HRO, NA, NA1, NB2EQL
+    use status, only: EQPF, EQFF, NE, TE, NI, TI, PBLON, PBPER, PFAST, &
         RHO, AMETR, CU, CUTOR, G22, MU, IPOL, FP
     use debugger, only: markloc, debug
 
@@ -1556,8 +1564,9 @@ contains
 !            FP(1:NA1) - poloidal flux [Vs]
 !---------------------------------------------------------------------
 
-    use const_inc, only: GP, GP2, RTOR, BTOR, NA1, NA, HRO
-    use status_inc, only: SRHO, XRHO, CU, MU, FP, G22, G33, IPOL
+    use pi_const, only: GP, GP2
+    use scalars, only: RTOR, BTOR, NA1, NA, HRO
+    use status, only: SRHO, XRHO, CU, MU, FP, G22, G33, IPOL
     use numerical_tools, only: extrap, integr
 
     integer :: j
@@ -1602,8 +1611,9 @@ contains
 !  MU(1:NA1) - (1/rho)dF/d(rho)      rotational transform
 !---------------------------------------------------------------------
 
-    use status_inc, only: XRHO, FP, MU, CU, IPOL, G22, G33, SXHO
-    use const_inc, only: GP, RTOR, HRO, BTOR, NA, NA1
+    use pi_const, only: GP
+    use status, only: XRHO, FP, MU, CU, IPOL, G22, G33, SXHO
+    use scalars, only: RTOR, HRO, BTOR, NA, NA1
     use numerical_tools, only: extrap
 
     integer :: j
@@ -1639,10 +1649,10 @@ contains
 ! Output: NB1, RHO, SRHO, HRO, AMETR(j>NA1)
 !---------------------------------------------------------------------
 
-    use parameter_inc, only: NRD
-    use status_inc, only: RHO, XRHO, SRHO, SXHO, AMETR
-    use const_inc, only: HRO, HROX, AB, ABC, ROC, ROWALL, &
-        FTO, BTOR, GP, NA, NA1, NB1, NAB
+    use pi_const, only: GP
+    use status, only: NRD, RHO, XRHO, SRHO, SXHO, AMETR
+    use scalars, only: HRO, HROX, AB, ABC, ROC, ROWALL, &
+        FTO, BTOR, NA, NA1, NB1, NAB
 
     integer :: j
     double precision :: YDA
@@ -1692,8 +1702,8 @@ contains
 ! Output: SHIF(1:NB1), ELON(1:NB1), TRIA(1:NB1), 
 !  AMETR(1:NB1), DRODA(1:NB1)
 
-    use const_inc, only: NB1, AB, ROC, RTOR, SHIFT, UPDWN, ELONG, TRIAN
-    use status_inc, only: RHO, SHIF, SHIV, ELON, TRIA, AMETR, DRODA
+    use scalars, only: NB1, AB, ROC, RTOR, SHIFT, UPDWN, ELONG, TRIAN
+    use status, only: RHO, SHIF, SHIV, ELON, TRIA, AMETR, DRODA
 
     integer :: j
     double precision :: YDA, YA, YR1, YR2

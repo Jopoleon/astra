@@ -9,20 +9,18 @@ program astra
 
 use json_module, only: json_file
 use graph_utils, only: astra_gui, astra_gui_ref, gui_init
-use io_mod, only: TASK, io_init, MACHINE, awd, restart
+use io_mod, only: TASK, io_init, MACHINE, awd, restart, exp_file, equ_file
 use cpu_usage, only: cpu_init, cpu_start, wall_start, cpu_report
-use const_inc, only: IPART, const_init, RTOR, UPDWN, SHIFT, PSIAX, PSIBO, &
+use scalars, only: IPART, const_init, RTOR, UPDWN, SHIFT, PSIAX, PSIBO, &
     TIME, TINIT, TSTART, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT, NA1, &
     constValues, varValues, varxValues, internValues, intern2Values
-use status_inc, only: status_init, defarr, profiles, profiles_x
+use status, only: status_init, defarr, profiles, profiles_x
 use debugger, only: astra_stop, markloc
-use ext_bnd, only: use_ext_bnd
 use transport2fbe, only: transport2fbe_init
 use json_vars, only: read_metadata, n_intern
 use json_rw, only: json_load, write_json, &
     read_scalar_block, read_array_block, read_equil
 use read_input, only: readInput, raw_cCoil
-use plasma_state, only: plasma_up
 use auxiliary, only: IFTREQ
 use set_x_data, only: set_x_scalars, set_x_arrays, astra_assignments
 use metrics, only: eqguess, metric, CCOIL, VCOIL
@@ -56,11 +54,9 @@ call status_init
 
 call ininam
 call io_init
-plasma_up = 1  ! plasma is up by default, can be set to 0 for breakdown by the user in a user-defined sbr called with "<"
 call readInput
 call astra_assignments ! ASTRA default assignments
 
-use_ext_bnd = 0
 IPART = 1   ! Mark initial iteration section
 
 allocate(CCOIL(raw_cCoil%ncoils), VCOIL(raw_cCoil%ncoils))
@@ -88,7 +84,8 @@ endif
 
 if (restart > 0) then
     print*, 'astra_main1, TIME=', TIME
-    write(f_json, '(2A, i0, A)') TRIM(awd), '/ncdf_out/aug34954fluxes-', restart, '.json'
+    write(f_json, '(5A, i0, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), &
+        TRIM(equ_file), '-', restart, '.json'
     call json_load(f_json, fjson)
     call read_scalar_block(fjson, "constants", constValues)
     call read_scalar_block(fjson, "variables", varValues)
@@ -96,7 +93,7 @@ if (restart > 0) then
     call read_scalar_block(fjson, "internal", internVal)
     call read_scalar_block(fjson, "intern2", intern2Values)
     internValues(1: n_intern) = internVal(1: n_intern)
-    write(*, '(A, 5f8.4)') 'astra_main2, TIME=', TIME
+    write(*, '(A, 2f8.4, i0)') 'astra_main2, TIME=', TIME, internValues(2), n_intern
     call read_array_block(fjson, "profiles", profs)
     call read_array_block(fjson, "profiles_x", profs_x)
     profiles(  1:NA1, :) = profs

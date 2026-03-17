@@ -4,8 +4,8 @@
 !
 double precision FUNCTION QMINR(YR)
 
-use const_inc, only: NA1
-use status_inc, only: MU
+use scalars, only: NA1
+use status, only: MU
 
 implicit none
 

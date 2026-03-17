@@ -16,24 +16,22 @@ contains
 !---------------------------------------------------------------------
     subroutine neo_alloc
 
-    use const_inc, only: NA1
+    use scalars, only: NA1
 
     if (.not. allocated(neo_out%chi_i)) then
         allocate(neo_out%chi_i(NA1), neo_out%chi_e(NA1), neo_out%e_pflux(NA1))
         allocate(neo_out%ion_pflux(nspec_max-1, NA1))
     endif
 
-    return
     end subroutine neo_alloc
 
 !---------------------------------------------------------------------
     subroutine neo_ipc(rho_norm_max)
 
     use omp_lib
-    use parameter_inc, only: NRD
     use io_mod, only: equ_file, exp_file, awd
-    use const_inc, only: NA1, BTOR, RTOR, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
-    use status_inc, only: NE, TE, NI, TI, ER, MU, FP_NORM, &
+    use scalars, only: NA1, BTOR, RTOR, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
+    use status, only: NE, TE, NI, TI, ER, MU, FP_NORM, &
         ZIM1, ZIM2, ZIM3, NDEUT, NIZ1, NIZ2, NIZ3, &
         RHO, AMETR, SHIF, ELON, TRIA, VTOR, VPOL, G11, VRS
     use numerical_tools, only: qinterp
@@ -58,9 +56,9 @@ contains
     double precision, dimension(n_arr_out, nrho_m) :: prof_out
     double precision :: bmod, bpolz, xstep, rho_min, rho_max, dstep, T0, m0, a0_m, gradrhosq_inv, drho
     double precision, dimension(n_scalars) :: scal_in
-    double precision, dimension(NRD) :: rmaj_as, q_as, ni_main_as, vpar_as, &
+    double precision, dimension(NA1) :: rmaj_as, q_as, ni_main_as, vpar_as, &
         j_boot, e_pflux_as, chii_as, chie_as
-    double precision, dimension(nspec_max-1, NRD) :: i_pflux_as
+    double precision, dimension(nspec_max-1, NA1) :: i_pflux_as
     double precision, dimension(nrho_m) :: rho_m, ti_m, te_m, ne_m, vpar_m, &
         ametr_m, elon_m, tria_m, rmaj_m, q_m, &
         drmin, drmaj, dti, dte, dne, dq, delong, dtrian, dvpar, drhodr, dr
@@ -71,7 +69,7 @@ contains
     character(len=64) :: SBP_NAME
     character(len=128) :: ipc_file, astra_task
 
-    double precision, dimension(NRD) :: e0imp1, FVimp1, e0imp2, FVimp2, e0imp3, FVimp3 ! DF
+    double precision, dimension(NA1) :: e0imp1, FVimp1, e0imp2, FVimp2, e0imp3, FVimp3 ! DF
     
     save semID, shmID_vars, shmID_arrs
 
@@ -328,7 +326,6 @@ contains
     call SYSTEM_CLOCK(t_wall2, rate)
     print*, "XPR wall time", dble(t_wall2 - t_wall1)/dble(rate)
 
-    return
     end subroutine neo_ipc
 
 end module a2neo

@@ -2,12 +2,12 @@
 !   (Yushmanov 11-JAN-89)
 double precision FUNCTION WTOTR(YR)
 
-use status_inc, only: NE, TE, NI, TI
+use status, only: NE, TE, NI, TI
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision VINT
 
 WTOTR = VINT(NE*TE, YR) + VINT(NI*TI, YR)
 WTOTR = 0.0024*WTOTR

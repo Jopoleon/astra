@@ -1,6 +1,6 @@
 module nclass_mod
 
-use parameter_inc, only: NRD
+use status, only: NRD
 
 implicit none
 
@@ -93,9 +93,10 @@ subroutine NEOCL4
 ! density of main ions as they are defined above
 !---------------------------------------------------------------------
 
-use const_inc, only: GP2, ABC, ROC, BTOR, RTOR, HRO, NA, NA1, &
+use pi_const, only: GP2
+use scalars, only: ABC, ROC, BTOR, RTOR, HRO, NA, NA1, &
     AMJ, AIM1, AIM2, AIM3, ZMJ
-use status_inc, only: BDB0, B0DB2, BDB02, BMAXT, FOFB, IPOL, &
+use status, only: BDB0, B0DB2, BDB02, BMAXT, FOFB, IPOL, &
     ULON, ER, VRS, G11, RHO, AMETR, &
     MU, ELON, SHIF, TE, TI, &
     NE, NHYDR, NDEUT, NTRIT, NHE3, NALF, ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3, NMAIN
@@ -1002,7 +1003,6 @@ jext_nc(NA1) = jext_nc(NA)
 cc_nc(NA1)   = cc_nc(NA)
 ni_nc(NA1)   = ni_nc(NA)
 
-return
 end subroutine neocl4
 
 !---------------------------------------------------------------------
@@ -1014,8 +1014,9 @@ subroutine ZBFAUX(GRRdB2, NGRTheta, YFM)
 !                  corrected by I.Yu. Senichenkov (IYS) February 2008
 !---------------------------------------------------------------------
 
-use const_inc, only: ROC, HRO, NA, NA1, GP2, BTOR, RTOR
-use status_inc, only: BDB0, BDB02, IPOL, MU, TRIA, ELON, SHIF, &
+use pi_const, only: GP2
+use scalars, only: ROC, HRO, NA, NA1, BTOR, RTOR
+use status, only: BDB0, BDB02, IPOL, MU, TRIA, ELON, SHIF, &
     AMETR, RHO, DRODA
 
 integer, parameter :: ntheta=32
@@ -1157,7 +1158,6 @@ do j_mvisc=1, 3
                         YFM(j_mvisc, NA-1)*(NA - ROC/HRO)
 enddo
 
-return
 end subroutine zbfaux
 
 !----------------------------------------------------------------
@@ -1490,7 +1490,6 @@ do i=1,m_s
   qeb_s(i)=qfl_s(4,i)/den_iz(im,iza)/temp_i(im)/z_j7kv
 enddo
 
-return
 end subroutine nclass
 
 !----------------------------------------------------------------
@@ -1924,7 +1923,6 @@ do i=1,m_s
   enddo
 enddo
 
-return
 end subroutine NCLASS_FLOW
 
 !----------------------------------------------------------------
@@ -2038,7 +2036,6 @@ do i=1,m_s
   endif
 enddo
          
-return
 end subroutine NCLASS_K
 
 !----------------------------------------------------------------
@@ -2144,7 +2141,6 @@ do im=1,m_i
   enddo   
 enddo
 
-return
 end subroutine NCLASS_MN
 
 !----------------------------------------------------------------
@@ -2373,7 +2369,6 @@ if((k_banana.ne.0).or.(k_pfirsch.ne.0)) then
   enddo
 endif
 
-return
 end subroutine NCLASS_MU
 
 !----------------------------------------------------------------
@@ -2461,7 +2456,6 @@ do i=1,m_s
   enddo   
 enddo
 
-return
 end subroutine NCLASS_NU
 
 !----------------------------------------------------------------
@@ -2572,7 +2566,6 @@ do i=1,m_s
   enddo          
 enddo
 
-return
 end subroutine NCLASS_TAU
 
 !----------------------------------------------------------------
@@ -2600,7 +2593,6 @@ WRITE(c_l,'(i2)') n_l
 char='('//c_c//'a'//c_l//')'
 WRITE(nout,char) (c(i),i=1,n_c)
 
-return
 end subroutine WRITE_C
 
 !----------------------------------------------------------------
@@ -2658,7 +2650,6 @@ else
   WRITE(nout,char) (i(j),j=1,n_i),(r(j),j=1,n_r)
 endif
 
-return
 end subroutine WRITE_IR
 
 !----------------------------------------------------------------
@@ -2692,7 +2683,6 @@ if(nbelow.gt.0) then
   enddo
 endif
 
-return
 end subroutine WRITE_LINE
 
 !----------------------------------------------------------------
@@ -2752,7 +2742,6 @@ else
   WRITE(nout,char) label(1:48),(i(j),j=1,n_i),(r(j),j=1,n_r)
 endif
 
-return
 end subroutine WRITE_LINE_IR
 
 !----------------------------------------------------------------
@@ -2813,7 +2802,7 @@ do i=n,1,-1
   endif
   b(i)=sum/a(i,i)
 enddo   
-return
+
 end subroutine U_LU_BACKSUB
 
 !----------------------------------------------------------------
@@ -2912,7 +2901,6 @@ do j=1,n
   endif
 enddo   
 
-return
 end subroutine U_LU_DECOMP
 
 !----------------------------------------------------------------
@@ -2970,7 +2958,6 @@ else
   enddo
 endif
 
-return
 end function U_ERF
 
 !----------------------------------------------------------------
@@ -2993,7 +2980,6 @@ do i=1,n
   x(i)=0.0
 enddo   
 
-return
 end subroutine RARRAY_ZERO
 
 !----------------------------------------------------------------
@@ -3018,7 +3004,7 @@ do i=1,n
   RARRAY_SUM=RARRAY_SUM+x(ix)
   ix=ix+incx
 enddo   
-return
+
 end function RARRAY_SUM
 
 !----------------------------------------------------------------
@@ -3052,7 +3038,6 @@ do i=1,n
   iy=iy+incy
 enddo   
 
-return
 end subroutine RARRAY_COPY
 
 end module nclass_mod

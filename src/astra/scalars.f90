@@ -1,11 +1,8 @@
-module const_inc
- 
-use parameter_inc, only: NARRX
+module scalars
 
 implicit none
 
 integer, parameter :: NEQNS=19
-double precision, parameter :: GP=3.1415926, GP2=6.283185
 
 double precision, pointer :: &
     AB,    ABC,   AIM1,  AIM2,  AIM3,  AMJ,   AWALL, BTOR, &
@@ -81,7 +78,8 @@ double precision :: IBKDW ! IBKDW=-1 for breakdown yes
 double precision, pointer :: &
     HRO, HROX, VOLUME, ROC, ROWALL, FTO, &
     FTN, BTN, PSIFB, RBDOT, ALBPL, &
-    TSTART, TAU, TIMEQL, QBEAM, IPLN, ROCO, RON, ROE, ROI, ROU, &
+    TSTART, TAU, TAU_NEW, TAU_OLD, TIMEQL, QBEAM, IPLN, &
+    ROCO, RON, ROE, ROI, ROU, &
     RO0, RO1, RO2, RO3, RO4, RO5, RO6, RO7, RO8, RO9, &
     PSIAX, PSIBO, PSIFBO, PSIEXT, PSPLEX, IPLFBE, &
     PSIEXO, PSPLXO, ATREQ, PTREQ, BBDOT, IFBEY, TAUPRP, &
@@ -220,4 +218,4 @@ contains
 
     end subroutine const_init
 
-end module const_inc
+end module scalars

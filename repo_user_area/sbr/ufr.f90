@@ -107,5 +107,4 @@ endif
 deallocate(tmp1)
 deallocate(tmp2)
 
-return
 end subroutine UF2DR

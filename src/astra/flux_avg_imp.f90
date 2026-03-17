@@ -25,9 +25,8 @@ contains
 ! - FVimp_out -> transformation coefficient of the convection [1/m]
 !---------------------------------------------------------------------
 
-    use parameter_inc, only: NRD
-    use const_inc, only: NA1, RTOR, ZMJ, AMJ
-    use status_inc, only: TE, TI, ZEF, VTOR, SHIF
+    use scalars, only: NA1, RTOR, ZMJ, AMJ
+    use status, only: TE, TI, ZEF, VTOR, SHIF, NRD
 
     integer, intent(in) :: geom_type
     double precision, intent(in) :: Aimp_in
@@ -145,8 +144,8 @@ contains
 ! - R_LFS_out ----> low field side major radius [m]
 !---------------------------------------------------------------------
 
-    use const_inc, only: NA1, RTOR, time, tau, tstart
-    use status_inc, only: AMETR, SHIF, SHIV
+    use scalars, only: NA1, RTOR, time, tau, tstart
+    use status, only: AMETR, SHIF, SHIV
     use parameters_a2equil, only: equil_now
     use numerical_tools, only: qinterp
 

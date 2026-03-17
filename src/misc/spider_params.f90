@@ -34,7 +34,7 @@ type type_parameters
     real(DP) :: enels=1.0d-6 ! circuit equation accuracy
 
     integer :: neql = 100 ! number of nodes in radial
-    integer :: nteta = 90 ! number of intervals in poloidal + 2
+    integer :: ntheta = 90 ! number of intervals in poloidal + 2
     integer :: n_dmf = 3  ! number of iterations of cde in SPIDER with rectangular grid
     integer :: no_circuit_eq = 0 ! if 1, doesnt do circuit equations
 

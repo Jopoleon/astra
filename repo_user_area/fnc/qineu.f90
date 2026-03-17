@@ -2,8 +2,8 @@
 !   (Yushmanov 11-JAN-89)
 double precision FUNCTION QINEUR(YR)
 
-use const_inc, only: HRO, NNCL, NNWM
-use status_inc, only: VR, NE, NN, NI, TE, TN, TI
+use scalars, only: HRO, NNCL, NNWM
+use status, only: VR, NE, NN, NI, TE, TN, TI
 use standard_functions, only: jrho_drho
 
 implicit none

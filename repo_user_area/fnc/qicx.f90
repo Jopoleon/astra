@@ -2,8 +2,8 @@
 !   (Yushmanov 11-JAN-89)
 double precision FUNCTION QICXR(YR)
 
-use const_inc, only: HRO, NNWM, NNCL
-use status_inc, only: VR, TE, TN, TI, NE, NN, NI
+use scalars, only: HRO, NNWM, NNCL
+use status, only: VR, TE, TN, TI, NE, NN, NI
 use standard_functions, only: jrho_drho
 
 implicit none

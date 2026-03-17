@@ -211,7 +211,7 @@ class EXP_PARSER:
                 self.profiles['data'].append((factor*uf.f['data']).ravel().tolist())
                 self.profiles['filter'].append(alpha)
                 uf_keys.append(varName)
-                
+
             else: # A line of the kind "NAMEXP ...  GRIDTYPE ...", not u-file
                 attr_d = parse_line2d(line)
                 if 'FILTER' in attr_d:

@@ -3,7 +3,7 @@
 !   (Polevoy 25-JUN-97,  29-JUN-2016)
 double precision FUNCTION SHINER(YR)
 
-use const_inc, only: CNB1
+use scalars, only: CNB1
 
 implicit none
 

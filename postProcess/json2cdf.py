@@ -83,7 +83,7 @@ def json_concat(expequ):
     nt = j_json - 1
     nx   = len(json_d['profiles']['XRHO'])
     n_eq = len(json_d['equil_profiles']['rho_tor_norm'])
-    n_th = len(json_d['equil_coord']['teta2d'])
+    n_th = len(json_d['equil_coord']['theta2d'])
     nR   = len(json_d['equil_rect']['r2d'])
     nZ   = len(json_d['equil_rect']['z2d'])
     logger.debug('nt=%d, nrho=%d, nr_eq=%d, nthe_eq=%d' %(nt, nx, n_eq, n_th))
@@ -127,9 +127,9 @@ def json_concat(expequ):
     rho_surf.long_name = meta_d['equil_profiles']['rho_tor_norm']['desc']
 
     theta = f.createVariable('THETA', dtyp, ('THETA', ))
-    theta.data = np.array(ds_astra['teta2d']['data'], dtype=dtyp)
+    theta.data = np.array(ds_astra['theta2d']['data'], dtype=dtyp)
     theta.units = 'rad'
-    theta.long_name = meta_d['equil_coord']['teta2d']['desc']
+    theta.long_name = meta_d['equil_coord']['theta2d']['desc']
 
     rgrid = f.createVariable('R', dtyp, ('R', ))
     rgrid.data = np.array(ds_astra['r2d']['data'], dtype=dtyp)
@@ -142,7 +142,7 @@ def json_concat(expequ):
     zgrid.long_name = meta_d['equil_rect']['z2d']['desc']
 
     for key, val in ds_astra.items():
-        if key not in ('TIME', 'XRHO', 'rho_tor_norm', 'teta2d', 'r2d', 'z2d'):
+        if key not in ('TIME', 'XRHO', 'rho_tor_norm', 'theta2d', 'r2d', 'z2d'):
             tmp = f.createVariable(key, dtyp, val['dimensions'])
             tmp[:] = val['data']
             tmp.units = val['units']

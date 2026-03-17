@@ -3,13 +3,14 @@
 !   (Pereverzev 09-OCT-08)
 double precision function TAUF7R(YR)
 
-use const_inc, only: TAU
-use status_inc, only: SF7TOT, F7, F7O
+use scalars, only: TAU
+use status, only: SF7TOT, F7, F7O
+use standard_functions, only: VINT, VINTO
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT, VINTO, YQ, YW, YWO
+double precision :: YQ, YW, YWO
 
 YQ  = VINT(SF7TOT, YR)
 YW  = VINT(F7, YR)

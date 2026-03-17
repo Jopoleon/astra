@@ -2,12 +2,12 @@
 !   (Polevoy 28.09.89)
 double precision FUNCTION QBTOTR(YR)
 
-use status_inc, only: PBEAM
+use status, only: PBEAM
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT
 
 QBTOTR = VINT(PBEAM, YR)
 

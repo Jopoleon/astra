@@ -1,7 +1,7 @@
 !----------------
 module nbstatus_inc
  
-use parameter_inc, only: NRD
+use status, only: NRD
 
 implicit none
 

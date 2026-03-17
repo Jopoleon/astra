@@ -35,14 +35,14 @@ endtype
 end module ferromagstructure
 
 !---------------------------------------------------------------------
-module scalars
+module feqis_scalars
 
 implicit none
 
 double precision :: psplex, li3, li_aug, betapol, betapol_iter, &
     wkin, bpkin, iplasma, btor0, rgeom0
 
-end module scalars
+end module feqis_scalars
 
 !---------------------------------------------------------------------
 module transfer_functions

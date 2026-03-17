@@ -4,32 +4,29 @@ subroutine STEPUP
 ! Note that now time step is updated at the end of a full time cycle
 !-------------------------------------------------------------------
 
-use const_inc, only: IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
+use scalars, only: IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
     IPCTRL, ICIRCQ, ITFBP, ITREQ, FTN, FTO, BTN, BTOR, HRO, ROC, NA1, &
-    TAU, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, ATREQ, LEQ, & 
+    TAU, TAU_NEW, TAU_OLD, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, ATREQ, LEQ, & 
     PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, RBDOT, BBDOT
-use status_inc, only: TE, TI, NE, NI, NIO, FP, defarr, error_catch
+use status, only: TE, TI, NE, NI, NIO, FP, defarr, error_catch
 use io_mod, only: MACHINE, TASK
 use read_input, only: raw_cCoil, raw_vCoil
-use plasma_state, only: plasma_up
 use auxiliary, only: IFTREQ, IFSTEP, OLDNEW
 use set_x_data, only: set_x_scalars, set_x_arrays, get_coil
-use metrics, only: CCOIL, VCOIL, metric
+use metrics, only: CCOIL, VCOIL, plasma_up ,metric
 use feqis_solvers, only: feqisupdate
 use gui_interaction, only: if_key
 
 implicit none
 
 integer :: IFSUB, ibcpsi_fb, bc_type_for_fp, jkey, n_coils
-double precision :: zipctrl, iplfbeo, Apsibcfac, Bpsibcfac, dfpdrbm12, &
-    tau_old, tau_new
+double precision :: zipctrl, iplfbeo, Apsibcfac, Bpsibcfac, dfpdrbm12
 double precision, dimension(raw_cCoil%ncoils) :: yccoil
 double precision, dimension(raw_vCoil%ncoils) :: yvcoil
 
 data ibcpsi_fb /0/
 
 save ibcpsi_fb  ! counter to use psi as bc stuff
-save tau_old, tau_new
 
 !Initialize a few variables for toroidal field
 BTN = BTOR
@@ -65,7 +62,7 @@ call detvar
 ! Subroutines with the "<" symbol are put here
 ! here it computes the new NI also. These are run with tau_old
 
-if (plasma_up == 1 .or. ifbey == 0) then
+if (plasma_up .or. ifbey == 0) then
     call OLDNEW           ! Time advance: F(t-tau):=F(t) neo=ne, etc,except ni
     call set_x_scalars    ! Set exp scalars, moved here for btor consistency
 endif
@@ -122,13 +119,13 @@ time_step_accuracy: do
 ! NITREQ regulates this. 
 ! 1 - no iterations, 2 - yes. is 1 by default
 
-        if (plasma_up == 0 .or. ifbey == 0) then
+        if (.not. plasma_up .or. ifbey == 0) then
             call set_x_arrays(2)       ! Update exp-data with a new metric
         endif
 
         call METRIC          ! Equilibrium call, compute IPL from dfpdrb, compute PSIEXT, shape, psplex, and metric coefficients, update ROC, FTN
 
-        if (plasma_up == 1) then
+        if (plasma_up) then
             RBDOT = (FTO  - FTN)/(FTO  + FTN)/TAU     !New rbdot for adiabatic compression
             BBDOT = (BTOR - BTN)/(BTOR + BTN)/TAU     !New bbdot for adiabatic compression
 
@@ -144,7 +141,7 @@ time_step_accuracy: do
             call error_catch
         endif
 
-        if (plasma_up == 1) then
+        if (plasma_up) then
             call eqns_inc(ibcpsi_fb, bc_type_for_fp, dfpdrbm12)
         endif
 
@@ -194,7 +191,7 @@ time_step_accuracy: do
         endif
 
 !quantitites for psi b.c.
-        if (plasma_up == 1) then
+        if (plasma_up) then
             Apsibcfac = dfpdrbm12
             Bpsibcfac = PSIEXT - PSPLEX*ROC*Apsibcfac
             PSIFB = Bpsibcfac
@@ -211,7 +208,7 @@ time_step_accuracy: do
 
     enddo tr_eq_loop
 
-    if (plasma_up == 1 .or. IFBEY == 0) then
+    if (plasma_up .or. IFBEY == 0) then
         call DEFARR                  ! F(t)>0? Define F(t) outside ABC
     endif
     

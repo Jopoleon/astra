@@ -55,12 +55,8 @@ C============================================= F-P Coefficients
 	include 'nbi/nbfp.inc'
 	integer	ISPEND,ISPE,I,J,I1
 	common /CNBSP/ ISPEND,ISPE(9)
-	double precision	PI,PI2,SQPI,VB2,YE,YA,YB,YD,YI,YDEL
+	double precision	VB2,YE,YA,YB,YD,YI,YDEL
 	double precision	YEXPI,YAERF,YcERF,YHDVB,YIP,YAB
-	PI	=3.1415926536
-	PI2	=PI*PI
-	SQPI	=dSQRT(PI)
-!	IV1	=IV+1
 	DO 1	I=1,IV1
 		A1(I)	=0.
 		B(I)	=0.
@@ -123,11 +119,7 @@ C======================================================== V,MU mesh
 	SUBROUTINE NBMESH
 	implicit none
 	include 'nbi/nbfp.inc'
-	double precision	PI,PI2,SQPI
 	integer	IT1,JV,JT
-	PI	=3.1415926536
-	PI2	=PI*PI
-	SQPI	=SQRT(PI)
 C...Vi=i*HV i=1,2,...,IV,IV1;	MUj=-1+(j-1/2)*Hmu j=1,2,..,IT
 !	IV1	=IV+1
 	IT1	=IT+1
@@ -146,12 +138,8 @@ C======================================================== MU sweep
 	SUBROUTINE NBPOMU
 	implicit none
 	include 'nbi/nbfp.inc'
-	double precision	PI,PI2,SQPI,AJ,BJ,CJ,DJ,Y
+	double precision	AJ,BJ,CJ,DJ,Y
 	integer	I,ITM1,J,J1,JM
-	PI	=3.1415926536
-	PI2	=PI*PI
-	SQPI	=SQRT(PI)
-!	IV1	=IV+1
 	ITM1	=IT-1
 C....Calculations of ALFA,BETA
 	DO 1	I=1,IV
@@ -191,12 +179,8 @@ C========================================================= V sweep
 	SUBROUTINE NBPOVE
 	implicit none
 	include 'nbi/nbfp.inc'
-	double precision	PI,PI2,SQPI,Y
+	double precision Y
 	integer	J,JP,I,I1,IM
-	PI	=3.1415926536
-	PI2	=PI*PI
-	SQPI	=dSQRT(PI)
-!	IV1	=IV+1
 	DO 1 J=1,IT
 C.....Calculations of alfa, beta
 		JP	=J+1
@@ -237,6 +221,7 @@ c	magnetic surfaces, ripple losses
 C======================================================== Polevoy
 
         use nbstatus_inc
+	use pi_const, only: GP
 
 	implicit none
 
@@ -258,7 +243,7 @@ c,NN(1),TN(1),NNBM1(1),NNBM2(1),NNBM3(1)
 	common/CION2/	PBCX(NRD),YFCUR(NRD),YFI(3),CNSFI(3)
      .	,YLNI(NRD),YLNE(NRD),YLNZ(NRD)
 	CHARACTER	YSRSNM*12
-	double precision FNBF,SPEX,PBEIE,PBICX,GP,YET,CBMI33,YM2F
+	double precision FNBF,SPEX,PBEIE,PBICX,YET,CBMI33,YM2F
 	double precision SQPI,DTION,YEV21,YEV22,YEV23,YJ2,YEPS,T0,TSNBI
 	double precision CNSTN,CNSTQ,CNSTP,CNSTC,CNSTE,CNSTT,CNSTQT
 	double precision DTAU,EBDTI,EBDTI0,CNSTE0,CNSNN,CNSNN0,YNN0,YV2
@@ -279,7 +264,6 @@ c,NN(1),TN(1),NNBM1(1),NNBM2(1),NNBM3(1)
 
 c	for double precision JDBL=2 (single precision 1) 30-MAY-06
 	JDBL=2
-	GP	=3.1415926536
 	SQPI	=dSQRT(GP)
 c...Time step
 	if(TAU.le.0.) goto 998

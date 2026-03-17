@@ -2,12 +2,12 @@
 !   (Yushmanov 11-JAN-89)
 double precision FUNCTION QTOTR(YR)
 
-use status_inc, only: PE, PI
+use status, only: PE, PI
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT
 
 QTOTR = VINT(PE + PI, YR)
 

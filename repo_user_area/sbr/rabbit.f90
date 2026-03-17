@@ -11,10 +11,11 @@ contains
         rabbit_lib_get_dv_darea, rabbit_lib_get_wfi
     use rabbit_variables, only: fusion_power, neutron_power
 
+    use pi_const, only: GP2
     use io_mod, only: AWD, nml_file
-    use const_inc, only: GP2, AIM1, TIME, TAU, QNBI, ROC, &
+    use scalars, only: AIM1, TIME, TAU, QNBI, ROC, &
        RTOR, BTOR, NA1, PSIAX, PSIBO
-    use status_inc, only: FP, FP_NORM, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
+    use status, only: FP, FP_NORM, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
        XRHO, VOLUM, IPOL, PEBM, PIBM, NIBM, CUBM, SNEBM, SCUBM, NRATE, &
        PBLON, PBPER, MU, VTOR, ZEF, NI, NHYDR, NDEUT, NTRIT
     use numerical_tools, only: qinterp
@@ -326,7 +327,6 @@ contains
 
     write(6, *) 'Done RABBIT'
 
-    return
     end subroutine RABBIT
 
 end module a2rabbit

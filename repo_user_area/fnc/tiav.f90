@@ -4,14 +4,14 @@
 
 double precision FUNCTION TIAVR(YR)
 
-use status_inc, only: TI
+use status, only: TI
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT, VOLR
+double precision, external :: VOLR
 
 TIAVR = VINT(TI, YR)/VOLR(YR)
 
-return
 end function TIAVR

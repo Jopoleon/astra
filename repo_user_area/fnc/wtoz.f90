@@ -2,8 +2,8 @@
 !             (Fable Nov 2018) total energy including fast ions
 double precision FUNCTION WTOZR(YR)
 
-use const_inc, only: HRO
-use status_inc, only: NE, TE, NI, TI, VR, PBLON, PBPER, PFAST
+use scalars, only: HRO
+use status, only: NE, TE, NI, TI, VR, PBLON, PBPER, PFAST
 
 implicit none
 
@@ -18,7 +18,6 @@ do J=1, JK
         0.5*(PBLON(J) + PBPER(J)) + PFAST(J))*VR(J)
 enddo
 WTOZR = HRO*(WTOZR - (NE(JK)*TE(JK) + NI(JK)*TI(JK) + &
-     & 0.5*(PBLON(J) + PBPER(J)) + PFAST(J))*HRO)*.0024
+    0.5*(PBLON(J) + PBPER(J)) + PFAST(J))*HRO)*.0024
 
-return
 end function WTOZR

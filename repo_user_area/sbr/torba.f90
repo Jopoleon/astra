@@ -11,14 +11,14 @@ contains
 ! tor and pol angle
 !----------------------------------------------------------------------|
 
-    use parameter_inc, only: NRD
-    use const_inc, only: NA1, RTOR, BTOR, TIME, ROC, SGNIP, SGNBT
-    use status_inc, only: TE, NE, FP, XRHO, ZEF, MU, ELON, SHif , IPOL, &
+    use pi_const, only: GP2
+    use scalars, only: NA1, RTOR, BTOR, TIME, ROC, SGNIP, SGNBT
+    use status, only: TE, NE, FP, XRHO, ZEF, MU, ELON, SHIF, IPOL, &
        AMETR, VOLUM, PEECR, CUECR, AREAT, rho_pol, FP_NORM
     use io_mod, only: AWD, nml_file
     use numerical_tools, only: qinterp, integr
     use standard_functions, only: VINT, IINT
-    use parameters_a2equil, only : equil_now, GP2
+    use parameters_a2equil, only : equil_now
     use surface_contours, only: ctr2rz_b
 
     logical, parameter :: dump_flag=.FALSE.
@@ -431,7 +431,6 @@ contains
 
     write(*, *) 'Exiting torba'
 
-    return
     end subroutine torba
 
  end module a2torbeam

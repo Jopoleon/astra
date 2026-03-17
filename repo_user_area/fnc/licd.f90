@@ -13,8 +13,9 @@
 
 double precision FUNCTION LICDR(YR1)
 
-use const_inc, only: GP, BTOR, NA, HRO
-use status_inc, only: IPOL, CD, VR, G22
+use pi_const, only: GP
+use scalars, only: BTOR, NA, HRO
+use status, only: IPOL, CD, VR, G22
 
 implicit none
 
@@ -28,7 +29,7 @@ ELSE
 ENDIF
 JR    = YR
 IF(JR >= NA) JR = NA
-YCD1  = .1/(GP*BTOR)
+YCD1  = 0.1/(GP*BTOR)
 YMUCD = YCD1*CD(1)*VR(1)/IPOL(1)**2
 YSINT = 0.
 DO J=1, JR
@@ -43,5 +44,4 @@ else
    LICDR = .5*YSINT*HRO*((JR+1.)**2/(YR*YR*YMUCD*IPOL(JR+1)))**2
 endif
 
-return
 end function licdr

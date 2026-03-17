@@ -2,12 +2,12 @@
 !   (Yushmanov 11-JAN-89)
 double precision FUNCTION WEXR(YR)
 
-use status_inc, only: NEX, TEX
+use status, only: NEX, TEX
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision VINT
 
 WEXR = VINT(NEX*TEX, YR)
 WEXR = 0.0024*WEXR

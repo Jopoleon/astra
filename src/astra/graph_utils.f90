@@ -1,7 +1,7 @@
 module graph_utils
 
 use char_manip, only: null_ch
-use parameter_inc, only: NRD
+use status, only: NRD
 
 implicit none
 
@@ -80,7 +80,7 @@ contains
     subroutine gui_init
 
     use io_mod, only: resize, n_sbr
-    use const_inc, only: AB, TINIT, TSCALE, XOUT
+    use scalars, only: AB, TINIT, TSCALE, XOUT
     use json_vars, only: n_intern, internNames
 
     integer :: i, j, ios, j0, j1, jgrid, jj, plot_mode
@@ -907,19 +907,18 @@ contains
 ! JIFNEW = 1 New curves only
 !---------------------------------------------------------------------
 
-    use parameter_inc, only: NRD, NRDX, NARRX
-    use status_inc, only: AMETR, MU, SHIF, ELON, TRIA
-    use const_inc, only: XOUT, NAB, NA1, NA1E, ABC, TINIT, TSCALE, RTOR, &
+    use status, only: AMETR, MU, SHIF, ELON, TRIA
+    use scalars, only: XOUT, NAB, NA1, NA1E, ABC, TINIT, TSCALE, RTOR, &
         MEQUIL, LEQ, TIME
-    use io_mod, only: IFDFAX, NPTM, XAXES, DATAX, equ_file, TOUTX
+    use io_mod, only: IFDFAX, NPTM, XAXES, DATAX, equ_file, TOUTX, nr_x_max
     use read_input, only: raw_profiles
     use dbl2char, only: fmt_smart
     use char_manip, only: len_trim_tab, str_in_list
     use debugger, only: markloc, debug, astra_stop
-    use json_vars, only: profxNames
+    use json_vars, only: profxNames, n_profx
     use standard_functions, only: AFVAL
 
-    integer, parameter :: jzero=0
+    integer, parameter :: jzero=0, NRDX=500
     integer, intent(in) :: MARK, JIFNEW
     integer, intent(inout) :: IYO(NTIMES,*)
     double precision, intent(in) :: TT_out(NTIMES)
@@ -1083,7 +1082,7 @@ contains
             if (NWINDX(jxout) == 0) CYCLE plot_profx ! NWINDX set in ininam.f90
             CHAR6 = NAMEX(jxout)
             if (CHAR6(1: 1) == ' ') CYCLE plot_profx
-            do jprof=1, NARRX
+            do jprof=1, n_profx
                 if (profxNames(jprof) == CHAR6) jn = jprof 
             enddo
             if (jn == 0) then
@@ -1096,7 +1095,7 @@ contains
             if (jpnt <= 0) CYCLE plot_profx
 
             jsc = NWINDX(jxout)
-            if (abs(SC(jsc)) < 1.1E-7) call SCAL(1, SC(jsc), SCALER(jsc), DATAX(1, jn), jpnt, NRDX)
+            if (abs(SC(jsc)) < 1.1E-7) call SCAL(1, SC(jsc), SCALER(jsc), DATAX(1, jn), jpnt, nr_x_max)
             jplot_in_tab = NWIND1(jsc) - curves_per_frame(MOD10)*active_tab(MOD10)
             if (jplot_in_tab <= 0 .or. jplot_in_tab > curves_per_frame(MOD10)) CYCLE plot_profx
             j_canv = MOD(jplot_in_tab - 1, n_canvas) + 1        ! 1-8 for mode '1'
@@ -1431,7 +1430,8 @@ contains
     subroutine plot_wall
 ! Plot vessel components reading them from json machine file
 
-    use const_inc, only: AB, ELONM, RTOR, TRICH, GP2
+    use pi_const, only: GP2
+    use scalars, only: AB, ELONM, RTOR, TRICH
     use debugger, only: debug
     use machine_config, only: config, json_cfg, cfg_exists
 
@@ -1483,8 +1483,8 @@ contains
 ! Input: MODEX, YIN, FP
 ! Output: Value a=YIN mapped to the current abscissa
 
-    use status_inc, only: AMETR, FP_NORM
-    use const_inc, only: XOUT, AB, ABC, ROC, NA1
+    use status, only: AMETR, FP_NORM
+    use scalars, only: XOUT, AB, ABC, ROC, NA1
     use numerical_tools, only: QUADIN
     use standard_functions, only: RFA
 
@@ -1527,7 +1527,7 @@ contains
     subroutine plot_flux_surfaces
 ! Redraw magnetic surfaces:
 
-    use const_inc, only: NEQUIL, MEQUIL
+    use scalars, only: NEQUIL, MEQUIL
     use parameters_a2equil, only: equil_now
 
     integer, parameter :: n_surf=556, nrho_plot=12
@@ -1669,7 +1669,7 @@ contains
     subroutine set_plot(plot_mode)
     ! Subroutine draw frame for different modes
 
-    use const_inc, only: TSCALE, TINIT, AWALL
+    use scalars, only: TSCALE, TINIT, AWALL
     use dbl2char, only: fmt_smart
     use char_manip, only: len_trim_tab
 

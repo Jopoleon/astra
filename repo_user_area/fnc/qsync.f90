@@ -2,8 +2,8 @@
 !   (Pereverzev 9-AUG-02)
 double precision function QSYNCR(YR)
 
-use const_inc, only: ROC, BTOR, RTOR, AB
-use status_inc, only: VOLUM
+use scalars, only: ROC, BTOR, RTOR, AB
+use status, only: VOLUM
 
 implicit none
 

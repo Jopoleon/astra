@@ -3,7 +3,7 @@ subroutine lexthrs(lext)
 ! external inductance LEXT from Hirshman, Neilson, Phys fluids 20 3 1986
 ! lext in microHenri
 
-use const_inc, only: RTOR, ABC, ELONG
+use scalars, only: RTOR, ABC, ELONG
 use numerical_tools, only: qinterp
 
 implicit none
@@ -27,5 +27,4 @@ b0(1) = 0.73*sqrt(z1(1))*(1. + 2.*z1(1)**4 - 6*z1(1)**5 + 3.7*z1(1)**6)
 
 lext = 0.4*3.141592*rtor*a0(1)*(1. - z1(1))/(1. - z1(1) + b0(1)*ELONG)
 
-return
 end subroutine lexthrs

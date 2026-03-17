@@ -1,17 +1,15 @@
 module strahl_mod
 
-use parameter_inc, only: NRD
+use status, only: NRD
 
 implicit none
 
-double precision, dimension(NRD) ::     zeff_strahl, prad_tot_strahl,&
-                                        nmain_strahl, prad_main_strahl
+double precision, dimension(NRD) :: zeff_strahl, prad_tot_strahl, &
+    nmain_strahl, prad_main_strahl
 double precision, dimension(NRD, 11) :: prad_strahl, nimp_strahl, &
-                                        zavg_strahl, nesrc_strahl, &
-                                        Dneo_strahl, Vneo_strahl, &
-                                        Dz_in_strahl, Vz_in_strahl
-
-double precision, dimension(11) ::      rrates_in_strahl 
+    zavg_strahl, nesrc_strahl, Dneo_strahl, Vneo_strahl, &
+    Dz_in_strahl, Vz_in_strahl
+double precision, dimension(11) :: rrates_in_strahl 
 
 contains
 
@@ -59,9 +57,9 @@ subroutine A2STRAHL(tau_start, zneocl, dzneocl, dimpsol, shot_in)
 !  
 !============================================================================================!
 
-use parameter_inc, only: NRD
-use const_inc, only: TIME, TSTART, TAUPRP, NA1, PSIAX, GP, GP2, RTOR, NA, HRO, IPART
-use status_inc, only: FP, UPL, VOLUM, SHIF, NE, TE, TI, AMAIN, ZMAIN
+use pi_const, only: GP, GP2
+use scalars, only: TIME, TSTART, TAUPRP, NA1, PSIAX, RTOR, NA, HRO, IPART
+use status, only: FP, UPL, VOLUM, SHIF, NE, TE, TI, AMAIN, ZMAIN
 use io_mod, only: machine, awd, nml_file, astra_ext
 use numerical_tools, only: qinterp
 
@@ -84,7 +82,7 @@ double precision :: dum1, tau_strahl, &
     ne_decayl, te_decayl, ti_decayl, z_K, zdr_0, zdr_1, rbrlcfs, rlimrlcfs, &
     tolimiter, solflow, solrout1, solrout2, solrout3, solrout4, todivert, addsheathvoltage
 
-double precision, dimension(NRD) :: rhopol, rhovol, r_rho
+double precision, dimension(NA1) :: rhopol, rhovol, r_rho
 
 double precision, dimension(10) :: aweight, eneutr, rsources, rrates, trates, ridecay, &
     wrecycl, divpuff, swincm, swoutcm, promptredep, taudiv, taupump
@@ -96,7 +94,7 @@ double precision, dimension(n_o_max, 10) :: pradsp_o, nimpsp_o, zavgsp_o, nesrcs
 
 double precision, dimension(ngmax) :: rhopolg, neg, teg, tig
 
-double precision, dimension(NRD,10) :: Dzin, Vzin, Dz_anom, Vz_anom
+double precision, dimension(NA1,10) :: Dzin, Vzin, Dz_anom, Vz_anom
 
 character(len=160) :: strahl_dir, cmd_cmd, as_nml
 character(len=20) :: rho_coord, elements_touse(10)
@@ -561,8 +559,8 @@ enddo
 !conversion from strahl rvol to astra rho
 
 do isp=1,nimp_touse
-   dneosp_o(1:NRD,isp) = dneosp_o(1:NRD,isp)/r_rho(1:NRD)
-   vneosp_o(1:NRD,isp) = vneosp_o(1:NRD,isp)/r_rho(1:NRD)
+   dneosp_o(1:NA1,isp) = dneosp_o(1:NA1,isp)/r_rho(1:NA1)
+   vneosp_o(1:NA1,isp) = vneosp_o(1:NA1,isp)/r_rho(1:NA1)
 enddo
 
 ! Dneo species
@@ -586,8 +584,8 @@ print *, "Finished STRAHL call"
 201 format(1F15.8)
 203 format(1I8)
 
-return
 end subroutine a2strahl
+
 !----------------------------------------------------------------------
 subroutine profiles_file_write_strahl(strahl_dir, rho_coord, rhopol, &
     ngrid, ne, te, ti, ne_decayl, te_decayl, ti_decayl, time, &
@@ -768,7 +766,6 @@ close(nch_w2)
 105 format(A, F15.8)
 107 format(E16.8)
 
-return
 end subroutine profiles_file_write_strahl
 
 !----------------------------------------------------------------------
@@ -955,7 +952,6 @@ close(nch_w3)
 101 format(F15.8)
 103 format(A, F15.8, A, F15.8, A, F15.8, A, F15.8)
 
-return
 end subroutine grid_write_strahl
 
 end module strahl_mod

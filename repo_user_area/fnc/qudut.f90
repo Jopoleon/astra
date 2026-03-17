@@ -2,13 +2,14 @@
 !   (E Fable July 2023)
 double precision FUNCTION QUDUTR(YR)
 
-use const_inc, only: HRO, TAU
-use status_inc, only: UPAR, UPARO, UPS0, UPS0O
+use scalars, only: HRO, TAU
+use status, only: UPAR, UPARO, UPS0, UPS0O
+use standard_functions, only: VINT, VINTO
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision YQ, YQO, VINT, VINTO
+double precision :: YQ, YQO
 
 YQ  = VINT (UPAR*UPS0 , YR)
 YQO = VINTO(UPARO*UPS0O, YR)

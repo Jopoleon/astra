@@ -4,8 +4,8 @@ subroutine GNEX
 !    (Pereverzev 23-FEB-98)
 !   2-NOV-99 GNX redetermined to give the flux density
 
-use const_inc, only: HRO, NA1, NAB, TAU, NNCL, NNWM
-use status_inc, only: VR, VRO, NE, NEO, TE, NI, NN, SLAT, GNX, SNEBM
+use scalars, only: HRO, NA1, NAB, TAU, NNCL, NNWM
+use status, only: VR, VRO, NE, NEO, TE, NI, NN, SLAT, GNX, SNEBM
 
 implicit none
 
@@ -35,5 +35,4 @@ if (NA1 < NAB) then
     enddo
 endif
 
-return
 end subroutine gnex

@@ -1,7 +1,8 @@
 subroutine foureqc
 
-use const_inc, only: NA1, NEQUIl, MEQUIL, IPART, GP2, ABC
-use status_inc, only: FP_NORM
+use pi_const, only: GP2
+use scalars, only: NA1, NEQUIl, MEQUIL, IPART, ABC
+use status, only: FP_NORM
 use parameters_a2equil, only: equil_now
 use numerical_tools, only: qinterp
 
@@ -32,7 +33,7 @@ allocate(four_coef(four_types, four_order_max, nrho))
 ! (for file reading and tglf_four_coeff setting respectevely)
 
 do jthe=1, ntheta ! R, Z, r, theta, psin values
-    theta(jthe) = equil_now%coord_sys%position%teta2d(jthe) ! theta(ntheta)
+    theta(jthe) = equil_now%coord_sys%position%theta2d(jthe) ! theta(ntheta)
     do jrho=1, nrho
         RR(jrho, jthe) = equil_now%coord_sys%position%r(jrho, jthe)    ! R(nrho, ntheta)
         ZZ(jrho, jthe) = equil_now%coord_sys%position%z(jrho, jthe)    ! Z(nrho, ntheta)
@@ -111,5 +112,4 @@ close(unit_out)
 
 deallocate(theta, dtheta, cos_mthe, sin_mthe, damin, theta_half, psi_n, RR, ZZ, drdr, dzdr, four_coef)
 
-return
 end subroutine foureqc

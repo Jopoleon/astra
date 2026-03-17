@@ -15,8 +15,9 @@ double precision   function   WBPOLR(YR1)
 !      (corrected  6-JUL-99)
 !-----------------------------------------------------------------------
 
-use const_inc, only: HRO, GP, BTOR, RTOR
-use status_inc, only: MU, IPOL, G22
+use pi_const, only: GP
+use scalars, only: HRO, BTOR, RTOR
+use status, only: MU, IPOL, G22
 
 implicit none
 
@@ -31,7 +32,6 @@ DO J=1, JK
    J1 = J + J - 1
    WBPOLR = WBPOLR + (J1*MU(J)**2*(2.*J*J - J1))*IPOL(J)*G22(J)/J
 enddo
-WBPOLR = 1.25*GP*WBPOLR*HRO*HRO*HRO*BTOR*BTOR/RTOR
+WBPOLR = 1.25*GP*WBPOLR*HRO**3*BTOR**2/RTOR
 
-return
 end function WBPOLR

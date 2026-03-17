@@ -11,8 +11,8 @@ class POSTEP:
     header = \
 """subroutine POSTEP
 
-use const_inc
-use status_inc
+use scalars
+use status
 use nclass_mod
 use strahl_mod
 use a2tglf, only: tglf_ipc
@@ -35,11 +35,10 @@ class ININAM:
     header = \
 """subroutine ININAM
 
-use parameter_inc, only: NRD
 use io_mod, only: sbr_name, n_sbr, awd
 use graph_utils
-use const_inc
-use status_inc
+use scalars
+use status
 use debugger, only: markloc
 use json_vars, only: profxNames, n_intern
 
@@ -57,8 +56,8 @@ class SETVAR:
     header = \
 """subroutine SETVAR
 
-use const_inc
-use status_inc
+use scalars
+use status
 use debugger, only: markloc
 
 implicit none
@@ -181,11 +180,11 @@ class INIVAR:
 '''subroutine INIVAR
 
 use io_mod, only: IFDFAX
-use const_inc
+use scalars
 use nclass_mod
-use status_inc
+use status
 use debugger, only: markloc
-use json_vars, only: profxNames
+use json_vars, only: profxNames, n_profx
 
 implicit none
 
@@ -215,8 +214,8 @@ class DETVAR:
     header = \
 '''subroutine DETVAR
 
-use const_inc
-use status_inc
+use scalars
+use status
 use nclass_mod
 use strahl_mod
 use standard_functions
@@ -615,9 +614,9 @@ class RADOUT:
 ! Radial profile plotting
 !------------------------------------------------------------
 
-use parameter_inc
-use const_inc
-use status_inc
+use pi_const, only: GP, GP2
+use scalars
+use status
 use graph_utils
 use standard_functions
 use debugger, only: markloc, debug
@@ -647,9 +646,9 @@ subroutine TIMOUT
 ! Time traces plotting
 !------------------------------------------------------------
 
-use parameter_inc
-use const_inc
-use status_inc
+use pi_const, only: GP, GP2
+use scalars
+use status
 use graph_utils
 use standard_functions
 use debugger, only: markloc, debug
@@ -861,11 +860,11 @@ class INIT_CONVERGE_STEP:
     header = \
 '''subroutine init_converge_step
 
-use parameter_inc, only: NRD
+use pi_const, only: GP, GP2
 use io_mod, only: equ_file, exp_file
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
-use const_inc
-use status_inc
+use scalars
+use status
 use nclass_mod
 use a2tglf, only: tglf_ipc, tglf_out
 use a2qlk, only: qlk_ipc, qlk_out
@@ -892,20 +891,19 @@ class EQNS_INC:
 ! Note that now time step is updated at the end of a full time cycle
 !-------------------------------------------------------------------
 
-use parameter_inc, only: NRD
-use const_inc
-use status_inc
+use pi_const, only: GP, GP2
+use scalars
+use status
 use a2tglf, only: tglf_ipc, tglf_out
 use a2qlk, only: qlk_ipc, qlk_out
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use nclass_mod
 use strahl_mod
-use plasma_state
 use standard_functions
 use debugger, only: markloc
 use numerical_tools, only: extrap
 use transport_solver
-use metrics, only: cuofp
+use metrics, only: cuofp, cuofmu
 
 implicit none
 

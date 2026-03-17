@@ -1,19 +1,12 @@
 module io_mod
 
-use parameter_inc, only: NRDX, NARRX
-use debugger, only: debug, flightsim
-use const_inc, only: TSTART, TEND, TPAUSE
-
 implicit none
 
-integer, parameter :: NCONST=256
-
-integer, dimension(NARRX) :: IFDFAX=-1, jbeg_arrx, NPTM
-integer, dimension(NCONST) :: IFDFVX=-1
-integer :: n_sbr, NGR, restart
+integer, allocatable, dimension(:) :: IFDFAX, jbeg_arrx, NPTM, IFDFVX
+integer :: n_sbr, restart, nr_x_max
 double precision :: resize
-double precision, dimension(NARRX) :: TOUTX
-double precision, dimension(NRDX, NARRX) :: XAXES, DATAX
+double precision, allocatable :: TOUTX(:)
+double precision, allocatable, dimension(:, :) :: XAXES, DATAX
 
 character(len=4) :: machine, TASK
 character(len=20), allocatable :: sbr_name(:)
@@ -22,11 +15,22 @@ character(132) :: AWD, astra_ext, nml_file, equ_file, exp_file, NBFILE='***'
 contains
 
     subroutine io_init
- 
+
+    use json_vars, only: n_profx, n_var
+    use debugger, only: debug, flightsim
+    use scalars, only: TSTART, TEND, TPAUSE
+
     logical :: nml_exists
     integer :: ios
     character(len=132) :: log_file
     double precision :: tbeg_nml, tend_nml, tpause_nml
+
+    allocate(TOUTX(n_profx))
+    allocate(XAXES(nr_x_max, n_profx), DATAX(nr_x_max, n_profx))
+    allocate(IFDFAX(n_profx), jbeg_arrx(n_profx), NPTM(n_profx))
+    allocate(IFDFVX(n_var))
+    IFDFAX = -1
+    IFDFVX = -1
 
     namelist / astra_log / equ_file, exp_file, task, machine, &
         debug, tbeg_nml, tend_nml, tpause_nml, resize, restart, flightsim

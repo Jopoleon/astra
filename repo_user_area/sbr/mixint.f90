@@ -54,10 +54,9 @@ SUBROUTINE MIXINT(OPTION, RECOND)
 !   OPTION = 10, 11, 12, respectively.
 !-----------------------------------------------------------------------
 
-use parameter_inc, only: NRD
-use const_inc, only: BTOR, RTOR, HRO, ROC, GP, GP2, NA1, NB1, &
+use scalars, only: BTOR, RTOR, HRO, ROC, GP, GP2, NA1, NB1, &
     TIME, TSTART, TAU, TAUMIN, LEQ
-use status_inc, only: TE, TI, NE, NI, VR, FP, CU, MU, IPOL, G22, G33
+use status, only: NRD, TE, TI, NE, NI, VR, FP, CU, MU, IPOL, G22, G33
 
 implicit none
 
@@ -345,5 +344,4 @@ YT = max(1.d-4, (TIME - TMIX)/5.)
 TAU = TAUMIN
 TMIX = TIME
 
-return
 end subroutine mixint

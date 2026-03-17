@@ -473,6 +473,8 @@
 "intern2": {
     "TSTART": {"units": "s", "desc": "Start time, t_start <= t <= t_end"},
     "TAU"   : {"units": "s", "desc": "Time step"},
+    "TAU_NEW" : {"units": "s", "desc": "New time step"},
+    "TAU_OLD" : {"units": "s", "desc": "Old time step"},
     "TAUPRP": {"units": "s", "desc": "Time step old after ifstep, but not yet updated so that it is consitent with what has been used in eqns"},
     "HRO"   : {"units": "m", "desc": "Radial grid size"},
     "HROX"  : {"desc": "Normalized radial grid size"},
@@ -1155,7 +1157,7 @@
     "r": {"units": "m", "desc": "Major radius of magnetic surfaces' points"},
     "rmin": {"units": "m", "desc": "Minor radius local distance from axis to point"},
     "psirz": {"units": "Wb", "desc": "Psi in polar coordinates"},
-    "teta2d": {"units": "rad", "desc": "Poloidal angle of magnetic surfaces' points"},
+    "theta2d": {"units": "rad", "desc": "Poloidal angle of magnetic surfaces' points"},
     "z": {"units": "m", "desc": "Vertical coordinate of magnetic surfaces' points"}
 }
 

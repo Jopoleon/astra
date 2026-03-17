@@ -14,23 +14,21 @@ contains
 !---------------------------------------------------------------------
     subroutine qlk_alloc
 
-    use const_inc, only: NA1
+    use scalars, only: NA1
 
     if (.not. allocated(qlk_out%chi_i)) then
         allocate(qlk_out%chi_i(NA1), qlk_out%chi_e(NA1), qlk_out%e_pflux(NA1), qlk_out%equipart(NA1))
     endif
 
-    return
     end subroutine qlk_alloc
 
 !---------------------------------------------------------------------
     subroutine qlk_ipc(rho_norm_max)
 
     use omp_lib
-    use parameter_inc, only: NRD
     use io_mod, only: equ_file, exp_file, awd
-    use const_inc, only: NA1, BTOR, RTOR, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
-    use status_inc, only: NE, TE, NI, TI, ZIM1, ZIM2, ZIM3, PBLON, PBPER, &
+    use scalars, only: NA1, BTOR, RTOR, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
+    use status, only: NE, TE, NI, TI, ZIM1, ZIM2, ZIM3, PBLON, PBPER, &
         PFAST, NIZ3, AMAIN, ER, MU, FP_NORM, RHO, AMETR, SHIF, &
         NDEUT, NIZ1, NIZ2, VTOR, NIBM, G11, VPOL, VRS, SHEAR
     use numerical_tools, only: qinterp
@@ -55,7 +53,7 @@ contains
     double precision, dimension(n_scalars) :: scal_in
     double precision, dimension(nrho_m) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
         dvper, drhodr, dr, dv_r
-    double precision, dimension(NRD) :: gradrhosq_as, rmaj_as, q_as, &
+    double precision, dimension(NA1) :: gradrhosq_as, rmaj_as, q_as, &
         vpar_as, vper_as, &
         chie_m, chii_m, elec_pflux_m, exchi_m, ptot_as, gamma_m, omega_m
     double precision, dimension(nrho_m) :: chie, chii, exchi, elec_pflux, rho_m, &
@@ -64,7 +62,7 @@ contains
     double precision, dimension(nspec_max) :: zs_in
     double precision, dimension(nspec_max-1, nrho_m) :: dti, dni, ni_m, ti_m, ion_pflux
     double precision, dimension(nspec_max-1, nrho_m) :: zi_m 
-    double precision, dimension(nspec_max-1, NRD) :: ni_as, ion_pflux_m
+    double precision, dimension(nspec_max-1, NA1) :: ni_as, ion_pflux_m
     character(len=32) :: str_nworkers
     character(len=64) :: SBP_NAME
     character(len=128) :: ipc_file, astra_task
@@ -335,7 +333,6 @@ contains
     call SYSTEM_CLOCK(t_wall2, rate)
     print*, "XPR wall time", dble(t_wall2 - t_wall1)/dble(rate)
 
-    return
     end subroutine qlk_ipc
 
 end module a2qlk

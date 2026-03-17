@@ -7,7 +7,7 @@ contains
     subroutine kibm2key(KIBM, KEY, return_flag)
 
     use io_mod, only: TASK, n_sbr
-    use const_inc, only: DTEQ
+    use scalars, only: DTEQ
     use char_manip, only: beep_ch
     use debugger, only: astra_stop
     use cpu_usage, only: cpu_report
@@ -79,10 +79,9 @@ contains
 ! 12,13 - for equ/model.log file (once on entry)
 ! 3 - for post-viewer file (first on entry, then periodically)
 
-    use parameter_inc, only: NRD
-    use status_inc, only: MU, AMETR, SHIF, ELON, TRIA, EQFF, EQPF, FP, RHO
-    use const_inc, only: KEY, ITREQ, DPOUT, exp_header, &
-       NA, NB1, NA1, NAB, LEQ, TIME, TAU, TINIT, TSCALE, &
+    use status, only: MU, AMETR, SHIF, ELON, TRIA, EQFF, EQPF, FP, RHO, NRD
+    use scalars, only: KEY, ITREQ, DPOUT, exp_header, &
+       NA, NA1, NAB, LEQ, TIME, TAU, TINIT, TSCALE, &
        TSTART, TPAUSE, TEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
        BTOR, IPL, constValues, varValues, internValues
     use graph_utils, only: astra_gui, astra_gui_ref, plot_area, &
@@ -608,8 +607,8 @@ contains
 !---------------------------------------------------------------------
     subroutine graph_output(MARK, ITO)
 
-    use const_inc, only: NA
-    use status_inc, only: MU
+    use scalars, only: NA
+    use status, only: MU
     use io_mod, only: TASK
     use graph_utils, only: MOD10, nplots_max, NTIMES, TTOUT, TOUT, show_plots
     use debugger, only: markloc, debug
@@ -649,8 +648,8 @@ contains
     use graph_utils, only: astra_gui, KPRI, MOD10, MODEY, RUNID, &
         WarningColor, nplots_max, NTIMES, TOUT, TTOUT, show_plots, &
         set_plot_area, set_plot, plotMode
-    use const_inc, only: XOUT, TIME, TAU, NA
-    use status_inc, only: MU
+    use scalars, only: XOUT, TIME, TAU, NA
+    use status, only: MU
     use debugger, only: markloc, debug
     use auxiliary, only: lineav
 
@@ -727,8 +726,8 @@ contains
 !---------------------------------------------------------------------
     subroutine writeData(CHORDN)
 
-    use const_inc, only: XOUT, NAB, NA, NA1, exp_header, RTOR, ABC, BTOR, IPL, TIME, TAU, constValues
-    use status_inc, only: MU, AMETR, RHO, FP
+    use scalars, only: XOUT, NAB, NA, NA1, exp_header, RTOR, ABC, BTOR, IPL, TIME, TAU, constValues
+    use status, only: MU, AMETR, RHO, FP
     use io_mod, only: AWD, equ_file, exp_file
     use graph_utils, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, &
         WarningColor, ROUT, RUNID, NRW, NTIMES, TTOUT, TOUT
@@ -967,8 +966,8 @@ contains
         scale_bnd, NTIMES, TOUT, TTOUT, &
         IDT, IDX, MODEY, LTOUT, NRW, NTOUT, active_tab, &
         NWIND3, NAMET, White, Red, Blue
-    use status_inc, only: AMETR, SHIF, ELON, TRIA, FP, RHO
-    use const_inc, only: TIME, TINIT, TSCALE, NA, NA1, NAB, XOUT, AB, ABC, ROC, HRO
+    use status, only: AMETR, SHIF, ELON, TRIA, FP, RHO
+    use scalars, only: TIME, TINIT, TSCALE, NA, NA1, NAB, XOUT, AB, ABC, ROC, HRO
     use dbl2char, only: fmt_smart
     use numerical_tools, only: QUADIN
     use standard_functions, only: RZ2A
@@ -1204,7 +1203,7 @@ contains
 !-----------------------------
     function upperLabel(ne_av, q95) result(upper_label)
 
-    use const_inc, only: RTOR, BTOR, IPL, ABC
+    use scalars, only: RTOR, BTOR, IPL, ABC
     use dbl2char, only: fmt_smart
 
     double precision, intent(in) :: ne_av, q95
@@ -1232,7 +1231,7 @@ contains
     subroutine up_label(YN, YQ)
 ! Upper string of the Astra graphic window
 
-    use const_inc, only: exp_header
+    use scalars, only: exp_header
     use graph_utils, only: astra_gui, Black
 
     double precision, intent(in) :: YN, YQ
@@ -1273,7 +1272,7 @@ contains
     subroutine const2ps
 ! Appending the list of constants to a PS file
 
-    use const_inc, only: constValues, varValues
+    use scalars, only: constValues, varValues
     use char_manip, only: null_ch
     use io_mod, only: resize
     use dbl2char, only: fmt_smart

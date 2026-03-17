@@ -3,7 +3,7 @@
 !     (Polevoy 28.09.89)
 double precision function ZNDNR(YR)
 
-use status_inc, only: TE, NE, VR, ZEF
+use status, only: TE, NE, VR, ZEF
 use standard_functions, only: jrho_drho
 
 implicit none

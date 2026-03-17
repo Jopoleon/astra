@@ -20,9 +20,8 @@ subroutine facit(Z_imp_in, A_imp_in, N_imp_in, rot_mod, Dz_out, Vz_out)
   !
   !============================================================================================!
 
-  use parameter_inc, only: NRD
-  use const_inc, only: NA1, BTOR, RTOR, AMJ
-  use status_inc, only: TE, TI, NE, IPOL, MU, SQEPS, AMETR, VTOR, ZEF, ZMAIN, NMAIN, VRS, G11, RHO
+  use scalars, only: NA1, BTOR, RTOR, AMJ
+  use status, only: NRD, TE, TI, NE, IPOL, MU, SQEPS, AMETR, VTOR, ZEF, ZMAIN, NMAIN, VRS, G11, RHO
   use flux_avg_imp, only: lfs2fsa_impDV
 
   implicit none
@@ -187,7 +186,6 @@ end subroutine facit
 !*******************************************************************************
 !**************************** Main subroutine **********************************
 !*******************************************************************************
-
 
 subroutine FACIT_LFS(nx, eps, &                                 ! grid parameters
                      Zz, Az, Zi, Ai, &                          ! impurity and main ion charge and mass
@@ -492,16 +490,11 @@ subroutine FACIT_LFS(nx, eps, &                                 ! grid parameter
   ! Total surface-averaged flux
   Flux_imp = -Dz*gradNz + N_z*Vz
 
-
-  return
 end subroutine FACIT_LFS
-
-
 
 !*******************************************************************************
 !*********************** Complementary subroutines *****************************
 !*******************************************************************************
-
 
 function ftrap_lfs(epsK)
 !*******************************************************************************
@@ -522,10 +515,7 @@ function ftrap_lfs(epsK)
 
   ftrap_lfs = 1. - (1. - epsK)**1.5/(sqrt(1. + epsK)*(1 + 1.46*sqrt(epsK)))
 
-  return
 end function ftrap_lfs
-
-
 
 
 function ki_Redl_lfs(nuistar, ft, Zeff)
@@ -556,9 +546,7 @@ function ki_Redl_lfs(nuistar, ft, Zeff)
   ki_Redl_lfs = ((alpha0 + 0.7*Zeff*sqrt(ft*nuistar))/(1.0 + 0.18*sqrt(nuistar))-&
               0.002*nuistar**2*ft**6)/(1.0 + 0.004*nuistar**2*ft**6)
 
-  return
 end function ki_Redl_lfs
-
 
 
 function ki_rot_lfs(nuistar, ft, Zeff, Mach_i)
@@ -603,7 +591,6 @@ function ki_rot_lfs(nuistar, ft, Zeff, Mach_i)
   ki_rot_lfs = ((ki0 + (l1k)*Zeff*sqrt(ft*nuistar) + l2k*nuistar**(0.25))/(1+l3k*sqrt(nuistar))-&
            l4k*l5k*nuistar**2*ft**6 + l6k*nuistar**(0.25))/(1.0 + l5k*nuistar**2*ft**6)
 
-  return
 end function ki_rot_lfs
 
 
@@ -632,9 +619,7 @@ function C2_lfs(alpha, g, f1, f2, Aimp, Ai)
 
   C2_lfs = 1.5/(1.0 + (2.0/Aimp)*f1) - (0.29 + 0.68*alpha)/(0.59 + alpha + (1.34 + f2)/g**2)
 
-  return
 end function C2_lfs
-
 
 
 subroutine facs_lfs(nx, Zimp, Aimp, ft, Mzstar, rotation_model, &
@@ -784,16 +769,12 @@ subroutine facs_lfs(nx, Zimp, Aimp, ft, Mzstar, rotation_model, &
      y12ip  = y12ip*l7
      y12ips = y12ips*l7
 
-
   else
      ahbp = (1.01579172 + -1.78923911e-3*Zimp)/(1.0 + 6.60170647e-13*Zimp**6.66398825)
 
   endif
 
-        
 end subroutine facs_lfs
-
-
 
 
 subroutine K_VISC_lfs(nx, ni, nimp, Ti, wii, wimpimp, Zi, Zimp, Ai, Aimp, Tauii, &
@@ -1002,7 +983,4 @@ subroutine K_VISC_lfs(nx, ni, nimp, Ti, wii, wimpimp, Zi, Zimp, Ai, Aimp, Tauii,
   K12i = y12ib*K12iB/((1 + y12ib*K12iB/(y12ip*K12iP))*(1 + y12ip*K12iP/(y12ips*K12iPS)))
   K22i = K22iB/((1.0 + K22iB/(K22iP))*(1.0 + K22iP/(K22iPS)))
 
-
-
-  return
 end subroutine K_VISC_lfs

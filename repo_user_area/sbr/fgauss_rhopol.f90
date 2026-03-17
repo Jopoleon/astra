@@ -10,9 +10,8 @@
 
 subroutine FGAUSS_RHOPOL(rhop_center, rhop_width, gauss)
 
-use parameter_inc, only: NRD
-use const_inc, only: NA1, ROC, HRO
-use status_inc, only: RHO, VR, rho_pol
+use scalars, only: NA1, ROC, HRO
+use status, only: NRD, RHO, VR, rho_pol
 
 implicit none
 
@@ -32,5 +31,4 @@ do j=1, NA1
    gauss(j)= gauss(j)/gauss_vol_int
 enddo
 
-return
 end subroutine fgauss_rhopol

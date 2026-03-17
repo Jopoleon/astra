@@ -1,10 +1,8 @@
 subroutine qlknn_serial(chii, chie, e_pflux)
 
-use parameter_inc, only: NRD
-
-use const_inc, only: BTOR, RTOR, AMJ, AIM1, AIM2, AIM3, ZMJ, &
+use scalars, only: BTOR, RTOR, AMJ, AIM1, AIM2, AIM3, ZMJ, &
     NA1, NA1N, NA1E, NA1I
-use status_inc, only: NE, TE, NI, TI, &
+use status, only: NRD, NE, TE, NI, TI, &
     ZEF, ZIM1, ZIM2, ZIM3, PBLON, PBPER, &
     PFAST, NIZ3, AMAIN, ER, MU, &
     RHO, AMETR, SHIF, ELON, &
@@ -59,11 +57,11 @@ double precision :: T0, m0, drho_cs
 ! Shifted cicle geometry inputs
 double precision :: gamma_e_tg, vpar_tg, mach_fac, ql_fac
 
-double precision, dimension(NRD) :: vexb2, vpar_m, vper_m, &
+double precision, dimension(NA1) :: vexb2, vpar_m, vper_m, &
     gradrhosq_exp, rmaj_exp, q_exp, ptot
 
 double precision, dimension(nspec_max-1) :: dti, dni
-double precision, dimension(nspec_max-1, NRD) :: ni_m, ti_m
+double precision, dimension(nspec_max-1, NA1) :: ni_m, ti_m
 double precision :: vpar_in, vpar_shear_in, cexb
 
 CHARACTER(len=20) :: fmtnets
@@ -647,5 +645,4 @@ radial_loop: do jrho=1, NA1
 
 enddo radial_loop
 
-return
 END subroutine qlknn_serial

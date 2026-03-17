@@ -979,7 +979,7 @@ C		keeping the same total volume integral.
 C	Input:	YFO(1:N1)
 C	Output:	YFO(1:JNA1)
 C------------------------------------------------------------ 22-MAY-08
-        use parameter_inc, only: NRD
+        use status, only: NRD
 
 	implicit none
 	include  'nbi/nbicom.inc'
@@ -1046,8 +1046,10 @@ C	Input:	YFO(1:N1)
 C	Output:	YFO(1:JNA1)
 C------------------------------------------------------------- 22-APR-13
 
-        use parameter_inc, only: NRD
+        use status, only: NRD
+
 	implicit none
+
 	include  'nbi/nbicom.inc'
 	double precision	IINT,YFO(*),Y,YOLD,YNEW,ALFA,YCI3,YROC
 	integer	j,JNA,JNAC,JNA1,JSIGN
