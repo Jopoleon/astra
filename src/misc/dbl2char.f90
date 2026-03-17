@@ -28,12 +28,12 @@ contains
     double precision, intent(in) :: x
     integer, intent(in) :: width
     character(len=width) :: out
-    character(len=32) :: tmp
-    integer :: prec
+    character(len=32) :: tmp, s
+    integer :: prec, expo
     logical :: fitted
-    double precision :: r
+    double precision :: r, mant
 
-    if (width < 3) stop "fmt_smart: width too small"
+    if (width < 4) stop "fmt_smart: width too small"
 
 ! Handle very small numbers
     if (abs(x) < 1.0d-12) then
@@ -43,8 +43,11 @@ contains
 
 ! Try fixed-point first
     fitted = .false.
-    do prec = width-1, 1, -1
-        write(tmp, '(F0.'//trim(adjustl(itoa(prec)))//')') x
+    do prec=width-1, 1, -1
+       write(tmp, '(F0.'//trim(adjustl(itoa(prec)))//')') x
+! If rounding produced zero but x is not zero → reject fixed format
+       read(tmp, *) r
+       if (r == 0.0d0 .and. x /= 0.0d0) cycle
 ! Remove leading zero for numbers between -1 and 1
         if (abs(x) < 1.0d0 .and. x /= 0.0d0) then
             if (tmp(1:1) == '0') tmp = tmp(2:)   ! remove leading 0
@@ -57,18 +60,40 @@ contains
         endif
     enddo
 
-! If still not fitted, switch to scientific notation
-    if (.not. fitted) then
-        do prec = width-2, 1, -1
-            write(tmp, '(E0.'//trim(adjustl(itoa(prec)))//')') x
+! Leave as it is (F) if width=4 and 0.001 < abs(x) < 1000.
+    if (.not. ((width == 4 .and. abs(x) >= 1.0d-3 .and. abs(x) < 1.0d3) .or. &
+               (width == 5 .and. abs(x) >= 1.0d-3 .and. abs(x) < 1.0d3) .or. &
+               (width == 6 .and. abs(x) >= 1.0d-4 .and. abs(x) < 1.0d4))  ) then
+        do prec=width-2, 0, -1
+            expo = floor(log10(abs(x)))
+            mant = x / 10.0d0**expo
+            write(s, '(F0.' // trim(adjustl(itoa(prec))) // ')') mant
+
+! remove leading zero
+            if (s(1:1) == '0') s = s(2:)
+            if (s(1:1) == '-' .and. s(2:2) == '0') s = '-'//s(3:)
+
+! remove trailing decimal point
+            if (index(s, '.') > 0) then
+                if (s(len_trim(s): len_trim(s)) == '.') then
+                    s = s(:len_trim(s)-1)
+                endif
+            endif
+ 
+            if (expo == 0) then
+                tmp = trim(s)
+            else
+                tmp = trim(s) // 'e' // trim(adjustl(itoa(expo)))
+            endif
+ 
             if (len_trim(tmp) <= width) then
-                write(out, '(A)') adjustl(TRIM(tmp))
+                out = adjustl(tmp)
                 fitted = .true.
                 exit
             endif
         enddo
-    endif
-
+    endif 
+ 
 ! Fallback: truncate if nothing fits
     if (.not. fitted) then
         write(out, '(A)') tmp(1:width)
