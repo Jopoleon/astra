@@ -66,7 +66,8 @@ subroutine MIXINQ(OPTION, RECOND)
 ! Options 30, 31, 32 include (10+20), (11+21), (12+22).
 !-----------------------------------------------------------------------
 
-use scalars, only: BTOR, RTOR, HRO, ROC, GP, GP2, NA1, NB1, &
+use pi_const, only: GP, GP2
+use scalars, only: BTOR, RTOR, HRO, ROC, NA1, NB1, &
     TIME, TSTART, TAU, TAUMIN, CMHD1, CMHD2, CMHD3, CMHD4, LEQ
 use status, only: NRD, TE, TI, NE, NI, VR, FP, CU, MU, IPOL, G22, G33, CAR1, CAR2
 

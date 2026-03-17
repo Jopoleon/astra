@@ -54,7 +54,8 @@ SUBROUTINE MIXINT(OPTION, RECOND)
 !   OPTION = 10, 11, 12, respectively.
 !-----------------------------------------------------------------------
 
-use scalars, only: BTOR, RTOR, HRO, ROC, GP, GP2, NA1, NB1, &
+use pi_const, only: GP, GP2
+use scalars, only: BTOR, RTOR, HRO, ROC, NA1, NB1, &
     TIME, TSTART, TAU, TAUMIN, LEQ
 use status, only: NRD, TE, TI, NE, NI, VR, FP, CU, MU, IPOL, G22, G33
 
