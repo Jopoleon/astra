@@ -56,6 +56,8 @@ call SETVAR
 call DETVAR
 call eqguess
 call INIVAR
+call transport2fbe_init(TAU, TSTART, RTOR, UPDWN, SHIFT, PSIAX, PSIBO, MACHINE, &
+    raw_cCoil%ncoils, raw_cCoil%current)
 
 if (gui_on) then
     call gui_init
@@ -66,8 +68,6 @@ if (restart > 0) then ! Initial condition from output json file
     call read_ajson(restart)
     tend = tend_nml
 else ! Iterations for initial convergence
-    call transport2fbe_init(TAU, TSTART, RTOR, UPDWN, SHIFT, PSIAX, PSIBO, MACHINE, &
-        raw_cCoil%ncoils, raw_cCoil%current)
     jt_req = 0
     do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set in IFTREQ (status:defarr)
         if (gui_on) jkey = if_key(256)
