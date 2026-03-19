@@ -10,7 +10,7 @@ program astra
 use graph_utils, only: astra_gui, astra_gui_ref, gui_init
 use cpu_usage, only: cpu_init, cpu_start, wall_start, cpu_report
 use scalars, only: IPART, scalars_init, RTOR, UPDWN, SHIFT, PSIAX, PSIBO, &
-    TIME, TSTART, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT
+    TIME, TSTART, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT, IPEQL
 use status, only: status_init, defarr
 use debugger, only: astra_stop, markloc
 use transport2fbe, only: transport2fbe_init
@@ -56,8 +56,10 @@ call SETVAR
 call DETVAR
 call eqguess
 call INIVAR
-call transport2fbe_init(TAU, TSTART, RTOR, UPDWN, SHIFT, PSIAX, PSIBO, MACHINE, &
-    raw_cCoil%ncoils, raw_cCoil%current)
+if (IPEQL == 5) then ! FEQIS
+  call transport2fbe_init(TAU, TSTART, RTOR, UPDWN, SHIFT, PSIAX, PSIBO, &
+     MACHINE, raw_cCoil%ncoils, raw_cCoil%current)
+endif
 
 if (gui_on) then
     call gui_init

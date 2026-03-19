@@ -17,7 +17,7 @@ contains
     use scalars, only: IPART, FTO, FTN, ROC, &
         BTOR, ROCO, RTOR, SHIFT, &
         ABC, ELONG, TRIAN, UPDWN, NA1, NB1, MEQUIL, NEQUIL, &
-        LEQ, IPEQL, TIME, TSTART, TIMEQL, DTEQL, BTN
+        IPEQL, TIME, TSTART, TIMEQL, DTEQL, BTN
     use debugger, only: markloc, astra_stop
     use parameters_a2equil, only: equil_now
     use numerical_tools, only: qinterp
@@ -39,12 +39,10 @@ contains
         VRO(1: NB1) = VR(1: NB1)
     endif
 
-    LEQ(5) = IPEQL
-
     call CPU_TIME(t_cpu1)
     call SYSTEM_CLOCK(t_wall1, rate)
 
-    SELECT CASE(LEQ(5))
+    SELECT CASE(IPEQL)
 
     CASE(-2)  ! Cylindircal case, No equilibrium solver. No toroidicity
         call EQCYL
@@ -87,7 +85,7 @@ contains
         endif
 
     CASE(4: 5)  ! SPIDER, FEQIS
-        if (LEQ(5) == 4) then
+        if (IPEQL == 4) then
             equil_solver = 3
         else
             equil_solver = 101
@@ -106,7 +104,7 @@ contains
     cpuTime_equ = cpuTime_equ + t_cpu2 - t_cpu1
     wallTime_equ = wallTime_equ + t_wall2 - t_wall1
 
-    if (LEQ(5) < 3) then
+    if (IPEQL < 3) then
         nrho_surf = abs(NEQUIL)
         nthe_surf = abs(MEQUIL)
         if (nrho_surf == 0) nrho_surf = NA1 + 1
@@ -180,7 +178,7 @@ contains
     subroutine EQCYL
 
 !---------------------------------------------------------------------
-! Quasi-cylindrical assignment: Called if LEQ(5)==-2
+! Quasi-cylindrical assignment: Called if IPEQL==-2
 !
 ! In: RTOR, SHIFT, ABC, ELONG, TRIAN, NA1, NB1
 ! Out: NA, HRO, ROC, RHO(j), DRODA, VOLUM, IPOL, G33, GRADRO, G11, G22, SLAT
@@ -268,7 +266,7 @@ contains
     subroutine EQGUESS
 
 !---------------------------------------------------------------------
-! Guessed equibrium: Called if LEQ(5)==0 or data_initiation @ 1st_entry
+! Guessed equibrium: Called if IPEQL==0 or data_initiation @ 1st_entry
 !
 ! In: RTOR, SHIFT, ABC, ELONG, TRIAN, NA1, NB1, HRO
 ! Out: NA, RHO(j), DRODA, VOLUM, IPOL, G33, GRADRO, G11, G22, SLAT,
@@ -785,7 +783,7 @@ contains
 !                                         |                 | -> EQC1
 !                                         | -> EQPPAB
 !---------------------------------------------------------------------
-! This solver is called if LEQ(5) == 3
+! This solver is called if IPEQL == 3
 ! EMEQ grid is defined as min(NA1, NEQUIL, NP)
 ! For (NEQUIL = 0 ) metric is prescribed by a simple formula
 ! For (NEQUIL = -1) metric is taken from a data file

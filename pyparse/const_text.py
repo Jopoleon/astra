@@ -74,7 +74,7 @@ NI(J) = NE(J)/ZMJ
 enddo
 if (ABC+abs(SHIFT) > AB) then
 write(*, *) char(7), ">>> Warning >>> Inconsistent boundary setting."
-if (LEQ(5) == 3) then
+if (IPEQL == 3) then
 write(*, *) "    Plasma beyond the vacuum vessel has been cut off"
 else
 write(*, *) "    Plasma boundary intersects the vacuum vessel"
@@ -244,7 +244,7 @@ call neo_alloc
 
     rad_tail  = \
 """
-if (LEQ(5) == 3) then
+if (IPEQL == 3) then
 SHIFT = min(SHIFT, 0.9*AB)
 ABC = min(ABC, AB - abs(SHIFT))
 ABC = max(ABC, 0.1*AB)

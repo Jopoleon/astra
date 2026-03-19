@@ -8,6 +8,7 @@
 !----------------- General parameters ----------------------!
 NEQUIL = 91.;
 MEQUIL = 90.;
+IPEQL = 4;
 
 ! Time step definition
 TAUMIN = 0.01;           ! minimum time step

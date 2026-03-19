@@ -151,7 +151,7 @@ contains
     IPCTRL = 0
     SGNIP  = 1
     SGNBT  = 1
-    IPEQL  = 4 ! 4- SPIDER, 5- FEQIS
+    IPEQL  = 5 ! 4- SPIDER, 5- FEQIS
     DTEQ(1, :) = 0.
     DTEQ(2, :) = -99999.
     DTEQ(3, :) =  99999.

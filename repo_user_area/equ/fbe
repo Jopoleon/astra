@@ -1,13 +1,12 @@
 NEQUIL=91;
 MEQUIL=90;
-!MEQUIL=0;
+IPEQL=5;
 
 atreq = .005;
 
 ICIRCQ = 1;
 ITFBE  = 2.5;
 IPCTRL = 0;
-IPEQL  = 5;
 
 IPL=IPLX;
 SGNIP= 1;

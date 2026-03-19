@@ -4,9 +4,9 @@ subroutine STEPUP
 ! Note that now time step is updated at the end of a full time cycle
 !-------------------------------------------------------------------
 
-use scalars, only: IBCPSI, IPART, ITFBE, IFBEY, IPLFBE, &
+use scalars, only: IBCPSI, IPART, ITFBE, IFBEY, IPLFBE, IPEQL, &
     IPCTRL, ICIRCQ, ITFBP, ITREQ, FTN, FTO, BTN, BTOR, HRO, ROC, NA1, &
-    TAU, TAU_NEW, TAU_OLD, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, ATREQ, LEQ, & 
+    TAU, TAU_NEW, TAU_OLD, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, ATREQ, & 
     PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, RBDOT, BBDOT
 use status, only: TE, TI, NE, NI, NIO, FP, defarr, error_catch
 use read_input, only: raw_cCoil, raw_vCoil, MACHINE, TASK
@@ -226,9 +226,9 @@ tau = tau_old !reuse old for postep routines
 ! When circuit equations are used do this
 if (IFBEY >= 1) then         ! is doing free boundary
     if (ICIRCQ > 0) then    ! circuit equations are solved with whatever code
-        if (LEQ(5) == 4) then ! SPIDER
+        if (IPEQL == 4) then ! SPIDER
             call SPIDUPDATE(machine, CCOIL(1:n_coils), time, n_coils)    ! Update circuit stuff which has to be outside the iterations of course
-        else if (LEQ(5) == 5) then ! FEQIS
+        else if (IPEQL == 5) then ! FEQIS
             call FEQISUPDATE(CCOIL, n_coils)    ! Update circuit stuff which has to be
         endif
     endif

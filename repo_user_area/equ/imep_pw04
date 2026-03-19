@@ -7,6 +7,9 @@
 
 !GENERAL PARAMETERS BLOCK-------------------------------------------------
 !Define equilibrium grid
+NEQUIL = 51;
+MEQUIL = 51;
+IPEQL = 4;
 
 atreq = 0.1;
 

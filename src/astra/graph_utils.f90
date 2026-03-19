@@ -909,7 +909,7 @@ contains
 
     use status, only: AMETR, MU, SHIF, ELON, TRIA
     use scalars, only: XOUT, NAB, NA1, NA1E, ABC, TINIT, TSCALE, RTOR, &
-        MEQUIL, LEQ, TIME
+        MEQUIL, IPEQL, TIME
     use read_input, only: raw_profiles, equ_file, nr_x_max, &
         IFDFAX, NPTM, XAXES, DATAX, TOUTX
     use dbl2char, only: fmt_smart
@@ -1281,7 +1281,7 @@ contains
 ! or (n_bnd == 8) after calling equil with no boundary points provided;
 !     n_bnd == 0 otherwise
 
-        SELECT CASE(LEQ(5))
+        SELECT CASE(IPEQL)
         CASE(3)
             call plot_lcfs(JIFNEW, IYO, TIME)
         CASE(4: 5)
