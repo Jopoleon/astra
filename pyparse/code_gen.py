@@ -84,7 +84,7 @@ class CODE_GEN:
 use read_input, only: n_sbr, sbr_name, nr_x_max
 use scalars
 use status
-use json_vars, only: n_const, n_var, n_varx, n_intern, n_internInt, n_intern2, n_prof, n_profx
+use json_vars, only: n_const, n_var, n_varx, n_intern, n_intern2, n_prof, n_profx
 
 implicit none
 
@@ -96,7 +96,6 @@ implicit none
 allocate(varValues(n_var))
 allocate(varxValues(n_varx))
 allocate(internValues(n_intern + 4*n_sbr))
-allocate(internIntValues(n_internInt))
 allocate(intern2Values(n_intern2))
 allocate(profiles(NRD, n_prof))
 allocate(profiles_x(NRD, n_profx))
@@ -117,8 +116,6 @@ allocate(TEQ(n_sbr))
         for j, inter in enumerate(parse.intern1):
             self.associate_pointers += '%s => internValues(%d)\n' %(inter, j+1)
         self.associate_pointers += 'DTEQ(1:4, 1:n_sbr) => internValues(n_intern+1: n_intern + 4*n_sbr)\n\n'
-        for j, inter in enumerate(parse.internInt):
-            self.associate_pointers += '%s => internIntValues(%d)\n' %(inter, j+1)
         for j, inter in enumerate(parse.intern2):
             self.associate_pointers += '%s => intern2Values(%d)\n' %(inter, j+1)
         self.associate_pointers += '\n'
@@ -162,7 +159,7 @@ end subroutine POSTEP'''
                     l2f = pa.LINE2FOR(line, parse)
                     detv_time += 'if (IFDFVX(%d) <= 2) %s\n'%(jvar, l2f)
                     break
-            if var in parse.constants + parse.intern1 + parse.intern2 + parse.internInt:
+            if var in parse.constants + parse.intern1 + parse.intern2:
                 detv_time += pa.apptmp(lbl, parse)
             elif var in parse.profiles:
                 detv_rad += pa.apptmp(lbl, parse)

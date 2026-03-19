@@ -5,22 +5,29 @@ LIBDIR=$AWD/lib
 ERR=0
 echo ""
 
-LIB1=$LIBDIR/libsbr.a
-OBJ1=`ar -tv $LIB1 | awk '{print $NF}'`
-LIB2=$LIBDIR/libfnc.a
-OBJ2=`ar -tv $LIB2 | awk '{print $NF}'`
-for OB1 in $OBJ1
+for lib1 in for sbr fnc
 do
-    for OB2 in $OBJ2
-    do
-        if [ $OB1 == $OB2 ]
-        then
-            echo Conflicting $OB1: in $LIB1 and $LIB2
-            echo No ASTRA simulation started
-            echo ""
-            ERR=1
-        fi
-    done
+   LIB1=$LIBDIR/lib${lib1}.a
+   OBJ1=`ar -tv $LIB1 | awk '{print $NF}'`
+   for lib2 in fnc sbr
+   do
+      [ "$lib1" == "$lib2" ] && break
+      LIB2=$LIBDIR/lib${lib2}.a
+      OBJ2=`ar -tv $LIB2 | awk '{print $NF}'`
+      for OB1 in $OBJ1
+      do
+         for OB2 in $OBJ2
+         do
+            if [ $OB1 == $OB2 ]
+            then
+               echo Conflicting $OB1: in $LIB1 and $LIB2
+  	       echo No ASTRA simulation started
+               echo ""
+	       ERR=1
+            fi
+	 done
+      done
+   done
 done
 
 exit $ERR

@@ -81,7 +81,8 @@ contains
 !---------------------------------------------------------------------
     subroutine solve_gse2d_fbe_full(j_init)
 
-    use fbe_core, only: nr, nz, nr2, nz2, Rrect, Zrect, dr, dz, rax, zax, &
+    use fbe_core, only: nr, nz, nr2, nz2, psiextrz, &
+        Rrect, Zrect, dr, dz, rax, zax, &
         iaxis, jaxis, psistabr, psistabz, jrz, solve_fbe_static_iterations_curgiven
     use pbe_core, only: raxp, zaxp
     use circuit, only: restab_axis_with_fourier_wall, restab_boundary_with_fourier_wall, & !doesnt work well
@@ -90,13 +91,16 @@ contains
         restab_F_function_full_currents_limits,restab_2_timepoints_evolution_limits, &
         restab_j_timepoints_evolution_limits_xpoints_boundariz, & 
         restab_1_timepoint_limits_xpoints_boundariz, interp_j_fromrhotorz
-    use transport2fbe, only: refit_mode, n_of_newton_iterations
+    use transport2fbe, only: refit_mode, n_of_newton_iterations, use_isoflux
     use feqis_tools, only: closest_index
     use feqis_scalars, only: iplasma
     
     integer, intent(in) :: j_init
 
-    double precision :: curr
+    integer :: j_iter, j_iter2, j_cyclo, jeppa
+    double precision :: temp_err, raxold, zaxold, temp_err2, raxoldo, zaxoldo, &
+        raxtmp, zaxtmp, det, psistab1o, psistab2o, psro, pszo, dist1, dist2, &
+        cibapr, cibazr, rleft, rright, zup, zdown, dcrdr, dcrdz, dczdr, dczdz, curr
 
 ! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
 
@@ -165,7 +169,7 @@ contains
 
     use fbe_core, only : nr2, nz2, iaxis, jaxis, &
         Rrect, Zrect, dr, dz, rax, zax, &
-        jrz, psistabr, psistabz, &
+        jrz, psirz, psiextrz, psiplasrz, psistabr, psistabz, &
         solve_fbe_instantaneous
     use circuit, only : interp_j_fromrhotorz
     use feqis_scalars, only: iplasma
@@ -176,9 +180,12 @@ contains
     integer, intent(in) :: j_init, j_stab
     double precision, intent(in) :: raxold, zaxold
 
-    double precision :: curr
+    integer :: i, j
+    double precision :: curr, dum1, dum2, zum1, zum2, delr, delz
+    double precision, dimension(9) :: c
+    double precision, dimension(nr2, nz2) :: g
 
-! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
+!first, initialized initial guess coming from prescribed boundary current density: jrhotheta
     if (j_init == 0) then
         call interp_j_fromrhotorz
 ! Rescale current density
@@ -413,8 +420,11 @@ contains
     use fbe_core, only: nrho2d, rbnd, zbnd, &
         psia_2d, ffp_2d, ppp_2d, &
         psistabr, psistabz, psibnd
+    use circuit, only: ncoils
     use feqis_scalars, only: iplasma, Rgeom0, Btor0
-    use transport2fbe, only: raxis_astra, zaxis_astra, psi0_astra, psib_astra, &
+    use transport2fbe, only: dr_factor_init, dz_factor_init, &
+        tau_circuit, tau_gseq, activate_coil, current_limit, &
+        raxis_astra, zaxis_astra, psi0_astra, psib_astra, use_limiter, &
         fix_shape_after_fbe_off
     use numerical_tools, only: linterp
     use feqis_tools, only: pol_angle
@@ -553,15 +563,16 @@ contains
     use ferromagstructure, only: type_ferromag
     use green_function, only: greeni
     use green_matrix, only: dgreenirj, dgreenizj, dgreenirpl, dgreenizpl
-    use transport2fbe, only: cur_init, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
+    use transport2fbe, only: cur_init, use_isoflux, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
          voltage_limits_active_coils, sigma_isoflux
     use feqis_tools, only: sintable, costable
     use json_module, only : json_file
 
     character(len=*) :: machine_name
 
+    type(type_ferromag), dimension(:), allocatable :: ferromag
     logical :: found
-    integer :: i, j, n_perim
+    integer :: i, j, ii, jj, n_perim
     integer, dimension(:), allocatable :: n_sames
     double precision :: rmin, rmax, zmin, zmax
     character(len=120) :: fjson
@@ -1033,7 +1044,7 @@ contains
     subroutine convert_boundary_to_pbe
 
     use pi_const, only: GP2
-    use fbe_core, only: nr, nr2, nz, iaxis, jaxis, &
+    use fbe_core, only: nr, nr2, nz, nbnd, iaxis, jaxis, &
         raus, rinner, zbot, ztop, &
         Rrect, Zrect, dr, dz, rax, zax, rbnd, zbnd, &
         psiaxis, psibnd, psirz
@@ -1177,7 +1188,7 @@ contains
     double precision, intent(out), dimension(ncoilz) :: force_R, force_Z
     double precision, intent(out) :: plasma_force(2) !index 1 is Radial, index 2 is vertical
 
-    integer :: i, j, nblock_a
+    integer :: i, j, k, nblock_a
     double precision :: x1
 
     force_R = 0.
@@ -1222,7 +1233,7 @@ contains
     integer, intent(in) :: ncoilz, plasma_state
     double precision, intent(out), dimension(ncoilz) :: force_R, force_Z, force_tot, plasma_contrib_R, plasma_contrib_Z
 
-    integer :: i, j, nblock_a
+    integer :: i, j, k, nblock_a
     double precision :: x1
 
     force_R = 0.

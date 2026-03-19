@@ -4,14 +4,9 @@ MEQUIL=90;
 
 atreq = .005;
 
-ICIRCQ = 1;
-ITFBE  = 2.5;
-IPCTRL = 0;
-IPEQL  = 5;
-
 IPL=IPLX;
-SGNIP= 1;
-SGNBT= -1;
+SGNIP= 1.;
+SGNBT= -1.;
 
 TAUMIN=0.002;
 TAUMAX=0.002;

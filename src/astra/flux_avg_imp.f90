@@ -26,7 +26,7 @@ contains
 !---------------------------------------------------------------------
 
     use scalars, only: NA1, RTOR, ZMJ, AMJ
-    use status, only: TE, TI, ZEF, VTOR, NRD
+    use status, only: TE, TI, ZEF, VTOR, SHIF, NRD
 
     integer, intent(in) :: geom_type
     double precision, intent(in) :: Aimp_in
@@ -159,7 +159,7 @@ contains
 
     integer :: i, j
     integer :: idxmpi
-    integer :: nrho_surf, nthe_surf
+    integer :: nrho_surf, nthe_surf, jmax
 
 ! intermediate variables
     double precision, allocatable, dimension(:) :: rmin_equ, th0, th1, th2, pf_eq, rho_eq

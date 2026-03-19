@@ -59,21 +59,19 @@ double precision, pointer :: &
     CDmj1, CDmj2, CDmj3, CDmj4, CDmj5, CDmj6, CDmj7, CDmj8, CDmj9, &
     CDhj1, CDhj2, CDhj3, CDhj4, CDhj5, CDhj6, CDhj7, CDhj8, CDhj9
 
-double precision, target, allocatable, dimension(:) :: constValues, &
-    varValues, varxValues, internValues, intern2Values
-integer, target, allocatable, dimension(:) :: internIntValues
+! Old list: Versions 5.2 and earlier
+double precision, target, allocatable, dimension(:) :: constValues, varValues, varxValues, internValues, intern2Values
 
 double precision, allocatable :: TEQ(:)
 
 double precision, pointer :: &
     DPOUT, TIME, TAUMIN, TAUMAX, TAUINC, DELVAR, &
-    TINIT, TSCALE, XOUT, XINPUT, ITFBE, &
-    NB2EQL, DTEQL, TPAUSE, TEND, DTEQ(:, :)
-
-integer, pointer :: &
-    NEQUIL, MEQUIL, INUME1, INUME2, INUME3, INUME4, &
-    IPROT, ITFBP, ICIRCQ, IPCTRL, &
-    SGNIP, SGNBT, IPEQL, IFBEY, IBCPSI
+    ITEREX, TINIT, TSCALE, XOUT, XINPUT, &
+    NB2EQL, NEQUIL, DTEQL, MEQUIL, TPAUSE, TEND, &
+    INUME1, INUME2, INUME3, INUME4, &
+    IPROT, ITFBE, ITFBP, ICIRCQ, IPCTRL, ADCMPF, &
+    SGNIP, SGNBT,  IFBEG, IPEQL, &
+    DTEQ(:, :)
 
 double precision :: IBKDW ! IBKDW=-1 for breakdown yes
 
@@ -84,7 +82,7 @@ double precision, pointer :: &
     ROCO, RON, ROE, ROI, ROU, &
     RO0, RO1, RO2, RO3, RO4, RO5, RO6, RO7, RO8, RO9, &
     PSIAX, PSIBO, PSIFBO, PSIEXT, PSPLEX, IPLFBE, &
-    PSIEXO, PSPLXO, ATREQ, PTREQ, BBDOT, TAUPRP, &
+    PSIEXO, PSPLXO, ATREQ, PTREQ, BBDOT, IFBEY, TAUPRP, &
     TEB, TIB, NEB, UPARB, QEB, QIB, QNB, MUB, TTRQB, QETB, QITB, QNNB, &
     F0B, F1B, F2B, F3B, F4B, F5B, F6B, F7B, F8B, F9B, &
     QF0B, QF1B, QF2B, QF3B, QF4B, QF5B, QF6B, QF7B, QF8B, QF9B, &
@@ -92,7 +90,6 @@ double precision, pointer :: &
 
 integer :: NA, NA1, NAB, NB1, NNCX, KEY, &
     NSTEPS, ITREQ, IPART, LEQ(NEQNS), NITOT
-
 integer :: NA1N, NA1E, NA1I, NA1U, &
     NA10, NA11, NA12, NA13, NA14, NA15, NA16, NA17, NA18, NA19
 character(len=132) :: exp_header
@@ -102,7 +99,9 @@ double precision :: tbeg_eq, tend_eq
 contains
 
 !------------------------------------------
-    subroutine scalars_init
+    subroutine const_init
+
+    integer :: j
 
     constValues   = 0.
     varValues     = 0.
@@ -131,28 +130,31 @@ contains
     TAUMAX = 0.05
     TAUINC = 1.1
     DELVAR = 0.1
+    ITEREX = 1.
     TINIT  = 0.
     TSCALE = 1.
     XOUT   = 1.
     XINPUT = 1.
     NB2EQL = 1.
-    NEQUIL = 0
+    NEQUIL = 0.
     DTEQL  = 0.
-    MEQUIL = 0
+    MEQUIL = 0.
     TPAUSE = 100.
     TEND   = 1000.
-    INUME1 = 22
-    INUME2 = 22
-    INUME3 = 22
-    INUME4 = 22
-    IPROT  = 0
-    ITFBE  = 1.e6
-    ITFBP  = 0
-    ICIRCQ = 0
-    IPCTRL = 0
-    SGNIP  = 1
-    SGNBT  = 1
-    IPEQL  = 4 ! 4- SPIDER, 5- FEQIS
+    INUME1 = 22.
+    INUME2 = 22.
+    INUME3 = 22.
+    INUME4 = 22.
+    IPROT  = 0.
+    ITFBE  = 1e6
+    ITFBP  = 0.
+    ICIRCQ = 0.
+    IPCTRL = 0.
+    ADCMPF = 1.
+    SGNIP  = 1.
+    SGNBT  = 1.
+    IFBEG  = 0.
+    IPEQL  = 4. ! 4- SPIDER, 5- FEQIS
     DTEQ(1, :) = 0.
     DTEQ(2, :) = -99999.
     DTEQ(3, :) =  99999.
@@ -201,8 +203,7 @@ contains
     ATREQ  = 1.E-04
     PTREQ  = 1.E-05
     BBDOT  = 0.0
-    IFBEY  = 0
-    IBCPSI = 0
+    IFBEY  = 0.
     NB1    = 41
     NA1    = 41
     NNCX   = 200
@@ -215,6 +216,6 @@ contains
     LEQ = -1
     exp_header(:) = ' '
 
-    end subroutine scalars_init
+    end subroutine const_init
 
 end module scalars

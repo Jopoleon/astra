@@ -62,9 +62,11 @@ contains
     double precision, intent(in), dimension(ntheta) :: theta
     double precision, intent(in), dimension(nrho, ntheta) :: jrho, rho
 
-    integer :: i, k1, k2, k3, k4, j1, j2
-    double precision :: anglr, rho0, r1, r2, r3, r4, z1, z2, z3, z4, d1, d2, d3, d4
-    double precision, dimension(4) :: jj1
+    integer :: i, k, k1, k2, k3, k4, j1, j2
+    double precision :: anglr, rho0, r1, r2, r3, r4, z1, z2, z3, z4, a1, a2, a3, a4, d1, d2, d3, d4
+    double precision, dimension(2) :: x1, y1, jt
+    double precision, dimension(4) :: jj1, coef
+    double precision, dimension(4, 4) :: matrix, imatrix
 
     anglr = pol_angle(rax, zax, r_in, z_in)
     rho0 = sqrt((r_in - rax)**2 + (z_in - zax)**2)
@@ -330,7 +332,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     integer, intent(in) :: ncoilz, plasma_state
     double precision, intent(out), dimension(ncoilz) :: force_R, force_Z
 
-    integer :: i, j, nblock_a
+    integer :: i, j, k, nblock_a
     double precision :: x1
 
     force_R = 0.
@@ -884,7 +886,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     use numerical_tools, only: linterp
 
     integer, parameter :: n_evol = 2
-    integer :: i, j, k, j_iter, jt
+    integer :: i, j, k, j_iter, iax, jax, jt
     integer, dimension(n_evol) :: iax_ev, jax_ev, nxp_ev
     double precision :: temp_err, curr, f_correction, x1, x2, x3, &
         Ffunc, Ffunc_old, lambda, deltapsiext !lagrange multplier lambda
@@ -1143,7 +1145,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     use numerical_tools, only: linterp
 
     integer, parameter :: n_evol = 2
-    integer :: i, j, k, j_iter, jt, iactive, jactive
+    integer :: i, j, k, j_iter, iax, jax, jt, iactive, jactive
     integer, dimension(n_evol) :: iax_ev, jax_ev, nxp_ev
     double precision :: temp_err, curr, f_correction, x1, x2, x3, &
         Ffunc, Ffunc_old, lambda, deltapsiext !lagrange multplier lambda
@@ -1421,18 +1423,18 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         n_xpoint_fit, vloop_avg, L_ext, &
         dIp_dt, tau_gseq, time_astra, &
         use_isoflux, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
-        voltage_limits_active_coils, cur_init, sigma_isoflux
+        voltage_limits_active_coils, sigma_limits, cur_init, sigma_isoflux
     use green_function, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
     use pi_const, only: GP2, GP2_sq
     use numerical_tools, only: linterp
 
-    integer :: i, j, k, j_iter, iax, jax, j_time, ntheta_temp
+    integer :: i, j, k, j_iter, iax, jax, jt, j_time, ntheta_temp
     double precision :: temp_err, curr, f_correction, x1, x2, x3, &
         Ffunc, Ffunc_old, lambda, deltapsiext, psibexto, psibext !lagrange multplier lambda
     double precision, dimension(9) :: bub
     double precision, dimension(ntheta) :: psicorr, rbref, zbref
-    double precision, dimension(nactive+1) :: Fderiv
+    double precision, dimension(nactive+1) :: result_vector, Fderiv
     double precision, dimension(nactive, ntheta) :: G_00, G_002
     double precision, dimension(nactive) :: G_00c, G_00c2, G_00r, G_00z, curref, curnow, curdiff
     double precision, dimension(nactive+1,nactive+1) :: matrix, invmatrix
@@ -1796,22 +1798,22 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
 
     use errors_params, only: err_find_psistab
     use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy, &
-        sigma_xpoint, r_xpoint_fit, z_xpoint_fit, &
+        current_limit, sigma_xpoint, r_xpoint_fit, z_xpoint_fit, &
         n_xpoint_fit, vloop_avg, L_ext, &
         dIp_dt, tau_gseq, time_astra, &
         use_isoflux, n_isoflux, r_isoflux, z_isoflux, which_x_point, &
-        cur_init
+        voltage_limits_active_coils, sigma_limits, cur_init
     use green_function, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
     use pi_const, only: GP2, GP2_sq
     use numerical_tools, only: linterp
 
-    integer :: i, j, k, j_iter, iax, jax, ntheta_temp
+    integer :: i, j, k, j_iter, iax, jax, jt, j_time, ntheta_temp
     double precision :: temp_err, curr, f_correction, x1, x2, x3, &
-        Ffunc, Ffunc_old, psibexto, psibext
+        Ffunc, Ffunc_old, lambda, deltapsiext, psibexto, psibext !lagrange multplier lambda
     double precision, dimension(9) :: bub
     double precision, dimension(ntheta) :: psicorr, rbref, zbref
-    double precision, dimension(nactive) :: Fderiv
+    double precision, dimension(nactive) :: result_vector, Fderiv
     double precision, dimension(nactive, ntheta) :: G_00
     double precision, dimension(nactive) :: G_00c, G_00r, G_00z, curref, curnow, curdiff
     double precision, dimension(nactive,nactive) :: matrix, invmatrix
@@ -1819,9 +1821,12 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     double precision, dimension(:), allocatable :: dummyx, rbndtemp, zbndtemp
     double precision, dimension(nblocks-npassive) :: force_r, force_z
     double precision :: raxref, zaxref, r_norm_ref
+    double precision :: currents_limits_adds(nactive, 2)
     integer, dimension(:), allocatable :: gridpoint_tipe
     character(len=80) :: file_time
     logical :: file_exists
+    data j_time/0/
+    save j_time
 
     r_norm_ref = 0.5*(Rrect(1) + Rrect(nr2))
     psicorr   = 0.
@@ -2482,7 +2487,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
 ! how to include forces???
 
     use errors_params, only: err_find_psistab
-    use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy
+    use transport2fbe, only: sigma_coils, sigma_b, sigma_axis, sigma_energy, sigma_forces
     use green_function, only: greeni
     use feqis_tools, only: closest_index, interp2d_psi, inv_matrix
 
@@ -2760,12 +2765,14 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     use feqis_tools, only: closest_index, interp2d_psi, least_square_biquad
 
     integer :: i, j, j_iter, iax, jax
-    double precision :: curr, dum1, psistab1o, psistab2o, delr, delz, &
+    double precision :: curr, dum1, dum2, zum1, psistab1o, psistab2o, delr, delz, &
         S_00r, C_00r, S_00z, C_00z, temp_err
+    double precision, dimension(6) :: ccc
     double precision, dimension(5) :: ddipsi
     double precision, dimension(9) :: bub, xub, yub
     double precision, dimension(npassive) :: anglr, g0_r, g0_z
     double precision, dimension(258, 258) :: C_00, S_00
+    double precision, dimension(nr2, nz2) :: g
 
 !first, initialized initial guess coming from prescribed boundary current density: jrhotheta
     call interp_j_fromrhotorz
@@ -2939,7 +2946,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     use numerical_tools, only: qinterp
     use pi_const, only: GP, muvac
 
-    integer :: i, j, ii, jj, iii, iferro, nval
+    integer :: i, j, ii, jj, iii, jjj, iferro, nval
     double precision :: x1, x2, x3, x4, d
     double precision, dimension(1) :: z1, z2
     type(type_ferromag), dimension(:), allocatable :: ferromag
@@ -3008,7 +3015,8 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
 !---------------------------------------------------------------------
     subroutine interp_j_fromrhotorz
 
-    integer :: i, j
+    integer :: i, j, k, k1, k2
+    double precision :: t1, t2, t3, t4
 
 ! go from jrhotheta to jrz
     jrz = 0.

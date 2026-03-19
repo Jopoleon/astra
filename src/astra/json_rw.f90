@@ -31,34 +31,7 @@ contains
     end subroutine json_load
 
 !---------------------------------------------------------------------
-    subroutine read_scalars_int(fjson, label, values)
-
-    type(json_file), intent(inout) :: fjson
-    character(len=*), intent(in) :: label
-    integer, intent(out), allocatable, dimension(:) :: values
-
-    logical :: found
-    integer :: j, nvars
-    integer :: val
-    type(json_value), pointer :: jsonBlock, dictPointer
-    type(json_core) :: jCore    
-
-    write(*, '(2A)') 'Reading json block ', TRIM(label)
-
-    call fjson%info(TRIM(label), n_children=nvars)
-    allocate(values(nvars))
-
-    call fjson%get(TRIM(label), jsonBlock, found)
-    do j=1, nvars
-        call jCore%get_child(jsonBlock, j, dictPointer, found)
-        call jCore%get(dictPointer, val)
-        values(j) = val
-    enddo
-
-    end subroutine read_scalars_int
-
-!---------------------------------------------------------------------
-    subroutine read_scalars_float(fjson, label, values)
+    subroutine read_scalar_block(fjson, label, values)
 
     type(json_file), intent(inout) :: fjson
     character(len=*), intent(in) :: label
@@ -82,7 +55,7 @@ contains
         values(j) = val
     enddo
 
-    end subroutine read_scalars_float
+    end subroutine read_scalar_block
 
 !---------------------------------------------------------------------
     subroutine read_array_block(fjson, label, profs)
@@ -94,6 +67,7 @@ contains
     logical :: found
     integer :: j, k, nvars, npts
     double precision :: val
+    character(len=:), allocatable :: error_msg
 
     type(json_value), pointer :: jsonBlock, arrPointer, valPointer
     type(json_core) :: jCore
@@ -245,7 +219,7 @@ end subroutine read_array_2d
         psirz2d, fdia2d, r, z, rmin, psirz
 
 ! equil_scalars
-    call read_scalars_float(fjson, "equil_signals", equil_traces)
+    call read_scalar_block(fjson, "equil_signals", equil_traces)
 
     equil_now%global_param%toroid_field%b0 = equil_traces(1)
     equil_now%global_param%betpol          = equil_traces(2)
@@ -361,21 +335,21 @@ end subroutine read_array_2d
     end subroutine read_equil
 
 !---------------------------------------------------------------------
-    subroutine write_ajson
+    subroutine write_json
 
     use parameters_a2equil, only: equil_now
-    use scalars, only: NA1, varValues, varxValues, constValues, &
-        internValues, internIntValues, intern2Values
+    use scalars, only: NA1, varValues, varxValues, constValues, internValues, intern2Values
     use status, only: profiles, profiles_x
     use read_input, only: awd, exp_file, equ_file, restart
     use debugger, only: debug
     use json_vars, only: equil_sigPtr, equil_profPtr, equil_rectPtr, equil_coordPtr, &
-        profPtr, profxPtr, constPtr, internPtr, internIntPtr, intern2Ptr, &
-        varPtr, varxPtr, n_prof, n_profx
+        profPtr, profxPtr, constPtr, internPtr, intern2Ptr, varPtr, varxPtr, n_prof, n_profx
 
-    integer :: j, ios, j_call=1, j_out, nrho_surf, nthe_surf, nR, nZ
+    integer :: j, jrho, ios, j_call=1, j_out, nrho_surf, nthe_surf, nR, nZ
     character(len=180) :: json_out
     double precision, dimension(20) :: equil_traces
+    character(KIND=JSON_CK, len=:), allocatable :: sunit, sdesc, sname
+    type(json_core) :: jCore
 
     save j_call
 
@@ -397,12 +371,11 @@ end subroutine read_array_2d
 !------
 
 ! Scalars
-    call write_scalars_float(varPtr, varValues, label="variables")
-    call write_scalars_float(varxPtr, varxValues, label="variables_x")
-    call write_scalars_float(constPtr, constValues, label="constants")
-    call write_scalars_float(internPtr, internValues, label="internal")
-    call write_scalars_int(internIntPtr, internIntValues, label="internInt")
-    call write_scalars_float(intern2Ptr, intern2Values, label="intern2")
+    call write_scalar_block(varPtr, varValues, label="variables")
+    call write_scalar_block(varxPtr, varxValues, label="variables_x")
+    call write_scalar_block(constPtr, constValues, label="constants")
+    call write_scalar_block(internPtr, internValues, label="internal")
+    call write_scalar_block(intern2Ptr, intern2Values, label="intern2")
 
 !-----------
 ! Profiles
@@ -441,7 +414,7 @@ end subroutine read_array_2d
     equil_traces(6) = equil_now%global_param%psiaxis
     equil_traces(7) = equil_now%global_param%toroid_field%r0
     equil_traces(8) = equil_now%global_param%Vloop
-    call write_scalars_float(equil_sigPtr, equil_traces(1: 8), label='equil_signals')
+    call write_scalar_block(equil_sigPtr, equil_traces(1: 8), label='equil_signals')
 
 ! 1 d profiles
     jid = 0
@@ -507,45 +480,10 @@ end subroutine read_array_2d
 
     write(*, '(A)') '   Written file ' // TRIM(json_out)
 
-    end subroutine write_ajson
+    end subroutine write_json
 
 !---------------------------------------------------------------
-    subroutine write_scalars_int(json_in, scalar_list, label)
-
-    integer, intent(in), dimension(*) :: scalar_list
-    character(len=*), intent(in), optional :: label
-    type(json_value), intent(in), pointer :: json_in
-
-    logical :: found
-    integer :: nvars, j
-    character(KIND=JSON_CK, len=:), allocatable :: sname
-    type(json_value), pointer :: dictPointer
-    type(json_core) :: jCore
-
-101 format('    "', A, '": ', i0, ',')
-102 format('    "', A, '": ', i0, '')
-201 format(   '"', A, '": {')
-
-    call jCore%info(json_in, n_children=nvars)
-
-    if (present(label)) write(nunit, 201) TRIM(label)
-
-    do j=1, nvars
-        call jCore%get_child(json_in, j, dictPointer, found)
-        call jCore%info(dictPointer, name=sname)
-        if (j < nvars) then
-            write(nunit, 101) sname, scalar_list(j)
-        else
-            write(nunit, 102) sname, scalar_list(j)
-        endif
-    enddo
- 
-    if (present(label)) write(nunit, '(A)') '},'
-
-    end subroutine write_scalars_int
-
-!---------------------------------------------------------------
-    subroutine write_scalars_float(json_in, scalar_list, label)
+    subroutine write_scalar_block(json_in, scalar_list, label)
 
     double precision, intent(in), dimension(*) :: scalar_list
     character(len=*), intent(in), optional :: label
@@ -577,7 +515,7 @@ end subroutine read_array_2d
  
     if (present(label)) write(nunit, '(A)') '},'
 
-    end subroutine write_scalars_float
+    end subroutine write_scalar_block
 
 !---------------------------------------------------------------------
     subroutine prettyFloatArray(n_u, arr_in, fmt, n_columns)
@@ -609,7 +547,7 @@ end subroutine read_array_2d
     logical, intent(in), optional :: last_array
 
     logical :: found
-    integer :: i, j, ij, n_columns
+    integer :: i, j, ij, n_columns, n_remain
     double precision :: abs_val
     double precision, dimension(:), allocatable :: array
     double precision, dimension(:, :), allocatable :: array2
@@ -684,37 +622,4 @@ end subroutine read_array_2d
 
     end subroutine write_array
 
-!---------------------------------------------------------------------
-    subroutine read_ajson(n_restart)
-
-    use read_input, only: awd, exp_file, equ_file
-    use scalars, only: NA1, constValues, varValues, varxValues, &
-        internValues, internIntValues, intern2Values
-    use status, only: profiles, profiles_x
-    use json_vars, only: n_intern
-
-    integer, intent(in) :: n_restart
-
-    double precision, dimension(:), allocatable :: internVal
-    double precision, dimension(:, :), allocatable :: profs, profs_x
-    character(len=132) :: f_json
-    type(json_file) :: fjson
-
-    write(f_json, '(5A, i0, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), &
-        TRIM(equ_file), '-', n_restart, '.json'
-    call json_load(f_json, fjson)
-    call read_scalars_float(fjson, "constants", constValues)
-    call read_scalars_float(fjson, "variables", varValues)
-    call read_scalars_float(fjson, "variables_x", varxValues)
-    call read_scalars_float(fjson, "internal", internVal)
-    call read_scalars_int(fjson, "internInt", internIntValues)
-    call read_scalars_float(fjson, "intern2", intern2Values)
-    internValues(1: n_intern) = internVal(1: n_intern)
-    call read_array_block(fjson, "profiles", profs)
-    call read_array_block(fjson, "profiles_x", profs_x)
-    profiles(  1:NA1, :) = profs
-    profiles_x(1:NA1, :) = profs_x
-    call read_equil(fjson)
-    call fjson%destroy()
-      end subroutine read_ajson
 end module json_rw

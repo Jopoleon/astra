@@ -208,14 +208,15 @@ contains
 
     use scalars, only: NA1, AB, ABC, RTOR, varValues, exp_header, TSTART, TEND
     use char_manip, only: to_upper, str_in_list
-    use debugger, only: markloc, astra_stop
+    use debugger, only: markloc, debug, astra_stop
     use parse_utils, only: split2array2
     use json_vars, only: varNames, profxNames
 
     integer, parameter :: len_data_max=250000, n_unit=201, nbnd_max=400000
 
     logical :: skip_read=.false.
-    integer :: jarr, INTYPE, jtype, nr_exp, ntim, ntim1, IVAR, NGR
+    integer :: jarr, INTYPE, jtype, nr_exp, ntim, ntim1, n_coils, IVAR, NGR
+    integer, allocatable, dimension(:) :: int_json
     integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
     integer :: n_words, i_filter_glob, len_profs_data, len_profs_time, len_scalars
     integer :: nt_u, nx_u, ios, ndim_u, nscal_u, jvar, jrt, jt, jthe, nbnd
@@ -378,7 +379,7 @@ contains
         allocate(raw_profiles%time(len_profs_time))
         allocate(raw_profiles%filter(len_profs_time))
         allocate(raw_profiles%label(len_profs_time))
-        allocate(raw_profiles%arr_index(len_profs_time+1))
+        allocate(raw_profiles%arr_index(len_profs_time))
         allocate(raw_profiles%jbeg_grid(len_profs_time))
         allocate(raw_profiles%jbeg_data(len_profs_time))
         allocate(raw_profiles%grid_type(len_profs_time))
@@ -971,14 +972,11 @@ contains
 !call clean_string(strtmp, strtmp)
     nlen = LEN_TRIM(strtmp)
 
-    if (nlen == 0) then
-        ARRNAM = ''
-    else
-        ARRNAM = strtmp(1: 6)
+    ARRNAM = strtmp(1: 6)
 ! Append "X" if absent
-        if (nlen < 6 .and. strtmp(nlen: nlen) /= 'X') then
-            ARRNAM(nlen+1: nlen+1) = 'X'
-        endif
+
+    if (nlen < 6 .and. strtmp(nlen: nlen) /= 'X') then
+        ARRNAM(nlen+1: nlen+1) = 'X'
     endif
 
     end function ARRNAM
@@ -1209,6 +1207,7 @@ contains
     double precision, intent(out), dimension(:), allocatable :: t_out, x_out, arr_out
 
     integer :: ios, jx, jt, jlin, n_header
+    character(132) :: err_msg
 
     write(*, *) 'Reading u-file ' // TRIM(uname)
     allocate(t_out(nt), x_out(nx), arr_out(nt*nx))

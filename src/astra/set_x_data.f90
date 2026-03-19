@@ -497,11 +497,11 @@ contains
     use json_vars, only: varNames, n_profx, profxNames, n_var
     use numerical_tools, only: EXTRAP, INTEGR
     use debugger, only: astra_stop
-    use read_input, only: raw_boundary, exp_file, IFDFVX
+    use read_input, only: raw_boundary, exp_file, IFDFVX, IFDFAX
     use metrics, only: setgeo, new_grid, roc3a
-    use char_manip, only: to_upper, str_in_list
  
-    integer :: j, jt, jthe, jvar, KAWALL
+    integer :: KAB, KAWALL, KRTOR, KELONM, KTRICH
+    integer :: j, jt, jthe
     double precision :: YTP=-1.d9
     double precision, dimension(:), allocatable :: bnd_r, bnd_z
     character(len=132) :: err_msg
@@ -518,9 +518,18 @@ contains
     call set_x_scalars
 
     do j=1, n_var
-        jvar = str_in_list(varNames(j), (/ 'AB    ', 'AWALL ', 'RTOR  ', 'ELONM ', 'TRICH ' /))
-        if (jvar > 0) IFDFVX(j) = 4
-        if (varNames(j) == 'AWALL ') KAWALL = j
+        SELECT CASE(varNames(j))
+        CASE('AB    ')
+            KAB    = j
+        CASE('AWALL ')
+            KAWALL = j
+        CASE('RTOR  ')
+            KRTOR  = j
+        CASE('ELONM ')
+            KELONM = j
+        CASE('TRICH ')
+            KTRICH = j
+        END SELECT
     enddo
  
     if (AWALL < AB) then
@@ -538,6 +547,12 @@ contains
         write(*, *) '>>> Warning: AWALL is set unreasonably large'
         write(*, *) '    Check settings in data and log files'
     endif
+
+    IFDFVX(KAB)    = 4
+    IFDFVX(KELONM) = 4
+    IFDFVX(KRTOR)  = 4
+    IFDFVX(KTRICH) = 4
+    IFDFVX(KAWALL) = 4
 
 ! If boundary is given, calculates initial geometry from that
     if (raw_boundary%nt > 0) then

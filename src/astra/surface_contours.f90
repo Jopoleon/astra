@@ -53,7 +53,7 @@ contains
     theta = ATAN2(z_in, r_in) - th_ref
     jmin = MINLOC(ABS(theta))
     jmid = jmin(1)
-    ind3 = (/ MOD(jmid-2 + n_the, n_the) + 1, jmid, MOD(jmid, n_the) + 1 /)
+    ind3 = (/ MOD(jmid-2, n_the) + 1, jmid, MOD(jmid, n_the) + 1 /)
 
     theta3 = theta(ind3)
     if (jmid == 1) then

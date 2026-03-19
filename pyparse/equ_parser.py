@@ -55,7 +55,6 @@ class EQU_PARSER:
         self.profiles  = self.prof + self.profx + prof_ext
         self.constants = json_keys['constants']
         self.intern1   = json_keys['internal']
-        self.internInt = json_keys['internInt']
         self.intern2   = json_keys['intern2']
         self.variables = json_keys['variables']
         self.varx      = json_keys['variables_x']

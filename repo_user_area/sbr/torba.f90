@@ -42,7 +42,7 @@ contains
     double precision :: xrtol, xatol, xstep, xtbeg, xtend, xpw0, xrmaj,  &
         xrmin, xb0, xdns, edgdns, xe1, xe2,  xte0, xteedg, xe1t, xe2t,  &
         xdel0, xdeled, xelo0, xeloed, xq0, xqedg
-    double precision :: xpoldeg, xtordeg, alpha, beta, sgn_bt, sgn_ip
+    double precision :: xpoldeg, xtordeg, alpha, beta
     double precision :: rhoresult(0: 19)
     double precision, dimension(n_gy_max) :: power_gyro, freq_n, &
         xryyb, xrzzb, xwyyb, xwzzb, theta_n, phi_n, theta_t, phi_t, RR_n, ZZ_n
@@ -80,8 +80,6 @@ contains
     prdata = 0.d0
     extrap_coef_cPoints = 3 ! skips 3 steps
     extrap_coef_cFreq   = 6 ! skips 6 steps to make it faster
-    sgn_ip = dble(SGNIP)
-    sgn_bt = dble(SGNBT)
 
     n_Rrect = NrRect
     n_Zrect = NzRect
@@ -130,14 +128,14 @@ contains
     eqdata(1) = FP(NA1)
 
     write(*, '(A)') 'Acquiring eqdata'
-    write(*, '(A, i2, i2)') 'Sign of Ip, Bt', SGNIP, SGNBT
+    write(*, '(A, f9.4, f9.4)') 'Sign of Ip, Bt', SGNIP, SGNBT
 
     eqdata(2: n_Rrect+1) = Rrect
     eqdata(n_Rrect+2: n_Rrect+n_Zrect+1) = Zrect
 
-    B_Rrect = sgn_ip*B_Rrect
-    B_Zrect = sgn_ip*B_Zrect
-    B_Trect = sgn_bt*B_Trect
+    B_Rrect = SGNIP*B_Rrect
+    B_Zrect = SGNIP*B_Zrect
+    B_Trect = SGNBT*B_Trect
 
     write(6, '(A, 3f11.7)') 'B_Z HFS/LFS'
     write(6, '(2e12.4)') B_Zrect(1, NZrect/2), B_Zrect(n_Rrect, n_Zrect/2)
@@ -420,9 +418,9 @@ contains
             write(*, *) 'Absorption per injected MW', rhoresult(13)
             write(*, *) 'Total driven current MA per MW / total MA', &
                 1.e-3*rhoresult(12), &
-                1.e-3*rhoresult(13)*sgn_ip*power_gyro(jgy)
+                1.e-3*rhoresult(13)*SGNIP*power_gyro(jgy)
             PEECR(1: NA1) = PEECR(1: NA1) + rhoresult(13)*power_gyro(jgy)*ECR
-            CUECR(1: NA1) = CUECR(1: NA1) + 1.e-3*rhoresult(12)*sgn_ip*power_gyro(jgy)*CCD
+            CUECR(1: NA1) = CUECR(1: NA1) + 1.e-3*rhoresult(12)*SGNIP*power_gyro(jgy)*CCD
 
         endif
     enddo gyro_loop

@@ -58,7 +58,7 @@ endtype plot_frame
 
 ! Colors, array AstraColorNum in Astra2XW.c
 integer, dimension(NRW) :: NWIND1, NWIND3, NWIND4, NWIND7, NWINDX
-integer :: NTOUT, NROUT, LTOUT, IPOUT, MOD10, NXOUT
+integer :: NDTNAM, NTOUT, NROUT, LTOUT, IPOUT, MOD10, NXOUT
 integer :: MODEY, IDX, IDT, KPRI, NST, AVERS, ARLEAS, AEDIT
 integer, dimension(plot_modes) :: active_tab, curves_per_frame
 double precision, dimension(NRW)   :: GRAL, GRAP, OSHIFT, OSHIFR, SCALET, SCALER
@@ -1432,15 +1432,17 @@ contains
 
     use pi_const, only: GP2
     use scalars, only: AB, ELONM, RTOR, TRICH
+    use debugger, only: debug
     use machine_config, only: config, json_cfg, cfg_exists
 
     integer, parameter :: n_theta=64, ngc_max=750
-    integer :: j, j1, jgc, jbeg, NGC, ndim_gc
+    integer :: j, j1, jgc, jbeg, ios, nSHOT, NGC, ndim_gc
     integer, allocatable, dimension(:) :: contour_len, contour_color
     double precision :: pol_ang, Rwall, Zwall
     double precision, dimension(n_theta) :: xwall, ywall
     double precision, dimension(ngc_max) :: xGC, yGC
     double precision, allocatable, dimension(:) :: rGC, zGC
+    character(len=64) :: STRI
 
     call setColor(Blue)
 
@@ -1537,8 +1539,8 @@ contains
 
     if (SIZE(equil_now%coord_sys%position%r) == 0) return
 
-    n_rho_surf = NEQUIL
-    n_theta    = MEQUIL
+    n_rho_surf = NINT(NEQUIL)
+    n_theta    = NINT(MEQUIL)
     n_theta1 = n_theta + 1
     nskip = 1 + n_rho_surf/nrho_plot
 
