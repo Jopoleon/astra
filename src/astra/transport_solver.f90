@@ -255,7 +255,7 @@ contains
 
     if (t1 == 0. .and. t2 /= 0.) then
         COULG = 15.9 - 0.5*LOG(NE(J)) + log(TE(J))
-        if (nint(abs(IPROT)) == 2 .or. nint(ABS(IPROT)) == 4) then
+        if (abs(IPROT) == 2 .or. ABS(IPROT) == 4) then
             SUZPEI = NMAIN(J)/AMAIN(J)*ZMAIN(J)**2 + &
                 NIZ1(J)/AIM1*ZIM1(J)**2 + &
                 NIZ2(J)/AIM2*ZIM2(J)**2 + &
@@ -274,16 +274,16 @@ contains
 
 !---------------------------------------------------------------------
     subroutine RUNEQ_TETI(G_new, H1_new, H2_new, G_old, H1_old, H2_old, & 
-        Y1_old, Y2_old, W1, W2, V, unit_coeff, G11, A1_in, A2_in, B1_in, B2_in, &
-        S1_in, S2_in, P1, P2, rbdot, bbdot, Ngridb, Ngrid, dx, dt, &
+        Y1_old, Y2_old, V, unit_coeff, G11, A1_in, A2_in, B1_in, B2_in, &
+        S1_in, S2_in, P1, P2, Ngridb, Ngrid, dx, dt, &
         x_in, imethod, y1, y2, Q1_out, Q2_out)
 
     use numerical_tools, only: deriv, extrap, gradient
 
     integer, intent(in) :: Ngrid, imethod, Ngridb
-    double precision, intent(in) :: rbdot, bbdot, dx, dt, unit_coeff
+    double precision, intent(in) :: dx, dt, unit_coeff
     double precision, intent(in), dimension(Ngrid) :: G_new, H1_new, H2_new, G_old, &
-        H1_old, H2_old, Y1_old, Y2_old, W1, W2, V, G11, &
+        H1_old, H2_old, Y1_old, Y2_old, V, G11, &
         A1_in, A2_in, B1_in, B2_in, S1_in, S2_in, P1, P2, x_in
     double precision, intent(out)  , dimension(Ngrid) :: Q1_out, Q2_out
     double precision, intent(inout), dimension(Ngrid) :: y1, y2
@@ -294,7 +294,7 @@ contains
         Vtilde, N1_new, N1_old, N2_new, N2_old
     double precision, dimension(Ngridb) :: A1, A2, T12, &
         S1_new, S2_new, xi1, fxi1, gxi1, xi2, fxi2, gxi2, &
-        Gmix, g_v, AA1, BB1, CC1, RR1, TT1, AA2, BB2, CC2, RR2, TT2
+        Gmix, g_v, AA1, BB1, CC1, RR1, TT1, AA2, BB2, CC2, RR2
 
     x_b = x_in + 0.5*dx
     do j=1, Ngridb

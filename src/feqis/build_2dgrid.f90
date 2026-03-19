@@ -33,13 +33,13 @@ double precision, intent(out), dimension(nrho, ntheta) :: bpcell, bcell
 double precision, intent(out), dimension(nrho) :: r_out, r_in, elon, shif, &
     g41, q_out, shiv, square, tria_u, tria_l
 
-integer :: jrho, jthe, jthe_l, k, j, i, ji, i1, i2, ip0, ip1, ip2, ip3
-double precision :: drdX, drdY, Mdet, dpsi, dthe, ipol_rmaj, z1, z2, z3, rho_interp, &
+integer :: jrho, jthe, j, i, ji, i1, i2, ip0, ip1, ip2, ip3
+double precision :: ipol_rmaj, z1, z2, rho_interp, &
     dumba1, dumba2, dumba3, dumba4, qedge, rhoedge, greenf, t4, &
     yrzmin, yrzmax, yzmax, yrmin, yrmax, yrr, yzmin, ya
 double precision, dimension(3) :: xxxx1, yyyy1, pppp1
 double precision, dimension(nrho) :: rhot, rhoa, dPSIdV, dVa, daa, dum1, AMETR, ONEZ
-double precision, dimension(ntheta) :: dl_arc, tar1, tar2, theta_special, dl_arc_special, &
+double precision, dimension(ntheta) :: dl_arc, tar1, theta_special, dl_arc_special, &
     rmaj2_sq, gradVa_sq, B_ABSa_sq
 double precision, dimension(nrho, ntheta) :: gradPSIa, gradVa, dV2da, dA2da, &
     B_pola, B_ABSa, B_Ta, dldt_temp

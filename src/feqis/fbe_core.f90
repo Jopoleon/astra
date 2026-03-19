@@ -446,7 +446,7 @@ contains
 
     logical :: from_scratch
     integer :: niter, i, j, k, i1, i4, i5, i9, n_adding
-    double precision :: x1, x2, x5, pos_xpointR, pos_xpointZ
+    double precision :: x1, x2, pos_xpointR, pos_xpointZ
     double precision, dimension(5) :: dpsi
     double precision, dimension(200) :: rx_add, zx_add
     double precision, dimension(500) :: psi_limp

@@ -98,7 +98,7 @@ contains
     double precision,  intent(in), dimension(ndim) :: f_in
     double precision, dimension(ndim) :: f_out
 
-    integer :: i, j, imethod1, icall, k
+    integer :: i, imethod1, k
     double precision :: z(ndim)
     complex(kind=dp) :: d(2*(ndim+1))
 
@@ -135,7 +135,6 @@ contains
     double precision, dimension(5) :: derivs
 
     integer :: k
-    double precision :: det, det_r, det_z, rax, zax, uax
     double precision, dimension(6) :: B, coeff
     double precision, dimension(21) :: sums
     double precision, dimension(6, 6) :: A, Ainv
@@ -340,7 +339,7 @@ contains
     double precision, intent(out) :: dr_out, dz_out, u_out
     double precision, intent(out), dimension(5) :: derivs
 
-    double precision :: hessian, r_loc, z_loc
+    double precision :: r_loc, z_loc
     double precision :: d_dpsi(5)
 
     r_loc = 0.

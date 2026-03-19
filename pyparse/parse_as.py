@@ -519,6 +519,9 @@ def LINE2FOR(equStatement, parse):
                 pass
 
     pieces = rec_split(tmp)
+    if pieces[0].upper().strip() in parse.internInt:
+        return equStatement
+
     try:
         line_out = recParse(pieces, parse)
     except:
