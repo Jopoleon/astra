@@ -4,7 +4,7 @@ subroutine STEPUP
 ! Note that now time step is updated at the end of a full time cycle
 !-------------------------------------------------------------------
 
-use scalars, only: IPART, ITFBE, IFBEY, IPLFBE, IFBEG, &
+use scalars, only: IBCPSI, IPART, ITFBE, IFBEY, IPLFBE, &
     IPCTRL, ICIRCQ, ITFBP, ITREQ, FTN, FTO, BTN, BTOR, HRO, ROC, NA1, &
     TAU, TAU_NEW, TAU_OLD, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, ATREQ, LEQ, & 
     PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, RBDOT, BBDOT
@@ -18,14 +18,10 @@ use gui_interaction, only: if_key
 
 implicit none
 
-integer :: IFSUB, ibcpsi_fb, bc_type_for_fp, jkey, n_coils
+integer :: IFSUB, bc_type_for_fp, jkey, n_coils
 double precision :: zipctrl, iplfbeo, Apsibcfac, Bpsibcfac, dfpdrbm12
 double precision, dimension(raw_cCoil%ncoils) :: yccoil
 double precision, dimension(raw_vCoil%ncoils) :: yvcoil
-
-data ibcpsi_fb /0/
-
-save ibcpsi_fb  ! counter to use psi as bc stuff
 
 !Initialize a few variables for toroidal field
 BTN = BTOR
@@ -48,12 +44,12 @@ IPART = 2     ! Mark time evolution section
 NIO = NI  !moved from OLDNEW here to maintain it correctly. detvar goes before oldnew to maintain time derivative computations. 
 
 !switch from pbe to fbe gs solver
-if (ITFBE < 0.) IFBEY = 0.
+if (ITFBE < 0.) IFBEY = 0
 if (ITFBE > 0.) then
     if (TIME < ITFBE) then
-        IFBEY = 0.
+        IFBEY = 0
     else
-        IFBEY = IFBEY + 1.
+        IFBEY = IFBEY + 1
     endif
 endif
 
@@ -85,15 +81,13 @@ else ! if time <= ITFBE, ccoil and vcoil comes from experimental traces in exp f
     call get_coil(TIME, raw_vCoil, yvcoil)
 endif
 
-! counter for psi bc = -1 
-if (ITFBP == 0.0) ibcpsi_fb = 0
-
-if (IFBEY >= 1.) then
-    if (ITFBP < 0.0) then
-        ibcpsi_fb = ibcpsi_fb + 1
-        ibcpsi_fb = min(ibcpsi_fb, 3)
+if (ITFBP == 0) IBCPSI = 0
+if (IFBEY >= 1) then
+    if (ITFBP < 0) then
+        IBCPSI = IBCPSI + 1
+        IBCPSI = min(IBCPSI, 3)
     else
-        ibcpsi_fb = 0
+        IBCPSI = 0
     endif
 endif
 
@@ -129,7 +123,7 @@ time_step_accuracy: do
             BBDOT = (BTOR - BTN)/(BTOR + BTN)/TAU     !New bbdot for adiabatic compression
 
 ! here it should go the correction after 1st free boundary call since geometry changes abruptly
-            if (IFBEY == 1.) then
+            if (IFBEY == 1) then
                 RBDOT = 0.   !also set compression to zero to avoid jumps
                 BBDOT = 0.   !also set compression to zero to avoid jumps
             endif
@@ -141,7 +135,7 @@ time_step_accuracy: do
         endif
 
         if (plasma_up) then
-            call eqns_inc(ibcpsi_fb, bc_type_for_fp, dfpdrbm12)
+            call eqns_inc(IBCPSI, bc_type_for_fp, dfpdrbm12)
         endif
 
 ! catching errors: infinite or nan profiles
@@ -184,9 +178,9 @@ time_step_accuracy: do
         jkey = IFTREQ(ATREQ)            ! ++ITREQ; Tr-Eq loop converged?  
 
 ! some options to avoid NITREQ when IFBEY = 1, IPCTR = X.1  --> does not do NITREQ
-        if (IFBEY == 1.) then
-            zipctrl = IPCTRL - nint(IPCTRL)
-            if (zipctrl > 1.e-10) jkey = 1
+        if (IFBEY == 1) then
+!            zipctrl = IPCTRL - nint(IPCTRL)
+!            if (zipctrl > 1.e-10) jkey = 1
         endif
 
 !quantitites for psi b.c.
@@ -195,9 +189,9 @@ time_step_accuracy: do
             Bpsibcfac = PSIEXT - PSPLEX*ROC*Apsibcfac
             PSIFB = Bpsibcfac
 
-            if (ITFBP < 0.0) then
-                if (IFBEY >= 1.) then
-                    if (ibcpsi_fb == 1) then
+            if (ITFBP < 0) then
+                if (IFBEY >= 1) then
+                    if (IBCPSI == 1) then
                         FP = FP - FP(NA1) + PSIFB
                         bc_type_for_fp = 3
                     endif
@@ -230,8 +224,8 @@ tau_new = tau !store new tau
 tau = tau_old !reuse old for postep routines
 
 ! When circuit equations are used do this
-if (IFBEY >= 1.) then         ! is doing free boundary
-    if (ICIRCQ > 0.) then    ! circuit equations are solved with whatever code
+if (IFBEY >= 1) then         ! is doing free boundary
+    if (ICIRCQ > 0) then    ! circuit equations are solved with whatever code
         if (LEQ(5) == 4) then ! SPIDER
             call SPIDUPDATE(machine, CCOIL(1:n_coils), time, n_coils)    ! Update circuit stuff which has to be outside the iterations of course
         else if (LEQ(5) == 5) then ! FEQIS

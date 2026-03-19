@@ -47,7 +47,7 @@ contains
     use metrics, only: CUOFP
 
     integer :: j
-    double precision :: CTAU, TAUO, YY, TAUN
+    double precision :: CTAU, TAUO, TAUN
 
     call markloc('IFSTEP')
 

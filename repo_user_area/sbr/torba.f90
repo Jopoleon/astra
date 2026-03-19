@@ -128,7 +128,7 @@ contains
     eqdata(1) = FP(NA1)
 
     write(*, '(A)') 'Acquiring eqdata'
-    write(*, '(A, f9.4, f9.4)') 'Sign of Ip, Bt', SGNIP, SGNBT
+    write(*, '(A, i2, i2)') 'Sign of Ip, Bt', SGNIP, SGNBT
 
     eqdata(2: n_Rrect+1) = Rrect
     eqdata(n_Rrect+2: n_Rrect+n_Zrect+1) = Zrect

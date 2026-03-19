@@ -24,7 +24,7 @@ character(len=*) :: machine_name
 type(type_equilibrium), intent(in) :: equil_in
 type(type_equilibrium), intent(out) :: equil_out
 
-integer :: nrplasma, j_init, j_call, j_vacplas, i
+integer :: nrplasma, j_init, j_call, j_vacplas
 
 data j_call/0/
 data j_vacplas/0/

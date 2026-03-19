@@ -39,7 +39,7 @@ contains
         VRO(1: NB1) = VR(1: NB1)
     endif
 
-    LEQ(5) = nint(IPEQL)
+    LEQ(5) = IPEQL
 
     call CPU_TIME(t_cpu1)
     call SYSTEM_CLOCK(t_wall1, rate)
@@ -107,8 +107,8 @@ contains
     wallTime_equ = wallTime_equ + t_wall2 - t_wall1
 
     if (LEQ(5) < 3) then
-        nrho_surf = abs(nint(NEQUIL))
-        nthe_surf = abs(nint(MEQUIL))
+        nrho_surf = abs(NEQUIL)
+        nthe_surf = abs(MEQUIL)
         if (nrho_surf == 0) nrho_surf = NA1 + 1
         if (nthe_surf == 0) nthe_surf = 41
         if (.not. associated(equil_now%coord_sys%position%r)) then
@@ -192,7 +192,7 @@ contains
         ELON, TRIA, SLAT, G11, G22, G33, G41, G42, G43, G44, G45, &
         BDB0, BDB02, B0DB2, IPOL, MU, &
         FOFB, BMAXT, BMINT, DRODA, GRADRO, VOLUM
-    use scalars, only: VOLUME, RTOR, BTOR, internValues, &
+    use scalars, only: VOLUME, RTOR, BTOR, &
         ABC, HRO, ROC, FTO, ROWALL, NA, NA1, NB1
     use numerical_tools, only: integr
     use debugger, only: markloc, debug
@@ -283,10 +283,10 @@ contains
 
     use pi_const, only: GP, GP2, GP2_sq
     use scalars, only: ROC, RTOR, SHIFT, ABC, ELONG, TRIAN, &
-        FTO, BTOR, NA, NA1, NB1, NAB, HRO, VOLUME
+        FTO, BTOR, NA, NA1, NB1, HRO, VOLUME
     use status, only: RHO, VR, VRS, AMETR, SHIF, &
         ELON, TRIA, SLAT, G11, G22, G33, G41, G42, G43, G44, G45, &
-        BDB0, BDB02, B0DB2, IPOL, MU, FP, FV, SHEAR, &
+        BDB0, BDB02, B0DB2, IPOL, MU, FP, SHEAR, &
         FOFB, BMAXT, BMINT, DRODA, GRADRO, VOLUM
     use numerical_tools, only: integr
     use debugger, only: markloc, debug
@@ -785,9 +785,8 @@ contains
 !                                         |                 | -> EQC1
 !                                         | -> EQPPAB
 !---------------------------------------------------------------------
-! This solver is called if LEQ(5) == 3 or 
-!        if (NEQUIL != 42 and NEQUIL != 64.64 and NEQUIL > 0)
-! EMEQ grid is defined as min(NA1, nint(NEQIL), NP)
+! This solver is called if LEQ(5) == 3
+! EMEQ grid is defined as min(NA1, NEQUIL, NP)
 ! For (NEQUIL = 0 ) metric is prescribed by a simple formula
 ! For (NEQUIL = -1) metric is taken from a data file
 ! For (NEQUIL = 1 ) metric is frozen (can be used interactively)
@@ -817,9 +816,8 @@ contains
         A, B, C, D, BC, BD, XTR, BMOD_EQU, FOFB_EQU, GRDA_EQU, &
         X_EQU, B2B0_EQU, B0B2_EQU, BMAX_EQU, BMIN_EQU, VR_EQU, VRS_EQU, &
         G11_EQU, G22_EQU, G33_EQU, IPOL_EQU, DRODA_EQU, GRADRO_EQU
-    character(len=80) :: STRI
 
-    save jcall, NR_EQU
+    save jcall
     data jcall/0/
 
 !--------------------------------------------------
@@ -829,16 +827,12 @@ contains
 
     jexit = 0
 
-    if (jcall == -1) return
-
-! Define NR_EQU as min(NA1, nint(NEQIL), NP)
-    if (jcall == 0) then
-        NR_EQU = nint(NEQUIL)
-        if (NR_EQU > NP) then
-            write(*, '(A, I4)') " >>> Warning >>> Maximum size of the equilibrium grid is", NP
-            write(*, '(17X, A, I4)') "The grid will be reduced to NP =", NP
-            NR_EQU = NP
-        endif
+! Define NR_EQU as min(NA1, NEQIL, NP)
+    NR_EQU = NEQUIL
+    if (NR_EQU > NP) then
+        write(*, '(A, I4)') " >>> Warning >>> Maximum size of the equilibrium grid is", NP
+        write(*, '(17X, A, I4)') "The grid will be reduced to NP =", NP
+        NR_EQU = NP
     endif
 
 ! Rise triangularity (initiation stage only)
@@ -1039,10 +1033,10 @@ contains
 
     use pi_const, only: GP, GP2, GP2_sq
     use read_input, only: machine
-    use scalars, only: NEQUIL, MEQUIL, IPART, IPCTRL, TAU, NA, NA1, NAB, &
+    use scalars, only: NEQUIL, MEQUIL, IPART, IPCTRL, TAU, NA, NA1, &
         RTOR, BTOR, IPL, HRO, ROC, ABC, &
         VOLUME, SHIFT, ELONG, UPDWN, TRIAN, &
-        INUME3, ITFBP, IPLFBE, IFBEY, ITREQ, ICIRCQ, ITFBE, &
+        ITFBP, IPLFBE, IFBEY, ITREQ, ICIRCQ, ITFBE, &
         NB2EQL, TIME, LEQ, PSIFB, PSPLEX, PSIEXT, IPEQL, IPROT
     use status, only: G11, G22, G22E, G33, G33E, G41, G42, G43, G44, G45, &
         FP, IPOL, MU, SHEAR, &
@@ -1060,7 +1054,7 @@ contains
 
     integer, intent(in) :: equil_solver
 
-    integer :: i, j, jneql, jntheta, jnbnd, j_save_bound, j_rotation, n_coils
+    integer :: i, j, jneql, jntheta, jnbnd, j_rotation, n_coils
     double precision :: yrocnew, iplnew, ychipfp, yipl, yupdwn
     double precision, dimension(NA1) :: yg11, yg22, yg33, yvr, yvrs, yslat, yg41, &
         ygradro, yipol, ydroda, ypres, ybmaxt, ybmint, yfp, &
@@ -1071,13 +1065,10 @@ contains
     type(type_equilibrium) :: equil_in, equil_out
     type(type_parameters) :: parameters_equil
 
-    save j_save_bound, iplnew
-    data j_save_bound/0/
-
     call markloc('A2GSSOLVER')
 
-    jneql  = abs(nint(NEQUIL))
-    jntheta = abs(nint(MEQUIL))
+    jneql  = abs(NEQUIL)
+    jntheta = abs(MEQUIL)
     n_coils = raw_cCoil%ncoils
 
     if (raw_boundary%n_theta == 0) then
@@ -1087,9 +1078,7 @@ contains
     endif
 
 ! provide grid for t=TIME+TAU
-    if (j_save_bound == 0 .or. IPART == 1) then
-        call BNDRY(rbnd(1: jnbnd), zbnd(1: jnbnd))
-    endif
+    call BNDRY(rbnd(1: jnbnd), zbnd(1: jnbnd))
 
     do j=1, n_coils
         yccoil(j) = CCOIL(j)
@@ -1098,7 +1087,7 @@ contains
 
     iplnew = G22(NA)/RTOR/0.4/GP * (FP(NA1) - FP(NA))/HRO * IPOL(NA1)
 
-    if (ITFBP /= 0.) IPLFBE = iplnew      ! current for free boundary equilibrium
+    if (ITFBP /= 0) IPLFBE = iplnew      ! current for free boundary equilibrium
     if (IPART == 1) then
         iplnew = IPL            ! if in initialization mode, use plasma current
     endif
@@ -1114,7 +1103,7 @@ contains
 
     j_rotation = 0
     omega_rot = 0.
-    if (nint(abs(IPROT)) == 3 .or. nint(abs(IPROT)) == 4) then
+    if (abs(IPROT) == 3 .or. abs(IPROT) == 4) then
         j_rotation = 1
         omega_rot(1:NA1) = VTOR(1:NA1)/(RTOR+SHIF(1:NA1) + AMETR(1:NA1)) ! Flux function Omega from Vtor_LFS / R_LFS
     endif
@@ -1145,10 +1134,10 @@ contains
 
 ! call to equil
     i = 1    !fbe is off
-    if (IFBEY >= 1.) i = 2    !fbe is on
+    if (IFBEY >= 1) i = 2    !fbe is on
     if (IPART == 1 ) i = 1    !fbe is off
 
-    if (ifbey > 0. .and. .not. plasma_up) then
+    if (ifbey > 0 .and. .not. plasma_up) then
         equil_in%global_param%i_plasma = IPLFBE*1e6   !itm is in A
         parameters_equil%dt      = tau
         parameters_equil%time    = time
@@ -1160,7 +1149,7 @@ contains
         parameters_equil%key_out   = 0
         parameters_equil%k_fixfree = 1
         parameters_equil%key_start = 0    ! controller, refit currents
-        parameters_equil%nstep = max(0, nint(ifbey) - 1)
+        parameters_equil%nstep = max(0, ifbey - 1)
         if (equil_solver == 101) then
             call feqis_main(n_coils, vcoil(1:n_coils), parameters_equil%neql, parameters_equil%k_fixfree, parameters_equil%no_circuit_eq, 0, machine, equil_in, equil_out)
         endif
@@ -1168,8 +1157,8 @@ contains
         call GSSOLVER( &
 ! Input:
             equil_solver, jneql, jntheta, jnbnd, NA1, rbnd, zbnd, XRHO(1: NA1), RTOR, BTOR, &
-            ROC, yfp, ypres, VOLUME, n_coils, yvcoil, i, IPART, ITREQ, &
-            nint(INUME3), TAU, nint(ITFBP), nint(ICIRCQ), nint(IPCTRL), nint(IFBEY), &
+            ROC, yfp, ypres, VOLUME, n_coils, yvcoil, i, ITREQ, &
+            TAU, ITFBP, ICIRCQ, IPCTRL, IFBEY, &
             TIME, ychipfp, PSIFB, &
             omega_rot, j_rotation, TI(1: NA1), NI(1: NA1), MRHO(1: NA1), &
 ! Output:
@@ -1455,45 +1444,44 @@ contains
 !    R_0*<\vec j\cdot\nabla\zeta> = EQPF+EQFF*<R_0^2/r^2>
 !---------------------------------------------------------------------
 
-    use scalars, only: INUME3, RTOR, BTOR, HRO, NA, NA1, NB2EQL
+    use scalars, only: RTOR, BTOR, HRO, NA, NA1, NB2EQL
     use status, only: EQPF, EQFF, NE, TE, NI, TI, PBLON, PBPER, PFAST, &
         RHO, AMETR, CU, CUTOR, G22, G33, MU, IPOL
     use debugger, only: markloc, debug
 
     integer :: j
-    double precision :: YCB, YG, YTH2, residual_num
+    double precision :: YCB, YG, YTH2
 
     call markloc('RHSEQ', debug_lev=3*debug)
 
-    residual_num = abs(nint(INUME3) - INUME3)
 ! Preparing input for the 3M equilibrium solver:
-    if (residual_num < 0.01) then     ! inume3 = 22 --> calculates this. if inume3 = 22.02, calculate it elsewhere (user defined) 
-        YCB = 1.6E-3*RTOR/(BTOR*HRO**2)
-        do J=2, NA
-            EQFF(J) = ( (NE(J+1)*TE(J+1) - NE(J)*TE(J)) + &
-                        (NI(J+1)*TI(J+1) - NI(J)*TI(J)) )/J
-            EQFF(J) = EQFF(J) + 0.5*NB2EQL * &
-                (PBLON(J+1) - PBLON(J) + PBPER(J+1) - PBPER(J))/J
-            EQFF(J) = EQFF(J) + (PFAST(J+1) - PFAST(J))/J
-            EQFF(J) = -YCB*EQFF(J)/(MU(J))
-        enddo
-        EQFF(1) = EQFF(2)
-        EQFF(NA1) = EQFF(NA) + (EQFF(NA) - EQFF(NA-1)) * &
-            (AMETR(NA) - AMETR(NA-1))/(AMETR(NA1) - AMETR(NA))
-        EQFF(NA1) = EQFF(NA) + (EQFF(NA) - EQFF(NA-1))
-        do J=1, NA1
-            EQPF(j) = EQFF(j)
-            YTH2 = RHO(j)*G22(J)*(MU(J)/RTOR)**2
-            YG = (1. + YTH2)*G33(J)
-            EQFF(J)  = (CU(J)/IPOL(J) - EQPF(j))/YG
-            CUTOR(J) = (CU(J)/IPOL(J) + YTH2*EQPF(j))/(1. + YTH2)
-        enddo
-    else ! calculates only cutor
-        do J=1, NA1
-            YTH2 = RHO(j)*G22(J)*(MU(J)/RTOR)**2
-            CUTOR(J) = (CU(J)/IPOL(J) + YTH2*EQPF(j))/(1. + YTH2)
-        enddo
-    endif
+
+    YCB = 1.6E-3*RTOR/(BTOR*HRO**2)
+    do J=2, NA
+        EQFF(J) = ( (NE(J+1)*TE(J+1) - NE(J)*TE(J)) + &
+                    (NI(J+1)*TI(J+1) - NI(J)*TI(J)) )/J
+        EQFF(J) = EQFF(J) + 0.5*NB2EQL * &
+            (PBLON(J+1) - PBLON(J) + PBPER(J+1) - PBPER(J))/J
+        EQFF(J) = EQFF(J) + (PFAST(J+1) - PFAST(J))/J
+        EQFF(J) = -YCB*EQFF(J)/(MU(J))
+    enddo
+    EQFF(1) = EQFF(2)
+    EQFF(NA1) = EQFF(NA) + (EQFF(NA) - EQFF(NA-1)) * &
+        (AMETR(NA) - AMETR(NA-1))/(AMETR(NA1) - AMETR(NA))
+    EQFF(NA1) = EQFF(NA) + (EQFF(NA) - EQFF(NA-1))
+    do J=1, NA1
+        EQPF(j) = EQFF(j)
+        YTH2 = RHO(j)*G22(J)*(MU(J)/RTOR)**2
+        YG = (1. + YTH2)*G33(J)
+        EQFF(J)  = (CU(J)/IPOL(J) - EQPF(j))/YG
+        CUTOR(J) = (CU(J)/IPOL(J) + YTH2*EQPF(j))/(1. + YTH2)
+    enddo
+!    else ! calculates only cutor
+!        do J=1, NA1
+!            YTH2 = RHO(j)*G22(J)*(MU(J)/RTOR)**2
+!            CUTOR(J) = (CU(J)/IPOL(J) + YTH2*EQPF(j))/(1. + YTH2)
+!        enddo
+!    endif
 
     end subroutine RHSEQ
 
@@ -1519,47 +1507,45 @@ contains
 !---------------------------------------------------------------------
 
     use pi_const, only: GP2
-    use scalars, only: INUME3, RTOR, BTOR, HRO, NA, NA1, NB2EQL
+    use scalars, only: RTOR, BTOR, NA, NA1, NB2EQL
     use status, only: EQPF, EQFF, NE, TE, NI, TI, PBLON, PBPER, PFAST, &
         RHO, AMETR, CU, CUTOR, G22, MU, IPOL, FP
     use debugger, only: markloc, debug
 
     integer :: j
-    double precision :: YCB, YG, YTH2, residual_num, press
+    double precision :: YTH2, press
     double precision :: z1
 
     call markloc('RHSEQ2', debug_lev=3*debug)
 
-    residual_num = abs(nint(INUME3)-INUME3)
 ! Preparing input for the 3M equilibrium solver:
-    if (residual_num < 0.01) then     ! inume3 = 22 --> calculates this. if inume3 = 22.02, calculate it elsewhere (user defined) 
-        do J=2, NA
-            press = ( (NE(J+1)*TE(J+1) - NE(J)*TE(J)) + (NI(J+1)*TI(J+1) - NI(J)*TI(J)) )
-            press = press + 0.5*NB2EQL * (PBLON(J+1) - PBLON(J) + PBPER(J+1) - PBPER(J))
-            press = press + (PFAST(J+1) - PFAST(J))
-            EQPF(J) = 1602.*press/(FP(J+1)-FP(J))
-        enddo
-        EQPF(1) = EQPF(2)
-        EQPF(NA1) = EQPF(NA) + (EQPF(NA) - EQPF(NA-1)) * (AMETR(NA) - AMETR(NA-1))/(AMETR(NA1) - AMETR(NA))
-        EQPF(NA1) = EQPF(NA) + (EQPF(NA) - EQPF(NA-1))
-        do J=2, NA
-            press = 0.5*(IPOL(J+1)**2 - IPOL(J)**2)/(FP(J+1)-FP(J))
-            EQFF(J) = press * (RTOR*BTOR)**2 
-        enddo
-        EQFF(1) = EQFF(2)
-        EQFF(NA1) = EQFF(NA) + (EQFF(NA) - EQFF(NA-1)) * (AMETR(NA) - AMETR(NA-1))/(AMETR(NA1) - AMETR(NA))
-        EQFF(NA1) = EQFF(NA) + (EQFF(NA) - EQFF(NA-1))
-        do J=1, NA1
-            z1 = 1.e-6/(GP2*RTOR)*EQPF(j) 
-            YTH2 = RHO(j)*G22(J)*(MU(J)/RTOR)**2
-            CUTOR(J) = (CU(J)/IPOL(J) + YTH2*z1)/(1. + YTH2)
-        enddo
-    else ! calculates only cutor
-        do J=1, NA1
-            YTH2 = RHO(j)*G22(J)*(MU(J)/RTOR)**2
-            CUTOR(J) = (CU(J)/IPOL(J) + YTH2*EQPF(j))/(1. + YTH2)
-        enddo
-    endif
+    do J=2, NA
+        press = ( (NE(J+1)*TE(J+1) - NE(J)*TE(J)) + (NI(J+1)*TI(J+1) - NI(J)*TI(J)) )
+        press = press + 0.5*NB2EQL * (PBLON(J+1) - PBLON(J) + PBPER(J+1) - PBPER(J))
+        press = press + (PFAST(J+1) - PFAST(J))
+        EQPF(J) = 1602.*press/(FP(J+1)-FP(J))
+    enddo
+    EQPF(1) = EQPF(2)
+    EQPF(NA1) = EQPF(NA) + (EQPF(NA) - EQPF(NA-1)) * (AMETR(NA) - AMETR(NA-1))/(AMETR(NA1) - AMETR(NA))
+    EQPF(NA1) = EQPF(NA) + (EQPF(NA) - EQPF(NA-1))
+    do J=2, NA
+        press = 0.5*(IPOL(J+1)**2 - IPOL(J)**2)/(FP(J+1)-FP(J))
+        EQFF(J) = press * (RTOR*BTOR)**2 
+    enddo
+    EQFF(1) = EQFF(2)
+    EQFF(NA1) = EQFF(NA) + (EQFF(NA) - EQFF(NA-1)) * (AMETR(NA) - AMETR(NA-1))/(AMETR(NA1) - AMETR(NA))
+    EQFF(NA1) = EQFF(NA) + (EQFF(NA) - EQFF(NA-1))
+    do J=1, NA1
+        z1 = 1.e-6/(GP2*RTOR)*EQPF(j) 
+        YTH2 = RHO(j)*G22(J)*(MU(J)/RTOR)**2
+        CUTOR(J) = (CU(J)/IPOL(J) + YTH2*z1)/(1. + YTH2)
+    enddo
+!    else ! calculates only cutor
+!        do J=1, NA1
+!            YTH2 = RHO(j)*G22(J)*(MU(J)/RTOR)**2
+!            CUTOR(J) = (CU(J)/IPOL(J) + YTH2*EQPF(j))/(1. + YTH2)
+!        enddo
+!    endif
 
     end subroutine RHSEQ2
 

@@ -5,14 +5,11 @@ implicit none
 contains
 
 !---------------------------------------------------------------------
-    integer function N_95_POS(i)
-! Returns the radial integer index of the psi_95 position, at the left
-! i in input is a dummy integer, so call it as N_95_POS(0)
+    integer function N_95_POS
+! Returns the radial integer index of the psi_95 position
 
     use scalars, only: NA1
     use status, only: FP_NORM
-
-    integer, intent(in) :: i
 
     integer :: j
 
@@ -36,7 +33,7 @@ contains
     double precision :: r1, r2, y1, y2
     double precision, dimension(NA1) :: rhop
 
-    j = N_95_POS(0)
+    j = N_95_POS()
 
     rhop = (FP(1:NA1) - PSIAX)/(FP(NA1) - PSIAX)
 
@@ -422,7 +419,7 @@ contains
         YPOW = 0.
         do jj = 1, NA1-1
             YR = (RHO(jj)/ROC - YX)/YW 
-            YPOW = YPOW + exp(-YR*YR)*VR(jj)
+            YPOW = YPOW + exp(-YR**2)*VR(jj)
         enddo
         YPOW = YPOW*HRO
     endif
@@ -1051,7 +1048,7 @@ contains
 ! G.W. Pacher (18/01/1994)
 ! Changed by Pereverzev 15.10.98
 
-    use scalars, only: TAU, TIME
+    use scalars, only: TAU
     use time_functions, only: f_id, function_id, nloc
 
     double precision, intent(in) :: Y, YTAV

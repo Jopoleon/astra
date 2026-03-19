@@ -79,22 +79,21 @@ contains
 ! 12,13 - for equ/model.log file (once on entry)
 ! 3 - for post-viewer file (first on entry, then periodically)
 
-    use status, only: MU, AMETR, SHIF, ELON, TRIA, EQFF, EQPF, FP, RHO, NRD
-    use scalars, only: KEY, ITREQ, DPOUT, exp_header, &
-       NA, NA1, NAB, LEQ, TIME, TAU, TINIT, TSCALE, &
-       TSTART, TPAUSE, TEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
-       BTOR, IPL, constValues, varValues, internValues
+    use status, only: NRD
+    use scalars, only: KEY, ITREQ, NA1, NAB, TIME, TAU, &
+        TPAUSE, TEQ, AB, ABC, ROC, XOUT, &
+        constValues, varValues, internValues
     use graph_utils, only: astra_gui, astra_gui_ref, plot_area, &
         Black, Blue, Magenta, WarningColor, &
         active_tab, curves_per_frame, MOD10, LTOUT, IPOUT, MODEY, &
-        NWINDX, NWIND1, NWIND3, NWIND4, NWIND7, &
-        NROUT, NTOUT, NXOUT, NST, NDTNAM, NRW, &
+        NWIND1, NWIND3, NWIND4, NWIND7, &
+        NROUT, NTOUT, NST, NRW, &
         NAMER, NAMET, NAMEX, SCALER, SCALET, ROUT, OSHIFR, OSHIFT, &
         DTNAME, runid, VERSION, AVERS, ARLEAS, AEDIT, &
         GRAP, GRAL, TIM7, NAM7, KPRI, nplots_max, &
         NTIMES, TTOUT, TOUT, ASTWIN, ASXWIN, ASKINT, MENUTABLE, &
         set_plot_area, set_plot, plotMode
-    use read_input, only: n_sbr, equ_file, exp_file, TASK, jbeg_arrx, IFDFVX
+    use read_input, only: n_sbr, equ_file, exp_file, TASK, IFDFVX
     use char_manip, only: null_ch, beep_ch
     use debugger, only: markloc, debug, astra_stop
     use json_vars, only: internNames, constNames, varNames, n_const, n_var, n_intern
@@ -105,26 +104,19 @@ contains
     integer, intent(in) :: IFKL
 
     logical :: skip_poll
-    integer :: POLLEVENT, WAITEVENT, KIBM, KASCII, key_tmp, return_flag
-    integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
-        IFLAG, INT4, IRET, plot_mode, &
-        MODEX, IX, IY, NU1, j2, J1, ios, &
-        YEAR, MONTH, DAY, HOUR, MINUTE, time_arr(8)
+    integer :: POLLEVENT, WAITEVENT, KIBM, KASCII, return_flag
+    integer :: MARK, J, JJ, IDSP, IFLAG, INT4, IRET, plot_mode, &
+        MODEX, IX, IY, j2, j1, ios
 ! plot_arr dimension: 4*NRD(Mode 5, 8) 320(7) 2*NTIMES(Mode 6) 2*NRD(Modes 1-4)
     integer :: ITO(NTIMES, nplots_max+2)
-    double precision :: CHORDN, ABD, ALFA, TIMEB
+    double precision :: CHORDN, TIMEB
     double precision, allocatable :: varValues_old(:) 
-    double precision, dimension(NTIMES) :: PRMARK
-    character(len=6) :: NAMEP(NTIMES)
-    character(len=10), dimension(NRW) :: UNAMES
     character(len=40) :: CNSFIL
     character(len=80) :: HELP(28), STR, STRB
     character(len=132) :: STRI, ps_root, PSNAME
 
-    save ITO, IFLAG, MARK, LTOUTO, IDSP
-    save NAMEP
-    data PRMARK/NTIMES*0./  IFLAG/0/  &
-         JTOUT/0/ LTOUTO/0/ MARK /0/       IDSP/0/
+    save ITO, IFLAG, MARK, IDSP
+    data IFLAG/0/ MARK/0/ IDSP/0/
 
 ! ASCII codes: ^C 3  <Esc>27 <Space>32  % 37  * 42  . 46  / 47  ? 63
 !   0 48  1 49  2 50  3 51  4 52  5 53  6 54  7 55  8 56  9 57
@@ -210,7 +202,6 @@ contains
         call TIMOUT
         TTOUT(LTOUT) = TIME
         LTOUT = LTOUT + 1
-        JTOUT = JTOUT + 1
 
 ! Time output
         if (MOD10 <= 3 .or. MOD10 >= 6) then
@@ -399,10 +390,9 @@ contains
             call MENUTABLE(n_const, constValues, constNames, 2)
 
         CASE(68) ! 'D'
-            NDTNAM = n_intern + 4*n_sbr
             TIMEB = TIME
             MODEX = XOUT + 0.49
-            call MENUTABLE(NDTNAM, internValues, DTNAME, 3) ! Only place requiring internValues(j>44)
+            call MENUTABLE(n_intern + 4*n_sbr, internValues, DTNAME, 3) ! Only place requiring internValues(j>44)
             j = XOUT + 0.49
             if (j < 0 .or. j > 3) then
                 write(*, *) ">>> Unknown X-axis. Redefinition ignored"
@@ -493,12 +483,11 @@ contains
 
             do
                 if (j2 < 0) EXIT
-                do J1=1, int(1.333*plot_area%height/astra_gui%dylet) - 1
+                do j1=1, int(1.333*plot_area%height/astra_gui%dylet) - 1
                     if (j2 >= 0) then
                         read(1, '(1A80)', iostat=ios) STR
                         if (ios < 0) j2 = -1
                     endif
-                    NNN = (J1 - 1)*astra_gui%dylet + 1
                     if (j2 < 0) then
                         STRB = repeat(' ', 35)
                         write(*, '(1X, A)') TRIM(STRB)
@@ -726,7 +715,7 @@ contains
 !---------------------------------------------------------------------
     subroutine writeData(CHORDN)
 
-    use scalars, only: XOUT, NAB, NA, NA1, exp_header, RTOR, ABC, BTOR, IPL, TIME, TAU, constValues
+    use scalars, only: XOUT, NAB, NA, NA1, exp_header, TIME, TAU, constValues
     use status, only: MU, AMETR, RHO, FP
     use read_input, only: AWD, equ_file, exp_file
     use graph_utils, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, &

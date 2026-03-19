@@ -113,7 +113,7 @@ subroutine EMEQ &
 use debugger, only: markloc, debug
 use pi_const, only: GP, GP2_sq
 
-integer NA1, NAOLD, NA, NT, NT1, I, I1, J, K, NITER
+integer NA1, NAOLD, NA, NT, NT1, I, I1, J, K
 double precision BR00, SA0, GL0, GD30, ACC, B0T, PLCUR, &
    TIME, A, AA, C, CC, S, SS, SR, SX, SX1, T, Y, Y1, &
    SDT, SDT0, DRDA, DZDA, DRDT, DZDT, DMETR, DA2, DGR2, FI, FJ, &
@@ -123,10 +123,9 @@ double precision, dimension(NA1) :: BA, BB, GR, GBD, GL, &
    GSD, GRA, SQGRA, GRAR, AVR2, AI0, dgrda, avsqg, Vol, GR2AUX, &
    B2B0EQ, B0B2EQ, BMAXEQ, BMINEQ, BMODEQ, FOFBEQ, GRDAEQ
 
-save AOLD, GLOLD, G3DOLD, NAOLD, NITER
+save AOLD, GLOLD, G3DOLD, NAOLD
 
 data AOLD/0.d0/ GLOLD/0.d0/ G3DOLD/0.d0/ NAOLD/1/
-data NITER/60/
 
 ! Initialise
 
@@ -160,9 +159,8 @@ do I=1, NA1
    WSJP(I) = BA(I)
    WSP(I)  = BB(I)
 enddo
-NITER = 30               ! Use 60 for the 1st entry only
 call markloc("Calling EQAB3", debug_lev=2*debug)
-call EQAB3(NA, NT, NITER, ACC) ! Call MEM equil solver
+call EQAB3(NA, NT, ACC) ! Call MEM equil solver
 if (NA .le. 1) then
    NA1 = NA
    return
@@ -330,7 +328,7 @@ YLIN = YLIN*WBBS0*WBBS0*A*2./(0.4*GP*PLCUR)**2/BR00
 END subroutine EMEQ
 
 !-------------------------------------------------------
-subroutine EQAB3(NA, NT, NITER, ACC)
+subroutine EQAB3(NA, NT, ACC)
 !-------------------------------------------------------
 ! - 3 MOMENT EQUILIBRIUM SOLVER   AUGUST 17,1988 
 ! NITER - max number of iterations
@@ -338,7 +336,9 @@ subroutine EQAB3(NA, NT, NITER, ACC)
 
 use debugger, only: markloc, debug
 
-integer, intent(in) :: NT, NITER
+integer, parameter :: NITER=30
+
+integer, intent(in) :: NT
 integer, intent(out) :: NA
 double precision, intent(in) :: ACC
 

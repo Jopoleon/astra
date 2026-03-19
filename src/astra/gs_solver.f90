@@ -15,8 +15,8 @@ contains
         rbnd, zbnd, &
         xrho, rtor, btor, &
         roc, fp, pres_in, volume, &
-        ncoils, yvcoil, iter_step, iter_part, iter_itreq, &
-        inume_3, tau_step, ipsibcf, icircq, ipctrl, ifbey, time_a, &
+        ncoils, yvcoil, iter_step, iter_itreq, &
+        tau_step, ipsibcf, icircq, ipctrl, ifbey, time_a, &
         psifb_in, psifb, &
         omega_rot, i_rotation, ion_temp, ion_dens, plasma_mass, &
 ! Output:
@@ -40,8 +40,7 @@ contains
     integer, parameter :: nbtabp=1000
 
     integer, intent(in) :: equil_solver, ntheta, nr_equ, jna1, nbnd, ncoils, &
-        iter_step, iter_part, ipsibcf, icircq, ipctrl, &
-        iter_itreq, inume_3, ifbey, i_rotation
+        iter_step, ipsibcf, icircq, ipctrl, iter_itreq, ifbey, i_rotation
 
     double precision, intent(in) :: tau_step, psifb_in, rtor, btor, roc, time_a
     double precision, intent(in), dimension(ncoils) :: yvcoil
@@ -59,7 +58,7 @@ contains
     double precision, intent(inout) :: ipl, volume
 
     logical :: file_existence, found
-    integer :: i, j, n_theta, i_call_gsss, k, k1, key_start, keyplc, &
+    integer :: i, j, n_theta, k, k1, key_start, keyplc, &
         jiter, p, jveps, jr, jz, nr, nz
     double precision :: dum1r, R0, Z0, Fvacuum, dxrho_sp, dx, &
         phib, PSIb, deltaPSI, PSI0, phibm, phibl, IPLX, Vtemp, Veps, &
@@ -84,9 +83,6 @@ contains
 
 !----------------------------------------------------------------------
 
-    data i_call_gsss /0/
-    save i_call_gsss
-
     data vtemp_counter/0.5/
     save vtemp_counter
 
@@ -99,7 +95,7 @@ contains
 
 !-----------------------------
 
-    if (ifbey == 0 .and. i_call_gsss == 0) then
+    if (ifbey == 0) then
 !defaults
         time_fix_eqpff = 0.
         fix_eqpf_eqff = 0
@@ -190,11 +186,6 @@ contains
     GG2(1) = 0.0
     volum_in(1) = 0.0
 
-    if (i_call_gsss /= 0) then
-        GG2 = g22e
-        GG3 = g33e
-    endif
-
 !---------------------------------------
 ! call EQUIL_CALL_SPID
 !---------------------------------------
@@ -252,33 +243,31 @@ contains
 
     equil_in%eqgeometry%boundary%npoints = n_theta    !one periodic point
 
-    if (i_call_gsss == 0) then
-        if (cfg_exists) then
-            call config%get('nR', nr, found)
-            call config%get('nZ', nz, found)
-            call config%get('Rmin', Rmin, found)
-            call config%get('Rmax', Rmax, found)
-            call config%get('Zmin', Zmin, found)
-            call config%get('Zmax', Zmax, found)
-        else
-            nr = 65
-            nz = 65
-            Rmin = MINVAL(Rbnd) - 0.05
-            Rmax = MAXVAL(Rbnd) + 0.05
-            Zmin = MINVAL(Zbnd) - 0.05
-            Zmax = MAXVAL(Zbnd) + 0.05
-        endif
-        allocate(equil_in%eqgeometry%rectgrid%r2d(nr))
-        allocate(equil_in%eqgeometry%rectgrid%z2d(nz))
-        do jr=1, nr
-            equil_in%eqgeometry%rectgrid%r2d(jr) = Rmin + (jr - 1.)*(Rmax - Rmin)/(nr - 1.)
-        enddo
-        do jz=1, nz
-            equil_in%eqgeometry%rectgrid%z2d(jz) = Zmin + (jz - 1.)*(Zmax - Zmin)/(nz - 1.)
-        enddo
+    if (cfg_exists) then
+        call config%get('nR', nr, found)
+        call config%get('nZ', nz, found)
+        call config%get('Rmin', Rmin, found)
+        call config%get('Rmax', Rmax, found)
+        call config%get('Zmin', Zmin, found)
+        call config%get('Zmax', Zmax, found)
+    else
+        nr = 65
+        nz = 65
+        Rmin = MINVAL(Rbnd) - 0.05
+        Rmax = MAXVAL(Rbnd) + 0.05
+        Zmin = MINVAL(Zbnd) - 0.05
+        Zmax = MAXVAL(Zbnd) + 0.05
     endif
+    allocate(equil_in%eqgeometry%rectgrid%r2d(nr))
+    allocate(equil_in%eqgeometry%rectgrid%z2d(nz))
+    do jr=1, nr
+        equil_in%eqgeometry%rectgrid%r2d(jr) = Rmin + (jr - 1.)*(Rmax - Rmin)/(nr - 1.)
+    enddo
+    do jz=1, nz
+        equil_in%eqgeometry%rectgrid%z2d(jz) = Zmin + (jz - 1.)*(Zmax - Zmin)/(nz - 1.)
+    enddo
 
-!Iteration cycle
+! Iteration cycle
     iter_loop: do jiter=1, miter_ext
         p = 1
         Vtemp = volume
@@ -333,7 +322,7 @@ contains
             call integrcc(nr_equ, PSI, Hinv, dum1)
 !end of algorithm
 
-            Vtemp = vtemp_counter*vtemp+(1. - vtemp_counter)*dum1(nr_equ)
+            Vtemp = vtemp_counter*vtemp + (1. - vtemp_counter)*dum1(nr_equ)
 
             Veps = abs(Vtemp - volume)/volume
 
@@ -443,7 +432,7 @@ contains
             nr_equ, n_theta, iter_step, &
             ncoils, yvcoil, tau_step, time_a, &
             ipsibcf, key_no_refits, &
-            icircq, ipctrl, iter_itreq, ifbey, inume_3, &
+            icircq, ipctrl, iter_itreq, ifbey, &
 ! Outputs
             key_start, keyplc, equil_now)
         
@@ -717,20 +706,18 @@ contains
         nr_equ, n_theta, iter_step, &
         ncoils, yvcoils, tau_step, time_a, &
         ipsibcf, key_no_refits, &
-        icircq, ipctrl, &
-        iter_itreq, ifbey, inume_3, &
+        icircq, ipctrl, iter_itreq, ifbey, &
 ! Output:
         key_start, keyplc, equil_out)
 
     use imas_ids, only: type_equilibrium
     use spider_params, only: type_parameters
     use pi_const, only: GP, GP2
-    use parameters_a2equil, only: fix_adapgrid, s_fazt
-    use scalars, only : rtor,shift, updwn
+    use parameters_a2equil, only: s_fazt
     use read_input, only: nml_file, machine
 
     integer, intent(in) :: equil_solver, nr_equ, n_theta, iter_step, ncoils, &
-        ipsibcf, key_no_refits, icircq, ipctrl, iter_itreq, ifbey, inume_3
+        ipsibcf, key_no_refits, icircq, ipctrl, iter_itreq, ifbey
     double precision, intent(in) :: tau_step, time_a
     double precision, intent(in), dimension(ncoils) :: yvcoils
     type(type_equilibrium), intent(in) :: equil_in
@@ -739,36 +726,28 @@ contains
     type(type_equilibrium), intent(out) :: equil_out
 
     logical :: file_existence
-    integer :: nstep, i, key_equil, nrp, &
-        toric_fourc, toric_file, strahl_file, strahl_fourc, &
-        write_coils_diagn, key_plcs, kprs, k_grids, &
-        kprs2, fixadapgrid
+    integer :: nstep, i, key_equil, nrp, key_plcs, kprs, k_grids, kprs2
 
-    double precision :: epsros, enelss, k_filessss, ipl, psplexavg, psplexavgexp
+    double precision :: epsros, enelss
     double precision, dimension(ncoils) :: t_currents, ucoils
     character(len=120) :: fname
 
     type(type_parameters) :: parameters_equil
 
-    save toric_fourc, toric_file
-    save strahl_file, strahl_fourc, write_coils_diagn
-    save kprs, k_grids, epsros, enelss, key_plcs, k_filessss
-    save psplexavg, kprs2, psplexavgexp
+    save kprs, k_grids, epsros, enelss, key_plcs, kprs2
 
-    namelist / spider / kprs, k_grids, epsros, enelss, key_plcs, &
-        toric_fourc, toric_file, strahl_file, strahl_fourc, write_coils_diagn, &
-        k_filessss, psplexavg, psplexavgexp, fixadapgrid
+    namelist / spider / kprs, k_grids, epsros, enelss, key_plcs
 
 !for PBE , use p and cu, key_equil=key_dmf=-10, nstep = 0 only at first iteration
     key_equil = 0
     nrp = 256
 
-    nstep = max(0, ifbey-1)
+    nstep = max(0, ifbey - 1)
 
 ! grids
-    parameters_equil%dt    = tau_step
-    parameters_equil%time  = time_a
-    parameters_equil%neql  = nr_equ
+    parameters_equil%dt     = tau_step
+    parameters_equil%time   = time_a
+    parameters_equil%neql   = nr_equ
     parameters_equil%ntheta = n_theta + 2
 
 !defaults
@@ -778,15 +757,6 @@ contains
         epsros = 1.e-9
         enelss = 1.e-9
         key_plcs = 1
-        toric_fourc = 4
-        toric_file = 1
-        strahl_file = 1
-        strahl_fourc = 3
-        write_coils_diagn = 0
-        k_filessss = 0.
-        psplexavg = 0.
-        psplexavgexp = 0.
-        fix_adapgrid = 0
         INQUIRE( FILE=TRIM(nml_file), EXIST=file_existence)
         if (file_existence) then
             open(53, FILE=TRIM(nml_file))
@@ -794,7 +764,6 @@ contains
             close(53)
             kprs2 = kprs
         endif
-!    fix_adapgrid = fixadapgrid
     endif
 
     if (s_fazt == 0) then
