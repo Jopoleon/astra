@@ -11,7 +11,7 @@ use graph_utils, only: astra_gui, astra_gui_ref, gui_init
 use cpu_usage, only: cpu_init, cpu_start, wall_start, cpu_report
 use scalars, only: IPART, scalars_init, RTOR, UPDWN, SHIFT, PSIAX, PSIBO, &
     TIME, TSTART, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT, IPEQL
-use status, only: status_init, defarr
+use status, only: status_init, defarr, setvar
 use debugger, only: astra_stop, markloc
 use transport2fbe, only: transport2fbe_init
 use json_vars, only: read_metadata
@@ -38,41 +38,47 @@ character(len=16) :: str_iterations
 call CPU_TIME(cpu_start)
 call SYSTEM_CLOCK(wall_start, rate)
 
-call read_metadata
-call associate_pointers
-call cpu_init
-call ininam
-gui_on = (TASK(1: 3) /= 'BGD')
+call read_metadata      ! reads variables/profiles lists from astra_variables.json
+call associate_pointers ! associates vars to pointers consistently with lists in astra_variables.json
+call cpu_init           ! starting walltime diagnostic for each sbr
+gui_on = (TASK(1: 3) /= 'BGD') ! Graphic window yes/no
 
-call scalars_init
-call status_init
-call readInput
+call scalars_init ! Fallback default values for scalars
+call ininam       ! Sets DTEQ, DTNAME and plot labels (from equ file); call after scalars_init!
+
+call readInput    ! "restart" is set inside readInput
 allocate(CCOIL(raw_cCoil%ncoils), VCOIL(raw_cCoil%ncoils))
-call astra_assignments ! ASTRA default assignments
-IPART = 1   ! Mark initial iteration section
-call set_x_arrays(1)
-call INIVAR
-call SETVAR
-call DETVAR
-call eqguess
-call INIVAR
-if (IPEQL == 5) then ! FEQIS
-  call transport2fbe_init(TAU, TSTART, RTOR, UPDWN, SHIFT, PSIAX, PSIBO, &
-     MACHINE, raw_cCoil%ncoils, raw_cCoil%current)
+if (gui_on) then
+    call gui_init ! Start GUI
 endif
 
-if (gui_on) then
-    call gui_init
-endif
- 
-! "restart" is set correctly inside read_input !
 if (restart > 0) then ! Initial condition from output json file
-    call read_ajson(restart)
-    tend = tend_nml
+    call read_ajson(restart) ! Read the desired json file
+    call set_x_arrays(2) ! To plot also exp raw data
+    if (IPEQL == 5) then ! FEQIS
+        call transport2fbe_init(TAU, TSTART, RTOR, UPDWN, SHIFT, PSIAX, PSIBO, &
+            MACHINE, raw_cCoil%ncoils, raw_cCoil%current) ! Transfer ASTRA pars to FEQIS
+    endif
+    tend = tend_nml ! TEND is read from json, TEND_NML from command line "-e TBEG_NML"
+    if (gui_on) jkey = if_key(0) ! Plot right now
 else ! Iterations for initial convergence
+    call status_init       ! Fallback default values for profiles
+    call astra_assignments ! ASTRA default assignments
+    IPART = 1              ! Mark initial iteration section
+    call set_x_arrays(1)   ! Set TEX, CAR1X at current time from raw_*
+    call INIVAR            ! User-defined (equ) initialisation of NE, TE, TI, UPAR, FJ, MU/CU
+    call SETVAR            ! Set fallback NI, ZEF and a sanity check if ABC > AB
+    call DETVAR
+    call eqguess
+    call INIVAR
+    if (IPEQL == 5) then ! FEQIS
+        call transport2fbe_init(TAU, TSTART, RTOR, UPDWN, SHIFT, PSIAX, PSIBO, &
+            MACHINE, raw_cCoil%ncoils, raw_cCoil%current) ! Transfer ASTRA pars to FEQIS
+    endif
+
     jt_req = 0
     do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set in IFTREQ (status:defarr)
-        if (gui_on) jkey = if_key(256)
+        if (gui_on) jkey = if_key(256) ! Plot right now
         call set_x_scalars    ! Set exp scalars
         call DETVAR
         call DEFARR
@@ -86,12 +92,12 @@ else ! Iterations for initial convergence
         call METRIC
         jt_req = IFTREQ(ATREQ)     ! ++ITREQ; Convergence check; 1 - yes
     enddo
- 
-    if (gui_on) then
-        str_iterations(1:16) = ' ' ! Erase iteration number, iterations label top right
-        call textvm(astra_gui%width-18*astra_gui_ref%dxlet, 2, str_iterations(1:16), 16)
-        call textvm(astra_gui%width-17*astra_gui_ref%dxlet, astra_gui_ref%dylet + 1, str_iterations(1:14), 14)
-    endif
+endif
+
+if (gui_on) then
+    str_iterations(1:16) = ' ' ! Erase iteration number, iterations label top right
+    call textvm(astra_gui%width-18*astra_gui_ref%dxlet, 2, str_iterations(1:16), 16)
+    call textvm(astra_gui%width-17*astra_gui_ref%dxlet, astra_gui_ref%dylet + 1, str_iterations(1:14), 14)
 endif
 
 !---------------

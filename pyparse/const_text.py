@@ -181,7 +181,6 @@ class INIVAR:
 
 use read_input, only: IFDFAX
 use scalars
-use nclass_mod
 use status
 use debugger, only: markloc
 use json_vars, only: profxNames, n_profx

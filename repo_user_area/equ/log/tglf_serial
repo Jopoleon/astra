@@ -1,5 +1,4 @@
- Start file for version 7.1.0
- Variables as described in the file "for/const.inc"
+ Variables:
 AB     =  6.000E-01
 ABC    =  5.000E-01
 AIM1   =  1.200E+01

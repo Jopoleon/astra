@@ -8,10 +8,12 @@ subroutine NEUT
 ! Output: NN, TN, ALBPL
 !---------------------------------------------CHANGED BY POLEVOY-------|
 
-use scalars, only: NA, NA1, ABC, NAB, ENCL, ENWM, NNCL, NNWM, AMJ, NNCX, ALBPL
+use scalars, only: NA, NA1, ABC, NAB, ENCL, ENWM, NNCL, NNWM, AMJ, ALBPL
 use status, only: NRD, NN, TN, NE, TE, NI, TI, SNNBM, AMAIN
 
 implicit none
+
+integer, parameter :: NNCX=200
 
 integer :: J, JJ, JN
 double precision, dimension(NRD) :: SCXNI, TEN, SRCNN, YVI, &

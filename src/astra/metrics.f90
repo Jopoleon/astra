@@ -1708,22 +1708,19 @@ contains
     use status, only: RHO, SHIF, SHIV, ELON, TRIA, AMETR, DRODA
 
     integer :: j
-    double precision :: YDA, YA, YR1, YR2
+    double precision :: YDA, YA, YR1, YR2, rho_n_sq
 
-    do j=1, NB1
-        YR2 = min(1.d0, (RHO(J)/ROC)**2)
-        SHIF(J) = SHIFT
-        SHIV(J) = UPDWN
-        ELON(J) = 0.5*(1. + ELONG + (ELONG - 1.)*YR2)
-        TRIA(J) = TRIAN*YR2
-    enddo
     YDA = 0.1*AB/NB1
-
     YR1 = 0.
     YA  = 0.
     YR2 = 0.
 
     do j=1, NB1
+        rho_n_sq = min(1.d0, (RHO(J)/ROC)**2)
+        SHIF(J) = SHIFT
+        SHIV(J) = UPDWN
+        ELON(J) = 0.5*(1. + ELONG + (ELONG - 1.)*rho_n_sq)
+        TRIA(J) = TRIAN*rho_n_sq
         do while(YR2 <= RHO(j))
             YR1 = YR2
             YA = YA + YDA

@@ -72,7 +72,9 @@ double precision, pointer :: &
 
 integer, pointer :: &
     NEQUIL, MEQUIL, INUME1, INUME2, INUME3, INUME4, &
-    IPROT, ITFBP, ICIRCQ, IPCTRL, IPEQL, IFBEY, IBCPSI
+    IPART, IPROT, ITFBP, ICIRCQ, IPCTRL, IPEQL, IFBEY, IBCPSI, &
+    NA, NA1, NAB, NB1, NA1N, NA1E, NA1I, NA1U, &
+    NA10, NA11, NA12, NA13, NA14, NA15, NA16, NA17, NA18, NA19
 
 double precision :: IBKDW ! IBKDW=-1 for breakdown yes
 
@@ -80,20 +82,15 @@ double precision, pointer :: &
     HRO, HROX, VOLUME, ROC, ROWALL, FTO, &
     FTN, BTN, PSIFB, RBDOT, ALBPL, &
     TSTART, TAU, TAU_NEW, TAU_OLD, TIMEQL, QBEAM, IPLN, &
-    ROCO, RON, ROE, ROI, ROU, &
-    RO0, RO1, RO2, RO3, RO4, RO5, RO6, RO7, RO8, RO9, &
-    PSIAX, PSIBO, PSIFBO, PSIEXT, PSPLEX, IPLFBE, &
+    ROCO, PSIAX, PSIBO, PSIFBO, PSIEXT, PSPLEX, IPLFBE, &
     PSIEXO, PSPLXO, ATREQ, PTREQ, BBDOT, TAUPRP, &
     TEB, TIB, NEB, UPARB, QEB, QIB, QNB, MUB, TTRQB, QETB, QITB, QNNB, &
     F0B, F1B, F2B, F3B, F4B, F5B, F6B, F7B, F8B, F9B, &
     QF0B, QF1B, QF2B, QF3B, QF4B, QF5B, QF6B, QF7B, QF8B, QF9B, &
     QFF0B, QFF1B, QFF2B, QFF3B, QFF4B, QFF5B, QFF6B, QFF7B, QFF8B, QFF9B
 
-integer :: NA, NA1, NAB, NB1, NNCX, KEY, &
-    NSTEPS, ITREQ, IPART, LEQ(NEQNS), NITOT
+integer :: KEY, NSTEPS, ITREQ, LEQ(NEQNS), NITOT
 
-integer :: NA1N, NA1E, NA1I, NA1U, &
-    NA10, NA11, NA12, NA13, NA14, NA15, NA16, NA17, NA18, NA19
 character(len=132) :: exp_header
 
 double precision :: tbeg_eq, tend_eq
@@ -204,7 +201,6 @@ contains
     IBCPSI = 0
     NB1    = 41
     NA1    = 41
-    NNCX   = 200
     NAB    = 41
     NA     = 40
     NITOT  = 0

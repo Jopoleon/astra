@@ -39,7 +39,6 @@ TMP_SRC = \
 $(TMP_DIR)/astra_out.f90 \
 $(TMP_DIR)/associate_pointers.f90 \
 $(TMP_DIR)/inivar.f90 \
-$(TMP_DIR)/setvar.f90 \
 $(TMP_DIR)/detvar.f90 \
 $(TMP_DIR)/postep.f90 \
 $(TMP_DIR)/ininam.f90 \

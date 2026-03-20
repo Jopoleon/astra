@@ -309,25 +309,10 @@ end subroutine INIVAR'''
 
         self.ininam  = const_text.ININAM.header
         self.ininam += inam
+        self.ininam += setv_sbr
         self.ininam += \
 '''
 end subroutine ininam'''
-
-#-----------
-# setvar.f90
-
-        setv_rho = ''
-        for lbl in config.eqn_list:
-            if lbl not in ('CU', 'Equil'):
-                if parse.leq_d[lbl] == -1:
-                    setv_rho += 'RO%s = ROC\n' %config.short_d[lbl]
-
-        self.setvar = const_text.SETVAR.header
-        self.setvar += setv_rho
-        self.setvar += setv_sbr
-        self.setvar += \
-'''
-end subroutine setvar'''
 
 #--------------
 # astra_out.f90

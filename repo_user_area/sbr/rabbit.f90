@@ -4,11 +4,11 @@ implicit none
 
 contains
 
-    subroutine RABBIT(power_MW_in)
+    subroutine RABBIT(pNBI_MW, pRF_MW, fRF_MHz, nRF_harm)
 
     use mod_rabbit_lib, only: do_dump, rabbit_lib_init, rabbit_lib_set_dump_dir, &
         rabbit_lib_dump_beams, rabbit_lib_set_sp_plasma_ratio, rabbit_lib_step, &
-        rabbit_lib_get_dv_darea, rabbit_lib_get_wfi
+        rabbit_lib_get_dv_darea, rabbit_lib_get_wfi, rabbit_lib_get_icrh_depo
     use rabbit_variables, only: fusion_power, neutron_power
 
     use pi_const, only: GP2
@@ -17,7 +17,7 @@ contains
        RTOR, BTOR, NA1, PSIAX, PSIBO
     use status, only: FP, FP_NORM, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
        XRHO, VOLUM, IPOL, PEBM, PIBM, NIBM, CUBM, SNEBM, SCUBM, NRATE, &
-       PBLON, PBPER, MU, VTOR, ZEF, NI, NHYDR, NDEUT, NTRIT
+       PBLON, PBPER, MU, VTOR, ZEF, NI, NHYDR, NDEUT, NTRIT, PEICR, PIICR
     use numerical_tools, only: qinterp
     use standard_functions, only: VINT, IINT
     use parameters_a2equil, only : equil_now
@@ -26,7 +26,7 @@ contains
     integer, parameter :: NrRect=64, NzRect=64, nnb_max=30, nspc=3, nrhoout=21, unit_lim=11
     double precision, parameter :: ALFA=1.d-5
 
-    double precision, intent(in), optional :: power_MW_in
+    double precision, intent(in), optional :: pNBI_MW, pRF_MW, fRF_MHz, nRF_harm
 
     integer, dimension(nnb_max) :: ierr
     integer :: n_Rrect, n_Zrect, n_nbi, dum, n_lim, jumpcor, torqjxb_model
@@ -35,7 +35,7 @@ contains
 
     double precision :: aimp, zimp, p_i, p_e, tq_i, fi, i_cd, src, nfi
     double precision, allocatable, dimension(:) :: aplasma, zplasma, species_plasma_ratio
-    double precision, dimension(NA1) :: rhotor1d
+    double precision, dimension(NA1) :: rhotor1d, p_rf_e, p_rf_i
     double precision, allocatable, dimension(:, :), save :: powe, powi, &
           press, bdep, bdens, jfi, jnbcd,  wfi_par, wfi_perp, wfi_par_lab, &
           torqe, torqi, torqjxb, torqth, torqthcxloss, torqdepo, n_rate
@@ -60,6 +60,9 @@ contains
         nfi_rb, jcd_rb, src_rb, tq_rb, pfi_par, pfi_perp, nrate_in
     double precision, dimension(:), allocatable :: r_lim, z_lim
 
+! ICRF
+    double precision :: Ah, Zh, wRF, pRF, nharmonic
+    double precision, allocatable, dimension(:) :: p_rf_abs, p_rf_coll_e, p_rf_coll_i, te_rf, ne_rf
     character(len=120) :: as_nml, pinj_file, pinj_file2, limiter_file, table_path
 
     namelist / rabbit_beam_geo / start_pos, unit_vec, width_poly
@@ -93,15 +96,15 @@ contains
         allocate(aplasma(0))
         allocate(zplasma(0))
     endif
-    if (maxval(NHYDR(1:NA1)) .gt. 0.) then
+    if (maxval(NHYDR(1:NA1)) > 0.) then
         aplasma = [aplasma, 1.]
         zplasma = [zplasma, 1.]
     endif
-    if (maxval(NDEUT(1:NA1)) .gt. 0.) then
+    if (maxval(NDEUT(1:NA1)) > 0.) then
         aplasma = [aplasma, 2.]
         zplasma = [zplasma, 1.]
     endif
-    if (maxval(NTRIT(1:NA1)) .gt. 0.) then
+    if (maxval(NTRIT(1:NA1)) > 0.) then
         aplasma = [aplasma, 3.]
         zplasma = [zplasma, 1.]
     endif
@@ -112,6 +115,7 @@ contains
        if (nint(Aplasma(i)) == 2) species_plasma_ratio(i) = sum(ndeut)
        if (nint(Aplasma(i)) == 3) species_plasma_ratio(i) = sum(ntrit)   
     enddo
+    print*, 'Aplasma', Aplasma
     species_plasma_ratio = species_plasma_ratio / sum(species_plasma_ratio)
 
     n_Rrect = NrRect
@@ -206,8 +210,8 @@ contains
         allocate(wfi_par_lab(nrhoout, n_nbi))
     endif
 
-    if (present(power_MW_in)) then
-        pinj(1) = 1.d6*power_MW_in
+    if (present(pNBI_MW)) then
+        pinj(1) = 1.d6*pNBI_MW
     else
         pinj_file2 = TRIM(awd) // '/' // TRIM(pinj_file)
         call uf2dr(pinj_file2, TIME, pinj(1:n_nbi))
@@ -265,6 +269,35 @@ contains
     call rabbit_lib_get_dV_dArea(dvol, darea, nrhoout)
     call rabbit_lib_get_Wfi(wfi_par, wfi_perp, wfi_par_lab, n_nbi, nrhoout)
 
+! ICRF, Stix model
+! Assuming H minority
+    Ah = 1.0
+    Zh = 1.0
+    if (present(pRF_MW)) then
+        PRF = 1.e6*pRF_MW
+    else
+        PRF = 1.e6   ! Default: 1 MW
+    endif
+    if (present(nRF_harm)) then
+        nharmonic = nRF_harm
+    else
+        nharmonic = 2. ! Default: 2nd harmonic
+    endif
+    if (present(fRF_MHz)) then
+        wRF = fRF_MHz*1.e6*GP2
+    else
+        wRF = 36.5e6*GP2 ! Default: AUG's 36.5 MHz
+    endif
+    if (.not. allocated(te_rf))       allocate(te_rf(nrhoout))
+    if (.not. allocated(ne_rf))       allocate(ne_rf(nrhoout))
+    if (.not. allocated(p_rf_abs))    allocate(p_rf_abs(nrhoout))
+    if (.not. allocated(p_rf_coll_e)) allocate(p_rf_coll_e(nrhoout))
+    if (.not. allocated(p_rf_coll_i)) allocate(p_rf_coll_i(nrhoout))
+
+    call qinterp(rhotor1d, te_interp, NA1, rho_rab_out, te_rf, nrhoout)
+    call qinterp(rhotor1d, ne_interp, NA1, rho_rab_out, ne_rf, nrhoout)
+    call rabbit_lib_get_icrh_depo(Ah, Zh, wRF, PRF, nharmonic, p_rf_abs, p_rf_coll_e, p_rf_coll_i, ne_rf, te_rf, nrhoout)
+
 ! Sum over all NBI sources
 
     pe_rb   = sum(powe (: , 1: n_nbi), 2)/1.d6
@@ -300,6 +333,11 @@ contains
     call qinterp(rho_rab_out, pfi_par , nrhoout, XRHO(1: NA1), PBLON(1: NA1), NA1)
     call qinterp(rho_rab_out, pfi_perp, nrhoout, XRHO(1: NA1), PBPER(1: NA1), NA1)
     call qinterp(rho_rab_out, nrate_in, nrhoout, XRHO(1: NA1), NRATE(1: NA1), NA1)
+
+    call qinterp(rho_rab_out, p_rf_coll_i, nrhoout, XRHO(1: NA1), p_rf_i, NA1)
+    call qinterp(rho_rab_out, p_rf_coll_e, nrhoout, XRHO(1: NA1), p_rf_e, NA1)
+    PIICR(1: NA1) = 1e-6*p_rf_i(1: NA1)
+    PEICR(1: NA1) = 1e-6*p_rf_e(1: NA1)
 
     if (ALFA > 0.) then 
         call smearr(ALFA, PIBM , PIBM )

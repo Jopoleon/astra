@@ -401,6 +401,30 @@ contains
     end subroutine DEFARR
 
 !---------------------------------------------------------------------
+    subroutine SETVAR
+
+    use scalars, only: NA1, AMJ, ZMJ, AB, ABC, SHIFT, IPEQL
+
+    integer :: j
+
+    do j=1, NA1
+        ZEF(J)= max(1.d0, ZEFX(J))
+        ZMAIN(J) = ZMJ
+        AMAIN(J) = AMJ
+        NI(J) = NE(J)/ZMJ
+    enddo
+    if (ABC+abs(SHIFT) > AB) then
+        write(*, *) char(7), ">>> Warning >>> Inconsistent boundary setting."
+        if (IPEQL == 3) then
+            write(*, *) "    Plasma beyond the vacuum vessel has been cut off"
+        else
+            write(*, *) "    Plasma boundary intersects the vacuum vessel"
+        endif
+    endif
+
+    end subroutine setvar
+
+!---------------------------------------------------------------------
     subroutine error_catch
 
     use scalars, only: NA1
