@@ -32,21 +32,16 @@ void sbp2astra_(int* jsbp, int *nchunk, int *n_sbp_arr_out, char* ipcFile, doubl
     IPCr = fopen(ipc_file, "r");
     while (fgets(line, sizeof line, IPCr)) {
         char *p = line;
-
 /* skip leading blanks and tabs */
         while (*p == ' ' || *p == '\t')
             p++;
-
 /* skip line if first non-blank is not digit or sign */
         if (!isdigit((unsigned char)*p) && *p != '+' && *p != '-')
             continue;
-
 /* parse integers */
         if (sscanf(p, "%d%d%d", &jproc, &ID, &ShmID) != 3)
             continue;
-	if (jproc == *jsbp) break;
-
-/* valid data line */
+        if (jproc == *jsbp) break;
     }
     fclose(IPCr);
     
@@ -58,6 +53,7 @@ void sbp2astra_(int* jsbp, int *nchunk, int *n_sbp_arr_out, char* ipcFile, doubl
             mem[jarr + (j + J_PROC*N_CHUNK) * N_ARR_OUT] = prof_out[jarr + j*N_ARR_OUT];
         }
     }
+    shmdt(ShmAdr);
     return;
 }
 
@@ -70,8 +66,7 @@ void sbp2astra_(int* jsbp, int *nchunk, int *n_sbp_arr_out, char* ipcFile, doubl
 int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, int *n_sbp_arr_out, int* Nsub, char *subName, char* ipcFile, char* astraTask, int *SemID, int *ShmID_dims, int *ShmID_vars, int *ShmID_arrs, int *ipcId){
 
     int N_SUB, N_DIMS, N_SCALARS, N_RHO, N_ARR_IN, N_ARR_OUT, N_CHUNK, dim_size, var_size, arr_size, Nsems;
-    int i, j, c, J_PROC, ID, ShmID;
-    int ShmID_dummy;
+    int i, j, ID, ShmID;
     key_t my_key, key2;
     pid_t PID=0;
     FILE *IPCw;
@@ -164,7 +159,6 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
             perror("semop failed");
             return j + 1;
         }
-
         if (i == -1) return j + 1;
     }
 
@@ -245,6 +239,7 @@ int fill_dim2shm_(int* Ndims, int* dims_in, int* ShmID_dims){
     int dim_size = N_DIMS * sizeof(int);
     memcpy(dims_input, dims_in, dim_size);
 
+    shmdt(ShmAdr_dims);
     return 0;
 }
 
@@ -257,6 +252,7 @@ int fill_var2shm_(int* Nscalars, double* scal_in, int* ShmID_vars){
     int var_size = N_SCALARS*sizeof(double);
     memcpy(scal_input, scal_in, var_size);
 
+    shmdt(ShmAdr_vars);
     return 0;
 }
 
@@ -270,5 +266,6 @@ int fill_arr2shm_(int* Ngrid, int* n_sbp_arr_in, double* prof_in, int* ShmID_arr
     size_t num_elements = N_RHO * N_ARR_IN;
     memcpy(prof_input, prof_in, num_elements * sizeof(double));
 
+    shmdt(ShmAdr_arrs);
     return 0;
 }
