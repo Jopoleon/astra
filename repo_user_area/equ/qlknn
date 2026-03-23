@@ -35,8 +35,8 @@ NNWM=1.d-5; !Warm neutrals
 NEUT:.05:::;
 
 ! ECH: TORBEAM, NBI: RABBIT
-TORBA>:.05:::;
-RABBIT>:.05:::;
+TORBA<:.05:::;
+RABBIT<:.05:::;
 
 ! ICRF
 
@@ -71,7 +71,7 @@ CF16=0.85;  ! Boundary
 CF12=0.02; ! Frequency of calls
 CRAD3=nint((CF16*NA1 - 1)/16.);
 
-qlknn_serial(CAR21, CAR22, CAR24)>::::;
+qlknn_serial(CAR21, CAR22, CAR24)<::::;
 
 XI = min(20., max(0., CAR21)) + HNASI;
 HE = min(20., max(0., CAR22)) + HNGSE;

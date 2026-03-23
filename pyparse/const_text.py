@@ -219,9 +219,11 @@ use nclass_mod
 use strahl_mod
 use standard_functions
 use read_input, only: IFDFVX
-use a2tglf, only: tglf_alloc, tglf_out
-use a2qlk, only: qlk_alloc, qlk_out
-use a2neo, only: neo_alloc, neo_out 
+use a2rabbit, only: rabbit
+use a2torbeam, only: torba
+use a2tglf, only: tglf_alloc, tglf_out, tglf_ipc
+use a2qlk, only: qlk_alloc, qlk_out, qlk_ipc
+use a2neo, only: neo_alloc, neo_out, neo_ipc
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use json_vars, only: profxNames
 use debugger, only: markloc
@@ -617,6 +619,9 @@ use status
 use graph_utils
 use standard_functions
 use debugger, only: markloc, debug
+use a2tglf, only: tglf_out
+use a2qlk, only: qlk_out
+use a2neo, only: neo_out 
 
 implicit none
 

@@ -54,6 +54,7 @@ if (ITFBE > 0.) then
 endif
 
 call detvar
+
 ! Subroutines with the "<" symbol are put here
 ! here it computes the new NI also. These are run with tau_old
 

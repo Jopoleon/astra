@@ -47,8 +47,8 @@ NNWM=1.d-5; !Warm neutrals
 NEUT:.05:::;
 
 ! ECH: TORBEAM, NBI: RABBIT
-TORBA>:.05:::;
-RABBIT>:.05:::;
+TORBA<:.05:::;
+RABBIT<:.05:::;
 
 ! Radiation
 
@@ -65,7 +65,7 @@ CAR11=CUBM;
 
 ! TGLF call
 
-tglf_serial(CAR21, CAR22, CAR24, CAR42, CAR31, CAR32, CAR33, CAR34, CAR35):0.02:::;
+tglf_serial(CAR21, CAR22, CAR24, CAR42, CAR31, CAR32, CAR33, CAR34, CAR35)<:0.02:::;
 
 XI = min(20., max(0., CAR21)) + HNASI;
 HE = min(20., max(0., CAR22)) + HNGSE;
