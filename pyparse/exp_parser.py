@@ -103,8 +103,8 @@ class EXP_PARSER:
         self.prof      = json_keys['profiles']
         self.profx     = json_keys['profiles_x']
         self.constants = json_keys['constants']
-        self.intern1   = json_keys['internal']
-        self.intern2   = json_keys['intern2']
+        self.control   = json_keys['control']
+        self.internDbl = json_keys['internDbl']
         self.variables = json_keys['variables']
         self.varx      = json_keys['variables_x']
 

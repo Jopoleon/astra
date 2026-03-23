@@ -40,7 +40,7 @@ use graph_utils
 use scalars
 use status
 use debugger, only: markloc
-use json_vars, only: profxNames, n_intern
+use json_vars, only: profxNames, n_control
 
 implicit none
 
@@ -48,7 +48,7 @@ integer :: j
 
 call markloc("xar_usage")
 
-allocate(DTNAME(n_intern+4*n_sbr))
+allocate(DTNAME(n_control+4*n_sbr))
 """
 
 class SETVAR:

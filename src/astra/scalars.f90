@@ -60,7 +60,7 @@ double precision, pointer :: &
     CDhj1, CDhj2, CDhj3, CDhj4, CDhj5, CDhj6, CDhj7, CDhj8, CDhj9
 
 double precision, target, allocatable, dimension(:) :: constValues, &
-    varValues, varxValues, internValues, intern2Values
+    varValues, varxValues, controlValues, internDblValues
 integer, target, allocatable, dimension(:) :: internIntValues
 
 double precision, allocatable :: TEQ(:)
@@ -100,11 +100,11 @@ contains
 !------------------------------------------
     subroutine scalars_init
 
-    constValues   = 0.
-    varValues     = 0.
-    varxValues    = 0.
-    internValues  = 0.
-    intern2Values = 0.
+    constValues     = 0.
+    varValues       = 0.
+    varxValues      = 0.
+    controlValues   = 0.
+    internDblValues = 0.
 
     NA1N = 0
     NA1E = 0

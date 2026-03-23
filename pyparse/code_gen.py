@@ -84,7 +84,7 @@ class CODE_GEN:
 use read_input, only: n_sbr, sbr_name, nr_x_max
 use scalars
 use status
-use json_vars, only: n_const, n_var, n_varx, n_intern, n_internInt, n_intern2, n_prof, n_profx
+use json_vars, only: n_const, n_var, n_varx, n_control, n_internInt, n_internDbl, n_prof, n_profx
 
 implicit none
 
@@ -95,9 +95,9 @@ implicit none
 '''allocate(constValues(n_const))
 allocate(varValues(n_var))
 allocate(varxValues(n_varx))
-allocate(internValues(n_intern + 4*n_sbr))
+allocate(controlValues(n_control + 4*n_sbr))
 allocate(internIntValues(n_internInt))
-allocate(intern2Values(n_intern2))
+allocate(internDblValues(n_internDbl))
 allocate(profiles(NRD, n_prof))
 allocate(profiles_x(NRD, n_profx))
 allocate(DTEQ(4, n_sbr))
@@ -114,13 +114,13 @@ allocate(TEQ(n_sbr))
         for j, varx in enumerate(parse.varx):
             self.associate_pointers += '%s => varxValues(%d)\n' %(varx, j+1)
         self.associate_pointers += '\n'
-        for j, inter in enumerate(parse.intern1):
-            self.associate_pointers += '%s => internValues(%d)\n' %(inter, j+1)
-        self.associate_pointers += 'DTEQ(1:4, 1:n_sbr) => internValues(n_intern+1: n_intern + 4*n_sbr)\n\n'
+        for j, inter in enumerate(parse.control):
+            self.associate_pointers += '%s => controlValues(%d)\n' %(inter, j+1)
+        self.associate_pointers += 'DTEQ(1:4, 1:n_sbr) => controlValues(n_control+1: n_control + 4*n_sbr)\n\n'
         for j, inter in enumerate(parse.internInt):
             self.associate_pointers += '%s => internIntValues(%d)\n' %(inter, j+1)
-        for j, inter in enumerate(parse.intern2):
-            self.associate_pointers += '%s => intern2Values(%d)\n' %(inter, j+1)
+        for j, inter in enumerate(parse.internDbl):
+            self.associate_pointers += '%s => internDblValues(%d)\n' %(inter, j+1)
         self.associate_pointers += '\n'
         for j, profx in enumerate(parse.profx):
             self.associate_pointers += '%s => profiles_x(:, %d)\n' %(profx, j+1)
@@ -162,7 +162,7 @@ end subroutine POSTEP'''
                     l2f = pa.LINE2FOR(line, parse)
                     detv_time += 'if (IFDFVX(%d) <= 2) %s\n'%(jvar, l2f)
                     break
-            if var in parse.constants + parse.intern1 + parse.intern2 + parse.internInt:
+            if var in parse.constants + parse.control + parse.internDbl + parse.internInt:
                 detv_time += pa.apptmp(lbl, parse)
             elif var in parse.profiles:
                 detv_rad += pa.apptmp(lbl, parse)
@@ -305,7 +305,7 @@ end subroutine INIVAR'''
             j_sbr  = sbrs_d[line]['neq']
             sbrnam = sbrs_d[line]['name']
             inam += 'sbr_name(%d) = "%s"\n' %(j_sbr, sbrnam)
-            inam += 'DTNAME(%d*4+n_intern) = "%s"//char(0)\n' %(j_sbr, sbrnam[:6])
+            inam += 'DTNAME(%d*4+n_control) = "%s"//char(0)\n' %(j_sbr, sbrnam[:6])
 
         self.ininam  = const_text.ININAM.header
         self.ininam += inam

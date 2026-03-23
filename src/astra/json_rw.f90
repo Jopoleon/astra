@@ -365,12 +365,12 @@ end subroutine read_array_2d
 
     use parameters_a2equil, only: equil_now
     use scalars, only: NA1, varValues, varxValues, constValues, &
-        internValues, internIntValues, intern2Values
+        controlValues, internIntValues, internDblValues
     use status, only: profiles, profiles_x
     use read_input, only: awd, exp_file, equ_file, restart
     use debugger, only: debug
     use json_vars, only: equil_sigPtr, equil_profPtr, equil_rectPtr, equil_coordPtr, &
-        profPtr, profxPtr, constPtr, internPtr, internIntPtr, intern2Ptr, &
+        profPtr, profxPtr, constPtr, controlPtr, internIntPtr, internDblPtr, &
         varPtr, varxPtr, n_prof, n_profx
 
     integer :: j, ios, j_call=1, j_out, nrho_surf, nthe_surf, nR, nZ
@@ -400,9 +400,9 @@ end subroutine read_array_2d
     call write_scalars_float(varPtr, varValues, label="variables")
     call write_scalars_float(varxPtr, varxValues, label="variables_x")
     call write_scalars_float(constPtr, constValues, label="constants")
-    call write_scalars_float(internPtr, internValues, label="internal")
+    call write_scalars_float(controlPtr, controlValues, label="control")
     call write_scalars_int(internIntPtr, internIntValues, label="internInt")
-    call write_scalars_float(intern2Ptr, intern2Values, label="intern2")
+    call write_scalars_float(internDblPtr, internDblValues, label="internDbl")
 
 !-----------
 ! Profiles
@@ -689,14 +689,14 @@ end subroutine read_array_2d
 
     use read_input, only: awd, exp_file, equ_file
     use scalars, only: NA1, constValues, varValues, varxValues, &
-        internValues, internIntValues, intern2Values, &
+        controlValues, internIntValues, internDblValues, &
         NEQUIL, MEQUIL, ITFBP, IFBEY, IPEQL
     use status, only: profiles, profiles_x
-    use json_vars, only: n_intern
+    use json_vars, only: n_control
 
     integer, intent(in) :: n_restart
 
-    double precision, dimension(:), allocatable :: internVal
+    double precision, dimension(:), allocatable :: controlVal
     double precision, dimension(:, :), allocatable :: profs, profs_x
     character(len=132) :: f_json
     type(json_file) :: fjson
@@ -707,15 +707,15 @@ end subroutine read_array_2d
     call read_scalars_float(fjson, "constants", constValues)
     call read_scalars_float(fjson, "variables", varValues)
     call read_scalars_float(fjson, "variables_x", varxValues)
-    call read_scalars_float(fjson, "internal", internVal)
-    call read_scalars_int(fjson, "internInt", internIntValues)
-    call read_scalars_float(fjson, "intern2", intern2Values)
-    internValues(1: n_intern) = internVal(1: n_intern)
+    call read_scalars_float(fjson, "control", controlVal)
+    call read_scalars_int(  fjson, "internInt", internIntValues)
+    call read_scalars_float(fjson, "internDbl", internDblValues)
+    controlValues(1: n_control) = controlVal(1: n_control)
     call read_array_block(fjson, "profiles", profs)
     call read_array_block(fjson, "profiles_x", profs_x)
     profiles(  1:NA1, :) = profs
     profiles_x(1:NA1, :) = profs_x
     call read_equil(fjson)
     call fjson%destroy()
-      end subroutine read_ajson
+    end subroutine read_ajson
 end module json_rw

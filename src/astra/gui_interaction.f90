@@ -82,7 +82,7 @@ contains
     use status, only: NRD
     use scalars, only: KEY, ITREQ, NA1, NAB, TIME, TAU, &
         TPAUSE, TEQ, AB, ABC, ROC, XOUT, &
-        constValues, varValues, internValues
+        constValues, varValues, controlValues
     use graph_utils, only: astra_gui, astra_gui_ref, plot_area, &
         Black, Blue, Magenta, WarningColor, &
         active_tab, curves_per_frame, MOD10, LTOUT, IPOUT, MODEY, &
@@ -96,7 +96,7 @@ contains
     use read_input, only: n_sbr, equ_file, exp_file, TASK, IFDFVX
     use char_manip, only: null_ch, beep_ch
     use debugger, only: markloc, debug, astra_stop
-    use json_vars, only: internNames, constNames, varNames, n_const, n_var, n_intern
+    use json_vars, only: controlNames, constNames, varNames, n_const, n_var, n_control
     use cpu_usage, only: cpu_report
     use auxiliary, only: lineav
 
@@ -392,7 +392,7 @@ contains
         CASE(68) ! 'D'
             TIMEB = TIME
             MODEX = XOUT + 0.49
-            call MENUTABLE(n_intern + 4*n_sbr, internValues, DTNAME, 3) ! Only place requiring internValues(j>44)
+            call MENUTABLE(n_control + 4*n_sbr, controlValues, DTNAME, 3) ! Only place requiring controlValues(j>44)
             j = XOUT + 0.49
             if (j < 0 .or. j > 3) then
                 write(*, *) ">>> Unknown X-axis. Redefinition ignored"
@@ -454,7 +454,7 @@ contains
                enddo
                write(1, '(A, I2)') ' Control parameters:', 22
                do J=1, 22   ! Don't save TPAUSE and TEND
-                   write(1, '(1A6, 1A2, 1P, 8E11.3)') internNames(J), ' =', internValues(J)
+                   write(1, '(1A6, 1A2, 1P, 8E11.3)') controlNames(J), ' =', controlValues(J)
                enddo
                close (1)
                write(*, *) "Default start file is modified"

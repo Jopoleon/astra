@@ -81,7 +81,7 @@ contains
 
     use read_input, only: resize, n_sbr
     use scalars, only: AB, TINIT, TSCALE, XOUT
-    use json_vars, only: n_intern, internNames
+    use json_vars, only: n_control, controlNames
 
     integer :: i, j, ios, j0, j1, jgrid, jj, plot_mode
     character(len=132) :: STRI
@@ -157,9 +157,9 @@ contains
     enddo
     curves_per_frame = (/ 16, 8, 8, 2, 2, 8, 4, 0, 0 /)
 
-    DTNAME(1: n_intern) = internNames
+    DTNAME(1: n_control) = controlNames
     do j=1, n_sbr
-        i = (j-1)*4 + n_intern
+        i = (j-1)*4 + n_control
         write(DTNAME(i+1), '(A, i0)') 'DTeq', j
         write(DTNAME(i+2), '(A, i0)') 'BEeq', j
         write(DTNAME(i+3), '(A, i0)') 'ENeq', j

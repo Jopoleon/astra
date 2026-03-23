@@ -24,7 +24,7 @@ contains
     use surface_contours, only: ctr2rz_b
 
     integer, parameter :: NrRect=64, NzRect=64, nnb_max=30, nspc=3, nrhoout=21, unit_lim=11
-    double precision, parameter :: ALFA=1.d-5
+    double precision, parameter :: ALFA=1.d-5, p_icrf_min=2.e-4
 
     double precision, intent(in), optional :: pNBI_MW, pRF_MW, fRF_MHz, nRF_harm
 
@@ -296,7 +296,7 @@ contains
 
     call qinterp(rhotor1d, te_interp, NA1, rho_rab_out, te_rf, nrhoout)
     call qinterp(rhotor1d, ne_interp, NA1, rho_rab_out, ne_rf, nrhoout)
-    if (PRF > 2.e4) then
+    if (PRF > p_icrf_min) then
         call rabbit_lib_get_icrh_depo(Ah, Zh, wRF, PRF, nharmonic, p_rf_abs, p_rf_coll_e, p_rf_coll_i, ne_rf, te_rf, nrhoout)
     endif
  

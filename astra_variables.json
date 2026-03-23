@@ -436,7 +436,7 @@
     "CDHJ9" : {}
 },
 
-"internal": {
+"control": {
     "DPOUT" : {"units": "s", "desc": "Profiles/time output interval"},
     "TIME"  : {"units": "s", "desc": "Current time, t"},
     "TAUMIN": {"units": "s", "desc": "Minimum time step"},
@@ -451,9 +451,7 @@
     "DTEQL" : {"units": "s", "desc": "Time interval to recalculate equilibrium"},
     "ITFBE" : {"unit": "s", "desc": "Time at which FBE is switched on. If negative, FBE is switched off. By default it is negative"},
     "TPAUSE": {"units": "s", "desc": "Time to set pause mode"},
-    "TEND"  : {"units": "s", "desc": "End time, t_end, t_start <= t <= t_end"},
-    "SGNIP" : {"desc": "Sign of current with respect to reference system of coordinates used in Astra"},
-    "SGNBT" : {"desc": "Sign of toroidal field with respect to reference system of coordinates used in Astra"}
+    "TEND"  : {"units": "s", "desc": "End time, t_end, t_start <= t <= t_end"}
 },
 
 "internInt": {
@@ -491,7 +489,9 @@
     "NA19"  : {"desc": "Number of radial points up to F9 boundary conditoin"}
 },
     
-"intern2": {
+"internDbl": {
+    "SGNIP" : {"desc": "Sign of current with respect to reference system of coordinates used in Astra"},
+    "SGNBT" : {"desc": "Sign of toroidal field with respect to reference system of coordinates used in Astra"},
     "TSTART": {"units": "s", "desc": "Start time, t_start <= t <= t_end"},
     "TAU"   : {"units": "s", "desc": "Time step"},
     "TAU_NEW" : {"units": "s", "desc": "New time step"},

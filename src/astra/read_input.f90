@@ -46,9 +46,9 @@ contains
 
     use machine_config, only: config_read
     use parse_utils, only: path_split, inquire_fname, assign_val
-    use json_vars, only: internNames, constNames, varNames, &
-        n_intern, n_const, n_profx, n_var
-    use scalars, only: varValues, constValues, internValues
+    use json_vars, only: controlNames, constNames, varNames, &
+        n_control, n_const, n_profx, n_var
+    use scalars, only: varValues, constValues, controlValues
     use debugger, only: astra_stop
 
     logical :: log_exists
@@ -93,7 +93,7 @@ contains
     nvar = 37
     call assign_val(file_in, nvar    ,    varNames(1: nvar)    ,    varValues(1: nvar)    , n_color)
     call assign_val(file_in, n_const ,  constNames(1: n_const) ,  constValues(1: n_const) , n_color)
-    call assign_val(file_in, n_intern, internNames(1: n_intern), internValues(1: n_intern), n_color)
+    call assign_val(file_in, n_control, controlNames(1: n_control), controlValues(1: n_control), n_color)
 
 ! Read exp file
     call read_exp
