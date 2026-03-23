@@ -276,7 +276,7 @@ contains
     if (present(pRF_MW)) then
         PRF = 1.e6*pRF_MW
     else
-        PRF = 1.e6   ! Default: 1 MW
+        PRF = 0.d0
     endif
     if (present(nRF_harm)) then
         nharmonic = nRF_harm
@@ -296,8 +296,10 @@ contains
 
     call qinterp(rhotor1d, te_interp, NA1, rho_rab_out, te_rf, nrhoout)
     call qinterp(rhotor1d, ne_interp, NA1, rho_rab_out, ne_rf, nrhoout)
-    call rabbit_lib_get_icrh_depo(Ah, Zh, wRF, PRF, nharmonic, p_rf_abs, p_rf_coll_e, p_rf_coll_i, ne_rf, te_rf, nrhoout)
-
+    if (PRF > 2.e4) then
+        call rabbit_lib_get_icrh_depo(Ah, Zh, wRF, PRF, nharmonic, p_rf_abs, p_rf_coll_e, p_rf_coll_i, ne_rf, te_rf, nrhoout)
+    endif
+ 
 ! Sum over all NBI sources
 
     pe_rb   = sum(powe (: , 1: n_nbi), 2)/1.d6
