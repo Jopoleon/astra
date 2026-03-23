@@ -980,6 +980,7 @@ C	Input:	YFO(1:N1)
 C	Output:	YFO(1:JNA1)
 C------------------------------------------------------------ 22-MAY-08
         use status, only: NRD
+        use numerical_tools, only: smooth
 
 	implicit none
 	include  'nbi/nbicom.inc'
@@ -1009,7 +1010,7 @@ c
 		YOLD	=VINT(YFO,YROC)
 		ALFA	=0.001d0
 c	call transf(n1,dri,x,na1,yfo,xj)
-	call SMOOTH(ALFA,n1,dri,x,jna1,yfo,xj)
+	call SMOOTH(ALFA, x, dri, n1, xj, yfo, jna1)
 C*16-MAR-98 vvvvvvvvvvvvvvvvvvvvvvvv
 !!	do	J	=1,JNA1
 !!	if(YFO(j).lt.0.d0)	YFO(J)	=0.d0
@@ -1047,6 +1048,7 @@ C	Output:	YFO(1:JNA1)
 C------------------------------------------------------------- 22-APR-13
 
         use status, only: NRD
+        use numerical_tools, only: smooth
 
 	implicit none
 
@@ -1074,7 +1076,7 @@ C...Total current normalization
 		YOLD	=IINT(YFO,YROC)
 		ALFA	=0.001d0
 c	call transf(n1,dri,x,na1,yfo,xj)
-	call SMOOTH(ALFA,n1,dri,x,jna1,yfo,xj)
+	call SMOOTH(ALFA, x, dri, n1, xj, yfo, jna1)
 C*22-APR-13 vv Cut of artificial negatives/positive after smoothing
         if(JSIGN.eq.0) then	!no real change of sign
 	do	J	=1,JNA1
