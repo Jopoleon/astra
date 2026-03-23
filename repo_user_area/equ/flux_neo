@@ -46,7 +46,7 @@ NEUT:.05:::;
 !CNB1=8; CNB2=1; CNB3=2; CNB4=1;
 !NBI:0.05;
 
-!RABBIT>:0.050:::;
+!RABBIT<:0.050:::;
 
 VPOL=VPSWW;
 VTOR=VTORX;
@@ -66,7 +66,7 @@ PE=POH+PEBM+PEECR-PEICL-PRAD+PEDT;
 PI=PIBM+PEICL+PIDT;
 
 ! NEO call
-NEO_IPC>:0.1:::;
+neo_ipc<:0.1:::;
 
 CAR17 = "neo_out%chi_i(j)";
 CAR18 = "neo_out%chi_e(j)";

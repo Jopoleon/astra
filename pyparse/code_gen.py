@@ -42,9 +42,14 @@ class CODE_GEN:
             sbrs_d[line] = sbr_d
             locsbr = sbr_d['locsbr']
             a_str = ''
-            if locsbr == -1:
+            if locsbr == -2:
                 detv_sbr += pa.sbr_header(j_sbr, astr=a_str)
                 detv_sbr += pa.write_sbr(sbr_d)
+            elif locsbr == -1:
+                detv_sbr += 'if (IPART == 2) then\n'
+                detv_sbr += pa.sbr_header(j_sbr, astr=a_str)
+                detv_sbr += pa.write_sbr(sbr_d)
+                detv_sbr += 'endif\n'
             elif locsbr == 0:
                 eqns_lin.append(line)
             elif locsbr == 1:

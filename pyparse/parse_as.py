@@ -467,8 +467,10 @@ def parse_sbr(line):
         tmin = 0.
         tmax = 1000.
         key = ''
+    if '<<' in line:
+        locsbr = -2  # detvar.f90; call in ASTRA_MAIN, STEPUP before equil
     if '<' in line:
-        locsbr = -1  # detvar.f90; call in ASTRA_MAIN, STEPUP before equil
+        locsbr = -1  # detvar.f90; call in STEPUP before equil
     elif '>' in line or sbrnam.upper() in ('MIXINT', 'MIXEXT', 'TSCTRL'):
         locsbr = 1   # postep.f90; call in STEPUP
     else:

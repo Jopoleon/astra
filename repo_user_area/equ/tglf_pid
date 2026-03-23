@@ -50,8 +50,8 @@ ENCL=CNEUT2; ! between 2 and 10 eV (now it's 5 eV = 0.005 keV)
 NEUT>::::; ! calculates neutral density NN and temperature TN
 
 ! ECH: TORBEAM, NBI: RABBIT
-TORBA>:.05:::;
-RABBIT>:.05:::;
+TORBA<:.05:::;
+RABBIT<:.05:::;
 
 ! Radiation
 
@@ -69,7 +69,7 @@ CAR11=CUBM;
 
 !TGLF call
 CF16 = 1.0;
-tglf_ipc(CF16):0.02:::;
+tglf_ipc(CF16)<:0.02:::;
 
 CAR17 = "tglf_out%chi_i(j)";
 CAR18 = "tglf_out%chi_e(j)";
