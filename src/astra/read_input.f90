@@ -4,7 +4,7 @@ implicit none
 
 integer :: n_sbr, restart, nr_x_max
 integer, allocatable, dimension(:) :: IFDFAX, jbeg_arrx, NPTM, IFDFVX
-double precision :: resize, tend_nml
+double precision :: resize, tend_nml, tpause_nml
 double precision, allocatable :: TOUTX(:)
 double precision, allocatable, dimension(:, :) :: XAXES, DATAX
 character(len=4) :: machine, TASK
@@ -109,7 +109,7 @@ contains
     logical :: nml_exists
     integer :: ios
     character(len=132) :: log_file
-    double precision :: tbeg_nml, tpause_nml
+    double precision :: tbeg_nml
 
     namelist / astra_log / equ_file, exp_file, task, machine, &
         debug, tbeg_nml, tend_nml, tpause_nml, resize, restart, flightsim

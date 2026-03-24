@@ -4,7 +4,7 @@ implicit none
 
 contains
 
-    subroutine RABBIT(pNBI_MW, pRF_MW, fRF_MHz, nRF_harm)
+    subroutine RABBIT(pNBI_MW, dt_in, pRF_MW, fRF_MHz, nRF_harm)
 
     use mod_rabbit_lib, only: do_dump, rabbit_lib_init, rabbit_lib_set_dump_dir, &
         rabbit_lib_dump_beams, rabbit_lib_set_sp_plasma_ratio, rabbit_lib_step, &
@@ -26,7 +26,7 @@ contains
     integer, parameter :: NrRect=64, NzRect=64, nnb_max=30, nspc=3, nrhoout=21, unit_lim=11
     double precision, parameter :: ALFA=1.d-5, p_icrf_min=2.e-4
 
-    double precision, intent(in), optional :: pNBI_MW, pRF_MW, fRF_MHz, nRF_harm
+    double precision, intent(in), optional :: pNBI_MW, dt_in, pRF_MW, fRF_MHz, nRF_harm
 
     integer, dimension(nnb_max) :: ierr
     integer :: n_Rrect, n_Zrect, n_nbi, dum, n_lim, jumpcor, torqjxb_model
@@ -49,7 +49,7 @@ contains
     double precision, allocatable, dimension(:) :: Rrect, zrect, rho_eq, pf_eq
     double precision :: psi_sep, psi_axis, rmag, zmag, drho_eq
     double precision :: R_max, R_min, z_max, z_min, dr, dz
-    double precision :: part_mix(nspc, nnb_max), dt_in, output_timing 
+    double precision :: part_mix(nspc, nnb_max), dt, output_timing 
     double precision :: tim_prev=-1.d0, dumba1, dumba2
 
     double precision, dimension(NA1) :: rho_interp_plasma, rho_interp_eq, &
@@ -220,7 +220,11 @@ contains
     QNBI = sum(pinj(1:n_nbi))*1d-6
 
     output_timing = 0.5d0
-    dt_in = max(TIME - tim_prev, 1.d-6)
+    if (present(dt_in)) then
+        dt = dt_in
+    else
+        dt = max(TIME - tim_prev, 1.d-6)
+    endif
 
     rho_interp_plasma = rhotor1d
     ne_interp = 1e19*NE(1:NA1)
@@ -258,7 +262,7 @@ contains
         psi_sep, psi_axis, rmag, zmag,                          & ! eq scalars
         N_Rrect, N_Zrect, ldim,                                 & ! eq dimensions
         pinj(1: n_nbi), einj(1: n_nbi), part_mix(: , 1: n_nbi), &
-        nspc, n_nbi, bdens_in, dt_in, output_timing,            & ! Output
+        nspc, n_nbi, bdens_in, dt, output_timing,            & ! Output
         powe, powi, press, bdep, bdens, jfi, jnbcd,             &
         torqe, torqi, torqjxb, torqth, torqthcxloss, torqdepo,  &
         n_rate, rho_rab_out, nrhoout,     &

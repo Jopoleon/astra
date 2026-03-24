@@ -58,7 +58,7 @@ if __name__ == '__main__':
         parser.add_argument('-dev', '--DeviceName', help='Machine short name', required=False, default=alog_d['machine'])
         parser.add_argument('-resize', '--resize', type=float, help='Resize factor for ASTRA frame', required=False, default=alog_d['resize'])
     parser.add_argument('-batch', action='store_true', help='Run batch job'  , required=False)
-    parser.add_argument('-tpause', '--tpause', type=float, help='Pause @time', required=False)
+    parser.add_argument('-tpause', '--tpause', type=float, help='Pause @time', required=False, default=1.e4)
     parser.add_argument('-debug', action='store_true', help='Debug', required=False)
     parser.add_argument('-re', '--restart', type=int, help='Restart', required=False, default=0)
     parser.add_argument('-fs', action='store_true', help='Flight simulator', required=False)
@@ -93,8 +93,7 @@ if __name__ == '__main__':
     alog += 'flightsim = %d\n'     %int(args.fs)
     alog += 'resize    = %8.4f\n'  %resize
     alog += 'restart   = %d\n'     %args.restart
-    if args.tpause is not None:
-        alog += 'tpause_nml = %8.4f\n' %args.tpause
+    alog += 'tpause_nml = %8.4f\n' %args.tpause
     alog += '\n/\n'
 
     logger.info('Writing %s' %f_log)

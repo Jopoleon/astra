@@ -135,8 +135,8 @@ contains
     NEQUIL = 0
     DTEQL  = 0.
     MEQUIL = 0
-    TPAUSE = 100.
-    TEND   = 1000.
+    TPAUSE = 1.e5
+    TEND   = 1.e5
     INUME1 = 22
     INUME2 = 22
     INUME3 = 22

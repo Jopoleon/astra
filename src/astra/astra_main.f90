@@ -10,13 +10,14 @@ program astra
 use graph_utils, only: astra_gui, astra_gui_ref, gui_init
 use cpu_usage, only: cpu_init, cpu_start, wall_start, cpu_report
 use scalars, only: IPART, scalars_init, RTOR, UPDWN, SHIFT, PSIAX, PSIBO, &
-    TIME, TSTART, TEND, DPOUT, TAU, ATREQ, IFBEY, NITOT, IPEQL
+    TIME, TSTART, TEND, TPAUSE, DPOUT, TAU, ATREQ, IFBEY, NITOT, IPEQL
 use status, only: status_init, defarr, setvar
 use debugger, only: astra_stop, markloc
 use transport2fbe, only: transport2fbe_init
 use json_vars, only: read_metadata
 use json_rw, only: read_ajson, write_ajson
-use read_input, only: readInput, raw_cCoil, TASK, MACHINE, restart, tend_nml
+use read_input, only: readInput, raw_cCoil, TASK, MACHINE, &
+    restart, tend_nml, tpause_nml
 use auxiliary, only: IFTREQ
 use set_x_data, only: set_x_scalars, set_x_arrays, astra_assignments
 use metrics, only: eqguess, metric, CCOIL, VCOIL
@@ -60,6 +61,7 @@ if (restart > 0) then ! Initial condition from output json file
             MACHINE, raw_cCoil%ncoils, raw_cCoil%current) ! Transfer ASTRA pars to FEQIS
     endif
     tend = tend_nml ! TEND is read from json, TEND_NML from command line "-e TBEG_NML"
+    tpause = tpause_nml
     if (gui_on) jkey = if_key(0) ! Plot right now
 else ! Iterations for initial convergence
     call status_init       ! Fallback default values for profiles
