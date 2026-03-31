@@ -49,6 +49,7 @@ end module a2rabbit
 EOF
 	sed -i "s#export\ RABBIT_LIB#\#export\ RABBIT_LIB#g" $AWD/exe/astra_rc
 	sed -i "s#RABBIT#\!RABBIT#g" $AWD/equ/fluxes
+	sed -i "s#RABBIT#\!RABBIT#g" $AWD/equ/feqis
     fi
 
     if [ "$TORBEAM" = "n" ]
@@ -63,6 +64,7 @@ end module a2torbeam
 EOF
 	sed -i "s#export\ TORB_LIB#\#export\ TORB_LIB#g" $AWD/exe/astra_rc
 	sed -i "s#TORBA#\!TORBA#g" $AWD/equ/fluxes
+	sed -i "s#TORBA#\!TORBA#g" $AWD/equ/feqis
     fi
 
     if [ "$QLKNN" = "n" ]
@@ -114,4 +116,4 @@ then
 else
     make -f exe/Makefile clean
 fi
-exe/as_exe -m fluxes -v aug34954 -s 4 -e 5
+exe/as_exe -m feqis -v aug34954 -s 4 -e 5

@@ -36,6 +36,7 @@ subroutine NBI
 use scalars
 use status
 use read_input, only: NBFILE
+use nbstatus, only: nbstatus_io
 
 implicit none
 
@@ -49,7 +50,7 @@ endif
 ! CNB1  = 8
 ! CNB2  = 1   ? Explicit form of CX losses ?
  JINOUT=0 ! ASTRA->NBI
- call nbstatus(JINOUT, NB1, NA1, NE, NHYDR, NDEUT, NTRIT, NHE3, &
+ call nbstatus_io(JINOUT, NB1, NA1, NE, NHYDR, NDEUT, NTRIT, NHE3, &
      NALF, NI, NIZ1, NIZ2, NIZ3, ZIM1, ZIM2, ZIM3, TE, TI, &
      VR, SHIF, SHIV, ELON, TRIA, AMETR, RHO, FP, MU, AMAIN, &
      NN, TN, ZEF, G33, IPOL, NIBM, PIBM, PEBM, PBLON, PBPER, & 
@@ -73,7 +74,7 @@ endif
 
 JINOUT=1 ! NBI->ASTRA
 
-call nbstatus(JINOUT, NB1, NA1, NE, NHYDR, NDEUT, NTRIT, NHE3, &
+call nbstatus_io(JINOUT, NB1, NA1, NE, NHYDR, NDEUT, NTRIT, NHE3, &
     NALF, NI, NIZ1, NIZ2, NIZ3, ZIM1, ZIM2, ZIM3, TE, TI, &
     VR, SHIF, SHIV, ELON, TRIA, AMETR, RHO, FP, MU, AMAIN, &
     NN, TN, ZEF, G33, IPOL, NIBM, PIBM, PEBM, PBLON, PBPER, & 

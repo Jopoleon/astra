@@ -17,7 +17,7 @@ FC_FLAGS = -r8 -no-prec-div -ip -O0 -fPIC -traceback
 
 # Make Commands
 .PHONY: all
-all: directories $(LIB) rmgenmod
+all: directories $(LIB) mvmod
 
 .PHONY: directories
 directories:
@@ -25,9 +25,10 @@ directories:
 	@mkdir -p $(OBJ_DIR)
 	@mkdir -p $(MOD_DIR)
 
-.PHONY: rmgenmod
-rmgenmod:
+.PHONY: mvmod
+mvmod:
 	rm -f *genmod.*
+	-@mv *.mod $(MOD_DIR)/ 2>/dev/null; true
 
 .PHONY: clean
 clean:
@@ -37,26 +38,15 @@ clean:
 
 # Rules
 
-MODOBJS = $(OBJ_DIR)/nbstatus_inc.o
+MODOBJS = \
+$(OBJ_DIR)/cross_sections.o \
+$(OBJ_DIR)/nbstatus.o \
+$(OBJ_DIR)/nbicom.o \
+$(OBJ_DIR)/nbibce.o
 
 OBJS = \
 $(OBJ_DIR)/stread.o \
-$(OBJ_DIR)/nbfoa.o \
-$(OBJ_DIR)/NBIBCE.o \
-$(OBJ_DIR)/nbicom.o \
-$(OBJ_DIR)/nbinj.o \
-$(OBJ_DIR)/nborbco.o \
-$(OBJ_DIR)/nborbctr.o \
-$(OBJ_DIR)/nbstatus.o \
-$(OBJ_DIR)/nbtrag.o \
-$(OBJ_DIR)/nbuser.o
-
-$(OBJ_DIR)/nbstatus_inc.o: $(SRC_DIR)/nbstatus_inc.f90
-	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -c $< -o $@
-	mv nbstatus_inc.mod $(MOD_DIR)/
-
-$(OBJ_DIR)%.o: $(SRC_DIR)%.f
-	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(MOD_DIR) -c $< -o $@
+$(OBJ_DIR)/nbinj.o
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f90
 	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(MOD_DIR) -c $< -o $@

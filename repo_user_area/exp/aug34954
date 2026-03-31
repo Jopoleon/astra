@@ -12,6 +12,8 @@ AMJ             2.0              Majority mass/m_p
 
 IPL      U-file:34954/MAG34954.IPL_AVG
 BTOR     U-file:34954/MAG34954.BTOR_AVG
+ZRD3            2.5
+ZRD8            2.5
 
 FILTER   0.002
 

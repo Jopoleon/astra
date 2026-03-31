@@ -6,9 +6,10 @@ SRC_DIR = $(AWD)/$(sub)
 OBJ_DIR = $(AWD)/obj/$(sub)
 MOD_DIR = $(AWD)/mod/$(sub)
 INC_DIR = $(AWD)/inc
-MOD_ASTRA = $(AWD)/mod/astra 
-MOD_FEQIS = $(AWD)/mod/feqis 
-MOD_MISC = $(AWD)/mod/misc 
+MOD_ASTRA = $(AWD)/mod/astra
+MOD_FEQIS = $(AWD)/mod/feqis
+MOD_NBI   = $(AWD)/mod/nbi
+MOD_MISC  = $(AWD)/mod/misc
 LIB_DIR = $(AWD)/lib
 LIB = $(LIB_DIR)/lib$(sub).a
 
@@ -50,6 +51,9 @@ $(OBJ_DIR)/qlknn_serial.o: $(SRC_DIR)/qlknn_serial.f90 $(QLKNN_LIB)
 
 $(OBJ_DIR)/rabbit.o: $(SRC_DIR)/rabbit.f90
 	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(RABBIT_INC) -c $< -o $@
+
+$(OBJ_DIR)/nbi.o: $(SRC_DIR)/nbi.f90
+	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(MOD_NBI) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f90
 	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(MOD_FEQIS) -c $< -o $@
