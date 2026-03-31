@@ -8,15 +8,16 @@ contains
 
     use mod_rabbit_lib, only: do_dump, rabbit_lib_init, rabbit_lib_set_dump_dir, &
         rabbit_lib_dump_beams, rabbit_lib_set_sp_plasma_ratio, rabbit_lib_step, &
-        rabbit_lib_get_dv_darea, rabbit_lib_get_wfi, rabbit_lib_get_icrh_depo
+        rabbit_lib_get_dv_darea, rabbit_lib_get_wfi, rabbit_lib_get_icrh_depo, &
+        rabbit_lib_set_background_neutrals
     use rabbit_variables, only: fusion_power, neutron_power
 
     use pi_const, only: GP2
     use read_input, only: AWD, nml_file
     use scalars, only: AIM1, TIME, TAU, QNBI, ROC, &
-       RTOR, BTOR, NA1, PSIAX, PSIBO
+       RTOR, BTOR, NA1, PSIAX, PSIBO, NNCL, NNWM
     use status, only: FP, FP_NORM, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
-       XRHO, VOLUM, IPOL, PEBM, PIBM, NIBM, CUBM, SNEBM, SCUBM, NRATE, &
+       XRHO, VOLUM, IPOL, PEBM, PIBM, NIBM, CUBM, SNEBM, SCUBM, NRATE, NN, &
        PBLON, PBPER, MU, VTOR, ZEF, NI, NHYDR, NDEUT, NTRIT, PEICR, PIICR
     use numerical_tools, only: qinterp
     use standard_functions, only: VINT, IINT
@@ -49,12 +50,12 @@ contains
     double precision, allocatable, dimension(:) :: Rrect, zrect, rho_eq, pf_eq
     double precision :: psi_sep, psi_axis, rmag, zmag, drho_eq
     double precision :: R_max, R_min, z_max, z_min, dr, dz
-    double precision :: part_mix(nspc, nnb_max), dt, output_timing 
+    double precision :: part_mix(nspc, nnb_max), dt, output_timing
     double precision :: tim_prev=-1.d0, dumba1, dumba2
 
     double precision, dimension(NA1) :: rho_interp_plasma, rho_interp_eq, &
        ti_interp, te_interp, ne_interp, omg_interp, zef_interp,  &
-       iota, area, vol, ffp, psi_n
+       iota, area, vol, ffp, psi_n, back_neutral_prof
     double precision, dimension(nrhoout) :: rho_rab_out, &
         bdens_in, pi_rb, pe_rb, dvol, darea, &
         nfi_rb, jcd_rb, src_rb, tq_rb, pfi_par, pfi_perp, nrate_in
@@ -113,7 +114,7 @@ contains
     do i=1, size(Aplasma)
        if (nint(Aplasma(i)) == 1) species_plasma_ratio(i) = sum(nhydr)
        if (nint(Aplasma(i)) == 2) species_plasma_ratio(i) = sum(ndeut)
-       if (nint(Aplasma(i)) == 3) species_plasma_ratio(i) = sum(ntrit)   
+       if (nint(Aplasma(i)) == 3) species_plasma_ratio(i) = sum(ntrit)
     enddo
     print*, 'Aplasma', Aplasma
     species_plasma_ratio = species_plasma_ratio / sum(species_plasma_ratio)
@@ -123,7 +124,7 @@ contains
 
     if (.not. allocated(Rrect)) allocate(Rrect(n_Rrect), Zrect(n_Zrect))
 
-    if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---       
+    if (tim_prev == -1.d0) then  ! --- RABBIT Initialization ---
         as_nml = TRIM(AWD) // '/' // TRIM(nml_file)
 
         ios = 0
@@ -132,7 +133,7 @@ contains
         if (ios < 0) then
             write(*, *) 'RABBIT namelist ' // trim(as_nml) // ' not found, returning'
             return
-        endif 
+        endif
         read(53, nml=rabbit_beam_geo, iostat=ios)
         read(53, nml=partmix, iostat=ios)
         read(53, nml=nbi_par, iostat=ios)
@@ -164,7 +165,7 @@ contains
 
         aimp = AIM1
         zimp = ZIM1(1)
-     
+
         if (zimp /= 4 .AND. zimp /= 5 .AND. zimp /= 6  .AND. zimp /= 7 .AND. zimp /= 10 .AND. zimp /= 28) then
             write(6, *) 'No cross-sections for Zimp other than 4, 5, 6, 7, 10, 28'
             write(6, *) 'Forcing Zimp=6'
@@ -172,7 +173,7 @@ contains
         endif
 
         call rabbit_lib_init(aplasma, zplasma, aimp, zimp,           & ! plasma species
-            size(Aplasma),                                           &  !number of main ion species
+            size(Aplasma),                                           & ! number of main ion species
             a_beam(1:n_nbi), z_beam(1:n_nbi), start_pos(:, 1:n_nbi), &
             unit_vec(:, 1:n_nbi), width_poly(:, 1:n_nbi),            & ! beam
             nspc, n_nbi,                                             & ! beam
@@ -181,6 +182,8 @@ contains
             N_Rrect, N_Zrect,                                        & ! eq grid dimensions
             ldim, pdim,                                              & ! plasma grid dimension
             TRIM(as_nml), LEN_TRIM(as_nml), ierr(1:n_nbi))
+
+        call rabbit_lib_set_background_neutrals(back_neutral_prof, NA1)
 
         if (do_dump) then ! dump Rabbit inputs (for debbuging)
             call rabbit_lib_set_dump_dir(TRIM(awd), LEN_TRIM(awd))
@@ -232,6 +235,7 @@ contains
     ti_interp = 1e3*TI(1:NA1)
     omg_interp = VTOR(1:NA1)/RTOR
     zef_interp = ZEF(1:NA1)
+    back_neutral_prof = 1e19*(NNCL + NNWM)*NN(1: NA1)
 
     rho_interp_eq = rhotor1d
     iota = MU(1:NA1)
@@ -266,7 +270,7 @@ contains
         powe, powi, press, bdep, bdens, jfi, jnbcd,             &
         torqe, torqi, torqjxb, torqth, torqthcxloss, torqdepo,  &
         n_rate, rho_rab_out, nrhoout,     &
-        powe_tot(1: n_nbi), powi_tot(1: n_nbi), pshine(1: n_nbi), & 
+        powe_tot(1: n_nbi), powi_tot(1: n_nbi), pshine(1: n_nbi), &
         prot(1: n_nbi), porbloss(1: n_nbi), pcxloss(1: n_nbi),    &
         Inbcd(1: n_nbi), ierr(1: n_nbi))
 
@@ -303,7 +307,7 @@ contains
     if (PRF > p_icrf_min) then
         call rabbit_lib_get_icrh_depo(Ah, Zh, wRF, PRF, nharmonic, p_rf_abs, p_rf_coll_e, p_rf_coll_i, ne_rf, te_rf, nrhoout)
     endif
- 
+
 ! Sum over all NBI sources
 
     pe_rb   = sum(powe (: , 1: n_nbi), 2)/1.d6
@@ -345,7 +349,7 @@ contains
     PIICR(1: NA1) = 1e-6*p_rf_i(1: NA1)
     PEICR(1: NA1) = 1e-6*p_rf_e(1: NA1)
 
-    if (ALFA > 0.) then 
+    if (ALFA > 0.) then
         call smearr(ALFA, PIBM , PIBM )
         call smearr(ALFA, PEBM , PEBM )
         call smearr(ALFA, NIBM , NIBM )

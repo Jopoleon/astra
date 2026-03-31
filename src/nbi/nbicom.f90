@@ -4,7 +4,7 @@ use nbstatus, only: n_rho, n_theta, n_energy
 
 implicit none
 
-integer, parameter :: ndim1=82
+integer, parameter :: ndim1=82, ndim2=201
 double precision, dimension(n_theta), parameter :: PLEJ2 = (/ &
     -5.000000E-01, -4.994000E-01, -4.976000E-01, -4.946000E-01, &
     -4.904000E-01, -4.850000E-01, -4.784000E-01, -4.706000E-01, &
@@ -21,10 +21,10 @@ double precision, dimension(n_theta), parameter :: PLEJ2 = (/ &
      8.823999E-01,  9.405999E-01,  9.999999E-01/)
 
 integer :: IHB, IRB, IEB, JEB, N1, JTANG, NTET1, &
-    JIM0R, JIM0L, JNR, JNL, JE, JCENTR, JNRC, JNLC, II(201)
+    JIM0R, JIM0L, JNR, JNL, JE, JCENTR, JNRC, JNLC, II(ndim2)
 double precision :: R, A, BZ, HB, RBMIN1, RBMAX1, EB, QB, PB, Hocu, &
     RCR, RJ, RJT, RM0R, RM0L, YFM0R, YFM0L, &
-    YFM0T, YF0, YDYH, SQRCR, RJM(201)
+    YFM0T, YF0, YDYH, SQRCR, RJM(ndim2)
 double precision, dimension(n_energy) :: SVII, VNB, YAQB
 double precision, dimension(n_rho) :: RC, RE, RI, DRE, DRI, YCOS,YBTDB, &
     REJ, RIJ, BTDB, AMU, PL, PN0, PM, PLI, YDZ, YTRAP, X, XJ, DX, ELON1, TRIA1
@@ -37,7 +37,7 @@ double precision :: DT, EZ
 double precision, dimension(9) :: yVB, RNB, ZB, RMB, yEB
 double precision :: YSIMPI(3, 9)
 double precision, dimension(n_rho) :: stnbdp, sdnbtp, sdnbdp1, sdnbdp2
-double precision, dimension(3, 201) :: YPSI, RLM
+double precision, dimension(3, ndim2) :: YPSI, RLM
 
 contains
 
@@ -337,7 +337,7 @@ contains
         endif
     enddo
 
-    ii(201) = n
+    ii(ndim2) = n
     do je=jeb, ieb
         drl(je) = 1.d0 / (0.0144d0 * sqrt(eb * pb / (ieb - je + 1)) / (bz * a))
         do jn = 1, n1
@@ -805,16 +805,16 @@ contains
         endif
     enddo
 
-    II(201) = N
+    II(ndim2) = N
 ! For orbit averaging and gyrolosses
-    RJM(201) = RJT
+    RJM(ndim2) = RJT
     RJM(1) = RJ
     do JE=JEB, IEB
-        YPSI(JE, 201) = ARD(JE, N1)
+        YPSI(JE, ndim2) = ARD(JE, N1)
         YPSI(JE, 1)   = ARD(JE, N1)
-        RLM(JE, 201)   = YDYH*sqrt(RJM(201))/Y0/DRL(JE)
-        if (CBMS1 >= 2.) RLM(JE, 201)=0.
-        RLM(JE, 1)=YDYH*sqrt(RJM(1))/Y0/DRL(JE)
+        RLM(JE, ndim2)  = YDYH*sqrt(RJM(ndim2))/Y0/DRL(JE)
+        if (CBMS1 >= 2.) RLM(JE, ndim2) = 0.
+        RLM(JE, 1) = YDYH*sqrt(RJM(1))/Y0/DRL(JE)
         if (CBMS1 >= 2.) RLM(JE, 1) = 0.
     enddo
 
