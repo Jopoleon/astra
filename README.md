@@ -2,7 +2,7 @@ Repository of the ASTRA code
 
 ## Maintainer
 
-Current maintainer:
+Current maintainers:
 - Giovanni Tardini <giovanni.tardini@ipp.mpg.de>
 - Emiliano Fable <emiliano.fable@ipp.mpg.de>
 
@@ -13,7 +13,7 @@ This project is licensed under the GNU Lesser General Public License v2.1
 
 Clone:
 ```
-  git clone git@gitlab.mpcdf.mpg.de:git/astra.git a8
+  git clone https://gitlab.mpcdf.mpg.de/git/astra a8
 ```
 
 Install:
@@ -33,15 +33,17 @@ Supported platforms:
   IPP tok
   IPP hz-ld-prod
   IPP-cz
-  gateway
+  Eurofusion gateway
   iter-sdcc
   GA-iris
   GA-omega
   Perlmutter
   mit.edu
-  puhti (VTT)
+  puhti, tohtori (VTT)
   rat2 (Padua)
   freia (ukaea)
+  Columbia university
+  Sevilla university
 
 The supported platforms are automatically recognised. Check with
 ```

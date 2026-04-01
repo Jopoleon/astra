@@ -1,6 +1,7 @@
 NEQUIL=91;
 MEQUIL=90;
 !MEQUIL=0;
+IPEQL=4;
 
 atreq = .5;
 

@@ -11,7 +11,7 @@ then
 fi
 
 EXP=aug34954
-for EQU in fluxes feqis flux_tglf qlk tglf
+for EQU in flux_feqis flux_spider flux_tglf flux_neo qlk tglf
 do
     $AWD/exe/as_exe -m $EQU -v $EXP -s 4. -e 5.
     python3 $AWD/compareRegressions.py -m $EQU -v $EXP
@@ -37,7 +37,7 @@ done
 # Slow ones
 
 EXP=aug34954
-for EQU in flux_tglf_serial flux_neo
+for EQU in flux_tglf_serial
 do
     $AWD/exe/as_exe -m $EQU -v $EXP -s 4. -e 5.
     python3 $AWD/compareRegressions.py -m $EQU -v $EXP

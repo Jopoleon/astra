@@ -161,7 +161,7 @@ contains
     SGNIP  = 1.
     SGNBT  = 1.
     IFBEG  = 0.
-    IPEQL  = 4.
+    IPEQL  = 5.
     DTEQ(1, :) = 0.
     DTEQ(2, :) = -99999.
     DTEQ(3, :) =  99999.
