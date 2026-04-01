@@ -18,7 +18,7 @@ do
 done
 
 EXP=aug34954_t
-for EQU in fluxes
+for EQU in flux_feqis
 do
     $AWD/exe/as_exe -m $EQU -v $EXP -s 4. -e 5.
     python3 $AWD/compareRegressions.py -m $EQU -v $EXP
