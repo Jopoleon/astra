@@ -183,8 +183,6 @@ contains
             ldim, pdim,                                              & ! plasma grid dimension
             TRIM(as_nml), LEN_TRIM(as_nml), ierr(1:n_nbi))
 
-        call rabbit_lib_set_background_neutrals(back_neutral_prof, NA1)
-
         if (do_dump) then ! dump Rabbit inputs (for debbuging)
             call rabbit_lib_set_dump_dir(TRIM(awd), LEN_TRIM(awd))
             call rabbit_lib_dump_beams(TRIM(awd), LEN_TRIM(awd), einj, part_mix)
@@ -259,6 +257,8 @@ contains
 
     call rabbit_lib_set_sp_plasma_ratio(species_plasma_ratio, size(species_plasma_ratio))
 
+    call rabbit_lib_set_background_neutrals(back_neutral_prof, NA1)
+
     call rabbit_lib_step(                                       & ! input
         rho_interp_plasma, ne_interp, te_interp, ti_interp,     &
         zef_interp, omg_interp, pdim,                           & ! Kin profiles & their dim
@@ -289,7 +289,7 @@ contains
     if (present(nRF_harm)) then
         nharmonic = nRF_harm
     else
-        nharmonic = 2. ! Default: 2nd harmonic
+        nharmonic = 1. ! Default: 1st harmonic (minority H)
     endif
     if (present(fRF_MHz)) then
         wRF = fRF_MHz*1.e6*GP2
@@ -299,8 +299,8 @@ contains
     if (.not. allocated(te_rf))       allocate(te_rf(nrhoout))
     if (.not. allocated(ne_rf))       allocate(ne_rf(nrhoout))
     if (.not. allocated(p_rf_abs))    allocate(p_rf_abs(nrhoout))
-    if (.not. allocated(p_rf_coll_e)) allocate(p_rf_coll_e(nrhoout))
-    if (.not. allocated(p_rf_coll_i)) allocate(p_rf_coll_i(nrhoout))
+    if (.not. allocated(p_rf_coll_e)) allocate(p_rf_coll_e(nrhoout), source=0.0)
+    if (.not. allocated(p_rf_coll_i)) allocate(p_rf_coll_i(nrhoout), source=0.0)
 
     call qinterp(rhotor1d, te_interp, NA1, rho_rab_out, te_rf, nrhoout)
     call qinterp(rhotor1d, ne_interp, NA1, rho_rab_out, ne_rf, nrhoout)
