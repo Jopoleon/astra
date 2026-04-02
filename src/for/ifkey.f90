@@ -33,7 +33,7 @@ integer function IFKEY(IFKL)
 
 use parameter_inc, only: NRD, NARRX
 use status_inc, only: MU, AMETR, SHIF, ELON, TRIA, EQFF, EQPF, FP, RHO
-use const_inc, only: KEY, ITREQ, DROUT, DTOUT, DPOUT, exp_header, &
+use const_inc, only: KEY, ITREQ, DPOUT, exp_header, &
    NA, NB1, NA1, NAB, NUF, LEQ, TIME, TAU, TINIT, TSCALE, &
    TSTART, TPAUSE, TEQ, DTEQ, HRO, AB, ABC, ROC, XOUT, RTOR, &
    BTOR, IPL, constValues, varValues, internValues, &
@@ -71,7 +71,7 @@ integer :: MARK, J, JJ, NNN, LTOUTO, JTOUT, IDSP, &
     YEAR, MONTH, DAY, HOUR, MINUTE, time_arr(8)
 ! plot_arr dimension: 4*NRD(Mode 5, 8) 320(7) 2*NTIMES(Mode 6) 2*NRD(Modes 1-4)
 integer :: ITO(NTIMES, nplots_max+2)
-double precision :: LINEAV, CHORDN, ABD, ALFA, TIMEB, TROUT, TPOUT=0.d0
+double precision :: LINEAV, CHORDN, ABD, ALFA, TIMEB, TPOUT=0.d0
 double precision, allocatable :: varValues_old(:) 
 double precision, dimension(1) :: rescale_array
 double precision, dimension(NTIMES) :: PRMARK, TIMOD4
@@ -84,9 +84,9 @@ character(len=132) :: STRI, ps_root, PSNAME
 character(len=7), dimension(1), parameter :: rescale_label = (/ 'Rescale' /)
 integer, external :: plotMode
 
-save ITO, IFLAG, TROUT, MARK, LTOUTO, IDSP
+save ITO, IFLAG, MARK, LTOUTO, IDSP
 save NAMEP
-data PRMARK/NTIMES*0./  TROUT/-99999./ &
+data PRMARK/NTIMES*0./ &
      IFLAG/0/  &
      JTOUT/0/ LTOUTO/0/ MARK /0/       IDSP/0/
 
@@ -157,8 +157,6 @@ elseif (IFKL == 256) then
     call textvm(astra_gui%width-18*astra_gui_ref%dxlet, 2, "equil iterations", 16)
     call setColor(Blue) ! Iteration #
     call textvm(astra_gui%width-17*astra_gui_ref%dxlet, astra_gui_ref%dylet+1, STRI(1:14), 14)
-    TROUT = TIME
-    call graph_output(MARK, PRMARK, NAMEP, ITO)
 endif
 
 if (IFKL /= 256 .and. TASK(4:4) /= 'B') call TIMEDT(TIME, 1000.*TAU)
@@ -182,16 +180,8 @@ TTOUT(LTOUT) = TIME
 LTOUT = LTOUT + 1
 JTOUT = JTOUT + 1
 
-! Radial output
-if (MOD10 <= 3 .or. MOD10 >= 8) then
-    if (TIME + .5*TAU >= TROUT + DROUT) then
-        TROUT = TIME
-        call graph_output(MARK, PRMARK, NAMEP, ITO)
-    endif
-endif
-
-! Time output
-if (MOD10 == 6 .or. MOD10 == 7) then
+! Time/radial output
+if (MOD10 <= 3 .or. MOD10 >= 6) then
     call graph_output(MARK, PRMARK, NAMEP, ITO)
 endif
 
@@ -472,7 +462,6 @@ do while(.True.)
         if (TIME >= TIMEB) then
             call refresh_plot(IFKL, MARK, PRMARK, PSNAME)
         else
-            TROUT = TIME
             TTOUT(LTOUT-1) = TIME
             TPOUT = TIME
             do J=1, n_sbr
