@@ -1,14 +1,14 @@
 !---------------------------------------------------------------------
 double precision function GETNUM(FIELD, ERCODE)
 
-use const_inc , only: constValues, varxValues
+use const_inc, only: constValues, varxValues
 use char_manip, only: str_in_list
 use json_vars, only: constNames, varNames
 
 implicit none
 
-integer, intent(out) :: ERCODE
 character(len=*), intent(in) :: FIELD
+integer, intent(out) :: ERCODE
 
 integer :: l, j, jnam, jpos, jpos1, j1, ISHIFT, ios
 character(len=6) :: ZNUM
@@ -41,9 +41,9 @@ else
     if (j1 /= 0) then
         if (j1 > 3) then
             ERCODE = 1
-            return
+        else
+            ZNUM = FIELD(jpos+3: jpos+j1+1)
         endif
-        ZNUM = FIELD(jpos+3: jpos+j1+1)
     else
         ZNUM = FIELD(jpos+3:)
     endif
@@ -94,49 +94,64 @@ character(len=132) :: str_line
 
 if (NFIELD > 20) then
     ERCODE = 4
-    return
-endif
-
+else
 ! Skip all lines beginning with '!'
-j = 1
-do while (j == 1)
-    read(NCH, '(A)', iostat=ios) str_line
-    if (ios < 0) then ! EOF encountered
-        ERCODE = 5
-        return
-    else if (ios > 0) then
-        ERCODE = 1
-        return
-    endif
-    j = index(str_line, '!')
-enddo
+    j = 1
+    do while (j == 1)
+        read(NCH, '(A)', iostat=ios) str_line
+        if (ios < 0) then ! EOF encountered
+            ERCODE = 5
+            EXIT
+        else if (ios > 0) then
+            ERCODE = 1
+            EXIT
+        endif
+        j = index(str_line, '!')
+    enddo
 
-if (j /= 0) then
-    ERCODE = 3
-    write(*, *) 'STREAD error: exclamation marks allowed only at line beginning'
-else  ! Read numbers and/or variable names
-    ERCODE = 5  ! Missing entries
-    read(NCH, '(5A)', iostat=ios) (SFIELD(j), j=1, NFIELD)
-    if (ios < 0) then ! EOF encoutnered
-        ERCODE = 5
-    else if (ios > 0) then
-        ERCODE = 1      ! Error reading, probably never occurring
-    else
-        ERCODE = 0
-        do j=1, NFIELD
-            SFIELD(J) = to_upper(SFIELD(j))
-            if ( ISNUM(SFIELD(j), 12) ) then
-                read(SFIELD(j), *) ARRAY(j) ! read err never occurs, protected by ISNUM
-            else ! In case it is a variable name, like ZRD*, pick its value
-                ARRAY(j) = GETNUM(SFIELD(j), ERCODE)
-                if (ERCODE /= 0) then ! Unrecognised variable name
-                    ERCODE = 1
-                    EXIT
+    if (j /= 0 .and. ERCODE == 0) then
+        ERCODE = 3
+        write(*, *) 'STREAD error: exclamation marks allowed only at line beginning'
+    else  ! Read numbers and/or variable names
+        ERCODE = 5  ! Missing entries
+        read(NCH, '(5A)', iostat=ios) (SFIELD(j), j=1, NFIELD)
+        if (ios < 0) then ! EOF encoutnered
+            ERCODE = 5
+        else if (ios > 0) then
+            ERCODE = 1      ! Error reading, probably never occurring
+        else
+            ERCODE = 0
+            do j=1, NFIELD
+                SFIELD(J) = to_upper(SFIELD(j))
+                if ( ISNUM(SFIELD(j), 12) ) then
+                    read(SFIELD(j), *) ARRAY(j) ! read err never occurs, protected by ISNUM
+                else ! In case it is a variable name, like ZRD*, pick its value
+                    ARRAY(j) = GETNUM(SFIELD(j), ERCODE)
+                    if (ERCODE /= 0) then ! Unrecognised variable name
+                        ERCODE = 1
+                        EXIT
+                    endif
                 endif
-            endif
-        enddo
+            enddo
+        endif
     endif
+endif 
+
+if (ERCODE > 0) then
+    SELECT CASE(ERCODE)
+    CASE(1)
+        write(*, *) '>>> NBI >>> Error in NBI file: unrecognized variable name'
+    CASE(2)
+        write(*, *) '>>> NBI >>> NBI File read error'
+    CASE(3)
+        write(*, *) '>>> NBI >>> Wrong NBI configuration file format. '
+        write(*, *) '            More records expected than available.'
+    CASE(4)
+        write(*, *) '>>> NBI calling STREAD: array out of limits'
+    CASE(5)
+        write(*, *)'>>> NBI >>> Wrong NBI configuration file format: '
+    END SELECT
+    stop
 endif
 
-return
 end subroutine STREAD
