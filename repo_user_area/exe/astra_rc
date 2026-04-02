@@ -23,7 +23,7 @@ export TORB_LIB="-L${TORB_LIBDIR} -ltorbeamB  -Wl,-rpath,${TORB_LIBDIR} ${IRC_LI
 
 # RABBIT
 
-RABBIT_HOME=${ASTRA_EXT}/rabbit/nov24
+RABBIT_HOME=${ASTRA_EXT}/rabbit/mar26
 RABBIT_LIBDIR=${RABBIT_HOME}/lib
 export RABBIT_LIB="-L${RABBIT_LIBDIR} -lrabbit -Wl,-rpath,${RABBIT_LIBDIR}"
 export RABBIT_INC=${RABBIT_HOME}/inc
