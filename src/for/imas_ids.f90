@@ -91,7 +91,7 @@ endtype type_global_param
 type type_rz2D  !    Structure for list of R,Z positions (2D)
     real(DP),pointer :: r(:,:) => null()     ! /r - Major radius [m]
     real(DP),pointer :: z(:,:) => null()     ! /z - Altitude [m]
-    real(DP),pointer :: teta2d(:) => null()     ! /theta [rad]
+    real(DP),pointer :: theta2d(:) => null()     ! /theta [rad]
     real(DP),pointer :: rmin(:,:) => null()     ! /r minor local [m]
     real(DP),pointer :: psirz(:,:) => null()     ! /r minor local [m]
 !  real(DP),pointer :: Epol_eta(:,:) => null()     ! /poloidal electric field PS over eta [V/m * sigma]

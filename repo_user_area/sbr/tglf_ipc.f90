@@ -262,7 +262,7 @@ contains
 
         deallocate(pfn_equ)
 
-        theta_equ = equil_now%coord_sys%position%teta2d
+        theta_equ = equil_now%coord_sys%position%theta2d
         dtheta_elite = GP2/dble(nthe_elite - 1)
         theta_elite = (/ ((jthe - 1.)*dtheta_elite, jthe=1, nthe_elite) /)
     endif

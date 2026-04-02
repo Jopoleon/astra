@@ -4,7 +4,7 @@ subroutine GS_SOLVER( &
 ! Input:
     equil_solver, &
     nr_equ, &  ! radial grid
-    nteta, & ! poloidal grid
+    ntheta, & ! poloidal grid
     nbnd, &  ! # boundary points
     jna1, & ! radial grid for input (dimension of all arrays below)
     rbnd, zbnd, &
@@ -36,7 +36,7 @@ implicit none
 
 integer, parameter :: nbtabp=1000
 
-integer, intent(in) :: equil_solver, nteta, nr_equ, jna1, nbnd, ncoils, &
+integer, intent(in) :: equil_solver, ntheta, nr_equ, jna1, nbnd, ncoils, &
     iter_step, iter_part, ipsibcf, icircq, ipctrl, &
     iter_itreq, inume_3, ifbey, i_rotation
 
@@ -130,7 +130,7 @@ if (ifbey == 0 .and. i_call_gsss == 0) then
     endif
 endif
 
-n_theta = nteta
+n_theta = ntheta
 if (n_theta == 1) n_theta = nbnd
 if (n_theta == 0) n_theta = 1
 

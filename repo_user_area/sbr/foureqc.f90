@@ -32,7 +32,7 @@ allocate(four_coef(four_types, four_order_max, nrho))
 ! (for file reading and tglf_four_coeff setting respectevely)
 
 do jthe=1, ntheta ! R, Z, r, theta, psin values
-    theta(jthe) = equil_now%coord_sys%position%teta2d(jthe) ! theta(ntheta)
+    theta(jthe) = equil_now%coord_sys%position%theta2d(jthe) ! theta(ntheta)
     do jrho=1, nrho
         RR(jrho, jthe) = equil_now%coord_sys%position%r(jrho, jthe)    ! R(nrho, ntheta)
         ZZ(jrho, jthe) = equil_now%coord_sys%position%z(jrho, jthe)    ! Z(nrho, ntheta)

@@ -58,10 +58,10 @@ nrp = 256
 nstep = max(0, ifbey-1)
 
 ! grids
-parameters_equil%dt    = tau_step
-parameters_equil%time  = time_a
-parameters_equil%neql  = nr_equ
-parameters_equil%nteta = n_theta + 2
+parameters_equil%dt     = tau_step
+parameters_equil%time   = time_a
+parameters_equil%neql   = nr_equ
+parameters_equil%ntheta = n_theta + 2
 parameters_equil%prename = trim(parameters_equil%prename) // trim(MACHINE) // '/'
 
 !defaults

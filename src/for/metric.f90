@@ -106,7 +106,7 @@ if (LEQ(5) < 3) then
         allocate(equil_now%coord_sys%position%z(nrho_surf, nthe_surf))
         allocate(equil_now%coord_sys%position%rmin(nrho_surf, nthe_surf))
         allocate(equil_now%coord_sys%position%psirz(nrho_surf, nthe_surf))
-        allocate(equil_now%coord_sys%position%teta2d(nthe_surf))
+        allocate(equil_now%coord_sys%position%theta2d(nthe_surf))
     endif
     if (.not. associated(equil_now%profiles_1d%rho_tor_norm)) then
         allocate(equil_now%profiles_1d%areat  (nrho_surf))
@@ -160,7 +160,7 @@ if (LEQ(5) < 3) then
         prof_as = UPDWN + AMETR(1:NA1)*ELON(1:NA1)*SIN(theta)
         call qinterp(XRHO(1:NA1), prof_as, NA1, equil_now%profiles_1d%rho_tor_norm, prof_eq, nrho_surf)
         equil_now%coord_sys%position%z(:, jthe) = prof_eq
-        equil_now%coord_sys%position%teta2d(jthe) = theta
+        equil_now%coord_sys%position%theta2d(jthe) = theta
     enddo
 endif
 
@@ -1051,7 +1051,7 @@ integer, parameter :: itfbe_ctrl=0
 
 integer, intent(in) :: equil_solver
 
-integer :: i, j, jneql, jnteta, jnbnd, j_save_bound, j_rotation
+integer :: i, j, jneql, jntheta, jnbnd, j_save_bound, j_rotation
 double precision :: yrocnew, iplnew, ychipfp, yipl, yupdwn
 double precision, dimension(NA1) :: yg11, yg22, yg33, yvr, yvrs, yslat, yg41, &
     ygradro, yipol, ydroda, ypres, ybmaxt, ybmint, yfp, &
@@ -1065,8 +1065,8 @@ data j_save_bound/0/
 
 call markloc('A2GSSOLVER')
 
-jneql  = abs(nint(NEQUIL))
-jnteta = abs(nint(MEQUIL))
+jneql   = abs(nint(NEQUIL))
+jntheta = abs(nint(MEQUIL))
 
 ! n_bnd=51 <-> ABC, ELONG, TRIAN setting for boundary
 
@@ -1145,7 +1145,7 @@ endif
 call GS_SOLVER( &
 ! Input:
     equil_solver, &
-    jneql, jnteta, jnbnd, NA1, &
+    jneql, jntheta, jnbnd, NA1, &
     rbnd, zbnd, & 
     XRHO(1: NA1), RTOR, BTOR, ROC, yfp, ypres, &
     VOLUME, n_coils, yccoil, yvcoil, i, IPART, ITREQ, &

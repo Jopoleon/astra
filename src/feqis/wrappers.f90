@@ -106,7 +106,7 @@ double precision :: temp_err, raxold, zaxold, temp_err2, raxoldo, zaxoldo, &
     raxtmp, zaxtmp, det, psistab1o, psistab2o, psro, pszo, dist1, dist2, &
     cibapr, cibazr, rleft, rright, zup, zdown, dcrdr, dcrdz, dczdr, dczdz, curr
 
-! First, initialized initial guess coming from prescribed boundary current density: jrhoteta
+! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
 
 SELECT CASE(refit_mode)
 
@@ -115,7 +115,7 @@ CASE(-1) ! 1 turn only, linearized solution
 
 CASE(0) ! full static convergent solution with given currents
 ! Start iterations to find self-consistent solution
-! first, initialized initial guess coming from prescribed boundary current density: jrhoteta
+! first, initialized initial guess coming from prescribed boundary current density: jrhotheta
     if (j_init == 0) then
         call interp_j_fromrhotorz
 ! Rescale current density
@@ -191,7 +191,7 @@ double precision :: curr, dum1, dum2, zum1, zum2, delr, delz
 double precision, dimension(9) :: c
 double precision, dimension(nr2, nz2) :: g
 
-!first, initialized initial guess coming from prescribed boundary current density: jrhoteta
+!first, initialized initial guess coming from prescribed boundary current density: jrhotheta
 if (j_init == 0) then
     call interp_j_fromrhotorz
 ! Rescale current density
@@ -432,8 +432,8 @@ use parameters_a2equil, only: type_parameters, max_iter, &
     err_find_biquad_in, err_epsilon_in, err_gaptolez_in, err_fix_boundary_in, &
     err_find_oxpoints_derivs_in
 use imas_ids, only: type_equilibrium
-use pbe_core, only: nrho, nteta, raxp, zaxp, rbndp, zbndp, &
-    teta, tetaexp, raxp, zaxp, &
+use pbe_core, only: nrho, ntheta, raxp, zaxp, rbndp, zbndp, &
+    theta, thetaexp, raxp, zaxp, &
     pressure, ipol, pprime, ffprime, &
     psigrid, psigrida, rexp, zexp
 use fbe_core, only: nrho2d, use_limiter, &
@@ -463,7 +463,7 @@ data it_was_fbe_before/0/
 save it_was_fbe_before
 
 if (j_call == 0) then
-    nteta = equil_in%eqgeometry%boundary%npoints
+    ntheta = equil_in%eqgeometry%boundary%npoints
     nrho = params%neql
     allocate(psigrid(nrho))
     psistabR = 0.
@@ -489,31 +489,31 @@ if (j_call == 0) then
 
     Rgeom0 = equil_in%global_param%toroid_field%r0
     max_iter = 1000 !hardwired
-! teta for polar grid, goes from 0 to 2*pi-dteta, but point nt + 1 is the periodic one
+! theta for polar grid, goes from 0 to 2*pi-dtheta, but point nt + 1 is the periodic one
     psi0_astra = equil_in%profiles_1d%psi(1)
     psib_astra = equil_in%profiles_1d%psi(nrho)
     raxp = raxis_astra
     zaxp = zaxis_astra
     psibnd = -1.e6
     use_limiter = use_limiter_astra
-    allocate(teta(nteta+1))
+    allocate(theta(ntheta+1))
     allocate(pressure(nrho))
     allocate(pprime(nrho))
     allocate(ffprime(nrho))
     allocate(psigrida(nrho))
     allocate(ipol(nrho))
-    allocate(rexp(2*nteta))
-    allocate(zexp(2*nteta))
-    allocate(tetaexp(2*nteta))
-    allocate(rbndp(2*nteta))
-    allocate(zbndp(2*nteta))
-    allocate(rbnd(2*nteta))
-    allocate(zbnd(2*nteta))
+    allocate(rexp(2*ntheta))
+    allocate(zexp(2*ntheta))
+    allocate(thetaexp(2*ntheta))
+    allocate(rbndp(2*ntheta))
+    allocate(zbndp(2*ntheta))
+    allocate(rbnd(2*ntheta))
+    allocate(zbnd(2*ntheta))
 endif
 
 if (ifplasma == 1) then
-    do i=1, nteta + 1
-        teta(i) = GPI2*(i - 1.)/(nteta + 0.)
+    do i=1, ntheta + 1
+        theta(i) = GPI2*(i - 1.)/(ntheta + 0.)
     enddo
 
     btor0   = equil_in%global_param%toroid_field%b0
@@ -536,48 +536,48 @@ if (ifplasma == 1) then
     if (params%k_fixfree == 1.and.fix_shape_after_fbe_off == 1) it_was_fbe_before = 1
 
     if (params%k_fixfree == 0 .and. it_was_fbe_before == 0) then ! If 1, comes from free boundary
-        rexp(1:nteta) = equil_in%eqgeometry%boundary%r(1:nteta)
-        zexp(1:nteta) = equil_in%eqgeometry%boundary%z(1:nteta)
+        rexp(1:ntheta) = equil_in%eqgeometry%boundary%r(1:ntheta)
+        zexp(1:ntheta) = equil_in%eqgeometry%boundary%z(1:ntheta)
 ! Define angle not based on mag axis, but on geometrical center
         if (j_call == 0) then
             raxp = raxis_astra
             zaxp = zaxis_astra
         endif
 
-        do i=1, nteta
-            tetaexp(i) = pol_angle(raxp, zaxp, rexp(i), zexp(i))
+        do i=1, ntheta
+            thetaexp(i) = pol_angle(raxp, zaxp, rexp(i), zexp(i))
         enddo
 
 ! Order points
-        rdum(1:nteta) = rexp(1:nteta)
-        zdum(1:nteta) = zexp(1:nteta)
-        tdum(1:nteta) = tetaexp(1:nteta)
-        do i=1, nteta
-            j = minloc(tdum(1:nteta), 1)
+        rdum(1:ntheta) = rexp(1:ntheta)
+        zdum(1:ntheta) = zexp(1:ntheta)
+        tdum(1:ntheta) = thetaexp(1:ntheta)
+        do i=1, ntheta
+            j = minloc(tdum(1:ntheta), 1)
             rexp(i) = rdum(j)
             zexp(i) = zdum(j)
-            tetaexp(i) = tdum(j)
+            thetaexp(i) = tdum(j)
             tdum(j) = 1.e6
         enddo
 
 ! Reorder
-        if (tetaexp(1) > tetaexp(nteta)) then ! Reorder
+        if (thetaexp(1) > thetaexp(ntheta)) then ! Reorder
             j = 1
-            do k=1, nteta-1
-                if (tetaexp(k + 1) < tetaexp(k)) j = k + 1   ! j is the first teta above 0
+            do k=1, ntheta-1
+                if (thetaexp(k + 1) < thetaexp(k)) j = k + 1   ! j is the first theta above 0
             enddo
-            if (j > 1) tetaexp(1:j-1) = tetaexp(1:j-1) - GPI2
+            if (j > 1) thetaexp(1:j-1) = thetaexp(1:j-1) - GPI2
         endif
 
-        do i=1, nteta
-            rexp(nteta + i) = rexp(i)
-            zexp(nteta + i) = zexp(i)
-            tetaexp(nteta + i) = tetaexp(i) + GPI2
+        do i=1, ntheta
+            rexp(ntheta + i) = rexp(i)
+            zexp(ntheta + i) = zexp(i)
+            thetaexp(ntheta + i) = thetaexp(i) + GPI2
         enddo
-        call linterp(tetaexp(1:nteta*2), rexp(1:nteta*2), nteta*2, teta(1:nteta), rbndp(1:nteta), nteta)
-        call linterp(tetaexp(1:nteta*2), zexp(1:nteta*2), nteta*2, teta(1:nteta), zbndp(1:nteta), nteta)
-        rbnd(1:nteta) = rbndp(1:nteta)
-        zbnd(1:nteta) = zbndp(1:nteta)
+        call linterp(thetaexp(1:ntheta*2), rexp(1:ntheta*2), ntheta*2, theta(1:ntheta), rbndp(1:ntheta), ntheta)
+        call linterp(thetaexp(1:ntheta*2), zexp(1:ntheta*2), ntheta*2, theta(1:ntheta), zbndp(1:ntheta), ntheta)
+        rbnd(1:ntheta) = rbndp(1:ntheta)
+        zbnd(1:ntheta) = zbndp(1:ntheta)
     endif
 endif
 
@@ -791,11 +791,11 @@ end subroutine equil_feqis_init_circ
 !--------------------------------------------------------------------
 subroutine fix_boundary_feqis(j_init)
 
-use pbe_core, only: nrho, nteta, raxp, zaxp, rbndp, zbndp, rho, teta, &
-    psiaxisp, psirhoteta, psigrida, psibndp, &
+use pbe_core, only: nrho, ntheta, raxp, zaxp, rbndp, zbndp, rho, theta, &
+    psiaxisp, psirhotheta, psigrida, psibndp, &
     psia_1d, ffp_1d, ppp_1d, &
     ffprime, pprime, pressure, ipol, &
-    Rpol, Zpol, Rpul, Zpul, jrhoteta
+    Rpol, Zpol, Rpul, Zpul, jrhotheta
 use global_params, only: Rgeom0, Btor0, iplasma
 use scalars, only: li3, li_aug, betapol, betapol_iter, wkin, bpkin, psplex
 use transport2fbe, only: raxis_astra, zaxis_astra, psi0_astra, psib_astra, &
@@ -817,9 +817,9 @@ integer, intent(in) :: j_init
 integer :: i, j, jr, jt, ierr
 double precision :: psiaxis_new, cnorm, rax_new, zax_new, rhoedge
 double precision, dimension(nrho) :: q_new, effprimp, epprimp
-double precision, dimension(nteta) :: thetap_i
+double precision, dimension(ntheta) :: thetap_i
 double precision, dimension(512, 512) :: psisave
-double precision, dimension(nrho, nteta) :: rmaj2, jcbn2, darea2, &
+double precision, dimension(nrho, ntheta) :: rmaj2, jcbn2, darea2, &
     r_min, yy2, jrho2, gradr2, darea, dl_dt
 
 data ierr/0/
@@ -827,13 +827,13 @@ save psisave, ierr
 
 ! initial guess
 if (j_init == 0) then
-    allocate(rho(nrho, nteta+1))
-    allocate(rpol(nrho, nteta))
-    allocate(zpol(nrho, nteta))
-    allocate(rpul(nrho, nteta))
-    allocate(zpul(nrho, nteta))
-    allocate(psirhoteta(nrho, nteta))
-    allocate(jrhoteta(nrho, nteta+1))
+    allocate(rho(nrho, ntheta+1))
+    allocate(rpol(nrho, ntheta))
+    allocate(zpol(nrho, ntheta))
+    allocate(rpul(nrho, ntheta))
+    allocate(zpul(nrho, ntheta))
+    allocate(psirhotheta(nrho, ntheta))
+    allocate(jrhotheta(nrho, ntheta+1))
     allocate(psia_1d(nrho))
     allocate(ppp_1d(nrho))
     allocate(ffp_1d(nrho))
@@ -864,59 +864,59 @@ if (j_init == 0) then
     allocate(trialbez(nrho))
     allocate(phibez(nrho))
     allocate(qbez(nrho))
-    allocate(t2dbez(nteta))
+    allocate(t2dbez(ntheta))
     allocate(rbp2_b2bez(nrho))
     allocate(pprimebez(nrho))
     allocate(pressbez(nrho))
     allocate(ipolbez(nrho))
     allocate(shivbez(nrho))
     allocate(squarebez(nrho))
-    allocate(rpbez(nrho, nteta))
-    allocate(zpbez(nrho, nteta))
-    allocate(rminbez(nrho, nteta))
-    allocate(bpcellbez(nrho, nteta))
-    allocate(bcellbez(nrho, nteta))
-    allocate(rmin2dbez(nrho, nteta))
-    allocate(jrhobez(nrho, nteta))
-    allocate(bpcell2dbez(nrho, nteta))
-    allocate(bcell2dbez(nrho, nteta))
-    allocate(lambda2d(nrho, nteta))
-    allocate(fsa_kernel(nrho, nteta))
-    allocate(dator(nrho, nteta))
+    allocate(rpbez(nrho, ntheta))
+    allocate(zpbez(nrho, ntheta))
+    allocate(rminbez(nrho, ntheta))
+    allocate(bpcellbez(nrho, ntheta))
+    allocate(bcellbez(nrho, ntheta))
+    allocate(rmin2dbez(nrho, ntheta))
+    allocate(jrhobez(nrho, ntheta))
+    allocate(bpcell2dbez(nrho, ntheta))
+    allocate(bcell2dbez(nrho, ntheta))
+    allocate(lambda2d(nrho, ntheta))
+    allocate(fsa_kernel(nrho, ntheta))
+    allocate(dator(nrho, ntheta))
 
     raxp = raxis_astra
     zaxp = zaxis_astra
     psiaxisp = psi0_astra
     psibndp = psib_astra
     do jr=1, Nrho
-        do jt=1, Nteta
+        do jt=1, Ntheta
             lambda2d(jr, jt) = (jr - 1)/(Nrho - 1.)
         enddo
     enddo
-    do jt=1, Nteta
-         psirhoteta(1: Nrho, jt) = psigrida(1: Nrho)
+    do jt=1, Ntheta
+         psirhotheta(1: Nrho, jt) = psigrida(1: Nrho)
     enddo
 else
-    psirhoteta(1:nrho, 1:nteta) = psisave(1:nrho, 1:nteta)
-    psiaxisp = psirhoteta(   1, 1)
-    psibndp  = psirhoteta(nrho, 1)
+    psirhotheta(1:nrho, 1:ntheta) = psisave(1:nrho, 1:ntheta)
+    psiaxisp = psirhotheta(   1, 1)
+    psibndp  = psirhotheta(nrho, 1)
 endif
 
 !boundary from previous time step
 
-call PHI_EQ_2d_PBE(nrho, nteta, psigrida(1:nrho), iplasma, &
+call PHI_EQ_2d_PBE(nrho, ntheta, psigrida(1:nrho), iplasma, &
     ffprime(1:nrho), pprime(1:nrho), btor0*rgeom0, &
-    rbndp(1:nteta), zbndp(1:nteta), Raxp, Zaxp, psiaxisp, psibndp, &
-    solve_fix, j_init, rpbez(1:nrho, 1:nteta), zpbez(1:nrho, 1:nteta), &
-    psirhoteta(1:nrho, 1:nteta), psibez(1:nrho), &   ! psinorm new
-    lambda2d(1:nrho, 1:nteta), t2dbez(1:nteta), &
+    rbndp(1:ntheta), zbndp(1:ntheta), Raxp, Zaxp, psiaxisp, psibndp, &
+    solve_fix, j_init, rpbez(1:nrho, 1:ntheta), zpbez(1:nrho, 1:ntheta), &
+    psirhotheta(1:nrho, 1:ntheta), psibez(1:nrho), &   ! psinorm new
+    lambda2d(1:nrho, 1:ntheta), t2dbez(1:ntheta), &
     psiaxis_new, cnorm, rax_new, zax_new, thetap_i, rmaj2, &
     jcbn2, q_new, rhoedge, darea2, epprimp, effprimp, r_min, yy2, gradr2, darea, ierr, dl_dt)
 
 raxp = rax_new
 zaxp = zax_new
 psiaxisp = psiaxis_new
-psisave(1:nrho, 1:nteta) = psirhoteta(1:nrho, 1:nteta)
+psisave(1:nrho, 1:ntheta) = psirhotheta(1:nrho, 1:ntheta)
 
 ! notice that qedge is the extrapolate of q_new at neql
 ffprimebez(1:nrho) = effprimp(1:nrho)/cnorm
@@ -926,14 +926,14 @@ ipolbez   (1:nrho) = ipol    (1:nrho)
 
 !additional calculations
 
-do jt=1, nteta
+do jt=1, ntheta
     do jr=1, nrho
-        jrhoteta(jr, jt) = (effprimp(jr)/rpbez(jr, jt) + &
+        jrhotheta(jr, jt) = (effprimp(jr)/rpbez(jr, jt) + &
             rpbez(jr, jt)*epprimp(jr))/GPI2/0.4/GPI/cnorm
     enddo
 enddo
 
-do jt=1, nteta
+do jt=1, ntheta
     do jr=1, nrho-1
         jrho2(jr, jt) = ( 0.5*(effprimp(jr ) + effprimp(jr+1)) * 1./Rmaj2(jr, jt) + &
             Rmaj2(jr, jt)*0.5*(epprimp(jr+1) + epprimp(jr)))/GPI2/0.4/GPI/cnorm
@@ -947,17 +947,17 @@ R_curr_0D = sqrt(sum(jrho2(1:jr, :)*Rmaj2(1:jr, :)**2 * darea2(1:jr, :))/ &
                  sum(jrho2(1:jr, :)*darea2(1:jr, :)))
 
 !regrid
-call build_2dgrid(nrho, nteta, psibez(1:nrho), &
-    psirhoteta(1:nrho, 1:nteta),jrho2(1:nrho,1:nteta),darea2(1:nrho,1:nteta),YY2(1:nrho,1:nteta), &
+call build_2dgrid(nrho, ntheta, psibez(1:nrho), &
+    psirhotheta(1:nrho, 1:ntheta),jrho2(1:nrho,1:ntheta),darea2(1:nrho,1:ntheta),YY2(1:nrho,1:ntheta), &
     rgeom0, pressure(1:nrho), &
-    btor0, ipol(1:nrho), iplasma, rpbez(1:nrho, 1:nteta), zpbez(1:nrho, 1:nteta), &
-    rmaj2(1:nrho, 1:nteta), r_min(1:nrho, 1:nteta), jcbn2(1:nrho, 1:nteta), &
-    thetap_i(1:nteta), q_new(1:nrho), rhoedge, gradr2(1:nrho, 1:nteta), &
+    btor0, ipol(1:nrho), iplasma, rpbez(1:nrho, 1:ntheta), zpbez(1:nrho, 1:ntheta), &
+    rmaj2(1:nrho, 1:ntheta), r_min(1:nrho, 1:ntheta), jcbn2(1:nrho, 1:ntheta), &
+    thetap_i(1:ntheta), q_new(1:nrho), rhoedge, gradr2(1:nrho, 1:ntheta), &
     g2bez(1:nrho), gm1bez(1:nrho), areatbez(1:nrho), perimbez(1:nrho), vbez(1:nrho), &
     g1bez(1:nrho), ggrhobez(1:nrho), bmaxbez(1:nrho), bminbez(1:nrho), &
     gm4bez(1:nrho), bdb0bez(1:nrho), gm5bez(1:nrho), fofbbez(1:nrho), surfbez(1:nrho), & ! lateral surface
     li3, betapol, psplex, &
-    bpcell2dbez(1:nrho, 1:nteta), bcell2dbez(1:nrho, 1:nteta), &
+    bpcell2dbez(1:nrho, 1:ntheta), bcell2dbez(1:nrho, 1:ntheta), &
     routbez(1:nrho), rinbez(1:nrho), kbez(1:nrho), triaubez(1:nrho), trialbez(1:nrho), shifbez(1:nrho), &
     gm41bez(1:nrho), qbez(1:nrho), shivbez(1:nrho), squarebez(1:nrho), li_aug, betapol_iter, dl_dt, &
     wkin, bpkin)
@@ -965,27 +965,27 @@ call build_2dgrid(nrho, nteta, psibez(1:nrho), &
 phibez(1:nrho) = 0.
 rbp2_b2bez(1:nrho) = 0.
 
-rmin2dbez(1:nrho, 1:nteta) = r_min   (1:nrho, 1:nteta)
-dator    (1:nrho, 1:nteta) = darea   (1:nrho, 1:nteta)
-jrhobez  (1:nrho, 1:nteta) = jrhoteta(1:nrho, 1:nteta)
+rmin2dbez(1:nrho, 1:ntheta) = r_min   (1:nrho, 1:ntheta)
+dator    (1:nrho, 1:ntheta) = darea   (1:nrho, 1:ntheta)
+jrhobez  (1:nrho, 1:ntheta) = jrhotheta(1:nrho, 1:ntheta)
 
-rpol(1:nrho, 1:nteta) = rpbez(1:nrho, 1:nteta)
-zpol(1:nrho, 1:nteta) = zpbez(1:nrho, 1:nteta)
-rpul(1:nrho, 1:nteta) = rpbez(1:nrho, 1:nteta)
-zpul(1:nrho, 1:nteta) = zpbez(1:nrho, 1:nteta)
+rpol(1:nrho, 1:ntheta) = rpbez(1:nrho, 1:ntheta)
+zpol(1:nrho, 1:ntheta) = zpbez(1:nrho, 1:ntheta)
+rpul(1:nrho, 1:ntheta) = rpbez(1:nrho, 1:ntheta)
+zpul(1:nrho, 1:ntheta) = zpbez(1:nrho, 1:ntheta)
 
 gm41bez  (1:nrho) = 0.
 dpsidvbez(1:nrho) = 0.
 
 ! additional info from rectangular grid
-do j=1, nteta
+do j=1, ntheta
     do i=1, nrho
         rho(i, j) = sqrt((rpol(i, j) - raxp)**2 + (zpol(i, j) - zaxp)**2)
     enddo
 enddo
-teta(1:nteta) = t2dbez(1:nteta)
-rho(1:nrho, nteta+1) = rho(1:nrho, 1)
-teta(nteta + 1) = teta(1) + GPI2
+theta(1:ntheta) = t2dbez(1:ntheta)
+rho(1:nrho, ntheta+1) = rho(1:nrho, 1)
+theta(ntheta + 1) = theta(1) + GPI2
 
 psia_1d(1:nrho) = psigrida(1:nrho)
 ffp_1d (1:nrho) = ffprime (1:nrho)
@@ -1001,8 +1001,8 @@ use pi_vars, only: GPI, GPI2
 use imas_ids, only: type_equilibrium
 use fbe_core, only: nr2, nz2, psirz, &
     Rrect, Zrect, psiaxis, psibnd
-use pbe_core, only: nrho, nteta, &
-    psiaxisp, psibndp, psirhoteta
+use pbe_core, only: nrho, ntheta, &
+    psiaxisp, psibndp, psirhotheta
 use global_params, only: iplasma
 use scalars, only: betapol, li3, li_aug, betapol_iter, wkin, bpkin, psplex
 use transfer_functions, only: rpbez, zpbez, t2dbez, &
@@ -1030,15 +1030,15 @@ equil_out%global_param%i_plasma = iplasma*1.e6
 equil_out%global_param%wkin   = wkin ! volume integral of pressure
 equil_out%global_param%bpkin   = bpkin ! volume integral of Bp**2/(2mu0)
 
-equil_out%coord_sys%position%teta2d(1:nteta) = t2dbez(1:nteta)
-equil_out%coord_sys%position%psirz(1:nrho, 1:nteta) = psirhoteta (1:nrho, 1:nteta)/GPI2
-equil_out%coord_sys%position%r    (1:nrho, 1:nteta) = rpbez      (1:nrho, 1:nteta)
-equil_out%coord_sys%position%z    (1:nrho, 1:nteta) = zpbez      (1:nrho, 1:nteta)
-equil_out%coord_sys%position%rmin (1:nrho, 1:nteta) = rmin2dbez  (1:nrho, 1:nteta)
-equil_out%coord_sys%bpcell        (1:nrho, 1:nteta) = bpcell2dbez(1:nrho, 1:nteta)
-equil_out%coord_sys%bcell         (1:nrho, 1:nteta) = bcell2dbez (1:nrho, 1:nteta)
-equil_out%coord_sys%darea         (1:nrho, 1:nteta) = dator(1:nrho, 1:nteta)
-equil_out%coord_sys%jphi          (1:nrho, 1:nteta) = jrhobez(1:nrho, 1:nteta)
+equil_out%coord_sys%position%theta2d(1:ntheta) = t2dbez(1:ntheta)
+equil_out%coord_sys%position%psirz(1:nrho, 1:ntheta) = psirhotheta (1:nrho, 1:ntheta)/GPI2
+equil_out%coord_sys%position%r    (1:nrho, 1:ntheta) = rpbez      (1:nrho, 1:ntheta)
+equil_out%coord_sys%position%z    (1:nrho, 1:ntheta) = zpbez      (1:nrho, 1:ntheta)
+equil_out%coord_sys%position%rmin (1:nrho, 1:ntheta) = rmin2dbez  (1:nrho, 1:ntheta)
+equil_out%coord_sys%bpcell        (1:nrho, 1:ntheta) = bpcell2dbez(1:nrho, 1:ntheta)
+equil_out%coord_sys%bcell         (1:nrho, 1:ntheta) = bcell2dbez (1:nrho, 1:ntheta)
+equil_out%coord_sys%darea         (1:nrho, 1:ntheta) = dator(1:nrho, 1:ntheta)
+equil_out%coord_sys%jphi          (1:nrho, 1:ntheta) = jrhobez(1:nrho, 1:ntheta)
 
 equil_out%eqgeometry%rectgrid%npointsr = nr2
 equil_out%eqgeometry%rectgrid%npointsz = nz2
@@ -1096,20 +1096,20 @@ use fbe_core, only: nr, nr2, nz, nbnd, iaxis, jaxis, &
     raus, rinner, zbot, ztop, &
     Rrect, Zrect, dr, dz, rax, zax, rbnd, zbnd, &
     psiaxis, psibnd, psirz
-use pbe_core, only: nteta, teta, raxp, zaxp, rbndp, zbndp, &
+use pbe_core, only: ntheta, theta, raxp, zaxp, rbndp, zbndp, &
     psiaxisp, psibndp
 use feqis_tools, only: pol_angle, interp2d_psi
 
 implicit none
 
 integer :: i, j, k, j4
-double precision :: x1, x2, t1, t2, t3, z1, z2, z3, x11, dx, dteta
-double precision, dimension(500) :: teta_fbe
+double precision :: x1, x2, t1, t2, t3, z1, z2, z3, x11, dx, dtheta
+double precision, dimension(500) :: theta_fbe
 
-do i=1, nteta + 1
-    teta(i) = GPI2*(i - 1.)/(nteta + 0.)
+do i=1, ntheta + 1
+    theta(i) = GPI2*(i - 1.)/(ntheta + 0.)
 enddo
-dteta = teta(2) - teta(1)
+dtheta = theta(2) - theta(1)
 
 ! Find boundary
 j = jaxis
@@ -1124,30 +1124,30 @@ else
     rbnd(1) = Rrect(k) - (psirz(k, j) - psibnd)/(psirz(k, j) - psirz(k-1, j))*dr
 endif
 zbnd(1) = Zrect(j)
-teta_fbe(1) = pol_angle(rax, zax, rbnd(1), zbnd(1))
+theta_fbe(1) = pol_angle(rax, zax, rbnd(1), zbnd(1))
 
-theta_loop: do i=2, nteta
-    dx = sqrt((dr*cos(teta(i)))**2 + (dz*sin(teta(i)))**2)
+theta_loop: do i=2, ntheta
+    dx = sqrt((dr*cos(theta(i)))**2 + (dz*sin(theta(i)))**2)
     x1 = sqrt((rbnd(i-1) - rax)**2 + (zbnd(i-1) - zax)**2)
-    teta_fbe(i) = teta_fbe(i-1) + dteta
+    theta_fbe(i) = theta_fbe(i-1) + dtheta
 
-    t1 = rax + x1*cos(teta_fbe(i))
-    t2 = zax + x1*sin(teta_fbe(i))
+    t1 = rax + x1*cos(theta_fbe(i))
+    t2 = zax + x1*sin(theta_fbe(i))
 
     if (t1 >= raus) then
-        x1 = (raus - rax)/cos(teta_fbe(i))
+        x1 = (raus - rax)/cos(theta_fbe(i))
     endif
     if (t1 <= rinner) then
-        x1 = (rinner - rax)/cos(teta_fbe(i))
+        x1 = (rinner - rax)/cos(theta_fbe(i))
     endif
     if (t2 >= ztop) then
-        x1 = (ztop - zax)/sin(teta_fbe(i))
+        x1 = (ztop - zax)/sin(theta_fbe(i))
     endif
     if (t2 <= zbot) then
-        x1 = (zbot - zax)/sin(teta_fbe(i))
+        x1 = (zbot - zax)/sin(theta_fbe(i))
     endif
-    t1 = rax + x1*cos(teta_fbe(i))
-    t2 = zax + x1*sin(teta_fbe(i))
+    t1 = rax + x1*cos(theta_fbe(i))
+    t2 = zax + x1*sin(theta_fbe(i))
     t3 = interp2d_psi(t1, t2, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
 
     if (t3 == psibnd) then
@@ -1155,8 +1155,8 @@ theta_loop: do i=2, nteta
         zbnd(i) = t2
     elseif (t3 < psibnd) then
         do
-            z1 = rax + (x1 - dx)*cos(teta_fbe(i))
-            z2 = zax + (x1 - dx)*sin(teta_fbe(i))
+            z1 = rax + (x1 - dx)*cos(theta_fbe(i))
+            z2 = zax + (x1 - dx)*sin(theta_fbe(i))
             z3 = interp2d_psi(z1, z2, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             if (z3 < psibnd) then
                 dx = 1.1*dx
@@ -1165,32 +1165,32 @@ theta_loop: do i=2, nteta
             endif
         enddo
         x11 = x1 - (t3 - psibnd)/(t3 - z3)*dx
-        rbnd(i) = rax + x11*cos(teta_fbe(i))
-        zbnd(i) = zax + x11*sin(teta_fbe(i))
+        rbnd(i) = rax + x11*cos(theta_fbe(i))
+        zbnd(i) = zax + x11*sin(theta_fbe(i))
     else
         do
             j4 = 0
             x2 = x1 + dx
-            z1 = rax + x2*cos(teta_fbe(i))
-            z2 = zax + x2*sin(teta_fbe(i))
+            z1 = rax + x2*cos(theta_fbe(i))
+            z2 = zax + x2*sin(theta_fbe(i))
             if (z1 >= raus) then
-                x2 = (raus - rax)/cos(teta_fbe(i))
+                x2 = (raus - rax)/cos(theta_fbe(i))
                 j4 = 1
             endif
             if (z1 <= rinner) then
-                x2 = (rinner - rax)/cos(teta_fbe(i))
+                x2 = (rinner - rax)/cos(theta_fbe(i))
                 j4 = 1
             endif
             if (z2 >= ztop) then
-                x2 = (ztop - zax)/sin(teta_fbe(i))
+                x2 = (ztop - zax)/sin(theta_fbe(i))
                 j4 = 1
             endif
             if (z2 <= zbot) then
-                x2 = (zbot - zax)/sin(teta_fbe(i))
+                x2 = (zbot - zax)/sin(theta_fbe(i))
                 j4 = 1
             endif
-            z1 = rax + x2*cos(teta_fbe(i))
-            z2 = zax + x2*sin(teta_fbe(i))
+            z1 = rax + x2*cos(theta_fbe(i))
+            z2 = zax + x2*sin(theta_fbe(i))
             z3 = interp2d_psi(z1, z2, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             if (z3 > psibnd) then
                 if (j4 == 1) then
@@ -1204,18 +1204,18 @@ theta_loop: do i=2, nteta
             endif
         enddo
         x11 = x1 + (t3 - psibnd)/(t3 - z3)*dx
-        rbnd(i) = rax + x11*cos(teta_fbe(i))
-        zbnd(i) = zax + x11*sin(teta_fbe(i))
+        rbnd(i) = rax + x11*cos(theta_fbe(i))
+        zbnd(i) = zax + x11*sin(theta_fbe(i))
    endif
 
 enddo theta_loop
 
-teta (1:nteta) = teta_fbe(1:nteta)
-rbndp(1:nteta) = rbnd(1:nteta)
-zbndp(1:nteta) = zbnd(1:nteta)
-teta (nteta + 1) = teta(nteta) + dteta
-rbndp(nteta + 1) = rbnd(1) 
-zbndp(nteta + 1) = zbnd(1)
+theta (1:ntheta) = theta_fbe(1:ntheta)
+rbndp(1:ntheta) = rbnd(1:ntheta)
+zbndp(1:ntheta) = zbnd(1:ntheta)
+theta (ntheta + 1) = theta(ntheta) + dtheta
+rbndp(ntheta + 1) = rbnd(1) 
+zbndp(ntheta + 1) = zbnd(1)
 
 raxp = rax
 zaxp = zax
@@ -1226,33 +1226,33 @@ return
 end subroutine convert_boundary_to_pbe
 
 !--------------------------------------------------------------------
-subroutine estimate_boundary_to_pbe(rbnd, zbnd, ntetaz)
+subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
 
 use pi_vars, only: GPI2
 use fbe_core, only: nr, nr2, nz, iaxis, jaxis, &
     raus, rinner, zbot, ztop, &
     Rrect, Zrect, dr, dz, rax, zax,  &
     psiaxis, psibnd, psirz
-use pbe_core, only: teta
+use pbe_core, only: theta
 use feqis_tools, only: pol_angle, interp2d_psi
 
 implicit none
 
-integer, intent(IN) :: ntetaz
-double precision, intent(OUT), dimension(ntetaz) :: rbnd, zbnd
+integer, intent(IN) :: nthetaz
+double precision, intent(OUT), dimension(nthetaz) :: rbnd, zbnd
 
-integer :: i, j, k, j4, nteta
-double precision :: x1, x2, t1, t2, t3, z1, z2, z3, x11, dx, dteta
-double precision, dimension(500) :: teta_fbe
+integer :: i, j, k, j4, ntheta
+double precision :: x1, x2, t1, t2, t3, z1, z2, z3, x11, dx, dtheta
+double precision, dimension(500) :: theta_fbe
 
-nteta = ntetaz
+ntheta = nthetaz
 rbnd = 0.
 zbnd = 0.
 
-do i=1, nteta + 1
-    teta(i) = GPI2*(i - 1.)/(nteta + 0.)
+do i=1, ntheta + 1
+    theta(i) = GPI2*(i - 1.)/(ntheta + 0.)
 enddo
-dteta = teta(2) - teta(1)
+dtheta = theta(2) - theta(1)
 
 dx = sqrt(dr**2 + dz**2)
 
@@ -1269,30 +1269,30 @@ else
     rbnd(1) = Rrect(k) - (psirz(k, j) - psibnd)/(psirz(k, j) - psirz(k-1, j))*dr
 endif
 zbnd(1) = Zrect(j)
-teta_fbe(1) = pol_angle(rax, zax, rbnd(1), zbnd(1))
+theta_fbe(1) = pol_angle(rax, zax, rbnd(1), zbnd(1))
 
-theta_loop: do i=2, nteta
+theta_loop: do i=2, ntheta
     dx = sqrt(dr**2 + dz**2)
     x1 = sqrt((rbnd(i-1) - rax)**2 + (zbnd(i-1) - zax)**2)
-    teta_fbe(i) = teta_fbe(i-1) + dteta
+    theta_fbe(i) = theta_fbe(i-1) + dtheta
 
-    t1 = rax + x1*cos(teta_fbe(i))
-    t2 = zax + x1*sin(teta_fbe(i))
+    t1 = rax + x1*cos(theta_fbe(i))
+    t2 = zax + x1*sin(theta_fbe(i))
 
     if (t1 >= raus) then
-        x1 = (raus - rax)/cos(teta_fbe(i))
+        x1 = (raus - rax)/cos(theta_fbe(i))
     endif
     if (t1 <= rinner) then
-        x1 = (rinner - rax)/cos(teta_fbe(i))
+        x1 = (rinner - rax)/cos(theta_fbe(i))
     endif
     if (t2 >= ztop) then
-        x1 = (ztop - zax)/sin(teta_fbe(i))
+        x1 = (ztop - zax)/sin(theta_fbe(i))
     endif
     if (t2 <= zbot) then
-        x1 = (zbot - zax)/sin(teta_fbe(i))
+        x1 = (zbot - zax)/sin(theta_fbe(i))
     endif
-    t1 = rax + x1*cos(teta_fbe(i))
-    t2 = zax + x1*sin(teta_fbe(i))
+    t1 = rax + x1*cos(theta_fbe(i))
+    t2 = zax + x1*sin(theta_fbe(i))
     t3 = interp2d_psi(t1, t2, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
 
     if (t3 == psibnd) then
@@ -1300,8 +1300,8 @@ theta_loop: do i=2, nteta
         zbnd(i) = t2
     elseif (t3 < psibnd) then
         do
-            z1 = rax + (x1 - dx)*cos(teta_fbe(i))
-            z2 = zax + (x1 - dx)*sin(teta_fbe(i))
+            z1 = rax + (x1 - dx)*cos(theta_fbe(i))
+            z2 = zax + (x1 - dx)*sin(theta_fbe(i))
             z3 = interp2d_psi(z1, z2, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             if (z3 < psibnd) then
                 dx = 1.1*dx
@@ -1310,32 +1310,32 @@ theta_loop: do i=2, nteta
             endif
         enddo
         x11 = x1 - (t3 - psibnd)/(t3 - z3)*dx
-        rbnd(i) = rax + x11*cos(teta_fbe(i))
-        zbnd(i) = zax + x11*sin(teta_fbe(i))
+        rbnd(i) = rax + x11*cos(theta_fbe(i))
+        zbnd(i) = zax + x11*sin(theta_fbe(i))
     else
         do
             j4 = 0
             x2 = x1 + dx
-            z1 = rax + x2*cos(teta_fbe(i))
-            z2 = zax + x2*sin(teta_fbe(i))
+            z1 = rax + x2*cos(theta_fbe(i))
+            z2 = zax + x2*sin(theta_fbe(i))
             if (z1 >= raus) then
-                x2 = (raus - rax)/cos(teta_fbe(i))
+                x2 = (raus - rax)/cos(theta_fbe(i))
                 j4 = 1
             endif
             if (z1 <= rinner) then
-                x2 = (rinner - rax)/cos(teta_fbe(i))
+                x2 = (rinner - rax)/cos(theta_fbe(i))
                 j4 = 1
             endif
             if (z2 >= ztop) then
-                x2 = (ztop - zax)/sin(teta_fbe(i))
+                x2 = (ztop - zax)/sin(theta_fbe(i))
                 j4 = 1
             endif
             if (z2 <= zbot) then
-                x2 = (zbot - zax)/sin(teta_fbe(i))
+                x2 = (zbot - zax)/sin(theta_fbe(i))
                 j4 = 1
             endif
-            z1 = rax + x2*cos(teta_fbe(i))
-            z2 = zax + x2*sin(teta_fbe(i))
+            z1 = rax + x2*cos(theta_fbe(i))
+            z2 = zax + x2*sin(theta_fbe(i))
             z3 = interp2d_psi(z1, z2, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             if (z3 > psibnd) then
                 if (j4 == 1) then
@@ -1349,8 +1349,8 @@ theta_loop: do i=2, nteta
             endif
         enddo
         x11 = x1 + (t3 - psibnd)/(t3 - z3)*dx
-        rbnd(i) = rax + x11*cos(teta_fbe(i))
-        zbnd(i) = zax + x11*sin(teta_fbe(i))
+        rbnd(i) = rax + x11*cos(theta_fbe(i))
+        zbnd(i) = zax + x11*sin(theta_fbe(i))
    endif
 
 enddo theta_loop

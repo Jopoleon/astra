@@ -8,8 +8,8 @@ use fbe_core, only: nr, nr1, nr2, nz, nz1, nz2, nbnd, nlimiter, &
     psiextrz, psiplasrz, psirz, psiaxis, psibnd, psistabR, psistabZ, psiferro, &
     get_psiplasrz, find_new_axis, find_psi_boundary, new_jrz, &
     compound_psi, psi_external_calc
-use pbe_core, only: raxp, zaxp, rbndp, zbndp, rpol, zpol, nteta, nrho, &
-    rho, jrhoteta, teta, pprime, ffprime, psigrida, psirhoteta
+use pbe_core, only: raxp, zaxp, rbndp, zbndp, rpol, zpol, ntheta, nrho, &
+    rho, jrhotheta, theta, pprime, ffprime, psigrida, psirhotheta
 use global_params, only: iplasma
 
 implicit none
@@ -33,7 +33,7 @@ double precision, dimension(:), allocatable :: psiplasmatoconduc !plasma --> con
 ! coordinates:
 ! r, z --> rectangular grid in meters
 ! rho --> distance of point from magnetic axis in meters
-! teta --> angle from LFS midplane which is 0, coincides with Zmag plane
+! theta --> angle from LFS midplane which is 0, coincides with Zmag plane
 ! psigrid --> in poloidal flux equispaced
 
 !grids
@@ -51,16 +51,16 @@ double precision, dimension(100,100) :: matrix_ferro_to_invert, matrix_ferro_inv
 contains
 
 !---------------------------------------------------------------------
-    double precision function curinterp(r_in, z_in, jrho, rho, teta, rax, zax, nrho, nteta)
+    double precision function curinterp(r_in, z_in, jrho, rho, theta, rax, zax, nrho, ntheta)
 
     use pi_vars, only: GPI2
     use numerical_tools, only: linterp
     use feqis_tools, only: pol_angle
 
-    integer,  intent(in) :: nrho, nteta
+    integer,  intent(in) :: nrho, ntheta
     double precision, intent(in) :: r_in, z_in, rax, zax
-    double precision, intent(in), dimension(nteta) :: teta
-    double precision, intent(in), dimension(nrho, nteta) :: jrho, rho
+    double precision, intent(in), dimension(ntheta) :: theta
+    double precision, intent(in), dimension(nrho, ntheta) :: jrho, rho
 
     integer :: i, k, k1, k2, k3, k4, j1, j2
     double precision :: anglr, rho0, r1, r2, r3, r4, z1, z2, z3, z4, a1, a2, a3, a4, d1, d2, d3, d4
@@ -71,11 +71,11 @@ contains
     anglr = pol_angle(rax, zax, r_in, z_in)
     rho0 = sqrt((r_in - rax)**2 + (z_in - zax)**2)
 
-    if (anglr < teta(1)) anglr = anglr + GPI2
+    if (anglr < theta(1)) anglr = anglr + GPI2
 
     j1 = 1
-    do i=1, nteta
-        if (anglr >= teta(i)) j1 = i
+    do i=1, ntheta
+        if (anglr >= theta(i)) j1 = i
     enddo
     j2 = j1 + 1
 
@@ -98,14 +98,14 @@ contains
     enddo
     k4 = k3 + 1
 
-    r1 = rax + rho(k1, j1)*cos(teta(j1))
-    r2 = rax + rho(k2, j1)*cos(teta(j1))
-    r3 = rax + rho(k4, j2)*cos(teta(j2))
-    r4 = rax + rho(k3, j2)*cos(teta(j2))
-    z1 = zax + rho(k1, j1)*sin(teta(j1))
-    z2 = zax + rho(k2, j1)*sin(teta(j1))
-    z3 = zax + rho(k4, j2)*sin(teta(j2))
-    z4 = zax + rho(k3, j2)*sin(teta(j2))
+    r1 = rax + rho(k1, j1)*cos(theta(j1))
+    r2 = rax + rho(k2, j1)*cos(theta(j1))
+    r3 = rax + rho(k4, j2)*cos(theta(j2))
+    r4 = rax + rho(k3, j2)*cos(theta(j2))
+    z1 = zax + rho(k1, j1)*sin(theta(j1))
+    z2 = zax + rho(k2, j1)*sin(theta(j1))
+    z3 = zax + rho(k4, j2)*sin(theta(j2))
+    z4 = zax + rho(k3, j2)*sin(theta(j2))
     jj1(1) = jrho(k1, j1)
     jj1(2) = jrho(k2, j1)
     jj1(3) = jrho(k4, j2)
@@ -174,7 +174,7 @@ contains
     rc_cur  = R_curr_0D
 
     do i=1, nrho-1
-        do j=1, nteta
+        do j=1, ntheta
             avgelem = dator(i, j) !/bpcell(i, j-1)
             perimz = perimz + avgelem
             rgeoc  = rgeoc + rpol(i, j)*avgelem
@@ -185,7 +185,7 @@ contains
     zgeoc = zgeoc/perimz
 
     do i=1, nrho-1
-        do j=1, nteta
+        do j=1, ntheta
             avgelem = dator(i, j) !/bpcell(i, j-1)
             ahorc2  = ahorc2 + (rpol(i, j) - rgeoc)**2 * avgelem
         enddo
@@ -370,14 +370,14 @@ contains
     double precision, dimension(500) :: rbref, zbref
     double precision, dimension(nconduc) :: G_00c, G_00r, G_00z, &
         Fderiv, curref, curnow, curdiff
-    double precision, dimension(nteta) :: psicorr
-    double precision, dimension(nconduc, nteta) :: G_00
+    double precision, dimension(ntheta) :: psicorr
+    double precision, dimension(nconduc, ntheta) :: G_00
     double precision, dimension(nconduc, nconduc) :: matrix, invmatrix
 
     psicorr   = 0.
     Ffunc_old = 1.e6
 
-! First, initialized initial guess coming from prescribed boundary current density: jrhoteta
+! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
 
     call interp_j_fromrhotorz
 
@@ -402,17 +402,17 @@ contains
 
     raxref = raxp
     zaxref = zaxp
-    rbref(1:nteta) = rbndp(1:nteta)
-    zbref(1:nteta) = zbndp(1:nteta)
+    rbref(1:ntheta) = rbndp(1:ntheta)
+    zbref(1:ntheta) = zbndp(1:ntheta)
 
 ! calculate the matrix F_li of the F function, including the green function terms
     matrix    = 0.
     invmatrix = 0.
     do j=1, nconduc
-        do k=1, nteta
+        do k=1, ntheta
             G_00(j, k) = interp2d_psi(rbref(k), zbref(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         enddo
-        G_00c(j) = sum(G_00(j, 1:nteta))/(0. + nteta)
+        G_00c(j) = sum(G_00(j, 1:ntheta))/(0. + ntheta)
         bub(1) = interp2d_psi(raxref - dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         bub(2) = interp2d_psi(raxref + dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         bub(3) = interp2d_psi(raxref, zaxref - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
@@ -425,7 +425,7 @@ contains
         do i=1, nconduc
             if (i == j) matrix(i, j) = matrix(i, j) + 2.*sigma_coils(i)
             matrix(i, j) = matrix(i, j) +  &
-                2.*sigma_B*sum((G_00(i, 1:nteta) - G_00c(i))*(G_00(j, 1:nteta) - G_00c(j))) +  &
+                2.*sigma_B*sum((G_00(i, 1:ntheta) - G_00c(i))*(G_00(j, 1:ntheta) - G_00c(j))) +  &
                 2.*sigma_axis*(G_00r(i)*G_00r(j) + G_00z(i)*G_00z(j))
        enddo
     enddo
@@ -449,11 +449,11 @@ contains
             enddo
         enddo
 
-        do j=1, nteta
+        do j=1, ntheta
             psicorr(j) = interp2d_psi(rbref(j), zbref(j), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         enddo
 
-        x1 = sum(psicorr)/(nteta + 0.) !average psi on the boundary
+        x1 = sum(psicorr)/(ntheta + 0.) !average psi on the boundary
 
 ! Derivative at ref axis
         bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
@@ -468,7 +468,7 @@ contains
 ! Calculate F derivative
         do i=1, nconduc
             Fderiv(i) = 2.*(sigma_coils(i)*curdiff(i) + &
-                sigma_B*sum((psicorr - x1)*(G_00(i, 1:nteta) - G_00c(i))) + &
+                sigma_B*sum((psicorr - x1)*(G_00(i, 1:ntheta) - G_00c(i))) + &
                 sigma_axis*(x2*G_00r(i) + x3*G_00z(i)) )
         enddo
 
@@ -535,14 +535,14 @@ contains
     double precision, dimension(nconduc, n_xpoint_fit) :: G_00xr, G_00xz
     double precision, dimension(n_xpoint_fit) :: dummyx
 
-    double precision, dimension(nteta) :: psicorr
-    double precision, dimension(nconduc, nteta) :: G_00
+    double precision, dimension(ntheta) :: psicorr
+    double precision, dimension(nconduc, ntheta) :: G_00
     double precision, dimension(nconduc, nconduc) :: matrix, invmatrix
 
     psicorr   = 0.
     Ffunc_old = 1.e6
 
-! First, initialized initial guess coming from prescribed boundary current density: jrhoteta
+! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
 
     call interp_j_fromrhotorz
 
@@ -567,17 +567,17 @@ contains
 
     raxref = raxp
     zaxref = zaxp
-    rbref(1:nteta) = rbndp(1:nteta)
-    zbref(1:nteta) = zbndp(1:nteta)
+    rbref(1:ntheta) = rbndp(1:ntheta)
+    zbref(1:ntheta) = zbndp(1:ntheta)
 
 ! calculate the matrix F_li of the F function, including the green function terms
     matrix    = 0.
     invmatrix = 0.
     do j=1, nconduc
-        do k=1, nteta
+        do k=1, ntheta
             G_00(j, k) = interp2d_psi(rbref(k), zbref(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         enddo
-        G_00c(j) = sum(G_00(j, 1:nteta))/(0. + nteta)
+        G_00c(j) = sum(G_00(j, 1:ntheta))/(0. + ntheta)
         bub(1) = interp2d_psi(raxref - dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         bub(2) = interp2d_psi(raxref + dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         bub(3) = interp2d_psi(raxref, zaxref - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
@@ -599,7 +599,7 @@ contains
             if (i == j) matrix(i, j) = matrix(i, j) + 2.*sigma_coils(i)
             dummyx(1:n_xpoint_fit) = G_00xr(i,1:n_xpoint_fit)*G_00xr(j,1:n_xpoint_fit) + G_00xz(i,1:n_xpoint_fit)*G_00xz(j,1:n_xpoint_fit)
             matrix(i, j) = matrix(i, j) +  &
-                2.*sigma_B*sum((G_00(i, 1:nteta) - G_00c(i))*(G_00(j, 1:nteta) - G_00c(j))) +  &
+                2.*sigma_B*sum((G_00(i, 1:ntheta) - G_00c(i))*(G_00(j, 1:ntheta) - G_00c(j))) +  &
                 2.*sigma_axis*(G_00r(i)*G_00r(j) + G_00z(i)*G_00z(j)) + &
                 2.*sigma_xpoint*sum(dummyx)
        enddo
@@ -624,11 +624,11 @@ contains
             enddo
         enddo
 
-        do j=1, nteta
+        do j=1, ntheta
             psicorr(j) = interp2d_psi(rbref(j), zbref(j), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         enddo
 
-        x1 = sum(psicorr)/(nteta + 0.) !average psi on the boundary
+        x1 = sum(psicorr)/(ntheta + 0.) !average psi on the boundary
 
         Ffunc = 0.
         Ffunc = sigma_B*sum((psicorr - x1)**2) + sum(sigma_coils(1:nconduc)*curdiff**2)
@@ -653,7 +653,7 @@ contains
 
 ! Calculate F derivative
         do i=1, nconduc
-            Fderiv(i) = 2.*(sigma_coils(i)*curdiff(i) + sigma_B*sum((psicorr - x1)*(G_00(i, 1:nteta) - G_00c(i))))
+            Fderiv(i) = 2.*(sigma_coils(i)*curdiff(i) + sigma_B*sum((psicorr - x1)*(G_00(i, 1:ntheta) - G_00c(i))))
             bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
@@ -733,7 +733,7 @@ contains
         Ffunc, Ffunc_old, lambda, deltapsiext !lagrange multplier lambda
     double precision, dimension(9) :: bub
     double precision, dimension(n_evol) :: rax_ev,zax_ev,ip_ev, V_loop, L_ext, delta_t, psi_ext_ev
-    double precision, dimension(nteta) :: psicorr
+    double precision, dimension(ntheta) :: psicorr
     double precision, dimension(:), allocatable :: raxref_ev, zaxref_ev, &
         ffunc_ev, result_vector, Fderiv
     double precision, dimension(nrho, n_evol) :: psia_ev,pprim_ev,ffprim_ev
@@ -744,14 +744,14 @@ contains
     double precision, dimension(:, :, :), allocatable :: j_ev, psi_ev, G_00
     character(len=80) :: file_time
 
-    allocate(rbref_ev(nteta, n_evol))
-    allocate(zbref_ev(nteta, n_evol))
+    allocate(rbref_ev(ntheta, n_evol))
+    allocate(zbref_ev(ntheta, n_evol))
     allocate(raxref_ev(n_evol))
     allocate(zaxref_ev(n_evol))
     allocate(ffunc_ev(n_evol))
     allocate(j_ev(nr2, nz2, n_evol))
     allocate(psi_ev(nr2, nz2, n_evol))
-    allocate(G_00(nactive, nteta, n_evol))
+    allocate(G_00(nactive, ntheta, n_evol))
     allocate(G_00c(nactive, n_evol))
     allocate(G_00r(nactive, n_evol))
     allocate(G_00z(nactive, n_evol))
@@ -764,20 +764,20 @@ contains
     allocate(invmatrix(nactive*n_evol+1, nactive*n_evol+1))
 
     do jt=1, 2
-        if (jt == 1) file_time = 'dat/feqis_time1_file.dat' !contains the prescribed boundary data for time t1: jrhoteta, rho, teta, rb, zb, rho augmented to nteta+1, teta augmented to nteta+1, raxp, zaxp, iplasma, psia,pprim,ffprim
-        if (jt == 2) file_time = 'dat/feqis_time2_file.dat' !contains the prescribed boundary data for time t2: jrhoteta, rho, teta, rho augmented to nteta+1, teta augmented to nteta+1, raxp, zaxp, iplasma, psia2,pprim2,ffprim2, Lext, deltaT, Vloop
+        if (jt == 1) file_time = 'dat/feqis_time1_file.dat' !contains the prescribed boundary data for time t1: jrhotheta, rho, theta, rb, zb, rho augmented to ntheta+1, theta augmented to ntheta+1, raxp, zaxp, iplasma, psia,pprim,ffprim
+        if (jt == 2) file_time = 'dat/feqis_time2_file.dat' !contains the prescribed boundary data for time t2: jrhotheta, rho, theta, rho augmented to ntheta+1, theta augmented to ntheta+1, raxp, zaxp, iplasma, psia2,pprim2,ffprim2, Lext, deltaT, Vloop
         open(32, file=TRIM(file_time))
-            read(32, *) jrhoteta(1:nrho, 1:nteta)
-            read(32, *) rho(1:nrho, 1:nteta)
-            read(32, *) teta(1:nteta)
-            read(32, *) rbndp(1:nteta)
-            read(32, *) zbndp(1:nteta)
+            read(32, *) jrhotheta(1:nrho, 1:ntheta)
+            read(32, *) rho(1:nrho, 1:ntheta)
+            read(32, *) theta(1:ntheta)
+            read(32, *) rbndp(1:ntheta)
+            read(32, *) zbndp(1:ntheta)
             read(32, *) raxp, zaxp, ip_ev(jt)
             read(32, *) psia_ev(1:nrho, jt), pprim_ev(1:nrho, jt), ffprim_ev(1:nrho, jt) !pprime is Pascal / grad(FP), ffprime is F dF/dFP
             read(32, *) L_ext(jt), delta_t(jt), V_loop(jt)
         close(32)
-        rho(1:nrho, nteta+1) = rho(1:nrho, 1)
-        teta(nteta+1) = teta(1) + GPI2
+        rho(1:nrho, ntheta+1) = rho(1:nrho, 1)
+        theta(ntheta+1) = theta(1) + GPI2
         call interp_j_fromrhotorz
         curr = SUM(jrz)*dr*dz
         j_ev(:, :, jt) = jrz/curr*ip_ev(jt)
@@ -786,8 +786,8 @@ contains
         iax_ev(jt) = closest_index(rax_ev(jt), Rrect(1), dr)
         zax_ev(jt) = zaxp
         jax_ev(jt) = closest_index(zax_ev(jt), Zrect(1), dz)
-        rbref_ev(1: nteta, jt) = rbndp(1: nteta)
-        zbref_ev(1: nteta, jt) = zbndp(1: nteta)
+        rbref_ev(1: ntheta, jt) = rbndp(1: ntheta)
+        zbref_ev(1: ntheta, jt) = zbndp(1: ntheta)
     enddo
 
     deltapsiext = -(0.5*sum(V_loop)*(delta_t(2) - delta_t(1)) + 0.5*sum(L_ext)*(ip_ev(2) - ip_ev(1)))
@@ -819,10 +819,10 @@ contains
 ! build up bordered Hessian matrix (1...I1, 1....I2, lambda ; same)
     do jt=1,n_evol
         do j=1, nactive
-            do k=1, nteta
+            do k=1, ntheta
                 G_00(j, k, jt) = interp2d_psi(rbref_ev(k,jt), zbref_ev(k,jt), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
             enddo
-            G_00c(j, jt) = sum(G_00(j, 1:nteta, jt))/(0. + nteta)
+            G_00c(j, jt) = sum(G_00(j, 1:ntheta, jt))/(0. + ntheta)
             bub(1) = interp2d_psi(raxref_ev(jt) - dr/2., zaxref_ev(jt), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
             bub(2) = interp2d_psi(raxref_ev(jt) + dr/2., zaxref_ev(jt), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
             bub(3) = interp2d_psi(raxref_ev(jt), zaxref_ev(jt) - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
@@ -835,7 +835,7 @@ contains
             do i=1, nactive
                 if (i == j) matrix((jt-1)*nactive+i, (jt-1)*nactive+j) = matrix((jt-1)*nactive+i, (jt-1)*nactive+j) + sigma_coils(i)*sigma_energy*indconduc(i, i)
                 matrix((jt-1)*nactive+i, (jt-1)*nactive+j) = matrix((jt-1)*nactive+i, (jt-1)*nactive+j) +  &
-                    2.*sigma_B*sum((G_00(i, 1:nteta, jt) - G_00c(i, jt))*(G_00(j, 1:nteta, jt) - G_00c(j, jt))) +  &
+                    2.*sigma_B*sum((G_00(i, 1:ntheta, jt) - G_00c(i, jt))*(G_00(j, 1:ntheta, jt) - G_00c(j, jt))) +  &
                     2.*sigma_axis*(G_00r(i, jt)*G_00r(j, jt) + G_00z(i, jt)*G_00z(j, jt))
             enddo
         enddo
@@ -872,10 +872,10 @@ contains
                    psirz(i, j) = psi_ev(i, j, jt) + f_correction !total flux
                enddo
            enddo
-           do j=1, nteta
+           do j=1, ntheta
                psicorr(j) = interp2d_psi(rbref_ev(j,jt), zbref_ev(j,jt), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
            enddo
-           x1 = sum(psicorr)/(nteta + 0.) !average psi on the boundary
+           x1 = sum(psicorr)/(ntheta + 0.) !average psi on the boundary
 ! Derivative at ref axis
            bub(1) = interp2d_psi(raxref_ev(jt) - 0.5*dr, zaxref_ev(jt), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
            bub(2) = interp2d_psi(raxref_ev(jt) + 0.5*dr, zaxref_ev(jt), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
@@ -893,7 +893,7 @@ contains
 ! Calculate F derivative
            do i=1, nactive
                Fderiv((jt-1)*nactive+i) = 2.*(0.5*indconduc(i, i)*sigma_coils(i)*sigma_energy*curdiff(i, jt) + &
-                   sigma_B*sum((psicorr - x1)*(G_00(i, 1:nteta, jt) - G_00c(i, jt))) + &
+                   sigma_B*sum((psicorr - x1)*(G_00(i, 1:ntheta, jt) - G_00c(i, jt))) + &
                    sigma_axis*(x2*G_00r(i, jt) + x3*G_00z(i, jt)) )
            enddo
        enddo !end time loop
@@ -992,7 +992,7 @@ contains
     double precision :: temp_err, curr, f_correction, x1, x2, x3, &
         Ffunc, Ffunc_old, lambda, deltapsiext !lagrange multplier lambda
     double precision, dimension(9) :: bub
-    double precision, dimension(nteta) :: psicorr
+    double precision, dimension(ntheta) :: psicorr
     double precision, dimension(n_evol) :: rax_ev, zax_ev, ip_ev, &
          V_loop, L_ext, delta_t, psi_ext_ev
     double precision, dimension(:), allocatable :: raxref_ev, zaxref_ev, &
@@ -1005,14 +1005,14 @@ contains
     double precision, dimension(:, :, :), allocatable :: j_ev, psi_ev, G_00
     character(len=80) :: file_time
 
-    allocate(rbref_ev(nteta, n_evol))
-    allocate(zbref_ev(nteta, n_evol))
+    allocate(rbref_ev(ntheta, n_evol))
+    allocate(zbref_ev(ntheta, n_evol))
     allocate(raxref_ev(n_evol))
     allocate(zaxref_ev(n_evol))
     allocate(ffunc_ev(n_evol))
     allocate(j_ev(nr2, nz2, n_evol))
     allocate(psi_ev(nr2, nz2, n_evol))
-    allocate(G_00(nactive, nteta, n_evol))
+    allocate(G_00(nactive, ntheta, n_evol))
     allocate(G_00c(nactive, n_evol))
     allocate(G_00r(nactive, n_evol))
     allocate(G_00z(nactive, n_evol))
@@ -1025,20 +1025,20 @@ contains
     allocate(invmatrix(nactive*n_evol+1, nactive*n_evol+1))
 
     do jt=1, 2
-        if (jt==1) file_time='dat/feqis_time1_file.dat'   !contains the prescribed boundary data for time t1: jrhoteta, rho, teta, rb, zb, rho augmented to nteta+1, teta augmented to nteta+1, raxp, zaxp, iplasma, psia,pprim,ffprim
-        if (jt==2) file_time='dat/feqis_time2_file.dat'   !contains the prescribed boundary data for time t2: jrhoteta, rho, teta, rho augmented to nteta+1, teta augmented to nteta+1, raxp, zaxp, iplasma, psia2,pprim2,ffprim2, Lext, deltaT, Vloop
+        if (jt==1) file_time='dat/feqis_time1_file.dat'   !contains the prescribed boundary data for time t1: jrhotheta, rho, theta, rb, zb, rho augmented to ntheta+1, theta augmented to ntheta+1, raxp, zaxp, iplasma, psia,pprim,ffprim
+        if (jt==2) file_time='dat/feqis_time2_file.dat'   !contains the prescribed boundary data for time t2: jrhotheta, rho, theta, rho augmented to ntheta+1, theta augmented to ntheta+1, raxp, zaxp, iplasma, psia2,pprim2,ffprim2, Lext, deltaT, Vloop
         open(32, file=TRIM(file_time))
-            read(32, *) jrhoteta(1: nrho, 1: nteta)
-            read(32, *) rho(1: nrho, 1: nteta)
-            read(32, *) teta(1: nteta)
-            read(32, *) rbndp(1: nteta)
-            read(32, *) zbndp(1: nteta)
+            read(32, *) jrhotheta(1: nrho, 1: ntheta)
+            read(32, *) rho(1: nrho, 1: ntheta)
+            read(32, *) theta(1: ntheta)
+            read(32, *) rbndp(1: ntheta)
+            read(32, *) zbndp(1: ntheta)
             read(32, *) raxp, zaxp, ip_ev(jt)
             read(32, *) psia_ev(1: nrho,jt), pprim_ev(1: nrho, jt), ffprim_ev(1: nrho, jt) !pprime is Pascal / grad(FP), ffprime is F dF/dFP
             read(32,*) L_ext(jt), delta_t(jt), V_loop(jt)
         close(32)
-        rho(1: nrho, nteta+1) = rho(1: nrho, 1)
-        teta(nteta+1) = teta(1) + GPI2
+        rho(1: nrho, ntheta+1) = rho(1: nrho, 1)
+        theta(ntheta+1) = theta(1) + GPI2
         call interp_j_fromrhotorz
         curr = SUM(jrz) *dr*dz
         j_ev(:, :, jt) = jrz/curr*ip_ev(jt)
@@ -1047,8 +1047,8 @@ contains
         iax_ev(jt) = closest_index(rax_ev(jt), Rrect(1), dr)
         zax_ev(jt) = zaxp
         jax_ev(jt) = closest_index(zax_ev(jt), Zrect(1), dz)
-        rbref_ev(1: nteta, jt) = rbndp(1: nteta)
-        zbref_ev(1: nteta, jt) = zbndp(1: nteta)
+        rbref_ev(1: ntheta, jt) = rbndp(1: ntheta)
+        zbref_ev(1: ntheta, jt) = zbndp(1: ntheta)
     enddo
 
     deltapsiext = -(0.5*sum(V_loop)*(delta_t(2) - delta_t(1)) + 0.5*sum(L_ext) * (ip_ev(2) - ip_ev(1)))
@@ -1078,10 +1078,10 @@ contains
 ! Build up bordered Hessian matrix (1...I1, 1....I2, lambda ; same)
     do jt=1, n_evol
         do j=1, nactive
-            do k=1, nteta
+            do k=1, ntheta
                 G_00(j, k, jt) = interp2d_psi(rbref_ev(k, jt), zbref_ev(k, jt), Rrect(1: nr), Zrect(1: nz), greeni(1: nr, 1: nz, j))
             enddo
-            G_00c(j, jt) = sum(G_00(j, 1:nteta, jt))/(0. + nteta)
+            G_00c(j, jt) = sum(G_00(j, 1:ntheta, jt))/(0. + ntheta)
             bub(1) = interp2d_psi(raxref_ev(jt) - dr/2., zaxref_ev(jt), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
             bub(2) = interp2d_psi(raxref_ev(jt) + dr/2., zaxref_ev(jt), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
             bub(3) = interp2d_psi(raxref_ev(jt), zaxref_ev(jt) - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
@@ -1098,7 +1098,7 @@ contains
                    matrix(iactive, jactive) = matrix(iactive, jactive) + sigma_coils(i)*sigma_energy*indconduc(i, i)
                endif
                matrix(iactive, jactive) = matrix(iactive, jactive) +  &
-                   2.*sigma_B*sum((G_00(i, 1:nteta, jt) - G_00c(i, jt))*(G_00(j, 1:nteta, jt) - G_00c(j, jt))) +  &
+                   2.*sigma_B*sum((G_00(i, 1:ntheta, jt) - G_00c(i, jt))*(G_00(j, 1:ntheta, jt) - G_00c(j, jt))) +  &
                    2.*sigma_axis*(G_00r(i, jt)*G_00r(j, jt) + G_00z(i, jt)*G_00z(j, jt))
             enddo
         enddo
@@ -1134,10 +1134,10 @@ contains
                     psirz(i, j) = psi_ev(i, j, jt) + f_correction ! total flux
                 enddo
             enddo
-            do j=1, nteta
+            do j=1, ntheta
                 psicorr(j) = interp2d_psi(rbref_ev(j, jt), zbref_ev(j, jt), Rrect(1: nr), Zrect(1: nz), psirz(1: nr, 1: nz))
             enddo
-            x1 = sum(psicorr)/(nteta + 0.) !average psi on the boundary
+            x1 = sum(psicorr)/(ntheta + 0.) !average psi on the boundary
 ! Derivative at ref axis
             bub(1) = interp2d_psi(raxref_ev(jt) - 0.5*dr, zaxref_ev(jt), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             bub(2) = interp2d_psi(raxref_ev(jt) + 0.5*dr, zaxref_ev(jt), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
@@ -1154,7 +1154,7 @@ contains
 ! Calculate F derivative
             do i=1, nactive
                 Fderiv((jt-1)*nactive+i) = 2.*(0.5*indconduc(i, i)*sigma_coils(i)*sigma_energy*curdiff(i, jt) + &
-                    sigma_B*sum((psicorr - x1)*(G_00(i, 1:nteta, jt) - G_00c(i, jt))) + &
+                    sigma_B*sum((psicorr - x1)*(G_00(i, 1:ntheta, jt) - G_00c(i, jt))) + &
                     sigma_axis*(x2*G_00r(i, jt) + x3*G_00z(i, jt)) )
             enddo
         enddo !end time loop
@@ -1272,19 +1272,19 @@ contains
     use pi_vars, only: GPI, GPI2, GPI4, muvac, mu0
     use numerical_tools, only: linterp
 
-    integer :: i, j, k, j_iter, iax, jax, jt, j_time, nteta_temp
+    integer :: i, j, k, j_iter, iax, jax, jt, j_time, ntheta_temp
     double precision :: temp_err, curr, f_correction, x1, x2, x3, &
         Ffunc, Ffunc_old, lambda, deltapsiext, psibexto, psibext !lagrange multplier lambda
     double precision, dimension(9) :: bub
-    double precision, dimension(nteta) :: psicorr, rbref, zbref
+    double precision, dimension(ntheta) :: psicorr, rbref, zbref
     double precision, dimension(nactive+1) :: result_vector, Fderiv
-    double precision, dimension(nactive, nteta) :: G_00, G_002
+    double precision, dimension(nactive, ntheta) :: G_00, G_002
     double precision, dimension(nactive) :: G_00c, G_00c2, G_00r, G_00z, curref, curnow, curdiff
     double precision, dimension(nactive+1,nactive+1) :: matrix, invmatrix
     double precision, dimension(:, :), allocatable :: G_00xr, G_00xz
     double precision, dimension(:), allocatable :: dummyx, rbndtemp, zbndtemp
     double precision, dimension(nblocks-npassive) :: force_r, force_z
-    double precision :: raxref, zaxref, r_norm_ref, sigma_boundary_points(nteta), boundary_weight
+    double precision :: raxref, zaxref, r_norm_ref, sigma_boundary_points(ntheta), boundary_weight
     double precision :: currents_limits_adds(nactive, 2)
     integer, dimension(:), allocatable :: gridpoint_tipe
     character(len=80) :: file_time
@@ -1298,7 +1298,7 @@ contains
     psicorr   = 0.
     Ffunc_old = 1.e6
 
-! First, initialized initial guess coming from prescribed boundary current density: jrhoteta
+! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
 
     call interp_j_fromrhotorz
 
@@ -1314,19 +1314,19 @@ contains
     jax = jaxis
     raxref = raxp
     zaxref = zaxp
-    rbref(1:nteta) = rbndp(1:nteta)
-    zbref(1:nteta) = zbndp(1:nteta)
-    nteta_temp = nteta
-    nbnd = nteta
-    rbnd(1:nbnd) = rbref(1:nteta)
-    zbnd(1:nbnd) = zbref(1:nteta)
-    allocate(rbndtemp(nteta),zbndtemp(nteta))
+    rbref(1:ntheta) = rbndp(1:ntheta)
+    zbref(1:ntheta) = zbndp(1:ntheta)
+    ntheta_temp = ntheta
+    nbnd = ntheta
+    rbnd(1:nbnd) = rbref(1:ntheta)
+    zbnd(1:nbnd) = zbref(1:ntheta)
+    allocate(rbndtemp(ntheta),zbndtemp(ntheta))
     
     sigma_boundary_points = 1. ! later everything gets multiplied by sigma_b which is the global weight of the boundary
     
     if (use_isoflux > 0) then
     !the code assumes that isoflux 1 is raus, isoflux 2 is ztop, isoflux 3 is rin, isoflux 4 is zbot. if one or more than one are x points is given in which_x_point
-        nteta_temp = n_isoflux
+        ntheta_temp = n_isoflux
         n_xpoint_fit = n_isoflux
         if (n_xpoint_fit > 0) then
             allocate(G_00xr(nactive, n_xpoint_fit))
@@ -1334,10 +1334,10 @@ contains
             allocate(dummyx(n_xpoint_fit))
         endif
         allocate(gridpoint_tipe(n_isoflux))
-        rbref(1:nteta_temp) = r_isoflux(1:nteta_temp)          
-        zbref(1:nteta_temp) = z_isoflux(1:nteta_temp)          
-        r_xpoint_fit(1:nteta_temp)=rbref(1:nteta_temp)
-        z_xpoint_fit(1:nteta_temp)=zbref(1:nteta_temp)
+        rbref(1:ntheta_temp) = r_isoflux(1:ntheta_temp)          
+        zbref(1:ntheta_temp) = z_isoflux(1:ntheta_temp)          
+        r_xpoint_fit(1:ntheta_temp)=rbref(1:ntheta_temp)
+        z_xpoint_fit(1:ntheta_temp)=zbref(1:ntheta_temp)
         gridpoint_tipe = -1
         do i = 1, n_isoflux
             if (which_x_point(i) == -1) gridpoint_tipe(i) = -1
@@ -1355,7 +1355,7 @@ contains
         endif
     endif
     
-    boundary_weight = sum(sigma_boundary_points(1:nteta_temp))
+    boundary_weight = sum(sigma_boundary_points(1:ntheta_temp))
 
 ! Axis is given by raxp, zaxp; boundary by rbndp, zbndp; coilref by curconduc(passive)
     if (j_time == 0) curnow(1:nactive) = cur_init(1:nactive)
@@ -1375,12 +1375,12 @@ contains
     lambda = 0.
 
     do j=1, nactive
-        do k=1, nteta_temp
+        do k=1, ntheta_temp
             G_00(j, k) = interp2d_psi(rbref(k), zbref(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
             G_002(j, k) = sigma_boundary_points(k)*interp2d_psi(rbref(k), zbref(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         enddo
-        G_00c(j) = sum(G_00(j, 1:nteta_temp))/(0. + nteta_temp)
-        G_00c2(j) = sum(G_002(j, 1:nteta_temp))/boundary_weight
+        G_00c(j) = sum(G_00(j, 1:ntheta_temp))/(0. + ntheta_temp)
+        G_00c2(j) = sum(G_002(j, 1:ntheta_temp))/boundary_weight
         bub(1) = interp2d_psi(raxref - dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         bub(2) = interp2d_psi(raxref + dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         bub(3) = interp2d_psi(raxref, zaxref - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
@@ -1417,7 +1417,7 @@ contains
         do i=1, nactive
             if (i == j) matrix(i, j) = matrix(i, j) + sigma_energy*indconduc(i, i) + 2.*(sigma_coils(i) + sigma_coils_ref(i))
             matrix(i, j) = matrix(i, j) +  &
-                2.*sigma_B*sum((G_002(i, 1:nteta_temp) - G_00c2(i))*(G_002(j, 1:nteta_temp) - G_00c2(j))) +  &
+                2.*sigma_B*sum((G_002(i, 1:ntheta_temp) - G_00c2(i))*(G_002(j, 1:ntheta_temp) - G_00c2(j))) +  &
                 2.*sigma_axis*(G_00r(i)*G_00r(j) + G_00z(i)*G_00z(j))
             if (n_xpoint_fit > 0) then
                 dummyx(1:n_xpoint_fit) = G_00xr(i, 1:n_xpoint_fit)*G_00xr(j, 1:n_xpoint_fit) + &
@@ -1456,11 +1456,11 @@ contains
             enddo
         enddo
 
-        do j=1, nteta_temp
+        do j=1, ntheta_temp
             psicorr(j) = sigma_boundary_points(j)*interp2d_psi(rbref(j), zbref(j), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         enddo
 
-        x1 = sum(psicorr(1:nteta_temp))/boundary_weight !average psi on the boundary
+        x1 = sum(psicorr(1:ntheta_temp))/boundary_weight !average psi on the boundary
 
 ! Derivative at ref axis
         bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
@@ -1470,7 +1470,7 @@ contains
         x2 = (bub(2) - bub(1))/dr ! dPsi/dr
         x3 = (bub(4) - bub(3))/dz ! dPsi/dz
 
-        Ffunc = sigma_B*sum((psicorr(1:nteta_temp) - x1)**2) + sigma_axis*(x2**2 + x3**2)
+        Ffunc = sigma_B*sum((psicorr(1:ntheta_temp) - x1)**2) + sigma_axis*(x2**2 + x3**2)
         do i=1, nactive
             Ffunc = Ffunc+0.5*indconduc(i, i)*sigma_energy*curnow(i)**2 + sigma_coils(i)*curnow(i)**2 + &
                     sigma_coils_ref(i)*curdiff(i)**2
@@ -1509,7 +1509,7 @@ contains
         do i=1, nactive
             Fderiv(i) = 2.*(0.5*indconduc(i,i)*sigma_energy*curnow(i) + &
                 sigma_coils_ref(i)*curdiff(i) + &
-                sigma_coils(i)*curnow(i) + sigma_B*sum((psicorr(1:nteta_temp) - x1)*(G_002(i, 1:nteta_temp) - G_00c2(i))))
+                sigma_coils(i)*curnow(i) + sigma_B*sum((psicorr(1:ntheta_temp) - x1)*(G_002(i, 1:ntheta_temp) - G_00c2(i))))
             bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
@@ -1609,16 +1609,16 @@ contains
 
     call psi_mutual_effect_conductors(psiplasmatoconduc)
 
-    call estimate_boundary_to_pbe(rbndtemp, zbndtemp, nteta)
+    call estimate_boundary_to_pbe(rbndtemp, zbndtemp, ntheta)
 
     open(32, file = file_time)
     write(32, *) nactive, curconduc(1:nactive)*1e3, -GPI2*psibext, rax, zax, &
         tau_gseq_feqis, vloop_avg, L_ext*dIp_dt, &
         nr2, nz2, psirz(1:nr2, 1:nz2), nblocks - npassive, force_R, force_Z, &
         psibnd, psiaxis, indconduc(1:nactive, 1:nactive), resconduc(1:nactive, 1:nactive), &
-        nlimiter, limiterR(1:nlimiter), limiterZ(1:nlimiter), Rrect(1), Rrect(nr2), Zrect(1), Zrect(nz2), nteta_temp, &
-        rbref(1:nteta_temp), zbref(1:nteta_temp), time_astra, tau_gseq_feqis, GPI2*psiplasmatoconduc(1:nactive), &  !saved in kA
-        nteta, rbndtemp(1:nteta), zbndtemp(1:nteta), rbndp(1:nteta), zbndp(1:nteta)
+        nlimiter, limiterR(1:nlimiter), limiterZ(1:nlimiter), Rrect(1), Rrect(nr2), Zrect(1), Zrect(nz2), ntheta_temp, &
+        rbref(1:ntheta_temp), zbref(1:ntheta_temp), time_astra, tau_gseq_feqis, GPI2*psiplasmatoconduc(1:nactive), &  !saved in kA
+        ntheta, rbndtemp(1:ntheta), zbndtemp(1:ntheta), rbndp(1:ntheta), zbndp(1:ntheta)
     close(32)
 
 !update time
@@ -1652,13 +1652,13 @@ contains
     use pi_vars, only: GPI, GPI2, GPI4, muvac, mu0
     use numerical_tools, only: linterp
 
-    integer :: i, j, k, j_iter, iax, jax, jt, j_time, nteta_temp
+    integer :: i, j, k, j_iter, iax, jax, jt, j_time, ntheta_temp
     double precision :: temp_err, curr, f_correction, x1, x2, x3, &
         Ffunc, Ffunc_old, lambda, deltapsiext, psibexto, psibext !lagrange multplier lambda
     double precision, dimension(9) :: bub
-    double precision, dimension(nteta) :: psicorr, rbref, zbref
+    double precision, dimension(ntheta) :: psicorr, rbref, zbref
     double precision, dimension(nactive) :: result_vector, Fderiv
-    double precision, dimension(nactive, nteta) :: G_00
+    double precision, dimension(nactive, ntheta) :: G_00
     double precision, dimension(nactive) :: G_00c, G_00r, G_00z, curref, curnow, curdiff
     double precision, dimension(nactive,nactive) :: matrix, invmatrix
     double precision, dimension(:, :), allocatable :: G_00xr, G_00xz
@@ -1676,7 +1676,7 @@ contains
     psicorr   = 0.
     Ffunc_old = 1.e6
 
-! First, initialized initial guess coming from prescribed boundary current density: jrhoteta
+! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
 
     call interp_j_fromrhotorz
 
@@ -1692,17 +1692,17 @@ contains
     jax = jaxis
     raxref = raxp
     zaxref = zaxp
-    rbref(1:nteta) = rbndp(1:nteta)
-    zbref(1:nteta) = zbndp(1:nteta)
-    nteta_temp = nteta
-    nbnd = nteta
-    rbnd(1:nbnd) = rbref(1:nteta)
-    zbnd(1:nbnd) = zbref(1:nteta)
-    allocate(rbndtemp(nteta),zbndtemp(nteta))
+    rbref(1:ntheta) = rbndp(1:ntheta)
+    zbref(1:ntheta) = zbndp(1:ntheta)
+    ntheta_temp = ntheta
+    nbnd = ntheta
+    rbnd(1:nbnd) = rbref(1:ntheta)
+    zbnd(1:nbnd) = zbref(1:ntheta)
+    allocate(rbndtemp(ntheta),zbndtemp(ntheta))
 
     if (use_isoflux > 0) then
     !the code assumes that isoflux 1 is raus, isoflux 2 is ztop, isoflux 3 is rin, isoflux 4 is zbot. if one or more than one are x points is given in which_x_point
-        nteta_temp = n_isoflux
+        ntheta_temp = n_isoflux
         n_xpoint_fit = n_isoflux
         if (n_xpoint_fit > 0) then
             allocate(G_00xr(nactive, n_xpoint_fit))
@@ -1710,10 +1710,10 @@ contains
             allocate(dummyx(n_xpoint_fit))
         endif
         allocate(gridpoint_tipe(n_isoflux))
-        rbref(1:nteta_temp) = r_isoflux(1:nteta_temp)          
-        zbref(1:nteta_temp) = z_isoflux(1:nteta_temp)          
-        r_xpoint_fit(1:nteta_temp)=rbref(1:nteta_temp)
-        z_xpoint_fit(1:nteta_temp)=zbref(1:nteta_temp)
+        rbref(1:ntheta_temp) = r_isoflux(1:ntheta_temp)          
+        zbref(1:ntheta_temp) = z_isoflux(1:ntheta_temp)          
+        r_xpoint_fit(1:ntheta_temp)=rbref(1:ntheta_temp)
+        z_xpoint_fit(1:ntheta_temp)=zbref(1:ntheta_temp)
         gridpoint_tipe = -1
         do i = 1, n_isoflux
             if (which_x_point(i) == -1) gridpoint_tipe(i) = -1
@@ -1740,10 +1740,10 @@ contains
     invmatrix = 0.
 
     do j=1, nactive
-        do k=1, nteta_temp
+        do k=1, ntheta_temp
             G_00(j, k) = interp2d_psi(rbref(k), zbref(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         enddo
-        G_00c(j) = sum(G_00(j, 1:nteta_temp))/(0. + nteta_temp)
+        G_00c(j) = sum(G_00(j, 1:ntheta_temp))/(0. + ntheta_temp)
         bub(1) = interp2d_psi(raxref - dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         bub(2) = interp2d_psi(raxref + dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         bub(3) = interp2d_psi(raxref, zaxref - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
@@ -1780,7 +1780,7 @@ contains
         do i=1, nactive
             if (i == j) matrix(i, j) = matrix(i, j) + sigma_energy/sigma_coils(i)*indconduc(i, i) + 2.*sigma_coils(i)
             matrix(i, j) = matrix(i, j) +  &
-                2.*sigma_B*sum((G_00(i, 1:nteta_temp) - G_00c(i))*(G_00(j, 1:nteta_temp) - G_00c(j))) +  &
+                2.*sigma_B*sum((G_00(i, 1:ntheta_temp) - G_00c(i))*(G_00(j, 1:ntheta_temp) - G_00c(j))) +  &
                 2.*sigma_axis*(G_00r(i)*G_00r(j) + G_00z(i)*G_00z(j))
             if (n_xpoint_fit > 0) then
                 dummyx(1:n_xpoint_fit) = G_00xr(i, 1:n_xpoint_fit)*G_00xr(j, 1:n_xpoint_fit) + &
@@ -1808,11 +1808,11 @@ contains
             enddo
         enddo
 
-        do j=1, nteta_temp
+        do j=1, ntheta_temp
             psicorr(j) = interp2d_psi(rbref(j), zbref(j), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         enddo
 
-        x1 = sum(psicorr(1:nteta_temp))/(nteta_temp + 0.) !average psi on the boundary
+        x1 = sum(psicorr(1:ntheta_temp))/(ntheta_temp + 0.) !average psi on the boundary
 
 ! Derivative at ref axis
         bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
@@ -1822,7 +1822,7 @@ contains
         x2 = (bub(2) - bub(1))/dr ! dPsi/dr
         x3 = (bub(4) - bub(3))/dz ! dPsi/dz
 
-        Ffunc = sigma_B*sum((psicorr(1:nteta_temp) - x1)**2) + sigma_axis*(x2**2 + x3**2)
+        Ffunc = sigma_B*sum((psicorr(1:ntheta_temp) - x1)**2) + sigma_axis*(x2**2 + x3**2)
         do i=1, nactive
             Ffunc = Ffunc+0.5*indconduc(i, i)*sigma_energy/sigma_coils(i)*curnow(i)**2 + sigma_coils(i)*curdiff(i)**2
         enddo
@@ -1857,7 +1857,7 @@ contains
         Fderiv = 0.
         do i=1, nactive
             Fderiv(i) = 2.*(0.5*indconduc(i,i)*sigma_energy/sigma_coils(i)*curnow(i) + &
-                sigma_coils(i)*curdiff(i) + sigma_B*sum((psicorr(1:nteta_temp) - x1)*(G_00(i, 1:nteta_temp) - G_00c(i))))
+                sigma_coils(i)*curdiff(i) + sigma_B*sum((psicorr(1:ntheta_temp) - x1)*(G_00(i, 1:ntheta_temp) - G_00c(i))))
             bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             bub(2) = interp2d_psi(raxref + 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
             bub(3) = interp2d_psi(raxref, zaxref - 0.5*dz, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
@@ -1939,16 +1939,16 @@ contains
 
     call psi_mutual_effect_conductors(psiplasmatoconduc)
 
-    call estimate_boundary_to_pbe(rbndtemp, zbndtemp, nteta)
+    call estimate_boundary_to_pbe(rbndtemp, zbndtemp, ntheta)
 
     open(32, file = file_time)
     write(32, *) nactive, curconduc(1:nactive)*1e3, -GPI2*psibext, rax, zax, &
         tau_gseq_feqis, vloop_avg, L_ext*dIp_dt, &
         nr2, nz2, psirz(1:nr2, 1:nz2), nblocks - npassive, force_R, force_Z, &
         psibnd, psiaxis, indconduc(1:nactive, 1:nactive), resconduc(1:nactive, 1:nactive), &
-        nlimiter, limiterR(1:nlimiter), limiterZ(1:nlimiter), Rrect(1), Rrect(nr2), Zrect(1), Zrect(nz2), nteta_temp, &
-        rbref(1:nteta_temp), zbref(1:nteta_temp), time_astra, tau_gseq_feqis, GPI2*psiplasmatoconduc(1:nactive), &  !saved in kA
-        nteta, rbndtemp(1:nteta), zbndtemp(1:nteta)
+        nlimiter, limiterR(1:nlimiter), limiterZ(1:nlimiter), Rrect(1), Rrect(nr2), Zrect(1), Zrect(nz2), ntheta_temp, &
+        rbref(1:ntheta_temp), zbref(1:ntheta_temp), time_astra, tau_gseq_feqis, GPI2*psiplasmatoconduc(1:nactive), &  !saved in kA
+        ntheta, rbndtemp(1:ntheta), zbndtemp(1:ntheta)
     close(32)
 
 
@@ -1974,9 +1974,9 @@ contains
 
     open(unit, file=trim(filename))
 !first PBE stuff
-        write(unit, *) nrho, nteta
+        write(unit, *) nrho, ntheta
         write(unit, *) pprime, ffprime, psigrida  ! pprim, ffprim, psigrid
-        write(unit, *) rpol, zpol, jrhoteta, psirhoteta  !R, Z, jrhoteta, PSI
+        write(unit, *) rpol, zpol, jrhotheta, psirhotheta  !R, Z, jrhotheta, PSI
         write(unit, *) dator !area elements
 !now free boundary
         if (allocated(Rrect)) then
@@ -2010,14 +2010,14 @@ contains
     double precision, dimension(500) :: rbref, zbref
     double precision, dimension(nactive) :: G_00c, G_00r, G_00z, &
         Fderiv, curref, curnow, curdiff
-    double precision, dimension(nteta) :: psicorr
-    double precision, dimension(nactive, nteta) :: G_00
+    double precision, dimension(ntheta) :: psicorr
+    double precision, dimension(nactive, ntheta) :: G_00
     double precision, dimension(nactive, nactive) :: matrix, invmatrix
 
     psicorr   = 0.
     Ffunc_old = 1.e6
 
-! First, initialized initial guess coming from prescribed boundary current density: jrhoteta
+! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
 
     call interp_j_fromrhotorz
 
@@ -2041,18 +2041,18 @@ contains
 
     raxref = raxp
     zaxref = zaxp
-    rbref(1:nteta) = rbndp(1:nteta)
-    zbref(1:nteta) = zbndp(1:nteta)
+    rbref(1:ntheta) = rbndp(1:ntheta)
+    zbref(1:ntheta) = zbndp(1:ntheta)
 
 ! calculate the matrix F_li of the F function, including the green function terms
     matrix    = 0.
     invmatrix = 0.
 
     do j=1, nactive
-        do k=1, nteta
+        do k=1, ntheta
             G_00(j, k) = interp2d_psi(rbref(k), zbref(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         enddo
-        G_00c(j) = sum(G_00(j, 1:nteta))/(0. + nteta)
+        G_00c(j) = sum(G_00(j, 1:ntheta))/(0. + ntheta)
         bub(1) = interp2d_psi(raxref - dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         bub(2) = interp2d_psi(raxref + dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         bub(3) = interp2d_psi(raxref, zaxref - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
@@ -2065,7 +2065,7 @@ contains
         do i=1, nactive
             if (i == j) matrix(i, j) = matrix(i, j) + sigma_energy*sigma_coils(i)*indconduc(i,i)
             matrix(i, j) = matrix(i, j) +  &
-                2.*sigma_B*sum((G_00(i, 1:nteta) - G_00c(i))*(G_00(j, 1:nteta) - G_00c(j))) +  &
+                2.*sigma_B*sum((G_00(i, 1:ntheta) - G_00c(i))*(G_00(j, 1:ntheta) - G_00c(j))) +  &
                 2.*sigma_axis*(G_00r(i)*G_00r(j) + G_00z(i)*G_00z(j))
         enddo
     enddo
@@ -2089,11 +2089,11 @@ contains
             enddo
         enddo
 
-        do j=1, nteta
+        do j=1, ntheta
             psicorr(j) = interp2d_psi(rbref(j), zbref(j), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         enddo
 
-        x1 = sum(psicorr)/(nteta + 0.) !average psi on the boundary
+        x1 = sum(psicorr)/(ntheta + 0.) !average psi on the boundary
 
 ! Derivative at ref axis
         bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
@@ -2111,7 +2111,7 @@ contains
 ! Calculate F derivative
         do i=1, nactive
             Fderiv(i) = 2.*(0.5*indconduc(i,i)*sigma_energy*sigma_coils(i)*curdiff(i) + &
-                sigma_B*sum((psicorr - x1)*(G_00(i, 1:nteta) - G_00c(i))) + &
+                sigma_B*sum((psicorr - x1)*(G_00(i, 1:ntheta) - G_00c(i))) + &
                 sigma_axis*(x2*G_00r(i) + x3*G_00z(i)) )
         enddo
 
@@ -2175,14 +2175,14 @@ contains
     double precision, dimension(500) :: rbref, zbref
     double precision, dimension(nactive) :: G_00c, G_00r, G_00z, &
         Fderiv, curref, curnow, curdiff
-    double precision, dimension(nteta) :: psicorr
-    double precision, dimension(nactive, nteta) :: G_00
+    double precision, dimension(ntheta) :: psicorr
+    double precision, dimension(nactive, ntheta) :: G_00
     double precision, dimension(nactive, nactive) :: matrix, invmatrix
 
     psicorr   = 0.
     Ffunc_old = 1.e6
 
-! First, initialized initial guess coming from prescribed boundary current density: jrhoteta
+! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
 
     call interp_j_fromrhotorz
 
@@ -2206,18 +2206,18 @@ contains
 
     raxref = raxp
     zaxref = zaxp
-    rbref(1:nteta) = rbndp(1:nteta)
-    zbref(1:nteta) = zbndp(1:nteta)
+    rbref(1:ntheta) = rbndp(1:ntheta)
+    zbref(1:ntheta) = zbndp(1:ntheta)
 
 ! calculate the matrix F_li of the F function, including the green function terms
     matrix    = 0.
     invmatrix = 0.
 
     do j=1, nactive
-        do k=1, nteta
+        do k=1, ntheta
             G_00(j, k) = interp2d_psi(rbref(k), zbref(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         enddo
-        G_00c(j) = sum(G_00(j, 1:nteta))/(0. + nteta)
+        G_00c(j) = sum(G_00(j, 1:ntheta))/(0. + ntheta)
         bub(1) = interp2d_psi(raxref - dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         bub(2) = interp2d_psi(raxref + dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         bub(3) = interp2d_psi(raxref, zaxref - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
@@ -2230,7 +2230,7 @@ contains
         do i=1, nactive
             if (i == j) matrix(i, j) = matrix(i, j) + sigma_energy*sigma_coils(i)*indconduc(i,i)
             matrix(i, j) = matrix(i, j) +  &
-                2.*sigma_B*sum((G_00(i, 1:nteta) - G_00c(i))*(G_00(j, 1:nteta) - G_00c(j))) +  &
+                2.*sigma_B*sum((G_00(i, 1:ntheta) - G_00c(i))*(G_00(j, 1:ntheta) - G_00c(j))) +  &
                 2.*sigma_axis*(G_00r(i)*G_00r(j) + G_00z(i)*G_00z(j))
        enddo
     enddo
@@ -2253,11 +2253,11 @@ contains
             enddo
         enddo
 
-        do j=1, nteta
+        do j=1, ntheta
             psicorr(j) = interp2d_psi(rbref(j), zbref(j), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         enddo
 
-        x1 = sum(psicorr)/(nteta + 0.) !average psi on the boundary
+        x1 = sum(psicorr)/(ntheta + 0.) !average psi on the boundary
 
 ! Derivative at ref axis
         bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
@@ -2275,7 +2275,7 @@ contains
 ! Calculate F derivative
         do i=1, nactive
             Fderiv(i) = 2.*(0.5*indconduc(i,i)*sigma_energy*sigma_coils(i)*curdiff(i) + &
-                sigma_B*sum((psicorr - x1)*(G_00(i, 1:nteta) - G_00c(i))) + &
+                sigma_B*sum((psicorr - x1)*(G_00(i, 1:ntheta) - G_00c(i))) + &
                 sigma_axis*(x2*G_00r(i) + x3*G_00z(i)) )
         enddo
 
@@ -2345,14 +2345,14 @@ contains
     double precision, dimension(500) :: rbref, zbref
     double precision, dimension(nactive) :: G_00c, G_00r, G_00z, &
         Fderiv, curref, curnow, curdiff
-    double precision, dimension(nteta) :: psicorr
-    double precision, dimension(nactive, nteta) :: G_00
+    double precision, dimension(ntheta) :: psicorr
+    double precision, dimension(nactive, ntheta) :: G_00
     double precision, dimension(nactive, nactive) :: matrix, invmatrix
 
     psicorr   = 0.
     Ffunc_old = 1.e6
 
-! First, initialized initial guess coming from prescribed boundary current density: jrhoteta
+! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
 
     call interp_j_fromrhotorz
 
@@ -2376,18 +2376,18 @@ contains
 
     raxref = raxp
     zaxref = zaxp
-    rbref(1:nteta) = rbndp(1:nteta)
-    zbref(1:nteta) = zbndp(1:nteta)
+    rbref(1:ntheta) = rbndp(1:ntheta)
+    zbref(1:ntheta) = zbndp(1:ntheta)
 
 ! calculate the matrix F_li of the F function, including the green function terms
     matrix    = 0.
     invmatrix = 0.
 
     do j=1, nactive
-        do k=1, nteta
+        do k=1, ntheta
             G_00(j, k) = interp2d_psi(rbref(k), zbref(k), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         enddo
-        G_00c(j) = sum(G_00(j, 1:nteta))/(0. + nteta)
+        G_00c(j) = sum(G_00(j, 1:ntheta))/(0. + ntheta)
         bub(1) = interp2d_psi(raxref - dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         bub(2) = interp2d_psi(raxref + dr/2., zaxref, Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
         bub(3) = interp2d_psi(raxref, zaxref - dz/2., Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, j))
@@ -2400,7 +2400,7 @@ contains
         do i=1, nactive
             if (i == j) matrix(i, j) = matrix(i, j) + sigma_energy*sigma_coils(i)*indconduc(i,i)
             matrix(i, j) = matrix(i, j) +  &
-                2.*sigma_B*sum((G_00(i, 1:nteta) - G_00c(i))*(G_00(j, 1:nteta) - G_00c(j))) +  &
+                2.*sigma_B*sum((G_00(i, 1:ntheta) - G_00c(i))*(G_00(j, 1:ntheta) - G_00c(j))) +  &
                 2.*sigma_axis*(G_00r(i)*G_00r(j) + G_00z(i)*G_00z(j))
        enddo
     enddo
@@ -2423,11 +2423,11 @@ contains
             enddo
         enddo
 
-        do j=1, nteta
+        do j=1, ntheta
             psicorr(j) = interp2d_psi(rbref(j), zbref(j), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         enddo
 
-        x1 = sum(psicorr)/(nteta + 0.) ! average psi on the boundary
+        x1 = sum(psicorr)/(ntheta + 0.) ! average psi on the boundary
 
 ! Derivative at ref axis
         bub(1) = interp2d_psi(raxref - 0.5*dr, zaxref, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
@@ -2445,7 +2445,7 @@ contains
 ! Calculate F derivative
         do i=1, nactive
             Fderiv(i) = 2.*(0.5*indconduc(i,i)*sigma_energy*sigma_coils(i)*curdiff(i) + &
-                sigma_B*sum((psicorr - x1)*(G_00(i, 1:nteta) - G_00c(i))) + &
+                sigma_B*sum((psicorr - x1)*(G_00(i, 1:ntheta) - G_00c(i))) + &
                 sigma_axis*(x2*G_00r(i) + x3*G_00z(i)) )
         enddo
 
@@ -2504,13 +2504,13 @@ contains
     double precision :: temp_err, curr, f_correction, x1, psibt0, psibt1
     double precision, dimension(9) :: bub
     double precision, dimension(npassive) :: anglr
-    double precision, dimension(nteta) :: psicorr
+    double precision, dimension(ntheta) :: psicorr
     double precision, dimension(n_fourier_restab_boundary) :: S_00, C_00
-    double precision, dimension(4*nteta*n_fourier_restab_boundary) :: work
-    double precision, dimension(nteta, n_fourier_restab_boundary) :: G_00c, G_00s
-    double precision, dimension(nteta, 2*n_fourier_restab_boundary) :: matrix
+    double precision, dimension(4*ntheta*n_fourier_restab_boundary) :: work
+    double precision, dimension(ntheta, n_fourier_restab_boundary) :: G_00c, G_00s
+    double precision, dimension(ntheta, 2*n_fourier_restab_boundary) :: matrix
 
-! First, initialized initial guess coming from prescribed boundary current density: jrhoteta
+! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
     call interp_j_fromrhotorz
 
 ! Rescale current density
@@ -2531,7 +2531,7 @@ contains
     do i=1, npassive
         anglr(i) = ATAN2(z_cond(nactive + i) - zax, r_cond(nactive + i) - rax)
 ! Find true axis
-        do j=1, nteta
+        do j=1, ntheta
             bub(2) = interp2d_psi(rbndp(j), zbndp(j), Rrect(1:nr), Zrect(1:nz), greeni(1:nr, 1:nz, nactive + i))
             do k=1, n_fourier_restab_boundary
                 G_00c(j, k) = G_00c(j, k) + cos(k*anglr(i))*bub(2)
@@ -2540,7 +2540,7 @@ contains
         enddo
     enddo
 
-    do j=1, nteta
+    do j=1, ntheta
         do k=1, n_fourier_restab_boundary
             matrix(j, k) = G_00c(j, k)
             matrix(j, n_fourier_restab_boundary + k) = G_00s(j, k)
@@ -2553,18 +2553,18 @@ contains
     do j_iter=1, 30
         psiplasrz = get_psiplasrz()
         call compound_psi
-        do j=1, nteta
+        do j=1, ntheta
             psicorr(j) = interp2d_psi(rbndp(j), zbndp(j), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         enddo
 
-        x1 = sum(psicorr)/(nteta + 0.)
+        x1 = sum(psicorr)/(ntheta + 0.)
         psibt1  = x1
         psicorr = x1 - psicorr
 
 ! Least square fit solution
 
-        call dgels('N', nteta, n_fourier_restab_boundary*2, 1, matrix, nteta, &
-            psicorr, nteta, WORK, 2*(nteta)*n_fourier_restab_boundary*2, INFO)
+        call dgels('N', ntheta, n_fourier_restab_boundary*2, 1, matrix, ntheta, &
+            psicorr, ntheta, WORK, 2*(ntheta)*n_fourier_restab_boundary*2, INFO)
 
 ! Construct correction
         call compound_psi
@@ -2623,7 +2623,7 @@ contains
     double precision, dimension(258, 258) :: C_00, S_00
     double precision, dimension(nr2, nz2) :: g
 
-!first, initialized initial guess coming from prescribed boundary current density: jrhoteta
+!first, initialized initial guess coming from prescribed boundary current density: jrhotheta
     call interp_j_fromrhotorz
 
 ! Rescale current density
@@ -2870,13 +2870,13 @@ contains
     integer :: i, j, k, k1, k2
     double precision :: t1, t2, t3, t4
 
-! go from jrhoteta to jrz
+! go from jrhotheta to jrz
     jrz = 0.
-    jrhoteta(1:nrho, nteta+1) = jrhoteta(1:nrho, 1)
+    jrhotheta(1:nrho, ntheta+1) = jrhotheta(1:nrho, 1)
     do j=1, nz2
         do i=1, nr2
-            jrz(i, j) = curinterp(Rrect(i), Zrect(j), jrhoteta(1:nrho, 1:nteta+1),  &
-                rho(1:nrho, 1:nteta+1), teta(1:nteta+1), raxp, zaxp, nrho, nteta+1)
+            jrz(i, j) = curinterp(Rrect(i), Zrect(j), jrhotheta(1:nrho, 1:ntheta+1),  &
+                rho(1:nrho, 1:ntheta+1), theta(1:ntheta+1), raxp, zaxp, nrho, ntheta+1)
         enddo
     enddo
 

@@ -38,7 +38,7 @@ f_elite = 'tglf/tglf4elite.dat'
 open(unit_out, file=TRIM(f_elite))
 write(unit_out, '(i)') nthe_equ
 do jthe=1, nthe_equ
-    write(unit_out, '(e14.6)') equil_now%coord_sys%position%teta2d(jthe)
+    write(unit_out, '(e14.6)') equil_now%coord_sys%position%theta2d(jthe)
 enddo
 write(unit_out, '(2i)') NA1, nthe_equ
 do jrho=1, NA1
