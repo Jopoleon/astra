@@ -2,7 +2,7 @@ subroutine feqis_main(nucoils, ucoils, parameters_equil, ifplasma, &
     equil_in, equil_out)
 
 use imas_ids, only: type_equilibrium  
-use parameters_a2equil, only: type_parameters
+use spider_params, only: type_parameters
 use feqis_circuit, only: psi_cur_old, psiplasmatoconduc, &
     ucoils, voltage,  &
     psi_mutual_effect_conductors_simple

@@ -427,7 +427,8 @@ use pi_vars, only: GPI, GPI2, mu0
 use errors_params, only: err_circ_plasma_iter, err_find_oxpoints_derivs, &
     err_find_psistab, err_find_delr, err_find_biquad, err_epsilon, &
     err_gaptolez, err_fix_boundary, err_find_oxpoints
-use parameters_a2equil, only: type_parameters, max_iter, &
+use spider_params, only: type_parameters
+use parameters_a2equil, only: max_iter, &
     err_circ_in, err_find_oxpoints_in, err_find_psistab_in, err_find_delr_in, &
     err_find_biquad_in, err_epsilon_in, err_gaptolez_in, err_fix_boundary_in, &
     err_find_oxpoints_derivs_in

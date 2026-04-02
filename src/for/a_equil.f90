@@ -10,7 +10,8 @@ subroutine A_EQUIL( &
     key_start, PSIEXT, PSPLEX, keyplc, equil_out)
 
 use imas_ids, only: type_equilibrium
-use parameters_a2equil, only: type_parameters, fix_adapgrid, GP, GP2, s_fazt
+use spider_params, only: type_parameters  
+use parameters_a2equil, only: fix_adapgrid, GP, GP2, s_fazt
 use const_inc, only : rtor,shift, updwn
 use feqis_circuit, only: psib_ext_feqis
 
@@ -210,7 +211,7 @@ end subroutine A_equil
 subroutine A_equil_2(ncoils, ifbey, time_a, tau_step, vcoils, eq_solver, iplas_vac)
 
 use imas_ids, only: type_equilibrium
-use parameters_a2equil, only: type_parameters
+use spider_params, only: type_parameters
 use io_mod, only: MACHINE
 
 implicit none
