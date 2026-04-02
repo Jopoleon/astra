@@ -36,10 +36,9 @@ subroutine NBI
 use const_inc
 use status_inc
 use io_mod, only: NBFILE
+use nbstatus, only: set_input, get_output
 
 implicit none
-
-integer :: JINOUT
 
 if (NBFILE(1:1).eq.'*') then
     write(*, *)'>>> NBI Error >>> Configuration file not found'
@@ -48,16 +47,14 @@ endif
 
 ! CNB1  = 8
 ! CNB2  = 1   ? Explicit form of CX losses ?
- JINOUT=0 ! ASTRA->NBI
- call nbstatus(JINOUT, NB1, NA1, NE, NHYDR, NDEUT, NTRIT, NHE3, &
-     NALF, NI, NIZ1, NIZ2, NIZ3, ZIM1, ZIM2, ZIM3, TE, TI, &
-     VR, SHIF, SHIV, ELON, TRIA, AMETR, RHO, FP, MU, AMAIN, &
-     NN, TN, ZEF, G33, IPOL, NIBM, PIBM, PEBM, PBLON, PBPER, & 
-     PBEAM, SNEBM, SNNBM, CUFI, CUBM, SCUBM, &
-     SNIBM1, SNIBM2, SNIBM3, NNBM1, NNBM2, NNBM3)
+call set_input(NE, NHYDR, NDEUT, NTRIT, NHE3, &
+    NALF, NI, NIZ1, NIZ2, NIZ3, ZIM1, ZIM2, ZIM3, TE, TI, &
+    VR, SHIF, SHIV, ELON, TRIA, AMETR, RHO, FP, MU, AMAIN, &
+    NN, TN, ZEF, G33, IPOL, NIBM, PIBM, PEBM, PBLON, PBPER, & 
+    PBEAM, SNEBM, SNNBM, CUFI, CUBM, SCUBM, &
+    SNIBM1, SNIBM2, SNIBM3, NNBM1, NNBM2, NNBM3)
 
- call NBINJ( &
-     trim(NBFILE), BTOR, RTOR, ABC, AB, ROC, SHIFT, UPDWN, &
+call NBINJ( trim(NBFILE), BTOR, RTOR, ABC, AB, ROC, SHIFT, UPDWN, &
     HRO, TAU, NA1, NB1, AIM1, AIM2, AIM3, AMJ, ZMJ, NNCL, NNWM, QNBI, &
 ! Any allowed control parameters can be used below
     CNB1, & ! No. of NB sources |CNB1| if<0 no FP, srs only  (8)
@@ -71,16 +68,10 @@ endif
     CNBI4)   ! control of beam-plasma fusion 1/0/2 full/off/Ti=0
 !  0 (no fusion), 1 (finite Te, Ti), 2 (finite Te, Ti=0) 
 
-JINOUT=1 ! NBI->ASTRA
-
-call nbstatus(JINOUT, NB1, NA1, NE, NHYDR, NDEUT, NTRIT, NHE3, &
-    NALF, NI, NIZ1, NIZ2, NIZ3, ZIM1, ZIM2, ZIM3, TE, TI, &
-    VR, SHIF, SHIV, ELON, TRIA, AMETR, RHO, FP, MU, AMAIN, &
-    NN, TN, ZEF, G33, IPOL, NIBM, PIBM, PEBM, PBLON, PBPER, & 
+call get_output(NIBM, PIBM, PEBM, PBLON, PBPER, & 
     PBEAM, SNEBM, SNNBM, CUFI, CUBM, SCUBM, &
     SNIBM1, SNIBM2, SNIBM3, NNBM1, NNBM2, NNBM3)
 
-return
 end subroutine nbi
 
 !======================================================================|
