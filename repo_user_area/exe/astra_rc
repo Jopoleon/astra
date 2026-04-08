@@ -12,7 +12,11 @@ export JSON_INC=$JSON_HOME/inc
 
 # SPIDER
 SPIDER_HOME=${ASTRA_EXT}/spider/mar26
-export SPIDER_LIB=${SPIDER_HOME}/lib/libspider.a
+if [ -f ${SPIDER_HOME}/lib/libspider.a ]; then
+    export SPIDER_LIB=${SPIDER_HOME}/lib/libspider.a
+else
+    export SPIDER_LIB=""
+fi
 
 # TORBEAM
 

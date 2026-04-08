@@ -18,9 +18,25 @@ double precision, dimension(IV1, n_fun) :: FSRS, FVM, RMN
 
 contains
 
-!---------------------------------------------------------------------
 ! Subroutines for time dependent Fokker-Planck calculations
 
+!---------------------------------------------------------------------
+    double precision function YERF(x_in)
+    
+    double precision, intent(in) :: x_in
+    double precision :: EX2, T, T2, T3
+
+    EX2 = dEXP(-x_in**2)
+    T  = 1.d0 / (1.d0 + 0.3275911d0 * x_in)
+    T2 = T**2
+    T3 = T2 * T
+
+    YERF = (1.d0 - (0.254829592d0 * T - &
+        0.284496736d0 * T2 + 1.421413741d0 * T3 - &
+        1.453152027d0 * T2 * T2 + 1.061405429d0 * T2 * T3) * EX2)
+
+    end function YERF
+    
 !---------------------------------------------------------------------
     double precision function YCERF(x_in)
 !----------------------------------------------------- 17.11.89
@@ -28,7 +44,7 @@ contains
 !-------------------------------------------------------------
 
     double precision, intent(in) :: x_in
-    double precision :: X2, EX2, T, T2, T3
+    double precision :: X2, EX2
 
     if (x_in < 0.06d0) then
         YCERF = 0.3761264d0
@@ -37,16 +53,7 @@ contains
 
     X2 = x_in**2
     EX2 = dEXP(-X2)
-
-    T  = 1.d0 / (1.d0 + 0.3275911d0 * x_in)
-    T2 = T**2
-    T3 = T2 * T
-
-    YCERF = (1.d0 - (0.254829592d0 * T - &
-        0.284496736d0 * T2 + 1.421413741d0 * T3 - &
-        1.453152027d0 * T2 * T2 + 1.061405429d0 * T2 * T3) * EX2)
-
-    YCERF = (0.56418959d0 * EX2 + YCERF * (x_in - 0.5d0 / x_in)) / (2.d0 * X2)
+    YCERF = (0.56418959d0 * EX2 + YERF(x_in) * (x_in - 0.5d0 / x_in)) / (2.d0 * X2)
 
     end function YCERF
 
@@ -60,7 +67,7 @@ contains
 !---------------------------------------------------------------------
 
     double precision, intent(in) :: x_in
-    double precision :: EX2, T, T2, T3
+    double precision :: EX2
 
     if (x_in < 0.055d0) then
         YAERF = 0.7522528d0 * x_in**3
@@ -68,16 +75,7 @@ contains
     endif
 
     EX2 = dexp(-x_in**2)
-
-    T  = 1.d0 / (1.d0 + 0.3275911d0 * x_in)
-    T2 = T **2
-    T3 = T2 * T
-
-    YAERF = (1.d0  - (0.254829592d0 * T - &
-        0.284496736d0 * T2 +  1.421413741d0 * T3 - &
-        1.453152027d0 * T2 * T2 +  1.061405429d0 * T2 * T3) * EX2)
-
-    YAERF = YAERF - 1.1283792d0 * x_in * EX2
+    YAERF = YERF(x_in) - 1.1283792d0 * x_in * EX2
 
     end function YAERF
 
@@ -89,8 +87,7 @@ contains
 
     integer :: I, J, I1
 
-    double precision VB2, YE, YA, YB, YD, YI, YDEL
-    double precision YEXPI, YHDVB, YIP, YAB
+    double precision :: VB2, YE, YA, YB, YD, YI, YDEL, YEXPI, YHDVB, YIP, YAB
 
     do I=1, IV1
         A1(I) = 0.
@@ -184,8 +181,8 @@ contains
     subroutine NBPOMU
 ! MU sweep
 
-    double precision AJ, BJ, CJ, DJ, Y
-    integer I, ITM1, J, J1, JM
+    integer :: I, ITM1, J, J1, JM
+    double precision :: AJ, BJ, CJ, DJ, Y
 
     ITM1 = IT - 1
 
@@ -229,8 +226,8 @@ contains
     subroutine NBPOVE
 ! V sweep
 
-    double precision :: Y
     integer :: J, JP, I, I1, IM
+    double precision :: Y
 
     do J=1, IT ! ..... Calculations of alfa, beta
         JP = J + 1
@@ -282,9 +279,7 @@ contains
         TAU, NNCL, NNWM, CBM1, CBM2, CBM3, CBM4, &
         CBMI1, CBMI2, CBMI3, CBMI4, YEXTARR(n_rho, 9)
 
-    integer :: JFPBEG, JN1OLD
-
-    integer :: N, N1, ITC, IT1, NTET1, IEB, J1BEG, J1END, &
+    integer :: JFPBEG, JN1OLD, N, N1, ITC, IT1, NTET1, IEB, J1BEG, J1END, &
         I, J, JT, JV, JN, JE, JBMS4, JNA, JNAC, J2, JSP, ISP, &
         ITRAP, JTDTS, ITIME, NTET, JN22, IE, IVE, J1, JTIME, &
         I1, I2, JLREC, JSRNUM, JDBL, jOUT

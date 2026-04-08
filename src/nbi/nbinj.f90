@@ -1,8 +1,8 @@
 ! Neutral Beam driven current, momentum and power deposition
 !    including Ripple Losses
 !-----------------------------------------------------------------------
-!	entry:	AMETR, SHIF, NA1, RTOR, AB, BTOR, NI, HBEAM, 
-!     		RBMIN, RBMAX, CBMS2, CBMI3, EBEAM, QBEAM, ABEAM, DBM1, DBM2, DBM3, 
+!	entry:	AMETR, SHIF, NA1, RTOR, AB, BTOR, NI, HBEAM,
+!     		RBMIN, RBMAX, CBMS2, CBMI3, EBEAM, QBEAM, ABEAM, DBM1, DBM2, DBM3,
 !	      MU, TE, TI, NE, NN, NNB, ZEF, AMAIN, PBEAM, SCUBM, CONTR, ELON, TRIAN
 ! NBI interactive control:
 ! <VARIABLES>:
@@ -21,10 +21,10 @@
 !
 ! Comments: the footprint position is interpreted as:
 !
-! for tangential NBI: (RBMAX+RBMIN)/2 > RTOR - AB 
-! as NBI cross-section by the meridianal plane perpendicular 
+! for tangential NBI: (RBMAX+RBMIN)/2 > RTOR - AB
+! as NBI cross-section by the meridianal plane perpendicular
 ! to the vertical plane of the central NBI pencil beam
-! with tangential radius of (RBMAX+RBMIN)/2 
+! with tangential radius of (RBMAX+RBMIN)/2
 !
 ! for perpendicular NBI: (RBMAX+RBMIN)/2 < RTOR - AB
 ! as NBI cross-section by the verticall plane perpendicular to
@@ -39,13 +39,13 @@
 !  menues for each source separately. NBMENU is called
 !  automatically when you increase CBM1. User can
 !  call NBMENU anytime by changing a sign of CBM1
-!  to negative (CBM1 = 4 to CBM1 = -4, etc.) 
+!  to negative (CBM1 = 4 to CBM1 = -4, etc.)
 !
 ! CX heat losses due to NBI control
-! 
-! CBM2=1  heat losses (=0 No losses) from bulk ions due 
+!
+! CBM2=1  heat losses (=0 No losses) from bulk ions due
 !  to NBI charge exchange    (Def=1)
-!   CBM2=1 corresponds to the explicit calculations 
+!   CBM2=1 corresponds to the explicit calculations
 !  of the heat sink from the bulk ion component at
 !  the moment when NBI is called.
 !  Implicit form is recommended:
@@ -70,7 +70,7 @@
 ! CBMS1>1 Zero-width drift orbit
 ! CBMS2=1, ..., 82 number of 'pencils'   (Def=1)
 ! CBMS3=tg(angle between central pencil and midplane) (Def=1)
-! Comments: CBMS3 is used for perpendicular NBI only  
+! Comments: CBMS3 is used for perpendicular NBI only
 ! CBMS4=(HBmax-HBmin)/(RBMAX-RBMIN): HBEAM=(HBmax+HBmin)/2(Def=1)
 !
 ! Fast ion solver control
@@ -79,37 +79,37 @@
 !  number of angle mesh points NTET1=50/CBMI1+1
 ! CBMI1=0 no FP solver, only ionisation source Y4TORIC is calculated
 ! CBMI2-4 are active for CBMI1=2 only
-! 
+!
 ! CBMI2=TAUNBI/TAU ratio of the NBI time-step to TAU (Def=1)
-! WARNING: TAUNBI does not coinside automatically with the 
-!  interval between sequental calls of NBI (that 
-!  enables the consumption of calculations at the 
-!  NBI-steady state phase) 
+! WARNING: TAUNBI does not coinside automatically with the
+!  interval between sequental calls of NBI (that
+!  enables the consumption of calculations at the
+!  NBI-steady state phase)
 ! CBMI3=1, 2... NBI X-mesh points number N1=(NA1-1)/CBMI3+1(Def=1)
 !       3(EB, EB/2, EB/3), 2(EB, EB/2), 1(EB)
 ! CBMI4=0, 1, 2...control of beam-plasma fusion              (Def=1)
-!  0 (no fusion), 1 (finite Te, Ti), 2 (finite Te, Ti=0) 
-!       NBI V-mesh points number IV1=161 
+!  0 (no fusion), 1 (finite Te, Ti), 2 (finite Te, Ti=0)
+!       NBI V-mesh points number IV1=161
 !
 ! USER's Functions (NBUSER.f) shold be treated from user's sbr/
 !
 ! NBFHZ(NBI_No, Z, CBMH1, CBMH2), NBFRY(NBI_No, Y, CBMR1, CBMR2)
-!  power distribution in the footprint profile 
+!  power distribution in the footprint profile
 !  (see comments in the subroutines)
 !
-! RIPRAD(ZUPDWN, J) [m] - Ripple loss cone boundary (major 
-!  radius) for each magnetic surface: ZUPDWN [m]- 
-!  shift in respect to the midplane of ripple 
+! RIPRAD(ZUPDWN, J) [m] - Ripple loss cone boundary (major
+!  radius) for each magnetic surface: ZUPDWN [m]-
+!  shift in respect to the midplane of ripple
 !  simmetry, J - surface index
-! RIPRAD -depends on tokamak mag. field coils' and 
+! RIPRAD -depends on tokamak mag. field coils' and
 !  plasma configurations  (Def: No Ripple losses) (Def=999)
-! exit: PBEAM, PEBM, PIBM, NIBM, CUFI, CUBM, PBLON, PBPER, 
+! exit: PBEAM, PEBM, PIBM, NIBM, CUFI, CUBM, PBLON, PBPER,
 !  SCUBM, SNEBM, SNNBM, NNBM1, 2, 3 for MAIN
 !=============================================================
 !  stnbdp [1/s]- intensity of burn out of T from T NBI
 !   on D bulk component
 !  Tritium sink/n14.1MeV+3.52MeVHe4 source: S= NDEUT(j)*stnbdp(j)
-! 
+!
 !  sdnbtp [1/s]- intensity of burn out of D from D NBI
 !   on T bulk component
 ! Deuterium sink/n14.1MeV+3.52MeVHe4 source: S= NTRIT(j)*sdnbtp(j)
@@ -143,30 +143,29 @@ double precision, intent(in) :: BTOR, RTOR, ABC, AB, ROC, SHIFT, UPDWN, HRO, TAU
 character(len=*), intent(in) :: file_nbi
 double precision, intent(out) :: QNBI, CBM1, CBMI3, CBMI4
 
-double precision :: CBMH1, CBMH2, CBMR1, CBMR2, CBMS1, CBMS2, CBMS3, CBMS4, &
-    EBEAM,  DBM1,  DBM2,  DBM3, ABEAM,  HBEAM,  CONTR,  RBMAX,  RBMIN,  QBEAM
-
 logical :: EXI
 integer :: N, JSRNUM, J, J2FRST, JN, JN1, JNAX, ERCODE, JWARN, INBMS, &
     JSRREC, jABEAM, jZBEAM, IFLAG
+double precision :: CBMH1, CBMH2, CBMR1, CBMR2, CBMS1, CBMS2, CBMS3, CBMS4, &
+    EBEAM, DBM1, DBM2, DBM3, ABEAM, HBEAM, CONTR, RBMAX, RBMIN, QBEAM
 double precision :: YQBEAM, ZBEAM, YCBMI3, YCBMI4, YABEAM, YEBEAM, YUD, YHM
 double precision :: ARRAY(n_fields), YCOS(n_theta), yEXTARR(n_rho, 9)
 character(len=25) :: STRI
 character(len=40) :: YVARNAME
 
 !---- Ripple normalized radius of the ripple boundary
-!---- banana with RTCRIT > YRIPLR is lost 
+!---- banana with RTCRIT > YRIPLR is lost
 double precision :: RIPRAD, Y, Y1, Y2, YMAX, YQBM
 real*8, allocatable :: Y4TORIC(:, :, :), YQBMJE(:, :), yetmp(:), ypwtmp(:), ypartmp(:)
 integer jElevAll, je, jiounit, JT
 
 save J2FRST, INBMS
 data J2FRST, INBMS, YCBMI3, YCBMI4 /0, 0, 1.d0, 1.d0/
-data ABEAM/1.d0/ DBM1/1.d0/ DBM2/0.d0/ DBM3/0.d0/ 
+data ABEAM/1.d0/ DBM1/1.d0/ DBM2/0.d0/ DBM3/0.d0/
 data RBMIN/1.d0/ RBMAX/.5d0/
 
 jElevAll = 0 ! for write to SSFPQL
-ZBEAM = 1.d0 ! Hydrogen isotopes only 
+ZBEAM = 1.d0 ! Hydrogen isotopes only
 
 inquire(file=TRIM(file_nbi), exist=EXI)
 
@@ -216,16 +215,16 @@ open(2, file=TRIM(file_nbi), status='OLD')
 do j=1, INBMS
     call STREAD(2, 20, ARRAY, ERCODE)
     if (j == 1) then
-        ABEAM = ARRAY(3) 
+        ABEAM = ARRAY(3)
         EBEAM = ARRAY(5)
     else
         if (EBEAM < ARRAY(5)) EBEAM = ARRAY(5)
         if (CBMI1 /= 1.d0 .and. ABEAM /= ARRAY(3)) write(*, *) 'ABEAM must be the same for all NBIs if CBM4  /=  1'
     endif
-    if (Y < (ARRAY(3)*ARRAY(5))) Y = ARRAY(3)*ARRAY(5)        
+    if (Y < (ARRAY(3)*ARRAY(5))) Y = ARRAY(3)*ARRAY(5)
 enddo
 close(2)
- 
+
 if (CBMI1 > 0.d0) then
     CBMI3 = 1.d0
     J = 5.d-3*dsqrt(Y)*(NA1/ABC)/(BTOR*RTOR/(RTOR + SHIFT))
@@ -237,11 +236,11 @@ if (CBMI1 > 0.d0) then
         YCBMI4 = CBMI4
     endif
     if (CBMI1 > 1.d0 .and. J2FRST /= 0) then
-        if (CBMI3 /= YCBMI3 .or. CBMI4 /= YCBMI4) write(*, *) 'CBMI3, CBMI4 can`t be changed after CNB4=2' 
+        if (CBMI3 /= YCBMI3 .or. CBMI4 /= YCBMI4) write(*, *) 'CBMI3, CBMI4 can`t be changed after CNB4=2'
         CBMI3 = YCBMI3
         CBMI4 = YCBMI4
     endif
-else  ! w/o FP solver FI source on the transport grid 
+else  ! w/o FP solver FI source on the transport grid
     CBMI3 = 1.d0 !!!!
 endif
 
@@ -250,7 +249,7 @@ CBM1 = INBMS
 
 !---- Ripple
 
-YUD = UPDWN 
+YUD = UPDWN
 Y = (AMETR(NA1) + AMETR(NA1 - 1))/2.d0
 N = (NA1 - 1)/CBMI3
 Y1 =0.
@@ -298,8 +297,8 @@ enddo
 
 ! Set plasma composition
 call NBSPEC(AIM1, AIM2, AIM3, AMJ, ZMJ, NA1, NB1, &
-   yEXTARR, NE, NI, NHYDR, NDEUT, NTRIT, NHE3, NALF, NIZ1, NIZ2, NIZ3, &
-   ZIM1, ZIM2, ZIM3, RMB, ZB, ISPEND, ISPE, IFLAG)
+    yEXTARR, NE, NI, NHYDR, NDEUT, NTRIT, NHE3, NALF, NIZ1, NIZ2, NIZ3, &
+    ZIM1, ZIM2, ZIM3, RMB, ZB, ISPEND, ISPE, IFLAG)
 
 if (IFLAG /= 0) return
 
@@ -377,7 +376,7 @@ do JN=1, INBMS
             YEXTARR, CBMI4)
 
         if (CBMI1 == 1.d0) call NBION0(NA1, NNCL, NNWM, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
-    
+
 !: counter injection part...
         QBEAM = YQBEAM*CONTR
         call NBSRSR(JSRNUM, 1.d0, NA1, RTOR, SHIFT, AB, BTOR, NNCL, NNWM, HRO, YHM, &
@@ -410,19 +409,19 @@ if (CBMI1 >= 2.d0)  then
     if (JWARN == 1) then
         write(*, *) 'ABEAM must be the same for CBMI1#1'
         ABEAM = YABEAM
-    endif 
+    endif
 
     call NBIONR(EBEAM, ABEAM, AMJ, RTOR, NA1, TAU, NNCL, NNWM, CBM1, CBM2, &
         CBM3, CBM4, CBMI1, CBMI2, CBMI3, CBMI4, JSRREC, YEXTARR)
 endif
- 
+
 ! Conversion to rough mesh keeping the intagrals
 if (CBMI3 /= 1.d0)    then
     call NBSMTV(NIBM, CBMI3, ROC, NA1)
     call NBSMTV(PIBM, CBMI3, ROC, NA1)
     call NBSMTV(PEBM, CBMI3, ROC, NA1)
     call NBSMTV(PBLON, CBMI3, ROC, NA1)
-    call NBSMTV(PBPER, CBMI3, ROC, NA1) 
+    call NBSMTV(PBPER, CBMI3, ROC, NA1)
     call NBSMTV(PBEAM, CBMI3, ROC, NA1)
     call NBSMTV(SNNBM, CBMI3, ROC, NA1)
     call NBSMTV(SNEBM, CBMI3, ROC, NA1)
@@ -451,20 +450,20 @@ if (CBMI1 == 0.d0) then ! write to SSFPQL
     enddo
     if (jElevAll == 0) then !no power in NBI
         jElevAll = 1
-        if (.not. allocated(Y4TORIC)) allocate(Y4TORIC(jElevAll, n_theta, NA1)) 
+        if (.not. allocated(Y4TORIC)) allocate(Y4TORIC(jElevAll, n_theta, NA1))
         if (.not. allocated(yetmp)) allocate(yetmp(jElevAll))
         if (.not. allocated(ypwtmp)) allocate(ypwtmp(jElevAll))
         if (.not. allocated(ypartmp)) allocate(ypartmp(jElevAll))
         do je=1, jElevAll
             yetmp(je) = EBEAM
             ypwtmp(jE) = 0.d0
-            ypartmp(jE) = 0.d0 
+            ypartmp(jE) = 0.d0
             do j=1, n_theta
                 do jn=1, NA1-1
                     Y4TORIC(jE, j, jn)=0.d0
                 enddo
-            enddo 
-        enddo 
+            enddo
+        enddo
     else ! power in NBI
         if (.not. allocated(Y4TORIC)) allocate(Y4TORIC(jElevAll, n_theta, NA1))
         if (.not. allocated(yetmp)) allocate(yetmp(jElevAll))
@@ -473,11 +472,11 @@ if (CBMI1 == 0.d0) then ! write to SSFPQL
         do je=1, jElevAll
             yetmp(je)   = 0.d0
             ypwtmp(je)  = 0.d0
-            ypartmp(je) = 0.d0 
+            ypartmp(je) = 0.d0
         enddo
 
         open(35, FILE='dat/srsfi.dat', FORM='UNFORMATTED', STATUS='UNKNOWN', ACCESS='DIRECT', RECL=JSRREC)
-        J = 0  ! for JELEVEL 
+        J = 0  ! for JELEVEL
         do JSRNUM=1, INBMS ! cycle for NBI sources
             read(35, REC=JSRNUM, ERR=990) EBEAM, &
                 (((YASBA(JE, JN, JT), JE=1, 3), JN=1, NA1-1), JT=1, n_theta)
@@ -487,16 +486,16 @@ if (CBMI1 == 0.d0) then ! write to SSFPQL
                 yetmp(j) = EBEAM
                 do jt=1, n_theta
                     do jn=1, NA1
-                        if (jn < na1) then 
+                        if (jn < na1) then
                             Y = YASBA(3, JN, JT)
                         else
                             Y = 0.d0
                         endif
                         Y4TORIC(j, jt, jn) = Y*1.d19
                         ypwtmp(j) = ypwtmp(j) + Y*1.6d-3*yetmp(j)
-                        ypartmp(j) = ypartmp(j) + Y4TORIC(j, jt, jn) 
+                        ypartmp(j) = ypartmp(j) + Y4TORIC(j, jt, jn)
                     enddo
-                enddo 
+                enddo
             endif
             if (YQBMJE(JSRNUM, 2) > 0.d0) then
                 j = j + 1
@@ -511,7 +510,7 @@ if (CBMI1 == 0.d0) then ! write to SSFPQL
 
                         Y4TORIC(j, jt, jn) = Y*1.d19
                         ypwtmp(j) = ypwtmp(j) + Y*1.6d-3*yetmp(j)
-                        ypartmp(j) = ypartmp(j) + Y4TORIC(j, jt, jn) 
+                        ypartmp(j) = ypartmp(j) + Y4TORIC(j, jt, jn)
                     enddo
                 enddo
             endif
@@ -528,9 +527,9 @@ if (CBMI1 == 0.d0) then ! write to SSFPQL
 
                         Y4TORIC(j, jt, jn) = Y*1.d19
                         ypwtmp(j) = ypwtmp(j) + Y*1.6d-3*yetmp(j)
-                        ypartmp(j) = ypartmp(j) + Y4TORIC(j, jt, jn) 
+                        ypartmp(j) = ypartmp(j) + Y4TORIC(j, jt, jn)
                     enddo
-                enddo 
+                enddo
             endif
         enddo
         close(35)
@@ -579,7 +578,7 @@ if (CBMI1 == 0.d0) then ! write to SSFPQL
     if (allocated(ypartmp)) deallocate (ypartmp)
 
 endif !write to SSFPQL
-   
+
 do j=1, na1
     NNBM2(j)  = SNIBM2(j)
     NNBM3(j)  = stnbdp(j)
@@ -599,15 +598,15 @@ stop
 95 continue
 write(*, *) '>>> NBI calling STREAD: array out of limits'
 stop
- 
+
 96 continue
 write(*, *) '>>> NBI >>> Error in file "', TRIM(file_nbi), '": unrecognized variable name'
 stop
- 
+
 97 continue
 write(*, *) '>>> NBI >>> File "', TRIM(file_nbi), '" read error'
 stop
- 
+
 98 continue
 write(*, *) '>>> NBI >>> Wrong NBI configuration file format. '
 write(*, *) '            More records expected than available.'
@@ -615,9 +614,9 @@ stop
 
 990 write(*, *) '>>> NBI >>> read error in dat/srsfi.dat'
 stop
- 
+
 end subroutine NBINJ
-      
+
 !---------------------------------------------------------------------
 subroutine NQUERY(NCH, file_name, NBS, ERCODE)
 !---------------------------------------------------------------------
@@ -655,7 +654,7 @@ character(len=80) :: STR, STRI, ADATA(n_nbi_max), CDATA(n_nbi_max)
 !  ABEAM HBEAM CONTR QBEAMy
 !  RBMAX RBMIN YCBEAM YJBEAM
 !  SRSNo
-! New NBI file: 
+! New NBI file:
 !   Parameters
 !  QBEAM CONTR ABEAM ZBEAM EBEAM
 !  DBM1 DBM2 DBM3 CBMS1 CBMS2
@@ -667,10 +666,10 @@ character(len=80) :: STR, STRI, ADATA(n_nbi_max), CDATA(n_nbi_max)
 if (NBS > n_nbi_max) then
     write(*, '(2(A, I3, A))') &
        '>>> NQUERY: Too many NB sources NBS =', NBS, ' requested', &
-       '            Call ignored,   NBSmax =', n_nbi_max, ' is allowed'
+       '            Call ignored,  NBSmax =', n_nbi_max, ' is allowed'
     return
 endif
- 
+
 if (NBS <= 0) then
     write(*, '(2(A, I3))') '>>> NQUERY: Number of sources must be positive, NBS =', NBS
     return
@@ -713,11 +712,11 @@ do jj=1, NBS
             endif
             if (j == 10) i = -3
         enddo
-    endif 
+    endif
 enddo
 
  10 continue
- 
+
 ! Template for the 1st string of a table
 STRI = "# |QBeam |Contr |ABeam |ZBeam |EBeam |DBeam1|DBeam2|DBeam3|Orb_av|Penc.#" // char(0)
 STR = "NBI configuration file: " // TRIM(file_name) // char(0)
@@ -791,8 +790,12 @@ use nbicom, only: N1, X, XJ, DRI
 
 implicit none
 
-double precision :: YFO(*), Y, YOLD, YNEW, ALFA, YCI3, YROC
-integer :: j, JNA, JNAC, JNA1, JSIGN
+integer, intent(in) :: JNA1
+double precision, intent(in) :: YCI3, YROC
+double precision, intent(inout) :: YFO(*)
+
+integer :: j, JNA, JNAC, JSIGN
+double precision :: Y, YOLD, YNEW, ALFA
 
 JSIGN = 0
 do j=1, n1-1
@@ -804,7 +807,7 @@ do j=1, n1-1
         if (DRI(1)*DRI(J) < 0.d0) JSIGN = 1
     endif
 enddo
- 
+
 DRI(N1)  = 0.d0
 X(N1)    = 1.d0
 XJ(JNA1) = 1.d0
@@ -904,9 +907,10 @@ double precision function RIPRAD(YUPDWN, J)
 ! J - magnetic surface number
 
 implicit none
-  
+
 integer, intent(in) :: J
 double precision, intent(in) :: YUPDWN
+
 ! Default (No ripple losses)
 RIPRAD	= 99999.
 

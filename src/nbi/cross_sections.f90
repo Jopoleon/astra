@@ -193,11 +193,13 @@ contains
 ! Stotq =Zq*(1+Sq*(Zq-1))*S1(E, ne, Te),
 ! n*Stot =nq*Stotq+... ,  q=1, 2, ..., N for all ion species
 !--------------------------------------------- Polevoy A.R. 25.01.09
-! double precision 25-MAY-11
 !---------------------------Ne, Ar added by Leonov V.M. in 1999
-    double precision :: ABEAM, E_keV, NE19, Te_keV, Zq, Aq, A(10), B(3, 2, 2), &
-        T, ALT, ALN, ALE, AN, AT, AE, S1, SQ
+      
+    double precision, intent(in) :: ABEAM, E_keV, NE19, Te_keV, Zq, Aq
+
     integer :: i, j, k, iSTOTQ1
+    double precision :: A(10), B(3, 2, 2), T, ALT, ALN, ALE, AN, AT, AE, S1, SQ
+
     data iSTOTQ1/0/
     if (E_keV < 10.d0) write(*, *) 'Illegal use of STOT: Eb<10 keV'
     if (abeam < 1 .or. abeam > 3.) then
@@ -218,8 +220,7 @@ contains
             A(8) = 6.660d-2
             A(9) = -6.77d-2
             A(10) = -1.48d-3
-        endif
-        if (abeam == 2.d0) then
+        else if (abeam == 2.d0) then
             A(1) = -6.79d1
             A(2) = -1.22d0
             A(3) = 8.14d-2
@@ -230,8 +231,7 @@ contains
             A(8) = 7.51d-2
             A(9) = -6.3d-2
             A(10) = -5.08-4
-        endif
-        if (abeam == 3.d0) then
+        else if (abeam == 3.d0) then
             A(1) = -7.42d1
             A(2) = -1.18d0
             A(3) = 8.43d-2
@@ -255,8 +255,7 @@ contains
             A(8) = -2.98d-2
             A(9) = -9.59d-2
             A(10) = 4.21d-3
-        endif
-        if (abeam == 2.d0) then
+        else if (abeam == 2.d0) then
             A(1) = 1.41d1
             A(2) = 1.11d0
             A(3) = 4.08d-1
@@ -267,8 +266,7 @@ contains
             A(8) = -2.88d-2
             A(9) = -9.71d-2
             A(10) = 4.74d-3
-        endif
-        if (abeam == 3.d0) then
+        else if (abeam == 3.d0) then
             A(1) = 1.27d1
             A(2) = 1.26d0
             A(3) = 4.49d-1
@@ -568,8 +566,8 @@ contains
     end function STOTQ1
 
 !---------------------------------------------------------------------
-    double precision function sv_reac(A_main, E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi, calc_fus_flag, &
-        Acoeff, Bcoeff)
+    double precision function sv_reac(A_main, E_NBI_keV, A_NBI, n_e, &
+        Te_keV, Ti_keV, yAi, calc_fus_flag, Acoeff, Bcoeff)
 !---------------------------------------------------------------------
 ! <SigmaV dt> probability for d with EBEAM keV to burn out on maxwellian d
 ! with Ti  during the slowing down to Ti in reaction:
@@ -594,7 +592,8 @@ contains
 
     double precision, parameter :: YTMIN=0.01d0
 
-    double precision, intent(in) :: A_main, E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi, calc_fus_flag, Acoeff(5), Bcoeff(4)
+    double precision, intent(in) :: A_main, E_NBI_keV, A_NBI, n_e, &
+        Te_keV, Ti_keV, yAi, calc_fus_flag, Acoeff(5), Bcoeff(4)
   
     integer :: jk, jend
     double precision :: YX3, YX2, YX, YE, YECM, YSQ, YASS, YBSS, YSS2, YS2, YSIG, &
@@ -684,7 +683,9 @@ contains
     end function sv_reac
     
 !---------------------------------------------------------------------
-    double precision function svddnp1(E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi, calc_fus_flag)
+    double precision function svddnp1(E_NBI_keV, A_NBI, n_e, &
+        Te_keV, Ti_keV, yAi, calc_fus_flag)
+
 ! d(Ebeam) + d(Ti) -> He3(870 keV) + n (2450 keV)
 
     double precision, parameter :: A_main=2.d0, &
@@ -702,7 +703,9 @@ contains
     end function svddnp1
 
 !---------------------------------------------------------------------
-    double precision function svddnp2(E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi, calc_fus_flag)
+    double precision function svddnp2(E_NBI_keV, A_NBI, n_e, &
+        Te_keV, Ti_keV, yAi, calc_fus_flag)
+
 ! d(Ebeam) + d(Ti) -> t(1008 keV) + p(3025 keV)
 
     double precision, parameter :: A_main=2.d0, &
@@ -720,7 +723,9 @@ contains
     end function svddnp2
   
 !---------------------------------------------------------------------
-    double precision function svdtbp(E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi, calc_fus_flag)
+    double precision function svdtbp(E_NBI_keV, A_NBI, n_e, &
+        Te_keV, Ti_keV, yAi, calc_fus_flag)
+
 ! d(t)(Ebeam) + t(d)(Ti) -> He4(3524 keV) + n(14072 keV)
 
     double precision, parameter :: Acoeff(5) = (/6.927d4, 7.454d8, 2.05d6, 5.2002d4, 0.d0/), &

@@ -7,8 +7,8 @@ use json_vars, only: constNames, varNames
 
 implicit none
 
-integer, intent(out) :: ERCODE
 character(len=*), intent(in) :: FIELD
+integer, intent(out) :: ERCODE
 
 integer :: l, j, jnam, jpos, jpos1, j1, ISHIFT, ios
 character(len=6) :: ZNUM

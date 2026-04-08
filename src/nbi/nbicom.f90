@@ -235,7 +235,7 @@ contains
 !---- ripple normalized radius of ripple boundary
 !---- banana with rtrap > yriplr is lost
 
-    use nbstatus, only: yriplr, n_nbi_max, n_energy
+    use nbstatus, only: n_nbi_max, n_energy
 
     integer, intent(in) :: jsrnum
     double precision, intent(in) :: contr
@@ -676,13 +676,13 @@ contains
 !  YQSHth [MW] shine through power in the file dat\shth.dat
 !-------------------------------------- Polevoy
 
-    use nbstatus, only: YRIPLR, n_nbi_max
+    use nbstatus, only: n_nbi_max
 
     integer, intent(in) :: JSRNUM
     double precision, intent(in) :: CONTR, CBMS1, AR(*)
     double precision, intent(out) :: YAQBP(*)
 
-    integer	:: JLOSS, ntet, n, jn, jt, jhb05, jn1, ji, in, in1, jh, jh1, jjh, j_jn, &
+    integer :: JLOSS, ntet, n, jn, jt, jhb05, jn1, ji, in, in1, jh, jh1, jjh, j_jn, &
         jjr, jr, jbb, jjn, jj, jt1, jt2, jii, jnn, jhp1, jeth, jtrap
     double precision :: YQSHTH, Y0, DS, DV, YLOSS, YE3, RJ0, YH, YR, YRN, &
         YE, YVEDE, Y, YDH, XJH, ZJH, YZJH, Y12, Y2, YC2, YRN1, YR2, YR1, &
@@ -1601,10 +1601,11 @@ contains
 
     use nbstatus, only: n_rho
 
-    double precision :: AMJ, ZMJ, AIM1, AIM2, AIM3
-    double precision, dimension(*) :: ZB, RMB, NE, NHYDR, NDEUT, NTRIT, NHE3,  &
-      NALF, NI, ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3
-    double precision :: yEXTARR(n_rho, 9)
+    double precision, intent(in) :: AMJ, ZMJ, AIM1, AIM2, AIM3
+    double precision, intent(in), dimension(*) :: NE, NHYDR, NDEUT, NTRIT, NHE3, NALF, NI, &
+        ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3
+    double precision, intent(out), dimension(*) :: ZB, RMB
+    double precision, intent(out) :: yEXTARR(n_rho, 9)
 
     integer :: ISPEND, ISPE(*), JIHYDR, JIDEUT, JITRIT, JIHE3, JIALF, JN, &
         JIZ1, JIZ2, JIZ3, J, JSP, NA1, NB1, JENE, JINI, IFLAG
@@ -1916,7 +1917,7 @@ contains
 
         if (JTRAP /= 0) then   ! passing (contr)
             do j_the=JT1, JT2
-                YASBA(JE, JN1, j_the) = YASBA(JE, JN1, j_the) + dy_dt
+                YASBA1(JE, JN1, j_the) = YASBA1(JE, JN1, j_the) + dy_dt
             enddo
         else   ! trapped
             do j_the=JT1, JT2
@@ -1930,7 +1931,8 @@ contains
     end subroutine nbctr3
 
 !---------------------------------------------------------------------
-    subroutine nbco2gc(jn, jn1, N1, jbb, ieb, y0, y1, y2, yc2, ydex, az_jr, contr, yct2, yaqbp, ydys)
+    subroutine nbco2gc(jn, jn1, N1, jbb, ieb, y0, y1, y2, yc2, ydex, &
+        az_jr, contr, yct2, yaqbp, ydys)
 
     use nbstatus, only: yriplr, n_energy
 
@@ -2095,11 +2097,11 @@ contains
 !    YCOS(JJN)  = <v.B>/vB (x(JJN))
 
     integer, intent(in) :: je, jn
-    double precision, intent(in) :: YC2, YF0
+    double precision, intent(in) :: RCR, RJ, RJT, YC2, YF0
     integer, intent(out) :: ITRAP, ILOSS, jnr, jnl, jnrc, jnlc
 
     integer :: J, J1
-    double precision :: Y, YY, RCR, RJ, RJT, YY1
+    double precision :: Y, YY, YY1
 
     JNR  = JN
     JNL  = JN
