@@ -1917,7 +1917,7 @@ contains
 
         if (JTRAP /= 0) then   ! passing (contr)
             do j_the=JT1, JT2
-                YASBA(JE, JN1, j_the) = YASBA(JE, JN1, j_the) + dy_dt
+                YASBA1(JE, JN1, j_the) = YASBA1(JE, JN1, j_the) + dy_dt
             enddo
         else   ! trapped
             do j_the=JT1, JT2
