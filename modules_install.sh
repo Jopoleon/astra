@@ -23,6 +23,7 @@ JSON_VERSION=9.0.2
 NETCDF_VERSION=mar26
 RABBIT_VERSION=unstable
 TORBEAM_VERSION=unstable
+SPIDER_VERSION=unstable
 QLK_VERSION=unstable
 QLKNN_VERSION=unstable
 GA_VERSION=unstable
@@ -37,6 +38,7 @@ JSON_INSTALL=$ASTRA_EXT/json/$JSON_VERSION
 NETCDF_INSTALL=$ASTRA_EXT/netcdf/$NETCDF_VERSION
 RABBIT_INSTALL=$ASTRA_EXT/rabbit/$RABBIT_VERSION
 TORBEAM_INSTALL=$ASTRA_EXT/torbeam/$TORBEAM_VERSION
+SPIDER_INSTALL=$ASTRA_EXT/spider/$SPIDER_VERSION
 QLK_INSTALL=$ASTRA_EXT/qualikiz/$QLK_VERSION
 QLKNN_INSTALL=$ASTRA_EXT/qlk_nn/$QLKNN_VERSION
 TGLF_INSTALL=$ASTRA_EXT/tglf/$GA_VERSION
@@ -235,6 +237,30 @@ then
     cp $AWD/platform/env.$platform $TORBEAM_INSTALL/
     echo $TORBEAM_HASH | cat > $TORBEAM_INSTALL/hash
     echo TORBEAM built in $TORBEAM_HOME installed in $TORBEAM_INSTALL
+fi
+
+
+#-------
+# SPIDER
+#-------
+
+read -p "Install SPIDER (y/n) " SPIDER_FLAG
+
+if [ "$SPIDER_FLAG" = "y" ]
+then
+    cd $SOFT_ROOT
+    rm -rf spider
+    git clone git@gitlab.mpcdf.mpg.de:git/spider
+    SPIDER_HOME=$SOFT_ROOT/spider
+    cd $SPIDER_HOME
+    SPIDER_HASH=`git rev-parse HEAD`
+    make
+
+    mkdir -p $SPIDER_INSTALL/lib
+    cp $SPIDER_HOME/lib/libspider.a $SPIDER_INSTALL/lib/
+    cp $AWD/platform/env.$platform $SPIDER_INSTALL/
+    echo $SPIDER_HASH | cat > $SPIDER_INSTALL/hash
+    echo SPIDER built in $SPIDER_HOME installed in $SPIDER_INSTALL
 fi
 
 #---------
