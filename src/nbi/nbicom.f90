@@ -20,7 +20,7 @@ double precision, dimension(n_theta), parameter :: PLEJ2 = (/ &
      6.615999E-01,  7.150000E-01,  7.695999E-01,  8.253999E-01, &
      8.823999E-01,  9.405999E-01,  9.999999E-01/)
 
-integer :: IHB, IRB, IEB, JEB, N1, JTANG, NTET1, &
+integer :: IHB, IRB, IEB, JEB, N1, JTANG, ntet1, &
     JIM0R, JIM0L, JNR, JNL, JE, JCENTR, JNRC, JNLC, II(ndim2)
 double precision :: R, A, BZ, HB, RBMIN1, RBMAX1, EB, QB, PB, Hocu, &
     RCR, RJ, RJT, RM0R, RM0L, YFM0R, YFM0L, &
@@ -243,8 +243,7 @@ contains
     double precision, intent(inout) :: yaqbp(*)
 
     integer :: ntet, ji, jn, jt, jr, jjn, jj, jhb05, jn1, in, in1, &
-        jjh, jh, jh1, jjr, jbb, jii, jnn, jhp1, jeth, jt1, jt2, &
-        jtrap, n
+        jjh, jh, jh1, jjr, jbb, jnn, jhp1, jeth, jt1, jt2, n
     double precision :: ydedj, y0, y1, y2, y, ye, yh, ds, dv, &
         yqshth, yloss, yvede, ye3, rj0, yr, ydh, xjh, &
         zjh, yzjh, y12, yr1, yr2, yc1, yc2
@@ -535,8 +534,8 @@ contains
                         RCR = 0.
                         YC2 = 1.
                     endif
-                    JT1 = min(int(NTET*YC1) + 1, NTET)
-                    JT2 = min(int(NTET*YC2) + 1, NTET)
+                    JT1 = min(int(ntet*YC1) + 1, ntet)
+                    JT2 = min(int(ntet*YC2) + 1, ntet)
                     call nbctr3(jn, jn1, JT1, JT2, n1, jbb, ieb, y1, y2, yc2, AZ(jr), contr, yct2, yaqbp)
                 enddo
 
@@ -558,8 +557,8 @@ contains
                         YC2 = 1.
                         RCR = 0.
                     endif
-                    JT1 = min(int(NTET*YC1) + 1, NTET)
-                    JT2 = min(int(NTET*YC2) + 1, NTET)
+                    JT1 = min(int(ntet*YC1) + 1, ntet)
+                    JT2 = min(int(ntet*YC2) + 1, ntet)
                     call nbctr3(jn, jn1, JT1, JT2, n1, jbb, ieb, y1, y2, yc2, AZ(jr), contr, yct2, yaqbp)
                 enddo
 
@@ -580,8 +579,8 @@ contains
                     YC1 = YC2
                     YC2 = AZ(JR)*DRI(JN)
                     RCR = Y12*DRI(JN)
-                    JT2 = min(int(NTET*YC1) + 1, NTET)
-                    JT1 = min(int(NTET*YC2) + 1, NTET)
+                    JT2 = min(int(ntet*YC1) + 1, ntet)
+                    JT1 = min(int(ntet*YC2) + 1, ntet)
                     call nbctr3(jn, jn1, JT1, JT2, n1, jbb, ieb, y1, y2, yc2, AZ(jr), contr, yct2, yaqbp)
                 enddo
 
@@ -599,8 +598,8 @@ contains
                     YC1 = YC2
                     YC2 = AZ(JR)*DRE(JN1)
                     RCR = Y12*DRE(JN1)
-                    JT2 = min(int(NTET*YC1) + 1, NTET)
-                    JT1 = min(int(NTET*YC2) + 1, NTET)
+                    JT2 = min(int(ntet*YC1) + 1, ntet)
+                    JT1 = min(int(ntet*YC2) + 1, ntet)
                     call nbctr3(jn, jn1, JT1, JT2, n1, jbb, ieb, y1, y2, yc2, AZ(jr), contr, yct2, yaqbp)
                 enddo
 
@@ -634,7 +633,7 @@ contains
         do JN=1, N1
             YSLEJ0(JE, JN) = 0.0d0
             YSLEJ2(JE, JN) = 0.0d0
-            do JT=1, NTET1
+            do JT=1, ntet1
                 if (YASBA(JE, JN, JT) > 0.) then
                     YASBA(JE, JN, JT) = YASBA(JE, JN, JT)*Y
                     YSLEJ2(JE, JN) = YSLEJ2(JE, JN) + YASBA(JE, JN, JT)*2.5d0*PLEJ2(JT)
@@ -666,12 +665,11 @@ contains
     double precision, intent(in) :: CONTR, CBMS1, AR(*)
     double precision, intent(out) :: YAQBP(*)
 
-    integer :: JLOSS, ntet, n, jn, jt, jhb05, jn1, ji, in, in1, jh, jh1, jjh, j_jn, &
-        jjr, jr, jbb, jjn, jj, jt1, jt2, jii, jnn, jhp1, jeth, jtrap
+    integer :: ntet, n, jn, jt, jhb05, jn1, ji, in, in1, jh, jh1, jjh, &
+        jjr, jr, jbb, jjn, jj, jt1, jt2, jnn, jhp1, jeth
     double precision :: YQSHTH, Y0, DS, DV, YLOSS, YE3, RJ0, YH, YR, YRN, &
         YE, YVEDE, Y, YDH, XJH, ZJH, YZJH, Y12, Y2, YC2, YRN1, YR2, YR1, &
-        YQBP, YDEDJ, YRBJN, Y1, YC1, YDT, YDY, YDYS, YDEX, &
-        YFA, YDDD, YD, YDYDT, YSQR, YSQL
+        YDEDJ, YRBJN, Y1, YC1, YDYS, YDEX
     double precision, dimension(3) :: DRL, YCU, YCT2, YVE
 
 !=====Ripple
@@ -681,7 +679,7 @@ contains
     endif
 
     YQSHTH = 0.
-    NTET = NTET1 - 1
+    ntet = ntet1 - 1
     N    = N1 - 1
     Y0   = R/A
     DS    = abs(RBMAX1-RBMIN1)*A/(N*IRB)
@@ -696,7 +694,7 @@ contains
             YACBA (JE, JN) = 0.
             YATBA (JE, JN) = 0.
             YAQBA (JE, JN) = 0.
-            do JT=1, NTET1
+            do JT=1, ntet1
                 YASBA (JE, JN, JT) = 0.d0
                 YASBA1(JE, JN, JT) = 0.d0
             enddo
@@ -885,8 +883,8 @@ contains
                         RCR = 0.
                         YC2 = 1.
                     endif
-                    JT1 = NTET*YC1 + 1
-                    JT2 = NTET*YC2 + 1
+                    JT1 = ntet*YC1 + 1
+                    JT2 = ntet*YC2 + 1
                     YDEX = EXP(-YDYS)
                     YFE(JE, JN) = YDEX
                     call nbco2gc(jn, jn1, N1, jbb, ieb, y0, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
@@ -911,8 +909,8 @@ contains
                         YC2 = 1.
                         RCR = 0.
                     endif
-                    JT1 = NTET*YC1 + 1
-                    JT2 = NTET*YC2 + 1
+                    JT1 = ntet*YC1 + 1
+                    JT2 = ntet*YC2 + 1
                     YDEX = EXP(-YDYS)
                     YFI(JE,JN) = YDEX
                     call nbco2gc(jn, jn1, N1, jbb, ieb, y0, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
@@ -937,8 +935,8 @@ contains
                     YC2 = AZ(JR)*DRI(JN)
                     YRBJN = RI(JN)
                     RCR = (RI(JN) - AZ(JR))*(RI(JN) + AZ(JR))/RI(JN)
-                    JT2 = NTET*YC1 + 1
-                    JT1 = NTET*YC2 + 1
+                    JT2 = ntet*YC1 + 1
+                    JT1 = ntet*YC2 + 1
                     YDEX = YFI(JE, JN)
                     call nbco2gc(jn, jn1, N1, jbb, ieb, y0, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
                     if (YC1 < YC2) write(*,*) 'YC1,YC2,251', YC1, YC2, JN
@@ -958,8 +956,8 @@ contains
                     YC2 = AZ(JR)*DRE(JN1)
                     YRBJN = RE(JN)
                     RCR = (RE(JN1) - AZ(JR))*(RE(JN1) + AZ(JR))/RE(JN1)
-                    JT2 = NTET*YC1 + 1
-                    JT1 = NTET*YC2 + 1
+                    JT2 = ntet*YC1 + 1
+                    JT1 = ntet*YC2 + 1
                     YDEX = YFE(JE,JN)
                     call nbco2gc(jn, jn1, N1, jbb, ieb, y0, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
                     if (YC1 < YC2) write(*,*) 'YC1,YC2,271', YC1, YC2, JN
@@ -983,8 +981,8 @@ contains
                         RCR = 0.
                         YC2 = 1.
                     endif
-                    JT1 = min(int(NTET*YC1) + 1, NTET)
-                    JT2 = min(int(NTET*YC2) + 1, NTET)
+                    JT1 = min(int(ntet*YC1) + 1, ntet)
+                    JT2 = min(int(ntet*YC2) + 1, ntet)
                     call nbctr3(jn, jn1, JT1, JT2, n1, jbb, ieb, y1, y2, yc2, AZ(jr), contr, yct2, yaqbp)
                 enddo
 
@@ -1006,8 +1004,8 @@ contains
                         YC2 = 1.
                         RCR = 0.
                     endif
-                    JT1 = min(int(NTET*YC1) + 1, NTET)
-                    JT2 = min(int(NTET*YC2) + 1, NTET)
+                    JT1 = min(int(ntet*YC1) + 1, ntet)
+                    JT2 = min(int(ntet*YC2) + 1, ntet)
                     call nbctr3(jn, jn1, JT1, JT2, n1, jbb, ieb, y1, y2, yc2, AZ(jr), contr, yct2, yaqbp)
                 enddo
 
@@ -1028,8 +1026,8 @@ contains
                     YC1 = YC2
                     YC2 = AZ(JR)*DRI(JN)
                     RCR = Y12*DRI(JN)
-                    JT2 = min(int(NTET*YC1) + 1, NTET)
-                    JT1 = min(int(NTET*YC2) + 1, NTET)
+                    JT2 = min(int(ntet*YC1) + 1, ntet)
+                    JT1 = min(int(ntet*YC2) + 1, ntet)
                     call nbctr3(jn, jn1, JT1, JT2, n1, jbb, ieb, y1, y2, yc2, AZ(jr), contr, yct2, yaqbp)
                 enddo
 
@@ -1047,8 +1045,8 @@ contains
                     YC1 = YC2
                     YC2 = AZ(JR)*DRE(JN1)
                     RCR = Y12*DRE(JN1)
-                    JT2 = min(int(NTET*YC1) + 1, NTET)
-                    JT1 = min(int(NTET*YC2) + 1, NTET)
+                    JT2 = min(int(ntet*YC1) + 1, ntet)
+                    JT1 = min(int(ntet*YC2) + 1, ntet)
                     call nbctr3(jn, jn1, JT1, JT2, n1, jbb, ieb, y1, y2, yc2, AZ(jr), contr, yct2, yaqbp)
                 enddo
 
@@ -1080,7 +1078,7 @@ contains
         do JN=1, N1
             YSLEJ0(JE, JN) = 0.0
             YSLEJ2(JE, JN) = 0.0
-            do JT=1, NTET1
+            do JT=1, ntet1
                 if (YASBA(JE, JN, JT) > 0.) then
                     YASBA(JE, JN, JT) = YASBA(JE, JN, JT)*Y
                     YSLEJ2(JE, JN) = YSLEJ2(JE, JN) + YASBA(JE, JN, JT)*2.5*PLEJ2(JT)
@@ -1101,7 +1099,7 @@ contains
     subroutine nbsrsr(JSRNUM, YCONTR, NA1, RTOR, SHIFT, AB, BTOR, &
         NNCL, NNWM, HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
         CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, &
-        ABEAM, CONTR, QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
+        ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
 
 !---------------------------------------------------------------------
 ! fast ion's sourses (for multi sources) + ripple
@@ -1139,14 +1137,14 @@ contains
     double precision, intent(in) :: YCONTR, RTOR, SHIFT, AB, BTOR, &
         NNCL, NNWM, HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
         CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, &
-        ABEAM, CONTR, QBEAM, RBMAX, RBMIN, CBMI4, yEXTARR(n_rho, 9)
+        ABEAM, QBEAM, RBMAX, RBMIN, CBMI4, yEXTARR(n_rho, 9)
     integer, intent(out) :: JSRREC
 
     double precision :: NNB, AR(n_rho), YE2, YCX
     double precision, dimension(n_energy) :: AQBP, ADQB
     double precision :: YZERO(n_energy, n_rho, n_theta), YSCU1, YFVDA, YNHDT, &
-        YDBM, YD, YJN, YSCU, YPOW, YDV, YDDV, YJE, YE1, Y, YS, YEPS
-    integer :: N, J, NTET, JN, JN1, JNA, JNAX, JE, JT, JNA1, JNAC, JS, JSP
+        YDBM, YJN, YSCU, YPOW, YD, YDV, YDDV, YJE, YE1, Y, YEPS
+    integer :: N, J, ntet, JN, JN1, JNA, JNAX, JE, JT, JNA1, JNAC, JS, JSP
 
     N1 = (NA1 - 1)/CBMI3 + 1
     N = N1 - 1
@@ -1181,16 +1179,16 @@ contains
         JEB = IEB - 2
     endif
     if (CBMI1 /= 1.d0) then
-        NTET1 = 50/2 + 1
+        ntet1 = 50/2 + 1
     else
-        NTET1 = 50 + 1
+        ntet1 = 50 + 1
     endif
 
-    NTET = NTET1 - 1
+    ntet = ntet1 - 1
 
     if (CBMI1 /= 1.d0) then
-! N- number of surfaces,  2*NTET (cntr+co angle)
-        JSRREC = JDBL*4*(1 + 3*N*2*NTET)
+! N- number of surfaces,  2*ntet (cntr+co angle)
+        JSRREC = JDBL*4*(1 + 3*N*2*ntet)
         open(35, FILE='dat/srsfi.dat', FORM='UNFORMATTED', STATUS='UNKNOWN', access='DIRECT', RECL=JSRREC)
     endif
 
@@ -1254,7 +1252,7 @@ contains
             YANBA1(JE, JN) = 0.d0
             YSLEJ0(JE, JN) = 0.0d0
             YSLEJ2(JE, JN) = 0.0d0
-            do JT=1, NTET1
+            do JT=1, ntet1
                 YASBA (JE, JN, JT) = 0.d0
                 YASBA1(JE, JN, JT) = 0.d0
                 YZERO (JE, JN, JT) = 0.d0
@@ -1311,7 +1309,7 @@ contains
             YATBA (JE, JN1) = YATBA (JE, JN)*YDDV
             YJE = EBEAM/(IEB - JE + 1)
             if (CBMI1 > 0.d0) then ! convert prtcl/s => prtcl/s/m^3
-                do JT=1, NTET1
+                do JT=1, ntet1
                     YASBA (JE, JN1, JT) = YASBA (JE, JN, JT)*YDDV
                     YASBA1(JE, JN1, JT) = YASBA1(JE, JN, JT)*YDDV
                 enddo
@@ -1367,8 +1365,8 @@ contains
 
  999 continue
     if (CBMI1 /= 1.d0) then
-        write(35, REC=JSRNUM) EBEAM, (((YASBA1(JE, JN, JT),  JE=1, 3), JN=1, N), JT=NTET, 1, -1),  &
-            (((YASBA(JE, JN, JT),   JE=1, 3), JN=1, N), JT=1, NTET)
+        write(35, REC=JSRNUM) EBEAM, (((YASBA1(JE, JN, JT),  JE=1, 3), JN=1, N), JT=ntet, 1, -1),  &
+            (((YASBA(JE, JN, JT),   JE=1, 3), JN=1, N), JT=1, ntet)
         close(35)
     endif
 
@@ -1497,7 +1495,7 @@ contains
     double precision, intent(in) :: YEBEAM, YABEAM, CBMI3, YEXTARR(n_rho, 9)
 
     integer :: J, JN, JSP, JE, JS
-    double precision :: YEOA, YY, Y1, Y2, Y3, Y12, Y13, Y23, YJE
+    double precision :: YY, Y1, Y2, Y3, Y12, Y13, Y23, YJE
 
     Y3 = yEBEAM/yABEAM
     Y1 = Y3/3.d0
@@ -1553,7 +1551,7 @@ contains
     end subroutine nbsisn
 
 !---------------------------------------------------------------------
-    subroutine nbspec(AIM1, AIM2, AIM3, AMJ, ZMJ, NA1, NB1,  &
+    subroutine nbspec(AIM1, AIM2, AIM3, AMJ, ZMJ, NA1, &
         yEXTARR, NE, NI, NHYDR, NDEUT, NTRIT, NHE3, NALF, NIZ1, NIZ2, NIZ3,  &
         ZIM1, ZIM2, ZIM3, RMB, ZB, ISPEND, ISPE, IFLAG)
 !---------------------------------------------------------------------
@@ -1578,7 +1576,7 @@ contains
     double precision, intent(out) :: yEXTARR(n_rho, 9)
 
     integer :: ISPEND, ISPE(*), JIHYDR, JIDEUT, JITRIT, JIHE3, JIALF, JN, &
-        JIZ1, JIZ2, JIZ3, J, JSP, NA1, NB1, JENE, JINI, IFLAG
+        JIZ1, JIZ2, JIZ3, NA1, JENE, JINI, IFLAG
 
 ! Identification of plasma species for NBI
 ! Polevoy A.R. 18.03.91
@@ -1740,7 +1738,7 @@ contains
     double precision, intent(in) :: y1, y2, yc2, az_jr, contr
     double precision, dimension(n_energy), intent(inout) :: yct2, yaqbp
 
-    integer :: jii, je, ji, jtrap, j_the, ntet
+    integer :: jii, je, ji, jtrap, j_the
     double precision :: dt, yr1, yr2, dy, yd, ydcos, ytcos, ydys, yqbp, yf0, yfa, yddd, dy_dt
 
     dt = 1./(JT2 - JT1 + 1)
@@ -1825,7 +1823,7 @@ contains
     double precision, intent(in) :: y1, y2, yc2, az_jr, contr
     double precision, dimension(n_energy), intent(inout) :: yct2, yaqbp
 
-    integer :: jii, je, ji, jtrap, j_the, ntet
+    integer :: jii, je, ji, jtrap, j_the
     double precision :: dt, yr1, yr2, dy, yd, ydcos, ytcos, ydys, yqbp, yf0, yfa, yddd, dy_dt
 
     dt = 1./(JT2 - JT1 + 1)
@@ -1912,10 +1910,10 @@ contains
     double precision, dimension(n_energy), intent(inout) :: yct2, yaqbp
 
     integer :: jii, je, ji, jtrap, j_the, ntet, jloss, j_jn
-    double precision :: dt, yr2, yr1, dy, yd, ydcos, ytcos, yqbp, yf0, yfa, yddd, &
+    double precision :: yr2, yr1, dy, yd, ydcos, ytcos, yqbp, yf0, yfa, yddd, &
         YSQR, YSQL, YJSERF
 
-    ntet = NTET1 - 1
+    ntet = ntet1 - 1
     YR2 = -SQRT(RJ*(RJ - RCR))
     if (RCR < RJT) then
         YR1 = -SQRT(RJT*(RJT - RCR))
@@ -2029,13 +2027,13 @@ contains
             endif
             YAQBP(JE) = YQBP
             if (YCOS(j_jn) > 0.D0) then
-                j_the = NTET*YCOS(j_jn)*YBTDB(JN)
-                if (j_the > NTET) j_the = NTET
+                j_the = ntet*YCOS(j_jn)*YBTDB(JN)
+                if (j_the > ntet) j_the = ntet
                 if (j_the < 1)    j_the = 1
                 YASBA(JE, j_jn, j_the) = YASBA(JE, j_jn, j_the) + YD
             else
-                j_the = (-NTET*YCOS(j_jn)*YBTDB(JN))
-                if (j_the > NTET) j_the = NTET
+                j_the = (-ntet*YCOS(j_jn)*YBTDB(JN))
+                if (j_the > ntet) j_the = ntet
                 if (j_the < 1)    j_the = 1
                 YASBA1(JE, j_jn, j_the) = YASBA1(JE, j_jn, j_the) + YD
             endif

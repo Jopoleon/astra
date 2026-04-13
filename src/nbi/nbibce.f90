@@ -83,7 +83,7 @@ contains
     subroutine NBCOEF
 ! Fokker-Planck coefficients
 
-    use nbstatus, only: ISPE, ISPEND
+    use nbstatus, only: ISPEND
 
     integer :: I, J, I1
 
@@ -256,9 +256,8 @@ contains
     end subroutine NBPOVE
 
 !---------------------------------------------------------------------
-    subroutine NBIONR(EBEAM, ABEAM, AMJ, RTOR, NA1, TAU, NNCL, NNWM, &
-      CBM1, CBM2, CBM3, CBM4, CBMI1, CBMI2, CBMI3, CBMI4, &
-      JSRREC, YEXTARR)
+    subroutine NBIONR(EBEAM, ABEAM, RTOR, NA1, TAU, NNCL, NNWM, &
+      CBM1, CBM3, CBM4, CBMI2, CBMI3, JSRREC, YEXTARR)
 
 !====================================================== 22-MAR-99
 ! Update 05-NOV-2012, 14-JAN-13
@@ -275,14 +274,13 @@ contains
     use nbicom, only: YASBA, YASBA1
 
     integer, intent(in) :: NA1, JSRREC
-    double precision, intent(in) :: EBEAM, ABEAM, AMJ, RTOR, &
-        TAU, NNCL, NNWM, CBM1, CBM2, CBM3, CBM4, &
-        CBMI1, CBMI2, CBMI3, CBMI4, YEXTARR(n_rho, 9)
+    double precision, intent(in) :: EBEAM, ABEAM, RTOR, &
+        TAU, NNCL, NNWM, CBM1, CBM3, CBM4, CBMI2, CBMI3, YEXTARR(n_rho, 9)
 
     integer :: JFPBEG, JN1OLD, N, N1, ITC, IT1, NTET1, IEB, J1BEG, J1END, &
         I, J, JT, JV, JN, JE, JBMS4, JNA, JNAC, J2, JSP, ISP, &
         ITRAP, JTDTS, ITIME, NTET, JN22, IE, IVE, J1, JTIME, &
-        I1, I2, JLREC, JSRNUM, JDBL, jOUT
+        I1, I2, JLREC, JSRNUM, JDBL
 
     double precision :: YET, CBMI33, YM2F, &
         SQPI, DTION, YEV21, YEV22, YEV23, YJ2, YEPS, T0, TSNBI, &
@@ -290,14 +288,12 @@ contains
         DTAU, EBDTI, EBDTI0, CNSTE0, CNSNN, CNSNN0, YNN0, YV2, &
         YRMN, YSRSE, YEBEAM, YPB, YIP, YV4, FVMMIN, F0J, YEXARG, &
         YE, YI, YPEBM, YPIBM, YPBPER, YPBLON, YNB, YCUFI, YMF, &
-        PTHBM, PTHERM, YDELPE, YDELPI, YDELMI, YDELME, &
-        YSUMMU, YMAXMU
+        PTHBM, PTHERM, YDELPE, YDELPI, YDELMI, YDELME, YMAXMU
 
     save JFPBEG, JN1OLD
 
     data JFPBEG /0/
     data JN1OLD /1/
-    data jOUT /0/
 
     JDBL = 2
     SQPI = sqrt(GP)
@@ -325,23 +321,6 @@ contains
     YFI(2) = YFI(3) / 1.414214d0
     YFI(1) = YFI(3) / 1.732051d0
     IEB = 3
-
-!----- read output flag
-    open(1, file = 'dat/nbi.dat')
-    read(1, *, end = 111, err = 111) jOUT
-111   close(1)
-
-!----- optional output
-    if (jOUT /= 0) then
-        open(1, file = 'dat/nbion.dat')
-        write(1, *) N,  ' N = size of radial grid'
-        write(1, *) IV, ' IV = size of Velocity grid'
-        write(1, *) IT, ' IT = size of Angle grid'
-        write(1, *) ' Comments: to get density at j-th surface'
-        write(1, *) ' summarize dNb(i, j)'
-        write(1, *) ' v2(i) normalized velocity'
-        write(1, *) ' mu(j) = cos(pitch angle)'
-    endif
 
 !----- clear previous distributions
     do JN=1, NA1
@@ -412,16 +391,6 @@ contains
     open(35, file='dat/srsfi.dat', form='unformatted', access='DIRECT', recl=JSRREC)
 
     do JN=1, N ! Output for distribution function        
-        if (jOUT /= 0) then
-            write(1, *) JN, ' n = index on radial grid (1-N)'
-            write(1, *) 'v2(i)                   mu(j)', &
-         '                 dNb(i,j) [10^19 m-3]'
-            write(11, *) JN, ' n = index on radial grid (1-N)'
-            write(11, *) 'v2(i) ', '                 dFv(i)'
-            write(12, *) JN, ' n = index on radial grid (1-N)'
-            write(12, *) 'v2(i) ', '                 Fv(i)'
-        endif
-
         JNA = 1 + CBMI3*(JN - 1)
         JNAC = JNA - 1 + CBMI3
         J2 = JNA - CBMI3*YJ2
@@ -618,18 +587,6 @@ contains
                 YM2F = YM2F + YM2(J)*(FVM(I1, J) + FVM(I1, J1))
                 YIP  = YIP + FVM(I1, J) + FVM(I1, J1)
             enddo
-            if (jOUT /= 0) then
-                YSUMMU = 0.d0
-                YEXARG = EBDTI*(1.d0/DV2(1) - 1.d0/DV2(I))
-                YE = dEXP(YEXARG)*YMAXMU
-                do j=1, IT
-                    write(1, *) 1./dv2(i), (-1. + (j-0.5)*HM), &
-                     FVM(I,J)/dv2(i)*CNSTN
-                    YSUMMU = YSUMMU + FVM(I,J)
-                enddo
-                write(11, *) 1./dv2(i), YSUMMU*CNSTN
-                write(12, *) 1./dv2(i), (YSUMMU - YE)*CNSTN
-            endif
 
             do J=1, ITRAP
                 J1 = IT - J + 1
@@ -665,11 +622,6 @@ contains
 
     close(31)
     close(35)
-    if (jOUT /= 0) then
-        close(1)
-        close(11)
-        close(12)
-    endif
 
     return
 
