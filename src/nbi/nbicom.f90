@@ -29,7 +29,7 @@ double precision, dimension(n_rho) :: RC, RE, RI, DRE, DRI, YCOS, YBTDB, &
 double precision, dimension(ndim1) :: AZ, YDRY
 double precision, dimension(4, 4) :: SVEX
 double precision, dimension(n_energy, n_rho) :: ARD, YFI, F, YFE, YANBA, &
-    YAQBA, YACBA, DTCX, DTE, DTI, YATBA, YANBA1, YSLEJ0, YSLEJ2
+    YAQBA, YACBA, DTCX, YATBA, YANBA1, YSLEJ0, YSLEJ2
 double precision, dimension(n_energy, n_rho, n_theta) :: YASBA, YASBA1, YASBA2
 double precision, dimension(9) :: ZB, RMB
 double precision :: YSIMPI(3, 9)
@@ -85,8 +85,8 @@ contains
     yhbd2 = abs(hb)/2.d0
 
     if (yhbd2 == 0.d0) then
-        write(*,*) 'nbi source n ', jsrc, ' vertical size = 0'
-        write(*,*) 'continue with vertical size = 1.e-5'
+        write(*, *) 'nbi source n ', jsrc, ' vertical size = 0'
+        write(*, *) 'continue with vertical size = 1.e-5'
         yhbd2 = 1.d-5
     endif
 
