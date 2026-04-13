@@ -1095,7 +1095,7 @@ contains
 
 !---------------------------------------------------------------------
     subroutine nbsrsr(JSRNUM, YCONTR, NA1, RTOR, SHIFT, AB, BTOR, &
-        NNCL, NNWM, HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
+        HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
         CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, &
         ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
 
@@ -1108,7 +1108,7 @@ contains
 !--------------------------------------------------------------Polevoy
 !	entry:	AMETR,SHIF,NA1,RTOR,AB,BTOR,NI,HBEAM,RBMIN,RBMAX,
 !     		CBMS2,CBMI3,EBEAM,QBEAM,ABEAM,DBM1,DBM2,DBM3,
-!	     	TE,TI,NE,NN,NNB,ZEF,AMAIN,PBEAM,SCUBM,CONTR,ELON,
+!	     	TE,TI,NE,NN,ZEF,AMAIN,PBEAM,SCUBM,CONTR,ELON,
 !	CBMS2	number of 'pencils'
 !	CBMI3	number of internal mesh points
 !			 41 (CBMI3=1),21 (CBMI3=2)
@@ -1132,12 +1132,12 @@ contains
 
     integer, intent(in) :: JSRNUM, NA1
     double precision, intent(in) :: YCONTR, RTOR, SHIFT, AB, BTOR, &
-        NNCL, NNWM, HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
+        HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
         CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, &
         ABEAM, QBEAM, RBMAX, RBMIN, CBMI4, yEXTARR(n_rho, 9)
     integer, intent(out) :: JSRREC
 
-    double precision :: NNB, AR(n_rho), YE2, YCX
+    double precision :: AR(n_rho), YE2, YCX
     double precision, dimension(n_energy) :: AQBP, ADQB
     double precision :: YZERO(n_energy, n_rho, n_theta), YSCU1, YFVDA, YNHDT, &
         YDBM, YJN, YSCU, YPOW, YD, YDV, YDDV, YJE, YE1, Y, YEPS
@@ -1209,7 +1209,6 @@ contains
         write(*, *) 'NBI input for the source ', JSRNUM, ' is not correct'
         write(*, *) 'please use: RBMAX > RBMIN and CBMS4 > 0'
     endif
-    NNB = NNCL + NNWM
     RBMIN1 = RBMIN*100.
     RBMAX1 = RBMAX*100.
     YD = 10000.d0/(BZ*GP2*A**2)
@@ -1365,7 +1364,7 @@ contains
     end subroutine nbsrsr
 
 !---------------------------------------------------------------------
-    subroutine nbion0(NA1, NNCL, NNWM, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
+    subroutine nbion0(NA1, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
 !---------------------------------------------------------------------
 ! Steady State (1+2D:(x+MU, V)) Fokker-Plank Solver
 !	PEBM, PIBM(X)-power to electrons, ions [MW/m3]
@@ -1373,16 +1372,16 @@ contains
 !	NIBM(x) - fast ion's density [10^19/m3]
 !-------------------------------------------------------------- Polevoi
 
-    use nbstatus, only: n_rho, ISPE, ISPEND, AMAIN, NE, TE, TI, NN, ZEF, &
+    use nbstatus, only: n_rho, ISPE, ISPEND, AMAIN, NE, TE, TI, ZEF, &
         AMETR, SHIF, PBPER, PBLON, NIBM, PEBM, PIBM, CUFI, CUBM
     use cross_sections, only: fnbf, fnb2, fnbp, fnbi1
 
     integer, intent(in) :: NA1
-    double precision, intent(in) :: NNCL, NNWM, ABEAM, EBEAM, RTOR, CBMI3, &
+    double precision, intent(in) :: ABEAM, EBEAM, RTOR, CBMI3, &
         yEXTARR(n_rho, 9)
 
     integer :: JN, JS, JSP, JN1, JNA, JNA1, JNAC, J, J2, JE
-    double precision :: YC1, YC2, YS, YSTE, YEPS, YN0, YDN, Y, X1, X2, X3, &
+    double precision :: YC1, YC2, YS, YSTE, YEPS, YDN, Y, X1, X2, X3, &
         YA, YB, YC, YC0, Y1, Y12, YA1, YD1, YI0, YI2, YP11, YCRNT, YPIDPB, &
         STSD3
     double precision, dimension(n_rho) :: PBCX, YZ2D3, YTSE, YFCUR, YLNI, YLNE, YLNZ, YEBDEC
@@ -1417,7 +1416,6 @@ contains
         YEPS = AMETR(JN)/(RTOR + SHIF(JN))
         YFCUR(JN) = (1.d0 - FNBF(ZEF(JN), YEPS)/ZEF(JN))
         PBCX(JN) = 0.d0
-        YN0 = (NNWM + NNCL)*NN(JN)
         YDN = 0.d0
     enddo
 
@@ -1445,7 +1443,7 @@ contains
                 YC1 = YC0 + YC
                 YC2 = YC1 + 2.d0*YC
                 Y1  = 4.d0*YA*YC1/YB**2
-                Y12 =1.d0+sqrt(1.d0 + Y1)
+                Y12 = 1.d0 + sqrt(1.d0 + Y1)
                 YA1 = 0.5d0*YB*Y12/YA
                 YD1 = 2.d0/(Y12 + 0.5d0*Y1)
                 YI0 = (0.5d0 - FNB2(X2)/X2)
