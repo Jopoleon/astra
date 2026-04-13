@@ -32,7 +32,7 @@ double precision, dimension(ndim1) :: AZ, YDRY
 double precision, dimension(4, 4) :: SVEX
 double precision, dimension(n_energy, n_rho) :: ARD, YFI, F, YFE, YANBA, &
     YAQBA, YACBA, DTCX, DTE, DTI, YATBA, YANBA1, YSLEJ0, YSLEJ2
-double precision, dimension(n_energy, n_rho, n_theta) :: YASBA, YASBA1
+double precision, dimension(n_energy, n_rho, n_theta) :: YASBA, YASBA1, YASBA2
 double precision :: DT, EZ
 double precision, dimension(9) :: yVB, RNB, ZB, RMB, yEB
 double precision :: YSIMPI(3, 9)
@@ -246,13 +246,9 @@ contains
         jjh, jh, jh1, jjr, jbb, jii, jnn, jhp1, jeth, jt1, jt2, &
         jtrap, n
     double precision :: ydedj, y0, y1, y2, y, ye, yh, ds, dv, &
-        yqshth, yloss, yvede, ydydt, ye3, rj0, yr, ydh, xjh, &
-        zjh, yzjh, y12, yr1, yr2, yc1, yc2, ydt, ydy, &
-        ydys, ydex, yqbp, yfa, yddd, yd, ydcos, ytcos
+        yqshth, yloss, yvede, ye3, rj0, yr, ydh, xjh, &
+        zjh, yzjh, y12, yr1, yr2, yc1, yc2
     double precision, dimension(n_energy) :: drl, ycu, yct2, yve
-    character(len=12) :: shname
-
-    data shname /'dat/shth.dat'/
 
 !---- ripple
 
@@ -260,13 +256,6 @@ contains
         write(*,*) '>>> too many nbi sources (see nb1tr)'
         return
     endif
-    if (jsrnum < 10) then
-        write(shname(12:12), '(1i1)') jsrnum
-    else if (jsrnum < 100) then
-        write(shname(11:12), '(1i2)') jsrnum
-    endif
-
-    open(38, file=shname, status='unknown')
 
     yqshth = 0.d0
     ntet = ntet1 - 1
@@ -660,11 +649,6 @@ contains
         enddo
     enddo
 
-! Shinethrough
-		
-    write(38, *) YQSHTH, ' Q shine through [MW] for source ', JSRNUM
-    close(38)
-
     end subroutine nb1tr
 
 !---------------------------------------------------------------------
@@ -673,7 +657,7 @@ contains
 ! coinjection  with ion's trapping and orbital losses
 !  AQBA[MW],ACBA[MA m/s],ANBA[10*13 prtcls],
 !  ASBA[10#19 prtcl/s]*Dcos(JT)
-!  YQSHth [MW] shine through power in the file dat\shth.dat
+!  YQSHth [MW] shine through power
 !-------------------------------------- Polevoy
 
     use nbstatus, only: n_nbi_max
@@ -687,25 +671,15 @@ contains
     double precision :: YQSHTH, Y0, DS, DV, YLOSS, YE3, RJ0, YH, YR, YRN, &
         YE, YVEDE, Y, YDH, XJH, ZJH, YZJH, Y12, Y2, YC2, YRN1, YR2, YR1, &
         YQBP, YDEDJ, YRBJN, Y1, YC1, YDT, YDY, YDYS, YDEX, &
-        YFA, YDDD, YD, YDCOS, YJSERF, YDYDT, YTCOS, &
-        YSQR, YSQL
+        YFA, YDDD, YD, YDYDT, YSQR, YSQL
     double precision, dimension(3) :: DRL, YCU, YCT2, YVE
-
-    character(len=12) :: SHNAME
-    DATA SHNAME/'dat/shth.dat'/
 
 !=====Ripple
     if (jsrnum > n_nbi_max) then
         write(*,*) '>>> too many nbi sources (see nb1tr)'
         return
     endif
-    if (jsrnum < 10) then
-        write(shname(12:12), '(1i1)') jsrnum
-    else if (jsrnum < 100) then
-        write(shname(11:12), '(1i2)') jsrnum
-    endif
 
-    open(38, file=SHNAME, status='UNKNOWN')
     YQSHTH = 0.
     NTET = NTET1 - 1
     N    = N1 - 1
@@ -1120,10 +1094,6 @@ contains
             enddo
         enddo
     enddo
-
-! Shinethrough   
-    write(38, *) YQSHTH, ' Q shine through [MW] for source ', JSRNUM
-    close(38)
 
     end subroutine nbtrag
 
