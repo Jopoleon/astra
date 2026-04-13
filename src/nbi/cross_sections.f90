@@ -596,11 +596,11 @@ contains
         Te_keV, Ti_keV, yAi, calc_fus_flag, Acoeff(5), Bcoeff(4)
   
     integer :: jk, jend
-    double precision :: YX3, YX2, YX, YE, YECM, YSQ, YASS, YBSS, YSS2, YS2, YSIG, &
+    double precision :: YX3, YX2, YX, YE, YECM, YSQ, YASS, YBSS, YSS2, YSIG, &
         YXC3, YECDEB, YDS, YLE, YLI, YBG, &
         YA0, YB0, YAS, YBS, YMU, YGAM, YBET,  &
-        YB, Vth2, MVth2, MVth24, Vb, YVs, YS, YSS, YR, YD, Y27, VtdVb2, YVB, YV,  &
-        Y13, Y23, YEMIN, YRMD3, YRPD3, YVb0, YCOEF
+        YB, Vth2, MVth2, MVth24, YVs, YSS, YR, YD, Y27, VtdVb2, YVB, &
+        Y13, YEMIN, YRMD3, YRPD3, YVb0, YCOEF
 
     if (E_NBI_keV <= 0.d0) then
         sv_reac = 0.d0

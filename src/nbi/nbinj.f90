@@ -296,7 +296,7 @@ do JN1=1, 9
 enddo
 
 ! Set plasma composition
-call NBSPEC(AIM1, AIM2, AIM3, AMJ, ZMJ, NA1, NB1, &
+call NBSPEC(AIM1, AIM2, AIM3, AMJ, ZMJ, NA1, &
     yEXTARR, NE, NI, NHYDR, NDEUT, NTRIT, NHE3, NALF, NIZ1, NIZ2, NIZ3, &
     ZIM1, ZIM2, ZIM3, RMB, ZB, ISPEND, ISPE, IFLAG)
 
@@ -372,7 +372,7 @@ do JN=1, INBMS
         QBEAM = YQBEAM*(1. - CONTR)
         call NBSRSR(JSRNUM, -1.d0, NA1, RTOR, SHIFT, AB, BTOR, NNCL, NNWM, HRO, YHM, &
             CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, CBMR1, CBMR2, CBMI3, CBMI1, &
-            EBEAM, DBM1, DBM2, DBM3, ABEAM, CONTR, QBEAM, RBMAX, RBMIN, JSRREC, &
+            EBEAM, DBM1, DBM2, DBM3, ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, &
             YEXTARR, CBMI4)
 
         if (CBMI1 == 1.d0) call NBION0(NA1, NNCL, NNWM, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
@@ -381,18 +381,18 @@ do JN=1, INBMS
         QBEAM = YQBEAM*CONTR
         call NBSRSR(JSRNUM, 1.d0, NA1, RTOR, SHIFT, AB, BTOR, NNCL, NNWM, HRO, YHM, &
             CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, CBMR1, CBMR2, CBMI3, CBMI1, &
-            EBEAM, DBM1, DBM2, DBM3, ABEAM, CONTR, QBEAM, RBMAX, RBMIN, JSRREC, &
+            EBEAM, DBM1, DBM2, DBM3, ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, &
             YEXTARR, CBMI4)
         if (CBMI1 == 1.d0) call NBION0(NA1, NNCL, NNWM, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
         QBEAM =YQBEAM
     else
         if (CONTR == 1.d0) call NBSRSR(JSRNUM, 1.d0, NA1, RTOR, SHIFT, AB, BTOR, &
             NNCL, NNWM, HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
-            CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, ABEAM, CONTR, &
+            CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, ABEAM, &
             QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
         if (CONTR == 0.d0) call NBSRSR(JSRNUM, -1.d0, NA1, RTOR, SHIFT, AB, BTOR, &
             NNCL, NNWM, HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
-            CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, ABEAM, CONTR, &
+            CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, ABEAM, &
             QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
         if (CBMI1 == 1.d0) call NBION0(NA1, NNCL, NNWM, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
     endif
@@ -411,8 +411,8 @@ if (CBMI1 >= 2.d0)  then
         ABEAM = YABEAM
     endif
 
-    call NBIONR(EBEAM, ABEAM, AMJ, RTOR, NA1, TAU, NNCL, NNWM, CBM1, CBM2, &
-        CBM3, CBM4, CBMI1, CBMI2, CBMI3, CBMI4, JSRREC, YEXTARR)
+    call NBIONR(EBEAM, ABEAM, RTOR, NA1, TAU, NNCL, NNWM, &
+        CBM1, CBM3, CBM4, CBMI2, CBMI3, JSRREC, YEXTARR)
 endif
 
 ! Conversion to rough mesh keeping the intagrals
@@ -455,12 +455,12 @@ if (CBMI1 == 0.d0) then ! write to SSFPQL
         if (.not. allocated(ypwtmp)) allocate(ypwtmp(jElevAll))
         if (.not. allocated(ypartmp)) allocate(ypartmp(jElevAll))
         do je=1, jElevAll
-            yetmp(je) = EBEAM
-            ypwtmp(jE) = 0.d0
+            yetmp(je)   = EBEAM
+            ypwtmp(jE)  = 0.d0
             ypartmp(jE) = 0.d0
             do j=1, n_theta
                 do jn=1, NA1-1
-                    Y4TORIC(jE, j, jn)=0.d0
+                    Y4TORIC(jE, j, jn) = 0.d0
                 enddo
             enddo
         enddo
@@ -553,7 +553,7 @@ if (CBMI1 == 0.d0) then ! write to SSFPQL
     write(jiounit, '(A)')   'Cos(PitchAngle) Mesh'
     write(jiounit, '(6E17.9)') (YCOS(j), j=1, n_theta)
 
-    do j = 1, jsrnum  ! count of NBI species (=1)
+    do j=1, jsrnum  ! count of NBI species (=1)
         write(jiounit, '(A11, I3)') 'NBI Species', j
         write(jiounit, '(3I5)') jABEAM, jZBEAM, jElevAll
         write(jiounit, '(A)')   'Energy levels, keV'
@@ -588,29 +588,6 @@ do j=1, na1
 enddo
 
 return
-
-93 continue
-write(*, *)'>>> NBI >>> Wrong NBI configuration file format: '
-write(*, '(6X, I2, A, I2, A)') JN-1, ' beam records available, ', &
-    int(CBM1), ' records required.'
-stop
-
-95 continue
-write(*, *) '>>> NBI calling STREAD: array out of limits'
-stop
-
-96 continue
-write(*, *) '>>> NBI >>> Error in file "', TRIM(file_nbi), '": unrecognized variable name'
-stop
-
-97 continue
-write(*, *) '>>> NBI >>> File "', TRIM(file_nbi), '" read error'
-stop
-
-98 continue
-write(*, *) '>>> NBI >>> Wrong NBI configuration file format. '
-write(*, *) '            More records expected than available.'
-stop
 
 990 write(*, *) '>>> NBI >>> read error in dat/srsfi.dat'
 stop
@@ -853,10 +830,10 @@ implicit none
 integer, intent(in) :: JNA1
 double precision, intent(in) :: YCI3, YROC
 double precision, intent(inout) :: YFO(*)
+double precision, external :: IINT
 
 integer :: j, JNA, JNAC, JSIGN
 double precision :: Y, YOLD, YNEW, ALFA
-double precision, external :: IINT
 
 JSIGN = 0         ! change of sign? (1= yes, 0= no)
 do j=1, n1-1
