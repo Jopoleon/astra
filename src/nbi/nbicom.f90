@@ -21,20 +21,19 @@ double precision, dimension(n_theta), parameter :: PLEJ2 = (/ &
      8.823999E-01,  9.405999E-01,  9.999999E-01/)
 
 integer :: IHB, IRB, IEB, JEB, N1, JTANG, ntet1, &
-    JIM0R, JIM0L, JNR, JNL, JE, JCENTR, JNRC, JNLC, II(ndim2)
+    JIM0R, JIM0L, JNR, JNL, JE, JNRC, JNLC, II(ndim2)
 double precision :: R, A, BZ, HB, RBMIN1, RBMAX1, EB, QB, PB, Hocu, &
     RCR, RJ, RJT, RM0R, RM0L, YFM0R, YFM0L, &
-    YFM0T, YF0, YDYH, SQRCR, RJM(ndim2)
+    YFM0T, YF0, YDYH, RJM(ndim2)
 double precision, dimension(n_energy) :: SVII, VNB, YAQB
-double precision, dimension(n_rho) :: RC, RE, RI, DRE, DRI, YCOS,YBTDB, &
-    REJ, RIJ, BTDB, AMU, PL, PN0, PM, PLI, YDZ, YTRAP, X, XJ, DX, ELON1, TRIA1
+double precision, dimension(n_rho) :: RC, RE, RI, DRE, DRI, YCOS, YBTDB, &
+    REJ, RIJ, YDZ, YTRAP, X, XJ, DX, ELON1, TRIA1
 double precision, dimension(ndim1) :: AZ, YDRY
 double precision, dimension(4, 4) :: SVEX
 double precision, dimension(n_energy, n_rho) :: ARD, YFI, F, YFE, YANBA, &
     YAQBA, YACBA, DTCX, DTE, DTI, YATBA, YANBA1, YSLEJ0, YSLEJ2
 double precision, dimension(n_energy, n_rho, n_theta) :: YASBA, YASBA1, YASBA2
-double precision :: DT, EZ
-double precision, dimension(9) :: yVB, RNB, ZB, RMB, yEB
+double precision, dimension(9) :: ZB, RMB
 double precision :: YSIMPI(3, 9)
 double precision, dimension(n_rho) :: stnbdp, sdnbtp, sdnbdp1, sdnbdp2
 double precision, dimension(3, ndim2) :: YPSI, RLM
@@ -150,7 +149,7 @@ contains
         ydzout = (yhtop - yhedge) / (jedge * a)
         zy = yhtopa
 
-        do jhh = 1, jedge
+        do jhh=1, jedge
             yz1 = zy
             zy  = yz1 - ydzout
             zy12 = 0.5d0 * (zy + yz1)
@@ -214,7 +213,7 @@ contains
     endif
 
     yds = yhbd2 / (a * ys)
-    do jh = 1, jhb05
+    do jh=1, jhb05
         ydz(jh) = ydz(jh) * yds
     enddo
 
@@ -223,7 +222,7 @@ contains
     y  = 2.d0*451.9d0*qb/ysb
     y1 = eb/pb
 
-    do je = jeb, ieb
+    do je=jeb, ieb
         ye = y1/(ieb - je + 1)
         yaqb(je) = y*adqb(je)/(ye*pb*sqrt(ye))
     enddo
@@ -260,7 +259,7 @@ contains
     ntet = ntet1 - 1
     n    = n1 - 1
     y0 = r / a
-    ds = abs(rbmax1 - rbmin1) * a / (n * irb)
+    ds = abs(rbmax1 - rbmin1)*a/(n*irb)
     dv = ds * a
     yloss = 0.d0
 
@@ -682,7 +681,7 @@ contains
     ntet = ntet1 - 1
     N    = N1 - 1
     Y0   = R/A
-    DS    = abs(RBMAX1-RBMIN1)*A/(N*IRB)
+    DS    = abs(RBMAX1 - RBMIN1)*A/(N*IRB)
     DV    = DS*A
     YLOSS = 0.
 
@@ -751,7 +750,6 @@ contains
         else
             if (JN1 == 1) then
                 JN1 = -1
-                JCENTR = JI
             endif
 82          continue
             IN1 = -JN1
@@ -1110,7 +1108,7 @@ contains
 !--------------------------------------------------------------Polevoy
 !	entry:	AMETR,SHIF,NA1,RTOR,AB,BTOR,NI,HBEAM,RBMIN,RBMAX,
 !     		CBMS2,CBMI3,EBEAM,QBEAM,ABEAM,DBM1,DBM2,DBM3,
-!	     	MU,TE,TI,NE,NN,NNB,ZEF,AMAIN,PBEAM,SCUBM,CONTR,ELON,
+!	     	TE,TI,NE,NN,NNB,ZEF,AMAIN,PBEAM,SCUBM,CONTR,ELON,
 !	CBMS2	number of 'pencils'
 !	CBMI3	number of internal mesh points
 !			 41 (CBMI3=1),21 (CBMI3=2)
@@ -1124,8 +1122,7 @@ contains
 !---------------------------------------------------------------------
 
     use nbstatus, only: n_rho, n_energy, n_theta, ISPE, ISPEND, &
-        AMETR, VR, RHO, FP, MU, AMAIN, ELON, TRIA, SHIF, &
-        NE, NI, TE, TI, NN, &
+        AMETR, VR, RHO, FP, AMAIN, ELON, TRIA, SHIF, NE, TE, TI, &
         SCUBM, PBEAM, NNBM1, NNBM2, NNBM3, SNNBM, SNEBM, &
         SNIBM1, SNIBM2, SNIBM3
     use cross_sections, only: svdtbp, svddnp1, svddnp2, seiv
@@ -1229,8 +1226,6 @@ contains
         JNAX = 1 + CBMI3*(JN-1)
         JNA  = JNAX - CBMI3*YJN
         if (CBMI3 > 1.d0) YJN  = .5d0
-        PM(JN)    = max(AMAIN(JNA), 1.d0)
-        PLI(JN)   = max(NI(JNA), 1.d-4)
         ELON1(JN) = max(ELON(JNAX), 1.d0)
         TRIA1(JN) = TRIA(JNAX)*XJ(JNAX)
         X(JN)     = XJ(JNAX)
@@ -1239,9 +1234,6 @@ contains
         REJ(JN)   =  X(JN) + Y + DX(JN)
         RIJ(JN)   = -X(JN) + Y + DX(JN)
         YBTDB(JN) = YBTDB(JNAX)
-        AMU(JN)   = max(MU(JNA), 1.d-4)
-        PL(JN)    = max(NE(JNA), 1.d-4)
-        PN0(JN)   = max(NN(JNA)*(NNWM + NNCL), 0.d0)
         YEPS      = AMETR(JNAX)/(RTOR + SHIF(JNAX))
         YTRAP(JN) = sqrt(2.*YEPS/(1. + YEPS))
         do JE=1, n_energy
@@ -1930,11 +1922,11 @@ contains
         dy = -dy
     endif
 
-    RM0R  = Y0 + DX(JN) + X(JN)
+    RM0R = Y0 + DX(JN) + X(JN)
     JIM0R = (RJ - RM0R)*YDYH + 2
     if (JIM0R <= 0) JIM0R = 1
 
-    RM0L  = Y0 + DX(JN) - X(JN)
+    RM0L = Y0 + DX(JN) - X(JN)
     JIM0L = (RJ - RM0L)*YDYH + 2
     if (JIM0L > JII) then
         JIM0L = JII
@@ -1945,7 +1937,6 @@ contains
 
     YSQR  = SQRT(RM0R*(RM0R - RCR))
     YSQL  = SQRT(RM0L*(RM0L - RCR))
-    SQRCR = SQRT(RCR)
 
     do JE=JBB, IEB
         YFM0R = ARD(JE, JN) - YSQR
