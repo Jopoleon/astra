@@ -357,8 +357,7 @@ contains
 !----- file for Fij
     JLREC = JDBL * 4 * IV1 * IT
 
-    open(31, file = 'dat/fij.dat', form='unformatted', &
-     access = 'direct', recl = JLREC)
+    open(31, file = 'dat/fij.dat', form='unformatted', access='direct', recl=JLREC)
 
 !----- zero initial distribution
     if (N1 > JN1OLD) then
@@ -376,8 +375,7 @@ contains
                     FVM(I, J) = 0.
                 enddo
             enddo
-            write(31, rec=JN, err=999) &
-             ((FVM(JV, JT), JV = 1, IV1), JT = 1, IT)
+            write(31, rec=JN, err=999) ((FVM(JV, JT), JV = 1, IV1), JT = 1, IT)
         enddo
     endif
 
@@ -411,8 +409,7 @@ contains
 ! Change to program units
     YJ2 = 0.
 ! Radial distribution cycle
-    open(35, file='dat/srsfi.dat', form='unformatted', &
-     access='DIRECT', recl=JSRREC)
+    open(35, file='dat/srsfi.dat', form='unformatted', access='DIRECT', recl=JSRREC)
 
     do JN=1, N ! Output for distribution function        
         if (jOUT /= 0) then

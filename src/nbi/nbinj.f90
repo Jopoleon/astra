@@ -455,12 +455,12 @@ if (CBMI1 == 0.d0) then ! write to SSFPQL
         if (.not. allocated(ypwtmp)) allocate(ypwtmp(jElevAll))
         if (.not. allocated(ypartmp)) allocate(ypartmp(jElevAll))
         do je=1, jElevAll
-            yetmp(je) = EBEAM
-            ypwtmp(jE) = 0.d0
+            yetmp(je)   = EBEAM
+            ypwtmp(jE)  = 0.d0
             ypartmp(jE) = 0.d0
             do j=1, n_theta
                 do jn=1, NA1-1
-                    Y4TORIC(jE, j, jn)=0.d0
+                    Y4TORIC(jE, j, jn) = 0.d0
                 enddo
             enddo
         enddo
@@ -553,7 +553,7 @@ if (CBMI1 == 0.d0) then ! write to SSFPQL
     write(jiounit, '(A)')   'Cos(PitchAngle) Mesh'
     write(jiounit, '(6E17.9)') (YCOS(j), j=1, n_theta)
 
-    do j = 1, jsrnum  ! count of NBI species (=1)
+    do j=1, jsrnum  ! count of NBI species (=1)
         write(jiounit, '(A11, I3)') 'NBI Species', j
         write(jiounit, '(3I5)') jABEAM, jZBEAM, jElevAll
         write(jiounit, '(A)')   'Energy levels, keV'
@@ -588,29 +588,6 @@ do j=1, na1
 enddo
 
 return
-
-93 continue
-write(*, *)'>>> NBI >>> Wrong NBI configuration file format: '
-write(*, '(6X, I2, A, I2, A)') JN-1, ' beam records available, ', &
-    int(CBM1), ' records required.'
-stop
-
-95 continue
-write(*, *) '>>> NBI calling STREAD: array out of limits'
-stop
-
-96 continue
-write(*, *) '>>> NBI >>> Error in file "', TRIM(file_nbi), '": unrecognized variable name'
-stop
-
-97 continue
-write(*, *) '>>> NBI >>> File "', TRIM(file_nbi), '" read error'
-stop
-
-98 continue
-write(*, *) '>>> NBI >>> Wrong NBI configuration file format. '
-write(*, *) '            More records expected than available.'
-stop
 
 990 write(*, *) '>>> NBI >>> read error in dat/srsfi.dat'
 stop
