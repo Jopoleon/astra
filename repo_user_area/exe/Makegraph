@@ -1,0 +1,63 @@
+ifndef AWD
+$(error setenv/export AWD first)
+endif
+
+SRC_DIR = $(AWD)/src/graph
+OBJ_DIR = $(AWD)/obj/graph
+MOD_DIR = $(AWD)/mod/graph
+INC_DIR = $(AWD)/inc
+MOD_TYP = $(AWD)/mod/misc
+MOD_ASTRA = $(AWD)/mod/astra
+
+LIB_DIR = $(AWD)/lib
+LIBNAM = libgraph.a
+LIB = $(LIB_DIR)/$(LIBNAM)
+
+# Compilers
+
+FC_FLAGS = -r8 -no-prec-div -traceback -ip -fPIC -O0 $(CHECKALLCOMP)
+
+MODOBJS = \
+$(OBJ_DIR)/graph_utils.o \
+$(OBJ_DIR)/gui_interaction.o
+
+OBJS = \
+$(OBJ_DIR)/Astra2XW.o \
+$(OBJ_DIR)/dialogx.o
+
+# Make Commands
+
+.PHONY: modules
+modules: directories $(MODOBJS) mvmod
+
+.PHONY: lib
+lib: $(LIB)
+
+.PHONY: directories
+directories:
+	@mkdir -p $(MOD_DIR)
+	@mkdir -p $(OBJ_DIR)
+	@mkdir -p $(LIB_DIR)
+
+.PHONY: mvmod
+mvmod:
+	rm -f *genmod.*
+	-@mv *.mod $(MOD_DIR)/ 2>/dev/null; true
+
+.PHONY: clean
+clean:
+	rm -f *.mod
+	rm -f $(MOD_DIR)/*.mod
+	rm -rf $(OBJ_DIR)
+	rm -f $(LIB)
+
+# Rules
+
+$(OBJ_DIR)%.o: $(SRC_DIR)%.f90
+	$(FC) $(FC_FLAGS) -I$(MOD_TYP) -I$(MOD_ASTRA) -I$(MOD_DIR) -c $< -o $@
+
+$(OBJ_DIR)%.o: $(SRC_DIR)%.c
+	$(CC) -fPIC -c $< -o $@ -I$(INC_DIR)
+
+$(LIB): $(MODOBJS) $(OBJS)
+	ar rv $(LIB) $(MODOBJS) $(OBJS) >/dev/null

@@ -38,14 +38,9 @@ $(OBJ_DIR)/json_rw.o \
 $(OBJ_DIR)/gs_solver.o \
 $(OBJ_DIR)/metrics.o \
 $(OBJ_DIR)/auxiliary.o \
-$(OBJ_DIR)/set_x_data.o \
-$(OBJ_DIR)/graph_utils.o \
-$(OBJ_DIR)/gui_interaction.o
+$(OBJ_DIR)/set_x_data.o
 
-OBJS = \
-$(OBJ_DIR)/Astra2XW.o \
-$(OBJ_DIR)/dialogx.o \
-$(OBJ_DIR)/ipc_control.o
+OBJS = $(OBJ_DIR)/ipc_control.o
 
 # Make Commands
 
