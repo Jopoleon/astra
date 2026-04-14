@@ -26,17 +26,16 @@ contains
     double precision, intent(inout) :: CBM1, CBMI3
 
     logical :: file_exists
-    integer :: N, j_nbi, J, JN, JN1, JNAX, ERCODE, JWARN, &
+    integer :: N, j_nbi, J, JN, JN1, JNAX, ERCODE, JWARN, j_frac, j_rho, &
         JSRREC, IFLAG, n_nbi, jElevAll
     double precision :: CBMH1, CBMH2, CBMR1, CBMR2, CBMS1, CBMS2, CBMS3, CBMS4, EBEAM, &
-        DBM1=1.d0, DBM2=0.d0, DBM3=0.d0, ABEAM=1.d0, HBEAM, CONTR, RBMAX=0.5d0, RBMIN=1.d0, QBEAM
+        power_frac(3)=(/1.d0, 0.d0, 0.d0/), ABEAM=1.d0, HBEAM, CONTR, RBMAX=0.5d0, RBMIN=1.d0, QBEAM
     double precision :: YQBEAM, ZBEAM, YABEAM, YEBEAM, YUD, YHM
     double precision :: ARRAY(n_fields), yEXTARR(n_rho, 9)
 
 !---- Ripple normalized radius of the ripple boundary
 !---- banana with RTCRIT > YRIPLR is lost
     double precision :: Y, Y1, Y2, YMAX, YQBM
-    real*8, allocatable :: YQBMJE(:, :)
 
     jElevAll = 0 ! for write to SSFPQL
     ZBEAM = 1.d0 ! Hydrogen isotopes only
@@ -52,19 +51,14 @@ contains
         stop
     endif
 
-    if (CBMI1 == 0.d0) then ! print for SSFPQL
-        if (.not. allocated(YQBMJE)) allocate (YQBMJE(n_nbi, 3))
-        YQBMJE = 0.d0
-    endif ! print for SSFPQL
-
 ! CBMI3 to make NBI internal mesh interval > max Larmor raduis
     Y = 1.d-3
     EBEAM = 1.d-3
 
     open(2, file=TRIM(file_nbi), status='OLD')
-    do j=1, n_nbi
+    do j_nbi=1, n_nbi
         call STREAD(2, 20, ARRAY, ERCODE)
-        if (j == 1) then
+        if (j_nbi == 1) then
             ABEAM = ARRAY(3)
             EBEAM = ARRAY(5)
         else
@@ -104,28 +98,28 @@ contains
     YRIPLR(N+1) = YRIPLR(N)
 
 ! Hot ion' source
-    do JN=1, NB1
-        PBEAM(JN)   = 0.
-        SCUBM(JN)   = 0.
-        SNNBM(JN)   = 0.
-        SNEBM(JN)   = 0.
-        NNBM1(JN)   = 0.
-        NNBM2(JN)   = 0.
-        NNBM3(JN)   = 0.
-        stnbdp(JN)  = 0.
-        sdnbtp(JN)  = 0.
-        sdnbdp1(JN) = 0.
-        sdnbdp2(JN) = 0.
-        SNIBM1(jn)  = 0.
-        SNIBM2(jn)  = 0.
-        SNIBM3(jn)  = 0.
-        PEBM(JN)    = 0.
-        PIBM(JN)    = 0.
-        CUBM(JN)    = 0.
-        CUFI(JN)    = 0.
-        PBPER(JN)   = 0.
-        NIBM(JN)    = 0.
-        PBLON(JN)   = 0.
+    do j_rho=1, NB1
+        PBEAM(j_rho)   = 0.
+        SCUBM(j_rho)   = 0.
+        SNNBM(j_rho)   = 0.
+        SNEBM(j_rho)   = 0.
+        NNBM1(j_rho)   = 0.
+        NNBM2(j_rho)   = 0.
+        NNBM3(j_rho)   = 0.
+        stnbdp(j_rho)  = 0.
+        sdnbtp(j_rho)  = 0.
+        sdnbdp1(j_rho) = 0.
+        sdnbdp2(j_rho) = 0.
+        SNIBM1(j_rho)  = 0.
+        SNIBM2(j_rho)  = 0.
+        SNIBM3(j_rho)  = 0.
+        PEBM(j_rho)    = 0.
+        PIBM(j_rho)    = 0.
+        CUBM(j_rho)    = 0.
+        CUFI(j_rho)    = 0.
+        PBPER(j_rho)   = 0.
+        NIBM(j_rho)    = 0.
+        PBLON(j_rho)   = 0.
     enddo
     ISPE = 0
     yEXTARR = 0.d0
@@ -143,7 +137,6 @@ contains
     endif
 
     JWARN = 0
-    jElevAll = 0
 
     YEBEAM = EBEAM
     YABEAM = ABEAM
@@ -157,9 +150,7 @@ contains
         CONTR = ARRAY(2)
         ABEAM = ARRAY(3)
         EBEAM = ARRAY(5)
-        DBM1  = ARRAY(6)
-        DBM2  = ARRAY(7)
-        DBM3  = ARRAY(8)
+        power_frac = ARRAY(6: 8)
         CBMS1 = ARRAY(9)
         CBMS2 = ARRAY(10)
         HBEAM = ARRAY(11)
@@ -171,22 +162,6 @@ contains
         CBMH2 = ARRAY(17)
         CBMR1 = ARRAY(18)
         CBMR2 = ARRAY(19)
-        if (CBMI1 == 0.d0) then ! print for SSFPQL
-            if (QBEAM*EBEAM > 0d0) then ! NBI on
-                if (DBM1 > 0.d0) then
-                    YQBMJE(j_nbi, 1) = QBEAM*DBM1
-                    jElevAll = jElevAll + 1
-                endif
-                if (DBM2 > 0.d0) then
-                    YQBMJE(j_nbi, 2) = QBEAM*DBM2
-                    jElevAll = jElevAll + 1
-                endif
-                if (DBM3 > 0.d0) then
-                    YQBMJE(j_nbi, 3) = QBEAM*DBM3
-                    jElevAll = jElevAll + 1
-                endif
-            endif
-        endif
 
         if (YABEAM /= ABEAM) JWARN = 1
         QNBI = QNBI + QBEAM
@@ -196,26 +171,23 @@ contains
         YQBM = YQBM + YQBEAM
         YHM = (HBEAM - YUD)*100.
         if (CONTR == 0.d0 .or. CONTR == 1.d0) then
-            call NBSRSR(j_nbi, 2.d0*CONTR - 1.d0, NA1, RTOR, SHIFT, AB, BTOR, &
-                HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
-                CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, ABEAM, &
-                QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
+            call NBSRSR(j_nbi, 2.d0*CONTR - 1.d0, NA1, RTOR, SHIFT, AB, BTOR, HRO, YHM, &
+                CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, CBMR1, CBMR2, CBMI3, CBMI1, &
+                EBEAM, power_frac, ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
             if (CBMI1 == 1.d0) call NBION0(NA1, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
         else ! balanced injection
 ! coinj. part
             QBEAM = YQBEAM*(1. - CONTR)
             call NBSRSR(j_nbi, -1.d0, NA1, RTOR, SHIFT, AB, BTOR, HRO, YHM, &
                 CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, CBMR1, CBMR2, CBMI3, CBMI1, &
-                EBEAM, DBM1, DBM2, DBM3, ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, &
-                YEXTARR, CBMI4)
+                EBEAM, power_frac, ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
             if (CBMI1 == 1.d0) call NBION0(NA1, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
 
 !: counter injection part...
             QBEAM = YQBEAM*CONTR
             call NBSRSR(j_nbi, 1.d0, NA1, RTOR, SHIFT, AB, BTOR, HRO, YHM, &
                 CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, CBMR1, CBMR2, CBMI3, CBMI1, &
-                EBEAM, DBM1, DBM2, DBM3, ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, &
-                YEXTARR, CBMI4)
+                EBEAM, power_frac, ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
             if (CBMI1 == 1.d0) call NBION0(NA1, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
             QBEAM = YQBEAM
         endif
@@ -264,24 +236,21 @@ contains
         call smooth_int(CUBM, CBMI3, ROC, NA1, surf=.true.)
     endif
 
-    do j=1, NA1
-        PEBM(J) = PEBM(J) - 2.08E-5*SNEBM(J)
+    do j_rho=1, NA1
+        PEBM(j_rho) = PEBM(j_rho) - 2.08E-5*SNEBM(j_rho)
         if (CBM2 > 0.)  then
-            PIBM(J) = PIBM(J) - 0.0024*SNNBM(J)*TI(J)
+            PIBM(j_rho) = PIBM(j_rho) - 0.0024*SNNBM(j_rho)*TI(j_rho)
         endif
-    enddo
-
-    do j=1, na1
-        NNBM2(j)  = SNIBM2(j)
-        NNBM3(j)  = stnbdp(j)
-        SNIBM1(j) = sdnbdp1(j)
-        SNIBM2(j) = sdnbdp2(j)
-        SNIBM3(j) = sdnbtp(j)
+        NNBM2(j_rho)  = SNIBM2(j_rho)
+        NNBM3(j_rho)  = stnbdp(j_rho)
+        SNIBM1(j_rho) = sdnbdp1(j_rho)
+        SNIBM2(j_rho) = sdnbdp2(j_rho)
+        SNIBM3(j_rho) = sdnbtp(j_rho)
     enddo
 
     return
 
-990  write(*, *) '>>> NBI >>> read error in dat/srsfi.dat'
+990 write(*, *) '>>> NBI >>> read error in dat/srsfi.dat'
     stop
 
     end subroutine NBINJ

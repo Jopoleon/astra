@@ -1048,7 +1048,7 @@ contains
 !---------------------------------------------------------------------
     subroutine nbsrsr(j_nbi, YCONTR, NA1, RTOR, SHIFT, AB, BTOR, &
         HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
-        CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, &
+        CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, power_frac, &
         ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
 
 !---------------------------------------------------------------------
@@ -1059,12 +1059,12 @@ contains
 ! New SCUBM =Nt/m3					     22-APR-13
 !--------------------------------------------------------------Polevoy
 !	entry:	AMETR,SHIF,NA1,RTOR,AB,BTOR,NI,HBEAM,RBMIN,RBMAX,
-!     		CBMS2,CBMI3,EBEAM,QBEAM,ABEAM,DBM1,DBM2,DBM3,
+!     		CBMS2,CBMI3,EBEAM,QBEAM,ABEAM,power_frac,
 !	     	TE,TI,NE,NN,ZEF,AMAIN,PBEAM,SCUBM,CONTR,ELON,
 !	CBMS2	number of 'pencils'
 !	CBMI3	number of internal mesh points
 !			 41 (CBMI3=1),21 (CBMI3=2)
-!	DBM3,2,1 power fraction of energy comps.
+!	power_frac3,2,1 power fraction of energy comps.
 !		    	 3(EB,EB/2,EB/3),2(EB,EB/2),1(EB)
 !	CONTR	Qcontr/Qbeam
 !	j_nbi 	Number of the current hot ion source
@@ -1085,7 +1085,7 @@ contains
     integer, intent(in) :: j_nbi, NA1
     double precision, intent(in) :: YCONTR, RTOR, SHIFT, AB, BTOR, &
         HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
-        CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, &
+        CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, power_frac(3), &
         ABEAM, QBEAM, RBMAX, RBMIN, CBMI4, yEXTARR(n_rho, 9)
     integer, intent(out) :: JSRREC
 
@@ -1108,23 +1108,23 @@ contains
 
     IEB = 3
     IRB = CBMS2
-    YDBM = DBM1 + DBM2 + DBM3
+    YDBM = SUM(power_frac)
 
     do j=1,  3
         ADQB(j) = 0.d0
     enddo
-    if (DBM1 <= 0.d0) then
-        write(*, *) 'ILLEGAL: NBI source N', j_nbi, ' DBM1 <= 0 !!!'
+    if (power_frac(1) <= 0.d0) then
+        write(*, *) 'ILLEGAL: NBI source N', j_nbi, ' power_frac(1) <= 0 !!!'
         return
     endif
-    ADQB(3) = DBM1/YDBM
+    ADQB(3) = power_frac(1)/YDBM
     JEB = IEB
-    if (DBM2 > 0.d0) then
-        ADQB(2) = DBM2/YDBM
+    if (power_frac(2) > 0.d0) then
+        ADQB(2) = power_frac(2)/YDBM
         JEB = IEB - 1
     endif
-    if (DBM3 > 0.d0) then
-        ADQB(1) = DBM3/YDBM
+    if (power_frac(3) > 0.d0) then
+        ADQB(1) = power_frac(3)/YDBM
         JEB = IEB - 2
     endif
     if (CBMI1 /= 1.d0) then
