@@ -20,24 +20,20 @@ double precision, dimension(n_theta), parameter :: PLEJ2 = (/ &
      6.615999E-01,  7.150000E-01,  7.695999E-01,  8.253999E-01, &
      8.823999E-01,  9.405999E-01,  9.999999E-01/)
 
-integer :: IHB, IRB, IEB, JEB, N1, JTANG, ntet1, &
-    JIM0R, JIM0L, JNR, JNL, JE, JCENTR, JNRC, JNLC, II(ndim2)
-double precision :: R, A, BZ, HB, RBMIN1, RBMAX1, EB, QB, PB, Hocu, &
-    RCR, RJ, RJT, RM0R, RM0L, YFM0R, YFM0L, &
-    YFM0T, YF0, YDYH, SQRCR, RJM(ndim2)
+integer :: IHB, IRB, IEB, JEB, N1, JTANG, ntet1, JNR, JNL, II(ndim2)
+double precision :: Rmaj, amin, BZ, HB, RBMIN1, RBMAX1, EB, QB, PB, Hocu, &
+    RCR, RJ, RJT, YDYH
 double precision, dimension(n_energy) :: SVII, VNB, YAQB
-double precision, dimension(n_rho) :: RC, RE, RI, DRE, DRI, YCOS,YBTDB, &
-    REJ, RIJ, BTDB, AMU, PL, PN0, PM, PLI, YDZ, YTRAP, X, XJ, DX, ELON1, TRIA1
+double precision, dimension(n_rho) :: RC, RE, RI, DRE, DRI, YCOS, YBTDB, &
+    REJ, RIJ, YDZ, YTRAP, X, XJ, DX, ELON1, TRIA1
 double precision, dimension(ndim1) :: AZ, YDRY
 double precision, dimension(4, 4) :: SVEX
 double precision, dimension(n_energy, n_rho) :: ARD, YFI, F, YFE, YANBA, &
-    YAQBA, YACBA, DTCX, DTE, DTI, YATBA, YANBA1, YSLEJ0, YSLEJ2
-double precision, dimension(n_energy, n_rho, n_theta) :: YASBA, YASBA1, YASBA2
-double precision :: DT, EZ
-double precision, dimension(9) :: yVB, RNB, ZB, RMB, yEB
+    YAQBA, YACBA, DTCX, YATBA, YANBA1, YSLEJ0, YSLEJ2
+double precision, dimension(n_energy, n_rho, n_theta) :: YASBA, YASBA1
+double precision, dimension(9) :: ZB, RMB
 double precision :: YSIMPI(3, 9)
 double precision, dimension(n_rho) :: stnbdp, sdnbtp, sdnbdp1, sdnbdp2
-double precision, dimension(3, ndim2) :: YPSI, RLM
 
 contains
 
@@ -73,8 +69,8 @@ contains
         yhtop, yhtopa, yhedge, yhedga, yd05h, ydzout, ydhz, ydzjh
 
     n = n1 - 1
-    yr1 = rbmin1/a
-    yr2 = rbmax1/a
+    yr1 = rbmin1/amin
+    yr2 = rbmax1/amin
 
     if (yr2 <= yr1) then
         write(*, *) 'for nbi source n ', jsrc, &
@@ -83,13 +79,13 @@ contains
         yr2 = yr1 + 1.d-5
     endif
 
-    yc = r/a
+    yc = Rmaj/amin
     y  = yc + 1.d0
     yhbd2 = abs(hb)/2.d0
 
     if (yhbd2 == 0.d0) then
-        write(*,*) 'nbi source n ', jsrc, ' vertical size = 0'
-        write(*,*) 'continue with vertical size = 1.e-5'
+        write(*, *) 'nbi source n ', jsrc, ' vertical size = 0'
+        write(*, *) 'continue with vertical size = 1.e-5'
         yhbd2 = 1.d-5
     endif
 
@@ -97,13 +93,13 @@ contains
     yd  = 2.d0 / abs(yr2 - yr1)
     yr0 = 0.5d0 * (yr1 + yr2)
     hocu = yhm
-    do jh = 1, n1
-          ydz(jh) = 0.d0
+    do jh=1, n1
+        ydz(jh) = 0.d0
     enddo
 
 ! perpendicular nbi: calculation of the nbi height
 
-    y = hocu / a
+    y = hocu/amin
     yhocu = y
 
     if (yr0 < (yc + dx(1))) then
@@ -113,7 +109,7 @@ contains
         enddo
     endif
 
-    hocu = a * yhocu
+    hocu = amin*yhocu
     ys = 0.d0
 
     do jr=1, irb
@@ -130,10 +126,10 @@ contains
 
     yhocu  = abs(hocu)
     yhtop  = yhocu + yhbd2
-    yhtopa = yhtop / a
-    ynocu  = yhocu / yhbd2
-    yhedga = x(n1) * elon1(n1)
-    yhedge = a * yhedga
+    yhtopa = yhtop/amin
+    ynocu  = yhocu/yhbd2
+    yhedga = x(n1)*elon1(n1)
+    yhedge = amin*yhedga
     jhb05  = 0
 
     if (yhedge < (yhocu - yhbd2)) then ! nbi out of plasma
@@ -141,16 +137,16 @@ contains
         return
     endif
 
-    yd05h = a / yhbd2
+    yd05h = amin/yhbd2
     ys = 0.d0
 
     if (yhtop > yhedge) then ! nbi partly out of plasma
         jedge = (yhtop / yhedge - 1.d0) * (n1 - 1)
         if (jedge < 1) jedge = 1
-        ydzout = (yhtop - yhedge) / (jedge * a)
+        ydzout = (yhtop - yhedge) / (jedge*amin)
         zy = yhtopa
 
-        do jhh = 1, jedge
+        do jhh=1, jedge
             yz1 = zy
             zy  = yz1 - ydzout
             zy12 = 0.5d0 * (zy + yz1)
@@ -213,17 +209,17 @@ contains
         ys = ys + ydz(jh)
     endif
 
-    yds = yhbd2 / (a * ys)
-    do jh = 1, jhb05
+    yds = yhbd2 / (amin*ys)
+    do jh=1, jhb05
         ydz(jh) = ydz(jh) * yds
     enddo
 
     ihb = 2*jhb05
-    ysb = (yr2 - yr1)*a*2.d0*yhbd2
+    ysb = (yr2 - yr1)*amin*2.d0*yhbd2
     y  = 2.d0*451.9d0*qb/ysb
     y1 = eb/pb
 
-    do je = jeb, ieb
+    do je=jeb, ieb
         ye = y1/(ieb - je + 1)
         yaqb(je) = y*adqb(je)/(ye*pb*sqrt(ye))
     enddo
@@ -231,37 +227,29 @@ contains
     end subroutine nb0
 
 !---------------------------------------------------------------------
-    subroutine nb1tr(yaqbp, contr, ar, jsrnum)
+    subroutine nb1tr(yaqbp, contr, ar)
 !---- ripple normalized radius of ripple boundary
 !---- banana with rtrap > yriplr is lost
 
-    use nbstatus, only: n_nbi_max, n_energy
+    use nbstatus, only: n_energy
 
-    integer, intent(in) :: jsrnum
     double precision, intent(in) :: contr
     double precision, intent(in) :: ar(*)
     double precision, intent(inout) :: yaqbp(*)
 
     integer :: ntet, ji, jn, jt, jr, jjn, jj, jhb05, jn1, in, in1, &
-        jjh, jh, jh1, jjr, jbb, jnn, jhp1, jeth, jt1, jt2, n
+        jjh, jh, jh1, jjr, jbb, jnn, jhp1, je, jeth, jt1, jt2, n
     double precision :: ydedj, y0, y1, y2, y, ye, yh, ds, dv, &
         yqshth, yloss, yvede, ye3, rj0, yr, ydh, xjh, &
         zjh, yzjh, y12, yr1, yr2, yc1, yc2
     double precision, dimension(n_energy) :: drl, ycu, yct2, yve
 
-!---- ripple
-
-    if (jsrnum > n_nbi_max) then
-        write(*,*) '>>> too many nbi sources (see nb1tr)'
-        return
-    endif
-
     yqshth = 0.d0
     ntet = ntet1 - 1
     n    = n1 - 1
-    y0 = r / a
-    ds = abs(rbmax1 - rbmin1) * a / (n * irb)
-    dv = ds * a
+    y0 = Rmaj/amin
+    ds = abs(rbmax1 - rbmin1)*amin/(n*irb)
+    dv = ds*amin
     yloss = 0.d0
 
 ! -------- clean the sources --------
@@ -327,9 +315,9 @@ contains
 
     ii(ndim2) = n
     do je=jeb, ieb
-        drl(je) = 1.d0 / (0.0144d0 * sqrt(eb * pb / (ieb - je + 1)) / (bz * a))
+        drl(je) = 1.d0 / (0.0144d0*sqrt(eb*pb/(ieb - je + 1)) / (bz*amin))
         do jn = 1, n1
-            ard(je, jn) = ar(jn) * drl(je)
+            ard(je, jn) = ar(jn)*drl(je)
         enddo
     enddo
 
@@ -609,7 +597,7 @@ contains
 
 220         continue
 
-            do jeth = jeb, ieb
+            do jeth=jeb, ieb
                 yqshth = yqshth + yaqbp(jeth) * yve(jeth)
             enddo
 
@@ -651,7 +639,7 @@ contains
     end subroutine nb1tr
 
 !---------------------------------------------------------------------
-    subroutine nbtrag(YAQBP, CONTR, AR, JSRNUM, CBMS1)
+    subroutine nbtrag(YAQBP, CONTR, AR)
 !--------- Neutral beam ionization -----------
 ! coinjection  with ion's trapping and orbital losses
 !  AQBA[MW],ACBA[MA m/s],ANBA[10*13 prtcls],
@@ -659,31 +647,22 @@ contains
 !  YQSHth [MW] shine through power
 !-------------------------------------- Polevoy
 
-    use nbstatus, only: n_nbi_max
-
-    integer, intent(in) :: JSRNUM
-    double precision, intent(in) :: CONTR, CBMS1, AR(*)
+    double precision, intent(in) :: CONTR, AR(*)
     double precision, intent(out) :: YAQBP(*)
 
-    integer :: ntet, n, jn, jt, jhb05, jn1, ji, in, in1, jh, jh1, jjh, &
+    integer :: je, ntet, n, jn, jt, jhb05, jn1, ji, in, in1, jh, jh1, jjh, &
         jjr, jr, jbb, jjn, jj, jt1, jt2, jnn, jhp1, jeth
     double precision :: YQSHTH, Y0, DS, DV, YLOSS, YE3, RJ0, YH, YR, YRN, &
         YE, YVEDE, Y, YDH, XJH, ZJH, YZJH, Y12, Y2, YC2, YRN1, YR2, YR1, &
         YDEDJ, YRBJN, Y1, YC1, YDYS, YDEX
     double precision, dimension(3) :: DRL, YCU, YCT2, YVE
 
-!=====Ripple
-    if (jsrnum > n_nbi_max) then
-        write(*,*) '>>> too many nbi sources (see nb1tr)'
-        return
-    endif
-
     YQSHTH = 0.
     ntet = ntet1 - 1
     N    = N1 - 1
-    Y0   = R/A
-    DS    = abs(RBMAX1-RBMIN1)*A/(N*IRB)
-    DV    = DS*A
+    Y0 = Rmaj/amin
+    DS = abs(RBMAX1 - RBMIN1)*amin/(N*IRB)
+    DV = DS*amin
     YLOSS = 0.
 
 ! clean the sources
@@ -718,7 +697,7 @@ contains
     YH   = 0.01
     JN1  = N1
     do JE=JEB, IEB
-        DRL(JE) = 1./(0.0144d0*sqrt(EB*PB/(IEB - JE + 1))/(BZ*A))
+        DRL(JE) = 1./(0.0144d0*sqrt(EB*PB/(IEB - JE + 1))/(BZ*amin))
         do JN=1, N1
             ARD(JE, JN) = AR(JN)*DRL(JE)
         enddo
@@ -739,19 +718,9 @@ contains
             endif
 
 ! For orbit averaging and gyrolosses
-            RJM(JI) = RJ - YR
-            do JE=JEB, IEB
-                YPSI(JE, JI) = ARD(JE, JN) + (ARD(JE, JN1) - ARD(JE, JN)) * &
-                    (RJM(JI) - YRN)/(YRN1 - YRN)
-                RLM(JE, JI) = YDYH*sqrt(RJM(JI))/Y0/DRL(JE)
-                if (CBMS1 >= 2.) RLM(JE, JI) = 0. ! Finite Larmor radius off
-            enddo
- 
-! For orbit averaging and gyrolosses
         else
             if (JN1 == 1) then
                 JN1 = -1
-                JCENTR = JI
             endif
 82          continue
             IN1 = -JN1
@@ -766,29 +735,10 @@ contains
                 goto 82
             endif
 ! For orbit averaging and gyrolosses
-            RJM(JI) =RJ-YR
-            do JE=JEB, IEB
-                YPSI(JE, JI) = ARD(JE, IN) + (ARD(JE, IN1) - ARD(JE, IN)) * &
-                    (RJM(JI)-YRN)/(YRN1-YRN)
-                RLM(JE, JI) = YDYH*sqrt(RJM(JI))/Y0/DRL(JE)
-                if (CBMS1 >= 2.) RLM(JE, JI) = 0.
-            enddo
-! For orbit averaging and gyrolosses
         endif
     enddo
 
     II(ndim2) = N
-! For orbit averaging and gyrolosses
-    RJM(ndim2) = RJT
-    RJM(1) = RJ
-    do JE=JEB, IEB
-        YPSI(JE, ndim2) = ARD(JE, N1)
-        YPSI(JE, 1)   = ARD(JE, N1)
-        RLM(JE, ndim2)  = YDYH*sqrt(RJM(ndim2))/Y0/DRL(JE)
-        if (CBMS1 >= 2.) RLM(JE, ndim2) = 0.
-        RLM(JE, 1) = YDYH*sqrt(RJM(1))/Y0/DRL(JE)
-        if (CBMS1 >= 2.) RLM(JE, 1) = 0.
-    enddo
 
     do JE=JEB, IEB
         YE = YE3/(IEB - JE + 1)
@@ -857,7 +807,7 @@ contains
             RCR = (RE(N1) - AZ(JR))*(RE(N1) + AZ(JR))*DRE(N1)
             YR2 = CONTR*sqrt(RJ*(RJ - RCR))
             if (RCR < RJT) then
-                YR1 = CONTR*sqrt(RJT*(RJT-RCR))
+                YR1 = CONTR*sqrt(RJT*(RJT - RCR))
             else
                 YR1 = 0.
             endif
@@ -867,8 +817,8 @@ contains
 
             if (CONTR < 0.) then
                do JJ=1, JJN   ! loop from R = RE(A) to R = RC (RE(0)) or to R(Y=0)
-                   JN  = N1-JJ
-                   JN1 = JN+1
+                   JN  = N1 - JJ
+                   JN1 = JN + 1
                    if (Y2 == 0.) goto 226 ! R = R(Y=0)
                    Y12 = (RE(JN) - AZ(JR))*(RE(JN) + AZ(JR))
                    Y1  = Y2
@@ -887,14 +837,14 @@ contains
                     JT2 = ntet*YC2 + 1
                     YDEX = EXP(-YDYS)
                     YFE(JE, JN) = YDEX
-                    call nbco2gc(jn, jn1, N1, jbb, ieb, y0, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
+                    call nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
                 enddo
 
                 JN = JH - 1
                 if (Y2 == 0.) goto 226 ! beam touch R = R(0) (R=RC)
 
                 do JN=JH, N ! loop from R = R(0) (R=RC) to R = R(Y=0) or to R = RI(A)
-                            JN1 = JN + 1
+                    JN1 = JN + 1
                     if (Y2 == 0.) goto 224
                     Y12 = (RI(JN1) - AZ(JR))*(RI(JN1) + AZ(JR))
                     Y1  = Y2
@@ -913,7 +863,7 @@ contains
                     JT2 = ntet*YC2 + 1
                     YDEX = EXP(-YDYS)
                     YFI(JE,JN) = YDEX
-                    call nbco2gc(jn, jn1, N1, jbb, ieb, y0, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
+                    call nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
                     if (YC1 > YC2) write(*, *) 'YC1,YC2,231', YC1, YC2, JN
                 enddo
 
@@ -938,7 +888,7 @@ contains
                     JT2 = ntet*YC1 + 1
                     JT1 = ntet*YC2 + 1
                     YDEX = YFI(JE, JN)
-                    call nbco2gc(jn, jn1, N1, jbb, ieb, y0, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
+                    call nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
                     if (YC1 < YC2) write(*,*) 'YC1,YC2,251', YC1, YC2, JN
                 enddo
 
@@ -959,7 +909,7 @@ contains
                     JT2 = ntet*YC1 + 1
                     JT1 = ntet*YC2 + 1
                     YDEX = YFE(JE,JN)
-                    call nbco2gc(jn, jn1, N1, jbb, ieb, y0, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
+                    call nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
                     if (YC1 < YC2) write(*,*) 'YC1,YC2,271', YC1, YC2, JN
                 enddo
 
@@ -1096,9 +1046,9 @@ contains
     end subroutine nbtrag
 
 !---------------------------------------------------------------------
-    subroutine nbsrsr(JSRNUM, YCONTR, NA1, RTOR, SHIFT, AB, BTOR, &
-        NNCL, NNWM, HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
-        CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, &
+    subroutine nbsrsr(j_nbi, YCONTR, NA1, RTOR, SHIFT, AB, BTOR, &
+        HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
+        CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, power_frac, &
         ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
 
 !---------------------------------------------------------------------
@@ -1109,23 +1059,22 @@ contains
 ! New SCUBM =Nt/m3					     22-APR-13
 !--------------------------------------------------------------Polevoy
 !	entry:	AMETR,SHIF,NA1,RTOR,AB,BTOR,NI,HBEAM,RBMIN,RBMAX,
-!     		CBMS2,CBMI3,EBEAM,QBEAM,ABEAM,DBM1,DBM2,DBM3,
-!	     	MU,TE,TI,NE,NN,NNB,ZEF,AMAIN,PBEAM,SCUBM,CONTR,ELON,
+!     		CBMS2,CBMI3,EBEAM,QBEAM,ABEAM,power_frac,
+!	     	TE,TI,NE,NN,ZEF,AMAIN,PBEAM,SCUBM,CONTR,ELON,
 !	CBMS2	number of 'pencils'
 !	CBMI3	number of internal mesh points
 !			 41 (CBMI3=1),21 (CBMI3=2)
-!	DBM3,2,1 power fraction of energy comps.
+!	power_frac3,2,1 power fraction of energy comps.
 !		    	 3(EB,EB/2,EB/3),2(EB,EB/2),1(EB)
 !	CONTR	Qcontr/Qbeam
-!	JSRNUM 	Number of the current hot ion source
+!	j_nbi 	Number of the current hot ion source
 !	JSRREC 	Length of the hot ion source record
 !	exit:	PBEAM,SCUBM,SNEBM,SNNBM		for MAIN
 !	SCUBM	Toroidal pulse [kg*m/s2/m3]	05-AUG-96
 !---------------------------------------------------------------------
 
     use nbstatus, only: n_rho, n_energy, n_theta, ISPE, ISPEND, &
-        AMETR, VR, RHO, FP, MU, AMAIN, ELON, TRIA, SHIF, &
-        NE, NI, TE, TI, NN, &
+        AMETR, VR, RHO, FP, AMAIN, ELON, TRIA, SHIF, NE, TE, TI, &
         SCUBM, PBEAM, NNBM1, NNBM2, NNBM3, SNNBM, SNEBM, &
         SNIBM1, SNIBM2, SNIBM3
     use cross_sections, only: svdtbp, svddnp1, svddnp2, seiv
@@ -1133,14 +1082,14 @@ contains
     integer, parameter :: JDBL=2
     double precision, parameter :: GP2=6.283185d0
 
-    integer, intent(in) :: JSRNUM, NA1
+    integer, intent(in) :: j_nbi, NA1
     double precision, intent(in) :: YCONTR, RTOR, SHIFT, AB, BTOR, &
-        NNCL, NNWM, HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
-        CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, &
+        HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
+        CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, power_frac(3), &
         ABEAM, QBEAM, RBMAX, RBMIN, CBMI4, yEXTARR(n_rho, 9)
     integer, intent(out) :: JSRREC
 
-    double precision :: NNB, AR(n_rho), YE2, YCX
+    double precision :: AR(n_rho), YE2, YCX
     double precision, dimension(n_energy) :: AQBP, ADQB
     double precision :: YZERO(n_energy, n_rho, n_theta), YSCU1, YFVDA, YNHDT, &
         YDBM, YJN, YSCU, YPOW, YD, YDV, YDDV, YJE, YE1, Y, YEPS
@@ -1149,33 +1098,33 @@ contains
     N1 = (NA1 - 1)/CBMI3 + 1
     N = N1 - 1
     if (RBMAX <= RBMIN) then
-        write(*, *) 'ILLEGAL: NBI source N', JSRNUM, ' RBMAX <= RBMIN !!!'
+        write(*, *) 'ILLEGAL: NBI source N', j_nbi, ' RBMAX <= RBMIN !!!'
         return
     endif
     if (EBEAM*ABEAM == 0.) then
-        write(*, *) 'ILLEGAL: NBI source N', JSRNUM, ' EBEAM*ABEAM = 0 !!!'
+        write(*, *) 'ILLEGAL: NBI source N', j_nbi, ' EBEAM*ABEAM = 0 !!!'
         return
     endif
 
     IEB = 3
     IRB = CBMS2
-    YDBM = DBM1 + DBM2 + DBM3
+    YDBM = SUM(power_frac)
 
     do j=1,  3
         ADQB(j) = 0.d0
     enddo
-    if (DBM1 <= 0.d0) then
-        write(*, *) 'ILLEGAL: NBI source N', JSRNUM, ' DBM1 <= 0 !!!'
+    if (power_frac(1) <= 0.d0) then
+        write(*, *) 'ILLEGAL: NBI source N', j_nbi, ' power_frac(1) <= 0 !!!'
         return
     endif
-    ADQB(3) = DBM1/YDBM
+    ADQB(3) = power_frac(1)/YDBM
     JEB = IEB
-    if (DBM2 > 0.d0) then
-        ADQB(2) = DBM2/YDBM
+    if (power_frac(2) > 0.d0) then
+        ADQB(2) = power_frac(2)/YDBM
         JEB = IEB - 1
     endif
-    if (DBM3 > 0.d0) then
-        ADQB(1) = DBM3/YDBM
+    if (power_frac(3) > 0.d0) then
+        ADQB(1) = power_frac(3)/YDBM
         JEB = IEB - 2
     endif
     if (CBMI1 /= 1.d0) then
@@ -1189,7 +1138,6 @@ contains
     if (CBMI1 /= 1.d0) then
 ! N- number of surfaces,  2*ntet (cntr+co angle)
         JSRREC = JDBL*4*(1 + 3*N*2*ntet)
-        open(35, FILE='dat/srsfi.dat', FORM='UNFORMATTED', STATUS='UNKNOWN', access='DIRECT', RECL=JSRREC)
     endif
 
     X(1)    = 0.d0
@@ -1199,49 +1147,43 @@ contains
     EB = EBEAM*1000.d0
     QB = QBEAM*1000.d0
     PB = ABEAM
-    R = (RTOR + SHIFT)*100.d0
-    A = AMETR(NA1)*100.d0
-    if (((RBMAX + RBMIN)/2.d0) > (RTOR-AB)) then ! Tangentional NBI
-        JTANG =1
+    Rmaj = (RTOR + SHIFT)*100.d0
+    amin = AMETR(NA1)*100.d0
+    if (((RBMAX + RBMIN)/2.d0) > (RTOR - AB)) then ! Tangentional NBI
+        JTANG = 1
     else ! Perpendicular NBI
-        JTANG =0
+        JTANG = 0
     endif
     BZ = BTOR/(1. + SHIFT/RTOR)
     HB = CBMS4*(RBMAX - RBMIN)*100.*sqrt(1. + CBMS3*CBMS3)
     if (HB <= 0.)then
-        write(*, *) 'NBI input for the source ', JSRNUM, ' is not correct'
+        write(*, *) 'NBI input for the source ', j_nbi, ' is not correct'
         write(*, *) 'please use: RBMAX > RBMIN and CBMS4 > 0'
     endif
-    NNB = NNCL + NNWM
     RBMIN1 = RBMIN*100.
     RBMAX1 = RBMAX*100.
-    YD = 10000.d0/(BZ*GP2*A**2)
+    YD = 10000.d0/(BZ*GP2*amin**2)
     YBTDB(1) = 1.d0
     do JN=2, NA1
         JN1 = JN - 1
         AR(JN) = (FP(JN) - FP(1))*YD
         YBTDB(JN) = 1.d0
-        XJ(JN) = 50.d0*(AMETR(JN) + AMETR(JN1))/A
+        XJ(JN) = 50.d0*(AMETR(JN) + AMETR(JN1))/amin
     enddo
     YJN = 0.d0
-    Y = R/A
+    Y = Rmaj/amin
     do JN=1, N1
         JNAX = 1 + CBMI3*(JN-1)
         JNA  = JNAX - CBMI3*YJN
         if (CBMI3 > 1.d0) YJN  = .5d0
-        PM(JN)    = max(AMAIN(JNA), 1.d0)
-        PLI(JN)   = max(NI(JNA), 1.d-4)
         ELON1(JN) = max(ELON(JNAX), 1.d0)
         TRIA1(JN) = TRIA(JNAX)*XJ(JNAX)
         X(JN)     = XJ(JNAX)
         AR(JN)    = AR(JNA)
-        DX(JN)    = 100.d0*(SHIF(JNAX)-SHIFT)/A
+        DX(JN)    = 100.d0*(SHIF(JNAX) - SHIFT)/amin
         REJ(JN)   =  X(JN) + Y + DX(JN)
         RIJ(JN)   = -X(JN) + Y + DX(JN)
         YBTDB(JN) = YBTDB(JNAX)
-        AMU(JN)   = max(MU(JNA), 1.d-4)
-        PL(JN)    = max(NE(JNA), 1.d-4)
-        PN0(JN)   = max(NN(JNA)*(NNWM + NNCL), 0.d0)
         YEPS      = AMETR(JNAX)/(RTOR + SHIF(JNAX))
         YTRAP(JN) = sqrt(2.*YEPS/(1. + YEPS))
         do JE=1, n_energy
@@ -1272,15 +1214,15 @@ contains
     if (QB <= 0.d0) goto 999
 
     call NBSISN(NA1, EBEAM, ABEAM, CBMI3, YEXTARR)
-    call NB0(ADQB, JSRNUM, YHM, CBMH1, CBMH2, CBMR1, CBMR2, CBMS3)
+    call NB0(ADQB, j_nbi, YHM, CBMH1, CBMH2, CBMR1, CBMR2, CBMS3)
 
     if (CBMS1 < 1.d0) then
-        call NB1TR(AQBP, YCONTR, AR, JSRNUM)
+        call NB1TR(AQBP, YCONTR, AR)
     else
-        call NBTRAG(AQBP, YCONTR, AR, JSRNUM, CBMS1)
+        call NBTRAG(AQBP, YCONTR, AR)
     endif
     YSCU = 2.d3/(9.79d0*sqrt(2000.d0*EBEAM/ABEAM))
-    YSCU1 = ABEAM*0.0209d0*0.5d-2*A
+    YSCU1 = ABEAM*0.0209d0*0.5d-2*amin
     YPOW = 0.d0
     JNA1 = 1
     do JN=2, N1
@@ -1333,11 +1275,11 @@ contains
         enddo
 
         do J=JNA1, JNAC
-            YFVDA = F(1, JN1)*VNB(1)/A
+            YFVDA = F(1, JN1)*VNB(1)/amin
             if (YFVDA /= 0.d0) NNBM1(j) = NNBM1(j) + YANBA(3, JN1)/YFVDA
-            YFVDA = F(2, JN1)*VNB(2)/A
+            YFVDA = F(2, JN1)*VNB(2)/amin
             if (YFVDA /= 0.d0) NNBM2(j) = NNBM3(j) + YANBA(2, JN1)/YFVDA
-            YFVDA = F(3, JN1)*VNB(3)/A
+            YFVDA = F(3, JN1)*VNB(3)/amin
             if (YFVDA /= 0.d0) NNBM3(j) = NNBM3(j) + YANBA(1, JN1)/YFVDA
             YNHDT = 0.d0   !  total proton content
             do JS=2, ISPEND
@@ -1364,16 +1306,11 @@ contains
     enddo
 
  999 continue
-    if (CBMI1 /= 1.d0) then
-        write(35, REC=JSRNUM) EBEAM, (((YASBA1(JE, JN, JT),  JE=1, 3), JN=1, N), JT=ntet, 1, -1),  &
-            (((YASBA(JE, JN, JT),   JE=1, 3), JN=1, N), JT=1, ntet)
-        close(35)
-    endif
 
     end subroutine nbsrsr
 
 !---------------------------------------------------------------------
-    subroutine nbion0(NA1, NNCL, NNWM, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
+    subroutine nbion0(NA1, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
 !---------------------------------------------------------------------
 ! Steady State (1+2D:(x+MU, V)) Fokker-Plank Solver
 !	PEBM, PIBM(X)-power to electrons, ions [MW/m3]
@@ -1381,16 +1318,16 @@ contains
 !	NIBM(x) - fast ion's density [10^19/m3]
 !-------------------------------------------------------------- Polevoi
 
-    use nbstatus, only: n_rho, ISPE, ISPEND, AMAIN, NE, TE, TI, NN, ZEF, &
+    use nbstatus, only: n_rho, ISPE, ISPEND, AMAIN, NE, TE, TI, ZEF, &
         AMETR, SHIF, PBPER, PBLON, NIBM, PEBM, PIBM, CUFI, CUBM
     use cross_sections, only: fnbf, fnb2, fnbp, fnbi1
 
     integer, intent(in) :: NA1
-    double precision, intent(in) :: NNCL, NNWM, ABEAM, EBEAM, RTOR, CBMI3, &
+    double precision, intent(in) :: ABEAM, EBEAM, RTOR, CBMI3, &
         yEXTARR(n_rho, 9)
 
     integer :: JN, JS, JSP, JN1, JNA, JNA1, JNAC, J, J2, JE
-    double precision :: YC1, YC2, YS, YSTE, YEPS, YN0, YDN, Y, X1, X2, X3, &
+    double precision :: YC1, YC2, YS, YSTE, YEPS, YDN, Y, X1, X2, X3, &
         YA, YB, YC, YC0, Y1, Y12, YA1, YD1, YI0, YI2, YP11, YCRNT, YPIDPB, &
         STSD3
     double precision, dimension(n_rho) :: PBCX, YZ2D3, YTSE, YFCUR, YLNI, YLNE, YLNZ, YEBDEC
@@ -1425,7 +1362,6 @@ contains
         YEPS = AMETR(JN)/(RTOR + SHIF(JN))
         YFCUR(JN) = (1.d0 - FNBF(ZEF(JN), YEPS)/ZEF(JN))
         PBCX(JN) = 0.d0
-        YN0 = (NNWM + NNCL)*NN(JN)
         YDN = 0.d0
     enddo
 
@@ -1453,7 +1389,7 @@ contains
                 YC1 = YC0 + YC
                 YC2 = YC1 + 2.d0*YC
                 Y1  = 4.d0*YA*YC1/YB**2
-                Y12 =1.d0+sqrt(1.d0 + Y1)
+                Y12 = 1.d0 + sqrt(1.d0 + Y1)
                 YA1 = 0.5d0*YB*Y12/YA
                 YD1 = 2.d0/(Y12 + 0.5d0*Y1)
                 YI0 = (0.5d0 - FNB2(X2)/X2)
@@ -1470,8 +1406,8 @@ contains
                 YCRNT = YACBA(JE, JN1)*YTSE(J2)*YD1*FNBI1(X2, YZ2D3(J2))
                 CUFI(j) = CUFI(j) + YCRNT
                 PIBM(j) = PIBM(j) + YAQBA(JE, JN1)*YPIDPB
-                PEBM(j) = PEBM(j) + YAQBA(JE, JN1)*(1.0d0-YPIDPB)
-                CUBM(j) = CUBM(j)+YCRNT*YFCUR(J2)
+                PEBM(j) = PEBM(j) + YAQBA(JE, JN1)*(1.0d0 - YPIDPB)
+                CUBM(j) = CUBM(j) + YCRNT*YFCUR(J2)
             enddo
         enddo
     enddo
@@ -1691,11 +1627,11 @@ contains
                 ZB(ISPEND)  = ZIM3(1)
                 ISPE(ISPEND) = 9
             endif
-            yEXTARR(JN, 9)=NIZ3(JN)
+            yEXTARR(JN, 9) = NIZ3(JN)
         endif
 
         if (NI(JN) > 0.d0) then
-            if (JINI < 1) JINI=1
+            if (JINI < 1) JINI = 1
         endif
     enddo
 
@@ -1742,14 +1678,14 @@ contains
     double precision :: dt, yr1, yr2, dy, yd, ydcos, ytcos, ydys, yqbp, yf0, yfa, yddd, dy_dt
 
     dt = 1./(JT2 - JT1 + 1)
-    YR2 = -sqrt(RJ * (RJ - RCR))
+    YR2 = -sqrt(RJ*(RJ - RCR))
 
     if (RCR < RJT) then
-        YR1 = -sqrt(RJT * (RJT - RCR))
+        YR1 = -sqrt(RJT*(RJT - RCR))
         JI = N1
     else
         YR1 = 0.
-        JII = (RJ - RCR) * YDYH
+        JII = (RJ - RCR)*YDYH
         JI = II(JII)
     endif
 
@@ -1827,14 +1763,14 @@ contains
     double precision :: dt, yr1, yr2, dy, yd, ydcos, ytcos, ydys, yqbp, yf0, yfa, yddd, dy_dt
 
     dt = 1./(JT2 - JT1 + 1)
-    YR2 = sqrt(RJ * (RJ - RCR))
+    YR2 = sqrt(RJ*(RJ - RCR))
 
     if (RCR < RJT) then
-        YR1 = sqrt(RJT * (RJT - RCR))
+        YR1 = sqrt(RJT*(RJT - RCR))
         JI = N1
     else
         YR1 = 0.
-        JII = (RJ - RCR) * YDYH
+        JII = (RJ - RCR)*YDYH
         JI = II(JII)
     endif
 
@@ -1899,19 +1835,19 @@ contains
     end subroutine nbctr3
 
 !---------------------------------------------------------------------
-    subroutine nbco2gc(jn, jn1, N1, jbb, ieb, y0, y1, y2, yc2, ydex, &
+    subroutine nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, ydex, &
         az_jr, contr, yct2, yaqbp, ydys)
 
     use nbstatus, only: yriplr, n_energy
 
     integer, intent(in) :: jn, jn1, N1, jbb, ieb
-    double precision, intent(in) :: y0, y1, y2, yc2, ydex, az_jr, contr
+    double precision, intent(in) :: y1, y2, yc2, ydex, az_jr, contr
     double precision, intent(out) :: ydys
     double precision, dimension(n_energy), intent(inout) :: yct2, yaqbp
 
     integer :: jii, je, ji, jtrap, j_the, ntet, jloss, j_jn
     double precision :: yr2, yr1, dy, yd, ydcos, ytcos, yqbp, yf0, yfa, yddd, &
-        YSQR, YSQL, YJSERF
+        YJSERF
 
     ntet = ntet1 - 1
     YR2 = -SQRT(RJ*(RJ - RCR))
@@ -1930,27 +1866,7 @@ contains
         dy = -dy
     endif
 
-    RM0R  = Y0 + DX(JN) + X(JN)
-    JIM0R = (RJ - RM0R)*YDYH + 2
-    if (JIM0R <= 0) JIM0R = 1
-
-    RM0L  = Y0 + DX(JN) - X(JN)
-    JIM0L = (RJ - RM0L)*YDYH + 2
-    if (JIM0L > JII) then
-        JIM0L = JII
-        RM0L  = RCR
-    endif
-
-    if (JIM0R <= 0) JIM0R = 1
-
-    YSQR  = SQRT(RM0R*(RM0R - RCR))
-    YSQL  = SQRT(RM0L*(RM0L - RCR))
-    SQRCR = SQRT(RCR)
-
     do JE=JBB, IEB
-        YFM0R = ARD(JE, JN) - YSQR
-        YFM0T = ARD(JE, JN) + YSQR
-        YFM0L = ARD(JE, JN) - YSQL
         YDYS  = F(JE, JN)*dy
         YQBP = YAQBP(JE)*YDEX
         YF0  = (ARD(JE, JN) - az_jr)
@@ -1968,8 +1884,7 @@ contains
                 JNR   = JN1
                 JLOSS = 1
             else
-                CALL NBORBCO(JE, JN, RCR, RJ, RJT, YC2, YF0, &
-                             JNR, JNL, JNRC, JNLC, JTRAP, JLOSS)
+                CALL NBORBCO(JE, JN, RCR, RJ, RJT, YC2, YF0, JNR, JNL, JTRAP, JLOSS)
                 if (JLOSS == 0) then
                     YJSERF = 1./(JNR - JNL + 1.D0)
                     YD     = YDDD*YJSERF
@@ -1996,8 +1911,7 @@ contains
                 JNR   = JN1
                 JLOSS = 0
             else
-                CALL NBORBCO(JE, JN, RCR, RJ, RJT, YC2, YF0, &
-                             JNR, JNL, JNRC, JNLC, JTRAP, JLOSS)
+                CALL NBORBCO(JE, JN, RCR, RJ, RJT, YC2, YF0, JNR, JNL, JTRAP, JLOSS)
                 if (JLOSS == 0) then
                     YJSERF = 1./(JNR - JNL + 1)
                     YD     = YDDD*YJSERF
@@ -2044,7 +1958,7 @@ contains
     end subroutine nbco2gc
 
 !---------------------------------------------------------------------
-    subroutine nborbco(JE, JN, RCR, RJ, RJT, YC2, YF0, JNR, JNL, JNRC, JNLC, ITRAP, ILOSS)
+    subroutine nborbco(JE, JN, RCR, RJ, RJT, YC2, YF0, JNR, JNL, ITRAP, ILOSS)
 
 !----- First orbit analysis taking account ----
 ! the input source redistribution
@@ -2059,22 +1973,19 @@ contains
 !    RC(j   )       = major radius of mag. axis
 ! output:
 !    JNL, JNR   = minimum/maximum surface index of the orbit with finit RLM
-!    JNLC, JNRC = minimum/maximum surface index of the orbit g.c.
 !    ILOSS      = 0/1 if particle is kept/lost
 !    ITRAP      = 0/1 for banana/passing orbits
 !    YCOS(JJN)  = <v.B>/vB (x(JJN))
 
     integer, intent(in) :: je, jn
     double precision, intent(in) :: RCR, RJ, RJT, YC2, YF0
-    integer, intent(out) :: ITRAP, ILOSS, jnr, jnl, jnrc, jnlc
+    integer, intent(out) :: ITRAP, ILOSS, jnr, jnl
 
     integer :: J, J1
     double precision :: Y, YY, YY1
 
     JNR  = JN
     JNL  = JN
-    JNRC = JN
-    JNLC = JN
 
     ITRAP = 1 !(def.passing)
     ILOSS = 0 !(def. kept)
@@ -2100,7 +2011,6 @@ contains
         ycos(j) = y/yy
         ycos(j) = max(-1.d0, ycos(j))
         ycos(j) = min( 1.d0, ycos(j))
-        JNRC = J
         JNR  = J
         J = J + J1 ! motion to LFS (R->RJ)
         goto 1
@@ -2124,7 +2034,6 @@ contains
         ycos(j) = y/yy
         ycos(j) = max(-1.d0, ycos(j))
         ycos(j) = min( 1.d0, ycos(j))
-        JNLC = J
         JNL  = J
         J =J + J1 ! motion to HFS (R->RJT)
         yy1 = yy

@@ -37,6 +37,7 @@ use const_inc
 use status_inc
 use io_mod, only: NBFILE
 use nbstatus, only: set_input, get_output
+use nb_injection, only: nbinj
 
 implicit none
 
