@@ -38,19 +38,16 @@ clean:
 
 # Rules
 
-MODOBJS = \
+OBJS = \
 $(OBJ_DIR)/cross_sections.o \
 $(OBJ_DIR)/nbstatus.o \
 $(OBJ_DIR)/nbicom.o \
-$(OBJ_DIR)/nbibce.o
-
-OBJS = \
-$(OBJ_DIR)/stread.o \
-$(OBJ_DIR)/nbinj.o
+$(OBJ_DIR)/nbibce.o \
+$(OBJ_DIR)/nb_injection.o
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f90
 	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(MOD_DIR) -c $< -o $@
 
-$(LIB): $(MODOBJS) $(OBJS)
-	ar rv $(LIB) $(MODOBJS) $(OBJS) >/dev/null
+$(LIB): $(OBJS)
+	ar rv $(LIB) $(OBJS) >/dev/null
 	ranlib $(LIB)

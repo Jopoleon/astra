@@ -37,6 +37,7 @@ use scalars
 use status
 use read_input, only: NBFILE
 use nbstatus, only: set_input, get_output
+use nb_injection, only: nbinj
 
 implicit none
 
