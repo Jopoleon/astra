@@ -24,6 +24,7 @@ MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libm
 LIB = -L/usr/lib64 $(QLKNN_LIB) $(TGLF_LIB) $(TORB_LIB) $(RABBIT_LIB) $(SPIDER_LIB) -lsbr -lnbi -lastra -lfnc -lfeqis -lmisc $(JSON_LIB) -L$(LIB_DIR) $(MKL_LIB) -lrt
 
 AENV = $(AWD)/exe/astra_rc
+BUILD = $(AWD)/exe/Build
 
 FC_FLAGS = $(CHECKALLCOMP) -qopenmp -traceback -o   
 
@@ -73,7 +74,7 @@ modules:
 
 # Linking, create ASTRA executable
 
-$(ATASK): $(LIBASTRA) $(LIBMISC) $(LIBNBI) $(LIBFEQIS) $(SPIDER_LIB) $(LIBSBR) $(LIBFNC) $(AENV) $(EQU) $(ASTRA_SRC) $(PYFILES) $(FMLS)
+$(ATASK): $(LIBASTRA) $(LIBMISC) $(LIBNBI) $(LIBFEQIS) $(SPIDER_LIB) $(LIBSBR) $(LIBFNC) $(AENV) $(BUILD) $(EQU) $(ASTRA_SRC) $(PYFILES) $(FMLS)
 	$(PY_TMP_GEN)
 	$(FC) $(FC_FLAGS) $(ATASK) $(ASTRA_SRC) $(TMP_SRC) -I$(JSON_INC) -I$(MOD_DIR)/astra -I$(MOD_DIR)/misc -I$(MOD_DIR)/sbr -I$(MOD_DIR)/feqis -I$(NBI_INC) $(LIB)
 
