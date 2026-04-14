@@ -8,7 +8,7 @@ contains
         HRO, TAU, NA1, NB1, AIM1, AIM2, AIM3, AMJ, ZMJ, NNCL, NNWM, QNBI, &
         CBM1, CBM2, CBMI3, CBMI1, CBM4, CBMI2, CBM3, CBMI4)
 
-    use nbstatus, only: n_rho, n_fields, n_theta, ISPE, ISPEND, YRIPLR, &
+    use nbstatus, only: n_rho, n_fields, n_theta, n_energy, ISPE, ISPEND, YRIPLR, &
         AMETR, PBEAM, SCUBM, SNNBM, SNEBM, SNIBM1, SNIBM2, SNIBM3, &
         NNBM1, NNBM2, NNBM3, NIBM, PEBM, PIBM, CUBM, CUFI, PBPER, PBLON, &
         NE, NI, NHYDR, NDEUT, NTRIT, NHE3, NALF, NIZ1, NIZ2, NIZ3, &
@@ -27,27 +27,24 @@ contains
 
     logical :: file_exists
     integer :: N, j_nbi, J, JN, JN1, JNAX, ERCODE, JWARN, j_frac, j_rho, &
-        JSRREC, IFLAG, n_nbi, jElevAll
+        JSRREC, IFLAG, n_nbi
     double precision :: CBMH1, CBMH2, CBMR1, CBMR2, CBMS1, CBMS2, CBMS3, CBMS4, EBEAM, &
-        power_frac(3)=(/1.d0, 0.d0, 0.d0/), ABEAM=1.d0, HBEAM, CONTR, RBMAX=0.5d0, RBMIN=1.d0, QBEAM
-    double precision :: YQBEAM, ZBEAM, YABEAM, YEBEAM, YUD, YHM
+        power_frac(n_energy), ABEAM=1.d0, HBEAM, CONTR, RBMAX=0.5d0, RBMIN=1.d0, QBEAM
+    double precision :: YQBEAM, YABEAM, YEBEAM, YUD, YHM
     double precision :: ARRAY(n_fields), yEXTARR(n_rho, 9)
 
 !---- Ripple normalized radius of the ripple boundary
 !---- banana with RTCRIT > YRIPLR is lost
     double precision :: Y, Y1, Y2, YMAX, YQBM
 
-    jElevAll = 0 ! for write to SSFPQL
-    ZBEAM = 1.d0 ! Hydrogen isotopes only
-
+    power_frac(1) = 1.d0
     inquire(file=TRIM(file_nbi), exist=file_exists)
 
     if (.not. file_exists) write(*, *) 'File "', TRIM(file_nbi), '" not found'
     n_nbi = abs(int(CBM1 + 0.5d0))
     if (CBM1 < 0.0) n_nbi = n_nbi + 1
     if (n_nbi == 0) then
-        write(*, *) '>>> NBI >>> Zero number of sources'
-        write(*, *)"            Don't know what to do"
+        write(*, *) '>>> NBI >>> Zero sources, stopping'
         stop
     endif
 
@@ -65,7 +62,7 @@ contains
             if (EBEAM < ARRAY(5)) EBEAM = ARRAY(5)
             if (CBMI1 /= 1.d0 .and. ABEAM /= ARRAY(3)) write(*, *) 'ABEAM must be the same for all NBIs if CBM4  /=  1'
         endif
-        if (Y < (ARRAY(3)*ARRAY(5))) Y = ARRAY(3)*ARRAY(5)
+        Y = max(Y, ARRAY(3)*ARRAY(5))
     enddo
     close(2)
 
@@ -82,7 +79,6 @@ contains
     CBM1 = n_nbi
 
 !---- Ripple
-
     YUD = UPDWN
     Y = (AMETR(NA1) + AMETR(NA1 - 1))/2.d0
     N = (NA1 - 1)/CBMI3
@@ -212,20 +208,20 @@ contains
 
 ! Conversion to rough mesh keeping the intagrals
     if (CBMI3 /= 1.d0)    then
-        call smooth_int(NIBM, CBMI3, ROC, NA1)
-        call smooth_int(PIBM, CBMI3, ROC, NA1)
-        call smooth_int(PEBM, CBMI3, ROC, NA1)
+        call smooth_int(NIBM , CBMI3, ROC, NA1)
+        call smooth_int(PIBM , CBMI3, ROC, NA1)
+        call smooth_int(PEBM , CBMI3, ROC, NA1)
         call smooth_int(PBLON, CBMI3, ROC, NA1)
         call smooth_int(PBPER, CBMI3, ROC, NA1)
         call smooth_int(PBEAM, CBMI3, ROC, NA1)
         call smooth_int(SNNBM, CBMI3, ROC, NA1)
         call smooth_int(SNEBM, CBMI3, ROC, NA1)
         if (ABEAM < 1.5d0) then
-            call smooth_int(SNIBM1, CBMI3, ROC, NA1) !H ion source
+            call smooth_int(SNIBM1, CBMI3, ROC, NA1) ! H ion source
         else if (ABEAM > 2.5d0) then
-            call smooth_int(SNIBM3, CBMI3, ROC, NA1) !T ion source
+            call smooth_int(SNIBM3, CBMI3, ROC, NA1) ! T ion source
         else
-            call smooth_int(SNIBM2, CBMI3, ROC, NA1) !D ion source
+            call smooth_int(SNIBM2, CBMI3, ROC, NA1) ! D ion source
         endif
         call smooth_int(SCUBM  , CBMI3, ROC, NA1)
         call smooth_int(stnbdp , CBMI3, ROC, NA1)

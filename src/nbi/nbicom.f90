@@ -1138,7 +1138,6 @@ contains
     if (CBMI1 /= 1.d0) then
 ! N- number of surfaces,  2*ntet (cntr+co angle)
         JSRREC = JDBL*4*(1 + 3*N*2*ntet)
-        open(35, FILE='dat/srsfi.dat', FORM='UNFORMATTED', STATUS='UNKNOWN', access='DIRECT', RECL=JSRREC)
     endif
 
     X(1)    = 0.d0
@@ -1307,11 +1306,6 @@ contains
     enddo
 
  999 continue
-    if (CBMI1 /= 1.d0) then
-        write(35, REC=j_nbi) EBEAM, (((YASBA1(JE, JN, JT),  JE=1, 3), JN=1, N), JT=ntet, 1, -1),  &
-            (((YASBA(JE, JN, JT),   JE=1, 3), JN=1, N), JT=1, ntet)
-        close(35)
-    endif
 
     end subroutine nbsrsr
 
