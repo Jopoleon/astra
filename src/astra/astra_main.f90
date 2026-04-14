@@ -46,6 +46,7 @@ gui_on = (TASK(1: 3) /= 'BGD') ! Graphic window yes/no
 
 call scalars_init ! Fallback default values for scalars
 call ininam       ! Sets DTEQ, DTNAME and plot labels (from equ file); call after scalars_init!
+call set_graph_names
 
 call readInput    ! "restart" is set inside readInput
 allocate(CCOIL(raw_cCoil%ncoils), VCOIL(raw_cCoil%ncoils))

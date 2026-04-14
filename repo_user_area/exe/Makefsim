@@ -31,7 +31,6 @@ ASTRA_SRC = \
 $(ASTRA_DIR)/fsim_main.f90 $(ASTRA_DIR)/fsim_stepup.f90 
 
 TMP_SRC = \
-$(TMP_DIR)/astra_out.f90 \
 $(TMP_DIR)/associate_pointers.f90 \
 $(TMP_DIR)/inivar.f90 \
 $(TMP_DIR)/detvar.f90 \

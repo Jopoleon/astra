@@ -29,6 +29,21 @@ integer :: IFSUB, t_wall1, t_wall2, rate
 double precision :: t_cpu1, t_cpu2
 """
 
+class SET_GRAPH_NAMES:
+    
+    header = \
+"""subroutine SET_GRAPH_NAMES
+
+use read_input, only: sbr_name, n_sbr, awd
+use graph_utils
+use json_vars, only: n_control
+use debugger, only: markloc
+
+implicit none
+
+allocate(DTNAME(n_control+4*n_sbr))
+"""
+
 
 class ININAM:
     
@@ -36,7 +51,6 @@ class ININAM:
 """subroutine ININAM
 
 use read_input, only: sbr_name, n_sbr, awd
-use graph_utils
 use scalars
 use status
 use debugger, only: markloc
@@ -44,11 +58,6 @@ use json_vars, only: profxNames, n_control
 
 implicit none
 
-integer :: j
-
-call markloc("xar_usage")
-
-allocate(DTNAME(n_control+4*n_sbr))
 """
 
 class SETVAR:

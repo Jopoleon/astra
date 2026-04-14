@@ -291,26 +291,10 @@ end subroutine INIVAR'''
         for jlbl, lbl in enumerate(config.eqn_list):
             inam += 'LEQ(%d) = %d\n' %(jlbl+1, parse.leq_d[lbl])
         inam += 'call markloc("ininam")\n'
-        inam += 'NTOUT = %d\n' %len(parse.namet)
-        inam += 'NROUT = %d\n' %len(parse.namer)
-        inam += 'NXOUT = %d\n' %len(parse.namex)
-
-        for jr, name in enumerate(parse.namer):
-            if parse.scaler[jr] != '':
-                inam += 'SCALER(%d) = %s\n' %(jr+1, parse.scaler[jr])
-            inam += 'NAMER (%d) = "%s"\n' %(jr+1, name.ljust(4))
-        for jrx, name in enumerate(parse.namex):
-            inam += 'NAMEX (%d) = "%s"\n' %(jrx+1, name.ljust(6))
-            inam += 'NWINDX(%d) = %s\n' %(jrx+1, parse.nwindx[jrx])
-        for jt, name in enumerate(parse.namet):
-            if parse.scalet[jt] != '':
-                inam += 'SCALET(%d) = %s\n' %(jt+1, parse.scalet[jt])
-            inam += 'NAMET (%d) = "%s"\n' %(jt+1, name.ljust(4))
         for line in parse.sbr_lines:
             j_sbr  = sbrs_d[line]['neq']
             sbrnam = sbrs_d[line]['name']
             inam += 'sbr_name(%d) = "%s"\n' %(j_sbr, sbrnam)
-            inam += 'DTNAME(%d*4+n_control) = "%s"//char(0)\n' %(j_sbr, sbrnam[:6])
 
         self.ininam  = const_text.ININAM.header
         self.ininam += inam
@@ -318,6 +302,37 @@ end subroutine INIVAR'''
         self.ininam += \
 '''
 end subroutine ininam'''
+
+#-----------
+# set_graph_names.f90
+
+        graph  = const_text.SET_GRAPH_NAMES.header
+        graph += 'call markloc("set_graph_names")\n'
+        graph += 'NTOUT = %d\n' %len(parse.namet)
+        graph += 'NROUT = %d\n' %len(parse.namer)
+        graph += 'NXOUT = %d\n' %len(parse.namex)
+
+        for jr, name in enumerate(parse.namer):
+            if parse.scaler[jr] != '':
+                graph += 'SCALER(%d) = %s\n' %(jr+1, parse.scaler[jr])
+            graph += 'NAMER (%d) = "%s"\n' %(jr+1, name.ljust(4))
+        for jrx, name in enumerate(parse.namex):
+            graph += 'NAMEX (%d) = "%s"\n' %(jrx+1, name.ljust(6))
+            graph += 'NWINDX(%d) = %s\n' %(jrx+1, parse.nwindx[jrx])
+        for jt, name in enumerate(parse.namet):
+            if parse.scalet[jt] != '':
+                graph += 'SCALET(%d) = %s\n' %(jt+1, parse.scalet[jt])
+            graph += 'NAMET (%d) = "%s"\n' %(jt+1, name.ljust(4))
+        for line in parse.sbr_lines:
+            j_sbr  = sbrs_d[line]['neq']
+            sbrnam = sbrs_d[line]['name']
+            graph += 'DTNAME(%d*4+n_control) = "%s"//char(0)\n' %(j_sbr, sbrnam[:6])
+
+        graph += \
+'''
+end subroutine set_graph_names'''
+
+        self.set_graph_names = graph
 
 #--------------
 # astra_out.f90
