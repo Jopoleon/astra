@@ -12,11 +12,11 @@ contains
         AMETR, PBEAM, SCUBM, SNNBM, SNEBM, SNIBM1, SNIBM2, SNIBM3, &
         NNBM1, NNBM2, NNBM3, NIBM, PEBM, PIBM, CUBM, CUFI, PBPER, PBLON, &
         NE, NI, NHYDR, NDEUT, NTRIT, NHE3, NALF, NIZ1, NIZ2, NIZ3, &
-        TI, RHO, VR, ZIM1, ZIM2, ZIM3
+        TI, ZIM1, ZIM2, ZIM3
     use nbibce, only: nbionr
-    use nbicom, only: nbspec, nbsrsr, nbion0, stnbdp, sdnbtp, sdnbdp1, sdnbdp2, RMB, ZB, YASBA
+    use nbicom, only: nbspec, nbsrsr, nbion0, stnbdp, sdnbtp, sdnbdp1, sdnbdp2, RMB, ZB
 
-    integer, parameter :: jiounit=36
+    integer, parameter :: n_unit=36
 
     integer, intent(in) :: NA1, NB1
     double precision, intent(in) :: BTOR, RTOR, ABC, AB, ROC, SHIFT, UPDWN, HRO, TAU, &
@@ -27,17 +27,16 @@ contains
 
     logical :: file_exists
     integer :: N, j_nbi, J, JN, JN1, JNAX, ERCODE, JWARN, &
-        JSRREC, jABEAM, jZBEAM, IFLAG, n_nbi, jElevAll, je, JT
+        JSRREC, IFLAG, n_nbi, jElevAll
     double precision :: CBMH1, CBMH2, CBMR1, CBMR2, CBMS1, CBMS2, CBMS3, CBMS4, EBEAM, &
         DBM1=1.d0, DBM2=0.d0, DBM3=0.d0, ABEAM=1.d0, HBEAM, CONTR, RBMAX=0.5d0, RBMIN=1.d0, QBEAM
     double precision :: YQBEAM, ZBEAM, YABEAM, YEBEAM, YUD, YHM
-    double precision :: ARRAY(n_fields), YCOS(n_theta), yEXTARR(n_rho, 9)
-    character(len=40) :: YVARNAME
+    double precision :: ARRAY(n_fields), yEXTARR(n_rho, 9)
 
 !---- Ripple normalized radius of the ripple boundary
 !---- banana with RTCRIT > YRIPLR is lost
     double precision :: Y, Y1, Y2, YMAX, YQBM
-    real*8, allocatable :: Y4TORIC(:, :, :), YQBMJE(:, :), yetmp(:), ypwtmp(:), ypartmp(:)
+    real*8, allocatable :: YQBMJE(:, :)
 
     jElevAll = 0 ! for write to SSFPQL
     ZBEAM = 1.d0 ! Hydrogen isotopes only
@@ -152,10 +151,8 @@ contains
 
     open(2, file=TRIM(file_nbi), status='OLD')
 
-    do JN=1, n_nbi
-        j_nbi = JN
+    do j_nbi=1, n_nbi
         call STREAD(2, 20, ARRAY, ERCODE)
-
         QBEAM = ARRAY(1)
         CONTR = ARRAY(2)
         ABEAM = ARRAY(3)
@@ -177,15 +174,15 @@ contains
         if (CBMI1 == 0.d0) then ! print for SSFPQL
             if (QBEAM*EBEAM > 0d0) then ! NBI on
                 if (DBM1 > 0.d0) then
-                    YQBMJE(jn, 1) = QBEAM*DBM1
+                    YQBMJE(j_nbi, 1) = QBEAM*DBM1
                     jElevAll = jElevAll + 1
                 endif
                 if (DBM2 > 0.d0) then
-                    YQBMJE(jn, 2) = QBEAM*DBM2
+                    YQBMJE(j_nbi, 2) = QBEAM*DBM2
                     jElevAll = jElevAll + 1
                 endif
                 if (DBM3 > 0.d0) then
-                    YQBMJE(jn, 3) = QBEAM*DBM3
+                    YQBMJE(j_nbi, 3) = QBEAM*DBM3
                     jElevAll = jElevAll + 1
                 endif
             endif
@@ -198,15 +195,19 @@ contains
 ! Switch off the ion source
         YQBM = YQBM + YQBEAM
         YHM = (HBEAM - YUD)*100.
-        if (CONTR /= 0.d0 .and. CONTR /= 1.d0) then
-! balanced injection
+        if (CONTR == 0.d0 .or. CONTR == 1.d0) then
+            call NBSRSR(j_nbi, 2.d0*CONTR - 1.d0, NA1, RTOR, SHIFT, AB, BTOR, &
+                HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
+                CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, ABEAM, &
+                QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
+            if (CBMI1 == 1.d0) call NBION0(NA1, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
+        else ! balanced injection
 ! coinj. part
             QBEAM = YQBEAM*(1. - CONTR)
             call NBSRSR(j_nbi, -1.d0, NA1, RTOR, SHIFT, AB, BTOR, HRO, YHM, &
                 CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, CBMR1, CBMR2, CBMI3, CBMI1, &
                 EBEAM, DBM1, DBM2, DBM3, ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, &
                 YEXTARR, CBMI4)
-
             if (CBMI1 == 1.d0) call NBION0(NA1, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
 
 !: counter injection part...
@@ -217,16 +218,6 @@ contains
                 YEXTARR, CBMI4)
             if (CBMI1 == 1.d0) call NBION0(NA1, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
             QBEAM = YQBEAM
-        else
-            if (CONTR == 1.d0) call NBSRSR(j_nbi, 1.d0, NA1, RTOR, SHIFT, AB, BTOR, &
-                HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
-                CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, ABEAM, &
-                QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
-            if (CONTR == 0.d0) call NBSRSR(j_nbi, -1.d0, NA1, RTOR, SHIFT, AB, BTOR, &
-                HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
-                CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, ABEAM, &
-                QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
-            if (CBMI1 == 1.d0) call NBION0(NA1, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
         endif
     enddo
 
@@ -243,8 +234,8 @@ contains
             ABEAM = YABEAM
         endif
 
-        call NBIONR(EBEAM, ABEAM, RTOR, NA1, TAU, NNCL, NNWM, &
-            CBM1, CBM3, CBM4, CBMI2, CBMI3, JSRREC, YEXTARR)
+        call NBIONR(EBEAM, ABEAM, RTOR, NA1, TAU, NNCL, NNWM, CBM1, CBM3, CBM4, &
+            CBMI2, CBMI3, JSRREC, YEXTARR)
     endif
 
 ! Conversion to rough mesh keeping the intagrals
@@ -257,9 +248,13 @@ contains
         call smooth_int(PBEAM, CBMI3, ROC, NA1)
         call smooth_int(SNNBM, CBMI3, ROC, NA1)
         call smooth_int(SNEBM, CBMI3, ROC, NA1)
-        if (ABEAM < 1.5d0) call smooth_int(SNIBM1, CBMI3, ROC, NA1) !H ion source
-        if (ABEAM < 2.5d0 .and. ABEAM > 1.5d0) call smooth_int(SNIBM2, CBMI3, ROC, NA1) !D ion source
-        if (ABEAM > 2.5d0) call smooth_int(SNIBM3, CBMI3, ROC, NA1) !T ion source
+        if (ABEAM < 1.5d0) then
+            call smooth_int(SNIBM1, CBMI3, ROC, NA1) !H ion source
+        else if (ABEAM > 2.5d0) then
+            call smooth_int(SNIBM3, CBMI3, ROC, NA1) !T ion source
+        else
+            call smooth_int(SNIBM2, CBMI3, ROC, NA1) !D ion source
+        endif
         call smooth_int(SCUBM  , CBMI3, ROC, NA1)
         call smooth_int(stnbdp , CBMI3, ROC, NA1)
         call smooth_int(sdnbdp1, CBMI3, ROC, NA1)
@@ -275,139 +270,6 @@ contains
             PIBM(J) = PIBM(J) - 0.0024*SNNBM(J)*TI(J)
         endif
     enddo
-
-    if (CBMI1 == 0.d0) then ! write to SSFPQL
-        do j=1, n_theta
-            YCOS(j) = -1.d0 + 2.d0*((J - 1.0)/(N_THETA - 1.0))
-        enddo
-        if (jElevAll == 0) then !no power in NBI
-            jElevAll = 1
-            if (.not. allocated(Y4TORIC)) allocate(Y4TORIC(jElevAll, n_theta, NA1))
-            if (.not. allocated(yetmp)) allocate(yetmp(jElevAll))
-            if (.not. allocated(ypwtmp)) allocate(ypwtmp(jElevAll))
-            if (.not. allocated(ypartmp)) allocate(ypartmp(jElevAll))
-            do je=1, jElevAll
-                yetmp(je)   = EBEAM
-                ypwtmp(jE)  = 0.d0
-                ypartmp(jE) = 0.d0
-                do j=1, n_theta
-                    do jn=1, NA1-1
-                        Y4TORIC(jE, j, jn) = 0.d0
-                    enddo
-                enddo
-            enddo
-        else ! power in NBI
-            if (.not. allocated(Y4TORIC)) allocate(Y4TORIC(jElevAll, n_theta, NA1))
-            if (.not. allocated(yetmp)) allocate(yetmp(jElevAll))
-            if (.not. allocated(ypwtmp)) allocate(ypwtmp(jElevAll))
-            if (.not. allocated(ypartmp)) allocate(ypartmp(jElevAll))
-            do je=1, jElevAll
-                yetmp(je)   = 0.d0
-                ypwtmp(je)  = 0.d0
-                ypartmp(je) = 0.d0
-            enddo
-
-            open(35, FILE='dat/srsfi.dat', FORM='UNFORMATTED', STATUS='UNKNOWN', ACCESS='DIRECT', RECL=JSRREC)
-            J = 0  ! for JELEVEL
-            do j_nbi=1, n_nbi ! cycle for NBI sources
-                read(35, REC=j_nbi, ERR=990) EBEAM, &
-                    (((YASBA(JE, JN, JT), JE=1, 3), JN=1, NA1-1), JT=1, n_theta)
-! JE=3 for full energy EBEAM
-                if (YQBMJE(j_nbi, 1) > 0.d0) then
-                    j = j + 1
-                    yetmp(j) = EBEAM
-                    do jt=1, n_theta
-                        do jn=1, NA1
-                            if (jn < na1) then
-                                Y = YASBA(3, JN, JT)
-                            else
-                                Y = 0.d0
-                            endif
-                            Y4TORIC(j, jt, jn) = Y*1.d19
-                            ypwtmp(j) = ypwtmp(j) + Y*1.6d-3*yetmp(j)
-                            ypartmp(j) = ypartmp(j) + Y4TORIC(j, jt, jn)
-                        enddo
-                    enddo
-                endif
-                if (YQBMJE(j_nbi, 2) > 0.d0) then
-                    j = j + 1
-                    yetmp(j) = EBEAM/2.d0
-                    do jt=1, n_theta
-                        do jn=1, NA1
-                            if (jn < na1) then
-                                Y = YASBA(3, JN, JT)
-                            else
-                                Y = 0.d0
-                            endif
-
-                            Y4TORIC(j, jt, jn) = Y*1.d19
-                            ypwtmp(j) = ypwtmp(j) + Y*1.6d-3*yetmp(j)
-                            ypartmp(j) = ypartmp(j) + Y4TORIC(j, jt, jn)
-                        enddo
-                    enddo
-                endif
-                if (YQBMJE(j_nbi, 3) > 0.d0) then
-                    j = j + 1
-                    yetmp(j) = EBEAM/3.d0
-                    do jt=1, n_theta
-                        do jn=1, NA1
-                            if (jn < na1) then
-                                Y = YASBA(3, JN, JT)
-                            else
-                                Y = 0.d0
-                            endif
-                            Y4TORIC(j, jt, jn) = Y*1.d19
-                            ypwtmp(j) = ypwtmp(j) + Y*1.6d-3*yetmp(j)
-                            ypartmp(j) = ypartmp(j) + Y4TORIC(j, jt, jn)
-                        enddo
-                    enddo
-                endif
-            enddo
-            close(35)
-        endif ! end power in NBI
-
-        j_nbi = 1 ! number of species with differet mass
-        jABEAM = ABEAM
-        jZBEAM = ZBEAM
-
-        open(jiounit, file='dat/toric.nbi')
-        YVARNAME = 'ASTRA'
-        write(jiounit, '(A40)') YVARNAME
-        write(jiounit, '(3I5)') j_nbi, NA1, n_theta !Energy, Space, Pitch angle
-        write(jiounit, '(A)')   'Radial mesh step'
-        write(jiounit, '(E17.9)') HRO/RHO(NA1)
-        write(jiounit, '(A)') 'Radial mesh SQRT(NormTorFlux)'
-        write(jiounit, '(6E17.9)') (RHO(j)/RHO(NA1), j=1, NA1)
-        write(jiounit, '(A)')   'Specific volumes (m^3)'
-        write(jiounit, '(6E17.9)') (VR(j)*HRO, j=1, NA1)
-        write(jiounit, '(A)')   'Cos(PitchAngle) Mesh'
-        write(jiounit, '(6E17.9)') (YCOS(j), j=1, n_theta)
-
-        do j=1, j_nbi  ! count of NBI species (=1)
-            write(jiounit, '(A11, I3)') 'NBI Species', j
-            write(jiounit, '(3I5)') jABEAM, jZBEAM, jElevAll
-            write(jiounit, '(A)')   'Energy levels, keV'
-            write(jiounit, '(6E17.9)') (yetmp(je), je=1, jElevAll)
-            write(jiounit, '(A)')  'Powers, MW'
-            write(jiounit, '(6E17.9)') (ypwtmp(je), je=1, jElevAll)
-            write(jiounit, '(A)')  'Ionization rates, prtcl/sec'
-            write(jiounit, '(6E17.9)') (ypartmp(je), je=1, jElevAll)
-            write(jiounit, *) ' Particle source(jE, jCos, jRad), 1/sec'
-            do je=1, jElevAll
-                do jn=1, NA1
-                    write(jiounit, '(6E17.9)') (Y4TORIC(je, jt, jn), jt=1, n_theta)
-                enddo
-            enddo
-        enddo
-
-        close(jiounit)
-        if (allocated(Y4TORIC)) deallocate(Y4TORIC)
-        if (allocated(YQBMJE)) deallocate (YQBMJE)
-        if (allocated(yetmp)) deallocate (yetmp)
-        if (allocated(ypwtmp)) deallocate (ypwtmp)
-        if (allocated(ypartmp)) deallocate (ypartmp)
-
-    endif !write to SSFPQL
 
     do j=1, na1
         NNBM2(j)  = SNIBM2(j)
@@ -523,7 +385,7 @@ contains
 !---------------------------------------------------------------------
     double precision function GETNUM(FIELD, ERCODE)
 
-    use scalars , only: constValues, varxValues
+    use scalars, only: constValues, varxValues
     use char_manip, only: str_in_list
     use json_vars, only: constNames, varNames
 
