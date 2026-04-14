@@ -227,13 +227,12 @@ contains
     end subroutine nb0
 
 !---------------------------------------------------------------------
-    subroutine nb1tr(yaqbp, contr, ar, jsrnum)
+    subroutine nb1tr(yaqbp, contr, ar)
 !---- ripple normalized radius of ripple boundary
 !---- banana with rtrap > yriplr is lost
 
-    use nbstatus, only: n_nbi_max, n_energy
+    use nbstatus, only: n_energy
 
-    integer, intent(in) :: jsrnum
     double precision, intent(in) :: contr
     double precision, intent(in) :: ar(*)
     double precision, intent(inout) :: yaqbp(*)
@@ -244,13 +243,6 @@ contains
         yqshth, yloss, yvede, ye3, rj0, yr, ydh, xjh, &
         zjh, yzjh, y12, yr1, yr2, yc1, yc2
     double precision, dimension(n_energy) :: drl, ycu, yct2, yve
-
-!---- ripple
-
-    if (jsrnum > n_nbi_max) then
-        write(*,*) '>>> too many nbi sources (see nb1tr)'
-        return
-    endif
 
     yqshth = 0.d0
     ntet = ntet1 - 1
@@ -647,7 +639,7 @@ contains
     end subroutine nb1tr
 
 !---------------------------------------------------------------------
-    subroutine nbtrag(YAQBP, CONTR, AR, JSRNUM)
+    subroutine nbtrag(YAQBP, CONTR, AR)
 !--------- Neutral beam ionization -----------
 ! coinjection  with ion's trapping and orbital losses
 !  AQBA[MW],ACBA[MA m/s],ANBA[10*13 prtcls],
@@ -655,9 +647,6 @@ contains
 !  YQSHth [MW] shine through power
 !-------------------------------------- Polevoy
 
-    use nbstatus, only: n_nbi_max
-
-    integer, intent(in) :: JSRNUM
     double precision, intent(in) :: CONTR, AR(*)
     double precision, intent(out) :: YAQBP(*)
 
@@ -667,12 +656,6 @@ contains
         YE, YVEDE, Y, YDH, XJH, ZJH, YZJH, Y12, Y2, YC2, YRN1, YR2, YR1, &
         YDEDJ, YRBJN, Y1, YC1, YDYS, YDEX
     double precision, dimension(3) :: DRL, YCU, YCT2, YVE
-
-!=====Ripple
-    if (jsrnum > n_nbi_max) then
-        write(*,*) '>>> too many nbi sources (see nb1tr)'
-        return
-    endif
 
     YQSHTH = 0.
     ntet = ntet1 - 1
@@ -1063,7 +1046,7 @@ contains
     end subroutine nbtrag
 
 !---------------------------------------------------------------------
-    subroutine nbsrsr(JSRNUM, YCONTR, NA1, RTOR, SHIFT, AB, BTOR, &
+    subroutine nbsrsr(j_nbi, YCONTR, NA1, RTOR, SHIFT, AB, BTOR, &
         HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
         CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, &
         ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
@@ -1084,7 +1067,7 @@ contains
 !	DBM3,2,1 power fraction of energy comps.
 !		    	 3(EB,EB/2,EB/3),2(EB,EB/2),1(EB)
 !	CONTR	Qcontr/Qbeam
-!	JSRNUM 	Number of the current hot ion source
+!	j_nbi 	Number of the current hot ion source
 !	JSRREC 	Length of the hot ion source record
 !	exit:	PBEAM,SCUBM,SNEBM,SNNBM		for MAIN
 !	SCUBM	Toroidal pulse [kg*m/s2/m3]	05-AUG-96
@@ -1099,7 +1082,7 @@ contains
     integer, parameter :: JDBL=2
     double precision, parameter :: GP2=6.283185d0
 
-    integer, intent(in) :: JSRNUM, NA1
+    integer, intent(in) :: j_nbi, NA1
     double precision, intent(in) :: YCONTR, RTOR, SHIFT, AB, BTOR, &
         HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
         CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, &
@@ -1115,11 +1098,11 @@ contains
     N1 = (NA1 - 1)/CBMI3 + 1
     N = N1 - 1
     if (RBMAX <= RBMIN) then
-        write(*, *) 'ILLEGAL: NBI source N', JSRNUM, ' RBMAX <= RBMIN !!!'
+        write(*, *) 'ILLEGAL: NBI source N', j_nbi, ' RBMAX <= RBMIN !!!'
         return
     endif
     if (EBEAM*ABEAM == 0.) then
-        write(*, *) 'ILLEGAL: NBI source N', JSRNUM, ' EBEAM*ABEAM = 0 !!!'
+        write(*, *) 'ILLEGAL: NBI source N', j_nbi, ' EBEAM*ABEAM = 0 !!!'
         return
     endif
 
@@ -1131,7 +1114,7 @@ contains
         ADQB(j) = 0.d0
     enddo
     if (DBM1 <= 0.d0) then
-        write(*, *) 'ILLEGAL: NBI source N', JSRNUM, ' DBM1 <= 0 !!!'
+        write(*, *) 'ILLEGAL: NBI source N', j_nbi, ' DBM1 <= 0 !!!'
         return
     endif
     ADQB(3) = DBM1/YDBM
@@ -1175,7 +1158,7 @@ contains
     BZ = BTOR/(1. + SHIFT/RTOR)
     HB = CBMS4*(RBMAX - RBMIN)*100.*sqrt(1. + CBMS3*CBMS3)
     if (HB <= 0.)then
-        write(*, *) 'NBI input for the source ', JSRNUM, ' is not correct'
+        write(*, *) 'NBI input for the source ', j_nbi, ' is not correct'
         write(*, *) 'please use: RBMAX > RBMIN and CBMS4 > 0'
     endif
     RBMIN1 = RBMIN*100.
@@ -1232,12 +1215,12 @@ contains
     if (QB <= 0.d0) goto 999
 
     call NBSISN(NA1, EBEAM, ABEAM, CBMI3, YEXTARR)
-    call NB0(ADQB, JSRNUM, YHM, CBMH1, CBMH2, CBMR1, CBMR2, CBMS3)
+    call NB0(ADQB, j_nbi, YHM, CBMH1, CBMH2, CBMR1, CBMR2, CBMS3)
 
     if (CBMS1 < 1.d0) then
-        call NB1TR(AQBP, YCONTR, AR, JSRNUM)
+        call NB1TR(AQBP, YCONTR, AR)
     else
-        call NBTRAG(AQBP, YCONTR, AR, JSRNUM)
+        call NBTRAG(AQBP, YCONTR, AR)
     endif
     YSCU = 2.d3/(9.79d0*sqrt(2000.d0*EBEAM/ABEAM))
     YSCU1 = ABEAM*0.0209d0*0.5d-2*amin
@@ -1325,7 +1308,7 @@ contains
 
  999 continue
     if (CBMI1 /= 1.d0) then
-        write(35, REC=JSRNUM) EBEAM, (((YASBA1(JE, JN, JT),  JE=1, 3), JN=1, N), JT=ntet, 1, -1),  &
+        write(35, REC=j_nbi) EBEAM, (((YASBA1(JE, JN, JT),  JE=1, 3), JN=1, N), JT=ntet, 1, -1),  &
             (((YASBA(JE, JN, JT),   JE=1, 3), JN=1, N), JT=1, ntet)
         close(35)
     endif

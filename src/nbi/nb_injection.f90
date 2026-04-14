@@ -16,32 +16,28 @@ contains
     use nbibce, only: nbionr
     use nbicom, only: nbspec, nbsrsr, nbion0, stnbdp, sdnbtp, sdnbdp1, sdnbdp2, RMB, ZB, YASBA
 
+    integer, parameter :: jiounit=36
+
     integer, intent(in) :: NA1, NB1
     double precision, intent(in) :: BTOR, RTOR, ABC, AB, ROC, SHIFT, UPDWN, HRO, TAU, &
-        AIM1, AIM2, AIM3, AMJ, ZMJ, NNCL, NNWM, CBM2, CBM3, CBM4, CBMI1, CBMI2
+        AIM1, AIM2, AIM3, AMJ, ZMJ, NNCL, NNWM, CBM2, CBM3, CBM4, CBMI1, CBMI2, CBMI4
     character(len=*), intent(in) :: file_nbi
-    double precision, intent(out) :: QNBI, CBM1, CBMI3, CBMI4
+    double precision, intent(out) :: QNBI
+    double precision, intent(inout) :: CBM1, CBMI3
 
     logical :: file_exists
-    integer :: N, JSRNUM, J, J2FRST, JN, JN1, JNAX, ERCODE, JWARN, INBMS, &
-        JSRREC, jABEAM, jZBEAM, IFLAG
-    double precision :: CBMH1, CBMH2, CBMR1, CBMR2, CBMS1, CBMS2, CBMS3, CBMS4, &
-        EBEAM, DBM1, DBM2, DBM3, ABEAM, HBEAM, CONTR, RBMAX, RBMIN, QBEAM
-    double precision :: YQBEAM, ZBEAM, YCBMI3, YCBMI4, YABEAM, YEBEAM, YUD, YHM
+    integer :: N, j_nbi, J, JN, JN1, JNAX, ERCODE, JWARN, &
+        JSRREC, jABEAM, jZBEAM, IFLAG, n_nbi, jElevAll, je, JT
+    double precision :: CBMH1, CBMH2, CBMR1, CBMR2, CBMS1, CBMS2, CBMS3, CBMS4, EBEAM, &
+        DBM1=1.d0, DBM2=0.d0, DBM3=0.d0, ABEAM=1.d0, HBEAM, CONTR, RBMAX=0.5d0, RBMIN=1.d0, QBEAM
+    double precision :: YQBEAM, ZBEAM, YABEAM, YEBEAM, YUD, YHM
     double precision :: ARRAY(n_fields), YCOS(n_theta), yEXTARR(n_rho, 9)
-    character(len=25) :: STRI
     character(len=40) :: YVARNAME
 
 !---- Ripple normalized radius of the ripple boundary
 !---- banana with RTCRIT > YRIPLR is lost
     double precision :: Y, Y1, Y2, YMAX, YQBM
     real*8, allocatable :: Y4TORIC(:, :, :), YQBMJE(:, :), yetmp(:), ypwtmp(:), ypartmp(:)
-    integer jElevAll, je, jiounit, JT
-
-    save J2FRST, INBMS
-    data J2FRST, INBMS, YCBMI3, YCBMI4 /0, 0, 1.d0, 1.d0/
-    data ABEAM/1.d0/ DBM1/1.d0/ DBM2/0.d0/ DBM3/0.d0/
-    data RBMIN/1.d0/ RBMAX/.5d0/
 
     jElevAll = 0 ! for write to SSFPQL
     ZBEAM = 1.d0 ! Hydrogen isotopes only
@@ -49,41 +45,17 @@ contains
     inquire(file=TRIM(file_nbi), exist=file_exists)
 
     if (.not. file_exists) write(*, *) 'File "', TRIM(file_nbi), '" not found'
-    J = abs(int(CBM1 + 0.5d0))
-    if (CBM1 < .0) J = J + 1
-    if (J == 0) then
+    n_nbi = abs(int(CBM1 + 0.5d0))
+    if (CBM1 < 0.0) n_nbi = n_nbi + 1
+    if (n_nbi == 0) then
         write(*, *) '>>> NBI >>> Zero number of sources'
         write(*, *)"            Don't know what to do"
         stop
     endif
 
-    if (INBMS == 0) INBMS = J ! 1st call
-
-    if (INBMS /= J) then  ! No. of sources changed
-        INBMS = J
-        call NQUERY(2, TRIM(file_nbi), INBMS, ERCODE)
-        if (ERCODE /= 0) then
-            write(*, *) "NQUERY Errcode =", ERCODE
-            write(*, *) '>>> NBI >>> Error in file "', TRIM(file_nbi), '": unrecognized variable name'
-            stop
-        endif
-    else if (.not. file_exists .or. CBM1 <= 0.d0 ) then
-! Interactive viewer/editor of the beam source parameter list
-        call NQUERY(2, TRIM(file_nbi), INBMS, ERCODE)
-        if (ERCODE /= 0) then
-            write(*, *) "NQUERY Errcode =", ERCODE
-            write(*, *) '>>> NBI >>> Error in file "', TRIM(file_nbi), '": unrecognized variable name'
-            stop
-        endif
-    endif
-
     if (CBMI1 == 0.d0) then ! print for SSFPQL
-        if (.not. allocated(YQBMJE)) allocate (YQBMJE(INBMS, 3))
-        do jn=1, INBMS
-            do je=1, 3
-                YQBMJE(jn, je) = 0.d0
-            enddo
-        enddo
+        if (.not. allocated(YQBMJE)) allocate (YQBMJE(n_nbi, 3))
+        YQBMJE = 0.d0
     endif ! print for SSFPQL
 
 ! CBMI3 to make NBI internal mesh interval > max Larmor raduis
@@ -91,7 +63,7 @@ contains
     EBEAM = 1.d-3
 
     open(2, file=TRIM(file_nbi), status='OLD')
-    do j=1, INBMS
+    do j=1, n_nbi
         call STREAD(2, 20, ARRAY, ERCODE)
         if (j == 1) then
             ABEAM = ARRAY(3)
@@ -109,22 +81,12 @@ contains
         J = 5.d-3*dsqrt(Y)*(NA1/ABC)/(BTOR*RTOR/(RTOR + SHIFT))
         if (J > 1 .and. J < (NA1-1)) CBMI3 = J
         if (5*J > (NA1-1) .and. NA1 > 6) CBMI3 = (NA1 - 1)/5
-        if (CBMI1 > 1.d0 .and. J2FRST == 0) then
-            J2FRST = 1
-            YCBMI3 = CBMI3
-            YCBMI4 = CBMI4
-        endif
-        if (CBMI1 > 1.d0 .and. J2FRST /= 0) then
-            if (CBMI3 /= YCBMI3 .or. CBMI4 /= YCBMI4) write(*, *) 'CBMI3, CBMI4 can`t be changed after CNB4=2'
-            CBMI3 = YCBMI3
-            CBMI4 = YCBMI4
-        endif
     else  ! w/o FP solver FI source on the transport grid
-        CBMI3 = 1.d0 !!!!
+        CBMI3 = 1.d0
     endif
 
     QNBI = 0.d0
-    CBM1 = INBMS
+    CBM1 = n_nbi
 
 !---- Ripple
 
@@ -142,7 +104,6 @@ contains
     enddo
     YRIPLR(N+1) = YRIPLR(N)
 
-!---- Ripple
 ! Hot ion' source
     do JN=1, NB1
         PBEAM(JN)   = 0.
@@ -177,7 +138,7 @@ contains
 
     if (IFLAG /= 0) return
 
-    if (INBMS == 0) then
+    if (n_nbi == 0) then
         write(*, *) ' -1 < CBM1 < 1 = no NBI sources '
         return
     endif
@@ -191,8 +152,8 @@ contains
 
     open(2, file=TRIM(file_nbi), status='OLD')
 
-    do JN=1, INBMS
-        JSRNUM = JN
+    do JN=1, n_nbi
+        j_nbi = JN
         call STREAD(2, 20, ARRAY, ERCODE)
 
         QBEAM = ARRAY(1)
@@ -230,9 +191,6 @@ contains
             endif
         endif
 
-! Beam footprint drawing:
-        write(STRI, '(a, i3, a)')" NBINJ: Beam #", JN, "    "//char(0)
-
         if (YABEAM /= ABEAM) JWARN = 1
         QNBI = QNBI + QBEAM
         YQBEAM = QBEAM
@@ -244,7 +202,7 @@ contains
 ! balanced injection
 ! coinj. part
             QBEAM = YQBEAM*(1. - CONTR)
-            call NBSRSR(JSRNUM, -1.d0, NA1, RTOR, SHIFT, AB, BTOR, HRO, YHM, &
+            call NBSRSR(j_nbi, -1.d0, NA1, RTOR, SHIFT, AB, BTOR, HRO, YHM, &
                 CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, CBMR1, CBMR2, CBMI3, CBMI1, &
                 EBEAM, DBM1, DBM2, DBM3, ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, &
                 YEXTARR, CBMI4)
@@ -253,18 +211,18 @@ contains
 
 !: counter injection part...
             QBEAM = YQBEAM*CONTR
-            call NBSRSR(JSRNUM, 1.d0, NA1, RTOR, SHIFT, AB, BTOR, HRO, YHM, &
+            call NBSRSR(j_nbi, 1.d0, NA1, RTOR, SHIFT, AB, BTOR, HRO, YHM, &
                 CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, CBMR1, CBMR2, CBMI3, CBMI1, &
                 EBEAM, DBM1, DBM2, DBM3, ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, &
                 YEXTARR, CBMI4)
             if (CBMI1 == 1.d0) call NBION0(NA1, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
             QBEAM = YQBEAM
         else
-            if (CONTR == 1.d0) call NBSRSR(JSRNUM, 1.d0, NA1, RTOR, SHIFT, AB, BTOR, &
+            if (CONTR == 1.d0) call NBSRSR(j_nbi, 1.d0, NA1, RTOR, SHIFT, AB, BTOR, &
                 HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
                 CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, ABEAM, &
                 QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
-            if (CONTR == 0.d0) call NBSRSR(JSRNUM, -1.d0, NA1, RTOR, SHIFT, AB, BTOR, &
+            if (CONTR == 0.d0) call NBSRSR(j_nbi, -1.d0, NA1, RTOR, SHIFT, AB, BTOR, &
                 HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
                 CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, DBM1, DBM2, DBM3, ABEAM, &
                 QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
@@ -351,11 +309,11 @@ contains
 
             open(35, FILE='dat/srsfi.dat', FORM='UNFORMATTED', STATUS='UNKNOWN', ACCESS='DIRECT', RECL=JSRREC)
             J = 0  ! for JELEVEL
-            do JSRNUM=1, INBMS ! cycle for NBI sources
-                read(35, REC=JSRNUM, ERR=990) EBEAM, &
+            do j_nbi=1, n_nbi ! cycle for NBI sources
+                read(35, REC=j_nbi, ERR=990) EBEAM, &
                     (((YASBA(JE, JN, JT), JE=1, 3), JN=1, NA1-1), JT=1, n_theta)
 ! JE=3 for full energy EBEAM
-                if (YQBMJE(JSRNUM, 1) > 0.d0) then
+                if (YQBMJE(j_nbi, 1) > 0.d0) then
                     j = j + 1
                     yetmp(j) = EBEAM
                     do jt=1, n_theta
@@ -371,7 +329,7 @@ contains
                         enddo
                     enddo
                 endif
-                if (YQBMJE(JSRNUM, 2) > 0.d0) then
+                if (YQBMJE(j_nbi, 2) > 0.d0) then
                     j = j + 1
                     yetmp(j) = EBEAM/2.d0
                     do jt=1, n_theta
@@ -388,7 +346,7 @@ contains
                         enddo
                     enddo
                 endif
-                if (YQBMJE(JSRNUM, 3) > 0.d0) then
+                if (YQBMJE(j_nbi, 3) > 0.d0) then
                     j = j + 1
                     yetmp(j) = EBEAM/3.d0
                     do jt=1, n_theta
@@ -398,7 +356,6 @@ contains
                             else
                                 Y = 0.d0
                             endif
-
                             Y4TORIC(j, jt, jn) = Y*1.d19
                             ypwtmp(j) = ypwtmp(j) + Y*1.6d-3*yetmp(j)
                             ypartmp(j) = ypartmp(j) + Y4TORIC(j, jt, jn)
@@ -409,15 +366,14 @@ contains
             close(35)
         endif ! end power in NBI
 
-        jsrnum = 1 ! number of species with differet mass
-        jiounit = 36
+        j_nbi = 1 ! number of species with differet mass
         jABEAM = ABEAM
         jZBEAM = ZBEAM
 
         open(jiounit, file='dat/toric.nbi')
         YVARNAME = 'ASTRA'
         write(jiounit, '(A40)') YVARNAME
-        write(jiounit, '(3I5)') jsrnum, NA1, n_theta !Energy, Space, Pitch angle
+        write(jiounit, '(3I5)') j_nbi, NA1, n_theta !Energy, Space, Pitch angle
         write(jiounit, '(A)')   'Radial mesh step'
         write(jiounit, '(E17.9)') HRO/RHO(NA1)
         write(jiounit, '(A)') 'Radial mesh SQRT(NormTorFlux)'
@@ -427,7 +383,7 @@ contains
         write(jiounit, '(A)')   'Cos(PitchAngle) Mesh'
         write(jiounit, '(6E17.9)') (YCOS(j), j=1, n_theta)
 
-        do j=1, jsrnum  ! count of NBI species (=1)
+        do j=1, j_nbi  ! count of NBI species (=1)
             write(jiounit, '(A11, I3)') 'NBI Species', j
             write(jiounit, '(3I5)') jABEAM, jZBEAM, jElevAll
             write(jiounit, '(A)')   'Energy levels, keV'
@@ -467,141 +423,6 @@ contains
     stop
 
     end subroutine NBINJ
-
-!---------------------------------------------------------------------
-    subroutine NQUERY(NCH, file_name, NBS, ERCODE)
-!---------------------------------------------------------------------
-! Input:
-!   NBS    - Requested No. of NBI sources
-!   NCH    - Logical unit (must be connected to the file NBINP)
-! Output:   Data are written into file NBINP
-!   ERCODE - Error code (0 for normal exit)
-!---------------------------------------------------------------------
-
-    use char_manip, only: to_upper, first_non_blank
-    use dbl2char, only: isnum, fmt_smart
-    use nbstatus, only: n_fields, n_nbi_max
-
-    integer, intent(in) :: NCH, NBS
-    character(len=*), intent(in) :: file_name
-    integer, intent(out) :: ERCODE
-
-    integer :: j, j1, jj, i, ios
-    double precision :: YCB
-    character(len=6) :: val_str
-    character(len=12), dimension(n_fields) :: SFIELD
-    character(len=80) :: STR, STRI, ADATA(n_nbi_max), CDATA(n_nbi_max)
-
-    if (NBS > n_nbi_max) then
-        write(*, '(2(A, I3, A))') &
-           '>>> NQUERY: Too many NB sources NBS =', NBS, ' requested', &
-           '            Call ignored,  NBSmax =', n_nbi_max, ' is allowed'
-        return
-    endif
-
-    if (NBS <= 0) then
-        write(*, '(2(A, I3))') '>>> NQUERY: Number of sources must be positive, NBS =', NBS
-        return
-    endif
-
-! Default definition:
-    do jj=1, NBS
-        write(ADATA(jj)(1:2), '(1I2)') jj
-        write(CDATA(jj)(1:2), '(1I2)') jj
-        ADATA(jj)(3:) = "   zrd1     0.     2.     1.   100.     .7     .2     .1     1.    10."
-        CDATA(jj)(3:) = "     .3    1.6     1.     0.     1.     9.     2.     9.     2.     0."
-    enddo
-
-    open(NCH, file=TRIM(file_name), status='OLD', iostat=ios)
-    if (ios /= 0) then
-        open(NCH, file=TRIM(file_name), status='NEW')
-    endif
-    do jj=1, NBS
-        read(NCH, '(A)', end=10) STR
-        j = index(STR, '!')
-        if (j == 0) then ! Don't skip if not starting with "!"
-            read(NCH, '(5A)', err=99) SFIELD
-            i = -3
-            do j=1, n_fields
-                i = i + 7
-                SFIELD(j)(1:12) = to_upper(SFIELD(j)(1:12))
-                write(*, *) 'nbi.sfield', SFIELD(j)(1:12)
-                if (isnum(SFIELD(j), 12)) then
-                    read(SFIELD(j), *) YCB
-                    val_str = fmt_smart(YCB, 6)
-                    write(*, *) '"nbi.value', val_str, '"', YCB
-                else
-                    j1 = first_non_blank(SFIELD(j))
-                    val_str = SFIELD(j)(j1:)
-                endif
-                if (j <= 10) then
-                    write(ADATA(jj)(i:i+5), '(1A6)') val_str
-                else
-                    write(CDATA(jj)(i:i+5), '(1A6)') val_str
-                endif
-                if (j == 10) i = -3
-            enddo
-        endif
-    enddo
-
- 10 continue
-
-! Template for the 1st string of a table
-    STRI = "# |QBeam |Contr |ABeam |ZBeam |EBeam |DBeam1|DBeam2|DBeam3|Orb_av|Penc.#" // char(0)
-    STR = "NBI configuration file: " // TRIM(file_name) // char(0)
-    j = len(ADATA(1))
-    call NBIBOX(STR, STRI, ADATA, j, NBS, 0, 0)
-
-    STRI = "# |HBeam |RBmax |RBmin |tg(A) |Aspect|Cver1 |Cver2 |Chor1 |Chor2 |Unused" // char(0)
-    STR = "NBI configuration file (cnt.): " // TRIM(file_name) // char(0)
-    j = len(CDATA(1))
-    call NBIBOX(STR, STRI, CDATA, j, NBS, 0, 0)
-
-    rewind(NCH)  ! Modify input file
-
-    if (ios /= 0) then
-        write(NCH, '(1I3)') 1
-    else
-        j = 1
-        do while(j /= 0) ! Skip lines starting with "!"
-            read(NCH, '(A)', end=99) STR
-            j = index(STR, '!')
-        enddo
-    endif
-
-    do jj=1, NBS
-        i = -3
-        do j=1, n_fields
-            i = i + 7
-            if (j <= 10) then
-                 write(val_str, '(1A6)') ADATA(jj)(i:i+5)
-            else
-                 write(val_str, '(1A6)') CDATA(jj)(i:i+5)
-            endif
-            val_str(1:6) = to_upper(val_str(1:6))
-            if (ISNUM(val_str, 6)) then
-                read(val_str, *)YCB
-                write(SFIELD(j), '(1P, E12.4)')YCB
-            else
-                j1 = first_non_blank(val_str)
-                val_str = val_str(j1:) // '     '
-                SFIELD(j)(1:) = val_str // '      '
-            endif
-            if (j == 10) i = -3
-        enddo
-        if (jj /= 1) write(NCH, '(1I3)') jj
-        write(NCH, '(3(5A12/), 5A12)')SFIELD
-    enddo
-
-    close(NCH)
-    ERCODE = 0
-    return
-
-99  continue
-    close(NCH)
-    ERCODE = 1
-
-    end subroutine NQUERY
 
 !---------------------------------------------------------------------
     subroutine smooth_int(YFO, YCI3, YROC, JNA1, surf)

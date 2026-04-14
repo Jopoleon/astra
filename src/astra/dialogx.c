@@ -62,7 +62,6 @@ extern int isprint(int); // check if a character passed as the argument is a pri
 extern int isalnum(int); // checks whether a character is alphabet or number
 int nextevent(INT_*, INT_*, INT_*, Button[], char[]);
 int menubox_(INT_*, double*, char[], INT_*, INT_*);
-int nbibox_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
 int layoutbox_(char[], char[], char[], INT_*, INT_*, INT_*, INT_*);
 int FindBoxNum(int, int, int, int, int, int);
 int GetEsc(XKeyEvent);
@@ -1289,27 +1288,6 @@ void ProcessRootWindowEvent(XEvent *theEvent){
         break;
     }
     return;
-}
-
-/**********************************************************************/
-int nbibox_ (char title[], char template[], char array[], INT_ *len,
-	     INT_ * nrows, INT_ *ngroup, INT_ *morow){
-/* The same as "menubox", but the 1st column
-   		is drawn in blue and closed for access
-Input:	title	- Title of the table
-	template  string defining a structure of the table and its 1st line
-		  1st line does not appear if all non-'|' symbols are spaces
-	array	- data (numbers or strings) for input and output
-	len	- length of "array" element according to description
-			in the calling routine (80 in the example below)
-	nrows	- number of rows in a table to be created
-	ngroup	- if > 0 distance (in rows) between blue separating lines
-	morow	- if > 0 separates bottom of the table with a fat blue line
-
-Called only from src/nbi/nbinj.f
-Just a placeholder, if needed use the abstract "menubox"
-*/
-  return 0;
 }
 
 /**********************************************************************/
