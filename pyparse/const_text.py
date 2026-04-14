@@ -34,8 +34,8 @@ class SET_GRAPH_NAMES:
     header = \
 """subroutine SET_GRAPH_NAMES
 
-use read_input, only: sbr_name, n_sbr, awd
-use graph_utils
+use read_input, only: n_sbr
+use graph_utils, only: NTOUT, NROUT, NXOUT, NAMER, SCALER, NAMET, NAMEX, NWINDX, DTNAME
 use json_vars, only: n_control
 use debugger, only: markloc
 
