@@ -11,7 +11,7 @@ integer :: jid
 contains
 
 !---------------------------------------------------------------------
-    subroutine write_json
+    subroutine write_json()
 
     use parameters_a2equil, only: equil_now
     use const_inc, only: NA1, varValues, varxValues, constValues, internValues, intern2Values

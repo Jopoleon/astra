@@ -18,7 +18,7 @@ external IINT
 class POSTEP:
 
     header = \
-"""subroutine POSTEP
+"""subroutine POSTEP()
 
 use const_inc
 use status_inc
@@ -42,7 +42,7 @@ double precision :: t_cpu1, t_cpu2
 class ININAM:
     
     header = \
-"""subroutine ININAM
+"""subroutine ININAM()
 
 use parameter_inc, only: n_sbr_max, NRD
 use io_mod, only: sbr_name, IFSBX, n_sbr, awd
@@ -70,7 +70,7 @@ enddo
 class SETVAR:
 
     header = \
-"""subroutine SETVAR
+"""subroutine SETVAR()
 
 use const_inc
 use status_inc
@@ -193,7 +193,7 @@ UPL(NA1)  = ULON(NA1)/(IPOL(NA1)*G33(NA1))
 class INIVAR:
 
     header = \
-'''subroutine INIVAR
+'''subroutine INIVAR()
 
 use io_mod, only: IFDFAX
 use const_inc
@@ -228,7 +228,7 @@ enddo
 class DETVAR:
 
     header = \
-'''subroutine DETVAR
+'''subroutine DETVAR()
 
 use const_inc
 use status_inc
@@ -625,7 +625,7 @@ bc_type_imp(2) = 1
 class RADOUT:
 
     header = \
-"""subroutine RADOUT
+"""subroutine RADOUT()
 
 !------------------------------------------------------------
 ! Radial profile plotting
@@ -657,7 +657,7 @@ return
 end subroutine RADOUT
 
 !------------------------------------------------------------
-subroutine TIMOUT
+subroutine TIMOUT()
 
 !------------------------------------------------------------
 ! Time traces plotting
@@ -874,7 +874,7 @@ call markloc("init done")
 class INIT_CONVERGE_STEP:
 
     header = \
-'''subroutine init_converge_step
+'''subroutine init_converge_step()
 
 use parameter_inc, only: NRD
 use io_mod, only: equ_file, exp_file

@@ -70,9 +70,9 @@ contains
 !  AVR2 - <1/R#2>
 !  AI0  - IPOL*RTOR*BTOR
 !======================================================================|
-subroutine EMEQ &
+subroutine EMEQ( &
 ! Input:
-   (BA, BB, & ! j_zeta = BA*(R00/r) + BB*(r/R00-R00/r)
+    BA, BB, & ! j_zeta = BA*(R00/r) + BB*(r/R00-R00/r)
     BR00,   & ! R00 = R_0+\Delta_edge  ! RTOR+SHIFT
     SA0,    & ! a_edge   ! ABC
     GL0,    & ! \lambda_edge   ! ELONG

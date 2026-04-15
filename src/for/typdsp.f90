@@ -258,7 +258,7 @@ return
 end subroutine writeData
 
 !---------------------------------------------------------------------
-subroutine TYPDSP
+subroutine TYPDSP()
 
 use const_inc, only: XOUT, NAB, NA1
 use outcmn_inc, only: LTOUT, NTOUT, NROUT, MOD10, NAMER, NAMET, ROUT, &
@@ -977,7 +977,7 @@ return
 end subroutine TIMEDT
 
 !---------------------------------------------------------------------
-subroutine const2ps
+subroutine const2ps()
 ! Appending the list of constants to a PS file
 
 use const_inc, only: constValues, varValues

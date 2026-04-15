@@ -101,7 +101,7 @@ double precision :: tbeg_eq, tend_eq
 contains
 
 !------------------------------------------
-    subroutine const_init
+    subroutine const_init()
 
     integer :: j
 

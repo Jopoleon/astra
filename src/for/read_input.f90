@@ -1,4 +1,4 @@
-subroutine read_input
+subroutine read_input()
 !----------------------------------------------------------------------|
 !  NTVAR    maximal number of time slices for all variables
 !  IVAR     number of actually defined variables

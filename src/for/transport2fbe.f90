@@ -51,7 +51,8 @@ double precision, dimension(:,:), allocatable :: voltage_limits_active_coils
 
 contains
 
-    subroutine transport2fbe_init
+!---------------------------------------------------------------------
+    subroutine transport2fbe_init()
 
     use_limiter_astra = 1  ! 1-uses limiter, 0-ignore limiter
     refit_mode = 0

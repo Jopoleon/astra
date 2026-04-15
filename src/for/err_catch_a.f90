@@ -1,4 +1,4 @@
-subroutine err_catch_a
+subroutine err_catch_a()
 
 use const_inc, only: NA1
 use status_inc, only: TE, FP, NE, G11

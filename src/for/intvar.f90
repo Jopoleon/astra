@@ -1,4 +1,4 @@
-subroutine INTVAR
+subroutine INTVAR()
 !-----------------------------------------------------------------------
 ! Time evolution of the scalar input data
 ! For the current time, a value is stored in the array

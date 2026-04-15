@@ -22,7 +22,7 @@ character(132) :: AWD, astra_ext, nml_file, equ_file, exp_file, NBFILE='***'
 
 contains
 
-    subroutine io_init
+    subroutine io_init()
 
     logical :: nml_exists
     integer :: ios

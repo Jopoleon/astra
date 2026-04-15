@@ -1274,7 +1274,7 @@ return
 end subroutine STUFF
 
 !---------------------------------------------------------------------
-double precision function LINEAV
+double precision function LINEAV()
 
 ! LINEAV [10#19/m#3]: Horizontal chord average density (r) [m]
 ! Integral {0, r} ( NE ) dl / a

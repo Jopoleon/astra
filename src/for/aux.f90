@@ -15,7 +15,7 @@ return
 end function dfj
 
 !---------------------------------------------------------------------
-integer function IFSTEP
+integer function IFSTEP()
 
 ! Input
 !       LEQ(1)  LEQ(2)  LEQ(3)  LEQ(4)  LEQ(5)  LEQ(6-9)
@@ -231,7 +231,7 @@ return
 end function IFTREQ
 
 !---------------------------------------------------------------------
-subroutine OLDNEW
+subroutine OLDNEW()
 
 use status_inc, only: NE, TE, TI, FP, VR, UPAR, UPS0, UPS1, UPS2, &
     NEO, TEO, TIO, FPO, VRO, UPARO, UPS0O, UPS1O, UPS2O, &

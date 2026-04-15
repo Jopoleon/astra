@@ -42,7 +42,8 @@ type(plot_frame) :: plot_area_ref, plot_area
 
 contains
 
-    subroutine outcmn_init
+!---------------------------------------------------------------------
+    subroutine outcmn_init()
 
     integer :: i, j, ios, j0, j1
     character(len=132) :: STRI

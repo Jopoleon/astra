@@ -80,7 +80,7 @@ contains
     end function YAERF
 
 !---------------------------------------------------------------------
-    subroutine NBCOEF
+    subroutine NBCOEF()
 ! Fokker-Planck coefficients
 
     use nbstatus, only: ISPEND
@@ -152,7 +152,7 @@ contains
     end subroutine NBCOEF
 
 !---------------------------------------------------------------------
-    subroutine NBMESH
+    subroutine NBMESH()
 ! V, MU mesh
 
     integer :: IT1, JV, JT
@@ -178,7 +178,7 @@ contains
     end subroutine NBMESH
 
 !---------------------------------------------------------------------
-    subroutine NBPOMU
+    subroutine NBPOMU()
 ! MU sweep
 
     integer :: I, ITM1, J, J1, JM
@@ -223,7 +223,7 @@ contains
     end subroutine NBPOMU
 
 !---------------------------------------------------------------------
-    subroutine NBPOVE
+    subroutine NBPOVE()
 ! V sweep
 
     integer :: J, JP, I, I1, IM

@@ -1,4 +1,4 @@
-subroutine METRIC
+subroutine METRIC()
 
 use cpu_usage, only: wallTime_equ, cpuTime_equ
 use status_inc, only: VRO, VR, SHIF, AMETR, ELON, TRIA, XRHO, FP, IPOL
@@ -168,7 +168,7 @@ return
 end subroutine METRIC
 
 !---------------------------------------------------------------------
-subroutine EQCYL
+subroutine EQCYL()
 
 !---------------------------------------------------------------------
 ! Quasi-cylindrical assignment: Called if LEQ(5)==-2
@@ -237,7 +237,7 @@ VOLUME = VOLUM(NA1)
 end subroutine EQCYL
 
 !---------------------------------------------------------------------
-subroutine extrap_fields_flat
+subroutine extrap_fields_flat()
 
 use const_inc, only: NA1, NAB
 use status_inc, only: SHEAR, BDB02, B0DB2, BMAXT, BMINT, BDB0, FOFB
@@ -258,7 +258,7 @@ return
 end subroutine extrap_fields_flat
 
 !---------------------------------------------------------------------
-subroutine EQGUESS
+subroutine EQGUESS()
 
 !---------------------------------------------------------------------
 ! Guessed equibrium: Called if LEQ(5)==0 or data_initiation @ 1st_entry
@@ -390,7 +390,7 @@ return
 end subroutine EQGUESS
 
 !---------------------------------------------------------------------
-subroutine set_external_metric
+subroutine set_external_metric()
 
 ! Set external metric  (Pereverzev 10.02.2005)
 
@@ -572,7 +572,7 @@ return
 end subroutine set_external_metric
 
 !---------------------------------------------------------------------
-subroutine extmetric_input
+subroutine extmetric_input()
 
 use const_inc, only: NA1
 use status_inc, only: SHIF, ELON, TRIA, G33, IPOL, VR, SLAT, G11, G22, &
@@ -590,7 +590,7 @@ return
 end subroutine extmetric_input
 
 !---------------------------------------------------------------------
-subroutine set_external_metric_2
+subroutine set_external_metric_2()
 
 ! Set external metric
 
@@ -1511,7 +1511,7 @@ return
 end subroutine GETCOILS
 
 !---------------------------------------------------------------------
-subroutine RHSEQ
+subroutine RHSEQ()
 
 !---------------------------------------------------------------------
 ! Input: RTOR, BTOR, NA, NA1, HRO, NB2EQL, 
@@ -1577,7 +1577,7 @@ return
 end subroutine RHSEQ
 
 !---------------------------------------------------------------------
-subroutine RHSEQ2
+subroutine RHSEQ2()
 
 !---------------------------------------------------------------------
 ! Input: RTOR, BTOR, NA, NA1, HRO, NB2EQL, 
@@ -1645,7 +1645,7 @@ return
 end subroutine RHSEQ2
 
 !---------------------------------------------------------------------
-subroutine CUOFMU
+subroutine CUOFMU()
 
 !---------------------------------------------------------------------
 ! Compute CU(rho) and FP(rho) from MU(rho)
@@ -1698,7 +1698,7 @@ return
 end subroutine CUOFMU
 
 !---------------------------------------------------------------------
-subroutine CUOFP
+subroutine CUOFP()
 
 !---------------------------------------------------------------------
 ! Compute CU(rho) and MU(rho) from FP(rho)
@@ -1748,7 +1748,7 @@ return
 end subroutine CUOFP
 
 !---------------------------------------------------------------------
-subroutine new_grid
+subroutine new_grid()
 
 !---------------------------------------------------------------------
 ! Input:  XRHO, SXHO, HROX, ROC, NA1, AB, ABC, AMETR(NA1)
@@ -1805,7 +1805,7 @@ return
 end subroutine new_grid
 
 !---------------------------------------------------------------------
-subroutine SETGEO
+subroutine SETGEO()
 !---------------------------------------------------------------------
 ! input:  NB1, HRO, ROC, AB, RHO(j)
 ! Output: SHIF(1:NB1), ELON(1:NB1), TRIA(1:NB1), 

@@ -82,7 +82,7 @@ double precision, dimension(:), pointer :: &
 contains
 
 !---------------------------------------------------------------------
-    subroutine status_init
+    subroutine status_init()
 
     use parameter_inc, only: NRD
 
@@ -161,7 +161,7 @@ contains
     end subroutine status_init
 
 !---------------------------------------------------------------------
-    subroutine DEFARR
+    subroutine DEFARR()
 !---------------------------------------------------------------------
 ! 1) Check positiveness of Z_eff, n_e, n_i, T_e, T_i.  Stop if negative.
 ! 2) Extend definition of all standard arrays beyond NA1.

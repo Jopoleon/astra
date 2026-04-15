@@ -586,7 +586,7 @@ return
 end subroutine feqis_init
 
 !--------------------------------------------------------------------
-subroutine equil_feqis_init_circ
+subroutine equil_feqis_init_circ()
 
 use pi_vars, only: GPI
 use fft_mod_eff, only: sintable, costable
@@ -1090,7 +1090,7 @@ return
 end subroutine equil_assignments
 
 !--------------------------------------------------------------------
-subroutine convert_boundary_to_pbe
+subroutine convert_boundary_to_pbe()
 
 use pi_vars, only: GPI2
 use fbe_core, only: nr, nr2, nz, nbnd, iaxis, jaxis, &

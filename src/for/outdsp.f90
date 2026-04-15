@@ -1,4 +1,4 @@
-subroutine initMainWindow
+subroutine initMainWindow()
 
 use outcmn_inc, only: astra_gui_ref, astra_gui, plot_area_ref, plot_area, &
     RUNID, NST, MOD10, MODEY, NTOUT, resizeGraph
@@ -611,7 +611,7 @@ return
 end subroutine plot_lcfs
 
 !---------------------------------------------------------------------
-subroutine plot_wall
+subroutine plot_wall()
 !---------------------------------------------------------------------
 ! Plot vessel components reading them from json machine file
 
@@ -717,7 +717,7 @@ return
 end function abscissa
 
 !---------------------------------------------------------------------
-subroutine plot_flux_surfaces
+subroutine plot_flux_surfaces()
 !---------------------------------------------------------------------
 ! Redraw magnetic surfaces:
 

@@ -403,7 +403,7 @@ return
 end SUBROUTINE ctr2rz_fun
 
 !----------------------------------------------------------
-SUBROUTINE ctr2rz
+SUBROUTINE ctr2rz()
 ! 2D interpolation of Psi, Fdia from contours(rho, theta) to Cartesian R, z 2D-grid
   
 use parameters_a2equil, only: equil_now

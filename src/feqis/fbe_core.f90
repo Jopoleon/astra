@@ -125,7 +125,7 @@ contains
     end function solve_gs2d
 
 !---------------------------------------------------------------------
-    subroutine psi_external_calc
+    subroutine psi_external_calc()
 
     use green_function, only: greeni
 
@@ -379,7 +379,7 @@ contains
     end function xpoint_axis_connection
 
 !--------------------------------------------------------------------
-    subroutine find_new_axis
+    subroutine find_new_axis()
 
     integer :: j, iax, jax, i_old, j_old, ijmax(2)
     double precision :: hessian
@@ -415,7 +415,7 @@ contains
     end subroutine find_new_axis
 
 !-------------------------------------------------------------------
-    subroutine compound_psi   ! to think about ferromags...
+    subroutine compound_psi()   ! to think about ferromags...
 
     psirz = psiplasrz + psiextrz
 
@@ -450,7 +450,7 @@ contains
     end subroutine add_xpoint
 
 !--------------------------------------------------------------------
-    subroutine find_psi_boundary
+    subroutine find_psi_boundary()
 
     use pi_vars, only: GPI
     use errors_params, only: err_find_oxpoints_derivs
@@ -659,7 +659,8 @@ contains
     end subroutine find_psi_boundary
 
 !--------------------------------------------------------------------
-    subroutine new_jrz ! calculate new right hand side given new boundary!
+    subroutine new_jrz()
+! calculate new right hand side given new boundary!
 
     use feqis_tools, only: fill_in_current, floor_index
     use global_params, only: iplasma
@@ -820,7 +821,7 @@ contains
     end subroutine new_jrz
 
 !--------------------------------------------------------------------
-    function get_psiplasrz result(psi_plas)
+    function get_psiplasrz() result(psi_plas)
 
     double precision, dimension(nr2, nz2) :: green, psi_plas
     double precision, dimension(2*nr + 2*nz) :: greenBnd

@@ -648,7 +648,7 @@ return
 end subroutine ASXWIN
 
 !---------------------------------------------------------------------
-subroutine get_runid
+subroutine get_runid()
 !---------------------------------------------------------------------
 ! The subroutine forms string RUNID and additionally returns 
 ! date and time when those are not defined (calling from INIT)
