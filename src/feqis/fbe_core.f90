@@ -832,7 +832,7 @@ contains
     double precision, dimension(9) :: coeff
 
     psiplasrz = get_psiplasrz()
-    call compound_psi
+    call compound_psi()
     if (j_stab == 1) then
         iloc = closest_index(raxold, Rrect(1), dr)
         jloc = closest_index(zaxold, Zrect(1), dz)
@@ -848,9 +848,9 @@ contains
             enddo
         enddo
     endif
-    call find_new_axis
-    call find_psi_boundary
-    call new_jrz
+    call find_new_axis()
+    call find_psi_boundary()
+    call new_jrz()
 
     end subroutine solve_fbe_instantaneous
 

@@ -363,8 +363,7 @@ contains
         enddo
     enddo
 
-    call NBMESH
-
+    call NBMESH()
     CNSTN = HM*HV
     CNSTQ = 3.2d-3*EBEAM*HV**2 * CNSTN
     CNSTP = EBEAM*CNSTN*HV*HV
@@ -481,8 +480,7 @@ contains
 
         YSRSE = YSRSE*CNSTQT
 ! Coefficients
-        call NBCOEF
-
+        call NBCOEF()
         read(31, rec=JN, iostat=ios) ((FVM(JV, JT), JV=1, IV1), JT=1, IT)
         if (ios > 0) then
             write(*, *) 'R/W error in NBION2'
@@ -503,8 +501,8 @@ contains
 
 ! Fij sweeping
         do JTIME=1, ITIME
-            call NBPOMU
-            call NBPOVE
+            call NBPOMU()
+            call NBPOVE()
         enddo
 
 ! Fij linearization Fij b =Fij - Foj exp(-Ei/T)

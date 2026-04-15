@@ -27,7 +27,7 @@ contains
         if (KEY == 47) then ! <Alt>+/
             if (TASK(4:4) /= 'B') call Close_Screen
             call cpu_report('>>> ASTRA <Alt>+/ exit >>>')
-            call astra_stop
+            call astra_stop()
         endif
         if (KEY >= 32 .and. KEY <= 126) then
             write(*, *) '  "<Alt>+<', char(KEY), '>"  pressed'
@@ -182,7 +182,7 @@ contains
         else ! IFKL = 0
             if (TASK(4:4) /= 'B') then
                 call time_label(TIME, 1000.*TAU)
-                call tab_label
+                call tab_label()
             endif
         endif
 
@@ -199,7 +199,7 @@ contains
             endif
         endif
 
-        call TIMOUT
+        call TIMOUT()
         TTOUT(LTOUT) = TIME
         LTOUT = LTOUT + 1
 
@@ -236,7 +236,7 @@ contains
                     if (KIBM == 1 .and. (KEY == 99 .or. KEY == 67)) then ! <Ctrl>+C
                         if (TASK(4:4) /= 'B') call Close_Screen
                         call cpu_report('>>> ASTRA <Ctrl>+C exit >>>')
-                        call astra_stop
+                        call astra_stop()
                     endif
 
                     if (KIBM == 65006) then
@@ -303,7 +303,7 @@ contains
 
         CASE(13) ! 'ESC'
             TASK = 'RUN '
-            call rcurso
+            call rcurso()
             call ERASXY()
 
         CASE(32) ! 'space'
@@ -318,7 +318,7 @@ contains
                 TASK = 'DSP '
                 ix = 0
                 iy = 0
-                call pcurso
+                call pcurso()
                 skip_poll = .False.
             endif
 
@@ -333,7 +333,7 @@ contains
         CASE(47) ! '/'
             if (TASK(4:4) /= 'B') call Close_Screen
             call cpu_report('>>> ASTRA / or "Quit" button exit >>>')
-            call astra_stop
+            call astra_stop()
 
         CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
             if (MOD10 >= 2 .and. MOD10 <= 5) then
@@ -354,7 +354,7 @@ contains
             endif
             if (MOD10 /= KEY - 48) then ! Just changed plotting mode
                 MOD10 = KEY - 48
-                call erasrw
+                call erasrw()
                 plot_mode = 1
                 NST = 0
                 plot_mode = plotMode(MOD10, MODEY)
@@ -410,7 +410,7 @@ contains
             endif
 
         CASE(70) ! 'F'
-            call TIMOUT
+            call TIMOUT()
             call writeData(CHORDN)
 
          CASE(71, 81) ! 71:'G'=portrait, 81:'Q'=landscape
@@ -589,7 +589,7 @@ contains
     if (TASK(4:4) /= 'B') call Close_Screen
 
     call cpu_report('>>> ASTRA exit: reached END time >>>')
-    call astra_stop
+    call astra_stop()
 
     end function if_key
 
@@ -613,8 +613,8 @@ contains
 
     if (TASK(1:3) == 'BGD' .or. TASK(4:4) == 'B') return
 
-    call TIMOUT
-    call RADOUT
+    call TIMOUT()
+    call RADOUT()
 
     if (MOD10 == 4 .or. MOD10 == 5) then
         print*, 'Plot modes 4-5 not available'
@@ -625,7 +625,7 @@ contains
     call up_label(CHORDN, 1./MU(NA))
     jt = 0
     if (MOD10 <= 7) call down_label(jt, TOUT)
-    call redraw
+    call redraw()
 
     end subroutine graph_output
 
@@ -652,8 +652,7 @@ contains
 
     call markloc('refresh_plot', debug_lev=2*debug)
 
-    call erasrw
-
+    call erasrw()
     plot_mode = plotMode(MOD10, MODEY)
     call set_plot_area(plot_mode)
     call set_plot(plot_mode)
@@ -662,11 +661,11 @@ contains
     call TaskMenu(j)
     call textbf(0, astra_gui%Height - int(104.*astra_gui%resizeGraph), RUNID, 80) ! Task ID
     if (IFKL == 256 .and. TASK(1: 3) /= 'DSP') then
-        call PSCLOSE
+        call PSCLOSE()
         return
     endif
-    call RADOUT
-    call TIMOUT
+    call RADOUT()
+    call TIMOUT()
 
     if (MOD10 == 4 .or. MOD10 == 5) then
         print*, 'Plot mode 4-5 not available anymore'
@@ -677,7 +676,7 @@ contains
     call up_label(CHORDN, 1./MU(NA))
     if (IFKL /= 256) then
         call time_label(TIME, 1000.*TAU) ! 256 <-> initial iterations
-        call tab_label
+        call tab_label()
     endif
     j = 0
     if (MOD10 <= 5 .or. MOD10 == 7) call down_label(j, TOUT)
@@ -688,7 +687,7 @@ contains
         if (KPRI == 1) call const2ps
         STRI = 'The figure is stored in the file: ' // TRIM(PSNAME)
         call textvm(10, astra_gui%yMessage, TRIM(STRI), LEN_TRIM(STRI))
-        call PSCLOSE
+        call PSCLOSE()
         KPRI = 0
     endif
 

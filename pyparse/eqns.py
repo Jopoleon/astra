@@ -493,7 +493,7 @@ UPL(J) = (FP(J) - FPO(J))/TAU - YQDCMF(J)
 ULON(J) = IPOL(J)*G33(J)*(UPL(J) - GP2*ROC**2 * BTOR*BBDOT*MU(J)) !this is correct, also 
 !goes into Ohmic power. Ohmic power is not computed with dPsi/dt_x, but dPsi/dt_phi (ULON)
 enddo
-call CUOFP
+call CUOFP()
 '''
 
     if 'UEXT' in parse.var_defined or 'LEXT' in parse.var_defined:

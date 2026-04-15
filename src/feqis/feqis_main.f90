@@ -141,14 +141,14 @@ if (k_fixfree == 1 .and. refit_mode /= 818) then !any other mode than 818
         
 	psi_cur_old = psiplasmatoconduc
         
-	call psi_external_calc
+        call psi_external_calc()
         psirz = psiextrz
         j_vacplas = 0
     else if (ifplasma == 1) then  ! full plasma solved
         if (j_vacplas == 0) j_call = 0
         call full_system_advance(j_call, no_circuit_eq)
         if (j_call == -1) then
-            call convert_boundary_to_pbe
+            call convert_boundary_to_pbe()
             call fix_boundary(1)
         endif
         j_vacplas = 1
@@ -172,7 +172,7 @@ else if (k_fixfree == 0 .and. refit_mode /= 818) then !any other mode than 818
 endif
 
 if (refit_mode == 818) then  ! run prescribed boundary but with coil currents fitting in the bakcground
-    call psi_external_calc
+    call psi_external_calc()
     call solve_gse2d_fbe_full(0)
     call fix_boundary(1)
     equil_out%global_param%psplex   = psplex

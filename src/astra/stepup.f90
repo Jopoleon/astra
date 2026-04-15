@@ -53,14 +53,14 @@ if (ITFBE > 0.) then
     endif
 endif
 
-call detvar
+call detvar()
 
 ! Subroutines with the "<" symbol are put here
 ! here it computes the new NI also. These are run with tau_old
 
 if (plasma_up .or. ifbey == 0) then
-    call OLDNEW           ! Time advance: F(t-tau):=F(t) neo=ne, etc,except ni
-    call set_x_scalars    ! Set exp scalars, moved here for btor consistency
+    call OLDNEW()         ! Time advance: F(t-tau):=F(t) neo=ne, etc,except ni
+    call set_x_scalars()  ! Set exp scalars, moved here for btor consistency
 endif
 
 ! Update time at the end of everything
@@ -117,7 +117,7 @@ time_step_accuracy: do
             call set_x_arrays(2)       ! Update exp-data with a new metric
         endif
 
-        call METRIC          ! Equilibrium call, compute IPL from dfpdrb, compute PSIEXT, shape, psplex, and metric coefficients, update ROC, FTN
+        call METRIC()          ! Equilibrium call, compute IPL from dfpdrb, compute PSIEXT, shape, psplex, and metric coefficients, update ROC, FTN
 
         if (plasma_up) then
             RBDOT = (FTO  - FTN)/(FTO  + FTN)/TAU     !New rbdot for adiabatic compression
@@ -132,7 +132,7 @@ time_step_accuracy: do
 
         if (isnan(hro)) then
             write(*, *) 'hro is nan'
-            call error_catch
+            call error_catch()
         endif
 
         if (plasma_up) then
@@ -142,47 +142,41 @@ time_step_accuracy: do
 ! catching errors: infinite or nan profiles
         if (sum(abs(te(1:na1)))/na1 > 1e8) then
             write(*, *) 'te isinf'
-            call error_catch
+            call error_catch()
         endif
         if (sum(abs(ti(1:na1)))/na1 > 1e8) then
             write(*, *) 'ti isinf'
-            call error_catch
+            call error_catch()
         endif
         if (sum(abs(ne(1:na1)))/na1 > 1e8) then
             write(*, *) 'ne isinf'
-            call error_catch
+            call error_catch()
         endif
         if (sum(abs(fp(1:na1)))/na1 > 1e8)  then
             write(*, *) 'fp isinf'
-            call error_catch
+            call error_catch()
         endif
         if (isnan(sum(te(1:na1))))  then
             write(*, *) 'te isnan'
-            call error_catch
+            call error_catch()
         endif
         if (isnan(sum(ti(1:na1))))  then
             write(*, *) 'ti isnan'
-            call error_catch
+            call error_catch()
         endif
         if (isnan(sum(ne(1:na1))))  then
             write(*, *) 'ne isnan'
-            call error_catch
+            call error_catch()
         endif
         if (isnan(sum(fp(1:na1))))  then
             write(*, *) 'fp isnan'
-            call error_catch
+            call error_catch()
         endif
 
         if (TASK(1:3) /= 'BGD') then
             jkey = if_key(0)                 ! Enables ITREQ iteration control 
         endif
         jkey = IFTREQ(ATREQ)            ! ++ITREQ; Tr-Eq loop converged?  
-
-! some options to avoid NITREQ when IFBEY = 1, IPCTR = X.1  --> does not do NITREQ
-        if (IFBEY == 1) then
-!            zipctrl = IPCTRL - nint(IPCTRL)
-!            if (zipctrl > 1.e-10) jkey = 1
-        endif
 
 !quantitites for psi b.c.
         if (plasma_up) then
@@ -203,7 +197,7 @@ time_step_accuracy: do
     enddo tr_eq_loop
 
     if (plasma_up .or. IFBEY == 0) then
-        call DEFARR                  ! F(t)>0? Define F(t) outside ABC
+        call DEFARR()               ! F(t)>0? Define F(t) outside ABC
     endif
     
     tau_old = tau !store old tau before changing it
@@ -237,7 +231,7 @@ endif
 
 TIME = TIME + TAU
 TAUPRP = tau
-call POSTEP
+call POSTEP()
 
 if (TAU /= TAUPRP) then
     tau_new = tau !store new tau in case it has been changed in postep

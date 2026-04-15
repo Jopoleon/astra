@@ -45,29 +45,27 @@ contains
     SELECT CASE(IPEQL)
 
     CASE(-2)  ! Cylindircal case, No equilibrium solver. No toroidicity
-        call EQCYL
-        call RHSEQ
-
+        call EQCYL()
+        call RHSEQ()
     CASE(-1)  ! Take metric from exp/data_file
         ROC = ROC3A(RTOR, SHIFT, ABC, ELONG, TRIAN)
         FTO = GP*BTOR*ROC**2
-        call set_external_metric ! Main grid: (jj-0.5)*h
-        call RHSEQ  ! this computes ffprime and pprime
+        call set_external_metric()! Main grid: (jj-0.5)*h
+        call RHSEQ()! this computes ffprime and pprime
 
     CASE(-6)  ! Take metric internally subroutine external file (so not X)
         ROC = ROC3A(RTOR, SHIFT, ABC, ELONG, TRIAN)
         FTO = GP*BTOR*ROC**2
-        call set_external_metric_2 ! Main grid: (jj-0.5)*h
-        call RHSEQ  ! this computes ffprime and pprime
+        call set_external_metric_2()! Main grid: (jj-0.5)*h
+        call RHSEQ()! this computes ffprime and pprime
 
     CASE(0) ! No equilibrium solver (NEQUIL=0) .or. data initiation @ 1st entry
-        call EQGUESS
-
+        call EQGUESS()
     CASE(1)  ! EMEQ
         if (TIME == TSTART) NDTEQUILMY = 0
         if (TIME >  TSTART) NDTEQUILMY = 1
         if (TIME-TIMEQL >= NDTEQUILMY*DTEQL) then
-            call RHSEQ   ! Define p', FF', j_tor=CUTOR
+            call RHSEQ()! Define p', FF', j_tor=CUTOR
             call A2EMEQ(jexit)
             if (jexit /= 0) then
                 err_msg = 'Equilibrium problem at the initial iterations'
@@ -80,7 +78,7 @@ contains
         if (TIME == TSTART) NDTEQUILMY = 0
         if (TIME >  TSTART) NDTEQUILMY = 1
         if (TIME-TIMEQL >= NDTEQUILMY*DTEQL) then
-            call RHSEQ
+            call RHSEQ()
             TIMEQL = TIME
         endif
 
@@ -93,7 +91,7 @@ contains
         if (TIME == TSTART) NDTEQUILMY = 0
         if (TIME >  TSTART) NDTEQUILMY = 1
         if (TIME-TIMEQL >= NDTEQUILMY*DTEQL) then
-            call RHSEQ2    ! Define p', FF', j_tor=CUTOR, but using the gssolver definitions
+            call RHSEQ2()! Define p', FF', j_tor=CUTOR, but using the gssolver definitions
             call A2GSSOLVER(equil_solver)
             TIMEQL = TIME
         endif
@@ -299,12 +297,10 @@ contains
     NA  = NA1 - 1
 
 ! Compute NB1 
-    call new_grid
-
+    call new_grid()
 ! Define AMETR, SHIF, ELON, TRIA, SHIV
 
-    call SETGEO
-
+    call SETGEO()
     YDV = 0.
 
     do J=1, NB1
@@ -328,8 +324,7 @@ contains
     VOLUM(NA1) = GP*GP2*ABC**2 * ELONG*(RTOR + SHIFT - 0.25*ABC*TRIAN)
 
 ! Input:  ROC, HRO, NB1, NA1, NA=NA1-1, AB, ABC, AMETR(NA1)
-    call new_grid
-! Output: NAB, RHO(NA1)=ROC, AMETR(j>NA1)
+    call new_grid()! Output: NAB, RHO(NA1)=ROC, AMETR(j>NA1)
 
 !----- Definition --------------------------- Approximation ----------
 ! gradRHO = DRODA
@@ -385,7 +380,7 @@ contains
     enddo
     SHEAR(NA1) = SHEAR(NA)
 
-    call extrap_fields_flat
+    call extrap_fields_flat()
     call INTEGR(RHO, 1, VR, VOLUM, NA1)
 
     VOLUME = VOLUM(NA1)
@@ -478,7 +473,7 @@ contains
             endif
         enddo
     else if (ipart == 1) then   ! for initialisation
-        call eqguess
+        call eqguess()
         return
     endif
 
@@ -581,9 +576,9 @@ contains
             DRODA(J) = 1.
             SLAT(J)  = VRS(J)*DRODA(J)
         enddo
-        call extrap_fields_flat
+        call extrap_fields_flat()
         call INTEGR(RHO, 1, VR, VOLUM, NA1) ! Compute volume(rho) on shifted grid integrating VR
-        call new_grid ! The RHO-grid and NA, NA1 are updated
+        call new_grid()! The RHO-grid and NA, NA1 are updated
         VOLUME = VOLUM(NA1)
     endif
 
@@ -626,7 +621,7 @@ contains
     call markloc('set_external_metric_2', debug_lev=3*debug)
 
     if (.not. flightsim) then
-        call extmetric_input
+        call extmetric_input()
     endif
 
     YNF = RTOR*GP2_sq
@@ -700,9 +695,9 @@ contains
             DRODA(J) = 1.
             SLAT(J)  = VRS(J)*DRODA(J)
         enddo
-        call extrap_fields_flat
+        call extrap_fields_flat()
         call INTEGR(RHO, 1, VR, VOLUM, NA1) ! Compute volume(rho) integrating VR
-        call new_grid ! The RHO-grid and NA, NA1 are updated
+        call new_grid() ! The RHO-grid and NA, NA1 are updated
         VOLUME = VOLUM(NA1)
     endif
 
@@ -737,13 +732,13 @@ contains
         write(*, *) " >>> Error >>> ROC3A >>> Illegal input: R+Delta < a"
         write(*, '(1P, 16X, 2(A, E10.3))') "R+Delta =", Rmaj + shaf_shift, ",    a =", a_min
         write(*, *) Rmaj, shaf_shift, a_min, elongation, triangularity
-        call astra_stop
-    endif
+        call astra_stop()
+     endif
 
     if (YGE < 0) then
         write(*, *) " >>> Error >>> ROC3A: Illegal input"
         write(*, *) Rmaj, shaf_shift, a_min, elongation, triangularity
-        call astra_stop
+        call astra_stop()
     else if (YGE == 0) then
         ROC3A = 0.
     else
@@ -858,7 +853,7 @@ contains
         do J=1, NA1
             CU(J) = CU(J)*IPL/YCB
         enddo
-        call RHSEQ
+        call RHSEQ()
         do J=1, NA1
             TE(J) = A(J)
             TI(J) = B(J)
@@ -931,7 +926,7 @@ contains
     ROC = YRO*GR(NR_EQU)  ! Define a new RHO_edge
 ! FTN = GP*BTN*ROC*ROC
 
-    call new_grid ! The RHO-grid and NA, NA1, HRO are updated
+    call new_grid() ! The RHO-grid and NA, NA1, HRO are updated
 !---------------------------------------
 ! Define a new auxiliary (shifted) grid:
     Y2 = 0.5d0/ROC
@@ -1010,8 +1005,7 @@ contains
     BDB0  = BDB0*BTOOO/BTOR
     B0DB2 = B0DB2/BTOOO**2 * BTOR**2
 
-    call extrap_fields_flat
-
+    call extrap_fields_flat()
     call INTEGR(RHO, 1, VR, VOLUM, NA1)
     VOLUME = VOLUM(NA1)
 
@@ -1214,7 +1208,7 @@ contains
         endif
 
 ! Deallocate equil_out%metric_coefs%g1 & co
-        call new_grid ! The RHO-grid and NA, NA1, HRO are updated, also AMETR(NA1) = ABC is done there
+        call new_grid() ! The RHO-grid and NA, NA1, HRO are updated, also AMETR(NA1) = ABC is done there
 
         VOLUM(NA1) = yvolum(NA1)
         G22 = G22/VRS*RTOR/GP2_sq/IPOL
@@ -1242,8 +1236,7 @@ contains
             SQUARN(J) = ysquare(J) 
         enddo
 
-        call extrap_fields_flat
-
+        call extrap_fields_flat()
         VOLUME = VOLUM(NA1)
     endif
 

@@ -538,8 +538,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
 
 ! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
 
-    call interp_j_fromrhotorz
-
+    call interp_j_fromrhotorz()
 ! Rescale current density
     curr = SUM(jrz(1:nr2, 1:nz2)) *dr*dz
     jrz = jrz/curr*iplasma
@@ -597,7 +596,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         psiplasrz = get_psiplasrz()
 
 ! Construct correction
-        call compound_psi
+        call compound_psi()
         do j=1, nz2
             do i=1, nr2
                 f_correction = 0.
@@ -639,7 +638,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         curdiff = curnow - curref
 
 ! Construct correction
-        call compound_psi
+        call compound_psi()
         do j=1, nz2
             do i=1, nr2
                 f_correction = 0.
@@ -650,9 +649,9 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
             enddo
         enddo
 
-        call find_new_axis
-        call find_psi_boundary
-        call new_jrz  ! calculate new right hand side
+        call find_new_axis()
+        call find_psi_boundary()
+        call new_jrz() ! calculate new right hand side
 
         temp_err = abs(Ffunc - Ffunc_old)
         Ffunc_old = Ffunc
@@ -664,11 +663,11 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         curconduc(i) = curnow(i)
     enddo
 
-    call psi_external_calc
-    call compound_psi
-    call find_new_axis
-    call find_psi_boundary
-    call new_jrz  ! calculate new right hand side
+    call psi_external_calc()
+    call compound_psi()
+    call find_new_axis()
+    call find_psi_boundary()
+    call new_jrz() ! calculate new right hand side
 
     end subroutine restab_F_function_full_fonfit
 
@@ -702,8 +701,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
 
 ! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
 
-    call interp_j_fromrhotorz
-
+    call interp_j_fromrhotorz()
 ! Rescale current density
     curr = SUM(jrz(1:nr2, 1:nz2)) *dr*dz
     jrz = jrz/curr*iplasma
@@ -771,8 +769,8 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         psiplasrz = get_psiplasrz()
 
 ! Construct correction
-        call compound_psi
-    do j=1, nz2
+        call compound_psi()
+        do j=1, nz2
             do i=1, nr2
                 f_correction = 0.
                 do k=1, nconduc
@@ -838,7 +836,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         curdiff = curnow - curref
 
 ! Construct correction
-        call compound_psi
+        call compound_psi()
         do j=1, nz2
             do i=1, nr2
                 f_correction = 0.
@@ -849,9 +847,9 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
             enddo
         enddo
 
-        call find_new_axis
-        call find_psi_boundary
-        call new_jrz  ! calculate new right hand side
+        call find_new_axis()
+        call find_psi_boundary()
+        call new_jrz() ! calculate new right hand side
 
         temp_err = abs(Ffunc - Ffunc_old)
         Ffunc_old = Ffunc
@@ -863,11 +861,11 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         curconduc(i) = curnow(i)
     enddo
 
-    call psi_external_calc
-    call compound_psi
-    call find_new_axis
-    call find_psi_boundary
-    call new_jrz  ! calculate new right hand side
+    call psi_external_calc()
+    call compound_psi()
+    call find_new_axis()
+    call find_psi_boundary()
+    call new_jrz() ! calculate new right hand side
 
     end subroutine restab_F_function_full_fonfit_xpoints
 
@@ -935,7 +933,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         close(32)
         rho(1:nrho, ntheta+1) = rho(1:nrho, 1)
         theta(ntheta+1) = theta(1) + GP2
-        call interp_j_fromrhotorz
+        call interp_j_fromrhotorz()
         curr = SUM(jrz)*dr*dz
         j_ev(:, :, jt) = jrz/curr*ip_ev(jt)
         psia_ev(:, jt) = (psia_ev(:, jt) - psia_ev(1, jt))/(psia_ev(nrho, jt) - psia_ev(1, jt))
@@ -1089,7 +1087,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
 ! axis block
            iaxis = iax_ev(jt)
            jaxis = jax_ev(jt)
-           call find_new_axis
+           call find_new_axis()
            iax_ev(jt) = iaxis
            jax_ev(jt) = jaxis
 
@@ -1099,7 +1097,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
                r_xpoint(1: n_of_xpoints) = rxp_ev(1: n_of_xpoints, jt)
                z_xpoint(1: n_of_xpoints) = zxp_ev(1: n_of_xpoints, jt)
            endif
-           call find_psi_boundary
+           call find_psi_boundary()
            nxp_ev(jt) = n_of_xpoints
            if (n_of_xpoints > 0) then
                rxp_ev(1: n_of_xpoints, jt) = r_xpoint(1: n_of_xpoints)
@@ -1111,7 +1109,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
            call linterp(psia_ev(:, jt), pprim_ev (:, jt), nrho, psia_2d, ppp_2d, nrho2d)
            ffp_2d = -GP2/mu0*ffp_2d
            ppp_2d = -GP2*1.e-6*ppp_2d
-           call new_jrz  ! calculate new right hand side
+           call new_jrz()! calculate new right hand side
            j_ev(:, :, jt) = jrz
            i_totev(1: nactive, jt) = curdiff(1: nactive, jt)
        enddo
@@ -1195,7 +1193,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         close(32)
         rho(1: nrho, ntheta+1) = rho(1: nrho, 1)
         theta(ntheta+1) = theta(1) + GP2
-        call interp_j_fromrhotorz
+        call interp_j_fromrhotorz()
         curr = SUM(jrz) *dr*dz
         j_ev(:, :, jt) = jrz/curr*ip_ev(jt)
         psia_ev(:, jt) = (psia_ev(:, jt) - psia_ev(1, jt))/(psia_ev(nrho, jt) - psia_ev(1, jt))
@@ -1356,7 +1354,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
 ! Axis block
             iaxis = iax_ev(jt)
             jaxis = jax_ev(jt)
-            call find_new_axis
+            call find_new_axis()
             iax_ev(jt) = iaxis
             jax_ev(jt) = jaxis
 
@@ -1366,7 +1364,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
                 r_xpoint(1: n_of_xpoints) = rxp_ev(1: n_of_xpoints, jt)
                 z_xpoint(1: n_of_xpoints) = zxp_ev(1: n_of_xpoints, jt)
             endif
-            call find_psi_boundary
+            call find_psi_boundary()
             nxp_ev(jt) = n_of_xpoints
             if (n_of_xpoints > 0) then
                 rxp_ev(1: n_of_xpoints, jt) = r_xpoint(1: n_of_xpoints)
@@ -1378,7 +1376,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
             call linterp(psia_ev(:, jt), pprim_ev (:, jt), nrho, psia_2d, ppp_2d, nrho2d)
             ffp_2d = -GP2/mu0*ffp_2d
             ppp_2d = -GP2*1.e-6*ppp_2d
-            call new_jrz  ! calculate new right hand side
+            call new_jrz() ! calculate new right hand side
             j_ev(:, :, jt) = jrz
 
             i_totev(1: nactive, jt) = curdiff(1: nactive, jt)
@@ -1455,8 +1453,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
 
 ! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
 
-    call interp_j_fromrhotorz
-
+    call interp_j_fromrhotorz()
 ! Rescale current density
     curr = SUM(jrz(1:nr2, 1:nz2)) *dr*dz
     jrz = jrz/curr*iplasma
@@ -1600,7 +1597,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     do j_iter=1, 300000
         psiplasrz = get_psiplasrz()
 ! Construct correction
-        call compound_psi
+        call compound_psi()
         do j=1, nz2
             do i=1, nr2
                 f_correction = 0.
@@ -1727,7 +1724,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         curdiff = curnow - curref
 
 ! Construct correction
-        call compound_psi
+        call compound_psi()
         do j=1, nz2
             do i=1, nr2
                 f_correction = 0.
@@ -1738,9 +1735,9 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
             enddo
         enddo
 
-        call find_new_axis
-        call find_psi_boundary
-        call new_jrz  ! calculate new right hand side
+        call find_new_axis()
+        call find_psi_boundary()
+        call new_jrz() ! calculate new right hand side
 
         temp_err = sum(abs(Fderiv))
         Ffunc_old = Ffunc
@@ -1829,8 +1826,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
 
 ! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
 
-    call interp_j_fromrhotorz
-
+    call interp_j_fromrhotorz()
 ! Rescale current density
     curr = SUM(jrz(1:nr2, 1:nz2)) *dr*dz
     jrz = jrz/curr*iplasma
@@ -1948,7 +1944,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     do j_iter=1, 300000
         psiplasrz = get_psiplasrz()
 ! Construct correction
-        call compound_psi
+        call compound_psi()
         do j=1, nz2
             do i=1, nr2
                 f_correction = 0.
@@ -2053,7 +2049,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         curdiff = curnow - curref
 
 ! Construct correction
-        call compound_psi
+        call compound_psi()
         do j=1, nz2
             do i=1, nr2
                 f_correction = 0.
@@ -2064,9 +2060,9 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
             enddo
         enddo
 
-        call find_new_axis
-        call find_psi_boundary
-        call new_jrz  ! calculate new right hand side
+        call find_new_axis()
+        call find_psi_boundary()
+        call new_jrz() ! calculate new right hand side
 
         temp_err = sum(abs(Fderiv))
         Ffunc_old = Ffunc
@@ -2169,8 +2165,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
 
 ! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
 
-    call interp_j_fromrhotorz
-
+    call interp_j_fromrhotorz()
 ! Rescale current density
     curr = SUM(jrz(1:nr2, 1:nz2)) *dr*dz
     jrz = jrz/curr*iplasma
@@ -2228,7 +2223,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         if (j_iter > 150) stop
         psiplasrz = get_psiplasrz()
 ! Construct correction
-        call compound_psi
+        call compound_psi()
         do j=1, nz2
             do i=1, nr2
                 f_correction = 0.
@@ -2273,7 +2268,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         curdiff = curnow - curref
 
 ! Construct correction
-        call compound_psi
+        call compound_psi()
         do j=1, nz2
             do i=1, nr2
                 f_correction = 0.
@@ -2284,9 +2279,9 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
             enddo
         enddo
 
-        call find_new_axis
-        call find_psi_boundary
-        call new_jrz  ! calculate new right hand side
+        call find_new_axis()
+        call find_psi_boundary()
+        call new_jrz()! calculate new right hand side
 
         temp_err = sum(abs(Fderiv))
         Ffunc_old = Ffunc
@@ -2299,11 +2294,11 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         curconduc(i) = curnow(i)
     enddo
 
-    call psi_external_calc
-    call compound_psi
-    call find_new_axis
-    call find_psi_boundary
-    call new_jrz  ! calculate new right hand side
+    call psi_external_calc()
+    call compound_psi()
+    call find_new_axis()
+    call find_psi_boundary()
+    call new_jrz() ! calculate new right hand side
 
     end subroutine restab_F_function_full_currents
 
@@ -2333,8 +2328,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
 
 ! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
 
-    call interp_j_fromrhotorz
-
+    call interp_j_fromrhotorz()
 ! Rescale current density
     curr = SUM(jrz(1:nr2, 1:nz2)) *dr*dz
     jrz = jrz/curr*iplasma
@@ -2391,7 +2385,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         if (j_iter > 150) stop
         psiplasrz = get_psiplasrz()
 ! Construct correction
-        call compound_psi
+        call compound_psi()
         do j=1, nz2
             do i=1, nr2
                 f_correction = 0.
@@ -2441,7 +2435,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         enddo
 
 ! Construct correction
-        call compound_psi
+        call compound_psi()
         do j=1, nz2
             do i=1, nr2
                 f_correction = 0.
@@ -2452,9 +2446,9 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
             enddo
         enddo
 
-        call find_new_axis
-        call find_psi_boundary
-        call new_jrz  ! calculate new right hand side
+        call find_new_axis()
+        call find_psi_boundary()
+        call new_jrz() ! calculate new right hand side
 
         temp_err = sum(abs(Fderiv))
         Ffunc_old = Ffunc
@@ -2467,11 +2461,11 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         curconduc(i) = curnow(i)
     enddo
 
-    call psi_external_calc
-    call compound_psi
-    call find_new_axis
-    call find_psi_boundary
-    call new_jrz  ! calculate new right hand side
+    call psi_external_calc()
+    call compound_psi()
+    call find_new_axis()
+    call find_psi_boundary()
+    call new_jrz() ! calculate new right hand side
 
     end subroutine restab_F_function_full_currents_limits
 
@@ -2502,8 +2496,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
 
 ! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
 
-    call interp_j_fromrhotorz
-
+    call interp_j_fromrhotorz()
 ! Rescale current density
     curr = SUM(jrz(1:nr2, 1:nz2)) *dr*dz
     jrz = jrz/curr*iplasma
@@ -2560,7 +2553,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         if (j_iter > 150) stop
         psiplasrz = get_psiplasrz()
 ! Construct correction
-        call compound_psi
+        call compound_psi()
         do j=1, nz2
             do i=1, nr2
                 f_correction = 0.
@@ -2605,7 +2598,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         curdiff = curnow - curref
 
 ! Construct correction
-        call compound_psi
+        call compound_psi()
         do j=1, nz2
             do i=1, nr2
                 f_correction = 0.
@@ -2616,9 +2609,9 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
             enddo
         enddo
 
-        call find_new_axis
-        call find_psi_boundary
-        call new_jrz  ! calculate new right hand side
+        call find_new_axis()
+        call find_psi_boundary()
+        call new_jrz() ! calculate new right hand side
 
         temp_err = sum(abs(Fderiv))
         Ffunc_old = Ffunc
@@ -2631,11 +2624,11 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         curconduc(i) = curnow(i)
     enddo
 
-    call psi_external_calc
-    call compound_psi
-    call find_new_axis
-    call find_psi_boundary
-    call new_jrz  ! calculate new right hand side
+    call psi_external_calc()
+    call compound_psi()
+    call find_new_axis()
+    call find_psi_boundary()
+    call new_jrz()! calculate new right hand side
 
     end subroutine restab_F_function_full_currents_forces
 
@@ -2658,8 +2651,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     double precision, dimension(ntheta, 2*n_fourier_restab_boundary) :: matrix
 
 ! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
-    call interp_j_fromrhotorz
-
+    call interp_j_fromrhotorz()
 ! Rescale current density
     curr = SUM(jrz(1:nr2, 1:nz2)) *dr*dz
     jrz = jrz/curr*iplasma
@@ -2699,7 +2691,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
 
     do j_iter=1, 30
         psiplasrz = get_psiplasrz()
-        call compound_psi
+        call compound_psi()
         do j=1, ntheta
             psicorr(j) = interp2d_psi(rbndp(j), zbndp(j), Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
         enddo
@@ -2714,7 +2706,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
             psicorr, ntheta, WORK, 2*(ntheta)*n_fourier_restab_boundary*2, INFO)
 
 ! Construct correction
-        call compound_psi
+        call compound_psi()
         do j=1, nz2
             do i=1, nr2
                 f_correction = 0.
@@ -2727,9 +2719,9 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
             enddo
         enddo
 
-        call find_new_axis
-        call find_psi_boundary
-        call new_jrz  ! calculate new right hand side
+        call find_new_axis()
+        call find_psi_boundary()
+        call new_jrz() ! calculate new right hand side
 
         temp_err = abs(psibt0 - psibt1)
         psibt0 = psibt1
@@ -2743,11 +2735,11 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         enddo
     enddo
 
-    call psi_external_calc
-    call compound_psi
-    call find_new_axis
-    call find_psi_boundary
-    call new_jrz  ! calculate new right hand side
+    call psi_external_calc()
+    call compound_psi()
+    call find_new_axis()
+    call find_psi_boundary()
+    call new_jrz()! calculate new right hand side
 
     stop
     end subroutine restab_boundary_with_fourier_wall
@@ -2768,8 +2760,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     double precision, dimension(258, 258) :: C_00, S_00
 
 !first, initialized initial guess coming from prescribed boundary current density: jrhotheta
-    call interp_j_fromrhotorz
-
+    call interp_j_fromrhotorz()
 ! Rescale current density
     curr = SUM(jrz(1:nr2, 1:nz2)) *dr*dz
     jrz = jrz/curr*iplasma
@@ -2837,8 +2828,8 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         psistabz = 0.
         delr = 0.
         delz = 0.
-        call compound_psi
-        call find_new_axis
+        call compound_psi()
+        call find_new_axis()
         dum1 = C_00r*S_00z - C_00z*S_00r
 
         bub(1) = interp2d_psi(raxp + dr, zaxp, Rrect(1:nr), Zrect(1:nz), psirz(1:nr, 1:nz))
@@ -2853,13 +2844,13 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         psistabr = delr
         psistabz = delz
 
-        call compound_psi
+        call compound_psi()
         psirz(1:nr2, 1:nz2) = psirz(1:nr2, 1:nz2) +  &
             psistabr*C_00(1:nr2, 1:nz2) + psistabz*S_00(1:nr2, 1:nz2) !total flux
 
-        call find_new_axis
-        call find_psi_boundary
-        call new_jrz  ! calculate new right hand side
+        call find_new_axis()
+        call find_psi_boundary()
+        call new_jrz() ! calculate new right hand side
 
         temp_err = (abs(psistab1o - psistabr) + abs(psistab2o - psistabz))
         psistab1o = psistabr
@@ -2873,11 +2864,11 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
         curconduc(nactive + i) = curconduc(nactive + i) + psistabr*cos(anglr(i)) + psistabz*sin(anglr(i))
     enddo
 
-    call psi_external_calc
-    call compound_psi
-    call find_new_axis
-    call find_psi_boundary
-    call new_jrz  ! calculate new right hand side
+    call psi_external_calc()
+    call compound_psi()
+    call find_new_axis()
+    call find_psi_boundary()
+    call new_jrz() ! calculate new right hand side
 
     end subroutine restab_axis_with_fourier_wall
 
@@ -2895,7 +2886,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     integer i,i1,j,k
     double precision :: F_stab, F_destab, f_ratio, dum1, dum2
     
-! Calculate the time scale of the VDE based on the simple estimate tau_VDE = ()    
+! Calculate the time scale of the VDE based on the simple estimate tau_VDE = ()
 
 ! Compute F_destab
     F_destab = 0.

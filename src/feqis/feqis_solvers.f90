@@ -27,7 +27,7 @@ contains
 ! at iteration 0, dpsidt = 0
     if (j_init == 0 .or. no_circuit_eq == 1) then
 ! First do full equilibrium solution at time t=0
-        call psi_external_calc
+        call psi_external_calc()
         call solve_gse2d_fbe_full(0)
         do i=1, nconduc
             psiplasmatoconduc(i) = sum(jrz(1: nr2, 1: nz2) * dr * dz * greeni(1: nr2, 1: nz2, i))
@@ -41,7 +41,7 @@ contains
 
     if (fast_mode == 1 .and. execute_plasma == 1) then
         psi_cur_old(1:nconduc) = psiplasmatoconduc(1:nconduc)
-        call psi_external_calc
+        call psi_external_calc()
         call solve_gse2d_fbe_full_1turn(1, 0, 0.d0, 0.d0)
         do i=1, nconduc
             psiplasmatoconduc(i) = sum(jrz(1: nr2, 1: nz2) * dr * dz * greeni(1: nr2, 1: nz2, i))
@@ -53,7 +53,7 @@ contains
         cur_temp(1:nconduc) = curconduc(1:nconduc)
         call circuit_eq_advance(1)
         if (fast_mode == 0) then
-            call psi_external_calc
+            call psi_external_calc()
             call solve_gse2d_fbe_full_1turn(1, 0, 0.d0, 0.d0)
             do i=1, nconduc
                 psiplasmatoconduc(i) = sum(jrz(1: nr2, 1: nz2) * dr * dz * greeni(1: nr2, 1: nz2, i))
@@ -109,8 +109,7 @@ contains
 ! Start iterations to find self-consistent solution
 ! first, initialized initial guess coming from prescribed boundary current density: jrhotheta
         if (j_init == 0) then
-            call interp_j_fromrhotorz
-! Rescale current density
+            call interp_j_fromrhotorz() ! Rescale current density
             curr = SUM(jrz(1:nr2, 1:nz2)) *dr*dz
             jrz = jrz/curr*iplasma
             rax = raxp
@@ -123,37 +122,27 @@ contains
         call solve_fbe_static_iterations_curgiven(raxp, zaxp, n_of_newton_iterations)
 
     CASE(1) ! refit eddy currents using fourier method for axis stability. doesnt respect boundary. fixed given active currents
-        call restab_axis_with_fourier_wall
-
+        call restab_axis_with_fourier_wall()
     CASE(2) ! doesn't work
-        call restab_boundary_with_fourier_wall !doesnt work well
-
+        call restab_boundary_with_fourier_wall() !doesnt work well
     CASE(3) ! refits all currents (active and passive) with F minimization cost function, no constraints. valid also for limited plasmas.
-        call restab_F_function_full_fonfit 
-
+        call restab_F_function_full_fonfit()
     CASE(313) ! refits all currents (active and passive) with F minimization cost function, no constraints. Fits also additional X points positions. Use only if n_xpoint_fit > 0
-        call restab_F_function_full_fonfit_xpoints 
-
+        call restab_F_function_full_fonfit_xpoints()
     CASE(4) !finds active currents from scratch, eddy currents zero
-        call restab_F_function_full_currents
-
+        call restab_F_function_full_currents()
     CASE(41) !refit active currents from scratch for 1 point also isoflux
-        call restab_1_timepoint_limits_xpoints_boundariz
-
+        call restab_1_timepoint_limits_xpoints_boundariz()
     CASE(5) !finds active currents from scratch including evolution from time t1 to time t2, with constraint on the consumed flux. eddy currents = 0.
-        call restab_2_timepoints_evolution
-
+        call restab_2_timepoints_evolution()
     CASE(6) !finds active currents from scratch, eddy currents zero. minimize magnetic energy and intercoil forces.
-        call restab_F_function_full_currents_forces
-
+        call restab_F_function_full_currents_forces()
     CASE(7) !finds active currents from scratch, eddy currents zero. minimize magnetic energy and respect current limits.
-        call restab_F_function_full_currents_limits
-
+        call restab_F_function_full_currents_limits()
     CASE(8) !finds active currents from scratch including evolution from time t1 to time t2, with constraint on the consumed flux. eddy currents = 0. also respect current limits
-        call restab_2_timepoints_evolution_limits
-
+        call restab_2_timepoints_evolution_limits()
     CASE(818) !finds active currents from scratch including evolution from time j-1 to time j, with constraint on the consumed flux. eddy currents = 0. also respect current limits, with xpoints. This one does isoflux
-        call restab_j_timepoints_evolution_limits_xpoints_boundariz ! uses full boundary
+        call restab_j_timepoints_evolution_limits_xpoints_boundariz() ! uses full boundary
 
     END SELECT
 
@@ -180,8 +169,7 @@ contains
 
 ! First, initialized initial guess coming from prescribed boundary current density: jrhotheta
     if (j_init == 0) then
-        call interp_j_fromrhotorz
-! Rescale current density
+        call interp_j_fromrhotorz() ! Rescale current density
         curr = SUM(jrz(1:nr2, 1:nz2)) *dr*dz
         jrz = jrz/curr*iplasma
         rax = raxp

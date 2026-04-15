@@ -66,8 +66,7 @@ contains
     IFDFVX = -1
 
 ! Read run info from tmp/astra.nml
-    call read_nml
-
+    call read_nml()
 ! Read machine configuration, if available (need "machine" variable defined)
     call config_read(TRIM(machine))
 
@@ -97,8 +96,7 @@ contains
     call assign_val(file_in, n_control, controlNames(1: n_control), controlValues(1: n_control), n_color)
 
 ! Read exp file
-    call read_exp
-
+    call read_exp()
     end subroutine readInput
 
 !---------------------------------------------------------------------

@@ -199,8 +199,8 @@ contains
             if (TIME <= TSTART + TAU/2.) write(*, '(2A,1H"/)') &
                 '               Check if it is defined in the data file "', &
                 TRIM(exp_file)
-            call error_catch
-            call astra_stop
+            call error_catch()
+            call astra_stop()
         endif
         VP(j) = ULON(j)/(YV*j*MU(j))
         YZF = max(YZF, ZEF(j))

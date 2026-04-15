@@ -506,7 +506,7 @@ radial_loop: do jr=1, nrho_m
 
 ! ------ Call TGLF ------
     write(*, *) 'Calling TGLF jrho=', jr
-    call tglf_run
+    call tglf_run()
 ! -----------------------
 
 ! Transport coefficients

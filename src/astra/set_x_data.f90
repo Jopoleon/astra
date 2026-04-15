@@ -515,8 +515,7 @@ contains
     TIME = TSTART
     if (YTP > -1.d8) TPAUSE = YTP
 
-    call set_x_scalars
-
+    call set_x_scalars()
     do j=1, n_var
         jvar = str_in_list(varNames(j), (/ 'AB    ', 'AWALL ', 'RTOR  ', 'ELONM ', 'TRICH ' /))
         if (jvar > 0) IFDFVX(j) = 4
@@ -597,8 +596,8 @@ contains
     NB1 = NA1
     NA  = NA1 - 1
 
-    call SETGEO
-    call NEW_GRID
+    call SETGEO()
+    call NEW_GRID()
 
     do J=1, NB1
         G22(J) = RHO(J)

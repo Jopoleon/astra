@@ -1275,8 +1275,7 @@ contains
         y8bar = (/pixel_ymid, pixel_ymid/)
         call drawcurve(0, 2, x8bar, y8bar)
 ! Plot the complete wall structure (Pixmap # 1)
-        call plot_wall
-
+        call plot_wall()
 ! if (data file includes NAMEXP BND) then (n_bnd > 0);
 ! or (n_bnd == 8) after calling equil with no boundary points provided;
 !     n_bnd == 0 otherwise
@@ -1293,8 +1292,7 @@ contains
                 call plot_lcfs(JIFNEW, IYO, TIME)
             endif
         END SELECT
-        call plot_flux_surfaces
-
+        call plot_flux_surfaces()
 ! Plot dots of R, z if an exp profile is input as function of R, z (GRIDTYPE 18-20)
         jcol = -1
         loop8: do jxout=1, NXOUT
