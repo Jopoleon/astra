@@ -1,4 +1,4 @@
-subroutine foureqc
+subroutine foureqc()
 
 use const_inc, only: NA1, NEQUIl, MEQUIL, IPART, GP2, ABC
 use status_inc, only: FP_NORM

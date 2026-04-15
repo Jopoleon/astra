@@ -1,4 +1,4 @@
-subroutine NEUT
+subroutine NEUT()
 !-----------------------------------------------------------22.01.97---|
 ! Input: ABC,NA1,NA,AMJ,NAB,NNCX
 !        AMAIN(j),ZMAIN(j),TE(j),TI(j),NE(j),NI(j),ZEF(j),SNNBM(j)

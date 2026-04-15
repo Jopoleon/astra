@@ -1,4 +1,4 @@
-subroutine a2tglf_elite
+subroutine a2tglf_elite()
 
 use const_inc, only: IPART, NA1
 use status_inc, only: RHO, FP_NORM

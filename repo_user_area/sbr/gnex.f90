@@ -1,4 +1,4 @@
-subroutine GNEX
+subroutine GNEX()
 ! Electron flux GNX due to all neutral sources
 ! GNX  [10^19 particle/m^2/s]
 !    (Pereverzev 23-FEB-98)

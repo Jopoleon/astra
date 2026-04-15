@@ -1,4 +1,4 @@
-subroutine NBI
+subroutine NBI()
 !----------------------------------------------------------------------|
 ! Interface to the Neutral Beam Injection package by A.R.Polevoi
 !      (Edition 19-APR-2000)

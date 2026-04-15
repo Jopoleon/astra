@@ -32,7 +32,7 @@ integer, parameter :: mx_mi=9, mx_ms=40, mx_mz=100
 contains
 
 !----------------------------------------------------------------
-subroutine NEOCL4
+subroutine NEOCL4()
 
 !    Astra interface to Houlberg's code NCLASS
 !

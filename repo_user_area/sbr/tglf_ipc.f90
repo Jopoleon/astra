@@ -14,7 +14,7 @@ type(tglf_output) :: tglf_out
 contains
 
 !---------------------------------------------------------------------
-    subroutine tglf_alloc
+    subroutine tglf_alloc()
 
     use const_inc, only: NA1
 

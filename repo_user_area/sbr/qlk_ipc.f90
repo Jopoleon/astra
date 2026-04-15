@@ -12,7 +12,7 @@ type(qlk_output) :: qlk_out
 contains
 
 !---------------------------------------------------------------------
-    subroutine qlk_alloc
+    subroutine qlk_alloc()
 
     use const_inc, only: NA1
 
