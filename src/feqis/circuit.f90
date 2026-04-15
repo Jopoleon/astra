@@ -514,7 +514,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     end subroutine psi_external_calc_position
 
 !--------------------------------------------------------------------
-    subroutine restab_F_function_full_fonfit
+    subroutine restab_F_function_full_fonfit()
 ! Refits all currents
 
     use errors_params, only: err_find_psistab
@@ -673,7 +673,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     end subroutine restab_F_function_full_fonfit
 
 !--------------------------------------------------------------------
-    subroutine restab_F_function_full_fonfit_xpoints ! valid only if n_xpoint_fit > 0
+    subroutine restab_F_function_full_fonfit_xpoints ! valid only if n_xpoint_fit > 0()
 ! Refits all currents and x points
 
     use errors_params, only: err_find_psistab
@@ -872,7 +872,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     end subroutine restab_F_function_full_fonfit_xpoints
 
 !--------------------------------------------------------------------
-    subroutine restab_2_timepoints_evolution
+    subroutine restab_2_timepoints_evolution()
 
 ! Finds active currents from scratch including evolution from time point t1 to time point t2
 
@@ -1130,7 +1130,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     end subroutine restab_2_timepoints_evolution
 
 !--------------------------------------------------------------------
-    subroutine restab_2_timepoints_evolution_limits
+    subroutine restab_2_timepoints_evolution_limits()
 
 ! Finds active currents from scratch including evolution from time point t1 to time point t2
 
@@ -1399,7 +1399,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     end subroutine restab_2_timepoints_evolution_limits
 
 !--------------------------------------------------------------------
-    subroutine restab_j_timepoints_evolution_limits_xpoints_boundariz  ! this one does everthing, boundary and isoflux 4 and more isoflux
+    subroutine restab_j_timepoints_evolution_limits_xpoints_boundariz  ! this one does everthing, boundary and isoflux 4 and more isoflux()
 
 ! Finds active currents from scratch including evolution from time point j-1 to point j
 
@@ -1790,7 +1790,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     end subroutine restab_j_timepoints_evolution_limits_xpoints_boundariz
   
 !--------------------------------------------------------------------
-    subroutine restab_1_timepoint_limits_xpoints_boundariz  ! this one does everthing, boundary and isoflux 4 and more isoflux
+    subroutine restab_1_timepoint_limits_xpoints_boundariz  ! this one does everthing, boundary and isoflux 4 and more isoflux()
 
 ! Finds active currents from scratch for a fixed time point
 
@@ -2145,7 +2145,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     end subroutine diagnose
   
 !--------------------------------------------------------------------
-    subroutine restab_F_function_full_currents
+    subroutine restab_F_function_full_currents()
 ! Finds active currents from scratch. Passive currents are given.
 
     use errors_params, only: err_find_psistab
@@ -2308,7 +2308,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     end subroutine restab_F_function_full_currents
 
 !--------------------------------------------------------------------
-    subroutine restab_F_function_full_currents_limits
+    subroutine restab_F_function_full_currents_limits()
 ! Finds active currents from scratch. Passive currents are given.
 
     use errors_params, only: err_find_psistab
@@ -2476,7 +2476,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     end subroutine restab_F_function_full_currents_limits
 
 !--------------------------------------------------------------------
-    subroutine restab_F_function_full_currents_forces
+    subroutine restab_F_function_full_currents_forces()
 ! Finds active currents from scratch. Passive currents are given. Forces get minimized too.
 
 ! how to include forces???
@@ -2640,7 +2640,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     end subroutine restab_F_function_full_currents_forces
 
 !--------------------------------------------------------------------
-    subroutine restab_boundary_with_fourier_wall !not working well
+    subroutine restab_boundary_with_fourier_wall !not working well()
 
     use errors_params, only: err_find_psistab
     use transport2fbe, only: n_fourier_restab_boundary
@@ -2753,7 +2753,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     end subroutine restab_boundary_with_fourier_wall
 
 !--------------------------------------------------------------------
-    subroutine restab_axis_with_fourier_wall
+    subroutine restab_axis_with_fourier_wall()
 
     use errors_params, only: err_find_psistab
     use green_function, only: greeni
@@ -2932,7 +2932,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     end subroutine estimate_tau_VDE
 
 !-------------------------------------------------------------------
-    subroutine ferro_mag_create
+    subroutine ferro_mag_create()
 
     use ferromagstructure, only: type_ferromag
     use feqis_tools, only: interp2d_psi, green_function, inv_matrix
@@ -3006,7 +3006,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     end subroutine ferro_mag_create
 
 !---------------------------------------------------------------------
-    subroutine interp_j_fromrhotorz
+    subroutine interp_j_fromrhotorz()
 
     integer :: i, j
 

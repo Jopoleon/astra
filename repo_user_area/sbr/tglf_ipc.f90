@@ -14,7 +14,7 @@ type(tglf_output) :: tglf_out
 contains
 
 !---------------------------------------------------------------------
-    subroutine tglf_alloc
+    subroutine tglf_alloc()
 
     use scalars, only: NA1
 

@@ -361,7 +361,7 @@ end subroutine read_array_2d
     end subroutine read_equil
 
 !---------------------------------------------------------------------
-    subroutine write_ajson
+    subroutine write_ajson()
 
     use parameters_a2equil, only: equil_now
     use scalars, only: NA1, varValues, varxValues, constValues, &

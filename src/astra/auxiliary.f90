@@ -228,7 +228,7 @@ contains
     end function IFTREQ
 
 !---------------------------------------------------------------------
-    subroutine OLDNEW
+    subroutine OLDNEW()
 
     use status, only: NE, TE, TI, FP, VR, UPAR, UPS0, UPS1, UPS2, &
         NEO, TEO, TIO, FPO, VRO, UPARO, UPS0O, UPS1O, UPS2O, &

@@ -4,17 +4,14 @@ use nbstatus, only: n_rho, n_energy
   
 implicit none
 
-integer, parameter :: IV1=321, n_ch=9, n_fun=50
+integer, parameter :: IV1=321, n_ch=9, n_pitch=50
 
 integer :: IV, IT
-double precision :: HV, HM, DT, EZ
-double precision, dimension(n_energy) :: YFI, CNSFI
+double precision :: HV, HM, DT
 double precision, dimension(n_ch) :: VB, RNB, ZB, RMB, EB
-double precision, dimension(IV1) :: DV2, A, B, A1, B1, D, AL, BT, &
-   AE, BE, AI, BI
-double precision, dimension(n_fun) :: YM1, YM2
-double precision, dimension(n_rho) :: PBCX, YFCUR, YLNI, YLNE, YLNZ
-double precision, dimension(IV1, n_fun) :: FSRS, FVM, RMN
+double precision, dimension(IV1) :: DV2, A, B, A1, B1, D, AL, BT, AE, BE, AI, BI
+double precision, dimension(n_pitch) :: YM1, YM2
+double precision, dimension(IV1, n_pitch) :: FSRS, FVM, RMN
 
 contains
 
@@ -24,24 +21,22 @@ contains
     double precision function YERF(x_in)
     
     double precision, intent(in) :: x_in
-    double precision :: EX2, T, T2, T3
+    double precision :: EX2, T
 
-    EX2 = dEXP(-x_in**2)
-    T  = 1.d0 / (1.d0 + 0.3275911d0 * x_in)
-    T2 = T**2
-    T3 = T2 * T
+    EX2 = exp(-x_in**2)
+    T = 1.d0/(1.d0 + 0.3275911d0 * x_in)
 
     YERF = (1.d0 - (0.254829592d0 * T - &
-        0.284496736d0 * T2 + 1.421413741d0 * T3 - &
-        1.453152027d0 * T2 * T2 + 1.061405429d0 * T2 * T3) * EX2)
+        0.284496736d0 * T**2 + 1.421413741d0 * T**3 - &
+        1.453152027d0 * T**4 + 1.061405429d0 * T**5) * EX2)
 
     end function YERF
     
 !---------------------------------------------------------------------
     double precision function YCERF(x_in)
-!----------------------------------------------------- 17.11.89
+!---------------------------------------------------------------------
 ! YcERF =( exp(-x2) / x / sqrt(pi) + erf(x)*(1 - .5/x2) ) / (2 x)
-!-------------------------------------------------------------
+!---------------------------------------------------------------------
 
     double precision, intent(in) :: x_in
     double precision :: X2, EX2
@@ -52,7 +47,7 @@ contains
     endif
 
     X2 = x_in**2
-    EX2 = dEXP(-X2)
+    EX2 = exp(-X2)
     YCERF = (0.56418959d0 * EX2 + YERF(x_in) * (x_in - 0.5d0 / x_in)) / (2.d0 * X2)
 
     end function YCERF
@@ -61,7 +56,6 @@ contains
     double precision function YAERF(x_in)
 !---------------------------------------------------------------------
 ! YAERF = erf(x) - 2 * x * exp(-x2) / sqrt(pi)
-!
 ! ERF = integral exp(-s2) ds * 2 / sqrt(pi)
 ! Abramowitz, Stegun p.122
 !---------------------------------------------------------------------
@@ -74,13 +68,13 @@ contains
         return
     endif
 
-    EX2 = dexp(-x_in**2)
+    EX2 = exp(-x_in**2)
     YAERF = YERF(x_in) - 1.1283792d0 * x_in * EX2
 
     end function YAERF
 
 !---------------------------------------------------------------------
-    subroutine NBCOEF
+    subroutine NBCOEF()
 ! Fokker-Planck coefficients
 
     use nbstatus, only: ISPEND
@@ -92,7 +86,7 @@ contains
     do I=1, IV1
         A1(I) = 0.
         B(I)  = 0.
-        A(I)  = ((I + 1) * I / (HV * (I + 0.5))**3)
+        A(I)  = (I + 1) * I / (HV * (I + 0.5))**3
         B1(I) = 0.
         D(I)  = 0.
     enddo
@@ -101,23 +95,23 @@ contains
 
     do J=1, ISPEND
 
-        VB2  = VB(J) * VB(J)
-        YE   = HV * HV / EB(J)
+        VB2  = VB(J)**2
+        YE   = HV**2/EB(J)
         YDEL = ZB(J)**2 * RNB(J) / RNB(1)
-        YB = .5 * VB2 * YDEL * dexp(0.75 * YE)
-        YA = dexp(YE)
-        YD = YDEL / (HM * HM) / VB(J)
-        YHDVB = HV / VB(J)
+        YB = 0.5d0*VB2*YDEL*exp(0.75 * YE)
+        YA = exp(YE)
+        YD = YDEL / HM**2 / VB(J)
+        YHDVB = HV/VB(J)
 
         do I=1, IV1
             I1 = I + 1
-            YI  = I * YHDVB
-            YIP = (I + .5d0) * YHDVB
-            YEXPI = dexp(I * YE)
-            YAB = YB * A(I) * YAERF(YIP)
-            B(I)  = B(I)  + YAB * YEXPI
-            A1(I) = A1(I) + YAB / (YEXPI * YA)
-            D(I)  = D(I) + YD * YCERF(YI)
+            YI  = I*YHDVB
+            YIP = (I + 0.5d0)*YHDVB
+            YEXPI = exp(I*YE)
+            YAB = YB*A(I)*YAERF(YIP)
+            B(I)  = B(I)  + YAB*YEXPI
+            A1(I) = A1(I) + YAB/(YEXPI * YA)
+            D(I)  = D(I) + YD*YCERF(YI)
         enddo
 
         if (J == 1) then
@@ -137,48 +131,45 @@ contains
 
     do I=1, IV
         I1 = I + 1
-        D(I)   = D(I)  * DV2(I)
-        A(I1)  = A1(I) * DV2(I1)
-        A1(I)  = A1(I) * DV2(I)
-        B1(I1) = B(I)  * DV2(I1)
-        B(I)   = B(I)  * DV2(I)
-
+        D(I)   = D(I) *DV2(I)
+        A(I1)  = A1(I)*DV2(I1)
+        A1(I)  = A1(I)*DV2(I)
+        B1(I1) = B(I) *DV2(I1)
+        B(I)   = B(I) *DV2(I)
     enddo
 
-    B(IV1)  = B(IV1)  * DV2(IV1)
-    D(IV1)  = D(IV1)  * DV2(IV1)
-    A1(IV1) = A1(IV1) * DV2(IV1)
+    B(IV1)  = B(IV1) *DV2(IV1)
+    D(IV1)  = D(IV1) *DV2(IV1)
+    A1(IV1) = A1(IV1)*DV2(IV1)
 
     end subroutine NBCOEF
 
 !---------------------------------------------------------------------
-    subroutine NBMESH
+    subroutine NBMESH()
 ! V, MU mesh
 
-    integer :: IT1, JV, JT
+    integer :: JV, JT
 
 ! ... Vi = i * HV  i = 1..IV1
 ! ... MUj = -1 + (j - 1/2) * Hmu
 
-    IT1 = IT + 1
-    HM = 2. / IT
-    HV = 4. / 3. / IV
+    HM = 2./IT
+    HV = 4./3. / IV
 
-! ... YM2j = 1 - (Mj + 1/2)**2
-    do JT = 1, IT
-        YM1(JT) = -1. + HM * (JT - .5)
+    do JT=1, IT
+        YM1(JT) = -1. + HM * (JT - 0.5)
         YM2(JT) = JT * HM * (2. - JT * HM)
     enddo
 
 ! ... DV2i = 1 / Vi**2
     do JV = 1, IV1
-        DV2(JV) = 1. / (HV * JV)**2
+        DV2(JV) = 1./(HV * JV)**2
     enddo
 
     end subroutine NBMESH
 
 !---------------------------------------------------------------------
-    subroutine NBPOMU
+    subroutine NBPOMU()
 ! MU sweep
 
     integer :: I, ITM1, J, J1, JM
@@ -191,31 +182,31 @@ contains
     do I=1, IV
         BJ = D(I) * YM2(1)
         CJ = BJ + DT
-        DJ = FSRS(I, 1) + DT * FVM(I, 1)
+        DJ = FSRS(I, 1) + DT*FVM(I, 1)
         AL(2) = BJ / CJ
         BT(2) = DJ / CJ
 
         do J=2, ITM1
             J1 = J + 1
-            DJ = FSRS(I, J) + DT * FVM(I, J)
+            DJ = FSRS(I, J) + DT*FVM(I, J)
             AJ = BJ
             BJ = D(I) * YM2(J)
             CJ = AJ + BJ + DT
-            Y = (CJ - AL(J) * AJ)
+            Y = (CJ - AL(J)*AJ)
             AL(J1) = BJ / Y
-            BT(J1) = (DJ + AJ * BT(J)) / Y
+            BT(J1) = (DJ + AJ*BT(J)) / Y
         enddo
 
 ! ... Sweeping
-        DJ = FSRS(I, IT) + DT * FVM(I, IT)
+        DJ = FSRS(I, IT) + DT*FVM(I, IT)
         AJ = BJ
         CJ = AJ + DT
-        FVM(I, IT) = (DJ + AJ * BT(IT)) / (CJ - AL(IT) * AJ)
+        FVM(I, IT) = (DJ + AJ*BT(IT)) / (CJ - AL(IT)*AJ)
 
         do JM=1, ITM1
             J  = IT - JM
             J1 = J + 1
-            FVM(I, J) = AL(J1) * FVM(I, J1) + BT(J1)
+            FVM(I, J) = AL(J1)*FVM(I, J1) + BT(J1)
         enddo
 
     enddo
@@ -223,7 +214,7 @@ contains
     end subroutine NBPOMU
 
 !---------------------------------------------------------------------
-    subroutine NBPOVE
+    subroutine NBPOVE()
 ! V sweep
 
     integer :: J, JP, I, I1, IM
@@ -233,22 +224,22 @@ contains
         JP = J + 1
         Y = DT + A1(1) + RMN(1, J)
         AL(2) = B(1)/Y
-        BT(2) = (FSRS(1, J) + FVM(1, J) * DT)/Y
+        BT(2) = (FSRS(1, J) + FVM(1, J)*DT)/Y
 
 ! ... Sweeping
         do I=2, IV
             I1 = I + 1
-            Y = DT + A1(I) + B1(I) - AL(I) * A(I) + RMN(I, J)
+            Y = DT + A1(I) + B1(I) - AL(I)*A(I) + RMN(I, J)
             AL(I1) = B(I)/Y
             BT(I1) = (A(I) * BT(I) + FSRS(I, J) + FVM(I, J) * DT)/Y
         enddo
 
-        FVM(IV1, J) = BT(IV1) * A1(IV) / (B(IV) - A1(IV) * AL(IV1))
+        FVM(IV1, J) = BT(IV1)*A1(IV)/(B(IV) - A1(IV)*AL(IV1))
 
         do IM=1, IV
             I  = IV - IM + 1
             I1 = I + 1
-            FVM(I, J) = AL(I1) * FVM(I1, J) + BT(I1)
+            FVM(I, J) = AL(I1)*FVM(I1, J) + BT(I1)
         enddo
 
     enddo
@@ -257,7 +248,7 @@ contains
 
 !---------------------------------------------------------------------
     subroutine NBIONR(EBEAM, ABEAM, RTOR, NA1, TAU, NNCL, NNWM, &
-      CBM1, CBM3, CBM4, CBMI2, CBMI3, JSRREC, YEXTARR)
+        n_nbi, CBM3, cx_cold, CBMI2, dn_rho, JSRREC, YEXTARR)
 
 !====================================================== 22-MAR-99
 ! Update 05-NOV-2012, 14-JAN-13
@@ -273,26 +264,27 @@ contains
     use pi_const, only: GP
     use nbicom, only: YASBA, YASBA1
 
-    integer, intent(in) :: NA1, JSRREC
+    integer, intent(in) :: NA1, JSRREC, n_nbi, cx_cold, dn_rho
     double precision, intent(in) :: EBEAM, ABEAM, RTOR, &
-        TAU, NNCL, NNWM, CBM1, CBM3, CBM4, CBMI2, CBMI3, YEXTARR(n_rho, 9)
+        TAU, NNCL, NNWM, CBM3, CBMI2, YEXTARR(n_rho, 9)
 
-    integer :: JFPBEG, JN1OLD, N, N1, ITC, IT1, NTET1, IEB, J1BEG, J1END, &
-        I, J, JT, JV, JN, JE, JBMS4, JNA, JNAC, J2, JSP, ISP, &
+    integer :: JN1OLD, N, N1, ITC, NTET1, J1BEG, J1END, &
+        I, J, JT, JV, JN, JE, JNA, JNAC, J2, JSP, ISP, &
         ITRAP, JTDTS, ITIME, NTET, JN22, IE, IVE, J1, JTIME, &
-        I1, I2, JLREC, JSRNUM, JDBL
+        I1, I2, JLREC, j_nbi, JDBL, ios
 
-    double precision :: YET, CBMI33, YM2F, &
+    double precision :: CNSFI, YET, YM2F, &
         SQPI, DTION, YEV21, YEV22, YEV23, YJ2, YEPS, T0, TSNBI, &
         CNSTN, CNSTQ, CNSTP, CNSTC, CNSTE, CNSTT, CNSTQT, &
         DTAU, EBDTI, EBDTI0, CNSTE0, CNSNN, CNSNN0, YNN0, YV2, &
         YRMN, YSRSE, YEBEAM, YPB, YIP, YV4, FVMMIN, F0J, YEXARG, &
         YE, YI, YPEBM, YPIBM, YPBPER, YPBLON, YNB, YCUFI, YMF, &
         PTHBM, PTHERM, YDELPE, YDELPI, YDELMI, YDELME, YMAXMU
+    double precision, dimension(n_energy) :: YFI
+    double precision, dimension(n_rho) :: Fcur, Lni, Lne, Lnz
 
-    save JFPBEG, JN1OLD
+    save JN1OLD
 
-    data JFPBEG /0/
     data JN1OLD /1/
 
     JDBL = 2
@@ -303,15 +295,14 @@ contains
     DTION = CBMI2 * TAU
 
 !----- flux surface
-    N1 = (NA1 - 1) / CBMI3 + 1
+    N1 = (NA1 - 1) / dn_rho + 1
     N  = N1 - 1
 
 !----- pitch angle
-    ITC   = 50 / 2
+    ITC   = n_pitch/2
     NTET  = ITC
     NTET1 = ITC + 1
-    IT  = 2 * ITC
-    IT1 = IT + 1
+    IT    = 2*ITC
 
 !----- velocity
     IV = IV1 - 1
@@ -320,7 +311,6 @@ contains
     YFI(3) = (IV * 3) / 4.d0
     YFI(2) = YFI(3) / 1.414214d0
     YFI(1) = YFI(3) / 1.732051d0
-    IEB = 3
 
 !----- clear previous distributions
     do JN=1, NA1
@@ -334,8 +324,7 @@ contains
     enddo
 
 !----- file for Fij
-    JLREC = JDBL * 4 * IV1 * IT
-
+    JLREC = 4*JDBL*IV1*IT
     open(31, file = 'dat/fij.dat', form='unformatted', access='direct', recl=JLREC)
 
 !----- zero initial distribution
@@ -354,11 +343,14 @@ contains
                     FVM(I, J) = 0.
                 enddo
             enddo
-            write(31, rec=JN, err=999) ((FVM(JV, JT), JV = 1, IV1), JT = 1, IT)
+            write(31, rec=JN, iostat=ios) ((FVM(JV, JT), JV=1, IV1), JT=1, IT)
+            if (ios > 0) then
+                write(*, *) 'error NBION2'
+                return
+            endif
         enddo
     endif
 
-    JFPBEG = 1
     JN1OLD = N1
 
 !----- source arrays
@@ -371,17 +363,14 @@ contains
         enddo
     enddo
 
-    JBMS4 = CBM1
-
     call NBMESH
 
-    EZ = 0.d0
     CNSTN = HM*HV
     CNSTQ = 3.2d-3*EBEAM*HV**2 * CNSTN
     CNSTP = EBEAM*CNSTN*HV*HV
-    CNSTC = 0.7*SQRT(EBEAM/ABEAM)*HV*CNSTN
+    CNSTC = 0.7*sqrt(EBEAM/ABEAM)*HV*CNSTN
     CNSTE = 1.6d-3*CNSTP/DTION
-    CNSTT = 3.5d-2*EBEAM*SQRT(EBEAM*ABEAM)
+    CNSTT = 3.5d-2*EBEAM*sqrt(EBEAM*ABEAM)
     YEV21 = EBEAM/ABEAM
     YEV22 = YEV21/2.
     YEV23 = YEV21/3.
@@ -391,49 +380,47 @@ contains
     open(35, file='dat/srsfi.dat', form='unformatted', access='DIRECT', recl=JSRREC)
 
     do JN=1, N ! Output for distribution function        
-        JNA = 1 + CBMI3*(JN - 1)
-        JNAC = JNA - 1 + CBMI3
-        J2 = JNA - CBMI3*YJ2
-        if (JN == N) JNAC=NA1-1
-        if (CBMI3 > 1.d0) YJ2 = 0.5d0
-        YLNE(JN) = 15.85d0 + log(TE(J2)/sqrt(NE(J2)))
+        JNA = 1 + dn_rho*(JN - 1)
+        JNAC = JNA - 1 + dn_rho
+        J2 = JNA - dn_rho*YJ2
+        if (JN == N) JNAC = NA1 - 1
+        if (dn_rho > 1) YJ2 = 0.5d0
+        Lne(JN) = 15.85d0 + log(TE(J2)/sqrt(NE(J2)))
         if (EBEAM > 100.*ABEAM) then
-            YLNI(JN) = 23.7d0 + log(AMAIN(J2)/(AMAIN(J2) + ABEAM)* &
+            Lni(JN) = 23.7d0 + log(AMAIN(J2)/(AMAIN(J2) + ABEAM)* &
               sqrt(1.d-3*ABEAM*EBEAM*TE(J2)/NE(J2)))
         else
-            YLNI(JN) = 25.4d0 + log(1.d-3*EBEAM*AMAIN(J2)/ &
+            Lni(JN) = 25.4d0 + log(1.d-3*EBEAM*AMAIN(J2)/ &
                   (AMAIN(J2) + ABEAM)*sqrt(TE(J2)/NE(J2)))
         endif
-        YLNZ(JN) = YLNI(JN)
+        Lnz(JN) = Lni(JN)
         YEPS = AMETR(J2)/(RTOR + SHIF(J2))
         ITRAP = (1.d0 - sqrt(2.*YEPS/(1. + YEPS)))/HM - 1
-        YFCUR(JN) = (1. - FNBF(ZEF(J2), YEPS)/ZEF(J2))
-        PBCX(JN) = 0.
-        RNB(1) = NE(J2)*YLNE(JN)
+        Fcur(JN) = (1. - FNBF(ZEF(J2), YEPS)/ZEF(J2))
+        RNB(1) = NE(J2)*Lne(JN)
         EB(1) = TE(J2)/EBEAM
         VB(1) = sqrt(EB(1)*ABEAM/RMB(1))
 
         do JSP=2, ISPEND
             ISP = ISPE(JSP)
             if (EBEAM > 100.*ABEAM) then
-                YLNZ(JN) = 23.7d0 + log(RMB(JSP)/(RMB(JSP) + ABEAM)* &
-                 sqrt(1.d-3*ABEAM*EBEAM*TE(J2)/NE(J2)))
+                Lnz(JN) = 23.7d0 + log(RMB(JSP)/(RMB(JSP) + ABEAM)* &
+                    sqrt(1.d-3*ABEAM*EBEAM*TE(J2)/NE(J2)))
             else
-                YLNZ(JN) = 25.4d0 + log(1.d-3*EBEAM*RMB(JSP)/ &
-             (RMB(JSP)+ABEAM)*SQRT(TE(J2)/NE(J2)))
+                Lnz(JN) = 25.4d0 + log(1.d-3*EBEAM*RMB(JSP)/ &
+                    (RMB(JSP)+ABEAM)*sqrt(TE(J2)/NE(J2)))
             endif
-            RNB(JSP) = YEXTARR(J2, ISP)*YLNZ(JN)
+            RNB(JSP) = YEXTARR(J2, ISP)*Lnz(JN)
             EB(JSP) = TI(J2)/EBEAM
             VB(JSP) = sqrt(EB(JSP)*ABEAM/RMB(JSP))
         enddo
   
 ! Time step DTAU[s]
-        T0 = CNSTT/(NE(J2)*YLNE(JN))
+        T0 = CNSTT/(NE(J2)*Lne(JN))
 
 ! Beam prtcls. slowing down time
-        TSNBI = 2.d0*ABEAM*sqrt(TE(J2))*TE(J2)/YLNE(JN)/NE(J2)
-        CBMI33 = 2.
-        JTDTS = CBMI33*DTION/TSNBI
+        TSNBI = 2.d0*ABEAM*sqrt(TE(J2))*TE(J2)/Lne(JN)/NE(J2)
+        JTDTS = 2.d0*DTION/TSNBI
         if (JTDTS > 1) then
             ITIME = JTDTS
         else
@@ -449,7 +436,7 @@ contains
 
 ! Sources and losses distributions
         CNSNN = 4.373E7*T0*CBM3*0.5d0
-        CNSNN0 = (NNCL + NNWM)*4.373d7*T0*CBM4*0.5d0
+        CNSNN0 = (NNCL + NNWM)*4.373d7*T0*dble(cx_cold)*0.5d0
         do JV=1, IV1
             do JT=1, IT
                 RMN(JV, JT) = 0.d0
@@ -460,7 +447,7 @@ contains
 ! Fast ions CX due to cold neutrals
 ! Fast ions CX due to NB neutrals
 
-        if (CBM4 > 0.d0 .or. CBM3 > 0.d0) then
+        if (cx_cold > 0 .or. CBM3 > 0.d0) then
             YNN0 = CNSNN0*NN(J2) + CNSNN * &
                (NNBM1(J2) + NNBM2(J2) + NNBM3(J2))
             do JV=1, IV1
@@ -475,22 +462,18 @@ contains
 ! End of CX losses
 
         YSRSE = 0.
-        do JSRNUM=1, JBMS4
-            read(35, rec=JSRNUM, err=211) YEBEAM, &
+        do j_nbi=1, n_nbi
+            read(35, rec=j_nbi, iostat=ios) YEBEAM, &
                 (((YASBA(JE, JN22, JT), JE=1, 3), JN22=1, N), JT=1, IT)
- 211        continue
 
             do JT=1, IT
-                do IE=1, 3
+                do IE=1, n_energy
                     if (YASBA(IE, JN, JT) > 0.) then
                         IVE = YFI(IE)*sqrt(YEBEAM/EBEAM)
-                        CNSFI(IE) = DV2(IVE)/CNSTN * 0.5 * &
-                                 (YFI(IE)/IVE)**2*YEBEAM/EBEAM
+                        CNSFI = DV2(IVE)/CNSTN*0.5*(YFI(IE)/IVE)**2*YEBEAM/EBEAM
 ! Correction of power balance
-                        FSRS(IVE, JT) = YASBA(IE, JN, JT)* &
-                         CNSFI(IE)*T0 + FSRS(IVE,JT)
-                        YSRSE = YSRSE + YASBA(IE, JN, JT)*T0/CNSTN * &
-                             0.5*IVE**2
+                        FSRS(IVE, JT) = YASBA(IE, JN, JT)*CNSFI * T0 + FSRS(IVE,JT)
+                        YSRSE = YSRSE + YASBA(IE, JN, JT)*T0/CNSTN *0.5*IVE**2
                     endif
                 enddo
             enddo
@@ -500,7 +483,12 @@ contains
 ! Coefficients
         call NBCOEF
 
-        read(31, rec=JN, err=996) ((FVM(JV, JT), JV=1, IV1), JT=1, IT)
+        read(31, rec=JN, iostat=ios) ((FVM(JV, JT), JV=1, IV1), JT=1, IT)
+        if (ios > 0) then
+            write(*, *) 'R/W error in NBION2'
+            return
+        endif
+
 ! For dPb/dt
         YPB = 0.
         do I=1, IV
@@ -537,14 +525,17 @@ contains
         do JV=1, IV1
             YE = 0.
             YEXARG = EBDTI*(1.d0/DV2(1) - 1.d0/DV2(JV))
-            YE = dEXP(YEXARG)*F0J
+            YE = exp(YEXARG)*F0J
             do JT=1, IT
                 FVM(JV, JT) = FVM(JV, JT) - YE
             enddo
         enddo
 
-        write(31, rec=JN, err=996) &
-         ((FVM(JV, JT), JV=1, IV1), JT=1, IT)
+        write(31, rec=JN, iostat=ios) ((FVM(JV, JT), JV=1, IV1), JT=1, IT)
+        if (ios > 0) then
+            write(*, *) 'R/W error in NBION2'
+            return
+        endif
 
 ! Power to plasma, beam pressure, density, current
         YIP    = 0.
@@ -616,19 +607,12 @@ contains
             NIBM(J) = YNB*CNSTN
 ! Fast ion current without trapping correction for Eb [MA/m2]
             CUFI(J) = YCUFI*CNSTC
-            CUBM(J) = CUFI(J)*YFCUR(JN)
+            CUBM(J) = CUFI(J)*Fcur(JN)
         enddo
     enddo ! radial loop
 
     close(31)
     close(35)
-
-    return
-
- 999  write(*, *) 'error NBION2'
-    return
-
- 996  write(*, *) 'R/W error in NBION2'
 
     end subroutine NBIONR
 

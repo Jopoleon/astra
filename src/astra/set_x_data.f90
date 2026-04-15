@@ -427,7 +427,7 @@ contains
     end subroutine set_x_arrays
 
 !-----------------------------------------------------------------------
-    subroutine set_x_scalars
+    subroutine set_x_scalars()
 !-----------------------------------------------------------------------
 ! Time evolution of the scalar input data
 ! For the current time, a value is stored in the array
@@ -483,7 +483,7 @@ contains
     end subroutine set_x_scalars
 
 !----------------------------------------------------------------------
-    subroutine astra_assignments
+    subroutine astra_assignments()
 
     use pi_const, only: GP, GP2
     use scalars, only: NA1, NA, NB1, NAB, AB, ABC, AWALL, TIME, TSTART, TPAUSE, &

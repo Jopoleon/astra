@@ -9,7 +9,7 @@ rho_pol(1:NA1) = SQRT(FP_NORM(1: NA1))
 class POSTEP:
 
     header = \
-"""subroutine POSTEP
+"""subroutine POSTEP()
 
 use scalars
 use status
@@ -32,7 +32,7 @@ double precision :: t_cpu1, t_cpu2
 class SET_GRAPH_NAMES:
     
     header = \
-"""subroutine SET_GRAPH_NAMES
+"""subroutine SET_GRAPH_NAMES()
 
 use read_input, only: n_sbr
 use graph_utils, only: NTOUT, NROUT, NXOUT, NAMER, SCALER, NAMET, NAMEX, NWINDX, DTNAME
@@ -48,7 +48,7 @@ allocate(DTNAME(n_control+4*n_sbr))
 class ININAM:
     
     header = \
-"""subroutine ININAM
+"""subroutine ININAM()
 
 use read_input, only: sbr_name, n_sbr, awd
 use scalars
@@ -63,7 +63,7 @@ implicit none
 class SETVAR:
 
     header = \
-"""subroutine SETVAR
+"""subroutine SETVAR()
 
 use scalars
 use status
@@ -186,7 +186,7 @@ UPL(NA1)  = ULON(NA1)/(IPOL(NA1)*G33(NA1))
 class INIVAR:
 
     header = \
-'''subroutine INIVAR
+'''subroutine INIVAR()
 
 use read_input, only: IFDFAX
 use scalars
@@ -220,7 +220,7 @@ enddo
 class DETVAR:
 
     header = \
-'''subroutine DETVAR
+'''subroutine DETVAR()
 
 use scalars
 use status
@@ -616,7 +616,7 @@ bc_type_imp(2) = 1
 class RADOUT:
 
     header = \
-"""subroutine RADOUT
+"""subroutine RADOUT()
 
 !------------------------------------------------------------
 ! Radial profile plotting
@@ -651,7 +651,7 @@ enddo
 end subroutine RADOUT
 
 !------------------------------------------------------------
-subroutine TIMOUT
+subroutine TIMOUT()
 
 !------------------------------------------------------------
 ! Time traces plotting
@@ -869,7 +869,7 @@ call markloc("init done")
 class INIT_CONVERGE_STEP:
 
     header = \
-'''subroutine init_converge_step
+'''subroutine init_converge_step()
 
 use pi_const, only: GP, GP2, mu0
 use read_input, only: equ_file, exp_file

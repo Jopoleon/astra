@@ -6,7 +6,7 @@ contains
 !---------------------------------------------------------------------
     subroutine NBINJ(file_nbi, BTOR, RTOR, ABC, AB, ROC, SHIFT, UPDWN, &
         HRO, TAU, NA1, NB1, AIM1, AIM2, AIM3, AMJ, ZMJ, NNCL, NNWM, QNBI, &
-        CBM1, CBM2, CBMI3, CBMI1, CBM4, CBMI2, CBM3, CBMI4)
+        n_nbi, cx_flag, dn_rho, fp_flag, cx_cold, CBMI2, CBM3, calc_fus)
 
     use nbstatus, only: n_rho, n_fields, n_theta, n_energy, ISPE, ISPEND, YRIPLR, &
         AMETR, PBEAM, SCUBM, SNNBM, SNEBM, SNIBM1, SNIBM2, SNIBM3, &
@@ -18,16 +18,15 @@ contains
 
     integer, parameter :: n_unit=36
 
-    integer, intent(in) :: NA1, NB1
+    integer, intent(in) :: NA1, NB1, cx_flag, fp_flag, cx_cold, calc_fus
     double precision, intent(in) :: BTOR, RTOR, ABC, AB, ROC, SHIFT, UPDWN, HRO, TAU, &
-        AIM1, AIM2, AIM3, AMJ, ZMJ, NNCL, NNWM, CBM2, CBM3, CBM4, CBMI1, CBMI2, CBMI4
+        AIM1, AIM2, AIM3, AMJ, ZMJ, NNCL, NNWM, CBM3, CBMI2
     character(len=*), intent(in) :: file_nbi
     double precision, intent(out) :: QNBI
-    double precision, intent(inout) :: CBM1, CBMI3
+    integer, intent(inout) :: n_nbi, dn_rho
 
     logical :: file_exists
-    integer :: N, j_nbi, J, JN, JN1, JNAX, ERCODE, JWARN, j_frac, j_rho, &
-        JSRREC, IFLAG, n_nbi
+    integer :: N, j_nbi, J, JN, JN1, JNAX, ERCODE, JWARN, j_rho, JSRREC, IFLAG
     double precision :: CBMH1, CBMH2, CBMR1, CBMR2, CBMS1, CBMS2, CBMS3, CBMS4, EBEAM, &
         power_frac(n_energy), ABEAM=1.d0, HBEAM, CONTR, RBMAX=0.5d0, RBMIN=1.d0, QBEAM
     double precision :: YQBEAM, YABEAM, YEBEAM, YUD, YHM
@@ -41,14 +40,13 @@ contains
     inquire(file=TRIM(file_nbi), exist=file_exists)
 
     if (.not. file_exists) write(*, *) 'File "', TRIM(file_nbi), '" not found'
-    n_nbi = abs(int(CBM1 + 0.5d0))
-    if (CBM1 < 0.0) n_nbi = n_nbi + 1
+    if (n_nbi < 0.0) n_nbi = n_nbi + 1
     if (n_nbi == 0) then
         write(*, *) '>>> NBI >>> Zero sources, stopping'
         stop
     endif
 
-! CBMI3 to make NBI internal mesh interval > max Larmor raduis
+! dn_rho to make NBI internal mesh interval > max Larmor raduis
     Y = 1.d-3
     EBEAM = 1.d-3
 
@@ -60,32 +58,29 @@ contains
             EBEAM = ARRAY(5)
         else
             if (EBEAM < ARRAY(5)) EBEAM = ARRAY(5)
-            if (CBMI1 /= 1.d0 .and. ABEAM /= ARRAY(3)) write(*, *) 'ABEAM must be the same for all NBIs if CBM4  /=  1'
+            if (fp_flag /= 1 .and. ABEAM /= ARRAY(3)) write(*, *) 'ABEAM must be the same for all NBIs if cx_cold  /=  1'
         endif
         Y = max(Y, ARRAY(3)*ARRAY(5))
     enddo
     close(2)
 
-    if (CBMI1 > 0.d0) then
-        CBMI3 = 1.d0
-        J = 5.d-3*dsqrt(Y)*(NA1/ABC)/(BTOR*RTOR/(RTOR + SHIFT))
-        if (J > 1 .and. J < (NA1-1)) CBMI3 = J
-        if (5*J > (NA1-1) .and. NA1 > 6) CBMI3 = (NA1 - 1)/5
-    else  ! w/o FP solver FI source on the transport grid
-        CBMI3 = 1.d0
+    dn_rho = 1
+    if (fp_flag > 0) then
+        J = 5.d-3*sqrt(Y)*(NA1/ABC)/(BTOR*RTOR/(RTOR + SHIFT))
+        if (J > 1 .and. J < (NA1-1)) dn_rho = J
+        if (5*J > (NA1-1) .and. NA1 > 6) dn_rho = (NA1 - 1)/5
     endif
 
     QNBI = 0.d0
-    CBM1 = n_nbi
 
 !---- Ripple
     YUD = UPDWN
     Y = (AMETR(NA1) + AMETR(NA1 - 1))/2.d0
-    N = (NA1 - 1)/CBMI3
+    N = (NA1 - 1)/dn_rho
     Y1 = 0.
     do JN1=N+1, 2, -1
         JN = JN1 - 1
-        JNAX = 1 + CBMI3*(JN - 1)
+        JNAX = 1 + dn_rho*(JN - 1)
         Y2 = RIPRAD(YUD, JNAX)/Y
         if (Y2 >= Y1) YMAX = Y2
         Y1 = Y2
@@ -128,7 +123,7 @@ contains
     if (IFLAG /= 0) return
 
     if (n_nbi == 0) then
-        write(*, *) ' -1 < CBM1 < 1 = no NBI sources '
+        write(*, *) 'No NBI sources '
         return
     endif
 
@@ -168,23 +163,23 @@ contains
         YHM = (HBEAM - YUD)*100.
         if (CONTR == 0.d0 .or. CONTR == 1.d0) then
             call NBSRSR(j_nbi, 2.d0*CONTR - 1.d0, NA1, RTOR, SHIFT, AB, BTOR, HRO, YHM, &
-                CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, CBMR1, CBMR2, CBMI3, CBMI1, &
-                EBEAM, power_frac, ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
-            if (CBMI1 == 1.d0) call NBION0(NA1, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
+                CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, CBMR1, CBMR2, dn_rho, fp_flag, &
+                EBEAM, power_frac, ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, calc_fus)
+            if (fp_flag == 1) call NBION0(NA1, ABEAM, EBEAM, RTOR, dn_rho, yEXTARR)
         else ! balanced injection
 ! coinj. part
             QBEAM = YQBEAM*(1. - CONTR)
             call NBSRSR(j_nbi, -1.d0, NA1, RTOR, SHIFT, AB, BTOR, HRO, YHM, &
-                CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, CBMR1, CBMR2, CBMI3, CBMI1, &
-                EBEAM, power_frac, ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
-            if (CBMI1 == 1.d0) call NBION0(NA1, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
+                CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, CBMR1, CBMR2, dn_rho, fp_flag, &
+                EBEAM, power_frac, ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, calc_fus)
+            if (fp_flag == 1) call NBION0(NA1, ABEAM, EBEAM, RTOR, dn_rho, yEXTARR)
 
 !: counter injection part...
             QBEAM = YQBEAM*CONTR
             call NBSRSR(j_nbi, 1.d0, NA1, RTOR, SHIFT, AB, BTOR, HRO, YHM, &
-                CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, CBMR1, CBMR2, CBMI3, CBMI1, &
-                EBEAM, power_frac, ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
-            if (CBMI1 == 1.d0) call NBION0(NA1, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
+                CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, CBMR1, CBMR2, dn_rho, fp_flag, &
+                EBEAM, power_frac, ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, calc_fus)
+            if (fp_flag == 1) call NBION0(NA1, ABEAM, EBEAM, RTOR, dn_rho, yEXTARR)
             QBEAM = YQBEAM
         endif
     enddo
@@ -196,45 +191,45 @@ contains
     QBEAM = YQBM
 
 ! Fast ion' distribution (3D + t)
-    if (CBMI1 >= 2.d0)  then
+    if (fp_flag > 1)  then
         if (JWARN == 1) then
-            write(*, *) 'ABEAM must be the same for CBMI1#1'
+            write(*, *) 'ABEAM must be the same for fp_flag=2'
             ABEAM = YABEAM
         endif
 
-        call NBIONR(EBEAM, ABEAM, RTOR, NA1, TAU, NNCL, NNWM, CBM1, CBM3, CBM4, &
-            CBMI2, CBMI3, JSRREC, YEXTARR)
+        call NBIONR(EBEAM, ABEAM, RTOR, NA1, TAU, NNCL, NNWM, n_nbi, CBM3, cx_cold, &
+            CBMI2, dn_rho, JSRREC, YEXTARR)
     endif
 
 ! Conversion to rough mesh keeping the intagrals
-    if (CBMI3 /= 1.d0)    then
-        call smooth_int(NIBM , CBMI3, ROC, NA1)
-        call smooth_int(PIBM , CBMI3, ROC, NA1)
-        call smooth_int(PEBM , CBMI3, ROC, NA1)
-        call smooth_int(PBLON, CBMI3, ROC, NA1)
-        call smooth_int(PBPER, CBMI3, ROC, NA1)
-        call smooth_int(PBEAM, CBMI3, ROC, NA1)
-        call smooth_int(SNNBM, CBMI3, ROC, NA1)
-        call smooth_int(SNEBM, CBMI3, ROC, NA1)
+    if (dn_rho /= 1)    then
+        call smooth_int(NIBM , dn_rho, ROC, NA1)
+        call smooth_int(PIBM , dn_rho, ROC, NA1)
+        call smooth_int(PEBM , dn_rho, ROC, NA1)
+        call smooth_int(PBLON, dn_rho, ROC, NA1)
+        call smooth_int(PBPER, dn_rho, ROC, NA1)
+        call smooth_int(PBEAM, dn_rho, ROC, NA1)
+        call smooth_int(SNNBM, dn_rho, ROC, NA1)
+        call smooth_int(SNEBM, dn_rho, ROC, NA1)
         if (ABEAM < 1.5d0) then
-            call smooth_int(SNIBM1, CBMI3, ROC, NA1) ! H ion source
+            call smooth_int(SNIBM1, dn_rho, ROC, NA1) ! H ion source
         else if (ABEAM > 2.5d0) then
-            call smooth_int(SNIBM3, CBMI3, ROC, NA1) ! T ion source
+            call smooth_int(SNIBM3, dn_rho, ROC, NA1) ! T ion source
         else
-            call smooth_int(SNIBM2, CBMI3, ROC, NA1) ! D ion source
+            call smooth_int(SNIBM2, dn_rho, ROC, NA1) ! D ion source
         endif
-        call smooth_int(SCUBM  , CBMI3, ROC, NA1)
-        call smooth_int(stnbdp , CBMI3, ROC, NA1)
-        call smooth_int(sdnbdp1, CBMI3, ROC, NA1)
-        call smooth_int(sdnbdp2, CBMI3, ROC, NA1)
-        call smooth_int(sdnbtp , CBMI3, ROC, NA1)
-        call smooth_int(CUFI, CBMI3, ROC, NA1, surf=.true.)
-        call smooth_int(CUBM, CBMI3, ROC, NA1, surf=.true.)
+        call smooth_int(SCUBM  , dn_rho, ROC, NA1)
+        call smooth_int(stnbdp , dn_rho, ROC, NA1)
+        call smooth_int(sdnbdp1, dn_rho, ROC, NA1)
+        call smooth_int(sdnbdp2, dn_rho, ROC, NA1)
+        call smooth_int(sdnbtp , dn_rho, ROC, NA1)
+        call smooth_int(CUFI, dn_rho, ROC, NA1, surf=.true.)
+        call smooth_int(CUBM, dn_rho, ROC, NA1, surf=.true.)
     endif
 
     do j_rho=1, NA1
         PEBM(j_rho) = PEBM(j_rho) - 2.08E-5*SNEBM(j_rho)
-        if (CBM2 > 0.)  then
+        if (cx_flag > 0)  then
             PIBM(j_rho) = PIBM(j_rho) - 0.0024*SNNBM(j_rho)*TI(j_rho)
         endif
         NNBM2(j_rho)  = SNIBM2(j_rho)
@@ -244,15 +239,10 @@ contains
         SNIBM3(j_rho) = sdnbtp(j_rho)
     enddo
 
-    return
-
-990 write(*, *) '>>> NBI >>> read error in dat/srsfi.dat'
-    stop
-
     end subroutine NBINJ
 
 !---------------------------------------------------------------------
-    subroutine smooth_int(YFO, YCI3, YROC, JNA1, surf)
+    subroutine smooth_int(YFO, dn_rho, YROC, JNA1, surf)
 !---------------------------------------------------------------------
 !  The subroutine transmits a histogram like function YFO(1:N1)
 !  from an N1 grid X(1:N1) to a smooth functon YFO(1:JNA1)
@@ -265,8 +255,8 @@ contains
     use standard_functions, only: VINT, IINT
     use nbicom, only: N1, X, XJ, DRI
 
-    integer, intent(in) :: JNA1
-    double precision, intent(in) :: YCI3, YROC
+    integer, intent(in) :: dn_rho, JNA1
+    double precision, intent(in) :: YROC
     double precision, intent(inout) :: YFO(*)
     logical, intent(in), optional :: surf
 
@@ -282,8 +272,8 @@ contains
  
     JSIGN = 0
     do j=1, n1-1
-        JNA = 1 + YCI3*(j - 1)
-        JNAC = JNA - 1 + YCI3
+        JNA = 1 + dn_rho*(j - 1)
+        JNAC = JNA - 1 + dn_rho
         X(j) = XJ(JNAC)
         DRI(j) = YFO(JNA)
         if (JSIGN < 1) then

@@ -1048,8 +1048,8 @@ contains
 !---------------------------------------------------------------------
     subroutine nbsrsr(j_nbi, YCONTR, NA1, RTOR, SHIFT, AB, BTOR, &
         HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
-        CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, power_frac, &
-        ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, CBMI4)
+        CBMR1, CBMR2, dn_rho, fp_flag, EBEAM, power_frac, &
+        ABEAM, QBEAM, RBMAX, RBMIN, JSRREC, YEXTARR, calc_fus)
 
 !---------------------------------------------------------------------
 ! fast ion's sourses (for multi sources) + ripple
@@ -1059,11 +1059,11 @@ contains
 ! New SCUBM =Nt/m3					     22-APR-13
 !--------------------------------------------------------------Polevoy
 !	entry:	AMETR,SHIF,NA1,RTOR,AB,BTOR,NI,HBEAM,RBMIN,RBMAX,
-!     		CBMS2,CBMI3,EBEAM,QBEAM,ABEAM,power_frac,
+!     		CBMS2,dn_rho,EBEAM,QBEAM,ABEAM,power_frac,
 !	     	TE,TI,NE,NN,ZEF,AMAIN,PBEAM,SCUBM,CONTR,ELON,
 !	CBMS2	number of 'pencils'
-!	CBMI3	number of internal mesh points
-!			 41 (CBMI3=1),21 (CBMI3=2)
+!	dn_rho	number of internal mesh points
+!			 41 (dn_rho=1),21 (dn_rho=2)
 !	power_frac3,2,1 power fraction of energy comps.
 !		    	 3(EB,EB/2,EB/3),2(EB,EB/2),1(EB)
 !	CONTR	Qcontr/Qbeam
@@ -1082,11 +1082,11 @@ contains
     integer, parameter :: JDBL=2
     double precision, parameter :: GP2=6.283185d0
 
-    integer, intent(in) :: j_nbi, NA1
+    integer, intent(in) :: j_nbi, NA1, dn_rho, fp_flag, calc_fus
     double precision, intent(in) :: YCONTR, RTOR, SHIFT, AB, BTOR, &
         HRO, YHM, CBMH1, CBMH2, CBMS1, CBMS2, CBMS3, CBMS4, &
-        CBMR1, CBMR2, CBMI3, CBMI1, EBEAM, power_frac(3), &
-        ABEAM, QBEAM, RBMAX, RBMIN, CBMI4, yEXTARR(n_rho, 9)
+        CBMR1, CBMR2, EBEAM, power_frac(3), &
+        ABEAM, QBEAM, RBMAX, RBMIN, yEXTARR(n_rho, 9)
     integer, intent(out) :: JSRREC
 
     double precision :: AR(n_rho), YE2, YCX
@@ -1095,7 +1095,7 @@ contains
         YDBM, YJN, YSCU, YPOW, YD, YDV, YDDV, YJE, YE1, Y, YEPS
     integer :: N, J, ntet, JN, JN1, JNA, JNAX, JE, JT, JNA1, JNAC, JS, JSP
 
-    N1 = (NA1 - 1)/CBMI3 + 1
+    N1 = (NA1 - 1)/dn_rho + 1
     N = N1 - 1
     if (RBMAX <= RBMIN) then
         write(*, *) 'ILLEGAL: NBI source N', j_nbi, ' RBMAX <= RBMIN !!!'
@@ -1127,7 +1127,7 @@ contains
         ADQB(1) = power_frac(3)/YDBM
         JEB = IEB - 2
     endif
-    if (CBMI1 /= 1.d0) then
+    if (fp_flag /= 1) then
         ntet1 = 50/2 + 1
     else
         ntet1 = 50 + 1
@@ -1135,7 +1135,7 @@ contains
 
     ntet = ntet1 - 1
 
-    if (CBMI1 /= 1.d0) then
+    if (fp_flag /= 1) then
 ! N- number of surfaces,  2*ntet (cntr+co angle)
         JSRREC = JDBL*4*(1 + 3*N*2*ntet)
     endif
@@ -1173,9 +1173,9 @@ contains
     YJN = 0.d0
     Y = Rmaj/amin
     do JN=1, N1
-        JNAX = 1 + CBMI3*(JN-1)
-        JNA  = JNAX - CBMI3*YJN
-        if (CBMI3 > 1.d0) YJN  = .5d0
+        JNAX = 1 + dn_rho*(JN-1)
+        JNA  = JNAX - dn_rho*YJN
+        if (dn_rho > 1) YJN  = .5d0
         ELON1(JN) = max(ELON(JNAX), 1.d0)
         TRIA1(JN) = TRIA(JNAX)*XJ(JNAX)
         X(JN)     = XJ(JNAX)
@@ -1213,7 +1213,7 @@ contains
 
     if (QB <= 0.d0) goto 999
 
-    call NBSISN(NA1, EBEAM, ABEAM, CBMI3, YEXTARR)
+    call NBSISN(NA1, EBEAM, ABEAM, dn_rho, YEXTARR)
     call NB0(ADQB, j_nbi, YHM, CBMH1, CBMH2, CBMR1, CBMR2, CBMS3)
 
     if (CBMS1 < 1.d0) then
@@ -1227,9 +1227,9 @@ contains
     JNA1 = 1
     do JN=2, N1
         JN1 = JN - 1
-        if (JN > 2) JNA1 = 2 + CBMI3*(JN - 2)
+        if (JN > 2) JNA1 = 2 + dn_rho*(JN - 2)
         JNA = JNA1 + 1
-        JNAC = 1 + CBMI3*(JN - 1)
+        JNAC = 1 + dn_rho*(JN - 1)
         if (JN == N1)then
             JNAC = NA1 - 1
             YDV = VR(JNAC)*(RHO(NA1) - JNAC*HRO)
@@ -1250,7 +1250,7 @@ contains
             YACBA (JE, JN1) = YACBA (JE, JN)*YDDV
             YATBA (JE, JN1) = YATBA (JE, JN)*YDDV
             YJE = EBEAM/(IEB - JE + 1)
-            if (CBMI1 > 0.d0) then ! convert prtcl/s => prtcl/s/m^3
+            if (fp_flag > 0) then ! convert prtcl/s => prtcl/s/m^3
                 do JT=1, ntet1
                     YASBA (JE, JN1, JT) = YASBA (JE, JN, JT)*YDDV
                     YASBA1(JE, JN1, JT) = YASBA1(JE, JN, JT)*YDDV
@@ -1258,13 +1258,13 @@ contains
             endif
             do j=JNA1, JNAC
                 PBEAM(j) = PBEAM(j) + YAQBA(JE, JN1)
-                if (CBMI4 > 0.) then ! beam-plasma fusion
+                if (calc_fus > 0) then ! beam-plasma fusion
                     if (ABEAM == 3.d0) stnbdp(j) = stnbdp(j) + YAQBA(JE, JN1) * &
-                        svdtbp(YJE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), CBMI4)*(625.d0/YJE)
+                        svdtbp(YJE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), calc_fus)*(625.d0/YJE)
                     if (ABEAM == 2.d0) then
-                        sdnbtp(j)  = sdnbtp(j)  + YAQBA(JE, JN1)*(625.d0/YJE) * svdtbp (YJE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), CBMI4)
-                        sdnbdp2(j) = sdnbdp2(j) + YAQBA(JE, JN1)*(625.d0/YJE) * svddnp2(YJE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), CBMI4)
-                        sdnbdp1(j) = sdnbdp1(j) + YAQBA(JE, JN1)*(625.d0/YJE) * svddnp1(YJE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), CBMI4)
+                        sdnbtp(j)  = sdnbtp(j)  + YAQBA(JE, JN1)*(625.d0/YJE) * svdtbp (YJE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), calc_fus)
+                        sdnbdp2(j) = sdnbdp2(j) + YAQBA(JE, JN1)*(625.d0/YJE) * svddnp2(YJE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), calc_fus)
+                        sdnbdp1(j) = sdnbdp1(j) + YAQBA(JE, JN1)*(625.d0/YJE) * svddnp1(YJE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), calc_fus)
                     endif
                 endif
                 SCUBM(j) = SCUBM(j) + YATBA(JE, JN1)*YSCU1
@@ -1310,7 +1310,7 @@ contains
     end subroutine nbsrsr
 
 !---------------------------------------------------------------------
-    subroutine nbion0(NA1, ABEAM, EBEAM, RTOR, CBMI3, yEXTARR)
+    subroutine nbion0(NA1, ABEAM, EBEAM, RTOR, dn_rho, yEXTARR)
 !---------------------------------------------------------------------
 ! Steady State (1+2D:(x+MU, V)) Fokker-Plank Solver
 !	PEBM, PIBM(X)-power to electrons, ions [MW/m3]
@@ -1322,15 +1322,14 @@ contains
         AMETR, SHIF, PBPER, PBLON, NIBM, PEBM, PIBM, CUFI, CUBM
     use cross_sections, only: fnbf, fnb2, fnbp, fnbi1
 
-    integer, intent(in) :: NA1
-    double precision, intent(in) :: ABEAM, EBEAM, RTOR, CBMI3, &
-        yEXTARR(n_rho, 9)
+    integer, intent(in) :: NA1, dn_rho
+    double precision, intent(in) :: ABEAM, EBEAM, RTOR, yEXTARR(n_rho, 9)
 
     integer :: JN, JS, JSP, JN1, JNA, JNA1, JNAC, J, J2, JE
     double precision :: YC1, YC2, YS, YSTE, YEPS, YDN, Y, X1, X2, X3, &
         YA, YB, YC, YC0, Y1, Y12, YA1, YD1, YI0, YI2, YP11, YCRNT, YPIDPB, &
         STSD3
-    double precision, dimension(n_rho) :: PBCX, YZ2D3, YTSE, YFCUR, YLNI, YLNE, YLNZ, YEBDEC
+    double precision, dimension(n_rho) :: YZ2D3, YTSE, YFCUR, YLNI, YLNE, YLNZ, YEBDEC
 
     do JN=1, NA1
         YSTE = sqrt(TE(JN))
@@ -1361,18 +1360,17 @@ contains
         YTSE(JN)   = 2.d0*ABEAM*YSTE*TE(JN)/(NE(JN)*YLNE(JN))
         YEPS = AMETR(JN)/(RTOR + SHIF(JN))
         YFCUR(JN) = (1.d0 - FNBF(ZEF(JN), YEPS)/ZEF(JN))
-        PBCX(JN) = 0.d0
         YDN = 0.d0
     enddo
 
     do JN=2, N1
         JN1  = JN - 1
-        JNA1 = 1 + CBMI3*(JN1 - 1)
+        JNA1 = 1 + dn_rho*(JN1 - 1)
         JNA  = JNA1 + 1
-        JNAC = JNA1 - 1 + CBMI3
+        JNAC = JNA1 - 1 + dn_rho
         if (JN == N1) JNAC = NA1 - 1
-        J2 = 1 + CBMI3*(JN1-1) - CBMI3*YDN
-        if (CBMI3 > 1.d0) YDN = 0.5d0
+        J2 = 1 + dn_rho*(JN1-1) - dn_rho*YDN
+        if (dn_rho > 1) YDN = 0.5d0
         do JE=JEB, IEB
             Y = 1.d0/(IEB - JE + 1)
             do J=JNA1, JNAC
@@ -1415,7 +1413,7 @@ contains
     end subroutine nbion0
 
 !---------------------------------------------------------------------
-    subroutine nbsisn(NA1, YEBEAM, YABEAM, CBMI3, YEXTARR)
+    subroutine nbsisn(NA1, YEBEAM, YABEAM, dn_rho, YEXTARR)
 !---------------------------------------------------------------------
 !			25-MAY-11 StotQ->StotQ1 Janev->Suzuki
 !	Fij = A/L(ri, Ej) - local normalized inverse Neutral Beam
@@ -1427,8 +1425,8 @@ contains
     use nbstatus, only: n_rho, ISPE, ISPEND, NE, TE, AMETR
     use cross_sections, only: STOTQ1, seiv, spii, spex, simpi
 
-    integer, intent(in) :: NA1
-    double precision, intent(in) :: YEBEAM, YABEAM, CBMI3, YEXTARR(n_rho, 9)
+    integer, intent(in) :: NA1, dn_rho
+    double precision, intent(in) :: YEBEAM, YABEAM, YEXTARR(n_rho, 9)
 
     integer :: J, JN, JSP, JE, JS
     double precision :: YY, Y1, Y2, Y3, Y12, Y13, Y23, YJE
@@ -1463,7 +1461,7 @@ contains
     do JE=1, IEB
         YY = Y3/(IEB - JE + 1)
         do JN =1, N1
-            J = (JN - 1)*CBMI3 + 1
+            J = (JN - 1)*dn_rho + 1
 ! Janev, Boley (for Eb>0.1 MeV)
             if (YY >= 100.d0) then
                 F(JE, JN) = 0.d0

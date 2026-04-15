@@ -1232,7 +1232,7 @@ contains
     end subroutine up_label
 
 !---------------------------------------------------------------------
-    subroutine tab_label
+    subroutine tab_label()
 
     use graph_utils, only: astra_gui, astra_gui_ref, active_tab, MOD10, Blue
 
@@ -1258,7 +1258,7 @@ contains
     end subroutine time_label
 
 !---------------------------------------------------------------------
-    subroutine const2ps
+    subroutine const2ps()
 ! Appending the list of constants to a PS file
 
     use scalars, only: constValues, varValues

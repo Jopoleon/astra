@@ -77,7 +77,7 @@ type(plot_frame) :: plot_area_ref, plot_area
 contains
 
 !---------------------------------------------------------------------
-    subroutine gui_init
+    subroutine gui_init()
 
     use read_input, only: resize, n_sbr
     use scalars, only: AB, TINIT, TSCALE, XOUT
@@ -1427,7 +1427,7 @@ contains
     end subroutine plot_lcfs
 
 !---------------------------------------------------------------------
-    subroutine plot_wall
+    subroutine plot_wall()
 ! Plot vessel components reading them from json machine file
 
     use pi_const, only: GP2
@@ -1522,7 +1522,7 @@ contains
     end function abscissa
 
 !---------------------------------------------------------------------
-    subroutine plot_flux_surfaces
+    subroutine plot_flux_surfaces()
 ! Redraw magnetic surfaces:
 
     use scalars, only: NEQUIL, MEQUIL

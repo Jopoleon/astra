@@ -14,7 +14,7 @@ double precision, allocatable :: cpuTime_sbr(:)
 contains
 
 !---------------------------------------------------------------------
-    subroutine CPU_init
+    subroutine CPU_init()
 
     allocate(wallTime_sbr(n_sbr), cpuTime_sbr(n_sbr))
     cpuTime_sbr = 0.

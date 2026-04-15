@@ -1,4 +1,4 @@
-subroutine STEPUP
+subroutine STEPUP()
 !-------------------------------------------------------------------
 ! Perform one time step
 ! Note that now time step is updated at the end of a full time cycle

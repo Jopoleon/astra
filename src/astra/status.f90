@@ -84,7 +84,7 @@ double precision, dimension(:), pointer :: &
 contains
 
 !---------------------------------------------------------------------
-    subroutine status_init
+    subroutine status_init()
 
     integer :: j
 
@@ -161,7 +161,7 @@ contains
     end subroutine status_init
 
 !---------------------------------------------------------------------
-    subroutine DEFARR
+    subroutine DEFARR()
 !---------------------------------------------------------------------
 ! 1) Check positiveness of Z_eff, n_e, n_i, T_e, T_i.  Stop if negative.
 ! 2) Extend definition of all standard arrays beyond NA1.
@@ -401,7 +401,7 @@ contains
     end subroutine DEFARR
 
 !---------------------------------------------------------------------
-    subroutine SETVAR
+    subroutine SETVAR()
 
     use scalars, only: NA1, AMJ, ZMJ, AB, ABC, SHIFT, IPEQL
 
@@ -425,7 +425,7 @@ contains
     end subroutine setvar
 
 !---------------------------------------------------------------------
-    subroutine error_catch
+    subroutine error_catch()
 
     use scalars, only: NA1
     use debugger, only: astra_stop

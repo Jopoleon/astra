@@ -325,7 +325,7 @@ contains
     end subroutine ctr2rz_fun3
 
 !---------------------------------------------------------------------
-    subroutine ctr2rz
+    subroutine ctr2rz()
 
     use parameters_a2equil, only: equil_now
     use scalars, only: IFBEY

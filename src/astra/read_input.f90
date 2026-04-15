@@ -43,7 +43,7 @@ type(rawCoils) :: raw_cCoil, raw_vCoil
 contains
 
 !---------------------------------------------------------------------
-    subroutine readInput
+    subroutine readInput()
 
     use machine_config, only: config_read
     use parse_utils, only: path_split, inquire_fname, assign_val
@@ -102,7 +102,7 @@ contains
     end subroutine readInput
 
 !---------------------------------------------------------------------
-    subroutine read_nml
+    subroutine read_nml()
 
     use debugger, only: debug
     use scalars, only: TSTART, TEND, TPAUSE
@@ -196,7 +196,7 @@ contains
     end subroutine read_coilx
 
 !---------------------------------------------------------------------
-    subroutine read_exp
+    subroutine read_exp()
 !---------------------------------------------------------------------
 ! len_data_max   maximal number of time slices for all arrays
 ! len_scalars    number of actually defined variables

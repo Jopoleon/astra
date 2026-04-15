@@ -23,7 +23,7 @@ contains
     end subroutine config_read
 
 !---------------------------------------------------------------------
-    subroutine config_close
+    subroutine config_close()
 
     call config%destroy()
 

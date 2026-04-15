@@ -1,4 +1,4 @@
-subroutine a2tglf_elite
+subroutine a2tglf_elite()
 
 use scalars, only: IPART, NA1
 use status, only: RHO, FP_NORM

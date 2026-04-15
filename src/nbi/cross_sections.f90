@@ -567,7 +567,7 @@ contains
 
 !---------------------------------------------------------------------
     double precision function sv_reac(A_main, E_NBI_keV, A_NBI, n_e, &
-        Te_keV, Ti_keV, yAi, calc_fus_flag, Acoeff, Bcoeff)
+        Te_keV, Ti_keV, yAi, calc_fus, Acoeff, Bcoeff)
 !---------------------------------------------------------------------
 ! <SigmaV dt> probability for d with EBEAM keV to burn out on maxwellian d
 ! with Ti  during the slowing down to Ti in reaction:
@@ -592,8 +592,9 @@ contains
 
     double precision, parameter :: YTMIN=0.01d0
 
+    integer, intent(in) :: calc_fus
     double precision, intent(in) :: A_main, E_NBI_keV, A_NBI, n_e, &
-        Te_keV, Ti_keV, yAi, calc_fus_flag, Acoeff(5), Bcoeff(4)
+        Te_keV, Ti_keV, yAi, Acoeff(5), Bcoeff(4)
   
     integer :: jk, jend
     double precision :: YX3, YX2, YX, YE, YECM, YSQ, YASS, YBSS, YSS2, YSIG, &
@@ -645,7 +646,7 @@ contains
         YX3 = YX2*YX
         YE  = YECM*YX2
         if (E_NBI_keV*YX2 > YEMIN) then
-            if (Ti_keV >= YTMIN .and. calc_fus_flag < 1.5d0) then
+            if (Ti_keV >= YTMIN .and. calc_fus < 2) then
                 yBET  = YB/YX3
                 YR    = yBET/2.d0+Y27
                 YD    = sqrt(YBET*(yBET/4.d0+Y27))
@@ -684,7 +685,7 @@ contains
     
 !---------------------------------------------------------------------
     double precision function svddnp1(E_NBI_keV, A_NBI, n_e, &
-        Te_keV, Ti_keV, yAi, calc_fus_flag)
+        Te_keV, Ti_keV, yAi, calc_fus)
 
 ! d(Ebeam) + d(Ti) -> He3(870 keV) + n (2450 keV)
 
@@ -692,19 +693,20 @@ contains
         Acoeff(5) = (/5.3701d4, 3.3027d2, -0.12706d0, 2.9327d-5, -2.5151d-9/), &
         Bcoeff(4) = (/0.d0, 0.d0, 0.d0, 0.d0/)
 
-    double precision, intent(in) :: E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi, calc_fus_flag
+    integer, intent(in) :: calc_fus
+    double precision, intent(in) :: E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi
 
     if (A_NBI /= 2.d0) then
         svddnp1 = 0.d0
     else
-        svddnp1 = sv_reac(A_main, E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi, calc_fus_flag, Acoeff, Bcoeff)
+        svddnp1 = sv_reac(A_main, E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi, calc_fus, Acoeff, Bcoeff)
     endif
 
     end function svddnp1
 
 !---------------------------------------------------------------------
     double precision function svddnp2(E_NBI_keV, A_NBI, n_e, &
-        Te_keV, Ti_keV, yAi, calc_fus_flag)
+        Te_keV, Ti_keV, yAi, calc_fus)
 
 ! d(Ebeam) + d(Ti) -> t(1008 keV) + p(3025 keV)
 
@@ -712,26 +714,28 @@ contains
         Acoeff(5) = (/5.5576d4, 2.1054d2, -3.2638d-2, 1.4987d-6, 1.1881d-10/), &
         Bcoeff(4) = (/0.d0, 0.d0, 0.d0, 0.d0/)
 
-    double precision, intent(in) :: E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi, calc_fus_flag
+    integer, intent(in) :: calc_fus
+    double precision, intent(in) :: E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi
 
     if (A_NBI /= 2.d0) then
         svddnp2 = 0.d0
     else
-        svddnp2 = sv_reac(A_main, E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi, calc_fus_flag, Acoeff, Bcoeff)
+        svddnp2 = sv_reac(A_main, E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi, calc_fus, Acoeff, Bcoeff)
     endif
 
     end function svddnp2
   
 !---------------------------------------------------------------------
     double precision function svdtbp(E_NBI_keV, A_NBI, n_e, &
-        Te_keV, Ti_keV, yAi, calc_fus_flag)
+        Te_keV, Ti_keV, yAi, calc_fus)
 
 ! d(t)(Ebeam) + t(d)(Ti) -> He4(3524 keV) + n(14072 keV)
 
     double precision, parameter :: Acoeff(5) = (/6.927d4, 7.454d8, 2.05d6, 5.2002d4, 0.d0/), &
         Bcoeff(4) = (/63.8d0, -0.995d0, 6.981d-5, 1.728d-4/)
 
-    double precision, intent(in) :: E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi, calc_fus_flag
+    integer, intent(in) :: calc_fus
+    double precision, intent(in) :: E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi
     double precision :: A_main
 
     if (A_NBI /= 2.d0 .and. A_NBI /= 3.d0) then
@@ -742,7 +746,7 @@ contains
         else
             A_main = 3.d0 ! d NBI in t bulk plasma
         endif
-        svdtbp = sv_reac(A_main, E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi, calc_fus_flag, Acoeff, Bcoeff)
+        svdtbp = sv_reac(A_main, E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi, calc_fus, Acoeff, Bcoeff)
     endif
 
     end function svdtbp

@@ -14,7 +14,7 @@ type(neo_output) :: neo_out
 contains
 
 !---------------------------------------------------------------------
-    subroutine neo_alloc
+    subroutine neo_alloc()
 
     use scalars, only: NA1
 

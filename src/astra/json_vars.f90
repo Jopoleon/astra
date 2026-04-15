@@ -44,7 +44,7 @@ contains
     end subroutine get_subdict
   
 !---------------------------------------------------------------------
-    subroutine read_metadata
+    subroutine read_metadata()
 
     logical :: status_ok
     character(len=:), allocatable :: error_msg

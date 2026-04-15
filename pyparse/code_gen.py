@@ -84,7 +84,7 @@ class CODE_GEN:
 # associate_pointers
 
         self.associate_pointers = \
-'''subroutine associate_pointers
+'''subroutine associate_pointers()
 
 use read_input, only: n_sbr, sbr_name, nr_x_max
 use scalars

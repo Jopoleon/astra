@@ -98,7 +98,7 @@ double precision :: tbeg_eq, tend_eq
 contains
 
 !------------------------------------------
-    subroutine scalars_init
+    subroutine scalars_init()
 
     constValues     = 0.
     varValues       = 0.

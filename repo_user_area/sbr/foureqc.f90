@@ -1,4 +1,4 @@
-subroutine foureqc
+subroutine foureqc()
 
 use pi_const, only: GP2
 use scalars, only: NA1, NEQUIl, MEQUIL, IPART, ABC
