@@ -90,7 +90,7 @@ if __name__ == '__main__':
     alog += 'TASK      = "%s"\n'   %rtype
     alog += 'machine   = "%s"\n'   %dev_name
     alog += 'debug     = %d\n'     %int(args.debug)
-    alog += 'flightsim = %d\n'     %int(args.fs)
+    alog += 'flightsim = .%s.\n'   %args.fs
     alog += 'resize    = %8.4f\n'  %resize
     alog += 'restart   = %d\n'     %args.restart
     alog += 'tpause_nml = %8.4f\n' %args.tpause
@@ -104,7 +104,7 @@ if __name__ == '__main__':
 
     expequ = args.exp + args.equ
 
-    cmd = '%s/exe/Build %s %s %s' %(awd, args.equ, args.exp, rtype)
+    cmd = '%s/exe/Build %s %s %s %s' %(awd, args.equ, args.exp, rtype, args.fs)
     if args.batch and args.waitslurm:
         cmd += ' -W'
     logger.info(cmd)

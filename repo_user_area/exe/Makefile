@@ -10,22 +10,20 @@ OBJ_DIR = $(AWD)/obj
 TMP_DIR = $(AWD)/src/tmp
 XPR_DIR = $(AWD)/xpr
 NBI_INC = $(AWD)/mod/nbi
-ATASK = $(TSK_DIR)/$(MODEL).exe
-EQU  = $(AWD)/equ/$(MODEL)
-EXP  = $(AWD)/exp/$(FEXP)
-LIBSBR    = $(LIB_DIR)/libsbr.a
-LIBFNC    = $(LIB_DIR)/libfnc.a
-LIBASTRA  = $(LIB_DIR)/libastra.a
+EQU = $(AWD)/equ/$(MODEL)
+EXP = $(AWD)/exp/$(FEXP)
+LIBSBR   = $(LIB_DIR)/libsbr.a
+LIBFNC   = $(LIB_DIR)/libfnc.a
+LIBASTRA = $(LIB_DIR)/libastra.a
 LIBMISC  = $(LIB_DIR)/libmisc.a
-LIBNBI    = $(LIB_DIR)/libnbi.a
-LIBFEQIS  = $(LIB_DIR)/libfeqis.a
-LIBGRAPH  = $(LIB_DIR)/libgraph.a
+LIBNBI   = $(LIB_DIR)/libnbi.a
+LIBFEQIS = $(LIB_DIR)/libfeqis.a
+LIBGRAPH = $(LIB_DIR)/libgraph.a
 
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
 LIB = -L/usr/lib64 -lX11 $(QLKNN_LIB) $(TGLF_LIB) $(TORB_LIB) $(RABBIT_LIB) $(SPIDER_LIB) -lsbr -lnbi -lgraph -lastra -lfnc -lfeqis -lmisc $(JSON_LIB) -L$(LIB_DIR) $(MKL_LIB) -lrt
 
 AENV = $(AWD)/exe/astra_rc
-BUILD = $(AWD)/exe/Build
 
 FC_FLAGS = $(CHECKALLCOMP) -qopenmp -traceback -o   
 
@@ -78,7 +76,7 @@ modules:
 
 # Linking, create ASTRA executable
 
-$(ATASK): $(LIBGRAPH) $(LIBASTRA) $(LIBMISC) $(LIBNBI) $(LIBFEQIS) $(SPIDER_LIB) $(LIBSBR) $(LIBFNC) $(AENV) $(BUILD) $(EQU) $(ASTRA_SRC) $(PYFILES) $(FMLS)
+$(ATASK): $(LIBGRAPH) $(LIBASTRA) $(LIBMISC) $(LIBNBI) $(LIBFEQIS) $(SPIDER_LIB) $(LIBSBR) $(LIBFNC) $(AENV) $(EQU) $(ASTRA_SRC) $(PYFILES) $(FMLS)
 	$(PY_TMP_GEN)
 	$(FC) $(FC_FLAGS) $(ATASK) $(ASTRA_SRC) $(TMP_SRC) -I$(JSON_INC) -I$(MOD_DIR)/astra -I$(MOD_DIR)/graph -I$(MOD_DIR)/misc -I$(MOD_DIR)/sbr -I$(MOD_DIR)/feqis -I$(NBI_INC) $(LIB)
 

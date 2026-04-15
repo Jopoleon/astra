@@ -424,20 +424,16 @@ contains
         IPOL, IPOLX, VR, VRS, VRX, RHO, XRHO, AMETR, SLAT, SLATX, &
         BDB0, BDB02, B0DB2, BMINT, BMAXT, FOFB, VOLUM, SHEAR, FP, MU, &
         shiv, squarn, shivx, squax
-    use debugger, only: markloc, debug, flightsim
+    use debugger, only: markloc, debug
     use numerical_tools, only: integr
+    use read_input, only: flightsim
 
     integer :: j
     double precision :: YNF, YR1
 
     call markloc('set_external_metric', debug_lev=3*debug)
 
-    if (flightsim == 1 .and. ipart == 1) then   ! for initialisation
-        call eqguess
-        return
-    endif
-
-    if (flightsim == 0) then
+    if (.not. flightsim) then
         YNF = RTOR*GP2_sq
         do J=1, NA1
             if (IFDEFX('SHX   ')) then
@@ -481,6 +477,9 @@ contains
                 VR(J) = YNF*RHO(j)/(IPOL(j)*G33(j))
             endif
         enddo
+    else if (ipart == 1) then   ! for initialisation
+        call eqguess
+        return
     endif
 
 ! Compute new ROC
@@ -497,7 +496,15 @@ contains
     HRO  =  RHO(2) - RHO(1)
     HROX = (RHO(2) - RHO(1))/ROC
 
-    if (flightsim == 0) then
+    if (flightsim) then
+        do j=1,NA1
+            VRS(j)   = 0.5*(VR(J+1) + VR(j))
+            SLAT(J)  = 0.5*(SLAT(J+1) + SLAT(j))
+            G11(J)   = 0.5*(G11(j) + G11(j+1))
+            G22(J)   = 0.5*(G22(j) + G22(j+1))
+            DRODA(J) = 0.5*(DRODA(j) + DRODA(j+1))
+         enddo
+    else
 ! Flux grid: j*h
         do J=1, NA
             VRS(j) = 0.5*(VR(J+1) + VR(j))
@@ -522,14 +529,6 @@ contains
                 DRODA(J) = 1.
             endif
         enddo  
-    else if (flightsim==1) then
-        do j=1,NA1
-            VRS(j)   = 0.5*(VR(J+1) + VR(j))
-            SLAT(J)  = 0.5*(SLAT(J+1) + SLAT(j))
-            G11(J)   = 0.5*(G11(j) + G11(j+1))
-            G22(J)   = 0.5*(G22(j) + G22(j+1))
-            DRODA(J) = 0.5*(DRODA(j) + DRODA(j+1))
-        enddo
     endif
 
 ! Linear extrapolation
@@ -617,15 +616,16 @@ contains
         G11, G22, G33, GRADRO, DRODA, &
         IPOL, VR, VRS, RHO, XRHO, AMETR, SLAT, &
         BDB0, BDB02, B0DB2, BMINT, BMAXT, FOFB, VOLUM, SHEAR, FP, MU, SHIV, SQUARN
-    use debugger, only: markloc, debug, flightsim
+    use debugger, only: markloc, debug
     use numerical_tools, only: integr
+    use read_input, only: flightsim
 
     integer :: j
     double precision :: YNF, YR1
 
     call markloc('set_external_metric_2', debug_lev=3*debug)
 
-    if (flightsim == 0) then
+    if (.not. flightsim) then
         call extmetric_input
     endif
 

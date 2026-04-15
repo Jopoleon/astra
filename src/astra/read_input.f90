@@ -2,6 +2,7 @@ module read_input
 
 implicit none
 
+logical :: flightsim
 integer :: n_sbr, restart, nr_x_max
 integer, allocatable, dimension(:) :: IFDFAX, jbeg_arrx, NPTM, IFDFVX
 double precision :: resize, tend_nml, tpause_nml
@@ -103,7 +104,7 @@ contains
 !---------------------------------------------------------------------
     subroutine read_nml
 
-    use debugger, only: debug, flightsim
+    use debugger, only: debug
     use scalars, only: TSTART, TEND, TPAUSE
 
     logical :: nml_exists

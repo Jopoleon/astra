@@ -1,4 +1,4 @@
-subroutine FSIM_STEPUP
+subroutine STEPUP_BATCH
 !-------------------------------------------------------------------
 ! Perform one time step
 ! Note that now time step is updated at the end of a full time cycle
@@ -246,4 +246,4 @@ endif
 ! note that in postep if one wants to modify tau, like in tsctrl, better to do it in tauprp
 ! call TSCTRL at the end of all other subroutines
 
-end subroutine FSIM_STEPUP
+end subroutine STEPUP_BATCH

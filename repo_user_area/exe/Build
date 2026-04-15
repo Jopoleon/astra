@@ -3,8 +3,9 @@
 equ_file=$1
 exp_file=$2
 TASK=$3
-if [[ $# > 3 ]]; then
-    WAIT_SLURM=$4
+FSIM=$4
+if [[ $# > 4 ]]; then
+    WAIT_SLURM=$5
 else
     WAIT_SLURM=""
 fi
@@ -25,7 +26,14 @@ export CHECKALLCOMP=" "
 ulimit -s 100000
 
 echo Compile main ASTRA executable $equ_file $AWD 
-make -f exe/Makefile MODEL=$equ_file FEXP=$exp_file
+if [[ "$FSIM" == "True" || "$TASK" == "BGD" ]]
+then
+    ATASK=$AWD/bin/${equ_file}_batch.exe
+    make -f exe/Makebatch MODEL=$equ_file FEXP=$exp_file ATASK=$ATASK
+else
+    ATASK=$AWD/bin/${equ_file}_gui.exe
+    make -f exe/Makefile  MODEL=$equ_file FEXP=$exp_file ATASK=$ATASK
+fi
 status=$?
 if [ $status -ne 0 ]
 then
@@ -42,19 +50,29 @@ then
     exit 2
 fi
 
-exe/CheckObjs
-status=$?
-if [ $status -ne 0 ]
-then
-    echo CheckObjs failed: conflicting object names
-    exit 3
-fi
+# Check for conflicting sbr, fnc names
+
+LIBDIR=$AWD/lib
+LIB1=$LIBDIR/libsbr.a
+OBJ1=`ar -tv $LIB1 | awk '{print $NF}'`
+LIB2=$LIBDIR/libfnc.a
+OBJ2=`ar -tv $LIB2 | awk '{print $NF}'`
+for OB1 in $OBJ1
+do
+    for OB2 in $OBJ2
+    do
+        if [ $OB1 == $OB2 ]
+        then
+            echo Conflicting $OB1: in $LIB1 and $LIB2
+            echo No ASTRA simulation started
+            echo ""
+            exit 3
+        fi
+    done
+done
 
 # Execution
 
-ATASK=$AWD/bin/$equ_file.exe
-
-#if [ "$TASK" = 'BGDs' ] # for testing only
 if [ "$TASK" = 'BGD' ]
 then
     if ! command -v sbatch &> /dev/null

@@ -1,4 +1,4 @@
-program astra4fsim
+program astra_batch
 
 ! Copyright (C) 2026 Institut fuer Plasmaphysik - Boltzmannstrasse 2, 85748 Garching (Germany)
 !
@@ -99,10 +99,10 @@ do while (TIME < t_stop)
         call write_ajson
         jt_out = jt_out + 1
     endif
-    call FSIM_STEPUP ! Time-dependent evolution
+    call STEPUP_BATCH ! Time-dependent evolution
 enddo
 
 call CPU_report('>>> ASTRA normal exit >>>')
 call astra_stop
 
-end program astra4fsim
+end program astra_batch
