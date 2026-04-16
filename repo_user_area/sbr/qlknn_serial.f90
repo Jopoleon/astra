@@ -69,10 +69,10 @@ character(len=120) :: AEXT
 
 TYPE (qlknn_options), SAVE :: qlknn_opts ! for QuaLiKiz Neural Network options
 TYPE (qlknn_normpars), SAVE :: qlknn_norms ! for normalisation conversion of gammaE inside QLKNN
-REAL, ALLOCATABLE, DIMENSION(:, :) :: qlknn_in
-REAL, ALLOCATABLE, DIMENSION(:, :) :: qlknn_out
-REAL, DIMENSION(dimx, 15) :: qlknn_hornnet_constants
-REAL, DIMENSION(dimx, 13) :: qlknn_eb
+double precision, ALLOCATABLE, DIMENSION(:, :) :: qlknn_in
+double precision, ALLOCATABLE, DIMENSION(:, :) :: qlknn_out
+double precision, DIMENSION(dimx, 15) :: qlknn_hornnet_constants
+double precision, DIMENSION(dimx, 13) :: qlknn_eb
 LOGICAL, DIMENSION(dimx, 13) :: qlknn_validity
 LOGICAL, DIMENSION(13) :: qlknn_validity_mask
 LOGICAL, DIMENSION(dimx) :: qlknn_rho_validity

@@ -10,10 +10,6 @@ LIB_DIR = $(AWD)/lib
 LIBNAM = libmisc.a
 LIB = $(LIB_DIR)/$(LIBNAM)
 
-# Compilers
-
-FC_FLAGS = -r8 -no-prec-div -traceback -ip -fPIC -O0 $(CHECKALLCOMP)
-
 MODOBJS = \
 $(OBJ_DIR)/pi_const.o \
 $(OBJ_DIR)/imas_ids.o \

@@ -1166,7 +1166,7 @@ contains
         enddo plot_profx
 
 ! Erase/put q=1 radius, BC for Te
-        yq1   = abscissa(AFVAL(MU, 1.0))
+        yq1   = abscissa(AFVAL(MU, 1.d0))
         te_bc = abscissa(AMETR(max(NA1E, 1)))
         ymax = dble(IYM0) - 0.8*plot_area%canvas_height
         do j_canv=1, plot_area%nx_canvas
@@ -1271,7 +1271,7 @@ contains
         call markloc('Drawing mode 8', debug_lev=2*debug)
         px_rmag = (RTOR + SHIF(1))*meter2pixel
         call setColor(Black)
-        x8bar = (/0., px_rmag/)
+        x8bar = (/0.d0, px_rmag/)
         y8bar = (/pixel_ymid, pixel_ymid/)
         call drawcurve(0, 2, x8bar, y8bar)
 ! Plot the complete wall structure (Pixmap # 1)

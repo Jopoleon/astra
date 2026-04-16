@@ -30,8 +30,7 @@ contains
     character(len=*), intent(in) :: str_in
 
     integer :: j, j2, wall_now, rate
-    double precision :: time_step, cpu_now, cpuTime_tot
-    real :: wall_tot
+    double precision :: time_step, cpu_now, cpuTime_tot, wall_tot
 
     call markloc('CPU_usage')
     write(nch, '(A)') TRIM(str_in)

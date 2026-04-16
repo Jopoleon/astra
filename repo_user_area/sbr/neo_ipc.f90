@@ -29,7 +29,7 @@ contains
     subroutine neo_ipc(rho_norm_max)
 
     use omp_lib
-    use read_input, only: equ_file, exp_file, awd
+    use read_input, only: equ_file, exp_file, awd, astra_exe
     use scalars, only: NA1, BTOR, RTOR, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
     use status, only: NE, TE, NI, TI, ER, MU, FP_NORM, &
         ZIM1, ZIM2, ZIM3, NDEUT, NIZ1, NIZ2, NIZ3, &
@@ -77,8 +77,7 @@ contains
 
     write(ipc_file, '(5A, i0, 2A)') TRIM(awd), '/tmp/', TRIM(exp_file), &
         TRIM(equ_file), '-', ipcId, '.ipc', char(0)
-    write(astra_task, '(5A)') TRIM(awd), '/bin/', TRIM(equ_file), &
-        '.exe', char(0)
+    write(astra_task, '(2A)') TRIM(astra_exe), char(0)
 
     if (first_call) then
         call get_environment_variable("MAX_NWORKERS", str_nworkers, status=stat)
@@ -306,11 +305,11 @@ contains
 
 ! Interpolate back to ASTRA radial grid
 
-    call qinterp(rho_m, prof_out(1, :), nrho_m, RHO(1:NA1),    chii_as, NA1, extrap_right=0.)
-    call qinterp(rho_m, prof_out(2, :), nrho_m, RHO(1:NA1),    chie_as, NA1, extrap_right=0.)
-    call qinterp(rho_m, prof_out(4, :), nrho_m, RHO(1:NA1), e_pflux_as, NA1, extrap_right=0.)
+    call qinterp(rho_m, prof_out(1, :), nrho_m, RHO(1:NA1),    chii_as, NA1, extrap_right=0.d0)
+    call qinterp(rho_m, prof_out(2, :), nrho_m, RHO(1:NA1),    chie_as, NA1, extrap_right=0.d0)
+    call qinterp(rho_m, prof_out(4, :), nrho_m, RHO(1:NA1), e_pflux_as, NA1, extrap_right=0.d0)
     do jion=1, ns_in-1
-        call qinterp(rho_m, prof_out(8+jion, :), nrho_m, RHO(1:NA1), i_pflux_as(jion, 1:NA1), NA1, extrap_right=0.)
+        call qinterp(rho_m, prof_out(8+jion, :), nrho_m, RHO(1:NA1), i_pflux_as(jion, 1:NA1), NA1, extrap_right=0.d0)
     enddo
  
     do jrho=1, NA1

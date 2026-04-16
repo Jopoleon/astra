@@ -64,7 +64,7 @@ contains
 
     norm3 = SQRT(r_in(ind3)**2 + z_in(ind3)**2)
 
-    CALL quad_int(0., theta3, norm3, norm_out)
+    CALL quad_int(0.d0, theta3, norm3, norm_out)
 
     return
     end subroutine interp_norm

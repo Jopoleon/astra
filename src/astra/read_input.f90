@@ -9,7 +9,7 @@ double precision :: resize, tend_nml, tpause_nml
 double precision, allocatable :: TOUTX(:)
 double precision, allocatable, dimension(:, :) :: XAXES, DATAX
 character(len=4) :: machine, TASK
-character(132) :: AWD, astra_ext, nml_file, equ_file, exp_file, NBFILE='***'
+character(132) :: AWD, astra_ext, nml_file, equ_file, exp_file, NBFILE='***', astra_exe
 character(len=20), allocatable :: sbr_name(:)
 
 type rawScalars
@@ -65,8 +65,16 @@ contains
     IFDFAX = -1
     IFDFVX = -1
 
+    CALL getenv('ASTRA_EXT', astra_ext)
+
 ! Read run info from tmp/astra.nml
     call read_nml()
+    if (TASK(1:3) == 'BGD' .or. flightsim) then
+        write(astra_exe, '(4A)') TRIM(awd), '/bin/', TRIM(equ_file), '_batch.exe'
+    else
+        write(astra_exe, '(4A)') TRIM(awd), '/bin/', TRIM(equ_file), '_gui.exe'
+    endif
+
 ! Read machine configuration, if available (need "machine" variable defined)
     call config_read(TRIM(machine))
 
@@ -134,8 +142,6 @@ contains
     if (.not. nml_exists) then
         nml_file = 'exp/nml/' // trim(machine)
     endif
-
-    CALL getenv('ASTRA_EXT', astra_ext)
           
     end subroutine read_nml
 

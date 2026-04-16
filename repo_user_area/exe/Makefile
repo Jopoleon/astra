@@ -25,8 +25,6 @@ LIB = -L/usr/lib64 -lX11 $(QLKNN_LIB) $(TGLF_LIB) $(TORB_LIB) $(RABBIT_LIB) $(SP
 
 AENV = $(AWD)/exe/astra_rc
 
-FC_FLAGS = $(CHECKALLCOMP) -qopenmp -traceback -o   
-
 ASTRA_SRC = \
 $(ASTRA_DIR)/astra_main.f90 $(ASTRA_DIR)/stepup.f90
 
@@ -78,7 +76,7 @@ modules:
 
 $(ATASK): $(LIBGRAPH) $(LIBASTRA) $(LIBMISC) $(LIBNBI) $(LIBFEQIS) $(SPIDER_LIB) $(LIBSBR) $(LIBFNC) $(AENV) $(EQU) $(ASTRA_SRC) $(PYFILES) $(FMLS)
 	$(PY_TMP_GEN)
-	$(FC) $(FC_FLAGS) $(ATASK) $(ASTRA_SRC) $(TMP_SRC) -I$(JSON_INC) -I$(MOD_DIR)/astra -I$(MOD_DIR)/graph -I$(MOD_DIR)/misc -I$(MOD_DIR)/sbr -I$(MOD_DIR)/feqis -I$(NBI_INC) $(LIB)
+	$(FC) $(LD_FLAGS) -o $(ATASK) $(ASTRA_SRC) $(TMP_SRC) -I$(JSON_INC) -I$(MOD_DIR)/astra -I$(MOD_DIR)/graph -I$(MOD_DIR)/misc -I$(MOD_DIR)/sbr -I$(MOD_DIR)/feqis -I$(NBI_INC) $(LIB)
 
 # User defined sbr and fnc
 
