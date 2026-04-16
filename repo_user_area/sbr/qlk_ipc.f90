@@ -205,7 +205,7 @@ contains
         jr_r = jr + 1
         jr_l = jr - 1
         if (jr == 1) then
-            jr_l = jr
+            jr_l = 1
         else if (jr == nrho_m) then
             jr_r = jr
         endif
