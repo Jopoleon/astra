@@ -404,7 +404,7 @@ contains
     end subroutine find_new_axis
 
 !-------------------------------------------------------------------
-    subroutine compound_psi   ! to think about ferromags...()
+    subroutine compound_psi()   ! to think about ferromags...()
 
     psirz = psiplasrz + psiextrz
 
@@ -806,7 +806,7 @@ contains
     end subroutine new_jrz
 
 !--------------------------------------------------------------------
-    function get_psiplasrz result(psi_plas)
+    function get_psiplasrz() result(psi_plas)
 
     double precision, dimension(nr2, nz2) :: green, psi_plas
     double precision, dimension(2*nr + 2*nz) :: greenBnd

@@ -19,7 +19,7 @@ contains
     end function dfj
 
 !---------------------------------------------------------------------
-    integer function IFSTEP
+    integer function IFSTEP()
 
 ! Input
 !       LEQ(1)  LEQ(2)  LEQ(3)  LEQ(4)  LEQ(5)  LEQ(6-9)
@@ -270,7 +270,7 @@ contains
     end subroutine OLDNEW
 
 !---------------------------------------------------------------------
-    double precision function LINEAV
+    double precision function LINEAV()
 
 ! LINEAV [10#19/m#3]: Horizontal chord average density (r) [m]
 ! Integral {0, r} ( NE ) dl / a

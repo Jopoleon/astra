@@ -20,6 +20,9 @@ LIBNBI   = $(LIB_DIR)/libnbi.a
 LIBFEQIS = $(LIB_DIR)/libfeqis.a
 LIBGRAPH = $(LIB_DIR)/libgraph.a
 
+FC_FLAGS += -I$(AWD)
+LD_FLAGS += -I$(AWD)
+
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
 LIB = -L/usr/lib64 -lX11 $(QLKNN_LIB) $(TGLF_LIB) $(TORB_LIB) $(RABBIT_LIB) $(SPIDER_LIB) -lsbr -lnbi -lgraph -lastra -lfnc -lfeqis -lmisc $(JSON_LIB) -L$(LIB_DIR) $(MKL_LIB) -lrt
 

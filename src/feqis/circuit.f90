@@ -383,7 +383,7 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     end subroutine get_zccurfbe
 
 !---------------------------------------------------------------------
-    double precision function psib_ext
+    double precision function psib_ext()
 ! Returns external flux on plasma boundary
 
     use feqis_tools, only: interp2d_psi

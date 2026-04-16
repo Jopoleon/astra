@@ -274,9 +274,9 @@ subroutine FACIT_LFS(nx, eps, &                                 ! grid parameter
 
   ! INPUTS
   integer, intent(in) :: nx, rotation_model
-  double precision, dimension(nx), intent(in)  :: T_e, T_i, N_e, N_i, N_z, gradTi, gradNi, gradNz
-  double precision, dimension(nx), intent(in)  :: qmag, FV, Zz, Mach_ii, Z_eff, eps
-  double precision, intent(in) :: B0, R0, Ai, Az, Zi
+  double precision, dimension(nx), intent(in)  :: T_e, T_i, N_e, N_i, N_z, &
+       gradTi, gradNi, gradNz, qmag, FV, Zz, Mach_ii, Z_eff, eps, Zi
+  double precision, intent(in) :: B0, R0, Ai, Az
 
   ! OUTPUTS
 
@@ -511,7 +511,7 @@ function ftrap_lfs(epsK)
   implicit none
 
   double precision :: ftrap_lfs
-  double precision, intent(inout) :: epsK
+  double precision, intent(in) :: epsK
 
   ftrap_lfs = 1. - (1. - epsK)**1.5/(sqrt(1. + epsK)*(1 + 1.46*sqrt(epsK)))
 
@@ -835,8 +835,8 @@ subroutine K_VISC_lfs(nx, ni, nimp, Ti, wii, wimpimp, Zi, Zimp, Ai, Aimp, Tauii,
 
   integer :: nx
   double precision, dimension(nx) :: ni, nimp, Ti, wii, wimpimp, Tauii, Tauimpi, Tauiimp, Tauimpimp, eps2, qmag, ft
-  double precision :: Zi, Ai, Aimp, R0, mimp, mi
-  double precision, dimension(nx) :: Zimp
+  double precision :: Ai, Aimp, R0, mimp, mi
+  double precision, dimension(nx) :: Zi, Zimp
   double precision, dimension(nx) :: K11a, K12a, K22a, K11i, K12i, K22i
   double precision, dimension(nx) :: y11zb, y11zp, y11zps, y11ib, y11ip, y11ips
   double precision, dimension(nx) :: y12zb, y12zp, y12zps, y12ib, y12ip, y12ips

@@ -862,7 +862,7 @@ contains
                     JT1 = ntet*YC1 + 1
                     JT2 = ntet*YC2 + 1
                     YDEX = EXP(-YDYS)
-                    YFI(JE,JN) = YDEX
+                    YFI(JE, JN) = YDEX
                     call nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
                     if (YC1 > YC2) write(*, *) 'YC1,YC2,231', YC1, YC2, JN
                 enddo
@@ -908,7 +908,7 @@ contains
                     RCR = (RE(JN1) - AZ(JR))*(RE(JN1) + AZ(JR))/RE(JN1)
                     JT2 = ntet*YC1 + 1
                     JT1 = ntet*YC2 + 1
-                    YDEX = YFE(JE,JN)
+                    YDEX = YFE(JE, JN)
                     call nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
                     if (YC1 < YC2) write(*,*) 'YC1,YC2,271', YC1, YC2, JN
                 enddo

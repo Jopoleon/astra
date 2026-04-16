@@ -147,7 +147,7 @@ contains
         if (ios /= 0) then
             write(*, *) 'Error opening limiter file: iostat=', ios
         endif
-        read(unit_lim, '(2i)') dum, n_lim
+        read(unit_lim, *) dum, n_lim
         allocate(r_lim(n_lim), z_lim(n_lim))
         do jlim=1, n_lim
             read(unit_lim, *) r_lim(jlim), z_lim(jlim)

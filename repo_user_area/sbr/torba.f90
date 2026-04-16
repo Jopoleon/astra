@@ -128,7 +128,7 @@ contains
     eqdata(1) = FP(NA1)
 
     write(*, '(A)') 'Acquiring eqdata'
-    write(*, '(A, i2, i2)') 'Sign of Ip, Bt', SGNIP, SGNBT
+    write(*, '(A, f6.3, f6.3)') 'Sign of Ip, Bt', SGNIP, SGNBT
 
     eqdata(2: n_Rrect+1) = Rrect
     eqdata(n_Rrect+2: n_Rrect+n_Zrect+1) = Zrect
@@ -345,7 +345,7 @@ contains
 
 ! Call TORBEAM library:
 
-            write(*, '(/A, i)') 'TORBEAM call for gyrotron ', jgy
+            write(*, '(/A, i0)') 'TORBEAM call for gyrotron ', jgy
             write(6, '(A, 2f9.4)') 'Phi, theta', xtordeg, xpoldeg
             write(6, *) 'EQDATA', eqdata(1),  eqdata(2), eqdata(2+n_Rrect), &
                 eqdata(2+n_Rrect+n_Zrect), &

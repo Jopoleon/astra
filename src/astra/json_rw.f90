@@ -385,7 +385,7 @@ end subroutine read_array_2d
     nZ = SIZE(equil_now%eqgeometry%rectgrid%z2d)
 
     j_out = j_call + restart
-    if (debug > 0) write(*, '(A, 3i)') 'Starting a2json', j_out, nrho_surf, nthe_surf
+    if (debug > 0) write(*, '(A, 3I0)') 'Starting a2json', j_out, nrho_surf, nthe_surf
 
     write(json_out, '(5A, i0, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), TRIM(equ_file), '-', j_out, '.json'
 

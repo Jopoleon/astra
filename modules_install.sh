@@ -34,8 +34,17 @@ STRAHL_VERSION=unstable
 #--------------------
 
 SOFT_ROOT=$HOME/soft
-JSON_INSTALL=$ASTRA_EXT/json/$JSON_VERSION
-NETCDF_INSTALL=$ASTRA_EXT/netcdf/$NETCDF_VERSION
+
+if [ "$FC" = 'gfortran' ]
+then
+    JSON_INSTALL=$ASTRA_EXT/json/gnu_$JSON_VERSION
+    NETCDF_INSTALL=$ASTRA_EXT/netcdf/gcc_$NETCDF_VERSION
+    export FFLAGS="-fopenmp"
+else
+    JSON_INSTALL=$ASTRA_EXT/json/$JSON_VERSION
+    NETCDF_INSTALL=$ASTRA_EXT/netcdf/$NETCDF_VERSION
+    export FFLAGS="-qopenmp"
+fi
 RABBIT_INSTALL=$ASTRA_EXT/rabbit/$RABBIT_VERSION
 TORBEAM_INSTALL=$ASTRA_EXT/torbeam/$TORBEAM_VERSION
 SPIDER_INSTALL=$ASTRA_EXT/spider/$SPIDER_VERSION
@@ -49,8 +58,9 @@ STRAHL_INSTALL=$ASTRA_EXT/strahl/$STRAHL_VERSION
 PATH_OLD=$PATH
 
 export PATH=$SOFT_ROOT/$CMAKE_VERSION/bin:$PATH
-export FFLAGS="-qopenmp"
+
 CMAKE=$SOFT_ROOT/$CMAKE_VERSION/bin/cmake
+
 mkdir -p $SOFT_ROOT
 
 #------------------
@@ -124,9 +134,10 @@ read -p "Install NetCDF (y/n) " NETCDF_FLAG
 if [ "$NETCDF_FLAG" = "y" ]
 then
     cd $NETCDF_INSTALL
+    FFLAGS_IN=$FFLAGS
     if [[ "$FC" == "ifx" ]]; then
         export CXX=icpx
-        export FFLAGS="-O2 -qopenmp"
+        export FFLAGS="-O2 $FFLAGS_IN"
         export CFLAGS="-O2"
     fi
     export LD_LIBRARY_PATH="$NETCDF_INSTALL/lib:$LD_LIBRARY_PATH"
@@ -178,6 +189,8 @@ then
     make install
     cd ..
 
+    export FFLAGS=FFLAGS_IN
+
     echo "========================"
     echo "Build complete!"
     echo "Libraries in $NETCDF_INSTALL/lib"
@@ -203,7 +216,7 @@ then
     RABBIT_HASH=`git rev-parse HEAD`
     mkdir build
     cd build
-    $CMAKE .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_Fortran_COMPILER=$FC -DOpenMP_Fortran_FLAGS=-qopenmp -DNETCDF_HOME=$NETCDF_INSTALL
+    $CMAKE .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_Fortran_COMPILER=$FC -DOpenMP_Fortran_FLAGS=$FFLAGS -DNETCDF_HOME=$NETCDF_INSTALL
     make
 
     mkdir -p $RABBIT_INSTALL/lib
@@ -349,21 +362,40 @@ then
     cd $GACODE_ROOT
     GACODE_HASH=`git rev-parse HEAD`
 
-    cat << EOT > ${GACODE_ROOT}/platform/build/make.inc.${GACODE_PLATFORM}
+    if [ "$FC" = 'gfortran' ]
+    then
+        cat << EOT > ${GACODE_ROOT}/platform/build/make.inc.${GACODE_PLATFORM}
+IDENTITY="IPP linux cluster"
+CORES_PER_NODE=16
+NUMAS_PER_NODE=1
+
+FC  = ${MPIFC} -J${GACODE_ROOT}/modules
+F77 = ${FC}
+FOMP   = ${FFLAGS}
+FMATH  =
+FOPT   =-Ofast
+FDEBUG =-eD -Ktrap=fp -m 1
+LMATH = -mkl
+FFTW_INC=${FFTW_INC}
+ARCH = ar cr
+EOT
+    else # Intel
+        cat << EOT > ${GACODE_ROOT}/platform/build/make.inc.${GACODE_PLATFORM}
 IDENTITY="IPP linux cluster"
 CORES_PER_NODE=16
 NUMAS_PER_NODE=1
 
 FC  = ${MPIFC} -module ${GACODE_ROOT}/modules
 F77 = ${FC}
-FOMP   =-qopenmp
+FOMP   = ${FFLAGS}
 FMATH  =-real-size 64
 FOPT   =-Ofast
 FDEBUG =-eD -Ktrap=fp -m 1
-LMATH = -qmkl -mkl
+LMATH = -qmkl
 FFTW_INC=${FFTW_INC}
 ARCH = ar cr
 EOT
+    fi
 
     cd $GACODE_ROOT/tglf
     make

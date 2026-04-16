@@ -297,7 +297,7 @@ contains
     enddo set_dims_1d
 
     if (len_scalars > len_data_max) then
-        write(err_msg, '(A, i)') &
+        write(err_msg, '(A, I0)') &
             '>>> read_exp: Size of time dependent scalars data stream cannot exceed', len_data_max
         call astra_stop(err_msg)
     endif
@@ -373,7 +373,7 @@ contains
     close(n_unit)
 
     if (len_profs_data > len_data_max) then
-        write(err_msg, '(A, i)') &
+        write(err_msg, '(A, I0)') &
             '>>> read_exp: Size of time dependent profiles data stream cannot exceed', len_data_max
         call astra_stop(err_msg)
     endif
@@ -694,7 +694,7 @@ contains
 
             nbnd = raw_boundary%nt*raw_boundary%n_theta
             if (nbnd > nbnd_max) then
-                write(err_msg, '(2A, i)') err_msg_exp, 'Boundary data must not exceed ', nbnd_max
+                write(err_msg, '(2A, I0)') err_msg_exp, 'Boundary data must not exceed ', nbnd_max
                 call astra_stop(err_msg)
             endif
 
@@ -735,7 +735,7 @@ contains
             raw_boundary%nt = nt_u
             nbnd = nx_u*nt_u
             if (nbnd > nbnd_max) then
-                write(err_msg, '(2A, i)') TRIM(err_msg_exp), 'Boundary data #theta must not exceed ', nbnd_max
+                write(err_msg, '(2A, I0)') TRIM(err_msg_exp), 'Boundary data #theta must not exceed ', nbnd_max
                 call astra_stop(err_msg)
             endif
             call ufrd('udb/' // trim(STRI) // '_r', nscal_u, ndim_u, nt_u, nx_u, raw_boundary%time, x_u, raw_boundary%R)
@@ -829,7 +829,7 @@ contains
 
 ! INTYPE unknown
             if (INTYPE < 0 .or. INTYPE > 20) then
-                write(err_msg, '(A, i0, A)') '>>> ERROR: Unknown input type =', INTYPE, ',  ignored'
+                write(err_msg, '(A, I0, A)') '>>> ERROR: Unknown input type =', INTYPE, ',  ignored'
                 call astra_stop(err_msg)
             endif
 

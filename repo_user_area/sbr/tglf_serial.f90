@@ -498,7 +498,7 @@ radial_loop: do jr=1, nrho_m
             write(f_elite, '(A11, I0)') 'elite4tglf_', jr
             open(31, FILE=f_elite)
             do jthe=1, nthe_elite
-                write(31, '(3F)') tglf_R_elite_in(jthe), tglf_Z_elite_in(jthe), Bp_elite(jthe)
+                write(31, '(3F9.5)') tglf_R_elite_in(jthe), tglf_Z_elite_in(jthe), Bp_elite(jthe)
             enddo
             close(31)
         endif

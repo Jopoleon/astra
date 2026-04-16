@@ -169,7 +169,7 @@ contains
             allocate(x_grid(n_grid+1), dat_exp(n_grid+1))
 
             gridtype = raw_profiles%grid_type(jt)
-            write(err_msg_grid, '(A, i, A)')  'Option GRIDTYPE=', gridtype, ' not implemented, exiting'
+            write(err_msg_grid, '(A, I0, A)')  'Option GRIDTYPE=', gridtype, ' not implemented, exiting'
             jx = raw_profiles%jbeg_grid(jt)
             jy = raw_profiles%jbeg_data(jt)
 
@@ -507,7 +507,7 @@ contains
     character(len=132) :: err_msg
 
     if (NA1 > NRD) then
-        write(err_msg, '(2A, i)') '>>> FATAL ERROR: The radial grid size out of range.\n', &
+        write(err_msg, '(2A, I0)') '>>> FATAL ERROR: The radial grid size out of range.\n', &
             '                 Parameter "NA1" cannot exceed', NRD
         call astra_stop(err_msg)
     endif

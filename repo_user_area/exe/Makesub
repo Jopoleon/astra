@@ -54,7 +54,7 @@ $(OBJ_DIR)/nbi.o: $(SRC_DIR)/nbi.f90
 	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(MOD_NBI) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f90
-	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(MOD_FEQIS) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.c
 	$(CC) -I$(INC_DIR) -c $< -o $@

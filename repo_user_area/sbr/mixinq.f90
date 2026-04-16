@@ -130,14 +130,13 @@ do  j=2,NB1
    IS(JNRES) = j
 enddo
 if (FPSTAR(NB1).gt.0. .and. (KOPT.eq.1 .or. KOPT.eq.3))   then
-   write(*,*)MU
-   pause'Inverse q-profile'
-   endif
+   write(*, *) 'Inverse q-profile', MU(1:NA1)
+endif
 if ( KOPT .ge. 2)   then
    CMHD1 = 0.
    CMHD2 = 0.
 !    CF3 = 0.
-   endif
+endif
 if (JNRES .eq. 0)   return  ! No resonance found
 if ( KOPT .ge. 2)   CMHD1 = RHOS(1)/ROC
 

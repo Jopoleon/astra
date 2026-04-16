@@ -626,7 +626,7 @@ contains
     allocate(psi_cur_old(nconduc))
     allocate(dpc(nconduc))
     allocate(voltage_limits_active_coils(nactive, 2))
-    if (n_isoflux > 0 .and. not(allocated(r_isoflux))) then
+    if (n_isoflux > 0 .and. .not. allocated(r_isoflux)) then
         allocate(r_isoflux(n_isoflux))
         allocate(z_isoflux(n_isoflux))
         allocate(which_x_point(n_isoflux))

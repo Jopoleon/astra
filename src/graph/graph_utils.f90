@@ -138,7 +138,7 @@ contains
     GRAL   = 0.
     GRAP   = AB
 
-    NAM7 = (/ 'Tmin', 'Tmax', 'Tmark', 'Style' /)
+    NAM7 = (/ 'Tmin  ', 'Tmax  ', 'Tmark ', 'Style ' /)
     TIM7 = (/ 0, 9999, 9999, 1 /)
 
 ! Output windows
@@ -1139,7 +1139,7 @@ contains
                 r_out= min(r_out, 7.d0)
                 JDSP = plot_area%canvas_height*r_out + IYMN + y_shift
                 PTM(2) = plot_area%height - min(max(JDSP, IYMN), IYMX)
-                call setColor(jcol, 2)
+                call setColor(jcol)
                 call NMARK(PTM, jsym)
                 PTMO(1, j1, jxout) = PTM(1)
                 PTMO(2, j1, jxout) = PTM(2)

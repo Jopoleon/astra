@@ -5,7 +5,7 @@ implicit none
 contains
 
 !---------------------------------------------------------------------
-    integer function N_95_POS
+    integer function N_95_POS()
 ! Returns the radial integer index of the psi_95 position
 
     use scalars, only: NA1

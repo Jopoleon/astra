@@ -310,7 +310,7 @@ write(nch_w1, '(A)') &
 
 ! reclying has to be for each imp species
 do isp=1, nimp_touse
-    write(nch_w1, '(A, I, A, F12.4, A, E14.5, A, E12.4)') &
+    write(nch_w1, '(A, I0, A, F12.4, A, E14.5, A, E12.4)') &
         '   ', irecycl(isp), '               ', wrecycl(isp), '        ', taudiv(isp), '  ', taupump(isp)
 enddo
 write(nch_w1, '(A)') &
@@ -437,10 +437,10 @@ write(nch_w1, '(A)') &
 close(nch_w1)
 
 101 format(A, F15.8)
-104 format(A, F15.8 , A, I, A, F15.8, A, F15.8)
+104 format(A, F15.8 , A, I0, A, F15.8, A, F15.8)
 105 format(A, E25.11, A, E25.11, 10A)
 108 format(A, F15.8 , A, E16.8, A, F15.8)
-109 format(A, I, A , I, A, I, A)
+109 format(A, I0, A , I0, A, I0, A)
 112 format(A, F15.8 , A, F15.8, A, F15.8, A, F15.8)
 145 format(A, F15.8 , A, F15.8, A, F15.8, A, F15.8, A, F15.8)
 ! end call params_file_write_strahl

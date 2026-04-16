@@ -174,7 +174,7 @@ contains
         skip_poll = .True.
     else
         if (IFKL == 256) then
-            write(STRI, '(a, i3)') "Iteration #", ITREQ
+            write(STRI, '(A, I3)') "Iteration #", ITREQ
             call setColor(Magenta) ! Iterations
             call textvm(astra_gui%width-18*astra_gui_ref%dxlet, 2, "equil iterations", 16)
             call setColor(Blue) ! Iteration #
@@ -549,11 +549,11 @@ contains
             if (MOD10 == 0) then
                 write(*, *) 'X-axis:   none'
             elseif (MOD10 == 3) then
-                write(*, '(A, I)') 'X-axis:   poloidal flux,  1 < j < NA1 =', NA1
+                write(*, '(A, I0)') 'X-axis:   poloidal flux,  1 < j < NA1 =', NA1
             elseif (MOD10 == 4) then
-                write(*, '(A, F5.2, A, I)') 'X-axis:   0 < a < AB =', AB, 'm     1 < j < NAB =', NAB
+                write(*, '(A, F5.2, A, I0)') 'X-axis:   0 < a < AB =', AB, 'm     1 < j < NAB =', NAB
             elseif (MOD10 == 5) then
-                write(*, '(A, I)') 'X-axis:   major radius in the mid-plane'
+                write(*, '(A, I0)') 'X-axis:   major radius in the mid-plane'
             elseif (MOD10 == 6) then
                 write(*, *) 'X-axis:   time [s]'
             elseif (MOD10 == 7) then
@@ -563,13 +563,13 @@ contains
             elseif (MOD10 == 9) then
                 write(*, *) "User's plot"
             elseif (MODEX == 0) then
-                write(*, '(A, F5.2, A, I)') 'X-axis:   0 < a < AB =', AB, 'm,     1 < j < NAB =', NAB
+                write(*, '(A, F5.2, A, I0)') 'X-axis:   0 < a < AB =', AB, 'm,     1 < j < NAB =', NAB
             elseif (MODEX == 1) then
-                write(*, '(A, F5.2, A, I)') 'X-axis:   0 < a < ABC =', ABC, 'm,    1 < j < NA1 =', NA1
+                write(*, '(A, F5.2, A, I0)') 'X-axis:   0 < a < ABC =', ABC, 'm,    1 < j < NA1 =', NA1
             elseif (MODEX == 2) then
-                write(*, '(A, F5.2, A, I)') 'X-axis:   0 < rho < ROC =', ROC, 'm,    1 < j < NA1 =', NA1
+                write(*, '(A, F5.2, A, I0)') 'X-axis:   0 < rho < ROC =', ROC, 'm,    1 < j < NA1 =', NA1
             elseif (MODEX == 3) then
-                write(*, '(A, I)') 'X-axis:   0 < Psi < FP(NA1),  1 < j < NA1 =', NA1
+                write(*, '(A, I0)') 'X-axis:   0 < Psi < FP(NA1),  1 < j < NA1 =', NA1
             else
                 write(*, *) 'X-axis:   Unknown option'
             endif
@@ -926,7 +926,7 @@ contains
 
     102 format('   Time', 16(3X, A))
     104 format(X, A)
-    408 format(PE12.3, 64(PE12.3))
+    408 format(1PE12.3, 64(1PE12.3))
 
     end subroutine writeData
 

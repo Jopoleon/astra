@@ -8,6 +8,14 @@ MOD_ASTRA = $(AWD)/mod/astra
 LIBASTRA = $(AWD)/lib/libastra.a
 AENV = $(AWD)/exe/astra_rc
 
+ifeq ($(FC),gfortran)
+  ADD_LIBS :=
+  LD := $(FC)
+else
+  ADD_LIBS := -L$(COMP_LIBDIR) -lifcoremt -lifport -lifcore
+  LD := $(CC)
+endif
+
 # TGLF
 
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
@@ -37,16 +45,16 @@ clean:
 
 
 $(XPR)/tglfi:	$(XPR)/tglfinter.o $(XPR)/tglf_interf.o $(LIBASTRA) $(TGLF_LIB) $(AENV)
-	$(CC) -o $@ $(XPR)/tglfinter.o $(XPR)/tglf_interf.o $(LIBASTRA)	\
-	$(TGLF_LIB) $(MKL_LIB) -lpthread -lm -L$(COMP_LIBDIR) -lifcoremt -lifport -lifcore
+	$(LD) -o $@ $(XPR)/tglfinter.o $(XPR)/tglf_interf.o $(LIBASTRA)	\
+	$(TGLF_LIB) $(MKL_LIB) -lpthread -lm $(ADD_LIBS)
 
 $(XPR)/neo:	$(XPR)/neointer.o $(XPR)/neo_interf.o $(LIBASTRA) $(NEO_LIB) $(AENV)
 	$(MPI_CC) -o $@ $(XPR)/neointer.o $(XPR)/neo_interf.o $(LIBASTRA)	\
-	$(NEO_LIB) $(MKL_LIB) -lpthread -lm -L$(COMP_LIBDIR) -lifcoremt -lifport -lifcore
+	$(NEO_LIB) $(MKL_LIB) -lpthread -lm $(ADD_LIBS)
 
 $(XPR)/qlki:	$(XPR)/qlkinter.o $(XPR)/qlk_interf.o $(LIBASTRA) $(QLK_LIB) $(AENV)
 	$(MPI_CC) -o $@ $(XPR)/qlkinter.o $(XPR)/qlk_interf.o $(LIBASTRA)	\
-	$(QLK_LIB) $(MKL_LIB) -lpthread -lm -L$(COMP_LIBDIR) -lifcoremt -lifport -lifcore
+	$(QLK_LIB) $(MKL_LIB) -lpthread -lm $(ADD_LIBS)
 
 # c wrapper
 
