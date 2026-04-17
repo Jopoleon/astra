@@ -2,15 +2,20 @@
 
 rootdir=`dirname $0`      # may be relative path
 export AWD=`cd $rootdir && pwd`  # ensure absolute path
+if [ $# -ge 1 ]
+then
+    comp=$1
+fi
 
 chmod 744 $AWD/get_platform
 platform=`$AWD/get_platform`
+if [[ -v comp ]]
+then
+    platform=${platform}_${comp}
+fi
+echo $platform
+source $AWD/platform/env.${platform}
 
-#--------------------
-# User dependent part
-#--------------------
-
-source $AWD/platform/env.$platform
 FC_SERIAL=$FC
 
 #------------------
@@ -280,13 +285,15 @@ fi
 # QuaLiKiz
 #---------
 
+echo $MPIFC
+which $MPIFC
 read -p "Install QuaLiKiz (y/n) " QLK_FLAG
 
 if [ "$QLK_FLAG" = "y" ]
 then
     cd $SOFT_ROOT
-    rm -rf QuaLiKiz
-    git clone https://gitlab.com/qualikiz-group/QuaLiKiz.git
+#    rm -rf QuaLiKiz
+#    git clone https://gitlab.com/qualikiz-group/QuaLiKiz.git
     QLK_HOME=$SOFT_ROOT/QuaLiKiz
     cd $QLK_HOME
     QLK_HASH=`git rev-parse HEAD`
@@ -372,10 +379,10 @@ NUMAS_PER_NODE=1
 FC  = ${MPIFC} -J${GACODE_ROOT}/modules
 F77 = ${FC}
 FOMP   = ${FFLAGS}
-FMATH  =
+FMATH  =-fdefault-real-8
 FOPT   =-Ofast
 FDEBUG =-eD -Ktrap=fp -m 1
-LMATH = -mkl
+LMATH = -L${MKLROOT}/lib/intel64 -Wl,-rpath,${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl
 FFTW_INC=${FFTW_INC}
 ARCH = ar cr
 EOT
