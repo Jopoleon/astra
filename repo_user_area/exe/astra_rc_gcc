@@ -6,12 +6,12 @@ AWD=`cd $rootdir/.. && pwd` # ensure absolute path
 platform=`$AWD/get_platform`
 
 #JSON
-JSON_HOME=${ASTRA_EXT}/json/gnu_9.0.2
+JSON_HOME=${ASTRA_EXT}/json/gcc_9.0.2
 export JSON_LIB=$JSON_HOME/lib/libjsonfortran.a
 export JSON_INC=$JSON_HOME/inc
 
 # SPIDER
-SPIDER_HOME=${ASTRA_EXT}/spider/gnu_apr26
+SPIDER_HOME=${ASTRA_EXT}/spider/gcc_apr26
 if [ -f ${SPIDER_HOME}/lib/libspider.a ]; then
     export SPIDER_LIB=${SPIDER_HOME}/lib/libspider.a
 else
@@ -21,13 +21,13 @@ fi
 # TORBEAM
 
 IRC_LIB="-L${COMP_LIBDIR} -lirc" # necessary for libtorbeam.so
-TORB_HOME=${ASTRA_EXT}/torbeam/gnu_apr26
+TORB_HOME=${ASTRA_EXT}/torbeam/gcc_apr26
 TORB_LIBDIR=${TORB_HOME}/lib
 export TORB_LIB="-L${TORB_LIBDIR} -ltorbeamB  -Wl,-rpath,${TORB_LIBDIR} ${IRC_LIB}"
 
 # RABBIT
 
-RABBIT_HOME=${ASTRA_EXT}/rabbit/gnu_apr26
+RABBIT_HOME=${ASTRA_EXT}/rabbit/gcc_apr26
 RABBIT_LIBDIR=${RABBIT_HOME}/lib
 export RABBIT_LIB="-L${RABBIT_LIBDIR} -lrabbit -Wl,-rpath,${RABBIT_LIBDIR}"
 export RABBIT_INC=${RABBIT_HOME}/inc
@@ -36,15 +36,15 @@ export RABBIT_INC=${RABBIT_HOME}/inc
 
 QLK_HOME=${ASTRA_EXT}/qualikiz/nov24
 export QLK_INC=${QLK_HOME}/inc
-export QLK_LIB=${QLK_HOME}/lib/libQLK-intel-release-default.a
+export QLK_LIB=${QLK_HOME}/lib/libQLK-gcc-release-default.a
 
-QLKNN_HOME=${ASTRA_EXT}/qlk_nn/nov24
+QLKNN_HOME=${ASTRA_EXT}/qlk_nn/gcc_apr26
 export QLKNN_INC=${QLKNN_HOME}/inc
-export QLKNN_LIB=${QLKNN_HOME}/lib/libQLKNN-intel-release-default.a
+export QLKNN_LIB=${QLKNN_HOME}/lib/libQLKNN-gcc-release-default.a
 
 # TGLF
 
-TGLF_HOME=${ASTRA_EXT}/tglf/gnu_apr26
+TGLF_HOME=${ASTRA_EXT}/tglf/gcc_apr26
 export TGLF_INC=${TGLF_HOME}/inc
 export TGLF_LIB=${TGLF_HOME}/lib/libtglf.a
 

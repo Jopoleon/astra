@@ -12,7 +12,10 @@ platform=`$AWD/get_platform`
 if [[ -v comp ]]
 then
     platform=${platform}_${comp}
+else
+    comp=""
 fi
+
 echo $platform
 source $AWD/platform/env.${platform}
 
@@ -42,7 +45,7 @@ SOFT_ROOT=$HOME/soft
 
 if [ "$FC" = 'gfortran' ]
 then
-    JSON_INSTALL=$ASTRA_EXT/json/gnu_$JSON_VERSION
+    JSON_INSTALL=$ASTRA_EXT/json/gcc_$JSON_VERSION
     NETCDF_INSTALL=$ASTRA_EXT/netcdf/gcc_$NETCDF_VERSION
     export FFLAGS="-fopenmp"
 else
@@ -292,17 +295,25 @@ read -p "Install QuaLiKiz (y/n) " QLK_FLAG
 if [ "$QLK_FLAG" = "y" ]
 then
     cd $SOFT_ROOT
-#    rm -rf QuaLiKiz
-#    git clone https://gitlab.com/qualikiz-group/QuaLiKiz.git
+    rm -rf QuaLiKiz
+    git clone https://gitlab.com/qualikiz-group/QuaLiKiz.git
     QLK_HOME=$SOFT_ROOT/QuaLiKiz
     cd $QLK_HOME
     QLK_HASH=`git rev-parse HEAD`
     git submodule init
     git submodule update
+
+    if [ "$comp" = "gcc" ]
+    then
+        export TOOLCHAIN=gcc
+    fi
     export FC=$MPIFC
     export LINK=$MPIFC
     export QLK_HAVE_NAG=0
     export TUBSCFG_MPI=0
+    export VERBOSE=1
+    export BUILD=release
+
     make
 
     mkdir -p $QLK_INSTALL/lib
@@ -329,16 +340,31 @@ then
     QLKNN_HASH=`git rev-parse HEAD`
     git submodule init
     git submodule update
+
+    if [ "$comp" = "gcc" ]
+    then
+        export TOOLCHAIN=gcc
+    fi
+
     export FC=$FC_SERIAL
     export LINK=$FC_SERIAL
     export QLK_HAVE_NAG=0
     export TUBSCFG_MPI=0
+    export VERBOSE=1
+    export BUILD=release
+
     make
 
     mkdir -p $QLKNN_INSTALL/lib
     mkdir -p $QLKNN_INSTALL/inc
-    cp $QLKNN_HOME/lib/libQLKNN-intel-release-default.a $QLKNN_INSTALL/lib
-    cp $QLKNN_HOME/include/intel-release-default/* $QLKNN_INSTALL/inc/
+    if [ "$comp" = "gcc" ]
+    then
+        cp $QLKNN_HOME/lib/libQLKNN-gcc-release-default.a $QLKNN_INSTALL/lib
+        cp $QLKNN_HOME/include/gcc-release-default/* $QLKNN_INSTALL/inc/
+    else
+        cp $QLKNN_HOME/lib/libQLKNN-intel-release-default.a $QLKNN_INSTALL/lib
+        cp $QLKNN_HOME/include/intel-release-default/* $QLKNN_INSTALL/inc/
+    fi
     cp $AWD/platform/env.$platform $QLKNN_INSTALL/
     cd $QLKNN_INSTALL/
     rm -rf qlknn-hyper-namelists
