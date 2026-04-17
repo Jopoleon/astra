@@ -18,10 +18,12 @@ cd $AWD
 # Get platform-dependent compiler paths
 platform=`$AWD/get_platform`
 source $AWD/platform/env.$platform
-source $AWD/exe/astra_rc
-
-export CHECKALLCOMP=" "
-#export CHECKALLCOMP="-check all -warn all -traceback"
+if [[ -v ASTRA_COMPILER ]]
+then
+    source $AWD/exe/astra_rc_${ASTRA_COMPILER}
+else
+    source $AWD/exe/astra_rc_${ASTRA_COMPILER}
+fi
 
 ulimit -s 100000
 
