@@ -28,7 +28,8 @@ double precision, dimension(n_rho) :: RC, RE, RI, DRE, DRI, YCOS, YBTDB, &
     REJ, RIJ, YDZ, YTRAP, X, XJ, DX, ELON1, TRIA1
 double precision, dimension(ndim1) :: AZ, YDRY
 double precision, dimension(4, 4) :: SVEX
-double precision, dimension(n_energy, n_rho) :: ARD, YFI, F, YFE, YANBA, &
+double precision, dimension(n_rho) :: YFI, YFE
+double precision, dimension(n_energy, n_rho) :: ARD, F, YANBA, &
     YAQBA, YACBA, DTCX, YATBA, YANBA1, YSLEJ0, YSLEJ2
 double precision, dimension(n_energy, n_rho, n_theta) :: YASBA, YASBA1
 double precision, dimension(9) :: ZB, RMB
@@ -811,6 +812,7 @@ contains
             else
                 YR1 = 0.
             endif
+
             do JE=JEB, IEB
                 YCT2(JE) = 0.
             enddo
@@ -836,7 +838,7 @@ contains
                     JT1 = ntet*YC1 + 1
                     JT2 = ntet*YC2 + 1
                     YDEX = EXP(-YDYS)
-                    YFE(JE, JN) = YDEX
+                    YFE(JN) = YDEX
                     call nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
                 enddo
 
@@ -862,7 +864,7 @@ contains
                     JT1 = ntet*YC1 + 1
                     JT2 = ntet*YC2 + 1
                     YDEX = EXP(-YDYS)
-                    YFI(JE, JN) = YDEX
+                    YFI(JN) = YDEX
                     call nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
                     if (YC1 > YC2) write(*, *) 'YC1,YC2,231', YC1, YC2, JN
                 enddo
@@ -887,7 +889,7 @@ contains
                     RCR = (RI(JN) - AZ(JR))*(RI(JN) + AZ(JR))/RI(JN)
                     JT2 = ntet*YC1 + 1
                     JT1 = ntet*YC2 + 1
-                    YDEX = YFI(JE, JN)
+                    YDEX = YFI(JN)
                     call nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
                     if (YC1 < YC2) write(*,*) 'YC1,YC2,251', YC1, YC2, JN
                 enddo
@@ -908,7 +910,7 @@ contains
                     RCR = (RE(JN1) - AZ(JR))*(RE(JN1) + AZ(JR))/RE(JN1)
                     JT2 = ntet*YC1 + 1
                     JT1 = ntet*YC2 + 1
-                    YDEX = YFE(JE, JN)
+                    YDEX = YFE(JN)
                     call nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
                     if (YC1 < YC2) write(*,*) 'YC1,YC2,271', YC1, YC2, JN
                 enddo

@@ -99,7 +99,7 @@ contains
     END SELECT
     call CPU_TIME(t_cpu2)
     call SYSTEM_CLOCK(t_wall2, rate)
-    cpuTime_equ = cpuTime_equ + t_cpu2 - t_cpu1
+    cpuTime_equ = cpuTime_equ + dble(t_cpu2) - dble(t_cpu1)
     wallTime_equ = wallTime_equ + t_wall2 - t_wall1
 
     if (IPEQL < 3) then

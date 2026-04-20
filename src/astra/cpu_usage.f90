@@ -35,7 +35,7 @@ contains
     call markloc('CPU_usage')
     write(nch, '(A)') TRIM(str_in)
     call SYSTEM_CLOCK(wall_now, rate)
-    wall_tot = real(wall_now - wall_start) / real(rate)
+    wall_tot = dble(wall_now - wall_start) / dble(rate)
     call CPU_TIME(cpu_now)
     cpuTime_tot = cpu_now - cpu_start
 

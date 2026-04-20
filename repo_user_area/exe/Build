@@ -22,12 +22,13 @@ if [[ -v ASTRA_COMPILER ]]
 then
     source $AWD/exe/astra_rc_${ASTRA_COMPILER}
 else
-    source $AWD/exe/astra_rc_${ASTRA_COMPILER}
+    source $AWD/exe/astra_rc
 fi
 
 ulimit -s 100000
 
-echo Compile main ASTRA executable $equ_file $AWD 
+echo Compile main ASTRA executable $equ_file $AWD
+
 if [[ "$FSIM" == "True" || "$TASK" == "BGD" ]]
 then
     ATASK=$AWD/bin/${equ_file}_batch.exe

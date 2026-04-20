@@ -1,7 +1,5 @@
 module spider_params
 
-integer, parameter, private :: DP=kind(1.0D0)
-
 type type_parameters
 
     integer :: kpr=0  ! print in equil (0 - no print, -1 - no write)
@@ -26,12 +24,12 @@ type type_parameters
 
     integer ::  key_psibcf=1   !=1 - compute psiext and psipl for b.c. apt for current control
 
-    real(DP) :: dt=1.d-3
-    real(DP) :: time=0.d0
-    real(DP) :: dpsdt=0.d0   ! boundary vloop in input
+    double precision :: dt=1.d-3
+    double precision :: time=0.d0
+    double precision :: dpsdt=0.d0   ! boundary vloop in input
 
-    real(DP) :: epsro=1.0d-7 ! fixed boundary equilibrium accuracy
-    real(DP) :: enels=1.0d-6 ! circuit equation accuracy
+    double precision :: epsro=1.0d-7 ! fixed boundary equilibrium accuracy
+    double precision :: enels=1.0d-6 ! circuit equation accuracy
 
     integer :: neql = 100 ! number of nodes in radial
     integer :: ntheta = 90 ! number of intervals in poloidal + 2

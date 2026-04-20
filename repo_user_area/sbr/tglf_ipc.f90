@@ -77,13 +77,12 @@ contains
     double precision, dimension(nthe_elite) :: theta_elite, RR_elite, ZZ_elite, Bp_elite
     character(len=128) :: f_elite, ipc_file, astra_task
 
-    save semID, shmID_vars, shmID_arrs
+    save semID, shmID_dims, shmID_vars, shmID_arrs, first_call
 
     call SYSTEM_CLOCK(t_wall1, rate)
 
     write(ipc_file, '(5A, i0, 2A)') TRIM(awd), '/tmp/', TRIM(exp_file), &
         TRIM(equ_file), '-', ipcId, '.ipc', char(0)
-    write(astra_task, '(2A)') TRIM(astra_exe), char(0)
 
     if (first_call) then
         call get_environment_variable("MAX_NWORKERS", str_nworkers, status=stat)
@@ -109,7 +108,8 @@ contains
             write(*, '(A, i3, A, i3)') '>>> Warning nrho_m=', nrho_m, ' larger than NA1=', NA1
             print*, 'Possible profile overfit on TGLF grid'
         endif
-        SBP_NAME = "xpr/tglfi"//char(0)
+        SBP_NAME = "xpr/tglfi" // char(0)
+        astra_task = TRIM(astra_exe) // char(0)
         call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, &
             nworkers, SBP_NAME, ipc_file, astra_task, semID, shmID_dims, &
             shmID_vars, shmID_arrs, ipcId)

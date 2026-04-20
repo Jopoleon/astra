@@ -371,11 +371,11 @@ radial_loop: do jrho=1, NA1
 
             call default_qlknn_fullflux_options(qlknn_opts)
 
-            if (.not. NN_ETG) then
+            if (NN_ETG == 0) then
                 write(*, *) 'Fullflux nets are always running with ETG on'
                 stop
             endif
-            if (.not. NN_TEM) then
+            if (NN_TEM == 0) then
                 write(*, *) 'Fullflux nets are always running with TEM on'
                 stop
             endif
