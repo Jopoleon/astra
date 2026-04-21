@@ -97,7 +97,7 @@ contains
             write(*, '(A, i3, A, i3)') '>>> Warning nrho_m=', nrho_m, ' larger than NA1=', NA1
             print*, 'Possible profile overfit on TGLF grid'
         endif
-        SBP_NAME = "xpr/tglfi" // char(0)
+        SBP_NAME = "xpr/qlki" // char(0)
         astra_task = TRIM(astra_exe) // char(0)
         call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, &
             nworkers, SBP_NAME, ipc_file, astra_task, semID, shmID_dims, &
