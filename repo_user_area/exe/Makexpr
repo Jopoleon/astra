@@ -13,10 +13,14 @@ ifeq ($(FC),gfortran)
   LD := $(FC)
   OMP_FFLAG =-fopenmp
   OMP_CFLAG =-fopenmp
+  MPI_FC = $(MPIFC) $(OMP_FFLAG)
+  MPI_CC = $(MPIFC) $(OMP_CFLAG)
 else
   ADD_LIBS := -L$(COMP_LIBDIR) -lifcoremt -lifport -lifcore
   LD := $(CC)
   OMP_CFLAG =-qopenmp
+  MPI_FC = $(MPIFC) $(OMP_FFLAG)
+  MPI_CC = $(MPICC) $(OMP_CFLAG)
 endif
 
 # TGLF
@@ -24,14 +28,10 @@ endif
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
 #-----
 
-# Qualikiz
-MPI_FC = $(MPIFC) $(OMP_FFLAG)
-MPI_CC = $(MPICC) $(OMP_CFLAG)
-
 #-----
 
 .PHONY: all
-all: directories $(XPR)/tglfi $(XPR)/qlki $(XPR)/neo
+all: directories $(XPR)/tglfi $(XPR)/neo
 
 .PHONY: directories
 directories:
