@@ -1,4 +1,4 @@
-subroutine STEPUP_BATCH()
+subroutine STEPUP()
 !-------------------------------------------------------------------
 ! Perform one time step
 ! Note that now time step is updated at the end of a full time cycle
@@ -9,11 +9,14 @@ use scalars, only: IBCPSI, IPART, ITFBE, IFBEY, IPLFBE, IPEQL, &
     TAU, TAU_NEW, TAU_OLD, TAUMIN, TAUMAX, TAUPRP, TIME, TSTART, ATREQ, & 
     PSIFBO, PSIFB, PSIEXO, PSIEXT, PSPLXO, PSPLEX, RBDOT, BBDOT
 use status, only: TE, TI, NE, NI, NIO, FP, defarr, error_catch
-use read_input, only: raw_cCoil, raw_vCoil, MACHINE
+use read_input, only: raw_cCoil, raw_vCoil, MACHINE, TASK
 use auxiliary, only: IFTREQ, IFSTEP, OLDNEW
 use set_x_data, only: set_x_scalars, set_x_arrays, get_coil
 use metrics, only: CCOIL, VCOIL, plasma_up ,metric
 use feqis_solvers, only: feqisupdate
+#ifdef X11
+use gui_interaction, only: if_key
+#endif
 
 implicit none
 
@@ -172,15 +175,14 @@ time_step_accuracy: do
             call error_catch()
         endif
 
-        jkey = IFTREQ(ATREQ)            ! ++ITREQ; Tr-Eq loop converged?  
-
-! some options to avoid NITREQ when IFBEY = 1, IPCTR = X.1  --> does not do NITREQ
-        if (IFBEY == 1) then
-!            zipctrl = IPCTRL - nint(IPCTRL)
-!            if (zipctrl > 1.e-10) jkey = 1
+#ifdef X11
+        if (TASK(1:3) /= 'BGD') then
+            jkey = if_key(0)                 ! Enables ITREQ iteration control 
         endif
+#endif
+        jkey = IFTREQ(ATREQ)            ! ++ITREQ; Tr-Eq loop converged?
 
-!quantitites for psi b.c.
+! quantitites for psi b.c.
         if (plasma_up) then
             Apsibcfac = dfpdrbm12
             Bpsibcfac = PSIEXT - PSPLEX*ROC*Apsibcfac
@@ -246,4 +248,4 @@ endif
 ! note that in postep if one wants to modify tau, like in tsctrl, better to do it in tauprp
 ! call TSCTRL at the end of all other subroutines
 
-end subroutine STEPUP_BATCH
+end subroutine STEPUP

@@ -101,7 +101,6 @@ mkdir -p $AWD/tmp
 chmod 744 $AWD/exe/Build
 chmod 744 $AWD/exe/as_exe
 chmod 744 $AWD/exe/wr_nml
-chmod 744 $AWD/exe/CheckObjs
 chmod 744 $AWD/pyparse/parser_main.py
 chmod 744 $AWD/clean.sh
 chmod 744 $AWD/compReg.sh

@@ -23,13 +23,19 @@ LIBGRAPH = $(LIB_DIR)/libgraph.a
 FC_FLAGS += -I$(AWD)
 LD_FLAGS += -I$(AWD)
 
+ifdef X11
+  X11FLAG = -DX11
+else
+  X11FLAG =
+endif
+
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
 LIB = -L/usr/lib64 -lX11 $(QLKNN_LIB) $(TGLF_LIB) $(TORB_LIB) $(RABBIT_LIB) $(SPIDER_LIB) -lsbr -lnbi -lgraph -lastra -lfnc -lfeqis -lmisc $(JSON_LIB) -L$(LIB_DIR) $(MKL_LIB) -lrt
 
 AENV = $(AWD)/exe/astra_rc
 
 ASTRA_SRC = \
-$(ASTRA_DIR)/astra_main.f90 $(ASTRA_DIR)/stepup.f90
+$(ASTRA_DIR)/astra_main.F90 $(ASTRA_DIR)/stepup.F90
 
 TMP_SRC = \
 $(TMP_DIR)/astra_out.f90 \
@@ -79,7 +85,7 @@ modules:
 
 $(ATASK): $(LIBGRAPH) $(LIBASTRA) $(LIBMISC) $(LIBNBI) $(LIBFEQIS) $(SPIDER_LIB) $(LIBSBR) $(LIBFNC) $(AENV) $(EQU) $(ASTRA_SRC) $(PYFILES) $(FMLS)
 	$(PY_TMP_GEN)
-	$(FC) $(LD_FLAGS) -o $(ATASK) $(ASTRA_SRC) $(TMP_SRC) -I$(JSON_INC) -I$(MOD_DIR)/astra -I$(MOD_DIR)/graph -I$(MOD_DIR)/misc -I$(MOD_DIR)/sbr -I$(MOD_DIR)/feqis -I$(NBI_INC) $(LIB)
+	$(FC) $(LD_FLAGS) -o $(ATASK) $(ASTRA_SRC) $(TMP_SRC) -I$(MOD_DIR)/misc -I$(MOD_DIR)/astra -I$(MOD_DIR)/sbr -I$(MOD_DIR)/feqis -I$(MOD_DIR)/graph $(LIB) $(X11FLAG)
 
 # User defined sbr and fnc
 

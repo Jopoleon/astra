@@ -1,4 +1,4 @@
-program astra_batch
+program astra
 
 ! Copyright (C) 2026 Institut fuer Plasmaphysik - Boltzmannstrasse 2, 85748 Garching (Germany)
 !
@@ -15,11 +15,16 @@ use debugger, only: astra_stop, markloc
 use transport2fbe, only: transport2fbe_init
 use json_vars, only: read_metadata
 use json_rw, only: read_ajson, write_ajson
-use read_input, only: readInput, raw_cCoil, MACHINE, &
+use read_input, only: readInput, raw_cCoil, TASK, MACHINE, &
     restart, tend_nml, tpause_nml
 use auxiliary, only: IFTREQ
 use set_x_data, only: set_x_scalars, set_x_arrays, astra_assignments
 use metrics, only: eqguess, metric, CCOIL, VCOIL
+
+#ifdef X11
+use graph_utils, only: astra_gui, astra_gui_ref, gui_init
+use gui_interaction, only: if_key
+#endif
 
 implicit none
 
@@ -47,6 +52,14 @@ call ininam()       ! Sets DTEQ, DTNAME and plot labels (from equ file); call af
 call readInput()    ! "restart" is set inside readInput
 allocate(CCOIL(raw_cCoil%ncoils), VCOIL(raw_cCoil%ncoils))
 
+#ifdef X11
+call set_graph_names()
+gui_on = (TASK(1: 3) /= 'BGD') ! Graphic window yes/no
+if (gui_on) then
+    call gui_init() ! Start GUI
+endif
+#endif X11
+
 if (restart > 0) then ! Initial condition from output json file
     call read_ajson(restart) ! Read the desired json file
     call set_x_arrays(2)     ! To plot also exp raw data
@@ -56,6 +69,9 @@ if (restart > 0) then ! Initial condition from output json file
     endif
     tend = tend_nml ! TEND is read from json, TEND_NML from command line "-e TBEG_NML"
     tpause = tpause_nml
+#ifdef X11
+    if (gui_on) jkey = if_key(0) ! Plot right now
+#endif
 else ! Iterations for initial convergence
     call status_init()       ! Fallback default values for profiles
     call astra_assignments() ! ASTRA default assignments
@@ -73,6 +89,9 @@ else ! Iterations for initial convergence
 
     jt_req = 0
     do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set in IFTREQ (status:defarr)
+#ifdef X11
+        if (gui_on) jkey = if_key(256) ! Plot right now
+#endif
         call set_x_scalars()    ! Set exp scalars
         call DETVAR()
         call DEFARR()
@@ -88,6 +107,14 @@ else ! Iterations for initial convergence
     enddo
 endif
 
+#ifdef X11
+if (gui_on) then
+    str_iterations(1:16) = ' ' ! Erase iteration number, iterations label top right
+    call textvm(astra_gui%width-18*astra_gui_ref%dxlet, 2, str_iterations(1:16), 16)
+    call textvm(astra_gui%width-17*astra_gui_ref%dxlet, astra_gui_ref%dylet + 1, str_iterations(1:14), 14)
+endif
+#endif
+
 !---------------
 ! Time step loop
 !---------------
@@ -99,10 +126,10 @@ do while (TIME < t_stop)
         call write_ajson()
         jt_out = jt_out + 1
     endif
-    call STEPUP_BATCH() ! Time-dependent evolution
+    call STEPUP() ! Time-dependent evolution
 enddo
 
 call CPU_report('>>> ASTRA normal exit >>>')
 call astra_stop()
 
-end program astra_batch
+end program astra

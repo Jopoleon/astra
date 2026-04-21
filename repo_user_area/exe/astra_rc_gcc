@@ -1,17 +1,12 @@
 #!/bin/bash
 
-rootdir=`dirname $0`        # may be relative path
-AWD=`cd $rootdir/.. && pwd` # ensure absolute path
-
-platform=`$AWD/get_platform`
-
 #JSON
 JSON_HOME=${ASTRA_EXT}/json/gcc_9.0.2
 export JSON_LIB=$JSON_HOME/lib/libjsonfortran.a
 export JSON_INC=$JSON_HOME/inc
 
 # SPIDER
-SPIDER_HOME=${ASTRA_EXT}/spider/gcc_apr26
+SPIDER_HOME=${ASTRA_EXT}/spider/unstable
 if [ -f ${SPIDER_HOME}/lib/libspider.a ]; then
     export SPIDER_LIB=${SPIDER_HOME}/lib/libspider.a
 else

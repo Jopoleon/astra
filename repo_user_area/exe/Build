@@ -31,9 +31,11 @@ echo Compile main ASTRA executable $equ_file $AWD
 
 if [[ "$FSIM" == "True" || "$TASK" == "BGD" ]]
 then
+    unset X11
     ATASK=$AWD/bin/${equ_file}_batch.exe
     make -f exe/Makebatch MODEL=$equ_file FEXP=$exp_file ATASK=$ATASK
 else
+    export X11=y
     ATASK=$AWD/bin/${equ_file}_gui.exe
     make -f exe/Makefile  MODEL=$equ_file FEXP=$exp_file ATASK=$ATASK
 fi
