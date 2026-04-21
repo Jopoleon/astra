@@ -30,7 +30,7 @@ else
 endif
 
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
-LIB = -L/usr/lib64 -lX11 $(QLKNN_LIB) $(TGLF_LIB) $(TORB_LIB) $(RABBIT_LIB) $(SPIDER_LIB) -lsbr -lnbi -lgraph -lastra -lfnc -lfeqis -lmisc $(JSON_LIB) -L$(LIB_DIR) $(MKL_LIB) -lrt
+LIB = -lsbr -lnbi -L/usr/lib64 -lX11 $(QLKNN_LIB) $(TGLF_LIB) $(TORB_LIB) $(RABBIT_LIB) $(SPIDER_LIB) -lgraph -lastra -lfnc -lfeqis -lmisc $(JSON_LIB) -L$(LIB_DIR) $(MKL_LIB) -lrt
 
 AENV = $(AWD)/exe/astra_rc
 

@@ -405,7 +405,7 @@ NUMAS_PER_NODE=1
 FC  = ${MPIFC} -J${GACODE_ROOT}/modules
 F77 = ${FC}
 FOMP   = ${FFLAGS}
-FMATH  =-fdefault-real-8
+FMATH  =-fdefault-real-8 -fdefault-double-8
 FOPT   =-Ofast
 FDEBUG =-eD -Ktrap=fp -m 1
 LMATH = -L${MKLROOT}/lib/intel64 -Wl,-rpath,${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl

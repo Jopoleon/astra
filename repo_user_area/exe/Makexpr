@@ -11,9 +11,11 @@ AENV = $(AWD)/exe/astra_rc
 ifeq ($(FC),gfortran)
   ADD_LIBS :=
   LD := $(FC)
+  OMP_FLAG =-fopenmp
 else
   ADD_LIBS := -L$(COMP_LIBDIR) -lifcoremt -lifport -lifcore
   LD := $(CC)
+  OMP_FLAG =-qopenmp -r8 -no-prec-div -traceback
 endif
 
 # TGLF
@@ -22,8 +24,8 @@ MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libm
 #-----
 
 # Qualikiz
-MPI_FC = $(MPIFC) -qopenmp -r8 -no-prec-div -traceback
-MPI_CC = $(MPICC) -qopenmp
+MPI_FC = $(MPIFC) $(OMP_FLAG)
+MPI_CC = $(MPICC) $(OMP_FLAG)
 
 #-----
 
