@@ -13,25 +13,24 @@ ifeq ($(FC),gfortran)
   LD := $(FC)
   OMP_FFLAG =-fopenmp
   OMP_CFLAG =-fopenmp
+  LD_MPI := $(MPIFC) $(OMP_FFLAG)
   MPI_FC = $(MPIFC) $(OMP_FFLAG)
-  MPI_CC = $(MPIFC) $(OMP_CFLAG)
 else
   ADD_LIBS := -L$(COMP_LIBDIR) -lifcoremt -lifport -lifcore
   LD := $(CC)
   OMP_CFLAG =-qopenmp
+  LD_MPI := $(MPICC) $(OMP_CFLAG)
   MPI_FC = $(MPIFC) $(OMP_FFLAG)
-  MPI_CC = $(MPICC) $(OMP_CFLAG)
 endif
 
 # TGLF
 
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
-#-----
 
 #-----
 
 .PHONY: all
-all: directories $(XPR)/tglfi $(XPR)/neo
+all: directories $(XPR)/tglfi $(XPR)/qlki $(XPR)/neo
 
 .PHONY: directories
 directories:
@@ -52,11 +51,11 @@ $(XPR)/tglfi:	$(XPR)/tglfinter.o $(XPR)/tglf_interf.o $(LIBASTRA) $(TGLF_LIB) $(
 	$(TGLF_LIB) $(MKL_LIB) -lpthread -lm $(ADD_LIBS)
 
 $(XPR)/neo:	$(XPR)/neointer.o $(XPR)/neo_interf.o $(LIBASTRA) $(NEO_LIB) $(AENV)
-	$(MPI_CC) -o $@ $(XPR)/neointer.o $(XPR)/neo_interf.o $(LIBASTRA)	\
+	$(LD_MPI) -o $@ $(XPR)/neointer.o $(XPR)/neo_interf.o $(LIBASTRA)	\
 	$(NEO_LIB) $(MKL_LIB) -lpthread -lm $(ADD_LIBS)
 
 $(XPR)/qlki:	$(XPR)/qlkinter.o $(XPR)/qlk_interf.o $(LIBASTRA) $(QLK_LIB) $(AENV)
-	$(MPI_CC) -o $@ $(XPR)/qlkinter.o $(XPR)/qlk_interf.o $(LIBASTRA)	\
+	$(LD_MPI) -o $@ $(XPR)/qlkinter.o $(XPR)/qlk_interf.o $(LIBASTRA)	\
 	$(QLK_LIB) $(MKL_LIB) -lpthread -lm $(ADD_LIBS)
 
 # c wrapper
