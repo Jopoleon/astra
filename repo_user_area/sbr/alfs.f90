@@ -4,6 +4,7 @@ use scalars, only: NA1, ROC
 use status, only: NRD, TE, AMETR
 use parameters_a2equil, only: equil_now
 use numerical_tools, only: qinterp
+use standard_functions, only: RADIAL, GRAD
 
 implicit none
 
@@ -12,7 +13,6 @@ double precision, intent(out) :: a_lfs(NRD), dt_tetop(NRD), avdte
 integer :: j, i, Nx, Nt, n1, n2
 double precision :: te_top, Rmag, Zmag
 double precision, dimension(556) :: a_lfs_eq, ametr_eq
-double precision, external :: RADIAL, GRAD
 
 nx = SIZE(equil_now%coord_sys%position%r, 1)
 nt = SIZE(equil_now%coord_sys%position%r, 2)
