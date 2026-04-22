@@ -109,6 +109,12 @@ contains
         aplasma = [aplasma, 3.d0]
         zplasma = [zplasma, 1.d0]
     endif
+    if (SIZE(aplasma) == 0) then
+        print*, '>>> Error in RABBIT: no plasma main species specified'
+        print*, 'Set NHYDR, NDEUT and/or NTRIT in the ASTRA equ file'
+        stop
+    endif
+ 
     if (.not. allocated(species_plasma_ratio)) allocate(species_plasma_ratio(size(Aplasma)))
 
     do i=1, size(Aplasma)
