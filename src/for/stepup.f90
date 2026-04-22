@@ -54,13 +54,13 @@ if (ITFBE > 0.) then
     endif
 endif
 
-call detvar
+call detvar()
 ! Subroutines with the "<" symbol are put here
 ! here it computes the new NI also. These are run with tau_old
 
 if (plasma_up == 1 .or. ifbey == 0) then
-    call OLDNEW           ! Time advance: F(t-tau):=F(t) neo=ne, etc,except ni
-    call INTVAR           ! Set exp scalars, moved here for btor consistency
+    call OLDNEW()         ! Time advance: F(t-tau):=F(t) neo=ne, etc,except ni
+    call INTVAR()         ! Set exp scalars, moved here for btor consistency
 endif
 
 ! Update time at the end of everything
@@ -114,7 +114,7 @@ time_step_accuracy: do
             call SETARX(2)       ! Update exp-data with a new metric
         endif
 
-        call METRIC          ! Equilibrium call, compute IPL from dfpdrb, compute PSIEXT, shape, psplex, and metric coefficients, update ROC, FTN
+        call METRIC()          ! Equilibrium call, compute IPL from dfpdrb, compute PSIEXT, shape, psplex, and metric coefficients, update ROC, FTN
 
         if (plasma_up == 1) then
             RBDOT = (FTO  - FTN)/(FTO  + FTN)/TAU     !New rbdot for adiabatic compression
@@ -129,7 +129,7 @@ time_step_accuracy: do
 
         if (isnan(hro)) then
             write(*, *) 'hro is nan'
-            call err_catch_a
+            call err_catch_a()
         endif
 
         if (plasma_up == 1) then
@@ -139,35 +139,35 @@ time_step_accuracy: do
 ! catching errors: infinite or nan profiles
         if (sum(abs(te(1:na1)))/na1 > 1e8) then
             write(*, *) 'te isinf'
-            call err_catch_a
+            call err_catch_a()
         endif
         if (sum(abs(ti(1:na1)))/na1 > 1e8) then
             write(*, *) 'ti isinf'
-            call err_catch_a
+            call err_catch_a()
         endif
         if (sum(abs(ne(1:na1)))/na1 > 1e8) then
             write(*, *) 'ne isinf'
-            call err_catch_a
+            call err_catch_a()
         endif
         if (sum(abs(fp(1:na1)))/na1 > 1e8)  then
             write(*, *) 'fp isinf'
-            call err_catch_a
+            call err_catch_a()
         endif
         if (isnan(sum(te(1:na1))))  then
             write(*, *) 'te isnan'
-            call err_catch_a
+            call err_catch_a()
         endif
         if (isnan(sum(ti(1:na1))))  then
             write(*, *) 'ti isnan'
-            call err_catch_a
+            call err_catch_a()
         endif
         if (isnan(sum(ne(1:na1))))  then
             write(*, *) 'ne isnan'
-            call err_catch_a
+            call err_catch_a()
         endif
         if (isnan(sum(fp(1:na1))))  then
             write(*, *) 'fp isnan'
-            call err_catch_a
+            call err_catch_a()
         endif
 
         if (TASK(1:3) /= 'BGD') then
@@ -200,7 +200,7 @@ time_step_accuracy: do
     enddo tr_eq_loop
 
     if (plasma_up == 1 .or. IFBEY == 0) then
-        call DEFARR                  ! F(t)>0? Define F(t) outside ABC
+        call DEFARR()              ! F(t)>0? Define F(t) outside ABC
     endif
     
     tau_old = tau !store old tau before changing it
@@ -234,7 +234,7 @@ endif
 
 TIME = TIME + TAU
 TAUPRP = tau
-call POSTEP
+call POSTEP()
 
 if (TAU /= TAUPRP) then
     tau_new = tau !store new tau in case it has been changed in postep

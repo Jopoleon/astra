@@ -36,15 +36,15 @@ save jt_out
 call CPU_TIME(cpu_start)
 call SYSTEM_CLOCK(wall_start, rate)
 
-call read_metadata
-call associate_pointers
+call read_metadata()
+call associate_pointers()
 
-call const_init
-call status_init
+call const_init()
+call status_init()
 
-call ininam
-call io_init
-call read_input
+call ininam()
+call io_init()
+call read_input()
 
 use_ext_bnd = 0
 IPART = 1   ! Mark initial iteration section
@@ -54,36 +54,36 @@ IPART = 1   ! Mark initial iteration section
 !--------------------
 
 if (TASK(1: 3) /= 'BGD') then
-    call outcmn_init
-    call initMainWindow
+    call outcmn_init()
+    call initMainWindow()
 endif
 
 call SETARX(1)
-call INIVAR
-call SETVAR
-call DETVAR
-call EQGUESS
-call INIVAR
+call INIVAR()
+call SETVAR()
+call DETVAR()
+call EQGUESS()
+call INIVAR()
 
-call transport2fbe_init
+call transport2fbe_init()
 
 jt_req = 0
 do while (jt_req == 0) ! Till convergence (jt_req /= 0). Max #iterations is set in IFTREQ (for/defarr.f90)
 
     if (TASK(1:3) /= 'BGD') jkey = IFKEY(256)
-    call INTVAR      ! Set exp scalars
-    call DETVAR
-    call DEFARR
+    call INTVAR()      ! Set exp scalars
+    call DETVAR()
+    call DEFARR()
     call SETARX(1)   ! Set X-data w/o time interpolation
-    call INIVAR
+    call INIVAR()
     call markloc("init")
     NITOT = NITOT + 1
 
-    call INIT_CONVERGE_STEP
+    call INIT_CONVERGE_STEP()
     call markloc("init done")
 
     IFBEY = 0. ! no fbe possible here
-    call METRIC
+    call METRIC()
     jt_req = IFTREQ(ATREQ)     ! ++ITREQ; Convergence check; 1 - yes
 enddo
 
@@ -99,13 +99,13 @@ endif
 
 do while (TIME - TEND + 1.E-8 < DPOUT + TAU)
     if ((TIME - TSTART + 1.E-8)/DPOUT >= jt_out) then
-        call write_json
+        call write_json()
         jt_out = jt_out + 1
     endif
-    call STEPUP
+    call STEPUP()
 enddo
 
 call CPU_report('>>> ASTRA normal exit >>>')
-call astra_stop
+call astra_stop()
 
 end program astra

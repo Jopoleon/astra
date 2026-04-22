@@ -239,7 +239,7 @@ radial_loop: do jr=1, chunk
     SELECT CASE (neo_sim_model_in)
 
     CASE(1) ! analytic
-        call neo_run
+        call neo_run()
         pflux_i(1) = neo_pflux_thHH_out *Gamma_GB
         eflux_i(1) = neo_eflux_thCHi_out*Q_GB
         pflux_e    = neo_pflux_thHH_out *Gamma_GB 
@@ -248,7 +248,7 @@ radial_loop: do jr=1, chunk
         print*, 'neo analytic', pflux_i(1), eflux_i(1)
 
     CASE(2) ! kinetic calculation
-        call neo_run
+        call neo_run()
 
         pflux_e = (neo_pflux_dke_out(1)    + tgyro_gv_flag*neo_pflux_gv_out(1)) *Gamma_GB
         eflux_e = (neo_efluxncv_dke_out(1) + tgyro_gv_flag*neo_efluxncv_gv_out(1)) * Q_GB

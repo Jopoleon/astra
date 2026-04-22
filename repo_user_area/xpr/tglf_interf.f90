@@ -385,7 +385,7 @@ radial_loop: do jr=1, chunk
         write(file_dump_local, '(A11, I0)') 'input.tglf_', jr + jr1
     endif
 ! -----------------------
-    call tglf_run
+    call tglf_run()
 ! -----------------------
 
 ! Transport coefficients

@@ -96,18 +96,24 @@ contains
         allocate(aplasma(0))
         allocate(zplasma(0))
     endif
-    if (maxval(NHYDR(1:NA1)) > 0.) then
-        aplasma = [aplasma, 1.]
-        zplasma = [zplasma, 1.]
+    if (maxval(NHYDR(1:NA1)) > 0.d0) then
+        aplasma = [aplasma, 1.d0]
+        zplasma = [zplasma, 1.d0]
     endif
-    if (maxval(NDEUT(1:NA1)) > 0.) then
-        aplasma = [aplasma, 2.]
-        zplasma = [zplasma, 1.]
+    if (maxval(NDEUT(1:NA1)) > 0.d0) then
+        aplasma = [aplasma, 2.d0]
+        zplasma = [zplasma, 1.d0]
     endif
-    if (maxval(NTRIT(1:NA1)) > 0.) then
-        aplasma = [aplasma, 3.]
-        zplasma = [zplasma, 1.]
+    if (maxval(NTRIT(1:NA1)) > 0.d0) then
+        aplasma = [aplasma, 3.d0]
+        zplasma = [zplasma, 1.d0]
     endif
+    if (SIZE(aplasma) == 0) then
+        print*, '>>> Error in RABBIT: no plasma main species specified'
+        print*, 'Set NHYDR, NDEUT and/or NTRIT in the ASTRA equ file'
+        stop
+    endif
+ 
     if (.not. allocated(species_plasma_ratio)) allocate(species_plasma_ratio(size(Aplasma)))
 
     do i=1, size(Aplasma)
@@ -147,7 +153,7 @@ contains
         if (ios /= 0) then
             write(*, *) 'Error opening limiter file: iostat=', ios
         endif
-        read(unit_lim, '(2i)') dum, n_lim
+        read(unit_lim, *) dum, n_lim
         allocate(r_lim(n_lim), z_lim(n_lim))
         do jlim=1, n_lim
             read(unit_lim, *) r_lim(jlim), z_lim(jlim)
@@ -302,8 +308,8 @@ contains
     if (.not. allocated(te_rf))       allocate(te_rf(nrhoout))
     if (.not. allocated(ne_rf))       allocate(ne_rf(nrhoout))
     if (.not. allocated(p_rf_abs))    allocate(p_rf_abs(nrhoout))
-    if (.not. allocated(p_rf_coll_e)) allocate(p_rf_coll_e(nrhoout), source=0.0)
-    if (.not. allocated(p_rf_coll_i)) allocate(p_rf_coll_i(nrhoout), source=0.0)
+    if (.not. allocated(p_rf_coll_e)) allocate(p_rf_coll_e(nrhoout), source=0.d0)
+    if (.not. allocated(p_rf_coll_i)) allocate(p_rf_coll_i(nrhoout), source=0.d0)
 
     call qinterp(rhotor1d, te_interp, NA1, rho_rab_out, te_rf, nrhoout)
     call qinterp(rhotor1d, ne_interp, NA1, rho_rab_out, ne_rf, nrhoout)

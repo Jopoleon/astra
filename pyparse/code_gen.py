@@ -84,7 +84,7 @@ class CODE_GEN:
 # associate_pointers
 
         self.associate_pointers = \
-'''subroutine associate_pointers
+'''subroutine associate_pointers()
 
 use parameter_inc, only: NRD, n_sbr_max
 use const_inc

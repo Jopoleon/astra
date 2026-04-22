@@ -140,7 +140,7 @@ endif
 
     mu = \
 '''enddo
-call CUOFMU
+call CUOFMU()
 YU = GP2*RTOR
 do j=1, NA1
 '''
@@ -254,9 +254,9 @@ integer :: t_wall1, t_wall2, rate
 double precision :: t_cpu1, t_cpu2
 
 call markloc("detvar (time signals)")
-call tglf_alloc
-call qlk_alloc
-call neo_alloc
+call tglf_alloc()
+call qlk_alloc()
+call neo_alloc()
 '''
 
     rad_tail  = \
