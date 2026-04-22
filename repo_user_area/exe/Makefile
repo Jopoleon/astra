@@ -23,10 +23,16 @@ LIBGRAPH = $(LIB_DIR)/libgraph.a
 FC_FLAGS += -I$(AWD)
 LD_FLAGS += -I$(AWD)
 
-ifdef X11
-  X11FLAG = -DX11
+ifdef SPIDER
+  SPIDER_FLAG = -DSPIDER
 else
-  X11FLAG =
+  SPIDER_FLAG =
+endif
+
+ifdef X11
+  X11_FLAG = -DX11
+else
+  X11_FLAG =
 endif
 
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
@@ -77,7 +83,7 @@ clean:
 .PHONY: modules
 modules:
 	make -f $(AWD)/exe/Makemisc modules
-	make -f $(AWD)/exe/Makeastra modules
+	make -f $(AWD)/exe/Makeastra modules SPID_FLAG=$(SPIDER_FLAG)
 	make -f $(AWD)/exe/Makefeqis modules
 	make -f $(AWD)/exe/Makegraph modules
 
@@ -85,7 +91,7 @@ modules:
 
 $(ATASK): $(LIBGRAPH) $(LIBASTRA) $(LIBMISC) $(LIBNBI) $(LIBFEQIS) $(SPIDER_LIB) $(LIBSBR) $(LIBFNC) $(AENV) $(EQU) $(ASTRA_SRC) $(PYFILES) $(FMLS)
 	$(PY_TMP_GEN)
-	$(FC) $(LD_FLAGS) -o $(ATASK) $(ASTRA_SRC) $(TMP_SRC) -I$(MOD_DIR)/misc -I$(MOD_DIR)/astra -I$(MOD_DIR)/sbr -I$(MOD_DIR)/feqis -I$(MOD_DIR)/graph $(LIB) $(X11FLAG)
+	$(FC) $(LD_FLAGS) -o $(ATASK) $(ASTRA_SRC) $(TMP_SRC) -I$(MOD_DIR)/misc -I$(MOD_DIR)/astra -I$(MOD_DIR)/sbr -I$(MOD_DIR)/feqis -I$(MOD_DIR)/graph $(LIB) $(X11_FLAG)
 
 # User defined sbr and fnc
 
