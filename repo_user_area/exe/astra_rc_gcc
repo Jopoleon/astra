@@ -6,7 +6,7 @@ export JSON_LIB=$JSON_HOME/lib/libjsonfortran.a
 export JSON_INC=$JSON_HOME/inc
 
 # SPIDER
-SPIDER_HOME=${ASTRA_EXT}/spider/unstable
+SPIDER_HOME=${ASTRA_EXT}/spider/gcc_apr26
 if [ -f ${SPIDER_HOME}/lib/libspider.a ]; then
     export SPIDER_LIB=${SPIDER_HOME}/lib/libspider.a
 else
@@ -29,7 +29,7 @@ export RABBIT_INC=${RABBIT_HOME}/inc
 
 # QuaLiKiZ
 
-QLK_HOME=${ASTRA_EXT}/qualikiz/nov24
+QLK_HOME=${ASTRA_EXT}/qualikiz/gcc_apr26
 export QLK_INC=${QLK_HOME}/inc
 export QLK_LIB=${QLK_HOME}/lib/libQLK-gcc-release-default.a
 
