@@ -827,7 +827,7 @@ contains
      else
 #ifdef SPIDER
         call spider_run(ncoils, ucoils, equil_in, equil_out, parameters_equil)
-#endif SPIDER
+#endif
     endif
     if (ipsibcf /= 0) parameters_equil%key_psibcf = 1
 
