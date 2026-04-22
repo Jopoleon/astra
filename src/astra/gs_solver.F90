@@ -824,8 +824,10 @@ contains
 
     if (equil_solver == 101) then
         call feqis_main(ncoils, ucoils, parameters_equil%neql, parameters_equil%k_fixfree, parameters_equil%no_circuit_eq, 1, machine, equil_in, equil_out)
-    else
+     else
+#ifdef SPIDER
         call spider_run(ncoils, ucoils, equil_in, equil_out, parameters_equil)
+#endif SPIDER
     endif
     if (ipsibcf /= 0) parameters_equil%key_psibcf = 1
 

@@ -25,6 +25,13 @@ else
     source $AWD/exe/astra_rc
 fi
 
+if [[ "$SPIDER_LIB" == "" ]]
+then
+    unset SPIDER
+else
+    export SPIDER=y
+fi
+
 ulimit -s 100000
 
 echo Compile main ASTRA executable $equ_file $AWD

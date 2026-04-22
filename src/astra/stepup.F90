@@ -226,7 +226,9 @@ tau = tau_old !reuse old for postep routines
 if (IFBEY >= 1) then         ! is doing free boundary
     if (ICIRCQ > 0) then    ! circuit equations are solved with whatever code
         if (IPEQL == 4) then ! SPIDER
+#ifdef SPIDER
             call SPIDUPDATE(machine, CCOIL(1:n_coils), time, n_coils)    ! Update circuit stuff which has to be outside the iterations of course
+#endif
         else if (IPEQL == 5) then ! FEQIS
             call FEQISUPDATE(CCOIL, n_coils)    ! Update circuit stuff which has to be
         endif

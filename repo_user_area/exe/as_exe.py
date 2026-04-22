@@ -63,7 +63,7 @@ if __name__ == '__main__':
     parser.add_argument('-re', '--restart', type=int, help='Restart', required=False, default=0)
     parser.add_argument('-fs', action='store_true', help='Flight simulator', required=False)
     parser.add_argument('-W', '--waitslurm', action='store_true', help='Hold on SLURM job', required=False, default=False)
-    parser.add_argument('-c', '--compiler', help='Compiler (gui, ifx)', required=False)
+    parser.add_argument('-c', '--compiler', help='Compiler (gcc, ifx)', required=False)
 
     args = parser.parse_args()
 
