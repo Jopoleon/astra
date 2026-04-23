@@ -28,7 +28,6 @@ double precision, dimension(n_rho) :: RC, RE, RI, DRE, DRI, YCOS, YBTDB, &
     REJ, RIJ, YDZ, YTRAP, X, XJ, DX, ELON1, TRIA1
 double precision, dimension(ndim1) :: AZ, YDRY
 double precision, dimension(4, 4) :: SVEX
-double precision, dimension(n_rho) :: YFI, YFE
 double precision, dimension(n_energy, n_rho) :: ARD, F, YANBA, &
     YAQBA, YACBA, DTCX, YATBA, YANBA1, YSLEJ0, YSLEJ2
 double precision, dimension(n_energy, n_rho, n_theta) :: YASBA, YASBA1
@@ -655,8 +654,10 @@ contains
         jjr, jr, jbb, jjn, jj, jt1, jt2, jnn, jhp1, jeth
     double precision :: YQSHTH, Y0, DS, DV, YLOSS, YE3, RJ0, YH, YR, YRN, &
         YE, YVEDE, Y, YDH, XJH, ZJH, YZJH, Y12, Y2, YC2, YRN1, YR2, YR1, &
-        YDEDJ, YRBJN, Y1, YC1, YDYS, YDEX
+        YDEDJ, YRBJN, Y1, YC1
     double precision, dimension(3) :: DRL, YCU, YCT2, YVE
+    double precision, dimension(n_energy) :: yf_io
+    double precision, dimension(n_energy, n_rho) :: YFI, YFE
 
     YQSHTH = 0.
     ntet = ntet1 - 1
@@ -837,9 +838,8 @@ contains
                     endif
                     JT1 = ntet*YC1 + 1
                     JT2 = ntet*YC2 + 1
-                    YDEX = EXP(-YDYS)
-                    YFE(JN) = YDEX
-                    call nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
+                    call nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, AZ(jr), contr, yct2, yaqbp, yf_io, .true.)
+                    YFE(:, JN) = yf_io
                 enddo
 
                 JN = JH - 1
@@ -863,9 +863,8 @@ contains
                     endif
                     JT1 = ntet*YC1 + 1
                     JT2 = ntet*YC2 + 1
-                    YDEX = EXP(-YDYS)
-                    YFI(JN) = YDEX
-                    call nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
+                    call nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, AZ(jr), contr, yct2, yaqbp, yf_io, .true.)
+                    YFI(:, JN) = yf_io
                     if (YC1 > YC2) write(*, *) 'YC1,YC2,231', YC1, YC2, JN
                 enddo
 
@@ -889,8 +888,7 @@ contains
                     RCR = (RI(JN) - AZ(JR))*(RI(JN) + AZ(JR))/RI(JN)
                     JT2 = ntet*YC1 + 1
                     JT1 = ntet*YC2 + 1
-                    YDEX = YFI(JN)
-                    call nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
+                    call nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, AZ(jr), contr, yct2, yaqbp, yf_io, .false.)
                     if (YC1 < YC2) write(*,*) 'YC1,YC2,251', YC1, YC2, JN
                 enddo
 
@@ -910,8 +908,7 @@ contains
                     RCR = (RE(JN1) - AZ(JR))*(RE(JN1) + AZ(JR))/RE(JN1)
                     JT2 = ntet*YC1 + 1
                     JT1 = ntet*YC2 + 1
-                    YDEX = YFE(JN)
-                    call nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, ydex, AZ(jr), contr, yct2, yaqbp, ydys)
+                    call nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, AZ(jr), contr, yct2, yaqbp, yf_io, .false.)
                     if (YC1 < YC2) write(*,*) 'YC1,YC2,271', YC1, YC2, JN
                 enddo
 
@@ -1835,19 +1832,19 @@ contains
     end subroutine nbctr3
 
 !---------------------------------------------------------------------
-    subroutine nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, ydex, &
-        az_jr, contr, yct2, yaqbp, ydys)
+    subroutine nbco2gc(jn, jn1, N1, jbb, ieb, y1, y2, yc2, &
+        az_jr, contr, yct2, yaqbp, yf_io, flag_ydex)
 
     use nbstatus, only: yriplr, n_energy
 
+    logical, intent(in) :: flag_ydex
     integer, intent(in) :: jn, jn1, N1, jbb, ieb
-    double precision, intent(in) :: y1, y2, yc2, ydex, az_jr, contr
-    double precision, intent(out) :: ydys
-    double precision, dimension(n_energy), intent(inout) :: yct2, yaqbp
+    double precision, intent(in) :: y1, y2, yc2, az_jr, contr
+    double precision, intent(inout), dimension(n_energy) :: yct2, yaqbp, yf_io
 
     integer :: jii, je, ji, jtrap, j_the, ntet, jloss, j_jn
-    double precision :: yr2, yr1, dy, yd, ydcos, ytcos, yqbp, yf0, yfa, yddd, &
-        YJSERF
+    double precision :: ydys, ydex, yr2, yr1, dy, yd, ydcos, ytcos, yqbp, &
+        yf0, yfa, yddd, YJSERF
 
     ntet = ntet1 - 1
     YR2 = -SQRT(RJ*(RJ - RCR))
@@ -1867,7 +1864,13 @@ contains
     endif
 
     do JE=JBB, IEB
-        YDYS  = F(JE, JN)*dy
+        YDYS = F(JE, JN)*dy
+        if (flag_ydex) then
+            YDEX  = exp(-YDYS)
+	    yf_io(JE) = YDEX
+        else
+            YDEX = yf_io(JE)
+        endif  
         YQBP = YAQBP(JE)*YDEX
         YF0  = (ARD(JE, JN) - az_jr)
         YFA  = YF0 - ARD(JE, N1)
