@@ -40,7 +40,7 @@ contains
     inquire(file=TRIM(file_nbi), exist=file_exists)
 
     if (.not. file_exists) write(*, *) 'File "', TRIM(file_nbi), '" not found'
-    if (n_nbi < 0.0) n_nbi = n_nbi + 1
+    if (n_nbi < 0) n_nbi = n_nbi + 1
     if (n_nbi == 0) then
         write(*, *) '>>> NBI >>> Zero sources, stopping'
         stop
