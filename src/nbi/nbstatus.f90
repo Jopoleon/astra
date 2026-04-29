@@ -4,13 +4,13 @@ use status, only: NRD
 
 implicit none
 
-integer, parameter :: n_rho=NRD, n_nbi_max=16, n_fields=20, n_theta=51, n_energy=3
+integer, parameter :: n_rho=NRD, n_nbi_max=16, n_fields=20, n_theta=51, n_energy=3, nspec_max=9
 !   n_nbi_max - Max. No. of NBI sources (max No. of groupss in *.nbi file)
 !   n_fields - No. of fields in one group of *.nbi file
 !   n_theta - #pitch angle
 !   n_energy: full, half, 1/3
 
-integer :: ISPEND, ISPE(9)
+integer :: ISPEND, ISPE(nspec_max)
 double precision, dimension(n_rho) :: NE, NHYDR, NDEUT, &
     NTRIT, NHE3, NALF, NI, NIZ1, NIZ2, NIZ3, ZIM1, ZIM2, ZIM3, &
     TE, TI, VR, SHIF,  SHIV,  ELON,  TRIA, AMETR, RHO, &

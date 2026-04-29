@@ -1,14 +1,14 @@
 module nbibce
 
-use nbstatus, only: n_rho, n_energy
-  
+use nbstatus, only: n_rho, n_energy, nspec_max, n_theta
+
 implicit none
 
-integer, parameter :: IV1=321, n_ch=9, n_pitch=50
+integer, parameter :: IV1=321, n_pitch=n_theta-1
 
 integer :: IV, IT
 double precision :: HV, HM, DT
-double precision, dimension(n_ch) :: VB, RNB, ZB, RMB, EB
+double precision, dimension(nspec_max) :: VB, RNB, ZB, RMB, EB
 double precision, dimension(IV1) :: DV2, A, B, A1, B1, D, AL, BT, AE, BE, AI, BI
 double precision, dimension(n_pitch) :: YM1, YM2
 double precision, dimension(IV1, n_pitch) :: FSRS, FVM, RMN
