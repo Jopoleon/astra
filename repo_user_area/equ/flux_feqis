@@ -21,8 +21,9 @@ NIZ1=CIMP1*NE;
 
 !Deuterium density
 NDEUT=NE-ZIM1*NIZ1;
+NHYDR=0.05*NDEUT; ! Minority H
 NMAIN=NDEUT;
-NI=NDEUT+NIZ1;  !Thermal ion density
+NI=NDEUT+NHYDR+NIZ1;  !Thermal ion density
 ZEF1 = ZICAR*(ZICAR-1.)*NIZ1/NE
 ZEF = 1+ZEF1;
 
@@ -46,11 +47,11 @@ NEUT:.05:::;
 VPOL=VPSWW;
 VTOR=VTORX;
 ! ZRD23X=1 using angular velocity, =0 using vtor;
-!ER=BTOR*(VTOR/RTOR*FRS*MU+VDIA-VPOL)
+ER=BTOR*(VTOR/RTOR*FRS*MU+VDIA-VPOL)
 
-! ECH: TORBEAM, NBI: RABBIT
+! ECH: TORBEAM ->PEECR, CUECR; NBI: RABBIT->PEBM, PIBM, ...
 TORBA<:.05:::;
-RABBIT<:.05:::;
+RABBIT(pRF_MW=2.d0, nRF_harm=2.d0, fRF_MHz=36.5d0, pi_icr=PIICR, pe_icr=PEICR)<:.05:::;
 
 TE:AS;		TE=TEX;
 TI:AS;		TI=TIX
@@ -58,6 +59,7 @@ NE:AS;		NE=NEX;
 
 PE=POH+PEBM+PEECR-PEICL-PRAD+PEDT;
 PI=PIBM+PEICL+PIDT;
+SN=SNEBM;
 
 CAR1 = QETOT;
 CAR2 = QITOT;
@@ -90,18 +92,18 @@ MU=1./(CAR2X + 0.0001);
 
 	Profile output
 
-Tex\TE\\TEX;	pinb\PIBM\-3;	Pecr\PEECR;	nT\NTRIT;
+Tex\TE\\TEX;	pinb\PIBM\-3;	Pecr\PEECR;	neut\NRATE;
 dens\NE\\NEX;	j\CU;		Pohm\POH\-1;	Sne\SNEBM; 
 Tix\TI\\TIX; 	penb\PEBM\-3; 	Jecr\CUECR;	nD\NDEUT;
 Zeff\ZEF;	q\1./MU\\CAR2X;	Prad\PRAD\-1;	sneu\SNNEU;
 
 j\CU\-15;	Upl\UPL\-28;	Qi\QITOT\-13;   nuis\NUIS;
-jbs\CUBS\-15;	\;	joh\CUOHM\-15;	RLTi\RTOR/LTI;	
+jbs\CUBS\-15;	pRFi\PIICR;	joh\CUOHM\-15;	RLTi\RTOR/LTI;
 CC\CC\-12;	\;	Qe\QETOT;	RLne\RTOR/LNE;
-X_nc\HNCHI\-7;	\;	X_as\HNASI\-7;	hexp\HEXP;
+X_nc\HNCHI\-7;	pRFe\PEICR;	X_as\HNASI\-7;	hexp\HEXP;
 
 	Time output
 
 QE_QETOTB;	QI_QITOTB;	QOH_QOHB;	NA1_NA1; 
 q0_1/MUC;	qa_1/MUB; 	q95_1/MU(AFX(0.95));	q95r_ZRD13X;
-qmin_QMINB;	PNBi_VINT(PIBMB);	PNBe_VINT(PEBMB);	Pecr_VINT(PEECRB); Inb_IINT(CUBMB); Iec_IINT(CUECRB); betn_BETANB;
+qmin_QMINB;	PNBi_VINT(PIBMB);	PNBe_VINT(PEBMB);	Pecr_VINT(PEECRB); Inb_IINT(CUBMB); Iec_IINT(CUECRB); betn_BETANB; neut_VINT(NRATEB); pRFi_VINT(PIICRB); pRFe_VINT(PEICRB);

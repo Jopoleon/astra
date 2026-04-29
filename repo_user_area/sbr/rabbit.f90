@@ -4,7 +4,7 @@ implicit none
 
 contains
 
-    subroutine RABBIT(pNBI_MW, dt_in, pRF_MW, fRF_MHz, nRF_harm)
+    subroutine RABBIT(pNBI_MW, dt_in, pRF_MW, fRF_MHz, nRF_harm, pi_icr, pe_icr)
 
     use mod_rabbit_lib, only: do_dump, rabbit_lib_init, rabbit_lib_set_dump_dir, &
         rabbit_lib_dump_beams, rabbit_lib_set_sp_plasma_ratio, rabbit_lib_step, &
@@ -18,7 +18,7 @@ contains
        RTOR, BTOR, NA1, PSIAX, PSIBO, NNCL, NNWM
     use status, only: FP, FP_NORM, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
        XRHO, VOLUM, IPOL, PEBM, PIBM, NIBM, CUBM, SNEBM, SCUBM, NRATE, NN, &
-       PBLON, PBPER, MU, VTOR, ZEF, NI, NHYDR, NDEUT, NTRIT, PEICR, PIICR
+       PBLON, PBPER, MU, VTOR, ZEF, NI, NHYDR, NDEUT, NTRIT
     use numerical_tools, only: qinterp
     use standard_functions, only: VINT, IINT
     use parameters_a2equil, only : equil_now
@@ -28,6 +28,7 @@ contains
     double precision, parameter :: ALFA=1.d-5, p_icrf_min=2.e-4
 
     double precision, intent(in), optional :: pNBI_MW, dt_in, pRF_MW, fRF_MHz, nRF_harm
+    double precision, intent(out), optional :: pi_icr(*), pe_icr(*)
 
     integer, dimension(nnb_max) :: ierr
     integer :: n_Rrect, n_Zrect, n_nbi, dum, n_lim, jumpcor, torqjxb_model
@@ -352,8 +353,8 @@ contains
 
     call qinterp(rho_rab_out, p_rf_coll_i, nrhoout, XRHO(1: NA1), p_rf_i, NA1)
     call qinterp(rho_rab_out, p_rf_coll_e, nrhoout, XRHO(1: NA1), p_rf_e, NA1)
-    PIICR(1: NA1) = 1e-6*p_rf_i(1: NA1)
-    PEICR(1: NA1) = 1e-6*p_rf_e(1: NA1)
+    pi_icr(1: NA1) = 1e-6*p_rf_i(1: NA1)
+    pe_icr(1: NA1) = 1e-6*p_rf_e(1: NA1)
 
     if (ALFA > 0.) then
         call smearr(ALFA, PIBM , PIBM )
