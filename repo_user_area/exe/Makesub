@@ -10,6 +10,7 @@ MOD_ASTRA = $(AWD)/mod/astra
 MOD_FEQIS = $(AWD)/mod/feqis
 MOD_NBI   = $(AWD)/mod/nbi
 MOD_MISC  = $(AWD)/mod/misc
+
 LIB_DIR = $(AWD)/lib
 LIB = $(LIB_DIR)/lib$(sub).a
 
@@ -51,7 +52,7 @@ $(OBJ_DIR)/rabbit.o: $(SRC_DIR)/rabbit.f90
 	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(RABBIT_INC) -c $< -o $@
 
 $(OBJ_DIR)/torfpql_mod.o: $(SRC_DIR)/torfpql_mod.f90
-	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(TORFPQL_INC) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I. -I$(MOD_ASTRA) -I$(MOD_DIR) -I$(TORFPQL_INC) -c $< -o $@
 
 $(OBJ_DIR)/nbi.o: $(SRC_DIR)/nbi.f90
 	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(MOD_NBI) -c $< -o $@

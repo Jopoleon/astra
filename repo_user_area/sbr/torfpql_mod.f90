@@ -23,9 +23,9 @@ use read_input, only: awd, nml_file
 use status, only: nhydr, ndeut, ntrit, nhe3, nalf, &
     zim1, zim2, zim3, niz1, niz2, niz3, ne, te, ti, &
     fp, piicr, peicr, pifw, pefw, cufw, cuicr
-
 use scalars, only: na1, aim1, aim2, aim3, psiax, psibo, roc
-     
+use a2eqdsk, only: eqdsk
+
 !-----------------------------------------------------------------------
 ! Use TORIC-SSFPQL modules
 !-----------------------------------------------------------------------
