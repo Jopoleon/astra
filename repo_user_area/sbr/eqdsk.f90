@@ -1,4 +1,4 @@
-subroutine EQDSK(coco_number)
+subroutine EQDSK(coco_number, fileq)
 
 use pi_const, only: GP2
 use scalars, only: RTOR, BTOR, IPL, TIME, TSTART, SGNBT, SGNIP, NA1
@@ -10,12 +10,13 @@ use surface_contours, only: ctr2rz_fun3
 
 implicit none
 
-integer, parameter :: nrRect=257, nzRect=257, eqdsk_unit=11
+integer, parameter :: nrRect=257, nzRect=257
 integer, dimension(8), parameter :: coco_dpsi_sign=(/1, 1, -1, -1, 1, 1, -1, -1/)
 
 integer, intent(in) :: coco_number
+character(len=*), intent(in), optional :: fileq
 
-integer :: i, j, nrho_surf, nthe_surf
+integer :: i, j, nrho_surf, nthe_surf, eqdsk_unit
 double precision :: dpsin_rect, Rmin, Rmax, zmin, zmax, dr, dz, dpsi_sgn, psi_2pi
 double precision, allocatable, dimension(:) :: psin_eq
 double precision, dimension(nrRect) :: r_rect, psin_rect, pres_rect, &
@@ -24,9 +25,20 @@ double precision, dimension(nzRect) :: z_rect
 double precision, dimension(nrRect, nzRect) :: psi_rect
 character(len=120) :: f_eqdsk
 
-if (TIME <= TSTART) return
+double precision :: rdim, zdim, rcentr, rleft, zmid, rmaxis, zmaxis, &
+    simag, sibry, bcentr, current, xdum
 
-dpsi_sgn = coco_dpsi_sign(coco_number)
+if (coco_number > 18 .or. mod(coco_number, 10) > 8) then
+    write(*,*) ' ABEND: coco number <= 18'
+    STOP ' eqdsk'
+endif
+
+if (.not. present(fileq)) then
+    if (TIME <= TSTART) return
+endif
+
+dpsi_sgn = coco_dpsi_sign(mod(coco_number, 10))
+
 if (coco_number < 10) then
     psi_2pi = 1./GP2
 else
@@ -63,24 +75,40 @@ call qinterp(psin_eq, equil_now%profiles_1d%ffprime , nrho_surf, psin_rect, fpri
 call qinterp(FP_NORM(1:na1), 1./MU(1:NA1), NA1, psin_rect, q_rect, nrRect)
 
 ! EQDSk file output
-if (TIME < 10.) then
-    write(f_eqdsk, '(5A, f5.3, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), TRIM(equ_file), '0', TIME, '.eqdsk'
+if (.not. present(fileq)) then 
+    if (TIME < 10.) then
+        write(f_eqdsk, '(5A, f5.3, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), TRIM(equ_file), '0', TIME, '.eqdsk'
+    else
+        write(f_eqdsk, '(4A, f6.3, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), TRIM(equ_file), TIME, '.eqdsk'
+    endif
 else
-    write(f_eqdsk, '(4A, f6.3, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), TRIM(equ_file), TIME, '.eqdsk'
+   f_eqdsk = fileq
 endif
- 
 write(*, '(2A, i4)') 'Storing ' // TRIM(f_eqdsk), '   nR =', nrRect
 
-open(eqdsk_unit, file=TRIM(f_eqdsk))
+rdim    = R_rect(nrRect) - R_rect(1)
+zdim    = Z_rect(nzRect) - Z_rect(1)
+rcentr  = rtor
+rleft   = R_rect(1)
+zmid    = 0.5*(Z_rect(1) + Z_rect(nzRect))
+rmaxis  = equil_now%coord_sys%position%r(1, 1)
+zmaxis  = equil_now%coord_sys%position%z(1, 1)
+simag   = dpsi_sgn*SGNIP*equil_now%profiles_1d%psi(1)*psi_2pi
+sibry   = SGNIP*equil_now%profiles_1d%psi(nrho_surf)*psi_2pi
+bcentr  = SGNBT*BTOR
+current = SGNIP*IPL*1.d6
+xdum    = 0.
+
+open(newunit=eqdsk_unit, file=TRIM(f_eqdsk))
 write(eqdsk_unit, '(A48, 3i4)') 'ASTRA', 3, nrRect, nzRect
 ! Boxdim(R, m), BOxdim(Z, m), R0(vacuum), Rmin(box, m), Zmid(box, m)
-write(eqdsk_unit, '(5E16.9)') R_rect(nrRect) - R_rect(1), Z_rect(nzRect) - Z_rect(1), RTOR, &
-    R_rect(1), 0.5*(Z_rect(1) + Z_rect(nzRect))
+
+write(eqdsk_unit, '(5E16.9)') rdim,    zdim,   rcentr, rleft,  zmid 
 ! Rmagnaxis(m), Zmagnaxis(m)
-write(eqdsk_unit, '(5E16.9)') equil_now%coord_sys%position%r(1, 1), equil_now%coord_sys%position%z(1, 1), &
-    dpsi_sgn*SGNIP*equil_now%profiles_1d%psi(1)*psi_2pi, SGNIP*equil_now%profiles_1d%psi(nrho_surf)*psi_2pi, SGNBT*BTOR
-write(eqdsk_unit, '(5E16.9)') SGNIP*IPL*1.d6, dpsi_sgn*SGNIP*equil_now%profiles_1d%psi(1)*psi_2pi, 0., equil_now%coord_sys%position%r(1, 1), 0.
-write(eqdsk_unit, '(5E16.9)') equil_now%coord_sys%position%z(1, 1), 0., dpsi_sgn*SGNIP*equil_now%profiles_1d%psi(nrho_surf)*psi_2pi, 0., 0.
+write(eqdsk_unit, '(5E16.9)') rmaxis,  zmaxis, simag,  sibry,  bcentr
+
+write(eqdsk_unit, '(5E16.9)') current, simag,  xdum,   rmaxis, xdum
+write(eqdsk_unit, '(5E16.9)') zmaxis,  xdum,   sibry,  xdum,   xdum
 write(eqdsk_unit, '(5E16.9)') (SGNBT*fdia_rect(i), i=1, nrRect)
 write(eqdsk_unit, '(5E16.9)') (pres_rect(i), i=1, nrRect)
 write(eqdsk_unit, '(5E16.9)') (dpsi_sgn*SGNIP*fprime_rect(i)/psi_2pi, i=1, nrRect)

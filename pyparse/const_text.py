@@ -20,6 +20,7 @@ use a2qlk, only: qlk_ipc
 use a2neo, only: neo_ipc
 use a2rabbit, only: rabbit
 use a2torbeam, only: torba
+use torfpql_mod, only: toric
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use debugger, only: markloc
 
@@ -230,6 +231,7 @@ use standard_functions
 use read_input, only: IFDFVX
 use a2rabbit, only: rabbit
 use a2torbeam, only: torba
+use torfpql_mod, only: toric
 use a2tglf, only: tglf_alloc, tglf_out, tglf_ipc
 use a2qlk, only: qlk_alloc, qlk_out, qlk_ipc
 use a2neo, only: neo_alloc, neo_out, neo_ipc

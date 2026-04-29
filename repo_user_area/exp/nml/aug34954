@@ -178,3 +178,11 @@
    solrout3 = 1.3
    solrout4 = 1.5
 /
+
+&toric
+   freqcy     = 36.5E6
+   hf_pwgoal  = 1.2
+   accur_goal = 2.
+   max_iter   = 10
+   nphi       = 12
+/

@@ -50,6 +50,9 @@ $(OBJ_DIR)/qlknn_serial.o: $(SRC_DIR)/qlknn_serial.f90 $(QLKNN_LIB)
 $(OBJ_DIR)/rabbit.o: $(SRC_DIR)/rabbit.f90
 	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(RABBIT_INC) -c $< -o $@
 
+$(OBJ_DIR)/torfpql_mod.o: $(SRC_DIR)/torfpql_mod.f90
+	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(TORFPQL_INC) -c $< -o $@
+
 $(OBJ_DIR)/nbi.o: $(SRC_DIR)/nbi.f90
 	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(MOD_NBI) -c $< -o $@
 

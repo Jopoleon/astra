@@ -6,7 +6,8 @@ export JSON_LIB=$JSON_HOME/lib/libjsonfortran.a
 export JSON_INC=$JSON_HOME/inc
 
 # SPIDER
-SPIDER_HOME=${ASTRA_EXT}/spider/apr26
+SPIDER_HOME=${ASTRA_EXT}/spider/skip
+#SPIDER_HOME=${ASTRA_EXT}/spider/apr26
 if [ -f ${SPIDER_HOME}/lib/libspider.a ]; then
     export SPIDER_LIB=${SPIDER_HOME}/lib/libspider.a
 else
@@ -26,6 +27,12 @@ RABBIT_HOME=${ASTRA_EXT}/rabbit/mar26
 RABBIT_LIBDIR=${RABBIT_HOME}/lib
 export RABBIT_LIB="-L${RABBIT_LIBDIR} -lrabbit -Wl,-rpath,${RABBIT_LIBDIR}"
 export RABBIT_INC=${RABBIT_HOME}/inc
+
+# TORIC-SSFPQL
+TORFPQL_HOME=${ASTRA_EXT}/toric/apr26/intel/2025.1
+export TORFPQL_LIBDIR=${TORFPQL_HOME}/lib/
+export TORFPQL_INC=${TORFPQL_HOME}/include
+export TORFPQL_LIB="-L${TORFPQL_LIBDIR} -ltoric -Wl,-rpath,${TORFPQL_LIBDIR} -L ${TORFPQL_LIBDIR} -lfmtout -lslatec -lodepack -Wl,-rpath,${TORFPQL_LIBDIR} -L/usr/lib64/ -lgmp  -L/mpcdf/soft/SLE_15/packages/znver4/fftw/intel_2025.1-2025.1.0/3.3.9/lib/ -lfftw3  -Wl,-rpath,/mpcdf/soft/SLE_15/packages/znver4/fftw/intel_2025.1-2025.1.0/3.3.9/lib/"
 
 # QuaLiKiZ
 
