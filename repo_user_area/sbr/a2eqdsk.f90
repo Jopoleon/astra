@@ -1,3 +1,10 @@
+module a2eqdsk
+
+implicit none
+
+contains
+
+!---------------------------------------------------------------------
 subroutine EQDSK(coco_number, fileq)
 
 use pi_const, only: GP2
@@ -8,13 +15,11 @@ use status, only: MU, FP_NORM
 use numerical_tools, only: qinterp
 use surface_contours, only: ctr2rz_fun3
 
-implicit none
-
 integer, parameter :: nrRect=257, nzRect=257
 integer, dimension(8), parameter :: coco_dpsi_sign=(/1, 1, -1, -1, 1, 1, -1, -1/)
 
 integer, intent(in) :: coco_number
-character(len=*), intent(in), optional :: fileq
+character(len=120), intent(in), optional :: fileq
 
 integer :: i, j, nrho_surf, nthe_surf, eqdsk_unit
 double precision :: dpsin_rect, Rmin, Rmax, zmin, zmax, dr, dz, dpsi_sgn, psi_2pi
@@ -75,14 +80,16 @@ call qinterp(psin_eq, equil_now%profiles_1d%ffprime , nrho_surf, psin_rect, fpri
 call qinterp(FP_NORM(1:na1), 1./MU(1:NA1), NA1, psin_rect, q_rect, nrRect)
 
 ! EQDSk file output
-if (.not. present(fileq)) then 
+if (present(fileq)) then
+    print*, 'Debug with fileq'
+    f_eqdsk = TRIM(fileq)
+else
+    print*, 'Debug w.o. fileq'
     if (TIME < 10.) then
         write(f_eqdsk, '(5A, f5.3, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), TRIM(equ_file), '0', TIME, '.eqdsk'
     else
         write(f_eqdsk, '(4A, f6.3, A)') TRIM(awd), '/ncdf_out/', TRIM(exp_file), TRIM(equ_file), TIME, '.eqdsk'
     endif
-else
-   f_eqdsk = fileq
 endif
 write(*, '(2A, i4)') 'Storing ' // TRIM(f_eqdsk), '   nR =', nrRect
 
@@ -123,3 +130,5 @@ close(eqdsk_unit)
 deallocate(psin_eq)
 
 end subroutine EQDSK
+
+end module a2eqdsk

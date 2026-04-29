@@ -15,6 +15,7 @@ use scalars
 use status
 use nclass_mod
 use strahl_mod
+use a2eqdsk, only: eqdsk
 use a2tglf, only: tglf_ipc
 use a2qlk, only: qlk_ipc
 use a2neo, only: neo_ipc
@@ -229,6 +230,7 @@ use nclass_mod
 use strahl_mod
 use standard_functions
 use read_input, only: IFDFVX
+use a2eqdsk, only: eqdsk
 use a2rabbit, only: rabbit
 use a2torbeam, only: torba
 use torfpql_mod, only: toric
@@ -907,6 +909,7 @@ class EQNS_INC:
 use pi_const, only: GP, GP2, mu0
 use scalars
 use status
+use a2eqdsk, only: eqdsk
 use a2tglf, only: tglf_ipc, tglf_out
 use a2qlk, only: qlk_ipc, qlk_out
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
