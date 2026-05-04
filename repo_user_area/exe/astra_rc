@@ -18,7 +18,7 @@ fi
 IRC_LIB="-L${COMP_LIBDIR} -lirc" # necessary for libtorbeam.so
 TORB_HOME=${ASTRA_EXT}/torbeam/nov24
 TORB_LIBDIR=${TORB_HOME}/lib
-export TORB_LIB="-L${TORB_LIBDIR} -ltorbeamB  -Wl,-rpath,${TORB_LIBDIR} ${IRC_LIB}"
+export TORB_LIB="-L${TORB_LIBDIR} -ltorbeamB -Wl,-rpath,${TORB_LIBDIR} ${IRC_LIB}"
 
 # RABBIT
 
@@ -31,7 +31,8 @@ export RABBIT_INC=${RABBIT_HOME}/inc
 TORFPQL_HOME=${ASTRA_EXT}/toric/apr26/intel/2025.1
 export TORFPQL_LIBDIR=${TORFPQL_HOME}/lib/
 export TORFPQL_INC=${TORFPQL_HOME}/include
-export TORFPQL_LIB="-L${TORFPQL_LIBDIR} -ltoric -Wl,-rpath,${TORFPQL_LIBDIR} -L ${TORFPQL_LIBDIR} -lfmtout -lslatec -lodepack -Wl,-rpath,${TORFPQL_LIBDIR} -L/usr/lib64/ -lgmp  -L/mpcdf/soft/SLE_15/packages/znver4/fftw/intel_2025.1-2025.1.0/3.3.9/lib/ -lfftw3  -Wl,-rpath,/mpcdf/soft/SLE_15/packages/znver4/fftw/intel_2025.1-2025.1.0/3.3.9/lib/"
+FFTW_LIBDIR=/mpcdf/soft/SLE_15/packages/znver4/fftw/intel_2025.1-2025.1.0/3.3.9/lib
+export TORFPQL_LIB="-L${TORFPQL_LIBDIR} -ltoric -lslatec -lodepack -Wl,-rpath,${TORFPQL_LIBDIR} -L${FFTW_LIBDIR} -lfftw3 -Wl,-rpath,${FFTW_LIBDIR}"
 
 # QuaLiKiZ
 

@@ -428,7 +428,7 @@ contains
 
     use numerical_tools, only: smooth
     use standard_functions, only: VINT, IINT
-    use nbicom, only: N1, X, XJ
+    use nbicom, only: N1, a_norm, a_norm_astra
 
     integer, intent(in) :: dn_rho, JNA1
     double precision, intent(in) :: YROC
@@ -452,16 +452,16 @@ contains
     do j=1, n1-1
         JNA = 1 + dn_rho*(j - 1)
         JNAC = JNA - 1 + dn_rho
-        X(j) = XJ(JNAC)
+        a_norm(j) = a_norm_astra(JNAC)
         DRI(j) = YFO(JNA)
         if (JSIGN < 1) then
             if (DRI(1)*DRI(J) < 0.d0) JSIGN = 1
         endif
     enddo
 
-    DRI(N1)  = 0.d0
-    X(N1)    = 1.d0
-    XJ(JNA1) = 1.d0
+    DRI(N1)    = 0.d0
+    a_norm(N1) = 1.d0
+    a_norm_astra(JNA1) = 1.d0
 
 ! Total power normalization
 
@@ -472,7 +472,7 @@ contains
     endif
 
     ALFA = 0.001d0
-    call SMOOTH(ALFA, x, dri, n1, xj, yfo, jna1)
+    call SMOOTH(ALFA, a_norm, dri, n1, a_norm_astra, yfo, jna1)
 
 ! Cut of artificial negatives/positive after smoothing
     if (JSIGN == 0) then !no real change of sign
