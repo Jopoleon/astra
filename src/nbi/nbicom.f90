@@ -54,8 +54,8 @@ contains
     n = n1 - 1
     yr1 = RBmin_cm/amin_cm
     yr2 = RBmax_cm/amin_cm
-    if (.not. allocated(ydry)) allocate(ydry(n_pencil))
-    if (.not. allocated(az)) allocate(az(n_pencil))
+    if (.not. allocated(ydry)) allocate(ydry(n_pencil), source=0.d0)
+    if (.not. allocated(az)) allocate(az(n_pencil), source=0.d0)
 
     if (yr2 <= yr1) then
         write(*, *) 'for nbi source n ', jsrc, &
@@ -701,6 +701,8 @@ contains
             yatba (jE, jn) = 0.d0
             yanba (jE, jn) = 0.d0
             yanba1(jE, jn) = 0.d0
+            yslej0(jE, jn) = 0.d0
+            yslej2(jE, jn) = 0.d0
             do JT=1, ntet1
                 yasba (jE, jn, JT) = 0.d0
                 yasba1(jE, jn, JT) = 0.d0
@@ -713,6 +715,7 @@ contains
     a_norm(1)  = 0.d0
     a_norm(n1) = 1.d0
     shaf_n(n1) = 0.d0
+    rc(n1) = aspect_ratio
 
     if (Pinj_kW <= 0.d0) return
 
