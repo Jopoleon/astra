@@ -19,7 +19,7 @@ integer, parameter :: nrRect=257, nzRect=257
 integer, dimension(8), parameter :: coco_dpsi_sign=(/1, 1, -1, -1, 1, 1, -1, -1/)
 
 integer, intent(in) :: coco_number
-character(len=120), intent(in), optional :: fileq
+character(len=*), intent(in), optional :: fileq
 
 integer :: i, j, nrho_surf, nthe_surf, eqdsk_unit
 double precision :: dpsin_rect, Rmin, Rmax, zmin, zmax, dr, dz, dpsi_sgn, psi_2pi
