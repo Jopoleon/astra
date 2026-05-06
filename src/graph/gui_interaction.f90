@@ -9,7 +9,6 @@ contains
     use read_input, only: TASK, n_sbr
     use scalars, only: DTEQ
     use char_manip, only: beep_ch
-    use debugger, only: astra_stop
     use cpu_usage, only: cpu_report
 
     integer, intent(in) :: KIBM ! KIBM in input takes only values 1 (Ctrl) or 2 (Alt)
@@ -27,7 +26,7 @@ contains
         if (KEY == 47) then ! <Alt>+/
             if (TASK(4:4) /= 'B') call Close_Screen
             call cpu_report('>>> ASTRA <Alt>+/ exit >>>')
-            call astra_stop()
+            STOP
         endif
         if (KEY >= 32 .and. KEY <= 126) then
             write(*, *) '  "<Alt>+<', char(KEY), '>"  pressed'
@@ -95,7 +94,7 @@ contains
         set_plot_area, set_plot, plotMode
     use read_input, only: n_sbr, equ_file, exp_file, TASK, IFDFVX
     use char_manip, only: null_ch, beep_ch
-    use debugger, only: markloc, debug, astra_stop
+    use debugger, only: markloc, debug
     use json_vars, only: controlNames, constNames, varNames, n_const, n_var, n_control
     use cpu_usage, only: cpu_report
     use auxiliary, only: lineav
@@ -236,7 +235,7 @@ contains
                     if (KIBM == 1 .and. (KEY == 99 .or. KEY == 67)) then ! <Ctrl>+C
                         if (TASK(4:4) /= 'B') call Close_Screen
                         call cpu_report('>>> ASTRA <Ctrl>+C exit >>>')
-                        call astra_stop()
+                        STOP
                     endif
 
                     if (KIBM == 65006) then
@@ -333,7 +332,7 @@ contains
         CASE(47) ! '/'
             if (TASK(4:4) /= 'B') call Close_Screen
             call cpu_report('>>> ASTRA / or "Quit" button exit >>>')
-            call astra_stop()
+            STOP
 
         CASE(48: 57) ! '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
             if (MOD10 >= 2 .and. MOD10 <= 5) then
@@ -589,7 +588,7 @@ contains
     if (TASK(4:4) /= 'B') call Close_Screen
 
     call cpu_report('>>> ASTRA exit: reached END time >>>')
-    call astra_stop()
+    STOP
 
     end function if_key
 

@@ -173,7 +173,7 @@ contains
     use read_input, only: exp_file
     use scalars, only: RTOR, BTOR, HRO, ROC, ABC, NA1, NB1, &
         TIME, TAU, TSTART, WTE, WTI, WNE
-    use debugger, only: markloc, astra_stop
+    use debugger, only: markloc
 
     integer :: j
     double precision :: YV, YF, YMU, YN, YNE, YNI, YTE, YTI, YZF
@@ -200,7 +200,7 @@ contains
                 '               Check if it is defined in the data file "', &
                 TRIM(exp_file)
             call error_catch()
-            call astra_stop()
+            STOP
         endif
         VP(j) = ULON(j)/(YV*j*MU(j))
         YZF = max(YZF, ZEF(j))
@@ -235,7 +235,7 @@ contains
         CASE DEFAULT
             err_msg = '               The variable "' // str // '" is less or equal zero'
         END SELECT
-        call astra_stop(err_msg)
+        STOP err_msg
 
     endif
 
@@ -428,7 +428,6 @@ contains
     subroutine error_catch()
 
     use scalars, only: NA1
-    use debugger, only: astra_stop
 
     write(*, *) 'TE    Fp    NE    G11 '
     write(*, *) te(1)  , fp(1)  , ne(1)  , g11(1)

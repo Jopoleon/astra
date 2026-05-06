@@ -70,7 +70,7 @@ contains
     use scalars, only: TIME, BTOR, AB, ABC, ROC, VOLUME, NA1, NAB, PSIAX
     use status, only: NRD, AMETR, RHO, FP, VOLUM, profiles_x, rho_pol
     use numerical_tools, only: qinterp, sortab, smooth
-    use debugger, only: markloc, astra_stop
+    use debugger, only: markloc
     use read_input, only: raw_profiles, jbeg_arrx, IFDFAX, &
         XAXES, DATAX, NPTM, TOUTX
     use standard_functions, only: RZ2A
@@ -120,8 +120,8 @@ contains
         jto = jt_start
 ! Check whether the input time-array is monotonic
         do j3=jt_start+1, jt_end
-            if (raw_profiles%time(j3)  < raw_profiles%time(j3-1)) call astra_stop(err_msg // 'not ascending')
-            if (raw_profiles%time(j3) == raw_profiles%time(j3-1)) call astra_stop(err_msg // 'repeated')
+            if (raw_profiles%time(j3)  < raw_profiles%time(j3-1)) STOP err_msg // 'not ascending'
+            if (raw_profiles%time(j3) == raw_profiles%time(j3-1)) STOP err_msg // 'repeated'
             if (raw_profiles%time(j3) <= TIME) jto = j3
         enddo
 
@@ -219,14 +219,8 @@ contains
                 XA(: NP1) = rho_pol(: NP1)
                 call qinterp(XA, AMETR, NP1, x_grid(1: n_grid), XAXES(1: n_grid, KN), n_grid)
 
-            CASE(4)
-                call astra_stop(err_msg_grid)
-
-            CASE(5)
-                call astra_stop(err_msg_grid)
-
-            CASE(6)
-                call astra_stop(err_msg_grid)
+            CASE(4: 6)
+                STOP err_msg_grid
 
 ! Normalised grids
 
@@ -314,7 +308,7 @@ contains
                 dat_exp(N11) = DATAX(min(n_grid, N11), KN)
 
             CASE(17)
-                call astra_stop(err_msg_grid)
+                STOP err_msg_grid
 
             CASE(18)
                 NP1 = NA1
@@ -496,7 +490,6 @@ contains
         AMAIN, UPS0, UPS0O
     use json_vars, only: varNames, n_profx, profxNames, n_var
     use numerical_tools, only: EXTRAP, INTEGR
-    use debugger, only: astra_stop
     use read_input, only: raw_boundary, exp_file, IFDFVX
     use metrics, only: setgeo, new_grid, roc3a
     use char_manip, only: to_upper, str_in_list
@@ -509,7 +502,7 @@ contains
     if (NA1 > NRD) then
         write(err_msg, '(2A, I0)') '>>> FATAL ERROR: The radial grid size out of range.\n', &
             '                 Parameter "NA1" cannot exceed', NRD
-        call astra_stop(err_msg)
+        STOP err_msg
     endif
 
     TIME = TSTART
@@ -530,7 +523,7 @@ contains
 
     if (ABC > AB) then
         err_msg = '>>> Error: ABC cannot exceed AB. Check your file exp/' // TRIM(exp_file)
-        call astra_stop(TRIM(err_msg))
+        STOP TRIM(err_msg)
     endif
 
     if (AWALL > 1.2*AB .or. AWALL > RTOR) then

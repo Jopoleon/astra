@@ -914,7 +914,7 @@ contains
         IFDFAX, NPTM, XAXES, DATAX, TOUTX
     use dbl2char, only: fmt_smart
     use char_manip, only: len_trim_tab, str_in_list
-    use debugger, only: markloc, debug, astra_stop
+    use debugger, only: markloc, debug
     use json_vars, only: profxNames, n_profx
     use standard_functions, only: AFVAL
 
@@ -1088,7 +1088,7 @@ contains
             if (jn == 0) then
                 write(*, *)
                 write(*, *) '>>> Error in the model "', TRIM(equ_file), '"'
-                call astra_stop('>>> Unknown data set "' // CHAR6 // '" is requested')
+                STOP '>>> Unknown data set "' // CHAR6 // '" is requested'
             endif
 
             jpnt = NPTM(jn)

@@ -11,7 +11,7 @@ use cpu_usage, only: cpu_init, cpu_start, wall_start, cpu_report
 use scalars, only: IPART, scalars_init, RTOR, UPDWN, SHIFT, PSIAX, PSIBO, &
     TIME, TSTART, TEND, TPAUSE, DPOUT, TAU, ATREQ, IFBEY, NITOT, IPEQL
 use status, only: status_init, defarr, setvar
-use debugger, only: astra_stop, markloc
+use debugger, only: markloc
 use transport2fbe, only: transport2fbe_init
 use json_vars, only: read_metadata
 use json_rw, only: read_ajson, write_ajson
@@ -130,6 +130,6 @@ do while (TIME < t_stop)
 enddo
 
 call CPU_report('>>> ASTRA normal exit >>>')
-call astra_stop()
+STOP
 
 end program astra

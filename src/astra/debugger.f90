@@ -40,14 +40,4 @@ contains
 
     end subroutine markloc
 
-!---------------------------------------------------------------------
-    subroutine astra_stop(str_in)
-
-    character(len=*), optional, intent(in) :: str_in
-
-    if (PRESENT(str_in)) write(*, '(A)') str_in
-    STOP
-
-    end subroutine astra_stop
-
 end module debugger

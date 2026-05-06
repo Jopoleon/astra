@@ -50,7 +50,6 @@ contains
     use json_vars, only: controlNames, constNames, varNames, &
         n_control, n_const, n_profx, n_var
     use scalars, only: varValues, constValues, controlValues
-    use debugger, only: astra_stop
 
     logical :: log_exists
     integer :: jj, jpos, nvar, n_color
@@ -83,7 +82,7 @@ contains
 
 ! Read file equ/log/<model>
     jj = LEN_TRIM(equ_file)
-    if (jj == 0) call astra_stop('>>> read_equ_log: Error, empty model file name')
+    if (jj == 0) STOP '>>> read_equ_log: Error, empty model file name'
 
     call path_split(equ_file, dir_path, fname, jpos)
 
@@ -95,7 +94,7 @@ contains
 
     inquire(file=TRIM(file_in), exist=LOG_EXISTS)
     if (.not. LOG_EXISTS)  then ! Missing log file
-        call astra_stop('>>> Error: file "' // TRIM(file_in) // '" missing')
+        STOP '>>> Error: file "' // TRIM(file_in) // '" missing'
     endif
 
     nvar = 37
@@ -148,7 +147,7 @@ contains
 !---------------------------------------------------------------------
     subroutine read_coilx(nunit, stri_in, coilx_out)
 
-    use debugger, only: markloc, astra_stop
+    use debugger, only: markloc
 
     integer, parameter :: nt_coils_max=25000
 
@@ -166,14 +165,14 @@ contains
     j = INDEX(stri_in, 'NTIMES')
     if (j == 0) then
         err_msg = TRIM(err_msg) // '    Number of COILSX must be defined'
-        call astra_stop(err_msg)
+        STOP err_msg
     endif
     read(stri_in(j+6:), *) nt
 
     j = INDEX(stri_in, 'POINTS')
     if (j == 0) then
         err_msg = TRIM(err_msg) // '    Number of COILSX must be defined'
-        call astra_stop(err_msg)
+        STOP err_msg
     endif
     read(stri_in(j+6:), *) n_coils
 
@@ -187,14 +186,14 @@ contains
     if (n_coils*nt > nt_coils_max) then
         write(err_msg, '(2A)') TRIM(err_msg), &
            '    COILSX data length must be < nt_coils_max'
-        call astra_stop(err_msg)
+        STOP err_msg
     endif
 
     read(nunit, *, iostat=ios)(coilx_out%time(j), j=1, nt)
     read(nunit, *, iostat=ios)(coilx_out%current(j), j=1, n_coils*nt)
     if (ios /= 0) then
         err_msg = TRIM(err_msg) // '    Size mismatch in COILSX group'
-        call astra_stop(err_msg)
+        STOP err_msg
     endif
 
     end subroutine read_coilx
@@ -213,7 +212,7 @@ contains
 
     use scalars, only: NA1, AB, ABC, RTOR, varValues, exp_header, TSTART, TEND
     use char_manip, only: to_upper, str_in_list
-    use debugger, only: markloc, astra_stop
+    use debugger, only: markloc
     use parse_utils, only: split2array2
     use json_vars, only: varNames, profxNames
 
@@ -244,9 +243,9 @@ contains
 
     len_scalars = 0
     open(n_unit, FILE=TRIM(file_exp), iostat=ios)
-    if (ios /= 0) call astra_stop('>>> read_exp: No such experimental variant "' // TRIM(exp_file) // '"')
+    if (ios /= 0) STOP '>>> read_exp: No such experimental variant "' // TRIM(exp_file) // '"'
     read(n_unit, '(A132/)', iostat=ios) exp_header
-    if (ios > 0) call astra_stop(err_format)
+    if (ios > 0) STOP err_format
 
     set_dims_1d: do
         read(n_unit, '(A132)', iostat=ios) STRI
@@ -299,7 +298,7 @@ contains
     if (len_scalars > len_data_max) then
         write(err_msg, '(A, I0)') &
             '>>> read_exp: Size of time dependent scalars data stream cannot exceed', len_data_max
-        call astra_stop(err_msg)
+        STOP err_msg
     endif
 
     if (.not. allocated(raw_scalars%var_index)) then
@@ -328,7 +327,7 @@ contains
         else
             read(n_unit, '(A132)', iostat=ios) STRI
             if (ios < 0) EXIT set_dims_2d
-            if (ios > 0) call astra_stop(err_format)
+            if (ios > 0) STOP err_format
         endif
         lin_upper = to_upper(STRI)
         if (LEN_TRIM(lin_upper) == 0) CYCLE set_dims_2d
@@ -347,12 +346,12 @@ contains
                     SELECT CASE(keyword)
                     CASE('POINTS')
                         read(strarray(j+1), *, iostat=ios) nr_exp
-                        if (ios /= 0) call astra_stop(err_format)
+                        if (ios /= 0) STOP err_format
                     CASE('NAMEXP')      ! New variable, exp-block
                         VNAM = VARNAM(strarray(j+1), ier_tab)
                     CASE('NTIMES')
                         read(strarray(j+1), *, iostat=ios) ntim
-                        if (ios /= 0) call astra_stop(err_format)
+                        if (ios /= 0) STOP err_format
                     END SELECT
                 enddo
                 VNAMX = ARRNAM(VNAM)
@@ -375,7 +374,7 @@ contains
     if (len_profs_data > len_data_max) then
         write(err_msg, '(A, I0)') &
             '>>> read_exp: Size of time dependent profiles data stream cannot exceed', len_data_max
-        call astra_stop(err_msg)
+        STOP err_msg
     endif
 
     if (.not. allocated(raw_profiles%data)) then
@@ -407,7 +406,7 @@ contains
 
     open(n_unit, FILE=TRIM(file_exp), iostat=ios)
     read(n_unit, '(A132/)', iostat=ios) exp_header
-    if (ios /= 0) call astra_stop(err_msg_exp // 'in header')
+    if (ios /= 0) STOP err_msg_exp // 'in header'
 
     VNAMO = ' '
     VNAMU = ' '
@@ -457,9 +456,9 @@ contains
             endif
 ! Read "time" array & function array
             read(n_unit, *, iostat=ios) (raw_scalars%time(IVAR+jj), jj=1, ntim)
-            if (ios /= 0) call astra_stop(err_format)
+            if (ios /= 0) STOP err_format
             read(n_unit, *, iostat=ios) (raw_scalars%data(IVAR+jj), jj=1, ntim)
-            if (ios /= 0) call astra_stop(err_format)
+            if (ios /= 0) STOP err_format
             varValues(jvar) = factor*raw_scalars%data(IVAR+1)
             do jj=1, ntim
                 IVAR = IVAR + 1
@@ -482,10 +481,10 @@ contains
         if (VNAM == 'NA1   ' .or. VNAM == 'TSTART' .or. VNAM == 'TEND  ') then
             err_msg = err_msg_exp // '"' // TRIM(VNAM) // '"'
             if (ier_tab /= 0 ) then
-                call astra_stop(TRIM(err_msg) // ': tabulation not allowed in this type of input')
+                STOP TRIM(err_msg) // ': tabulation not allowed in this type of input'
             endif
             if (VNAMO == VNAM) then
-                call astra_stop(TRIM(err_msg) // ' cannot vary in time')
+                STOP TRIM(err_msg) // ' cannot vary in time'
             endif
             call str2dbl(VDAT, VRDATA, IERR)
             VNAMO = VNAM
@@ -504,7 +503,7 @@ contains
         if (jvar == 0) CYCLE parse_exp_1d
 
 ! U-file name duplicated:
-        if (VNAM == VNAMU) call astra_stop(err_msg_exp // 'ambiguous ' // TRIM(VNAM) // ' definition')
+        if (VNAM == VNAMU) STOP err_msg_exp // 'ambiguous ' // TRIM(VNAM) // ' definition'
 
         j1 = index(STRI, ':')
 
@@ -514,16 +513,16 @@ contains
             if (ier_tab /= 0 ) then
                 err_msg = err_msg_exp // '"' // TRIM(VNAM) // &
                     '": tabulation not allowed in this type of input'
-                call astra_stop(err_msg)
+                STOP err_msg
             endif
 
             err_msg = '>>> read_exp: File "' // TRIM(file_exp) // '" reading error'
             call str2dbl(VTIM, TIMEVR, IERR)
-            if (IERR /= 0) call astra_stop(err_msg)
+            if (IERR /= 0) STOP err_msg
             call str2dbl(VDAT, VRDATA, IERR)
-            if (IERR /= 0) call astra_stop(err_msg)
+            if (IERR /= 0) STOP err_msg
             call str2dbl(VERR, VRERR, IERR)
-            if (IERR /= 0) call astra_stop(err_msg)
+            if (IERR /= 0) STOP err_msg
 
             IFDFVX(jvar) = 0
             varValues(jvar) = factor*VRDATA
@@ -538,7 +537,7 @@ contains
 
         else  ! ":" found in the input string "STRI", pointer to U-file
 
-            if (VNAM == VNAMO) call astra_stop(err_msg_exp // 'ambiguous ' // TRIM(VNAM) // ' definition')
+            if (VNAM == VNAMO) STOP err_msg_exp // 'ambiguous ' // TRIM(VNAM) // ' definition'
 
             call parse_u_line(STRI, uvar, uname, factor)
             VNAMU = VNAM
@@ -586,7 +585,7 @@ contains
         else
             read(n_unit, '(A132)', iostat=ios) STRI
             if (ios < 0) EXIT parse_exp_2d
-            if (ios > 0) call astra_stop(err_format)
+            if (ios > 0) STOP err_format
         endif
 
         INTYPE = -1
@@ -616,25 +615,25 @@ contains
                 SELECT CASE(keyword)
                 CASE('POINTS')
                     read(strarray(j+1), *, iostat=ios) nr_exp
-                    if (ios /= 0) call astra_stop(err_format)
+                    if (ios /= 0) STOP err_format
                 CASE('NAMEXP')      ! New variable, exp-block
                     VNAM = VARNAM(strarray(j+1), ier_tab)
                 CASE('GRIDTY')
                     read(strarray(j+1), *, iostat=ios) INTYPE
-                    if (ios /= 0) call astra_stop(err_format)
+                    if (ios /= 0) STOP err_format
                 CASE('NTIMES')
                     read(strarray(j+1), *, iostat=ios) ntim
-                    if (ios /= 0) call astra_stop(err_format)
+                    if (ios /= 0) STOP err_format
                 CASE('FILTER')
                     read(strarray(j+1), *, iostat=ios) ALFA
-                    if (ios /= 0) call astra_stop(err_format)
+                    if (ios /= 0) STOP err_format
                     if (i_filter_glob == 1) then
                         alfa_glob = alfa
                         i_filter_glob = 0
                     endif
                 CASE('FACTOR')
                     read(strarray(j+1), *, iostat=ios) factor
-                    if (ios /= 0) call astra_stop(err_format)
+                    if (ios /= 0) STOP err_format
                 CASE('PROFIL')
                     EXIT
                 CASE DEFAULT
@@ -681,12 +680,12 @@ contains
 
         CASE ('BNDX  ')
             if (raw_boundary%nt /= 0) then
-                call astra_stop(err_msg_exp // 'Boundary must be defined in a single group')
+                STOP err_msg_exp // 'Boundary must be defined in a single group'
             endif
             j = INDEX(lin_upper, 'POINTS')
             if (j /= 0) read(STRI(j+6:), *) raw_boundary%n_theta
             if (j == 0) then
-                call astra_stop(err_msg_exp // 'Number of boundary points must be defined')
+                STOP err_msg_exp // 'Number of boundary points must be defined'
             endif
 
             raw_boundary%nt = max(ntim, 1)
@@ -695,7 +694,7 @@ contains
             nbnd = raw_boundary%nt*raw_boundary%n_theta
             if (nbnd > nbnd_max) then
                 write(err_msg, '(2A, I0)') err_msg_exp, 'Boundary data must not exceed ', nbnd_max
-                call astra_stop(err_msg)
+                STOP err_msg
             endif
 
 ! Input order:
@@ -722,7 +721,7 @@ contains
             deallocate(bnd_rz)
 
             if (ios /= 0) then
-                call astra_stop(err_msg_exp // 'More data items than data values for BND group')
+                STOP err_msg_exp // 'More data items than data values for BND group'
             endif
             VNAMO = VNAM
 
@@ -736,7 +735,7 @@ contains
             nbnd = nx_u*nt_u
             if (nbnd > nbnd_max) then
                 write(err_msg, '(2A, I0)') TRIM(err_msg_exp), 'Boundary data #theta must not exceed ', nbnd_max
-                call astra_stop(err_msg)
+                STOP err_msg
             endif
             call ufrd('udb/' // trim(STRI) // '_r', nscal_u, ndim_u, nt_u, nx_u, raw_boundary%time, x_u, raw_boundary%R)
             call ufrd('udb/' // trim(STRI) // '_z', nscal_u, ndim_u, nt_u, nx_u, raw_boundary%time, x_u, raw_boundary%Z)
@@ -821,7 +820,7 @@ contains
             if (nr_exp <= 1) then
                 write(err_msg, '(3A, 8X, A)') err_msg, 'Input quantity: ', TRIM(VNAM), &
                     'Number of grid points must be > 1'
-                call astra_stop(err_msg)
+                STOP err_msg
             endif
 
             jtype = 1 + INTYPE/10
@@ -830,11 +829,11 @@ contains
 ! INTYPE unknown
             if (INTYPE < 0 .or. INTYPE > 20) then
                 write(err_msg, '(A, I0, A)') '>>> ERROR: Unknown input type =', INTYPE, ',  ignored'
-                call astra_stop(err_msg)
+                STOP err_msg
             endif
 
             if (ntim > 0) read(n_unit, *, iostat=ios) (raw_profiles%time(NGR+j), j=1, ntim)
-            if (ios > 0) call astra_stop(err_format)
+            if (ios > 0) STOP err_format
 
             do j=1, ntim1
                 NGR = NGR + 1
@@ -849,7 +848,7 @@ contains
                     if (INTYPE == 18 .or. INTYPE == 19) then
                         jarr = jarr + 1
                         read(n_unit, *, iostat=ios) raw_profiles%data(jarr)
-                        if (ios > 0) call astra_stop(err_format)
+                        if (ios > 0) STOP err_format
                     endif
                     do j1=1, jtype
                         read(n_unit, *, iostat=ios) (raw_profiles%data(jarr + jj), jj=1, nr_exp)
@@ -857,7 +856,7 @@ contains
                             write(err_msg, '(3A, /, A, 1p, 6e12.4)') err_msg_exp, &
                                 '".  Format error in group ', TRIM(STRI), 'Last data read: ', &
                                 (raw_profiles%data(jarr+jj), jj=1, nr_exp)
-                                call astra_stop(err_msg)
+                                STOP err_msg
                         endif
                         jarr = jarr + nr_exp
                         if (jtype == 2 .and. INTYPE <= 17 .and. j1 == 1) XBDRY = raw_profiles%data(jarr)
@@ -874,7 +873,7 @@ contains
                         write(err_msg, '(3A, /, A, 1p, 6e12.4)') err_msg_exp, &
                                 '".  Format error in group ', TRIM(STRI), 'Last data read: ', &
                             (raw_profiles%data(jarr+jj), jj=1, nr_exp)
-                        call astra_stop(err_msg)
+                        STOP err_msg
                     endif
                     do jj=1, nr_exp
                         raw_profiles%data(jarr + jj) = factor*raw_profiles%data(jarr + jj)
@@ -1082,7 +1081,7 @@ contains
 !---------------------------------------------------------------------
     subroutine parse_u_line(str_in, var_name, uname, factor)
 
-    use debugger, only: markloc, astra_stop
+    use debugger, only: markloc
     use char_manip, only: to_upper, split_string
     use parse_utils, only: split2array 
 
@@ -1101,7 +1100,7 @@ contains
     str1 = repeat(' ', 132)
 
     call split_string(str_in, ' ', var_name, str1)
-    if (LEN_TRIM(var_name) == 0) call astra_stop(err_msg)
+    if (LEN_TRIM(var_name) == 0) STOP err_msg
 
     call split2array(str1, ':', strarray, n_words)
 
@@ -1110,7 +1109,7 @@ contains
     if (LEN_TRIM(strarray(2)) > 0) then
         uname = 'udb/' // TRIM(strarray(2))
     else
-        call astra_stop(err_msg // ' no u-file name found')
+        STOP err_msg // ' no u-file name found'
     endif
 
     factor = 1.d0
@@ -1125,7 +1124,7 @@ contains
 !---------------------------------------------------------------------
     subroutine ufheader(uname, n_scal, n_dim, nt, nx, lbl2)
 
-    use debugger, only: markloc, astra_stop
+    use debugger, only: markloc
     use char_manip, only: to_upper, split_string
 
     integer, parameter :: n_unit=11
@@ -1145,12 +1144,12 @@ contains
 
     open(n_unit, FILE=TRIM(uname), iostat=ios)
     err_msg = '>>> U-file "' // TRIM(uname) // '" opening error'
-    if (ios /= 0) call astra_stop(err_msg)
+    if (ios /= 0) STOP err_msg
 
 ! # shot, device, #dimensions
     read(n_unit, '(i7, A4, 1X, i1)', ERR=925) n_shot, sdev, n_dim
     err_msg = '>>> U-file "' // TRIM(uname) // '" wrong dims'
-    if (n_dim <= 0 .or. n_dim > 2) call astra_stop(err_msg)
+    if (n_dim <= 0 .or. n_dim > 2) STOP err_msg
  
     read(n_unit, *) ! Shot date
 
@@ -1200,7 +1199,7 @@ contains
 
     return
 
-925 call astra_stop(err_msg)
+925 STOP err_msg
 
     end subroutine ufheader
 

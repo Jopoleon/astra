@@ -10,7 +10,7 @@ contains
 ! Set variable list from file parsing
     SUBROUTINE assign_val(file_in, narr, arr_in, arr_out, n_dim_next)
 
-    use debugger, only: markloc, astra_stop
+    use debugger, only: markloc
 
     integer, intent(in) :: narr
     character(len=6), dimension(narr), intent(in) :: arr_in
@@ -28,7 +28,7 @@ contains
         line_loop: do
             read(171, '(A132)', iostat=ios) STRI
             if (ios < 0) EXIT line_loop  ! End of file encountered
-            if (ios > 0) call astra_stop('>>> READAT: File "' // TRIM(file_in) // '" reading error')
+            if (ios > 0) STOP '>>> READAT: File "' // TRIM(file_in) // '" reading error'
             call split_string(STRI, '=', str_nam, str_val)
             if (LEN_TRIM(str_val) == 0) CYCLE line_loop
             if ( TRIM(arr_in(j)) == str_nam(1: LEN_TRIM(str_nam)) ) then

@@ -18,7 +18,7 @@ contains
         BTOR, ROCO, RTOR, SHIFT, &
         ABC, ELONG, TRIAN, UPDWN, NA1, NB1, MEQUIL, NEQUIL, &
         IPEQL, TIME, TSTART, TIMEQL, DTEQL, BTN
-    use debugger, only: markloc, astra_stop
+    use debugger, only: markloc
     use parameters_a2equil, only: equil_now
     use numerical_tools, only: qinterp
 
@@ -69,7 +69,7 @@ contains
             call A2EMEQ(jexit)
             if (jexit /= 0) then
                 err_msg = 'Equilibrium problem at the initial iterations'
-                if (IPART == 1) call astra_stop(err_msg)
+                if (IPART == 1) STOP err_msg
             endif
             TIMEQL = TIME
         endif
@@ -718,7 +718,7 @@ contains
 !  ROC3A - Dimensional toroidal "rho" [m]
 !---------------------------------------------------------------------
 
-    use debugger, only: markloc, debug, astra_stop
+    use debugger, only: markloc, debug
 
     double precision, intent(in) :: Rmaj, shaf_shift, a_min, elongation, triangularity
 
@@ -732,13 +732,13 @@ contains
         write(*, *) " >>> Error >>> ROC3A >>> Illegal input: R+Delta < a"
         write(*, '(1P, 16X, 2(A, E10.3))') "R+Delta =", Rmaj + shaf_shift, ",    a =", a_min
         write(*, *) Rmaj, shaf_shift, a_min, elongation, triangularity
-        call astra_stop()
+        STOP
      endif
 
     if (YGE < 0) then
         write(*, *) " >>> Error >>> ROC3A: Illegal input"
         write(*, *) Rmaj, shaf_shift, a_min, elongation, triangularity
-        call astra_stop()
+        STOP
     else if (YGE == 0) then
         ROC3A = 0.
     else
