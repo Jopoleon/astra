@@ -31,12 +31,12 @@ contains
     double precision, intent(out), optional :: pi_icr(*), pe_icr(*)
 
     integer, dimension(nnb_max) :: ierr
-    integer :: n_Rrect, n_Zrect, n_nbi, dum, n_lim, jumpcor, torqjxb_model, nsp_plasma
+    integer :: n_Rrect, n_Zrect, n_nbi, dum, n_lim, jumpcor, torqjxb_model
     integer :: pdim, ldim
     integer :: i, j, jlim, jnb, ios, nrho_surf, nthe_surf
 
     double precision :: aimp, zimp, p_i, p_e, tq_i, fi, i_cd, src, nfi
-    double precision, allocatable, dimension(:) :: aplasma, zplasma, species_plasma_ratio, sp_plasma_ratio
+    double precision, allocatable, dimension(:) :: aplasma, zplasma, species_plasma_ratio
     double precision, dimension(NA1) :: rhotor1d, p_rf_e, p_rf_i
     double precision, allocatable, dimension(:, :), save :: powe, powi, &
           press, bdep, bdens, jfi, jnbcd,  wfi_par, wfi_perp, wfi_par_lab, &
@@ -71,7 +71,6 @@ contains
     namelist / partmix / part_mix
     namelist / nbi_par / n_nbi, a_beam, z_beam, einj, pinj_file
     namelist / physics / jumpcor, table_path, limiter_file, torqjxb_model
-    namelist / species / aimp, zimp, aplasma, zplasma, nsp_plasma, sp_plasma_ratio
     save tim_prev, bdens_in, n_nbi, einj, part_mix, pinj_file, Rrect, zrect
 
     write(6, *) 'Calling RABBIT...'
@@ -174,10 +173,11 @@ contains
         aimp = AIM1
         zimp = ZIM1(1)
 
-        if (zimp /= 4 .AND. zimp /= 5 .AND. zimp /= 6  .AND. zimp /= 7 .AND. zimp /= 10 .AND. zimp /= 28) then
+        if (zimp /= 4.d0 .AND. zimp /= 5.d0 .AND. zimp /= 6.d0  .AND. zimp /= 7.d0 .AND. zimp /= 10.d0 .AND. zimp /= 28.d0) then
             write(6, *) 'No cross-sections for Zimp other than 4, 5, 6, 7, 10, 28'
             write(6, *) 'Forcing Zimp=6'
-            zimp = 6
+            zimp = 6.d0
+            aimp = 12.d0
         endif
 
         call rabbit_lib_init(aplasma, zplasma, aimp, zimp,           & ! plasma species
@@ -191,35 +191,9 @@ contains
             ldim, pdim,                                              & ! plasma grid dimension
             TRIM(as_nml), LEN_TRIM(as_nml), ierr(1:n_nbi))
 
-        !do_dump = .true. ! Uncomment this line to activate debug dumping of RABBIT inputs into rabbit_dump/
         if (do_dump) then ! dump Rabbit inputs (for debbuging)
-            call execute_command_line('mkdir -p ' // TRIM(awd) // '/rabbit_dump')
-            ! Copy original namelist to options.nml
-            call execute_command_line('cp ' // TRIM(as_nml) // ' ' // TRIM(awd) // '/rabbit_dump/options.nml')
-
-            ! Prepare species namelist data (initial values)
-            nsp_plasma = size(aplasma)
-            sp_plasma_ratio = species_plasma_ratio
-
-            ! Comment out existing &species subgroup if present to avoid duplicates
-            call execute_command_line("sed -i '/&species/,/\// s/^/! /' " // TRIM(awd) // "/rabbit_dump/options.nml")
-
-            ! Append species information
-            open(54, file=TRIM(awd) // '/rabbit_dump/options.nml', status='old', position='append')
-            write(54, '(/, A)') '! sp_plasma_ratio is the initial species composition'
-            write(54, nml=species)
-            close(54)
-
-            ! Copy limiter file
-            call execute_command_line('cp ' // TRIM(limiter_file) // ' ' // TRIM(awd) // '/rabbit_dump/')
-
-            ! Initialize species ratio log
-            open(55, file=TRIM(awd) // '/rabbit_dump/species_ratios.dat', status='replace')
-            write(55, '(A)') '# TIME, species_plasma_ratio'
-            close(55)
-
-            call rabbit_lib_set_dump_dir(TRIM(awd) // '/rabbit_dump', LEN_TRIM(awd) + 12)
-            call rabbit_lib_dump_beams(TRIM(awd) // '/rabbit_dump', LEN_TRIM(awd) + 12, einj, part_mix)
+            call rabbit_lib_set_dump_dir(TRIM(awd), LEN_TRIM(awd))
+            call rabbit_lib_dump_beams(TRIM(awd), LEN_TRIM(awd), einj, part_mix)
         endif
 
         tim_prev = max(0.d0, TIME-TAU)
@@ -292,12 +266,6 @@ contains
     call rabbit_lib_set_sp_plasma_ratio(species_plasma_ratio, size(species_plasma_ratio))
 
     call rabbit_lib_set_background_neutrals(back_neutral_prof, NA1)
-
-    if (do_dump) then
-        open(55, file=TRIM(awd) // '/rabbit_dump/species_ratios.dat', status='old', position='append')
-        write(55, '(F12.6, 100E15.7)') TIME, species_plasma_ratio
-        close(55)
-    endif
 
     call rabbit_lib_step(                                       & ! input
         rho_interp_plasma, ne_interp, te_interp, ti_interp,     &
