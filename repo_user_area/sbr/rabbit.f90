@@ -385,10 +385,12 @@ contains
     call qinterp(rho_rab_out, pfi_perp, nrhoout, XRHO(1: NA1), PBPER(1: NA1), NA1)
     call qinterp(rho_rab_out, nrate_in, nrhoout, XRHO(1: NA1), NRATE(1: NA1), NA1)
 
-    call qinterp(rho_rab_out, p_rf_coll_i, nrhoout, XRHO(1: NA1), p_rf_i, NA1)
-    call qinterp(rho_rab_out, p_rf_coll_e, nrhoout, XRHO(1: NA1), p_rf_e, NA1)
-    pi_icr(1: NA1) = 1e-6*p_rf_i(1: NA1)
-    pe_icr(1: NA1) = 1e-6*p_rf_e(1: NA1)
+    if (PRF > p_icrf_min) then
+        call qinterp(rho_rab_out, p_rf_coll_i, nrhoout, XRHO(1: NA1), p_rf_i, NA1)
+        call qinterp(rho_rab_out, p_rf_coll_e, nrhoout, XRHO(1: NA1), p_rf_e, NA1)
+        pi_icr(1: NA1) = 1.d-6*p_rf_i(1: NA1)
+        pe_icr(1: NA1) = 1.d-6*p_rf_e(1: NA1)
+    endif
 
     if (ALFA > 0.) then
         call smearr(ALFA, PIBM , PIBM )
