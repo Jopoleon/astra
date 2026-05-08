@@ -172,10 +172,11 @@ contains
         aimp = AIM1
         zimp = ZIM1(1)
 
-        if (zimp /= 4 .AND. zimp /= 5 .AND. zimp /= 6  .AND. zimp /= 7 .AND. zimp /= 10 .AND. zimp /= 28) then
+        if (zimp /= 4.d0 .AND. zimp /= 5.d0 .AND. zimp /= 6.d0 .AND. zimp /= 7.d0 .AND. zimp /= 10.d0 .AND. zimp /= 28.d0) then
             write(6, *) 'No cross-sections for Zimp other than 4, 5, 6, 7, 10, 28'
             write(6, *) 'Forcing Zimp=6'
-            zimp = 6
+            zimp = 6.d0
+            aimp = 12.d0
         endif
 
         call rabbit_lib_init(aplasma, zplasma, aimp, zimp,           & ! plasma species
