@@ -476,7 +476,7 @@ then
 F90C=ifort
 #the compiler flags
 FFLAGS=-u -m64 -O
-NCDFLIB=$SOFT_ROOT/netCDF/fortran/.libs/libnetcdff.a $SOFT_ROOT/netCDF/liblib/.libs/libnetcdf.a
+NCDFLIB=$ASTRA_EXT/netcdf/mar26/libnetcdff.a $ASTRA_EXT/netcdf/mar26/libnetcdf.a
 F90FLAGS=-m64 -O -fPIC
 #the flags for the shared library
 SHAREDFLAGS=-G -fPIC -B symbolic -zdefs

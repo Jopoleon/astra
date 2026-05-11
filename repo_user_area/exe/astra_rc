@@ -22,7 +22,7 @@ export TORB_LIB="-L${TORB_LIBDIR} -ltorbeamB -Wl,-rpath,${TORB_LIBDIR} ${IRC_LIB
 
 # RABBIT
 
-RABBIT_HOME=${ASTRA_EXT}/rabbit/mar26
+RABBIT_HOME=${ASTRA_EXT}/rabbit/may26
 RABBIT_LIBDIR=${RABBIT_HOME}/lib
 export RABBIT_LIB="-L${RABBIT_LIBDIR} -lrabbit -Wl,-rpath,${RABBIT_LIBDIR}"
 export RABBIT_INC=${RABBIT_HOME}/inc
@@ -32,7 +32,7 @@ TORFPQL_HOME=${ASTRA_EXT}/toric/apr26/intel/2025.1
 export TORFPQL_LIBDIR=${TORFPQL_HOME}/lib/
 export TORFPQL_INC=${TORFPQL_HOME}/include
 FFTW_LIBDIR=/mpcdf/soft/SLE_15/packages/znver4/fftw/intel_2025.1-2025.1.0/3.3.9/lib
-export TORFPQL_LIB="-L${TORFPQL_LIBDIR} -ltoric -lslatec -lodepack -Wl,-rpath,${TORFPQL_LIBDIR} -L${FFTW_LIBDIR} -lfftw3 -Wl,-rpath,${FFTW_LIBDIR}"
+export TORFPQL_LIB="-L${TORFPQL_LIBDIR} -ltoric -lslatec -lodepack -Wl,-rpath,${TORFPQL_LIBDIR} -L${FFTW_LIBDIR} -lfftw3 -Wl,-rpath,${FFTW_LIBDIR} -lgmp"
 
 # QuaLiKiZ
 
