@@ -2,41 +2,20 @@ ifndef AWD
 $(error setenv/export AWD first)
 endif
 
-SRC_DIR = $(AWD)/src/astra
-OBJ_DIR = $(AWD)/obj/astra
-MOD_DIR = $(AWD)/mod/astra
+SRC_DIR = $(AWD)/src/$(sub)
+OBJ_DIR = $(AWD)/obj/$(sub)
+MOD_DIR = $(AWD)/mod/$(sub)
 INC_DIR = $(AWD)/inc
-MOD_FEQ = $(AWD)/mod/feqis
-MOD_TYP = $(AWD)/mod/misc
 
 LIB_DIR = $(AWD)/lib
-LIBNAM = libastra.a
-LIBTYP = libmisc.a
-LIB = $(LIB_DIR)/$(LIBNAM)
+LIB = $(LIB_DIR)/lib$(sub).a
 
-MODOBJS = \
-$(OBJ_DIR)/json_vars.o \
-$(OBJ_DIR)/debugger.o \
-$(OBJ_DIR)/machine_config.o \
-$(OBJ_DIR)/parse_utils.o \
-$(OBJ_DIR)/emeq.o \
-$(OBJ_DIR)/scalars.o \
-$(OBJ_DIR)/read_input.o \
-$(OBJ_DIR)/time_functions.o \
-$(OBJ_DIR)/status.o \
-$(OBJ_DIR)/transport_solver.o \
-$(OBJ_DIR)/standard_functions.o \
-$(OBJ_DIR)/cpu_usage.o \
-$(OBJ_DIR)/parameters_a2equil.o \
-$(OBJ_DIR)/surface_contours.o \
-$(OBJ_DIR)/flux_avg_imp.o \
-$(OBJ_DIR)/json_rw.o \
-$(OBJ_DIR)/gs_solver.o \
-$(OBJ_DIR)/metrics.o \
-$(OBJ_DIR)/auxiliary.o \
-$(OBJ_DIR)/set_x_data.o
-
-OBJS = $(OBJ_DIR)/ipc_control.o
+ifdef SPIDER_LIB
+  SPIDER_FLAG = -DSPIDER
+else
+  SPIDER_FLAG =
+  SPIDER_LIB  =
+endif
 
 # Make Commands
 
@@ -60,17 +39,17 @@ mvmod:
 .PHONY: clean
 clean:
 	rm -f *.mod
-	rm -f $(MOD_DIR)/*.mod
+	rm -rf $(LIB_DIR)
 	rm -rf $(OBJ_DIR)
-	rm -f $(LIB)
+	rm -rf $(MOD_DIR)
 
 # Rules
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f90
-	$(FC) $(FC_FLAGS) -I$(MOD_TYP) -I$(MOD_DIR) -I$(MOD_FEQ) -I$(JSON_INC) -c $< -o $@
+	$(FC) $(FC_FLAGS) $(INCLUDE) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.F90
-	$(FC) $(FC_FLAGS) -I$(MOD_TYP) -I$(MOD_DIR) -I$(MOD_FEQ) -I$(JSON_INC) $(SPID_FLAG) -c $< -o $@
+	$(FC) $(FC_FLAGS) $(INCLUDE) $(SPID_FLAG) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.c
 	$(CC) -fPIC -c $< -o $@ -I$(INC_DIR)

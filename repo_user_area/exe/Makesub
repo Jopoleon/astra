@@ -5,9 +5,7 @@ endif
 SRC_DIR = $(AWD)/$(sub)
 OBJ_DIR = $(AWD)/obj/$(sub)
 MOD_DIR = $(AWD)/mod/$(sub)
-INC_DIR = $(AWD)/inc
 MOD_ASTRA = $(AWD)/mod/astra
-MOD_FEQIS = $(AWD)/mod/feqis
 MOD_NBI   = $(AWD)/mod/nbi
 MOD_MISC  = $(AWD)/mod/misc
 
@@ -47,14 +45,19 @@ SRCFF90 := $(wildcard $(SRC_DIR)/*.F90)
 SRCF    := $(wildcard $(SRC_DIR)/*.f)
 SRCC    := $(wildcard $(SRC_DIR)/*.c)
 
-OBJF90  := $(patsubst $(SRC_DIR)%.f90, $(OBJ_DIR)%.o, $(SRCF90))
-OBJFF90 := $(patsubst $(SRC_DIR)%.F90, $(OBJ_DIR)%.o, $(SRCFF90))
-OBJF    := $(patsubst $(SRC_DIR)%.f  , $(OBJ_DIR)%.o, $(SRCF)  )
-OBJC    := $(patsubst $(SRC_DIR)%.c  , $(OBJ_DIR)%.o, $(SRCC)  )
+OBJF90  := $(patsubst $(SRC_DIR)/%.f90, $(OBJ_DIR)/%.o, $(SRCF90))
+OBJFF90 := $(patsubst $(SRC_DIR)/%.F90, $(OBJ_DIR)/%.o, $(SRCFF90))
+OBJF    := $(patsubst $(SRC_DIR)/%.f  , $(OBJ_DIR)/%.o, $(SRCF)  )
+OBJC    := $(patsubst $(SRC_DIR)/%.c  , $(OBJ_DIR)/%.o, $(SRCC)  )
 
 # Make Commands
 .PHONY: all
-all: directories $(LIB) mvmod
+all: print directories $(LIB) mvmod
+
+print:
+	echo "dir $(SRC_DIR)"
+	echo "sources $(SRCF90)"
+	echo "objects $(OBJF90)"
 
 .PHONY: directories
 directories:
@@ -71,6 +74,7 @@ mvmod:
 clean:
 	rm -rf $(OBJ_DIR)
 	rm $(LIB)
+	rm -rf $(MOD_DIR)
 
 $(OBJ_DIR)/tglf_serial.o: $(SRC_DIR)/tglf_serial.F90 $(TGLF_LIB)
 	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(TGLF_INC) $(TGLF_FLAG) -c $< -o $@
@@ -97,7 +101,7 @@ $(OBJ_DIR)%.o: $(SRC_DIR)%.f
 	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.c
-	$(CC) -I$(INC_DIR) -c $< -o $@
+	$(CC) -c $< -o $@
 
 $(LIB): $(OBJF90) $(OBJFF90) $(OBJF) $(OBJC)
 	ar rv $(LIB) $(OBJF90)  >/dev/null

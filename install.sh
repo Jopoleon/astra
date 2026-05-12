@@ -36,12 +36,12 @@ then
     read -p "Do you want QualiKiZ NN? y/n " QLKNN
     read -p "Do you want NEO? y/n " NEO
     read -p "Do you want TGLF? y/n " TGLF
-# RABBIT, TORBEAM
+
+# RABBIT, TORBEAM in test case
     if [ "$RABBIT" = "n" ]
     then
 	sed -i "s#RABBIT#\!RABBIT#g" $AWD/equ/flux_feqis
     fi
-
     if [ "$TORBEAM" = "n" ]
     then
 	sed -i "s#TORBA#\!TORBA#g" $AWD/equ/flux_feqis

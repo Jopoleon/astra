@@ -217,7 +217,6 @@ then
     rm -rf rabbit
 
     export LD_LIBRARY_PATH="$NETCDF_INSTALL/lib:$LD_LIBRARY_PATH"
-# git clone https://gitlab.mpcdf.mpg.de/markusw/rabbit
     git clone git@gitlab.mpcdf.mpg.de:markusw/rabbit.git
     RABBIT_HOME=$SOFT_ROOT/rabbit
     cd $RABBIT_HOME
@@ -225,6 +224,7 @@ then
     mkdir build
     cd build
     $CMAKE .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_Fortran_COMPILER=$FC -DOpenMP_Fortran_FLAGS=$FFLAGS -DNETCDF_HOME=$NETCDF_INSTALL
+#    $CMAKE .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_Fortran_COMPILER=$FC -DOpenMP_Fortran_FLAGS=$FFLAGS -DNETCDF_HOME=selfmade
     make
 
     mkdir -p $RABBIT_INSTALL/lib
