@@ -39,37 +39,25 @@ then
 # RABBIT, TORBEAM
     if [ "$RABBIT" = "n" ]
     then
-	sed -i "s#export\ RABBIT_LIB#\#export\ RABBIT_LIB#g" $AWD/exe/astra_rc
-	sed -i "s#RABBIT#\!RABBIT#g" $AWD/equ/flux_spider
 	sed -i "s#RABBIT#\!RABBIT#g" $AWD/equ/flux_feqis
     fi
 
     if [ "$TORBEAM" = "n" ]
     then
-	sed -i "s#export\ TORB_LIB#\#export\ TORB_LIB#g" $AWD/exe/astra_rc
-	sed -i "s#TORBA#\!TORBA#g" $AWD/equ/flux_spider
 	sed -i "s#TORBA#\!TORBA#g" $AWD/equ/flux_feqis
-    fi
-
-    if [ "$QLKNN" = "n" ]
-    then
-	sed -i "s#export\ QLKNN_LIB#\#export\ QLKNN_LIB#g" $AWD/exe/astra_rc
     fi
 
 # NEO, QUALIKIZ, TGLF (needing MPI)
     if [ "$QLK" = "n" ]
     then
-	sed -i "s#export\ QLK_LIB#\#export\ QLK_LIB#g" $AWD/exe/astra_rc
 	sed -i -e '/all: directories/ s/\$(XPR)\/qlki//g' $AWD/exe/Makexpr
     fi
     if [ "$NEO" = "n" ]
     then
-	sed -i "s#export\ NEO_LIB#\#export\ NEO_LIB#g" $AWD/exe/astra_rc
 	sed -i -e '/all: directories/ s/\$(XPR)\/neo//g' $AWD/exe/Makexpr
     fi
     if [ "$TGLF" = "n" ]
     then
-	sed -i "s#export\ TGLF_LIB#\#export\ TGLF_LIB#g" $AWD/exe/astra_rc
 	sed -i -e '/all: directories/ s/\$(XPR)\/tglfi//g' $AWD/exe/Makexpr
     fi
 fi
