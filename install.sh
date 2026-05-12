@@ -39,14 +39,6 @@ then
 # RABBIT, TORBEAM
     if [ "$RABBIT" = "n" ]
     then
-	rm $AWD/sbr/rabbit.f90
-	cat <<EOF > $AWD/sbr/rabbit.f90
-module a2rabbit
-contains
-subroutine rabbit
-end subroutine rabbit
-end module a2rabbit
-EOF
 	sed -i "s#export\ RABBIT_LIB#\#export\ RABBIT_LIB#g" $AWD/exe/astra_rc
 	sed -i "s#RABBIT#\!RABBIT#g" $AWD/equ/flux_spider
 	sed -i "s#RABBIT#\!RABBIT#g" $AWD/equ/flux_feqis
@@ -54,14 +46,6 @@ EOF
 
     if [ "$TORBEAM" = "n" ]
     then
-        rm $AWD/sbr/torba.f90
-	cat <<EOF > $AWD/sbr/torbeam.f90
-module a2torbeam
-contains
-subroutine torba
-end subroutine torba
-end module a2torbeam
-EOF
 	sed -i "s#export\ TORB_LIB#\#export\ TORB_LIB#g" $AWD/exe/astra_rc
 	sed -i "s#TORBA#\!TORBA#g" $AWD/equ/flux_spider
 	sed -i "s#TORBA#\!TORBA#g" $AWD/equ/flux_feqis
@@ -69,7 +53,6 @@ EOF
 
     if [ "$QLKNN" = "n" ]
     then
-        rm $AWD/sbr/qlknn_serial.f90
 	sed -i "s#export\ QLKNN_LIB#\#export\ QLKNN_LIB#g" $AWD/exe/astra_rc
     fi
 
@@ -88,7 +71,6 @@ EOF
     then
 	sed -i "s#export\ TGLF_LIB#\#export\ TGLF_LIB#g" $AWD/exe/astra_rc
 	sed -i -e '/all: directories/ s/\$(XPR)\/tglfi//g' $AWD/exe/Makexpr
-	rm $AWD/sbr/tglf_serial.f90
     fi
 fi
 
