@@ -177,9 +177,9 @@ clean:
 .PHONY: modules
 modules:
 	make -f $(AWD)/exe/Makeastra "MODOBJS=$(MMODS)" sub=misc
-	make -f $(AWD)/exe/Makeastra "MODOBJS=$(AMODS)" "INCLUDE=$(AINCLUDE)" sub=astra modules
-	make -f $(AWD)/exe/Makeastra "MODOBJS=$(FMODS)" "INCLUDE=$(FINCLUDE)" sub=feqis modules
-	make -f $(AWD)/exe/Makeastra "MODOBJS=$(GMODS)" "INCLUDE=$(GINCLUDE)" sub=graph modules
+	make -f $(AWD)/exe/Makeastra "MODOBJS=$(AMODS)" "INCLUDE=$(AINCLUDE)" sub=astra
+	make -f $(AWD)/exe/Makeastra "MODOBJS=$(FMODS)" "INCLUDE=$(FINCLUDE)" sub=feqis
+	make -f $(AWD)/exe/Makeastra "MODOBJS=$(GMODS)" "INCLUDE=$(GINCLUDE)" sub=graph
 	make -f $(AWD)/exe/Makeastra "MODOBJS=$(NMODS)" "INCLUDE=$(NINCLUDE)" sub=nbi
 
 # Linking, create ASTRA executable

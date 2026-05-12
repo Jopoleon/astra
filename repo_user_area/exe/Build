@@ -37,7 +37,7 @@ else
     export X11=y
     ATASK=$AWD/bin/${equ_file}_gui.exe
 fi
-    make -f exe/Makefile  MODEL=$equ_file FEXP=$exp_file ATASK=$ATASK
+make -f exe/Makefile  MODEL=$equ_file FEXP=$exp_file ATASK=$ATASK
 status=$?
 if [ $status -ne 0 ]
 then
