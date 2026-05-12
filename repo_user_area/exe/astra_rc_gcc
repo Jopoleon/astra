@@ -6,42 +6,71 @@ export JSON_LIB=$JSON_HOME/lib/libjsonfortran.a
 export JSON_INC=$JSON_HOME/inc
 
 # SPIDER
-SPIDER_HOME=${ASTRA_EXT}/spider/gcc_apr26
-if [ -f ${SPIDER_HOME}/lib/libspider.a ]; then
-    export SPIDER_LIB=${SPIDER_HOME}/lib/libspider.a
-else
-    export SPIDER_LIB=""
+
+SPIDER_LIBDIR=${ASTRA_EXT}/spider/gcc_apr26/lib
+export SPIDER_LIB=${SPIDER_LIBDIR}/libspider.a
+if [ ! -f ${SPIDER_LIB} ]; then
+    unset SPIDER_LIB
 fi
 
 # TORBEAM
 
 IRC_LIB="-L${COMP_LIBDIR} -lirc" # necessary for libtorbeam.so
-TORB_HOME=${ASTRA_EXT}/torbeam/gcc_apr26
-TORB_LIBDIR=${TORB_HOME}/lib
-export TORB_LIB="-L${TORB_LIBDIR} -ltorbeamB  -Wl,-rpath,${TORB_LIBDIR} ${IRC_LIB}"
+TORBEAM_LIBDIR=${ASTRA_EXT}/torbeam/gcc_apr26/lib
+if [ -f ${TORBEAM_LIBDIR}/libtorbeamB.so ]; then
+    export TORBEAM_LIB="-L${TORBEAM_LIBDIR} -ltorbeamB -Wl,-rpath,${TORBEAM_LIBDIR} ${IRC_LIB}"
+else
+    unset TORBEAM_LIB
+fi
 
 # RABBIT
 
 RABBIT_HOME=${ASTRA_EXT}/rabbit/gcc_may26
 RABBIT_LIBDIR=${RABBIT_HOME}/lib
-export RABBIT_LIB="-L${RABBIT_LIBDIR} -lrabbit -Wl,-rpath,${RABBIT_LIBDIR}"
+if [ -f ${RABBIT_LIBDIR}/librabbit.so ]; then
+    export RABBIT_LIB="-L${RABBIT_LIBDIR} -lrabbit -Wl,-rpath,${RABBIT_LIBDIR}"
+else
+    unset RABBIT_LIB
+fi
 export RABBIT_INC=${RABBIT_HOME}/inc
+
+# TORIC-SSFPQL
+
+TORIC_HOME="${ASTRA_EXT}/toric/apr26/gfortran/2025.1"
+TORIC_LIBDIR=${TORIC_HOME}/lib
+export TORIC_INC=${TORIC_HOME}/include
+FFTW_LIBDIR=/mpcdf/soft/SLE_15/packages/znver4/fftw/intel_2025.1-2025.1.0/3.3.9/lib
+if [ -f ${TORIC_LIBDIR}/libtoric.so ]; then
+    export TORIC_LIB="-L${TORIC_LIBDIR} -ltoric -lslatec -lodepack -Wl,-rpath,${TORIC_LIBDIR} -L${FFTW_LIBDIR} -lfftw3 -Wl,-rpath,${FFTW_LIBDIR} -lgmp"
+else
+    unset TORIC_LIB
+fi
 
 # QuaLiKiZ
 
 QLK_HOME=${ASTRA_EXT}/qualikiz/gcc_apr26
+QLK_LIBDIR=${QLK_HOME}/lib
 export QLK_INC=${QLK_HOME}/inc
-export QLK_LIB=${QLK_HOME}/lib/libQLK-gcc-release-default.a
+export QLK_LIB=${QLK_LIBDIR}/libQLK-gcc-release-default.a
+
+# Qualikiz Neural-Network
 
 QLKNN_HOME=${ASTRA_EXT}/qlk_nn/gcc_apr26
+QLKNN_LIBDIR=${QLKNN_HOME}/lib
 export QLKNN_INC=${QLKNN_HOME}/inc
-export QLKNN_LIB=${QLKNN_HOME}/lib/libQLKNN-gcc-release-default.a
+export QLKNN_LIB=${QLKNN_LIBDIR}/libQLKNN-gcc-release-default.a
+if [ ! -f ${QLKNN_LIB} ]; then
+    unset QLKNN_LIB
+fi
 
 # TGLF
 
 TGLF_HOME=${ASTRA_EXT}/tglf/gcc_apr26
 export TGLF_INC=${TGLF_HOME}/inc
 export TGLF_LIB=${TGLF_HOME}/lib/libtglf.a
+if [ ! -f ${TGLF_LIB} ]; then
+    unset TGLF_LIB
+fi
 
 # NEO
 

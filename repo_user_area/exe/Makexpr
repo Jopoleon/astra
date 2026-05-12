@@ -20,7 +20,7 @@ else
   LD := $(CC)
   LD_MPI := $(MPICC) $(OMP_CFLAG)
 endif
-MPI_FC = $(MPIFC) $(OMP_FFLAG)
+MPI_FC = $(MPIFC)
 
 # TGLF
 

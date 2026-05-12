@@ -4,6 +4,8 @@ implicit none
 
 contains
 
+#ifdef TORBEAM_INSTALLED
+
     subroutine TORBA(power_MW_in)
 
 !----------------------------------------------------------------------|
@@ -430,7 +432,16 @@ contains
     deallocate( ne_interp)
 
     write(*, *) 'Exiting torba'
-
     end subroutine torba
+
+#else
+    subroutine torba(power_MW_in)
+
+    double precision, intent(in), optional :: power_MW_in
+
+    print*, 'TORBEAM not installed, check TORBEAM_LIB path in exe/astra_rc or exe/astra_rc_<compiler>'
+    stop
+    end subroutine torba
+#endif
 
  end module a2torbeam

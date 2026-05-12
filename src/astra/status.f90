@@ -432,7 +432,7 @@ contains
     write(*, *) 'TE    Fp    NE    G11 '
     write(*, *) te(1)  , fp(1)  , ne(1)  , g11(1)
     write(*, *) te(na1), fp(na1), ne(na1), g11(na1)
-    write(*,*) 'somethings not right, quit run'
+    write(*, *) 'somethings not right, quit run'
     stop
 
     return

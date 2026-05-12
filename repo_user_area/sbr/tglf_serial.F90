@@ -1,5 +1,7 @@
 subroutine tglf_serial(chi_i, chi_e, e_pflux, vimp1, vimp2, i_mflux_as, exchi_as, gamma_as, omega_as)
 
+#ifdef TGLF_INSTALLED
+
 use tglf_interface, only: nsm, tglf_zs_in, tglf_ns_in, tglf_mass_in, &
     tglf_find_width_in, tglf_iflux_in, tglf_use_bper_in, tglf_use_mhd_rule_in, &
     tglf_use_bisection_in, tglf_use_inboard_detrapped_in, tglf_new_eikonal_in, &
@@ -559,4 +561,9 @@ enddo
 call SYSTEM_CLOCK(t_wall2, rate)
 print*, "TGLF_serial wall time", dble(t_wall2 - t_wall1)/dble(rate)
 
-END subroutine tglf_serial
+#else
+print*, 'TGLF not installed, check TGLF_LIB path in exe/astra_rc or exe/astra_rc_<compiler>'
+stop
+#endif
+
+end subroutine tglf_serial

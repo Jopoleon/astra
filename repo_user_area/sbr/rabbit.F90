@@ -4,6 +4,8 @@ implicit none
 
 contains
 
+#ifdef RABBIT_INSTALLED
+
     subroutine RABBIT(pNBI_MW, dt_in, pRF_MW, fRF_MHz, nRF_harm, pi_icr, pe_icr)
 
     use mod_rabbit_lib, only: do_dump, rabbit_lib_init, rabbit_lib_set_dump_dir, &
@@ -417,7 +419,17 @@ contains
     endif
 
     write(6, *) 'Done RABBIT'
-
     end subroutine RABBIT
+
+#else
+    subroutine RABBIT(pNBI_MW, dt_in, pRF_MW, fRF_MHz, nRF_harm, pi_icr, pe_icr)
+
+    double precision, intent(in), optional :: pNBI_MW, dt_in, pRF_MW, fRF_MHz, nRF_harm
+    double precision, intent(out), optional :: pi_icr(*), pe_icr(*)
+
+    print*, 'RABBIT not installed, check RABBIT_LIB path in exe/astra_rc or exe/astra_rc_<compiler>'
+    stop
+    end subroutine RABBIT
+#endif
 
 end module a2rabbit

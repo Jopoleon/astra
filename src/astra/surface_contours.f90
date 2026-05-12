@@ -30,8 +30,8 @@ contains
 
     double precision m
 
-    m = (y_in(2)-y_in(1)) / (x_in(2)-x_in(1))
-    y_out =  m*(x_out-x_in(2)) + y_in(2)
+    m = (y_in(2) - y_in(1)) / (x_in(2) - x_in(1))
+    y_out = m*(x_out - x_in(2)) + y_in(2)
 
     return
     end subroutine lin_int

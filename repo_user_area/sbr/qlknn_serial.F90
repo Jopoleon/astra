@@ -1,5 +1,7 @@
 subroutine qlknn_serial(chii, chie, e_pflux)
 
+#ifdef QLKNN_INSTALLED
+
 use scalars, only: BTOR, RTOR, AMJ, AIM1, AIM2, AIM3, ZMJ, &
     NA1, NA1N, NA1E, NA1I
 use status, only: NRD, NE, TE, NI, TI, &
@@ -645,4 +647,9 @@ radial_loop: do jrho=1, NA1
 
 enddo radial_loop
 
-END subroutine qlknn_serial
+#else
+print*, 'QlkNN not installed, check QLKNN_LIB path in exe/astra_rc or exe/astra_rc_<compiler>'
+stop
+#endif
+
+end subroutine qlknn_serial

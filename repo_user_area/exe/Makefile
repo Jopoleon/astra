@@ -23,10 +23,11 @@ LIBGRAPH = $(LIB_DIR)/libgraph.a
 FC_FLAGS += -I$(AWD)
 LD_FLAGS += -I$(AWD)
 
-ifdef SPIDER
+ifdef SPIDER_LIB
   SPIDER_FLAG = -DSPIDER
 else
   SPIDER_FLAG =
+  SPIDER_LIB  =
 endif
 
 ifdef X11
@@ -36,7 +37,7 @@ else
 endif
 
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
-LIB = -lsbr -lnbi -L/usr/lib64 -lX11 $(QLKNN_LIB) $(TGLF_LIB) $(TORB_LIB) $(RABBIT_LIB) -lgraph -lastra -lfnc -lfeqis -lmisc $(SPIDER_LIB) $(JSON_LIB) -L$(LIB_DIR) $(MKL_LIB) -lrt $(TORFPQL_LIB)
+LIB = -lsbr -lnbi -L/usr/lib64 -lX11 $(QLKNN_LIB) $(TGLF_LIB) $(TORBEAM_LIB) $(RABBIT_LIB) -lgraph -lastra -lfnc -lfeqis -lmisc $(SPIDER_LIB) $(JSON_LIB) -L$(LIB_DIR) $(MKL_LIB) -lrt $(TORIC_LIB)
 
 AENV = $(AWD)/exe/astra_rc
 

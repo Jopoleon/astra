@@ -2,18 +2,14 @@
 
 struct sembuf buf0 = {0, 0, ~SEM_UNDO&~IPC_NOWAIT};
 
-/*---------------------------------------------------
-  Trims a string
-*/
+/*-------- Trims a string -------*/
 void trim_right(char *str) {
     int i = strlen(str) - 1;
     while (i >= 0 && (str[i] == ' ' || str[i] == '\n' || str[i] == '\r' || str[i] == '\t'))
         str[i--] = '\0';
 }
 
-/*--------------------------------------------------------------------
-  Reads the shared memory segment and stores the subprocess' output to an ASTRA fortran array
-*/
+/*-------- Reads the shared memory segment -> ASTRA fortran array --------*/
 void sbp2astra_(int* jsbp, int *nchunk, int *n_sbp_arr_out, char* ipcFile, double* mem){
 
     int j, J_PROC, jproc, ID, ShmID, jarr, N_CHUNK, N_ARR_OUT;
@@ -54,15 +50,14 @@ void sbp2astra_(int* jsbp, int *nchunk, int *n_sbp_arr_out, char* ipcFile, doubl
         }
     }
     shmdt(ShmAdr);
-    return;
 }
 
-/*---------------------------------------------------
+/*--------
   Get PID and key for the Astra main process
   Create and initialize a set of Nsems semaphores
   Assign NA1 (= *Ngrid) to N_RHO
-  Allocate two shared memory segments for Astra datasets
-*/
+  Allocate 3 shared memory segments for Astra datasets
+--------*/
 int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, int *n_sbp_arr_out, int* Nsub, char *subName, char* ipcFile, char* astraTask, int *SemID, int *ShmID_dims, int *ShmID_vars, int *ShmID_arrs, int *ipcId){
 
     int N_SUB, N_DIMS, N_SCALARS, N_RHO, N_ARR_IN, N_ARR_OUT, N_CHUNK, dim_size, var_size, arr_size, Nsems;
@@ -140,20 +135,16 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
     fprintf(IPCw, "      ProcID       ShmID\n");
     fclose(IPCw);
 
-/*---------------------------------------------------------------------
-  Set (lock) the primary semaphore to -(Number_of_processes)
-  Launch parallel subprocesses
-*/
-
+// Set (lock) the primary semaphore to -(Number_of_processes)
     getcwd(AWD, sizeof(AWD));
     for (j=0; j<*Nsub; j++) {
-// Sending main (e.g. "tglfi"), only once per subprocess
+// Sending main (e.g. "tglfi") once per subprocess
         snprintf(jobString, sizeof(jobString), "%s/%s %s %d %d %d %d %d %d %d&",
 		 AWD, sub_name, ipc_file, key2, j+1, N_CHUNK, N_ARR_OUT,
 		 *ShmID_dims, *ShmID_vars, *ShmID_arrs);
         i = system(jobString);
 
-/* Wait until child increments semaphore 0 */
+// Wait until child increments semaphore 0
         struct sembuf bufj = {0, -1, ~IPC_NOWAIT};
         if (semop(*SemID, &bufj, 1) == -1) {
             perror("semop failed");
@@ -165,7 +156,7 @@ int initialise_ipc_(int* Ngrid, int* Ndims, int* Nscalars, int *n_sbp_arr_in, in
     return 0;
 }
 
-/*--------------------- Unlock subprocess ----------------------------*/
+/*-------- Unlock subprocess --------*/
 void unlock_sbp_(int* jsbp, int *SemID){
     auto struct sembuf bufJ = {*jsbp, 1, IPC_NOWAIT};
     --buf0.sem_op;   // Each call decrements Sem0 value by 1
@@ -173,11 +164,8 @@ void unlock_sbp_(int* jsbp, int *SemID){
     semop(*SemID, &bufJ, 1);
 }
 
-/*---------------------------------------------------------------------*/
-/* Compare Sem0 value with buf0.sem_op ( == -Nsems) and
- wait until all subprocesses increment Sem0 by 1
-        so that Sem0 reaches value Nsems
-*/
+/*-------- Compare Sem0 value with buf0.sem_op ( == -Nsems) and wait until 
+  all subprocesses increment Sem0 by 1 so that Sem0 reaches value Nsems --------*/
 int wait4all_(int *SemID){
     static struct timespec timeout = {0, 100000000};   // timeout = .1 sec
 
@@ -230,28 +218,20 @@ int wait4all_(int *SemID){
     return 1;
 }
 
-/*----------- Fill shared memory segment with integer array (dims) -------------*/
-int fill_int_shm_(int* Nsize, int* int_in, int* ShmID){
-
+/*-------- Fill shared memory segment with integer array (dims) --------*/
+void fill_int_shm_(int* Nsize, int* int_in, int* ShmID){
     void *ShmAdr = shmat(*ShmID, NULL, 0);
     int* int_input = (int *)((char *)ShmAdr);
-    int N_SIZE = *Nsize;
-    int buf_size = N_SIZE*sizeof(int);
+    int buf_size = *Nsize * sizeof(int);
     memcpy(int_input, int_in, buf_size);
-
     shmdt(ShmAdr);
-    return 0;
 }
 
-/*----------- Fill shared memory segment with double array (scal, prof) -------------*/
-int fill_dbl_shm_(int* Nsize, double* dbl_in, int* ShmID){
-
+/*-------- Fill shared memory segment with double array (scal, prof) --------*/
+void fill_dbl_shm_(int* Nsize, double* dbl_in, int* ShmID){
     void *ShmAdr = shmat(*ShmID, NULL, 0);
     double* dbl_input = (double *)((char *)ShmAdr);
-    int N_SIZE = *Nsize;
-    int buf_size = N_SIZE*sizeof(double);
+    int buf_size = *Nsize * sizeof(double);
     memcpy(dbl_input, dbl_in, buf_size);
-
     shmdt(ShmAdr);
-    return 0;
 }
