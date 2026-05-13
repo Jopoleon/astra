@@ -8,9 +8,12 @@ export JSON_INC=$JSON_HOME/inc
 
 # SPIDER
 
-SPIDER_LIBDIR=${ASTRA_EXT}/spider/apr26/lib
+SPIDER_HOME=${ASTRA_EXT}/spider/may26
+SPIDER_LIBDIR=${SPIDER_HOME}/lib
 export SPIDER_LIB=${SPIDER_LIBDIR}/libspider.a
-if [ ! -f ${SPIDER_LIB} ]; then
+if [ -f ${SPIDER_LIB} ]; then
+    export SPIDER_INC=-I${SPIDER_HOME}/inc
+else
     unset SPIDER_LIB
 fi
 

@@ -278,7 +278,9 @@ then
     make
 
     mkdir -p $SPIDER_INSTALL/lib
+    mkdir -p $SPIDER_INSTALL/inc
     cp $SPIDER_HOME/lib/libspider.a $SPIDER_INSTALL/lib/
+    cp $SPIDER_HOME/inc/spider_params.mod $SPIDER_INSTALL/inc/
     cp $AWD/platform/env.$platform $SPIDER_INSTALL/
     echo $SPIDER_HASH | cat > $SPIDER_INSTALL/hash
     echo SPIDER built in $SPIDER_HOME installed in $SPIDER_INSTALL

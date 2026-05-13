@@ -11,10 +11,10 @@ LIB_DIR = $(AWD)/lib
 LIB = $(LIB_DIR)/lib$(sub).a
 
 ifdef SPIDER_LIB
-  SPIDER_FLAG = -DSPIDER
+   SPIDER_FLAG = -DSPIDER
 else
-  SPIDER_FLAG =
-  SPIDER_LIB  =
+   SPIDER_FLAG =
+   SPIDER_LIB  =
 endif
 
 # Make Commands
@@ -49,7 +49,7 @@ $(OBJ_DIR)%.o: $(SRC_DIR)%.f90
 	$(FC) $(FC_FLAGS) $(INCLUDE) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.F90
-	$(FC) $(FC_FLAGS) $(INCLUDE) $(SPIDER_FLAG) -c $< -o $@
+	$(FC) $(FC_FLAGS) $(INCLUDE) $(SPIDER_INC) $(SPIDER_FLAG) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.c
 	$(CC) -fPIC -c $< -o $@ -I$(INC_DIR)
