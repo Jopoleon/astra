@@ -104,5 +104,4 @@ $(OBJ_DIR)%.o: $(SRC_DIR)%.c
 	$(CC) -c $< -o $@
 
 $(LIB): $(OBJF90) $(OBJFF90) $(OBJF) $(OBJC)
-	ar rv $(LIB) $(OBJF90) $(OBJFF90) $(OBJF) $(OBJC) >/dev/null
-	ranlib $(LIB)
+	ar rcs $(LIB) $(OBJF90) $(OBJFF90) $(OBJF) $(OBJC) >/dev/null

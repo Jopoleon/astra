@@ -31,6 +31,9 @@ GOBJ_DIR = $(OBJ_DIR)/graph
 MOBJ_DIR = $(OBJ_DIR)/misc
 NOBJ_DIR = $(OBJ_DIR)/nbi
 
+FC_FLAGS += -I$(AWD) # to incldue fml in sbr/*.f90
+LD_FLAGS += -I$(AWD) # to incldue fml in src/tmp/*.f90
+
 # parser-generated Fortran routines
 
 TMP_SRC = \
