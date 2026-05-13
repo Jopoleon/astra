@@ -1038,7 +1038,6 @@ contains
         VOLUM, SHIF, ELON, TRIA, XRHO, AREAT, PERIM, SHIV, SQUARN, VTOR
     use debugger, only: markloc
     use imas_ids, only: type_equilibrium
-    use spider_params, only: type_parameters
     use read_input, only: raw_boundary, raw_cCoil
     use gs_solver, only: gssolver
 
@@ -1046,7 +1045,8 @@ contains
 
     integer, intent(in) :: equil_solver
 
-    integer :: i, j, jneql, jntheta, jnbnd, j_rotation, n_coils
+    integer :: i, j, jneql, jntheta, jnbnd, j_rotation, n_coils, &
+        neql, k_fixfree, no_circuit_eq
     double precision :: yrocnew, iplnew, ychipfp, yipl, yupdwn
     double precision, dimension(NA1) :: yg11, yg22, yg33, yvr, yvrs, yslat, yg41, &
         ygradro, yipol, ydroda, ypres, ybmaxt, ybmint, yfp, &
@@ -1054,8 +1054,8 @@ contains
         ytria, yfofb, yeqpf, yeqff, yshiv, ysquare, omega_rot
     double precision, dimension(raw_cCoil%ncoils) :: yccoil, yvcoil
     double precision, dimension(1000) :: rbnd, zbnd
+
     type(type_equilibrium) :: equil_in, equil_out
-    type(type_parameters) :: parameters_equil
 
     call markloc('A2GSSOLVER')
 
@@ -1131,19 +1131,11 @@ contains
 
     if (ifbey > 0 .and. .not. plasma_up) then
         equil_in%global_param%i_plasma = IPLFBE*1e6   !itm is in A
-        parameters_equil%dt      = tau
-        parameters_equil%time    = time
-        parameters_equil%kpr     = -2
-        parameters_equil%k_grid  = 1
-        parameters_equil%epsro   = 1.d-9
-        parameters_equil%enels   = 1.d-9
-        parameters_equil%key_plc = 1
-        parameters_equil%key_out   = 0
-        parameters_equil%k_fixfree = 1
-        parameters_equil%key_start = 0    ! controller, refit currents
-        parameters_equil%nstep = max(0, ifbey - 1)
+        k_fixfree = 1
+        neql = 100
+        no_circuit_eq = 0
         if (equil_solver == 101) then
-            call feqis_main(n_coils, vcoil(1:n_coils), parameters_equil%neql, parameters_equil%k_fixfree, parameters_equil%no_circuit_eq, 0, machine, equil_in, equil_out)
+            call feqis_main(n_coils, vcoil(1:n_coils), neql, k_fixfree, no_circuit_eq, 0, machine, equil_in, equil_out)
         endif
     else
         call GSSOLVER( &

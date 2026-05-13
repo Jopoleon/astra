@@ -39,9 +39,9 @@ mvmod:
 .PHONY: clean
 clean:
 	rm -f *.mod
-	rm -rf $(LIB_DIR)
-	rm -rf $(OBJ_DIR)
 	rm -rf $(MOD_DIR)
+	rm -rf $(OBJ_DIR)
+	rm -rf $(LIB_DIR)
 
 # Rules
 
@@ -49,10 +49,10 @@ $(OBJ_DIR)%.o: $(SRC_DIR)%.f90
 	$(FC) $(FC_FLAGS) $(INCLUDE) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.F90
-	$(FC) $(FC_FLAGS) $(INCLUDE) $(SPID_FLAG) -c $< -o $@
+	$(FC) $(FC_FLAGS) $(INCLUDE) $(SPIDER_FLAG) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.c
 	$(CC) -fPIC -c $< -o $@ -I$(INC_DIR)
 
 $(LIB): $(MODOBJS) $(OBJS)
-	ar rv $(LIB) $(MODOBJS) $(OBJS) >/dev/null
+	ar rcs $(LIB) $(MODOBJS) $(OBJS) >/dev/null

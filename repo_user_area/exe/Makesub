@@ -13,31 +13,31 @@ LIB_DIR = $(AWD)/lib
 LIB = $(LIB_DIR)/lib$(sub).a
 
 ifdef TORIC_LIB
-  TORIC_FLAG = -DTORIC_INSTALLED
+   TORIC_FLAG = -DTORIC_INSTALLED
 else
-  TORIC_FLAG =
-  TORIC_LIB  =
+   TORIC_FLAG =
+   TORIC_LIB  =
 endif
 
 ifdef TORBEAM_LIB
-  TORBEAM_FLAG = -DTORBEAM_INSTALLED
+   TORBEAM_FLAG = -DTORBEAM_INSTALLED
 else
-  TORBEAM_FLAG =
-  TORBEAM_LIB  =
+   TORBEAM_FLAG =
+   TORBEAM_LIB  =
 endif
 
 ifdef RABBIT_LIB
-  RABBIT_FLAG = -DRABBIT_INSTALLED
+   RABBIT_FLAG = -DRABBIT_INSTALLED
 else
-  RABBIT_FLAG =
-  RABBIT_LIB  =
+   RABBIT_FLAG =
+   RABBIT_LIB  =
 endif
 
 ifdef QLKNN_LIB
-  QLKNN_FLAG = -DQLKNN_INSTALLED
+   QLKNN_FLAG = -DQLKNN_INSTALLED
 else
-  QLKNN_FLAG =
-  QLKNN_LIB  =
+   QLKNN_FLAG =
+   QLKNN_LIB  =
 endif
 
 SRCF90  := $(wildcard $(SRC_DIR)/*.f90)
@@ -61,8 +61,8 @@ print:
 
 .PHONY: directories
 directories:
-	@mkdir -p $(OBJ_DIR)
 	@mkdir -p $(MOD_DIR)
+	@mkdir -p $(OBJ_DIR)
 	@mkdir -p $(LIB_DIR)
 
 .PHONY: mvmod
@@ -72,9 +72,9 @@ mvmod:
 
 .PHONY: clean
 clean:
+	rm -rf $(MOD_DIR)
 	rm -rf $(OBJ_DIR)
 	rm $(LIB)
-	rm -rf $(MOD_DIR)
 
 $(OBJ_DIR)/tglf_serial.o: $(SRC_DIR)/tglf_serial.F90 $(TGLF_LIB)
 	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(TGLF_INC) $(TGLF_FLAG) -c $< -o $@
@@ -104,8 +104,5 @@ $(OBJ_DIR)%.o: $(SRC_DIR)%.c
 	$(CC) -c $< -o $@
 
 $(LIB): $(OBJF90) $(OBJFF90) $(OBJF) $(OBJC)
-	ar rv $(LIB) $(OBJF90)  >/dev/null
-	ar rv $(LIB) $(OBJFF90) >/dev/null
-	ar rv $(LIB) $(OBJF)    >/dev/null
-	ar rv $(LIB) $(OBJC)    >/dev/null
+	ar rv $(LIB) $(OBJF90) $(OBJFF90) $(OBJF) $(OBJC) >/dev/null
 	ranlib $(LIB)

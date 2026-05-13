@@ -711,7 +711,6 @@ contains
         key_start, keyplc, equil_out)
 
     use imas_ids, only: type_equilibrium
-    use spider_params, only: type_parameters
     use pi_const, only: GP, GP2
     use parameters_a2equil, only: s_fazt
     use read_input, only: nml_file, machine
@@ -731,6 +730,41 @@ contains
     double precision :: epsros, enelss
     double precision, dimension(ncoils) :: t_currents, ucoils
     character(len=120) :: fname
+
+    type type_parameters
+
+        integer :: kpr=0      ! print in equil (0 - no print, -1 - no write)
+        integer :: k_grid=0   ! 0 -> rect. grid, 1 -> adap. grid
+        integer :: k_auto=1   ! 1 ->  full initialization
+        integer :: key_dmf=0  !=1->diff.mag.field, =0->without
+        integer :: nstep = 0  ! nstep=0 - initial eq., nstep>0 using computed eq.
+
+        character(len=80) :: prename = 'exp/equ/' ! working directory path
+        character(len=80) :: eqdfn = ''
+
+        integer ::  k_fixfree=1  ! 0->only fixed boundary spider 
+        integer ::  k_filesss=1  ! 1->use files, 0 use memory 
+        integer ::  key_ini=1    ! 1 astra profiles, =0 start from EQDSK and SPIDER profiles
+        integer ::  key_start=0  ! 1 reconstruction, =0 direct for free-boundary equilibrium
+        integer ::  key_0stp=0   ! initial eq. only =0 - p',ff'; =1 - p,cu
+        integer ::  key_pres=0   ! 1 -> pressure profile, 0 -> p' profile  
+        integer ::  i_eqdsk=0    ! 1 -> eqdsk file as input, 0 -> other user input 
+        integer ::  key_plc=1    ! 1 -> precribed Ip, 0 -> no G-S rhs renormalization , ipl is an output anyway 
+        integer ::  key_out=0    ! 1 -> circuit equations with currents and inductive voltages update, =0 - no update, 0 is to do iterations, last one has to have key_out=1
+        integer ::  key_psibcf=1 ! 1 -> compute psiext and psipl for b.c. apt for current control
+
+        double precision :: dt=1.d-3
+        double precision :: time=0.d0
+        double precision :: dpsdt=0.d0   ! boundary vloop in input
+        double precision :: epsro=1.0d-7 ! fixed boundary equilibrium accuracy
+        double precision :: enels=1.0d-6 ! circuit equation accuracy
+
+        integer :: neql=100 ! number of nodes in radial
+        integer :: ntheta=90 ! number of intervals in poloidal + 2
+        integer :: n_dmf=3  ! number of iterations of cde in SPIDER with rectangular grid
+        integer :: no_circuit_eq=0 ! if 1, doesnt do circuit equations
+
+    endtype
 
     type(type_parameters) :: parameters_equil
 
@@ -824,8 +858,8 @@ contains
 
     if (equil_solver == 101) then
         call feqis_main(ncoils, ucoils, parameters_equil%neql, parameters_equil%k_fixfree, parameters_equil%no_circuit_eq, 1, machine, equil_in, equil_out)
-     else
 #ifdef SPIDER
+    else
         call spider_run(ncoils, ucoils, equil_in, equil_out, parameters_equil)
 #endif
     endif

@@ -2,6 +2,8 @@ ifndef AWD
 $(error setenv/export AWD first)
 endif
 
+# Paths
+
 LIB_DIR = $(AWD)/lib
 TSK_DIR = $(AWD)/bin
 ASTRA_DIR = $(AWD)/src/astra
@@ -9,7 +11,6 @@ MOD_DIR = $(AWD)/mod
 OBJ_DIR = $(AWD)/obj
 TMP_DIR = $(AWD)/src/tmp
 XPR_DIR = $(AWD)/xpr
-NBI_INC = $(AWD)/mod/nbi
 EQU = $(AWD)/equ/$(MODEL)
 EXP = $(AWD)/exp/$(FEXP)
 LIBSBR   = $(LIB_DIR)/libsbr.a
@@ -24,41 +25,34 @@ MOD_ASTRA = $(MOD_DIR)/astra
 MOD_FEQIS = $(MOD_DIR)/feqis
 MOD_GRAPH = $(MOD_DIR)/graph
 MOD_NBI   = $(MOD_DIR)/nbi
-AOBJ_DIR = $(AWD)/obj/astra
-FOBJ_DIR = $(AWD)/obj/feqis
-GOBJ_DIR = $(AWD)/obj/graph
-MOBJ_DIR = $(AWD)/obj/misc
-NOBJ_DIR = $(AWD)/obj/nbi
+AOBJ_DIR = $(OBJ_DIR)/astra
+FOBJ_DIR = $(OBJ_DIR)/feqis
+GOBJ_DIR = $(OBJ_DIR)/graph
+MOBJ_DIR = $(OBJ_DIR)/misc
+NOBJ_DIR = $(OBJ_DIR)/nbi
 
-FC_FLAGS += -I$(AWD)
-LD_FLAGS += -I$(AWD)
+# parser-generated Fortran routines
+
+TMP_SRC = \
+$(TMP_DIR)/associate_pointers.f90 \
+$(TMP_DIR)/inivar.f90 \
+$(TMP_DIR)/detvar.f90 \
+$(TMP_DIR)/postep.f90 \
+$(TMP_DIR)/ininam.f90 \
+$(TMP_DIR)/init_converge_step.f90 \
+$(TMP_DIR)/eqns_inc.f90
+
+# graphics yes/no
 
 ifdef X11
-  X11_LIB = -L/usr/lib64 -lX11
-  X11_FLAG = -DX11
-  GRAPH_FLAG = -lgraph
-  TMP_SRC = \
-$(TMP_DIR)/astra_out.f90 \
-$(TMP_DIR)/associate_pointers.f90 \
-$(TMP_DIR)/inivar.f90 \
-$(TMP_DIR)/detvar.f90 \
-$(TMP_DIR)/postep.f90 \
-$(TMP_DIR)/ininam.f90 \
-$(TMP_DIR)/set_graph_names.f90 \
-$(TMP_DIR)/init_converge_step.f90 \
-$(TMP_DIR)/eqns_inc.f90
+   X11_LIB = -L/usr/lib64 -lX11
+   X11_FLAG = -DX11
+   GRAPH_FLAG = -lgraph
+   TMP_SRC += $(TMP_DIR)/astra_out.f90 $(TMP_DIR)/set_graph_names.f90
 else
-  X11_LIB =
-  X11_FLAG =
-  GRAPH_FLAG =
-  TMP_SRC = \
-$(TMP_DIR)/associate_pointers.f90 \
-$(TMP_DIR)/inivar.f90 \
-$(TMP_DIR)/detvar.f90 \
-$(TMP_DIR)/postep.f90 \
-$(TMP_DIR)/ininam.f90 \
-$(TMP_DIR)/init_converge_step.f90 \
-$(TMP_DIR)/eqns_inc.f90
+   X11_LIB =
+   X11_FLAG =
+   GRAPH_FLAG =
 endif
 
 # ASTRA objects
@@ -111,21 +105,18 @@ FINCLUDE = -I$(MOD_MISC) -I$(MOD_FEQIS) -I$(JSON_INC)
 
 # graph objects
 
-GMODS = \
-$(GOBJ_DIR)/graph_utils.o \
-$(GOBJ_DIR)/gui_interaction.o
-
-GOBJS = \
-$(GOBJ_DIR)/Astra2XW.o \
-$(GOBJ_DIR)/dialogx.o
-
+GMODS = $(GOBJ_DIR)/graph_utils.o $(GOBJ_DIR)/gui_interaction.o
+GOBJS = $(GOBJ_DIR)/Astra2XW.o $(GOBJ_DIR)/dialogx.o
 GINCLUDE = -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(MOD_GRAPH)
 
 # misc objects
 
-MISC_SRCDIR = $(AWD)/src/misc
-SRCF90 := $(wildcard $(MISC_SRCDIR)/*.f90)
-MMODS := $(patsubst $(MISC_SRCDIR)/%.f90, $(MOBJ_DIR)/%.o, $(SRCF90))
+MMODS = \
+$(MOBJ_DIR)/char_manip.o \
+$(MOBJ_DIR)/dbl2char.o \
+$(MOBJ_DIR)/imas_ids.o \
+$(MOBJ_DIR)/numerical_tools.o \
+$(MOBJ_DIR)/pi_const.o
 
 # NBI objects
 
@@ -154,6 +145,7 @@ FMLS    := $(wildcard $(AWD)/fml/*)
 PYFILES := $(wildcard $(AWD)/pyparse/*.py)
 
 # Make Commands
+
 .PHONY: all
 all: directories modules $(ATASK)
 
@@ -176,11 +168,11 @@ clean:
 
 .PHONY: modules
 modules:
-	make -f $(AWD)/exe/Makeastra "MODOBJS=$(MMODS)" sub=misc
-	make -f $(AWD)/exe/Makeastra "MODOBJS=$(AMODS)" "INCLUDE=$(AINCLUDE)" sub=astra
-	make -f $(AWD)/exe/Makeastra "MODOBJS=$(FMODS)" "INCLUDE=$(FINCLUDE)" sub=feqis
-	make -f $(AWD)/exe/Makeastra "MODOBJS=$(GMODS)" "INCLUDE=$(GINCLUDE)" sub=graph
-	make -f $(AWD)/exe/Makeastra "MODOBJS=$(NMODS)" "INCLUDE=$(NINCLUDE)" sub=nbi
+	make -f $(AWD)/exe/Makeastra "MODOBJS=$(MMODS)"                       sub=misc  modules
+	make -f $(AWD)/exe/Makeastra "MODOBJS=$(AMODS)" "INCLUDE=$(AINCLUDE)" sub=astra modules
+	make -f $(AWD)/exe/Makeastra "MODOBJS=$(FMODS)" "INCLUDE=$(FINCLUDE)" sub=feqis modules
+	make -f $(AWD)/exe/Makeastra "MODOBJS=$(GMODS)" "INCLUDE=$(GINCLUDE)" sub=graph modules
+	make -f $(AWD)/exe/Makeastra "MODOBJS=$(NMODS)" "INCLUDE=$(NINCLUDE)" sub=nbi   modules
 
 # Linking, create ASTRA executable
 
