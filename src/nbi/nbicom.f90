@@ -893,6 +893,8 @@ contains
         STSD3
     double precision, dimension(n_rho) :: YZ2D3, YTSE, YFCUR, YLNI, YLNE, YLNZ, YEBDEC
 
+    dtcx = 0.d0
+
     do jn=1, NA1
         YSTE = sqrt(TE(jn))
         if (EBEAM > 1.d2*ABEAM) then

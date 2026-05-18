@@ -17,7 +17,7 @@ contains
     use pi_const, only: GP2
     use read_input, only: AWD, nml_file
     use scalars, only: AIM1, TIME, TAU, QNBI, ROC, &
-       RTOR, BTOR, NA1, PSIAX, PSIBO, NNCL, NNWM
+       RTOR, BTOR, NA1, PSIAX, PSIBO, NNCL, NNWM, SGNIP, SGNBT
     use status, only: FP, FP_NORM, AMAIN, ZMAIN, ZIM1, NE, TE, TI, &
        XRHO, VOLUM, IPOL, PEBM, PIBM, NIBM, CUBM, SNEBM, SCUBM, NRATE, NN, &
        PBLON, PBPER, MU, VTOR, ZEF, NI, NHYDR, NDEUT, NTRIT
@@ -58,7 +58,7 @@ contains
 
     double precision, dimension(NA1) :: rho_interp_plasma, rho_interp_eq, &
        ti_interp, te_interp, ne_interp, omg_interp, zef_interp,  &
-       iota, area, vol, ffp, psi_n, back_neutral_prof
+       iota, area, vol, Fprof, psi_n, back_neutral_prof
     double precision, dimension(nrhoout) :: rho_rab_out, &
         bdens_in, pi_rb, pe_rb, dvol, darea, &
         nfi_rb, jcd_rb, src_rb, tq_rb, pfi_par, pfi_perp, nrate_in
@@ -89,8 +89,8 @@ contains
     nthe_surf = SIZE(equil_now%coord_sys%position%r, 2)
     allocate(pf_eq(nrho_surf), rho_eq(nrho_surf))
 
-    psi_axis = PSIAX/GP2
-    psi_sep  = PSIBO/GP2
+    psi_axis = SGNIP*PSIAX/GP2
+    psi_sep  = SGNIP*PSIBO/GP2
     rmag = equil_now%coord_sys%position%r(1, 1)
     zmag = equil_now%coord_sys%position%z(1, 1)
 
@@ -273,9 +273,9 @@ contains
     back_neutral_prof = 1e19*(NNCL + NNWM)*NN(1: NA1)
 
     rho_interp_eq = rhotor1d
-    iota = MU(1:NA1)
+    iota = -SGNIP*SGNBT*MU(1:NA1)
     vol = VOLUM(1:NA1)
-    ffp = IPOL(1:NA1)*BTOR*RTOR
+    Fprof = SGNBT*IPOL(1:NA1)*BTOR*RTOR
     psi_n = FP_NORM(1: NA1)
     vol(1) = 0.d0
     psi_n(1) = 0.d0
@@ -290,7 +290,7 @@ contains
     write(6, *) 'Call rabbit_lib_step'
 
     call ctr2rz_b(Rrect, zrect, PSI_rect, pf=pf_eq)
-    PSI_RECT = PSI_RECT/GP2
+    PSI_RECT = SGNIP*PSI_RECT/GP2
 
     call rabbit_lib_set_sp_plasma_ratio(species_plasma_ratio, size(species_plasma_ratio))
 
@@ -305,7 +305,7 @@ contains
     call rabbit_lib_step(                                       & ! input
         rho_interp_plasma, ne_interp, te_interp, ti_interp,     &
         zef_interp, omg_interp, pdim,                           & ! Kin profiles & their dim
-        PSI_rect, psi_n, vol, area, rho_interp_eq, iota, ffp,   & ! eq
+        PSI_rect, psi_n, vol, area, rho_interp_eq, iota, Fprof, & ! eq
         psi_sep, psi_axis, rmag, zmag,                          & ! eq scalars
         N_Rrect, N_Zrect, ldim,                                 & ! eq dimensions
         pinj(1: n_nbi), einj(1: n_nbi), part_mix(: , 1: n_nbi), &
