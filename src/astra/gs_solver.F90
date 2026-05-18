@@ -837,8 +837,6 @@ contains
 #endif
     endif
 
-!output from equil_out structure
-
     end subroutine A_equil
 
 end module GS_SOLVER

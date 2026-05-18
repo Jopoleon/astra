@@ -1128,11 +1128,12 @@ contains
 
     integer :: jii, je, ji, jn1, jtrap, j_the, ntet, jloss, j_jn, jnR, jnL
     double precision :: yr2, yr1, yd, yqbp, dy_abs, yf0, yfa, yddd, YJSERF, ydex
-    double precision, dimension(n_rho) :: ycos
+    double precision, dimension(n_rho) :: ycos, btdb
 
     jn1 = jn + 1
     ntet = ntet1 - 1
     YR2 = -sqrt(RJ*(RJ - rcr))
+    btdb = 1.d0
 
     if (rcr < RJT) then
         YR1 = -sqrt(RJT*(RJT - rcr))
@@ -1193,7 +1194,7 @@ contains
             yaqba(jE, j_jn) = yaqba(jE, j_jn) + YD
             if (YCOS(j_jn) >= trap_pitch(j_jn)) yacba(jE, j_jn) = yacba(jE, j_jn) + YD * 2.d0 * YCOS(j_jn)
             YAQBP(jE) = YQBP
-            j_the = int(abs(ntet * YCOS(j_jn)))
+            j_the = int( abs(ntet * YCOS(j_jn)) * btdb(jn) )
             j_the = min(j_the, ntet)
             j_the = max(j_the, 1)
             if (YCOS(j_jn) > 0.d0) then
