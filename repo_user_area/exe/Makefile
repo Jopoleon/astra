@@ -200,7 +200,7 @@ $(LIBASTRA): $(AWD)/src/astra/*
 	make -f $(AWD)/exe/Makeastra "MODOBJS=$(AMODS)" "OBJS=$(AOBJS)" "INCLUDE=$(AINCLUDE)" sub=astra lib
 
 $(LIBNBI): $(AWD)/src/nbi/*
-	make -f $(AWD)/exe/Makeastra "MODOBJS=$(GMODS)" "INCLUDE=$(NINCLUDE)" sub=nbi lib
+	make -f $(AWD)/exe/Makeastra "MODOBJS=$(NMODS)" "INCLUDE=$(NINCLUDE)" sub=nbi lib
 
 $(LIBFEQIS): $(AWD)/src/feqis/*
 	make -f $(AWD)/exe/Makeastra "MODOBJS=$(FMODS)" "OBJS=$(FOBJS)" "INCLUDE=$(FINCLUDE)" sub=feqis lib
