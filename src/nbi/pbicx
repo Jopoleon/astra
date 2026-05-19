@@ -1,0 +1,8 @@
+! PBICX [MW/m#3]: Ion heat source due to charge exchange with NBI neutrals
+! PBICX=3/2*SNNBM*Ti
+! Examples:  ! Note: if CNB2 > 0 the losses are included in NBI
+! CNB2=0; PI=-PBICX+...;
+! CNB2=0; PIT=-0.0024*SNNBM+...;
+! CNB2=1;  ! The losses are included in PIBM
+!   (Polevoi 14-FEB-97)
+      PBICX =0.0024*SNNBM(J)*TI(J)
