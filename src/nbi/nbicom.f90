@@ -653,6 +653,7 @@ contains
     if (fp_flag /= 1) then
 ! N- number of surfaces,  2*ntet (cntr+co angle)
         JSRREC = JDBL*4*(1 + 3*N*2*ntet)
+	open(35, file='dat/srsfi.dat', form='UNFORMATTED', status='UNKNOWN', access='DIRECT', recl=JSRREC)
     endif
 
     a_norm_astra(1)   = 0.d0
@@ -717,157 +718,165 @@ contains
     shaf_n(n1) = 0.d0
     rc(n1) = aspect_ratio
 
-    if (Pinj_kW <= 0.d0) return
+    if (Pinj_kW > 0.d0) then
 
-    call NBSISN(NA1, EBEAM, ABEAM, dn_rho, YEXTARR, vnb, svex, ysimpi)
-    call NB0(jE_min, n_pencil, j_nbi, amin_cm, RBmin_cm, RBmax_cm, Pinj_kW, Anbi, &
-        h_b, ADQB, YHM, CBMH1, CBMH2, CBMR1, CBMR2, CBMS3, y_aqb, y_dz, ydry, az)
+        call NBSISN(NA1, EBEAM, ABEAM, dn_rho, YEXTARR, vnb, svex, ysimpi)
+        call NB0(jE_min, n_pencil, j_nbi, amin_cm, RBmin_cm, RBmax_cm, Pinj_kW, Anbi, &
+            h_b, ADQB, YHM, CBMH1, CBMH2, CBMR1, CBMR2, CBMS3, y_aqb, y_dz, ydry, az)
 
-    do jE=jE_min, n_energy
-        drl = 1.d0/(0.0144d0*sqrt(Enbi_eV*Anbi/(n_energy - jE + 1))/(bz*amin_cm))
-        do jn=1, n1
-            ard(jE, jn) = ar(jn)*drl
+        do jE=jE_min, n_energy
+            drl = 1.d0/(0.0144d0*sqrt(Enbi_eV*Anbi/(n_energy - jE + 1))/(bz*amin_cm))
+            do jn=1, n1
+                ard(jE, jn) = ar(jn)*drl
+            enddo
         enddo
-    enddo
  
-    ye3 = Enbi_eV / Anbi
-    ds = abs(RBmax_cm - RBmin_cm)*amin_cm/(n*n_pencil)
-    do jE=jE_min, n_energy
-        ye = ye3/(n_energy - jE + 1)
-        YVEDE = ds*sqrt(ye)/451.9d0
-        YVE(jE) = YVEDE * Anbi * ye * 1.d-3
-        YCU(jE) = -ycontr*vnb(jE)*YVEDE*5.d-6
-    enddo
+        ye3 = Enbi_eV / Anbi
+        ds = abs(RBmax_cm - RBmin_cm)*amin_cm/(n*n_pencil)
+        do jE=jE_min, n_energy
+            ye = ye3/(n_energy - jE + 1)
+            YVEDE = ds*sqrt(ye)/451.9d0
+            YVE(jE) = YVEDE * Anbi * ye * 1.d-3
+            YCU(jE) = -ycontr*vnb(jE)*YVEDE*5.d-6
+        enddo
 
 ! -------- clean the sources --------
-    yanba  = 0.d0
-    yanba1 = 0.d0
-    yacba  = 0.d0
-    yaqba  = 0.d0
-    yatba  = 0.d0
-    yasba  = 0.d0
-    yasba1 = 0.d0
+        yanba  = 0.d0
+        yanba1 = 0.d0
+        yacba  = 0.d0
+        yaqba  = 0.d0
+        yatba  = 0.d0
+        yasba  = 0.d0
+        yasba1 = 0.d0
 
 ! for calculation of surface index II=jn(X(Rcrit)) in trapping analysis
 ! YR=(RJ-Rii/AB) normalised distance from ext. boundary RJ
 ! Trapping analysis with gyroradius and surface averaging
 ! Rlm = Gyrorad(in the midplain)*YDYH/sqrt(rcr)
-    yh  = 1.d-2
-    jn1 = n1
-    do ji=1, ndim2-1
-        yr = yh * (ji - 1)
-        do while (jn1 > 1)
-            jn  = jn1 - 1
-            if (yr >= (a_norm(n1) + shaf_n(n1) - shaf_n(jn1) - a_norm(jn1)) .and. &
-                yr <  (a_norm(n1) + shaf_n(n1) - shaf_n(jn)  - a_norm(jn))) then
-                II(ji) = jn
-                EXIT
-            endif
-            jn1 = jn
-        enddo
-! --- Second branch (only if first didn’t assign) ---
-        if (jn1 <= 1) then
-            if (jn1 == 1) jn1 = -1
-            do
-                in1 = -jn1
-                in  = in1 + 1
-                if (yr >= (a_norm(n1) + shaf_n(n1) + a_norm(in1) - shaf_n(in1)) .and. &
-                    yr <  (a_norm(n1) + shaf_n(n1) + a_norm(in)  - shaf_n(in))) then
-                    II(ji) = in1
+        yh  = 1.d-2
+        jn1 = n1
+        do ji=1, ndim2-1
+            yr = yh * (ji - 1)
+            do while (jn1 > 1)
+                jn  = jn1 - 1
+                if (yr >= (a_norm(n1) + shaf_n(n1) - shaf_n(jn1) - a_norm(jn1)) .and. &
+                    yr <  (a_norm(n1) + shaf_n(n1) - shaf_n(jn)  - a_norm(jn))) then
+                    II(ji) = jn
                     EXIT
                 endif
-                jn1 = jn1 - 1
+                jn1 = jn
             enddo
-        endif
-    enddo
-    II(ndim2) = n
-
-    trag_flag = (CBMS1 >= 1.d0)
-    call NBTR(perp_flag, trag_flag, jE_min, n_pencil, AQBP, ycontr, &
-        yve, y_aqb, y_dz, ydry, az)
-    call compute_dists(yslej0, yslej2, YVE, YCU, jE_min, n1, ntet1)
-
-    YSCU1 = ABEAM*0.0209d0*0.5d-2*amin_cm
-    jnA1 = 1
-    do jn=2, n1
-        jn1 = jn - 1
-        if (jn > 2) jnA1 = 2 + dn_rho*(jn - 2)
-        jnA = jnA1 + 1
-        jnAC = 1 + dn_rho*(jn - 1)
-        if (jn == n1)then
-            jnAC = NA1 - 1
-            YDV = VR(jnAC)*(RHO(NA1) - jnAC*HRO)
-        else
-            YDV = 0.d0
-        endif
-        if (jna1 > jnAC) jnA1 = jnAC
-        jnAX = jnAC
-
-        do J=jnA1, jnAC
-            YDV = VR(j)*HRO + YDV
-        enddo
-        YDDV = 1./YDV
-        do jE=jE_min, n_energy
-            yslej0(jE, jn1) = yslej0(jE, jn)*YDDV
-            yslej2(jE, jn1) = yslej2(jE, jn)*YDDV
-            yaqba (jE, jn1) = yaqba (jE, jn)*YDDV
-            yacba (jE, jn1) = yacba (jE, jn)*YDDV
-            yatba (jE, jn1) = yatba (jE, jn)*YDDV
-            YjE = EBEAM/(n_energy - jE + 1)
-            if (fp_flag > 0) then ! convert prtcl/s => prtcl/s/m^3
-                do JT=1, ntet1
-                    yasba (jE, jn1, JT) = yasba (jE, jn, JT)*YDDV
-                    yasba1(jE, jn1, JT) = yasba1(jE, jn, JT)*YDDV
+! --- Second branch (only if first didn’t assign) ---
+            if (jn1 <= 1) then
+                if (jn1 == 1) jn1 = -1
+                do
+                    in1 = -jn1
+                    in  = in1 + 1
+                    if (yr >= (a_norm(n1) + shaf_n(n1) + a_norm(in1) - shaf_n(in1)) .and. &
+                        yr <  (a_norm(n1) + shaf_n(n1) + a_norm(in)  - shaf_n(in))) then
+                        II(ji) = in1
+                        EXIT
+                    endif
+                    jn1 = jn1 - 1
                 enddo
             endif
-            do j=jnA1, jnAC
-                PBEAM(j) = PBEAM(j) + yaqba(jE, jn1)
-                if (calc_fus > 0) then ! beam-plasma fusion
-                    if (ABEAM == 3.d0) stnbdp(j) = stnbdp(j) + yaqba(jE, jn1) * &
-                        svdtbp(YjE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), calc_fus)*(625.d0/YjE)
-                    if (ABEAM == 2.d0) then
-                        sdnbtp(j)  = sdnbtp(j)  + yaqba(jE, jn1)*(625.d0/YjE) * svdtbp (YjE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), calc_fus)
-                        sdnbdp2(j) = sdnbdp2(j) + yaqba(jE, jn1)*(625.d0/YjE) * svddnp2(YjE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), calc_fus)
-                        sdnbdp1(j) = sdnbdp1(j) + yaqba(jE, jn1)*(625.d0/YjE) * svddnp1(YjE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), calc_fus)
-                    endif
-                endif
-                SCUBM(j) = SCUBM(j) + yatba(jE, jn1)*YSCU1
-            enddo
-
-            yanba (jE, jn1) = yanba (jE, jn)*YDDV*625.d0/YjE
-            yanba1(jE, jn1) = yanba1(jE, jn)*YDDV*625.d0/YjE
         enddo
+        II(ndim2) = n
 
-        do J=jnA1, jnAC
-            YFVDA = F(1, jn1)*vnb(1)/amin_cm
-            if (YFVDA /= 0.d0) NNBM1(j) = NNBM1(j) + yanba(3, jn1)/YFVDA
-            YFVDA = F(2, jn1)*vnb(2)/amin_cm
-            if (YFVDA /= 0.d0) NNBM2(j) = NNBM3(j) + yanba(2, jn1)/YFVDA
-            YFVDA = F(3, jn1)*vnb(3)/amin_cm
-            if (YFVDA /= 0.d0) NNBM3(j) = NNBM3(j) + yanba(1, jn1)/YFVDA
-            YNHDT = 0.d0   !  total proton content
-            do JS=2, ISPEND
-                JSP = ISPE(JS)
-                if (ZB(JS) == 1.) YNHDT = YNHDT + yEXTARR(jnA, JSP)
+        trag_flag = (CBMS1 >= 1.d0)
+        call NBTR(perp_flag, trag_flag, jE_min, n_pencil, AQBP, ycontr, &
+            yve, y_aqb, y_dz, ydry, az)
+        call compute_dists(yslej0, yslej2, YVE, YCU, jE_min, n1, ntet1)
+
+        YSCU1 = ABEAM*0.0209d0*0.5d-2*amin_cm
+        jnA1 = 1
+        do jn=2, n1
+            jn1 = jn - 1
+            if (jn > 2) jnA1 = 2 + dn_rho*(jn - 2)
+            jnA = jnA1 + 1
+            jnAC = 1 + dn_rho*(jn - 1)
+            if (jn == n1)then
+                jnAC = NA1 - 1
+                YDV = VR(jnAC)*(RHO(NA1) - jnAC*HRO)
+            else
+                YDV = 0.d0
+            endif
+            if (jna1 > jnAC) jnA1 = jnAC
+            jnAX = jnAC
+
+            do J=jnA1, jnAC
+                YDV = VR(j)*HRO + YDV
             enddo
-! Calc. total particle sourse: SNEBM
-            YE1 = NE(jnA)*SEIV(TE(jnA))
+            YDDV = 1./YDV
             do jE=jE_min, n_energy
-                YE2 = 0.d0
+                yslej0(jE, jn1) = yslej0(jE, jn)*YDDV
+                yslej2(jE, jn1) = yslej2(jE, jn)*YDDV
+                yaqba (jE, jn1) = yaqba (jE, jn)*YDDV
+                yacba (jE, jn1) = yacba (jE, jn)*YDDV
+                yatba (jE, jn1) = yatba (jE, jn)*YDDV
+                YjE = EBEAM/(n_energy - jE + 1)
+                if (fp_flag > 0) then ! convert prtcl/s => prtcl/s/m^3
+                    do JT=1, ntet1
+                        yasba (jE, jn1, JT) = yasba (jE, jn, JT)*YDDV
+                        yasba1(jE, jn1, JT) = yasba1(jE, jn, JT)*YDDV
+                    enddo
+                endif
+                do j=jnA1, jnAC
+                    PBEAM(j) = PBEAM(j) + yaqba(jE, jn1)
+                    if (calc_fus > 0) then ! beam-plasma fusion
+                        if (ABEAM == 3.d0) stnbdp(j) = stnbdp(j) + yaqba(jE, jn1) * &
+                            svdtbp(YjE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), calc_fus)*(625.d0/YjE)
+                        if (ABEAM == 2.d0) then
+                            sdnbtp(j)  = sdnbtp(j)  + yaqba(jE, jn1)*(625.d0/YjE) * svdtbp (YjE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), calc_fus)
+                            sdnbdp2(j) = sdnbdp2(j) + yaqba(jE, jn1)*(625.d0/YjE) * svddnp2(YjE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), calc_fus)
+                            sdnbdp1(j) = sdnbdp1(j) + yaqba(jE, jn1)*(625.d0/YjE) * svddnp1(YjE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), calc_fus)
+                        endif
+                    endif
+                    SCUBM(j) = SCUBM(j) + yatba(jE, jn1)*YSCU1
+                enddo
+
+                yanba (jE, jn1) = yanba (jE, jn)*YDDV*625.d0/YjE
+                yanba1(jE, jn1) = yanba1(jE, jn)*YDDV*625.d0/YjE
+            enddo
+
+            do J=jnA1, jnAC
+                YFVDA = F(1, jn1)*vnb(1)/amin_cm
+                if (YFVDA /= 0.d0) NNBM1(j) = NNBM1(j) + yanba(3, jn1)/YFVDA
+                YFVDA = F(2, jn1)*vnb(2)/amin_cm
+                if (YFVDA /= 0.d0) NNBM2(j) = NNBM3(j) + yanba(2, jn1)/YFVDA
+                YFVDA = F(3, jn1)*vnb(3)/amin_cm
+                if (YFVDA /= 0.d0) NNBM3(j) = NNBM3(j) + yanba(1, jn1)/YFVDA
+                YNHDT = 0.d0   !  total proton content
                 do JS=2, ISPEND
                     JSP = ISPE(JS)
-                    YE2 = YE2 + yEXTARR(jnA, JSP)*ysimpi(jE, JS)*vnb(jE)
+                    if (ZB(JS) == 1.) YNHDT = YNHDT + yEXTARR(jnA, JSP)
                 enddo
+! Calc. total particle sourse: SNEBM
+                YE1 = NE(jnA)*SEIV(TE(jnA))
+                do jE=jE_min, n_energy
+                    YE2 = 0.d0
+                    do JS=2, ISPEND
+                        JSP = ISPE(JS)
+                        YE2 = YE2 + yEXTARR(jnA, JSP)*ysimpi(jE, JS)*vnb(jE)
+                    enddo
 ! Calc. thermal neutral  sourCe: SNNBM
-                YCX = YNHDT*SVEX(jE)
-                SNNBM(j) = SNNBM(j) + YCX/(YCX + YE1 + YE2)*yanba1(jE, jn1)
-                SNEBM(j) = SNEBM(j) + (1.d0 - YCX/(YCX + YE1 + YE2))*yanba1(jE, jn1)
-                if (ABEAM < 1.5d0) SNIBM1(j) = SNIBM1(j) + (1.d0 - YCX/(YCX + YE1 + YE2))*yanba(jE, jn1) !H ion source
-                if (ABEAM < 2.5d0 .and. ABEAM > 1.5d0) SNIBM2(j) = SNIBM2(j) + (1.d0 - YCX/(YCX + YE1 + YE2))*yanba(jE, jn1) !D ion source
-                if (ABEAM > 2.5d0) SNIBM3(j) = SNIBM3(j) + (1.d0 - YCX/(YCX + YE1 + YE2))*yanba(jE, jn1) !T ion source
+                    YCX = YNHDT*SVEX(jE)
+                    SNNBM(j) = SNNBM(j) + YCX/(YCX + YE1 + YE2)*yanba1(jE, jn1)
+                    SNEBM(j) = SNEBM(j) + (1.d0 - YCX/(YCX + YE1 + YE2))*yanba1(jE, jn1)
+                    if (ABEAM < 1.5d0) SNIBM1(j) = SNIBM1(j) + (1.d0 - YCX/(YCX + YE1 + YE2))*yanba(jE, jn1) !H ion source
+                    if (ABEAM < 2.5d0 .and. ABEAM > 1.5d0) SNIBM2(j) = SNIBM2(j) + (1.d0 - YCX/(YCX + YE1 + YE2))*yanba(jE, jn1) !D ion source
+                    if (ABEAM > 2.5d0) SNIBM3(j) = SNIBM3(j) + (1.d0 - YCX/(YCX + YE1 + YE2))*yanba(jE, jn1) !T ion source
+                enddo
             enddo
         enddo
-    enddo
+    endif ! P_src > 0
+
+    if (fp_flag /= 1) then
+        write(35, rec=j_nbi) EBEAM, &
+            (((YASBA1(JE, JN, JT), JE=1, 3), JN=1, N), JT=NTET, 1, -1), &
+            (((YASBA (JE, JN, JT), JE=1, 3), JN=1, N), JT=1, NTET)
+        close(35)
+    endif
 
     end subroutine nbsrsr
 

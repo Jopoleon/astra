@@ -1,6 +1,7 @@
 module nbibce
 
 use nbstatus, only: n_rho, n_energy, nspec_max, n_theta
+use nbicom, only: RMB, ZB
 
 implicit none
 
@@ -8,7 +9,7 @@ integer, parameter :: IV1=321, n_pitch=n_theta-1
 
 integer :: IV, IT
 double precision :: HV, HM, DT
-double precision, dimension(nspec_max) :: VB, RNB, ZB, RMB, EB
+double precision, dimension(nspec_max) :: VB, RNB, EB
 double precision, dimension(IV1) :: DV2, A, B, A1, B1, D, AL, BT, AE, BE, AI, BI
 double precision, dimension(n_pitch) :: YM1, YM2
 double precision, dimension(IV1, n_pitch) :: FSRS, FVM, RMN
@@ -19,7 +20,7 @@ contains
 
 !---------------------------------------------------------------------
     double precision function YERF(x_in)
-    
+
     double precision, intent(in) :: x_in
     double precision :: EX2, T
 
@@ -31,7 +32,7 @@ contains
         1.453152027d0 * T**4 + 1.061405429d0 * T**5) * EX2)
 
     end function YERF
-    
+
 !---------------------------------------------------------------------
     double precision function YCERF(x_in)
 !---------------------------------------------------------------------
@@ -100,9 +101,8 @@ contains
         YDEL = ZB(J)**2 * RNB(J) / RNB(1)
         YB = 0.5d0*VB2*YDEL*exp(0.75 * YE)
         YA = exp(YE)
-        YD = YDEL / HM**2 / VB(J)
+        YD = YDEL / (HM**2) / VB(J)
         YHDVB = HV/VB(J)
-
         do I=1, IV1
             I1 = I + 1
             YI  = I*YHDVB
@@ -177,9 +177,7 @@ contains
 
     ITM1 = IT - 1
 
-! ... Calculations of ALFA, BETA
-
-    do I=1, IV
+    do I=1, IV ! ... Calculations of ALFA, BETA
         BJ = D(I) * YM2(1)
         CJ = BJ + DT
         DJ = FSRS(I, 1) + DT*FVM(I, 1)
@@ -192,7 +190,7 @@ contains
             AJ = BJ
             BJ = D(I) * YM2(J)
             CJ = AJ + BJ + DT
-            Y = (CJ - AL(J)*AJ)
+            Y =  CJ - AL(J)*AJ
             AL(J1) = BJ / Y
             BT(J1) = (DJ + AJ*BT(J)) / Y
         enddo
@@ -208,7 +206,6 @@ contains
             J1 = J + 1
             FVM(I, J) = AL(J1)*FVM(I, J1) + BT(J1)
         enddo
-
     enddo
 
     end subroutine NBPOMU
@@ -274,7 +271,7 @@ contains
         I1, I2, JLREC, j_nbi, JDBL, ios
 
     double precision :: CNSFI, YET, YM2F, &
-        SQPI, DTION, YEV21, YEV22, YEV23, YJ2, YEPS, T0, TSNBI, &
+        DTION, YEV21, YEV22, YEV23, YJ2, YEPS, T0, TSNBI, &
         CNSTN, CNSTQ, CNSTP, CNSTC, CNSTE, CNSTT, CNSTQT, &
         DTAU, EBDTI, EBDTI0, CNSTE0, CNSNN, CNSNN0, YNN0, YV2, &
         YRMN, YSRSE, YEBEAM, YPB, YIP, YV4, FVMMIN, F0J, YEXARG, &
@@ -288,7 +285,6 @@ contains
     data JN1OLD /1/
 
     JDBL = 2
-    SQPI = sqrt(GP)
 
 !----- time step
     if (TAU <= 0.) return
@@ -309,8 +305,8 @@ contains
 
 !----- beam energy components
     YFI(3) = (IV * 3) / 4.d0
-    YFI(2) = YFI(3) / 1.414214d0
-    YFI(1) = YFI(3) / 1.732051d0
+    YFI(2) = YFI(3) / sqrt(2.d0)
+    YFI(1) = YFI(3) / sqrt(3.d0)
 
 !----- clear previous distributions
     do JN=1, NA1
@@ -356,7 +352,7 @@ contains
 !----- source arrays
     do JT=1, NTET1
         do JN=1, N1
-            do JE=1, 3
+            do JE=1, n_energy
                 YASBA1(JE, JN, JT) = 0.d0
                 YASBA (JE, JN, JT) = 0.d0
             enddo
@@ -366,7 +362,7 @@ contains
     call NBMESH()
     CNSTN = HM*HV
     CNSTQ = 3.2d-3*EBEAM*HV**2 * CNSTN
-    CNSTP = EBEAM*CNSTN*HV*HV
+    CNSTP = EBEAM*CNSTN*HV**2
     CNSTC = 0.7*sqrt(EBEAM/ABEAM)*HV*CNSTN
     CNSTE = 1.6d-3*CNSTP/DTION
     CNSTT = 3.5d-2*EBEAM*sqrt(EBEAM*ABEAM)
@@ -378,7 +374,7 @@ contains
 ! Radial distribution cycle
     open(35, file='dat/srsfi.dat', form='unformatted', access='DIRECT', recl=JSRREC)
 
-    do JN=1, N ! Output for distribution function        
+    do JN=1, N ! Output for distribution function
         JNA = 1 + dn_rho*(JN - 1)
         JNAC = JNA - 1 + dn_rho
         J2 = JNA - dn_rho*YJ2
@@ -413,7 +409,7 @@ contains
             EB(JSP) = TI(J2)/EBEAM
             VB(JSP) = sqrt(EB(JSP)*ABEAM/RMB(JSP))
         enddo
-  
+
 ! Time step DTAU[s]
         T0 = CNSTT/(NE(J2)*Lne(JN))
 
@@ -431,7 +427,7 @@ contains
         CNSTQT = CNSTQ/T0
         EBDTI  = 1.d0/EB(2)
         EBDTI0 = EBDTI/DV2(1)
-        CNSTE0 = EB(2)*sqrt(EB(2))*SQPI/2.d0
+        CNSTE0 = EB(2)*sqrt(GP*EB(2))/2.d0
 
 ! Sources and losses distributions
         CNSNN = 4.373E7*T0*CBM3*0.5d0
@@ -476,7 +472,7 @@ contains
                     endif
                 enddo
             enddo
-        enddo 
+        enddo
 
         YSRSE = YSRSE*CNSTQT
 ! Coefficients
