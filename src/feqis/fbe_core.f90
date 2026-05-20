@@ -646,7 +646,7 @@ contains
     end subroutine find_psi_boundary
 
 !--------------------------------------------------------------------
-    subroutine new_jrz ! calculate new right hand side given new boundary!()
+    subroutine new_jrz() ! calculate new right hand side given new boundary!()
 
     use feqis_tools, only: fill_in_current, floor_index
     use feqis_scalars, only: iplasma
