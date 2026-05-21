@@ -26,12 +26,14 @@ contains
 
     double precision, intent(in), optional :: pNBI_MW, dt_in, pRF_MW, fRF_MHz, nRF_harm
 
-    integer, dimension(nnb_max) :: ierr
+    logical :: cxloss
     integer :: n_Rrect, n_Zrect, n_nbi, dum, n_lim, jumpcor, torqjxb_model
     integer :: pdim, ldim
     integer :: i, j, jlim, jnb, ios, nrho_surf, nthe_surf
+    integer, dimension(nnb_max) :: ierr
 
-    double precision :: aimp, zimp, p_i, p_e, tq_i, fi, i_cd, src, nfi
+    double precision :: aimp, zimp, p_i, p_e, tq_i, fi, i_cd, src, nfi, &
+        Elimitfac, Rlim, zlim, Rmax, Rmin
     double precision, allocatable, dimension(:) :: aplasma, zplasma, species_plasma_ratio
     double precision, dimension(NA1) :: rhotor1d, p_rf_e, p_rf_i
     double precision, allocatable, dimension(:, :), save :: powe, powi, &
@@ -68,7 +70,8 @@ contains
     namelist / rabbit_beam_geo / start_pos, unit_vec, width_poly
     namelist / partmix / part_mix
     namelist / nbi_par / n_nbi, a_beam, z_beam, einj, pinj_file
-    namelist / physics / jumpcor, table_path, limiter_file, torqjxb_model
+    namelist / physics / jumpcor, Elimitfac, table_path, limiter_file, &
+        torqjxb_model, Rlim, zlim, Rmax, Rmin, cxloss
     save tim_prev, bdens_in, n_nbi, einj, part_mix, pinj_file, Rrect, zrect
 
     write(6, *) 'Calling RABBIT...'
