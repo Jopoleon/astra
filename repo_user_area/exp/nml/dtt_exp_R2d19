@@ -40,7 +40,6 @@
 
 &physics
    jumpcor=2
-   Elimitfac=1.5
    table_path   = 'rabbit/tables_ITERDEMO'
    limiter_file = 'rabbit/limiters/limiter_dtt.dat'
    Rmax=2.92200
