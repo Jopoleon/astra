@@ -58,8 +58,9 @@
 
 &physics
    jumpcor = 2
-   table_path   = 'rabbit/tables_highRes'
-   limiter_file = 'rabbit/limiters/limiter_aug.dat'
+   Elimitfac = 1.5
+   table_path   = '/tokp/work/git/a8b/rabbit/tables_highRes'
+   limiter_file = '/tokp/work/git/a8b/rabbit/limiters/limiter_aug.dat'
    Rlim = 2.20 !AUG defaults, overridden if limiter_file exists
    zlim = 0.20
    Rmax = 2.26 !AUG defaults
