@@ -33,8 +33,8 @@ implicit none
 !-------------------------------------------
 
 logical :: gui_on
-integer :: jt_req, jkey, jt_out, rate
-double precision :: t_stop
+integer :: jt_req, jkey, rate
+double precision :: t_stop, t_prev_json
 character(len=16) :: str_iterations
 
 !-------------------- Initial settings --------------------------------|
@@ -119,12 +119,11 @@ endif
 ! Time step loop
 !---------------
 
-jt_out = 0
-t_stop = TEND + max(DPOUT, TAU)
-do while (TIME < t_stop)
-    if ((TIME - TSTART + 1.E-8)/DPOUT >= jt_out) then
+t_prev_json = TSTART - DPOUT
+do while (TIME < TEND + 1.d-8)
+    if ((TIME - t_prev_json + 1.d-8) > DPOUT) then
         call write_ajson()
-        jt_out = jt_out + 1
+        t_prev_json = t_prev_json + DPOUT
     endif
     call STEPUP() ! Time-dependent evolution
 enddo
