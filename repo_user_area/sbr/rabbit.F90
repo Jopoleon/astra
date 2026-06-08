@@ -361,7 +361,7 @@ contains
     pi_rb   = sum(powi (: , 1: n_nbi), 2)/1.d6
     tq_rb   = sum(torqi(: , 1: n_nbi), 2) + sum(torqe(: , 1: n_nbi), 2) + sum(torqth(: , 1: n_nbi), 2) + sum(torqjxb(: , 1: n_nbi), 2)
     nfi_rb  = sum(bdens(: , 1: n_nbi), 2)/1.d19
-    jcd_rb  = sum(jnbcd(: , 1: n_nbi), 2)/1.d6
+    jcd_rb  = sum(jnbcd(: , 1: n_nbi), 2)/1.d6 * SGNIP
     src_rb  = sum(bdep (: , 1: n_nbi), 2)/1.d19
 
 ! pfi_par = sum(press(: , 1: n_nbi), 2)/1602.d0
