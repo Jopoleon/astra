@@ -33,7 +33,10 @@ contains
     logical :: fitted
     double precision :: r, mant
 
-    if (width < 4) stop "fmt_smart: width too small"
+    if (width < 4) then
+        write(*, '(A)') "fmt_smart: width too small"
+        ERROR STOP
+    endif
 
 ! Handle very small numbers
     if (abs(x) < 1.0d-12) then

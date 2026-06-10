@@ -69,7 +69,10 @@ contains
             call A2EMEQ(jexit)
             if (jexit /= 0) then
                 err_msg = 'Equilibrium problem at the initial iterations'
-                if (IPART == 1) STOP err_msg
+                if (IPART == 1) then
+                    write(*, '(A)') err_msg
+                    ERROR STOP
+                endif
             endif
             TIMEQL = TIME
         endif

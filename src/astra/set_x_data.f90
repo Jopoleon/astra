@@ -120,8 +120,14 @@ contains
         jto = jt_start
 ! Check whether the input time-array is monotonic
         do j3=jt_start+1, jt_end
-            if (raw_profiles%time(j3)  < raw_profiles%time(j3-1)) STOP err_msg // 'not ascending'
-            if (raw_profiles%time(j3) == raw_profiles%time(j3-1)) STOP err_msg // 'repeated'
+            if (raw_profiles%time(j3)  < raw_profiles%time(j3-1)) then
+                write(*, '(A)') err_msg // 'not ascending'
+                ERROR STOP
+            endif
+            if (raw_profiles%time(j3) == raw_profiles%time(j3-1)) then
+                write(*, '(A)') err_msg // 'repeated'
+                ERROR STOP
+            endif
             if (raw_profiles%time(j3) <= TIME) jto = j3
         enddo
 
@@ -220,7 +226,8 @@ contains
                 call qinterp(XA, AMETR, NP1, x_grid(1: n_grid), XAXES(1: n_grid, KN), n_grid)
 
             CASE(4: 6)
-                STOP err_msg_grid
+                write(*, '(A)') err_msg_grid
+                ERROR STOP
 
 ! Normalised grids
 
@@ -308,7 +315,8 @@ contains
                 dat_exp(N11) = DATAX(min(n_grid, N11), KN)
 
             CASE(17)
-                STOP err_msg_grid
+                write(*, '(A)') err_msg_grid
+                ERROR STOP
 
             CASE(18)
                 NP1 = NA1
@@ -500,9 +508,9 @@ contains
     character(len=132) :: err_msg
 
     if (NA1 > NRD) then
-        write(err_msg, '(2A, I0)') '>>> FATAL ERROR: The radial grid size out of range.\n', &
+        write(*, '(2A, I0)') '>>> FATAL ERROR: The radial grid size out of range.\n', &
             '                 Parameter "NA1" cannot exceed', NRD
-        STOP err_msg
+        ERROR STOP
     endif
 
     TIME = TSTART
@@ -522,8 +530,8 @@ contains
     if (IFDFVX(KAWALL) < 0 .and. (AWALL < AB .or. AWALL > 1.2*AB)) AWALL = AB
 
     if (ABC > AB) then
-        err_msg = '>>> Error: ABC cannot exceed AB. Check your file exp/' // TRIM(exp_file)
-        STOP TRIM(err_msg)
+        write(*, '(A)') '>>> Error: ABC cannot exceed AB. Check your file exp/' // TRIM(exp_file)
+        ERROR STOP
     endif
 
     if (AWALL > 1.2*AB .or. AWALL > RTOR) then

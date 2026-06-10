@@ -28,7 +28,10 @@ contains
         line_loop: do
             read(171, '(A132)', iostat=ios) STRI
             if (ios < 0) EXIT line_loop  ! End of file encountered
-            if (ios > 0) STOP '>>> READAT: File "' // TRIM(file_in) // '" reading error'
+            if (ios > 0) then
+                write(*, '(A)') '>>> READAT: File "' // TRIM(file_in) // '" reading error'
+                ERROR STOP
+            endif
             call split_string(STRI, '=', str_nam, str_val)
             if (LEN_TRIM(str_val) == 0) CYCLE line_loop
             if ( TRIM(arr_in(j)) == str_nam(1: LEN_TRIM(str_nam)) ) then

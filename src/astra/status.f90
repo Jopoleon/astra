@@ -235,7 +235,9 @@ contains
         CASE DEFAULT
             err_msg = '               The variable "' // str // '" is less or equal zero'
         END SELECT
-        STOP err_msg
+ 
+        write(*, '(A)') err_msg
+        ERROR STOP
 
     endif
 

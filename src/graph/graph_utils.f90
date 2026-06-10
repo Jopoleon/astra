@@ -1086,9 +1086,9 @@ contains
                 if (profxNames(jprof) == CHAR6) jn = jprof 
             enddo
             if (jn == 0) then
-                write(*, *)
-                write(*, *) '>>> Error in the model "', TRIM(equ_file), '"'
-                STOP '>>> Unknown data set "' // CHAR6 // '" is requested'
+                write(*, '(/3A)') '>>> Error in the model "', TRIM(equ_file), '"'
+                write(*, '(A)') '>>> Unknown data set "' // CHAR6 // '" is requested'
+                ERROR STOP
             endif
 
             jpnt = NPTM(jn)

@@ -82,7 +82,10 @@ contains
 
 ! Read file equ/log/<model>
     jj = LEN_TRIM(equ_file)
-    if (jj == 0) STOP '>>> read_equ_log: Error, empty model file name'
+    if (jj == 0) then
+        write(*, '(A)') '>>> read_equ_log: Error, empty model file name'
+        ERROR STOP
+    endif
 
     call path_split(equ_file, dir_path, fname, jpos)
 
@@ -94,7 +97,8 @@ contains
 
     inquire(file=TRIM(file_in), exist=LOG_EXISTS)
     if (.not. LOG_EXISTS)  then ! Missing log file
-        STOP '>>> Error: file "' // TRIM(file_in) // '" missing'
+        write(*, '(A)') '>>> Error: file "' // TRIM(file_in) // '" missing'
+        ERROR STOP
     endif
 
     nvar = 37
@@ -164,15 +168,15 @@ contains
 
     j = INDEX(stri_in, 'NTIMES')
     if (j == 0) then
-        err_msg = TRIM(err_msg) // '    Number of COILSX must be defined'
-        STOP err_msg
+        write(*, '(A)') TRIM(err_msg) // '    Number of COILSX must be defined'
+        ERROR STOP
     endif
     read(stri_in(j+6:), *) nt
 
     j = INDEX(stri_in, 'POINTS')
     if (j == 0) then
-        err_msg = TRIM(err_msg) // '    Number of COILSX must be defined'
-        STOP err_msg
+        write(*, '(A)') TRIM(err_msg) // '    Number of COILSX must be defined'
+        ERROR STOP
     endif
     read(stri_in(j+6:), *) n_coils
 
@@ -184,16 +188,15 @@ contains
     endif
 
     if (n_coils*nt > nt_coils_max) then
-        write(err_msg, '(2A)') TRIM(err_msg), &
-           '    COILSX data length must be < nt_coils_max'
-        STOP err_msg
+        write(*, '(A)') TRIM(err_msg) // '    COILSX data length must be < nt_coils_max'
+        ERROR STOP
     endif
 
     read(nunit, *, iostat=ios)(coilx_out%time(j), j=1, nt)
     read(nunit, *, iostat=ios)(coilx_out%current(j), j=1, n_coils*nt)
     if (ios /= 0) then
-        err_msg = TRIM(err_msg) // '    Size mismatch in COILSX group'
-        STOP err_msg
+        write(*, '(A)') TRIM(err_msg) // '    Size mismatch in COILSX group'
+        ERROR STOP
     endif
 
     end subroutine read_coilx
@@ -243,9 +246,15 @@ contains
 
     len_scalars = 0
     open(n_unit, FILE=TRIM(file_exp), iostat=ios)
-    if (ios /= 0) STOP '>>> read_exp: No such experimental variant "' // TRIM(exp_file) // '"'
+    if (ios /= 0) then
+        write(*, '(A)') '>>> read_exp: No such experimental variant "' // TRIM(exp_file) // '"'
+        ERROR STOP
+    endif
     read(n_unit, '(A132/)', iostat=ios) exp_header
-    if (ios > 0) STOP err_format
+    if (ios > 0) then
+        write(*, '(A)') err_format
+        ERROR STOP
+    endif
 
     set_dims_1d: do
         read(n_unit, '(A132)', iostat=ios) STRI
@@ -296,9 +305,9 @@ contains
     enddo set_dims_1d
 
     if (len_scalars > len_data_max) then
-        write(err_msg, '(A, I0)') &
+        write(*, '(A, I0)') &
             '>>> read_exp: Size of time dependent scalars data stream cannot exceed', len_data_max
-        STOP err_msg
+        ERROR STOP
     endif
 
     if (.not. allocated(raw_scalars%var_index)) then
@@ -327,7 +336,10 @@ contains
         else
             read(n_unit, '(A132)', iostat=ios) STRI
             if (ios < 0) EXIT set_dims_2d
-            if (ios > 0) STOP err_format
+            if (ios > 0) then
+                write(*, '(A)') err_format
+                ERROR STOP
+            endif
         endif
         lin_upper = to_upper(STRI)
         if (LEN_TRIM(lin_upper) == 0) CYCLE set_dims_2d
@@ -346,12 +358,18 @@ contains
                     SELECT CASE(keyword)
                     CASE('POINTS')
                         read(strarray(j+1), *, iostat=ios) nr_exp
-                        if (ios /= 0) STOP err_format
+                        if (ios /= 0) then
+                            write(*, '(A)') err_format
+                            ERROR STOP
+                        endif
                     CASE('NAMEXP')      ! New variable, exp-block
                         VNAM = VARNAM(strarray(j+1), ier_tab)
                     CASE('NTIMES')
                         read(strarray(j+1), *, iostat=ios) ntim
-                        if (ios /= 0) STOP err_format
+                        if (ios /= 0) then
+                            write(*, '(A)') err_format
+                            ERROR STOP
+                        endif
                     END SELECT
                 enddo
                 VNAMX = ARRNAM(VNAM)
@@ -372,9 +390,9 @@ contains
     close(n_unit)
 
     if (len_profs_data > len_data_max) then
-        write(err_msg, '(A, I0)') &
+        write(*, '(A, I0)') &
             '>>> read_exp: Size of time dependent profiles data stream cannot exceed', len_data_max
-        STOP err_msg
+        ERROR STOP
     endif
 
     if (.not. allocated(raw_profiles%data)) then
@@ -406,7 +424,10 @@ contains
 
     open(n_unit, FILE=TRIM(file_exp), iostat=ios)
     read(n_unit, '(A132/)', iostat=ios) exp_header
-    if (ios /= 0) STOP err_msg_exp // 'in header'
+    if (ios /= 0) then
+        write(*, '(A)')err_msg_exp // 'in header'
+        ERROR STOP
+    endif
 
     VNAMO = ' '
     VNAMU = ' '
@@ -456,9 +477,15 @@ contains
             endif
 ! Read "time" array & function array
             read(n_unit, *, iostat=ios) (raw_scalars%time(IVAR+jj), jj=1, ntim)
-            if (ios /= 0) STOP err_format
+            if (ios /= 0) then
+                write(*, '(A)') err_format
+                ERROR STOP
+            endif
             read(n_unit, *, iostat=ios) (raw_scalars%data(IVAR+jj), jj=1, ntim)
-            if (ios /= 0) STOP err_format
+            if (ios /= 0) then
+               write(*, '(A)') err_format
+               ERROR STOP
+            endif
             varValues(jvar) = factor*raw_scalars%data(IVAR+1)
             do jj=1, ntim
                 IVAR = IVAR + 1
@@ -481,10 +508,12 @@ contains
         if (VNAM == 'NA1   ' .or. VNAM == 'TSTART' .or. VNAM == 'TEND  ') then
             err_msg = err_msg_exp // '"' // TRIM(VNAM) // '"'
             if (ier_tab /= 0 ) then
-                STOP TRIM(err_msg) // ': tabulation not allowed in this type of input'
+                write(*, '(A)') TRIM(err_msg) // ': tabulation not allowed in this type of input'
+                ERROR STOP
             endif
             if (VNAMO == VNAM) then
-                STOP TRIM(err_msg) // ' cannot vary in time'
+                write(*, '(A)') TRIM(err_msg) // ' cannot vary in time'
+                ERROR STOP
             endif
             call str2dbl(VDAT, VRDATA, IERR)
             VNAMO = VNAM
@@ -503,7 +532,10 @@ contains
         if (jvar == 0) CYCLE parse_exp_1d
 
 ! U-file name duplicated:
-        if (VNAM == VNAMU) STOP err_msg_exp // 'ambiguous ' // TRIM(VNAM) // ' definition'
+        if (VNAM == VNAMU) then
+            write(*, '(A)') err_msg_exp // 'ambiguous ' // TRIM(VNAM) // ' definition'
+            ERROR STOP
+        endif
 
         j1 = index(STRI, ':')
 
@@ -511,18 +543,27 @@ contains
 
 ! Tabulation encountered in the old-standard line:
             if (ier_tab /= 0 ) then
-                err_msg = err_msg_exp // '"' // TRIM(VNAM) // &
+                write(*, '(A)') err_msg_exp // '"' // TRIM(VNAM) // &
                     '": tabulation not allowed in this type of input'
-                STOP err_msg
+                ERROR STOP
             endif
 
             err_msg = '>>> read_exp: File "' // TRIM(file_exp) // '" reading error'
             call str2dbl(VTIM, TIMEVR, IERR)
-            if (IERR /= 0) STOP err_msg
+            if (IERR /= 0) then
+                write(*, '(A)') err_msg
+                ERROR STOP
+            endif
             call str2dbl(VDAT, VRDATA, IERR)
-            if (IERR /= 0) STOP err_msg
+            if (IERR /= 0) then
+                write(*, '(A)') err_msg
+                ERROR STOP
+            endif
             call str2dbl(VERR, VRERR, IERR)
-            if (IERR /= 0) STOP err_msg
+            if (IERR /= 0) then
+                write(*, '(A)') err_msg
+                ERROR STOP
+            endif
 
             IFDFVX(jvar) = 0
             varValues(jvar) = factor*VRDATA
@@ -537,7 +578,10 @@ contains
 
         else  ! ":" found in the input string "STRI", pointer to U-file
 
-            if (VNAM == VNAMO) STOP err_msg_exp // 'ambiguous ' // TRIM(VNAM) // ' definition'
+            if (VNAM == VNAMO) then
+                write(*, '(A)') err_msg_exp // 'ambiguous ' // TRIM(VNAM) // ' definition'
+                ERROR STOP
+            endif
 
             call parse_u_line(STRI, uvar, uname, factor)
             VNAMU = VNAM
@@ -585,7 +629,10 @@ contains
         else
             read(n_unit, '(A132)', iostat=ios) STRI
             if (ios < 0) EXIT parse_exp_2d
-            if (ios > 0) STOP err_format
+            if (ios > 0) then
+                write(*, '(A)') err_format
+                ERROR STOP
+            endif
         endif
 
         INTYPE = -1
@@ -615,25 +662,40 @@ contains
                 SELECT CASE(keyword)
                 CASE('POINTS')
                     read(strarray(j+1), *, iostat=ios) nr_exp
-                    if (ios /= 0) STOP err_format
+                    if (ios /= 0) then
+                        write(*, '(A)') err_format
+                        ERROR STOP
+                    endif
                 CASE('NAMEXP')      ! New variable, exp-block
                     VNAM = VARNAM(strarray(j+1), ier_tab)
                 CASE('GRIDTY')
                     read(strarray(j+1), *, iostat=ios) INTYPE
-                    if (ios /= 0) STOP err_format
+                    if (ios /= 0) then
+                        write(*, '(A)') err_format
+                        ERROR STOP
+                    endif
                 CASE('NTIMES')
                     read(strarray(j+1), *, iostat=ios) ntim
-                    if (ios /= 0) STOP err_format
+                    if (ios /= 0) then
+                        write(*, '(A)') err_format
+                        ERROR STOP
+                    endif
                 CASE('FILTER')
                     read(strarray(j+1), *, iostat=ios) ALFA
-                    if (ios /= 0) STOP err_format
+                    if (ios /= 0) then
+                        write(*, '(A)') err_format
+                        ERROR STOP
+                    endif
                     if (i_filter_glob == 1) then
                         alfa_glob = alfa
                         i_filter_glob = 0
                     endif
                 CASE('FACTOR')
                     read(strarray(j+1), *, iostat=ios) factor
-                    if (ios /= 0) STOP err_format
+                    if (ios /= 0) then
+                        write(*, '(A)') err_format
+                        ERROR STOP
+                    endif
                 CASE('PROFIL')
                     EXIT
                 CASE DEFAULT
@@ -680,12 +742,14 @@ contains
 
         CASE ('BNDX  ')
             if (raw_boundary%nt /= 0) then
-                STOP err_msg_exp // 'Boundary must be defined in a single group'
+                write(*, '(A)') err_msg_exp // 'Boundary must be defined in a single group'
+                ERROR STOP
             endif
             j = INDEX(lin_upper, 'POINTS')
             if (j /= 0) read(STRI(j+6:), *) raw_boundary%n_theta
             if (j == 0) then
-                STOP err_msg_exp // 'Number of boundary points must be defined'
+                write(*, '(A)') err_msg_exp // 'Number of boundary points must be defined'
+                ERROR STOP
             endif
 
             raw_boundary%nt = max(ntim, 1)
@@ -693,8 +757,8 @@ contains
 
             nbnd = raw_boundary%nt*raw_boundary%n_theta
             if (nbnd > nbnd_max) then
-                write(err_msg, '(2A, I0)') err_msg_exp, 'Boundary data must not exceed ', nbnd_max
-                STOP err_msg
+                write(*, '(2A, I0)') err_msg_exp, 'Boundary data must not exceed ', nbnd_max
+                ERROR STOP
             endif
 
 ! Input order:
@@ -721,7 +785,8 @@ contains
             deallocate(bnd_rz)
 
             if (ios /= 0) then
-                STOP err_msg_exp // 'More data items than data values for BND group'
+                write(*, '(A)') err_msg_exp // 'More data items than data values for BND group'
+                ERROR STOP
             endif
             VNAMO = VNAM
 
@@ -734,8 +799,8 @@ contains
             raw_boundary%nt = nt_u
             nbnd = nx_u*nt_u
             if (nbnd > nbnd_max) then
-                write(err_msg, '(2A, I0)') TRIM(err_msg_exp), 'Boundary data #theta must not exceed ', nbnd_max
-                STOP err_msg
+                write(*, '(2A, I0)') TRIM(err_msg_exp), 'Boundary data #theta must not exceed ', nbnd_max
+                ERROR STOP
             endif
             call ufrd('udb/' // trim(STRI) // '_r', nscal_u, ndim_u, nt_u, nx_u, raw_boundary%time, x_u, raw_boundary%R)
             call ufrd('udb/' // trim(STRI) // '_z', nscal_u, ndim_u, nt_u, nx_u, raw_boundary%time, x_u, raw_boundary%Z)
@@ -818,9 +883,9 @@ contains
 
         else ! read exp-block data
             if (nr_exp <= 1) then
-                write(err_msg, '(3A, 8X, A)') err_msg, 'Input quantity: ', TRIM(VNAM), &
+                write(*, '(3A, 8X, A)') err_msg, 'Input quantity: ', TRIM(VNAM), &
                     'Number of grid points must be > 1'
-                STOP err_msg
+                ERROR STOP
             endif
 
             jtype = 1 + INTYPE/10
@@ -828,12 +893,15 @@ contains
 
 ! INTYPE unknown
             if (INTYPE < 0 .or. INTYPE > 20) then
-                write(err_msg, '(A, I0, A)') '>>> ERROR: Unknown input type =', INTYPE, ',  ignored'
-                STOP err_msg
+                write(*, '(A, I0, A)') '>>> ERROR: Unknown input type =', INTYPE, ',  ignored'
+                ERROR STOP
             endif
 
             if (ntim > 0) read(n_unit, *, iostat=ios) (raw_profiles%time(NGR+j), j=1, ntim)
-            if (ios > 0) STOP err_format
+            if (ios > 0) then
+                write(*, '(A)') err_format
+                ERROR STOP
+            endif
 
             do j=1, ntim1
                 NGR = NGR + 1
@@ -848,15 +916,18 @@ contains
                     if (INTYPE == 18 .or. INTYPE == 19) then
                         jarr = jarr + 1
                         read(n_unit, *, iostat=ios) raw_profiles%data(jarr)
-                        if (ios > 0) STOP err_format
+                        if (ios > 0) then
+                            write(*, '(A)') err_format
+                            ERROR STOP
+                        endif
                     endif
                     do j1=1, jtype
                         read(n_unit, *, iostat=ios) (raw_profiles%data(jarr + jj), jj=1, nr_exp)
                         if (ios /= 0) then
-                            write(err_msg, '(3A, /, A, 1p, 6e12.4)') err_msg_exp, &
+                            write(*, '(3A, /, A, 1p, 6e12.4)') err_msg_exp, &
                                 '".  Format error in group ', TRIM(STRI), 'Last data read: ', &
                                 (raw_profiles%data(jarr+jj), jj=1, nr_exp)
-                                STOP err_msg
+                            ERROR STOP
                         endif
                         jarr = jarr + nr_exp
                         if (jtype == 2 .and. INTYPE <= 17 .and. j1 == 1) XBDRY = raw_profiles%data(jarr)
@@ -870,10 +941,10 @@ contains
                     raw_profiles%jbeg_data(NGR) = jarr + 1
                     read(n_unit, *, iostat=ios) (raw_profiles%data(jarr + jj), jj=1, nr_exp)
                     if (ios /= 0) then
-                        write(err_msg, '(3A, /, A, 1p, 6e12.4)') err_msg_exp, &
+                        write(*, '(3A, /, A, 1p, 6e12.4)') err_msg_exp, &
                                 '".  Format error in group ', TRIM(STRI), 'Last data read: ', &
                             (raw_profiles%data(jarr+jj), jj=1, nr_exp)
-                        STOP err_msg
+                        ERROR STOP
                     endif
                     do jj=1, nr_exp
                         raw_profiles%data(jarr + jj) = factor*raw_profiles%data(jarr + jj)
@@ -1100,7 +1171,10 @@ contains
     str1 = repeat(' ', 132)
 
     call split_string(str_in, ' ', var_name, str1)
-    if (LEN_TRIM(var_name) == 0) STOP err_msg
+    if (LEN_TRIM(var_name) == 0) then
+        write(*, '(A)') err_msg
+        ERROR STOP
+    endif
 
     call split2array(str1, ':', strarray, n_words)
 
@@ -1109,7 +1183,8 @@ contains
     if (LEN_TRIM(strarray(2)) > 0) then
         uname = 'udb/' // TRIM(strarray(2))
     else
-        STOP err_msg // ' no u-file name found'
+        write(*, '(A)') err_msg // ' no u-file name found'
+        ERROR STOP
     endif
 
     factor = 1.d0
@@ -1144,13 +1219,19 @@ contains
 
     open(n_unit, FILE=TRIM(uname), iostat=ios)
     err_msg = '>>> U-file "' // TRIM(uname) // '" opening error'
-    if (ios /= 0) STOP err_msg
+    if (ios /= 0) then
+        write(*, '(A)') err_msg
+        ERROR STOP
+    endif
 
 ! # shot, device, #dimensions
     read(n_unit, '(i7, A4, 1X, i1)', ERR=925) n_shot, sdev, n_dim
     err_msg = '>>> U-file "' // TRIM(uname) // '" wrong dims'
-    if (n_dim <= 0 .or. n_dim > 2) STOP err_msg
- 
+    if (n_dim <= 0 .or. n_dim > 2) then
+        write(*, '(A)') err_msg
+        ERROR STOP
+    endif
+
     read(n_unit, *) ! Shot date
 
 ! Scalar parameters
@@ -1199,7 +1280,8 @@ contains
 
     return
 
-925 STOP err_msg
+925 write(*, '(A)') err_msg
+    ERROR STOP
 
     end subroutine ufheader
 
