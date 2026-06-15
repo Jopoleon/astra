@@ -528,7 +528,7 @@ do while (YKEY == 'Y' .or. YKEY == 'y')
 
     jn = 0
     jm = 0
-    write(ABNUM, '(f6.3)') ABNUM
+    write(ABNUM, '(f6.3)') AB
     do j=1, NB
         jb = IBOX(j)
         if (jb <= 0 ) then
