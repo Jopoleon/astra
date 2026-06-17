@@ -335,8 +335,6 @@ def tieqn(parse):
     ti_txt += '\n'
     if 'DVI' in var_defined:
         ti_txt += 'YWB(J) = YWB(J) + DVI(J)*0.5*(NI(j) + NI(j+1))*log(TI(j)/TI(j+1))/HRO\n'
-        ti_txt += 'YWD(J) = DVI(j)\n'
-    ti_txt += 'YWC(J) = PI(j)\n'
     ti_txt += 'enddo\n'
 
     if assign_type == 'AS':
@@ -350,10 +348,6 @@ def tieqn(parse):
         ti_txt += const_text.TIEQN.assigned
     elif assign_type[:2] == 'EQ':
         ti_txt += bnd_init('TI', var_defined, parse)
-        if 'DVI' in var_defined:
-            ti_txt += 'YWD(ND1) = 1.\n'
-        else:
-            ti_txt += 'YWD(ND1) = 0.\n'
         if 'DSI' in var_defined:
             ti_txt += 'DSI(ND1) = 1.\n'
         else:
@@ -420,8 +414,6 @@ def teeqn(parse):
     
     if 'DVE' in var_defined:
         te_txt +=  'YWB(J) = YWB(J) + DVE(J)*0.5*(NE(j) + NE(j+1))*log(TE(j)/TE(j+1))/HRO\n'
-        te_txt +=  'YWD(J) = DVE(j)\n'
-    te_txt += 'YWC(J) = PE(j)\n'
     te_txt += 'enddo\n'
 
     if assign_type == 'AS':
@@ -435,10 +427,6 @@ def teeqn(parse):
         te_txt += const_text.TEEQN.assigned
     elif assign_type[:2] == 'EQ':
         te_txt += bnd_init('TE', var_defined, parse)
-        if 'DVE' in var_defined:
-            te_txt += 'YWD(ND1) = 1.\n'
-        else:
-            te_txt += 'YWD(ND1) = 0.\n'
         if 'DSE' in var_defined:
             te_txt += 'DSE(ND1) = 1.\n'
         else:
@@ -717,8 +705,6 @@ def tetieqn(parse):
     teti += txt + '\n'
     if 'DVE' in var_defined:
         teti += 'YWB1(J) = YWB1(J) + DVE(J)*0.5*(NE(j) + NE(j+1))*log(TE(j)/TE(j+1))/HRO\n'
-        teti += 'YWD(J) = DVE(j)\n'
-    teti += 'YWC(J) = PE(j)\n'
     teti += 'enddo\n'  # model1.f90, line 2292
 
     if 'TE' not in var_defined:
@@ -726,10 +712,6 @@ def tetieqn(parse):
 
     teti += bnd_init('TE', var_defined, parse).replace('YWC', 'YWC1').replace('bctype', 'bc_type_imp(1)')
 
-    if 'DVE' in var_defined:
-        teti += 'YWD(ND1) = 1.\n'
-    else:
-        teti += 'YWD(ND1) = 0.\n'
     if 'DSE' in var_defined:
         teti += 'DSE(ND1) = 1.\n'
     else:
@@ -822,8 +804,6 @@ def tetieqn(parse):
     teti += txt + '\n'
     if 'DVI' in var_defined:
         teti += 'YWB2(J) = YWB2(J) + DVI(J)*0.5*(NI(j) + NI(j+1))*log(TI(j)/TI(j+1))/HRO\n'
-        teti += 'YWD(J) = DVI(j)\n'
-    teti += 'YWC(J) = PI(j)\n'
     teti += 'enddo\n'  # model1.f90, line 2547
 
     if 'TI' not in var_defined:
@@ -832,10 +812,6 @@ def tetieqn(parse):
 
     teti += bnd_init('TI', var_defined, parse).replace('YWC', 'YWC2').replace('bctype', 'bc_type_imp(2)')
 
-    if 'DVI' in var_defined:
-        teti += 'YWD(ND1) = 1.\n'
-    else:
-        teti += 'YWD(ND1) = 0.\n'
     if 'DSI' in var_defined:
         teti += 'DSI(ND1) = 1.\n'
     else:
