@@ -13,6 +13,7 @@ class POSTEP:
 
 use scalars
 use status
+use pi_const
 use nclass_mod
 use strahl_mod
 use a2eqdsk, only: eqdsk
@@ -55,6 +56,7 @@ class ININAM:
 use read_input, only: sbr_name, n_sbr, awd
 use scalars
 use status
+use pi_const
 use debugger, only: markloc
 use json_vars, only: profxNames, n_control
 
@@ -69,6 +71,7 @@ class SETVAR:
 
 use scalars
 use status
+use pi_const
 use debugger, only: markloc
 
 implicit none
@@ -193,6 +196,7 @@ class INIVAR:
 use read_input, only: IFDFAX
 use scalars
 use status
+use pi_const
 use debugger, only: markloc
 use json_vars, only: profxNames, n_profx
 
@@ -226,6 +230,7 @@ class DETVAR:
 
 use scalars
 use status
+use pi_const
 use nclass_mod
 use strahl_mod
 use standard_functions
@@ -629,6 +634,7 @@ class RADOUT:
 use pi_const, only: GP, GP2, mu0
 use scalars
 use status
+use pi_const
 use graph_utils
 use standard_functions
 use debugger, only: markloc, debug
@@ -664,6 +670,7 @@ subroutine TIMOUT()
 use pi_const, only: GP, GP2, mu0
 use scalars
 use status
+use pi_const
 use graph_utils
 use standard_functions
 use debugger, only: markloc, debug
@@ -880,6 +887,7 @@ use read_input, only: equ_file, exp_file
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use scalars
 use status
+use pi_const
 use nclass_mod
 use a2tglf, only: tglf_ipc, tglf_out
 use a2qlk, only: qlk_ipc, qlk_out
@@ -909,6 +917,7 @@ class EQNS_INC:
 use pi_const, only: GP, GP2, mu0
 use scalars
 use status
+use pi_const
 use a2eqdsk, only: eqdsk
 use a2tglf, only: tglf_ipc, tglf_out
 use a2qlk, only: qlk_ipc, qlk_out
