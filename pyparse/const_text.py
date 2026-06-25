@@ -631,7 +631,6 @@ class RADOUT:
 ! Radial profile plotting
 !------------------------------------------------------------
 
-use pi_const, only: GP, GP2, mu0
 use scalars
 use status
 use pi_const
@@ -667,7 +666,6 @@ subroutine TIMOUT()
 ! Time traces plotting
 !------------------------------------------------------------
 
-use pi_const, only: GP, GP2, mu0
 use scalars
 use status
 use pi_const
@@ -882,7 +880,6 @@ class INIT_CONVERGE_STEP:
     header = \
 '''subroutine init_converge_step()
 
-use pi_const, only: GP, GP2, mu0
 use read_input, only: equ_file, exp_file
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use scalars
@@ -914,7 +911,6 @@ class EQNS_INC:
 ! Note that now time step is updated at the end of a full time cycle
 !-------------------------------------------------------------------
 
-use pi_const, only: GP, GP2, mu0
 use scalars
 use status
 use pi_const

@@ -1067,13 +1067,20 @@ contains
     n_coils = raw_cCoil%ncoils
 
     if (raw_boundary%n_theta == 0) then
-        jnbnd = 41 ! "NAMEXP BND" not found
+        jnbnd = jntheta ! "NAMEXP BND" not found
+        raw_boundary%n_theta = jnbnd
+        allocate(raw_boundary%R(jnbnd), raw_boundary%Z(jnbnd))
     else
         jnbnd = raw_boundary%n_theta
     endif
 
 ! provide grid for t=TIME+TAU
     call BNDRY(rbnd(1: jnbnd), zbnd(1: jnbnd))
+
+    if (raw_boundary%n_theta == 0) then
+        raw_boundary%R(1: jnbnd) = rbnd(1: jnbnd)
+        raw_boundary%Z(1: jnbnd) = zbnd(1: jnbnd)
+    endif
 
     do j=1, n_coils
         yccoil(j) = CCOIL(j)
