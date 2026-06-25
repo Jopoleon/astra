@@ -58,6 +58,7 @@ def json_concat(expequ):
                 if j_json == 1: # First data, metadata from astra_variables.json
                     ds_astra[key] = {}
                     meta = meta_d[lbl][key]
+                    ds_astra[key]['group'] = lbl
                     if 'units' in meta:
                         ds_astra[key]['units'] = meta['units']
                     else:
@@ -79,20 +80,20 @@ def json_concat(expequ):
     n_th = len(json_d['equil_coord']['theta2d'])
     nR   = len(json_d['equil_rect']['r2d'])
     nZ   = len(json_d['equil_rect']['z2d'])
-    logger.debug('nt=%d, nrho=%d, nr_eq=%d, nthe_eq=%d' %(nt, nx, n_eq, n_th))
+    logger.debug('nt=%d, nrho=%d, nr_eq=%d, nthe_eq=%d, nR=%d, nZ=%d' %(nt, nx, n_eq, n_th, nR, nZ))
 
     for key, val in ds_astra.items():
         val['data'] = np.array(val['data'], dtype=dtyp)
         darr = val['data']
         if darr.shape == (nt, ):
             val['dimensions'] = ['TIME']
-        elif darr.shape == (nt, nx) and key[:6] != 'equil_':
+        elif darr.shape == (nt, nx) and val['group'][:6] != 'equil_':
             val['dimensions'] = ['TIME', 'XRHO']
-        elif darr.shape == (nt, n_eq) and key[:6] == 'equil_':
+        elif darr.shape == (nt, n_eq) and val['group'][:6] == 'equil_':
             val['dimensions'] = ['TIME', 'RHO_SURF']
-        elif darr.shape == (nt, n_eq, n_th):
+        elif darr.shape == (nt, n_eq, n_th) and val['group'][:6] == 'equil_':
             val['dimensions'] = ['TIME', 'RHO_SURF', 'THETA']
-        elif darr.shape == (nt, nR, nZ):
+        elif darr.shape == (nt, nR, nZ) and val['group'][:6] == 'equil_':
             val['dimensions'] = ['TIME', 'R', 'Z']
 
     f = netcdf_file(cdf_out, 'w', mmap=False)
@@ -135,6 +136,7 @@ def json_concat(expequ):
     zgrid.long_name = meta_d['equil_rect']['z2d']['desc']
 
     for key, val in ds_astra.items():
+        print(key, val['data'].shape)
         if key not in ('TIME', 'XRHO', 'rho_tor_norm', 'theta2d', 'r2d', 'z2d'):
             tmp = f.createVariable(key, dtyp, val['dimensions'])
             tmp[:] = val['data']
