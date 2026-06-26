@@ -47,33 +47,33 @@ if (TIME <= TSTART + 0.0001) then
     return
 endif
 
-allocate(rmin_sp(NEQIL))
-allocate(rmaj_sp(NEQIL))
-allocate(bp_sp(NEQIL))
-allocate(psi_sp(NEQIL))
-allocate(rpol_sp(NEQIL))
-allocate(zispan(NEQIL))
+allocate(rmin_sp(NEQUIL))
+allocate(rmaj_sp(NEQUIL))
+allocate(bp_sp(NEQUIL))
+allocate(psi_sp(NEQUIL))
+allocate(rpol_sp(NEQUIL))
+allocate(zispan(NEQUIL))
 
-ispan = minloc(abs(equil_now%coord_sys%position%r(NEQIL, 1:MEQIL) - (RTOR + AWALL)), 1) ! Z=0, lfs
-psi_sp(1:NEQIL) = equil_now%coord_sys%position%psirz(1:NEQIL, ispan) !PSI
-bp_sp(1:NEQIL)  = equil_now%coord_sys%bpcell(1:NEQIL, ispan) !BPOL
-bp_sp(NEQIL) = bp_sp(NEQIL-1) !defined up to NEQIL-1
-rmaj_sp(1:NEQIL) = equil_now%coord_sys%position%r(1:NEQIL, ispan)
-rmin_sp(1:NEQIL) = equil_now%coord_sys%position%r(1:NEQIL, ispan) - (rmaj_sp(1))
-zispan(1:NEQIL)  = equil_now%coord_sys%position%z(1:NEQIL, ispan)
-rpol_sp(1:NEQIL) = sqrt((psi_sp(1:NEQIL) - psi_sp(1))/(psi_sp(NEQIL) - psi_sp(1))); !rpol spider
+ispan = minloc(abs(equil_now%coord_sys%position%r(NEQUIL, 1:MEQIL) - (RTOR + AWALL)), 1) ! Z=0, lfs
+psi_sp(1:NEQUIL) = equil_now%coord_sys%position%psirz(1:NEQUIL, ispan) !PSI
+bp_sp(1:NEQUIL)  = equil_now%coord_sys%bpcell(1:NEQUIL, ispan) !BPOL
+bp_sp(NEQUIL) = bp_sp(NEQUIL-1) !defined up to NEQUIL-1
+rmaj_sp(1:NEQUIL) = equil_now%coord_sys%position%r(1:NEQUIL, ispan)
+rmin_sp(1:NEQUIL) = equil_now%coord_sys%position%r(1:NEQUIL, ispan) - (rmaj_sp(1))
+zispan(1:NEQUIL)  = equil_now%coord_sys%position%z(1:NEQUIL, ispan)
+rpol_sp(1:NEQUIL) = sqrt((psi_sp(1:NEQUIL) - psi_sp(1))/(psi_sp(NEQUIL) - psi_sp(1))); !rpol spider
 
 !interpolate on astra grid using rpol
  !pi_as(1:na1) = TI(1:na1)*NI(1:na1) !ion pressure
 pi_as(1:na1) = TI(1:na1)*NMAIN(1:na1) !ion pressure of main ion species
 
-call qinterp(rpol_sp(1:NEQIL), rmaj_sp(1:NEQIL), NEQIL, rho_pol(1:NA1), rmaj_as(1:NA1), NA1) !r
-call qinterp(rpol_sp(1:NEQIL), rmin_sp(1:NEQIL), NEQIL, rho_pol(1:NA1), rmin_as(1:NA1), NA1) !r (defined but not used in original) 
-call qinterp(rpol_sp(1:NEQIL), bp_sp(  1:NEQIL), NEQIL, rho_pol(1:NA1), bp_as(1:NA1), NA1)  !Bpol
+call qinterp(rpol_sp(1:NEQUIL), rmaj_sp(1:NEQUIL), NEQUIL, rho_pol(1:NA1), rmaj_as(1:NA1), NA1) !r
+call qinterp(rpol_sp(1:NEQUIL), rmin_sp(1:NEQUIL), NEQUIL, rho_pol(1:NA1), rmin_as(1:NA1), NA1) !r (defined but not used in original) 
+call qinterp(rpol_sp(1:NEQUIL), bp_sp(  1:NEQUIL), NEQUIL, rho_pol(1:NA1), bp_as(1:NA1), NA1)  !Bpol
 
 bp_lfs(1:na1) = bp_as(1:na1)
 
-call qinterp(rpol_sp(1:NEQIL), psi_sp(1:NEQIL), NEQIL, rho_pol(1:NA1), psi_as(1:NA1), NA1)  !Psi
+call qinterp(rpol_sp(1:NEQUIL), psi_sp(1:NEQUIL), NEQUIL, rho_pol(1:NA1), psi_as(1:NA1), NA1)  !Psi
 
 !diamagnetic term = R*B_pol/qi/ni*grad_Psi(Pi) (V/m)
 do jrho=1,NA1-1
