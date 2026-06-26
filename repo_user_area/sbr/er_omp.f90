@@ -54,7 +54,7 @@ allocate(psi_sp(NEQUIL))
 allocate(rpol_sp(NEQUIL))
 allocate(zispan(NEQUIL))
 
-ispan = minloc(abs(equil_now%coord_sys%position%r(NEQUIL, 1:MEQIL) - (RTOR + AWALL)), 1) ! Z=0, lfs
+ispan = minloc(abs(equil_now%coord_sys%position%r(NEQUIL, 1:MEQUIL) - (RTOR + AWALL)), 1) ! Z=0, lfs
 psi_sp(1:NEQUIL) = equil_now%coord_sys%position%psirz(1:NEQUIL, ispan) !PSI
 bp_sp(1:NEQUIL)  = equil_now%coord_sys%bpcell(1:NEQUIL, ispan) !BPOL
 bp_sp(NEQUIL) = bp_sp(NEQUIL-1) !defined up to NEQUIL-1
