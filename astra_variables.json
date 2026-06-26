@@ -1159,12 +1159,21 @@
     "z2d": {"units": "m", "desc": "Rectangular grid vertical coordinate"}
 },
 
-"equil_coord": {
+"equil_rz2d": {
     "r": {"units": "m", "desc": "Major radius of magnetic surfaces' points"},
     "rmin": {"units": "m", "desc": "Minor radius local distance from axis to point"},
     "psirz": {"units": "Wb", "desc": "Psi in polar coordinates"},
     "theta2d": {"units": "rad", "desc": "Poloidal angle of magnetic surfaces' points"},
     "z": {"units": "m", "desc": "Vertical coordinate of magnetic surfaces' points"}
+},
+
+"equil_coord": {
+    "gradvcell": {"desc": "|grad_V| [m^2] in cells"},
+    "bpcell": {"unit": "T", "desc": "Bp in cells"},
+    "bcell":  {"unit": "T", "desc": "B in cells"},
+    "rcell":  {"unit": "m", "desc": "R in cells"},
+    "darea":  {"unit": "m^2", "desc": "dA in cells"},
+    "jphi":   {"unit": "MA/m^2", "desc": "j toroidal in cells"}
 }
 
 }

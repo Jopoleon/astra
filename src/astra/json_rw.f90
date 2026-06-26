@@ -242,7 +242,8 @@ end subroutine read_array_2d
     double precision, allocatable, dimension(:) :: equil_traces, &
         r2d, z2d, theta2d
     double precision, allocatable, dimension(:, :) :: equil_profiles, &
-        psirz2d, fdia2d, r, z, rmin, psirz
+        psirz2d, fdia2d, r, z, rmin, psirz, &
+        gradvcell, bpcell, bcell, rcell, darea, jphi
 
 ! equil_scalars
     call read_scalars_float(fjson, "equil_signals", equil_traces)
@@ -337,12 +338,12 @@ end subroutine read_array_2d
     equil_now%eqgeometry%rectgrid%psirz2d = psirz2d
     equil_now%eqgeometry%rectgrid%fdia2d  = fdia2d
 
-! equil_coord
-    call read_array_1d(fjson, "equil_coord", "theta2d", theta2d)
-    call read_array_2d(fjson, "equil_coord", "r", r)
-    call read_array_2d(fjson, "equil_coord", "z", z)
-    call read_array_2d(fjson, "equil_coord", "rmin", rmin)
-    call read_array_2d(fjson, "equil_coord", "psirz", psirz)
+! equil_rz2d
+    call read_array_1d(fjson, "equil_rz2d", "theta2d", theta2d)
+    call read_array_2d(fjson, "equil_rz2d", "r", r)
+    call read_array_2d(fjson, "equil_rz2d", "z", z)
+    call read_array_2d(fjson, "equil_rz2d", "rmin", rmin)
+    call read_array_2d(fjson, "equil_rz2d", "psirz", psirz)
 
     nthe_eq = SIZE(theta2d)
 
@@ -358,6 +359,28 @@ end subroutine read_array_2d
     equil_now%coord_sys%position%rmin  = rmin
     equil_now%coord_sys%position%psirz = psirz
 
+! equil_coord
+    call read_array_2d(fjson, "equil_coord", "gradvcell", gradvcell)
+    call read_array_2d(fjson, "equil_coord", "bpcell", bpcell)
+    call read_array_2d(fjson, "equil_coord", "bcell" , bcell )
+    call read_array_2d(fjson, "equil_coord", "rcell" , rcell )
+    call read_array_2d(fjson, "equil_coord", "darea" , darea )
+    call read_array_2d(fjson, "equil_coord", "jphi"  , jphi  )
+
+    allocate(equil_now%coord_sys%gradvcell(nrho_eq, nthe_eq))
+    allocate(equil_now%coord_sys%bpcell(nrho_eq, nthe_eq))
+    allocate(equil_now%coord_sys%bcell(nrho_eq, nthe_eq))
+    allocate(equil_now%coord_sys%rcell(nrho_eq, nthe_eq))
+    allocate(equil_now%coord_sys%darea(nrho_eq, nthe_eq))
+    allocate(equil_now%coord_sys%jphi(nrho_eq, nthe_eq))
+
+    equil_now%coord_sys%gradvcell = gradvcell
+    equil_now%coord_sys%bpcell = bpcell
+    equil_now%coord_sys%bcell  = bcell
+    equil_now%coord_sys%rcell  = rcell
+    equil_now%coord_sys%darea  = darea
+    equil_now%coord_sys%jphi   = jphi
+
     end subroutine read_equil
 
 !---------------------------------------------------------------------
@@ -369,7 +392,7 @@ end subroutine read_array_2d
     use status, only: profiles, profiles_x
     use read_input, only: awd, exp_file, equ_file, restart
     use debugger, only: debug
-    use json_vars, only: equil_sigPtr, equil_profPtr, equil_rectPtr, equil_coordPtr, &
+    use json_vars, only: equil_sigPtr, equil_profPtr, equil_rectPtr, equil_rz2dPtr, equil_coordPtr, &
         profPtr, profxPtr, constPtr, controlPtr, internIntPtr, internDblPtr, &
         varPtr, varxPtr, n_prof, n_profx
 
@@ -479,12 +502,23 @@ end subroutine read_array_2d
 
     if (debug > 0) write(*, *) 'Writing mag.surf quantities'
     jid = 0
+    write(nunit, '(A/)') '"equil_rz2d": {'
+    call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%r, equil_rz2dPtr)
+    call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%rmin, equil_rz2dPtr)
+    call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%psirz, equil_rz2dPtr)
+    call write_array((/nthe_surf/), equil_now%coord_sys%position%theta2d, equil_rz2dPtr)
+    call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%z, equil_rz2dPtr, last_array=.true.)
+    write(nunit, '(A/)') '},' ! End of "equil_rz2d" dictionary
+
+    if (debug > 0) write(*, *) 'Writing equil coord'
+    jid = 0
     write(nunit, '(A/)') '"equil_coord": {'
-    call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%r, equil_coordPtr)
-    call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%rmin, equil_coordPtr)
-    call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%psirz, equil_coordPtr)
-    call write_array((/nthe_surf/), equil_now%coord_sys%position%theta2d, equil_coordPtr)
-    call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%position%z, equil_coordPtr, last_array=.true.)
+    call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%gradvcell, equil_coordPtr)
+    call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%bpcell, equil_coordPtr)
+    call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%bcell , equil_coordPtr)
+    call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%rcell , equil_coordPtr)
+    call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%darea , equil_coordPtr)
+    call write_array((/nrho_surf, nthe_surf/), equil_now%coord_sys%jphi  , equil_coordPtr, last_array=.true.)
     write(nunit, '(A/)') '},' ! End of "equil_coord" dictionary
 
     jid = 0

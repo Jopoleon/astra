@@ -77,7 +77,7 @@ def json_concat(expequ):
     nt = j_json - 1
     nx   = len(json_d['profiles']['XRHO'])
     n_eq = len(json_d['equil_profiles']['rho_tor_norm'])
-    n_th = len(json_d['equil_coord']['theta2d'])
+    n_th = len(json_d['equil_rz2d']['theta2d'])
     nR   = len(json_d['equil_rect']['r2d'])
     nZ   = len(json_d['equil_rect']['z2d'])
     logger.debug('nt=%d, nrho=%d, nr_eq=%d, nthe_eq=%d, nR=%d, nZ=%d' %(nt, nx, n_eq, n_th, nR, nZ))
@@ -123,7 +123,7 @@ def json_concat(expequ):
     theta = f.createVariable('THETA', dtyp, ('THETA', ))
     theta.data = np.array(ds_astra['theta2d']['data'], dtype=dtyp)
     theta.units = 'rad'
-    theta.long_name = meta_d['equil_coord']['theta2d']['desc']
+    theta.long_name = meta_d['equil_rz2d']['theta2d']['desc']
 
     rgrid = f.createVariable('R', dtyp, ('R', ))
     rgrid.data = np.array(ds_astra['r2d']['data'], dtype=dtyp)

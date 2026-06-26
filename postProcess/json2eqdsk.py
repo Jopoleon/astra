@@ -53,8 +53,8 @@ def json2eqdsk(f_json, nR=129, nZ=257, cocos_out=7):
     geq['BCENTR'] = json_d['variables']['BTOR']
     
 # Contours
-    rsurf = np.array(json_d['equil_coord']['r'], dtype=np.float32)
-    zsurf = np.array( json_d['equil_coord']['z'], dtype=np.float32)
+    rsurf = np.array(json_d['equil_rz2d']['r'], dtype=np.float32)
+    zsurf = np.array(json_d['equil_rz2d']['z'], dtype=np.float32)
     geq['RMAXIS'] = rsurf[0, 0]
     geq['ZMAXIS'] = zsurf[0, 0]
     geq['RBBBS'] = rsurf[-1, :]

@@ -5,15 +5,16 @@ use json_module, only : json_file, json_core, json_value, json_ck
 implicit none
 
 integer :: n_var, n_varx, n_const, n_control, n_internInt, n_internDbl, &
-    n_prof, n_profx, n_equil_sig, n_equil_prof, n_equil_rect, n_equil_coord
+    n_prof, n_profx, n_equil_sig, n_equil_prof, n_equil_rect, &
+    n_equil_rz2d, n_equil_coord
 character(len=6), allocatable, dimension(:) :: varNames, &
     varxNames, constNames, controlNames, internIntNames, internDblNames, &
     profNames, profxNames, equil_sigNames, equil_profNames, &
-    equil_rectNames, equil_coordNames
+    equil_rectNames, equil_rz2dNames, equil_coordNames
 type(json_file) :: astra_vars
 type(json_value), pointer :: varPtr, varxPtr, constPtr, &
      controlPtr, internIntPtr, internDblPtr, profPtr, profxPtr, &
-     equil_sigPtr, equil_profPtr, equil_rectPtr, equil_coordPtr
+     equil_sigPtr, equil_profPtr, equil_rectPtr, equil_rz2dPtr, equil_coordPtr
 
 contains
 
@@ -70,6 +71,7 @@ contains
     call get_subdict(astra_vars, 'equil_signals' , n_equil_sig  ,   equil_sigNames,   equil_sigPtr)
     call get_subdict(astra_vars, 'equil_profiles', n_equil_prof ,  equil_profNames,  equil_profPtr)
     call get_subdict(astra_vars, 'equil_rect'    , n_equil_rect ,  equil_rectNames,  equil_rectPtr)
+    call get_subdict(astra_vars, 'equil_rz2d'    , n_equil_rz2d ,  equil_rz2dNames,  equil_rz2dPtr)
     call get_subdict(astra_vars, 'equil_coord'   , n_equil_coord, equil_coordNames, equil_coordPtr)
 
     end subroutine read_metadata
