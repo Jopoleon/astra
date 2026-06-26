@@ -1168,7 +1168,7 @@
 },
 
 "equil_coord": {
-    "gradvcell": {"desc": "|grad_V| [m^2] in cells"},
+    "gradvcell": {"unit": "m^2", "desc": "|grad_V| in cells"},
     "bpcell": {"unit": "T", "desc": "Bp in cells"},
     "bcell":  {"unit": "T", "desc": "B in cells"},
     "rcell":  {"unit": "m", "desc": "R in cells"},
