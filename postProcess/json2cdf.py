@@ -136,7 +136,6 @@ def json_concat(expequ):
     zgrid.long_name = meta_d['equil_rect']['z2d']['desc']
 
     for key, val in ds_astra.items():
-        print(key, val['data'].shape)
         if key not in ('TIME', 'XRHO', 'rho_tor_norm', 'theta2d', 'r2d', 'z2d'):
             tmp = f.createVariable(key, dtyp, val['dimensions'])
             tmp[:] = val['data']
