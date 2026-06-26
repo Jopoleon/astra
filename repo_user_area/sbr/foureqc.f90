@@ -20,8 +20,8 @@ character(len=120) :: f_four
 if (IPART == 1) return
 
 ! nequil, mequil are reals
-nrho   = int(nequil)
-ntheta = int(mequil)
+nrho   = NEQUIL
+ntheta = MEQUIL
 
 allocate(theta(ntheta), dtheta(ntheta), cos_mthe(ntheta), sin_mthe(ntheta), damin(ntheta))
 allocate(theta_half(ntheta+1))

@@ -33,7 +33,7 @@ implicit none
 double precision, intent(in) :: er_min, er_sep
 double precision, dimension(na1), intent(out) :: wexb_lfs, er_lfs, vdia_lfs, bp_lfs
 
-integer :: ispan, jrho, neq, meq
+integer :: ispan, jrho
 double precision :: er0
 double precision, allocatable, dimension(:) :: rmin_sp, rmaj_sp, bp_sp, psi_sp, rpol_sp, zispan
 double precision, dimension(na1) :: rmaj_as, rmin_as, bp_as, vdia_as, pi_as, psi_as
@@ -46,36 +46,34 @@ if (TIME <= TSTART + 0.0001) then
     wexb_lfs(1:na1) = 0.0001
     return
 endif
-!NEQUIL and MEQUIL are NOT integers!
-neq = int(nequil)
-meq = int(mequil)
-allocate(rmin_sp(neq))
-allocate(rmaj_sp(neq))
-allocate(bp_sp(neq))
-allocate(psi_sp(neq))
-allocate(rpol_sp(neq))
-allocate(zispan(neq))
 
-ispan = minloc(abs(equil_now%coord_sys%position%r(neq,1:meq) - (RTOR + AWALL)), 1) ! Z=0, lfs
-psi_sp(1:neq) = equil_now%coord_sys%position%psirz(1:neq, ispan) !PSI
-bp_sp(1:neq)  = equil_now%coord_sys%bpcell(1:nequil, ispan) !BPOL
-bp_sp(neq) = bp_sp(neq-1) !defined up to neq-1
-rmaj_sp(1:neq) = equil_now%coord_sys%position%r(1:neq, ispan)
-rmin_sp(1:neq) = equil_now%coord_sys%position%r(1:neq, ispan) - (rmaj_sp(1))
-zispan(1:neq)  = equil_now%coord_sys%position%z(1:neq, ispan)
-rpol_sp(1:neq) = sqrt((psi_sp(1:neq) - psi_sp(1))/(psi_sp(neq) - psi_sp(1))); !rpol spider
+allocate(rmin_sp(NEQIL))
+allocate(rmaj_sp(NEQIL))
+allocate(bp_sp(NEQIL))
+allocate(psi_sp(NEQIL))
+allocate(rpol_sp(NEQIL))
+allocate(zispan(NEQIL))
+
+ispan = minloc(abs(equil_now%coord_sys%position%r(NEQIL, 1:MEQIL) - (RTOR + AWALL)), 1) ! Z=0, lfs
+psi_sp(1:NEQIL) = equil_now%coord_sys%position%psirz(1:NEQIL, ispan) !PSI
+bp_sp(1:NEQIL)  = equil_now%coord_sys%bpcell(1:NEQIL, ispan) !BPOL
+bp_sp(NEQIL) = bp_sp(NEQIL-1) !defined up to NEQIL-1
+rmaj_sp(1:NEQIL) = equil_now%coord_sys%position%r(1:NEQIL, ispan)
+rmin_sp(1:NEQIL) = equil_now%coord_sys%position%r(1:NEQIL, ispan) - (rmaj_sp(1))
+zispan(1:NEQIL)  = equil_now%coord_sys%position%z(1:NEQIL, ispan)
+rpol_sp(1:NEQIL) = sqrt((psi_sp(1:NEQIL) - psi_sp(1))/(psi_sp(NEQIL) - psi_sp(1))); !rpol spider
 
 !interpolate on astra grid using rpol
  !pi_as(1:na1) = TI(1:na1)*NI(1:na1) !ion pressure
 pi_as(1:na1) = TI(1:na1)*NMAIN(1:na1) !ion pressure of main ion species
 
-call qinterp(rpol_sp(1:neq), rmaj_sp(1:neq), neq, rho_pol(1:NA1), rmaj_as(1:NA1), NA1) !r
-call qinterp(rpol_sp(1:neq), rmin_sp(1:neq), neq, rho_pol(1:NA1), rmin_as(1:NA1), NA1) !r (defined but not used in original) 
-call qinterp(rpol_sp(1:neq), bp_sp(  1:neq), neq, rho_pol(1:NA1), bp_as(1:NA1), NA1)  !Bpol
+call qinterp(rpol_sp(1:NEQIL), rmaj_sp(1:NEQIL), NEQIL, rho_pol(1:NA1), rmaj_as(1:NA1), NA1) !r
+call qinterp(rpol_sp(1:NEQIL), rmin_sp(1:NEQIL), NEQIL, rho_pol(1:NA1), rmin_as(1:NA1), NA1) !r (defined but not used in original) 
+call qinterp(rpol_sp(1:NEQIL), bp_sp(  1:NEQIL), NEQIL, rho_pol(1:NA1), bp_as(1:NA1), NA1)  !Bpol
 
 bp_lfs(1:na1) = bp_as(1:na1)
 
-call qinterp(rpol_sp(1:neq), psi_sp(1:neq), neq, rho_pol(1:NA1), psi_as(1:NA1), NA1)  !Psi
+call qinterp(rpol_sp(1:NEQIL), psi_sp(1:NEQIL), NEQIL, rho_pol(1:NA1), psi_as(1:NA1), NA1)  !Psi
 
 !diamagnetic term = R*B_pol/qi/ni*grad_Psi(Pi) (V/m)
 do jrho=1,NA1-1
