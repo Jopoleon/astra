@@ -99,10 +99,11 @@ def fill_core_profiles(cv):
         
         cp1d[jt].ion.resize(n_ions_used)
         cp1d[jt].ion[0].z_ion = np.float64(np.around(cv['ZMAIN'][jt, 0]))
-        cp1d[jt].ion[0].density         = nd + e19m3_to_m3*cv['NIBM'][jt, :]
-        cp1d[jt].ion[0].density_thermal = nd
-        cp1d[jt].ion[0].density_fast    = e19m3_to_m3*cv['NIBM'][jt, :]
-        cp1d[jt].ion[0].temperature     = ti
+        cp1d[jt].ion[0].temperature      = ti
+        cp1d[jt].ion[0].density          = nd + e19m3_to_m3*cv['NIBM'][jt, :]
+        cp1d[jt].ion[0].density_thermal  = nd
+        cp1d[jt].ion[0].density_fast     = e19m3_to_m3*cv['NIBM'][jt, :]
+        cp1d[jt].ion[0].pressure_thermal = keV_m3_to_Pa*ni*ti
         cp1d[jt].ion[0].pressure_fast_perpendicular = cv['PBPER'][jt, :]
         cp1d[jt].ion[0].pressure_fast_parallel      = cv['PBLON'][jt, :]
         cp1d[jt].ion[0].element.resize(1)
@@ -112,10 +113,12 @@ def fill_core_profiles(cv):
         for jion in range(n_ions_max):
             if jion > 0:
                 if nimp_flag[jimp-1]:
+                    nimp = e19m3_to_m3*cv['NIZ%d' %jimp][jt, :]
                     cp1d[jt].ion[jimp].temperature = ti
                     cp1d[jt].ion[jimp].z_ion = np.float64(np.around(cv['ZIM%d' %jimp][jt, 0]))
-                    cp1d[jt].ion[jimp].density         = e19m3_to_m3*cv['NIZ%d' %jimp][jt, :]
-                    cp1d[jt].ion[jimp].density_thermal = e19m3_to_m3*cv['NIZ%d' %jimp][jt, :]
+                    cp1d[jt].ion[jimp].density          = nimp
+                    cp1d[jt].ion[jimp].density_thermal  = nimp
+                    cp1d[jt].ion[jimp].pressure_thermal = keV_m3_to_Pa*nimp*ti
                     jimp += 1
 
     return cp
