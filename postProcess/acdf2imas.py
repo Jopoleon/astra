@@ -14,10 +14,11 @@ logger.setLevel(logging.INFO)
 
 # Units conversion factors
 
-keV_m3_to_Pa = 1.602*1e-16
-e19m3_to_m3  = 1e19
-keV_e19m3_to_Pa = e19m3_to_m3*keV_m3_to_Pa
 keV_to_eV    = 1e3
+e19m3_to_m3  = 1e19
+eV_m3_to_Pa  = 1.602*1e-19
+keV_m3_to_Pa = keV_to_eV*eV_m3_to_Pa
+keV_e19m3_to_Pa = e19m3_to_m3*keV_m3_to_Pa
 MW_to_W = 1e6
 MA_to_A = 1e6
 
@@ -89,8 +90,8 @@ def fill_core_profiles(cv):
         cp1d[jt].electrons.temperature     = te
         cp1d[jt].electrons.density         = ne
         cp1d[jt].electrons.density_thermal = ne
-        cp1d[jt].electrons.pressure         = keV_m3_to_Pa*ne*te
-        cp1d[jt].electrons.pressure_thermal = keV_m3_to_Pa*ne*te
+        cp1d[jt].electrons.pressure         = eV_m3_to_Pa*ne*te
+        cp1d[jt].electrons.pressure_thermal = eV_m3_to_Pa*ne*te
         cp1d[jt].q = 1./cv['MU'][jt, :]
         cp1d[jt].zeff = cv['ZEF'][jt, :]
         cp1d[jt].t_i_average = ti
@@ -104,7 +105,7 @@ def fill_core_profiles(cv):
         cp1d[jt].ion[0].density          = nd + e19m3_to_m3*cv['NIBM'][jt, :]
         cp1d[jt].ion[0].density_thermal  = nd
         cp1d[jt].ion[0].density_fast     = e19m3_to_m3*cv['NIBM'][jt, :]
-        cp1d[jt].ion[0].pressure_thermal = keV_m3_to_Pa*nd*ti
+        cp1d[jt].ion[0].pressure_thermal = eV_m3_to_Pa*nd*ti
         cp1d[jt].ion[0].pressure_fast_perpendicular = keV_e19m3_to_Pa*cv['PBPER'][jt, :]
         cp1d[jt].ion[0].pressure_fast_parallel      = keV_e19m3_to_Pa*cv['PBLON'][jt, :]
         cp1d[jt].ion[0].element.resize(1)
@@ -119,7 +120,7 @@ def fill_core_profiles(cv):
                     cp1d[jt].ion[jimp].z_ion = np.float64(np.around(cv['ZIM%d' %jimp][jt, 0]))
                     cp1d[jt].ion[jimp].density          = nimp
                     cp1d[jt].ion[jimp].density_thermal  = nimp
-                    cp1d[jt].ion[jimp].pressure_thermal = keV_m3_to_Pa*nimp*ti
+                    cp1d[jt].ion[jimp].pressure_thermal = eV_m3_to_Pa*nimp*ti
                     jimp += 1
 
     return cp
