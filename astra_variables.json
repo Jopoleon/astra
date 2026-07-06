@@ -1141,7 +1141,7 @@
     "perim": {"units": "m", "desc": "Flux surface lateral perimeter"},
     "phi": {"units": "Wb", "desc": "Toroidal flux"},
     "pprime": {"desc": "PPRIME from EQUIL"},
-    "pressure": {"desc": "Pressure from EQUIL"},
+    "pressure": {"unit": "Pa", "desc": "Pressure from EQUIL"},
     "psi": {"units": "Wb", "desc": "Psi"},
     "q": {"desc": "Safety factor from EQUIL"},
     "r_inboard" : {"units": "m", "desc": "AMETR is 0.5*(r_outboard - r_inboard)"},
