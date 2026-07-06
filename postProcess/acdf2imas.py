@@ -16,6 +16,7 @@ logger.setLevel(logging.INFO)
 
 keV_m3_to_Pa = 1.602*1e-16
 e19m3_to_m3  = 1e19
+keV_e19m3_to_Pa = e19m3_to_m3*keV_m3_to_Pa
 keV_to_eV    = 1e3
 MW_to_W = 1e6
 MA_to_A = 1e6
@@ -104,8 +105,8 @@ def fill_core_profiles(cv):
         cp1d[jt].ion[0].density_thermal  = nd
         cp1d[jt].ion[0].density_fast     = e19m3_to_m3*cv['NIBM'][jt, :]
         cp1d[jt].ion[0].pressure_thermal = keV_m3_to_Pa*ni*ti
-        cp1d[jt].ion[0].pressure_fast_perpendicular = cv['PBPER'][jt, :]
-        cp1d[jt].ion[0].pressure_fast_parallel      = cv['PBLON'][jt, :]
+        cp1d[jt].ion[0].pressure_fast_perpendicular = keV_e19m3_to_Pa*cv['PBPER'][jt, :]
+        cp1d[jt].ion[0].pressure_fast_parallel      = keV_e19m3_to_Pa*cv['PBLON'][jt, :]
         cp1d[jt].ion[0].element.resize(1)
         cp1d[jt].ion[0].element[0].a   = np.mean(cv['AMAIN'][jt, :])
         cp1d[jt].ion[0].element[0].z_n = np.mean(np.around(cv['ZMAIN'][jt, :]))
