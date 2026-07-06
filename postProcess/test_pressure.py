@@ -1,4 +1,3 @@
-import os, datetime, logging, argparse
 from scipy.io import netcdf_file
 import matplotlib.pylab as plt
 
@@ -25,9 +24,6 @@ pres_i_th = eV_m3_to_Pa*ni*ti
 pres_i_fast = 0.5*keV_e19m3_to_Pa*cv['PBPER'][jt, :] + 0.5*keV_e19m3_to_Pa*cv['PBLON'][jt, :]
 pres_equil = cv['pressure'][jt, :]
 pres_tot = pres_e + pres_i_th + pres_i_fast
-print(pres_equil)
-print(pres_tot)
-print(pres_i_fast)
 
 plt.plot(rho, pres_e     , 'g-', label='e')
 plt.plot(rho, pres_i_th  , 'k-', label='i,th')
