@@ -106,8 +106,8 @@ def fill_core_profiles(cv):
         cp1d[jt].ion[0].density_thermal  = nd
         cp1d[jt].ion[0].density_fast     = e19m3_to_m3*cv['NIBM'][jt, :]
         cp1d[jt].ion[0].pressure_thermal = eV_m3_to_Pa*nd*ti
-        cp1d[jt].ion[0].pressure_fast_perpendicular = keV_e19m3_to_Pa*cv['PBPER'][jt, :]
-        cp1d[jt].ion[0].pressure_fast_parallel      = keV_e19m3_to_Pa*cv['PBLON'][jt, :]
+        cp1d[jt].ion[0].pressure_fast_perpendicular = keV_e19m3_to_Pa*(cv['PBPER'][jt, :] + 2./3.*cv['PFAST'][jt, :])
+        cp1d[jt].ion[0].pressure_fast_parallel      = keV_e19m3_to_Pa*(cv['PBLON'][jt, :] + 1./3.*cv['PFAST'][jt, :])
         cp1d[jt].ion[0].element.resize(1)
         cp1d[jt].ion[0].element[0].a   = np.mean(cv['AMAIN'][jt, :])
         cp1d[jt].ion[0].element[0].z_n = np.mean(np.around(cv['ZMAIN'][jt, :]))
