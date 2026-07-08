@@ -8,7 +8,7 @@ subroutine build_2dgrid(nrho, ntheta, psin_grid, &
     BMAXT, BMINT, BDB02, BDB0, B0DB2, FOFB, &
     slat, li3, betapol, psplex, bpcell, bcell, r_out, r_in, &
     elon, tria_u, tria_l, shif, g41, q_out, shiv, square, li_aug, betapol_iter, dl_dt, &
-    wkin, bpkin)
+    wkin, bpkin, dpsidvbez)
 
 use pi_vars, only: GPI, GPI2
 use numerical_tools, only: qinterp, extrapolate, polyfitcc
@@ -26,7 +26,7 @@ double precision, intent(in), dimension(nrho, ntheta) :: PSI, jrho2, darea2, yy2
 double precision, intent(out) :: li3, betapol, psplex, li_aug, betapol_iter, wkin, bpkin
 double precision, intent(out), dimension(nrho) :: G1, G2, G3, &
     volum, areat, perim, slat, &
-    FOFB, GRADRO, BMAXT, BMINT, BDB02, BDB0, B0DB2
+    FOFB, GRADRO, BMAXT, BMINT, BDB02, BDB0, B0DB2, dpsidvbez
 double precision, intent(in), dimension(nrho, ntheta) :: XX, YY, rmin, Rmaj2, & 
     jcbn2, gradr2
 double precision, intent(out), dimension(nrho, ntheta) :: bpcell, bcell
@@ -225,6 +225,7 @@ do jrho=1, nrho-1
     tar1 = btor**2/B_ABSa_sq * &
         ( 1. - (sqrt(1. - (B_ABSa(jrho, :)/BMAXT(jrho)))) * (1. + 0.5*(B_ABSa(jrho, :)/BMAXT(jrho))) )
     FOFB(jrho) = sum(tar1*fsa_kernel(jrho, :))
+    dpsidvbez(jrho) = dPSIdv(jrho)
 enddo
 
 rho_interp = rhoa(nrho)
