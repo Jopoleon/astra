@@ -8,7 +8,7 @@ subroutine build_2dgrid(nrho, ntheta, psin_grid, &
     BMAXT, BMINT, BDB02, BDB0, B0DB2, FOFB, &
     slat, li3, betapol, psplex, bpcell, bcell, r_out, r_in, &
     elon, tria_u, tria_l, shif, g41, q_out, shiv, square, li_aug, betapol_iter, dl_dt, &
-    wkin, bpkin)
+    wkin, bpkin, dpsidvbez)
 
 use pi_const, only: GP, GP2, muvac, mu0
 use numerical_tools, only: qinterp, extrapolate, polyfitcc
@@ -26,7 +26,7 @@ double precision, intent(in), dimension(nrho, ntheta) :: PSI, jrho2, darea2, yy2
 double precision, intent(out) :: li3, betapol, psplex, li_aug, betapol_iter, wkin, bpkin
 double precision, intent(out), dimension(nrho) :: G1, G2, G3, &
     volum, areat, perim, slat, &
-    FOFB, GRADRO, BMAXT, BMINT, BDB02, BDB0, B0DB2
+    FOFB, GRADRO, BMAXT, BMINT, BDB02, BDB0, B0DB2, dpsidvbez
 double precision, intent(in), dimension(nrho, ntheta) :: XX, YY, rmin, Rmaj2, & 
     jcbn2, gradr2
 double precision, intent(out), dimension(nrho, ntheta) :: bpcell, bcell
@@ -225,6 +225,7 @@ do jrho=1, nrho-1
     tar1 = btor**2/B_ABSa_sq * &
         ( 1. - (sqrt(1. - (B_ABSa(jrho, :)/BMAXT(jrho)))) * (1. + 0.5*(B_ABSa(jrho, :)/BMAXT(jrho))) )
     FOFB(jrho) = sum(tar1*fsa_kernel(jrho, :))
+    dpsidvbez(jrho) = dPSIdv(jrho)
 enddo
 
 rho_interp = rhoa(nrho)
@@ -240,6 +241,7 @@ BMINT(nrho)  = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, BMINT
 BDB02(nrho)  = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, BDB02)
 BDB0(nrho)   = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, BDB0)
 B0DB2(nrho)  = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, B0DB2)
+dpsidvbez(nrho) = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, dpsidvbez)
 
 call qinterp(rhot(1: nrho-1), G1(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
 G1(2: nrho-1) = dum1(2: nrho-1)
@@ -263,6 +265,8 @@ call qinterp(rhot(1: nrho-1), bdb0(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: 
 bdb0(2: nrho-1) = dum1(2: nrho-1)
 call qinterp(rhot(1: nrho-1), b0db2(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
 b0db2(2: nrho-1) = dum1(2: nrho-1)
+call qinterp(rhot(1: nrho-1), dpsidvbez(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+dpsidvbez(2: nrho-1) = dum1(2: nrho-1)
 
 G1(1) = 0.0
 G3(1) = 1./XX(1, 1)**2

@@ -891,7 +891,7 @@ contains
         bpcell2dbez(1:nrho, 1:ntheta), bcell2dbez(1:nrho, 1:ntheta), &
         routbez(1:nrho), rinbez(1:nrho), kbez(1:nrho), triaubez(1:nrho), trialbez(1:nrho), shifbez(1:nrho), &
         gm41bez(1:nrho), qbez(1:nrho), shivbez(1:nrho), squarebez(1:nrho), li_aug, betapol_iter, dl_dt, &
-        wkin, bpkin)
+        wkin, bpkin, dpsidvbez(1:nrho))
 
     phibez(1:nrho) = 0.
     rbp2_b2bez(1:nrho) = 0.
@@ -904,9 +904,6 @@ contains
     zpol(1:nrho, 1:ntheta) = zpbez(1:nrho, 1:ntheta)
     rpul(1:nrho, 1:ntheta) = rpbez(1:nrho, 1:ntheta)
     zpul(1:nrho, 1:ntheta) = zpbez(1:nrho, 1:ntheta)
-
-    gm41bez  (1:nrho) = 0.
-    dpsidvbez(1:nrho) = 0.
 
 ! additional info from rectangular grid
     do j=1, ntheta
