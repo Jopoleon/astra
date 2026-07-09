@@ -1,8 +1,8 @@
-subroutine scrunch2d(mpol, mom_array)
+subroutine scrunch2d(mpol, ntheta_out, r_surf, z_surf)
 
 use parameters_a2equil, only : equil_now
 use status, only: NRD
-use numerical_tools, only: argsort, sort_by_index
+use numerical_tools, only: argsort, sort_by_index, mom2rz
 use read_input, only: raw_boundary
 
 implicit none
@@ -10,11 +10,11 @@ implicit none
 integer, parameter :: niter=1000, max_iterate=10, n_resets=100, pexp=4
 double precision, parameter:: ftol=1d-8, bmax=0.15d0, pi=3.14159265359d0
 
-integer, intent(in) :: mpol
-double precision, intent(out), dimension(NRD) :: mom_array
+integer, intent(in) :: mpol, ntheta_out
+double precision, intent(out), dimension(NRD) :: r_surf, z_surf
 
 logical :: reset
-integer :: jmom, jthe, iterate, jiter, nresets, nrho, ntheta
+integer :: jmom, jthe, iterate, jiter, nresets, ntheta
 integer, dimension(:), allocatable :: ind_sort
 double precision :: dnorm, raxis, zaxis, rcos, rsin, zcos, zsin, arg, xi, yi, &
     t1fac, r10, r10sq, delt, dtau, gmin, gnorm, gnorm_old, xm_ratio, phiangle, &
@@ -26,8 +26,6 @@ double precision, dimension(:), allocatable :: rin, zin, xc, yc, xangle, r1, z1,
 double precision, dimension(:, :), allocatable :: cosa, sina
 double precision, dimension(:), allocatable :: xvec, xstore, xdot, gvec
 
-!nrho   = SIZE(equil_now%coord_sys%position%r, 1)
-!ntheta = SIZE(equil_now%coord_sys%position%r, 2)
 ntheta = raw_boundary%n_theta
 
 print*, 'NTHETA, MPOL', ntheta, mpol
@@ -44,6 +42,8 @@ xrc = 0.d0
 xrs = 0.d0
 xzc = 0.d0
 xzs = 0.d0
+r_surf = 0.d0
+z_surf = 0.d0
 
 dnorm = dble(2)/dble(ntheta)
 do jmom=1, mpol
@@ -235,18 +235,18 @@ iter_loop: do jiter=1, niter
 
 enddo iter_loop
 
-mom_array(       1:   mpol) = xrc
-mom_array(  mpol+1: 2*mpol) = xrs
-mom_array(2*mpol+1: 3*mpol) = xzc
-mom_array(3*mpol+1: 4*mpol) = xzs
-
-print*, 'SCRUNCH', mom_array(1: 4*mpol)
+call mom2rz(mpol, ntheta_out, xrc, xrs, xzc, xzs, r_surf(1: ntheta_out), z_surf(1: ntheta_out))
 
 deallocate(ind_sort)
 deallocate(rin, zin, xc, yc, xangle, r1, z1, rt1, zt1, &
     rcon, zcon, gcon, gcon2, gangle, gr, gz, pol_angle, tmp)
 deallocate(cosa, sina)
 deallocate(xvec, xstore, xdot, gvec)
+
+do jthe=1, ntheta_out
+    write(*, '(2(f9.4))') r_surf(jthe), z_surf(jthe)
+enddo
+pause
 
 return
 end subroutine scrunch2d

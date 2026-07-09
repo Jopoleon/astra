@@ -930,4 +930,28 @@ contains
  
     end subroutine sort_by_index
 
+!---------------------------------------------------------------------
+    subroutine mom2rz(mpol, ntheta, rcos, rsin, zcos, zsin, r_surf, z_surf)
+
+    double precision, parameter :: pi2=6.283185307179586d0
+
+    integer, intent(in) :: mpol, ntheta
+    double precision, intent(in), dimension(mpol) :: rcos, rsin, zcos, zsin
+    double precision, intent(out), dimension(ntheta) :: r_surf, z_surf
+
+    integer :: jthe, jmom
+    double precision :: angle
+
+    r_surf = 0.d0
+    z_surf = 0.d0
+    do jmom=1, mpol
+       do jthe=1, ntheta
+            angle = pi2*(jmom-1)*(jthe-1)/ntheta
+            r_surf(jthe) = r_surf(jthe) + rcos(jmom)*cos(angle) + rsin(jmom)*sin(angle)
+            z_surf(jthe) = z_surf(jthe) + zcos(jmom)*cos(angle) + zsin(jmom)*sin(angle)
+        enddo
+    enddo
+
+    end subroutine mom2rz
+
 end module numerical_tools
