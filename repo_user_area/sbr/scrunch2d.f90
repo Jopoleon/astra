@@ -243,10 +243,5 @@ deallocate(rin, zin, xc, yc, xangle, r1, z1, rt1, zt1, &
 deallocate(cosa, sina)
 deallocate(xvec, xstore, xdot, gvec)
 
-do jthe=1, ntheta_out
-    write(*, '(2(f9.4))') r_surf(jthe), z_surf(jthe)
-enddo
-pause
-
 return
 end subroutine scrunch2d
