@@ -888,4 +888,46 @@ contains
 
     end subroutine SORTAB
 
+!---------------------------------------------------------------------
+    subroutine argsort(n, a_in, idx)
+
+    integer, intent(in) :: n
+    double precision, intent(in) :: a_in(n)
+    integer, intent(out) :: idx(n)
+
+    integer :: i, j, jtmp
+
+! Initialize indices
+     idx = [(i, i=1, n)]
+
+! Simple insertion sort
+     do i=2, n
+         jtmp = idx(i)
+         j = i - 1
+         do while (a_in(idx(j)) > a_in(jtmp))
+             idx(j+1) = idx(j)
+             j = j - 1
+             if (j == 0) EXIT
+         enddo
+         idx(j+1) = jtmp
+    enddo
+  
+    end subroutine argsort
+
+!---------------------------------------------------------------------
+    subroutine sort_by_index(n, idx_in, a_in, a_out)
+
+    integer, intent(in) :: n
+    integer, intent(in) :: idx_in(n)
+    double precision, intent(in) :: a_in(n)
+    double precision, intent(out) :: a_out(n)
+
+    integer :: i
+
+    do i=1, n
+        a_out(i) = a_in(idx_in(i))
+    enddo
+ 
+    end subroutine sort_by_index
+
 end module numerical_tools
