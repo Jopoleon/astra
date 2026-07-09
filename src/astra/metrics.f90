@@ -1339,7 +1339,8 @@ contains
         enddo
         return
     endif
-
+ 
+! Time interpolation of boundary R(t, theta), Z(t, theta)
     do j=1, nt_bnd
         if (TIME > raw_boundary%time(j)) jt = j
     enddo

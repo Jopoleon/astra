@@ -36,15 +36,14 @@ contains
         key_no_startz, key_no_refits, equil_now
     use read_input, only: nml_file
     use machine_config, only: json_cfg, config, cfg_exists
-
-    integer, parameter :: nbtabp=1000
+    use scrunch2d, only: surf2surf
 
     integer, intent(in) :: equil_solver, ntheta, nr_equ, jna1, nbnd, ncoils, &
         iter_step, ipsibcf, icircq, ipctrl, iter_itreq, ifbey, i_rotation
 
     double precision, intent(in) :: tau_step, psifb_in, rtor, btor, roc, time_a
     double precision, intent(in), dimension(ncoils) :: yvcoil
-    double precision, intent(in), dimension(nbtabp) :: rbnd, zbnd
+    double precision, intent(in), dimension(nbnd) :: rbnd, zbnd
     double precision, intent(in), dimension(jna1) :: xrho, pres_in, fp, & 
         omega_rot, ion_temp, ion_dens, plasma_mass
 
@@ -60,11 +59,10 @@ contains
     logical :: file_existence, found
     integer :: i, j, n_theta, k, k1, key_start, keyplc, &
         jiter, p, jveps, jr, jz, nr, nz
-    double precision :: dum1r, R0, Z0, Fvacuum, dxrho_sp, dx, &
+    double precision :: R0, Z0, Fvacuum, dxrho_sp, dx, &
         phib, PSIb, deltaPSI, PSI0, phibm, phibl, IPLX, Vtemp, Veps, &
         zfuncb, errG, roc_sp, g2ediff, errght, ybound, Rmag, vtemp_counter, &
         Rmin, Rmax, Zmin, Zmax
-    double precision, dimension(nbnd) :: Rb, Zb
     double precision, dimension(jna1) :: dpsi_ad, dp_ad, pres, sxho, vxho, xrho_sq, sxho_sq, vxho_sq
     double precision, dimension(nr_equ) :: volum_in, PSI, psi_minus, PRESS, xrho_sp, xrho_sp_sq, &
         GG2, GG3, g11_sp, g41_sp, gradro_sp, xrho_roc_sp, &
@@ -128,17 +126,6 @@ contains
             close(53)
         endif
     endif
-
-    n_theta = ntheta
-    if (n_theta == 1) n_theta = nbnd
-    if (n_theta == 0) n_theta = 1
-
-    dum1r = (nbnd + 1.e-9)/(n_theta + 1.e-9)
-    do i=1, n_theta
-        j = nint((i-1)*dum1r) + 1
-        Rb(i) = rbnd(j)
-        Zb(i) = zbnd(j)
-    enddo
 
     pres = 1.E+06*pres_in
     R0   = rtor
@@ -233,6 +220,10 @@ contains
     hout2 = 0.
     Houtt = 0.
 
+    n_theta = ntheta
+    if (n_theta == 1) n_theta = nbnd
+    if (n_theta == 0) n_theta = 1
+
     allocate(equil_in%profiles_1d%psi(nr_equ))
     allocate(equil_in%profiles_1d%pprime(nr_equ))
     allocate(equil_in%profiles_1d%ffprime(nr_equ))
@@ -240,6 +231,9 @@ contains
     allocate(equil_in%profiles_1d%F_dia(nr_equ))
     allocate(equil_in%eqgeometry%boundary%r(n_theta))
     allocate(equil_in%eqgeometry%boundary%z(n_theta))
+
+! "Interpolate (Fourier moments fit + expansion)
+    call surf2surf(7, n_theta, rbnd(1:nbnd), zbnd(1:nbnd), equil_in%eqgeometry%boundary%r, equil_in%eqgeometry%boundary%z)
 
     equil_in%eqgeometry%boundary%npoints = n_theta    !one periodic point
 
@@ -418,12 +412,6 @@ contains
             equil_in%profiles_1d%ffprime(i)  = eqff_sp(i)
             equil_in%profiles_1d%pressure(i) = PRESS(i)
             equil_in%profiles_1d%F_dia(i)    = ipol_sp(i)*btor*r0
-        enddo
-
-! for current diffusion equation in equil
-        do i=1, n_theta
-            equil_in%eqgeometry%boundary%r(i) = Rb(i)
-            equil_in%eqgeometry%boundary%z(i) = Zb(i)
         enddo
 
         call a_equil( &

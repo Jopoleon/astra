@@ -723,8 +723,7 @@ end subroutine read_array_2d
 
     use read_input, only: awd, exp_file, equ_file
     use scalars, only: NA1, constValues, varValues, varxValues, &
-        controlValues, internIntValues, internDblValues, &
-        NEQUIL, MEQUIL, ITFBP, IFBEY, IPEQL
+        controlValues, internIntValues, internDblValues
     use status, only: profiles, profiles_x
     use json_vars, only: n_control
 
