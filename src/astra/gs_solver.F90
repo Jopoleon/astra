@@ -58,7 +58,7 @@ contains
 
     logical :: file_existence, found
     integer :: i, j, n_theta, k, k1, key_start, keyplc, &
-        jiter, p, jveps, jr, jz, nr, nz
+        jiter, p, jveps, jr, jz, nr, nz, t1, t2, rate
     double precision :: R0, Z0, Fvacuum, dxrho_sp, dx, &
         phib, PSIb, deltaPSI, PSI0, phibm, phibl, IPLX, Vtemp, Veps, &
         zfuncb, errG, roc_sp, g2ediff, errght, ybound, Rmag, vtemp_counter, &
@@ -232,8 +232,11 @@ contains
     allocate(equil_in%eqgeometry%boundary%r(n_theta))
     allocate(equil_in%eqgeometry%boundary%z(n_theta))
 
-! "Interpolate (Fourier moments fit + expansion)
+! "Interpolate" sep. boundary R, z (Fourier moments fit + expansion)
+    call SYSTEM_CLOCK(t1, rate)
     call surf2surf(7, n_theta, rbnd(1:nbnd), zbnd(1:nbnd), equil_in%eqgeometry%boundary%r, equil_in%eqgeometry%boundary%z)
+    call SYSTEM_CLOCK(t2, rate)
+    print*, 'surf2surf time', dble(t2 - t1) /dble(rate)
 
     equil_in%eqgeometry%boundary%npoints = n_theta    !one periodic point
 
