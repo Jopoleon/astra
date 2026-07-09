@@ -549,8 +549,8 @@ contains
         jt = j
         allocate(bnd_r(raw_boundary%n_theta), bnd_z(raw_boundary%n_theta))
         do jthe=1, raw_boundary%n_theta
-            bnd_r(jthe) = raw_boundary%R((jthe-1)*raw_boundary%nt + jt)
-            bnd_z(jthe) = raw_boundary%Z((jthe-1)*raw_boundary%nt + jt)
+            bnd_r(jthe) = raw_boundary%R(jt, jthe)
+            bnd_z(jthe) = raw_boundary%Z(jt, jthe)
         enddo
 ! Calculate ABC
         ABC = (maxval(bnd_r) - minval(bnd_r))/2.

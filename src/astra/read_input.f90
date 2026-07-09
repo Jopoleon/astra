@@ -27,7 +27,8 @@ type rawProfiles
 endtype rawProfiles
 type rawBoundary
     integer :: nt, n_theta
-    double precision, dimension(:), allocatable :: time, R, Z
+    double precision, dimension(:), allocatable :: time
+    double precision, dimension(:, :), allocatable :: R, Z
 endtype rawBoundary
 type rawCoils
     integer :: nt=0, ncoils=0
@@ -227,7 +228,7 @@ contains
     integer :: n_words, i_filter_glob, len_profs_data, len_profs_time, len_scalars
     integer :: nt_u, nx_u, ios, ndim_u, nscal_u, jvar, jrt, jt, jthe, nbnd
 
-    double precision, allocatable :: t_u(:), x_u(:), var_u(:), bnd_rz(:)
+    double precision, allocatable, dimension(:) :: t_u, x_u, var_u, bnd_rz, bnd_r, bnd_z
     double precision :: XBDRY, YB, YB1, YXB, YXB1, ALFA, ALFA_GLOB, &
         VRDATA, FACTOR, TIMEVR, VRERR
     character(len=6) :: VNAM, VNAMO, VNAMU, VNAMX, VTIM, VDAT, VERR, keyword
@@ -770,14 +771,15 @@ contains
 
             allocate(raw_boundary%time(raw_boundary%nt))
             read(n_unit, *, iostat=ios) (raw_boundary%time(j), j=1, raw_boundary%nt)
-            allocate(raw_boundary%R(nbnd), raw_boundary%Z(nbnd))
+            allocate(raw_boundary%R(raw_boundary%nt, raw_boundary%n_theta))
+            allocate(raw_boundary%Z(raw_boundary%nt, raw_boundary%n_theta))
             allocate(bnd_rz(2*nbnd))
             read(n_unit, fmt=*, iostat=ios) (bnd_rz(j), j=1, 2*nbnd)
             jrt = 1
             do jthe=1, raw_boundary%n_theta
                 do jt=1, raw_boundary%nt
-                    raw_boundary%R((jthe-1)*raw_boundary%nt + jt) = bnd_rz(jrt)
-                    raw_boundary%Z((jthe-1)*raw_boundary%nt + jt) = bnd_rz(jrt+raw_boundary%nt)
+                    raw_boundary%R(jt, jthe) = bnd_rz(jrt)
+                    raw_boundary%Z(jt, jthe) = bnd_rz(jrt+raw_boundary%nt)
                     jrt = jrt + 1
                 enddo
                 jrt = jrt + raw_boundary%nt
@@ -797,13 +799,23 @@ contains
             call ufheader('udb/'//trim(STRI)//'_r', nscal_u, ndim_u, nt_u, nx_u, rholbl)
             raw_boundary%n_theta = nx_u
             raw_boundary%nt = nt_u
+            allocate(raw_boundary%R(raw_boundary%nt, raw_boundary%n_theta))
+            allocate(raw_boundary%Z(raw_boundary%nt, raw_boundary%n_theta))
             nbnd = nx_u*nt_u
             if (nbnd > nbnd_max) then
                 write(*, '(2A, I0)') TRIM(err_msg_exp), 'Boundary data #theta must not exceed ', nbnd_max
                 ERROR STOP
             endif
-            call ufrd('udb/' // trim(STRI) // '_r', nscal_u, ndim_u, nt_u, nx_u, raw_boundary%time, x_u, raw_boundary%R)
-            call ufrd('udb/' // trim(STRI) // '_z', nscal_u, ndim_u, nt_u, nx_u, raw_boundary%time, x_u, raw_boundary%Z)
+            allocate(bnd_r(nt_u*nx_u), bnd_z(nt_u*nx_u))
+            call ufrd('udb/' // trim(STRI) // '_r', nscal_u, ndim_u, nt_u, nx_u, raw_boundary%time, x_u, bnd_r)
+            call ufrd('udb/' // trim(STRI) // '_z', nscal_u, ndim_u, nt_u, nx_u, raw_boundary%time, x_u, bnd_z)
+            do jthe=1, nx_u
+                do jt=1, nt_u
+                    raw_boundary%R(jt, jthe) = bnd_r((jthe-1)*nt_u + jt)
+                    raw_boundary%Z(jt, jthe) = bnd_z((jthe-1)*nt_u + jt)
+                enddo
+            enddo
+            deallocate(bnd_r, bnd_z)
             VNAMO = VNAM
 
         CASE('ENDX  ')

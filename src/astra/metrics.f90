@@ -1069,7 +1069,7 @@ contains
     if (raw_boundary%n_theta == 0) then
         jnbnd = jntheta ! "NAMEXP BND" not found
         raw_boundary%n_theta = jnbnd
-        allocate(raw_boundary%R(jnbnd), raw_boundary%Z(jnbnd))
+        allocate(raw_boundary%R(1, jnbnd), raw_boundary%Z(1, jnbnd))
     else
         jnbnd = raw_boundary%n_theta
     endif
@@ -1078,8 +1078,8 @@ contains
     call BNDRY(rbnd(1: jnbnd), zbnd(1: jnbnd))
 
     if (raw_boundary%n_theta == 0) then
-        raw_boundary%R(1: jnbnd) = rbnd(1: jnbnd)
-        raw_boundary%Z(1: jnbnd) = zbnd(1: jnbnd)
+        raw_boundary%R(1, 1: jnbnd) = rbnd(1: jnbnd)
+        raw_boundary%Z(1, 1: jnbnd) = zbnd(1: jnbnd)
     endif
 
     do j=1, n_coils
@@ -1318,8 +1318,8 @@ contains
             endif
         else ! nt_nbd = 1
             do j=1, n_bnd
-                RPB(j) = raw_boundary%R(j)
-                ZPB(j) = raw_boundary%Z(j)
+                RPB(j) = raw_boundary%R(1, j)
+                ZPB(j) = raw_boundary%Z(1, j)
             enddo
         endif 
         return
@@ -1327,15 +1327,15 @@ contains
 
     if (TIME <= raw_boundary%time(1)) then ! Take bnd at time=t1
         do j=1, n_bnd
-            RPB(j) = raw_boundary%R(1 + (j - 1)*nt_bnd)
-            ZPB(j) = raw_boundary%Z(1 + (j - 1)*nt_bnd)
+            RPB(j) = raw_boundary%R(1, j)
+            ZPB(j) = raw_boundary%Z(1, j)
         enddo
         return
     endif
     if (TIME >= raw_boundary%time(nt_bnd)) then ! Take bnd at time=t_nt_bnd
         do j=1, n_bnd
-            RPB(j) = raw_boundary%R(nt_bnd + (j - 1)*nt_bnd)
-            ZPB(j) = raw_boundary%Z(nt_bnd + (j - 1)*nt_bnd)
+            RPB(j) = raw_boundary%R(nt_bnd, j)
+            ZPB(j) = raw_boundary%Z(nt_bnd, j)
         enddo
         return
     endif
@@ -1348,10 +1348,8 @@ contains
     yd1 = (TIME - raw_boundary%time(jt))/ydt
     yd2 = (TIME - raw_boundary%time(jt+1))/ydt
     do j=1, n_bnd
-        j1 = jt + (j - 1)*nt_bnd
-        RPB(j) = yd1*raw_boundary%R(j1+1) - yd2*raw_boundary%R(j1)
-        j1 = jt + (j - 1)*nt_bnd
-        ZPB(j) = yd1*raw_boundary%Z(j1+1) - yd2*raw_boundary%Z(j1)
+        RPB(j) = yd1*raw_boundary%R(jt+1, j) - yd2*raw_boundary%R(jt, j)
+        ZPB(j) = yd1*raw_boundary%Z(jt+1, j) - yd2*raw_boundary%Z(jt, j)
     enddo
     if (n_bnd > 12) return
 

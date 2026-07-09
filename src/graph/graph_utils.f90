@@ -1386,9 +1386,8 @@ contains
     if (raw_boundary%nt <= 1) then
         jj = 1
         do j=1, raw_boundary%n_theta, j2
-            j1 = max(1, raw_boundary%nt + (j - 1)*jj)
-            PTM(1) = raw_boundary%R(j1)*meter2pixel
-            PTM(2) = pixel_ymid - raw_boundary%Z(j1)*meter2pixel
+            PTM(1) = raw_boundary%R(1, j)*meter2pixel
+            PTM(2) = pixel_ymid - raw_boundary%Z(1, j)*meter2pixel
             call NMARK(PTM, 4)   !Use (PTM, 4) for *
             IYO(1, j) = PTM(1)
             IYO(2, j) = PTM(2)
@@ -1396,9 +1395,8 @@ contains
     else if (time_in <= raw_boundary%time(1) .or. time_in >= raw_boundary%time(raw_boundary%nt)) then ! extrapolate flat
         jj = raw_boundary%nt
         do j=1, raw_boundary%n_theta, j2
-            j1 = raw_boundary%nt + (j - 1)*jj
-            PTM(1) = raw_boundary%R(j1)*meter2pixel
-            PTM(2) = pixel_ymid - raw_boundary%Z(j1+jj)*meter2pixel
+            PTM(1) = raw_boundary%R(jj, j)*meter2pixel
+            PTM(2) = pixel_ymid - raw_boundary%Z(jj, j)*meter2pixel
             call NMARK(PTM, 4)   !Use (PTM, 4) for *
             IYO(1, j) = PTM(1)
             IYO(2, j) = PTM(2)
@@ -1411,9 +1409,8 @@ contains
         YXL = (time_in - raw_boundary%time(jj  ))/YS
         YXR = (time_in - raw_boundary%time(jj+1))/YS
         do j=1, raw_boundary%n_theta, j2 ! Time differentiation
-            j1 = jj + (j - 1)*raw_boundary%nt
-            YX = YXL*raw_boundary%R(j1+1) - YXR*raw_boundary%R(j1)
-            YZ = YXL*raw_boundary%Z(j1+1) - YXR*raw_boundary%Z(j1)
+            YX = YXL*raw_boundary%R(jj+1, j) - YXR*raw_boundary%R(jj, j)
+            YZ = YXL*raw_boundary%Z(jj+1, j) - YXR*raw_boundary%Z(jj, j)
             PTM(1) = YX*meter2pixel
             PTM(2) = pixel_ymid - YZ*meter2pixel
             call NMARK(PTM, 4)

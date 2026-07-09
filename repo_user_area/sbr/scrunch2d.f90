@@ -54,8 +54,8 @@ xmpq4(1:2) = 0
 xmpq3 = SQRT(xmpq4)
 faccon = 0.125*dnorm/(1. + dm1)**pexp
 
-rin = raw_boundary%R(1:ntheta)
-zin = raw_boundary%Z(1:ntheta)
+rin = raw_boundary%R(1, 1:ntheta)
+zin = raw_boundary%Z(1, 1:ntheta)
 
 raxis = SUM(rin)/dble(ntheta)
 zaxis = SUM(zin)/dble(ntheta)
