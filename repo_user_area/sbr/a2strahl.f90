@@ -138,9 +138,9 @@ contains
         return
     endif
 
-    print *, "Calling STRAHL..."
-    print *, "Number of impurities:", nimp_touse
-    print *, "Species: ", (elements_touse(isp), isp=1, nimp_touse)
+    write(*, '(/A)') 'Calling STRAHL...'
+    print *, 'Number of impurities:', nimp_touse
+    print *, 'Species: ', (elements_touse(isp), isp=1, nimp_touse)
 
     diffname1_s = ''
 
@@ -449,7 +449,7 @@ contains
 
     cmd_cmd = TRIM(astra_ext) // '/strahl/sep23/bin/strahl a q'
 
-    write(*, '(A)') 'Executing', cmd_cmd 
+    write(*, '(2A)') 'Executing', TRIM(cmd_cmd)
     call system(cmd_cmd)      ! run strahl
 
     cmd_cmd = 'rm -f results.txt'
@@ -457,7 +457,7 @@ contains
 
     cmd_cmd = TRIM(astra_ext) // '/strahl/sep23/bin/result_to_astra '// TRIM(elements_touse(1))//' > ' // TRIM(strahl_dir) // 'results.txt'
 
-    write(*, '(A)') 'Executing', cmd_cmd 
+    write(*, '(2A)') 'Executing', TRIM(cmd_cmd )
     call system(cmd_cmd)   ! produce new result file
 
     call chdir(TRIM(awd))      ! cdir
@@ -569,7 +569,7 @@ contains
 
     deallocate(g11_dvol_fac)
 
-    print *, "Finished STRAHL call"
+    write(*, '(A/)') 'Finished STRAHL call'
 
     end subroutine a2strahl
 
