@@ -9,7 +9,6 @@ double precision, dimension(NRD) :: zeff_strahl, prad_tot_strahl,&
 double precision, dimension(NRD, 11) :: prad_strahl, nimp_strahl, &
     zavg_strahl, nesrc_strahl, Dneo_strahl, Vneo_strahl, &
     Dz_in_strahl, Vz_in_strahl
-
 double precision, dimension(11) :: rrates_in_strahl 
 
 contains
@@ -65,8 +64,8 @@ contains
     use numerical_tools, only: qinterp
 
     integer, parameter :: ngmax=140, n_o_max=512
-
     character(len=120), parameter :: strahl_output='results.txt', strahl_param_in='param_files/sparams.dat'
+    double precision, parameter :: vimpsol=0.d0
 
     double precision, intent(in) :: tau_start, zneocl, dzneocl, dimpsol, shot_in
 
@@ -74,12 +73,11 @@ contains
         Nr_o, ineocl, ineocla, ineocli, i_stepst, ios, iu, nshot=11111
     integer, dimension(10) :: irecycl
 
-    real*8 :: tneocl, tneocl0, rneocl
-
+    double precision :: tneocl, tneocl0, rneocl
     double precision :: dum1, tau_strahl, ne_decayl, te_decayl, ti_decayl, &
         z_K, zdr_0, zdr_1, rbrlcfs, rlimrlcfs, tolimiter, &
         solflow, solrout1, solrout2, solrout3, solrout4, todivert, addsheathvoltage
-    double precision, dimension(NRD) :: rhovol, r_rho
+    double precision, dimension(NRD) :: rhovol, drvol_drtor
     double precision, dimension(10) :: aweight, eneutr, rsources, rrates, trates, ridecay, &
         wrecycl, divpuff, swincm, swoutcm, promptredep, taudiv, taupump
     double precision, dimension(n_o_max) :: rpol_o, zeff_o, pradtot_o, nmain_o, pradmain_o 
@@ -156,21 +154,22 @@ contains
 
     indexx = 1
 
-! rhovol
     do j=1, NA1
         rhovol(j) = (VOLUM(j)/(GP2*GP*(RTOR + SHIF(1))))**0.5
     enddo
 
+! Conversion from rho to rhovol of STRAHL for diffusion and convection
+
     do j=1, NA
-        r_rho(j) = (rhovol(j+1) - rhovol(j))/HRO
+        drvol_drtor(j) = (rhovol(j+1) - rhovol(j))/HRO
     enddo
-    r_rho(NA1) = r_rho(NA)
+    drvol_drtor(NA1) = drvol_drtor(NA)
 
 ! Conversion from rho to rhovol of STRAHL for diffusion and convection
 
-    g11_dvol_fac(1:NA1) = r_rho(1:NA1)*G11(1:NA1)/VRS(1:NA1)
+    g11_dvol_fac(1:NA1) = drvol_drtor(1:NA1)*G11(1:NA1)/VRS(1:NA1)
     do isp=1, nimp_touse
-        Dzin(1:NA1, isp) = Dz_in_strahl(1:NA1, isp)*g11_dvol_fac(1:NA1)*r_rho(1:NA1)
+        Dzin(1:NA1, isp) = Dz_in_strahl(1:NA1, isp)*g11_dvol_fac(1:NA1)*drvol_drtor(1:NA1)
         Vzin(1:NA1, isp) = Vz_in_strahl(1:NA1, isp)*g11_dvol_fac(1:NA1)
     enddo
 
@@ -354,7 +353,7 @@ contains
         '', &
         ' ', &
         'cv   # of interpolation points'
-    write(iu, *) '          ', min(NA1, ngmax) -1 + 4
+    write(iu, *) '          ', min(NA1, ngmax) - 1 + 4
     write(iu, '(/A)') ''
     write(iu, '(A)') 'cv   rho poloidal grid for interpolation'
     do i=1, min(NA1, ngmax)-1
@@ -371,12 +370,12 @@ contains
     write(iu, '(A)') ''
     write(iu, '(A)') 'cv    D[m**2/s]'
 
-    do isp=1,nimp_touse
+    do isp=1, nimp_touse
         do i=1, min(NA1, ngmax)-1
-            write(iu, 101) '     ', Dz_anom(i,isp)
+            write(iu, 101) '     ', Dz_anom(i, isp)
         enddo
-        write(iu, 101) '     ', Dz_anom(min(NA1, ngmax) - 1,isp) + (1. - rho_pol(min(NA1, ngmax) - 1)) * &
-            (dimpsol - Dz_anom(min(NA1, ngmax) - 1,isp))/(1.05 - rho_pol(min(NA1, ngmax) - 1))
+        write(iu, 101) '     ', Dz_anom(min(NA1, ngmax) - 1, isp) + (1. - rho_pol(min(NA1, ngmax) - 1)) * &
+            (dimpsol - Dz_anom(min(NA1, ngmax) - 1, isp))/(1.05 - rho_pol(min(NA1, ngmax) - 1))
         write(iu, 101) '     ', dimpsol
         write(iu, 101) '     ', dimpsol
         write(iu, 101) '     ', dimpsol
@@ -410,10 +409,10 @@ contains
         do i=1, min(NA1, ngmax)
             write(iu, 101) '     ', Vz_anom(i,isp)
         enddo
-        write(iu, 101) '     ', 0.0
-        write(iu, 101) '     ', 0.0
-        write(iu, 101) '     ', 0.0
-        write(iu, 101) '     ', 0.0
+        write(iu, 101) '     ', vimpsol
+        write(iu, 101) '     ', vimpsol
+        write(iu, 101) '     ', vimpsol
+        write(iu, 101) '     ', vimpsol
     enddo
 
     write(iu, '(A)') &
@@ -550,7 +549,7 @@ contains
 ! Conversion from strahl rvol to astra rho
 
     do isp=1, nimp_touse
-        dneosp_o(1:NA1, isp) = dneosp_o(1:NA1, isp)/(r_rho(1:NA1)*g11_dvol_fac(1:NA1))
+        dneosp_o(1:NA1, isp) = dneosp_o(1:NA1, isp)/(drvol_drtor(1:NA1)*g11_dvol_fac(1:NA1))
         vneosp_o(1:NA1, isp) = vneosp_o(1:NA1, isp)/g11_dvol_fac(1:NA1)
     enddo
 
@@ -586,7 +585,7 @@ contains
     double precision, intent(in), dimension(ngrid) :: ne, te, ti, rhopol
     double precision, intent(in), dimension(ngmax) :: rhopolg, teg, tig, neg
     character(len=20), intent(in) :: rho_coord
-    character(len=80), intent(in) :: strahl_dir
+    character(len=*),  intent(in) :: strahl_dir
 
     integer :: i, iu
 
@@ -762,7 +761,7 @@ contains
 
     integer, intent(in) :: nfour_c
     double precision, intent(in) :: Raxis, Rvoltot, Vloop, time
-    character(len=80), intent(in) :: strahl_dir
+    character(len=*),  intent(in) :: strahl_dir
     character(len=4) , intent(in) :: machine
 
     integer :: i, j, nequil, iu
