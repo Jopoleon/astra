@@ -241,6 +241,7 @@ BMINT(nrho)  = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, BMINT
 BDB02(nrho)  = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, BDB02)
 BDB0(nrho)   = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, BDB0)
 B0DB2(nrho)  = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, B0DB2)
+dpsidvbez(nrho) = EXTRAPOLATE(rho_interp, nrho-1, nrho-2, nrho-3, nrho, rhot, dpsidvbez)
 
 call qinterp(rhot(1: nrho-1), G1(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
 G1(2: nrho-1) = dum1(2: nrho-1)
