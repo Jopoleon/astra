@@ -84,7 +84,7 @@ contains
     double precision :: dum1, tau_strahl, ne_decayl, te_decayl, ti_decayl, &
         z_K, zdr_0, zdr_1, rbrlcfs, rlimrlcfs, tolimiter, &
         solflow, solrout1, solrout2, solrout3, solrout4, todivert, addsheathvoltage
-    double precision, dimension(NRD) :: rhovol, drvol_drtor, r_rho
+    double precision, dimension(NRD) :: rhovol, drvol_drtor
     double precision, dimension(10) :: aweight, eneutr, rsources, rrates, trates, ridecay, &
         wrecycl, divpuff, swincm, swoutcm, promptredep, taudiv, taupump
     double precision, dimension(n_o_max) :: rpol_o, zeff_o, pradtot_o, nmain_o, pradmain_o 
@@ -182,11 +182,6 @@ contains
     do j=1, NA1
         rhovol(j) = (VOLUM(j)/(GP2*GP*(RTOR + SHIF(1))))**0.5
     enddo
-
-    do j=1, NA
-        r_rho(j) = (rhovol(j+1) - rhovol(j))/HRO
-    enddo
-    r_rho(NA1) = r_rho(NA)
 
 ! Conversion from rho to rhovol of STRAHL for diffusion and convection
 
@@ -402,9 +397,9 @@ contains
     write(iu, '(A)') ''
     write(iu, '(A)') 'cv    D[m**2/s]'
 
-    do isp=1,nimp_touse
+    do isp=1, nimp_touse
         do i=1, min(NA1, ngmax)-1
-            write(iu, 101) '     ', Dz_anom(i,isp)
+            write(iu, 101) '     ', Dz_anom(i, isp)
         enddo
         write(iu, 101) '     ', dimpsol
         write(iu, 101) '     ', dimpsol
@@ -443,7 +438,7 @@ contains
             write(iu, 101) '     ', Vz_anom(i,isp)
         enddo
         write(iu, 101) '     ', vimpsol
-        write(iu, 101) '     ', vimpsol 
+        write(iu, 101) '     ', vimpsol
         write(iu, 101) '     ', vimpsol
         write(iu, 101) '     ', vimpsol
         write(iu, 101) '     ', vimpsol
