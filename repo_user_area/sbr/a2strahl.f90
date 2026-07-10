@@ -384,7 +384,7 @@ contains
         '', &
         ' ', &
         'cv   # of interpolation points'
-    write(iu, *) '          ', min(NA1, ngmax)-1+4+1
+    write(iu, *) '          ', min(NA1, ngmax) + 4
     write(iu, '(/A)') ''
     write(iu, '(A)') 'cv   rho poloidal grid for interpolation'
     do i=1, min(NA1, ngmax)-1
@@ -425,7 +425,7 @@ contains
     write(iu, *) '         ', min(NA1, ngmax) + 4
     write(iu, '(/A)') 'cv   rho poloidal grid for      interpolation'
     do i=1, min(NA1, ngmax)
-        if(NA1 > ngmax) then
+        if (NA1 > ngmax) then
             write(iu, 101) '     ', rhopolg(i)
         else
             write(iu, 101) '     ', rho_pol(i)
@@ -830,7 +830,7 @@ contains
         '   ', &
         '   ', &
         'cv     rho volume / rho_volume(LCFS)    '
-    
+
     do i=1, nequil
         rvol = sqrt(equil_now%profiles_1d%volume(i)/equil_now%profiles_1d%volume(nequil))
         write(iu, 101) rvol
@@ -860,7 +860,7 @@ contains
         '   ', &
         '   ', &
         'cv  fraction of circulating particles  '
-    
+
     btor = equil_now%global_param%toroid_field%b0
     do i=1, nequil
         BDB0  = equil_now%profiles_1d%bdb0(i)
