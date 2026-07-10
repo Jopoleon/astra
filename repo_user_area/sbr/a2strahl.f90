@@ -17,6 +17,7 @@ contains
 !---------------------------------------------------------------------
     subroutine A2STRAHL(tau_start, zneocl, dzneocl, dimpsol)
 !---------------------------------------------------------------------
+!    - D. Fajardo, Feb 2024: geometry factors for Dzin, vzin
 !    - D. Fajardo, Feb 2023
 !    - G. Tardini, Sep 2022
 !    - E. Fable, Feb 2012 -   CCCs
@@ -254,7 +255,7 @@ contains
         '   ', &
         'cv     finite vol=1, finite diff=0', &
         '         1', &
-        '   ', & 
+        '   ', &
         '      S T A R T   C O N D I T I O N S', &
         '   ', &
         'cv    start new=0/from old impurity   distribution=1     shot   at    time  index'
@@ -421,7 +422,7 @@ contains
         ' ', &
         ' ', &
         'cv   # of interpolation points'
-    write(iu, *) '         ', min(NA1, ngmax)-1+4+1
+    write(iu, *) '         ', min(NA1, ngmax) + 4
     write(iu, '(/A)') 'cv   rho poloidal grid for      interpolation'
     do i=1, min(NA1, ngmax)
         if(NA1 > ngmax) then
