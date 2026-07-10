@@ -4,20 +4,19 @@ use parameter_inc, only: NRD
 
 implicit none
 
-double precision, dimension(NRD) ::     zeff_strahl, prad_tot_strahl,&
-                                        nmain_strahl, prad_main_strahl
+double precision, dimension(NRD) :: zeff_strahl, prad_tot_strahl,&
+    nmain_strahl, prad_main_strahl
 double precision, dimension(NRD, 11) :: prad_strahl, nimp_strahl, &
-                                        zavg_strahl, nesrc_strahl, &
-                                        Dneo_strahl, Vneo_strahl, &
-                                        Dz_in_strahl, Vz_in_strahl
+    zavg_strahl, nesrc_strahl, Dneo_strahl, Vneo_strahl, &
+    Dz_in_strahl, Vz_in_strahl
 
-double precision, dimension(11) ::      rrates_in_strahl 
+double precision, dimension(11) :: rrates_in_strahl 
 
 contains
 
-!----------------------------------------------------------------------
+!---------------------------------------------------------------------
     subroutine A2STRAHL(tau_start, zneocl, dzneocl, dimpsol, shot_in)
-!----------------------------------------------------------------------
+!---------------------------------------------------------------------
 !    - D. Fajardo, Feb 2024: geometry factors for Dzin, vzin
 !    - D. Fajardo, Feb 2023
 !    - G. Tardini, Sep 2022
@@ -303,7 +302,7 @@ contains
 
 ! reclying has to be for each imp species
     do isp=1, nimp_touse
-        write(iu, '(A, I, A, F12.4, A, E14.5, A, E12.4)') &
+        write(iu, '(A, i0, A, F12.4, A, E14.5, A, E12.4)') &
             '   ', irecycl(isp), '               ', wrecycl(isp), '        ', taudiv(isp), '  ', taupump(isp)
     enddo
     write(iu, '(A)') &
@@ -355,7 +354,7 @@ contains
         '', &
         ' ', &
         'cv   # of interpolation points'
-    write(iu, *) '          ', min(NA1, ngmax)-1+4
+    write(iu, *) '          ', min(NA1, ngmax) -1 + 4
     write(iu, '(/A)') ''
     write(iu, '(A)') 'cv   rho poloidal grid for interpolation'
     do i=1, min(NA1, ngmax)-1
@@ -430,10 +429,10 @@ contains
     close(iu)
 
 101 format(A, F15.8)
-104 format(A, F15.8 , A, I, A, F15.8, A, F15.8)
+104 format(A, F15.8 , A, i0, A, F15.8, A, F15.8)
 105 format(A, E25.11, A, E25.11, 10A)
 108 format(A, F15.8 , A, E16.8, A, F15.8)
-109 format(A, I, A , I, A, I, A)
+109 format(A, i0, A , i0, A, i0, A)
 112 format(A, F15.8 , A, F15.8, A, F15.8, A, F15.8)
 145 format(A, F15.8 , A, F15.8, A, F15.8, A, F15.8, A, F15.8)
 ! end call params_file_write_strahl
@@ -567,9 +566,7 @@ contains
              rho_pol(1:NA1), Vneo_strahl(1:NA1, isp), NA1)
     enddo
 
-    i_stepst = i_stepst+1
-
-    if (i_stepst > 5) i_stepst=5
+    i_stepst = min(i_stepst + 1, 5)
 
     deallocate(g11_dvol_fac)
 
@@ -577,7 +574,7 @@ contains
 
     end subroutine a2strahl
 
-!----------------------------------------------------------------------
+!---------------------------------------------------------------------
     subroutine profiles_file_write_strahl(strahl_dir, rho_coord, rhopol, &
         ngrid, ne, te, ti, ne_decayl, te_decayl, ti_decayl, time, &
         rhopolg, teg, neg, tig, ngmax)
@@ -594,7 +591,7 @@ contains
     integer :: i, iu
 
 ! Start with main parameter file
-    open(newunit=iu, file=TRIM(strahl_dir)//strahl_prof_in)
+    open(newunit=iu, file=TRIM(strahl_dir) // strahl_prof_in)
     write(iu, '(A)') &
         '          ******************** ', &
         '          **** from ASTRA **** ', &
@@ -757,8 +754,7 @@ contains
     end subroutine profiles_file_write_strahl
 
 !----------------------------------------------------------------------
-    subroutine grid_write_strahl(strahl_dir, nfour_c, Raxis, &
-        Rvoltot, Vloop, time, machine)
+    subroutine grid_write_strahl(strahl_dir, nfour_c, Raxis, Rvoltot, Vloop, time, machine)
 
     use parameters_a2equil, only: equil_now
 
@@ -774,7 +770,7 @@ contains
 
     nequil = SIZE(equil_now%profiles_1d%volume)
 
-    open(newunit=iu, file=TRIM(strahl_dir)//strahl_grid_in)
+    open(newunit=iu, file=TRIM(strahl_dir) // strahl_grid_in)
     write(iu, '(A)') &
         '   ', &
         'cv  rho volume(LCFS)[cm]  R_axis[cm]   U_loop[V]    time[s] '
