@@ -91,6 +91,7 @@ contains
         dneosp_o, vneosp_o
     double precision, dimension(ngmax) :: rhopolg, neg, teg, tig
     double precision, dimension(NRD, 10) :: Dzin, Vzin, Dz_anom, Vz_anom
+    double precision, dimension(:), allocatable :: g11_dvol_fac
 
     character(len=300) :: strahl_base, strahl_dir, cmd_cmd, as_nml, results_file
     character(len=20) :: rho_coord, elements_touse(10)
@@ -99,7 +100,7 @@ contains
     integer, save :: i_stepst=0, ineocli=0
     double precision, save :: tneocl0_save=0.d0
 
-    NAMELIST / strahl_par /  tau_strahl, rho_coord, ne_decayl, te_decayl, ti_decayl, &
+    NAMELIST / strahl_par / tau_strahl, rho_coord, ne_decayl, te_decayl, ti_decayl, &
         nfour_c, nimp_touse, elements_touse, aweight, eneutr, ridecay, irecycl, &
         wrecycl, diffname1_s, z_K, n_grids, zdr_0, zdr_1, rsources, rrates, trates, &
         ineocla, rneocl, divpuff, swincm, swoutcm, promptredep, taudiv, taupump, &
@@ -114,6 +115,8 @@ contains
     open(newunit=iu, FILE=TRIM(as_nml), delim='apostrophe')
     read(iu, nml=strahl_par, iostat=ios)
     close(iu)
+
+    allocate(g11_dvol_fac(NA1))
 
     ineocl = 0
     tneocl = TIME - TSTART - tneocl0_save
@@ -194,9 +197,10 @@ contains
     drvol_drtor(NA1-1) = drvol_drtor(NA1-2)
     drvol_drtor(NA1) = drvol_drtor(NA1-2)
 
+    g11_dvol_fac(1:NA1) = drvol_drtor(1:NA1)*G11(1:NA1)/VRS(1:NA1)
     do isp=1, nimp_touse
-        Dzin(:,isp) = Dz_in_strahl(:,isp)*drvol_drtor(:)**2*G11(1:NA1)/VRS(1:NA1)
-        Vzin(:,isp) = Vz_in_strahl(:,isp)*drvol_drtor(:)*G11(1:NA1)/VRS(1:NA1)
+        Dzin(1:NA1, isp) = Dz_in_strahl(1:NA1, isp)*g11_dvol_fac(1:NA1)*drvol_drtor(1:NA1)
+        Vzin(1:NA1, isp) = Vz_in_strahl(1:NA1, isp)*g11_dvol_fac(1:NA1)
     enddo
 
     rhopolg(1) = 0.
@@ -228,13 +232,13 @@ contains
 
 ! Produce STRAHL input files
 
-!Start with main parameter file
+! Start with main parameter file
     open(newunit=iu, file=TRIM(strahl_dir)//TRIM(strahl_param_in))
     write(iu, '(A)') &
         '               M A I N  I O N ', &
         '   ', &
         'cv    background ion:  atomic weight    charge  '
-!Deuterium: A=2.0    Z=1.0
+! Deuterium: A=2.0    Z=1.0
     write(iu, '(A, F12.4, A, F12.4)') '          ', amain(1), '   ', zmain(1)
 ! remember to put variable instead of 2.some for weight and charge
     write(iu, '(A)') &
@@ -582,8 +586,8 @@ contains
 ! Conversion from strahl rvol to astra rho
 
     do isp=1, nimp_touse
-        dneosp_o(1:NRD, isp) = dneosp_o(1:NRD, isp)/(drvol_drtor(1:NRD)**2*G11(1:NRD)/VRS(1:NRD))
-        vneosp_o(1:NRD, isp) = vneosp_o(1:NRD, isp)/(drvol_drtor(1:NRD)*G11(1:NRD)/VRS(1:NRD))
+        dneosp_o(1:NA1, isp) = dneosp_o(1:NA1, isp)/(drvol_drtor(1:NA1)*g11_dvol_fac(1:NA1))
+        vneosp_o(1:NA1, isp) = vneosp_o(1:NA1, isp)/g11_dvol_fac(1:NA1)
     enddo
 
 ! Dneo species
@@ -599,6 +603,8 @@ contains
     enddo
 
     i_stepst = min(i_stepst + 1, 5)
+
+    deallocate(g11_dvol_fac)
 
     print *, "Finished STRAHL call"
 
