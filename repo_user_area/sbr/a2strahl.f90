@@ -143,9 +143,9 @@ contains
         return
     endif
 
-    print *, "Calling STRAHL..."
-    print *, "Number of impurities:", nimp_touse
-    print *, "Species: ", (elements_touse(isp), isp=1, nimp_touse)
+    write(*, '(/A)') 'Calling STRAHL...'
+    print *, 'Number of impurities:', nimp_touse
+    print *, 'Species: ', (elements_touse(isp), isp=1, nimp_touse)
 
     diffname1_s = ''
 
@@ -602,7 +602,7 @@ contains
 
     deallocate(g11_dvol_fac)
 
-    print *, "Finished STRAHL call"
+    write(*, '(A/)') 'Finished STRAHL call'
 
     end subroutine a2strahl
 
