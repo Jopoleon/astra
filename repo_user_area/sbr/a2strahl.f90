@@ -58,8 +58,8 @@ contains
 !============================================================================================!
 
     use parameter_inc, only: NRD
-    use const_inc, only: TIME, TSTART, TAUPRP, NA1, GP, GP2, RTOR, NA, HRO, IPART
-    use status_inc, only: rho_pol, UPL, VOLUM, SHIF, NE, TE, TI, AMAIN, ZMAIN, G11, VRS
+    use const_inc, only: TIME, TSTART, TAUPRP, NA1, GP, GP2, RTOR, NA, IPART
+    use status_inc, only: rho_pol, UPL, VOLUM, SHIF, NE, TE, TI, AMAIN, ZMAIN, RHO, VRS, G11
     use io_mod, only: machine, awd, nml_file, astra_ext
     use numerical_tools, only: qinterp
 
@@ -160,12 +160,13 @@ contains
 
 ! Conversion from rho to rhovol of STRAHL for diffusion and convection
 
-    do j=1, NA
-        drvol_drtor(j) = (rhovol(j+1) - rhovol(j))/HRO
+    do j=2, NA1-1
+        drvol_drtor(j) = (rhovol(j+1) - rhovol(j-1))/(RHO(j+1)-RHO(j-1))
     enddo
-    drvol_drtor(NA1) = drvol_drtor(NA)
-
-! Conversion from rho to rhovol of STRAHL for diffusion and convection
+    drvol_drtor(NA1) = (rhovol(NA1) - rhovol(NA1-1))/(RHO(NA1)-RHO(NA1-1))
+    drvol_drtor(1) = drvol_drtor(2)
+    drvol_drtor(NA1-1) = drvol_drtor(NA1-2)
+    drvol_drtor(NA1) = drvol_drtor(NA1-2)
 
     g11_dvol_fac(1:NA1) = drvol_drtor(1:NA1)*G11(1:NA1)/VRS(1:NA1)
     do isp=1, nimp_touse
@@ -353,7 +354,7 @@ contains
         '', &
         ' ', &
         'cv   # of interpolation points'
-    write(iu, *) '          ', min(NA1, ngmax) - 1 + 4
+    write(iu, *) '          ', min(NA1, ngmax) + 4
     write(iu, '(/A)') ''
     write(iu, '(A)') 'cv   rho poloidal grid for interpolation'
     do i=1, min(NA1, ngmax)-1
@@ -363,6 +364,7 @@ contains
             write(iu, 101) '     ', rho_pol(i)
         endif
     enddo
+    write(iu, 101) '     ', 1.0
     write(iu, 101) '     ', solrout1
     write(iu, 101) '     ', solrout2
     write(iu, 101) '     ', solrout3
@@ -374,8 +376,8 @@ contains
         do i=1, min(NA1, ngmax)-1
             write(iu, 101) '     ', Dz_anom(i, isp)
         enddo
-        write(iu, 101) '     ', Dz_anom(min(NA1, ngmax) - 1, isp) + (1. - rho_pol(min(NA1, ngmax) - 1)) * &
-            (dimpsol - Dz_anom(min(NA1, ngmax) - 1, isp))/(1.05 - rho_pol(min(NA1, ngmax) - 1))
+        write(iu, 101) '     ', dimpsol
+        write(iu, 101) '     ', dimpsol
         write(iu, 101) '     ', dimpsol
         write(iu, 101) '     ', dimpsol
         write(iu, 101) '     ', dimpsol
@@ -399,6 +401,7 @@ contains
             write(iu, 101) '     ', rho_pol(i)
         endif
     enddo
+    write(iu, 101) '     ', 1.0
     write(iu, 101) '     ', solrout1
     write(iu, 101) '     ', solrout2
     write(iu, 101) '     ', solrout3
@@ -406,9 +409,10 @@ contains
     write(iu, *) ''
     write(iu, '(A)') 'cv    V[m/s]'
     do isp=1,nimp_touse
-        do i=1, min(NA1, ngmax)
+        do i=1, min(NA1, ngmax)-1
             write(iu, 101) '     ', Vz_anom(i,isp)
         enddo
+        write(iu, 101) '     ', vimpsol
         write(iu, 101) '     ', vimpsol
         write(iu, 101) '     ', vimpsol
         write(iu, 101) '     ', vimpsol
