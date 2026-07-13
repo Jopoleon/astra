@@ -64,7 +64,7 @@ contains
 !  
 !============================================================================================!
 
-    use scalars, only: TIME, TSTART, TAUPRP, NA1, RTOR, NA, HRO, IPART
+    use scalars, only: TIME, TSTART, TAUPRP, NA1, RTOR, NA, IPART
     use pi_const, only: GP, GP2
     use status, only: rho_pol, UPL, VOLUM, SHIF, NE, TE, TI, AMAIN, ZMAIN, RHO, VRS, G11
     use read_input, only: machine, awd, nml_file, astra_ext
