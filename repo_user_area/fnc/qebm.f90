@@ -2,12 +2,12 @@
 !   (Pereverzev 20-MAY-08)
 double precision FUNCTION QEBMR(YR)
 
-use status_inc, only: PEBM
+use status, only: PEBM
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT
 
 QEBMR = VINT(PEBM, YR)
 

@@ -2,13 +2,15 @@
 !   (Pereverzev 17-FEB-00)
 double precision function IOHMR(YR)
 
-use const_inc, only: NA1, RTOR, GP2, HRO
-use status_inc, only: CC, ULON, RHO
+use pi_const, only: GP2
+use scalars, only: NA1, RTOR, HRO
+use status, only: CC, ULON, RHO
+use standard_functions, only: IINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: A(NA1), IINT
+double precision :: A(NA1)
 integer :: j
 
 do j=1, NA1
@@ -18,5 +20,4 @@ enddo
 
 IOHMR = IINT(A, YR)
 
-return
 end function IOHMR

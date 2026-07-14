@@ -8,11 +8,12 @@ subroutine NEUT()
 ! Output: NN, TN, ALBPL
 !---------------------------------------------CHANGED BY POLEVOY-------|
 
-use parameter_inc, only: NRD
-use const_inc, only: NA, NA1, ABC, NAB, ENCL, ENWM, NNCL, NNWM, AMJ, NNCX, ALBPL
-use status_inc, only: NN, TN, NE, TE, NI, TI, SNNBM, AMAIN
+use scalars, only: NA, NA1, ABC, NAB, ENCL, ENWM, NNCL, NNWM, AMJ, ALBPL
+use status, only: NRD, NN, TN, NE, TE, NI, TI, SNNBM, AMAIN
 
 implicit none
+
+integer, parameter :: NNCX=200
 
 integer :: J, JJ, JN
 double precision, dimension(NRD) :: SCXNI, TEN, SRCNN, YVI, &

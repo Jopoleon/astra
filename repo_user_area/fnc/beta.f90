@@ -8,8 +8,9 @@
 
 double precision function BETAR(YR)
 
-use const_inc, only: ROC, HRO, NA1, BTOR
-use status_inc, only: VR, TE, TI, NE, NI, PBLON, PBPER, PFAST
+use scalars, only: ROC, HRO, NA1, BTOR
+use status, only: VR, TE, TI, NE, NI, PBLON, PBPER, PFAST
+use standard_functions, only: jrho_drho
 
 implicit  none
 
@@ -17,17 +18,16 @@ double precision, intent(in) :: YR
 integer :: J, JK
 double precision :: YV, YDR
 
-call yrjkdr(YR, JK, YDR)
+call jrho_drho(YR, JK, YDR)
 
 YV = 0.
 BETAR = 0.
 do J=1, JK
-   YV = YV + VR(J)
-   BETAR = BETAR + VR(j)*(TE(J)*NE(J) + TI(J)*NI(J) + 0.5*(PBLON(J) + PBPER(J)) + PFAST(J))
+    YV = YV + VR(J)
+    BETAR = BETAR + VR(j)*(TE(J)*NE(J) + TI(J)*NI(J) + 0.5*(PBLON(J) + PBPER(J)) + PFAST(J))
 enddo
 YV = YV - YDR
 BETAR = BETAR - YDR*(TE(JK)*NE(JK) + TI(JK)*NI(JK) + 0.5*(PBLON(JK) + PBPER(JK)) + PFAST(J))
 BETAR = 0.402*BETAR/(YV*BTOR*BTOR)
 
-return
 end function betar

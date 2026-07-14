@@ -27,7 +27,7 @@ integer, parameter :: max_xpoints=500
 integer :: i_plasmatype !(0-limited, 1-single null, 2-double null)
 integer :: iaxis, jaxis, n_of_xpoints, active_x_point
 double precision :: psibnd, psiaxis, rax, zax, &
-    alpsep, psistabR, psistabZ, dr_factor_init, dz_factor_init
+    alpsep, psistabR, psistabZ
 double precision, dimension(max_xpoints) :: r_xpoint, z_xpoint, psi_xpoint
 double precision, dimension(:, :), allocatable :: green_bnd_f
 
@@ -53,9 +53,8 @@ contains
 !--------------------------------------------------------------------
     function solve_gs2d(greenBnd_in) result(green_out)
 
-    use pi_vars, only: mu0
-    use fft_mod_eff, only: costable
-    use feqis_tools, only: discrete_sine_transform, solve_tridiag_fbe
+    use pi_const, only: mu0
+    use feqis_tools, only: discrete_sine_transform, solve_tridiag_fbe, costable
 
     double precision, intent(in), dimension(2*nr+2*nz) :: greenBnd_in
     double precision, dimension(nr2, nz2) :: green_out
@@ -121,7 +120,6 @@ contains
     enddo
     green_out(2:nr1, 2:nz1) = 2./(nz + 1)*gt2(2:nr1, 2:nz1)
 
-    return
     end function solve_gs2d
 
 !---------------------------------------------------------------------
@@ -137,7 +135,6 @@ contains
         enddo
     enddo
 
-    return
     end subroutine psi_external_calc
 
 !---------------------------------------------------------------------
@@ -159,7 +156,6 @@ contains
         coeff(k) = sum(A_inv(k, :) * psi9)
     enddo
       
-    return
     end function getCoeffs
 
 !---------------------------------------------------------------------
@@ -178,7 +174,6 @@ contains
     r_out = Rrect(i_in) + dr_out
     z_out = Zrect(j_in) + dz_out
     
-    return
     end subroutine nine_point_regression
 
 !---------------------------------------------------------------------
@@ -212,7 +207,6 @@ contains
     r_out = r_in + dr_out
     z_out = z_in + dz_out
 
-    return
     end subroutine nine_point_regression_follow
 
 !---------------------------------------------------------------------
@@ -278,7 +272,6 @@ contains
 
     if (n_add == 0) ierr=1
 
-    return
     end subroutine find_closest_xpoints
 
 !-----------------------------------------------------------------------------------
@@ -295,14 +288,13 @@ contains
         green_bnd(j) = bgint(green_in, j)
     enddo
 
-    return
     end function boundary
 
 !-----------------------------------------------------------------------------------
     double precision function bgint(green_in, j_in)
 ! Integral_over_boundary of -Green * dg/dn * dl
 
-    use pi_vars, only: GPI
+    use pi_const, only: GP
 
     double precision, intent(in), dimension(nr2, nz2) :: green_in
     integer, intent(in)  :: j_in
@@ -328,9 +320,8 @@ contains
         dgdn(jcount) = green_in(2, j) * green_bnd_f(j_in, jcount) * dz/dr * 2./(Rrect(1) + Rrect(2))
     enddo
 
-    bgint = sum(dgdn)/GPI
+    bgint = sum(dgdn)/GP
 
-    return
     end function bgint
 
 !---------------------------------------------------------------------
@@ -375,7 +366,6 @@ contains
         endif
     enddo
 
-    return
     end function xpoint_axis_connection
 
 !--------------------------------------------------------------------
@@ -411,11 +401,10 @@ contains
         stop
     endif
 
-    return
     end subroutine find_new_axis
 
 !-------------------------------------------------------------------
-    subroutine compound_psi()   ! to think about ferromags...
+    subroutine compound_psi()   ! to think about ferromags...()
 
     psirz = psiplasrz + psiextrz
 
@@ -425,7 +414,6 @@ contains
 !        psirz = psirz + psiferro
 !    endif
 
-    return
     end subroutine compound_psi
   
 !--------------------------------------------------------------------
@@ -446,19 +434,19 @@ contains
         endif
     endif
 
-    return
     end subroutine add_xpoint
 
 !--------------------------------------------------------------------
     subroutine find_psi_boundary()
 
-    use pi_vars, only: GPI
+    use pi_const, only: GP
     use errors_params, only: err_find_oxpoints_derivs
     use feqis_tools, only: closest_index, pol_angle, interp2d_psi
+    use transport2fbe, only: use_limiter
 
     logical :: from_scratch
     integer :: niter, i, j, k, i1, i4, i5, i9, n_adding
-    double precision :: x1, x2, x5, pos_xpointR, pos_xpointZ
+    double precision :: x1, x2, pos_xpointR, pos_xpointZ
     double precision, dimension(5) :: dpsi
     double precision, dimension(200) :: rx_add, zx_add
     double precision, dimension(500) :: psi_limp
@@ -612,10 +600,10 @@ contains
         do i=1, n_of_xpoints
             if (psi_xpoint(i) > -1.e5) then
                 x1 = pol_angle(rax, zax, r_xpoint(i), z_xpoint(i))
-                if ((r_xpoint(i) > rax) .and. (x1 >= 7./4.*GPI .or.  x1 <= GPI/4.   )) raus   = min(raus, r_xpoint(i))
-                if ((z_xpoint(i) > zax) .and. (x1 >=   GPI/4.  .and. x1 <= 3./4.*GPI)) ztop   = min(ztop, z_xpoint(i))
-                if ((r_xpoint(i) < rax) .and. (x1 >= 3./4.*GPI .and. x1 <= 5./4.*GPI)) rinner = max(rinner, r_xpoint(i))
-                if ((z_xpoint(i) < zax) .and. (x1 >= 5./4.*GPI .and. x1 <= 7./4.*GPI)) zbot   = max(zbot, z_xpoint(i))
+                if ((r_xpoint(i) > rax) .and. (x1 >= 7./4.*GP .or.  x1 <= GP/4.   )) raus   = min(raus, r_xpoint(i))
+                if ((z_xpoint(i) > zax) .and. (x1 >=   GP/4.  .and. x1 <= 3./4.*GP)) ztop   = min(ztop, z_xpoint(i))
+                if ((r_xpoint(i) < rax) .and. (x1 >= 3./4.*GP .and. x1 <= 5./4.*GP)) rinner = max(rinner, r_xpoint(i))
+                if ((z_xpoint(i) < zax) .and. (x1 >= 5./4.*GP .and. x1 <= 7./4.*GP)) zbot   = max(zbot, z_xpoint(i))
             endif
         enddo
         do j=1, nlimiter
@@ -655,15 +643,13 @@ contains
 ! Normalized flux
     psi_n(1:nr2, 1:nz2) = (psirz(1:nr2, 1:nz2) - psiaxis)/(psibnd - psiaxis)
 
-    return
     end subroutine find_psi_boundary
 
 !--------------------------------------------------------------------
-    subroutine new_jrz()
-! calculate new right hand side given new boundary!
+    subroutine new_jrz() ! calculate new right hand side given new boundary!()
 
     use feqis_tools, only: fill_in_current, floor_index
-    use global_params, only: iplasma
+    use feqis_scalars, only: iplasma
 
     integer :: i, j, i1, i2, j1, quadrant, ipluz, jpluz, &
         ilast, totpoints, istart, j_griddo_j
@@ -817,7 +803,6 @@ contains
         stop
     endif
 
-    return
     end subroutine new_jrz
 
 !--------------------------------------------------------------------
@@ -831,7 +816,6 @@ contains
     greenBnd = boundary(green)      ! gbound = integral (Green*dg/dn) over the boundary
     psi_plas = solve_gs2d(greenBnd) ! again jrz as right hand side
 
-    return
     end function get_psiplasrz
 
 !--------------------------------------------------------------------
@@ -848,7 +832,7 @@ contains
     double precision, dimension(9) :: coeff
 
     psiplasrz = get_psiplasrz()
-    call compound_psi
+    call compound_psi()
     if (j_stab == 1) then
         iloc = closest_index(raxold, Rrect(1), dr)
         jloc = closest_index(zaxold, Zrect(1), dz)
@@ -864,11 +848,10 @@ contains
             enddo
         enddo
     endif
-    call find_new_axis
-    call find_psi_boundary
-    call new_jrz
+    call find_new_axis()
+    call find_psi_boundary()
+    call new_jrz()
 
-    return
     end subroutine solve_fbe_instantaneous
 
 !--------------------------------------------------------------------
@@ -876,6 +859,7 @@ contains
 
     use feqis_tools, only: closest_index
     use errors_params, only: err_find_psistab
+    use transport2fbe, only: dr_factor_init, dz_factor_init
 
     double precision, intent(in):: raxp, zaxp
     integer, intent(in):: n_of_newton_iterations
@@ -958,7 +942,6 @@ contains
         if (temp_err2 <= err_find_psistab) EXIT
     enddo
 
-    return
     end subroutine solve_fbe_static_iterations_curgiven
 
 end module fbe_core

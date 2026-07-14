@@ -5,31 +5,64 @@ endif
 SRC_DIR = $(AWD)/$(sub)
 OBJ_DIR = $(AWD)/obj/$(sub)
 MOD_DIR = $(AWD)/mod/$(sub)
-INC_DIR = $(AWD)/inc
-MOD_FOR = $(AWD)/mod/for 
-MOD_FEQ = $(AWD)/mod/feqis 
+MOD_ASTRA = $(AWD)/mod/astra
 MOD_NBI   = $(AWD)/mod/nbi
+MOD_MISC  = $(AWD)/mod/misc
+
 LIB_DIR = $(AWD)/lib
 LIB = $(LIB_DIR)/lib$(sub).a
 
-FC_FLAGS = -r8 -no-prec-div -traceback -ip -O0 -w -fPIC -qopenmp $(CHECKALLCOMP)
+ifdef TORIC_LIB
+   TORIC_FLAG = -DTORIC_INSTALLED
+else
+   TORIC_FLAG =
+   TORIC_LIB  =
+endif
 
-SRCF90 := $(wildcard $(SRC_DIR)/*.f90)
-SRCF   := $(wildcard $(SRC_DIR)/*.f)
-SRCC   := $(wildcard $(SRC_DIR)/*.c)
+ifdef TORBEAM_LIB
+   TORBEAM_FLAG = -DTORBEAM_INSTALLED
+else
+   TORBEAM_FLAG =
+   TORBEAM_LIB  =
+endif
 
-OBJF90 := $(patsubst $(SRC_DIR)%.f90, $(OBJ_DIR)%.o, $(SRCF90))
-OBJF   := $(patsubst $(SRC_DIR)%.f, $(OBJ_DIR)%.o, $(SRCF)  )
-OBJC   := $(patsubst $(SRC_DIR)%.c, $(OBJ_DIR)%.o, $(SRCC)  )
+ifdef RABBIT_LIB
+   RABBIT_FLAG = -DRABBIT_INSTALLED
+else
+   RABBIT_FLAG =
+   RABBIT_LIB  =
+endif
+
+ifdef QLKNN_LIB
+   QLKNN_FLAG = -DQLKNN_INSTALLED
+else
+   QLKNN_FLAG =
+   QLKNN_LIB  =
+endif
+
+SRCF90  := $(wildcard $(SRC_DIR)/*.f90)
+SRCFF90 := $(wildcard $(SRC_DIR)/*.F90)
+SRCF    := $(wildcard $(SRC_DIR)/*.f)
+SRCC    := $(wildcard $(SRC_DIR)/*.c)
+
+OBJF90  := $(patsubst $(SRC_DIR)/%.f90, $(OBJ_DIR)/%.o, $(SRCF90))
+OBJFF90 := $(patsubst $(SRC_DIR)/%.F90, $(OBJ_DIR)/%.o, $(SRCFF90))
+OBJF    := $(patsubst $(SRC_DIR)/%.f  , $(OBJ_DIR)/%.o, $(SRCF)  )
+OBJC    := $(patsubst $(SRC_DIR)/%.c  , $(OBJ_DIR)/%.o, $(SRCC)  )
 
 # Make Commands
 .PHONY: all
-all: directories $(LIB) mvmod
+all: print directories $(LIB) mvmod
+
+print:
+	echo "dir $(SRC_DIR)"
+	echo "sources $(SRCF90)"
+	echo "objects $(OBJF90)"
 
 .PHONY: directories
 directories:
-	@mkdir -p $(OBJ_DIR)
 	@mkdir -p $(MOD_DIR)
+	@mkdir -p $(OBJ_DIR)
 	@mkdir -p $(LIB_DIR)
 
 .PHONY: mvmod
@@ -39,32 +72,36 @@ mvmod:
 
 .PHONY: clean
 clean:
+	rm -rf $(MOD_DIR)
 	rm -rf $(OBJ_DIR)
 	rm $(LIB)
 
-$(OBJ_DIR)%.o: $(SRC_DIR)%.f
-	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -c $< -o $@
+$(OBJ_DIR)/tglf_serial.o: $(SRC_DIR)/tglf_serial.F90 $(TGLF_LIB)
+	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(TGLF_INC) $(TGLF_FLAG) -c $< -o $@
 
-$(OBJ_DIR)/tglf_serial.o: $(SRC_DIR)/tglf_serial.f90 $(TGLF_LIB)
-	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -I$(TGLF_INC) -c $< -o $@
+$(OBJ_DIR)/qlknn_serial.o: $(SRC_DIR)/qlknn_serial.F90 $(QLKNN_LIB)
+	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(QLKNN_INC) $(QLKNN_FLAG) -c $< -o $@
 
-$(OBJ_DIR)/qlknn_serial.o: $(SRC_DIR)/qlknn_serial.f90 $(QLKNN_LIB)
-	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -I$(QLKNN_INC) -c $< -o $@
+$(OBJ_DIR)/torba.o: $(SRC_DIR)/torba.F90
+	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) $(TORBEAM_FLAG) -c $< -o $@
 
-$(OBJ_DIR)/rabbit.o: $(SRC_DIR)/rabbit.f90
-	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -I$(RABBIT_INC) -c $< -o $@
+$(OBJ_DIR)/rabbit.o: $(SRC_DIR)/rabbit.F90
+	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(RABBIT_INC) $(RABBIT_FLAG) -c $< -o $@
+
+$(OBJ_DIR)/torfpql_mod.o: $(SRC_DIR)/torfpql_mod.F90
+	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(MOD_DIR) -I$(TORIC_INC) $(TORIC_FLAG) -c $(SRC_DIR)/torfpql_mod.F90 -o $@
 
 $(OBJ_DIR)/nbi.o: $(SRC_DIR)/nbi.f90
-	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -I$(MOD_NBI) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(MOD_NBI) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f90
-	$(FC) $(FC_FLAGS) -I$(MOD_FOR) -I$(MOD_FEQ) -c $< -o $@
+	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -c $< -o $@
+
+$(OBJ_DIR)%.o: $(SRC_DIR)%.f
+	$(FC) $(FC_FLAGS) -I$(MOD_MISC) -I$(MOD_ASTRA) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.c
-	$(CC) -I$(INC_DIR) -c $< -o $@
+	$(CC) -c $< -o $@
 
-$(LIB): $(OBJF90) $(OBJF) $(OBJC)
-	ar rv $(LIB) $(OBJF90) >/dev/null
-	ar rv $(LIB) $(OBJF) >/dev/null
-	ar rv $(LIB) $(OBJC) >/dev/null
-	ranlib $(LIB)
+$(LIB): $(OBJF90) $(OBJFF90) $(OBJF) $(OBJC)
+	ar rcs $(LIB) $(OBJF90) $(OBJFF90) $(OBJF) $(OBJC) >/dev/null

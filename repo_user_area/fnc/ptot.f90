@@ -2,8 +2,8 @@
 !   (Yushmanov 12-MAY-87)
 double precision FUNCTION PTOTR(YR)
 
-use const_inc, only: HRO, NA1
-use status_inc, only: PETOT, PITOT
+use scalars, only: HRO, NA1
+use status, only: PETOT, PITOT
 
 implicit none
 

@@ -2,12 +2,12 @@
 !   (Yushmanov 11-JAN-89)
 double precision FUNCTION QNTOTR(YR)
 
-use status_inc, only: SNTOT
+use status, only: SNTOT
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT
 
 QNTOTR = VINT(SNTOT, YR)
 

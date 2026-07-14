@@ -11,9 +11,9 @@ void tglf_interf_(int*, int*, double*, double*, double*);
 
 int main(int argc, char *argv[]) {
 
-    void *ShmAd0, *ShmAd1, *ShmAd2, *ShmAdr;
+    void *ShmAdr_dims, *ShmAdr_vars, *ShmAdr_arrs, *ShmAdr;
     int j, outSize, N_ARR_OUT, J_PROC, N_CHUNK;
-    int SemID, ShmId0, ShmId1, ShmId2;
+    int SemID, ShmID_dims, ShmID_vars, ShmID_arrs;
     int ProcShmId;
     key_t Key_in, ProcKey;
     pid_t ProcPid;
@@ -32,21 +32,21 @@ int main(int argc, char *argv[]) {
 
     sscanf(argv[1], "%s", ipc_file);
     Key_in = (key_t)atoi(argv[2]);
-    J_PROC    = atoi(argv[3]);
-    N_CHUNK   = atoi(argv[4]);
-    N_ARR_OUT = atoi(argv[5]);
-    ShmId0 = atoi(argv[6]);
-    ShmId1 = atoi(argv[7]);
-    ShmId2 = atoi(argv[8]);
+    J_PROC     = atoi(argv[3]);
+    N_CHUNK    = atoi(argv[4]);
+    N_ARR_OUT  = atoi(argv[5]);
+    ShmID_dims = atoi(argv[6]);
+    ShmID_vars = atoi(argv[7]);
+    ShmID_arrs = atoi(argv[8]);
     printf("Fortran main: %s %d %3d %3d %d\n", ProcPath, ProcPid, J_PROC, N_CHUNK, N_ARR_OUT);
 
 /* Associate My semaphore with the ordinal process number */
     bufN.sem_num = J_PROC;
 /* Get semaphore and shmem IDs. */
     SemID  = semget(Key_in, 0, 0660);
-    ShmAd0 = shmat(ShmId0, NULL, 0);
-    ShmAd1 = shmat(ShmId1, NULL, 0);
-    ShmAd2 = shmat(ShmId2, NULL, 0);
+    ShmAdr_dims = shmat(ShmID_dims, NULL, 0);
+    ShmAdr_vars = shmat(ShmID_vars, NULL, 0);
+    ShmAdr_arrs = shmat(ShmID_arrs, NULL, 0);
     ProcKey = ftok(ProcPath, (int)ProcPid);
     outSize = N_CHUNK*N_ARR_OUT*sizeof(double);
 
@@ -67,15 +67,15 @@ int main(int argc, char *argv[]) {
     fprintf(IPCa, "%10d %10d %10d\n", J_PROC, ProcPid, ProcShmId);
     fclose(IPCa);
 
-    int* dim_in = (int *)((char *)ShmAd0); // constant at all time steps
+    int* dim_in = (int *)((char *)ShmAdr_dims); // constant at all time steps
 
     while(1){
 /* Increments the PRIMARY semaphore immediately, i.e. lets it run
    and proceeds to the next line or exits if semop fails */
         if (semop(SemID, &buf0, 1) < 0) break;
         if (semop(SemID, &bufN, 1) < 0) break;
-        double* scal_in  = (double *)((char *)ShmAd1);
-	double* prof_in  = (double *)((char *)ShmAd2);
+        double* scal_in  = (double *)((char *)ShmAdr_vars);
+	double* prof_in  = (double *)((char *)ShmAdr_arrs);
         double* prof_out = (double *)((char *)ShmAdr); // IPC subprocess output
 
 /* Call Fortran function */

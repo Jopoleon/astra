@@ -1,6 +1,6 @@
 NEQUIL=91;
 MEQUIL=90;
-!MEQUIL=0;
+IPEQL = 4;
 
 atreq = .5;
 
@@ -88,7 +88,7 @@ MU=1./(CAR2X + 0.0001);
 !CU=max(0., min(70./IPLX*BTORX/2.5, CNSA));
 !CU=CNSA;
 
-!MIXINT(10.,ZRD22X)::::;tglf_pel	
+!MIXINT(10.,ZRD22X)::::;
 ! E.g. CF10=10 - Kadomtsev model, ZRD22X= prescribed period
 !CF9=min(0.25,ZRD22X);
 

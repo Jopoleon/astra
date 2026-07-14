@@ -22,8 +22,9 @@ SUBROUTINE FOUR_ARR(tim, n_cycle, ARRIN, FREQ, n_harm, arrout)
 ! under another name (see sbr/fourex.for)
 !-----------------------------------------------------------------------|
 
-use parameter_inc, only: NRD
-use const_inc, only: NA1, GP2
+use pi_const, only: GP2
+use status, only: NRD
+use scalars, only: NA1
 
 implicit none
 
@@ -33,7 +34,7 @@ double precision, intent(in), dimension(na1) :: ARRIN
 double precision, intent(out), dimension(NRD, n_harm*2+1) :: ARROUT
 
 integer :: jharm, jrho, jtime, jtimeold, jn
-double precision, dimension(NRD, 11) :: prof_sum=0.d0
+double precision, dimension(NA1, 11) :: prof_sum
 double precision :: arg, dt, tim_old=0., yyaa, phase, ycycle
 
 ARG  = GP2*FREQ*tim    ! Phase of the main frequency
@@ -42,43 +43,44 @@ ycycle = n_cycle
 jtime    = tim    *FREQ/ycycle ! Integer number of completed periods 
 jtimeold = tim_old*FREQ/ycycle
 
-if(jtime <= jtimeold) then
+prof_sum = 0.d0
+
+if (jtime <= jtimeold) then
 ! Time integration step for the 0th Fourier coefficient (time average):
-   prof_sum(1: NA1, 1) = prof_sum(1: NA1, 1) + ARRIN(1: NA1)*DT
+    prof_sum(:, 1) = prof_sum(:, 1) + ARRIN(1: NA1)*DT
 ! Integration for the Fourier coefficients:
-   do jharm = 1, n_harm  !jharm = armonic number
-      JN = 2*jharm
-      PHASE = jharm*ARG !Phase of the jharm-th harmonic
-      do jrho = 1, NA1
-         YYAA = (ARRIN(jrho) - ARROUT(jrho, 1))*DT
-         prof_sum(jrho, JN)   = prof_sum(jrho, JN)   + YYAA*cos(PHASE)
-         prof_sum(jrho, JN+1) = prof_sum(jrho, JN+1) + YYAA*sin(PHASE)
-      enddo
-   enddo
-   TIM_OLD = tim
-   return
+    do jharm = 1, n_harm  !jharm = armonic number
+        JN = 2*jharm
+        PHASE = jharm*ARG !Phase of the jharm-th harmonic
+        do jrho = 1, NA1
+            YYAA = (ARRIN(jrho) - ARROUT(jrho, 1))*DT
+            prof_sum(jrho, JN)   = prof_sum(jrho, JN)   + YYAA*cos(PHASE)
+            prof_sum(jrho, JN+1) = prof_sum(jrho, JN+1) + YYAA*sin(PHASE)
+        enddo
+    enddo
+    TIM_OLD = tim
+    return
 endif
 
 ! If the period has finished, define ARROUT and return it to ASTRA:
 ! Division by period, return Fourier coefficients to ASTRA:
 
-ARROUT(1: NA1, 1) = FREQ*prof_sum(1: NA1, 1)/ycycle !Division by period
-prof_sum(1: NA1, 1) = ARRIN(1: NA1)*DT ! Reset for the next integration
+ARROUT(1: NA1, 1) = FREQ*prof_sum(:, 1)/ycycle !Division by period
+prof_sum(:, 1) = ARRIN(1: NA1)*DT ! Reset for the next integration
 
 do jharm = 1, n_harm
-   JN = 2*jharm
-   PHASE = jharm*ARG
-   do jrho = 1, NA1
-      ARROUT(jrho, JN)   = 2.*FREQ*sqrt(prof_sum(jrho, JN)**2 + prof_sum(jrho, JN+1)**2)/ycycle
-      ARROUT(jrho, JN+1) = ATAN2(prof_sum(jrho, JN+1), prof_sum(jrho,JN))
+    JN = 2*jharm
+    PHASE = jharm*ARG
+    do jrho = 1, NA1
+        ARROUT(jrho, JN)   = 2.*FREQ*sqrt(prof_sum(jrho, JN)**2 + prof_sum(jrho, JN+1)**2)/ycycle
+        ARROUT(jrho, JN+1) = ATAN2(prof_sum(jrho, JN+1), prof_sum(jrho,JN))
 ! Begin for the next integration:
-      YYAA = (ARRIN(jrho) - ARROUT(jrho, 1))*DT
-      prof_sum(jrho, JN)   = YYAA*cos(PHASE)
-      prof_sum(jrho, JN+1) = YYAA*sin(PHASE)
-   enddo
+        YYAA = (ARRIN(jrho) - ARROUT(jrho, 1))*DT
+        prof_sum(jrho, JN)   = YYAA*cos(PHASE)
+        prof_sum(jrho, JN+1) = YYAA*sin(PHASE)
+    enddo
 enddo
 
 TIM_OLD = tim
 
-return
 end subroutine four_arr

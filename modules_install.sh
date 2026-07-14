@@ -2,15 +2,23 @@
 
 rootdir=`dirname $0`      # may be relative path
 export AWD=`cd $rootdir && pwd`  # ensure absolute path
+if [ $# -ge 1 ]
+then
+    comp=$1
+fi
 
 chmod 744 $AWD/get_platform
 platform=`$AWD/get_platform`
+if [[ -v comp ]]
+then
+    platform=${platform}_${comp}
+else
+    comp=""
+fi
 
-#--------------------
-# User dependent part
-#--------------------
+echo $platform
+source $AWD/platform/env.${platform}
 
-source $AWD/platform/env.$platform
 FC_SERIAL=$FC
 
 #------------------
@@ -34,8 +42,17 @@ STRAHL_VERSION=unstable
 #--------------------
 
 SOFT_ROOT=$HOME/soft
-JSON_INSTALL=$ASTRA_EXT/json/$JSON_VERSION
-NETCDF_INSTALL=$ASTRA_EXT/netcdf/$NETCDF_VERSION
+
+if [ "$FC" = 'gfortran' ]
+then
+    JSON_INSTALL=$ASTRA_EXT/json/gcc_$JSON_VERSION
+    NETCDF_INSTALL=$ASTRA_EXT/netcdf/gcc_$NETCDF_VERSION
+    export FFLAGS="-fopenmp"
+else
+    JSON_INSTALL=$ASTRA_EXT/json/$JSON_VERSION
+    NETCDF_INSTALL=$ASTRA_EXT/netcdf/$NETCDF_VERSION
+    export FFLAGS="-qopenmp"
+fi
 RABBIT_INSTALL=$ASTRA_EXT/rabbit/$RABBIT_VERSION
 TORBEAM_INSTALL=$ASTRA_EXT/torbeam/$TORBEAM_VERSION
 SPIDER_INSTALL=$ASTRA_EXT/spider/$SPIDER_VERSION
@@ -49,8 +66,9 @@ STRAHL_INSTALL=$ASTRA_EXT/strahl/$STRAHL_VERSION
 PATH_OLD=$PATH
 
 export PATH=$SOFT_ROOT/$CMAKE_VERSION/bin:$PATH
-export FFLAGS="-qopenmp"
+
 CMAKE=$SOFT_ROOT/$CMAKE_VERSION/bin/cmake
+
 mkdir -p $SOFT_ROOT
 
 #------------------
@@ -124,9 +142,10 @@ read -p "Install NetCDF (y/n) " NETCDF_FLAG
 if [ "$NETCDF_FLAG" = "y" ]
 then
     cd $NETCDF_INSTALL
+    FFLAGS_IN=$FFLAGS
     if [[ "$FC" == "ifx" ]]; then
         export CXX=icpx
-        export FFLAGS="-O2 -qopenmp"
+        export FFLAGS="-O2 $FFLAGS_IN"
         export CFLAGS="-O2"
     fi
     export LD_LIBRARY_PATH="$NETCDF_INSTALL/lib:$LD_LIBRARY_PATH"
@@ -178,6 +197,8 @@ then
     make install
     cd ..
 
+    export FFLAGS=FFLAGS_IN
+
     echo "========================"
     echo "Build complete!"
     echo "Libraries in $NETCDF_INSTALL/lib"
@@ -196,14 +217,14 @@ then
     rm -rf rabbit
 
     export LD_LIBRARY_PATH="$NETCDF_INSTALL/lib:$LD_LIBRARY_PATH"
-# git clone https://gitlab.mpcdf.mpg.de/markusw/rabbit
     git clone git@gitlab.mpcdf.mpg.de:markusw/rabbit.git
     RABBIT_HOME=$SOFT_ROOT/rabbit
     cd $RABBIT_HOME
     RABBIT_HASH=`git rev-parse HEAD`
     mkdir build
     cd build
-    $CMAKE .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_Fortran_COMPILER=$FC -DOpenMP_Fortran_FLAGS=-qopenmp -DNETCDF_HOME=$NETCDF_INSTALL
+    $CMAKE .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_Fortran_COMPILER=$FC -DOpenMP_Fortran_FLAGS=$FFLAGS -DNETCDF_HOME=$NETCDF_INSTALL
+#    $CMAKE .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_Fortran_COMPILER=$FC -DOpenMP_Fortran_FLAGS=$FFLAGS -DNETCDF_HOME=selfmade
     make
 
     mkdir -p $RABBIT_INSTALL/lib
@@ -257,7 +278,9 @@ then
     make
 
     mkdir -p $SPIDER_INSTALL/lib
+    mkdir -p $SPIDER_INSTALL/inc
     cp $SPIDER_HOME/lib/libspider.a $SPIDER_INSTALL/lib/
+    cp $SPIDER_HOME/inc/spider_params.mod $SPIDER_INSTALL/inc/
     cp $AWD/platform/env.$platform $SPIDER_INSTALL/
     echo $SPIDER_HASH | cat > $SPIDER_INSTALL/hash
     echo SPIDER built in $SPIDER_HOME installed in $SPIDER_INSTALL
@@ -267,6 +290,8 @@ fi
 # QuaLiKiz
 #---------
 
+echo $MPIFC
+which $MPIFC
 read -p "Install QuaLiKiz (y/n) " QLK_FLAG
 
 if [ "$QLK_FLAG" = "y" ]
@@ -279,10 +304,18 @@ then
     QLK_HASH=`git rev-parse HEAD`
     git submodule init
     git submodule update
+
+    if [ "$comp" = "gcc" ]
+    then
+        export TOOLCHAIN=gcc
+    fi
     export FC=$MPIFC
     export LINK=$MPIFC
     export QLK_HAVE_NAG=0
     export TUBSCFG_MPI=0
+    export VERBOSE=1
+    export BUILD=release
+
     make
 
     mkdir -p $QLK_INSTALL/lib
@@ -309,16 +342,31 @@ then
     QLKNN_HASH=`git rev-parse HEAD`
     git submodule init
     git submodule update
+
+    if [ "$comp" = "gcc" ]
+    then
+        export TOOLCHAIN=gcc
+    fi
+
     export FC=$FC_SERIAL
     export LINK=$FC_SERIAL
     export QLK_HAVE_NAG=0
     export TUBSCFG_MPI=0
+    export VERBOSE=1
+    export BUILD=release
+
     make
 
     mkdir -p $QLKNN_INSTALL/lib
     mkdir -p $QLKNN_INSTALL/inc
-    cp $QLKNN_HOME/lib/libQLKNN-intel-release-default.a $QLKNN_INSTALL/lib
-    cp $QLKNN_HOME/include/intel-release-default/* $QLKNN_INSTALL/inc/
+    if [ "$comp" = "gcc" ]
+    then
+        cp $QLKNN_HOME/lib/libQLKNN-gcc-release-default.a $QLKNN_INSTALL/lib
+        cp $QLKNN_HOME/include/gcc-release-default/* $QLKNN_INSTALL/inc/
+    else
+        cp $QLKNN_HOME/lib/libQLKNN-intel-release-default.a $QLKNN_INSTALL/lib
+        cp $QLKNN_HOME/include/intel-release-default/* $QLKNN_INSTALL/inc/
+    fi
     cp $AWD/platform/env.$platform $QLKNN_INSTALL/
     cd $QLKNN_INSTALL/
     rm -rf qlknn-hyper-namelists
@@ -349,21 +397,40 @@ then
     cd $GACODE_ROOT
     GACODE_HASH=`git rev-parse HEAD`
 
-    cat << EOT > ${GACODE_ROOT}/platform/build/make.inc.${GACODE_PLATFORM}
+    if [ "$FC" = 'gfortran' ]
+    then
+        cat << EOT > ${GACODE_ROOT}/platform/build/make.inc.${GACODE_PLATFORM}
+IDENTITY="IPP linux cluster"
+CORES_PER_NODE=16
+NUMAS_PER_NODE=1
+
+FC  = ${MPIFC} -J${GACODE_ROOT}/modules
+F77 = ${FC}
+FOMP   = ${FFLAGS}
+FMATH  =-fdefault-real-8
+FOPT   =-Ofast -fallow-argument-mismatch -Wno-error
+FDEBUG =-eD -Ktrap=fp -m 1
+LMATH = -L${MKLROOT}/lib/intel64 -Wl,-rpath,${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl
+FFTW_INC=${FFTW_INC}
+ARCH = ar cr
+EOT
+    else # Intel
+        cat << EOT > ${GACODE_ROOT}/platform/build/make.inc.${GACODE_PLATFORM}
 IDENTITY="IPP linux cluster"
 CORES_PER_NODE=16
 NUMAS_PER_NODE=1
 
 FC  = ${MPIFC} -module ${GACODE_ROOT}/modules
 F77 = ${FC}
-FOMP   =-qopenmp
+FOMP   = ${FFLAGS}
 FMATH  =-real-size 64
 FOPT   =-Ofast
 FDEBUG =-eD -Ktrap=fp -m 1
-LMATH = -qmkl -mkl
+LMATH = -qmkl
 FFTW_INC=${FFTW_INC}
 ARCH = ar cr
 EOT
+    fi
 
     cd $GACODE_ROOT/tglf
     make
@@ -411,7 +478,7 @@ then
 F90C=ifort
 #the compiler flags
 FFLAGS=-u -m64 -O
-NCDFLIB=$SOFT_ROOT/netCDF/fortran/.libs/libnetcdff.a $SOFT_ROOT/netCDF/liblib/.libs/libnetcdf.a
+NCDFLIB=$ASTRA_EXT/netcdf/mar26/lib/libnetcdff.a $ASTRA_EXT/netcdf/mar26/lib/libnetcdf.a
 F90FLAGS=-m64 -O -fPIC
 #the flags for the shared library
 SHAREDFLAGS=-G -fPIC -B symbolic -zdefs

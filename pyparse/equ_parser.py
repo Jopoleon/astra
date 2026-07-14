@@ -54,8 +54,9 @@ class EQU_PARSER:
         prof_ext = json_keys['strahl']
         self.profiles  = self.prof + self.profx + prof_ext
         self.constants = json_keys['constants']
-        self.intern1   = json_keys['internal']
-        self.intern2   = json_keys['intern2']
+        self.control   = json_keys['control']
+        self.internInt = json_keys['internInt']
+        self.internDbl = json_keys['internDbl']
         self.variables = json_keys['variables']
         self.varx      = json_keys['variables_x']
 
@@ -199,28 +200,20 @@ class EQU_PARSER:
                             self.init_d[var] = tmp[1]
                 logger.debug('%s %s %s %s', var, self.assign_d[var], self.init_d[var])
 
-        arname = []
+        self.arname = []
         equtxt = "".join(equ_lines)
 
         for j_eqn, eqn in enumerate(config.eqn_list):
             varx = eqn + 'X'
             if varx in equtxt:
-                arname.append(varx)
+                self.arname.append(varx)
 
         for lin in equ_lines:
             for jarr, var in enumerate(self.profx):
                 if var in lin:
-                    if var not in arname:
-                        arname.append(var)
+                    if var not in self.arname:
+                        self.arname.append(var)
                         break
-
-# Ordinal number in array list
-        self.arxuse = []
-        for varx in arname:
-            for jarr, arr in enumerate(self.profx):
-                if arr == varx:
-                    self.arxuse.append(jarr+1)
-                    break
 
 # Time output
 

@@ -1,5 +1,4 @@
- Start file for version 7.1.0
- Variables as described in the file "for/const.inc"
+ Variables:
 AB     =  6.000E-01
 ABC    =  5.000E-01
 AIM1   =  1.200E+01
@@ -200,22 +199,16 @@ CDHJ6  =  1.000E+00
 CDHJ7  =  1.000E+00
 CDHJ8  =  1.000E+00
 CDHJ9  =  1.000E+00
- Control parameters (common block A_OUTPUT):22
+ Control parameters
 DPOUT  =  1.000E-03
 TIME   =  4.000E+00
 TAUMIN =  1.000E-04
 TAUMAX =  1.000E-03
 TAUINC =  1.100E+00
 DELVAR =  1.000E-01
-ITEREX =  1.000E+00
-NITREQ =  1.000E+00
 TINIT  =  0.000E+00
 TSCALE =  5.000E+00
-NUFR   =  4.100E+01
 XOUT   =  1.000E+00
 XINPUT =  1.000E+00
 NB2EQL =  1.000E+00
-NEQUIL =  5.100E+01
-NBNDR  =  5.000E+01
 DTEQL  =  0.000E+00
-MEQUIL =  5.100E+01

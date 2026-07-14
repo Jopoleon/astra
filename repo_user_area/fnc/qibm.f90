@@ -2,12 +2,12 @@
 !   (Pereverzev 20-MAY-08)
 double precision FUNCTION QIBMR(YR)
 
-use status_inc, only: PIBM
+use status, only: PIBM
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT
 
 QIBMR = VINT(PIBM, YR)
 

@@ -2,11 +2,12 @@
 !   (Pereverzev 09-May-2008)
 double precision FUNCTION Q9TOTR(YR)
 
-use status_inc, only: SF9TOT
+use status, only: SF9TOT
+use standard_functions, only: VINT
+
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT
 
 Q9TOTR = VINT(SF9TOT, YR)
 

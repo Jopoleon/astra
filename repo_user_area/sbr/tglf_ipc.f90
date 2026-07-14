@@ -16,7 +16,7 @@ contains
 !---------------------------------------------------------------------
     subroutine tglf_alloc()
 
-    use const_inc, only: NA1
+    use scalars, only: NA1
 
     if (.not. allocated(tglf_out%chi_i)) then
         allocate(tglf_out%chi_i(NA1), tglf_out%chi_e(NA1), tglf_out%e_pflux(NA1), &
@@ -25,17 +25,16 @@ contains
         allocate(tglf_out%ion_pflux(nspec_max-1, NA1))
     endif
 
-    return
     end subroutine tglf_alloc
   
 !---------------------------------------------------------------------
     subroutine tglf_ipc(rho_norm_max)
 
     use omp_lib
-    use parameter_inc, only: NRD
-    use io_mod, only: equ_file, exp_file, awd
-    use const_inc, only: NA1, GP2, BTOR, RTOR, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
-    use status_inc, only: NE, TE, NI, TI, ZEF, PBLON, PBPER, PFAST, &
+    use pi_const, only: GP2  
+    use read_input, only: equ_file, exp_file, awd, astra_exe
+    use scalars, only: NA1, BTOR, RTOR, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
+    use status, only: NE, TE, NI, TI, ZEF, PBLON, PBPER, PFAST, &
         ZIM1, ZIM2, ZIM3, NIZ1, NIZ2, NIZ3, ER, MU, FP_NORM, &
         RHO, AMETR, SHIF, ELON, NDEUT, NTRIT, TRIA, VTOR, G11, VPOL, VRS
     use parameters_a2equil, only: equil_now
@@ -61,15 +60,14 @@ contains
     double precision, dimension(n_scalars) :: scal_in
     double precision, dimension(nrho_m) :: drmin, drmaj, drho, dte, dne, dq, &
         dptot, delong, dtrian, dvpar, dvper, drhodr, dr, dv_r
-    double precision, dimension(NRD) :: rmaj_as, q_as, ni_main_as, &
+    double precision, dimension(NA1) :: rmaj_as, q_as, ni_main_as, &
         vexb_as, vpar_as, vper_as, chie_as, chii_as, e_pflux_as, ptot_as
     double precision, dimension(nrho_m) :: rho_m, gamma_max, omega_max, kymax, &
         te_m, ne_m, vpar_m, vper_m, vexb_m, &
         ametr_m, elon_m, tria_m, rmaj_m, ptot_m, q_m, zef_m, pfn_m
     double precision, dimension(nspec_max-1) :: zi_max
-    double precision, dimension(nspec_max-1, nrho_m) :: dti, dni, ni_m, ti_m, i_pflux
-    double precision, dimension(nspec_max-1, nrho_m) :: zi_m 
-    double precision, dimension(nspec_max-1, NRD) :: i_pflux_as
+    double precision, dimension(nrho_m, nspec_max-1) :: dti, dni, ni_m, ti_m, zi_m 
+    double precision, dimension(NA1, nspec_max-1) :: i_pflux_as
     double precision, dimension(n_inputs, nrho_m) :: prof_in
     character(len=32) :: str_nworkers
     character(len=64) :: SBP_NAME
@@ -79,14 +77,12 @@ contains
     double precision, dimension(nthe_elite) :: theta_elite, RR_elite, ZZ_elite, Bp_elite
     character(len=128) :: f_elite, ipc_file, astra_task
 
-    save semID, shmID_vars, shmID_arrs
+    save semID, shmID_dims, shmID_vars, shmID_arrs, first_call
 
     call SYSTEM_CLOCK(t_wall1, rate)
 
     write(ipc_file, '(5A, i0, 2A)') TRIM(awd), '/tmp/', TRIM(exp_file), &
         TRIM(equ_file), '-', ipcId, '.ipc', char(0)
-    write(astra_task, '(5A)') TRIM(awd), '/bin/', TRIM(equ_file), &
-        '.exe', char(0)
 
     if (first_call) then
         call get_environment_variable("MAX_NWORKERS", str_nworkers, status=stat)
@@ -112,7 +108,8 @@ contains
             write(*, '(A, i3, A, i3)') '>>> Warning nrho_m=', nrho_m, ' larger than NA1=', NA1
             print*, 'Possible profile overfit on TGLF grid'
         endif
-        SBP_NAME = "xpr/tglfi"//char(0)
+        SBP_NAME = "xpr/tglfi" // char(0)
+        astra_task = TRIM(astra_exe) // char(0)
         call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, &
             nworkers, SBP_NAME, ipc_file, astra_task, semID, shmID_dims, &
             shmID_vars, shmID_arrs, ipcId)
@@ -131,13 +128,13 @@ contains
     rho_m = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_m) /)
 
     zi_m(1, :) = ZMJ
-    call qinterp(RHO(1:NA1), ZIM1(1:NA1), NA1, rho_m, zi_m(2, :), nrho_m)
-    call qinterp(RHO(1:NA1), ZIM2(1:NA1), NA1, rho_m, zi_m(3, :), nrho_m)
-    call qinterp(RHO(1:NA1), ZIM3(1:NA1), NA1, rho_m, zi_m(4, :), nrho_m)
-    call qinterp(RHO(1:NA1), NIZ1(1:NA1), NA1, rho_m, ni_m(2, :), nrho_m)
-    call qinterp(RHO(1:NA1), NIZ2(1:NA1), NA1, rho_m, ni_m(3, :), nrho_m)
-    call qinterp(RHO(1:NA1), NIZ3(1:NA1), NA1, rho_m, ni_m(4, :), nrho_m)
-    call qinterp(RHO(1:NA1),   TI(1:NA1), NA1, rho_m, ti_m(1, :), nrho_m)
+    call qinterp(RHO(1:NA1), ZIM1(1:NA1), NA1, rho_m, zi_m(:, 2), nrho_m)
+    call qinterp(RHO(1:NA1), ZIM2(1:NA1), NA1, rho_m, zi_m(:, 3), nrho_m)
+    call qinterp(RHO(1:NA1), ZIM3(1:NA1), NA1, rho_m, zi_m(:, 4), nrho_m)
+    call qinterp(RHO(1:NA1), NIZ1(1:NA1), NA1, rho_m, ni_m(:, 2), nrho_m)
+    call qinterp(RHO(1:NA1), NIZ2(1:NA1), NA1, rho_m, ni_m(:, 3), nrho_m)
+    call qinterp(RHO(1:NA1), NIZ3(1:NA1), NA1, rho_m, ni_m(:, 4), nrho_m)
+    call qinterp(RHO(1:NA1),   TI(1:NA1), NA1, rho_m, ti_m(:, 1), nrho_m)
     call qinterp(RHO(1:NA1),      TE(1:NA1), NA1, rho_m,    te_m, nrho_m)
     call qinterp(RHO(1:NA1),      NE(1:NA1), NA1, rho_m,    ne_m, nrho_m)
     call qinterp(RHO(1:NA1),     ZEF(1:NA1), NA1, rho_m,   zef_m, nrho_m)
@@ -146,9 +143,9 @@ contains
     call qinterp(RHO(1:NA1),    TRIA(1:NA1), NA1, rho_m,  tria_m, nrho_m)
     call qinterp(RHO(1:NA1), FP_NORM(1:NA1), NA1, rho_m,   pfn_m, nrho_m)
 
-    ti_m(2, :) = ti_m(1, :)
-    ti_m(3, :) = ti_m(1, :)
-    ti_m(4, :) = ti_m(1, :)
+    ti_m(:, 2) = ti_m(:, 1)
+    ti_m(:, 3) = ti_m(:, 1)
+    ti_m(:, 4) = ti_m(:, 1)
 
     do jrho=1, NA1
         if (NDEUT(jrho) >= 0.01*NE(jrho)) then
@@ -166,7 +163,7 @@ contains
         vexb_as(jrho) = -ER(jrho)/bmod ! vexb in m/s (vperp = vexb since the diamagnetic velocity is the curvature drift ac
     enddo
 
-    call qinterp(RHO(1:NA1), ni_main_as(1:NA1), NA1, rho_m, ni_m(1, :), nrho_m)
+    call qinterp(RHO(1:NA1), ni_main_as(1:NA1), NA1, rho_m, ni_m(:, 1), nrho_m)
     call qinterp(RHO(1:NA1),    rmaj_as(1:NA1), NA1, rho_m,     rmaj_m, nrho_m)
     call qinterp(RHO(1:NA1),       q_as(1:NA1), NA1, rho_m,        q_m, nrho_m)
     call qinterp(RHO(1:NA1),    ptot_as(1:NA1), NA1, rho_m,     ptot_m, nrho_m)
@@ -178,9 +175,9 @@ contains
     a0_m = AMETR(NA1)
 
     do jr=1, nrho_m
-        ni_m(2, jr) = max(1.e-9, ni_m(2, jr))
-        ni_m(3, jr) = max(1.e-9, ni_m(3, jr))
-        ni_m(4, jr) = max(1.e-9, ni_m(4, jr))
+        ni_m(jr, 2) = max(1.e-9, ni_m(jr, 2))
+        ni_m(jr, 3) = max(1.e-9, ni_m(jr, 3))
+        ni_m(jr, 4) = max(1.e-9, ni_m(jr, 4))
     enddo
 
 ! Number of species
@@ -212,9 +209,9 @@ contains
         jr_r = jr + 1
         jr_l = jr - 1
         if (jr == 1) then
-            jr_l = jr
+            jr_l = 1
         else if (jr == nrho_m) then
-            jr_r = jr
+            jr_r = nrho_m
         endif
         dstep = 1./dble(jr_r - jr_l)  ! 0.5 in between, 1 at the edges
         drmin(jr)  = dstep*(ametr_m(jr_r) - ametr_m(jr_l))
@@ -228,8 +225,8 @@ contains
         dq(jr)     = dstep*(q_m(jr_r) - q_m(jr_l))
         dvper(jr)  = dstep*(vper_m(jr_r) - vper_m(jr_l))
         do jion=1, nspec_max-1
-            dni(jion, jr) = dstep*(ni_m(jion, jr_r) - ni_m(jion, jr_l))
-            dti(jion, jr) = dstep*(ti_m(jion, jr_r) - ti_m(jion, jr_l))
+            dni(jr, jion) = dstep*(ni_m(jr_r, jion) - ni_m(jr_l, jion))
+            dti(jr, jion) = dstep*(ti_m(jr_r, jion) - ti_m(jr_l, jion))
         enddo
         dv_r(jr) = dstep* &
             (vpar_m(jr_r)/(rmaj_m(jr_r) + ametr_m(jr_r)) - &
@@ -316,35 +313,35 @@ contains
     prof_in(25, :) = dv_r
     prof_in(26, :) = dr
     prof_in(27, :) = drhodr
-    prof_in(28, :) = ni_m(1, :)
-    prof_in(29, :) = ni_m(2, :)
-    prof_in(30, :) = ni_m(3, :)
-    prof_in(31, :) = ni_m(4, :)
-    prof_in(32, :) = ti_m(1, :)
-    prof_in(33, :) = ti_m(2, :)
-    prof_in(34, :) = ti_m(3, :)
-    prof_in(35, :) = ti_m(4, :)
-    prof_in(36, :) = zi_m(1, :)
-    prof_in(37, :) = zi_m(2, :)
-    prof_in(38, :) = zi_m(3, :)
-    prof_in(39, :) = zi_m(4, :)
-    prof_in(40, :) = dni(1, :)
-    prof_in(41, :) = dni(2, :)
-    prof_in(42, :) = dni(3, :)
-    prof_in(43, :) = dni(4, :)
-    prof_in(44, :) = dti(1, :)
-    prof_in(45, :) = dti(2, :)
-    prof_in(46, :) = dti(3, :)
-    prof_in(47, :) = dti(4, :)
+    prof_in(28, :) = ni_m(:, 1)
+    prof_in(29, :) = ni_m(:, 2)
+    prof_in(30, :) = ni_m(:, 3)
+    prof_in(31, :) = ni_m(:, 4)
+    prof_in(32, :) = ti_m(:, 1)
+    prof_in(33, :) = ti_m(:, 2)
+    prof_in(34, :) = ti_m(:, 3)
+    prof_in(35, :) = ti_m(:, 4)
+    prof_in(36, :) = zi_m(:, 1)
+    prof_in(37, :) = zi_m(:, 2)
+    prof_in(38, :) = zi_m(:, 3)
+    prof_in(39, :) = zi_m(:, 4)
+    prof_in(40, :) = dni(:, 1)
+    prof_in(41, :) = dni(:, 2)
+    prof_in(42, :) = dni(:, 3)
+    prof_in(43, :) = dni(:, 4)
+    prof_in(44, :) = dti(:, 1)
+    prof_in(45, :) = dti(:, 2)
+    prof_in(46, :) = dti(:, 3)
+    prof_in(47, :) = dti(:, 4)
 
     if (first_call) then
-        call fill_dim2shm(n_dims, dims_in, shmID_dims)
+        call fill_int_shm(n_dims, dims_in, shmID_dims)
         first_call = .False.
     endif
 
 ! **** Fill shared memory segments
-    call fill_var2shm(n_scalars, scal_in, shmID_vars)
-    call fill_arr2shm(nrho_m, n_inputs, prof_in, shmID_arrs)
+    call fill_dbl_shm(n_scalars, scal_in, shmID_vars)
+    call fill_dbl_shm(nrho_m*n_inputs, prof_in, shmID_arrs)
 
 ! **** Free each semaphore
     do i=1, nworkers
@@ -365,15 +362,15 @@ contains
     chie_as = 0.
     chii_as = 0.
 
-    call qinterp(rho_m, prof_out(1, :), nrho_m, RHO(1:NA1),    chii_as(1:NA1), NA1, extrap_right=0.)
-    call qinterp(rho_m, prof_out(2, :), nrho_m, RHO(1:NA1),    chie_as(1:NA1), NA1, extrap_right=0.)
-    call qinterp(rho_m, prof_out(4, :), nrho_m, RHO(1:NA1), e_pflux_as(1:NA1), NA1, extrap_right=0.)
-    call qinterp(rho_m, prof_out(3, :), nrho_m, RHO(1:NA1), tglf_out%mom_flux, NA1, extrap_right=0.)
-    call qinterp(rho_m, prof_out(5, :), nrho_m, RHO(1:NA1), tglf_out%equipart, NA1, extrap_right=0.)
-    call qinterp(rho_m, prof_out(6, :), nrho_m, RHO(1:NA1),    tglf_out%gamma, NA1, extrap_right=0.)
-    call qinterp(rho_m, prof_out(7, :), nrho_m, RHO(1:NA1),    tglf_out%omega, NA1, extrap_right=0.)
+    call qinterp(rho_m, prof_out(1, :), nrho_m, RHO(1:NA1),    chii_as(1:NA1), NA1, extrap_right=0.d0)
+    call qinterp(rho_m, prof_out(2, :), nrho_m, RHO(1:NA1),    chie_as(1:NA1), NA1, extrap_right=0.d0)
+    call qinterp(rho_m, prof_out(4, :), nrho_m, RHO(1:NA1), e_pflux_as(1:NA1), NA1, extrap_right=0.d0)
+    call qinterp(rho_m, prof_out(3, :), nrho_m, RHO(1:NA1), tglf_out%mom_flux, NA1, extrap_right=0.d0)
+    call qinterp(rho_m, prof_out(5, :), nrho_m, RHO(1:NA1), tglf_out%equipart, NA1, extrap_right=0.d0)
+    call qinterp(rho_m, prof_out(6, :), nrho_m, RHO(1:NA1),    tglf_out%gamma, NA1, extrap_right=0.d0)
+    call qinterp(rho_m, prof_out(7, :), nrho_m, RHO(1:NA1),    tglf_out%omega, NA1, extrap_right=0.d0)
     do jion=1, nspec_max-1
-        call qinterp(rho_m, prof_out(7+jion, :), nrho_m, RHO(1:NA1), i_pflux_as(jion, 1:NA1), NA1, extrap_right=0.)
+        call qinterp(rho_m, prof_out(7+jion, :), nrho_m, RHO(1:NA1), i_pflux_as(1:NA1, jion), NA1, extrap_right=0.d0)
     enddo
 
     do jrho=1, NA1
@@ -381,16 +378,15 @@ contains
         tglf_out%chi_i(jrho)   = chii_as(jrho)*gradrhosq_inv ! m^2/s
         tglf_out%chi_e(jrho)   = chie_as(jrho)*gradrhosq_inv ! m^2/s
         tglf_out%e_pflux(jrho) = e_pflux_as(jrho)*gradrhosq_inv/a0_m
-        tglf_out%ion_pflux(1, jrho) = i_pflux_as(1, jrho)*gradrhosq_inv/a0_m/(ni_main_as(jrho)/NE(jrho))  ! main ion particle flux
-        tglf_out%ion_pflux(2, jrho) = i_pflux_as(2, jrho)*gradrhosq_inv/a0_m/(NIZ1(jrho)/NE(jrho))  ! 1st imp particle flux
-        tglf_out%ion_pflux(3, jrho) = i_pflux_as(3, jrho)*gradrhosq_inv/a0_m/(NIZ2(jrho)/NE(jrho))  ! 2nd imp particle flux
-        tglf_out%ion_pflux(4, jrho) = i_pflux_as(4, jrho)*gradrhosq_inv/a0_m/(NIZ3(jrho)/NE(jrho))  ! 2nd imp particle flux
+        tglf_out%ion_pflux(1, jrho) = i_pflux_as(jrho, 1)*gradrhosq_inv/a0_m/(ni_main_as(jrho)/NE(jrho))  ! main ion particle flux
+        tglf_out%ion_pflux(2, jrho) = i_pflux_as(jrho, 2)*gradrhosq_inv/a0_m/(NIZ1(jrho)/NE(jrho))  ! 1st imp particle flux
+        tglf_out%ion_pflux(3, jrho) = i_pflux_as(jrho, 3)*gradrhosq_inv/a0_m/(NIZ2(jrho)/NE(jrho))  ! 2nd imp particle flux
+        tglf_out%ion_pflux(4, jrho) = i_pflux_as(jrho, 4)*gradrhosq_inv/a0_m/(NIZ3(jrho)/NE(jrho))  ! 2nd imp particle flux
     enddo
 
     call SYSTEM_CLOCK(t_wall2, rate)
     print*, "XPR wall time", dble(t_wall2 - t_wall1)/dble(rate)
 
-    return
     end subroutine tglf_ipc
 
 end module a2tglf

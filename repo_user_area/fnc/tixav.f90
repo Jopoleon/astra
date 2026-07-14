@@ -4,14 +4,14 @@
 
 double precision FUNCTION TIXAVR(YR)
 
-use status_inc, only: TIX
+use status, only: TIX
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT, VOLR
+double precision, external :: VOLR
 
 TIXAVR = VINT(TIX, YR)/VOLR(YR)
 
-return
 end function TIXAVR

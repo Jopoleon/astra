@@ -1,14 +1,12 @@
-!  AUG 
+NEQUIL=91;
+MEQUIL=90;
+IPEQL=5;
 
 IPL=IPLX;
 SGNIP=1.d0;
 SGNBT=-1.d0;
-IPEQL=5;
 
-NEQUIL = 91;
-MEQUIL = 90;
 ATREQ = 1.;
-!MEQUIL = 0;
 
 TAUMIN=0.05;
 TAUMAX=0.05;
@@ -79,7 +77,7 @@ CAR44 = "tglf_out%omega(j)";
 XI = min(20., max(0., CAR21)) + HNASI;
 HE = min(20., max(0., CAR22)) + HNGSE;
 DN = HNGSE; ! + CAR23;
-CN = CAR24 -VP*VRAS; !max(-20., min(20.,CAR24));
+CN = "tglf_out%e_pflux(j)" - VP*VRAS; !max(-20., min(20.,CAR24));
 
 DVN=CF14;
 DVE=CF14;
@@ -117,7 +115,7 @@ TE:EQ[2,CF16];
 TI=TIX;
 TI:EQ[2,CF16];
 
-CU:EQ; 
+CU:EQ;
 
 MU = 1./(CAR2X + 0.0001);
 CC = CNHR; !CNSA;

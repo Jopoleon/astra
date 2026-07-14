@@ -18,7 +18,7 @@ awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 class CODE_GEN:
 
 
-    def __init__(self, parse):
+    def __init__(self, parse, nr_x_max):
 
 
         eqns_lin = parse.eqns_lines
@@ -73,7 +73,7 @@ class CODE_GEN:
 #-----------
 # declar.fnc
 
-        self.fnc = const_text.FNC.header + pa.write_declar(parse.fnc_list, ext='R')
+        self.fnc = pa.write_declar(parse.fnc_list, ext='R')
 
 #-----------
 # declar.fml
@@ -86,21 +86,28 @@ class CODE_GEN:
         self.associate_pointers = \
 '''subroutine associate_pointers()
 
-use parameter_inc, only: NRD, n_sbr_max
-use const_inc
-use status_inc
-use json_vars, only: n_const, n_var, n_varx, n_intern, n_intern2, n_prof, n_profx
+use read_input, only: n_sbr, sbr_name, nr_x_max
+use scalars
+use status
+use json_vars, only: n_const, n_var, n_varx, n_control, n_internInt, n_internDbl, n_prof, n_profx
 
 implicit none
 
-allocate(constValues(n_const))
+'''
+        self.associate_pointers += 'n_sbr = %d\n' %len(parse.sbr_lines)
+        self.associate_pointers += 'nr_x_max = %d\n' %nr_x_max
+        self.associate_pointers += \
+'''allocate(constValues(n_const))
 allocate(varValues(n_var))
 allocate(varxValues(n_varx))
-allocate(internValues(n_intern + 4*n_sbr_max))
-allocate(intern2Values(n_intern2))
+allocate(controlValues(n_control + 4*n_sbr))
+allocate(internIntValues(n_internInt))
+allocate(internDblValues(n_internDbl))
 allocate(profiles(NRD, n_prof))
 allocate(profiles_x(NRD, n_profx))
-allocate(DTEQ(4, n_sbr_max))
+allocate(DTEQ(4, n_sbr))
+allocate(sbr_name(n_sbr))
+allocate(TEQ(n_sbr))
 
 '''
         for j, const in enumerate(parse.constants):
@@ -112,11 +119,13 @@ allocate(DTEQ(4, n_sbr_max))
         for j, varx in enumerate(parse.varx):
             self.associate_pointers += '%s => varxValues(%d)\n' %(varx, j+1)
         self.associate_pointers += '\n'
-        for j, inter in enumerate(parse.intern1):
-            self.associate_pointers += '%s => internValues(%d)\n' %(inter, j+1)
-        self.associate_pointers += 'DTEQ(1:4, 1:n_sbr_max) => internValues(n_intern+1: n_intern + 4*n_sbr_max)\n\n'
-        for j, inter in enumerate(parse.intern2):
-            self.associate_pointers += '%s => intern2Values(%d)\n' %(inter, j+1)
+        for j, inter in enumerate(parse.control):
+            self.associate_pointers += '%s => controlValues(%d)\n' %(inter, j+1)
+        self.associate_pointers += 'DTEQ(1:4, 1:n_sbr) => controlValues(n_control+1: n_control + 4*n_sbr)\n\n'
+        for j, inter in enumerate(parse.internInt):
+            self.associate_pointers += '%s => internIntValues(%d)\n' %(inter, j+1)
+        for j, inter in enumerate(parse.internDbl):
+            self.associate_pointers += '%s => internDblValues(%d)\n' %(inter, j+1)
         self.associate_pointers += '\n'
         for j, profx in enumerate(parse.profx):
             self.associate_pointers += '%s => profiles_x(:, %d)\n' %(profx, j+1)
@@ -126,7 +135,6 @@ allocate(DTEQ(4, n_sbr_max))
 
         self.associate_pointers += \
 '''
-return
 end subroutine associate_pointers
 '''
 
@@ -138,7 +146,6 @@ end subroutine associate_pointers
         self.postep += \
 '''call markloc("tmp/postep.inc")
 
-return
 end subroutine POSTEP'''
 
 #----------------------------
@@ -160,7 +167,7 @@ end subroutine POSTEP'''
                     l2f = pa.LINE2FOR(line, parse)
                     detv_time += 'if (IFDFVX(%d) <= 2) %s\n'%(jvar, l2f)
                     break
-            if var in parse.constants + parse.intern1 + parse.intern2:
+            if var in parse.constants + parse.control + parse.internDbl + parse.internInt:
                 detv_time += pa.apptmp(lbl, parse)
             elif var in parse.profiles:
                 detv_rad += pa.apptmp(lbl, parse)
@@ -181,7 +188,6 @@ J = jdetv
         self.detvar += const_text.DETVAR.rad_tail
         self.detvar += \
 '''
-return
 end subroutine DETVAR'''
 
 #----------
@@ -272,71 +278,61 @@ end subroutine DETVAR'''
                 inivar += 'CU(J) = CC(J)\n'
         inivar += 'enddo\n'
 
-        self.iniv = inivar
-
         self.inivar  = const_text.INIVAR.header
         self.inivar += inivar
         self.inivar += \
 '''
-return
 end subroutine INIVAR'''
 
 #-----------
 # ininam.f90
 
         inam  = 'AWD = "%s"\n' %awd
-        if parse.arxuse:
-            for j, arx in enumerate(parse.arxuse):
-                inam += 'ARXUSE(%d) = %d\n' %(j+1, arx)
         for jlbl, lbl in enumerate(config.eqn_list):
             inam += 'LEQ(%d) = %d\n' %(jlbl+1, parse.leq_d[lbl])
-        inam += const_text.ININAM.sb
         inam += 'call markloc("ininam")\n'
-        inam += 'n_sbr = %d\n' %len(parse.sbr_lines)
-        inam += 'NTOUT = %d\n' %len(parse.namet)
-        inam += 'NROUT = %d\n' %len(parse.namer)
-        inam += 'NXOUT = %d\n' %len(parse.namex)
-
-        for jr, name in enumerate(parse.namer):
-            if parse.scaler[jr] != '':
-                inam += 'SCALER(%d) = %s\n' %(jr+1, parse.scaler[jr])
-            inam += 'NAMER (%d) = "%s"\n' %(jr+1, name.ljust(4))
-        for jrx, name in enumerate(parse.namex):
-            inam += 'NAMEX (%d) = "%s"\n' %(jrx+1, name.ljust(6))
-            inam += 'NWINDX(%d) = %s\n' %(jrx+1, parse.nwindx[jrx])
-        for jt, name in enumerate(parse.namet):
-            if parse.scalet[jt] != '':
-                inam += 'SCALET(%d) = %s\n' %(jt+1, parse.scalet[jt])
-            inam += 'NAMET (%d) = "%s"\n' %(jt+1, name.ljust(4))
         for line in parse.sbr_lines:
             j_sbr  = sbrs_d[line]['neq']
             sbrnam = sbrs_d[line]['name']
             inam += 'sbr_name(%d) = "%s"\n' %(j_sbr, sbrnam)
-            inam += 'DTNAME(%d*4+n_intern) = "%s"//char(0)\n' %(j_sbr, sbrnam[:6])
 
         self.ininam  = const_text.ININAM.header
         self.ininam += inam
+        self.ininam += setv_sbr
         self.ininam += \
 '''
-return
 end subroutine ininam'''
 
 #-----------
-# setvar.f90
+# set_graph_names.f90
 
-        setv_rho = ''
-        for lbl in config.eqn_list:
-            if lbl not in ('CU', 'Equil'):
-                if parse.leq_d[lbl] == -1:
-                    setv_rho += 'RO%s = ROC\n' %config.short_d[lbl]
+        graph  = const_text.SET_GRAPH_NAMES.header
+        graph += 'call markloc("set_graph_names")\n'
+        graph += 'NTOUT = %d\n' %len(parse.namet)
+        graph += 'NROUT = %d\n' %len(parse.namer)
+        graph += 'NXOUT = %d\n' %len(parse.namex)
 
-        self.setvar = const_text.SETVAR.header
-        self.setvar += setv_rho
-        self.setvar += setv_sbr
-        self.setvar += \
+        for jr, name in enumerate(parse.namer):
+            if parse.scaler[jr] != '':
+                graph += 'SCALER(%d) = %s\n' %(jr+1, parse.scaler[jr])
+            graph += 'NAMER (%d) = "%s"\n' %(jr+1, name.ljust(4))
+        for jrx, name in enumerate(parse.namex):
+            graph += 'NAMEX (%d) = "%s"\n' %(jrx+1, name.ljust(6))
+            graph += 'NWINDX(%d) = %s\n' %(jrx+1, parse.nwindx[jrx])
+        for jt, name in enumerate(parse.namet):
+            if parse.scalet[jt] != '':
+                graph += 'SCALET(%d) = %s\n' %(jt+1, parse.scalet[jt])
+            graph += 'NAMET (%d) = "%s"\n' %(jt+1, name.ljust(4))
+        for line in parse.sbr_lines:
+            j_sbr  = sbrs_d[line]['neq']
+            sbrnam = sbrs_d[line]['name']
+            graph += 'DTNAME(%d*4+n_control) = "%s"//char(0)\n' %(j_sbr, sbrnam[:6])
+
+        graph += \
 '''
-return
-end subroutine setvar'''
+end subroutine set_graph_names'''
+
+        self.set_graph_names = graph
 
 #--------------
 # astra_out.f90
@@ -359,7 +355,6 @@ end subroutine setvar'''
                 self.astra_out += 'TOUT(LTOUT, %d) = 0.d0\n' %(jsig+1)
         self.astra_out += \
 '''
-return
 end subroutine TIMOUT'''
 
 #--------------------------------
@@ -369,8 +364,8 @@ end subroutine TIMOUT'''
 
         self.init_converge_step  = const_text.INIT_CONVERGE_STEP.header
         self.init_converge_step += init_tmp
-        self.init_converge_step += const_text.INIT_CONVERGE_STEP.tail
+        self.init_converge_step += '\nend subroutine init_converge_step\n'
 
         self.eqns_inc  = const_text.EQNS_INC.header
         self.eqns_inc += eqns_tmp
-        self.eqns_inc += const_text.EQNS_INC.tail
+        self.eqns_inc += '\nend subroutine EQNS_INC\n'

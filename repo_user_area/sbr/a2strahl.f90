@@ -1,6 +1,7 @@
 module strahl_mod
 
-use parameter_inc, only: NRD
+use status, only: NRD
+use read_input, only: equ_file, exp_file
 
 implicit none
 
@@ -14,7 +15,7 @@ double precision, dimension(11) :: rrates_in_strahl
 contains
 
 !---------------------------------------------------------------------
-    subroutine A2STRAHL(tau_start, zneocl, dzneocl, dimpsol, shot_in)
+    subroutine A2STRAHL(tau_start, zneocl, dzneocl, dimpsol)
 !---------------------------------------------------------------------
 !    - D. Fajardo, Feb 2024: geometry factors for Dzin, vzin
 !    - D. Fajardo, Feb 2023
@@ -22,6 +23,13 @@ contains
 !    - E. Fable, Feb 2012 -   CCCs
 !
 !  Coupling between ASTRA and STRAHL (R. Dux)
+!
+!  Concurrency fixes (call interface unchanged):
+!    - Replaced hardcoded unit numbers      -> newunit=
+!    - Eliminated call chdir()              -> absolute paths everywhere
+!    - Instance-unique working directory    -> strahl_<exp_file>/
+!    - system() calls use sub-shell cd      -> no process-wide CWD change
+!    - All intermediate file I/O uses       -> absolute paths
 !
 ! INPUTS
 ! ======
@@ -31,7 +39,6 @@ contains
 ! - zneocl ----> time at which NEOART starts within STRAHL. Set to large number to skip NEOART
 ! - dzneocl ---> time step for NEOART
 ! - dimpsol ---> scrape-off layer diffusivity for the impurities, in [m^2/s]
-! - shot_in ---> shot number (can be set to zero)
 !
 ! * Given in equ file to array names from src/for/strahl_mod.f90,
 !   with isp = 1...nsp being the index of each impurity species:
@@ -57,20 +64,20 @@ contains
 !  
 !============================================================================================!
 
-    use parameter_inc, only: NRD
-    use const_inc, only: TIME, TSTART, TAUPRP, NA1, GP, GP2, RTOR, NA, IPART
-    use status_inc, only: rho_pol, UPL, VOLUM, SHIF, NE, TE, TI, AMAIN, ZMAIN, RHO, VRS, G11
-    use io_mod, only: machine, awd, nml_file, astra_ext
+    use scalars, only: TIME, TSTART, TAUPRP, NA1, RTOR, NA, IPART
+    use pi_const, only: GP, GP2
+    use status, only: rho_pol, UPL, VOLUM, SHIF, NE, TE, TI, AMAIN, ZMAIN, RHO, VRS, G11
+    use read_input, only: machine, awd, nml_file, astra_ext
     use numerical_tools, only: qinterp
 
     integer, parameter :: ngmax=140, n_o_max=512
-    character(len=120), parameter :: strahl_output='results.txt', strahl_param_in='param_files/sparams.dat'
+    character(len=120), parameter :: strahl_param_in='param_files/sparams.dat'
     double precision, parameter :: vimpsol=0.d0
 
-    double precision, intent(in) :: tau_start, zneocl, dzneocl, dimpsol, shot_in
+    double precision, intent(in) :: tau_start, zneocl, dzneocl, dimpsol
 
-    integer :: i, isp, j, k, shotn, indexx, nimp_touse, nfour_c, n_grids, &
-        Nr_o, ineocl, ineocla, ineocli, i_stepst, ios, iu, nshot=11111
+    integer :: i, isp, j, k, indexx, nimp_touse, nfour_c, n_grids, &
+        Nr_o, ineocl, ineocla, ios, iu, nshot=11111
     integer, dimension(10) :: irecycl
 
     double precision :: tneocl, tneocl0, rneocl
@@ -87,14 +94,12 @@ contains
     double precision, dimension(NRD, 10) :: Dzin, Vzin, Dz_anom, Vz_anom
     double precision, dimension(:), allocatable :: g11_dvol_fac
 
-    character(len=300) :: strahl_dir, cmd_cmd, as_nml
+    character(len=300) :: strahl_base, strahl_dir, cmd_cmd, as_nml, results_file
     character(len=20) :: rho_coord, elements_touse(10)
     character(len=6) :: diffname1_s
 
-    data i_stepst /0/
-    data ineocli /0/
-    data tneocl0 /0./
-    save i_stepst, tneocl0, ineocli
+    integer, save :: i_stepst=0, ineocli=0
+    double precision, save :: tneocl0_save=0.d0
 
     NAMELIST / strahl_par / tau_strahl, rho_coord, ne_decayl, te_decayl, ti_decayl, &
         nfour_c, nimp_touse, elements_touse, aweight, eneutr, ridecay, irecycl, &
@@ -115,12 +120,12 @@ contains
     allocate(g11_dvol_fac(NA1))
 
     ineocl = 0
-    tneocl = TIME - TSTART - tneocl0
+    tneocl = TIME - TSTART - tneocl0_save
     if (TIME > zneocl+TAUPRP) then
         if (tneocl > dzneocl) then
             ineocl = 1
             ineocli = 1
-            tneocl0 = TIME - TSTART
+            tneocl0_save = TIME - TSTART
         endif
     endif
 
@@ -144,13 +149,33 @@ contains
 
     diffname1_s = ''
 
-    shotn = nint(shot_in)
-    strahl_dir = TRIM(awd) // '/strahl/'
+! Base strahl directory containing atomic data, rate tables, and
+! any other ancillary files the STRAHL binary expects at runtime
+    strahl_base = TRIM(awd) // '/strahl'
 
-    call chdir(TRIM(strahl_dir))      ! cdir
-    call system('mkdir -p result')
-    call system('mkdir -p nete')
-    call system('mkdir -p param_files')
+! Instance-unique working directory keyed off exp_file and equ_file.
+! Each simultaneous ASTRA run gets its own complete copy of the
+! strahl tree, so hardcoded internal filenames never collide.
+    strahl_dir = TRIM(awd) // '/strahl/' // TRIM(exp_file) // '_' // TRIM(equ_file) // '/'
+
+! On first call, deep-copy the entire base strahl/ directory so that
+! all auxiliary files (atomic data, etc.) are available.  On subsequent
+! calls the instance directory already exists with STRAHL's own restart
+! state from previous time steps.
+    if (i_stepst == 0) then
+        call system('mkdir -p ' // TRIM(strahl_dir) // 'atomdat')
+        call system('mkdir -p ' // TRIM(strahl_dir) // 'result')
+        call system('mkdir -p ' // TRIM(strahl_dir) // 'nete')
+        call system('mkdir -p ' // TRIM(strahl_dir) // 'param_files')
+        call system('cp -a ' // TRIM(strahl_base) // '/atomdat '        // TRIM(strahl_dir))
+        call system('cp '    // TRIM(strahl_base) // '/*.atomdat '      // TRIM(strahl_dir))
+        call system('cp '    // TRIM(strahl_base) // '/pec_files '      // TRIM(strahl_dir))
+        call system('cp '    // TRIM(strahl_base) // '/pec_files '      // TRIM(strahl_dir))
+        call system('cp '    // TRIM(strahl_base) // '/pstrahl '        // TRIM(strahl_dir))
+        call system('cp '    // TRIM(strahl_base) // '/strahl.control ' // TRIM(strahl_dir))
+    endif
+
+! Ensure the sub-directories exist (harmless if the copy already created them)
 
     indexx = 1
 
@@ -450,25 +475,29 @@ contains
         rhovol(NA1), UPL(NA1), TIME-TIME, machine)
 
 ! Main STRAHL call
+! Run in a sub-shell that cd's into the instance directory,
+! so the process-wide CWD is never touched.
 
-    cmd_cmd = TRIM(astra_ext) // '/strahl/sep23/bin/strahl a q'
+    cmd_cmd = 'cd ' // TRIM(strahl_dir) // ' && ' // TRIM(astra_ext) // '/strahl/sep23/bin/strahl a q'
 
-    write(*, '(2A)') 'Executing', TRIM(cmd_cmd)
-    call system(cmd_cmd)      ! run strahl
+    write(*, '(2A)') 'Executing: ', TRIM(cmd_cmd)
+    call system(cmd_cmd)
 
-    cmd_cmd = 'rm -f results.txt'
-    call system(cmd_cmd)    ! rm old results, if existing
+! Build results filename with absolute path inside instance directory
+    results_file = TRIM(strahl_dir) // 'results.txt'
 
-    cmd_cmd = TRIM(astra_ext) // '/strahl/sep23/bin/result_to_astra '// TRIM(elements_touse(1))//' > ' // TRIM(strahl_dir) // 'results.txt'
+    cmd_cmd = 'rm -f ' // TRIM(results_file)
+    call system(cmd_cmd)
 
-    write(*, '(2A)') 'Executing', TRIM(cmd_cmd )
-    call system(cmd_cmd)   ! produce new result file
+    cmd_cmd = 'cd ' // TRIM(strahl_dir) // ' && ' // TRIM(astra_ext) // '/strahl/sep23/bin/result_to_astra ' // &
+        TRIM(elements_touse(1)) // ' > ' // TRIM(results_file)
 
-    call chdir(TRIM(awd))      ! cdir
+    write(*, '(2A)') 'Executing: ', TRIM(cmd_cmd)
+    call system(cmd_cmd)
 
-! Extract results from stahl/results.txt:
+! Extract results from results.txt:
 
-    open(newunit=iu, file=TRIM(strahl_dir)//TRIM(strahl_output))
+    open(newunit=iu, file=TRIM(results_file))
     read(iu, *) Nr_o
     read(iu, *) cmd_cmd
     read(iu, *) (rpol_o(i), i=1, Nr_o) ! rho poloidal

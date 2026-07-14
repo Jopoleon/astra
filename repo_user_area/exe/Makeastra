@@ -1,0 +1,58 @@
+ifndef AWD
+$(error setenv/export AWD first)
+endif
+
+SRC_DIR = $(AWD)/src/$(sub)
+OBJ_DIR = $(AWD)/obj/$(sub)
+MOD_DIR = $(AWD)/mod/$(sub)
+INC_DIR = $(AWD)/inc
+
+LIB_DIR = $(AWD)/lib
+LIB = $(LIB_DIR)/lib$(sub).a
+
+ifdef SPIDER_LIB
+   SPIDER_FLAG = -DSPIDER
+else
+   SPIDER_FLAG =
+   SPIDER_LIB  =
+endif
+
+# Make Commands
+
+.PHONY: modules
+modules: directories $(MODOBJS) mvmod
+
+.PHONY: lib
+lib: $(LIB)
+
+.PHONY: directories
+directories:
+	@mkdir -p $(MOD_DIR)
+	@mkdir -p $(OBJ_DIR)
+	@mkdir -p $(LIB_DIR)
+
+.PHONY: mvmod
+mvmod:
+	rm -f *genmod.*
+	-@mv *.mod $(MOD_DIR)/ 2>/dev/null; true
+
+.PHONY: clean
+clean:
+	rm -f *.mod
+	rm -rf $(MOD_DIR)
+	rm -rf $(OBJ_DIR)
+	rm -rf $(LIB_DIR)
+
+# Rules
+
+$(OBJ_DIR)%.o: $(SRC_DIR)%.f90
+	$(FC) $(FC_FLAGS) $(INCLUDE) -c $< -o $@
+
+$(OBJ_DIR)%.o: $(SRC_DIR)%.F90
+	$(FC) $(FC_FLAGS) $(INCLUDE) $(SPIDER_INC) $(SPIDER_FLAG) -c $< -o $@
+
+$(OBJ_DIR)%.o: $(SRC_DIR)%.c
+	$(CC) -fPIC -c $< -o $@ -I$(INC_DIR)
+
+$(LIB): $(MODOBJS) $(OBJS)
+	ar rcs $(LIB) $(MODOBJS) $(OBJS) >/dev/null

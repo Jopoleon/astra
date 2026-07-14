@@ -6,8 +6,9 @@
 ! run e.g. with exp/AUG33040_2500
 !
 !----------------- General parameters ----------------------!
-NEQUIL = 91.;
-MEQUIL = 90.;
+NEQUIL = 91;
+MEQUIL = 90;
+IPEQL = 4;
 
 ! Time step definition
 TAUMIN = 0.01;           ! minimum time step
@@ -126,7 +127,7 @@ CPEL3 = CIMP3*1.e19; ! edge source of impurities in atoms/second
 ! to sbr call:
 CSOL1 = 1.d0*CSOL2; ! SOL diffusivity for impurities in STRAHL in m^2/s (control from log with CSOL2, default: 1.0)
 
-A2STRAHL(0.d0, 1.d6, 1.d6, CSOL1, 0.d0)>::::;
+A2STRAHL(0.d0, 1.d6, 1.d6, CSOL1)>::::;
 
 ! take outputs from A2STRAHL
 

@@ -4,14 +4,14 @@
 
 double precision FUNCTION TEXAVR(YR)
 
-use status_inc, only: TEX
+use status, only: TEX
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT, VOLR
+double precision, external :: VOLR
 
 TEXAVR = VINT(TEX, YR)/VOLR(YR)
 
-return
 end function TEXAVR

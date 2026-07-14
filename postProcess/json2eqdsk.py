@@ -45,16 +45,16 @@ def json2eqdsk(f_json, nR=129, nZ=257, cocos_out=7):
 
     geq = {}
     geq['CASE2'] = 'ASTRA'
-    
-    ip_sgn = json_d['astra']['SGNIP']['data']
-    bt_sgn = json_d['astra']['SGNBT']['data']
+
+    ip_sgn = json_d['internal']['SGNIP']
+    bt_sgn = json_d['internal']['SGNBT']
     dpsi_sign = coco_dpsi_sign[cocos_out-1]
-    geq['CURRENT'] = 1e6*json_d['astra']['IPL']['data']
-    geq['BCENTR'] = json_d['astra']['BTOR']['data']
+    geq['CURRENT'] = 1e6*json_d['variables']['IPL']
+    geq['BCENTR'] = json_d['variables']['BTOR']
     
 # Contours
-    rsurf = np.array(json_d['equil']['r']['data'], dtype=np.float32)
-    zsurf = np.array( json_d['equil']['z']['data'], dtype=np.float32)
+    rsurf = np.array(json_d['equil_rz2d']['r'], dtype=np.float32)
+    zsurf = np.array(json_d['equil_rz2d']['z'], dtype=np.float32)
     geq['RMAXIS'] = rsurf[0, 0]
     geq['ZMAXIS'] = zsurf[0, 0]
     geq['RBBBS'] = rsurf[-1, :]
@@ -71,19 +71,19 @@ def json2eqdsk(f_json, nR=129, nZ=257, cocos_out=7):
 
     geq['RDIM'] = Rmax - Rmin
     geq['ZDIM'] = Zmax - Zmin
-    geq['RCENTR'] = json_d['astra']['RTOR']['data']
+    geq['RCENTR'] = json_d['variables']['RTOR']
     geq['RLEFT'] = Rmin
     geq['ZMID'] = 0.5*(Zmax + Zmin)
     geq['NW'] = nR
     geq['NH'] = nZ
     
 # 1d profiles
-    f_dia   = np.array(json_d['equil']['f_dia']['data']   , dtype=flt)
-    ffprime = np.array(json_d['equil']['ffprime']['data'] , dtype=flt)
-    pprime  = np.array(json_d['equil']['pprime']['data']  , dtype=flt)
-    pres    = np.array(json_d['equil']['pressure']['data'], dtype=flt)
-    psi     = np.array(json_d['equil']['psi']['data']     , dtype=flt)
-    q       = np.array(json_d['equil']['q']['data']       , dtype=flt)
+    f_dia   = np.array(json_d['equil_profiles']['f_dia']   , dtype=flt)
+    ffprime = np.array(json_d['equil_profiles']['ffprime'] , dtype=flt)
+    pprime  = np.array(json_d['equil_profiles']['pprime']  , dtype=flt)
+    pres    = np.array(json_d['equil_profiles']['pressure'], dtype=flt)
+    psi     = np.array(json_d['equil_profiles']['psi']     , dtype=flt)
+    q       = np.array(json_d['equil_profiles']['q']       , dtype=flt)
 
     geq['SIMAG'] = ip_sgn*dpsi_sign*psi[0]
     geq['SIBRY'] = ip_sgn*dpsi_sign*psi[-1]

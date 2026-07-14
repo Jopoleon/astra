@@ -6,29 +6,23 @@ rho_pol(1:NA1) = SQRT(FP_NORM(1: NA1))
 '''
 
 
-class FNC:
-
-    header  = \
-"""
-double precision :: VINT, IINT, LININT, GRAD, GRADS, FRMAX, FRMIN, RFMIN, RFMAX, RFVAL, AFVAL, RFVEX, AFVEX, RFVIN, AFVIN, RFA, RFAN, XFA, XFAN, AFR, AFX, RECR, ATR, ATX, TIMINT, TIMDER, TIMAVG, GAUSS, RADIAL, RADINT, ASTEP, RSTEP, XSTEP, STEP, CUT, FTBOX, FXBOX, FABOX, FIXVAL, FTAV, FTMIN, FTMAX, FRAMP, FJUMP
-external IINT
-"""
-
-
 class POSTEP:
 
     header = \
 """subroutine POSTEP()
 
-use const_inc
-use status_inc
+use scalars
+use status
+use pi_const
 use nclass_mod
 use strahl_mod
+use a2eqdsk, only: eqdsk
 use a2tglf, only: tglf_ipc
 use a2qlk, only: qlk_ipc
 use a2neo, only: neo_ipc
 use a2rabbit, only: rabbit
 use a2torbeam, only: torba
+use torfpql_mod, only: toric
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use debugger, only: markloc
 
@@ -38,33 +32,36 @@ integer :: IFSUB, t_wall1, t_wall2, rate
 double precision :: t_cpu1, t_cpu2
 """
 
+class SET_GRAPH_NAMES:
+    
+    header = \
+"""subroutine SET_GRAPH_NAMES()
+
+use read_input, only: n_sbr
+use graph_utils, only: NTOUT, NROUT, NXOUT, NAMER, SCALER, NAMET, NAMEX, NWINDX, DTNAME
+use json_vars, only: n_control
+use debugger, only: markloc
+
+implicit none
+
+allocate(DTNAME(n_control+4*n_sbr))
+"""
+
 
 class ININAM:
     
     header = \
 """subroutine ININAM()
 
-use parameter_inc, only: n_sbr_max, NRD
-use io_mod, only: sbr_name, IFSBX, n_sbr, awd
-use outcmn_inc
-use const_inc
-use status_inc
+use read_input, only: sbr_name, n_sbr, awd
+use scalars
+use status
+use pi_const
 use debugger, only: markloc
-use json_vars, only: profxNames, n_intern
+use json_vars, only: profxNames, n_control
 
 implicit none
 
-integer :: j
-
-call markloc("xar_usage")
-
-allocate(DTNAME(n_intern+4*n_sbr_max))
-"""
-
-    sb = \
-"""do j=1, n_sbr_max
-IFSBX(j) = 0
-enddo
 """
 
 class SETVAR:
@@ -72,8 +69,9 @@ class SETVAR:
     header = \
 """subroutine SETVAR()
 
-use const_inc
-use status_inc
+use scalars
+use status
+use pi_const
 use debugger, only: markloc
 
 implicit none
@@ -90,7 +88,7 @@ NI(J) = NE(J)/ZMJ
 enddo
 if (ABC+abs(SHIFT) > AB) then
 write(*, *) char(7), ">>> Warning >>> Inconsistent boundary setting."
-if (LEQ(5) == 3) then
+if (IPEQL == 3) then
 write(*, *) "    Plasma beyond the vacuum vessel has been cut off"
 else
 write(*, *) "    Plasma boundary intersects the vacuum vessel"
@@ -103,7 +101,7 @@ class CUAS:
     header = \
 '''! **** Current profile adjustment
 call markloc("CU adjustment")
-YB = 0.4*GP
+YB = mu0
 YC = YB*RTOR/BTOR
 YD = -0.8*GP**2 * RTOR
 YA = 2./(HRO**2 * YD)
@@ -147,7 +145,7 @@ do j=1, NA1
 
     cu1 = \
 '''YF = GP2*HRO**2 * BTOR
-YC = 0.4*GP*RTOR/BTOR
+YC = mu0*RTOR/BTOR
 YM = 0.
 YMCD = 0.
 do J=1, NA1
@@ -171,7 +169,7 @@ FP(J+1) = FP(J) + YF*YM1
 enddo
 MU(NA1) = EXTRAP(SXHO(1:NA), MU(1:NA), SXHO(NA1), NA, 2, .false.)
 YU = GP2*RTOR
-YJ_CU = (FP(NA1) - FP(NA))/HRO * IPOL(NA1) * G22(NA)/(0.4*GP*RTOR)
+YJ_CU = (FP(NA1) - FP(NA))/HRO * IPOL(NA1) * G22(NA)/(mu0*RTOR)
 YJ_CU = IPL/YJ_CU
 do j=1, NA1
 CU(J) = YJ_CU*CU(J)
@@ -195,12 +193,12 @@ class INIVAR:
     header = \
 '''subroutine INIVAR()
 
-use io_mod, only: IFDFAX
-use const_inc
-use nclass_mod
-use status_inc
+use read_input, only: IFDFAX
+use scalars
+use status
+use pi_const
 use debugger, only: markloc
-use json_vars, only: profxNames
+use json_vars, only: profxNames, n_profx
 
 implicit none
 
@@ -230,13 +228,17 @@ class DETVAR:
     header = \
 '''subroutine DETVAR()
 
-use const_inc
-use status_inc
+use scalars
+use status
+use pi_const
 use nclass_mod
 use strahl_mod
-use io_mod, only: IFDFVX
+use standard_functions
+use read_input, only: IFDFVX
+use a2eqdsk, only: eqdsk
 use a2rabbit, only: rabbit
 use a2torbeam, only: torba
+use torfpql_mod, only: toric
 use a2tglf, only: tglf_alloc, tglf_out, tglf_ipc
 use a2qlk, only: qlk_alloc, qlk_out, qlk_ipc
 use a2neo, only: neo_alloc, neo_out, neo_ipc
@@ -261,7 +263,7 @@ call neo_alloc()
 
     rad_tail  = \
 """
-if (LEQ(5) == 3) then
+if (IPEQL == 3) then
 SHIFT = min(SHIFT, 0.9*AB)
 ABC = min(ABC, AB - abs(SHIFT))
 ABC = max(ABC, 0.1*AB)
@@ -279,11 +281,11 @@ bc_values(1) = 0.0
 bc_values(2) = 0.0
 bc_values(3) = 1.
 bc_values(4) = -1.
-bc_values(5) = HRO*0.4*GP/G22(NA)*IPL*RTOR/IPOL(NA1)
+bc_values(5) = HRO*mu0/G22(NA)*IPL*RTOR/IPOL(NA1)
 bc_type_for_fp = 1
-if (ITFBP /= 0.0 .and. ITFBE < TIME) then
-if (ibcpsi_fb >= 0) then
-if (ITFBP < 0.0 .and. ibcpsi_fb >= 2.) then
+if (ITFBP /= 0 .and. ITFBE < TIME) then
+if (IBCPSI >= 0) then
+if (ITFBP < 0 .and. IBCPSI >= 2) then
 bctype = 3
 bc_values(1) = 0.0
 bc_values(2) = 0.0
@@ -293,13 +295,13 @@ bc_values(5) = PSIEXT*HRO
 bc_type_for_fp = 3
 endif
 endif
-if (ibcpsi_fb <= 1) then
+if (IBCPSI <= 1) then
 bctype = 3
 bc_values(1) = 0.0
 bc_values(2) = 0.0
 bc_values(3) = 1.
 bc_values(4) = -1.
-bc_values(5) = HRO*0.4*GP/G22(NA)*IPL*RTOR/IPOL(NA1)
+bc_values(5) = HRO*mu0/G22(NA)*IPL*RTOR/IPOL(NA1)
 bc_type_for_fp = 1
 endif
 endif
@@ -313,9 +315,9 @@ bctype = 1
 bc_values(1) = 0.0
 bc_values(2) = 0.0
 bc_type_for_fp = 2
-if (ITFBP /= 0.0 .and. ITFBE < TIME) then
-if (ibcpsi_fb > 0) then
-if (ITFBP < 0.0 .and. ibcpsi_fb >= 2.) then
+if (ITFBP /= 0 .and. ITFBE < TIME) then
+if (IBCPSI > 0) then
+if (ITFBP < 0 .and. IBCPSI >= 2) then
 bctype = 3
 bc_values(1) = 0.0
 bc_values(2) = 0.0
@@ -325,7 +327,7 @@ bc_values(5) = PSIEXT*HRO
 bc_type_for_fp = 3
 endif
 endif
-if (ibcpsi_fb <= 1) then
+if (IBCPSI <= 1) then
 bctype = 1
 bc_values(1) = 0.0
 bc_values(2) = 0.0
@@ -350,9 +352,9 @@ bc_values(3) = HRO + PSPLEX*ROC
 bc_values(4) = -PSPLEX*ROC
 bc_values(5) = PSIEXT*HRO
 bc_type_for_fp = 3
-if (ITFBP /= 0.0 .and. ITFBE < TIME) then
-if (ibcpsi_fb > 0) then
-if (ITFBP < 0.0 .and. ibcpsi_fb >= 2.) then
+if (ITFBP /= 0 .and. ITFBE < TIME) then
+if (IBCPSI > 0) then
+if (ITFBP < 0 .and. IBCPSI >= 2) then
 bctype = 3
 bc_values(1) = 0.0
 bc_values(2) = 0.0
@@ -362,7 +364,7 @@ bc_values(5) = PSIEXT*HRO
 bc_type_for_fp = 3
 endif
 endif
-if (ibcpsi_fb <= 1) then
+if (IBCPSI <= 1) then
 bctype = 1
 bc_values(1) = 0.0
 bc_values(2) = 0.0
@@ -384,11 +386,11 @@ YWR(j) = 0.
 YWQ(j) = 0.
 YWG11(j) = 1.
 YWWB(j) = 1./RHO(j)
-YVR(j) = CC(j)*0.4*GP*RHO(j)/IPOL(j)**2
+YVR(j) = CC(j)*mu0*RHO(j)/IPOL(j)**2
 unit_coeff = 1.
 YWD(j) = -(VR(j)/(GP2*RHO(j)*CC(j))) * (CUBS(j) + CD(j))
 enddo
-imethod = nint(INUME3)
+imethod = INUME3
 
 call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWWB(1: NA1), YVR(1: NA1), unit_coeff, YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RBDOT, BBDOT, NA1, NA1, HRO, TAU, RHO(1: NA1), imethod, bctype, bc_values, FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), MPHIT(1: NA1) )
 
@@ -412,7 +414,7 @@ YWHO(j) = 3./2.*NEO(j)
 unit_coeff = 625.
 YWWB(j) = VR(j)**(5./3.)
 enddo
-imethod = nint(INUME2)
+imethod = INUME2
 
 call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), TEO(1: NA1), YWWB(1: NA1), YVR(1: NA1), unit_coeff, G11(1: NA1)/unit_coeff, YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), unit_coeff*PET(1: NA1), unit_coeff*PETOT(1: NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, RHO(1: NA1), imethod, bctype, bc_values, TE(1: NA1), QE(1: NA1), YQDCM(1: NA1), MPHIT(1: NA1) )
 do j=1, NA1
@@ -455,7 +457,7 @@ YWHO(j) = 3./2.*NIO(j)
 unit_coeff = 625.
 YWWB(j) = VR(j)**(5./3.)
 enddo
-imethod = nint(INUME2)
+imethod = INUME2
 
 call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), TIO(1: NA1), YWWB(1: NA1), YVR(1: NA1), unit_coeff, G11(1: NA1)/unit_coeff, YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), unit_coeff*PIT(1: NA1), unit_coeff*PITOT(1: NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, RHO(1: NA1), imethod, bctype, bc_values, TI(1: NA1), QI(1: NA1), YQDCM(1: NA1), MPHIT(1: NA1) )
 do j=1, NA1
@@ -498,7 +500,7 @@ YVR(j)  = VR(j)
 unit_coeff  = 1.
 YWWB(j) = VR(j)
 enddo
-imethod = nint(INUME1)
+imethod = INUME1
 
 call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), NEO(1: NA1), YWWB(1: NA1), YVR(1: NA1), unit_coeff, G11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), SNN(1: NA1), SN(1: NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, RHO(1: NA1), imethod, bctype, bc_values, NE(1: NA1), QN(1: NA1), YQDCM(1: NA1), MPHIT(1: NA1) )
 do J=1, NA
@@ -545,7 +547,7 @@ unit_coeff = 1.
 YWG11(j) = G11(j)
 ! missing UPS1 and UPS2 terms in <M_phi>
 YWWB(j) = VR(j)
-if (IPROT >= 1.) then
+if (IPROT >= 1) then
 ! contributions to net torque
 MPHIT(j) = MPHIT(j) + UPS1O(j)/UPS0O(j)
 MPHIT(j) = MPHIT(j) + UPS2O(j)/UPS0O(j)
@@ -556,7 +558,7 @@ YWgradb2(J) = 2.*(BDB02(J+1) - BDB02(J))/(BDB02(J+1) + BDB02(J))/HRO  !d log <B*
 YWR(J) = RTOR/IPOL(J)*XUPAR(J)*DLNEOD(J) - RTOR/IPOL(J)*(CNPAR(J) + XUPAR(J)*YWgradF(J))*DLNEO(J) + (XUPAR(J) - XUPAP(J))*RTOR/IPOL(J)*BDB02(J)*BTOR*SGNEOD(J) + RTOR/IPOL(J)*BDB02(J)*BTOR*(XUPAR(J)*YWgradb2(J) - XUPAR(J)*YWgradF(J) + CNPAP(J) - CNPAR(J))*SGNEO(J) + RTOR/IPOL(J)*(CNPAD(J) - CNPAR(J) - XUPAD(J)*YWgradF(J))*DDNEO(J) + RTOR/IPOL(J)*(XUPAR(J) - XUPAD(J))*DDNEOD(J)
 endif
 enddo
-imethod = nint(INUME4)
+imethod = INUME4
 
 call RUNEQ(YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), UPARO(1: NA1), YWWB(1: NA1), YVR(1: NA1), unit_coeff, YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWD(1: NA1), TTRQ(1: NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, RHO(1: NA1), imethod, bctype, bc_values, UPAR(1: NA1), QU(1: NA1), YQDCM(1: NA1), MPHIT(1: NA1))
 
@@ -590,15 +592,13 @@ YWGN(j) = VR(j)**(5./3.)
 YWGO(j) = VRO(j)**(5./3.)
 unit_coeff = 625.
 YVR(j) = VR(j)
-YWW1B(j) = VR(j)**(5./3.)
-YWW2B(j) = VR(j)**(5./3.)
 enddo
-imethod = nint(INUME2)
+imethod = INUME2
 '''
 
     runeq = \
 '''NA1I = ND1
-call RUNEQ_TETI(YWGN(1:NA1), 3./2.*NE(1:NA1), 3./2.*NI(1:NA1), YWGO(1:NA1), 3./2.*NEO(1:NA1), 3./2.*NIO(1:NA1), TEO(1:NA1), TIO(1:NA1), YWW1B(1:NA1), YWW2B(1:NA1), YVR(1:NA1), unit_coeff, G11(1:NA1)/unit_coeff, YWA1(1:NA1), YWA2(1:NA1), YWB1(1:NA1), YWB2(1:NA1), unit_coeff*PET(1:NA1), unit_coeff*PIT(1:NA1), unit_coeff*PETOT(1:NA1), unit_coeff*PITOT(1:NA1), RBDOT, BBDOT, ND1, NA1, HRO, TAU, RHO(1:NA1), imethod, TE(1:NA1), TI(1:NA1), QE(1:NA1), QI(1:NA1))
+call RUNEQ_TETI(YWGN(1:NA1), 3./2.*NE(1:NA1), 3./2.*NI(1:NA1), YWGO(1:NA1), 3./2.*NEO(1:NA1), 3./2.*NIO(1:NA1), TEO(1:NA1), TIO(1:NA1), YVR(1:NA1), unit_coeff, G11(1:NA1)/unit_coeff, YWA1(1:NA1), YWA2(1:NA1), YWB1(1:NA1), YWB2(1:NA1), unit_coeff*PET(1:NA1), unit_coeff*PIT(1:NA1), unit_coeff*PETOT(1:NA1), unit_coeff*PITOT(1:NA1), ND1, NA1, HRO, TAU, RHO(1:NA1), imethod, TE(1:NA1), TI(1:NA1), QE(1:NA1), QI(1:NA1))
 if (ND1 < NA1) then
 do j=ND1+1, NA1
 QE(j) = QE(ND1)
@@ -631,11 +631,15 @@ class RADOUT:
 ! Radial profile plotting
 !------------------------------------------------------------
 
-use parameter_inc
-use const_inc
-use status_inc
-use outcmn_inc
+use scalars
+use status
+use pi_const
+use graph_utils
+use standard_functions
 use debugger, only: markloc, debug
+use a2tglf, only: tglf_out
+use a2qlk, only: qlk_out
+use a2neo, only: neo_out 
 
 implicit none
 
@@ -653,7 +657,6 @@ class TIMOUT:
 """
 enddo
 
-return
 end subroutine RADOUT
 
 !------------------------------------------------------------
@@ -663,10 +666,11 @@ subroutine TIMOUT()
 ! Time traces plotting
 !------------------------------------------------------------
 
-use parameter_inc
-use const_inc
-use status_inc
-use outcmn_inc
+use scalars
+use status
+use pi_const
+use graph_utils
+use standard_functions
 use debugger, only: markloc, debug
 
 implicit none
@@ -691,7 +695,7 @@ YVR(j)  = VR(j)
 unit_coeff  = 1.
 YWWB(j) = VR(j)
 enddo
-imethod = nint(INUME1)
+imethod = INUME1
 '''
 
 class CUEQN:
@@ -699,7 +703,7 @@ class CUEQN:
     header = \
 '''! **** Current equation
 call markloc("Current equation")
-YC =  0.4*GP*RTOR/BTOR
+YC =  mu0*RTOR/BTOR
 YD = -0.8*GP**2 * RTOR
 YA = 2./(HRO**2 * YD)
 do J=1, NA1
@@ -716,15 +720,15 @@ bc_values(1) = 0.0
 bc_values(2) = 0.0
 bc_values(3) = 1.
 bc_values(4) = -1.
-bc_values(5) = HRO*0.4*GP/G22(NA)*IPL*RTOR/IPOL(NA1)
+bc_values(5) = HRO*mu0/G22(NA)*IPL*RTOR/IPOL(NA1)
 bc_type_for_fp=1
 ! For psifb
 ! when using the free boundary circuit equations with free current,
 ! then use mixed b.c.
-if (ITFBP /= 0.0 .and. ITFBE < TIME) then
-if (ibcpsi_fb > 0) then
+if (ITFBP /= 0 .and. ITFBE < TIME) then
+if (IBCPSI > 0) then
 !case implicit
-if (ITFBP < 0.0 .and. ibcpsi_fb >= 2.) then
+if (ITFBP < 0 .and. IBCPSI >= 2) then
 bctype = 3
 bc_values(1) = 0.0
 bc_values(2) = 0.0
@@ -734,13 +738,13 @@ bc_values(5) =  PSIEXT*HRO
 bc_type_for_fp = 3
 endif
 endif
-if (ibcpsi_fb <= 1) then
+if (IBCPSI <= 1) then
 bctype = 3
 bc_values(1) = 0.0
 bc_values(2) = 0.0
 bc_values(3) = 1.
 bc_values(4) = -1.
-bc_values(5) = HRO*0.4*GP/G22(NA)*IPL*RTOR/IPOL(NA1)
+bc_values(5) = HRO*mu0/G22(NA)*IPL*RTOR/IPOL(NA1)
 bc_type_for_fp = 1
 endif
 endif
@@ -756,10 +760,10 @@ bc_type_for_fp = 2
 !For psifb
 ! when using the free boundary circuit equations with free current,
 ! then use mixed b.c.
-if (ITFBP /= 0.0 .and. ITFBE < TIME) then
-if (ibcpsi_fb > 0) then
+if (ITFBP /= 0 .and. ITFBE < TIME) then
+if (IBCPSI > 0) then
 !case implicit
-if (ITFBP < 0.0 .and. ibcpsi_fb >= 2.) then
+if (ITFBP < 0 .and. IBCPSI >= 2) then
 bc_type = 3
 bc_values(1) = 0.0
 bc_values(2) = 0.0
@@ -769,7 +773,7 @@ bc_values(5) =  PSIEXT*HRO
 bc_type_for_fp = 3
 endif
 endif
-if (ibcpsi_fb <=  1) then
+if (IBCPSI <=  1) then
 bctype = 1
 bc_values(1) = 0.0
 bc_values(2) = 0.0
@@ -796,10 +800,10 @@ bc_type_for_fp = 3
 !For psifb
 ! when using the free boundary circuit equations with free current,
 ! then use mixed b.c.
-if (ITFBP /= 0.0 .and. ITFBE < TIME) then
-if (ibcpsi_fb > 0) then
+if (ITFBP /= 0 .and. ITFBE < TIME) then
+if (IBCPSI > 0) then
 ! case implicit
-if (ITFBP < 0.0 .and. ibcpsi_fb >= 2.) then
+if (ITFBP < 0 .and. IBCPSI >= 2) then
 bc_type = 3
 bc_values(1) = 0.0
 bc_values(2) = 0.0
@@ -809,7 +813,7 @@ bc_values(5) = PSIEXT*HRO
 bc_type_for_fp = 3
 endif
 endif
-if (ibcpsi_fb <= 1) then
+if (IBCPSI <= 1) then
 bc_type = 1
 bc_values(1) = 0.0
 bc_values(2) = 0.0
@@ -831,11 +835,11 @@ YWR(j)  = 0.
 YWQ(j)  = 0.
 YWG11(j) = 1.
 YWWB(j) = 1./RHO(j)
-YVR(j) = CC(j)*0.4*GP*RHO(j)/IPOL(j)**2
+YVR(j) = CC(j)*mu0*RHO(j)/IPOL(j)**2
 unit_coeff = 1.
 YWD(j) = -(VR(j)/(GP2*RHO(j)*CC(j))) * (CUBS(j) + CD(j))
 enddo
-imethod = nint(INUME3)
+imethod = INUME3
 
 call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWWB(1: NA1), YVR(1: NA1), unit_coeff, YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RBDOT, BBDOT, NA1, NA1, HRO, TAU, RHO(1: NA1), imethod, bctype, bc_values, FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), MPHIT(1: NA1) )
 
@@ -876,16 +880,17 @@ class INIT_CONVERGE_STEP:
     header = \
 '''subroutine init_converge_step()
 
-use parameter_inc, only: NRD
-use io_mod, only: equ_file, exp_file
+use read_input, only: equ_file, exp_file
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
-use const_inc
-use status_inc
+use scalars
+use status
+use pi_const
 use nclass_mod
 use a2tglf, only: tglf_ipc, tglf_out
 use a2qlk, only: qlk_ipc, qlk_out
 use debugger, only: markloc
 use numerical_tools, only: extrap
+use metrics, only: cuofmu
 
 implicit none
 
@@ -897,14 +902,6 @@ double precision :: YB, YC, YU, YJ_CU, YM, YMCD, YIOH, YICD, YM1, t_cpu1, t_cpu2
 double precision, dimension(NRD) :: YWA
 '''
 
-    tail = \
-'''
-
-return
-end subroutine init_converge_step
-'''
-
-
 class EQNS_INC:
 
     header = \
@@ -914,17 +911,20 @@ class EQNS_INC:
 ! Note that now time step is updated at the end of a full time cycle
 !-------------------------------------------------------------------
 
-use parameter_inc, only: NRD, n_sbr_max
-use const_inc
-use status_inc
+use scalars
+use status
+use pi_const
+use a2eqdsk, only: eqdsk
 use a2tglf, only: tglf_ipc, tglf_out
 use a2qlk, only: qlk_ipc, qlk_out
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use nclass_mod
 use strahl_mod
-use plasma_state
+use standard_functions
 use debugger, only: markloc
 use numerical_tools, only: extrap
+use transport_solver
+use metrics, only: cuofp, cuofmu
 
 implicit none
 
@@ -935,20 +935,13 @@ integer, intent(in) :: ibcpsi_fb
 integer, intent(out) :: bc_type_for_fp
 double precision, intent(out) :: dfpdrbm12
 
-integer :: IFSUB, imethod, ND, ND1, NODE, JCALL, bctype, bc_type_imp(2), t_wall1, t_wall2, rate
+integer :: IFSUB, imethod, ND, ND1, JCALL, bctype, bc_type_imp(2), t_wall1, t_wall2, rate
 
 double precision :: YHRO, YM1, YM2, YB, YC, YJ_CU, YM, YU, YIOH, YICD, YMCD, bc_value_imp(2), t_cpu1, t_cpu2, unit_coeff
 double precision, dimension(5) :: bc_values
 double precision, dimension(NRD) :: YWA, YWB, YWC, YWD, YWGN, &
-    YWHN, YWGO, YWHO, YWR, YVR, YWA1, YWA2, YWB1, YWB2, &
-    YWAA, YWWB, YWW1B, YWW2B, & 
+    YWHN, YWGO, YWHO, YWR, YVR, YWA1, YWA2, YWB1, YWB2, YWAA, YWWB, &
     YWC1, YWC2, YWS, YQDCM, MPHIT, YQDCMF, YWQ, YWG11, YWgradF, YWgradb2
 
 MPHIT = 0.
-'''
-
-    tail = \
-'''
-return
-end subroutine EQNS_INC
 '''

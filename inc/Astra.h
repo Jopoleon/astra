@@ -1,7 +1,5 @@
-#if defined(__INTEL_COMPILER) || defined(__INTEL_LLVM_COMPILER)
-#  define _GNU_SOURCE
-#  define __USE_GNU
-#endif
+#define _GNU_SOURCE
+#define __USE_GNU
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

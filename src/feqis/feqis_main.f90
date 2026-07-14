@@ -1,37 +1,37 @@
-subroutine feqis_main(nucoils, ucoils, parameters_equil, ifplasma, & 
+subroutine feqis_main(nucoils, ucoils, neql, k_fixfree, no_circuit_eq, ifplasma, machine_name, & 
     equil_in, equil_out)
 
 use imas_ids, only: type_equilibrium  
-use spider_params, only: type_parameters
-use feqis_circuit, only: psi_cur_old, psiplasmatoconduc, &
-    ucoils, voltage,  &
+use circuit, only: psi_cur_old, psiplasmatoconduc, voltage, &
     psi_mutual_effect_conductors_simple
 use fbe_core, only: nr2, nz2, nr1, nz1, Rrect, Zrect, &
     psirz, psiextrz, &
     psi_external_calc, nbnd, i_plasmatype, &
     r_xpoint, z_xpoint, n_of_xpoints, active_x_point
 use pbe_core, only: nrho, ntheta, psibndp, psiaxisp
-use global_params, only: iplasma
-use scalars, only: psplex
+use feqis_scalars, only: psplex, iplasma
 use transport2fbe, only: refit_mode, simple_plasma_model_breakdown, &
     plasma_config, x_point_save
+use feqis_solvers, only: feqis_init, equil_init_circ, fix_boundary, &
+    full_system_advance, convert_boundary_to_pbe, circuit_eq_advance, &
+    equil_assignments, solve_gse2d_fbe_full
 
 implicit none
 
-integer, intent(in) :: nucoils, ifplasma
+integer, intent(in) :: nucoils, ifplasma, neql, k_fixfree, no_circuit_eq
 double precision, intent(in) , dimension(nucoils) :: ucoils
-type(type_parameters), intent(in) :: parameters_equil
+character(len=*) :: machine_name
 type(type_equilibrium), intent(in) :: equil_in
 type(type_equilibrium), intent(out) :: equil_out
 
-integer :: nrplasma, j_init, j_call, j_vacplas, i
+integer :: nrplasma, j_init, j_call, j_vacplas
 
 data j_call/0/
 data j_vacplas/0/
 data j_init/0/
 save j_call, j_init, j_vacplas
 
-call feqis_init(equil_in, parameters_equil, j_init, ifplasma)
+call feqis_init(equil_in, neql, k_fixfree, j_init, ifplasma)
 
 nrplasma = nrho
 nbnd = ntheta ! for fbe
@@ -50,8 +50,8 @@ if (j_call == 0) then
         Rrect = equil_in%eqgeometry%rectgrid%r2d
         Zrect = equil_in%eqgeometry%rectgrid%z2d
     endif
-    if (parameters_equil%k_fixfree == 1 .or. refit_mode == 818) then   ! also if refit mode = 818, initialize free boundary stuff
-        call equil_feqis_init_circ
+    if (k_fixfree == 1 .or. refit_mode == 818) then   ! also if refit mode = 818, initialize free boundary stuff
+        call equil_init_circ(machine_name)
         if (refit_mode == 818) then
             j_call = 1 ! this is because if free boundary was never called, it needs to initialize these arrays
             refit_mode = 0 ! this is because if free boundary was never called, it needs to initialize these arrays
@@ -125,7 +125,7 @@ if (ifplasma == 1) then
     allocate(equil_out%profiles_1d%squareness(nrplasma))
 endif
 
-if (parameters_equil%k_fixfree == 1 .and. refit_mode /= 818) then !any other mode than 818
+if (k_fixfree == 1 .and. refit_mode /= 818) then !any other mode than 818
     voltage = 0.
     voltage(1:nucoils) = ucoils(1:nucoils) ! voltage inputs for active conductors
     if (ifplasma == 0) then       ! only circuit equations solved
@@ -137,19 +137,19 @@ if (parameters_equil%k_fixfree == 1 .and. refit_mode /= 818) then !any other mod
          iplasma = equil_in%global_param%i_plasma/1.e6 	
          call psi_mutual_effect_conductors_simple(psiplasmatoconduc)
         endif
-        call circuit_eq_advance_feqis(j_call)
+        call circuit_eq_advance(j_call)
         
 	psi_cur_old = psiplasmatoconduc
         
-	call psi_external_calc
+        call psi_external_calc()
         psirz = psiextrz
         j_vacplas = 0
     else if (ifplasma == 1) then  ! full plasma solved
         if (j_vacplas == 0) j_call = 0
-        call full_system_advance_feqis(j_call, parameters_equil%no_circuit_eq)
+        call full_system_advance(j_call, no_circuit_eq)
         if (j_call == -1) then
-            call convert_boundary_to_pbe
-            call fix_boundary_feqis(1)
+            call convert_boundary_to_pbe()
+            call fix_boundary(1)
         endif
         j_vacplas = 1
 ! below 2 diagnostics for configuration and xpoints
@@ -161,8 +161,8 @@ if (parameters_equil%k_fixfree == 1 .and. refit_mode /= 818) then !any other mod
             x_point_save(20, 2) = z_xpoint(active_x_point)
         endif
     endif
-else if (parameters_equil%k_fixfree == 0 .and. refit_mode /= 818) then !any other mode than 818
-    call fix_boundary_feqis(j_init)
+else if (k_fixfree == 0 .and. refit_mode /= 818) then !any other mode than 818
+    call fix_boundary(j_init)
     equil_out%global_param%psplex   = psplex
     equil_out%global_param%psibound = psibndp
     equil_out%global_param%psiaxis  = psiaxisp
@@ -172,8 +172,9 @@ else if (parameters_equil%k_fixfree == 0 .and. refit_mode /= 818) then !any othe
 endif
 
 if (refit_mode == 818) then  ! run prescribed boundary but with coil currents fitting in the bakcground
-    call full_system_advance_feqis(-818, 0)
-    call fix_boundary_feqis(1)
+    call psi_external_calc()
+    call solve_gse2d_fbe_full(0)
+    call fix_boundary(1)
     equil_out%global_param%psplex   = psplex
     equil_out%global_param%psibound = psibndp
     equil_out%global_param%psiaxis  = psiaxisp
@@ -198,5 +199,4 @@ if (ifplasma == 1) then
     call equil_assignments(equil_out)
 endif
 
-return
 end subroutine feqis_main

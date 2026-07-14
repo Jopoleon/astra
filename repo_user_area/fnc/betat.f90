@@ -7,8 +7,9 @@
 !     (Pereverzev 02 - MAY - 2006) (Fable, Apr 2024)
 double precision function BETATR(YR)
 
-use const_inc, only: BTOR, IPL, ABC, NA1, HRO, ROC
-use status_inc, only: TE, TI, NE, NI, PBLON, PBPER, PFAST, VR
+use scalars, only: BTOR, IPL, ABC, NA1, HRO, ROC
+use status, only: TE, TI, NE, NI, PBLON, PBPER, PFAST, VR
+use standard_functions, only: jrho_drho
 
 implicit  none
 
@@ -16,7 +17,7 @@ double precision, intent(in) :: YR
 integer :: J, JK
 double precision :: YV, YDR
 
-call yrjkdr(YR, JK, YDR)
+call jrho_drho(YR, JK, YDR)
 
 YV = 0.
 BETATR = 0.
@@ -28,5 +29,4 @@ YV = YV - YDR
 BETATR = BETATR - YDR*(TE(JK)*NE(JK) + TI(JK)*NI(JK))
 BETATR = 0.402*BETATR*ABC/(YV*BTOR*IPL)
 
-return
 end function BETATR

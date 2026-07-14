@@ -65,4 +65,9 @@ else
     platform=mypc
 fi
 
+if [[ -v ASTRA_COMPILER ]]
+then
+    platform=${platform}_${ASTRA_COMPILER}
+fi
+
 echo $platform

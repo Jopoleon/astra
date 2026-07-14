@@ -14,23 +14,21 @@ contains
 !---------------------------------------------------------------------
     subroutine qlk_alloc()
 
-    use const_inc, only: NA1
+    use scalars, only: NA1
 
     if (.not. allocated(qlk_out%chi_i)) then
         allocate(qlk_out%chi_i(NA1), qlk_out%chi_e(NA1), qlk_out%e_pflux(NA1), qlk_out%equipart(NA1))
     endif
 
-    return
     end subroutine qlk_alloc
 
 !---------------------------------------------------------------------
     subroutine qlk_ipc(rho_norm_max)
 
     use omp_lib
-    use parameter_inc, only: NRD
-    use io_mod, only: equ_file, exp_file, awd
-    use const_inc, only: NA1, BTOR, RTOR, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
-    use status_inc, only: NE, TE, NI, TI, ZIM1, ZIM2, ZIM3, PBLON, PBPER, &
+    use read_input, only: equ_file, exp_file, awd, astra_exe
+    use scalars, only: NA1, BTOR, RTOR, ROC, AMJ, AIM1, AIM2, AIM3, ZMJ
+    use status, only: NE, TE, NI, TI, ZIM1, ZIM2, ZIM3, PBLON, PBPER, &
         PFAST, NIZ3, AMAIN, ER, MU, FP_NORM, RHO, AMETR, SHIF, &
         NDEUT, NIZ1, NIZ2, VTOR, NIBM, G11, VPOL, VRS, SHEAR
     use numerical_tools, only: qinterp
@@ -55,28 +53,25 @@ contains
     double precision, dimension(n_scalars) :: scal_in
     double precision, dimension(nrho_m) :: drmin, drmaj, drho, dte, dne, dq, dptot, &
         dvper, drhodr, dr, dv_r
-    double precision, dimension(NRD) :: gradrhosq_as, rmaj_as, q_as, &
+    double precision, dimension(NA1) :: gradrhosq_as, rmaj_as, q_as, &
         vpar_as, vper_as, &
         chie_m, chii_m, elec_pflux_m, exchi_m, ptot_as, gamma_m, omega_m
-    double precision, dimension(nrho_m) :: chie, chii, exchi, elec_pflux, rho_m, &
+    double precision, dimension(nrho_m) :: chie, chii, exchi, rho_m, &
         gamma_max, omega_max, kymax, te_m, ne_m, vpar_m, vper_m, &
         ametr_m, rmaj_m, ptot_m, q_m
     double precision, dimension(nspec_max) :: zs_in
-    double precision, dimension(nspec_max-1, nrho_m) :: dti, dni, ni_m, ti_m, ion_pflux
-    double precision, dimension(nspec_max-1, nrho_m) :: zi_m 
-    double precision, dimension(nspec_max-1, NRD) :: ni_as, ion_pflux_m
+    double precision, dimension(nrho_m, nspec_max-1) :: dti, dni, ni_m, ti_m, zi_m 
+    double precision, dimension(NA1, nspec_max-1) :: ni_as
     character(len=32) :: str_nworkers
     character(len=64) :: SBP_NAME
     character(len=128) :: ipc_file, astra_task
 
-    save semID, shmID_vars, shmID_arrs
+    save semID, shmID_dims, shmID_vars, shmID_arrs, first_call
 
     call SYSTEM_CLOCK(t_wall1, rate)
 
     write(ipc_file, '(5A, i0, 2A)') TRIM(awd), '/tmp/', TRIM(exp_file), &
         TRIM(equ_file), '-', ipcId, '.ipc', char(0)
-    write(astra_task, '(5A)') TRIM(awd), '/bin/', TRIM(equ_file), &
-        '.exe', char(0)
 
     if (first_call) then
         call get_environment_variable("MAX_NWORKERS", str_nworkers, status=stat)
@@ -102,7 +97,8 @@ contains
             write(*, '(A, i3, A, i3)') '>>> Warning nrho_m=', nrho_m, ' larger than NA1=', NA1
             print*, 'Possible profile overfit on TGLF grid'
         endif
-        SBP_NAME = "xpr/qlki"//char(0)
+        SBP_NAME = "xpr/qlki" // char(0)
+        astra_task = TRIM(astra_exe) // char(0)
         call initialise_ipc(nrho_m, n_dims, n_scalars, n_inputs, n_arr_out, &
             nworkers, SBP_NAME, ipc_file, astra_task, semID, shmID_dims, &
             shmID_vars, shmID_arrs, ipcId)
@@ -121,40 +117,40 @@ contains
     rho_m = (/ (rho_min + (jr - 1.)*xstep, jr=1, nrho_m) /)
 
     zi_m(1, :) = ZMJ
-    call qinterp(RHO(1:NA1),     TI(1:NA1), NA1, rho_m, ti_m(1, :), nrho_m)
+    call qinterp(RHO(1:NA1),     TI(1:NA1), NA1, rho_m, ti_m(:, 1), nrho_m)
     call qinterp(RHO(1:NA1),     TE(1:NA1), NA1, rho_m,       te_m, nrho_m)
-    call qinterp(RHO(1:NA1),   ZIM1(1:NA1), NA1, rho_m, zi_m(2, :), nrho_m)
-    call qinterp(RHO(1:NA1),   ZIM2(1:NA1), NA1, rho_m, zi_m(3, :), nrho_m)
-    call qinterp(RHO(1:NA1),   ZIM3(1:NA1), NA1, rho_m, zi_m(4, :), nrho_m)
+    call qinterp(RHO(1:NA1),   ZIM1(1:NA1), NA1, rho_m, zi_m(:, 2), nrho_m)
+    call qinterp(RHO(1:NA1),   ZIM2(1:NA1), NA1, rho_m, zi_m(:, 3), nrho_m)
+    call qinterp(RHO(1:NA1),   ZIM3(1:NA1), NA1, rho_m, zi_m(:, 4), nrho_m)
     call qinterp(RHO(1:NA1),     NE(1:NA1), NA1, rho_m,       ne_m, nrho_m)
     call qinterp(RHO(1:NA1),  AMETR(1:NA1), NA1, rho_m,    ametr_m, nrho_m)
 
-    ti_m(2, :) = ti_m(1, :)
-    ti_m(3, :) = ti_m(1, :)
-    ti_m(4, :) = ti_m(1, :)
+    ti_m(:, 2) = ti_m(:, 1)
+    ti_m(:, 3) = ti_m(:, 1)
+    ti_m(:, 4) = ti_m(:, 1)
 
     do jrho=1, NA1
         if (NDEUT(jrho) >= 0.01*NE(jrho)) then
-            ni_as(1, jrho) = NDEUT(jrho)
+            ni_as(jrho, 1) = NDEUT(jrho)
         else ! likely: NDEUT not defined in equ file, hence zero
-            ni_as(1, jrho) = NI(jrho)
+            ni_as(jrho, 1) = NI(jrho)
         endif
-        ni_as(2, jrho) = NIZ1(jrho)
-        ni_as(3, jrho) = NIZ2(jrho)
-        ni_as(4, jrho) = NIZ3(jrho)
+        ni_as(jrho, 2) = NIZ1(jrho)
+        ni_as(jrho, 3) = NIZ2(jrho)
+        ni_as(jrho, 4) = NIZ3(jrho)
         rmaj_as(jrho) = RTOR + SHIF(jrho)
         q_as(jrho)    = 1./MU(jrho)
-        ptot_as(jrho) = NE(jrho)*TE(jrho) + ni_as(1, jrho)*TI(jrho) + ni_as(2, jrho)*TI(jrho) + pfast(jrho) + 0.5*(pblon(jrho) + pbper(jrho))
+        ptot_as(jrho) = NE(jrho)*TE(jrho) + ni_as(jrho, 1)*TI(jrho) + ni_as(jrho, 2)*TI(jrho) + pfast(jrho) + 0.5*(pblon(jrho) + pbper(jrho))
         bpolz = BTOR*AMETR(jrho)*MU(jrho)/RTOR
         gradrhosq_as(jrho) = G11(jrho)/VRS(jrho)
         vper_as(jrho) = ER(jrho)/(RTOR*bpolz) ! vexb in m/s --> Omega_E
         vpar_as(jrho) = ER(jrho)/(RTOR*bpolz)*(RTOR+SHIF(jrho) + AMETR(jrho))
     enddo
 
-    call qinterp(RHO(1:NA1), ni_as(1, 1:NA1), NA1, rho_m, ni_m(1, :), nrho_m)
-    call qinterp(RHO(1:NA1), ni_as(2, 1:NA1), NA1, rho_m, ni_m(2, :), nrho_m)
-    call qinterp(RHO(1:NA1), ni_as(3, 1:NA1), NA1, rho_m, ni_m(3, :), nrho_m)
-    call qinterp(RHO(1:NA1), ni_as(4, 1:NA1), NA1, rho_m, ni_m(4, :), nrho_m)
+    call qinterp(RHO(1:NA1), ni_as(1:NA1, 1), NA1, rho_m, ni_m(:, 1), nrho_m)
+    call qinterp(RHO(1:NA1), ni_as(1:NA1, 2), NA1, rho_m, ni_m(:, 2), nrho_m)
+    call qinterp(RHO(1:NA1), ni_as(1:NA1, 3), NA1, rho_m, ni_m(:, 3), nrho_m)
+    call qinterp(RHO(1:NA1), ni_as(1:NA1, 4), NA1, rho_m, ni_m(:, 4), nrho_m)
     call qinterp(RHO(1:NA1),  rmaj_as(1:NA1), NA1, rho_m,  rmaj_m, nrho_m)
     call qinterp(RHO(1:NA1),     q_as(1:NA1), NA1, rho_m,     q_m, nrho_m)
     call qinterp(RHO(1:NA1),  ptot_as(1:NA1), NA1, rho_m,  ptot_m, nrho_m)
@@ -165,13 +161,12 @@ contains
     a0_m = AMETR(NA1)
 
     do jr=1, nrho_m
-        ni_m(2, jr) = max(1.e-9, ni_m(2, jr))
-        ni_m(3, jr) = max(1.e-9, ni_m(3, jr))
-        ni_m(4, jr) = max(1.e-9, ni_m(4, jr))
+        ni_m(jr, 2) = max(1.e-9, ni_m(jr, 2))
+        ni_m(jr, 3) = max(1.e-9, ni_m(jr, 3))
+        ni_m(jr, 4) = max(1.e-9, ni_m(jr, 4))
     enddo
 
     elec_pflux_m = 0.
-    ion_pflux_m  = 0.
     chie_m  = 0.
     chii_m  = 0.
     exchi_m = 0.
@@ -208,9 +203,9 @@ contains
         jr_r = jr + 1
         jr_l = jr - 1
         if (jr == 1) then
-            jr_l = jr
+            jr_l = 1
         else if (jr == nrho_m) then
-            jr_r = jr
+            jr_r = nrho_m
         endif
         dstep = 1./dble(jr_r - jr_l)  ! 0.5 in between, 1 at the edges
         drmin(jr)  = dstep*(ametr_m(jr_r) - ametr_m(jr_l))
@@ -222,8 +217,8 @@ contains
         dq(jr)     = dstep*(q_m(jr_r) - q_m(jr_l))
         dvper(jr)  = dstep*(vper_m(jr_r) - vper_m(jr_l))
         do jspec=1, ns_in-1
-            dti(jspec, jr) = dstep*(ti_m(jspec, jr_r) - ti_m(jspec, jr_l))
-            dni(jspec, jr) = dstep*(ni_m(jspec, jr_r) - ni_m(jspec, jr_l))
+            dti(jr, jspec) = dstep*(ti_m(jr_r, jspec) - ti_m(jr_l, jspec))
+            dni(jr, jspec) = dstep*(ni_m(jr_r, jspec) - ni_m(jr_l, jspec))
         enddo
         dv_r(jr) = dstep* &
             (vpar_m(jr_r)/(rmaj_m(jr_r) + ametr_m(jr_r)) - &
@@ -259,18 +254,18 @@ contains
     prof_in( 6, :) = te_m
     prof_in( 7, :) = vpar_m
     prof_in( 8, :) = vper_m
-    prof_in( 9, :) = ti_m(1, :)
-    prof_in(10, :) = ti_m(2, :)
-    prof_in(11, :) = ti_m(3, :)
-    prof_in(12, :) = ti_m(4, :)
-    prof_in(13, :) = ni_m(1, :)
-    prof_in(14, :) = ni_m(2, :)
-    prof_in(15, :) = ni_m(3, :)
-    prof_in(16, :) = ni_m(4, :)
-    prof_in(17, :) = zi_m(1, :)
-    prof_in(18, :) = zi_m(2, :)
-    prof_in(19, :) = zi_m(3, :)
-    prof_in(20, :) = zi_m(4, :)
+    prof_in( 9, :) = ti_m(:, 1)
+    prof_in(10, :) = ti_m(:, 2)
+    prof_in(11, :) = ti_m(:, 3)
+    prof_in(12, :) = ti_m(:, 4)
+    prof_in(13, :) = ni_m(:, 1)
+    prof_in(14, :) = ni_m(:, 2)
+    prof_in(15, :) = ni_m(:, 3)
+    prof_in(16, :) = ni_m(:, 4)
+    prof_in(17, :) = zi_m(:, 1)
+    prof_in(18, :) = zi_m(:, 2)
+    prof_in(19, :) = zi_m(:, 3)
+    prof_in(20, :) = zi_m(:, 4)
     prof_in(21, :) = drmin
     prof_in(22, :) = drmaj
     prof_in(23, :) = drho
@@ -282,23 +277,23 @@ contains
     prof_in(29, :) = dv_r
     prof_in(30, :) = dr
     prof_in(31, :) = drhodr
-    prof_in(32, :) = dti(1, :)
-    prof_in(33, :) = dti(2, :)
-    prof_in(34, :) = dti(3, :)
-    prof_in(35, :) = dti(4, :)
-    prof_in(36, :) = dni(1, :)
-    prof_in(37, :) = dni(2, :)
-    prof_in(38, :) = dni(3, :)
-    prof_in(39, :) = dni(4, :)
+    prof_in(32, :) = dti(:, 1)
+    prof_in(33, :) = dti(:, 2)
+    prof_in(34, :) = dti(:, 3)
+    prof_in(35, :) = dti(:, 4)
+    prof_in(36, :) = dni(:, 1)
+    prof_in(37, :) = dni(:, 2)
+    prof_in(38, :) = dni(:, 3)
+    prof_in(39, :) = dni(:, 4)
 
     if (first_call) then
-        call fill_dim2shm(n_dims, dims_in, shmID_dims)
+        call fill_int_shm(n_dims, dims_in, shmID_dims)
         first_call = .False.
     endif
 
 ! **** Fill shared memory segments
-    call fill_var2shm(n_scalars, scal_in, shmID_vars)
-    call fill_arr2shm(nrho_m, n_inputs, prof_in, shmID_arrs)
+    call fill_dbl_shm(n_scalars, scal_in, shmID_vars)
+    call fill_dbl_shm(nrho_m*n_inputs, prof_in, shmID_arrs)
 
 ! **** Free each semaphore
     do i=1, nworkers
@@ -315,10 +310,10 @@ contains
 
     ! Interpolate back to ASTRA radial grid
 
-    call qinterp(rho_m, prof_out(1, :), nrho_m, RHO(1:NA1), chii_m(1:NA1)      , NA1, extrap_right=0.)
-    call qinterp(rho_m, prof_out(2, :), nrho_m, RHO(1:NA1), chie_m(1:NA1)      , NA1, extrap_right=0.)
-    call qinterp(rho_m, prof_out(4, :), nrho_m, RHO(1:NA1), elec_pflux_m(1:NA1), NA1, extrap_right=0.)
-    call qinterp(rho_m, prof_out(5, :), nrho_m, RHO(1:NA1), exchi_m(1:NA1)     , NA1, extrap_right=0.)
+    call qinterp(rho_m, prof_out(1, :), nrho_m, RHO(1:NA1), chii_m(1:NA1)      , NA1, extrap_right=0.d0)
+    call qinterp(rho_m, prof_out(2, :), nrho_m, RHO(1:NA1), chie_m(1:NA1)      , NA1, extrap_right=0.d0)
+    call qinterp(rho_m, prof_out(4, :), nrho_m, RHO(1:NA1), elec_pflux_m(1:NA1), NA1, extrap_right=0.d0)
+    call qinterp(rho_m, prof_out(5, :), nrho_m, RHO(1:NA1), exchi_m(1:NA1)     , NA1, extrap_right=0.d0)
 
     chii_m (1:2) = chii_m (3)
     chie_m (1:2) = chie_m (3)
@@ -335,7 +330,6 @@ contains
     call SYSTEM_CLOCK(t_wall2, rate)
     print*, "XPR wall time", dble(t_wall2 - t_wall1)/dble(rate)
 
-    return
     end subroutine qlk_ipc
 
 end module a2qlk

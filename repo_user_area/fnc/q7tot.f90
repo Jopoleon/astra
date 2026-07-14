@@ -2,11 +2,12 @@
 !   (Pereverzev 09-May-2008)
 double precision FUNCTION Q7TOTR(YR)
 
-use status_inc, only: SF7TOT
+use status, only: SF7TOT
+use standard_functions, only: VINT
+
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT
 
 Q7TOTR = VINT(SF7TOT, YR)
 

@@ -3,14 +3,14 @@
 !   (Yushmanov 11-MAY-87)
 double precision FUNCTION NEXAVR(YR)
 
-use status_inc, only: NEX
+use status, only: NEX
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT, VOLR
+double precision, external :: VOLR
 
 NEXAVR = VINT(NEX, YR)/VOLR(YR)
 
-return
 end function NEXAVR

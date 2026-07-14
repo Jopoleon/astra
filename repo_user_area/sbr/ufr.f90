@@ -6,7 +6,7 @@
 
 subroutine UF1DR(ufnam, tim_in, val)
 
-use parse_utils, only: ufheader, ufrd
+use read_input, only: ufheader, ufrd
 
 implicit none
 
@@ -15,7 +15,7 @@ character(len=120), intent(in) :: ufnam
 double precision, intent(out) :: val
 
 logical :: uf_exists
-integer :: nt_u, nx_u, ndim_u, j, jt, jch, jtprev
+integer :: nt_u, nx_u, nscal_u, ndim_u, j, jt, jch, jtprev
 double precision :: tim1, tim2, tmp1, tmp2
 double precision, dimension(:), allocatable :: t_u, x_u, var_u
 character(len=30) :: rholbl
@@ -27,11 +27,8 @@ if (.not. uf_exists) then
     return
 endif
 
-call ufheader(TRIM(ufnam), ndim_u, nt_u, nx_u, rholbl)
-allocate(t_u(nt_u))
-allocate(x_u(nx_u))
-allocate(var_u(nt_u*nx_u))
-call ufrd(TRIM(ufnam), ndim_u, nt_u, nx_u, t_u, x_u, var_u)
+call ufheader(TRIM(ufnam), nscal_u, ndim_u, nt_u, nx_u, rholbl)
+call ufrd(TRIM(ufnam), nscal_u, ndim_u, nt_u, nx_u, t_u, x_u, var_u)
 
 ! Interpolate between time points
 if (tim_in <= t_u(1)) then
@@ -51,10 +48,6 @@ else
     val = tmp1 + (tim_in - tim1) * (tmp2 - tmp1)/(tim2 - tim1)
 endif
 
-deallocate(t_u)
-deallocate(x_u)
-deallocate(var_u)
-
 return
 end subroutine UF1DR
 
@@ -66,7 +59,7 @@ end subroutine UF1DR
 
 subroutine UF2DR(ufnam, tim_in, arr1d)
 
-use parse_utils, only: ufheader, ufrd
+use read_input, only: ufheader, ufrd
 
 implicit none
 
@@ -75,7 +68,7 @@ character(len=120), intent(in) :: ufnam
 double precision, intent(out) :: arr1d(*)
 
 logical :: uf_exists
-integer :: nt_u, nx_u, ndim_u, j, jt, jch, jtprev
+integer :: nt_u, nx_u, nscal_u, ndim_u, j, jt, jch, jtprev
 double precision :: tim1, tim2
 double precision, dimension(:), allocatable :: t_u, x_u, var_u, tmp1, tmp2
 character(len=30) :: rholbl
@@ -87,13 +80,10 @@ if (.not. uf_exists) then
     return
 endif
 
-call ufheader(TRIM(ufnam), ndim_u, nt_u, nx_u, rholbl)
-allocate(t_u(nt_u))
-allocate(x_u(nx_u))
+call ufheader(TRIM(ufnam), nscal_u, ndim_u, nt_u, nx_u, rholbl)
 allocate(tmp1(nx_u))
 allocate(tmp2(nx_u))
-allocate(var_u(nt_u*nx_u))
-call ufrd(TRIM(ufnam), ndim_u, nt_u, nx_u, t_u, x_u, var_u)
+call ufrd(TRIM(ufnam), nscal_u, ndim_u, nt_u, nx_u, t_u, x_u, var_u)
 
 ! Interpolate between time points
 if (tim_in <= t_u(1)) then
@@ -114,11 +104,7 @@ else
                    (tmp2(1: nx_u) - tmp1(1: nx_u))/(tim2 - tim1)
 endif
 
-deallocate(t_u)
-deallocate(x_u)
 deallocate(tmp1)
 deallocate(tmp2)
-deallocate(var_u)
 
-return
 end subroutine UF2DR

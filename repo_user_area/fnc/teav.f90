@@ -4,14 +4,14 @@
 
 double precision FUNCTION TEAVR(YR)
 
-use status_inc, only: TE
+use status, only: TE
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT, VOLR
+double precision :: VOLR
 
 TEAVR = VINT(TE, YR)/VOLR(YR)
 
-return
 end function TEAVR

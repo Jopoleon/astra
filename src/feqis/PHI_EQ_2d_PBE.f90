@@ -7,7 +7,7 @@ subroutine PHI_EQ_2d_PBE(nrho, ntheta, psin_grid_in, iplasma, &
     psiax, cnorm, X0, Y0, thetap_i_out, rmaj2, jcbn2, q_new, rhoedge, &
     darea2, epprim_out, efprim_out, r_min, yy2, gradr2, darea, ierr, dl_dt)
 
-use pi_vars, only: GPI, GPI2, GPI4, muvac
+use pi_const, only: GP, GP2, GP2_sq, muvac, mu0
 implicit none
 
 integer :: max_iter
@@ -46,8 +46,8 @@ psin_grid = psin_grid_in
 ierr=0
 
 do jrho=1, nrho
-    epprimp(jrho)  = -GPI4*muvac*pprimp(jrho)
-    effprimp(jrho) = -GPI4*ffprimp(jrho)
+    epprimp(jrho)  = -GP2_sq*muvac*pprimp(jrho)
+    effprimp(jrho) = -GP2_sq*ffprimp(jrho)
     if (i_prevc == 0) then
         lambda2d(jrho, :) = (jrho - 1.)/(nrho - 1.)
         PSI(jrho, :) = psin_grid(jrho)
@@ -96,7 +96,7 @@ iter_loop: do jiter=1, max_iter+1
             fpol2(jrho) = fpol2(jrho-1) + (2.*jrho - 3.)/qhalf
         enddo
 
-        rhoedge = sqrt(phi_flux(nrho)/GPI)
+        rhoedge = sqrt(phi_flux(nrho)/GP)
 
         psin_grid = 0.5*psin_grid + 0.5*fpol2/fpol2(nrho)         ! this update makes up for the missing external iterations. Otherwise the external iterations according to my scheme work if this block is commented. Let us keep this and use miter_ext = 1 in the external iterations since this is faster.
         do jrho=1, nrho-1
@@ -118,7 +118,7 @@ iter_loop: do jiter=1, max_iter+1
             XX(:, jthe)*epprimp(:)*dArea(:, jthe))
     enddo
 
-    cnorm = sum(known_term)/iplasma/GPI2/0.4/GPI
+    cnorm = sum(known_term)/iplasma/GP2/mu0
     known_term = known_term/cnorm
 
     call solver_inversion_matrix_gsef(PSIb, nrho, ntheta, &
@@ -204,5 +204,4 @@ thetap_i_out = thetap_i(1: ntheta)
 epprim_out = epprimp
 efprim_out = effprimp
 
-return
 end subroutine PHI_EQ_2d_PBE

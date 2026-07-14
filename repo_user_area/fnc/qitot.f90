@@ -2,12 +2,12 @@
 !   (Yushmanov 11-JAN-89)
 double precision FUNCTION QITOTR(YR)
 
-use status_inc, only: PITOT
+use status, only: PITOT
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT
 
 QITOTR = VINT(PITOT, YR)
 

@@ -2,28 +2,26 @@ module ferromagstructure
 
 implicit none
 
-integer, parameter, private :: DP=kind(1.0D0)
-
 type type_position   ! Structure for list of R,Z positions (1D)
     integer :: npoints
     integer :: sigma_surface
-    real(DP), pointer :: R(:)       => null()  ! /r - Major radius [m]. Vector(max_npoints). Time-dependent
-    real(DP), pointer :: Z(:)       => null()  ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
-    real(DP), pointer :: tanangl(:) => null()  ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
-    real(DP), pointer :: length(:)  => null()  ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
-    real(DP), pointer :: MagnetizationChi(:)  => null()  ! /calculated chi for this element
-    real(DP), pointer :: Btangfield(:)  => null()  ! /calculated chi for this element
-    real(DP), pointer :: Current(:)  => null()  ! /I_s of this element in MA
+    double precision, pointer :: R(:)       => null()  ! /r - Major radius [m]. Vector(max_npoints). Time-dependent
+    double precision, pointer :: Z(:)       => null()  ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
+    double precision, pointer :: tanangl(:) => null()  ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
+    double precision, pointer :: length(:)  => null()  ! /z - Altitude [m]. Vector(max_npoints). Time-dependent
+    double precision, pointer :: MagnetizationChi(:)  => null()  ! /calculated chi for this element
+    double precision, pointer :: Btangfield(:)  => null()  ! /calculated chi for this element
+    double precision, pointer :: Current(:)  => null()  ! /I_s of this element in MA
 endtype type_position
  
 type type_mutmatrix  ! Structure for list of R,Z positions (1D)
-    real(DP), pointer :: Mij(:, :) => null()    ! /mutual induction matrix
+    double precision, pointer :: Mij(:, :) => null()    ! /mutual induction matrix
 endtype type_mutmatrix
  
 type type_magnetiz   ! Structure for list of R,Z positions (1D)
     integer :: nvalues
-    real(DP), pointer :: Chi(:) => null()   ! /magnetic suceptibility
-    real(DP), pointer :: H(:)   => null()   ! /Bvacuum_tangent/mu0
+    double precision, pointer :: Chi(:) => null()   ! /magnetic suceptibility
+    double precision, pointer :: H(:)   => null()   ! /Bvacuum_tangent/mu0
 endtype
 
 type type_ferromag
@@ -35,13 +33,14 @@ endtype
 end module ferromagstructure
 
 !---------------------------------------------------------------------
-module scalars
+module feqis_scalars
 
 implicit none
 
-double precision :: psplex, li3, li_aug, betapol, betapol_iter, wkin, bpkin
+double precision :: psplex, li3, li_aug, betapol, betapol_iter, &
+    wkin, bpkin, iplasma, btor0, rgeom0
 
-end module scalars
+end module feqis_scalars
 
 !---------------------------------------------------------------------
 module transfer_functions

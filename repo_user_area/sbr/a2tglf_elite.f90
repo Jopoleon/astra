@@ -1,7 +1,7 @@
 subroutine a2tglf_elite()
 
-use const_inc, only: IPART, NA1
-use status_inc, only: RHO, FP_NORM
+use scalars, only: IPART, NA1
+use status, only: RHO, FP_NORM
 use parameters_a2equil, only: equil_now
 use numerical_tools, only: qinterp
 
@@ -36,11 +36,11 @@ enddo
 
 f_elite = 'tglf/tglf4elite.dat'
 open(unit_out, file=TRIM(f_elite))
-write(unit_out, '(i)') nthe_equ
+write(unit_out, '(I0)') nthe_equ
 do jthe=1, nthe_equ
     write(unit_out, '(e14.6)') equil_now%coord_sys%position%theta2d(jthe)
 enddo
-write(unit_out, '(2i)') NA1, nthe_equ
+write(unit_out, '(2I0)') NA1, nthe_equ
 do jrho=1, NA1
     do jthe=1, nthe_equ
         write(unit_out, '(3e14.6)') RR_as(jrho, jthe), ZZ_as(jrho, jthe), Bp_as(jrho, jthe)
@@ -50,5 +50,4 @@ close(unit_out)
 
 write(*, '(2A)') 'Written ', TRIM(f_elite)
 
-return
 end subroutine a2tglf_elite

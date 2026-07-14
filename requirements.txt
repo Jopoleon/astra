@@ -1,10 +1,13 @@
-intel >2018
- 1) ifort with openMP flag
- 2) mpifort with openMP flag
-cc
-MKL
-python >= 3
-scipy >= 0.19.1 (probably even less)
+Compiler:
+   intel >2018 (ifort, ifx)
+   gfortran
 
-torbeam
-rabbit (then also NetCDF for c and f90)
+Additional packages
+   MKL
+   MPI
+   OpenMP flags
+   NetCDF if RABBIT is needed
+
+python 
+   v >= 3
+   scipy v >= 0.19.1

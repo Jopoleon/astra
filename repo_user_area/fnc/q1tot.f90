@@ -2,11 +2,12 @@
 !   (Pereverzev 09-May-2008)
 double precision FUNCTION Q1TOTR(YR)
 
-use status_inc, only: SF1TOT
+use status, only: SF1TOT
+use standard_functions, only: VINT
+
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT
 
 Q1TOTR = VINT(SF1TOT, YR)
 

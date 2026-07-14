@@ -10,7 +10,7 @@ subroutine build_2dgrid(nrho, ntheta, psin_grid, &
     elon, tria_u, tria_l, shif, g41, q_out, shiv, square, li_aug, betapol_iter, dl_dt, &
     wkin, bpkin, dpsidvbez)
 
-use pi_vars, only: GPI, GPI2
+use pi_const, only: GP, GP2, muvac, mu0
 use numerical_tools, only: qinterp, extrapolate, polyfitcc
 use feqis_tools, only: green_function_includingsamepoint, pol_angle
 use metric_coefficients_pbe, only: fsa_kernel
@@ -33,13 +33,13 @@ double precision, intent(out), dimension(nrho, ntheta) :: bpcell, bcell
 double precision, intent(out), dimension(nrho) :: r_out, r_in, elon, shif, &
     g41, q_out, shiv, square, tria_u, tria_l
 
-integer :: jrho, jthe, jthe_l, k, j, i, ji, i1, i2, ip0, ip1, ip2, ip3
-double precision :: drdX, drdY, Mdet, dpsi, dthe, ipol_rmaj, z1, z2, z3, rho_interp, &
+integer :: jrho, jthe, j, i, ji, i1, i2, ip0, ip1, ip2, ip3
+double precision :: ipol_rmaj, z1, z2, rho_interp, &
     dumba1, dumba2, dumba3, dumba4, qedge, rhoedge, greenf, t4, &
     yrzmin, yrzmax, yzmax, yrmin, yrmax, yrr, yzmin, ya
 double precision, dimension(3) :: xxxx1, yyyy1, pppp1
 double precision, dimension(nrho) :: rhot, rhoa, dPSIdV, dVa, daa, dum1, AMETR, ONEZ
-double precision, dimension(ntheta) :: dl_arc, tar1, tar2, theta_special, dl_arc_special, &
+double precision, dimension(ntheta) :: dl_arc, tar1, theta_special, dl_arc_special, &
     rmaj2_sq, gradVa_sq, B_ABSa_sq
 double precision, dimension(nrho, ntheta) :: gradPSIa, gradVa, dV2da, dA2da, &
     B_pola, B_ABSa, B_Ta, dldt_temp
@@ -58,14 +58,14 @@ dv2da = 0.
 jthe = 1
 do jrho=1, nrho-1
     da2da(jrho, jthe) = Jcbn2(jrho, jthe)*(psin_grid(jrho+1) - psin_grid(jrho)) * &
-        (thetap_i(1)+GPI2 - thetap_i(ntheta)) 
-    dv2da(jrho, jthe) = GPI2*Rmaj2(jrho, jthe)*da2da(jrho, jthe)
+        (thetap_i(1)+GP2 - thetap_i(ntheta)) 
+    dv2da(jrho, jthe) = GP2*Rmaj2(jrho, jthe)*da2da(jrho, jthe)
 enddo
 do jthe=2, ntheta
     do jrho=1, nrho-1
         da2da(jrho, jthe) = Jcbn2(jrho, jthe)*(psin_grid(jrho+1) - psin_grid(jrho)) * &
             (thetap_i(jthe) - thetap_i(jthe-1)) 
-        dv2da(jrho, jthe) = GPI2*Rmaj2(jrho, jthe)*da2da(jrho, jthe)
+        dv2da(jrho, jthe) = GP2*Rmaj2(jrho, jthe)*da2da(jrho, jthe)
     enddo
 enddo
 
@@ -102,16 +102,16 @@ do jrho=1, nrho
     theta_special(1) = pol_angle(dumba1, dumba3/dumba4, XX(jrho, 1), YY(jrho, 1)/dumba4)
     do jthe=2, ntheta 
         theta_special(jthe) = pol_angle(dumba1, dumba3/dumba4, XX(jrho, jthe), YY(jrho, jthe)/dumba4)
-        if (theta_special(jthe) < theta_special(jthe-1) - GPI2/ntheta) then
-            theta_special(jthe) = theta_special(jthe) + GPI2
+        if (theta_special(jthe) < theta_special(jthe-1) - GP2/ntheta) then
+            theta_special(jthe) = theta_special(jthe) + GP2
         endif
         z1 = sin(theta_special(jthe) + theta_special(jthe-1))*sin(0.5*(theta_special(jthe) + theta_special(jthe-1)))
         dl_arc(jthe) = dldt_temp(jrho, jthe)*(thetap_i(jthe) - thetap_i(jthe-1)) !on the full grid
         dl_arc_special(jthe) = dldt_temp(jrho, jthe)*(theta_special(jthe) - theta_special(jthe-1)) !on the full grid
         square(jrho) = square(jrho) + (XX(jrho, jthe) - dumba1)/dumba2*z1*dl_arc_special(jthe)
     enddo
-    dl_arc(1) = dldt_temp(jrho, 1)*(thetap_i(1) + GPI2 - thetap_i(ntheta))
-    z1 = sin((thetap_i(1) + GPI2 + thetap_i(ntheta)))*sin(0.5*(thetap_i(1) + GPI2 + thetap_i(ntheta)))
+    dl_arc(1) = dldt_temp(jrho, 1)*(thetap_i(1) + GP2 - thetap_i(ntheta))
+    z1 = sin((thetap_i(1) + GP2 + thetap_i(ntheta)))*sin(0.5*(thetap_i(1) + GP2 + thetap_i(ntheta)))
     square(jrho) = square(jrho) + (XX(jrho, 1)-dumba1)/dumba2*z1*dl_arc(1)
     perim(jrho)  = sum(dl_arc)
     square(jrho) = square(jrho)/perim(jrho)
@@ -145,7 +145,7 @@ do jthe=1, ntheta
     do jrho=1, nrho-1
         z1 = dVa(jrho)/(psin_grid(jrho+1) - psin_grid(jrho))
         z2 = (PSI(jrho+1, jthe) - PSI(jrho, jthe))/(psin_grid(jrho+1) - psin_grid(jrho))
-        B_pola(jrho, jthe) = z2/(GPI2*Rmaj2(jrho, jthe))*sqrt(gradr2(jrho, jthe))
+        B_pola(jrho, jthe) = z2/(GP2*Rmaj2(jrho, jthe))*sqrt(gradr2(jrho, jthe))
         bpcell(jrho, jthe) = B_pola(jrho, jthe)
         gradPSIa(jrho, jthe) = z2*sqrt(gradr2(jrho, jthe))
         gradVa  (jrho, jthe) = z1*sqrt(gradr2(jrho, jthe))
@@ -174,27 +174,27 @@ enddo
 psplex = dumba1/sum(dl_arc)
 psplex = psplex/(1.*sum(B_pola(nrho, 1:ntheta)*dl_arc(1:ntheta))/0.4) ! for LEXT part, alternative
 
-!li3 = 2.*sum(B_pola**2 * dV2da)/rtor/(0.4*GPI*iplasma)**2
+!li3 = 2.*sum(B_pola**2 * dV2da)/rtor/(0.4*GP*iplasma)**2
 dumba1 = 0.5*(maxval(XX(nrho, 1:ntheta)) + minval(XX(nrho, 1:ntheta))) !Rgeo
-li3 = 2.*sum(B_pola**2 * dV2da)/dumba1/(0.4*GPI*iplasma)**2
+li3 = 2.*sum(B_pola**2 * dV2da)/dumba1/(mu0*iplasma)**2
 li_aug = li3 * dumba1 * perim(nrho)**2./(2.*volum(nrho))
 !write(*,*) 'liaug',li3,dumba1,perim(nrho),volum(nrho)
 do jrho=1, nrho-1
     onez(jrho) = 0.5*(pressure(jrho) + pressure(jrho+1))
 enddo
-betapol = 0.4*GPI2*1.e-6*sum(onez*dva)/sum(B_pola**2 * dV2da)
-betapol_iter = 4.*1.e-6*sum(onez*dva)/(0.4*GPI*dumba1*iplasma**2.)
+betapol = 0.4*GP2*1.e-6*sum(onez*dva)/sum(B_pola**2 * dV2da)
+betapol_iter = 4.*1.e-6*sum(onez*dva)/(0.4*GP*dumba1*iplasma**2.)
 wkin = sum(onez*dva)  !int(pressure dV)
-bpkin = sum(B_pola**2 * dV2da)/(0.4*GPI2*1.e-6) ! int(Bp**2/(2mu0)dV)
+bpkin = sum(B_pola**2 * dV2da)/(2.*muvac) ! int(Bp**2/(2mu0)dV)
 
 slat = 0.
 do jrho=2, nrho
     do jthe=1, ntheta-1 
         slat(jrho) = slat(jrho) + XX(jrho, jthe)*dldt_temp(jrho, jthe)*(thetap_i(jthe+1) - thetap_i(jthe))
     enddo
-    slat(jrho) = slat(jrho) + XX(jrho, ntheta)*dldt_temp(jrho, ntheta)*(thetap_i(1) - thetap_i(ntheta) + GPI2)
+    slat(jrho) = slat(jrho) + XX(jrho, ntheta)*dldt_temp(jrho, ntheta)*(thetap_i(1) - thetap_i(ntheta) + GP2)
 enddo
-slat = slat*GPI2   !full grid
+slat = slat*GP2   !full grid
 
 do jrho=1, nrho
     ametr(jrho) = 0.5*(maxval(XX(jrho, 1: ntheta)) - minval(XX(jrho, 1: ntheta)))
@@ -265,6 +265,8 @@ call qinterp(rhot(1: nrho-1), bdb0(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: 
 bdb0(2: nrho-1) = dum1(2: nrho-1)
 call qinterp(rhot(1: nrho-1), b0db2(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
 b0db2(2: nrho-1) = dum1(2: nrho-1)
+call qinterp(rhot(1: nrho-1), dpsidvbez(1: nrho-1), nrho-1, rhoa(2: nrho-1), dum1(2: nrho-1), nrho-2)
+dpsidvbez(2: nrho-1) = dum1(2: nrho-1)
 
 G1(1) = 0.0
 G3(1) = 1./XX(1, 1)**2
@@ -333,5 +335,4 @@ TRIA_U(1) = 0.d0
 TRIA_L(1) = 0.d0
 SHIF(1) = XX(1, 1) - rtor
 
-return
 end subroutine build_2dgrid

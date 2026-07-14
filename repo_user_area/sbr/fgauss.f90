@@ -10,8 +10,8 @@
 
 subroutine FGAUSS(YCENTR, YWIDTH, YPROF)
 
-use const_inc, only: NA1, ROC, HRO
-use status_inc, only: RHO, VR
+use scalars, only: NA1, ROC, HRO
+use status, only: RHO, VR
 
 implicit none
 
@@ -32,5 +32,4 @@ do j=1, NA1
    YPROF(j)= YPROF(j)/YPOW
 enddo
 
-return
 end subroutine fgauss

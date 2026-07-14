@@ -26,7 +26,8 @@ def compare(fcdf, fcdf_ref, tolerance=1.e-7):
         else:
             arr2 = ncref[key].data
             if arr1.shape != arr2.shape:
-                logger.error('Shape mismatch')
+                logger.error('Shape mismatch %s', key)
+                print(key, arr1.shape, arr2.shape)
             else:
                 for jt in range(nt):
                     arr_new = np.atleast_1d(arr1[jt])

@@ -1,6 +1,6 @@
 NEQUIL=91;
 MEQUIL=90;
-!MEQUIL=0;
+IPEQL = 4;
 
 atreq = .5;
 
@@ -56,7 +56,7 @@ VTOR=VTORX;
 ! ECH
 ! TORBEAM
 
-!TORBA(PEECR, CUECR, 0.d0)>:.05:::;
+!TORBA(PEECR, CUECR, 0.d0)<:.05:::;
 
 TE:AS;		TE=TEX;
 TI:AS;		TI=TIX

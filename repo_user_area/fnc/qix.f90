@@ -2,12 +2,12 @@
 !   (Yushmanov 11-JAN-89)
 double precision FUNCTION QIXR(YR)
 
-use status_inc, only: PIX
+use status, only: PIX
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-double precision :: VINT
 
 QIXR = VINT(PIX, YR)
 

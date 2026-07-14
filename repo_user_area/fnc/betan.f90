@@ -7,26 +7,26 @@
 !     (Pereverzev 02 - MAY - 2006)
 double precision function BETANR(YR)
 
-use const_inc, only: BTOR, IPL, ABC, NA1, HRO, ROC
-use status_inc, only: TE, TI, NE, NI, PBLON, PBPER, PFAST, VR
+use scalars, only: BTOR, IPL, ABC, NA1, HRO, ROC
+use status, only: TE, TI, NE, NI, PBLON, PBPER, PFAST, VR
+use standard_functions, only: jrho_drho
 
 implicit  none
 
 double precision, intent(in) :: YR
-integer :: J, JK
+integer :: j, JK
 double precision :: YV, YDR
 
-call yrjkdr(YR, JK, YDR)
+call jrho_drho(YR, JK, YDR)
 
 YV = 0.
 BETANR = 0.
-do J = 1, JK
-   YV = YV + VR(J)
-   BETANR = BETANR + VR(j)*(TE(J)*NE(J) + TI(J)*NI(J) + 0.5*(PBLON(J) + PBPER(J)) + PFAST(J))
+do j=1, JK
+    YV = YV + VR(J)
+    BETANR = BETANR + VR(j)*(TE(J)*NE(J) + TI(J)*NI(J) + 0.5*(PBLON(J) + PBPER(J)) + PFAST(J))
 enddo
 YV = YV - YDR
 BETANR = BETANR - YDR*(TE(JK)*NE(JK) + TI(JK)*NI(JK) + 0.5*(PBLON(JK) + PBPER(JK)) + PFAST(JK))
 BETANR = 0.402*BETANR*ABC/(YV*BTOR*IPL)
 
-return
 end function betanr

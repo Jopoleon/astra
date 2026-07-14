@@ -32,12 +32,9 @@ def json_concat(expequ):
     j_json = 1
     f_json = '%s-%d.json' %(loc, j_json)
 
-# Don't store a new CDF if the current one is newer than 1st json
-    if os.path.isfile(cdf_out):
-        if os.stat(f_json).st_mtime < os.stat(cdf_out).st_mtime:
-            logger.warning('json files older then %s' %cdf_out)
-            logger.warning('No 2D NetCDF file written')
-            return
+    f_meta = '%s/astra_variables.json' %awd
+    with open(f_meta, 'r') as fmeta:
+        meta_d = json.load(fmeta)
 
     logger.info('Started json2cdf')
     ds_astra = {}
@@ -55,85 +52,49 @@ def json_concat(expequ):
         logger.debug(f_json)
         with open(f_json, 'r') as fjson:
             json_d = json.load(fjson)
-            astra_d = json_d['astra']
-            equil_d = json_d['equil']
 
-        for key, val in astra_d.items():
-            dat = val['data']
-            if 'dims' in val.keys():
-                if np.prod(val['dims']) == 0:
-                    continue
-            if key not in ('XRHO', ):
-                if j_json == 1:
-                    if type(dat) == type([]): # list
-                        if len(dat) > 0:
-                            ds_astra[key] = [dat]
-                        else: # array, all zeros
-                            ds_astra[key] = [np.zeros(val['dims'])]
-                    else: # scalar
-                        ds_astra[key] = [dat]
-                else:
-                    if type(dat) == type([]): # list
-                        if len(dat) > 0:
-                            ds_astra[key].append(dat)
-                        else: # all zeros
-                            ds_astra[key].append(np.zeros(val['dims']))
-                    else: # scalar
-                        ds_astra[key].append(dat)
+        for lbl, dic in json_d.items():
+            for key, dat in dic.items():
+                if j_json == 1: # First data, metadata from astra_variables.json
+                    ds_astra[key] = {}
+                    meta = meta_d[lbl][key]
+                    ds_astra[key]['group'] = lbl
+                    if 'units' in meta:
+                        ds_astra[key]['units'] = meta['units']
+                    else:
+                        ds_astra[key]['units'] = ''
+                    if 'desc' in meta:
+                        ds_astra[key]['long_name'] = meta['desc']
+                    else:
+                        ds_astra[key]['long_name'] = ''
+                    ds_astra[key]['data'] = [dat]
+                else: # append data
+                    ds_astra[key]['data'].append(dat)
 
-        for key, val in equil_d.items():
-            dat = val['data']
-            if 'dims' in val.keys():
-                if np.prod(val['dims']) == 0:
-                    continue
-            if key not in ('rho_tor_norm', 'teta2d'):
-                if j_json == 1:
-                    if type(dat) == type([]): # list
-                        if len(dat) > 0:
-                            ds_equil[key] = [dat]
-                        else: # array, all zeros
-                            ds_equil[key] = [np.zeros(val['dims'])]
-                    else: # scalar
-                        ds_equil[key] = [dat]
-                else:
-                    if type(dat) == type([]): # list
-                        if len(dat) > 0:
-                            ds_equil[key].append(dat)
-                        else: # all zeros
-                            ds_equil[key].append(np.zeros(val['dims']))
-                    else: # scalar
-                        ds_equil[key].append(dat)
-                        
         f_json_prev = f_json
         j_json += 1
 
     nt = j_json - 1
-    nx   = astra_d['XRHO']['dims'][0]
-    n_eq = equil_d['rho_tor_norm']['dims'][0]
-    n_th = equil_d['teta2d']['dims'][0]
-    nR   = equil_d['r2d']['dims'][0]
-    nZ   = equil_d['z2d']['dims'][0]
-    logger.debug('nt=%d, nrho=%d, nr_eq=%d, nthe_eq=%d' %(nt, nx, n_eq, n_th))
+    nx   = len(json_d['profiles']['XRHO'])
+    n_eq = len(json_d['equil_profiles']['rho_tor_norm'])
+    n_th = len(json_d['equil_rz2d']['theta2d'])
+    nR   = len(json_d['equil_rect']['r2d'])
+    nZ   = len(json_d['equil_rect']['z2d'])
+    logger.debug('nt=%d, nrho=%d, nr_eq=%d, nthe_eq=%d, nR=%d, nZ=%d' %(nt, nx, n_eq, n_th, nR, nZ))
 
     for key, val in ds_astra.items():
-        ds_astra[key] = np.array(val, dtype=dtyp)
-        darr = ds_astra[key]
+        val['data'] = np.array(val['data'], dtype=dtyp)
+        darr = val['data']
         if darr.shape == (nt, ):
-            astra_d[key]['dimensions'] = ['TIME']
-        elif darr.shape == (nt, nx):
-            astra_d[key]['dimensions'] = ['TIME', 'XRHO']
-
-    for key, val in ds_equil.items():
-        ds_equil[key] = np.array(val, dtype=dtyp)
-        darr = ds_equil[key]
-        if darr.shape == (nt, ):
-            equil_d[key]['dimensions'] = ['TIME']
-        elif darr.shape == (nt, n_eq):
-            equil_d[key]['dimensions'] = ['TIME', 'RHO_SURF']
-        elif darr.shape == (nt, n_eq, n_th):
-            equil_d[key]['dimensions'] = ['TIME', 'RHO_SURF', 'THETA']
-        elif darr.shape == (nt, nR, nZ):
-            equil_d[key]['dimensions'] = ['TIME', 'R', 'Z']
+            val['dimensions'] = ['TIME']
+        elif darr.shape == (nt, nx) and val['group'][:6] != 'equil_':
+            val['dimensions'] = ['TIME', 'XRHO']
+        elif darr.shape == (nt, n_eq) and val['group'][:6] == 'equil_':
+            val['dimensions'] = ['TIME', 'RHO_SURF']
+        elif darr.shape == (nt, n_eq, n_th) and val['group'][:6] == 'equil_':
+            val['dimensions'] = ['TIME', 'RHO_SURF', 'THETA']
+        elif darr.shape == (nt, nR, nZ) and val['group'][:6] == 'equil_':
+            val['dimensions'] = ['TIME', 'R', 'Z']
 
     f = netcdf_file(cdf_out, 'w', mmap=False)
 
@@ -145,49 +106,41 @@ def json_concat(expequ):
     f.createDimension('Z', nZ)
 
     rho = f.createVariable('XRHO', dtyp, ('XRHO', ))
-    rho.data  = np.array(astra_d['XRHO']['data'], dtype=dtyp)
-    rho.units = astra_d['XRHO']['units']
-    rho.long_name = astra_d['XRHO']['long_name']
+    rho.data  = np.array(json_d['profiles']['XRHO'], dtype=dtyp)
+    rho.units = ''
+    rho.long_name = meta_d['profiles']['XRHO']['desc']
 
     time = f.createVariable('TIME', dtyp, ('TIME', ))
-    time.data = ds_astra['TIME'].astype(dtyp)
+    time.data = ds_astra['TIME']['data'].astype(dtyp)
     time.units = 's'
     time.long_name = 'Time'
 
     rho_surf = f.createVariable('RHO_SURF', dtyp, ('RHO_SURF', ))
-    rho_surf.data = np.array(equil_d['rho_tor_norm']['data'], dtype=dtyp)
+    rho_surf.data = np.array(ds_astra['rho_tor_norm']['data'], dtype=dtyp)
     rho_surf.units = '-'
-    rho_surf.long_name = equil_d['rho_tor_norm']['long_name']
+    rho_surf.long_name = meta_d['equil_profiles']['rho_tor_norm']['desc']
 
     theta = f.createVariable('THETA', dtyp, ('THETA', ))
-    theta.data = np.array(equil_d['teta2d']['data'], dtype=dtyp)
+    theta.data = np.array(ds_astra['theta2d']['data'], dtype=dtyp)
     theta.units = 'rad'
-    theta.long_name = equil_d['teta2d']['long_name']
+    theta.long_name = meta_d['equil_rz2d']['theta2d']['desc']
 
     rgrid = f.createVariable('R', dtyp, ('R', ))
-    rgrid.data = np.array(equil_d['r2d']['data'], dtype=dtyp)
+    rgrid.data = np.array(ds_astra['r2d']['data'], dtype=dtyp)
     rgrid.units = 'm'
-    rgrid.long_name = equil_d['r2d']['long_name']
+    rgrid.long_name = meta_d['equil_rect']['r2d']['desc']
 
     zgrid = f.createVariable('Z', dtyp, ('Z', ))
-    zgrid.data = np.array(equil_d['z2d']['data'], dtype=dtyp)
+    zgrid.data = np.array(ds_astra['z2d']['data'], dtype=dtyp)
     zgrid.units = 'm'
-    zgrid.long_name = equil_d['z2d']['long_name']
+    zgrid.long_name = meta_d['equil_rect']['z2d']['desc']
 
     for key, val in ds_astra.items():
-        if key != 'TIME':
-            tmp = f.createVariable(key, dtyp, astra_d[key]['dimensions'])
-            tmp[:] = val
-            tmp.units = astra_d[key]['units']
-            tmp.long_name = astra_d[key]['long_name']
-
-    for key, val in ds_equil.items():
-        if key != 'TIME':
-            if 'dimensions' in equil_d[key].keys():
-                tmp = f.createVariable(key, dtyp, equil_d[key]['dimensions'])
-                tmp[:] = val
-                tmp.units = equil_d[key]['units']
-                tmp.long_name = equil_d[key]['long_name']
+        if key not in ('TIME', 'XRHO', 'rho_tor_norm', 'theta2d', 'r2d', 'z2d'):
+            tmp = f.createVariable(key, dtyp, val['dimensions'])
+            tmp[:] = val['data']
+            tmp.units = val['units']
+            tmp.long_name = val['long_name']
 
     f.close()
     logger.info('Stored %s' %cdf_out)

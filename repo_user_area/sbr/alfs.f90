@@ -1,10 +1,10 @@
 SUBROUTINE alfs(ped_width, a_lfs, dt_tetop, avdte)
 
-use parameter_inc, only: NRD
-use const_inc, only: NA1, ROC
-use status_inc, only: TE, AMETR
+use scalars, only: NA1, ROC
+use status, only: NRD, TE, AMETR
 use parameters_a2equil, only: equil_now
 use numerical_tools, only: qinterp
+use standard_functions, only: RADIAL, GRAD
 
 implicit none
 
@@ -13,7 +13,6 @@ double precision, intent(out) :: a_lfs(NRD), dt_tetop(NRD), avdte
 integer :: j, i, Nx, Nt, n1, n2
 double precision :: te_top, Rmag, Zmag
 double precision, dimension(556) :: a_lfs_eq, ametr_eq
-double precision, external :: RADIAL, GRAD
 
 nx = SIZE(equil_now%coord_sys%position%r, 1)
 nt = SIZE(equil_now%coord_sys%position%r, 2)
@@ -39,5 +38,4 @@ n1 = nint(ped_width*NA1) + 1
 n2 = nint(0.999*NA1) - 1
 avdte = SUM(dt_tetop(n1: n2))/dble(n2 + 1 - n1)
 
-RETURN
 END SUBROUTINE alfs

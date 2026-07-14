@@ -1,7 +1,8 @@
 subroutine foureqc()
 
-use const_inc, only: NA1, NEQUIl, MEQUIL, IPART, GP2, ABC
-use status_inc, only: FP_NORM
+use pi_const, only: GP2
+use scalars, only: NA1, NEQUIl, MEQUIL, IPART, ABC
+use status, only: FP_NORM
 use parameters_a2equil, only: equil_now
 use numerical_tools, only: qinterp
 
@@ -19,8 +20,8 @@ character(len=120) :: f_four
 if (IPART == 1) return
 
 ! nequil, mequil are reals
-nrho   = int(nequil)
-ntheta = int(mequil)
+nrho   = NEQUIL
+ntheta = MEQUIL
 
 allocate(theta(ntheta), dtheta(ntheta), cos_mthe(ntheta), sin_mthe(ntheta), damin(ntheta))
 allocate(theta_half(ntheta+1))
@@ -111,5 +112,4 @@ close(unit_out)
 
 deallocate(theta, dtheta, cos_mthe, sin_mthe, damin, theta_half, psi_n, RR, ZZ, drdr, dzdr, four_coef)
 
-return
 end subroutine foureqc

@@ -3,18 +3,15 @@
 !   (Yushmanov 11-MAY-87)
 double precision FUNCTION NEAVR(YR)
 
-use status_inc, only: NE, VOLUM
-use const_inc, only: HRO
+use status, only: NE, VOLUM
+use scalars, only: HRO
+use standard_functions, only: VINT
 
 implicit none
 
 double precision, intent(in) :: YR
-integer :: i
-double precision, external :: VINT
+double precision, external :: VOLR
 
-i = int(YR/HRO) + 1
+NEAVR = VINT(NE, YR)/VOLR(YR)
 
-NEAVR = VINT(NE, YR)/VOLUM(i) !VOLR(YR)
-
-return
 end function NEAVR

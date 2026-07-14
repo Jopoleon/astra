@@ -4,14 +4,14 @@
 !     (Pereverzev 02-MAY-2006)
 double precision function BETRR(YR)
 
-use const_inc, only: BTOR
+use scalars, only: BTOR
+use standard_functions, only: AFR
 
 implicit  none
 
-double precision YR, AFR, BETAR, ITOTR
-external AFR, BETAR, ITOTR
+double precision :: YR
+double precision, external :: BETAR, ITOTR
 
 BETRR = BETAR(YR)*AFR(YR)*BTOR/ITOTR(YR)
 
-return
 end function BETRR

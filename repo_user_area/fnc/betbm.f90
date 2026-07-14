@@ -6,22 +6,22 @@
 !
 double precision function BETBMR(YR)
 
-use const_inc, only: NA, BTOR, RTOR, HRO, GP2
-use status_inc, only: ELON, AMETR, IPOL, PBPER, MU, G22
+use pi_const, only: GP2
+use scalars, only: NA, BTOR, RTOR, HRO
+use status, only: ELON, AMETR, IPOL, PBPER, MU, G22
 
 implicit none
 
 double precision YR, YB
-integer  J, JK
+integer :: j, JK
 
 YB  = 0.
 JK  = YR/HRO + 0.5
 IF(JK < 1) JK = 2
 IF(JK > NA) JK = NA
-DO J = 2, JK
-   YB  = YB + ELON(J)*AMETR(J)**2*(PBPER(J - 1) - PBPER(J + 1))
+do j=2, JK
+   YB = YB + ELON(J)*AMETR(J)**2*(PBPER(J - 1) - PBPER(J + 1))
 enddo
-BETBMR  = 6.4E-4*GP2*YB*0.5*(RTOR/(G22(JK)*IPOL(JK)*BTOR*JK*HRO*MU(JK)))**2
+BETBMR  = 6.4E-4 * GP2*YB*0.5*(RTOR/(G22(JK)*IPOL(JK)*BTOR*JK*HRO*MU(JK)))**2
 
-return
 end function BETBMR
