@@ -38,7 +38,7 @@ use tor_mod_public, only:  r8,                                       &
      lun5, lun6, lun8, lun9, lun17, lun21, lun22                    
 use fpq_mod_public, only:                                            &
      nrdpsi, redpsi, pwnet_prof, tpwnet, fpwnet,                     &
-     lun18
+     lun18, hf_pwi
 use tor_mod_deallocate, only: torfpql_deallocate_all
 use tor_mod_nmlst, only: tor_open_nmlst, tor_close_nmlst, tor_run_nmlst
 
@@ -114,19 +114,23 @@ public :: toric
 contains
 
 !---------------------------------------------------------------------
-    subroutine toric(pwic, frq, ntor, toll, nmax, debug)
+    subroutine toric(pwic, frq, ntor, toll, nmax, debug, prf_abs)
 !---------------------------------------------------------------------
 !  Main driver: sets up directories, writes input files, runs
 !  TORIC-SSFPQL, and broadcasts results back to ASTRA.
 !-----------------------------------------------------------------------
 ! Optional input parameters
 !-----------------------------------------------------------------------
-! pwic   : [real: MW] ICRF coupled power          (default: from namelist)
-! frq    : [real: Hz] RF frequency
-! ntor   : [int] toroidal wave number
-! toll   : [real] convergence tolerance        (default: from namelist)
-! nmax   : [int]  max TORIC-SSFPQL iterations  (default: from namelist)
-! debug  : [int]  0 = remove run directory on exit; 1 = keep it (default = 0)
+! pwic    : [in - real: MW] ICRF coupled power   (default: from namelist)
+! frq     : [in - real: Hz] RF frequency             (default: from namelist)
+! ntor    : [in - int] toroidal wave number          (default: from namelist)
+! toll    : [in - real] convergence tolerance        (default: from namelist)
+! nmax    : [in - int]  max TORIC-SSFPQL iterations  (default: from namelist)
+! debug   : [in - int]  0 = remove run directories   (default = 0)
+!-----------------------------------------------------------------------
+! Optional ouput parameters
+!-----------------------------------------------------------------------
+! prf_abs : [out: W/cm3] toric deposition profile for minority
 !-----------------------------------------------------------------------
     use tor_mod_looptorql, only: tor_toricql
 
@@ -134,11 +138,14 @@ contains
 
     real(r8), intent(in), optional :: pwic, frq, toll
     integer,  intent(in), optional :: ntor, nmax, debug
+    real(r8), intent(out), optional :: prf_abs(*)
 
     integer :: ios
     
     real(r8) :: pwic_lc=-1._r8, frq_lc=-1._r8, toll_lc=-1._r8
     integer  :: ntor_lc=-99999, nmax_lc=-1
+    real(r8), dimension(1:na1) :: prf_abs_lc
+    
 
     if (present(pwic)) pwic_lc = pwic
     if (present(frq))  frq_lc  = frq
@@ -163,7 +170,8 @@ contains
     call tor_run_nmlst()   ! Read namelist for the type of run
     call tor_toricql()     ! TORIC-SSFPQL loop manager
     call tor_close_nmlst() ! Close namelist file
-    call broadcast2astra() ! Broadcast TORIC-SSFPQL results into ASTRA arrays
+    call broadcast2astra(prf_abs_lc) ! Broadcast TORIC-SSFPQL results into ASTRA arrays
+    if (present(prf_abs)) prf_abs(1:na1) = prf_abs_lc(1:na1)
     call torfpql_deallocate_all() ! Clean up memory
     call safe_chdir(awd, ios)     ! Return to home directory
 
@@ -247,7 +255,7 @@ contains
     if (pwicrf > 0._r8) hf_pwgoal  = pwicrf
     if (frq > 0._r8)    freqcy     = frq
     if (toll > 0._r8)   accur_goal = toll
-    if (nmax > 0)       max_iter   = nmax
+    if (nmax >= 0)       max_iter   = nmax
     if (ntor > -1000)   nphi       = ntor    
     toricmode   = 'toric_fpql'
     isol        = 1
@@ -274,7 +282,7 @@ contains
     end subroutine write_nml
 
 !---------------------------------------------------------------------
-    subroutine broadcast2astra()
+    subroutine broadcast2astra(prf)
 !---------------------------------------------------------------------
 !  Broadcast TORIC-SSFPQL results to ASTRA arrays.
 !---------------------------------------------------------------------
@@ -282,8 +290,10 @@ contains
     use numerical_tools, only: qinterp
     use standard_functions, only: VINT
 
+    real(r8), intent(out) :: prf(1:na1)
+    
     integer :: i, isp
-    real(r8) :: pic_as, pec_as, ptot_as, pic_ts, pec_ts, ptot_ts
+    real(r8) :: pic_as, pec_as, ptot_as, pic_ts, pec_ts, ptot_ts    
 
 ! Initialized to zero ASTRA arrays
     pifw (1:na1) = 0._r8    ! ion heating from fast wave
@@ -298,6 +308,8 @@ contains
          nrdpsi, rpol_as(1:npt_ts), piicr(1:npt_ts), npt_ts)
     call qinterp(redpsi *  rpol_as(npt_ts), pwnet_prof(nspele, :),              &
          nrdpsi, rpol_as(1:npt_ts), peicr(1:npt_ts), npt_ts)
+    call qinterp(redpsi *  rpol_as(npt_ts),  hf_pwi(2,0,:),                     &
+         nrdpsi, rpol_as(1:npt_ts), prf(1:npt_ts), npt_ts)
 
 ! Update the species structure with their absorbed power
     i = 0
@@ -452,6 +464,7 @@ contains
         if (rpol_as(i) > rho_max) exit
         npt_ts = i
     enddo
+    rpol_as(1) = 0._r8 
 
     if (npt_ts == 0) then
         write(lun_scr, *) 'ERROR: no radial points within rho_max'
