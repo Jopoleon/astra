@@ -46,10 +46,10 @@ clean:
 # Rules
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.f90
-	$(FC) $(FC_FLAGS) $(INCLUDE) -c $< -o $@
+	$(FC) $(FC_FLAGS) $(INC_FLAGS) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.F90
-	$(FC) $(FC_FLAGS) $(INCLUDE) $(SPIDER_INC) $(SPIDER_FLAG) -c $< -o $@
+	$(FC) $(FC_FLAGS) $(INC_FLAGS) $(SPIDER_INC) $(SPIDER_FLAG) -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.c
 	$(CC) -fPIC -c $< -o $@ -I$(INC_DIR)

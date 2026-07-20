@@ -173,10 +173,10 @@ clean:
 .PHONY: modules
 modules:
 	make -f $(AWD)/exe/Makeastra "MODOBJS=$(MMODS)"                       sub=misc  modules
-	make -f $(AWD)/exe/Makeastra "MODOBJS=$(AMODS)" "INCLUDE=$(AINCLUDE)" sub=astra modules
-	make -f $(AWD)/exe/Makeastra "MODOBJS=$(FMODS)" "INCLUDE=$(FINCLUDE)" sub=feqis modules
-	make -f $(AWD)/exe/Makeastra "MODOBJS=$(GMODS)" "INCLUDE=$(GINCLUDE)" sub=graph modules
-	make -f $(AWD)/exe/Makeastra "MODOBJS=$(NMODS)" "INCLUDE=$(NINCLUDE)" sub=nbi   modules
+	make -f $(AWD)/exe/Makeastra "MODOBJS=$(AMODS)" "INC_FLAGS=$(AINCLUDE)" sub=astra modules
+	make -f $(AWD)/exe/Makeastra "MODOBJS=$(FMODS)" "INC_FLAGS=$(FINCLUDE)" sub=feqis modules
+	make -f $(AWD)/exe/Makeastra "MODOBJS=$(GMODS)" "INC_FLAGS=$(GINCLUDE)" sub=graph modules
+	make -f $(AWD)/exe/Makeastra "MODOBJS=$(NMODS)" "INC_FLAGS=$(NINCLUDE)" sub=nbi   modules
 
 # Linking, create ASTRA executable
 
@@ -198,13 +198,13 @@ $(LIBMISC): $(AWD)/src/misc/*
 	make -f $(AWD)/exe/Makeastra "MODOBJS=$(MMODS)" sub=misc lib
 
 $(LIBASTRA): $(AWD)/src/astra/*
-	make -f $(AWD)/exe/Makeastra "MODOBJS=$(AMODS)" "OBJS=$(AOBJS)" "INCLUDE=$(AINCLUDE)" sub=astra lib
+	make -f $(AWD)/exe/Makeastra "MODOBJS=$(AMODS)" "OBJS=$(AOBJS)" "INC_FLAGS=$(AINCLUDE)" sub=astra lib
 
 $(LIBNBI): $(AWD)/src/nbi/*
-	make -f $(AWD)/exe/Makeastra "MODOBJS=$(NMODS)" "INCLUDE=$(NINCLUDE)" sub=nbi lib
+	make -f $(AWD)/exe/Makeastra "MODOBJS=$(NMODS)" "INC_FLAGS=$(NINCLUDE)" sub=nbi lib
 
 $(LIBFEQIS): $(AWD)/src/feqis/*
-	make -f $(AWD)/exe/Makeastra "MODOBJS=$(FMODS)" "OBJS=$(FOBJS)" "INCLUDE=$(FINCLUDE)" sub=feqis lib
+	make -f $(AWD)/exe/Makeastra "MODOBJS=$(FMODS)" "OBJS=$(FOBJS)" "INC_FLAGS=$(FINCLUDE)" sub=feqis lib
 
 $(LIBGRAPH): $(AWD)/src/graph/*
-	make -f $(AWD)/exe/Makeastra "MODOBJS=$(GMODS)" "OBJS=$(GOBJS)" "INCLUDE=$(GINCLUDE)" sub=graph lib
+	make -f $(AWD)/exe/Makeastra "MODOBJS=$(GMODS)" "OBJS=$(GOBJS)" "INC_FLAGS=$(GINCLUDE)" sub=graph lib
