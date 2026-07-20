@@ -51,7 +51,7 @@ ER=BTOR*(VTOR/RTOR*FRS*MU+VDIA-VPOL)
 
 ! ECH: TORBEAM ->PEECR, CUECR; NBI: RABBIT->PEBM, PIBM, ...
 TORBA<:.05:::;
-RABBIT(pRF_MW=2.d0, nRF_harm=2.d0, fRF_MHz=36.5d0, pi_icr=PIICR, pe_icr=PEICR)<:.05:::;
+RABBIT(pRF_MW=1.d0, nRF_harm=2.d0, fRF_MHz=36.5d0, pi_icr=PIICR, pe_icr=PEICR)<:.05:::;
 EQDSK(7)<:0.05:::;
 
 TE:AS;		TE=TEX;
