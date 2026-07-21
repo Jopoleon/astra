@@ -1520,11 +1520,12 @@ contains
     subroutine plot_flux_surfaces()
 ! Redraw magnetic surfaces:
 
-    use scalars, only: NEQUIL, MEQUIL
+    use scalars, only: NEQUIL, MEQUIL, IPEQL
     use parameters_a2equil, only: equil_now
+    use stella_module, only: stella_which_surf
 
     integer, parameter :: n_surf=556, nrho_plot=12
-    integer :: jrho, jr, nskip, n_theta, n_theta1, n_rho_surf
+    integer :: jrho, jr, nskip, n_theta, n_theta1, n_rho_surf, nbeg, nend
     double precision, dimension(n_surf) :: xplot, yplot
     double precision, dimension(nrho_plot+1, n_surf) :: xplot_old, yplot_old
 
@@ -1535,10 +1536,20 @@ contains
     n_rho_surf = NEQUIL
     n_theta    = MEQUIL
     n_theta1 = n_theta + 1
-    nskip = 1 + n_rho_surf/nrho_plot
 
+! Stellarator
+    if (IPEQL == 7 .and. stella_which_surf == 0) then
+        nbeg = n_rho_surf - 4
+        nend = n_rho_surf
+        nskip = 1
+    else
+        nbeg = 1
+        nend = n_rho_surf + nskip - 1
+        nskip = 1 + n_rho_surf/nrho_plot
+    endif
+ 
     jr = 1
-    do jrho=1, n_rho_surf + nskip - 1, nskip
+    do jrho=nbeg, nend, nskip
         if (jrho > n_rho_surf) EXIT
         xplot(1: n_theta) = meter2pixel*equil_now%coord_sys%position%r(jrho, 1: n_theta)
         xplot(n_theta1)   = meter2pixel*equil_now%coord_sys%position%r(jrho, 1)  ! Close polygon
