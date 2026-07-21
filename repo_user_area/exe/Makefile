@@ -66,6 +66,7 @@ $(AOBJ_DIR)/debugger.o \
 $(AOBJ_DIR)/machine_config.o \
 $(AOBJ_DIR)/scrunch2d.o \
 $(AOBJ_DIR)/stella_module.o \
+$(AOBJ_DIR)/a2dkes.o \
 $(AOBJ_DIR)/parse_utils.o \
 $(AOBJ_DIR)/emeq.o \
 $(AOBJ_DIR)/scalars.o \

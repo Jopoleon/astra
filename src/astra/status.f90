@@ -3,6 +3,7 @@ module status
 implicit none
 
 integer, parameter :: NRD=801
+double precision, dimension(:, :), allocatable :: dkes2astra_variables
 
 double precision, dimension(:), pointer :: &
     TEO, TIO, NEO, UPAR, UPARO, &
@@ -16,7 +17,8 @@ double precision, dimension(:), pointer :: &
     VOLUM, CV, DRODA, PDE, PDI, SDN, &
     SD0, SD1, SD2, SD3, SD4, SD5, SD6, SD7, SD8, SD9, &
     UPS0, UPS0O, UPS1, UPS1O, DLNEO, SGNEO, UPS2, &
-    UPS2O, MRHO, DDNEO, SGNEOD, DLNEOD, SQUARN, &
+    UPS2O, MRHO, DDNEO, SGNEOD, DLNEOD, SQUARN, SG11, &
+    SG12, SG21, SG22, FTPT, & 
     B0DB2, BDB02, BDB0, BMAXT, BMINT, FOFB, GRADRO, &
     EQFF, EQPF, SLAT, FV, MV, XRHO, rho_pol, FP_NORM, &
     SXHO, SRHO, G22E, G33E, AREAT, PERIM, &
@@ -65,7 +67,8 @@ double precision, dimension(:), pointer :: &
     F0X, F1X, F2X, F3X, F4X, F5X, F6X, F7X, F8X, F9X, &
     MUX, MVX, GNX, SNX, PEX, PIX, PRADX, TEX, TIX, NEX, CUX, &
     ZEFX, VRX, SHX, ELX, TRX, G11X, G22X, G33X, DRODAX, IPOLX, &
-    NIX, VPOLX, VTORX, SLATX, SHIVX, SQUAX
+    NIX, VPOLX, VTORX, SLATX, SHIVX, SQUAX, SG11X, &
+    SG12X, SG21X, SG22X, FTPTX
 
 double precision, allocatable, dimension(:, :), target :: profiles_x, profiles
 
@@ -108,6 +111,11 @@ contains
     AREAT = 1.
     PERIM = 1.
     VOLUM = 1.
+    SG11 = 1.
+    SG12 = 0.
+    SG21 = 0.
+    SG22 = 2.
+    FTPT = 0.2
 
 ! Species
 
@@ -157,6 +165,8 @@ contains
        QN(j) = FP(j)
        GN(j) = FP(j)
     enddo
+
+    allocate(dkes2astra_variables(NRD, 50), source=0.d0)
 
     end subroutine status_init
 
@@ -339,6 +349,12 @@ contains
             UPS1(j)  = UPS1(NA1)
             UPS0O(j) = UPS0O(NA1)
             UPS1O(j) = UPS1O(NA1)
+
+            SG11(j)   = SG11(NA1)
+            SG12(j)   = SG12(NA1)
+            SG21(j)   = SG21(NA1)
+            SG22(j)   = SG22(NA1)	    
+	    FTPT(j)   = FTPT(NA1)
 
             NN(j) = NN(NA1)
             TN(j) = TN(NA1)

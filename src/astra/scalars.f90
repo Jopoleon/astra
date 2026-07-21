@@ -19,7 +19,7 @@ double precision, pointer :: &
     ZRD61, ZRD62, ZRD63, ZRD64, ZRD65, ZRD66, ZRD67, ZRD68, ZRD69, ZRD70, &
     ZRD71, ZRD72, ZRD73, ZRD74, ZRD75, ZRD76, ZRD77, ZRD78, ZRD79, ZRD80, &
     ZRD81, ZRD82, ZRD83, ZRD84, ZRD85, ZRD86, ZRD87, ZRD88, ZRD89, ZRD90, &
-    ZRD91, ZRD92, ZRD93, ZRD94, ZRD95, ZRD96
+    ZRD91, ZRD92, ZRD93, ZRD94, ZRD95, ZRD96, GVAC, PHIEDG
 
 double precision, pointer :: &
     ABX,    ABCX,   AIM1X, AIM2X, AIM3X,  AMJX,   AWALLX, BTORX, &
@@ -36,7 +36,7 @@ double precision, pointer :: &
     ZRD61X, ZRD62X, ZRD63X, ZRD64X, ZRD65X, ZRD66X, ZRD67X, ZRD68X, ZRD69X, ZRD70X, &
     ZRD71X, ZRD72X, ZRD73X, ZRD74X, ZRD75X, ZRD76X, ZRD77X, ZRD78X, ZRD79X, ZRD80X, &
     ZRD81X, ZRD82X, ZRD83X, ZRD84X, ZRD85X, ZRD86X, ZRD87X, ZRD88X, ZRD89X, ZRD90X, &
-    ZRD91X, ZRD92X, ZRD93X, ZRD94X, ZRD95X, ZRD96X
+    ZRD91X, ZRD92X, ZRD93X, ZRD94X, ZRD95X, ZRD96X, GVACX, PHIEDGX
 
 double precision, pointer :: &
     CF1,   CF2,   CF3,   CF4,   CF5,   CF6,   CF7,   CF8, &
@@ -100,7 +100,7 @@ contains
 !------------------------------------------
     subroutine scalars_init()
 
-    constValues     = 0.
+    constValues     = 1.
     varValues       = 0.
     varxValues      = 0.
     controlValues   = 0.
@@ -205,6 +205,8 @@ contains
     NA     = 40
     NITOT  = 0
     NSTEPS = 0
+    GVAC   = 4.5
+    PHIEDG = 1./0.
 
     TEQ = -1.e3
     LEQ = -1
