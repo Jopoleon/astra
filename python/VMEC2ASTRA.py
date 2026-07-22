@@ -11,7 +11,6 @@ stellopt_path = os.environ.get("STELLOPT_PATH")
 py_stel_path = os.path.join(stellopt_path, "pySTEL")
 sys.path.insert(0, py_stel_path)
 
-print('STE', stellopt_path)
 from libstell.vmec import VMEC
 
 # Interpolation
