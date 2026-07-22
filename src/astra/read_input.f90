@@ -50,7 +50,7 @@ contains
     use parse_utils, only: path_split, inquire_fname, assign_val
     use json_vars, only: controlNames, constNames, varNames, &
         n_control, n_const, n_profx, n_var
-    use scalars, only: varValues, constValues, controlValues
+    use scalars, only: varValues, constValues, controlValues, phiedg
 
     logical :: log_exists
     integer :: jj, jpos, nvar, n_color
@@ -103,8 +103,9 @@ contains
     endif
 
     nvar = 37
-    call assign_val(file_in, nvar    ,    varNames(1: nvar)    ,    varValues(1: nvar)    , n_color)
-    call assign_val(file_in, n_const ,  constNames(1: n_const) ,  constValues(1: n_const) , n_color)
+    call assign_val(file_in, nvar      ,    varNames(1: nvar)    ,      varValues(1: nvar)     , n_color)
+    call assign_val(file_in, 1         ,    varNames(135)        ,      varValues(135)         , n_color) ! phiedg
+    call assign_val(file_in, n_const   ,  constNames(1: n_const) ,    constValues(1: n_const)  , n_color)
     call assign_val(file_in, n_control, controlNames(1: n_control), controlValues(1: n_control), n_color)
 
 ! Read exp file
