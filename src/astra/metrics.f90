@@ -2217,12 +2217,10 @@ contains
     data t_boozero/0./
     save init_vmecco, t_boozero
 
-! Default path, overwritten by the namelist
-    stellopt_dir = TRIM(astra_ext) // '/STELLOPT'
-
-    NAMELIST / vmec / stellopt_dir, boozer_surfaces, phi_full_surfaces, &
+    NAMELIST / vmec / boozer_surfaces, phi_full_surfaces, &
         dt_boozer, vac_phase_stel, mboz, nboz
 
+    CALL getenv('STELLOPT_PATH', stellopt_dir)
     path_to_vmec = TRIM(stellopt_dir) // '/VMEC2000/Release/'
     as_nml = TRIM(awd) // '/' // TRIM(nml_file)
     write(*, *) 'Reading namelist ', TRIM(as_nml)
