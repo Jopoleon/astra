@@ -204,6 +204,12 @@ contains
         allocate(equil_now%eqgeometry%rectgrid%fdia2d(1, 1))
         allocate(equil_now%eqgeometry%rectgrid%r2d(1))
         allocate(equil_now%eqgeometry%rectgrid%z2d(1))
+        allocate(equil_now%coord_sys%gradvcell(nrho_surf, nthe_surf))
+        allocate(equil_now%coord_sys%bpcell(nrho_surf, nthe_surf))
+        allocate(equil_now%coord_sys%bcell(nrho_surf, nthe_surf))
+        allocate(equil_now%coord_sys%rcell(nrho_surf, nthe_surf))
+        allocate(equil_now%coord_sys%darea(nrho_surf, nthe_surf))
+        allocate(equil_now%coord_sys%jphi(nrho_surf, nthe_surf))
 
         if (.not. associated(equil_now%profiles_1d%rho_tor_norm)) then
             allocate(equil_now%profiles_1d%areat  (nrho_surf))
@@ -2282,11 +2288,11 @@ contains
         if (vac_fac==0) then
             write(s_curtor, '(F)') vac_phase_stel*IPL*1.e6
             write(s_phi,    '(F)') SGNBT*phi_edgehog
-            command_line = "python dat/vmecmodin.py " // trim(adjustl(s_curtor)) // "   " // &
+            command_line = "python python/vmecmodin.py " // trim(adjustl(s_curtor)) // "   " // &
                 trim(adjustl(s_phi))
             call execute_command_line(command_line)
 
-            command_line="python dat/read_vmec_surfaces_in.py"
+            command_line="python python/read_vmec_surfaces_in.py"
             call execute_command_line(command_line)
             open(32, file='dat/nsurfaces.dat')
             read(32, *) nsurfacet
@@ -2313,13 +2319,13 @@ contains
             enddo
             raxis_str = trim(raxis_str) // "]"
             zaxis_str = trim(zaxis_str) // "]"
-            command_line = 'python dat/vmecraxdin.py "' // trim(raxis_str) // '" "' // &
+            command_line = 'python python/vmecraxdin.py "' // trim(raxis_str) // '" "' // &
                 trim(zaxis_str)//'" '
             call execute_command_line(command_line)
             deallocate(raxiscc, zaxiscc)
             write(s_curtor, '(F)') vac_phase_stel*IPL*1.e6
             write(s_phi,    '(F)') SGNBT*phi_edgehog
-            command_line = "python dat/vmecmodin2.py " // trim(adjustl(s_curtor)) // &
+            command_line = "python python/vmecmodin2.py " // trim(adjustl(s_curtor)) // &
                 "   " // trim(adjustl(s_phi))
             call execute_command_line(command_line)
         endif
@@ -2413,7 +2419,7 @@ contains
 ! for the DKES interface.  NA1 is passed so the B00 profile length matches.
 ! ---------------------------------------------------------------------
     write(s_curtor, '(I0)') NA1
-    command_line = 'python dat/extract_boozer_data.py ' // trim(s_curtor)
+    command_line = 'python python/extract_boozer_data.py ' // trim(s_curtor)
     call execute_command_line(command_line)
 
     end subroutine a2vmec

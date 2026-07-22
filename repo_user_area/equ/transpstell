@@ -52,7 +52,7 @@ CE=0.0;
 CI=0.0;
 
 ER=F1*1.e3;
-DKES_INTERFACE_WRAPPER(F1,0.9d0)>::2.*TAU::;
+!DKES_INTERFACE_WRAPPER(F1,0.9d0)>::2.*TAU::;
 CAR30="dkes2astra_variables(j,4)";
 F1:EQ[2,1.0];
 F1 = 0.0;

@@ -6,11 +6,13 @@ import re
 import scipy
 from scipy.io import netcdf_file
 from scipy.interpolate import interp1d
-from libstell.vmec import VMEC
 
 stellopt_path = os.environ.get("STELLOPT_PATH")
 py_stel_path = os.path.join(stellopt_path, "pySTEL")
 sys.path.insert(0, py_stel_path)
+
+print('STE', stellopt_path)
+from libstell.vmec import VMEC
 
 # Interpolation
 linterp = lambda x, y, xi: interp1d(x, y, kind='linear'   , fill_value='extrapolate')(xi)
@@ -704,8 +706,8 @@ with open(metric_file, 'wb') as f:
         VRS, GRADRO, G11, Rmaj, 
         VOLUM, AMETR, SLAT, FTPT
     ]:
+        np.asarray(arr, dtype=np.float64).tofile(f)
 
-    np.asarray(arr, dtype=np.float64).tofile(f)
     np.array([mnmax], dtype=np.int32).tofile(f)
 
     xm.astype(np.int32).tofile(f)

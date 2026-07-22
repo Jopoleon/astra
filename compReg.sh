@@ -7,7 +7,7 @@ platform=`$AWD/get_platform`
 source $AWD/platform/env.$platform
 if [[ ":$PATH:" != *":$PYTHON_BIN:"* ]]
 then
-    export PATH=${PYTHON_BIN}:${PATH}
+    export PATH=${PYTHON_BINDIR}:${PATH}
 fi
 
 EXP=aug34954
