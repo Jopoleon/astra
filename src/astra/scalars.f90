@@ -72,7 +72,7 @@ double precision, pointer :: &
 
 integer, pointer :: &
     NEQUIL, MEQUIL, INUME1, INUME2, INUME3, INUME4, &
-    IPART, IPROT, ITFBP, ICIRCQ, IPCTRL, IPEQL, IFBEY, IBCPSI, &
+    IPART, IPROT, ITFBP, ICIRCQ, IPCTRL, IPEQL, vmec_option, IFBEY, IBCPSI, &
     NA, NA1, NAB, NB1, NA1N, NA1E, NA1I, NA1U, &
     NA10, NA11, NA12, NA13, NA14, NA15, NA16, NA17, NA18, NA19
 
@@ -149,6 +149,7 @@ contains
     SGNIP  = 1
     SGNBT  = 1
     IPEQL  = 5 ! 4- SPIDER, 5- FEQIS
+    vmec_option = 0
     DTEQ(1, :) = 0.
     DTEQ(2, :) = -99999.
     DTEQ(3, :) =  99999.

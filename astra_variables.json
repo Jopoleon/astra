@@ -473,6 +473,7 @@
     "IFBEY" : {"desc": "switched to = 1 if doing fbe, to 0 if doing PBE"},
     "IBCPSI": {"desc": "Counter for Psi as boundary condition"},
     "IPEQL" : {"desc": "Numerical flag to choose equilibrium solver (0 doesnt do anything, 1 forces 3mom, 4 spider, 5 feqis)"},
+    "vmec_option": {"desc": "Flag for VMEC coupling type"}, 
     "NA1"   : {"desc": "Number of radial points up to separatrix"},
     "NA"    : {"desc": "NA1-1"},
     "NAB"   : {"desc": "Number of radial points up to AB"},

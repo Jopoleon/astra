@@ -18,11 +18,10 @@ contains
     use scalars, only: IPART, FTO, FTN, ROC, &
         BTOR, ROCO, RTOR, SHIFT, &
         ABC, ELONG, TRIAN, UPDWN, NA1, NB1, MEQUIL, NEQUIL, &
-        IPEQL, TIME, TSTART, TIMEQL, DTEQL, BTN
+        IPEQL, vmec_option, TIME, TSTART, TIMEQL, DTEQL, BTN
     use debugger, only: markloc
     use parameters_a2equil, only: equil_now
     use numerical_tools, only: qinterp
-    use stella_module, only: vmec_option
     use scalars, only: tau
 
     integer :: i, jexit, NDTEQUILMY, equil_solver, jthe, nrho_surf, nthe_surf
@@ -39,7 +38,7 @@ contains
 
     call markloc('METRIC')
 
-    if (IPART == 1 .or. IPART==3) then ! do only at initiation
+    if (IPART == 1 .or. IPART == 3) then ! do only at initiation
         FTN = FTO
         BTN = BTOR
         ROC = sqrt(FTO/GP/BTOR)
@@ -47,10 +46,6 @@ contains
         VRO(1: NB1) = VR(1: NB1)
 ! if IPEQL = 70, 71, 72, ..., 79
 ! vmec_option between 0 and 9, set IPEQL to 7
-        if (IPEQL > 69 .and. IPEQL < 80) then
-            vmec_option = IPEQL - 70
-            IPEQL = 7
-        endif
     endif
 
     if (i_vmec_options_choose == 0) then
@@ -245,7 +240,8 @@ contains
 
         if (TIME == TSTART) NDTEQUILMY = 0
         if (TIME >  TSTART) NDTEQUILMY = 1
-        if (TIME == TSTART.and.vmec_vacuum>0) then
+
+        if (TIME == TSTART .and. vmec_vacuum > 0) then
             call EQCYL_STELLA
             call RHSEQ
             call VMEC2ASTRA(vmec_vacuum, vmec_tau, vmec_dteq, yes_boozer)

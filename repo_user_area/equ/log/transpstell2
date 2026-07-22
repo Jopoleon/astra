@@ -172,24 +172,9 @@ CDHJ7  =  1.000E+00
 CDHJ8  =  1.000E+00
 CDHJ9  =  1.000E+00
  Control parameters (common block A_OUTPUT):22
-DROUT  =  1.E-04
-DTOUT  =  1.E-04
 DPOUT  =  10.000E
 TAUMIN =  1.E-4
 TAUMAX =  1.E-4
 DELVAR =  0.01
 TSCALE =  15.0
-NEQUIL =  99
-NBNDR  =  51
-MEQUIL =  51
-IPEQL  =  79
 SGNBT  =  1.
- Color table (description in for/outcmn.inc):          32
-   0   0     50   0      3   0     62   0
-  37   0      5   0     26   0     60   0
-  50   0     26   0      1   0      1   0
-  50   0      1   0      1   0      1   0
-   0   0      0   0      0   0      0   0
-   0   0      0   0      0   0      0   0
-   0   0      0   0      0   0      0   0
-   0   0      0   0      0   0      0   0

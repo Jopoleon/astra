@@ -1,4 +1,6 @@
 atreq = .005;
+IPEQL = 7;
+vmec_option = 4;
 
 UEXT = 0.;
 !lexthrs(ZRD96)<::::;

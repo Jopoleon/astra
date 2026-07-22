@@ -1,8 +1,5 @@
-!NEQUIL=91;
-!MEQUIL=90;
-!MEQUIL=0;
-
 atreq = .005;
+IPEQL = 4;
 
 !IPL=(IPLX-ICDB-IBSB)*exp(-55.5*(TIME-TSTART))+ICDB+IBSB;
 UEXT = 0.;

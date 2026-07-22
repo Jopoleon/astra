@@ -1,5 +1,6 @@
 atreq = .005;
-IPEQL  =  70;
+IPEQL  =  7;
+vmec_option = 0;
 NEQUIL =  99;
 MEQUIL =  51;
 
