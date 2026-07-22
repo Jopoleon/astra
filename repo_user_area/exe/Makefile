@@ -137,6 +137,10 @@ NINCLUDE = -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(MOD_NBI)
 
 # Linking terms
 
+#FOR STELLARATOR
+#LIB = -lnbi -lsbr -lnbi -L/usr/lib64 -lX11 $(QLKNN_LIB) $(TGLF_LIB) $(TRAVIS_LIB) $(TORBEAM_LIB) $(RABBIT_LIB) $(GRAPH_FLAG) -lastra -lfnc -lfeqis -lmisc $(SPIDER_LIB) $(JSON_LIB) -L$(LIB_DIR) $(MKL_LIB) -lrt $(TORIC_LIB) -lstdc++
+#LIB +=  -Wl,--start-group $(LIBSTELL_LIBDIR) -Wl,--end-group  -lrt  $(NETCDF_LIB) 
+
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
 LIB = -lsbr -lnbi $(X11_LIB) $(QLKNN_LIB) $(TGLF_LIB) $(TORBEAM_LIB) $(RABBIT_LIB) $(GRAPH_FLAG) -lastra -lfnc -lfeqis -lmisc $(SPIDER_LIB) $(JSON_LIB) -L$(LIB_DIR) $(MKL_LIB) -lrt $(TORIC_LIB)
 

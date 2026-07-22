@@ -4,8 +4,11 @@ equ_file=$1
 exp_file=$2
 TASK=$3
 FSIM=$4
-if [[ $# > 4 ]]; then
-    WAIT_SLURM=$5
+nnodes=$5
+export N_NODES="${nnodes}"
+
+if [[ $# > 5 ]]; then
+    WAIT_SLURM=$6
 else
     WAIT_SLURM=""
 fi

@@ -194,10 +194,7 @@ def cuasn(parse, bc='CU', neq=1):
         cuas_txt += const_text.CUAS.cu1
         cuas_txt += pa.apptmp('CU', parse)
         cuas_txt += const_text.CUAS.cu2
-        if 'MV' in parse.var_defined:
-            cuas_txt += 'MU(J) = YJ_CU*MU(J) + MV(j)\n'
-            cuas_txt += 'FP(J) = YJ_CU*(FP(J) - FP(1)) + FP(1) + FV(J)\n'
-        else:
+        if 'MV' not in parse.var_defined:
             cuas_txt += 'MU(J) = YJ_CU*MU(J)\n'
             cuas_txt += 'FP(J) = YJ_CU*(FP(J) - FP(1)) + FP(1)\n'
 
@@ -486,7 +483,11 @@ call CUOFP()
 
     if 'UEXT' in parse.var_defined or 'LEXT' in parse.var_defined:
         cueq_txt += '!DFPDR = ((FP(NA1) - FP(NA) - (FV(NA1) - FV(NA)))/HRO)\n'
-        cueq_txt += 'IPL = 5.*IPOL(NA1)*G22(NA)*((FP(NA1) - FP(NA) - (FV(NA1) - FV(NA)))/HRO)/GP2/RTOR\n'
+        cueq_txt += 'if ((PEQL == 6 .or. IPEQL == 9 .or. IPEQL == 7) then\n'
+        cueq_txt += 'IPL = (FP(NA1) - FP(NA))/HRO*1./(mu0/SG11(NA)) - MV(NA)*SRHO(NA)*GP2*BTOR*1./(mu0/SG11(NA))\n'
+        cueq_txt += 'else\n'
+        cueq_txt += 'IPL = 5.*IPOL(NA1)*G22(NA)*((FP(NA1) - FP(NA))/HRO)/GP2/RTOR\n'
+        cueq_txt += 'endif\n'
 
     return cueq_txt
 
@@ -553,7 +554,8 @@ def fjeqn(parse, jeq):
         fj_txt += '%sTOT(NA1) = %sTOT(NA1) + %s(NA1)*%s(NA1)\n' %(sf, sf, sff, key)
 
     if qfb in var_defined and none_in([qffb, varb, ro], var_defined):
-        fj_txt += '%s(NA1) = %sB\n' %(qf, qf)
+        #fj_txt += '%s(NA1) = %sB\n' %(qf, qf)
+        dumm1quaglia=1
     else:
         fj_txt += '%s(NA1) = %s(NA)\n' %(qf, qf)
 

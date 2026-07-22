@@ -49,7 +49,7 @@ if __name__ == '__main__':
         parser.add_argument('-s', '--tbeg', type=float, help='Initial time', required=False, default=0.1)
         parser.add_argument('-e', '--tend', type=float, help='End time'    , required=False, default=10.)
         parser.add_argument('-dev', '--DeviceName', help='Machine short name', required=False, default='aug')
-        parser.add_argument('-resize', '--resize', type=float, help='Resize factor for ASTRA frame', required=False)
+        parser.add_argument('-resize', '--resize', type=float, help='Resize factor for ASTRA frame', required=False, default=1.)
     else:
         parser.add_argument('-m', '--equ', help='Model file', required=False, default=alog_d['equ_file'])
         parser.add_argument('-v', '--exp', help='Exp file'  , required=False, default=alog_d['exp_file'])
@@ -57,6 +57,7 @@ if __name__ == '__main__':
         parser.add_argument('-e', '--tend', type=float, help='End time'      , required=False, default=alog_d['tend_nml'])
         parser.add_argument('-dev', '--DeviceName', help='Machine short name', required=False)
         parser.add_argument('-resize', '--resize', type=float, help='Resize factor for ASTRA frame', required=False)
+    parser.add_argument('-nodes', '--nodes', type=int, help='Nr of nodes to launch parallel jobs', required=False, default='1')
     parser.add_argument('-batch', action='store_true', help='Run batch job'  , required=False)
     parser.add_argument('-tpause', '--tpause', type=float, help='Pause @time', required=False, default=1.e4)
     parser.add_argument('-debug', action='store_true', help='Debug', required=False)
@@ -121,7 +122,7 @@ if __name__ == '__main__':
 
     expequ = args.exp + args.equ
 
-    cmd = '%s/exe/Build %s %s %s %s' %(awd, args.equ, args.exp, rtype, args.fs)
+    cmd = '%s/exe/Build %s %s %s %s %s' %(awd, args.equ, args.exp, rtype, args.fs, args.nodes)
     if args.batch and args.waitslurm:
         cmd += ' -W'
     logger.info(cmd)
