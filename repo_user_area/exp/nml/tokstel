@@ -81,8 +81,7 @@
 
 &vmec
 
-   path_to_vmec = '/shares/users/public/emf/STELLOPT/VMEC2000/Release/'
-   path_to_stellopt = '/shares/users/public/emf/STELLOPT/'
+   stellopt_dir = '/tokp/work/software/TOK_2023/software/ASTRA_LIBRARIES_EXT/STELLOPT'
    boozer_surfaces = 7
    dt_boozer = 0.01
    phi_full_surfaces = 0.0

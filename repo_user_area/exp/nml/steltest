@@ -120,8 +120,7 @@
 
 &vmec
 
-   path_to_vmec = '/shares/users/public/emf/STELLOPT/VMEC2000/Release/'
-   path_to_stellopt = '/shares/users/public/emf/STELLOPT/'
+   stellopt_dir = '/tokp/work/software/TOK_2023/software/ASTRA_LIBRARIES_EXT/STELLOPT'
    boozer_surfaces = 3
    mboz = 32
    nboz = 32

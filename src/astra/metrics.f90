@@ -2189,7 +2189,7 @@ contains
     use status, only: TE, NE, FP, XRHO, ZEF, MU, ELON, SHif , IPOL, &
         AMETR, VOLUM, PEECR, CUECR, AREAT, rho_pol, FP_NORM, &
         PBLON, PBPER, PFAST, TI, NI, CU, SG11, SG12, MV
-    use read_input, only: AWD, nml_file
+    use read_input, only: AWD, astra_ext, nml_file
     use stella_module, only: phi_edge_total, nsurfacet, &
         dphidsb_stella, dphidvpb_ip, dphidvpb_f0
     use numerical_tools, only: qinterp, integr, derivcc
@@ -2205,9 +2205,8 @@ contains
     double precision, dimension(NRD) :: pressure, svmec, curtorprof, dum1
 
     character(len=32) :: s_curtor, s_phi, n_nodes
-    character(len=256) :: path_to_vmec='/shares/users/work/emf/STELLOPT/VMEC2000/Release/', &
-        path_to_stellopt='/shares/users/work/emf/STELLOPT/', dat_in_file='dat/vmecinput.dat', &
-        s_rax, s_zax, mpi_command
+    character(len=256) :: path_to_vmec, stellopt_dir, &
+        dat_in_file='dat/vmecinput.dat', s_rax, s_zax, mpi_command
     character(len=1000) :: command_line, raxis_str, zaxis_str, filename
     character(len=120) :: as_nml
 
@@ -2218,9 +2217,13 @@ contains
     data t_boozero/0./
     save init_vmecco, t_boozero
 
-    NAMELIST / vmec / path_to_vmec, path_to_stellopt, boozer_surfaces, phi_full_surfaces, &
+! Default path, overwritten by the namelist
+    stellopt_dir = TRIM(astra_ext) // '/STELLOPT'
+
+    NAMELIST / vmec / stellopt_dir, boozer_surfaces, phi_full_surfaces, &
         dt_boozer, vac_phase_stel, mboz, nboz
 
+    path_to_vmec = TRIM(stellopt_dir) // '/VMEC2000/Release/'
     as_nml = TRIM(awd) // '/' // TRIM(nml_file)
     write(*, *) 'Reading namelist ', TRIM(as_nml)
     open(57, FILE=TRIM(as_nml), delim='apostrophe')
@@ -2395,7 +2398,7 @@ contains
         deallocate(surfaces_for_boozer)
 
         command_line = 'cd dat && ' // trim(mpi_command) // ' ' // trim(n_nodes) // ' ' // &
-            trim(path_to_stellopt)// '/BOOZ_XFORM/Release/xbooz_xform  inboozer.in true_surfaces.txt && cd ..'
+            trim(stellopt_dir) // '/BOOZ_XFORM/Release/xbooz_xform  inboozer.in true_surfaces.txt && cd ..'
 
         if (time-tstart >= t_boozero .or. time-tstart <= 0.) then
             call execute_command_line(command_line)
