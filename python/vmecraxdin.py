@@ -5,7 +5,7 @@ import argparse
 import ast
 import re
 
-def write_vmecinput(raxis_cc, zaxis_cs, template_file='dat/vmecinput_template.dat', output_file='dat/vmecinput.dat'):
+def write_vmecinput(raxis_cc, zaxis_cs, template_file='vmec_io/vmecinput_template.dat', output_file='dat/vmecinput.dat'):
     """Replace raxis_cc and zaxis_cs in a VMEC template and save to dat/vmecinput.dat"""
     # Convert to numpy arrays
     raxis_cc = np.asarray(raxis_cc, dtype=np.float64)

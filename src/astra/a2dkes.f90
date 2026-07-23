@@ -135,7 +135,7 @@ CONTAINS
     ROC=RHO(NA1)
      
     IF (.NOT. dkes_is_initialized) THEN
-      namelist_file = 'dat/stell_files.nml'
+      namelist_file = 'vmec_io/stell_files.nml'
       OPEN(newunit=nml_unit, file=TRIM(namelist_file), status='old', action='read', iostat=io_stat)
       IF (io_stat /= 0) STOP 'Namelist Read Error'
       READ(nml_unit, NML=ASTRA_DKES_INTERFACE, iostat=io_stat)

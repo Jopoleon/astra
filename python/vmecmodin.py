@@ -13,7 +13,7 @@ def main():
 
     args = parser.parse_args()
 
-    template_path = Path("dat/vmecinput_template.dat")
+    template_path = Path("vmec_io/vmecinput_template.dat")
     output_path   = Path("dat/vmecinput.dat")
 
     if not template_path.exists():
