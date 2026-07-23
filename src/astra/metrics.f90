@@ -96,10 +96,10 @@ contains
             vmec_dteq   = 0
             yes_boozer  = 1
         CASE(9)
-            vmec_vacuum=2
-            vmec_tau=2
-            vmec_dteq=0
-            yes_boozer=0
+            vmec_vacuum = 2
+            vmec_tau    = 2
+            vmec_dteq   = 0
+            yes_boozer  = 0
         END SELECT
         i_vmec_options_choose = 1
     endif

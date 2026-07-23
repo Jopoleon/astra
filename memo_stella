@@ -1,5 +1,5 @@
-cp ../a8_fsim/vmec_coupling/dat/* dat/
-cp ../a8_fsim/exp/steltest* exp/
+cp /shares/departments/AUG/users/git/vmec_coupling/dat/* dat/
+cp /shares/departments/AUG/users/git/vmec_coupling/exp/steltest* exp/
 
 exe/as_exe -m transpstell -v steltest -s 0. -e 4. -tpause 0. -nodes 8
 
