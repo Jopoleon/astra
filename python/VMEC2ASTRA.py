@@ -572,8 +572,7 @@ if (lasym):
 phi = np.abs(data.phi.squeeze())   #change from zeta = phi (VMEC) to zeta = -phi (ASTRA)
 psi_a = data.phi[-1].item() / (2.0 * np.pi) # Toroidal flux at edge / 2pi
 NFP = float(data.nfp)    #number of field periods
-Nsurfacet = float(len(np.abs(data.phi.squeeze())))    #number of surfaces
-print(Nsurfacet)
+
 #SHIFT, ELONG, TRIAN, UPDWN
 Fboundary = np.abs(data.bvco[-1]).item()  # F at boundary for a tokamak would be RBphi. For stellarator it is more complicated
 #calculate RHO and SRHO
@@ -693,8 +692,7 @@ with open(metric_file, 'wb') as f:
             HROX, HRO, ROC, RTOR, ABC, BTOR, 
             volume, GVAC, Fboundary, 
             NFP, dphidsb, 
-            Ip_contrib, F0_contrib, 
-            Nsurfacet
+            Ip_contrib, F0_contrib
         ], 
         dtype=np.float64
     ).tofile(f)

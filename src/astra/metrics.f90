@@ -2015,7 +2015,7 @@ contains
     use scalars, only: NEQUIL, MEQUIL, NA1, HROX, HRO, ROC, RTOR, ABC, BTOR, &
         VOLUME, GVAC, FTO, UPDWN
     use status
-    use stella_module, only: dphidsb_stella, dphidvpb_ip, dphidvpb_f0, nsurfacet, &
+    use stella_module, only: dphidsb_stella, dphidvpb_ip, dphidvpb_f0, &
         stella_which_surf
     use parameters_a2equil, only: equil_now
     use numerical_tools, only: qinterp
@@ -2059,7 +2059,7 @@ contains
 
     open(unit=10, file='vmec_io/VMEC2ASTRA.bin', form='unformatted', access='stream')
     read(10) HROX, HRO, ROC, RTOR, ABC, BTOR, volume, GVAC, f_boundary, nfperiods, &
-        dphidsb_stella, dummo1, dummo2, nsurfacet
+        dphidsb_stella, dummo1, dummo2
     read(10) RHO(1:NA1), SRHO(1:NA1), SG11(1:NA1), SG12(1:NA1), &
         SG21(1:NA1), SG22(1:NA1), MV(1:NA1), VR(1:NA1), &
         VRS(1:NA1), GRADRO(1:NA1), G11(1:NA1), Rmaj(1:NA1), &
