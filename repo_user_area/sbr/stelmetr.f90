@@ -29,7 +29,7 @@ SG12(1:na1) = -(0.25*xrho(1:na1)**5 + 0.1)*SG11(1:na1)  !only example SG12 for M
 SG21(1:na1) = -(0.07*xrho(1:na1)**5 + 0.02)*xrho(1:na1)  !only example SG21
 
 DTEQL  =  0.05
-open(32,file='dat/input_metric.dat')
+open(32,file='vmec_io/input_metric.dat')
 write(32,*) 1
 write(32,*) 0.,shif(1:na1),elon(1:na1), &
  tria(1:na1),g33(1:na1),ipol(1:na1),vr(1:na1), &
