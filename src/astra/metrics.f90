@@ -2283,8 +2283,8 @@ contains
             write(s_curtor, '(F)') vac_phase_stel*IPL*1.e6
             write(s_phi   , '(F)') SGNBT*phi_edgehog
             write(s_nequil, '(I0)') NEQUIL
-            command_line = "python python/vmecmodin.py " // trim(s_curtor) // " " // &
-                trim(s_phi) // " " // trim(s_nequil)
+            command_line = "python python/vmecmodin.py " // trim(s_curtor) // &
+                " " // trim(s_phi) // " " // trim(s_nequil)
             call execute_command_line(command_line)
         endif
 
@@ -2302,14 +2302,10 @@ contains
             enddo
             raxis_str = trim(raxis_str) // "]"
             zaxis_str = trim(zaxis_str) // "]"
-            command_line = 'python python/vmecraxdin.py "' // trim(raxis_str) // '" "' // &
-                trim(zaxis_str)//'" '
-            call execute_command_line(command_line)
-!            deallocate(raxiscc, zaxiscc)
             write(s_curtor, '(F)') vac_phase_stel*IPL*1.e6
             write(s_phi,    '(F)') SGNBT*phi_edgehog
-            command_line = "python python/vmecmodin2.py " // trim(adjustl(s_curtor)) // &
-                "   " // trim(adjustl(s_phi))
+            command_line = 'python python/vmecraxdin.py "' // trim(adjustl(raxis_str)) // '" "' // &
+                trim(adjustl(zaxis_str)) // '" ' // trim(s_curtor) // " " // trim(s_phi) // " " // trim(s_nequil)
             call execute_command_line(command_line)
         endif
 

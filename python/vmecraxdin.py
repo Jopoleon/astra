@@ -28,6 +28,10 @@ def write_vmecinput(raxis_cc, zaxis_cs, template_file='vmec_io/vmecinput_templat
     filled = re.sub(r'^\s*(ZAXIS_CS\s*=).*', r'\1 ' + zaxis_str, filled, flags=re.MULTILINE)
     filled = re.sub(r'^\s*(RAXIS\s*=).*', r'\1 ' + raxis_str, template, flags=re.MULTILINE)
     filled = re.sub(r'^\s*(ZAXIS\s*=).*', r'\1 ' + zaxis_str, filled, flags=re.MULTILINE)
+    filled = filled.replace("$CURTOR" , str(args.curtor))
+    filled = filled.replace("$PHIEDGE", str(args.phiedge))
+    filled = filled.replace("$NEQUIL" , str(args.nequil))
+
     # Ensure output directory exists
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
@@ -43,11 +47,14 @@ def parse_array(array_str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate VMEC input file from template")
-    parser.add_argument('raxis_cc', type=str, help='Radial axis array (e.g., "[1.0, 1.1, 1.2]")')
-    parser.add_argument('zaxis_cs', type=str, help='Vertical axis array (e.g., "[0.0, 0.1, 0.2]")')
+    parser.add_argument('raxis_cc', type=str  , help='Radial axis array (e.g., "[1.0, 1.1, 1.2]")')
+    parser.add_argument('zaxis_cs', type=str  , help='Vertical axis array (e.g., "[0.0, 0.1, 0.2]")')
+    parser.add_argument("curtor"  , type=float, help="Value to set for CURTOR")
+    parser.add_argument("phiedge" , type=float, help="Value to set for PHIEDGE")
+    parser.add_argument("nequil"  , type=int  , help="Value to set for NEQUIL")
     args = parser.parse_args()
 
     raxis_cc = parse_array(args.raxis_cc)
     zaxis_cs = parse_array(args.zaxis_cs)
 
-    write_vmecinput(raxis_cc, zaxis_cs)
+    write_vmecinput(raxis_cc, zaxis_cs, args.curtor, args.phiedge, args.nequil)
