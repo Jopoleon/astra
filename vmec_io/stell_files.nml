@@ -1,0 +1,32 @@
+! Namelist for VMEC-ASTRA-DKES stellarator simulation
+
+
+&VMEC_TO_ASTRA_INPUTS
+  ! Inputs for the Python vmec2astra script
+  VMEC_WOUT_FILE    = '/tokp/work/git/a8s/vmec_io/wout_VMECoutput.nc'
+  BOOZER_FILE    = '/tokp/work/git/a8s/vmec_io/boozmn_VMECoutput.nc'
+/
+
+
+&ASTRA_DKES_INTERFACE
+  ! Inputs for the Fortran astra_dkes_interface_module
+  DKES_FILE_PATH = '/home/IPP-HGW/emf/vmecdata/FLM_1000_1000_1000_1000_-0227_-0227.01.040_ref274.dk'
+  VMEC_HEADER_FILE = '/tokp/work/git/a8s/vmec_io/vmec_header_data_VMECoutput.txt'
+  B00_PROFILE_FILE = '/tokp/work/git/a8s/vmec_io/b00_profile_boozer_boozmn_VMECoutput.txt' 
+  MINOR_RADIUS_W7AS_FILE = '/tokp/work/git/a8s/vmec_io/minorradiusW7AS_boozmn_VMECoutput.txt'
+/
+
+
+! NGS pellet straight-line chord (read by VMEC2ASTRA.py -> ABLATION_NGS 3D mode).
+! When this group is present with a velocity, each equilibrium update traces the
+! real straight line fired from (LAUNCH_THETA,LAUNCH_PHI) on the LCFS along
+! (VX,VY,VZ) [m/s] through the 3D metric, and writes CHORD_OUT = rho(l)/modB(l).
+! Remove the group (or its VX) for runs that do not inject a pellet.
+&PELLET_CHORD
+  LAUNCH_THETA = 0.7426990816987241
+  LAUNCH_PHI   = 0.39269908169872414
+  VX           = -528.65329
+  VY           = -218.97536
+  VZ           = -820.107
+  CHORD_OUT    = 'vmec_io/pellet_chord.dat'
+/
