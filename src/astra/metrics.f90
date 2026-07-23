@@ -6,7 +6,10 @@ implicit none
 
 logical :: use_ext_bnd=.false.
 logical :: plasma_up=.true.  ! plasma is up by default, can be set to False for breakdown by the user in a user-defined sbr called with "<"
+integer :: naxis
+real*8, allocatable :: raxiscc(:), zaxiscc(:)
 double precision, dimension(:), allocatable :: CCOIL, VCOIL
+
 
 contains
 
@@ -2022,11 +2025,11 @@ contains
     double precision :: dummo1, dummo2, phi_full_surfaces
     character(len=128) :: cmd, str_NA1, mpi_command
     integer ivmec, k, k1
-    integer :: mnmax, naxis
+    integer :: mnmax
     integer, allocatable :: xm(:), xnn(:)
     integer :: ns_temp, k2
     logical :: lasym
-    real*8, allocatable :: rmnc_lcfs(:), zmns_lcfs(:), raxiscc(:), zaxiscc(:)
+    real*8, allocatable :: rmnc_lcfs(:), zmns_lcfs(:)
     real*8, allocatable :: rmnc_all(:, :), zmns_all(:, :), bndr(:), bndz(:)
     real*8, allocatable :: rmnc_interp(:, :), zmns_interp(:, :), xrho_eq(:), phi_temp(:)
     real*8, allocatable :: rmns_lcfs(:), zmnc_lcfs(:)
@@ -2086,6 +2089,8 @@ contains
         read(10) zmnc_lcfs
     endif
     read(10) naxis
+    if (allocated(raxiscc)) deallocate(raxiscc)
+    if (allocated(zaxiscc)) deallocate(zaxiscc)
     allocate(raxiscc(naxis), zaxiscc(naxis))
     read(10) raxiscc
     read(10) zaxiscc
@@ -2116,12 +2121,6 @@ contains
     read(10) phi_temp
 
     close(10)
-
-    open(32, file='vmec_io/raxiszaxis_new_condition.dat')
-    write(32, *) naxis
-    write(32, *) raxiscc
-    write(32, *) zaxiscc
-    close(32)
 
     if (phi_full_surfaces < 0.) then ! plot LCFS for various toroidal angles if phi_full_surfaces < 0
         stella_which_surf = 0
@@ -2165,7 +2164,6 @@ contains
 
     deallocate(xm, xnn, rmnc_lcfs, zmns_lcfs)
     deallocate(rmns_lcfs, zmnc_lcfs)
-    deallocate(raxiscc, zaxiscc)
     deallocate(rmnc_all)
     deallocate(zmns_all)
     deallocate(rmnc_interp)
@@ -2200,7 +2198,7 @@ contains
 
     logical :: file_exists
     integer :: ios, i, ivmec, vac_phase_stel, count_rate, start_count, end_count, mboz, nboz, &
-         naxis, boozer_surfaces, init_vmecco
+         boozer_surfaces, init_vmecco
     double precision :: phi_edgehog, t1, t2, vac_fac, dt_boozer, t_boozero
     double precision, dimension(NRD) :: pressure, svmec, curtorprof, dum1
 
@@ -2211,7 +2209,6 @@ contains
     character(len=120) :: as_nml
 
     integer, allocatable, dimension(:) :: surfaces_for_boozer
-    real*8, allocatable :: raxiscc(:), zaxiscc(:)
 
     data init_vmecco/0/
     data t_boozero/0./
@@ -2282,28 +2279,22 @@ contains
 ! RAXIS and ZAXIS guessues
 
 ! python sub curtor and phiedge in the rigjht place
-        if (vac_fac==0) then
+        if (vac_fac == 0) then
             write(s_curtor, '(F)') vac_phase_stel*IPL*1.e6
             write(s_phi,    '(F)') SGNBT*phi_edgehog
             command_line = "python python/vmecmodin.py " // trim(adjustl(s_curtor)) // "   " // &
                 trim(adjustl(s_phi))
             call execute_command_line(command_line)
 
-            command_line="python python/read_vmec_surfaces_in.py"
+            command_line = "python python/read_vmec_surfaces_in.py"
             call execute_command_line(command_line)
             open(32, file='vmec_io/nsurfaces.dat')
             read(32, *) nsurfacet
             close(32)
         endif
 
-        if (vac_fac==1) then
-            open(32, file='vmec_io/raxiszaxis_new_condition.dat')
-            read(32, *) naxis
-            allocate(raxiscc(naxis))
-            allocate(zaxiscc(naxis))
-            read(32, *) raxiscc
-            read(32, *) zaxiscc
-            close(32)
+        if (vac_fac == 1) then
+            print*, 'NAXIS', naxis
             raxis_str = "["
             zaxis_str = "["
             do i=1, naxis
@@ -2319,7 +2310,7 @@ contains
             command_line = 'python python/vmecraxdin.py "' // trim(raxis_str) // '" "' // &
                 trim(zaxis_str)//'" '
             call execute_command_line(command_line)
-            deallocate(raxiscc, zaxiscc)
+!            deallocate(raxiscc, zaxiscc)
             write(s_curtor, '(F)') vac_phase_stel*IPL*1.e6
             write(s_phi,    '(F)') SGNBT*phi_edgehog
             command_line = "python python/vmecmodin2.py " // trim(adjustl(s_curtor)) // &
