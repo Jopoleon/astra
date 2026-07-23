@@ -73,8 +73,8 @@
 
 &travis
 
-   inputfile_name = 'dat/WAL-nc.input'
-   output_dir = 'dat/TEMP'
+   inputfile_name = 'vmec_io/WAL-nc.input'
+   output_dir = 'vmec_io/TEMP'
    n_beams = 1
    id_beam(1) = '111'
 /

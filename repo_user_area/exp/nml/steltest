@@ -111,8 +111,8 @@
 
 &travis
 
-   inputfile_name = 'dat/W7X-nc.input'
-   output_dir = '~/a8_fsim/dat/TEMP'
+   inputfile_name = 'vmec_io/W7X-nc.input'
+   output_dir = '~/a8_fsim/vmec_io/TEMP'
    n_beams = 2
    id_beam(1) = '104'
    id_beam(2) = '105'
