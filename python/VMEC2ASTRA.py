@@ -457,7 +457,7 @@ def _parse_pellet_group(nl_path):
     return out
 
 
-def maybe_write_pellet_chord(dat, nl_path='dat/stell_files.nml'):
+def maybe_write_pellet_chord(dat, nl_path='vmec_io/stell_files.nml'):
     """If a &PELLET_CHORD group is present, trace the straight-line chord for
     each configured pellet on the current equilibrium and write the table(s).
     Multi-pellet: LAUNCH_THETA/PHI/VX/VY/VZ may be comma lists of length NPEL;
@@ -517,7 +517,7 @@ args = parser.parse_args()
 
 NA1 = args.astra_nrad
 
-namelist_path = 'dat/stell_files.nml'
+namelist_path = 'vmec_io/stell_files.nml'
 nl_params = parse_fortran_namelist(namelist_path, 'VMEC_TO_ASTRA_INPUTS')
 
 try:
