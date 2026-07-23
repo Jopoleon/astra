@@ -120,7 +120,6 @@
 
 &vmec
 
-   stellopt_dir = '/tokp/work/software/TOK_2023/software/ASTRA_LIBRARIES_EXT/STELLOPT'
    boozer_surfaces = 3
    mboz = 32
    nboz = 32

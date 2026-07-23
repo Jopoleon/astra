@@ -81,7 +81,6 @@
 
 &vmec
 
-   stellopt_dir = '/tokp/work/software/TOK_2023/software/ASTRA_LIBRARIES_EXT/STELLOPT'
    boozer_surfaces = 7
    dt_boozer = 0.01
    phi_full_surfaces = 0.0
