@@ -2183,12 +2183,12 @@ contains
 
     use status, only: NRD
     use scalars, only: NA1, RTOR, BTOR, TIME, ROC, SGNIP, SGNBT, ABC, IPL, PHIEDG, &
-        SGNBT, IPART, TSTART
+        SGNBT, IPART, TSTART, NEQUIL
     use status, only: TE, NE, FP, XRHO, ZEF, MU, ELON, SHif , IPOL, &
         AMETR, VOLUM, PEECR, CUECR, AREAT, rho_pol, FP_NORM, &
         PBLON, PBPER, PFAST, TI, NI, CU, SG11, SG12, MV
     use read_input, only: AWD, astra_ext, nml_file
-    use stella_module, only: phi_edge_total, nsurfacet, &
+    use stella_module, only: phi_edge_total, &
         dphidsb_stella, dphidvpb_ip, dphidvpb_f0
     use numerical_tools, only: qinterp, integr, derivcc
     use parameters_a2equil, only : equil_now
@@ -2204,9 +2204,9 @@ contains
 
     character(len=32) :: s_curtor, s_phi, n_nodes
     character(len=256) :: path_to_vmec, stellopt_dir, &
-        dat_in_file='vmec_io/vmecinput.dat', s_rax, s_zax, mpi_command
+        dat_in_file='vmec_io/vmecinput.dat', mpi_command
     character(len=1000) :: command_line, raxis_str, zaxis_str, filename
-    character(len=120) :: as_nml
+    character(len=120) :: s_rax, s_zax, s_nequil, as_nml
 
     integer, allocatable, dimension(:) :: surfaces_for_boozer
 
@@ -2281,16 +2281,11 @@ contains
 ! python sub curtor and phiedge in the rigjht place
         if (vac_fac == 0) then
             write(s_curtor, '(F)') vac_phase_stel*IPL*1.e6
-            write(s_phi,    '(F)') SGNBT*phi_edgehog
-            command_line = "python python/vmecmodin.py " // trim(adjustl(s_curtor)) // "   " // &
-                trim(adjustl(s_phi))
+            write(s_phi   , '(F)') SGNBT*phi_edgehog
+            write(s_nequil, '(I0)') NEQUIL
+            command_line = "python python/vmecmodin.py " // trim(s_curtor) // " " // &
+                trim(s_phi) // " " // trim(s_nequil)
             call execute_command_line(command_line)
-
-            command_line = "python python/read_vmec_surfaces_in.py"
-            call execute_command_line(command_line)
-            open(32, file='vmec_io/nsurfaces.dat')
-            read(32, *) nsurfacet
-            close(32)
         endif
 
         if (vac_fac == 1) then
@@ -2342,19 +2337,14 @@ contains
     endif  ! vmec dteq command
 
     if (yes_boozer == 1) then !run boozer after vmec only if ivmec ==2, vmec run with 1 or 2
-        if (IPART == 1) then
-            open(32, file='vmec_io/nsurfaces.dat')
-            read(32, *) nsurfacet
-            close(32)
-        endif
 
         allocate(surfaces_for_boozer(boozer_surfaces))
 
         do i=2, boozer_surfaces+1
-            surfaces_for_boozer(i-1) = nint((i-1.)/(boozer_surfaces+1.)*nsurfacet)
+            surfaces_for_boozer(i-1) = nint((i-1.)/(boozer_surfaces+1.)*NEQUIL)
         enddo
         surfaces_for_boozer(1) = max(1, surfaces_for_boozer(1))
-        surfaces_for_boozer(boozer_surfaces) = min(nint(nsurfacet), surfaces_for_boozer(boozer_surfaces))
+        surfaces_for_boozer(boozer_surfaces) = min(NEQUIL, surfaces_for_boozer(boozer_surfaces))
 
 ! if true_surfaces exists, use that one
         filename = 'vmec_io/true_surfaces.txt'
@@ -2381,7 +2371,7 @@ contains
         open(32, file='vmec_io/inboozer.in')
         write(32, '(33333I8)') mboz, nboz
         write(32, *) ' VMECoutput '
-        write(32, '(33333I8)') [(i, i = 1, nint(nsurfacet))]
+        write(32, '(33333I8)') [(i, i=1, NEQUIL)]
         close(32)
 
         deallocate(surfaces_for_boozer)
