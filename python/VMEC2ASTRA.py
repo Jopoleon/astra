@@ -426,7 +426,7 @@ def _parse_pellet_group(nl_path):
         return {}
     txt = open(nl_path).read()
     # terminate the group on a '/' at the start of a line (namelist convention), 
-    # NOT on the '/' inside a path value like 'dat/pellet_chord.dat'
+    # NOT on the '/' inside a path value like 'vmec_io/pellet_chord.dat'
     m = re.search(r'&pellet_chord\b(.*?)^\s*/', txt, re.S | re.M | re.I)
     if not m:
         return {}
@@ -457,7 +457,7 @@ def _parse_pellet_group(nl_path):
     return out
 
 
-def maybe_write_pellet_chord(dat, nl_path='dat/stell_files.nml'):
+def maybe_write_pellet_chord(dat, nl_path='vmec_io/stell_files.nml'):
     """If a &PELLET_CHORD group is present, trace the straight-line chord for
     each configured pellet on the current equilibrium and write the table(s).
     Multi-pellet: LAUNCH_THETA/PHI/VX/VY/VZ may be comma lists of length NPEL;
@@ -474,7 +474,7 @@ def maybe_write_pellet_chord(dat, nl_path='dat/stell_files.nml'):
     try:
         vx = p['vx']
         npel = p.get('npel') or len(vx)
-        stem = p.get('chord_out', 'dat/pellet_chord.dat')
+        stem = p.get('chord_out', 'vmec_io/pellet_chord.dat')
         base, ext = os.path.splitext(stem)
 
         def pick(key, ip, default=0.0):
@@ -517,7 +517,7 @@ args = parser.parse_args()
 
 NA1 = args.astra_nrad
 
-namelist_path = 'dat/stell_files.nml'
+namelist_path = 'vmec_io/stell_files.nml'
 nl_params = parse_fortran_namelist(namelist_path, 'VMEC_TO_ASTRA_INPUTS')
 
 try:
@@ -529,8 +529,8 @@ except KeyError:
 wout_basename = os.path.basename(wout_file)
 shot_id = wout_basename.replace('wout_', '').replace('.nc', '')
 
-metric_file = f'dat/VMEC2ASTRA.bin'
-header_file = f'dat/vmec_header_data_{shot_id}.txt'
+metric_file = f'vmec_io/VMEC2ASTRA.bin'
+header_file = f'vmec_io/vmec_header_data_{shot_id}.txt'
 
 #read wout file
 data = VMEC()
@@ -742,7 +742,7 @@ with open(metric_file, 'wb') as f:
     phi = np.asarray(data.phi, dtype=np.float64)
     phi.tofile(f)                                # then data
 
-b00_output_file = f'dat/b00_profile_{shot_id}_vmec.txt'
+b00_output_file = f'vmec_io/b00_profile_{shot_id}_vmec.txt'
 np.savetxt(b00_output_file, B00_ASTRA_grid)
 print(f'Wrote B00 profile to {b00_output_file}')
 	
@@ -769,7 +769,7 @@ for i in range(len(xm)):
     if m != 0:
         a2 += m * R[i] * Z[i]
 a_booz = np.sqrt(a2)
-radius_out = f"dat/minorradiusW7AS_boozmn_{shot_id}.txt"
+radius_out = f"vmec_io/minorradiusW7AS_boozmn_{shot_id}.txt"
 with open(radius_out, 'w') as f:
     f.write(str(a_booz.item()))
 print(f"Saved minor radius to: {radius_out}")

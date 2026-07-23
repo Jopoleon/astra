@@ -2,8 +2,8 @@
 
 import re
 
-input_file = "dat/vmecinput.dat"
-output_file = "dat/nsurfaces.dat"
+input_file  = "vmec_io/vmecinput.dat"
+output_file = "vmec_io/nsurfaces.dat"
 
 ns_array = []
 

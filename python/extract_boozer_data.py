@@ -123,7 +123,7 @@ def read_minor_radius_text(boozer_file):
 
 
 # GENERATED PATH  (NetCDF boozmn, 7 surfaces from true_surfaces.txt)
-def _read_true_surfaces(path="dat/true_surfaces.txt"):
+def _read_true_surfaces(path="vmec_io/true_surfaces.txt"):
     if not os.path.exists(path):
         raise FileNotFoundError(f"{path} not found (needed for generated mode)")
     with open(path) as f:
@@ -192,8 +192,8 @@ def is_netcdf(path):
 
 
 if __name__ == "__main__":
-    nl_vmec = parse_fortran_namelist('dat/stell_files.nml', 'VMEC_TO_ASTRA_INPUTS')
-    nl_xb   = parse_fortran_namelist('dat/stell_files.nml', 'EXTRACT_BOOZER')
+    nl_vmec = parse_fortran_namelist('vmec_io/stell_files.nml', 'VMEC_TO_ASTRA_INPUTS')
+    nl_xb   = parse_fortran_namelist('vmec_io/stell_files.nml', 'EXTRACT_BOOZER')
     # NA1: optional command-line arg (a2vmec passes it) overrides the namelist
     # default; the interface reads B00_PHYSICAL_PROFILE(NA1), so the profile
     # length MUST equal NA1.
@@ -205,15 +205,15 @@ if __name__ == "__main__":
 
     gen_file = nl_vmec.get('boozer_file')
     arc_file = nl_xb.get('boozer_file_archive')
-    wout_file = nl_vmec.get('vmec_wout_file', 'dat/wout_VMECoutput.nc')
+    wout_file = nl_vmec.get('vmec_wout_file', 'vmec_io/wout_VMECoutput.nc')
 
     if gen_file is not None and os.path.exists(gen_file) and is_netcdf(gen_file):
         boozer_file, use_generated = gen_file, True
     else:
         boozer_file, use_generated = arc_file, False
 
-    b00_out = "dat/b00_profile_boozer.txt"
-    rad_out = "dat/minorradiusW7AS.txt"
+    b00_out = "vmec_io/b00_profile_boozer.txt"
+    rad_out = "vmec_io/minorradiusW7AS.txt"
 
     try:
         if use_generated:

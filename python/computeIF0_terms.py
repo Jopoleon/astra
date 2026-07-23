@@ -2,7 +2,7 @@ import numpy as np
 from scipy.io import netcdf_file
 
 
-booz_file="dat/boozmn_VMECoutput.nc"
+booz_file="vmec_io/boozmn_VMECoutput.nc"
 
 ntheta=128
 nzeta=128
@@ -128,7 +128,7 @@ avgI=np.sum(termI*weight)/np.sum(weight)
 avgF=np.sum(termF*weight)/np.sum(weight)
 
 
-with open("dat/I_F0_out.dat","w") as out:
+with open("vmec_io/I_F0_out.dat","w") as out:
 
  out.write("{:.15e}\n".format(avgI))
  out.write("{:.15e}\n".format(avgF))
