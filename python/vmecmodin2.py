@@ -51,7 +51,7 @@ def main():
     output_path.write_text(text)
 
     print(f"Wrote updated VMEC input to: {output_path}")
-    print(f"  CURTOR   = {args.curtor}")
+    print(f"  CURTOR  = {args.curtor}")
     print(f"  PHIEDGE = {args.phiedge}")
 
 

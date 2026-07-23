@@ -9,7 +9,7 @@ def main():
     )
     parser.add_argument("curtor" , type=float, help="Value to set for CURTOR")
     parser.add_argument("phiedge", type=float, help="Value to set for PHIEDGE")
-    parser.add_argument("nequil", type=int, help="Value to set for NEQUIL")
+    parser.add_argument("nequil" , type=int  , help="Value to set for NEQUIL")
 
     args = parser.parse_args()
 
@@ -21,10 +21,9 @@ def main():
 
     text = template_path.read_text()
 
-    text = text.replace("$CURTOR", str(args.curtor))
+    text = text.replace("$CURTOR" , str(args.curtor))
     text = text.replace("$PHIEDGE", str(args.phiedge))
-    print(args.nequil)
-    text = text.replace("$NEQUIL", str(args.nequil))
+    text = text.replace("$NEQUIL" , str(args.nequil))
 
     output_path.write_text(text)
 
