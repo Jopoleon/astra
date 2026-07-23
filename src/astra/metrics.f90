@@ -2057,7 +2057,7 @@ contains
     write(*, *) cmd
     call execute_command_line(trim(cmd), wait=.true.)
 
-    open(unit=10, file='vmec_io/VMEC2ASTRA.bin', form='unformatted', access='stream')
+    open(unit=10, file='dat/VMEC2ASTRA.bin', form='unformatted', access='stream')
     read(10) HROX, HRO, ROC, RTOR, ABC, BTOR, volume, GVAC, f_boundary, nfperiods, &
         dphidsb_stella, dummo1, dummo2
     read(10) RHO(1:NA1), SRHO(1:NA1), SG11(1:NA1), SG12(1:NA1), &
@@ -2204,7 +2204,7 @@ contains
 
     character(len=32) :: s_curtor, s_phi, n_nodes
     character(len=256) :: path_to_vmec, stellopt_dir, &
-        dat_in_file='vmec_io/vmecinput.dat', mpi_command
+        dat_in_file='dat/vmecinput.dat', mpi_command
     character(len=1000) :: command_line, raxis_str, zaxis_str, filename
     character(len=120) :: s_rax, s_zax, s_nequil, as_nml
 
@@ -2240,14 +2240,14 @@ contains
         pressure = 1602.*pressure  ! Pascal
 
 ! generate pressure and iota files
-        open(32, file='vmec_io/vmecp.dat')
+        open(32, file='dat/vmecp.dat')
         write(32, *) NA1
         do i=1, NA1
             write(32, *) svmec(i), vac_phase_stel*pressure(i)
         enddo
         close(32)
 
-        open(32, file='vmec_io/vmeci.dat')
+        open(32, file='dat/vmeci.dat')
         write(32, *) NA1
         do i=1, NA1
             write(32, *) svmec(i), mu(i)
@@ -2260,7 +2260,7 @@ contains
 
         if (vac_phase_stel == 1) curtorprof = curtorprof/curtorprof(NA1-1)*IPL ! ATTENTION
         curtorprof(NA1)=IPL
-        open(32, file='vmec_io/vmecc.dat')
+        open(32, file='dat/vmecc.dat')
         write(32, *) NA1
         do i=1, NA1
             write(32, *) svmec(i), vac_phase_stel*curtorprof(i)*1.e6  ! A/m^2
@@ -2271,7 +2271,7 @@ contains
 !the input namelist to run vmec using curtor and phiedge are:
 ! NCURR = 1   ! given toroidal current IPL
 ! IMATCH_PHIEDGE = 1    ! phiedge is enforced to be matched exactly in vmec
-! PMASS_TYPE, PCURR_TYPE and files vmec_io/vmecpressure.dat and vmec_io/vmeccurr.dat. Iota not used as input
+! PMASS_TYPE, PCURR_TYPE and files dat/vmecpressure.dat and dat/vmeccurr.dat. Iota not used as input
 ! PRES_SCALE = 1.
 ! SPRES_PED = 1.
 ! BLOAT = 1.
@@ -2323,7 +2323,7 @@ contains
         else
             command_line = trim(mpi_command) // ' ' // trim(n_nodes) // ' ' // &
                 trim(path_to_vmec) // '/xvmec2000' // ' ' // trim(dat_in_file) // &
-                ' reset=vmec_io/wout_VMECoutput.nc'
+                ' reset=dat/wout_VMECoutput.nc'
         endif
         write(*, *) command_line
 
@@ -2331,7 +2331,7 @@ contains
         call system_clock(end_count)
         write(*, *) 'time spent on vmec : ', real(end_count-start_count, 8)/real(count_rate, 8)
 
-        command_line = 'cp wout_dat.nc vmec_io/wout_VMECoutput.nc'
+        command_line = 'cp wout_dat.nc dat/wout_VMECoutput.nc'
         call execute_command_line(command_line)
         write(*, *) 'end vmec'
     endif  ! vmec dteq command
@@ -2347,7 +2347,7 @@ contains
         surfaces_for_boozer(boozer_surfaces) = min(NEQUIL, surfaces_for_boozer(boozer_surfaces))
 
 ! if true_surfaces exists, use that one
-        filename = 'vmec_io/true_surfaces.txt'
+        filename = 'dat/true_surfaces.txt'
         open(UNIT=20, FILE=trim(filename), STATUS='OLD', IOSTAT=ios)
         if (ios == 0) then
             file_exists = .TRUE.
@@ -2357,18 +2357,18 @@ contains
         endif
 
         if (file_exists) then
-            open(20, file='vmec_io/true_surfaces.txt')  ! the nr of surfaces has tobe equal to boozer_surfaces
+            open(20, file='dat/true_surfaces.txt')  ! the nr of surfaces has tobe equal to boozer_surfaces
             read(20, *) i
             read(20, *) surfaces_for_boozer(1:boozer_surfaces)
             close(20)
         else
-            open(20, file='vmec_io/true_surfaces.txt')  ! the nr of surfaces has tobe equal to boozer_surfaces
+            open(20, file='dat/true_surfaces.txt')  ! the nr of surfaces has tobe equal to boozer_surfaces
             write(20, *) boozer_surfaces
             write(20, '(555I0)') surfaces_for_boozer(1:boozer_surfaces)
             close(20)
         endif
 
-        open(32, file='vmec_io/inboozer.in')
+        open(32, file='dat/inboozer.in')
         write(32, '(33333I8)') mboz, nboz
         write(32, *) ' VMECoutput '
         write(32, '(33333I8)') [(i, i=1, NEQUIL)]
@@ -2393,7 +2393,7 @@ contains
 !                                reused DKES table (no Boozer run needed);
 !   * NetCDF boozmn (generated)-> reads the fresh 7-surface transform just
 !                                produced above when yes_boozer==1.
-! Either way it writes vmec_io/b00_profile_boozer.txt and vmec_io/minorradiusW7AS.txt
+! Either way it writes dat/b00_profile_boozer.txt and dat/minorradiusW7AS.txt
 ! for the DKES interface.  NA1 is passed so the B00 profile length matches.
 ! ---------------------------------------------------------------------
     write(s_curtor, '(I0)') NA1

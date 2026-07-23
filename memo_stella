@@ -1,4 +1,6 @@
-cp /shares/departments/AUG/users/git/vmec_coupling/vmec_io/* vmec_io/
+./install.sh
+mv vmec_io dat
+cp /shares/departments/AUG/users/git/vmec_coupling/vmec_io/vmecinput_template.dat dat/
 cp /shares/departments/AUG/users/git/vmec_coupling/exp/steltest* exp/
 
 exe/as_exe -m transpstell -v steltest -s 0. -e 4. -tpause 0. -nodes 8

@@ -135,7 +135,7 @@ CONTAINS
     ROC=RHO(NA1)
      
     IF (.NOT. dkes_is_initialized) THEN
-      namelist_file = 'vmec_io/stell_files.nml'
+      namelist_file = 'dat/stell_files.nml'
       OPEN(newunit=nml_unit, file=TRIM(namelist_file), status='old', action='read', iostat=io_stat)
       IF (io_stat /= 0) STOP 'Namelist Read Error'
       READ(nml_unit, NML=ASTRA_DKES_INTERFACE, iostat=io_stat)
@@ -1974,7 +1974,7 @@ CONTAINS
     status_out = 0
 
     IF (LEN_TRIM(MINOR_RADIUS_W7AS_FILE) == 0) THEN
-      MINOR_RADIUS_W7AS_FILE = 'vmec_io/minorradiusW7AS.txt'
+      MINOR_RADIUS_W7AS_FILE = 'dat/minorradiusW7AS.txt'
       WRITE(*,*) 'WARNING: MINOR_RADIUS_W7AS_FILE not in namelist'
     END IF
     
@@ -2013,7 +2013,7 @@ CONTAINS
     status_out = 0
 
     IF (LEN_TRIM(VMEC_HEADER_FILE) == 0) THEN
-      VMEC_HEADER_FILE = 'vmec_io/vmec_header_data.txt'
+      VMEC_HEADER_FILE = 'dat/vmec_header_data.txt'
       WRITE(*,*) 'WARNING: VMEC_HEADER_FILE not in namelist'
     END IF
     
