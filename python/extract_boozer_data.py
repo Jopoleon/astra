@@ -192,8 +192,8 @@ def is_netcdf(path):
 
 
 if __name__ == "__main__":
-    nl_vmec = parse_fortran_namelist('vmec/stell_filees.nml', 'VMEC_TO_ASTRA_INPUTS')
-    nl_xb   = parse_fortran_namelist('vmec/stell_filees.nml', 'EXTRACT_BOOZER')
+    nl_vmec = parse_fortran_namelist('vmec/stell_files.nml', 'VMEC_TO_ASTRA_INPUTS')
+    nl_xb   = parse_fortran_namelist('vmec/stell_files.nml', 'EXTRACT_BOOZER')
     # NA1: optional command-line arg (a2vmec passes it) overrides the namelist
     # default; the interface reads B00_PHYSICAL_PROFILE(NA1), so the profile
     # length MUST equal NA1.
