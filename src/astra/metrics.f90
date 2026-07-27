@@ -2199,7 +2199,7 @@ contains
     logical :: file_exists
     integer :: ios, i, ivmec, vac_phase_stel, count_rate, start_count, end_count, mboz, nboz, &
          boozer_surfaces, init_vmecco
-    double precision :: phi_edgehog, t1, t2, vac_fac, dt_boozer, t_boozero
+    double precision :: phi_edgehog, t1, t2, dt_boozer, t_boozero
     double precision, dimension(NRD) :: pressure, svmec, curtorprof, dum1
 
     character(len=32) :: s_curtor, s_phi, n_nodes
@@ -2234,7 +2234,6 @@ contains
         if (vmec_vacuum == 0) call compute_phi_edgehog(phi_edgehog, f_boundary)  !compute it with plasma
 ! this for now while the compute is fixed
         phi_edge_total = phi_edgehog
-        vac_fac = (1. - vmec_vacuum)
         svmec = XRHO**2  ! s vmec is phi/phi_b
         pressure = NE*TE + NI*TI + 0.5*(PBLON + PBPER) + PFAST
         pressure = 1602.*pressure  ! Pascal
@@ -2279,52 +2278,53 @@ contains
 ! RAXIS and ZAXIS guessues
 
 ! python sub curtor and phiedge in the rigjht place
-        if (vac_fac == 0) then
+        call execute_command_line('rm -f ' // TRIM(dat_in_file)) ! Clean, to raise errors
+        if (vmec_vacuum == 0 .or. vmec_vacuum == 1) then
             write(s_curtor, '(F)') vac_phase_stel*IPL*1.e6
             write(s_phi   , '(F)') SGNBT*phi_edgehog
             write(s_nequil, '(I0)') NEQUIL
             command_line = "python python/vmecmodin.py " // trim(s_curtor) // &
                 " " // trim(s_phi) // " " // trim(s_nequil)
+            if (vmec_vacuum == 0) then
+                raxis_str = '"'
+                zaxis_str = '"'
+                do i=1, naxis
+                    write(raxis_str(len_trim(raxis_str)+1:), '(F10.6)') raxiscc(i)
+                    write(zaxis_str(len_trim(zaxis_str)+1:), '(F10.6)') zaxiscc(i)
+                    if (i < naxis) then
+                        raxis_str(len_trim(raxis_str)+1: len_trim(raxis_str)+3) = ", "
+                        zaxis_str(len_trim(zaxis_str)+1: len_trim(zaxis_str)+3) = ", "
+                    endif
+                enddo
+                raxis_str = trim(raxis_str) // '"'
+                zaxis_str = trim(zaxis_str) // '"'
+                command_line = TRIM(command_line) // ' -r ' // TRIM(raxis_str) // &
+                                                     ' -z ' // TRIM(zaxis_str)
+            endif
+!            pause 
             call execute_command_line(command_line)
-        endif
-
-        if (vac_fac == 1) then
-            print*, 'NAXIS', naxis
-            raxis_str = "["
-            zaxis_str = "["
-            do i=1, naxis
-                write(raxis_str(len_trim(raxis_str)+1:), '(F10.6)') raxiscc(i)
-                write(zaxis_str(len_trim(zaxis_str)+1:), '(F10.6)') zaxiscc(i)
-                if (i < naxis) then
-                    raxis_str(len_trim(raxis_str)+1:len_trim(raxis_str)+2) = ", "
-                    zaxis_str(len_trim(zaxis_str)+1:len_trim(zaxis_str)+2) = ", "
-                endif
-            enddo
-            raxis_str = trim(raxis_str) // "]"
-            zaxis_str = trim(zaxis_str) // "]"
-            write(s_curtor, '(F)') vac_phase_stel*IPL*1.e6
-            write(s_phi,    '(F)') SGNBT*phi_edgehog
-            write(s_nequil, '(I0)') NEQUIL
-            command_line = 'python python/vmecmodin.py -r "' // trim(adjustl(raxis_str)) // '" -z "' // &
-                 trim(adjustl(zaxis_str)) // '" ' // trim(s_curtor) // " " // trim(s_phi) // " " // trim(s_nequil)
-            call execute_command_line(command_line)
+!            pause
         endif
 
         call system_clock(count_rate=count_rate)
         call system_clock(start_count)
 
-        if (init_vmecco == 0) then
+        INQUIRE(file=TRIM(dat_in_file), EXIST=file_exists)
+        if (file_exists) then
             command_line = trim(mpi_command) // ' ' // trim(n_nodes) // ' ' // &
                 trim(path_to_vmec) // '/xvmec2000' // ' ' // trim(dat_in_file)
-            init_vmecco = 1
+            if (init_vmecco == 0) then
+                init_vmecco = 1
+            else
+                command_line = trim(command_line) // ' reset=dat/wout_VMECoutput.nc'
+            endif
+            write(*, *) command_line
+            call execute_command_line(trim(command_line))
         else
-            command_line = trim(mpi_command) // ' ' // trim(n_nodes) // ' ' // &
-                trim(path_to_vmec) // '/xvmec2000' // ' ' // trim(dat_in_file) // &
-                ' reset=dat/wout_VMECoutput.nc'
+            print*, 'File ' // TRIM(dat_in_file) // ' for VMEC not found, quitting ASTRA/VMEC'
+            STOP
         endif
-        write(*, *) command_line
 
-        call execute_command_line(trim(command_line))
         call system_clock(end_count)
         write(*, *) 'time spent on vmec : ', real(end_count-start_count, 8)/real(count_rate, 8)
 
@@ -2493,7 +2493,7 @@ contains
         if (niter > 1000000 ) errtol = 0.
     enddo !phi loop
 
-    write(*, *) 'phiedge dopo : ', phi_edgehog, GP*BTOR*ROC**2, phiedg
+    write(*, *) 'New phiedge : ', phi_edgehog, GP*BTOR*ROC**2, phiedg
 
     end subroutine compute_phi_edgehog
 

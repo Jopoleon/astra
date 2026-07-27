@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 
-import argparse, ast, re, os
+import argparse, re, os
 import numpy as np
 
 
 def replaceArray(text, arrName, arrStr):
-
-    arrList = ast.literal_eval(arrStr)
-    arr_str = '  '.join(f'{x:.6f}' for x in arrList)
-    text = re.sub(r'^\s*( ' + arrName + r'\s*=).*', r'\1 ' + arr_str, text, flags=re.MULTILINE)
-    return text
+    return re.sub(r'^\s*( ' + arrName + r'\s*=).*', r'\1 ' + arrStr, text, flags=re.MULTILINE)
 
     
 def replaceParams(text, curtor, phiedge, nequil):
@@ -33,7 +29,9 @@ def write_vmecinput(curtor, phiedge, nequil, raxis=None, zaxis=None, template_fi
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
     if raxis is not None:
-        if len(raxis) != len(zaxis):
+        raxis = raxis.strip()
+        zaxis = zaxis.strip()
+        if len(raxis.split()) != len(zaxis.split()):
             raise ValueError(f"raxis and zaxis must have the same length, got {len(raxis)} and {len(zaxis)}")
         text = replaceArray(text, 'RAXIS', raxis)
         text = replaceArray(text, 'ZAXIS', zaxis)
