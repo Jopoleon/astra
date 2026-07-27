@@ -2304,6 +2304,7 @@ contains
             zaxis_str = trim(zaxis_str) // "]"
             write(s_curtor, '(F)') vac_phase_stel*IPL*1.e6
             write(s_phi,    '(F)') SGNBT*phi_edgehog
+            write(s_nequil, '(I0)') NEQUIL
             command_line = 'python python/vmecraxdin.py "' // trim(adjustl(raxis_str)) // '" "' // &
                 trim(adjustl(zaxis_str)) // '" ' // trim(s_curtor) // " " // trim(s_phi) // " " // trim(s_nequil)
             call execute_command_line(command_line)
