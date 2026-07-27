@@ -7,8 +7,7 @@ import scipy
 from scipy.io import netcdf_file
 from scipy.interpolate import interp1d
 
-stellopt_path = os.environ.get("STELLOPT_PATH")
-py_stel_path = os.path.join(stellopt_path, "pySTEL")
+py_stel_path = os.path.join(os.environ.get("STELLOPT_PATH"), "pySTEL")
 sys.path.insert(0, py_stel_path)
 
 from libstell.vmec import VMEC
@@ -20,19 +19,18 @@ qinterp = lambda x, y, xi: interp1d(x, y, kind='quadratic', fill_value='extrapol
 
 def read_axis_from_wout(wout_file):
 
-    f = netcdf_file(wout_file, mmap=False)
-    raxis_cc = f.variables["raxis_cc"][:]
-    zaxis_cs = f.variables["zaxis_cs"][:]
-    lasym = int(f.variables["lasym__logical__"][()])
+    cv = netcdf_file(wout_file, mmap=False).variables
+    raxis_cc = cv["raxis_cc"][:]
+    zaxis_cs = cv["zaxis_cs"][:]
+    lasym = int(cv["lasym__logical__"][()])
 
     if lasym:
-        raxis_cs = f.variables["raxis_cs"][:]
-        zaxis_cc = f.variables["zaxis_cc"][:]
+        raxis_cs = cv["raxis_cs"][:]
+        zaxis_cc = cv["zaxis_cc"][:]
     else:
         raxis_cs = None
         zaxis_cc = None
     
-    f.close()
     return raxis_cc, zaxis_cs, raxis_cs, zaxis_cc
 
 
@@ -74,13 +72,13 @@ def calc_grad_rho(dat):
     Returns
     ----------
     avgrho : ndarray
-    	Flux surface average of |grad(rho)|
+        Flux surface average of |grad(rho)|
     """
 
     nu = 64
     nv = 128
     theta = np.linspace(0, 2*np.pi, nu).reshape((nu, 1))
-    zeta   = np.linspace(0, 2*np.pi, nv).reshape((nv, 1))
+    zeta  = np.linspace(0, 2*np.pi, nv).reshape((nv, 1))
     # Create derivatives
     xm2d  = np.broadcast_to(dat.xm.T, (dat.ns, dat.mnmax))
     xn2d  = np.broadcast_to(dat.xn.T, (dat.ns, dat.mnmax))
@@ -88,32 +86,32 @@ def calc_grad_rho(dat):
     rvmns = - xn2d * dat.rmnc
     zumnc =   xm2d * dat.zmns
     zvmnc =   xn2d * dat.zmns
-    if dat.iasym==1:
-    	rumnc =   xm2d * dat.rmns
-    	rvmnc =   xn2d * dat.rmns
-    	zumns = - xm2d * dat.zmnc
-    	zvmns = - xn2d * dat.zmnc
-    r = dat.cfunct(theta, zeta, dat.rmnc, dat.xm, dat.xn)
-    g = dat.cfunct(theta, zeta, dat.gmnc, dat.xm_nyq, dat.xn_nyq)
+    if dat.iasym == 1:
+        rumnc =   xm2d * dat.rmns
+        rvmnc =   xn2d * dat.rmns
+        zumns = - xm2d * dat.zmnc
+        zvmns = - xn2d * dat.zmnc
+    r  = dat.cfunct(theta, zeta, dat.rmnc, dat.xm, dat.xn)
+    g  = dat.cfunct(theta, zeta, dat.gmnc, dat.xm_nyq, dat.xn_nyq)
     ru = dat.sfunct(theta, zeta, rumns, dat.xm, dat.xn)
     rv = dat.sfunct(theta, zeta, rvmns, dat.xm, dat.xn)
     zu = dat.cfunct(theta, zeta, zumnc, dat.xm, dat.xn)
     zv = dat.cfunct(theta, zeta, zvmnc, dat.xm, dat.xn)
-    if dat.iasym==1:
-    	r  = r  + dat.sfunct(theta, zeta, dat.rmns, dat.xm, dat.xn)
-    	g  = g  + dat.sfunct(theta, zeta, dat.gmns, dat.xm_nyq, dat.xn_nyq)
-    	ru = ru + dat.cfunct(theta, zeta, rumnc, dat.xm, dat.xn)
-    	rv = rv + dat.cfunct(theta, zeta, rvmnc, dat.xm, dat.xn)
-    	zu = zu + dat.sfunct(theta, zeta, zumns, dat.xm, dat.xn)
-    	zv = zv + dat.sfunct(theta, zeta, zvmns, dat.xm, dat.xn)
+    if dat.iasym == 1:
+        r  = r  + dat.sfunct(theta, zeta, dat.rmns, dat.xm, dat.xn)
+        g  = g  + dat.sfunct(theta, zeta, dat.gmns, dat.xm_nyq, dat.xn_nyq)
+        ru = ru + dat.cfunct(theta, zeta, rumnc, dat.xm, dat.xn)
+        rv = rv + dat.cfunct(theta, zeta, rvmnc, dat.xm, dat.xn)
+        zu = zu + dat.sfunct(theta, zeta, zumns, dat.xm, dat.xn)
+        zv = zv + dat.sfunct(theta, zeta, zvmns, dat.xm, dat.xn)
     # Calc metrics
     gsr = - zu * r
     gsp = zu * rv - ru * zv
     gsz = ru * r
-    gs  = ( gsr * gsr + gsp * gsp + gsz * gsz ) / ( g * g )
+    gs  = ( gsr**2 + gsp**2 + gsz**2) / g**2
     rho = np.sqrt(dat.phi/dat.phi[-1])
     for i in range(dat.ns):
-    	gs[i, :, :] = np.sqrt(0.25 * gs[i, :, :] / ( rho[i] * rho[i] ))
+        gs[i, :, :] = np.sqrt(0.25 * gs[i, :, :] / rho[i]**2 )
     vp = np.sum(g, axis=(1, 2))
     avgrho = np.sum(gs * g, axis=(1, 2)) / vp
     avgrho[0] = 2.0 * avgrho[1] - avgrho[2]
@@ -128,18 +126,18 @@ def calc_Rmaj(dat):
     Returns
     ----------
     Rmaj : ndarray
-    	Flux surface average of R
+        Flux surface average of R
     """
 
     nu = 64
     nv = 128
     theta = np.linspace(0, 2*np.pi, nu).reshape((nu, 1))
-    zeta   = np.linspace(0, 2*np.pi, nv).reshape((nv, 1))
+    zeta  = np.linspace(0, 2*np.pi, nv).reshape((nv, 1))
     r = dat.cfunct(theta, zeta, dat.rmnc, dat.xm, dat.xn)
     g = dat.cfunct(theta, zeta, dat.gmnc, dat.xm_nyq, dat.xn_nyq)
-    if dat.iasym==1:
-    	r  = r  + dat.sfunct(theta, zeta, dat.rmns, dat.xm, dat.xn)
-    	g  = g  + dat.sfunct(theta, zeta, dat.gmns, dat.xm_nyq, dat.xn_nyq)
+    if dat.iasym == 1:
+        r += dat.sfunct(theta, zeta, dat.rmns, dat.xm, dat.xn)
+        g += dat.sfunct(theta, zeta, dat.gmns, dat.xm_nyq, dat.xn_nyq)
     # Calc flux surface average
     vp = np.sum(g, axis=(1, 2))
     Rmaj = np.sum(r * g, axis=(1, 2)) / vp
@@ -153,15 +151,14 @@ def calc_V(dat, vp):
     Returns
     ----------
     V : ndarray
-    	V(s) 
+        V(s) 
     """
-    GP2 = 2 * np.pi
-    dels = (dat.phi[1]-dat.phi[0])/dat.phi[-1]
-    dels = dels.item()
-    V = dat.phi.copy().squeeze()
+    dels = (dat.phi[1] - dat.phi[0])/dat.phi[-1]
+    V = dat.phi.squeeze()
+    nV = len(V)
     V[0] = 0.
-    for i in range(1, len(V)):
-    	V[i] = V[i-1] + GP2**2*vp[i]*dels
+    V[1:] = 4. * np.pi**2 * np.cumsum(vp[1: nV] * dels)
+
     return V
 
 
@@ -175,19 +172,19 @@ def f2h(var_full):
     Parameters
     ----------
     var_full : list
-    	Variable on full grid
+        Variable on full grid
     Returns
     ----------
     var_half : list
-    	Variable on half grid
+        Variable on half grid
     """
 
     var_half = var_full.copy()
     var_half[0] = 0.
     var_half[1] = 0.5 * (var_full[0] + var_full[1])
     for i in range(2, len(var_full)):
-    	var_half[i] = 2.0 * var_full[i-1] - var_half[i-1]
-    return var_half	
+        var_half[i] = 2.0 * var_full[i-1] - var_half[i-1]
+    return var_half
 
 
 def calc_ftrap(dat):
@@ -208,21 +205,21 @@ def calc_ftrap(dat):
     b = dat.cfunct(theta, zeta, dat.bmnc, dat.xm_nyq, dat.xn_nyq)
     g = dat.cfunct(theta, zeta, dat.gmnc, dat.xm_nyq, dat.xn_nyq)
     if dat.iasym == 1:
-    	b  += dat.sfunct(theta, zeta, dat.bmns, dat.xm_nyq, dat.xn_nyq)
-    	g  += dat.sfunct(theta, zeta, dat.gmns, dat.xm_nyq, dat.xn_nyq)
+        b  += dat.sfunct(theta, zeta, dat.bmns, dat.xm_nyq, dat.xn_nyq)
+        g  += dat.sfunct(theta, zeta, dat.gmns, dat.xm_nyq, dat.xn_nyq)
     # Calc <B^2/Bmax^2>
     vp = np.sum(g, axis=(1, 2))
     b2 = np.sum(b**2 * g, axis=(1, 2)) / vp   #<B^2>
     bmax2 = b2/np.max(b**2, axis=(1, 2))  #<bmax^2> = <B^2/Bmax^2>
     bmax = b.copy()
     for u in range(len(vp)):    
-    	bmax[u, :, :] = b[u, :, :]/np.max(b, axis=(1, 2))[u]   #bmax = B/Bmax (3D array)
+        bmax[u, :, :] = b[u, :, :]/np.max(b, axis=(1, 2))[u]   #bmax = B/Bmax (3D array)
     #introduce normalised global magnetic moment lambda
     dlambda = 1/(nlambda - 1)   #stepwidth in lambda
     integrand = np.empty((nlambda, len(vp)))    #lambda/<sqrt(1-lambda*bmax)>
     for mn in range(nlambda):
-    	integrand[mn, :] = mn*dlambda   #lambda
-    	integrand[mn, :] = integrand[mn, :]*vp/np.sum(np.sqrt(1-mn*dlambda*bmax)*g, axis=(1, 2))
+        integrand[mn, :] = mn*dlambda   #lambda
+        integrand[mn, :] = integrand[mn, :]*vp/np.sum(np.sqrt(1 - mn*dlambda*bmax)*g, axis=(1, 2))
     integral = np.sum(integrand, axis=0)*dlambda   #integral over lambda
     ftrap = 1 - 0.75*bmax2*integral
     return ftrap
@@ -551,24 +548,23 @@ B00_physical_profile = data.bmnc[:, mn_index_b00].squeeze()
 # Constants from ASTRA
 #NA1 = int(sys.argv[1])
 NA = NA1 - 1
-GP = np.pi
 GP2 = 2 * np.pi
-HROX = 1.0 / (NA1 - 0.5)
+HROX = 1.0/(NA1 - 0.5)
 
 # Define ASTRA arrays
-XRHO = np.array([(i + 1 - 0.5) * HROX for i in range(NA1)])
-SXHO = np.array([(i + 1) * HROX for i in range(NA1)])
+SXHO = HROX*np.arange(1, NA1+1)
+XRHO = SXHO - 0.5*HROX
 
 #some quantities from VMEC output
 lasym = data.lasym
-RTOR = data.rmajor
-ABC = data.aminor
-BTOR = np.abs(data.b0)   #change from zeta = phi (VMEC) to zeta = -phi (ASTRA)
+RTOR  = data.rmajor
+ABC   = data.aminor
+BTOR  = np.abs(data.b0)   #change from zeta = phi (VMEC) to zeta = -phi (ASTRA)
 volume = data.volume
 GVAC = np.abs(data.rbtor) # RB-t edge, coincides with F_b = F0 for tokamak
 BTOR = np.abs(data.b0)   #stellarator definition
-if (lasym):
- BTOR = GVAC/RTOR   # tokamak defintion
+if lasym:
+    BTOR = GVAC/RTOR   # tokamak defintion
 phi = np.abs(data.phi.squeeze())   #change from zeta = phi (VMEC) to zeta = -phi (ASTRA)
 psi_a = data.phi[-1].item() / (2.0 * np.pi) # Toroidal flux at edge / 2pi
 NFP = float(data.nfp)    #number of field periods
@@ -576,12 +572,12 @@ NFP = float(data.nfp)    #number of field periods
 #SHIFT, ELONG, TRIAN, UPDWN
 Fboundary = np.abs(data.bvco[-1]).item()  # F at boundary for a tokamak would be RBphi. For stellarator it is more complicated
 #calculate RHO and SRHO
-ROC = np.sqrt(phi[-1]/(GP*BTOR))
+ROC = np.sqrt(phi[-1]/(np.pi*BTOR))
 dphidsb = np.abs(data.phipf[-1].item())
-RHO = XRHO*ROC
+RHO  = XRHO*ROC
 SRHO = SXHO*ROC
 HRO  =  RHO[1] - RHO[0]
-RHOVMECmesh = np.sqrt(phi/(GP*BTOR))
+RHOVMECmesh = np.sqrt(phi/(np.pi*BTOR))
 
 # calculate susceptance matrix (on full mesh)
 S11, S12, S21, S22 = data.calc_susceptance()
@@ -614,7 +610,7 @@ S21small = np.delete(S21, [1, 2])
 
 S11 = qinterp(RHOVMECmeshsmall, S11small, RHOVMECmesh)
 S12 = qinterp(RHOVMECmeshsmall, S12small, RHOVMECmesh)
-S21 = qinterp(RHOVMECmeshsmall, S21small, RHOVMECmesh)	
+S21 = qinterp(RHOVMECmeshsmall, S21small, RHOVMECmesh)
 
 # calculate V'
 Vp = data.vp.squeeze()*GP2**3*BTOR*RHOVMECmesh/phi[-1]  #vp is on full mesh
@@ -622,23 +618,23 @@ Vph = f2h(data.vp.squeeze())   #(dV/ds)/(4*pi*pi) on VMEC half mesh
 
 # calculate <|grad(rho)|>
 GRADROVMEC = calc_grad_rho(data)
-GRADROVMEC = GRADROVMEC * np.sqrt(phi[-1]/(GP*BTOR))    
+GRADROVMEC = GRADROVMEC * np.sqrt(phi[-1]/(np.pi*BTOR))    
 
 # calculate <|grad(rho)|^2>
 G1 = data.calc_grad_rhosq()
-G1 = phi[-1]*G1/(GP*BTOR)
+G1 = phi[-1]*G1/(np.pi*BTOR)
 g11 = Vp * G1
 
 # calculate <R>, V, aeff
 RmajVMEC = calc_Rmaj(data)
 Vol = calc_V(data, Vph)
-Amineff = np.sqrt(2*Vol/(GP2*GP2*RmajVMEC))
+Amineff = np.sqrt(2*Vol/(GP2**2 * RmajVMEC))
 
 # calculate ftrapped
 ftrapped = calc_ftrap(data)
 
 # calculate jpar and iota (not taken to astra automatically)
-jpar = data.jdotb.squeeze()/(1.e6*BTOR)
+jpar   = data.jdotb.squeeze()/(1.e6*BTOR)
 muVMEC = data.iotaf.squeeze()
 
 # interpolate to ASTRA grid
@@ -743,7 +739,7 @@ with open(metric_file, 'wb') as f:
 b00_output_file = f'dat/b00_profile_{shot_id}_vmec.txt'
 np.savetxt(b00_output_file, B00_ASTRA_grid)
 print(f'Wrote B00 profile to {b00_output_file}')
-	
+
 header_data_filename = header_file
 with open(header_data_filename, 'w') as f:
     f.write(f'{ABC:.10e}\n')
@@ -756,16 +752,7 @@ print(f"Major radius (RTOR): {data.rmajor:.4f} m")
 print(f"Minor radius (ABC and AB):  {data.aminor:.4f} m")
 print(f"Toroidal field on axis (BTOR): {data.b0:.4f} T")
 
-s = -1
-
-R = rmnc_lcfs
-Z = zmns_lcfs
-a2 = 0.0
-nmodes = len(xm)
-for i in range(len(xm)):
-    m = xm[i]
-    if m != 0:
-        a2 += m * R[i] * Z[i]
+a2 = np.sum(rmnc_lcfs*zmns_lcfs*xm)
 a_booz = np.sqrt(a2)
 radius_out = f"dat/minorradiusW7AS_boozmn_{shot_id}.txt"
 with open(radius_out, 'w') as f:

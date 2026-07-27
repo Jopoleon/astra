@@ -2328,7 +2328,7 @@ contains
         call system_clock(end_count)
         write(*, *) 'time spent on vmec : ', real(end_count-start_count, 8)/real(count_rate, 8)
 
-        command_line = 'cp wout_dat.nc dat/wout_VMECoutput.nc'
+        command_line = 'mv wout_dat.nc dat/wout_VMECoutput.nc'
         call execute_command_line(command_line)
         write(*, *) 'end vmec'
     endif  ! vmec dteq command
