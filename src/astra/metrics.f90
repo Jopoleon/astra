@@ -2197,25 +2197,22 @@ contains
     double precision, intent(out) :: f_boundary, phi_full_surfaces
 
     logical :: file_exists
-    integer :: ios, i, ivmec, vac_phase_stel, count_rate, start_count, end_count, mboz, nboz, &
-         boozer_surfaces, init_vmecco
+    integer :: ios, i, ivmec, vac_phase_stel, count_rate, start_count, end_count, &
+         mboz, nboz, init_vmecco
     double precision :: phi_edgehog, t1, t2, dt_boozer, t_boozero
     double precision, dimension(NRD) :: pressure, svmec, curtorprof, dum1
 
     character(len=32) :: s_curtor, s_phi, n_nodes
     character(len=256) :: path_to_vmec, stellopt_dir, &
         dat_in_file='dat/vmecinput.dat', mpi_command
-    character(len=1000) :: command_line, raxis_str, zaxis_str, f_true_surf
+    character(len=1000) :: command_line, raxis_str, zaxis_str, f_true_surf='vmec_io/true_surfaces.txt'
     character(len=120) :: s_rax, s_zax, s_nequil, as_nml
-
-    integer, allocatable, dimension(:) :: surfaces_for_boozer
 
     data init_vmecco/0/
     data t_boozero/0./
     save init_vmecco, t_boozero
 
-    NAMELIST / vmec / boozer_surfaces, phi_full_surfaces, &
-        dt_boozer, vac_phase_stel, mboz, nboz
+    NAMELIST / vmec / phi_full_surfaces, dt_boozer, vac_phase_stel, mboz, nboz
 
     CALL getenv('STELLOPT_PATH', stellopt_dir)
     path_to_vmec = TRIM(stellopt_dir) // '/VMEC2000/Release/'
@@ -2334,57 +2331,24 @@ contains
     endif  ! vmec dteq command
 
     if (yes_boozer == 1) then !run boozer after vmec only if ivmec ==2, vmec run with 1 or 2
-
-        allocate(surfaces_for_boozer(boozer_surfaces))
-
-        do i=2, boozer_surfaces+1
-            surfaces_for_boozer(i-1) = nint((i-1.)/(boozer_surfaces+1.)*NEQUIL)
-        enddo
-        surfaces_for_boozer(1) = max(1, surfaces_for_boozer(1))
-        surfaces_for_boozer(boozer_surfaces) = min(NEQUIL, surfaces_for_boozer(boozer_surfaces))
-
-! if true_surfaces exists, use that one
-        f_true_surf = 'vmec_io/true_surfaces.txt'
-        open(UNIT=20, FILE=TRIM(f_true_surf), STATUS='OLD', IOSTAT=ios)
-        if (ios == 0) then
-            file_exists = .TRUE.
-            close(20)
-        else
-            file_exists = .FALSE.
-        endif
-
-        if (file_exists) then
-            open(20, file=TRIM(f_true_surf))  ! the nr of surfaces has tobe equal to boozer_surfaces
-            read(20, *) i
-            read(20, *) surfaces_for_boozer(1:boozer_surfaces)
-            close(20)
-        else
-            open(20, file=TRIM(f_true_surf))  ! the nr of surfaces has tobe equal to boozer_surfaces
-            write(20, *) boozer_surfaces
-            write(20, '(555I0)') surfaces_for_boozer(1:boozer_surfaces)
-            close(20)
-        endif
-
         open(32, file='dat/inboozer.in')
         write(32, '(33333I8)') mboz, nboz
         write(32, *) ' VMECoutput '
         write(32, '(33333I8)') [(i, i=1, NEQUIL)]
         close(32)
 
-        deallocate(surfaces_for_boozer)
-
         command_line = 'cd dat && ' // trim(mpi_command) // ' ' // trim(n_nodes) // ' ' // &
-            trim(stellopt_dir) // '/BOOZ_XFORM/Release/xbooz_xform inboozer.in ../vmec_io/' // TRIM(f_true_surf) // ' cd ..'
+            trim(stellopt_dir) // '/BOOZ_XFORM/Release/xbooz_xform inboozer.in ../' // TRIM(f_true_surf) // ' cd ..'
 
-        if (time-tstart >= t_boozero .or. time-tstart <= 0.) then
+        if (TIME >= TSTART+t_boozero .or. TIME <= TSTART) then
             call execute_command_line(command_line)
-            t_boozero = time-tstart+dt_boozer
+            t_boozero = time - tstart + dt_boozer
         endif
-    endif ! yes boozer
+    endif
 
 ! ---------------------------------------------------------------------
-! extract_boozer_data.py is called EVERY time (moved out of the yes_boozer
-! block).  It auto-detects the Boozer file format from &VMEC_TO_ASTRA_INPUTS
+! extract_boozer_data.py is called EVERY time .
+! It auto-detects the Boozer file format from &VMEC_TO_ASTRA_INPUTS
 ! BOOZER_FILE:
 !   * text  Boozer (archive)  -> reads the full-surface archive that made the
 !                                reused DKES table (no Boozer run needed);

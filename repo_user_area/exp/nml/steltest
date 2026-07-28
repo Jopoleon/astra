@@ -1,5 +1,4 @@
 &rabbit_beam_geo
-
    start_pos(1:3, 1) =  7.0021462, -6.1559992,  0.6000009
    start_pos(1:3, 2) =  6.2954221, -6.7757797,  0.6000009
    start_pos(1:3, 3) =  6.3297009, -6.7457175, -0.6000009
@@ -27,11 +26,9 @@
    width_poly(1:3, 6) = 0.0000000, 0.0116500000, 0.0000000
    width_poly(1:3, 7) = 0.0000000, 0.0116500000, 0.0000000
    width_poly(1:3, 8) = 0.0000000, 0.0116500000, 0.0000000
-
 /
 
 &partmix
-
    part_mix(1:3, 1) =  0.4689018,  0.3642054,  0.1668928
    part_mix(1:3, 2) =  0.4689018,  0.3642054,  0.1668928
    part_mix(1:3, 3) =  0.4689018,  0.3642054,  0.1668928
@@ -40,18 +37,15 @@
    part_mix(1:3, 6) =  0.4307239,  0.3903196,  0.1789565
    part_mix(1:3, 7) =  0.4307239,  0.3903196,  0.1789565
    part_mix(1:3, 8) =  0.4307239,  0.3903196,  0.1789565
-
 /
 
 &nbi_par
-
    n_nbi = 8
    a_beam =  2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0
    z_beam =  1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
    pinj_file = 'udb/33040_2500/P33040.NBI_AVG0'
    einj(1) = 6.0000e+04, 6.0000e+04, 5.9276e+04, 6.0000e+04
    einj(5) = 9.2537e+04, 9.3000e+04, 9.3000e+04, 9.3352e+04
-
 /
 
 
@@ -59,9 +53,11 @@
    Aimp = 200.00
    Zimp = 100.00
 /
+
 &output_settings
    it_orbout = -1
 /
+
 &physics
    jumpcor = 2
    table_path   = 'rabbit/tables_highRes'
@@ -81,7 +77,6 @@
 /
 
 &torbeam
-
    n_gyro = 8
    pecr_file  = 'udb/33040_2500/P33040.ECH_AVG0'
    theta_file = 'udb/33040_2500/THEAS33040.ECH_AVG0'
@@ -106,11 +101,9 @@
    xryyb(5) = 8.5510e+01, 8.5510e+01, 1.1580e+02, 8.5510e+01
    xrzzb(1) = 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00
    xrzzb(5) = 8.5510e+01, 8.5510e+01, 1.1580e+02, 8.5510e+01
-
 /
 
 &travis
-
    inputfile_name = 'vmec_io/W7X-nc.input'
    output_dir = '~/a8_fsim/vmec_io/TEMP'
    n_beams = 2
@@ -119,14 +112,11 @@
 /
 
 &vmec
-
-   boozer_surfaces = 3
    mboz = 32
    nboz = 32
    phi_full_surfaces = 0.
    dt_boozer = 0.01
    vac_phase_stel = 0      !  0 to do real vacuum at start for stellarator. 1 for tokamak
-
 /
 
 
@@ -203,7 +193,6 @@
 /
 
 &equil_settings
-
    time_fix_eqpff = 0.0021
    fix_eqpf_eqff = 0
    cheb_degree = 5
@@ -228,11 +217,9 @@
    epsg_tol = 1.e-8  !1.e-8
    key_no_startz = 0
    key_no_refits = 0
-
 /
 
 &spider
-
    kprs = -1 !-1
    k_grids = 0
    epsros = 1.d-9 !1.d-9

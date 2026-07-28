@@ -9,7 +9,6 @@
 /
 
 &nbi_par
-
    n_nbi = 1
    a_beam =  2.0
    z_beam =  1.0
@@ -21,9 +20,11 @@
    Aimp = 200.00
    Zimp = 100.00
 /
+
 &output_settings
    it_orbout = -1
 /
+
 &physics
    jumpcor = 2
    table_path   = 'rabbit/tables_ITERDEMO'
@@ -43,7 +44,6 @@
 /
 
 &torbeam
-
    n_gyro = 8
    pecr_file  = 'udb/33040_2500/P33040.ECH_AVG0'
    theta_file = 'udb/33040_2500/THEAS33040.ECH_AVG0'
@@ -68,11 +68,9 @@
    xryyb(5) = 8.5510e+01, 8.5510e+01, 1.1580e+02, 8.5510e+01
    xrzzb(1) = 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00
    xrzzb(5) = 8.5510e+01, 8.5510e+01, 1.1580e+02, 8.5510e+01
-
 /
 
 &travis
-
    inputfile_name = 'vmec_io/WAL-nc.input'
    output_dir = 'vmec_io/TEMP'
    n_beams = 1
@@ -80,13 +78,9 @@
 /
 
 &vmec
-
-   boozer_surfaces = 7
-   phi_full_surfaces = 6.0772!0.5986 !0.2059
+   phi_full_surfaces = 6.0772 !0.5986 !0.2059
    dt_boozer = 0.01
-
 /
-
 
 &strahl_par
    tau_strahl = 1.e-5
@@ -161,7 +155,6 @@
 /
 
 &equil_settings
-
    time_fix_eqpff = 0.0021
    fix_eqpf_eqff = 0
    cheb_degree = 5
@@ -186,11 +179,9 @@
    epsg_tol = 1.e-8  !1.e-8
    key_no_startz = 0
    key_no_refits = 0
-
 /
 
 &spider
-
    kprs = -1 !-1
    k_grids = 0
    epsros = 1.d-9 !1.d-9
@@ -203,5 +194,4 @@
    psplexavg = 0.01 ! 0.01
    psplexavgexp = 0. !exponent of Ip in psplexavg
    fixadapgrid = 0 !0 for standard spider adaptive grid, 1 for EF variation
-
 /
