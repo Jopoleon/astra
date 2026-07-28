@@ -584,10 +584,12 @@ S11, S12, S21, S22 = data.calc_susceptance()
 #s31, s32 = data.calc_dphidpvb_elements()
 
 # Rewrite into ASTRA coordinate system (minus due to sign convention of jacobian); still VMEC mesh
-S11 = -phi[-1]*S11/(GP2*BTOR*RHOVMECmesh)
-S12 = -phi[-1]*S12/(GP2*BTOR*RHOVMECmesh)
-S21 = -phi[-1]*S21/(GP2*BTOR*RHOVMECmesh)
-S22 = -phi[-1]*S22/(GP2*BTOR)     #S22ASTRA = rho*S22Strand 
+fac1 = -phi[-1]/(GP2*BTOR)
+fac2 = -phi[-1]/(GP2*BTOR*RHOVMECmesh)
+S11 *= fac2
+S12 *= fac2
+S21 *= fac2
+S22 *= fac1     #S22ASTRA = rho*S22Strand 
 
 #Ip_contrib = -phi[-1]*s31[-1]/(GP2*BTOR*RHOVMECmesh)
 #F0_contrib = -phi[-1]*s32[-1]/(GP2*BTOR*RHOVMECmesh)

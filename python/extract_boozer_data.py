@@ -1,6 +1,4 @@
-import sys
-import os
-import re
+import sys, os, re, traceback
 import numpy as np
 from scipy.interpolate import PchipInterpolator
 
@@ -187,7 +185,9 @@ def is_netcdf(path):
         with open(path, 'rb') as f:
             magic = f.read(4)
     except OSError:
+        print('OSerror')
         return False
+    print(magic[:3])
     return magic[:3] == b'CDF' or magic == b'\x89HDF'
 
 
@@ -205,12 +205,24 @@ if __name__ == "__main__":
 
     gen_file = nl_vmec.get('boozer_file')
     arc_file = nl_xb.get('boozer_file_archive')
-    wout_file = nl_vmec.get('vmec_wout_file', 'dat/wout_VMECoutput.nc')
+    wout_file = nl_vmec.get('vmec_wout_file')
+
+    if gen_file is None:
+        print('gen_file is None')
+        input('Press <Enter> to continue')
+    if not os.path.exists(gen_file):
+        print('gen_file %s not found' %gen_file)
+        input('Press <Enter> to continue')
+    if not is_netcdf(gen_file):
+        print('gen_file %s is not NetCDF nor HDF5' %gen_file)
+        input('Press <Enter> to continue')
 
     if gen_file is not None and os.path.exists(gen_file) and is_netcdf(gen_file):
-        boozer_file, use_generated = gen_file, True
+        boozer_file = gen_file
+        use_generated = True
     else:
-        boozer_file, use_generated = arc_file, False
+        boozer_file = arc_file
+        use_generated = False
 
     b00_out = "dat/b00_profile_boozer.txt"
     rad_out = "dat/minorradiusW7AS.txt"
@@ -234,6 +246,7 @@ if __name__ == "__main__":
         print(f"[{mode}] wrote {rad_out}  (minorradiusW7AS = {rad})")
 
     except Exception as e:
+        traceback.print_exc()
         sys.stderr.write(
             "\n" + "!" * 70 + "\n"
             f"!! extract_boozer_data FAILED: {e}\n"
