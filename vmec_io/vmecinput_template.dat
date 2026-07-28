@@ -2,8 +2,8 @@
  MGRID_FILE = '/home/IPP-HGW/emf/vmecdata/mgrid_w7x_nv36_hires.nc'
  LFREEB = F
  LOLDOUT = T
- LWOUTTXT = T
- LDIAGNO = T
+ LWOUTTXT = F
+ LDIAGNO = F
  LFULL3D1OUT = T
  MAX_MAIN_ITERATIONS = 1
  DELT  = 0.6
