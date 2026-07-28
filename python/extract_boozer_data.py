@@ -33,9 +33,10 @@ def parse_fortran_namelist(file_path, group_name):
     return params
 
 
-def astra_rho(astra_points):
-    hrox = 1.0 / (astra_points - 0.5)
-    return np.array([(i + 0.5) * hrox for i in range(astra_points)])
+def astra_rho(n_rho):
+    hrox = 1.0 / (n_rho - 0.5)
+    grid = np.arange(n_rho, dtype=np.float32) + 0.5*hrox
+    return grid
 
 
 def pchip_clamped(rho_anchor, b00_anchor, astra_rho_grid):

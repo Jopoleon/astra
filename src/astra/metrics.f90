@@ -2205,7 +2205,7 @@ contains
     character(len=32) :: s_curtor, s_phi, n_nodes
     character(len=256) :: path_to_vmec, stellopt_dir, &
         dat_in_file='dat/vmecinput.dat', mpi_command
-    character(len=1000) :: command_line, raxis_str, zaxis_str, filename
+    character(len=1000) :: command_line, raxis_str, zaxis_str, f_true_surf
     character(len=120) :: s_rax, s_zax, s_nequil, as_nml
 
     integer, allocatable, dimension(:) :: surfaces_for_boozer
@@ -2344,8 +2344,8 @@ contains
         surfaces_for_boozer(boozer_surfaces) = min(NEQUIL, surfaces_for_boozer(boozer_surfaces))
 
 ! if true_surfaces exists, use that one
-        filename = 'dat/true_surfaces.txt'
-        open(UNIT=20, FILE=trim(filename), STATUS='OLD', IOSTAT=ios)
+        f_true_surf = 'dat/true_surfaces.txt'
+        open(UNIT=20, FILE=TRIM(f_true_surf), STATUS='OLD', IOSTAT=ios)
         if (ios == 0) then
             file_exists = .TRUE.
             close(20)
@@ -2354,12 +2354,12 @@ contains
         endif
 
         if (file_exists) then
-            open(20, file='dat/true_surfaces.txt')  ! the nr of surfaces has tobe equal to boozer_surfaces
+            open(20, file=TRIM(f_true_surf))  ! the nr of surfaces has tobe equal to boozer_surfaces
             read(20, *) i
             read(20, *) surfaces_for_boozer(1:boozer_surfaces)
             close(20)
         else
-            open(20, file='dat/true_surfaces.txt')  ! the nr of surfaces has tobe equal to boozer_surfaces
+            open(20, file=TRIM(f_true_surf))  ! the nr of surfaces has tobe equal to boozer_surfaces
             write(20, *) boozer_surfaces
             write(20, '(555I0)') surfaces_for_boozer(1:boozer_surfaces)
             close(20)
