@@ -2344,7 +2344,7 @@ contains
         surfaces_for_boozer(boozer_surfaces) = min(NEQUIL, surfaces_for_boozer(boozer_surfaces))
 
 ! if true_surfaces exists, use that one
-        f_true_surf = 'dat/true_surfaces.txt'
+        f_true_surf = 'vmec_io/true_surfaces.txt'
         open(UNIT=20, FILE=TRIM(f_true_surf), STATUS='OLD', IOSTAT=ios)
         if (ios == 0) then
             file_exists = .TRUE.
@@ -2374,7 +2374,7 @@ contains
         deallocate(surfaces_for_boozer)
 
         command_line = 'cd dat && ' // trim(mpi_command) // ' ' // trim(n_nodes) // ' ' // &
-            trim(stellopt_dir) // '/BOOZ_XFORM/Release/xbooz_xform  inboozer.in true_surfaces.txt && cd ..'
+            trim(stellopt_dir) // '/BOOZ_XFORM/Release/xbooz_xform inboozer.in ../vmec_io/' // TRIM(f_true_surf) // ' cd ..'
 
         if (time-tstart >= t_boozero .or. time-tstart <= 0.) then
             call execute_command_line(command_line)

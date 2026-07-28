@@ -122,7 +122,7 @@ def read_minor_radius_text(boozer_file):
 
 
 # GENERATED PATH  (NetCDF boozmn, 7 surfaces from true_surfaces.txt)
-def _read_true_surfaces(path="dat/true_surfaces.txt"):
+def _read_true_surfaces(path="vmec_io/true_surfaces.txt"):
     if not os.path.exists(path):
         raise FileNotFoundError(f"{path} not found (needed for generated mode)")
     with open(path) as f:
