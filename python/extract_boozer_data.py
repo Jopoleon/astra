@@ -193,8 +193,9 @@ def is_netcdf(path):
 
 
 if __name__ == "__main__":
+
     nl_vmec = parse_fortran_namelist('vmec_io/stell_files.nml', 'VMEC_TO_ASTRA_INPUTS')
-    nl_xb   = parse_fortran_namelist('vmec_io/stell_files.nml', 'EXTRACT_BOOZER')
+    nl_booz = parse_fortran_namelist('vmec_io/stell_files.nml', 'EXTRACT_BOOZER')
     # NA1: optional command-line arg (a2vmec passes it) overrides the namelist
     # default; the interface reads B00_PHYSICAL_PROFILE(NA1), so the profile
     # length MUST equal NA1.
@@ -204,8 +205,8 @@ if __name__ == "__main__":
         npts = nl_vmec.get('astra_nrad', 91)
     grid = astra_rho(npts)
 
-    gen_file = nl_vmec.get('boozer_file')
-    arc_file = nl_xb.get('boozer_file_archive')
+    gen_file  = nl_vmec.get('boozer_file')
+    arc_file  = nl_booz.get('boozer_file_archive')
     wout_file = nl_vmec.get('vmec_wout_file')
 
     if gen_file is None:

@@ -2258,9 +2258,7 @@ contains
                 command_line = TRIM(command_line) // ' -r ' // TRIM(raxis_str) // &
                                                      ' -z ' // TRIM(zaxis_str)
             endif
-!            pause 
             call execute_command_line(command_line)
-!            pause
         endif
 
 ! Write pressure, iota and current files
@@ -2311,6 +2309,9 @@ contains
         write(*, *) 'end vmec'
     endif  ! vmec dteq command
 
+!------------------------------
+! Dump boozer geometry for DKES
+!------------------------------
     if (yes_boozer == 1) then
         open(32, file='dat/inboozer.in')
         write(32, '(33333I8)') mboz, nboz
@@ -2329,7 +2330,7 @@ contains
 
 ! ---------------------------------------------------------------------
 ! extract_boozer_data.py is called EVERY time .
-! It auto-detects the Boozer file format from &VMEC_TO_ASTRA_INPUTS
+! It auto-detects the Boozer file-format from vmec_io/stell_files.nml, &VMEC_TO_ASTRA_INPUTS
 ! BOOZER_FILE:
 !   * text  Boozer (archive)  -> reads the full-surface archive that made the
 !                                reused DKES table (no Boozer run needed);
