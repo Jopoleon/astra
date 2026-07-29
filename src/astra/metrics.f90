@@ -2268,7 +2268,7 @@ contains
                 command_line = TRIM(command_line) // ' -r ' // TRIM(raxis_str) // &
                                                      ' -z ' // TRIM(zaxis_str)
             endif
-            call execute_command_line(command_line)
+            call execute_command_line(TRIM(command_line))
         endif
 
 !-----------------------------------------------------------------
@@ -2319,7 +2319,7 @@ contains
 
         command_line = 'mv wout_dat.nc ' // TRIM(VMEC_WOUT_FILE)
         write(*, *) TRIM(command_line)
-        call execute_command_line(command_line)
+        call execute_command_line(TRIM(command_line))
     endif  ! vmec dteq command
 
 !------------------------------
@@ -2335,9 +2335,9 @@ contains
         if (TIME >= TSTART+t_boozero .or. TIME <= TSTART) then
             command_line = 'cd dat && ' // TRIM(mpi_command) // ' -n 1 ' // &
                 TRIM(stellopt_dir) // '/BOOZ_XFORM/Release/xbooz_xform inboozer.in ../' // &
-                TRIM(f_true_surf) // ' cd ..'
+                TRIM(f_true_surf) // ' && cd ..'
             write(*, *) TRIM(command_line)
-            call execute_command_line(command_line) ! Input: dat/inboozer.in; Output: ./boozmn_VMECoutput.nc
+            call execute_command_line(TRIM(command_line)) ! Input: dat/inboozer.in; Output: ./boozmn_VMECoutput.nc
             t_boozero = time - tstart + dt_boozer
         endif
     endif
