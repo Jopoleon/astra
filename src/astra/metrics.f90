@@ -2309,7 +2309,7 @@ contains
         else
             command_line = trim(command_line) // ' reset=' // TRIM(VMEC_WOUT_FILE)
         endif
-        write(*, *) command_line
+        write(*, *) TRIM(command_line)
         call execute_command_line(trim(command_line))
 ! Output files: parvmecinfo.txt, jxbout_dat.nc, mercier.dat, wout_dat.nc, 
 !     threed1.dat, timings.txt
@@ -2318,7 +2318,7 @@ contains
         write(*, *) 'time spent on vmec : ', real(end_count-start_count, 8)/real(count_rate, 8)
 
         command_line = 'mv wout_dat.nc ' // TRIM(VMEC_WOUT_FILE)
-        write(*, *) command_line
+        write(*, *) TRIM(command_line)
         call execute_command_line(command_line)
     endif  ! vmec dteq command
 
@@ -2333,11 +2333,11 @@ contains
         close(32)
 
         if (TIME >= TSTART+t_boozero .or. TIME <= TSTART) then
-            command_line = 'cd dat && ' // TRIM(mpi_command) // ' ' // &
+            command_line = 'cd dat && ' // TRIM(mpi_command) // ' -n 1 ' // &
                 TRIM(stellopt_dir) // '/BOOZ_XFORM/Release/xbooz_xform inboozer.in ../' // &
                 TRIM(f_true_surf) // ' cd ..'
-            write(*, *) command_line
-            call execute_command_line(command_line) ! Input: dat/inboozer.in; Output: dat/boozmn_VMECoutput.nc
+            write(*, *) TRIM(command_line)
+            call execute_command_line(command_line) ! Input: dat/inboozer.in; Output: ./boozmn_VMECoutput.nc
             t_boozero = time - tstart + dt_boozer
         endif
     endif
@@ -2354,7 +2354,7 @@ contains
 ! for the DKES interface.  NA1 is passed so the B00 profile length matches.
 ! ---------------------------------------------------------------------
     write(command_line, '(A, I0)') 'python python/extract_boozer_data.py ', NA1
-    write(*, *) command_line
+    write(*, *) TRIM(command_line)
     call execute_command_line(command_line) ! Output: dat/b00_profile_boozer.txt, dat/minorradiusW7AS.txt
 
     end subroutine a2vmec
