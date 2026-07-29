@@ -2044,8 +2044,10 @@ contains
         allocate(bndz(MEQUIL))
     endif
 
+! Run VMEC stand-alone
     call a2vmec(vmec_vacuum, vmec_dteq, yes_boozer, f_boundary, phi_full_surfaces)
 
+! Collect VMEC output and store it into ASTRA arrays
     call get_environment_variable("PYTHON_BIN", mpi_command)
     write(cmd, '(A, A, I0)') trim(mpi_command), ' python/VMEC2ASTRA.py ', NA1
     write(*, *) cmd
@@ -2061,8 +2063,7 @@ contains
     read(10) mnmax
 
     AREAT = 0.*SLAT  ! to be implemented
-
-    FTO = GP*BTOR*ROC**2 !needed
+    FTO = GP*BTOR*ROC**2 ! needed
 
 ! Compute F = IPOL*RTOR*BTOR --> IPOL = F/RTOR/BTOR
     IPOL = (SG21*MU  + SG22/SRHO)*SRHO/RTOR   ! From F. Solfronk et al., PPCF 2026
@@ -2413,7 +2414,7 @@ contains
         rocco = sqrt(phi_edgehog/GP/BTOR)
         mu_temp = muhat/phi_edgehog
 
-        phi =  phi_edgehog*xrho**2
+        phi = phi_edgehog * xrho**2
         i1 = (SG11*mu_temp + SG12)
         f1 = (SG21*mu_temp + s22_temp)
         H_b = GP2*f_boundary/f1(NA1)

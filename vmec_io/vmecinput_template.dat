@@ -1,10 +1,10 @@
 &INDATA
  MGRID_FILE = '/home/IPP-HGW/emf/vmecdata/mgrid_w7x_nv36_hires.nc'
- LFREEB = F
- LOLDOUT = T
+ LFREEB   = F
+ LOLDOUT  = F
  LWOUTTXT = F
- LDIAGNO = F
- LFULL3D1OUT = T
+ LDIAGNO  = F
+ LFULL3D1OUT = F
  MAX_MAIN_ITERATIONS = 1
  DELT  = 0.6
  TCON0 = 2.0
