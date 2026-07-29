@@ -1,37 +1,7 @@
-import sys, os, re, traceback
+import sys, os, traceback
 import numpy as np
 from scipy.interpolate import PchipInterpolator
-
-def parse_fortran_namelist(file_path, group_name):
-    params = {}
-    in_group = False
-    var_re = re.compile(r"^\s*([a-zA-Z0-9_]+)\s*=\s*(?:'([^']*)'|\"([^\"]*)\"|([\d.Ee+-]+))\s*")
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"Namelist file not found: {file_path}")
-    with open(file_path, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if line.lower().startswith(f'&{group_name.lower()}'):
-                in_group = True
-                continue
-            if line.startswith('/') and in_group:
-                break
-            if in_group and not line.startswith('!'):
-                m = var_re.match(line)
-                if m:
-                    key = m.group(1).lower()
-                    sq, dq, num = m.group(2), m.group(3), m.group(4)
-                    if sq is not None:
-                        params[key] = sq
-                    elif dq is not None:
-                        params[key] = dq
-                    elif num is not None:
-                        try:
-                            params[key] = int(num)
-                        except ValueError:
-                            params[key] = float(num)
-    return params
-
+from parse_fortran_nml import parse_fortran_namelist
 
 def astra_rho(n_rho):
     hrox = 1.0 / (n_rho - 0.5)
@@ -195,7 +165,8 @@ def is_netcdf(path):
 if __name__ == "__main__":
 
     nl_vmec = parse_fortran_namelist('vmec_io/stell_files.nml', 'VMEC_TO_ASTRA_INPUTS')
-    nl_booz = parse_fortran_namelist('vmec_io/stell_files.nml', 'EXTRACT_BOOZER')
+    nl_dkes = parse_fortran_namelist('vmec_io/stell_files.nml', 'ASTRA_DKES_INTERFACE')
+
     # NA1: optional command-line arg (a2vmec passes it) overrides the namelist
     # default; the interface reads B00_PHYSICAL_PROFILE(NA1), so the profile
     # length MUST equal NA1.
@@ -205,42 +176,23 @@ if __name__ == "__main__":
         npts = nl_vmec.get('astra_nrad', 91)
     grid = astra_rho(npts)
 
-    gen_file  = nl_vmec.get('boozer_file')
-    arc_file  = nl_booz.get('boozer_file_archive')
-    wout_file = nl_vmec.get('vmec_wout_file')
+    boozer_file = nl_vmec['boozer_file']
+    wout_file   = nl_vmec['vmec_wout_file']
 
-    if gen_file is None:
-        print('gen_file is None')
+    if not os.path.exists(boozer_file):
+        print('boozer_file %s not found' %boozer_file)
         input('Press <Enter> to continue')
-    if not os.path.exists(gen_file):
-        print('gen_file %s not found' %gen_file)
+    if not is_netcdf(boozer_file):
+        print('boozer_file %s is not NetCDF nor HDF5' %boozer_file)
         input('Press <Enter> to continue')
-    if not is_netcdf(gen_file):
-        print('gen_file %s is not NetCDF nor HDF5' %gen_file)
-        input('Press <Enter> to continue')
-
-    if gen_file is not None and os.path.exists(gen_file) and is_netcdf(gen_file):
-        boozer_file = gen_file
-        use_generated = True
-    else:
-        boozer_file = arc_file
-        use_generated = False
 
     b00_out = "dat/b00_profile_boozer.txt"
     rad_out = "dat/minorradiusW7AS.txt"
 
     try:
-        if use_generated:
-            # generated: 7-surface boozmn from this run's xbooz_xform
-            mode = "generated"
-            b00 = read_boozer_b00_nc(boozer_file, wout_file, grid)
-            rad = minor_radius_modesum(wout_file)
-        else:
-            # archive: dense text Boozer that made the reused DKES table
-            mode = "archive"
-            b00 = read_boozer_b00_text(boozer_file, grid)
-            rad = read_minor_radius_text(boozer_file)
-
+        mode = "generated"
+        b00 = read_boozer_b00_nc(boozer_file, wout_file, grid)
+        rad = minor_radius_modesum(wout_file)
         np.savetxt(b00_out, b00)
         with open(rad_out, 'w') as f:
             f.write(str(rad))

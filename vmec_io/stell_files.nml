@@ -11,8 +11,8 @@
   ! Inputs for the Fortran astra_dkes_interface_module
   DKES_FILE_PATH = '/home/IPP-HGW/emf/vmecdata/FLM_1000_1000_1000_1000_-0227_-0227.01.040_ref274.dk'
   VMEC_HEADER_FILE = 'dat/vmec_header_data_VMECoutput.txt'
-  B00_PROFILE_FILE = 'dat/b00_profile_boozer_boozmn_VMECoutput.txt' 
-  MINOR_RADIUS_W7AS_FILE = 'dat/minorradiusW7AS_boozmn_VMECoutput.txt'
+  B00_PROFILE_FILE = 'dat/b00_profile_boozer_VMECoutput.txt' 
+  MINOR_RADIUS_W7AS_FILE = 'dat/minorradiusW7AS_VMECoutput.txt'
 /
 
 ! NGS pellet straight-line chord (read by VMEC2ASTRA.py -> ABLATION_NGS 3D mode).

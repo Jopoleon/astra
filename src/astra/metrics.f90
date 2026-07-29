@@ -2337,7 +2337,7 @@ contains
                 TRIM(stellopt_dir) // '/BOOZ_XFORM/Release/xbooz_xform inboozer.in ../' // &
                 TRIM(f_true_surf) // ' && cd ..'
             write(*, *) TRIM(command_line)
-            call execute_command_line(TRIM(command_line)) ! Input: dat/inboozer.in; Output: ./boozmn_VMECoutput.nc
+            call execute_command_line(TRIM(command_line)) ! Input: dat/inboozer.in, vmec_io/true_surfaces.txt, ./wout_VMECoutput.nc; Output: ./boozmn_VMECoutput.nc
             t_boozero = time - tstart + dt_boozer
         endif
     endif
@@ -2355,7 +2355,7 @@ contains
 ! ---------------------------------------------------------------------
     write(command_line, '(A, I0)') 'python python/extract_boozer_data.py ', NA1
     write(*, *) TRIM(command_line)
-    call execute_command_line(command_line) ! Output: dat/b00_profile_boozer.txt, dat/minorradiusW7AS.txt
+    call execute_command_line(command_line) ! Input: dat/boozmn_VMECoutput.nc; Output dat/b00_profile_boozer.txt, dat/minorradiusW7AS.txt
 
     end subroutine a2vmec
 

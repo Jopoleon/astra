@@ -1,11 +1,8 @@
-import sys
-import os
+import sys, os, re, argparse
 import numpy as np
-import argparse
-import re 
-import scipy
 from scipy.io import netcdf_file
 from scipy.interpolate import interp1d
+from parse_fortran_nml import parse_fortran_namelist
 
 py_stel_path = os.path.join(os.environ.get("STELLOPT_PATH"), "pySTEL")
 sys.path.insert(0, py_stel_path)
@@ -32,36 +29,6 @@ def read_axis_from_wout(wout_file):
         zaxis_cc = None
     
     return raxis_cc, zaxis_cs, raxis_cs, zaxis_cc
-
-
-def parse_fortran_namelist(file_path, group_name):
-
-    params = {}
-    in_group = False
-    var_re = re.compile(r"^\s*([a-zA-Z0-9_]+)\s*=\s*(?:'([^']*)'|([\d.Ee+-]+))\s*")
-
-    with open(file_path, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if line.lower().startswith(f'&{group_name.lower()}'):
-                in_group = True
-                continue
-            if line.startswith('/'):
-                if in_group:
-                    break
-            
-            if in_group and not line.startswith('!'):
-                match = var_re.match(line)
-                if match:
-                    key, str_val, num_val = match.groups()
-                    if str_val is not None:
-                        params[key.lower()] = str_val
-                    elif num_val is not None:
-                        try:
-                            params[key.lower()] = int(num_val)
-                        except ValueError:
-                            params[key.lower()] = float(num_val)
-    return params
 
 
 def calc_grad_rho(dat):
@@ -515,10 +482,11 @@ args = parser.parse_args()
 NA1 = args.astra_nrad
 
 namelist_path = 'vmec_io/stell_files.nml'
-nl_params = parse_fortran_namelist(namelist_path, 'VMEC_TO_ASTRA_INPUTS')
+nl_vmec = parse_fortran_namelist(namelist_path, 'VMEC_TO_ASTRA_INPUTS')
+nl_dkes = parse_fortran_namelist(namelist_path, 'ASTRA_DKES_INTERFACE')
 
 try:
-    wout_file = nl_params['vmec_wout_file']
+    wout_file = nl_vmec['vmec_wout_file']
 except KeyError:
     print(f"ERROR: 'VMEC_WOUT_FILE' not found in namelist '{namelist_path}'")
     sys.exit(1)
@@ -527,7 +495,6 @@ wout_basename = os.path.basename(wout_file)
 shot_id = wout_basename.replace('wout_', '').replace('.nc', '')
 
 metric_file = f'dat/VMEC2ASTRA.bin'
-header_file = f'dat/vmec_header_data_{shot_id}.txt'
 
 #read wout file
 data = VMEC()
@@ -681,7 +648,7 @@ if (lasym):
 raxis_cc, zaxis_cs, raxis_cs, zaxis_cc = read_axis_from_wout(wout_file)
 
 mnmax = np.array([data.mnmax], dtype=np.int32)
-nn=len(raxis_cc)
+nn = len(raxis_cc)
 
 with open(metric_file, 'wb') as f:
 
@@ -738,16 +705,18 @@ with open(metric_file, 'wb') as f:
     phi = np.asarray(data.phi, dtype=np.float64)
     phi.tofile(f)                                # then data
 
-b00_output_file = f'dat/b00_profile_{shot_id}_vmec.txt'
+b00_output_file = nl_dkes['b00_profile_file']
+header_file     = nl_dkes['vmec_header_file']
+radius_out      = nl_dkes['minor_radius_w7as_file']
+
 np.savetxt(b00_output_file, B00_ASTRA_grid)
 print(f'Wrote B00 profile to {b00_output_file}')
 
-header_data_filename = header_file
-with open(header_data_filename, 'w') as f:
+with open(header_file, 'w') as f:
     f.write(f'{ABC:.10e}\n')
     f.write(f'{psi_a:.10e}\n')
 
-print(f'Wrote ABC and psi_a to {header_data_filename}')
+print(f'Wrote ABC and psi_a to {header_file}')
 
 print(f'Update the .exp file:')
 print(f"Major radius (RTOR): {data.rmajor:.4f} m")
@@ -756,7 +725,6 @@ print(f"Toroidal field on axis (BTOR): {data.b0:.4f} T")
 
 a2 = np.sum(rmnc_lcfs*zmns_lcfs*xm)
 a_booz = np.sqrt(a2)
-radius_out = f"dat/minorradiusW7AS_boozmn_{shot_id}.txt"
 with open(radius_out, 'w') as f:
     f.write(str(a_booz.item()))
 print(f"Saved minor radius to: {radius_out}")
