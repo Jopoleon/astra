@@ -2204,9 +2204,10 @@ contains
 
     character(len=32) :: s_curtor, s_phi, n_nodes
     character(len=256) :: path_to_vmec, stellopt_dir, &
-        dat_in_file='dat/vmecinput.dat', mpi_command
+        dat_in_file, mpi_command, iomsg
     character(len=1000) :: command_line, raxis_str, zaxis_str, f_true_surf='vmec_io/true_surfaces.txt'
-    character(len=120) :: s_rax, s_zax, s_nequil, as_nml
+    character(len=120) :: s_nequil, as_nml, PMASS_FILE="dat/vmecp.dat", &
+        PIOTA_FILE="dat/vmeci.dat", PCURR_FILE="dat/vmecc.dat"
 
     data init_vmecco/0/
     data t_boozero/0./
@@ -2216,11 +2217,14 @@ contains
 
     CALL getenv('STELLOPT_PATH', stellopt_dir)
     path_to_vmec = TRIM(stellopt_dir) // '/VMEC2000/Release/'
+
     as_nml = TRIM(awd) // '/' // TRIM(nml_file)
     write(*, *) 'Reading namelist ', TRIM(as_nml)
     open(57, FILE=TRIM(as_nml), delim='apostrophe')
     read(57, nml=vmec, iostat=ios)
     close(57)
+
+    dat_in_file = TRIM(awd) // '/dat/vmecinput.dat'
 
     call execute_command_line("nproc")
     call get_environment_variable("MPI_COMMAND", mpi_command)
@@ -2235,39 +2239,17 @@ contains
         pressure = NE*TE + NI*TI + 0.5*(PBLON + PBPER) + PFAST
         pressure = 1602.*pressure  ! Pascal
 
-! generate pressure and iota files
-        open(32, file='dat/vmecp.dat')
-        write(32, *) NA1
-        do i=1, NA1
-            write(32, *) svmec(i), vac_phase_stel*pressure(i)
-        enddo
-        close(32)
-
-        open(32, file='dat/vmeci.dat')
-        write(32, *) NA1
-        do i=1, NA1
-            write(32, *) svmec(i), mu(i)
-        enddo
-        close(32)
-
         curtorprof = 0.
 ! calculate actual curtorprof for vmec
         curtorprof = (MU - MV)*SG11/(0.4*GP)*GP2*BTOR*XRHO*ROC
 
         if (vac_phase_stel == 1) curtorprof = curtorprof/curtorprof(NA1-1)*IPL ! ATTENTION
-        curtorprof(NA1)=IPL
-        open(32, file='dat/vmecc.dat')
-        write(32, *) NA1
-        do i=1, NA1
-            write(32, *) svmec(i), vac_phase_stel*curtorprof(i)*1.e6  ! A/m^2
-        enddo
-        write(32, *) vac_phase_stel*IPL*1.e6, SGNBT*phi_edgehog  ! A, phiedge (this should be computed with a fsa eq solver...), PHIEDGE from log file as initial guess for vacuum calculation
-        close(32)
+        curtorprof(NA1) = IPL
 
 !the input namelist to run vmec using curtor and phiedge are:
 ! NCURR = 1   ! given toroidal current IPL
 ! IMATCH_PHIEDGE = 1    ! phiedge is enforced to be matched exactly in vmec
-! PMASS_TYPE, PCURR_TYPE and files dat/vmecpressure.dat and dat/vmeccurr.dat. Iota not used as input
+! PMASS_TYPE, PCURR_TYPE and files PMASS_FILE, PCURR_FILE. Iota not used as input
 ! PRES_SCALE = 1.
 ! SPRES_PED = 1.
 ! BLOAT = 1.
@@ -2275,8 +2257,8 @@ contains
 ! RAXIS and ZAXIS guessues
 
 ! python sub curtor and phiedge in the rigjht place
-        call execute_command_line('rm -f ' // TRIM(dat_in_file)) ! Clean, to raise errors
         if (vmec_vacuum == 0 .or. vmec_vacuum == 1) then
+            call execute_command_line('rm -f ' // TRIM(dat_in_file)) ! Clean, to raise errors
             write(s_curtor, '(F)') vac_phase_stel*IPL*1.e6
             write(s_phi   , '(F)') SGNBT*phi_edgehog
             write(s_nequil, '(I0)') NEQUIL
@@ -2303,24 +2285,42 @@ contains
 !            pause
         endif
 
+! Write pressure, iota and current files
+
+        open(132, file=TRIM(PMASS_FILE))
+        write(132, *) NA1
+        do i=1, NA1
+            write(132, *) svmec(i), vac_phase_stel*pressure(i)
+        enddo
+        close(132)
+
+        open(133, file=TRIM(PIOTA_FILE))
+        write(133, *) NA1
+        do i=1, NA1
+            write(133, *) svmec(i), MU(i)
+        enddo
+        close(133)
+ 
+        open(134, file=TRIM(PCURR_FILE))
+        write(134, *) NA1
+        do i=1, NA1
+            write(134, *) svmec(i), vac_phase_stel*curtorprof(i)*1.e6  ! A/m^2
+        enddo
+        write(134, *) vac_phase_stel*IPL*1.e6, SGNBT*phi_edgehog
+        close(134)
+
         call system_clock(count_rate=count_rate)
         call system_clock(start_count)
 
-        INQUIRE(file=TRIM(dat_in_file), EXIST=file_exists)
-        if (file_exists) then
-            command_line = trim(mpi_command) // ' ' // trim(n_nodes) // ' ' // &
-                trim(path_to_vmec) // '/xvmec2000' // ' ' // trim(dat_in_file)
-            if (init_vmecco == 0) then
-                init_vmecco = 1
-            else
-                command_line = trim(command_line) // ' reset=dat/wout_VMECoutput.nc'
-            endif
-            write(*, *) command_line
-            call execute_command_line(trim(command_line))
+        command_line = trim(mpi_command) // ' ' // trim(n_nodes) // ' ' // &
+            trim(path_to_vmec) // '/xvmec2000' // ' ' // trim(dat_in_file)
+        if (init_vmecco == 0) then
+            init_vmecco = 1
         else
-            print*, 'File ' // TRIM(dat_in_file) // ' for VMEC not found, quitting ASTRA/VMEC'
-            STOP
+            command_line = trim(command_line) // ' reset=dat/wout_VMECoutput.nc'
         endif
+        write(*, *) command_line
+        call execute_command_line(trim(command_line))
 
         call system_clock(end_count)
         write(*, *) 'time spent on vmec : ', real(end_count-start_count, 8)/real(count_rate, 8)

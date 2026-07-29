@@ -26,12 +26,12 @@
  BLOAT = 1.0
  SPRES_PED = 1.00000000
  PRES_SCALE = 1.0
- PMASS_TYPE='file'
- PMASS_FILE='dat/vmecp.dat'
- PIOTA_TYPE='file'
- PIOTA_FILE='dat/vmeci.dat'
- PCURR_TYPE='file'
- PCURR_FILE='dat/vmecc.dat'
+ PMASS_TYPE = "file"
+ PMASS_FILE = "dat/vmecp.dat"
+ PIOTA_TYPE = "file"
+ PIOTA_FILE= "dat/vmeci.dat"
+ PCURR_TYPE = "file"
+ PCURR_FILE = "dat/vmecc.dat"
  RAXIS =  5.584E+00 3.6765E-01
  ZAXIS = -0.0000E+00 -3.0224E-01
  RBC(0,0)=5.5322e+00  ZBS(0,0)=-0.0000e+00
