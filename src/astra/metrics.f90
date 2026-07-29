@@ -247,23 +247,23 @@ contains
         if (TIME == TSTART .and. vmec_vacuum > 0) then
             call EQCYL_STELLA
             call RHSEQ
-            call VMEC2ASTRA(vmec_vacuum, vmec_tau, vmec_dteq, yes_boozer)
+            call vmec_interface(vmec_vacuum, vmec_dteq, yes_boozer)
             vmec_vacuum = 0
             return
         endif
         if (TIME-TSTART < 2*TAU .and. vmec_tau == 1) then ! call again vmec and vmec2astra.py
-            call VMEC2ASTRA(vmec_vacuum, vmec_tau, vmec_dteq, yes_boozer)
+            call vmec_interface(vmec_vacuum, vmec_dteq, yes_boozer)
             TIMEQL = TIME
             return
         endif
         if (TIME-TSTART < 2*TAU .and. vmec_tau == 2) then ! call only vmec2astra.py but no vmec
-            call VMEC2ASTRA(vmec_vacuum, 0, 0, yes_boozer)
+            call vmec_interface(vmec_vacuum, 0, yes_boozer)
             TIMEQL = TIME
             vmec_tau = 0
             return
         endif
         if (TIME > TSTART .and. TIME-TIMEQL >= NDTEQUILMY*DTEQL) then !call vmec+vmec2astra.py or only vmec2astra.py
-            call VMEC2ASTRA(vmec_vacuum, vmec_tau, vmec_dteq, yes_boozer)
+            call vmec_interface(vmec_vacuum, vmec_dteq, yes_boozer)
             TIMEQL = TIME
             return
         endif
@@ -2008,34 +2008,30 @@ contains
     end subroutine fourier_expansion
 
 !---------------------------------------------------------------------
-    subroutine VMEC2ASTRA(vmec_vacuum, vmec_tau, vmec_dteq, yes_boozer)
+    subroutine vmec_interface(vmec_vacuum, vmec_dteq, yes_boozer)
 !---------------------------------------------------------------------
 ! Reads VMEC output and converts it to ASTRA quantities
 
     use scalars, only: NEQUIL, MEQUIL, NA1, HROX, HRO, ROC, RTOR, ABC, BTOR, &
         VOLUME, GVAC, FTO, UPDWN
-    use status
-    use stella_module, only: dphidsb_stella, dphidvpb_ip, dphidvpb_f0, &
-        stella_which_surf
+    use status, only: RHO, SRHO, SG11, SG12, SG21, SG22, MV, VR, VRS, GRADRO, &
+        G11, VOLUM, AMETR, SLAT, FTPT, AREAT, IPOL, MU, SHIF
+    use stella_module, only: dphidsb_stella, stella_which_surf
     use parameters_a2equil, only: equil_now
     use numerical_tools, only: qinterp
 
-    integer, intent(in):: vmec_vacuum, vmec_tau, vmec_dteq, yes_boozer
-    double precision :: Rmaj(NA1), theta, angle, f_boundary, nfperiods, brangle
-    double precision :: dummo1, dummo2, phi_full_surfaces
-    character(len=128) :: cmd, str_NA1, mpi_command
-    integer ivmec, k, k1
-    integer :: mnmax
-    integer, allocatable :: xm(:), xnn(:)
-    integer :: ns_temp, k2
+    integer, intent(in):: vmec_vacuum, vmec_dteq, yes_boozer
+
     logical :: lasym
-    real*8, allocatable :: rmnc_lcfs(:), zmns_lcfs(:)
-    real*8, allocatable :: rmnc_all(:, :), zmns_all(:, :), bndr(:), bndz(:)
-    real*8, allocatable :: rmnc_interp(:, :), zmns_interp(:, :), xrho_eq(:), phi_temp(:)
-    real*8, allocatable :: rmns_lcfs(:), zmnc_lcfs(:)
-    real*8, allocatable :: rmns_all(:, :), zmnc_all(:, :)
-    real*8, allocatable :: rmns_interp(:, :), zmnc_interp(:, :)
-    integer :: nt_bnd, n_phase
+    integer :: k, k1, k2, mnmax, ns_temp, nt_bnd, n_phase
+    integer, allocatable, dimension(:) :: xm, xnn
+    real*8, allocatable, dimension(:) :: rmnc_lcfs, rmns_lcfs, zmnc_lcfs, zmns_lcfs, &
+        bndr, bndz, xrho_eq, phi_temp
+    real*8, allocatable, dimension(:, :) :: rmnc_all, rmns_all, zmnc_all, zmns_all, &
+        rmnc_interp, rmns_interp, zmnc_interp, zmns_interp
+    double precision :: f_boundary, nfperiods, brangle, dum1, dum2, phi_full_surfaces
+    double precision :: Rmaj(NA1)
+    character(len=128) :: cmd, mpi_command
 
     save f_boundary
 
@@ -2048,18 +2044,16 @@ contains
         allocate(bndz(MEQUIL))
     endif
 
-    call a2vmec(vmec_vacuum, vmec_tau, vmec_dteq, yes_boozer, f_boundary, phi_full_surfaces)
-
-    write(str_NA1, '(I0)') NA1
+    call a2vmec(vmec_vacuum, vmec_dteq, yes_boozer, f_boundary, phi_full_surfaces)
 
     call get_environment_variable("PYTHON_BIN", mpi_command)
-    cmd = trim(mpi_command)//' python/VMEC2ASTRA.py ' // trim(str_NA1)
+    write(cmd, '(A, A, I0)') trim(mpi_command), ' python/VMEC2ASTRA.py ', NA1
     write(*, *) cmd
     call execute_command_line(trim(cmd), wait=.true.)
 
     open(unit=10, file='dat/VMEC2ASTRA.bin', form='unformatted', access='stream')
     read(10) HROX, HRO, ROC, RTOR, ABC, BTOR, volume, GVAC, f_boundary, nfperiods, &
-        dphidsb_stella, dummo1, dummo2
+        dphidsb_stella, dum1, dum2
     read(10) RHO(1:NA1), SRHO(1:NA1), SG11(1:NA1), SG12(1:NA1), &
         SG21(1:NA1), SG22(1:NA1), MV(1:NA1), VR(1:NA1), &
         VRS(1:NA1), GRADRO(1:NA1), G11(1:NA1), Rmaj(1:NA1), &
@@ -2134,7 +2128,7 @@ contains
                 equil_now%coord_sys%position%z(NEQUIL-n_phase, 1:MEQUIL))
         enddo
     else ! all flux surfaces at 1 toroidal angle given by phi_full_surfaces >=0.
-        stella_which_surf=1
+        stella_which_surf = 1
         do k1=1, ns_temp
             xrho_eq(k1) = sqrt(phi_temp(k1)/phi_temp(ns_temp))
         enddo
@@ -2176,10 +2170,10 @@ contains
     deallocate(phi_temp)
     deallocate(bndr, bndz)
 
-    end subroutine VMEC2ASTRA
+    end subroutine vmec_interface
 
 !---------------------------------------------------------------------
-    subroutine A2VMEC(vmec_vacuum, vmec_tau, vmec_dteq, yes_boozer, f_boundary, phi_full_surfaces)
+    subroutine A2VMEC(vmec_vacuum, vmec_dteq, yes_boozer, f_boundary, phi_full_surfaces)
 
     use status, only: NRD
     use scalars, only: NA1, RTOR, BTOR, TIME, ROC, SGNIP, SGNBT, ABC, IPL, PHIEDG, &
@@ -2187,26 +2181,21 @@ contains
     use status, only: TE, NE, FP, XRHO, ZEF, MU, ELON, SHif , IPOL, &
         AMETR, VOLUM, PEECR, CUECR, AREAT, rho_pol, FP_NORM, &
         PBLON, PBPER, PFAST, TI, NI, CU, SG11, SG12, MV
-    use read_input, only: AWD, astra_ext, nml_file
-    use stella_module, only: phi_edge_total, &
-        dphidsb_stella, dphidvpb_ip, dphidvpb_f0
-    use numerical_tools, only: qinterp, integr, derivcc
-    use parameters_a2equil, only : equil_now
+    use read_input, only: AWD, nml_file
+    use stella_module, only: phi_edge_total
 
-    integer, intent(in):: vmec_vacuum, vmec_tau, vmec_dteq, yes_boozer
+    integer, intent(in):: vmec_vacuum, vmec_dteq, yes_boozer
     double precision, intent(out) :: f_boundary, phi_full_surfaces
 
-    logical :: file_exists
-    integer :: ios, i, ivmec, vac_phase_stel, count_rate, start_count, end_count, &
+    integer :: ios, i, vac_phase_stel, count_rate, start_count, end_count, &
          mboz, nboz, init_vmecco
-    double precision :: phi_edgehog, t1, t2, dt_boozer, t_boozero
-    double precision, dimension(NRD) :: pressure, svmec, curtorprof, dum1
+    double precision :: phi_edgehog, dt_boozer, t_boozero
+    double precision, dimension(NRD) :: pressure, svmec, curtorprof
 
-    character(len=32) :: s_curtor, s_phi, n_nodes
-    character(len=256) :: path_to_vmec, stellopt_dir, &
-        dat_in_file, mpi_command, iomsg
+    character(len=32) :: n_nodes
+    character(len=256) :: path_to_vmec, stellopt_dir, f_data_in, mpi_command
     character(len=1000) :: command_line, raxis_str, zaxis_str, f_true_surf='vmec_io/true_surfaces.txt'
-    character(len=120) :: s_nequil, as_nml, PMASS_FILE="dat/vmecp.dat", &
+    character(len=120) :: as_nml, PMASS_FILE="dat/vmecp.dat", &
         PIOTA_FILE="dat/vmeci.dat", PCURR_FILE="dat/vmecc.dat"
 
     data init_vmecco/0/
@@ -2224,7 +2213,7 @@ contains
     read(57, nml=vmec, iostat=ios)
     close(57)
 
-    dat_in_file = TRIM(awd) // '/dat/vmecinput.dat'
+    f_data_in = TRIM(awd) // '/dat/vmecinput.dat'
 
     call execute_command_line("nproc")
     call get_environment_variable("MPI_COMMAND", mpi_command)
@@ -2246,24 +2235,12 @@ contains
         if (vac_phase_stel == 1) curtorprof = curtorprof/curtorprof(NA1-1)*IPL ! ATTENTION
         curtorprof(NA1) = IPL
 
-!the input namelist to run vmec using curtor and phiedge are:
-! NCURR = 1   ! given toroidal current IPL
-! IMATCH_PHIEDGE = 1    ! phiedge is enforced to be matched exactly in vmec
-! PMASS_TYPE, PCURR_TYPE and files PMASS_FILE, PCURR_FILE. Iota not used as input
-! PRES_SCALE = 1.
-! SPRES_PED = 1.
-! BLOAT = 1.
-! lfreeb = .false.
-! RAXIS and ZAXIS guessues
+! Replace CURTOR, PHIEDGE and NEQUIL in dat/vmecinput.dat
 
-! python sub curtor and phiedge in the rigjht place
         if (vmec_vacuum == 0 .or. vmec_vacuum == 1) then
-            call execute_command_line('rm -f ' // TRIM(dat_in_file)) ! Clean, to raise errors
-            write(s_curtor, '(F)') vac_phase_stel*IPL*1.e6
-            write(s_phi   , '(F)') SGNBT*phi_edgehog
-            write(s_nequil, '(I0)') NEQUIL
-            command_line = "python python/vmecmodin.py " // trim(s_curtor) // &
-                " " // trim(s_phi) // " " // trim(s_nequil)
+            call execute_command_line('rm -f ' // TRIM(f_data_in)) ! Clean, to raise errors
+            write(command_line, '(A, F, 1X, F, 1X, I0)') "python python/vmecmodin.py ", &
+                vac_phase_stel*IPL*1.e6, SGNBT*phi_edgehog, NEQUIL
             if (vmec_vacuum == 0) then
                 raxis_str = '"'
                 zaxis_str = '"'
@@ -2309,11 +2286,14 @@ contains
         write(134, *) vac_phase_stel*IPL*1.e6, SGNBT*phi_edgehog
         close(134)
 
+!---------------
+! VMEC execution
+!---------------
         call system_clock(count_rate=count_rate)
         call system_clock(start_count)
 
         command_line = trim(mpi_command) // ' ' // trim(n_nodes) // ' ' // &
-            trim(path_to_vmec) // '/xvmec2000' // ' ' // trim(dat_in_file)
+            trim(path_to_vmec) // '/xvmec2000 ' // trim(f_data_in)
         if (init_vmecco == 0) then
             init_vmecco = 1
         else
@@ -2330,7 +2310,7 @@ contains
         write(*, *) 'end vmec'
     endif  ! vmec dteq command
 
-    if (yes_boozer == 1) then !run boozer after vmec only if ivmec ==2, vmec run with 1 or 2
+    if (yes_boozer == 1) then
         open(32, file='dat/inboozer.in')
         write(32, '(33333I8)') mboz, nboz
         write(32, *) ' VMECoutput '
@@ -2357,8 +2337,7 @@ contains
 ! Either way it writes dat/b00_profile_boozer.txt and dat/minorradiusW7AS.txt
 ! for the DKES interface.  NA1 is passed so the B00 profile length matches.
 ! ---------------------------------------------------------------------
-    write(s_curtor, '(I0)') NA1
-    command_line = 'python python/extract_boozer_data.py ' // trim(s_curtor)
+    write(command_line, '(A, I0)') 'python python/extract_boozer_data.py ', NA1
     call execute_command_line(command_line)
 
     end subroutine a2vmec
@@ -2367,19 +2346,20 @@ contains
     subroutine compute_phi_edgehog(phi_edgehog, f_boundary)
 
     use status, only: NRD
-    use scalars, only: btor, roc, NA1, phiedg, time, volume, IPL, rtor
+    use scalars, only: btor, roc, NA1, phiedg, volume
     use status, only: FP, MU, SG11, SG12, SG21, SG22, &
      PFAST, PBLON, PBPER, NE, TE, TI, NI, VOLUM, XRHO, rho, srho, vr, vrs, sxho, MV
     use numerical_tools, only: derivcc, integrcc
-    use stella_module, only: dphidsb_stella, dphidvpb_ip, dphidvpb_f0, f_vacuum_rb
+    use stella_module, only: f_vacuum_rb
 
     double precision, intent(out) :: phi_edgehog
-    double precision phi(nrd), pressure(nrd), dphidv(nrd)
-    double precision pprimv(nrd), muhat(nrd), a(nrd), b(nrd), c(nrd), dum(nrd), d(nrd)
-    double precision c1(nrd), c2(nrd), c3(nrd), c4(nrd), dphidv1, F_0, dphidv0(nrd)
-    double precision f_boundary, errtol, tolerr, v_temp, i1(nrd), f1(nrd)
-    double precision H_b, detS, phipvb, f_vacuum, rocco, s22_temp(nrd), mu_temp(nrd)
-    integer niter, i_initto
+
+    integer :: niter, i_initto
+    double precision :: f_boundary, errtol, tolerr, v_temp, H_b, &
+        detS, f_vacuum, rocco
+    double precision, dimension(NRD) :: phi, pressure, dphidv, pprimv, muhat, &
+        a, b, c, dum, d, c1, c2, c3, c4, i1, f1, s22_temp, mu_temp
+ 
     data i_initto/0/
     save i_initto
 
@@ -2401,7 +2381,7 @@ contains
 
 ! phiedg is the vacuum phiedge from user
     phi_edgehog = GP*BTOR*ROC**2
-    muhat = mu*phi_edgehog
+    muhat  = mu*phi_edgehog
     tolerr = 1.e-12
     errtol = 100.
     v_temp = volume
