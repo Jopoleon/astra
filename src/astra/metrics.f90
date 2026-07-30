@@ -2309,6 +2309,7 @@ contains
         endif
         write(*, *) TRIM(command_line)
         call execute_command_line(trim(command_line))
+
 ! Output files: parvmecinfo.txt, jxbout_dat.nc, mercier.dat, wout_dat.nc, 
 !     threed1.dat, timings.txt
 

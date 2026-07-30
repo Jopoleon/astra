@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 import numpy as np
-from scipy.io import netcdf
+from scipy.io import netcdf_file
 
 VMEC_FILE = "dat/wout_VMECoutput.nc"
 
 # Open VMEC file
-vmec = netcdf.netcdf_file(VMEC_FILE, 'r')
+with netcdf_file(VMEC_FILE, 'r') as f:
+    vmec = f.variables
 
 # Load poloidal and toroidal mode numbers
-xm = vmec.variables["xm"][:]  # poloidal mode numbers
-xn = vmec.variables["xn"][:]  # toroidal mode numbers
-print(len(vmec.variables["phi"][:]))
-vmec.close()
+xm = vmec["xm"][:]  # poloidal mode numbers
+xn = vmec["xn"][:]  # toroidal mode numbers
+print(len(vmec["phi"][:]))
 
 # Find unique modes
 unique_m = np.unique(xm)

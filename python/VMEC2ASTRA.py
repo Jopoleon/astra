@@ -25,7 +25,8 @@ qinterp = lambda x, y, xi: interp1d(x, y, kind='quadratic', fill_value='extrapol
 
 def read_axis_from_wout(wout_file):
 
-    cv = netcdf_file(wout_file, mmap=False).variables
+    with netcdf_file(wout_file, 'r', mmap=False) as f:
+        cv = f.variables
     raxis_cc = cv["raxis_cc"][:]
     zaxis_cs = cv["zaxis_cs"][:]
     lasym = int(cv["lasym__logical__"][()])

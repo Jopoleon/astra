@@ -15,7 +15,6 @@ import numpy as np
 import glob
 import re
 
-from scipy.io import netcdf
 from scipy.io import netcdf_file
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from types import SimpleNamespace
@@ -101,26 +100,28 @@ data_VMEC = VMEC()
 data_VMEC.read_wout(VMEC_FILE)
 
 #open vmec and booz files
-vmec = netcdf.netcdf_file(VMEC_FILE, 'r')
-booz = netcdf.netcdf_file(BOOZ_FILE, 'r')
+with netcdf_file(VMEC_FILE, 'r', mmap=False) as f:
+    vmec = f.variables
+with netcdf_file(BOOZ_FILE, 'r', mmap=False) as f:
+    boox = f.variables
 
 # VMEC quantities
-Aminor = vmec.variables["Aminor_p"].data.copy()  # this should be minor radius w7as ?
-ns = vmec.variables["ns"].data.copy()
+Aminor = vmec["Aminor_p"].data  # this should be minor radius w7as ?
+ns = vmec["ns"].data
 print(ns)
 #exit()
-iotas = vmec.variables["iotaf"].data.copy()
-iotah = vmec.variables["iotas"].data.copy()
-phip = vmec.variables["phi"].data.copy()
-phip_p = vmec.variables["phipf"].data.copy()
-phip2 = booz.variables["phi_b"].data.copy()
-phip2_p = booz.variables["phip_b"].data.copy()
-ib = booz.variables["iota_b"].data.copy()
-iota_boozer=ib.copy()
-iff = vmec.variables["iotaf"].data.copy()
+iotas = vmec["iotaf"].data
+iotah = vmec["iotas"].data
+phip = vmec["phi"].data
+phip_p = vmec["phipf"].data
+phip2 = booz["phi_b"].data
+phip2_p = booz["phip_b"].data
+ib = booz["iota_b"].data
+iota_boozer=ib
+iff = vmec["iotaf"].data
 # need to find s_1 boozer and s_end boozer now!
-s_vmec=phip.copy()/phip[-1]
-s_boozer = s_vmec.copy()
+s_vmec=phip/phip[-1]
+s_boozer = s_vmec
 s_boozer[0]=0
 s_boozer[1:] = 0.5 * (s_vmec[1:] + s_vmec[:-1])
 
@@ -129,7 +130,7 @@ s_boozer[1:] = 0.5 * (s_vmec[1:] + s_vmec[:-1])
 
 
 
-print(booz.variables.keys(),s_vmec,s_boozer)
+print(booz.keys(),s_vmec,s_boozer)
 #exit()
 # Note that boozer quantities are on the VMEC HALF GRID!, SO Boozer surface N is actually half surface between VMEC surface N and N+1, 
 # for example boozer surface 2 is half grid between VMEC surface 2 and 3
@@ -139,27 +140,27 @@ print(phip/phip[-1],phip2/phip[-1],ib,iff, phip_p,phip2_p,iotas,iotah)
 
 psia=phip[-1]/2./np.pi
 psia_vmec=phip[-1]/2./np.pi
-psiab=booz.variables["phip_b"].data.copy()
+psiab=booz["phip_b"].data
 # Boozer mode numbers
-print(booz.variables.keys())
+print(booz.keys())
 #exit()
-xm = vmec.variables["xm"].data.copy()
-xn = vmec.variables["xn"].data.copy()
+xm = vmec["xm"].data
+xn = vmec["xn"].data
 #print(xm,xn)
 # Fourier amplitudes of |B|
-bmnc = booz.variables["bmnc_b"].data.copy()
-rmnc = booz.variables["rmnc_b"].data.copy()
+bmnc = booz["bmnc_b"].data
+rmnc = booz["rmnc_b"].data
 
 # find index of m=0/1, n=0
-xmb = booz.variables["ixm_b"].data.copy()
-xnb = booz.variables["ixn_b"].data.copy()
-nsb = booz.variables["ns_b"].data.copy()
+xmb = booz["ixm_b"].data
+xnb = booz["ixn_b"].data
+nsb = booz["ns_b"].data
 idx00 = np.where((xmb == 0) & (xnb == 0))[0][0]
 idx01 = np.where((xmb == 1) & (xnb == 0))[0][0]
 
 # choose flux surface index (example: last surface)
 
-ib = booz.variables["iota_b"].data.copy()
+ib = booz["iota_b"].data
 print(bmnc[:,idx00])
 print(bmnc[:,idx01])
 #exit()
@@ -172,8 +173,8 @@ print(B00_boozer,R00_boozer, B10_boozer,B10_boozer/B00_boozer,ib,nsb,len(ib),bmn
 # the first surface has rubbish reszults!!!!
 
 #exit()
-rmnc = vmec.variables["rmnc"].data.copy()
-zmns = vmec.variables["zmns"].data.copy()
+rmnc = vmec["rmnc"].data
+zmns = vmec["zmns"].data
 
 s = -1
 
@@ -210,9 +211,9 @@ print(Aminor,psia,B00_boozer,a_booz,psia,psiab[-1])
 
 #exit()
 
-bmnc = booz.variables["bmnc_b"][:].copy()   # shape (ns, nmodes)
-xn   = booz.variables["ixn_b"][:].copy()
-xm   = booz.variables["ixm_b"][:].copy()
+bmnc = booz["bmnc_b"][:]   # shape (ns, nmodes)
+xn   = booz["ixn_b"][:]
+xm   = booz["ixm_b"][:]
 ns   = bmnc.shape[0]
 print(ns)
 #exit()
@@ -246,19 +247,14 @@ for s in range(len(BOOZER_SURFACES2)):
     
 print(B2_avg_all[BOOZER_SURFACES2]/B00_boozer**2)
 print(B10_boozer/B00_boozer)
-#exit()
 
-bmnc = booz.variables["bmnc_b"][:].copy()   # shape (ns, nmodes)
-xn   = booz.variables["ixn_b"][:].copy()
-xm   = booz.variables["ixm_b"][:].copy()
-phi_booz   = booz.variables["phi_b"][:].copy()
+bmnc = booz["bmnc_b"][:]   # shape (ns, nmodes)
+xn   = booz["ixn_b"][:]
+xm   = booz["ixm_b"][:]
+phi_booz   = booz["phi_b"][:]
 ns   = bmnc.shape[0]
 
-B2_avg = B2_avg_all[BOOZER_SURFACES2].copy()
-
-#close files
-vmec.close()
-booz.close()
+B2_avg = B2_avg_all[BOOZER_SURFACES2]
 
 rrr=a_booz*np.sqrt(s_boozer[BOOZER_SURFACES])
 epsilonz=rrr/R00_boozer
@@ -268,10 +264,7 @@ print(B10_boozer/B00_boozer,np.abs(B10_boozer/epsilonz/B00_boozer),rrr,R00_booze
 #Erresonance = 0.5*rrr/a_booz*iota_boozer[BOOZER_SURFACES]
 Erresonance = np.abs(iota_boozer[BOOZER_SURFACES]/R00_boozer*rrr*B00_boozer**2.) # another B00 to make up for the normalization later on
 print(Erresonance)
-#exit()
 
-
-#exit()
 
 def calc_ftrap(dat):
 		"""Compute trapped fraction f_t according to 
@@ -287,7 +280,7 @@ def calc_ftrap(dat):
 		nv = 128
 		nlambda = 256
 		theta = np.linspace(0,2*np.pi,nu).reshape((nu,1))
-		zeta   = np.linspace(0,2*np.pi,nv).reshape((nv,1))
+		zeta  = np.linspace(0,2*np.pi,nv).reshape((nv,1))
 		b = dat.cfunct(theta,zeta,dat.bmnc,dat.xm_nyq,dat.xn_nyq)
 		g = dat.cfunct(theta,zeta,dat.gmnc,dat.xm_nyq,dat.xn_nyq)
 		if dat.iasym==1:
@@ -297,7 +290,7 @@ def calc_ftrap(dat):
 		vp = np.sum(g,axis=(1,2))
 		b2 = np.sum(b**2 * g,axis=(1,2)) / vp   #<B^2>
 		bmax2 = b2/np.max(b**2, axis=(1,2))  #<bmax^2> = <B^2/Bmax^2>
-		bmax = b.copy()
+		bmax = b
 		for u in range(len(vp)):    
 			bmax[u,:,:] = b[u,:,:]/np.max(b, axis=(1,2))[u]   #bmax = B/Bmax (3D array)
 		#introduce normalised global magnetic moment lambda

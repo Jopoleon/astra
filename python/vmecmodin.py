@@ -10,11 +10,9 @@ def replaceArray(text, arrName, arrStr):
 
     
 def replaceParams(text, curtor, phiedge, nequil):
-
     text = text.replace("$CURTOR" , '%12.4e' %curtor)
     text = text.replace("$PHIEDGE", '%12.4e' %phiedge)
     text = text.replace("$NEQUIL" , '%d'     %nequil)
-
     return text
 
 
@@ -26,13 +24,11 @@ def write_vmecinput(curtor, phiedge, nequil, raxis=None, zaxis=None, template_fi
         raise FileNotFoundError(f"Template file not found: {template_path}")
 
     nl_vmec = parse_fortran_namelist(namelist_path, 'VMEC_TO_ASTRA_INPUTS')
-    print(nl_vmec.keys())
     output_file = nl_vmec['vmec_in_file']
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
     with open(template_file, 'r') as f:
         text = f.read()
-
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
     if raxis is not None:
         raxis = raxis.strip()
