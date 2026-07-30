@@ -7,7 +7,7 @@
   BOOZER_FILE    = 'vmec_dat/boozmn_VMECoutput.nc'
   VMEC_IN_FILE   = 'vmec_dat/vmecinput.dat'
   VMEC2A_METRIC  = 'vmec_dat/vmec2astra.bin'
-  BOOZER_INFILE  = 'vmec_dat/inboozer.in'
+  BOOZER_INFILE  = 'vmec_dat/inboozer.dat'
 /
 
 &ASTRA_DKES_INTERFACE
