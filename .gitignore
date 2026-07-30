@@ -26,9 +26,9 @@ pyparse/iondens_ass.py
 /qualikiz
 /tglf
 /toric
-/.res
 /bin
 /src/tmp
+/vmec_dat
 user
 profiles.dat
 *_backup

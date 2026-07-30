@@ -2139,6 +2139,9 @@ contains
 
     close(10)
 
+! Clean working files to make sure errors are raised
+    call execute_command_line('rm vmec_dat/*')
+
     if (phi_full_surfaces < 0.) then ! plot LCFS for various toroidal angles if phi_full_surfaces < 0
         stella_which_surf = 0
         nt_bnd = 1
@@ -2218,8 +2221,8 @@ contains
     character(len=32) :: n_nodes
     character(len=256) :: stellopt_dir, mpi_command
     character(len=1000) :: command_line, raxis_str, zaxis_str, f_true_surf='vmec_io/true_surfaces.txt'
-    character(len=120) :: as_nml, PMASS_FILE="dat/vmecp.dat", &
-        PIOTA_FILE="dat/vmeci.dat", PCURR_FILE="dat/vmecc.dat"
+    character(len=120) :: as_nml, PMASS_FILE="vmec_dat/vmecp.dat", &
+        PIOTA_FILE="vmec_dat/vmeci.dat", PCURR_FILE="vmec_dat/vmecc.dat"
 
     data init_vmecco/0/
     data t_boozero/0./
@@ -2257,7 +2260,7 @@ contains
         curtorprof(NA1) = IPL
 
 !--------------------------------------------------------------
-! Replace CURTOR, PHIEDGE and NEQUIL -> write dat/vmecinput.dat
+! Replace CURTOR, PHIEDGE and NEQUIL -> write vmec_dat/vmecinput.dat
 
         if (vmec_vacuum == 0 .or. vmec_vacuum == 1) then
             call execute_command_line('rm -f ' // TRIM(VMEC_IN_FILE)) ! Clean, to raise errors
@@ -2338,18 +2341,18 @@ contains
 ! Dump boozer geometry for DKES
 
     if (yes_boozer == 1) then
-        open(32, file='dat/inboozer.in')
+        open(32, file='vmec_dat/inboozer.in')
         write(32, '(33333I8)') mboz, nboz
         write(32, *) ' VMECoutput '
         write(32, '(33333I8)') [(i, i=1, NEQUIL)]
         close(32)
 
         if (TIME >= TSTART+t_boozero .or. TIME <= TSTART) then
-            command_line = 'cd dat && ' // TRIM(mpi_command) // ' -n 1 ' // &
+            command_line = 'cd vmec_dat && ' // TRIM(mpi_command) // ' -n 1 ' // &
                 TRIM(stellopt_dir) // '/BOOZ_XFORM/Release/xbooz_xform inboozer.in ../' // &
                 TRIM(f_true_surf) // ' && cd ..'
             write(*, *) TRIM(command_line)
-            call execute_command_line(TRIM(command_line)) ! Input: dat/inboozer.in, vmec_io/true_surfaces.txt, ./wout_VMECoutput.nc; Output: ./boozmn_VMECoutput.nc
+            call execute_command_line(TRIM(command_line)) ! Input: vmec_dat/inboozer.in, vmec_io/true_surfaces.txt, ./wout_VMECoutput.nc; Output: ./boozmn_VMECoutput.nc
             t_boozero = time - tstart + dt_boozer
         endif
     endif
@@ -2362,12 +2365,12 @@ contains
 !                                reused DKES table (no Boozer run needed);
 !   * NetCDF boozmn (generated)-> reads the fresh 7-surface transform just
 !                                produced above when yes_boozer==1.
-! Either way it writes dat/b00_profile_boozer.txt and dat/minorradiusW7AS.txt
+! Either way it writes vmec_dat/b00_profile_boozer.txt and vmec_dat/minorradiusW7AS.txt
 ! for the DKES interface.  NA1 is passed so the B00 profile length matches.
 ! ---------------------------------------------------------------------
     write(command_line, '(A, I0)') 'python python/extract_boozer_data.py ', NA1
     write(*, *) TRIM(command_line)
-    call execute_command_line(command_line) ! Input: dat/boozmn_VMECoutput.nc; Output dat/b00_profile_boozer.txt, dat/minorradiusW7AS.txt
+    call execute_command_line(command_line) ! Input: vmec_dat/boozmn_VMECoutput.nc; Output vmec_dat/b00_profile_boozer.txt, vmec_dat/minorradiusW7AS.txt
 
     end subroutine a2vmec
 

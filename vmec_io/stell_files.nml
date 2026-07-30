@@ -3,18 +3,18 @@
 
 &VMEC_TO_ASTRA_INPUTS
   ! Inputs for the Python vmec2astra script
-  VMEC_WOUT_FILE = 'dat/wout_VMECoutput.nc'
-  BOOZER_FILE    = 'dat/boozmn_VMECoutput.nc'
-  VMEC_IN_FILE   = 'dat/vmecinput.dat'
-  VMEC2A_METRIC  = 'dat/vmec2astra.bin'
+  VMEC_WOUT_FILE = 'vmec_dat/wout_VMECoutput.nc'
+  BOOZER_FILE    = 'vmec_dat/boozmn_VMECoutput.nc'
+  VMEC_IN_FILE   = 'vmec_dat/vmecinput.dat'
+  VMEC2A_METRIC  = 'vmec_dat/vmec2astra.bin'
 /
 
 &ASTRA_DKES_INTERFACE
   ! Inputs for the Fortran astra_dkes_interface_module
   DKES_FILE_PATH = '/home/IPP-HGW/emf/vmecdata/FLM_1000_1000_1000_1000_-0227_-0227.01.040_ref274.dk'
-  VMEC_HEADER_FILE = 'dat/vmec_header_data_VMECoutput.txt'
-  B00_PROFILE_FILE = 'dat/b00_profile_boozer_VMECoutput.txt' 
-  MINOR_RADIUS_W7AS_FILE = 'dat/minorradiusW7AS_VMECoutput.txt'
+  VMEC_HEADER_FILE = 'vmec_dat/vmec_header_data_VMECoutput.txt'
+  B00_PROFILE_FILE = 'vmec_dat/b00_profile_boozer_VMECoutput.txt' 
+  MINOR_RADIUS_W7AS_FILE = 'vmec_dat/minorradiusW7AS_VMECoutput.txt'
 /
 
 ! NGS pellet straight-line chord (read by VMEC2ASTRA.py -> ABLATION_NGS 3D mode).
@@ -28,5 +28,5 @@
   VX           = -528.65329
   VY           = -218.97536
   VZ           = -820.107
-  CHORD_OUT    = 'dat/pellet_chord.dat'
+  CHORD_OUT    = 'vmec_dat/pellet_chord.dat'
 /
