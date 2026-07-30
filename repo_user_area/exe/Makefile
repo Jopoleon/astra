@@ -47,8 +47,16 @@ $(TMP_DIR)/eqns_inc.f90
 
 # graphics yes/no
 
+PLATFORM := $(shell $(AWD)/get_platform)
+
 ifdef X11
-   X11_LIB = -L/usr/lib64 -lX11
+   ifeq ($(PLATFORM),darwin)
+      X11_LIB = -L/opt/X11/lib -lX11
+   else ifeq ($(shell uname -m),aarch64)
+      X11_LIB = -L/usr/lib/aarch64-linux-gnu -lX11
+   else
+      X11_LIB = -L/usr/lib64 -lX11
+   endif
    X11_FLAG = -DX11
    GRAPH_FLAG = -lgraph
    TMP_SRC += $(TMP_DIR)/astra_out.f90 $(TMP_DIR)/set_graph_names.f90
@@ -137,7 +145,12 @@ NINCLUDE = -I$(MOD_MISC) -I$(MOD_ASTRA) -I$(MOD_NBI)
 # Linking terms
 
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
-LIB = -lsbr -lnbi $(X11_LIB) $(QLKNN_LIB) $(TGLF_LIB) $(TORBEAM_LIB) $(RABBIT_LIB) $(GRAPH_FLAG) -lastra -lfnc -lfeqis -lmisc $(SPIDER_LIB) $(JSON_LIB) -L$(LIB_DIR) $(MKL_LIB) -lrt $(TORIC_LIB)
+RT_LIB = -lrt
+ifeq ($(PLATFORM),darwin)
+   MKL_LIB = -L$(OPENBLAS_LIBDIR) -lopenblas
+   RT_LIB =
+endif
+LIB = -lsbr -lnbi $(X11_LIB) $(QLKNN_LIB) $(TGLF_LIB) $(TORBEAM_LIB) $(RABBIT_LIB) $(GRAPH_FLAG) -lastra -lfnc -lfeqis -lmisc $(SPIDER_LIB) $(JSON_LIB) -L$(LIB_DIR) $(MKL_LIB) $(RT_LIB) $(TORIC_LIB)
 
 AENV = $(AWD)/exe/astra_rc
 

@@ -3,6 +3,7 @@
 rootdir=`dirname $0`          # may be relative path
 AWD=`cd $rootdir && pwd`  # ensure absolute path
 node=`uname -n`
+os=`uname`
 
 if [[ $AWD = "/localhome"* ]]
 then
@@ -61,6 +62,9 @@ then
 elif [[ $node = "tohtorisms" ]]
 then
     platform=tohtori
+elif [[ $os = "Darwin" ]]
+then
+    platform=darwin
 else
     platform=mypc
 fi
