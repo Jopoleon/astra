@@ -112,7 +112,8 @@ do jrho=1, NA1
     ni_m(4, jrho) = max(1.e-9, NIZ3(jrho))
     rmaj_exp(jrho) = RTOR + SHIF(jrho)
     q_exp(jrho)    = 1./MU(jrho)
-    ptot(jrho) = NE(jrho)*TE(jrho) + ni_m(1, jrho)*ti_m(1, jrho) + ni_m(2, jrho)*ti_m(2, jrho) + pfast(jrho) + 0.5*(pblon(jrho) + pbper(jrho))
+    ptot(jrho) = NE(jrho)*TE(jrho) + ni_m(1, jrho)*ti_m(1, jrho) + ni_m(2, jrho)*ti_m(2, jrho) + &
+        pfast(jrho) + 0.5*(pblon(jrho) + pbper(jrho))
     bpolz = BTOR*AMETR(jrho)*MU(jrho)/RTOR
     bmod = sqrt(BTOR**2 + bpolz**2)
     gradrhosq_exp(jrho) = G11(jrho)/VRS(jrho)
@@ -501,7 +502,8 @@ radial_loop: do jrho=1, NA1
         endif
 
         call evaluate_hornnet_constants(qlknn_in, blocks, qlknn_hornnet_constants, INT(verbose_in-1, lli), qlknn_opts, qlknn_norms)
-        call hornnet_flux_from_constants(qlknn_in, blocks, qlknn_hornnet_constants, qlknn_out, INT(verbose_in-1, lli), qlknn_opts, qlknn_norms)
+        call hornnet_flux_from_constants(qlknn_in, blocks, qlknn_hornnet_constants, qlknn_out, &
+            INT(verbose_in-1, lli), qlknn_opts, qlknn_norms)
         if (verbose_in >= 2) then
             write(*, *) 'MegaHornNet evaluated'
         endif
@@ -555,7 +557,8 @@ radial_loop: do jrho=1, NA1
             stop 'QLK rot_flag out of bounds (0-2)! Stopping'
         END SELECT
 
-        call evaluate_jetexp_net(qlknn_in, nets, qlknn_members, qlknn_out, qlknn_eb, INT(verbose_in-1, lli), qlknn_opts, qlknn_validity=qlknn_validity)
+        call evaluate_jetexp_net(qlknn_in, nets, qlknn_members, qlknn_out, qlknn_eb, &
+            INT(verbose_in-1, lli), qlknn_opts, qlknn_validity=qlknn_validity)
 
         qlknn_validity_mask = .FALSE.  ! Only check validity for values actually being used by JETTO
         qlknn_validity_mask(1) = .TRUE.

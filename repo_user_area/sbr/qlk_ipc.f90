@@ -140,7 +140,8 @@ contains
         ni_as(jrho, 4) = NIZ3(jrho)
         rmaj_as(jrho) = RTOR + SHIF(jrho)
         q_as(jrho)    = 1./MU(jrho)
-        ptot_as(jrho) = NE(jrho)*TE(jrho) + ni_as(jrho, 1)*TI(jrho) + ni_as(jrho, 2)*TI(jrho) + pfast(jrho) + 0.5*(pblon(jrho) + pbper(jrho))
+        ptot_as(jrho) = NE(jrho)*TE(jrho) + ni_as(jrho, 1)*TI(jrho) + ni_as(jrho, 2)*TI(jrho) + &
+            pfast(jrho) + 0.5*(pblon(jrho) + pbper(jrho))
         bpolz = BTOR*AMETR(jrho)*MU(jrho)/RTOR
         gradrhosq_as(jrho) = G11(jrho)/VRS(jrho)
         vper_as(jrho) = ER(jrho)/(RTOR*bpolz) ! vexb in m/s --> Omega_E

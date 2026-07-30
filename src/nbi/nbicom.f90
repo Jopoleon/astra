@@ -827,9 +827,12 @@ contains
                         if (ABEAM == 3.d0) stnbdp(j) = stnbdp(j) + yaqba(jE, jn1) * &
                             svdtbp(YjE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), calc_fus)*(625.d0/YjE)
                         if (ABEAM == 2.d0) then
-                            sdnbtp(j)  = sdnbtp(j)  + yaqba(jE, jn1)*(625.d0/YjE) * svdtbp (YjE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), calc_fus)
-                            sdnbdp2(j) = sdnbdp2(j) + yaqba(jE, jn1)*(625.d0/YjE) * svddnp2(YjE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), calc_fus)
-                            sdnbdp1(j) = sdnbdp1(j) + yaqba(jE, jn1)*(625.d0/YjE) * svddnp1(YjE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), calc_fus)
+                            sdnbtp(j)  = sdnbtp(j)  + yaqba(jE, jn1)*(625.d0/YjE) * &
+                                svdtbp (YjE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), calc_fus)
+                            sdnbdp2(j) = sdnbdp2(j) + yaqba(jE, jn1)*(625.d0/YjE) * &
+                                svddnp2(YjE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), calc_fus)
+                            sdnbdp1(j) = sdnbdp1(j) + yaqba(jE, jn1)*(625.d0/YjE) * &
+                                svddnp1(YjE, ABEAM, NE(j), TE(j), TI(j), AMAIN(j), calc_fus)
                         endif
                     endif
                     SCUBM(j) = SCUBM(j) + yatba(jE, jn1)*YSCU1

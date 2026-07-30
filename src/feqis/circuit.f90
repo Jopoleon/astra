@@ -753,7 +753,8 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
     do j=1, nconduc
         do i=1, nconduc
             if (i == j) matrix(i, j) = matrix(i, j) + 2.*sigma_coils(i)
-            dummyx(1:n_xpoint_fit) = G_00xr(i,1:n_xpoint_fit)*G_00xr(j,1:n_xpoint_fit) + G_00xz(i,1:n_xpoint_fit)*G_00xz(j,1:n_xpoint_fit)
+            dummyx(1:n_xpoint_fit) = G_00xr(i, 1:n_xpoint_fit)*G_00xr(j, 1:n_xpoint_fit) + &
+                G_00xz(i, 1:n_xpoint_fit)*G_00xz(j, 1:n_xpoint_fit)
             matrix(i, j) = matrix(i, j) +  &
                 2.*sigma_B*sum((G_00(i, 1:ntheta) - G_00c(i))*(G_00(j, 1:ntheta) - G_00c(j))) +  &
                 2.*sigma_axis*(G_00r(i)*G_00r(j) + G_00z(i)*G_00z(j)) + &
@@ -928,7 +929,8 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
             read(32, *) rbndp(1:ntheta)
             read(32, *) zbndp(1:ntheta)
             read(32, *) raxp, zaxp, ip_ev(jt)
-            read(32, *) psia_ev(1:nrho, jt), pprim_ev(1:nrho, jt), ffprim_ev(1:nrho, jt) !pprime is Pascal / grad(FP), ffprime is F dF/dFP
+            read(32, *) psia_ev(1:nrho, jt), pprim_ev(1:nrho, jt), &
+                ffprim_ev(1:nrho, jt) !pprime is Pascal / grad(FP), ffprime is F dF/dFP
             read(32, *) L_ext(jt), delta_t(jt), V_loop(jt)
         close(32)
         rho(1:nrho, ntheta+1) = rho(1:nrho, 1)
@@ -988,7 +990,8 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
 
         do j=1, nactive
             do i=1, nactive
-                if (i == j) matrix((jt-1)*nactive+i, (jt-1)*nactive+j) = matrix((jt-1)*nactive+i, (jt-1)*nactive+j) + sigma_coils(i)*sigma_energy*indconduc(i, i)
+                if (i == j) matrix((jt-1)*nactive+i, (jt-1)*nactive+j) = &
+                    matrix((jt-1)*nactive+i, (jt-1)*nactive+j) + sigma_coils(i)*sigma_energy*indconduc(i, i)
                 matrix((jt-1)*nactive+i, (jt-1)*nactive+j) = matrix((jt-1)*nactive+i, (jt-1)*nactive+j) +  &
                     2.*sigma_B*sum((G_00(i, 1:ntheta, jt) - G_00c(i, jt))*(G_00(j, 1:ntheta, jt) - G_00c(j, jt))) +  &
                     2.*sigma_axis*(G_00r(i, jt)*G_00r(j, jt) + G_00z(i, jt)*G_00z(j, jt))
@@ -1188,7 +1191,8 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
             read(32, *) rbndp(1: ntheta)
             read(32, *) zbndp(1: ntheta)
             read(32, *) raxp, zaxp, ip_ev(jt)
-            read(32, *) psia_ev(1: nrho,jt), pprim_ev(1: nrho, jt), ffprim_ev(1: nrho, jt) !pprime is Pascal / grad(FP), ffprime is F dF/dFP
+            read(32, *) psia_ev(1: nrho,jt), pprim_ev(1: nrho, jt), &
+                ffprim_ev(1: nrho, jt) !pprime is Pascal / grad(FP), ffprime is F dF/dFP
             read(32,*) L_ext(jt), delta_t(jt), V_loop(jt)
         close(32)
         rho(1: nrho, ntheta+1) = rho(1: nrho, 1)
@@ -1517,8 +1521,10 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
 
 ! Calculate additional current limits
     do i=1, nactive
-         currents_limits_adds(i, 1) = curref(i) + tau_gseq*(voltage_limits_active_coils(i, 1) - resconduc(i, i)*curref(i))/indconduc(i, i)
-         currents_limits_adds(i, 2) = curref(i) + tau_gseq*(voltage_limits_active_coils(i, 2) - resconduc(i,i)*curref(i))/indconduc(i, i)
+         currents_limits_adds(i, 1) = curref(i) + &
+             tau_gseq*(voltage_limits_active_coils(i, 1) - resconduc(i, i)*curref(i))/indconduc(i, i)
+         currents_limits_adds(i, 2) = curref(i) + &
+             tau_gseq*(voltage_limits_active_coils(i, 2) - resconduc(i,i)*curref(i))/indconduc(i, i)
     enddo
 
 ! calculate the matrix F_li of the F function, including the green function terms
@@ -2712,8 +2718,10 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
                 f_correction = 0.
                 do k=1, n_fourier_restab_boundary
                     f_correction = f_correction +  &
-                        psicorr(k)                            *sum(greeni(i, j, nactive + 1:nactive + npassive)*cos(k*anglr(1:npassive))) + &
-                        psicorr(n_fourier_restab_boundary + k)*sum(greeni(i, j, nactive + 1:nactive + npassive)*sin(k*anglr(1:npassive)))
+                        psicorr(k) *sum(greeni(i, j, nactive + 1:nactive + npassive) * &
+                            cos(k*anglr(1:npassive))) + &
+                        psicorr(n_fourier_restab_boundary + k) *sum(greeni(i, j, nactive + 1:nactive + &
+                            npassive)*sin(k*anglr(1:npassive)))
                 enddo
                 psirz(i, j) = psirz(i, j) + f_correction !total flux
             enddo
@@ -2975,7 +2983,8 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
 ! Calculate inverse and currents
         matrix_ferro_inverse(1:iii, 1:iii) = inv_matrix(matrix_ferro_to_invert(1:iii, 1:iii), iii)
         do ii=1, iii
-            ferromag(iferro)%position%current(ii) = sum(matrix_ferro_inverse(ii, 1:iii)*ferromag(iferro)%position%btangfield(1:iii)) !ferromag currents in MA
+            ferromag(iferro)%position%current(ii) = &
+                sum(matrix_ferro_inverse(ii, 1:iii)*ferromag(iferro)%position%btangfield(1:iii)) !ferromag currents in MA
         enddo
     enddo
 
@@ -2987,7 +2996,9 @@ subroutine estimate_boundary_to_pbe(rbnd, zbnd, nthetaz)
                 do j=1, iii
                     d = abs(Rrect(ii) - ferromag(iferro)%position%r(j)) + abs(Zrect(ii) - ferromag(iferro)%position%z(j))
                    if (d > 0) then
-                       psiferro(ii, jj) = psiferro(ii, jj) + muvac/GP*green_function(Rrect(ii), Zrect(jj), ferromag(iferro)%position%r(j), ferromag(iferro)%position%z(j))*ferromag(iferro)%position%current(j)
+                       psiferro(ii, jj) = psiferro(ii, jj) + muvac/GP * &
+                           green_function(Rrect(ii), Zrect(jj), ferromag(iferro)%position%r(j), &
+                           ferromag(iferro)%position%z(j))*ferromag(iferro)%position%current(j)
                    endif
                enddo
            enddo

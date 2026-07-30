@@ -225,7 +225,19 @@ class EXP_PARSER:
                 if varName in uf_keys: # double variable definition: 2x u-file, or u-file+exp_ascii
                     logger.error('>>> Error: var %s defined in u-file and ASCII exp', varName)
                     sys.exit(5)
-                dataStream = read_float_block(lines, jlin+1, jnext)
+
+                if varName == 'BNDUX':
+                    uf_path = lines[jlin+1].strip()
+                    fR_in = '%s/udb/%s_r' %(config.awd, uf_path)
+                    fZ_in = '%s/udb/%s_z' %(config.awd, uf_path)
+                    ufR = ufiles.UFILE(fin=fR_in)
+                    ufZ = ufiles.UFILE(fin=fZ_in)
+                    self.boundary['time'] = ufR.X['data'].tolist()
+                    self.boundary['R'] = ufR.f['data'].ravel().tolist()
+                    self.boundary['Z'] = ufZ.f['data'].ravel().tolist()
+
+                else:
+                    dataStream = read_float_block(lines, jlin+1, jnext)
 
                 if varName in ('CCOILX', 'VCOILX'): # differs from NEX, TEX, ... because it has no radial grid
                     nt = n_times(attr_d)
@@ -243,16 +255,6 @@ class EXP_PARSER:
                     bnd_rz = dataStream[nt:].reshape(nthe, 2, nt)
                     self.boundary['R'] = bnd_rz[:, 0, :].ravel().tolist()
                     self.boundary['Z'] = bnd_rz[:, 1, :].ravel().tolist()
-
-                elif varName == 'BNDUX':
-                    uf_path = lines[jlin+1].strip()
-                    fR_in = '%s/udb/%s_r' %(config.awd, uf_path)
-                    fZ_in = '%s/udb/%s_z' %(config.awd, uf_path)
-                    ufR = ufiles.UFILE(fin=fR_in)
-                    ufZ = ufiles.UFILE(fin=fZ_in)
-                    self.boundary['time'] = ufR.X['data'].tolist()
-                    self.boundary['R'] = ufR.f['data'].ravel().tolist()
-                    self.boundary['Z'] = ufZ.f['data'].ravel().tolist()
 
                 elif varName in self.profx:
                     nt = n_times(attr_d)

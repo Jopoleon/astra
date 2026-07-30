@@ -25,7 +25,8 @@ if (.not. allocated(RR_as)) then
     allocate(ZZ_as(NA1, nthe_equ))
     allocate(Bp_as(NA1, nthe_equ))
 endif
-pfn_equ = (equil_now%profiles_1d%psi - equil_now%profiles_1d%psi(1))/(equil_now%profiles_1d%psi(nrho_equ) - equil_now%profiles_1d%psi(1))
+pfn_equ = (equil_now%profiles_1d%psi - equil_now%profiles_1d%psi(1)) / &
+    (equil_now%profiles_1d%psi(nrho_equ) - equil_now%profiles_1d%psi(1))
 
 ! Interpolation on ASTRA rho-grid
 do jthe=1, nthe_equ

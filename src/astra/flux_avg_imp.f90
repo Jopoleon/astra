@@ -186,7 +186,8 @@ contains
 
 ! initial poloidal coordinate
     do j=1, nthe_surf
-        th0(j) = atan2(equil_now%coord_sys%position%z(nrho_surf, j) - SHIV(NA1), equil_now%coord_sys%position%r(nrho_surf, j)-(RTOR+SHIF(NA1)))
+        th0(j) = atan2(equil_now%coord_sys%position%z(nrho_surf, j) - SHIV(NA1), &
+            equil_now%coord_sys%position%r(nrho_surf, j) - (RTOR + SHIF(NA1)))
     enddo
 
 ! find location where th0 is closest to -pi

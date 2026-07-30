@@ -48,7 +48,8 @@ double precision, dimension(:,:), allocatable :: voltage_limits_active_coils
 
 contains
 
-    subroutine transport2fbe_init(tau_in, tstart_in, R_in, updown_in, shift_in, psi0_in, psib_in, machine_name, ncoils, coil_currents)
+    subroutine transport2fbe_init(tau_in, tstart_in, R_in, updown_in, shift_in, &
+        psi0_in, psib_in, machine_name, ncoils, coil_currents)
 
     integer, intent(in) :: ncoils
     double precision, intent(in) :: tau_in, tstart_in, R_in, updown_in, shift_in, psi0_in, psib_in
