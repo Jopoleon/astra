@@ -10,7 +10,8 @@ logical :: plasma_up=.true.  ! plasma is up by default, can be set to False for 
 integer :: naxis
 real*8, allocatable :: raxiscc(:), zaxiscc(:)
 double precision, dimension(:), allocatable :: CCOIL, VCOIL
-character(len=256) :: VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE, VMEC2A_METRIC
+character(len=256) :: VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE, &
+    VMEC2A_METRIC, BOOZER_INFILE
 
 
 contains
@@ -2016,7 +2017,8 @@ contains
     character(len=256) :: f_stella_nml
 
     f_stella_nml = TRIM(awd) // '/vmec_io/stell_files.nml'
-    NAMELIST / vmec_to_astra_inputs / VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE, VMEC2A_METRIC
+    NAMELIST / vmec_to_astra_inputs / VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE, &
+        VMEC2A_METRIC, BOOZER_INFILE
 
     write(*, *) 'Reading namelist ', TRIM(f_stella_nml)
     open(58, FILE=TRIM(f_stella_nml), delim='apostrophe')
@@ -2341,7 +2343,7 @@ contains
 ! Dump boozer geometry for DKES
 
     if (yes_boozer == 1) then
-        open(32, file='vmec_dat/inboozer.in')
+        open(32, file=TRIM(BOOZER_INFILE))
         write(32, '(33333I8)') mboz, nboz
         write(32, *) ' VMECoutput '
         write(32, '(33333I8)') [(i, i=1, NEQUIL)]
@@ -2349,7 +2351,8 @@ contains
 
         if (TIME >= TSTART+t_boozero .or. TIME <= TSTART) then
             command_line = 'cd vmec_dat && ' // TRIM(mpi_command) // ' -n 1 ' // &
-                TRIM(stellopt_dir) // '/BOOZ_XFORM/Release/xbooz_xform inboozer.in ../' // &
+                TRIM(stellopt_dir) // '/BOOZ_XFORM/Release/xbooz_xform ../' // &
+                TRIM(BOOZER_INFILE) // ' ../' // &
                 TRIM(f_true_surf) // ' && cd ..'
             write(*, *) TRIM(command_line)
             call execute_command_line(TRIM(command_line)) ! Input: vmec_dat/inboozer.in, vmec_io/true_surfaces.txt, ./wout_VMECoutput.nc; Output: ./boozmn_VMECoutput.nc
