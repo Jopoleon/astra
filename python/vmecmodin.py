@@ -2,6 +2,7 @@
 
 import argparse, re, os
 import numpy as np
+from parse_fortran_nml import parse_fortran_namelist
 
 
 def replaceArray(text, arrName, arrStr):
@@ -17,12 +18,17 @@ def replaceParams(text, curtor, phiedge, nequil):
     return text
 
 
-def write_vmecinput(curtor, phiedge, nequil, raxis=None, zaxis=None, template_file='vmec_io/vmecinput_template.dat', output_file='dat/vmecinput.dat'):
+def write_vmecinput(curtor, phiedge, nequil, raxis=None, zaxis=None, template_file='vmec_io/vmecinput_template.dat', namelist_path='vmec_io/stell_files.nml'):
     """Replace CURTOR, PHIEDGE, NEQUIL (optional RAXIS, ZAXIS) from vmec_io/vmecinput_template.dat into dat/vmecinput.dat"""
 
 # Read template
     if not os.path.isfile(template_file):
         raise FileNotFoundError(f"Template file not found: {template_path}")
+
+    nl_vmec = parse_fortran_namelist(namelist_path, 'VMEC_TO_ASTRA_INPUTS')
+    print(nl_vmec.keys())
+    output_file = nl_vmec['vmec_in_file']
+
     with open(template_file, 'r') as f:
         text = f.read()
 

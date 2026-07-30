@@ -2194,8 +2194,8 @@ contains
     double precision, dimension(NRD) :: pressure, svmec, curtorprof
 
     character(len=32) :: n_nodes
-    character(len=256) :: path_to_vmec, stellopt_dir, f_data_in, mpi_command, &
-        f_stella_nml, VMEC_WOUT_FILE, BOOZER_FILE
+    character(len=256) :: path_to_vmec, stellopt_dir, mpi_command, &
+        f_stella_nml, VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE
     character(len=1000) :: command_line, raxis_str, zaxis_str, f_true_surf='vmec_io/true_surfaces.txt'
     character(len=120) :: as_nml, PMASS_FILE="dat/vmecp.dat", &
         PIOTA_FILE="dat/vmeci.dat", PCURR_FILE="dat/vmecc.dat"
@@ -2205,7 +2205,7 @@ contains
     save init_vmecco, t_boozero
 
     NAMELIST / vmec / phi_full_surfaces, dt_boozer, vac_phase_stel, mboz, nboz
-    NAMELIST / vmec_to_astra_inputs / VMEC_WOUT_FILE, BOOZER_FILE
+    NAMELIST / vmec_to_astra_inputs / VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE
 
     CALL getenv('STELLOPT_PATH', stellopt_dir)
     path_to_vmec = TRIM(stellopt_dir) // '/VMEC2000/Release/'
@@ -2222,8 +2222,6 @@ contains
     open(58, FILE=TRIM(f_stella_nml), delim='apostrophe')
     read(58, nml=vmec_to_astra_inputs, iostat=ios)
     close(58)
-
-    f_data_in = TRIM(awd) // '/dat/vmecinput.dat'
 
     call execute_command_line("nproc")
     call get_environment_variable("MPI_COMMAND", mpi_command)
@@ -2249,7 +2247,7 @@ contains
 ! Replace CURTOR, PHIEDGE and NEQUIL -> write dat/vmecinput.dat
 
         if (vmec_vacuum == 0 .or. vmec_vacuum == 1) then
-            call execute_command_line('rm -f ' // TRIM(f_data_in)) ! Clean, to raise errors
+            call execute_command_line('rm -f ' // TRIM(VMEC_IN_FILE)) ! Clean, to raise errors
             write(command_line, '(A, F, 1X, F, 1X, I0)') "python python/vmecmodin.py ", &
                 vac_phase_stel*IPL*1.e6, SGNBT*phi_edgehog, NEQUIL
             if (vmec_vacuum == 0) then
@@ -2303,7 +2301,7 @@ contains
         call system_clock(start_count)
 
         command_line = trim(mpi_command) // ' -n ' // trim(n_nodes) // ' ' // &
-             trim(path_to_vmec) // '/xvmec2000 ' // trim(f_data_in)
+             trim(path_to_vmec) // '/xvmec2000 ' // trim(VMEC_IN_FILE)
         if (init_vmecco == 0) then
             init_vmecco = 1
         else
