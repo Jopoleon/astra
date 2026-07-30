@@ -7,24 +7,28 @@ INC_DIR = $(AWD)/inc
 MOD_ASTRA = $(AWD)/mod/astra
 LIBASTRA = $(AWD)/lib/libastra.a
 AENV = $(AWD)/exe/astra_rc
+PLATFORM := $(shell $(AWD)/get_platform)
 
 ifeq ($(FC),gfortran)
-  ADD_LIBS :=
-  OMP_FFLAG =-fopenmp
-  LD := $(FC)
-  LD_MPI := $(MPIFC) $(OMP_FFLAG)
+   ADD_LIBS :=
+   OMP_FFLAG =-fopenmp
+   LD := $(FC)
+   LD_MPI := $(MPIFC) $(OMP_FFLAG)
 else
-  ADD_LIBS := -L$(COMP_LIBDIR) -lifcoremt -lifport -lifcore
-  OMP_CFLAG =-qopenmp
-  OMP_FFLAG =-qopenmp
-  LD := $(CC)
-  LD_MPI := $(MPICC) $(OMP_CFLAG)
+   ADD_LIBS := -L$(COMP_LIBDIR) -lifcoremt -lifport -lifcore
+   OMP_CFLAG =-qopenmp
+   OMP_FFLAG =-qopenmp
+   LD := $(CC)
+   LD_MPI := $(MPICC) $(OMP_CFLAG)
 endif
 MPI_FC = $(MPIFC)
 
 # TGLF
 
 MKL_LIB = -Wl,--start-group $(MKL_LIBDIR)/libmkl_intel_lp64.a $(MKL_LIBDIR)/libmkl_core.a $(MKL_LIBDIR)/libmkl_sequential.a -Wl,--end-group
+ifeq ($(PLATFORM),darwin)
+   MKL_LIB = -L$(OPENBLAS_LIBDIR) -lopenblas
+endif
 
 #-----
 

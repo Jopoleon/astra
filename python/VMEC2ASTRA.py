@@ -1,8 +1,17 @@
-import sys, os, re, argparse
+import sys, os, re, argparse, logging
 import numpy as np
 from scipy.io import netcdf_file
 from scipy.interpolate import interp1d
 from parse_fortran_nml import parse_fortran_namelist
+
+fmt = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s: %(message)s', '%H:%M:%S')
+logger = logging.getLogger('vmec2a')
+if len(logger.handlers) == 0:
+    hnd = logging.StreamHandler()
+    hnd.setFormatter(fmt)
+    logger.addHandler(hnd)
+#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 py_stel_path = os.path.join(os.environ.get("STELLOPT_PATH"), "pySTEL")
 sys.path.insert(0, py_stel_path)
@@ -474,11 +483,9 @@ def maybe_write_pellet_chord(dat, nl_path='vmec_io/stell_files.nml'):
                 paths.append(stem)
             for out in paths:
                 write_pellet_chord(out, l, rho, s, modB, R, Z, meta)
-                print(f"Wrote pellet chord {out}: {len(l)} pts, "
-                  f"deepest rho={np.min(rho):.4f}, |v|={meta['vmag']:.1f} m/s", 
-                  flush=True)
+                logger.info(f"Wrote pellet chord {out}: {len(l)} pts, deepest rho={np.min(rho):.4f}, |v|={meta['vmag']:.1f} m/s")
     except Exception as e:
-        print(f"pellet chord skipped: {e}", flush=True)
+        logger.error(f"pellet chord skipped: {e}")
 
 
 parser = argparse.ArgumentParser()
@@ -501,7 +508,7 @@ nl_dkes = parse_fortran_namelist(namelist_path, 'ASTRA_DKES_INTERFACE')
 try:
     wout_file = nl_vmec['vmec_wout_file']
 except KeyError:
-    print(f"ERROR: 'VMEC_WOUT_FILE' not found in namelist '{namelist_path}'")
+    logger.error(f"ERROR: 'VMEC_WOUT_FILE' not found in namelist '{namelist_path}'")
     sys.exit(1)
 
 wout_basename = os.path.basename(wout_file)
@@ -520,7 +527,7 @@ maybe_write_pellet_chord(data)
 mn_index_b00 = np.where((data.xm_nyq == 0) & (data.xn_nyq == 0))[0]
 
 if mn_index_b00.size == 0:
-    print("ERROR: Could not find the (m=0, n=0) mode for 'bmnc'.")
+    logger.error("ERROR: Could not find the (m=0, n=0) mode for 'bmnc'.")
     sys.exit(1)
 
 B00_physical_profile = data.bmnc[:, mn_index_b00].squeeze()
@@ -575,9 +582,6 @@ S22 *= fac1     #S22ASTRA = rho*S22Strand
 #F0_contrib = -phi[-1]*s32[-1]/(GP2*BTOR*RHOVMECmesh)
 Ip_contrib = np.abs(0.*data.rbtor)
 F0_contrib = np.abs(0.*data.rbtor)
-
-print(Ip_contrib)
-print(F0_contrib)
 
 # Force S11[0], S12[0], S21[0] = 0.
 S11[0] = 0.
@@ -706,7 +710,6 @@ with open(metric_file, 'wb') as f:
         rmns_all = np.asarray(data.rmns, dtype=np.float64)
         zmnc_all = np.asarray(data.zmnc, dtype=np.float64)
     ns_all = rmnc_all.shape[0]   # number of flux surfaces
-    print(ns_all)
     
     np.array([ns_all], dtype=np.int32).tofile(f)
 
@@ -723,21 +726,20 @@ header_file     = nl_dkes['vmec_header_file']
 radius_out      = nl_dkes['minor_radius_w7as_file']
 
 np.savetxt(b00_output_file, B00_ASTRA_grid)
-print(f'Wrote B00 profile to {b00_output_file}')
+logger.info(f'Wrote B00 profile to {b00_output_file}')
 
 with open(header_file, 'w') as f:
     f.write(f'{ABC:.10e}\n')
     f.write(f'{psi_a:.10e}\n')
 
-print(f'Wrote ABC and psi_a to {header_file}')
-
-print(f'Update the .exp file:')
-print(f"Major radius (RTOR): {data.rmajor:.4f} m")
-print(f"Minor radius (ABC and AB):  {data.aminor:.4f} m")
-print(f"Toroidal field on axis (BTOR): {data.b0:.4f} T")
+logger.info(f'Wrote ABC and psi_a to {header_file}')
+logger.info(f'Update the .exp file:')
+logger.info(f"Major radius (RTOR): {data.rmajor:.4f} m")
+logger.info(f"Minor radius (ABC and AB):  {data.aminor:.4f} m")
+logger.info(f"Toroidal field on axis (BTOR): {data.b0:.4f} T")
 
 a2 = np.sum(rmnc_lcfs*zmns_lcfs*xm)
 a_booz = np.sqrt(a2)
 with open(radius_out, 'w') as f:
     f.write(str(a_booz.item()))
-print(f"Saved minor radius to: {radius_out}")
+logger.info(f"Saved minor radius to: {radius_out}")

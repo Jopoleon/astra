@@ -1,8 +1,25 @@
 #!/bin/bash
 
+platform=`$AWD/get_platform`
+
 #JSON
 
 JSON_HOME=${ASTRA_EXT}/json/9.0.2
+TORBEAM_HOME=${ASTRA_EXT}/torbeam/nov24
+RABBIT_HOME=${ASTRA_EXT}/rabbit/may26
+TGLF_HOME=${ASTRA_EXT}/tglf/jun25
+NEO_HOME=${ASTRA_EXT}/neo/dec24
+QLK_HOME=${ASTRA_EXT}/qualikiz/nov24
+QLKNN_HOME=${ASTRA_EXT}/qlk_nn/nov24
+if [[ "$platform" = "darwin" ]]; then
+    JSON_HOME=${ASTRA_EXT}/json
+    TORBEAM_HOME=${ASTRA_EXT}/torbeam
+    RABBIT_HOME=${ASTRA_EXT}/rabbit
+    TGLF_HOME=${ASTRA_EXT}/tglf
+    NEO_HOME=${ASTRA_EXT}/neo
+    QLK_HOME=${ASTRA_EXT}/qualikiz
+    QLKNN_HOME=${ASTRA_EXT}/qlk_nn
+fi
 export JSON_LIB=$JSON_HOME/lib/libjsonfortran.a
 export JSON_INC=$JSON_HOME/inc
 
@@ -20,7 +37,7 @@ fi
 # TORBEAM
 
 IRC_LIB="-L${COMP_LIBDIR} -lirc" # necessary for libtorbeam.so
-TORBEAM_LIBDIR=${ASTRA_EXT}/torbeam/nov24/lib
+TORBEAM_LIBDIR=${TORBEAM_HOME}/lib
 if [ -f ${TORBEAM_LIBDIR}/libtorbeamB.so ]; then
     export TORBEAM_LIB="-L${TORBEAM_LIBDIR} -ltorbeamB -Wl,-rpath,${TORBEAM_LIBDIR} ${IRC_LIB}"
 else
@@ -29,9 +46,9 @@ fi
 
 # RABBIT
 
-RABBIT_HOME=${ASTRA_EXT}/rabbit/may26
 RABBIT_LIBDIR=${RABBIT_HOME}/lib
-if [ -f ${RABBIT_LIBDIR}/librabbit.so ]; then
+if [ -f ${RABBIT_LIBDIR}/librabbit.so ] || \
+   [ -f ${RABBIT_LIBDIR}/librabbit.dylib ]; then
     export RABBIT_LIB="-L${RABBIT_LIBDIR} -lrabbit -Wl,-rpath,${RABBIT_LIBDIR}"
 else
     unset RABBIT_LIB
@@ -52,24 +69,27 @@ fi
 
 # QuaLiKiZ
 
-QLK_HOME=${ASTRA_EXT}/qualikiz/nov24
 QLK_LIBDIR=${QLK_HOME}/lib
 export QLK_INC=${QLK_HOME}/inc
 export QLK_LIB=${QLK_LIBDIR}/libQLK-intel-release-default.a
+if [ -f ${QLK_LIBDIR}/libQLK-gcc-release-default.a ]; then
+    export QLK_LIB=${QLK_LIBDIR}/libQLK-gcc-release-default.a
+fi
 
 # Qualikiz Neural-Network
 
-QLKNN_HOME=${ASTRA_EXT}/qlk_nn/nov24
 QLKNN_LIBDIR=${QLKNN_HOME}/lib
 export QLKNN_INC=${QLKNN_HOME}/inc
 export QLKNN_LIB=${QLKNN_LIBDIR}/libQLKNN-intel-release-default.a
+if [ -f ${QLKNN_LIBDIR}/libQLKNN-gcc-release-default.a ]; then
+    export QLKNN_LIB=${QLKNN_LIBDIR}/libQLKNN-gcc-release-default.a
+fi
 if [ ! -f ${QLKNN_LIB} ]; then
     unset QLKNN_LIB
 fi
 
 # TGLF
 
-TGLF_HOME=${ASTRA_EXT}/tglf/jun25
 export TGLF_INC=${TGLF_HOME}/inc
 export TGLF_LIB=${TGLF_HOME}/lib/libtglf.a
 if [ ! -f ${TGLF_LIB} ]; then
@@ -78,7 +98,6 @@ fi
 
 # NEO
 
-NEO_HOME=${ASTRA_EXT}/neo/dec24
 NEO_LIBDIR=${NEO_HOME}/lib
 export NEO_INC=${NEO_HOME}/inc
 export NEO_LIB="${NEO_LIBDIR}/neo_lib.a ${NEO_LIBDIR}/nclass_lib.a ${NEO_LIBDIR}/UMFPACK_lib.a ${NEO_LIBDIR}/math_lib.a ${NEO_LIBDIR}/expro_lib.a ${NEO_LIBDIR}/geo_lib.a"

@@ -1,7 +1,16 @@
-import sys, os, traceback
+import sys, os, traceback, logging
 import numpy as np
 from scipy.interpolate import PchipInterpolator
 from parse_fortran_nml import parse_fortran_namelist
+
+fmt = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s: %(message)s', '%H:%M:%S')
+logger = logging.getLogger('extractBoozer')
+if len(logger.handlers) == 0:
+    hnd = logging.StreamHandler()
+    hnd.setFormatter(fmt)
+    logger.addHandler(hnd)
+#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 def astra_rho(n_rho):
     hrox = 1.0 / (n_rho - 0.5)
@@ -156,9 +165,9 @@ def is_netcdf(path):
         with open(path, 'rb') as f:
             magic = f.read(4)
     except OSError:
-        print('OSerror')
+        logger.error('OSerror')
         return False
-    print(magic[:3])
+    logger.debug(magic[:3])
     return magic[:3] == b'CDF' or magic == b'\x89HDF'
 
 
@@ -180,10 +189,10 @@ if __name__ == "__main__":
     wout_file   = nl_vmec['vmec_wout_file']
 
     if not os.path.exists(boozer_file):
-        print('boozer_file %s not found' %boozer_file)
+        logger.error('boozer_file %s not found' %boozer_file)
         input('Press <Enter> to continue')
     if not is_netcdf(boozer_file):
-        print('boozer_file %s is not NetCDF nor HDF5' %boozer_file)
+        logger.error('boozer_file %s is not NetCDF nor HDF5' %boozer_file)
         input('Press <Enter> to continue')
 
     b00_out = "dat/b00_profile_boozer.txt"
@@ -196,19 +205,18 @@ if __name__ == "__main__":
         np.savetxt(b00_out, b00)
         with open(rad_out, 'w') as f:
             f.write(str(rad))
-        print(f"[{mode}] wrote {b00_out}  (first 5: {b00[:5]})")
-        print(f"[{mode}] wrote {rad_out}  (minorradiusW7AS = {rad})")
+        logger.info(f"[{mode}] wrote {b00_out}  (first 5: {b00[:5]})")
+        logger.info(f"[{mode}] wrote {rad_out}  (minorradiusW7AS = {rad})")
 
     except Exception as e:
         traceback.print_exc()
-        sys.stderr.write(
-            "\n" + "!" * 70 + "\n"
-            f"!! extract_boozer_data FAILED: {e}\n"
-            f"!! Boozer file: {boozer_file}\n"
-            "!! Writing ZERO B00 and ZERO minor radius as placeholders.\n"
-            "!! The DKES interface CANNOT produce a valid Er from these.\n"
-            "!! Fix the Boozer file / namelist path before trusting results.\n"
-            + "!" * 70 + "\n\n")
+        logger.error(f'''
+Extract_boozer_data FAILED: {e}
+Boozer file: {boozer_file}
+Writing ZERO B00 and ZERO minor radius as placeholders
+The DKES interface CANNOT produce a valid Er from these
+Fix the Boozer file / namelist path before trusting results
+''')
         np.savetxt(b00_out, np.zeros(npts))
         with open(rad_out, 'w') as f:
             f.write("0.0")
