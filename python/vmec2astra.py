@@ -515,7 +515,7 @@ except KeyError:
 wout_basename = os.path.basename(wout_file)
 shot_id = wout_basename.replace('wout_', '').replace('.nc', '')
 
-metric_file = f'dat/VMEC2ASTRA.bin'
+metric_file = nl_vmec['vmec2a_metric']
 
 #read wout file
 data = VMEC()

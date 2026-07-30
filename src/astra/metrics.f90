@@ -1,6 +1,7 @@
 module metrics
 
 use pi_const, only: GP, GP2, GP2_sq
+use read_input, only: AWD
 
 implicit none
 
@@ -9,6 +10,7 @@ logical :: plasma_up=.true.  ! plasma is up by default, can be set to False for 
 integer :: naxis
 real*8, allocatable :: raxiscc(:), zaxiscc(:)
 double precision, dimension(:), allocatable :: CCOIL, VCOIL
+character(len=256) :: VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE, VMEC2A_METRIC
 
 
 contains
@@ -2006,6 +2008,22 @@ contains
         enddo
     enddo
     end subroutine fourier_expansion
+  
+!---------------------------------------------------------------------
+    subroutine vmec_io_files
+
+    integer :: ios
+    character(len=256) :: f_stella_nml
+
+    f_stella_nml = TRIM(awd) // '/vmec_io/stell_files.nml'
+    NAMELIST / vmec_to_astra_inputs / VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE, VMEC2A_METRIC
+
+    write(*, *) 'Reading namelist ', TRIM(f_stella_nml)
+    open(58, FILE=TRIM(f_stella_nml), delim='apostrophe')
+    read(58, nml=vmec_to_astra_inputs, iostat=ios)
+    close(58)
+
+    end subroutine vmec_io_files
 
 !---------------------------------------------------------------------
     subroutine vmec_interface(vmec_vacuum, vmec_dteq, yes_boozer)
@@ -2044,16 +2062,20 @@ contains
         allocate(bndz(MEQUIL))
     endif
 
+! Set I/O paths for VMEDC I/O files
+
+    call vmec_io_files()
+
 ! Run VMEC stand-alone
     call a2vmec(vmec_vacuum, vmec_dteq, yes_boozer, f_boundary, phi_full_surfaces)
 
 ! Collect VMEC output and store it into ASTRA arrays
     call get_environment_variable("PYTHON_BIN", py_command)
-    write(cmd, '(A, A, I0)') trim(py_command), ' python/VMEC2ASTRA.py ', NA1
+    write(cmd, '(A, A, I0)') trim(py_command), ' python/vmec2astra.py ', NA1
     write(*, *) cmd
     call execute_command_line(trim(cmd), wait=.true.)
 
-    open(unit=10, file='dat/VMEC2ASTRA.bin', form='unformatted', access='stream')
+    open(unit=10, file=TRIM(VMEC2A_METRIC), form='unformatted', access='stream')
     read(10) HROX, HRO, ROC, RTOR, ABC, BTOR, volume, GVAC, f_boundary, nfperiods, &
         dphidsb_stella, dum1, dum2
     read(10) RHO(1:NA1), SRHO(1:NA1), SG11(1:NA1), SG12(1:NA1), &
@@ -2194,8 +2216,7 @@ contains
     double precision, dimension(NRD) :: pressure, svmec, curtorprof
 
     character(len=32) :: n_nodes
-    character(len=256) :: path_to_vmec, stellopt_dir, mpi_command, &
-        f_stella_nml, VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE
+    character(len=256) :: stellopt_dir, mpi_command
     character(len=1000) :: command_line, raxis_str, zaxis_str, f_true_surf='vmec_io/true_surfaces.txt'
     character(len=120) :: as_nml, PMASS_FILE="dat/vmecp.dat", &
         PIOTA_FILE="dat/vmeci.dat", PCURR_FILE="dat/vmecc.dat"
@@ -2205,23 +2226,15 @@ contains
     save init_vmecco, t_boozero
 
     NAMELIST / vmec / phi_full_surfaces, dt_boozer, vac_phase_stel, mboz, nboz
-    NAMELIST / vmec_to_astra_inputs / VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE
 
     CALL getenv('STELLOPT_PATH', stellopt_dir)
-    path_to_vmec = TRIM(stellopt_dir) // '/VMEC2000/Release/'
 
     as_nml = TRIM(awd) // '/' // TRIM(nml_file)
-    f_stella_nml = TRIM(awd) // '/vmec_io/stell_files.nml'
 
     write(*, *) 'Reading namelist ', TRIM(as_nml)
     open(57, FILE=TRIM(as_nml), delim='apostrophe')
     read(57, nml=vmec, iostat=ios)
     close(57)
-
-    write(*, *) 'Reading namelist ', TRIM(f_stella_nml)
-    open(58, FILE=TRIM(f_stella_nml), delim='apostrophe')
-    read(58, nml=vmec_to_astra_inputs, iostat=ios)
-    close(58)
 
     call execute_command_line("nproc")
     call get_environment_variable("MPI_COMMAND", mpi_command)
@@ -2301,7 +2314,7 @@ contains
         call system_clock(start_count)
 
         command_line = trim(mpi_command) // ' -n ' // trim(n_nodes) // ' ' // &
-             trim(path_to_vmec) // '/xvmec2000 ' // trim(VMEC_IN_FILE)
+              TRIM(stellopt_dir) // '/VMEC2000/Release/xvmec2000 ' // trim(VMEC_IN_FILE)
         if (init_vmecco == 0) then
             init_vmecco = 1
         else

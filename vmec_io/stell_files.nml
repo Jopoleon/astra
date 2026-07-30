@@ -6,6 +6,7 @@
   VMEC_WOUT_FILE = 'dat/wout_VMECoutput.nc'
   BOOZER_FILE    = 'dat/boozmn_VMECoutput.nc'
   VMEC_IN_FILE   = 'dat/vmecinput.dat'
+  VMEC2A_METRIC  = 'dat/vmec2astra.bin'
 /
 
 &ASTRA_DKES_INTERFACE
