@@ -269,8 +269,8 @@ class PointGeom(object):
         Z = np.dot(zc, sa)
         R_t = np.dot(rc, -self.xm * sa)
         R_z = np.dot(rc, -self.xn * sa)
-        Z_t = np.dot(zc, self.xm * ca)
-        Z_z = np.dot(zc, self.xn * ca)
+        Z_t = np.dot(zc,  self.xm * ca)
+        Z_z = np.dot(zc,  self.xn * ca)
         R_s = np.dot(rc_s, ca)
         Z_s = np.dot(zc_s, sa)
 
@@ -279,14 +279,18 @@ class PointGeom(object):
         modB = np.dot(bc, np.cos(an))
 
         if self.iasym == 1:
-            rsc = self._interp_row(self.rmns, s)
-            zcc = self._interp_row(self.zmnc, s)
+            rsc  = self._interp_row(self.rmns, s)
+            zcc  = self._interp_row(self.zmnc, s)
             rsc_s = self._deriv_row(self.rmns, s)
             zcc_s = self._deriv_row(self.zmnc, s)
-            R += np.dot(rsc, sa);            Z += np.dot(zcc, ca)
-            R_t += np.dot(rsc, self.xm * ca); R_z += np.dot(rsc, self.xn * ca)
-            Z_t += np.dot(zcc, -self.xm * sa); Z_z += np.dot(zcc, -self.xn * sa)
-            R_s += np.dot(rsc_s, sa);         Z_s += np.dot(zcc_s, ca)
+            R += np.dot(rsc, sa)
+            Z += np.dot(zcc, ca)
+            R_t += np.dot(rsc,  self.xm * ca)
+            R_z += np.dot(rsc,  self.xn * ca)
+            Z_t += np.dot(zcc, -self.xm * sa)
+            Z_z += np.dot(zcc, -self.xn * sa)
+            R_s += np.dot(rsc_s, sa)
+            Z_s += np.dot(zcc_s, ca)
             bsc = self._interp_row(self.bmns, s)
             modB += np.dot(bsc, np.sin(an))
 
@@ -352,19 +356,28 @@ def compute_pellet_chord(dat, launch_theta, launch_phi, v_xyz,
         if y[0] < 0.0:
             y[0] = -y[0]
         li = (i + 1) * dl
-        ls.append(li); ss.append(y[0]); ths.append(y[1]); zes.append(y[2])
+        ls.append(li)
+        ss.append(y[0])
+        ths.append(y[1])
+        zes.append(y[2])
         if y[0] < 0.98:
             entered = True
         if entered and y[0] >= 1.0:
             break
 
-    ls = np.array(ls); ss = np.clip(np.array(ss), 0.0, 1.0)
-    ths = np.array(ths); zes = np.array(zes)
+    ls = np.array(ls)
+    ss = np.clip(np.array(ss), 0.0, 1.0)
+    ths = np.array(ths)
+    zes = np.array(zes)
     rho = np.sqrt(ss)
-    modB = np.empty_like(ls); R = np.empty_like(ls); Z = np.empty_like(ls)
+    modB = np.empty_like(ls)
+    R = np.empty_like(ls)
+    Z = np.empty_like(ls)
     for i in range(len(ls)):
         g = pg.eval(ss[i], ths[i], zes[i])
-        modB[i] = g['modB']; R[i] = g['R']; Z[i] = g['Z']
+        modB[i] = g['modB']
+        R[i] = g['R']
+        Z[i] = g['Z']
     return ls, rho, ss, modB, R, Z
 
 
@@ -461,7 +474,7 @@ def maybe_write_pellet_chord(dat, nl_path='vmec_io/stell_files.nml'):
                 paths.append(stem)
             for out in paths:
                 write_pellet_chord(out, l, rho, s, modB, R, Z, meta)
-            print(f"Wrote pellet chord {paths[0]}: {len(l)} pts, "
+                print(f"Wrote pellet chord {out}: {len(l)} pts, "
                   f"deepest rho={np.min(rho):.4f}, |v|={meta['vmag']:.1f} m/s", 
                   flush=True)
     except Exception as e:
@@ -543,7 +556,7 @@ ROC = np.sqrt(phi[-1]/(np.pi*BTOR))
 dphidsb = np.abs(data.phipf[-1].item())
 RHO  = XRHO*ROC
 SRHO = SXHO*ROC
-HRO  =  RHO[1] - RHO[0]
+HRO  = RHO[1] - RHO[0]
 RHOVMECmesh = np.sqrt(phi/(np.pi*BTOR))
 
 # calculate susceptance matrix (on full mesh)
