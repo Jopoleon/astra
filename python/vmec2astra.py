@@ -13,6 +13,7 @@ if len(logger.handlers) == 0:
 #logger.setLevel(logging.DEBUG)
 logger.setLevel(logging.INFO)
 
+awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 py_stel_path = os.path.join(os.environ.get("STELLOPT_PATH"), "pySTEL")
 sys.path.insert(0, py_stel_path)
 
@@ -507,7 +508,8 @@ nl_vmec = parse_fortran_namelist(namelist_path, 'VMEC_TO_ASTRA_INPUTS')
 nl_dkes = parse_fortran_namelist(namelist_path, 'ASTRA_DKES_INTERFACE')
 
 try:
-    wout_file = nl_vmec['vmec_wout_file']
+    vmec_wd = f'{awd}/{nl_vmec["vmec_wd"]}'
+    wout_file = f'{vmec_wd}/{nl_vmec["vmec_wout_file"]}'
 except KeyError:
     logger.error(f"ERROR: 'VMEC_WOUT_FILE' not found in namelist '{namelist_path}'")
     sys.exit(1)
@@ -515,7 +517,7 @@ except KeyError:
 wout_basename = os.path.basename(wout_file)
 shot_id = wout_basename.replace('wout_', '').replace('.nc', '')
 
-metric_file = nl_vmec['vmec2a_metric']
+metric_file = f'{vmec_wd}/{nl_vmec["vmec2a_metric"]}'
 
 #read wout file
 data = VMEC()
@@ -722,9 +724,9 @@ with open(metric_file, 'wb') as f:
     phi = np.asarray(data.phi, dtype=np.float64)
     phi.tofile(f)                                # then data
 
-b00_output_file = nl_dkes['b00_profile_file']
-header_file     = nl_dkes['vmec_header_file']
-radius_out      = nl_dkes['minor_radius_w7as_file']
+b00_output_file = f'{vmec_wd}/{nl_dkes["b00_profile_file"]}'
+header_file     = f'{vmec_wd}/{nl_dkes["vmec_header_file"]}'
+radius_out      = f'{vmec_wd}/{nl_dkes["minor_radius_w7as_file"]}'
 
 np.savetxt(b00_output_file, B00_ASTRA_grid)
 logger.info(f'Wrote B00 profile to {b00_output_file}')

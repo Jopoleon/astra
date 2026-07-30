@@ -4,6 +4,8 @@ import argparse, re, os
 import numpy as np
 from parse_fortran_nml import parse_fortran_namelist
 
+awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
 
 def replaceArray(text, arrName, arrStr):
     return re.sub(r'^\s*( ' + arrName + r'\s*=).*', r'\1 ' + arrStr, text, flags=re.MULTILINE)
@@ -24,8 +26,9 @@ def write_vmecinput(curtor, phiedge, nequil, raxis=None, zaxis=None, template_fi
         raise FileNotFoundError(f"Template file not found: {template_path}")
 
     nl_vmec = parse_fortran_namelist(namelist_path, 'VMEC_TO_ASTRA_INPUTS')
-    output_file = nl_vmec['vmec_in_file']
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    vmec_wd = f'{awd}/{nl_vmec["vmec_wd"]}'
+    output_file = f'{vmec_wd}/{nl_vmec["vmec_in_file"]}'
+    os.makedirs(vmec_wd, exist_ok=True)
 
     with open(template_file, 'r') as f:
         text = f.read()

@@ -10,8 +10,8 @@ logical :: plasma_up=.true.  ! plasma is up by default, can be set to False for 
 integer :: naxis
 real*8, allocatable :: raxiscc(:), zaxiscc(:)
 double precision, dimension(:), allocatable :: CCOIL, VCOIL
-character(len=256) :: VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE, &
-    VMEC2A_METRIC, BOOZER_INFILE
+character(len=256) :: f_vmec_wout, f_boozer, f_vmec_in, f_vmec_metric, &
+    f_boozer_in, vmec_work_dir
 
 
 contains
@@ -2015,15 +2015,24 @@ contains
 
     integer :: ios
     character(len=256) :: f_stella_nml
+    character(len=256) :: VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE, &
+        VMEC2A_METRIC, BOOZER_INFILE, VMEC_WD
 
     f_stella_nml = TRIM(awd) // '/vmec_io/stell_files.nml'
     NAMELIST / vmec_to_astra_inputs / VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE, &
-        VMEC2A_METRIC, BOOZER_INFILE
+        VMEC2A_METRIC, BOOZER_INFILE, VMEC_WD
 
     write(*, *) 'Reading namelist ', TRIM(f_stella_nml)
     open(58, FILE=TRIM(f_stella_nml), delim='apostrophe')
     read(58, nml=vmec_to_astra_inputs, iostat=ios)
     close(58)
+
+    vmec_work_dir = TRIM(awd) // '/' // TRIM(VMEC_WD) // '/'
+    f_vmec_wout   = TRIM(vmec_work_dir) // TRIM(VMEC_WOUT_FILE)
+    f_boozer      = TRIM(vmec_work_dir) // TRIM(BOOZER_FILE)
+    f_vmec_in     = TRIM(vmec_work_dir) // TRIM(VMEC_IN_FILE)
+    f_vmec_metric = TRIM(vmec_work_dir) // TRIM(VMEC2A_METRIC)
+    f_boozer_in   = TRIM(vmec_work_dir) // TRIM(BOOZER_INFILE)
 
     end subroutine vmec_io_files
 
@@ -2077,7 +2086,7 @@ contains
     write(*, *) cmd
     call execute_command_line(trim(cmd), wait=.true.)
 
-    open(unit=10, file=TRIM(VMEC2A_METRIC), form='unformatted', access='stream')
+    open(unit=10, file=TRIM(f_vmec_metric), form='unformatted', access='stream')
     read(10) HROX, HRO, ROC, RTOR, ABC, BTOR, volume, GVAC, f_boundary, nfperiods, &
         dphidsb_stella, dum1, dum2
     read(10) RHO(1:NA1), SRHO(1:NA1), SG11(1:NA1), SG12(1:NA1), &
@@ -2142,8 +2151,8 @@ contains
     close(10)
 
 ! Clean working files to make sure errors are raised
-    call execute_command_line('rm vmec_dat/*.dat')
-    call execute_command_line('rm vmec_dat/*.txt')
+    call execute_command_line('rm ' // TRIM(vmec_work_dir) // '/*.dat')
+    call execute_command_line('rm ' // TRIM(vmec_work_dir) // '/*.txt')
 
     if (phi_full_surfaces < 0.) then ! plot LCFS for various toroidal angles if phi_full_surfaces < 0
         stella_which_surf = 0
@@ -2210,7 +2219,7 @@ contains
     use status, only: TE, NE, FP, XRHO, ZEF, MU, ELON, SHif , IPOL, &
         AMETR, VOLUM, PEECR, CUECR, AREAT, rho_pol, FP_NORM, &
         PBLON, PBPER, PFAST, TI, NI, CU, SG11, SG12, MV
-    use read_input, only: AWD, nml_file
+    use read_input, only: nml_file
     use stella_module, only: phi_edge_total
 
     integer, intent(in):: vmec_vacuum, vmec_dteq, yes_boozer
@@ -2222,10 +2231,10 @@ contains
     double precision, dimension(NRD) :: pressure, svmec, curtorprof
 
     character(len=32) :: n_nodes
-    character(len=256) :: stellopt_dir, mpi_command
-    character(len=1000) :: command_line, raxis_str, zaxis_str, f_true_surf='vmec_io/true_surfaces.txt'
-    character(len=120) :: as_nml, PMASS_FILE="vmec_dat/vmecp.dat", &
-        PIOTA_FILE="vmec_dat/vmeci.dat", PCURR_FILE="vmec_dat/vmecc.dat"
+    character(len=256) :: stellopt_dir, mpi_command, f_true_surf
+    character(len=1000) :: command_line, raxis_str, zaxis_str
+    character(len=120) :: as_nml, PMASS_FILE="vmecp.dat", &
+        PIOTA_FILE="vmeci.dat", PCURR_FILE="vmecc.dat"
 
     data init_vmecco/0/
     data t_boozero/0./
@@ -2234,7 +2243,7 @@ contains
     NAMELIST / vmec / phi_full_surfaces, dt_boozer, vac_phase_stel, mboz, nboz
 
     CALL getenv('STELLOPT_PATH', stellopt_dir)
-
+    f_true_surf = TRIM(awd) // '/vmec_io/true_surfaces.txt'
     as_nml = TRIM(awd) // '/' // TRIM(nml_file)
 
     write(*, *) 'Reading namelist ', TRIM(as_nml)
@@ -2263,10 +2272,9 @@ contains
         curtorprof(NA1) = IPL
 
 !--------------------------------------------------------------
-! Replace CURTOR, PHIEDGE and NEQUIL -> write vmec_dat/vmecinput.dat
+! Replace CURTOR, PHIEDGE and NEQUIL -> write VMEC_WD/vmecinput.dat
 
         if (vmec_vacuum == 0 .or. vmec_vacuum == 1) then
-            call execute_command_line('rm -f ' // TRIM(VMEC_IN_FILE)) ! Clean, to raise errors
             write(command_line, '(A, F, 1X, F, 1X, I0)') "python python/vmecmodin.py ", &
                 vac_phase_stel*IPL*1.e6, SGNBT*phi_edgehog, NEQUIL
             if (vmec_vacuum == 0) then
@@ -2291,21 +2299,21 @@ contains
 !-----------------------------------------------------------------
 ! Write pressure, iota and current files (vmecp, vmeci, vmecc.dat)
 
-        open(132, file=TRIM(PMASS_FILE))
+        open(132, file=TRIM(vmec_work_dir) // TRIM(PMASS_FILE))
         write(132, *) NA1
         do i=1, NA1
             write(132, *) svmec(i), vac_phase_stel*pressure(i)
         enddo
         close(132)
 
-        open(133, file=TRIM(PIOTA_FILE))
+        open(133, file=TRIM(vmec_work_dir) // TRIM(PIOTA_FILE))
         write(133, *) NA1
         do i=1, NA1
             write(133, *) svmec(i), MU(i)
         enddo
         close(133)
  
-        open(134, file=TRIM(PCURR_FILE))
+        open(134, file=TRIM(vmec_work_dir) // TRIM(PCURR_FILE))
         write(134, *) NA1
         do i=1, NA1
             write(134, *) svmec(i), vac_phase_stel*curtorprof(i)*1.e6  ! A/m^2
@@ -2320,11 +2328,11 @@ contains
         call system_clock(start_count)
 
         command_line = trim(mpi_command) // ' -n ' // trim(n_nodes) // ' ' // &
-              TRIM(stellopt_dir) // '/VMEC2000/Release/xvmec2000 ' // trim(VMEC_IN_FILE)
+              TRIM(stellopt_dir) // '/VMEC2000/Release/xvmec2000 ' // trim(f_vmec_in)
         if (init_vmecco == 0) then
             init_vmecco = 1
         else
-            command_line = trim(command_line) // ' reset=' // TRIM(VMEC_WOUT_FILE)
+            command_line = trim(command_line) // ' reset=' // TRIM(f_vmec_wout)
         endif
         write(*, *) TRIM(command_line)
         call execute_command_line(trim(command_line))
@@ -2335,7 +2343,7 @@ contains
         call system_clock(end_count)
         write(*, *) 'time spent on vmec : ', real(end_count-start_count, 8)/real(count_rate, 8)
 
-        command_line = 'mv wout_dat.nc ' // TRIM(VMEC_WOUT_FILE)
+        command_line = 'mv wout_dat.nc ' // TRIM(f_vmec_wout)
         write(*, *) TRIM(command_line)
         call execute_command_line(TRIM(command_line))
     endif  ! vmec dteq command
@@ -2344,19 +2352,19 @@ contains
 ! Dump boozer geometry for DKES
 
     if (yes_boozer == 1) then
-        open(32, file=TRIM(BOOZER_INFILE))
+        open(32, file=TRIM(f_boozer_in))
         write(32, '(33333I8)') mboz, nboz
         write(32, *) ' VMECoutput '
         write(32, '(33333I8)') [(i, i=1, NEQUIL)]
         close(32)
 
         if (TIME >= TSTART+t_boozero .or. TIME <= TSTART) then
-            command_line = 'cd vmec_dat && ' // TRIM(mpi_command) // ' -n 1 ' // &
-                TRIM(stellopt_dir) // '/BOOZ_XFORM/Release/xbooz_xform ../' // &
-                TRIM(BOOZER_INFILE) // ' ../' // &
-                TRIM(f_true_surf) // ' && cd ..'
+            command_line = 'cd ' // TRIM(vmec_work_dir) // ' && ' // &
+                TRIM(mpi_command)  // ' -n 1 ' // &
+                TRIM(stellopt_dir) // '/BOOZ_XFORM/Release/xbooz_xform ' // &
+                TRIM(f_boozer_in)  // ' ' // TRIM(f_true_surf)
             write(*, *) TRIM(command_line)
-            call execute_command_line(TRIM(command_line)) ! Input: vmec_dat/inboozer.in, vmec_io/true_surfaces.txt, ./wout_VMECoutput.nc; Output: ./boozmn_VMECoutput.nc
+            call execute_command_line(TRIM(command_line)) ! Input: VMEC_WD/inboozer.in, vmec_io/true_surfaces.txt, ./wout_VMECoutput.nc; Output: ./boozmn_VMECoutput.nc
             t_boozero = time - tstart + dt_boozer
         endif
     endif
@@ -2369,12 +2377,12 @@ contains
 !                                reused DKES table (no Boozer run needed);
 !   * NetCDF boozmn (generated)-> reads the fresh 7-surface transform just
 !                                produced above when yes_boozer==1.
-! Either way it writes vmec_dat/b00_profile_boozer.txt and vmec_dat/minorradiusW7AS.txt
+! Either way it writes VMEC_WD/b00_profile_boozer.txt and VMEC_WD/minorradiusW7AS.txt
 ! for the DKES interface.  NA1 is passed so the B00 profile length matches.
 ! ---------------------------------------------------------------------
     write(command_line, '(A, I0)') 'python python/extract_boozer_data.py ', NA1
     write(*, *) TRIM(command_line)
-    call execute_command_line(command_line) ! Input: vmec_dat/boozmn_VMECoutput.nc; Output vmec_dat/b00_profile_boozer.txt, vmec_dat/minorradiusW7AS.txt
+    call execute_command_line(command_line) ! Input: VMEC_WD/boozmn_VMECoutput.nc; Output VMEC_WD/b00_profile_boozer.txt, VMEC_WD/minorradiusW7AS.txt
 
     end subroutine a2vmec
 

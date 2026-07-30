@@ -12,6 +12,9 @@ if len(logger.handlers) == 0:
 #logger.setLevel(logging.DEBUG)
 logger.setLevel(logging.INFO)
 
+awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
+
 def astra_rho(n_rho):
     hrox = 1.0 / (n_rho - 0.5)
     grid = np.arange(n_rho, dtype=np.float32) + 0.5*hrox
@@ -185,8 +188,9 @@ if __name__ == "__main__":
         npts = nl_vmec.get('astra_nrad', 91)
     grid = astra_rho(npts)
 
-    boozer_file = nl_vmec['boozer_file']
-    wout_file   = nl_vmec['vmec_wout_file']
+    vmec_wd = f'{awd}/{nl_vmec["vmec_wd"]}'
+    boozer_file = f'{vmec_wd}/{nl_vmec["boozer_file"]}'
+    wout_file   = f'{vmec_wd}/{nl_vmec["vmec_wout_file"]}'
 
     if not os.path.exists(boozer_file):
         logger.error('boozer_file %s not found' %boozer_file)
@@ -195,8 +199,8 @@ if __name__ == "__main__":
         logger.error('boozer_file %s is not NetCDF nor HDF5' %boozer_file)
         input('Press <Enter> to continue')
 
-    b00_out = "dat/b00_profile_boozer.txt"
-    rad_out = "dat/minorradiusW7AS.txt"
+    b00_out = f'{vmec_wd}/b00_profile_boozer.txt'
+    rad_out = f'{vmec_wd}//minorradiusW7AS.txt'
 
     try:
         mode = "generated"
