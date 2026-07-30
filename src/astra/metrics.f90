@@ -2275,6 +2275,7 @@ contains
 ! Replace CURTOR, PHIEDGE and NEQUIL -> write VMEC_WD/vmecinput.dat
 
         if (vmec_vacuum == 0 .or. vmec_vacuum == 1) then
+            call execute_command_line('rm -f ' // TRIM(f_vmec_in)) ! Clean, to raise errors
             write(command_line, '(A, F, 1X, F, 1X, I0)') "python python/vmecmodin.py ", &
                 vac_phase_stel*IPL*1.e6, SGNBT*phi_edgehog, NEQUIL
             if (vmec_vacuum == 0) then
