@@ -128,7 +128,8 @@ do jrho=1, NA1
     endif
     rmaj_as(jrho) = RTOR + SHIF(jrho)
     q_as(jrho)    = 1./MU(jrho)
-    ptot_as(jrho) = NE(jrho)*TE(jrho) + ni_main_as(jrho)*TI(jrho) + NIZ1(jrho)*TI(jrho) + pfast(jrho) + 0.5*(pblon(jrho) + pbper(jrho))
+    ptot_as(jrho) = NE(jrho)*TE(jrho) + ni_main_as(jrho)*TI(jrho) + NIZ1(jrho)*TI(jrho) + &
+        pfast(jrho) + 0.5*(pblon(jrho) + pbper(jrho))
     bpolz = BTOR*AMETR(jrho)*MU(jrho)/RTOR
     bmod = sqrt(BTOR**2 + bpolz**2)
     vper_as(jrho) = ER(jrho)/(RTOR*bpolz) ! vexb in m/s --> Omega_E
@@ -208,7 +209,8 @@ if (geom_flag == 3) then
 
 ! Interpolation on TGLF rho-grid
 
-    pfn_equ = (equil_now%profiles_1d%psi - equil_now%profiles_1d%psi(1))/(equil_now%profiles_1d%psi(nrho_equ) - equil_now%profiles_1d%psi(1))
+    pfn_equ = (equil_now%profiles_1d%psi - equil_now%profiles_1d%psi(1)) / &
+        (equil_now%profiles_1d%psi(nrho_equ) - equil_now%profiles_1d%psi(1))
 
 ! Interpolation on TGLF rho-grid
     do jthe=1, nthe_equ
@@ -400,7 +402,8 @@ radial_loop: do jr=1, nrho_m
 ! Restore quasi-neutrality via main ions
 
     tglf_as_in(2)   = -1./tglf_zs_in(2)*(SUM(tglf_as_in*tglf_zs_in) - tglf_as_in(2)*tglf_zs_in(2))
-    tglf_rlns_in(2) = -1./(tglf_as_in(2)*tglf_zs_in(2))*(SUM(tglf_rlns_in*tglf_as_in*tglf_zs_in) - tglf_rlns_in(2)*tglf_as_in(2)*tglf_zs_in(2))
+    tglf_rlns_in(2) = -1./(tglf_as_in(2)*tglf_zs_in(2)) * &
+        (SUM(tglf_rlns_in*tglf_as_in*tglf_zs_in) - tglf_rlns_in(2)*tglf_as_in(2)*tglf_zs_in(2))
 
 ! GYRO conventions
 

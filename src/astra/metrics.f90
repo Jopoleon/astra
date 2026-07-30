@@ -2142,7 +2142,9 @@ contains
     close(10)
 
 ! Clean working files to make sure errors are raised
-!    call execute_command_line('rm vmec_dat/*')
+    call execute_command_line('rm vmec_dat/*.dat')
+    call execute_command_line('rm vmec_dat/*.txt')
+    call execute_command_line('rm ' // TRIM(BOOZER_INFILE))
 
     if (phi_full_surfaces < 0.) then ! plot LCFS for various toroidal angles if phi_full_surfaces < 0
         stella_which_surf = 0

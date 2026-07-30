@@ -57,7 +57,8 @@ dpsin_rect = 1./(nrRect - 1.d0)
 psin_rect = (/ (dpsin_rect*(i - 1.d0), i=1, nrRect) /)
 
 ! Getting 1d profiles from equilibrium
-psin_eq = (equil_now%profiles_1d%psi - equil_now%profiles_1d%psi(1))/(equil_now%profiles_1d%psi(nrho_surf) - equil_now%profiles_1d%psi(1))
+psin_eq = (equil_now%profiles_1d%psi - equil_now%profiles_1d%psi(1)) / &
+    (equil_now%profiles_1d%psi(nrho_surf) - equil_now%profiles_1d%psi(1))
 
 Rmin = MINVAL(equil_now%coord_sys%position%r(nrho_surf, :)) - 0.03
 Rmax = MAXVAL(equil_now%coord_sys%position%r(nrho_surf, :)) + 0.03
@@ -123,8 +124,10 @@ write(eqdsk_unit, '(5E16.9)') (dpsi_sgn*SGNIP*pprime_rect(i)/psi_2pi, i=1, nrRec
 write(eqdsk_unit, '(5E16.9)') ((dpsi_sgn*SGNIP*psi_rect(i, j)*psi_2pi, i=1, nrRect), j=1, nzRect)
 write(eqdsk_unit, '(5E16.9)') (SGNBT*SGNIP*q_rect(i), i=1, nrRect)
 write(eqdsk_unit, '(2i5)') nthe_surf, nthe_surf
-write(eqdsk_unit, '(5E16.9)') (equil_now%coord_sys%position%r(nrho_surf, i), equil_now%coord_sys%position%z(nrho_surf, i), i=1, nthe_surf)
-write(eqdsk_unit, '(5E16.9)') (equil_now%coord_sys%position%r(nrho_surf, i), equil_now%coord_sys%position%z(nrho_surf, i), i=1, nthe_surf)
+write(eqdsk_unit, '(5E16.9)') (equil_now%coord_sys%position%r(nrho_surf, i), &
+    equil_now%coord_sys%position%z(nrho_surf, i), i=1, nthe_surf)
+write(eqdsk_unit, '(5E16.9)') (equil_now%coord_sys%position%r(nrho_surf, i), &
+    equil_now%coord_sys%position%z(nrho_surf, i), i=1, nthe_surf)
 close(eqdsk_unit)
 
 deallocate(psin_eq)

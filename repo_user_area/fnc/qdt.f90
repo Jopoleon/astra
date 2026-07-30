@@ -17,7 +17,8 @@ JK = nint(YR/HRO)
 QDTR = 0.
 do J=1, JK
     SVDT = TI(J) ** (-0.33333333)
-    SVDT = 8.972*EXP(-19.9826*SVDT)*SVDT**2 * ((TI(J) + 1.0134)/(1. + 6.386E-3*(TI(J) + 1.0134)**2) + 1.877*EXP(-0.16176*TI(J)*SQRT(TI(J))))
+    SVDT = 8.972*EXP(-19.9826*SVDT)*SVDT**2 * &
+        ((TI(J) + 1.0134)/(1. + 6.386E-3*(TI(J) + 1.0134)**2) + 1.877*EXP(-0.16176*TI(J)*SQRT(TI(J))))
     PDT = 5.632*NDEUT(J)*NTRIT(J)*SVDT
     QDTR = QDTR + PDT*VR(J)
 enddo

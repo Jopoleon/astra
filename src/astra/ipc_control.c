@@ -1,5 +1,20 @@
 #include "Astra.h"
 
+#ifdef __APPLE__
+static int semtimedop(int semid, struct sembuf *sops, size_t nsops, const struct timespec *timeout) {
+    struct sembuf nowait = *sops;
+    int ret;
+
+    (void)timeout;
+    nowait.sem_flg |= IPC_NOWAIT;
+    while ((ret = semop(semid, &nowait, nsops)) == -1 && errno == EAGAIN) {
+        struct timespec ts = {0, 10000000};
+        nanosleep(&ts, NULL);
+    }
+    return ret;
+}
+#endif
+
 struct sembuf buf0 = {0, 0, ~SEM_UNDO&~IPC_NOWAIT};
 
 /*-------- Trims a string -------*/

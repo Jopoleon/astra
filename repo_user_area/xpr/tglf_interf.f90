@@ -305,7 +305,8 @@ radial_loop: do jr=1, chunk
 ! Restore quasi-neutrality via main ions
 
     tglf_as_in(2)   = -1./tglf_zs_in(2)*(SUM(tglf_as_in*tglf_zs_in) - tglf_as_in(2)*tglf_zs_in(2))
-    tglf_rlns_in(2) = -1./(tglf_as_in(2)*tglf_zs_in(2))*(SUM(tglf_rlns_in*tglf_as_in*tglf_zs_in) - tglf_rlns_in(2)*tglf_as_in(2)*tglf_zs_in(2))
+    tglf_rlns_in(2) = -1./(tglf_as_in(2)*tglf_zs_in(2)) * &
+        (SUM(tglf_rlns_in*tglf_as_in*tglf_zs_in) - tglf_rlns_in(2)*tglf_as_in(2)*tglf_zs_in(2))
 
 ! GYRO conventions
 

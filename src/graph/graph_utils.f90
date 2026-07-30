@@ -1029,13 +1029,15 @@ contains
                         r_out = min(max(YA/SC(jprof), -7.d0), 7.d0)
                         JDSP  = 10*(plot_area%canvas_height*r_out + IYMN + y_shift)
                         xplot(jxout) = dble(x_shift)
-                        yplot(jxout) = plot_area%height - min(max(dble(plot_area%canvas_height)*r_out + ymin + dble(y_shift), ymin), ymax)
+                        yplot(jxout) = plot_area%height - &
+                            min(max(dble(plot_area%canvas_height)*r_out + ymin + dble(y_shift), ymin), ymax)
                         jxout = jxout + 1
                     endif
                     r_out = min(max(ROUT(J, jprof)/SC(jprof), -7.d0), 7.d0)
                     JDSP  = 10*(plot_area%canvas_height*r_out + IYMN + y_shift)
                     xplot(jxout) = dble(x_shift) + dble(plot_area%width)/dble(plot_area%nx_canvas)*(YX - YL)/(YR - YL)
-                    yplot(jxout) = plot_area%height - min(max(dble(plot_area%canvas_height)*r_out + ymin + dble(y_shift), ymin), ymax)
+                    yplot(jxout) = plot_area%height - &
+                        min(max(dble(plot_area%canvas_height)*r_out + ymin + dble(y_shift), ymin), ymax)
                 endif
                 if (YA <= YR .and. YX > YR) then ! right edge interpolation
                     jxout = jxout + 1
@@ -1043,7 +1045,8 @@ contains
                     r_out = min(max(YA/SC(jprof), -7.d0), 7.d0)
                     JDSP  = 10*(plot_area%canvas_height*r_out + IYMN + y_shift)
                     xplot(jxout) = dble(x_shift) + dble(plot_area%width)/dble(plot_area%nx_canvas)
-                    yplot(jxout) = dble(plot_area%height) - min(max(dble(plot_area%canvas_height)*r_out + ymin + dble(y_shift), ymin), ymax)
+                    yplot(jxout) = dble(plot_area%height) - &
+                        min(max(dble(plot_area%canvas_height)*r_out + ymin + dble(y_shift), ymin), ymax)
                 endif
                 YA = YX
             enddo
@@ -1153,7 +1156,8 @@ contains
             endif
             jlx(j_canv) = jlx(j_canv) + 1
             text_posx = x_shift + plot_area%canvas_width - astra_gui%dxlet - 45
-            text_posy = (1 + jlx(j_canv))*astra_gui%dylet + FSHIFT + (plot_area%ymin - plot_area%ymax - plot_area%canvas_height)*(jy_canv) + 3
+            text_posy = (1 + jlx(j_canv))*astra_gui%dylet + FSHIFT + &
+                (plot_area%ymin - plot_area%ymax - plot_area%canvas_height)*(jy_canv) + 3
             XF4 = fmt_smart(TOUTX(jn), 4)
             call textvm(text_posx, text_posy, XF4, 5) ! Text (time) -> plot legend
             PTM(1) = text_posx + astra_gui%dxlet + 37 ! 12 is fixed, as the font size does not scale
@@ -1232,7 +1236,8 @@ contains
                 JDSP  = 10*(plot_area%canvas_height*r_out + IYMN + (n_canvas - j_canv)*plot_area%canvas_height)
                 JDSP  = max(JDSP, 10*IYMN)
                 IYO(J, nplots_max+2) = JY - min(JDSP, 10*IYMX)
-                ytrace(J) = dble(plot_area%height) - min(max(plot_area%canvas_height*r_out + ymin + (n_canvas - j_canv)*plot_area%canvas_height, ymin), ymax)
+                ytrace(J) = dble(plot_area%height) - &
+                    min(max(plot_area%canvas_height*r_out + ymin + (n_canvas - j_canv)*plot_area%canvas_height, ymin), ymax)
             enddo
 
             if (KPRI >= 1 .and. KPRI <= 2) then
