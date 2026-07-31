@@ -91,12 +91,12 @@ contains
     write(*, *) cmd
     call execute_command_line(trim(cmd), wait=.true.)
 
-    call vmecBin2astra(phi_full_surfaces)
+    call VMECbin2astra(phi_full_surfaces)
 
     end subroutine vmec_interface
 
 !---------------------------------------------------------------------
-    subroutine vmecBin2astra(phi_full_surfaces)
+    subroutine VMECbin2astra(phi_full_surfaces)
 
     use scalars, only: NEQUIL, MEQUIL, NA1, HROX, HRO, ROC, RTOR, ABC, BTOR, &
         VOLUME, GVAC, FTO, UPDWN
@@ -108,20 +108,20 @@ contains
 
     double precision, intent(in) :: phi_full_surfaces
     logical :: lasym
-    integer :: k, k1, k2, mnmax, ns_temp, nt_bnd, n_phase
+    integer :: jmom, jrho, mnmax, ns_temp, n_phase
     integer, allocatable, dimension(:) :: xm, xnn
     real*8, allocatable, dimension(:) :: rmnc_lcfs, rmns_lcfs, zmnc_lcfs, zmns_lcfs, &
         xrho_eq, phi_temp
     real*8, allocatable, dimension(:, :) :: rmnc_all, rmns_all, zmnc_all, zmns_all, &
         rmnc_interp, rmns_interp, zmnc_interp, zmns_interp
-    double precision :: f_boundary, nfperiods, brangle, dum1, dum2
+    double precision :: f_boundary, nfperiods, brangle, Ip_contrib, F0_contrib
     double precision :: Rmaj(NA1)
 
     save f_boundary
 
     open(unit=10, file=TRIM(f_vmec_metric), form='unformatted', access='stream')
     read(10) HROX, HRO, ROC, RTOR, ABC, BTOR, volume, GVAC, f_boundary, nfperiods, &
-        dphidsb_stella, dum1, dum2
+        dphidsb_stella, Ip_contrib, F0_contrib
     read(10) RHO(1:NA1), SRHO(1:NA1), SG11(1:NA1), SG12(1:NA1), &
         SG21(1:NA1), SG22(1:NA1), MV(1:NA1), VR(1:NA1), &
         VRS(1:NA1), GRADRO(1:NA1), G11(1:NA1), Rmaj(1:NA1), &
@@ -194,7 +194,7 @@ contains
 
     if (phi_full_surfaces < 0.) then ! plot LCFS for various toroidal angles if phi_full_surfaces < 0
         stella_which_surf = 0
-        nt_bnd = 1
+
 ! phi = 0, pi/4, pi/2, 3*pi/4, pi
         do n_phase=1, 4
             brangle = GP2*dble(n_phase)/5./nfperiods
@@ -205,26 +205,23 @@ contains
         enddo
     else ! all flux surfaces at 1 toroidal angle given by phi_full_surfaces >=0.
         stella_which_surf = 1
-        do k1=1, ns_temp
-            xrho_eq(k1) = sqrt(phi_temp(k1)/phi_temp(ns_temp))
+        do jrho=1, ns_temp
+            xrho_eq(jrho) = sqrt(phi_temp(jrho)/phi_temp(ns_temp))
         enddo
 
-        do k1=1, mnmax
-            call qinterp(xrho_eq(1:ns_temp), rmnc_all(k1, 1:ns_temp), ns_temp, xrho_eq(1:ns_temp), rmnc_interp(1:ns_temp, k1), ns_temp)
-            call qinterp(xrho_eq(1:ns_temp), zmns_all(k1, 1:ns_temp), ns_temp, xrho_eq(1:ns_temp), zmns_interp(1:ns_temp, k1), ns_temp)
-            call qinterp(xrho_eq(1:ns_temp), rmns_all(k1, 1:ns_temp), ns_temp, xrho_eq(1:ns_temp), rmns_interp(1:ns_temp, k1), ns_temp)
-            call qinterp(xrho_eq(1:ns_temp), zmnc_all(k1, 1:ns_temp), ns_temp, xrho_eq(1:ns_temp), zmnc_interp(1:ns_temp, k1), ns_temp)
+        do jmom=1, mnmax
+            call qinterp(xrho_eq(1:ns_temp), rmnc_all(jmom, 1:ns_temp), ns_temp, xrho_eq(1:ns_temp), rmnc_interp(1:ns_temp, jmom), ns_temp)
+            call qinterp(xrho_eq(1:ns_temp), zmns_all(jmom, 1:ns_temp), ns_temp, xrho_eq(1:ns_temp), zmns_interp(1:ns_temp, jmom), ns_temp)
+            call qinterp(xrho_eq(1:ns_temp), rmns_all(jmom, 1:ns_temp), ns_temp, xrho_eq(1:ns_temp), rmns_interp(1:ns_temp, jmom), ns_temp)
+            call qinterp(xrho_eq(1:ns_temp), zmnc_all(jmom, 1:ns_temp), ns_temp, xrho_eq(1:ns_temp), zmnc_interp(1:ns_temp, jmom), ns_temp)
         enddo
-
-        brangle = phi_full_surfaces
-        nt_bnd = 1
 
 ! Construct flux surfaces, phi = 0
-        do k2=1, ns_temp
-            call fourier_expansion(MEQUIL, mnmax, brangle, &
-                xm, xnn, rmnc_interp(k2, :), rmns_interp(k2, :), zmnc_interp(k2, :), zmns_interp(k2, :), &
-                equil_now%coord_sys%position%r(k2, 1:MEQUIL), &
-                equil_now%coord_sys%position%z(k2, 1:MEQUIL))
+        do jrho=1, ns_temp
+            call fourier_expansion(MEQUIL, mnmax, phi_full_surfaces, &
+                xm, xnn, rmnc_interp(jrho, :), rmns_interp(jrho, :), zmnc_interp(jrho, :), zmns_interp(jrho, :), &
+                equil_now%coord_sys%position%r(jrho, 1:MEQUIL), &
+                equil_now%coord_sys%position%z(jrho, 1:MEQUIL))
         enddo
     endif
 
@@ -245,7 +242,7 @@ contains
     deallocate(xrho_eq)
     deallocate(phi_temp)
 
-    end subroutine vmecBin2astra
+    end subroutine VMECbin2astra
 
 !---------------------------------------------------------------------
     subroutine ASTRA2VMEC(vmec_vacuum, vmec_dteq, yes_boozer, f_boundary, phi_full_surfaces)
