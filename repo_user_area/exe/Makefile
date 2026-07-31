@@ -89,6 +89,7 @@ $(AOBJ_DIR)/surface_contours.o \
 $(AOBJ_DIR)/flux_avg_imp.o \
 $(AOBJ_DIR)/json_rw.o \
 $(AOBJ_DIR)/gs_solver.o \
+$(AOBJ_DIR)/a2vmec.o \
 $(AOBJ_DIR)/metrics.o \
 $(AOBJ_DIR)/auxiliary.o \
 $(AOBJ_DIR)/set_x_data.o
