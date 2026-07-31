@@ -8,9 +8,66 @@ implicit none
 integer :: naxis
 real*8, allocatable :: raxiscc(:), zaxiscc(:)
 character(len=256) :: f_vmec_wout, f_boozer, f_vmec_in, f_vmec_metric, &
-    f_boozer_in, vmec_work_dir
+    f_boozer_in, vmec_work_dir, mpi_command, py_exe, stellopt_dir
 
 contains
+
+!---------------------------------------------------------------------
+    subroutine vmec_interface(vmec_vacuum, vmec_dteq, yes_boozer)
+!---------------------------------------------------------------------
+! Reads VMEC output and converts it to ASTRA quantities
+
+    use scalars, only: NA1
+    use read_input, only: nml_file
+
+    integer, intent(in):: vmec_vacuum, vmec_dteq, yes_boozer
+
+    integer :: vac_phase_stel, mboz, nboz, ios
+    double precision :: f_boundary, phi_full_surfaces, dt_boozer
+    character(len=256) :: cmd, as_nml
+
+    NAMELIST / vmec / phi_full_surfaces, dt_boozer, vac_phase_stel, mboz, nboz
+
+    save f_boundary
+
+    call get_environment_variable("MPI_COMMAND", mpi_command)
+    call get_environment_variable("PYTHON_BIN", py_exe)
+    call get_environment_variable('STELLOPT_PATH', stellopt_dir)
+
+    as_nml = TRIM(awd) // '/' // TRIM(nml_file)
+    write(*, *) 'Reading namelist ', TRIM(as_nml)
+    open(57, FILE=TRIM(as_nml), delim='apostrophe')
+    read(57, nml=vmec, iostat=ios)
+    close(57)
+
+    call execute_command_line('rm -f ' // TRIM(f_vmec_in)) ! Clean vmecinput.dat, to raise errors
+
+! Set I/O paths for VMEDC I/O files
+    call vmec_io_files()
+
+! Run VMEC stand-alone
+    call astra2vmec(vmec_vacuum, vmec_dteq, vac_phase_stel, f_boundary, phi_full_surfaces)
+
+! Dump boozer geometry for DKES
+    if (yes_boozer == 1) call calc_boozer(mboz, nboz, dt_boozer)
+
+! Extract Boozer data
+    write(cmd, '(A, 1X, A, 1X, I0)') TRIM(py_exe), 'python/extract_boozer_data.py', NA1
+    write(*, *) TRIM(cmd)
+    call execute_command_line(cmd) ! Input: VMEC_WD/boozmn_VMECoutput.nc; Output VMEC_WD/b00_profile_boozer.txt, VMEC_WD/minorradiusW7AS.txt
+
+! Collect VMEC output and store it into ASTRA arrays
+    write(cmd, '(A, 1X, A, I0)') trim(py_exe), 'python/vmec2bin.py ', NA1
+    write(*, *) cmd
+    call execute_command_line(trim(cmd), wait=.true.)
+
+    call VMECbin2astra(phi_full_surfaces)
+
+! Clean working files to make sure errors are raised
+    call execute_command_line('rm ' // TRIM(vmec_work_dir) // '/*.dat')
+    call execute_command_line('rm ' // TRIM(vmec_work_dir) // '/*.txt')
+
+    end subroutine vmec_interface
 
 !---------------------------------------------------------------------
     subroutine fourier_expansion(m_equil, mnmax, brangle, &
@@ -63,37 +120,6 @@ contains
     f_boozer_in   = TRIM(vmec_work_dir) // TRIM(BOOZER_INFILE)
 
     end subroutine vmec_io_files
-
-!---------------------------------------------------------------------
-    subroutine vmec_interface(vmec_vacuum, vmec_dteq, yes_boozer)
-!---------------------------------------------------------------------
-! Reads VMEC output and converts it to ASTRA quantities
-
-    use scalars, only: NA1
-
-    integer, intent(in):: vmec_vacuum, vmec_dteq, yes_boozer
-
-    double precision :: f_boundary, phi_full_surfaces
-    character(len=128) :: cmd, py_exe
-
-    save f_boundary
-
-! Set I/O paths for VMEDC I/O files
-
-    call vmec_io_files()
-
-! Run VMEC stand-alone
-    call astra2vmec(vmec_vacuum, vmec_dteq, yes_boozer, f_boundary, phi_full_surfaces)
-
-! Collect VMEC output and store it into ASTRA arrays
-    call get_environment_variable("PYTHON_BIN", py_exe)
-    write(cmd, '(A, A, I0)') trim(py_exe), ' python/vmec2bin.py ', NA1
-    write(*, *) cmd
-    call execute_command_line(trim(cmd), wait=.true.)
-
-    call VMECbin2astra(phi_full_surfaces)
-
-    end subroutine vmec_interface
 
 !---------------------------------------------------------------------
     subroutine VMECbin2astra(phi_full_surfaces)
@@ -183,10 +209,6 @@ contains
 
     close(10)
 
-! Clean working files to make sure errors are raised
-    call execute_command_line('rm ' // TRIM(vmec_work_dir) // '/*.dat')
-    call execute_command_line('rm ' // TRIM(vmec_work_dir) // '/*.txt')
-
     if (.not.associated(equil_now%coord_sys%position%r)) then
         allocate(equil_now%coord_sys%position%r(NEQUIL, MEQUIL))
         allocate(equil_now%coord_sys%position%z(NEQUIL, MEQUIL))
@@ -245,7 +267,8 @@ contains
     end subroutine VMECbin2astra
 
 !---------------------------------------------------------------------
-    subroutine ASTRA2VMEC(vmec_vacuum, vmec_dteq, yes_boozer, f_boundary, phi_full_surfaces)
+    subroutine ASTRA2VMEC(vmec_vacuum, vmec_dteq, vac_phase_stel, &
+        f_boundary, phi_full_surfaces)
 
     use status, only: NRD
     use scalars, only: NA1, RTOR, BTOR, TIME, ROC, SGNIP, SGNBT, ABC, IPL, PHIEDG, &
@@ -253,40 +276,26 @@ contains
     use status, only: TE, NE, FP, XRHO, ZEF, MU, ELON, SHif , IPOL, &
         AMETR, VOLUM, PEECR, CUECR, AREAT, rho_pol, FP_NORM, &
         PBLON, PBPER, PFAST, TI, NI, CU, SG11, SG12, MV
-    use read_input, only: nml_file
     use stella_module, only: phi_edge_total
 
-    integer, intent(in):: vmec_vacuum, vmec_dteq, yes_boozer
+    integer, intent(in):: vmec_vacuum, vmec_dteq, vac_phase_stel
     double precision, intent(out) :: f_boundary, phi_full_surfaces
 
-    integer :: ios, i, vac_phase_stel, count_rate, start_count, end_count, &
+    integer :: ios, i, count_rate, start_count, end_count, &
          mboz, nboz, init_vmecco
-    double precision :: phi_edgehog, dt_boozer, t_boozero
+    double precision :: phi_edgehog
     double precision, dimension(NRD) :: pressure, svmec, curtorprof
 
     character(len=32) :: n_nodes
-    character(len=256) :: stellopt_dir, mpi_command, f_true_surf
-    character(len=1000) :: command_line, raxis_str, zaxis_str
-    character(len=120) :: as_nml, PMASS_FILE="vmecp.dat", &
+    character(len=256) :: cmd
+    character(len=1000) :: raxis_str, zaxis_str
+    character(len=120) :: PMASS_FILE="vmecp.dat", &
         PIOTA_FILE="vmeci.dat", PCURR_FILE="vmecc.dat"
 
     data init_vmecco/0/
-    data t_boozero/0./
-    save init_vmecco, t_boozero
-
-    NAMELIST / vmec / phi_full_surfaces, dt_boozer, vac_phase_stel, mboz, nboz
-
-    CALL getenv('STELLOPT_PATH', stellopt_dir)
-    f_true_surf = TRIM(awd) // '/vmec_io/true_surfaces.txt'
-    as_nml = TRIM(awd) // '/' // TRIM(nml_file)
-
-    write(*, *) 'Reading namelist ', TRIM(as_nml)
-    open(57, FILE=TRIM(as_nml), delim='apostrophe')
-    read(57, nml=vmec, iostat=ios)
-    close(57)
+    save init_vmecco
 
     call execute_command_line("nproc")
-    call get_environment_variable("MPI_COMMAND", mpi_command)
     call get_environment_variable("N_NODES", n_nodes)
 
     if (vmec_dteq == 1 .and. vmec_vacuum < 2) then  ! run VMEC
@@ -309,8 +318,7 @@ contains
 ! Replace CURTOR, PHIEDGE and NEQUIL -> write VMEC_WD/vmecinput.dat
 
         if (vmec_vacuum == 0 .or. vmec_vacuum == 1) then
-            call execute_command_line('rm -f ' // TRIM(f_vmec_in)) ! Clean, to raise errors
-            write(command_line, '(A, F, 1X, F, 1X, I0)') "python python/vmecmodin.py ", &
+            write(cmd, '(A, 1X, A, 1X, F, 1X, F, 1X, I0)') TRIM(py_exe), "python/vmecmodin.py", &
                 vac_phase_stel*IPL*1.e6, SGNBT*phi_edgehog, NEQUIL
             if (vmec_vacuum == 0) then
                 raxis_str = '"'
@@ -325,10 +333,10 @@ contains
                 enddo
                 raxis_str = trim(raxis_str) // '"'
                 zaxis_str = trim(zaxis_str) // '"'
-                command_line = TRIM(command_line) // ' -r ' // TRIM(raxis_str) // &
+                cmd = TRIM(cmd) // ' -r ' // TRIM(raxis_str) // &
                                                      ' -z ' // TRIM(zaxis_str)
             endif
-            call execute_command_line(TRIM(command_line))
+            call execute_command_line(TRIM(cmd))
         endif
 
 !-----------------------------------------------------------------
@@ -362,15 +370,15 @@ contains
         call system_clock(count_rate=count_rate)
         call system_clock(start_count)
 
-        command_line = trim(mpi_command) // ' -n ' // trim(n_nodes) // ' ' // &
+        cmd = trim(mpi_command) // ' -n ' // trim(n_nodes) // ' ' // &
               TRIM(stellopt_dir) // '/VMEC2000/Release/xvmec2000 ' // trim(f_vmec_in)
         if (init_vmecco == 0) then
             init_vmecco = 1
         else
-            command_line = trim(command_line) // ' reset=' // TRIM(f_vmec_wout)
+            cmd = trim(cmd) // ' reset=' // TRIM(f_vmec_wout)
         endif
-        write(*, *) TRIM(command_line)
-        call execute_command_line(trim(command_line))
+        write(*, *) TRIM(cmd)
+        call execute_command_line(trim(cmd))
 
 ! Output files: parvmecinfo.txt, jxbout_dat.nc, mercier.dat, wout_dat.nc, 
 !     threed1.dat, timings.txt
@@ -378,48 +386,48 @@ contains
         call system_clock(end_count)
         write(*, *) 'time spent on vmec : ', real(end_count-start_count, 8)/real(count_rate, 8)
 
-        command_line = 'mv wout_dat.nc ' // TRIM(f_vmec_wout)
-        write(*, *) TRIM(command_line)
-        call execute_command_line(TRIM(command_line))
+        cmd = 'mv wout_dat.nc ' // TRIM(f_vmec_wout)
+        write(*, *) TRIM(cmd)
+        call execute_command_line(TRIM(cmd))
     endif  ! vmec dteq command
 
-!------------------------------
+    end subroutine astra2vmec
+
+!---------------------------------------------------------------------
+    subroutine calc_boozer(mboz, nboz, dt_boozer)
 ! Dump boozer geometry for DKES
 
-    if (yes_boozer == 1) then
-        open(32, file=TRIM(f_boozer_in))
-        write(32, '(33333I8)') mboz, nboz
-        write(32, *) ' VMECoutput '
-        write(32, '(33333I8)') [(i, i=1, NEQUIL)]
-        close(32)
+    use scalars, only: TIME, TSTART, NEQUIL
 
-        if (TIME >= TSTART+t_boozero .or. TIME <= TSTART) then
-            command_line = 'cd ' // TRIM(vmec_work_dir) // ' && ' // &
-                TRIM(mpi_command)  // ' -n 1 ' // &
-                TRIM(stellopt_dir) // '/BOOZ_XFORM/Release/xbooz_xform ' // &
-                TRIM(f_boozer_in)  // ' ' // TRIM(f_true_surf)
-            write(*, *) TRIM(command_line)
-            call execute_command_line(TRIM(command_line)) ! Input: VMEC_WD/inboozer.in, vmec_io/true_surfaces.txt, ./wout_VMECoutput.nc; Output: ./boozmn_VMECoutput.nc
-            t_boozero = time - tstart + dt_boozer
-        endif
+    integer, intent(in) :: mboz, nboz
+    double precision, intent(in) :: dt_boozer
+
+    integer :: i
+    double precision :: t_boozero
+    character(len=256) :: cmd, f_true_surf
+
+    data t_boozero/0./
+    save t_boozero
+
+    f_true_surf = TRIM(awd) // '/vmec_io/true_surfaces.txt'
+
+    open(32, file=TRIM(f_boozer_in))
+    write(32, '(33333I8)') mboz, nboz
+    write(32, *) ' VMECoutput '
+    write(32, '(33333I8)') [(i, i=1, NEQUIL)]
+    close(32)
+
+    if (TIME >= TSTART+t_boozero .or. TIME <= TSTART) then
+        cmd = 'cd ' // TRIM(vmec_work_dir) // ' && ' // &
+            TRIM(mpi_command)  // ' -n 1 ' // &
+            TRIM(stellopt_dir) // '/BOOZ_XFORM/Release/xbooz_xform ' // &
+            TRIM(f_boozer_in)  // ' ' // TRIM(f_true_surf)
+        write(*, *) TRIM(cmd)
+        call execute_command_line(TRIM(cmd)) ! Input: VMEC_WD/inboozer.dat, vmec_io/true_surfaces.txt, ./wout_VMECoutput.nc; Output: ./boozmn_VMECoutput.nc
+        t_boozero = TIME - TSTART + dt_boozer
     endif
-
-! ---------------------------------------------------------------------
-! extract_boozer_data.py is called EVERY time .
-! It auto-detects the Boozer file-format from vmec_io/stell_files.nml, &VMEC_TO_ASTRA_INPUTS
-! BOOZER_FILE:
-!   * text  Boozer (archive)  -> reads the full-surface archive that made the
-!                                reused DKES table (no Boozer run needed);
-!   * NetCDF boozmn (generated)-> reads the fresh 7-surface transform just
-!                                produced above when yes_boozer==1.
-! Either way it writes VMEC_WD/b00_profile_boozer.txt and VMEC_WD/minorradiusW7AS.txt
-! for the DKES interface.  NA1 is passed so the B00 profile length matches.
-! ---------------------------------------------------------------------
-    write(command_line, '(A, I0)') 'python python/extract_boozer_data.py ', NA1
-    write(*, *) TRIM(command_line)
-    call execute_command_line(command_line) ! Input: VMEC_WD/boozmn_VMECoutput.nc; Output VMEC_WD/b00_profile_boozer.txt, VMEC_WD/minorradiusW7AS.txt
-
-    end subroutine astra2vmec
+      
+    end subroutine calc_boozer
 
 !---------------------------------------------------------------------
     subroutine compute_phi_edgehog(phi_edgehog, f_boundary)
