@@ -69,37 +69,14 @@ contains
 !---------------------------------------------------------------------
 ! Reads VMEC output and converts it to ASTRA quantities
 
-    use scalars, only: NEQUIL, MEQUIL, NA1, HROX, HRO, ROC, RTOR, ABC, BTOR, &
-        VOLUME, GVAC, FTO, UPDWN
-    use status, only: RHO, SRHO, SG11, SG12, SG21, SG22, MV, VR, VRS, GRADRO, &
-        G11, VOLUM, AMETR, SLAT, FTPT, AREAT, IPOL, MU, SHIF
-    use stella_module, only: dphidsb_stella, stella_which_surf
-    use parameters_a2equil, only: equil_now
-    use numerical_tools, only: qinterp
+    use scalars, only: NA1
 
     integer, intent(in):: vmec_vacuum, vmec_dteq, yes_boozer
 
-    logical :: lasym
-    integer :: k, k1, k2, mnmax, ns_temp, nt_bnd, n_phase
-    integer, allocatable, dimension(:) :: xm, xnn
-    real*8, allocatable, dimension(:) :: rmnc_lcfs, rmns_lcfs, zmnc_lcfs, zmns_lcfs, &
-        bndr, bndz, xrho_eq, phi_temp
-    real*8, allocatable, dimension(:, :) :: rmnc_all, rmns_all, zmnc_all, zmns_all, &
-        rmnc_interp, rmns_interp, zmnc_interp, zmns_interp
-    double precision :: f_boundary, nfperiods, brangle, dum1, dum2, phi_full_surfaces
-    double precision :: Rmaj(NA1)
-    character(len=128) :: cmd, py_command
+    double precision :: f_boundary, phi_full_surfaces
+    character(len=128) :: cmd, py_exe
 
     save f_boundary
-
-    if (.not.associated(equil_now%coord_sys%position%r)) then
-        allocate(equil_now%coord_sys%position%r(NEQUIL, MEQUIL))
-        allocate(equil_now%coord_sys%position%z(NEQUIL, MEQUIL))
-    endif
-    if (.not.allocated(bndr)) then
-        allocate(bndr(MEQUIL))
-        allocate(bndz(MEQUIL))
-    endif
 
 ! Set I/O paths for VMEDC I/O files
 
@@ -109,10 +86,38 @@ contains
     call astra2vmec(vmec_vacuum, vmec_dteq, yes_boozer, f_boundary, phi_full_surfaces)
 
 ! Collect VMEC output and store it into ASTRA arrays
-    call get_environment_variable("PYTHON_BIN", py_command)
-    write(cmd, '(A, A, I0)') trim(py_command), ' python/vmec2astra.py ', NA1
+    call get_environment_variable("PYTHON_BIN", py_exe)
+    write(cmd, '(A, A, I0)') trim(py_exe), ' python/vmec2bin.py ', NA1
     write(*, *) cmd
     call execute_command_line(trim(cmd), wait=.true.)
+
+    call vmecBin2astra(phi_full_surfaces)
+
+    end subroutine vmec_interface
+
+!---------------------------------------------------------------------
+    subroutine vmecBin2astra(phi_full_surfaces)
+
+    use scalars, only: NEQUIL, MEQUIL, NA1, HROX, HRO, ROC, RTOR, ABC, BTOR, &
+        VOLUME, GVAC, FTO, UPDWN
+    use status, only: RHO, SRHO, SG11, SG12, SG21, SG22, MV, VR, VRS, GRADRO, &
+        G11, VOLUM, AMETR, SLAT, FTPT, AREAT, IPOL, MU, SHIF
+    use parameters_a2equil, only: equil_now
+    use stella_module, only: dphidsb_stella, stella_which_surf
+    use numerical_tools, only: qinterp
+
+    double precision, intent(in) :: phi_full_surfaces
+    logical :: lasym
+    integer :: k, k1, k2, mnmax, ns_temp, nt_bnd, n_phase
+    integer, allocatable, dimension(:) :: xm, xnn
+    real*8, allocatable, dimension(:) :: rmnc_lcfs, rmns_lcfs, zmnc_lcfs, zmns_lcfs, &
+        xrho_eq, phi_temp
+    real*8, allocatable, dimension(:, :) :: rmnc_all, rmns_all, zmnc_all, zmns_all, &
+        rmnc_interp, rmns_interp, zmnc_interp, zmns_interp
+    double precision :: f_boundary, nfperiods, brangle, dum1, dum2
+    double precision :: Rmaj(NA1)
+
+    save f_boundary
 
     open(unit=10, file=TRIM(f_vmec_metric), form='unformatted', access='stream')
     read(10) HROX, HRO, ROC, RTOR, ABC, BTOR, volume, GVAC, f_boundary, nfperiods, &
@@ -182,6 +187,11 @@ contains
     call execute_command_line('rm ' // TRIM(vmec_work_dir) // '/*.dat')
     call execute_command_line('rm ' // TRIM(vmec_work_dir) // '/*.txt')
 
+    if (.not.associated(equil_now%coord_sys%position%r)) then
+        allocate(equil_now%coord_sys%position%r(NEQUIL, MEQUIL))
+        allocate(equil_now%coord_sys%position%z(NEQUIL, MEQUIL))
+    endif
+
     if (phi_full_surfaces < 0.) then ! plot LCFS for various toroidal angles if phi_full_surfaces < 0
         stella_which_surf = 0
         nt_bnd = 1
@@ -234,9 +244,8 @@ contains
     deallocate(zmnc_interp)
     deallocate(xrho_eq)
     deallocate(phi_temp)
-    deallocate(bndr, bndz)
 
-    end subroutine vmec_interface
+    end subroutine vmecBin2astra
 
 !---------------------------------------------------------------------
     subroutine ASTRA2VMEC(vmec_vacuum, vmec_dteq, yes_boozer, f_boundary, phi_full_surfaces)
