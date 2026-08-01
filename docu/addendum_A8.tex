@@ -1,5 +1,6 @@
 \documentclass[12pt]{article}
 \usepackage{times,mathptm}
+\usepackage{amsmath}
 %\documentclass{article}
 \input{epsf.tex}		\epsfclipon
 \topmargin 0mm			\oddsidemargin 5mm
@@ -19,6 +20,7 @@ ASTRA--8.0
 
 \newcommand{\fl}[1]{\leftline{\tt\hspace*{3em} #1}\\}
 \newcommand{\dl}[1]{\leftline{\tt #1}}
+\newcommand\axisym{\stackrel{\mathclap{\scriptsize\mbox{axisym}}}{=}}
 \def\tab{$\hspace*{-2pt}\longrightarrow\hspace*{-5pt}|\hspace*{-3pt}$}
 %\def\bs{$\,\backslash\,$}
 %\def\bs{\verb"\"}
@@ -675,6 +677,19 @@ The coupling routines (not part of the nominal repository) must be in sbr/: wrsd
 \section{The new equilibrium solver FEQIS}
 \input{FEQIS_manual.tex}	
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Expansion to stellarator regime}
+\input{astell_manual.tex}	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\begin{thebibliography}{10}
+\bibitem{strand2001} P. I. Strand, W. A. Houlberg; Magnetic flux evolution in highly shaped plasmas. Phys. Plasmas 1 June 2001; 8 (6): 2782–2792. https://doi.org/10.1063/1.1366618
+\bibitem{ASTRAmanual}  G.V. Pereverzev, P.N. Yushmanov, ASTRA - Automated System for TRansport Analysis, Max-Planck-Institut Für Plasmaphysik, IPP-Report, IPP 5/98, February, 2002
+\bibitem{turkin2011} Y. Turkin, C. D. Beidler, H. Maaßberg, S. Murakami, V. Tribaldos, A. Wakasa; Neoclassical transport simulations for stellarators. Phys. Plasmas 1 February 2011; 18 (2): 022505. https://doi.org/10.1063/1.3553025
+\end{thebibliography}
 
 \vfill\eject
 %\input garbage.tex

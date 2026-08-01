@@ -137,7 +137,7 @@ contains
     integer :: jmom, jrho, mnmax, ns_temp, n_phase
     integer, allocatable, dimension(:) :: xm, xnn
     real*8, allocatable, dimension(:) :: rmnc_lcfs, rmns_lcfs, zmnc_lcfs, zmns_lcfs, &
-        xrho_eq, phi_temp
+        xrho_eq, xrho_eq_astra, phi_temp
     real*8, allocatable, dimension(:, :) :: rmnc_all, rmns_all, zmnc_all, zmns_all, &
         rmnc_interp, rmns_interp, zmnc_interp, zmns_interp
     double precision :: f_boundary, nfperiods, brangle, Ip_contrib, F0_contrib
@@ -194,6 +194,7 @@ contains
     allocate(rmns_interp(ns_temp, mnmax))
     allocate(zmnc_interp(ns_temp, mnmax))
     allocate(xrho_eq(ns_temp))
+    allocate(xrho_eq_astra(ns_temp))
     allocate(phi_temp(ns_temp))
 
 ! --- Read full arrays ---
@@ -229,13 +230,14 @@ contains
         stella_which_surf = 1
         do jrho=1, ns_temp
             xrho_eq(jrho) = sqrt(phi_temp(jrho)/phi_temp(ns_temp))
+            xrho_eq_astra(jrho) = (jrho-1.)/(ns_temp-1.)
         enddo
 
         do jmom=1, mnmax
-            call qinterp(xrho_eq(1:ns_temp), rmnc_all(jmom, 1:ns_temp), ns_temp, xrho_eq(1:ns_temp), rmnc_interp(1:ns_temp, jmom), ns_temp)
-            call qinterp(xrho_eq(1:ns_temp), zmns_all(jmom, 1:ns_temp), ns_temp, xrho_eq(1:ns_temp), zmns_interp(1:ns_temp, jmom), ns_temp)
-            call qinterp(xrho_eq(1:ns_temp), rmns_all(jmom, 1:ns_temp), ns_temp, xrho_eq(1:ns_temp), rmns_interp(1:ns_temp, jmom), ns_temp)
-            call qinterp(xrho_eq(1:ns_temp), zmnc_all(jmom, 1:ns_temp), ns_temp, xrho_eq(1:ns_temp), zmnc_interp(1:ns_temp, jmom), ns_temp)
+            call qinterp(xrho_eq(1:ns_temp), rmnc_all(jmom, 1:ns_temp), ns_temp, xrho_eq_astra(1:ns_temp), rmnc_interp(1:ns_temp, jmom), ns_temp)
+            call qinterp(xrho_eq(1:ns_temp), zmns_all(jmom, 1:ns_temp), ns_temp, xrho_eq_astra(1:ns_temp), zmns_interp(1:ns_temp, jmom), ns_temp)
+            call qinterp(xrho_eq(1:ns_temp), rmns_all(jmom, 1:ns_temp), ns_temp, xrho_eq_astra(1:ns_temp), rmns_interp(1:ns_temp, jmom), ns_temp)
+            call qinterp(xrho_eq(1:ns_temp), zmnc_all(jmom, 1:ns_temp), ns_temp, xrho_eq_astra(1:ns_temp), zmnc_interp(1:ns_temp, jmom), ns_temp)
         enddo
 
 ! Construct flux surfaces, phi = 0
@@ -261,7 +263,7 @@ contains
     deallocate(zmnc_all)
     deallocate(rmns_interp)
     deallocate(zmnc_interp)
-    deallocate(xrho_eq)
+    deallocate(xrho_eq, xrho_eq_astra)
     deallocate(phi_temp)
 
     end subroutine VMECbin2astra

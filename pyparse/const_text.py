@@ -778,11 +778,8 @@ endif
     circuit_eqn = \
 '''! Circuit equation:
 if (TIME - TSTART <= TAU) PSIEXT = FP(NA1) + LEXT*IPL
-if ((PEQL == 6 .or.  IPEQL == 9 .or. IPEQL == 7) then
-PSPLEX = LEXT/ROC*SG11(NA)/mu0
-else
 PSPLEX = LEXT/ROC*5.*IPOL(NA1)*G22(NA)/GP2/RTOR
-endif
+if ((IPEQL)==6.or.(IPEQL)==9 .or. (IPEQL) == 7) PSPLEX = LEXT/ROC*SG11(NA)/mu0
 PSIEXT = PSIEXT + TAU*UEXT
 
 if (TIME-TSTART <= TAU) then

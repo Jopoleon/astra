@@ -1,0 +1,234 @@
+The work included in the following chapter is developed by Fabian Solfronk\footnote{fabian.solfronk@ipp.mpg.de}.
+
+\subsection{Current diffusion equation}
+
+For tokamaks, the following equation is solved in ASTRA to compute the evolution of the poloidal flux:
+
+\begin{equation}
+    \label{tokcurrdiff}
+     \sigma_\parallel \left( \frac{\partial \Psi}{\partial t} - \frac{\rho \dot{B_0}}{2 B_0} \frac{\partial \Psi}{\partial \rho} \right) = \frac{J^2 R_0}{\mu_0 \rho} \frac{\partial}{\partial \rho} \left( \frac{G_2}{J} \frac{\partial \Psi}{\partial \rho} \right) - \frac{V'}{2\pi \rho} \left( j_{BS} + j_{CD} \right)
+\end{equation}
+
+However, axisymmetry was assumed during the derivation of this equation. As a consequence, for instance, the geometrical factor $G_2 = V'/(4\pi^2) \langle \left( \nabla \rho/R \right)^2 \rangle$ is part of the equation. Assuming axisymmetry is no longer valid in stellarator geometry. Therefore, an equation applicable in both tokamak and stellarator geometry has been derived. \newline
+First, in a curvilinear coordinate system $\left( \rho,\theta,\zeta\right)$ with radial coordinate $\rho$, poloidal angle $\theta$ and toroidal angle $\zeta$, the toroidal current $I$ and poloidal current $F$ can be defined as \cite{strand2001}
+
+\begin{eqnarray} 
+I(\rho) \equiv \int^{2\pi}_0 d\theta \int^\rho_0 \sqrt{g} \ J^\zeta \ d\rho = \frac{1}{\mu_0} \int^{2\pi}_0 B_\theta \ d\theta\\
+F(\rho) \equiv \int^{2\pi}_0 d\zeta \int^\infty_\rho \sqrt{g} \ J^\theta \ d\rho = \frac{1}{\mu_0} \int^{2\pi}_0 B_\zeta \ d\zeta \nonumber
+\end{eqnarray}
+
+where $\sqrt{g}$ is the Jacobian of the transformation from curvilinear to Cartesian coordinates, $J^i$ are contravariant components of the current density, and $B_i$ are covariant components of the magnetic field. Amp\`ere's law was used to derive each of the two latter expressions. In this way, the radial derivatives of the poloidal ($\Psi$) and toroidal ($\Phi$) magnetic flux can be related to the poloidal and toroidal current by defining the susceptance matrix $S$ \cite{strand2001}:
+
+\begin{equation} \label{IandF}
+\mu_0 
+\left( \begin{array}{rr} I \\ F \end{array} \right)
+=
+\left( \begin{array}{rr} S_{11} & S_{12} \\ S_{21} & S_{22} \end{array} \right)
+\left( \begin{array}{rr} \Psi' \\ \Phi' \end{array} \right)
+\end{equation}
+
+where $\mu_0$ is the vacuum permeability. This relation yields an equation for the rotational transform $\mu = \Psi'/\Phi' = 1/q$ \cite{strand2001}
+
+\begin{equation} \label{boundcond}
+\mu = \frac{\Psi'}{\Phi'} = \frac{\mu_0 I}{S_{11} \Phi'} - \frac{S_{12}}{S_{11}}
+\end{equation}
+
+Hence, the vacuum rotational transform is given by $\mu_{vac} = - S_{12}/S_{11}$. \newline
+
+In \cite{strand2001}, an equation for the evolution of the rotational transform $\mu$ was derived:
+
+\begin{equation}
+\label{strand}
+\frac{\partial \mu}{\partial t}\bigg|_\rho = \frac{\partial \mu}{\partial \Phi} \frac{\partial \Phi}{\partial t}\bigg|_\rho
++\frac{\partial}{\partial \Phi} \Bigg\{ \frac{\eta_{\parallel}}{\mu_0} \Phi' \left(S_{21} \mu + S_{22}\right)^2 \frac{\partial}{\partial \rho} \left[ \frac{S_{11} \mu + S_{12}}{S_{21} \mu + S_{22}} \right] - \eta_{\parallel} \big\langle ( \vec{J}_{BS} + \vec{J}_{CD} ) \cdot \vec{B} \big\rangle \frac{\partial V}{\partial \Phi}\Bigg\}
+\end{equation}
+
+where $\partial f/\partial t\big|_\rho$ describes the time derivative of a quantity $f$ with respect to constant $\rho$. Using $\mu = \Psi'/\Phi'$ and integrating equation \ref{strand} over $\Phi$ leads to 
+
+\begin{equation} \label{strandafterintegr}
+\frac{\partial \Psi}{\partial t}\bigg|_\rho = \mu \frac{\partial \Phi}{\partial t}\bigg|_\rho
++\frac{\eta_{\parallel}}{\mu_0} \Phi' \left(S_{21} \mu + S_{22}\right)^2 \frac{\partial}{\partial \rho} \left[ \frac{S_{11} \mu + S_{12}}{S_{21} \mu + S_{22}} \right] - \eta_{\parallel} \big\langle ( \vec{J}_{BS} + \vec{J}_{CD} ) \cdot \vec{B} \big\rangle \frac{\partial V}{\partial \Phi}
+\end{equation}
+
+A finite integration constant would cause a radially constant temporal change of the poloidal magnetic flux, which is not allowed due to $\Psi(0)=0$. Therefore, it is set to 0. Employing again $\mu = \Psi'/\Phi'$ and using the definition of $\rho$ in ASTRA ($\rho = \sqrt{\Phi/(B_0\pi)}$), equation \ref{strandafterintegr} can be transformed into an equation for $\Psi=\Psi(\rho,t)$. Further rewriting of the second term on the right-hand side in equation \ref{strandafterintegr} yields
+
+\begin{eqnarray} \label{finaleq}
+\sigma_\parallel \left( \partial_t - \frac{\rho \dot{B}_0}{2B_0} \partial_\rho \right) \Psi = \frac{W(S_{21},S_{11})}{2\pi B_0\mu_0 \rho} \left(\partial_\rho \Psi\right)^2 + \frac{1}{\mu_0} \left[ W(S_{22},S_{11}) + W(S_{21},S_{12}) \right]\partial_\rho \Psi
+\\
+ + \frac{\rho}{\mu_0} \det(S) \ \partial_\rho\left(\frac{\partial_\rho \Psi}{\rho} \right) + \frac{2\pi B_0}{\mu_0} \rho W(S_{22},S_{12}) - \frac{V'}{2\pi\rho} \left(j_{BS}+j_{CD} \right) \nonumber
+\end{eqnarray}
+
+where $W(f,g)$ is the Wronskian of the flux surface functions $f$ and $g$ defined as $W(f,g) \equiv fg' - gf'$, $\sigma_\parallel = 1/\eta_\parallel$ and for $j_{BS}$ and $j_{CD}$ the definitions from \cite{ASTRAmanual} where applied. Comparing equation \ref{finaleq} with the current diffusion equation for tokamaks (see equation \ref{tokcurrdiff}), two major differences are visible. First, in contrast to equation \ref{tokcurrdiff}, in the generic equation, besides the term driven by $j_{BS}$ and $j_{CD}$, there is a new source term proportional to $\rho W(S_{22},S_{12})$. Furthermore, there is a nonlinear term proportional to $(\partial_\rho \Psi)^2$. In the axisymmetric case, the susceptance matrix is diagonal \cite{strand2001}, and the two terms vanish.
+
+
+\subsubsection{Input parameters}
+
+In ASTRA, equations of the following type can be solved (`src/for/runeq.f90'):
+
+\begin{eqnarray} \label{inputscheme}
+\frac{1}{G} \partial_t \left( GHy \right) + \frac{1}{V} \partial_\rho \{ VMG_{11} \left(-Ay'-By+R \right) \} = Sy + P \\
++ \frac{\dot{b}}{W} \partial_\rho \left( VMN\rho y \right) + \left(\dot{r}-\dot{b} \right) \frac{\rho}{G} \partial_\rho \left(GHy \right) \nonumber
+\end{eqnarray}
+
+where $y$ is the quantity for which the equation is solved for, $\dot{r} = \dot{\Phi}(\rho_B)/(2\Phi(\rho_B))$, $\dot{b} = \dot{B_0}/(2B_0)$ and $G$, $H$, $V$, $M$, $G_{11}$, $A$, $B$, $R$, $S$, $P$, $W$ and $N$ (`tmp/eqns\_inc.f90': \texttt{YWGN,YWHN,YVR,YWM,YWG11,YWA,YWB,YWR,YWS,YWD,YWWB,YWNB}) are input parameters. Since equation \ref{inputscheme} does not include a term proportional to $(\partial_\rho \Psi)^2$, the nonlinear term was approximated via $(\partial_\rho \Psi)^2 \approx \partial_\rho \Psi\big|_{t-\tau} \ \partial_\rho \Psi\big|_{t}$, where $\tau$ is the duration of one ASTRA time step, assuming that $\partial_\rho \Psi$ changes sufficiently slow in time. Rewriting equation \ref{finaleq} again, yields the following input parameters for equation \ref{inputscheme}:
+
+\begin{align*} \label{inputscheme}  
+G &= 1 & &  \nonumber \\ 
+H &= 1 & & \nonumber \\ 
+V &= R^2_0 \frac{\sigma_\parallel}{b} &\axisym& \ \frac{\mu_0 \sigma_\parallel \rho}{J^2} \nonumber \\ 
+M &= \frac{1}{V} & & \nonumber \\ 
+G_{11} &= 1 & & \nonumber \\ 
+A &= c R^2_0 &\axisym& \ \frac{R_0 G_2}{J} \nonumber \\ 
+B &= R^2_0 \frac{a}{b} &\axisym& \ 0 \nonumber \\ 
+R &= -2\pi B_0 R^2_0 \frac{S_{12}}{S_{22}} &\axisym& \ 0 \nonumber \\ 
+S &= \frac{a^2}{b \sigma_\parallel} \partial_\rho \left(\frac{b}{a}\right) &\axisym& \ 0 \nonumber \\ 
+P &= - \frac{V'}{2\pi\rho\sigma_\parallel} \left(j_{BS}+j_{CD} \right) & & \nonumber \\ 
+W &= \frac{1}{\rho} & & \nonumber \\
+N &= \frac{1}{\rho} & & \nonumber \displaybreak[1] \\
+\text{with} \quad a &\equiv \frac{2}{\mu_0} S_{21} S_{22} \partial_\rho \left(\frac{S_{12}}{S_{22}}\right) - \frac{(S_{11})^2}{2\pi B_0 \rho\mu_0} \partial_\rho \left(\frac{S_{21}}{S_{11}}\right) \partial_\rho \Psi\big|_{t-\tau} &\axisym& \ 0,  \nonumber \\
+b &\equiv \frac{\rho}{\mu_0} (S_{22})^2 &\axisym& \ \frac{\left(R_0 J\right)^2}{\mu_0 \rho},  \nonumber \\
+c &\equiv \frac{S_{11}}{\rho S_{22}} - \frac{S_{21} S_{12}}{\rho (S_{22})^2} &\axisym& \ \frac{G_2}{R_0 J}
+\end{align*}
+
+As already mentioned above, the susceptance matrix is diagonal in axisymmetric geometry ($S_{12} = S_{21} = 0$). Moreover, it was shown in \cite{strand2001}, that in this case $S_{11} = V'/(4\pi^2) \ \langle ((\nabla \rho)/R)^2 \rangle$ and $S_{22} = 4\pi^2/(V' \ \langle R^{-2} \rangle)$ (here, $V$ is the volume and $R$ is the major radius). Thus, in ASTRA notation $S_{11} = G_2 = G_{22} J/R_0$ and $S_{22} = 4 \pi^2 R^2_0/(V' G_{33}) = R_0 J/\rho$ with the geometrical factors $G_{22}$ (\texttt{G22}; in \cite{ASTRAmanual} defined from the geometrical factor $G_2$) and $G_{33}$ (\texttt{G33}) and the normalized poloidal current $J$ (\texttt{IPOL}). By plugging these expressions into the input parameters, the input parameters reduce to the same parameters as for the tokamak current diffusion equation, illustrating that the generic equation is equivalent to the tokamak current diffusion equation in the axisymmetric case.
+
+\subsubsection{Boundary condition}
+
+In the tokamak case, the following boundary condition can be used to solve the current diffusion equation (see \cite{ASTRAmanual}):
+
+\begin{equation}
+\frac{\partial \Psi}{\partial \rho}\bigg|_{\rho_B} = \frac{\mu_0}{G_2(\rho_B)}I_{pl}(t)
+\end{equation}
+
+For stellarators, an equivalent boundary condition arises from equation \ref{boundcond} by multiplying it with $\Phi'=2\pi B_0 \rho$:
+
+\begin{equation}
+\frac{\partial \Psi}{\partial \rho}\bigg|_{\rho_B} = \frac{\mu_0}{S_{11}(\rho_B)}I_{pl}(t) + 2\pi B_0 \rho_B \mu_{vac}(\rho_B)
+\end{equation}
+
+
+
+\subsection{Calculation of $j_\parallel$ in non-axisymmetric geometry}
+
+The geometrical parameters $G_2$ ($G_{22}$) and $G_3$ ($G_{33}$) (defined in \cite{ASTRAmanual}) lose their importance in non-axisymmetric geometry. Instead, the geometrical parameters $S_{ij}$ needed to be defined. For a tokamak, $j_\parallel \equiv \langle \textbf{j}\cdot\Bvec \rangle/B_0$ is calculated via $j_\parallel = 2\pi^2 J^2/(\mu_0 V') \ \partial_\rho(G_{22}\partial_\rho \Psi)$. This is not valid in non-axisymmetric geometry. However, for stellarators the relation from \cite{strand2001} can be applied:
+
+\begin{eqnarray} \label{jpara1}
+\langle \textbf{j}\cdot\Bvec \rangle V' = \mu_0 W(F,I)
+\end{eqnarray}
+
+As a result, $j_\parallel$ in non-axisymmetric geometry is given by
+
+\begin{eqnarray} \label{jpara1}
+j_\parallel = \frac{\mu_0}{V'B_0} \ W(F,I)
+\end{eqnarray}
+
+Note that the toroidal current $I$ and poloidal current $F$ can easily be calculated from equation \ref{IandF} using that $\Phi'=2\pi B_0 \rho$.
+
+
+\subsection{Particle and energy transport in the stellarator regime}
+
+The equations describing particle and energy transport in ASTRA (see \cite{ASTRAmanual}) are already generic, i.e., applicable for stellarators. However, obviously, computing the energy and particle fluxes (or transport coefficients), which are needed in ASTRA as input, requires taking stellarator geometry into account. At this point, it is worth noting that the definitions of the fluxes and transport coefficients vary from code to code. In ASTRA, the electron particle flux $\Gamma_e$, the electron (ion) heat flux $q_e$ ($q_i$) and the bootstrap current density $j_{BS}$ are defined by \cite{ASTRAmanual}
+
+\begin{equation}
+    \label{eq:fluxesdef}
+    \renewcommand*{\arraystretch}{2.5}
+	\begin{pmatrix} 
+                \dfrac{\Gamma_e}{n_e} \\ \dfrac{q_e}{n_e T_e} \\ 	\dfrac{q_i}{n_i T_i} \\ V' G_1 \dfrac{\mu_0 j_{BS}}{B_\theta}
+	\end{pmatrix} = - V' G_1 \begin{pmatrix} 
+D_n & D_e & D_i & C_n \\ 
+\chi_n^e & \chi_e & \chi_i^e & C_e \\
+\chi_n^i & \chi_e^i & \chi_i & C_i \\ 
+C_1 & C_2 & C_3 & 0 
+	\end{pmatrix}
+\begin{pmatrix} 
+\dfrac{1}{n_e} \dfrac{\partial n_e}{\partial \rho} \\
+ \dfrac{1}{T_e} \dfrac{\partial T_e}{\partial \rho} \\ 	
+\dfrac{1}{T_i} \dfrac{\partial T_i}{\partial \rho} \\ 
+\dfrac{E_\parallel}{B_\theta}
+	\end{pmatrix}
+\end{equation}
+
+with the geometrical parameter $G_1 = \langle (\nabla \rho)^2 \rangle$, the poloidal magnetic field $B_\theta$ and the parallel electric field $E_\parallel$. However, for instance, in \cite{turkin2011}, the transport coefficients already include $G_1$.
+
+
+\subsection{Applying the stellarator regime in ASTRA}
+
+\subsubsection{New variables}
+
+During the derivation of the generic current diffusion equation, several new variables were introduced. These variables were implemented in ASTRA and are documented in table 7.1. The array-like variables $S_{ij}$ were defined on the intermediate grid, which turned out to be numerically more stable in the current version of ASTRA.
+
+{\bf Table 7.1} Variables (arrays) related to the stellarator regime\\[2ex]
+\begin{tabular}{|l|l|l|l|}				\hline
+\bf Name	&\bf Units & Definition & Description\\ \hline
+\tt SG11 / SG11X	&  & $S_{11}(\rho)$ & 11 component of susceptance matrix; \\
+&&&axisym.: $S_{11} = G_2$\\
+\tt SG12 / SG12X	&  & $S_{12}(\rho)$ & 12 component of susceptance matrix; \\
+&&&axisym.: $S_{12} = 0$\\
+\tt SG21 / SG21X	&  & $S_{21}(\rho)$ & 21 component of susceptance matrix; \\
+&&&axisym.: $S_{21} = 0$\\
+\tt SG22 / SG22X	&  & $S_{22}(\rho)$ & 22 component of susceptance matrix; \\
+&&&axisym.: $S_{22} = 4 \pi^2 R^2_0/(V' G_{3}) = R_0 J/\rho$\\
+\tt GVAC / GVACX	& Tm	& $\frac{\mu_0}{2\pi} \ F_{vac}$ & $R_0 B_0$ in tokamak\\
+\hline
+\end{tabular}
+\bigskip
+
+\subsubsection{Stellarator equilibrium}
+
+A necessary step to predict the behavior of stellarator plasmas with ASTRA in the future is to couple ASTRA to a stellarator equilibrium solver, which provides the quantities from table 7.1. At the moment, this is not yet the case. Thus, information about the equilibrium must be provided in advance and imported during the simulation. To do so, there are two options:
+
+\begin{enumerate}
+
+\item \texttt{IPEQL} = 6 (recommended): Metric (including the elements of the susceptance matrix) is taken from `input\_metric.txt'. The file should be structured as follows:\newline \newline
+$m$\newline
+$t_1$, SHIF(1:NA1,$t_1$), ELON(1:NA1,$t_1$), TRIA(1:NA1,$t_1$), G33(1:NA1,$t_1$), \newline
+IPOL(1:NA1,$t_1$), VR(1:NA1,$t_1$), SLAT(1:NA1,$t_1$), G11(1:NA1,$t_1$), G22(1:NA1,$t_1$), \newline
+DRODA(1:NA1,$t_1$), SHIV(1:NA1,$t_1$), SQUARN(1:NA1,$t_1$), SG11(1:NA1,$t_1$), \newline
+SG12(1:NA1,$t_1$), SG21(1:NA1,$t_1$), SG22(1:NA1,$t_1$) \newline
+$t_2$, SHIF(1:NA1,$t_2$), ELON(1:NA1,$t_2$), TRIA(1:NA1,$t_2$), G33(1:NA1,$t_2$), \newline
+IPOL(1:NA1,$t_2$), VR(1:NA1,$t_2$), SLAT(1:NA1,$t_2$), G11(1:NA1,$t_2$), G22(1:NA1,$t_2$), \newline
+DRODA(1:NA1,$t_2$), SHIV(1:NA1,$t_2$), SQUARN(1:NA1,$t_2$), SG11(1:NA1,$t_2$), \newline
+SG12(1:NA1,$t_2$), SG21(1:NA1,$t_2$), SG22(1:NA1,$t_2$)\newline
+...\newline
+$t_m$, SHIF(1:NA1,$t_m$), ELON(1:NA1,$t_m$), TRIA(1:NA1,$t_m$), G33(1:NA1,$t_m$), \newline
+IPOL(1:NA1,$t_m$), VR(1:NA1,$t_m$), SLAT(1:NA1,$t_m$), G11(1:NA1,$t_m$), G22(1:NA1,$t_m$), \newline
+DRODA(1:NA1,$t_m$), SHIV(1:NA1,$t_m$), SQUARN(1:NA1,$t_m$), SG11(1:NA1,$t_m$), \newline
+SG12(1:NA1,$t_m$), SG21(1:NA1,$t_m$), SG22(1:NA1,$t_m$)\newline
+Note that \texttt{G22}, \texttt{G33}, and \texttt{IPOL} are, in this case, dummy variables.
+
+
+\item \texttt{IPEQL} = 9: Metric (including the elements of the susceptance matrix) is taken from the data file as described in \cite{ASTRAmanual}.
+
+
+\subsubsection{Calculation of $\rho_B$ in the stellarator regime}
+
+In order to define the grid for \texttt{RHO}, $\rho_B$ (\texttt{ROC}), i.e., $\rho$ at the LCFS needs to be calculated. To do so, $F(\rho)$ can be considered for vacuum. In vacuum, $J^\theta$ is 0 inside the confined region. Thus, $F_{vac}(\rho) = F_{vac}$ is constant in the confined region and depends only on the coil currents of the stellarator. Hence, $F_{vac}$ is a machine parameter and should be provided as input for ASTRA. In the axisymmetric case, $B_\zeta = RB_\phi$ and, as a consequence, $F_{vac} = 2\pi/\mu_0 \ R_0B_0$. \newline
+Considering equation \ref{IandF}, $F_{vac}$ is given by 
+
+\begin{equation} \label{fvac}
+\mu_0 F_{vac} = S_{21} \Psi_{vac}' + S_{22}\Phi_{vac}' = \frac{\det(S)(\rho_B)}{S_{11}(\rho_B)} 2\pi B_0\rho_B
+\end{equation}
+
+During the last step, the definition of the vacuum rotational transform $\mu_{vac} = - S_{12}/S_{11}$ was used. Moreover, it was exploited that $F_{vac}$ is constant in the confined region. Rewriting equation \ref{fvac} yields a formula for $\rho_B$:
+
+\begin{equation}
+\rho_B = \frac{G_{vac}}{B_0} \ \frac{S_{11}(\rho_B)}{\det(S)(\rho_B)}
+\end{equation}
+
+where $G_{vac} \equiv \mu_0/(2\pi) \ F_{vac}$ (see table 7.1; \texttt{GVAC}).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
