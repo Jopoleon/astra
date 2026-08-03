@@ -155,7 +155,7 @@ contains
         endif
         rmaj_as(jrho) = RTOR + SHIF(jrho)
         q_as(jrho)    = 1./MU(jrho)
-        ptot_as(jrho) = NE(jrho)*TE(jrho) + ni_main_as(jrho)*TI(jrho) + NIZ1(jrho)*TI(jrho) + &
+        ptot_as(jrho) = NE(jrho)*TE(jrho) + TI(jrho)*(ni_main_as(jrho) + NIZ1(jrho) + NIZ2(jrho) + NIZ3(jrho)) +
             pfast(jrho) + 0.5*(pblon(jrho) + pbper(jrho))
         bpolz = BTOR*AMETR(jrho)*MU(jrho)/RTOR
         bmod = sqrt(BTOR**2 + bpolz**2)
