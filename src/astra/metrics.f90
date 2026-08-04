@@ -1,17 +1,19 @@
 module metrics
 
+use pi_const, only: GP, GP2, GP2_sq
+
 implicit none
 
 logical :: use_ext_bnd=.false.
 logical :: plasma_up=.true.  ! plasma is up by default, can be set to False for breakdown by the user in a user-defined sbr called with "<"
 double precision, dimension(:), allocatable :: CCOIL, VCOIL
 
+
 contains
 
 !---------------------------------------------------------------------
     subroutine METRIC()
 
-    use pi_const, only: GP, GP2
     use cpu_usage, only: wallTime_equ, cpuTime_equ
     use status, only: VRO, VR, SHIF, AMETR, ELON, TRIA, XRHO, FP, IPOL
     use scalars, only: IPART, FTO, FTN, ROC, &
@@ -47,6 +49,7 @@ contains
     CASE(-2)  ! Cylindircal case, No equilibrium solver. No toroidicity
         call EQCYL()
         call RHSEQ()
+
     CASE(-1)  ! Take metric from exp/data_file
         ROC = ROC3A(RTOR, SHIFT, ABC, ELONG, TRIAN)
         FTO = GP*BTOR*ROC**2
@@ -61,6 +64,7 @@ contains
 
     CASE(0) ! No equilibrium solver (NEQUIL=0) .or. data initiation @ 1st entry
         call EQGUESS()
+
     CASE(1)  ! EMEQ
         if (TIME == TSTART) NDTEQUILMY = 0
         if (TIME >  TSTART) NDTEQUILMY = 1
@@ -100,6 +104,7 @@ contains
         endif
 
     END SELECT
+
     call CPU_TIME(t_cpu2)
     call SYSTEM_CLOCK(t_wall2, rate)
     cpuTime_equ = cpuTime_equ + dble(t_cpu2) - dble(t_cpu1)
@@ -157,7 +162,7 @@ contains
         equil_now%profiles_1d%rho_tor = equil_now%profiles_1d%rho_tor_norm*ROC
         prof_as = FP(1: NA1)
         call qinterp(XRHO(1:NA1), prof_as, NA1, equil_now%profiles_1d%rho_tor_norm, prof_eq, nrho_surf)
-        equil_now%profiles_1d%psi = prof_eq   
+        equil_now%profiles_1d%psi = prof_eq
         prof_as = IPOL(1: NA1)*RTOR*BTOR
         call qinterp(XRHO(1:NA1), prof_as, NA1, equil_now%profiles_1d%rho_tor_norm, prof_eq, nrho_surf)
         equil_now%profiles_1d%F_dia = prof_eq
@@ -186,7 +191,6 @@ contains
 !  BDB02, B0DB2, BDB0, FOFB, BMAXT, BMINT, DRODA, GRADRO
 !---------------------------------------------------------------------
 
-    use pi_const, only: GP, GP2, GP2_sq
     use status, only: RHO, XRHO, VR, VRS, AMETR, SHIF, SHIV, &
         ELON, TRIA, SLAT, G11, G22, G33, G41, G42, G43, G44, G45, &
         BDB0, BDB02, B0DB2, IPOL, MU, &
@@ -218,7 +222,7 @@ contains
         TRIA(J)  = 0.
         IPOL(J)  = 1.
         G33(J)   = 1.
-        G11(J)   = VRS(j) 
+        G11(J)   = VRS(j)
         SLAT(J)  = VRS(j)
         BDB02(j) = 1. + (RHO(j)*MU(j)/RTOR)**2
         B0DB2(j) = 1./BDB02(j)
@@ -280,7 +284,6 @@ contains
 !     NA1, NA=NA1-1, NAB, RHO(NA1)=ROC, AMETR(j>NA1)
 !---------------------------------------------------------------------
 
-    use pi_const, only: GP, GP2, GP2_sq
     use scalars, only: ROC, RTOR, SHIFT, ABC, ELONG, TRIAN, &
         FTO, BTOR, NA, NA1, NB1, HRO, VOLUME
     use status, only: RHO, VR, VRS, AMETR, SHIF, &
@@ -299,7 +302,7 @@ contains
     FTO = GP*BTOR*ROC**2
     NA  = NA1 - 1
 
-! Compute NB1 
+! Compute NB1
     call new_grid()
 ! Define AMETR, SHIF, ELON, TRIA, SHIV
 
@@ -331,7 +334,7 @@ contains
 
 !----- Definition --------------------------- Approximation ----------
 ! gradRHO = DRODA
-! <|grad(a)|> = sqrt(G1)/DRODA 
+! <|grad(a)|> = sqrt(G1)/DRODA
 ! G1=<(gradRHO)**2>;     G1=DRODA**2
 ! G11=VR*G1=VR*<(gradRHO)**2>    G11=VR*G1
 ! G2=<(gradRHO/R)**2>*VR/4/pi**2;    G22=R*G2/J;
@@ -343,7 +346,7 @@ contains
         G33(J) = (RTOR/(RTOR + SHIF(J)))**2
         GRADRO(J) = DRODA(J)
         if (j < NB1) VRS(j) = 0.5*(VR(J + 1) + VR(j))
-        SLAT(J) = VRS(J)*DRODA(J)  
+        SLAT(J) = VRS(J)*DRODA(J)
         G11(J)  = VRS(J)*DRODA(J)**2
         G22(J)  = G11(J)/GP2_sq/(RTOR + SHIF(J))
         G41(J)  = 1.0
@@ -414,7 +417,6 @@ contains
 
 ! Set external metric  (Pereverzev 10.02.2005)
 
-    use pi_const, only: GP, GP2, GP2_sq
     use scalars, only: RTOR, BTOR, ABC, ROC, HRO, HROX, &
         SHIFT, ELONG, TRIAN, VOLUME, NA, NA1, NAB, updwn, ipart
     use status, only: SHIF, ELON, TRIA, SHX, ELX, TRX, &
@@ -495,7 +497,7 @@ contains
     HROX = (RHO(2) - RHO(1))/ROC
 
     if (flightsim) then
-        do j=1,NA1
+        do j=1, NA1
             VRS(j)   = 0.5*(VR(J+1) + VR(j))
             SLAT(J)  = 0.5*(SLAT(J+1) + SLAT(j))
             G11(J)   = 0.5*(G11(j) + G11(j+1))
@@ -509,12 +511,12 @@ contains
             if (IFDEFX('SLATX ')) then
                 SLAT(J) = 0.5*(SLATX(J+1) + SLATX(j))
             else
-                SLAT(J) = VRS(j) 
+                SLAT(J) = VRS(j)
             endif
             if (IFDEFX('G11X  ')) then
                 G11(J) = 0.5*(G11X(j) + G11X(j+1))
             else
-                G11(J) = VRS(j) 
+                G11(J) = VRS(j)
             endif
             if (IFDEFX('G22X  ')) then
                 G22(J) = 0.5*(G22X(j) + G22X(j+1))
@@ -526,7 +528,7 @@ contains
             else
                 DRODA(J) = 1.
             endif
-        enddo  
+        enddo
     endif
 
 ! Linear extrapolation
@@ -595,9 +597,9 @@ contains
         DRODA, SHIV, SQUARN
 
     open(32, file='input_metric.dat')
-    read(32, '(5555E25.11)') SHIF(1:na1), elon(1:na1), tria(1:na1), & 
-        g33(1:na1), ipol(1:na1), vr(1:na1), slat(1:na1), g11(1:na1), & 
-        g22(1:na1), droda(1:na1), shiv(1:na1), squarn(1:na1)
+    read(32, '(5555E25.11)') SHIF(1:NA1), elon(1:NA1), tria(1:NA1), &
+        g33(1:NA1), ipol(1:NA1), vr(1:NA1), slat(1:NA1), g11(1:NA1), &
+        g22(1:NA1), droda(1:NA1), shiv(1:NA1), squarn(1:NA1)
     close(32)
 
     end subroutine extmetric_input
@@ -607,7 +609,6 @@ contains
 
 ! Set external metric
 
-    use pi_const, only: GP, GP2_sq
     use scalars, only: RTOR, BTOR, ABC, ROC, HRO, HROX, &
         SHIFT, ELONG, TRIAN, VOLUME, NA, NA1, NAB, updwn
     use status, only: SHIF, ELON, TRIA, &
@@ -635,7 +636,7 @@ contains
     RHO(1: NA1) = XRHO(1: NA1)*ROC
 
     if (debug > 0) then
-        write(*, *) 'metric', RHO(1: 10),ROC
+        write(*, *) 'metric', RHO(1: 10), ROC
         write(*, *) VR(1: 10)
         write(*, *) G33(1: 10)
         write(*, *) IPOL(1: 10)
@@ -746,7 +747,7 @@ contains
         ROC3A = 0.
     else
         YD1 = 1.+YT2*(YT2-2./YGE)
-        if (YD1 >= 0) then 
+        if (YD1 >= 0) then
             YD1 = sqrt(YD1)
             Y1 = (2. - YT2*YGE)*YD1/(1. + YD1)
             Y2 = YGE - YT2
@@ -772,8 +773,8 @@ contains
 
 !---------------------------------------------------------------------
 ! Module call sequence in A2EMEQ
-!    
-!    EQ -> mapping -> EMEQ -> new_grid -> mapping 
+!
+!    EQ -> mapping -> EMEQ -> new_grid -> mapping
 !
 !                                         | -> EQGB3
 !                                         |                 | -> EQLVU3
@@ -788,15 +789,14 @@ contains
 ! For (NEQUIL = 1 ) metric is frozen (can be used interactively)
 !---------------------------------------------------------------------
 
-    use pi_const, only: GP, GP2_sq
     use emeq_mod, only: NP, emeq
-    use scalars, only: HRO, ABC, ROC, RTOR, BTOR, IPL, & 
-         TIME, ELONG, TRIAN, SHIFT, UPDWN, VOLUME, & 
+    use scalars, only: HRO, ABC, ROC, RTOR, BTOR, IPL, &
+         TIME, ELONG, TRIAN, SHIFT, UPDWN, VOLUME, &
          NA1, NA, NAB, NEQUIL
-    use status, only: NRD, TE, TI, CU, SHEAR, SHIV, & 
-         RHO, AMETR, EQPF, EQFF, IPOL, MU, FP, SXHO, & 
-         SLAT, VOLUM, SHIF, ELON, TRIA, DRODA, GRADRO, VR, VRS, XRHO, & 
-         G11, G22, G33, G41, G42, G43, G44, G45, & 
+    use status, only: NRD, TE, TI, CU, SHEAR, SHIV, &
+         RHO, AMETR, EQPF, EQFF, IPOL, MU, FP, SXHO, &
+         SLAT, VOLUM, SHIF, ELON, TRIA, DRODA, GRADRO, VR, VRS, XRHO, &
+         G11, G22, G33, G41, G42, G43, G44, G45, &
          BDB0, BDB02, B0DB2, BMAXT, BMINT, FOFB
     use numerical_tools, only: integr, qinterp, smooth
     use debugger, only: markloc
@@ -945,7 +945,7 @@ contains
         GRADRO_EQU(J) = BD(J)*DRODA_EQU(J)
         VR_EQU(J)     = VRS_EQU(j)
     enddo
-    call qinterp(X_EQU(1:NR_EQU), VRS_EQU(1:NR_EQU), NR_EQU, SXHO(1: NA1), VRS(1: NA1), NA1) 
+    call qinterp(X_EQU(1:NR_EQU), VRS_EQU(1:NR_EQU), NR_EQU, SXHO(1: NA1), VRS(1: NA1), NA1)
     call SMOOTH(ALFA, X_EQU,    G11_EQU, NR_EQU, SXHO,    G11, NA1)
     call SMOOTH(ALFA, X_EQU,    G22_EQU, NR_EQU, SXHO,    G22, NA1)
     call SMOOTH(ALFA, X_EQU,    G33_EQU, NR_EQU, SXHO,    G33, NA1)
@@ -966,9 +966,9 @@ contains
     enddo
 
 ! Define VR, G33 and IPOL on the main transport grid:
-    call qinterp(X_EQU(1:NR_EQU), VR_EQU(1:NR_EQU), NR_EQU, XRHO(1: NA1), VR(1: NA1), NA1) 
-    call SMOOTH(ALFA, X_EQU,  G33_EQU, NR_EQU, XRHO(1: NA1),  G33(1: NA1), NA1) 
-    call SMOOTH(ALFA, X_EQU, IPOL_EQU, NR_EQU, XRHO(1: NA1), IPOL(1: NA1), NA1) 
+    call qinterp(X_EQU(1:NR_EQU), VR_EQU(1:NR_EQU), NR_EQU, XRHO(1: NA1), VR(1: NA1), NA1)
+    call SMOOTH(ALFA, X_EQU,  G33_EQU, NR_EQU, XRHO(1: NA1),  G33(1: NA1), NA1)
+    call SMOOTH(ALFA, X_EQU, IPOL_EQU, NR_EQU, XRHO(1: NA1), IPOL(1: NA1), NA1)
     call SMOOTH(ALFA, X_EQU,      GBD, NR_EQU, XRHO(1: NA1), SHIF(1: NA1), NA1)
     call SMOOTH(ALFA, X_EQU,       GL, NR_EQU, XRHO(1: NA1), ELON(1: NA1), NA1)
 
@@ -1026,7 +1026,6 @@ contains
 !---------------------------------------------------------------------
     subroutine A2GSSOLVER(equil_solver)
 
-    use pi_const, only: GP, GP2, GP2_sq
     use read_input, only: machine
     use scalars, only: NEQUIL, MEQUIL, IPART, IPCTRL, TAU, NA, NA1, &
         RTOR, BTOR, IPL, HRO, ROC, ABC, &
@@ -1062,7 +1061,7 @@ contains
 
     call markloc('A2GSSOLVER')
 
-    jneql  = abs(NEQUIL)
+    jneql   = abs(NEQUIL)
     jntheta = abs(MEQUIL)
     n_coils = raw_cCoil%ncoils
 
@@ -1115,13 +1114,13 @@ contains
         yametr(j) = AMETR(j)
 
 !Efable Reput values since now they are used for ff' computation
-        yg11(j)    = G11(j)*VRS(j)                                    !g11 = <(grad(V)^2)> 
+        yg11(j)    = G11(j)*VRS(j)                                    !g11 = <(grad(V)^2)>
         yg22(j)    = G22(j)*GP2_sq*IPOL(j)/RTOR*VRS(j)    !g22 = <(grad(V)/R)^2>
         yg33(j)    = G33(j)/(RTOR**2)                             !g33 = <1/R^2>
         yvr(j)     = VR(j)
         yvrs(j)    = VRS(j)
         yslat(j)   = SLAT(j)
-        ygradro(j) = GRADRO(j)*VRS(j)                !gradro = <(grad(V))> 
+        ygradro(j) = GRADRO(j)*VRS(j)                !gradro = <(grad(V))>
         yipol(j)   = IPOL(j)*RTOR*BTOR                 !ipol = R*Bphi
         ypres(j)   = 1.60218E-3*((NE(j)*TE(j) + NI(j)*TI(j)) + &
             NB2EQL*(0.5*PBLON(j) + 0.5*PBPER(j)) + PFAST(j))  !thermal + fast ions  from NBI + fast alpha in keV/m^3 *1e19 to MJ/m^3
@@ -1159,7 +1158,7 @@ contains
             yrocnew, yipl, yg11, yg41, yg22, yg33, G22E(1: jneql), G33E(1: jneql), &
             yeqpf, yeqff, yvr, yvrs, yslat, ygradro, yipol, ybmaxt, ybmint, &
             ybdb02, ybdb0, yb0db2, ydroda, yvolum, yametr, yupdwn, yshif, yelon, ytria, &
-            yfofb, AREAT(1: NA1), PERIM(1: NA1), yshiv, ysquare) 
+            yfofb, AREAT(1: NA1), PERIM(1: NA1), yshiv, ysquare)
 
         ROC  = YROCNEW  ! Define a new RHO_edge
 
@@ -1193,17 +1192,17 @@ contains
             EQPF(J)  = yeqpf(J)    ! due to adiabatic compression done in the code
             EQFF(J)  = yeqff(J)    ! due to adiabatic compression done in the code
         enddo
-     
+
         if (raw_boundary%nt > 0 .or. TIME >= ITFBE .or. use_ext_bnd) then
             UPDWN = yupdwn
-            ABC   = yametr(NA1) 
+            ABC   = yametr(NA1)
             ELONG = ELON(NA1)
             TRIAN = TRIA(NA1)
             SHIFT = SHIF(NA1)
         endif
         if (itfbe_ctrl > 0) then
             UPDWN = yupdwn
-            ABC   = yametr(NA1) 
+            ABC   = yametr(NA1)
             ELONG = ELON(NA1)
             TRIAN = TRIA(NA1)
             SHIFT = SHIF(NA1)
@@ -1234,8 +1233,8 @@ contains
         enddo
         SHEAR(NA1) = SHEAR(NA)
         do J=1, NA1
-            SHIV(J) = yshiv(J) 
-            SQUARN(J) = ysquare(J) 
+            SHIV(J) = yshiv(J)
+            SQUARN(J) = ysquare(J)
         enddo
 
         call extrap_fields_flat()
@@ -1250,8 +1249,8 @@ contains
 !---------------------------------------------------------------------
 ! If 3M solver is used the subroutine is not called.
 ! Otherwise, if a general equilibrium solver, equil code, is called
-! then 
-! 1) In case of the plasma boundary defined by 3 moments, 
+! then
+! 1) In case of the plasma boundary defined by 3 moments,
 !     this subroutine writes 8 points on the boundary into arrays BNDR, BNDZ
 !     and into arrays RPB(1:n_bnd), ZPB(1:n_bnd)
 ! 2) If the plasma boundary is defined by a data file then
@@ -1264,7 +1263,6 @@ contains
 !  call BNDRY(RZPB, RZPB(n_bnd+1))
 !---------------------------------------------------------------------
 
-    use pi_const, only: GP2
     use read_input, only: raw_boundary
     use scalars, only: TIME, RTOR, SHIFT, ABC, TRIAN, UPDWN, ELONG
 
@@ -1272,7 +1270,7 @@ contains
 
     integer :: j, j1, jt, nt_bnd, n_bnd
     double precision :: ydt, yd1, yd2, yfi
-    double precision, dimension(:, :), allocatable :: ext_bnd_in ! 50 , 2 boundary values R,Z
+    double precision, dimension(:, :), allocatable :: ext_bnd_in ! 50 , 2 boundary values R, Z
 
     nt_bnd = raw_boundary%nt
     n_bnd  = raw_boundary%n_theta
@@ -1282,7 +1280,7 @@ contains
             if (n_bnd == 0) then
                 n_bnd = 8       ! call from ESC
                 yd1 = 0.75      ! sin^2(pi/3)
-                yd2 = 0.5       ! cos(pi/3) 
+                yd2 = 0.5       ! cos(pi/3)
                 ydt = sqrt(yd1) ! sin(pi/3)
                 RPB(1) = RTOR + SHIFT - ABC*TRIAN
                 ZPB(1) = UPDWN + ABC*ELONG
@@ -1321,7 +1319,7 @@ contains
                 RPB(j) = raw_boundary%R(1, j)
                 ZPB(j) = raw_boundary%Z(1, j)
             enddo
-        endif 
+        endif
         return
     endif
 
@@ -1339,7 +1337,7 @@ contains
         enddo
         return
     endif
- 
+
 ! Time interpolation of boundary R(t, theta), Z(t, theta)
     do j=1, nt_bnd
         if (TIME > raw_boundary%time(j)) jt = j
@@ -1419,7 +1417,7 @@ contains
     subroutine RHSEQ()
 
 !---------------------------------------------------------------------
-! Input: RTOR, BTOR, NA, NA1, HRO, NB2EQL, 
+! Input: RTOR, BTOR, NA, NA1, HRO, NB2EQL,
 !  NE, NI, TE, TI, MU, CU, AMETR, RHO, PBLON, PBPER, G22, G33, IPOL
 ! Output:
 !         EQPF
@@ -1431,7 +1429,7 @@ contains
 ! EQFF = -1.E-6*2*\pi/(R_0*\mu_0)*I*\prti{I}{\psi}
 !        = -5./R_0*I*\prti{I}{\psi}
 ! Local toroidal current density j[MA/m^2] is EQPF*r/R_0+EQFF*R_0/r, i.e.
-!         j(r, z) = r*(\vec j\cdot\nabla\zeta) = EQPF*r/R_0+EQFF*R_0/r , 
+!         j(r, z) = r*(\vec j\cdot\nabla\zeta) = EQPF*r/R_0+EQFF*R_0/r ,
 ! ASTRA average toroidal current density is
 !    R_0*<\vec j\cdot\nabla\zeta> = EQPF+EQFF*<R_0^2/r^2>
 !---------------------------------------------------------------------
@@ -1481,7 +1479,7 @@ contains
     subroutine RHSEQ2()
 
 !---------------------------------------------------------------------
-! Input: RTOR, BTOR, NA, NA1, HRO, NB2EQL, 
+! Input: RTOR, BTOR, NA, NA1, HRO, NB2EQL,
 !  NE, NI, TE, TI, MU, CU, AMETR, RHO, PBLON, PBPER, G22, G33, IPOL
 ! Output:
 !         EQPF
@@ -1493,12 +1491,11 @@ contains
 ! EQFF = -1.E-6*2*\pi/(R_0*\mu_0)*I*\prti{I}{\psi}
 !        = -5./R_0*I*\prti{I}{\psi}
 ! Local toroidal current density j[MA/m^2] is EQPF*r/R_0+EQFF*R_0/r, i.e.
-!         j(r, z) = r*(\vec j\cdot\nabla\zeta) = EQPF*r/R_0+EQFF*R_0/r , 
+!         j(r, z) = r*(\vec j\cdot\nabla\zeta) = EQPF*r/R_0+EQFF*R_0/r ,
 ! ASTRA average toroidal current density is
 !    R_0*<\vec j\cdot\nabla\zeta> = EQPF+EQFF*<R_0^2/r^2>
 !---------------------------------------------------------------------
 
-    use pi_const, only: GP2
     use scalars, only: RTOR, BTOR, NA, NA1, NB2EQL
     use status, only: EQPF, EQFF, NE, TE, NI, TI, PBLON, PBPER, PFAST, &
         RHO, AMETR, CU, CUTOR, G22, MU, IPOL, FP
@@ -1522,13 +1519,13 @@ contains
     EQPF(NA1) = EQPF(NA) + (EQPF(NA) - EQPF(NA-1))
     do J=2, NA
         press = 0.5*(IPOL(J+1)**2 - IPOL(J)**2)/(FP(J+1)-FP(J))
-        EQFF(J) = press * (RTOR*BTOR)**2 
+        EQFF(J) = press * (RTOR*BTOR)**2
     enddo
     EQFF(1) = EQFF(2)
     EQFF(NA1) = EQFF(NA) + (EQFF(NA) - EQFF(NA-1)) * (AMETR(NA) - AMETR(NA-1))/(AMETR(NA1) - AMETR(NA))
     EQFF(NA1) = EQFF(NA) + (EQFF(NA) - EQFF(NA-1))
     do J=1, NA1
-        z1 = 1.e-6/(GP2*RTOR)*EQPF(j) 
+        z1 = 1.e-6/(GP2*RTOR)*EQPF(j)
         YTH2 = RHO(j)*G22(J)*(MU(J)/RTOR)**2
         CUTOR(J) = (CU(J)/IPOL(J) + YTH2*z1)/(1. + YTH2)
     enddo
@@ -1552,15 +1549,14 @@ contains
 !          RTOR - R_0 [m]
 !          BTOR - B_0 [T]
 !          G22(1:NA1-1) - <g22/g>*............
-!          G33(1:NA1-1) - 
-!          IPOL(1:NA1-1)- 
+!          G33(1:NA1-1) -
+!          IPOL(1:NA1-1)-
 !          CD(1:NA1-1)  - external (+bootstrap) current
 !          MU(1:NA1)     - (1/rho)dF/d(rho) rotational transform
 ! Output: CU(1:NA1) - (1/rho)d{K*dF/d(rho)}/d(rho) current density
 !            FP(1:NA1) - poloidal flux [Vs]
 !---------------------------------------------------------------------
 
-    use pi_const, only: GP, GP2
     use scalars, only: RTOR, BTOR, NA1, NA, HRO
     use status, only: SRHO, XRHO, CU, MU, FP, G22, G33, IPOL
     use numerical_tools, only: extrap, integr
@@ -1599,15 +1595,14 @@ contains
 ! Input: HRO - radial step (m)
 !  NA1 - number of grid points
 !  G22(1:NA) - <g22/g>*............
-!  G33(1:NA) - 
-!  IPOL(1:NA) - 
+!  G33(1:NA) -
+!  IPOL(1:NA) -
 !  CD(1:NA) - external (+bootstrap) current
 !  FP(1:NA1) - poloidal flux
 ! Output: CU(1:NA1) - (1/rho)d{K*dF/d(rho)}/d(rho) current density
 !  MU(1:NA1) - (1/rho)dF/d(rho)      rotational transform
 !---------------------------------------------------------------------
 
-    use pi_const, only: GP
     use status, only: XRHO, FP, MU, CU, IPOL, G22, G33, SXHO
     use scalars, only: RTOR, HRO, BTOR, NA, NA1
     use numerical_tools, only: extrap
@@ -1645,7 +1640,6 @@ contains
 ! Output: NB1, RHO, SRHO, HRO, AMETR(j>NA1)
 !---------------------------------------------------------------------
 
-    use pi_const, only: GP
     use status, only: NRD, RHO, XRHO, SRHO, SXHO, AMETR
     use scalars, only: HRO, HROX, AB, ABC, ROC, ROWALL, &
         FTO, BTOR, NA, NA1, NB1, NAB
@@ -1663,7 +1657,7 @@ contains
     do j=1, NRD
         if (RHO(j) >= ROWALL) EXIT
     ENDDO
-    NB1 = min(NRD,j)
+    NB1 = min(NRD, j)
 
     AMETR(NA1) = ABC
 
@@ -1695,7 +1689,7 @@ contains
     subroutine SETGEO()
 !---------------------------------------------------------------------
 ! input:  NB1, HRO, ROC, AB, RHO(j)
-! Output: SHIF(1:NB1), ELON(1:NB1), TRIA(1:NB1), 
+! Output: SHIF(1:NB1), ELON(1:NB1), TRIA(1:NB1),
 !  AMETR(1:NB1), DRODA(1:NB1)
 
     use scalars, only: NB1, AB, ROC, RTOR, SHIFT, UPDWN, ELONG, TRIAN
