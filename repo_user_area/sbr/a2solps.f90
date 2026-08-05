@@ -15,9 +15,9 @@ implicit none
 
 integer, intent(in) :: irad, i_mod
 integer :: switch, lang, jrho, iostatus, n_imp, i_part, remain, ios
-double precision, dimension(NA1) :: qmain 
+double precision, dimension(NA1) :: qmain
 double precision :: dna1, dna2, dna3, dna4, hce, hci, vsa
-character(len=160) :: sicas_dir, date_str, f_switch='astra_switch.txt'
+character(len=160) :: sicas_dir, date_str, f_switch='astra_switch.txt', f4solps='a2s.dat'
 
 data i_part/0/
 save i_part
@@ -47,6 +47,7 @@ do jrho=1, NA1
 enddo
 
 n_imp = 0
+open(1001, file=TRIM(f4solps))
 write(1001, *) ' to solps fluxes in (MW,10^19 part/s)/m^2:'
 write(1001, *) lang
 write(1001, *) QE(irad)
