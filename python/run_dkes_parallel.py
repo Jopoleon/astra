@@ -19,7 +19,7 @@ from scipy.io import netcdf_file
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from types import SimpleNamespace
 
-stellopt_path = os.environ.get("STELLOPT_PATH")
+stellopt_path = os.environ.get("STELLOPT_HOME")
 py_stel_path = os.path.join(stellopt_path, "pySTEL")
 sys.path.insert(0,py_stel_path)
 
@@ -34,7 +34,7 @@ MAX_WORKERS = min(96, os.cpu_count())
 # USER SETTINGS
 # =====================================
 	
-DKES_EXEC = os.path.join(os.environ['STELLOPT_PATH'], 'DKES', 'Release', 'xdkes')
+DKES_EXEC = os.path.join(stellopt_path, 'DKES', 'Release', 'xdkes')
 
 #MAX_COUPLING_ORDER = 4   # user defined, change this to increase or decrease accuracy at low collisionality (higher = more computational time). 
 MAX_COUPLING_ORDER = int(sys.argv[1]) if len(sys.argv) > 1 else 4

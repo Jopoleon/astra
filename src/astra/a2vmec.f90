@@ -32,7 +32,7 @@ contains
 
     call get_environment_variable("MPI_COMMAND", mpi_command)
     call get_environment_variable("PYTHON_BIN", py_exe)
-    call get_environment_variable('STELLOPT_PATH', stellopt_dir)
+    call get_environment_variable('STELLOPT_HOME', stellopt_dir)
 
     as_nml = TRIM(awd) // '/' // TRIM(nml_file)
     write(*, *) 'Reading namelist ', TRIM(as_nml)
@@ -230,7 +230,7 @@ contains
         stella_which_surf = 1
         do jrho=1, ns_temp
             xrho_eq(jrho) = sqrt(phi_temp(jrho)/phi_temp(ns_temp))
-            xrho_eq_astra(jrho) = (jrho-1.)/(ns_temp-1.)
+            xrho_eq_astra(jrho) = (jrho - 1.)/(ns_temp - 1.)
         enddo
 
         do jmom=1, mnmax

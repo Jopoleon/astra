@@ -16,7 +16,7 @@ Here the inputs of FEQIS are described, whereas the outputs are the same as SPID
 The input files all go into "exp/equ/(machine name)/", where machine name is a 4 letter name.
 So far usable ones are: "aug\_" for aug and "dem\_" for demo. "iter" and "tcv\_" are in progress.
 
-The input files are the following: 
+The input files are the following:
 
 "coil.dat": coils geometry and coil currents, same structure as SPIDER.\\
 "coilres.dat": coils resistances same structure as SPIDER.\\
@@ -29,16 +29,16 @@ The input files are the following:
 "refit_ef.dat": refit parameters, new. \\
 
 
-In this section the newly implemented transport equation to advance toroidal 
+In this section the newly implemented transport equation to advance toroidal
 momentum is derived in details and the options to call it in the model file are
-presented. 
+presented.
 
 The motivation that has pushed to add this important piece of physics stems from
-the fact that application of toroidal momentum transport theory with respect to 
+the fact that application of toroidal momentum transport theory with respect to
 experimental studies has rapidly expanded and it is now a very important part of
 the fusion research. In the previous Astra versions, it was possible to mock--up
-momentum transport via the F{\it i} equations. However that has strong 
-limitations and the physical representation of momentum transport through 
+momentum transport via the F{\it i} equations. However that has strong
+limitations and the physical representation of momentum transport through
 density equations is not accurate in most cases. That is why this equation has
 been added to the code.
 
@@ -50,21 +50,21 @@ The basic assumption behind the derivation of the toroidal momentum transport eq
 \nabla \cdot \mathbf{J} = 0
 \label{qneutraldivjeq0}
 \end{eqnarray}
-Its flux--surface ($\displaystyle \langle f \rangle \doteq \frac{\partial}{\partial{V}}\int{f dV}$) average reads 
+Its flux--surface ($\displaystyle \langle f \rangle \doteq \frac{\partial}{\partial{V}}\int{f dV}$) average reads
 \begin{eqnarray}
 \langle J_\Psi R B_p \rangle=0
 \label{qneutraldivjeq0fsa}
 \end{eqnarray}
-with $J_r$ the 
+with $J_r$ the
 net radial current of the bulk plasma, $R$ the local major radius, and $B_p$ the
 poloidal magnetic field.
 
 The radial current density is given by non--ambipolar particle transport. In the case of a multi--species plasma this writes down as:
 \begin{eqnarray}
-J_\Psi =e\sum_s Z_s \Gamma_s 
+J_\Psi =e\sum_s Z_s \Gamma_s
 \label{jpsimultispecpartsum}
 \end{eqnarray}
-with $e Z_s$ the species charge, and $\Gamma_s$ the cross--flux surface particle flux of species $s$. 
+with $e Z_s$ the species charge, and $\Gamma_s$ the cross--flux surface particle flux of species $s$.
 %
 \subsection{Evaluation of the radial current and consequences on momentum transport}
 Each species $s$ has its own momentum transport equation, that is the complete three--dimensional force balance:
@@ -73,9 +73,9 @@ Each species $s$ has its own momentum transport equation, that is the complete t
 +\Pivec_{n,s}+\Pivec_{a,s}\right)=e Z_s n_s \left(\Evec+\Uvec_s\times\Bvec\right) +\Fvec_s+\Svec_s
 \label{momtranspeq3d}
 \end{eqnarray}
-The different quantities and terms are respectively: $m_s$ the species mass, $n_s$ the species density, $\Pivec_{x,s}$ 
-the species anisotropic stress tensor (c=classical, n=neoclassical, a=anomalous). Note that the anomalous part 
-supposedly contains also the turbulent part of the Maxwell stress tensor. $\Evec,\Bvec$ are the electric and magnetic 
+The different quantities and terms are respectively: $m_s$ the species mass, $n_s$ the species density, $\Pivec_{x,s}$
+the species anisotropic stress tensor (c=classical, n=neoclassical, a=anomalous). Note that the anomalous part
+supposedly contains also the turbulent part of the Maxwell stress tensor. $\Evec,\Bvec$ are the electric and magnetic
 fields, $\Fvec_s$ the friction force, and $\Svec_s$ the externally applied torque (NBI for example).
 
 We now multiply scalarly \eiref{momtranspeq3d} by $R\ephi$ and sum over all species:
@@ -96,7 +96,7 @@ Notice that, for an axisymmetric system, $R\ephi\cdot(\nabla\cdot) \rightarrow \
 \end{eqnarray}
 where $\Pivec_s=\Pivec_{c,s}+\Pivec_{n,s}+\Pivec_{a,s}$
 On the other hand: $R\ephi\cdot\left(
-\Jvec\times\Bvec\right)=R J_\psi \bpol$. 
+\Jvec\times\Bvec\right)=R J_\psi \bpol$.
 
 Before taking the flux--surface average, we rewrite \eiref{momtranspeq3drephi2} in 'conservative--like' form:
 \begin{eqnarray}
@@ -114,14 +114,14 @@ By doing this, and differentiating then by $\Phi$ at constant time, we get the e
 \begin{eqnarray}
 \frac{1}{V'}  \frac{\partial }{\partial{t}}_{\Phi}\left(V' \left\langle M_\phi \right\rangle\right) +\frac{\partial}{\partial V}\left\langle \left(R \sum_s \Pi_{\phi\Psi,s}-M_\phi\vvec_{\Phi}\cdot\frac{\nabla{V}}{|\nabla{V}|}\right)
 |\nabla{V}| \right\rangle\nonumber \\
--\left\langle R J_\Psi\bpol\right\rangle  - 
+-\left\langle R J_\Psi\bpol\right\rangle  -
 \left\langle R \sum_s S_{\phi,s}\right\rangle=0
 \label{momtranspeq3drephi2cons}
 \end{eqnarray}
 Therefore, imposing condition (\ref{qneutraldivjeq0fsa}), we end up with the relevant equation:
 \begin{eqnarray}
 \frac{1}{V'}  \frac{\partial }{\partial{t}}_{\Phi}\left(V' \left\langle M_\phi \right\rangle\right) + \frac{\partial}{\partial V}\left\langle \left(R \sum_s \Pi_{\phi\Psi,s}-M_\phi\vvec_{\Phi}\cdot\frac{\nabla{V}}{|\nabla{V}|}\right)
-|\nabla{V}| \right\rangle=\nonumber \\ 
+|\nabla{V}| \right\rangle=\nonumber \\
 =\left\langle R \sum_s S_{\phi,s}\right\rangle
 \label{momtranspeq3drephiFSA}
 \end{eqnarray}
@@ -129,7 +129,7 @@ The equation can also be written in terms of the coordinate $\rho=\sqrt{\Phi/(\p
 \begin{eqnarray}
 \frac{1}{V'} \frac{\partial }{\partial{t}}_{\rho}\left(V' \left\langle M_\phi \right\rangle\right) +\frac{1}{V'}  \frac{\partial}{\partial \rho}\left[ V' \left\langle R \sum_s \Pi_{\phi\Psi,s}\vert \nabla{\rho}\vert\right\rangle
 -V'\rho\frac{\dot{B}_0}{2 B_0}\langle  M_\phi \rangle \right]
-=\nonumber \\ 
+=\nonumber \\
 =\left\langle R \sum_s S_{\phi,s}\right\rangle
 \label{momtranspeq3drephiFSArho}
 \end{eqnarray}
@@ -137,7 +137,7 @@ or
 \begin{eqnarray}
 \frac{1}{V'} \frac{\partial }{\partial{t}}_{\rho}\left(V' \left\langle M_\phi \right\rangle\right) +\frac{1}{V'}  \frac{\partial}{\partial \rho}\left[ V' R_{\phi}
 -V'\rho\frac{\dot{B}_0}{2 B_0}\langle  M_\phi \rangle \right]
-=\nonumber \\ 
+=\nonumber \\
 =\left\langle R \sum_s S_{\phi,s}\right\rangle
 \label{momtranspeq3drephiFSArho}
 \end{eqnarray}
@@ -165,9 +165,9 @@ or
  I H_{\rm E}=U_\parallel B-I  H_{\rm P}-K B^2
 \label{uparperp2}
 \end{eqnarray}
-Note that $H = H(\Psi)$, i.e. is a flux function, since $\displaystyle H(\Psi)=-\left[\frac{\partial\Phi_0}{\partial \Psi}+\frac{1}{Zen}\frac{\partial{P}}{\partial{\Psi}}\right]$. 
+Note that $H = H(\Psi)$, i.e. is a flux function, since $\displaystyle H(\Psi)=-\left[\frac{\partial\Phi_0}{\partial \Psi}+\frac{1}{Zen}\frac{\partial{P}}{\partial{\Psi}}\right]$.
 
-Let us define 
+Let us define
 \begin{eqnarray}
 \upara=\left\langle U_\parallel B \right\rangle/B_0 = K \frac{\left\langle B^2 \right\rangle}{B_0}+\frac{I}{B_0}(H_{\rm E}+H_{\rm P})
 \label{uparfsadef}
@@ -182,13 +182,13 @@ so that:
 \begin{eqnarray}
 U_\phi = R \frac{B_0}{I}\upara + K I \left(\frac{1}{R}-R\frac{\left\langle B^2 \right\rangle}{I^2}\right)
 \label{omegafromupar}
-\end{eqnarray} 
+\end{eqnarray}
 Then:
 \begin{eqnarray}
 \Omega =\frac{B_0}{I}\upara + K I \left(\frac{1}{R^2}-\frac{\left\langle B^2 \right\rangle}{I^2}\right)
 \label{uparperp4}
 \end{eqnarray}
-This last equation allows to relate the code result for $\upara$ to the experimental measurement of $\Omega$ at some location. 
+This last equation allows to relate the code result for $\upara$ to the experimental measurement of $\Omega$ at some location.
 
 So, we have to compute $M= \left\langle M_\phi \right\rangle$, which, neglecting poloidal variations of the density (this will be upgraded in a future version), can be written as:
 \begin{eqnarray}
@@ -209,13 +209,13 @@ We can then rewrite the average toroidal mass flow as:
 \left\langle M_\phi \right\rangle=\Upsilon_0 \upara + \Upsilon_1 + \Upsilon_2
 \label{mphiavupar}
 \end{eqnarray}
-with 
+with
 \begin{eqnarray}
 \Upsilon_0&=&\rho_{\rm m}\frac{\left\langle R^2 \right\rangle\Bvacr}{I}
 \nonumber \\
 \Upsilon_1&=&-\frac{\left\langle R^2 \right\rangle\Bvacr}{I}\delta_{\rm neo}
 \nonumber \\
-\Upsilon_2&=&I\left(1- \frac{\langle R^2  \rangle \langle B^2 \rangle }{F} \right)\sigma_{\rm neo} 
+\Upsilon_2&=&I\left(1- \frac{\langle R^2  \rangle \langle B^2 \rangle }{F} \right)\sigma_{\rm neo}
 \label{ABdefs}
 \end{eqnarray}
 Note that in the limit of zero poloidal velocity and infinite friction, we can simplify $\Upsilon_1=\Upsilon_2=0$.
@@ -226,13 +226,13 @@ Infact, the term $\displaystyle \left\langle R \sum_s \Pi_{\phi\Psi,s}
 \begin{eqnarray}
  \Pi_{\phi\Psi,s} \rightarrow  \Pi_{\phi\Psi,s}+\frac{\bphi}{B}\Pi_{\parallel\Psi,s}-\frac{\bpol}{B}\Pi_{y\Psi,s}+m_s \Uphis \Gamma_s
 \label{stresstensorparperp}
-\end{eqnarray} 
+\end{eqnarray}
 where the parallel and binormal stress--tensors represent viscous terms at a fixed $\Phi$ surface. Also here $\Gamma_s$ is the particle flux.
 Also:
 \begin{eqnarray}
 R_\phi \rightarrow  R_\phi+R_\parallel-R_y+m_s \Uphis \Gamma_s
 \label{stresstensorparperp}
-\end{eqnarray} 
+\end{eqnarray}
 
 
 
@@ -241,14 +241,14 @@ The parallel stress tensor is in general given by (the species $s$ is intended, 
 \left\langle R \frac{\bphi}{B} \Pi_{\parallel\Psi}
 |\nabla{\rho}| \right\rangle=-m n R_0^2\left\langle |\nabla{\rho}|^2 \right\rangle \left[\chi \left(\frac{\partial H_{\rm e}}{\partial\rho}+\frac{1}{I}\frac{\partial (I H_{\rm P})}{\partial\rho}\right)+\chi_\theta \frac{b_2}{I}\frac{\partial K}{\partial\rho}-V H_{\rm e}-V_\theta \frac{b_2}{I} K -V_d H_{\rm P}\right]
 \label{parallelstresstensor}
-\end{eqnarray} 
+\end{eqnarray}
 where $\chi,\chi_\theta$ are the turbulent viscoties of the toroidal and poloidal flow respectively, $V,V_\theta,V_d$ are the pinch of electric, poloidal, and diamagnetic flows. $b_2=\left\langle B^2 \right\rangle$.
 The expression can be rewritten upon substituting using formulas (\ref{uparfsadef2}), and summing over species:
 \begin{eqnarray}
 \left\langle R \frac{\bphi}{B} \Pi_{\parallel\Psi}
 |\nabla{\rho}| \right\rangle= \frac{R_0^2 B_0}{I} \left\langle |\nabla{\rho}|^2 \right\rangle \left[-a_1 \frac{\partial \upara}{\partial\rho}+a_2\upara+a_3\delta_{\rm neo}'+a_4\delta_{\rm neo} +a_5 \sigma_{\rm neo}'+a_6\sigma_{\rm neo}+a_7 \delta_{\rm d,neo}\right]
 \label{parallelstresstensor2}
-\end{eqnarray} 
+\end{eqnarray}
 with the following definitions:
 \begin{eqnarray}
 a_1 &=& \rho_{\rm m} \chi
@@ -267,11 +267,11 @@ a_7 &=& \left(V_d-V-\chi\frac{\partial \log{I}}{\partial \rho}  \right)
 \nonumber \\
 \delta_{\rm neo}' &=& \sum_s m_s n_s \frac{\partial \uparaDZ}{\partial\rho}
 \nonumber \\
-\sigma_{\rm neo}' &=& \sum_s m_s n_s \frac{\partial K_s}{\partial\rho} 
+\sigma_{\rm neo}' &=& \sum_s m_s n_s \frac{\partial K_s}{\partial\rho}
 \nonumber \\
-\delta_{\rm d,neo} &=& \sum_s m_s n_s \frac{I H_{\rm P}}{B_0}  
+\delta_{\rm d,neo} &=& \sum_s m_s n_s \frac{I H_{\rm P}}{B_0}
 \label{stresstensorparperp2quantities}
-\end{eqnarray} 
+\end{eqnarray}
 Of course all of the above assumes that the transport coefficients are the same for all ion species (this will be improved in a future upgrade).
 
 The binormal stress tensor can be kept as a whole since in general cannot be represented in terms of diffusion and convection.
@@ -312,7 +312,7 @@ given in the table below:
 \tt CNPAR 	& m/s  	& $V_$  & Radial pinch of parallel momentum \\
 \tt CNPAD 	& m/s  	& $V_d$  & Radial pinch of diamagnetic momentum \\
 \tt CNPAP 	& m/s  	& $V_\theta$  & Radial pinch of poloidal momentum \\
-\tt RUPAR 	& 1/s$^2$ 	&  $R_{\parallel}$ &  Parallel Reynold stress $R_{\parallel}=\frac{\sum_s\left\langle R \frac{\bphi}{B} \Pi_{\parallel\Psi,s} 
+\tt RUPAR 	& 1/s$^2$ 	&  $R_{\parallel}$ &  Parallel Reynold stress $R_{\parallel}=\frac{\sum_s\left\langle R \frac{\bphi}{B} \Pi_{\parallel\Psi,s}
 |\nabla{\rho}| \right\rangle }{ (10^{19} m_{\rm proton})}$\\
 \tt RUPYR 	& 1/s$^2$  	& $R_y$ & Perp Reynold stress $R_y=\frac{\sum_s\left\langle R \frac{\bpol}{B} \Pi_{y\Psi,s}
 |\nabla{\rho}| \right\rangle}{(10^{19} m_{\rm proton})}$\\
@@ -330,7 +330,7 @@ Notice that MRHO, DLNEO, SGNEO, XUPAR, XUPAP, CNPAR, CNPAD, CNPAP, RUPAR, RUPYR,
 \begin{tabular}{|l|l|l|}					\hline
 \bf Name	&\bf Value & Description\\ \hline
 \tt IPROT 	& 0 & Include poloidal rotation terms \\
-\tt  	& 1 &  Neglect poloidal rotation terms \\ 
+\tt  	& 1 &  Neglect poloidal rotation terms \\
 \hline
 \end{tabular}
 \bigskip\\

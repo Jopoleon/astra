@@ -14,7 +14,7 @@ if len(logger.handlers) == 0:
 logger.setLevel(logging.INFO)
 
 awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-py_stel_path = os.path.join(os.environ.get("STELLOPT_PATH"), "pySTEL")
+py_stel_path = os.path.join(os.environ.get("STELLOPT_HOME"), "pySTEL")
 sys.path.insert(0, py_stel_path)
 
 from libstell.vmec import VMEC

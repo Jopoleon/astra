@@ -140,6 +140,7 @@ contains
 
     CASE(0) ! No equilibrium solver (NEQUIL=0) .or. data initiation @ 1st entry
         call EQGUESS()
+
     CASE(1)  ! EMEQ
         if (TIME == TSTART) NDTEQUILMY = 0
         if (TIME >  TSTART) NDTEQUILMY = 1

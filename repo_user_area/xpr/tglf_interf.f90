@@ -195,7 +195,7 @@ CASE(2)
     tglf_nmodes_in = tglf_ns_in + 2
     tglf_xnu_model_in = 3
     tglf_wdia_trapped_in = 1.
-    tglf_alpha_zf_in  = 1.
+    tglf_alpha_zf_in  = 1. ! set to -1 to filter out spurious KBM
 END SELECT
 
 !-------------------------
