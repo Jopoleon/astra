@@ -21,17 +21,13 @@
  GAMMA = 0.
  NSTEP = 100
  IMATCH_PHIEDGE = 1
- CURTOR = $CURTOR
- PHIEDGE = $PHIEDGE
  BLOAT = 1.0
  SPRES_PED = 1.00000000
  PRES_SCALE = 1.0
- PMASS_TYPE = "file"
- PMASS_FILE = "vmec_dat/vmecp.dat"
- PIOTA_TYPE = "file"
- PIOTA_FILE= "vmec_dat/vmeci.dat"
- PCURR_TYPE = "file"
- PCURR_FILE = "vmec_dat/vmecc.dat"
+! PMASS/PIOTA/PCURR_TYPE, CURTOR and PHIEDGE are appended by ASTRA
+! (src/astra/vmec_indata.f90) as AM/AI/AC_AUX_S/F spline profiles.
+! RAXIS/ZAXIS below are only the vacuum-phase guess; once ASTRA has an
+! axis it supplies RAXIS_CC/ZAXIS_CS and these two lines are dropped.
  RAXIS =  5.584E+00 3.6765E-01
  ZAXIS = -0.0000E+00 -3.0224E-01
  RBC(0,0)=5.5322e+00  ZBS(0,0)=-0.0000e+00
