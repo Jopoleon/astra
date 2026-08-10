@@ -24,24 +24,6 @@ linterp = lambda x, y, xi: interp1d(x, y, kind='linear'   , fill_value='extrapol
 qinterp = lambda x, y, xi: interp1d(x, y, kind='quadratic', fill_value='extrapolate')(xi)
 
 
-def read_axis_from_wout(wout_file):
-
-    with netcdf_file(wout_file, 'r', mmap=False) as f:
-        cv = f.variables
-    raxis_cc = cv["raxis_cc"][:]
-    zaxis_cs = cv["zaxis_cs"][:]
-    lasym = int(cv["lasym__logical__"][()])
-
-    if lasym:
-        raxis_cs = cv["raxis_cs"][:]
-        zaxis_cc = cv["zaxis_cc"][:]
-    else:
-        raxis_cs = None
-        zaxis_cc = None
-    
-    return raxis_cc, zaxis_cs, raxis_cs, zaxis_cc
-
-
 def calc_grad_rho(vmcObj):
     """Compute <|grad(rho)|> 
 
@@ -665,11 +647,15 @@ if (lasym):
     rmns_lcfs = vmc.rmns[-1, :].astype(np.float64)
     zmnc_lcfs = vmc.zmnc[-1, :].astype(np.float64)
 
-raxis_cc, zaxis_cs, raxis_cs, zaxis_cc = read_axis_from_wout(wout_file)
+with netcdf_file(wout_file, 'r', mmap=False) as f:
+    cv = f.variables
+raxis_cc = cv['raxis_cc'].data
+zaxis_cs = cv['zaxis_cs'].data
 
 mnmax = np.array([vmc.mnmax], dtype=np.int32)
 nn = len(raxis_cc)
 
+# Writing bin file for ASTRA
 with open(metric_file, 'wb') as f:
 
     np.array(
