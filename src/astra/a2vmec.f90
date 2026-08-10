@@ -50,6 +50,7 @@ contains
 
 ! Set I/O paths for VMEDC I/O files
     call vmec_io_files()
+    call execute_command_line('mkdir -p ' // TRIM(vmec_work_dir))
 
 ! Run VMEC stand-alone
     call astra2vmec(vmec_vacuum, vmec_dteq, vac_phase_stel, f_boundary, phi_full_surfaces)
