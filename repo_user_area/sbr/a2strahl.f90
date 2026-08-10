@@ -79,6 +79,7 @@ contains
     integer :: i, isp, j, k, indexx, nimp_touse, nfour_c, n_grids, &
         Nr_o, ineocl, ineocla, ios, iu, nshot=11111
     integer, dimension(10) :: irecycl
+    logical :: use_local_strahl
 
     double precision :: tneocl, tneocl0, rneocl
     double precision :: dum1, tau_strahl, ne_decayl, te_decayl, ti_decayl, &
@@ -94,7 +95,7 @@ contains
     double precision, dimension(NRD, 10) :: Dzin, Vzin, Dz_anom, Vz_anom
     double precision, dimension(:), allocatable :: g11_dvol_fac
 
-    character(len=300) :: strahl_base, strahl_dir, cmd_cmd, as_nml, results_file
+    character(len=300) :: strahl_base, strahl_dir, cmd_cmd, as_nml, results_file, strahl_exec, result_exec
     character(len=20) :: rho_coord, elements_touse(10)
     character(len=6) :: diffname1_s
 
@@ -478,7 +479,16 @@ contains
 ! Run in a sub-shell that cd's into the instance directory,
 ! so the process-wide CWD is never touched.
 
-    cmd_cmd = 'cd ' // TRIM(strahl_dir) // ' && ' // TRIM(astra_ext) // '/strahl/sep23/bin/strahl a q'
+    use_local_strahl = TRIM(astra_ext) == TRIM(awd) // '/astra_modules'
+    if (use_local_strahl) then
+        strahl_exec = TRIM(astra_ext) // '/strahl/bin/strahl'
+        result_exec = TRIM(astra_ext) // '/strahl/bin/result_to_astra'
+    else
+        strahl_exec = TRIM(astra_ext) // '/strahl/sep23/bin/strahl'
+        result_exec = TRIM(astra_ext) // '/strahl/sep23/bin/result_to_astra'
+    endif
+
+    cmd_cmd = 'cd ' // TRIM(strahl_dir) // ' && ' // TRIM(strahl_exec) // ' a q'
 
     write(*, '(2A)') 'Executing: ', TRIM(cmd_cmd)
     call system(cmd_cmd)
@@ -489,7 +499,7 @@ contains
     cmd_cmd = 'rm -f ' // TRIM(results_file)
     call system(cmd_cmd)
 
-    cmd_cmd = 'cd ' // TRIM(strahl_dir) // ' && ' // TRIM(astra_ext) // '/strahl/sep23/bin/result_to_astra ' // &
+    cmd_cmd = 'cd ' // TRIM(strahl_dir) // ' && ' // TRIM(result_exec) // ' ' // &
         TRIM(elements_touse(1)) // ' > ' // TRIM(results_file)
 
     write(*, '(2A)') 'Executing: ', TRIM(cmd_cmd)
