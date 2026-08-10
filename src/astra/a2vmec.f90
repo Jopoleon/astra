@@ -2,13 +2,18 @@ module a2vmec
 
 use pi_const, only: GP, GP2
 use read_input, only: AWD
+use vmec_indata, only: write_vmec_indata, vmec_profile_index, nvmec_prof_max
 
 implicit none
 
 integer :: naxis
 real*8, allocatable :: raxiscc(:), zaxiscc(:)
 character(len=256) :: f_vmec_wout, f_boozer, f_vmec_in, f_vmec_metric, &
-    f_boozer_in, vmec_work_dir, mpi_command, py_exe, stellopt_dir
+    f_boozer_in, f_template, vmec_work_dir, mpi_command, py_exe, stellopt_dir
+
+integer :: nvmec_prof = nvmec_prof_max
+character(len=32)  :: vmec_prof_type = 'cubic_spline'  ! or 'akima_spline'
+character(len=256) :: vmec_template = 'vmec_io/vmecinput_template.dat'
 
 contains
 
@@ -26,7 +31,8 @@ contains
     double precision :: f_boundary, phi_full_surfaces, dt_boozer
     character(len=256) :: cmd, as_nml
 
-    NAMELIST / vmec / phi_full_surfaces, dt_boozer, vac_phase_stel, mboz, nboz
+    NAMELIST / vmec / phi_full_surfaces, dt_boozer, vac_phase_stel, mboz, nboz, &
+        vmec_template, vmec_prof_type, nvmec_prof
 
     save f_boundary
 
@@ -118,6 +124,8 @@ contains
     f_vmec_in     = TRIM(vmec_work_dir) // TRIM(VMEC_IN_FILE)
     f_vmec_metric = TRIM(vmec_work_dir) // TRIM(VMEC2A_METRIC)
     f_boozer_in   = TRIM(vmec_work_dir) // TRIM(BOOZER_INFILE)
+
+    f_template    = TRIM(awd) // '/' // TRIM(vmec_template)
 
     end subroutine vmec_io_files
 
@@ -285,14 +293,13 @@ contains
 
     integer :: ios, i, count_rate, start_count, end_count, &
          mboz, nboz, init_vmecco
+    integer :: npv, idxv(NRD)
     double precision :: phi_edgehog
     double precision, dimension(NRD) :: pressure, svmec, curtorprof
+    double precision, dimension(NRD) :: sv, pv, qv, cv
 
     character(len=32) :: n_nodes
     character(len=256) :: cmd
-    character(len=1000) :: raxis_str, zaxis_str
-    character(len=120) :: PMASS_FILE="vmecp.dat", &
-        PIOTA_FILE="vmeci.dat", PCURR_FILE="vmecc.dat"
 
     data init_vmecco/0/
     save init_vmecco
@@ -317,54 +324,33 @@ contains
         curtorprof(NA1) = IPL
 
 !--------------------------------------------------------------
-! Replace CURTOR, PHIEDGE and NEQUIL -> write VMEC_WD/vmecinput.dat
+! Write VMEC_WD/vmecinput.dat: template + CURTOR, PHIEDGE, NEQUIL, the axis
+! guess and the pressure / iota / current profiles. The profiles go into
+! the stock VMEC spline arrays AM_AUX_S/F, AI_AUX_S/F and AC_AUX_S/F
+
+! Subsample onto the <= 100 knots the VMEC aux arrays hold (ndatafmax = 101
+! in LIBSTELL, one slot reserved for the -1 sentinel that ends the list).
+        call vmec_profile_index(NA1, nvmec_prof, idxv, npv)
+        do i=1, npv
+            sv(i) = svmec(idxv(i))
+            pv(i) = vac_phase_stel*pressure(idxv(i))            ! Pa
+            qv(i) = MU(idxv(i))
+            cv(i) = vac_phase_stel*curtorprof(idxv(i))*1.d6     ! enclosed current, A
+        enddo
 
         if (vmec_vacuum == 0 .or. vmec_vacuum == 1) then
-            write(cmd, '(A, 1X, A, 1X, F, 1X, F, 1X, I0)') TRIM(py_exe), "python/vmecmodin.py", &
-                vac_phase_stel*IPL*1.e6, SGNBT*phi_edgehog, NEQUIL
             if (vmec_vacuum == 0) then
-                raxis_str = '"'
-                zaxis_str = '"'
-                do i=1, naxis
-                    write(raxis_str(len_trim(raxis_str)+1:), '(F10.6)') raxiscc(i)
-                    write(zaxis_str(len_trim(zaxis_str)+1:), '(F10.6)') zaxiscc(i)
-                    if (i < naxis) then
-                        raxis_str(len_trim(raxis_str)+1: len_trim(raxis_str)+3) = ", "
-                        zaxis_str(len_trim(zaxis_str)+1: len_trim(zaxis_str)+3) = ", "
-                    endif
-                enddo
-                raxis_str = trim(raxis_str) // '"'
-                zaxis_str = trim(zaxis_str) // '"'
-                cmd = TRIM(cmd) // ' -r ' // TRIM(raxis_str) // &
-                                                     ' -z ' // TRIM(zaxis_str)
+                call write_vmec_indata(TRIM(f_template), TRIM(f_vmec_in), &
+                    sv(1:npv), pv(1:npv), qv(1:npv), cv(1:npv), npv, &
+                    vac_phase_stel*IPL*1.d6, SGNBT*phi_edgehog, &
+                    TRIM(vmec_prof_type), NEQUIL, raxiscc, zaxiscc, naxis)
+            else
+                call write_vmec_indata(TRIM(f_template), TRIM(f_vmec_in), &
+                    sv(1:npv), pv(1:npv), qv(1:npv), cv(1:npv), npv, &
+                    vac_phase_stel*IPL*1.d6, SGNBT*phi_edgehog, &
+                    TRIM(vmec_prof_type), NEQUIL)
             endif
-            call execute_command_line(TRIM(cmd))
         endif
-
-!-----------------------------------------------------------------
-! Write pressure, iota and current files (vmecp, vmeci, vmecc.dat)
-
-        open(132, file=TRIM(vmec_work_dir) // TRIM(PMASS_FILE))
-        write(132, *) NA1
-        do i=1, NA1
-            write(132, *) svmec(i), vac_phase_stel*pressure(i)
-        enddo
-        close(132)
-
-        open(133, file=TRIM(vmec_work_dir) // TRIM(PIOTA_FILE))
-        write(133, *) NA1
-        do i=1, NA1
-            write(133, *) svmec(i), MU(i)
-        enddo
-        close(133)
- 
-        open(134, file=TRIM(vmec_work_dir) // TRIM(PCURR_FILE))
-        write(134, *) NA1
-        do i=1, NA1
-            write(134, *) svmec(i), vac_phase_stel*curtorprof(i)*1.e6  ! A/m^2
-        enddo
-        write(134, *) vac_phase_stel*IPL*1.e6, SGNBT*phi_edgehog
-        close(134)
 
 !---------------
 ! VMEC execution
