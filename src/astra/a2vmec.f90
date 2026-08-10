@@ -8,12 +8,12 @@ implicit none
 
 integer :: naxis
 real*8, allocatable :: raxiscc(:), zaxiscc(:)
-character(len=256) :: f_vmec_wout, f_boozer, f_vmec_in, f_vmec_metric, &
+character(len=512) :: f_vmec_wout, f_boozer, f_vmec_in, f_vmec_metric, &
     f_boozer_in, f_template, vmec_work_dir, mpi_command, py_exe, stellopt_dir
 
 integer :: nvmec_prof = nvmec_prof_max
 character(len=32)  :: vmec_prof_type = 'cubic_spline'  ! or 'akima_spline'
-character(len=256) :: vmec_template = 'vmec_io/vmecinput_template.dat'
+character(len=512) :: vmec_template = 'vmec_io/vmecinput_template.dat'
 
 contains
 
@@ -29,7 +29,7 @@ contains
 
     integer :: vac_phase_stel, mboz, nboz, ios
     double precision :: f_boundary, phi_full_surfaces, dt_boozer
-    character(len=256) :: cmd, as_nml
+    character(len=512) :: cmd, as_nml
 
     NAMELIST / vmec / phi_full_surfaces, dt_boozer, vac_phase_stel, mboz, nboz, &
         vmec_template, vmec_prof_type, nvmec_prof
@@ -105,8 +105,8 @@ contains
     subroutine vmec_io_files
 
     integer :: ios
-    character(len=256) :: f_stella_nml
-    character(len=256) :: VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE, &
+    character(len=512) :: f_stella_nml
+    character(len=512) :: VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE, &
         VMEC2A_METRIC, BOOZER_INFILE, VMEC_WD
 
     f_stella_nml = TRIM(awd) // '/vmec_io/stell_files.nml'
@@ -299,7 +299,7 @@ contains
     double precision, dimension(NRD) :: sv, pv, qv, cv
 
     character(len=32) :: n_nodes
-    character(len=256) :: cmd
+    character(len=512) :: cmd
 
     data init_vmecco/0/
     save init_vmecco
@@ -392,7 +392,7 @@ contains
 
     integer :: i
     double precision :: t_boozero
-    character(len=256) :: cmd, f_true_surf
+    character(len=512) :: cmd, f_true_surf
 
     data t_boozero/0./
     save t_boozero
