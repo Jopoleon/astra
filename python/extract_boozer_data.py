@@ -1,6 +1,7 @@
 import sys, os, traceback, logging
 import numpy as np
 from scipy.interpolate import PchipInterpolator
+from scipy.io import netcdf_file
 from parse_fortran_nml import parse_fortran_namelist
 
 fmt = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s: %(message)s', '%H:%M:%S')
@@ -113,13 +114,14 @@ def _read_true_surfaces(path="vmec_io/true_surfaces.txt"):
 
 
 def read_boozer_b00_nc(boozer_nc, wout_nc, astra_rho_grid):
-    import xarray as xr
-    dsb = xr.open_dataset(boozer_nc)
-    dsv = xr.open_dataset(wout_nc)
+    with netcdf_file(wout_nc, 'r', mmap=False) as f:
+        dsv = f.variables
+    with netcdf_file(boozer_nc, 'r', mmap=False) as f:
+        dsb = f.variables
 
-    m_arr = dsb["ixm_b"].values
-    n_arr = dsb["ixn_b"].values
-    bmnc  = dsb["bmnc_b"].values            # (pack_rad, mn_modes)
+    m_arr = dsb["ixm_b"].data
+    n_arr = dsb["ixn_b"].data
+    bmnc  = dsb["bmnc_b"].data            # (pack_rad, mn_modes)
     idx00 = np.where((m_arr == 0) & (n_arr == 0))[0][0]
     b00_rows = bmnc[:, idx00]               # one value per transformed surface
 
@@ -135,11 +137,9 @@ def read_boozer_b00_nc(boozer_nc, wout_nc, astra_rho_grid):
                          f"rows ({len(b00_rows)})")
 
     # half-grid s
-    phi = np.abs(dsv["phi"].values).squeeze()
-    s_vmec = phi / phi[-1]
-    s_booz = s_vmec.copy()
-    s_booz[0] = 0.0
-    s_booz[1:] = 0.5 * (s_vmec[1:] + s_vmec[:-1])
+    phi = np.abs(dsv["phi"].data).squeeze()
+    s_vmec = phi/phi[-1]
+    s_booz = np.append(0., 0.5*(s_vmec[1:] + s_vmec[:-1]))
 
     idx = np.array([t - 1 for t in true_surf])   # 0-based VMEC index
     rho_anchor = np.sqrt(s_booz[idx])
@@ -148,17 +148,13 @@ def read_boozer_b00_nc(boozer_nc, wout_nc, astra_rho_grid):
 
 
 def minor_radius_modesum(wout_nc):
-    import xarray as xr
-    ds = xr.open_dataset(wout_nc)
-    xm = ds["xm"].values
-    R = ds["rmnc"].values[-1, :]
-    Z = ds["zmns"].values[-1, :]
-    a2 = 0.0
-    for i in range(len(xm)):
-        if xm[i] == 0:
-            continue
-        a2 += xm[i] * R[i] * Z[i]
-    return float(np.sqrt(a2))
+    with netcdf_file(wout_nc, 'r', mmap=False) as f:
+        cv = f.variables
+    xm = cv["xm"].data
+    R = cv["rmnc"].data[-1, :]
+    Z = cv["zmns"].data[-1, :]
+    a2 = np.sum(xm * R[:len(xm)] * Z[:len(xm)])
+    return np.sqrt(a2)
 
 
 def is_netcdf(path):

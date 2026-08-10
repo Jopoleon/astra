@@ -60,12 +60,12 @@ contains
 ! Extract Boozer data
     write(cmd, '(A, 1X, A, 1X, I0)') TRIM(py_exe), 'python/extract_boozer_data.py', NA1
     write(*, *) TRIM(cmd)
-    call execute_command_line(cmd) ! Input: VMEC_WD/boozmn_VMECoutput.nc; Output VMEC_WD/b00_profile_boozer.txt, VMEC_WD/minorradiusW7AS.txt
+    call execute_command_line(TRIM(cmd)) ! Input: VMEC_WD/boozmn_VMECoutput.nc; Output VMEC_WD/b00_profile_boozer.txt, VMEC_WD/minorradiusW7AS.txt
 
 ! Collect VMEC output and store it into ASTRA arrays
     write(cmd, '(A, 1X, A, I0)') trim(py_exe), 'python/vmec2bin.py ', NA1
-    write(*, *) cmd
-    call execute_command_line(trim(cmd), wait=.true.)
+    write(*, *) TRIM(cmd)
+    call execute_command_line(TRIM(cmd), wait=.true.)
 
     call VMECbin2astra(phi_full_surfaces)
 

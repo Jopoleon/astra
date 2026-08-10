@@ -283,6 +283,8 @@ contains
 
 !-----------------------------------------------------------------------
     character(len=64) function lhs_key(line)
+        use char_manip, only: to_upper
+
         character(len=*), intent(in) :: line
         integer :: ieq, i, n
         character(len=1) :: c
@@ -290,15 +292,7 @@ contains
         lhs_key = ''
         ieq = index(line, '=')
         if (ieq <= 1) return
-        n = 0
-        do i = 1, ieq-1
-            c = line(i:i)
-            if (c == ' ' .or. iachar(c) == 9) cycle
-            if (c >= 'a' .and. c <= 'z') c = achar(iachar(c) - 32)
-            n = n + 1
-            if (n > len(lhs_key)) return
-            lhs_key(n:n) = c
-        enddo
+        lhs_key = to_upper(line(1: ieq))
     end function lhs_key
 
 end module vmec_indata
