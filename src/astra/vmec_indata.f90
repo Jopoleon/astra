@@ -294,7 +294,7 @@ contains
         lhs_key = ''
         ieq = index(line_clean, '=')
         if (ieq <= 1) return
-        lhs_key = to_upper(line_clean(1: ieq))
+        lhs_key = to_upper(line_clean(1: ieq-1))
     end function lhs_key
 
 end module vmec_indata

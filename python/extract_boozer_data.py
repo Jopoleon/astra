@@ -153,7 +153,7 @@ def minor_radius_modesum(wout_nc):
     xm = cv["xm"].data
     R = cv["rmnc"].data[-1, :]
     Z = cv["zmns"].data[-1, :]
-    a2 = np.sum(xm * R[:len(xm)] * Z[:len(xm)])
+    a2 = np.sum(xm * R * Z)
     return np.sqrt(a2)
 
 
