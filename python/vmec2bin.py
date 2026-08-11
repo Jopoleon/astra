@@ -55,6 +55,7 @@ class vmec_extended(VMEC):
         super().__init__()
         self.read_wout(wout_file)
         self.phi = self.phi.squeeze()
+        self.vp  = self.vp.squeeze()
 
 
     def calc_moms(self, nu=64, nv=128):
@@ -427,6 +428,7 @@ def maybe_write_pellet_chord(vmc, nl_path='vmec_io/stell_files.nml'):
 
 def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius_out):
 
+    logger.info('Reading VMEC NetCDF output %s', wout_file)
     vmc = vmec_extended(wout_file)
     vmc.calc_moms(nu=64, nv=128)
 
@@ -463,18 +465,18 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
     if lasym:
         BTOR = GVAC/RTOR      # tokamak defintion
     phi = np.abs(vmc.phi)     # change from zeta = phi (VMEC) to zeta = -phi (ASTRA)
-    psi_a = vmc.phi[-1] / GP2 # Toroidal flux at edge / 2pi
+    phi_a = vmc.phi[-1] / GP2 # Toroidal flux at edge / 2pi
     NFP = float(vmc.nfp)      # number of field periods
 
 #SHIFT, ELONG, TRIAN, UPDWN
     Fboundary = np.abs(vmc.bvco[-1]).item()  # F at boundary for a tokamak would be RBphi. For stellarator it is more complicated
 #calculate RHO and SRHO
-    ROC = np.sqrt(phi[-1]/(np.pi*BTOR))
+    RHOVMECmesh = np.sqrt(phi/(np.pi*BTOR))
+    ROC = RHOVMECmesh[-1]
     dphidsb = np.abs(vmc.phipf[-1].item())
     RHO  = XRHO*ROC
     SRHO = SXHO*ROC
     HRO  = RHO[1] - RHO[0]
-    RHOVMECmesh = np.sqrt(phi/(np.pi*BTOR))
 
 # calculate susceptance matrix (on full mesh)
     S11, S12, S21, S22 = vmc.calc_susceptance()
@@ -482,11 +484,11 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
 
 # Rewrite into ASTRA coordinate system (minus due to sign convention of jacobian); still VMEC mesh
     fac1 = -phi[-1]/(GP2*BTOR)
-    fac2 = -phi[-1]/(GP2*BTOR*RHOVMECmesh)
+    fac2 = fac1/RHOVMECmesh
     S11 *= fac2
     S12 *= fac2
     S21 *= fac2
-    S22 *= fac1     #S22ASTRA = rho*S22Strand
+    S22 *= fac1
 
 #    Ip_contrib = -phi[-1]*s31[-1]/(GP2*BTOR*RHOVMECmesh)
 #    F0_contrib = -phi[-1]*s32[-1]/(GP2*BTOR*RHOVMECmesh)
@@ -509,12 +511,12 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
     S21 = qinterp(RHOVMECmeshsmall, S21small, RHOVMECmesh)
 
 # calculate V'
-    Vp = vmc.vp.squeeze()*GP2**3*BTOR*RHOVMECmesh/phi[-1]  #vp is on full mesh
-    Vph = f2h(vmc.vp.squeeze())   #(dV/ds)/(4*pi*pi) on VMEC half mesh
+    Vp = -vmc.vp * GP2**2 / fac2   # vp is on full mesh
+    Vph = f2h(vmc.vp)              # (dV/ds)/(4*pi*pi) on VMEC half mesh
 
 # calculate <|grad(rho)|>
     vmc.calc_grad_rho()
-    GRADROVMEC = vmc.avg_grad_rho * np.sqrt(phi[-1]/(np.pi*BTOR))
+    GRADROVMEC = vmc.avg_grad_rho * ROC
 
 # calculate <|grad(rho)|^2>
     G1 = vmc.calc_grad_rhosq()
@@ -576,11 +578,10 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
         cv = f.variables
     raxis_cc = cv['raxis_cc'].data
     zaxis_cs = cv['zaxis_cs'].data
-
-    mnmax = np.array([vmc.mnmax], dtype=np.int32)
     nn = len(raxis_cc)
 
 # Writing bin file for ASTRA
+    logger.info(f'Writing {metric_file}')
     with open(metric_file, 'wb') as f:
 
         np.array(
@@ -601,17 +602,17 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
         ]:
             np.asarray(arr, dtype=np.float64).tofile(f)
 
-        np.array([mnmax], dtype=np.int32).tofile(f)
+        np.array([vmc.mnmax], dtype=np.int32).tofile(f)
 
-        xm.astype(np.int32).tofile(f)
-        xn.astype(np.int32).tofile(f)
+        xm.tofile(f)
+        xn.tofile(f)
 
-        rmnc_lcfs.astype(np.float64).tofile(f)
-        zmns_lcfs.astype(np.float64).tofile(f)
+        rmnc_lcfs.tofile(f)
+        zmns_lcfs.tofile(f)
         np.array(lasym, dtype=np.int32).tofile(f)
         if lasym:
-            rmns_lcfs.astype(np.float64).tofile(f)
-            zmnc_lcfs.astype(np.float64).tofile(f)
+            rmns_lcfs.tofile(f)
+            zmnc_lcfs.tofile(f)
 
         np.array([nn], dtype=np.int32).tofile(f)
 
@@ -635,14 +636,16 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
         phi = np.asarray(vmc.phi, dtype=np.float64)
         phi.tofile(f)
 
+    logger.info(f'Written {metric_file}')
+
     np.savetxt(b00_output_file, B00_ASTRA_grid)
-    logger.info(f'Wrote B00 profile to {b00_output_file}')
+    logger.info(f'Written B00 profile to {b00_output_file}')
 
     with open(header_file, 'w') as f:
         f.write(f'{ABC:.10e}\n')
-        f.write(f'{psi_a:.10e}\n')
+        f.write(f'{phi_a:.10e}\n')
 
-    logger.info(f'Wrote ABC and psi_a to {header_file}')
+    logger.info(f'Written ABC and phi_a to {header_file}')
     logger.info(f"Major radius (RTOR): {vmc.rmajor:.4f} m")
     logger.info(f"Minor radius (ABC and AB):  {vmc.aminor:.4f} m")
     logger.info(f"Toroidal field on axis (BTOR): {vmc.b0:.4f} T")
@@ -651,7 +654,7 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
     a_booz = np.sqrt(a2)
     with open(radius_out, 'w') as f:
         f.write(str(a_booz.item()))
-    logger.info(f"Wrote minor radius to: {radius_out}")
+    logger.info(f"Written minor radius to: {radius_out}")
 
 
 if __name__ == '__main__':
