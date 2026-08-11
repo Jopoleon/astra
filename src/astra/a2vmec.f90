@@ -46,10 +46,9 @@ contains
     read(57, nml=vmec, iostat=ios)
     close(57)
 
-    call execute_command_line('rm -f ' // TRIM(f_vmec_in)) ! Clean vmecinput.dat, to raise errors
-
 ! Set I/O paths for VMEDC I/O files
     call vmec_io_files()
+    call execute_command_line('rm -f ' // TRIM(f_vmec_in)) ! Clean vmecinput.dat, to raise error
     call execute_command_line('mkdir -p ' // TRIM(vmec_work_dir))
 
 ! Run VMEC stand-alone
@@ -110,10 +109,10 @@ contains
     character(len=512) :: VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE, &
         VMEC2A_METRIC, BOOZER_INFILE, VMEC_WD
 
-    f_stella_nml = TRIM(awd) // '/vmec_io/stell_files.nml'
     NAMELIST / vmec_to_astra_inputs / VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE, &
         VMEC2A_METRIC, BOOZER_INFILE, VMEC_WD
 
+    f_stella_nml = TRIM(awd) // '/vmec_io/stell_files.nml'
     write(*, *) 'Reading namelist ', TRIM(f_stella_nml)
     open(58, FILE=TRIM(f_stella_nml), delim='apostrophe')
     read(58, nml=vmec_to_astra_inputs, iostat=ios)

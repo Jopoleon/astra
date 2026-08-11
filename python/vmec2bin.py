@@ -103,7 +103,7 @@ def calc_Rmaj(vmcObj):
     Rmaj = np.sum(r * g, axis=(1, 2)) / vp
     Rmaj[0] = 2.0 * Rmaj[1] - Rmaj[2]
     return Rmaj
-    
+
 
 def calc_V(vmcObj, vp):
     """Compute volume V(s) 
@@ -149,7 +149,7 @@ def f2h(var_full):
 
 def calc_ftrap(vmcObj):
     """Compute trapped fraction f_t according to 
-    
+
     H. Maassberg; C. D. Beidler; Y. Turkin; Phys. Plasmas 16, 072504 (2009) equation 12
 
     Returns
@@ -183,7 +183,7 @@ def calc_ftrap(vmcObj):
     integral = np.sum(integrand, axis=0)*dlambda   #integral over lambda
     ftrap = 1 - 0.75*bmax2*integral
     return ftrap
-    
+
 
 # ---------------------------------------------------------------------------
 # Pointwise VMEC geometry + straight-line pellet chord
@@ -471,264 +471,255 @@ def maybe_write_pellet_chord(vmcObj, nl_path='vmec_io/stell_files.nml'):
     except Exception as e:
         logger.error(f"pellet chord skipped: {e}")
 
-
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    "astra_nrad", 
-    type=int, 
-    nargs="?", 
-    default=91, 
-    help="Number of ASTRA radial grid points"
-)
-
-args = parser.parse_args()
-
-NA1 = args.astra_nrad
-
-namelist_path = 'vmec_io/stell_files.nml'
-nl_vmec = parse_fortran_namelist(namelist_path, 'VMEC_TO_ASTRA_INPUTS')
-nl_dkes = parse_fortran_namelist(namelist_path, 'ASTRA_DKES_INTERFACE')
-
-try:
-    vmec_wd = f'{awd}/{nl_vmec["vmec_wd"]}'
-    wout_file = f'{vmec_wd}/{nl_vmec["vmec_wout_file"]}'
-except KeyError:
-    logger.error(f"ERROR: 'VMEC_WOUT_FILE' not found in namelist '{namelist_path}'")
-    sys.exit(1)
-
-wout_basename = os.path.basename(wout_file)
-shot_id = wout_basename.replace('wout_', '').replace('.nc', '')
-
-metric_file = f'{vmec_wd}/{nl_vmec["vmec2a_metric"]}'
-
-#read wout file
-vmc = VMEC()
-vmc.read_wout(wout_file)
+def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius_out):
+# read wout file, plus some algebraic methods
+    vmc = VMEC()
+    vmc.read_wout(wout_file)
 
 # NGS pellet: if a launch is configured, trace the straight-line chord for
 # this (updated) equilibrium and refresh the table the Fortran model reads.
-maybe_write_pellet_chord(vmc)
+    maybe_write_pellet_chord(vmc)
 
-mn_index_b00 = np.where((vmc.xm_nyq == 0) & (vmc.xn_nyq == 0))[0]
+    mn_index_b00 = np.where((vmc.xm_nyq == 0) & (vmc.xn_nyq == 0))[0]
 
-if mn_index_b00.size == 0:
-    logger.error("ERROR: Could not find the (m=0, n=0) mode for 'bmnc'.")
-    sys.exit(1)
+    if mn_index_b00.size == 0:
+        logger.error("ERROR: Could not find the (m=0, n=0) mode for 'bmnc'.")
+        sys.exit(1)
 
-B00_physical_profile = vmc.bmnc[:, mn_index_b00].squeeze()
+    B00_physical_profile = vmc.bmnc[:, mn_index_b00].squeeze()
 
 # Constants from ASTRA
-#NA1 = int(sys.argv[1])
-NA = NA1 - 1
-GP2 = 2 * np.pi
-HROX = 1.0/(NA1 - 0.5)
+
+    NA = NA1 - 1
+    GP2 = 2 * np.pi
+    HROX = 1.0/(NA1 - 0.5)
 
 # Define ASTRA arrays
-SXHO = HROX*np.arange(1, NA1+1)
-XRHO = SXHO - 0.5*HROX
+    SXHO = HROX*np.arange(1, NA1+1)
+    XRHO = SXHO - 0.5*HROX
 
 #some quantities from VMEC output
-lasym = vmc.lasym
-RTOR  = vmc.rmajor
-ABC   = vmc.aminor
-BTOR  = np.abs(vmc.b0)   #change from zeta = phi (VMEC) to zeta = -phi (ASTRA)
-volume = vmc.volume
-GVAC = np.abs(vmc.rbtor) # RB-t edge, coincides with F_b = F0 for tokamak
-BTOR = np.abs(vmc.b0)   #stellarator definition
-if lasym:
-    BTOR = GVAC/RTOR   # tokamak defintion
-phi = np.abs(vmc.phi.squeeze())   #change from zeta = phi (VMEC) to zeta = -phi (ASTRA)
-psi_a = vmc.phi[-1].item() / (2.0 * np.pi) # Toroidal flux at edge / 2pi
-NFP = float(vmc.nfp)    #number of field periods
+    lasym = vmc.lasym
+    RTOR  = vmc.rmajor
+    ABC   = vmc.aminor
+    BTOR  = np.abs(vmc.b0)   #change from zeta = phi (VMEC) to zeta = -phi (ASTRA)
+    volume = vmc.volume
+    GVAC = np.abs(vmc.rbtor) # RB-t edge, coincides with F_b = F0 for tokamak
+    BTOR = np.abs(vmc.b0)   #stellarator definition
+    if lasym:
+        BTOR = GVAC/RTOR   # tokamak defintion
+    phi = np.abs(vmc.phi.squeeze())   #change from zeta = phi (VMEC) to zeta = -phi (ASTRA)
+    psi_a = vmc.phi[-1].item() / (2.0 * np.pi) # Toroidal flux at edge / 2pi
+    NFP = float(vmc.nfp)    #number of field periods
 
 #SHIFT, ELONG, TRIAN, UPDWN
-Fboundary = np.abs(vmc.bvco[-1]).item()  # F at boundary for a tokamak would be RBphi. For stellarator it is more complicated
+    Fboundary = np.abs(vmc.bvco[-1]).item()  # F at boundary for a tokamak would be RBphi. For stellarator it is more complicated
 #calculate RHO and SRHO
-ROC = np.sqrt(phi[-1]/(np.pi*BTOR))
-dphidsb = np.abs(vmc.phipf[-1].item())
-RHO  = XRHO*ROC
-SRHO = SXHO*ROC
-HRO  = RHO[1] - RHO[0]
-RHOVMECmesh = np.sqrt(phi/(np.pi*BTOR))
+    ROC = np.sqrt(phi[-1]/(np.pi*BTOR))
+    dphidsb = np.abs(vmc.phipf[-1].item())
+    RHO  = XRHO*ROC
+    SRHO = SXHO*ROC
+    HRO  = RHO[1] - RHO[0]
+    RHOVMECmesh = np.sqrt(phi/(np.pi*BTOR))
 
 # calculate susceptance matrix (on full mesh)
-S11, S12, S21, S22 = vmc.calc_susceptance()
+    S11, S12, S21, S22 = vmc.calc_susceptance()
 #s31, s32 = vmc.calc_dphidpvb_elements()
 
 # Rewrite into ASTRA coordinate system (minus due to sign convention of jacobian); still VMEC mesh
-fac1 = -phi[-1]/(GP2*BTOR)
-fac2 = -phi[-1]/(GP2*BTOR*RHOVMECmesh)
-S11 *= fac2
-S12 *= fac2
-S21 *= fac2
-S22 *= fac1     #S22ASTRA = rho*S22Strand 
+    fac1 = -phi[-1]/(GP2*BTOR)
+    fac2 = -phi[-1]/(GP2*BTOR*RHOVMECmesh)
+    S11 *= fac2
+    S12 *= fac2
+    S21 *= fac2
+    S22 *= fac1     #S22ASTRA = rho*S22Strand
 
-#Ip_contrib = -phi[-1]*s31[-1]/(GP2*BTOR*RHOVMECmesh)
-#F0_contrib = -phi[-1]*s32[-1]/(GP2*BTOR*RHOVMECmesh)
-Ip_contrib = np.abs(0.*vmc.rbtor)
-F0_contrib = np.abs(0.*vmc.rbtor)
+#    Ip_contrib = -phi[-1]*s31[-1]/(GP2*BTOR*RHOVMECmesh)
+#    F0_contrib = -phi[-1]*s32[-1]/(GP2*BTOR*RHOVMECmesh)
+    Ip_contrib = np.abs(0.*vmc.rbtor)
+    F0_contrib = np.abs(0.*vmc.rbtor)
 
 # Force S11[0], S12[0], S21[0] = 0.
-S11[0] = 0.
-S12[0] = 0.
-S21[0] = 0.
+    S11[0] = 0.
+    S12[0] = 0.
+    S21[0] = 0.
 
 # interpolate gp 1 and 2
-RHOVMECmeshsmall = np.delete(RHOVMECmesh, [1, 2])
-S11small = np.delete(S11, [1, 2])
-S12small = np.delete(S12, [1, 2])
-S21small = np.delete(S21, [1, 2])
+    RHOVMECmeshsmall = np.delete(RHOVMECmesh, [1, 2])
+    S11small = np.delete(S11, [1, 2])
+    S12small = np.delete(S12, [1, 2])
+    S21small = np.delete(S21, [1, 2])
 
-S11 = qinterp(RHOVMECmeshsmall, S11small, RHOVMECmesh)
-S12 = qinterp(RHOVMECmeshsmall, S12small, RHOVMECmesh)
-S21 = qinterp(RHOVMECmeshsmall, S21small, RHOVMECmesh)
+    S11 = qinterp(RHOVMECmeshsmall, S11small, RHOVMECmesh)
+    S12 = qinterp(RHOVMECmeshsmall, S12small, RHOVMECmesh)
+    S21 = qinterp(RHOVMECmeshsmall, S21small, RHOVMECmesh)
 
 # calculate V'
-Vp = vmc.vp.squeeze()*GP2**3*BTOR*RHOVMECmesh/phi[-1]  #vp is on full mesh
-Vph = f2h(vmc.vp.squeeze())   #(dV/ds)/(4*pi*pi) on VMEC half mesh
+    Vp = vmc.vp.squeeze()*GP2**3*BTOR*RHOVMECmesh/phi[-1]  #vp is on full mesh
+    Vph = f2h(vmc.vp.squeeze())   #(dV/ds)/(4*pi*pi) on VMEC half mesh
 
 # calculate <|grad(rho)|>
-GRADROVMEC = calc_grad_rho(vmc)
-GRADROVMEC = GRADROVMEC * np.sqrt(phi[-1]/(np.pi*BTOR))    
+    GRADROVMEC = calc_grad_rho(vmc)
+    GRADROVMEC = GRADROVMEC * np.sqrt(phi[-1]/(np.pi*BTOR))
 
 # calculate <|grad(rho)|^2>
-G1 = vmc.calc_grad_rhosq()
-G1 = phi[-1]*G1/(np.pi*BTOR)
-g11 = Vp * G1
+    G1 = vmc.calc_grad_rhosq()
+    G1 = phi[-1]*G1/(np.pi*BTOR)
+    g11 = Vp * G1
 
 # calculate <R>, V, aeff
-RmajVMEC = calc_Rmaj(vmc)
-Vol = calc_V(vmc, Vph)
-Amineff = np.sqrt(2*Vol/(GP2**2 * RmajVMEC))
+    RmajVMEC = calc_Rmaj(vmc)
+    Vol = calc_V(vmc, Vph)
+    Amineff = np.sqrt(2*Vol/(GP2**2 * RmajVMEC))
 
 # calculate ftrapped
-ftrapped = calc_ftrap(vmc)
+    ftrapped = calc_ftrap(vmc)
 
 # calculate jpar and iota (not taken to astra automatically)
-jpar   = vmc.jdotb.squeeze()/(1.e6*BTOR)
-muVMEC = vmc.iotaf.squeeze()
+    jpar   = vmc.jdotb.squeeze()/(1.e6*BTOR)
+    muVMEC = vmc.iotaf.squeeze()
 
 # interpolate to ASTRA grid
-SG11   = linterp(RHOVMECmesh, S11, SRHO)
-SG12   = linterp(RHOVMECmesh, S12, SRHO)
-SG21   = linterp(RHOVMECmesh, S21, SRHO)
-SG22   = linterp(RHOVMECmesh, S22, SRHO)
-VR     = linterp(RHOVMECmesh, Vp, RHO)
-VRS    = linterp(RHOVMECmesh, Vp, SRHO)
-GRADRO = linterp(RHOVMECmesh, GRADROVMEC, SRHO)
-G11    = linterp(RHOVMECmesh, g11, SRHO)
-Rmaj   = linterp(RHOVMECmesh, RmajVMEC, RHO)
-VOLUM  = linterp(RHOVMECmesh, Vol, RHO)
-AMETR  = linterp(RHOVMECmesh, Amineff, RHO)
-FTPT   = linterp(RHOVMECmesh, ftrapped, RHO)
-CU     = linterp(RHOVMECmesh, jpar, RHO)
-MU     = linterp(RHOVMECmesh, muVMEC, SRHO)
-SLAT   = VR*GRADRO
+    SG11   = linterp(RHOVMECmesh, S11, SRHO)
+    SG12   = linterp(RHOVMECmesh, S12, SRHO)
+    SG21   = linterp(RHOVMECmesh, S21, SRHO)
+    SG22   = linterp(RHOVMECmesh, S22, SRHO)
+    VR     = linterp(RHOVMECmesh, Vp, RHO)
+    VRS    = linterp(RHOVMECmesh, Vp, SRHO)
+    GRADRO = linterp(RHOVMECmesh, GRADROVMEC, SRHO)
+    G11    = linterp(RHOVMECmesh, g11, SRHO)
+    Rmaj   = linterp(RHOVMECmesh, RmajVMEC, RHO)
+    VOLUM  = linterp(RHOVMECmesh, Vol, RHO)
+    AMETR  = linterp(RHOVMECmesh, Amineff, RHO)
+    FTPT   = linterp(RHOVMECmesh, ftrapped, RHO)
+    CU     = linterp(RHOVMECmesh, jpar, RHO)
+    MU     = linterp(RHOVMECmesh, muVMEC, SRHO)
+    SLAT   = VR*GRADRO
 
 # Approximate values at NA1 for shifted grid
-def extrapolate_end(arr):
-    return 1.5 * arr[-2] - 0.5 * arr[-3]
+    def extrapolate_end(arr):
+        return 1.5 * arr[-2] - 0.5 * arr[-3]
 
-SG11[-1] = extrapolate_end(SG11)
-SG12[-1] = extrapolate_end(SG12)
-SG21[-1] = extrapolate_end(SG21)
-SG22[-1] = extrapolate_end(SG22)
-MV = -SG12/SG11
-VRS[-1]    = extrapolate_end(VRS)
-GRADRO[-1] = extrapolate_end(GRADRO)
-G11[-1]    = extrapolate_end(G11)
-MU[-1]     = extrapolate_end(MU)
-B00_ASTRA_grid = linterp(RHOVMECmesh, B00_physical_profile, RHO)
-xm = vmc.xm.astype(np.int32)   # poloidal mode numbers
-xn = vmc.xn.astype(np.int32)   # toroidal mode numbers
-rmnc_lcfs = vmc.rmnc[-1, :].astype(np.float64)
-zmns_lcfs = vmc.zmns[-1, :].astype(np.float64)
-if (lasym):
-    rmns_lcfs = vmc.rmns[-1, :].astype(np.float64)
-    zmnc_lcfs = vmc.zmnc[-1, :].astype(np.float64)
+    SG11[-1] = extrapolate_end(SG11)
+    SG12[-1] = extrapolate_end(SG12)
+    SG21[-1] = extrapolate_end(SG21)
+    SG22[-1] = extrapolate_end(SG22)
+    MV = -SG12/SG11
+    VRS[-1]    = extrapolate_end(VRS)
+    GRADRO[-1] = extrapolate_end(GRADRO)
+    G11[-1]    = extrapolate_end(G11)
+    MU[-1]     = extrapolate_end(MU)
+    B00_ASTRA_grid = linterp(RHOVMECmesh, B00_physical_profile, RHO)
+    xm = vmc.xm.astype(np.int32)   # poloidal mode numbers
+    xn = vmc.xn.astype(np.int32)   # toroidal mode numbers
+    rmnc_lcfs = vmc.rmnc[-1, :].astype(np.float64)
+    zmns_lcfs = vmc.zmns[-1, :].astype(np.float64)
+    if (lasym):
+        rmns_lcfs = vmc.rmns[-1, :].astype(np.float64)
+        zmnc_lcfs = vmc.zmnc[-1, :].astype(np.float64)
 
-with netcdf_file(wout_file, 'r', mmap=False) as f:
-    cv = f.variables
-raxis_cc = cv['raxis_cc'].data
-zaxis_cs = cv['zaxis_cs'].data
+    with netcdf_file(wout_file, 'r', mmap=False) as f:
+        cv = f.variables
+    raxis_cc = cv['raxis_cc'].data
+    zaxis_cs = cv['zaxis_cs'].data
 
-mnmax = np.array([vmc.mnmax], dtype=np.int32)
-nn = len(raxis_cc)
+    mnmax = np.array([vmc.mnmax], dtype=np.int32)
+    nn = len(raxis_cc)
 
 # Writing bin file for ASTRA
-with open(metric_file, 'wb') as f:
+    with open(metric_file, 'wb') as f:
 
-    np.array(
-        [
-            HROX, HRO, ROC, RTOR, ABC, BTOR, 
-            volume, GVAC, Fboundary, 
-            NFP, dphidsb, 
-            Ip_contrib, F0_contrib
-        ], 
-        dtype=np.float64
-    ).tofile(f)
+        np.array(
+            [
+                HROX, HRO, ROC, RTOR, ABC, BTOR,
+                volume, GVAC, Fboundary,
+                NFP, dphidsb,
+                Ip_contrib, F0_contrib
+            ],
+            dtype=np.float64
+        ).tofile(f)
 
-    for arr in [
-        RHO, SRHO, SG11, SG12, 
-        SG21, SG22, MV, VR, 
-        VRS, GRADRO, G11, Rmaj, 
-        VOLUM, AMETR, SLAT, FTPT
-    ]:
-        np.asarray(arr, dtype=np.float64).tofile(f)
+        for arr in [
+            RHO, SRHO, SG11, SG12,
+            SG21, SG22, MV, VR,
+            VRS, GRADRO, G11, Rmaj,
+            VOLUM, AMETR, SLAT, FTPT
+        ]:
+            np.asarray(arr, dtype=np.float64).tofile(f)
 
-    np.array([mnmax], dtype=np.int32).tofile(f)
+        np.array([mnmax], dtype=np.int32).tofile(f)
 
-    xm.astype(np.int32).tofile(f)
-    xn.astype(np.int32).tofile(f)
+        xm.astype(np.int32).tofile(f)
+        xn.astype(np.int32).tofile(f)
 
-    rmnc_lcfs.astype(np.float64).tofile(f)
-    zmns_lcfs.astype(np.float64).tofile(f)
-    np.array(int(lasym), dtype=np.int32).tofile(f)
-    if (lasym):
-        rmns_lcfs.astype(np.float64).tofile(f)
-        zmnc_lcfs.astype(np.float64).tofile(f)
+        rmnc_lcfs.astype(np.float64).tofile(f)
+        zmns_lcfs.astype(np.float64).tofile(f)
+        np.array(int(lasym), dtype=np.int32).tofile(f)
+        if (lasym):
+            rmns_lcfs.astype(np.float64).tofile(f)
+            zmnc_lcfs.astype(np.float64).tofile(f)
 
-    np.array([nn], dtype=np.int32).tofile(f)
+        np.array([nn], dtype=np.int32).tofile(f)
 
-    raxis_cc.astype(np.float64).tofile(f)
-    zaxis_cs.astype(np.float64).tofile(f)
+        raxis_cc.astype(np.float64).tofile(f)
+        zaxis_cs.astype(np.float64).tofile(f)
 
-    rmnc_all = np.asarray(vmc.rmnc, dtype=np.float64)
-    zmns_all = np.asarray(vmc.zmns, dtype=np.float64)
-    if (lasym):
-        rmns_all = np.asarray(vmc.rmns, dtype=np.float64)
-        zmnc_all = np.asarray(vmc.zmnc, dtype=np.float64)
-    ns_all = rmnc_all.shape[0]   # number of flux surfaces
-    
-    np.array([ns_all], dtype=np.int32).tofile(f)
+        rmnc_all = np.asarray(vmc.rmnc, dtype=np.float64)
+        zmns_all = np.asarray(vmc.zmns, dtype=np.float64)
+        if (lasym):
+            rmns_all = np.asarray(vmc.rmns, dtype=np.float64)
+            zmnc_all = np.asarray(vmc.zmnc, dtype=np.float64)
+        ns_all = rmnc_all.shape[0]   # number of flux surfaces
 
-    rmnc_all.tofile(f)
-    zmns_all.tofile(f)
-    if (lasym):
-        rmns_all.tofile(f)
-        zmnc_all.tofile(f)
-    phi = np.asarray(vmc.phi, dtype=np.float64)
-    phi.tofile(f)                                # then vmc
+        np.array([ns_all], dtype=np.int32).tofile(f)
 
-b00_output_file = f'{vmec_wd}/{nl_dkes["b00_profile_file"]}'
-header_file     = f'{vmec_wd}/{nl_dkes["vmec_header_file"]}'
-radius_out      = f'{vmec_wd}/{nl_dkes["minor_radius_w7as_file"]}'
+        rmnc_all.tofile(f)
+        zmns_all.tofile(f)
+        if (lasym):
+            rmns_all.tofile(f)
+            zmnc_all.tofile(f)
+        phi = np.asarray(vmc.phi, dtype=np.float64)
+        phi.tofile(f)                                # then vmc
 
-np.savetxt(b00_output_file, B00_ASTRA_grid)
-logger.info(f'Wrote B00 profile to {b00_output_file}')
+    np.savetxt(b00_output_file, B00_ASTRA_grid)
+    logger.info(f'Wrote B00 profile to {b00_output_file}')
 
-with open(header_file, 'w') as f:
-    f.write(f'{ABC:.10e}\n')
-    f.write(f'{psi_a:.10e}\n')
+    with open(header_file, 'w') as f:
+        f.write(f'{ABC:.10e}\n')
+        f.write(f'{psi_a:.10e}\n')
 
-logger.info(f'Wrote ABC and psi_a to {header_file}')
-logger.info(f'Update the .exp file:')
-logger.info(f"Major radius (RTOR): {vmc.rmajor:.4f} m")
-logger.info(f"Minor radius (ABC and AB):  {vmc.aminor:.4f} m")
-logger.info(f"Toroidal field on axis (BTOR): {vmc.b0:.4f} T")
+    logger.info(f'Wrote ABC and psi_a to {header_file}')
+    logger.info(f'Update the .exp file:')
+    logger.info(f"Major radius (RTOR): {vmc.rmajor:.4f} m")
+    logger.info(f"Minor radius (ABC and AB):  {vmc.aminor:.4f} m")
+    logger.info(f"Toroidal field on axis (BTOR): {vmc.b0:.4f} T")
 
-a2 = np.sum(rmnc_lcfs*zmns_lcfs*xm)
-a_booz = np.sqrt(a2)
-with open(radius_out, 'w') as f:
-    f.write(str(a_booz.item()))
-logger.info(f"Saved minor radius to: {radius_out}")
+    a2 = np.sum(rmnc_lcfs*zmns_lcfs*xm)
+    a_booz = np.sqrt(a2)
+    with open(radius_out, 'w') as f:
+        f.write(str(a_booz.item()))
+    logger.info(f"Saved minor radius to: {radius_out}")
+
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "astra_nrad", type=int, nargs="?", default=91, help="Number of ASTRA radial grid points")
+
+    args = parser.parse_args()
+
+    NA1 = args.astra_nrad
+
+    namelist_path = f'{awd}/vmec_io/stell_files.nml'
+    nl_vmec = parse_fortran_namelist(namelist_path, 'VMEC_TO_ASTRA_INPUTS')
+    nl_dkes = parse_fortran_namelist(namelist_path, 'ASTRA_DKES_INTERFACE')
+    vmec_wd     = f'{awd}/{nl_vmec["vmec_wd"]}'
+    wout_file   = f'{vmec_wd}/{nl_vmec["vmec_wout_file"]}'
+    metric_file = f'{vmec_wd}/{nl_vmec["vmec2a_metric"]}'
+    b00_output_file = f'{vmec_wd}/{nl_dkes["b00_profile_file"]}'
+    header_file     = f'{vmec_wd}/{nl_dkes["vmec_header_file"]}'
+    radius_out      = f'{vmec_wd}/{nl_dkes["minor_radius_w7as_file"]}'
+
+    write_out_files(wout_file, metric_file, b00_output_file, header_file, radius_out)
+
