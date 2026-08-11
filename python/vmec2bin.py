@@ -48,6 +48,50 @@ def f2h(var_full):
     return var_half
 
 
+def c_funct(theta, phi, fmnc, xm, xn):
+    (ns, mn) = fmnc.shape
+    lt = len(theta)
+    lz = len(phi)
+    mt = np.outer(xm, theta)
+    nz = np.outer(xn, phi)
+    cosmt = np.cos(mt)
+    sinmt = np.sin(mt)
+    cosnz = np.cos(nz)
+    sinnz = np.sin(nz)
+
+    f = np.empty((ns, lt, lz))
+    for k in range(ns):
+        coeff = fmnc[k, :]
+        f[k] = (
+          (coeff[:, None] * cosmt).T @ cosnz
+        - (coeff[:, None] * sinmt).T @ sinnz
+    )
+
+    return f
+
+
+def s_funct(theta, phi, fmnc, xm, xn):
+    (ns, mn) = fmnc.shape
+    lt = len(theta)
+    lz = len(phi)
+    mt = np.outer(xm, theta)
+    nz = np.outer(xn, phi)
+    cosmt = np.cos(mt)
+    sinmt = np.sin(mt)
+    cosnz = np.cos(nz)
+    sinnz = np.sin(nz)
+
+    f = np.empty((ns, lt, lz))
+    for k in range(ns):
+        coeff = fmnc[k, :]
+        f[k] = (
+          (coeff[:, None] * sinmt).T @ cosnz
+        + (coeff[:, None] * cosmt).T @ sinnz
+    )
+
+    return f
+
+
 class vmec_extended(VMEC):
 
 
@@ -56,68 +100,88 @@ class vmec_extended(VMEC):
         self.read_wout(wout_file)
         self.phi = self.phi.squeeze()
         self.vp  = self.vp.squeeze()
+        self.xm1 = self.xm[:, 0]
+        self.xn1 = self.xn[:, 0]
+        self.xm2 = self.xm_nyq[:, 0]
+        self.xn2 = self.xn_nyq[:, 0]
 
 
-    def calc_moms(self, nu=64, nv=128):
-        theta = np.linspace(0, 2*np.pi, nu).reshape((nu, 1))
-        zeta  = np.linspace(0, 2*np.pi, nv).reshape((nv, 1))
+    def calcMoms(self, nu=64, nv=128):
+        t1 = time.time()
+        theta = np.linspace(0, 2*np.pi, nu)
+        zeta  = np.linspace(0, 2*np.pi, nv)
+        self.theta = theta
+        self.zeta  = zeta
 # Create derivatives
-        xm2d  = np.broadcast_to(self.xm.T, (self.ns, self.mnmax))
-        xn2d  = np.broadcast_to(self.xn.T, (self.ns, self.mnmax))
-        rumns = - xm2d * self.rmnc
-        rvmns = - xn2d * self.rmnc
-        zumnc =   xm2d * self.zmns
-        zvmnc =   xn2d * self.zmns
+        rumns = - self.rmnc * self.xm1
+        rvmns = - self.rmnc * self.xn1
+        zumnc =   self.zmns * self.xm1
+        zvmnc =   self.zmns * self.xn1
+        lumnc =   self.lmns * self.xm1
+        lvmnc =   self.lmns * self.xn1
         if self.iasym == 1:
-            rumnc =   xm2d * self.rmns
-            rvmnc =   xn2d * self.rmns
-            zumns = - xm2d * self.zmnc
-            zvmns = - xn2d * self.zmnc
-        self.r  = self.cfunct(theta, zeta, self.rmnc, self.xm, self.xn)
-        self.g  = self.cfunct(theta, zeta, self.gmnc, self.xm_nyq, self.xn_nyq)
-        self.b  = self.cfunct(theta, zeta, self.bmnc, self.xm_nyq, self.xn_nyq)
-        self.ru = self.sfunct(theta, zeta, rumns, self.xm, self.xn)
-        self.rv = self.sfunct(theta, zeta, rvmns, self.xm, self.xn)
-        self.zu = self.cfunct(theta, zeta, zumnc, self.xm, self.xn)
-        self.zv = self.cfunct(theta, zeta, zvmnc, self.xm, self.xn)
+            rumnc =   self.rmns * self.xm1
+            rvmnc =   self.rmns * self.xn1
+            zumns = - self.zmnc * self.xm1
+            zvmns = - self.zmnc * self.xn1
+            lumns = - self.lmnc * self.xm1
+            lvmns = - self.lmnc * self.xn1
+        t2 = time.time()
+        self.r  = c_funct(theta, zeta, self.rmnc, self.xm1, self.xn1)
+        self.g  = c_funct(theta, zeta, self.gmnc, self.xm2, self.xn2)
+        self.b  = c_funct(theta, zeta, self.bmnc, self.xm2, self.xn2)
+        self.ru = s_funct(theta, zeta, rumns, self.xm1, self.xn1)
+        self.rv = s_funct(theta, zeta, rvmns, self.xm1, self.xn1)
+        self.zu = c_funct(theta, zeta, zumnc, self.xm1, self.xn1)
+        self.zv = c_funct(theta, zeta, zvmnc, self.xm1, self.xn1)
+        self.lu = c_funct(theta, zeta, lumnc, self.xm1, self.xn1)
+        self.lv = c_funct(theta, zeta, lvmnc, self.xm1, self.xn1)
         if self.iasym == 1:
-            self.r  += self.sfunct(theta, zeta, self.rmns, self.xm, self.xn)
-            self.g  += self.sfunct(theta, zeta, self.gmns, self.xm_nyq, self.xn_nyq)
-            self.b  += self.sfunct(theta, zeta, self.bmns, self.xm_nyq, self.xn_nyq)
-            self.ru += self.cfunct(theta, zeta, rumnc, self.xm, self.xn)
-            self.rv += self.cfunct(theta, zeta, rvmnc, self.xm, self.xn)
-            self.zu += self.sfunct(theta, zeta, zumns, self.xm, self.xn)
-            self.zv += self.sfunct(theta, zeta, zvmns, self.xm, self.xn)
+            self.r  += s_funct(theta, zeta, self.rmns, self.xm1, self.xn1)
+            self.g  += s_funct(theta, zeta, self.gmns, self.xm2, self.xn2)
+            self.b  += s_funct(theta, zeta, self.bmns, self.xm2, self.xn2)
+            self.ru += c_funct(theta, zeta, rumnc, self.xm1, self.xn1)
+            self.rv += c_funct(theta, zeta, rvmnc, self.xm1, self.xn1)
+            self.zu += s_funct(theta, zeta, zumns, self.xm1, self.xn1)
+            self.zv += s_funct(theta, zeta, zvmns, self.xm1, self.xn1)
+            self.lu += s_funct(theta, zeta, lumns, self.xm1, self.xn1)
+            self.lv += s_funct(theta, zeta, lvmns, self.xm1, self.xn1)
+        t3 = time.time()
         self.g_sum = np.sum(self.g, axis=(1, 2))
+        t4 = time.time()
+        print(self.iasym, t2-t1, t3-t2, t4-t3)
+#        input('Time')
 
 
-    def calc_grad_rho(self):
+    def calcGrad_rho(self):
 # Calc metrics
         gsr = -self.zu * self.r
         gsp =  self.zu * self.rv - self.ru * self.zv
         gsz =  self.ru * self.r
         gs  = ( gsr**2 + gsp**2 + gsz**2) / self.g**2
         rho_tor = np.sqrt(self.phi/self.phi[-1])
-        gs = np.sqrt(0.25 * gs / rho_tor[:, None, None]**2)
-        gsg = np.sum(gs * self.g, axis=(1, 2))
-        self.avg_grad_rho = gsg / self.g_sum
-        self.avg_grad_rho[0] = 2. * self.avg_grad_rho[1] - self.avg_grad_rho[2]
+        gs_rho2 = 0.25 * gs / rho_tor[:, None, None]**2
+        gs_sqrt = np.sqrt(gs_rho2)
+        self.avg_grad_rho2 = np.sum(gs_rho2 * self.g, axis=(1, 2)) / self.g_sum
+        self.avg_grad_rho  = np.sum(gs_sqrt * self.g, axis=(1, 2)) / self.g_sum
+        self.avg_grad_rho2[0] = 2.*self.avg_grad_rho2[1] - self.avg_grad_rho2[2]
+        self.avg_grad_rho[0]  = 2.*self.avg_grad_rho [1] - self.avg_grad_rho [2]
 
 
-    def calc_Rmaj(self):
+    def calcRmaj(self):
         """Returns <R> (flux surface average of R)"""
         self.Rmaj = np.sum(self.r * self.g, axis=(1, 2)) / self.g_sum
         self.Rmaj[0] = 2. * self.Rmaj[1] - self.Rmaj[2]
 
 
-    def calc_V(self, vp):
+    def calcVol(self, vp):
         """Returns volume V(s)"""
         dels = (self.phi[1] - self.phi[0])/self.phi[-1]
         nrho = len(self.phi)
         self.Vol = np.append(0., 4.*dels*np.pi**2 * np.cumsum(vp[1: nrho]))
 
 
-    def calc_ftrap(self):
+    def calcFtrap(self):
         """Compute trapped fraction f_t according to 
         H. Maassberg; C. D. Beidler; Y. Turkin; Phys. Plasmas 16, 072504 (2009) equation 12
 
@@ -139,6 +203,25 @@ class vmec_extended(VMEC):
             integrand[mn, :] = mn*dlambda*self.g_sum/np.sum(np.sqrt(1 - mn*dlambda*b_bmax)*self.g, axis=(1, 2))
         integral = np.sum(integrand, axis=0)*dlambda   #integral over lambda
         self.ftrap = 1. - 0.75*b2_bmax2*integral
+
+
+    def calcSusceptance(self):
+
+        scale_fact = 1.0 / ( 4 * np.pi**2)
+        S11 = ( self.ru**2 + self.zu**2)
+        S21 = ( self.ru * self.rv + self.zu * self.zv)
+        S12 = ( S21 * (1. + self.lu) - S11 * self.lv )
+        S22 = ( (self.rv**2 + self.zv**2 + self.r**2) * (1.0 + self.lu) - S21*self.lv )
+        S11 = np.trapezoid(S11/self.g, x=self.zeta, axis=2)
+        S12 = np.trapezoid(S12/self.g, x=self.zeta, axis=2)
+        S21 = np.trapezoid(S21/self.g, x=self.zeta, axis=2)
+        S22 = np.trapezoid(S22/self.g, x=self.zeta, axis=2)
+        S11 = np.trapezoid(S11, x=self.theta, axis=1)*scale_fact
+        S12 = np.trapezoid(S12, x=self.theta, axis=1)*scale_fact
+        S21 = np.trapezoid(S21, x=self.theta, axis=1)*scale_fact
+        S22 = np.trapezoid(S22, x=self.theta, axis=1)*scale_fact
+
+        return S11, S12, S21, S22
 
 # ---------------------------------------------------------------------------
 # Pointwise VMEC geometry + straight-line pellet chord
@@ -170,10 +253,10 @@ class PointGeom(object):
     trapped-fraction transform above and small in the ablation region)."""
 
     def __init__(self, vmc):
-        self.xm  = np.asarray(vmc.xm    , dtype=np.float64).ravel()
-        self.xn  = np.asarray(vmc.xn    , dtype=np.float64).ravel()
-        self.xmn = np.asarray(vmc.xm_nyq, dtype=np.float64).ravel()
-        self.xnn = np.asarray(vmc.xn_nyq, dtype=np.float64).ravel()
+        self.xm  = np.asarray(vmc.xm1, dtype=np.float64)
+        self.xn  = np.asarray(vmc.xn1, dtype=np.float64)
+        self.xmn = np.asarray(vmc.xm2, dtype=np.float64)
+        self.xnn = np.asarray(vmc.xn2, dtype=np.float64)
         self.rmnc = np.asarray(vmc.rmnc, dtype=np.float64)
         self.zmns = np.asarray(vmc.zmns, dtype=np.float64)
         self.bmnc = np.asarray(vmc.bmnc, dtype=np.float64)
@@ -433,7 +516,7 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
     logger.info('Reading VMEC NetCDF output %s', wout_file)
     vmc = vmec_extended(wout_file)
     logger.info('Calculating moments')
-    vmc.calc_moms(nu=64, nv=128)
+    vmc.calcMoms(nu=64, nv=128)
 
 # NGS pellet: if a launch is configured, trace the straight-line chord for
 # this (updated) equilibrium and refresh the table the Fortran model reads.
@@ -482,7 +565,7 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
     HRO  = RHO[1] - RHO[0]
 
 # calculate susceptance matrix (on full mesh)
-    S11, S12, S21, S22 = vmc.calc_susceptance()
+    S11, S12, S21, S22 = vmc.calcSusceptance()
 #s31, s32 = vmc.calc_dphidpvb_elements()
 
 # Rewrite into ASTRA coordinate system (minus due to sign convention of jacobian); still VMEC mesh
@@ -518,21 +601,21 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
     Vph = f2h(vmc.vp)              # (dV/ds)/(4*pi*pi) on VMEC half mesh
 
 # calculate <|grad(rho)|>
-    vmc.calc_grad_rho()
+    vmc.calcGrad_rho()
     GRADROVMEC = vmc.avg_grad_rho * ROC
 
 # calculate <|grad(rho)|^2>
-    G1 = vmc.calc_grad_rhosq()
+    G1 = vmc.avg_grad_rho2
     G1 = phi[-1]*G1/(np.pi*BTOR)
     g11 = Vp * G1
 
 # calculate <R>, V, aeff
-    vmc.calc_Rmaj()
-    vmc.calc_V(Vph)
+    vmc.calcRmaj()
+    vmc.calcVol(Vph)
     Amineff = np.sqrt(2*vmc.Vol/(GP2**2 * vmc.Rmaj))
 
 # calculate ftrapped
-    vmc.calc_ftrap()
+    vmc.calcFtrap()
 
 # calculate jpar and iota (not taken to astra automatically)
     jpar   = vmc.jdotb.squeeze()/(1.e6*BTOR)
