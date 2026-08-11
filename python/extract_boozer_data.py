@@ -172,6 +172,7 @@ def is_netcdf(path):
 
 if __name__ == "__main__":
 
+    logger.info("Start")
     nl_vmec = parse_fortran_namelist('vmec_io/stell_files.nml', 'VMEC_TO_ASTRA_INPUTS')
     nl_dkes = parse_fortran_namelist('vmec_io/stell_files.nml', 'ASTRA_DKES_INTERFACE')
 
@@ -199,14 +200,13 @@ if __name__ == "__main__":
     rad_out = f'{vmec_wd}//minorradiusW7AS.txt'
 
     try:
-        mode = "generated"
         b00 = read_boozer_b00_nc(boozer_file, wout_file, grid)
         rad = minor_radius_modesum(wout_file)
         np.savetxt(b00_out, b00)
         with open(rad_out, 'w') as f:
             f.write(str(rad))
-        logger.info(f"[{mode}] wrote {b00_out}  (first 5: {b00[:5]})")
-        logger.info(f"[{mode}] wrote {rad_out}  (minorradiusW7AS = {rad})")
+        logger.info(f"Wrote {b00_out}  (first 5: {b00[:5]})")
+        logger.info(f"Wrote {rad_out}  (minorradiusW7AS = {rad})")
 
     except Exception as e:
         traceback.print_exc()

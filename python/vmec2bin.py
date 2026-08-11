@@ -1,4 +1,4 @@
-import sys, os, re, argparse, logging
+import sys, os, re, argparse, logging, time
 import numpy as np
 from scipy.io import netcdf_file
 from scipy.interpolate import interp1d
@@ -44,7 +44,7 @@ def f2h(var_full):
     var_half = np.zeros_like(var_full)
     var_half[1] = 0.5 * (var_full[0] + var_full[1])
     for i in range(2, len(var_full)):
-        var_half[i] = 2.0 * var_full[i-1] - var_half[i-1]
+        var_half[i] = 2. * var_full[i-1] - var_half[i-1]
     return var_half
 
 
@@ -83,10 +83,12 @@ class vmec_extended(VMEC):
         if self.iasym == 1:
             self.r  += self.sfunct(theta, zeta, self.rmns, self.xm, self.xn)
             self.g  += self.sfunct(theta, zeta, self.gmns, self.xm_nyq, self.xn_nyq)
+            self.b  += self.sfunct(theta, zeta, self.bmns, self.xm_nyq, self.xn_nyq)
             self.ru += self.cfunct(theta, zeta, rumnc, self.xm, self.xn)
             self.rv += self.cfunct(theta, zeta, rvmnc, self.xm, self.xn)
             self.zu += self.sfunct(theta, zeta, zumns, self.xm, self.xn)
             self.zv += self.sfunct(theta, zeta, zvmns, self.xm, self.xn)
+        self.g_sum = np.sum(self.g, axis=(1, 2))
 
 
     def calc_grad_rho(self):
@@ -97,16 +99,14 @@ class vmec_extended(VMEC):
         gs  = ( gsr**2 + gsp**2 + gsz**2) / self.g**2
         rho_tor = np.sqrt(self.phi/self.phi[-1])
         gs = np.sqrt(0.25 * gs / rho_tor[:, None, None]**2)
-        vp = np.sum(self.g, axis=(1, 2))
         gsg = np.sum(gs * self.g, axis=(1, 2))
-        self.avg_grad_rho = gsg / vp
-        self.avg_grad_rho[0] = 2.0 * self.avg_grad_rho[1] - self.avg_grad_rho[2]
+        self.avg_grad_rho = gsg / self.g_sum
+        self.avg_grad_rho[0] = 2. * self.avg_grad_rho[1] - self.avg_grad_rho[2]
 
 
     def calc_Rmaj(self):
         """Returns <R> (flux surface average of R)"""
-        vp = np.sum(self.g, axis=(1, 2))
-        self.Rmaj = np.sum(self.r * self.g, axis=(1, 2)) / vp
+        self.Rmaj = np.sum(self.r * self.g, axis=(1, 2)) / self.g_sum
         self.Rmaj[0] = 2. * self.Rmaj[1] - self.Rmaj[2]
 
 
@@ -128,15 +128,15 @@ class vmec_extended(VMEC):
 
         nlambda = 256
 # Calc <B^2/Bmax^2>
-        vp = np.sum(self.g, axis=(1, 2))
-        b2 = np.sum(self.b**2 * self.g, axis=(1, 2)) / vp  # <B^2>
-        b2_bmax2 = b2/np.max(self.b**2, axis=(1, 2))   # <B^2/Bmax^2>
+        b_sq = self.b**2
+        b2 = np.sum(b_sq * self.g, axis=(1, 2)) / self.g_sum  # <B^2>
+        b2_bmax2 = b2/np.max(b_sq, axis=(1, 2))   # <B^2/Bmax^2>
         b_bmax   = self.b/np.max(self.b, axis=(1, 2), keepdims=True)
 # Introduce normalised global magnetic moment lambda
         dlambda = 1./(nlambda - 1.)   #stepwidth in lambda
-        integrand = np.empty((nlambda, len(vp)))    #lambda/<sqrt(1-lambda*b_bmax)>
+        integrand = np.empty((nlambda, len(self.g_sum)))    #lambda/<sqrt(1-lambda*b_bmax)>
         for mn in range(nlambda):
-            integrand[mn, :] = mn*dlambda*vp/np.sum(np.sqrt(1 - mn*dlambda*b_bmax)*self.g, axis=(1, 2))
+            integrand[mn, :] = mn*dlambda*self.g_sum/np.sum(np.sqrt(1 - mn*dlambda*b_bmax)*self.g, axis=(1, 2))
         integral = np.sum(integrand, axis=0)*dlambda   #integral over lambda
         self.ftrap = 1. - 0.75*b2_bmax2*integral
 
@@ -183,10 +183,10 @@ class PointGeom(object):
             self.zmnc = np.asarray(vmc.zmnc, dtype=np.float64)
             self.bmns = np.asarray(vmc.bmns, dtype=np.float64)
         self.ns = self.rmnc.shape[0]
-        self.sgrid = np.linspace(0.0, 1.0, self.ns)
+        self.sgrid = np.linspace(0., 1., self.ns)
 
     def _bracket(self, s):
-        s = min(max(s, 0.0), 1.0)
+        s = min(max(s, 0.), 1.)
         x = s * (self.ns - 1)
         j = int(np.floor(x))
         if j >= self.ns - 1:
@@ -196,7 +196,7 @@ class PointGeom(object):
     def _interp_row(self, arr, s):
         """Linear interp of arr[ns, mn] at scalar s on the uniform s grid."""
         j, f = self._bracket(s)
-        return arr[j] * (1.0 - f) + arr[j + 1] * f
+        return arr[j] * (1. - f) + arr[j + 1] * f
 
     def _deriv_row(self, arr, s):
         """d/ds of the linearly-interpolated arr[ns, mn] (exact per-cell slope, 
@@ -273,14 +273,14 @@ def compute_pellet_chord(vmc, launch_theta, launch_phi, v_xyz, max_len=None, nst
     pg = PointGeom(vmc)
     v = np.asarray(v_xyz, dtype=np.float64)
     vmag = np.linalg.norm(v)
-    if vmag <= 0.0:
+    if vmag <= 0.:
         raise ValueError("pellet velocity magnitude is zero")
     vhat = v/vmag
 
 # a generous default path length: a few times the device size
 
     if max_len is None:
-        max_len = 4.0*vmc.aminor
+        max_len = 4.*vmc.aminor
     dl = max_len/nstep
 
     def rhs(y):
@@ -290,30 +290,30 @@ def compute_pellet_chord(vmc, launch_theta, launch_phi, v_xyz, max_len=None, nst
                          np.dot(vhat, g['grad_t']), 
                          np.dot(vhat, g['grad_z'])])
 
-    y = np.array([1.0, launch_theta, launch_phi])
-    ls, ss, ths, zes = [0.0], [y[0]], [y[1]], [y[2]]
+    y = np.array([1., launch_theta, launch_phi])
+    ss  = [y[0]]
+    ths = [y[1]]
+    zes = [y[2]]
     entered = False
     for i in range(nstep):
         k1 = rhs(y)
         k2 = rhs(y + 0.5 * dl * k1)
         k3 = rhs(y + 0.5 * dl * k2)
         k4 = rhs(y + dl * k3)
-        y = y + (dl / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+        y += (dl / 6.) * (k1 + 2*k2 + 2*k3 + k4)
 # clamp s to the valid [0, 1]; reflect tiny overshoot at the axis
-        if y[0] < 0.0:
+        if y[0] < 0.:
             y[0] = -y[0]
-        li = (i + 1) * dl
-        ls.append(li)
         ss.append(y[0])
         ths.append(y[1])
         zes.append(y[2])
         if y[0] < 0.98:
             entered = True
-        if entered and y[0] >= 1.0:
+        if entered and y[0] >= 1.:
             break
 
-    ls = np.array(ls)
-    ss = np.clip(np.array(ss), 0.0, 1.0)
+    ls = dl*np.arange(len(ths))
+    ss = np.clip(np.array(ss), 0., 1.)
     ths = np.array(ths)
     zes = np.array(zes)
     rho = np.sqrt(ss)
@@ -337,6 +337,7 @@ def write_pellet_chord(path, l, rho, s, modB, R, Z, meta):
             f.write(f"# {k} = {v}\n")
         f.write("# columns: l[m]   rho[-]   s[-]   modB[T]   R[m]   Z[m]\n")
         f.write(f"{len(l)}\n")
+
         for i in range(len(l)):
             f.write("%14.8e %12.8f %12.8f %12.6f %12.6f %12.6f\n"
                     % (l[i], rho[i], s[i], modB[i], R[i], Z[i]))
@@ -401,7 +402,7 @@ def maybe_write_pellet_chord(vmc, nl_path='vmec_io/stell_files.nml'):
         stem = p.get('chord_out', 'dat/pellet_chord.dat')
         base, ext = os.path.splitext(stem)
 
-        def pick(key, ip, default=0.0):
+        def pick(key, ip, default=0.):
             lst = p.get(key)
             if not lst:
                 return default
@@ -422,6 +423,7 @@ def maybe_write_pellet_chord(vmc, nl_path='vmec_io/stell_files.nml'):
             for out in paths:
                 write_pellet_chord(out, l, rho, s, modB, R, Z, meta)
                 logger.info(f"Wrote pellet chord {out}: {len(l)} pts, deepest rho={np.min(rho):.4f}, |v|={meta['vmag']:.1f} m/s")
+
     except Exception as e:
         logger.error(f"pellet chord skipped: {e}")
 
@@ -430,6 +432,7 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
 
     logger.info('Reading VMEC NetCDF output %s', wout_file)
     vmc = vmec_extended(wout_file)
+    logger.info('Calculating moments')
     vmc.calc_moms(nu=64, nv=128)
 
 # NGS pellet: if a launch is configured, trace the straight-line chord for
@@ -447,8 +450,8 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
 # Constants from ASTRA
 
     NA = NA1 - 1
-    GP2 = 2 * np.pi
-    HROX = 1.0/(NA1 - 0.5)
+    GP2 = 2. * np.pi
+    HROX = 1./(NA1 - 0.5)
 
 # Define ASTRA arrays
     SXHO = HROX*np.arange(1, NA1+1)
@@ -484,10 +487,10 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
 
 # Rewrite into ASTRA coordinate system (minus due to sign convention of jacobian); still VMEC mesh
     fac1 = -phi[-1]/(GP2*BTOR)
-    fac2 = fac1/RHOVMECmesh
-    S11 *= fac2
-    S12 *= fac2
-    S21 *= fac2
+    fac2 = fac1/RHOVMECmesh[1:]
+    S11[1:] *= fac2
+    S12[1:] *= fac2
+    S21[1:] *= fac2
     S22 *= fac1
 
 #    Ip_contrib = -phi[-1]*s31[-1]/(GP2*BTOR*RHOVMECmesh)
@@ -511,7 +514,7 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
     S21 = qinterp(RHOVMECmeshsmall, S21small, RHOVMECmesh)
 
 # calculate V'
-    Vp = -vmc.vp * GP2**2 / fac2   # vp is on full mesh
+    Vp = -vmc.vp * GP2**2 * RHOVMECmesh/fac1   # vp is on full mesh
     Vph = f2h(vmc.vp)              # (dV/ds)/(4*pi*pi) on VMEC half mesh
 
 # calculate <|grad(rho)|>
