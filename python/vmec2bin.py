@@ -4,6 +4,7 @@ from scipy.io import netcdf_file
 from scipy.interpolate import interp1d
 from parse_fortran_nml import parse_fortran_namelist
 
+
 fmt = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s: %(message)s', '%H:%M:%S')
 logger = logging.getLogger('vmec2a')
 if len(logger.handlers) == 0:
@@ -127,27 +128,28 @@ class VMEC():
         with netcdf_file(wout_file, 'r', mmap=False) as f:
             cv = f.variables
         for label in ('raxis_cc', 'zaxis_cs', 'b0', 'rbtor', 'rmnc', 'zmns',
-                      'phi', 'phipf', 'iotaf', 'jdotb',
-                      'nfp', 'ns', 'mnmax', 'mnmax_nyq'):
-            setattr(self, label, cv[label].data)
+                      'phi', 'phipf', 'iotaf', 'jdotb'):
+            setattr(self, label, cv[label].data.astype(np.float64))
+        for label in ('nfp', 'ns', 'mnmax', 'mnmax_nyq'):
+            setattr(self, label, cv[label].data.astype(np.int32))
         for label in ('bvco', 'vp'):
-            setattr(self, label, h2f(cv[label].data))
+            setattr(self, label, h2f(cv[label].data).astype(np.float64))
         self.lasym = cv['lasym__logical__'].data
         if self.lasym:
-            self.rmns = cv['rmns'].data
-            self.zmnc = cv['zmnc'].data
+            self.rmns = cv['rmns'].data.astype(np.float64)
+            self.zmnc = cv['zmnc'].data.astype(np.float64)
 
-        self.rmajor = cv['Rmajor_p'].data
-        self.aminor = cv['Aminor_p'].data
-        self.volume = cv['volume_p'].data
-        self.xm =  cv['xm'].data
-        self.xn = -cv['xn'].data
-        self.xm_nyq =  cv['xm_nyq'].data
-        self.xn_nyq = -cv['xn_nyq'].data
+        self.rmajor = cv['Rmajor_p'].data.astype(np.float64)
+        self.aminor = cv['Aminor_p'].data.astype(np.float64)
+        self.volume = cv['volume_p'].data.astype(np.float64)
+        self.xm =  cv['xm'].data.astype(np.float64)
+        self.xn = -cv['xn'].data.astype(np.float64)
+        self.xm_nyq =  cv['xm_nyq'].data.astype(np.float64)
+        self.xn_nyq = -cv['xn_nyq'].data.astype(np.float64)
 
-        self.lmns = np.zeros_like(cv['lmns'].data)
-        self.bmnc = np.zeros_like(cv['bmnc'].data)
-        self.gmnc = np.zeros_like(cv['gmnc'].data)
+        self.lmns = np.zeros_like(cv['lmns'].data.astype(np.float64))
+        self.bmnc = np.zeros_like(cv['bmnc'].data.astype(np.float64))
+        self.gmnc = np.zeros_like(cv['gmnc'].data.astype(np.float64))
         for mn in range(self.mnmax):
             self.lmns[:, mn] = h2fmn(cv['lmns'][:, mn], int(self.xm[mn]), self.ns)
         for mn in range(self.mnmax_nyq):
@@ -168,7 +170,7 @@ class VMEC():
         zvmnc =   self.zmns * self.xn
         lumnc =   self.lmns * self.xm
         lvmnc =   self.lmns * self.xn
-        if self.lasym == 1:
+        if self.lasym:
             rumnc =   self.rmns * self.xm
             rvmnc =   self.rmns * self.xn
             zumns = - self.zmnc * self.xm
@@ -185,7 +187,7 @@ class VMEC():
         self.zv = c_funct(theta, zeta, zvmnc, self.xm, self.xn)
         self.lu = c_funct(theta, zeta, lumnc, self.xm, self.xn)
         self.lv = c_funct(theta, zeta, lvmnc, self.xm, self.xn)
-        if self.lasym == 1:
+        if self.lasym:
             self.r  += s_funct(theta, zeta, self.rmns, self.xm, self.xn)
             self.g  += s_funct(theta, zeta, self.gmns, self.xm_nyq, self.xn_nyq)
             self.b  += s_funct(theta, zeta, self.bmns, self.xm_nyq, self.xn_nyq)
@@ -202,6 +204,12 @@ class VMEC():
 #        input('Time')
 
 
+    def surfAverage(self, arr_in):
+        arr_out = np.sum(arr_in * self.g, axis=(1, 2)) / self.g_sum
+        arr_out[0] = 2. * arr_out[1] - arr_out[2]
+        return arr_out
+
+
     def calcGrad_rho(self):
 # Calc metrics
         gsr = -self.zu * self.r
@@ -211,16 +219,13 @@ class VMEC():
         rho_tor = np.sqrt(self.phi/self.phi[-1])
         gs_rho2 = 0.25 * gs / rho_tor[:, None, None]**2
         gs_sqrt = np.sqrt(gs_rho2)
-        self.avg_grad_rho2 = np.sum(gs_rho2 * self.g, axis=(1, 2)) / self.g_sum
-        self.avg_grad_rho  = np.sum(gs_sqrt * self.g, axis=(1, 2)) / self.g_sum
-        self.avg_grad_rho2[0] = 2.*self.avg_grad_rho2[1] - self.avg_grad_rho2[2]
-        self.avg_grad_rho[0]  = 2.*self.avg_grad_rho [1] - self.avg_grad_rho [2]
+        self.avg_grad_rho2 = self.surfAverage(gs_rho2)
+        self.avg_grad_rho  = self.surfAverage(gs_sqrt)
 
 
     def calcRmaj(self):
-        """Returns <R> (flux surface average of R)"""
-        self.Rmaj = np.sum(self.r * self.g, axis=(1, 2)) / self.g_sum
-        self.Rmaj[0] = 2. * self.Rmaj[1] - self.Rmaj[2]
+        """Returns <R>"""
+        self.Rmaj = self.surfAverage(self.r)
 
 
     def calcVol(self, vp):
@@ -240,10 +245,9 @@ class VMEC():
         """
 
         nlambda = 256
-# Calc <B^2/Bmax^2>
         b_sq = self.b**2
-        b2 = np.sum(b_sq * self.g, axis=(1, 2)) / self.g_sum  # <B^2>
-        b2_bmax2 = b2/np.max(b_sq, axis=(1, 2))   # <B^2/Bmax^2>
+        b2 = self.surfAverage(b_sq)              # <B^2>
+        b2_bmax2 = b2/np.max(b_sq, axis=(1, 2))  # <B^2/Bmax^2>
         b_bmax   = self.b/np.max(self.b, axis=(1, 2), keepdims=True)
 # Introduce normalised global magnetic moment lambda
         dlambda = 1./(nlambda - 1.)   #stepwidth in lambda
@@ -302,18 +306,18 @@ class PointGeom(object):
     trapped-fraction transform above and small in the ablation region)."""
 
     def __init__(self, vmc):
-        self.xm  = np.asarray(vmc.xm, dtype=np.float64)
-        self.xn  = np.asarray(vmc.xn, dtype=np.float64)
-        self.xmn = np.asarray(vmc.xm_nyq, dtype=np.float64)
-        self.xnn = np.asarray(vmc.xn_nyq, dtype=np.float64)
-        self.rmnc = np.asarray(vmc.rmnc, dtype=np.float64)
-        self.zmns = np.asarray(vmc.zmns, dtype=np.float64)
-        self.bmnc = np.asarray(vmc.bmnc, dtype=np.float64)
+        self.xm  = vmc.xm
+        self.xn  = vmc.xn
+        self.xmn = vmc.xm_nyq
+        self.xnn = vmc.xn_nyq
+        self.rmnc = vmc.rmnc
+        self.zmns = vmc.zmns
+        self.bmnc = vmc.bmnc
         self.iasym = getattr(vmc, 'iasym', 0)
         if self.iasym == 1:
-            self.rmns = np.asarray(vmc.rmns, dtype=np.float64)
-            self.zmnc = np.asarray(vmc.zmnc, dtype=np.float64)
-            self.bmns = np.asarray(vmc.bmns, dtype=np.float64)
+            self.rmns = vmc.rmns
+            self.zmnc = vmc.zmnc
+            self.bmns = vmc.bmns
         self.ns = self.rmnc.shape[0]
         self.sgrid = np.linspace(0., 1., self.ns)
 
@@ -563,8 +567,7 @@ def maybe_write_pellet_chord(vmc, nl_path='vmec_io/stell_files.nml'):
 def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius_out):
 
     logger.info('Reading VMEC NetCDF output %s', wout_file)
-    with netcdf_file(wout_file, 'r', mmap=False) as f:
-        cv = f.variables
+
     vmc = VMEC(wout_file)
     logger.info('Calculating moments')
     vmc.calcMoms(nu=64, nv=128)
@@ -602,7 +605,6 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
         BTOR = GVAC/RTOR      # tokamak defintion
     phi = np.abs(vmc.phi)     # change from zeta = phi (VMEC) to zeta = -phi (ASTRA)
     phi_a = vmc.phi[-1] / GP2 # Toroidal flux at edge / 2pi
-    NFP = float(vmc.nfp)      # number of field periods
 
 #SHIFT, ELONG, TRIAN, UPDWN
     Fboundary = np.abs(vmc.bvco[-1])  # F at boundary for a tokamak would be RBphi. For stellarator it is more complicated
@@ -704,25 +706,17 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
     B00_ASTRA_grid = linterp(RHOVMECmesh, B00_physical_profile, RHO)
     xm = vmc.xm.astype(np.int32)   # poloidal mode numbers
     xn = vmc.xn.astype(np.int32)   # toroidal mode numbers
-    rmnc_lcfs = vmc.rmnc[-1, :].astype(np.float64)
-    zmns_lcfs = vmc.zmns[-1, :].astype(np.float64)
-    if lasym:
-        rmns_lcfs = vmc.rmns[-1, :].astype(np.float64)
-        zmnc_lcfs = vmc.zmnc[-1, :].astype(np.float64)
 
-    raxis_cc = cv['raxis_cc'].data
-    zaxis_cs = cv['zaxis_cs'].data
-    nn = len(raxis_cc)
+    nn = len(vmc.raxis_cc)
 
 # Writing bin file for ASTRA
-    logger.info(f'Writing {metric_file}')
     with open(metric_file, 'wb') as f:
 
         np.array(
             [
                 HROX, HRO, ROC, RTOR, ABC, BTOR,
                 volume, GVAC, Fboundary,
-                NFP, dphidsb,
+                vmc.nfp, dphidsb,
                 Ip_contrib, F0_contrib
             ],
             dtype=np.float64
@@ -734,41 +728,34 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
             VRS, GRADRO, G11, Rmaj,
             VOLUM, AMETR, SLAT, FTPT
         ]:
-            np.asarray(arr, dtype=np.float64).tofile(f)
+            arr.tofile(f) # They are np.float64, checked
 
         np.array([vmc.mnmax], dtype=np.int32).tofile(f)
 
         xm.tofile(f)
         xn.tofile(f)
 
-        rmnc_lcfs.tofile(f)
-        zmns_lcfs.tofile(f)
+        vmc.rmnc[-1, :].tofile(f)
+        vmc.zmns[-1, :].tofile(f)
         np.array(lasym, dtype=np.int32).tofile(f)
         if lasym:
-            rmns_lcfs.tofile(f)
-            zmnc_lcfs.tofile(f)
+            vmc.rmns[-1, :].tofile(f)
+            vmc.zmnc[-1, :].tofile(f)
 
         np.array([nn], dtype=np.int32).tofile(f)
 
-        raxis_cc.astype(np.float64).tofile(f)
-        zaxis_cs.astype(np.float64).tofile(f)
+        vmc.raxis_cc.tofile(f)
+        vmc.zaxis_cs.tofile(f)
 
-        rmnc_all = np.asarray(vmc.rmnc, dtype=np.float64)
-        zmns_all = np.asarray(vmc.zmns, dtype=np.float64)
-        if lasym:
-            rmns_all = np.asarray(vmc.rmns, dtype=np.float64)
-            zmnc_all = np.asarray(vmc.zmnc, dtype=np.float64)
-        ns_all = rmnc_all.shape[0]   # number of flux surfaces
-
+        ns_all = vmc.rmnc.shape[0]   # number of flux surfaces
         np.array([ns_all], dtype=np.int32).tofile(f)
 
-        rmnc_all.tofile(f)
-        zmns_all.tofile(f)
+        vmc.rmnc.tofile(f)
+        vmc.zmns.tofile(f)
         if lasym:
-            rmns_all.tofile(f)
-            zmnc_all.tofile(f)
-        phi = np.asarray(vmc.phi, dtype=np.float64)
-        phi.tofile(f)
+            vmc.rmns.tofile(f)
+            vmc.zmnc.tofile(f)
+        vmc.phi.tofile(f)
 
     logger.info(f'Written {metric_file}')
 
@@ -784,7 +771,7 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
     logger.info(f"Minor radius (ABC and AB):  {vmc.aminor:.4f} m")
     logger.info(f"Toroidal field on axis (BTOR): {vmc.b0:.4f} T")
 
-    a2 = np.sum(rmnc_lcfs*zmns_lcfs*xm)
+    a2 = np.sum(vmc.rmnc[-1, :]*vmc.zmns[-1, :]*xm)
     a_booz = np.sqrt(a2)
     with open(radius_out, 'w') as f:
         f.write(str(a_booz.item()))
