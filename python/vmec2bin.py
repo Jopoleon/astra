@@ -14,38 +14,64 @@ if len(logger.handlers) == 0:
 logger.setLevel(logging.INFO)
 
 awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-py_stel_path = os.path.join(os.environ.get("STELLOPT_HOME"), "pySTEL")
-sys.path.insert(0, py_stel_path)
-
-from libstell.vmec import VMEC
 
 # Interpolation
 linterp = lambda x, y, xi: interp1d(x, y, kind='linear'   , fill_value='extrapolate')(xi)
 qinterp = lambda x, y, xi: interp1d(x, y, kind='quadratic', fill_value='extrapolate')(xi)
 
 
+def h2f(var_half):
+    """Half to full grid"""
+    var_full = var_half.copy()
+    var_full[0] = 1.5 * var_full[1] - 0.5 * var_full[2]
+    var_full[1:-1] = 0.5 * (var_full[1:-1] + var_full[2:])
+    var_full[-1] = 2.0 * var_full[-1] - var_full[-2]
+    return var_full
+
+
 def f2h(var_full):
-    """Full to half grid
-
-    This routine takes a 1D field and interpolates it from the full
-    to the half grid, based on the assumption that the 1D field was previously
-    transformed via h2f. The choice of var_half[0] is arbitrary.
-
-    Parameters
-    ----------
-    var_full : list
-        Variable on full grid
-    Returns
-    ----------
-    var_half : list
-        Variable on half grid
-    """
-
+    """Full to half grid"""
     var_half = np.zeros_like(var_full)
     var_half[1] = 0.5 * (var_full[0] + var_full[1])
     for i in range(2, len(var_full)):
         var_half[i] = 2. * var_full[i-1] - var_half[i-1]
     return var_half
+
+
+def h2fmn(var_half, mmode, ns):
+    """Half to full grid with Fourier interpolation
+
+    This routine takes a 1D field and interpolates it from the half
+    to the full grid taking care of even and odd mode parity. For 
+    an ns sized array we assumes that the first index [0]=0 and 
+    is just a placeholder.
+
+    Parameters
+    ----------
+    var_half : list
+    	Variable on half grid
+    mmode : int
+    	Poloidal mode number
+    Returns
+    ----------
+    var_full : list
+    	Variable on full grid
+    """
+
+    temp = var_half.copy()
+    if np.mod(mmode, 2) == 1:
+        factlo = 0.5*np.sqrt(np.linspace(0, ns-1.0, ns)/np.linspace(-0.5, ns-1.5, ns))
+        facthi = 0.5*np.sqrt(np.linspace(0, ns-1.0, ns)/np.linspace( 0.5, ns-0.5, ns))
+        temp[1:-1] = factlo[1:-1]*temp[1:-1] + facthi[2:]*temp[2:]
+        factlo = 2.*np.sqrt((ns-1)/(ns - 1.5))
+        facthi =   -np.sqrt((ns-1)/(ns - 2.0))
+        temp[-1] = factlo*temp[-1] + facthi*temp[-2]
+        temp[0] = 0.0
+    else:
+        temp[1:-1] = 0.5*(temp[1:-1] + temp[2:])
+        temp[-1] = 2.*temp[-1] - temp[-2]
+        temp[0]  = 2.*temp[ 1] - temp[ 2]
+    return temp
 
 
 def c_funct(theta, phi, fmnc, xm, xn):
@@ -63,9 +89,8 @@ def c_funct(theta, phi, fmnc, xm, xn):
     for k in range(ns):
         coeff = fmnc[k, :]
         f[k] = (
-          (coeff[:, None] * cosmt).T @ cosnz
-        - (coeff[:, None] * sinmt).T @ sinnz
-    )
+            (coeff[:, None] * cosmt).T @ cosnz -
+            (coeff[:, None] * sinmt).T @ sinnz )
 
     return f
 
@@ -85,25 +110,49 @@ def s_funct(theta, phi, fmnc, xm, xn):
     for k in range(ns):
         coeff = fmnc[k, :]
         f[k] = (
-          (coeff[:, None] * sinmt).T @ cosnz
-        + (coeff[:, None] * cosmt).T @ sinnz
-    )
+            (coeff[:, None] * sinmt).T @ cosnz +
+            (coeff[:, None] * cosmt).T @ sinnz )
 
     return f
 
 
-class vmec_extended(VMEC):
+class VMEC():
 
 
     def __init__(self, wout_file):
-        super().__init__()
-        self.read_wout(wout_file)
-        self.phi = self.phi.squeeze()
-        self.vp  = self.vp.squeeze()
-        self.xm1 = self.xm[:, 0]
-        self.xn1 = self.xn[:, 0]
-        self.xm2 = self.xm_nyq[:, 0]
-        self.xn2 = self.xn_nyq[:, 0]
+        self.readWout(wout_file)
+
+
+    def readWout(self, wout_file):
+        with netcdf_file(wout_file, 'r', mmap=False) as f:
+            cv = f.variables
+        for label in ('raxis_cc', 'zaxis_cs', 'b0', 'rbtor', 'rmnc', 'zmns',
+                      'phi', 'phipf', 'iotaf', 'jdotb',
+                      'nfp', 'ns', 'mnmax', 'mnmax_nyq'):
+            setattr(self, label, cv[label].data)
+        for label in ('bvco', 'vp'):
+            setattr(self, label, h2f(cv[label].data))
+        self.lasym = cv['lasym__logical__'].data
+        if self.lasym:
+            self.rmns = cv['rmns'].data
+            self.zmnc = cv['zmnc'].data
+
+        self.rmajor = cv['Rmajor_p'].data
+        self.aminor = cv['Aminor_p'].data
+        self.volume = cv['volume_p'].data
+        self.xm =  cv['xm'].data
+        self.xn = -cv['xn'].data
+        self.xm_nyq =  cv['xm_nyq'].data
+        self.xn_nyq = -cv['xn_nyq'].data
+
+        self.lmns = np.zeros_like(cv['lmns'].data)
+        self.bmnc = np.zeros_like(cv['bmnc'].data)
+        self.gmnc = np.zeros_like(cv['gmnc'].data)
+        for mn in range(self.mnmax):
+            self.lmns[:, mn] = h2fmn(cv['lmns'][:, mn], int(self.xm[mn]), self.ns)
+        for mn in range(self.mnmax_nyq):
+            self.bmnc[:, mn] = h2fmn(cv['bmnc'][:, mn], int(self.xm_nyq[mn]), self.ns)
+            self.gmnc[:, mn] = h2fmn(cv['gmnc'][:, mn], int(self.xm_nyq[mn]), self.ns)
 
 
     def calcMoms(self, nu=64, nv=128):
@@ -113,43 +162,43 @@ class vmec_extended(VMEC):
         self.theta = theta
         self.zeta  = zeta
 # Create derivatives
-        rumns = - self.rmnc * self.xm1
-        rvmns = - self.rmnc * self.xn1
-        zumnc =   self.zmns * self.xm1
-        zvmnc =   self.zmns * self.xn1
-        lumnc =   self.lmns * self.xm1
-        lvmnc =   self.lmns * self.xn1
-        if self.iasym == 1:
-            rumnc =   self.rmns * self.xm1
-            rvmnc =   self.rmns * self.xn1
-            zumns = - self.zmnc * self.xm1
-            zvmns = - self.zmnc * self.xn1
-            lumns = - self.lmnc * self.xm1
-            lvmns = - self.lmnc * self.xn1
+        rumns = - self.rmnc * self.xm
+        rvmns = - self.rmnc * self.xn
+        zumnc =   self.zmns * self.xm
+        zvmnc =   self.zmns * self.xn
+        lumnc =   self.lmns * self.xm
+        lvmnc =   self.lmns * self.xn
+        if self.lasym == 1:
+            rumnc =   self.rmns * self.xm
+            rvmnc =   self.rmns * self.xn
+            zumns = - self.zmnc * self.xm
+            zvmns = - self.zmnc * self.xn
+            lumns = - self.lmnc * self.xm
+            lvmns = - self.lmnc * self.xn
         t2 = time.time()
-        self.r  = c_funct(theta, zeta, self.rmnc, self.xm1, self.xn1)
-        self.g  = c_funct(theta, zeta, self.gmnc, self.xm2, self.xn2)
-        self.b  = c_funct(theta, zeta, self.bmnc, self.xm2, self.xn2)
-        self.ru = s_funct(theta, zeta, rumns, self.xm1, self.xn1)
-        self.rv = s_funct(theta, zeta, rvmns, self.xm1, self.xn1)
-        self.zu = c_funct(theta, zeta, zumnc, self.xm1, self.xn1)
-        self.zv = c_funct(theta, zeta, zvmnc, self.xm1, self.xn1)
-        self.lu = c_funct(theta, zeta, lumnc, self.xm1, self.xn1)
-        self.lv = c_funct(theta, zeta, lvmnc, self.xm1, self.xn1)
-        if self.iasym == 1:
-            self.r  += s_funct(theta, zeta, self.rmns, self.xm1, self.xn1)
-            self.g  += s_funct(theta, zeta, self.gmns, self.xm2, self.xn2)
-            self.b  += s_funct(theta, zeta, self.bmns, self.xm2, self.xn2)
-            self.ru += c_funct(theta, zeta, rumnc, self.xm1, self.xn1)
-            self.rv += c_funct(theta, zeta, rvmnc, self.xm1, self.xn1)
-            self.zu += s_funct(theta, zeta, zumns, self.xm1, self.xn1)
-            self.zv += s_funct(theta, zeta, zvmns, self.xm1, self.xn1)
-            self.lu += s_funct(theta, zeta, lumns, self.xm1, self.xn1)
-            self.lv += s_funct(theta, zeta, lvmns, self.xm1, self.xn1)
+        self.r  = c_funct(theta, zeta, self.rmnc, self.xm, self.xn)
+        self.g  = c_funct(theta, zeta, self.gmnc, self.xm_nyq, self.xn_nyq)
+        self.b  = c_funct(theta, zeta, self.bmnc, self.xm_nyq, self.xn_nyq)
+        self.ru = s_funct(theta, zeta, rumns, self.xm, self.xn)
+        self.rv = s_funct(theta, zeta, rvmns, self.xm, self.xn)
+        self.zu = c_funct(theta, zeta, zumnc, self.xm, self.xn)
+        self.zv = c_funct(theta, zeta, zvmnc, self.xm, self.xn)
+        self.lu = c_funct(theta, zeta, lumnc, self.xm, self.xn)
+        self.lv = c_funct(theta, zeta, lvmnc, self.xm, self.xn)
+        if self.lasym == 1:
+            self.r  += s_funct(theta, zeta, self.rmns, self.xm, self.xn)
+            self.g  += s_funct(theta, zeta, self.gmns, self.xm_nyq, self.xn_nyq)
+            self.b  += s_funct(theta, zeta, self.bmns, self.xm_nyq, self.xn_nyq)
+            self.ru += c_funct(theta, zeta, rumnc, self.xm, self.xn)
+            self.rv += c_funct(theta, zeta, rvmnc, self.xm, self.xn)
+            self.zu += s_funct(theta, zeta, zumns, self.xm, self.xn)
+            self.zv += s_funct(theta, zeta, zvmns, self.xm, self.xn)
+            self.lu += s_funct(theta, zeta, lumns, self.xm, self.xn)
+            self.lv += s_funct(theta, zeta, lvmns, self.xm, self.xn)
         t3 = time.time()
         self.g_sum = np.sum(self.g, axis=(1, 2))
         t4 = time.time()
-        print(self.iasym, t2-t1, t3-t2, t4-t3)
+        print(self.lasym, t2-t1, t3-t2, t4-t3)
 #        input('Time')
 
 
@@ -253,10 +302,10 @@ class PointGeom(object):
     trapped-fraction transform above and small in the ablation region)."""
 
     def __init__(self, vmc):
-        self.xm  = np.asarray(vmc.xm1, dtype=np.float64)
-        self.xn  = np.asarray(vmc.xn1, dtype=np.float64)
-        self.xmn = np.asarray(vmc.xm2, dtype=np.float64)
-        self.xnn = np.asarray(vmc.xn2, dtype=np.float64)
+        self.xm  = np.asarray(vmc.xm, dtype=np.float64)
+        self.xn  = np.asarray(vmc.xn, dtype=np.float64)
+        self.xmn = np.asarray(vmc.xm_nyq, dtype=np.float64)
+        self.xnn = np.asarray(vmc.xn_nyq, dtype=np.float64)
         self.rmnc = np.asarray(vmc.rmnc, dtype=np.float64)
         self.zmns = np.asarray(vmc.zmns, dtype=np.float64)
         self.bmnc = np.asarray(vmc.bmnc, dtype=np.float64)
@@ -514,7 +563,9 @@ def maybe_write_pellet_chord(vmc, nl_path='vmec_io/stell_files.nml'):
 def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius_out):
 
     logger.info('Reading VMEC NetCDF output %s', wout_file)
-    vmc = vmec_extended(wout_file)
+    with netcdf_file(wout_file, 'r', mmap=False) as f:
+        cv = f.variables
+    vmc = VMEC(wout_file)
     logger.info('Calculating moments')
     vmc.calcMoms(nu=64, nv=128)
 
@@ -541,10 +592,9 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
     XRHO = SXHO - 0.5*HROX
 
 #some quantities from VMEC output
-    lasym = vmc.lasym
-    RTOR  = vmc.rmajor
-    ABC   = vmc.aminor
-    BTOR  = np.abs(vmc.b0)    #change from zeta = phi (VMEC) to zeta = -phi (ASTRA)
+    lasym  = vmc.lasym
+    RTOR   = vmc.rmajor
+    ABC    = vmc.aminor
     volume = vmc.volume
     GVAC = np.abs(vmc.rbtor)  # RB-t edge, coincides with F_b = F0 for tokamak
     BTOR = np.abs(vmc.b0)     # stellarator definition
@@ -555,11 +605,11 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
     NFP = float(vmc.nfp)      # number of field periods
 
 #SHIFT, ELONG, TRIAN, UPDWN
-    Fboundary = np.abs(vmc.bvco[-1]).item()  # F at boundary for a tokamak would be RBphi. For stellarator it is more complicated
+    Fboundary = np.abs(vmc.bvco[-1])  # F at boundary for a tokamak would be RBphi. For stellarator it is more complicated
 #calculate RHO and SRHO
     RHOVMECmesh = np.sqrt(phi/(np.pi*BTOR))
     ROC = RHOVMECmesh[-1]
-    dphidsb = np.abs(vmc.phipf[-1].item())
+    dphidsb = np.abs(vmc.phipf[-1])
     RHO  = XRHO*ROC
     SRHO = SXHO*ROC
     HRO  = RHO[1] - RHO[0]
@@ -618,8 +668,8 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
     vmc.calcFtrap()
 
 # calculate jpar and iota (not taken to astra automatically)
-    jpar   = vmc.jdotb.squeeze()/(1.e6*BTOR)
-    muVMEC = vmc.iotaf.squeeze()
+    jpar   = vmc.jdotb/(1.e6*BTOR)
+    muVMEC = vmc.iotaf
 
 # interpolate to ASTRA grid
     SG11   = linterp(RHOVMECmesh, S11, SRHO)
@@ -660,8 +710,6 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
         rmns_lcfs = vmc.rmns[-1, :].astype(np.float64)
         zmnc_lcfs = vmc.zmnc[-1, :].astype(np.float64)
 
-    with netcdf_file(wout_file, 'r', mmap=False) as f:
-        cv = f.variables
     raxis_cc = cv['raxis_cc'].data
     zaxis_cs = cv['zaxis_cs'].data
     nn = len(raxis_cc)
