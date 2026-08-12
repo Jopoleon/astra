@@ -274,7 +274,7 @@ def maybe_write_pellet_chord(vmc, nl_path='vmec_io/stell_files.nml'):
         logger.error(f"pellet chord skipped: {e}")
 
 
-def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius_out):
+def write_out_files(NA1, wout_file, metric_file, b00_output_file, header_file, radius_out):
 
     logger.info('Reading VMEC NetCDF output %s', wout_file)
 
@@ -296,7 +296,6 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
 
 # Constants from ASTRA
 
-    NA = NA1 - 1
     GP2 = 2. * np.pi
     HROX = 1./(NA1 - 0.5)
 
@@ -505,4 +504,4 @@ if __name__ == '__main__':
     header_file     = f'{vmec_wd}/{nl_dkes["vmec_header_file"]}'
     radius_out      = f'{vmec_wd}/{nl_dkes["minor_radius_w7as_file"]}'
 
-    write_out_files(wout_file, metric_file, b00_output_file, header_file, radius_out)
+    write_out_files(NA1, wout_file, metric_file, b00_output_file, header_file, radius_out)
