@@ -23,10 +23,10 @@ qinterp = lambda x, y, xi: interp1d(x, y, kind='quadratic', fill_value='extrapol
 
 def h2f(var_half):
     """Half to full grid"""
-    var_full = var_half.copy()
-    var_full[0] = 1.5 * var_full[1] - 0.5 * var_full[2]
-    var_full[1:-1] = 0.5 * (var_full[1:-1] + var_full[2:])
-    var_full[-1] = 2.0 * var_full[-1] - var_full[-2]
+    var_full = np.empty_like(var_half)
+    var_full[0]  = 1.5 * var_half[1] - 0.5 * var_half[2]
+    var_full[1:-1] = 0.5 * (var_half[1:-1] + var_half[2:])
+    var_full[-1] = 2. * var_half[-1] - var_full[-2]
     return var_full
 
 
@@ -128,7 +128,7 @@ class VMEC():
         with netcdf_file(wout_file, 'r', mmap=False) as f:
             cv = f.variables
         for label in ('raxis_cc', 'zaxis_cs', 'b0', 'rbtor', 'rmnc', 'zmns',
-                      'phi', 'phipf', 'iotaf', 'jdotb'):
+                      'phi', 'phipf', 'iotaf', 'jdotb', 'xm', 'xm_nyq'):
             setattr(self, label, cv[label].data.astype(np.float64))
         for label in ('nfp', 'ns', 'mnmax', 'mnmax_nyq'):
             setattr(self, label, cv[label].data.astype(np.int32))
@@ -142,9 +142,7 @@ class VMEC():
         self.rmajor = cv['Rmajor_p'].data.astype(np.float64)
         self.aminor = cv['Aminor_p'].data.astype(np.float64)
         self.volume = cv['volume_p'].data.astype(np.float64)
-        self.xm =  cv['xm'].data.astype(np.float64)
-        self.xn = -cv['xn'].data.astype(np.float64)
-        self.xm_nyq =  cv['xm_nyq'].data.astype(np.float64)
+        self.xn     = -cv['xn'    ].data.astype(np.float64)
         self.xn_nyq = -cv['xn_nyq'].data.astype(np.float64)
 
         self.lmns = np.zeros_like(cv['lmns'].data.astype(np.float64))
@@ -170,13 +168,6 @@ class VMEC():
         zvmnc =   self.zmns * self.xn
         lumnc =   self.lmns * self.xm
         lvmnc =   self.lmns * self.xn
-        if self.lasym:
-            rumnc =   self.rmns * self.xm
-            rvmnc =   self.rmns * self.xn
-            zumns = - self.zmnc * self.xm
-            zvmns = - self.zmnc * self.xn
-            lumns = - self.lmnc * self.xm
-            lvmns = - self.lmnc * self.xn
         t2 = time.time()
         self.r  = c_funct(theta, zeta, self.rmnc, self.xm, self.xn)
         self.g  = c_funct(theta, zeta, self.gmnc, self.xm_nyq, self.xn_nyq)
@@ -188,6 +179,12 @@ class VMEC():
         self.lu = c_funct(theta, zeta, lumnc, self.xm, self.xn)
         self.lv = c_funct(theta, zeta, lvmnc, self.xm, self.xn)
         if self.lasym:
+            rumnc =   self.rmns * self.xm
+            rvmnc =   self.rmns * self.xn
+            zumns = - self.zmnc * self.xm
+            zvmns = - self.zmnc * self.xn
+            lumns = - self.lmnc * self.xm
+            lvmns = - self.lmnc * self.xn
             self.r  += s_funct(theta, zeta, self.rmns, self.xm, self.xn)
             self.g  += s_funct(theta, zeta, self.gmns, self.xm_nyq, self.xn_nyq)
             self.b  += s_funct(theta, zeta, self.bmns, self.xm_nyq, self.xn_nyq)
@@ -306,10 +303,10 @@ class PointGeom(object):
     trapped-fraction transform above and small in the ablation region)."""
 
     def __init__(self, vmc):
-        self.xm  = vmc.xm
-        self.xn  = vmc.xn
-        self.xmn = vmc.xm_nyq
-        self.xnn = vmc.xn_nyq
+        self.xm   = vmc.xm
+        self.xn   = vmc.xn
+        self.xmn  = vmc.xm_nyq
+        self.xnn  = vmc.xn_nyq
         self.rmnc = vmc.rmnc
         self.zmns = vmc.zmns
         self.bmnc = vmc.bmnc
@@ -342,11 +339,11 @@ class PointGeom(object):
 
     def eval(self, s, theta, zeta):
         """Return dict with R, Z, modB and grad_s/grad_t/grad_z (each 3-vectors)."""
-        rc = self._interp_row(self.rmnc, s)
-        zc = self._interp_row(self.zmns, s)
+        rc  = self._interp_row(self.rmnc, s)
+        zc  = self._interp_row(self.zmns, s)
         rc_s = self._deriv_row(self.rmnc, s)
         zc_s = self._deriv_row(self.zmns, s)
-        a = self.xm * theta + self.xn * zeta
+        a = self.xm*theta + self.xn*zeta
         ca, sa = np.cos(a), np.sin(a)
 
         R = np.dot(rc, ca)
@@ -600,9 +597,10 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
     ABC    = vmc.aminor
     volume = vmc.volume
     GVAC = np.abs(vmc.rbtor)  # RB-t edge, coincides with F_b = F0 for tokamak
-    BTOR = np.abs(vmc.b0)     # stellarator definition
     if lasym:
-        BTOR = GVAC/RTOR      # tokamak defintion
+        BTOR = GVAC/RTOR      # tokamak
+    else:
+        BTOR = np.abs(vmc.b0) # stellarator
     phi = np.abs(vmc.phi)     # change from zeta = phi (VMEC) to zeta = -phi (ASTRA)
     phi_a = vmc.phi[-1] / GP2 # Toroidal flux at edge / 2pi
 
@@ -743,7 +741,6 @@ def write_out_files(wout_file, metric_file, b00_output_file, header_file, radius
             vmc.zmnc[-1, :].tofile(f)
 
         np.array([nn], dtype=np.int32).tofile(f)
-
         vmc.raxis_cc.tofile(f)
         vmc.zaxis_cs.tofile(f)
 
