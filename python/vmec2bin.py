@@ -37,7 +37,7 @@ def interp_row(arr, s, ns):
 
 
 def deriv_row(arr, s, ns):
-    """d/ds of the linearly-interpolated arr[ns, mn] (exact per-cell slope, 
+    """d/ds of the linearly-interpolated arr[ns, mn] (exact per-cell slope,
        self-consistent with interp_row so grad_i.e_j = delta_ij holds)."""
     j, _ = bracket(s, ns)
     return (arr[j + 1] - arr[j]) * (ns - 1)
@@ -55,8 +55,8 @@ def deriv_row(arr, s, ns):
 # of pulling in simsopt/pySTEL.  See docu/ngs_pellet_todo.md, section 3.
 #
 # VMEC real-space embedding (stellarator symmetric): with zeta the cylindrical
-# toroidal angle,  x = (R cos zeta, R sin zeta, Z), 
-#   R = sum rmnc(s) cos(m theta + n zeta),   Z = sum zmns(s) sin(m theta + n zeta), 
+# toroidal angle,  x = (R cos zeta, R sin zeta, Z),
+#   R = sum rmnc(s) cos(m theta + n zeta),   Z = sum zmns(s) sin(m theta + n zeta),
 #   modB = sum bmnc(s) cos(m_nyq theta + n_nyq zeta)   (Nyquist mode set).
 # The covariant basis e_s, e_theta, e_zeta -> contravariant via the reciprocal
 # relations; sqrt(g) = e_s . (e_theta x e_zeta).
@@ -122,7 +122,7 @@ def compute_pellet_chord(vmc, launch_theta, launch_phi, v_xyz, max_len=None, nst
     and tabulate the geometry the Fortran ablation ODE needs.
 
     The pellet flies with fixed Cartesian velocity v_xyz [m/s]; along the line
-    the flux coordinates evolve by  d(s, theta, zeta)/dl = vhat . grad(s, theta, zeta), 
+    the flux coordinates evolve by  d(s, theta, zeta)/dl = vhat . grad(s, theta, zeta),
     integrated with RK4 in real arclength l (vhat = v/|v|).  Integration starts
     at s=1, (theta, zeta)=(launch_theta, launch_phi) and stops when the pellet
     exits (s back >= 1 after entering) or after max_len.
@@ -146,8 +146,8 @@ def compute_pellet_chord(vmc, launch_theta, launch_phi, v_xyz, max_len=None, nst
     def rhs(y):
         s, th, ze = y
         g = PointGeom(vmc, s, th, ze)
-        return np.array([np.dot(vhat, g['grad_s']), 
-                         np.dot(vhat, g['grad_t']), 
+        return np.array([np.dot(vhat, g['grad_s']),
+                         np.dot(vhat, g['grad_t']),
                          np.dot(vhat, g['grad_z'])])
 
     y = np.array([1., launch_theta, launch_phi])
@@ -259,9 +259,8 @@ def maybe_write_pellet_chord(vmc, nl_path='vmec_io/stell_files.nml'):
             phi = pick('launch_phi', ip)
             v = [pick('vx', ip), pick('vy', ip), pick('vz', ip)]
             l, rho, s, modB, R, Z = compute_pellet_chord(vmc, theta, phi, v)
-            meta = dict(pellet=ip + 1, launch_theta=theta, launch_phi=phi, 
-                        v_xyz=f"[{v[0]}, {v[1]}, {v[2]}]", 
-                        vmag=np.linalg.norm(v), nfp=vmc.nfp, 
+            meta = dict(pellet=ip + 1, launch_theta=theta, launch_phi=phi,
+                        v_xyz=v, vmag=np.linalg.norm(v), nfp=vmc.nfp,
                         penetration_rho_min=np.min(rho))
             paths = [f"{base}_{ip + 1}{ext}"]
             if npel == 1:
