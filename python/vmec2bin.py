@@ -224,42 +224,27 @@ def write_pellet_chord(path, l, rho, s, modB, R, Z, meta):
                     % (l[i], rho[i], s[i], modB[i], R[i], Z[i]))
 
 
-def _parse_pellet_group(nl_path):
-    """Parse &PELLET_CHORD, allowing comma-separated per-pellet lists for
-    LAUNCH_THETA/LAUNCH_PHI/VX/VY/VZ (parse_fortran_namelist only does scalars)."""
+def parse_pellet_group(nl_path):
+    """Parse the &PELLET_CHORD namelist group."""
 
-    if not os.path.exists(nl_path):
+    logger.info(f'Parse PELLET_CHORD namelit group in {nl_path}')
+    try:
+        params = parse_fortran_namelist(nl_path, "PELLET_CHORD")
+    except FileNotFoundError:
         return {}
-    txt = open(nl_path).read()
-    # terminate the group on a '/' at the start of a line (namelist convention), 
-    # NOT on the '/' inside a path value like 'dat/pellet_chord.dat'
-    m = re.search(r'&pellet_chord\b(.*?)^\s*/', txt, re.S | re.M | re.I)
-    if not m:
-        return {}
-    body = m.group(1)
-
-    def grab(name):
-        vals = []
-        for line in body.splitlines():
-            line = line.split('!', 1)[0]
-            mm = re.match(r'\s*' + name + r'\s*=\s*(.+)', line, re.I)
-            if mm:
-                for tok in mm.group(1).split(', '):
-                    tok = tok.strip().strip("'\"")
-                    if tok:
-                        vals.append(tok)
-        return vals
 
     out = {}
-    for key in ('launch_theta', 'launch_phi', 'vx', 'vy', 'vz'):
-        v = grab(key)
-        if v:
-            out[key] = [float(x.replace('d', 'e').replace('D', 'e')) for x in v]
-    co = grab('chord_out')
-    if co:
-        out['chord_out'] = co[0]
-    npel = grab('npel')
-    out['npel'] = int(float(npel[0])) if npel else None
+
+    for key in ("launch_theta", "launch_phi", "vx", "vy", "vz"):
+        if key in params:
+            value = params[key]
+            out[key] = value if isinstance(value, list) else [value]
+
+    if "chord_out" in params:
+        out["chord_out"] = params["chord_out"]
+
+    out["npel"] = params.get("npel")
+
     return out
 
 
@@ -272,7 +257,7 @@ def maybe_write_pellet_chord(vmc, nl_path='vmec_io/stell_files.nml'):
     swallowed so the metric conversion is never broken."""
 
     try:
-        p = _parse_pellet_group(nl_path)
+        p = parse_pellet_group(nl_path)
     except Exception:
         return
     if not p or 'vx' not in p:

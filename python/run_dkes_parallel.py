@@ -7,25 +7,14 @@
 
 # the sign of L13 has to be fixed
 
-import os
-import sys
-import shutil
-import subprocess
+import os, sys, shutil, subprocess, glob, re
 import numpy as np
-import glob
-import re
-
 from scipy.io import netcdf_file
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from types import SimpleNamespace
+from vmec import VMEC
 
 stellopt_path = os.environ.get("STELLOPT_HOME")
-py_stel_path = os.path.join(stellopt_path, "pySTEL")
-sys.path.insert(0,py_stel_path)
-
-from libstell.vmec import VMEC
-from scipy.interpolate import interp1d
-
 os.environ["OMP_NUM_THREADS"] = "1"
 
 MAX_WORKERS = min(96, os.cpu_count())
@@ -96,8 +85,9 @@ print(BOOZER_SURFACES2)
 CMUL_BLOCK_SIZE = 8   # number of (cmul,efield) rows per block
 
 #read wout file
-data_VMEC = VMEC()
-data_VMEC.read_wout(VMEC_FILE)
+vmc = VMEC()
+vmc.readWout(VMEC_FILE)
+vmc.calcFtrap()
 
 #open vmec and booz files
 with netcdf_file(VMEC_FILE, 'r', mmap=False) as f:
@@ -264,46 +254,6 @@ print(B10_boozer/B00_boozer,np.abs(B10_boozer/epsilonz/B00_boozer),rrr,R00_booze
 #Erresonance = 0.5*rrr/a_booz*iota_boozer[BOOZER_SURFACES]
 Erresonance = np.abs(iota_boozer[BOOZER_SURFACES]/R00_boozer*rrr*B00_boozer**2.) # another B00 to make up for the normalization later on
 print(Erresonance)
-
-
-def calc_ftrap(dat):
-		"""Compute trapped fraction f_t according to 
-		
-		H. Maassberg; C. D. Beidler; Y. Turkin; Phys. Plasmas 16, 072504 (2009) equation 12
-
-		Returns
-		----------
-		ftrap : ndarray
-		"""
-		import numpy as np
-		nu = 64
-		nv = 128
-		nlambda = 256
-		theta = np.linspace(0,2*np.pi,nu).reshape((nu,1))
-		zeta  = np.linspace(0,2*np.pi,nv).reshape((nv,1))
-		b = dat.cfunct(theta,zeta,dat.bmnc,dat.xm_nyq,dat.xn_nyq)
-		g = dat.cfunct(theta,zeta,dat.gmnc,dat.xm_nyq,dat.xn_nyq)
-		if dat.iasym==1:
-			b  = b + dat.sfunct(theta,zeta,dat.bmns,dat.xm_nyq,dat.xn_nyq)
-			g  = g + dat.sfunct(theta,zeta,dat.gmns,dat.xm_nyq,dat.xn_nyq)
-		# Calc <B^2/Bmax^2>
-		vp = np.sum(g,axis=(1,2))
-		b2 = np.sum(b**2 * g,axis=(1,2)) / vp   #<B^2>
-		bmax2 = b2/np.max(b**2, axis=(1,2))  #<bmax^2> = <B^2/Bmax^2>
-		bmax = b
-		for u in range(len(vp)):    
-			bmax[u,:,:] = b[u,:,:]/np.max(b, axis=(1,2))[u]   #bmax = B/Bmax (3D array)
-		#introduce normalised global magnetic moment lambda
-		dlambda = 1/(nlambda - 1)   #stepwidth in lambda
-		integrand = np.empty((nlambda, len(vp)))    #lambda/<sqrt(1-lambda*bmax)>
-		for mn in range(nlambda):
-			integrand[mn,:] = mn*dlambda   #lambda
-			integrand[mn,:] = integrand[mn,:]*vp/np.sum(np.sqrt(1-mn*dlambda*bmax)*g,axis=(1,2))
-		integral = np.sum(integrand,axis=0)*dlambda   #integral over lambda
-		ftrap = 1 - 0.75*bmax2*integral
-		return ftrap
-
-ftrapped = calc_ftrap(data_VMEC)
 
 COMBINED_OUTPUT = "dkes_combined.dat"
 
@@ -641,7 +591,7 @@ def extract_surface_quantities2(vmec_file, booz_file, s, resultoo):
     Bsq = Bsq_avg/B00real**2. #bdotb[idx]/bmnc[idx, 0]**2.
 
         # ftrap
-    ftrap = ftrapped[idx]
+    ftrap = vmc.ftrap[idx]
 	
         # Kn
     epsilonz=r/R00
