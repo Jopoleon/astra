@@ -1,6 +1,5 @@
-import sys, os, re, argparse, logging, time
+import sys, os, argparse, logging, time
 import numpy as np
-from scipy.io import netcdf_file
 from scipy.interpolate import interp1d
 from parse_fortran_nml import parse_fortran_namelist
 from vmec import VMEC, f2h
@@ -20,6 +19,28 @@ awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 # Interpolation
 linterp = lambda x, y, xi: interp1d(x, y, kind='linear'   , fill_value='extrapolate')(xi)
 qinterp = lambda x, y, xi: interp1d(x, y, kind='quadratic', fill_value='extrapolate')(xi)
+
+
+def bracket(s, ns):
+    s = min(max(s, 0.), 1.)
+    x = s * (ns - 1)
+    j = int(np.floor(x))
+    if j >= ns - 1:
+        j = ns - 2
+    return j, x - j
+
+
+def interp_row(arr, s, ns):
+    """Linear interp of arr[ns, mn] at scalar s on the uniform s grid."""
+    j, f = bracket(s, ns)
+    return arr[j] * (1. - f) + arr[j + 1] * f
+
+
+def deriv_row(arr, s, ns):
+    """d/ds of the linearly-interpolated arr[ns, mn] (exact per-cell slope, 
+       self-consistent with interp_row so grad_i.e_j = delta_ij holds)."""
+    j, _ = bracket(s, ns)
+    return (arr[j + 1] - arr[j]) * (ns - 1)
 
 # ---------------------------------------------------------------------------
 # Pointwise VMEC geometry + straight-line pellet chord
@@ -41,100 +62,59 @@ qinterp = lambda x, y, xi: interp1d(x, y, kind='quadratic', fill_value='extrapol
 # relations; sqrt(g) = e_s . (e_theta x e_zeta).
 # ---------------------------------------------------------------------------
 
-class PointGeom(object):
-    """Evaluate R, Z, modB and grad_s/theta/zeta at an arbitrary (s, theta, zeta).
+def PointGeom(vmc, s, theta, zeta):
+    """Return dict with R, Z, modB and grad_s/grad_t/grad_z (each 3-vectors)."""
 
-    Coefficients are linearly interpolated on the uniform full-mesh s grid
-    s = linspace(0, 1, ns); the s-derivatives d(rmnc)/ds, d(zmns)/ds are taken
-    once by np.gradient.  modB uses the Nyquist mode set on the same s grid
-    (half/full-mesh offset of half a cell is neglected -- consistent with the
-    trapped-fraction transform above and small in the ablation region)."""
+    ns = vmc.rmnc.shape[0]
+    rc  = interp_row(vmc.rmnc, s, ns)
+    zc  = interp_row(vmc.zmns, s, ns)
+    rc_s = deriv_row(vmc.rmnc, s, ns)
+    zc_s = deriv_row(vmc.zmns, s, ns)
+    a = vmc.xm*theta + vmc.xn*zeta
+    ca, sa = np.cos(a), np.sin(a)
 
-    def __init__(self, vmc):
-        self.xm   = vmc.xm
-        self.xn   = vmc.xn
-        self.xmn  = vmc.xm_nyq
-        self.xnn  = vmc.xn_nyq
-        self.rmnc = vmc.rmnc
-        self.zmns = vmc.zmns
-        self.bmnc = vmc.bmnc
-        self.iasym = getattr(vmc, 'iasym', 0)
-        if self.iasym == 1:
-            self.rmns = vmc.rmns
-            self.zmnc = vmc.zmnc
-            self.bmns = vmc.bmns
-        self.ns = self.rmnc.shape[0]
-        self.sgrid = np.linspace(0., 1., self.ns)
+    R = np.dot(rc, ca)
+    Z = np.dot(zc, sa)
+    R_t = np.dot(rc, -vmc.xm * sa)
+    R_z = np.dot(rc, -vmc.xn * sa)
+    Z_t = np.dot(zc,  vmc.xm * ca)
+    Z_z = np.dot(zc,  vmc.xn * ca)
+    R_s = np.dot(rc_s, ca)
+    Z_s = np.dot(zc_s, sa)
 
-    def _bracket(self, s):
-        s = min(max(s, 0.), 1.)
-        x = s * (self.ns - 1)
-        j = int(np.floor(x))
-        if j >= self.ns - 1:
-            j = self.ns - 2
-        return j, x - j
+    bc = interp_row(vmc.bmnc, s, ns)
+    an = vmc.xm_nyq * theta + vmc.xn_nyq * zeta
+    modB = np.dot(bc, np.cos(an))
 
-    def _interp_row(self, arr, s):
-        """Linear interp of arr[ns, mn] at scalar s on the uniform s grid."""
-        j, f = self._bracket(s)
-        return arr[j] * (1. - f) + arr[j + 1] * f
+    if vmc.lasym:
+        rsc  = interp_row(vmc.rmns, s, ns)
+        zcc  = interp_row(vmc.zmnc, s, ns)
+        rsc_s = deriv_row(vmc.rmns, s, ns)
+        zcc_s = deriv_row(vmc.zmnc, s, ns)
+        R += np.dot(rsc, sa)
+        Z += np.dot(zcc, ca)
+        R_t += np.dot(rsc,  vmc.xm*ca)
+        R_z += np.dot(rsc,  vmc.xn*ca)
+        Z_t += np.dot(zcc, -vmc.xm*sa)
+        Z_z += np.dot(zcc, -vmc.xn*sa)
+        R_s += np.dot(rsc_s, sa)
+        Z_s += np.dot(zcc_s, ca)
+        bsc = interp_row(vmc.bmns, s, ns)
+        modB += np.dot(bsc, np.sin(an))
 
-    def _deriv_row(self, arr, s):
-        """d/ds of the linearly-interpolated arr[ns, mn] (exact per-cell slope, 
-        self-consistent with _interp_row so grad_i.e_j = delta_ij holds)."""
-        j, _ = self._bracket(s)
-        return (arr[j + 1] - arr[j]) * (self.ns - 1)
+    cz, sz = np.cos(zeta), np.sin(zeta)
+    # covariant basis vectors in Cartesian (x = R cos z, R sin z, Z)
+    e_s = np.array([R_s*cz,        R_s*sz,         Z_s])
+    e_t = np.array([R_t*cz,        R_t*sz,         Z_t])
+    e_z = np.array([R_z*cz - R*sz, R_z *sz + R*cz, Z_z])
+    sqrtg = np.dot(e_s, np.cross(e_t, e_z))
+    if abs(sqrtg) < 1e-30:
+        sqrtg = 1e-30
+    grad_s = np.cross(e_t, e_z) / sqrtg
+    grad_t = np.cross(e_z, e_s) / sqrtg
+    grad_z = np.cross(e_s, e_t) / sqrtg
 
-    def eval(self, s, theta, zeta):
-        """Return dict with R, Z, modB and grad_s/grad_t/grad_z (each 3-vectors)."""
-        rc  = self._interp_row(self.rmnc, s)
-        zc  = self._interp_row(self.zmns, s)
-        rc_s = self._deriv_row(self.rmnc, s)
-        zc_s = self._deriv_row(self.zmns, s)
-        a = self.xm*theta + self.xn*zeta
-        ca, sa = np.cos(a), np.sin(a)
-
-        R = np.dot(rc, ca)
-        Z = np.dot(zc, sa)
-        R_t = np.dot(rc, -self.xm * sa)
-        R_z = np.dot(rc, -self.xn * sa)
-        Z_t = np.dot(zc,  self.xm * ca)
-        Z_z = np.dot(zc,  self.xn * ca)
-        R_s = np.dot(rc_s, ca)
-        Z_s = np.dot(zc_s, sa)
-
-        bc = self._interp_row(self.bmnc, s)
-        an = self.xmn * theta + self.xnn * zeta
-        modB = np.dot(bc, np.cos(an))
-
-        if self.iasym == 1:
-            rsc  = self._interp_row(self.rmns, s)
-            zcc  = self._interp_row(self.zmnc, s)
-            rsc_s = self._deriv_row(self.rmns, s)
-            zcc_s = self._deriv_row(self.zmnc, s)
-            R += np.dot(rsc, sa)
-            Z += np.dot(zcc, ca)
-            R_t += np.dot(rsc,  self.xm*ca)
-            R_z += np.dot(rsc,  self.xn*ca)
-            Z_t += np.dot(zcc, -self.xm*sa)
-            Z_z += np.dot(zcc, -self.xn*sa)
-            R_s += np.dot(rsc_s, sa)
-            Z_s += np.dot(zcc_s, ca)
-            bsc = self._interp_row(self.bmns, s)
-            modB += np.dot(bsc, np.sin(an))
-
-        cz, sz = np.cos(zeta), np.sin(zeta)
-        # covariant basis vectors in Cartesian (x = R cos z, R sin z, Z)
-        e_s = np.array([R_s*cz,          R_s*sz,          Z_s])
-        e_t = np.array([R_t*cz,          R_t*sz,          Z_t])
-        e_z = np.array([R_z*cz - R*sz,   R_z *sz + R*cz,  Z_z])
-        sqrtg = np.dot(e_s, np.cross(e_t, e_z))
-        if abs(sqrtg) < 1e-30:
-            sqrtg = 1e-30
-        grad_s = np.cross(e_t, e_z) / sqrtg
-        grad_t = np.cross(e_z, e_s) / sqrtg
-        grad_z = np.cross(e_s, e_t) / sqrtg
-        return dict(R=R, Z=Z, modB=abs(modB), grad_s=grad_s, grad_t=grad_t, grad_z=grad_z)
+    return dict(R=R, Z=Z, modB=abs(modB), grad_s=grad_s, grad_t=grad_t, grad_z=grad_z)
 
 
 def compute_pellet_chord(vmc, launch_theta, launch_phi, v_xyz, max_len=None, nstep=2000):
@@ -151,7 +131,6 @@ def compute_pellet_chord(vmc, launch_theta, launch_phi, v_xyz, max_len=None, nst
     rho = sqrt(s) is the ASTRA flux label.
     """
 
-    pg = PointGeom(vmc)
     v = np.asarray(v_xyz, dtype=np.float64)
     vmag = np.linalg.norm(v)
     if vmag <= 0.:
@@ -166,7 +145,7 @@ def compute_pellet_chord(vmc, launch_theta, launch_phi, v_xyz, max_len=None, nst
 
     def rhs(y):
         s, th, ze = y
-        g = pg.eval(s, th, ze)
+        g = PointGeom(vmc, s, th, ze)
         return np.array([np.dot(vhat, g['grad_s']), 
                          np.dot(vhat, g['grad_t']), 
                          np.dot(vhat, g['grad_z'])])
@@ -193,7 +172,8 @@ def compute_pellet_chord(vmc, launch_theta, launch_phi, v_xyz, max_len=None, nst
         if entered and y[0] >= 1.:
             break
 
-    ls = dl*np.arange(len(ths))
+    nls = len(ths)
+    ls = dl*np.arange(nls)
     ss = np.clip(np.array(ss), 0., 1.)
     ths = np.array(ths)
     zes = np.array(zes)
@@ -201,8 +181,8 @@ def compute_pellet_chord(vmc, launch_theta, launch_phi, v_xyz, max_len=None, nst
     modB = np.empty_like(ls)
     R = np.empty_like(ls)
     Z = np.empty_like(ls)
-    for i in range(len(ls)):
-        g = pg.eval(ss[i], ths[i], zes[i])
+    for i in range(nls):
+        g = PointGeom(vmc, ss[i], ths[i], zes[i])
         modB[i] = g['modB']
         R[i] = g['R']
         Z[i] = g['Z']
