@@ -18,9 +18,8 @@ logger.setLevel(logging.INFO)
 
 awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
-# Interpolation
+# Linear interpolation
 linterp = lambda x, y, xi: interp1d(x, y, kind='linear'   , fill_value='extrapolate')(xi)
-qinterp = lambda x, y, xi: interp1d(x, y, kind='quadratic', fill_value='extrapolate')(xi)
 
 
 def vmec2astra(vmc, NA1, metric_file, b00_output_file):
@@ -38,19 +37,11 @@ def vmec2astra(vmc, NA1, metric_file, b00_output_file):
     Ip_contrib = np.abs(0.*vmc.rbtor)
     F0_contrib = np.abs(0.*vmc.rbtor)
 
-# Constants from ASTRA
 
+# ASTRA radial grids
     HROX = 1./(NA1 - 0.5)
-
-# Define ASTRA arrays
     SXHO = HROX*np.arange(1, NA1+1)
     XRHO = SXHO - 0.5*HROX
-
-#some quantities from VMEC output
-    lasym  = vmc.lasym
-    RTOR   = vmc.rmajor
-    ABC    = vmc.aminor
-    volume = vmc.volume
 
 # Astra grids
     ROC  = vmc.RHOVMECmesh[-1]
@@ -104,8 +95,8 @@ def vmec2astra(vmc, NA1, metric_file, b00_output_file):
 
         np.array(
             [
-                HROX, HRO, ROC, RTOR, ABC, vmc.BTOR,
-                volume, vmc.GVAC, vmc.Fboundary,
+                HROX, HRO, ROC, vmc.rmajor, vmc.aminor, vmc.BTOR,
+                vmc.volume, vmc.GVAC, vmc.Fboundary,
                 vmc.nfp, vmc.dphidsb,
                 Ip_contrib, F0_contrib
             ],
@@ -127,8 +118,8 @@ def vmec2astra(vmc, NA1, metric_file, b00_output_file):
 
         vmc.rmnc[-1, :].tofile(f)
         vmc.zmns[-1, :].tofile(f)
-        np.array(lasym, dtype=np.int32).tofile(f)
-        if lasym:
+        np.array(vmc.lasym, dtype=np.int32).tofile(f)
+        if vmc.lasym:
             vmc.rmns[-1, :].tofile(f)
             vmc.zmnc[-1, :].tofile(f)
 
@@ -141,7 +132,7 @@ def vmec2astra(vmc, NA1, metric_file, b00_output_file):
 
         vmc.rmnc.tofile(f)
         vmc.zmns.tofile(f)
-        if lasym:
+        if vmc.lasym:
             vmc.rmns.tofile(f)
             vmc.zmnc.tofile(f)
         vmc.phi.tofile(f)
