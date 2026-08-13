@@ -849,23 +849,34 @@ enddo
 call markloc("init done")
 '''
 
-class INIT_CONVERGE_STEP:
-
-    header = \
-'''subroutine init_converge_step()
-
+modules_tmp = '''
 use read_input, only: equ_file, exp_file
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
 use scalars
 use status
 use pi_const
 use nclass_mod
+use strahl_mod
+use standard_functions
+use a2eqdsk, only: eqdsk
 use a2tglf, only: tglf_ipc, tglf_out
 use a2qlk, only: qlk_ipc, qlk_out
 use debugger, only: markloc
 use numerical_tools, only: extrap
-use metrics, only: cuofmu
+use metrics, only: cuofp, cuofmu
 use flux_avg_imp
+use transport_solver
+use a2rabbit, only: rabbit
+use a2torbeam, only: torba
+use torfpql_mod, only: toric
+'''
+
+class INIT_CONVERGE_STEP:
+
+    header = \
+f'''subroutine init_converge_step()
+
+{modules_tmp}
 
 implicit none
 
@@ -880,27 +891,13 @@ double precision, dimension(NRD) :: YWA
 class EQNS_INC:
 
     header = \
-'''subroutine EQNS_INC(ibcpsi_fb, bc_type_for_fp, dfpdrbm12)
+f'''subroutine EQNS_INC(ibcpsi_fb, bc_type_for_fp, dfpdrbm12)
 !-------------------------------------------------------------------
 ! Perform one time step
 ! Note that now time step is updated at the end of a full time cycle
 !-------------------------------------------------------------------
 
-use scalars
-use status
-use pi_const
-use a2eqdsk, only: eqdsk
-use a2tglf, only: tglf_ipc, tglf_out
-use a2qlk, only: qlk_ipc, qlk_out
-use cpu_usage, only: wallTime_sbr, cpuTime_sbr
-use nclass_mod
-use strahl_mod
-use standard_functions
-use debugger, only: markloc
-use numerical_tools, only: extrap
-use transport_solver
-use metrics, only: cuofp, cuofmu
-use flux_avg_imp
+{modules_tmp}
 
 implicit none
 
@@ -925,26 +922,12 @@ MPHIT = 0.
 class POSTEP:
 
     header = \
-"""subroutine POSTEP()
+f'''subroutine POSTEP()
 
-use scalars
-use status
-use pi_const
-use nclass_mod
-use strahl_mod
-use a2eqdsk, only: eqdsk
-use a2tglf, only: tglf_ipc
-use a2qlk, only: qlk_ipc
-use a2neo, only: neo_ipc
-use a2rabbit, only: rabbit
-use a2torbeam, only: torba
-use torfpql_mod, only: toric
-use cpu_usage, only: wallTime_sbr, cpuTime_sbr
-use debugger, only: markloc
-use flux_avg_imp
+{modules_tmp}
 
 implicit none
 
 integer :: IFSUB, t_wall1, t_wall2, rate
 double precision :: t_cpu1, t_cpu2
-"""
+'''
