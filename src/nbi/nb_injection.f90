@@ -503,6 +503,15 @@ contains
     end subroutine smooth_int
 
 !---------------------------------------------------------------------
+    double precision function NB_EXP(x_in, coeff1, coeff2)
+
+    double precision, intent(in) :: x_in, coeff1, coeff2
+
+    nb_exp = EXP(-coeff1*abs(x_in)**coeff2)
+
+    end function NB_EXP
+
+!---------------------------------------------------------------------
     double precision function RIPRAD(YUPDWN, J)
 ! Ripple loss boundary R[m] for each magnetic surface
 ! YUPDWN [m] plasma midplane shift in respect to the plane
