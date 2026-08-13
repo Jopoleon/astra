@@ -6,32 +6,6 @@ rho_pol(1:NA1) = SQRT(FP_NORM(1: NA1))
 '''
 
 
-class POSTEP:
-
-    header = \
-"""subroutine POSTEP()
-
-use scalars
-use status
-use pi_const
-use nclass_mod
-use strahl_mod
-use a2eqdsk, only: eqdsk
-use a2tglf, only: tglf_ipc
-use a2qlk, only: qlk_ipc
-use a2neo, only: neo_ipc
-use a2rabbit, only: rabbit
-use a2torbeam, only: torba
-use torfpql_mod, only: toric
-use cpu_usage, only: wallTime_sbr, cpuTime_sbr
-use debugger, only: markloc
-
-implicit none
-
-integer :: IFSUB, t_wall1, t_wall2, rate
-double precision :: t_cpu1, t_cpu2
-"""
-
 class SET_GRAPH_NAMES:
     
     header = \
@@ -891,6 +865,7 @@ use a2qlk, only: qlk_ipc, qlk_out
 use debugger, only: markloc
 use numerical_tools, only: extrap
 use metrics, only: cuofmu
+use flux_avg_imp
 
 implicit none
 
@@ -925,6 +900,7 @@ use debugger, only: markloc
 use numerical_tools, only: extrap
 use transport_solver
 use metrics, only: cuofp, cuofmu
+use flux_avg_imp
 
 implicit none
 
@@ -945,3 +921,30 @@ double precision, dimension(NRD) :: YWA, YWB, YWC, YWD, YWGN, &
 
 MPHIT = 0.
 '''
+
+class POSTEP:
+
+    header = \
+"""subroutine POSTEP()
+
+use scalars
+use status
+use pi_const
+use nclass_mod
+use strahl_mod
+use a2eqdsk, only: eqdsk
+use a2tglf, only: tglf_ipc
+use a2qlk, only: qlk_ipc
+use a2neo, only: neo_ipc
+use a2rabbit, only: rabbit
+use a2torbeam, only: torba
+use torfpql_mod, only: toric
+use cpu_usage, only: wallTime_sbr, cpuTime_sbr
+use debugger, only: markloc
+use flux_avg_imp
+
+implicit none
+
+integer :: IFSUB, t_wall1, t_wall2, rate
+double precision :: t_cpu1, t_cpu2
+"""
