@@ -1,5 +1,14 @@
+import logging
 import numpy as np
 from scipy.io import netcdf_file
+from scipy.interpolate import interp1d
+
+logger = logging.getLogger('vmec2a.VMEC')
+
+GP2 = 2.*np.pi
+
+# Quadratic interpolation
+qinterp = lambda x, y, xi: interp1d(x, y, kind='quadratic', fill_value='extrapolate')(xi)
 
 
 def h2f(var_half):
@@ -248,3 +257,87 @@ class VMEC():
         S22 = np.trapezoid(S22, x=self.theta, axis=1)*scale_fact
 
         return S11, S12, S21, S22
+
+
+    def calcAll(self):
+
+#some quantities from VMEC output
+        self.phi_abs = np.abs(self.phi) 
+
+        self.Fboundary = np.abs(self.bvco[-1])  # F at boundary for a tokamak would be RBphi. For stellarator it is more complicated
+
+        self.GVAC = np.abs(self.rbtor)  # RB-t edge, coincides with F_b = F0 for tokamak
+        if self.lasym:
+            self.BTOR = self.GVAC/self.rbtor      # tokamak
+        else:
+            self.BTOR = np.abs(self.b0) # stellarator
+
+        self.RHOVMECmesh = np.sqrt(self.phi_abs/(np.pi*self.BTOR))
+        self.dphidsb = np.abs(self.phipf[-1])
+
+        fac1 = -self.phi_abs[-1]/(GP2*self.BTOR)
+        fac2 = fac1/self.RHOVMECmesh[1:]
+
+# calculate susceptance matrix (on full mesh)
+        S11, S12, S21, S22 = self.calcSusceptance()
+        
+        S11[1:] *= fac2
+        S12[1:] *= fac2
+        S21[1:] *= fac2
+        S22 *= fac1
+
+# Force S11[0], S12[0], S21[0] = 0.
+        S11[0] = 0.
+        S12[0] = 0.
+        S21[0] = 0.
+
+# interpolate gp 1 and 2
+        RHOVMECmeshsmall = np.delete(self.RHOVMECmesh, [1, 2])
+        S11small = np.delete(S11, [1, 2])
+        S12small = np.delete(S12, [1, 2])
+        S21small = np.delete(S21, [1, 2])
+
+        self.S11a = qinterp(RHOVMECmeshsmall, S11small, self.RHOVMECmesh)
+        self.S12a = qinterp(RHOVMECmeshsmall, S12small, self.RHOVMECmesh)
+        self.S21a = qinterp(RHOVMECmeshsmall, S21small, self.RHOVMECmesh)
+        self.S22a = S22
+
+# calculate V'
+        self.Vpf = -self.vp * GP2**2 * self.RHOVMECmesh/fac1   # vp is on full mesh
+        Vph = f2h(self.vp)              # (dV/ds)/(4*pi*pi) on VMEC half mesh
+
+# calculate <|grad(rho)|>
+        self.calcGrad_rho()
+
+# calculate <|grad(rho)|^2>
+        G1 = self.avg_grad_rho2
+        G1 = self.phi_abs[-1]*G1/(np.pi*self.BTOR)
+        self.g11 = self.Vpf * G1
+
+# calculate <R>, V, aeff
+        self.calcRmaj()
+        self.calcVol(Vph)
+        self.Amineff = np.sqrt(2*self.Vol/(GP2**2 * self.Rmaj))
+
+# calculate ftrapped
+        self.calcFtrap()
+
+# calculate jpar and iota (not taken to astra automatically)
+        self.jpar = self.jdotb/(1.e6*self.BTOR)
+
+
+    def write_header(self, header_file):
+        phi_a = self.phi[-1] / GP2 # Toroidal flux at edge / 2pi, with sign
+        with open(header_file, 'w') as f:
+            f.write(f'{self.aminor:.10e}\n')
+            f.write(f'{phi_a:.10e}\n')
+            logger.info(f'Written ABC and phi_a to {header_file}')
+
+
+    def write_amin(self, radius_out):
+        a2 = np.sum(self.rmnc[-1, :]*self.zmns[-1, :]*self.xm)
+        a_booz = np.sqrt(a2)
+        with open(radius_out, 'w') as f:
+            f.write(str(a_booz.item()))
+            logger.info(f"Written minor radius to: {radius_out}")
+       
