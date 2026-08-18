@@ -108,7 +108,7 @@ class PELLET():
         pass
 
 
-    def parse_pellet_nml(self, nl_path='vmec_io/stell_files.nml'):
+    def parse_pellet_nml(self, nl_path='vmec/templates/stell_files.nml'):
         """Parse the &PELLET_CHORD namelist group."""
 
         logger.info(f'Parse PELLET_CHORD namelit group in {nl_path}')

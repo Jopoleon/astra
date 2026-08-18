@@ -3,6 +3,8 @@ import numpy as np
 from scipy.interpolate import PchipInterpolator
 from scipy.io import netcdf_file
 from parse_fortran_nml import parse_fortran_namelist
+from pathlib import Path
+
 
 fmt = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s: %(message)s', '%H:%M:%S')
 logger = logging.getLogger('extractBoozer')
@@ -13,7 +15,7 @@ if len(logger.handlers) == 0:
 #logger.setLevel(logging.DEBUG)
 logger.setLevel(logging.INFO)
 
-awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+awd = Path(__file__).resolve().parents[2]
 
 
 def astra_rho(n_rho):
@@ -105,15 +107,15 @@ def read_minor_radius_text(boozer_file):
 
 
 # GENERATED PATH  (NetCDF boozmn, 7 surfaces from true_surfaces.txt)
-def _read_true_surfaces(path="vmec_io/true_surfaces.txt"):
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"{path} not found (needed for generated mode)")
-    with open(path) as f:
+def _read_true_surfaces(f_true_surf):
+    if not os.path.exists(f_true_surf):
+        raise FileNotFoundError(f"{f_true_surf} not found (needed for generated mode)")
+    with open(f_true_surf) as f:
         next(f)                        # line 1 = count
         return [int(x) for x in f.read().split()]
 
 
-def read_boozer_b00_nc(boozer_nc, wout_nc, astra_rho_grid):
+def read_boozer_b00_nc(boozer_nc, wout_nc, f_true_surf, astra_rho_grid):
     with netcdf_file(wout_nc, 'r', mmap=False) as f:
         dsv = f.variables
     with netcdf_file(boozer_nc, 'r', mmap=False) as f:
@@ -131,7 +133,7 @@ def read_boozer_b00_nc(boozer_nc, wout_nc, astra_rho_grid):
                          f"Boozer transform produced no usable data")
     b00_rows = b00_rows[good]
 
-    true_surf = _read_true_surfaces()        # VMEC indices of computed surfaces
+    true_surf = _read_true_surfaces(f_true_surf)        # VMEC indices of computed surfaces
     if len(true_surf) != len(b00_rows):
         raise ValueError(f"true_surfaces ({len(true_surf)}) != nonzero boozer "
                          f"rows ({len(b00_rows)})")
@@ -173,8 +175,8 @@ def is_netcdf(path):
 if __name__ == "__main__":
 
     logger.info("Start")
-    nl_vmec = parse_fortran_namelist('vmec_io/stell_files.nml', 'VMEC_TO_ASTRA_INPUTS')
-    nl_dkes = parse_fortran_namelist('vmec_io/stell_files.nml', 'ASTRA_DKES_INTERFACE')
+    nl_vmec = parse_fortran_namelist('vmec/templates/stell_files.nml', 'VMEC_TO_ASTRA_INPUTS')
+    nl_dkes = parse_fortran_namelist('vmec/templates/stell_files.nml', 'ASTRA_DKES_INTERFACE')
 
     # NA1: optional command-line arg (a2vmec passes it) overrides the namelist
     # default; the interface reads B00_PHYSICAL_PROFILE(NA1), so the profile
@@ -185,9 +187,11 @@ if __name__ == "__main__":
         npts = nl_vmec.get('astra_nrad', 91)
     grid = astra_rho(npts)
 
-    vmec_wd = f'{awd}/{nl_vmec["vmec_wd"]}'
-    boozer_file = f'{vmec_wd}/{nl_vmec["boozer_file"]}'
-    wout_file   = f'{vmec_wd}/{nl_vmec["vmec_wout_file"]}'
+    vmec_data   = f'{awd}/{nl_vmec["vmec_root"]}/{nl_vmec["data_dir"]}'
+    vmec_temp   = f'{awd}/{nl_vmec["vmec_root"]}/{nl_vmec["template_dir"]}'
+    boozer_file = f'{vmec_data}/{nl_vmec["boozer_file"]}'
+    wout_file   = f'{vmec_data}/{nl_vmec["vmec_wout_file"]}'
+    surf_file   = f'{vmec_temp}/{nl_vmec["true_surf_file"]}'
 
     if not os.path.exists(boozer_file):
         logger.error('boozer_file %s not found' %boozer_file)
@@ -196,11 +200,11 @@ if __name__ == "__main__":
         logger.error('boozer_file %s is not NetCDF nor HDF5' %boozer_file)
         input('Press <Enter> to continue')
 
-    b00_out = f'{vmec_wd}/b00_profile_boozer.txt'
-    rad_out = f'{vmec_wd}//minorradiusW7AS.txt'
+    b00_out = f'{vmec_data}/b00_profile_boozer.txt'
+    rad_out = f'{vmec_data}/minorradiusW7AS.txt'
 
     try:
-        b00 = read_boozer_b00_nc(boozer_file, wout_file, grid)
+        b00 = read_boozer_b00_nc(boozer_file, wout_file, surf_file, grid)
         rad = minor_radius_modesum(wout_file)
         np.savetxt(b00_out, b00)
         with open(rad_out, 'w') as f:

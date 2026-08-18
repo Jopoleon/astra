@@ -8,12 +8,13 @@ implicit none
 
 integer :: naxis
 real*8, allocatable :: raxiscc(:), zaxiscc(:)
-character(len=512) :: f_vmec_wout, f_boozer, f_vmec_in, f_vmec_metric, &
-    f_boozer_in, f_template, vmec_work_dir, mpi_command, py_exe, stellopt_dir
+character(len=512) :: f_vmec_wout, f_boozer, f_vmec_in, f_vmec_metric, f_true_surf, &
+    f_boozer_in, f_template, vmec_data_dir, vmec_temp_dir, &
+    mpi_command, py_exe, stellopt_dir
 
 integer :: nvmec_prof = nvmec_prof_max
 character(len=32)  :: vmec_prof_type = 'cubic_spline'  ! or 'akima_spline'
-character(len=512) :: vmec_template = 'vmec_io/vmecinput_template.dat'
+character(len=512) :: vmec_template, f_vmec_settings
 
 contains
 
@@ -32,7 +33,7 @@ contains
     character(len=512) :: cmd, as_nml
 
     NAMELIST / vmec / phi_full_surfaces, dt_boozer, vac_phase_stel, mboz, nboz, &
-        vmec_template, vmec_prof_type, nvmec_prof
+        f_vmec_settings
 
     save f_boundary
 
@@ -49,7 +50,7 @@ contains
 ! Set I/O paths for VMEDC I/O files
     call vmec_io_files()
     call execute_command_line('rm -f ' // TRIM(f_vmec_in)) ! Clean vmecinput.dat, to raise error
-    call execute_command_line('mkdir -p ' // TRIM(vmec_work_dir))
+    call execute_command_line('mkdir -p ' // TRIM(vmec_data_dir))
 
 ! Run VMEC stand-alone
     call astra2vmec(vmec_vacuum, vmec_dteq, vac_phase_stel, f_boundary, phi_full_surfaces)
@@ -58,20 +59,20 @@ contains
     if (yes_boozer == 1) call calc_boozer(mboz, nboz, dt_boozer)
 
 ! Extract Boozer data
-    write(cmd, '(A, 1X, A, 1X, I0)') TRIM(py_exe), 'python/extract_boozer_data.py', NA1
+    write(cmd, '(A, 1X, A, 1X, I0)') TRIM(py_exe), 'vmec/python/extract_boozer_data.py', NA1
     write(*, *) TRIM(cmd)
     call execute_command_line(TRIM(cmd)) ! Input: VMEC_WD/boozmn_VMECoutput.nc; Output VMEC_WD/b00_profile_boozer.txt, VMEC_WD/minorradiusW7AS.txt
 
 ! Collect VMEC output and store it into ASTRA arrays
-    write(cmd, '(A, 1X, A, I0)') trim(py_exe), 'python/vmec2bin.py ', NA1
+    write(cmd, '(A, 1X, A, I0)') trim(py_exe), 'vmec/python/vmec2bin.py ', NA1
     write(*, *) TRIM(cmd)
     call execute_command_line(TRIM(cmd), wait=.true.)
 
     call VMECbin2astra(phi_full_surfaces)
 
 ! Clean working files to make sure errors are raised
-    call execute_command_line('rm ' // TRIM(vmec_work_dir) // '/*.dat')
-    call execute_command_line('rm ' // TRIM(vmec_work_dir) // '/*.txt')
+    call execute_command_line('rm ' // TRIM(vmec_data_dir) // '/*.dat')
+    call execute_command_line('rm ' // TRIM(vmec_data_dir) // '/*.txt')
 
     end subroutine vmec_interface
 
@@ -107,25 +108,29 @@ contains
     integer :: ios
     character(len=512) :: f_stella_nml
     character(len=512) :: VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE, &
-        VMEC2A_METRIC, BOOZER_INFILE, VMEC_WD
+        VMEC_METRIC_FILE, VMEC_IN_TEMPLATE, BOOZER_INFILE, TRUE_SURF_FILE, VMEC_ROOT, &
+        TEMPLATE_DIR, DATA_DIR
 
     NAMELIST / vmec_to_astra_inputs / VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE, &
-        VMEC2A_METRIC, BOOZER_INFILE, VMEC_WD
+        VMEC_METRIC_FILE, VMEC_IN_TEMPLATE, BOOZER_INFILE, TRUE_SURF_FILE, VMEC_ROOT, &
+        TEMPLATE_DIR, DATA_DIR
 
-    f_stella_nml = TRIM(awd) // '/vmec_io/stell_files.nml'
+    f_stella_nml = TRIM(awd) // '/' // TRIM(f_vmec_settings)
     write(*, *) 'Reading namelist ', TRIM(f_stella_nml)
     open(58, FILE=TRIM(f_stella_nml), delim='apostrophe')
     read(58, nml=vmec_to_astra_inputs, iostat=ios)
     close(58)
 
-    vmec_work_dir = TRIM(awd) // '/' // TRIM(VMEC_WD) // '/'
-    f_vmec_wout   = TRIM(vmec_work_dir) // TRIM(VMEC_WOUT_FILE)
-    f_boozer      = TRIM(vmec_work_dir) // TRIM(BOOZER_FILE)
-    f_vmec_in     = TRIM(vmec_work_dir) // TRIM(VMEC_IN_FILE)
-    f_vmec_metric = TRIM(vmec_work_dir) // TRIM(VMEC2A_METRIC)
-    f_boozer_in   = TRIM(vmec_work_dir) // TRIM(BOOZER_INFILE)
+    vmec_data_dir = TRIM(awd) // '/' // TRIM(VMEC_ROOT) // '/' // TRIM(DATA_DIR) // '/'
+    vmec_temp_dir = TRIM(awd) // '/' // TRIM(VMEC_ROOT) // '/' // TRIM(TEMPLATE_DIR) // '/'
+    f_vmec_wout   = TRIM(vmec_data_dir) // TRIM(VMEC_WOUT_FILE)
+    f_boozer      = TRIM(vmec_data_dir) // TRIM(BOOZER_FILE)
+    f_vmec_in     = TRIM(vmec_data_dir) // TRIM(VMEC_IN_FILE)
+    f_vmec_metric = TRIM(vmec_data_dir) // TRIM(VMEC_METRIC_FILE)
+    f_boozer_in   = TRIM(vmec_data_dir) // TRIM(BOOZER_INFILE)
 
-    f_template    = TRIM(awd) // '/' // TRIM(vmec_template)
+    f_template  = TRIM(vmec_temp_dir) // TRIM(VMEC_IN_TEMPLATE)
+    f_true_surf = TRIM(vmec_temp_dir) // TRIM(TRUE_SURF_FILE)
 
     end subroutine vmec_io_files
 
@@ -392,12 +397,10 @@ contains
 
     integer :: i
     double precision :: t_boozero
-    character(len=512) :: cmd, f_true_surf
+    character(len=512) :: cmd
 
     data t_boozero/0./
     save t_boozero
-
-    f_true_surf = TRIM(awd) // '/vmec_io/true_surfaces.txt'
 
     open(32, file=TRIM(f_boozer_in))
     write(32, '(33333I8)') mboz, nboz
@@ -406,12 +409,12 @@ contains
     close(32)
 
     if (TIME >= TSTART+t_boozero .or. TIME <= TSTART) then
-        cmd = 'cd ' // TRIM(vmec_work_dir) // ' && ' // &
+        cmd = 'cd ' // TRIM(vmec_data_dir) // ' && ' // &
             TRIM(mpi_command)  // ' -n 1 ' // &
             TRIM(stellopt_dir) // '/BOOZ_XFORM/Release/xbooz_xform ' // &
             TRIM(f_boozer_in)  // ' ' // TRIM(f_true_surf)
         write(*, *) TRIM(cmd)
-        call execute_command_line(TRIM(cmd)) ! Input: VMEC_WD/inboozer.dat, vmec_io/true_surfaces.txt, ./wout_VMECoutput.nc; Output: ./boozmn_VMECoutput.nc
+        call execute_command_line(TRIM(cmd)) ! Input: VMEC_WD/inboozer.dat, vmec/templates/true_surfaces.txt, ./wout_VMECoutput.nc; Output: ./boozmn_VMECoutput.nc
         t_boozero = TIME - TSTART + dt_boozer
     endif
       

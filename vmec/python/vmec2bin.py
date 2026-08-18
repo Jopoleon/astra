@@ -4,6 +4,7 @@ from scipy.interpolate import interp1d
 from pellet import PELLET
 from vmec import VMEC, f2h
 from parse_fortran_nml import parse_fortran_namelist
+from pathlib import Path
 
 GP2 = 2.*np.pi
 
@@ -16,7 +17,7 @@ if len(logger.handlers) == 0:
 #logger.setLevel(logging.DEBUG)
 logger.setLevel(logging.INFO)
 
-awd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+awd = Path(__file__).resolve().parents[2]
 
 # Linear interpolation
 linterp = lambda x, y, xi: interp1d(x, y, kind='linear'   , fill_value='extrapolate')(xi)
@@ -52,20 +53,20 @@ def vmec2astra(vmc, NA1, metric_file, b00_output_file):
     GRADROVMEC = vmc.avg_grad_rho * ROC
 
 # interpolate to ASTRA grid
-    SG11   = linterp(vmc.RHOVMECmesh, vmc.S11a, SRHO)
-    SG12   = linterp(vmc.RHOVMECmesh, vmc.S12a, SRHO)
-    SG21   = linterp(vmc.RHOVMECmesh, vmc.S21a, SRHO)
-    SG22   = linterp(vmc.RHOVMECmesh, vmc.S22a, SRHO)
-    VR     = linterp(vmc.RHOVMECmesh, vmc.Vpf, RHO)
-    VRS    = linterp(vmc.RHOVMECmesh, vmc.Vpf, SRHO)
-    GRADRO = linterp(vmc.RHOVMECmesh, GRADROVMEC, SRHO)
-    G11    = linterp(vmc.RHOVMECmesh, vmc.g11, SRHO)
-    Rmaj   = linterp(vmc.RHOVMECmesh, vmc.Rmaj, RHO)
-    VOLUM  = linterp(vmc.RHOVMECmesh, vmc.Vol, RHO)
-    AMETR  = linterp(vmc.RHOVMECmesh, vmc.Amineff, RHO)
-    FTPT   = linterp(vmc.RHOVMECmesh, vmc.ftrap, RHO)
-    CU     = linterp(vmc.RHOVMECmesh, vmc.jpar, RHO)
-    MU     = linterp(vmc.RHOVMECmesh, vmc.iotaf, SRHO)
+    SG11   = linterp(vmc.RHOVMECmesh, vmc.S11a   , SRHO)
+    SG12   = linterp(vmc.RHOVMECmesh, vmc.S12a   , SRHO)
+    SG21   = linterp(vmc.RHOVMECmesh, vmc.S21a   , SRHO)
+    SG22   = linterp(vmc.RHOVMECmesh, vmc.S22a   , SRHO)
+    VR     = linterp(vmc.RHOVMECmesh, vmc.Vpf    ,  RHO)
+    VRS    = linterp(vmc.RHOVMECmesh, vmc.Vpf    , SRHO)
+    GRADRO = linterp(vmc.RHOVMECmesh, GRADROVMEC , SRHO)
+    AMETR  = linterp(vmc.RHOVMECmesh, vmc.Amineff,  RHO)
+    G11    = linterp(vmc.RHOVMECmesh, vmc.g11    , SRHO)
+    Rmaj   = linterp(vmc.RHOVMECmesh, vmc.Rmaj   ,  RHO)
+    VOLUM  = linterp(vmc.RHOVMECmesh, vmc.Vol    ,  RHO)
+    FTPT   = linterp(vmc.RHOVMECmesh, vmc.ftrap  ,  RHO)
+    CU     = linterp(vmc.RHOVMECmesh, vmc.jpar   ,  RHO)
+    MU     = linterp(vmc.RHOVMECmesh, vmc.iotaf  , SRHO)
     SLAT   = VR*GRADRO
 
 # Approximate values at NA1 for shifted grid
@@ -155,15 +156,15 @@ if __name__ == '__main__':
 
     NA1 = args.astra_nrad
 
-    namelist_path = f'{awd}/vmec_io/stell_files.nml'
+    namelist_path = f'{awd}/vmec/templates/stell_files.nml'
     nl_vmec = parse_fortran_namelist(namelist_path, 'VMEC_TO_ASTRA_INPUTS')
     nl_dkes = parse_fortran_namelist(namelist_path, 'ASTRA_DKES_INTERFACE')
-    vmec_wd     = f'{awd}/{nl_vmec["vmec_wd"]}'
-    wout_file   = f'{vmec_wd}/{nl_vmec["vmec_wout_file"]}'
-    metric_file = f'{vmec_wd}/{nl_vmec["vmec2a_metric"]}'
-    b00_output_file = f'{vmec_wd}/{nl_dkes["b00_profile_file"]}'
-    header_file     = f'{vmec_wd}/{nl_dkes["vmec_header_file"]}'
-    radius_out      = f'{vmec_wd}/{nl_dkes["minor_radius_w7as_file"]}'
+    vmec_data   = f'{awd}/{nl_vmec["vmec_root"]}/{nl_vmec["data_dir"]}'
+    wout_file   = f'{vmec_data}/{nl_vmec["vmec_wout_file"]}'
+    metric_file = f'{vmec_data}/{nl_vmec["vmec_metric_file"]}'
+    b00_output_file = f'{vmec_data}/{nl_dkes["b00_profile_file"]}'
+    header_file     = f'{vmec_data}/{nl_dkes["vmec_header_file"]}'
+    radius_out      = f'{vmec_data}/{nl_dkes["minor_radius_w7as_file"]}'
 
     logger.info('Reading VMEC NetCDF output')
     vmc = VMEC(wout_file)

@@ -115,6 +115,7 @@
    phi_full_surfaces = 0.
    dt_boozer = 0.01
    vac_phase_stel = 0      !  0 to do real vacuum at start for stellarator. 1 for tokamak
+   f_vmec_settings = 'vmec/templates/stell_files.nml'
 /
 
 &strahl_par

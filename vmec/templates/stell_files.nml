@@ -6,9 +6,13 @@
   VMEC_WOUT_FILE = 'wout_VMECoutput.nc'
   BOOZER_FILE    = 'boozmn_VMECoutput.nc'
   VMEC_IN_FILE   = 'vmecinput.dat'
-  VMEC2A_METRIC  = 'vmec2astra.bin'
+  VMEC_METRIC_FILE = 'vmec2astra.bin'
+  VMEC_IN_TEMPLATE = 'vmecinput_template.dat'
   BOOZER_INFILE  = 'inboozer.dat'
-  VMEC_WD = 'vmec_dat'
+  TRUE_SURF_FILE = 'true_surf.txt'
+  VMEC_ROOT      = 'vmec'
+  TEMPLATE_DIR   = 'templates'
+  DATA_DIR       = 'dat'
 /
 
 &ASTRA_DKES_INTERFACE
