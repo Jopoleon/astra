@@ -175,8 +175,9 @@ def is_netcdf(path):
 if __name__ == "__main__":
 
     logger.info("Start")
-    nl_vmec = parse_fortran_namelist('vmec/templates/stell_files.nml', 'VMEC_TO_ASTRA_INPUTS')
-    nl_dkes = parse_fortran_namelist('vmec/templates/stell_files.nml', 'ASTRA_DKES_INTERFACE')
+    f_settings = 'vmec/templates/stell_files.nml'
+    nl_vmec = parse_fortran_namelist(f_settings, 'VMEC_TO_ASTRA_INPUTS')
+    nl_dkes = parse_fortran_namelist(f_settings, 'ASTRA_DKES_INTERFACE')
 
     # NA1: optional command-line arg (a2vmec passes it) overrides the namelist
     # default; the interface reads B00_PHYSICAL_PROFILE(NA1), so the profile

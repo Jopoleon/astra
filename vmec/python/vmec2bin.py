@@ -179,7 +179,7 @@ if __name__ == '__main__':
 # NGS pellet: if a launch is configured, trace the straight-line chord for
 # this (updated) equilibrium and refresh the table the Fortran model reads.
     pel = PELLET()
-    pel.parse_pellet_nml()
+    pel.parse_pellet_nml(namelist_path)
     pel.chords(vmc)
 
     vmec2astra(vmc, NA1, metric_file, b00_output_file)

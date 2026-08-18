@@ -108,12 +108,12 @@ class PELLET():
         pass
 
 
-    def parse_pellet_nml(self, nl_path='vmec/templates/stell_files.nml'):
+    def parse_pellet_nml(self, f_setting):
         """Parse the &PELLET_CHORD namelist group."""
 
-        logger.info(f'Parse PELLET_CHORD namelit group in {nl_path}')
+        logger.info(f'Parse PELLET_CHORD namelit group in {f_setting}')
         try:
-            self.pars_d = parse_fortran_namelist(nl_path, "PELLET_CHORD")
+            self.pars_d = parse_fortran_namelist(f_setting, "PELLET_CHORD")
             for key in ('vx', 'vy', 'vz', 'launch_theta', 'launch_phi'):
                 self.pars_d[key] = np.atleast_1d(self.pars_d[key])
         except FileNotFoundError:
