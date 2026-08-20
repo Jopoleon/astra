@@ -16,8 +16,6 @@ double precision, dimension(IV1, n_pitch) :: FSRS, FVM, RMN
 
 contains
 
-! Subroutines for time dependent Fokker-Planck calculations
-
 !---------------------------------------------------------------------
     double precision function YERF(x_in)
 
@@ -245,23 +243,30 @@ contains
 
 !---------------------------------------------------------------------
     subroutine NBIONR(EBEAM, ABEAM, RTOR, NA1, TAU, NNCL, NNWM, &
-        n_nbi, CBM3, cx_cold, CBMI2, dn_rho, JSRREC, YEXTARR)
+        n_nbi, CBM3, cx_cold, CBMI2, calc_fus, dn_rho, JSRREC, YEXTARR)
 
 !====================================================== 22-MAR-99
 ! Update 05-NOV-2012, 14-JAN-13
 ! linearization 29-OCT-2015
 ! 2D (v, cosTET) Fokker-Planck solver for different
 ! magnetic surfaces, ripple losses
+! return CX loss on "thermal" neutrals        26-MAY-2025
+! PBCX power loss by fast ion CX "thermal" neutrals            14-AUG-2026
+! SBICX fast ion sink due to CX with "thermal" neutrals        14-AUG-2026
+! SRSTH thermal ion source due to fast ion slowing down     14-AUG-2026
+! neutron sources from time-dependent FP    03-JUN-2025
+!    2D (v, cosTET) Fokker - Plank solver for different
+!    magnetic surfaces, ripple losses
 !======================================================== Polevoy
 
     use nbstatus, only: PEBM, PIBM, CUBM, CUFI, PBPER, PBLON, &
         NIBM, TE, NE, TI, AMAIN, AMETR, SHIF, ZEF, ISPE, ISPEND, &
-        NN, TN, NNBM1, NNBM2, NNBM3
-    use cross_sections, only: SPEX, FNBF
+        NN, TN, NNBM1, NNBM2, NNBM3, PBCX, SBICX, SRSTH
+    use cross_sections, only: SPEX, FNBF, svddnp1f, svddnp2f, svdtbpf
     use pi_const, only: GP
     use nbicom, only: YASBA, YASBA1
 
-    integer, intent(in) :: NA1, JSRREC, n_nbi, cx_cold, dn_rho
+    integer, intent(in) :: NA1, JSRREC, n_nbi, cx_cold, dn_rho, calc_fus
     double precision, intent(in) :: EBEAM, ABEAM, RTOR, &
         TAU, NNCL, NNWM, CBM3, CBMI2, YEXTARR(n_rho, 9)
 
@@ -277,8 +282,11 @@ contains
         YRMN, YSRSE, YEBEAM, YPB, YIP, YV4, FVMMIN, F0J, YEXARG, &
         YE, YI, YPEBM, YPIBM, YPBPER, YPBLON, YNB, YCUFI, YMF, &
         PTHBM, PTHERM, YDELPE, YDELPI, YDELMI, YDELME, YMAXMU
+    double precision :: ystnbdp, ysdnbtp, ysdnbdp1, ysdnbdp2, YX, &
+        ypbcx, ynbth, ysbsrs, ysrsth, ysbicx ! Added Jun 2025, aug 2026
     double precision, dimension(n_energy) :: YFI
-    double precision, dimension(n_rho) :: Fcur, Lni, Lne, Lnz
+    double precision, dimension(n_rho) :: Fcur, Lni, Lne, Lnz, &
+        stnbdp, sdnbtp, sdnbdp1, sdnbdp2   ! June 2025
 
     save JN1OLD
 
@@ -310,13 +318,20 @@ contains
 
 !----- clear previous distributions
     do JN=1, NA1
-        PEBM(JN) = 0.
-        PIBM(JN) = 0.
-        CUBM(JN) = 0.
-        CUFI(JN) = 0.
+        PEBM(JN)  = 0.
+        PIBM(JN)  = 0.
+        CUBM(JN)  = 0.
+        CUFI(JN)  = 0.
         PBPER(JN) = 0.
-        NIBM(JN) = 0.
+        NIBM(JN)  = 0.
         PBLON(JN) = 0.
+        stnbdp(jn)  = 0.
+        sdnbtp(JN)  = 0.
+        sdnbdp1(JN) = 0.
+        sdnbdp2(JN) = 0.
+        PBCX(JN)  = 0.
+        SRSTH(JN) = 0.
+        SBICX(JN) = 0.
     enddo
 
 !----- file for Fij
@@ -501,6 +516,21 @@ contains
             call NBPOVE()
         enddo
 
+! Added August 2026
+        YPBCX  = 0.
+        YSRSTH = 0.
+        YSBICX = 0.
+        do i=1, IV
+            YIP = 0.
+            YV4 = i**2/DV2(i)
+            do J=1, ITC
+                J1 = IT - J + 1
+                YIP = YIP + FVM(I, J)*RMN(I, J) + FVM(I, J1)*RMN(I, J1)
+            enddo
+            YSBICX = YSBICX + YIP      ! CX ion sink from tail
+            YPBCX  = YPBCX  + YV4*YIP  ! CX energy sink from tail
+        enddo
+
 ! Fij linearization Fij b =Fij - Foj exp(-Ei/T)
         FVMMIN = FVM(1, 1)
         do J=2, IT
@@ -509,9 +539,11 @@ contains
         F0J    = FVMMIN
         PTHBM  = F0J*TI(J2)*CNSTE0*1.5
         PTHERM = 1.6d-3*PTHBM/DTION
+        YNBTH  = F0J*CNSTE0/DTION    ! August 2026
         YE     = 0.
         YMAXMU = 0.d0
 
+        YSRSTH = 0.d0    ! particle sink to thermal ions
         do JT =1, IT
             YMAXMU = YMAXMU + FVM(1, JT) - F0J
         enddo
@@ -520,11 +552,12 @@ contains
             YE = 0.
             YEXARG = EBDTI*(1.d0/DV2(1) - 1.d0/DV2(JV))
             YE = exp(YEXARG)*F0J
+            YSRSTH = YSRSTH + YE/DV2(JV) ! August-2026
             do JT=1, IT
                 FVM(JV, JT) = FVM(JV, JT) - YE
             enddo
         enddo
-
+        YSRSTH = YSRSTH*IT ! August 2026
         write(31, rec=JN, iostat=ios) ((FVM(JV, JT), JV=1, IV1), JT=1, IT)
         if (ios > 0) then
             write(*, *) 'R/W error in NBION2'
@@ -542,6 +575,10 @@ contains
         YCUFI  = 0.
         YMF    = 0.
         YM2F   = 0.
+        ystnbdp  = 0.
+        ysdnbtp  = 0.
+        ysdnbdp1 = 0.
+        ysdnbdp2 = 0.
         do J=1, ITC
             J1 = IT - J + 1
             YM2F = YM2F + YM2(J)*(FVM(1, J) + FVM(1, J1))
@@ -587,21 +624,38 @@ contains
             YPBLON = YPBLON + YV4*(YIP - YM2F)
             YPEBM  = YPEBM - I**2 * (YDELPE - YDELME)
             YPIBM  = YPIBM - I**2 * (YDELPI - YDELMI)
+            YX = HV*I
+            if (ABEAM > 1.5) then
+                ysdnbtp = ysdnbtp + svdtbpf(EBEAM, ABEAM, TE(JN), TI(JN), calc_fus, YX)*YI/DV2(I)
+                if (ABEAM < 2.5) then
+                    ysdnbdp1 = ysdnbdp1 + svddnp1f(EBEAM, ABEAM, TE(JN), TI(JN), calc_fus, YX)*YI/DV2(I)
+                    ysdnbdp2 = ysdnbdp2 + svddnp2f(EBEAM, ABEAM, TE(JN), TI(JN), calc_fus, YX)*YI/DV2(I)
+                endif
+            endif
         enddo
+
         do J=JNA, JNAC
 ! Beam power distribution
-            PEBM(J) = YPEBM*CNSTQT/2.	
+            PEBM(J) = YPEBM*CNSTQT/2.
             PIBM(J) = YPIBM*CNSTQT/2. + PTHERM
 ! Beam energy Wbeam = Pbper + Pblon/2
 ! Beam perpendicular pressure <Mb Vort2/2> [10*19 keV/m3]
             PBPER(J) = YPBPER*CNSTP
 ! Beam parallel pressure   <Mb Vpar2> [10*19 keV/m3]
             PBLON(J) = 2.*YPBLON*CNSTP
-! Beam density	     [10*19 /m3]
+! Beam density         [10*19 /m3]
             NIBM(J) = YNB*CNSTN
 ! Fast ion current without trapping correction for Eb [MA/m2]
             CUFI(J) = YCUFI*CNSTC
             CUBM(J) = CUFI(J)*Fcur(JN)
+            if (ABEAM > 1.5) then ! June 2025
+                sdnbtp(J)  = ysdnbtp*CNSTN
+                sdnbdp1(J) = ysdnbdp1*CNSTN
+                sdnbdp2(J) = ysdnbdp2*CNSTN
+            endif ! June 2025
+            PBCX(j)  = YPBCX*CNSTQT       ! power loss due to CX with thermal neutrals | August 2026
+            SBICX(j) = YSBICX*CNSTN       ! thermal-fast CX ion loss | August 2026
+            SRSTH(j) = YSRSTH*CNSTN/DTION ! thermal ion source from fast ion slowing down | August 2026
         enddo
     enddo ! radial loop
 

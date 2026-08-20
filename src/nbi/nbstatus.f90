@@ -16,7 +16,8 @@ double precision, dimension(n_rho) :: NE, NHYDR, NDEUT, &
     TE, TI, VR, SHIF,  SHIV,  ELON,  TRIA, AMETR, RHO, &
     FP, MU, AMAIN, NIBM, PIBM, PEBM, PBLON, PBPER, PBEAM, &
     SNEBM, SNNBM, CUFI, CUBM, SCUBM, SNIBM1, SNIBM2, SNIBM3, &
-    NNBM1, NNBM2, NNBM3, NN, TN, ZEF, G33, IPOL
+    NNBM1, NNBM2, NNBM3, NN, TN, ZEF, G33, IPOL, &
+    PBCX, SBICX, SRSTH
 double precision :: YRIPLR(n_rho)
 
 contains

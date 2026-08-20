@@ -12,7 +12,7 @@ contains
         AMETR, PBEAM, SCUBM, SNNBM, SNEBM, SNIBM1, SNIBM2, SNIBM3, &
         NNBM1, NNBM2, NNBM3, NIBM, PEBM, PIBM, CUBM, CUFI, PBPER, PBLON, &
         NE, NI, NHYDR, NDEUT, NTRIT, NHE3, NALF, NIZ1, NIZ2, NIZ3, &
-        TI, ZIM1, ZIM2, ZIM3
+        TI, ZIM1, ZIM2, ZIM3, PBCX, SBICX, SRSTH
     use nbibce, only: nbionr
     use nbicom, only: nbsrsr, nbion0, stnbdp, sdnbtp, sdnbdp1, sdnbdp2, RMB, ZB
 
@@ -194,11 +194,14 @@ contains
         endif
 
         call NBIONR(EBEAM, ABEAM, RTOR, NA1, TAU, NNCL, NNWM, n_nbi, CBM3, cx_cold, &
-            CBMI2, dn_rho, JSRREC, YEXTARR)
+            CBMI2, calc_fus, dn_rho, JSRREC, YEXTARR)
     endif
 
 ! Conversion to rough mesh keeping the intagrals
     if (dn_rho /= 1)    then
+        call smooth_int(PBCX , dn_rho, ROC, NA1)
+        call smooth_int(SBICX, dn_rho, ROC, NA1)
+        call smooth_int(SRSTH, dn_rho, ROC, NA1)
         call smooth_int(NIBM , dn_rho, ROC, NA1)
         call smooth_int(PIBM , dn_rho, ROC, NA1)
         call smooth_int(PEBM , dn_rho, ROC, NA1)
@@ -501,6 +504,15 @@ contains
     deallocate(dri)
 
     end subroutine smooth_int
+
+!---------------------------------------------------------------------
+    double precision function NB_EXP(x_in, coeff1, coeff2)
+
+    double precision, intent(in) :: x_in, coeff1, coeff2
+
+    nb_exp = EXP(-coeff1*abs(x_in)**coeff2)
+
+    end function NB_EXP
 
 !---------------------------------------------------------------------
     double precision function RIPRAD(YUPDWN, J)
