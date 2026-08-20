@@ -261,7 +261,7 @@ contains
 
     use nbstatus, only: PEBM, PIBM, CUBM, CUFI, PBPER, PBLON, &
         NIBM, TE, NE, TI, AMAIN, AMETR, SHIF, ZEF, ISPE, ISPEND, &
-        NN, TN, NNBM1, NNBM2, NNBM3
+        NN, TN, NNBM1, NNBM2, NNBM3, PBCX, SBICX, SRSTH
     use cross_sections, only: SPEX, FNBF, svddnp1f, svddnp2f, svdtbpf
     use pi_const, only: GP
     use nbicom, only: YASBA, YASBA1
@@ -286,7 +286,6 @@ contains
         ypbcx, ynbth, ysbsrs, ysrsth, ysbicx ! Added Jun 2025, aug 2026
     double precision, dimension(n_energy) :: YFI
     double precision, dimension(n_rho) :: Fcur, Lni, Lne, Lnz, &
-        pbcx, srsth, sbicx, & ! August 2026
         stnbdp, sdnbtp, sdnbdp1, sdnbdp2   ! June 2025
 
     save JN1OLD

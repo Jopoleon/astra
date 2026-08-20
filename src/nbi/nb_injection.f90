@@ -12,7 +12,7 @@ contains
         AMETR, PBEAM, SCUBM, SNNBM, SNEBM, SNIBM1, SNIBM2, SNIBM3, &
         NNBM1, NNBM2, NNBM3, NIBM, PEBM, PIBM, CUBM, CUFI, PBPER, PBLON, &
         NE, NI, NHYDR, NDEUT, NTRIT, NHE3, NALF, NIZ1, NIZ2, NIZ3, &
-        TI, ZIM1, ZIM2, ZIM3
+        TI, ZIM1, ZIM2, ZIM3, PBCX, SBICX, SRSTH
     use nbibce, only: nbionr
     use nbicom, only: nbsrsr, nbion0, stnbdp, sdnbtp, sdnbdp1, sdnbdp2, RMB, ZB
 
@@ -199,6 +199,9 @@ contains
 
 ! Conversion to rough mesh keeping the intagrals
     if (dn_rho /= 1)    then
+        call smooth_int(PBCX , dn_rho, ROC, NA1)
+        call smooth_int(SBICX, dn_rho, ROC, NA1)
+        call smooth_int(SRSTH, dn_rho, ROC, NA1)
         call smooth_int(NIBM , dn_rho, ROC, NA1)
         call smooth_int(PIBM , dn_rho, ROC, NA1)
         call smooth_int(PEBM , dn_rho, ROC, NA1)
