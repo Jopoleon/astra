@@ -111,6 +111,9 @@ contains
         PBPER(j_rho)   = 0.
         NIBM(j_rho)    = 0.
         PBLON(j_rho)   = 0.
+        PBCX(j_rho)    = 0. ! August 2026
+        SRSTH(j_rho)   = 0. ! August 2026
+        SBICX(j_rho)   = 0. ! August 2026
     enddo
     ISPE = 0
     yEXTARR = 0.d0
@@ -236,6 +239,13 @@ contains
         SNIBM1(j_rho) = sdnbdp1(j_rho)
         SNIBM2(j_rho) = sdnbdp2(j_rho)
         SNIBM3(j_rho) = sdnbtp(j_rho)
+        if (fp_flag < 2) then ! SS FP solution | August 2026
+            NNBM1(j_rho) = NNBM2(j_rho) - SNNBM(j_rho) ! source of thermal ions  due to NBI
+        else ! time dependent FP
+            NNBM1(j_rho) = SRSTH(j_rho) - SNNBM(j_rho) ! source of thermal ions  due to NBI for
+            SNNBM(j_rho) = SNNBM(j_rho) - SBICX(j_rho) ! source of thermal neutrals (- sink from fast ions)
+            PIBM(j_rho)  = PIBM(j_rho) + SBICX(j_rho)*TI(j_rho)*0.0024 ! birth of thermal ion due to CX of fast ion & thermal neutral
+        endif
     enddo
 
     end subroutine NBINJ
