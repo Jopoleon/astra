@@ -1,35 +1,34 @@
 module cross_sections
 
-  implicit none
+implicit none
 
 contains
 
 !---------------------------------------------------------------------
-    double precision function SPEX(E_in)
+    double precision function SPEX(E_in_keV)
 !---------------------------------------------- [10#-13 cm2]
 ! Neutral beam charge-exchange cross section by proton impact
 ! Reviere A.C //Nucl.Fusion.v.11(1971).p.363
-! E [kev] = Ebeam*Mp/Mb
 !------------------------------------------- Polevoy A.R. 21.03.91
 
-    double precision, intent(in) :: E_in
+    double precision, intent(in) :: E_in_keV
     double precision :: Y
 
-    Y = 1.d3*E_in
+    Y = 1.d3*E_in_keV ! [eV]
     SPEX = 0.06937d0*(1.d0 - 0.155d0*LOG10(Y))**2 / (1.d0 + 0.1112d-14 * Y**3.3)
 
     end function SPEX
 
 !---------------------------------------------------------------------
-    double precision function FNBF(Z_in, E_in)
+    double precision function FNBF(Z_in, epsilon)
 ! toroidal correction for NB driven current
 ! Kim Y.B.,Callen J.D.,Hamnen H.//Nucl.Fus.,(1988)
 ! Neocl.Cur.And Transp.In Aux.Heat.Tokamaks
 
-    double precision, intent(in) :: Z_in, E_in
+    double precision, intent(in) :: Z_in, epsilon
     double precision :: FT, G, Z2
 
-    FT = sqrt(E_in)*(1.46d0 - 0.46d0*E_in)
+    FT = sqrt(epsilon)*(1.46d0 - 0.46d0*epsilon)
     G = FT/(1.d0 - FT)
     Z2 = Z_in**2
     FNBF = ((Z2 + 1.41d0*Z_in) + (Z2 + 0.45d0*Z_in)*G)/((Z2 + 1.41d0*Z_in) + &
@@ -118,22 +117,22 @@ contains
     end function FNBP
 
 !---------------------------------------------------------------------
-    double precision function SIMPI(E_keV, Zq)
+    double precision function SIMPI(E_NBI_keV, Zq)
 !----------------------------------------------- Simpi [10#-13 cm2]
 ! Neutral beam impurity impact ionization cross section for
 ! H(D, T) beam (3He, 4He, C, O, Fe) impurity
 ! Janev R.K., Boley C.D., Post D.E., "Penetration of Neutral
 ! Beams into Fusion Plasma", Nucl.Fusion, Vol.29., No.12, (1989),
 !  pp. 2125-2137.
-! Ebeam [KeV]=0-10000,
+! E_KeV=0-10000,
 ! Simpi =Zq*C1*[1/(1+C2*E)+C3*ln(1+C5*E)/(C4+E)]
 ! E [keV] =Eb/Mb/Zq
 !--------------------------------------------Polevoy A.R. 21.03.91
 
-    double precision, intent(in) :: E_keV, Zq
+    double precision, intent(in) :: E_NBI_keV, Zq
     double precision :: E
 
-    E = E_keV/ZQ
+    E = E_NBI_keV/ZQ
     SIMPI = 7.457d-3*ZQ*(1./(1. + 0.08095*E)+2.754*LOG(1. + 1.27*E)/(64.58 + E))
 
     end function SIMPI
@@ -160,20 +159,20 @@ contains
     end function SEIV
 
 !---------------------------------------------------------------------
-    double precision function SPII(E_keV)
+    double precision function SPII(E_NBI_keV)
 !---------------------------------------------- Spii [10#-13 cm2]
 ! Neutral beam ionization cross section by proton impact
 ! Reviere A.C //Nucl.Fusion.v.11(1971).p.363
 ! E [kev] = Ebeam*Mp/Mb
 !------------------------------------------- Polevoy A.R. 21.03.91
 
-    double precision, intent(in) :: E_keV
+    double precision, intent(in) :: E_NBI_keV
     double precision :: Y1
 
-    if (E_keV >= 150.d0) then
-        SPII = 36.d-3*(LOG10(0.1666d0*E_keV) + 3.d0)/E_keV
-    else if (E_keV > 3.d0) then
-        Y1 = LOG10(E_keV) + 3.d0
+    if (E_NBI_keV >= 150.d0) then
+        SPII = 36.d-3*(LOG10(0.1666d0*E_NBI_keV) + 3.d0)/E_NBI_keV
+    else if (E_NBI_keV > 3.d0) then
+        Y1 = LOG10(E_NBI_keV) + 3.d0
         SPII = 10**((-0.8712d0*Y1 + 8.156d0)*Y1 - 21.833d0)
     else
         SPII = 0.d0
@@ -182,34 +181,34 @@ contains
     end function SPII
 
 !---------------------------------------------------------------------
-    double precision function STOTQ1(ABEAM, E_keV, NE19, Te_keV, Zq, Aq)
+    double precision function STOTQ1(A_NBI, E_NBI_keV, NE19, Te_keV, Zq, Aq)
 !----------------------------------------------- Stotq1 [10#-13 cm2]
 ! Partial neutral beam stopping cross section for
 ! H(D, T) beam H(D, T, 3He, 4He, Li, Be, B, C, N, O, Ne, Fe, Ar) plasma
 !       S Suzuki,  et al "Attenuation og high-energy neutral hydrogen
 !       beams in hugh-density plasmas"
-! Ne [10#19 m-3]=0.1-100,  Ebeam [KeV]=100-10000,  Te [KeV]=1-50
+! Ne [10#19 m-3]=0.1-100,  E_KeV=100-10000,  Te [KeV]=1-50
 ! E [keV]=Ebeam*Mi/Mb
 ! Stotq =Zq*(1+Sq*(Zq-1))*S1(E, ne, Te),
 ! n*Stot =nq*Stotq+... ,  q=1, 2, ..., N for all ion species
 !--------------------------------------------- Polevoy A.R. 25.01.09
 !---------------------------Ne, Ar added by Leonov V.M. in 1999
       
-    double precision, intent(in) :: ABEAM, E_keV, NE19, Te_keV, Zq, Aq
+    double precision, intent(in) :: A_NBI, E_NBI_keV, NE19, Te_keV, Zq, Aq
 
     integer :: i, j, k, iSTOTQ1
     double precision :: A(10), B(3, 2, 2), T, ALT, ALN, ALE, AN, AT, AE, S1, SQ
 
     data iSTOTQ1/0/
-    if (E_keV < 10.d0) write(*, *) 'Illegal use of STOT: Eb<10 keV'
-    if (abeam < 1 .or. abeam > 3.) then
-        write(*, *) 'NBI (stotq1): no data stopping CS for ABEAM = ',  ABEAM
+    if (E_NBI_keV < 10.d0) write(*, *) 'Illegal use of STOT: Eb<10 keV'
+    if (A_NBI < 1 .or. A_NBI > 3.) then
+        write(*, *) 'NBI (stotq1): no data stopping CS for A_NBI = ',  A_NBI
         STOTQ1 = 0.d0
         return
     endif
  
-    if (E_keV < 100.d0) then
-        if (abeam == 1.d0) then
+    if (E_NBI_keV < 100.d0) then
+        if (A_NBI == 1.d0) then
             A(1) = -5.29d1
             A(2) = -1.36d0
             A(3) = 7.19d-2
@@ -220,7 +219,7 @@ contains
             A(8) = 6.660d-2
             A(9) = -6.77d-2
             A(10) = -1.48d-3
-        else if (abeam == 2.d0) then
+        else if (A_NBI == 2.d0) then
             A(1) = -6.79d1
             A(2) = -1.22d0
             A(3) = 8.14d-2
@@ -231,7 +230,7 @@ contains
             A(8) = 7.51d-2
             A(9) = -6.3d-2
             A(10) = -5.08-4
-        else if (abeam == 3.d0) then
+        else if (A_NBI == 3.d0) then
             A(1) = -7.42d1
             A(2) = -1.18d0
             A(3) = 8.43d-2
@@ -244,7 +243,7 @@ contains
             A(10) = -1.85d-4
          endif
     else
-        if (abeam == 1.d0) then
+        if (A_NBI == 1.d0) then
             A(1) = 1.27d1
             A(2) = 1.25d0
             A(3) = 4.52d-1
@@ -255,7 +254,7 @@ contains
             A(8) = -2.98d-2
             A(9) = -9.59d-2
             A(10) = 4.21d-3
-        else if (abeam == 2.d0) then
+        else if (A_NBI == 2.d0) then
             A(1) = 1.41d1
             A(2) = 1.11d0
             A(3) = 4.08d-1
@@ -266,7 +265,7 @@ contains
             A(8) = -2.88d-2
             A(9) = -9.71d-2
             A(10) = 4.74d-3
-        else if (abeam == 3.d0) then
+        else if (A_NBI == 3.d0) then
             A(1) = 1.27d1
             A(2) = 1.26d0
             A(3) = 4.49d-1
@@ -283,7 +282,7 @@ contains
     if (ZQ <= 1.) then
         B = 0.
     else if (AQ < 6.d0) then  ! He
-        if (E_keV < 100.d0) then
+        if (E_NBI_keV < 100.d0) then
             B(1, 1, 1) = -7.92d-1
             B(1, 1, 2) = 4.2d-2
             B(1, 2, 1) = 5.3d-2
@@ -311,7 +310,7 @@ contains
             B(3, 2, 2) = -2.21d-4
         endif
     else if (AQ > 6d0 .and. AQ < 8.d0) then ! Li
-        if (E_keV < 100.d0) then
+        if (E_NBI_keV < 100.d0) then
             B(1, 1, 1) = -4.97d-1
             B(1, 1, 2) = 3.38d-2
             B(1, 2, 1) = 3.87d-2
@@ -339,7 +338,7 @@ contains
             B(3, 2, 2) = -2.39d-4
         endif
     else if (AQ > 8.d0 .and. AQ < 10.d0) then ! Be
-        if (E_keV < 100.d0) then
+        if (E_NBI_keV < 100.d0) then
             B(1, 1, 1) = 1.12d-1
             B(1, 1, 2) = 4.95d-2
             B(1, 2, 1) = 1.16d-2
@@ -367,7 +366,7 @@ contains
             B(3, 2, 2) = -2.27d-4
         endif
     else if (AQ > 10.d0 .and. AQ < 12.d0) then ! B
-        if (E_keV < 100.d0) then
+        if (E_NBI_keV < 100.d0) then
             B(1, 1, 1) = 1.22d-1
             B(1, 1, 2) = 5.27d-2
             B(1, 2, 1) = -4.3d-4
@@ -395,7 +394,7 @@ contains
             B(3, 2, 2) = -2.54d-4
         endif
     else if (AQ > 11.d0 .and. AQ < 13.d0) then ! C
-        if (E_keV < 100.d0) then
+        if (E_NBI_keV < 100.d0) then
             B(1, 1, 1) = 1.61d-1
             B(1, 1, 2) = 5.98d-2
             B(1, 2, 1) = -3.36d-3
@@ -423,7 +422,7 @@ contains
             B(3, 2, 2) = -1.89d-4
         endif
     else if (AQ > 12.d0 .and. AQ < 15.d0) then ! N
-        if (E_keV < 100.d0) then
+        if (E_NBI_keV < 100.d0) then
             B(1, 1, 1) = 1.34d-1
             B(1, 1, 2) = 5.24d-2
             B(1, 2, 1) = -4.69d-3
@@ -451,7 +450,7 @@ contains
             B(3, 2, 2) = -1.15d-4
         endif
     else if (AQ > 15.d0 .and. AQ < 17.d0) then !O
-        if (E_keV < 100.) then
+        if (E_NBI_keV < 100.) then
             B(1, 1, 1) = 1.07d-1
             B(1, 1, 2) = 4.31d-2
             B(1, 2, 1) = -2.83d-3
@@ -510,7 +509,7 @@ contains
             write(*, *) '    cross section for Aimp=56 is substituted instead'
             iSTOTQ1 = 1
         endif
-        if (E_keV < 100.) then
+        if (E_NBI_keV < 100.) then
             B(1, 1, 1) = -4.65d-5
             B(1, 1, 2) = -7.29d-4
             B(1, 2, 1) = -3.1d-3
@@ -543,9 +542,9 @@ contains
     T = max(Te_keV, 1.d0)
     ALT = LOG(T)
     ALN = LOG(NE19)
-    ALE = LOG(E_keV)
+    ALE = LOG(E_NBI_keV)
     S1 = 1.d-3*A(1)*(1.d0 + (A(2) + A(3)*ALE)*ALE) * (1.d0 + (1.d0 - exp(-A(4)*NE19))**A(5) * &
-        (A(6) + (A(7) + A(8)*ALE)*ALE)) * (1.d0 + (A(9) + A(10)*ALT)*ALT)/E_keV
+        (A(6) + (A(7) + A(8)*ALE)*ALE)) * (1.d0 + (A(9) + A(10)*ALT)*ALT)/E_NBI_keV
     AT = 1.0d0
     do K=1, 2
         AN = AT
@@ -596,17 +595,17 @@ contains
     end subroutine calc_bosh
 
 !---------------------------------------------------------------------
-    double precision function sv_reaction_x(EBEAM, ABEAM, TI, calc_fus, X, Acoeff, Bcoeff, YTMIN)
+    double precision function sv_reaction_x(E_NBI_keV, A_NBI, TI, calc_fus, X, Acoeff, Bcoeff, YTMIN)
 
 !---------------------------------------------------------------------
 ! Calculate the fusion reaction factor for a fast particle with
-! energy EBEAM*X**2 interacting with a Maxwellian species at TI.
+! energy E_NBI_keV*X**2 interacting with a Maxwellian species at TI.
 !
 ! This is the common single-X part of sv_reac and sv_reacf.
 !---------------------------------------------------------------------
 
     integer, intent(in) :: calc_fus
-    double precision, intent(in) :: EBEAM, ABEAM, TI, X, YTMIN
+    double precision, intent(in) :: E_NBI_keV, A_NBI, TI, X, YTMIN
     double precision, intent(in) :: Acoeff(5), Bcoeff(4)
 
     double precision :: X2, X3
@@ -622,13 +621,13 @@ contains
 
     sv_reaction_x = 0.d0
 
-    if (EBEAM <= 0.d0) return
+    if (E_NBI_keV <= 0.d0) return
 
 ! Reduced mass and center-of-mass energy
     YMt  = 2.d0
-    YMU  = ABEAM*YMt/(ABEAM + YMt)
+    YMU  = A_NBI*YMt/(A_NBI + YMt)
     YBG  = 31.397d0*sqrt(YMU)
-    YECM = 0.5d0*EBEAM
+    YECM = 0.5d0*E_NBI_keV
     YSQ  = sqrt(YECM)
 
 ! Thermal correction
@@ -638,7 +637,7 @@ contains
         Vth2   = 2.d0*TI/2.d0
         MVth2  = YMU*Vth2
         MVth24 = MVth2/4.d0
-        YVB    = sqrt(2.d0*EBEAM/ABEAM)
+        YVB    = sqrt(2.d0*E_NBI_keV/A_NBI)
         VtdVb2 = Vth2/YVB**2
         YB     = 22.2d0*VtdVb2/YVB
         YEMIN  = TI
@@ -648,7 +647,7 @@ contains
 
     X2 = X**2
 
-    if (EBEAM*X2 <= YEMIN) return
+    if (E_NBI_keV*X2 <= YEMIN) return
 
     if (TI >= YTMIN .and. calc_fus < 2) then
         X3   = X2*X
@@ -685,9 +684,9 @@ contains
 
 !---------------------------------------------------------------------
     double precision function sv_reac(A_main, E_NBI_keV, A_NBI, n_e, &
-        Te_keV, Ti_keV, yAi, calc_fus, Acoeff, Bcoeff)
+        Te_keV, Ti_keV, Amain, calc_fus, Acoeff, Bcoeff)
 !---------------------------------------------------------------------
-! <SigmaV dt> probability for d with EBEAM keV to burn out on maxwellian d
+! <SigmaV dt> probability for d with E_NBI_keV keV to burn out on maxwellian d
 ! with Ti  during the slowing down to Ti in reaction:
 !---------------------------------------------------------------------
 ! Crossection by H-S. Bosch,  G.M. Hale
@@ -698,10 +697,10 @@ contains
 !
 ! Use:
 !    Sdt245[10^-19/m^3/s] =
-!   =Pbeam[MW]*svddnb2*625/EBEAM[keV]*Ndeut[10^19m-3]
+!   =Pbeam[MW]*svddnb2*625/E_NBI_keV[keV]*Ndeut[10^19m-3]
 !
 ! input: E_NBI_keV[energy, keV], A_NBI[mass,  a.u.],
-!  n_e[Ne, 10^19m-3], Te_keV[Te, keV], yAi[amain,  mass,  a.u.]
+!  n_e[Ne, 10^19m-3], Te_keV[Te, keV], Amain[amain,  mass,  a.u.]
 ! ....Logarithm e
 !  YLE =15.85+LOG(TE(j)/sqrt(NE(j)))
 !  TauES = 2.d0*A_NBI*TE(j)^1.5/LnE/NE(j)
@@ -713,7 +712,7 @@ contains
 
     integer, intent(in) :: calc_fus
     double precision, intent(in) :: A_main, E_NBI_keV, A_NBI, n_e, &
-        Te_keV, Ti_keV, yAi, Acoeff(5), Bcoeff(4)
+        Te_keV, Ti_keV, Amain, Acoeff(5), Bcoeff(4)
   
     integer :: jk
     double precision :: YX3, YX2, YX, YE, YECM, YSQ, YASS, YBSS, YSS2, YSIG, &
@@ -749,13 +748,13 @@ contains
 ! Coulomb Log Le, Li
     YLE = (15.85d0 + LOG(Te_keV/sqrt(n_e)))
     if (E_NBI_keV > 100.d0*A_NBI) then
-        YLI = 23.7d0+log(yAi/(yAi+A_NBI) * sqrt(1.d-3*A_NBI*E_NBI_keV*Te_keV/n_e))
+        YLI = 23.7d0+log(Amain/(Amain+A_NBI) * sqrt(1.d-3*A_NBI*E_NBI_keV*Te_keV/n_e))
     else
-        YLI = 25.4d0+log(1.d-3*E_NBI_keV*yAi/(yAi + A_NBI) * sqrt(Te_keV/n_e))
+        YLI = 25.4d0+log(1.d-3*E_NBI_keV*Amain/(Amain + A_NBI) * sqrt(Te_keV/n_e))
     endif
 
     YDS = 1.d0/dble(jend)
-    YECDEB = 14.6d0*Te_keV*A_NBI/E_NBI_keV/(YLE*yAi/YLI)**0.667
+    YECDEB = 14.6d0*Te_keV*A_NBI/E_NBI_keV/(YLE*Amain/YLI)**0.667
     YXC3 = YECDEB*sqrt(YECDEB)
 
     do jk=1, jend
@@ -772,7 +771,7 @@ contains
 
 !---------------------------------------------------------------------
     double precision function svddnp1(E_NBI_keV, A_NBI, n_e, &
-        Te_keV, Ti_keV, yAi, calc_fus)
+        Te_keV, Ti_keV, Amain, calc_fus)
 
 ! d(Ebeam) + d(Ti) -> He3(870 keV) + n (2450 keV)
 
@@ -781,19 +780,19 @@ contains
         Bcoeff(4) = (/0.d0, 0.d0, 0.d0, 0.d0/)
 
     integer, intent(in) :: calc_fus
-    double precision, intent(in) :: E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi
+    double precision, intent(in) :: E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, Amain
 
     if (A_NBI /= 2.d0) then
         svddnp1 = 0.d0
     else
-        svddnp1 = sv_reac(A_main, E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi, calc_fus, Acoeff, Bcoeff)
+        svddnp1 = sv_reac(A_main, E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, Amain, calc_fus, Acoeff, Bcoeff)
     endif
 
     end function svddnp1
 
 !---------------------------------------------------------------------
     double precision function svddnp2(E_NBI_keV, A_NBI, n_e, &
-        Te_keV, Ti_keV, yAi, calc_fus)
+        Te_keV, Ti_keV, Amain, calc_fus)
 
 ! d(Ebeam) + d(Ti) -> t(1008 keV) + p(3025 keV)
 
@@ -802,19 +801,19 @@ contains
         Bcoeff(4) = (/0.d0, 0.d0, 0.d0, 0.d0/)
 
     integer, intent(in) :: calc_fus
-    double precision, intent(in) :: E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi
+    double precision, intent(in) :: E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, Amain
 
     if (A_NBI /= 2.d0) then
         svddnp2 = 0.d0
     else
-        svddnp2 = sv_reac(A_main, E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi, calc_fus, Acoeff, Bcoeff)
+        svddnp2 = sv_reac(A_main, E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, Amain, calc_fus, Acoeff, Bcoeff)
     endif
 
     end function svddnp2
   
 !---------------------------------------------------------------------
     double precision function svdtbp(E_NBI_keV, A_NBI, n_e, &
-        Te_keV, Ti_keV, yAi, calc_fus)
+        Te_keV, Ti_keV, Amain, calc_fus)
 
 ! d(t)(Ebeam) + t(d)(Ti) -> He4(3524 keV) + n(14072 keV)
 
@@ -822,7 +821,7 @@ contains
         Bcoeff(4) = (/63.8d0, -0.995d0, 6.981d-5, 1.728d-4/)
 
     integer, intent(in) :: calc_fus
-    double precision, intent(in) :: E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi
+    double precision, intent(in) :: E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, Amain
     double precision :: A_main
 
     if (A_NBI /= 2.d0 .and. A_NBI /= 3.d0) then
@@ -833,17 +832,17 @@ contains
         else
             A_main = 3.d0 ! d NBI in t bulk plasma
         endif
-        svdtbp = sv_reac(A_main, E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, yAi, calc_fus, Acoeff, Bcoeff)
+        svdtbp = sv_reac(A_main, E_NBI_keV, A_NBI, n_e, Te_keV, Ti_keV, Amain, calc_fus, Acoeff, Bcoeff)
     endif
 
     end function svdtbp
 
 !---------------------------------------------------------------------
-    double precision function sv_reacf(yEBEAM, yABEAM, yTEJ, yTIJ, calc_fus, yX, Acoeff, Bcoeff)
+    double precision function sv_reacf(E_NBI_keV, A_NBI, Te_keV, Ti_keV, calc_fus, yX, Acoeff, Bcoeff)
 !---------------------------------------------------------------------
 ! Polevoi = 24-JUN-2025
 ! svdtbpf = <SigmaV*Ffast dV3> [10^-19/s] intensity of fusion reaction of
-! fast d/t with energy (EBEAM*yX**2) keV and Maxwellian t/d    with Ti per reaction:
+! fast d/t with energy (E_NBI_keV*yX**2) keV and Maxwellian t/d    with Ti per reaction:
 !    d/t(Ebeam) + t/d(Ti) -> He4(3524 keV) + n(14072 keV)
 !---------------------------------------------------------------------
 !    Crossection by    H-S. Bosch, G.M. Hale
@@ -854,68 +853,68 @@ contains
 !    Use:
 !          Sn14[10^-19/m^3/s] = svdtbpf*Ndeut[10^19m-3]
 !
-!    input:    yEBEAM[energy,keV],yABEAM[mass, a.u.],
-!        yTEJ[Te,keV],yTIJ[Ti,keV],
-!        (V = Sqrt(2 T/M)  , Vfast = (2 EBEAM/ABEAM)*yX
+!    input:    E_NBI_keV[energy,keV],A_NBI[mass, a.u.],
+!        Te_keV[Te,keV],Ti_keV[Ti,keV],
+!        (V = Sqrt(2 T/M)  , Vfast = (2 E_NBI_keV/A_NBI)*yX
 !---------------------------------------------------------------------
 
     double precision, parameter :: YTMIN=1.d-3
     integer, intent(in) :: calc_fus
-    double precision, intent(in) :: yEBEAM, yABEAM, yTEJ, yTIJ, yX
+    double precision, intent(in) :: E_NBI_keV, A_NBI, Te_keV, Ti_keV, yX
     double precision, intent(in) :: Acoeff(5), Bcoeff(4)
 
-    sv_reacf = sv_reaction_x(yEBEAM, yABEAM, yTIJ, calc_fus, yX, Acoeff, Bcoeff, YTMIN)
-    sv_reacf = sv_reacf * 4.38d-7 * sqrt(yEBEAM/yABEAM)
+    sv_reacf = sv_reaction_x(E_NBI_keV, A_NBI, Ti_keV, calc_fus, yX, Acoeff, Bcoeff, YTMIN)
+    sv_reacf = sv_reacf * 4.38d-7 * sqrt(E_NBI_keV/A_NBI)
 
     end function sv_reacf
 
 !---------------------------------------------------------------------
-    double precision function svddnp1f(yEBEAM, yABEAM, yTEJ, yTIJ, calc_fus, yX)
+    double precision function svddnp1f(E_NBI_keV, A_NBI, Te_keV, Ti_keV, calc_fus, yX)
 
     double precision, parameter :: Acoeff(5) = (/5.3701d4, 3.3027d2, -0.12706d0, 2.9327d-5, -2.5151d-9/), &
         Bcoeff(4) = (/0.d0, 0.d0, 0.d0, 0.d0/) 
 
     integer, intent(in) :: calc_fus
-    double precision, intent(in) :: yEBEAM, yABEAM, yTEJ, yTIJ, yX
+    double precision, intent(in) :: E_NBI_keV, A_NBI, Te_keV, Ti_keV, yX
 
-    if (yABEAM /= 2.d0) then
+    if (A_NBI /= 2.d0) then
         svddnp1f = 0.d0
     else
-        svddnp1f = sv_reacf(yEBEAM, yABEAM, yTEJ, yTIJ, calc_fus, yX, Acoeff, Bcoeff)
+        svddnp1f = sv_reacf(E_NBI_keV, A_NBI, Te_keV, Ti_keV, calc_fus, yX, Acoeff, Bcoeff)
     endif
 
     end function svddnp1f
 
 !---------------------------------------------------------------------
-    double precision function svddnp2f(yEBEAM, yABEAM, yTEJ, yTIJ, calc_fus, yX)
+    double precision function svddnp2f(E_NBI_keV, A_NBI, Te_keV, Ti_keV, calc_fus, yX)
 
     double precision, parameter :: Acoeff(5) = (/5.5576d4, 2.1054d2, -3.2638d-2, 1.4987d-6, 1.1881d-10/), &
         Bcoeff(4) = (/0.d0, 0.d0, 0.d0, 0.d0/)
 
     integer, intent(in) :: calc_fus
-    double precision, intent(in) :: yEBEAM, yABEAM, yTEJ, yTIJ, yX
+    double precision, intent(in) :: E_NBI_keV, A_NBI, Te_keV, Ti_keV, yX
 
-    if (yABEAM /= 2.d0) then
+    if (A_NBI /= 2.d0) then
         svddnp2f = 0.d0
     else
-        svddnp2f = sv_reacf(yEBEAM, yABEAM, yTEJ, yTIJ, calc_fus, yX, Acoeff, Bcoeff)
+        svddnp2f = sv_reacf(E_NBI_keV, A_NBI, Te_keV, Ti_keV, calc_fus, yX, Acoeff, Bcoeff)
     endif
 
     end function svddnp2f
 
 !---------------------------------------------------------------------
-    double precision function svdtbpf(yEBEAM, yABEAM, yTEJ, yTIJ, calc_fus, yX)
+    double precision function svdtbpf(E_NBI_keV, A_NBI, Te_keV, Ti_keV, calc_fus, yX)
 
     double precision, parameter :: Acoeff(5) = (/6.927d4, 7.454d8, 2.05d6, 5.2002d4, 0.d0/), &
         Bcoeff(4) = (/63.8d0, -0.995d0, 6.981d-5, 1.728d-4/)
 
     integer, intent(in) :: calc_fus
-    double precision, intent(in) :: yEBEAM, yABEAM, yTEJ, yTIJ, yX
+    double precision, intent(in) :: E_NBI_keV, A_NBI, Te_keV, Ti_keV, yX
 
-    if (yABEAM < 2.d0 .or. yABEAM > 3.d0) then
+    if (A_NBI < 2.d0 .or. A_NBI > 3.d0) then
         svdtbpf = 0.d0
     else
-        svdtbpf = sv_reacf(yEBEAM, yABEAM, yTEJ, yTIJ, calc_fus, yX, Acoeff, Bcoeff)
+        svdtbpf = sv_reacf(E_NBI_keV, A_NBI, Te_keV, Ti_keV, calc_fus, yX, Acoeff, Bcoeff)
     endif
 
     end function svdtbpf
