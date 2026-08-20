@@ -171,6 +171,7 @@ use read_input, only: IFDFAX
 use scalars
 use status
 use pi_const
+use standard_functions
 use debugger, only: markloc
 use json_vars, only: profxNames, n_profx
 
