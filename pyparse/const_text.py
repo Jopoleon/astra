@@ -862,7 +862,7 @@ use a2eqdsk, only: eqdsk
 use a2tglf, only: tglf_ipc, tglf_out
 use a2qlk, only: qlk_ipc, qlk_out
 use debugger, only: markloc
-use numerical_tools, only: extrap
+use numerical_tools, only: extrap, qinterp
 use metrics, only: cuofp, cuofmu
 use flux_avg_imp
 use transport_solver

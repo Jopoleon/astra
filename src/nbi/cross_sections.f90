@@ -566,6 +566,124 @@ contains
     end function STOTQ1
 
 !---------------------------------------------------------------------
+    subroutine calc_bosh(E, Acoeff, Bcoeff, YA0, YB0, YAS, YBS, YASS, YBSS)
+
+    double precision, intent(in) :: E
+    double precision, intent(in) :: Acoeff(5), Bcoeff(4)
+
+    double precision, intent(out) :: YA0, YB0
+    double precision, intent(out) :: YAS, YBS
+    double precision, intent(out) :: YASS, YBSS
+
+    YA0 = Acoeff(1) + E*(Acoeff(2) + E*( &
+          Acoeff(3) + E*(Acoeff(4) + E*Acoeff(5))))
+
+    YB0 = 1.d0 + E*(Bcoeff(1) + E*( &
+          Bcoeff(2) + E*(Bcoeff(3) + E*Bcoeff(4))))
+
+    YAS = Acoeff(2) + E*(2.d0*Acoeff(3) + E*( &
+          3.d0*Acoeff(4) + 4.d0*E*Acoeff(5)))
+
+    YBS = Bcoeff(1) + E*(2.d0*Bcoeff(2) + E*( &
+          3.d0*Bcoeff(3) + 4.d0*E*Bcoeff(4)))
+
+    YASS = 2.d0*(Acoeff(3) + 3.d0*E*( &
+            Acoeff(4) + 2.d0*E*Acoeff(5)))
+
+    YBSS = 2.d0*(Bcoeff(2) + 3.d0*E*( &
+            Bcoeff(3) + 2.d0*E*Bcoeff(4)))
+
+    end subroutine calc_bosh
+
+!---------------------------------------------------------------------
+    double precision function sv_reaction_x(EBEAM, ABEAM, TI, calc_fus, X, Acoeff, Bcoeff, YTMIN)
+
+!---------------------------------------------------------------------
+! Calculate the fusion reaction factor for a fast particle with
+! energy EBEAM*X**2 interacting with a Maxwellian species at TI.
+!
+! This is the common single-X part of sv_reac and sv_reacf.
+!---------------------------------------------------------------------
+
+    integer, intent(in) :: calc_fus
+    double precision, intent(in) :: EBEAM, ABEAM, TI, X, YTMIN
+    double precision, intent(in) :: Acoeff(5), Bcoeff(4)
+
+    double precision :: X2, X3
+    double precision :: YE, YECM, YSQ, YBG, YMt
+    double precision :: YASS, YBSS, YSS2, YSS
+    double precision :: YA0, YB0, YAS, YBS
+    double precision :: YMU, YGAM, YBET
+    double precision :: YB, Vth2, MVth2, MVth24
+    double precision :: YVS, YR, YD, Y27
+    double precision :: VtdVb2, YVB
+    double precision :: Y13, YEMIN
+    double precision :: YRMD3, YRPD3, YVB0, YCOEF
+
+    sv_reaction_x = 0.d0
+
+    if (EBEAM <= 0.d0) return
+
+! Reduced mass and center-of-mass energy
+    YMt  = 2.d0
+    YMU  = ABEAM*YMt/(ABEAM + YMt)
+    YBG  = 31.397d0*sqrt(YMU)
+    YECM = 0.5d0*EBEAM
+    YSQ  = sqrt(YECM)
+
+! Thermal correction
+    if (TI >= YTMIN) then
+        Y13    = 1.d0/3.d0
+        Y27    = 1.d0/27.d0
+        Vth2   = 2.d0*TI/2.d0
+        MVth2  = YMU*Vth2
+        MVth24 = MVth2/4.d0
+        YVB    = sqrt(2.d0*EBEAM/ABEAM)
+        VtdVb2 = Vth2/YVB**2
+        YB     = 22.2d0*VtdVb2/YVB
+        YEMIN  = TI
+    else
+        YEMIN = YTMIN
+    endif
+
+    X2 = X**2
+
+    if (EBEAM*X2 <= YEMIN) return
+
+    if (TI >= YTMIN .and. calc_fus < 2) then
+        X3   = X2*X
+        YBET = YB/X3
+        YR = YBET/2.d0 + Y27
+        YD = sqrt(YBET*(YBET/4.d0 + Y27))
+        YRMD3 = (YR - YD)**Y13
+        YRPD3 = (YR + YD)**Y13
+        YVB0 = Y13 + YRMD3 + YRPD3
+        YVS  = X*YVB0
+        YGAM = 3.d0 - 2.d0/YVB0
+        YE = YECM*YVS**2
+! Bosch-Hale coefficients
+        call calc_bosh(YE, Acoeff, Bcoeff, YA0, YB0, YAS, YBS, YASS, YBSS)
+        YSS = YAS/YA0 - YBS/YB0
+        YSS2 = YSS*(1.d0 - 4.d0*YE*YBS/YB0) + 2.d0*YE*(YASS/YA0 - YBSS/YB0)
+        YCOEF = exp(-X2*(YVB0 - 1.d0)**2/VtdVb2) * &
+                YVB0/sqrt(YGAM) * &
+                (1.d0 + MVth24*YSS2/YGAM + &
+                 1.5d0*(1.d0 - 1.d0/YVB0)/YGAM**2 * &
+                 (MVth2*YSS - VtdVb2/YVS**2))
+        sv_reaction_x = exp(-YBG/YVS/YSQ)/YE * YA0/YB0 * YVB0 * YCOEF
+    else
+        YVS = X
+        YE  = YECM*X2
+        YA0 = Acoeff(1) + YE*(Acoeff(2) + YE*( &
+              Acoeff(3) + YE*(Acoeff(4) + YE*Acoeff(5))))
+        YB0 = 1.d0 + YE*(Bcoeff(1) + YE*( &
+              Bcoeff(2) + YE*(Bcoeff(3) + YE*Bcoeff(4))))
+        sv_reaction_x = exp(-YBG/YVS/YSQ)/YE * YA0/YB0
+    endif
+
+    end function sv_reaction_x
+
+!---------------------------------------------------------------------
     double precision function sv_reac(A_main, E_NBI_keV, A_NBI, n_e, &
         Te_keV, Ti_keV, yAi, calc_fus, Acoeff, Bcoeff)
 !---------------------------------------------------------------------
@@ -590,21 +708,22 @@ contains
 !  V = Sqrt(2 T/M)
 !---------------------------------------------------------------------
 
-    double precision, parameter :: YTMIN=0.01d0
+    integer, parameter :: jend=1000
+    double precision, parameter :: YTMIN=1.d-3
 
     integer, intent(in) :: calc_fus
     double precision, intent(in) :: A_main, E_NBI_keV, A_NBI, n_e, &
         Te_keV, Ti_keV, yAi, Acoeff(5), Bcoeff(4)
   
-    integer :: jk, jend
+    integer :: jk
     double precision :: YX3, YX2, YX, YE, YECM, YSQ, YASS, YBSS, YSS2, YSIG, &
         YXC3, YECDEB, YDS, YLE, YLI, YBG, &
         YA0, YB0, YAS, YBS, YMU, YGAM, YBET,  &
         YB, Vth2, MVth2, MVth24, YVs, YSS, YR, YD, Y27, VtdVb2, YVB, &
         Y13, YEMIN, YRMD3, YRPD3, YVb0, YCOEF
 
+    sv_reac = 0.d0
     if (E_NBI_keV <= 0.d0) then
-        sv_reac = 0.d0
         return
     endif
 
@@ -635,54 +754,22 @@ contains
         YLI = 25.4d0+log(1.d-3*E_NBI_keV*yAi/(yAi + A_NBI) * sqrt(Te_keV/n_e))
     endif
 
-    jend = 1000
-    YDS = (1.d0/jend)
-    sv_reac = 0.d0
+    YDS = 1.d0/dble(jend)
     YECDEB = 14.6d0*Te_keV*A_NBI/E_NBI_keV/(YLE*yAi/YLI)**0.667
     YXC3 = YECDEB*sqrt(YECDEB)
-    do JK=1, jend
-        YX  = (YDS*JK)
-        YX2 = YX**2
-        YX3 = YX2*YX
-        YE  = YECM*YX2
-        if (E_NBI_keV*YX2 > YEMIN) then
-            if (Ti_keV >= YTMIN .and. calc_fus < 2) then
-                yBET  = YB/YX3
-                YR    = yBET/2.d0+Y27
-                YD    = sqrt(YBET*(yBET/4.d0+Y27))
-                YRMD3 = (YR - YD)**Y13
-                YRPD3 = (YR + YD)**Y13
-                YVb0  = Y13 + YRMD3 + YRPD3
-                YVS   = YX*YVb0
-                YGAM  = 3.0d0 - 2.0/YVb0
-                YE    = YECM*YVS**2
-                YA0   = Acoeff(1) + YE*(Acoeff(2) + YE*(Acoeff(3) + YE*(Acoeff(4) + YE*Acoeff(5))))
-                YB0   = 1.d0 + YE*(Bcoeff(1) + YE*(Bcoeff(2) + YE*(Bcoeff(3) + YE*Bcoeff(4))))
-                YAS   = Acoeff(2) + YE*(2.d0*Acoeff(3)+YE*(3.d0*Acoeff(4) + 4.d0*YE*Acoeff(5)))
-                YBS   = Bcoeff(1) + YE*(2.d0*Bcoeff(2)+YE*(3.d0*Bcoeff(3) + 4.d0*YE*Bcoeff(4)))
-                YASS  = 2.d0*(Acoeff(3) + 3.d0*YE*(Acoeff(4) + 2.d0*YE*Acoeff(5)))
-                YBSS  = 2.d0*(Bcoeff(2) + 3.d0*YE*(Bcoeff(3) + 2.d0*YE*Bcoeff(4)))
-                YSS   = YAS/YA0 - YBS/YB0
-                YSS2  = YSS*(1.d0 - 4.d0*YE*YBS/YB0) + 2.d0*YE*(YASS/YA0 - YBSS/YB0)
 
-                Ycoef = exp(-YX2*(YVb0 - 1.d0)**2/VtdVb2)*yVb0/sqrt(YGAM)*(1.d0 + MVth24*YSS2/YGAM + &
-                    1.5d0*(1.d0-1.d0/yVb0)/YGAM**2*(MVth2*YSS-VtdVb2/YVS**2))
-                YSIG = exp(-YBG/YVS/YSQ)/YE*YA0/YB0*yVb0*Ycoef
-            else
-                YVS = YX
-                YE = YECM*YX2
-                YA0 = Acoeff(1) + YE*(Acoeff(2) + YE*(Acoeff(3) + YE*(Acoeff(4) + YE*Acoeff(5))))
-                YB0 = 1.d0 + YE*(Bcoeff(1) + YE*(Bcoeff(2) + YE*(Bcoeff(3) + YE*Bcoeff(4))))
-                YSIG = exp(-YBG/YVS/YSQ)/YE*YA0/YB0
-            endif
-            sv_reac = sv_reac + YSIG/(1. + YXC3/YX3)
+    do jk=1, jend
+        YX = YDS*jk
+        if (E_NBI_keV*YX**2 > YEMIN) then
+            YSIG = sv_reaction_x(E_NBI_keV, A_NBI, Ti_keV, calc_fus, YX, Acoeff, Bcoeff, YTMIN)
+            sv_reac = sv_reac + YSIG/(1.d0 + YXC3/YX**3)
         endif
     enddo
 
     sv_reac = sv_reac*YDS*1.d-3*4.38d-4*sqrt(E_NBI_keV/A_NBI)*2.d0*A_NBI/n_e*Te_keV*sqrt(Te_keV)/YLE
  
     end function sv_reac
-    
+
 !---------------------------------------------------------------------
     double precision function svddnp1(E_NBI_keV, A_NBI, n_e, &
         Te_keV, Ti_keV, yAi, calc_fus)
@@ -750,5 +837,89 @@ contains
     endif
 
     end function svdtbp
+
+!---------------------------------------------------------------------
+    double precision function sv_reacf(yEBEAM, yABEAM, yTEJ, yTIJ, calc_fus, yX, Acoeff, Bcoeff)
+!---------------------------------------------------------------------
+! Polevoi = 24-JUN-2025
+! svdtbpf = <SigmaV*Ffast dV3> [10^-19/s] intensity of fusion reaction of
+! fast d/t with energy (EBEAM*yX**2) keV and Maxwellian t/d    with Ti per reaction:
+!    d/t(Ebeam) + t/d(Ti) -> He4(3524 keV) + n(14072 keV)
+!---------------------------------------------------------------------
+!    Crossection by    H-S. Bosch, G.M. Hale
+!        NF, V 32 , N 4, (1992) p 611-631
+!    Corrected for finit ion temperature according to:
+!        D.R.Mikkelsen, NF V 29, N 7, (1989) p 1113-1115
+!    + second derivative is addedd S' -> S'+ 2 E S''(16-JUL-13)
+!    Use:
+!          Sn14[10^-19/m^3/s] = svdtbpf*Ndeut[10^19m-3]
+!
+!    input:    yEBEAM[energy,keV],yABEAM[mass, a.u.],
+!        yTEJ[Te,keV],yTIJ[Ti,keV],
+!        (V = Sqrt(2 T/M)  , Vfast = (2 EBEAM/ABEAM)*yX
+!---------------------------------------------------------------------
+
+    double precision, parameter :: YTMIN=1.d-3
+    integer, intent(in) :: calc_fus
+    double precision, intent(in) :: yEBEAM, yABEAM, yTEJ, yTIJ, yX
+    double precision, intent(in) :: Acoeff(5), Bcoeff(4)
+
+    sv_reacf = sv_reaction_x(yEBEAM, yABEAM, yTIJ, calc_fus, yX, Acoeff, Bcoeff, YTMIN)
+    sv_reacf = sv_reacf * 4.38d-7 * sqrt(yEBEAM/yABEAM)
+
+    end function sv_reacf
+
+!---------------------------------------------------------------------
+    double precision function svddnp1f(yEBEAM, yABEAM, yTEJ, yTIJ, calc_fus, yX)
+
+    double precision, parameter :: Acoeff(5) = (/5.3701d4, 3.3027d2, -0.12706d0, 2.9327d-5, -2.5151d-9/), &
+        Bcoeff(4) = (/0.d0, 0.d0, 0.d0, 0.d0/) 
+
+    integer, intent(in) :: calc_fus
+    double precision, intent(in) :: yEBEAM, yABEAM, yTEJ, yTIJ, yX
+
+    if (yABEAM /= 2.d0) then
+        svddnp1f = 0.d0
+    else
+        svddnp1f = sv_reacf(yEBEAM, yABEAM, yTEJ, yTIJ, calc_fus, yX, Acoeff, Bcoeff)
+    endif
+
+    end function svddnp1f
+
+!---------------------------------------------------------------------
+    double precision function svddnp2f(yEBEAM, yABEAM, yTEJ, yTIJ, calc_fus, yX)
+
+    double precision, parameter :: Acoeff(5) = (/5.5576d4, 2.1054d2, -3.2638d-2, 1.4987d-6, 1.1881d-10/), &
+        Bcoeff(4) = (/0.d0, 0.d0, 0.d0, 0.d0/)
+
+    integer, intent(in) :: calc_fus
+    double precision, intent(in) :: yEBEAM, yABEAM, yTEJ, yTIJ, yX
+
+    if (yABEAM /= 2.d0) then
+        svddnp2f = 0.d0
+    else
+        svddnp2f = sv_reacf(yEBEAM, yABEAM, yTEJ, yTIJ, calc_fus, yX, Acoeff, Bcoeff)
+    endif
+
+    end function svddnp2f
+
+!---------------------------------------------------------------------
+    double precision function svdtbpf(yEBEAM, yABEAM, yTEJ, yTIJ, calc_fus, yX)
+
+    double precision, parameter :: Acoeff(5) = (/6.927d4, 7.454d8, 2.05d6, 5.2002d4, 0.d0/), &
+        Bcoeff(4) = (/63.8d0, -0.995d0, 6.981d-5, 1.728d-4/)
+
+    integer, intent(in) :: calc_fus
+    double precision, intent(in) :: yEBEAM, yABEAM, yTEJ, yTIJ, yX
+
+    if (yABEAM < 2.d0 .or. yABEAM > 3.d0) then
+        svdtbpf = 0.d0
+    else
+        svdtbpf = sv_reacf(yEBEAM, yABEAM, yTEJ, yTIJ, calc_fus, yX, Acoeff, Bcoeff)
+    endif
+
+    end function svdtbpf
+
+!---------------------------------------------------------------------
 
 end module cross_sections

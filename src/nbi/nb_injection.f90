@@ -194,7 +194,7 @@ contains
         endif
 
         call NBIONR(EBEAM, ABEAM, RTOR, NA1, TAU, NNCL, NNWM, n_nbi, CBM3, cx_cold, &
-            CBMI2, dn_rho, JSRREC, YEXTARR)
+            CBMI2, calc_fus, dn_rho, JSRREC, YEXTARR)
     endif
 
 ! Conversion to rough mesh keeping the intagrals
