@@ -202,9 +202,9 @@ contains
 
 ! Conversion to rough mesh keeping the intagrals
     if (dn_rho /= 1)    then
-        call smooth_int(PBCX , dn_rho, ROC, NA1)
-        call smooth_int(SBICX, dn_rho, ROC, NA1)
-        call smooth_int(SRSTH, dn_rho, ROC, NA1)
+        call smooth_int(PBCX , dn_rho, ROC, NA1) ! August 2026
+        call smooth_int(SBICX, dn_rho, ROC, NA1) ! August 2026
+        call smooth_int(SRSTH, dn_rho, ROC, NA1) ! August 2026
         call smooth_int(NIBM , dn_rho, ROC, NA1)
         call smooth_int(PIBM , dn_rho, ROC, NA1)
         call smooth_int(PEBM , dn_rho, ROC, NA1)
