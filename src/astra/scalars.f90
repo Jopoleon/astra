@@ -100,6 +100,10 @@ contains
 !------------------------------------------
     subroutine scalars_init()
 
+! PHIEDG starts at +Inf as a "not set by the model" marker.  1./0. is an
+! Intel extension; gfortran rejects it at compile time.
+    use, intrinsic :: ieee_arithmetic, only: ieee_value, ieee_positive_inf
+
     constValues     = 1.
     varValues       = 0.
     varxValues      = 0.
@@ -207,7 +211,7 @@ contains
     NITOT  = 0
     NSTEPS = 0
     GVAC   = 4.5
-    PHIEDG = 1./0.
+    PHIEDG = ieee_value(1.d0, ieee_positive_inf)
 
     TEQ = -1.e3
     LEQ = -1

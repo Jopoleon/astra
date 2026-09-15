@@ -61,10 +61,11 @@ contains
 ! Try fixed-point first
     fitted = .false.
     do prec=width-1, 1, -1
-       write(tmp, '(F0.'//trim(adjustl(itoa(prec)))//')') x
+        if (abs(x) >= 10.0d0**width) exit
+        write(tmp, '(F0.'//trim(adjustl(itoa(prec)))//')') x
 ! If rounding produced zero but x is not zero → reject fixed format
-       read(tmp, *) r
-       if (r == 0.0d0 .and. x /= 0.0d0) cycle
+        read(tmp, *) r
+        if (r == 0.0d0 .and. x /= 0.0d0) cycle
 ! Remove leading zero for numbers between -1 and 1
         if (abs(x) < 1.0d0 .and. x /= 0.0d0) then
             if (tmp(1:1) == '0') tmp = tmp(2:)   ! remove leading 0

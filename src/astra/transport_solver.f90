@@ -136,10 +136,10 @@ contains
         bc_val(1) = GH_new(Ngridb) + theta * ( -gsydt(Ngridb) + g_v(Ngridb)*vta(Ngridb-1)*fxi(Ngridb-1) )
         if (bctype == 4) bc_val(1) = bc_val(1) + theta*g_v(Ngridb)*bc_values(2)*unit_coeff*dx
         bc_val(2) = CC(Ngridb)
-        bc_val(3) = GH_old(Ngridb)*y_old(Ngridb) + gsydt(Ngridb) + (1. - theta) * &
+        bc_val(3) = GH_old(Ngridb)*y_old(Ngridb) + gsdt(Ngridb) + (1. - theta) * &
             (  gsydt(Ngridb)*y_old(Ngridb) - g_v(Ngridb) * &
             (vta(Ngridb-1) * (fxi(Ngridb-1)*y_old(Ngridb) - gxi(Ngridb-1)*y_old(Ngridb-1)) )  )
-        if (bctype == 2) bc_val(3) = bc_val(3) + g_v(Ngridb)*bc_values(1)*unit_coeff*dx
+        if (bctype == 2) bc_val(3) = bc_val(3) - g_v(Ngridb)*bc_values(1)*unit_coeff*dx
     END SELECT
 
 ! Tridiagonal solver

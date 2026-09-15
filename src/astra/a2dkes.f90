@@ -1,11 +1,14 @@
 MODULE a2dkes
 
+  use a2vmec, only: f_vmec_settings
+  use read_input, only: AWD
+
   IMPLICIT NONE
 
-  CHARACTER(LEN=256) :: DKES_FILE_PATH
-  CHARACTER(LEN=256) :: VMEC_HEADER_FILE
-  CHARACTER(LEN=256) :: B00_PROFILE_FILE
-  CHARACTER(LEN=256) :: MINOR_RADIUS_W7AS_FILE
+  CHARACTER(LEN=812) :: DKES_FILE_PATH = ''
+  CHARACTER(LEN=812) :: VMEC_HEADER_FILE = ''
+  CHARACTER(LEN=812) :: B00_PROFILE_FILE = ''
+  CHARACTER(LEN=812) :: MINOR_RADIUS_W7AS_FILE = '', WORKING_PATTO
   NAMELIST /ASTRA_DKES_INTERFACE/ DKES_FILE_PATH, VMEC_HEADER_FILE, B00_PROFILE_FILE, MINOR_RADIUS_W7AS_FILE
 
   INTEGER, SAVE :: nr
@@ -75,6 +78,71 @@ MODULE a2dkes
 
 CONTAINS
 
+!---------------------------------------------------------------------
+  SUBROUTINE dkes_io_files
+!---------------------------------------------------------------------
+! Resolve the four DKES input paths from VMEC_ROOT and DATA_DIR in the settings
+! file, the way a2vmec resolves the VMEC ones, so both halves of a run share
+! one working directory.
+
+    INTEGER :: nml_unit, io_stat
+    CHARACTER(LEN=512) :: f_stella_nml
+    CHARACTER(LEN=512) :: VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE, &
+        VMEC_METRIC_FILE, VMEC_IN_TEMPLATE, BOOZER_INFILE, TRUE_SURF_FILE, &
+        VMEC_ROOT, TEMPLATE_DIR, DATA_DIR
+
+    NAMELIST / vmec_to_astra_inputs / VMEC_WOUT_FILE, BOOZER_FILE, VMEC_IN_FILE, &
+        VMEC_METRIC_FILE, VMEC_IN_TEMPLATE, BOOZER_INFILE, TRUE_SURF_FILE, VMEC_ROOT, &
+        TEMPLATE_DIR, DATA_DIR
+
+! Fallback, matching a2vmec and what install.sh -stell seeds.
+    VMEC_ROOT = 'vmec_io'
+    DATA_DIR  = 'dat'
+
+    f_stella_nml = TRIM(AWD) // '/' // TRIM(f_vmec_settings)
+    WRITE(*, *) 'Reading namelist ', TRIM(f_stella_nml)
+    OPEN(newunit=nml_unit, file=TRIM(f_stella_nml), status='old', action='read', &
+        delim='apostrophe', iostat=io_stat)
+    IF (io_stat /= 0) THEN
+      WRITE(*, *) "ERROR: cannot open '", TRIM(f_stella_nml), "'"
+      STOP 'Namelist Read Error'
+    END IF
+
+! A DKES table can be used with an equilibrium this run did not compute, so
+! the VMEC group is allowed to be absent.  The defaults above then stand.
+    READ(nml_unit, NML=vmec_to_astra_inputs, iostat=io_stat)
+    IF (io_stat /= 0) WRITE(*, *) &
+        'WARNING: no &VMEC_TO_ASTRA_INPUTS group, DKES paths default to vmec_io/dat'
+
+    REWIND(nml_unit)
+    READ(nml_unit, NML=ASTRA_DKES_INTERFACE, iostat=io_stat)
+    IF (io_stat /= 0) THEN
+      WRITE(*, *) "ERROR: no &ASTRA_DKES_INTERFACE group in '", TRIM(f_stella_nml), "'"
+      STOP 'Namelist Read Error'
+    END IF
+    CLOSE(nml_unit)
+
+! Defaults have to be applied before the prefix, while the names are still empty.
+    IF (LEN_TRIM(VMEC_HEADER_FILE) == 0) THEN
+      VMEC_HEADER_FILE = 'vmec_header_data.txt'
+      WRITE(*, *) 'WARNING: VMEC_HEADER_FILE not in namelist, using ', TRIM(VMEC_HEADER_FILE)
+    END IF
+    IF (LEN_TRIM(MINOR_RADIUS_W7AS_FILE) == 0) THEN
+      MINOR_RADIUS_W7AS_FILE = 'minorradiusW7AS.txt'
+      WRITE(*, *) 'WARNING: MINOR_RADIUS_W7AS_FILE not in namelist, using ', &
+          TRIM(MINOR_RADIUS_W7AS_FILE)
+    END IF
+
+    WORKING_PATTO = TRIM(AWD) // '/' // TRIM(VMEC_ROOT) // '/' // TRIM(DATA_DIR) // '/'
+    WRITE(*, *) 'DKES input directory ', TRIM(WORKING_PATTO)
+
+    DKES_FILE_PATH         = TRIM(WORKING_PATTO) // TRIM(DKES_FILE_PATH)
+    VMEC_HEADER_FILE       = TRIM(WORKING_PATTO) // TRIM(VMEC_HEADER_FILE)
+    B00_PROFILE_FILE       = TRIM(WORKING_PATTO) // TRIM(B00_PROFILE_FILE)
+    MINOR_RADIUS_W7AS_FILE = TRIM(WORKING_PATTO) // TRIM(MINOR_RADIUS_W7AS_FILE)
+
+  END SUBROUTINE dkes_io_files
+
   ! Main subroutine called by ASTRA at each time step
   SUBROUTINE CALCULATE_FLUXES_FOR_ASTRA(NA1,BTOR,ZMJ,AMJ, &
        TE,TI,NE,NI,CAR10,CAR11,CAR12,NI_GRAD, &
@@ -123,8 +191,7 @@ CONTAINS
 
     REAL(KIND=8) :: b00_physical_scaled, dr_over_drtilde_loc, b2_norm_interpolated
 
-    INTEGER :: nml_unit, io_stat
-    CHARACTER(LEN=256) :: namelist_file
+    INTEGER :: io_stat
 
     INTEGER :: N_spec, ispec
     REAL(KIND=8) :: Z_spec(5), A_spec(5)
@@ -135,13 +202,8 @@ CONTAINS
     ROC=RHO(NA1)
      
     IF (.NOT. dkes_is_initialized) THEN
-      namelist_file = 'vmec_io/stell_files.nml'
-      OPEN(newunit=nml_unit, file=TRIM(namelist_file), status='old', action='read', iostat=io_stat)
-      IF (io_stat /= 0) STOP 'Namelist Read Error'
-      READ(nml_unit, NML=ASTRA_DKES_INTERFACE, iostat=io_stat)
-      CLOSE(nml_unit)
-      IF (io_stat /= 0) STOP 'Namelist Read Error'
-      
+      CALL dkes_io_files()
+
       CALL read_minorradiusW7AS(er_status)
       IF (er_status /= 0) STOP 'Minor r W7AS error'
 
@@ -1973,11 +2035,6 @@ CONTAINS
 
     status_out = 0
 
-    IF (LEN_TRIM(MINOR_RADIUS_W7AS_FILE) == 0) THEN
-      MINOR_RADIUS_W7AS_FILE = 'dat/minorradiusW7AS.txt'
-      WRITE(*,*) 'WARNING: MINOR_RADIUS_W7AS_FILE not in namelist'
-    END IF
-    
     INQUIRE(file=TRIM(MINOR_RADIUS_W7AS_FILE), exist=file_exists_flag)
     IF (.NOT. file_exists_flag) THEN
       WRITE(*,*) "ERROR: '", TRIM(MINOR_RADIUS_W7AS_FILE), "' not found"
@@ -2012,11 +2069,6 @@ CONTAINS
 
     status_out = 0
 
-    IF (LEN_TRIM(VMEC_HEADER_FILE) == 0) THEN
-      VMEC_HEADER_FILE = 'dat/vmec_header_data.txt'
-      WRITE(*,*) 'WARNING: VMEC_HEADER_FILE not in namelist'
-    END IF
-    
     INQUIRE(file=TRIM(VMEC_HEADER_FILE), exist=file_exists_flag)
     IF (.NOT. file_exists_flag) THEN
       WRITE(*,*) "ERROR: '", TRIM(VMEC_HEADER_FILE), "' not found"
