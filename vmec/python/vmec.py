@@ -11,6 +11,75 @@ GP2 = 2.*np.pi
 qinterp = lambda x, y, xi: interp1d(x, y, kind='quadratic', fill_value='extrapolate')(xi)
 
 
+def axis_displacement(rmnc, rmns, zmnc, zmns, xn, nphi=1000):
+    """
+    Calculate the toroidally averaged displacement of the 3D VMEC
+    magnetic axis from its toroidally averaged (2D) axis.
+
+    Parameters
+    ----------
+    rmnc : array_like
+        Cosine Fourier coefficients of R on the magnetic axis.
+    rmns : array_like
+        Sine Fourier coefficients of R on the magnetic axis.
+    zmnc : array_like
+        Cosine Fourier coefficients of Z on the magnetic axis.
+    zmns : array_like
+        Sine Fourier coefficients of Z on the magnetic axis.
+    xn : array_like
+        Toroidal mode numbers corresponding to the Fourier coefficients.
+    nphi : int, optional
+        Number of toroidal points used for the numerical average.
+
+    Returns
+    -------
+    d_ax : float
+        Toroidally averaged axis displacement.
+    """
+
+    rmnc = np.asarray(rmnc)
+    rmns = np.asarray(rmns)
+    zmnc = np.asarray(zmnc)
+    zmns = np.asarray(zmns)
+    xn = np.asarray(xn)
+
+    # Toroidal angle
+    phi = np.linspace(0.0, 2.0 * np.pi, nphi, endpoint=False)
+
+    # 3D magnetic axis
+    Rax_3D = np.zeros(nphi)
+    Zax_3D = np.zeros(nphi)
+
+    for i, ph in enumerate(phi):
+        angle = xn * ph
+
+        Rax_3D[i] = np.sum(
+            rmnc * np.cos(angle) +
+            rmns * np.sin(angle)
+        )
+
+        Zax_3D[i] = np.sum(
+            zmnc * np.cos(angle) +
+            zmns * np.sin(angle)
+        )
+
+    # Toroidally averaged (2D) axis
+    Rax_2D = np.mean(Rax_3D)
+    Zax_2D = np.mean(Zax_3D)
+
+    # Displacement at each toroidal angle
+    d = np.sqrt(
+        (Rax_3D - Rax_2D)**2 +
+        (Zax_3D - Zax_2D)**2
+    )
+
+    # Toroidal average
+    d_ax = np.mean(d)
+
+    return d_ax
+
+
+
 def h2f(var_half):
     """Half to full grid"""
     var_full = np.empty_like(var_half)
@@ -138,11 +207,20 @@ class VMEC():
         self.lmns = np.zeros_like(cv['lmns'].data.astype(np.float64))
         self.bmnc = np.zeros_like(cv['bmnc'].data.astype(np.float64))
         self.gmnc = np.zeros_like(cv['gmnc'].data.astype(np.float64))
+        if self.lasym:
+            self.lmnc = np.zeros_like(cv['lmnc'].data.astype(np.float64))
+            self.gmns = np.zeros_like(cv['gmns'].data.astype(np.float64))
+            self.bmns = np.zeros_like(cv['bmns'].data.astype(np.float64))
         for mn in range(self.mnmax):
             self.lmns[:, mn] = h2fmn(cv['lmns'][:, mn], int(self.xm[mn]), self.ns)
+            if self.lasym:
+                self.lmnc[:, mn] = h2fmn(cv['lmnc'][:, mn], int(self.xm[mn]), self.ns)
         for mn in range(self.mnmax_nyq):
             self.bmnc[:, mn] = h2fmn(cv['bmnc'][:, mn], int(self.xm_nyq[mn]), self.ns)
             self.gmnc[:, mn] = h2fmn(cv['gmnc'][:, mn], int(self.xm_nyq[mn]), self.ns)
+            if self.lasym:
+                self.gmns[:, mn] = h2fmn(cv['gmns'][:, mn], int(self.xm_nyq[mn]), self.ns)
+                self.bmns[:, mn] = h2fmn(cv['bmns'][:, mn], int(self.xm_nyq[mn]), self.ns)
 
 
     def calcMoms(self, nu=64, nv=128):
@@ -268,7 +346,7 @@ class VMEC():
 
         self.GVAC = np.abs(self.rbtor)  # RB-t edge, coincides with F_b = F0 for tokamak
         if self.lasym:
-            self.BTOR = self.GVAC/self.rbtor      # tokamak
+            self.BTOR = self.GVAC/self.rmajor      # tokamak
         else:
             self.BTOR = np.abs(self.b0) # stellarator
 
