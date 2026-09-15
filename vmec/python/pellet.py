@@ -98,29 +98,166 @@ def PointGeom(vmc, s, theta, zeta):
     grad_t = np.cross(e_z, e_s) / sqrtg
     grad_z = np.cross(e_s, e_t) / sqrtg
 
-    return dict(R=R, Z=Z, modB=abs(modB), grad_s=grad_s, grad_t=grad_t, grad_z=grad_z)
+    return dict(R=R, Z=Z, modB=abs(modB), grad_s=grad_s, grad_t=grad_t, grad_z=grad_z,
+                e_t=e_t, e_z=e_z)
+
+
+def lcfs_points(vmc, theta, zeta):
+    """Cartesian points on the LCFS for flat arrays theta, zeta of equal length."""
+
+    a = np.outer(theta, vmc.xm) + np.outer(zeta, vmc.xn)
+    R = np.cos(a) @ vmc.rmnc[-1]
+    Z = np.sin(a) @ vmc.zmns[-1]
+    if vmc.lasym:
+        R = R + np.sin(a) @ vmc.rmns[-1]
+        Z = Z + np.cos(a) @ vmc.zmnc[-1]
+    return np.stack((R*np.cos(zeta), R*np.sin(zeta), Z), axis=1)
+
+
+def lcfs_entry(vmc, p0, vdir, tol=1e-10, nseed=12):
+    """Where a straight injector line first crosses the LCFS.
+
+Returns (theta, zeta, t) for the crossing nearest the injector in front of it,
+t being the distance from p0 along the unit direction, or None when the line
+misses the plasma. p0 and vdir are Cartesian [m] in the VMEC frame,
+x = R cos(zeta), y = R sin(zeta), z = Z.
+
+Solves X_LCFS(theta, zeta) - p0 - t*vhat = 0 by Newton from the best points of
+a coarse surface scan; the Jacobian columns are the covariant e_theta, e_zeta
+and -vhat."""
+
+    vhat = np.asarray(vdir, dtype=float)
+    vmag = np.linalg.norm(vhat)
+    if vmag <= 0.:
+        return None
+    vhat = vhat/vmag
+    p0 = np.asarray(p0, dtype=float)
+
+    nth, nze = 64, 32*max(int(vmc.nfp), 1) + 32
+    th, ze = np.meshgrid(np.linspace(0., 2.*np.pi, nth, endpoint=False),
+                         np.linspace(0., 2.*np.pi, nze, endpoint=False), indexing='ij')
+    th, ze = th.ravel(), ze.ravel()
+
+    rel = lcfs_points(vmc, th, ze) - p0
+    tt = rel @ vhat
+    dperp = np.linalg.norm(rel - np.outer(tt, vhat), axis=1)
+
+    ahead = np.flatnonzero(tt > 0.)
+    if ahead.size == 0:
+        return None
+    seeds = ahead[np.argsort(dperp[ahead])[:nseed]]
+
+    hits = []
+    for k in seeds:
+        y = np.array([th[k], ze[k], tt[k]])
+        for _ in range(40):
+            g = PointGeom(vmc, 1., y[0], y[1])
+            res = np.array([g['R']*np.cos(y[1]), g['R']*np.sin(y[1]), g['Z']]) \
+                  - p0 - y[2]*vhat
+            if np.linalg.norm(res) < tol:
+                break
+            jac = np.column_stack((g['e_t'], g['e_z'], -vhat))
+            try:
+                step = np.linalg.solve(jac, -res)
+            except np.linalg.LinAlgError:
+                break
+            # Damped, so a seed on the far side of the surface cannot jump the
+            # solver into a different crossing.
+            big = np.max(np.abs(step[:2]))
+            if big > 0.3:
+                step = step*(0.3/big)
+            y = y + step
+        else:
+            continue
+        if np.all(np.isfinite(y)) and y[2] > 0. and np.linalg.norm(res) < 1e-8:
+            hits.append(y)
+
+    if not hits:
+        return None
+    theta, zeta, t = min(hits, key=lambda h: h[2])
+    return theta % (2.*np.pi), zeta % (2.*np.pi), t
 
 
 class PELLET():
 
 
     def __init__(self):
-        pass
+        self.pars_d = {}
 
 
     def parse_pellet_nml(self, f_setting):
-        """Parse the &PELLET_CHORD namelist group."""
+        """Read the pellet launch from &pellet_ngs in the exp namelist.
 
-        logger.info(f'Parse PELLET_CHORD namelit group in {f_setting}')
+Two ways to aim a pellet. Either pel_theta and pel_phi place it on the LCFS and
+pel_ux/pel_uy/pel_uz give the direction, of any length; or pel_x0/y0/z0 and
+pel_x1/y1/z1 give two Cartesian points [m] on the injector axis, the start and
+the tip, and the line through them is the path. The point pair sets both the
+direction and the entry point, so it overrides the other four keys. Velocity is
+pel_vp times the normalised direction."""
+
+        logger.info('Parse &pellet_ngs group in %s', f_setting)
+        self.pars_d = {}
         try:
-            self.pars_d = parse_fortran_namelist(f_setting, "PELLET_CHORD")
-            for key in ('vx', 'vy', 'vz', 'launch_theta', 'launch_phi'):
-                self.pars_d[key] = np.atleast_1d(self.pars_d[key])
+            nml_d = parse_fortran_namelist(f_setting, "pellet_ngs")
+            npel = int(nml_d.get('npel', 0))
         except FileNotFoundError:
-            return {}
+            logger.info('No chord: %s does not exist', f_setting)
+            return
+        except Exception as err:
+            # This parser reads a subset of namelist syntax, and vmec2bin writes
+            # the metric after this call: a value it cannot read costs the chord,
+            # not the run.
+            logger.warning('No chord: cannot read &pellet_ngs in %s: %s', f_setting, err)
+            return
+
+        # Without a chord file ABLATION_NGS runs 1D and never reads one.
+        stem = nml_d.get('pel_chord_file', '')
+        if npel <= 0 or not stem:
+            logger.info('No chord: npel = %d, pel_chord_file = %r', npel, stem)
+            return
+
+        # A key shorter than npel leaves the rest at zero, as Fortran does, so
+        # pad rather than broadcast; chords() skips what stays unset.
+        pars_d = {}
+        for key, out in (('pel_theta', 'launch_theta'), ('pel_phi', 'launch_phi'),
+                         ('pel_vp', 'vp'), ('pel_ux', 'ux'), ('pel_uy', 'uy'),
+                         ('pel_uz', 'uz'),
+                         ('pel_x0', 'x0'), ('pel_y0', 'y0'), ('pel_z0', 'z0'),
+                         ('pel_x1', 'x1'), ('pel_y1', 'y1'), ('pel_z1', 'z1')):
+            val = np.atleast_1d(nml_d.get(key, 0.)).astype(float)
+            pars_d[out] = np.pad(val, (0, max(0, npel - val.size)))[:npel]
+
+        p0 = np.stack([pars_d.pop(k) for k in ('x0', 'y0', 'z0')])
+        seg = np.stack([pars_d.pop(k) for k in ('x1', 'y1', 'z1')]) - p0
+        seglen = np.linalg.norm(seg, axis=0)
+        has_p0 = seglen > 0.
+        with np.errstate(invalid='ignore', divide='ignore'):
+            for j, key in enumerate(('ux', 'uy', 'uz')):
+                pars_d[key] = np.where(has_p0, seg[j]/np.where(has_p0, seglen, 1.),
+                                       pars_d[key])
+
+        unorm = np.sqrt(pars_d['ux']**2 + pars_d['uy']**2 + pars_d['uz']**2)
+        if not np.any(unorm > 0.):
+            logger.info('No chord: neither pel_ux/uy/uz nor a pel_x0/x1 point pair'
+                        ' in &pellet_ngs')
+            return
+        with np.errstate(invalid='ignore', divide='ignore'):
+            for key in ('ux', 'uy', 'uz'):
+                pars_d[key] = np.where(unorm > 0., pars_d[key]/unorm, 0.)
+
+        for vkey, ukey in (('vx', 'ux'), ('vy', 'uy'), ('vz', 'uz')):
+            pars_d[vkey] = pars_d['vp'] * pars_d[ukey]
+        pars_d['p0'] = p0
+        pars_d['has_p0'] = has_p0
+        pars_d['npel'] = npel
+        pars_d['chord_out'] = stem
+        self.pars_d = pars_d
 
 
     def chords(self, vmc):
+
+        if not self.pars_d:
+            return
 
         try:
             npel = self.pars_d.get('npel') or len(self.pars_d['vx'])
@@ -128,8 +265,19 @@ class PELLET():
             base, ext = os.path.splitext(stem)
             vel = np.stack((self.pars_d['vx'], self.pars_d['vy'], self.pars_d['vz']))
             for jpel in range(npel):
-                self.theta = self.pars_d['launch_theta'][jpel]
-                self.phi   = self.pars_d['launch_phi'  ][jpel]
+                if np.linalg.norm(vel[:, jpel]) <= 0.:
+                    logger.info('Pellet %d has no speed or no direction, no chord', jpel + 1)
+                    continue
+                if self.pars_d['has_p0'][jpel]:
+                    hit = lcfs_entry(vmc, self.pars_d['p0'][:, jpel], vel[:, jpel])
+                    if hit is None:
+                        logger.info('Pellet %d: the injector line misses the plasma,'
+                                    ' no chord', jpel + 1)
+                        continue
+                    self.theta, self.phi, _ = hit
+                else:
+                    self.theta = self.pars_d['launch_theta'][jpel]
+                    self.phi   = self.pars_d['launch_phi'  ][jpel]
                 self.v_xyz = vel[:, jpel]
                 self.compute_chord(vmc)
                 self.meta_d = dict(pellet=jpel + 1, launch_theta=self.theta, launch_phi=self.phi,
