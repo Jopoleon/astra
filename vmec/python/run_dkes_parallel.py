@@ -9,12 +9,19 @@
 
 import os, sys, shutil, subprocess, glob, re
 import numpy as np
+from scipy.io import netcdf
 from scipy.io import netcdf_file
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from types import SimpleNamespace
-from vmec import VMEC
+import time
 
 stellopt_path = os.environ.get("STELLOPT_HOME")
+py_stel_path = os.path.join(stellopt_path, "pySTEL")
+sys.path.insert(0,py_stel_path)
+
+from libstell.vmec import VMEC
+from scipy.interpolate import interp1d
+
 os.environ["OMP_NUM_THREADS"] = "1"
 
 MAX_WORKERS = min(96, os.cpu_count())
@@ -26,11 +33,16 @@ MAX_WORKERS = min(96, os.cpu_count())
 DKES_EXEC = os.path.join(stellopt_path, 'DKES', 'Release', 'xdkes')
 
 #MAX_COUPLING_ORDER = 4   # user defined, change this to increase or decrease accuracy at low collisionality (higher = more computational time). 
-MAX_COUPLING_ORDER = int(sys.argv[1]) if len(sys.argv) > 1 else 4
+MAX_COUPLING_ORDER = int(sys.argv[1]) if len(sys.argv) > 1 else 2
+Lalpha = int(sys.argv[2]) if len(sys.argv) > 2 else 100
+#print(MAX_COUPLING_ORDER,Lalpha)
+#exit()
+
 
 INPUT_FILE = "input.VMECoutput"
 BOOZ_FILE = "boozmn_VMECoutput.nc"
-BOOZ_INFILE = "inboozer.in"
+BOOZ_FILE_EXT = "VMECoutput"
+BOOZ_INFILE = "inboozer.dat"
 VMEC_FILE = "wout_VMECoutput.nc"
 VMEC_HEADER_FILE = "vmec_header_data_VMECoutput.txt"
 with open(VMEC_HEADER_FILE, "r") as f:
@@ -39,7 +51,7 @@ with open(VMEC_HEADER_FILE, "r") as f:
     psi_sign=np.sign(float(third_line))  # this is the one that the dkes interface is reading
 print(third_line,psi_sign)
 
-OUTPUT_NAME = "dkesout.VMECoutput"
+OUTPUT_NAME = "dkesout.VMECoutputnc"
 
 #SURFACES = [13, 25, 37 ,49 ,61 ,73 ,85] #list(range(1, 11))
 with open(BOOZ_INFILE, "r") as f:
@@ -65,17 +77,17 @@ with open(filename, "r") as f:
     TRUE_SURFACES = [int(x) for x in f.read().split()]
 
 print("TRUE_SURFACES =", TRUE_SURFACES)
-
+#exit()
 #TRUE_SURFACES = [ 2 , 5 , 13 , 25 , 41 , 60  ,85]   # this should come from user via file true_surfaces.txt where 
 # a nr of surfaces and then a list of numbers should be given, boozer should have been run with ALL VMEC surfaces list, e.g. 
 # 7
 # 2 5 13 25 41 60 85
 
-BOOZER_SURFACES = [s-1  for s in TRUE_SURFACES]
+#BOOZER_SURFACES = TRUE_SURFACES
+BOOZER_SURFACES = [x - 1 for x in TRUE_SURFACES]
 
 nr_surfaces = len(TRUE_SURFACES)
-BOOZER_SURFACES2 = list(range(nr_surfaces))
-
+BOOZER_SURFACES2 = BOOZER_SURFACES #list(range(nr_surfaces))
 
 SURFACES=TRUE_SURFACES
 
@@ -85,33 +97,30 @@ print(BOOZER_SURFACES2)
 CMUL_BLOCK_SIZE = 8   # number of (cmul,efield) rows per block
 
 #read wout file
-vmc = VMEC()
-vmc.readWout(VMEC_FILE)
-vmc.calcFtrap()
+data_VMEC = VMEC()
+data_VMEC.read_wout(VMEC_FILE)
 
 #open vmec and booz files
-with netcdf_file(VMEC_FILE, 'r', mmap=False) as f:
-    vmec = f.variables
-with netcdf_file(BOOZ_FILE, 'r', mmap=False) as f:
-    boox = f.variables
+vmec = netcdf.netcdf_file(VMEC_FILE, 'r')
+booz = netcdf.netcdf_file(BOOZ_FILE, 'r')
 
 # VMEC quantities
-Aminor = vmec["Aminor_p"].data  # this should be minor radius w7as ?
-ns = vmec["ns"].data
+Aminor = vmec.variables["Aminor_p"].data.copy()  # this should be minor radius w7as ?
+ns = vmec.variables["ns"].data.copy()
 print(ns)
 #exit()
-iotas = vmec["iotaf"].data
-iotah = vmec["iotas"].data
-phip = vmec["phi"].data
-phip_p = vmec["phipf"].data
-phip2 = booz["phi_b"].data
-phip2_p = booz["phip_b"].data
-ib = booz["iota_b"].data
-iota_boozer=ib
-iff = vmec["iotaf"].data
+iotas = vmec.variables["iotaf"].data.copy()
+iotah = vmec.variables["iotas"].data.copy()
+phip = vmec.variables["phi"].data.copy()
+phip_p = vmec.variables["phipf"].data.copy()
+phip2 = booz.variables["phi_b"].data.copy()
+phip2_p = booz.variables["phip_b"].data.copy()
+ib = booz.variables["iota_b"].data.copy()
+iota_boozer=ib.copy()
+iff = vmec.variables["iotaf"].data.copy()
 # need to find s_1 boozer and s_end boozer now!
-s_vmec=phip/phip[-1]
-s_boozer = s_vmec
+s_vmec=phip.copy()/phip[-1]
+s_boozer = s_vmec.copy()
 s_boozer[0]=0
 s_boozer[1:] = 0.5 * (s_vmec[1:] + s_vmec[:-1])
 
@@ -120,7 +129,7 @@ s_boozer[1:] = 0.5 * (s_vmec[1:] + s_vmec[:-1])
 
 
 
-print(booz.keys(),s_vmec,s_boozer)
+print(booz.variables.keys(),s_vmec,s_boozer)
 #exit()
 # Note that boozer quantities are on the VMEC HALF GRID!, SO Boozer surface N is actually half surface between VMEC surface N and N+1, 
 # for example boozer surface 2 is half grid between VMEC surface 2 and 3
@@ -130,41 +139,41 @@ print(phip/phip[-1],phip2/phip[-1],ib,iff, phip_p,phip2_p,iotas,iotah)
 
 psia=phip[-1]/2./np.pi
 psia_vmec=phip[-1]/2./np.pi
-psiab=booz["phip_b"].data
+psiab=booz.variables["phip_b"].data.copy()
 # Boozer mode numbers
-print(booz.keys())
+print(booz.variables.keys())
 #exit()
-xm = vmec["xm"].data
-xn = vmec["xn"].data
+xm = vmec.variables["xm"].data.copy()
+xn = vmec.variables["xn"].data.copy()
 #print(xm,xn)
 # Fourier amplitudes of |B|
-bmnc = booz["bmnc_b"].data
-rmnc = booz["rmnc_b"].data
+bmnc = booz.variables["bmnc_b"].data.copy()
+rmnc = booz.variables["rmnc_b"].data.copy()
 
 # find index of m=0/1, n=0
-xmb = booz["ixm_b"].data
-xnb = booz["ixn_b"].data
-nsb = booz["ns_b"].data
+xmb = booz.variables["ixm_b"].data.copy()
+xnb = booz.variables["ixn_b"].data.copy()
+nsb = booz.variables["ns_b"].data.copy()
 idx00 = np.where((xmb == 0) & (xnb == 0))[0][0]
 idx01 = np.where((xmb == 1) & (xnb == 0))[0][0]
 
 # choose flux surface index (example: last surface)
 
-ib = booz["iota_b"].data
+ib = booz.variables["iota_b"].data.copy()
 print(bmnc[:,idx00])
 print(bmnc[:,idx01])
-#exit()
 B00_boozer = bmnc[BOOZER_SURFACES2, idx00]
 R00_boozer = rmnc[BOOZER_SURFACES2, idx00]
 B10_boozer = bmnc[BOOZER_SURFACES2, idx01]
-print(B00_boozer,R00_boozer, B10_boozer,B10_boozer/B00_boozer,ib,nsb,len(ib),bmnc[:,idx00])
+print(BOOZER_SURFACES2,B00_boozer,R00_boozer, B10_boozer,B10_boozer/B00_boozer,ib,nsb,len(ib),bmnc[:,idx00])
+#exit()
 
 # note that bmnc and rmnc are length 98 instead of 99 like bvco since the last surface is skipped, 
 # the first surface has rubbish reszults!!!!
 
 #exit()
-rmnc = vmec["rmnc"].data
-zmns = vmec["zmns"].data
+rmnc = vmec.variables["rmnc"].data.copy()
+zmns = vmec.variables["zmns"].data.copy()
 
 s = -1
 
@@ -201,9 +210,9 @@ print(Aminor,psia,B00_boozer,a_booz,psia,psiab[-1])
 
 #exit()
 
-bmnc = booz["bmnc_b"][:]   # shape (ns, nmodes)
-xn   = booz["ixn_b"][:]
-xm   = booz["ixm_b"][:]
+bmnc = booz.variables["bmnc_b"][:].copy()   # shape (ns, nmodes)
+xn   = booz.variables["ixn_b"][:].copy()
+xm   = booz.variables["ixm_b"][:].copy()
 ns   = bmnc.shape[0]
 print(ns)
 #exit()
@@ -231,20 +240,24 @@ def flux_surface_average(B):
 # Compute <B^2> and beta for all surfaces
 B2_avg_all = np.zeros(ns)
 beta_num_all = np.zeros(ns)
-for s in range(len(BOOZER_SURFACES2)):
+for s in BOOZER_SURFACES2:
     B_surf = reconstruct_B(s)
     B2_avg_all[s] = 1.0/flux_surface_average(B_surf)
     
 print(B2_avg_all[BOOZER_SURFACES2]/B00_boozer**2)
 print(B10_boozer/B00_boozer)
 
-bmnc = booz["bmnc_b"][:]   # shape (ns, nmodes)
-xn   = booz["ixn_b"][:]
-xm   = booz["ixm_b"][:]
-phi_booz   = booz["phi_b"][:]
+bmnc = booz.variables["bmnc_b"][:].copy()   # shape (ns, nmodes)
+xn   = booz.variables["ixn_b"][:].copy()
+xm   = booz.variables["ixm_b"][:].copy()
+phi_booz   = booz.variables["phi_b"][:].copy()
 ns   = bmnc.shape[0]
 
-B2_avg = B2_avg_all[BOOZER_SURFACES2]
+B2_avg = B2_avg_all[BOOZER_SURFACES2].copy()
+
+#close files
+vmec.close()
+booz.close()
 
 rrr=a_booz*np.sqrt(s_boozer[BOOZER_SURFACES])
 epsilonz=rrr/R00_boozer
@@ -254,6 +267,49 @@ print(B10_boozer/B00_boozer,np.abs(B10_boozer/epsilonz/B00_boozer),rrr,R00_booze
 #Erresonance = 0.5*rrr/a_booz*iota_boozer[BOOZER_SURFACES]
 Erresonance = np.abs(iota_boozer[BOOZER_SURFACES]/R00_boozer*rrr*B00_boozer**2.) # another B00 to make up for the normalization later on
 print(Erresonance)
+#exit()
+
+print(np.abs(B10_boozer/B00_boozer*R00_boozer/rrr))
+#exit()
+
+def calc_ftrap(dat):
+		"""Compute trapped fraction f_t according to 
+		
+		H. Maassberg; C. D. Beidler; Y. Turkin; Phys. Plasmas 16, 072504 (2009) equation 12
+
+		Returns
+		----------
+		ftrap : ndarray
+		"""
+		import numpy as np
+		nu = 64
+		nv = 128
+		nlambda = 256
+		theta = np.linspace(0,2*np.pi,nu).reshape((nu,1))
+		zeta   = np.linspace(0,2*np.pi,nv).reshape((nv,1))
+		b = dat.cfunct(theta,zeta,dat.bmnc,dat.xm_nyq,dat.xn_nyq)
+		g = dat.cfunct(theta,zeta,dat.gmnc,dat.xm_nyq,dat.xn_nyq)
+		if dat.iasym==1:
+			b  = b + dat.sfunct(theta,zeta,dat.bmns,dat.xm_nyq,dat.xn_nyq)
+			g  = g + dat.sfunct(theta,zeta,dat.gmns,dat.xm_nyq,dat.xn_nyq)
+		# Calc <B^2/Bmax^2>
+		vp = np.sum(g,axis=(1,2))
+		b2 = np.sum(b**2 * g,axis=(1,2)) / vp   #<B^2>
+		bmax2 = b2/np.max(b**2, axis=(1,2))  #<bmax^2> = <B^2/Bmax^2>
+		bmax = b.copy()
+		for u in range(len(vp)):    
+			bmax[u,:,:] = b[u,:,:]/np.max(b, axis=(1,2))[u]   #bmax = B/Bmax (3D array)
+		#introduce normalised global magnetic moment lambda
+		dlambda = 1/(nlambda - 1)   #stepwidth in lambda
+		integrand = np.empty((nlambda, len(vp)))    #lambda/<sqrt(1-lambda*bmax)>
+		for mn in range(nlambda):
+			integrand[mn,:] = mn*dlambda   #lambda
+			integrand[mn,:] = integrand[mn,:]*vp/np.sum(np.sqrt(1-mn*dlambda*bmax)*g,axis=(1,2))
+		integral = np.sum(integrand,axis=0)*dlambda   #integral over lambda
+		ftrap = 1 - 0.75*bmax2*integral
+		return ftrap
+
+ftrapped = calc_ftrap(data_VMEC)
 
 COMBINED_OUTPUT = "dkes_combined.dat"
 
@@ -565,12 +621,15 @@ def extract_surface_quantities2(vmec_file, booz_file, s, resultoo):
     Aminor = a_booz  # this should be minor radius w7as ?
     iotas = iota_boozer
 
-    idx = SURFACES[s] - 1
+    idx = SURFACES[s] 
 
         # normalized toroidal flux
     s_norm = s_boozer[idx] #idx / (ns - 1)
+#    s = idx
+    print(' ')
+    print(' ',s,idx)
     print(s_norm)
-    
+
         # minor radius
     r = Aminor * np.sqrt(s_norm)
 
@@ -591,7 +650,7 @@ def extract_surface_quantities2(vmec_file, booz_file, s, resultoo):
     Bsq = Bsq_avg/B00real**2. #bdotb[idx]/bmnc[idx, 0]**2.
 
         # ftrap
-    ftrap = vmc.ftrap[idx]
+    ftrap = ftrapped[idx]
 	
         # Kn
     epsilonz=r/R00
@@ -601,6 +660,7 @@ def extract_surface_quantities2(vmec_file, booz_file, s, resultoo):
     kn = np.abs(b10/epsilonz)
 
         # geometric data
+#    time.sleep(15) 
     geom=Geomdat()
     		
     geom.R00 = R00
@@ -611,8 +671,8 @@ def extract_surface_quantities2(vmec_file, booz_file, s, resultoo):
 
     drtildedr=2.*psia/(B00real*Aminor**2)
     print(drtildedr)
-    conv11=-1.0*B00real**2*np.abs(drtildedr)**0.
-    conv13=-np.sqrt(Bsq)*B00real**1*np.sqrt(np.abs(drtildedr))**0.   # whats the correct sign here? not sure.
+    conv11=-1.0*B00real**2*np.abs(drtildedr)**2.
+    conv13=-np.sqrt(Bsq)*B00real**1*np.sqrt(np.abs(drtildedr))**2.   # whats the correct sign here? not sure.
     conv33=-Bsq    # L33 is now PERFECT at the first CMUL
 	
     dkdata = get_dkdata(resultoo,conv11) # get dkes data
@@ -620,7 +680,6 @@ def extract_surface_quantities2(vmec_file, booz_file, s, resultoo):
     	
         # calculate the fits
     eps_eff, g11_ft, g11_er, ex_er, efield_u = dkes_fitd11_single(geom, dkdata)	
-
 
 
 
@@ -648,48 +707,6 @@ def extract_surface_quantities2(vmec_file, booz_file, s, resultoo):
     return results
 
 
-def get_psip_for_dkes(surface):
-
-    # VMEC quantities
-    Aminor = a_booz  # this should be minor radius w7as ?
-
-    psia=psia_vmec
-    print(Aminor,psia)
-#    exit()
-
-    s = SURFACES.index(surface)
-    idx = SURFACES[s]-1
-
-        # normalized toroidal flux
-    s_norm = s_boozer[idx]
-    print(s_norm)
-    
-        # minor radius
-    r = Aminor * np.sqrt(s_norm)
-
-        # major radius
-    R00 = R00_boozer[s]
-
-        # B00
-    B00 = B00_boozer[s]
-    B00real = B00
-    B00 = 1.0
-
-        # rotational transform
-    iota = iotas[idx]
-
-    Bsq_avg = B2_avg[s]
-
-        # flux surface average of B^2/B0^2
-    Bsq = Bsq_avg/B00real**2. #bdotb[idx]/bmnc[idx, 0]**2.
-
-#    psippo = r * 2 * psia / Aminor**2 * 1.0 /B00real
-    psippo = r  * B00real
-    
-
-    return psippo, B00real
-
-
 def run_dkes_surface_block(surface, ic, block_file):
 
     run_dir = f"surface_{surface:02d}_{ic:02d}"
@@ -715,24 +732,19 @@ def run_dkes_surface_block(surface, ic, block_file):
     legend_file = os.path.join(run_dir, "legendrnm.txt")
 
     # Example: define Lalpha, M, N here (or compute them from your data)
-    Lalpha = 300   # pitch-angle grid
-    M_values = [44]  # example M modes
-    N_values = [44]  # example N modes
 
+    with open(INPUT_FILE, "w") as f:
+     f.write("&dkes_indata\n")
+     f.write(f"  lalpha={Lalpha}\n")
+     f.write("/\n")
     with open(legend_file, "w") as f:
        f.write(f"{Lalpha:6d}\n")
        
-    psip_file = os.path.join(run_dir, "psi_def_for_dkes.txt")
 
-    # get psip in new definition
     surface_index = TRUE_SURFACES.index(surface)  # 0-based index    
-    psippo, B00real = get_psip_for_dkes(surface)   
     actual_js = TRUE_SURFACES[surface_index]
 
-    with open(psip_file, "w") as f:
-       f.write(f"{psippo:7.4f} {B00real:7.4f} {MAX_COUPLING_ORDER}  {actual_js}\n")
-
-
+    print(actual_js)
     log_file = os.path.join(run_dir, "dkes.log")
 
 
@@ -744,7 +756,7 @@ def run_dkes_surface_block(surface, ic, block_file):
     
     with open(log_file, "w") as log:
         subprocess.run(
-            [DKES_EXEC, INPUT_FILE, str(surface_index+2)],
+            [DKES_EXEC, BOOZ_FILE_EXT, str(actual_js),"nc",str(MAX_COUPLING_ORDER),str(Lalpha)],
             cwd=run_dir,
             stdout=log,
             stderr=log
@@ -854,9 +866,6 @@ def main(run_dkes):
     # ---------------------------------
      for s in results:
         results[s].sort(key=lambda x: x[0])
-
-#    eqdata = extract_surface_quantities(VMEC_FILE, BOOZ_FILE, SURFACES)
-
 
     else:
      results = collect_existing_dkes_outputs()
