@@ -17,22 +17,12 @@
 
 &ASTRA_DKES_INTERFACE
   ! Inputs for the Fortran astra_dkes_interface_module
-  DKES_FILE_PATH = '/home/IPP-HGW/emf/vmecdata/FLM_1000_1000_1000_1000_-0227_-0227.01.040_ref274.dk'
+  DKES_FILE_PATH = 'dkes_combined.dat'
   VMEC_HEADER_FILE = 'vmec_header_data_VMECoutput.txt'
   B00_PROFILE_FILE = 'b00_profile_boozer_VMECoutput.txt' 
   MINOR_RADIUS_W7AS_FILE = 'minorradiusW7AS_VMECoutput.txt'
 /
 
-! NGS pellet straight-line chord (read by VMEC2ASTRA.py -> ABLATION_NGS 3D mode).
-! When this group is present with a velocity, each equilibrium update traces the
-! real straight line fired from (LAUNCH_THETA,LAUNCH_PHI) on the LCFS along
-! (VX,VY,VZ) [m/s] through the 3D metric, and writes CHORD_OUT = rho(l)/modB(l).
-! Remove the group (or its VX) for runs that do not inject a pellet.
-&PELLET_CHORD
-  LAUNCH_THETA = 0.7426990816987241
-  LAUNCH_PHI   = 0.39269908169872414
-  VX           = -528.65329
-  VY           = -218.97536
-  VZ           = -820.107
-  CHORD_OUT    = 'pellet_chord.dat'
-/
+! The NGS pellet launch is in &pellet_ngs in exp/nml/<exp>: pel_vp,
+! pel_chord_file, and either pel_theta/pel_phi with pel_ux/pel_uy/pel_uz or
+! the two injector points pel_x0/pel_y0/pel_z0 and pel_x1/pel_y1/pel_z1.

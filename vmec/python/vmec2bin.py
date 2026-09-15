@@ -2,7 +2,7 @@ import sys, os, argparse, logging, time
 import numpy as np
 from scipy.interpolate import interp1d
 from pellet import PELLET
-from vmec import VMEC, f2h
+from vmec import VMEC, f2h, axis_displacement
 from parse_fortran_nml import parse_fortran_namelist
 from pathlib import Path
 
@@ -151,10 +151,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "astra_nrad", type=int, nargs="?", default=91, help="Number of ASTRA radial grid points")
+    parser.add_argument(
+        "exp_nml", nargs="?", default=None,
+        help="exp namelist file, relative to the run directory; its "
+             "&pellet_ngs group holds the pellet launch")
 
     args = parser.parse_args()
 
     NA1 = args.astra_nrad
+    exp_nml = f'{awd}/{args.exp_nml}' if args.exp_nml else None
 
     namelist_path = f'{awd}/vmec/templates/stell_files.nml'
     nl_vmec = parse_fortran_namelist(namelist_path, 'VMEC_TO_ASTRA_INPUTS')
@@ -176,10 +181,17 @@ if __name__ == '__main__':
     vmc.write_header(header_file)
     vmc.write_amin(radius_out)
 
-# NGS pellet: if a launch is configured, trace the straight-line chord for
-# this (updated) equilibrium and refresh the table the Fortran model reads.
-    pel = PELLET()
-    pel.parse_pellet_nml(namelist_path)
-    pel.chords(vmc)
+    if vmc.lasym:
+        d_ax = axis_displacement(vmc.rmnc, vmc.rmns, vmc.zmnc, vmc.zmns, vmc.xn)
+        print(f'\nd_ax : {d_ax}\n')
+
+# NGS pellet: trace the straight-line chord for this equilibrium and refresh
+# the table ABLATION_NGS reads.  The launch is in the exp namelist.
+    if exp_nml is None:
+        logger.info('No exp namelist given, no pellet chord traced')
+    else:
+        pel = PELLET()
+        pel.parse_pellet_nml(exp_nml)
+        pel.chords(vmc)
 
     vmec2astra(vmc, NA1, metric_file, b00_output_file)
