@@ -25,6 +25,8 @@ contains
 !---------------------------------------------------------------------
     function fmt_smart(x, width) result(out)
 
+    use, intrinsic :: ieee_arithmetic, only: ieee_is_finite, ieee_is_nan
+
     double precision, intent(in) :: x
     integer, intent(in) :: width
     character(len=width) :: out
@@ -36,6 +38,18 @@ contains
     if (width < 4) then
         write(*, '(A)') "fmt_smart: width too small"
         ERROR STOP
+    endif
+
+! Handle IEEE non-finite values before logarithmic formatting
+    if (.not. ieee_is_finite(x)) then
+        if (ieee_is_nan(x)) then
+            out = 'NaN'
+        else if (x > 0.0d0) then
+            out = 'Inf'
+        else
+            out = '-Inf'
+        endif
+        return
     endif
 
 ! Handle very small numbers
