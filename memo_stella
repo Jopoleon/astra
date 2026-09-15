@@ -3,9 +3,7 @@ cp /shares/departments/AUG/users/git/vmec_coupling/exp/steltest* exp/
 
 exe/as_exe -m transpstell -v steltest -s 0. -e 4. -tpause 0. -nodes 8
 
-STELLOPT used subdirs:
+Required STELLOPT subdirs:
     BOOZ_XFORM
     VMEC2000
-    pySTEL
     DKES
-    LIBSTELL

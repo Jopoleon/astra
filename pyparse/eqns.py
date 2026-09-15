@@ -98,9 +98,24 @@ def bnd_init(var, var_defined, parse):
 
     assign_type = parse.assign_d[var]
     bnd_txt = ''
+    varb_list = config.bnd_d[var]
+    bnd_count = count_in(varb_list, var_defined)
+# A prescribed flux (bctype=2) leaves the value at ND1 as an unknown for the
+# solver.  Re-applying the initial-profile expression there would overwrite it,
+# invisibly except to the flux expression below, which reads it a few lines
+# later: QNNB would then see a frozen prescribed number instead of the solved
+# edge value.  Nodes beyond ND1 are outside the solved domain and must still
+# come from the profile, so only the boundary node itself is spared.
+    is_flux = (bnd_count == 1) and (varb_list[0] not in var_defined)
+    jlo = 'ND1+1' if is_flux else 'ND1'
+
     rho_bnd, tbeg, tend = rhoBC(assign_type)
     if rho_bnd is None:
         bnd_txt += 'ND1 = NA1\n'
+        if var in var_defined:
+            bnd_txt += 'do j=%s, NA1\n' %jlo
+            bnd_txt += pa.apptmp(var, parse)
+            bnd_txt += 'enddo\n'
     else:
         l2f = pa.LINE2FOR(rho_bnd, parse)
         bnd_txt += 'tbeg_eq = %12.4e\n' %tbeg
@@ -108,19 +123,19 @@ def bnd_init(var, var_defined, parse):
         bnd_txt += 'if (TIME >= tbeg_eq .and. TIME <= tend_eq) then\n'
         bnd_txt += 'ND1 = NODE(%s)\n' %l2f.strip()
         if var in var_defined:
-            bnd_txt += 'do j=ND1, NA1\n'
+            bnd_txt += 'do j=%s, NA1\n' %jlo
             bnd_txt += pa.apptmp(var, parse)
             bnd_txt += 'enddo\n'
         bnd_txt += 'else if (TIME < tbeg_eq) then\n'
         bnd_txt += 'ND1 = 1\n'
         if var in var_defined:
-            bnd_txt += 'do j=ND1, NA1\n'
+            bnd_txt += 'do j=%s, NA1\n' %jlo
             bnd_txt += pa.apptmp(var, parse)
             bnd_txt += 'enddo\n'
         bnd_txt += 'else if (TIME > tend_eq) then\n'
         bnd_txt += 'ND1 = 1\n'
         if var in var_defined:
-            bnd_txt += 'do j=ND1, NA1\n'
+            bnd_txt += 'do j=%s, NA1\n' %jlo
             bnd_txt += '%s(j) = %sO(j)\n' %(var, var)
             bnd_txt += 'enddo\n'
         bnd_txt += 'endif\n'
@@ -128,8 +143,7 @@ def bnd_init(var, var_defined, parse):
         varx = 'VTORX'
     else:
         varx = '%sX' %var
-    varb_list = config.bnd_d[var]
-    bnd_count = count_in(varb_list, var_defined)
+
     if bnd_count == 0: # No boundary condition is set
         if var not in var_defined:
             logger.warning('Neither BC nor external condition for %s is given', var)
@@ -138,8 +152,13 @@ def bnd_init(var, var_defined, parse):
         bnd_txt += '%sO(ND1: NA1) = %s(ND1: NA1)\n' %(var, var)
         bnd_txt += 'bctype = 1\n'
     elif bnd_count == 1:
+# Neither branch below is inside a loop, so their expressions are generated
+# subscripted at ND1 rather than at the loop variable.  Left at the default,
+# LINE2FOR would write NE(J), and J holds whatever the loop above left in it --
+# NA1+1, one past the last grid point -- or nothing at all when there was no
+# loop.  Both branches are affected: QNB = 10*NE and NEB = 0.5*NEX alike.
         if varb_list[0] in var_defined: # NEB
-            bnd_txt += '%s(ND1) = %s' %(var, pa.LINE2FOR(parse.right_hand_d[varb_list[0]], parse) )
+            bnd_txt += '%s(ND1) = %s' %(var, pa.LINE2FOR(parse.right_hand_d[varb_list[0]], parse, idx='ND1') )
             bnd_txt += '%sO(ND1: NA1) = %s(ND1: NA1)\n' %(var, var)
             bnd_txt += 'bctype = 1\n'
             if var not in var_defined: # Linear extrapolation towards rho=1
@@ -149,9 +168,9 @@ def bnd_init(var, var_defined, parse):
         else: # QNB
             flux = varb_list[1][:-1]     # flux is 'QN', 'QE',...
             if varb_list[1] in var_defined:
-                bnd_txt += '%s(ND1) = %s' %(flux, pa.LINE2FOR(parse.right_hand_d[varb_list[1]], parse) )
+                bnd_txt += '%s(ND1) = %s' %(flux, pa.LINE2FOR(parse.right_hand_d[varb_list[1]], parse, idx='ND1') )
             else:
-                bnd_txt += '%s(ND1) = %s(ND1)*(%s)\n' %(flux, var, pa.LINE2FOR(parse.right_hand_d[varb_list[2]], parse).strip() )
+                bnd_txt += '%s(ND1) = %s(ND1)*(%s)\n' %(flux, var, pa.LINE2FOR(parse.right_hand_d[varb_list[2]], parse, idx='ND1').strip() )
             bnd_txt += 'bc_values(1) = %s(ND1)\n' %flux
             bnd_txt += 'bctype = 2\n'
     else:
@@ -194,9 +213,10 @@ def cuasn(parse, bc='CU', neq=1):
         cuas_txt += const_text.CUAS.cu1
         cuas_txt += pa.apptmp('CU', parse)
         cuas_txt += const_text.CUAS.cu2
-        if 'MV' not in parse.var_defined:
-            cuas_txt += 'MU(J) = YJ_CU*MU(J)\n'
-            cuas_txt += 'FP(J) = YJ_CU*(FP(J) - FP(1)) + FP(1)\n'
+# FPMUOFCU has already normalised CU, MU and FP against IPL, using a YJ_CU
+# that is local to it.  Re-applying the MU and FP halves here reads a name
+# that was never in scope: FP(1) survives, because the expression is an
+# identity at j=1, and FP(2:) and MU pick up whatever is in that stack slot.
 
     cuas_txt += const_text.CUAS.cu_mu
 
@@ -483,7 +503,7 @@ call CUOFP()
 
     if 'UEXT' in parse.var_defined or 'LEXT' in parse.var_defined:
         cueq_txt += '!DFPDR = ((FP(NA1) - FP(NA) - (FV(NA1) - FV(NA)))/HRO)\n'
-        cueq_txt += 'if ((PEQL == 6 .or. IPEQL == 9 .or. IPEQL == 7) then\n'
+        cueq_txt += 'if (IPEQL == 6 .or. IPEQL == 9 .or. IPEQL == 7) then\n'
         cueq_txt += 'IPL = (FP(NA1) - FP(NA))/HRO*1./(mu0/SG11(NA)) - MV(NA)*SRHO(NA)*GP2*BTOR*1./(mu0/SG11(NA))\n'
         cueq_txt += 'else\n'
         cueq_txt += 'IPL = 5.*IPOL(NA1)*G22(NA)*((FP(NA1) - FP(NA))/HRO)/GP2/RTOR\n'

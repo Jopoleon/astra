@@ -153,14 +153,17 @@ def equ_prepare(f_equ):
     return equ_lines
 
 
-def indiciseVar(var, parse):
-    '''Add proper FORTRAN index to ASTRA arrays'''
+def indiciseVar(var, parse, idx='J'):
+    '''Add proper FORTRAN index to ASTRA arrays
+
+    "idx" is the Fortran array index label, default is "J"
+    '''
 
     out = var      # including case var in ('+', '-', '*', '/', '(', ')', ',')
     if var in parse.profiles + parse.arr_nam2:
-        out = '%s(J)' %var
+        out = '%s(%s)' %(var, idx)
     elif var in parse.fnc_list:
-        out = '%sR(RHO(J))' %var
+        out = '%sR(RHO(%s))' %(var, idx)
     else:
         tmp1 = var[:-1]
         if var.endswith('B'):
@@ -325,17 +328,17 @@ def getInnermostBracket(pieces):
     return jleft, jright
 
 
-def recParse(pieces_in, parse):
+def recParse(pieces_in, parse, idx='J'):
     '''Recursive fortranisation from innermost to outermost ()'''
 
     pieces = pieces_in
     while '(' in pieces:
-        pieces = ParseBracket(pieces, parse)
-    out_str = parse_pieces(pieces, parse)
+        pieces = ParseBracket(pieces, parse, idx=idx)
+    out_str = parse_pieces(pieces, parse, idx=idx)
     return out_str
 
 
-def ParseBracket(pieces_in, parse):
+def ParseBracket(pieces_in, parse, idx='J'):
     '''Fortranise innermost () block'''
 
     jleft, jright = getInnermostBracket(pieces_in)
@@ -343,12 +346,12 @@ def ParseBracket(pieces_in, parse):
         jleft -= 2
         jright += 1
     pieces_within = pieces_in[jleft-1: jright+1] # function, '(', ..., ')'
-    str_mid = parse_pieces(pieces_within, parse)
+    str_mid = parse_pieces(pieces_within, parse, idx=idx)
     pieces_out = pieces_in[:jleft-1] + [str_mid] + pieces_in[jright+1:]
     return pieces_out
 
 
-def parse_pieces(pieces, parse):
+def parse_pieces(pieces, parse, idx='J'):
     '''Fortranise a block [func, '(', ..., ')'] into a string'''
 
     line_out = ''
@@ -367,7 +370,7 @@ def parse_pieces(pieces, parse):
                     out = '%s(%s, ROC)'  %(var, tmp3)
             elif block_right == 'j':
                 if var3 in parse.profiles:
-                    out = '%s(%s, j*HRO)'  %(var, block_left)
+                    out = '%s(%s, %s*HRO)'  %(var, block_left, idx)
             else:
                 if block_left in parse.profiles:
                     out = '%s(%s, %s*ROC)'  %(var, block_left, block_right)
@@ -385,7 +388,7 @@ def parse_pieces(pieces, parse):
                 if jpos < n_pieces-1 and pieces[jpos+1] == '(':
                     out = var
                 else:
-                    out = indiciseVar(var, parse)
+                    out = indiciseVar(var, parse, idx=idx)
             else:
                 out = 'RADIAL(%s, RFA(%s))' %(var, block_left)
                 jpos += jbra + 1
@@ -394,7 +397,7 @@ def parse_pieces(pieces, parse):
                 if jpos < n_pieces-1 and pieces[jpos+1] == '(':
                     out = var
                 else:
-                    out = indiciseVar(var, parse)
+                    out = indiciseVar(var, parse, idx=idx)
             else:
                 out = '%sR(%s)' %(var, block_left)
                 jpos += jbra
@@ -407,7 +410,7 @@ def parse_pieces(pieces, parse):
             if jpos < n_pieces-1 and pieces[jpos+1] == '(':
                 out = var
             else:
-                out = indiciseVar(var, parse)
+                out = indiciseVar(var, parse, idx=idx)
 
         line_out += out
         jpos += 1
@@ -496,8 +499,9 @@ def parse_sbr(line):
     return sbr_dic
 
 
-def LINE2FOR(equStatement, parse):
-# Convert an "equ" statement in Fortran format
+def LINE2FOR(equStatement, parse, idx='J'):
+# Convert an "equ" statement in Fortran format.  `idx` subscripts radial
+# arrays; pass the node name for a statement that is not inside a loop.
 
     if not equStatement:
         return ''
@@ -525,7 +529,7 @@ def LINE2FOR(equStatement, parse):
         return equStatement
 
     try:
-        line_out = recParse(pieces, parse)
+        line_out = recParse(pieces, parse, idx=idx)
     except:
         logger.error('Error in EQU-file line:')
         logger.error(equStatement)

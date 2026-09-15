@@ -7,11 +7,7 @@ implicit none
 private
 public :: write_vmec_indata, vmec_profile_index, nvmec_prof_max
 
-! LIBSTELL sizes the aux arrays at ndatafmax = 101 (vparams.f) and recovers
-! the point count as minloc(*_aux_s(2:), dim=1) against a -1 sentinel fill,
-! so a full 101 points would leave no sentinel and VMEC would STOP.
 integer, parameter :: nvmec_prof_max = 100
-
 ! spline_cubic / Akima both need at least 4 knots (profile_functions.f
 ! aborts with 'check s-grid for ...' below that).
 integer, parameter :: nvmec_prof_min = 4

@@ -24,7 +24,10 @@ def astra_parser(f_equ, f_exp):
     for jvar, var in enumerate(exp.profiles['label']):
         if len(exp.profiles['rho']) > 500:
             logger.warning('X array %s has nrho > 500', var)
-    nr_x_max = max([len(x) for x in exp.profiles['rho']])
+    # A case that prescribes everything in the model has no experimental
+    # profiles, and max() raises on an empty list.  read_input allocates
+    # XAXES/DATAX zero-length, so 0 is the right size.
+    nr_x_max = max((len(x) for x in exp.profiles['rho']), default=0)
     print("NRX_MAX", nr_x_max)
     return code_gen.CODE_GEN(equ, nr_x_max)
 
