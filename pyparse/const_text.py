@@ -735,7 +735,7 @@ if (ITFBP /= 0 .and. ITFBE < TIME) then
 if (IBCPSI > 0) then
 !case implicit
 if (ITFBP < 0 .and. IBCPSI >= 2) then
-bc_type = 3
+bctype = 3
 bc_values(1) = 0.0
 bc_values(2) = 0.0
 bc_values(3) = HRO + PSPLEX*ROC
@@ -781,7 +781,7 @@ if (ITFBP /= 0 .and. ITFBE < TIME) then
 if (IBCPSI > 0) then
 ! case implicit
 if (ITFBP < 0 .and. IBCPSI >= 2) then
-bc_type = 3
+bctype = 3
 bc_values(1) = 0.0
 bc_values(2) = 0.0
 bc_values(3) = HRO + PSPLEX*ROC
@@ -791,7 +791,7 @@ bc_type_for_fp = 3
 endif
 endif
 if (IBCPSI <= 1) then
-bc_type = 1
+bctype = 1
 bc_values(1) = 0.0
 bc_values(2) = 0.0
 bc_type_for_fp = 2
