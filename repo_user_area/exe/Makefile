@@ -50,10 +50,15 @@ $(TMP_DIR)/eqns_inc.f90
 PLATFORM := $(shell $(AWD)/get_platform)
 
 ifdef X11
+# Debian-family multiarch puts libX11 in /usr/lib/<arch>-linux-gnu, RPM-family
+# in /usr/lib64.  Probe for the library instead of naming a directory per
+# architecture: this covers aarch64, which used to need its own branch, and
+# x86_64 Debian, which had none and so failed to link the GUI build.
+   MULTIARCH_LIBDIR = /usr/lib/$(shell uname -m)-linux-gnu
    ifeq ($(PLATFORM),darwin)
       X11_LIB = -L/opt/X11/lib -lX11
-   else ifeq ($(shell uname -m),aarch64)
-      X11_LIB = -L/usr/lib/aarch64-linux-gnu -lX11
+   else ifneq ($(wildcard $(MULTIARCH_LIBDIR)/libX11.so*),)
+      X11_LIB = -L$(MULTIARCH_LIBDIR) -lX11
    else
       X11_LIB = -L/usr/lib64 -lX11
    endif
@@ -75,7 +80,6 @@ $(AOBJ_DIR)/machine_config.o \
 $(AOBJ_DIR)/scrunch2d.o \
 $(AOBJ_DIR)/stella_module.o \
 $(AOBJ_DIR)/vmec_indata.o \
-$(AOBJ_DIR)/a2dkes.o \
 $(AOBJ_DIR)/parse_utils.o \
 $(AOBJ_DIR)/emeq.o \
 $(AOBJ_DIR)/scalars.o \
@@ -91,6 +95,7 @@ $(AOBJ_DIR)/flux_avg_imp.o \
 $(AOBJ_DIR)/json_rw.o \
 $(AOBJ_DIR)/gs_solver.o \
 $(AOBJ_DIR)/a2vmec.o \
+$(AOBJ_DIR)/a2dkes.o \
 $(AOBJ_DIR)/metrics.o \
 $(AOBJ_DIR)/auxiliary.o \
 $(AOBJ_DIR)/set_x_data.o
