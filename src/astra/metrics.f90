@@ -210,17 +210,6 @@ contains
         allocate(equil_now%coord_sys%darea(nrho_surf, nthe_surf))
         allocate(equil_now%coord_sys%jphi(nrho_surf, nthe_surf))
 
-! Zero what this branch allocates but never fills.  rmin, psirz, gradvcell,
-! darea and jphi are assigned only on the JSON-reader path in json_rw.f90, so
-! on the VMEC path json_rw writes whatever the allocator handed back: junk that
-! changed with the binary layout, and gradvcell once happened to alias bpcell
-! exactly.  Nothing consumes them yet, but they reach the CDF.
-        equil_now%coord_sys%position%rmin  = 0.d0
-        equil_now%coord_sys%position%psirz = 0.d0
-        equil_now%coord_sys%gradvcell      = 0.d0
-        equil_now%coord_sys%darea          = 0.d0
-        equil_now%coord_sys%jphi           = 0.d0
-
         if (.not. associated(equil_now%profiles_1d%rho_tor_norm)) then
             allocate(equil_now%profiles_1d%areat  (nrho_surf))
             allocate(equil_now%profiles_1d%bdb0   (nrho_surf))
