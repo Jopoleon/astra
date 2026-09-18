@@ -121,10 +121,11 @@ contains
     logical :: nml_exists
     integer :: ios
     character(len=132) :: log_file
+    character(len=256) :: workflow
     double precision :: tbeg_nml
 
     namelist / astra_log / equ_file, exp_file, task, machine, &
-        debug, tbeg_nml, tend_nml, tpause_nml, resize, restart, flightsim
+        debug, tbeg_nml, tend_nml, tpause_nml, resize, restart, flightsim, workflow
 
     tbeg_nml   = -1.
     tend_nml   = -1.
@@ -223,7 +224,7 @@ contains
 
     integer, parameter :: len_data_max=250000, n_unit=201, nbnd_max=400000
 
-    logical :: skip_read=.false.
+    logical :: skip_read=.false., eof_1d
     integer :: jarr, INTYPE, jtype, nr_exp, ntim, ntim1, IVAR, NGR
     integer :: jj, j, j0, j1, IERR, ier_tab, jexar, jex1, jpos
     integer :: n_words, i_filter_glob, len_profs_data, len_profs_time, len_scalars
@@ -235,7 +236,8 @@ contains
     character(len=6) :: VNAM, VNAMO, VNAMU, VNAMX, VTIM, VDAT, VERR, keyword
     character(len=31) :: rholbl
     character(len=132) :: strarray(20), STRI, lin_upper, &
-        err_msg, err_format, err_msg_exp, file_exp, ufile_in, uname, uvar
+        err_msg, err_msg_exp, file_exp, ufile_in, uname, uvar
+    character(len=300) :: err_format
 
 !---------------------------------------------------------------------
     call markloc('read_exp')
@@ -258,10 +260,17 @@ contains
         ERROR STOP
     endif
 
+    eof_1d = .false.
     set_dims_1d: do
         read(n_unit, '(A132)', iostat=ios) STRI
-        if (ios > 0) EXIT set_dims_1d
-        err_format  =  err_msg_exp // '".  Format error in group ' // TRIM(STRI)
+! An exp that states only scalars has no group header, so end of file is a
+! normal exit here.  eof_1d tells the 2D pass below that STRI holds no group
+! header and that nothing is left to read.
+        if (ios /= 0) then
+            eof_1d = .true.
+            EXIT set_dims_1d
+        endif
+        err_format  =  TRIM(err_msg_exp) // '".  Format error in group ' // TRIM(STRI)
         lin_upper = to_upper(STRI)
         if (lin_upper(1: 1) == '!') CYCLE set_dims_1d
         if (lin_upper(1: 3) == 'END') EXIT set_dims_1d
@@ -331,8 +340,12 @@ contains
 
     len_profs_data = 0
     len_profs_time = 0
-    skip_read = .true.
+! Only if set_dims_1d stopped on a group header, which the 2D pass owns.
+    skip_read = .not. eof_1d
     set_dims_2d: do
+! Reading past the endfile record is an error, not a second EOF, so this pass
+! has to be skipped rather than left to find the end itself.
+        if (eof_1d) EXIT set_dims_2d
         if (skip_read) then
             skip_read = .false.
         else
@@ -427,7 +440,7 @@ contains
     open(n_unit, FILE=TRIM(file_exp), iostat=ios)
     read(n_unit, '(A132/)', iostat=ios) exp_header
     if (ios /= 0) then
-        write(*, '(A)')err_msg_exp // 'in header'
+        write(*, '(A)') TRIM(err_msg_exp) // 'in header'
         ERROR STOP
     endif
 
@@ -445,7 +458,7 @@ contains
             raw_profiles%n_groups = NGR
             return
         endif
-        err_format  =  err_msg_exp // '".  Format error in group ' // TRIM(STRI)
+        err_format =  TRIM(err_msg_exp) // '".  Format error in group ' // TRIM(STRI)
         lin_upper = to_upper(STRI)
         if (lin_upper(1: 1) == '!') CYCLE parse_exp_1d
         if (lin_upper(1: 3) == 'END') then
@@ -508,7 +521,7 @@ contains
 
 ! A special treatment required for time independent NA1, TSTART, TEND
         if (VNAM == 'NA1   ' .or. VNAM == 'TSTART' .or. VNAM == 'TEND  ') then
-            err_msg = err_msg_exp // '"' // TRIM(VNAM) // '"'
+            err_msg = TRIM(err_msg_exp) // '"' // TRIM(VNAM) // '"'
             if (ier_tab /= 0 ) then
                 write(*, '(A)') TRIM(err_msg) // ': tabulation not allowed in this type of input'
                 ERROR STOP
@@ -535,7 +548,7 @@ contains
 
 ! U-file name duplicated:
         if (VNAM == VNAMU) then
-            write(*, '(A)') err_msg_exp // 'ambiguous ' // TRIM(VNAM) // ' definition'
+            write(*, '(A)') TRIM(err_msg_exp) // 'ambiguous ' // TRIM(VNAM) // ' definition'
             ERROR STOP
         endif
 
@@ -545,7 +558,7 @@ contains
 
 ! Tabulation encountered in the old-standard line:
             if (ier_tab /= 0 ) then
-                write(*, '(A)') err_msg_exp // '"' // TRIM(VNAM) // &
+                write(*, '(A)') TRIM(err_msg_exp) // '"' // TRIM(VNAM) // &
                     '": tabulation not allowed in this type of input'
                 ERROR STOP
             endif
@@ -581,7 +594,7 @@ contains
         else  ! ":" found in the input string "STRI", pointer to U-file
 
             if (VNAM == VNAMO) then
-                write(*, '(A)') err_msg_exp // 'ambiguous ' // TRIM(VNAM) // ' definition'
+                write(*, '(A)') TRIM(err_msg_exp) // 'ambiguous ' // TRIM(VNAM) // ' definition'
                 ERROR STOP
             endif
 
@@ -744,13 +757,13 @@ contains
 
         CASE ('BNDX  ')
             if (raw_boundary%nt /= 0) then
-                write(*, '(A)') err_msg_exp // 'Boundary must be defined in a single group'
+                write(*, '(A)') TRIM(err_msg_exp) // 'Boundary must be defined in a single group'
                 ERROR STOP
             endif
             j = INDEX(lin_upper, 'POINTS')
             if (j /= 0) read(STRI(j+6:), *) raw_boundary%n_theta
             if (j == 0) then
-                write(*, '(A)') err_msg_exp // 'Number of boundary points must be defined'
+                write(*, '(A)') TRIM(err_msg_exp) // 'Number of boundary points must be defined'
                 ERROR STOP
             endif
 
@@ -759,7 +772,7 @@ contains
 
             nbnd = raw_boundary%nt*raw_boundary%n_theta
             if (nbnd > nbnd_max) then
-                write(*, '(2A, I0)') err_msg_exp, 'Boundary data must not exceed ', nbnd_max
+                write(*, '(2A, I0)') TRIM(err_msg_exp), 'Boundary data must not exceed ', nbnd_max
                 ERROR STOP
             endif
 
@@ -788,7 +801,7 @@ contains
             deallocate(bnd_rz)
 
             if (ios /= 0) then
-                write(*, '(A)') err_msg_exp // 'More data items than data values for BND group'
+                write(*, '(A)') TRIM(err_msg_exp) // 'More data items than data values for BND group'
                 ERROR STOP
             endif
             VNAMO = VNAM
@@ -937,7 +950,7 @@ contains
                     do j1=1, jtype
                         read(n_unit, *, iostat=ios) (raw_profiles%data(jarr + jj), jj=1, nr_exp)
                         if (ios /= 0) then
-                            write(*, '(3A, /, A, 1p, 6e12.4)') err_msg_exp, &
+                            write(*, '(3A, /, A, 1p, 6e12.4)') TRIM(err_msg_exp), &
                                 '".  Format error in group ', TRIM(STRI), 'Last data read: ', &
                                 (raw_profiles%data(jarr+jj), jj=1, nr_exp)
                             ERROR STOP
@@ -954,7 +967,7 @@ contains
                     raw_profiles%jbeg_data(NGR) = jarr + 1
                     read(n_unit, *, iostat=ios) (raw_profiles%data(jarr + jj), jj=1, nr_exp)
                     if (ios /= 0) then
-                        write(*, '(3A, /, A, 1p, 6e12.4)') err_msg_exp, &
+                        write(*, '(3A, /, A, 1p, 6e12.4)') TRIM(err_msg_exp), &
                                 '".  Format error in group ', TRIM(STRI), 'Last data read: ', &
                             (raw_profiles%data(jarr+jj), jj=1, nr_exp)
                         ERROR STOP

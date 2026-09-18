@@ -162,12 +162,12 @@ ifeq ($(PLATFORM),darwin)
    MKL_LIB = -L$(OPENBLAS_LIBDIR) -lopenblas
    RT_LIB =
 endif
-LIB = -lsbr -lnbi $(X11_LIB) $(QLKNN_LIB) $(TGLF_LIB) $(TORBEAM_LIB) $(RABBIT_LIB) $(GRAPH_FLAG) -lastra -lfnc -lfeqis -lmisc $(SPIDER_LIB) $(JSON_LIB) -L$(LIB_DIR) $(MKL_LIB) $(RT_LIB) $(TORIC_LIB)
+LIB = -lsbr -lnbi $(X11_LIB) $(QLKNN_LIB) $(TGLF_LIB) $(TRAVIS_LIB) $(TORBEAM_LIB) $(RABBIT_LIB) $(GRAPH_FLAG) -lastra -lfnc -lfeqis -lmisc $(SPIDER_LIB) $(JSON_LIB) -L$(LIB_DIR) $(MKL_LIB) $(RT_LIB) $(TORIC_LIB)
 
 AENV = $(AWD)/exe/astra_rc
 
 ASTRA_SRC = \
-$(ASTRA_DIR)/astra_main.F90 $(ASTRA_DIR)/stepup.F90
+$(ASTRA_DIR)/astra_main.F90 $(WORKFLOW)
 
 PY_TMP_GEN = $(AWD)/pyparse/parser_main.py -equ $(EQU) -exp $(EXP)
 
