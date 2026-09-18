@@ -7,6 +7,7 @@ implicit none
 logical :: use_ext_bnd=.false.
 logical :: plasma_up=.true.  ! plasma is up by default, can be set to False for breakdown by the user in a user-defined sbr called with "<"
 double precision, dimension(:), allocatable :: CCOIL, VCOIL
+double precision, dimension(:, :), allocatable :: ext_bnd_in
 
 
 contains
@@ -208,6 +209,49 @@ contains
         allocate(equil_now%coord_sys%rcell(nrho_surf, nthe_surf))
         allocate(equil_now%coord_sys%darea(nrho_surf, nthe_surf))
         allocate(equil_now%coord_sys%jphi(nrho_surf, nthe_surf))
+
+! Zero what this branch allocates but never fills.  rmin, psirz, gradvcell,
+! darea and jphi are assigned only on the JSON-reader path in json_rw.f90, so
+! on the VMEC path json_rw writes whatever the allocator handed back: junk that
+! changed with the binary layout, and gradvcell once happened to alias bpcell
+! exactly.  Nothing consumes them yet, but they reach the CDF.
+        equil_now%coord_sys%position%rmin  = 0.d0
+        equil_now%coord_sys%position%psirz = 0.d0
+        equil_now%coord_sys%gradvcell      = 0.d0
+        equil_now%coord_sys%darea          = 0.d0
+        equil_now%coord_sys%jphi           = 0.d0
+
+        if (.not. associated(equil_now%profiles_1d%rho_tor_norm)) then
+            allocate(equil_now%profiles_1d%areat  (nrho_surf))
+            allocate(equil_now%profiles_1d%bdb0   (nrho_surf))
+            allocate(equil_now%profiles_1d%bmaxt  (nrho_surf))
+            allocate(equil_now%profiles_1d%bmint  (nrho_surf))
+            allocate(equil_now%profiles_1d%dpsidv (nrho_surf))
+            allocate(equil_now%profiles_1d%F_dia  (nrho_surf))
+            allocate(equil_now%profiles_1d%ffprime(nrho_surf))
+            allocate(equil_now%profiles_1d%fofb   (nrho_surf))
+            allocate(equil_now%profiles_1d%g1     (nrho_surf))
+            allocate(equil_now%profiles_1d%g2     (nrho_surf))
+            allocate(equil_now%profiles_1d%ggradro(nrho_surf))
+            allocate(equil_now%profiles_1d%gm1    (nrho_surf))
+            allocate(equil_now%profiles_1d%gm4    (nrho_surf))
+            allocate(equil_now%profiles_1d%gm41   (nrho_surf))
+            allocate(equil_now%profiles_1d%gm5    (nrho_surf))
+            allocate(equil_now%profiles_1d%perim  (nrho_surf))
+            allocate(equil_now%profiles_1d%phi    (nrho_surf))
+            allocate(equil_now%profiles_1d%pprime (nrho_surf))
+            allocate(equil_now%profiles_1d%pressure(nrho_surf))
+            allocate(equil_now%profiles_1d%psi    (nrho_surf))
+            allocate(equil_now%profiles_1d%q      (nrho_surf))
+            allocate(equil_now%profiles_1d%rho_tor(nrho_surf))
+            allocate(equil_now%profiles_1d%rho_tor_norm(nrho_surf))
+            allocate(equil_now%profiles_1d%shif   (nrho_surf))
+            allocate(equil_now%profiles_1d%surface(nrho_surf))
+            allocate(equil_now%profiles_1d%volume (nrho_surf))
+            allocate(equil_now%profiles_1d%elongation(nrho_surf))
+            allocate(equil_now%profiles_1d%r_inboard (nrho_surf))
+            allocate(equil_now%profiles_1d%r_outboard(nrho_surf))
+        endif
 
         if (.not. associated(equil_now%profiles_1d%rho_tor_norm)) then
             allocate(equil_now%profiles_1d%areat  (nrho_surf))
@@ -1434,7 +1478,6 @@ contains
 
     integer :: j, j1, jt, nt_bnd, n_bnd
     double precision :: ydt, yd1, yd2, yfi
-    double precision, dimension(:, :), allocatable :: ext_bnd_in ! 50 , 2 boundary values R, Z
 
     nt_bnd = raw_boundary%nt
     n_bnd  = raw_boundary%n_theta
@@ -1815,7 +1858,7 @@ contains
 
 ! Computation of CU for stellarators (MU is equivalent to tokamak)
     if (IPEQL == 9 .or. IPEQL == 6 .or. IPEQL == 7) then
-        call DERIV(RHO(1:NA1), SRHO(NA1), 1, FP(1:NA1), YAR(1:NA1), 1, NA1, 1)		
+        call DERIV(RHO(1:NA1), SRHO(NA1), 1, FP(1:NA1), YAR(1:NA1), 1, NA1, 1)
 ! Calculate plasma current and poloidal current via SGij (defined on shifted grid)
         dumI(1:NA1) = (SG11(1:NA1)*YAR(1:NA1) + GP2*BTOR*SRHO(1:NA1)*SG12(1:NA1))/(0.4*GP)
 ! Calculate deriv(I/F) and F**2 on main grid

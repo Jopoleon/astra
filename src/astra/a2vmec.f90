@@ -64,7 +64,7 @@ contains
     call execute_command_line(TRIM(cmd)) ! Input: VMEC_WD/boozmn_VMECoutput.nc; Output VMEC_WD/b00_profile_boozer.txt, VMEC_WD/minorradiusW7AS.txt
 
 ! Collect VMEC output and store it into ASTRA arrays
-    write(cmd, '(A, 1X, A, I0)') trim(py_exe), 'vmec/python/vmec2bin.py ', NA1
+    write(cmd, '(A, 1X, A, 1X, I0, 1X, A)') trim(py_exe), 'vmec/python/vmec2bin.py', NA1, TRIM(nml_file)
     write(*, *) TRIM(cmd)
     call execute_command_line(TRIM(cmd), wait=.true.)
 
@@ -395,24 +395,31 @@ contains
     integer, intent(in) :: mboz, nboz
     double precision, intent(in) :: dt_boozer
 
-    integer :: i
+    integer :: i, n_surfacez, surfacez(1000)
     double precision :: t_boozero
     character(len=512) :: cmd
 
     data t_boozero/0./
     save t_boozero
 
+!use true surfaces
+
+    open(32, file=TRIM(f_true_surf))
+    read(32,*) n_surfacez
+    read(32,*) surfacez(1:n_surfacez)
+    close(32)
+
     open(32, file=TRIM(f_boozer_in))
     write(32, '(33333I8)') mboz, nboz
     write(32, *) ' VMECoutput '
-    write(32, '(33333I8)') [(i, i=1, NEQUIL)]
+    write(32, '(33333I8)') surfacez(1:n_surfacez)
     close(32)
 
     if (TIME >= TSTART+t_boozero .or. TIME <= TSTART) then
         cmd = 'cd ' // TRIM(vmec_data_dir) // ' && ' // &
             TRIM(mpi_command)  // ' -n 1 ' // &
             TRIM(stellopt_dir) // '/BOOZ_XFORM/Release/xbooz_xform ' // &
-            TRIM(f_boozer_in)  // ' ' // TRIM(f_true_surf)
+            TRIM(f_boozer_in)
         write(*, *) TRIM(cmd)
         call execute_command_line(TRIM(cmd)) ! Input: VMEC_WD/inboozer.dat, vmec/templates/true_surfaces.txt, ./wout_VMECoutput.nc; Output: ./boozmn_VMECoutput.nc
         t_boozero = TIME - TSTART + dt_boozer
