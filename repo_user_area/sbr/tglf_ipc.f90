@@ -75,7 +75,7 @@ contains
     double precision, allocatable, dimension(:) :: theta_equ, pfn_equ
     double precision, allocatable, dimension(:, :) :: RR_tg, ZZ_tg, Bp_tg
     double precision, dimension(nthe_elite) :: theta_elite, RR_elite, ZZ_elite, Bp_elite
-    character(len=128) :: f_elite, ipc_file, astra_task
+    character(len=256) :: f_elite, ipc_file, astra_task
 
     save semID, shmID_dims, shmID_vars, shmID_arrs, first_call
 

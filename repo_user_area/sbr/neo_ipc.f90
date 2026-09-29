@@ -66,7 +66,7 @@ contains
     double precision, dimension(NA1, nspec_max-1) :: i_pflux_as
     character(len=32) :: str_nworkers
     character(len=64) :: SBP_NAME
-    character(len=128) :: ipc_file, astra_task
+    character(len=256) :: ipc_file, astra_task
 
     double precision, dimension(NA1) :: e0imp1, FVimp1, e0imp2, FVimp2, e0imp3, FVimp3 ! DF
     
