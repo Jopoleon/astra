@@ -64,7 +64,7 @@ contains
     double precision, dimension(NA1, nspec_max-1) :: ni_as
     character(len=32) :: str_nworkers
     character(len=64) :: SBP_NAME
-    character(len=128) :: ipc_file, astra_task
+    character(len=256) :: ipc_file, astra_task
 
     save semID, shmID_dims, shmID_vars, shmID_arrs, first_call
 
