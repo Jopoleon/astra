@@ -45,7 +45,10 @@ def split_uname(uname):
         pre = fname[:jbeg]
     else:
         pre = ''
-    if jend > jbeg:
+    # jbeg < 0 means the name carries no shot number at all, and jend is then
+    # still 0, so "jend > jbeg" passes on -1 and int('') raises.  A U-file
+    # named for what it holds rather than for a shot is legitimate.
+    if jbeg >= 0 and jend > jbeg:
         shot = int(fname[jbeg: jend])
     else:
         shot = 0

@@ -57,11 +57,13 @@ if __name__ == '__main__':
         parser.add_argument('-e', '--tend', type=float, help='End time'      , required=False, default=alog_d['tend_nml'])
         parser.add_argument('-dev', '--DeviceName', help='Machine short name', required=False)
         parser.add_argument('-resize', '--resize', type=float, help='Resize factor for ASTRA frame', required=False)
+    parser.add_argument('-nodes', '--nodes', type=int, help='Nr of nodes to launch parallel jobs', required=False, default='1')
     parser.add_argument('-batch', action='store_true', help='Run batch job'  , required=False)
     parser.add_argument('-tpause', '--tpause', type=float, help='Pause @time', required=False, default=1.e4)
     parser.add_argument('-debug', action='store_true', help='Debug', required=False)
     parser.add_argument('-re', '--restart', type=int, help='Restart', required=False, default=0)
     parser.add_argument('-fs', action='store_true', help='Flight simulator', required=False)
+    parser.add_argument('-workflow', '--fpath', help='Workflow file to compile instead of the stock stepup', required=False, default=awd + '/src/astra/stepup.F90')
     parser.add_argument('-W', '--waitslurm', action='store_true', help='Hold on SLURM job', required=False, default=False)
     parser.add_argument('-c', '--compiler', help='Compiler (gcc, ifx)', required=False)
 
@@ -106,6 +108,7 @@ if __name__ == '__main__':
     alog += 'debug     = %d\n'     %int(args.debug)
     alog += 'flightsim = .%s.\n'   %args.fs
     alog += 'resize    = %8.4f\n'  %resize
+    alog += 'workflow  = "%s"\n'   %args.fpath
     alog += 'restart   = %d\n'     %args.restart
     alog += 'tpause_nml= %8.4f\n'  %args.tpause
     if compiler is not None:
@@ -121,7 +124,7 @@ if __name__ == '__main__':
 
     expequ = args.exp + args.equ
 
-    cmd = '%s/exe/Build %s %s %s %s' %(awd, args.equ, args.exp, rtype, args.fs)
+    cmd = '%s/exe/Build %s %s %s %s %s %s' %(awd, args.equ, args.exp, rtype, args.fs, args.nodes, args.fpath)
     if args.batch and args.waitslurm:
         cmd += ' -W'
     logger.info(cmd)

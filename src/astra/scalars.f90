@@ -19,7 +19,7 @@ double precision, pointer :: &
     ZRD61, ZRD62, ZRD63, ZRD64, ZRD65, ZRD66, ZRD67, ZRD68, ZRD69, ZRD70, &
     ZRD71, ZRD72, ZRD73, ZRD74, ZRD75, ZRD76, ZRD77, ZRD78, ZRD79, ZRD80, &
     ZRD81, ZRD82, ZRD83, ZRD84, ZRD85, ZRD86, ZRD87, ZRD88, ZRD89, ZRD90, &
-    ZRD91, ZRD92, ZRD93, ZRD94, ZRD95, ZRD96
+    ZRD91, ZRD92, ZRD93, ZRD94, ZRD95, ZRD96, GVAC, PHIEDG
 
 double precision, pointer :: &
     ABX,    ABCX,   AIM1X, AIM2X, AIM3X,  AMJX,   AWALLX, BTORX, &
@@ -36,7 +36,7 @@ double precision, pointer :: &
     ZRD61X, ZRD62X, ZRD63X, ZRD64X, ZRD65X, ZRD66X, ZRD67X, ZRD68X, ZRD69X, ZRD70X, &
     ZRD71X, ZRD72X, ZRD73X, ZRD74X, ZRD75X, ZRD76X, ZRD77X, ZRD78X, ZRD79X, ZRD80X, &
     ZRD81X, ZRD82X, ZRD83X, ZRD84X, ZRD85X, ZRD86X, ZRD87X, ZRD88X, ZRD89X, ZRD90X, &
-    ZRD91X, ZRD92X, ZRD93X, ZRD94X, ZRD95X, ZRD96X
+    ZRD91X, ZRD92X, ZRD93X, ZRD94X, ZRD95X, ZRD96X, GVACX, PHIEDGX
 
 double precision, pointer :: &
     CF1,   CF2,   CF3,   CF4,   CF5,   CF6,   CF7,   CF8, &
@@ -72,7 +72,7 @@ double precision, pointer :: &
 
 integer, pointer :: &
     NEQUIL, MEQUIL, INUME1, INUME2, INUME3, INUME4, &
-    IPART, IPROT, ITFBP, ICIRCQ, IPCTRL, IPEQL, IFBEY, IBCPSI, &
+    IPART, IPROT, ITFBP, ICIRCQ, IPCTRL, IPEQL, vmec_option, IFBEY, IBCPSI, &
     NA, NA1, NAB, NB1, NA1N, NA1E, NA1I, NA1U, &
     NA10, NA11, NA12, NA13, NA14, NA15, NA16, NA17, NA18, NA19
 
@@ -100,7 +100,11 @@ contains
 !------------------------------------------
     subroutine scalars_init()
 
-    constValues     = 0.
+! PHIEDG starts at +Inf as a "not set by the model" marker.  1./0. is an
+! Intel extension; gfortran rejects it at compile time.
+    use, intrinsic :: ieee_arithmetic, only: ieee_value, ieee_positive_inf
+
+    constValues     = 1.
     varValues       = 0.
     varxValues      = 0.
     controlValues   = 0.
@@ -149,6 +153,7 @@ contains
     SGNIP  = 1
     SGNBT  = 1
     IPEQL  = 5 ! 4- SPIDER, 5- FEQIS
+    vmec_option = 0
     DTEQ(1, :) = 0.
     DTEQ(2, :) = -99999.
     DTEQ(3, :) =  99999.
@@ -205,6 +210,8 @@ contains
     NA     = 40
     NITOT  = 0
     NSTEPS = 0
+    GVAC   = 4.5
+    PHIEDG = ieee_value(1.d0, ieee_positive_inf)
 
     TEQ = -1.e3
     LEQ = -1

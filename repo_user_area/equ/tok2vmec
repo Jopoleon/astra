@@ -1,0 +1,68 @@
+atreq = .005;
+IPEQL = 7;
+vmec_option = 4;
+
+UEXT = 0.;
+!lexthrs(ZRD96)<::::;
+LEXT=2.;
+
+IPL=IPL;
+
+!AMAIN=AMJ;
+!ZMAIN=ZMJ;
+AIM1=12.;
+ZIM1=ZICAR;
+NIZ1=0.*NE; 
+!NDEUT=NE-ZIM1*NIZ1;
+!NMAIN=NDEUT;
+NI=NE; !NDEUT+NIZ1;
+ZEF = 1.; ! + ZIM1*(ZIM1-ZMAIN)*NIZ1/NE;
+
+!NEUT:;
+
+VPOL=VPSWW;
+PE=PEECR;
+
+TOKSTELOUT>::::;
+
+
+TE:AS;      TE=0.0001*(1.-XRHO**2.)+0.1      
+TI:AS;      TI=TE;
+NE:AS;      NE=0.0001*(1.-XRHO**2.)+0.1;
+
+DTEQL = 0.002;
+CC=2.*(1-XRHO**2.)+0.1; !CNSA;
+CU:EQ; 
+CU=1.d0;
+CD=0.;
+!stelmetr>::::;
+
+!a2travis>:0.1:2.*TAU::;
+CAR63=GRAD(FP);
+CAR64=CAR63/(GP2*BTOR*SRHO);
+
+ZRD5=MV(AFX(0.d0));
+ZRD6=MU(AFX(0.d0));
+
+Erx\CAR54; mv\MV; cu\CU; cd\CD; cc\CC; 
+grot\CAR43;
+qe\(QE+0*5/2*TE*1602*QN/1e6)*1e6/SLAT\100; qi\(QI+0*5/2*TI*1602/1e6*QN)*1e6/SLAT\100; 
+Er\ER;
+ge\QN/SLAT;
+
+fp\FP; erx\car54; sf1\SF1\100; mv\MV; cu\CU; 
+he\HE; xi\XI; cc\CC; jbs\CD;
+pe\PE; ccn\CNSA; cd\CD;
+sh\SHIF;   gfp\CAR64;    d\TRIA;     g33\G33;
+ipol\IPOL; vr\VR;      slat\SLAT;  g11\G11;
+!g22\G22;   sg12\SG12;  sg21\SG21;  drda\DRODA;
+!shiv\SHIV; squa\SQUARN; sg11\SG11;  sg22\SG22;
+MU\MU;     MV\MV\-444; FP\FP;      upl\UPL;
+
+Tex\TE\\TEX;      pinb\PIBM\-3;    Pecr\PEECR;   mu\MU\-444;
+dens\NE\\NEX;      j\CU;            Pohm\POH\-1;    Sne\SNEBM;
+Tix\TI\\TIX;      Er\F1;    Jecr\CUECR;   nD\NDEUT;
+Zeff\ZEF;          q\1./MU\\CAR2X; Prad\PRAD\-1;   sneu\SNNEU;
+
+phib_GP*BTOR*ROC**2.; icd_-ICDB; ip_IPL; mv0_ZRD5; mu0_ZRD6;
+

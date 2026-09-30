@@ -22,6 +22,7 @@ if [[ "$platform" = "darwin" ]]; then
 fi
 export JSON_LIB=$JSON_HOME/lib/libjsonfortran.a
 export JSON_INC=$JSON_HOME/inc
+export STELLOPT_HOME=${STELLOPT_HOME:-${ASTRA_EXT}/STELLOPT/}
 
 # SPIDER
 

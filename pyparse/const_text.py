@@ -70,6 +70,7 @@ endif
 endif
 """
 
+
 class CUAS:
 
     header = \
@@ -127,26 +128,11 @@ do J=1, NA1
 
     cu2 = \
 '''
-if (j == NA1) CYCLE
-YM   = YM   +  CU(J)*RHO(J)/(G33(J)*IPOL(J)**3)
-YMCD = YMCD + YWA(J)*RHO(J)/(G33(J)*IPOL(J)**3)
 enddo
-YIOH = GP2*YM*HRO*IPOL(NA1)
-YICD = GP2*YMCD*HRO*IPOL(NA1)
-CU(1: NA1) = CU(1: NA1)*(IPL - YICD)/YIOH
-YM = 0.
-do j=1, NA
-YM = YM + YC*CU(J)*RHO(J)/(G33(J)*IPOL(J)**3)
-YM1 = YM/G22(J)
-MU(J) = YM1/J
-FP(J+1) = FP(J) + YF*YM1
-enddo
-MU(NA1) = EXTRAP(SXHO(1:NA), MU(1:NA), SXHO(NA1), NA, 2, .false.)
+call FPMUOFCU()
 YU = GP2*RTOR
-YJ_CU = (FP(NA1) - FP(NA))/HRO * IPOL(NA1) * G22(NA)/(mu0*RTOR)
-YJ_CU = IPL/YJ_CU
-do j=1, NA1
-CU(J) = YJ_CU*CU(J)
+do J=1, NA1
+
 '''
 
     cu_mu = \
@@ -656,6 +642,7 @@ include 'src/tmp/declar.fnc'
 call markloc('timout')
 """
 
+
 class FJEQN:
 
     eqn = \
@@ -672,6 +659,7 @@ YWWB(j) = VR(j)
 enddo
 imethod = INUME1
 '''
+
 
 class CUEQN:
 
@@ -695,8 +683,12 @@ bc_values(1) = 0.0
 bc_values(2) = 0.0
 bc_values(3) = 1.
 bc_values(4) = -1.
+if (IPEQL == 9 .or. IPEQL == 6 .or. IPEQL == 7) then      !stellarator option including vac iota
+ bc_values(5) = HRO * (mu0/SG11(NA)*IPL + GP2*BTOR*SRHO(NA)*MV(NA))
+else !tokamak
 bc_values(5) = HRO*mu0/G22(NA)*IPL*RTOR/IPOL(NA1)
-bc_type_for_fp=1
+endif
+bc_type_for_fp = 1
 ! For psifb
 ! when using the free boundary circuit equations with free current,
 ! then use mixed b.c.
@@ -719,7 +711,11 @@ bc_values(1) = 0.0
 bc_values(2) = 0.0
 bc_values(3) = 1.
 bc_values(4) = -1.
+if (IPEQL == 9 .or. IPEQL == 6 .or. IPEQL == 7) then      !stellarator option including vac iota
+bc_values(5) = HRO * (mu0/SG11(NA)*IPL + GP2*BTOR*SRHO(NA)*MV(NA))
+else !tokamak
 bc_values(5) = HRO*mu0/G22(NA)*IPL*RTOR/IPOL(NA1)
+endif
 bc_type_for_fp = 1
 endif
 endif
@@ -739,7 +735,7 @@ if (ITFBP /= 0 .and. ITFBE < TIME) then
 if (IBCPSI > 0) then
 !case implicit
 if (ITFBP < 0 .and. IBCPSI >= 2) then
-bc_type = 3
+bctype = 3
 bc_values(1) = 0.0
 bc_values(2) = 0.0
 bc_values(3) = HRO + PSPLEX*ROC
@@ -759,18 +755,24 @@ endif
 
     circuit_eqn = \
 '''! Circuit equation:
-if (TIME - TSTART <= TAU) then
-PSIEXT = FP(NA1) + LEXT*IPL
+if (TIME - TSTART <= TAU) PSIEXT = FP(NA1) + LEXT*IPL
 PSPLEX = LEXT/ROC*5.*IPOL(NA1)*G22(NA)/GP2/RTOR
-endif
-PSPLEX = LEXT/ROC*5.*IPOL(NA1)*G22(NA)/GP2/RTOR
+if (IPEQL == 6 .or. IPEQL == 9 .or. IPEQL == 7) PSPLEX = LEXT/ROC*SG11(NA)/mu0
 PSIEXT = PSIEXT + TAU*UEXT
+
+if (TIME-TSTART <= TAU) then
+FPO = FPO - FPO(NA1) + (PSIEXT + PSPLEX*ROC*GP2*SRHO(NA)*MV(NA)*BTOR) - PSPLEX*ROC*(FPO(NA1) - FPO(NA))/HRO
+FP = FPO 
+endif
+
 bctype = 3
 bc_values(1) = 0.0
 bc_values(2) = 0.0
 bc_values(3) = HRO + PSPLEX*ROC
 bc_values(4) =  -PSPLEX*ROC
 bc_values(5) = PSIEXT*HRO
+if (IPEQL == 6 .or. IPEQL == 9 .or. IPEQL == 7) bc_values(5) = (PSIEXT + PSPLEX*ROC*GP2*SRHO(NA)*MV(NA)*BTOR)*HRO
+
 bc_type_for_fp = 3
 !For psifb
 ! when using the free boundary circuit equations with free current,
@@ -779,7 +781,7 @@ if (ITFBP /= 0 .and. ITFBE < TIME) then
 if (IBCPSI > 0) then
 ! case implicit
 if (ITFBP < 0 .and. IBCPSI >= 2) then
-bc_type = 3
+bctype = 3
 bc_values(1) = 0.0
 bc_values(2) = 0.0
 bc_values(3) = HRO + PSPLEX*ROC
@@ -789,7 +791,7 @@ bc_type_for_fp = 3
 endif
 endif
 if (IBCPSI <= 1) then
-bc_type = 1
+bctype = 1
 bc_values(1) = 0.0
 bc_values(2) = 0.0
 bc_type_for_fp = 2
@@ -798,7 +800,33 @@ endif
 '''
 
     eqn = \
-'''YWA(1: NA1) = G22(1: NA1)
+'''if (IPEQL == 9 .or. IPEQL == 6 .or. IPEQL == 7) then      !stellarator option
+
+call qinterp(SRHO(1:NA1), SG22(1:NA1), na1,RHO(1:NA1), dum4(1:NA1), NA1)
+call qinterp(SRHO(1:NA1), SG21(1:NA1)*MU(1:NA1), na1,RHO(1:NA1), dum6(1:NA1), NA1)
+
+dum1(1:na1) = 2/RHO(1:NA1)*BTOR/0.4/CC(1:NA1) * (RHO(1:na1)*dum6(1:na1) + dum4(1:na1))**2 !1/VR
+dum2(1:na1) = SG11(1:NA1)/(GP2*BTOR)/ (SRHO(1:NA1)*SG21(1:NA1)*MU(1:NA1) + SG22(1:NA1)) !YWA
+dum3(1:na1) = SRHO(1:NA1)*SG12(1:NA1)/(SRHO(1:NA1)*SG21(1:NA1)*MU(1:NA1) + SG22(1:NA1)) !YWR
+do j=1, NA1
+YWA(j)  = dum2(j)
+YWGN(j) = 1.
+YWGO(j) = 1.
+YWHN(j) = 1.
+YWHO(j) = 1.
+YWB(j)  = 0.
+YWS(j)  = 0.
+YWR(j)  = -dum3(j)
+YWQ(j)  = 0.
+YWG11(j) = 1.
+YWNB(j) = 0.
+YWWB(j) = 1.
+YVR(j) = 1./dum1(j)
+YWM(j) = 1./YVR(j)
+YWD(j) = -(VR(j)/(GP2*RHO(j)*CC(j))) * (CUBS(j) + CD(j))
+enddo
+else !tokamak
+YWA(1: NA1) = G22(1: NA1)
 do j=1, NA1
 YWGN(j) = 1.
 YWGO(j) = 1.
@@ -814,12 +842,15 @@ YVR(j) = CC(j)*mu0*RHO(j)/IPOL(j)**2
 unit_coeff = 1.
 YWD(j) = -(VR(j)/(GP2*RHO(j)*CC(j))) * (CUBS(j) + CD(j))
 enddo
+endif
 imethod = INUME3
 
 call RUNEQ( YWGN(1: NA1), YWHN(1: NA1), YWGO(1: NA1), YWHO(1: NA1), FPO(1: NA1), YWWB(1: NA1), YVR(1: NA1), unit_coeff, YWG11(1: NA1), YWA(1: NA1), YWB(1: NA1), YWR(1: NA1), YWS(1: NA1), YWD(1: NA1), RBDOT, BBDOT, NA1, NA1, HRO, TAU, RHO(1: NA1), imethod, bctype, bc_values, FP(1: NA1), YWQ(1: NA1), YQDCMF(1: NA1), MPHIT(1: NA1) )
 
 dfpdrbm12 = -YWQ(NA)/G22(NA)
+YWR(1) = MU(NA1)*GP2*ROC**2 * BTOR*BBDOT
 '''
+
 
 class INIT:
 
@@ -850,6 +881,7 @@ enddo
 call markloc("init done")
 '''
 
+
 modules_tmp = '''
 use read_input, only: equ_file, exp_file
 use cpu_usage, only: wallTime_sbr, cpuTime_sbr
@@ -864,13 +896,14 @@ use a2tglf, only: tglf_ipc, tglf_out
 use a2qlk, only: qlk_ipc, qlk_out
 use debugger, only: markloc
 use numerical_tools, only: extrap, qinterp
-use metrics, only: cuofp, cuofmu
+use metrics, only: cuofp, cuofmu, fpmuofcu
 use flux_avg_imp
 use transport_solver
 use a2rabbit, only: rabbit
 use a2torbeam, only: torba
 use torfpql_mod, only: toric
 '''
+
 
 class INIT_CONVERGE_STEP:
 
@@ -888,6 +921,7 @@ integer :: IFSUB, t_wall1, t_wall2, rate
 double precision :: YB, YC, YU, YJ_CU, YM, YMCD, YIOH, YICD, YM1, t_cpu1, t_cpu2
 double precision, dimension(NRD) :: YWA
 '''
+
 
 class EQNS_INC:
 
@@ -911,14 +945,17 @@ double precision, intent(out) :: dfpdrbm12
 
 integer :: IFSUB, imethod, ND, ND1, JCALL, bctype, bc_type_imp(2), t_wall1, t_wall2, rate
 
-double precision :: YHRO, YM1, YM2, YB, YC, YJ_CU, YM, YU, YIOH, YICD, YMCD, bc_value_imp(2), t_cpu1, t_cpu2, unit_coeff
+double precision :: YHRO, YM1, YM2, YB, YC, YJ_CU, YM, YU, YIOH, YICD, YMCD, bc_value_imp(2), t_cpu1, t_cpu2, unit_coeff, yfv, ydf
 double precision, dimension(5) :: bc_values
 double precision, dimension(NRD) :: YWA, YWB, YWC, YWD, YWGN, &
-    YWHN, YWGO, YWHO, YWR, YVR, YWA1, YWA2, YWB1, YWB2, YWAA, YWWB, &
+    YWHN, YWGO, YWHO, YWR, YWH, YVR, YWM, YWA1, YWA2, YWB1, YWB2, &
+    YWAA, YWNB, YWWB, YWN1B, YWW1B, YWN2B, YWW2B, & 
     YWC1, YWC2, YWS, YQDCM, MPHIT, YQDCMF, YWQ, YWG11, YWgradF, YWgradb2
+double precision, dimension(na1) :: dum1, dum2, dum3, dum4, dum5, dum6
 
 MPHIT = 0.
 '''
+
 
 class POSTEP:
 

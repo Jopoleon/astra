@@ -7,6 +7,7 @@ implicit none
 logical :: use_ext_bnd=.false.
 logical :: plasma_up=.true.  ! plasma is up by default, can be set to False for breakdown by the user in a user-defined sbr called with "<"
 double precision, dimension(:), allocatable :: CCOIL, VCOIL
+double precision, dimension(:, :), allocatable :: ext_bnd_in
 
 
 contains
@@ -19,26 +20,96 @@ contains
     use scalars, only: IPART, FTO, FTN, ROC, &
         BTOR, ROCO, RTOR, SHIFT, &
         ABC, ELONG, TRIAN, UPDWN, NA1, NB1, MEQUIL, NEQUIL, &
-        IPEQL, TIME, TSTART, TIMEQL, DTEQL, BTN
+        IPEQL, vmec_option, TIME, TSTART, TIMEQL, DTEQL, BTN
     use debugger, only: markloc
     use parameters_a2equil, only: equil_now
     use numerical_tools, only: qinterp
+    use scalars, only: tau
+    use a2vmec, only: vmec_interface
 
     integer :: i, jexit, NDTEQUILMY, equil_solver, jthe, nrho_surf, nthe_surf
     integer :: t_wall1, t_wall2, rate
     double precision :: theta
+    integer :: vmec_vacuum, vmec_tau, vmec_dteq, yes_boozer
+    integer :: i_vmec_options_choose
     real :: t_cpu1, t_cpu2
     double precision, allocatable, dimension(:) :: prof_as, prof_eq
     character(len=120) :: err_msg
 
+    data i_vmec_options_choose/0/
+    save vmec_vacuum, vmec_tau, vmec_dteq, yes_boozer, i_vmec_options_choose
+
     call markloc('METRIC')
 
-    if (IPART == 1) then ! do only at initiation
+    if (IPART == 1 .or. IPART == 3) then ! do only at initiation
         FTN = FTO
         BTN = BTOR
         ROC = sqrt(FTO/GP/BTOR)
         ROCO = ROC
         VRO(1: NB1) = VR(1: NB1)
+! if IPEQL = 70, 71, 72, ..., 79
+! vmec_option between 0 and 9, set IPEQL to 7
+    endif
+
+    if (i_vmec_options_choose == 0) then
+        SELECT CASE(vmec_option)
+        CASE(0)
+            vmec_vacuum = 1
+            vmec_tau    = 1
+            vmec_dteq   = 1
+            yes_boozer  = 1
+        CASE(1)
+            vmec_vacuum = 2
+            vmec_tau    = 1
+            vmec_dteq   = 1
+            yes_boozer  = 1
+        CASE(2)
+            vmec_vacuum = 2
+            vmec_tau    = 2
+            vmec_dteq   = 1
+            yes_boozer  = 1
+        CASE(3)
+            vmec_vacuum = 2
+            vmec_tau    = 2
+            vmec_dteq   = 0
+            yes_boozer  = 1
+        CASE(4)
+            vmec_vacuum = 1
+            vmec_tau    = 1
+            vmec_dteq   = 1
+            yes_boozer  = 0
+        CASE(5)
+            vmec_vacuum = 2
+            vmec_tau    = 1
+            vmec_dteq   = 1
+            yes_boozer  = 0
+        CASE(6)
+            vmec_vacuum = 2
+            vmec_tau    = 2
+            vmec_dteq   = 1
+            yes_boozer  = 0
+        CASE(7)
+            vmec_vacuum = 2
+            vmec_tau    = 2
+            vmec_dteq   = 0
+            yes_boozer  = 0
+        CASE(8)
+            vmec_vacuum = 2
+            vmec_tau    = 2
+            vmec_dteq   = 0
+            yes_boozer  = 1
+        CASE(9)
+            vmec_vacuum = 2
+            vmec_tau    = 2
+            vmec_dteq   = 0
+            yes_boozer  = 0
+        END SELECT
+        i_vmec_options_choose = 1
+    endif
+
+    if (IPART == 3) then
+        IPART = 1
+        return
     endif
 
     call CPU_TIME(t_cpu1)
@@ -61,6 +132,12 @@ contains
         FTO = GP*BTOR*ROC**2
         call set_external_metric_2()! Main grid: (jj-0.5)*h
         call RHSEQ()! this computes ffprime and pprime
+
+    CASE(6)  ! Take stellarator metric internally subroutine external file (so not X)
+       ROC = ROC3A(RTOR, SHIFT, ABC, ELONG, TRIAN)
+       FTO = GP*BTOR*ROC**2
+       call set_external_metric_2() ! Main grid: (jj-0.5)*h
+       call RHSEQ()  ! this computes ffprime and pprime
 
     CASE(0) ! No equilibrium solver (NEQUIL=0) .or. data initiation @ 1st entry
         call EQGUESS()
@@ -103,6 +180,94 @@ contains
             TIMEQL = TIME
         endif
 
+    CASE(7)   !stellarator equilibrium solver
+        nrho_surf = abs(NEQUIL)
+        nthe_surf = abs(MEQUIL)
+        if (associated(equil_now%coord_sys%position%r)) then
+            deallocate(equil_now%coord_sys%position%r)
+            deallocate(equil_now%coord_sys%position%z)
+            deallocate(equil_now%coord_sys%position%rmin)
+            deallocate(equil_now%coord_sys%position%psirz)
+            deallocate(equil_now%coord_sys%position%theta2d)
+            deallocate(equil_now%eqgeometry%rectgrid%psirz2d)
+            deallocate(equil_now%eqgeometry%rectgrid%fdia2d)
+            deallocate(equil_now%eqgeometry%rectgrid%r2d)
+            deallocate(equil_now%eqgeometry%rectgrid%z2d)
+        endif
+        allocate(equil_now%coord_sys%position%r(nrho_surf, nthe_surf))
+        allocate(equil_now%coord_sys%position%z(nrho_surf, nthe_surf))
+        allocate(equil_now%coord_sys%position%rmin(nrho_surf, nthe_surf))
+        allocate(equil_now%coord_sys%position%psirz(nrho_surf, nthe_surf))
+        allocate(equil_now%coord_sys%position%theta2d(nthe_surf))
+        allocate(equil_now%eqgeometry%rectgrid%psirz2d(1, 1))
+        allocate(equil_now%eqgeometry%rectgrid%fdia2d(1, 1))
+        allocate(equil_now%eqgeometry%rectgrid%r2d(1))
+        allocate(equil_now%eqgeometry%rectgrid%z2d(1))
+        allocate(equil_now%coord_sys%gradvcell(nrho_surf, nthe_surf))
+        allocate(equil_now%coord_sys%bpcell(nrho_surf, nthe_surf))
+        allocate(equil_now%coord_sys%bcell(nrho_surf, nthe_surf))
+        allocate(equil_now%coord_sys%rcell(nrho_surf, nthe_surf))
+        allocate(equil_now%coord_sys%darea(nrho_surf, nthe_surf))
+        allocate(equil_now%coord_sys%jphi(nrho_surf, nthe_surf))
+
+        if (.not. associated(equil_now%profiles_1d%rho_tor_norm)) then
+            allocate(equil_now%profiles_1d%areat  (nrho_surf))
+            allocate(equil_now%profiles_1d%bdb0   (nrho_surf))
+            allocate(equil_now%profiles_1d%bmaxt  (nrho_surf))
+            allocate(equil_now%profiles_1d%bmint  (nrho_surf))
+            allocate(equil_now%profiles_1d%dpsidv (nrho_surf))
+            allocate(equil_now%profiles_1d%F_dia  (nrho_surf))
+            allocate(equil_now%profiles_1d%ffprime(nrho_surf))
+            allocate(equil_now%profiles_1d%fofb   (nrho_surf))
+            allocate(equil_now%profiles_1d%g1     (nrho_surf))
+            allocate(equil_now%profiles_1d%g2     (nrho_surf))
+            allocate(equil_now%profiles_1d%ggradro(nrho_surf))
+            allocate(equil_now%profiles_1d%gm1    (nrho_surf))
+            allocate(equil_now%profiles_1d%gm4    (nrho_surf))
+            allocate(equil_now%profiles_1d%gm41   (nrho_surf))
+            allocate(equil_now%profiles_1d%gm5    (nrho_surf))
+            allocate(equil_now%profiles_1d%perim  (nrho_surf))
+            allocate(equil_now%profiles_1d%phi    (nrho_surf))
+            allocate(equil_now%profiles_1d%pprime (nrho_surf))
+            allocate(equil_now%profiles_1d%pressure(nrho_surf))
+            allocate(equil_now%profiles_1d%psi    (nrho_surf))
+            allocate(equil_now%profiles_1d%q      (nrho_surf))
+            allocate(equil_now%profiles_1d%rho_tor(nrho_surf))
+            allocate(equil_now%profiles_1d%rho_tor_norm(nrho_surf))
+            allocate(equil_now%profiles_1d%shif   (nrho_surf))
+            allocate(equil_now%profiles_1d%surface(nrho_surf))
+            allocate(equil_now%profiles_1d%volume (nrho_surf))
+            allocate(equil_now%profiles_1d%elongation(nrho_surf))
+            allocate(equil_now%profiles_1d%r_inboard (nrho_surf))
+            allocate(equil_now%profiles_1d%r_outboard(nrho_surf))
+        endif
+
+        if (TIME == TSTART) NDTEQUILMY = 0
+        if (TIME >  TSTART) NDTEQUILMY = 1
+
+        if (TIME == TSTART .and. vmec_vacuum > 0) then
+            call EQCYL_STELLA
+            call RHSEQ
+            call vmec_interface(vmec_vacuum, vmec_dteq, yes_boozer)
+            vmec_vacuum = 0
+            return
+        endif
+        if (TIME-TSTART < 2*TAU .and. vmec_tau == 1) then ! call again vmec and vmec2astra.py
+            call vmec_interface(vmec_vacuum, vmec_dteq, yes_boozer)
+            TIMEQL = TIME
+            return
+        endif
+        if (TIME-TSTART < 2*TAU .and. vmec_tau == 2) then ! call only vmec2astra.py but no vmec
+            call vmec_interface(vmec_vacuum, 0, yes_boozer)
+            TIMEQL = TIME
+            vmec_tau = 0
+            return
+        endif
+        if (TIME > TSTART .and. TIME-TIMEQL >= NDTEQUILMY*DTEQL) then !call vmec+vmec2astra.py or only vmec2astra.py
+            call vmec_interface(vmec_vacuum, vmec_dteq, yes_boozer)
+            TIMEQL = TIME
+            return
+        endif
     END SELECT
 
     call CPU_TIME(t_cpu2)
@@ -1270,7 +1435,6 @@ contains
 
     integer :: j, j1, jt, nt_bnd, n_bnd
     double precision :: ydt, yd1, yd2, yfi
-    double precision, dimension(:, :), allocatable :: ext_bnd_in ! 50 , 2 boundary values R, Z
 
     nt_bnd = raw_boundary%nt
     n_bnd  = raw_boundary%n_theta
@@ -1557,13 +1721,14 @@ contains
 !            FP(1:NA1) - poloidal flux [Vs]
 !---------------------------------------------------------------------
 
-    use scalars, only: RTOR, BTOR, NA1, NA, HRO
-    use status, only: SRHO, XRHO, CU, MU, FP, G22, G33, IPOL
-    use numerical_tools, only: extrap, integr
+    use scalars, only: RTOR, BTOR, NA1, NA, HRO, IPEQL
+    use status, only: SRHO, XRHO, CU, MU, FP, G22, G33, IPOL, &
+    SG11, SG12, SG21, SG22, VR, RHO
+    use numerical_tools, only: extrap, integr, deriv, qinterp
 
     integer :: j
     double precision :: YAJ, YCJ
-    double precision, dimension(NA1) :: YAR
+    double precision, dimension(NA1) :: YAR, dumI, dumF, YAR1
 
     do j=1, NA1
         YAR(j) = GP2*BTOR*MU(j)*SRHO(j)
@@ -1585,6 +1750,21 @@ contains
         CU(j) = YCJ*CU(j)*G33(J)*IPOL(J)**3
     enddo
 
+! Computation of CU for stellarators (FP is equivalent for tokamaks)
+    if (IPEQL == 9 .or. IPEQL == 6 .or. IPEQL == 7) then
+        call DERIV(RHO(1:NA1), SRHO(NA1), 1, FP(1:NA1), YAR(1:NA1), 1, NA1, 1)
+! Calculate plasma current and poloidal current via SGij (defined on shifted grid)
+        dumI(1:NA1) = (SG11(1:NA1)*YAR(1:NA1) + GP2*BTOR*SRHO(1:NA1)*SG12(1:NA1))/(0.4*GP)
+        dumF(1:NA1) = (SG21(1:NA1)*YAR(1:NA1) + GP2*BTOR*SG22(1:NA1))/(0.4*GP)
+! Calculate deriv(I/F) and F**2 on main grid
+        call DERIV(SRHO(1:NA1), RHO(NA1), 2, dumI(1:NA1)/dumF(1:NA1), YAR(1:NA1), 1, NA1, 0)
+        call qinterp(RHO(1:NA1), dumF(1:NA1)**2, NA1, srho(1:NA1), YAR1(1:NA1), NA1)
+! Calculate CU
+        CU(1:NA1) = 0.4*GP*YAR1(1:NA1)*YAR(1:NA1)/(VR(1:NA1)*BTOR)
+        CU(NA1) = EXTRAP(XRHO(1:NA) , CU(1:NA ), XRHO(NA1), NA, 2, .false.)
+        CU(1)   = EXTRAP(XRHO(2:NA1), CU(2:NA1), XRHO(1  ), NA, 2, .true. )
+    endif
+
     end subroutine CUOFMU
 
 !---------------------------------------------------------------------
@@ -1603,12 +1783,14 @@ contains
 !  MU(1:NA1) - (1/rho)dF/d(rho)      rotational transform
 !---------------------------------------------------------------------
 
-    use status, only: XRHO, FP, MU, CU, IPOL, G22, G33, SXHO
-    use scalars, only: RTOR, HRO, BTOR, NA, NA1
-    use numerical_tools, only: extrap
+    use status, only: XRHO, FP, MU, CU, IPOL, G22, G33, SXHO, &
+        SG11, SG12, SG21, SG22, VR, SXHO, MV, FV, RHO, SRHO
+    use scalars, only: RTOR, HRO, BTOR, NA, NA1, IPEQL
+    use numerical_tools, only: extrap, deriv, qinterp
 
     integer :: j
     double precision :: YAJ, YCJ
+    double precision, dimension(NA1) :: YAR, YAR1, dumI, dumF
 
     YAJ = 0.
     CU  = 0.
@@ -1631,7 +1813,86 @@ contains
         MU(J) = YAJ*MU(j)
     enddo
 
+! Computation of CU for stellarators (MU is equivalent to tokamak)
+    if (IPEQL == 9 .or. IPEQL == 6 .or. IPEQL == 7) then
+        call DERIV(RHO(1:NA1), SRHO(NA1), 1, FP(1:NA1), YAR(1:NA1), 1, NA1, 1)
+! Calculate plasma current and poloidal current via SGij (defined on shifted grid)
+        dumI(1:NA1) = (SG11(1:NA1)*YAR(1:NA1) + GP2*BTOR*SRHO(1:NA1)*SG12(1:NA1))/(0.4*GP)
+! Calculate deriv(I/F) and F**2 on main grid
+        call DERIV(SRHO(1:NA1), RHO(NA1), 2, dumI(1:NA1)/IPOL(1:NA1), YAR(1:NA1), 1, NA1, 0)
+        call qinterp(RHO(1:NA1), IPOL(1:NA1)**2, NA1, SRHO(1:NA1), YAR1(1:NA1), NA1)
+! Calculate CU
+        CU(1:NA1) = GP2*RTOR*YAR1(1:NA1)*YAR(1:NA1)/VR(1:NA1)
+        CU(NA1) = EXTRAP(XRHO(1:NA ), CU(1:NA ), XRHO(NA1), NA, 2, .false.)
+        CU(1)   = EXTRAP(XRHO(2:NA1), CU(2:NA1), XRHO(  1), NA, 2, .true.)
+    endif
+
     end subroutine CUOFP
+
+!---------------------------------------------------------------------
+    subroutine FPMUOFCU()
+!---------------------------------------------------------------------
+! Compute FP(rho) and MU(rho) from CU(rho)
+
+    use scalars, only:  RTOR, BTOR, NA1, NA, HRO, IPEQL, IPL
+    use status, only: RHO, SRHO, XRHO, CU, MU, FP, G22, G33, IPOL, &
+        SG11, SG12, SG21, SG22, VR, CUBS, CD, FV, MV, SXHO
+    use numerical_tools, only: extrap, integr, deriv, derivcc, integrcc
+
+    integer :: j
+    double precision :: YAJ, YCJ
+    double precision, dimension(NA1) :: YAR, YAR1, dumI, dumF, ywa, phi, dumFp
+    double precision ym, ymcd, yioh, yicd, yc, ym1, yf, yu, yj_cu, y_ipl
+
+!computation of FP and MU for stellarators from CU (jpar)
+    if (IPEQL == 9 .or. IPEQL == 6 .or. IPEQL == 7) then
+        phi = GP*BTOR*SRHO(1:NA1)**2
+        yar(1:NA1) = CU(1:NA1)*VR(1:NA1)/IPOL(1:NA1)**2/(GP2*RTOR)  ! F I' - F' I
+        call integr(rho(1:NA1), 1, yar(1:NA1), dumF(1:NA1), NA1)
+        dumI(1:NA1) = dumF(1:NA1)*IPOL(1:NA1)
+        yc = IPL/dumI(NA1) ! the user needs to not input a cu that integrates to zero current. IPL can be zero
+        CU = CU * yc
+        dumI = dumI * yc
+
+! Calculate full mu
+        MU(1:NA1) = (0.4*GP/(GP2*BTOR*SRHO(1:NA1))*dumI(1:NA1) - SG12(1:NA1))/SG11(1:NA1)
+
+        call integr(srho(1:NA1), 2, GP2*BTOR*srho(1:NA1)*mv(1:NA1), FV(1:NA1), NA1)
+        call integr(srho(1:NA1), 2, GP2*BTOR*srho(1:NA1)*mu(1:NA1), FP(1:NA1), NA1)
+        return
+    endif
+
+    YF = GP2*HRO**2 * BTOR
+    YC = 0.4*GP*RTOR/BTOR
+    YM = 0.
+    YMCD = 0.
+    do j=1, NA1
+        if (j == NA1) CYCLE
+        YWA(J) = CUBS(J)+CD(J)
+        YM   = YM   +  CU(J)*RHO(J)/(G33(J)*IPOL(J)**3)
+        YMCD = YMCD + YWA(J)*RHO(J)/(G33(J)*IPOL(J)**3)
+    enddo
+    YIOH = GP2*YM*HRO*IPOL(NA1)
+    YICD = GP2*YMCD*HRO*IPOL(NA1)
+    CU(1: NA1) = CU(1: NA1)*(IPL - YICD)/YIOH
+    YM = 0.
+    do j=1, NA
+        YM = YM + YC*CU(J)*RHO(J)/(G33(J)*IPOL(J)**3)
+        YM1 = YM/G22(J)
+        MU(J) = YM1/J
+        FP(J+1) = FP(J) + YF*YM1
+    enddo
+    mu(NA1) = EXTRAP(SXHO(1:NA), MU(1:NA), SXHO(NA1), NA, 2, .false.)
+    YU = GP2*RTOR
+    YJ_CU = (FP(NA1) - FP(NA))/HRO * IPOL(NA1) * G22(NA)/(0.4*GP*RTOR)
+    YJ_CU = IPL/YJ_CU
+    do j=1, NA1
+        CU(J) = YJ_CU*CU(J)
+        MU(J) = YJ_CU*MU(J)
+        FP(J) = YJ_CU*(FP(J) - FP(1)) + FP(1)
+    enddo
+
+    end subroutine FPMUOFCU
 
 !---------------------------------------------------------------------
     subroutine new_grid()
@@ -1719,5 +1980,71 @@ contains
     enddo
 
     end subroutine SETGEO
+
+!---------------------------------------------------------------------
+    subroutine EQCYL_STELLA
+!---------------------------------------------------------------------
+! Quasi-cylindrical assignment: Called if IPEQL==-2
+!
+! In: RTOR, SHIFT, ABC, ELONG, TRIAN, NA1, NB1
+! Out: NA, HRO, ROC, RHO(j), DRODA, VOLUM, IPOL, G33, GRADRO, G11, G22, SLAT
+!  BDB02, B0DB2, BDB0, FOFB, BMAXT, BMINT, DRODA, GRADRO
+!---------------------------------------------------------------------
+
+    use status, only: RHO, XRHO, VR, VRS, AMETR, SHIF, SHIV, &
+        ELON, TRIA, SLAT, G11, G22, G33, G41, G42, G43, G44, G45, &
+        BDB0, BDB02, B0DB2, IPOL, MU, &
+        FOFB, BMAXT, BMINT, DRODA, GRADRO, VOLUM
+    use scalars, only: VOLUME, RTOR, BTOR,  &
+        ABC, HRO, ROC, FTO, ROWALL, NA, NA1, NB1, PHIEDG
+    use numerical_tools, only: integr
+    use debugger, only: markloc, debug
+
+    integer :: j
+
+    call markloc('EQCYL_STELLA', debug_lev=3*debug)
+
+    FTO = PHIEDG
+    VOLUME = GP2*RTOR*GP*ABC**2
+    ROC = sqrt(FTO/(GP*BTOR))
+    HRO = ROC/(NA1 - 0.5)
+
+    do j=1, NB1
+        RHO(J) = XRHO(J)*ROC
+        if (RHO(j) <= ROWALL) NA = j
+        G22(J)   = J*HRO
+        VR(J)    = GP2**2 * RTOR*RHO(J)
+        VRS(j)   = GP2**2 * RTOR*G22(J)
+        AMETR(J) = RHO(J)/ROC*ABC
+        SHIF(J)  = 0.
+        SHIV(J)  = 0.
+        ELON(J)  = 1.
+        TRIA(J)  = 0.
+        IPOL(J)  = 1.
+        G33(J)   = 1.
+        G11(J)   = VRS(j)
+        SLAT(J)  = VRS(j)
+        BDB02(j) = 1. + (RHO(j)*MU(j)/RTOR)**2
+        B0DB2(j) = 1./BDB02(j)
+        BDB0(j)  = sqrt(BDB02(j))
+        FOFB(j)  = 1.
+        BMAXT(j) = BTOR*BDB0(j)
+        BMINT(j) = BMAXT(j)
+        DRODA(j) = 1.
+        GRADRO(j)= 1.
+        G41(J)   = 1.
+        G42(J)   = GRADRO(J)
+        G43(J)   = GRADRO(J)
+        G44(J)   = G11(J)/VRS(J)
+        G45(J)   = G11(J)/VRS(J)
+    enddo
+    if (NA < NB1) then
+        NB1 = NA
+    endif
+    NA = NA1 - 1
+    call INTEGR(RHO, 1, VR, VOLUM, NB1)
+    VOLUME = VOLUM(NA1)
+
+    end subroutine EQCYL_STELLA
 
 end module metrics

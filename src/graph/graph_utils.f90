@@ -316,13 +316,20 @@ contains
 !---------------------------------------------------------------------
     double precision function SCALA(Y, NJ)
 
+    use, intrinsic :: ieee_arithmetic, only: ieee_is_finite
+
     integer, intent(in) :: NJ
     double precision, intent(in) :: Y(*)
 
     integer :: j
     double precision :: YS(6), YMAX
 
-    YMAX = MAXVAL(ABS(Y(1: NJ)))
+! Skip non-finite samples.  MAXVAL over a NaN or Inf leaves the loops below
+! either non-terminating or falling through to an out-of-bounds YS(7).
+    YMAX = 0.d0
+    do j=1, NJ
+        if (ieee_is_finite(Y(j))) YMAX = MAX(YMAX, ABS(Y(j)))
+    enddo
 
     YS(1) = 1.0d-9
     YS(2) = 1.5d-9
@@ -1026,14 +1033,14 @@ contains
                     jxout = jxout + 1
                     if (jxout == 1 .and. j > 1) then ! left edge interpolation
                         YA = ROUT(J, jprof) + (ROUT(J-1, jprof) - ROUT(J, jprof))*(YL - YX)/(YA - YX)
-                        r_out = min(max(YA/SC(jprof), -7.d0), 7.d0)
+                        r_out = min(max(safe_ratio(YA, SC(jprof)), -7.d0), 7.d0)
                         JDSP  = 10*(plot_area%canvas_height*r_out + IYMN + y_shift)
                         xplot(jxout) = dble(x_shift)
                         yplot(jxout) = plot_area%height - &
                             min(max(dble(plot_area%canvas_height)*r_out + ymin + dble(y_shift), ymin), ymax)
                         jxout = jxout + 1
                     endif
-                    r_out = min(max(ROUT(J, jprof)/SC(jprof), -7.d0), 7.d0)
+                    r_out = min(max(safe_ratio(ROUT(J, jprof), SC(jprof)), -7.d0), 7.d0)
                     JDSP  = 10*(plot_area%canvas_height*r_out + IYMN + y_shift)
                     xplot(jxout) = dble(x_shift) + dble(plot_area%width)/dble(plot_area%nx_canvas)*(YX - YL)/(YR - YL)
                     yplot(jxout) = plot_area%height - &
@@ -1042,7 +1049,7 @@ contains
                 if (YA <= YR .and. YX > YR) then ! right edge interpolation
                     jxout = jxout + 1
                     YA = ROUT(J, jprof) + (ROUT(J-1, jprof) - ROUT(J, jprof))*(YR - YX)/(YA - YX)
-                    r_out = min(max(YA/SC(jprof), -7.d0), 7.d0)
+                    r_out = min(max(safe_ratio(YA, SC(jprof)), -7.d0), 7.d0)
                     JDSP  = 10*(plot_area%canvas_height*r_out + IYMN + y_shift)
                     xplot(jxout) = dble(x_shift) + dble(plot_area%width)/dble(plot_area%nx_canvas)
                     yplot(jxout) = dble(plot_area%height) - &
@@ -1138,7 +1145,7 @@ contains
                 if (YA > 1. .or. YA < YL .or. YA > YR) CYCLE
                 j1 = j1 + 1
                 PTM(1) = x_shift + plot_area%width/plot_area%nx_canvas*(YA-YL)/(YR-YL)
-                r_out= max((DATAX(j, jn) + OSHIFR(jsc))/SC(jsc), -7.d0)
+                r_out= max(safe_ratio(DATAX(j, jn) + OSHIFR(jsc), SC(jsc)), -7.d0)
                 r_out= min(r_out, 7.d0)
                 JDSP = plot_area%canvas_height*r_out + IYMN + y_shift
                 PTM(2) = plot_area%height - min(max(JDSP, IYMN), IYMX)
@@ -1231,7 +1238,7 @@ contains
             jplot_in_canv = (jplot_in_tab - 1)/n_canvas       ! <-> color
             j_canv = MOD(jplot_in_tab - 1, n_canvas) + 1      ! 1-8 for mode '1'
             do J=1, LTOUT
-                r_out = max(t_out(J, jtrace)/SC(jtrace), -7.d0)
+                r_out = max(safe_ratio(t_out(J, jtrace), SC(jtrace)), -7.d0)
                 r_out = min(r_out, 7.d0)
                 JDSP  = 10*(plot_area%canvas_height*r_out + IYMN + (n_canvas - j_canv)*plot_area%canvas_height)
                 JDSP  = max(JDSP, 10*IYMN)
@@ -1845,5 +1852,20 @@ contains
     meter2pixel = dble(IDX*IDT)/scale_bnd
 
     end subroutine set_plot
+
+
+!---------------------------------------------------------------------
+    double precision function safe_ratio(NUM, DEN)
+! Value/scale ratio for the plot pixel mapping.  A NaN maps to 0 so it cannot
+! become a garbage pixel coordinate; the caller's min/max clamps take +/-Inf.
+
+    use, intrinsic :: ieee_arithmetic, only: ieee_is_nan
+
+    double precision, intent(in) :: NUM, DEN
+
+    safe_ratio = NUM/DEN
+    if (ieee_is_nan(safe_ratio)) safe_ratio = 0.d0   ! NaN -> 0
+
+    end function safe_ratio
 
 end module graph_utils

@@ -26,9 +26,13 @@ pyparse/iondens_ass.py
 /qualikiz
 /tglf
 /toric
+<<<<<<< HEAD
 /sicas
+=======
+>>>>>>> stars3d
 /bin
 /src/tmp
+/vmec/dat
 user
 profiles.dat
 *_backup

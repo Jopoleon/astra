@@ -4,8 +4,11 @@ equ_file=$1
 exp_file=$2
 TASK=$3
 FSIM=$4
-if [[ $# > 4 ]]; then
-    WAIT_SLURM=$5
+nnodes=$5
+export N_NODES="${nnodes}"
+workflow=$6
+if [[ $# > 6 ]]; then
+    WAIT_SLURM=$7
 else
     WAIT_SLURM=""
 fi
@@ -37,7 +40,7 @@ else
     export X11=y
     ATASK=$AWD/bin/${equ_file}_gui.exe
 fi
-make -f exe/Makefile  MODEL=$equ_file FEXP=$exp_file ATASK=$ATASK
+make -f exe/Makefile  MODEL=$equ_file FEXP=$exp_file ATASK=$ATASK WORKFLOW=${workflow}
 status=$?
 if [ $status -ne 0 ]
 then

@@ -1,0 +1,96 @@
+atreq = .005;
+IPEQL  =  7;
+vmec_option = 0;
+NEQUIL =  99;
+MEQUIL =  51;
+
+UEXT = 0.;
+!lexthrs(ZRD96)<::::;
+LEXT=2.;
+
+!AMAIN=AMJ;
+!ZMAIN=ZMJ;
+!AIM1=12.;
+!ZIM1=ZICAR;
+!NIZ1=CIMP1*NE;
+!NDEUT=NE-ZIM1*NIZ1;
+!NMAIN=NDEUT;
+!NI=NDEUT+NIZ1;
+!ZEF = 1.0 + ZIM1*(ZIM1-ZMAIN)*NIZ1/NE;
+
+!NEUT:;
+
+VPOL=VPSWW;
+PE=PEECR;
+
+TE:AS; !EQ;      
+TE=TEX; 
+TI:AS;      TI=TEX;
+NE:AS;      NE=NEX;
+
+!CU:EQ;
+!CD=0.1*FJUMP(5.);
+!CC=CNSA/1000.*(1.-FJUMP(3.)) + CNSA*FJUMP(3.);
+!CU=0.4;
+!IPL=IPLX;
+CC=CNSA;
+CU:AS; !EQ; 
+!MU=1.d0;
+CU=1.d0;
+!MU=MV; 
+
+DN=0.0; 
+DE=0.0; 
+DI=0.0; 
+HN=0.0;
+HE=0.0; 
+HI=0.0; 
+XN=0.0; 
+XE=0.0; 
+XI=0.0; 
+CN=0.0; 
+CE=0.0; 
+CI=0.0;
+
+ER=F1*1.e3;
+!DKES_INTERFACE_WRAPPER(F1,0.9d0)>::2.*TAU::;
+CAR30="dkes2astra_variables(j,4)";
+F1:EQ[2,1.0];
+F1 = 0.0;
+QF1B = 0.0;
+DF1 = 0.0001;   ! If Er not smooth, increase DF1 
+VF1 = 0.0;
+SF1 = CAR30 / 100000.0;  ! Numerical stability for larger time step (if scale is removed, use very small (10^-9) time step
+!SFF1 = -1.0e8 * (1.0 - RSTEP(0.5*HRO)); 
+DTEQL=0.5;
+
+!a2travis>:0.1:2.*TAU::;
+CD=CUECR;
+CAR63=GRAD(FP);
+CAR64=CAR63/(GP2*BTOR*SRHO);
+
+Er\ER; sf1\SF1;
+
+fp\FP; mu\MU; mv\MV; cu\CU; 
+
+pe\PE; cu\CU; cd\CD;
+sh\SHIF;   gfp\CAR64;    d\TRIA;     g33\G33;
+ipol\IPOL; vr\VR;      slat\SLAT;  g11\G11;
+g22\G22;   sg12\SG12;  sg21\SG21;  drda\DRODA;
+shiv\SHIV; squa\SQUARN; sg11\SG11;  sg22\SG22;
+MU\MU;     MV\MV\-444; FP\FP;      upl\UPL;
+
+Tex\TE\\TEX;      pinb\PIBM\-3;    Pecr\PEECR;   mu\MU\-444;
+dens\NE\\NEX;      j\CU;            Pohm\POH\-1;    Sne\SNEBM;
+Tix\TI\\TIX;      Er\F1;    Jecr\CUECR;   nD\NDEUT;
+Zeff\ZEF;          q\1./MU\\CAR2X; Prad\PRAD\-1;   sneu\SNNEU;
+
+G_e \ "dkes2astra_variables(j,5)";
+qe\ "dkes2astra_variables(j,6)";
+qi\ "dkes2astra_variables(j,7)";
+J_amb \ "dkes2astra_variables(j,8)";
+G_i \ "dkes2astra_variables(j,9)";
+Er\ F1;
+Source\ SF1;
+j_bootstrap\ "dkes2astra_variables(j,11)";
+conductivity_neo\ "dkes2astra_variables(j,12)";

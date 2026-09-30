@@ -132,7 +132,9 @@
     "ZRD93": {},
     "ZRD94": {},
     "ZRD95": {},
-    "ZRD96": {}
+    "ZRD96": {},
+    "GVAC" : {"units": "Tm", "desc": "<RB_phi>_magaxis,vac; RTOR*BTOR in tokamak"},
+    "PHIEDG" : {"units": "Tm**2", "desc": "Phi_edge; vacuum toroidal magnetic flux at edge"}
 },
 
 "variables_x": {
@@ -268,7 +270,9 @@
     "ZRD93X": {},
     "ZRD94X": {},
     "ZRD95X": {},
-    "ZRD96X": {}
+    "ZRD96X": {},
+    "GVACX" : {"units": "Tm", "desc": "<RB_phi>_magaxis,vac; RTOR*BTOR for stellarator"},
+    "PHIEDGX" : {"units": "Tm**2", "desc": "Phi_edge; vacuum toroidal magnetic flux at edge"}
     },
 
 "constants": {
@@ -469,6 +473,7 @@
     "IFBEY" : {"desc": "switched to = 1 if doing fbe, to 0 if doing PBE"},
     "IBCPSI": {"desc": "Counter for Psi as boundary condition"},
     "IPEQL" : {"desc": "Numerical flag to choose equilibrium solver (0 doesnt do anything, 1 forces 3mom, 4 spider, 5 feqis)"},
+    "vmec_option": {"desc": "Flag for VMEC coupling type"}, 
     "NA1"   : {"desc": "Number of radial points up to separatrix"},
     "NA"    : {"desc": "NA1-1"},
     "NAB"   : {"desc": "Number of radial points up to AB"},
@@ -987,7 +992,12 @@
     "ZIM2"  : {"desc": "2nd impurity Z (used in NBI package)"},
     "ZIM3"  : {"desc": "3rd impurity Z (used in NBI package)"},
     "ZIMPT" : {"desc": "average impurity Z"},
-    "ZMAIN" : {"desc": "Z of main ions"}
+    "ZMAIN" : {"desc": "Z of main ions"},
+    "SG11"  : {"desc": "11 component of susceptance matrix; axisym.: SG11 = G22*IPOL/RTOR"},
+    "SG12"  : {"desc": "12 component of susceptance matrix; axisym.: SG12 = 0, otherwise SG12=-MUV*S11"},
+    "SG21"  : {"desc": "21 component of susceptance matrix; axisym.: SG21 = 0, otherwise SG21=2 pi I_pol*drho/dPsi - sg22_strand/MU"},
+    "SG22"  : {"desc": "22 component of susceptance matrix; axisym.: SG22 = rho*sg22_strand = IPOL*RTOR = RHO*(GP2*RTOR)**2/(VR*G33)"},
+    "FTPT"  : {"desc": "Fraction of Trapped ParTicles (Taguchi 1988)"}
 },
 
 "profiles_x": {
@@ -1091,7 +1101,12 @@
     "VTORX" : {"units": "m/s", "desc": "Toroidal rotation speed as taken from data"},
     "SLATX" : {"units": "m^2", "desc": "Xarray for SLAT"},
     "SHIVX" : {"units": "m^2", "desc": "Xarray for SHIV"},
-    "SQUAX" : {"units": "m^2", "desc": "Xarray for SQUARN"}
+    "SQUAX" : {"units": "m^2", "desc": "Xarray for SQUARN"},
+    "SG11X" : {"desc": "SG11 as taken from a data file"},
+    "SG12X" : {"desc": "SG12 as taken from a data file"},
+    "SG21X" : {"desc": "SG21 as taken from a data file"},
+    "SG22X" : {"desc": "SG22 as taken from a data file"},
+    "FTPTX" : {"desc": "FTPT as taken from a data file"}
 },
 
 "strahl": {
