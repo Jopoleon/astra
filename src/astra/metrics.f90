@@ -242,38 +242,6 @@ contains
             allocate(equil_now%profiles_1d%r_outboard(nrho_surf))
         endif
 
-        if (.not. associated(equil_now%profiles_1d%rho_tor_norm)) then
-            allocate(equil_now%profiles_1d%areat  (nrho_surf))
-            allocate(equil_now%profiles_1d%bdb0   (nrho_surf))
-            allocate(equil_now%profiles_1d%bmaxt  (nrho_surf))
-            allocate(equil_now%profiles_1d%bmint  (nrho_surf))
-            allocate(equil_now%profiles_1d%dpsidv (nrho_surf))
-            allocate(equil_now%profiles_1d%F_dia  (nrho_surf))
-            allocate(equil_now%profiles_1d%ffprime(nrho_surf))
-            allocate(equil_now%profiles_1d%fofb   (nrho_surf))
-            allocate(equil_now%profiles_1d%g1     (nrho_surf))
-            allocate(equil_now%profiles_1d%g2     (nrho_surf))
-            allocate(equil_now%profiles_1d%ggradro(nrho_surf))
-            allocate(equil_now%profiles_1d%gm1    (nrho_surf))
-            allocate(equil_now%profiles_1d%gm4    (nrho_surf))
-            allocate(equil_now%profiles_1d%gm41   (nrho_surf))
-            allocate(equil_now%profiles_1d%gm5    (nrho_surf))
-            allocate(equil_now%profiles_1d%perim  (nrho_surf))
-            allocate(equil_now%profiles_1d%phi    (nrho_surf))
-            allocate(equil_now%profiles_1d%pprime (nrho_surf))
-            allocate(equil_now%profiles_1d%pressure(nrho_surf))
-            allocate(equil_now%profiles_1d%psi    (nrho_surf))
-            allocate(equil_now%profiles_1d%q      (nrho_surf))
-            allocate(equil_now%profiles_1d%rho_tor(nrho_surf))
-            allocate(equil_now%profiles_1d%rho_tor_norm(nrho_surf))
-            allocate(equil_now%profiles_1d%shif   (nrho_surf))
-            allocate(equil_now%profiles_1d%surface(nrho_surf))
-            allocate(equil_now%profiles_1d%volume (nrho_surf))
-            allocate(equil_now%profiles_1d%elongation(nrho_surf))
-            allocate(equil_now%profiles_1d%r_inboard (nrho_surf))
-            allocate(equil_now%profiles_1d%r_outboard(nrho_surf))
-        endif
-
         if (TIME == TSTART) NDTEQUILMY = 0
         if (TIME >  TSTART) NDTEQUILMY = 1
 
