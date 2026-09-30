@@ -210,6 +210,13 @@ contains
         allocate(equil_now%coord_sys%darea(nrho_surf, nthe_surf))
         allocate(equil_now%coord_sys%jphi(nrho_surf, nthe_surf))
 
+        equil_now%coord_sys%gradvcell = 0.d0
+        equil_now%coord_sys%bpcell    = 0.d0
+        equil_now%coord_sys%bcell     = 0.d0
+        equil_now%coord_sys%rcell     = 0.d0
+        equil_now%coord_sys%darea     = 0.d0
+        equil_now%coord_sys%jphi      = 0.d0
+
         if (.not. associated(equil_now%profiles_1d%rho_tor_norm)) then
             allocate(equil_now%profiles_1d%areat  (nrho_surf))
             allocate(equil_now%profiles_1d%bdb0   (nrho_surf))

@@ -108,6 +108,8 @@ contains
     allocate(Rrect(NrRect), dpf_dr(NrRect))
     allocate(Zrect(NzRect), dpf_dz(NzRect))
     allocate(pfm(NrRect, NzRect), fdia2d(NrRect, NzRect))
+    pfm = 0.d0
+    fdia2d = 0.d0
     if (present(pf)) then
         pf1d = pf(1: n_rho)
     else

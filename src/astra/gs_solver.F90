@@ -232,6 +232,12 @@ contains
     allocate(equil_in%eqgeometry%boundary%r(n_theta))
     allocate(equil_in%eqgeometry%boundary%z(n_theta))
 
+    equil_in%profiles_1d%psi      = 0.d0
+    equil_in%profiles_1d%pprime   = 0.d0
+    equil_in%profiles_1d%ffprime  = 0.d0
+    equil_in%profiles_1d%pressure = 0.d0
+    equil_in%profiles_1d%F_dia    = 0.d0
+
 ! "Interpolate" sep. boundary R, z (Fourier moments fit + expansion)
     call SYSTEM_CLOCK(t1, rate)
     call surf2surf(7, n_theta, rbnd(1:nbnd), zbnd(1:nbnd), equil_in%eqgeometry%boundary%r, equil_in%eqgeometry%boundary%z)
@@ -396,11 +402,11 @@ contains
             eqpf_sp(1:nr_equ) = pprimp(1:nr_equ)
             eqff_sp(1:nr_equ) = ffprimp(1:nr_equ)
         endif
-    		
+
 ! Compute F according to newfound dPSIdV
         call integrcc(nr_equ, PSI, ffprimp, dum3)
         do j=1, nr_equ
-            ipol_sp(j) = (2.**0.5)* ( 0.5*Fvacuum**2 - dum3(nr_equ) + dum3(j) )**0.5
+            ipol_sp(j) = sqrt( Fvacuum**2 - 2.*dum3(nr_equ) + 2.*dum3(j) )
             ipol_sp(j) = ipol_sp(j)/Fvacuum
         enddo
 
