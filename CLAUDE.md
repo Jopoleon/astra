@@ -12,18 +12,17 @@
 
 - `installer/` — `install_astra8.sh`, `docker/`, `docs/DETAILED.md` (устройство сборки ASTRA и все патчи для Ubuntu).
 - `docs/` — документация, оглавление в `docs/README.md`; разборы ASTRA — в `docs/astra/`.
-- `astra-src/` — локальный форк исходников ASTRA (MPCDF, LGPL v2.1+). В `.gitignore`, свой git:
-  remote `upstream` = MPCDF, `main` = копия оригинала (не трогать), `local` = наша рабочая ветка.
-  Подробно: `docs/local-fork.md`. Документация по исходникам (12 глав) — `astra-src/docs/README.md`,
-  вводные для агентов — `astra-src/AGENTS.md` (только локально).
+- `astra-src/` — исходники ASTRA (MPCDF, LGPL v2.1+) через git subtree, с очищенной историей оригинала
+  (без `regressions/` и файлов >5 МБ). Ветка `astra-upstream` — очищенная копия MPCDF (не трогать);
+  `.upstream/` (в `.gitignore`) — полный клон MPCDF для синхронизации. Подробно: `docs/local-fork.md`. Документация по исходникам (12 глав) — `astra-src/docs/README.md`,
+  вводные для агентов — `astra-src/AGENTS.md`.
 
 ## Правила
 
 - Ничего не вычищать из `astra-src/` по своей инициативе: чужие `platform/env.*`, регрессии,
   модули и т.п. — материал для изучения. Удаляем только по явной просьбе.
-- Правки исходников ASTRA — только в `astra-src/` на ветке `local`, коммиты там же; значимые правки
-  записывать в журнал в `docs/local-fork.md`.
-- Не пушить `astra-src/` в GitHub: в истории оригинала есть файлы >100 МБ.
+- Правки исходников ASTRA — обычные коммиты в `astra-src/` этого репозитория; значимые правки записывать в журнал `docs/local-fork.md`. Ветку `astra-upstream` руками не трогать.
+- Обновления из MPCDF — только `tools/sync-upstream.sh`, не голым `git pull`: он притащит неочищенную историю (~1 ГБ, файлы по 215 МБ). Подробно: `docs/local-fork.md`.
 - Соблюдать LGPL: не удалять `LICENSE` и копирайты оригинала.
 - Окончания строк только LF (в `~/.gitconfig` стоит `autocrlf=true`, локально выключено; с CRLF
   скрипты ASTRA ломаются).

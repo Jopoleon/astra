@@ -1,6 +1,6 @@
 # 09. Каталог пользовательской области (`repo_user_area/`)
 
-Состояние: исходники ASTRA 8 в `astra-src/`, ветка `local`, коммит `67281112` (2026-10-01, «ASTRA 8.6, January 2026» по `exe/version`).
+Состояние: исходники ASTRA 8 в `astra-src/`, MPCDF `67281112` (2026-10-01, «ASTRA 8.6, January 2026» по `exe/version`).
 
 Глава описывает всё, что лежит в `repo_user_area/`: модели (`equ/`), эксперименты (`exp/`), данные (`udb/`), формулы (`fml/`), функции (`fnc/`), подпрограммы (`sbr/`), а также `xpr/`, `preProcess/`, `pyparse/` и `exe/`. Описания составлены по содержимому файлов (заголовки, комментарии, код) и по `docu/section4.tex` (разделы «Astra expressions → List of expressions», «Built-in functions», «Plug-in subroutines»). Где назначение по файлу определить нельзя, так и написано: «назначение не установлено».
 

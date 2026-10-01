@@ -4,7 +4,7 @@
 
 Глава описывает файл модели `equ/<model>`: его синтаксис в ASTRA 8 (A8), отличия от ASTRA 7 (A7) и то, как Python-парсер `pyparse/` превращает модель в Fortran-код `src/tmp/*.f90`, который затем компилирует `make`. Разобраны все модули парсера, сгенерированные файлы и их место в цикле счёта. Пример построчно сверен с рабочей установкой `~/astra/a8` (модель `flux_feqis`, эксперимент `aug34954`). В конце собраны известные ловушки парсера.
 
-Состояние исходников: `astra-src`, ветка `local`, коммит `67281112` (2026-10-01). Пути даны относительно корня `astra-src`. Если вывод получен прогоном парсера в копии под `/tmp`, это сказано явно. Если вывод получен только чтением кода, он помечен «по коду».
+Состояние исходников: `astra-src`, MPCDF `67281112` (2026-10-01). Пути даны относительно корня `astra-src`. Если вывод получен прогоном парсера в копии под `/tmp`, это сказано явно. Если вывод получен только чтением кода, он помечен «по коду».
 
 Связанные главы: [01-overview.md](01-overview.md), [02-build-and-run.md](02-build-and-run.md) (сборка и запуск), [04-experiment-data.md](04-experiment-data.md) (файлы эксперимента, `X`-массивы), [05-solver-core.md](05-solver-core.md) (решатель переноса, `LEQ`, `ND1`), [06-equilibrium.md](06-equilibrium.md) (`IPEQL`, FEQIS), [07-heating-and-external-modules.md](07-heating-and-external-modules.md) (подпрограммы `sbr/`), [08-graphics-and-output.md](08-graphics-and-output.md) (вывод `\` и `_`), [09-user-area-catalog.md](09-user-area-catalog.md) (каталог `equ/`, `fml/`, `fnc/`, `sbr/`), [glossary.md](glossary.md) (переменные и единицы). Установка: [`../../installer/docs/DETAILED.md`](../../installer/docs/DETAILED.md).
 

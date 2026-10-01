@@ -12,7 +12,7 @@
 
 Отдельно разобраны примеры из репозитория, отличия A8 от A7 и причины, по которым демонстрационный `exp/readme` не работает. В конце даны **рекомендации** для новой установки (сферический токамак Глобус-М2). Это предложения автора, а не описание существующего кода.
 
-Состояние исходников: `astra-src`, ветка `local`, коммит `67281112` (2026-10-01). Пути даны относительно `astra-src`; пользовательские каталоги лежат в `repo_user_area/` (после установки — `~/astra/a8/`). Пометка «проверено» означает прогон в песочнице под `/tmp` уже собранным `~/astra/a8/bin/flux_feqis_batch.exe` или копией `pyparse`. Пометка «по коду» означает вывод из чтения исходников.
+Состояние исходников: `astra-src`, MPCDF `67281112` (2026-10-01). Пути даны относительно `astra-src`; пользовательские каталоги лежат в `repo_user_area/` (после установки — `~/astra/a8/`). Пометка «проверено» означает прогон в песочнице под `/tmp` уже собранным `~/astra/a8/bin/flux_feqis_batch.exe` или копией `pyparse`. Пометка «по коду» означает вывод из чтения исходников.
 
 Связанные главы: [01-overview.md](01-overview.md), [02-build-and-run.md](02-build-and-run.md), [03-model-language.md](03-model-language.md) (как модель использует `X`-переменные), [05-solver-core.md](05-solver-core.md), [06-equilibrium.md](06-equilibrium.md) (граница, FEQIS, `exp/cnf`), [07-heating-and-external-modules.md](07-heating-and-external-modules.md) (NBI, ICRH, namelist'ы), [08-graphics-and-output.md](08-graphics-and-output.md), [09-user-area-catalog.md](09-user-area-catalog.md) (каталог `exp/`, `udb/`), [glossary.md](glossary.md) (единицы). Установка и патч парсера: [`../../installer/docs/DETAILED.md`](../../installer/docs/DETAILED.md).
 
