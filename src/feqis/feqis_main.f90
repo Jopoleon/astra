@@ -1,7 +1,7 @@
 subroutine feqis_main(nucoils, ucoils, neql, k_fixfree, no_circuit_eq, ifplasma, machine_name, & 
     equil_in, equil_out)
 
-use imas_ids, only: type_equilibrium  
+use imas_ids, only: type_equilibrium, equil_allocate
 use circuit, only: psi_cur_old, psiplasmatoconduc, voltage, &
     psi_mutual_effect_conductors_simple
 use fbe_core, only: nr2, nz2, nr1, nz1, Rrect, Zrect, &
@@ -60,69 +60,7 @@ if (j_call == 0) then
 endif
 
 if (ifplasma == 1) then
-    allocate(equil_out%eqgeometry%boundary%r(ntheta))
-    allocate(equil_out%eqgeometry%boundary%z(ntheta))
-    allocate(equil_out%eqgeometry%rectgrid%r2d(nr2))
-    allocate(equil_out%eqgeometry%rectgrid%z2d(nz2))
-    allocate(equil_out%eqgeometry%rectgrid%psirz2d(nr2, nz2))
-    allocate(equil_out%eqgeometry%rectgrid%fdia2d(nr2, nz2))
-
-    allocate(equil_out%coord_sys%position%r(nrplasma, ntheta))
-    allocate(equil_out%coord_sys%position%z(nrplasma, ntheta))    
-    allocate(equil_out%coord_sys%position%theta2d(ntheta))    
-    allocate(equil_out%coord_sys%position%rmin(nrplasma, ntheta))    
-    allocate(equil_out%coord_sys%position%psirz(nrplasma, ntheta))    
-    allocate(equil_out%coord_sys%gradvcell(nrplasma, ntheta))
-    allocate(equil_out%coord_sys%bpcell(nrplasma, ntheta))
-    allocate(equil_out%coord_sys%bcell(nrplasma, ntheta))
-    allocate(equil_out%coord_sys%rcell(nrplasma, ntheta))
-    allocate(equil_out%coord_sys%darea(nrplasma, ntheta))
-    allocate(equil_out%coord_sys%jphi(nrplasma, ntheta))
-    
-    allocate(equil_out%profiles_1d%psi(nrplasma))
-    allocate(equil_out%profiles_1d%pressure(nrplasma))
-    allocate(equil_out%profiles_1d%phi(nrplasma))
-    allocate(equil_out%profiles_1d%pprime(nrplasma))
-    allocate(equil_out%profiles_1d%ffprime(nrplasma))
-    allocate(equil_out%profiles_1d%F_dia(nrplasma))
-    allocate(equil_out%profiles_1d%q(nrplasma))
-    allocate(equil_out%profiles_1d%gm1(nrplasma))
-    allocate(equil_out%profiles_1d%gm4(nrplasma))
-    allocate(equil_out%profiles_1d%gm5(nrplasma))
-    allocate(equil_out%profiles_1d%gm41(nrplasma))
-    allocate(equil_out%profiles_1d%rbp_b2(nrplasma))
-    allocate(equil_out%profiles_1d%bplfs(nrplasma))
-    allocate(equil_out%profiles_1d%rho_tor_norm(nrplasma) )
-    allocate(equil_out%profiles_1d%jparallel(nrplasma) )
-    allocate(equil_out%profiles_1d%sigmapar%value(nrplasma) )
-    allocate(equil_out%profiles_1d%jni%value(nrplasma) )
-    allocate(equil_out%profiles_1d%te%value(nrplasma) )
-    allocate(equil_out%profiles_1d%acosB2a(nrplasma, 5))
-    allocate(equil_out%profiles_1d%asinB2a(nrplasma, 5))
-    allocate(equil_out%profiles_1d%acosBlnBa(nrplasma, 5))
-    allocate(equil_out%profiles_1d%asinBlnBa(nrplasma, 5))
-    allocate(equil_out%profiles_1d%g1(nrplasma))
-    allocate(equil_out%profiles_1d%g2(nrplasma))
-    allocate(equil_out%profiles_1d%g2int(nrplasma))
-    allocate(equil_out%profiles_1d%fofb(nrplasma))
-    allocate(equil_out%profiles_1d%areat(nrplasma))
-    allocate(equil_out%profiles_1d%perim(nrplasma))
-    allocate(equil_out%profiles_1d%ggradro(nrplasma))
-    allocate(equil_out%profiles_1d%gdroda(nrplasma))
-    allocate(equil_out%profiles_1d%bmaxt(nrplasma))
-    allocate(equil_out%profiles_1d%bmint(nrplasma))
-    allocate(equil_out%profiles_1d%bdb0(nrplasma))
-    allocate(equil_out%profiles_1d%dPSIdV(nrplasma))
-    allocate(equil_out%profiles_1d%surface(nrplasma))
-    allocate(equil_out%profiles_1d%volume(nrplasma))
-    allocate(equil_out%profiles_1d%r_inboard(nrplasma))
-    allocate(equil_out%profiles_1d%r_outboard(nrplasma))
-    allocate(equil_out%profiles_1d%elongation(nrplasma))
-    allocate(equil_out%profiles_1d%tria_upper(nrplasma))
-    allocate(equil_out%profiles_1d%tria_lower(nrplasma))
-    allocate(equil_out%profiles_1d%shif(nrplasma))
-    allocate(equil_out%profiles_1d%shiv(nrplasma))
-    allocate(equil_out%profiles_1d%squareness(nrplasma))
+    call equil_allocate(nrplasma, ntheta, nr2, nz2, equil_out)
 endif
 
 if (k_fixfree == 1 .and. refit_mode /= 818) then !any other mode than 818

@@ -1,5 +1,3 @@
-./install.sh
-
 exe/as_exe -m transpstell -v steltest -s 0. -e 4. -tpause 0. -nodes 8
 
 Required STELLOPT subdirs:

@@ -20,12 +20,12 @@ contains
     use scalars, only: IPART, FTO, FTN, ROC, &
         BTOR, ROCO, RTOR, SHIFT, &
         ABC, ELONG, TRIAN, UPDWN, NA1, NB1, MEQUIL, NEQUIL, &
-        IPEQL, vmec_option, TIME, TSTART, TIMEQL, DTEQL, BTN
+        IPEQL, vmec_option, TIME, TAU, TSTART, TIMEQL, DTEQL, BTN
     use debugger, only: markloc
     use parameters_a2equil, only: equil_now
     use numerical_tools, only: qinterp
-    use scalars, only: tau
     use a2vmec, only: vmec_interface
+    use imas_ids, only: equil_allocate
 
     integer :: i, jexit, NDTEQUILMY, equil_solver, jthe, nrho_surf, nthe_surf
     integer :: t_wall1, t_wall2, rate
@@ -183,71 +183,7 @@ contains
     CASE(7)   !stellarator equilibrium solver
         nrho_surf = abs(NEQUIL)
         nthe_surf = abs(MEQUIL)
-        if (associated(equil_now%coord_sys%position%r)) then
-            deallocate(equil_now%coord_sys%position%r)
-            deallocate(equil_now%coord_sys%position%z)
-            deallocate(equil_now%coord_sys%position%rmin)
-            deallocate(equil_now%coord_sys%position%psirz)
-            deallocate(equil_now%coord_sys%position%theta2d)
-            deallocate(equil_now%eqgeometry%rectgrid%psirz2d)
-            deallocate(equil_now%eqgeometry%rectgrid%fdia2d)
-            deallocate(equil_now%eqgeometry%rectgrid%r2d)
-            deallocate(equil_now%eqgeometry%rectgrid%z2d)
-        endif
-        allocate(equil_now%coord_sys%position%r(nrho_surf, nthe_surf))
-        allocate(equil_now%coord_sys%position%z(nrho_surf, nthe_surf))
-        allocate(equil_now%coord_sys%position%rmin(nrho_surf, nthe_surf))
-        allocate(equil_now%coord_sys%position%psirz(nrho_surf, nthe_surf))
-        allocate(equil_now%coord_sys%position%theta2d(nthe_surf))
-        allocate(equil_now%eqgeometry%rectgrid%psirz2d(1, 1))
-        allocate(equil_now%eqgeometry%rectgrid%fdia2d(1, 1))
-        allocate(equil_now%eqgeometry%rectgrid%r2d(1))
-        allocate(equil_now%eqgeometry%rectgrid%z2d(1))
-        allocate(equil_now%coord_sys%gradvcell(nrho_surf, nthe_surf))
-        allocate(equil_now%coord_sys%bpcell(nrho_surf, nthe_surf))
-        allocate(equil_now%coord_sys%bcell(nrho_surf, nthe_surf))
-        allocate(equil_now%coord_sys%rcell(nrho_surf, nthe_surf))
-        allocate(equil_now%coord_sys%darea(nrho_surf, nthe_surf))
-        allocate(equil_now%coord_sys%jphi(nrho_surf, nthe_surf))
-
-        equil_now%coord_sys%gradvcell = 0.d0
-        equil_now%coord_sys%bpcell    = 0.d0
-        equil_now%coord_sys%bcell     = 0.d0
-        equil_now%coord_sys%rcell     = 0.d0
-        equil_now%coord_sys%darea     = 0.d0
-        equil_now%coord_sys%jphi      = 0.d0
-
-        if (.not. associated(equil_now%profiles_1d%rho_tor_norm)) then
-            allocate(equil_now%profiles_1d%areat  (nrho_surf))
-            allocate(equil_now%profiles_1d%bdb0   (nrho_surf))
-            allocate(equil_now%profiles_1d%bmaxt  (nrho_surf))
-            allocate(equil_now%profiles_1d%bmint  (nrho_surf))
-            allocate(equil_now%profiles_1d%dpsidv (nrho_surf))
-            allocate(equil_now%profiles_1d%F_dia  (nrho_surf))
-            allocate(equil_now%profiles_1d%ffprime(nrho_surf))
-            allocate(equil_now%profiles_1d%fofb   (nrho_surf))
-            allocate(equil_now%profiles_1d%g1     (nrho_surf))
-            allocate(equil_now%profiles_1d%g2     (nrho_surf))
-            allocate(equil_now%profiles_1d%ggradro(nrho_surf))
-            allocate(equil_now%profiles_1d%gm1    (nrho_surf))
-            allocate(equil_now%profiles_1d%gm4    (nrho_surf))
-            allocate(equil_now%profiles_1d%gm41   (nrho_surf))
-            allocate(equil_now%profiles_1d%gm5    (nrho_surf))
-            allocate(equil_now%profiles_1d%perim  (nrho_surf))
-            allocate(equil_now%profiles_1d%phi    (nrho_surf))
-            allocate(equil_now%profiles_1d%pprime (nrho_surf))
-            allocate(equil_now%profiles_1d%pressure(nrho_surf))
-            allocate(equil_now%profiles_1d%psi    (nrho_surf))
-            allocate(equil_now%profiles_1d%q      (nrho_surf))
-            allocate(equil_now%profiles_1d%rho_tor(nrho_surf))
-            allocate(equil_now%profiles_1d%rho_tor_norm(nrho_surf))
-            allocate(equil_now%profiles_1d%shif   (nrho_surf))
-            allocate(equil_now%profiles_1d%surface(nrho_surf))
-            allocate(equil_now%profiles_1d%volume (nrho_surf))
-            allocate(equil_now%profiles_1d%elongation(nrho_surf))
-            allocate(equil_now%profiles_1d%r_inboard (nrho_surf))
-            allocate(equil_now%profiles_1d%r_outboard(nrho_surf))
-        endif
+        call equil_allocate(nrho_surf, nthe_surf, 1, 1, equil_now)
 
         if (TIME == TSTART) NDTEQUILMY = 0
         if (TIME >  TSTART) NDTEQUILMY = 1
@@ -287,44 +223,8 @@ contains
         nthe_surf = abs(MEQUIL)
         if (nrho_surf == 0) nrho_surf = NA1 + 1
         if (nthe_surf == 0) nthe_surf = 41
-        if (.not. associated(equil_now%coord_sys%position%r)) then
-            allocate(equil_now%coord_sys%position%r(nrho_surf, nthe_surf))
-            allocate(equil_now%coord_sys%position%z(nrho_surf, nthe_surf))
-            allocate(equil_now%coord_sys%position%rmin(nrho_surf, nthe_surf))
-            allocate(equil_now%coord_sys%position%psirz(nrho_surf, nthe_surf))
-            allocate(equil_now%coord_sys%position%theta2d(nthe_surf))
-        endif
-        if (.not. associated(equil_now%profiles_1d%rho_tor_norm)) then
-            allocate(equil_now%profiles_1d%areat  (nrho_surf))
-            allocate(equil_now%profiles_1d%bdb0   (nrho_surf))
-            allocate(equil_now%profiles_1d%bmaxt  (nrho_surf))
-            allocate(equil_now%profiles_1d%bmint  (nrho_surf))
-            allocate(equil_now%profiles_1d%dpsidv (nrho_surf))
-            allocate(equil_now%profiles_1d%F_dia  (nrho_surf))
-            allocate(equil_now%profiles_1d%ffprime(nrho_surf))
-            allocate(equil_now%profiles_1d%fofb   (nrho_surf))
-            allocate(equil_now%profiles_1d%g1     (nrho_surf))
-            allocate(equil_now%profiles_1d%g2     (nrho_surf))
-            allocate(equil_now%profiles_1d%ggradro(nrho_surf))
-            allocate(equil_now%profiles_1d%gm1    (nrho_surf))
-            allocate(equil_now%profiles_1d%gm4    (nrho_surf))
-            allocate(equil_now%profiles_1d%gm41   (nrho_surf))
-            allocate(equil_now%profiles_1d%gm5    (nrho_surf))
-            allocate(equil_now%profiles_1d%perim  (nrho_surf))
-            allocate(equil_now%profiles_1d%phi    (nrho_surf))
-            allocate(equil_now%profiles_1d%pprime (nrho_surf))
-            allocate(equil_now%profiles_1d%pressure(nrho_surf))
-            allocate(equil_now%profiles_1d%psi    (nrho_surf))
-            allocate(equil_now%profiles_1d%q      (nrho_surf))
-            allocate(equil_now%profiles_1d%rho_tor(nrho_surf))
-            allocate(equil_now%profiles_1d%rho_tor_norm(nrho_surf))
-            allocate(equil_now%profiles_1d%shif   (nrho_surf))
-            allocate(equil_now%profiles_1d%surface(nrho_surf))
-            allocate(equil_now%profiles_1d%volume (nrho_surf))
-            allocate(equil_now%profiles_1d%elongation(nrho_surf))
-            allocate(equil_now%profiles_1d%r_inboard (nrho_surf))
-            allocate(equil_now%profiles_1d%r_outboard(nrho_surf))
-        endif
+        call equil_allocate(nrho_surf, nthe_surf, 1, 1, equil_now)
+
         if (.not. allocated(prof_as)) then
             allocate(prof_as(NA1))
             allocate(prof_eq(nrho_surf))
@@ -1700,12 +1600,6 @@ contains
         YTH2 = RHO(j)*G22(J)*(MU(J)/RTOR)**2
         CUTOR(J) = (CU(J)/IPOL(J) + YTH2*z1)/(1. + YTH2)
     enddo
-!    else ! calculates only cutor
-!        do J=1, NA1
-!            YTH2 = RHO(j)*G22(J)*(MU(J)/RTOR)**2
-!            CUTOR(J) = (CU(J)/IPOL(J) + YTH2*EQPF(j))/(1. + YTH2)
-!        enddo
-!    endif
 
     end subroutine RHSEQ2
 

@@ -9,7 +9,7 @@
 !Define equilibrium grid
 NEQUIL = 51;
 MEQUIL = 51;
-IPEQL = 4;
+IPEQL = 5;
 
 atreq = 0.1;
 
@@ -63,7 +63,7 @@ NMAIN=NDEUT;
 !!Power block---------------------
 SGNIP= 1.;
 SGNBT= -1.;
-CRAD4=VINT(PEECR,ROC);
+CRAD4=VINT(PEECRB);
 
 
 PEICR = 0.0;
@@ -280,14 +280,14 @@ cr25\car25\5; cr26\car26\5; snbm\SNNBM\-314; \;
 Te0_TE(0); Teb_TEB; Ti0_TI(0); Tib_TIB; TeTi_TE(0)/TI(0); vloo_UPL(AFX(1))_5;
 Teib_TEB/TIB; NNCL_NNCL; NeLA_NECHC; neb_NEB; q0_1./MU(0); QeB_QEB;
 QnB_QNB; fped_CHI2; SETn_CF1; Zef_ZEF(0); Ipl_IPL;
-Ecrh_VINT(PEECR,ROC);
-Icrh_VINT(CAR14,ROC); NBIe_VINT(PEBM, ROC);
+Ecrh_VINT(PEECRB);
+Icrh_VINT(CAR14B); NBIe_VINT(PEBM, ROC);
 NBIi_VINT(PIBM, ROC); Vlup_UPL(AFX(1)); abc_AMETR(AFX(1)); alfs_CAR44(AFX(1));
 Prad_VINT(PRAD, ROC); Tept_TE(AFX(CDWM2)); Tipt_TI(AFX(CDWM2)); nept_NE(AFX(CDWM2));
 ppt_CAR49(AFX(CDWM2)); cmh1_CMHD1; cmh3_CMHD3; ECRH_CBND3; GasV_CFUS4/1.E+19;
 Xped_CHI1; pedW_(1-CDWM4); pidW_(1-CDWM7); surf_SLAT(AFX(1)); CF3_CF3; Dped_CAR28(AFX(CDWM2+CDWM1/2));
 AMJ_AMJ; csl3_CSOL3; JB_CU(AFX(1)); encl_ENCL; dws_(CSOL4); cbnd2_CBND2;
-atop_(CAR44(AFX(1))-CAR44(AFX(CDWM2))); betN_CIMP4; PRni_VINT(CAR47,ROC);
+atop_(CAR44(AFX(1))-CAR44(AFX(CDWM2))); betN_CIMP4; PRni_VINT(CAR47B);
 TRIAN_TRIAN; cmp1_CIMP1; PUMP_ZRD42X; RTOR_RTOR; Rime_0.4*RTOR/1.65; CF9_CF9; che1_CHE1;
 
 !-------------------------------------------------------------------------------------------------------

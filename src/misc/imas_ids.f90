@@ -1,5 +1,7 @@
 module imas_ids
 
+implicit none
+  
 type type_coreprofile  !    Structure for core plasma profile; Time-dependent
     double precision, pointer :: value(:) => null()     ! /value - Signal value; Time-dependent; Vector (nrho)
     character(len=132), dimension(:), pointer ::source => null()       ! /source - Source of the profile (any comment describing the origin of the profile : code, path to diagnostic s
@@ -137,4 +139,109 @@ type type_equilibrium
     type (type_coreprofile) :: coreprofile  ! /equilibrium/global_param - 
 endtype type_equilibrium
 
+contains
+
+    subroutine equil_allocate(nrplasma, ntheta, nR, nZ, equil_io)
+
+    integer, intent(in) :: nrplasma, ntheta, nR, nZ
+    type(type_equilibrium), intent(inout) :: equil_io
+
+    if (.not. associated(equil_io%eqgeometry%boundary%r)) then
+        allocate(equil_io%eqgeometry%boundary%r(ntheta))
+        allocate(equil_io%eqgeometry%boundary%z(ntheta))
+        equil_io%eqgeometry%boundary%r = 0.d0
+        equil_io%eqgeometry%boundary%z = 0.d0
+    endif
+
+    if (associated(equil_io%coord_sys%position%r)) then
+        deallocate(equil_io%coord_sys%position%r)
+        deallocate(equil_io%coord_sys%position%z)
+        deallocate(equil_io%coord_sys%position%rmin)
+        deallocate(equil_io%coord_sys%position%psirz)
+        deallocate(equil_io%coord_sys%position%theta2d)
+
+        deallocate(equil_io%eqgeometry%rectgrid%r2d)
+        deallocate(equil_io%eqgeometry%rectgrid%z2d)
+        deallocate(equil_io%eqgeometry%rectgrid%psirz2d)
+        deallocate(equil_io%eqgeometry%rectgrid%fdia2d)
+    endif
+ 
+    allocate(equil_io%coord_sys%position%r(nrplasma, ntheta))
+    allocate(equil_io%coord_sys%position%z(nrplasma, ntheta))    
+    allocate(equil_io%coord_sys%position%rmin(nrplasma, ntheta))    
+    allocate(equil_io%coord_sys%position%psirz(nrplasma, ntheta))    
+    allocate(equil_io%coord_sys%position%theta2d(ntheta))    
+
+    allocate(equil_io%eqgeometry%rectgrid%r2d(nR))
+    allocate(equil_io%eqgeometry%rectgrid%z2d(nZ))
+    allocate(equil_io%eqgeometry%rectgrid%psirz2d(nR, nZ))
+    allocate(equil_io%eqgeometry%rectgrid%fdia2d(nR, nZ))
+    equil_io%eqgeometry%rectgrid%r2d     = 0.d0
+    equil_io%eqgeometry%rectgrid%z2d     = 0.d0
+    equil_io%eqgeometry%rectgrid%psirz2d = 0.d0
+    equil_io%eqgeometry%rectgrid%fdia2d  = 0.d0
+
+    allocate(equil_io%coord_sys%gradvcell(nrplasma, ntheta))
+    allocate(equil_io%coord_sys%bpcell(nrplasma, ntheta))
+    allocate(equil_io%coord_sys%bcell(nrplasma, ntheta))
+    allocate(equil_io%coord_sys%rcell(nrplasma, ntheta))
+    allocate(equil_io%coord_sys%darea(nrplasma, ntheta))
+    allocate(equil_io%coord_sys%jphi(nrplasma, ntheta))
+    equil_io%coord_sys%gradvcell = 0.d0
+    equil_io%coord_sys%bpcell    = 0.d0
+    equil_io%coord_sys%bcell     = 0.d0
+    equil_io%coord_sys%rcell     = 0.d0
+    equil_io%coord_sys%darea     = 0.d0
+    equil_io%coord_sys%jphi      = 0.d0
+
+    if (.not. associated(equil_io%profiles_1d%rho_tor_norm)) then
+        allocate(equil_io%profiles_1d%psi(nrplasma))
+        allocate(equil_io%profiles_1d%pressure(nrplasma))
+        allocate(equil_io%profiles_1d%phi(nrplasma))
+        allocate(equil_io%profiles_1d%pprime(nrplasma))
+        allocate(equil_io%profiles_1d%ffprime(nrplasma))
+        allocate(equil_io%profiles_1d%F_dia(nrplasma))
+        allocate(equil_io%profiles_1d%q(nrplasma))
+        allocate(equil_io%profiles_1d%gm1(nrplasma))
+        allocate(equil_io%profiles_1d%gm4(nrplasma))
+        allocate(equil_io%profiles_1d%gm5(nrplasma))
+        allocate(equil_io%profiles_1d%gm41(nrplasma))
+        allocate(equil_io%profiles_1d%rbp_b2(nrplasma))
+        allocate(equil_io%profiles_1d%bplfs(nrplasma))
+        allocate(equil_io%profiles_1d%rho_tor_norm(nrplasma) )
+        allocate(equil_io%profiles_1d%jparallel(nrplasma) )
+        allocate(equil_io%profiles_1d%sigmapar%value(nrplasma) )
+        allocate(equil_io%profiles_1d%jni%value(nrplasma) )
+        allocate(equil_io%profiles_1d%te%value(nrplasma) )
+        allocate(equil_io%profiles_1d%acosB2a(nrplasma, 5))
+        allocate(equil_io%profiles_1d%asinB2a(nrplasma, 5))
+        allocate(equil_io%profiles_1d%acosBlnBa(nrplasma, 5))
+        allocate(equil_io%profiles_1d%asinBlnBa(nrplasma, 5))
+        allocate(equil_io%profiles_1d%g1(nrplasma))
+        allocate(equil_io%profiles_1d%g2(nrplasma))
+        allocate(equil_io%profiles_1d%g2int(nrplasma))
+        allocate(equil_io%profiles_1d%fofb(nrplasma))
+        allocate(equil_io%profiles_1d%areat(nrplasma))
+        allocate(equil_io%profiles_1d%perim(nrplasma))
+        allocate(equil_io%profiles_1d%ggradro(nrplasma))
+        allocate(equil_io%profiles_1d%gdroda(nrplasma))
+        allocate(equil_io%profiles_1d%bmaxt(nrplasma))
+        allocate(equil_io%profiles_1d%bmint(nrplasma))
+        allocate(equil_io%profiles_1d%bdb0(nrplasma))
+        allocate(equil_io%profiles_1d%dPSIdV(nrplasma))
+        allocate(equil_io%profiles_1d%surface(nrplasma))
+        allocate(equil_io%profiles_1d%volume(nrplasma))
+        allocate(equil_io%profiles_1d%r_inboard(nrplasma))
+        allocate(equil_io%profiles_1d%r_outboard(nrplasma))
+        allocate(equil_io%profiles_1d%elongation(nrplasma))
+        allocate(equil_io%profiles_1d%tria_upper(nrplasma))
+        allocate(equil_io%profiles_1d%tria_lower(nrplasma))
+        allocate(equil_io%profiles_1d%shif(nrplasma))
+        allocate(equil_io%profiles_1d%shiv(nrplasma))
+        allocate(equil_io%profiles_1d%squareness(nrplasma))
+        equil_io%profiles_1d%squareness = 0.d0
+    endif
+
+    end subroutine equil_allocate
+  
 end module

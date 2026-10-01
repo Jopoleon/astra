@@ -6,7 +6,7 @@ SGNBT=-1.d0;
 
 NEQUIL = 91;
 MEQUIL = 90;
-IPEQL = 4;
+IPEQL = 5;
 ATREQ = 1.;
 
 TAUMIN=0.05;
