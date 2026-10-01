@@ -50,7 +50,12 @@ git clone https://gitlab.mpcdf.mpg.de/git/astra.git astra-src
 cd astra-src
 git remote rename origin upstream
 git switch -c local
+git config core.autocrlf false && git config core.eol lf
+git rm --cached -r -q . && git reset -q --hard   # перевыкачать файлы с LF
 ```
+
+Важно: в `~/.gitconfig` стоит `core.autocrlf=true` (WSL/Windows), с CRLF скрипты ASTRA не работают.
+Поэтому в `astra-src/` и в этом репозитории `core.autocrlf=false` задан локально.
 
 (Наши правки из ветки `local` при этом не восстановятся — они живут только на диске,
 пока не решим, куда их публиковать.)
