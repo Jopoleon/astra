@@ -27,5 +27,8 @@
 
 ## Связанное
 
-- `/home/egor/Work/tokomak/` — основной проект лаборатории (архив «Глобус-М2»); ASTRA там — побочная
-  задача, указатель: `docs/runbooks/astra8-ubuntu-install.md`.
+- `/home/egor/Work/tokomak/` (из Windows: `\\wsl.localhost\Ubuntu\home\egor\Work\tokomak`) — наш
+  внутренний проект лаборатории (архив «Глобус-М2», MDSplus). Там много контекста про установку
+  и про то, как всё обвязано в лаборатории: сервер, доступ, деплой, переписка с лабораторией
+  (`AGENTS.md`, `docs/context/`, `docs/runbooks/`). Пока не разобран — смотреть, когда понадобится
+  контекст лаборатории. Указатель на ASTRA там: `docs/runbooks/astra8-ubuntu-install.md`.
