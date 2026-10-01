@@ -1,6 +1,6 @@
-# Локальный форк исходников ASTRA (свой git, upstream = MPCDF).
-# В этот репозиторий не коммитится: см. docs/local-fork.md
-/astra-src/
+# Полный клон MPCDF и его очищенная копия — только для синхронизации,
+# см. docs/local-fork.md и tools/sync-upstream.sh
+/.upstream/
 
 .idea/
 .vscode/
