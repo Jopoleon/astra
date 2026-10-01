@@ -1,0 +1,5 @@
+! QEDT [MW]: Fusion power to electrons
+!  (Pereverzev 24-JUL-89)
+include 'fml/pedt'
+if (J .eq. 1) QEDT=0.
+QEDT=QEDT+PEDT*VR(J)*HRO

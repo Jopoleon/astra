@@ -1,0 +1,10 @@
+! betpv: Beta poloidal for sawteeth
+!  Pereverzev 25.04.89
+! betpl=8*pi*e-7*[<(ne*Te+ni*Ti)>-(ne*Te+ni*Ti)]/Bpo**2
+!
+ include 'fml/we'
+ include 'fml/wi'
+ BETPV=(WE+WI)/VOLUM(J)
+ BETPV=BETPV-0.0015*3/2*(NE(J)*TE(J)+NI(J)*TI(J))
+ BETPV=BETPV*(RTOR/(BTOR*J*HRO*ABS(MU(J)+.0001)))**2
+ BETPV=8*3.14*1E-7*BETPV*1E6*2/3

@@ -1,0 +1,5 @@
+! QIDT [MW]: Fusion power to ions
+!  (Pereverzev 24-JUL-89)
+include 'fml/pidt'
+if (J .eq. 1) QIDT=0.
+QIDT=QIDT+PIDT*VR(J)*HRO

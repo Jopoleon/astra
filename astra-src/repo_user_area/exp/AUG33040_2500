@@ -1,0 +1,48 @@
+aug #33040
+ Name ||Time  || Value|| Error
+______||______||______||______
+NA1             91
+RTOR            1.65
+AWALL           0.7              Reserved minor radius in the mid-plane
+ELONM           1.70             Chamber elongation
+TRICH           0.15             Chamber traingularity
+AB              0.6              Chamber minor radius in the mid-plane
+ZMJ             1.0              Majority Z
+AMJ             2.0              Majority mass/m_p
+IPL             1.0
+BTOR            2.5
+!IPL      U-file:33040_2500/MAG33040.IPL_AVG0
+!BTOR     U-file:33040_2500/MAG33040.BTOR_AVG0
+
+FILTER   0.002
+
+!Coil currents 
+NAMEXP CCOIL NTIMES 1  POINTS 12   
+ 2.5000 
+-25.7298
+ -5.9771
+  0.3431
+  3.5569
+ 16.1760
+ -2.6956
+-11.3229
+ -9.1073
+ -0.3271
+ -0.0710
+ 10.4898
+  1.0279
+!Coil voltages 
+NAMEXP VCOIL NTIMES 1  POINTS 12   
+ 2.5000 
+0. 0. 0. 0.
+0. 0. 0. 0.
+0. 0. 0. 0.
+
+TI       U-file:33040_2500/TI33040.CEZCMZ_AVG0: 1.e-3
+TE       U-file:33040_2500/TE33040.IDA_AVG0:    1.e-3
+NE       U-file:33040_2500/NE33040.IDA_AVG0:    1.e-13
+VTOR     U-file:33040_2500/ANGF33040.CEZCMZ_AVG0: 1.e-2
+CAR2     U-file:33040_2500/Q33040.QPR:1.
+
+NAMEXP BNDU
+33040_2500/33040.bnd.txt

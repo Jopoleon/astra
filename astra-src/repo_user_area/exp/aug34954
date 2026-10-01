@@ -1,0 +1,34 @@
+aug #34954
+ Name ||Time  || Value|| Error
+______||______||______||______
+NA1             91
+RTOR            1.65
+AWALL           0.7              Reserved minor radius in the mid-plane
+ELONM           1.70             Chamber elongation
+TRICH           0.15             Chamber traingularity
+AB              0.6              Chamber minor radius in the mid-plane
+ZMJ             1.0              Majority Z
+AMJ             2.0              Majority mass/m_p
+
+IPL      U-file:34954/MAG34954.IPL_AVG
+BTOR     U-file:34954/MAG34954.BTOR_AVG
+ZRD3            2.5
+ZRD8            2.5
+
+FILTER   0.002
+
+TI       U-file:34954/I34954.CEZCMZ_AVG: 1.e-3
+TE       U-file:34954/E34954.IDA_AVG:    1.e-3
+NE       U-file:34954/N34954.IDA_AVG:    1.e-13
+VTOR     U-file:34954/V34954.CEZCMZ_AVG: 1.e-2
+CAR2     U-file:34954/Q34954.QPR:        1.
+
+!Coil currents 
+NAMEXP CCOIL NTIMES 1  POINTS 12   
+ 0.0000 
+ 11.15  11.15  11.15  1.3666  
+ 0.9182  -2.1626  -2.2336  0.7633  
+ -12.9188  -6.6421  14.7121  22.5355  
+
+NAMEXP BNDU
+34954/34954.bnd.txt

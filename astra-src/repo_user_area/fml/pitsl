@@ -1,0 +1,21 @@
+! PITSL [MW/m#3/keV]: Longitudinal ion heat loss in SOL: PITSL=q_i/L, 
+!  according to G.Becker, NF, Vol.35, No.1, 35 (1995)
+!
+! Longitudinal heat flow
+! q_i = M n_i 2*T_i v_s = M n_i m_i v_i^2 v_s, M is the Mach number
+!   
+! v_s = sqrt((T_e+T_i)/m_i)
+!
+! q_i=9.9e2*M*NI*TI*sqrt(TE+TI)/L, [keV, m -> MW/m^2]
+!
+! L=0.5*\pi*q_a*R_0
+!
+!   Usage:  (for implicit scheme)
+! PIT=...-PITSL
+!   (Pereverzev 15-MAR-99)
+PITSL = 9.9e2*0.08*NI(j)*sqrt((TE(j)+TI(j))/AMAIN(j))
+! second line added to convert AUG connection length for other machines
+! AUG connection length is in factor 0.08
+! Mach number is 0.08*L_AUG=0.8
+! (G.W.Pacher - 26-03-2001)   *(1.65*4.)/(RTOR/MU(NA1))
+

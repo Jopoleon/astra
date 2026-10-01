@@ -1,0 +1,3 @@
+! QDV8 [F0/s]: Integral {0, R} (SDV8) dV
+!   (Pereverzev 9-OCT-07)
+QDV8 = HRO*SUM(SDV8(1:J)*VR(1:J))

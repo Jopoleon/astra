@@ -1,0 +1,18 @@
+! QNDNT [10#19/s]: d/dt(Volume integral {0, R}  NE )
+!   (Yushmanov 15-FEB-89)
+double precision FUNCTION QNDNTR(YR)
+
+use scalars, only: HRO, TAU
+use status, only: NE, NEO
+use standard_functions, only: VINT, VINTO
+
+implicit none
+
+double precision, intent(in) :: YR
+double precision :: YQ, YQO
+
+YQ  = VINT (NE , YR)
+YQO = VINTO(NEO, YR)
+QNDNTR = (YQ - YQO)/TAU
+
+end function QNDNTR

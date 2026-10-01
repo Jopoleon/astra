@@ -1,0 +1,7 @@
+! PIONZ [MW/m#3]:  Ion heat source due to cold neutrals Ionization
+! PIONZ=3/2*[<sigE*v>*Ne*Nn*Tn+<sigI*v>*Ni*Nn*Tn
+! PI=PIONZ+...
+!   (Pereverzev 14-MAY-87)
+INCLUDE 'fml/svii'
+INCLUDE 'fml/svie'
+PIONZ =0.0024*(NNCL+NNWM)*NN(J)*  (SVIE*NE(J)+SVII*NI(J))*TN(J)

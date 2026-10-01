@@ -1,0 +1,11 @@
+  34954AUGD 1 0 6              ;-SHOT #- F(X) DATA -UF1DWR- 03Jul2019
+                               ;-SHOT DATE-  UFILES ASCII FILE SYSTEM
+   0                           ;-NUMBER OF ASSOCIATED SCALAR QUANTITIES-
+ Time                Seconds   ;-INDEPENDENT VARIABLE LABEL-
+ Plasma Current      Amps      ;-DEPENDENT VARIABLE LABEL-
+ 0                             ;-PROC CODE- 0:RAW 1:AVG 2:SM. 3:AVG+SM
+          1                    ;-# OF X PTS-
+  2.500020E+00
+  7.969516E-01
+ ;----END-OF-DATA-----------------COMMENTS:-----------
+ Generated with write_u.py

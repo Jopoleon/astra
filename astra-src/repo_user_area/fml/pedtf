@@ -1,0 +1,7 @@
+! PEDTF [MW/m#3]   D-T Fusion power deposited to electrons (th+NBI)
+!     A.Polevoi 06-JUL-99
+  Y = 88./TE(J)
+  PEDTF = sqrt(Y)
+  PEDTF = (1.-2.*(0.16667*LOG((1.-PEDTF+Y)/(1.+2.*PEDTF+Y))+  0.57735026*(ATAN( 0.57735026*(2.*PEDTF-1.))+0.52359874) ) / Y)
+include 'fml/pdtf'
+  PEDTF = PDTF*PEDTF

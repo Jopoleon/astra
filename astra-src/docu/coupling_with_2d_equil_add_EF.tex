@@ -1,0 +1,362 @@
+%\chapter{Reference guide}
+
+\section{Coupling with the 2D magnetic equilibrium}
+In this section it is detailed the scheme which Astra--7.0 uses to couple with a
+generic Grad--Shafranov solver, be it prescribed or free--boundary.
+The main idea behind the coupling scheme is: the use of normalized grid $x$
+together with the current diffusion being solved for $\psi$, suggest to devise a
+scheme in which $\psi$ becomes the fundamental grid. This scheme is somewhat 
+different from what is done in so--called $q$--solvers, which perform iterations
+around the invariance of the safety factor $q$. Other schemes use the parallel 
+current $j_{||}$ as the quantity that directs the iterations. 
+The common experience is that both $q$--solvers and $j_{||}$--solvers are prone
+to numerical instabilities, hampering the ease of simulating disparate
+scenarios.
+
+In the following it is explained why, what is called later on, $\psi$--solver is
+better suited to guarantee stability and accuracy by resorting to not so 
+complicated numerical scheme.
+%
+\subsection{The Grad--Shafranov equation for a $\psi$--solver} 
+The starting point is the Grad--Shafranov equation (GSE):
+\begin{eqnarray}
+\Delta^* \Psi = -4\pi^2 \mu_0 R^2 \frac{\partial P}{\partial\psi} - 4\pi^2 F  \frac{\partial F}{\partial\psi} + ...{\rm (coils)}...
+\label{GSeqcouplsec}
+\end{eqnarray}
+where $\Psi(R,Z)$, $\psi(x)$, and one requires that $\Psi(x(R,Z))=\psi(x)$ on closed flux surfaces.
+$F=R B_\phi$ is the usual poloidal current integral.
+
+A useful relation is found between $F$ and derivative of $\psi$ over $x$:
+\begin{eqnarray}
+F(x) = \frac{2\pi}{g_3} \Phi_{\rm b} H \hat{q} \nonumber \\
+H = \frac{\partial\psi}{\partial V} \nonumber \\
+\hat{q} = 2x\frac{\partial x}{\partial\psi} 
+\label{Ffuncqhateq}
+\end{eqnarray}
+where $\displaystyle g_3=\left\langle \frac{1}{R^2}\right\rangle$. Notice that in the definition of $F$ 
+there are two unknowns at the level of transport: $H(x)$, and $\Phi_{\rm b}$. These two quantities cannot 
+be determined solely from 1D radial transport processes. However they are essential to compute both the 
+poloidal (and thus the parallel) current, and to compute the radial coordinate $\rho=\rho_{\rm b} x$ that 
+is actually used
+in the transport equations. The user can also prescribe the value of $F$ at the plasma/vacuum interface, 
+i.e. $F_{\rm b}=F_{\rm vac}$. If there are no poloidal currents flowing outside the separatrix, then 
+$F_{\rm b}=R_0 B_{\phi.0}$, i.e. the vacuum constant value. The value of $F_{\rm vac}$ {\it per se} does 
+not influence the equilibrium solution. However it influences the value of $\rho_{\rm b}$.
+
+Note also that $P'=\partial P/\partial\psi$ is a known function of $x$.
+
+Upon substitution of definition (\ref{Ffuncqhateq}) into the GSE we get (external coil currents are not 
+mentioned from now on):
+\begin{eqnarray}
+\Delta^* \Psi = -4\pi^2 \mu_0 R^2 \frac{\partial P}{\partial\psi} - 16\pi^4 \Phi_{\rm b}^2\frac{\hat{q} }{g_3}  H  \frac{\partial }{\partial\psi} \left(\frac{\hat{q}}{g_3} H \right)
+\label{GSeqcouplsec}
+\end{eqnarray}
+
+The flux--surface average of equation (\ref{GSeqcouplsec}) looks like:
+\begin{eqnarray}
+\frac{\partial}{\partial V}\left(g_2 H \right) = -4\pi^2 \mu_0 \frac{\partial P}{\partial\psi} - 16\pi^4 \Phi_{\rm b}^2 \hat{q}  H  \frac{\partial }{\partial\psi} \left(\frac{\hat{q}}{g_3} H \right)
+\label{GSeqcouplsecfsa}
+\end{eqnarray}
+with $\displaystyle g_2=\left\langle \frac{|\nabla V|^2}{R^2}\right\rangle$.
+
+Or:
+\begin{eqnarray}
+H\frac{\partial}{\partial x}\left(g_2 H \right) = -4\pi^2 \mu_0 \frac{\partial P}{\partial x} - 16\pi^4 \Phi_{\rm b}^2 \hat{q}  H  \frac{\partial }{\partial x} \left(\frac{\hat{q}}{g_3} H \right)
+\label{GSeqcouplsecfsax}
+\end{eqnarray}
+
+By defining $P_x = \partial P / \partial x$, and the additional quantities: $y=H^2/2$, $A=g_2+16 \pi^4 \Phi_{\rm b}^2 \hat{q}^2/g_3$, $B=2(g_{2,x}+16 \pi^4 \Phi_{\rm b}^2 \hat{q}(\hat{q}/g_3)_x)$, and $C=-4\pi^2 \mu_0 P_x$, we can compact the equation in:
+\begin{eqnarray}
+A y_x = -B y + C
+\label{GSeqcouplsecfsay}
+\end{eqnarray}
+which solution is easily computed as:
+\begin{eqnarray}
+y(x) =y_0 e^{-[B](x)} + e^{-[B](x)}\int_0^x{e^{[B](x')}C(x')dx'} 
+\label{GSeqcouplsecfsaysol1}
+\end{eqnarray}
+where here we temporarily employ the notation $[B](x)=\int_0^x Bdx$.
+
+The boundary condition $y(x=1)=y(1)$ is given in terms of known quantities:
+\begin{eqnarray}
+y(1) = \frac{1}{2}\left(\frac{F_{\rm vac} g_{3}(1)}{2\pi\Phi_{\rm b}\hat{q}(1)}\right)^2 
+\label{y1bc}
+\end{eqnarray}
+which allows to compute the solution to equation (\ref{GSeqcouplsecfsaysol1}):
+\begin{eqnarray}
+y(x) =\frac{y(1)-e^{-[B](1)}\int_0^1{e^{[B](x')}C(x')dx'}}{e^{[B](1)}} e^{-[B](x)} + e^{-[B](x)}\int_0^x{e^{[B](x')}C(x')dx'} 
+\label{GSeqcouplsecfsaysol2}
+\end{eqnarray}
+Having this solution, we can finally solve for $H(x)=\sqrt{2y(x)}$.
+
+The knowledge of $H(x)$ allows to compute the plasma volume $V(x)$ as:
+\begin{eqnarray}
+V(x) =\int_0^x \frac{2x}{H\hat{q}}dx 
+\label{VfromHeq}
+\end{eqnarray}
+On the other hand, the total plasma volume $V_{\rm b}=V(1)$ cannot be solved for by the flux--surface
+averaged GSE, since it depends on the exact last closed flux surface shape. 
+
+What then happens is that equation (\ref{VfromHeq}) is actually a non--linear equation for $\Phi_{\rm b}$:
+\begin{eqnarray}
+V_{\rm b}(\Phi_b) =\int_0^1 \frac{2x}{H(\Phi_{\rm b})\hat{q}}dx 
+\label{VfromHeq}
+\end{eqnarray}
+
+Having now found both $H(x)$ and the $\Phi_{\rm b}$ consistent with $\psi(x)$ and with the plasma volume
+$V_{\rm b}$, we can solve the 2D problem, equation (\ref{GSeqcouplsec}), with boundary condition
+$\Psi_{\infty}=0$. The 2D problem is solved in this form now:
+\begin{eqnarray}
+\Delta^* \Psi = -4\pi^2 \mu_0 \left(R^2-\frac{1}{g_3}\right) \frac{\partial P}{\partial\psi} + \frac{1 }{g_3}  \frac{\partial }{\partial V} \left(g_2 H \right)
+\label{GSeqcouplsecfinal}
+\end{eqnarray}
+which manifestly shows that the 2D problem reduces to computation of just flux--surfaces shape instead of usual
+shape+labeling.
+
+Notice that in the GSE equation, on the right--hand side, the quantity $H(x)$ has required both $g_2,g_3$
+for its solution. However, both $g_2,g_3$ are also solutions of the 2D GSE equation. To converge these two
+metric coefficients, iterations are necessary. Once convergence is reached, it is possible to check that the flux jump inside the plasma coincides with
+the flux jump from current diffusion equation, i.e. $\Psi_{\rm b}-\Psi_0=\psi_{\rm b}-\psi_0$.
+
+In cases of free--boundary computations, the plasma volume $V_{\rm b}$ can also change during iterations.
+%
+\subsection{The numerical scheme in details}
+Astra produces input profiles to the equilibrium coupling schemes both $\psi(x)$ and $P(x)$. $x$ is here
+the main Astra grid.
+After entering the interface for the coupling the two profiles are preinterpolated on what will be used as
+equilibrium grid $X$, equispaced from 0 to 1. As such, the iteration scheme sees entering profiles
+$\psi(X),P(X)$. Note that usually $N_X < N_x$ to speed up equilibrium computations. 
+
+Then the coupling scheme proceeds as follows (given for the general case of free--boundary equilibria):
+
+0) $\psi(X),P(X)$ enter in the iteration process;
+
+1ext) External iteration $j_{\rm ext}=0$: initial guesses for $g_2,g_3,\Phi_{\rm b},V_{\rm b}$ are set;
+
+2ext) External iteration $j_{\rm ext}=j_{\rm ext}+1$: update $g_2^{j_{\rm ext}},g_3^{j_{\rm ext}},V_{\rm b}^{j_{\rm ext}}$;
+
+1int) Internal iteration $i=0$: uses last computed $\Phi_{\rm b}$ as initial guess. 
+
+2int) Internal iteration $i=i+1$: solve equation for $H(x)^{i,j_{\rm ext}}$ given $g_2^{j_{\rm ext}},g_3^{j_{\rm ext}},\Phi_{\rm b}^{i,j_{\rm ext}}$. Compute temporary volume $V_{\rm b}^{i}$. 
+
+3int) If $V_{\rm b}^{i} \neq V_{\rm b}^{j_{\rm ext}}$ outside tolerance, adapt $\Phi_{\rm b}^{i,j_{\rm ext}}$ (done with bisection method), and go back to 2int). 
+
+4int) $\Phi_{\rm b}^{i,j_{\rm ext}}$ has converged $\rightarrow$ compute $FF'$;
+
+3ext) Call generic Grad--Shafranov solver with inputs $P'$ and $FF'$ as functions of $\psi_n=(\psi-\psi_0)/(\psi_{\rm b}-\psi_0)$. Returns outputs $g_2,g_3$ and new plasma volume $V_{\rm b}$;
+
+4ext) Check relative error between old and new metric coefficients. If over tolerance, go back to 2ext);
+
+1) Compute additional quantities requested by Astra;
+
+2) Interpolate all outputs from equilibrium grid $X$ to transport grids $x,\tilde{x}$ accordingly.
+
+After one such procedure, the program has performed $i$ iterations on 1D equation and $j_{\rm ext}$ 
+iterations of 2D calculations. The output metric coefficients are self--consistent with given boundary or 
+external coil currents and with current diffusion $\psi$.
+
+Since all passages involve solution of parabolic equations on the same grid, no instability is present. If 
+centered differencies are used, as in our case, spurious oscillations (pure imaginary Fourier modes) can be
+present. However these are dealt with very easily by means of under--relaxation. In the present version,
+old and new values are weighted 50$\%$ each to compute the updated value. This factor 0.5 is fixed for all 
+computations and as such does not constitute a mean to force convergence, but simply to stabilize numerical
+oscillations, retaining the 2nd order accuracy of the numerical solution of the equations. Our experience 
+is that one needs to under--relax only $g_2$ and $V_{\rm b}$, which are the most sensisitve quantities to 
+changes in plasma internal profiles.
+
+Notice also that we kept this procedure very modular, such that any GS solver that uses P' and FF' as
+inputs can be plugged into the iteration scheme.
+%
+\subsubsection{The numerical scheme: parameter namelist}
+In the directory {\it exp/equ/(MACHIN)/} (see below for the meaning of this) there can be a file called {\it 
+namelist.txt} that can be changed to try different numerical parameters. Here is the list with some example values 
+(default values used by the code are optimized for basic calculations):
+\\\\
+0.002 $\:\:\:\:\:$     ! time from which to fix P' and FF' (ignores current diffusion of ASTRA)\\
+0      $\:\:\:\:\:$    ! fix P' and FF' (ignores current diffusion of ASTRA)\\
+5    $\:\:\:\:\:$      ! not used\\
+0     $\:\:\:\:\:$      ! if value=1 writes an information file for testing equilbrium code standalone\\
+0   $\:\:\:\:\:$         ! 0 - do iterations always, 1 - does iterations only at first FBE call, -1 - does iterations always except at first FBE call (recommended value is 0)\\
+3   $\:\:\:\:\:$          ! numerical scheme for stabilization of numerical instabilities, 3 is recommended value\\
+3    $\:\:\:\:\:$      ! hard-wired parameters, leave 3\\
+0    $\:\:\:\:\:$      ! write files with diagnostic informations if value = 1\\
+0    $\:\:\:\:\:$     ! leave 0\\
+0.5   $\:\:\:\:\:$      ! under--relaxation factor\\
+0.1    $\:\:\:\:\:$     ! under--relaxation factor for metric coefficients correction\\
+0.2   $\:\:\:\:\:$    ! under--relaxation factor for metric coefficients derivatives\\
+1.E+2  $\:\:\:\:\:$   ! not used, do not change\\
+1.   $\:\:\:\:\:$      ! not used, do not change\\
+10000   $\:\:\:\:\:$   ! maximum number of iterations allowed\\
+1    $\:\:\:\:\:$    ! maximum number of iterations to be performed (if converges exits before of course). This depends on the time step. If time step is large, probably better to do some iterations\\
+2    $\:\:\:\:\:$      ! interpolation routine: 1 is quadratic, 2 is cubic splines\\
+4			  $\:\:\:\:\:$   			! interpolation method for flux--surfaces to rectangular grid: 4 is bi--quadratic\\
+1.E-9    $\:\:\:\:\:$     ! tolerance on magnetic flux at boundary\\
+1.E-5   $\:\:\:\:\:$      ! tolerance on metric coefficients variation\\
+1.E-5    $\:\:\:\:\:$      ! tolerance on plasma volume variations\\
+1.E-8 	  $\:\:\:\:\:$   		! tolerance on metric coefficients derivative variation (not used)\\					
+0 	  $\:\:\:\:\:$   		! if 0, does not do iterations if refit currents. 1 to do iterations when refitting currents \\					
+0 	  $\:\:\:\:\:$   		! if 0 does not overwrite coil.dat with refitted currents\\					
+
+%
+%\subsection{Another possible adiabatic compression scheme}
+%In section 2.3 we have discussed how grid convective terms are treated in the present version when using
+%normalized grid. There is also a third possibility, that is chosen by setting {\bf do\_adcmp=1}, or {\bf do\_adcmp=2}, %in the
+%parameter file of the coupling scheme, i.e. in \\ {\it ./EQUIL/COUPLING\_SCHEME/parameters\_cpef2a.f90}%
+
+%By setting {\bf do\_adcmp=1}, the code performs adiabatic compression dynamically during the internal 
+%iterations of the 1D equation, such that $\psi(\Phi)$ remains an invariant. This is what is done on the 
+%transport side a posteriori. However if done here, it assures consistency independently of the time 
+%stepping.
+
+%In addition, by setting {\bf do\_adcmp=2}, the same procedure is also applied to the pressure $P$, to keep $P(\Phi)$ constant (but neglecting $V'$ changes, which are anyway negligible in most cases).
+
+%If instead {\bf do\_adcmp=0} is chosen, adiabatic compression is performed a posteriori in the transport 
+%side. As said, that is still ok, but full consistency with the equilibrium requires solving it also in the 
+%1D equation iterations.
+%
+\subsection{Choosing between free--boundary and prescribed boundary equilibria}
+A new control parameter {\bf ITFBE} has been added, which can have values and meaning as explained in the following table 3.1.
+\\
+{\bf Table 3.1} Choice of equilibrium solution with {\bf ITFBE}\\[2ex]
+\begin{tabular}{|l|l|l|}					\hline
+\bf Name	&\bf Value & Description\\ \hline
+\tt ITFBE 	& -1 & Equilibrium is solved in prescribed boundary mode\\
+\tt  	& $>$ 0.0 &  Equilibrium is solved in free--boundary mode from TIME $>$ ITFBE\\ 
+\hline
+\end{tabular}
+\bigskip\\
+By default, {\bf ITFBE}=-1.
+
+Another variable {\bf IFBEG} regulates the choice between rectangular grid with {\bf IFBEG=0} and adaptive grid with {\bf IFBEG=1}. Notice that this choice has also to be set in the equilibrium code as well otherwise some possible incomapitibility problems will arise.
+%
+\subsubsection{The SPIDER parameter list}
+In the directory {\it exp/equ/(MACHIN)/} (see below for the meaning of this) there can be a file called {\it 
+namelist$\_$spider.txt} that can be changed to try different numerical parameters. Here is the list with some example values 
+(default values used by the code are optimized for basic calculations):
+\\\\
+0 $\:\:\:\:\:$     ! print info on screen from SPIDER\\
+0      $\:\:\:\:\:$    ! choose k$\_$grid (0 for rectangular, 1 for adaptive)\\
+1.0d-7    $\:\:\:\:\:$      ! tolerance on fixed boundary calculations\\
+1.0d-6     $\:\:\:\:\:$      ! tolerance on circuit equations\\
+1   $\:\:\:\:\:$         ! key$\_$plc: 1 to fix IPL into SPIDER, 0 to allow IPL from SPIDER to be used as actual current \\
+4   $\:\:\:\:\:$          ! number of toroidal harmonics for TORIC\\
+0    $\:\:\:\:\:$      ! if 1, save file for TORIC \\
+0    $\:\:\:\:\:$      ! if 1, save file for TORBEAM \\
+0    $\:\:\:\:\:$     ! if 1, save file for STRAHL \\
+0   $\:\:\:\:\:$      ! if 1, save file for EQDSK \\
+3    $\:\:\:\:\:$     ! number of fourier modes for STRAHL\\
+0   $\:\:\:\:\:$    ! if > 0, save respective fort. file with some diagnostic data\\
+%
+\subsection{Free--boundary condition on FP equation}
+In addition, the possibility of imposing an alternative boundary condition
+to the current diffusion equation has been made available. The new control parameter
+{\bf ITFBP} allows to choose this option. Its value are given in table 3.2:
+\\
+{\bf Table 3.2} Choice of boundary condition with {\bf ITFBP}\\[2ex]
+\begin{tabular}{|l|l|l|}					\hline
+\bf Name	&\bf Value & Description\\ \hline
+\tt ITFBP 	& 0 & No effect (i.e. uses the ASTRA b.c., \\
+\tt & & either prescribed $\ipl$ or prescribed $\psi_{\rm b}$)\\
+\tt  	& -1 &  Boundary condition is $\displaystyle \psi_{\rm b}+\left[G \frac{\partial\psi}{\partial\rho}\right]_{\rm b}=\psi_{\rm ext}$\\ 
+\hline
+\end{tabular}
+\bigskip\\
+By setting {\bf ITFBP}=-1, the boundary condition $\displaystyle \psi_{\rm b}+\left[G \frac{\partial\psi}{\partial\rho}\right]_{\rm b}=\psi_{\rm ext}$ is used, where the left--hand--side is numerically discretized and the auxiliary values $G,\psi_{\rm ext}$ are provided by the equilibrium code from a free--boundary equilibrium computation. The exact definitions are: 
+\begin{eqnarray}
+G=\frac{1}{l_{\rm b}}\oint\oint \rm{Green}(\vec{r},\vec{r}') \; \left\vert\frac{\nabla{\rho}}{R}\right\vert(\vec{r}') \; dl \; dl' \\ \nonumber
+\psi_{\rm ext}=\mu_0 \sum_j \; \frac{1}{l_{\rm b}}\oint  \rm{Green}(\vec{r}_j,\vec{r}') \; I_j \; dl'
+\label{Gpsiextdefeq}
+\end{eqnarray}
+where "Green" is the Green function of the Grad--Shafranov Laplacian operator and $I_j$ are the external conductors currents, and $l_{\rm b}$ is the LCFS perimeter length.
+The value of $\psib,\psi_{\rm ext},G$ in ASTRA are recorded in the scalar variables {\bf PSIFB}, {\bf PSIEXT}, {\bf PSPLEX}.
+The default value of the b.c. control variable is {\bf ITFBP}=0.
+%
+\subsection{Choosing if to solve circuit equations and controller}
+Additional control parameters {\bf ICIRCQ} and {\bf IPCTRL} have been introduced. The possible options are:
+\\
+{\bf Table 3.3} Choice of values for {\bf ICIRCQ} and {\bf IPCTRL}\\[2ex]
+\begin{tabular}{|l|l|l|}					\hline
+\bf Name	&\bf Value & Description\\ \hline
+\tt ICIRCQ 	& 0 & Does not run circuit equations in equilibrium code \\
+\tt  	& 1 &  Runs circuit equations in equilibrium code\\ 
+\tt IPCTRL 	& 0 & Does not run controller, coil.dat untouched, no refit \\
+\tt  	& 1 &  Runs controller, and refit coil--currents at first time step\\ 
+\tt  	& -1 &  Runs controller, and solves FB--GSE at first time step, given coil currents\\ 
+\tt  	& -2 &  No controller, do not refit coil--currents at first time step, \\
+\tt  	&  &  CCOIL goes into coil.dat\\ 
+\tt  	& -3 &  No controller, do not refit coil--currents at first time step,\\
+\tt  	&  &   CCOIL goes into coil.dat\\ 
+\tt  	& -4 &  No controller, refit coil--currents at first time step,\\
+\tt  	&  &   coil.dat untouched\\ 
+\tt  	& -5 &  No controller, refit coil--currents at first time step,\\
+\tt  	&  &   CCOIL into coil.dat\\ 
+\hline
+\end{tabular}
+\bigskip\\
+Notice that if IPCTRL is non--integer, in particular if written as IPCTRL=X.1 (where X is a value as in the table), then
+skips internal ASTRA iterations of NITREQ at first free--boundary call.
+
+Notice also that if IPCTRL is such that CCOIL overwrites coil.dat, then one has to create, in the
+{\it /exp/equ/(MACHINE)/} a directory called {\it req2d$\_$input} where a file called
+{\it coil$\_$ref.dat} should be present. This file has the same structure as coil.dat, and will be used as a template 
+to create the coil.dat using CCOIL values for the coil currents.
+%
+\subsection{Sign of toroidal field and toroidal current}
+From Astra--7.0 on, it is explicitly stated that BTOR, IPL, and related parameters (CU, MU, etc.) have to be given with 
+positive sign with respect to the reference coordinate system $(R,Z,\phi)$, or equivalently $(\psi,\theta,\phi)$. The 
+sign as in the real experimental scenario to be simulated, has to be given separately with the two new control 
+parameters {\bf SGNIP} and {\bf SGNBT}, as in table 3.3.
+\\
+{\bf Table 3.4} Sign of reference toroidal current and toroidal field\\[2ex]
+\begin{tabular}{|l|l|l|}					\hline
+\bf Name	&\bf Value & Description\\ \hline
+\tt SGNIP 	& 1 & Current flows into positive $\phi$ direction\\
+\tt  	& -1 & Current flows into negative $\phi$ direction\\ 
+\tt SGNBT 	& 1 & Toroidal field is positive in $\phi$ direction\\
+\tt  	& -1 &  Toroidal field is negative in $\phi$ direction\\ 
+\hline
+\end{tabular}
+\bigskip\\
+The signs will be taken into account in those parts of the code for which the direction of the field and current is relevant for the physical subsystem under study.
+The default values are {\bf SGNIP}=1 and {\bf SGNBT}=1.
+%
+\subsection{PSIAX and PSIBO}
+Two new output variables have been added to Astra. {\bf PSIAX} is the value of 
+$\psi$ at $x=0$, exactly on the magnetic axis. Since the axis is not a grid point, 
+{\bf PSIAX} is obtained with quadratic extrapolation from the first three grid 
+points. {\bf PSIAX} is also used to compute the normalized poloidal grid properly.
+
+The other variable {\bf PSIBO} is the value of $\psi$ at $x=1$.
+%
+\subsection{Machine dependency}
+To allow trating multiple machines (e.g. AUG, ITER, JET, etc...), a new variable has been added to ASTRA.
+The variable is called {\bf MACHIN} and it is a 4--character string that has to be assigned by putting the name of the machine in the first four characters of the experimental file list.
+So if one wants to choose 'aug' the experimental file heading would read something like:\\\\
+aug -AUG- \#11110 t=100 \\
+ Param|Time  |  Value  |   Error \\
+|-----|------|---------|-------- \\\\
+
+For ITER it would look like \\\\
+iter -ITER- \#11110 t=100 \\
+ Param|Time  |  Value  |   Error \\
+|-----|------|---------|-------- \\ \\
+
+The variable {\bf MACHIN} is then assigned as 'aug ' or 'iter'.
+The reason to do this is because, in the {\it exp/equ/} directory, the directory where equilibrium informations sit has the 
+same name as trim(MACHIN) (i.e. without the eventual space in case of a 3--letters machine name). So for 'aug ' there 
+will be a {\it exp/equ/aug/} directory which ASTRA and the equilibrium code will use to put information on the equilibrium.
+
+These trick allows to avoid having to recompile the code every time one wants to switch between machines.
+
+
+
+
+
+
+
+\clearpage
+
+
+
+
+

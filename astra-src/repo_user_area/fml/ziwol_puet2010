@@ -1,0 +1,17 @@
+! ZIWOL_PUET2010 [-] Average tungsten charge
+!    (D. Fajardo 28-11-2023)
+!    new parametrization, based on data from
+!    T. Pütterich et al 2010 Nucl. Fusion 50 025012
+T = TE(J)*1000.
+Z = LOG10(TE(J))
+if (T <= 9.86) then
+    ZIWOL_PUET2010 = 0.
+else if (T > 9.86 .and. T <= 1299.99) then
+    ZIWOL_PUET2010 = 13.3595*Z + 26.803
+else if (T > 1299.99 .and. T <= 3043.6871) then
+    ZIWOL_PUET2010 = 38.996*Z + 23.882
+else if (T > 3043.6871 .and. T <= 8749.84) then
+    ZIWOL_PUET2010 = 19.8975*Z + 33.1165
+else if (T > 8749.84) then
+    ZIWOL_PUET2010 = 20.0115*(Z - 0.942)**0.6773 + 51.86
+endif

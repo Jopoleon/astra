@@ -1,0 +1,3 @@
+! QDVN [10^19/s]: Integral {0, R} (SDVN) dV
+!   (Pereverzev 9-OCT-07)
+QDVN = HRO*SUM(SDVN(1:J)*VR(1:J))

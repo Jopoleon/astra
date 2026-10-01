@@ -1,0 +1,5 @@
+! SHAT []: Shear for usage in the if S/PPPL transport model
+!                       a   dq
+!          defined as  --- ----  Pereverzev 22-04-02
+!                       q   da
+if (j .le. NA)     SHAT =-AMETR(j)/MU(j)*(MU(j+1)-MU(j))/(AMETR(j+1)-AMETR(j))

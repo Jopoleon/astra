@@ -1,0 +1,9 @@
+! HCKM1 []: Electrical particle  convection  Neoclassical Kim
+!  inclusion of finite collision times (all collisionality
+!  regimes: banan - plateau - Pfirsch-Schlueter)
+!   Phys. Fluids B 3, 2050 (1991).
+!   (Alexander 04-JAN-95)
+! Example: HC=HCKM1
+include 'fml/dhkim'
+YD2=YMUE12*(YMUE22+YLE22)-YMUE22*(YMUE12+YLE12)
+HCKM1=BETPL*(DHKIM+YD2/DXKIM)

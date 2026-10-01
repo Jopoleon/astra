@@ -1,0 +1,10 @@
+ASTRA builds:
+
+mod/
+    misc/ feqis/ fnc/ astra/ nbi/ sbr/
+
+lib/
+    libmisc.a libfeqis.a libfnc.a libastra.a libnbi.a libsbr.a
+
+Other modules like SPIDER, TGLF, QuaLiKiZ, QlkNN, json, NEO are precompiled and shared among users on a given platform, with several versions.
+The user can choose the version in $AWS/exe/astra_rc

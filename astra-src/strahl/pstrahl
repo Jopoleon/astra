@@ -1,0 +1,5 @@
+#! /bin/csh -f
+
+unsetenv IDL_STARTUP
+
+idl source/idl/startup.pro

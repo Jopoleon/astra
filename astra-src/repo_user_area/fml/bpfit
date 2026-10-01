@@ -1,0 +1,6 @@
+! BPFIT: Beta Poloidal local with Fast Ions Total
+!  Fable May 2014 - Luda updated November 2017
+!  betpl=4*pi*(ne*Te+ni*Ti)/Bpo**2
+
+BPFIT = 6.4E-4*GP*(NE(J)*TE(J) + NI(J)*TI(J) + 0.5*PBPER(J) + 0.5*PBLON(J)) * &
+    (RTOR/(BTOR*J*HRO*ABS(MU(J) + 0.0001)))**2

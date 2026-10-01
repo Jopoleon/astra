@@ -1,0 +1,135 @@
+%\chapter{Reference guide}
+
+\section{Additional packages available with Astra--7.0}
+%
+\subsection{TORBEAM for ECRH/ECCD calculations}
+Recently, the TORBEAM code has been added to ASTRA through an
+interface subroutine \textit{torba.f} that is found in the sbr/ directory. 
+
+The executable files are to be extracted from the library {\it libtorbeam.a}, 
+and the resulting {\it xxx.o} are to be added to the {\it user.a} archive of 
+the Astra user. 
+
+To call TORBEAM just call it as a subroutine in the model file as:
+\\
+
+TORBA(VAR1,VAR2)::::;
+\\
+
+The outputs {\bf VAR1,VAR2} are two arrays. {\bf VAR1} is the ECRH power density
+deposition profile in [MW/m$^3$], while {\bf VAR2} is the ECCD profile in 
+[MA/m$^2$]. Note that the power profile is sumed up over all gyrotrons, as well 
+as the driven current profile.
+
+At present TORBA can run up to 8 gyrotrons. Their specifications are to be 
+prescribed in a file that has the same name as the experimental file, and has to
+be placed in the {\it exp/ecr/} directory. The structure of the ECRH file is the
+same as the NBI file explained in section 4, table 4.30. In the following table 
+6.1.1 the different parameters are explained for the ECRH file:\\
+\noindent
+{\bf Table 6.1.1. Parameters describing each gyrotron}\\[2ex]
+\begin{tabular}{| c | c | l |}
+\hline
+\bf No.&\bf\hspace*{-1pt}Units\hspace*{-1pt}&\bf Description\\
+\hline
+1  &[MW]& Gyrotron nominal power					\\
+2  &--& Unused parameter \\
+3  &[GHz]& Frequency\\
+4  &[cm]& Major radius from where beam is launched	\\
+5  &[cm]& Vertical position from where beam is launched	\\
+6  &[deg]& Angle of poloidal injection (from LFS, positive for upward launching) 	\\
+7  &[deg]& Angle of toroidal injection (from LFS, positive for clockwise launching)	\\
+8--20 &--& Unused parameters	\\
+\hline
+\end{tabular}\\[15pt]
+The first parameter gives the power injected by each gyrotron.
+This quantity is usually time dependent, therefore, it is convenient to
+set it as a variable rather than as a number. 
+For example, this variable can be a $\tt ZRD$
+and its time evolution can be prescribed in the data file.
+%
+\subsection{Quasi--linear transport model TGLF}
+The TGLF code [G. Staebler {\it et al.}, Phys. Plasmas {\bf 14}, 055909 (2007)] 
+computes turbulence--driven fluxes for heat and particle transport via solution
+of fluid moments with kinetic closure fitted to match kinetic responses computed
+with linear gyrokinetic codes. The trapped and passing particle descriptions 
+have been majorly upgraded with respect to its predecessor GLF23.
+
+In principle different interfaces between Astra and TGLF are available, for both
+serial and parallel computations. They should be requested explicitly.
+%
+\subsection{Quasi--linear transport model QuaLiKiz}
+%The TGLF code [G. Staebler {\it et al.}, Phys. Plasmas {\bf 14}, 055909 (2007)] 
+%computes turbulence--driven fluxes for heat and particle transport via solution
+%of fluid moments with kinetic closure fitted to match kinetic responses computed
+%with linear gyrokinetic codes. The trapped and passing particle descriptions 
+%have been majorly upgraded with respect to its predecessor GLF23.
+
+%In principle different interfaces between Astra and TGLF are available, for both
+%serial and parallel computations. They should be requested explicitly.
+%
+\subsection{TORIC for ICRF calculations}
+An interface to couple Astra to the TORIC code for ICRF heating computations has
+been developed. The routine is called {\it a2toric.f} and is part of the {\it sbr/} package. The TORIC library however has to be requested explicitly.
+%
+\subsection{STRAHL for impurity transport calculations}
+Astra is also now coupled to the impurity transport code STRAHL, such that 
+time--dependent computation can be performed with STRAHL providing impurity 
+profiles, $Z_{\rm eff}$ profiles, and radiated power profiles.
+
+The interface is called {\it A2STRAHL.f} and is part of the {\it sbr/} package. 
+The STRAHL code itself has to be requested explicitly. 
+%
+\subsection{NEO for neoclassical calculations}
+%Astra is also now coupled to the impurity transport code STRAHL, such that 
+%time--dependent computation can be performed with STRAHL providing impurity 
+%profiles, $Z_{\rm eff}$ profiles, and radiated power profiles.
+
+%The interface is called {\it A2STRAHL.f} and is part of the {\it sbr/} package. 
+%The STRAHL code itself has to be requested explicitly. 
+%
+\subsection{ASTRA restart files}
+Sometimes ASTRA computations can be lengthy, and it is important to be able to 
+save relevant data such that one can restart the simulation exactly as it has 
+been saved.
+
+This new routine is called {\it restart\_astra.f} and is in the {\it sbr/} 
+package. 
+It can be called in the model file as:
+
+RESTARTA::::;
+\\
+as with all the other routines, it can be assigned a starting time, an ending 
+time, and time intervals for execution, or keys to be pushed to activate it.
+Each time the routine is called, it will create a new subdirectory in the {\it 
+dat/} directory, the subdirectory being called {\it 
+(model)\_(expfile)\_(index)}, where (model) is the model file name, (expfile) 
+is the experimental file name, and (index) is just an index ordering the time 
+slices.
+
+Also, a new control parameter has been added, which is called {\bf IRESTA}, that can have the following values:
+\\
+{\bf Table 6.5.1} Choice of equilibrium solution with {\bf IRESTA}\\[2ex]
+\begin{tabular}{|l|l|l|}					\hline
+\bf Name	&\bf Value & Description\\ \hline
+\tt IRESTA 	& 0 & Do not use any restart file\\
+\tt  	& $i$ (integer $>$ 0) &  Use restart file with index $i$\\ 
+\hline
+\end{tabular}
+\bigskip\\
+By default, {\bf IRESTA}=0.
+
+If {\tt IRESTA}$>$0, then the restart file with index {\tt IRESTA} is used. What
+the restart option does essentially is reading first the experimental file and 
+model log file as they are, then reading the restart file and substituting all 
+constants with the values as they are stored in the restart file. The constants 
+include all variables and control/grid parameters. The simulation is then 
+started from the {\tt TIME} as stored in the restart file.
+As regards profiles, contrary to the usual Astra initialization, when using the restart 
+file, the following profiles are substituted as they are stored in the restart 
+file:
+
+{\tt TE, NE, TI, F(1--12), FP, UPAR, MU, CU}\\
+Instead of using the values as given in the exp file. This allows to restart a simulation exactly from the state in which it was left before.
+%
+\clearpage

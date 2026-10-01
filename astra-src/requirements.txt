@@ -1,0 +1,13 @@
+Compiler:
+   intel >2018 (ifort, ifx)
+   gfortran
+
+Additional packages
+   MKL
+   MPI
+   OpenMP flags
+   NetCDF if RABBIT is needed
+
+python 
+   v >= 3
+   scipy v >= 0.19.1

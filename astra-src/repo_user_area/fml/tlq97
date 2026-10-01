@@ -1,0 +1,6 @@
+! TL97[s]      TauEth(98) (for L-mode for ITER) (eq. I.3.3.1-2)
+!      "Study of RTO/RC ITER Options", Chapt. I Sec.3.3 Page.6
+!                        Polevoy (19-05-98)
+!       ITER Physics Basis, to be published in Nucl Fus.1
+!          TAU     =TLQ97/Q**.73
+  TLQ97   = 0.023*IPL**.96*RTOR**1.89*BTOR**.03*           AMAIN(1)**.2/ABC**.06            *ELONG**.64*NECHR(.01)**.4

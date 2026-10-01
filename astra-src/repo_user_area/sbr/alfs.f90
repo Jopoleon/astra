@@ -1,0 +1,41 @@
+SUBROUTINE alfs(ped_width, a_lfs, dt_tetop, avdte)
+
+use scalars, only: NA1, ROC
+use status, only: NRD, TE, AMETR
+use parameters_a2equil, only: equil_now
+use numerical_tools, only: qinterp
+use standard_functions, only: RADIAL, GRAD
+
+implicit none
+
+double precision, intent(in) :: ped_width
+double precision, intent(out) :: a_lfs(NRD), dt_tetop(NRD), avdte
+integer :: j, i, Nx, Nt, n1, n2
+double precision :: te_top, Rmag, Zmag
+double precision, dimension(556) :: a_lfs_eq, ametr_eq
+
+nx = SIZE(equil_now%coord_sys%position%r, 1)
+nt = SIZE(equil_now%coord_sys%position%r, 2)
+
+Rmag = equil_now%coord_sys%position%r(1, 1)
+Zmag = equil_now%coord_sys%position%z(1, 1)
+i = MINLOC(abs(equil_now%coord_sys%position%z(nx, 1:nt-1) - Zmag) + &
+    abs(equil_now%coord_sys%position%r(nx, 1:nt-1) - MAXVAL(equil_now%coord_sys%position%r(nx, 1:nt-1), 1)), 1)
+j = MINLOC(abs(equil_now%coord_sys%position%z(nx, 1:nt-1) - Zmag) + &
+    abs(equil_now%coord_sys%position%r(nx, 1:nt-1) - MINVAL(equil_now%coord_sys%position%r(nx, 1:nt-1), 1)), 1)
+
+a_lfs_eq(1:nx) = equil_now%coord_sys%position%r(1:nx, i) - Rmag
+AMETR_eq(1:nx) = 0.5*(equil_now%coord_sys%position%r(1:nx, i) - equil_now%coord_sys%position%r(1:nx, j))
+
+call qinterp(ametr_eq(1:nx), a_lfs_eq(1:nx), nx, AMETR(1:NA1), a_lfs(1:NA1), NA1)
+
+te_top = 100.*RADIAL(TE, ROC*ped_width)
+do j=1, NA1
+   dt_tetop(J) = -GRAD(TE, J)/GRAD(a_lfs, J)/te_top
+enddo
+
+n1 = nint(ped_width*NA1) + 1
+n2 = nint(0.999*NA1) - 1
+avdte = SUM(dt_tetop(n1: n2))/dble(n2 + 1 - n1)
+
+END SUBROUTINE alfs

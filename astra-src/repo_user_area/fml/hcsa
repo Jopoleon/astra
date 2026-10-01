@@ -1,0 +1,36 @@
+! HCSA []:  Bootstrap current density
+!        Jbs = HCSA*ln(Te)'+DCSA*ln(Ne)'+XCSA*ln(Ti)'
+!        Sauter, Angioni, Lin-Liu
+!        Physics of Plasmas, 6, 2834 (1999)
+!        (Angioni 29-MAY-2002)
+!        (corrected for beta tot Fable May 2014)
+!        NUES was replaced by NUESSA
+!        (Teplukhina 08-JAN-2015)
+! Example: HC=HCSA
+
+include 'fml/betpl'
+include 'fml/betpt'
+ZZ  = ZEF(J)
+ZFT = FTLLMR(RHO(J))
+include 'fml/nuessa'
+ZDF = 1 + 0.26*(1. - ZFT)*SQRT(NUESSA)
+ZDF = ZDF + 0.18*(1. - 0.37*ZFT)*NUESSA/SQRT(ZZ)
+ZFTE = ZFT/ZDF
+ZFTE2 = ZFTE**2
+ZFTE3 = ZFTE*ZFTE2
+ZFTE4 = ZFTE2**2
+ZDF = 1 + (1 + 0.6*ZFT)*SQRT(NUESSA)
+ZDF = ZDF + 0.85*(1. - 0.37*ZFT)*NUESSA*(1 + ZZ)
+ZFTI = ZFT/ZDF
+ZFTI2 = ZFTI**2
+ZFTI3 = ZFTI*ZFTI2
+ZFTI4 = ZFTI2**2
+HCEE = (0.05 + 0.62*ZZ)/ZZ/(1. + 0.44*ZZ)*(ZFTE - ZFTE4)
+HCEE = HCEE +(ZFTE2 - ZFTE4 - 1.2*(ZFTE3 - ZFTE4))/(1 + 0.22*ZZ)
+HCEE = HCEE + 1.2/(1 + 0.5*ZZ)*ZFTE4
+HCEI = -(0.56 + 1.93*ZZ)/ZZ/(1. + 0.44*ZZ)*(ZFTI - ZFTI4)
+HCEI = HCEI + 4.95/(1 + 2.48*ZZ)*(ZFTI2 - ZFTI4 - 0.55*(ZFTI3 - ZFTI4))
+HCEI = HCEI - 1.2/(1 + 0.5*ZZ)*ZFTI4
+INCLUDE 'fml/dcsa'
+HCSA = BETPL*(HCEE + HCEI) + DCSA/BETPT*BETPL
+if (J == 1) HCSA = 0.

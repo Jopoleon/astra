@@ -1,0 +1,16 @@
+! PRWOL_PUET2010 [MW*m#3] Tungsten cooling factor
+!    (D. Fajardo 28-11-2023)
+!    new parametrization, based on data from
+!    T. Pütterich et al 2010 Nucl. Fusion 50 025012
+!    Usage:  PE=...-PRWOL_PUET2010*NE*NIZ1
+T = TE(J)*1000.
+Z = LOG10(TE(J))
+if (T <= 25.25) then
+    PRWOL_PUET2010 = 20.
+else if (T > 25.25 .and. T <= 300.) then
+    PRWOL_PUET2010 = -(150.984*Z**4 + 566.56*Z**3 + 729.562*Z**2 + 377.649*Z + 47.922)
+else if (T > 300. .and. T <= 3350.) then
+    PRWOL_PUET2010 = -119.946*Z**3 - 82.821*Z**2 + 32.707*Z + 42.603
+else if (T > 3350.) then
+    PRWOL_PUET2010 = 4.7 + 14.484*EXP(-3.4196*(Z - 0.602)**2)
+endif

@@ -1,0 +1,23 @@
+cv   main ion brems       SXR     spectral brems      thermal CX   nbicx   
+             1             0            0                 0         0
+
+cv  diagnostic lines
+             0      
+
+cc begin atomicData
+acd:acd89_xe.dat           recombination
+scd:scd89_xe.dat           ionisation
+prb:prb89_xe.dat           continuum radiation 
+plt:plt89_xe.dat           line radiation
+cc end atomic Data        
+
+********************Diagnostic Lines******************** 
+
+cd     excitation     recombination   charge exchange
+          0                0               0
+
+cd   # of lines
+       1
+
+cd   charge of ion        ISEL          wavelength(A)       file extension
+ 

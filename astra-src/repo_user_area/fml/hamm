@@ -1,0 +1,5 @@
+! HAMM [m#2/s]: Heat conductivity Anomalous Merezhkin-Mukhovatov
+! HE=5*10#19*Eps#1.75*SQRT(Te/A)/Ne*q*R
+!   IAEA (Baltimore) 1 (1983) 83
+!   (Yushmanov 8-APR-87)
+HAMM=158.*SQRT(TE(J)*SQEPS(J)/AMAIN(J))*SQEPS(J)**3  *MU(J)/(NE(J)*RTOR)

@@ -1,0 +1,570 @@
+\documentclass[12pt]{article}
+\usepackage{times,mathptm}
+%\documentclass{article}
+\input{epsf.tex}		\epsfclipon
+\topmargin 0mm			\oddsidemargin 5mm
+\textwidth 165mm		\textheight 220mm
+\headheight 0mm			\headsep 0mm
+\pagestyle{empty}
+\newfont{\headfont}{cmr7 scaled\magstep0}
+\headheight 10mm		\headsep 10mm
+\pagestyle{myheadings}
+\markright{\headfont
+%\today\hfill 
+ASTRA--7.0 
+% -- draft description --- Not for distribution
+\hfill}
+\input definitions
+
+
+\newcommand{\fl}[1]{\leftline{\tt\hspace*{3em} #1}\\}
+\newcommand{\dl}[1]{\leftline{\tt #1}}
+\def\tab{$\hspace*{-2pt}\longrightarrow\hspace*{-5pt}|\hspace*{-3pt}$}
+%\def\bs{$\,\backslash\,$}
+%\def\bs{\verb"\"}
+\def\bs{{\tt\symbol{92}}}
+\def\us{{\tt\symbol{95}}}
+\def\qq{\qquad}
+%\def\us{$\,\rule[-2pt]{.6em}{.5pt}\,$}
+\def\ust{$\!\!\rule[-1.5pt]{.6em}{.5pt}\!\!$}
+\def\lfl{\leftline}
+\def\sp{\hspace*{.82pt}\tt\_\hspace*{.82pt}}
+\def\sp{\hspace*{.82pt}\tt\_\hspace*{.82pt}}
+\def\Svec{\mathbf{S}}
+\def\Uperpvec{\mathbf{U}_{\perp}}
+\def\bvec{\mathbf{b}}
+\def\Uperp{U_{\perp}}
+\def\Uphis{U_{\phi,s}}
+\def\upara{u_\parallel}
+\def\uparaDZ{\Delta u_{\parallel,Ds}}
+\def\Pivec{\Pi}
+\def\Ppert{\tilde{P}}
+\def\Cref{C_{\rm ref}}
+\def\Aref{A_{\rm ref}}
+\def\jpar{j_{\parallel}}
+\def\Bvac{B_{\rm vac}}
+\def\Rvac{R_{\rm vac}}
+\def\Pvec{\mathbf{P}}
+\def\Avec{\mathbf{A}}
+\def\Cvec{\mathbf{C}}
+\def\Avecref{\mathbf{A}_{\rm ref}}
+\def\Cvecref{\mathbf{C}_{\rm ref}}
+
+\def\fhat{\hat{f}}
+\def\Fhat{\hat{F}}
+\def\ghat{\hat{g}}
+\def\Ghat{\hat{G}}
+
+\def\Tbar{\bar{\mathbf{T}}}
+\def\Gbar{\bar{\mathbf{G}}}
+\def\Sbar{\bar{\mathbf{S}}}
+\def\Bbar{\bar{\mathbf{B}}}
+\def\Lbar{\bar{\mathbf{L}}}
+\def\Hbar{\bar{\mathbf{H}}}
+\def\Ibar{\bar{\mathbf{I}}}
+
+\def\Kapp{K_{\rm P}}
+\def\Kapi{K_{\rm I}}
+\def\Kbarp{\bar{\mathbf{K}}_{\rm P}}
+\def\Kbari{\bar{\mathbf{K}}_{\rm I}}
+\def\Dvec{\mathbf{\Delta}}
+
+\def\ldebye{\lambda_{\rm D}}
+\def\psit{\tilde{\Psi}}
+\def\psih{\hat{\Psi}}
+\def\eH{\mathbf{e}_{\rm h}}
+\def\eT{\mathbf{e}_{\rm t}}
+\def\csn{c_{\rm s}}
+\def\vth{v_{\rm th}}
+\def\vpsi{v_{\psi}}
+\def\phinv{\Phi_{\rm inv}}
+\def\phimix{\Phi_{\rm mix}}
+\def\vthe{v_{\rm th}^{\rm e}}
+\def\massi{m_{\rm i}}
+\def\massp{m_{\rm p}}
+\def\massD{m_{\rm D}}
+\def\massZ{m_{\rm Z}}
+\def\masse{m_{\rm e}}
+\def\vvec{\mathbf{v}}
+\def\xvec{\mathbf{x}}
+\def\Xvec{\mathbf{X}}
+\def\vpar{v_{\parallel}}
+\def\vparj{v_{\parallel,j}}
+\def\vperp{v_{\perp}}
+\def\kpar{k_{\parallel}}
+\def\kper{k_{\perp}}
+\def\kperdav{\left<k_{\perp}^2 \right>}
+\def\kyr{k_{\rm y} \rho_{\rm i}}
+\def\ky{k_{\rm y}}
+\def\vthi{v_{\rm th}^{\rm i}}
+\def\kx{k_{\rm x}}
+\def\kvec{\mathbf{k}}
+\def\mixjeq{\frac{\gamma}{<k_{\perp}^2>}}
+\def\mixj{\gamma/<k_{\perp}^2>}
+\def\rhoi{\rho_{\rm i}}
+\def\rlnez{\rlne^{\rm (s/n)}}
+\def\rhos{\rho_{\rm s}}
+\def\rhostar{\rho_{*}}
+\def\rhoe{\rho_{\rm e}}
+\def\omD{\omega_{\rm d}}
+\def\omR{\omega_{\rm R}}
+\def\ostar{\omega_*}
+\def\vpd{v_{\perp}^{\rm d}}
+\def\vzed{\hat{v}_{{\rm z}}}
+\def\ftrap{f_{\rm t}}
+\def\denspert{\tilde{n}}
+\def\omegalf{\omega_{\rm A}}
+\def\valf{v_{\rm A}}
+\def\rhom{\rho_{\rm m}}
+\def\npert{\tilde{n}}
+\def\fipert{\tilde{\Phi}}
+\def\fipertvec{\mathbf{\tilde{\Phi}}}
+\def\fizs{|\fipert_{\kvec}|^2}
+\def\fpert{\tilde{f}}
+\def\fpertvec{\mathbf{\tilde{f}}}
+\def\gpert{\tilde{g}}
+\def\gpertvec{\mathbf{\tilde{g}}}
+\def\vexb{\tilde{v}_{\mathbf{E}\times \mathbf{B}}^{\rm r}}
+\def\vExB{\mathbf{v}_{eb}}
+\def\veb{\tilde{v}_{\mathbf{E}\times \mathbf{B}}}
+\def\linhop{\textbf{\textit{L}}}
+\def\nlinhop{\textbf{\textit{N}}}
+\def\wmatr{\textbf{\textit{W}}}
+\def\ident{\textbf{\textit{I}}}
+%Fields
+\def\Rgeo{R_{\rm geo}}
+\def\Zgeo{Z_{\rm geo}}
+\def\Bgeo{B_{\rm geo}}
+\def\Btor{B_0}
+\def\Bvacr{B_{\rm 0v}}
+\def\Rvacr{R_{\rm 0v}}
+\def\Btor{B_0}
+\def\Btor{B_0}
+\def\betap{\beta_{\rm p}}
+\def\dense{n_{\rm e}}
+\def\densc{n_{\rm C}}
+\def\oaveg{\omega^{\rm QL}}
+\def\odaveg{\omega_{\rm d}^{\rm QL}}
+\def\densi{n_{\rm i}}
+\def\tempe{T_{\rm e}}
+\def\tempi{T_{\rm i}}
+\def\tite{\frac{T_{\rm i}}{T_{\rm e}}}
+\def\teti{\frac{T_{\rm e}}{T_{\rm i}}}
+\def\Bvec{\mathbf{B}}
+\def\Avec{\mathbf{A}}
+\def\Uvec{\mathbf{U}}
+\def\Uveci{\mathbf{U}_{\rm i}}
+\def\Uvece{\mathbf{U}_{\rm e}}
+\def\Rvec{\mathbf{R}}
+\def\Rvecdot{\dot{\mathbf{R}}}
+\def\Br{B_{\rm R}}
+\def\Bz{B_{\rm Z}}
+\def\Bvect{\mathbf{B}_{\rm \phi}}
+\def\Bvecp{\mathbf{B}_{\rm p}}
+\def\Avect{\mathbf{A}_{\rm \phi}}
+\def\Avecp{\mathbf{A}_{\rm p}}
+\def\Bvecpp{\mathbf{B}_{\rm p}^{\rm pl}}
+\def\Bvecpc{\mathbf{B}_{\rm p}^{\rm co}}
+\def\Bvecx{\mathbf{B}_0}
+\def\Avect{\mathbf{A}_{\rm \phi}}
+\def\Aphi{A_{\rm \phi}}
+\def\Evec{\mathbf{E}}
+\def\Gvec{\vec{\Gamma}}
+\def\Vvec{\mathbf{v}}
+\def\btor{B_{\rm \phi}}
+\def\PHIx{\Xi_0}
+\def\psib{\psi_{\rm b}}
+\def\psin{\hat{\psi}}
+\def\phin{\hat{\Phi}}
+\def\Vnorm{\hat{V}}
+\def\rnorm{\hat{r}}
+\def\phib{\Phi_{\rm b}}
+\def\psip{\psi^{\rm pl}}
+\def\psic{\psi^{\rm co}}
+\def\psibp{\psi_{\rm b}^{\rm pl}}
+\def\psibc{\psi_{\rm b}^{\rm co}}
+\def\PHIpx{\Xi_{\rm EXT}^{\rm pl}}
+\def\PHIcx{\Xi_{\rm EXT}^{\rm co}}
+\def\Vext{V_{\rm EXT}}
+\def\ephi{\mathbf{e}_{\phi}}
+\def\Ephi{\mathbf{E}_{\phi}}
+\def\vdriftj{\mathbf{v}_{{\rm d},j}}
+\def\vdrift{\mathbf{v}_{{\rm d}}}
+\def\Epol{\mathbf{E}_{\rm p}}
+\def\Jphi{j_{\phi}}
+\def\eZ{\mathbf{e}_{\rm Z}}
+\def\eR{\mathbf{e}_{\rm R}}
+\def\eP{\mathbf{e}_{\rm p}}
+\def\eY{\mathbf{e}_{\rm y}}
+\def\eS{\mathbf{e}_{\rm s}}
+\def\Rin{R_{\rm in}}
+\def\Rout{R_{\rm out}}
+\def\bpol{B_{\rm p}}
+\def\epsi{\mathbf{e}_{\psi}}
+\def\dSavec{d\mathbf{S}_1}
+\def\dSbvec{d\mathbf{S}_2}
+\def\dgavec{d\vec{\gamma}_1}
+\def\dgbvec{d\vec{\gamma}_2}
+%Gradients
+\def\rlteq{\frac{R}{L_{\rm T}}}
+\def\rlneq{\frac{R}{L_{\rm n}}}
+\def\rlteeq{\frac{R}{L_{\rm Te}}}
+\def\rltieq{\frac{R}{L_{\rm Ti}}}
+\def\rlte{R/L_{\rm Te}}
+\def\glogte{\frac{\partial{\log{T_{\rm e}}}}{\partial{\rho}}}
+\def\glogtehor{\partial{\log{T_{\rm e}}}/\partial{\rho}}
+\def\glogt{\frac{\partial{\log{T}}}{\partial{\rho}}}
+\def\glogti{\frac{\partial{\log{T_{\rm i}}}}{\partial{\rho}}}
+\def\glogne{\frac{\partial{\log{n_{\rm e}}}}{\partial{\rho}}}
+\def\glogni{\frac{\partial{\log{n_{\rm i}}}}{\partial{\rho}}}
+\def\glognehor{\partial{\log{n_{\rm e}}}/{\partial{\rho}}}
+\def\glognchor{\partial{\log{\densc}}/{\partial{\rho}}}
+\def\glogn{\frac{\partial{\log{n}}}{\partial{\rho}}}
+\def\glognhor{\partial{\log{n}}/\partial{\rho}}
+\def\glogneq{\frac{\partial{\log{n}}}{\partial{\rho}}}
+\def\glogteq{\frac{\partial{\log{T}}}{\partial{\rho}}}
+\def\glogthor{\partial{\log{T}}/\partial{\rho}}
+\def\rlti{R/L_{\rm Ti}}
+\def\rlt{R/L_{\rm T}}
+\def\lte{L_{\rm Te}}
+\def\lti{L_{\rm Ti}}
+\def\lne{L_{\rm n}}
+\def\lni{L_{\rm Ni}}
+\def\lteltieq{\frac{L_{\rm Te}}{L_{\rm Ti}}}
+\def\ltelneeq{\frac{L_{\rm Te}}{L_{\rm n}}}
+\def\ltelti{L_{\rm Te}/L_{\rm Ti}}
+\def\ltelne{L_{\rm Te}/L_{\rm n}}
+\def\ltelnestat{L_{\rm Te}/L_{\rm n}^{\rm stat}}
+\def\sgme{\sigma_{\rm e}}
+\def\etae{\eta_{\rm e}}
+\def\etai{\eta_{\rm i}}
+\def\rlneeq{\frac{R}{L_{\rm n}}}
+\def\rlteeq{\frac{R}{L_{\rm Te}}}
+\def\rlne{R/L_{\rm n}}
+\def\rlnc{R/L_{\rm C}}
+\def\rlnestat{\left[\rlne\right]_{\rm stat}}
+\def\rlnein{\rlne^{\rm In}}
+\def\rlneout{\rlne^{\rm Out}}
+\def\rlnestateq{\left[\rlneq\right]_{\rm stat}}
+\def\rlncstateq{\left[\rlnceq\right]_{\rm stat}}
+\def\rlnezeq{\frac{R}{L_{\rm n}}^{\rm (s/n)}}
+%Transport
+\def\Ocyi{\Omega_{\rm i}}
+\def\Ocye{\Omega_{\rm e}}
+\def\OcyZ{\Omega_{\rm Z}}
+\def\chie{\chi_{\rm e}}
+\def\Qe{Q_{\rm e}}
+\def\Dneo{D_{\rm neo}}
+\def\Vneo{V_{\rm neo}}
+\def\Dturb{D_{\rm turb}}
+\def\Vturb{V_{\rm turb}}
+\def\lamd{\lambda_{\rm D}}
+\def\lamde{\lambda_{\rm D}^{\rm e}}
+\def\chieneo{\chi_{\rm e}^{\rm NEO}}
+\def\chii{\chi_{\rm i}}
+\def\thetap{\theta_{\rm p}}
+\def\Wp{V_{\rm W}}
+\def\CT{C_{\rm T}}
+\def\CP{C_{\rm P}}
+\def\CPT{C_{\rm P}^{\rm (t)}}
+\def\CPP{C_{\rm P}^{\rm (p)}}
+\def\vthj{v_{{\rm th},j}}
+\def\CTT{C_{\rm T}^{\rm (t)}}
+\def\CTP{C_{\rm T}^{\rm (p)}}
+\def\pshift{\tilde{\Gamma}_{\rm k}}
+\def\gturbql{\Gamma_{\kvec}^{\rm q.l.}}
+\def\fluxi{\Gamma^{\rm i}}
+\def\fluxe{\Gamma^{\rm e}}
+\def\gneo{\Gamma_{\rm neo}}
+\def\gturb{\Gamma_{\rm turb}}
+\def\gturbe{\Gamma_{\rm e}^{\rm turb}}
+\def\qturbe{Q_{\rm e}^{\rm turb}}
+\def\qPB{Q_{\rm e}^{\rm PB}}
+\def\heate{Q_{\rm e}}
+\def\heati{Q_{\rm i}}
+\def\pech{P_{\rm ECH}}
+\def\rech{\rho_{\rm ECH}}
+\def\pequi{P_{\rm eq}}
+\def\pohm{P_{\rm OH}}
+\def\prad{P_{\rm rad}}
+\def\qequi{Q_{\rm eq}}
+\def\qohm{Q_{\rm OH}}
+\def\qrad{Q_{\rm rad}}
+\def\source{S_{\rm e}}
+%Plasma parameters & coordinates
+\def\Epar{E_{\parallel}}
+\def\Epjp{E_{\phi}J_{\phi}}
+\def\Etjt{E_{\rm p}j_{\rm p}}
+\def\Epol{E_{\rm p}}
+\def\jpol{j_{\rm p}}
+\def\wphi{w_{\phi}}
+\def\Wphi{W_{\phi}}
+\def\rhor{\rho_{\rm r}}
+\def\grho1{\left<|\nabla{\rho}|\right>}
+\def\grhov1{\left<|\nabla{\rvol}|\right>}
+\def\Bpol{B_{\theta}}
+\def\bphi{B_{\phi}}
+\def\bpol{B_{\rm p}}
+\def\vloop{V_{\rm loop}}
+\def\lint{l_{\rm i}}
+\def\ipl{I_{\rm p}}
+\def\rpsi{\rho_{\psi}}
+\def\betae{\beta_{\rm e}}
+\def\rvol{\rho_{\rm V}}
+\def\rtor{\rho_{\rm \Phi}}
+\def\rtorn{\hat{\rho}_{\rm \Phi}}
+\def\rtorb{\rho_{\rm \Phi,b}}
+\def\hrlw{H_{\rm RLW}}
+\def\q95{q_{95}}
+\def\qmin{q_{\rm min}}
+\def\nuei{\nu_{\rm ei}}
+\def\nuee{\nu_{\rm ee}}
+\def\nueff{\hat{\nu}}
+\def\nuef{\nu_{\rm eff}}
+\def\nustar{\nu_*}
+\def\Jvec{\mathbf{J}}
+\def\Jvecpert{\tilde{\mathbf{J}}}
+\def\cupar{j_{\parallel}}
+\def\upar{U_{\parallel}}
+\def\cuparni{j_{\parallel}^{\rm n.i.}}
+\def\cubs{j_{\rm BS}}
+\def\cucd{j_{\rm CD}}
+\def\cuohm{j_{\rm OH}}
+\def\wpol{w_{\rm p}}
+\def\Wpol{W_{\rm p}}
+\def\tauee{\tau_{\rm Ee}}
+\def\tauE{\tau_{\rm E}}
+\def\rhoinv{\rho_{\rm inv}}
+\def\rhomix{\rho_{\rm mix}}
+\def\fbs{f_{\rm BS}}
+\def\fcd{f_{\rm CD}}
+\def\foh{f_{\rm OH}}
+\def\ibs{I_{\rm BS}}
+\def\icd{I_{\rm CD}}
+\def\ioh{I_{\rm OH}}
+\def\ipol{I_{\rm pol}}
+\def\zeff{Z_{\rm eff}}
+\def\Ress{R_{\rm eff}}
+\def\Lstar{\Delta^*}
+\def\Opl{\Omega_{\rm pl}}
+\def\Opfs{\Omega_{\rm PF}}
+\def\Ovac{\Omega_{\rm vac}}
+\def\Opss{\Omega_{\rm PS}}
+\def\OOH{\Omega_{\rm OH}}
+\def\Lstar{\Delta^*}
+\def\Jpol{j_{\rm p}}
+\def\Hplasma{H\left(\Omega_{\rm pl}\right)}
+\def\deltapsib{\delta\psi_{\rm [b,\infty]}}
+\def\rvec{\mathbf{r}}
+\def\sbphi{s_{\rm b\phi}}
+\def\sbpol{s_{\rm bp}}
+\def\qabs{|q|}
+\def\gpar{\nabla_{\parallel}}
+\def\gperp{\nabla_{\perp}}
+\def\pvec{\mathbf{p}}
+\def\avec{\mathbf{a}}
+\def\kvec{\mathbf{k}}
+\def\rhovec{\vec{\rho}}
+\def\eavec{\mathbf{e}_1}
+\def\ebvec{\mathbf{e}_2}
+\def\ecvec{\mathbf{e}_3}
+\def\vperpvec{\mathbf{v}_{\perp}}
+\def\vpardot{\dot{v}_{\parallel}}
+\def\Apar{A_{\parallel}}
+\def\psibar{\bar{\psi}}
+\def\vphi{v_{\phi}}
+\def\rlpol{\rho_{\rm p}}
+\def\Lxi{\left<L\right>_{\xi}}
+\def\rhovecdot{\dot{\vec{\rho}}}
+\def\ptens{\stackrel{\leftrightarrow}\Pi}
+\def\Itens{\stackrel{\leftrightarrow}I}
+\def\rhomo{\rho_{\rm m0}}
+\def\rhomn{\hat{\rho}_{\rm m}}
+\def\vsn{v_{\rm s}}
+\def\Bvecn{\hat{\mathbf{B}}}
+\def\Vvecn{\hat{\mathbf{v}}}
+\def\nablan{\hat{\nabla}}
+\def\vsa{\hat{v}_{\rm sa}}
+\def\rhomnf{\tilde{\rho}_{\rm m}}
+\def\Bvecnf{\tilde{\mathbf{B}}}
+\def\Vvecnf{\tilde{\mathbf{v}}}
+\def\xinf{\tilde{\vec{\xi}}}
+\def\omI{\omega_{\rm I}}
+\def\gvec{\vec{\Gamma}}
+\def\Uvec{\mathbf{U}}
+\def\Uparj{U_{\parallel,j}}
+\def\Upar{U_{\parallel}}
+\def\Fvec{\mathbf{F}}
+\def\Fparj{F_{\parallel,j}}
+\def\Svecmj{\mathbf{S}_{{\rm m},j}}
+\def\Svecmpj{S_{{\rm m}\parallel,j}}
+\def\Poteq{\bar{\Phi}}
+\def\ebpsi{\bar{\mathbf{e}}_{\psi}}
+\def\utorj{U_{\phi j}}
+\def\upolj{U_{\thetap j}}
+\def\omphi{\omega_{\phi}}
+\def\nablax{\nabla_{\xvec}}
+\def\nablav{\nabla_{\Vvec}}
+\def\xvecdot{\dot{\mathbf{x}}}
+\def\vvecdot{\dot{\mathbf{v}}}
+\def\Edot{\dot{E}}
+\def\Igeo{I_{\rm geo}}
+\def\Fmaxwj{F_{{\rm M},j}}
+\def\Fmaxw{F_{{\rm M}}}
+\def\omDj{\omega_{{\rm d}j}}
+\def\ostarj{\omega_{{\rm *}j}}
+\def\rlnj{\frac{R}{L_{{\rm nj}}}}
+\def\rlTj{\frac{R}{L_{{\rm T}j}}}
+\def\vflutt{\tilde{v}_{\rm mf}^r}
+\def\Apart{\tilde{A}_{\parallel}}
+\def\Apertvec{\tilde{\mathbf{A}}}
+\def\Aperptvec{\tilde{\mathbf{A}}_{\perp}}
+\def\Aperpt{\tilde{{A}}_{\perp}}
+\def\Jparpert{\tilde{{J}}_{\parallel}}
+\def\Jparpertj{\tilde{{J}}_{\parallel j}}
+\def\Pnet{P_{\rm net}}
+\def\Pfus{P_{\rm fus}}
+\def\tauP{\tau_{\rm p}}
+\def\betaN{\beta_{\rm N}}
+\def\vpotp{\tilde{\mathbf{v}}_{\rm ea}}
+\def\vexbeq{\mathbf{v}_{\rm ExB}}
+\def\Evecp{\tilde{\mathbf{E}}}
+\def\Apvec{\tilde{\mathbf{A}}}
+\def\cpert{\tilde{\Theta}}
+\def\Vvece{\mathbf{v}_{\rm e}}
+\def\Vveci{\mathbf{v}_{\rm i}}
+\def\presse{p_{\rm e}}
+\def\Fvece{\mathbf{F}_{\rm e}}
+\def\talf{\tau_{\rm A}}
+\def\Omegae{\Omega_{\rm e}}
+\def\Omegai{\Omega_{\rm i}}
+\def\rhoe{\rho_{\rm e}}
+\def\Bpert{\tilde{B}}
+\def\Bvecpert{\tilde{\mathbf{B}}}
+\def\Vpert{\tilde{v}}
+\def\Apert{\tilde{A}}
+\def\Vhat{\hat{v}}
+\def\Ahat{\hat{A}}
+\def\Vvecpert{\tilde{\mathbf{v}}}
+\def\eX{\mathbf{e}_{\rm x}}
+\def\Lund{S_{\rm L}}
+\def\bpertx{\tilde{B}_{\rm x}}
+\def\Vvecdot{\dot{\mathbf{v}}}
+\def\vperpdot{\dot{v}_{\perp}}
+\def\vperpvecdot{\dot{\mathbf{v}}_{\perp}}
+\def\Thetap{\tilde{\Theta}}
+\def\Rperpvecdot{\dot{\tilde{\mathbf{R}}}}
+\def\Eperpdot{\dot{\tilde{E}}}
+\def\kvec{\mathbf{k}}
+\def\hpert{\tilde{h}}
+\def\nhat{\hat{n}}
+\def\eH{\mathbf{e}_{\rm h}}
+%
+\def\figtype{!b}
+%
+%\newfont{\main}{cmss12 scaled\magstep0}
+%\def\rightheadline{\tenrm\hfil LEFT \hfil\folio}
+%\def\leftheadline{\tenrm\folio\hfil LEFT \hfil}
+%\newcommand{\headline}[1]{\ifodd\pageno\rightheadline \else\leftheadline\fi}
+%\newfont{\msym}{/ipp2/lib/publisher/fonts/msym10 scaled\magstep1}
+%\newfont{\msym}{/afs/ipp/@sys/soft/publisher/fonts/msym10 scaled\magstep1}
+\def\msym{\cal}
+\newcommand{\tws}[1]{\hspace*{1pt}{\tt #1}\hspace*{1pt}}
+\newcommand{\twd}[1]{\hspace*{2pt}{\tt #1}\hspace*{2pt}}
+\newcommand{\tw}[1]{{\tt #1}}
+
+
+
+\begin{document}
+\parindent=0pt				\parskip=15pt plus2pt
+\parindent=30pt				\parskip=0pt plus2pt
+%\renewcommand{\thesubsection}{}	\setcounter{subsection}{0}
+\baselineskip=10pt plus 0.5pt
+
+\baselineskip=20pt plus 0.5pt
+\thispagestyle{empty}
+\Large\noindent
+E.~Fable
+\vskip40mm\noindent
+\LARGE\bf ASTRA--7.0 \\\\
+Addendum with changes and new features
+\vfill\rm\large\noindent
+ \\
+February 2012
+\eject
+\thispagestyle{empty}
+\begin{center}\LARGE\bf\sf
+MAX-PLANCK-INSTITUT F\"UR PLASMAPHYSIK\normalsize\\[15pt]
+GARCHING BEI M\"UNCHEN
+\end{center}
+\vspace*{40mm}
+\begin{center}\LARGE{\bf ASTRA--7.0} \\ \\ 
+Addendum with changes and new features
+\end{center}
+\vskip15mm
+\begin{center}\large\sf
+E.~Fable
+\vskip15mm
+\parbox{41mm}{\hspace*{-5mm}	\normalsize\sf
+\\ \normalsize
+\\	\normalsize
+\\	\normalsize
+}
+\vfill
+  \hfill November 2013
+\end{center}
+\eject
+\thispagestyle{empty}
+\clearpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+{\bf Introduction}\\\\
+Astra--7.0 is the natural continuation of the Astra concept, as brought to life and developed to the great extent that it is by the late Prof. Dr. G. V. Pereverzev\footnote{in memoriam} and Dr. Y. P. Yushmanov.
+
+The reference user manual is still the IPP report 5/98 (February 2002), since
+the philosophy and main features of the code have been preserved.
+The main changes, which will be presented in detail in this addendum, have tried
+to address issues that in my opinion lead to an improvement of the code 
+capabilities with respect to specific physical problems. 
+
+The choice of the numerical grid has been argument of many discussions, which 
+resulted in considering the normalized grid as a possible alternative to the 
+$\rho$--grid employed in Astra.
+
+The complex problem of coupling dynamically an evolving plasma with internal 
+transport processes on a free--boundary equilibrium background has been one of 
+the latest challenges faced by us. Its solution would allow to perform 
+full--tokamak--discharge simulations in Astra. The coupling scheme chosen 
+ultimately is, in my opinion, the best possible, both in terms of stability and 
+of physical consistency.
+
+The inclusion of a theory--based momentum transport equation is 
+something that Astra needed to complete its capability of full--channels 
+transport nalysis. In the new version, species temperatures, densitites, and 
+toroidal rotation velocities can be simlutaneously evolved.
+
+Additional packages (external codes, subroutines) have also been added, and described
+in this addendum.
+
+Some of the material presented here is part of upgrades that were already present in Astra--6.2.1, 
+as implemented by Prof. Pereverzev, however is not in the reference user manual: 
+the IPC paradigm for parallel processes, the treatment of implicit equipartition, 
+a novel numerical scheme to treat stiff transport problems, 
+and some additional minor changes that will be presented in the following. 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\clearpage
+\vfill\rm\normalsize
+\baselineskip=20pt plus 0.5pt
+\tableofcontents
+\vfill\eject
+\input norm_grid_add_EF.tex
+\input mom_transp_eq_add_EF.tex
+\input coupling_with_2d_equil_add_EF.tex
+\input icp_add_EF.tex
+\input stiff_transport_EF.tex
+\input newton_solver.tex
+\input additional_packages_add_EF.tex
+\input additional_changes_add_EF.tex
+\input summary_of_changes_a70.tex
+%\input garbage.tex
+%\input bib.tex
+\end{document}

@@ -1,0 +1,96 @@
+\documentclass[12pt]{article}
+\usepackage{times,mathptm}
+%\documentclass{article}
+\input{epsf.tex}		\epsfclipon
+\topmargin 0mm			\oddsidemargin 5mm
+\textwidth 165mm		\textheight 220mm
+\headheight 0mm			\headsep 0mm
+\pagestyle{empty}
+\newfont{\headfont}{cmr7 scaled\magstep0}
+\headheight 10mm		\headsep 10mm
+\pagestyle{myheadings}
+\markright{\headfont
+%\today\hfill 
+ASTRA -- Automated System for TRansport Analysis
+% -- draft description --- Not for distribution
+\hfill}
+\input definitions
+
+\newcommand{\fl}[1]{\leftline{\tt\hspace*{3em} #1}\\}
+\newcommand{\dl}[1]{\leftline{\tt #1}}
+\def\tab{$\hspace*{-2pt}\longrightarrow\hspace*{-5pt}|\hspace*{-3pt}$}
+%\def\bs{$\,\backslash\,$}
+%\def\bs{\verb"\"}
+\def\bs{{\tt\symbol{92}}}
+\def\us{{\tt\symbol{95}}}
+\def\qq{\qquad}
+%\def\us{$\,\rule[-2pt]{.6em}{.5pt}\,$}
+\def\ust{$\!\!\rule[-1.5pt]{.6em}{.5pt}\!\!$}
+%\newfont{\main}{cmss12 scaled\magstep0}
+%\def\rightheadline{\tenrm\hfil LEFT \hfil\folio}
+%\def\leftheadline{\tenrm\folio\hfil LEFT \hfil}
+%\newcommand{\headline}[1]{\ifodd\pageno\rightheadline \else\leftheadline\fi}
+%\newfont{\msym}{/ipp2/lib/publisher/fonts/msym10 scaled\magstep1}
+%\newfont{\msym}{/afs/ipp/@sys/soft/publisher/fonts/msym10 scaled\magstep1}
+\def\msym{\cal}
+\newcommand{\tws}[1]{\hspace*{1pt}{\tt #1}\hspace*{1pt}}
+\newcommand{\twd}[1]{\hspace*{2pt}{\tt #1}\hspace*{2pt}}
+\newcommand{\tw}[1]{{\tt #1}}
+
+\def\lfl{\leftline}
+\def\sp{\hspace*{.82pt}\tt\_\hspace*{.82pt}}
+\def\sp{\hspace*{.82pt}\tt\_\hspace*{.82pt}}
+
+\begin{document}
+\parindent=0pt				\parskip=15pt plus2pt
+\parindent=30pt				\parskip=0pt plus2pt
+%\renewcommand{\thesubsection}{}	\setcounter{subsection}{0}
+\baselineskip=10pt plus 0.5pt
+
+\baselineskip=20pt plus 0.5pt
+\thispagestyle{empty}
+\Large\noindent
+G.~V.~Pereverzev,~~P.~N.~Yushmanov
+\vskip40mm\noindent
+\LARGE\bf ASTRA \\
+Automated System  
+for TRansport Analysis
+\vfill\rm\large\noindent
+IPP 5/98 \\
+February 2002
+\eject
+\thispagestyle{empty}
+\begin{center}\LARGE\bf\sf
+MAX-PLANCK-INSTITUT F\"UR PLASMAPHYSIK\normalsize\\[15pt]
+GARCHING BEI M\"UNCHEN
+\end{center}
+\vspace*{40mm}
+\begin{center}\LARGE{\bf ASTRA} \\ 
+{\bf A}utomated {\bf S}ystem for  
+{\bf TR}ansport {\bf A}nalysis
+\end{center}
+\vskip15mm
+\begin{center}\large\sf
+G.~V.~Pereverzev~~and~~P.~N.~Yushmanov$\!\!^*$
+\vskip15mm
+\parbox{41mm}{\hspace*{-5mm}$^*\!\!$	\normalsize\sf
+Aspen Technology, Inc.\\ \normalsize
+12730 High Bluff dr.\\	\normalsize
+San Diego, CA 92130\\	\normalsize
+USA}
+\vfill
+IPP 5/98  \hfill February 2002
+\end{center}
+\eject
+\thispagestyle{empty}
+\vfill\rm\normalsize
+\baselineskip=20pt plus 0.5pt
+\tableofcontents
+\vfill\eject
+\input section12.tex
+\input section3.tex
+\input section4.tex
+\input section5.tex
+%\input garbage.tex
+\input bib.tex
+\end{document}

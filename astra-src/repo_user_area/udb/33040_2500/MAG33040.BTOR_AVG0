@@ -1,0 +1,12 @@
+  33040AUGD 1 0 6              ;-SHOT #- F(X) DATA -UF1DWR- 02Feb2023
+                               ;-SHOT DATE-  UFILES ASCII FILE SYSTEM
+   0                           ;-NUMBER OF ASSOCIATED SCALAR QUANTITIES-
+ Time                Seconds   ;-INDEPENDENT VARIABLE LABEL-
+ Btor                         T;-DEPENDENT VARIABLE LABEL-
+ 0                             ;-PROC CODE- 0:RAW 1:AVG 2:SM. 3:AVG+SM
+          1                    ;-# OF X PTS-
+  4.000010E+00
+  2.483879E+00
+ ;----END-OF-DATA-----------------COMMENTS:-----------
+  AUGD:FPC:BTF:1
+ Time averaged   0.0000 -   8.0000

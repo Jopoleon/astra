@@ -1,0 +1,4 @@
+!Slowing down time of fusion alpha's. Def. (16) in
+!Stix et al., Plasma Physics 14 (1972), pag. 367
+INCLUDE 'fml/coulg'
+ts_alf = 2.*SQRT(TE(J))*TE(J)/NE(J)/COULG

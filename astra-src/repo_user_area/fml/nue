@@ -1,0 +1,6 @@
+! NUE [1/s]: Full frequency of electron collisions
+! NUE=NUEE*(1+1.4*ZEF)
+!  (Yushmanov 25-APR-87, updated by Pereverzev 9-NOV-94)
+
+include 'fml/nuee'
+NUE = (1. + 1.4*ZEF(J))*NUEE

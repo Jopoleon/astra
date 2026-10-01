@@ -1,0 +1,77 @@
+#!/bin/bash
+
+rootdir=`dirname $0`          # may be relative path
+AWD=`cd $rootdir && pwd`  # ensure absolute path
+node=`uname -n`
+os=`uname`
+
+if [[ $AWD = "/localhome"* ]]
+then
+    platform=goblin
+elif [[ $AWD = "/home/ITER"* ]]
+then
+    platform=iter
+elif [[ $AWD = "/home/matlab"* ]]
+then
+    platform=docker
+elif [[ $AWD = "/global/homes"* ]]
+then
+    platform=perlmutter
+elif [[ $AWD = "/compass"* ]]
+then
+    platform=cz
+elif [[ $node = *"mit.edu" ]]|| [[ $node = "node"* ]]
+then
+    platform=mit
+elif [[ $node = "omega"* ]]
+then
+    platform=omega
+elif [[ $node = "cx-ld-prod"* ]] || [[ $node = "hz-ld-"* ]]
+then
+    platform=aug
+elif [[ $node = "viz"* ]]
+then
+    platform=gway
+elif [[ $node = "tok"* ]]
+then
+    platform=tok
+elif [[ $node = "iris"* ]]
+then
+    platform=iris
+elif [[ $node = "ncku-first" ]]
+then
+    platform=ncku
+elif [[ $node = "smartssv"* ]]
+then
+    platform=sevilla
+elif [[ $node = "rat2"* ]]
+then
+    platform=rat2
+elif [[ $node = "puhti"* ]]
+then
+    platform=puhti
+elif [[ $node = "freia"* ]]
+then
+    platform=freia
+elif [[ $node = "fc-deb"* ]]
+then
+    platform=hgw
+elif [[ $node = "feynman" ]]
+then
+    platform=columbia
+elif [[ $node = "tohtorisms" ]]
+then
+    platform=tohtori
+elif [[ $os = "Darwin" ]]
+then
+    platform=darwin
+else
+    platform=mypc
+fi
+
+if [[ -v ASTRA_COMPILER ]]
+then
+    platform=${platform}_${ASTRA_COMPILER}
+fi
+
+echo $platform

@@ -1,0 +1,59 @@
+\section{Summary of changes implemented in Astra--7.0}
+We summarize here the main differencies and the new features with respect to the
+previous version Astra--6.2.1:
+
+- The new grid is defined as $x=\sqrt{\Phi/\Phi_{\rm b}}$. Grid convective terms
+have been added and can be treated either a posteriori (adiabatic 
+compression/expansion), or iteratively (in the equations);
+
+- A toroidal momentum transport equation has been added. It is solved for the parallel velocity. Poloidal rotation (Pfirsch--Schlueter terms) are not yet implemented;
+
+- Coupling with the equilibrium codes has been made stable and consistent. It is
+valid for every code that uses $P'$ and $FF'$ as input for the equilibrium
+calculations;
+
+- Already in Astra--6.2.1 (but not in the respective user manual though): implicit equipartition for Te, Ti evolution; possibility of running several independent processes in parallel with IPC; numerical scheme for stiff transport problems;
+
+- Additional interfaces to packages are available in Astra: TORBEAM for ECH/ECCD computations; TGLF and QuaLiKiz for quasi--linear computation of turbulence--driven transport; TORIC for ICRF computations; STRAHL for impurity transport studies; NEO for neoclassical transport calculations (libraries are to be requested to the respective developer);
+
+- A routine to create Astra restart files has been developed; 
+
+- A way to comment entire blocks in the model file has been introduced:
+in the usual case, one uses the symbol "!" to comment a line, like \\
+!CV7 = 1;\\
+means that ASTRA will ignore the line above during compilation.
+However to comment multiple lines can be painful and not very efficient.
+So the symbol "\%" has been introduced. By using it, ASTRA ignores everything between a pair of "\%" symbol, as in the following example:\\
+\% \\
+CV7 = 1;\\
+PE = POH;\\
+PI=0.;\\
+\% \\
+the entire block above will be ignored during compilation.
+
+- A way to select entire blocks inside the model file:\\
+The symbol "\#" has been introduced. By using it, ASTRA uses only what is inside the block delimited by a pair of "\#" symbol, with the first appearance followed by a single digit or letter identifier. The latter shall appear at the beginning of the model file. For example:\\
+\#1 \\
+CV7 = 1;\\
+PE = POH;\\
+PI=0.;\\
+\# \\
+the above entire block above will be the only one used during compilation if the beginning of the model file contains "1". Everything else is ignored that is inside other blocks delimited by $\#$. However, what is outside of these blocks, is still taken into account.
+This new symbol thus allows to have several types of physics models inside a single model file, selectable by changing the digit or letter identifier at the beginning of the model file (first digit or letter of the model file), with having some common commands still read (for example plotting or common definitions).
+
+- A new Newton--scheme solver that allows for faster convergence to an absolute steady--state
+%
+
+\clearpage
+
+\section{Foreseen upgrades for next versions}
+As the code is in continue development, here are listed some foreseen upgrades for future versions. The order is almost as it should proceed chronologically (mostly).\\
+- A python--based version of the model writing routines, to improve flexibility (in progress with G. Tardini);\\
+- A version of ASTRA as a subroutine (long--term project).\\
+%- Possible amelioration of some parts of the code to speed--up computation and improve accuracy (interpolations, etc.);\\
+%- Mock--up of SOL transport;\\
+%- GUI for free--boundary evolution visualization;\\
+%- ...; 
+%
+
+\clearpage

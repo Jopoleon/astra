@@ -1,0 +1,7 @@
+! SVDT [10#19m#3/s]: The formula is a fit to D-T reaction rate
+! according to Putvinskiy
+! D+T=alpha(3.52MeV)+n(14.07MeV)
+! Use: Palpha=Nd*Nt*SVDT*3520./625. [MW/m#3]
+!   (Yushmanov 11-JUN-87)
+SVDT = TI(J) ** (-0.33333333)
+SVDT = 8.972*EXP(-19.9826*SVDT)*SVDT*SVDT* ((TI(J)+1.0134)/(1.+6.386E-3*(TI(J)+1.0134)**2)+ 1.877*EXP(-.16176*TI(J)*SQRT(TI(J))))

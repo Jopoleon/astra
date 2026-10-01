@@ -1,0 +1,122 @@
+#!/bin/bash
+
+equ_file=$1
+exp_file=$2
+TASK=$3
+FSIM=$4
+nnodes=$5
+export N_NODES="${nnodes}"
+workflow=$6
+if [[ $# > 6 ]]; then
+    WAIT_SLURM=$7
+else
+    WAIT_SLURM=""
+fi
+
+rootdir=`dirname $0`                  # may be relative path
+export AWD=`cd $rootdir/.. && pwd`    # ensure absolute path
+
+cd $AWD
+
+# Get platform-dependent compiler paths
+platform=`$AWD/get_platform`
+source $AWD/platform/env.$platform
+if [[ -n ${ASTRA_COMPILER+x} ]]
+then
+    source $AWD/exe/astra_rc_${ASTRA_COMPILER}
+else
+    source $AWD/exe/astra_rc
+fi
+
+ulimit -s 100000 2>/dev/null || ulimit -s unlimited
+
+echo Compile main ASTRA executable $equ_file $AWD
+
+if [[ "$FSIM" == "True" || "$TASK" == "BGD" ]]
+then
+    unset X11
+    ATASK=$AWD/bin/${equ_file}_batch.exe
+else
+    export X11=y
+    ATASK=$AWD/bin/${equ_file}_gui.exe
+fi
+make -f exe/Makefile  MODEL=$equ_file FEXP=$exp_file ATASK=$ATASK WORKFLOW=${workflow}
+status=$?
+if [ $status -ne 0 ]
+then
+    echo Error from exe/Makefile-compilation, exiting
+    exit 1
+fi
+
+echo Compile IPC programs
+make -f exe/Makexpr
+status=$?
+if [ $status -ne 0 ]
+then
+    echo Error from exe/Makexpr-compilation, exiting
+    exit 2
+fi
+
+# Check for conflicting sbr, fnc names
+
+LIBDIR=$AWD/lib
+LIB1=$LIBDIR/libsbr.a
+OBJ1=`ar -t $LIB1 | grep -v '^__.SYMDEF'`
+LIB2=$LIBDIR/libfnc.a
+OBJ2=`ar -t $LIB2 | grep -v '^__.SYMDEF'`
+for OB1 in $OBJ1
+do
+    for OB2 in $OBJ2
+    do
+        if [ $OB1 == $OB2 ]
+        then
+            echo Conflicting $OB1: in $LIB1 and $LIB2
+            echo No ASTRA simulation started
+            echo ""
+            exit 3
+        fi
+    done
+done
+
+# Execution
+
+if [ "$TASK" = 'BGD' ]
+then
+    if ! command -v sbatch &> /dev/null
+    then
+        echo Running $ATASK without graphic interactive window
+        $ATASK
+    else
+        bat="$AWD/exe/batch.sh"
+        cat << EOT > $bat
+#!/bin/sh
+#SBATCH -J astra_${USER}
+#SBATCH --mail-type=none
+${SL_QUEUE}
+export ASTRA_EXT=${ASTRA_EXT}
+export PATH=${PATH}
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+export MAX_NWORKERS=128
+$ATASK
+EOT
+
+        echo sbatch $bat
+        date
+	pwd
+        sbatch $WAIT_SLURM $bat
+    fi
+else
+    THREADS_PER_CORE=$(lscpu | awk -F: '/Thread\(s\) per core/ {gsub(/ /,"",$2); print $2}' 2>/dev/null)
+    [ -n "$THREADS_PER_CORE" ] || THREADS_PER_CORE=1
+    NPROC=$(nproc 2>/dev/null || sysctl -n hw.physicalcpu)
+    if (( NPROC < THREADS_PER_CORE ));
+    then
+        export MAX_NWORKERS=1
+    else
+        export MAX_NWORKERS=$(( NPROC / THREADS_PER_CORE ))
+    fi
+    echo 'Max nworkers' $MAX_NWORKERS
+    echo Running $ATASK
+    $ATASK
+    echo ASTRA normal exit
+fi

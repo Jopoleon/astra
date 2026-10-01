@@ -1,0 +1,9 @@
+! CCSPSA [1/(mkOhm*m)]: Spitzer conductivity
+!   ccsp = 1.9012e+4*Te[eV]^1.5/Z/N(Z)/Coulge [1/(Ohm*m)]
+!  N(Z)=0.58+0.74/(0.76+ZEF(J))
+!   Sauter, Angioni, Lin-Liu
+!   Physics of Plasmas, 6, 2834 (1999)
+!  (Teplukhina 08-JAN-2015)
+ 
+include 'fml/clgesa'
+CCSPSA = 601.2*TE(J)*SQRT(TE(J))*(0.76+ZEF(J))   /ZEF(J)/(1.18+0.58*ZEF(J))/CLGESA

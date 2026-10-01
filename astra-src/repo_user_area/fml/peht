@@ -1,0 +1,9 @@
+! PEDT [MW/m#3]   D-T Fusion power deposited to electrons
+! D.E.Post, 'Applied Atomic Collision Physics, Vol 2, 381, (1984)
+! C.M.Roach, 5/7/99
+
+include 'fml/pdt'
+include 'fml/paion1'
+include 'fml/ts_alf'
+PEHT = (1.0 - PAION1)*5.632*NALF(J)/TS_ALF
+

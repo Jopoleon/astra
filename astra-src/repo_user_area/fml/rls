@@ -1,0 +1,4 @@
+! RLS [m]:   rho* Ion Larmor radius sqrt(T_e/M_i)/omega_Bi
+!   Note ! 2 & Zmain not included !
+!   (Pereverzev 15-12-98)
+RLS=0.003235*sqrt(AMAIN(j)*TE(j))/BTOR

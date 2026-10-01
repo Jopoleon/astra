@@ -1,0 +1,3 @@
+! QDVE [MW]: Integral {0, R} (PDVE) dV
+!   (Pereverzev 9-OCT-07)
+QDVE = HRO*SUM(PDVE(1:J)*VR(1:J))

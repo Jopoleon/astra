@@ -1,0 +1,6 @@
+! Eli3 [a.u.]:li3 internal inductance from equilibrium solver 2*V*<Bp^2>/(0.4*pi*IPL)**2/Rtor
+!   (Polevoy  10-May-01)
+! open(33, file='dat/lin3')
+! read(33, *) eli3
+! close(33)
+Eli3=elin3R(ROC)

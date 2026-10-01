@@ -1,0 +1,1561 @@
+%\chapter{Background equations and formulae}
+
+\section{Background equations and formulae}
+
+\subsection{Coordinate systems, surface averages and fluxes}
+
+In this section we provide a summary of the main relations used in this
+paper. Detailed derivations and discussions can be found in \cite{HH}. 
+For the purpose of the geometry description, we consider the magnetic
+system as being toroidally symmetric. 
+Small violations of symmetry, which are always present in real systems,
+are neglected in the equilibrium, but may taken into account in the confinement
+properties of the plasma. 
+
+For the description of tokamak geometry we use two coordinate systems.
+The first one is the cylindrical coordinate system $\{r,\vf,z\}$ with
+the polar axis coinciding with the major axis of a torus.  
+The second $\{a,\theta,\zeta\}$ is related to the magnetic geometry of
+the tokamak, and uses a ``radial'' variable $a,$ which is an arbitrary
+label of a magnetic flux surface, and a poloidal angle $\theta,$ the
+specification of which does not play any role below. 
+In order to make both systems right-handed we choose the toroidal angle
+$\zeta$ as $\zeta=-\vf.$ 
+
+We denote a flux surface, defined by the equation $a={\rm Const}$, as
+$\mbox{\msym S}_a$ and introduce a volume integral over the interior,
+{\msym V}, of this flux surface 
+\begin{equation}
+\label{dfV}
+V=\int\limits_{\mbox{\msym V}} dV
+=\int\limits_{0}^{a}\! da \int\limits_{\mbox{\msym S}_a}
+\frac{dS_a}{|\nb a|} 
+=\int\limits_{0}^{a}\! da \int\limits_{0}^{2\pi}\!
+d\zeta\int\limits_{0}^{2\pi}\sqrt{g} \, d\theta 
+=2\pi\int\limits_{0}^{a}\! da\int\limits_{0}^{2\pi}\sqrt{g} \, d\theta
+\end{equation}
+where $g$ is the determinant of the metric tensor 
+$g
+=\dstyle\left(\frac{D(x,y,z)}{D(a,\theta,\zeta)}\right)^2
+=\left(\nb a\nb\theta\nb\zeta\right)^{-2}
+$ and $V$ is the volume of {\msym V}. 
+The flux surface average of an arbitrary function $f(\br)$ is defined
+\begin{equation}
+\label{dfav}
+\av{f}
+=\prti{}{V}\int\limits_{\mbox{\msym V}} f\, dV
+=\prti{}{V}\int\limits_{0}^{a}\! da \int\limits_{0}^{2\pi}\!
+d\zeta\int\limits_{0}^{2\pi}\sqrt{g} f\, d\theta 
+=2\pi\prti{a}{V}\int\limits_{0}^{2\pi}\sqrt{g} f\, d\theta
+.\end{equation}
+The symbols for partial derivatives are used here in order to emphasize
+that all surface functions (i.e. the functions of single space
+coordinate $a$) are also functions of time $t$.  
+Equation (\ref{dfav}) can equivalently be represented as
+\begin{equation}
+\label{dfav2}
+\av{f}
+=\prti{}{V}\int\limits_{\mbox{\msym V}} f\, dV
+=\int\limits_{\mbox{\msym S}_a}f\frac{dS_a}{|\nb V|}
+=\prti{\psi}{V}\oint f\frac{dl_\theta}{B_{\rm pol}}
+=\left.\oint f\frac{dl_\theta}{B_{\rm pol}}\right/
+\oint \frac{dl_\theta}{B_{\rm pol}}
+,\end{equation}
+where the poloidal flux $\psi$ and the poloidal component, $B_{\rm
+pol},$ of the magnetic field {\bf B} are determined in the next
+section. 
+For any axisymmetric function, $f=f(a,\theta),$ one also has
+\begin{equation}
+\label{avBf}
+\av{{\bf B}\.\na f}
+=\av{\mbox{div}\lb(f{\bf B}\rb)}
+=\prti{}{V}\int\limits_{\mbox{\msym V}}\mbox{div}\lb(f{\bf B}\rb)dV
+=\prti{}{V}\oint\limits_{\mbox{\msym S}_a}f\,{\bf B}\.d{\bf s}
+=0
+.\end{equation}
+Making use of \req{dfav2} we find the area of a magnetic surface
+\begin{equation}\label{Sa}
+S_a
+=\oint\limits_{\mbox{\msym S}_a}dS_a
+=\prti{}{V}\int\limits_{\mbox{\msym V}}|\na V|dV
+=\av{|\na V|}
+=\prti{V}{a}\av{|\na a|}
+.\end{equation}
+Further useful properties of the averaging procedure are
+\begin{equation}\label{avdiv}
+\av{F(a)f(a,\theta)}=F(a)\av{f}
+,\qquad
+\prti{V}{a}=2\pi\int\limits_{0}^{2\pi}\sqrt{g}\,d\theta
+,\qquad
+\av{\mbox{div}\,{\bf g}}
+=\prti{}{V}\av{{\bf g}\.\na V}
+=\prti{\mit\Gamma}{V}
+.\end{equation}
+The last identity in \req{avdiv} shows that the net flux $\mit\Gamma$
+of the vector ${\bf g}$ through the whole magnetic surface is given by 
+\begin{equation}
+{\mit\Gamma}
+=\int\mbox{div}\,{\bf g}\,dV
+=\av{{{\bf g}}\.\na V}
+=\prti{V}{a}\av{{{\bf g}}\.\na a}
+\end{equation}
+and the flux density
+\begin{equation}
+\gamma
+=\frac{{\mit\Gamma}}{S_a}
+=\frac{\av{{{\bf g}}\.\na a}}{\av{|\na a|}}
+.\end{equation}
+
+Assume now that a function of magnetic surface $F(a)$ describes a
+quantity which satisfies the general diffusion equation 
+\begin{equation}\label{dif1}
+\prti{F}{t}+\av{\mbox{div}\,{\bf g}}
+=\prti{F}{t}+\prti{\mit\Gamma}{V}
+=S(a)
+.\end{equation}
+%which can also be represented in any of the forms
+%\begin{equation}\label{locdif}
+%\prti{F}{t}+\prti{\mit\Gamma}{V}=S(a)
+%,\qquad\qquad
+%\prti{F}{t}+\prti{a}{V}\prti{}{a}\lb(\prti{V}{a} \av{|\na a|}\gamma
+%\rb)=S(a) 
+%.\end{equation}
+The local flux ${\bf g}$ can be taken in the form
+\begin{equation}\label{Gloc}
+{\bf g}(a,\theta)
+=F(a)\widetilde{\bf v}(a,\theta)-\widetilde D(a,\theta)\na F(a)
+.\end{equation}
+On substitution in \req{dif1} one has
+\begin{equation}\label{avdif}
+\prti{F}{t}
+=\prti{}{V}\lb( \av{(\na V)^2 \widetilde D}\prti{F}{V} - F\av{\na
+V\.\widetilde{\bf v}} \rb) 
++S(a)
+.\end{equation}
+This result suggests the introduction of two functions of a single
+argument $a$ 
+\begin{equation}\label{Dv}
+D(a)
+=\frac{\av{(\na V)^2 \widetilde D}}{\av{(\na V)^2}}
+=\frac{\av{(\na a)^2 \widetilde D}}{\av{(\na a)^2}}
+,\qquad\quad
+v(a)
+=\frac{\av{\na V\.\widetilde{\bf v}}}{\av{|\na V|}}
+=\frac{\av{\na a\.\widetilde{\bf v}}}{\av{|\na a|}}
+.\end{equation}
+These definitions, obviously, do not depend on the particular choice of
+the magnetic surface label $a.$ 
+Equation (\ref{avdif}) then reads
+\begin{equation}\label{dif}
+\prti{F}{t}
+=\prti{a}{V}\prti{}{a}\lb[\prti{V}{a}\av{(\na a)^2}
+\lb(D\prti{F}{a} - \frac{\av{|\na a|}}{\av{(\na a)^2}} v F\rb)
+\rb]+S(a)
+.\end{equation}
+This presentation of the diffusion equation is employed in the Astra code.
+The total flux and the average flux density on a magnetic surface are
+\begin{equation}\label{Gamma}
+{\mit\Gamma}(a)
+=\prti{V}{a}
+\lb(\av{|\na a|} v F - \av{(\na a)^2}D\prti{F}{a} \rb)
+,\qquad\qquad
+\gamma(a)
+=v F - \frac{\av{(\na a)^2}}{\av{|\na a|}}D\prti{F}{a} 
+.\end{equation}
+If it is needed to introduce an ``effective'' diffusion coefficient as
+implied by experimental observations then none of \req{Gamma} is
+appropriate. 
+The coefficient can be derived from \req{dif} as
+\begin{equation}\label{Deff}
+D_{\rm eff}(a)
+=\frac{\dstyle\int\prti{F}{t}\,dV-\int S\,dV}
+{\av{(\na V)^2}\prti{F}{V}}
+=\frac{\dstyle\int\lb(\prti{F}{t}-S\rb)\prti{V}{a}\,da}
+{\av{(\na a)^2}\prti{V}{a}\,\prti{F}{a}}
+\end{equation}
+which under the additional assumption $v=0$ coincides with $D(a)$ as
+defined by \req{Dv}. 
+
+The definitions (\ref{Dv}) are not unique. 
+For instance, it is possible to write the average transport equation in
+the form 
+\begin{equation}\label{dif11}
+\prti{F}{t}
+=\prti{a}{V}\prti{}{a}\lb[\prti{V}{a}\av{|\na a|}
+\lb(\widehat D\prti{F}{a} - v F\rb)
+\rb]+S(a)
+\end{equation}
+rather than \req{dif} with the argument that $\prti{V}{a}\av{|\na a|}$ is 
+the surface area and that the equation (\ref{dif11}) 
+and the flux density $\gamma=vF-\widehat D\;\prt{F}/\prt{a}$ appear in
+more ``cylindrical'' form. 
+The resulting expression for the diffusion coefficient
+$
+\widehat D_{\rm eff}(a)
+=\lb.\dstyle\int\lb(\prt{F}/\prt{t}-S\rb)dV\rb/\lb(S_a\;
+\prt{F}/\prt{a}\rb)  
+$
+looks simpler and, probably, more natural, but it is dependent on 
+a choice of the magnetic surface label ``{\it a}''. 
+In the Astra code, the invariant definition (\ref{Deff}) is used.
+
+We also introduce a local velocity, ${\bf u}_a$, of the $a(r,z)={\rm Const}$ surface as defined by the equation
+\begin{equation}
+\label{u}
+\left.\prti{a}{t}\right|_{\vec r} 
++{\bf u}_a\cdot\na a = 0
+.\end{equation}
+The local velocity ${\bf u}_f$ of another flux surface labeled by $f$
+(where $f=f(a,t)$) may be different from ${\bf u}_a$ but both are
+obviously related as 
+\begin{equation}\label{urel}
+\left.\prti{f}{a}\right|_t
+\left({\bf u}_a-{\bf u}_f\right)\cdot\na a
+= \left.\prti{f}{t}\right|_a 
+.\end{equation}
+Hence $\left.\prt{f}/\prt{t}\right|_a$ expresses the relative motion of
+the flux surface $f$ with respect to the flux surface $a.$ 
+In other words, a time derivative of a surface function depends on the
+assumption which quantity is taken as the `radial' coordinate and
+considered to be fixed while computing $\prt/\prt t.$ 
+
+\subsection{Formulae for plasma current and magnetic field}
+
+Taking advantage of the toroidal symmetry and making use of the Maxwell
+equations we can express two three-dimensional vectors, the magnetic
+field {\bf B} and the current density {\bf j}, in terms of two scalar
+functions $I(a)$ and $\Psi(a)$ (SI units are used): 
+\begin{equation}\label{dfB}
+\dstyle
+{\bf B}
+=I\nb\zeta+\frac{1}{2\pi}\left[\nb\Psi\times\nb\zeta\right]
+,\end{equation}
+\begin{equation}\label{dfj}
+\dstyle
+{\bf j}
+=-\frac{\nb\zeta}{2\pi\mu_0}r^2{\rm div}\frac{\nb\Psi}{r^2}
++\frac{1}{\mu_0}\left[\nb I\times\nb\zeta\right]
+.\end{equation}
+Taking the scalar product of equations (\ref{dfB}) and (\ref{dfj}) with
+$\nb\theta$ and integrating over the volume within magnetic surface
+using \req{dfV}, we obtain\footnote{In what follows we use exclusively
+the quantity $\psi=-\Psi=-2\pi rA_\zeta$ with $A_\zeta$ being the
+toroidal component of the magnetic vector potential.}: 
+\begin{equation}
+\label{dfpsi}
+\psi
+=-\Psi
+=\frac{1}{2\pi}\int\limits_{\mbox{\msym V}}{\bf B}\cdot\nb\theta\, d^3x
+\equiv
+\int\limits_{{\mbox{\msym S}}_\theta}{\bf B}\cdot d{\bf S}_\theta
+,\end{equation}
+\begin{equation}
+\label{dfI}
+I
+=R_0 B_0-\frac{\mu_0}{4\pi^2}\int\limits_{\mbox{\msym V}}{\bf
+j}\cdot\nb\theta\, d^3x 
+\equiv
+R_0 B_0-\frac{\mu_0}{2\pi}
+\int\limits_{{\mbox{\msym S}}_\theta}{\bf j}\cdot d{\bf S}_\theta
+.\end{equation}
+Here $R_0$ is the distance from the axis of the torus to a fixed point 
+inside the plasma.
+Usually, one chooses $R_0$ as the geometric center of the vacuum chamber.
+$B_0$ is the vacuum magnetic field at $r=R_0$. 
+While $R_0$ is constant, the magnetic field at this point may be a
+function of the time, $B_0=B_0(t)$. 
+The additive constants in \eqs\ref{dfpsi}),~(\ref{dfI}) are chosen so
+that the function $\psi=0$ at the magnetic axis and is physically
+the poloidal magnetic flux, while the function $I$ is related to the
+poloidal current inside a magnetic surface. 
+As long as no current flows outside the plasma, it follows that $I\equiv
+R_0B_0$ everywhere in space between the plasma edge and the toroidal
+field coils.  
+Equations \rf{dfpsi} and \rf{dfI} can be viewed as definitions for
+functions $\psi$ and $I$, respectively. We introduce also the
+dimensionless quantity 
+\begin{equation}
+\label{dfJ}
+J\df\frac{I}{R_0 B_0}
+.\end{equation}
+As long as poloidal (diamagnetic) plasma current is much smaller than
+the current in toroidal field coils, the quantity $J$ is very close to
+unity inside the plasma and $J=1$ outside it. 
+
+Both functions defined in \eqs\ref{dfpsi}), (\ref{dfI}) are so called
+surface functions that means that they depend on space
+coordinates only through the variable $a$. 
+In evolving plasmas, all surface functions may depend also on
+time $t,$ e.g., $V=V(a,t)$, $\psi=\psi(a,t)$. 
+Each of them can be used as radial coordinates instead of $a$. 
+It is convenient to introduce two further surface functions: 
+\begin{equation}
+\label{dfPhi}
+\Phi
+\df\int\limits_{{\mbox{\msym S}}_\zeta}{\bf B}\cdot d{\bf S}_\zeta
+=\frac{1}{2\pi}\int\limits_{\mbox{\msym V}}\left({\bf
+B}\cdot\nb\zeta\right) d^3x 
+=\frac{1}{2\pi}\int\limits_{\mbox{\msym V}}\frac{I}{r^2} d^3x
+,\qquad
+\rho\df\sqrt{\Phi\over\pi B_0}
+.\end{equation}
+The first of them is the toroidal magnetic flux $\Phi.$ The second
+$\rho,$ has the dimensionality of length and represents an effective
+minor radius. 
+
+As seen from \req{dfPhi} the quantities $I$ and $\Phi$ can be expressed
+in terms of each other. 
+On differentiation of \req{dfPhi} we have
+\begin{equation}
+\label{ident1}
+\prti{\Phi}{V}
+=\frac{I}{2\pi}\av{\frac{1}{r^2}}
+\qquad\mbox{or}\qquad
+4\pi^2\rho R_0
+=J\prti{V}{\rho}\av{\frac{R_0^2}{r^2}}
+\end{equation}
+which in large aspect ratio (where $\av{R_0^2/r^2}\approx 1$) and at low
+plasma pressure (where $J\approx 1$) reduces to
+$\prt{V}/\prt{\rho}\approx 4\pi^2\rho R_0$ or 
+$V\approx 2\pi^2\rho^2R_0$ showing that the variable $\rho$ can indeed
+be viewed as an effective (cylinder-like) minor radius of a magnetic
+surface. 
+In what follows, we use $\rho$ as the main radial variable and assume
+that all surface functions are functions of $\rho$ and $t$,
+i.e. $\psi=\psi(\rho,t)$, $V=V(\rho,t)$ and so on. 
+It means that time derivatives are understood as being computed with
+$\rho$ kept constant: 
+\begin{equation}\label{doverdt}
+\prti{f}{t}
+\df\prti{f(\rho,t)}{t}
+\equiv
+\left.\prti{f}{t}\right|_\rho
+.\end{equation}
+unless declared otherwise. Time derivatives taken at
+constant $\Phi$ also play a significant role and are related to the
+standard time derivative of \req{doverdt} by the following relation:  
+\begin{equation}
+\label{dtphi}
+\left.\prti{f}{t}\right|_\Phi
+=\left.\prti{f(\rho(\Phi,t),t)}{t}\right|_\Phi
+=\left.\prti{f}{t}\right|_\rho
++\prti{f}{\rho}\left.\prti{\rho}{t}\right|_\Phi
+=\prti{f}{t}
+-\frac{\rho\dot B_0}{2B_0}\prti{f}{\rho}
+.\end{equation}
+Some flux  surface averages are also included in the transport equations 
+and we introduce the following special notations: 
+\begin{equation}\label{metr}
+V'=\prti{V}{\rho}
+,\quad
+G_1\df\av{\left(\nb \rho\right)^2}
+,\quad
+G_2\df\frac{V'}{4\pi^2}\av{\left(\frac{\nb \rho}{r}\right)^2}
+,\quad
+G_3\df\av{\frac{R_0^2}{r^2}}
+\equiv\frac{4\pi^2\rho R_0}{JV'}
+\end{equation}
+where all $G_{\rm i}$ are dimensionless.
+
+For some applications the poloidal and toroidal components of the
+magnetic field {\bf B} are required. They can be found from \req{dfB} 
+\begin{equation}
+\label{Bpol}
+B_{\rm pol}
+=\frac{\left|\nb\rho\right|}{2\pi r}\prti{\psi}{\rho}
+,\qquad\qquad
+B_{\rm tor}=\frac{I}{r}
+.\end{equation}
+Both components are poloidally dependent. 
+We introduce also the average cylinder-like poloidal field $B_{\rm p}$,
+the rotational transform $\mu$ and the safety factor $q$ as 
+\begin{equation}\label{dfmu}
+B_{\rm p}
+\df\frac{1}{2\pi R_0}\prti{\psi}{\rho}
+,\qquad\qquad
+%Definition for \mu
+\iota\df\mu\df
+\prti{\psi}{\Phi}
+=\frac{1}{2\pi B_0\rho}\prti{\psi}{\rho}
+=\frac{B_{\rm p} R_0}{B_0\rho}
+,\qquad\qquad
+q\df
+\frac{1}{\mu}
+=\prti{\Phi}{\psi}
+.\end{equation}
+Averaging \req{dfj} and using \req{avdiv} we find the toroidal current
+density 
+\begin{equation}
+\label{dfjtor}
+j_{\rm tor}
+\df R_0\av{\bf j\cdot\nb\zeta}
+=\frac{2\pi R_0}{\mu_0 V'}\prti{}{\rho}
+\left(G_2\prti{\psi}{\rho}\right)
+=\frac{J G_3}{2\pi\mu_0\rho}\prti{}{\rho}
+\left(G_2\prti{\psi}{\rho}\right)
+\end{equation}
+and the parallel current density
+\begin{equation}\label{dfjp}\dstyle
+%Definition for the parallel current
+j_\pll
+\df \frac{\av{\bf j\cdot\bf B}}{B_0}
+\dstyle
+=\frac{2\pi R_0}{\mu_0 V'}J^2
+\prti{}{\rho}
+\left(G_2 J^{-1}\prti{\psi}{\rho}\right)
+.\end{equation}
+Integration of \req{dfjtor} gives different relations for the toroidal
+current 
+\begin{equation}
+\label{Ipl}
+\begin{array}{rl}\dstyle
+I_{\rm pl}
+\df\int\limits_{\mbox{\msym S}_\zeta}{\bf j}\cdot d{\bf S}_\zeta
+&\dstyle
+=\frac{1}{2\pi}
+\int\limits_{\mbox{\msym V}}\left({\bf j}\cdot\nabla\zeta\right) d^3x
+=\frac{1}{2\pi R_0}\int\limits_0^\rho V' j_{\rm tor} d\rho
+=\frac{J}{2\pi R_0}\int\limits_0^\rho \frac{V'}{J^2} j_\| d\rho
+\bigskip \\ &\dstyle
+=\frac{G_2}{\mu_0}\prti{\psi}{\rho}
+=\frac{2\pi B_0}{\mu_0}\rho G_2\mu
+=\frac{2\pi R_0}{\mu_0}G_2 B_{\rm p}
+\end{array}
+\end{equation}
+and
+\begin{equation}\label{jlon}
+j_{\rm tor}
+=2\pi R_0\prti{I_{\rm pl}}{V}
+,\qquad
+j_\|
+=2\pi R_0J^2\prti{}{V}\lb(\frac{I_{\rm pl}}{J}\rb)
+=J^2\prti{}{V}\int\limits_0^V\frac{j_{\rm tor}}{J}dV
+.\end{equation}
+Also the formula for the poloidal field energy, which follows from 
+\eqs\ref{metr})-(\ref{Bpol}), is useful 
+\begin{equation}
+\label{WI}
+W_{\rm I}
+=\int\limits_{\mbox{\msym V}}\frac{{\bf B}_{\rm pol}^2}{2\mu_0}d^3x
+=\frac{1}{2\mu_0}\int\limits_0^\rho 
+\left(\prti{\psi}{\rho}\right)^2 G_2 d\rho
+.\end{equation}
+The internal inductance $L_{\rm i}^W$ of the plasma current can be found
+from \eqs \ref{Ipl}), (\ref{WI}) as 
+$L_{\rm i}^W=2W_{\rm I}/I_{\rm pl}^2$. 
+The frequently used dimensionless quantity which is related to the
+internal inductance per unit length, $l_{\rm i}$, is given by $l_{\rm
+i}=\dstyle\frac{4\pi}{\mu_0}\frac{L_{\rm i}^W}{2\pi R_0}=\frac{2L_{\rm
+i}^W}{\mu_0 R_0}$. 
+Sometimes the internal inductance is defined as ${L_{\rm
+i}^\psi=[\psi(a_{\rm pl})-\psi(0)]/I_{\rm pl}}$ which is obviously
+different from $L_{\rm i}^W$. 
+
+\subsection{Equilibrium equation}
+
+Plasma configuration in a tokamak is determined by the Grad-Shafranov
+equilibrium equation 
+\begin{equation}
+%G-Sh equation 
+\label{GSh}
+\Delta^*\psi
+=r^2{\rm div}\frac{\nb\psi}{r^2}
+%=2\pi\mu_0r^2\left({\bf j}\cdot\nabla\zeta\right)
+=-4\pi^2\left(\mu_0 r^2\prti{p}{\psi}+I\prti{I}{\psi}\right)
+%=-\frac{2\pi}{R_0 B_{\rm p}}\left(\mu_0 r^2\prti{p}{\rho}
+%+I\prti{I}{\rho}\right)
+.\end{equation}
+The first term on the \rhs  contains the plasma pressure $p=p(\rho,t)$
+where the contributions from all plasma species are included. The second
+term describes the poloidal diamagnetic current, which can be readily
+expressed in terms of the average toroidal current density. 
+Eliminating $\Delta^*\psi$ from \eqs\ref{dfB}), (\ref{dfj}) and
+(\ref{GSh}) we find
+\begin{equation}\label{j1}
+{\bf j}
+=-2\pi r^2\prti{p}{\psi}\na\zeta-\frac{2\pi}{\mu_0}\prti{I}{\psi}{\bf B}
+.\end{equation}
+As mentioned above, the transport equations include parallel component
+of the current density. 
+So we need to represent the quantity $\prt I/\prt\psi$ in terms of the
+parallel current density $j_\pll$. 
+A scalar product of \eqs\ref{dfB}) and (\ref{j1}) gives
+\begin{equation}\label{j2}
+j_\pll
+=-\frac{2\pi}{B_0}\lb(I\prti{p}{\psi}
++\frac{\av{B^2}}{\mu_0}\prti{I}{\psi}\rb)
+,\end{equation}
+where
+\begin{equation}
+\frac{\av{B^2}}{B_0^2}
+=G_3 J^2+\frac{4\pi^2 G_2\rho^2 \mu^2}{V'}
+.\end{equation}
+We can now express the \rhs of \req{GSh} in terms of functions which are
+provided by the transport equations 
+\begin{equation}\label{GSp}
+\begin{array}{rl}\dstyle
+\Delta^*\psi
+&\dstyle
+%=\frac{2\pi\mu_0 R_0 J}{\av{B^2/B_0^2}}j_\pll
+%+4\pi^2\mu_0R_0^2\lb(\frac{J^2}{\av{B^2/B_0^2}}
+%-\frac{r^2}{R_0^2}\rb)\prti{p}{\psi}
+=\frac{2\pi\mu_0 R_0 J}{\av{B^2/B_0^2}}j_\pll
++\frac{2\pi\mu_0R_0^2}{B_0\rho\mu}\lb(\frac{J^2}{\av{B^2/B_0^2}}
+-\frac{r^2}{R_0^2}\rb)\prti{p}{\rho}
+\bigskip \\ &\dstyle
+=2\pi\mu_0 R_0\lb[
+\frac{J}{\av{B^2/B_0^2}}\lb(j_\pll
++\frac{R_0 J}{B_0\rho\mu}\prti{p}{\rho}\rb)
+-\frac{r^2}{B_0 R_0\rho\mu}\prti{p}{\rho}\rb]
+.\end{array}
+\end{equation}
+
+The equilibrium equation (\ref{GSp}) depends on $t$ parametrically but
+not explicitly.  
+Physically this means that we assume that the plasma is always in 
+equilibrium, and we do not consider relaxation processes. 
+The justification for this is that the relaxation to equilibrium is
+several orders of magnitude faster than all transport processes. 
+We consider the coupling of this equation to the time-dependent transport
+equations in Section 3.11. 
+
+\subsection{Toroidal electric field}
+
+For the toroidal vortex electric field ${\bf E}$ we have local
+(poloidally dependent) relation 
+\begin{equation}
+\label{vecE}
+{\bf E}
+=-\frac{1}{2\pi}\left.\prti{\Psi}{t}\right|_{\bf r}\nabla\zeta
+=\frac{1}{2\pi}\left.\prti{\psi}{t}\right|_{\bf r}\nabla\zeta
+.\end{equation}
+The toroidal loop voltage 
+$U_{\rm tor}$
+is usually understood as the quantity measured by a fixed toroidally
+symmetric loop of a constant major radius $\br_l=(r_l,z_l)$ which is
+given by 
+\begin{equation}
+\label{dfUt}
+U_{\rm tor}=2\pi r\left({\bf E}\cdot r\nabla\zeta\right)
+=\dstyle\left.\prti{\psi}{t}\right|_{\br_l}
+=-\lb.\lb({\bf u}_\psi\cdot\nabla\psi\rb)\rb|_{\br_l}
+\end{equation}
+where ${\bf u}_\psi$ a local velocity of the constant-$\psi$ surface
+(see \req{u}). Different kinds of motion contribute to ${\bf u}_\psi$
+and, hence, to $U_{\rm tor}$.  
+
+First of all, we have 
+\begin{equation}
+\label{UPhi}
+U_{\rm tor}
+=\left.\prti{\psi(\Phi,t)}{t}\right|_{\br_l}
+=\left.\prti{\psi}{t}\right|_\Phi
++\mu\left.\prti{\Phi}{t}\right|_{\br_l}
+.\end{equation}
+It can be shown \cite{HH} that the first term on the \rhs  of \req{UPhi}
+is related to an average longitudinal electric field $E_\pll$ on the
+magnetic surface $\Phi$ 
+\begin{equation}
+\label{dfEp}
+U_\pll
+\df
+2\pi R_0 E_\pll
+\df
+\frac{2\pi R_0}{B_0}\av{\bf E\cdot B}
+=\left.JG_3\prti{\psi}{t}\right|_\Phi
+=JG_3\lb(\left.\prti{\psi}{t}\right|_\rho-\pi\rho^2\mu\dot B_0\rb)
+.\end{equation}
+In ideally conducting plasmas $E_\pll=0$ and 
+%$\left.\prt\psi/\prt t\right|_\Phi=0$ 
+\req{dfEp} describes freezing of the fluxes $\psi$ and $\Phi$ in one
+another. 
+Using Eqs.~(\ref{urel}), (\ref{ident1}) and (\ref{dfUt}) we rewrite
+\req{UPhi} as 
+\begin{equation}
+\label{psivsPhi}
+\mu\left({\bf u}_\psi
+-{\bf u}_\Phi\right)\cdot\nb\Phi
++\frac{V'}{4\pi^2 R_0\rho}U_\pll
+=0
+.\end{equation}
+We conclude that the poloidal flux $\psi$ moves through the toroidal
+flux $\Phi$ only in proportion to its resistive dissipation within the
+flux surface. 
+The quantity $U_\pll$ (or $E_\pll$) is a measure of such dissipation. 
+It is the quantity $U_\pll$ which directly participates in and is
+provided by a transport code. 
+It describes irreversible diffusive flow of the poloidal flux $\psi$
+through the toroidal flux $\Phi.$ 
+
+Making use of \req{dfEp} we introduce another flux surface quantity,
+$U_{\rm pl},$ which is the voltage as seen in the coordinate system
+moving together with a $\rho$--surface: 
+\begin{equation}
+\label{Upl}
+U_{\rm pl}
+=\left.\prti{\psi}{t}\right|_\rho
+=\frac{U_\pll}{JG_3}
++\pi\rho^2 \mu\dot B_0
+%=U_{\rm tor}+2\pi \rho\mu B_0\left({\bf u}_\rho\cdot\nb\rho\right)
+%=U_{\rm tor}-2\pi \rho\mu B_0\left.\prti{\rho}{t}\right|_{\br_l}
+=\frac{U_\pll}{JG_3}
++2\pi\rho\mu B_0\left({\bf u}_\rho-{\bf u}_\Phi\right)\cdot\nb\rho
+,\end{equation}
+where \req{urel} and the definition \req{dfPhi} have also been used. 
+The last equality in \req{Upl} shows that the relative motion of the
+$\Phi$--surface with respect to the $\rho$--surface appears only due to
+variation of the external toroidal magnetic field $B_0$. 
+In most present day tokamaks the vacuum magnetic field can be viewed as
+time-independent, $\dot B_0=0,$ and both flux surface labels,
+$\rho$ and $\Phi,$ are physically equivalent. 
+Usually, the coefficient in front of $U_\pll$ in \req{Upl} is close to
+unity and, when $\dot B_0=0$, $U_{\rm pl}$ is close to $U_\pll$. 
+However, the difference between $U_\pll$ and $U_{\rm pl}$ can become
+significant in a small aspect ratio tokamak and at high plasma pressure. 
+For practical applications, the quantity $U_{\rm pl}$ is more convenient
+than $U_\pll$ because, {\em in steady state}, 
+$U_{\rm pl}$ does not vary over the minor radius $\rho:$ 
+\begin{equation}
+\label{Uplss}
+\prti{U_{\rm pl}}{\rho}=0
+.\end{equation}
+
+We consider now the second term on the \rhs  of \req{UPhi}. 
+First of all, we note that the pressure of the toroidal magnetic field
+in a tokamak is much higher than the plasma pressure. 
+For this reason the toroidal flux $\Phi$ cannot be changed noticeably
+by any internal processes in the plasma. 
+Consequently, the second term on the \rhs  of \req{UPhi} can
+only become appreciable when the external magnetic fields vary. 
+For instance, varying of the poloidal control field causes
+plasma movement as a whole (compression in major radius), while increase
+of the toroidal field results in compression in minor radius.
+When any of these movements is made faster than characteristic transport
+times then the plasma is compressed adiabatically.
+We can further consider the equality 
+\begin{equation}
+\label{drho}
+-{\bf u}_\rho\cdot\nb\rho
+=\left.\prti{\rho}{t}\right|_{\br_l}
+=\prti{\rho}{V}\left.\prti{V}{t}\right|_{\br_l}
++\left.\prti{\rho}{t}\right|_V
+=\prti{\rho}{V}\lb(\left.\prti{V}{t}\right|_{\br_l}
+-\left.\prti{V}{t}\right|_\rho\rb)
+\end{equation}
+relating the ``magnetic'' variable $\rho$ to the ``geometric'' variable
+$V$. We conclude that ${\bf u}_\rho$ comprises the plasma motion in
+space as a whole and a motion of the $\rho$--surface because of changes
+in the equilibrium (first and second
+terms in the brackets on the \rhs of \req{drho}, respectively).  
+
+In general case, using \eqs\ref{UPhi})--(\ref{drho}) we can write the
+toroidal loop voltage as 
+\begin{equation}\label{Utor1}
+U_{\rm tor}
+=\frac{1}{JG_3}U_\pll
++2\pi \rho\mu B_0\lb.\prti{\rho}{t}\rb|_V
++\pi\rho^2 \mu\dot B_0
++\frac{2\pi \rho\mu B_0}{V'}\left.\prti{V}{t}\right|_{\br_l}
+.\end{equation}
+All terms here have clear physical significance. 
+The \lhs  of \req{Utor1} is the loop voltage as measured in an experiment.
+The first term on the \rhs gives a resistive component. 
+The second term describes evolution of the plasma surface due to a
+variation in plasma para- or dia-magnetism. 
+It is of order $d\be_{\rm tor}/dt$ and in a tokamak is usually
+negligibly small. 
+The remaining two terms could be associated with the adiabatic compression
+in minor and major radii, respectively. 
+
+In order to express the measured loop voltage $U_{\rm tor}$ in terms of
+the calculated quantity $U_{\rm pl}$ we rewrite \req{Utor1} as
+\begin{equation}\label{Utor}
+U_{\rm tor}
+=U_{\rm pl}
++2\pi \rho\mu B_0\left.\prti{\rho}{t}\right|_V
++\frac{2\pi \rho\mu B_0}{V'}\left.\prti{V}{t}\right|_{\br_l}
+\end{equation}
+and evaluate it at some point $\br_l=\br_B$ assuming that the point
+$\br_B$ belongs to the edge flux surface with a fixed (for instance, 
+due to the boundary conditions) volume $V=V_B$ so that 
+$\prt V_B/\prt t=0.$ 
+\begin{equation}\label{Uplb}
+U_{\rm plB}
+=U_{\rm tor}\Bigr|_{\rho_B}
+=U_{\rm pl}(\rho_B)
++2\pi B_0\rho_B\mu(\rho_B)\prti{\rho_B}{t}
+=\lb.\prti{\psi}{t}\rb|_{\rho_B}
++2\pi B_0\rho_B\mu(\rho_B)\prti{\rho_B}{t}
+%+\frac{2\pi \rho\mu B_0}{V'}\left.\prti{V_B}{t}\right|_{\br_B}
+.\end{equation}
+The last term on the \rhs of \req{Uplb} is nonzero (although quite small)
+because the toroidal flux inside the plasma changes with any change in
+the profiles of plasma pressure or current density which gives rise to
+$\rho_B=\rho_B(t).$ 
+This term is provided by a solution of the Grad-Shafranov equation.
+Evaluation of $U_{\rm tor}$ at arbitrary point $\br_l=(r_l,z_l)$ outside
+the plasma requires solution of the equilibrium equation in the gap
+between the plasma boundary and the position of measurement $\br_l.$ 
+This problem is not considered here and, in what follows, we assume that
+the edge loop voltage is calculated according to \req{Uplb}.
+
+\subsection{Joule heating and Ohm's law}
+
+Dissipation of the magnetic field energy within a flux surface
+is defined by 
+\begin{equation}\label{QJ1}\hspace*{-10pt}
+\begin{array}{rl}\ds
+\int\limits_{\mbox{\msym V}} \left({\bf j\cdot E}\right) d^3x
+&\!\!\!\dstyle
+=\frac{1}{4\pi^2\mu_0}\int\limits_{\mbox{\msym V}} 
+\left.\prti{\psi}{t}\right|_\br
+{\rm div}\frac{\nabla\psi}{r^2}\;d^3x
+%\bigskip\\ &\dstyle
+=\frac{1}{4\pi^2\mu_0}\int\limits_{\mbox{\msym V}} 
+\lb(\left.\prti{\psi}{t}\right|_\rho
++\prti{\psi}{\rho}\left.\prti{\rho}{t}\right|_\br\rb)
+{\rm div}\frac{\nabla\psi}{r^2}\;d^3x
+%\bigskip\\ &\!\!\!\dstyle
+%=\frac{1}{4\pi^2\mu_0}\int\limits_{\mbox{\msym V}} 
+%\lb[U_{\rm pl}-2\pi B_0\rho\mu\left({\bf u}_\rho\cdot\nb\rho\right)\rb]
+%{\rm div}\frac{\nabla\psi}{r^2}\;d^3x
+\bigskip\\ &\!\!\!\dstyle
+=\int\limits_0^\rho U_{\rm pl}\prti{I_{\rm pl}}{\rho}d\rho
+-\frac{B_0}{2\pi\mu_0}\int\limits_{\mbox{\msym V}} 
+\rho\mu\left({\bf u}_\rho\cdot\nb\rho\right)
+{\rm div}\frac{\nabla\psi}{r^2}\;d^3x
+.\end{array}
+\end{equation}
+The first term on the \rhs of \req{QJ1} can be transformed as
+\begin{equation}\label{QJ2}
+%\begin{array}{rl}
+Q_{\rm J}
+%&\dstyle
+%=\frac{1}{4\pi^2\mu_0}\int\limits_{\mbox{\msym V}} 
+%\left.\prti{\psi}{t}\right|_\rho
+%{\rm div}\frac{\nabla\psi}{r^2}\;d^3x
+=\int\limits_0^\rho U_{\rm pl}\prti{I_{\rm pl}}{\rho}d\rho
+%\bigskip\\ &\dstyle
+=I_{\rm pl}U_{\rm pl}
+-\frac{1}{\mu_0}
+\int\limits_0^\rho
+\prti{\psi}{\rho}\prtii{\psi}{t}{\rho} G_2 d\rho
+=I_{\rm pl}U_{\rm pl}
+-\frac{1}{2\mu_0}
+\prti{}{t}
+\int\limits_0^\rho
+\left(\prti{\psi}{\rho}\right)^2 G_2 d\rho
+%.\end{array}
+\end{equation}
+which on account of the definition (\ref{WI}) can be represented as
+the conservation law for the energy of the poloidal magnetic field in
+the coordinate system moving together with a $\rho$--surface 
+\begin{equation}\label{WIcons}
+\prti{W_{\rm I}}{t}
+=I_{\rm pl}U_{\rm pl}-Q_{\rm J}
+.\end{equation}
+Here $I_{\rm pl}U_{\rm pl}$ is the Pointing flux relative to the
+$\rho={\rm Const}$ flux surface. 
+
+We can also rewrite \req{QJ2} as
+\begin{equation}
+\label{QJ}
+Q_{\rm J}
+=\int\limits_0^\rho U_{\rm pl}\prti{I_{\rm pl}}{\rho}d\rho
+=\frac{1}{2\pi R_0}\int\limits_0^\rho U_{\rm pl}j_{\rm tor}V'd\rho
+=\frac{1}{2\pi R_0}\int\limits_0^V U_{\rm pl}j_{\rm tor}dV
+,\end{equation}
+thus finding the density of magnetic energy dissipation as
+\begin{equation}\label{PJ}
+P_{\rm J}=\frac{1}{2\pi R_0}U_{\rm pl}j_{\rm tor}
+.\end{equation}
+This expression does not take into account the work done by the moving
+surface against the plasma pressure gradient described by the second
+term on the \rhs of \req{QJ1}. 
+As discussed in the previous section this contribution is usually small
+unless the fast processes as the adiabatic compression are involved
+~\cite{HH}. 
+
+The longitudinal Ohm law is assumed to have the form
+\begin{equation}\label{Ohm}
+j_\pll
+=\sigma_\pll E_\pll+j_{\rm BS}+j_{\rm CD}
+\end{equation}
+which together with relations \req{dfjp} and \req{dfEp} gives a transport
+equation for the poloidal flux $\psi$ considered in the next section.
+The averages of the bootstrap current density, ${\bf j}_{\rm BS}$, and
+the density of the current driven by external sources, ${\bf j}_{\rm
+CD}$, are determined similar to $j_\pll$ in \req{dfjp} 
+\begin{equation}\label{jCD}
+j_{\rm BS}=\dstyle\frac{1}{B_0}\av{{\bf j}_{\rm BS}\cdot{\bf B}}
+,\qquad\qquad
+j_{\rm CD}=\dstyle\frac{1}{B_0}\av{{\bf j}_{\rm CD}\cdot{\bf B}}
+.\end{equation}
+%As can be shown, only a part 
+%\begin{equation}\label{POH}
+%P_{\rm OH}=\sigma_\pll E_\pll^2
+%\end{equation}
+%of the total power $P_{\rm J}$ lost by the poloidal field goes
+%irreversibly to the bulk electron heating. There is another part, which
+%goes directly to non-Maxwellian particles and is spent for their
+%accelerating or decelerating. Under some conditions, this power can be
+%returned to the poloidal magnetic field system. 
+
+
+%\vfill\eject
+
+%\section{Tokamak simulation model}
+
+\subsection{Transport equations}
+
+The tokamak simulation code Astra like other codes comprises of a
+system of 1D diffusion equations for densities and temperatures of
+different plasma components, a 2D equilibrium equation, and, 
+a variety of other modules to describe additional heating, current
+drive and other non-diffusive processes in tokamak plasmas. A set of the
+transport equations for a tokamak is derived in \cite{HH}. In this
+section, we discuss the set of equations which are  implemented in the
+Astra code which differs from that presented in \cite{HH} by allowance
+for varying toroidal field $B_0$ and, consequently, adiabatic
+compression in minor radius.  
+
+The basic set of transport equations in the Astra code includes
+equations for the electron density $n_e,$ electron temperature, $T_e,$
+ion temperature, $T_i,$ and the poloidal flux~$\psi$ 
+\begin{equation}\label{main}
+\hspace*{-5mm}\lb\{
+\begin{array}{l}\dstyle
+\frac{1}{V'}\left(\prti{}{t}
+-\frac{\dot B_0}{2B_0}\prti{}{\rho}\rho
+\right)\left(V'n_e\right)
++\frac{1}{V'}\prti{}{\rho}
+\Gamma_e
+=S_e
+,\bigskip\\ \dstyle
+\frac{3}{2}\left(V'\right)^{-5/3}
+\left(\prti{}{t}
+-\frac{\dot B_0}{2B_0}\prti{}{\rho}\rho
+\right)\left[
+\left(V'\right)^{5/3}n_e T_e
+\right]
++\frac{1}{V'}\prti{}{\rho}
+\left(q_e+\frac{5}{2}T_e\Gamma_e
+\right)
+=P_e
+,\bigskip\\ \dstyle
+\frac{3}{2}\left(V'\right)^{-5/3}
+\left(\prti{}{t}
+-\frac{\dot B_0}{2B_0}\prti{}{\rho}\rho
+\right)\left[
+\left(V'\right)^{5/3}n_i T_i
+\right]
++\frac{1}{V'}\prti{}{\rho}
+\left(q_i+\frac{5}{2}T_i\Gamma_i
+\right)
+=P_i
+%,\bigskip\\ \dstyle
+%\frac{2\pi\rho}{V'}\sigma_\pll\left(\prti{\psi}{t}-\frac{\rho\dot B_0}{2B_0}\prti{\psi}{\rho}\right)=\frac{I^2}{2\pi\mu_0V'B_0}\prti{}{\rho}\left[\frac{V'}{I}\av{\left(\frac{\nb\rho}{r}\right)^2}\prti{\psi}{\rho}\right]-j_{BS}-j_{CD}
+,\bigskip\\ \dstyle
+%\label{Ohm}
+\sigma_\pll
+\left(\prti{\psi}{t}
+-\frac{\rho\dot B_0}{2B_0}\prti{\psi}{\rho}
+\right)
+=\frac{J^2R_0}{\mu_0\rho}\prti{}{\rho}
+\left(\frac{G_2}{J}
+\prti{\psi}{\rho}
+\right)
+-\frac{V'}{2\pi\rho}\left(j_{BS}+j_{CD}\right)
+.\end{array}\rb.
+\end{equation}
+If the main ion density $n_i$ and its flux $\Gamma_i$ are not explicitly
+defined (see Section 4) then it is assumed that $n_i=n_e/Z_i$ and
+$\Gamma_i=\Gamma_e/Z_i.$  
+(Note that this approximation neglects impurities.) 
+In line with the discussion in Section 2.1 all fluxes included in
+\req{main}, i.e. the electron flux $\Gamma_e$, the electron heat flux
+$q_e$ and the ion heat flux $q_i$, are considered as total fluxes
+through a flux surface $\rho=Const.$ In order to close the system of
+equations the fluxes should be expressed in terms of thermodynamic
+forces taken as derivatives with respect to $\rho$. In a simulation, the
+fluxes as well as the conductivity $\sigma_\pll$ and the bootstrap
+current density $j_{BS}$ can either be taken from a transport theory or
+from experimental observations in a tokamak. Independently of the origin
+of the formulae used for the representation of the fluxes, it is assumed
+in the Astra code that the transport matrix has the following form 
+\begin{equation}\label{fluxes}
+\left(
+\begin{array}{c}\dstyle
+\frac{\Gamma_e}{n_e}
+\medskip\\ \dstyle
+\frac{q_e}{n_eT_e}
+\medskip\\ \dstyle
+\frac{q_i}{n_iT_i}
+\medskip\\ \dstyle
+V'G_1\frac{\mu_0 j_{BS}}{B_p}
+\end{array}
+\right)
+=-V'G_1
+\left(
+\begin{array}{cccc}
+D_n & D_e & D_i & D_E
+\bigskip\medskip\\ \dstyle
+\chi_n^e & \chi_e & \chi_i^e & \chi_E^e
+\bigskip\medskip\\ \dstyle
+\chi_n^i & \chi_e^i & \chi_i & \chi_E^i
+\bigskip\medskip\\ \dstyle
+C_n & C_e & C_i & 0
+\end{array}
+\right)
+\cdot
+\left(
+\begin{array}{c}\dstyle
+\frac{1}{n_e}\prti{n_e}{\rho}
+\medskip\\ \dstyle
+\frac{1}{T_e}\prti{T_e}{\rho}
+\medskip\\ \dstyle
+\frac{1}{T_i}\prti{T_i}{\rho}
+\medskip\\ \dstyle
+\frac{E_\pll}{B_p}
+\end{array}
+\right)
+.\end{equation}
+All the coefficients in the upper left third-order minor of the
+transport matrix have dimensions $[m^2/s]$ while
+the right column and the bottom row are dimensionless. 
+The average poloidal magnetic field $B_p$ is given by \req{dfmu}. 
+
+In practice it is rare to use all the terms on the \rhs of the transport
+system of equations \req{main} and the full transport matrix
+\req{fluxes} are used in transport modeling.
+Moreover, often the transport set of four equations \req{main} is
+excessive. 
+For instance, computation of electron density $n_e$ can often be
+replaced with experimentally measured data. 
+The Astra code provides an easy way to retain only those terms and
+equations of \eqs\ref{main}),~(\ref{fluxes}) which are necessary for the
+specific problem under consideration. 
+This is coded as a set of special instructions and will be discussed
+further in Section~5.2. 
+On the other hand, the four transport equations of \req{main} can be
+insufficient for some problems of interest, such as minority ion heating
+or helium ash removal. In such cases, the code can be supplemented with
+additional diffusion equations as will be described in Section~3.12. 
+
+In addition to the main set of the transport equations (\req{main}) the
+Astra code provides a variety of other modules for the description of
+different processes in tokamak plasmas and to compute the transport
+coefficients in \eqs{\ref{main}})-(\ref{fluxes}).
+Processes modeled by these modules include additional heating and
+current drive, minority species behavior, the plasma periphery and SOL
+plasma, MHD stability analysis etc.
+
+\subsection{Sources and sinks}
+
+The source of electrons $S_e$ in the first of \eqs\ref{main}) is 
+\begin{equation}\label{S}
+S_e=s_{ion}^{(e)}Nn_e+s_{ion}^{(i)}Nn_i-s_{rec}n_in_e
+\end{equation}
+where $N$ is the density of neutral atoms of the working gas, $s_{rec}$
+is the recombination rate, and $s_{ion}^{(e)}$ and $s_{ion}^{(i)}$ are
+the rates of the impact ionization by electrons and ions, respectively. 
+The sources of the electron $P_e$ and of the ion $P_i$ energy are
+defined as
+\begin{equation}
+\begin{array}{l}\label{P}\dstyle
+P_e
+=P_{OH}-P_{\Gamma}-P_{ei}-P_e^{RAD}-P_e^N+P_e^H+P^{FUS}
+,\bigskip\\ \dstyle
+P_i=P_{\Gamma}+P_{ei}+P_i^N+P_i^H
+,\end{array}
+\end{equation}
+include the Ohmic heating $P_{OH}$ which was defined in \req{PJ}, the
+power lost as radiation $P_e^{RAD}$, the powers of auxiliary heating
+of electrons $P_e^H$ and ions $P_i^H$, heat exchange between electron
+and ion components 
+\begin{equation}\label{Pei}\dstyle
+P_{\Gamma}
+=\av{(\nb\rho)^2}\frac{\Gamma_e}{n_e}\prti{\left(n_iT_i\right)}{\rho}
+,\qquad
+P_{ei}=\frac{3m_e}{m_i}\frac{n_e}{\tau_e}(T_e-T_i)
+\end{equation}
+and losses due to the atomic processes
+\begin{equation}
+\begin{array}{l}\label{PN}\dstyle
+P_e^N
+=\left(s_{ion}^{(e)}N{\cal E}_{ion}+s_{rad}N{\cal E}_1
++\tstyle\frac{3}{2}s_{rec}n_iT_e\right)n_e
+,\bigskip\\ \dstyle
+P_i^N
+=\tstyle\frac{3}{2}\left(s_{ion}NT_N+s_{cx}N(T_N-T_i)
+-s_{rec}n_eT_i\right)n_i
+,\end{array}
+\end{equation}
+where $T_N$ is the temperature of the neutral atoms, $s_{cx}$ and
+$s_{rad}$ are  the charge exchange and radiation rates, respectively,
+${\cal E}_{ion}=13.6$ eV, ${\cal E}_1=10.2$ eV. 
+
+Although the bootstrap current $j_{BS}$ is expressed by \req{fluxes} in
+terms of thermodynamic forces, the bootstrap current together with the
+driven current $j_{CD}$ can also be viewed as sources of poloidal flux. 
+The driven current density $j_{CD}$ as well as $N$, $T_N$, $P_e^H$ and
+$P_i^H$ must be provided by separate modules which are included in the
+code. 
+Sawtooth oscillations and plasma behavior in a divertor region are
+further examples of processes which require separate treatment. 
+Modules for these processes are also included in the code, but
+detailed discussion of all these modules falls outside the scope of this
+report. 
+Below we discuss ways of adding new modules or replacing modules which
+already exist in the code.
+
+To close the system of transport equations \req{main} we need, in
+addition to the sources and sinks of \eqs\ref{S})--(\ref{P}), the
+transport matrix of \req{fluxes}, the electrical conductivity
+$\sigma_\pll$ and the driven current $j_{CD}$, specify also the surface
+functions $V',I,G_1,G_2,G_3$.
+Then with appropriate initial conditions and boundary conditions, we can
+determine the time evolution of the radial distributions of the electron
+density $n_e$, temperatures $T_{e,i}$ and current density.
+
+\subsection{Initial conditions}
+
+Initial conditions do not usually play a significant role in tokamak
+transport modeling, because normally steady-state discharge conditions
+are under study. 
+However, for the analysis of transient processes, such as plasma current
+ramp-up, initial conditions may play an essential role. 
+When available, measured experimental quantities may be used to supply
+distributions, but these are not always available, especially for the
+poloidal flux $\psi$ and the corresponding current density. 
+The simulation of some processes can be sensitive to the initial choice
+of the current density profile, and this choice may require care.
+It is usually sufficient to set initial conditions self-consistently,
+to give smooth plasma evolution during the initial moments of the run. 
+
+For the first three equations in \req{main} the natural initial
+conditions are 
+\begin{equation}\label{ic}
+\begin{array}{l}
+\lb.n_e(\rho,t)\rb|_{t=0}=n_{e0}(\rho)
+,\bigskip\\
+\lb.T_e(\rho,t)\rb|_{t=0}=T_{e0}(\rho)
+,\bigskip\\
+\lb.T_i(\rho,t)\rb|_{t=0}=T_{i0}(\rho)
+.\end{array}
+\end{equation}
+A similar initial condition for the poloidal flux would read
+$\lb.\psi(\rho,t)\rb|_{t=0}=\psi_0(\rho)$. 
+However, this is of no practical use because it is usually more
+convenient to prescribe the current density $j_\pll$ or the rotational
+transform $\mu,$ rather than the poloidal flux $\psi$ itself. 
+Thus, appropriate initial conditions are alternative 
+\begin{equation}\label{icj0}
+\begin{array}{l}
+{\rm either}\qquad
+\lb.j_\pll(\rho,t)\rb|_{t=0}=j_0(\rho)
+\qquad\mbox{or}\qquad
+\lb.\mu(\rho,t)\rb|_{t=0}=\bar\mu(\rho)
+.\end{array}
+\end{equation}
+These conditions involve either the second or the first derivative of
+the unknown function $\psi(\rho)$, respectively. 
+With either initial condition, $\psi(\rho)$ must be determined using
+either \req{dfjp} or \req{dfmu}.
+A further well-defined quantity is the total plasma current $I_{\rm pl},$
+which is always measured in experiments, while the current distribution
+during the early phase of a tokamak discharge is usually not known.
+Therefore it is reasonable to require that $I_{\rm pl}$ takes a given
+value and the normalizations of the current density or rotational
+transform profiles are adjusted to be self--consistent using
+\begin{equation}\label{icj}
+\lb\{\begin{array}{l}\dstyle
+\lb.j_\pll(\rho,t)\rb|_{t=0}=j_0(\rho)
+\bigskip\\ \dstyle
+\int\limits_0^{\rho_B}J^{-2}j_0 V'd\rho=2\pi R_0 I_{\rm pl}
+\end{array}\rb.
+\end{equation}
+or
+\begin{equation}\label{icmu}
+\lb.\mu(\rho,t)\rb|_{t=0}=\frac{\bar\mu(\rho)}{\bar\mu(\rho_B)}
+\frac{\mu_0 I_{\rm pl}}{2\pi B_0 \rho_B G_2(\rho_B)}
+,\end{equation}
+respectively.
+The boundary condition $J(\rho_B)=1$ is used in \req{icj}.
+
+Also convenient and useful is the initial condition with the plasma
+current distributed according to the steady-state condition 
+$\prtii{\psi}{t}{\rho}=0\Rightarrow\prti{\psi}{t}
+=U_{\rm pl}(\rho)=Const$. 
+Using the parallel Ohm's law \req{Ohm} and assuming
+$\dot B_0(t=0)=0$ we re-write the condition as 
+\begin{equation}\label{icU}
+\lb.\Bigl(j_\pll-j_{BS}-j_{CD}\Bigr)\rb|_{t=0}
+=\frac{2\pi\rho}{V'}\sigma_\pll(\rho)U_{\rm pl}
+=C_\sigma\frac{\rho}{V'}\sigma_\pll(\rho)
+.\end{equation}
+Similar to \eqs\ref{icj}),~(\ref{icmu}) the factor $C_\sigma$ in
+\req{icU} should be found from the condition that the total current is
+$I_{\rm pl}$. 
+Although the current relaxation time is long in a tokamak, the
+stationary initial condition \req{icU} is widely used when the direct
+measurements of the current density are not available. 
+The condition of \req{icU} is also physically relevant when
+non-diffusive processes cause fast current relaxation, or when the 
+preceding long phase of relaxation is of no interest. 
+
+\subsection{Boundary conditions for densities and temperatures}
+
+The boundary conditions for \req{main} at the magnetic axis $\rho=0$ are
+imposed by the geometry of problem and the requirement that all fluxes
+should vanish at $\rho=0$ 
+\begin{equation}\label{bc0}
+\lb.\Gamma_e\rb|_{\rho=0}
+=\lb.q_e\rb|_{\rho=0}
+=\lb.q_i\rb|_{\rho=0}
+=0
+.\end{equation}
+
+Boundary conditions at $\rho=\rho_B$ for the first three equations of
+the system \req{main} usually take one of two forms 
+\begin{equation}\label{bc}
+\begin{array}{ll}
+n_e(\rho_B)=n_{eB}(t)
+\qquad &\mbox{or}\Quad
+\Gamma_e(\rho_B)=\Gamma_{eB}(t)
+,\bigskip\\
+T_e(\rho_B)=T_{eB}(t)
+\qquad &\mbox{or}\Quad
+q_e(\rho_B)=q_{eB}(t)
+,\bigskip\\
+T_i(\rho_B)=T_{iB}(t)
+\qquad &\mbox{or}\Quad
+q_i(\rho_B)=q_{iB}(t)
+.\end{array}
+\end{equation}
+All the functions on the right hand sides in \req{bc}, besides
+explicitly depending on time $t,$ can also depend on all other plasma
+parameters. 
+The boundary conditions of \req{bc} can be imposed in any combination as
+described in Section~4.4.
+
+It worth noting now that, in general, the question of boundary
+conditions is not quite straightforward. 
+Indeed, in the configuration space, the plasma boundary is supposed to
+coincide with some flux surface $\mbox{\msym S}_B.$ 
+This boundary surface serves as an input to a solver of the
+Grad-Shafranov equilibrium equation. 
+The solver returns a position of this surface in flux coordinate $\rho_B.$
+Even in the simplest case, when the plasma boundary
+$\mbox{\msym S}_B$ is fixed in space and does not move, the
+corresponding value $\rho_B$ can vary in time depending on the plasma
+pressure and current density distributions. 
+Therefore, the plasma boundary $\rho_B(t)$ moves in the frame of the
+Lagrangian flux coordinate $\rho.$ 
+Thus the problem under consideration is always a moving boundary
+problem and this is discussed in more detail in Section~3.11.
+
+It is also possible that the required boundary conditions cannot be
+expressed explicitly in any of forms given in \req{bc}. 
+This can be the case when more elaborated boundary conditions are
+imposed by considering SOL models.
+Correct description of these cases could require the use of MHD or
+kinetic theory. 
+In the Astra code, these situations are implemented by calling special
+subroutines as described in Section 4. 
+
+\subsection{Boundary condition for the poloidal flux}
+
+The left boundary condition for the fourth equation in \req{main} is
+straightforward, 
+${\lb.\prti{\psi}{\rho}\rb|_{\rho=0}\hspace*{-10pt}=0}.$
+The boundary condition at $\rho=\rho_B$ is more complicated. 
+Generally, the condition should be obtained by solving a magnetostatic
+problem in the exterior region (with respect to the plasma) taking into
+account all poloidal currents with their mutual inductances,
+magnetization of the iron core, currents induced in a vacuum chamber and
+so on. 
+However, this would unreasonably complicate the problems under
+consideration. 
+It is more practical to use one of the three possibilities described
+below. 
+
+\subsubsection{Prescribed plasma current} 
+This is the most frequently used boundary condition for transport
+modeling. 
+%The condition is justified by a relative independence of the equation
+%for $\psi$ from other transport equations.  
+%Since the processes of particle and energy transport have the
+%characteristic times much shorter than this for the poloidal flux they
+%can be studied assuming prescribed or even time-independent plasma
+%current.  
+Making use of \req{Ipl} we write the condition as
+\begin{equation}\label{bcI}
+\lb.\prti{\psi}{\rho}\rb|_{\rho=\rho_B}
+=\frac{\mu_0}{G_2(\rho_B)}I_{\rm pl}(t)
+\end{equation}
+where $I_{\rm pl}(t)$ is the total plasma current with a prescribed time
+dependence. 
+
+\subsubsection{Prescribed loop voltage} 
+This is usually not a good choice of boundary condition. 
+For instance, in Ohmic plasmas this boundary condition gives rise to a
+thermal instability. 
+On the other hand, this instability is very slow and can be easily
+stabilized. 
+Therefore, this condition is also included in the code as a possible
+option. 
+In the simplest case where the plasma boundary is fixed (see discussion
+in Section~3.4) it reads 
+\begin{equation}\label{bcU}
+\lb.\prti{\psi}{t}\rb|_{\rho=\rho_B}
+=U_{\rm plB}(t)
+\end{equation}
+with $U_{\rm plB}$ being the prescribed boundary loop voltage.
+
+\subsubsection{External circuit equation} 
+This provides a boundary condition which includes the two previous
+conditions as particular cases. 
+It uses a simplified description of an external circuit with the single
+equation 
+\begin{equation}\label{bcL}
+U_{\rm ext}=\frac{d}{dt}\lb(L_{\rm ext}I_{\rm pl}\rb)+U_{\rm plB}
+\end{equation}
+where $L_{\rm ext}$ is the external inductance of the plasma, and 
+$U_{\rm plB}=U_{\rm pl}(\rho=\rho_B)$
+is the loop voltage calculated at the plasma edge \req{Uplb}.
+$U_{\rm ext}$ is a given function of time associated with the voltage
+produced by the primary coil. 
+
+\subsection{Closure of the equilibrium and transport equations}
+
+The four equations of \req{main} do not comprise a closed system, even
+when all the fluxes and right hand sides are determined. 
+Indeed, the functions $V(\rho,t)$, $J(\rho,t)$, $G_{1,2}(\rho,t)$
+included in \req{main} still remain unknown. 
+Moreover, the independent variable $\rho$ is also an unknown
+function of space coordinates and time: $\rho=\rho(r,z,t)$. 
+It is the solution of the Grad-Shafranov equation \req{GSh} which gives
+the instant relations of all flux coordinates, such as $\rho$, $V$, $J$,
+etc., to one another and to the laboratory coordinate system $\{r,z\}$. 
+These relations can vary in time due to time evolution of plasma
+parameters as described by \req{main}. 
+Hence to study the plasma evolution in a tokamak we should solve the set
+of one-dimensional transport equations (\ref{main}),~(\ref{fluxes})
+simultaneously with the two-dimensional equilibrium equation (\ref{GSp}).
+\footnote{Because of this combination of 1D and 2D equations
+the transport codes are often referred to as 1.5D codes.}
+
+First of all, we limit our consideration to the internal equilibrium
+problem with a prescribed plasma boundary. 
+This boundary is not supposed to be fixed in time so that
+the entire plasma can move according to a given law.
+However, we do not consider the external fields and currents which are
+required to provide this boundary evolution and the plasma movement
+because the solving of external equilibrium problem is beyond the scope
+of the Astra code.  
+
+The closing procedure can be seen as follows.
+At each time step, the solution to the transport equations
+(\ref{main}),~(\ref{fluxes}) provides the functions $p(\rho)$ and
+$j_\pll(\rho)$ on the \rhs of \req{GSp}.
+These functions are determined on the interval $0\leq\rho\leq\rho_B$.
+On the other hand, the solution of \req{GSp} is sought within the
+prescribed plasma boundary $\mbox{\msym S}_B.$  
+However, the requirement that this boundary $\mbox{\msym S}_B$ must
+coincide with the flux surface $\rho=\rho_B$ would overdetermine the
+problem. 
+According to the particular experimental conditions, it is possible to
+adopt different ways of treating this contradiction.
+For instance, the overdetermination can be removed if the surface
+$\mbox{\msym S}_B$ is given by a set of points $\{r_i,z_i\}$ while in
+between it is allowed to be arbitrary.
+This approach is practically useless because it suppose a corrugated
+plasma surface which most probably is not compatible with the external
+magnetic system.
+
+More practical would be to consider the whole set of boundary parameters 
+$\{\rho_B,r_i,z_i\}$ as approximate which has to be fitted with some
+accuracy. 
+If $\{r_i,z_i\}$ is firmly prescribed and $\rho_B$ is free then the
+formulation will be referred as  the prescribed plasma boundary. 
+The case with fixed $\rho_B$ and flexible $\{r_i,z_i\}$ will be called
+the adjustable plasma boundary. 
+These two approaches are discussed below. 
+
+\subsubsection{Prescribed plasma boundary}
+
+Presently, the following procedure is implemented in the Astra code.
+The equilibrium equation is solved requiring that
+$\mbox{\msym S}_B$ coincides with one of the $\rho$-surfaces, say
+$\rho=\hat\rho_B$, which can be either external or internal with respect
+to $\rho_B$. 
+In the case $\rho_B<\hat\rho_B$, there is a gap between the current
+carrying plasma and the presumed boundary $\mbox{\msym S}_B$. 
+In the case $\rho_B>\hat\rho_B$ the excessive plasma layer should be
+scraped off. 
+In both cases, the functions $p(\rho)$ and $j_\pll(\rho)$ are re-defined
+on the interval between $\rho_B$ and $\hat\rho_B$ so that in the region
+$\min(\rho_B,\hat\rho_B)\leq\rho\leq\max(\rho_B,\hat\rho_B)$:
+$p(\rho)=p(\rho_B)$ and $j_\pll(\rho)=0.$ 
+In addition, a surface skin current is added at $\rho=\hat\rho_B$ in
+order to keep the total plasma current unchanged. 
+Solving \req{GSp} is then iteratively repeated until $\hat\rho_B$
+remains constant with sufficient accuracy. 
+The new boundary position is selected as $\rho=\hat\rho_B$. 
+The described procedure does not change when a plasma boundary moves or
+varies its shape. 
+
+In practical calculations, at each time step it is sufficient to use the
+value of $\hat\rho_B$ returned by the equilibrium solver after one
+iteration as a new position of the boundary point $\rho_B$. 
+Indeed, as it has already been discussed, modifications in current
+density, pressure and the corresponding changes in plasma
+diamagnetism cause time variation of the plasma size. 
+Consequently, the time variation of $\rho_B(t)$ is of the order
+$\dot\beta_{tor}\Delta t$ and hence is very small. 
+Typically, the relative variation of $\rho_B$ is as small as $10^{-3}$
+per time step. 
+
+\subsubsection{Adjustable boundary}
+
+More relevant would be to consider the prescribed boundary shape
+as approximate which has to be fitted with some accuracy. 
+Then the different points on the boundary can be matched with different
+admissible errors according to their confidence weight. 
+%(see Section~3.11.2). 
+A trivial example of such an approach would be to fix the innermost point
+on the boundary (associated with internal limiter) and, adjusting the
+rest of the boundary $\mbox{\msym S}_B,$ allow the entire plasma to
+shift in order to avoid a contact with a limiter and preserve $\rho_B$
+unchanged. 
+
+This option assumes that the plasma boundary is given with one free
+parameter, which may be the boundary elongation, plasma shift, etc. 
+When plasma is expanding then the freedom is used in order to fulfill the
+condition that the plasma remains within the flux surface $\rho_B$ and
+thus avoids plasma contact with a limiter. 
+All other features of the code remain the same as in the case with
+prescribed boundary shape. 
+This version is easier for a numerical implementation and, probably,
+more relevant from the physical point of view. 
+However, it requires a specification of the admissible freedom. 
+We note in conclusion that all the details have significance which is
+more formal than practical, because the real variation in $\rho_B(t)$ is
+negligibly small. 
+
+\subsection{Auxiliary transport equations}
+
+Usually, a tokamak plasma contains a variety of different species. 
+These might be hydrogen isotopes, helium ash, or other impurities. 
+Each of them can be characterized by its own density and temperature. 
+Non-Maxwellian populations of the main plasma components can also be
+treated as independent species. 
+Densities, temperatures, velocities of rotation and other thermodynamic
+characteristics of plasmas are believed to obey the law of collisional
+diffusion. 
+For treatment of all these processes not included in \req{main} the
+Astra code provides a set of additional transport equations. 
+The present practice of transport tokamak modeling never uses the
+transport matrix of \req{fluxes} in full and most present-day tokamaks
+work with a time-independent toroidal magnetic field. 
+Therefore, these additional equations have a truncated form 
+\begin{equation}\label{aux}
+%\hspace*{-5mm}
+\prti{}{t}\left(V'f_j\right)
+=\prti{}{\rho}
+\left[V'
+\av{(\nb\rho)^2}\left(D_j\prti{f_j}{\rho}-v_j f_j\right)
+\right]
++V'S_j
+\qquad\qquad 
+j=1,2,3
+.\end{equation}
+In version 5.0 of the Astra code the number of equations (\ref{aux})
+cannot exceed 3, but this restriction can easily be lifted. 
+The initial and boundary conditions for \req{aux} are similar to those
+for the first three equations in \req{main} 
+\begin{equation}\label{icf}
+\lb.f_j(\rho,t)\rb|_{t=0}=f_{j0}(\rho)
+\end{equation}
+and
+\begin{equation}\label{bcf}
+\lb\{\begin{array}{l}
+\lb.\left(D_j\prti{f_j}{\rho}-v_j f_j\right)\rb|_{\rho=0}
+=0
+,\bigskip\\
+f_j(\rho_B,t)=f_{jB}(t)
+\qquad \mbox{or}\Quad
+\lb.\left(-D_j\prti{f_j}{\rho}+v_j f_j\right)\rb|_{\rho_B}=\Gamma_{jB}(t)
+.\end{array}\rb.
+\end{equation}
+
+\subsection{Equation for gas puff neutrals} 
+
+The subroutine solves a kinetic equation for a neutral distribution
+function $f_N$ 
+\begin{equation}\label{fN}
+%\begin{array}{l}\dstyle
+%{\bf v}\nb f_N+\lb(s_{ion}+s_{cx}\rb)f_N=\lb(s_{cx}N+s_{rec}n_e\rb)f_{Mi}
+v\prti{f_N}{x}+\lb(s_{ion}^{(e)}n_e+s_{ion}^{(i)}n_i+s_{cx}n_i\rb)f_N
+%\bigskip\\ \hspace*{10em}\dstyle
+=\frac{\sqrt{3}}{2}n_i\lb(s_{cx}N+s_{rec}n_e\rb)
+\delta\lb(v\pm\frac{v_{Ti}}{\sqrt{3}}\rb)
+,%.\end{array}
+\end{equation}
+where $v_{Ti}=\sqrt{2T_i/m_i}.$
+The factor $\sqrt{3}$ is included in \req{fN} in order to describe
+isotropic velocity distribution of the charge exchange neutrals.
+The equation (\ref{fN}) is solved in a slab geometry assuming that the
+plasma slab thickness is equal to twice the  minor radius in the
+equatorial cross-section $2a_B$. 
+This approximation is reasonable when the mean free path of a neutral is
+much smaller than $a_B$. 
+In present-day tokamaks, the condition is usually fulfilled with a large
+margin. 
+As long as the transit time of the neutral atoms is quite small the
+problem is treated as steady state.
+
+It is assumed that the incoming neutral particles have a
+velocity distribution 
+\begin{equation}\label{fN0}
+\begin{array}{rl}\dstyle
+\Bigl.f_N(x=-a_B,v)\Bigr|_{v>0}
+&\dstyle
+=N_1\delta\lb(v-v_1\rb)
++N_2\delta\lb(v-v_2\rb)
+,\bigskip\\ \dstyle
+\Bigl.f_N(x=a_B,v)\Bigr|_{v<0}
+&\dstyle
+=N_1\delta\lb(v+v_1\rb)
++N_2\delta\lb(v+v_2\rb)
+,\end{array}
+\end{equation}
+with $v_{1,2}=\sqrt{2E_{1,2}/m_i}.$
+%where $f_{Mi}$ is the Maxwellian distribution of ions. 
+%where the factor $\sqrt{3}$ on the \rhs appears from th
+\req{fN} is solved as described in \cite{DK} and the neutral density and
+temperature are then found as 
+\begin{equation}\label{N}
+%N({\bf r})=\int f_N({\bf r},{\bf v})d^3v
+N(x)=\int f_N(x,v)dv
+\qquad\mbox{and}\qquad
+%T_N({\bf r})=\int \frac{m_iv^2}{2}f_N({\bf r},{\bf v})d^3v
+T_N(x)=\frac{1}{N(x)}\int \frac{m_iv^2}{2}f_N(x,v)dv
+.\end{equation}
+
+\subsection{Other Astra compatible packages available by request}
+
+A number of other modules are incorporated in the Astra code.
+Some of them are quite complicated and time consuming. 
+The code is continually supplemented with newer ones.
+Only few of these additional packages are included in the 
+standard Astra version.
+Sometimes the interfaces only are provided, while the packages 
+can be obtained directly from their authors. 
+A description of all these modules is out of the scope of this report. 
+Only a list of the most useful modules with the names of the
+contact persons is presented here.
+
+\subsubsection{Additional heating and current drive}
+
+\paragraph{Neutral beam heating and current drive \rm\cite{Pole}.} 
+The NBI Heating and CD package of the Astra code was developed by
+A.~R.~Polevoi (polevoy@nfi.kiae.su). 
+A simplified time independent version of the package is distributed with
+the Astra code. 
+It is briefly described in Section~4.6.2.
+A more advanced time dependent version is available. 
+
+\paragraph{Electron cyclotron heating and current drive \rm\cite{Poli}.} 
+The wave equation for the electromagnetic waves in a cold plasma is
+solved in the Gaussian beam approximation. 
+The wave absorption at the frequency of the electron cyclotron resonance
+(ECR) and its harmonics is calculated for a Maxwellian plasma in the
+weakly relativistic approximation. 
+The driven current is estimated using the adjoint technique.
+This package
+%, called \tws{TORBEAM}, 
+is developed by E.~Poli 
+(Emanuele.Poli@ipp.mpg.de, see also 
+http://www.aug.ipp.mpg.de/\symbol{126}emp/torbeam.html).
+
+\paragraph{Lower hybrid heating and current drive \rm\cite{EP}.} 
+The wave equation is solved for the lower-hybrid frequency
+range in the cold plasma approximation using the geometric optics
+technique. 
+The Fokker--Planck equation is solved in the 1D approximation.
+Ion and $\alpha-$particle absorption is also included.
+(A.~N.~Saveliev, saveliev@ans.ioffe.rssi.ru).
+
+\paragraph{Ion cyclotron heating \rm\cite{MB}.} 
+The wave equation for the IC frequency range is solved in the eikonal
+approximation. 
+The code takes into account minority and ion cyclotron harmonic heating,
+ion-ion hybrid resonance heating and wave absorption due to coupling to
+the acoustic and ion-Bernstein waves. 
+The code also includes a module for the antenna-plasma coupling which
+provides the boundary conditions for the ray tracing. 
+(M.~Brambilla, Marco.Brambilla@ipp.mpg.de).
+
+\subsubsection{Transport coefficients}
+
+The Astra library includes about one hundred different neoclassical
+and anomalous transport coefficients which can be expressed as formulae. 
+Recently, more complicated routines for evaluation of the transport
+coefficients were developed. 
+Some of them can be included in the Astra code as separate modules. 
+
+\paragraph{Neoclassical transport {\tt NCLASS} \rm\cite{NCLASS}.}
+A matrix of neoclassical transport coefficients for a multi-species
+tokamak plasma is calculated.
+(W.A. Houlberg, houlbergwa@ornl.gov)
+
+\paragraph{Turbulent transport}
+The following three transport models provide transport matrix due to
+toroidal ion temperature gradient (ITG) modes and trapped electron modes
+(TEM). 
+
+-- { Weiland-Nordman model \rm\cite{WN}.}  
+(J.~Weiland, elfjw@elmagn.chalmers.se). 
+
+-- { IFS/PPPL model \rm\cite{ifspppl}.} (W.~Dorland,
+bdorland@pppl.gov). 
+
+-- { GLF23 model \rm\cite{glf}.} (J.~Kinsey,
+kinsey@apollo.gat.com).
+
+%\paragraph{Itoh-Fukuyama model \rm\cite{fitoh}.}  (D.~Mikkelsen, mikk@pppl.gov). 
+
+\subsubsection{Impurity transport and radiation}
+The subroutine {\tt STRAHL} \cite{strahl} describing transport and
+radiation of impurity ions (R.~Dux, Dux@ipp.mpg.de,
+http://www.aug.ipp.mpg.de/\symbol{126}Ralph.Dux/home.html) 
+can be linked with the code Astra. 
+No cross influence of impurities on the main plasma transport is
+included. 
+
+%\subsubsection{Scrape-off layer description}
+
+\subsubsection{Stability analysis}
+
+The code provides interfaces to stability codes as {\tt PEST,
+MAST, CASTOR, GARBO}. 
+For this codes, a special input file is written for specified time
+slices which can be used for a post-run stability analysis.
+In addition, more simplified routines are available for on line
+evaluation of instability induced transport. 
+
+\paragraph{Sawtooth oscillations ({\rm subroutine \tt MIXINT}.)} 
+Sawtooth description \cite{PP} based on the Ka\-domtsev theory for
+magnetic field line reconnection \cite{BB,PP} is included in the standard
+Astra distribution. 
+
+\paragraph{Tearing modes ({\rm subroutine \tt ISLAND}.)} 
+Simplified $\Delta'$ analysis for saturated island width in a
+cylindrical plasma is provided (A.N.Chudnovskij, chdn@wowa.net.kiae.su). 
+
+%\hyphenation
+%\paragraph{Balloonning modes.} (H.-P.Zerhfeld, zehrfeld@ipp.mpg.de)
+
+\vfill\eject

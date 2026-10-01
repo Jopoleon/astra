@@ -1,0 +1,30 @@
+! ZIXE2 [ ]:  Average Xenon charge^2
+! T [eV] Electron temperature
+! POST D.E. JENSEN R.V. e.a., Atomic Data and Nuclear Tables,
+!     Vol.20 (1977) 397.
+!                    (Fable 2024)
+
+T = TE(J)*1.E3
+Z = LOG10(TE(J))
+ZIXE2 = 0.
+
+if (T < 200. .and. T > 0.) then
+    Y =      1.398493e3 + Z   *4.471387e3 + Z**2*7.535434e3 + &
+        Z**3*7.540645e3 + Z**4*4.051307e3 + Z**5*8.980940e2
+endif
+if (T < 2000. .and. T > 200.) then
+    Y =      6.534578e2 + Z   *1.021993e2 + Z**2*3.911807e2 + &
+        Z**3*6.188945e3 + Z**4*6.015180e3 - Z**5*6.423354e2
+endif
+if (T < 20000. .and. T > 2000.) then
+    Y =      6.855930e3 - Z   *5.375176e4 + Z**2*1.745354e5 - &
+        Z**3*2.502967e5 + Z**4*1.662969e5 - Z**5*4.160487e4
+endif
+if (T > 20000.) then
+    Y =     -7.966994e4 + Z   *2.474997e5 - Z**2*2.983927e5 + &
+        Z**3*1.799612e5 - Z**4*5.420930e4 + Z**5*6.519285e3
+endif
+
+ZIXE2 = Y
+if (T < 80.) ZIXE2 = 0.  
+

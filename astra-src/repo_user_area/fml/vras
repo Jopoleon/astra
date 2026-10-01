@@ -1,0 +1,21 @@
+! VRAS []:  Electrical particle convection Neoclassical (Ware pinch)
+!                 C. Angioni and O. Sauter, Phys. Plasmas 7, 1224 (2000).
+!   (Angioni 2002)
+!   Usage in a model:   CN=-VP*VRAS (Ware pinch)
+ZZ=ZEF(J)
+INCLUDE 'fml/betpl'
+ZZ=ZEF(J)
+!       Lin-Liu and Miller trapped fraction [PoP 2, 1666 (1995)]
+!        ZFT=FTLLM
+ INCLUDE 'fml/tpf'
+ ZFT=TPF
+include 'fml/nues'
+! Sauter, Angioni, Lin-Liu, Bootstrap L31 [PoP 6, 2834 (1999)]
+  ZDF = 1.+(1.-0.1*ZFT)*SQRT(NUES)
+ZDF = ZDF + 0.5*(1.-ZFT)*NUES/ZZ
+ZFT = ZFT/ZDF
+  ZL31 = (1+1.4/(ZZ+1))*ZFT-1.9/(ZZ+1)*ZFT*ZFT
+ZL31 = ZL31 + (0.3*ZFT*ZFT+0.2*ZFT*ZFT*ZFT)*ZFT/(ZZ+1)
+VRAS= IPOL(J)*BDB02(J)*ZL31
+! Note: factor 2*pi = 2.0 * GP already in psi_pol
+

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+rootdir=`dirname $0`        # may be relative path
+AWD=`cd $rootdir/.. && pwd` # ensure absolute path
+
+platform=`$AWD/get_platform`
+source $AWD/platform/env.$platform
+if [[ ":$PATH:" != *":$PYTHON_BINDIR:"* ]]
+then
+    export PATH=${PYTHON_BINDIR}:${PATH}
+fi
+
+python3 ${AWD}/exe/as_exe.py "$@"

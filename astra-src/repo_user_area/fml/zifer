@@ -1,0 +1,13 @@
+! ZifER [ ]: Average Fe charge
+! T [eV] Electron temperature
+!       POST D.E. JENSEN R.V. e.a., Atomic Data and Nuclear Tables, 
+!        Vol.20 (1977) 397.
+!    (Yushmanov 25-12-89)
+T=TE(J)
+Z=LOG10(T)
+ZifER=0.
+if (T .lt. .300 .and. T .ge. .020) ZifER=4.+9.7*(Z+1.7)
+if (T .lt. .615 .and. T .ge. .300) ZifER=15.5+1.65*(Z+.522)
+if (T .lt. 1.20 .and. T .ge. .615) ZifER=16.+25.*(Z+.22)
+  if (T .ge. 1.2)   ZifER=23.5+1.8*(Z-.8)
+if (ZifER .gt. 26.)  ZifER=26.

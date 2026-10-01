@@ -1,0 +1,527 @@
+!*! TORIC package version 7.2flw
+
+ &toric_mode
+!  Read by tor_aamain
+!
+!  Preprocessing
+!     toricmode = 'sinbad'
+!     toricmode = 'felice'
+
+!  Executing
+!     toricmode = 'toric_maxw'
+!     toricmode = 'toric_qlin'
+!     toricmode = 'nphi_scan'
+!     toricmode = 'ssfpql'
+!        Change iex_sumnph to .true. in namelist ssfpqlinp
+!        and specify nphi_avg if applied to a scan
+      toricmode = 'toric_fpql'
+!
+!  Postprocessing
+!     toricmode = 'new_sumnph'
+!     toricmode = 'gc_orbits'
+!
+!  Special tests
+!     special_tests = .true.
+!     internal_tests = .true.
+!
+!  Format of the output
+!     iwdisk = -1
+!                                  1 - netCDF (default)
+!                                  0 - ASCII
+!                                 -1 - binary
+  /
+
+ &loopdata
+!  Read by subroutine tor_loop_nmlst in module tor_mod_nmlst
+      hf_pwgoal = 1.0 
+      accur_goal = 2.
+      max_iter = 5
+      iex_nphiscan = .false.
+      imaxql = 0
+! When restarting a loop set imaxql equal to the last iteration+1
+ /
+
+ &nphi_scan_inp
+!  Read by subroutine tor_nphscan_nmlst in module tor_mod_nmlst
+      nphi_start = -35
+      nphi_end = 35
+      nphi_step = 1
+  /
+
+ &toricainp
+!  Read from subroutine tor_hf_nmlst in module tor_mod_nmlst
+!
+      isol   = 0
+!                           = -1 : testing the mhd equilibrium
+!                           =  0 : diagnostic mode
+!                           =  1 : solution of the wave equations
+      nelm   = 501
+      ntt    =  64
+      nmod   =  31
+      nptvac =   0
+      mxmvac =  31
+!
+      freqcy = 36.5E6
+      nphi   = 12
+
+      iflr   = 1
+!                         flr only (1) or higher harmonics (2 or 3)
+      icoll  = 0
+      enhcol = 1.E5
+!                        Must be very large (10^5) to have any effect
+      zeff = 1.5
+!                        If Zeff is >= 1._r8 it will be used throughout
+!                                  < 1._r8  it will be reevaluated.
+!
+!     tn_alphas = .true.
+!                      If true, thermonuclear alphas are included
+!
+      igsmhd = 1
+!                               = 1: MHD conf. from file produced by i2mex
+!                               = 0: analytic MHD configuration
+      idprof = 1
+!                              =  1 : n and T Profiles from external file
+!                              =  0 : analytic n and T profiles
+      dist_plafars = 0.0
+!                               Distance plasma edge-faraday shield (cm)
+!                               If < -99. no FS is assumed.
+      dist_plaant = 6.0
+!
+      dist_plawall(1) = 14.0
+      dist_plawall(2) = 18.0
+      dist_plawall(3) = 10.0
+      dist_plawall(4) = 20.0
+!                              Distance plasma-wall (cm)
+!                              (1-4) : outer, up, inner, down
+!                              (must be > dist_plaant)
+!     iex_torelec = .true.
+!                              Toroidal effects on electron damping
+!                              default id .false.
+      mastch = 1
+      avmmax = 1.5E9
+
+      out2gnuIC = .true.
+!     out2fmtIC = .true.
+!     out2ncdfIC = .true.
+!                              All defaults are .false.
+!                              except out2ncdfIC = .true. if isol=-1
+!                              out2fmtIC not implemented with isol=1
+      inputpath = ''
+      profnt_file = '63084N22.profnt'
+      equil_file = '63084N22.equigs'
+!
+      timing_on = .true.
+ /
+
+  &antenna_inp
+
+! Toroidal antenna configuration
+! ==============================
+! Antenna geometry for the evaluation of the toroidal spectre
+      jpole = 3      ! Number of toroidal straps
+      width = 18.0   ! Strap length [cm]
+      wgap  = 20.    ! Strap width [cm]
+      phase =  0.    ! Phase difference [deg]
+
+! -- Parameters entered individually for each toroidal strap
+! Width of the straps entered individually [cm]
+! Default == width
+      width_arr = 9.5, 18.0, 9.5
+
+! Gap after each strap, entered individually [cm]
+! Default == wgap
+      wgap_arr = 14.0, 14.0
+
+! Relative current amplitudes in the toroidal straps
+! Defaul == 1.0
+      amplt_arr = 1., 2., 1.
+
+! Toroidal phases of the straps
+! Default == 0., phase, 2*phase, ...
+      phase_arr = 0., 180., 0.
+
+! Poloidal antenna configuration
+! ==============================
+     npol_strap = 1 ! Number of poloidal      
+
+     theant = 0.
+               ! Poloidal angle of the antenna midpoint [deg]
+     antlen = 92.  ! length of the antenna [cm]
+
+! Antenna geometry for the evaluation of the poloidal spectre
+      pol_model = 'feeder_to_short'
+!     pol_model = 'push-pull'
+
+      pol_current = 'numeric'
+!     pol_current = 'analytic'
+!
+      antlc  =  0.2  ! Constant of propagation (dimensionless)
+
+! -- Parameters entered individually for each poloidal strap
+! Poloidal length [cm]
+! Default  == antlen
+!     pol_len_arr = 32.5, 32.5
+
+! Poloidal gap [cm]
+! Default == 0.
+!     pol_gap_arr = 4.
+
+! Poloidal phase [deg]
+! Default == 0.
+!     pol_phase_arr = 0.
+
+! Poloidal relative current amplitude
+! Default == 1.
+!     pol_amplt_arr = 1.     
+  /
+
+ &equidata
+!
+!  Read from subroutine tor_equil_nmlst in module tor_mod_nmlst
+!  to define an analytic equilibrium (igsmhd = 0).
+!
+      rtor   = 165.5        ! Major radius (cm)
+      rplasm = 46.0         ! Plasma radius (cm)
+!
+      ashift = 0.0          ! Shafranov Shift
+      aellip = 1.00         ! Ellipticity on axis
+      sellip = 1.60         ! Ellipticity at separatrix
+      strian = -0.22        ! Triangularity at separatrix
+      azvert = 0.0
+      strigz = 0.0
+      sp_xs1 = 0.0
+!
+      bzero  = 2.505        ! Magnetic field at the geometric center
+      aicurr = 830.         ! Toroidal current (kA)
+      ppjte = 2.0
+      ppjti = 1.5
+      qaxis  = 1.040
+      qedge  = 3.457
+/
+
+ &profntdata
+! Read by subroutine tor_profnt_nmlst in module tor_mod_nmlst
+! Used only for analytic n and T profiles (iprodf = 0).
+!
+      profkind_n  = 'simple'  ! alternative: 'polyhg'
+      profkind_Te = 'simple'  ! alternative: 'polyhg'
+      profkind_Ti = 'simple'  ! alternative: 'polyhg'
+      nord_n = 9         ! Used only if profkinf is not 'simple'
+      nord_Te = 9        ! Must be >= than the orser of polynomial
+      nord_Ti = 9        ! used to specify the profile
+
+      nspec  = 2
+!                              Number of ion species
+!                              Should not exceed parameter nspmx
+      mainsp = 1             ! Reference species (for charge neutrality)
+
+      atm(1) = 2.            ! Atomic mass
+      atm(2) = 1.
+
+      azi(1) = 1.            ! Atomic charge
+      azi(2) = 1.
+
+      aconc(2) = 0.05        ! Concentrations (n_i/n_e)
+
+      denec  = 5.4E13        ! Central electron density (cm^-3)
+      tempec = 4.5           ! Central electron temperature (keV)
+
+      tempic(1) = 4.5       ! Central ion temperature (keV)
+      tempic(2) = 4.5 
+
+      ppnei = 2.0            ! Inner power in the density profile
+      ppnee = 1.0            ! Outer power in the density profile
+
+      pptei = 2.0       ! Inner power in the electron temperature profile
+      pptee = 1.0       ! Outer power in the electron temperature profile
+
+      pptii(1) = 2.0    ! Inner power in the ion temperature profile
+      pptie(1) = 1.0    ! Outer power in the ion temperature profile
+      pptii(2) = 2.0  
+      pptie(2) = 1.0
+
+      dnsepr = 1.8E13    ! Density at the last closed surface
+      tesepr = 0.20      ! Electron temperature at the last closed surface
+      tisepr(1) = 0.20   ! Ion temperature at the last closed surface
+      tisepr(2) = 0.20
+
+      so_thickness = 0.0 ! Scrape-off thickness (cm)
+!                        ! Must be sufficiently smaller than dist_plaant
+!                        ! to allow for 5 mesh points inbetween.
+      gldn   = 3.0       ! Density gradient length in scrape-off
+      glte   = 3.        ! Electron temperature gradient length in scrape-off
+      glti(1)   = 3.     ! Ion temperature gradient length in scrape-off
+      glti(2)   = 3.
+/
+
+ &coeffs_dens
+!  NOTE: nord_n must be <= than the value specified in namelist &profntdata
+      nord_n = 9
+      acf_n(0) = 6.1750753
+! .....
+ /
+
+ &coeffs_Tempe
+!  NOTE: nord_Te must be <= than the value specified in namelist &profntdata
+      nord_Te = 9
+      acf_Te(0) = 2.1750753
+      acf_Te(1) = 0.51826837
+      acf_Te(2) = 7.6075719
+      acf_Te(3) = -5.1425355
+      acf_Te(4) = -45.90422
+      acf_Te(5) = 25.454623
+      acf_Te(6) = 91.268823
+      acf_Te(7) = -122.46826
+      acf_Te(8) = 55.267736
+      acf_Te(9) = -8.597345
+ /
+
+ &coeffs_Tempi
+!  NOTE:nord_Ti must be <= than the value specified in namelist &profntdata
+      nord_Te = 9
+      acf_Ti(0) = 2.1750753
+! ......
+ /
+
+ &tnalphas_inp
+! Read in subroutine tor_hf_nmlst of module tor_mod_nmlst
+      alphas_conc = 0.0 ! 0.05
+!          n_Alpha/n_e (if zero, is estimated from  refdn_tnalph)
+!          Default is 9.625E+11_r8
+!     refdn_tnalph = 3.6664E+11
+!          Central density of thermonuclear alphas at which
+!          alphas_conc is supposed to reach 5%.
+!     alphas_model = 'maxwll_equiv'
+!                      Default is 'slowing_down'
+ /
+
+ &ssfpqlinp
+!  Read by subroutine fpq_fpql_nmlst in module  tor_mod_nmlst
+!
+!     nbi_on = .true. 
+      nrate_on = .true.
+
+      hf_power = 20.
+
+      emxfac(1) = 200.
+      emxfac(2) = 350.
+      emxfac(3) = 550.
+!                                multipliers of T_i in the definition 
+!                                of the max energy in the velocity mesh
+      nrdpsi = 101
+!
+      u_step = 0.1
+      legsup(1) = 36
+      legsup(2) = 42
+      legsup(3) = 42
+
+      out2gnuQL = .true.
+!     ipl_ncdf  = .true.
+!     iex_tortrp = .true.
+!     iex_sumnph = .true.
+!     nphi_avg = ... ! (See output of run_sumnph)
+!
+! NOTE: all iex_... defaults are .false.
+!
+      intLeg_source = 'longintC'
+!     intLeg_source = 'Mathematica'
+!     intLeg_source = 'fortran'
+!                               ! Default is 'longintC'
+      path_to_legints = ''
+
+      LEGINTS_FILE = ''
+
+      path_to_soldata = ''
+      soldata_file = 'toric.data'
+!
+      timing_on = .true.
+ /
+
+ &qlin_inp
+!
+!  Read by subroutione fpq_qlin_nmlst in module tor_mod_nmlst
+!
+      path_to_qldata = ''
+      qldata_file = 'ssfpql.data.fpql'
+!     qldata_file =' ssfpql.data.fpql1 '
+!     qldata_file = 'ssfpql.data.fpql2'
+!     qldata_file = 'ssfpql.data.fpql3'
+ /
+
+ &nbi_inp
+!
+!  Read by fpq_nbiinit in module fpq_mod_nbisrc
+!
+      path_to_nbidata = './'
+      nbidata_file = ' nbi.data '
+!     nbi_mode = 'none'
+!     nspread  = 7
+      nbi_mode = 'coinjection'
+!     nbi_mode = 'balanced'
+!     nbi_mode = 'counterinjection'
+ /
+
+  &gcpar
+! Read by fpq_gc_driver subroutine in module fpq_mod_gcenter
+!
+! Particle mass
+      amass = 1.
+! Particle charge (-1 for electrons)
+      achg = 1.
+! Initial (psi,theta,phi)
+      psi = 0.5
+      theta = 0.
+      phi = 0.
+! Energy [keV]
+      erg = 5000.
+! Lambda: mu/erg*B_eq
+      lambda = 0.78
+! Initial v parallel direction
+      ivdir = 1
+! Scan variables ('lmbd','energy','pphi')
+      nscan = 5
+      varscan = 'lmbd'
+      begscan = 0.7
+      endscan = 0.9
+! Nr. of bouncing times 
+      ibounc = 1
+! Control parameters of trajectory integral
+      nt_min = 50
+      nt_max = 500
+ /
+
+ &specl_tests
+!
+!  Read by subroutine run_nmlst in module tor_mod_nmlst
+!  The following options are mutually exclusive: 
+!
+!     test_FFT = .true.
+!     test_legints = .true.
+!           Requires link to the file LegInt.dat 
+!     test_rescof = .true.
+!     test_tor2ql = .true.
+!     test_ql2tor = .true.
+!     test_bessel = .true.
+!     test_ellipt = .true.
+!     test_icres = .true.
+!     test_catto = .true.
+  /
+
+ &intn_tests
+!  Read by subroutine tests_nmlst in module tor_mod_nmlst
+!
+! -------------------------------------
+!  Special tests and flow following (this version only)
+! -------------------------------------
+!
+!      toric_flow  = .true.
+!      fpql_flow   = .true.
+!      ipsi_flow = 6         ! Comment for hard-coded choices
+!      iflow_step = 5        ! Decomment if several outputs desired
+!      i_dtest_beg = 4       ! Range fo detailed tests
+!      i_dtest_end = 6
+!      test_sumnph = .true.
+!
+! -------------------------------------
+!  Tests of the TORIC code, diagnostic
+! -------------------------------------
+!
+!     out_dirflr = .true.
+!     out_dirhot = .true.
+!     psibeg_dir = 0.95
+!     psiend_dir = 1.0
+!     psistep_dir = 0.
+!     out_ibweld = .true.
+!     psibeg_ibw = 0.9
+!     psiend_ibw = 1.0
+!     psistep_dir = 0.05
+!
+! -------------------------------------
+!  Options and tests of the TORIC code
+! -------------------------------------
+!
+!     plot_allFields = .true.
+!     test_powbal = .true.
+!     test_bdconds = .true.
+!     test_zetaql = .true.
+!     test_polmodes = .true.
+!
+!     do_avging = .false.
+!               Running averaging of the raw equilibrium data
+!               Default is .true.
+!     intchb = 7
+!               >0: Chebyshev interpolation
+!               of order m = min(12, max(5,intchb))
+!     modvac = 1
+!               Default is -1 (JWP)
+!               Set modvac =  1 for the Order Reducttion Algorithm
+!
+! -------------------------------------
+!  Thermonuclear Alphas 
+! -------------------------------------
+!
+!     test_tnalphas = .true.
+!     ipharm_alphas = 1
+!        Harmonic tested (detailed test) - default is -1 (none)
+!        (only with isol = 0)
+!
+! -------------------------------------
+! Tests of the SSFPQL code
+! -------------------------------------
+!
+!     test_nrate = .true.
+!     test_qlcalj = .true.
+!     test_legints = .true.
+!     test_dql = .true.
+!     test_legendre = .true.
+!     test_qlzetas = .true.
+!     iex_gyrobohm = .true.
+      hfpw_rdiff(1) = 0.1
+      hfpw_rdiff(2) = 0.1
+!     test_torfld = .true.
+!     delta_k = 0.
+!          default is  delta_k = 180.
+!     addemin = .false.
+!
+!     ipsi_plotF(1) = -1
+!     ipsi_plotF(2) = -1
+!     plot_stix = .true.
+!     test_stix = .true.
+!     ipsi_tstix = 17
+!
+! -------------------------------------
+!  Options and tests of NBI
+! -------------------------------------
+!     test_nbibal = .true.
+!     nbi_Tfact = 2.
+!           ! Default is 1.
+! -------------------------------------
+! Tests of trapping
+! -------------------------------------
+!     test_trapping = .true.
+!     enh_ergref = 2.5
+!     dcr_fact = 0.5
+! -------------------------------------
+! Options and tests of the consistency loop
+! -------------------------------------
+      test_loop = .true.
+!     iex_anderson = 'neweta'
+!     eigmod_cntrl = .true.
+ /
+
+&icres_inp
+!  Read by subroutine fpq_icres in  module fpq_mod_Catto
+     nptpol = 0        ! n. of poloidal points
+     n_enval = 5       ! n. of energy values (<= 5)
+     ion_spec = 2      ! ion (<= nspec)
+     enekev(1) = 10.
+     enekev(2) = 33.1623
+     enekev(3) = 100.
+     enekev(4) = 331.623
+     enekev(5) = 1000.
+                       ! Energies
+     vlamb_min = 0.    ! Min value of Lambda_v
+     vlamb_max = 1.    ! Max value of Lambda_v
+     psi_pl = 0.33        ! Value of psi
+ /
+

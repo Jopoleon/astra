@@ -1,0 +1,697 @@
+\documentclass[12pt]{article}
+\usepackage{times,mathptm}
+\usepackage{amsmath}
+%\documentclass{article}
+\input{epsf.tex}		\epsfclipon
+\topmargin 0mm			\oddsidemargin 5mm
+\textwidth 165mm		\textheight 220mm
+\headheight 0mm			\headsep 0mm
+\pagestyle{empty}
+\newfont{\headfont}{cmr7 scaled\magstep0}
+\headheight 10mm		\headsep 10mm
+\pagestyle{myheadings}
+\markright{\headfont
+%\today\hfill 
+ASTRA--8.0 
+% -- draft description --- Not for distribution
+\hfill}
+\input definitions
+
+
+\newcommand{\fl}[1]{\leftline{\tt\hspace*{3em} #1}\\}
+\newcommand{\dl}[1]{\leftline{\tt #1}}
+\newcommand\axisym{\stackrel{\mathclap{\scriptsize\mbox{axisym}}}{=}}
+\def\tab{$\hspace*{-2pt}\longrightarrow\hspace*{-5pt}|\hspace*{-3pt}$}
+%\def\bs{$\,\backslash\,$}
+%\def\bs{\verb"\"}
+\def\bs{{\tt\symbol{92}}}
+\def\us{{\tt\symbol{95}}}
+\def\qq{\qquad}
+%\def\us{$\,\rule[-2pt]{.6em}{.5pt}\,$}
+\def\ust{$\!\!\rule[-1.5pt]{.6em}{.5pt}\!\!$}
+\def\lfl{\leftline}
+\def\sp{\hspace*{.82pt}\tt\_\hspace*{.82pt}}
+\def\sp{\hspace*{.82pt}\tt\_\hspace*{.82pt}}
+\def\Svec{\mathbf{S}}
+\def\Uperpvec{\mathbf{U}_{\perp}}
+\def\bvec{\mathbf{b}}
+\def\Uperp{U_{\perp}}
+\def\Uphis{U_{\phi,s}}
+\def\upara{u_\parallel}
+\def\uparaDZ{\Delta u_{\parallel,Ds}}
+\def\Pivec{\Pi}
+\def\Ppert{\tilde{P}}
+\def\Cref{C_{\rm ref}}
+\def\Aref{A_{\rm ref}}
+\def\jpar{j_{\parallel}}
+\def\Bvac{B_{\rm vac}}
+\def\Rvac{R_{\rm vac}}
+\def\Pvec{\mathbf{P}}
+\def\Avec{\mathbf{A}}
+\def\Cvec{\mathbf{C}}
+\def\Avecref{\mathbf{A}_{\rm ref}}
+\def\Cvecref{\mathbf{C}_{\rm ref}}
+
+\def\fhat{\hat{f}}
+\def\Fhat{\hat{F}}
+\def\ghat{\hat{g}}
+\def\Ghat{\hat{G}}
+
+\def\Tbar{\bar{\mathbf{T}}}
+\def\Gbar{\bar{\mathbf{G}}}
+\def\Sbar{\bar{\mathbf{S}}}
+\def\Bbar{\bar{\mathbf{B}}}
+\def\Lbar{\bar{\mathbf{L}}}
+\def\Hbar{\bar{\mathbf{H}}}
+\def\Ibar{\bar{\mathbf{I}}}
+
+\def\Kapp{K_{\rm P}}
+\def\Kapi{K_{\rm I}}
+\def\Kbarp{\bar{\mathbf{K}}_{\rm P}}
+\def\Kbari{\bar{\mathbf{K}}_{\rm I}}
+\def\Dvec{\mathbf{\Delta}}
+
+\def\ldebye{\lambda_{\rm D}}
+\def\psit{\tilde{\Psi}}
+\def\psih{\hat{\Psi}}
+\def\eH{\mathbf{e}_{\rm h}}
+\def\eT{\mathbf{e}_{\rm t}}
+\def\csn{c_{\rm s}}
+\def\vth{v_{\rm th}}
+\def\vpsi{v_{\psi}}
+\def\phinv{\Phi_{\rm inv}}
+\def\phimix{\Phi_{\rm mix}}
+\def\vthe{v_{\rm th}^{\rm e}}
+\def\massi{m_{\rm i}}
+\def\massp{m_{\rm p}}
+\def\massD{m_{\rm D}}
+\def\massZ{m_{\rm Z}}
+\def\masse{m_{\rm e}}
+\def\vvec{\mathbf{v}}
+\def\xvec{\mathbf{x}}
+\def\Xvec{\mathbf{X}}
+\def\vpar{v_{\parallel}}
+\def\vparj{v_{\parallel,j}}
+\def\vperp{v_{\perp}}
+\def\kpar{k_{\parallel}}
+\def\kper{k_{\perp}}
+\def\kperdav{\left<k_{\perp}^2 \right>}
+\def\kyr{k_{\rm y} \rho_{\rm i}}
+\def\ky{k_{\rm y}}
+\def\vthi{v_{\rm th}^{\rm i}}
+\def\kx{k_{\rm x}}
+\def\kvec{\mathbf{k}}
+\def\mixjeq{\frac{\gamma}{<k_{\perp}^2>}}
+\def\mixj{\gamma/<k_{\perp}^2>}
+\def\rhoi{\rho_{\rm i}}
+\def\rlnez{\rlne^{\rm (s/n)}}
+\def\rhos{\rho_{\rm s}}
+\def\rhostar{\rho_{*}}
+\def\rhoe{\rho_{\rm e}}
+\def\omD{\omega_{\rm d}}
+\def\omR{\omega_{\rm R}}
+\def\ostar{\omega_*}
+\def\vpd{v_{\perp}^{\rm d}}
+\def\vzed{\hat{v}_{{\rm z}}}
+\def\ftrap{f_{\rm t}}
+\def\denspert{\tilde{n}}
+\def\omegalf{\omega_{\rm A}}
+\def\valf{v_{\rm A}}
+\def\rhom{\rho_{\rm m}}
+\def\npert{\tilde{n}}
+\def\fipert{\tilde{\Phi}}
+\def\fipertvec{\mathbf{\tilde{\Phi}}}
+\def\fizs{|\fipert_{\kvec}|^2}
+\def\fpert{\tilde{f}}
+\def\fpertvec{\mathbf{\tilde{f}}}
+\def\gpert{\tilde{g}}
+\def\gpertvec{\mathbf{\tilde{g}}}
+\def\vexb{\tilde{v}_{\mathbf{E}\times \mathbf{B}}^{\rm r}}
+\def\vExB{\mathbf{v}_{eb}}
+\def\veb{\tilde{v}_{\mathbf{E}\times \mathbf{B}}}
+\def\linhop{\textbf{\textit{L}}}
+\def\nlinhop{\textbf{\textit{N}}}
+\def\wmatr{\textbf{\textit{W}}}
+\def\ident{\textbf{\textit{I}}}
+%Fields
+\def\Rgeo{R_{\rm geo}}
+\def\Zgeo{Z_{\rm geo}}
+\def\Bgeo{B_{\rm geo}}
+\def\Btor{B_0}
+\def\Bvacr{B_{\rm 0v}}
+\def\Rvacr{R_{\rm 0v}}
+\def\Btor{B_0}
+\def\Btor{B_0}
+\def\betap{\beta_{\rm p}}
+\def\dense{n_{\rm e}}
+\def\densc{n_{\rm C}}
+\def\oaveg{\omega^{\rm QL}}
+\def\odaveg{\omega_{\rm d}^{\rm QL}}
+\def\densi{n_{\rm i}}
+\def\tempe{T_{\rm e}}
+\def\tempi{T_{\rm i}}
+\def\tite{\frac{T_{\rm i}}{T_{\rm e}}}
+\def\teti{\frac{T_{\rm e}}{T_{\rm i}}}
+\def\Bvec{\mathbf{B}}
+\def\Avec{\mathbf{A}}
+\def\Uvec{\mathbf{U}}
+\def\Uveci{\mathbf{U}_{\rm i}}
+\def\Uvece{\mathbf{U}_{\rm e}}
+\def\Rvec{\mathbf{R}}
+\def\Rvecdot{\dot{\mathbf{R}}}
+\def\Br{B_{\rm R}}
+\def\Bz{B_{\rm Z}}
+\def\Bvect{\mathbf{B}_{\rm \phi}}
+\def\Bvecp{\mathbf{B}_{\rm p}}
+\def\Avect{\mathbf{A}_{\rm \phi}}
+\def\Avecp{\mathbf{A}_{\rm p}}
+\def\Bvecpp{\mathbf{B}_{\rm p}^{\rm pl}}
+\def\Bvecpc{\mathbf{B}_{\rm p}^{\rm co}}
+\def\Bvecx{\mathbf{B}_0}
+\def\Avect{\mathbf{A}_{\rm \phi}}
+\def\Aphi{A_{\rm \phi}}
+\def\Evec{\mathbf{E}}
+\def\Gvec{\vec{\Gamma}}
+\def\Vvec{\mathbf{v}}
+\def\btor{B_{\rm \phi}}
+\def\PHIx{\Xi_0}
+\def\psib{\psi_{\rm b}}
+\def\psin{\hat{\psi}}
+\def\phin{\hat{\Phi}}
+\def\Vnorm{\hat{V}}
+\def\rnorm{\hat{r}}
+\def\phib{\Phi_{\rm b}}
+\def\psip{\psi^{\rm pl}}
+\def\psic{\psi^{\rm co}}
+\def\psibp{\psi_{\rm b}^{\rm pl}}
+\def\psibc{\psi_{\rm b}^{\rm co}}
+\def\PHIpx{\Xi_{\rm EXT}^{\rm pl}}
+\def\PHIcx{\Xi_{\rm EXT}^{\rm co}}
+\def\Vext{V_{\rm EXT}}
+\def\ephi{\mathbf{e}_{\phi}}
+\def\Ephi{\mathbf{E}_{\phi}}
+\def\vdriftj{\mathbf{v}_{{\rm d},j}}
+\def\vdrift{\mathbf{v}_{{\rm d}}}
+\def\Epol{\mathbf{E}_{\rm p}}
+\def\Jphi{j_{\phi}}
+\def\eZ{\mathbf{e}_{\rm Z}}
+\def\eR{\mathbf{e}_{\rm R}}
+\def\eP{\mathbf{e}_{\rm p}}
+\def\eY{\mathbf{e}_{\rm y}}
+\def\eS{\mathbf{e}_{\rm s}}
+\def\Rin{R_{\rm in}}
+\def\Rout{R_{\rm out}}
+\def\bpol{B_{\rm p}}
+\def\epsi{\mathbf{e}_{\psi}}
+\def\dSavec{d\mathbf{S}_1}
+\def\dSbvec{d\mathbf{S}_2}
+\def\dgavec{d\vec{\gamma}_1}
+\def\dgbvec{d\vec{\gamma}_2}
+%Gradients
+\def\rlteq{\frac{R}{L_{\rm T}}}
+\def\rlneq{\frac{R}{L_{\rm n}}}
+\def\rlteeq{\frac{R}{L_{\rm Te}}}
+\def\rltieq{\frac{R}{L_{\rm Ti}}}
+\def\rlte{R/L_{\rm Te}}
+\def\glogte{\frac{\partial{\log{T_{\rm e}}}}{\partial{\rho}}}
+\def\glogtehor{\partial{\log{T_{\rm e}}}/\partial{\rho}}
+\def\glogt{\frac{\partial{\log{T}}}{\partial{\rho}}}
+\def\glogti{\frac{\partial{\log{T_{\rm i}}}}{\partial{\rho}}}
+\def\glogne{\frac{\partial{\log{n_{\rm e}}}}{\partial{\rho}}}
+\def\glogni{\frac{\partial{\log{n_{\rm i}}}}{\partial{\rho}}}
+\def\glognehor{\partial{\log{n_{\rm e}}}/{\partial{\rho}}}
+\def\glognchor{\partial{\log{\densc}}/{\partial{\rho}}}
+\def\glogn{\frac{\partial{\log{n}}}{\partial{\rho}}}
+\def\glognhor{\partial{\log{n}}/\partial{\rho}}
+\def\glogneq{\frac{\partial{\log{n}}}{\partial{\rho}}}
+\def\glogteq{\frac{\partial{\log{T}}}{\partial{\rho}}}
+\def\glogthor{\partial{\log{T}}/\partial{\rho}}
+\def\rlti{R/L_{\rm Ti}}
+\def\rlt{R/L_{\rm T}}
+\def\lte{L_{\rm Te}}
+\def\lti{L_{\rm Ti}}
+\def\lne{L_{\rm n}}
+\def\lni{L_{\rm Ni}}
+\def\lteltieq{\frac{L_{\rm Te}}{L_{\rm Ti}}}
+\def\ltelneeq{\frac{L_{\rm Te}}{L_{\rm n}}}
+\def\ltelti{L_{\rm Te}/L_{\rm Ti}}
+\def\ltelne{L_{\rm Te}/L_{\rm n}}
+\def\ltelnestat{L_{\rm Te}/L_{\rm n}^{\rm stat}}
+\def\sgme{\sigma_{\rm e}}
+\def\etae{\eta_{\rm e}}
+\def\etai{\eta_{\rm i}}
+\def\rlneeq{\frac{R}{L_{\rm n}}}
+\def\rlteeq{\frac{R}{L_{\rm Te}}}
+\def\rlne{R/L_{\rm n}}
+\def\rlnc{R/L_{\rm C}}
+\def\rlnestat{\left[\rlne\right]_{\rm stat}}
+\def\rlnein{\rlne^{\rm In}}
+\def\rlneout{\rlne^{\rm Out}}
+\def\rlnestateq{\left[\rlneq\right]_{\rm stat}}
+\def\rlncstateq{\left[\rlnceq\right]_{\rm stat}}
+\def\rlnezeq{\frac{R}{L_{\rm n}}^{\rm (s/n)}}
+%Transport
+\def\Ocyi{\Omega_{\rm i}}
+\def\Ocye{\Omega_{\rm e}}
+\def\OcyZ{\Omega_{\rm Z}}
+\def\chie{\chi_{\rm e}}
+\def\Qe{Q_{\rm e}}
+\def\Dneo{D_{\rm neo}}
+\def\Vneo{V_{\rm neo}}
+\def\Dturb{D_{\rm turb}}
+\def\Vturb{V_{\rm turb}}
+\def\lamd{\lambda_{\rm D}}
+\def\lamde{\lambda_{\rm D}^{\rm e}}
+\def\chieneo{\chi_{\rm e}^{\rm NEO}}
+\def\chii{\chi_{\rm i}}
+\def\thetap{\theta_{\rm p}}
+\def\Wp{V_{\rm W}}
+\def\CT{C_{\rm T}}
+\def\CP{C_{\rm P}}
+\def\CPT{C_{\rm P}^{\rm (t)}}
+\def\CPP{C_{\rm P}^{\rm (p)}}
+\def\vthj{v_{{\rm th},j}}
+\def\CTT{C_{\rm T}^{\rm (t)}}
+\def\CTP{C_{\rm T}^{\rm (p)}}
+\def\pshift{\tilde{\Gamma}_{\rm k}}
+\def\gturbql{\Gamma_{\kvec}^{\rm q.l.}}
+\def\fluxi{\Gamma^{\rm i}}
+\def\fluxe{\Gamma^{\rm e}}
+\def\gneo{\Gamma_{\rm neo}}
+\def\gturb{\Gamma_{\rm turb}}
+\def\gturbe{\Gamma_{\rm e}^{\rm turb}}
+\def\qturbe{Q_{\rm e}^{\rm turb}}
+\def\qPB{Q_{\rm e}^{\rm PB}}
+\def\heate{Q_{\rm e}}
+\def\heati{Q_{\rm i}}
+\def\pech{P_{\rm ECH}}
+\def\rech{\rho_{\rm ECH}}
+\def\pequi{P_{\rm eq}}
+\def\pohm{P_{\rm OH}}
+\def\prad{P_{\rm rad}}
+\def\qequi{Q_{\rm eq}}
+\def\qohm{Q_{\rm OH}}
+\def\qrad{Q_{\rm rad}}
+\def\source{S_{\rm e}}
+%Plasma parameters & coordinates
+\def\Epar{E_{\parallel}}
+\def\Epjp{E_{\phi}J_{\phi}}
+\def\Etjt{E_{\rm p}j_{\rm p}}
+\def\Epol{E_{\rm p}}
+\def\jpol{j_{\rm p}}
+\def\wphi{w_{\phi}}
+\def\Wphi{W_{\phi}}
+\def\rhor{\rho_{\rm r}}
+\def\grho1{\left<|\nabla{\rho}|\right>}
+\def\grhov1{\left<|\nabla{\rvol}|\right>}
+\def\Bpol{B_{\theta}}
+\def\bphi{B_{\phi}}
+\def\bpol{B_{\rm p}}
+\def\vloop{V_{\rm loop}}
+\def\lint{l_{\rm i}}
+\def\ipl{I_{\rm p}}
+\def\rpsi{\rho_{\psi}}
+\def\betae{\beta_{\rm e}}
+\def\rvol{\rho_{\rm V}}
+\def\rtor{\rho_{\rm \Phi}}
+\def\rtorn{\hat{\rho}_{\rm \Phi}}
+\def\rtorb{\rho_{\rm \Phi,b}}
+\def\hrlw{H_{\rm RLW}}
+\def\q95{q_{95}}
+\def\qmin{q_{\rm min}}
+\def\nuei{\nu_{\rm ei}}
+\def\nuee{\nu_{\rm ee}}
+\def\nueff{\hat{\nu}}
+\def\nuef{\nu_{\rm eff}}
+\def\nustar{\nu_*}
+\def\Jvec{\mathbf{J}}
+\def\Jvecpert{\tilde{\mathbf{J}}}
+\def\cupar{j_{\parallel}}
+\def\upar{U_{\parallel}}
+\def\cuparni{j_{\parallel}^{\rm n.i.}}
+\def\cubs{j_{\rm BS}}
+\def\cucd{j_{\rm CD}}
+\def\cuohm{j_{\rm OH}}
+\def\wpol{w_{\rm p}}
+\def\Wpol{W_{\rm p}}
+\def\tauee{\tau_{\rm Ee}}
+\def\tauE{\tau_{\rm E}}
+\def\rhoinv{\rho_{\rm inv}}
+\def\rhomix{\rho_{\rm mix}}
+\def\fbs{f_{\rm BS}}
+\def\fcd{f_{\rm CD}}
+\def\foh{f_{\rm OH}}
+\def\ibs{I_{\rm BS}}
+\def\icd{I_{\rm CD}}
+\def\ioh{I_{\rm OH}}
+\def\ipol{I_{\rm pol}}
+\def\zeff{Z_{\rm eff}}
+\def\Ress{R_{\rm eff}}
+\def\Lstar{\Delta^*}
+\def\Opl{\Omega_{\rm pl}}
+\def\Opfs{\Omega_{\rm PF}}
+\def\Ovac{\Omega_{\rm vac}}
+\def\Opss{\Omega_{\rm PS}}
+\def\OOH{\Omega_{\rm OH}}
+\def\Lstar{\Delta^*}
+\def\Jpol{j_{\rm p}}
+\def\Hplasma{H\left(\Omega_{\rm pl}\right)}
+\def\deltapsib{\delta\psi_{\rm [b,\infty]}}
+\def\rvec{\mathbf{r}}
+\def\sbphi{s_{\rm b\phi}}
+\def\sbpol{s_{\rm bp}}
+\def\qabs{|q|}
+\def\gpar{\nabla_{\parallel}}
+\def\gperp{\nabla_{\perp}}
+\def\pvec{\mathbf{p}}
+\def\avec{\mathbf{a}}
+\def\kvec{\mathbf{k}}
+\def\rhovec{\vec{\rho}}
+\def\eavec{\mathbf{e}_1}
+\def\ebvec{\mathbf{e}_2}
+\def\ecvec{\mathbf{e}_3}
+\def\vperpvec{\mathbf{v}_{\perp}}
+\def\vpardot{\dot{v}_{\parallel}}
+\def\Apar{A_{\parallel}}
+\def\psibar{\bar{\psi}}
+\def\vphi{v_{\phi}}
+\def\rlpol{\rho_{\rm p}}
+\def\Lxi{\left<L\right>_{\xi}}
+\def\rhovecdot{\dot{\vec{\rho}}}
+\def\ptens{\stackrel{\leftrightarrow}\Pi}
+\def\Itens{\stackrel{\leftrightarrow}I}
+\def\rhomo{\rho_{\rm m0}}
+\def\rhomn{\hat{\rho}_{\rm m}}
+\def\vsn{v_{\rm s}}
+\def\Bvecn{\hat{\mathbf{B}}}
+\def\Vvecn{\hat{\mathbf{v}}}
+\def\nablan{\hat{\nabla}}
+\def\vsa{\hat{v}_{\rm sa}}
+\def\rhomnf{\tilde{\rho}_{\rm m}}
+\def\Bvecnf{\tilde{\mathbf{B}}}
+\def\Vvecnf{\tilde{\mathbf{v}}}
+\def\xinf{\tilde{\vec{\xi}}}
+\def\omI{\omega_{\rm I}}
+\def\gvec{\vec{\Gamma}}
+\def\Uvec{\mathbf{U}}
+\def\Uparj{U_{\parallel,j}}
+\def\Upar{U_{\parallel}}
+\def\Fvec{\mathbf{F}}
+\def\Fparj{F_{\parallel,j}}
+\def\Svecmj{\mathbf{S}_{{\rm m},j}}
+\def\Svecmpj{S_{{\rm m}\parallel,j}}
+\def\Poteq{\bar{\Phi}}
+\def\ebpsi{\bar{\mathbf{e}}_{\psi}}
+\def\utorj{U_{\phi j}}
+\def\upolj{U_{\thetap j}}
+\def\omphi{\omega_{\phi}}
+\def\nablax{\nabla_{\xvec}}
+\def\nablav{\nabla_{\Vvec}}
+\def\xvecdot{\dot{\mathbf{x}}}
+\def\vvecdot{\dot{\mathbf{v}}}
+\def\Edot{\dot{E}}
+\def\Igeo{I_{\rm geo}}
+\def\Fmaxwj{F_{{\rm M},j}}
+\def\Fmaxw{F_{{\rm M}}}
+\def\omDj{\omega_{{\rm d}j}}
+\def\ostarj{\omega_{{\rm *}j}}
+\def\rlnj{\frac{R}{L_{{\rm nj}}}}
+\def\rlTj{\frac{R}{L_{{\rm T}j}}}
+\def\vflutt{\tilde{v}_{\rm mf}^r}
+\def\Apart{\tilde{A}_{\parallel}}
+\def\Apertvec{\tilde{\mathbf{A}}}
+\def\Aperptvec{\tilde{\mathbf{A}}_{\perp}}
+\def\Aperpt{\tilde{{A}}_{\perp}}
+\def\Jparpert{\tilde{{J}}_{\parallel}}
+\def\Jparpertj{\tilde{{J}}_{\parallel j}}
+\def\Pnet{P_{\rm net}}
+\def\Pfus{P_{\rm fus}}
+\def\tauP{\tau_{\rm p}}
+\def\betaN{\beta_{\rm N}}
+\def\vpotp{\tilde{\mathbf{v}}_{\rm ea}}
+\def\vexbeq{\mathbf{v}_{\rm ExB}}
+\def\Evecp{\tilde{\mathbf{E}}}
+\def\Apvec{\tilde{\mathbf{A}}}
+\def\cpert{\tilde{\Theta}}
+\def\Vvece{\mathbf{v}_{\rm e}}
+\def\Vveci{\mathbf{v}_{\rm i}}
+\def\presse{p_{\rm e}}
+\def\Fvece{\mathbf{F}_{\rm e}}
+\def\talf{\tau_{\rm A}}
+\def\Omegae{\Omega_{\rm e}}
+\def\Omegai{\Omega_{\rm i}}
+\def\rhoe{\rho_{\rm e}}
+\def\Bpert{\tilde{B}}
+\def\Bvecpert{\tilde{\mathbf{B}}}
+\def\Vpert{\tilde{v}}
+\def\Apert{\tilde{A}}
+\def\Vhat{\hat{v}}
+\def\Ahat{\hat{A}}
+\def\Vvecpert{\tilde{\mathbf{v}}}
+\def\eX{\mathbf{e}_{\rm x}}
+\def\Lund{S_{\rm L}}
+\def\bpertx{\tilde{B}_{\rm x}}
+\def\Vvecdot{\dot{\mathbf{v}}}
+\def\vperpdot{\dot{v}_{\perp}}
+\def\vperpvecdot{\dot{\mathbf{v}}_{\perp}}
+\def\Thetap{\tilde{\Theta}}
+\def\Rperpvecdot{\dot{\tilde{\mathbf{R}}}}
+\def\Eperpdot{\dot{\tilde{E}}}
+\def\kvec{\mathbf{k}}
+\def\hpert{\tilde{h}}
+\def\nhat{\hat{n}}
+\def\eH{\mathbf{e}_{\rm h}}
+%
+\def\figtype{!b}
+%
+%\newfont{\main}{cmss12 scaled\magstep0}
+%\def\rightheadline{\tenrm\hfil LEFT \hfil\folio}
+%\def\leftheadline{\tenrm\folio\hfil LEFT \hfil}
+%\newcommand{\headline}[1]{\ifodd\pageno\rightheadline \else\leftheadline\fi}
+%\newfont{\msym}{/ipp2/lib/publisher/fonts/msym10 scaled\magstep1}
+%\newfont{\msym}{/afs/ipp/@sys/soft/publisher/fonts/msym10 scaled\magstep1}
+\def\msym{\cal}
+\newcommand{\tws}[1]{\hspace*{1pt}{\tt #1}\hspace*{1pt}}
+\newcommand{\twd}[1]{\hspace*{2pt}{\tt #1}\hspace*{2pt}}
+\newcommand{\tw}[1]{{\tt #1}}
+
+
+
+\begin{document}
+\parindent=0pt				\parskip=15pt plus2pt
+\parindent=30pt				\parskip=0pt plus2pt
+%\renewcommand{\thesubsection}{}	\setcounter{subsection}{0}
+\baselineskip=10pt plus 0.5pt
+
+\baselineskip=20pt plus 0.5pt
+\thispagestyle{empty}
+\Large\noindent
+G. Tardini and E.~Fable
+\vskip40mm\noindent
+\LARGE\bf ASTRA--8.0 \\\\
+Addendum with changes and new features
+\vfill\rm\large\noindent
+ \\
+February 2024
+\eject
+\thispagestyle{empty}
+\begin{center}\LARGE\bf\sf
+MAX-PLANCK-INSTITUT F\"UR PLASMAPHYSIK\normalsize\\[15pt]
+GARCHING BEI M\"UNCHEN
+\end{center}
+\vspace*{40mm}
+%\begin{center}\LARGE{\bf ASTRA--7.0} \\ \\ 
+%Addendum with changes and new features
+%\end{center}
+%\vskip15mm
+%\begin{center}\large\sf
+%G. Tardini and E.~Fable
+%\vskip15mm
+%\parbox{41mm}{\hspace*{-5mm}	\normalsize\sf
+%\\ \normalsize
+%\\	\normalsize
+%\\	\normalsize
+%}
+%\vfill
+%  \hfill April 2023
+%\end{center}
+\eject
+\thispagestyle{empty}
+\clearpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+{\bf Introduction}\\\\
+Astra 8 is essentially a "new" code with respect to old Astra versions.
+The Code is now recast in F90, using modules and avoiding at all commons.
+This makes the code much more efficient to be developed and coupled to other frameworks.
+
+The compiler is now much cleaner, and many systems are already included in the platform 
+list. A user has no difficulty including new ones in case.
+
+Below this is written in details.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\clearpage
+\vfill\rm\normalsize
+\baselineskip=20pt plus 0.5pt
+\tableofcontents
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{New compiler and code language}
+The code structure is now the following. 
+
+Once cloned, the code comes with a 2--layers structure.
+Let us suppose the code has been cloned in a directory called "a8code".
+Then the 2 layers are:
+
+1) a8code/
+
+2) a8code/repo\_user\_area/ \\
+"a8code" contains the source code directory "src/", in which for, feqis, spider, nbi are contained. It also contains the directory "main/", which has the main program workflow and a few lists of variables. The main ASTRA program is astra\_main.f90 and the workflow subroutine is stepup.f90, and text files containing the list of all the native variables of various types. 
+
+"a8code/repo\_user\_area" contains the working directories with the pre--installed formulas, subroutines, and example model and experimental files.
+
+The command "install.sh" will copy from "repo\_user\_area" to the main directory, all the sub--directories contained there. As such, the user should eventually back--up any changes done to the pre--installed files in sbr/ xpr/ fnc/ etc.
+
+The rationale behind this is that the copied directories like sbr/, fnc/, fml/, xpr/, ... can now include user--defined files, or the user can even modify the pre--installed ones, without affecting the repository layer.\\%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+----------------------------------------------------------------------------------\\
+{\bf Platform and libraries}
+Then install.sh command will copy also a directory called "exe/", inside which there are a few compilation files. \\
+In particular, "exe/astra\_rc" contains the detailed list of the needed libraries and their paths. \\
+It is good for the user to check once if these paths are correct. \\
+The other two files which define the environment variables are exe/as\_exe and exe/Build. Check these ones in case the compilation returns errors. Note that, in absence of some libraries, one may need to comment out the xpr calls in exe/Build, or remove some subroutines from sbr/.\\
+----------------------------------------------------------------------------------\\\\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+After the "install.sh" copy is done, the user can now run ASTRA using the new command line: \\
+{\bf exe/as\_exe -m (modelfile) -v (expfile) -s (starttime) -e (endtime) -dev (machinename) -tpause (pausetime) -f -b -i (template\_file)}
+
+Note that all of these arguments are optional and do not need to be inserted. In which case, the last used value will be adopted.\\
+- The new argument "-f" launches ASTRA in "flight--simulator" mode, meaning it will crash if its not linked to the control system (whatever framework it maybe). \\
+- The argument "-dev" tells ASTRA which machine its running for configuration file purposes. This is needed also for free--boundary modeling.\\
+- The argument "-b" has the same effect as in the previous versions (batch mode). 
+- The new argument "-i" calls a pre--parses which parses through "template\_file", which is a model file which has inside lines like:\\
+INCLUDE: filename \\
+and it replaces the text in "filename" in the place of the INCLUDE. This is useful if one wants to generate modelfiles from a template, but simply replacing text blocks in "filename" with its own selection. The option "-i" is new and may not work on a version which is not yet upgraded to have it.
+
+Once Astra is called, it will compile everything present in the source code and the user--defined directories sbr/ and fnc/ 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Changes in the model file syntax}
+A few changes have appeared in the way the model file syntax has to be given.
+
+Here below the new rules are summarized:\\\\
+1) The functions (from "fnc") has to be given either as arrays (e.g. CARxx = QETOT), or as boundary integrals (e.g. CV1 = QETOTB). It does not work to call them as a function of RHO; \\
+2) All intrinsic arrays like TE, TI, NE, have to be defined as a function of minor radius, but only using AFX!. So for example, to have TE on axis in the plots: TE(AFX(0.)). To have TE at mid radius (mid minor radius): TE(AFX(0.5)); \\
+3) If an initial condition is given, e.g. NE = NEX, then the boundary condition will be automatically set as NEB = NEX(boundary position given in the EQ[] command). Only if NEB is explicitly defined, than it will be assigned in the way the user has defined it; \\
+4) A formula "fml" and the command GRAD cannot be used on the same line; \\
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Equilibrium solvers}
+The variable {\bf IPEQL}, that can be defined in the equ/log/ file in the "Parameter" block, can now attain several values, which correspond to the following equilibrium options:\\\\
+"-2" * cylindrical analytical equilibrium;\\\\
+"-1" * take the metric coefficients from the experimental file. The parameters (profiles) that should be given are: SHX (shift), SHIVX (shiv), SQUAX (squarn), ELX (elon), TRX (tria), G33X (G33), IPOLX (IPOL), VRX (VR), SLATX (slat), G11X (G11), G22X (G22), DRODAX (droda);\\\\
+"-6" *  same as "-1", but takes them from a file called "input\_metric.dat", which has to be in the astra main directory, and contains the same quantity defined from 1:NA1 (so already interpolated on the ASTRA rhotor norm grid). The order is: shif, elon, tria, g33, ipol, vr, slat, g11, g22, droda, shiv, squarn;\\\\
+"0" * fixed guess and no equilibrium from outside;\\\\
+"1" * 3--moment equilibrium EMEQ;\\\\
+"2" * not used;\\\\
+"3" * not used;\\\\
+"4" * SPIDER prescribed boundary;\\\\
+"5" * FEQIS prescribed or free boundary;\\\\
+Note that options -1 and -6 are bypassed if flightsim = 1, in which case those quantities will have to arrive from external codes.
+Also note that SPIDER free boundary is not available anymore. 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Generate the machine configuration grid for FEQIS}
+The FEQIS Grad--Shafranov solver can do both prescribed and free--boundary mode. For free--boundary mode, one needs first to create the machine description file. This is stored in exp/cnf/ and is called "machine\_description\_out.(dev)" dove (dev) e' lo stesso nome dato nell'opzione -dev nella linea di comando di Astra.
+
+To generate this file, first prepare the input file in the directory exp/cnf/.
+The input file is called "(dev)\_description\_in.json". \\
+If it is there, then just run: green/greenMatrices.py. This will automatically create the output files needed by FEQIS.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The namelist files}
+Astra now has a few namelist files to instruct some of the additional physics modules.
+In particular, in the "exp/nml/" directory, a namelist with the same name of the exp/ file, contains the following namelists:\\
+rabbit\_beam\_geo (RABBIT); partmix (NBI?); nbi\_par (NBI?); species (RABBIT); output\_settings (RABBIT); physics (RABBIT); numerics (RABBIT); nbinj\_par (NBI?); torbeam (TORBEAM); \\
+It also contains equil\_settings (astra coupling to equilibrium);  spider (SPIDER); fenix (flight simulator physics models parameters);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Coupling to FEQIS}
+To couple Astra to FEQIS, there needs to be a subroutine defined in sbr/, which an example is given in repo\_user\_area/sbr/eqctst.f90, and called in the model file, which defines all the parameters for FEQIS.
+In particular, the module to be used is:
+
+use transport2fbe\\
+Then, the following variable have to be assigned (default values are given). Note that below the variable "nequiv\_coils" has to be replaced with the actual number of equivalent coils, whereas "nconductors" is the total number of conductors (equivalent coils + passive elements):\\\\
+tau\_circuit\_feqis = tau ! time step to be used in the ciruit equations;\\
+tau\_gseq\_feqis    = tau ! time step to be used in the dPsi/dt term (explicit in the circuit equations). Notice that these 2 taus can be different if the GS solver is called less than the actual circuit equations (see below execute\_plasma variable);\\
+activate\_coil\_feqis(1:nequiv\_coils) = 1 ! if an index is set to 0, the coil is forced to 0 current; \\
+current\_limit\_feqis(1:nequiv\_coils, 1) =  1.e6 ! 1 is upper, 2 is lower; \\
+current\_limit\_feqis(1:nequiv\_coils, 2) = -1.e6 ! 1 is upper, 2 is lower; \\
+force\_coil(i,j) = 0. ! where it is 1, forces coil i,i to current of i,j; \\
+use\_reduce\_circuit = 0 ! run with reconnected circuits, does not reset the matrix; \\
+reconnect\_circuits = 0 ! this resets the circuit matrix, to change connections; \\
+n\_equivalence = 0 ! number of equivalent re-connections to be done;\\
+new\_equivalence = 0 !rules to recircuit. Example: $(/1,1,1,0,0,...0) \rightarrow$ the first 3 coils are re--combined into 1 equivalent coil. The matrix is long nequiv\_coils and the nr of rows is given by the value of new\_equivalence; \\
+resistance\_change = 0 ! this resets the circuit matrix, to change resistances (diagonals) \\
+new\_resistance=0 ! if given as a vector of length nequiv\_coils, change the finite values in the code resistance;\\
+raxis\_astra = RTOR + SHIFT ! initial guess for magnetic axis R;\\
+zaxis\_astra = UPDWN ! initial guess for magnetic axis Z;\\
+psi0\_astra = FP(1)  !initial guess for axis value of poloidal flux;\\
+psib\_astra = FP(NA1) ! same but for separatrix value\\
+n\_fourier\_restab\_boundary = 5 !nr of Fourier modes if Fourier refit mode is used (refit\_mode = 1);\\
+use\_limiter\_astra = 1   ! Use the limiter \\
+refit\_mode = 0   ! the following values are allowed: -1 * only 1 non--linear calculation, no convergence. 0 * no refit. 1 * refits only passive currents as Fourier harmonics. 2 * unused. 3 * refits all currents using sigma\_B, sigma\_axis, sigma\_coils(1:nconductors), and cur\_init(1:nconductors) as initial guess currents. 4 * finds the active coil currents from scratch, minimizes also global magnetic energy using sigma\_energy. 5 * finds active coil currents from scratch, between 2 time points, for which two files need to be given: dat/feqis\_time1\_file.dat and dat/feqis\_time2\_file.dat. Each file contains: jrho, rho, teta, rbndp, zbndp, raxp,zaxp,ipl, psigrid, pprim, ffprim from prescribed boundary, then Lext, t, Vloop. Minimized magnetic energy and enforces exact flux balance;\\
+sigma\_B = 1. ! Strength coefficient of boundary points in cost function;\\
+sigma\_axis = 50000. ! Strength coefficient of magnetic axis position in cost function;\\
+sigma\_coils(1:nconductors) = 1.e5 !strength coefficient for each individual conductor in the cost function;\\
+sigma\_energy = 1 !strength coefficient for all the coils for energy budget;\\
+solve\_fix = 0   ! if 0 * solve full fix boundary problem, >0 * N pass only;  \\
+execute\_plasma = 1   ! if 0 * only circuit equations, if 1 * solve plasma gseq too; \\
+n\_of\_newton\_iterations = 150 !maximum number of Newton iterations for initial convergence;\\
+dr\_factor\_init\_astra = 1. !factors of dr and dz for initial iterations; \\
+dz\_factor\_init\_astra = 1. \\
+fast\_mode = 0 ! if 1, it does only 1 non--linear iteration in the GS solver. Becomes much faster but also less accurate in time (needs to decrease time step then);\\
+cur\_init( 1:nequiv\_coils) = CCOIL(1:nequiv\_coils)/1.e3 ! initial conductor currents, where CCOIL comes from the exp file and it is in [kA], whereas cur\_init is in [A]; recommended to initialize it to 0 before assigning the equivalent coils. Also allowed is to assign the additional passive conductors. \\\\
+These declarations need to be given otherwise the free boundary code will crash.
+
+For refit\_mode = 5, the files can be created like this:\\\\
+open(32,file='dat/feqis\_time1\_file.dat') \\
+write(32,*) equil\_now\%coord\_sys\%jphi \\
+write(32,*) equil\_now\%coord\_sys\%position\%rmin \\
+write(32,*) equil\_now\%coord\_sys\%position\%teta2d \\
+write(32,*) equil\_now\%coord\_sys\%position\%r(nint(nequil),1:nint(mequil)) \\
+write(32,*) equil\_now\%coord\_sys\%position\%z(nint(nequil),1:nint(mequil)) \\
+write(32,*) rtor+shif(1),updwn,ipl \\
+write(32,*) equil\_now\%profiles\_1d\%psi,  equil\_now\%profiles\_1d\%pprime,equil\_now\%profiles\_1d\%ffprime \\
+write(32,*) LEXT, TIME, UPL(NA1) \\
+close(32)\\\\
+and similarly for file 2.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Additional routines for the flight simulator}
+Astra can be coupled to an external control framework using a generic C interface (developed by C. Wu at KIT, Germany). It can then be run in "flight simulator" mode adding the "-f" flag in the command line.
+
+The coupling routines (not part of the nominal repository) must be in sbr/: wrsdug.f90, rrsudg.f90, and shmrw.c. These are generic, but machine--dependent needs are specifically in wrsudg.f90 and rrsudg.f90.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The new equilibrium solver FEQIS}
+\input{FEQIS_manual.tex}	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Expansion to stellarator regime}
+\input{astell_manual.tex}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\begin{thebibliography}{10}
+\bibitem{strand2001} P. I. Strand, W. A. Houlberg; Magnetic flux evolution in highly shaped plasmas. Phys. Plasmas 1 June 2001; 8 (6): 2782–2792. https://doi.org/10.1063/1.1366618
+\bibitem{ASTRAmanual}  G.V. Pereverzev, P.N. Yushmanov, ASTRA - Automated System for TRansport Analysis, Max-Planck-Institut Für Plasmaphysik, IPP-Report, IPP 5/98, February, 2002
+\bibitem{turkin2011} Y. Turkin, C. D. Beidler, H. Maaßberg, S. Murakami, V. Tribaldos, A. Wakasa; Neoclassical transport simulations for stellarators. Phys. Plasmas 1 February 2011; 18 (2): 022505. https://doi.org/10.1063/1.3553025
+\end{thebibliography}
+
+\vfill\eject
+%\input garbage.tex
+%\input bib.tex
+\end{document}

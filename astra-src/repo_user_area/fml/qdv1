@@ -1,0 +1,3 @@
+! QDV1 [F1/s]: Integral {0, R} (SDV1) dV
+!   (Pereverzev 9-OCT-07)
+QDV1 = HRO*SUM(SDV1(1:J)*VR(1:J))

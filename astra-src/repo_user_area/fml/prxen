@@ -1,0 +1,46 @@
+!PRXEN [MW*m#3] xenon radiation power
+!        POST D.E. JENSEN R.V. e.a., Atomic Data and Nuclear Tables,
+!                               Vol.20 (1977) 397.
+!        (PPPL-1352 1977)
+!                       (Yushmanov 27-12-89)
+!        Corrected by Pereverzev 29-07-96
+!        Usage:        PE=...-PRXEN*NE*NIZ1
+
+T = TE(J)*1000.
+Z = LOG10(TE(J))
+PRXEN = 0.
+
+if (T > 0. .and. T < 200.) then
+    Y0 = -2.027267E1
+    Y1 = -1.530175E1
+    Y2 = -3.074557E1
+    Y3 = -3.155124E1
+    Y4 = -1.600739E1
+    Y5 = -3.091098
+endif
+if (T >= 200. .and. T < 2000.) then
+    Y0 = -1.778249E1
+    Y1 =  2.776326E-1
+    Y2 =  1.901048
+    Y3 = -5.727093
+    Y4 = -6.456918
+    Y5 =  2.998205
+endif
+if (T >= 2000. .and. T < 20000.) then
+    Y0 = -2.445709E1
+    Y1 =  5.504901E1
+    Y2 = -1.625266E2
+    Y3 =  2.174682E2
+    Y4 = -1.363026E2
+    Y5 =  3.242958E1
+endif
+if (T >= 20000.) then
+    Y0 = -3.693018E1
+    Y1 =  6.802254E1
+    Y2 = -9.562685E1
+    Y3 =  6.445815E1
+    Y4 = -2.107990E1
+    Y5 =  2.700386
+endif
+PRXEN = 10.**(Y0 + Z*(Y1 + Z*(Y2 + Z*(Y3 + Z*(Y4 + Z*Y5)))))*1.e19
+if (T < 80.) PRXEN = 0.

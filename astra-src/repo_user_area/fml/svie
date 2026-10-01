@@ -1,0 +1,17 @@
+! SVIE [10#19m#3/s]: The formula is a fit to ionization rate by electron impact
+! Freeman R.L., Jones E.M., CLM-R137 (1974)
+!   (Pereverzev 07-MAY-87)
+! SVIE =LOG10(TE(J))+3
+! if (TE(J) .gt. .02) THEN
+! SVIE=EXP(17.68-1.186*SVIE-5.9015/SVIE)
+!    ELSE
+! SVIE=EXP(29.93-7.0321*SVIE-36.2*EXP(-SVIE)+3.691*EXP(-SVIE**2))
+!    ENDif 
+! Abramov, Vikhrev, Pogutse Fizika Plazmy 3 (1977) N3 p.512 
+!   (POLEVOY 21.10.93)
+SVIE =.0136/TE(J)
+if (TE(J) .gt. .01) THEN
+SVIE=9.7E5*EXP(-SVIE)*SQRT(SVIE/(1.+SVIE))/(SVIE+.73)
+   ELSE
+SVIE=2.958E5*EXP(-SVIE)*SQRT(SVIE)
+   ENDif 

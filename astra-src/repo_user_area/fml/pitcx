@@ -1,0 +1,8 @@
+! PITCX [MW/m#3]: Ion heat source due to charge exchange
+!  with cold neutrals for implicit part of the source term
+! PITCX=3/2*<sigma*v>*Ni*Nn
+! Use: PIT=-PITCX
+! and: PI=PITCX*TN
+!   (Pereverzev 14-MAY-87)
+INCLUDE 'fml/svcx'
+PITCX =0.0024*SVCX*NI(J)*(NNCL+NNWM)*NN(J)

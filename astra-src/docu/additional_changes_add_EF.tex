@@ -1,0 +1,58 @@
+%\chapter{Reference guide}
+
+\section{Additional changes performed in Astra--7.0}
+%
+\subsection{New internal arrays}
+Additional arrays have been added to ASTRA, that could be useful for post--processing and physics analysis.
+The new arrays are listed below, with definition: \\\\
+Name ;  Unit  ;  Definition \\\\
+NMAIN $\,\,\,\,\,\,\,$ [$10^{19}$ $m^{-3}$] $\,\,\,\,\,\,\,$- Density of a "main ion" species, supposed to be the sum of all main ions (e.g. D, or D+T) (remember that NI is the sum of all THERMAL ions).\\\\
+AREAT  $\,\,\,\,\,\,\,$ [m$^2$] $\,\,\,\,\,\,\,$- Area of the toroidal surface (area of a poloidal cut at fixed toroidal angle), of a flux surface.\\\\
+PERIM  $\,\,\,\,\,\,\,$ [m]    $\,\,\,\,\,\,\,$ - perimeter of a flux surface, at a fixed toroidal angle.\\\\
+These new variables can be used in formulas, subroutines, functions, etc. Notice that at the moment AREAT and PERIM are not compute by the 3--moment solver EMEQ.
+\\\\
+As regards the description of the coils to be used in the free--boundary calculations, new arrays CCOIL and VCOIL are introduced (as well as CCOILX and VCOILX)
+In the experimental file, they should be defined as (in [kA] as units of currents):\\
+NAMEXP CCOIL NTIMES 1  POINTS 13 \\
+0. \\
+0.1  \\ 
+0.1\\
+0.1\\
+0.1\\
+0.1\\
+0.1\\
+0.1\\
+0.1\\
+0.1\\
+0.1\\
+0.1\\
+0.1\\
+0.1\\\\
+where the first value is the time point, and then 13 values follow for the 13 coils.
+The same structure has to be used for VCOIL (voltage in [V]).
+%
+\subsection{New formulas}
+In fml/ there have been added two new formulas: {\it pei2} and {\it suzpei}.
+{\it pei2} accounts for implicit equipartition with impurities, where {\it suzpei} contains the formula of the summation over the thermal ion species. {\it suzpei} has to be in case removed by the user and re-created in the fml/ directory in case a different choice of the summation is wanted. {\it pei2} instead can be used as it is. To choose to run implicit equipartition with {\it pei2} the variable {\bf IPROT} has to be set either = -2 or =2  (where the positive sign also sets in neoclassical contributions to parallel rotation in the UPAR equation).
+
+For explicit equipartition, the formula {\it peicl2} can be found in /astra$_$tools/fml/. It also uses {\it suzpei}.
+%
+\subsection{Generic implicit equipartition}
+From version of 25 March 2020, the implicit equipartition term has to be defined in the model file with the variable PEIQI. For example:\\
+PEIQI = PEI;\\
+is equivalent to using the formula for PEI for the implicit equipartition as was done before, or one can use SUZPEI or PEI2 or others. If PEIQI is not defined, it is initialized to 0., as such there will be no implicit equipartition term.
+%
+\subsection{New definitions for external metric}
+With respect to definitions given in section 5.3.3, the defintion of the metric quantities used when NEQUIL = -1 is assigned (remember also that needs to go together with the variable assignment of IPEQL (=1 by default)\\
+...\\
+NEQUIL = -1\\
+IPEQL  = 3 \\
+...\\
+The new definitions are:
+SHIF = SHX; ELON=ELX; TRIA=TRX; VR=VRX;\\
+DRODA=DRODAX; IPOL=IPOLX; G11=G11X; \\
+G22=G22X; G33=G33X;
+%
+\clearpage
+
+

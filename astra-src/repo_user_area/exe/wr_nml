@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if [ ! -z "${AWD}" ]
+then
+   echo Previously defined AWD $AWD
+else
+   rootdir=`dirname $0`       # may be relative path
+   export AWD=`cd $rootdir/.. && pwd`    # ensure absolute path
+fi
+
+source /etc/profile.d/modules.sh
+module load trview
+
+python ${TRVIEW_HOME}/trview/astra_nml_u.py "$@"

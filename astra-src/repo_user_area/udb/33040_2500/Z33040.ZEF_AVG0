@@ -1,0 +1,12 @@
+  33040AUGD 1 0 6              ;-SHOT #- F(X) DATA -UF1DWR- 02Feb2023
+                               ;-SHOT DATE-  UFILES ASCII FILE SYSTEM
+   0                           ;-NUMBER OF ASSOCIATED SCALAR QUANTITIES-
+ Time                Seconds   ;-INDEPENDENT VARIABLE LABEL-
+ Effective charge              ;-DEPENDENT VARIABLE LABEL-
+ 0                             ;-PROC CODE- 0:RAW 1:AVG 2:SM. 3:AVG+SM
+          1                    ;-# OF X PTS-
+  2.975600E+00
+  1.240559E+00
+ ;----END-OF-DATA-----------------COMMENTS:-----------
+ 
+ Time averaged   2.5006 -   3.4506

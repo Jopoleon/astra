@@ -1,0 +1,15 @@
+! PRNIT [MW*m#3] Nitrogen radiation power
+! T [eV] Electron temperature
+!       POST D.E. JENSEN R.V. e.a., Atomic Data and Nuclear Tables, 
+!        Vol.20 (1977) 397.
+!    (L.Giannone 06-08-96)
+! Usage:  PE=...-PRNIT*NE*NIZ1
+  T=TE(J)*1000.
+  Z=      LOG10(T)
+  if (T .le. 10.)                    Y=-3.9534+8.5806*Z-3.7143*Z*Z
+  if (T .le. 15. .and. T .gt. 10.)       Y=-10.193+20.888*Z-9.7818*Z*Z
+  if (T .le. 35. .and. T .gt. 15.)       Y=0.4686+4.8249*Z-3.8084*Z*Z
+  if (T .le. 100. .and. T .gt. 35.)       Y=28.329-33.587*Z+9.4121*Z*Z
+  if (T .le. 200. .and. T .gt. 100.)       Y=-50.19+45.261*Z-10.403*Z*Z
+  if (T .le. 10000. .and. T .gt. 200.)      Y=5.9994-4.6429*Z+0.66744*Z*Z
+  PRNIT =  10.**(Y)

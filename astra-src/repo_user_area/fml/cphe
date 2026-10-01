@@ -1,0 +1,7 @@
+! CPHE [Pure convection coefficient for flux of He in 1/m]
+! usage VF_j = DHE*CTHE + DHE*CPHE
+!la   25.07.08
+CPHE=20.3*(RHO(J)/ROC)**2-54.6*(RHO(J)/ROC)+51.6
+  CPHE=(CPHE*RHO(J)/ROC -18.7)*RHO(J)/ROC
+  CPHE=CPHE/(RTOR+SHIF(J))
+

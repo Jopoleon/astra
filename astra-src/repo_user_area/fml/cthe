@@ -1,0 +1,5 @@
+! CTHE [Thermodif fusion coefficient for flux of He in 1/m]
+! usage VF_j = DHE*CTHE + DHE*CPHE
+!la   25.07.08
+CTHE = 2.3*(RHO(J)/ROC)**3-4.2*(RHO(J)/ROC)**2 + 1.5*(RHO(J)/ROC) + 0.2
+CTHE = -2*CTHE*(TI(J+1) - TI(J))/HRO/(TI(J+1) + TI(J))

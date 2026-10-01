@@ -1,0 +1,7 @@
+!  Rhostarcrit formula 
+!  Emi 2004
+!
+!  RHOS=sqrt(mi/e)*sqrt(TE)*R0/LTe*1/Btor
+
+INCLUDE 'fml/lte'
+  RHOS=sqrt(TE(j)*1e3*1.67e-27/1.602e-19)/BTOR*RTOR/LTE

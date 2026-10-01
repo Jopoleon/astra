@@ -1,0 +1,3440 @@
+\section{User's guide}
+
+\subsection{General concept}
+
+As discussed in Section~3 the set of transport equations for a tokamak
+varies depending on a problem to be solved.
+The system \req{main} can be either shortened or appended with additional
+equations.
+Right hand sides of the system can also have quite different forms for
+different applications.
+However, the uncertainty in the transport matrix \req{fluxes} is
+incomparably higher.
+It would not be an overstatement to say that there are hundreds of
+choices for transport coefficients in the matrix \req{fluxes}.
+Therefore, to be efficient the transport simulation of a tokamak
+requires a convenient and flexible tool for creating numerical codes
+based on different transport models.
+The programming system Astra was designed for this purpose.
+
+Proceeding from this requirement the Astra code considers the set
+\eqs\ref{main})-(\ref{fluxes}) as a pattern which can be filled in or
+left empty according to user's request.
+Astra is not a numerical program in the conventional sense.
+A pre-determined program exists for the service parts of the Astra
+system only. 
+The transport kernel of the code is created every time by a code builder
+and includes only those equations,
+transport coefficients, sources, sinks and additional modules that were
+explicitly requested by the user in the description of transport task.
+It does not mean, however, that any change requires re-building the
+program. 
+On the contrary, the code is designed for an interactive work and
+provides a lot of techniques for computation control and correction.
+In particular, the interactive mode of operation is convenient for an
+interpretative modeling or for analysis of experimental data.
+
+Developing the concept of the code we tried to meet two contradictory
+requirements. 
+The first one is minimizing user's efforts for learning the code and for
+starting any reasonable simulation. 
+This implies that the user has to take only those decisions and supply
+only this information which cannot be obtained elsewhere.
+For instance, the type of device (tokamak or stellarator), its
+geometrical size, magnetic field, plasma current have to be specified by
+the user.
+It is also exclusively left at user's discretion to select a way of data
+treatment and data presentation.
+The second requirement is to avoid any hidden assumptions which can
+result in unexpected or difficult for understanding results and thus
+make usage of the code even more complicated if possible at all.  
+As a compromise, we adopted a number of default transformations which
+are in effect only if no explicit request is provided by the user.
+
+The following questions should be answered before creating any transport
+code:
+\begin{description}
+\item[\ \ 1.] What subset of \eqs{\ref{GSp}}), (\ref{main}), (\ref{aux}) is
+to be solved?
+\item[\ \ 2.] What boundary conditions should be imposed?
+\item[\ \ 3.] What quantities and in which form should appear as an output?
+\item[\ \ 4.] What parameters (major and minor radii of a torus, magnetic
+field, plasma current, etc.) and what initial conditions should be used?
+\end{description}
+\nopagebreak
+In the Astra system the fourth question is separated from the others.
+It is reasonable because the first three items specify the simulation
+model, i.e. a set of equations to be solved and a form of presentation
+of the results, whereas the forth specifies where to apply the
+simulation model. 
+By providing the answers to the first three questions the user completely
+defines how he wants to perform a simulation.
+Then Astra automatically builds the source code for the specified transport
+problem, compiles and loads it.
+We will call the generated program code a transport model or simply a
+model.
+
+The answer to the fourth question fills a model with machine and shot
+specific contents.
+Although the machine and plasma parameters can also be included in a
+model it is reasonable not to do this.
+Then the same simulation model can be applied to different devices and
+different parameters that are read from a data file when the program
+starts execution. 
+In addition to the global device parameters and the initial data for
+transport simulation, this file can also contain the full available
+information of plasma parameters, e.g. the time evolution of plasma
+current, plasma density $n_e$, the electron $T_e$ and ion $T_i$
+temperatures, plasma position, $Z_{eff}$, impurity densities, radiated
+power, auxiliary heating power, driven current and many others. 
+Essentially, it stores the whole set of experimental data for a specific
+shot.
+In addition, database shot record may include results of calculation from
+other codes thus providing implicit link between Astra and other codes,
+when external calculations may be made in advance.
+All this informations along with specifying discharge parameters can be used
+in the interpretative transport modeling for comparison with the simulation
+results in order to refine and develop the transport model.
+In the analysis mode, the experimental information is used for different
+kinds of data analysis and processing.
+
+Thus, {\bf the model} is a transport code created for the system of
+transport equations \req{main} with specified transport coefficients
+\req{fluxes}, initial and boundary conditions.
+It can include also a variety of other equations (e.g. different current
+drive and heating schemes, cold neutrals, SOL model, impurity diffusion),
+formulae and all possible combinations and processing the obtained data. 
+In addition to the transport analysis, the Astra system provides a
+powerful apparatus for data processing and presentation.
+
+{\bf The data file} is a set of time and radially dependent data
+related to a specific shot in a given device and containing available
+information about the shot.
+The data from the record are read by a model and can be used as the
+initial and boundary conditions, for comparison of stored experimental
+data with the results of simulation, for different treatments of
+experimental data and all other types of data analysis.
+
+A number of different models and data records exist in the Astra system
+independently.
+The rules for the creation of a model are described in
+Section ~5.2
+The data file format is described in Section~5.4.
+
+%\vfill\eject
+
+\subsection{Setting a model}
+
+\subsubsection{Model file}
+
+The main step in creation of a simulation code within the Astra
+system is a formulation of the transport problem to be solved and
+selection of the form for presentation of the results.
+This formulation is put into a special file where all requests
+for transport simulation, data manipulation and result presentation 
+are specified using Astra model description language.
+After the code starts the file is submitted to the Astra compiler 
+which processes all the instructions contained in the file and creates
+first a Fortran/C program and then the executable transport code.
+In most cases, these steps remain hidden for the Astra user who deals
+exclusively with the model or prototype file. 
+In what follows, we will not make a distinction between the transport
+code as such and the prototype file.
+Moreover, for brevity the prototype file will be also called
+{\bf a model file} or just a model. 
+
+Each model file contains a comprehensive and compact (typical length is
+3~kB) information about a corresponding transport code (approximate
+length of all source files 3 MB, binary executable 10~MB) created by the
+Astra system. 
+Because the model file is a unique image of the transport code, only
+these files need to be retained in order to repeat any simulation when
+such a necessity arises.
+All later Astra versions maintain compatibility with model files of
+preceding versions. 
+The user can have simultaneously a number of model files which are all
+stored in the directory \tw{AWD/equ/}.\footnote
+{See footnote in the page \pageref{AWD}.} 
+Few syntax rules are adopted in order to present user's request for
+a transport code in the most clear, visible and concise form.
+
+\subsubsection{General rules}
+
+A model file is a text (ASCII) file.
+Although a length of this file is restricted the restriction practically
+never occurs. 
+All instructions in a model are case insensitive.
+Maximal length of each line in the file is 132 symbols including spaces
+and tabulations which, however, are ignored and can be used to make a
+file more readable.
+The last line in the file should have a symbol \tw{<CR>} (carriage
+return) on the end otherwise it is ignored  during processing.
+
+Now we define a set of symbols, which have a special meaning
+and serve to describe Astra instructions or commands. 
+Those are
+\begin{equation}\label{specsym}
+\mbox{\tt :\qq =\qq\bs \qq\symbol{95}\qq ;\qq !}
+\end{equation}
+Every line in a model is considered as a command if anyone of the four
+first symbols in \req{specsym}, i.e. 
+{\tt ':', '=', '\bs ', '\symbol{95}'~} 
+is present in this line.
+Several commands can be joined in one line if they are separated 
+from one another with a semicolon {\tt ';'}.
+
+All other lines are ignored by the Astra compiler and, therefore, they
+can be used as commentaries.
+A command line can also be converted to a comment if the first symbol
+in it is an exclamation sign \tw{'!'}.
+In other words, the sign \tw{'!'} switches off all special symbols on 
+the right of itself until the end of line (\tw{<CR>}) or the nearest
+\tw{';'}. 
+Additionally, if the 1-st symbol in a line is \tw{'!'} then the whole
+line is ignored.
+
+\vskip 1ex\noindent
+{\bf Example:}\\
+{\tt\hspace*{1mm}
+~~~~~~~~~~~~~Boundary condition for the density\smallskip\\
+!NEB=NEX;~~QNB=100;~~QNNB=30;
+~This line is switched off by the leading '!'\smallskip\\
+\symbol{32}!~NEB=3;~~QNB=500;~~!QNNB=700;
+~Here the second instruction is effective 
+}\bigskip\\
+This example contains only one command: \tw{QNB=500}.
+All other instructions are suppressed.
+
+\paragraph{Order of operators.}
+
+When creating an executable code the Astra compiler analyzes each
+command in a model file and then creates a sequence of corresponding
+Fortran operators.
+(Sometimes, several operators correspond to one command in a model file.)
+During a compilation all commands are split in classes.
+The first class consists of assignment statements (Section 5.2.3) which
+have a scalar variable on the left hand side.
+The second class includes assignments of vector variables.
+Finally, the third class is composed of external modules (plug-in
+modules, Section 5.2.4) and transport equations (Section 5.2.5).  
+These three classes are treated after one another.
+With a few exceptions, an order of operators in each class is retained
+the same as in the original model file. 
+
+\subsubsection{Arithmetic expressions}
+
+Arithmetic expressions in the Astra code basically obey the Fortran
+syntax. 
+Operands of an expression can be constants, scalar and vector variables,
+Astra formulae and functions. 
+All arithmetic operations and Fortran intrinsic functions can be
+used in the expressions. 
+
+As in Fortran, arithmetic expressions appear mainly in {\bf assignment
+statements} i.e. those command lines which include the sign \twd{'='}.
+On the left of assignment statements can be the Astra scalars and
+vectors only. 
+If the left hand side of the assignment statement is a scalar than the
+right hand side of it must be a scalar otherwise an error is reported.
+If the left hand side is a vector than the right hand side can be either
+a scalar or a vector.
+
+\vskip 1ex\noindent
+{\bf Examples:}\smallskip\\ %{\rm(1)}\\
+{\tt\hspace*{1mm}
+~~~~~~Power source of 1 MW with the Gaussian distribution in radius
+\smallskip\\
+CAR1=exp(((RHO/ROC-0.5)/0.1)**2);~~~~~~~~CF1=VINT(CAR1B);
+\smallskip\\ \hspace*{1mm}
+~~~~~~~~~~~~~~~~~~~~~and a rectangular modulation in time (100Hz)
+\smallskip\\
+QECR=anint(.1*sin(100*GP2*TIME)+.5);~~PEX=QECR*CAR1/CF1;
+}\bigskip\\
+This example illustrates using expressions in a model. 
+Argument of the exponent in the first command shows that constants,
+scalars and vectors can be used on the right of assignment statement.
+The result is a vector.
+The second command calculates the scalar
+{\tt CF1} so that {\tt CAR1/CF1} is normalized to 1 MW.
+The third command uses two intrinsic Fortran functions and, finally,
+the forth one assigns the vector variable {\tt PEX} that later can be
+used as heating source in a transport equation.
+
+The next example shows that predefined Astra expressions can be used in
+a model to construct quite complicated quantities.
+{\tt%{\rm(2)}
+\smallskip\\
+\hspace*{1mm}
+~~~~~~~Simplified critical gradient model
+\smallskip\\
+CAR1=RTOR*grad(TI)/TI-RLTCR;~~~~~~CAR1=sqrt(step(CAR1)*CAR1);
+\smallskip\\
+CAR1=CAR1-CV1*ROTSH/GITG0;~~~~~~~~XI=HNCHI+CHE1*step(CAR1)*CAR1;
+}\medskip\\
+Here the following model for the ion heat conductivity is implemented
+$$
+\begin{array}{c}\ds
+\eta_i=\frac{R_0 T_i'}{T_i}
+,\qq
+\gamma^{ITG}={\rm max}\lb(0,\gamma_0\sqrt{\eta_i-\eta_{i,cr}}\rb)
+,\qq
+\chi_i^{ITG}
+=\frac{\chi_0}{\gamma_0}\,
+{\rm max}\,\lb(0,\gamma^{ITG}-\omega_{E\x B}\rb)
+,\bigskip\\ \ds
+\chi_i=\chi_i^{PS}+\chi_i^{neo}+\chi_i^{ITG}
+\end{array}
+$$
+and the following quantities from the Astra library (Astra formulae) are
+involved\\  
+\hspace*{3mm}
+{\tt RLTCR~} $\eta_{i,cr}=\lb(\frac{R_0\na T_i}{T_i}\rb)_{cr},$ 
+critical ion temperature gradient (ITG),\\
+\hspace*{3mm}
+{\tt ROTSH~} $\omega_{E\x
+B}=\frac{B_p}{B_0}\lb(\frac{E_\rho}{B_p}\rb)',$\label{ROTSH} 
+rotational shear,\\
+\hspace*{3mm}
+{\tt GITG0~} $=\gamma_0$ is related to the
+linear increment of the ITG instability $\gamma^{ITG}$,\\
+\hspace*{3mm}
+{\tt HNCHI~} $\chi_i^{PS}+\chi_i^{neo}$ is the
+neoclassical heat conductivity \cite{CH}.\\ 
+Two free parameters are included in the model:
+the stiffness $\chi_0=\tt CHE1$ 
+that characterizes transport properties of the nonlinear phase of the
+instability and the parameter {\tt CV1} which enables switching on and
+off transport (or
+instability) suppression due to the plasma rotation. 
+
+To summarize the interpretation rules for Astra expressions we say that
+a type of the result is determined by the left hand side of the
+assignment statement. 
+An assignment of a scalar to a vector variable is not considered as an
+error so that the vector on the left retaining its type is viewed as
+radially independent.
+If a vector is attempted to be assigned to a scalar then a warning
+message is reported although the error is not considered as severe.
+
+\paragraph{Vector variables at given radii.}
+
+As discussed, the Astra compiler discriminates different types
+of variables and allows using them in common context without explicit 
+indication of the variable type.
+However, sometimes a need arises to evaluate vector quantities at
+given radial positions. 
+This can be done in the conventional way.
+For instance, \tw{TE(0)} will be understood as the electron temperature
+at the magnetic axis $T_e(0),$ \tw{TE(ABC)} as the electron temperature
+at the plasma edge and \tw{~TE(0.3)} as the electron temperature at the
+radius $a=$0.3 m.
+More complicated constructions are also allowed.
+For instance, \tw{TE(AFVAL(MU,0.5))} gives a value of $T_e$ at the
+resonance surface $q=2.$
+
+A reference to the coordinate $a$ is selected as most convenient for 
+associating it with the laboratory reference frame because this
+coordinate can be thought of as the minor radius in the mid-plane
+(see \req{3mom}).
+However, Astra vectors can be calculated also as functions of other
+flux coordinates using auxiliary functions described in Section~4.8.3. 
+So \tw{~NI(AFR(0.3))} gives the ion density $n_i(\rho=0.3\rm m),$
+and \tw{~NI(AFX(0.3))} at $\rho_N=\rho/\rho_B=0.3.$
+One can also use \tw{~NI(0.3*ABC)} to obtain $n_i$ at $a_N=a/a_B=0.3$ 
+or, what is the same, at $a=0.3\,a_B=0.3\tt*ABC.$ 
+
+Shortcuts are provided for vector quantities evaluated at the magnetic
+axis and at the plasma edge. 
+Namely, adding {\tt~C~} to a vector variable name one obtains its
+value at the centre and adding {\tt~B~} at the edge
+\footnote{One exception of this rule is discussed at the end of 
+Section~5.2.5}.
+It means that \twd{TEC} stands for \twd{TE(0),} \twd{MUC} for 
+\twd{MU(0),} \twd{TEB} for 
+${\tt TE}|_{a=a_B}={\tt TE}|_{\rho=\rho_B}=\tt TE(ROC),$ 
+\twd{MUB} for \twd{MU(ROC)} and so on.
+
+Astra expressions which are implemented as functions (but not as
+formulae) can also be calculated at given radii according to the same
+syntax rules.
+Thus \twd{NEAVB} yields the electron density averaged over the whole 
+plasma volume while \twd{NECHC} gives the line averaged density along 
+the central chord.
+Finally, one can use two Astra functions \twd{ATR} and \twd{ATX} (see 
+Section~4.8.3) in order to evaluate Astra vectors as functions of
+the variables $\rho$ and $\rho_N,$ respectively.
+
+\subsubsection{Connection of plug-in modules}
+
+The next subject to be discussed is a connection of auxiliary
+packages to the Astra code. 
+On one hand, development of external packages provides the most
+powerful way to include various physical processes in the code. 
+In this way the user can also get an access to almost any part of the
+code and make nearly any 
+changes and additions to the resulting simulation model.
+On the other hand, it is completely at user's discretion to trace
+possible consequences of such an interference in the code flow.
+Many plug-in modules are already available and were discussed in the
+previous section.
+Others can be developed using one or few of the existing modules as
+templates. 
+
+Front end of any plug-in module is a subroutine called by Astra.
+Their inclusion in a simulation model is implemented through the
+instruction of the type\footnote
+{Here and below the braces \{...\} in a command description
+enclose an optional part of the command.}.
+\begin{equation}\label{sbr}
+\mbox{\tt Name(\it Argument list}\mbox{\tt):\symbol{123}}\Delta_t
+\tt:t_{start}\tt:t_{end}\mbox{\tt:Letter\symbol{125}}
+\end{equation}
+Only the first colon `:' is required in this line all others can be
+omitted together with the corresponding control parameters.
+However, if the $i\!$-th $(i=1,2,3,4)$ parameter is present it
+should be preceded with $i$ colons.
+This command results in calling a subroutine with the name {\tt "Name"}.
+An argument list of the subroutine (if present) is directly converted
+into a Fortran line without any transformations which are normally
+performed with the Astra expressions. 
+Therefore, the actual arguments can be constants, variable names, 
+or expressions including constants and scalar variables only.
+For instance, the instruction 
+\\
+{\tt\hspace*{3em}NEUT:;} 
+\\
+corresponds to the Fortran
+statement\\ 
+{\tt
+%\symbol{32}\symbol{32}\symbol{32}\symbol{32}\symbol{32}\symbol{32}
+\hspace*{3em}call~NEUT}\\
+which calls the subroutine {\tt NEUT} calculating the neutral density 
+{\tt NN} and temperature {\tt TN} (see Section 4.9.4).
+
+In the last example, the subroutine will be called at each time step of
+the simulation run. 
+This can be changed by involving control parameters in the command
+line \req{sbr}.
+They have the following meaning
+\bigskip\\
+\begin{tabular}{|c|l|c|}\hline
+\bf Parameter	&\bf Significance &\bf Default value	\\
+\hline
+$\tt \Delta_t$	& Time interval between calls	& 0	\\
+$\tt t_{start}$& First time of calling	&$-\infty$\\
+$\tt t_{end}$& Last time of calling	&$\infty$\\
+{\tt Letter} 	& Control key			& None	\\
+\hline
+\end{tabular}
+\bigskip\\
+If $\tt\Delta_t$ is not specified a subroutine is called at each time
+step. 
+Parameters $\tt t_{start}$ and $\tt t_{end}$ define start and end
+time 
+when the module is activated. No calls are made beyond the specified time
+interval $\tt t_{start}\leq{\it t}\leq t_{end}$.
+If one of these parameters is not specified then corresponding conditions
+do not apply.
+Parameter {\tt Letter} is used to provide manual activation of the module
+in the interactive mode of operation.
+So, the instruction 
+\\
+{\tt\hspace*{3em}NEUT:0.1:::N;} 
+\\
+results in calling \tw{NEUT} every 100 ms and additionally each time
+when the key combination ${\tt<Ctrl>N}$ is pressed. 
+The control key {\tt Letter} can acquire any capital alphabetic value
+except for \tw{'M'}.
+
+\subsubsection{Transport equations}
+
+As described in Section 4, the Astra code can solve up to seven transport
+equations for plasma density, electron and ion temperatures, current
+density and three unspecified functions.
+Each equation can be involved by an explicit request only.
+Alternatively, a rule can be provided for calculating any of those
+quantities as functions of radius and time.
+A type of evolution of a variable is specified by the
+instruction of the form
+\begin{equation}\label{Eq_com}
+\mbox{\tt Name:\symbol{123}Type\symbol{125}\symbol{123}[Tag,Expr1]\symbol{125}\symbol{123}:Expr2\symbol{125}}
+\end{equation}
+where every term after the first \tw{':'} can be omitted. 
+\begin{description}
+\vspace*{-1ex}
+\item[{\tt Name}] is one of the variables on the list: 
+${\tt NE,~TE,~TI,~CU,~F1,~F2,~F3}.$
+\vspace*{-1ex}
+\item[{\tt Type}] is one of the two qualifiers \twd{Equation} or
+\twd{Assignment} (each can be truncated up to one letter), default value is
+{\tt~Type=Equation}. 
+\vspace*{-1ex}
+\item[{\tt[Tag,Expr1]}] Not applicable if \tw{~Name=CU}.
+Otherwise, \tw{Expr1} defines the right boundary of the
+interval where the transport equation will be solved.
+An integer \tw{Tag} specifies a type of the radial coordinate defined by
+the expression \twd{Expr1} \\
+\hspace*{2em}{\tt Tag=0~} dimensional coordinate $a$ (may be omitted),\\
+\hspace*{2em}{\tt Tag=1~} dimensionless coordinate $a/a_B,$\\
+\hspace*{2em}{\tt Tag=2~} dimensionless coordinate $\rho_N=\rho/\rho_B.$
+\vspace*{-1ex}
+\item[{\tt Expr2}] is another expression that can be used if {\tt Name}
+is one of ~{\tt TE}~~or~~{\tt TI} only.
+The expression then determines $\gamma_e$ or $\gamma_i$ in \req{Amain}.
+By default, $\gamma_e=\gamma_i=0.$
+\end{description}
+\vspace*{-1ex}
+If the qualifier \tw{Type} is omitted then it is assumed to take the
+value \tw{Type=Equation}. 
+In case \tw{Type=Assignment}, the rest of the command string is ignored.
+The new feature introduced in the version 5.3 is a possibility to set the
+different right boundaries for different transport equations.
+However, some restrictions are imposed.
+\begin{enumerate}
+\vspace*{-1ex}
+\item If the right boundary is not given then it is set to
+$\rho_B=\tt ROC$ (or $a_B=\tt ABC$). 
+This maintains compatibility with the previous versions. 
+\vspace*{-1ex}
+\item For the poloidal flux (i.e. for \tw{Name=CU}) the right
+hand boundary cannot be shifted and is always $\rho_B.$ 
+\vspace*{-1ex}
+\item For all other equations it cannot exceed the value $\rho_B.$
+\vspace*{-1ex}
+\item Unlike the outermost boundary position, $\rho_B,$ which can be
+located arbitrary (continuously varying) on the difference grid, all
+``internal'' 
+boundaries are attributed to the nearest grid point in $\rho$ (jumping).
+\end{enumerate}
+\vspace*{-1ex}
+When a model is converted into a Fortran code, the transport equations
+and the plug-in modules are put in the same order as they are requested
+in the model. 
+Exception is made for the subroutines \tw{MIXINT} and \tw{TSCTRL} which
+are always placed after all transport equations.
+Although, in most cases, the order of transport equations is not
+essential, sometimes, one has to take this convention into account.
+
+The following example shows setting transport equation for the plasma
+density 
+\begin{equation}\label{model1}
+\begin{tabular}{p{5cm}p{5cm}p{3cm}}
+%\multicolumn{3}{c}{\tt Density evolution model }\smallskip\\
+\multicolumn{3}{l}{\tt NEUT:;}\smallskip\\
+{\tt DN=1+FPR**2;} & {\tt CN=-DN*FX;} & {\tt SNN=SNNEU}\smallskip\\
+{\tt NE:Equation;} & {\tt NE=10*sqrt(FPR)+3;} & \smallskip\\
+\end{tabular}
+\end{equation}
+The first line calls the subroutine \tw{NEUT} at each time step. 
+The second line defines the diffusion coefficient \tw{DN} as a parabolic
+function, the pinch velocity \tw{CN} as a product of this parabola and a
+linear function (the minus sign corresponds to the inward pinch). 
+The source term \tw{SNN} describes the ionization and recombination
+processes making use of the formula \tw{SNNEU}. 
+We remind that the same source term could be defined as \tw{SN=SNNEU*NE}.
+The only difference between these two representations is in the numerical
+implementation, implicit or explicit, respectively. 
+If there is no particular requirement then the implicit approximation is
+preferable. 
+Finally, the third line says that the diffusion equation for \tw{NE}
+should be solved with the initial condition defined by the last command.
+The boundary condition is not set here explicitly and, therefore, the
+value assigned by the initial condition at the point $\rho_B$ will be
+used. 
+Effectively, it means that the boundary condition \tw{NEB=3} is applied.
+Other options for the boundary condition with a prescribed particle flux
+or more complicated are shown in the example in Section 5.2.2.
+
+Exactly the same result can be obtained by means of any auxiliary
+transport equation \req{Aux}.
+$$
+\begin{tabular}{p{5cm}p{5cm}p{3cm}}
+\multicolumn{3}{l}{\tt NEUT:;}\smallskip\\
+{\tt DF1=1+FPR**2;} & {\tt VF1=-DF1*FX;} & {\tt SFF1=SNNEU}\smallskip\\
+{\tt F1:Equation;} & {\tt F1=10*sqrt(FPR)+3;} & \smallskip\\
+\end{tabular}
+$$
+Here a diffusion equation is constructed for the dummy variable \tw{F1}
+which in all details reproduces the diffusion equation for \tw{NE}
+created by the model \req{model1}. 
+This example shows how the transport equations for the variables \tw{F1,
+F2, F3} can be used for a description of multi-species plasma.
+
+Consider now five different models
+\begin{equation}\label{5models}
+\begin{tabular}{p{2cm}|p{25mm}|p{25mm}|p{25mm}|p{3cm}}
+\tt Model 1&\quad\tt Model 2 &\quad\tt Model 3 &\quad\tt Model 4 
+						      &\quad\tt Model 5\\
+\tt &\quad\tt TE:As &\quad\tt TE=TEX &\quad\tt TE=TEX &\quad\tt TE=TEX\\
+\tt &\quad\tt	    &\quad\tt	     &\quad\tt TE:As  &\quad\tt TE:Eq \\
+\end{tabular}
+\end{equation}
+and assume that a time evolving electron temperature \tw{TEX} is
+stored in a data file which will be used together with each of these
+models. 
+The model 1 is empty.
+Nevertheless, nonempty executable code will be created for this model
+which makes a number of assignments including those described in
+Section 5.3.1.
+In particular, the electron temperature will be defined as 
+${\tt TE}(\rho)={\tt TEX}(\rho,t_{start})$ where $t_{start}$ is the
+initial time of simulation.
+The model 2 produces the same effect.
+The model 3 makes the assignment ${\tt TE}(\rho,t)={\tt TEX}(\rho,t)$ at
+each time so that the complete time evolution of \tw{TEX} will be stored
+in \tw{TE}. 
+A result of the model 4 is exactly the same as for the model 3.
+In the model 5, solving the transport equation is requested,
+however, neither transport coefficients nor the power sources are
+defined.
+For this model, Astra will build a code where the first line \tw{TE=TEX}
+is interpreted as the initial condition ${\tt TE}(\rho)={\tt
+TEX}(\rho,t_{start})$ and the equation $\prt T_e/\prt t=0$ will be
+solved (we assume here that the magnetic field $B_0,$ the plasma density
+$n_e$ and the plasma size do not change in time).
+Thus, a result of the model 5 will coincide with that of the models 1
+and 2. 
+
+One can conclude from this example, that the instruction of the type
+\tw{Name:As} is inessential. 
+It is really so in most cases, although a formal difference can appear
+between model 3 and model 4 if other commands of the type \rf{Eq_com}
+are present. 
+Namely, with explicit instructions of the type \tw{Name:As}, order of
+assignment operators in a code is the same as in a model.
+If all these instructions are implicit then the assignment operators
+will follow one another as in the sequence 
+\tw{NE, TE, TI, CU, F1, F2, F3.}
+The logic discussed implies that if the \tw{Type} of evolution is set to
+{\tt Assignment} then an assignment expression for this variable is 
+expected. 
+Although an absence of such an assignment is not considered as an error, 
+a warning message is printed for models like the model 2.
+Another case when the explicit request \tw{CU:A} is necessary is
+discussed below in the example \rf{4models}.
+
+\vskip 2ex
+{\footnotesize
+The format of equation command line is modified in the most recent
+version 5.3 in comparison to the previous versions of the code.
+The old form was
+$$\mbox{\tt Name:Type\symbol{123}:Expr2\symbol{125}}$$
+which can be compared with \rf{Eq_com}.
+The qualifier \tw{Type} is here obligatory.
+In all other respects the model generated by the old-type equation
+command line fully coincides with that generated by the new one.
+However, there is a difference in treatment when an equation command
+line is absent.
+Namely, in old versions, an assignment of time evolution to all main
+variables \tw{NE,TE,TI,...} is activated only if the equation
+command line with \tw{Type=Assignment} is present.
+Coming back to the example \rf{5models} it means that the models 1, 2, 3
+and 5 give the same result while only the model 4 gives the time evolving
+temperature ${\tt TE}={\tt TEX}(\rho,t).$
+
+}
+The next example sets a transport equation for the poloidal flux
+$$
+\begin{tabular}{p{2.5cm}p{2.5cm}p{2.5cm}}
+\multicolumn{3}{r}{\tt Current diffusion equation}	\smallskip\\
+{\tt CU:;}	&					\smallskip\\
+{\tt CC=CCHR;}	&					\smallskip\\
+{\tt DC=DCHR;}	& {\tt HC=HCHR;} &{\tt XC=XCHR;}	\smallskip\\
+{\tt CD=CUX;}	& 					\smallskip\\
+{\tt CU=1;}	& {\tt MU=.2;}				\smallskip\\
+{\tt UEXT=0.2;}	&
+\multicolumn{2}{l}{\tt IPL=0.2+0.8*FRAMP(0.,1.);}	\smallskip\\
+\end{tabular}
+\begin{tabular}{p{7cm}}				\smallskip\\
+{\tt !Equation}						\smallskip\\
+{\tt !Conductivity \cite{HR}}				\smallskip\\
+{\tt !Bootstrap current \cite{Hbs}}			\smallskip\\
+{\tt !Pre-calculated driven current}			\smallskip\\
+{\tt !Initial distribution}				\smallskip\\
+{\tt !Boundary condition}				\smallskip\\
+\end{tabular}
+$$%\end{equation}
+The first line in this model requests the current diffusion equation to
+be solved by the code. 
+The second line specifies the conductivity \cite{HR} by making use of
+the formula \tw{CCHR}.
+The third line defines the bootstrap current in a similar way.
+The driven current density is supposed to be stored in a data file under
+the name \tw{CUX}.
+The assignment command \tw{CU=1} is understood as the initial condition.
+It sets the flat current distribution normalized to the total current
+\tw{IPL}. 
+The second command in this line contradicts to the first one.
+Therefore, according to the diagram in Section 4.3.2 it is ignored.
+The last line includes two contradicting boundary conditions for the
+poloidal flux.
+According to the priority rule of Section 4.4.2 the second one for the
+total plasma current \tw{IPL} is applied and no notice of~~\tw{UEXT=0.2}
+is taken here. 
+
+We discuss now different ways of setting the current density profile in
+case when the current diffusion equation is switched off.
+\begin{equation}\label{4models}
+\begin{tabular}{p{2cm}|p{3cm}|p{3cm}|p{4cm}}
+\tt Model 1&\qq\tt Model 2 &\qq\tt Model 3 &\qq\tt Model 4\\
+\tt CU:AS  &\qq\tt CU=FPR  &\qq\tt CU:As   &\qq\tt CU:A   \\
+\tt CU=FPR &\qq\tt         &\qq\tt MU=MUX  &\qq\tt        \\
+\end{tabular}
+\end{equation}
+The first model prescribes parabolic current density and is fully  
+equivalent to the second model. 
+In other words, the command \tw{CU:AS} can be omitted without 
+changing the result.
+The same is also applicable to the third model.
+This model prescribes a rotational transform profile as stored in
+a data file. 
+All these three models can also describe time dependent profiles. 
+The last model 4 gives the current density profile which at every time
+step is defined by the steady state condition \req{icU} as if the
+current penetration time (skin time) is much shorter than all the other
+characteristic times. 
+In this case, the command \tw{CU:A} cannot be omitted.
+
+We remind (see Section~4.3.2) that there is one essential difference in
+a way of defining initial current density profile between Model 1 and
+Model 3. 
+In both cases, the initial setting must be consistent with the total
+plasma current.
+But, in the first case, the entire current density profile is adjusted,
+in the second case, the boundary value of $\mu(\rho_B)$ at the edge
+only. 
+In other words, the current density in Model 1 is continuous, in Model 2,
+it has a surface skin current.
+
+\paragraph{Initial conditions.}
+As follows from the examples considered above, assignment statements 
+are used for setting initial conditions. 
+This implies that an assignment instruction is treated differently
+depending on the context. 
+Namely, if the left hand side of an instruction is one of main variables
+$\{\tw{NE, TE, TI, CU, F1, F2, F3}\}$ and the corresponding equation 
+is absent then the assignment is processed as all other assignment
+statements with a vector variable on the left hand side.
+
+Otherwise, if the corresponding equation is present then the time
+evolution of the quantity is defined by the equation while the
+assignment statement is executed only once at the start of simulation.
+Moreover, all main variables and few others (see Section~5.3.1) are
+defined even if they do not appear in any assignment statement in a
+model. 
+In the last-mentioned case, data stored in the start file are used.
+If no appropriate data are stored there and no assignment is made then
+the code results are not relevant. 
+In all cases, when an implicit assignment is involved it is applied just
+once for the initial time only.
+
+In addition, the initial conditions can be set by a user developed
+subroutine. 
+In this case, one should beware that an explicit definition in a model
+has higher priority than that in a subroutine. 
+In other words, if two contradicting settings in a subroutine and in a
+model are present then the latter will be used by the code.
+
+\paragraph{Boundary conditions.}
+A similar rule is applied to the boundary conditions.
+The boundary condition can be set by an explicit assignment command or
+by an implicit (Section 4.4) definition.
+As in the case of initial conditions, an explicit assignment can be time
+dependent while an implicit one is always time independent and assigns a
+boundary value at the initial time of the simulation only. 
+Once assigned this value does not change afterwards.
+
+This property can be used for more complicated boundary conditions
+that cannot be expressed by a simple formula.
+Suppose that a subroutine \tw{SOLAY} calculates the electron density at
+the edge \tw{NE(NA1)} taking the particle flux at the same point
+\tw{QN(NA1)} as an input. 
+This can be implemented in a model as the boundary condition
+\begin{equation}\label{model2}
+\begin{tabular}{p{5cm}p{5cm}p{3cm}}
+%\multicolumn{3}{c}{\tt Density evolution model }	\smallskip\\
+{\tt NEUT:;} &\multicolumn{2}{l}{\tt SOLAY(QN(NA1),NE(NA1)):}\smallskip\\
+{\tt DN=.1;} & {\tt CN=-VP*VRHH;} & {\tt SNN=SNNEU}	\smallskip\\
+{\tt NE:;}   & {\tt NE=NEX;}	  & 			\smallskip\\
+\end{tabular}
+\end{equation}
+This model describes a time evolution of the plasma density profile
+assuming a constant diffusion and the neoclassical Ware pinch. 
+Note that the argument list of a subroutine is not processed by the
+Astra compiler. 
+Therefore, the abbreviated notations \tw{QNB} and \tw{NEB} can not be
+used as arguments of the subroutine.
+If an additional instruction like \tw{NEB=NEXB} is present in the model
+\rf{model2} then it will override the edge density defined in the
+subroutine \tw{SOLAY}.
+
+\paragraph{Shifted boundary conditions.} Additional possibility for
+setting boundary conditions is provided by the term in square brackets
+in \rf{Eq_com}. 
+It enables solving different transport equations on different radial
+intervals. 
+This option can be useful when the core and periphery transport have
+different physical nature and shifting the boundary condition inside
+allows to exclude the periphery transport out of consideration.
+It can also be useful when the plasma parameters are not known at the
+plasma edge and the boundary condition is set at the outermost measured
+point. 
+
+According to the syntax of the command \rf{Eq_com} the all three
+instructions  
+$$
+\begin{tabular}{p{4cm}|p{4cm}|p{5cm}}
+\tt TI:[0.8*ABC] &\qq\tt TI:[1,0.8] &\qq\tt TI:[2,XFAN(0.8)] \\
+\end{tabular}
+$$
+are equivalent and require solving the heat conductivity equation
+for $T_i$ on the interval $0<a<0.8a_B=0.8\tt*ABC.$
+Similarly, the instructions
+$$
+%\begin{equation}\label{3models}
+\begin{tabular}{p{4cm}|p{4cm}|p{5cm}}
+\tt TI:[2,0.8] &\qq\tt TI:[AFX(0.8)] &\qq\tt TI:[1,AFX(0.8)/ABC] \\
+\end{tabular}
+%\end{equation}
+$$
+require solving the same equation on the interval $0<\rho<0.8\rho_B.$
+
+The next model
+\begin{equation}\label{model3}
+\begin{tabular}{p{6cm}p{6cm}}
+\multicolumn{2}{l}{\tt IFSPPL(CAR1,CAR2,CAR3,CAR4,CAR5,CAR6):}
+\smallskip\\
+{\tt XI=HNCHI+CAR5;} & {\tt PI=PEICL+PIX}
+\smallskip\\
+{\tt TI:Eq[1,0.9];}	& {\tt TI=TIX}
+\smallskip\\
+\end{tabular}
+\end{equation}
+produces a transport code solving the heat conductivity equation for
+$T_i$ on the interval $0\leq a\leq 0.9a_B.$ 
+Here the ion heat conductivity $\chi_i=\tt XI$ is defined as a sum of
+neoclassical and anomalous terms where the latter (along with many other
+quantities) is calculated by the subroutine \tws{IFSPPL}. 
+The heating source \twd{PI} includes the electron-ion heat exchange
+\twd{PEICL} and the auxiliary heating \twd{PIX} defined in a data file.
+
+The command \twd{TI=TIX} bears here a double meaning.
+Firstly, it defines the ion temperature $T_i(a,t_0)=T_{i,exp}(a,t_0)$ at
+the initial time $t_0$ on the whole radial interval $0\leq a\leq a_B.$ 
+The subsequent time evolution of $T_i(a,t>t_0)$ on the partial interval
+$0<a<0.9a_B$ is defined by the heat conductivity equation. 
+Thus, on the segment $0\leq a\leq 0.9a_B,$ the command \twd{TI=TIX}
+provides the initial and the boundary condition\footnote
+{Like in the case of non-shifted boundary, this assignment is made
+only once at the start time $t=t_0.$ 
+Moreover, it applies only when no explicit boundary setting is provided.}
+for the corresponding transport equation. 
+Secondly, it defines the time evolution of the ion temperature 
+$T_i(a,t)$ on the interval $0.9a_B<a\leq a_B$ for $t>t_0$ that is not
+covered by the transport equation.
+Therefore, the command \twd{TI:[1,0.9]} in the last line of the model
+\rf{model3} can be thought of as if it combines the definition of
+\twd{Type=Equation} for the interval $0<a<0.9a_B$ and of
+\twd{Type=Assignment} outside it. 
+
+Similarly to the case of non-shifted boundary conditions, the boundary
+value $T_i(0.9a_b)$ implicitly imposed by the command \twd{TI=\dots} is
+time independent. 
+In order to set a time dependent boundary condition one has either to
+use an explicit assignment statement in any of the forms
+$$
+\begin{tabular}{p{4cm}|p{4cm}|p{5cm}}
+\tt TIB=... &\qq\tt QIB=... &\qq\tt QITB=\dots \\
+\end{tabular}
+$$
+or to implement an implicit boundary setting with an external subroutine
+similar to that of the example \rf{model2}.
+
+It is significant to note that, in the particular case of the shifted
+boundary conditions, the abbreviation \tw{TIB} is interpreted
+distinctively depending of the context.
+Namely, whenever \twd{TIB} appears on the right hand side of any
+expression, it is replaced by the Astra code compiler with \twd{TI(NA1)}
+which is equivalent to $T_i(a_B).$ 
+However, if (and only if) any of the notations \twd{NEB, QNB, QNNB,
+TEB} and so on\footnote{The complete list is given in Table~4.8.} 
+stands on the left hand side of an assignment command then this command
+is interpreted as the boundary condition assignment and it is attributed
+to the boundary point declared by a corresponding equation instruction
+of the type \rf{Eq_com}. 
+
+For instance, if the command \twd{TIB=TIXB} is used in the model
+\rf{model3} it will result in the Fortran statement
+\twd{TI(NA1I)=TIX(NA1)}, where the array index \twd{NA1I} points to the
+grid node nearest to $0.9\,a_B$ while the index \twd{NA1} to the edge
+grid point $a_B=\tt ABC.$
+Most probably, it is not the result expected by the user.
+The correct assignment can be implemented as
+\twd{TIB=TIX(0.9*ABC).}
+
+\subsubsection{Radial output}
+First of all we note that there is no default output in Astra
+and therefore quantities of interest must be explicitly specified in the
+model definition.
+Request for a radial output has the form
+\begin{equation}\label{Radout}
+\mbox{\tt 
+Name\bs\symbol{123}Expression\symbol{125}%
+\symbol{123}\bs\bs Xdata\symbol{125}%
+%\symbol{123}\%Xdata\symbol{125}%
+\symbol{123}\bs Scale\symbol{125}%
+%\symbol{123}[Expr1,Expr2]@\#\%Tag\symbol{125}
+}\qquad
+\end{equation}
+Here \twd{Name} specifies a legend (a string with a length up to 4
+characters) associated with the radial profile given by any regular
+arithmetic \twd{Expression}. 
+Every part of this command shown in braces is optional and can be
+omitted, the group preceded by \twd{\bs\bs} can either be omitted or 
+repeated several times. 
+
+Up to 96 commands of the type \rf{Radout} can be present in a model
+and, consequently, up to 96 radial profiles can be plotted (or stored)
+in a simulation.
+Each radial profile defined by the corresponding \twd{Expression}
+together with its \twd{Name} and \twd{Scale} will appear in a graphic
+window when the code starts execution.
+The code provides a few different graphic modes which allow combination
+of several curves in one box and several boxes in one window.
+The curves are sequentially placed in boxes in the same order as the
+curve descriptions \rf{Radout} appear in the model. 
+If a number of curves is larger than the number of boxes then the next
+curve is again put in the first box, then in the second and so on until
+all boxes in the current window acquire the maximal for this mode number
+of curves. 
+Then the next (hidden) window is filled and the process continues until
+the list of the curves submitted to output is exhausted.
+
+In other words, one can say that each radial profile defined with
+\rf{Radout} receives its sequence number which is an ordinal number of
+the output command as they appear in the model.
+The curves are placed in graphic windows according to their sequence
+numbers.
+Because the position of the curves on the display it is essential for
+the convenience of viewing results, it is important to pay attention to
+the sequence of the output commands.
+Nevertheless, the user can change the sequence numbers and other curve
+attributes interactively during the code execution. 
+More detailed description of this feature will be given in Section~5.5.3.
+
+The parameter \twd{Scale} defines the scale for plotting the curve given
+by \twd{Expression}. 
+If \twd{Scale} is zero or absent then the scale of the output profile is
+automatically selected by the code. 
+If \twd{Scale} is given as a positive number then this number specifies
+the actual scale for the corresponding radial profile.
+Negative integer value of \twd{Scale} allows setting the same automatic
+scale for all profiles in the group with the same negative scale value.
+It is useful for representation of several different curves of the
+same meaning, e.g. the input powers of different heating methods.
+
+There is one more peculiarity in setting automatic group format.
+Normally auto-scale is selected based on the maximum absolute value in
+the entire group.
+But the user can enforce the code to make automatic scale basing upon a
+single specified profile in the group.
+It happens if the absolute value of the negative scale coincides
+with the sequence number of the output.
+We illustrate the discussed rules for radial output with an example:
+\vskip 1ex\noindent
+{\bf Example:}\smallskip\\ %{\rm(1)}\\
+{\tt\hspace*{1mm}
+Te\bs TE\bs -9;~~~~~~~Ti\bs TI\bs -9;~~~~~~~j\bs CU\bs-2;~~~~~~~~
+		Utor\bs UPL\bs-1;\smallskip\\ \hspace*{1mm}
+ne\bs NE\bs 10;~~~~~~~\bs;~~~~~~~~~~~~~~jOhm\bs CUOHM\bs-2;~~
+		iota\bs MU;\smallskip\\ \hspace*{1mm}
+Texp\bs TEX\bs-9;~~~~Tixp\bs TIX\bs -9;~~~~jBS\bs CUBS\bs-2;~~~~
+		Ulng\bs ULON\bs -1;\smallskip\\ \hspace*{1mm}
+nexp\bs NEX\bs 10;~~~~\bs;~~~~~~~~~~~~~~sigm\bs CC;~~~~~~~~~q\bs 1/MU;
+}\vskip 1ex
+
+%\begin{equation}\label{Rexa}
+%\mbox{\tt\begin{tabular}{p{3cm}p{3cm}p{3cm}p{3cm}}
+%Te\bs TE\bs -9; & Ti\bs TI\bs -9;  & j\bs CU;	  & Utor\bs UPL; \\
+%ne\bs NE\bs 10;  & \bs; jOh\bs CUOHM; &   & iota\bs MU; \\
+%Texp\bs TEX\bs-9;&Tixp\bs TIX\bs -9;&jBS\bs CUBS;&Ulng\bs ULON\bs-1;\\ 
+%nexp\bs NEX\bs 10;& &\bs; sigm\bs CC;         & q\bs 1/MU;\\
+%\end{tabular}}
+%\end{equation}
+
+\noindent
+Assume that this set of data is presented in the default radial output
+mode which allows up to 16 curves in a window. 
+The window includes 8 boxes placed in two rows and four columns with
+two curves in a box as schematically shown in this sketch.
+\bigskip\\
+\cl{\tt
+\begin{tabular}{| l | l | l | l |}				\hline
+\bf\large 1 &\bf\large 2 &\bf\large 3 &\bf\large 4 \\
+1 \& 9		&2 \& 10	&3 \& 11	&4 \& 12	\\ \hline
+\bf\large 5 &\bf\large 6 &\bf\large 7 &\bf\large 8 \\
+5 \& 13		&6 \& 14	&7 \& 15	&8 \& 16	\\ \hline
+\end{tabular}
+}
+\smallskip\\
+Hear the large digits in the left upper corner of each box show the box
+numbers and the curve sequence number are shown in ordinary type.
+Then the first eight profiles will be shown in red and the next eight in
+blue so that each box will contain one red and one blue curve.
+Consequently, the first and the third lines in the example enter in the
+first row of boxes while the second and the forth lines occupy the second
+row. 
+The empty instructions \twd{\bs;} are used in this example in order to
+skip the sixth box and put all quantities related to the current density
+one over or under another for a more convenient comparison.
+
+Thus the first box contains calculated and experimentally
+measured electron temperatures, \twd{TE} and \twd{TEX}, respectively. 
+The former is labeled on the plot as \twd{Te} and the latter as 
+\twd{Texp}. 
+Both will have the same scale defined by the data \twd{TEX} (sequence
+number~9).
+Similarly, the next box contains two ion temperatures with the same
+scale. 
+The third box includes the total current density \twd{CU} and the
+bootstrap current density \twd{CUBS} each with a common scale.
+The last box in the first row encloses the toroidal \twd{UPL} and the
+longitudinal \twd{ULON} loop voltages in the same scale defined by the
+largest of the two.
+The fifth box shows two density profiles with the
+prescribed scale. 
+The next box (No.~6) is empty. 
+The seventh box shows the Ohmic current density and conductivity
+profiles (which must be proportional in the steady state).
+Finally, the last in this mode, eighth box presents the rotational
+transform \twd{MU} and the safety factor.
+
+\paragraph{Presentation of experimental data.}
+So far we discussed the output of radial profiles presented as curves.
+In the example above, even so called ``experimental'' data as \twd{TEX}
+or \twd{NEX} are smoothed and transferred to the fine transport grid
+with a typical size of 100 nodes. 
+Transferring input experimental data to a radial grid of the 
+transport code is a problem which has no universal solution. 
+Although the Astra code provides a way of doing this transfer
+it could be unsatisfactory in some cases, for instance, it destroys
+a significant information while smoothing data or, in opposite, add 
+artificial features while extrapolation.
+In order to provide a way of visual control of data treatment
+the Astra code enables displaying the original input data as the
+radial plots. 
+
+Such a plot can be requested by a command line of the format \rf{Radout}
+making use of the control group \twd{\symbol{34}\bs\bs\symbol{34}}.
+A quantity \twd{Xdata} will be shown on a plot as it is stored in the
+input file (Section~5.4). 
+To be interpreted properly, the control word \twd{Xdata} must be one of
+the array names given in Table~5.4.
+For instance, the instruction \\
+\hspace*{5cm}{\tt Tex\bs TEX\bs\bs TEX\bs 10}\\
+plots the electron temperature \twd{TEX}, firstly, as a smoothed curve,
+secondly, by dots as the original data are stored in the input file.
+The curve and the dots will appear in the same box with the same
+scale 10 keV. 
+One can plot the dots only \\
+\hspace*{5cm}{\tt Tex\bs\bs TEX\qquad\qquad\qquad}\\
+or combine several measurements in one plot\\
+\hspace*{5cm}{\tt Tex\bs TEX\bs\bs TEX\bs\bs CAR1X}\\
+The latter command plots \twd{TEX} as a curve together with two sets of
+data stored in the input file under the names \twd{TEX} (e.g. Thomson
+scattering) and \twd{CAR1X} (e.g. ECE data). 
+The data for $\tt TEX$ and $\tt CAR1X$ will be shown by different
+symbols. 
+
+%\paragraph{Radial scale control.}
+%Sometimes it is needed to inspect a fine structure of radial dependence 
+%that cannot be clearly resolved in the standard radial scale.
+%To do this one can extend a part of the radial axis to the whole box.
+%It can be done by adding an instruction
+
+\subsubsection{Time output}
+Radial and time output commands have a similar format.
+The difference is that the backslash symbol 
+\twd{\symbol{34}\bs\symbol{34}} is replaced by the underscore
+\twd{\symbol{34}\us\symbol{34}}. 
+This format reads
+\begin{equation}\label{Timout}
+\mbox{\tt\symbol{123}Name\symbol{125}\us\symbol{123}Expression\symbol{125}\symbol{123}\us Scale\symbol{125}}\qquad
+\end{equation}
+Similar to the radial output, any allowed arithmetic expression can be
+used for output. 
+However, a natural restriction is applied that only scalar (radially
+independent) expressions may be used in the time output instructions. 
+The user can prescribe an output scale, ask for a common scale for several
+plots or take advantage of automatic scale adjustment. 
+Up to 96 time dependences can be processed by the current version of the
+code. 
+
+\subsubsection{Advanced options}
+
+\paragraph{User defined variables.}
+
+Variables used in a transport model basically belong to the Astra
+internal variable list which includes (a) a set of physically meaningful
+predefined variables and (b) a set of holder scalar and vector variables
+without specific meaning. 
+It is not considered as an error if the user employs his own scalar
+variables in a model. 
+Though there is no support for this variables and they are not defined 
+in most of Astra modules except for if explicitly passed to a
+corresponding subroutine.
+
+For instance, one can define a time dependent scalar quantity\\
+\hspace*{15mm}
+\twd{STAIRS=FJUMP(0.1)+FJUMP(0.2)+FJUMP(0.3)+FJUMP(0.4)+FJUMP(0.5)}\\ 
+and later use it as a part of another assignment statement or as a
+parameter of a subroutine, however, the quantity \twd{STAIRS} cannot be
+plotted with the standard time output instruction~\rf{Timout} because it
+is not available in the module concerned with the output.
+In order to overcome this limitation the user has two options.
+The standard and recommended way is to replace the name \twd{STAIR} with
+one of the C-parameters (Table~4.17).
+Another option is to describe the variable \twd{STAIRS} in a common
+block inside the file\footnote{See footnote on the page \pageref{AWD}.}
+\\ 
+\hspace*{3cm}
+\twd{AWD/tmp/declar.usr} \\
+This file is included by the Fortran statement \twd{INCLUDE} in all
+model dependent modules of the Astra kernel.
+
+\paragraph{Verbatim reproduction.}
+
+Processing a model file the Astra compiler transforms it into a Fortran
+source code according to some rules. 
+However, sometimes these rules are too restrictive because they are
+invented exclusively for dealing with Astra variables.
+There is a possibility to override these rules, switch off all
+transformations and require a verbatim record into a source code. 
+It can be done by quoting the appropriate string. 
+For instance, the expression 
+\\
+\hspace*{4cm}{\tt rhNA\us\symbol{34}RHO(NA)\symbol{34}}
+\\
+yields a value of the \tws{NA}-th element of the radial grid array
+\twd{RHO,} i.e. the position of the grid point adjacent to the edge
+one $\rho_B=\tt RHO(NA1).$
+Similarly, the instruction 
+\\
+\hspace*{4cm}\tw{wrk3\bs\symbol{34}WORK(j,3)\symbol{34}}\\
+allows to plot the data stored in the 3rd column of the two-dimensional
+array \twd{WORK}.
+
+It is not out of place to stress here that a care should be taken when
+using this feature.
+The user should beware that the Astra compiler can put the quoted
+string in unexpected place of the code or even being placed in a
+proper position the string can get in conflict with Fortran rules.
+Therefore, it is recommended to check if the effect of such a
+nonstandard operation provides the desired result.
+
+In addition we add a remark concerning the two working arrays
+\twd{WORK} and \twd{WORK1}. 
+Both arrays are described as real two-dimensional arrays
+and placed in a common block\footnote
+{In the standard installation $\twd{NRD}=501.$} 
+\\
+\hspace*{1.5cm}\tw{COMMON~}
+\tw{/WORKAR/~WORK1(NRD,2*NRD+7),~WORK(NRD,2*NRD)}\\
+in the file \twd{AWD/for/status.inc} 
+so that they can be used in every module including this file.
+The arrays are not being used by any routine of the Astra kernel.
+It is supposed that the first array \twd{WORK1} is used as a working
+area for plug-in subroutines without any usage outside these subroutines.
+Another array \twd{WORK} may be used either as a working area or as a
+tool for data exchange between user's subroutine and other parts of
+the code. 
+In the second case, it remains at user's discretion to trace possible 
+conflicts between different user developed modules.
+
+\paragraph{Post-compiler editing.}
+A possibility to interfere in the pre-defined sequence of Astra
+operations is given by the command
+\\
+\tw{> Astra -t}
+\\
+This suspends the code execution after the second step (see the flow
+diagram at page \pageref{flow}).
+At this point, the user can introduce any changes into the changeable
+part of the code.
+This part consists of intermediate Fortran source files located in the
+directory \twd{AWD/tmp/}. 
+When the appropriate adjustments are performed the code execution will
+be resumed with account for all recent modifications.
+
+\subsubsection{Several examples}
+In this section we consider several examples of building different
+models in the Astra system.
+We assume that all models discussed below are run with an appropriate
+input file that provides all data required by a model. 
+Therefore, some properties of data setting are used already in this
+section although they are first introduced in Section~5.3.
+
+We start with a discussion of simple plasma characteristics which can be
+calculated on the basis of measured plasma density and temperature
+profiles.  
+\vskip 1ex\noindent
+%{\bf Example 1:}\smallskip\\ %{\rm(1)}\\
+{\tt\hspace*{1mm}
+Wth\bs WTOT;~~~~~LTi\bs LTI;~~~~~~~Heff\bs HEEFF;~~~~Vpol\bs VPSWW;
+\smallskip\\ \hspace*{1mm}
+tauE\bs TAUE;~~~~LTic\bs RLTCR;~~~~Hiff\bs XIEFF;~~~~rhos\bs RLS;
+\medskip\\ 
+}
+As a result of this model the following quantities will be plotted one
+under another (in the 1st mode, their placement on a screen is the same
+as in the printout above): 
+the plasma thermal energy content (possible contribution from fast
+particles is not included) and the energy confinement time; 
+inverse normalized length of the ion temperature mapped to the
+mid-plane, $R_0/L_{Ti}=R_0|\prt T_i/\prt a|/T_i$;
+and a critical value for the same quantity with respect to the ion
+temperature gradient instability;
+effective (i.e. experimentally measured) heat conductivities for the
+electron and ion thermal components;
+and, finally, the neo-classical poloidal rotation velocity and 
+$\rho_s=\sqrt{T_e/m_i}.$
+All they will be plotted as radial functions.
+
+This code will also work if some quantities needed for calculations are
+not defined, however, then the results can be irrelevant.
+For instance, if the heating power is not defined then the heat
+conductivities and the confinement time will be negative.
+In order to get appropriate values for these quantities one has to define
+the input heating power in any allowed way, e.g. as 
+\twd{PE=POH;~PI=PIX}.
+
+Another essential remark is that the radial functions plotted by this
+model are time independent even if the correspondent data file contains
+time dependent data. 
+This happens in line with the syntax rules described in Section~5.2.2.
+Indeed, without the explicit definition the assignment as \twd{TE=TEX}
+and similar are fulfilled only once at $t=t_0,$ consequently, all
+quantities calculated on the basis of $n_e,\,T_e$ and so on are time
+independent. 
+One can view the difference running the model
+\vskip 1ex\noindent
+{\tt\hspace*{1mm}
+Tex\bs TEX\bs\bs TEX\bs -9;~~~~2\bs;~~~3\bs;~~~4\bs;
+	    ~~~~~~~~~~~~~5\bs;~~~6\bs;~~~7\bs;~~~8\bs;
+\smallskip\\ \hspace*{1mm}
+Te\bs TE\bs -9;
+\medskip\\}
+Two graphs will show the quantities \twd{TE} (in blue) and \twd{TEX}
+(in red) as smoothed curves in the same scale in the upper left box. 
+Additionally, the original data for \twd{TEX} will be shown with red
+crosses.
+The curve for \twd{TEX} will evolve as it is written in the data file,
+while \twd{TE} will coincide with \twd{TEX} at the first instant only.
+
+In order to remove all differences, one has to include in the model the
+explicit definitions of main plasma parameters.
+\vskip 1ex\noindent
+{\tt\hspace*{1mm}
+NE=NEX;~~~TE=TEX;~~~TI=TIX;~~~~~~~NEQUIL=41;
+\medskip\\}
+Here the command \twd{NEQUIL=41} requires that the Astra built-in 
+3-moment equilibrium solver is employed for the equilibrium 
+reconstruction.\footnote
+{We remind that, if not defined explicitly, the
+current density distribution is calculated from the steady state
+condition \req{Uplss}.}
+
+As an example of the time output consider
+\vskip 1ex\noindent
+%{\bf Example 2:}\smallskip\\ %{\rm(1)}\\
+{\tt\hspace*{1mm}
+ABC\us ABC;~~~~~~kapp\us ELONG;~~~~~~delt\us TRIAN;~~~~~~shif\us SHIFT;
+\smallskip\\ \hspace*{1mm}
+Tex0\us TEXC;~~~~Tix0\us TIXC;~~~~~~~Ipl\us IPL;~~~~~~~~~Btor\us BTOR;
+\smallskip\\ \hspace*{1mm}
+Wth\us WTOTB;~~~~pk1\us NEC/NEAVB;~~~pk2\us NEC/NECHC;
+				~~H-89\us TAUEB/(TITER+1.e-6);
+\smallskip\\ \hspace*{1mm}
+q0\us 1/MUC\us 5;~~~qa\us 1/MUB\us 5;~~~~~~qmin\us QMINB\us 5;
+		~~~qmin\us 1/FRMAX(MU)\us 5;
+\smallskip\\ \hspace*{1mm}
+Xmin\us XQMINB\us 1;~~~~q2a\us AFVAL(MU,.5)/ABC\us 1;
+		~~~~~~q3a\us AFVAL(MU,.333)/ABC\us 1;
+\medskip\\}
+The first line shows the geometrical parameters of the outermost
+magnetic surface: the minor radius \twd{ABC}, elongation \twd{ELONG},
+triangularity \twd{TRIAN} and shift with respect to the major radius
+\twd{RTOR}.
+The second line gives the central values of electron and ion
+temperatures then the plasma current and magnetic field. 
+After that follow: the total plasma energy content, the density peaking
+factor calculated as the central value divided by the volume averaged
+and by the chord averaged densities, enhancement factor with respect to
+the ITER-89 scaling. 
+The next two lines show different quantities characterizing the safety
+factor $q$ distribution. 
+The first of them yields the central $q(0)$ and the edge $q(a_B)$ values,
+then the minimum $q_{min}$ value calculated in two different ways. 
+Finally, the last line gives the radial positions (in the normalized 
+coordinate $x=a/a_B$) of the points where $q(x)$ reaches its minimum 
+value, where $q(x)=2$ and $q(x)=3.$
+
+Unlike the radial output most of the time dependencies above are plotted
+as they are stored in the data file, i.e. if a time dependence of any
+Astra simple variable (e.g. \twd{ABC}, \twd{IPL}, \twd{BTOR}, \dots) is
+written in the data file then it will be shown as time varying also in
+the Astra output. 
+This can be not the case for the derived quantities.
+For instance, \twd{NEC} and \twd{NEAVB} are calculated making use of
+\twd{NE}, therefore, for those quantities, the same rules are applicable
+as for \twd{NE}.
+
+The next example shows a model which reads in the experimental data for
+$n_e,T_e,T_i$ and calculates the current density evolution assuming
+the neoclassical conductivity and bootstrap current.
+\vskip 1ex\noindent
+{\tt\hspace*{1mm}
+NE=NEX;~~~~~TE=TEX;~~~~~TI=TIX;~~! measured plasma parameters
+\\ \hspace*{1mm}
+AMAIN=2;~~~~ZMAIN=1;~~~~~~~~~~~~~! mass \& charge of the main ion species
+\\ \hspace*{1mm}
+AIM1=12;~~~~ZIM1=6;~~~~~~~~~~~~~~! mass \& charge of the main impurity
+\\ \hspace*{1mm}
+NIZ1=NE*(ZEF-1)/(ZIM1-1)/ZIM1;~~~! density of the impurity
+\\ \hspace*{1mm}
+NI=NE*(ZIM1-ZEF+1)/ZIM1;~~~~~~~~~! total density of all plasma ions
+\\ \hspace*{1mm}
+NDEUT=NI-NIZ1;~~~~~~~~~~~~~~~~~~~! density of deuterium plasma ions
+\\ \hspace*{1mm}
+NEQUIL=41;~~~~~~~~~~~~~~~~~~~~~~~! 3-moment equilibrium solver
+\\ \hspace*{1mm}
+HC=HCKIM;~~~DC=DCKIM;~~~XC=XCKIM;! Bootstrap due to Kim
+\cite{Kim} \\ \hspace*{1mm}
+CU:EQ;~~~~~~MU=.33*FPR+.33;~~~~~~! current density Eq \& initial
+condition 
+\\ \hspace*{1mm}
+CC=CNHR;~~~~CD=CUBM;~~~~~~~~~~~~~! conductivity \cite{HR}~ \& NB driven
+current 
+\\ \hspace*{1mm}
+MIXINT(CV1,CF1):;~~~~~~~~~~~~~~~~! Kadomtsev reconnection
+\\ \hspace*{1mm}
+NBI:;~~~~~~~~~NEUT:;~~~~~~~~~~~~~! NB injection and cold neutrals
+\smallskip\\ \hspace*{1mm}
+~~~~~~~~~~~~~~~ Radial output
+\smallskip\\ \hspace*{1mm}
+Tex\bs TEX\bs\bs TEX;~~~~~q\bs 1./MU\bs 10;
+			~jtot\bs CU\bs 2;~~~~~Upl\bs UPL;
+\\ \hspace*{1mm}
+nex\bs NEX\bs\bs NEX;~~~~~cneo\bs CC;
+			~~~~jNB\bs CUBM\bs 2;~~~~shir\bs SHEAR;
+\\ \hspace*{1mm}
+Tix\bs TIX\bs\bs TIX;~~~~~iota\bs MU;
+			~~~~jOH\bs CUOHM\bs 2;~~~ULON\bs ULON;
+\\ \hspace*{1mm}
+Zeff\bs ZEFX\bs\bs ZEFX;~~cSp\bs CCSP;
+		~~~jBS\bs CUBS\bs 2;~~~~psiN\bs (FP-FPC)/(FPB-FPC);
+\smallskip\\ \hspace*{1mm}
+~~~~~~~~~~~~~~~~Time output
+\smallskip\\ \hspace*{1mm}
+Upl\us UPLB\us 2;~~~betj\us BETAJB;~~~bett\us BETTB;
+		~~~~li\us LINTB*RTOR/(RTOR+SHIFT)\us 1;
+\\ \hspace*{1mm}
+Ipl\us IPL\us 2;~~~~Ibs\us IBSB\us 2;
+		~~~Iohm\us IOHMB\us 2;~~~Inb\us IBMB\us 2;
+\medskip\\}
+This model can be used for simulating NBI assisted current ramp-up phase
+in a tokamak.
+Therefore, most of output quantities are related to the current density
+distribution. 
+In particular, the radial output shows the neoclassical and Spitzer
+conductivities (6th box), the third column (3rd and 7th boxes) includes
+different contributions to the current density, the forth box exhibits a 
+difference between the toroidal and longitudinal loop voltages, the
+shear and the normalized poloidal flux are displayed in the 8th box.
+The time output presents the edge loop (toroidal) voltage, poloidal and
+toroidal betas, internal inductance per unit length, the total plasma
+current as comprised of the bootstrap, Ohmic and beam driven currents.
+
+The next example illustrates simulation of a plasma density build-up.
+\smallskip\\
+%\vskip 1ex\noindent
+{\tt\hspace*{1mm}
+~~~~~~~~Equilibrium, electron, ion temperatures and poloidal flux
+\\ \hspace*{1mm}
+NEQUIL=41;~~~~~~~TE=2*FPR**2+.1;~~~~~~TI=TE/2;~~~~~~CC=CCSP;
+\smallskip\\ \hspace*{1mm}
+~~~~~~~~Particle source (wall neutrals + pellets)
+\\ \hspace*{1mm}
+NEUT:;~~~~~~~~~~~SNN=SNNEU;~~~~~~~~~~~~~! Gas puffing
+\\ \hspace*{1mm}
+CV1=anint(.1*sin(100*GP2*TIME)+.405);~~~! Square wave-form oscillator
+\\ \hspace*{1mm}
+SN=CF3*30000*CV1*GAUSS(.7,.1);~~~~~~~~~~! Pellet evaporation profile
+\smallskip\\ \hspace*{1mm}
+~~~~~~~~Density eqn with initial and boundary conditions
+\\ \hspace*{1mm}
+NE:EQ;~~~~~~~~~~~NE=10*FPR;~~~~~~~~~QNNB=CF2*10000;
+\\ \hspace*{1mm}
+CAR1=CF1*(1+3*FX**2);~~~~~~~~~~~~~~~~~~~! Prescribed function
+\\ \hspace*{1mm}
+DN=CAR1*(1-XSTEP(.85))+.5*XSTEP(.85);~~~! Diffusion coefficient
+\\ \hspace*{1mm}
+CN=-VP*VRHH;~~~~~~~~~~~~~~~~~~~~~~~~~~~~! Neoclassical pinch
+\\ \hspace*{1mm}
+TAUMAX=.0001;~~~~~~~~~~~~~~~~~~~~~~~~~~~! Time step limitation: < 1 ms
+\smallskip\\ \hspace*{1mm}
+~~~~~~~~~Auxiliary quantities
+\\ \hspace*{1mm}
+CV16=VINT(SNTOTB);~~~~~~~~~~~~~~~~~~~~~~! The same as QNTOTB
+\\ \hspace*{1mm}
+CV15=TIMINT(CV16);~~~~~~~~~~~~~~~~~~~~~~! Total particle source integral
+\\ \hspace*{1mm}
+CV14=NEAVB;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~! Volume average density <ne>
+\\ \hspace*{1mm}
+CV13=-TIMDER(CV14);~~~~~~~~~~~~~~~~~~~~~! d<ne>/dt
+\\ \hspace*{1mm}
+CV2=TIMINT(CV1);~~~~~~~~~~~~~~~~~~~~~~~~! Total evaporation time
+\smallskip\\ \hspace*{1mm}
+~~~~~~~~~Radial output
+\\ \hspace*{1mm}
+D\bs DN;~~~~~~~~gn\bs GN;~~~~~~~flux\bs QN;~~~~~~~~etai\bs LNE/LTI\bs
+								100;
+\\ \hspace*{1mm}
+ne\bs NE;~~~~~~~NN\bs NN\bs 1;~~~~~nue*\bs NUES\bs 1;~~~~Spuf\bs SNN*NE;
+\\ \hspace*{1mm}
+Vin\bs -CN;~~~~~V/D\bs -CN/DN;~~I(S)\bs QNTOT;~~~~~Lne\bs LNE;
+\\ \hspace*{1mm}
+Stot\bs SNTOT;~~TN\bs TN;~~~~~~~Ware\bs VP*VRHH;~~~Spel\bs SN;
+\smallskip\\ \hspace*{1mm}
+~~~~~~~~Time output
+\\ \hspace*{1mm}
+n(0)\us NEC;~~~~~~~tauP\us TAUPB\us .1;~~~~~~nlin\us NECHC;
+						~~~~~~~~Gin\us CV16;
+\\ \hspace*{1mm}
+n(a)\us NEB;~~~~~~~tau\us CV14/CV13\us .1;~~~<ne>\us CV14;
+						~~~~~~~~~Gout\us QNB;
+\\ \hspace*{1mm}
+<n>G\us 2.7*IPL/ABC**2;~~~NNCL\us NNCL;~~~ntot\us VOLUME*CV14;~~~NNWM\us NNWM;
+\\ \hspace*{1mm}
+Sinp\us CV15;~~~~~~~~~~~~~albe\us ALBPL;~~1or0\us CV1;~~~~~~~~~~~duty\us CV2/TIME;
+\medskip\\}
+Only the density diffusion equation is solved in this model.
+The pinch is assumed to be neoclassical while the particle diffusion is
+taken as a parabolic function inside $\rho<0.85\rho_B$ (plasma core) and
+as a constant $\rm 0.5~m^2/s$ outside this region (pedestal zone).
+The boundary condition for the density is given by the requirement that
+the total particle flux through the plasma boundary is
+$Q_n=V<n_e>/\tau_P=\tw{QNNB*}n_e(a).$
+For ASDEX-Upgrade parameters this gives 
+$Q_n\approx 3\times 10^{22}\rm\;s^{-1}.$
+
+The particle source consists of two comparable parts: gas puffing and
+pellet injection. 
+The former is described in Section~4.9.4. 
+The latter is assumed to be periodic ($1/T=100$Hz) with evaporation time
+$\Delta t\approx 1$ms. 
+The pellet ablation profile is represented by a Gaussian function with
+the prescribed width $\Delta_\rho=0.1\rho_B$ and the maximum position 
+$\rho_0=0.7\rho_B$. 
+The amplitude of this source ($3\times 10^{23}\rm\;s^{-1}$ in our example) can be evaluated as 
+$Q_nT/\Delta t.$
+Note that no interaction between the wall and pellet neutrals is taken
+into account in this simplified model.
+%Here \twd{CF1, CF2, CF3} are fit coefficients all of order 1.
+
+The radial output in this model gives only the quantities related to the 
+particle behavior. 
+It shows the diffusion coefficient \twd{DN}, the pinch velocity \twd{CN}
+(positive sign means outward flux), the total particles source
+\twd{SNTOT} and the partial sources due to pellets \twd{SN} and cold
+neutrals \twd{SNN*NE}.
+The quantity $\nu_e^*=\tt NUES$ which characterize collisions is
+shown together with the Ware pinch velocity \twd{VP*VRHH}.
+Also of interest could be a comparison of the two quantities \twd{QN},
+collisional particle flux, and \twd{QNTOT}, ionization particle source.
+In the steady state, this two quantities must coincide.
+In this simulation, they are always strongly different.
+
+The time output shows central, edge, volume and line average densities.
+The particle confinement time is calculated in two different ways.
+The Greenwald limiting density is shown under the name \twd{<n>G}.
+The two components of incoming cold neutrals are characterized by the
+parameters \twd{NNCL} and \twd{NNWM}.
+
+We conclude this section with a simulation model for electron and ion 
+power balance based on the IFS/PPPL transport model \cite{ifspppl}.
+For more convenient discussion we split the model in two pieces.
+\\
+{\tt\hspace*{1mm}
+!=============== ITG instability based transport model (part 1) =========
+\\ \hspace*{1mm}
+NEQUIL=41;~~~~~~~~~~~~!~~~3-moment solver for the Grad-Shafranov equation
+\\ \hspace*{1mm}
+!-------------------- Electron and ion densities ------------------------
+\\ \hspace*{1mm}
+NE:AS;~~~~~~~~NE=NEX;~~~~~ZEF=ZEFX;
+\\ \hspace*{1mm}
+AMAIN=AMJ;~~~~ZMAIN=ZMJ;~~~~~~~~~~~!~mass \& charge of main ion species
+\\ \hspace*{1mm}
+AIM1=12.;~~~~~ZIM1=6.;~~~~~~~~~~~~~!~mass \& charge of 1st impurity
+\\ \hspace*{1mm}
+ZEF1=ZIM1*(ZEF-1.)/(ZIM1-1.);~~~~~~!~1st impurity contribution to Zeff
+\\ \hspace*{1mm}
+NIZ1=NE*(ZEF-1.)/(ZIM1-1.)/ZIM1;~~~!~density of 1st impurity
+\\ \hspace*{1mm}
+NI=NE*(ZIM1-ZEF+1.)/ZIM1;~~~~~~~~~~!~density of all ions
+\\ \hspace*{1mm}
+NDEUT=NI-NIZ1-NIBM;~~~~~~~~~~~~~~~~!~density of deuterium plasma ions
+\\ \hspace*{1mm}
+!-------------------- Auxiliary heating ---------------------------------
+\\ \hspace*{1mm}
+NBI:0.01;~~~~~~~~~~~~~~~~~~~~~~~~~~!~Neutral beam injection
+\\ \hspace*{1mm}
+!-------------------- Plasma rotation -----------------------------------
+\\ \hspace*{1mm}
+VTOR=VTORX;~~~~~~VPOL=VPSWW;~~~~~~~~~~~!~VTOR from exp., VPOL from neocl.
+\\ \hspace*{1mm}
+ER=BTOR*(FRS*MU*VTOR/RTOR+VDIA-VPOL);~~!~Radial electric field 
+\\ \hspace*{1mm}
+!-------------------- ISF/PPPL transport model --------------------------
+\\ \hspace*{1mm}
+!~~~~~~~~~~~~~~~~~~~~~~~~~Output of IFSPPL:
+\\ \hspace*{1mm}
+!~~(1) R/L\us Tcrit for ITG mode,~~(2) R/L\us Tcrit for C branch,
+						~(3) not used,
+\\ \hspace*{1mm}
+!~~(4) Mode increment,
+~~~~~~~~~(5) CAR24=chi\us i,~~~~~~~~~~~(6) CAR23=chi\us e
+\\ \hspace*{1mm}
+IFSPPL(CAR19,CAR20,CAR21,CAR22,CAR24,CAR23):;
+\\ \hspace*{1mm}
+SMEARR(CV1,CAR23,CAR25):;~~CAR17=FTAV(CAR25,CV2);~~!~Space and time
+\\ \hspace*{1mm}
+SMEARR(CV1,CAR24,CAR26):;~~CAR18=FTAV(CAR26,CV2);~~!~~~averaging
+\\ \hspace*{1mm}
+HE=CAR17+HNGSE;~~~~~~~~~~~~XI=CAR18+FOWC*HNCHI;~~~~!~Heat conductivity
+\\ \hspace*{1mm}
+!-------------------- Heat transport equations --------------------------
+\\ \hspace*{1mm}
+PET=-PEI;~~~~PE=POH+PEBM-PET*TI-PRADX;
+\\ \hspace*{1mm}
+PIT=-PEI;~~~~PI=PIBM-PIT*TE;
+\\ \hspace*{1mm}
+TE:EQ;~~~~~~~TE=TEX;~~~~~~~~TEB=TEXB;
+\\ \hspace*{1mm}
+TI:EQ;~~~~~~~TI=TIX;~~~~~~~~TIB=TIXB;
+\\ \hspace*{1mm}
+!-------------------- Poloidal field equation ---------------------------
+\\ \hspace*{1mm}
+HC=HCKIM;~~~~DC=DCKIM;~~~~~~XC=XCKIM;
+\\ \hspace*{1mm}
+CU:EQ;~~~~~~~CU=FPR;~~~~~~~~CC=CNHR;~~~~~CD=CUBM;
+\\ \hspace*{1mm}
+!-------------------- Additional time step control ----------------------
+\\ \hspace*{1mm}
+CAR27=RTOR/LTI-CAR19;~~~~~~~TSCTRL(CAR27,CAR23,CAR24,CF4):;
+\\ \hspace*{1mm}
+!=============== ITG transport model (end of the 1st part) ==============
+\medskip\\ }
+The beginning of the model is similar to already discussed.
+It prescribes different density components and additional NBI heating.
+Then the radial electric field is calculated which will be later used 
+for computing shear of the plasma rotation velocity \twd{ROTSH}.
+Two velocity components are calculated by the model. 
+These are the diamagnetic velocity \twd{VDIA} and the poloidal velocity
+\twd{VPOL} taken from the neoclassical theory \cite{SWW}.
+The toroidal velocity \twd{VTOR} is assumed to be measured in the 
+experiment and stored in the data file as \twd{VTORX}.
+Note, however, that if the data for \twd{VTORX} are absent the code 
+will work substituting \twd{VTOR} with zero.
+The rotational shear \twd{ROTSH} is believed to reduce the effective
+increment of the ITG instability and, consequently, the anomalous
+transport. 
+This effect is taken into account inside the calling subroutine
+\twd{IFSPPL}. 
+
+Because of very ``stiff'' character of the IFS/PPPL model a special
+care should be taken to obtain a stable solution.
+This is implemented in two lines after the subroutine call.
+The subroutine returns electron and ion heat conductivities in two
+Astra vectors \twd{CAR23} and \twd{CAR24}, respectively.
+These two vectors are then successively processed with two subroutines 
+\twd{SMOOTH} and \twd{FTAV} performing space and time averaging,
+respectively, and yielding two smoothed vectors \twd{CAR17} and 
+\twd{CAR18}.
+As will be seen from the second part of the model, the radial output 
+allows to view both original (i.e. calculated by \twd{IFSPPL}) and
+smoothed quantities in the same plot and thus to control the quality of 
+the procedure applied.
+Adjusting the two control parameters \twd{CV1} and \twd{CV2} the user 
+can regulate each type of averaging and achieve nearly the complete 
+coincidence between the original and smoothed heat conductivities 
+in the steady state.
+
+On the other hand, a caution should be made against using this scheme
+for fast processes such as the heat wave propagation.
+If any of the characteristic length (for the space smoothing) or time
+(for the time averaging) is larger than the wavelength or the period 
+of the heat wave under consideration then an essential physic 
+information can be lost in course of averaging and the applicability 
+of results should be additionally inspected.
+
+Another possibility of the accuracy control is provided by the Astra 
+subroutine \twd{TSCTRL} \linebreak (time step control).
+This subroutine checks if a relative variation in any of three 
+quantities
+\\
+\hspace*{2em}{\tt CAR27~} being
+a difference between the instability threshold and the actual gradient,
+\\
+\hspace*{2em}{\tt CAR23} $=\chi_e^{ITG}$ being the
+electron heat conductivity as output from \twd{IFSPPL},\\
+\hspace*{2em}{\tt CAR24} $=\chi_i^{ITG}$ being the
+ion heat conductivity as output from \twd{IFSPPL},\\
+exceeds a confidence level given by the parameter \twd{CF4}.
+If yes, then the time step is automatically reduced.
+Finally, the user can reduce the time step manually until a very low
+value when no numerical instability takes place and check which of
+the described procedures is most suitable in every particular 
+case\footnote
+{However, we have to warn the user that this check is possible 
+only when the code is installed in double precision version. 
+Otherwise, the time step cannot be reduced below a certain value
+which is limited due to truncation errors in $U_{pl}=\prt\psi/\prt t.$}.
+To conclude this discussion we note that this numerical instability
+is not very dangerous and the simulation can safely continue also 
+when a developed instability is clearly seen as oscillations in 
+$\chi_{e,i}^{ITG}.$ 
+Even then the electron and ion temperatures show quite quiet behavior
+being hardly affected by a noise in the heat conductivity.
+
+Other terms of heat conductivity equations and the equation for 
+the poloidal field do not have any special features, therefore,
+we consider now the rest of this model.\\ 
+\noindent
+{\tt\hspace*{1mm}
+!=============== ITG instability based transport model (cont.) ==========
+\\ \hspace*{1mm}
+!-------------------- Auxiliary quantities ------------------------------
+\\ \hspace*{1mm}
+CV5=0.8E-3*VINT(PBLONB);~~~~~~~~!~Parallel and perpendicular 
+\\ \hspace*{1mm}
+CV6=1.6E-3*VINT(PBPERB);~~~~~~~~!~energy contents in the fast ions 
+\\ \hspace*{1mm}
+CAR28=BTOR*FRS*MU*VTOR/RTOR;
+\\ \hspace*{1mm}
+CAR29=HEXP;~~~~~~~~~SMEARR(CV3,CAR29,CAR30):;
+\\ \hspace*{1mm}
+CAR31=XEXP;~~~~~~~~~SMEARR(CV3,CAR31,CAR32):;
+\\ \hspace*{1mm}
+!====================== Profile output ==================================
+\\ \hspace*{1mm}
+Tex\bs TEX\bs\bs TEX\bs -5;~~~RLTi\bs RTOR/LTI\bs -6;
+			~~~Hex\bs HEXP\bs 5;~~~~~Hix\bs XEXP\bs 5;
+\\ \hspace*{1mm}
+Tix\bs TIX\bs\bs TIX\bs -3;~~~RLTi\bs RTOR/LTI\bs -2;
+			~~~KDes\bs CAR17\bs 5;~~~KDis\bs CAR18\bs 5;
+\\ \hspace*{1mm}
+Te\bs TE\bs -5;~~~~~~~~~~RLTC\bs CAR20\bs -6;
+			~~~~~~ke\bs HE\bs 5;~~~~~~~~ki\bs XI\bs 5;
+\\ \hspace*{1mm}
+Ti\bs TI\bs -3;~~~~~~~~~~RLTD\bs CAR19\bs -2;
+			~~~~~~KDe\bs CAR23\bs 5;~~~~KDi\bs CAR24\bs 5;
+\\ \hspace*{1mm}
+~~~~~~~~~~~~~~~~~Contributions to Er
+\\ \hspace*{1mm}
+ErVd\bs BTOR*VDIA\bs -1;~gamm\bs CAR22\bs -8;
+			~~~~~~Er\bs ER;~~~~~~~~~~vpol\bs VPOL;
+\\ \hspace*{1mm}
+Er\bs ER\bs -1;~~~~~~~~~~Pecr\bs PEECR;
+			~~~~~~~~~Pe\bs PETOT;~~~~~~~PNBe\bs PEBM;
+\\ \hspace*{1mm}
+ErVp\bs-VPOL*BTOR\bs -1;wExB\bs ROTSH\bs -8;
+		~~~~~~shat\bs SHEAR;~~~~~vtor\bs VTOR\bs\bs VTORX;
+\\ \hspace*{1mm}
+ErVt\bs CAR28\bs -1;~~~~~betj\bs BETAJ;
+			~~~~~~~~~Pi\bs PITOT;~~~~~~~PNBi\bs PIBM;
+\\ \hspace*{1mm}
+~~~~~~~~~~~~Current density
+\\ \hspace*{1mm}
+j\bs CU\bs -4;~~~~~~~~jIC\bs CUICR;~~~~~~~~nuis\bs NUIS;
+						~~~Vtor\bs UPL;
+\\ \hspace*{1mm}
+jNB\bs CUBM\bs -4;~~~~Zeff\bs ZEF\bs\bs ZEFX;~~~tpf\bs TPF;
+						~~~~~mu\bs MU\bs 1;
+\\ \hspace*{1mm}
+joh\bs CUOHM\bs -4;~~~jEC\bs CUECR;~~~~~~~~nues\bs NUES;
+						~~~V||\bs ULON;
+\\ \hspace*{1mm}
+jBS\bs CUBS\bs -4;~~~~sigm\bs CC;~~~~~~~~~~betj\bs BETAJ;
+						~~q\bs 1./MU\bs 5;
+\\ \hspace*{1mm}
+~~~~~~~~~~~~Heat conductivity
+\\ \hspace*{1mm}
+ncCH\bs HNCHI\bs 10;~~~GSba\bs HNGSB\bs 10;~~~grVt\bs grad(VTORX);
+						~~~Hex\bs HEXP\bs 10;
+\\ \hspace*{1mm}
+ncPS\bs HNPSI\bs 10;~~~KDes\bs CAR17\bs 10;~~~KDis\bs CAR18\bs 10;
+						~~~~~~prad\bs PRADX;
+\\ \hspace*{1mm}
+ncGS\bs HNGSI\bs 10;~~~GSpl\bs HNGSP\bs 10;~~~HeGS\bs HNGSE;
+					~~~~~~~~~Hix\bs CAR32\bs 10;
+\\ \hspace*{1mm}
+ncfw\bs FOWC*HNCHI\bs 10;~KDe\bs CAR23\bs 10;~KDi\bs CAR24\bs 10;
+						~~~~~~~PN\bs PENEU-PINEU;
+\\ \hspace*{1mm}
+~~~~~~~~~~~~Other quantities
+\\ \hspace*{1mm}
+ne\bs NE\bs -11;~~~~~~~dLT1\bs CAR27;~~~~~~RLT\bs RTOR/LTI\bs -2;
+						~~~nB\bs NIBM\bs -11
+\\ \hspace*{1mm}
+pNBl\bs PBLON;~~~~~~RLNI\bs RTOR/LNI;~~~RLT\bs RTOR/LTI\bs -6;
+						~~~nB1\bs NNBM1
+\\ \hspace*{1mm}
+ni\bs NI\bs -11;~~~~~~~shat\bs SHEAR\bs 2.;~~~RLTD\bs CAR19\bs -2;
+					~~~~~nD\bs NDEUT\bs -11
+\\ \hspace*{1mm}
+pNBp\bs PBPER;~~~~~~RLNE\bs RTOR/LNE;~~~RLTC\bs CAR20\bs -6;
+					~~~~~Zeff\bs ZEF\bs\bs ZEFX
+\\ \hspace*{1mm}
+!====================== Time output =====================================
+\\ \hspace*{1mm}
+Tix0\us TIXC\us -2;~~~~Ipl\us IPL;~~~~~~~~~Tex0\us TEXC\us -1;
+					~~<Te>\us TEAVB;
+\\ \hspace*{1mm}
+Ti0\us TIC\us -2;~~~~~~PNBI\us QNBI;~~~~~~~Te0\us TEC\us -1;
+					~~~~<Ti>\us TIAVB;
+\smallskip\\ \hspace*{1mm}
+ne0\us NEC;~~~~~~~~~Wthm\us WTOTB;~~~~~~<ne>\us NEAVB;
+					Wtot\us WTOTB+CV5+CV6;
+\\ \hspace*{1mm}
+nlc\us NECHC;~~~~~~~betp\us BETAJB;~~~~~Zef0\us ZEFC;
+					~Wequ\us WTOTB+0.75*CV6+1.5*CV5
+\smallskip\\ \hspace*{1mm}
+TiB\us TIB;~~~~~~~~~Ipl\us IPL;~~~~~~~~~iter\us TITER;
+					~~~~INB\us IBMB;
+\\ \hspace*{1mm}
+TeB\us TEB;~~~~~~~~~Ulc\us UPLB;~~~~~~~~tauE\us TAUEB;
+					~~~~IBS\us IBSB;
+\smallskip\\ \hspace*{1mm}
+Ptot\us QTOTB;~~~~~~POH\us QOHB;~~~~~~~~Pe\us QETOTB;
+					~~~~~PNBA\us QBTOTB;
+\\ \hspace*{1mm}
+Pi\us QITOTB;~~~~~~~PNB\us QNBI;~~~~~~~~shin\us QNBI-QBTOTB;
+					~Prad\us QRADB;
+\medskip\\ }
+{\tt\hspace*{1mm}
+!======================== ITG model end =================================
+}\vskip 1ex
+After calculation of few auxiliary quantities which are used for 
+output only the model defines 80 vector and 32 scalar output signals.
+The signals are ordered in a way that groups of associated quantities
+are placed as far as possible in the same box and on the same screen.
+Some of signals are repeated that allows to present them in appropriate
+context.
+
+Measurable quantities (as $T_e$ or $T_i$) are plotted in the same box
+with the calculated ones.
+If corresponding experimental data are not available it is not 
+considered as an error in a command like \twd{Tex\bs TEX\bs\bs TEX}.
+However, Astra vectors \twd{XEXP} and \twd{HEXP} which show 
+``effective'' heat conductivities include gradients of measured
+quantities in a denominator that can cause division by zero.
+
+The second group of 16 radial curves includes information concerning
+the plasma rotation.
+The second box here plots the ITG instability increment \twd{CAR22}
+together with the rotational shear \twd{ROTSH} 
+(see page \pageref{ROTSH}).
+Other radial output screens present current related quantities,
+different contributions to the heat conductivity, density 
+distributions and some gradients of plasma parameters which are
+essential for the ITG stability.
+
+Different local and global quantities are shown as time dependent
+signals.
+One can see here central and edge temperatures, energy contents
+calculated in three different ways, line and volume averaged
+densities, energy confinement time, partial 
+components of the total current and, finally, volume integrated
+power sources and sinks.
+
+\subsection{Data setting}
+
+\subsubsection{Hierarchy of data initialization}
+
+A chain of initialization procedures is invoked each time when the code
+is started.
+First of all, all variables with very few exceptions have pre-defined
+(default) values. 
+The default value of a variable is used only if the variable is not
+defined explicitly in any other way. 
+The most straightforward and natural way of data assignment is using a
+start (or data) file. 
+A name of this file is given by the user as a second parameter in the 
+Astra command line (see Section~5.5.2).
+Another possibility is assignment instruction in a model as 
+described in the previous section.
+One more option is an interactive change during the run time.
+A sequence of assignments for different types of variables is shown in
+the following table. 
+\medskip\\
+\indent
+{\bf Table 5.1. Order of variable setting}
+\nopagebreak
+\\[10pt]
+\nopagebreak
+\noindent
+\begin{tabular}{| l | c | c | c | c | c | c |}			\hline
+\bf Variable type	&\bf Default	&\bf{\tt .log }file
+					&\bf Data file
+						&\bf Model
+							&\bf Run time \\ 
+								\hline
+Device/plasma parameters	& $+$	& $+$	& $+$	& $+$	& $+$ \\
+Adjustable (dummy) variables	& $+$	& $+$	& $-$	& $+$	& $\pm$\\
+Grid/time/accuracy control	& $+$	& $+$	& $-$	& $+$	& $+$ \\
+Color control			& $+$	& $+$	& $-$	& $-$	& $+$ \\ 
+								\hline
+\end{tabular}
+\\[10pt]
+Every assignment type overrides all others which have 
+more left position in this table.
+For instance, if a quantity is redefined in the run time then every
+other definitions are disabled.
+The symbol ``$-$'' means that this type of variable cannot be assigned 
+in this way.
+The marking $\pm$ will be discussed in Section~5.3.4.
+
+There are few exceptions from the table above.
+Namely the following quantities are used for the radial grid allocation
+and, therefore, they have to be defined at earlier phase of 
+\linebreak\vspace*{-20pt}
+\begin{tabbing}
+\indent	\tt AWALL\quad  \=\quad (none)\quad \= $\rho$--grid size is 
+     $\rho_B=\sqrt{\mbox{\tt AWALL*AWALL*{\rm max}(ELONM,ELONG)}},$\kill
+\indent	\tt AB	  	\>(none)
+			\> maximum minor radius in a horizontal plane,\\
+\indent	\tt RTOR  	\>(none)
+			\> major radius at the same plane,	\\
+\indent	\tt ELONM 	\>(1)	
+			\> maximum elongation,			\\
+\indent	\tt TRICH 	\>(0)	
+			\> chamber triangularity (used for drawing
+			   only),\\
+\indent	\tt AWALL 	\>\tt (AB)
+			\> $\rho$--grid size is 
+     $\!\!\rho_W=1.1\tw{*AWALL*}\sqrt{\mbox{\rm max\tt(ELONM,ELONG)}},$\\
+\indent	\tt NB1	  	\>(41)
+		\> $\rho$--grid step is   $h=\rho_W/(\mbox{\tt NB1}-0.5)$
+\end{tabbing}
+\noindent
+the code execution and cannot be redefined later. 
+It means that these six quantities can be defined either by a
+\tw{`.log'} file (see Section 5.3.2) or by a data file and 
+they cannot be set in a model or changed during the run.
+This limitation seems to be not very restrictive while it arises 
+quite naturally from the requirement
+that these basic variables describing geometry of a particular
+device cannot depend on time. 
+When applicable, the quantities acquire default values which are 
+shown in brackets.
+However, it is recommended that the first 
+four of these quantities are defined explicitly. 
+In opposite, the default definition for {\tt AWALL} is in most cases
+well sufficient, therefore, it should be defined by the user only if 
+Astra provides a diagnostic that the default value is not appropriate.
+When setting the grid size {\tt NB1}, the user should take into account
+that the grid size (variable {\tt NA1} which will be automatically
+selected by the code) actually used in a simulation is usually a
+fraction ($\geq$80\%) of \twd{NB1}. 
+The rest of the radial grid is reserved for a description of the
+scrape-off layer and for a possible increase of the Lagrangian variable
+$\rho_B={\tt RHO(NA1)}<\rho_W.$ 
+
+We continue a list of variables which should be defined by the user.
+In addition to already mentioned \twd{AB, RTOR, ELONM, TRICH,} those are
+(default values are shown in parentheses)
+\\
+\centerline
+{\tt ABC(AB), SHIFT(0), ELONG(ELONM), TRIAN(0), BTOR{\rm(none)}, ZMJ(1),
+AMJ(2).}
+\\
+Finally, at least one of the three quantities
+\\
+\centerline{\tt
+IPL{\rm(none)}, UEXT{\rm (none)}, LEXT\rm(none)}
+\\
+also must be defined in order to avoid a possible crash during the code
+start-up. 
+However, all these quantities can be defined by every method listed in
+the first line of Table~5.1.
+
+\paragraph{Default array setting.}
+
+Unlike simple variables arrays can be defined either via a data file or
+in a model.
+Following is the list of vector variables (arrays) which can aquire
+default definitions 
+\begin{tabbing}
+$\tw{NE}(\rho)=\tw{NEX}({\rho}),$\quad	\=
+$\tw{F1}(\rho)=\tw{F1X}(\rho),$\quad	\=
+$\tw{NI}(\rho)=\tw{NE}(\rho)/\tw{ZMJ},$\quad\=
+$\tw{CU}(\rho)\propto\tw{CC}(\rho)$\kill
+$\tw{NE}(\rho)=\tw{NEX}(\rho),$	\>
+$\tw{F1}(\rho)=\tw{F1X}(\rho),$	\>
+$\tw{AMAIN}(\rho)=\tw{AMJ},$	\>
+$\tw{CC}(\rho)=\tw{CCSP}(\rho),$\\
+$\tw{TE}(\rho)=\tw{TEX}(\rho),$	\>
+$\tw{F2}(\rho)=\tw{F2X}(\rho),$	\>
+$\tw{ZMAIN}(\rho)=\tw{ZMJ},$	\>
+$\tw{CU}(\rho)\propto\tw{CC}(\rho),$\\
+$\tw{TI}(\rho)=\tw{TIX}(\rho),$	\>
+$\tw{F3}(\rho)=\tw{F3X}(\rho),$	\>
+$\tw{NI}(\rho)=\tw{NE}(\rho)/\tw{ZMJ},$	\>
+$\tw{ZEF}(\rho)=\max(1.,\tw{ZEFX}(\rho)).$
+\end{tabbing}
+These definitions are effective only if the left hand sides are not
+defined explicitly in a model. 
+For instance, if \twd{NE} appears on the left hand side in an assignment
+instruction in a model then the default definition \twd{NE=NEX} is not
+involved. 
+On the other hand, if any of the quantities {\tt NE, TE, TI} is not
+assigned in a model then it must be defined in the data file.  
+Otherwise, a run time error could be encountered.
+This requirement is not applied to the quantities \twd{F1, F2, F3}.
+Because their usage is optional they need not be defined unless they are
+directly used in a model.
+
+\subsubsection{Reading from a ``{\tt.log}'' file}
+
+Usually a large amount of tuning parameters participate in a transport
+modelling. 
+Often these parameters are not known in advance, therefore, an
+adjustment in course of simulation is a most reasonable way for finding
+appropriate values. 
+The Astra code provides a possibility to store all internal
+variables adjusted during the current run.
+This happens when user selects the option ``Save const'' (or the hot key
+\twd{`I'}) from the run time menu (Section~5.5.3).
+The current values of adjustable variables are saved in a file
+which is read each time when the code starts up so that all variable 
+values tailored and saved in a previous simulation will be used in the
+subsequent one. 
+A name of the file is composed by adding the extension ``{\tt .log}'' 
+to a name of the running model. 
+This convention implies that only one {\tt .log}~~file, and,
+consequently, one set of stored values corresponds to each model file. 
+These files can also be edited manually.
+
+\subsubsection{Input from a data file}
+
+Unlike the ``{\tt .log}'' file which belongs to a corresponding model
+there can be an arbitrary number of input files which describe an
+experimental setup and are not related to any particular model.
+Reading input data from a file is a conventional way of data definition. 
+The name of this file is specified as a first parameter
+in a command line starting execution of the Astra code.
+The format of this file is described in Section~5.4. 
+Here we discuss only the main principles of data input by making
+use of the data file.
+
+First of all, note that starting from this level of data initialization
+(see Table~5.1) every scalar or vector variable can be defined not only
+as a time constant but also as a time dependent function.
+On one hand, this adds a flexibility to the data setting. 
+On the other hand, it results in a restriction that only a limited
+number of specially treated variables can be read from a data file. 
+
+\paragraph{Scalar variables readable from a data file.}
+
+We start with a note that in future versions of the Astra code the set
+simple variables readable from a data file may be changed but the 
+updated list (except for the group \twd{ZRD1, ZRD2,}\dots and the three
+variables \twd{NB1, TSTART, TEND\rm)}
+can always be viewed during the code run by pressing the key `V' or 
+by clicking mouse in the field ``Variables''.
+In the version 5.3 of the code this set comprises
+\medskip\\
+\indent
+{\bf Table 5.2. List of Astra scalars definable by a data file}
+\nopagebreak
+\\[10pt]
+\nopagebreak
+\noindent
+{\tt
+\begin{tabular}{|p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}|}
+\hline
+AB	&ABC	&AIM1	&AIM2	&AIM3	&AMJ	&AWALL	&BTOR	\\
+ELONG	&ELONM	&ENCL	&ENWM	&FECR	&FFW	&FICR	&FLH	\\
+GN2E	&GN2I	&IPL	&LEXT	&NNCL	&NNWM	&QECR	&QFW	\\
+QICR	&QLH	&QNBI	&RTOR	&SHIFT	&TRIAN	&TRICH	&UEXT	\\
+UPDWN	&WNE	&WTE	&WTI	&ZMJ	&NB1	&TSTART	&TEND	\\
+ZRD1	&ZRD2	&ZRD3	&ZRD4	&ZRD5	&ZRD6	&ZRD7	&ZRD8	\\
+ZRD9	&ZRD10	&ZRD11	&ZRD12	&ZRD13	&ZRD14	&ZRD15	&ZRD16	\\
+ZRD17	&ZRD18	&ZRD19	&ZRD20	&ZRD21	&ZRD22	&ZRD23	&ZRD24	\\
+ZRD25	&ZRD26	&ZRD27	&ZRD28	&ZRD29	&ZRD30	&ZRD31	&ZRD32	\\
+ZRD33	&ZRD34	&ZRD35	&ZRD36	&ZRD37	&ZRD38	&ZRD39	&ZRD40	\\
+ZRD41	&ZRD42	&ZRD43	&ZRD44	&ZRD45	&ZRD46	&ZRD47	&ZRD48	\\
+\hline
+\end{tabular}
+}\\[10pt]
+Each variable from this list is mirrored with another variable with 
+a similar name but with trailing ``{\tt X}''(which stands for
+eXperimental), X-scalars.
+\medskip\\
+\indent
+{\bf Table 5.3. List of X-scalars readable from a data file}
+\nopagebreak
+\\[10pt]
+\nopagebreak
+\noindent
+{\tt
+\begin{tabular}{|p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}|}
+\hline
+ABX	&ABCX	&AIM1X	&AIM2X	&AIM3X	&AMJX	&AWALLX	&BTORX	\\
+ELONGX	&ELONMX	&ENCLX	&ENWMX	&FECRX	&FFWX	&FICRX	&FLHX	\\
+GN2EX	&GN2IX	&IPLX	&LEXTX	&NNCLX	&NNWMX	&QECRX	&QFWX	\\
+QICRX	&QLHX	&QNBIX	&RTORX	&SHIFTX	&TRIANX	&TRICHX	&UEXTX	\\
+UPDWNX	&WNEX	&WTEX	&WTIX	&ZMJX	&	&	&	\\
+ZRD1X	&ZRD2X	&ZRD3X	&ZRD4X	&ZRD5X	&ZRD6X	&ZRD7X	&ZRD8X	\\
+ZRD9X	&ZRD10X	&ZRD11X	&ZRD12X	&ZRD13X	&ZRD14X	&ZRD15X	&ZRD16X	\\
+ZRD17X	&ZRD18X	&ZRD19X	&ZRD20X	&ZRD21X	&ZRD22X	&ZRD23X	&ZRD24X	\\
+ZRD25X	&ZRD26X	&ZRD27X	&ZRD28X	&ZRD29X	&ZRD30X	&ZRD31X	&ZRD32X	\\
+ZRD33X	&ZRD34X	&ZRD35X	&ZRD36X	&ZRD37X	&ZRD38X	&ZRD39X	&ZRD40X	\\
+ZRD41X	&ZRD42X	&ZRD43X	&ZRD44X	&ZRD45X	&ZRD46X	&ZRD47X	&ZRD48X	\\
+\hline
+\end{tabular}
+}\\[10pt]
+In particular, it means that there are couples of independent variables,
+\twd{AB} and \twd{ABX}, \twd{ABC} and \twd{ABCX} and so on, which can be
+defined and used quite independently with one significant exception.
+Namely, if any of quantities from the second list is not defined
+explicitly in a model then, by default, it takes value of its
+experimental prototype. 
+For a practical work it means that if the quantity \twd{IPLX}
+is defined by a data file and the quantity \twd{IPL} is not
+mentioned in a model then there is no difference between both.
+In this case, the resulting code is fully equivalent to the code
+obtained with the explicit instruction \twd{IPL=IPLX}.
+However, if the quantity \twd{IPL} is defined in some independent way
+(for instance, by the boundary condition \twd{UEXT=0}) then 
+\twd{IPLX} and \twd{IPL} are fully independent. 
+
+At first sight, this convention could seem too complicated but
+it works so that a novice user of the code need not know anything
+about two different sets of data. 
+This allows to omit in a model multiple instructions of type 
+\twd{ABC=ABCX}.
+However, an advanced user can take advantage of that keeping trace
+on \twd{IPLX} as defined by experimental measurements and comparing
+it with \twd{IPL} calculated in the code.
+Note also, that if more complicated condition for \twd{IPL} is used,
+for instance, if \twd{IPL} is calculated inside user's subroutine 
+then the Astra code builder cannot recognize this hidden definition
+and will try to set \twd{IPL=IPLX} in conflict with user's intention.
+A simple way to overcome this contradiction is using a dummy
+instruction \twd{IPL=IPL} in a model.
+
+Three Astra control variables \twd{NB1, TSTART} and \twd{TEND} are used
+for influencing a simulation flow. 
+They have no X-counterpart, nevertheless, it is often useful to define
+these quantities by a data file. 
+Therefore they are added to the list of variable in Table~5.2.
+
+\paragraph{Vector variables readable from a data file.}
+Only a limited number of basic vector variables (\tw{X}-vectors) can be
+defined by an input file. 
+\medskip\\
+\indent
+{\bf Table 5.4. List of X-vectors readable from a data file}
+\nopagebreak
+\medskip\\
+\nopagebreak
+\noindent
+{\tt\begin{tabular}
+{|p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}p{15mm}|}
+\hline
+TEX	&TIX	&NEX	&NIX	&CUX	&ZEFX	&VPOLX	&VTORX 	\\
+MUX	&MVX	&GNX	&SNX	&PEX	&PIX	&PRADX	&IPOLX	\\
+SHX	&ELX	&TRX	&VRX	&G11X	&G22X	&G33X	&DRODAX	\\
+F1X	&F2X	&F3X	&CAR1X	&CAR2X	&CAR3X	&CAR4X	&CAR5X	\\
+CAR6X	&CAR7X	&CAR8X	&CAR9X	&CAR10X	&CAR11X	&CAR12X	&CAR13X	\\
+CAR14X	&CAR15X	&CAR16X	&	&	&	&	&	\\
+\hline
+\end{tabular}
+}\bigskip\\
+The list includes 
+\begin{description}
+\vspace*{-1ex}\item[--] 
+the main plasma characteristics which can be measured in an experiment 
+(e.g. electron temperature \twd{TEX}, density \twd{NEX,} effective 
+charge \twd{ZEFX} and so on), 
+\vspace*{-1ex}\item[--]
+calculated by external codes (e.g. quantities supplied by 
+equilibrium, heating and current drive codes), 
+\vspace*{-1ex}\item[--] 
+a set of 19 dummy arrays  \twd{(F1X, F2X, F3X, CAR1X, ..., CAR16X)}
+which can acquire any meaning depending on user's will. 
+\end{description}\vspace*{-1ex}
+Any array of Table~5.4 will be defined if its name appears in a data
+file according to the rules discussed in Section~5.4.3 and this data
+file is used for the current run.
+
+As already discussed in Section~5.3.1, a default definition of the type 
+$\tw{NE}(\rho)=\tw{NEX}({\rho})$ is applied to the following seven
+\tw{X}-arrays \twd{NEX, TEX, TIX, F1X, F2X, F3X, ZEFX} only. 
+The reason is that undefined \twd{NE, TE, TI, ZEF} can cause a
+simulation crash and \twd{F1, F2, F3} are added in order to keep
+similarity between the main and auxiliary transport equations, \req{main}
+and \req{aux}, respectively. 
+
+Usually, the default assignments are effective in absence of
+corresponding explicit definition only.
+However, there is one exception.
+If the equilibrium control parameter \twd{NEQUIL} (default value 0) is
+set as \\
+\hspace*{2cm}\tw{NEQUIL=-1}\\
+then it is assumed that all the geometry and configuration related
+quantities are defined by means of a data file. 
+In this case, nine \tw{X}-arrays \twd{SNX, ELX, TRX, VRX, DRODAX, IPOLX, 
+G11X, G22X, G33X} must be pre-calculated and stored in the data file.  
+These nine quantities will then be used to calculate the corresponding
+set of Astra vector variables as
+\begin{tabbing}
+$\tw{VR}(\rho)=4\pi^2\rho\,\tw{*RTOR*VRX}(\rho)$	\=
+$\tw{ELON}(\rho)=\tw{ELONG*ELX}(\rho)$			\=
+$\tw{TRIA}(\rho)=\tw{TRIAN*TRX*}(\rho/\rho_a)^2,$	\kill
+$\tw{SHIF}(\rho)=\tw{SHIFT*SHX}(\rho),$			\>
+$\tw{ELON}(\rho)=\tw{ELONG*ELX}(\rho),$			\>
+$\tw{TRIA}(\rho)=\tw{TRIAN*TRX*}(\rho/\rho_a)^2,$	\\
+$\tw{VR}(\rho)=4\pi^2\rho\,\tw{*RTOR*VRX}(\rho),$	\>
+$\tw{DRODA}(\rho)=\tw{DRODAX}(\rho),$			\>
+$\tw{IPOL}(\rho)=\tw{IPOLX}(\rho),$			\\
+$\tw{G11}(\rho)=\tw{VRX}(\rho)\tw{*G11X}(\rho),$	\>
+$\tw{G22}(\rho)=\rho\,\tw{*G22X}(\rho),$	\>
+$\tw{G33}(\rho)=\tw{G33X}(\rho).$
+\end{tabbing}
+As one can see, these \tw{X}-arrays are selected in such a way
+that for concentric non-shifted circle magnetic surfaces they all are
+unitary. 
+These assignments are always operative when $\tw{NEQUIL}=-1$ and cannot
+be overwritten by any assignments in a model.
+On the contrary, when $\tt NEQUIL\neq -1$ these nine \tw{X}-arrays have
+nothing to do with the corresponding left hand sides and can be used for
+any other goals.
+
+Similarly, all other \tw{X}-arrays have no pre-defined meaning and can
+be used for input of any radial profile. 
+For instance, if the vacuum rotational transform \twd{MV} should be
+taken from a data file then the assignment \twd{MV=MVX} has to be
+made explicitly in a model. 
+Without this assignment \twd{MVX} can be anything.
+The \tw{X}-arrays can be used in expressions according to usual rules
+\\
+\hspace*{2cm}\tw{PE=PEX-PRADX+POH-PEICL}
+\\
+or appear on the left hand side of an assignment command,
+e.g., \twd{CAR1X=FPR**1.5}.
+However, the latter construction is not recommended because if the same
+array \twd{CAR1X} is occasionally defined in a data file then a result is
+unpredictable. 
+
+\subsubsection{Run time variable setting}
+
+At the run time most of variables are accessible for a direct
+control by the user. 
+There are two ways of doing this.
+First of all, it can be done interactively by pressing keys 
+`A', `C', `D' and `V' or by mouse selecting proper fields from the 
+run time menu. 
+Another way is defining some quantities in user's subroutine.
+This method can be used when a quantity has to be calculated on a
+basis of complicated formula or equation.
+
+As follows from Table 5.1, definition of any quantity during the code
+execution has the highest priority and overrides any other definitions.
+In particular, once any plasma or device parameter is interactively
+changed by the user its previous assignments in a data file or in a
+model are discarded. 
+
+Unfortunately, it is more difficult to fulfill the same property for a 
+C-parameter.
+One should beware that a result of interactive setting C-parameter can
+be guaranteed only if it is not assigned in a model. 
+If, nevertheless, a C-parameter is defined in the model by a
+time-independent instruction like \tw{CV1=2} then a run-time
+modification will work properly, however, it will not in case of more
+complicated time-dependent assignment as \tw{CV1=FJUMP(0.1)}. 
+
+A similar difficulty arises when a variable or C-parameter is defined in
+a user subroutine. 
+If it is simultaneously defined in a model or changed interactively then
+a result is unpredictable.
+Therefore, it is recommended to avoid any conflicting definitions
+of those types.
+
+\subsection{Data file format}
+
+During installation of the Astra system the user is supplied with 
+sample data files. 
+New data files can be obtained by editing the 
+original files retaining their structure. 
+Therefore, this section can be omitted during the first reading. 
+For more elaborated data setting we describe syntax of a 
+data file in this section.
+
+\subsubsection{General requirements}
+
+In what follows we will distinguish between input of simple variables 
+and vectors. 
+The former means that a scalar function of time will be defined by the
+input. 
+The latter defines a time dependent vector function of a magnetic
+surface while the ``radial'' coordinate can be selected by the user from a
+wide set of different options. 
+It is also possible to define this function using two spatial
+coordinates $(r,z)$ in the poloidal plane.  
+This 2D function is then mapped to a 1D function of magnetic surfaces 
+using the time dependent magnetic configuration of the particular Astra
+run. 
+
+The first two lines in a data file are reserved for a commentary. 
+They are not used by the code itself but the first 16 positions of 
+the first line appear in the output graphic window during the Astra run.
+For instance, they can be used for displaying a device name and a shot 
+number under consideration.
+A length of meaningful string in a data file cannot exceed 132
+characters. 
+There is no limit for a length of commentary string.
+
+During reading a data file each string is checked whether its first 6
+characters match one of keywords. 
+The keywords are all the names listed in Tables 5.3 or 5.4
+and, additionally, the following seven control words: 
+\\ 
+{\tt\indent
+NAMEXP, NTIMES(1), FACTOR(1), FILTER(0.001), GRIDTYPE, POINTS, END.
+}\\
+A variable corresponds to each of the first 6 control words.
+An input value of this variable should follow after the control word.
+Once defined these values are valid until they are redefined by 
+another control string.
+The control variables \tw{FACTOR} (being the unit conversion factor),
+\tw{NTIMES} (number of time slices) and \tw{FILTER} (defining a
+transformation rule), if not defined explicitly are set to a default
+value shown in parentheses. 
+When the control word \tw{END} is found then reading the data file 
+is ceased, otherwise, it is continued until the file end.
+A meaning of other variables will be discussed later.
+All names and control words can appear in low or upper case.
+
+If a string is started with one of the control words it
+is treated as {\bf a control string}.
+When a control string is encountered it is parsed and an interpretation
+regime for a group of several subsequent lines is set.
+When the group is exhausted then the following 
+string is again checked against the matching condition. 
+If first 6 characters of the string do not match any of the keywords 
+then the string is skipped and the next string is processed similarly. 
+For instance, any non-alphabetic symbol in the first position of 
+a parsed string results in ignoring the string by the code.
+This property can be used for writing commentaries in the input file.
+
+For a sake of brevity the character \twd{`X'} on the end of 
+every name in the data file can be omitted. 
+Then the \twd{`X'} is added by the code so that presence or absence
+of \twd{`X'}in a name does not change the result. 
+For instance, there is no matter whether a name from Table 5.3 or 
+Table 5.2 is used. 
+But in any case, a data file defines a variable from Table 5.3 (or 5.4)
+only. 
+Whether the corresponding variable without the trailing \twd{`X'} is
+defined or not depends on the contents of a model file and
+interpretation rules discussed in the previous section.
+
+When reading input data is started the code is in a scalar input mode. 
+It means that at first all scalar variables should be defined. 
+After one of the control words
+{\tt~POINTS, GRIDTYPE, FILTER~} is encountered the code is switched
+to the vector input mode.
+Now the vector variables (Table 5.4) have to be defined.
+If a simple variable appears on the input now it will be ignored.
+
+There are several different ways of data input in the Astra system. 
+It can be either a direct reading data from a start file or redirecting
+input to so called ``U-file'' where the data are represented in a U-file
+standard developed in PPPL for storage of experimental data. 
+The U-file standard is used also for the ITER data base. 
+This standard is not described in this paper but it is quite
+transparent and can be easily understood from few examples attached
+to the Astra code.
+%Recently, a facility to read so call ``Ex-file'' was added. 
+%Ex-file is a standard used in the JETTO code \cite{JETTO}.
+%Reading Ex-files requires libraries available at JET only, therefore, it
+%is not discussed here.
+
+Different input formats can be combined in one input file.
+Moreover, mixing different formats is permitted for different time
+slices of the same input quantity.
+Definition of a time dependent scalar or vector can consist of several
+subsequent groups for different time slices. 
+However, one restriction should be mentioned here. 
+These groups can use different grids but the
+subsequent times should be given in the increasing order and
+all groups related to the same variable should be contiguous.
+In other words, when a time evolution for one variable is defined 
+and the input sequence is switched to another variable 
+then return to the first one is forbidden.
+
+\subsubsection{Reading data from a U-file.}
+
+First of all, the first 6 characters of every line are considered.
+If they are recognized as a name of variable then the next word in the
+string is analyzed. 
+If this word is \twd{"U-file"} (case insensitive) then the string is
+interpreted as a reference (pointer) to a U-file where a data set for 
+the current variable is stored. 
+The name of the U-file should be separated from the word \twd{U-file}
+with a colon  \twd{`:'}.
+Optionally, a multiplicative factor can be given after the 
+second~\twd{`:'}. 
+
+The following 5 lines show different allowed formats of a pointer to
+U-file: 
+\\
+\dl{IPL \tab U-file\tab:\tab A00000.aaa\tab Factor:\tab 0.000001}
+\dl{IPL \tab u-file\tab:A00000.aaa\tab factor:1.E-6}
+\dl{IPLX\tab U-FILE\tab:A00000.aaa\tab:1.E-6}
+\dl{iplx\tab U-File\tab:A00000.aaa:1.E-6}
+\dl{ipl \tab u-file:A00000.aaa:1.E-6}
+\\
+All these lines have the same effect and mean that the variable
+describing the plasma current, \twd{IPLX}, should be taken from the
+U-file \twd{AWD/udb/A00000.aaa} (\twd{`AWD'} denotes the Astra working
+directory) where it is stored in amperes and multiplied by 
+$10^{-6}$ because the Astra code employs MA as a current unit. 
+The word \twd{"Factor"} can be omitted.
+The symbol \tab~ shows a delimiter, i.e. any combination of 
+spaces and horizontal tabulations.
+
+Note that for this input format
+\\ -- only a U-file name is case sensitive,
+\\ -- only one line is allowed for every variable,
+\\ -- the word ``factor'' and the factor value can be omitted,
+\\ -- if the factor value is omitted it is set to 1,
+\\ -- a delimiter ``\tab'' is required only
+\\ \hspace*{5mm} -- between a name of variable and the word ``U-file'',
+\\ \hspace*{5mm} -- between a name of U-file and the word ``factor'' 
+if the latter is present. 
+
+The U-file name should be given with a path relative to the directory
+\twd{AWD/udb/}. 
+For instance, if the name is \twd{../exp/A00000.aaa } then the
+U-file containing data should be in the subdirectory \twd{AWD/exp/}.
+Every permissible U-file name is allowed but the file must exist and
+contain data. 
+For input of a scalar variable it should be a 0D or 1D U-file. 
+Moreover, in the latter case it should have time as independent variable.
+For input of a radial array it should be 1D or 2D U-file.
+
+In the ITER data base every U-file consists of a number of merged
+separate U-files for different signals.
+In order to select an appropriate record one can use a specifier
+\twd{`<'} as shown below
+\\
+\dl{IPL~~~U-file:JET/jet\us 40847\us 1D~<~IP~~:1.E-6}
+\dl{ABC~~~U-file:JET/jet\us 40847\us 1D~<~AMIN:1.E-6}
+\dl{BTOR~~U-file:JET/jet\us 40847\us 1D~<~BT~~:1.E-6}
+\dl{ZRD1~~U-file:JET/jet\us 40847\us 1D~<~LI~~:1.E-6}
+\\
+In this example, all four Astra variables \twd{IPLX}, \twd{ABCX},
+\twd{BTORX} and \twd{ZRD1X} are read from the same U-file 
+\twd{AWD/udb/JET/jet\us 40847} 
+where they are stored under the names \twd{IP}, \twd{AMIN}, \twd{BT} and
+\twd{LI}, respectively. 
+
+We also remind that, first of all, scalar variables have to be defined
+and then the input mode can be switched to the vector input.
+Thus, the group
+\\
+\dl{IPL \tab u-file:A00000.aaa:1.E-6}
+\dl{FILTER\tab 0.002}
+\dl{TEX \tab u-file:B00000.bbb:factor\tab 1.E-3}
+\dl{MV~  \tab u-file:C00000.ccc}
+\\
+first defines the simple variable \twd{IPLX} as discussed before.
+Then the control word \tw{FILTER} switches the input regime to the
+vector mode.
+(It could also be the words \twd{POINTS} or \twd{GRIDTYPE} but these two
+words do not affect the input from a U-file.)
+Then the radial array \twd{TEX} is taken from the U-file 
+\twd{AWD/udb/B00000.bbb} and all array values are multiplied by the
+factor $10^{-3}.$ 
+Finally, the array \twd{MVX} will be defined.
+
+\subsubsection{Fixed format input}
+
+If the first word in a string is recognized as a name from Table 5.3 or
+Table~5.4 and the second word is not \twd{"U-file"} then the rest of the
+string will be parsed in {\bf positional or fixed format} mode because all symbols will be interpreted according to their
+positions in the string. 
+This format was used in old versions (before 3.0) of the Astra code. 
+Although it is quite restrictive, for compatibility it is also supported
+in more recent versions. 
+
+\paragraph{Fixed format for a scalar input.}
+
+In the scalar input mode all positions in a string have the meaning
+specified by the table: 
+\bigskip\\
+\begin{tabular}{| l | l l l |}\hline
+Field position	&1-6		& 9-14	& 17-22	\\ \hline
+Field meaning	&\twd{NAME}	&Time	&Value	\\ \hline
+\end{tabular}
+\bigskip\\
+\twd{NAME} is one of the names listed in Table 5.2 (or Table 5.3). 
+``Time'' and ``Value'' 
+are numbers which obey Fortran rules for integer or real constants and 
+cannot use a place beyond the reserved fields of 6 positions. 
+Non-used positions (except for those on the end of a string) within 
+the reserved fields and the positions 7, 8, 15 and 16 should be filled 
+with spaces. 
+In the fixed format, the tabulations cannot be used as a separator 
+between meaningful fields. 
+For a time-independent variable the second field ``Time'' can be 
+skipped (filled with spaces).
+For instance, the string (spaces are shown with a symbol '{\tt\sp}')
+\\ \dl{BTOR\sp\sp\sp\sp\sp\sp\sp\sp\sp\sp\sp\sp3.5}
+is equivalent to the Fortran statement 
+\\
+\fl{BTORX=3.5}
+A variable evolving in time can be given as
+\\
+\dl{Name\sp\sp\sp\sp Time\sp\sp\sp\sp Value}
+\dl{123456\sp\sp 901234\sp\sp 789012}
+\dl{IPL\sp\sp\sp\sp\sp .0\sp\sp\sp\sp\sp\sp.1}
+\dl{IPL\sp\sp\sp\sp\sp 1.\sp\sp\sp\sp\sp\sp 1}
+\dl{IPL\sp\sp\sp\sp\sp 2\sp\sp\sp\sp\sp\sp\sp 1.0}
+\dl{IPL\sp\sp\sp\sp\sp 2.5\sp\sp\sp\sp\sp\sp 2.E-1}
+\\
+The first two lines will be interpreted by the Astra code as comment
+strings.  
+The whole group determines the internal variable \twd{IPLX} as a 
+function of time
+\begin{equation}\label{IPLX}
+\twd{IPLX}(t)=\left\{
+\begin{array}{ll}
+0.1\QQUAD	&{\rm if}\quad t\le 0\\
+0.1+0.9t	&{\rm if}\quad 0\le t\le 1\\
+1		&{\rm if}\quad 1\le t\le 2\\
+1-0.8(t-2)	&{\rm if}\quad 2\le t\le 2.5\\
+0.2		&{\rm if}\quad t\geq 2.5\\
+\end{array}\right.
+\end{equation}
+As can be easily seen the time evolution is obtained by a linear
+interpolation between subsequent times. 
+Outside the specified time interval the quantity is extended as
+a constant.
+
+\paragraph{Fixed format for arrays.} 
+As already mentioned, the Astra code starts reading data file being
+in the scalar input mode. 
+In order to invoke vector mode the variable \twd{POINTS} must be
+defined. 
+It can be done by a line as
+\medskip\\
+\dl{POINTS\tab\tt 20}
+\\[1ex]
+This line switches the input mode to reading vector variables and
+additionally declares that the vector dimensionality is 20.
+Then the first 6 characters in a line will be compared with array names
+of Table~5.4.
+If it fits one of those name and the next word is not \twd{"U-file"} 
+then the string should have the following fixed format:
+\bigskip\\
+\begin{tabular}{| l | c c c c c c c|}\hline
+Field position	&1-6	&7-11	&12-16	&17-21	
+&\dots		&\tt 7+5*j-11+5*j &\dots\\ \hline
+Field meaning	&\twd{NAME}& Time& Value& Value	
+&\dots		& Value	      &\dots\\ \hline
+\end{tabular}
+\bigskip\\
+All positions which are not used must be filled with spaces. 
+On the other hand, no spaces is required between the different fields. 
+The total number of fields in a line is $\twd{POINTS}+2$ and 
+$1\le j\le\tt POINTS.$ 
+
+As in the case of scalar variables the first two fields in the line give
+a variable name and a time value.
+If the variable is time independent then the second field can be empty
+(filled with spaces).
+Remaining fields define radial dependence of the vector assuming that
+its values are given on the equidistant grid in a radial variable.
+By default this radial variable is $0\leq a\leq a_B=\tt ABC.$
+This default convention can be changed by redetermining variable
+\twd{XINPUT} (see Section~4.6.1). 
+
+A time dependent vector can be defined similar to a time dependent
+scalar. 
+In the example below, the time evolving density \twd{NEX} is determined. 
+\bigskip\\
+\dl{POINTS\tab\tt 10}
+\dl{123456789012345678901234567890123456789012345678901234567890}
+\dl{Name\sp\sp Time\sp ValueValueValueValueValueValueValueValueValueValue}
+\dl{NE\sp\sp\sp\sp .0\sp\sp\sp 2.30\sp 2.27\sp 2.23\sp 2.15\sp 2.02\sp 1.8\sp\sp 1.49\sp 1.13\sp 0.8\sp\sp .522}
+\dl{NE\sp\sp\sp\sp 0.2002.3842.4302.4562.4102.3022.1281.9031.6471.3601.150}
+\dl{NE\sp\sp\sp\sp .4\sp\sp\sp 2.66\sp 2.77\sp 2.85\sp 2.86\sp 2.76\sp 2.58\sp 2.33\sp 2.03\sp 1.68\sp 1.43}
+\dl{TE\tab U-file:T12345.ECE:.001}
+\dl{TI\sp\sp\sp\sp\sp\sp\sp\sp\sp 3.22\sp 3.14\sp 3.07\sp 2.64\sp 2.07\sp 1.57\sp 1.14\sp 0.71\sp \sp .25\sp\sp.12}
+\dl{END}
+The first line in this example sets value \twd{POINTS=10} for all
+subsequent lines until it will be changed by another command line. 
+The second and third lines label positions.
+As long as they include no valid name in the first six positions they
+are ignored by the code. 
+As shown in the second line for ``\twd{NEX}'' no delimiter is required 
+between the different fields.
+Note that a U-file \twd{T12345.ECE} can have a number of radial points
+different from 10 but it will not affect the current value of
+\twd{POINTS.} 
+Because the length of every input line is limited by 132 positions no
+more than 24 array elements can be used in this format.
+
+\subsubsection{Free format input.}
+
+The control words {\tt~NAMEXP, NTIMES, FACTOR~} can be used for
+input both scalar and vector variables.
+Moreover, any of the control words {\tt~POINTS, GRIDTYPE, FILTER~} 
+switches the input regime from scalar to the vector mode.
+An order and case of the control words in a line are inessential.
+Once defined, each control variable value is valid until it is redefined
+by another control string.
+If the six leading characters in an input string match any of the
+control words then the following rules are applied: 
+\begin{description}
+\vspace*{-1ex}
+\item[--] an order of control words in a control line is arbitrary.
+\vspace*{-1ex}
+\item[--] the word \twd{NAMEXP} must be present in the line, 
+	and followed by a name from Table~5.2 or 5.4,
+\vspace*{-1ex}
+\item[--] the words \twd{NTIMES}, \twd{GRIDTYPE} and 
+   \twd{POINTS} (if present) should be followed by an integer number,
+\vspace*{-1ex}
+\item[--] the words \twd{FACTOR} and \twd{FILTER} 
+   (if present) should be followed by a real number,
+\vspace*{-1ex}
+\item[--] the words \twd{NTIMES, FACTOR} and \twd{FILTER} can be
+omitted, then they acquire default values 1, 1. and 0.001, respectively.
+\end{description}
+\vspace*{-1ex}\noindent
+A number after the word \twd{NTIMES} defines the number of time slices
+in the input.  
+These time values should always follow the control line.
+A real number after the word \twd{FACTOR} defines the multiplication
+(e.g. unit conversion) factor between the input data and in the Astra
+variable.  
+In the free format, no restrictions apart from those required by the
+Fortran syntax are imposed. 
+
+\paragraph{Free format for reading scalars.}
+In the scalar variable input mode each control line should be followed
+by a group of \twd{2*NTIMES} real numbers.
+First \twd{NTIMES} of them give time and the rest give variable values.
+For instance, the previous example \req{IPLX} can be written as
+\smallskip\\
+\dl{NAMEXP~IPL~~~~NTIMES~4~~~~FACTOR~1.E-6}
+\dl{~.0~~~~~~~~1.~~~~~~~~2~~~~~~~~2.5}
+\dl{.1e6~~~~~1.E+6~~~~~1.E6~~~~~~2.E5}
+\vskip 10pt
+
+The next example sets a box-like time dependence for the quantity
+\twd{QECRX} 
+\smallskip\\
+\dl{NTIMES 4~~~~~NAMEXP QECR}
+\dl{0.299~~~~~0.3~~~~~~1.5~~~~~~1.501}
+\dl{0.0~~~~~~~1.0~~~~~~1.0~~~~~~0.0}
+\vspace*{1ex}
+It switches on from zero to 1 MW at $t=0.3$s and switches off at
+$t=1.5$s. 
+
+\paragraph{Free format for reading vector variables.}
+
+The control words {\tt~POINTS, GRIDTYPE, FILTER~} switching the input
+regime to the vector mode have the following meaning
+\begin{description}
+\vspace*{-1ex}
+\item[--]\twd{POINTS} is a dimension of the input vector,
+\vspace*{-1ex}
+\item[--]\twd{GRIDTYPE} is an integer number specifying the radial
+variable, 
+\vspace*{-1ex}\item[--]
+\twd{FILTER} is a real number determining a method of data transfer.
+\end{description}
+%\noindent
+All control variables can be redefined after any input group as many
+times as needed. 
+Otherwise they extend their meaning to all subsequent groups with
+one exception. 
+The grid type and size, as determined by the variables \twd{GRIDTYPE}
+and \twd{POINTS}, are not applied to the input from a U-file. 
+The reason is that the input grid is defined independently in each
+U-file and this definition is effective inside this U-file only.
+When processing the U-file is over the variables \twd{GRIDTYPE} and 
+\twd{POINTS} retrieve their values.
+The action of the variable \twd{FILTER} is extended to all input formats.
+The control words \twd{NAMEXP, NTIMES, FACTOR} and their 
+values have the same significance and obey the same rules as for simple 
+variables.
+Input data should be split in strings no longer than 132 character each.
+
+The variable \twd{POINTS} has no pre-defined value. 
+It must appear in a control string at least once.
+It sets the number of grid points to be used in the subsequent
+input group. 
+This grid has nothing to do with the grid used in the transport equation
+solver. 
+Therefore, a rule for data transfer from one grid to another is required.
+Variables \twd{GRIDTYPE} and \twd{FILTER} define these rules.
+
+The quantity \twd{GRIDTYPE} defines the radial variable and a type of 
+the input grid.
+In the current version of the code it can take the following values.
+%\nopagebreak
+\smallskip\\
+\indent{\bf Table 5.5: Types of radial grid for input arrays}
+\nopagebreak\\[10pt]\nopagebreak\indent
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+Value 	&  Radial coordinate & Type of the grid	& Units & Comment\\
+\hline
+0	& $a_j=\tw{AB*}\kappa_j$	& Equidistant & [m] & \\
+1	& $a_j=\tw{ABC*}\kappa_j$	& Equidistant & [m] 
+					& Default input mode \\
+2	& $\rho_{N,j}=\kappa_j$	& Equidistant & [d/l] &	\\
+3	& $\rho_{\psi,j}=\kappa_j$	& Equidistant & [d/l] & \\
+4	& $\rho_{V,j}$		& Equidistant & [m] & Unimplemented \\
+5	& $\psi_{N,j}$		& Equidistant & [d/l] & Unimplemented \\
+6	& $\Phi_{j}$		& Equidistant & [Wb]  & Unimplemented \\
+%6-9	& 			& Equidistant & [d/l] & Reserved  \\
+10	& $a_j\in[0,\tw{AB}]$	& Arbitrary   & [m] &	 \\
+11	& $a_j\in[0,\tw{ABC}]$	& Arbitrary   & [m] &	 \\
+12	& $\rho_{N,j}\in[0,1]$	& Arbitrary   & [d/l] &	 \\
+13	& $\rho_{\psi,j}\in[0,1]$& Arbitrary   & [d/l] & \\
+14	& $\rho_{V,j}$		& Arbitrary   & [m] & 	 \\
+15	& $\psi_{N,j}]$		& Arbitrary   & [d/l]& 	 \\
+16	& $\Phi_{j}$		& Arbitrary   & [Wb]& 	 \\
+18	& $\{r_j,z_0\}$		& Arbitrary 	& [m] & Vertical   chord \\
+19	& $\{r_0,z_j\}$		& Arbitrary 	& [m] & Horizontal chord \\
+20	& $\{r_j,z_j\}$		& Arbitrary 	& [m] & 2D grid \\
+\hline
+\end{tabular}
+\\[15pt]
+where $\kappa_j=\ds\frac{j-1}{\tw{POINTS}-1},\quad 1\leq j\leq\tw{POINTS}$ 
+and
+$$
+\rho_N=\frac{\rho}{\rho_B}
+,\qq
+\rho_V=\sqrt\frac{V(\rho)-V(0)}{V(\rho_B)}\quad
+,\qq
+\psi_N=\frac{\psi(\rho)-\psi(0)}{\psi(\rho_B)-\psi(0)}
+,\qq
+\rho_\psi=\sqrt{\psi_N}
+.
+$$
+When $\tw{GRIDTYPE}< 10,$ an equidistant grid is selected   
+with respect to the radial coordinate used.
+Note that equidistant grids on different radial variables
+do not coincide with one another.
+
+When $\tw{GRIDTYPE}\geq 10,$ the grid is arbitrary and is expected to be 
+supplied by the user.
+In this case, the grid can be extended also beyond the interval 
+specified by the second column in Table 5.5
+but all data beyond this interval will be ignored.
+If the innermost point of the input grid does not coincide with 
+the magnetic axis $\rho=0$ 
+%or if the outermost point is inside the interval required 
+then the input quantity at $\rho=0$ is set to the nearest value provided.
+The same is done for the outer side.
+In other words, every quantity is extended by a constant
+outside the region where it is set by the input data 
+if this region is smaller than the region of definition.
+
+After that the input grid is mapped to the Astra transport grid by the
+quadratic interpolation while the data are transferred to the transport
+grid making use of the procedure described in Section~4.9.6 where
+$\alpha=\tt FILTER.$ 
+
+We consider now few examples. The first one reads: 
+\\
+\dl{******}
+\dl{NAMEXP~~PRAD~~NTIMES~~2~~POINTS~~10~~GRIDTYPE~~1}
+\dl{0.~~~0.03}
+\dl{1.683E-02~~1.835E-02~~2.118E-02~~2.511E-02~~3.063E-02}
+\dl{3.730E-02~~4.366E-02~~4.700E-02~~4.493E-02~~3.684E-02}
+\dl{1.10~~0.95~~0.78~~0.63~~0.51~~0.45~~0.37~~0.25~~0.13~~0.04}
+\dl{******}
+\dl{POINTS~~11	GRIDTYPE~~10~~NAMEXP~~PRAD}
+\dl{~.2}
+\dl{~.0~~.05~~.1~~.15~~.2~~.25~~.3~~.35~~.4~~.45~~.5}
+\dl{1.613903E-2~~1.683072E-2~~1.835108E-2~~2.118123E-2~~0.02511~~3.063486E-2}
+\dl{3.730636E-2~~4.366064E-2~~4.700778E-2~~4.493699E-2~~3.684750E-2}
+\dl{******}
+Here stars separate successive input groups and are ignored by the code. 
+The first control line declares that the input data should be written in
+the array with the name \tw{PRADX} on the radial grid of 10 points which
+is equidistant in the variable~$a$ on the segment $[0,\tw{ABC}].$ 
+Two time slices ($t=0$s and $t=0.03$s) given in the next line 
+are followed with 20 numbers which give the function values.
+The second control line says that the input should be continued
+using a new grid of 11 nodes. Then the time $t=0.2$s is given, 
+then 11 data for $\{a_j\}$ and 11 values of the function.
+Note that although the control pair \twd{"NTIMES~1"} is omitted the
+corresponding time data must be present.
+
+The second example:
+\\
+\dl{********************************* CAR3X *********************************}
+\dl{>>>>	Data are given along a vertical chord }
+\dl{POINTS~~10~~GRIDTYPE~~18~~NAMEXP~~CAR3}
+\dl{~0.3}
+\dl{~1.5}
+\dl{-0.81 -0.64 -0.47 -0.30 -0.13~~0.04~~0.21~~0.38~~0.55~~0.72}
+\dl{~0.04~~0.31~~0.56~~0.78~~0.93~~0.96~~0.87~~0.68~~0.44~~0.17}
+\dl{********************************* CAR1X *********************************}
+\dl{>>>>	Data are given along a downshifted horizontal chord }
+\dl{POINTS~~11~~GRIDTYPE~~19~~NAMEXP~~CAR1}
+\dl{~0.3}
+\dl{-0.25}
+\dl{~1.10~~1.20~~1.30~~1.40~~1.50~~1.60~~1.70~~1.80~~1.90~~2.00~~2.10}
+\dl{-0.09~~0.26~~0.53~~0.72~~0.83~~0.87~~0.83~~0.72~~0.53~~0.26 -0.09}
+\dl{********************************* CAR2X *********************************}
+\dl{>>>>	Data are given along an inclined chord }
+\dl{NAMEXP~~CAR2X~~GRIDTYPE~~20}
+\dl{~0.3}
+\dl{~1.10~~1.20~~1.30~~1.40~~1.50~~1.60~~1.70~~1.80~~1.90~~2.00~~2.10}
+\dl{-0.30 -0.28 -0.27 -0.25 -0.24 -0.23 -0.21 -0.20 -0.18 -0.17 -0.15}
+\dl{-0.12~~0.24~~0.51~~0.72~~0.84~~0.89~~0.87~~0.76~~0.58~~0.31 -0.03}
+\dl{*************************************************************************}
+defines three different quantities at the same time $t=$0.3 s 
+which is specified by the first number after each control line.
+In the first input group, \tw{GRIDTYPE=18}, therefore the time is
+followed by the distance to the torus axis $r_0=1.5$m, then $\{z_j\}$
+(also in meters) and $\{f_j\}$ are given, where $1\leq j\leq 10.$
+The second control line switches the name, the grid type and size.  
+It determines the horizontal chord with $z_0=-0.25$m, $\{r_j\}$ (in meters) 
+and then gives the function values $\{f_j\}$
+for $1\leq j\leq 11.$
+The third group inherits \twd{POINTS=11} and after the time value gives
+33 numbers for $\{r_j\},$ $\{z_j\}$ and $\{f_j\},$ with $1\leq j\leq 11.$
+
+\subsubsection{Input format for the plasma boundary.}
+When the three-moment equilibrium solver $(\tw{NEQUIL}\leq41)$ is
+used the plasma boundary should be described by a set of scalar
+variables \twd{RTOR, ABC, SHIFT, ELONG, TRIANG, UPDWN}.
+This boundary setting can also be used for more complicated
+equilibrium solvers, however, in the latter case, a more complicated
+boundary shape is usually necessary.
+
+A special input format is provided for setting the plasma boundary of
+arbitrary shape.
+The format is similar to the free format discussed above.
+A new keyword \twd{BND} (or \tw{BNDX}) is introduced which declares that
+the subsequent group of numbers will describe the plasma boundary.
+One should beware that the boundary input switches the input mode from
+scalar to vector type.
+
+Plasma boundary input is illustrated with an example:
+\\[1ex]
+\dl{NAMEXP~~BND~~NTIMES~~2~~POINTS~~8}
+\dl{0.263~~~0.313}
+\dl{2.7750~~2.7000~~1.7631~~1.7695}
+\dl{2.6283~~2.6371~-1.5053~-1.5104}
+\dl{3.8605~~3.8605~~0.2516~~0.2516}
+\dl{1.9041~~1.9167~~0.2516~~0.2516}
+\dl{3.3000~~3.2250~~1.5363~~1.5932}
+\dl{2.2748~~2.2500~~1.5172~~1.5014}
+\dl{2.2515~~2.2604~-1.0141~-1.0141}
+\dl{3.0728~~3.0750~-1.1406~-1.1526}
+\\[1ex]
+Here the time evolving plasma boundary is given by pairs of coordinates
+$\{r_j,z_j\}$ where ${1\leq j\leq\tt POINTS=8.}$
+First two time values $t_1=0.263$s and $t_2=0.313$s are given.
+Then follow $2\times\tt NTIMES\times POINTS$ coordinates  
+$r_1(t_1),\,r_1(t_2),\,z_1(t_1),\,z_1(t_2),\,r_2(t_1),\,r_2(t_2),\,
+\dots\,,$\linebreak 
+$r_8(t_1),\,r_8(t_2),\,z_8(t_1),\,z_8(t_2).$
+It is understood that the boundary coordinates are linearly interpolated
+if $t_1<t<t_2$ and do not evolve otherwise.
+
+In the current version of the code all data for the boundary input
+should be given in one group (multiple appearance of the combination 
+\twd{"NAMEXP BND"} is not allowed) and the the total number of data in
+this group $(2\times\tw{POINTS}+1)\times\tw{NTIMES}$ cannot exceed 25000.
+
+\vskip 3ex
+In conclusion, we outline a few {\bf common rules for a data file}:
+\begin{description}
+\vspace*{-1ex}
+\item[--] The first two lines should be used for a device/shot 
+identification and cannot contain a variable input.
+\vspace*{-1ex}
+\item[--] No meaningful (non-commentary) lines can use more than 132
+positions. 
+\vspace*{-1ex}
+\item[--] If different time slices for the same quantity follow one
+another then the time sequence should be put in increasing order.
+\vspace*{-1ex}
+\item[--] A sequence of records for every input quantity should be
+contiguous, i.e. records for one quantity cannot alternate with records
+for another. 
+\vspace*{-1ex}
+\item[--] At first, all simple variables should be determined. 
+\vspace*{-1ex}
+\item[--] A control line containing one of the words 
+\twd{POINTS, GRIDTYPE, FILTER} switches the input to the vector mode.
+After such a line radial profiles can be defined only. 
+\vspace*{-1ex}
+\item[--] A total number of input values for all simple variables and
+all time slices cannot exceed a value of the parameter \twd{NTVAR} which
+is set during the code installation. 
+An actual value of the parameter is defined in the file
+\twd{AWD/for/parameter.inc} (by default \twd{NTVAR=2000}).
+For radial profiles the same limitation is given by the parameter
+\twd{NTARR} (default value 5000).
+\vspace*{-1ex}
+\item[--] If the control word \tw{END} is encountered then the
+subsequent contents of the data file is ignored. 
+Otherwise, all records until the end of the file will be processed.
+\end{description}
+
+%\vfill\eject
+%\section{Operation guide}
+%\pagebreak
+\subsection{Brief operation guide}
+
+\subsubsection{Installing the code}
+
+To install the Astra code the user is supplied with two files. 
+One of them is an archived file containing all source files for the code.
+Another is a script file \twd{"InstallAstra"}. 
+Both files should be put in the same directory and then the code is
+installed by running the script file. 
+The script provides many options and can accept several control
+parameters. 
+For instance, there are options to install the code for multiple users
+with a shared kernel, options which specify names for the
+directory to put the code in and for the kernel to be linked to. 
+Only a simplest option is considered here.
+
+Running the script
+\\ \indent\twd{InstallAstra}\\
+without any control parameters should install the Astra kernel with the
+name \twd{"Astra"} and the Astra user directory with the name
+\twd{"astra"}. 
+However, for an unknown platform some additional adjustments could be
+requested. 
+If an error is encountered a message is printed.
+Then after a correction \twd{InstallAstra} should be run repeatedly.
+Usually, after the Astra code is successfully installed it offers to set
+two aliases 
+\\ \indent
+$\twd{Astra}=\twd{AWD/.exe/astra}$
+\\
+and
+\\ \indent
+$\twd{Review}=\twd{AWD/.exe/view}$
+\\
+where \twd{AWD} is replaced by the actual Astra working directory
+name. 
+Both alias names are arbitrary but for convenience these
+shorthands will be used in what follows. 
+
+\subsubsection{Starting the code}
+
+After the Astra code is installed a syntax of the starting command and
+the main contents of this section can be displayed by the command 
+\\{\indent
+\tt Astra help
+}
+\\
+or
+\\{\indent
+\tt Astra -h
+}
+\\
+The code is started by the command
+\\{\indent
+\tt Astra~[data\us file\us name]~[model\us name]~[start\us time]
+[end\us time]\\
+\hspace*{4.9em}
+[post\us view\us file\us name]~[test]
+}\\
+which can take up to 6 parameters separated by spaces.
+Any of them is optional and can be omitted. 
+However, a meaning of every parameter is determined by its ordinal
+position in the command line, therefore, if the dropped parameter is not
+the last one in the line it should be replaced with a comma. 
+Significance of the parameters should be obvious:
+
+{\tt data\us file\us name~} is the data file name in the directory
+\twd{AWD/exp/}, 
+
+{\tt model\us name~~~~~} is the model name in the directory
+\twd{AWD/equ/}, 
+
+{\tt start\us time~~~~~} is the initial time of the simulation.\\
+If one of these parameters is not defined then the value from the
+previous run is used.
+For instance, the command
+\\{\indent
+\tt Astra readme showdata
+}\\
+starts Astra run of a model described by the file
+\twd{showdata} (full name \twd{AWD/equ/showdata}) with initial data
+from \twd{readme} and initial time $t_0=0$ (default value).
+To repeat the same run one needs to enter just
+\\{\indent
+\tt Astra
+}\\
+The command
+\\{\indent
+\tt Astra , analysis
+}\\
+can then be used to run the model \twd{analysis} with the same
+data file \twd{readme}.
+
+Remaining parameters:
+ 
+{\tt end\us time~~~~~~~~~~~~} is the time when the simulation has
+to be stopped, 
+
+{\tt post\us view\us file\us name~} is the name for a file where the
+results will be saved.\\
+These two parameters are of use when interactive control is not required
+and the code is run in the background. 
+Then the 5-th parameter can be used for a post-run viewing the
+results of modelling as described in Section~5.5.4. 
+Normally, Astra writes all results of calculations in a file so that,
+after the run, one can inspect the results of simulation as if they are
+watched interactively.
+These results are stored in a special post-view file and each new run
+destroys the previous one.
+Moreover, if several Astra processes run simultaneously they all will
+write into the same file and corrupt it. 
+In order to avoid this corruption during few simultaneous Astra runs 
+the user has to employ the 5-th input parameter and submit the output of
+different Astra processes to different files.
+
+Finally, if the 6-th parameter \twd{"test"} or \twd{"TEST"} is set,
+then the code execution is suspended after the all Fortran source files
+are created (after Step~2 in the flow diagram on page \pageref{flow}). 
+At this moment, the user can manually introduce any code modifications
+which are not foreseen in the Astra compiler and resume execution of the
+modified code. 
+
+A superseding version of this command reads
+\\{\indent
+\tt Astra [-htVM] [-v data\us file\us name] [-m model\us name]
+[-s start\us time] \\
+\hspace*{4.9em}
+[-e end\us time] [-r post\us view\us file\us name]
+}\\
+The command 
+\\{\indent
+\tt Astra -t
+}\\
+is equivalent to
+\\{\indent
+\tt Astra~,~,~,~,~,~test
+}\\
+The commands
+\\{\indent
+\tt Astra -V
+}\\
+and
+\\{\indent
+\tt Astra -M
+}\\
+list all available data files and models, respectively.
+
+\subsubsection{Run time control}
+
+When the Astra code is started it sets up an interactive mode.
+In this mode, the user can control the simulation flow using menu boxes
+displayed in the main window. 
+If a menu box is selected with a mouse (any button) then either a
+message is printed about the fulfilled action or the run is
+suspended and a dialog window appears.
+After carrying out required changes and exiting the dialog window the
+run continues. 
+
+The key \twd{<Esc>} always means exit from the active window. 
+For a {\bf dialog window} pressing \twd{<Esc>} applies all changes,
+closes the dialog window and returns cursor and focus to the main window.
+When pressed in the {\bf main window \twd{<Esc>} stops} the code.
+A dialog window displays a set of boxes containing numbers and words.
+Only one box shown in bold (highlighted) is active at a time. 
+The user can select a box either with the mouse or with the keyboard
+arrows. 
+Data in the selected box can be modified in order to change the run flow
+as required. 
+In a dialog window, useful is the key \twd{`\symbol{63}`} which prints
+an information about the quantity in the highlighted box. 
+
+All menu options of the main window are duplicated by keyboard keys
+(letters are case insensitive). 
+Most of menu items do not require much explanations therefore we
+restrict this section to description of the main features of interactive
+control. 
+Instead of boring reading we encourage the user to test different options
+and find the most suitable mode of operation. 
+
+\paragraph{On-line help and information.}
+The list of operational keys can be obtained by pressing \twd{`H`} or
+\twd{`\symbol{63}`} or by selecting the menu box \twd{"Help"}. 
+The key \twd{`L`} types the results of model analysis by the Astra
+compiler. 
+The current radial grid is explained by \twd{`X`}.
+Correspondence between the menu options and the hot keys of this group
+is shown in the table below.
+\bigskip\\ 
+\cl{\tt\indent
+\begin{tabular}{| c | c | c | c |}\hline
+\bf Menu option & Help		& Type model 	& What X-axis? 	\\ \hline
+\bf Hot key 	& H {\rm or} ?	& L		& X		\\ \hline
+\end{tabular}
+}
+
+\paragraph{Execution control} is performed by using the following menu
+options: 
+\bigskip\\ 
+\cl{\tt\indent
+\begin{tabular}{| c | c | c | c | c |}\hline
+\bf Menu option & Variables & Constants & ~Grids~ & Save tuning \\ \hline
+\bf Hot key 	& V	& C	& D	& I		\\ \hline
+\end{tabular}
+}
+\\[2ex]
+The keys \twd{`V`}, \twd{`D`} and \twd{`C`} invoke dialog windows which 
+allow to change Astra variables listed in Tables~4.9--4.11, 4.13--4.16
+and 4.17, respectively.
+The key \twd{`I`} stores the current values of all these variables in a
+file with the extension \twd{.log} as described in Section~5.3.2.
+
+The set of variables accessible via a key \twd{`D`} includes 
+also a set of control parameters defined by the command line \req{sbr}.
+In this dialog window, one can change the control times for calling every
+subroutine. 
+There is an operation which can be done by the keyboard only.
+It is usage of a control key as described in Section~5.24.
+Pressing \twd{<Ctrl>} together with the predefined in the model key one
+can call the corresponding subroutine out of order.
+If such a combination matching one of the subroutine calling symbols is
+pressed when code is in waiting mode the one time step is made.
+
+Waiting and run modes are two alternative states of the code. 
+Two keys \twd{<Space>} and \twd{<Return>} are reciprocal and set the
+code in waiting and run modes, respectively.  
+\bigskip\\
+\cl{\tt
+\begin{tabular}{| c | c | c | c || c |}\hline
+\bf Menu option & Run   & Step    & Quit & Calling subroutine \\ \hline
+\bf Hot key 	& <Return> & <Space> & <Esc> & <Ctrl><Letter> 	\\ \hline
+\end{tabular}
+}
+\\[2ex]
+The run mode is the default one when the calculations are performed and
+the results presented on the screen are periodically renewed.
+In the waiting mode, code does nothing although all keys are operable as
+in the run mode.
+In this mode, it is possible to advance calculation step by step
+pressing \twd{<Space>} repeatedly.
+Additionally, this mode can be used for mapping different radial
+coordinates to one another because the cursor position is digitized and
+displayed showing several flux labels simultaneously. 
+
+\paragraph{Presentation control.}
+Numerous keys are available for changing presentation of simulation
+results. 
+First of all, we will distinguish 9 different presentation modes.
+Every of them can be set up pressing the corresponding digit-key.
+The first three modes plot radially dependent functions:
+\bigskip\\
+\cl{\tt
+\begin{tabular}{| c | c | c | c | c | c | c |}\hline
+\bf Menu option &16*f(\#) & 8*f(\#) & 8*f(psi)	\\ \hline
+\bf Hot key 	& 1	 & 2	   & 3		\\ \hline
+\end{tabular}
+}
+\\[2ex]
+In the first line, the number in front of \twd{*} shows a number of
+curves plotted simultaneously at one screen.
+Instead of the mark \twd{\#} in the symbolic notation above the Astra
+code shows the actual radial coordinate which is defined by the
+parameter \twd{XOUT} of Table~4.13 and can be one~of: 
+\begin{itemize}
+\vspace*{-1ex}
+\item[--] $a$ introduced by \req{3mom}, 
+		${\tt XOUT}=0$ or ${\tt XOUT}=1,$ 
+\vspace*{-1ex}
+\item[--] $\rho$ introduced by \req{dfPhi}, ${\tt XOUT}=2,$
+\vspace*{-1ex}
+\item[--] $\psi$ introduced by \req{dfpsi}, ${\tt XOUT}=3.$
+\end{itemize}
+\vspace*{-1ex}
+The parameter \twd{XOUT} appears in the dialog window \twd{`D`} under
+the name \twd{Xaxis}.
+It can be changed at any time and stored by pressing \twd{`I`}.
+
+The first (default) mode which simultaneously presents 16 radial
+functions was briefly considered in Section~5.2.6 and depicted there
+schematically as 
+\bigskip\\ 
+\cl{\tt
+\begin{tabular}{| l | l | l | l |}\hline
+\bf\large 1	&\bf\large 2	&\bf\large 3	&\bf\large 4	\\
+1 \& 9		&2 \& 10	&3 \& 11	&4 \& 12	\\ \hline
+\bf\large 5	&\bf\large 6	&\bf\large 7	&\bf\large 8 	\\
+5 \& 13		&6 \& 14	&7 \& 15	&8 \& 16	\\ \hline
+\end{tabular}
+}
+\\[2ex]
+where the large numbers numerate boxes containing two radial profiles
+each. 
+The small digits are the sequence numbers of these radial profiles as
+they appear in a model file.
+If the key \twd{`N`} is pressed then the next 16 curves will be
+displayed as shown below.
+\bigskip\\ 
+\cl{\tt
+\begin{tabular}{| l | l | l | l |}				\hline
+\bf\large 9	&\bf\large 10	&\bf\large 11	&\bf\large 12	\\
+17 \& 25	&18 \& 26	&19 \& 27	&20 \& 28	\\ \hline
+\bf\large 13	&\bf\large 14	&\bf\large 15	&\bf\large 16 	\\
+21 \& 29	&22 \& 30	&23 \& 31	&24 \& 32	\\ \hline
+\end{tabular}
+}
+\\[2ex]
+If \twd{`N`} is pressed several times so that the list of profiles
+requested for the radial output is exhausted then the first screen
+appears again. 
+The scan back can be carried out by pressing~\twd{`B`}.
+\\[2ex]
+\cl{\tt
+\begin{tabular}{| c | c | c | c | c || c |}	\hline
+\bf Menu option & Colors & Backward & Next & Refresh&Appearance\\ \hline
+\bf Hot key 	& A & B & N & R & . 			\\ \hline
+\end{tabular}
+}
+\\[2ex]
+These keys operate similarly in all graphic modes. 
+Colors can be changed in a dialog window opened by pressing \twd{`A`}.
+The key \twd{`R`} redraws the current screen if it was corrupted for
+any reason.
+The hot key \twd{`.`} (dot) is especially useful for black and white
+monitors or for plotting data on black and white printers. 
+It changes appearance of the curves either making them dashed or marking
+them with different symbols.
+
+There are few other possibilities to change the appearance of curves.
+\bigskip\\
+\cl{\tt
+\begin{tabular}{| c | c | c | c | c | c | c | c | c |}\hline
+\bf Menu option	& Select & Scales & Windows & Y-shift	\\ \hline
+\bf Hot key 	& M 	 & S 	  & W 	    & Y  	\\ \hline
+\end{tabular}
+}
+\\[2ex]
+The user can change scales for every curve \tw{`S`}, Y-offsets \tw{`Y`}
+and also redirect any curve in another box \tw{`W`}. 
+The key \tw{`M`} (option \twd{"Select"}) in modes 1, 2, 3, 6, 7 combines
+actions of all three keys \tw{`S`}, \tw{`Y`} and \tw{`W`}.
+
+%\vskip3ex
+The second mode (hot key \twd{`2`}) shows the same profiles in larger
+scale.
+Repeated pressing of the key \twd{`2`} switches between two different
+frames for the curves. 
+In one case, the zero-ordinate line is in the bottom of a window, in
+another, in the middle of it.\footnote
+{A similar feature is also available for modes 3, 4, 5 and 6.}
+This can be used for plotting curves with alternating sign.
+Schematically the second mode can be shown as
+\smallskip\\
+\cl{\tt
+\begin{tabular}{| l | l |}\hline
+\bf\large 1	&\bf\large 2			\\
+		&				\\
+1 \& 5 \& 9 \& 13	&2 \& 6 \& 10 \& 14	\\
+		&				\\ \hline
+\end{tabular}
+}
+\\[2ex]
+It is obtained if the lower row of boxes of the first mode is overlapped
+with the upper row.
+Consequently, the screen obtained by pressing \twd{`N`} can be
+represented as 
+\bigskip\\
+\cl{\tt
+\begin{tabular}{| l | l |}\hline
+\bf\large 3	&\bf\large 4			\\
+		&				\\
+3 \& 7 \& 11 \& 15	&4 \& 8 \& 12 \& 16	\\
+		&				\\ \hline
+\end{tabular}
+}
+\\[2ex]
+In other respects, the mode 2 is similar to the mode 1.
+
+The mode 3 is obsolete because it always uses the coordinate $\psi$ for
+the X-axis and, therefore, it is a particular case of the mode 2.
+It will be removed in future versions.
+
+The next three modes allow to plot time dependences
+\bigskip\\
+\cl{\tt
+\begin{tabular}{| c | c | c | c | c | c | c |}		\hline
+\bf Menu option & 2*f(a,t) & 2*f(R,t) & 8*f(t)		\\ \hline
+\bf Hot key 	& 4	   & 5	      & 6		\\ \hline
+\end{tabular}
+}
+\\[2ex]
+The mode 6 shows eight time dependent curves placed as
+\bigskip\\
+\cl{\tt
+\begin{tabular}{| l |}\hline
+\bf\large 1~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\\	\\
+1 \& 3 \& 5 \& 7					\\ \hline
+\bf\large 2~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\\	\\
+2 \& 4 \& 6 \& 8					\\ \hline
+\end{tabular}
+}
+\\[2ex]
+The time axis is defined by two parameters \twd{TINIT} and \twd{TSCALE}
+included in the dialog window \twd{`D`}.
+The first parameter defines position of the origin and the second one
+the total length of the scale.
+If in process of long simulation the current time $t$ becomes greater
+than \twd{TINIT}+\twd{TSCALE} then the current evolution of parameters
+is not seen any more.
+In this situation, one can interactively change the parameters
+\twd{TINIT} or \twd{TSCALE} and make the evolution visible again but
+most probably it will require a new correction quite soon.
+Sometimes, a better solution would be to set \twd{TSCALE} negative.
+Then $\rm abs\,(\tw{TSCALE})$ will have the same sense as before but 
+the $t$-axis will become floating.
+In other words, \twd{TINIT} will be ignored and alignment of graphs will
+be performed with respect to their right rather than left edge.
+
+If the key \twd{`6`} is pressed in the sixth mode once more then the
+frame will be changed to four boxes with two curves in each box
+\bigskip\\
+\cl{\tt
+\begin{tabular}{| l |}\hline
+\bf\large 1~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\\
+1 \& 5							\\ \hline
+\bf\large 2~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\\
+2 \& 6							\\ \hline
+\bf\large 3~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\\
+3 \& 7							\\ \hline
+\bf\large 4~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\\
+4 \& 8							\\ \hline
+\end{tabular}
+}
+\\[2ex]
+The next pressing \twd{`6`} will put all eight curves in one box
+%\bigskip\\ \cl{\tt\begin{tabular}{| l |}\hline
+%\bf\large 1~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\\ \\ \\	\\
+%1 \& 2 \& 3 \& 4 \& 5 \& 6 \& 7 \& 8			\\ \hline
+%\end{tabular}}\\[2ex]
+and, finally, the forth pressing \twd{`6`} returns the drawing into
+the original state. 
+
+The modes 4 and 5 are similar and differ by the X-axis only.
+Both show two radial profiles as functions of a coordinate in the
+mid-plane. 
+In the mode 4, this coordinate is $a$ (which is close to the minor
+radius), in the mode 5, it is the major radius $R.$
+In these two modes the radial profiles can be plotted for several time
+slices simultaneously. 
+When the mode is switched on all available radial profiles are shown
+with shadow color.
+Pressing the key \twd{`M`} one can select those profiles which should be
+plotted and remove others.
+In other respects, these two modes are similar to the mode 2.
+
+The mode 7 can also be attributed to modes plotting time dependences.
+It shows the same quantities as the mode 6 but as function one another.
+In other words, it gives simulation trajectory in a phase space.
+\bigskip\\
+\cl{\tt
+\begin{tabular}{| c | c | c | c | c |}\hline
+\bf Menu option &Phase space&Equilibrium&User graph& No graphics\\ \hline
+\bf Hot key     & 7	& 8	&9	&0	\\ \hline
+\end{tabular}
+}
+\\[2ex] 
+The mode 8 presents the plasma configuration (as a result of the
+equilibrium solver) and some other informations as NBI geometry
+or resonance position and so on. 
+The mode `9` is reserved for plotting user's graphs.
+It calls the subroutine \twd{AWD/sbr/mydraw.f} which can be edited by the
+user and include any graphics not foreseen in the Astra code.
+The key `0` suppresses the graphic output.
+
+\paragraph{Output files.}
+The user can save the figure which is currently on the screen as a
+PostScript file either in portrait (\twd{`G`}) or in landscape
+(\twd{`Q`}) orientation. 
+The data can also be saved in three different text formats.
+So the keys \twd{`F`} and \twd{`P`} results in writing ASCII files which
+include either all radial profiles (if any of modes 1, 2, 3, 4 or 5 is
+active) or all time dependences (in mode 6).
+PostScript and ASCII files are written into directory \twd{AWD/dat/}.
+Their names are generated automatically and reported in the command
+window.
+The same data as are stored in a file by pressing \twd{`F`} can be typed
+to the screen with the key \twd{`T`}. 
+\bigskip\\
+\cl{\tt
+\begin{tabular}{| c | c | c | c | c | c |}		\hline
+\bf Menu option & Port\us PS & Land\us PS & Write data
+				& Type data & U-files	\\ \hline
+\bf Hot key 	& G & Q & F \& P & T & U		\\ \hline
+\end{tabular}
+}
+\vskip2ex
+
+It is also possible to save data in the U-file format.
+When the key \twd{`U`} is pressed a dialog window is opened where a name
+of the U-file to be stored should be given.
+Note that a type of the U-file depends on the current mode of data
+presentation. 
+In the radial modes 1, 2 and 3, 1D U-files are created with the
+radial variable which is currently on the screen.
+Similarly, in the time mode 6, time dependent 1D U-files are written.
+Finally, in the mode 4, a 2D U-file with both radial and time
+dependences is created. 
+
+\subsubsection{Post-run viewer}
+
+Although the Astra code is basically designed for interactive work it
+can also be run in background and the results may be inspected
+afterwards. 
+To enable this option the Astra code always saves the main results of
+every run in a (post-view) file and provides a tool for its viewing.
+A typical length of this file is few MB, therefore, if the file has not
+been saved by an explicit command it will be overwritten by the next run
+and lost. 
+Therefore, the user should take care and issue the appropriate command if
+results of the run should be saved. 
+We remind that the simulation results can be submitted to a named file
+directly by the Astra starting command (Section~5.5.1).
+
+\paragraph{Review command syntax.}
+The corresponding command in the full format reads
+\\{\indent
+\tt Review [-hl] [-d file\us name] [-s file\us name] [-r file\us name] 
+		[file\us name]}
+\\
+The command 
+\\{\tt\indent
+Review -h
+\hspace{40mm}{\rm or}\qq\qq
+Review help}
+\\
+prints the short description of the Astra post-run viewer.
+When called without parameters
+\\{\tt\indent
+Review}
+\\
+the command retrieves the most recent Astra run.
+A name of the post-view file to be inspected can be given explicitly
+\\{\tt\indent
+Review file\us name}
+\\
+A list of all available post-view files can be obtained by
+\\{\tt\indent
+Review -l
+\hspace{40mm}{\rm or}\qq\qq
+Review @}
+\\
+The saving command is 
+\\{\tt\indent
+Review -s file\us name
+\qq\qq{\rm ~or}\qq\qq
+Review file\us name save}
+\\
+An existing post-view file can be removed with the command
+\\{\tt\indent
+Review -d file\us name
+\qq\qq{\rm ~or}\qq\qq
+Review file\us name del[ete]}
+
+\paragraph{Operation control.}
+The \twd{Review} command opens a graphic window which is very similar in
+image and operation to the Astra run window. 
+Similar to the run mode, there is a selection of menu boxes duplicated
+with control keys which mostly coincide in both modes.
+Moreover, some additional keys (arrows and \twd{<Home>,}
+\twd{<End>,} \twd{<PgUp>,} \twd{<PgDn>}) are enabled. 
+These keys serve to change the current viewing time (shown in the right
+upper corner) thus selecting appropriate time slices for radial profile
+plotting. 
+The arrows advance the current time either in small ($\gets$ and $\to$)
+or in large ($\uparrow$ and $\downarrow$) steps scanning the simulation
+time up and down, respectively.
+\twd{<Home>} (\twd{<End>}) moves the viewing time to the beginning (end)
+of the record. 
+Two additional keys \twd{<PgUp>} and \twd{<PgDn>} can be used if the
+review file is too long and can be loaded by parts only.
+
+On the other hand, some limitations for changing control parameters are
+added because no calculation is made in the view mode. 
+For instance, the keys \twd{`V`} and \twd{`C`} can be used for
+inspecting the current values of control or plasma parameters which
+cannot be changed in the view mode.
+The full list of active keys is printed when the key \twd{`H`} is
+pressed. 
+
+\paragraph{Model retrieval.}
+
+Transport modelling is controlled by a huge amount of plasma and tuning
+parameters.
+Tracking all changes in these parameters which are continuously
+varying is not easy.
+Therefore, a problem of reproducing a simulation run performed a while
+ago could be quite messy.
+To this end, Astra review file includes also a complete information
+about the model and tuning parameters for every saved run.
+
+The model file and the corresponding start $(\tt.log)$ file can be
+recovered with the command
+\\{\tt\indent
+Review -r file\us name}
+\\
+Here \twd{file\us name} is the post-view file name.
+The retrieved model and \twd{.log} files will be created in the Astra
+working directory \twd{AWD/} under the names \twd{model.tmp} and
+\twd{model.log}, respectively. 
+Then the user will be prompted to save these files under unique names in
+order not to destroy them by the subsequent operations.
+
+Note, however, that the initial data file is not stored.
+Therefore, if it was changed in the meantime then the exact reproduction 
+could be not possible. 
+A similar problem arises if the tuning parameters have been modified
+during the run.
+Although the history of parameter variation can be restored by a careful
+examination of the post-view file there is no automatic procedure for
+doing this. 
+Moreover, this history is stored in a post-view file with some
+discreteness, therefore, this information still is incomplete.
+
+%\vfill\eject
+
+
+

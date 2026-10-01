@@ -1,0 +1,22 @@
+!  CVFI  [1/m]     V_phi = CVFI*chi_phi
+! Ratio of the anomalous toroidal velocity to the ion heat diffusivity
+!   (C.Angioni private communication)
+!   Pereverzev 29-05-2008 
+!  Usage:  V_phi=CVFI*D_phi  or  V_phi=CVFI*CXFI*XI
+! It is assumed here that the momentum flux is given by
+! Gamma_phi = -chi_phi\nabla(nu) + (\nabla(n)/n+V_phi)*(nu)
+
+include 'fml/lne'
+YRNE = (RTOR+SHIF(j))/LNE
+YS = SHEAR(j)
+if (YS .le. 3.d0) then
+   CVFI =-(0.05*YRNE+0.19)*YRNE+(0.09/MU(j)-1.)/MU(j)    +(((0.089*YS-0.95)*YS+3.093)*YS-2.25)*YS
+else
+   CVFI =-0.1
+endif 
+if (j .lt. NA1) then
+   YLNE=2.*(NE(j+1)-NE(j))/(NE(j+1)+NE(j))/(RHO(j+1)-RHO(j))
+else
+   YLNE=0
+endif 
+CVFI = (CVFI/(RTOR+SHIF(j))+YLNE)
