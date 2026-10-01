@@ -26,7 +26,7 @@ export STELLOPT_HOME=${STELLOPT_HOME:-${ASTRA_EXT}/STELLOPT/}
 
 # SPIDER
 
-SPIDER_HOME=${ASTRA_EXT}/spider/jun26
+SPIDER_HOME=${ASTRA_EXT}/spider/latest
 SPIDER_LIBDIR=${SPIDER_HOME}/lib
 export SPIDER_LIB=${SPIDER_LIBDIR}/libspider.a
 if [ -f ${SPIDER_LIB} ]; then
