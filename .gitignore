@@ -1,0 +1,8 @@
+# Локальный форк исходников ASTRA (свой git, upstream = MPCDF).
+# В этот репозиторий не коммитится: см. docs/local-fork.md
+/astra-src/
+
+.idea/
+.vscode/
+__pycache__/
+*.pyc
