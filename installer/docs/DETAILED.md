@@ -54,7 +54,9 @@ exe/as_exe -m <model> -v <exp> [-s t0 -e t1] [-batch]
 | json-fortran 9.0.2 | ввод-вывод JSON, **обязательна** при линковке | GitHub, сборка cmake | собирается в `$PREFIX/ext/json/9.0.2` |
 | NetCDF C/Fortran | нужен RABBIT | apt | ставится на будущее |
 | RABBIT (NBI), TORBEAM (ECRH), SPIDER (свободная граница), STRAHL (примеси) | физические модули | **закрытые** репозитории IPP (`gitlab.mpcdf.mpg.de`, gerrit IPP) | не ставятся |
-| TGLF, NEO (GACODE), QuaLiKiZ, QLKNN | турбулентный и неоклассический транспорт | публичные (GitHub, gitlab.com), нужен MPI | пока не ставятся |
+| TGLF, NEO (GACODE) | турбулентный и неоклассический транспорт | публичный GitHub `gafusion/gacode` (Apache-2.0), сборка через `mpif90` | по ключу `--with-tglf` / `--with-neo` (раздел 3.10) |
+| OpenMPI (`openmpi-bin`, `libopenmpi-dev`) | компилятор `mpif90` для GACODE, линковка `xpr/neo` | apt | только с `--with-tglf`/`--with-neo` |
+| QuaLiKiZ, QLKNN | турбулентный транспорт | публичные (gitlab.com), нужен MPI | пока не ставятся |
 
 С мая 2026 (коммит `2ec99235`) ASTRA собирается без закрытых модулей: в `sbr/rabbit.F90`, `sbr/torba.F90` и в `#ifdef SPIDER` стоят заглушки. Но модели, вызывающие эти модули, нужно править: строки `TORBA...` и `RABBIT(...)` закомментировать через `!`.
 
@@ -122,19 +124,62 @@ gfortran по умолчанию обрезает строки свободно�
 
 ### 3.6. IPC-программы TGLF / QuaLiKiZ / NEO
 
-`exe/Makexpr` по умолчанию собирает `xpr/tglfi`, `xpr/qlki`, `xpr/neo`. Для них нужны библиотеки из `$ASTRA_EXT` и MPI; `QLK_LIB` в `astra_rc` прописан без проверки существования файла. Без них `Build` завершается с кодом 2 ещё до запуска модели. Upstream-`install.sh` убирает эти цели только в режиме `-safe` и после интерактивных вопросов; установщик убирает их всегда (как ответ `n` в `-safe`).
+`exe/Makexpr` по умолчанию собирает `xpr/tglfi`, `xpr/qlki`, `xpr/neo`. Для них нужны библиотеки из `$ASTRA_EXT` и MPI; `QLK_LIB` в `astra_rc` прописан без проверки существования файла. Без них `Build` завершается с кодом 2 ещё до запуска модели. Upstream-`install.sh` убирает эти цели только в режиме `-safe` и после интерактивных вопросов; установщик убирает их всегда (как ответ `n` в `-safe`). С `--with-tglf`/`--with-neo` цели `xpr/tglfi`/`xpr/neo` возвращаются (раздел 3.10).
 
 ### 3.7. Тестовая модель требует закрытых кодов
 
 `install.sh` сразу запускает `flux_feqis`/`aug34954`, а эта модель вызывает `TORBA` (ECRH) и `RABBIT` (NBI). Установщик комментирует эти две строки в `equ/flux_feqis` (как `install.sh -safe` при ответе `n`).
 
-### 3.8. Парсер файлов эксперимента
+### 3.8. Совместимость с ASTRA 7: файлы эксперимента и модели
 
-`pyparse/exp_parser.py::parse_u_line` делит строку U-файла по первому **пробелу**. Строки в стиле ASTRA 7 используют табуляцию (`TEX<tab>U-file: 00000.tes<tab>factor: 1.`), а строки-комментарии (`****  ... U-file "00000.tes"`) тоже содержат слово `U-file`. Парсер падал с `IndexError: list index out of range`. Установщик накладывает патч: разбор регулярным выражением, понимающим оба формата; строки без `<VAR> U-file:` пропускаются. Формат A8 (`TE  U-file:34954/TE34954.IDA_AVG: 1.e-3`) разбирается как раньше.
+Файлы и модели ASTRA 7 ломают ASTRA 8 в нескольких местах. Часть ошибок — от разницы компиляторов: A7 собиралась ifort, который прощает больше, чем gfortran. Часть — ошибки самой A8. Установщик накладывает один патч на пять файлов:
+
+| файл | что было | что стало |
+|---|---|---|
+| `pyparse/exp_parser.py` | падал на U-строках с табуляцией, одномерных U-файлах, `2.0d0`, значениях за 22-й колонкой, `FACTOR 1.0d3`; тихо обрезал блоки с текстом | читает эти формы; если блок не разобран, его размер всё равно учитывается в `nr_x_max` |
+| `src/astra/read_input.f90` | слово `points` в комментарии после значения открывало 2D-группу; `0.45d`, вырезанное из `0.45d0` по колонкам 17–22, gfortran не читает; для строк, не являющихся U-файлами, к размеру прибавлялся мусор | комментарии `!` обрезаются; поле расширяется до границы слова; размер считается только для U-строк |
+| `src/astra/parse_utils.f90` | строка данных A7 длиннее 20 чисел → запись за конец массива, segfault | лишние слова не пишутся |
+| `pyparse/parse_as.py` | `((A)*2)/(B)` → `ValueError` в генераторе (ошибка A8) | исправлено |
+| `pyparse/const_text.py` | `"cc_nc(j)"` в начальных значениях не компилировался | `use nclass_mod` в `inivar` |
+
+Проверено: вывод парсера для `aug34954`/`AUG33040_2500` и сгенерированный Fortran для всех 28 моделей A8 не изменились. Перенос моделей с формулами и `equ/log` — команда `astra8-a7to8`. Подробно — `docs/research/a7-user-area-to-a8-2026-10-02.md`.
 
 ### 3.9. `as_exe` всегда завершается с кодом 0
 
 Даже при ошибке компиляции `exe/as_exe` возвращает 0 (результат `os.system` игнорируется). Об успехе можно судить только по выводу: `>>> ASTRA normal exit >>>` и наличию `ncdf_out/<exp><model>.CDF`. Установщик проверяет именно это.
+
+### 3.10. TGLF и NEO из GACODE (`--with-tglf`, `--with-neo`)
+
+TGLF (турбулентный перенос) и NEO (неоклассика) — части открытого пакета GACODE (General Atomics, Apache-2.0, <https://github.com/gafusion/gacode>). ASTRA вызывает их двумя способами:
+
+- **IPC** (основной): обёртка `sbr/tglf_ipc.f90` (`TGLF_IPC`, `tglf_ipc(...)` в моделях `flux_tglf`, `tglf`, `tglf_pid`) через разделяемую память System V запускает 64 процесса `xpr/tglfi` — по одному на точку 64-точечной радиальной сетки — и собирает результат в `tglf_out%chi_i`, `chi_e`, `e_pflux`, ...; для NEO то же с `sbr/neo_ipc.f90` и `xpr/neo` (`flux_neo`);
+- **последовательный**: `sbr/tglf_serial.F90` (`tglf_serial(...)` в `flux_tglf_serial`, `tglf_serial`) линкуется прямо в `bin/<модель>_*.exe` и считает те же 64 точки по очереди.
+
+Что делает установщик (блок `# >>> gacode` в `install_astra8.sh`, шаг 5c):
+
+1. apt: `openmpi-bin libopenmpi-dev` (OpenMPI 4.1.6 в 24.04, 4.1.2 в 22.04). MPI нужен только для компиляции: `tglf_init_mpi.f90` делает `use mpi`, и библиотека GACODE собирается через `mpif90`. `xpr/tglfi` линкуется обычным `gfortran` без MPI: из архива берутся только объекты без MPI-вызовов. `xpr/neo` линкуется через `mpif90` (`LD_MPI` в `Makexpr`);
+2. GACODE скачивается по HTTPS одним коммитом (`git fetch --depth 1 --filter=blob:none`) и только нужные каталоги (`git sparse-checkout`: `tglf neo shared f2py/expro f2py/geo platform/build`) — ~13 МБ за 1–2 с вместо ~630 МБ полного дерева (почти всё — `cgyro`). Проверенный коммит — `master` от 2026-09-30, `f34a9dd2846afedba7a829d70f6194c2d8d8b304`; другой задаётся `--gacode-ref` (ветка, тег или полный хэш). Теги `stable_r*` в репозитории старые (последний — 2017 г.), поэтому закреплён коммит `master`. Каталог — `$PREFIX/build/gacode`;
+3. платформа GACODE `platform/build/make.inc.ASTRA_UBUNTU` пишется установщиком: `FC = mpif90 -fPIC -I/-J $GACODE_ROOT/modules`, `FMATH = -fdefault-real-8 -fdefault-double-8` (как на всех площадках GACODE), `FOPT = -O2 -fallow-argument-mismatch` (gfortran ≥ 10 иначе отвергает старые вызовы в стиле LAPACK);
+4. сборка штатными makefile GACODE, **последовательно**: в них нет зависимостей по модулям Fortran, и `make -j` падает (`tglf_allocate.o` раньше `tglf_modules.o`). TGLF: `make -C tglf/src tglf_lib.a` (~10 с). NEO: `shared/{math,nclass,UMFPACK}`, `f2py/{geo,expro}` (именно в этом порядке: `expro` использует `geo.mod`), затем `neo/src neo_lib.a` (~5 с);
+5. раскладка — та, что ждёт `exe/astra_rc` (каталог версии берётся из `astra_rc`, сейчас `jun25`/`dec24`):
+
+   ```
+   $ASTRA_EXT/tglf/jun25/lib/libtglf.a      (= tglf/src/tglf_lib.a)
+   $ASTRA_EXT/tglf/jun25/inc/tglf*.mod
+   $ASTRA_EXT/neo/dec24/lib/{neo,nclass,UMFPACK,math,expro,geo}_lib.a
+   $ASTRA_EXT/neo/dec24/inc/*.mod
+   ```
+
+   Рядом файл `GACODE_COMMIT`: при совпадении коммита повторная сборка пропускается;
+6. включение (выполняется при каждом запуске установщика, если библиотеки уже лежат в `$ASTRA_EXT`, даже без ключей):
+   - в `exe/Makexpr` в цель `all:` возвращаются `$(XPR)/tglfi` и/или `$(XPR)/neo` (шаг 5 их убрал);
+   - в `platform/env.ubuntu` дописывается `TGLF_FLAG=-DTGLF_INSTALLED`. Это обход дефекта upstream: `exe/Makesub` компилирует `sbr/tglf_serial.F90` с `$(TGLF_FLAG)`, но нигде его не определяет (в отличие от `RABBIT_FLAG`, `QLKNN_FLAG` и др.), поэтому `tglf_serial` всегда собирался заглушкой «not installed»;
+   - там же `ASTRA_MAX_NWORKERS=${ASTRA_MAX_NWORKERS:-64}` и `MAX_NWORKERS=$ASTRA_MAX_NWORKERS`, а в `exe/Build` перед `echo 'Max nworkers'` вставляется строка `export MAX_NWORKERS=${ASTRA_MAX_NWORKERS:-$MAX_NWORKERS}`. Причина: обёртки `tglf_ipc`/`neo_ipc` жёстко запускают `nworkers=64` процессов и останавливают расчёт (`>>> ERROR nworkers= 64 exceeds #physical CPUs= 12`, `Quitting ASTRA`), если `MAX_NWORKERS < 64`. Без переменной обёртка берёт половину логических ядер, а `Build` в режиме с окном сам ставит число физических ядер. На ПК 64 процесса просто делят ядра.
+7. проверка: после `flux_feqis` прогоняется `flux_tglf`/`aug34954`, t = 4–4.1 с (3 шага, 2 вызова TGLF; `TORBA`/`RABBIT` в этой модели уже закомментированы). Успех — `ASTRA normal exit`, строка `XPR wall time` (печатается после каждого вызова TGLF) и CDF. Только CDF недостаточно: при остановке по `MAX_NWORKERS` ASTRA успевает записать CDF с одним шагом.
+
+Модели `flux_tglf` и `flux_neo` используют `IPEQL=5` (FEQIS) и закомментированные `TORBA`/`RABBIT`, поэтому идут без закрытых кодов. `flux_neo_tglf` требует SPIDER (`IPEQL=4`), `tglf_rot_pred_08` и другие — проверять по месту (`TORBA`/`RABBIT` закомментировать).
+
+**NEO — экспериментально.** Библиотеки собираются, `xpr/neo` линкуется (проверено в 22.04 и 24.04), но расчёт `flux_neo` на стенде (24 логических ядра, 30 ГБ ОЗУ) за 11 минут не прошёл первый вызов: рабочие процессы `xpr/neo` занимали по 1.3–4.5 ГБ, система ушла в своп, расчёт остановлен вручную. NEO рассчитан на кластер (`exe/Build` при `sbatch` ставит `MAX_NWORKERS=128`).
 
 ## 4. Что делает `install_astra8.sh`
 
@@ -146,8 +191,9 @@ gfortran по умолчанию обрезает строки свободно�
 | 3 | сборка json-fortran в `$PREFIX/ext/json/9.0.2`; при `--blas mkl` — MKL с PyPI в `$PREFIX/ext/mkl/` | пропускается, если библиотека есть |
 | 4 | `env.ubuntu`, `env.mypc`, правка `get_platform`, патч парсера | идемпотентно |
 | 5 | копирование `repo_user_area/*` в рабочую копию, отключение xpr-целей и TORBA/RABBIT | `exe/` обновляется, в `equ/`, `exp/`, `udb/` ... дописываются только **отсутствующие** файлы |
+| 5c | только с `--with-tglf`/`--with-neo`: OpenMPI из apt, GACODE (sparse, один коммит), сборка TGLF/NEO в `$PREFIX/ext/{tglf,neo}/`; если библиотеки есть — возврат целей в `Makexpr`, `TGLF_FLAG` и `MAX_NWORKERS` в `env.ubuntu`, строка в `exe/Build` (раздел 3.10) | сборка пропускается при том же коммите; включение повторяется и без ключей |
 | 6 | команда `~/.local/bin/astra8`; если `~/.local/bin` нет в `PATH`, строка добавляется в `~/.bashrc` (стандартный `~/.profile` Ubuntu добавляет его только при следующем входе в систему) | перезаписывается, строка в `.bashrc` не дублируется |
-| 7 | `make clean`, полная сборка и batch-расчёт `flux_feqis`/`aug34954`, t = 4–5 с | выполняется заново (`--no-test` — пропустить) |
+| 7 | `make clean`, полная сборка и batch-расчёт `flux_feqis`/`aug34954`, t = 4–5 с; с `--with-tglf` ещё `flux_tglf`/`aug34954`, t = 4–4.1 с | выполняется заново (`--no-test` — пропустить) |
 
 Параметры:
 
@@ -159,10 +205,13 @@ gfortran по умолчанию обрезает строки свободно�
 --blas openblas|mkl
 --no-apt            не ставить пакеты
 --no-test           не запускать тестовый расчёт
+--with-tglf         собрать TGLF (GACODE), включить xpr/tglfi и tglf_serial
+--with-neo          собрать NEO (GACODE), включить xpr/neo (экспериментально)
+--gacode-ref REF    ветка, тег или ПОЛНЫЙ хэш GACODE (по умолчанию проверенный f34a9dd2...)
 -y                  без вопросов
 ```
 
-Журналы: `$PREFIX/install.log` (весь вывод apt/cmake/git), `$PREFIX/test_flux_feqis.log` (сборка и расчёт).
+Журналы: `$PREFIX/install.log` (весь вывод apt/cmake/git, в том числе сборки GACODE), `$PREFIX/test_flux_feqis.log` (сборка и расчёт), с `--with-tglf` — `$PREFIX/test_flux_tglf.log`.
 
 Изменения в upstream-файлах ASTRA (видны в `git -C ~/astra/a8 status`/`diff`):
 
@@ -222,6 +271,26 @@ python3 compareRegressions.py -m <model> -v <exp>   # отчёт: regressions/<e
 
 Установщик запускался без изменений в чистых контейнерах `ubuntu:24.04` и `ubuntu:22.04` (от root, `-y`): в обоих случаях код возврата 0, `ASTRA normal exit`, расчёт 31 с и 42 с. Отдельно проверены: обновление существующей полной копии (`~/astra` на стенде), `--ref main` и повторный запуск, сохраняющий файлы пользователя в `equ/`, `exp/`.
 
+### 5.5. TGLF (`--with-tglf`), 2026-10-02
+
+Чистые контейнеры, от root, `install_astra8.sh -y --with-tglf` (в 22.04 ещё `--with-neo`), ASTRA `e66f6ba1`, GACODE `f34a9dd2` (master 2026-09-30), стенд — 24 логических / 12 физических ядер, WSL2:
+
+| | Ubuntu 24.04 | Ubuntu 22.04 |
+|---|---|---|
+| gfortran / OpenMPI | 13.3.0 / 4.1.6 | 11.4.0 / 4.1.2 |
+| вся установка, включая apt и оба теста | 4 мин 0 с | 5 мин 28 с (с NEO) |
+| сборка TGLF / NEO | ~10 с / — | ~10 с / ~5 с |
+| `flux_feqis`, t = 4–5 с | 32 с | — |
+| `flux_tglf`, t = 4–4.1 с, 3 шага | 1 мин 10 с | 2 мин 8 с |
+| один вызов TGLF (64 процесса `xpr/tglfi`) | 28.7 с / 29.3 с | 55.2 с / 56.0 с |
+| повторный запуск без ключей (`--no-apt --no-test`) | — | 20 с, TGLF и NEO остались включены, строки в `env.ubuntu`/`Build` не задвоились |
+
+Результат `ncdf_out/aug34954flux_tglf.CDF`: `CAR17` = `tglf_out%chi_i`, `CAR18` = `chi_e` — конечные значения порядка 1–10 м²/с по радиусу (на последнем шаге, каждая 10-я точка: `6e-4 2.6 7.5 2.5 4.4 5.3 2.8 0.8 9.9 0`; ноль — на границе). Физически результаты не проверялись (эталона с TGLF для gfortran нет).
+
+Последовательный вариант `flux_tglf_serial`, t = 4–4.1 с (24.04, ручная проверка той же раскладки): `ASTRA normal exit`, CDF записан, один вызов `tglf_serial` — 273 с (64 точки по ~4.3 с на одном ядре), всего 9 мин 14 с. Без `TGLF_FLAG` эта модель останавливалась бы на заглушке.
+
+Режим с окном (GUI) с TGLF не запускался: правка `exe/Build` для него проверена только по тексту.
+
 ## 6. Docker
 
 Папка `docker/` — альтернатива установке в систему. Образ собирается **тем же** `install_astra8.sh`, поэтому всё описанное выше относится и к нему.
@@ -255,7 +324,7 @@ docker/astra-docker.sh <аргументы astra8>      (на компьютер
 ## 7. Ограничения и что дальше
 
 - **Закрытые модули IPP** (RABBIT, TORBEAM, SPIDER, STRAHL): без них нет NBI-нагрева, ECRH и связки со SPIDER. Доступ — только через сотрудничество с IPP (аккаунт `gitlab.mpcdf.mpg.de`). Когда доступ есть, их можно собрать штатным `modules_install.sh` в тот же `$ASTRA_EXT` (раскладка каталогов — в `exe/astra_rc`).
-- **TGLF / NEO / QuaLiKiZ**: открытые, их можно добавить в установщик (OpenMPI из apt + сборка GACODE/QuaLiKiZ). Пока не сделано.
+- **TGLF** ставится ключом `--with-tglf` (раздел 3.10). **NEO** (`--with-neo`) собирается, но расчёт на ПК упирается в память (64 процесса по 1–4 ГБ). **QuaLiKiZ / QLKNN**: открытые, не добавлены (QuaLiKiZ с gitlab.com, нужен MPI, как NEO).
 - **`showdata` + `readme`** (hello world из ASTRA 7): `exp/readme` в репозитории — файл формата A7 со ссылками на U-файлы `udb/00000.tes`, `udb/00000.tis`, которых в репозитории нет. После патча парсера он доходит до разбора ASCII-блоков профилей и падает на проверке размеров (`AssertionError` в `parse_exp2d`): формат блоков A7 отличается от A8. Нужны рабочие файлы лаборатории из установки ASTRA 7.
 - **Оптимизация**: `FC_FLAGS` содержит `-O0`, как у разработчиков (они используют его и для Intel). Ускорение через `-O2` возможно, но не проверялось на совпадение результатов.
 
@@ -269,6 +338,9 @@ docker/astra-docker.sh <аргументы astra8>      (на компьютер
 | `undefined reference to XOpenDisplay` | `--as-needed` | проверить `LD_FLAGS` в `platform/env.ubuntu` |
 | `libmkl_core.a: No such file` | выбран MKL, но он не скачался | переустановить с `--blas openblas` или повторить `--blas mkl` |
 | `Error from exe/Makexpr-compilation` | цели TGLF/QLK/NEO без библиотек | перезапустить установщик (уберёт цели) |
+| `>>> ERROR nworkers= 64 exceeds #physical CPUs=...`, `Quitting ASTRA` | модель с `TGLF_IPC`/`NEO_IPC`, а `MAX_NWORKERS` < 64 | поставить `--with-tglf` (пишет `ASTRA_MAX_NWORKERS=64` в `env.ubuntu`) или `export ASTRA_MAX_NWORKERS=64` |
+| `TGLF not installed`, `TGLF_SERIAL` останавливается | нет `$ASTRA_EXT/tglf/jun25/lib/libtglf.a` или `TGLF_FLAG` | `bash install_astra8.sh --with-tglf` |
+| `cannot fetch GACODE '...'` | короткий хэш в `--gacode-ref` или нет доступа к GitHub | полный хэш (40 символов); проверить `git ls-remote https://github.com/gafusion/gacode.git` |
 | `FileNotFoundError: .../udb/...` | файл эксперимента ссылается на отсутствующий U-файл | положить U-файл в `~/astra/a8/udb/` |
 | окно не появляется, `cannot open display` | нет X-сервера | Windows 11 + WSL2 (WSLg) или рабочий стол Ubuntu; в Windows 10 нужен X-сервер (VcXsrv) и `export DISPLAY=...`; или считать с `-batch` |
 | расчёт «молча» не идёт, код возврата 0 | `as_exe` не передаёт ошибки | смотреть вывод: ищите `Error` выше по тексту |
