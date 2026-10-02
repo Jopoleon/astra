@@ -44,12 +44,16 @@ def a8_name(a7_name):
 
 
 def convert_work(text, warnings):
+    # work(j,111) = NCLASS trapped fraction: A8 does not export it, the A8 formula TPF is the same quantity
+    if re.search(r'"\s*work\s*\(\s*j\s*,\s*111\s*\)\s*"', text, re.IGNORECASE):
+        text = re.sub(r'"\s*work\s*\(\s*j\s*,\s*111\s*\)\s*"', 'TPF', text, flags=re.IGNORECASE)
+        warnings.append('"work(j,111)" (NCLASS trapped fraction) -> TPF formula')
     def repl(m):
         n = int(m.group(1))
         if n in WORK_MAP:
             return '%s(j)' %WORK_MAP[n]
-        warnings.append('work(j,%d) has no ASTRA 8 counterpart, left as is' %n)
-        return m.group(0)
+        warnings.append('work(j,%d) has no ASTRA 8 counterpart: replaced by 0.' %n)
+        return '0.'
     return WORK_RE.sub(repl, text)
 
 

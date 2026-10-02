@@ -338,6 +338,8 @@ ok "platform/env.ubuntu written ($(ASTRA_PLATFORM=ubuntu "$AWD/get_platform"))"
 #  src/astra/parse_utils.f90  split2array2 wrote past its 20 words on long A7 data lines (segfault)
 #  pyparse/parse_as.py    "((A)*2)/(B)" lost a bracket (ValueError in getInnermostBracket)
 #  pyparse/const_text.py  inivar did not "use nclass_mod", so "cc_nc(j)" etc. failed in initial values
+#  repo_user_area/sbr/a2eqdsk.f90  EQDSK name in a 120-char buffer: "End of record" (SPIDER runs)
+#                         when the install path is longer than ~70 chars
 if ! grep -q "fortran_float" "$AWD/pyparse/exp_parser.py"; then
     git -C "$AWD" apply --whitespace=nowarn - <<'PATCH' || die "A7 compatibility patch does not apply to this ASTRA version (--ref); use the default ref"
 diff --git a/pyparse/exp_parser.py b/pyparse/exp_parser.py
@@ -712,6 +714,18 @@ diff --git a/src/astra/parse_utils.f90 b/src/astra/parse_utils.f90
          nout = nout + 1
          strarray(nout) = TRIM(ADJUSTL( strtmp(m:) )) 
      endif
+diff --git a/repo_user_area/sbr/a2eqdsk.f90 b/repo_user_area/sbr/a2eqdsk.f90
+--- a/repo_user_area/sbr/a2eqdsk.f90
++++ b/repo_user_area/sbr/a2eqdsk.f90
+@@ -28,7 +28,7 @@
+      fdia_rect, q_rect, pprime_rect, fprime_rect
+ double precision, dimension(nzRect) :: z_rect
+ double precision, dimension(nrRect, nzRect) :: psi_rect
+-character(len=120) :: f_eqdsk
++character(len=512) :: f_eqdsk
+ 
+ double precision :: rdim, zdim, rcentr, rleft, zmid, rmaxis, zmaxis, &
+     simag, sibry, bcentr, current, xdum
 PATCH
     ok "A7 compatibility patch applied (pyparse, read_input, parse_utils)"
 else
